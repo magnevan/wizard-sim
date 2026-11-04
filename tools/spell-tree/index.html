@@ -1,0 +1,172 @@
+<title>Spell Tree Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  /* Layout: a spellbook bench. Composer on the left, the result as a lit page on the right; stacks on phones. Same night palette as the gallery. */
+  :root {
+    color-scheme: dark;
+    --bg: #13102a; --bg-2: #1a1636; --panel: #201b40; --panel-2: #2a2452;
+    --fg: #f1ecff; --muted: #aaa3d2; --faint: #6f68a0; --line: rgba(190,175,255,.12);
+    --gold: #ffc857; --keep: #ffc857; --maybe: #8fb8ff; --cut: #ff8193;
+    --display: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+    --body: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { background: radial-gradient(1000px 520px at 10% -10%, rgba(255,79,155,.10), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(63,161,255,.10), transparent 60%), var(--bg); color: var(--fg); font: 15px/1.5 var(--body); min-height: 100vh; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  header.top { padding-block: 36px 18px; display: grid; gap: 12px; }
+  .eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  h1 { font: 400 clamp(32px, 6vw, 54px)/1 var(--display); margin: 0; text-wrap: balance; }
+  h1 span { color: var(--gold); }
+  .intro { max-width: 70ch; margin: 0; color: var(--muted); }
+  .intro b { color: var(--fg); }
+  h2 { font: 400 24px/1.1 var(--display); margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 14px; font-size: 14px; }
+
+  .bench { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 860px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 16px; min-width: 0; }
+  .label { font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; }
+
+  .queue { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .slot { aspect-ratio: 1; border-radius: 50%; border: 2px dashed var(--line); display: grid; place-items: center; font: 800 11px/1 var(--body); color: #1a1030; max-width: 64px; width: 100%; justify-self: center; }
+  .slot.full { border: 2px solid rgba(0,0,0,.25); box-shadow: 0 0 18px var(--c), inset 0 -6px 0 rgba(0,0,0,.18); background: var(--c); }
+  .event { min-height: 20px; font-size: 13px; color: var(--gold); }
+
+  .pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .el { appearance: none; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); color: var(--fg); padding: 12px 6px 10px; cursor: pointer; display: grid; justify-items: center; gap: 6px; font: 700 13px/1 var(--body); }
+  .el i { width: 22px; height: 22px; border-radius: 50%; background: var(--c); box-shadow: 0 0 12px var(--c); }
+  .el kbd { font: 500 10px/1 var(--mono); color: var(--faint); }
+  .el:hover { border-color: var(--c); }
+  .el:active { transform: translateY(1px); }
+
+  .modes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .seg { appearance: none; border: 1px solid var(--line); background: var(--bg-2); color: var(--muted); font: 700 13px/1.1 var(--body); padding: 10px 4px; border-radius: 10px; cursor: pointer; }
+  .seg small { display: block; font: 500 10px/1.2 var(--mono); color: var(--faint); margin-top: 4px; }
+  .seg[aria-pressed="true"] { background: var(--panel-2); color: var(--fg); border-color: rgba(190,175,255,.5); }
+  .seg.new[aria-pressed="true"] { border-color: var(--gold); }
+  .tag-new { color: var(--gold); font: 500 9px/1 var(--mono); letter-spacing: .08em; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .targets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .toggle { appearance: none; display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); background: var(--bg-2); color: var(--muted); border-radius: 12px; padding: 10px 12px; cursor: pointer; font: 700 14px/1.2 var(--body); text-align: left; width: 100%; }
+  .toggle .sw { width: 34px; height: 20px; border-radius: 99px; background: var(--panel-2); position: relative; flex: none; }
+  .toggle .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); transition: left .15s; }
+  .toggle[aria-pressed="true"] { color: var(--fg); border-color: var(--gold); }
+  .toggle[aria-pressed="true"] .sw { background: rgba(255,200,87,.35); }
+  .toggle[aria-pressed="true"] .sw::after { left: 17px; background: var(--gold); }
+  .toggle small { display: block; color: var(--faint); font-weight: 400; font-size: 12px; }
+  .ghost { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 10px; padding: 8px 12px; cursor: pointer; font: 700 13px/1 var(--body); }
+  .ghost:hover { color: var(--fg); }
+
+  .result { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+  @media (max-width: 860px) { .result { position: static; } }
+  .spell { border-radius: 14px; padding: 18px; background: linear-gradient(160deg, var(--panel-2), var(--bg-2)); border: 1px solid var(--line); display: grid; gap: 10px; }
+  .spell .form { font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .spell h3 { font: 400 34px/1 var(--display); margin: 0; }
+  .spell p { margin: 0; font-size: 16px; }
+  .leaf { display: inline-flex; gap: 6px; align-items: center; font: 800 12px/1 var(--body); padding: 6px 10px; border-radius: 99px; background: rgba(255,200,87,.14); color: var(--gold); justify-self: start; }
+  .leaf.none { background: rgba(255,255,255,.05); color: var(--faint); font-weight: 600; }
+  .notes { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+  .recipe { font: 500 12px/1.4 var(--mono); color: var(--faint); }
+  .power { display: flex; gap: 4px; } .power i { width: 18px; height: 6px; border-radius: 3px; background: var(--panel-2); } .power i.on { background: var(--gold); }
+
+  .grid5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 10px; }
+  .cell { appearance: none; text-align: left; border: 1px solid var(--line); background: var(--bg-2); color: var(--fg); border-radius: 12px; padding: 12px; cursor: pointer; display: grid; gap: 4px; font: 14px/1.35 var(--body); min-width: 0; align-content: start; }
+  .cell:hover { border-color: rgba(190,175,255,.4); }
+  .cell .m { font: 500 10.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+  .cell b { font: 400 18px/1.1 var(--display); }
+  .cell .lf { color: var(--gold); font-size: 12px; font-weight: 800; }
+  .cell.current { border-color: var(--gold); }
+
+  section.block { padding-block: 28px 6px; }
+  .leaves { display: flex; flex-wrap: wrap; gap: 8px; }
+  .lchip { appearance: none; border: 1px solid var(--line); background: var(--bg-2); color: var(--fg); border-radius: 99px; padding: 8px 12px; cursor: pointer; font: 700 13px/1 var(--body); display: inline-flex; gap: 6px; }
+  .lchip .s { color: var(--gold); } .lchip .s.qm { color: var(--maybe); }
+  .lchip:hover { border-color: rgba(190,175,255,.4); }
+
+  .qs { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+  .q { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+  .q p { margin: 0; font-weight: 700; }
+  .q small { color: var(--muted); }
+  textarea { width: 100%; resize: vertical; min-height: 44px; background: var(--bg-2); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font: 14px/1.4 var(--body); }
+  textarea::placeholder { color: var(--faint); }
+  .verdict { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .verdict button { appearance: none; border: 1px solid var(--line); background: var(--bg-2); color: var(--muted); font: 700 13px/1 var(--body); padding: 10px 6px; border-radius: 10px; cursor: pointer; }
+  .verdict button[aria-pressed="true"][data-v="keep"] { background: rgba(255,200,87,.16); color: var(--keep); border-color: rgba(255,200,87,.6); }
+  .verdict button[aria-pressed="true"][data-v="maybe"] { background: rgba(143,184,255,.14); color: var(--maybe); border-color: rgba(143,184,255,.55); }
+  .verdict button[aria-pressed="true"][data-v="cut"] { background: rgba(255,129,147,.13); color: var(--cut); border-color: rgba(255,129,147,.55); }
+  .save-state { font: 500 11px/1 var(--mono); color: var(--faint); }
+  .save-state.warn { color: var(--cut); }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .rules { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+  .variant { display: grid; grid-template-columns: repeat(2, minmax(110px, 1fr)); gap: 6px; }
+  .variant-note { flex: 1 1 320px; margin: 0; color: var(--muted); font-size: 13.5px; min-width: 0; }
+  footer { padding-block: 36px 60px; color: var(--faint); font-size: 13px; }
+</style>
+
+<header class="top wrap">
+  <div class="eyebrow">Magicka-toy · Spell tree, proposal A</div>
+  <h1>Spell Tree <span>Explorer</span></h1>
+  <p class="intro">Type a spell the Magicka way: queue elements, pick a cast mode, and see what comes out. Proposal A keeps Magicka's rules and adds two things: <b>Point</b>, a cast at the cursor or on an ally, and <b>Seal</b>, which stores a spell to go off later. <b>Release</b> sets off everything you've sealed at once. On a keyboard: Q W E R / A S D F for elements, 1–5 for modes, Space for Seal, Esc to clear.</p>
+</header>
+
+<main class="wrap">
+  <div class="rules">
+    <span class="label" style="margin:0">Rule set</span>
+    <div class="variant" id="variant" role="group" aria-label="Rule set">
+      <button type="button" class="seg" data-v="a" aria-pressed="true">A<small>as proposed</small></button>
+      <button type="button" class="seg new" data-v="a1" aria-pressed="false">A.1<small>after the audit</small></button>
+    </div>
+    <p class="variant-note" id="variantNote" hidden>A.1: Point on an ally casts your Self spell on them. Self gains enchantments (haste, glass cannon, stoneskin, ethereal, cleanse). Shield on an enemy is a Cage. Yank needs Arcane alone, so Earth + Arcane on an enemy is a Geyser under it.</p>
+  </div>
+  <div class="bench">
+    <div class="panel" aria-label="Compose a spell">
+      <div>
+        <div class="label"><span>Queue</span><button class="ghost" id="clear" type="button">Clear</button></div>
+        <div class="queue" id="queue"></div>
+        <div class="event" id="event" aria-live="polite"></div>
+      </div>
+      <div>
+        <div class="label"><span>Elements</span><span>opposites cancel · water+fire = steam · water+cold = ice</span></div>
+        <div class="pad" id="pad"></div>
+      </div>
+      <div>
+        <div class="label"><span>Cast mode</span></div>
+        <div class="modes" id="modes"></div>
+      </div>
+      <div id="targetWrap" hidden>
+        <div class="label"><span>Cursor is on</span></div>
+        <div class="targets" id="targets"></div>
+      </div>
+      <button class="toggle" id="seal" type="button" aria-pressed="false"><span class="sw"></span><span>Seal instead of cast<small>Store it in a vessel. The mode picks the vessel: staff, rune, line rune, orbit or weapon.</small></span></button>
+    </div>
+
+    <div class="result">
+      <div class="spell" id="spell" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <section class="block">
+    <h2>Everything this queue does</h2>
+    <p class="sub">The same elements in every cast mode, cast or sealed. Tap a cell to switch to it.</p>
+    <div class="grid5" id="all"></div>
+  </section>
+
+  <section class="block">
+    <h2>Your liked spells, as recipes</h2>
+    <p class="sub">Every keep (★) and maybe (?) from the gallery that this tree can produce. Tap one to load its recipe.</p>
+    <div class="leaves" id="leaves"></div>
+  </section>
+
+  <section class="block">
+    <h2>What do you think?</h2>
+    <p class="sub">Your answers are saved here and Claude reads them back. <span class="save-state" id="saveState">Connecting…</span></p>
+    <div class="qs" id="qs"></div>
+  </section>
+</main>
+<footer class="wrap">Full reasoning: docs/explorations/2026-11-03-spell-tree.md. The rules are in tools/spell-tree/resolver.js.</footer>
+
+<script src="resolver.js"></script>
+<script src="app.js"></script>

@@ -1,0 +1,111 @@
+<title>Pixel Battlefield</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Silkscreen&display=swap">
+<style>
+  /* Full-viewport canvas; the chrome is small, dark and out of the way. */
+  :root {
+    color-scheme: dark;
+    --bg: #07060b;
+    --panel: rgba(16, 14, 24, 0.92);
+    --panel-solid: #12101b;
+    --chip: #1f1c2c;
+    --fg: #ecebf2;
+    --muted: #a7a3b8;
+    --faint: #6f6b82;
+    --line: rgba(255, 255, 255, 0.09);
+    --line-2: rgba(255, 255, 255, 0.18);
+    --accent: #f2c44a;
+    --keep: #e6c36a;
+    --maybe: #94b6e6;
+    --cut: #e69191;
+    --body: "Inter", "Segoe UI", system-ui, sans-serif;
+    --pixel: "Silkscreen", "Inter", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg); font: 13px/1.45 var(--body); }
+  #view { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; image-rendering: pixelated; background: var(--bg); }
+  body.noui .chrome { display: none !important; }
+
+  .bar { position: fixed; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); z-index: 3;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 7px 10px; border-radius: 12px;
+    background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(6px); max-width: calc(100vw - 20px); }
+  .bar h1 { font: 400 12px/1 var(--pixel); letter-spacing: 0.04em; margin: 0 4px 0 2px; color: var(--accent); white-space: nowrap; }
+  .grp { display: flex; align-items: center; gap: 6px; }
+  .grp > label, .lbl { font: 600 11px/1 var(--body); color: var(--muted); white-space: nowrap; }
+  .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; }
+  .seg button { appearance: none; border: 0; background: transparent; color: var(--fg); font: 600 12px/1 var(--body); padding: 6px 9px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--line-2); }
+  .seg button[aria-pressed="true"] { background: var(--fg); color: #111; }
+  .btn { appearance: none; border: 1px solid var(--line-2); background: var(--chip); color: var(--fg); font: 600 12px/1 var(--body); padding: 6px 9px; border-radius: 8px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover, .seg button:hover { border-color: rgba(255,255,255,.35); }
+  .btn:focus-visible, .seg button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  input[type=range] { width: 110px; accent-color: #d9d6e4; margin: 0; }
+  #scrub { width: 150px; }
+  output { font: 500 11px/1 var(--body); color: var(--muted); min-width: 3.6ch; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .fb-toggle { position: fixed; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); z-index: 4; padding: 8px 12px; background: var(--panel); }
+  .fb-toggle .count { color: var(--accent); }
+  .panel { position: fixed; top: calc(max(10px, env(safe-area-inset-top)) + 44px); right: max(10px, env(safe-area-inset-right)); z-index: 4; width: min(360px, calc(100vw - 20px));
+    max-height: calc(100vh - 70px); overflow: auto; padding: 14px 14px 10px; border-radius: 14px; background: var(--panel-solid); border: 1px solid var(--line-2); box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+  .panel[hidden] { display: none; }
+  .panel h2 { font: 700 14px/1.2 var(--body); margin: 0 0 4px; }
+  .panel p.sub { margin: 0 0 12px; color: var(--muted); font-size: 12px; }
+  .q { padding: 10px 0; border-top: 1px solid var(--line); }
+  .q h3 { font: 600 12.5px/1.35 var(--body); margin: 0 0 7px; }
+  .q .seg { display: flex; }
+  .q .seg button { flex: 1; padding: 7px 6px; font-size: 11.5px; }
+  .q .seg button[aria-pressed="true"][data-tone="good"] { background: var(--keep); }
+  .q .seg button[aria-pressed="true"][data-tone="mid"] { background: var(--maybe); }
+  .q .seg button[aria-pressed="true"][data-tone="bad"] { background: var(--cut); }
+  .q textarea { width: 100%; margin-top: 7px; resize: vertical; min-height: 32px; max-height: 160px; background: #0b0a12; color: var(--fg); border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 8px; font: 12.5px/1.4 var(--body); }
+  .save { font: 500 11px/1.3 var(--body); color: var(--faint); margin-top: 8px; }
+  .save.warn { color: var(--cut); }
+  .moments { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 12px; }
+  .moments button { appearance: none; border: 1px solid var(--line-2); background: var(--chip); color: var(--fg); border-radius: 99px; padding: 4px 8px; font: 500 11px/1.2 var(--body); cursor: pointer; text-align: left; }
+  .moments button b { color: var(--accent); font-weight: 600; margin-right: 3px; font-variant-numeric: tabular-nums; }
+  .moments button:hover { border-color: rgba(255,255,255,.35); }
+  details.legend { margin: 0 0 10px; color: var(--muted); font-size: 12px; }
+  details.legend summary { cursor: pointer; color: var(--fg); font-weight: 600; }
+  details.legend ul { margin: 6px 0 0; padding-left: 16px; }
+  @media (max-width: 720px) { #scrub { width: 90px; } input[type=range] { width: 80px; } .bar h1 { display: none; } }
+</style>
+
+<canvas id="view" aria-label="A pixel-art fight seen from a steep three-quarter view: four wizards hold a ruined plaza behind a rock wall, a frost-coated stone wall and a shield arc, against goblins and brutes coming from three sides. Red's fire beam burns a brute, and Red's turret, a hovering fire crystal ringed by violet runic plates, fires bolts fed by Red's fire runes"></canvas>
+
+<div class="bar chrome" role="toolbar" aria-label="View controls">
+  <h1>PIXEL BATTLEFIELD</h1>
+  <div class="grp"><span class="lbl" id="pxLbl">Pixel</span><div class="seg" id="scale" role="group" aria-labelledby="pxLbl"><button type="button" data-s="2">2×</button><button type="button" data-s="3">3×</button><button type="button" data-s="4">4×</button></div></div>
+  <div class="grp"><button type="button" class="btn" id="pause" aria-pressed="false">❚❚</button><input id="scrub" type="range" min="0" max="1199" step="1" aria-label="Time in the 12 second loop"><output id="tOut"></output></div>
+  <button type="button" class="btn" id="fs" aria-label="Fullscreen">⛶ Fullscreen</button>
+</div>
+
+<button type="button" class="btn fb-toggle chrome" id="fbToggle" aria-expanded="false" aria-controls="panel">Feedback <span class="count" id="fbCount"></span></button>
+<aside class="panel chrome" id="panel" hidden aria-label="Feedback">
+  <h2>Pass 4.1: new turret</h2>
+  <p class="sub">New in pass 4.1: the turret is redesigned. It was “a torch on a cube”; now it is a hovering fire crystal over a carved dais, with three violet runic plates orbiting it and a ring of runes turning on the ground (Sigil is the form, fire its look). Pass 4, since pass 3: everything is drawn from one steep 3/4 camera. The ground is flatter (floor slabs are wider than tall and show a dark front edge), and columns, the turret plinth, trees, rocks and walls show big tops with shorter fronts. All shadows fall to the lower right. The rune HUD is two staggered rows like the keys. The turret has no ammo of its own: each shot draws a fire rune from Red, so it only stops when Red runs dry. Status shows on the bodies, with no icons. A payload sets the look and the strongest element sets the form, so Red's arcane-carrying-fire beam is now a fire beam.</p>
+  <div class="moments" id="moments" aria-label="Jump to a moment"></div>
+  <details class="legend">
+    <summary>Who is who</summary>
+    <ul>
+      <li><b>Red</b> is you (HUD at the bottom, solid ring). Beam west: arcane carrying fire, so it looks like a fire beam. Owns the fire turret, a Sigil device (Sigil + Fire + Fire): a fire crystal hovering over a carved dais, with violet runic plates orbiting it and a ring of runes on the ground. The turret never runs out on its own: each shot pulls one fire rune from Red (a mote flies from Red to the turret, and the F pips dip, then refill). When the east crowd arrives at about 7.1 s, the turret drains Red to nothing. It waits with its crystal sunk to a dull ember and its plates drooping, its ring dashed and Red's F key flashing, then fires again as Red regenerates. While it stands it binds one Sigil rune, the hollow pip on D.</li>
+      <li><b>Blue</b>: water, then cold spray up the gully, which freezes the puddle into an ice sheet. Owns the stone arc coated in frost (Shield + Earth + Cold) across the gully mouth. It raises a new one at 10.3 s after the brute breaks through; the stone comes up bare and the frost creeps over it.</li>
+      <li><b>Gold</b>: chain lightning. Owns the shield arc and the glyph (Sigil + Earth, so it glows in earth tones). Nearly out of runes: every arrow the shield absorbs costs Gold shield runes (a spark flies from Gold to the hit). The arc thins out through the archers' volley, is weakest around 7.3 s, and firms up again in the lull.</li>
+      <li><b>Violet</b>: conjured stone hammer (Earth + Arcane + Earth: earth gives the form, arcane the pink glow) against the east flanker. Owns the rock wall (Shield + Earth) on the west road. Brute A pounds it from 2.4 s, and Violet raises a fresh one at 11.5 s.</li>
+      <li>Walls show damage in four steps: cracks, a chunk out of the top, half height, rubble.</li>
+      <li>Status is on the body: burning flickers with embers, wet is darker with water running off, frozen is rimed and held in ice.</li>
+      <li>The motes circling a wizard are the runes they have ready, one per rune, in element colours. When a wizard prepares a spell, the queued motes fly to the staff one by one, then release on the cast.</li>
+    </ul>
+  </details>
+  <div id="questions"></div>
+  <div class="save" id="saveState" aria-live="polite"></div>
+</aside>
+
+<script src="scene.js"></script>
+<script src="pixel.js"></script>
+<script src="world.js"></script>
+<script src="walls.js"></script>
+<script src="actors.js"></script>
+<script src="render.js"></script>
+<script src="app.js"></script>

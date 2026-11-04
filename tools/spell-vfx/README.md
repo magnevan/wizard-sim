@@ -1,0 +1,101 @@
+# Spell VFX Gallery
+
+A page of looping pixel-art vignettes, one per spell of the current spell grammar (proposal C), drawn in the chosen art direction: the Pixel Battlefield look (high-res pixel art, the ~67° camera, banded dusk light, outlined procedural wizards). The user rates each vignette ★ Keep / ? Maybe / ✗ Cut, with an optional note. The question each one answers: can you tell what the spell does without reading the caption?
+
+Everything is procedural (no image assets), and every vignette is a pure function of its local time, so loops are seamless and any frame can be reproduced.
+
+Not published yet. The first publish needs `capabilities: { db: {} }`.
+
+## What is on the page (70 vignettes)
+- **New and reworked (5)** come first, in their own section with a badge (`fresh: 'new' | 'reworked'` on the vignette; `?fresh=0` puts them back in their groups, the "Changed" chip filters to them). Only this pass's changes are marked: the pass 5 marks were cleared once the user had rated them. New slugs are new visuals, so old ratings stay on the old slugs; reworked ones kept their slug.
+  - Pass 6 new: `death-goblin-fire-v2`, `death-goblin-frozen-shatter-v2`, `death-goblin-arcane-v2`, `death-goblin-quake`, `death-goblin-steam-v2` (see Deaths below).
+- **Forms (21):** the seven plain elements × Force / Area / Place. The fire patch is `fire-place-v3`: one continuous sheet of merged flame over glowing ground, with char only at the rim and once it dies down.
+- **Payloads and mixes (8):** fireball (fast and nearly flat), frost beam, lightning arc through soaked enemies, flame arc v2 (a white-hot plasma arc spraying molten sparks that fall and cool; no upward tongues), scalding spray, steam cloud, ice shards, ice sheet.
+- **Shield barriers (8):** drawn rock wall, ring of stone, barrier arc, tidal wave, fault line, fire curtain arc, ward, and stone armour coated in fire v3 (four big plates flush on the body, the robe greys to stone under them, thin glowing seams and small licks off the shoulders).
+- **Life: support spells (8, `vfx-life.js`, group `life`):** Life leads, and the other elements lend it their shape, never their harm. Heals read as help: green and gold light, rising sparkles and pluses, health bars ticking up.
+  - `life-chain-heal` (Life + Lightning): a green arc leaps from ally to ally.
+  - `life-healing-spray` (Life + Fire): a flamethrower-shaped cone of warm gold-green light that heals and thaws.
+  - `life-heal-stone` (Life + Earth): a stone lobbed over a rock wall that bursts into a healing wave.
+  - `life-healing-shards` (Life + Cold): shards that curve onto hurt allies.
+  - `life-rescue-spray` (Life + Water): douses a burning ally, heals them and nudges them out of the fire.
+  - `life-palm` (Life, Weapon: Healing palm): an open-hand pulse reaches the ally ahead, one-off.
+  - `sg-healing-hands` (Sigil + Life, Weapon): glowing hands with violet cuffs heal while touching.
+  - `sh-mending-ward` (Shield + Life on yourself): the ward skin in green, health mending slowly through arrow hits.
+- **Sigil devices (9):** flamethrower turret, stone orbitals, fire glyph, lightning line glyph, lens (Sigil alone, Place: a mote hops to the cursor and the lens opens there), rune motes, blink (Sigil alone, Force: the caster dissolves into pixels and reassembles a short way along the aim, out from under a brute's smash; the bound rune circles the head for a moment, so blinks can't be chained), double, sculpting wand.
+- **Sigil auras (7):** fire (you exude fire: a glowing outline, flames peeling off the silhouette and leaning out, embers streaming outward, warm light on the ground; no ring of flame), frost, mist, haste, regeneration, bulldoze, glass cannon.
+- **Deaths: goblin (9, `vfx-deaths.js`, group `deaths`):** a trial of "one base death per enemy plus an element overlay". Each card tags its approach (`approach`: base (no overlay) / base + overlay / bespoke) and the death event that drives it (`event`).
+  - The event: `{ archetype, element, delivery, dir, statuses: { frozen, wet, burning, stunned, chilled }, overkill, mix? }`. `delivery` is how the killing hit arrived: `missile | burst` (nova, quake, geyser) `| channel | arc | melee | wave`. `mix: 'scald'` marks water + fire.
+  - **The dispatch rule** (`pick()`, first match wins): frozen → shatter; mix scald → steam; earth + burst → quake; earth + missile → boulder (`death-goblin-earth`); fire → fire; cold → cold; lightning → lightning; arcane → arcane; otherwise → base. So water, shield, life, sigil, and earth by any other delivery all use the base death. Wet doesn't change the lightning death: a soaked target gets it plus the world's own wet-lightning surge.
+  - `baseDeath(g, t, dir, motion)`: impact flash and recoil, a fall profile (`topple`, `plank` (rigid rotation of the captured pixels), `none`, `fling`, `slide`, `bounce` (straight up, a rigid tumble about the middle, a crumpled landing in place), `slump` (sinks in one smooth movement)), a beat lying there, a cartoon poof, the dropped club (`clubStill`: it's just there when the cloud clears).
+  - `overlay[kind](ctx, g, t, dir, statuses, A, m)` draws on top. Hooks on the function: `.motion` / `.motionFor(statuses)` (base parameters, exit kind and colours), `.body` (rig state patch), `.ground` (the lingering mark), `.lights`.
+  - `bespoke.shatter` (frozen at death, any blow) and `bespoke.arcane` replace the body with its own pixels (`sprite()` draws the rig once offscreen and keeps the pixel list).
+  - The cards: base, fire-v2 (flames run along the body's own outline via `edgesOf()` / `silFlames()`, then char, ember outline, ash crumble; no combustion burst), frozen-shatter-v2 (body-shaped ice, see `frozenBody()` below; the shards are that ice), cold, lightning, arcane-v2 (the nudge burst, pink seams crack across the body, the pieces strain apart on threads that snap, then unravel from their edges and pop into nothing; `piecesOf()`; all in the camera plane), earth = the boulder death (missile only), quake (bounced up, tumbles, lands crumpled in cracked ground, debris and dust; not flung), steam-v2 (a steady flush, ear steam, a smooth slump, a steam puff, a soot cloud; no shaking anywhere).
+  - Retired (off the page, slugs reserved, never reuse): `death-goblin-fire`, `-frozen-shatter`, `-arcane`, `-steam` (replaced by `-v2`), `-water` (water uses the base), `-wet-lightning`.
+- **Frozen look (pass 6):** frozen bodies no longer sit in a cube. `PB.actors.frozenBody(solid, col, w, h, grow, seed)` in `actors.js` takes any silhouette mask and returns the pixels to paint: the body tinted pale blue with rime on its sky-facing pixels, a shell of clear ice hugging the silhouette (1 px, 2 px at the foot, lit pale on the left, deep blue at the base, a white lip and a glint), and up to four jagged crystal spikes leaning up and outward. `grow` (0..1) fills it from the feet up. The rig uses it for `s.frozen` (`s.iceShape: 'block'` brings back the old cube).
+
+The Sigil device (pass 4, `K.sigilDevice` in `fx.js`, also copied into `tools/art-pixel-hd/render.js`): a carved dais with a violet groove, a hovering crystal in the payload's colours with a violet outline and halo, and three runic stone plates orbiting it with violet runes. `K.runeRing` turns under it on the ground. Charge: the plates pull in and the crystal whitens as the owner's mote lands. Recoil: the crystal kicks up and the plates flare out. Dry: the crystal sinks to a dull ember, the plates droop and dim, and the ground runes blink.
+
+The shared cast pose (`actors.js`) now holds the staff out in front, nearly level, for every Force cast (the user's note on `mix-ice-shards`).
+
+Visual conventions:
+- Red is the caster, blue the ally, green goblins and the purple brute are enemies.
+- Before every cast, the queued runes fly to the staff in their element colours (the prep charge from art-pixel-hd).
+- Place casts show a cursor reticle. Drag casts show the dotted drag path.
+- No status icons over heads. Status is on the body: burning = flames and embers on the sprite; chilled = an icy tint plus rime on the top edges (crystal spikes when heavy, which is also how "frozen" reads now); wet = darker sprite with drips; shocked = the x-ray flicker plus a white outline on alternate frames; scalded = a red flush plus steam.
+- Devices sit on a violet seal ring. Rune costs show as motes flowing from the caster.
+
+## Files
+- `index.html`: the page (intro, filters, cards, general notes).
+- `app.js`: cards, captions from the rules, the animation loop, IntersectionObserver pausing, ratings.
+- `rules-c.js`: **a snapshot** of `tools/spell-atlas/rules-c.js` (re-copied 2026-11-04 by the main session: Life leads, Lens is Place, Blink is Force). It's the source of titles, descriptions, recipes, payload traits and cost tags. If the rules change, copy the file again and check that the captions still fit.
+- `core.js`: camera constants (FY 0.88, CU 0.8, matching art-pixel-hd), easing, the seeded `rand`, and the deterministic particle emitter `emit`.
+- `pixel.js`: copied from `tools/art-pixel-hd/pixel.js`, plus a Sigil ramp, a Sigil icon and a `?` glyph.
+- `actors.js`: copied from `tools/art-pixel-hd/actors.js` (the wizard, goblin, archer and brute rigs). Changes: `s.fallSide` (topple along the blow), `s.eyeCol` / `s.eyesShut` on goblins (pass 5, for deaths); a hit flash below 0.15 is a faint 2/16 flicker tinted by `s.flashCol`; `s.chill` (icy tint + rime), `s.tint`/`s.tintK`, `s.outline` (glowing outline colour), `s.skin` (`{ k, col, col2, hi, hit }`, a shimmering energy skin), and a white outline while shocked.
+- `stage.js`: renders one 200×124 art-pixel scene. In order: cached ground, decals, shadows, the depth-sorted stand pass, the banded light map (emissive pixels skip it), then unlit effects. It also holds the actor builders (`K.wiz`, `K.gob`, `K.archer`, `K.brute`, `K.pose`).
+- `fx.js`: the effects kit `K` (pass 3 added `shard`, `fireball`, `flameLink`, `mote`):
+  - prep charge, beams with a payload strand and riders, spray cones, area rings, lightning
+  - status effects (burning, dripping, frosty, chilled, pip, heal pluses)
+  - dust, debris, cracks, rocks
+  - walls extruded from a line, with damage (`dmg: [{ f, k }]`): a jagged bite out of the top, dark cracks with a lit lip, pale spalls, a hole at heavy damage and rubble at the foot. Each segment draws its own share of the pattern, so depth order holds. Energy sheets that fade; fire curtains
+  - glyphs, line glyphs, the Sigil device (`sigilDevice`, wrapped by `device`), rune rings, seal rings, ammo and rune-pool pips, auras
+- `vfx-forms.js`, `vfx-payload.js`, `vfx-shield.js`, `vfx-sigil.js`, `vfx-life.js`, `vfx-deaths.js`: the vignettes. `vfx-forms.js` also adds the shared helpers (`K.life`, `K.kb`, `K.down`, `K.hop`, `K.flash`, `K.walk`, `K.hp`, `K.puddle`, `K.caster`).
+- `filmstrip.html`: QA only, not for publishing. It shows frames side by side: `?ids=a,b&n=4&scale=2`, `?group=shield`, `?times=0.5,1,1.5`, and `?crop=x,y,w,h` (stage pixels, zoomed by `scale`) for a close look.
+
+## URL parameters (index.html)
+- `?t=<sec>` freezes every vignette at that time (taken modulo each loop). Use it for screenshots.
+- `?only=<slug>,<slug>` shows only those vignettes. `?group=forms|payload|shield|life|sigil|aura|deaths` shows one group.
+- `?scale=<n>` forces the pixel scale. By default it is the largest integer that fits the card. Below 2× the canvas fills the card width instead (phones).
+- `?static=1` behaves like prefers-reduced-motion: still frames, and a click plays that card.
+- `?bench=1` writes timings to `body[data-bench]`: the first pass, and the steady-state mean per frame.
+
+Animation: only cards on screen render (IntersectionObserver), at about 30 fps. Every card draws one still frame at load (`still`, default 42% of the loop), so the page is complete at rest. Clicking a screen pauses it. Steady state measured headless: a mean of 1.77 ms per vignette frame, worst 5.2 ms (`sh-ring-stone`); `life-heal-stone` and `fire-place-v3` take about 3.2 to 3.7 ms.
+
+## Ratings
+- Ratings live in the artifact's db, collection `ratings`, one doc per vignette slug: `{ mark: 'keep'|'maybe'|'cut'|null, note, updatedAt }`.
+- General notes are in collection `answers`, doc `general`: `{ mark: null, note, updatedAt }`.
+- Without the db, ratings are kept in this browser only (localStorage `spell-vfx-v1`).
+
+Read them with `ArtifactData` `list` on `ratings` and `answers`, then fold them into `docs/ideas/art-direction.md`.
+
+## Adding a vignette
+1. Pick the file for its group and `add({ ... })` (in `vfx-sigil.js`, auras use `auraVignette(...)`):
+   - `id`: a stable slug, which is also the db doc id. Never rename one that has ratings.
+   - `group`, `q` (the queue, e.g. `['sigil', 'fire', 'fire']`), `cast` (`force|area|place|self|conjure`), and `opts` (`{ drag: true }`).
+   - `dur`, the loop in seconds (about 3–4.6), plus `ground` (`grass|path|plaza`) and `seed`.
+   - Optional: `title` and `line` override the caption from the rules; `still` sets the time of the resting frame.
+   - `frame(t, K)` returns `{ actors, under(c, E), under2, stand: [[y, fn(c, E)]], lights: [[x, y, r, colour, a]], fx(c, A, E), shake }`. `A[id]` holds each actor's anchors (`tip`, `chest`, `head`, `charge`, `hands`, `bowTip`). Inside `under` or `stand`, `E.em(fn)` draws emissive pixels and `E.op(fn)` draws opaque ones over the mask.
+2. Use the standard rhythm: `K.caster(t, el, c0, c1)` preps from 0.05 to c0 and casts from c0 to c1. Call `K.prep(...)` in `fx` for the rune charge, and use `K.life(t, D)` so hit bodies fade out at the loop's end and back in at its start.
+3. Check it: open `filmstrip.html?ids=<slug>&n=6` (or screenshot it headless), then `index.html?only=<slug>`, and look for errors in `#errs`.
+
+Headless screenshots (use your own profile directory each time):
+`chrome --headless=new --user-data-dir=<fresh dir> --window-size=1760,1100 --virtual-time-budget=5000 --screenshot=<png> "file:///.../tools/spell-vfx/filmstrip.html?group=shield&n=4"`. Headless Chrome won't lay out narrower than about 500 px, so test phone width in a 390 px iframe.
+
+## Known weak spots
+- The Life vignettes are small at 2×: the sparkles and pluses carry the "help" read, and the health bars do the rest. `life-palm`'s hand-print pulse is tiny. In `sg-healing-hands` the staff still shows, because the rig has no empty-hands pose.
+- `sh-armour-fire-v3`: the stone tint also greys the hat a little, and the pauldrons sit close to the beard.
+- `au-fire`: the ground glow is light only, so on grass it reads warm green rather than orange.
+- The staff-forward cast pose applies to every vignette. Most use the live tip anchor; a few hard-coded launch points were checked (ice shards), not all.
+- Stone orbitals still show ammo pips; the turret rule (pay from the owner's pool) was not applied to them.
+- The sculpting wand is drawn in the unlit pass, so it always sits over the caster's body, even when the hand is behind it.
+- The double's half-power repeat reads by thickness alone.
+- Deaths: goblins face slightly toward the camera (`Math.PI - 0.65`); facing due west hides the ears, and the charred silhouette turned into a blob. The steam death's ear jets and the lightning sparks are a few pixels and want 3× to read well. Arcane v2's threads are 1 px lines and read best at 3×; under the pink light the goblin reads tan-pink rather than green while it cracks. The quake's launch dust is a flat tan blob for a few frames.

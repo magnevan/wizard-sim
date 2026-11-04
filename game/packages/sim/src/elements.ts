@@ -1,0 +1,75 @@
+/**
+ * Element ids and element-count vectors. In state an element is a byte (rules BASE order + 1,
+ * 0 = none), and a spell's elements are 9 counts in a Uint8Array slice, so effects can carry
+ * their payload in typed arrays.
+ */
+import { rules, type Element } from '@wizard-sim/rules';
+
+export const N_EL = 9;
+export const EL = {
+  water: 1, life: 2, shield: 3, cold: 4, lightning: 5, arcane: 6, sigil: 7, fire: 8, earth: 9,
+} as const satisfies Record<Element, number>;
+
+export const elementName = (id: number): Element => rules.BASE[id - 1];
+export const elementId = (el: Element): number => EL[el];
+
+// The ids must match the rules' BASE order (they index rune pools and replays).
+for (const el of rules.BASE) if (rules.BASE.indexOf(el) + 1 !== EL[el]) throw new Error('EL ids out of step with rules.BASE');
+
+/** Counts of each element (index = id - 1) in a queue of names. */
+export function countsOf(queue: readonly Element[], out = new Uint8Array(N_EL)): Uint8Array {
+  out.fill(0);
+  for (const e of queue) out[EL[e] - 1]++;
+  return out;
+}
+
+/** Copy 9 counts into a pool's flat array at slot `i`. */
+export function putCounts(dst: Uint8Array, i: number, src: Uint8Array): void {
+  dst.set(src, i * N_EL);
+}
+
+export const countIn = (flat: Uint8Array, i: number, id: number): number => flat[i * N_EL + id - 1];
+
+/** A queue (element names) from 9 counts at slot `at`, in BASE order. Spells only depend on counts. */
+export function queueFromCounts(flat: Uint8Array, at = 0): Element[] {
+  const q: Element[] = [];
+  for (let id = 1; id <= N_EL; id++) for (let k = 0; k < flat[at * N_EL + id - 1]; k++) q.push(elementName(id));
+  return q;
+}
+
+/**
+ * How much the form element's damage grows with its rune count n (1 = one rune's worth). Each form
+ * has its own curve, as in Magicka: sprays flatten (stacking a spray barely pays), rocks steepen
+ * (going all-in does), beams don't hit harder at all (extra runes make them last longer, cast.ts).
+ * Exponents use exp/log-free maths: n is a small integer, so the curves are tabled by n.
+ */
+export function formCurve(form: number, n: number, sprayExp: number, rockExp: number, linear: number): number {
+  if (n <= 1) return n;
+  if (form === EL.arcane || form === EL.life) return 1;
+  if (form === EL.water || form === EL.fire || form === EL.cold) return powSmall(n, sprayExp);
+  if (form === EL.earth) return powSmall(n, rockExp);
+  return 1 + linear * (n - 1);
+}
+
+/** n^e for n in 1..9 and e a multiple of 0.5 (sqrt is exact); other exponents fall back to linear interpolation between halves. */
+function powSmall(n: number, e: number): number {
+  const half = Math.round(e * 2);
+  const at = (h: number): number => {
+    let r = 1;
+    for (let k = 0; k < Math.floor(h / 2); k++) r *= n;
+    return h % 2 ? r * Math.sqrt(n) : r;
+  };
+  if (Math.abs(e * 2 - half) < 1e-9) return at(half);
+  const lo = Math.floor(e * 2), f = e * 2 - lo;
+  return at(lo) * (1 - f) + at(lo + 1) * f;
+}
+
+/** The form element of a payload: the rules' dominant() on counts (order never matters). 0 for none. */
+const PRIORITY = [EL.shield, EL.sigil, EL.life, EL.earth, EL.arcane, EL.lightning];
+const SPRAY = [EL.water, EL.fire, EL.cold];
+export function formOf(flat: Uint8Array, at = 0): number {
+  for (const id of PRIORITY) if (flat[at * N_EL + id - 1]) return id;
+  let best = 0, n = 0;
+  for (const id of SPRAY) { const c = flat[at * N_EL + id - 1]; if (c > n) { best = id; n = c; } }
+  return best;
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@wizard-sim/sim",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@wizard-sim/rules": "*"
+  }
+}

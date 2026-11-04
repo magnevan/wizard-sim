@@ -1,0 +1,32 @@
+{
+  "name": "wizard-sim",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @wizard-sim/client",
+    "dev:lan": "npm run dev -w @wizard-sim/client -- --host",
+    "build": "npm run build -w @wizard-sim/client",
+    "preview": "npm run preview -w @wizard-sim/client",
+    "test": "vitest run",
+    "typecheck": "tsc -p packages/rules && tsc -p packages/sim && tsc -p packages/net && tsc -p packages/client",
+    "check": "npm run typecheck && npm test",
+    "check:browser": "npm run build && node scripts/browser-check.mjs",
+    "shot": "node scripts/screenshot.mjs",
+    "check:net": "npm run build && node scripts/net-e2e.mjs",
+    "check:webrtc": "npm run build && node scripts/net-e2e.mjs --webrtc",
+    "sync-rules": "node scripts/sync-rules.mjs",
+    "balance": "vitest run --config vitest.balance.config.ts",
+    "artifact": "npm run build && node scripts/make-artifact.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "puppeteer-core": "^25.16.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.1.0"
+  }
+}

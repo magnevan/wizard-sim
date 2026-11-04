@@ -1,0 +1,222 @@
+/**
+ * Per-player casting: the rune economy, the element queue and the cast state machine.
+ *
+ * Runes: pressing an element reserves one rune of it (you need a whole one). A cast spends what
+ * the queue reserved; clearing the queue, or an element cancelling another, gives the runes back.
+ * Pools regenerate slowly; Attune (Arcane on yourself) speeds that up for a while.
+ *
+ * Rhythm: idle -> windup -> (charge | channel) -> recovery -> idle. Wind-up grows with the
+ * spell's size, not with how hard its keys are to type. A stun breaks wind-up, charge and
+ * channel. Channels are free for their natural duration, then cost upkeep from the form
+ * element's pool (regen debt); they end when you let go or that pool runs dry.
+ *
+ * Buttons: Force (press; hold to charge or channel), Area (tap = Area, hold = Place at the
+ * cursor, drag while holding = drawn Place), Self, Weapon.
+ */
+import { rules, type Cast, type Element } from '@wizard-sim/rules';
+import { compile, type SpellSpec } from './compile';
+import { RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
+import { EL, N_EL, elementName } from './elements';
+import { channelTick, fireSpell } from './effects';
+import { STRUCTURE_SHAPES, castStructure, dismissAt, doubleRepeat, hasteOf, payDouble, recallOldest, sigilCap, spendMote, weaponSwing } from './structures';
+import { len } from './geom';
+import { AIM_UNIT, BTN, type PlayerInput } from './input';
+import { atan2Turns } from './trig';
+import { CAST_ID, KIND, PHASE, QUEUE_MAX, type World } from './world';
+
+const CASTS: Cast[] = ['force', 'force', 'area', 'place', 'self', 'conjure']; // index = CAST_ID
+
+export function queueOf(w: World, i: number, cast = false): Element[] {
+  const s = w.seats, q = cast ? s.castQueue : s.queue, n = cast ? s.castLen[i] : s.queueLen[i];
+  const out: Element[] = [];
+  for (let k = 0; k < n; k++) out.push(elementName(q[i * QUEUE_MAX + k]));
+  return out;
+}
+
+function setQueue(w: World, i: number, q: readonly Element[]): void {
+  const s = w.seats;
+  s.queue.fill(0, i * QUEUE_MAX, (i + 1) * QUEUE_MAX);
+  for (let k = 0; k < q.length; k++) s.queue[i * QUEUE_MAX + k] = rules.BASE.indexOf(q[k]) + 1;
+  s.queueLen[i] = q.length;
+}
+
+const rune = (w: World, i: number, id: number) => i * N_EL + id - 1;
+
+function refundQueue(w: World, i: number): void {
+  for (let k = 0; k < w.seats.queueLen[i]; k++) w.seats.runes[rune(w, i, w.seats.queue[i * QUEUE_MAX + k])] += 1;
+  setQueue(w, i, []);
+}
+
+function pressElement(w: World, i: number, id: number): void {
+  if (id < 1 || id > N_EL) return;
+  const s = w.seats, b = w.bodies, tick = w.clock[0];
+  const before = queueOf(w, i);
+  const { queue, event } = rules.addElement(before, elementName(id));
+  const cancels = !!event && queue.length < before.length; // a cancel costs nothing, so it needs no rune
+  // No free Sigil rune but creations standing: the oldest is recalled, and its rune comes to your hand.
+  if (!cancels && id === EL.sigil && s.runes[rune(w, i, id)] < 1) recallOldest(w, i);
+  if (!cancels && s.runes[rune(w, i, id)] < 1) { w.events.push({ tick, kind: 'dry', who: i, x: b.x[i], y: b.y[i], look: id }); return; }
+  if (cancels) {
+    // A cancel: the cancelled element's rune comes back, and the new one is never spent.
+    const gone = before.find((e, k) => queue[k] !== e) ?? before[before.length - 1];
+    s.runes[rune(w, i, rules.BASE.indexOf(gone) + 1)] += 1;
+    // Double-tap Sigil over one of your creations: it's dismissed.
+    if (gone === 'sigil' && id === EL.sigil) dismissAt(w, i, b.x[i] + s.aimX[i], b.y[i] + s.aimY[i]);
+    w.events.push({ tick, kind: 'cancel', who: i, x: b.x[i], y: b.y[i], text: event, look: id });
+  } else if (event) {
+    return; // queue full
+  } else {
+    s.runes[rune(w, i, id)] -= 1;
+    w.events.push({ tick, kind: 'queue', who: i, x: b.x[i], y: b.y[i], look: id });
+  }
+  setQueue(w, i, queue);
+}
+
+function startCast(w: World, i: number, castId: number): void {
+  const s = w.seats;
+  s.castId[i] = castId;
+  s.castQueue.set(s.queue.subarray(i * QUEUE_MAX, (i + 1) * QUEUE_MAX), i * QUEUE_MAX);
+  s.castLen[i] = s.queueLen[i];
+  setQueue(w, i, []); // the reserved runes are now spent
+  const spec = specOf(w, i);
+  spendMote(w, i, spec.form);
+  s.phase[i] = PHASE.windup;
+  // Blink is instant: it must feel snappy (the user's note on the VFX gallery). Haste speeds every wind-up.
+  s.timer[i] = spec.shape === 'blink' ? 0 : Math.round(T(RHYTHM.windup + RHYTHM.windupPerRune * s.castLen[i]) / hasteOf(w, i));
+  s.chanTicks[i] = 0; s.chanTimer[i] = 0;
+}
+
+export function specOf(w: World, i: number): SpellSpec {
+  return compile(queueOf(w, i, true), CASTS[w.seats.castId[i]], { drag: w.seats.dragged[i] === 1 });
+}
+
+const aimFace = (w: World, i: number) => atan2Turns(w.seats.aimY[i], w.seats.aimX[i]);
+
+/** The target point for Place (and Blink): the aim point, at most `range` away. */
+function target(w: World, i: number, range = SHAPES.placeRange): [number, number] {
+  const s = w.seats, b = w.bodies, d = len(s.aimX[i], s.aimY[i]);
+  const k = d > range ? range / d : 1;
+  return [b.x[i] + s.aimX[i] * k, b.y[i] + s.aimY[i] * k];
+}
+
+function release(w: World, i: number, spec: SpellSpec, charge: number): void {
+  const [tx, ty] = target(w, i, spec.shape === 'blink' ? STRUCT.blinkRange : SHAPES.placeRange);
+  if (STRUCTURE_SHAPES.includes(spec.shape)) { castStructure(w, i, spec, aimFace(w, i), tx, ty, w.seats.holdX[i], w.seats.holdY[i]); return; }
+  // An empty Weapon cast swings your conjured weapon, if you hold one.
+  if (spec.cast === 'conjure' && spec.power === 0 && weaponSwing(w, i, aimFace(w, i))) return;
+  fireSpell(w, i, spec, aimFace(w, i), tx, ty, charge);
+  if (spec.shape !== 'blink' && spec.shape !== 'self') doubleRepeat(w, i, spec, tx, ty, charge);
+  w.events.push({ tick: w.clock[0], kind: 'cast', who: i, x: w.bodies.x[i], y: w.bodies.y[i], text: spec.title, look: spec.look });
+}
+
+function toRecovery(w: World, i: number): void {
+  w.seats.phase[i] = PHASE.recover;
+  w.seats.timer[i] = T(RHYTHM.recovery);
+}
+
+function windupTick(w: World, i: number, held: number, act: boolean): void {
+  const s = w.seats, b = w.bodies;
+  if (!act) { toRecovery(w, i); return; } // a stun breaks the cast; its runes are spent
+  if (s.timer[i] > 0) { s.timer[i]--; return; }
+  const spec = specOf(w, i);
+  if (spec.charge && held & BTN.force) { s.phase[i] = PHASE.charge; s.chanTicks[i] = 0; return; }
+  if (spec.channel) {
+    s.phase[i] = PHASE.channel; s.chanTicks[i] = 0;
+    s.dblPaid[i] = payDouble(w, i, spec) ? 1 : 0; // the Double echoes the channel if you can pay its half
+    w.events.push({ tick: w.clock[0], kind: 'cast', who: i, x: b.x[i], y: b.y[i], text: spec.title, look: spec.look });
+  } else { release(w, i, spec, 0); toRecovery(w, i); }
+}
+
+/** Can this body act at all this tick? */
+export const canAct = (w: World, i: number): boolean => !w.bodies.stun[i] && !w.bodies.frozen[i] && !w.bodies.down[i] && !w.bodies.downed[i];
+
+/** One tick of seat i: runes, queue, buttons, the cast phases. Movement happens in step.ts. */
+export function tickSeat(w: World, i: number, inp: PlayerInput): void {
+  const s = w.seats, b = w.bodies;
+  const held = inp.buttons, released = s.prevButtons[i] & ~held;
+  let pressed = held & ~s.prevButtons[i];
+  s.prevButtons[i] = held;
+  s.aimX[i] = inp.aimX * AIM_UNIT;
+  s.aimY[i] = inp.aimY * AIM_UNIT;
+  if (s.aimX[i] !== 0 || s.aimY[i] !== 0) b.face[i] = aimFace(w, i);
+
+  // Regen (Attune speeds it up).
+  const mult = s.attune[i] > 0 ? RUNES.attuneMult : 1;
+  if (s.attune[i] > 0) s.attune[i]--;
+  for (let e = 1; e <= N_EL; e++) {
+    const k = rune(w, i, e);
+    // Sigil runes bound in devices don't come back while those devices stand.
+    const cap = e === EL.sigil ? sigilCap(w, i) : RUNES.max[elementName(e)];
+    s.runes[k] = Math.min(Math.max(cap, 0), s.runes[k] + (RUNES.regen * mult) / 60);
+  }
+
+  // A conjured shield blocks while the Weapon button is held with an empty queue.
+  s.guardT[i] = s.guard[i] && held & BTN.weapon && s.queueLen[i] === 0 ? s.guardT[i] + 1 : 0;
+  if (s.guardT[i]) pressed &= ~BTN.weapon; // holding it to block is not a swing
+
+  if (pressed & BTN.clear) refundQueue(w, i);
+  pressElement(w, i, inp.press0);
+  pressElement(w, i, inp.press1);
+
+  // The Area button: tap for Area, hold for Place, drag while holding for a drawn Place.
+  if (pressed & BTN.area) { s.areaHeld[i] = 0; s.dragged[i] = 0; s.holdX[i] = b.x[i] + s.aimX[i]; s.holdY[i] = b.y[i] + s.aimY[i]; }
+  let areaCast = 0;
+  if (held & BTN.area) {
+    s.areaHeld[i]++;
+    if (len(b.x[i] + s.aimX[i] - s.holdX[i], b.y[i] + s.aimY[i] - s.holdY[i]) > RHYTHM.dragMin) s.dragged[i] = 1;
+  } else if (released & BTN.area) {
+    areaCast = s.areaHeld[i] < T(RHYTHM.placeHold) && !s.dragged[i] ? CAST_ID.area : CAST_ID.place;
+  }
+
+  // A cast pressed while busy is buffered briefly, so no press is lost to recovery.
+  const want = pressed & BTN.force ? CAST_ID.force : areaCast || (pressed & BTN.self ? CAST_ID.self : pressed & BTN.weapon ? CAST_ID.conjure : 0);
+  if (want) { s.bufCast[i] = want; s.bufTicks[i] = T(RHYTHM.castBuffer); }
+  else if (s.bufTicks[i] > 0 && --s.bufTicks[i] === 0) s.bufCast[i] = 0;
+
+  const act = canAct(w, i);
+  switch (s.phase[i]) {
+    case PHASE.idle: {
+      const c = s.bufCast[i];
+      if (!act || !c || (s.queueLen[i] === 0 && c !== CAST_ID.conjure)) break;
+      s.bufCast[i] = 0; s.bufTicks[i] = 0;
+      startCast(w, i, c);
+      // Instant spells (Blink) go off this very tick.
+      if ((s.phase[i] as number) === PHASE.windup && s.timer[i] === 0) windupTick(w, i, held, act);
+      break;
+    }
+    case PHASE.windup:
+      windupTick(w, i, held, act);
+      break;
+    case PHASE.charge: {
+      if (!act) { toRecovery(w, i); break; }
+      if (held & BTN.force && s.chanTicks[i] < T(RHYTHM.chargeMax)) { s.chanTicks[i]++; break; }
+      if (held & BTN.force) break; // fully charged: hold as long as you like
+      release(w, i, specOf(w, i), s.chanTicks[i] / T(RHYTHM.chargeMax));
+      toRecovery(w, i);
+      break;
+    }
+    case PHASE.channel: {
+      const spec = specOf(w, i);
+      if (!act || !(held & BTN.force)) { toRecovery(w, i); break; }
+      // Past the natural duration it costs upkeep from the form element; it ends when that runs dry.
+      const natural = RHYTHM.naturalChannel * (spec.shape === 'beam' ? Math.max(1, spec.formN) : 1); // a beam's extra runes buy time, not damage
+      if (s.chanTicks[i] >= T(natural) && spec.form) {
+        const k = rune(w, i, spec.form);
+        s.runes[k] -= RHYTHM.upkeep / 60;
+        if (s.runes[k] <= 0) { s.runes[k] = 0; toRecovery(w, i); break; }
+      }
+      channelTick(w, i, spec, aimFace(w, i));
+      const d = s.double[i];
+      if (s.dblPaid[i] && d >= 0 && w.bodies.kind[d] === KIND.double) {
+        const [tx, ty] = target(w, i, 30);
+        channelTick(w, d, spec, atan2Turns(ty - w.bodies.y[d], tx - w.bodies.x[d]), { seat: i, scale: STRUCT.doubleShare });
+      }
+      s.chanTicks[i]++;
+      break;
+    }
+    case PHASE.recover:
+      if (s.timer[i] > 0) s.timer[i]--;
+      else s.phase[i] = PHASE.idle;
+      break;
+  }
+}

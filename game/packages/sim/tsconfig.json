@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  // No DOM and no node types: the sim can't reach a clock, timers, the network or the page.
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": []
+  },
+  "include": ["src"]
+}

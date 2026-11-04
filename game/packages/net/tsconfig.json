@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  // Like the sim: no DOM. Real transports (WebRTC, Steam) plug in from the client or the desktop shell.
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": []
+  },
+  "include": ["src"]
+}

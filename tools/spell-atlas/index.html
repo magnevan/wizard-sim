@@ -1,0 +1,354 @@
+<title>Spell Atlas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  /* The whole tree on one page: a composer on top, then the form × cast grid, then the parts it is made from. Same night palette as the gallery and explorer. */
+  :root {
+    color-scheme: dark;
+    --bg: #13102a; --bg-2: #1a1636; --panel: #201b40; --panel-2: #2a2452;
+    --fg: #f1ecff; --muted: #aaa3d2; --faint: #6f68a0; --line: rgba(190,175,255,.12);
+    --gold: #ffc857; --keep: #ffc857; --maybe: #8fb8ff; --cut: #ff8193;
+    --display: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+    --body: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(1000px 520px at 10% -10%, rgba(255,79,155,.10), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(63,161,255,.10), transparent 60%), var(--bg); color: var(--fg); font: 15px/1.5 var(--body); min-height: 100vh; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  header.top { padding-block: 36px 10px; display: grid; gap: 12px; }
+  .eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  h1 { font: 400 clamp(32px, 6vw, 54px)/1 var(--display); margin: 0; }
+  h1 span { color: var(--gold); }
+  .intro { max-width: 74ch; margin: 0; color: var(--muted); }
+  .intro b { color: var(--fg); }
+  .formula { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font: 800 15px/1.2 var(--body); }
+  .formula span { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+  .formula em { font-style: normal; color: var(--gold); }
+  .formula i { font-style: normal; color: var(--faint); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 10px; margin-top: 8px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .stat > b { font: 400 30px/1 var(--display); display: block; }
+  .stat small b { color: var(--fg); }
+  .stat small { color: var(--muted); font-size: 13px; }
+  .stat.bad > b { color: var(--cut); } .stat.good > b { color: var(--gold); }
+  h2 { font: 400 26px/1.1 var(--display); margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 14px; font-size: 14px; max-width: 80ch; }
+  section.block { padding-block: 30px 4px; }
+  .label { font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+
+  .bench { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 18px; align-items: start; }
+  @media (max-width: 900px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 16px; min-width: 0; }
+  .queue { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .slot { aspect-ratio: 1; border-radius: 50%; border: 2px dashed var(--line); display: grid; place-items: center; font: 800 11px/1 var(--body); color: #1a1030; max-width: 56px; width: 100%; justify-self: center; }
+  .slot.full { border: 2px solid rgba(0,0,0,.25); box-shadow: 0 0 16px var(--c), inset 0 -6px 0 rgba(0,0,0,.18); background: var(--c); }
+  .slot.dom { outline: 3px solid var(--fg); outline-offset: 3px; }
+  .event { min-height: 20px; font-size: 13px; color: var(--gold); }
+  .pad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .el { appearance: none; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); color: var(--fg); padding: 11px 6px 9px; cursor: pointer; display: grid; justify-items: center; gap: 6px; font: 700 13px/1 var(--body); }
+  .el i { width: 20px; height: 20px; border-radius: 50%; background: var(--c); box-shadow: 0 0 12px var(--c); }
+  .el kbd { font: 500 10px/1 var(--mono); color: var(--faint); }
+  .el:hover { border-color: var(--c); }
+  .casts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .seg { appearance: none; border: 1px solid var(--line); background: var(--bg-2); color: var(--muted); font: 700 13px/1.1 var(--body); padding: 9px 4px; border-radius: 10px; cursor: pointer; text-align: center; }
+  .seg small { display: block; font: 500 10px/1.25 var(--mono); color: var(--faint); margin-top: 4px; }
+  .seg[aria-pressed="true"] { background: var(--panel-2); color: var(--fg); border-color: var(--gold); }
+  .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .toggle { appearance: none; display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); background: var(--bg-2); color: var(--muted); border-radius: 12px; padding: 9px 11px; cursor: pointer; font: 700 13px/1.2 var(--body); text-align: left; }
+  .toggle .sw { width: 30px; height: 18px; border-radius: 99px; background: var(--panel-2); position: relative; flex: none; }
+  .toggle .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--muted); transition: left .15s; }
+  .toggle[aria-pressed="true"] { color: var(--fg); border-color: var(--gold); }
+  .toggle[aria-pressed="true"] .sw::after { left: 15px; background: var(--gold); }
+  .toggle[disabled] { opacity: .4; cursor: default; }
+  .toggle small { display: block; color: var(--faint); font-weight: 400; font-size: 11.5px; }
+  .ghost { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 10px; padding: 6px 10px; cursor: pointer; font: 700 12px/1 var(--body); }
+  .ghost:hover { color: var(--fg); }
+
+  .result { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: grid; gap: 10px; }
+  @media (max-width: 900px) { .result { position: static; } }
+  .stage { width: 100%; aspect-ratio: 220 / 130; border-radius: 14px; border: 1px solid var(--line); display: block; background: #1b1733; }
+  .spell { border-radius: 14px; padding: 16px; background: linear-gradient(160deg, var(--panel-2), var(--bg-2)); border: 1px solid var(--line); display: grid; gap: 8px; }
+  .spell .form { font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .spell h3 { font: 400 30px/1 var(--display); margin: 0; }
+  .spell p { margin: 0; }
+  .pl { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .pl li { display: flex; gap: 8px; align-items: baseline; font-size: 14px; }
+  .pl li i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--c); transform: translateY(1px); }
+  .card h4 i[style*="gradient"] { box-shadow: none; }
+  .pl li b { color: var(--fg); }
+  .note { border-left: 3px solid var(--gold); padding-left: 10px; color: var(--muted); font-size: 13.5px; }
+  .intro.small { font-size: 13.5px; color: var(--faint); }
+  .cost { font-size: 13.5px; color: var(--muted); }
+  .cost b, .ctag { font: 600 11px/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 7px; border-radius: 99px; border: 1px solid currentColor; display: inline-block; margin-right: 4px; }
+  .ctag.stuff, .cost.stuff b { color: #d9b27a; }
+  .ctag.energy, .cost.energy b { color: #ffe08a; }
+  .ctag.bind, .cost.bind b { color: #e08cff; }
+  .ctag.sustain, .cost.sustain b { color: #ff7fb8; }
+  .ctag.cast, .cost.cast b { color: var(--muted); }
+  .scard { text-align: left; cursor: pointer; color: inherit; font: inherit; }
+  .scard:hover { border-color: rgba(255,255,255,.25); }
+  .scard .ctag { justify-self: start; }
+  .costs { display: grid; gap: 6px; margin-top: 14px; font-size: 14px; color: var(--muted); }
+  .recipe { font: 500 12px/1.4 var(--mono); color: var(--faint); }
+
+  .overlay { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .chip { appearance: none; border: 1px solid var(--line); background: var(--bg-2); color: var(--muted); border-radius: 99px; padding: 6px 11px 6px 8px; cursor: pointer; font: 700 13px/1 var(--body); display: inline-flex; gap: 6px; align-items: center; }
+  .chip i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
+  .chip[aria-pressed="true"] { color: var(--fg); border-color: var(--c); background: color-mix(in srgb, var(--c) 18%, var(--bg-2)); }
+  .gridwrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); }
+  table.atlas { border-collapse: separate; border-spacing: 0; min-width: 980px; width: 100%; table-layout: fixed; }
+  .atlas th { position: sticky; top: 0; background: var(--panel-2); font: 500 11px/1.25 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 10px 8px; text-align: left; z-index: 1; }
+  .atlas th small { display: block; text-transform: none; letter-spacing: 0; color: var(--faint); font-size: 10.5px; margin-top: 3px; }
+  .atlas th.rowh { position: sticky; left: 0; z-index: 2; background: var(--panel-2); width: 128px; }
+  .atlas td { padding: 6px; vertical-align: top; border-top: 1px solid var(--line); }
+  .atlas td.rowh { position: sticky; left: 0; background: var(--panel); z-index: 1; padding: 10px 8px; }
+  .rowh .dotl { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); vertical-align: -1px; margin-right: 6px; }
+  .rowh b { font: 400 17px/1.1 var(--display); }
+  .rowh small { display: block; color: var(--faint); font-size: 11.5px; line-height: 1.3; margin-top: 3px; }
+  .cellb { appearance: none; width: 100%; border: 1px solid transparent; background: transparent; color: var(--fg); border-radius: 10px; padding: 0; cursor: pointer; text-align: left; display: grid; gap: 4px; font: 700 13px/1.2 var(--body); }
+  .cellb canvas { width: 100%; aspect-ratio: 220 / 130; border-radius: 8px; display: block; }
+  .cellb span { padding: 0 2px 2px; display: flex; gap: 4px; align-items: baseline; justify-content: space-between; }
+  .cellb .mk { font: 500 10px/1 var(--mono); }
+  .cellb .mk.keep { color: var(--keep); } .cellb .mk.maybe { color: var(--maybe); } .cellb .mk.cut { color: var(--cut); }
+  .cellb:hover { border-color: rgba(190,175,255,.4); }
+  .cellb.current { border-color: var(--gold); }
+  .cellb.off { opacity: .35; }
+  .cellb .why { font: 400 11px/1.3 var(--body); color: var(--faint); padding: 0 2px 4px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 10px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+  .card h4 { margin: 0; font: 400 19px/1.1 var(--display); display: flex; gap: 8px; align-items: center; }
+  .card h4 i { width: 14px; height: 14px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .card .k { font: 500 11px/1 var(--mono); color: var(--gold); letter-spacing: .06em; text-transform: uppercase; }
+  .card canvas { width: 100%; aspect-ratio: 220 / 130; border-radius: 8px; display: block; }
+  .leaves { display: flex; flex-wrap: wrap; gap: 8px; }
+  .lchip { appearance: none; border: 1px solid var(--line); background: var(--bg-2); color: var(--fg); border-radius: 99px; padding: 8px 12px; cursor: pointer; font: 700 13px/1 var(--body); display: inline-flex; gap: 6px; }
+  .lchip .s { color: var(--gold); } .lchip .s.qm { color: var(--maybe); } .lchip .s.nw { color: var(--muted); }
+  .lchip:hover { border-color: rgba(190,175,255,.4); }
+  .dropped { display: grid; gap: 6px; margin-top: 14px; }
+  .dropped div { font-size: 14px; color: var(--muted); } .dropped b { color: var(--fg); }
+  table.coll { border-collapse: collapse; width: 100%; font-size: 14px; }
+  .collwrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+  .coll th, .coll td { text-align: left; padding: 10px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+  .coll th { font: 500 11px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); border-top: 0; }
+  .coll td:first-child { font-weight: 800; white-space: nowrap; }
+  .coll td.bad { color: var(--cut); } .coll td.ok { color: var(--muted); }
+  .qs { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+  .q { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 8px; min-width: 0; align-content: start; }
+  .q p { margin: 0; font-weight: 800; }
+  .q small { color: var(--muted); }
+  textarea { width: 100%; resize: vertical; min-height: 44px; background: var(--bg-2); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font: 14px/1.4 var(--body); }
+  textarea::placeholder { color: var(--faint); }
+  .verdict { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .verdict button { appearance: none; border: 1px solid var(--line); background: var(--bg-2); color: var(--muted); font: 700 13px/1 var(--body); padding: 9px 6px; border-radius: 10px; cursor: pointer; }
+  .verdict button[aria-pressed="true"][data-v="keep"] { background: rgba(255,200,87,.16); color: var(--keep); border-color: rgba(255,200,87,.6); }
+  .verdict button[aria-pressed="true"][data-v="maybe"] { background: rgba(143,184,255,.14); color: var(--maybe); border-color: rgba(143,184,255,.55); }
+  .verdict button[aria-pressed="true"][data-v="cut"] { background: rgba(255,129,147,.13); color: var(--cut); border-color: rgba(255,129,147,.55); }
+  .save-state { font: 500 11px/1 var(--mono); color: var(--faint); }
+  .save-state.warn { color: var(--cut); }
+  /* overnight drafts */
+  .decided > .eyebrow { margin-bottom: 8px; color: var(--gold); }
+  /* one decided item per row: what was decided on the left, its open question (if any) beside it */
+  .dec { display: grid; gap: 10px; }
+  .dec .row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .dec .row.solo { grid-template-columns: minmax(0, 1fr); }
+  .dec .row h4 { margin: 0 0 4px; font-size: 14.5px; }
+  .dec .row h4 .from { font: 500 10.5px/1 var(--mono); color: var(--faint); margin-left: 6px; letter-spacing: .04em; text-transform: uppercase; }
+  .dec .row p { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .dec .row .q { padding: 10px; }
+  @media (max-width: 760px) { .dec .row { grid-template-columns: minmax(0, 1fr); } }
+  .drafts { border-top: 1px dashed var(--line); margin-top: 26px; }
+  .drafts > .eyebrow { margin-bottom: 8px; color: var(--gold); }
+  .h3 { font: 400 21px/1.1 var(--display); margin: 26px 0 6px; display: flex; gap: 10px; align-items: center; }
+  .h3 span { font: 800 13px/1 var(--body); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--panel-2); color: var(--gold); border: 1px solid var(--line); }
+  .nowtag, .newtag { font: 600 10.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .05em; padding: 3px 6px; border-radius: 99px; border: 1px solid currentColor; }
+  .nowtag { color: var(--faint); } .newtag { color: var(--gold); }
+  table.fx { min-width: 900px; }
+  .fx td { font-size: 13.5px; }
+  .fx td .now, .fx td .new { display: block; }
+  .fx td .now { color: var(--faint); }
+  .fx td .now::before { content: "now "; font: 600 9.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .fx td .new { color: var(--fg); margin-top: 4px; }
+  .fx td .new::before { content: "draft "; font: 600 9.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--gold); }
+  .fx td .new.same { color: var(--muted); }
+  .fx td.mg { color: var(--muted); font-size: 13px; }
+  .fx td.mg i { color: var(--faint); }
+  .fx .eln { display: flex; gap: 7px; align-items: center; white-space: nowrap; }
+  .fx .eln i { width: 11px; height: 11px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); flex: none; }
+  table.mx { min-width: 860px; }
+  .mx td, .mx th { font-size: 13px; text-align: center; }
+  .mx td:first-child, .mx th:first-child { text-align: left; }
+  .mx td.e { color: var(--faint); }
+  .mx td b { color: var(--gold); font-weight: 800; }
+  .mx th i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 5px; }
+  .findings { display: grid; gap: 6px; margin-top: 12px; font-size: 14px; color: var(--muted); max-width: 90ch; }
+  .findings b { color: var(--fg); }
+  .dcards { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+  .dcards.wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); }
+  .dcard.rec { border-color: rgba(255,200,87,.55); box-shadow: 0 0 0 1px rgba(255,200,87,.2) inset; }
+  .dcard .k { display: flex; justify-content: space-between; gap: 8px; }
+  .dcard .rtag { color: var(--bg); background: var(--gold); border-radius: 99px; padding: 2px 7px; font-weight: 600; }
+  .dcard .rtag.alt { background: transparent; color: var(--maybe); border: 1px solid currentColor; }
+  .dcard dl { margin: 2px 0 0; display: grid; gap: 6px; }
+  .dcard dt { font: 600 10.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+  .dcard dd { margin: 2px 0 0; font-size: 13.5px; color: var(--muted); }
+  .dcard dd.dcost { color: #ffb3bf; }
+  .dcard dd.dgain { color: #ffe3a3; }
+  .fade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
+  .fade > div { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px; display: grid; gap: 6px; }
+  .fade .runes { display: flex; gap: 3px; }
+  .fade .runes i { width: 9px; height: 9px; border-radius: 50%; border: 1px solid #ffe08a; }
+  .fade .runes i.f { background: #ffe08a; box-shadow: 0 0 6px #ffe08a; }
+  .fade .runes i.b { background: transparent; border-style: dashed; }
+  .fade .runes i.fl { border-color: var(--cut); }
+  .fade .walls { display: flex; gap: 5px; align-items: end; height: 34px; }
+  .fade .walls span { flex: 1; height: 100%; border-radius: 4px; background: linear-gradient(180deg, rgba(255,224,138,.95), rgba(255,224,138,.45)); box-shadow: 0 0 10px rgba(255,224,138,.5); }
+  .fade .walls span.rock { background: linear-gradient(180deg, #c99a68, #7d5a38); box-shadow: none; }
+  .fade .walls span.crack { background-image: linear-gradient(115deg, transparent 45%, rgba(0,0,0,.6) 47%, transparent 50%), linear-gradient(180deg, rgba(255,224,138,.95), rgba(255,224,138,.45)); }
+  .fade .walls span.rock.crack { background-image: linear-gradient(115deg, transparent 45%, rgba(0,0,0,.6) 47%, transparent 50%), linear-gradient(180deg, #c99a68, #7d5a38); }
+  .fade .walls span.gone { background: transparent; border: 1px dashed var(--faint); box-shadow: none; }
+  .fade small { font-size: 11px; color: var(--faint); line-height: 1.25; }
+  table.lifet { min-width: 900px; }
+  .lifet td { font-size: 13.5px; }
+  .lifet td:first-child { white-space: normal; width: 170px; }
+  .lifet td:nth-child(2) { font: 500 12px/1.4 var(--mono); color: var(--faint); white-space: nowrap; }
+  .lifet td:nth-child(3) { color: var(--muted); }
+  .lifet td.bad { color: #ffb3bf; } .lifet td.ok { color: var(--muted); }
+  #qsF { margin-top: 6px; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  footer { padding-block: 36px 60px; color: var(--faint); font-size: 13px; }
+</style>
+
+<header class="top wrap">
+  <div class="eyebrow">Magicka-toy · Proposal C: the whole tree</div>
+  <h1>Spell <span>Atlas</span></h1>
+  <p class="intro">Every spell you can type, as one grid. In proposal C a spell is built from three parts, and <b>every element you add changes it</b>:</p>
+  <p class="intro">New in this pass: <b>Sigil binds.</b> Every Sigil spell holds one Sigil rune until it goes off, breaks or runs out, so your Sigil pool is how many devices you can keep; the elements are its ammo. Sigil no longer stacks (Sigil + Sigil cancel). <b>Sigil alone</b> now shapes your own magic, the way Shield alone is a mirror: a <b>Lens</b>, <b>Rune motes</b>, a <b>Waypoint glyph</b>, a <b>Double</b> and a <b>Sculpting wand</b> (your spells spare allies). Sigil + Self is now an <b>aura</b> that affects those around you. When wards and auras stack, <b>Earth is the material</b> and the other elements coat it: stone armour coated in fire, a burning bulldoze.</p>
+  <div class="formula"><span><em>Form</em> = the strongest element</span><i>×</i><span><em>Cast</em> = where it goes</span><i>+</i><span><em>Payload</em> = what every other element adds</span></div>
+  <div class="stats">
+    <div class="stat bad"><b>1 in 3</b><small>new elements you add in proposals A and A.1 change nothing (3,199 of 10,395 additions)</small></div>
+    <div class="stat good"><b>0</b><small>in proposal C (of 7,110 additions). Every added element is a new payload or a new form.</small></div>
+    <div class="stat"><b>678</b><small>distinct spells in 39 cells (9 forms × 4 casts, plus 3 kinds of Self), from 783 queues. Dragging a Shield or Sigil Place adds 89 more. With one rune per element you reach 670 of them.</small></div>
+    <div class="stat"><b>No Point key</b><small>Placing moved to <b>hold Area</b>. Ally casts moved to <b>Self + cursor on the ally</b>.</small></div>
+  </div>
+  <p class="intro small">Deferred: <b>Air</b>, as Earth's opposite to balance the element count, gets its own pass later. It is not in this grid.</p>
+</header>
+
+<main class="wrap">
+  <section class="block" aria-label="Compose a spell">
+    <div class="bench">
+      <div class="panel">
+        <div>
+          <div class="label"><span>Queue (ringed = the form)</span><button class="ghost" id="clear" type="button">Clear</button></div>
+          <div class="queue" id="queue"></div>
+          <div class="event" id="event" aria-live="polite"></div>
+        </div>
+        <div>
+          <div class="label"><span>Elements</span><span>opposites cancel (Shield ⟷ Sigil too) · water+fire scalds · water+cold freezes</span></div>
+          <div class="pad" id="pad"></div>
+        </div>
+        <div>
+          <div class="label"><span>Cast</span><span>tap vs hold are different casts</span></div>
+          <div class="casts" id="casts"></div>
+        </div>
+        <div class="toggles">
+          <button class="toggle" id="drag" type="button" aria-pressed="false"><span class="sw"></span><span>Drag while placing (Space)<small>Shield draws a wall, Sigil + elements a line glyph</small></span></button>
+          <button class="toggle" id="ally" type="button" aria-pressed="false"><span class="sw"></span><span>Cursor on an ally<small>Self casts go to them</small></span></button>
+        </div>
+      </div>
+      <div class="result">
+        <canvas class="stage" id="stage"></canvas>
+        <div class="spell" id="spell" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>Structures: what builds what</h2>
+    <p class="sub"><b>Shield</b> builds barriers: walls you <b>draw</b> (hold Place, drag, let go; curve the drag to bend it), a quick <b>arc around you</b> (let go without dragging), a forward <b>wave</b> (Force: Tidal wave with Water, Fault line with Earth) and a ring (Area). <b>Sigil</b> builds devices: <b>turrets</b> (Force, casting the other elements' Force spell, each shot drawn from your pool), <b>orbitals</b> (Area) and <b>glyphs</b> (Place; drag for a line glyph). Alone it places a <b>lens</b> (Place). Costs: <b>stuff costs once, energy costs upkeep, and every Sigil device binds a Sigil rune</b>. Tap a card to load it above.</p>
+    <div class="cards" id="structs"></div>
+    <div class="costs" id="costs"></div>
+  </section>
+
+  <section class="block">
+    <h2>The grid</h2>
+    <p class="sub">Rows are forms: the strongest element in the queue picks the row (Shield or Sigil beats Life beats Earth beats Arcane beats Lightning beats the spray elements; Shield and Sigil cancel, so they never meet). Columns are casts. Turn on payload elements below to see the <b>same payload carried by every form</b>. A dim cell means that element would cancel the form or take it over. Tap a cell to load it above and rate it.</p>
+    <div class="overlay" id="overlay"><span class="label" style="margin:0">Payload</span></div>
+    <div class="gridwrap"><table class="atlas" id="atlas"></table></div>
+  </section>
+
+  <section class="block">
+    <h2>What each element adds</h2>
+    <p class="sub">Each element leaves one status on whatever it hits, the same in every form. Four of them also bend the spell (Water pushes, Cold shatters, Lightning chains, Arcane bursts); only the one you put most of does, so a spell has at most one shape change. Inside a Life spell the elements lend their shape or their help instead, never their harm.</p>
+    <div class="cards" id="payloads"></div>
+  </section>
+
+  <section class="block">
+    <h2>Self: wards, auras, and the plain cast</h2>
+    <p class="sub"><b>Shield</b> + Self is a ward that protects you: alone it reflects (a mirror), with elements it resists them. <b>Sigil</b> + Self is an aura that affects those around you and never boosts your spells (add runes for that); it binds a Sigil rune. Several elements make several auras, each weaker. Sigil alone is a <b>Double</b>: a copy that repeats your spells at half power, each repeat paid with half that spell's runes. <b>Earth is the material</b>: with Earth, the other elements coat it instead, so Shield + Earth + Fire is stone armour coated in fire and Sigil + Earth + Fire is a burning bulldoze. Without Shield or Sigil, the elements simply hit you, as in Magicka: Life heals, Water douses. Point the cursor at an ally and the same spell goes to them.</p>
+    <div class="cards" id="buffs"></div>
+  </section>
+
+  <section class="block">
+    <h2>Your liked spells in proposal C</h2>
+    <p class="sub">Tap one to load it. The ones below the chips are dropped or moved, with the reason.</p>
+    <div class="leaves" id="leaves"></div>
+    <div class="dropped" id="dropped"></div>
+  </section>
+
+  <section class="block">
+    <h2>Collisions, checked</h2>
+    <p class="sub">You asked me to verify where old (Magicka) and new meanings clash. These are the ones I found, and what C does about each.</p>
+    <div class="collwrap"><table class="coll" id="coll"></table></div>
+  </section>
+
+  <section class="block decided" id="decided">
+    <div class="eyebrow">Decided 2026-11-04 · now in the rules</div>
+    <h2>What your review of the drafts decided</h2>
+    <p class="sub">Your notes, plus Claude's pick wherever you didn't say otherwise. Everything here is in <b>rules-c.js</b> and the grid above. Where something is still open, the question sits right next to it.</p>
+    <div class="dec" id="decList"></div>
+  </section>
+
+  <section class="block drafts" id="drafts">
+    <div class="eyebrow">The overnight drafts, kept as a record · see "What your review decided" above</div>
+    <h2>Overnight drafts: element effects, Shield, Life</h2>
+    <p class="sub">The three drafts as you reviewed them. The reasoning is in docs/explorations/2026-11-04-overnight-drafts.md. Facts about Magicka are from memory and marked <i>unverified</i>.</p>
+
+    <h3 class="h3"><span>1</span> What each element adds</h3>
+    <p class="sub">Each element owns <b>one status</b> (what it leaves on the target), <b>at most one shape change</b> (how it bends the spell) and <b>interactions</b> (its status meeting another). Each cell shows <span class="nowtag">now</span> the current rules and <span class="newtag">draft</span> Claude's proposal. A dash means nothing.</p>
+    <div class="collwrap"><table class="coll fx" id="fx"></table></div>
+    <div class="findings" id="fxFind"></div>
+    <div class="label" style="margin-top:18px"><span>Interactions (draft): a status already on the target × what hits it next</span><span>bold = new in the draft</span></div>
+    <div class="collwrap"><table class="coll mx" id="fxm"></table></div>
+    <div class="label" style="margin-top:18px"><span>Three fixes for the shape-change gaps</span></div>
+    <div class="cards dcards" id="fxFix"></div>
+    <div class="label" style="margin-top:18px"><span>Stacking: 2× Fire (depth) versus Fire + Lightning (breadth), both two runes</span></div>
+    <div class="cards dcards" id="fxStack"></div>
+
+    <h3 class="h3"><span>2</span> Shield in the rune economy</h3>
+    <p class="sub">Today Shield structures cost upkeep (but which pool pays isn't written down), earth walls are stuff, Sigil binds, and <b>the ward, Shield's strongest spell, costs one rune and lasts its natural duration</b>. You asked for a shield that fades as its caster runs low. The strips show how each model fades: three moments, from a full pool to the reserve floor.</p>
+    <div class="cards dcards wide" id="shModels"></div>
+
+    <h3 class="h3"><span>3</span> Life spells</h3>
+    <p class="sub"><b>195 of the 678 spells (29%)</b> mix Life with Fire, Cold, Lightning or Earth: they heal and harm at once. Every Life spell in the grid, and what is wrong with it:</p>
+    <div class="collwrap"><table class="coll lifet" id="lifeT"></table></div>
+    <div class="label" style="margin-top:18px"><span>Three directions</span></div>
+    <div class="cards dcards wide" id="lifeD"></div>
+    <div class="label" style="margin-top:18px"><span>Who does Life heal? (works with any direction)</span></div>
+    <div class="cards dcards" id="lifeWho"></div>
+
+  </section>
+
+  <section class="block">
+    <h2>What do you think?</h2>
+    <p class="sub">Saved here for Claude to read back. Cell ratings from the grid are saved too. Questions on the decided items sit next to them, above. <span class="save-state" id="saveState">Connecting…</span></p>
+    <div class="qs" id="qs"></div>
+  </section>
+</main>
+<footer class="wrap">Reasoning: docs/explorations/2026-11-03-full-tree.md, 2026-11-03-structures-review-and-elements.md and 2026-11-04-sigil-identity-and-buffs.md. Rules: tools/spell-atlas/rules-c.js. Audit: node tools/spell-atlas/audit-c.js.</footer>
+
+<script src="rules-c.js"></script>
+<script src="draw.js"></script>
+<script src="app.js"></script>

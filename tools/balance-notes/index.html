@@ -1,0 +1,381 @@
+<title>Balance Notes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Silkscreen&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  /* Layout: a reading column of findings; each finding that needs a decision carries its answer box beside it. Charts are single-hue bars with values on hover and a table under each. Dusk-first, like the other magicka-toy tools. */
+  :root {
+    color-scheme: dark;
+    --bg: #0d0b14; --surface: #161322; --raise: #1f1b2e; --fg: #ecebf2; --muted: #a8a3bb; --faint: #6f6a85;
+    --line: #2a2539; --line-2: #3c3552; --accent: #f2c44a; --bar: #e07a4a; --bar-2: #6f6a85; --good: #8fd0a8; --warn: #e6c36a;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --pixel: "Silkscreen", "Courier New", monospace;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) { --bg: #f1eff5; --surface: #ffffff; --raise: #f6f4fa; --fg: #1b1726; --muted: #57516b; --faint: #8a8499; --line: #e0dce8; --line-2: #c9c3d6; --accent: #9a6a08; --bar: #c05a2a; --bar-2: #9a94ab; --good: #2f8a57; --warn: #9a6a08; color-scheme: light; }
+  }
+  :root[data-theme="light"] { --bg: #f1eff5; --surface: #ffffff; --raise: #f6f4fa; --fg: #1b1726; --muted: #57516b; --faint: #8a8499; --line: #e0dce8; --line-2: #c9c3d6; --accent: #9a6a08; --bar: #c05a2a; --bar-2: #9a94ab; --good: #2f8a57; --warn: #9a6a08; color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body); margin: 0;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; }
+  .wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 40px; }
+  .wrap > * { min-width: 0; }
+  .col { max-width: 72ch; display: grid; gap: 12px; }
+  .eyebrow { font: 400 11px/1 var(--pixel); letter-spacing: 0.08em; color: var(--accent); text-transform: uppercase; }
+  h1 { font: 400 clamp(28px, 4.5vw, 40px)/1.1 var(--pixel); margin: 0; text-wrap: balance; }
+  h2 { font: 400 17px/1.3 var(--pixel); margin: 0; letter-spacing: 0.02em; text-wrap: balance; }
+  h3 { font: 700 18px/1.3 var(--body); margin: 0; text-wrap: balance; }
+  p, ul, ol { margin: 0; }
+  ul, ol { padding-left: 20px; display: grid; gap: 4px; }
+  .muted { color: var(--muted); }
+  code { font: 0.86em var(--mono); background: var(--raise); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line); }
+  section { display: grid; gap: 14px; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .finding { display: grid; grid-template-columns: minmax(0, 1fr) 320px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .finding.solo { grid-template-columns: minmax(0, 1fr); }
+  .finding .body { padding: 18px 20px; display: grid; gap: 10px; min-width: 0; }
+  .finding .body p, .finding .body li { color: var(--muted); }
+  .finding .body b { color: var(--fg); }
+  .side { background: var(--raise); border-left: 1px solid var(--line); padding: 18px; display: grid; gap: 10px; align-content: start; }
+  .side .ask { font: 700 14px/1.35 var(--body); }
+  .choices { display: grid; gap: 6px; }
+  .choices button { appearance: none; text-align: left; border: 1px solid var(--line-2); background: var(--bg); color: var(--fg); border-radius: 8px; padding: 8px 10px; font: 14px/1.35 var(--body); cursor: pointer; }
+  .choices button small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .choices button:hover { border-color: var(--muted); }
+  .choices button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .choices button[aria-pressed="true"] b::after { content: "  ✓"; color: var(--accent); }
+  textarea { width: 100%; min-width: 0; resize: vertical; min-height: 60px; background: var(--bg); color: var(--fg); border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 10px; font: 14px/1.45 var(--body); }
+  button:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tag { display: inline-block; font: 400 10px/1 var(--pixel); letter-spacing: 0.05em; text-transform: uppercase; padding: 4px 6px 3px; border-radius: 4px; border: 1px solid var(--line-2); color: var(--muted); }
+  .tag.big { color: var(--bar); border-color: var(--bar); }
+
+  .chart { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px 10px; display: grid; gap: 8px; min-width: 0; }
+  .chart h3 { font-size: 15px; }
+  .chart .cap { font-size: 13px; color: var(--faint); }
+  .chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .chart svg text { fill: var(--muted); font: 12px var(--body); }
+  .chart svg text.val { fill: var(--fg); font-variant-numeric: tabular-nums; }
+  .chart svg .grid { stroke: var(--line); stroke-width: 1; }
+  .chart svg rect.bar { fill: var(--bar); }
+  .chart svg rect.bar.dim { fill: var(--bar-2); }
+  .chart svg g.row:hover rect.bar { opacity: 0.8; }
+  .chart svg line.whisk { stroke: var(--fg); stroke-width: 2; }
+  .tip { position: fixed; pointer-events: none; background: var(--raise); border: 1px solid var(--line-2); border-radius: 6px; padding: 6px 9px; font: 13px/1.4 var(--body); color: var(--fg); z-index: 20; max-width: 280px; }
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 620px; }
+  th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { color: var(--muted); font-weight: 700; font-size: 12.5px; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 13.5px; }
+  .proposal { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--raise); border-radius: 0 8px 8px 0; display: grid; gap: 6px; }
+  .proposal code { background: var(--bg); }
+  .save { position: sticky; bottom: max(12px, env(safe-area-inset-bottom, 0px)); justify-self: end; font-size: 12.5px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; z-index: 5; }
+  .save.warn { color: var(--warn); border-color: var(--warn); }
+  @media (max-width: 820px) { .finding { grid-template-columns: 1fr; } .side { border-left: 0; border-top: 1px solid var(--line); } }
+</style>
+
+<div class="wrap">
+  <header class="col">
+    <div class="eyebrow">Magicka-toy · milestone 1 · measured 2026-11-04</div>
+    <h1>Balance Notes</h1>
+    <p class="muted">Every number in the engine is placeholder. Before you play-test, here is what the numbers actually do, measured by a harness that casts each spell at a target and runs bot pilots through the waves (<code>npm run balance</code> in <code>game/</code>). Below that are the problems the measurements show, a proposed first pass, and how to tune by feel with the new in-game panel. Questions have answer boxes beside them; anything left blank means you go with my recommendation.</p>
+  </header>
+
+  <section class="col" aria-labelledby="h-principles">
+    <h2 id="h-principles">What we tune toward</h2>
+    <p>Balance should serve the pillars, so these are the targets the numbers should hit, before any feel pass:</p>
+    <ul>
+      <li><b>A rune is worth about the same however you spend it.</b> Spells that are harder to land, or that commit you longer, earn a little more per rune; spells that hit a crowd earn less per target. Without this, one way of spending runes dominates and the language collapses into a single sentence (pillar 2).</li>
+      <li><b>The pace comes from runes, not from cooldowns.</b> You should cast often, but big spells should need saving up (pillar 4). That only works if the rune budget actually binds.</li>
+      <li><b>Every enemy asks a question you can read.</b> Goblins die to anything that hits a crowd; brutes take a commitment; telegraphs give you time to answer (pillar 7).</li>
+      <li><b>Co-op multiplies, it doesn't just add.</b> Combos between two players (soak then shock, freeze then shatter) should beat two players casting alone.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-today">
+    <h2 id="h-today">What the numbers do today</h2>
+    <div class="chart" id="chart-rune">
+      <h3>Damage per rune, one target</h3>
+      <p class="cap">Each spell cast once at a sturdy dummy, channels held for their natural duration (5 s). Orange bars are channels (beams, sprays, arcs); grey bars are everything else. Hover a bar for details.</p>
+      <svg id="svg-rune" role="img" aria-label="Damage per rune spent for each spell; channelled beams and sprays are far above everything else"></svg>
+      <details><summary>Table: every spell measured</summary><div class="tablewrap"><table id="t-spells"></table></div></details>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-findings">
+    <h2 id="h-findings">What that shows</h2>
+
+    <article class="finding" id="f-channel">
+      <div class="body">
+        <span class="tag big">The big one</span>
+        <h3>Channels are about ten times cheaper than everything else</h3>
+        <p>A beam or spray costs its runes once, then runs <b>free for 5 seconds</b>. One Arcane rune holds a beam for <b>154 damage</b>; one Earth rune throws a rock for <b>16</b>; a nova or a patch does 14–29. So the right play is almost always to hold a beam, and the rune budget barely binds: in the wave runs, faster regen didn't help the bots at all.</p>
+        <p>Options:</p>
+        <ol>
+          <li><b>Shorter free window, steeper upkeep</b>: free for 2.5 s, then 0.4 runes a second, and lower channel damage (<code>combat.channelRate</code> 2.2 → 1.0). A one-rune beam becomes about 35 damage, the same per rune as a held beam's upkeep.</li>
+          <li><b>Pay as you go</b>: no free window. A channel costs its form element per second from the start. Clear, but every channel then drains the pool in your hands.</li>
+          <li><b>Make one-shots stronger</b> instead (rocks, novas, blasts up 4–6x). Keeps beams as they are, but inflates everything around them.</li>
+        </ol>
+      </div>
+      <div class="side" data-q="q-channel">
+        <div class="ask">How should channels pay?</div>
+        <div class="choices">
+          <button type="button" data-v="short"><b>Short free window + upkeep (recommended)</b><small>Keeps the "hold to beam" feel, makes long beams a choice</small></button>
+          <button type="button" data-v="paygo"><b>Pay as you go</b><small>Simplest rule; harsher</small></button>
+          <button type="button" data-v="oneshots"><b>Raise one-shots instead</b><small>Beams stay generous</small></button>
+        </div>
+        <textarea aria-label="Note on channels" placeholder="Note (optional)"></textarea>
+      </div>
+    </article>
+
+    <article class="finding" id="f-scaling">
+      <div class="body">
+        <h3>Extra runes of the same element scale unevenly</h3>
+        <p>Doubling the form element should be a clear step up, by the same amount for every form. Today it isn't:</p>
+        <ul>
+          <li>Arcane beam ×2: <b>+100%</b> damage (154 → 306).</li>
+          <li>Rock ×2: <b>+94%</b> (16 → 31), but ×3 only +50% more (46).</li>
+          <li>Flamethrower ×2: <b>+38%</b> (120 → 166), because most of its damage is the burn, which doesn't stack.</li>
+          <li>Frost spray ×2: +98%, but almost all of its value is the freeze, not damage.</li>
+        </ul>
+        <p>My pick: each extra rune of the form adds a fixed share of the first rune's power, the same for all forms. Linear (+100%) keeps the arithmetic obvious. A smaller step (+70%) makes spreading runes across elements better than stacking one.</p>
+      </div>
+      <div class="side" data-q="q-scaling">
+        <div class="ask">What should a second rune of the same element add?</div>
+        <div class="choices">
+          <button type="button" data-v="70"><b>+70% each (recommended)</b><small>Stacking is strong, mixing is a little better per rune</small></button>
+          <button type="button" data-v="100"><b>+100% each, linear</b><small>Easiest to reason about</small></button>
+          <button type="button" data-v="shape"><b>More shape, not more damage</b><small>Bigger, longer, wider; damage per rune stays flat</small></button>
+        </div>
+        <textarea aria-label="Note on scaling" placeholder="Note (optional)"></textarea>
+      </div>
+    </article>
+
+    <article class="finding solo">
+      <div class="body">
+        <h3>Crowd spells are strong per rune, which is right, but sprays hit everyone at full</h3>
+        <p>Against a pack of five goblin-sized targets, a one-rune flamethrower deals <b>542</b> (4.5× its single-target damage) and a lightning arc 312 (2.6×, because it chains). A beam stays at 154. That's the right shape (sprays answer swarms, beams answer brutes), but sprays hitting every body in the cone at full strength makes them the answer to nearly everything. A falloff (the second and later bodies take, say, 60%) would keep the role and cut the dominance.</p>
+      </div>
+    </article>
+
+    <article class="finding solo">
+      <div class="body">
+        <h3>Some spells don't pull their weight</h3>
+        <ul>
+          <li><b>Ice shards</b> (Water + Cold as Force): 8 damage for 2 runes. The freeze needs most of the volley to land, and at range most shards miss. Either more shards land (tighter spread) or each shard chills more.</li>
+          <li><b>Frost spray</b>: low damage by design (its job is the freeze), but the freeze takes about 2 s of spraying to land. Fine for now; watch it in play.</li>
+          <li><b>Discharge and Lightning strike</b>: 8–12 per rune. Strike is meant to be the payoff on water (it surges), so it should stay low on dry ground, but Discharge has no such payoff.</li>
+          <li><b>Water spray</b> does no damage on purpose (soak and push). It needs to feel useful through the combo (soak → lightning ×2), which is a co-op question for play-testing.</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="finding" id="f-enemies">
+      <div class="body">
+        <h3>Enemies are soft, and slow to kill you</h3>
+        <p>Every goblin dies to any one hit (16 hp). A brute needs about 4 seconds of beam. Standing still, a single goblin needs 25 s to bring a wizard down, a brute about 10 s. In the wave runs, survival moved most when enemies got <b>tougher</b> (8.5 → 6 waves cleared) or <b>hit harder</b> (→ 7), and least when regen got faster.</p>
+        <div class="tablewrap"><table id="t-ttk"></table></div>
+        <p class="muted">Time to kill in seconds, burst (full pools) / sustained (waiting on regen), single target, before the shieldbearer's guard. Rocks are slow to sustain because one Earth rune comes back every 4.5 s.</p>
+      </div>
+      <div class="side" data-q="q-goblin">
+        <div class="ask">How many hits should a goblin take?</div>
+        <div class="choices">
+          <button type="button" data-v="one"><b>One basic hit (recommended)</b><small>Swarms are for crowd spells; one goblin is never a threat</small></button>
+          <button type="button" data-v="two"><b>Two or three</b><small>Each goblin matters a little</small></button>
+        </div>
+        <textarea aria-label="Note on enemies" placeholder="What should a brute feel like?"></textarea>
+      </div>
+    </article>
+  </section>
+
+  <section aria-labelledby="h-waves">
+    <div class="chart">
+      <h3 id="h-waves">Waves cleared in 5 minutes, two bot pilots</h3>
+      <p class="cap">Mean of four runs from slightly different starts; the line shows the lowest and highest run. The bots are crude (they kite, beam and spray), so read this as which knobs move difficulty, not as how hard the game is.</p>
+      <svg id="svg-waves" role="img" aria-label="Waves cleared under each set of numbers: enemy toughness and damage move it most"></svg>
+      <details><summary>Table: the wave runs</summary><div class="tablewrap"><table id="t-waves"></table></div></details>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-proposal">
+    <div class="finding" id="f-proposal">
+      <div class="body">
+        <h2 id="h-proposal">A proposed first pass</h2>
+        <p>If you agree with the recommendations above, these are the starting numbers I'd put in before you play. They are not applied yet. Each is one row in the tuning panel, so you can try them live first.</p>
+        <div class="proposal">
+          <p><code>rhythm.naturalChannel</code> 5 → 2.5 · <code>rhythm.upkeep</code> 0.2 → 0.4 · <code>combat.channelRate</code> 2.2 → 1.0</p>
+          <p><code>damage.earth</code> 16 → 22 · <code>damage.arcane</code> 14 → 16 (one-shots catch up a little)</p>
+          <p><code>combat.sprayFalloff</code> 1 → 0.6 (each body behind the nearest takes 60%; already in the panel)</p>
+          <p>Form scaling: +70% per extra rune for every form (needs a small sim change)</p>
+          <p>Enemy hp ×1.5 and damage ×1.25 across the board; goblins stay at one hit</p>
+        </div>
+        <p>Then re-run the harness and look again before any play-test, so the first time you play it is already in the right neighbourhood.</p>
+      </div>
+      <div class="side" data-q="q-apply">
+        <div class="ask">Apply this first pass?</div>
+        <div class="choices">
+          <button type="button" data-v="yes"><b>Yes, apply it (recommended)</b><small>I'll re-measure and report</small></button>
+          <button type="button" data-v="panel"><b>No, I'll try it in the panel first</b><small>Nothing changes in the code</small></button>
+        </div>
+        <textarea aria-label="Note on the first pass" placeholder="Note (optional)"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section class="col" aria-labelledby="h-feel">
+    <h2 id="h-feel">Tuning by feel: how to use the panel</h2>
+    <p>The <a href="https://claude.ai/artifact/LyoMoTDZdn2Na1W3qoMcFi" target="_blank" rel="noopener" style="color:var(--accent)">game</a> now has a tuning panel (press <b>F1</b>, or the Tune button at the top right). Every number above is a slider, changes apply on the next tick, and your changes are kept in your browser. While it's open, <b>N</b> spawns the chosen enemy at the cursor, <b>P</b> pauses and <b>.</b> steps one tick. Add <code>#arena</code> to the game's link for the waves.</p>
+    <ol>
+      <li><b>Pick one question per session</b>, e.g. "do beams feel too free?" or "is wave 3 a real fight?". Changing five knobs at once tells you nothing.</li>
+      <li><b>Play two or three waves</b> on the current numbers first, then change one knob and play the same waves again. <b>Start wave</b> and <b>Skip lull</b> in the panel get you there fast.</li>
+      <li><b>Watch the meters</b> while you play: your damage per second, damage per rune by spell, runes per minute, and time-to-kill per enemy. They tie what you feel to a number.</li>
+      <li>When something feels right, press <b>Export</b> and paste the JSON into our chat. I'll put it into the code, re-run the harness, and log it in the decisions.</li>
+      <li>The <b>Feel</b> section at the top holds the knobs that change the game's pace most: rune regen, wind-up, recovery, channel damage, walk speed, the lull and enemy speed.</li>
+    </ol>
+    <p class="muted">Tuned runs are marked "tuned" (and "dev-edited" once you've used a cheat), because a replay only reproduces a run with the same numbers. When we go online, every peer has to agree on the tuning, so the panel shows its hash.</p>
+  </section>
+
+  <section class="finding solo">
+    <div class="body">
+      <h2>Anything else</h2>
+      <p>Difficulty targets, what you expect a session to feel like, numbers that already feel wrong from the screenshots.</p>
+      <div data-q="general"><textarea aria-label="General notes" placeholder="Your notes" style="min-height:110px"></textarea></div>
+    </div>
+  </section>
+
+  <div class="save" id="saveState" aria-live="polite">Loading saved answers…</div>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(() => {
+  // Measured by game/tools/balance.balance.ts (npm run balance), 2026-11-04.
+  const SPELLS = [
+    ['Flamethrower', 'fire', 'force', 1, 5.42, 120, 542], ['Flamethrower', 'fire+fire', 'force', 2, 5.43, 166, 828],
+    ['Arcane beam', 'arcane', 'force', 1, 5.42, 154, 154], ['Arcane beam', 'arcane+arcane', 'force', 2, 5.43, 306, 306],
+    ['Fire beam', 'arcane+fire', 'force', 2, 5.43, 253, 253], ['Lightning arc', 'lightning', 'force', 1, 5.42, 120, 312],
+    ['Lightning arc', 'lightning+lightning', 'force', 2, 5.43, 230, 782], ['Frost spray', 'cold', 'force', 1, 5.42, 55, 275],
+    ['Frost spray', 'cold+cold', 'force', 2, 5.43, 109, 546], ['Water spray', 'water', 'force', 1, 5.42, 0, 0],
+    ['Rock', 'earth', 'force', 1, 1.38, 16, 16], ['Rock', 'earth+earth', 'force', 2, 1.4, 31, 31],
+    ['Fireball', 'earth+fire', 'force', 2, 1.4, 45, 45], ['Rock', 'earth×3', 'force', 3, 1.42, 46, 46],
+    ['Ice shards', 'water+cold', 'force', 2, 0.45, 8, 15], ['Arcane boulder', 'earth+arcane', 'force', 2, 1.4, 29, 64],
+    ['Frost boulder', 'earth+cold', 'force', 2, 1.4, 20, 36], ['Fire ring', 'fire', 'area', 1, 0.43, 29, 144],
+    ['Arcane nova', 'arcane', 'area', 1, 0.43, 14, 70], ['Earthquake', 'earth', 'area', 1, 0.43, 16, 80],
+    ['Discharge', 'lightning', 'area', 1, 0.43, 8, 40], ['Frost ring', 'cold+cold', 'area', 2, 0.48, 10, 50],
+    ['Fire patch', 'fire', 'place', 1, 0.9, 26, 129], ['Arcane blast', 'arcane', 'place', 1, 0.9, 14, 70],
+    ['Arcane geyser', 'earth+arcane', 'place', 2, 0.95, 39, 195], ['Lightning strike', 'lightning', 'place', 1, 0.9, 12, 60],
+    ['Steam cloud', 'water+fire', 'place', 2, 0.95, 35, 175],
+  ].map(([title, queue, cast, runes, sec, dmg, crowd]) => ({ title, queue, cast, runes, sec, dmg, crowd, perRune: Math.round(dmg / runes) }));
+
+  const TTK = [
+    ['Goblin', 16, [0.3, 0.5], [0.5, 0.9], [0.5, 4.7], [0.5, 1.6]],
+    ['Brute', 230, [4.1, 6.8], [7.5, 12.6], [7.1, 68], [7.2, 23.2]],
+    ['Shieldbearer', 90, [1.6, 2.7], [2.9, 4.9], [2.8, 26.6], [2.8, 9.1]],
+    ['Archer', 45, [0.8, 1.3], [1.5, 2.5], [1.4, 13.3], [1.4, 4.5]],
+    ['Grabber', 60, [1.1, 1.8], [2, 3.3], [1.9, 17.7], [1.9, 6.1]],
+    ['Fire imp', 40, [0.7, 1.2], [1.3, 2.2], [1.2, 11.8], [1.2, 4]],
+  ];
+  const WAVES = [
+    ['Current numbers', 8.5, 7, 10, 4.5, 1], ['Slower regen (0.15)', 7.5, 7, 8, 7.3, 2.5], ['Faster regen (0.3)', 8.3, 7, 9, 3.3, 0.5],
+    ['Enemies hit 1.5× harder', 7, 6, 8, 8.5, 3], ['Enemies 1.5× tougher', 6, 5, 7, 5.5, 2], ['Heavier casts (wind-up ×2)', 7.5, 7, 8, 5.8, 1],
+  ];
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+  const tip = document.getElementById('tip');
+  const showTip = (ev, html) => { tip.innerHTML = html; tip.hidden = false; const x = Math.min(innerWidth - 290, ev.clientX + 14); tip.style.left = x + 'px'; tip.style.top = (ev.clientY + 14) + 'px'; };
+  const hideTip = () => { tip.hidden = true; };
+
+  /** Horizontal bars on one linear scale; label left, value at the bar end, a hover target the full row. */
+  function bars(svg, rows, { label, value, max, fmt, dim, whisker, tipOf }) {
+    const W = 760, rowH = 24, left = 190, right = 56, top = 6;
+    const H = top + rows.length * rowH + 22;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const x = (v) => left + (v / max) * (W - left - right);
+    const ticks = 4;
+    for (let k = 0; k <= ticks; k++) {
+      const v = (max / ticks) * k, gx = x(v);
+      el('line', { class: 'grid', x1: gx, x2: gx, y1: top, y2: top + rows.length * rowH }, svg);
+      el('text', { x: gx, y: H - 4, 'text-anchor': 'middle' }, svg).textContent = fmt(v);
+    }
+    rows.forEach((r, i) => {
+      const y = top + i * rowH, g = el('g', { class: 'row' }, svg);
+      el('rect', { x: 0, y, width: W, height: rowH, fill: 'transparent' }, g);
+      el('text', { x: left - 10, y: y + rowH / 2 + 4, 'text-anchor': 'end' }, g).textContent = label(r);
+      const v = value(r), w = Math.max(2, x(v) - left);
+      el('rect', { class: 'bar' + (dim && dim(r) ? ' dim' : ''), x: left, y: y + 5, width: w, height: rowH - 10, rx: 3 }, g);
+      if (whisker) { const [lo, hi] = whisker(r); el('line', { class: 'whisk', x1: x(lo), x2: x(hi), y1: y + rowH / 2, y2: y + rowH / 2 }, g); }
+      el('text', { class: 'val', x: left + w + 6 + (whisker ? Math.max(0, x(whisker(r)[1]) - (left + w)) : 0), y: y + rowH / 2 + 4 }, g).textContent = fmt(v);
+      g.addEventListener('mousemove', (ev) => showTip(ev, tipOf(r)));
+      g.addEventListener('mouseleave', hideTip);
+    });
+  }
+
+  const sorted = [...SPELLS].sort((a, b) => b.perRune - a.perRune);
+  bars(document.getElementById('svg-rune'), sorted, {
+    label: (r) => `${r.title} (${r.queue})`, value: (r) => r.perRune, max: 160, fmt: (v) => String(Math.round(v)),
+    dim: (r) => !(r.cast === 'force' && r.sec > 2),
+    tipOf: (r) => `<b>${r.title}</b> · ${r.cast}<br>${r.runes} rune${r.runes > 1 ? 's' : ''}, ${r.dmg} damage over ${r.sec} s<br>${r.perRune} per rune · ${r.crowd} against a pack of 5`,
+  });
+  document.getElementById('t-spells').innerHTML = '<thead><tr><th>Spell</th><th>Queue</th><th>Cast</th><th>Runes</th><th>Seconds</th><th>Damage</th><th>Per rune</th><th>vs 5</th></tr></thead><tbody>' +
+    SPELLS.map((s) => `<tr><td>${s.title}</td><td>${s.queue}</td><td>${s.cast}</td><td>${s.runes}</td><td>${s.sec}</td><td>${s.dmg}</td><td>${s.perRune}</td><td>${s.crowd}</td></tr>`).join('') + '</tbody>';
+  document.getElementById('t-ttk').innerHTML = '<thead><tr><th>Enemy</th><th>HP</th><th>Arcane beam</th><th>Flamethrower</th><th>Rock</th><th>Fireball</th></tr></thead><tbody>' +
+    TTK.map(([n, hp, ...c]) => `<tr><td>${n}</td><td>${hp}</td>${c.map(([a, b]) => `<td>${a} / ${b}</td>`).join('')}</tr>`).join('') + '</tbody>';
+  bars(document.getElementById('svg-waves'), WAVES, {
+    label: (r) => r[0], value: (r) => r[1], max: 10, fmt: (v) => (Math.round(v * 10) / 10).toString(), whisker: (r) => [r[2], r[3]],
+    dim: (r) => r[0] !== 'Current numbers',
+    tipOf: (r) => `<b>${r[0]}</b><br>${r[1]} waves cleared (runs: ${r[2]}–${r[3]})<br>${r[4]} downs, ${r[5]} wipes on average`,
+  });
+  document.getElementById('t-waves').innerHTML = '<thead><tr><th>Numbers</th><th>Waves cleared (mean)</th><th>Lowest</th><th>Highest</th><th>Downs</th><th>Wipes</th></tr></thead><tbody>' +
+    WAVES.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td></tr>`).join('') + '</tbody>';
+
+  // Answers: answers/<question id> {choice, note}. Blank = Claude's recommendation stands.
+  const state = {};
+  const LS = 'balance-notes-v1';
+  try { Object.assign(state, JSON.parse(localStorage.getItem(LS) || '{}')); } catch {}
+  const lsSave = () => { try { localStorage.setItem(LS, JSON.stringify(state)); } catch {} };
+  let db = null;
+  const saveEl = document.getElementById('saveState');
+  const saveState = (t, warn) => { saveEl.textContent = t; saveEl.classList.toggle('warn', !!warn); };
+  const boxes = [...document.querySelectorAll('[data-q]')];
+  function paint() {
+    for (const box of boxes) {
+      const a = state[box.dataset.q] || {};
+      box.querySelectorAll('.choices button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === a.choice)));
+      const ta = box.querySelector('textarea');
+      if (ta && document.activeElement !== ta && ta.value !== (a.note || '')) ta.value = a.note || '';
+    }
+  }
+  const chains = {};
+  function put(id, patch) {
+    state[id] = Object.assign({}, state[id], patch);
+    lsSave(); paint();
+    if (!db) return;
+    saveState('Saving…');
+    const body = Object.assign({}, state[id], { updatedAt: new Date().toISOString() });
+    chains[id] = (chains[id] || Promise.resolve()).then(() => db.doc('answers/' + id).set(body))
+      .then(() => saveState('All answers saved')).catch(() => saveState('Couldn’t save. Your answer is kept in this browser.', true));
+  }
+  const debounce = (fn) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), 800); }; };
+  for (const box of boxes) {
+    const id = box.dataset.q, ta = box.querySelector('textarea');
+    box.querySelectorAll('.choices button').forEach((b) => b.addEventListener('click', () => {
+      const cur = (state[id] || {}).choice; put(id, { choice: cur === b.dataset.v ? null : b.dataset.v, note: ta ? ta.value : '' });
+    }));
+    if (ta) { const d = debounce((v) => put(id, { note: v })); ta.addEventListener('input', (e) => d(e.target.value)); }
+  }
+  paint();
+  (async () => {
+    const timer = setTimeout(() => saveState('Can’t reach saved answers yet. Answers stay in this browser for now.', true), 10000);
+    try { db = await window.claude?.use?.('db'); } catch { db = null; }
+    if (!db) { clearTimeout(timer); saveState('Answers are saved in this browser only'); return; }
+    db.collection('answers').onSnapshot((snap) => {
+      for (const d of snap.docs) { const x = d.data(); delete x.updatedAt; state[d.id] = x; }
+      if (!snap.metadata.fromCache) { clearTimeout(timer); saveState('All answers saved'); }
+      lsSave(); paint();
+    }, () => { clearTimeout(timer); saveState('Saved answers are unavailable. Answers stay in this browser.', true); db = null; });
+  })();
+})();
+</script>

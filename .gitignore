@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
+.godot/
+.import/
+prototypes/*/artifact/
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+game/artifact/
+game/shots/
+
+# Kept locally only: numbers read from the user's own game install
+docs/reference/magicka-numbers-extracted.md

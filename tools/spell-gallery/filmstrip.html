@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Filmstrip</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&display=swap">
+<style>
+  body { background: #120e22; color: #ddd; font: 12px system-ui; margin: 8px; }
+  .row { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .row h3 { width: 100%; margin: 0 0 4px; font-size: 13px; }
+  figure { margin: 0; } figcaption { font-size: 10px; opacity: .7; }
+  canvas { width: 300px; height: 195px; display: block; }
+</style></head>
+<body>
+<!-- Usage: filmstrip.html?file=vignettes/foo.js[&id=spell-id][&frames=6]
+     Renders each vignette from the file at evenly spaced times, for headless screenshots. -->
+<script src="engine.js"></script>
+<script>
+  const q = new URLSearchParams(location.search);
+  const s = document.createElement('script');
+  s.src = q.get('file') || 'vignettes/example.js';
+  s.onload = () => {
+    const frames = +(q.get('frames') || 6);
+    for (const v of SG.registry) {
+      if (q.get('id') && v.id !== q.get('id')) continue;
+      const row = document.createElement('div'); row.className = 'row';
+      row.innerHTML = `<h3>${v.id} (${v.duration}s)</h3>`;
+      for (let i = 0; i < frames; i++) {
+        const t = 0.25 + (v.duration - 0.5) * i / (frames - 1);
+        const c = document.createElement('canvas'); c.width = 600; c.height = 390;
+        SG.renderFrame(c, v, t);
+        const f = document.createElement('figure'); f.appendChild(c);
+        f.insertAdjacentHTML('beforeend', `<figcaption>t=${t.toFixed(2)}</figcaption>`);
+        row.appendChild(f);
+      }
+      document.body.appendChild(row);
+    }
+  };
+  document.body.appendChild(s);
+</script>
+</body></html>

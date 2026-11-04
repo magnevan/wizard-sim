@@ -1,0 +1,1046 @@
+{
+ "generated": "npm run balance",
+ "regen": 0.22,
+ "max": {
+  "water": 4,
+  "life": 4,
+  "shield": 4,
+  "cold": 4,
+  "lightning": 4,
+  "arcane": 4,
+  "sigil": 3,
+  "fire": 5,
+  "earth": 4
+ },
+ "spells": [
+  {
+   "title": "Flamethrower",
+   "queue": "fire",
+   "cast": "force",
+   "runes": 1,
+   "seconds": 2.92,
+   "damage": 54,
+   "heal": 0,
+   "crowd": 192,
+   "dps": 19,
+   "perRune": 54
+  },
+  {
+   "title": "Flamethrower",
+   "queue": "fire+fire",
+   "cast": "force",
+   "runes": 2,
+   "seconds": 2.93,
+   "damage": 60,
+   "heal": 0,
+   "crowd": 211,
+   "dps": 20,
+   "perRune": 30
+  },
+  {
+   "title": "Arcane beam",
+   "queue": "arcane",
+   "cast": "force",
+   "runes": 1,
+   "seconds": 2.92,
+   "damage": 40,
+   "heal": 0,
+   "crowd": 40,
+   "dps": 14,
+   "perRune": 40
+  },
+  {
+   "title": "Arcane beam",
+   "queue": "arcane+arcane",
+   "cast": "force",
+   "runes": 2,
+   "seconds": 5.43,
+   "damage": 79,
+   "heal": 0,
+   "crowd": 79,
+   "dps": 15,
+   "perRune": 40
+  },
+  {
+   "title": "Fire beam",
+   "queue": "arcane+fire",
+   "cast": "force",
+   "runes": 2,
+   "seconds": 2.93,
+   "damage": 75,
+   "heal": 0,
+   "crowd": 75,
+   "dps": 26,
+   "perRune": 37
+  },
+  {
+   "title": "Lightning arc",
+   "queue": "lightning",
+   "cast": "force",
+   "runes": 1,
+   "seconds": 2.92,
+   "damage": 60,
+   "heal": 0,
+   "crowd": 156,
+   "dps": 21,
+   "perRune": 60
+  },
+  {
+   "title": "Lightning arc",
+   "queue": "lightning+lightning",
+   "cast": "force",
+   "runes": 2,
+   "seconds": 2.93,
+   "damage": 102,
+   "heal": 0,
+   "crowd": 347,
+   "dps": 35,
+   "perRune": 51
+  },
+  {
+   "title": "Frost spray",
+   "queue": "cold",
+   "cast": "force",
+   "runes": 1,
+   "seconds": 2.92,
+   "damage": 13,
+   "heal": 0,
+   "crowd": 43,
+   "dps": 4,
+   "perRune": 13
+  },
+  {
+   "title": "Frost spray",
+   "queue": "cold+cold",
+   "cast": "force",
+   "runes": 2,
+   "seconds": 2.93,
+   "damage": 17,
+   "heal": 0,
+   "crowd": 59,
+   "dps": 6,
+   "perRune": 9
+  },
+  {
+   "title": "Water spray",
+   "queue": "water",
+   "cast": "force",
+   "runes": 1,
+   "seconds": 2.92,
+   "damage": 0,
+   "heal": 0,
+   "crowd": 0,
+   "dps": 0,
+   "perRune": 0
+  },
+  {
+   "title": "Rock",
+   "queue": "earth",
+   "cast": "force",
+   "runes": 1,
+   "seconds": 1.38,
+   "damage": 22,
+   "heal": 0,
+   "crowd": 22,
+   "dps": 16,
+   "perRune": 22
+  },
+  {
+   "title": "Rock",
+   "queue": "earth+earth",
+   "cast": "force",
+   "runes": 2,
+   "seconds": 1.4,
+   "damage": 60,
+   "heal": 0,
+   "crowd": 60,
+   "dps": 43,
+   "perRune": 30
+  },
+  {
+   "title": "Fireball",
+   "queue": "earth+fire",
+   "cast": "force",
+   "runes": 2,
+   "seconds": 1.4,
+   "damage": 50,
+   "heal": 0,
+   "crowd": 51,
+   "dps": 36,
+   "perRune": 25
+  },
+  {
+   "title": "Rock",
+   "queue": "earth+earth+earth",
+   "cast": "force",
+   "runes": 2.99,
+   "seconds": 1.42,
+   "damage": 109,
+   "heal": 0,
+   "crowd": 109,
+   "dps": 77,
+   "perRune": 36
+  },
+  {
+   "title": "Ice shards",
+   "queue": "water+cold",
+   "cast": "force",
+   "runes": 2,
+   "seconds": 0.45,
+   "damage": 8,
+   "heal": 0,
+   "crowd": 15,
+   "dps": 17,
+   "perRune": 4
+  },
+  {
+   "title": "Arcane boulder",
+   "queue": "earth+arcane",
+   "cast": "force",
+   "runes": 2,
+   "seconds": 1.4,
+   "damage": 37,
+   "heal": 0,
+   "crowd": 81,
+   "dps": 26,
+   "perRune": 18
+  },
+  {
+   "title": "Frost boulder",
+   "queue": "earth+cold",
+   "cast": "force",
+   "runes": 2,
+   "seconds": 1.4,
+   "damage": 26,
+   "heal": 0,
+   "crowd": 46,
+   "dps": 19,
+   "perRune": 13
+  },
+  {
+   "title": "Fire ring",
+   "queue": "fire",
+   "cast": "area",
+   "runes": 1,
+   "seconds": 0.43,
+   "damage": 29,
+   "heal": 0,
+   "crowd": 144,
+   "dps": 67,
+   "perRune": 29
+  },
+  {
+   "title": "Arcane nova",
+   "queue": "arcane",
+   "cast": "area",
+   "runes": 1,
+   "seconds": 0.43,
+   "damage": 16,
+   "heal": 0,
+   "crowd": 80,
+   "dps": 37,
+   "perRune": 16
+  },
+  {
+   "title": "Earthquake",
+   "queue": "earth",
+   "cast": "area",
+   "runes": 1,
+   "seconds": 0.43,
+   "damage": 22,
+   "heal": 0,
+   "crowd": 110,
+   "dps": 51,
+   "perRune": 22
+  },
+  {
+   "title": "Discharge",
+   "queue": "lightning",
+   "cast": "area",
+   "runes": 1,
+   "seconds": 0.43,
+   "damage": 8,
+   "heal": 0,
+   "crowd": 40,
+   "dps": 18,
+   "perRune": 8
+  },
+  {
+   "title": "Frost ring",
+   "queue": "cold+cold",
+   "cast": "area",
+   "runes": 2,
+   "seconds": 0.48,
+   "damage": 7,
+   "heal": 0,
+   "crowd": 35,
+   "dps": 15,
+   "perRune": 4
+  },
+  {
+   "title": "Fire patch",
+   "queue": "fire",
+   "cast": "place",
+   "runes": 1,
+   "seconds": 0.9,
+   "damage": 26,
+   "heal": 0,
+   "crowd": 129,
+   "dps": 29,
+   "perRune": 26
+  },
+  {
+   "title": "Arcane blast",
+   "queue": "arcane",
+   "cast": "place",
+   "runes": 1,
+   "seconds": 0.9,
+   "damage": 16,
+   "heal": 0,
+   "crowd": 80,
+   "dps": 18,
+   "perRune": 16
+  },
+  {
+   "title": "Arcane geyser",
+   "queue": "earth+arcane",
+   "cast": "place",
+   "runes": 2,
+   "seconds": 0.95,
+   "damage": 49,
+   "heal": 0,
+   "crowd": 247,
+   "dps": 52,
+   "perRune": 25
+  },
+  {
+   "title": "Lightning strike",
+   "queue": "lightning",
+   "cast": "place",
+   "runes": 1,
+   "seconds": 0.9,
+   "damage": 12,
+   "heal": 0,
+   "crowd": 60,
+   "dps": 13,
+   "perRune": 12
+  },
+  {
+   "title": "Steam cloud",
+   "queue": "water+fire",
+   "cast": "place",
+   "runes": 2,
+   "seconds": 0.95,
+   "damage": 35,
+   "heal": 0,
+   "crowd": 175,
+   "dps": 37,
+   "perRune": 18
+  },
+  {
+   "title": "Life beam",
+   "queue": "life",
+   "cast": "force",
+   "runes": 1,
+   "seconds": 2.92,
+   "damage": 0,
+   "heal": 0,
+   "crowd": 0,
+   "dps": 0,
+   "perRune": 0
+  },
+  {
+   "title": "Healing ring",
+   "queue": "life+life",
+   "cast": "area",
+   "runes": 2,
+   "seconds": 0.48,
+   "damage": 0,
+   "heal": 28,
+   "crowd": 0,
+   "dps": 0,
+   "perRune": 0
+  },
+  {
+   "title": "Chain heal",
+   "queue": "life+lightning",
+   "cast": "force",
+   "runes": 2,
+   "seconds": 2.93,
+   "damage": 0,
+   "heal": 84,
+   "crowd": 0,
+   "dps": 0,
+   "perRune": 0
+  }
+ ],
+ "ttk": [
+  {
+   "archetype": "Goblin",
+   "hp": 30,
+   "spells": [
+    {
+     "spell": "Flamethrower",
+     "burst": 1.6,
+     "sustained": 2.5
+    },
+    {
+     "spell": "Flamethrower",
+     "burst": 1.5,
+     "sustained": 4.5
+    },
+    {
+     "spell": "Arcane beam",
+     "burst": 2.2,
+     "sustained": 3.4
+    },
+    {
+     "spell": "Arcane beam",
+     "burst": 2.1,
+     "sustained": 3.5
+    },
+    {
+     "spell": "Fire beam",
+     "burst": 1.2,
+     "sustained": 1.8
+    },
+    {
+     "spell": "Lightning arc",
+     "burst": 1.5,
+     "sustained": 2.3
+    },
+    {
+     "spell": "Lightning arc",
+     "burst": 0.9,
+     "sustained": 2.7
+    },
+    {
+     "spell": "Frost spray",
+     "burst": 6.7,
+     "sustained": 10.5
+    },
+    {
+     "spell": "Frost spray",
+     "burst": 5.2,
+     "sustained": 16
+    },
+    {
+     "spell": "Rock",
+     "burst": 1.9,
+     "sustained": 6.2
+    },
+    {
+     "spell": "Rock",
+     "burst": 0.7,
+     "sustained": 4.5
+    },
+    {
+     "spell": "Fireball",
+     "burst": 0.8,
+     "sustained": 2.7
+    },
+    {
+     "spell": "Rock",
+     "burst": 0.4,
+     "sustained": 3.7
+    },
+    {
+     "spell": "Ice shards",
+     "burst": 1.7,
+     "sustained": 17
+    },
+    {
+     "spell": "Arcane boulder",
+     "burst": 1.1,
+     "sustained": 3.7
+    },
+    {
+     "spell": "Frost boulder",
+     "burst": 1.6,
+     "sustained": 5.2
+    }
+   ]
+  },
+  {
+   "archetype": "Brute",
+   "hp": 345,
+   "spells": [
+    {
+     "spell": "Flamethrower",
+     "burst": 18.7,
+     "sustained": 29
+    },
+    {
+     "spell": "Flamethrower",
+     "burst": 16.8,
+     "sustained": 52.3
+    },
+    {
+     "spell": "Arcane beam",
+     "burst": 25.2,
+     "sustained": 39.2
+    },
+    {
+     "spell": "Arcane beam",
+     "burst": 23.7,
+     "sustained": 39.7
+    },
+    {
+     "spell": "Fire beam",
+     "burst": 13.5,
+     "sustained": 20.9
+    },
+    {
+     "spell": "Lightning arc",
+     "burst": 16.8,
+     "sustained": 26.1
+    },
+    {
+     "spell": "Lightning arc",
+     "burst": 9.9,
+     "sustained": 30.7
+    },
+    {
+     "spell": "Frost spray",
+     "burst": 77.5,
+     "sustained": 120.6
+    },
+    {
+     "spell": "Frost spray",
+     "burst": 59.5,
+     "sustained": 184.5
+    },
+    {
+     "spell": "Rock",
+     "burst": 21.6,
+     "sustained": 71.3
+    },
+    {
+     "spell": "Rock",
+     "burst": 8,
+     "sustained": 52.3
+    },
+    {
+     "spell": "Fireball",
+     "burst": 9.7,
+     "sustained": 31.4
+    },
+    {
+     "spell": "Rock",
+     "burst": 4.5,
+     "sustained": 43
+    },
+    {
+     "spell": "Ice shards",
+     "burst": 19.4,
+     "sustained": 196
+    },
+    {
+     "spell": "Arcane boulder",
+     "burst": 13.1,
+     "sustained": 42.4
+    },
+    {
+     "spell": "Frost boulder",
+     "burst": 18.6,
+     "sustained": 60.3
+    }
+   ]
+  },
+  {
+   "archetype": "Shieldbearer",
+   "hp": 135,
+   "spells": [
+    {
+     "spell": "Flamethrower",
+     "burst": 7.3,
+     "sustained": 11.4
+    },
+    {
+     "spell": "Flamethrower",
+     "burst": 6.6,
+     "sustained": 20.5
+    },
+    {
+     "spell": "Arcane beam",
+     "burst": 9.9,
+     "sustained": 15.3
+    },
+    {
+     "spell": "Arcane beam",
+     "burst": 9.3,
+     "sustained": 15.5
+    },
+    {
+     "spell": "Fire beam",
+     "burst": 5.3,
+     "sustained": 8.2
+    },
+    {
+     "spell": "Lightning arc",
+     "burst": 6.6,
+     "sustained": 10.2
+    },
+    {
+     "spell": "Lightning arc",
+     "burst": 3.9,
+     "sustained": 12
+    },
+    {
+     "spell": "Frost spray",
+     "burst": 30.3,
+     "sustained": 47.2
+    },
+    {
+     "spell": "Frost spray",
+     "burst": 23.3,
+     "sustained": 72.2
+    },
+    {
+     "spell": "Rock",
+     "burst": 8.5,
+     "sustained": 27.9
+    },
+    {
+     "spell": "Rock",
+     "burst": 3.2,
+     "sustained": 20.5
+    },
+    {
+     "spell": "Fireball",
+     "burst": 3.8,
+     "sustained": 12.3
+    },
+    {
+     "spell": "Rock",
+     "burst": 1.8,
+     "sustained": 16.8
+    },
+    {
+     "spell": "Ice shards",
+     "burst": 7.6,
+     "sustained": 76.7
+    },
+    {
+     "spell": "Arcane boulder",
+     "burst": 5.1,
+     "sustained": 16.6
+    },
+    {
+     "spell": "Frost boulder",
+     "burst": 7.3,
+     "sustained": 23.6
+    }
+   ]
+  },
+  {
+   "archetype": "Archer",
+   "hp": 68,
+   "spells": [
+    {
+     "spell": "Flamethrower",
+     "burst": 3.7,
+     "sustained": 5.7
+    },
+    {
+     "spell": "Flamethrower",
+     "burst": 3.3,
+     "sustained": 10.3
+    },
+    {
+     "spell": "Arcane beam",
+     "burst": 5,
+     "sustained": 7.7
+    },
+    {
+     "spell": "Arcane beam",
+     "burst": 4.7,
+     "sustained": 7.8
+    },
+    {
+     "spell": "Fire beam",
+     "burst": 2.7,
+     "sustained": 4.1
+    },
+    {
+     "spell": "Lightning arc",
+     "burst": 3.3,
+     "sustained": 5.2
+    },
+    {
+     "spell": "Lightning arc",
+     "burst": 2,
+     "sustained": 6.1
+    },
+    {
+     "spell": "Frost spray",
+     "burst": 15.3,
+     "sustained": 23.8
+    },
+    {
+     "spell": "Frost spray",
+     "burst": 11.7,
+     "sustained": 36.4
+    },
+    {
+     "spell": "Rock",
+     "burst": 4.3,
+     "sustained": 14
+    },
+    {
+     "spell": "Rock",
+     "burst": 1.6,
+     "sustained": 10.3
+    },
+    {
+     "spell": "Fireball",
+     "burst": 1.9,
+     "sustained": 6.2
+    },
+    {
+     "spell": "Rock",
+     "burst": 0.9,
+     "sustained": 8.5
+    },
+    {
+     "spell": "Ice shards",
+     "burst": 3.8,
+     "sustained": 38.6
+    },
+    {
+     "spell": "Arcane boulder",
+     "burst": 2.6,
+     "sustained": 8.4
+    },
+    {
+     "spell": "Frost boulder",
+     "burst": 3.7,
+     "sustained": 11.9
+    }
+   ]
+  },
+  {
+   "archetype": "Grabber",
+   "hp": 90,
+   "spells": [
+    {
+     "spell": "Flamethrower",
+     "burst": 4.9,
+     "sustained": 7.6
+    },
+    {
+     "spell": "Flamethrower",
+     "burst": 4.4,
+     "sustained": 13.6
+    },
+    {
+     "spell": "Arcane beam",
+     "burst": 6.6,
+     "sustained": 10.2
+    },
+    {
+     "spell": "Arcane beam",
+     "burst": 6.2,
+     "sustained": 10.4
+    },
+    {
+     "spell": "Fire beam",
+     "burst": 3.5,
+     "sustained": 5.5
+    },
+    {
+     "spell": "Lightning arc",
+     "burst": 4.4,
+     "sustained": 6.8
+    },
+    {
+     "spell": "Lightning arc",
+     "burst": 2.6,
+     "sustained": 8
+    },
+    {
+     "spell": "Frost spray",
+     "burst": 20.2,
+     "sustained": 31.5
+    },
+    {
+     "spell": "Frost spray",
+     "burst": 15.5,
+     "sustained": 48.1
+    },
+    {
+     "spell": "Rock",
+     "burst": 5.6,
+     "sustained": 18.6
+    },
+    {
+     "spell": "Rock",
+     "burst": 2.1,
+     "sustained": 13.6
+    },
+    {
+     "spell": "Fireball",
+     "burst": 2.5,
+     "sustained": 8.2
+    },
+    {
+     "spell": "Rock",
+     "burst": 1.2,
+     "sustained": 11.2
+    },
+    {
+     "spell": "Ice shards",
+     "burst": 5.1,
+     "sustained": 51.1
+    },
+    {
+     "spell": "Arcane boulder",
+     "burst": 3.4,
+     "sustained": 11.1
+    },
+    {
+     "spell": "Frost boulder",
+     "burst": 4.8,
+     "sustained": 15.7
+    }
+   ]
+  },
+  {
+   "archetype": "Fire imp",
+   "hp": 60,
+   "spells": [
+    {
+     "spell": "Flamethrower",
+     "burst": 3.2,
+     "sustained": 5.1
+    },
+    {
+     "spell": "Flamethrower",
+     "burst": 2.9,
+     "sustained": 9.1
+    },
+    {
+     "spell": "Arcane beam",
+     "burst": 4.4,
+     "sustained": 6.8
+    },
+    {
+     "spell": "Arcane beam",
+     "burst": 4.1,
+     "sustained": 6.9
+    },
+    {
+     "spell": "Fire beam",
+     "burst": 2.3,
+     "sustained": 3.6
+    },
+    {
+     "spell": "Lightning arc",
+     "burst": 2.9,
+     "sustained": 4.5
+    },
+    {
+     "spell": "Lightning arc",
+     "burst": 1.7,
+     "sustained": 5.3
+    },
+    {
+     "spell": "Frost spray",
+     "burst": 13.5,
+     "sustained": 21
+    },
+    {
+     "spell": "Frost spray",
+     "burst": 10.3,
+     "sustained": 32.1
+    },
+    {
+     "spell": "Rock",
+     "burst": 3.8,
+     "sustained": 12.4
+    },
+    {
+     "spell": "Rock",
+     "burst": 1.4,
+     "sustained": 9.1
+    },
+    {
+     "spell": "Fireball",
+     "burst": 1.7,
+     "sustained": 5.5
+    },
+    {
+     "spell": "Rock",
+     "burst": 0.8,
+     "sustained": 7.5
+    },
+    {
+     "spell": "Ice shards",
+     "burst": 3.4,
+     "sustained": 34.1
+    },
+    {
+     "spell": "Arcane boulder",
+     "burst": 2.3,
+     "sustained": 7.4
+    },
+    {
+     "spell": "Frost boulder",
+     "burst": 3.2,
+     "sustained": 10.5
+    }
+   ]
+  }
+ ],
+ "threat": [
+  {
+   "archetype": "Goblin",
+   "damage": 5,
+   "cycle": 1.5,
+   "dps": 3.3,
+   "secondsToKillWizard": 30,
+   "speed": 3.2
+  },
+  {
+   "archetype": "Brute",
+   "damage": 38,
+   "cycle": 2.9,
+   "dps": 13.1,
+   "secondsToKillWizard": 7.6,
+   "speed": 1.8
+  },
+  {
+   "archetype": "Shieldbearer",
+   "damage": 18,
+   "cycle": 2,
+   "dps": 9,
+   "secondsToKillWizard": 11.1,
+   "speed": 2.2
+  },
+  {
+   "archetype": "Archer",
+   "damage": 20,
+   "cycle": 3.4,
+   "dps": 5.9,
+   "secondsToKillWizard": 17,
+   "speed": 2.4
+  },
+  {
+   "archetype": "Grabber",
+   "damage": 13,
+   "cycle": 3.8,
+   "dps": 3.4,
+   "secondsToKillWizard": 29.2,
+   "speed": 2.8
+  },
+  {
+   "archetype": "Fire imp",
+   "damage": 9,
+   "cycle": 1.6,
+   "dps": 5.6,
+   "secondsToKillWizard": 17.8,
+   "speed": 3
+  }
+ ],
+ "waves": [
+  {
+   "name": "current",
+   "cleared": 5.3,
+   "clearedMin": 4,
+   "clearedMax": 7,
+   "downs": 6.3,
+   "wipes": 2.5,
+   "kills": 36.3,
+   "damageTaken": 1902,
+   "clearSeconds": [
+    10,
+    30.1,
+    33.8,
+    21.7
+   ]
+  },
+  {
+   "name": "slower regen (0.15)",
+   "cleared": 3.8,
+   "clearedMin": 3,
+   "clearedMax": 4,
+   "downs": 8,
+   "wipes": 3.3,
+   "kills": 31.8,
+   "damageTaken": 1700.8,
+   "clearSeconds": [
+    10,
+    60,
+    18.8,
+    60.9
+   ]
+  },
+  {
+   "name": "faster regen (0.3)",
+   "cleared": 6,
+   "clearedMin": 5,
+   "clearedMax": 7,
+   "downs": 5.3,
+   "wipes": 1.8,
+   "kills": 39.5,
+   "damageTaken": 1577.3,
+   "clearSeconds": [
+    10,
+    40.5,
+    22.7,
+    17.8,
+    22.6,
+    26.7
+   ]
+  },
+  {
+   "name": "enemies hit 1.5x harder",
+   "cleared": 3.8,
+   "clearedMin": 3,
+   "clearedMax": 4,
+   "downs": 11.5,
+   "wipes": 4.8,
+   "kills": 41.8,
+   "damageTaken": 1829.3,
+   "clearSeconds": [
+    10,
+    62.7,
+    30.4
+   ]
+  },
+  {
+   "name": "enemies 1.5x tougher",
+   "cleared": 4.8,
+   "clearedMin": 4,
+   "clearedMax": 5,
+   "downs": 5.8,
+   "wipes": 2.3,
+   "kills": 33.5,
+   "damageTaken": 1684.8,
+   "clearSeconds": [
+    11.6,
+    30.8,
+    18.5,
+    30.7,
+    96.8
+   ]
+  },
+  {
+   "name": "heavier casts (windup x2)",
+   "cleared": 5,
+   "clearedMin": 4,
+   "clearedMax": 6,
+   "downs": 7.3,
+   "wipes": 2.5,
+   "kills": 36.3,
+   "damageTaken": 1832.3,
+   "clearSeconds": [
+    9.4,
+    21.7,
+    20.7,
+    14.1,
+    64.9
+   ]
+  }
+ ]
+}

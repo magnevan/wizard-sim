@@ -1,0 +1,880 @@
+/**
+ * Spell VFX in the game, ported from the Spell VFX gallery and the Battlefield's effects pass.
+ * Two canvases cover the field (art/field.ts) and are redrawn every frame: `ground` under the
+ * actors (surfaces, shadows, rings, telegraphs, scorch) and `over` above them (beams, sprays,
+ * arcs, missiles, bursts, statuses, pops). Both are crisp Canvas2D pixel art uploaded as one
+ * texture each.
+ *
+ * Inputs are the sim state (channels, missiles, zones, surfaces, statuses: drawn as they are
+ * each frame) and the sim's events (turned into short-lived effects with a start time and a
+ * seed, kept here and never in the sim). The look rule holds throughout: the shape comes from
+ * the spell's form, the material from its look element (arcane + fire is a fire beam, earth +
+ * fire a fireball, earth + cold an ice boulder).
+ */
+import { Sprite, Texture } from 'pixi.js';
+import {
+  ARENA, CELL, GRID_W, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PHASE, QUEUE_MAX, SURF, ZONE, elementName, specOf,
+  type SimEvent, type SpellSpec, type World,
+} from '@wizard-sim/sim';
+import { FIELD, gx, gy } from './field';
+import * as K from './kit';
+import * as X from './px';
+import type { Ctx, Pt, Ramp } from './px';
+import type { Frame } from './actors';
+import { HEIGHT, WIDTH, type Anchors, type RigKind } from './rigs';
+import { FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './util';
+
+const EL = X.EL;
+
+/** What the view knows about a body this frame: its feet in field px, its anchors and rig. */
+export interface BodyView { on: boolean; x: number; y: number; a: Anchors | null; rig: RigKind; seat: number; f: Frame | null }
+export type LightFn = (x: number, y: number, r: number, col: string, a: number) => void;
+
+/** A short-lived effect born from an event. */
+interface Fx {
+  kind: string; t0: number; life: number; seed: number;
+  x: number; y: number; x2: number; y2: number;
+  look: number; who: number; r: number; n: number;
+  text?: string; els?: number[];
+}
+
+const elName = (id: number): string => (id >= 1 && id <= N_EL ? elementName(id) : 'arcane');
+const ramp = (id: number): Ramp => EL[elName(id)] ?? EL.arcane;
+/** The seats' default staff orbs (the Battlefield's: Red arcane, Blue cold, Gold lightning, Violet earth). */
+const SEAT_EL = [6, 4, 5, 9];
+const STAFF_Z = 10; // missiles fly about this high (art px)
+const LIFT = 9; // a beam or spray end is lifted to about chest height
+
+export class Vfx {
+  /** The local player's seat: their ring is solid and their rune swirl sparse (their HUD shows the detail). */
+  localSeat = 0;
+  readonly ground: Sprite;
+  readonly over: Sprite;
+  private g = X.canvas(FIELD.W, FIELD.H);
+  private o = X.canvas(FIELD.W, FIELD.H);
+  private surf = X.canvas(FIELD.W, FIELD.H);
+  private gt: Texture; private ot: Texture;
+  private fx: Fx[] = [];
+  private surfKey = '';
+  // per slot: when a zone or a lobbed stone appeared, and the stone's flight time
+  private zoneT0 = new Float64Array(MAX_ZONES);
+  private zoneType = new Uint8Array(MAX_ZONES);
+  private mT0 = new Float64Array(MAX_MISSILES);
+  private mLife0 = new Int32Array(MAX_MISSILES);
+  private mAlive = new Uint8Array(MAX_MISSILES);
+  private mType = new Uint8Array(MAX_MISSILES);
+  private mLook = new Uint8Array(MAX_MISSILES);
+  private mX = new Float64Array(MAX_MISSILES); private mY = new Float64Array(MAX_MISSILES);
+  private mVX = new Float64Array(MAX_MISSILES); private mVY = new Float64Array(MAX_MISSILES);
+  // per seat: the queued motes and when each arrived; when the channel started
+  private motes: { el: number; tq: number }[][] = [[], [], [], []];
+  // per body: last heal (for sparkles that follow the body)
+  healAt = new Float64Array(128).fill(-9);
+  /** Events another view part (view-structures.ts) already turned into effects: skipped here. */
+  readonly skip = new Set<SimEvent>();
+
+  constructor() {
+    this.gt = Texture.from(this.g.c); this.gt.source.scaleMode = 'nearest';
+    this.ot = Texture.from(this.o.c); this.ot.source.scaleMode = 'nearest';
+    this.ground = new Sprite(this.gt);
+    this.over = new Sprite(this.ot);
+  }
+
+  private add(kind: string, t0: number, life: number, o: Partial<Fx>): void {
+    if (this.fx.length > 500) this.fx.shift();
+    this.fx.push({ kind, t0, life, seed: 0, x: 0, y: 0, x2: 0, y2: 0, look: 0, who: -1, r: 0, n: 0, ...o });
+  }
+
+  /** After each sim step: turn events and slot changes into effects. t = sim seconds of the new state. */
+  afterStep(w: World, t: number): void {
+    const m = w.missiles, z = w.zones, b = w.bodies, tick = w.clock[0];
+    // missiles that ended this step: impacts (heal-stones burst through their 'burst' event)
+    const healStones: Pt[] = [];
+    for (let j = 0; j < MAX_MISSILES; j++) {
+      if (m.alive[j] && !this.mAlive[j]) { this.mT0[j] = t; this.mLife0[j] = m.life[j]; }
+      if (!m.alive[j] && this.mAlive[j]) {
+        if (this.mType[j] === 3) healStones.push([this.mX[j], this.mY[j]]);
+        else this.add('impact', t, 1.4, { x: this.mX[j], y: this.mY[j], x2: this.mVX[j], y2: this.mVY[j], look: this.mLook[j], n: this.mType[j], seed: tick * 7 + j, r: m.r[j] });
+      }
+      this.mAlive[j] = m.alive[j];
+      if (m.alive[j]) { this.mType[j] = m.type[j]; this.mLook[j] = m.look[j]; this.mX[j] = m.x[j]; this.mY[j] = m.y[j]; this.mVX[j] = m.vx[j]; this.mVY[j] = m.vy[j]; }
+    }
+    // zones: when each began, and which ended this step
+    const ended: { type: number; x: number; y: number }[] = [];
+    for (let k = 0; k < MAX_ZONES; k++) {
+      if (z.type[k] && z.type[k] !== this.zoneType[k]) this.zoneT0[k] = t;
+      if (!z.type[k] && this.zoneType[k]) ended.push({ type: this.zoneType[k], x: z.x[k], y: z.y[k] });
+      this.zoneType[k] = z.type[k];
+    }
+    const near = (ax: number, ay: number, bx: number, by: number) => Math.abs(ax - bx) < 0.6 && Math.abs(ay - by) < 0.6;
+    for (const e of w.events) if (!this.skip.has(e)) this.onEvent(w, e, t, ended, healStones, near);
+    this.skip.clear();
+    this.fx = this.fx.filter((f) => t - f.t0 < f.life);
+    void b;
+  }
+
+  private onEvent(w: World, e: SimEvent, t: number, ended: { type: number; x: number; y: number }[], healStones: Pt[], near: (a: number, b: number, c: number, d: number) => boolean): void {
+    const seed = e.tick * 13 + (e.who + 2) * 101 + Math.round(e.x * 7);
+    const look = e.look ?? 0, who = e.who;
+    const spec = (): SpellSpec | null => (who >= 0 && who < MAX_SEATS && w.seats.active[who] ? specOf(w, who) : null);
+    switch (e.kind) {
+      case 'cast':
+        if (who < 0) { if (e.text) this.add('banner', t, 2.4, { text: e.text }); return; }
+        this.add('release', t, 0.25, { who, look, els: this.motes[who]?.map((q) => q.el) });
+        if (spec()?.shape === 'self') this.add('self', t, 1.0, { who, look, x: e.x, y: e.y, seed });
+        return;
+      case 'hit': case 'heal': {
+        const amt = Math.round(e.amount ?? 0);
+        if (e.kind === 'heal') this.healAt[who] = t;
+        // a body taking hit after hit (a beam, a spray) shows one number that keeps counting up
+        const heal = e.kind === 'heal' ? 1 : 0, open = !e.text && this.fx.find((f) => f.kind === 'pop' && f.who === who && f.look === heal && !f.text && t - f.t0 < 0.45);
+        if (open) { open.n += amt; open.t0 = t; }
+        else if (amt > 0 || e.text) this.add('pop', t, 0.9, { who, x: e.x, y: e.y, n: amt, look: heal, text: e.text, seed });
+        return;
+      }
+      case 'zap': {
+        const sp = spec(), x2 = e.x2 ?? e.x, y2 = e.y2 ?? e.y;
+        if (sp?.shape === 'strike' && Math.abs(x2 - e.x) < 1e-6) { this.add('strike', t, 0.6, { x: x2, y: y2, look, seed }); return; }
+        const style = look === 8 ? 'flame' : look === 2 || sp?.heal ? 'life' : 'bolt';
+        this.add('zap', t, sp?.shape === 'discharge' ? 0.22 : 0.18, { who, x: e.x, y: e.y, x2, y2, look, seed, text: style });
+        if (sp?.shape === 'discharge' && !this.fx.some((f) => f.kind === 'discharge' && f.who === who && t - f.t0 < 0.05)) this.add('discharge', t, 0.45, { who, x: e.x, y: e.y, look, seed });
+        return;
+      }
+      case 'burst': {
+        if (e.text === 'dismissed') return;
+        const r = e.amount ?? 1;
+        const zone = ended.find((q) => near(q.x, q.y, e.x, e.y));
+        if (zone) { this.add(zone.type === ZONE.geyser ? 'geyser' : 'blast', t, 2.6, { x: e.x, y: e.y, r, look, seed }); return; }
+        if (healStones.some((p) => near(p[0], p[1], e.x, e.y))) { this.add('healburst', t, 1.8, { x: e.x, y: e.y, r, look, seed }); return; }
+        if (who >= MAX_SEATS) { this.add('slam', t, 1.3, { x: e.x, y: e.y, r, look, seed }); return; }
+        const shape = spec()?.shape ?? 'nova';
+        if (shape === 'swing' || shape === 'palm') this.add(shape, t, shape === 'palm' ? 0.9 : 0.4, { who, x: e.x, y: e.y, r, look, seed, x2: w.bodies.x[who], y2: w.bodies.y[who] });
+        else if (shape === 'patch') { if (!spec()?.scald) this.add('patch', t, look === 1 ? 1.8 : 1.0, { x: e.x, y: e.y, r, look, seed }); }
+        else this.add(shape === 'quake' ? 'quake' : 'nova', t, 1.3, { who, x: e.x, y: e.y, r, look, seed });
+        return;
+      }
+      case 'blink': this.add('blink', t, 0.4, { who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, seed }); return;
+      case 'shatter': this.add('shatter', t, 1.6, { x: e.x, y: e.y, seed }); return;
+      case 'freeze': this.add('freeze', t, 0.5, { who, x: e.x, y: e.y, seed }); return;
+      case 'surge': this.add('surge', t, 0.45, { x: e.x, y: e.y, seed }); return;
+      case 'cancel': this.add('cancel', t, 0.3, { who, look, seed }); return;
+      case 'dry': this.add('dry', t, 0.5, { who, x: e.x, y: e.y, seed }); return;
+      case 'fizzle':
+        if (e.text === 'dies') this.add('death', t, 1.4, { x: e.x, y: e.y, n: look, seed });
+        return;
+      default:
+    }
+  }
+
+  /**
+   * Redraw both canvases. t is sim time (with interpolation): event effects, missiles and other sim state
+   * age by it. ct is the cosmetic clock (real time): loops, flicker, swirls, fire sheets and particle
+   * drift run on it, so they keep moving while the sim waits on the network or is paused.
+   * bodies[i] says where body i stands this frame.
+   */
+  draw(w: World, t: number, bodies: BodyView[], light: LightFn, structures?: (g: Ctx, o: Ctx) => void, ct = t): void {
+    const g = this.g.x, o = this.o.x;
+    g.clearRect(0, 0, FIELD.W, FIELD.H); o.clearRect(0, 0, FIELD.W, FIELD.H);
+    g._fs = o._fs = null;
+    this.surfaces(w, ct, light);
+    this.zones(w, t, light, ct);
+    this.groundMarks(w, bodies, t);
+    if (structures) { structures(g, o); g._fs = o._fs = null; }
+    for (const f of this.fx) this.drawFx(f, t - f.t0, t, w, bodies, light);
+    this.missiles(w, t, light);
+    this.channels(w, ct, bodies, light);
+    this.casters(w, ct, bodies, light);
+    this.statuses(w, t, bodies, light, ct);
+    this.bars(w, bodies);
+    this.gt.source.update(); this.ot.source.update();
+  }
+
+  // ---- the floor: water, ice and one continuous sheet of fire ----------------------------------
+  private surfaces(w: World, t: number, light: LightFn): void {
+    const s = w.surf, g = this.g.x, n = s.kind.length;
+    let key = '';
+    for (let c = 0; c < n; c++) if (s.kind[c]) key += c.toString(36) + s.kind[c];
+    if (key !== this.surfKey) { this.surfKey = key; this.paintSurfaces(w); }
+    if (key) g.drawImage(this.surf.c, 0, 0);
+    const cw = CELL * 16, FR = EL.fire;
+    const at = (c: number): Pt => [gx(-ARENA.w / 2 + ((c % GRID_W) + 0.5) * CELL), gy(-ARENA.h / 2 + (Math.floor(c / GRID_W) + 0.5) * CELL)];
+    const kindAt = (c: number, dx: number, dy: number) => { const x = (c % GRID_W) + dx, y = Math.floor(c / GRID_W) + dy; return x < 0 || y < 0 || x >= GRID_W || y * GRID_W + x >= n ? 0 : s.kind[y * GRID_W + x]; };
+    for (let c = 0; c < n; c++) {
+      const k = s.kind[c]; if (!k) continue;
+      const [x, y] = at(c);
+      if (k === SURF.water) {
+        // ripples on a few cells
+        if (rand(c, 5) < 0.08) { const e = mod(t * 0.7 + rand(c, 6), 1); X.ring(g, x, y, 1 + e * 5, (1 + e * 5) * 0.4, '#5aa8e8', (1 - e) * 0.8); }
+        if (rand(c, 7) < 0.04 && mod(t * 0.5 + rand(c, 8), 1) < 0.15) X.line(g, x - 2, y, x + 1, y - 1, '#8ad0ff');
+      } else if (k === SURF.ice) {
+        if (rand(c, 9) < 0.05 && Math.floor(t * 3 + rand(c, 10) * 9) % 6 === 0) { X.px(g, x, y - 1, '#ffffff'); X.px(g, x - 1, y - 1, '#c4eefa'); X.px(g, x + 1, y - 1, '#c4eefa'); }
+      } else {
+        // the flame body: a solid low base everywhere and tongues where travelling waves peak,
+        // so neighbouring cells merge into one sheet with ragged tips (fire-place-v3)
+        const nb = (kindAt(c, -1, 0) === k ? 1 : 0) + (kindAt(c, 1, 0) === k ? 1 : 0) + (kindAt(c, 0, -1) === k ? 1 : 0) + (kindAt(c, 0, 1) === k ? 1 : 0);
+        const inner = nb / 4, life = Math.min(1, s.life[c] / 40);
+        // edges round off: columns near a side with no fire beyond it are shorter, and jittered
+        const openL = kindAt(c, -1, 0) !== k, openR = kindAt(c, 1, 0) !== k, openF = kindAt(c, 0, 1) !== k, openB = kindAt(c, 0, -1) !== k;
+        for (let row = 0; row < 2; row++) {
+          const yy = Math.round(y - 1 + row * 2.4), x0 = Math.round(x - cw / 2);
+          const ef = row ? (openF ? 0.45 : 1) : openB ? 0.6 : 1;
+          for (let xx = x0; xx < x0 + cw; xx++) {
+            const lx = xx - x0, side = Math.min(openL ? (lx + 1) / 4 : 1, openR ? (cw - lx) / 4 : 1) * ef;
+            if (side < 0.5 && rand(xx, yy, 3) > side * 1.6) continue;
+            const wv = 0.5 + 0.5 * Math.sin(xx * 0.5 - t * 5 + yy * 1.7 + Math.sin(yy * 0.6) * 3), w2 = 0.5 + 0.5 * Math.sin(xx * 0.23 + t * 3.1 - yy * 0.8);
+            const base = (1 + 1.5 * inner) * life * side, tg = (3 + 9 * inner) * Math.pow(wv, 2) * (0.55 + 0.45 * w2) * (0.85 + 0.15 * Math.sin(t * 13 + xx));
+            const hh = Math.round(base + tg * life * side);
+            if (hh < 1) continue;
+            const sw = Math.sin(t * 9 + xx * 0.4 + yy);
+            // the column in bands: gold roots in the middle, orange, then a red-orange tip
+            const b1 = Math.round(hh * (inner > 0.7 ? 0.4 : 0.2)), b2 = Math.round(hh * 0.75);
+            if (b1 > 0) X.rect(g, xx, yy - b1 + 1, 1, b1, FR[1]);
+            if (b2 > b1) X.rect(g, xx + Math.round(sw * b2 * 0.06), yy - b2 + 1, 1, b2 - b1, FR[2]);
+            if (hh > b2) X.rect(g, xx + Math.round(sw * hh * 0.12), yy - hh + 1, 1, hh - b2, hh > 6 ? FR[3] : FR[2]);
+            if (hh > 8 && wv > 0.97) X.px(g, xx + Math.round(sw * hh * 0.14), yy - hh, FR[0]);
+          }
+        }
+        // embers and sparks spiralling up out of the fire, a little smoke
+        for (const p of emit(t, 1.4, 1.1, (i, age) => ({ x: x + (rand(i, 3, c) - 0.5) * cw + Math.sin(age * 6 + i) * 2.5 + age * 4, y: y - 8 - age * 26, age }))) X.px(this.o.x, p.x, p.y, p.age < 0.35 ? FR[0] : p.age < 0.7 ? FR[1] : FR[3]);
+        if (c % 9 === 0) light(x, y - 4, 34, '#ff8a30', 0.5 * life + 0.06 * Math.sin(t * 13 + c));
+      }
+    }
+  }
+  private paintSurfaces(w: World): void {
+    const s = w.surf, c = this.surf.x, n = s.kind.length;
+    c.clearRect(0, 0, FIELD.W, FIELD.H); c._fs = null;
+    const at = (k: number): Pt => [gx(-ARENA.w / 2 + ((k % GRID_W) + 0.5) * CELL), gy(-ARENA.h / 2 + (Math.floor(k / GRID_W) + 0.5) * CELL)];
+    const same = (k: number) => {
+      const x = k % GRID_W, y = Math.floor(k / GRID_W), v = s.kind[k];
+      let m = 0;
+      if (x > 0 && s.kind[k - 1] === v) m++; if (x < GRID_W - 1 && s.kind[k + 1] === v) m++;
+      if (y > 0 && s.kind[k - GRID_W] === v) m++; if (k + GRID_W < n && s.kind[k + GRID_W] === v) m++;
+      return m;
+    };
+    // rims first, so neighbouring cells merge into one soft blob, then the interiors
+    for (let k = 0; k < n; k++) {
+      const v = s.kind[k]; if (!v) continue;
+      const [x, y] = at(k), j = (rand(k, 1) - 0.5) * 1.2;
+      if (v === SURF.water) X.ellipse(c, x + j, y, 6.4, 3.9, '#18325a');
+      else if (v === SURF.ice) X.ellipse(c, x + j, y, 6.4, 3.9, '#7ab8d4');
+      else { X.ellipse(c, x + j, y + 0.5, 7.2, 4.4, '#2a1a12', 0.6); X.ellipse(c, x, y, 5.8, 3.4, EL.fire[4], 0.75); }
+    }
+    for (let k = 0; k < n; k++) {
+      const v = s.kind[k]; if (!v) continue;
+      const [x, y] = at(k), m = same(k);
+      if (v === SURF.water) {
+        if (m >= 3) X.ellipse(c, x, y - 0.5, 5.4, 3.0, '#204a80');
+        if (rand(k, 2) < 0.12) X.line(c, x - 2, y - 1, x + 1, y - 2, '#5aa8e8');
+      } else if (v === SURF.ice) {
+        if (m >= 3) X.ellipse(c, x, y - 0.5, 5.4, 3.0, '#b4e4f4');
+        if (rand(k, 3) < 0.16) X.line(c, x - 2, y, x + 2 + rand(k, 4) * 2, y, '#ffffff');
+        if (rand(k, 5) < 0.1) X.lines(c, [[x - 3, y + 1], [x, y + 2], [x + 3, y + 1]], '#5a90b0');
+      } else if (m >= 3) X.ellipse(c, x, y, 5, 2.8, EL.fire[3]);
+    }
+  }
+
+  // ---- zones: delayed blasts, geysers, healing springs, steam -----------------------------------
+  private zones(w: World, simT: number, light: LightFn, t: number): void {
+    const z = w.zones, g = this.g.x, o = this.o.x;
+    for (let k = 0; k < MAX_ZONES; k++) {
+      const ty = z.type[k]; if (!ty) continue;
+      const x = gx(z.x[k]), y = gy(z.y[k]), r = z.r[k] * 16, e = simT - this.zoneT0[k], R = ramp(z.look[k]), sd = k * 31 + 7;
+      if (ty === ZONE.blast) {
+        // arcane fuse: an outer ring and a ring tightening on the spot, the centre flickering faster
+        const kk = clamp(e / 0.6, 0, 1);
+        K.gring(g, x, y, r, R[3], 0.8, 1); K.gring(g, x, y, r * (1 - kk) + 2, R[1], 1, 1);
+        if (Math.floor(t * (6 + kk * 14)) % 2) X.ellipse(g, x, y, 3, 2, R[2]);
+        light(x, y, r + 10, R[2], 0.3 + 0.4 * kk);
+      } else if (ty === ZONE.geyser) {
+        // earth rumbles: cracks running out, a ring tightening, grit jumping
+        const kk = clamp(e / 0.6, 0, 1);
+        K.cracks(g, x, y, r, sd, kk, '#1a120c', 7);
+        K.gring(g, x, y, r - kk * 4, '#8a6a48', 0.5 + 0.5 * kk, 1);
+        for (let i = 0; i < 6; i++) if (rand(i, Math.floor(t * 20), sd) < 0.5) X.px(o, x + (rand(i, 3, sd) - 0.5) * r * 1.4, y + (rand(i, 4, sd) - 0.5) * r * FY - rand(i, Math.floor(t * 20), 5) * 3, EL.earth[1]);
+      } else if (ty === ZONE.spring) {
+        // a healing spring: soft green rings welling out, light rising, sparkles (it reads as help)
+        const fade = Math.min(seg(e, 0, 0.3), seg(z.life[k], 0, 30));
+        K.gring(g, x, y, r, EL.life[2], 0.9 * fade, 1); K.gring(g, x, y, r * 0.7, EL.life[3], 0.6 * fade, 1);
+        X.ellipse(g, x, y, r * 0.9, r * 0.9 * FY, '#1e7a34', 0.3 * fade);
+        for (let i = 0; i < 2; i++) { const pe = mod(t * 0.7 + i / 2, 1); K.gring(g, x, y, 4 + pe * (r - 4), EL.life[1], (1 - pe) * 0.7 * fade, 1); }
+        K.sparkle(o, x, y - 4, t, fade, r * 1.4, sd, X.LIFE, 18);
+        for (const p of emit(t, 10, 1.2, (i, age) => { const a = rand(i, 1, sd) * TAU, rr = Math.sqrt(rand(i, 2, sd)) * r; return { x: x + Math.cos(a) * rr, y: y + Math.sin(a) * rr * FY - age * 14, age }; })) if (fade > 0.3) X.px(o, p.x, p.y, p.age < 0.5 ? X.WARM[2] : EL.life[1]);
+        light(x, y, r + 14, '#8ef07e', 0.45 * fade);
+      } else if (ty === ZONE.steam) {
+        // a steam cloud: big soft billows drawn over the bodies inside it
+        const cl = easeOut(seg(e, 0, 0.6)) * seg(z.life[k], 0, 30);
+        for (let i = 0; i < 22; i++) {
+          const a = rand(i, 11, sd) * TAU, rr = Math.sqrt(rand(i, 12, sd)) * r * cl, px2 = x + Math.cos(a) * rr + Math.sin(t * 0.9 + i) * 2, py2 = y + Math.sin(a) * rr * 0.55 - 8 - rand(i, 13, sd) * 10 * cl + Math.sin(t * 1.3 + i) * 1.5;
+          K.puff(o, px2, py2 + 2, (5 + rand(i, 14, sd) * 4) * (0.5 + cl * 0.5), '#6a7088', cl);
+          K.puff(o, px2 - 1, py2, (4.5 + rand(i, 14, sd) * 4) * (0.5 + cl * 0.5), i % 4 === 0 ? EL.steam[1] : i % 2 ? '#a8b0c4' : EL.steam[2], cl);
+        }
+        for (const p of emit(t, 6, 1.5, (i, age) => ({ x: x + (rand(i, 21, sd) - 0.5) * r * 2, y: y - 14 - age * 16, age }))) K.puff(o, p.x, p.y, 3 + p.age * 4, EL.steam[2], (1 - p.age) * 0.7 * cl);
+        light(x, y - 6, r + 20, '#d8e0f0', 0.3 * cl);
+      }
+    }
+  }
+
+  // ---- shadows and team rings under the bodies ------------------------------------------------
+  private groundMarks(w: World, bodies: BodyView[], t: number): void {
+    const g = this.g.x, b = w.bodies;
+    for (let i = 0; i < bodies.length; i++) {
+      const v = bodies[i]; if (!v.on) continue;
+      const wd = WIDTH[v.rig] * 1.15;
+      X.shadow(g, v.x + 0.5, v.y + 0.5, wd, Math.max(1.5, wd * FY), HEIGHT[v.rig] * 0.25 * (b.downed[i] ? 0.3 : 1));
+      if (b.kind[i] === KIND.wizard) {
+        const col = X.TEAMS[i % 4].light, me = i === this.localSeat;
+        X.ring(g, v.x, v.y + 1, 8, 8 * FY, col, me ? 1 : 0.55);
+        if (me) { X.px(g, v.x, v.y + 7, col); X.px(g, v.x - 1, v.y + 8, col); X.px(g, v.x + 1, v.y + 8, col); }
+      }
+    }
+    void t;
+  }
+
+  // ---- missiles: the form sets the shape, the look element the material ------------------------
+  private missiles(w: World, t: number, light: LightFn): void {
+    const m = w.missiles, o = this.o.x, g = this.g.x;
+    for (let j = 0; j < MAX_MISSILES; j++) {
+      if (!m.alive[j]) continue;
+      const ty = m.type[j], look = m.look[j], el = elName(look), R = ramp(look), sd = j * 17 + 3;
+      const x = gx(m.x[j]), yg = gy(m.y[j]), vx = m.vx[j], vy = m.vy[j] * FY, L = Math.hypot(vx, vy) || 1, ux = vx / L, uy = vy / L;
+      const e = t - this.mT0[j];
+      if (ty === 3) {
+        // a heal-stone lobbed over everything: a stone with green light seeping from its cracks
+        const k = clamp(1 - m.life[j] / Math.max(1, this.mLife0[j]), 0, 1), z = STAFF_Z + Math.sin(k * Math.PI) * 34, y = yg - z;
+        X.ellipse(g, x, yg, 3, 1.5, 'rgba(8,6,16,0.45)');
+        for (let i = 1; i <= 5; i++) X.px(o, x - ux * i * 3, y + i * (k < 0.5 ? 2 : -2) * 0.6, i < 3 ? X.LIFE[2] : X.LIFE[4]);
+        X.glow(o, x, y, 7, X.LIFE[3], 0.7); K.rock(o, x, y, 4, sd, K.ROCK_MAT.life);
+        X.line(o, x - 2, y - 1, x + 1, y + 1, X.LIFE[2]); X.px(o, x + 1, y - 2, X.LIFE[1]);
+        light(x, yg, 30, '#8ef07e', 0.4);
+        continue;
+      }
+      const y = yg - STAFF_Z;
+      if (ty === 2) {
+        // shards: jagged slivers with a glitter trail; Life's are pale crystal with a green heart
+        X.ellipse(g, x, yg, 2, 1, 'rgba(8,6,16,0.35)');
+        if (look === 2) {
+          for (let k2 = 1; k2 <= 4; k2++) X.px(o, x - ux * k2 * 3, y - uy * k2 * 3, k2 < 2 ? X.LIFE[1] : X.LIFE[3]);
+          X.line(o, x - ux * 3, y - uy * 3, x + ux * 2, y + uy * 2, '#9ff4ff', 2); X.line(o, x - ux * 2, y - uy * 2, x + ux * 3, y + uy * 3, '#ffffff');
+          X.px(o, x, y, X.LIFE[3]); X.glow(o, x, y, 4, X.LIFE[2], 0.6);
+        } else {
+          const SR: Ramp = el === 'cold' || el === 'water' ? EL.cold : el === 'earth' ? X.EARTH : R.length >= 6 ? R : [...R, R[R.length - 1]];
+          for (let k2 = 1; k2 <= 4; k2++) X.px(o, x - ux * k2 * 4, y - uy * k2 * 4, k2 === 1 ? SR[1] : k2 < 3 ? SR[2] : SR[4]);
+          K.shard(o, x, y, Math.atan2(uy, ux), 6.5, sd, 1, SR);
+        }
+        continue;
+      }
+      if (ty === 1) {
+        const r = clamp(m.r[j] * 16, 3, 8);
+        X.ellipse(g, x, yg, r * 0.8, r * 0.4, 'rgba(8,6,16,0.45)');
+        if (el === 'fire') {
+          // a fireball: burning flecks and dark smoke peeling off behind it
+          for (const p of emit(t, 70, 0.4, (i, age, ts) => { const back = (t - ts) * L * 16; return { x: x - ux * back + (rand(i, 2, sd) - 0.5) * 3, y: y - uy * back + (rand(i, 3, sd) - 0.5) * 3 - age * 8, age }; }, this.mT0[j], t)) X.px(o, p.x, p.y, K.fireCol(p.age));
+          for (const p of emit(t, 18, 0.7, (i, age, ts) => { const back = (t - ts) * L * 16 + 3; return { x: x - ux * back, y: y - uy * back - age * 10, age }; }, this.mT0[j], t)) if (p.age > 0.2) K.puff(o, p.x, p.y, 1.5 + p.age * 3, '#4a4250', (1 - p.age) * 0.7);
+          K.fireball(o, x, y, r, t, ux, uy, sd);
+          light(x, yg, 44, '#ff7a2a', 0.9);
+        } else {
+          // a rock, an ice boulder, a mud ball...: the same heavy missile in the look's material
+          const mat = el === 'cold' ? K.ROCK_MAT.cold : el === 'water' ? K.ROCK_MAT.water : el === 'arcane' ? K.ROCK_MAT.arcane : el === 'lightning' ? K.ROCK_MAT.lightning : K.ROCK_MAT.earth;
+          for (let k2 = 1; k2 <= 4; k2++) X.px(o, x - ux * k2 * 4, y - uy * k2 * 4 + k2 * 0.5, el === 'cold' ? EL.cold[k2] : el === 'water' ? EL.water[Math.min(4, k2)] : X.EARTH[k2]);
+          K.rock(o, x, y, r, sd, mat);
+          if (el === 'cold') { if (Math.floor(t * 8 + j) % 3 === 0) X.px(o, x - r * 0.3, y - r * 0.5, '#ffffff'); light(x, yg, 30, '#9ff4ff', 0.4); }
+          if (el === 'water') for (const p of emit(t, 14, 0.4, (i, age) => ({ x: x + (rand(i, 4, sd) - 0.5) * r, y: y + r * 0.5 + age * age * 10, age }))) X.px(o, p.x, p.y, '#8ad0ff');
+          if (el === 'lightning' && Math.floor(t * 18) % 3 !== 2) { K.zap(o, [x - r, y], [x + r, y - 1], Math.floor(t * 18) + sd, EL.lightning, 1, 0); light(x, yg, 30, '#b08aff', 0.5); }
+          if (el === 'arcane') { X.glow(o, x, y, r + 3, R[2], 0.5); light(x, yg, 30, R[2], 0.4); }
+        }
+        void e;
+        continue;
+      }
+      // a plain bolt in the look's colours
+      for (let k2 = 6; k2 >= 1; k2--) K.sq(o, x - ux * k2 * 2.5, y - uy * k2 * 2.5, k2 < 3 ? 2 : 1, R[Math.min(R.length - 1, 1 + (k2 >> 1))]);
+      X.glow(o, x, y, 6, R[2], 0.7); K.sq(o, x, y, 3, R[2]); K.sq(o, x, y, 2, R[1]); X.px(o, x, y - 1, '#ffffff');
+      light(x, yg, 30, R[2], 0.5);
+    }
+  }
+
+  // ---- channels and charges: beams, sprays, the charging rock ------------------------------------
+  private channels(w: World, t: number, bodies: BodyView[], light: LightFn): void {
+    const s = w.seats, o = this.o.x, g = this.g.x;
+    for (let i = 0; i < MAX_SEATS; i++) {
+      if (!s.active[i]) continue;
+      const ph = s.phase[i], v = bodies[i];
+      if (!v?.on || !v.a) continue;
+      const tip: Pt = [v.x + v.a.tip[0], v.y + v.a.tip[1]];
+      if (ph === PHASE.charge) {
+        const spec = specOf(w, i), ch: Pt = [v.x + v.a.charge[0], v.y + v.a.charge[1]], k = smooth(clamp(s.chanTicks[i] / 60, 0, 1)), el = elName(spec.look);
+        for (let q = 0; q < 7; q++) { const a = t * 8 + q * 0.9, r = 10 - k * 6; X.px(o, ch[0] + Math.cos(a) * r, ch[1] + Math.sin(a) * r * 0.7, ramp(spec.look)[q % 2 ? 1 : 2]); }
+        if (spec.heal) { K.rock(o, ch[0], ch[1] + 2, 1.5 + k * 3.5, 6, K.ROCK_MAT.life); X.glow(o, ch[0], ch[1] + 2, 4 + k * 3, X.LIFE[3], 0.5); }
+        else if (el === 'fire') { K.fireball(o, ch[0], ch[1], 1.2 + k * 3.2, t, 0.2, -1, 4); light(ch[0], v.y, 30, '#ff7a2a', 0.5 * k + 0.2); }
+        else K.rock(o, ch[0], ch[1] + 2, 1.5 + k * 4, 4, el === 'cold' ? K.ROCK_MAT.cold : el === 'water' ? K.ROCK_MAT.water : K.ROCK_MAT.earth);
+        continue;
+      }
+      if (ph !== PHASE.channel) continue;
+      const spec = specOf(w, i), t0 = t - s.chanTicks[i] / 60, sd = i * 977;
+      const ex = gx(s.chanEndX[i]), ey = gy(s.chanEndY[i]);
+      const look = elName(spec.look || spec.form);
+      if (spec.shape === 'beam') {
+        const z: Pt = [ex, ey - LIFT], on = easeOut(seg(t, t0, t0 + 0.12));
+        const full: Pt = [lerp(tip[0], z[0], on), lerp(tip[1], z[1], on)];
+        const hitBody = this.beamHits(w, s.chanEndX[i], s.chanEndY[i], i);
+        if (spec.heal) { K.beam(o, tip, full, t, X.LIFE_L, { on: 1, hit: hitBody && on > 0.95, seed: sd }); }
+        else if (look === 'fire') K.fireBeam(o, tip, full, t, hitBody && on > 0.95);
+        else {
+          const R = look === 'cold' ? X.FROST : ramp(spec.look);
+          // a second element in the beam twists round it as a strand (arcane + fire's strand is the fire beam itself)
+          K.beam(o, tip, full, t, R, { on: 1, hit: hitBody && on > 0.95, seed: sd });
+          if (look === 'cold') for (const p of emit(t, 60, 0.6, (q, age) => { const kk = rand(q, 71, sd); return { x: lerp(tip[0], full[0], kk) + (rand(q, 72, sd) - 0.5) * 4, y: lerp(tip[1], full[1], kk) + age * 9 + Math.sin(age * 8 + q) * 1.2, age, q }; })) X.px(o, p.x, p.y, (p.q + Math.floor(t * 16)) % 5 === 0 ? '#ffffff' : p.age < 0.5 ? X.FROST[2] : X.FROST[4]);
+        }
+        const lc = spec.heal ? '#8ef07e' : look === 'fire' ? '#ff6a20' : ramp(spec.look)[2];
+        for (let q = 1; q <= 3; q++) light(lerp(tip[0], full[0], q / 4), lerp(v.y, ey, q / 4), 34, lc, 0.4);
+        light(ex, ey, 50, lc, 0.6);
+      } else if (spec.shape === 'spray') {
+        const z: Pt = [ex, ey - 6];
+        if (spec.heal) {
+          if (look === 'water') {
+            K.cone(o, tip, z, t, 'water', t0, { spread: 0.22, power: 0.7, seed: sd });
+            for (const p of emit(t, 40, 0.45, (q, age) => ({ x: lerp(tip[0], z[0], age * 1.05), y: lerp(tip[1], z[1], age * 1.05) + (rand(q, 3, sd) - 0.5) * 10 * age - Math.sin(age * Math.PI) * 4, age }), t0, t)) X.px(o, p.x, p.y, p.age < 0.5 ? X.LIFE[1] : X.LIFE[3]);
+          } else K.warmCone(o, tip, z, t, t0, X.WARM, sd);
+          light(lerp(tip[0], ex, 0.5), lerp(v.y, ey, 0.5), 50, '#ffe68a', 0.5);
+        } else {
+          const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
+          K.cone(o, tip, z, t, kind, t0, { spread: 0.28, seed: sd });
+          light(lerp(tip[0], ex, 0.55), lerp(v.y, ey, 0.55), 50, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', kind === 'fire' ? 0.7 : 0.45);
+          if (kind === 'cold') for (let q = 0; q < 40; q++) { const a = rand(q, 61, sd) * TAU, r = Math.pow(rand(q, 62, sd), 0.7) * 18 * seg(t, t0 + 0.3, t0 + 1.3); X.px(g, ex + Math.cos(a) * r, ey + Math.sin(a) * r * FY * 0.7, q % 4 === 0 ? '#ffffff' : q % 2 ? '#bfe8f6' : '#8ccce4'); }
+        }
+      } else if (spec.shape === 'arc') {
+        X.glow(o, tip[0], tip[1], 6, look === 'fire' ? X.PLASMA[2] : spec.heal ? X.LIFE[2] : EL.lightning[2], 0.8);
+      }
+      // the Double echoes the channel from its own spot at half power (the sim pays for it: dblPaid)
+      const d = s.double[i], dv = d >= 0 && w.bodies.kind[d] === KIND.double ? bodies[d] : null;
+      if (s.dblPaid[i] && dv?.on && dv.a && (spec.shape === 'beam' || spec.shape === 'spray')) {
+        const dt: Pt = [dv.x + dv.a.tip[0], dv.y + dv.a.tip[1]], dex = gx(s.dblEndX[i]), dey = gy(s.dblEndY[i]), sd2 = sd + 31;
+        if (spec.shape === 'beam') {
+          const R = spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look);
+          K.beam(o, dt, [dex, dey - LIFT], t, R, { on: easeOut(seg(t, t0, t0 + 0.12)), w: 0.5, hit: this.beamHits(w, s.dblEndX[i], s.dblEndY[i], d), seed: sd2 });
+          light(dex, dey, 34, spec.heal ? '#8ef07e' : R[2], 0.35);
+        } else {
+          const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
+          if (spec.heal && look !== 'water') K.warmCone(o, dt, [dex, dey - 6], t, t0, X.WARM, sd2);
+          else K.cone(o, dt, [dex, dey - 6], t, kind, t0, { spread: 0.2, power: 0.45, seed: sd2 });
+          light(lerp(dt[0], dex, 0.5), lerp(dv.y, dey, 0.5), 34, kind === 'fire' ? '#ff7a2a' : '#7fb0ff', 0.3);
+        }
+        X.glow(o, dt[0], dt[1], 4, EL.sigil[2], 0.6);
+      }
+    }
+  }
+  /** Did a beam end on a body (so it splashes), or in the air? */
+  private beamHits(w: World, x: number, y: number, src: number): boolean {
+    const b = w.bodies;
+    for (let i = 0; i < b.kind.length; i++) if (i !== src && b.kind[i] && Math.abs(b.x[i] - x) < b.r[i] + 0.4 && Math.abs(b.y[i] - y) < b.r[i] + 0.4) return true;
+    return false;
+  }
+
+  // ---- wizards: staff orbs, the readiness swirl, queued runes gathering at the staff ---------------
+  private casters(w: World, t: number, bodies: BodyView[], light: LightFn): void {
+    const s = w.seats, o = this.o.x, g = this.g.x;
+    for (let i = 0; i < MAX_SEATS; i++) {
+      if (!s.active[i]) { this.motes[i].length = 0; continue; }
+      const v = bodies[i]; if (!v?.on || !v.a) continue;
+      const casting = s.phase[i] === PHASE.windup || s.phase[i] === PHASE.charge;
+      const q: number[] = [];
+      const src = casting ? s.castQueue : s.queue, len = casting ? s.castLen[i] : s.queueLen[i];
+      for (let k = 0; k < len; k++) q.push(src[i * QUEUE_MAX + k]);
+      // keep the arrival time of motes that are still queued; new ones start their flight now
+      const ms = this.motes[i];
+      let same = 0;
+      while (same < ms.length && same < q.length && ms[same].el === q[same]) same++;
+      ms.length = same;
+      for (let k = same; k < q.length; k++) ms.push({ el: q[k], tq: t });
+      const ch: Pt = [v.x + v.a.charge[0], v.y + v.a.charge[1]], tip: Pt = [v.x + v.a.tip[0], v.y + v.a.tip[1]];
+      // the staff orb: the colour of what is being built or cast, else the wizard's own
+      const orbEl = ms.length ? ms[ms.length - 1].el : s.phase[i] !== PHASE.idle ? specOf(w, i).look || SEAT_EL[i] : SEAT_EL[i], OR = ramp(orbEl);
+      X.rect(o, tip[0] - 1, tip[1] - 1, 3, 3, OR[2]); X.px(o, tip[0], tip[1] - 1, OR[0]); X.px(o, tip[0] - 1, tip[1], OR[1]);
+      X.glow(o, tip[0], tip[1], 5 + (s.phase[i] === PHASE.channel ? 2 : 0), OR[2], 0.55);
+      light(v.x, v.y - 2, 40, '#a8a0d0', 0.35); light(tip[0], v.y + 2, 24, OR[2], 0.35);
+      // the readiness swirl: one mote per ready rune, in runs of element colour, round the waist
+      this.swirl(g, o, w, i, v, t, ms.length > 0 || s.phase[i] !== PHASE.idle);
+      // queued runes fly from the swirl to the staff and orbit there as a charge
+      let arrived = 0, last = 0;
+      ms.forEach((mq, k) => {
+        const e = (t - mq.tq) / 0.24, R = ramp(mq.el);
+        if (e < 1) {
+          const a0 = 2.4 + k * 1.3, sx = v.x + Math.cos(a0) * 11, sy = v.y - 9 + Math.sin(a0) * 11 * FY, kk = smooth(Math.max(0, e));
+          const x = lerp(sx, ch[0], kk), y = lerp(sy, ch[1], kk) - Math.sin(e * Math.PI) * 5;
+          for (let tr = 1; tr <= 3; tr++) { const k2 = smooth(Math.max(0, e - tr * 0.09)); X.px(o, lerp(sx, ch[0], k2), lerp(sy, ch[1], k2) - Math.sin(Math.max(0, e - tr * 0.09) * Math.PI) * 5, R[tr < 2 ? 2 : 3]); }
+          X.rect(o, x - 1, y - 1, 2, 2, R[1]); X.px(o, x, y - 1, R[0]);
+          return;
+        }
+        arrived++; last = mq.el;
+        const n = ms.length, a2 = (k / n) * TAU + t * 7, r = 3.4 + n * 0.6, x = ch[0] + Math.cos(a2) * r, y = ch[1] + Math.sin(a2) * r * 0.75;
+        X.px(o, x - Math.cos(a2 - 0.5) * 1.6, y - Math.sin(a2 - 0.5) * 1.2, R[3]);
+        X.rect(o, x - 0.5, y - 0.5, 2, 2, R[0]); X.px(o, x + 1, y + 1, R[2]);
+        const pe = (t - mq.tq - 0.24) / 0.22;
+        if (pe >= 0 && pe < 1) { X.ring(o, ch[0], ch[1], 2 + pe * 7, (2 + pe * 7) * 0.8, R[pe < 0.4 ? 0 : 1], 1 - pe); if (pe < 0.25) X.rect(o, ch[0] - 1, ch[1] - 1, 3, 3, '#ffffff'); }
+      });
+      if (arrived) {
+        const R = ramp(last);
+        X.glow(o, ch[0], ch[1], 5 + arrived * 2.4, R[2], 0.75 + 0.15 * Math.sin(t * 30));
+        X.ring(o, ch[0], ch[1], 3.4 + ms.length * 0.6, (3.4 + ms.length * 0.6) * 0.75, R[3], 0.5);
+        X.rect(o, ch[0] - 1, ch[1] - 1, 2, 2, R[1]); X.px(o, ch[0], ch[1], arrived === ms.length ? '#ffffff' : R[0]);
+        light(ch[0], v.y, 30 + arrived * 6, R[2], 0.3 + 0.12 * arrived);
+      }
+    }
+  }
+  private swirl(g: Ctx, o: Ctx, w: World, i: number, v: BodyView, t: number, busy: boolean): void {
+    // the local player's HUD shows the detail: their swirl is a third as dense, closer and dimmer
+    const me = i === this.localSeat, sc = me ? 0.34 : 1, rr = me ? 11.5 : 14, ph = (i + 1) * 1.7, W1 = TAU / 12;
+    let k = 0;
+    for (let e = 1; e <= N_EL; e++) {
+      const val = w.seats.runes[i * N_EL + e - 1] * sc, n = Math.floor(val + 1e-6), fr = val - n, R = ramp(e);
+      for (let j = 0; j <= n; j++) {
+        const part = j === n ? fr : 0;
+        if (j === n && fr <= 0.3) break;
+        const kk = k + j;
+        if (part && Math.floor(t * 4 + j) % 2) continue; // a regenerating rune blinks in
+        if (busy && j & 1) continue; // casting: the swirl steps back
+        const slot = (q: number) => { const a = ph + W1 * 2 * t - q * 0.5 * (me ? 0.62 : 0.8), z = 10 + (me ? 2.5 : 4) * Math.sin(a + ph) + Math.sin(W1 * 7 * t + q) * 0.7; return { x: v.x + Math.cos(a) * rr, y: v.y + Math.sin(a) * rr * FY - z, front: Math.sin(a) > -0.1 }; };
+        const p = slot(kk), b2 = slot(kk + 0.22), dim = part > 0 || busy || me;
+        if (!p.front) { X.px(g, p.x, p.y, R[dim ? 3 : 2]); X.px(g, b2.x, b2.y, R[4] ?? R[3]); continue; }
+        if (!dim) {
+          X.px(o, b2.x, b2.y, R[3]);
+          X.px(o, p.x - 1, p.y, R[2]); X.px(o, p.x + 1, p.y, R[2]); X.px(o, p.x, p.y - 1, R[2]); X.px(o, p.x, p.y + 1, R[3]);
+          X.px(o, p.x, p.y, R[0]);
+        } else { X.px(o, p.x, p.y, R[me ? 2 : 1]); if (!me) X.px(o, b2.x, b2.y, R[3]); }
+      }
+      k += val;
+    }
+  }
+
+  // ---- statuses hanging off bodies (the rig draws what is on the body) --------------------------
+  private statuses(w: World, simT: number, bodies: BodyView[], light: LightFn, t: number): void {
+    const b = w.bodies, o = this.o.x;
+    for (let i = 0; i < bodies.length; i++) {
+      const v = bodies[i]; if (!v.on || !v.a) continue;
+      const ch: Pt = [v.x + v.a.chest[0], v.y + v.a.chest[1]], hd: Pt = [v.x + v.a.head[0], v.y + v.a.head[1]], big = v.rig === 'brute';
+      if (b.burn[i] > 0) { K.burningFx(o, ch, t, b.burn[i] < 20 ? 0.5 : 1, big, i * 7); light(v.x, v.y - 4, big ? 70 : 44, '#ff7020', 0.6 + 0.06 * Math.sin(t * 19 + i)); }
+      if (b.wet[i] > 0 && !b.frozen[i]) K.drips(o, ch, v.y, t, i * 5);
+      if (b.frozen[i]) { K.iceGlints(o, v.x, v.y, HEIGHT[v.rig] + 3, WIDTH[v.rig] + 1, t, i); light(v.x, v.y - 4, 30, '#bff4ff', 0.3); }
+      else if (b.chill[i] > 0.1) K.chilled(o, ch, hd, t, Math.min(1, b.chill[i] / 3), i, big ? 1.8 : 1);
+      if (b.stun[i] > 0) K.shockSparks(o, ch, t, i * 3);
+      if (b.expose[i] > 0) {
+        // exposed: its guard is broken open, cracked amber marks flicker on the body and a broken ring at its feet
+        const f = Math.floor(t * 8 + i);
+        if (f % 4) { X.lines(o, [[ch[0] - 3, ch[1] - 3], [ch[0] - 1, ch[1] - 1], [ch[0] - 2, ch[1] + 1]], '#ffb060'); X.lines(o, [[ch[0] + 3, ch[1] - 2], [ch[0] + 1, ch[1]], [ch[0] + 2, ch[1] + 2]], '#ff7a3a'); }
+        for (let k = 0; k < 8; k++) if ((k + f) % 3) { const a = (k / 8) * TAU; X.px(this.g.x, v.x + Math.cos(a) * 7, v.y + 1 + Math.sin(a) * 7 * FY, '#ff7a3a'); }
+      }
+      if (b.down[i] > 0 && !b.downed[i]) K.dazed(o, hd, t);
+      if (simT - this.healAt[i] < 1.2) K.sparkle(o, v.x, v.y - 10, t, 1 - seg(simT - this.healAt[i], 0.8, 1.2), 10, i, X.LIFE);
+    }
+  }
+  private bars(w: World, bodies: BodyView[]): void {
+    const b = w.bodies, o = this.o.x;
+    for (let i = 0; i < bodies.length; i++) {
+      const v = bodies[i]; if (!v.on || !v.a || b.hp[i] >= b.maxHp[i] || b.downed[i]) continue;
+      const f = Math.max(0, b.hp[i] / b.maxHp[i]), wd = v.rig === 'brute' ? 18 : 12;
+      const x = Math.round(v.x - wd / 2), y = Math.round(v.y + v.a.head[1] - (v.rig === 'wizard' ? 18 : 9));
+      X.rect(o, x - 1, y - 1, wd + 2, 4, '#120e1a'); X.rect(o, x, y, wd, 2, '#3a1420');
+      X.rect(o, x, y, Math.max(1, Math.round(wd * f)), 2, b.team[i] === 1 ? (f > 0.5 ? '#5fe07a' : f > 0.25 ? '#e6c84a' : '#e05a5a') : '#e05a5a');
+    }
+  }
+
+  // ---- event effects ---------------------------------------------------------------------------
+  private drawFx(f: Fx, e: number, t: number, w: World, bodies: BodyView[], light: LightFn): void {
+    const o = this.o.x, g = this.g.x, sd = f.seed, R = ramp(f.look), el = elName(f.look);
+    const x = gx(f.x), y = gy(f.y), r = f.r * 16;
+    const body = f.who >= 0 && f.who < bodies.length ? bodies[f.who] : null;
+    switch (f.kind) {
+      case 'release': {
+        if (!body?.on || !body.a) return;
+        const ch: Pt = [body.x + body.a.charge[0], body.y + body.a.charge[1]], els = f.els?.length ? f.els : [f.look || 6];
+        els.forEach((id, k) => X.ring(o, ch[0], ch[1], 2 + e * 40 + k * 2, (2 + e * 40 + k * 2) * 0.8, ramp(id)[k ? 2 : 1], 1 - e / 0.25));
+        if (e < 0.06) X.rect(o, ch[0] - 2, ch[1] - 2, 5, 5, '#ffffff');
+        return;
+      }
+      case 'pop': {
+        // small damage and heal numbers: rise a few pixels and fade (dithered), never noisy
+        const v = bodies[f.who];
+        if (!v?.on || !v.a) return;
+        const k = e / f.life, px2 = v.x + (rand(sd, 1) - 0.5) * 8, py2 = v.y + v.a.head[1] - 12 - easeOut(Math.min(1, k * 1.6)) * 8;
+        if (k > 0.7 && X.bay(Math.round(px2), Math.round(py2 + e * 60)) < (k - 0.7) / 0.3) return;
+        const heal = f.look === 1, str = f.text ? f.text : (heal ? '+' : '') + f.n;
+        const col = f.text ? '#ffd36b' : heal ? X.LIFE[1] : f.n >= 20 ? '#ffd860' : '#f4f0f8';
+        X.text(o, str, Math.round(px2 - str.length * 2), Math.round(py2), col, '#120e1a');
+        return;
+      }
+      case 'zap': {
+        if (Math.floor(t * 18) % 3 === 2 && e > 0.05) return;
+        const from = this.bodyAt(bodies, w, f.x, f.y), to = this.bodyAt(bodies, w, f.x2, f.y2);
+        const a: Pt = from ? (from.seat === f.who && from.a ? [from.x + from.a.tip[0], from.y + from.a.tip[1]] : [from.x + (from.a?.chest[0] ?? 0), from.y + (from.a?.chest[1] ?? -8)]) : [x, y - 8];
+        const z: Pt = to?.a ? [to.x + to.a.chest[0], to.y + to.a.chest[1]] : [gx(f.x2), gy(f.y2) - 8];
+        const s2 = sd + Math.floor(t * 18) * 13;
+        if (f.text === 'flame') {
+          // the flame arc: a white-hot plasma channel spraying molten sparks
+          const pts = K.bolt(a, z, s2, 0.3, 4);
+          X.lines(o, pts, X.PLASMA[4], 4); X.lines(o, pts, X.PLASMA[2], 2); X.lines(o, pts, '#ffffff', 1);
+          X.glow(o, z[0], z[1], 7, X.PLASMA[2], 0.9); X.rect(o, z[0] - 1, z[1] - 1, 3, 3, '#ffffff');
+          K.moltenSparks(o, z[0], to ? to.y : z[1] + 8, 9, t, 80, sd, f.t0, f.t0 + 0.15);
+          light(z[0], to ? to.y : z[1] + 8, 46, '#ffb050', 0.8);
+        } else if (f.text === 'life') {
+          const pts = K.bolt(a, z, s2, 0.3, 4);
+          X.lines(o, pts, X.LIFE[5], 3); X.lines(o, pts, X.LIFE[3], 2); X.lines(o, pts, X.LIFE[0], 1); X.glow(o, z[0], z[1], 6, X.LIFE[2], 0.8);
+          light(z[0], z[1] + 8, 34, '#8ef07e', 0.6);
+        } else {
+          const LR = el === 'lightning' || !f.look ? EL.lightning : R;
+          K.zap(o, a, z, s2, LR); K.zapHit(o, z, s2, LR);
+          light(z[0], z[1] + 8, 60, '#b08aff', 0.8);
+        }
+        return;
+      }
+      case 'discharge': {
+        if (!body?.on || !body.a) return;
+        const c: Pt = [body.x + body.a.chest[0], body.y + body.a.chest[1] - 2];
+        K.gring(g, body.x, body.y, (4 + SHAPES_DISCHARGE) * 16 * easeOut(Math.min(1, e / 0.2)), EL.lightning[3], 0.4 * (1 - e / f.life), 1);
+        if (Math.floor(t * 20) % 3 !== 2) { X.glow(o, c[0], c[1], 10, EL.lightning[2], 0.9); for (let k = 0; k < 4; k++) { const a = rand(sd + Math.floor(t * 20), k) * TAU; X.lines(o, K.bolt(c, [c[0] + Math.cos(a) * 16, c[1] + Math.sin(a) * 12], sd + k + Math.floor(t * 20), 0.5, 2), EL.lightning[2], 1); } }
+        light(body.x, body.y, 70, '#b08aff', 0.9 * (1 - e / f.life));
+        return;
+      }
+      case 'strike': {
+        // a sky strike: a bolt from above, a white flash, a ring, light everywhere
+        const top: Pt = [x + 14, y - FIELD.OY + 4];
+        if (e < 0.25 && Math.floor(t * 30) % 2 === 0) { const pts = K.bolt(top, [x, y - 2], sd + Math.floor(t * 30), 0.25, 5); X.lines(o, pts, EL.lightning[3], 4); X.lines(o, pts, '#ffffff', 2); }
+        if (e < 0.06) X.ellipse(o, x, y - 4, 16, 10, '#ffffff');
+        if (e < 0.4) K.gring(g, x, y, 4 + e * 60, EL.lightning[1], 1 - e / 0.4, 1);
+        K.scorch(g, x, y, 8, 0.5 * (1 - seg(e, 0.3, 0.6)));
+        light(x, y, 120, '#c4a4ff', 1.2 * (1 - e / 0.3));
+        return;
+      }
+      case 'nova': {
+        if (f.look === 8) {
+          // the fire ring: a front of flame tongues racing outward
+          const q = e / 0.55;
+          if (q < 1.3) { const rr = 4 + (r - 4) * easeOut(Math.min(1, q)), a = 1 - seg(q, 0.7, 1.3); for (let i = 0; i < 26; i++) { const th = (i / 26) * TAU; if (rand(i, Math.floor(t * 15), sd) > a + 0.15) continue; K.tongue(o, x + Math.cos(th) * rr, y + Math.sin(th) * rr * FY, 2.2, (6 + 3 * Math.sin(t * 14 + i)) * a, Math.sin(t * 7 + i) * 1.5); } K.gring(g, x, y, rr, EL.fire[2], a, 1); }
+          light(x, y, r + 30, '#ff7a2a', 0.9 * (1 - seg(e, 0, 0.7)));
+          return;
+        }
+        const Rp = f.look === 2 ? EL.life : R;
+        const rr = K.nova(o, x, y - 2, t, f.t0, 0.5, r, Rp, { n: 34, lift: f.look === 2 ? 10 : 6, seed: sd });
+        if (f.look === 1 && rr > 0 && e < 0.5) for (let i = 0; i < 18; i++) { const a = (i / 18) * TAU; X.px(o, x + Math.cos(a) * rr * 0.9, y + Math.sin(a) * rr * 0.9 * FY - 4 - Math.sin((e / 0.5) * Math.PI) * 8, EL.water[0]); }
+        if (f.look === 4) { const k = seg(e, 0, 0.6) * (1 - seg(e, 0.8, 1.3)); if (k > 0) { K.gring(g, x, y, 8 + (r - 8) * k, 'rgba(210,245,255,0.5)', 0.6, 2); for (let i = 0; i < 30; i++) { const a = rand(i, 5, sd) * TAU, q = Math.sqrt(rand(i, 6, sd)) * r * k; X.px(g, x + Math.cos(a) * q, y + Math.sin(a) * q * FY, i % 3 ? '#c4eefa' : '#ffffff'); } } }
+        if (f.look === 2) K.sparkle(o, x, y - 6, t, 1 - seg(e, 0.6, 1.2), r, sd, X.LIFE, 20);
+        light(x, y, r + 30, Rp[2], 0.8 * (1 - seg(e, 0, 0.6)));
+        return;
+      }
+      case 'quake': case 'slam': {
+        // the ground cracks out from the centre and a ring of dust and stones rolls out
+        const front = Math.max(4, r * easeOut(Math.min(1, e / 0.5)));
+        K.cracks(g, x, y, r * 0.9, sd, seg(e, 0, 0.4), '#1a120c', 9);
+        X.ellipse(g, x, y, 12, 6, 'rgba(26,18,12,0.5)');
+        if (e < 1) { const a = 1 - seg(e, 0.5, 1); K.gring(g, x, y, front, '#553e2a', a, 3); K.gring(g, x, y, front + 1, '#b8946a', a, 1); }
+        if (e < 0.7) { const q = e / 0.7, a = 1 - q; K.gring(o, x, y, front, X.EARTH[1], a, 2); for (let i = 0; i < 22; i++) { const th = (i / 22) * TAU + rand(i, 2, sd) * 0.2, px2 = x + Math.cos(th) * front, py2 = y + Math.sin(th) * front * FY; K.puff(o, px2, py2 - 2 - q * 4, 2 + q * 3, i % 2 ? '#8a7a68' : '#6a5a4a', a); if (i % 3 === 0 && q < 0.5) X.rect(o, px2, py2 - 4 - Math.sin(q * 9) * 4, 2, 2, '#977552'); } }
+        return;
+      }
+      case 'patch': {
+        if (f.look === 8) {
+          if (e < 0.9) for (let i = 0; i < 48; i++) { const a = (i / 48) * TAU, rr = r * easeOut(e / 0.9) + (rand(i, Math.floor(t * 20), 62) - 0.5) * 2; X.px(o, x + Math.cos(a) * rr, y + Math.sin(a) * rr * FY - 1, i % 2 ? EL.fire[1] : EL.fire[0]); }
+        } else if (f.look === 1) {
+          // a localized downpour: a dark cloud over the spot, rain streaks, splashes
+          const cloud = Math.min(seg(e, 0, 0.3), 1 - seg(e, f.life - 0.4, f.life)), CY = y - 46;
+          for (const p of emit(t, 90, 0.42, (i, age) => { const a = rand(i, 81, sd) * TAU, q = Math.sqrt(rand(i, 82, sd)) * r; return { gx2: x + Math.cos(a) * q, gy2: y + Math.sin(a) * q * FY, age, top: CY + 6 + rand(i, 83, sd) * 6 }; }, f.t0 + 0.1, f.t0 + f.life - 0.4)) {
+            if (p.age <= 0.8) { const q = p.age / 0.8, px2 = lerp(p.gx2 + 9, p.gx2, q), py2 = lerp(p.top, p.gy2, q * q * 0.35 + q * 0.65); X.line(o, px2 + 1, py2 - 3, px2, py2, '#5aa8e8'); X.px(o, px2, py2, '#cfefff'); }
+            else { const q = (p.age - 0.8) / 0.2; X.ring(g, p.gx2, p.gy2, 1 + q * 2.5, (1 + q * 2.5) * 0.45, '#8ad0ff', 1 - q); }
+          }
+          if (cloud > 0.05) for (let i = 0; i < 14; i++) {
+            const cx = x + 6 + (rand(i, 91, sd) - 0.5) * r * 1.8 * (0.6 + 0.4 * cloud) + Math.sin(t * 0.8 + i) * 1.5, cy = CY + (rand(i, 92, sd) - 0.5) * 10, cr = (5 + rand(i, 93, sd) * 4) * (0.5 + 0.5 * cloud);
+            K.puff(o, cx, cy + 2, cr, '#2e3246', cloud); K.puff(o, cx - 1, cy, cr * 0.85, i % 3 ? '#4a5068' : '#5c6480', cloud);
+          }
+          light(x, y, r + 16, '#2a8cff', 0.3 * cloud);
+        } else if (f.look === 4) {
+          if (e < 0.6) { const front = x - r - 8 + (e / 0.6) * (r * 2 + 16); for (let i = 0; i < 10; i++) X.px(o, front + (rand(i, Math.floor(t * 20), sd) - 0.5) * 4, y - r * FY + i * r * FY * 0.2, i % 2 ? '#ffffff' : EL.cold[1]); }
+          light(x, y, r + 20, '#9ff4ff', 0.4 * (1 - e / f.life));
+        }
+        return;
+      }
+      case 'blast': case 'geyser': {
+        if (f.kind === 'blast') {
+          K.scorch(g, x, y, r * 0.55, 0.35 * (1 - seg(e, f.life - 0.6, f.life))); K.cracks(g, x, y, r * 0.65, sd, 1, 'rgba(30,14,30,0.8)', 7);
+          if (e < 0.5) { X.glow(o, x, y - 6, 24 * (1 - e * 1.5), R[2], 0.9); K.gring(o, x, y, 6 + e * 100, R[1], 1 - e / 0.5, 2); K.gring(o, x, y, 4 + e * 70, '#ffffff', 0.8 - e / 0.5, 1); }
+          if (e < 0.8) for (let k = 0; k < 24; k++) { const a = rand(k, 91, sd) * TAU, sp = 30 + rand(k, 92, sd) * 40, vz = 30 + rand(k, 93, sd) * 50, z = vz * e - 120 * e * e; if (z < 0) continue; K.sq(o, x + Math.cos(a) * sp * e, y + Math.sin(a) * sp * e * FY - z, k % 3 ? 1 : 2, k % 2 ? R[1] : '#ffffff'); }
+          light(x, y, r + 40, R[2], 1.1 * (1 - seg(e, 0, 0.5)));
+        } else {
+          // the geyser erupts: rock and earth thrown high, a column of dust, the ground broken
+          K.scorch(g, x, y, r * 0.8, 0.6 * (1 - seg(e, f.life - 0.5, f.life))); K.cracks(g, x, y, r * 1.1, sd, 1, '#1a120c', 7);
+          const gcols: Ramp = f.look === 1 ? [EL.water[1], EL.water[2], '#ffffff'] : f.look === 8 ? [EL.fire[1], EL.fire[3], '#6a2a1a'] : f.look === 4 ? [EL.cold[1], EL.cold[3], '#ffffff'] : ['#977552', '#553e2a', '#b8946a'];
+          if (e < 0.45) K.gring(g, x, y, 8 + e * 80, '#e0c8a0', 1 - e / 0.45, 1);
+          if (e < 0.08) X.ellipse(o, x, y - 6, 12, 9, '#ffffff');
+          for (let i = 0; i < 6; i++) { const h = (14 + rand(i, 33, sd) * 10) * easeOut(seg(e, 0, 0.08 + i * 0.01)) * (1 - seg(e, 0.6, 1.1)); if (h < 1) continue; const a = (i / 6) * TAU + rand(i, 31, sd) * 0.5, rr = 3 + rand(i, 32, sd) * r * 0.5, sx = x + Math.cos(a) * rr, sy = y + Math.sin(a) * rr * FY, wd = 2.5 + rand(i, 34, sd); X.poly(o, [[sx - wd - 1, sy + 1], [sx + wd + 1, sy + 1], [sx + Math.cos(a) * 2 + 1, sy - h - 1], [sx + Math.cos(a) * 2 - 1, sy - h - 1]], '#1a120c'); X.poly(o, [[sx - wd, sy], [sx + wd, sy], [sx + Math.cos(a) * 2 + 0.5, sy - h]], gcols[1]); X.poly(o, [[sx - wd, sy], [sx - wd * 0.1, sy], [sx + Math.cos(a) * 2, sy - h + 1]], gcols[0]); }
+          K.debris(o, x, y - 4, e, sd, 16, 40, gcols, 90);
+          K.dust(o, x, y, e - 0.05, sd, 12, 28, '#8a7a68', 1.4);
+          light(x, y, r + 30, f.look === 8 ? '#ff7a2a' : '#e0c8a0', 0.6 * (1 - seg(e, 0, 0.6)));
+        }
+        return;
+      }
+      case 'healburst': {
+        if (e < 0.07) X.ellipse(o, x, y - 4, 12, 9, '#f2ffe8');
+        K.nova(o, x, y, t, f.t0, 0.45, r, EL.life, { n: 26, lift: 8, seed: sd });
+        K.debris(o, x, y - 4, e, sd, 9, 30, ['#c8fab0', '#977552', '#8ef07e'], 40);
+        K.sparkle(o, x, y - 4, t, 1 - seg(e, 1, 1.6), 28, sd, X.LIFE, 22);
+        const k = easeOut(seg(e, 0, 0.3)) * (1 - seg(e, 1.2, 1.8));
+        if (k > 0.02) { K.gring(g, x, y, r * k, EL.life[2], 0.8 * k, 1); X.ellipse(g, x, y, r * 0.75 * k, r * 0.75 * k * FY, '#1e7a34', 0.35 * k); }
+        light(x, y, r + 30, '#8ef07e', 0.9 * (1 - seg(e, 0, 1.5)));
+        return;
+      }
+      case 'swing': {
+        // the swing: a crescent smear sweeping across the front, white at the edge, then the look's colour
+        const cx = gx(f.x2), cy = gy(f.y2) - 8, ang = Math.atan2((f.y - f.y2) * FY, f.x - f.x2), q = clamp(e / 0.18, 0, 1), rr = 14;
+        const C = f.look ? R : ['#ffffff', '#e8e4f0', '#b8b4c8', '#8a8498', '#5a5468'];
+        for (let k = 0; k < 10; k++) { const a0 = ang - 1.1 + q * 2.2 - k * 0.12; if (a0 < ang - 1.1) break; const a1 = a0 - 0.12; X.line(o, cx + Math.cos(a0) * rr, cy + Math.sin(a0) * rr * 0.7, cx + Math.cos(a1) * rr, cy + Math.sin(a1) * rr * 0.7, k < 3 ? '#ffffff' : C[Math.min(C.length - 1, k < 6 ? 1 : 2)], k < 4 ? 3 : 2); }
+        if (e > 0.12 && e < 0.3) for (let k = 0; k < 6; k++) { const a = ang + (rand(k, sd) - 0.5) * 1.6, d = rr + (e - 0.12) * 60; X.px(o, cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.7, C[1]); }
+        return;
+      }
+      case 'palm': {
+        const h: Pt = body?.on && body.a ? [body.x + body.a.hands[0][0], body.y + body.a.hands[0][1]] : [gx(f.x2), gy(f.y2) - 8];
+        const z: Pt = [x, y - 8], q = clamp(e / 0.32, 0, 1);
+        if (e < 0.32) {
+          const px2 = lerp(h[0] + 2, z[0], easeOut(q)), py2 = lerp(h[1], z[1], q);
+          for (let k = 0; k < 3; k++) X.ring(o, px2 - k * 4 * Math.sign(z[0] - h[0] || 1), py2, 2 + k, 4 + k * 1.5, k ? X.LIFE[3] : X.LIFE[1], 1 - k * 0.3, -1.2, 1.2);
+          X.glow(o, px2, py2, 5, X.LIFE[2], 0.7);
+          for (let fn = 0; fn < 4; fn++) X.rect(o, px2 + 1, py2 - 3 + fn * 1.5, 2, 1, X.LIFE[0]);
+          X.rect(o, px2 - 1, py2 - 2, 2, 4, X.LIFE[1]);
+        } else K.healHit(o, z, e - 0.32);
+        if (e < 0.12) X.glow(o, h[0] + 2, h[1], 6, X.LIFE[1], 0.9);
+        light(z[0], y, 40, '#c8fab0', 0.7 * (1 - seg(e, 0.3, 0.9)));
+        return;
+      }
+      case 'self': {
+        if (!body?.on) return;
+        const Rs = f.look === 2 ? X.LIFE : R;
+        K.gring(g, body.x, body.y, 4 + e * 18, Rs[1], 1 - e, 1);
+        if (f.look === 2) { K.healHit(o, [body.x, body.y - 10], e); K.sparkle(o, body.x, body.y - 10, t, 1 - e, 12, sd); }
+        else for (let k = 0; k < 8; k++) { const a = (k / 8) * TAU + e * 4, d = 12 * (1 - e); X.px(o, body.x + Math.cos(a) * d, body.y - 10 + Math.sin(a) * d * 0.6, Rs[k % 2 ? 1 : 2]); }
+        light(body.x, body.y, 40, Rs[2], 0.6 * (1 - e));
+        return;
+      }
+      case 'blink': {
+        // Blink is near-instant: the body's pixels streak out along the aim and land in a few frames,
+        // no wind-up. Over a long jump each pixel draws its streak, so the path reads as one flash of light.
+        const ax2 = gx(f.x2), ay2 = gy(f.y2), TEAM = X.TEAMS[(f.who + 4) % 4], SV = EL.sigil, cols = [TEAM.main, TEAM.light, SV[1], SV[0], '#ffffff', TEAM.dark];
+        const D = Math.hypot(ax2 - x, ay2 - y), travel = 0.06 + Math.min(0.07, D / 5000);
+        if (D > 40 && e < 0.22) {
+          // the path: a thin violet seam that flares and fades
+          const a = 1 - e / 0.22, n = Math.max(2, Math.round(D / 2));
+          for (let i = 0; i <= n; i++) { const k = i / n, px2 = lerp(x, ax2, k), py2 = lerp(y, ay2, k) - 10; if (a > X.bay(Math.round(px2), Math.round(py2))) X.px(o, px2, py2, e < 0.06 ? '#ffffff' : SV[1]); }
+          for (let i = 1; i < 6; i++) light(lerp(x, ax2, i / 6), lerp(y, ay2, i / 6), 30, '#ee8cff', 0.35 * a);
+        }
+        for (let i = 0; i < 48; i++) {
+          const bx = (rand(i, 1, sd) - 0.5) * 9, bz = 1 + rand(i, 2, sd) * 22, t0 = rand(i, 3, sd) * 0.03 + (bz / 23) * 0.01, q0 = (e - t0) / travel;
+          if (q0 < 0 || q0 > 1.2) continue;
+          const q = Math.min(1, q0), k = q * q * (3 - 2 * q), px2 = lerp(x + bx, ax2 + bx, k), py2 = lerp(y - bz, ay2 - bz, k);
+          if (q0 < 1) { const k2 = Math.max(0, q - 0.3), k3 = k2 * k2 * (3 - 2 * k2); X.line(o, lerp(x + bx, ax2 + bx, k3), lerp(y - bz, ay2 - bz, k3), px2, py2, i % 3 ? SV[2] : cols[i % cols.length]); }
+          X.px(o, px2, py2, q0 > 1 ? '#ffffff' : cols[i % cols.length]);
+        }
+        if (e < 0.08) { const q = e / 0.08; X.ring(o, x, y - 10, 10 * (1 - q) + 1, 12 * (1 - q) + 1, SV[1], 1 - q * 0.5); }
+        if (e > travel && e < travel + 0.25) { const q = (e - travel) / 0.25; K.gring(g, ax2, ay2, 4 + q * 12, SV[1], 1 - q, 1); }
+        if (e < 0.25) { light(ax2, ay2, 46, '#ee8cff', 0.7 * (1 - e / 0.25)); light(x, y, 36, '#ee8cff', 0.5 * (1 - e / 0.25)); }
+        return;
+      }
+      case 'impact': {
+        const ty = f.n, look = elName(f.look), ix = x, iy = y - (ty === 2 ? STAFF_Z : 6), s = clamp(f.r * 16 / 5, 0.6, 1.6);
+        if (ty === 2) {
+          // a shard splinters into glitter
+          if (e < 0.2) for (let k = 0; k < 6; k++) { const a = rand(k, sd, 9) * TAU; X.px(o, ix + Math.cos(a) * e * 40, iy + Math.sin(a) * e * 20, k % 2 ? '#ffffff' : (f.look === 2 ? X.LIFE[1] : EL.cold[1])); }
+          if (f.look === 2) K.healHit(o, [ix, iy], e);
+          return;
+        }
+        if (ty === 1 && look === 'fire') {
+          // the fireball bursts: a white flash, a ball of flame, a ring of tongues, embers flung
+          K.scorch(g, x, y, 14 * s, 0.75 * (1 - seg(e, 0.8, 1.4))); K.cracks(g, x, y, 12 * s, sd, 1, `rgba(20,10,8,${(0.8 * (1 - seg(e, 0.8, 1.4))).toFixed(2)})`, 7);
+          if (e < 0.07) X.ellipse(o, x, iy, 14 * s, 11 * s, '#fff4c0');
+          if (e < 0.45) { const q = e / 0.45; X.glow(o, x, iy, 18 * s * (1 - q * 0.6), EL.fire[2], 0.95 * (1 - q)); X.glow(o, x, iy, 10 * s * (1 - q), EL.fire[1], 0.9 * (1 - q)); }
+          if (e < 0.6) { const q = e / 0.6, rr = 4 + easeOut(q) * 24 * s; for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU; K.tongue(o, x + Math.cos(a) * rr, y + Math.sin(a) * rr * FY, 1.8, (7 + 3 * Math.sin(i * 2.7)) * (1 - q), Math.cos(a) * 2); } K.gring(o, x, y, rr + 2, EL.fire[1], 1 - q, 1); }
+          if (e < 1) for (let k = 0; k < 20; k++) { const a = rand(k, 5, sd) * TAU, sp = 18 + rand(k, 6, sd) * 28, vz = 30 + rand(k, 7, sd) * 40, z = vz * e - 90 * e * e; if (z < -1) continue; X.px(o, x + Math.cos(a) * sp * e, y + Math.sin(a) * sp * e * FY - Math.max(0, z), K.fireCol(e * 0.9 + rand(k, 8, sd) * 0.2)); }
+          if (e > 0.2) for (let i = 0; i < 6; i++) { const a = rand(i, 61, sd) * TAU, rr = Math.sqrt(rand(i, 62, sd)) * 8; K.tongue(o, x + Math.cos(a) * rr, y + Math.sin(a) * rr * FY * 0.7, 1.4, (3 + 2 * Math.sin(t * 12 + i * 2)) * (1 - seg(e, 0.8, 1.4)) * seg(e, 0.2, 0.5), Math.sin(t * 6 + i)); }
+          K.dust(o, x, y, e, sd, 7, 16, '#5a4a48', 0.9);
+          light(x, y, 110, '#ffb060', 1.2 * (1 - seg(e, 0, 0.5))); light(x, y, 34, '#ff7020', 0.5 * (1 - seg(e, 0.5, 1.4)));
+          return;
+        }
+        if (ty === 1) {
+          // a rock lands: dust and chips; an ice boulder bursts into ice; a mud ball splashes
+          const cols: Ramp = look === 'cold' ? [EL.cold[0], EL.cold[2], EL.cold[3]] : look === 'water' ? ['#4a3c2a', '#8ad0ff', '#6a5a40'] : ['#977552', '#553e2a', '#b8946a'];
+          K.scorch(g, x, y, 7 * s, 0.4 * (1 - seg(e, 0.8, 1.4)));
+          if (e < 0.06) K.sq(o, x, iy, 4, '#ffffff');
+          K.debris(o, x, iy, e, sd, 10, 45, cols);
+          K.dust(o, x, y, e, sd, 9, 18, look === 'cold' ? '#d8f4ff' : look === 'water' ? '#5a6a80' : '#8a7a68', 0.9);
+          if (look === 'cold') light(x, y, 50, '#9ff4ff', 0.6 * (1 - e));
+          return;
+        }
+        // a bolt pops
+        if (e < 0.3) { X.ring(o, x, iy, 3 + e * 30, (3 + e * 30) * FY, R[1], 1 - e / 0.3); if (e < 0.06) K.sq(o, x, iy, 5, '#ffffff'); }
+        light(x, y, 40, R[2], 0.8 * (1 - seg(e, 0, 0.4)));
+        return;
+      }
+      case 'shatter': {
+        // the ice that held a body explodes: a white flash, chunks thrown out, bouncing to rest
+        if (e < 0.12) X.ellipse(o, x, y - 8, 8, 9, '#ffffff', 1 - e / 0.12);
+        for (let k = 0; k < 16; k++) {
+          const a2 = rand(sd, k, 41) * TAU, sp = 18 + rand(sd, k, 42) * 34, vz = 30 + rand(sd, k, 43) * 50;
+          let z = 8 + vz * e - 110 * e * e; if (z < 0) z = 0;
+          const d = sp * Math.min(e, 0.55 + e * 0.15);
+          if (e > 1.2 && rand(sd, k, 44) < (e - 1.2) / 0.4) continue;
+          K.sq(o, x + Math.cos(a2) * d, y + Math.sin(a2) * d * FY - z, k % 3 === 0 ? 2 : 1, [EL.cold[0], EL.cold[2], EL.cold[3], EL.cold[4]][k % 4]);
+        }
+        light(x, y, 50, '#9ff4ff', 0.6 * (1 - seg(e, 0, 0.6)));
+        return;
+      }
+      case 'freeze': {
+        for (let k = 0; k < 10; k++) { const a = rand(k, sd) * TAU, d = 4 + e * 24; X.px(o, x + Math.cos(a) * d, y - 6 + Math.sin(a) * d * 0.5, k % 2 ? '#ffffff' : EL.cold[1]); }
+        light(x, y, 40, '#bff4ff', 0.6 * (1 - e / 0.5));
+        return;
+      }
+      case 'surge': {
+        // the current runs through the water: sparks over every wet cell nearby
+        if (Math.floor(t * 20) % 3 === 2) return;
+        const s = w.surf, f2 = Math.floor(t * 20);
+        for (let c = 0; c < s.kind.length; c++) {
+          if (s.kind[c] !== SURF.water) continue;
+          const cx = -ARENA.w / 2 + ((c % GRID_W) + 0.5) * CELL, cy = -ARENA.h / 2 + (Math.floor(c / GRID_W) + 0.5) * CELL;
+          if (Math.abs(cx - f.x) > 6 || Math.abs(cy - f.y) > 6 || rand(c, f2, sd) > 0.4) continue;
+          X.px(o, gx(cx) + (rand(c, f2, 1) - 0.5) * 7, gy(cy) + (rand(c, f2, 2) - 0.5) * 4, rand(c, f2, 3) < 0.3 ? '#ffffff' : EL.lightning[1]);
+        }
+        light(x, y, 70, '#b08aff', 0.6);
+        return;
+      }
+      case 'cancel': {
+        if (!body?.on || !body.a) return;
+        const ch: Pt = [body.x + body.a.charge[0], body.y + body.a.charge[1]];
+        for (let k = 0; k < 8; k++) { const a = (k / 8) * TAU, d = 2 + e * 30; X.px(o, ch[0] + Math.cos(a) * d, ch[1] + Math.sin(a) * d * 0.7, k % 2 ? R[1] : '#8a8498'); }
+        return;
+      }
+      case 'dry': {
+        if (!body?.on) return;
+        for (let k = 0; k < 4; k++) K.puff(o, body.x + (rand(k, sd) - 0.5) * 8, body.y - 18 - e * 14, 1.5 + e * 3, '#6a6478', (1 - e / 0.5) * 0.8);
+        return;
+      }
+      case 'death': {
+        const big = f.n === 2;
+        for (let k = 0; k < (big ? 9 : 5); k++) { const age = e / 1.4, a2 = rand(sd, k, 91) * TAU, d = (big ? 12 : 7) * easeOut(age); K.puff(o, x + Math.cos(a2) * d, y - 3 + Math.sin(a2) * d * 0.5 - age * 8, (big ? 3 : 2) + age * 3, '#6a6478', (1 - age) * 0.7); }
+        if (e < 0.5) K.debris(o, x, y - 6, e, sd, big ? 10 : 6, 30, f.n === 6 ? [EL.fire[1], EL.fire[3]] : ['#4e7228', '#2e4a1c', '#8a6040'], 40);
+        return;
+      }
+      case 'banner': {
+        // wave moments: a big title over the arena that pops in and fades
+        const q = e / f.life, txt = (f.text ?? '').toUpperCase(), k = 2, wd = txt.length * 4 * k;
+        if (q > 0.75 && X.bay(Math.round(e * 30), 1) < (q - 0.75) / 0.25) return;
+        const col = /CLEAR/.test(txt) ? X.LIFE[1] : /WIPE/.test(txt) ? '#ff6a6a' : '#ffd860';
+        const by = Math.round(FIELD.OY - (ARENA.h / 2) * 16 * FY + 22 - easeOut(Math.min(1, e * 4)) * 6); // over the arena's north edge, clear of the wave strip
+        X.text(o, txt, Math.round(FIELD.W / 2 - wd / 2), by, col, '#120e1a', k);
+        return;
+      }
+      default:
+    }
+  }
+
+  /** The body standing at a world point (zap ends), if any. */
+  private bodyAt(bodies: BodyView[], w: World, x: number, y: number): BodyView | null {
+    const b = w.bodies;
+    for (let i = 0; i < bodies.length; i++) if (bodies[i].on && Math.abs(b.x[i] - x) < 0.35 && Math.abs(b.y[i] - y) < 0.35) return bodies[i];
+    return null;
+  }
+}
+
+/** Discharge reach beyond the base 4 units is per lightning rune; the ring shows the base. */
+const SHAPES_DISCHARGE = 1;

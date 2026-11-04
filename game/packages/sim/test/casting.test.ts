@@ -1,0 +1,217 @@
+import { describe, expect, it } from 'vitest';
+import type { Element } from '@wizard-sim/rules';
+import {
+  BTN, EL, KIND, N_EL, NO_INPUT, PHASE, RUNES, SURF, compile, createWorld, elementId, quantize, step,
+  type PlayerInput, type World,
+} from '../src';
+import { cellAt } from '../src/effects';
+
+// A tiny driver: seat 0 acts, everyone else idles. Aim is a world point, kept between steps.
+class Driver {
+  aim = { x: 1, y: 0 };
+  constructor(readonly w: World) {}
+  tick(over: Partial<PlayerInput> = {}, n = 1): this {
+    const b = this.w.bodies;
+    for (let k = 0; k < n; k++) {
+      const me = quantize({ ...NO_INPUT, aimX: (this.aim.x - b.x[0]) * 32, aimY: (this.aim.y - b.y[0]) * 32, ...over });
+      step(this.w, [me, NO_INPUT, NO_INPUT, NO_INPUT]);
+    }
+    return this;
+  }
+  aimAt(x: number, y: number): this { this.aim = { x, y }; return this; }
+  queue(...els: Element[]): this { for (const e of els) this.tick({ press0: elementId(e) }); return this; }
+  /** Press a button, hold it `hold` ticks, release, then let the cast play out. */
+  cast(btn: number, hold = 1, after = 40): this { this.tick({ buttons: btn }, hold); return this.tick({}, after); }
+  place(x: number, y: number, hold = 30): this { this.aimAt(x, y); return this.cast(BTN.area, hold); }
+}
+
+/** A world with one wizard at (0, 0) and a dummy at (dx, 0). */
+function range(dx = 3, players = 1): { w: World; d: Driver; dummy: number } {
+  const w = createWorld(1, players, { dummies: false });
+  const b = w.bodies;
+  b.x[0] = 0; b.y[0] = 0;
+  const dummy = 4;
+  b.kind[dummy] = KIND.dummy; b.team[dummy] = 2; b.x[dummy] = dx; b.y[dummy] = 0; b.r[dummy] = 0.5; b.hp[dummy] = b.maxHp[dummy] = 400;
+  const d = new Driver(w).aimAt(dx, 0);
+  return { w, d, dummy };
+}
+const rune = (w: World, el: Element) => w.seats.runes[elementId(el) - 1];
+
+describe('runes and the queue', () => {
+  it('queueing reserves a rune, Esc gives it back', () => {
+    const { w, d } = range();
+    d.queue('fire');
+    expect(rune(w, 'fire')).toBeCloseTo(RUNES.max.fire - 1, 1);
+    d.tick({ buttons: BTN.clear });
+    expect(w.seats.queueLen[0]).toBe(0);
+    expect(rune(w, 'fire')).toBeCloseTo(RUNES.max.fire, 1);
+  });
+
+  it('a cancel refunds the cancelled rune and never spends the new one', () => {
+    const { w, d } = range();
+    d.queue('fire', 'cold');
+    expect(w.seats.queueLen[0]).toBe(0);
+    expect(rune(w, 'fire')).toBeCloseTo(RUNES.max.fire, 1);
+    expect(rune(w, 'cold')).toBeCloseTo(RUNES.max.cold, 1);
+  });
+
+  it('you cannot queue an element you are out of', () => {
+    const { w, d } = range();
+    w.seats.runes[elementId('earth') - 1] = 0.5;
+    d.queue('earth');
+    expect(w.seats.queueLen[0]).toBe(0);
+    expect(w.events.some((e) => e.kind === 'dry')).toBe(true);
+  });
+
+  it('a cast spends the runes; regen brings them back slowly, faster when attuned', () => {
+    const { w, d } = range();
+    d.queue('arcane').cast(BTN.self, 1, 2); // Attune
+    const after = rune(w, 'arcane');
+    d.tick({}, 60);
+    expect(rune(w, 'arcane') - after).toBeCloseTo(RUNES.regen * RUNES.attuneMult, 1);
+  });
+});
+
+describe('Force casts', () => {
+  it('a flamethrower burns the dummy', () => {
+    const { w, d, dummy } = range();
+    d.queue('fire').cast(BTN.force, 60);
+    expect(w.bodies.hp[dummy]).toBeLessThan(400);
+    expect(w.bodies.burn[dummy]).toBeGreaterThan(0);
+  });
+
+  it('wet targets take double from lightning', () => {
+    const a = range(), b = range();
+    a.w.bodies.wet[a.dummy] = 600;
+    for (const { d } of [a, b]) d.queue('lightning').cast(BTN.force, 30);
+    const lostWet = 400 - a.w.bodies.hp[a.dummy], lostDry = 400 - b.w.bodies.hp[b.dummy];
+    expect(lostWet).toBeGreaterThan(lostDry * 1.8);
+  });
+
+  it('a frost spray freezes, and a rock shatters the frozen for double', () => {
+    const { w, d, dummy } = range();
+    d.queue('cold', 'cold').cast(BTN.force, 150, 0);
+    expect(w.bodies.frozen[dummy]).toBeGreaterThan(0);
+    const before = w.bodies.hp[dummy];
+    w.bodies.frozen[dummy] = 200; // keep it frozen however long the spray took
+    d.queue('earth').cast(BTN.force, 90, 20);
+    expect(before - w.bodies.hp[dummy]).toBeGreaterThan(16 * 0.7 * 2 - 1);
+  });
+
+  it('water + cold as Force is Ice shards: a volley of missiles, not a spray', () => {
+    const spec = compile(['water', 'cold'], 'force');
+    expect(spec.title).toBe('Ice shards');
+    expect(spec.shape).toBe('shards');
+    const { w, d } = range();
+    d.queue('water', 'cold').tick({ buttons: BTN.force }, 1).tick({}, 16);
+    let n = 0;
+    for (let j = 0; j < w.missiles.alive.length; j++) n += w.missiles.alive[j];
+    expect(n).toBeGreaterThanOrEqual(5);
+  });
+
+  it('the arcane beam hits the first body only, ally or not (friendly fire)', () => {
+    const { w, d, dummy } = range(6, 2);
+    w.bodies.x[1] = 3; w.bodies.y[1] = 0; // the ally stands in the way
+    d.queue('arcane').cast(BTN.force, 60);
+    expect(w.bodies.hp[1]).toBeLessThan(100);
+    expect(w.bodies.hp[dummy]).toBe(400);
+  });
+
+  it('a fully charged rock pierces', () => {
+    const { w, d, dummy } = range(3);
+    const b = w.bodies;
+    b.kind[5] = KIND.dummy; b.team[5] = 2; b.x[5] = 6; b.y[5] = 0; b.r[5] = 0.5; b.hp[5] = b.maxHp[5] = 400;
+    d.queue('earth').cast(BTN.force, 75, 60);
+    expect(b.hp[dummy]).toBeLessThan(400);
+    expect(b.hp[5]).toBeLessThan(400);
+  });
+
+  it('the look rule: arcane + fire is a fire beam that burns', () => {
+    const spec = compile(['arcane', 'fire'], 'force');
+    expect(spec.title).toBe('Fire beam');
+    expect(spec.look).toBe(EL.fire);
+    const { w, d, dummy } = range();
+    d.queue('arcane', 'fire').cast(BTN.force, 40);
+    expect(w.bodies.burn[dummy]).toBeGreaterThan(0);
+  });
+
+  it('channels cost upkeep past their natural duration', () => {
+    const { w, d } = range();
+    d.queue('arcane');
+    const start = rune(w, 'arcane');
+    d.tick({ buttons: BTN.force }, 60 * 8);
+    expect(w.seats.phase[0]).toBe(PHASE.channel);
+    // 8 s of regen, minus 3 s of upkeep past the 5 s natural duration.
+    expect(rune(w, 'arcane')).toBeLessThan(start + 8 * RUNES.regen - 0.5);
+  });
+
+  it('Blink is instant and moves you along your aim', () => {
+    const { w, d } = range();
+    d.aimAt(10, 0).queue('sigil').tick({ buttons: BTN.force });
+    expect(w.bodies.x[0]).toBeGreaterThan(3.5);
+  });
+});
+
+describe('Life (support)', () => {
+  it('the Life beam heals an ally and harms no one', () => {
+    const { w, d, dummy } = range(6, 2);
+    w.bodies.x[1] = 3; w.bodies.y[1] = 0; w.bodies.hp[1] = 40;
+    d.queue('life').cast(BTN.force, 60);
+    expect(w.bodies.hp[1]).toBeGreaterThan(40);
+    expect(w.bodies.hp[dummy]).toBe(400);
+  });
+
+  it('the Healing ring heals everyone around, enemies too', () => {
+    const { w, d, dummy } = range(2);
+    w.bodies.hp[dummy] = 100; w.bodies.hp[0] = 50;
+    d.queue('life').cast(BTN.area, 2);
+    expect(w.bodies.hp[dummy]).toBeGreaterThan(100);
+    expect(w.bodies.hp[0]).toBeGreaterThan(50);
+  });
+
+  it('life + lightning is Chain heal, which seeks hurt allies', () => {
+    const spec = compile(['life', 'lightning'], 'force');
+    expect(spec.title).toBe('Chain heal');
+    expect(spec.shape).toBe('arc');
+  });
+});
+
+describe('Area and Place', () => {
+  it('a flood leaves water on the floor, and a lightning strike on it surges', () => {
+    const { w, d, dummy } = range(4);
+    d.queue('water').place(4, 0);
+    expect(w.surf.kind[cellAt(4, 0)]).toBe(SURF.water);
+    const before = w.bodies.hp[dummy];
+    d.queue('lightning').place(4, 0);
+    expect(w.bodies.hp[dummy]).toBeLessThan(before);
+  });
+
+  it('cold on water makes walkable ice; fire on ice melts it', () => {
+    const { w, d } = range(8);
+    d.queue('water').place(3, 3).queue('cold').place(3, 3);
+    expect(w.surf.kind[cellAt(3, 3)]).toBe(SURF.ice);
+    d.queue('fire').place(3, 3);
+    expect(w.surf.kind[cellAt(3, 3)]).toBe(SURF.water);
+  });
+
+  it('an earthquake knocks down everyone around you', () => {
+    const { w, d, dummy } = range(2);
+    d.queue('earth').tick({ buttons: BTN.area }, 2).tick({}, 15);
+    expect(w.bodies.down[dummy] + (400 - w.bodies.hp[dummy])).toBeGreaterThan(0);
+  });
+
+  it('every non-structure cell of the grid compiles to a real shape', () => {
+    const plain: Element[] = ['water', 'life', 'cold', 'lightning', 'arcane', 'fire', 'earth'];
+    const todo: string[] = [];
+    for (const a of plain) for (const b of [null, ...plain]) for (const cast of ['force', 'area', 'place', 'conjure'] as const) {
+      const q = b ? [a, b] : [a];
+      const spec = compile(q, cast);
+      if (spec.shape === 'todo') todo.push(`${q.join('+')}/${cast}: ${spec.title}`);
+    }
+    expect(todo).toEqual([]);
+  });
+});
+
+describe('counts layout', () => {
+  it('N_EL matches the rules', () => expect(N_EL).toBe(9));
+});

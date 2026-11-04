@@ -1,0 +1,142 @@
+<title>Spell Wishlist Gallery</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,800;1,6..12,400&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  /* Layout: a night-time scrying table. Dark single-look page; cards are lit windows into the arena. */
+  :root {
+    color-scheme: dark;
+    --bg: #13102a;
+    --bg-2: #1a1636;
+    --panel: #201b40;
+    --panel-2: #2a2452;
+    --fg: #f1ecff;
+    --muted: #aaa3d2;
+    --faint: #6f68a0;
+    --line: rgba(190, 175, 255, 0.12);
+    --gold: #ffc857;
+    --keep: #ffc857;
+    --maybe: #8fb8ff;
+    --cut: #ff8193;
+    --f-offense: #ff7b39; --f-control: #aeefff; --f-preparation: #ff4f9b; --f-support: #ffe08a;
+    --f-enchant: #5fe07a; --f-weapon: #d1a170; --f-summon: #c7a8ff; --f-movement: #3fa1ff;
+    --display: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+    --body: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(255, 79, 155, 0.10), transparent 60%),
+      radial-gradient(900px 500px at 95% 0%, rgba(63, 161, 255, 0.10), transparent 60%),
+      var(--bg);
+    color: var(--fg);
+    font: 15px/1.5 var(--body);
+    min-height: 100vh;
+  }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  .wrap { max-width: 1320px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+  header.top { padding-block: 40px 20px; display: grid; gap: 14px; }
+  .eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  h1 { font: 400 clamp(34px, 6vw, 60px)/1 var(--display); margin: 0; letter-spacing: 0.01em; text-wrap: balance; }
+  h1 .spark { color: var(--gold); }
+  .intro { max-width: 68ch; color: var(--muted); margin: 0; }
+  .intro strong { color: var(--fg); font-weight: 800; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--muted); }
+  .legend span b { font-weight: 800; }
+
+  .progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .bar { flex: 1 1 200px; max-width: 340px; height: 8px; border-radius: 99px; background: var(--panel); overflow: hidden; display: flex; }
+  .bar i { display: block; height: 100%; transition: width .3s; }
+  .bar .k { background: var(--keep); } .bar .m { background: var(--maybe); } .bar .c { background: var(--cut); }
+  .save-state { font: 500 11px/1 var(--mono); color: var(--faint); }
+  .save-state.warn { color: var(--cut); }
+
+  nav.filters { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: rgba(19, 16, 42, 0.88); backdrop-filter: blur(10px); border-block: 1px solid var(--line); }
+  nav.filters .wrap { display: flex; gap: 8px; flex-wrap: wrap; padding-block: 10px; align-items: center; }
+  .chip { appearance: none; border: 1px solid var(--line); background: var(--bg-2); color: var(--muted); font: 600 13px/1 var(--body); padding: 7px 11px; border-radius: 99px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+  .chip:hover { color: var(--fg); border-color: rgba(190,175,255,.3); }
+  .chip[aria-pressed="true"] { background: var(--panel-2); color: var(--fg); border-color: rgba(190,175,255,.45); }
+  .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--muted)); }
+  .chip .n { font: 500 11px/1 var(--mono); color: var(--faint); }
+  .sep { width: 1px; height: 20px; background: var(--line); margin-inline: 4px; }
+
+  section.group { padding-block: 28px 8px; }
+  section.group > header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  h2 { font: 400 26px/1.1 var(--display); margin: 0; }
+  section.group > header p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 18px; }
+  .card { background: var(--panel); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--line); transition: border-color .2s, transform .2s; min-width: 0; }
+  .card[data-mark="keep"] { border-color: rgba(255, 200, 87, .55); }
+  .card[data-mark="maybe"] { border-color: rgba(143, 184, 255, .45); }
+  .card[data-mark="cut"] { opacity: .62; }
+  .stage { position: relative; aspect-ratio: 400 / 260; max-width: 100%; background: #0e0b1f; cursor: pointer; }
+  .stage canvas { width: 100%; height: 100%; display: block; }
+  .stage .badge { position: absolute; top: 10px; left: 10px; font: 800 11px/1 var(--body); letter-spacing: .04em; padding: 5px 8px; border-radius: 99px; background: rgba(12, 8, 26, .78); color: var(--fg); display: inline-flex; gap: 5px; align-items: center; }
+  .badge.starred { color: var(--gold); } .badge.maybe { color: var(--maybe); } .badge.user { color: #ffb1e0; } .badge.new { color: #b8f0c8; } .badge.tree { color: #ffd9a0; } .badge.magick { color: #9fe8ff; }
+  .stage .paused { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(12, 8, 26, .35); opacity: 0; transition: opacity .15s; pointer-events: none; }
+  .stage .paused span { width: 46px; height: 46px; border-radius: 50%; background: rgba(12,8,26,.8); display: grid; place-items: center; font-size: 18px; }
+  .stage.is-paused .paused { opacity: 1; }
+  .stage .scrub { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--c); opacity: .8; }
+
+  .body { padding: 14px 16px 6px; display: grid; gap: 8px; flex: 1; align-content: start; }
+  .title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  h3 { font: 400 21px/1.15 var(--display); margin: 0; letter-spacing: .01em; }
+  .fam { font: 500 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--c); border: 1px solid currentColor; padding: 4px 7px; border-radius: 6px; white-space: nowrap; opacity: .9; }
+  .one { margin: 0; font-size: 15px; color: var(--fg); }
+  dl { margin: 4px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 5px 10px; font-size: 13.5px; }
+  dt { color: var(--faint); font: 500 10.5px/1.9 var(--mono); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+  dd { margin: 0; color: var(--muted); min-width: 0; }
+
+  .rate { padding: 12px 16px 16px; display: grid; gap: 10px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .seg button { appearance: none; border: 1px solid var(--line); background: var(--bg-2); color: var(--muted); font: 700 13px/1 var(--body); padding: 10px 6px; border-radius: 10px; cursor: pointer; display: inline-flex; justify-content: center; gap: 6px; align-items: center; }
+  .seg button:hover { color: var(--fg); }
+  .seg button[aria-pressed="true"][data-v="keep"] { background: rgba(255,200,87,.16); color: var(--keep); border-color: rgba(255,200,87,.6); }
+  .seg button[aria-pressed="true"][data-v="maybe"] { background: rgba(143,184,255,.14); color: var(--maybe); border-color: rgba(143,184,255,.55); }
+  .seg button[aria-pressed="true"][data-v="cut"] { background: rgba(255,129,147,.13); color: var(--cut); border-color: rgba(255,129,147,.55); }
+  textarea { width: 100%; resize: vertical; min-height: 40px; background: var(--bg-2); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font: 14px/1.4 var(--body); }
+  textarea::placeholder { color: var(--faint); }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .empty { color: var(--muted); padding: 30px 0; }
+  footer.foot { padding-block: 40px 60px; color: var(--faint); font-size: 13px; }
+
+  @media (max-width: 520px) {
+    header.top { padding-block: 26px 14px; }
+    .sep { display: none; }
+  }
+</style>
+
+<header class="top wrap">
+  <div class="eyebrow">Magicka-toy · Spell wishlist, rounds 2 and 3</div>
+  <h1>Spell Wishlist <span class="spark">Gallery</span></h1>
+  <p class="intro">Each card loops one spell in the situation where it should be <strong>the best answer</strong>. <strong>New in round 3:</strong> the first group shows spells that fall out of the spell tree proposal and that nobody suggested directly. Your round 2 ratings are kept below. Rate anything and add a note if something sparks. Claude reads your ratings back into the docs.</p>
+  <div class="legend"><span><b style="color:var(--keep)">★ Keep</b> build on it</span><span><b style="color:var(--maybe)">? Maybe</b> something there</span><span><b style="color:var(--cut)">✗ Cut</b> drop it</span><span>Tap a scene to pause it.</span></div>
+  <div class="progress">
+    <div class="bar" aria-hidden="true"><i class="k"></i><i class="m"></i><i class="c"></i></div>
+    <span id="count">0 rated</span>
+    <span class="save-state" id="saveState">Connecting…</span>
+  </div>
+</header>
+
+<nav class="filters" aria-label="Filter spells">
+  <div class="wrap" id="filters"></div>
+</nav>
+
+<main class="wrap" id="main"></main>
+<footer class="foot wrap">Scenes are drawn live from simple shapes, so they show what a spell does, not how it's cast. Controls and the spell grammar are still open questions.</footer>
+
+<script src="engine.js"></script>
+<script src="vignettes/example.js"></script>
+<script src="vignettes/a-wishlist-offense.js"></script>
+<script src="vignettes/b-wishlist-support.js"></script>
+<script src="vignettes/c-new-offense.js"></script>
+<script src="vignettes/d-new-support.js"></script>
+<script src="vignettes/e-new-preparation.js"></script>
+<script src="vignettes/f-tree-leaves.js"></script>
+<script src="vignettes/g-coop-magicks.js"></script>
+<script src="app.js"></script>

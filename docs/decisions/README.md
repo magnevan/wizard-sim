@@ -241,3 +241,10 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
 - **Rejoin:** anyone can take an empty seat, whether by reloading or re-entering the room code. The coordinator sends a confirmed snapshot (gzipped, a few KB) and the inputs after it; the seat plays again 0.75 s later, and the newcomer runs extra ticks to catch up. A page that falls behind for other reasons (a hidden tab) catches up the same way.
 - **Limits:** if the host's page leaves, the match goes on, but its room code stops working, so nobody can join or rejoin by code. Rejoin needs WebRTC or the tab bus: a snapshot doesn't fit the artifact room's 4 KiB messages. The dropped wizard is still in the world: enemies can hit it, and it can be revived.
 - **On remote snapping (the user asked why prediction isn't faster):** nothing can guess a key press before its packet arrives. The fixes are better guesses for aim (in world space, carrying on a sweep) and showing a late remote spell from its first frame. Not built yet.
+
+## 2026-11-04: Play-test notes, round 2 (`explorations/2026-11-04-playtest-2.md`)
+- **Shield gets the Sigil dismiss:** double-tap Shield over your wall and the whole cast comes down. Over yourself, it drops your ward and guard.
+- **Casting while moving is allowed** (the user: "we should probably just allow that too"). It was already in the rules (half speed while channelling or charging); a mouse-chord input bug had blocked it. The slow-down is the tunable `body.castWalk`.
+- **Coated rock acts on contact:** its non-Earth elements pulse on whoever touches it, like a curtain on whoever crosses it.
+- **The death set for the goblin is complete:** base, cold, lightning, quake, steam v2, fire v2 (no combustion flame) and frozen shatter v2 (body-shaped ice) are keeps. Water uses the base death; wet lightning is not its own death; the boulder death is for boulders, not quakes. Arcane needs a third, calmer version.
+- **Open:** inspect mode (hold Alt), Shield ring balance (one budget per cast, recommended), the game-wide "every element changes the spell" audit, and the weapon proposals (`explorations/2026-11-04-weapons-and-movesets.md`).

@@ -49,6 +49,17 @@ describe('Shield', () => {
     expect(w.bodies.hp[t]).toBe(400);
   });
 
+  it('coated rock acts on whoever touches it: a Life stone arc heals, a plain one does not', () => {
+    for (const life of [true, false]) {
+      const { w, d } = arena(2);
+      w.bodies.x[1] = STRUCT.arcRadius + 0.55; w.bodies.y[1] = 0; w.bodies.hp[1] = 50;
+      d.aimAt(5, 0).queue(...((life ? ['shield', 'life', 'earth'] : ['shield', 'earth']) as Element[])).cast(BTN.area, 20, 90);
+      expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
+      if (life) expect(w.bodies.hp[1]).toBeGreaterThan(50);
+      else expect(w.bodies.hp[1]).toBe(50);
+    }
+  });
+
   it('a rock wall stops bodies', () => {
     const { w, d } = arena(2);
     d.aimAt(4, 0).queue('shield', 'earth').cast(BTN.area, 20, 20);
@@ -242,6 +253,27 @@ describe('Sigil', () => {
     d.aimAt(3, 0).queue('sigil', 'sigil');
     expect(devices(w, DEVICE.lens)).toBe(0);
     expect(rune(w, 'sigil')).toBeGreaterThan(before + 0.9);
+  });
+
+  it('double-tapping Shield over your wall brings the whole arc down', () => {
+    const { w, d } = arena();
+    d.aimAt(5, 0).queue('shield', 'fire').cast(BTN.area, 20, 20); // a fire curtain arc
+    expect(walls(w, WALL.curtain)).toBe(STRUCT.arcSegs);
+    d.aimAt(STRUCT.arcRadius, 0.3).queue('shield', 'shield');
+    expect(walls(w, WALL.curtain)).toBe(0);
+    d.aimAt(5, 0).queue('shield', 'earth').cast(BTN.area, 20, 20);
+    d.aimAt(5, 0).queue('shield', 'shield'); // nothing under the cursor: just a cancel
+    expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
+    d.aimAt(STRUCT.arcRadius, 0).queue('shield', 'shield');
+    expect(walls(w, WALL.rock)).toBe(0);
+  });
+
+  it('double-tapping Shield on yourself drops your ward', () => {
+    const { w, d } = arena();
+    d.queue('shield', 'fire').cast(BTN.self, 1, 20);
+    expect(w.seats.ward[0]).not.toBe(WARD.none);
+    d.aimAt(0.1, 0).queue('shield', 'shield');
+    expect(w.seats.ward[0]).toBe(WARD.none);
   });
 
   it('a double tap with nothing under the cursor is just a cancel', () => {

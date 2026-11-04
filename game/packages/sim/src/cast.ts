@@ -18,7 +18,7 @@ import { compile, type SpellSpec } from './compile';
 import { RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
 import { EL, N_EL, elementName } from './elements';
 import { channelTick, fireSpell } from './effects';
-import { STRUCTURE_SHAPES, castStructure, dismissAt, doubleRepeat, hasteOf, payDouble, recallOldest, sigilCap, spendMote, weaponSwing } from './structures';
+import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, recallOldest, sigilCap, spendMote, weaponSwing } from './structures';
 import { len } from './geom';
 import { AIM_UNIT, BTN, type PlayerInput } from './input';
 import { atan2Turns } from './trig';
@@ -60,8 +60,9 @@ function pressElement(w: World, i: number, id: number): void {
     // A cancel: the cancelled element's rune comes back, and the new one is never spent.
     const gone = before.find((e, k) => queue[k] !== e) ?? before[before.length - 1];
     s.runes[rune(w, i, rules.BASE.indexOf(gone) + 1)] += 1;
-    // Double-tap Sigil over one of your creations: it's dismissed.
+    // Double-tap Sigil over one of your creations, or Shield over one of your walls (or yourself, for a ward): it's dismissed.
     if (gone === 'sigil' && id === EL.sigil) dismissAt(w, i, b.x[i] + s.aimX[i], b.y[i] + s.aimY[i]);
+    if (gone === 'shield' && id === EL.shield) dismissShieldAt(w, i, b.x[i] + s.aimX[i], b.y[i] + s.aimY[i]);
     w.events.push({ tick, kind: 'cancel', who: i, x: b.x[i], y: b.y[i], text: event, look: id });
   } else if (event) {
     return; // queue full

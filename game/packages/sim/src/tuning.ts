@@ -27,6 +27,7 @@ export interface Tunable {
 
 /** One-line explanations for the numbers that matter most to feel. */
 const HELP: Record<string, string> = {
+  'body.castWalk': 'How fast you walk while holding a channel or charge, as a fraction of walk speed (1 = no slow-down, 0 = rooted). Hold LMB and RMB together to walk and cast.',
   'runes.regen': 'Runes per second, per element. The main pace knob: lower means fewer, more deliberate casts.',
   'runes.max.fire': 'How many Fire runes fit in your pool (also caps how many you can put in one spell).',
   'rhythm.windup': 'Seconds before any spell goes off. Plus windupPerRune for each rune in it.',

@@ -455,6 +455,10 @@ export class StructureView {
       // one continuous sheet of flame along the line (fire-place-v3's column fire): a low base and
       // tongues where travelling waves peak, gold roots, orange body, red-orange tips
       const FR = EL.fire, n = cols.length;
+      // one column per pixel along the wall: a north-south wall would stack them into a 1 px strip,
+      // so columns widen as the wall turns vertical (1 px across the screen, 4 px up it)
+      const adx = Math.abs(bb[0] - a[0]), ady = Math.abs(bb[1] - a[1]);
+      const cw = 1 + Math.round((3 * ady) / (adx + ady + 1e-6)), co = Math.floor(cw / 2);
       for (let j = 0; j < n; j++) {
         const xx = Math.round(cols[j][0]), yy = Math.round(cols[j][1]), edge = Math.min(1, (j + 1) / 4, (n - j) / 4);
         if (edge < 0.5 && rand(xx, yy, 3) > edge * 1.6) continue;
@@ -462,9 +466,9 @@ export class StructureView {
         const hh = Math.round(((3 + 2 * pulse) + (h - 3) * wv * wv * (0.55 + 0.45 * w2) * (0.85 + 0.15 * Math.sin(t * 13 + j))) * edge * rise);
         if (hh < 1) continue;
         const sw = Math.sin(t * 9 + j * 0.4), b1 = Math.round(hh * 0.35), b2 = Math.round(hh * 0.75);
-        if (b1 > 0) X.rect(c, xx, yy - b1 + 1, 1, b1, FR[1]);
-        if (b2 > b1) X.rect(c, xx + Math.round(sw * b2 * 0.06), yy - b2 + 1, 1, b2 - b1, FR[2]);
-        if (hh > b2) X.rect(c, xx + Math.round(sw * hh * 0.12), yy - hh + 1, 1, hh - b2, hh > 7 ? FR[3] : FR[2]);
+        if (b1 > 0) X.rect(c, xx - co, yy - b1 + 1, cw, b1, FR[1]);
+        if (b2 > b1) X.rect(c, xx - co + Math.round(sw * b2 * 0.06), yy - b2 + 1, cw, b2 - b1, FR[2]);
+        if (hh > b2) X.rect(c, xx - co + Math.round(sw * hh * 0.12), yy - hh + 1, Math.max(1, cw - 1), hh - b2, hh > 7 ? FR[3] : FR[2]);
         if (hh > 9 && wv > 0.97) X.px(c, xx + Math.round(sw * hh * 0.14), yy - hh, FR[0]);
       }
       for (const p of emit(t, 4 * P.length, 1, (i, age) => { const q = P[mod(i, P.length)]; return { x: q[0] + Math.sin(age * 5 + i) * 2, y: q[1] - h * 0.6 - age * 14, age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? EL.fire[1] : EL.fire[3]);

@@ -23,7 +23,7 @@ import { exportText, parseOverrides, replaceTuning, saveTuning } from './tune-io
 /** The knobs that change how the game feels most, pinned at the top. */
 const FEEL: [string, string][] = [
   ['runes.regen', 'Rune regen /s'], ['rhythm.windup', 'Wind-up s'], ['rhythm.windupPerRune', 'Wind-up per rune'], ['rhythm.recovery', 'Recovery s'],
-  ['combat.channelRate', 'Channel rate'], ['body.walkSpeed', 'Walk speed'], ['waves.lull', 'Wave lull s'],
+  ['combat.channelRate', 'Channel rate'], ['body.walkSpeed', 'Walk speed'], ['body.castWalk', 'Walk while casting'], ['waves.lull', 'Wave lull s'],
 ];
 const SCALES = [0.25, 0.5, 1, 2];
 

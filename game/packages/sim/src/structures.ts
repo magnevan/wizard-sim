@@ -269,6 +269,34 @@ export function dismissAt(w: World, seat: number, x: number, y: number): boolean
   return true;
 }
 
+/**
+ * Shield-Shield cancel with the cursor at (x, y): your wall there comes down, the whole cast at once
+ * (every segment raised on the same tick), or, with the cursor on you, your ward and conjured guard.
+ * Energy walls stop draining your pool; rock was paid once and gives nothing back. True if something went.
+ */
+export function dismissShieldAt(w: World, seat: number, x: number, y: number): boolean {
+  const wl = w.walls, b = w.bodies, s = w.seats;
+  let best = -1, bd = HOVER;
+  for (let k = 0; k < MAX_WALLS; k++) {
+    if (!wl.type[k] || wl.owner[k] !== seat) continue;
+    const d = segDist(x, y, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0];
+    if (d < bd) { bd = d; best = k; }
+  }
+  if ((s.ward[seat] || s.guard[seat]) && len(x - b.x[seat], y - b.y[seat]) < bd) {
+    s.ward[seat] = WARD.none; s.guard[seat] = 0;
+    w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: b.x[seat], y: b.y[seat], amount: 1, look: EL.shield, text: 'dismissed' });
+    return true;
+  }
+  if (best < 0) return false;
+  const born = wl.born[best], look = wl.type[best] === WALL.rock ? EL.earth : EL.shield;
+  for (let k = 0; k < MAX_WALLS; k++) {
+    if (!wl.type[k] || wl.owner[k] !== seat || wl.born[k] !== born) continue;
+    w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.6, look, text: 'dismissed' });
+    wl.type[k] = WALL.none;
+  }
+  return true;
+}
+
 /** Pressing Sigil with no free rune: the oldest creation goes and its rune comes to your hand. */
 export function recallOldest(w: World, seat: number): boolean {
   const dv = w.devices, s = w.seats, b = w.bodies;
@@ -341,11 +369,15 @@ export function tickStructures(w: World): void {
     if (s.ward[i] && s.wardEls[i * N_EL + EL.life - 1]) b.hp[i] = Math.min(b.maxHp[i], b.hp[i] + STRUCT.mendPerSec / 60);
   }
 
-  // Curtains pulse their elements on whoever stands in them (a Life curtain is a healing zone).
+  // Curtains pulse their elements on whoever stands in them (a Life curtain is a healing zone);
+  // coated rock pulses its coat on whoever touches it (a Life wall heals those sheltering against
+  // it, and the enemies bashing it too; a Fire wall burns them). The Earth is the wall itself.
   for (let k = 0; k < MAX_WALLS; k++) {
-    if (wl.type[k] !== WALL.curtain || (tick - wl.born[k]) % 30 !== 0) continue;
+    const ty = wl.type[k];
+    if ((ty !== WALL.curtain && ty !== WALL.rock) || (tick - wl.born[k]) % 30 !== 0) continue;
     const els = wl.els.slice(k * N_EL, k * N_EL + N_EL);
     els[EL.shield - 1] = 0;
+    if (ty === WALL.rock) { els[EL.earth - 1] = 0; if (!els.some((n) => n > 0)) continue; }
     const heal = els[EL.life - 1] > 0;
     for (let i = 0; i < b.kind.length; i++) {
       if (!alive(w, i)) continue;

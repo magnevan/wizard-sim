@@ -89,6 +89,8 @@ export const SHAPES = {
 
 export const BODY = {
   wizardHp: 100, wizardRadius: 0.45, walkSpeed: 4.2,
+  /** Walking speed while you hold a channel or a charge, as a fraction of walkSpeed. */
+  castWalk: 0.5,
   dummyHp: 400, dummyRadius: 0.5, dummyResetAfter: 3,
   friction: 0.25, // fraction of the gap to the wanted velocity closed per tick
 };

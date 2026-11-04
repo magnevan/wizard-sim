@@ -15,6 +15,8 @@ export class KeyboardMouse {
   private presses: number[] = [];
   private held = 0;
   private walking = false;
+  /** Mouse buttons down that started on the game (PointerEvent.buttons bits: 1 LMB, 2 RMB). */
+  private mouse = 0;
   private sx = 0;
   private sy = 0;
   private keyToElement = new Map<string, number>();
@@ -34,16 +36,22 @@ export class KeyboardMouse {
     });
     target.addEventListener('contextmenu', (e) => e.preventDefault());
     target.addEventListener('pointermove', (e) => { this.sx = e.clientX; this.sy = e.clientY; });
-    target.addEventListener('pointerdown', (e) => {
-      this.sx = e.clientX; this.sy = e.clientY;
-      if (e.button === 0) { if (e.shiftKey) this.held |= BTN.weapon; else this.walking = true; }
-      if (e.button === 2) this.held |= e.shiftKey ? BTN.area : BTN.force;
-    });
-    addEventListener('pointerup', (e) => {
-      if (e.button === 0) { this.walking = false; this.held &= ~BTN.weapon; }
-      if (e.button === 2) this.held &= ~(BTN.force | BTN.area);
-    });
-    addEventListener('blur', () => { this.walking = false; this.held = 0; });
+    // A second button pressed while one is held fires no pointerdown, only a pointermove with new
+    // buttons (a chord), so walking and casting at once go through the buttons mask.
+    target.addEventListener('pointerdown', (e) => { this.sx = e.clientX; this.sy = e.clientY; this.sync(e); });
+    addEventListener('pointermove', (e) => { if (this.mouse) this.sync(e); });
+    addEventListener('pointerup', (e) => this.sync(e));
+    addEventListener('blur', () => { this.walking = false; this.held = 0; this.mouse = 0; });
+  }
+
+  /** Mouse buttons that went down or up since the last event. */
+  private sync(e: PointerEvent): void {
+    const now = e.buttons & 3, down = now & ~this.mouse, up = this.mouse & ~now;
+    this.mouse = now;
+    if (down & 1) { if (e.shiftKey) this.held |= BTN.weapon; else this.walking = true; }
+    if (down & 2) this.held |= e.shiftKey ? BTN.area : BTN.force;
+    if (up & 1) { this.walking = false; this.held &= ~BTN.weapon; }
+    if (up & 2) this.held &= ~(BTN.force | BTN.area);
   }
 
   /** The input for the next tick for the wizard in `seat`. */

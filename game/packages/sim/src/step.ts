@@ -35,7 +35,7 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
     if (m > 1) { mx /= m; my /= m; }
     let speed = BODY.walkSpeed * Math.max(0.2, 1 - 0.22 * b.chill[i]) * hasteOf(w, i);
     const ph = s.phase[i];
-    if (ph === PHASE.channel || ph === PHASE.charge) speed *= 0.5;
+    if (ph === PHASE.channel || ph === PHASE.charge) speed *= BODY.castWalk;
     if (!canAct(w, i) || b.heldBy[i] >= 0) speed = 0; // held by a grabber: you can still cast, not walk
     const grip = onIce(w, i) ? 0.03 : BODY.friction;
     b.vx[i] += (mx * speed - b.vx[i]) * grip;

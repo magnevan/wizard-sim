@@ -6,7 +6,7 @@
  * is felt as little as possible.
  *
  * Over an unreliable transport: each packet carries every input the receiver hasn't acknowledged
- * yet (up to 32), plus our acknowledgement of theirs, so lost packets cost nothing but time.
+ * yet (up to 120), plus our acknowledgement of theirs, so lost packets cost nothing but time.
  * Every 30 ticks peers exchange a hash of the world; a mismatch is a desync, reported with the tick.
  *
  * RollbackSession (rollback.ts) runs on the same input pipeline and packets.
@@ -17,7 +17,8 @@ import type { Transport } from './transport';
 const MSG_INPUTS = 1;
 /** One packet for all peers: our inputs plus an ack for each of them (broadcast transports). */
 const MSG_ALL = 2;
-const MAX_RESEND = 32;
+/** At most this many inputs per packet: enough to fill a rejoining peer's gap of up to 2 s. */
+const MAX_RESEND = 120;
 export const HASH_EVERY = 30;
 
 export interface Desync { tick: number; mine: number; theirs: number; peer: number }
@@ -70,6 +71,16 @@ export class LockstepSession {
   protected acceptsPast = false;
   /** A peer's input for tick t arrived (rollback compares it with what it predicted). */
   protected onInput(_t: number, _p: number, _input: PlayerInput): void {}
+  /** Seat p has left (rollback's drop-out): ignore its packets and don't send for it. */
+  protected out(_p: number): boolean { return false; }
+
+  /** The oldest of our inputs still to send, from `need`, skipping any no longer kept. Returns [first, count]. */
+  private range(need: number): [number, number] {
+    const me = this.me();
+    let first = Math.max(need, this.scheduled - MAX_RESEND);
+    while (first < this.scheduled && !this.inputs.get(first)?.[me]) first++;
+    return [first, Math.min(this.scheduled - first, MAX_RESEND)];
+  }
 
   protected slot(t: number): (PlayerInput | undefined)[] {
     let s = this.inputs.get(t);
@@ -89,9 +100,8 @@ export class LockstepSession {
     const me = this.me();
     if (this.net.broadcast) { this.flushAll(me); return; }
     this.seats.forEach((seat, p) => {
-      if (p === me) return;
-      const first = Math.max(this.theyNeed[p], this.scheduled - MAX_RESEND);
-      const count = Math.max(0, this.scheduled - first);
+      if (p === me || this.out(p)) return;
+      const [first, count] = this.range(this.theyNeed[p]);
       const buf = new Uint8Array(1 + 1 + 4 + 4 + 1 + count * INPUT_BYTES + 8);
       const v = new DataView(buf.buffer);
       v.setUint8(0, MSG_INPUTS); v.setUint8(1, this.net.self);
@@ -106,8 +116,8 @@ export class LockstepSession {
 
   private flushAll(me: number): void {
     let need = this.scheduled;
-    this.seats.forEach((_, p) => { if (p !== me) need = Math.min(need, this.theyNeed[p]); });
-    const first = Math.max(need, this.scheduled - MAX_RESEND), count = Math.max(0, this.scheduled - first);
+    this.seats.forEach((_, p) => { if (p !== me && !this.out(p)) need = Math.min(need, this.theyNeed[p]); });
+    const [first, count] = this.range(need);
     const peers = this.seats.length - 1;
     const head = 3 + peers * 5;
     const buf = new Uint8Array(head + 5 + count * INPUT_BYTES + 8);
@@ -129,7 +139,7 @@ export class LockstepSession {
       const type = v.getUint8(0);
       if (type !== MSG_INPUTS && type !== MSG_ALL) continue;
       const p = this.seats.indexOf(from);
-      if (p < 0 || p === this.me()) continue;
+      if (p < 0 || p === this.me() || this.out(p)) continue;
       let o: number;
       if (type === MSG_INPUTS) { this.theyNeed[p] = Math.max(this.theyNeed[p], v.getUint32(2, true)); o = 6; }
       else {

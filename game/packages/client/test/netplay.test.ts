@@ -5,7 +5,7 @@ import type { Bus } from '../src/net/bus';
 // A minimal DOM for the Co-op panel (it only needs elements to write into).
 const el = () => ({ style: {} as Record<string, string>, dataset: {} as Record<string, string>, innerHTML: '', addEventListener: () => {}, id: '' });
 vi.stubGlobal('document', { createElement: el, body: { appendChild: () => {} } });
-vi.stubGlobal('window', { setInterval: () => 0 });
+vi.stubGlobal('window', { setInterval: () => 0, addEventListener: () => {} });
 
 /** An in-memory bus: every page hears every other page's messages, in order, at once. */
 function hub() {
@@ -55,6 +55,60 @@ describe('online co-op over the bus', () => {
     expect([wa.clock[0], wb.clock[0]]).toEqual([300, 300]);
     expect(hashWorld(wa)).toBe(hashWorld(wb));
     expect(a.session!.desyncs).toEqual([]);
+    vi.useRealTimers();
+  });
+
+  it('a player leaves, the others carry on, and a new page takes the seat back', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
+    const { NetPlay } = await import('../src/net/netplay');
+    type Page = InstanceType<typeof NetPlay>;
+    const bus = hub();
+    const worlds = [createWorld(1, 1), createWorld(2, 1), createWorld(3, 1)];
+    const [a, b, c] = ['aaaa', 'bbbb', 'cccc'].map((id, i) => new NetPlay(bus(id), worlds[i], 'arena', () => {}));
+    a.host();
+    vi.advanceTimersByTime(1600);
+    const match = [...(b as unknown as { open: Map<string, unknown> }).open.keys()][0];
+    b.join(match); c.join(match);
+    a.start();
+    vi.advanceTimersByTime(1500);
+    expect([a.state, b.state, c.state]).toEqual(['playing', 'playing', 'playing']);
+
+    let now = 0, f = 0;
+    const play = (pages: [Page, ReturnType<typeof createWorld>][], until: number) => {
+      for (let n = 0; n < until * 3 && pages.some(([, w]) => w.clock[0] < until); n++, f++) {
+        now += 17;
+        for (const [p, w] of pages) {
+          p.pump(now);
+          const s = p.session;
+          if (!s) continue;
+          for (let r = 1 + Math.max(0, Math.min(6, s.lag - 2)); r > 0 && w.clock[0] < until; r--) {
+            while (s.nextScheduled <= w.clock[0] + s.delay) s.pushLocal(quantize({ ...NO_INPUT, moveX: [60, -60, 30][p.seat], buttons: f % 90 < 3 ? BTN.force : 0, press0: f % 90 === 50 ? 8 : 0, aimX: 64, aimY: 0 }));
+            s.advance(1);
+          }
+        }
+        vi.advanceTimersByTime(17);
+      }
+    };
+    play([[a, worlds[0]], [b, worlds[1]], [c, worlds[2]]], 200);
+    c.leave(); // says bye: the others agree on the drop at once
+    play([[a, worlds[0]], [b, worlds[1]]], 400);
+    expect([worlds[0].clock[0], worlds[1].clock[0]]).toEqual([400, 400]);
+    expect(a.session!.isGone(399, 2) && b.session!.isGone(399, 2)).toBe(true);
+    expect(hashWorld(worlds[0])).toBe(hashWorld(worlds[1]));
+
+    // A new page sees the empty seat in the lobby (the coordinator announces it) and takes it.
+    const wd = createWorld(9, 1);
+    const d = new NetPlay(bus('dddd'), wd, 'arena', () => {});
+    play([[a, worlds[0]], [b, worlds[1]]], 500);
+    expect((d as unknown as { open: Map<string, { rejoin?: boolean }> }).open.get(match)?.rejoin).toBe(true);
+    d.join(match);
+    await vi.waitFor(() => expect(d.state).toBe('playing'), { timeout: 5000 });
+    expect(d.seat).toBe(2);
+    play([[a, worlds[0]], [b, worlds[1]], [d, wd]], 800);
+    expect([worlds[0].clock[0], worlds[1].clock[0], wd.clock[0]]).toEqual([800, 800, 800]);
+    expect(hashWorld(wd)).toBe(hashWorld(worlds[0]));
+    expect(hashWorld(worlds[1])).toBe(hashWorld(worlds[0]));
+    expect([a, b, d].every((p) => p.session!.desyncs.length === 0)).toBe(true);
     vi.useRealTimers();
   });
 

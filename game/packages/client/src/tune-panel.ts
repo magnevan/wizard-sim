@@ -57,6 +57,10 @@ export class TunePanel {
   private cursor: { x: number; y: number } | null = null;
   private rows = new Map<string, Row[]>();
   private sections: Section[] = [];
+  /** The Tools section, which added sections follow (null until built). */
+  private toolsSec: Element | null = null;
+  private lastExtra: Element | null = null;
+  private extra: { label: string; fill: (body: HTMLElement) => void }[] = [];
   private arch = 1;
   private nextMeters = 0;
   private el: Record<'hash' | 'meters' | 'export' | 'import' | 'msg' | 'pause' | 'flags', HTMLElement> | null = null;
@@ -209,6 +213,8 @@ export class TunePanel {
 
     // Tools: cheats, time, spawning, waves
     const tools = this.panelSection('Tools', true, root);
+    this.toolsSec = tools.parentElement!;
+    for (const x of this.extra) this.placeSection(x);
     const tg = h('div', 'tune-line');
     for (const [key, label] of [['infiniteRunes', 'Infinite runes'], ['godMode', 'God mode']] as const) {
       const lab = h('label', 'tune-check'), box = h('input');
@@ -292,6 +298,21 @@ export class TunePanel {
       s.rows.push(this.row(t, s.det, t.label, true));
     }
     document.body.appendChild(root);
+  }
+
+  /** A section another part of the client fills (the Network test), placed after Tools once the panel is built. */
+  addSection(label: string, fill: (body: HTMLElement) => void): void {
+    this.extra.push({ label, fill });
+    if (this.toolsSec) this.placeSection(this.extra[this.extra.length - 1]);
+  }
+
+  private placeSection(x: { label: string; fill: (body: HTMLElement) => void }): void {
+    const holder = document.createElement('div');
+    const body = this.panelSection(x.label, false, holder);
+    const det = holder.firstElementChild!;
+    (this.lastExtra ?? this.toolsSec!).after(det);
+    this.lastExtra = det;
+    x.fill(body);
   }
 
   private panelSection(label: string, open: boolean, parent: HTMLElement): HTMLElement {

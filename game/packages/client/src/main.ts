@@ -138,6 +138,7 @@ async function boot(): Promise<void> {
         preRewind: (w) => view.notePreRewind(w), postRewind: (w) => view.notePostRewind(w, net!.seat),
       };
     });
+    if (net) tune.addSection('Network test', (body) => net!.attachDebug(body));
   }
 
   const runStep = () => {
@@ -155,15 +156,21 @@ async function boot(): Promise<void> {
   let last = performance.now();
   /** Online: our input goes in `delay` ticks ahead; a tick runs once every seat's input is in. */
   const netSteps = (now: number) => {
-    const s = net!.session!;
     net!.pump(now);
-    acc = Math.min(acc + (now - last) / 1000, 8 * DT);
-    while (acc >= DT) {
+    const s = net!.session;
+    if (!s) return; // dropped from the match just now
+    const tick = () => {
       // Keep our inputs `delay` ticks ahead (the delay follows the round trip, so this may push several).
       while (s.nextScheduled <= world.clock[0] + s.delay) s.pushLocal(keyboard.sample(world, net!.seat));
-      if (!s.advance(1)) break; // waiting on someone: keep the time, catch up when it arrives
+      return s.advance(1) > 0;
+    };
+    acc = Math.min(acc + (now - last) / 1000, 8 * DT);
+    while (acc >= DT) {
+      if (!tick()) break; // waiting on someone: keep the time, catch up when it arrives
       acc -= DT;
     }
+    // Behind the others (a tab that was hidden, or one that just rejoined): run a few extra ticks a frame.
+    for (let k = Math.min(6, s.lag - 2); k > 0; k--) if (!tick()) break;
   };
   // ?pauseAt=N pauses the sim at tick N as the tuning panel's P does (for checking that cosmetic
   // animation keeps running on real time while the sim stands still)

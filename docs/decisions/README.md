@@ -226,3 +226,11 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
 - **Fire stays on the floor for 10 s,** and scorch marks outlast it (the user: "you'd expect the terrain to keep scorched").
 - **Many structure visuals were placeholders** (lens, barriers, wards, auras, the Double). A full VFX coverage pass is under way, with a placement preview while you hold Area.
 - **Death animations:** start with one enemy (the goblin), trying a base death plus an overlay for the killing element. The user doubts overlays will be enough, so the trial reports where a death needs its own animation. Deaths now carry the killing element, the blow's direction and the body's statuses.
+
+## 2026-11-04: Going public as Wizard Sim
+- **Public repo:** https://github.com/magnevan/wizard-sim. **The game is hosted** at https://magnevan.github.io/wizard-sim/, deployed by `.github/workflows/pages.yml` on every push to main (it runs `npm run check` first). Online play there uses WebRTC rooms with four-letter codes.
+- **The public history starts fresh.** The 42 earlier commits stay on the local branch `private-history`; never push it. Commits use the GitHub no-reply email.
+- **The decompiled Magicka numbers stay local** (`docs/reference/magicka-numbers-extracted.md` is gitignored). The public-source notes in `magicka-numbers.md` are published.
+- **Names:** the code is `@wizard-sim/*`, the page title is Wizard Sim and the debug global is `window.wizardSim`. Docs still credit Magicka as the inspiration. The local folder stays `magicka-toy`.
+- **Licence: MIT** for the whole repo (the user's choice).
+- `npm run check:webrtc` can test the deployed build: `node scripts/net-e2e.mjs --webrtc --url https://magnevan.github.io/wizard-sim/`.

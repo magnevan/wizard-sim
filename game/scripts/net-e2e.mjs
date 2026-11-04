@@ -3,6 +3,7 @@
 // Usage (after npm run build):
 //   node scripts/net-e2e.mjs            BroadcastChannel between the two pages (offline, fast)
 //   node scripts/net-e2e.mjs --webrtc   real WebRTC through PeerJS's public signalling server
+//   node scripts/net-e2e.mjs --webrtc --url https://magnevan.github.io/wizard-sim/   the deployed build
 // Exit code 0 on success; prints what each page saw.
 import puppeteer from 'puppeteer-core';
 import { BASE, findChrome, startPreview } from './serve.mjs';
@@ -11,7 +12,9 @@ const webrtc = process.argv.includes('--webrtc');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fail = (msg) => { console.error('FAIL:', msg); process.exitCode = 1; };
 
-const stop = await startPreview();
+const urlArg = process.argv.indexOf('--url');
+const base = urlArg > 0 ? process.argv[urlArg + 1] : BASE;
+const stop = urlArg > 0 ? () => {} : await startPreview();
 const browser = await puppeteer.launch({
   executablePath: findChrome(),
   headless: true,
@@ -23,7 +26,7 @@ const browser = await puppeteer.launch({
   ],
 });
 try {
-  const url = `${BASE}?lights=0&debug=0&timerloop=1${webrtc ? '' : '&net=bc'}`; // small and light: two software-rendered pages share one CPU
+  const url = `${base}?lights=0&debug=0&timerloop=1${webrtc ? '' : '&net=bc'}`; // small and light: two software-rendered pages share one CPU
   const [a, b] = await Promise.all([browser.newPage(), browser.newPage()]);
   for (const p of [a, b]) { await p.setViewport({ width: 640, height: 400 }); p.on('pageerror', (e) => console.error('page error:', e.message)); }
   await Promise.all([a.goto(url), b.goto(url)]);

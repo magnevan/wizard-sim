@@ -15,14 +15,13 @@
  */
 import { rules, type Cast, type Element } from '@wizard-sim/rules';
 import { compile, type SpellSpec } from './compile';
-import { ARMS, RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
+import { RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
 import { EL, N_EL, elementName } from './elements';
 import { channelTick, fireSpell } from './effects';
 import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, recallOldest, sigilCap, spendMote, weaponSwing } from './structures';
 import { len } from './geom';
 import { AIM_UNIT, BTN, type PlayerInput } from './input';
-import { TAP, heavy, heavyCharge, holdTick, remember, retreat, special, strike } from './hands';
-import { setPower } from './hit';
+import { TAP, channelsSpecial, heavy, heavyCharge, holdTick, retreat, special, specialTick, strike } from './hands';
 import { atan2Turns } from './trig';
 import { CAST_ID, KIND, PHASE, PU, QUEUE_MAX, regenOf, runeMax, stackOf, type World } from './world';
 
@@ -92,7 +91,7 @@ function startCast(w: World, i: number, castId: number): void {
   s.phase[i] = PHASE.windup;
   // Blink is instant: it must feel snappy (the user's note on the VFX gallery). Haste speeds every wind-up.
   s.timer[i] = spec.shape === 'blink' ? 0 : Math.round(T(RHYTHM.windup + RHYTHM.windupPerRune * s.castLen[i]) / hasteOf(w, i));
-  s.chanTicks[i] = 0; s.chanTimer[i] = 0; s.echoT[i] = 0;
+  s.chanTicks[i] = 0; s.chanTimer[i] = 0;
 }
 
 export function specOf(w: World, i: number): SpellSpec {
@@ -130,17 +129,13 @@ function release(w: World, i: number, spec: SpellSpec, charge: number): void {
   if (STRUCTURE_SHAPES.includes(spec.shape)) { castStructure(w, i, spec, aimFace(w, i), tx, ty, w.seats.holdX[i], w.seats.holdY[i], on); return; }
   // An empty Weapon cast swings your conjured weapon, if you hold one.
   if (spec.cast === 'conjure' && spec.power === 0 && weaponSwing(w, i, aimFace(w, i))) return;
-  // An echo (the Echo focus's Heavy) casts at half power, and neither the Double nor the memory repeats it.
-  const echo = w.seats.echoT[i] > 0;
-  fireSpell(w, i, spec, aimFace(w, i), tx, ty, echo ? 0.5 : charge, echo ? { scale: ARMS.echoPower } : undefined);
-  if (!echo && spec.shape !== 'blink' && spec.shape !== 'self') doubleRepeat(w, i, spec, tx, ty, charge);
-  if (!echo) remember(w, i, spec, w.seats.castId[i]);
+  fireSpell(w, i, spec, aimFace(w, i), tx, ty, charge);
+  if (spec.shape !== 'blink' && spec.shape !== 'self') doubleRepeat(w, i, spec, tx, ty, charge);
   w.events.push({ tick: w.clock[0], kind: 'cast', who: i, x: w.bodies.x[i], y: w.bodies.y[i], text: spec.title, look: spec.look });
 }
 
 function toRecovery(w: World, i: number): void {
   w.seats.phase[i] = PHASE.recover;
-  w.seats.echoT[i] = 0;
   w.seats.timer[i] = T(RHYTHM.recovery);
 }
 
@@ -152,9 +147,7 @@ function windupTick(w: World, i: number, held: number, act: boolean): void {
   if (spec.charge && held & BTN.force) { s.phase[i] = PHASE.charge; s.chanTicks[i] = 0; return; }
   if (spec.channel) {
     s.phase[i] = PHASE.channel; s.chanTicks[i] = 0;
-    const echo = s.echoT[i] > 0;
-    s.dblPaid[i] = !echo && payDouble(w, i, spec) ? 1 : 0; // the Double echoes the channel if you can pay its half
-    if (!echo) remember(w, i, spec, s.castId[i]);
+    s.dblPaid[i] = payDouble(w, i, spec) ? 1 : 0; // the Double echoes the channel if you can pay its half
     w.events.push({ tick: w.clock[0], kind: 'cast', who: i, x: b.x[i], y: b.y[i], text: spec.title, look: spec.look });
   } else { release(w, i, spec, 0); toRecovery(w, i); }
 }
@@ -221,16 +214,23 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
       const t = s.handT[i];
       s.handT[i] = 0; s.linkTo[i] = -1;
       if (t <= TAP) strike(w, i, face);
-      else if (heavy(w, i, face, heavyCharge(t))) return; // the Echo: a cast is under way
+      else heavy(w, i, face, heavyCharge(t));
       toRecovery(w, i);
       return;
     }
-    if (c === CAST_ID.area || c === CAST_ID.place) { const [tx, ty] = target(w, i); special(w, i, face, tx, ty); toRecovery(w, i); return; }
+    if (c === CAST_ID.area || c === CAST_ID.place) {
+      const ch = s.specT[i] > 0; s.specT[i] = 0;
+      if (!ch) { const [tx, ty] = target(w, i); special(w, i, face, tx, ty); } // a held Special (Siphon, Mend) ended on release
+      toRecovery(w, i); return;
+    }
+    // Shift+RMB held: the wand's Siphon and the hands' Mend channel while it's down.
+    if (held & BTN.area && s.areaHeld[i] > TAP && channelsSpecial(w, i)) { specialTick(w, i); return; }
     if (c === CAST_ID.conjure) { retreat(w, i, face); toRecovery(w, i); return; }
     if (c === CAST_ID.self) return; // Space with nothing queued: Defend, when you hold a guard (guardT above)
     if (s.handT[i] > 0) return;
   }
   if (!act) s.handT[i] = 0;
+  if (!act || !(held & BTN.area)) s.specT[i] = 0;
   if (!s.handT[i]) s.linkTo[i] = -1;
   switch (s.phase[i]) {
     case PHASE.idle: {
@@ -255,9 +255,7 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
     }
     case PHASE.channel: {
       const spec = specOf(w, i);
-      // An echoed channel runs on its own for ARMS.echoChannel seconds; yours, while you hold RMB.
-      const echo = s.echoT[i] > 0;
-      if (!act || (echo ? --s.echoT[i] <= 0 : !(held & BTN.force))) { toRecovery(w, i); break; }
+      if (!act || !(held & BTN.force)) { toRecovery(w, i); break; }
       // Past the natural duration it costs upkeep from the form element; it ends when that runs dry.
       const natural = RHYTHM.naturalChannel * (spec.shape === 'beam' ? Math.max(1, spec.formN) : 1); // a beam's extra runes buy time, not damage
       if (s.chanTicks[i] >= T(natural) && spec.form) {
@@ -265,9 +263,7 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
         s.runes[k] -= RHYTHM.upkeep / 60;
         if (s.runes[k] <= 0) { s.runes[k] = 0; toRecovery(w, i); break; }
       }
-      if (echo) setPower(ARMS.echoPower);
       channelTick(w, i, spec, aimFace(w, i));
-      setPower(1);
       const d = s.double[i];
       if (s.dblPaid[i] && d >= 0 && w.bodies.kind[d] === KIND.double) {
         const [tx, ty] = target(w, i, 30);

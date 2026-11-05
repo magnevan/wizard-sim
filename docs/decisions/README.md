@@ -371,3 +371,21 @@ The user said "build optimistically", so the game now has what `explorations/202
 - **Net flake (`check:net`: "pages drifted apart over the slow link (-1 vs 851)").** Page A (the host) had been dropped: its session was null. The TypeError after it came from the test, which set `session.aimPrediction` without checking for null. A drop needs one page to hear nothing from the other for 2.5 s. A's link was only lagged (150 ms, 3% loss), so A's own page most likely stalled for over 2.5 s. Two software-rendered pages share one CPU, and memory was short. B then dropped it, as designed.
   - Game fix: if a page's own loop stalls (over 0.5 s between two pumps), it gives every seat a fresh 2.5 s before calling anyone silent. Without this, a page that froze could, on waking, take the others' silence for theirs and drop the healthy players. It would be its own coordinator by then, so its "drop" would kick the host out.
   - Test fixes: the aim switch is null-safe. The test now fails with each page's message and its longest event-loop stall. It also has a new phase: B freezes for 3.5 s, A must keep playing, and only B is dropped.
+
+## 2026-11-05: Round-2 ratings built: new Retreats and passives, the Arcane wand, Mend, carrying slows you
+
+From the user's round-2 ratings on the Weapon Moveset Review (`explorations/2026-11-05-guards-round-2.md`). Built optimistically and shown as round 3 on the same page.
+- **Guards:**
+  - Bulwark's Retreat is the **Shove step** (a step back plus a knockback and stun in front), replacing Brace.
+  - The Mirror's Backstep goes 3 u, and its block glances shots off without wear.
+  - The Rime block chills biters and no longer frosts the floor.
+  - Tide is **Quenched** (can't burn), no longer always wet.
+  - The Prism's passive is **Clear** (allies' beams and sprays don't hurt you).
+  - The Leaf block heals allies on any side, and its Retreat is the **Seed step** (a healing bloom left behind).
+- **Weapons:**
+  - The Echo focus is replaced by the **Arcane wand**: light bolt, charged piercing bolt, and **Siphon** (held, rooted, rune regen ×4).
+  - Healing hands' Special is **Mend** (held, heals allies around you).
+  - The javelin costs 2 uses, and is drawn peeling off the spearhead.
+- **Carrying a guard or a weapon costs 5 % walking speed each** (q-res-when note).
+- **Mixing, first cut:** the lead sets the moves; the second element mixes in its passive and its whole resistance row at half. A fuller rule (every element mixes, coats, rune counts scale) is proposed in the exploration and asked on the page; it is not built.
+- Golden hash `14440468` → `e055dcdb` (the Echo state is removed; the Special channel state is new).

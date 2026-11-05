@@ -13,7 +13,7 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import {
-  CELL, DEVICE, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PHASE, QUEUE_MAX, RHYTHM, SURF, T, ZONE,
+  CELL, DEVICE, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SURF, T, ZONE,
   compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
@@ -449,6 +449,16 @@ export class Vfx {
         continue;
       }
       const y = yg - STAFF_Z;
+      if (ty === 2 && m.flags[j] & PF.pin) {
+        // the spear's javelin: a long ice shaft along its flight, a bright head, frost shedding off the tail
+        X.ellipse(g, x, yg, 6, 1.2, 'rgba(8,6,16,0.35)');
+        X.line(o, x - ux * 13, y - uy * 13, x + ux * 2, y + uy * 2, '#163e7a', 3);
+        X.line(o, x - ux * 12, y - uy * 12, x + ux * 2, y + uy * 2, '#9ff4ff', 1);
+        K.shard(o, x + ux * 3, y + uy * 3, Math.atan2(uy, ux), 5, sd, 1, EL.cold);
+        for (const p of emit(t, 30, 0.35, (i, age, ts) => { const back = (t - ts) * L * 16 + 12; return { x: x - ux * back + (rand(i, 2, sd) - 0.5) * 3, y: y - uy * back + age * 4, age }; }, this.mT0[j], t)) X.px(o, p.x, p.y, p.age < 0.4 ? '#ffffff' : EL.cold[2]);
+        light(x, yg, 26, '#9ff4ff', 0.4);
+        continue;
+      }
       if (ty === 2) {
         // shards: jagged slivers with a glitter trail; Life's are pale crystal with a green heart
         X.ellipse(g, x, yg, 2, 1, 'rgba(8,6,16,0.35)');

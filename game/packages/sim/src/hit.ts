@@ -39,9 +39,6 @@ const c = (els: Uint8Array, at: number, id: number) => els[at * N_EL + id - 1];
 export const HIT_KIND = { other: 0, missile: 1, burst: 2, channel: 3, arc: 4, melee: 5, wave: 6 } as const;
 let hitKind = 0;
 export function setHitKind(k: number): void { hitKind = k; }
-/** A power multiplier on every hit while it's set (the Echo focus's half-power channels). Not state: set and reset around one call. */
-let power = 1;
-export function setPower(k: number): void { power = k; }
 
 /**
  * Applies the payload in `els` (9 counts at slot `at`) to body `t`.
@@ -50,7 +47,6 @@ export function setPower(k: number): void { power = k; }
 export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: HitOpts): number {
   const b = w.bodies;
   if (b.kind[t] === KIND.none) return 0;
-  if (power !== 1) o = { ...o, scale: o.scale * power };
   const ss = o.statusScale ?? 1;
   const tick = w.clock[0];
   const water = c(els, at, EL.water), fire = c(els, at, EL.fire), cold = c(els, at, EL.cold);
@@ -65,7 +61,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     }
   }
   const srcSeat = src >= 0 && src < MAX_SEATS ? src : -1, tSeat = t < MAX_SEATS ? t : -1;
-  // A guard (guards.ts): the Prism pane stops beams from the front (and halves them unraised); resistances below.
+  // A guard (guards.ts): Clear lets allies' beams through harmlessly; a raised Prism pane stops them from the front. Resistances below.
   const guard = tSeat >= 0 ? s.guard[tSeat] : 0;
   if (guard && !o.heal && hitKind === HIT_KIND.channel && o.frontal) {
     const k = guardBeam(w, tSeat, src, els, at, o.scale, o.dirX, o.dirY);

@@ -10,7 +10,7 @@
  * placement preview), holddrag (held while dragging, never let go), guard (Weapon cast, then the button held to block).
  * wait does nothing for a cycle (?spell=shield+earth/place;wait;wait keeps one wall up to watch it break).
  * A target after @ overrides where the seat aims: ?spell=shield+earth/drag@0,-2
- * Your hands, with nothing queued: strike, heavy, special, retreat, block (?spell=sigil+cold/weapon;heavy).
+ * Your hands, with nothing queued: strike, heavy, special, channel (Special held), retreat, block (?spell=sigil+cold/weapon;heavy).
  * Pure integer maths on the tick, so a given --ms shows the same moment.
  */
 import { rules, type Element } from '@wizard-sim/rules';
@@ -36,7 +36,7 @@ function parseOne(s: string): Demo | null {
 }
 
 /** Casts that work with nothing queued: your hands (weapon moves and the guard's gestures). */
-const HANDS = ['weapon', 'wait', 'strike', 'heavy', 'special', 'block', 'retreat'];
+const HANDS = ['weapon', 'wait', 'strike', 'heavy', 'special', 'channel', 'block', 'retreat'];
 const PERIOD = 170;
 /** Where seat i aims: the middle dummy for seat 0, the left one for seat 1. */
 const TARGET = [[0, -5], [-6, -4]] as const;
@@ -61,6 +61,7 @@ export function demoInput(w: World, tick: number, seat: number, d: Demo): Player
   else if (d.cast === 'strike') buttons = ph >= go && ph < go + 2 ? BTN.force : 0;
   else if (d.cast === 'heavy') buttons = ph >= go && ph < go + 60 ? BTN.force : 0;
   else if (d.cast === 'special') buttons = ph >= go && ph < go + 2 ? BTN.area : 0;
+  else if (d.cast === 'channel') buttons = ph >= go && ph < go + 140 ? BTN.area : 0; // a held Special (Siphon, Mend)
   else if (d.cast === 'retreat') buttons = ph >= go && ph < go + 2 ? BTN.weapon : 0;
   else if (d.cast === 'block') buttons = ph >= go && ph < go + 140 ? BTN.self : 0;
   else if (d.cast === 'guard') buttons = (ph >= go && ph < go + 2) || ph >= go + 30 ? BTN.weapon : 0;

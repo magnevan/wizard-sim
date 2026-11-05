@@ -13,21 +13,21 @@ const elName = (id: number) => rules.ELEMENTS[elementName(id) as Element].name;
 /** Each guard: its name, Defend (block / parry), Retreat, and passive (docs/explorations/2026-11-05-guards.md). */
 const GUARD_TEXT: Record<string, [string, string, string, string]> = {
   mirror: ['Mirror buckler', 'narrow block, parry reflects a shot', 'Backstep', 'Light: full speed blocking, widest parry'],
-  bulwark: ['Bulwark', 'wide block that stops melee, parry bashes down', 'Brace (no move, 1 s)', 'Anchored: no knockback; 15 % slower'],
+  bulwark: ['Bulwark', 'wide block that stops melee, parry bashes down', 'Shove step (a step back; knocks back what is in front)', 'Anchored: no knockback; 15 % slower'],
   ember: ['Ember targe', 'thorns burn biters, parry blows flame', 'Flame step (leaves fire)', 'Warm: no chill or freeze; fire immune'],
-  rime: ['Rime kite', 'frosts the floor ahead, parry freezes a biter', 'Ice slide (leaves ice)', 'Sure-footed: never slips; cold immune'],
+  rime: ['Rime kite', 'chills biters, parry freezes them', 'Ice slide (leaves ice)', 'Sure-footed: never slips; cold immune'],
   spark: ['Spark ring', 'weakest block, parry discharges', 'Blink 3 u (leaves a spark)', 'Grounded: chain lightning skips you'],
-  tide: ['Tide shield', 'shoves and soaks biters, parry throws a wave', 'Surge (shoves what is in front)', 'Doused: always wet, cannot burn'],
-  prism: ['Prism pane', 'stops beams, parry returns them', 'Phase (through bodies)', 'Hovering ward: halves frontal beams'],
-  leaf: ['Leaf aegis', 'heals allies behind you, parry burst-heals', 'Regroup (toward an ally, heals both)', 'Regrowth: slow healing'],
+  tide: ['Tide shield', 'shoves and soaks biters, parry throws a wave', 'Surge (shoves what is in front)', 'Quenched: cannot burn'],
+  prism: ['Prism pane', 'stops beams and sprays, parry returns them', 'Phase (through bodies)', 'Clear: allies’ beams and sprays don’t hurt you'],
+  leaf: ['Leaf aegis', 'heals allies around you, parry burst-heals you all', 'Seed step (leaves a healing bloom)', 'Regrowth: slow healing'],
 };
 /** Each weapon: its name, Heavy and Special. */
 const WEAPON_TEXT: Record<string, [string, string, string]> = {
   water: ['Tide trident', 'wave slash (shoves, soaks)', 'Sweep'],
-  life: ['Healing hands', 'Healing link on the ally under the cursor (1 use a second)', 'Sweep'],
-  cold: ['Frost spear', 'impaling dash (frozen targets shatter)', 'javelin: pins and frosts (3 uses)'],
+  life: ['Healing hands', 'Healing link on the ally under the cursor (1 use a second)', 'hold: Mend (heals allies around you)'],
+  cold: ['Frost spear', 'impaling dash (frozen targets shatter)', 'javelin: pins and frosts (2 uses)'],
   lightning: ['Lightning whip', 'chain lash (up to 3 more)', 'Sweep'],
-  arcane: ['Echo focus', 'Echo: your remembered spell at half power (5 uses)', 'Copy an ally’s last spell'],
+  arcane: ['Arcane wand', 'a charged bolt that pierces', 'hold: Siphon (rooted, runes regenerate 4x)'],
   fire: ['Flame sword', 'fire wave (ignites, no lingering fire)', 'Sweep'],
   earth: ['Stone maul', 'fissure down one lane (knocks down)', 'Sweep'],
 };
@@ -132,7 +132,6 @@ export class Inspect {
       if (s.weapon[i]) {
         const wd = WEAPON_TEXT[elementName(s.weapon[i])];
         out.push(`· ${wd ? wd[0] : `a conjured ${elName(s.weapon[i])} weapon`} (${s.weaponUses[i]} uses)${wd ? `: RMB hold ${wd[1]} · Shift+RMB ${wd[2]}` : ''}`);
-        if (s.weapon[i] === ID('arcane')) out.push(`· the orb remembers ${s.echoCast[i] ? elements(s.echoEls, i) || 'nothing' : 'nothing yet'}`);
       }
       if (s.linkTo[i] >= 0) out.push(`· Healing link on Player ${s.linkTo[i] + 1}`);
     }

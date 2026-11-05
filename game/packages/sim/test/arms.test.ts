@@ -1,6 +1,7 @@
 /**
- * Round-2 weapons and guards (docs/explorations/2026-11-05-guards.md): the weapon-specific Heavies
- * and Specials, the Echo focus, and the eight guards' Defend, Retreat, passives and resistances.
+ * Weapons and guards (docs/explorations/2026-11-05-guards.md, revised in 2026-11-05-guards-round-2.md):
+ * the weapon-specific Heavies and Specials, the Arcane wand, and the eight guards' Defend, Retreat,
+ * passives, resistances and mixing.
  */
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
@@ -8,7 +9,7 @@ import {
   ARCH, ARCHETYPES, ARMS, BTN, EL, GUARD, KIND, NO_INPUT, SURF, TEAM, ZONE, createWorld, elementId, quantize, spawnBody, step,
   type PlayerInput, type World,
 } from '../src';
-import { resist, RES } from '../src/guards';
+import { anchored, resist, RES, walkMult } from '../src/guards';
 import { cellAt } from '../src/effects';
 
 class Driver {
@@ -63,13 +64,23 @@ describe('guards: one per lead element', () => {
     }
   });
 
-  it('a second element adds only its own resistance, at half strength', () => {
+  it('a second element mixes in its passive and its whole resistance row at half strength', () => {
     const { w, d } = arena();
     d.conjure('shield', 'fire', 'fire', 'earth'); // Ember targe, led by Fire, with Earth second
     expect(w.seats.guard[0]).toBe(GUARD.ember);
     expect(resist(w, 0, RES.fire)).toBe(1);
     expect(resist(w, 0, RES.physical)).toBe(0.25); // half of the Bulwark's 50 % physical
-    expect(resist(w, 0, RES.cold)).toBe(0.5); // the Ember's own, nothing from the Bulwark's cold
+    expect(resist(w, 0, RES.cold)).toBe(0.625); // the Ember's 50 % plus half the Bulwark's 25 %
+    expect(anchored(w, 0)).toBe(true); // the Bulwark's passive, mixed in
+  });
+
+  it('carrying costs a little walking speed: a guard and a weapon 5 % each', () => {
+    const { w, d } = arena();
+    expect(walkMult(w, 0)).toBe(1);
+    d.conjure('shield', 'fire');
+    expect(walkMult(w, 0)).toBeCloseTo(ARMS.carryWalk);
+    d.conjure('sigil', 'fire');
+    expect(walkMult(w, 0)).toBeCloseTo(ARMS.carryWalk * ARMS.carryWalk);
   });
 
   it('resistances apply while carried: an Ember targe takes no fire, a Rime kite takes more', () => {
@@ -109,7 +120,7 @@ describe('guards: one per lead element', () => {
     expect(burnt).toBe(true);
   });
 
-  it('a Mirror parry (Space tapped as the shot lands) sends the shot back; a late block only absorbs it', () => {
+  it('a Mirror parry (Space tapped as the shot lands) sends the shot back; a block glances it off, unworn', () => {
     for (const parry of [true, false]) {
       const { w, d, dummy } = arena(2);
       const t = dummy(-6, 0, 9);
@@ -129,25 +140,40 @@ describe('guards: one per lead element', () => {
       }
       expect(w.bodies.hp[0]).toBe(100);
       if (parry) expect(w.bodies.hp[1] < 100 || w.bodies.hp[t] < 400).toBe(true);
-      else expect(w.seats.guardHp[0]).toBeLessThan(ARMS.hp.mirror);
+      else expect(w.seats.guardHp[0]).toBe(ARMS.hp.mirror);
     }
   });
 
-  it('the Prism pane stops a beam from the front while raised, and halves it when not', () => {
+  it('Clear: an ally\'s beam does nothing to a Prism carrier, raised or not', () => {
     const hurt: number[] = [];
-    for (const mode of ['none', 'carried', 'raised']) {
+    for (const mode of ['none', 'carried']) {
       const { w, d } = arena(2);
       if (mode !== 'none') d.conjure('shield', 'arcane');
-      d.aimAt(3, 0);
+      d.aimAt(-3, 0); // facing away: Clear works from any side
       w.bodies.x[1] = 3; w.bodies.y[1] = 0;
       const ally = new Driver(w, 1).aimAt(0, 0);
       step(w, [d.input(), ally.input({ press0: elementId('arcane') }), NO_INPUT, NO_INPUT]);
-      for (let k = 0; k < 90; k++) step(w, [d.input(mode === 'raised' ? { buttons: BTN.self } : {}), ally.input({ buttons: BTN.force }), NO_INPUT, NO_INPUT]);
+      for (let k = 0; k < 90; k++) step(w, [d.input(), ally.input({ buttons: BTN.force }), NO_INPUT, NO_INPUT]);
       hurt.push(100 - w.bodies.hp[0]);
     }
     expect(hurt[0]).toBeGreaterThan(5);
-    expect(hurt[1]).toBeLessThan(hurt[0] * 0.75); // the hovering ward (plus the Prism's arcane resistance)
-    expect(hurt[2]).toBe(0);
+    expect(hurt[1]).toBe(0);
+  });
+
+  it('a raised Prism pane stops an enemy beam from the front; unraised it only resists', () => {
+    const hurt: number[] = [];
+    for (const raised of [false, true]) {
+      const { w, d } = arena(2);
+      d.conjure('shield', 'arcane');
+      d.aimAt(3, 0);
+      w.bodies.x[1] = 3; w.bodies.y[1] = 0; w.bodies.team[1] = TEAM.enemies; // a rival wizard
+      const foe = new Driver(w, 1).aimAt(0, 0);
+      step(w, [d.input(), foe.input({ press0: elementId('arcane') }), NO_INPUT, NO_INPUT]);
+      for (let k = 0; k < 90; k++) step(w, [d.input(raised ? { buttons: BTN.self } : {}), foe.input({ buttons: BTN.force }), NO_INPUT, NO_INPUT]);
+      hurt.push(100 - w.bodies.hp[0]);
+    }
+    expect(hurt[0]).toBeGreaterThan(2);
+    expect(hurt[1]).toBe(0);
   });
 
   it('Grounded: an ally\'s chain lightning skips the Spark ring carrier', () => {
@@ -162,9 +188,10 @@ describe('guards: one per lead element', () => {
     expect(w.bodies.hp[t]).toBeLessThan(400);
   });
 
-  it('passives: Tide is always wet and never burns; Leaf regrows; Ember dries you at once', () => {
-    const tide = arena(); tide.d.conjure('shield', 'water'); tide.d.tick({}, 30);
-    expect(tide.w.bodies.wet[0]).toBeGreaterThan(0);
+  it('passives: Tide is Quenched (never burns, not kept wet); Leaf regrows; Ember dries you at once', () => {
+    const tide = arena(); tide.d.conjure('shield', 'water'); tide.w.bodies.burn[0] = 300; tide.d.tick({}, 30);
+    expect(tide.w.bodies.burn[0]).toBe(0);
+    expect(tide.w.bodies.wet[0]).toBe(0);
     const leaf = arena(); leaf.d.conjure('shield', 'life'); leaf.w.bodies.hp[0] = 50; leaf.d.tick({}, 120);
     expect(leaf.w.bodies.hp[0]).toBeGreaterThan(51);
     const ember = arena(); ember.d.conjure('shield', 'fire'); ember.w.bodies.wet[0] = 300; ember.d.tick({}, 2);
@@ -183,16 +210,22 @@ describe('guards: Retreat (Shift+LMB, nothing queued)', () => {
     return a;
   };
 
-  it('without a guard it is the generic hop; the Mirror\'s Backstep goes about 2 units', () => {
+  it('without a guard it is the generic hop; the Mirror\'s Backstep goes about 3 units', () => {
     expect(retreatOf([]).w.bodies.x[0]).toBeLessThan(-0.8);
     const m = retreatOf(['shield']).w.bodies.x[0];
-    expect(m).toBeLessThan(-1.6); expect(m).toBeGreaterThan(-2.4);
+    expect(m).toBeLessThan(-2.5); expect(m).toBeGreaterThan(-3.5);
   });
 
-  it('Brace (Bulwark) does not move you, and nothing knocks you back', () => {
-    const { w } = retreatOf(['shield', 'earth']);
-    expect(Math.abs(w.bodies.x[0])).toBeLessThan(0.05);
-    expect(w.seats.retreatT[0]).toBeGreaterThan(0); // 1 s brace, 40 ticks in: still braced
+  it('Shove step (Bulwark): a short step back, and what was in front is knocked back and stunned', () => {
+    const { w, d, enemy } = arena();
+    d.conjure('shield', 'earth');
+    const e = enemy(ARCH.swarmer, 1.4, 0);
+    w.bodies.x[0] = 0; w.bodies.y[0] = 0;
+    d.aimAt(5, 0).cast(BTN.weapon, 1, 12);
+    expect(w.bodies.x[0]).toBeLessThan(-1);
+    expect(w.bodies.x[0]).toBeGreaterThan(-2);
+    expect(w.bodies.x[e]).toBeGreaterThan(2.2); // with your step back, about 3 u of space
+    expect(w.bodies.stun[e]).toBeGreaterThan(0);
   });
 
   it('Flame step leaves a short line of fire; Ice slide a lasting ice strip and a long slide', () => {
@@ -217,11 +250,28 @@ describe('guards: Retreat (Shift+LMB, nothing queued)', () => {
     expect(w.bodies.x[0]).toBeLessThan(-2);
   });
 
-  it('Regroup (Leaf) curves toward the nearest ally and heals you both', () => {
-    const { w } = retreatOf(['shield', 'life'], (a) => { a.w.bodies.x[1] = -1; a.w.bodies.y[1] = 3; a.w.bodies.hp[1] = 50; a.w.bodies.hp[0] = 50; });
-    expect(w.bodies.y[0]).toBeGreaterThan(1);
-    expect(w.bodies.hp[1]).toBeGreaterThan(50);
-    expect(w.bodies.hp[0]).toBeGreaterThan(50);
+  it('Seed step (Leaf): a hop back that leaves a healing bloom where you stood, ally or not', () => {
+    const { w } = retreatOf(['shield', 'life'], (a) => { a.w.bodies.x[1] = 0.3; a.w.bodies.y[1] = 0.8; a.w.bodies.hp[1] = 50; });
+    expect(w.bodies.x[0]).toBeLessThan(-2);
+    expect(Array.from(w.zones.type).includes(ZONE.spring)).toBe(true);
+    expect(w.bodies.hp[1]).toBeGreaterThan(50); // the ally standing in it
+  });
+
+  it('Leaf block heals allies on any side of you', () => {
+    const { w, d } = arena(2);
+    d.conjure('shield', 'life');
+    w.bodies.x[1] = 2; w.bodies.y[1] = 0; w.bodies.hp[1] = 50; // in front, not behind
+    d.aimAt(5, 0).tick({ buttons: BTN.self }, 60);
+    expect(w.bodies.hp[1]).toBeGreaterThan(55);
+  });
+
+  it('Rime block chills a biting goblin', () => {
+    const { w, d, enemy } = arena();
+    d.conjure('shield', 'cold');
+    const e = enemy(ARCH.swarmer, 1.4, 0);
+    let chilled = false;
+    for (let t = 0; t < 200 && !chilled; t++) { d.aimAt(5, 0).tick({ buttons: BTN.self }); if (w.bodies.chill[e] > 0) chilled = true; }
+    expect(chilled).toBe(true);
   });
 
   it('Retreat has a fixed 0.5 s recovery: a second Retreat right away does nothing', () => {
@@ -297,7 +347,7 @@ describe('weapons: Heavies and Specials', () => {
     expect(w.bodies.x[1] - w.bodies.x[0]).toBeGreaterThan(ARMS.linkRange - 0.5);
   });
 
-  it('the spear\'s javelin (Shift+RMB) pins the target and frosts the ground; the spear stays; 3 uses', () => {
+  it('the spear\'s javelin (Shift+RMB) pins the target and frosts the ground; the spear stays; 2 uses', () => {
     const { w, d, enemy } = arena();
     d.aimAt(5, 0).conjure('sigil', 'cold');
     const e = enemy(ARCH.brute, 5, 0);
@@ -310,54 +360,46 @@ describe('weapons: Heavies and Specials', () => {
   });
 });
 
-describe('the Echo focus (Sigil + Arcane)', () => {
-  it('remembers your last spell and re-casts it at half power for 5 uses, no runes', () => {
-    const { w, d, dummy } = arena();
-    const t = dummy(4, 0);
-    d.aimAt(4, 0).queue('earth').cast(BTN.force, 50, 40); // a rock
-    const first = 400 - w.bodies.hp[t];
-    expect(first).toBeGreaterThan(0);
-    w.bodies.hp[t] = 400;
-    d.conjure('sigil', 'arcane');
-    expect(w.seats.echoCast[0]).toBeGreaterThan(0);
-    expect(w.seats.echoEls[0 * 9 + EL.earth - 1]).toBe(1);
-    const earth = w.seats.runes[EL.earth - 1], uses = w.seats.weaponUses[0];
-    d.cast(BTN.force, 40, 60); // Heavy: the echo
-    expect(w.bodies.hp[t]).toBeLessThan(400);
-    expect(400 - w.bodies.hp[t]).toBeLessThan(first);
-    expect(w.seats.runes[EL.earth - 1]).toBeGreaterThanOrEqual(earth);
-    expect(w.seats.weaponUses[0]).toBe(uses - ARMS.echoUses);
-  });
-
-  it('echoes a channel for a moment on its own', () => {
-    const { w, d, dummy } = arena();
-    const t = dummy(3, 0);
-    d.aimAt(3, 0).queue('fire').cast(BTN.force, 20, 30);
-    w.bodies.hp[t] = 400; w.bodies.burn[t] = 0;
-    d.conjure('sigil', 'arcane').cast(BTN.force, 40, 80);
-    expect(w.bodies.hp[t]).toBeLessThan(400);
-  });
-
-  it('Copy (Shift+RMB) takes the spell an ally just cast near you', () => {
-    const { w, d, dummy } = arena(2);
-    dummy(4, -3);
-    d.conjure('sigil', 'arcane');
-    w.bodies.x[1] = 2; w.bodies.y[1] = 0;
-    const ally = new Driver(w, 1).aimAt(4, -3);
-    step(w, [d.input(), ally.input({ press0: elementId('cold') }), NO_INPUT, NO_INPUT]);
-    step(w, [d.input(), ally.input({ press0: elementId('cold') }), NO_INPUT, NO_INPUT]);
-    for (let k = 0; k < 20; k++) step(w, [d.input(), ally.input({ buttons: BTN.area }), NO_INPUT, NO_INPUT]);
-    for (let k = 0; k < 20; k++) step(w, [d.input(), ally.input(), NO_INPUT, NO_INPUT]);
-    expect(w.seats.lastCast[1]).toBeGreaterThan(0);
-    d.tick({ buttons: BTN.area }).tick({}, 10);
-    expect(w.seats.echoEls[EL.cold - 1]).toBe(2);
-  });
-
-  it('Strike is a weak bolt', () => {
+describe('the Arcane wand (Sigil + Arcane) and Mend', () => {
+  it('Strike is a light bolt', () => {
     const { w, d, dummy } = arena();
     const t = dummy(4, 0);
     d.aimAt(4, 0).conjure('sigil', 'arcane').cast(BTN.force, 1, 40);
     expect(w.bodies.hp[t]).toBeLessThan(400);
     expect(w.bodies.hp[t]).toBeGreaterThan(390);
+  });
+
+  it('a charged bolt (Heavy) hits harder and pierces', () => {
+    const { w, d, dummy } = arena();
+    const a = dummy(3, 0, 8), b = dummy(6, 0, 9);
+    d.aimAt(6, 0).conjure('sigil', 'arcane').cast(BTN.force, 60, 60);
+    expect(400 - w.bodies.hp[a]).toBeGreaterThan(10);
+    expect(w.bodies.hp[b]).toBeLessThan(400);
+  });
+
+  it('Siphon: hold Shift+RMB, rooted, runes regenerate several times as fast, a use a second', () => {
+    const regen: number[] = [];
+    for (const siphon of [false, true]) {
+      const { w, d } = arena();
+      d.aimAt(5, 0).conjure('sigil', 'arcane');
+      w.seats.runes[EL.fire - 1] = 0;
+      const uses = w.seats.weaponUses[0];
+      const hold = siphon ? { buttons: BTN.area, moveX: 127 } : {};
+      d.tick(hold, 20);
+      const x = w.bodies.x[0];
+      d.tick(hold, 130);
+      regen.push(w.seats.runes[EL.fire - 1]);
+      if (siphon) { expect(Math.abs(w.bodies.x[0] - x)).toBeLessThan(0.1); expect(w.seats.weaponUses[0]).toBe(uses - 2 * ARMS.siphonUses); }
+    }
+    expect(regen[1]).toBeGreaterThan(regen[0] * 3);
+  });
+
+  it('Mend (Healing hands, Shift+RMB held) heals allies around you', () => {
+    const { w, d } = arena(2);
+    d.aimAt(5, 0).conjure('sigil', 'life');
+    w.bodies.x[1] = -2; w.bodies.y[1] = 1; w.bodies.hp[1] = 40;
+    d.tick({ buttons: BTN.area }, 120);
+    expect(w.bodies.hp[1]).toBeGreaterThan(48);
+    expect(w.seats.weapon[0]).toBe(EL.life);
   });
 });

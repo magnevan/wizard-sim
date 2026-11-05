@@ -1,7 +1,7 @@
 /**
- * Conjured guards (docs/explorations/2026-11-05-guards.md, built on its recommendations pending the
- * user's round-2 ratings). A guard is Shield + a lead element, conjured once; it lasts until its HP
- * runs out. It owns two gestures and two always-on traits:
+ * Conjured guards (docs/explorations/2026-11-05-guards.md, revised by the user's round-2 ratings in
+ * 2026-11-05-guards-round-2.md). A guard is Shield + a lead element, conjured once; it lasts until its
+ * HP runs out. It owns two gestures and two always-on traits:
  *
  *   Defend   Space (nothing queued): hold = block frontal hits into the guard's HP; a tap timed as a
  *            hit lands = parry, which stops the hit and sets off the guard's parry effect.
@@ -10,28 +10,29 @@
  *   Retreat  Shift+LMB (nothing queued): each guard moves you differently (one doesn't move you).
  *            Free, with a fixed 0.5 s recovery in which you can't Retreat or Defend again.
  *   Passive  always on while carried.
- *   Resists  always on while carried, from any direction (recommendation 1). A second element adds
- *            only its own resistance, at half strength (recommendation 3).
+ *   Resists  always on while carried, from any direction. Carrying a guard costs a little walking speed.
+ *   Mixing   the lead element sets Defend and Retreat; a second element mixes in its passive and its
+ *            whole resistance row at half strength (the user's pick: "mix").
  *
- *   Guard (queue)          Defend: block / parry               Retreat       Passive
- *   Mirror buckler (S)     narrow / reflects a missile          Backstep      Light: full speed blocking, widest parry
- *   Bulwark (S+E)          wide, stops melee / bashes down      Brace         Anchored: no knockback (and 15 % slower)
- *   Ember targe (S+F)      thorns / a burst of flame            Flame step    Warm: no chill or freeze, dry at once
- *   Rime kite (S+C)        frosts the floor / freezes attacker  Ice slide     Sure-footed: no slipping on ice
- *   Spark ring (S+L)       weakest / chain discharge            Blink         Grounded: chain lightning skips you
- *   Tide shield (S+W)      shoves and soaks / a shoving wave    Surge         Doused: always wet, can't burn
- *   Prism pane (S+A)       stops beams / returns the beam       Phase         Hovering ward: halves frontal beams
- *   Leaf aegis (S+Li)      heals allies behind / burst heal     Regroup       Regrowth: slow healing
+ *   Guard (queue)          Defend: block / parry                 Retreat       Passive
+ *   Mirror buckler (S)     narrow, glances shots / reflects one   Backstep 3u   Light: full speed blocking, widest parry
+ *   Bulwark (S+E)          wide, stops melee / bashes down        Shove step    Anchored: no knockback (and 15 % slower)
+ *   Ember targe (S+F)      thorns / a burst of flame              Flame step    Warm: no chill or freeze, dry at once
+ *   Rime kite (S+C)        chills melee attackers / freezes them  Ice slide     Sure-footed: no slipping on ice
+ *   Spark ring (S+L)       weakest / chain discharge              Blink         Grounded: chain lightning skips you
+ *   Tide shield (S+W)      shoves and soaks / a shoving wave      Surge         Quenched: can't burn
+ *   Prism pane (S+A)       stops beams and sprays / returns them  Phase         Clear: allies' beams and sprays don't hurt you
+ *   Leaf aegis (S+Li)      heals allies around you / burst heal   Seed step     Regrowth: slow healing
  */
 import { ARMS, STATUS, T } from './config';
 import { EL, N_EL } from './elements';
 import { cellAt, floorDisc, hit, hitOpts, spawnZone, touchFloor, zap, type Payload } from './effects';
 import { inCone, len } from './geom';
-import { applyHit, bloom } from './hit';
+import { addKnock, applyHit, bloom } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { payloadDamage, wallAt } from './walls';
 import { WALL } from './compile';
-import { GUARD, GUARD_NAME, KIND, MAX_SEATS, SURF, ZONE, type World } from './world';
+import { GUARD, GUARD_NAME, KIND, MAX_SEATS, ZONE, type World } from './world';
 
 /** Resistance columns. */
 export const RES = { physical: 0, fire: 1, cold: 2, lightning: 3, arcane: 4 } as const;
@@ -88,7 +89,7 @@ export function resist(w: World, t: number, col: number): number {
   if (!g) return 0;
   let r = RES_TABLE[g][col];
   const e2 = guardSecond(w, t);
-  if (e2 && OWN_COL[e2] === col) r += ARMS.secondRes * RES_TABLE[GUARD_OF[e2]][col];
+  if (e2) r += ARMS.secondRes * RES_TABLE[GUARD_OF[e2]][col]; // the second element's whole row, strengths and weaknesses
   return Math.min(1, r);
 }
 /** The resistance column of an element's damage (Earth is physical), or -1. */
@@ -96,30 +97,45 @@ export const colOf = (id: number): number => OWN_COL[id] ?? -1;
 
 // ---- passives ----------------------------------------------------------------------------------
 
+/** Does seat i's guard have guard g's passive: its lead, or its second element mixed in? */
+export function hasPassive(w: World, i: number, g: number): boolean {
+  const lead = guardOf(w, i);
+  if (!lead) return false;
+  if (lead === g) return true;
+  const e2 = guardSecond(w, i);
+  return e2 !== 0 && GUARD_OF[e2] === g;
+}
 /** Anchored (Bulwark): no knockback while carried. */
-export const anchored = (w: World, i: number): boolean => guardOf(w, i) === GUARD.bulwark;
-/** No chill or freeze: the Ember targe (Warm) and anything immune to cold. */
-export const warm = (w: World, i: number): boolean => guardOf(w, i) === GUARD.ember || resist(w, i, RES.cold) >= 1;
-/** Can't burn: immune to fire, or the Tide shield (always wet). */
-export const unburnable = (w: World, i: number): boolean => guardOf(w, i) === GUARD.tide || resist(w, i, RES.fire) >= 1;
-/** Never slips on ice (Rime kite). */
-export const sureFooted = (w: World, i: number): boolean => guardOf(w, i) === GUARD.rime;
-/** Grounded (Spark ring): chain lightning skips this seat. */
-export const grounded = (w: World, i: number): boolean => guardOf(w, i) === GUARD.spark;
+export const anchored = (w: World, i: number): boolean => hasPassive(w, i, GUARD.bulwark);
+/** No chill or freeze: Warm (Ember) and anything immune to cold. */
+export const warm = (w: World, i: number): boolean => hasPassive(w, i, GUARD.ember) || resist(w, i, RES.cold) >= 1;
+/** Can't burn: immune to fire, or Quenched (Tide). */
+export const unburnable = (w: World, i: number): boolean => hasPassive(w, i, GUARD.tide) || resist(w, i, RES.fire) >= 1;
+/** Never slips on ice (Rime). */
+export const sureFooted = (w: World, i: number): boolean => hasPassive(w, i, GUARD.rime);
+/** Grounded (Spark): chain lightning skips this seat. */
+export const grounded = (w: World, i: number): boolean => hasPassive(w, i, GUARD.spark);
+/** Clear (Prism): an ally's beams and sprays don't hurt this seat. */
+export const clear = (w: World, i: number): boolean => i < MAX_SEATS && hasPassive(w, i, GUARD.prism);
 /** Phasing back (Prism pane's Retreat): passes through bodies. */
 export const phased = (w: World, i: number): boolean => i < MAX_SEATS && ((guardOf(w, i) === GUARD.prism && w.seats.retreatT[i] > 0) || w.seats.dashT[i] > 0);
-/** Braced (Bulwark's Retreat): doesn't move. */
-export const braced = (w: World, i: number): boolean => guardOf(w, i) === GUARD.bulwark && w.seats.retreatT[i] > 0;
 export const blocking = (w: World, i: number): boolean => guardOf(w, i) !== 0 && w.seats.guardT[i] > 0;
 
-/** Walking speed from the guard: the Bulwark is slow, a raised guard slows you (the Mirror is Light), Brace stops you. */
+/**
+ * Walking speed from what you carry: a guard or a weapon costs a little each; the Bulwark is slow;
+ * a raised guard slows you (the Mirror is Light); channelling a weapon Special slows or roots you.
+ */
 export function walkMult(w: World, i: number): number {
+  const s = w.seats;
+  let k = s.weapon[i] && s.weaponUses[i] > 0 ? ARMS.carryWalk : 1;
+  if (s.specT[i] > 0) k *= s.weapon[i] === EL.arcane ? 0 : ARMS.auraWalk; // Siphon roots you; Mend slows you
   const g = guardOf(w, i);
-  if (!g) return 1;
-  if (braced(w, i)) return 0;
+  if (!g) return k;
+  k *= ARMS.carryWalk;
+  if (hasPassive(w, i, GUARD.bulwark)) k *= ARMS.bulwarkWalk;
   const up = blocking(w, i);
-  if (g === GUARD.bulwark) return ARMS.bulwarkWalk * (up ? ARMS.bulwarkBlockWalk : 1);
-  return up && g !== GUARD.mirror ? ARMS.blockWalk : 1;
+  if (g === GUARD.bulwark) return k * (up ? ARMS.bulwarkBlockWalk : 1);
+  return up && g !== GUARD.mirror ? k * ARMS.blockWalk : k;
 }
 
 const blockHalf = (g: number): number => (g === GUARD.mirror ? ARMS.blockMirror : g === GUARD.bulwark ? ARMS.blockBulwark : ARMS.block);
@@ -204,18 +220,17 @@ function parryEffect(w: World, i: number, src: number, melee: boolean): void {
       cone(w, i, 3.2, 0.2, (j, ux, uy) => { hit(w, j, one(EL.water), hitOpts(one(EL.water), i, 1, ux, uy)); b.kx[j] += ux * 10; b.ky[j] += uy * 10; });
       move(w, i, 'tidewave');
       break;
-    case GUARD.leaf: healBehind(w, i, ARMS.leafParryHeal, true); break;
+    case GUARD.leaf: healAround(w, i, ARMS.leafParryHeal, true, true); break;
     default: break; // the Mirror and the Prism send the shot back (guardMissile, applyHit)
   }
 }
 
-/** Allies directly behind seat i (within 3 u, behind its back) are healed `amount`. */
-function healBehind(w: World, i: number, amount: number, event: boolean): void {
-  const b = w.bodies, fx = cosTurns(b.face[i]), fy = sinTurns(b.face[i]);
+/** Allies around seat i (within ARMS.leafRange, any side; `self`: i too) are healed `amount`. */
+function healAround(w: World, i: number, amount: number, event: boolean, self = false): void {
+  const b = w.bodies;
   for (let j = 0; j < MAX_SEATS; j++) {
-    if (j === i || b.kind[j] !== KIND.wizard || b.downed[j] || b.team[j] !== b.team[i]) continue;
-    const dx = b.x[j] - b.x[i], dy = b.y[j] - b.y[i], d = len(dx, dy);
-    if (d > 3 || (dx * fx + dy * fy) / (d || 1) > -0.4) continue;
+    if ((j === i && !self) || b.kind[j] !== KIND.wizard || b.downed[j] || b.team[j] !== b.team[i]) continue;
+    if (len(b.x[j] - b.x[i], b.y[j] - b.y[i]) > ARMS.leafRange) continue;
     const before = b.hp[j];
     b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + amount);
     bloom(w, i, j, b.hp[j] - before);
@@ -239,6 +254,13 @@ export function guardMissile(w: World, i: number, j: number, ux: number, uy: num
     parryEffect(w, i, src, false);
     return 1;
   }
+  if (g === GUARD.mirror) { // a glancing block: the shot skips off to the side, and the buckler isn't worn down
+    const side = m.vx[j] * cosTurns(w.bodies.face[i] + 0.25) + m.vy[j] * sinTurns(w.bodies.face[i] + 0.25) >= 0 ? 0.25 : -0.25;
+    const sp = len(m.vx[j], m.vy[j]), a = w.bodies.face[i] + side;
+    m.vx[j] = cosTurns(a) * sp; m.vy[j] = sinTurns(a) * sp; m.lastHit[j] = i;
+    move(w, i, 'glance');
+    return 2;
+  }
   let dmg = payloadDamage(m.els, j, m.scale[j]);
   if (g === GUARD.ember && m.els[j * N_EL + EL.water - 1]) dmg = Math.max(dmg, 10) * ARMS.emberWater; // Water douses it
   damageGuard(w, i, dmg);
@@ -259,18 +281,21 @@ export function guardMelee(w: World, t: number, src: number, dmg: number, dx: nu
   if (parrying(w, t)) { parryEffect(w, t, src, true); return 0; }
   const foe = src >= 0 && alive(w, src);
   if (foe && g === GUARD.ember) { b.burn[src] = Math.max(b.burn[src], T(STATUS.burn)); b.burnSrc[src] = t; } // thorns
+  if (foe && g === GUARD.rime) { b.chill[src] = Math.min(STATUS.chillMax, b.chill[src] + ARMS.rimeChill); w.events.push({ tick: w.clock[0], kind: 'move', who: t, x: b.x[src], y: b.y[src], text: 'chill', look: EL.cold }); } // frost bites back
   if (foe && g === GUARD.tide) { applyHit(w, src, one(EL.water).counts, 0, { scale: 1, heal: false, scald: false, freeze: false, source: t, dirX: -dx, dirY: -dy, push: 0 }); b.kx[src] -= dx * 8; b.ky[src] -= dy * 8; }
   if (g === GUARD.bulwark) { damageGuard(w, t, dmg); move(w, t, 'block'); return 0; }
   return land;
 }
 
 /**
- * A beam (or spray) tick on seat t from `src`. Returns the scale left of it: the Prism pane stops it
- * while blocking (a parry turns it on its caster), and halves it from the front even when not.
+ * A beam (or spray) tick on seat t from `src`. Returns the scale left of it: an ally's does nothing
+ * to a Clear seat (the Prism's passive, or mixed in); the Prism pane stops it from the front while
+ * blocking, and a parry turns it on its caster.
  */
 export function guardBeam(w: World, t: number, src: number, els: Uint8Array, at: number, scale: number, dx: number, dy: number): number {
-  if (guardOf(w, t) !== GUARD.prism || !fromFront(w, t, dx, dy)) return 1;
-  if (!blocking(w, t)) return 0.5;
+  const b = w.bodies;
+  if (src >= 0 && src !== t && clear(w, t) && b.team[src] === b.team[t]) return 0;
+  if (guardOf(w, t) !== GUARD.prism || !blocking(w, t) || !fromFront(w, t, dx, dy)) return 1;
   if (parrying(w, t) && src >= 0 && src !== t && alive(w, src)) {
     applyHit(w, src, els, at, { scale, heal: false, scald: false, freeze: false, source: t, dirX: -dx, dirY: -dy, push: 0 });
     if (w.clock[0] % 6 === 0) move(w, t, 'parry');
@@ -315,7 +340,12 @@ export function guardRetreat(w: World, i: number, face: number): void {
   s.guardT[i] = 0;
   const push = (d: number, ux = bx, uy = by) => { b.kx[i] += ux * glide(d); b.ky[i] += uy * glide(d); }; // your own move: never blocked by Anchored
   switch (g) {
-    case GUARD.bulwark: s.retreatT[i] = T(ARMS.brace); move(w, i, 'brace'); return;
+    case GUARD.bulwark: { // Shove step: a short step back, and the slab knocks back whatever was in front
+      push(ARMS.shoveStep);
+      cone(w, i, ARMS.shoveRange, 0.2, (j, ux, uy) => { if (b.team[j] !== b.team[i]) { addKnock(w, j, ux, uy, ARMS.shoveKnock); b.stun[j] = Math.max(b.stun[j], T(ARMS.shoveStun)); } });
+      move(w, i, 'shovestep', x + bx * ARMS.shoveStep, y + by * ARMS.shoveStep);
+      return;
+    }
     case GUARD.ember: {
       push(ARMS.flameStep);
       floorLine(w, x, y, x + bx * ARMS.flameStep, y + by * ARMS.flameStep, EL.fire, T(ARMS.flameLine));
@@ -349,25 +379,14 @@ export function guardRetreat(w: World, i: number, face: number): void {
       return;
     }
     case GUARD.prism: push(ARMS.phase); s.retreatT[i] = T(ARMS.phaseTime); move(w, i, 'phase', x + bx * ARMS.phase, y + by * ARMS.phase); return;
-    case GUARD.leaf: {
-      let ally = -1, ad = ARMS.regroup;
-      for (let j = 0; j < MAX_SEATS; j++) {
-        if (j === i || b.kind[j] !== KIND.wizard || b.downed[j] || b.team[j] !== b.team[i]) continue;
-        const d = len(b.x[j] - x, b.y[j] - y);
-        if (d < ad) { ad = d; ally = j; }
-      }
-      if (ally < 0) break; // nobody near: a plain step back
-      // the step back curves toward the ally: half back, mostly toward them, stopping beside them
-      const tx = (b.x[ally] - x) / (ad || 1), ty = (b.y[ally] - y) / (ad || 1);
-      const ux = bx * 0.35 + tx, uy = by * 0.35 + ty, ul = len(ux, uy) || 1;
-      push(Math.max(0.5, ad - 1), ux / ul, uy / ul);
-      for (const j of [i, ally]) { const before = b.hp[j]; b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + ARMS.regroupHeal); w.events.push({ tick: w.clock[0], kind: 'heal', who: j, src: i, x: b.x[j], y: b.y[j], amount: b.hp[j] - before, look: EL.life }); }
-      move(w, i, 'regroup', b.x[ally], b.y[ally]);
+    case GUARD.leaf: // Seed step: a hop back that leaves a healing bloom where you stood, for whoever steps in
+      push(ARMS.seedStep);
+      spawnZone(w, ZONE.spring, i, one(EL.life), x, y, ARMS.seedRadius, T(ARMS.seedLife), 0);
+      move(w, i, 'seedstep', x + bx * ARMS.seedStep, y + by * ARMS.seedStep);
       return;
-    }
     default: break;
   }
-  push(ARMS.backstep); // the Mirror's crisp hop (and the Leaf's, with no ally near)
+  push(ARMS.backstep); // the Mirror's crisp hop
   move(w, i, 'backstep', x + bx * ARMS.backstep, y + by * ARMS.backstep);
 }
 
@@ -383,14 +402,10 @@ export function tickGuards(w: World): void {
     if (s.dashT[i] > 0) s.dashT[i]--;
     const g = s.guard[i];
     if (!g || !s.active[i] || b.kind[i] !== KIND.wizard || b.downed[i]) continue;
-    if (g === GUARD.ember) { b.wet[i] = 0; b.chill[i] = 0; b.frozen[i] = 0; b.burn[i] = 0; } // Warm: dry at once; fire can't hurt it
-    else if (g === GUARD.tide) { b.wet[i] = Math.max(b.wet[i], T(1)); b.burn[i] = 0; } // Doused
-    else if (g === GUARD.leaf && b.hp[i] > 0) b.hp[i] = Math.min(b.maxHp[i], b.hp[i] + ARMS.regrowth / 60); // Regrowth
-    if (!s.guardT[i]) continue;
-    if (g === GUARD.leaf) healBehind(w, i, ARMS.leafBlockHeal / 60, false);
-    if (g === GUARD.rime && s.guardT[i] % 12 === 1) { // the block frosts the floor in front, so chargers slip
-      const fx = cosTurns(b.face[i]), fy = sinTurns(b.face[i]);
-      for (const f of [1.2, 1.8]) for (const sd of [-0.5, 0, 0.5]) { const c = cellAt(w, b.x[i] + fx * f - fy * sd, b.y[i] + fy * f + fx * sd); if (c >= 0 && w.surf.kind[c] !== SURF.fire) touchFloor(w, c, EL.cold); }
-    }
+    // Passives, the lead's or mixed in from a second element.
+    if (hasPassive(w, i, GUARD.ember)) { b.wet[i] = 0; b.chill[i] = 0; b.frozen[i] = 0; b.burn[i] = 0; } // Warm: dry at once; fire can't hurt it
+    if (hasPassive(w, i, GUARD.tide)) b.burn[i] = 0; // Quenched
+    if (hasPassive(w, i, GUARD.leaf) && b.hp[i] > 0) b.hp[i] = Math.min(b.maxHp[i], b.hp[i] + ARMS.regrowth / 60); // Regrowth
+    if (s.guardT[i] && g === GUARD.leaf) healAround(w, i, ARMS.leafBlockHeal / 60, false);
   }
 }

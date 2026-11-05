@@ -146,15 +146,21 @@ export const ARMS = {
   quakeHalf: 0.45, quakeRange: 7.5,
   /** Healing link (Life): picks the ally within linkPick of the cursor, holds to linkRange (or a wall), heals linkHeal hp/s, costs linkUses uses a second. */
   linkRange: 8, linkPick: 1.5, linkHeal: 12, linkUses: 1,
+  /** Charged bolt (Arcane wand): its power at full charge, and how fast it flies. */
+  chargedBolt: 1.1, boltSpeed: 14,
   /** Impaling dash (Cold): this many times the spear's reach; frozen targets on the way shatter. */
   dashMult: 2.5,
   /** Chain lash (Lightning): jumps after the first target, and how far each jump reaches. */
   lashJumps: 3, lashJump: 3.5,
   // ---- Specials ----
   /** The spear's javelin: uses, speed, how long it pins (roots) the target, and the frost it leaves. */
-  javelinUses: 3, javelinSpeed: 16, pin: 1.5, frostRadius: 1.0,
-  /** Echo focus: uses per echo, its power, how long an echoed channel runs, Copy's reach and window, the Strike bolt's power. */
-  echoUses: 5, echoPower: 0.5, echoChannel: 1.0, copyRange: 6, copyWindow: 2, boltScale: 0.35,
+  javelinUses: 2, javelinSpeed: 16, pin: 1.5, frostRadius: 1.0,
+  /** Arcane wand: the Strike bolt's power; Siphon (held Special, rooted) multiplies your rune regen, for siphonUses a second. */
+  boltScale: 0.45, siphonMult: 4, siphonUses: 1,
+  /** Mend (Healing hands' held Special): heals allies within auraRange (not you) auraHeal hp/s, auraUses a second; you walk at auraWalk. */
+  auraRange: 3.5, auraHeal: 7, auraUses: 1, auraWalk: 0.5,
+  /** Carrying a guard, or a weapon, costs this much walking speed each (the user: carrying should slow you a little). */
+  carryWalk: 0.95,
   // ---- Guards ----
   /** Retreat and Defend share this fixed recovery after a Retreat (pillar 4: a rhythm, not a hidden cooldown). */
   retreatRecovery: 0.5,
@@ -164,16 +170,20 @@ export const ARMS = {
   blockMirror: 0.09, blockBulwark: 0.2, block: 0.13,
   /** Walking while blocking (x walk speed): the Mirror is Light (1); the Bulwark slows you most; and the Bulwark's always-on slow. */
   blockWalk: 0.7, bulwarkBlockWalk: 0.4, bulwarkWalk: 0.85,
-  /** Retreat distances: Backstep, Flame step, Ice slide, Blink, Surge, Phase; Regroup looks this far for an ally. */
-  backstep: 2, flameStep: 3, iceSlide: 5, blink: 3, surge: 3, phase: 2.5, regroup: 4,
-  /** Brace (no move, no knockback), Phase (through bodies), the Flame step's fire line and the Blink spark, in seconds. */
-  brace: 1, phaseTime: 0.5, flameLine: 1, spark: 4,
-  /** Heals: Regroup (both of you), Leaf regrowth (hp/s), a Leaf block to allies behind (hp/s), a Leaf parry. */
-  regroupHeal: 8, regrowth: 1, leafBlockHeal: 8, leafParryHeal: 20,
+  /** Retreat distances: Backstep, Shove step, Flame step, Ice slide, Blink, Surge, Phase, Seed step. */
+  backstep: 3, shoveStep: 1.5, flameStep: 3, iceSlide: 5, blink: 3, surge: 3, phase: 2.5, seedStep: 2.5,
+  /** Shove step (Bulwark): the slab's reach, its knockback and the stun it leaves. */
+  shoveRange: 2.6, shoveKnock: 14, shoveStun: 0.6,
+  /** Phase (through bodies), the Flame step's fire line, the Blink spark, and the Seed step's healing bloom, in seconds; the bloom's radius. */
+  phaseTime: 0.5, flameLine: 1, spark: 4, seedLife: 4, seedRadius: 1.2,
+  /** Heals: Leaf regrowth (hp/s), a Leaf block to allies around you (hp/s), a Leaf parry (you too), and how far "around" reaches. */
+  regrowth: 1, leafBlockHeal: 8, leafParryHeal: 20, leafRange: 3.5,
+  /** A Rime block chills a melee attacker by this much (chill stacks). */
+  rimeChill: 1,
   /** Guard damage multipliers: the Spark ring is the weakest block; Water douses the Ember targe. */
   sparkBlock: 1.5, emberWater: 2,
-  /** A second element in a guard adds its own resistance at this share (the doc's recommendation: half). */
+  /** A second element in a guard mixes in its passive and its resistance row at this share. */
   secondRes: 0.5,
   /** What each guard takes before it breaks. */
-  hp: { mirror: 70, bulwark: 160, ember: 90, rime: 90, spark: 45, tide: 90, prism: 90, leaf: 90 },
+  hp: { mirror: 90, bulwark: 160, ember: 90, rime: 90, spark: 45, tide: 90, prism: 90, leaf: 90 },
 };

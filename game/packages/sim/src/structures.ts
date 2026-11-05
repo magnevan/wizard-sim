@@ -192,8 +192,6 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
     case 'weapon': {
       s.wand[src] = 0; s.weapon[src] = spec.sub; s.wandBorn[src] = w.clock[0];
       s.weaponEls.set(restCounts(spec), src * N_EL); s.weaponUses[src] = STRUCT.weaponUses;
-      // The Echo focus starts out remembering the last spell you cast.
-      if (spec.sub === EL.arcane) { s.echoEls.set(s.lastEls.subarray(src * N_EL, src * N_EL + N_EL), src * N_EL); s.echoCast[src] = s.lastCast[src]; }
       break;
     }
     case 'aura': s.auraEls.set(restCounts(spec), on * N_EL); s.aura[on] = T(STRUCT.auraTime); break;

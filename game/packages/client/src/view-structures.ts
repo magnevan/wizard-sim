@@ -215,8 +215,8 @@ class Scorch {
 
 /** How long each weapon or guard move's effect plays (s). */
 const MOVE_LIFE: Record<string, number> = {
-  dash: 0.45, flamestep: 0.5, iceslide: 0.7, backstep: 0.5, phase: 0.6, regroup: 0.8, brace: 1.0, surge: 0.6, tidewave: 0.6,
-  parry: 0.4, block: 0.25, guardbreak: 0.8, flameburst: 0.45, echo: 0.6, copy: 0.5, link: 0.5, linkbreak: 0.5,
+  dash: 0.45, flamestep: 0.5, iceslide: 0.7, backstep: 0.5, phase: 0.6, seedstep: 0.8, shovestep: 0.7, surge: 0.6, tidewave: 0.6,
+  parry: 0.4, block: 0.25, glance: 0.3, chill: 0.5, guardbreak: 0.8, flameburst: 0.45, chargedbolt: 0.4, javelin: 0.45, siphon: 0.5, mend: 0.6, link: 0.5, linkbreak: 0.5,
 };
 /** Each guard's colour. */
 const GUARD_RAMP: Record<string, Ramp> = {
@@ -1042,22 +1042,15 @@ export class StructureView {
       X.rect(c, tp[0] - 4, tp[1] - 3, 8, 6, '#1a120c'); X.rect(c, tp[0] - 3, tp[1] - 2, 6, 4, X.EARTH[2]); X.rect(c, tp[0] - 3, tp[1] - 2, 6, 1, X.EARTH[0]); X.rect(c, tp[0] - 3, tp[1] + 1, 6, 1, X.EARTH[4]);
       X.px(c, tp[0] + 1, tp[1], X.EARTH[3]);
     } else if (el === 'arcane') {
-      // the Echo focus: a violet orb hovering over your palm; the runes of the spell it remembers circle it
-      const cx = h[0] + fwd * 2, cy = h[1] - 7 * k + Math.sin(t * 4) * 0.6, r = 3.2 * k + 0.5, s = w.seats;
-      X.ellipse(o, cx, h[1] + 0.5, 2.2, 0.9, EL.arcane[3], 0.6);
-      X.glow(o, cx, cy, 6, EL.arcane[2], 0.6);
-      X.ellipse(c, cx, cy, r + 1, r + 1, '#120e1a'); X.ring(c, cx, cy, r + 0.4, r + 0.4, '#fbe6ff', 0.9);
-      X.ellipse(c, cx, cy, r, r, EL.arcane[3]); X.ellipse(c, cx - 0.4, cy - 0.4, r * 0.66, r * 0.66, EL.arcane[2]);
-      X.rect(c, cx - 1.5, cy - 1.5, 2, 2, EL.arcane[0]); X.px(c, cx - 1, cy - 1, '#ffffff');
-      const runes: number[] = [];
-      if (s.echoCast[i]) for (let id = 1; id <= N_EL; id++) for (let q = 0; q < s.echoEls[i * N_EL + id - 1]; q++) runes.push(id);
-      const n = runes.length || 3;
-      for (let q = 0; q < n; q++) {
-        const a = t * 2.2 + (q / n) * TAU, px2 = cx + Math.cos(a) * 7.5 * k, py2 = cy + Math.sin(a) * 3.8 * k, cc = Math.sin(a) < 0 ? g : o;
-        if (runes.length) { const R = runes[q] === ELID.life ? LIFE : ramp(runes[q]); X.rect(cc, px2 - 2, py2 - 2, 4, 4, '#120e1a'); X.rect(cc, px2 - 1, py2 - 1, 2, 2, R[1]); X.px(cc, px2, py2 - 1, R[0]); }
-        else X.px(cc, px2, py2, q % 2 ? EL.arcane[1] : EL.arcane[2]);
-      }
-      light(cx, v.y, 26, '#ff4f9b', 0.45);
+      // the Arcane wand: a short dark rod with a violet orb at its tip; Siphon makes the orb swell and motes circle it
+      const tp = dir(10 * k, 0.55), sip = w.seats.specT[i] > 0, r = (sip ? 2.8 + Math.sin(t * 12) * 0.5 : 2.2) * k + 0.5;
+      X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#120e1a', 3); X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#5a3a6a', 1);
+      X.glow(o, tp[0], tp[1], sip ? 10 : 6, EL.arcane[2], 0.6);
+      X.ellipse(c, tp[0], tp[1], r + 1, r + 1, '#120e1a');
+      X.ellipse(c, tp[0], tp[1], r, r, EL.arcane[3]); X.ellipse(c, tp[0] - 0.4, tp[1] - 0.4, r * 0.66, r * 0.66, EL.arcane[2]);
+      X.px(c, tp[0] - 1, tp[1] - 1, '#ffffff');
+      if (sip) for (let q = 0; q < 5; q++) { const a = t * 5 + (q / 5) * TAU, rr = 9 - mod(t * 3 + q * 0.2, 1) * 7; X.px(Math.sin(a) < 0 ? g : o, tp[0] + Math.cos(a) * rr, tp[1] + Math.sin(a) * rr * 0.5, q % 2 ? EL.arcane[1] : '#ffffff'); }
+      light(tp[0], v.y, 26, '#ff4f9b', sip ? 0.7 : 0.4);
     } else if (el === 'fire') {
       const tp = dir(14 * k, 0.4);
       X.line(c, h[0] - fwd * 3, h[1] + 1, h[0] + fwd * 3, h[1] - 1, '#3a2a1a', 2); X.px(c, h[0], h[1] + 2, '#3a2a1a');
@@ -1374,8 +1367,8 @@ export class StructureView {
         if (f.kind === 'mv-flamestep') K.dust(o, x, y - 2, e, sd, 5, 10, '#4a3a3a', 0.6);
         return;
       }
-      case 'mv-backstep': case 'mv-phase': case 'mv-regroup': {
-        // hop dust (Mirror), a hex afterimage (Prism), a leaf trail (Leaf) where you were
+      case 'mv-backstep': case 'mv-phase': case 'mv-seedstep': {
+        // hop dust (Mirror), a hex afterimage (Prism), a leaf trail (Leaf) from the bloom it left
         const q = e / f.life;
         if (f.kind === 'mv-backstep') { K.dust(g, x, y, e, sd, 7, 12, '#8a7a68', 0.7); K.gring(g, x, y, 3 + q * 9, EL.shield[1], 1 - q, 1); return; }
         if (f.kind === 'mv-phase') {
@@ -1386,11 +1379,21 @@ export class StructureView {
         for (let j = 0; j < 12; j++) { const kq = j / 12, px2 = lerp(x, x2, kq * 0.8) + Math.sin(kq * 6 + sd) * 4, py2 = lerp(y, y2, kq * 0.8) - 2; if (rand(j, 4, sd) < q) continue; X.px(g, px2, py2, j % 2 ? LIFE[2] : LIFE[3]); X.px(o, px2 + 1, py2 - 4 - q * 6, LIFE[1]); }
         return;
       }
-      case 'mv-brace': {
-        // the slab planted: a shock ring and dust where it bites the ground
+      case 'mv-shovestep': {
+        // the slab slammed forward as you step back: a shock arc in front of where you stood, and dust
+        const x2 = gx(f.x2), y2 = gy(f.y2), L = Math.hypot(x - x2, y - y2) || 1, ux = (x - x2) / L, uy = (y - y2) / L, q = e / f.life;
+        if (q < 0.5) for (let j = -4; j <= 4; j++) { const a = Math.atan2(uy, ux) + j * 0.16, rr = 8 + q * 40; X.px(g, x + Math.cos(a) * rr, y + Math.sin(a) * rr * FY, j % 2 ? X.EARTH[1] : '#e8dcc8'); X.px(g, x + Math.cos(a) * (rr - 2), y + Math.sin(a) * (rr - 2) * FY, X.EARTH[3]); }
+        K.dust(o, x + ux * 10, y + uy * 10 * FY, e, sd, 8, 16, '#8a7a68', 0.8);
+        return;
+      }
+      case 'mv-glance': case 'mv-chill': {
+        // a shot skipping off the Mirror: a white flash and sparks; frost biting back at a Rime blocker's attacker
         const q = e / f.life;
-        if (q < 0.4) K.gring(g, x, y, 4 + q * 30, X.EARTH[1], 1 - q / 0.4, 2);
-        K.dust(o, x, y, e, sd, 8, 16, '#8a7a68', 0.8);
+        if (f.kind === 'mv-chill') { for (let j = 0; j < 8; j++) K.puff(o, x + (rand(j, 1, sd) - 0.5) * 14, y - 8 - e * 10, 1.5 + e * 4, j % 2 ? '#ffffff' : X.FROST[1], 1 - q); return; }
+        const v = bodies[f.who]; if (!v?.on) return;
+        const fx = gx(w.bodies.x[f.who] + Math.cos(w.bodies.face[f.who] * TAU) * 0.6), fy = gy(w.bodies.y[f.who] + Math.sin(w.bodies.face[f.who] * TAU) * 0.6) - 10;
+        X.ellipse(o, fx, fy, 5 * (1 - q), 5 * (1 - q), '#ffffff', 1 - q);
+        for (let j = 0; j < 6; j++) { const a = rand(j, 1, sd) * TAU, d = e * 40; X.px(o, fx + Math.cos(a) * d, fy + Math.sin(a) * d * 0.5, j % 2 ? '#ffffff' : EL.shield[1]); }
         return;
       }
       case 'mv-surge': case 'mv-tidewave': {
@@ -1417,12 +1420,27 @@ export class StructureView {
         light(v.x, v.y, 50, '#ff7020', 0.8 * (1 - q));
         return;
       }
-      case 'mv-echo': case 'mv-copy': {
-        // Echo: violet rings bloom off the orb as it re-casts; Copy: a mote flies from the ally into your orb
+      case 'mv-chargedbolt': case 'mv-siphon': {
+        // the wand: rings off the tip as a charged bolt leaves; Siphon pulls violet motes in from all round
         const v = bodies[f.who]; if (!v?.on || !v.a) return;
-        const orb: Pt = [v.x + v.a.hands[0][0], v.y + v.a.hands[0][1] - 7], q = e / f.life;
-        if (f.kind === 'mv-copy') { S.mote(o, [gx(f.x2), gy(f.y2) - 14], orb, q, EL.arcane, 14); if (q > 0.8) X.glow(o, orb[0], orb[1], 7, EL.arcane[1], 1); return; }
-        K.gring(o, orb[0], orb[1] + 4, 3 + q * 18, EL.arcane[1], 1 - q, 1); X.glow(o, orb[0], orb[1], 9 * (1 - q), EL.arcane[2], 0.9);
+        const tip: Pt = [v.x + v.a.hands[0][0], v.y + v.a.hands[0][1] - 9], q = e / f.life;
+        if (f.kind === 'mv-siphon') { for (let j = 0; j < 6; j++) { const a = rand(j, 1, sd) * TAU; S.mote(o, [tip[0] + Math.cos(a) * 30, tip[1] + 10 + Math.sin(a) * 18], tip, q, EL.arcane, 10); } return; }
+        K.gring(o, tip[0], tip[1] + 4, 3 + q * 18, EL.arcane[1], 1 - q, 1); X.glow(o, tip[0], tip[1], 9 * (1 - q), EL.arcane[2], 0.9);
+        return;
+      }
+      case 'mv-javelin': {
+        // the throw: the spear thrusts and an ice copy peels off its head along the thrust line, shedding frost
+        const v = bodies[f.who]; if (!v?.on || !v.a) return;
+        const q = e / f.life, a = w.bodies.face[f.who] * TAU, ux = Math.cos(a), uy = Math.sin(a) * FY, hx = v.x + v.a.hands[0][0], hy = v.y + v.a.hands[0][1];
+        if (q < 0.35) { const k = q / 0.35; X.line(o, hx + ux * (4 + k * 10), hy + uy * (4 + k * 10) - 2, hx + ux * (16 + k * 14), hy + uy * (16 + k * 14) - 2, '#c4eefa', 2); X.glow(o, hx + ux * 16, hy + uy * 16 - 2, 6 * (1 - k), '#9ff4ff', 0.8); }
+        for (let j = 0; j < 8; j++) { const d = 14 + rand(j, 1, sd) * 12; if (rand(j, 2, sd) < q) continue; X.px(o, hx + ux * d + (rand(j, 3, sd) - 0.5) * 4, hy + uy * d - 2 + e * 14, j % 2 ? '#ffffff' : X.FROST[1]); }
+        return;
+      }
+      case 'mv-mend': {
+        // Mend: a soft green ring swelling out to its reach at your feet, leaves lifting off it
+        const q = e / f.life, R3 = 3.5 * 16;
+        K.gring(g, x, y, R3 * (0.3 + 0.7 * q), LIFE[2], 1 - q, 1);
+        for (let j = 0; j < 8; j++) { const a = (j / 8) * TAU + sd, rr = R3 * (0.3 + 0.7 * q); X.px(o, x + Math.cos(a) * rr, y + Math.sin(a) * rr * FY - q * 8, j % 2 ? LIFE[1] : LIFE[3]); }
         return;
       }
       case 'mv-link': case 'mv-linkbreak': {

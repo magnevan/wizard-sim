@@ -141,10 +141,8 @@ export interface Seats {
   dashT: Int32Array;
   /** The Healing link: the ally it holds (-1 none) and ticks it has held (it costs a use a second). */
   linkTo: Int16Array; linkT: Int32Array;
-  /** The Echo focus's memory: a spell's 9 counts and cast (CAST_ID, 0 none); ticks left of an echo being cast (half power). */
-  echoEls: Uint8Array; echoCast: Uint8Array; echoT: Int32Array;
-  /** The last spell this seat cast (9 counts, cast id, tick), for an ally's Copy. */
-  lastEls: Uint8Array; lastCast: Uint8Array; lastTick: Int32Array;
+  /** Ticks a held weapon Special has channelled (the wand's Siphon, the hands' Mend); 0 when not. */
+  specT: Int32Array;
   /** Your Double's body, or -1; where it keeps itself relative to you; whether it paid for the current channel; where its beam reached. */
   double: Int16Array; dblOX: Float64Array; dblOY: Float64Array; dblPaid: Uint8Array; dblEndX: Float64Array; dblEndY: Float64Array;
   /** When the Double, and the wand or conjured weapon, were made (for recalling the oldest). */
@@ -387,7 +385,7 @@ function seats(n: number): Seats {
     weapon: u8(n), weaponEls: u8(n * N_EL), weaponUses: i32(n), motes: u8(n),
     guard: u8(n), guardHp: f64(n), guardT: i32(n), handT: i32(n), double: new Int16Array(n).fill(-1), dblOX: f64(n), dblOY: f64(n), dblPaid: u8(n), dblEndX: f64(n), dblEndY: f64(n), dblBorn: i32(n), wandBorn: i32(n),
     guardEls: u8(n * N_EL), guardCd: i32(n), retreatT: i32(n), dashT: i32(n), linkTo: new Int16Array(n).fill(-1), linkT: i32(n),
-    echoEls: u8(n * N_EL), echoCast: u8(n), echoT: i32(n), lastEls: u8(n * N_EL), lastCast: u8(n), lastTick: i32(n),
+    specT: i32(n),
   };
 }
 function missiles(n: number): Missiles {

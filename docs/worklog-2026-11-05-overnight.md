@@ -13,7 +13,7 @@ Each item runs in its own agent and git worktree, and Claude merges into main, r
 | Survive mode: arena, waves, power-ups | agent | merged: `#survive`; 10 power-ups built; 6 questions in `explorations/2026-11-05-survive-mode.md` |
 | Deaths for brute, archer, imp, grabber and shieldbearer: gallery round and game port | agent | merged; gallery republished (17 new slugs, group `deaths2`) |
 | Remote prediction: world-space aim, late remote spells shown from their first frame | agent | merged: wrong guesses 86 % → 4 % with a walking partner at 150 ms |
-| Weapon-specific Heavies and guard Retreats in the game | next | wait for the user's round-2 ratings before building |
+| Weapon-specific Heavies and guard Retreats in the game | Claude | done; round-2 ratings built, round 3 on the review page (`explorations/2026-11-05-guards-round-2.md`) |
 | Inert audit, Life family | partly decided | sprays sized by the lending element (built); earth, cold and lightning proposed in the decisions log |
 | 4. Host tuning online without desync | Claude | done |
 | TURN relay | waits on the user | — |

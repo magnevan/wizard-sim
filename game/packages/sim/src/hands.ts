@@ -1,21 +1,21 @@
 /**
  * Your hands: with no runes queued, the cast gestures are weapon moves (grammar v2,
- * docs/explorations/2026-11-05-weapons-review-1.md; the round-2 weapons in 2026-11-05-guards.md,
- * built on its recommendations pending the user's round-2 ratings). Runes queued = magic, none = your hands.
+ * docs/explorations/2026-11-05-weapons-review-1.md; the round-2 weapons in 2026-11-05-guards.md, revised
+ * by the user's ratings in 2026-11-05-guards-round-2.md). Runes queued = magic, none = your hands.
  *
  *   RMB tap     Strike   your weapon's swing, or the staff's shove                     1 use
  *   RMB hold    Heavy    charge, then the weapon's own big move                        2 uses
- *   Shift+RMB   Special  a full-circle Sweep for most; the spear's javelin; the Echo focus's Copy
+ *   Shift+RMB   Special  a full-circle Sweep for most; the spear's javelin; held: the wand's Siphon, the hands' Mend
  *   Shift+LMB   Retreat  your guard's Retreat (guards.ts), or a quick hop back without one
  *   Space       Defend   hold to block with your guard, tap as a hit lands to parry (cast.ts: guardT)
  *
  *   Weapon            Heavy                                               Special
  *   Bare staff        a big shove                                         Sweep
  *   Tide trident      a wave slash rolling along the floor: shoves, soaks Sweep
- *   Healing hands     Healing link: hold to heal the ally under the cursor, no release; 1 use a second
- *   Frost spear       an impaling dash 2.5x its reach; frozen targets on the way shatter   Javelin (pins, frosts; 3 uses)
+ *   Healing hands     Healing link: hold to heal the ally under the cursor, no release      Mend: hold to heal allies around you
+ *   Frost spear       an impaling dash 2.5x its reach; frozen targets on the way shatter   Javelin (pins, frosts; 2 uses)
  *   Lightning whip    a chain lash: the first target, then up to 3 more   Sweep
- *   Echo focus        Echo: re-casts the spell it remembers at half power (5 uses)          Copy an ally's spell
+ *   Arcane wand       a charged bolt that pierces                                           Siphon: hold, rooted, runes regenerate fast
  *   Flame sword       a rolling crescent of flame that ignites, no lingering fire           Sweep
  *   Stone maul        a fissure down one lane, knocking down all in it    Sweep
  */
@@ -29,7 +29,7 @@ import { grounded, guardRetreat } from './guards';
 import { spawnFront } from './structures';
 import { cosTurns, sinTurns } from './trig';
 import { clipRay } from './walls';
-import { CAST_ID, KIND, MAX_SEATS, PF, PHASE, PU, QUEUE_MAX, stackOf, type World } from './world';
+import { KIND, MAX_SEATS, PF, PU, regenOf, runeMax, stackOf, type World } from './world';
 
 /** Ticks a press may last and still be a tap (Strike rather than Heavy). */
 export const TAP = T(0.25);
@@ -57,24 +57,25 @@ function blow(w: World, i: number, face: number, ex: FireExtra, uses: number): v
 }
 
 export function strike(w: World, i: number, face: number): void {
-  if (held(w, i) === EL.arcane) { // the Echo focus: a weak orb bolt
-    const m = spawnMissile(w, i, payloadOf(weaponSpec(w, i)), cosTurns(face), sinTurns(face), 0, ARMS.boltScale, 0, 0);
-    if (m >= 0) w.missiles.r[m] = 0.2;
-    spend(w, i, 1);
-    return;
-  }
+  if (held(w, i) === EL.arcane) { bolt(w, i, face, ARMS.boltScale, false); spend(w, i, 1); return; } // the wand: a light bolt
   blow(w, i, face, {}, 1);
 }
 
-/**
- * Released after a hold: `charge` 0..1 is how long past a tap it was held, against RHYTHM.chargeMax.
- * Returns true when it started a cast (the Echo), so the caller leaves the seat's phase alone.
- */
-export function heavy(w: World, i: number, face: number, charge: number): boolean {
+/** The Arcane wand's bolt: a light one (Strike) or a charged one that pierces (Heavy). */
+function bolt(w: World, i: number, face: number, scale: number, pierce: boolean): void {
+  const dx = cosTurns(face), dy = sinTurns(face);
+  const m = spawnMissile(w, i, payloadOf(weaponSpec(w, i)), dx, dy, 0, scale, 0, 0);
+  if (m < 0) return;
+  const mm = w.missiles;
+  mm.vx[m] = dx * ARMS.boltSpeed; mm.vy[m] = dy * ARMS.boltSpeed; mm.r[m] = pierce ? 0.3 : 0.2; mm.pierce[m] = pierce ? 1 : 0;
+}
+
+/** Released after a hold: `charge` 0..1 is how long past a tap it was held, against RHYTHM.chargeMax. */
+export function heavy(w: World, i: number, face: number, charge: number): void {
   const el = held(w, i), k = STRUCT.heavyScale * (0.6 + 0.4 * charge);
   switch (el) {
-    case 0: blow(w, i, face, { scale: k, reach: STRUCT.heavyReach, knock: 8 }, 2); return false; // the staff's big shove
-    case EL.life: return false; // the Healing link was the hold itself (holdTick): nothing on release
+    case 0: blow(w, i, face, { scale: k, reach: STRUCT.heavyReach, knock: 8 }, 2); return; // the staff's big shove
+    case EL.life: return; // the Healing link was the hold itself (holdTick): nothing on release
     case EL.water: case EL.fire: case EL.earth: {
       // a wave from the weapon: the trident's slash, the flame sword's rolling crescent, the maul's fissure down one lane
       const half = el === EL.water ? ARMS.tideHalf : el === EL.fire ? ARMS.fireHalf : ARMS.quakeHalf;
@@ -82,12 +83,12 @@ export function heavy(w: World, i: number, face: number, charge: number): boolea
       spawnFront(w, i, weaponEls(w, i), face, half, ARMS.waveScale * (0.6 + 0.4 * charge), range);
       move(w, i, el === EL.water ? 'tideslash' : el === EL.fire ? 'firewave' : 'fissure', el, w.bodies.x[i] + cosTurns(face) * range, w.bodies.y[i] + sinTurns(face) * range);
       spend(w, i, 2);
-      return false;
+      return;
     }
-    case EL.cold: dash(w, i, face, k); spend(w, i, 2); return false;
-    case EL.lightning: lash(w, i, face, k); spend(w, i, 2); return false;
-    case EL.arcane: return echo(w, i);
-    default: blow(w, i, face, { scale: k, reach: STRUCT.heavyReach, knock: 8 }, 2); return false;
+    case EL.cold: dash(w, i, face, k); spend(w, i, 2); return;
+    case EL.lightning: lash(w, i, face, k); spend(w, i, 2); return;
+    case EL.arcane: bolt(w, i, face, ARMS.chargedBolt * (0.5 + 0.5 * charge), charge >= 0.5); move(w, i, 'chargedbolt', EL.arcane); spend(w, i, 2); return;
+    default: blow(w, i, face, { scale: k, reach: STRUCT.heavyReach, knock: 8 }, 2); return;
   }
 }
 
@@ -148,22 +149,6 @@ function lash(w: World, i: number, face: number, k: number): void {
   }
 }
 
-/** The Echo focus's Heavy: re-casts the remembered spell from the orb at half power, for uses instead of runes. */
-function echo(w: World, i: number): boolean {
-  const s = w.seats;
-  if (!s.echoCast[i]) { w.events.push({ tick: w.clock[0], kind: 'fizzle', who: i, x: w.bodies.x[i], y: w.bodies.y[i], text: 'Nothing to echo' }); return false; }
-  // The cast state machine casts it (cast.ts): its queue is the memory, and echoT marks it as an echo.
-  let n = 0;
-  s.castQueue.fill(0, i * QUEUE_MAX, (i + 1) * QUEUE_MAX);
-  for (let id = 1; id <= N_EL; id++) for (let c = 0; c < s.echoEls[i * N_EL + id - 1] && n < QUEUE_MAX; c++) s.castQueue[i * QUEUE_MAX + n++] = id;
-  s.castLen[i] = n; s.castId[i] = s.echoCast[i]; s.dragged[i] = 0;
-  s.phase[i] = PHASE.windup; s.timer[i] = T(0.08); s.chanTicks[i] = 0; s.chanTimer[i] = 0;
-  s.echoT[i] = T(ARMS.echoChannel);
-  move(w, i, 'echo', EL.arcane);
-  spend(w, i, ARMS.echoUses);
-  return true;
-}
-
 /** Each tick RMB is held past a tap: the Healing link (Life) finds and holds an ally. */
 export function holdTick(w: World, i: number): void {
   const s = w.seats, b = w.bodies;
@@ -207,35 +192,40 @@ export function special(w: World, i: number, face: number, tx: number, ty: numbe
     spend(w, i, ARMS.javelinUses);
     return;
   }
-  if (el === EL.arcane) { copy(w, i); return; }
+  if (el === EL.arcane || el === EL.life) return; // Siphon and Mend are held (specialTick); a tap does nothing
   blow(w, i, face, { half: 0.5, scale: STRUCT.sweepScale }, 2); // a full circle round you, your partner too
 }
 
-/** The Echo focus's Copy: the orb takes the last spell an ally cast near you (recently) as the one it remembers. */
-function copy(w: World, i: number): void {
-  const s = w.seats, b = w.bodies, now = w.clock[0];
-  let best = -1;
-  for (let j = 0; j < MAX_SEATS; j++) {
-    if (j === i || !s.active[j] || !s.lastCast[j] || b.kind[j] !== KIND.wizard || b.team[j] !== b.team[i]) continue;
-    if (now - s.lastTick[j] > T(ARMS.copyWindow) || len(b.x[j] - b.x[i], b.y[j] - b.y[i]) > ARMS.copyRange) continue;
-    if (best < 0 || s.lastTick[j] > s.lastTick[best]) best = j;
-  }
-  if (best < 0) { w.events.push({ tick: now, kind: 'fizzle', who: i, x: b.x[i], y: b.y[i], text: 'Nothing to copy' }); return; }
-  s.echoEls.set(s.lastEls.subarray(best * N_EL, best * N_EL + N_EL), i * N_EL);
-  s.echoCast[i] = s.lastCast[best];
-  move(w, i, 'copy', EL.arcane, b.x[best], b.y[best]);
-  spend(w, i, 1);
-}
+/** Does seat i's weapon have a held Special (the wand's Siphon, the hands' Mend)? */
+export const channelsSpecial = (w: World, i: number): boolean => held(w, i) === EL.arcane || held(w, i) === EL.life;
 
 /**
- * Remembers a spell seat i just cast: for an ally's Copy, and in the Echo focus if you hold one.
- * Structures, Blink and Self casts aren't remembered (the focus echoes attacks and heals).
+ * Each tick Shift+RMB is held past a tap with a channelling weapon. Siphon: you stand still and your
+ * runes regenerate ARMS.siphonMult times as fast. Mend: allies around you (not you) heal while you
+ * walk slowly. Either costs uses each second.
  */
-export function remember(w: World, i: number, spec: SpellSpec, castId: number): void {
-  if (!spec.power || spec.shape === 'blink' || spec.shape === 'self' || spec.shape === 'todo' || castId === CAST_ID.self) return;
-  const s = w.seats;
-  s.lastEls.set(spec.counts.subarray(0, N_EL), i * N_EL); s.lastCast[i] = castId; s.lastTick[i] = w.clock[0];
-  if (held(w, i) === EL.arcane) { s.echoEls.set(spec.counts.subarray(0, N_EL), i * N_EL); s.echoCast[i] = castId; }
+export function specialTick(w: World, i: number): void {
+  const s = w.seats, b = w.bodies, el = held(w, i);
+  const t = s.specT[i]++;
+  if (el === EL.arcane) {
+    for (let e = 1; e <= N_EL; e++) {
+      const k = i * N_EL + e - 1;
+      if (e !== EL.sigil) s.runes[k] = Math.min(runeMax(w, i, e), s.runes[k] + (regenOf(w, i) * (ARMS.siphonMult - 1)) / 60);
+    }
+    if (t % 30 === 0) move(w, i, 'siphon', EL.arcane);
+    if (t > 0 && t % 60 === 0) spend(w, i, ARMS.siphonUses);
+    return;
+  }
+  for (let j = 0; j < MAX_SEATS; j++) {
+    if (j === i || !s.active[j] || b.kind[j] !== KIND.wizard || b.downed[j] || b.team[j] !== b.team[i]) continue;
+    if (len(b.x[j] - b.x[i], b.y[j] - b.y[i]) > ARMS.auraRange) continue;
+    const before = b.hp[j];
+    b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + ARMS.auraHeal / 60);
+    bloom(w, i, j, b.hp[j] - before);
+    if (t % 30 === 0) w.events.push({ tick: w.clock[0], kind: 'heal', who: j, src: i, x: b.x[j], y: b.y[j], amount: ARMS.auraHeal / 2, look: EL.life });
+  }
+  if (t % 30 === 0) move(w, i, 'mend', EL.life, b.x[i], b.y[i], ARMS.auraRange);
+  if (t > 0 && t % 60 === 0) spend(w, i, ARMS.auraUses);
 }
 
 /** Shift+LMB with nothing queued: your guard's Retreat, or a quick hop backwards without one. */

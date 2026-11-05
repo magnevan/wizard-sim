@@ -91,9 +91,9 @@
   // The base death. Motion profiles: topple (default), plank (stiff), none (stays upright),
   // fling (thrown along the blow, bounces, can flatten), slide (swept off its feet).
   function baseDeath(g, td, dir, o = {}) {
-    const ov = o.overkill || 0, fall = o.fall || 'topple';
+    const ov = o.overkill || 0, fall = o.fall || 'topple', S = o.S || 1;
     const side = Math.abs(dir[0]) > 0.2 ? Math.sign(dir[0]) : (g.seed & 1 ? 1 : -1);
-    let kb = 0, z = 0, dead = 0, sq = 0, face = g.face, exitAt = o.exitAt, rot = null;
+    let kb = 0, z = 0, dead = 0, sq = 0, face = g.face, exitAt = o.exitAt, rot = null, pivot = null;
     if (fall === 'topple') {
       kb = (5 + 8 * ov) * easeOut(seg(td, 0, 0.35));
       z = K.hop(td, 0, 3 + 4 * ov, 0.32) + K.hop(td, 0.42, 1.5, 0.16);
@@ -127,7 +127,7 @@
       dead = 0.9 * smooth(seg(td, 0, 0.18));
       kb = S * easeOut(seg(td, 0, 1.15));
       z = K.hop(td, 0, 5, 0.3);
-      face = g.face + 5 * easeOut(seg(td, 0, 1.15));
+      face = g.face + (o.spinS == null ? 5 : o.spinS) * easeOut(seg(td, 0, 1.15));
       if (exitAt == null) exitAt = 1.4;
     } else if (fall === 'bounce') {
       // bounced straight up off its feet by the ground (quake, geyser): it tumbles in the air
@@ -143,6 +143,18 @@
         dead = 0.9; sq = td < T1 + 0.08 ? 0.9 : td < T1 + 0.24 ? 0.35 * (1 - seg(td, T1 + 0.16, T1 + 0.24)) : 0;
       }
       if (exitAt == null) exitAt = 1.5;
+    } else if (fall === 'heavy') {
+      // (pass 7) a big body: rocks back on its heels, sinks to its knees, then tips over like a
+      // felled tree (a rigid turn of the kneeling pose about its feet) and slams down with a small
+      // rebound. pivot: where the kneeling body stands (the turn's centre)
+      const K1 = o.kneelAt || 0.42, K2 = K1 + (o.tipDur || 0.5), KB = o.kb == null ? 3 : o.kb;
+      kb = KB * easeOut(seg(td, 0, 0.3));
+      face = g.face + (o.rock == null ? 0.22 : o.rock) * Math.sin(td * 13) * (1 - seg(td, 0, K1));
+      sq = (o.kneel == null ? 0.55 : o.kneel) * smooth(seg(td, 0.16, K1));
+      if (td >= K1) { const k = seg(td, K1, K2); rot = (Math.PI / 2) * (k * k) * (1 - 0.07 * K.hop(td, K2, 1, 0.16)); }
+      z = (o.lift || 0) > 0 ? K.hop(td, 0, o.lift, 0.3) : 0;
+      pivot = [g.x + dir[0] * KB, g.y + dir[1] * KB * FY];
+      if (exitAt == null) exitAt = K2 + 0.8;
     } else if (fall === 'slump') {
       // sinks where it stands in one smooth movement, no hop, no bounce, no shake
       dead = 0.9 * smooth(seg(td, o.slumpAt || 0.5, (o.slumpAt || 0.5) + 0.35));
@@ -153,8 +165,8 @@
     const out = Object.assign({}, g, { x, y, z, dead, sq, face, fallSide: side, flash: K.flash(td, 0), flashCol: o.hitCol || '#ffffff', spd: 0, alpha: g.alpha * (1 - gone) });
     // where the body is (lying bodies sit off to the fall side, low), for poofs and marks
     let lie = dead / 0.9; if (rot != null) lie = fall === 'bounce' ? 0.5 : clamp(rot / (Math.PI / 2), 0, 1);
-    const mid = [x + side * (rot != null ? 6 : 4) * lie, y - z - lerp(7, 3, lie) + (sq > 1 ? 1.5 : 0)];
-    return { g: out, side, exitAt, gone, mid, td, fall, rot };
+    const mid = [x + side * (rot != null ? 6 : 4) * lie * S, y - z - lerp(7, 3, lie) * S + (sq > 1 ? 1.5 : 0)];
+    return { g: out, side, exitAt, gone, mid, td, fall, rot, pivot, S };
   }
 
   // ---------------------------------------------------------------------------
@@ -206,7 +218,7 @@
     const a = A[g.id], x = m.g0.x + dir[0] * 3, y = m.g0.y;
     const k = Math.min(seg(td, 0, 0.1), 1 - smooth(seg(td, 0.35, 0.95)));
     if (td < m.exitAt && k > 0.04) {
-      const cap = baseDeath(m.g0, 0.3, dir, m.o).g; Object.assign(cap, OVERLAY.fire.body(cap, 0.3), { alpha: 1, flash: 0 });
+      const cap = baseDeath(m.g0, 0.3, dir, m.o).g; Object.assign(cap, (m.O || OVERLAY.fire).body(cap, 0.3), { alpha: 1, flash: 0 });
       const ed = edgesOf(m.key + '#burn', sprite(m.key + '#burn', cap, m.tH + 0.3));
       silFlames(c, ed, g.x - cap.x, -(g.z || 0), k, td + 0.3);
     }
@@ -592,16 +604,23 @@
     if (el === 'fire' || el === 'cold' || el === 'lightning' || el === 'arcane') return el;
     return 'base';
   }
+  // Pass 7: the other archetypes. ARCH[archetype] = { S (body size against the goblin's), pick(ev,
+  // kind) (remap the dispatch), overlay: { kind: overlay }, bespoke: { kind: fn }, drop(c, x, y,
+  // side, ex, m, fade) (what it leaves lying instead of the club) }. Filled by vfx-deaths-2.js;
+  // anything an archetype doesn't override plays the goblin's death on its rig.
+  const ARCH = {};
   function death(ev, t, tH, g0, D, key) {
     const td = t - tH, fade = 1 - seg(t, D - 0.45, D), st = ev.statuses || {};
     if (td < 0) return { actor: g0, stand: [], under() {}, fx() {}, lights: [], td, alive: true };
-    const kind = pick(ev);
-    if (BESPOKE[kind]) return Object.assign({ td, kind }, BESPOKE[kind](ev, t, td, g0, D, key, fade));
-    const O = OVERLAY[kind] || null;
-    let mo = Object.assign({ overkill: ev.overkill || 0 }, O && O.motion);
+    const AH = ARCH[ev.archetype] || {};
+    let kind = pick(ev); if (AH.pick) kind = AH.pick(ev, kind);
+    const BF = (AH.bespoke && AH.bespoke[kind]) || BESPOKE[kind];
+    if (BF) return Object.assign({ td, kind }, BF(ev, t, td, g0, D, key, fade));
+    const O = (AH.overlay && AH.overlay[kind]) || OVERLAY[kind] || null;
+    let mo = Object.assign({ overkill: ev.overkill || 0, S: AH.S || 1 }, O && O.motion);
     if (O && O.motionFor) mo = O.motionFor(st, mo);
     const m = baseDeath(g0, td, ev.dir, mo);
-    m.g0 = g0; m.o = mo; m.key = key; m.tH = tH;
+    m.g0 = g0; m.o = mo; m.key = key; m.tH = tH; m.ev = ev; m.fade = fade; m.O = O;
     if (O && O.body) { const keepA = m.g.alpha; Object.assign(m.g, O.body(m.g, td, ev.dir, st, m)); m.g.alpha = keepA; }
     const exit = mo.exit || 'poof', ex = td - m.exitAt, stand = [];
     if (m.rot != null && m.fall === 'bounce') {
@@ -610,7 +629,7 @@
       m.g.alpha = 0;
       if (a > 0.05) stand.push([m.g.y, (c, E) => rigid(c, E, px, pv, m.rot * m.side, m.g.flash, a, [m.g.x - g0.x, m.g.y - g0.y - m.g.z], true)]);
     } else if (m.rot != null) {
-      const cx = Math.round(g0.x + ev.dir[0] * 1.5), cy = Math.round(g0.y + ev.dir[1] * 1.5 * FY), px = sprite(key + '#rigid', Object.assign({}, m.g, { x: cx, y: cy, z: 0, flash: 0, dead: 0 }), tH), pv = [Math.round(cx), Math.round(cy - m.g.z)], a = m.alpha = m.g.alpha;
+      const cx = Math.round(m.pivot ? m.pivot[0] : g0.x + ev.dir[0] * 1.5), cy = Math.round(m.pivot ? m.pivot[1] : g0.y + ev.dir[1] * 1.5 * FY), px = sprite(key + '#rigid', Object.assign({}, m.g, { x: cx, y: cy, z: 0, flash: 0, dead: 0 }), tH), pv = [Math.round(cx), Math.round(cy - m.g.z)], a = m.alpha = m.g.alpha;
       m.g.alpha = 0;
       if (a > 0.05) stand.push([m.g.y, (c, E) => rigid(c, E, px, pv, m.rot * m.side, m.g.flash, a)]);
     }
@@ -618,8 +637,8 @@
     if (exit === 'poof' && mo.club !== false && ex > 0) {
       // (clubStill: it is simply there when the cloud clears, lying still)
       const cl = mo.clubCol || ['#a8743e', '#e0aa6a'], gx = m.g.x + m.side * 6, z = mo.clubStill ? 0 : K.hop(ex, 0, 6, 0.35), x = mo.clubStill ? gx : lerp(m.mid[0], gx, seg(ex, 0, 0.35));
-      if (mo.clubStill && ex < 0.25) { /* hidden inside the cloud */ } else
-      stand.push([m.g.y + 1, (c) => { if (keep(x, m.g.y, fade)) club(c, x, m.g.y + 1 - z, m.side, cl[0], cl[1]); }]);
+      if (mo.clubStill && ex < 0.25) { /* hidden inside the cloud */ } else if (AH.drop) stand.push([m.g.y + 1, (c, E) => AH.drop(c, x, m.g.y + 1 - z, m.side, ex, m, fade, E)]);
+      else stand.push([m.g.y + 1, (c) => { if (keep(x, m.g.y, fade)) club(c, x, m.g.y + 1 - z, m.side, cl[0], cl[1]); }]);
     }
     // crumble: the captured body falls apart from the top into ash, embers rising off it
     if (exit === 'crumble' && ex >= 0) {
@@ -643,18 +662,20 @@
       }]);
     }
     const lights = O && O.lights ? O.lights(m.g, td, st, m) : [];
+    if (O && O.stand) O.stand(stand, m.g, td, ev.dir, st, m);
     return {
-      td, kind, m, actor: m.g, stand, lights,
+      td, kind, m, actor: m.g, stand, lights, shake: O && O.shake ? O.shake(td, m) : 0,
       under(c, E) { if (O && O.ground) O.ground(c, E, m.g, td, ev.dir, st, m, fade); },
       fx(c, A) {
         const a = A[m.g.id];
         if (a && a.chest) star(c, [a.chest[0] - ev.dir[0] * 2, a.chest[1]], td, mo.hitCol || '#ffffff');
         if (O) O(c, m.g, td, ev.dir, st, A, m);
-        if (exit === 'poof') poof(c, m.mid[0], m.mid[1], ex / 0.7, mo.exitCols || POOF, mo.exitR || 11, 3);
+        if (exit === 'poof') poof(c, m.mid[0], m.mid[1], ex / 0.7, mo.exitCols || POOF, (mo.exitR || 11) * (mo.S || 1), 3);
       },
     };
   }
-  PB.deaths = { baseDeath, overlay: OVERLAY, bespoke: BESPOKE, death, sprite, poof, pick };
+  PB.deaths = { baseDeath, overlay: OVERLAY, bespoke: BESPOKE, death, sprite, poof, pick, arch: ARCH,
+    lib: { edgesOf, silFlames, chunksOf, simChunk, piecesOf, rigid, star, keep, club, POOF, SNOW, SMOKE, SOOT, SPLASH, DIRT } };
 
   // ---------------------------------------------------------------------------
   // The vignettes. One goblin, one wizard casting the killing spell, the same stage as the rest.
@@ -697,7 +718,7 @@
     } });
 
   // Fire v2: base + overlay (stands, burns along its own outline, chars, crumbles).
-  V({ id: 'death-goblin-fire-v2', fresh: 'new', approach: 'base + overlay', still: 1.55, title: 'Goblin death: fire', q: ['fire', 'fire'], cast: 'force', dur: 4.2, seed: 82,
+  V({ id: 'death-goblin-fire-v2', approach: 'base + overlay', still: 1.55, title: 'Goblin death: fire', q: ['fire', 'fire'], cast: 'force', dur: 4.2, seed: 82,
     event: { archetype: 'goblin', element: 'fire', delivery: 'channel', dir: [1, 0], statuses: { burning: 1 }, overkill: 0.3 },
     line: 'Burning when the flamethrower finishes it: flames run along its own outline (no combustion burst), it chars to a black silhouette with ember edges and blinking eyes, then crumbles into ash and embers, leaving a scorch mark.',
     frame(t, K) {
@@ -711,7 +732,7 @@
     } });
 
   // Frozen shatter v2: bespoke. Frozen at death, so any blow shatters it (here a rock).
-  V({ id: 'death-goblin-frozen-shatter-v2', fresh: 'new', approach: 'bespoke', still: 1.0, title: 'Goblin death: frozen shatter', q: ['earth', 'earth'], cast: 'force', dur: 3.8, seed: 83,
+  V({ id: 'death-goblin-frozen-shatter-v2', approach: 'bespoke', still: 1.0, title: 'Goblin death: frozen shatter', q: ['earth', 'earth'], cast: 'force', dur: 3.8, seed: 83,
     event: { archetype: 'goblin', element: 'earth', delivery: 'missile', dir: [1, 0], statuses: { frozen: 1 }, overkill: 0.5 },
     line: 'Frozen solid (rime and clear ice hugging its body, a few crystal spikes, no cube) when a rock hits it: the ice and the goblin inside break into shards that skitter across the ground and melt, leaving a frost patch.',
     frame(t, K) {
@@ -754,7 +775,7 @@
     } });
 
   // Arcane v2: bespoke (the body's own pixels tear apart along seams).
-  V({ id: 'death-goblin-arcane-v2', fresh: 'new', approach: 'bespoke', still: 1.95, title: 'Goblin death: arcane', q: ['arcane'], cast: 'force', dur: 3.8, seed: 87, ground: 'plaza',
+  V({ id: 'death-goblin-arcane-v2', approach: 'bespoke', still: 1.95, title: 'Goblin death: arcane', q: ['arcane'], cast: 'force', dur: 3.8, seed: 87, ground: 'plaza',
     event: { archetype: 'goblin', element: 'arcane', delivery: 'channel', dir: [1, 0], statuses: {}, overkill: 0.3 },
     line: 'The magic that holds it together tears: the beam’s burst shoves it back, pink fault lines crack across its body, the pieces strain apart on threads of magic that snap, and the pieces unravel and pop into nothing.',
     frame(t, K) {
@@ -782,7 +803,7 @@
     } });
 
   // Quake (earth + burst): base + overlay (bounce profile: up, tumble, crumpled landing in place).
-  V({ id: 'death-goblin-quake', fresh: 'new', approach: 'base + overlay', still: 1.35, title: 'Goblin death: quake (earth burst)', q: ['earth', 'earth'], cast: 'area', dur: 3.8, seed: 91, ground: 'grass',
+  V({ id: 'death-goblin-quake', approach: 'base + overlay', still: 1.35, title: 'Goblin death: quake (earth burst)', q: ['earth', 'earth'], cast: 'area', dur: 3.8, seed: 91, ground: 'grass',
     event: { archetype: 'goblin', element: 'earth', delivery: 'burst', dir: [1, 0], statuses: {}, overkill: 0.5 },
     line: 'For earthquake and geyser kills: the ground heaves under its feet and bounces it straight up; it tumbles, lands crumpled where it stood (not flung sideways) in cracked ground, debris and dust, then poofs.',
     frame(t, K) {
@@ -811,7 +832,7 @@
     } });
 
   // Steam v2 (mix scald): base + overlay (steady flush, slump, steam puff, soot cloud; no shaking).
-  V({ id: 'death-goblin-steam-v2', fresh: 'new', approach: 'base + overlay', still: 1.85, title: 'Goblin death: steam (scald)', q: ['water', 'fire'], cast: 'force', dur: 3.8, seed: 90,
+  V({ id: 'death-goblin-steam-v2', approach: 'base + overlay', still: 1.85, title: 'Goblin death: steam (scald)', q: ['water', 'fire'], cast: 'force', dur: 3.8, seed: 90,
     event: { archetype: 'goblin', element: 'water', mix: 'scald', delivery: 'channel', dir: [1, 0], statuses: { wet: 1 }, overkill: 0.3 },
     line: 'Scalded: it flushes a steady red with steam rising off it and whistling from its ears, sinks where it stands, gives off a puff of steam and goes up in a soot cloud; the sooty smudge and blackened club lie still.',
     frame(t, K) {

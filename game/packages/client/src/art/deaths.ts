@@ -17,9 +17,10 @@
  *              binds the body tears along seams into many small pieces that drift a little apart
  *              and unravel into nothing
  *
- * Only the goblin's deaths were rated. The other archetypes (brute, archer, imp, grabber,
- * shieldbearer) play the same set on their own rig, with sizes scaled to the body (S below),
- * until they get deaths of their own.
+ * The other archetypes (brute, archer, imp, grabber, shieldbearer) play the same set on their own
+ * rig, with sizes scaled to the body (S below), except where the body or character changes how a
+ * death reads (ARCH below, from the gallery's vfx-deaths-2.js): the brute's heavy fall, the archer's
+ * bow and arrows, the imp put out by cold and water, the grabber's long arms, the shieldbearer's shield.
  *
  * Each death paints into its own small canvas, a sprite depth-sorted with the actors; ground
  * marks go to the field's ground canvas and effects to its over canvas. Deaths are cosmetic and
@@ -50,7 +51,10 @@ export interface Pose extends RigState { x: number; y: number; z: number }
 /** What the death event says (see tickDeaths in the sim). */
 export interface DeathInfo { el: number; mix: number; shape: number; status: number; dirX: number; dirY: number; overkill: number; arch: number }
 
-type Kind = 'base' | 'fire' | 'cold' | 'lightning' | 'earth' | 'quake' | 'steam' | 'shatter' | 'arcane';
+type Kind = 'base' | 'water' | 'fire' | 'cold' | 'lightning' | 'earth' | 'quake' | 'steam' | 'shatter' | 'arcane';
+/** Which body is dying: its rig and variant (rigs.ts: imp 3, grabber 4, shieldbearer 5). */
+type Arch = 'goblin' | 'brute' | 'archer' | 'imp' | 'grabber' | 'shieldbearer';
+const archOf = (g: RigState): Arch => (g.kind === 'brute' ? 'brute' : g.kind === 'archer' ? 'archer' : g.kind !== 'goblin' ? 'goblin' : g.variant === 3 ? 'imp' : g.variant === 4 ? 'grabber' : g.variant === 5 ? 'shieldbearer' : 'goblin');
 /** Which death, first match wins. */
 export function pickDeath(e: DeathInfo): Kind {
   if (e.status & STATUS_BIT.frozen) return 'shatter';
@@ -61,7 +65,8 @@ export function pickDeath(e: DeathInfo): Kind {
   if (e.el === ELID.cold) return 'cold';
   if (e.el === ELID.lightning) return 'lightning';
   if (e.el === ELID.arcane) return 'arcane';
-  return 'base'; // water (the user: "probably just base"), life, shield, sigil, unknown
+  if (e.el === ELID.water) return 'water'; // the base death (the user: "probably just base"), except on an imp
+  return 'base'; // life, shield, sigil, unknown
 }
 
 /** A captured body pixel (field px). Chunks and pieces add their own marks. */
@@ -74,7 +79,7 @@ interface Death {
   who: number; tick: number;
   /** Real time of the first frame drawn (NaN until then). */
   t0: number;
-  g0: Pose; dir: Pt; ov: number; kind: Kind;
+  g0: Pose; dir: Pt; ov: number; kind: Kind; arch: Arch;
   /** Body size against the goblin's, for offsets and sizes. */
   S: number;
   slot: Slot;
@@ -182,17 +187,19 @@ function rigid(c: Ctx, px: Px[], pv: Pt, ang: number, flash: number, alpha: numb
 // The base death. Motion profiles: topple (default), plank (stiff), none (stays upright),
 // fling (thrown along the blow, bounces, can flatten), slide, bounce (up off its feet), slump.
 interface Motion {
-  fall?: 'topple' | 'plank' | 'none' | 'fling' | 'slide' | 'bounce' | 'slump';
-  exitAt?: number; exit?: 'poof' | 'crumble'; club?: boolean; hitCol?: string; exitCols?: Ramp; exitR?: number;
+  fall?: 'topple' | 'plank' | 'none' | 'fling' | 'slide' | 'bounce' | 'slump' | 'heavy';
+  exitAt?: number; exit?: 'poof' | 'crumble' | 'fizzle'; club?: boolean; hitCol?: string; exitCols?: Ramp; exitR?: number;
   clubCol?: [string, string]; clubStill?: boolean; overkill?: number;
-  fling?: number; h1?: number; flatten?: boolean; t1?: number; air?: number; drift?: number; spin?: number; slumpAt?: number; slide?: number;
+  fling?: number; h1?: number; flatten?: boolean; t1?: number; air?: number; drift?: number; spin?: number; slumpAt?: number; slide?: number; spinS?: number;
+  /** heavy (the brute): when it is on its knees, how long the tip takes, how far it is shoved, how low it kneels, how much it rocks, a lift off the ground */
+  kneelAt?: number; tipDur?: number; kb?: number; kneel?: number; rock?: number; lift?: number;
 }
-interface Base { g: Pose; side: number; exitAt: number; gone: number; mid: Pt; fall: string; rot: number | null; g0: Pose; o: Motion }
+interface Base { g: Pose; side: number; exitAt: number; gone: number; mid: Pt; fall: string; rot: number | null; g0: Pose; o: Motion; pivot: Pt | null }
 
 function baseDeath(g: Pose, td: number, dir: Pt, o: Motion, S: number): Base {
   const ov = o.overkill ?? 0, fall = o.fall ?? 'topple';
   const side = Math.abs(dir[0]) > 0.2 ? Math.sign(dir[0]) : (g.seed & 1 ? 1 : -1);
-  let kb = 0, z = 0, dead = 0, sq = 0, face = g.face, exitAt = o.exitAt ?? -1, rot: number | null = null;
+  let kb = 0, z = 0, dead = 0, sq = 0, face = g.face, exitAt = o.exitAt ?? -1, rot: number | null = null, pivot: Pt | null = null;
   if (fall === 'topple') {
     kb = (5 + 8 * ov) * easeOut(seg(td, 0, 0.35));
     z = hop(td, 0, 3 + 4 * ov, 0.32) + hop(td, 0.42, 1.5, 0.16);
@@ -226,7 +233,7 @@ function baseDeath(g: Pose, td: number, dir: Pt, o: Motion, S: number): Base {
     dead = 0.9 * smooth(seg(td, 0, 0.18));
     kb = Sl * easeOut(seg(td, 0, 1.15));
     z = hop(td, 0, 5, 0.3);
-    face = g.face + 5 * easeOut(seg(td, 0, 1.15));
+    face = g.face + (o.spinS ?? 5) * easeOut(seg(td, 0, 1.15));
     if (exitAt < 0) exitAt = 1.4;
   } else if (fall === 'bounce') {
     // bounced straight up off its feet by the ground (quake): it tumbles in the air (a rigid spin of
@@ -242,6 +249,17 @@ function baseDeath(g: Pose, td: number, dir: Pt, o: Motion, S: number): Base {
       dead = 0.9; sq = td < T1 + 0.08 ? 0.9 : td < T1 + 0.24 ? 0.35 * (1 - seg(td, T1 + 0.16, T1 + 0.24)) : 0;
     }
     if (exitAt < 0) exitAt = 1.5;
+  } else if (fall === 'heavy') {
+    // a big body (the brute): rocks back on its heels, sinks to its knees, then tips over like a felled
+    // tree (a rigid turn of the kneeling pose about its feet) and slams down with a small rebound
+    const K1 = o.kneelAt ?? 0.42, K2 = K1 + (o.tipDur ?? 0.5), KB = o.kb ?? 3;
+    kb = KB * easeOut(seg(td, 0, 0.3));
+    face = g.face + (o.rock ?? 0.22) * Math.sin(td * 13) * (1 - seg(td, 0, K1));
+    sq = (o.kneel ?? 0.55) * smooth(seg(td, 0.16, K1));
+    if (td >= K1) { const k = seg(td, K1, K2); rot = (Math.PI / 2) * k * k * (1 - 0.07 * hop(td, K2, 1, 0.16)); }
+    z = (o.lift ?? 0) > 0 ? hop(td, 0, o.lift, 0.3) : 0;
+    pivot = [g.x + dir[0] * KB, g.y + dir[1] * KB * FY];
+    if (exitAt < 0) exitAt = K2 + 0.8;
   } else if (fall === 'slump') {
     // sinks where it stands in one smooth movement, no hop, no bounce, no shake
     const a = o.slumpAt ?? 0.5;
@@ -254,12 +272,13 @@ function baseDeath(g: Pose, td: number, dir: Pt, o: Motion, S: number): Base {
   // where the body is (a lying body sits off to the fall side, low), for poofs and marks
   let lie = dead / 0.9; if (rot != null) lie = fall === 'bounce' ? 0.5 : clamp(rot / (Math.PI / 2), 0, 1);
   const mid: Pt = [x + side * (rot != null ? 6 : 4) * lie * S, y - z - lerp(7, 3, lie) * S + (sq > 1 ? 1.5 : 0)];
-  return { g: out, side, exitAt, gone, mid, fall, rot, g0: g, o };
+  return { g: out, side, exitAt, gone, mid, fall, rot, g0: g, o, pivot };
 }
 
 // ---------------------------------------------------------------------------------------------
 // Overlays: what each element adds to the base death.
-interface Ctx2 { d: Death; m: Base; td: number; fade: number; A: Anchors }
+interface Ctx2 { d: Death; m: Base; td: number; fade: number; A: Anchors; O: Overlay | null }
+type Push = (y: number, fn: (c: Ctx) => void) => void;
 interface Overlay {
   motion: Motion;
   motionFor?: (o: Motion) => Motion;
@@ -270,6 +289,10 @@ interface Overlay {
   /** The lingering mark on the floor. */
   ground?: (c: Ctx, q: Ctx2) => void;
   lights?: (q: Ctx2) => Light[];
+  /** Props of its own (a dropped shield, a thrown bow), depth-sorted with the body. */
+  stand?: (q: Ctx2, push: Push) => void;
+  /** Screen shake, art px (a brute slamming down). */
+  shake?: (q: Ctx2) => number;
 }
 
 // Flames that follow the body's silhouette (fire v2): tongues rise off every sky-facing edge pixel
@@ -321,12 +344,12 @@ OVERLAY.fire = {
     const ch = smooth(seg(td, 0.1, 0.7)), blink = ch > 0.7 && mod(td, 0.55) < 0.07;
     return { burn: 0.7 * (1 - ch), burnF: Math.floor(td * 16) % 4, tint: '#140e10', tintK: 0.9 * ch, outline: ch > 0.35 ? (Math.floor(td * 9) % 3 ? '#ff5a20' : '#c8302a') : null, eyeCol: ch > 0.5 ? '#ffffff' : null, eyesShut: blink ? 1 : 0, sq: 0.12 * ch };
   },
-  fx(c, { d, m, td, A }) {
-    const x = m.g0.x + d.dir[0] * 3, y = m.g0.y, S = d.S;
+  fx(c, q) {
+    const { d, m, td, A } = q, x = m.g0.x + d.dir[0] * 3, y = m.g0.y, S = d.S;
     const k = Math.min(seg(td, 0, 0.1), 1 - smooth(seg(td, 0.35, 0.95)));
     if (td < m.exitAt && k > 0.04) {
       const cap = baseDeath(m.g0, 0.3, d.dir, m.o, S).g;
-      Object.assign(cap, OVERLAY.fire!.body!(0.3), { alpha: 1, flash: 0, burnF: 0 });
+      Object.assign(cap, (q.O ?? OVERLAY.fire!).body!(0.3), { alpha: 1, flash: 0, burnF: 0 });
       const ed = edgesOf(d, 'burn', capture(d, 'burn', cap));
       silFlames(c, ed, m.g.x - cap.x, -m.g.z, k, td + 0.3);
     }
@@ -481,17 +504,17 @@ OVERLAY.steam = {
 
 // ---------------------------------------------------------------------------------------------
 // Bespoke deaths: the body is replaced by its own pixels.
-interface Bespoke { stand: Stand[]; under: (c: Ctx) => void; fx: (c: Ctx) => void; lights: Light[] }
+interface Bespoke { stand: Stand[]; under: (c: Ctx) => void; fx: (c: Ctx) => void; lights: Light[]; shake?: number }
 
 // SHATTER v2 (frozen at death, any blow): the body-shaped ice (rigs.ts frozenBody) and the body
 // inside it break into shards along the ice, which fly along the blow, bounce and skitter over the
 // ground, then melt.
 interface Chunk { pts: Px[]; cx: number; cy: number; hh: number }
-function chunksOf(d: Death, px: Px[], n: number, seed: number): Chunk[] {
-  const hit = d.cache.get('chunks') as Chunk[] | undefined;
+function chunksOf(d: Death, px: Px[], n: number, seed: number, key = 'chunks'): Chunk[] {
+  const hit = d.cache.get(key) as Chunk[] | undefined;
   if (hit) return hit;
   const out: Chunk[] = [];
-  d.cache.set('chunks', out);
+  d.cache.set(key, out);
   if (!px.length) return out;
   const seeds: Pt[] = []; for (let i = 0; i < n; i++) { const p = px[Math.floor(rand(i, seed, 1) * px.length)]; seeds.push([p.x + (rand(i, seed, 2) - 0.5), p.y + (rand(i, seed, 3) - 0.5)]); }
   const ch: Chunk[] = seeds.map(() => ({ pts: [], cx: 0, cy: 0, hh: 1 }));
@@ -614,7 +637,7 @@ function piecesOf(d: Death, px: Px[], n: number, seed: number): Pieces {
   d.cache.set('pieces', out);
   return out;
 }
-function arcane(d: Death, td: number): Bespoke {
+function arcane(d: Death, td: number, _fade = 1, limbs = false): Bespoke {
   const R = EL.arcane, dir = d.dir, g0 = d.g0, S = d.S;
   const PC = piecesOf(d, capture(d, 'arcane', { ...g0, flash: 0 }), Math.round(12 * Math.sqrt(S)), 13);
   // the nudge: the blow shoves the body back a little along the blow
@@ -623,7 +646,12 @@ function arcane(d: Death, td: number): Bespoke {
   const SEAM = (p: Px) => 0.05 + 0.3 * Math.min(1, Math.hypot(p.x - imp[0], p.y - imp[1]) / (14 * S)); // when a seam pixel cracks
   const STRAIN0 = 0.4, LET = 0.8;
   const goOf = (j: number) => LET + rand(j, 17) * 0.25;
-  const vanish = (p: Px, sp: number) => sp + 0.15 + (p.d ?? 0) * 0.1 + rand(p.i, 23) * 0.3;
+  // limbs (the grabber): pixels well out in front of the body's core (its long arms and claws) glow
+  // and unravel first, from the claws inward
+  const fs = Math.sign(Math.cos(g0.face)) || 1, reach = (p: Px) => (p.x - PC.cx) * fs - 3.5;
+  let maxR = 0; if (limbs) for (const P of PC.P) for (const p of P.pts) maxR = Math.max(maxR, reach(p));
+  const limb = (p: Px) => limbs && reach(p) > 0;
+  const vanish = (p: Px, sp: number) => (limb(p) ? 0.3 + (maxR - reach(p)) * 0.045 + rand(p.i, 23) * 0.05 : sp + 0.15 + (p.d ?? 0) * 0.1 + rand(p.i, 23) * 0.3);
   // a piece's offset: a slow creep as the seams open, then a short, soft drift once it lets go
   const D2: Pt[] = PC.P.map((c, j) => {
     const sp = goOf(j), creep = 1.5 * smooth(seg(td, STRAIN0, sp)), drift = td > sp ? 4.5 * (0.7 + 0.4 * rand(j, 19)) * easeOut(seg(td, sp, sp + 0.7)) * Math.sqrt(S) : 0;
@@ -639,7 +667,8 @@ function arcane(d: Death, td: number): Bespoke {
         const x = Math.round(p.x + dx), y = Math.round(p.y + dy);
         // the last instant before a pixel goes: it glows
         if (td > tv - 0.06) { X.px(c, x, y, td > tv - 0.03 ? R[1] : R[2]); continue; }
-        if (p.seam && !p.dark && td > SEAM(p)) X.px(c, x, y, td - SEAM(p) < 0.04 ? '#ffffff' : (p.x + p.y) % 2 ? R[2] : R[3]);
+        if (limb(p) && td > tv - 0.18 && !p.dark) { X.px(c, x, y, (p.x + p.y) % 2 ? R[2] : R[3]); continue; }
+        if (p.seam && !p.dark && td > SEAM(p) && (!limbs || (p.x + p.y) % 2 === 0)) X.px(c, x, y, td - SEAM(p) < 0.04 ? '#ffffff' : (p.x + p.y) % 2 ? R[2] : R[3]);
         else X.px(c, x, y, td > 0.1 && !p.dark ? X.mix(p.col, '#ff9ad0', 0.1 + 0.15 * strain) : p.col);
       }
     });
@@ -664,9 +693,9 @@ function arcane(d: Death, td: number): Bespoke {
       }
       // tiny pops where pixels wink out
       PC.P.forEach((pc, j) => {
-        const sp = goOf(j); if (td < sp + 0.1) return;
+        const sp = goOf(j); if (!limbs && td < sp + 0.1) return;
         for (const p of pc.pts) {
-          if (p.i % 9) continue;
+          if (p.i % (limb(p) ? 3 : 9)) continue;
           const e = td - vanish(p, sp); if (e < 0 || e > 0.06) continue;
           X.px(c, p.x + D2[j][0], p.y + D2[j][1], '#ffffff');
         }
@@ -675,6 +704,462 @@ function arcane(d: Death, td: number): Bespoke {
     lights: [[PC.cx + ox, g0.y - 4, 30, '#ff4f9b', td < 0.12 ? 0.6 : (0.1 + 0.25 * seg(td, 0.1, LET)) * (1 - seg(td, LET, LET + 0.9))]],
   };
 }
+
+// ---------------------------------------------------------------------------------------------
+// The other archetypes (Spell VFX gallery, tools/spell-vfx/vfx-deaths-2.js). Each plays the goblin set
+// on its own rig, except where its body or character changes how a death reads:
+//   brute        too heavy to fly: base, boulder, quake and cold all end in the heavy fall (it kneels,
+//                tips over like a felled tree, the screen shakes, dust rolls out along its length)
+//   archer       its gear: base (the bow flies, arrows spill), fire (the string burns through, the bow
+//                burns on the ground, the arrows flare), boulder (bow and arrows thrown along)
+//   imp          a living ember: base (the crown flame is left flickering on the ground), cold (goes out
+//                like a cooled coal and breaks into cinders), water and the scald mix (doused: hissing
+//                steam, a smoking black lump), frozen shatter (the shards glow inside and steam)
+//   grabber      long arms: base (skids face down, claws gouging furrows), lightning (claw-to-claw arc),
+//                arcane (v3 with the arms unravelling first, from the claws in)
+//   shieldbearer its shield: base (drops and rocks flat with a clang), boulder (splintered), fire (burns
+//                on the ground after the body, leaving the iron rim and boss)
+interface ArchDef {
+  pick?: (k: Kind) => Kind;
+  ov?: Partial<Record<Kind, Overlay>>;
+  bs?: Partial<Record<Kind, (d: Death, td: number, fade: number) => Bespoke>>;
+  /** What it leaves lying after a poof, instead of the goblin's club. */
+  drop?: (c: Ctx, x: number, y: number, side: number, ex: number, q: Ctx2) => void;
+}
+const OL = '#120e1a';
+/** A loose prop on an arc from p0 (lifted z0) to p1, landing at t0 + dur with a small bounce; null before t0. */
+interface Toss { x: number; y: number; z: number; k: number; e: number }
+function toss(td: number, t0: number, p0: Pt, p1: Pt, h: number, dur: number, z0 = 0): Toss | null {
+  const e = td - t0; if (e < 0) return null;
+  const k = clamp(e / dur, 0, 1);
+  return { x: lerp(p0[0], p1[0], easeOut(k)), y: lerp(p0[1], p1[1], easeOut(k)), z: z0 * (1 - k) + h * 4 * k * (1 - k) + hop(e, dur, h * 0.15 + 1, dur * 0.35), k, e };
+}
+function bow(c: Ctx, x: number, y: number, ang: number, col = '#b8844a', string = 1): void {
+  const ux = Math.cos(ang), uy = Math.sin(ang) * 0.75, nl = Math.hypot(uy, ux) || 1;
+  const a: Pt = [x - ux * 5, y - uy * 5], b: Pt = [x + ux * 5, y + uy * 5], m: Pt = [x + (uy / nl) * 1.8, y - (ux / nl) * 1.8];
+  X.lines(c, [a, m, b], OL, 2); X.lines(c, [a, m, b], col);
+  if (string === 1) X.line(c, a[0], a[1], b[0], b[1], '#d0d0dc');
+  else if (string > 0) { X.line(c, a[0], a[1], lerp(a[0], b[0], 0.25), lerp(a[1], b[1], 0.25) + 1, '#d0d0dc'); X.line(c, b[0], b[1], lerp(b[0], a[0], 0.25), lerp(b[1], a[1], 0.25) + 1, '#d0d0dc'); }
+  X.px(c, a[0], a[1], '#d8a868'); X.px(c, b[0], b[1], '#d8a868');
+}
+function arrow(c: Ctx, x: number, y: number, ang: number): void {
+  const ux = Math.cos(ang), uy = Math.sin(ang) * 0.75;
+  X.line(c, x - ux * 3, y - uy * 3 + 1, x + ux * 3, y + uy * 3 + 1, OL);
+  X.line(c, x - ux * 3, y - uy * 3, x + ux * 2, y + uy * 2, '#e8d8b0');
+  X.px(c, x + ux * 3, y + uy * 3, '#c0cbdc'); X.px(c, x - ux * 3, y - uy * 3, '#c8443a');
+}
+/** The shieldbearer's shield on its edge (tilt 1) or lying flat (0); ch = charred, wood = how much board is left. */
+function shieldProp(c: Ctx, x: number, y: number, tilt: number, ch = 0, wood = 1): void {
+  const w = 8, h = Math.max(3, Math.round(lerp(6, 10, clamp(tilt, 0, 1)))), x0 = Math.round(x - w / 2), y0 = Math.round(y - h);
+  const W = X.mix('#6a4a2c', '#221818', ch), P = X.mix('#4e3420', '#140e10', ch), HI = X.mix('#8a6a48', '#3a2a26', ch), RIM = X.mix('#8a8e98', '#3e3c44', ch * 0.85), BOSS = ch > 0.6 ? '#6a6a72' : '#c8ccd8';
+  if (wood > 0.02) {
+    X.rect(c, x0 - 1, y0 - 1, w + 3, h + 2, OL);
+    for (let j = 0; j < h; j++) for (let i = 0; i <= w; i++) { if (wood < 1 && rand(i, j, 91) > wood) continue; X.px(c, x0 + i, y0 + j, j === 0 ? HI : i === 3 || i === 6 ? P : W); }
+  }
+  X.line(c, x0, y0, x0 + w, y0, RIM); X.line(c, x0, y0 + h - 1, x0 + w, y0 + h - 1, RIM);
+  X.line(c, x0, y0, x0, y0 + h - 1, RIM); X.line(c, x0 + w, y0, x0 + w, y0 + h - 1, RIM);
+  const by = Math.round(y0 + h / 2 - 1);
+  X.rect(c, x0 + 3, by, 2, 2, BOSS); if (ch < 0.6) X.px(c, x0 + 3, by, '#ffffff');
+}
+const shieldAt = (g: Pose): Pt => [g.x + Math.cos(g.face) * 4.8, g.y + Math.sin(g.face) * 4.8 * FY];
+const gripAt = (g: Pose): Pt => [g.x + Math.cos(g.face) * 5, g.y + Math.sin(g.face) * 5 * FY];
+const wrap = (o: Overlay, extra: Partial<Overlay>): Overlay => ({ ...o, ...extra });
+
+// --- BRUTE ----------------------------------------------------------------------------------
+const heavyT = (o: Motion): number => (o.kneelAt ?? 0.42) + (o.tipDur ?? 0.5);
+const lieAt = (m: Base): Pt => [(m.pivot ?? [m.g.x, m.g.y])[0] + m.side * 11, (m.pivot ?? [m.g.x, m.g.y])[1]];
+function slam(c: Ctx, x: number, y: number, e: number, side: number, seed: number, col = '#8a7a68', ring = '#d8c0a0'): void {
+  if (e < 0 || e > 1.4) return;
+  for (let j = 0; j < 2; j++) K.dust(c, x + side * (j - 0.5) * 14, y + 1, e - j * 0.04, seed + j * 7, 5, 22 + j * 4, col, 0.9);
+  if (e < 0.3) K.gring(c, x, y + 1, 6 + e * 80, ring, 1 - e / 0.3, 1);
+  for (let k = 0; k < 9; k++) { if (e > 0.6) break; const a = rand(k, seed, 1) * TAU, dd = (8 + rand(k, seed, 2) * 16) * easeOut(Math.min(1, e * 2.2)); X.rect(c, x + Math.cos(a) * dd, y + Math.sin(a) * dd * 0.45 - hop(e, 0, 3 + rand(k, seed, 3) * 5, 0.32), k % 3 ? 1 : 2, 1, k % 2 ? DIRT[1] : DIRT[2]); }
+}
+function dent(c: Ctx, m: Base, td: number, fade: number, cr = 18): void {
+  const e = td - heavyT(m.o); if (e < 0) return;
+  const [x, y] = lieAt(m);
+  X.ellipse(c, x, y + 1, 13, 3.2, rgba(40, 28, 20, 0.45 * fade));
+  K.cracks(c, x, y + 1, cr, 9, seg(e, 0, 0.12), rgba(26, 18, 12, 0.7 * fade), 7);
+}
+const slamShake = (q: Ctx2, A = 2.5): number => { const e = q.td - heavyT(q.m.o); return e > 0 && e < 0.3 ? A * (1 - e / 0.3) : 0; };
+const knees = (c: Ctx, m: Base, td: number): void => { if (td > 0.28 && m.pivot) K.dust(c, m.pivot[0], m.pivot[1] + 1, td - (m.o.kneelAt ?? 0.42) + 0.06, 31, 3, 10, '#8a7a68', 0.4); };
+const shutEyes = (td: number): Partial<RigState> => ({ eyesShut: td > 0.3 ? 1 : 0 });
+const BRUTE: ArchDef = {
+  ov: {
+    base: {
+      motion: { fall: 'heavy', club: false, exitR: 9, exitAt: 1.75 }, body: shutEyes,
+      fx(c, { m, td }) { knees(c, m, td); const [x, y] = lieAt(m); slam(c, x, y, td - heavyT(m.o), m.side, 41); },
+      ground(c, { m, td, fade }) { dent(c, m, td, fade); },
+      shake: (q) => slamShake(q),
+    },
+    // the boulder bursts on its chest; it skids back on its heels, ploughing two furrows, and falls
+    earth: {
+      motion: { fall: 'heavy', kb: 10, kneel: 0.15, rock: 0.07, kneelAt: 0.55, tipDur: 0.45, club: false, exitR: 9, exitAt: 1.8, hitCol: '#fff4e0' }, body: shutEyes,
+      fx(c, { d, m, td }) {
+        const ch: Pt = [m.g0.x - d.dir[0] * 2, m.g0.y - 17];
+        if (td < 0.06) X.ellipse(c, ch[0], ch[1], 5, 4, '#fff4e0');
+        K.debris(c, ch[0], ch[1] + 12, td, 61, 12, 46, ['#b8946a', '#76583c', '#553e2a'], 36);
+        K.dust(c, ch[0], ch[1] + 4, td, 63, 6, 12, '#a8987e', 0.7);
+        if (td < 0.35) for (const s of [-1, 1]) K.dust(c, m.g.x - d.dir[0] * 2, m.g.y + s * 2, td, 65 + s, 3, 6, '#8a7a68', 0.4);
+        const [x, y] = lieAt(m); slam(c, x, y, td - heavyT(m.o), m.side, 43);
+      },
+      ground(c, { m, td, fade }) {
+        const a = 0.7 * fade, x0 = m.g0.x, x1 = m.g.x;
+        if (Math.abs(x1 - x0) > 1) for (const s of [-2, 2]) { X.line(c, x0, m.g0.y + s, x1, m.g.y + s, rgba(30, 20, 14, a)); X.line(c, x0, m.g0.y + s + 1, x1, m.g.y + s + 1, rgba(154, 122, 84, a * 0.8)); }
+        dent(c, m, td, fade);
+        for (let i = 0; i < 6; i++) { const x = m.g0.x + (rand(i, 66) - 0.3) * 18, y = m.g0.y + (rand(i, 67) - 0.5) * 8; if (td > 0.4 && keep(x, y, fade)) { X.rect(c, x, y, 2, 1, '#6a5038'); X.px(c, x, y - 1, '#977552'); } }
+      },
+      shake: (q) => Math.max(q.td < 0.15 ? 2 : 0, slamShake(q)),
+    },
+    // too heavy to bounce: heaved a little way up on ground that breaks into slabs, down on its knees, falls
+    quake: {
+      motion: { fall: 'heavy', lift: 6, kb: 1, kneel: 0.6, kneelAt: 0.5, tipDur: 0.45, club: false, exitR: 9, exitAt: 1.8, hitCol: '#fff4e0', exitCols: ['#efe4d0', '#bfae94', '#7a6a58'] }, body: shutEyes,
+      fx(c, { m, td }) {
+        const x0 = m.g0.x, y0 = m.g0.y;
+        K.debris(c, x0, y0 - 1, td, 71, 16, 40, [DIRT[0], DIRT[1], DIRT[2]], 60);
+        K.dust(c, x0, y0, td, 72, 12, 20, '#8a7a68', 0.8);
+        if (td < 0.3) K.gring(c, x0, y0 + 1, 5 + td * 70, '#d8c0a0', 1 - td / 0.3, 1);
+        knees(c, m, td);
+        const [x, y] = lieAt(m); slam(c, x, y, td - heavyT(m.o), m.side, 45);
+      },
+      ground(c, { m, td, fade }) {
+        const x = m.g0.x, y = m.g0.y + 1, k = seg(td, 0, 0.12);
+        if (k > 0) { X.ellipse(c, x, y, 12 * k, 4 * k, rgba(40, 28, 20, 0.55 * fade)); K.cracks(c, x, y, 26, 14, k, rgba(26, 18, 12, 0.85 * fade), 9); }
+        // the broken slabs
+        const up = hop(td, 0, 3, 0.32);
+        if (k > 0) for (let i = 0; i < 6; i++) {
+          const an = (i / 6) * TAU + rand(i, 141) * 0.5, r = 9 + rand(i, 142) * 5, cx = x + Math.cos(an) * r, cy = y + Math.sin(an) * r * 0.45, w = 4 + rand(i, 143) * 3, tl = (rand(i, 144) - 0.5) * 2;
+          const lift = up * (0.6 + rand(i, 145) * 0.6) + 1 + rand(i, 146);
+          const pts: Pt[] = [[cx - w, cy + tl], [cx + w, cy - tl], [cx + w - 1, cy - tl - lift], [cx - w + 1, cy + tl - lift]];
+          if (!keep(cx, cy, fade)) continue;
+          X.poly(c, pts.map(([px, py]) => [px, py + 1] as Pt), DIRT[3]); X.poly(c, pts, DIRT[2]); X.line(c, pts[3][0], pts[3][1], pts[2][0], pts[2][1], DIRT[0]);
+        }
+        dent(c, m, td, fade, 10);
+      },
+      shake: (q) => Math.max(slamShake(q), q.td < 0.3 ? 1.5 : 0),
+      lights: ({ m, td }) => [[m.g0.x, m.g0.y, 60, '#e0c8a0', 0.7 * (1 - seg(td, 0, 0.5))]],
+    },
+    // frost-stiff, so no kneel: a shiver, then it tips over whole; the slam cracks the rime, throws ice and snow
+    cold: {
+      motion: { fall: 'heavy', kneel: 0, rock: 0.05, kneelAt: 0.22, tipDur: 0.62, club: false, exitR: 9, exitAt: 1.75, exitCols: SNOW, hitCol: '#e0ffff' },
+      body: () => ({ chill: 1, wet: 0 }),
+      fx(c, { d, m, td, A }) {
+        if (td < 0.6) K.chilled(c, A.chest, A.head, td + 5, 1, d.who, 1.8);
+        const e = td - heavyT(m.o), [x, y] = lieAt(m);
+        if (e > 0 && td < m.exitAt + 0.05) {
+          const run = seg(e, 0, 0.1), pts: Pt[] = [];
+          for (let i = 0; i <= 8; i++) pts.push([x - 10 + i * 2.5, y - 4 + (i % 2 ? 1 : -1)]);
+          const n = Math.max(2, Math.ceil(pts.length * run));
+          X.lines(c, pts.slice(0, n), '#ffffff'); if (e < 0.12) X.lines(c, pts.slice(0, n).map(([px, py]) => [px, py + 1] as Pt), '#1e5a96');
+          for (let k = 0; k < 16; k++) { const an = rand(k, 81) * Math.PI + Math.PI, sp = 14 + rand(k, 82) * 26, vz = 24 + rand(k, 83) * 28, z = vz * e - 110 * e * e; if (z < -1 || e > 0.6) continue; X.px(c, x + (rand(k, 84) - 0.5) * 18 + Math.cos(an) * sp * e * 0.8, y + Math.sin(an) * sp * e * 0.3 - Math.max(0, z), k % 3 ? '#e0ffff' : '#ffffff'); }
+        }
+        slam(c, x, y, e, m.side, 47, '#d8ecf6', '#e0ffff');
+      },
+      ground(c, { m, td, fade }) {
+        const k = seg(td, 0, 0.9) * fade, [x, y] = lieAt(m);
+        if (k > 0.02) for (let i = 0; i < 110; i++) { const an = rand(i, 61) * TAU, r = Math.pow(rand(i, 62), 0.7) * 24 * k, px = x + Math.cos(an) * r, py = y + 1 + Math.sin(an) * r * FY * 0.5; if (keep(px, py, fade)) X.px(c, px, py, i % 4 === 0 ? '#ffffff' : i % 2 ? '#bfe8f6' : '#8ccce4'); }
+      },
+      shake: (q) => slamShake(q),
+      lights: ({ m, td }) => [[m.g0.x + 8, m.g0.y, 50, '#9ff4ff', 0.45 * (1 - seg(td, m.exitAt, m.exitAt + 1))]],
+    },
+  },
+  drop() { /* bare-handed */ },
+};
+
+// --- ARCHER ---------------------------------------------------------------------------------
+const ARROWS = 3, SNAP = 0.28;
+function bowFlight(td: number, g0: Pose, dir: Pt, t0: number, far = 0): Toss | null {
+  const p0 = gripAt(g0), side = Math.sign(Math.cos(g0.face)) || -1;
+  return toss(td, t0, p0, [p0[0] + side * 6 + dir[0] * far, p0[1] + 3 + dir[1] * far * FY], 9 + far * 0.15, 0.48 + far * 0.004, 7);
+}
+const drawBow = (c: Ctx, p: Toss, ang: number, fade: number, col?: string, string?: number): void => { if (keep(p.x, p.y, fade)) bow(c, p.x, p.y - p.z, ang, col, string); };
+function arrowsOut(push: Push, td: number, from: Pt, dir: Pt, fade: number, t0: number, far: number, n = ARROWS): void {
+  for (let k = 0; k < n; k++) {
+    const p1: Pt = [from[0] + dir[0] * (far * (0.5 + rand(k, 151) * 0.6)) + (rand(k, 152) - 0.5) * 10, from[1] + 2 + (rand(k, 153) - 0.5) * 8];
+    const p = toss(td, t0 + k * 0.04, from, p1, 5 + rand(k, 154) * 5 + far * 0.1, 0.3 + far * 0.005, 8);
+    if (!p) continue;
+    const ang = rand(k, 155) * TAU + (p.k < 1 ? p.e * 14 : (0.3 + far * 0.005) * 14);
+    push(p.y, (c) => { if (keep(p.x, p.y, fade)) arrow(c, p.x, p.y - p.z, ang); });
+  }
+}
+const bowDrop = (td: number, g0: Pose): Toss | null => { const p0 = gripAt(g0); return toss(td, SNAP, p0, [p0[0] + Math.cos(g0.face) * 4, p0[1] + 2], 2, 0.26, 7); };
+const bowRest = (g0: Pose): Toss => bowDrop(9, g0)!;
+const bowFire = (td: number): number => Math.min(seg(td, SNAP + 0.25, SNAP + 0.4), 1 - seg(td, 1.9, 2.6));
+const ARCHER: ArchDef = {
+  ov: {
+    base: {
+      motion: { fall: 'topple', club: false }, body: (td) => ({ bare: td > 0.05 ? 1 : 0 }),
+      stand({ d, m, td, fade }, push) {
+        const p = bowFlight(td, m.g0, d.dir, 0.04);
+        if (p) push(p.y, (c) => drawBow(c, p, Math.PI / 2 + Math.min(p.e, 0.48) * 9, fade));
+        arrowsOut(push, td, [m.g0.x + d.dir[0] * 4, m.g0.y], d.dir, fade, 0.34, 10);
+      },
+    },
+    fire: wrap(OVERLAY.fire!, {
+      body: (td) => ({ ...OVERLAY.fire!.body!(td), bare: td > SNAP ? 1 : 0 }),
+      fx(c, q) {
+        OVERLAY.fire!.fx!(c, q);
+        const { m, td } = q, gp = gripAt(m.g0);
+        if (td > SNAP - 0.02 && td < SNAP + 0.12) star(c, [gp[0], gp[1] - 7], td - SNAP + 0.02, '#ffd860', 4);
+        for (let k = 0; k < 3; k++) { const e = td - (0.42 + k * 0.14); if (e < 0 || e > 0.16) continue; const x = m.g0.x - Math.cos(m.g0.face) * 3 + (k - 1) * 2, y = m.g0.y - 11 - k; X.px(c, x, y, '#ffffff'); X.px(c, x - 1, y, '#fff4c0'); X.px(c, x + 1, y, '#fff4c0'); K.tongue(c, x, y, 1, 4 * (1 - e / 0.16), Math.sin(td * 9 + k)); }
+        const bp = bowRest(m.g0), k = bowFire(td);
+        if (k > 0.04) for (let j = -2; j <= 2; j++) K.tongue(c, bp.x + j * 2, bp.y - 1, 1, (2 + 1.6 * Math.sin(td * 15 + j * 2.3)) * k * (1 - Math.abs(j) * 0.2), Math.sin(td * 7 + j));
+      },
+      ground(c, q) { OVERLAY.fire!.ground!(c, q); const bp = bowRest(q.m.g0); K.scorch(c, bp.x, bp.y + 1, 5 * seg(q.td, SNAP + 0.3, 1.2), 0.6 * q.fade); },
+      lights(q) { const bp = bowRest(q.m.g0); return [...OVERLAY.fire!.lights!(q), [bp.x, bp.y - 2, 22, '#ff7020', 0.5 * bowFire(q.td)]]; },
+      stand({ m, td, fade }, push) {
+        const p = bowDrop(td, m.g0); if (!p) return;
+        const ch = smooth(seg(td, SNAP + 0.3, 2.0));
+        push(p.y, (c) => drawBow(c, p, lerp(Math.PI / 2, 0.15, p.k), fade, X.mix('#b8844a', '#2a2020', ch), td < SNAP + 0.05 ? 1 : 0.5 * (1 - seg(td, SNAP + 0.1, SNAP + 0.3))));
+      },
+    }),
+    earth: wrap(OVERLAY.earth!, {
+      motion: { ...OVERLAY.earth!.motion, club: false },
+      motionFor: (o) => ({ ...OVERLAY.earth!.motionFor!(o), club: false }),
+      body: () => ({ bare: 1 }),
+      stand({ d, m, td, fade }, push) {
+        const p = bowFlight(td, m.g0, d.dir, 0, 46);
+        if (p) push(p.y, (c) => drawBow(c, p, Math.PI / 2 + Math.min(p.e, 0.66) * 13, fade));
+        const at = baseDeath(m.g0, 0.12, d.dir, m.o, d.S).g;
+        arrowsOut(push, td, [at.x, at.y], d.dir, fade, 0.12, 34, 5);
+      },
+    }),
+  },
+  drop(c, x, y, side, _ex, { fade }) {
+    if (!keep(x, y, fade)) return;
+    bow(c, x, y - 1, 0.2 * side);
+    for (let k = 0; k < ARROWS; k++) arrow(c, x - side * (5 + k * 3), y + 1 + (k - 1) * 2, (rand(k, 161) - 0.5) * 1.6);
+  },
+};
+
+// --- IMP ------------------------------------------------------------------------------------
+const EMBER: Ramp = ['#ffd0a0', '#c86a4a', '#4a3034'];
+const STEAM: Ramp = ['#ffffff', '#e8f0f8', '#b8c4d4'];
+const BRK = 1.05;
+function impColdState(g0: Pose, td: number, dir: Pt): Pose {
+  const cool = smooth(seg(td, 0.08, 0.85));
+  return { ...g0, x: g0.x + dir[0] * 2 * easeOut(seg(td, 0, 0.15)), crown: 1 - seg(td, 0.05, 0.3), tint: '#3a3438', tintK: 0.86 * cool, chill: 0.5 * seg(td, 0, 0.4), burn: 0, wet: 0, flash: flashLvl(0.6 * flashOf(td, 0)), flashCol: '#e0ffff', eyeCol: cool > 0.55 ? '#ff7a30' : null, eyesShut: cool > 0.92 ? 1 : 0, spd: 0, alpha: 1 };
+}
+const CRACKS: Pt[][] = [[[-1, -11], [0, -9], [-1, -7], [1, -5], [0, -3]], [[2, -10], [3, -8], [2, -6]], [[-3, -7], [-2, -5], [-3, -3]], [[1, -13], [-1, -12]]];
+/** COLD: goes out like a cooled coal: the glow drains to grey-black stone through fading lava cracks, then it breaks into cinders. */
+function impCold(d: Death, td: number, fade: number): Bespoke {
+  const dir = d.dir, g0 = d.g0, g = impColdState(g0, td, dir), gx = g.x, gy = g0.y;
+  const glow = Math.min(seg(td, 0.25, 0.45), 1 - seg(td, 0.75, BRK - 0.05));
+  const fxPre = (c: Ctx) => {
+    if (td < 0.25) K.dust(c, gx, gy - 8, td, 191, 6, 10, '#e0f4ff', 0.3);
+    for (const p of emit(td, 5, 1.0, (i, age) => ({ x: gx + (rand(i, 192) - 0.5) * 2 + age * 4, y: gy - 15 - age * 12, age }), 0.1)) K.puff(c, p.x, p.y, 1 + p.age * 2, '#5a5464', (1 - p.age) * 0.8 * (1 - seg(td, 1.2, 1.8)));
+  };
+  const frost = (c: Ctx, k: number) => { for (let i = 0; i < 30; i++) { const an = rand(i, 193) * TAU, r = Math.pow(rand(i, 194), 0.7) * 9 * k, x = gx + Math.cos(an) * r, y = gy + 1 + Math.sin(an) * r * 0.4; if (keep(x, y, fade)) X.px(c, x, y, i % 3 ? '#bfe8f6' : '#ffffff'); } };
+  if (td < BRK) {
+    return {
+      stand: [[gy, (c) => { paint(g, c, Math.round(g.x), Math.round(g.y)); }]],
+      under(c) { const k = seg(td, 0, 0.6); if (k > 0.02) frost(c, k); },
+      fx(c) {
+        fxPre(c);
+        const last = td > BRK - 0.08;
+        if (glow > 0.05 || last) for (const cr of CRACKS) X.lines(c, cr.map(([x, y]) => [gx + x, gy + y] as Pt), last ? '#ffffff' : glow > 0.6 ? '#ffd860' : glow > 0.3 ? '#ff9a30' : '#c8502a');
+        star(c, [gx - dir[0] * 2, gy - 7], td, '#e0ffff', 6);
+      },
+      lights: [[gx, gy - 6, 30, '#ff7020', 0.5 * (1 - seg(td, 0.05, 0.6))], [gx, gy - 6, 26, '#ff9a30', 0.4 * glow], [gx, gy, 30, '#9ff4ff', 0.3 * (1 - seg(td, 0, 0.5))]],
+    };
+  }
+  const cap = impColdState(g0, BRK, dir);
+  const px = capture(d, 'cinder', { ...cap, flash: 0 }), ch = chunksOf(d, px, 9, 5, 'cinder-chunks');
+  const e = td - BRK, cxs = ch.reduce((s, c) => s + c.cx, 0) / Math.max(1, ch.length);
+  const pos = ch.map((c, j): [number, number, number] => {
+    const z0 = gy - c.cy, fall = Math.sqrt(2 * Math.max(0, z0 - c.hh) / 260), te = e - rand(j, 195) * 0.08;
+    const z = te < 0 ? z0 : te < fall ? z0 - 130 * te * te : c.hh + hop(te, fall, 1.5, 0.14);
+    const sp = easeOut(seg(te, 0, fall + 0.15));
+    return [c.cx + (c.cx - cxs) * 0.6 * sp + (rand(j, 196) - 0.5) * 3 * sp, gy + (rand(j, 197) - 0.5) * 3 * sp, Math.max(c.hh, z)];
+  });
+  return {
+    stand: ch.map((c, j): Stand => [pos[j][1], (cc) => {
+      const [x, y, z] = pos[j];
+      for (const p of c.pts) { const xx = x + p.x - c.cx, yy = y - z + p.y - c.cy; if (keep(xx, yy, fade)) X.px(cc, xx, yy, p.dark ? '#141016' : X.mix(p.col, '#2a2428', 0.35)); }
+      if (j % 3 === 0 && e < 0.9 && (Math.floor(td * 6) + j) % 4 !== 0) X.px(cc, x, y - z, e < 0.4 ? '#ff9a30' : '#c8502a');
+    }]),
+    under(c) { if (keep(gx, gy, fade)) X.ellipse(c, gx, gy + 1, 6, 2, rgba(30, 26, 30, 0.6 * fade)); frost(c, 1); },
+    fx(c) { fxPre(c); if (e < 0.12) star(c, [gx, gy - 7], e, '#ffd860', 6); K.dust(c, gx, gy, e - 0.15, 198, 6, 10, '#5a5458', 0.7); },
+    lights: [[gx, gy - 2, 22, '#ff7020', 0.35 * (1 - seg(e, 0, 1))]],
+  };
+}
+/** FROZEN SHATTER: the heat trapped under the ice: the shards glow inside, then hiss steam and melt fast. */
+function impShatter(d: Death, td: number, fade: number): Bespoke {
+  const g0 = d.g0, dir = d.dir, gy = g0.y;
+  const px = capture(d, 'ice', { ...g0, flash: 0, frozen: 1 }), ch = chunksOf(d, px, 12, 9);
+  const melt = seg(td, 0.85, 1.6);
+  const pos = ch.map((c, j) => simChunk(c, j, td, dir, gy));
+  const landed = (j: number) => td > 0.4 && pos[j][2] <= ch[j].hh + 0.1;
+  return {
+    stand: ch.map((c, j): Stand => [pos[j][1], (cc) => {
+      const [x, y, z] = pos[j];
+      for (const p of c.pts) {
+        if (melt > 0 && rand(p.i, 77) < melt * 1.1) continue;
+        const dd = Math.abs(p.x - c.cx) + Math.abs(p.y - c.cy);
+        X.px(cc, x + p.x - c.cx, y - z + p.y - c.cy, dd < 1.6 && c.pts.length > 6 ? ((Math.floor(td * 10) + j) % 3 ? '#ff9a30' : '#ffd860') : p.ice ?? p.col);
+      }
+    }]),
+    under(c) {
+      const k = seg(td, 0, 0.25) * (1 - seg(td, 0.6, 1.4)) * fade;
+      if (k > 0.02) for (let i = 0; i < 50; i++) { const an = rand(i, 61) * TAU, r = Math.pow(rand(i, 62), 0.6) * 13 * k, x = g0.x + 3 + Math.cos(an) * r, y = gy + 1 + Math.sin(an) * r * FY * 0.6; if (keep(x, y, k)) X.px(c, x, y, i % 4 === 0 ? '#ffffff' : '#bfe8f6'); }
+      for (let j = 0; j < ch.length; j++) if (landed(j)) X.ellipse(c, pos[j][0], pos[j][1] + 1, 1.5 + melt * 2.5, 1 + melt * 0.6, rgba(30, 50, 80, 0.6 * fade));
+    },
+    fx(c) {
+      const p: Pt = [g0.x - 1, gy - 9];
+      if (td < 0.06) X.ellipse(c, p[0], p[1], 12, 10, '#ffffff');
+      star(c, p, td, '#ffd0a0', 10);
+      if (td < 0.6) for (let k = 0; k < 18; k++) { const an = rand(k, 41) * TAU, sp = 20 + rand(k, 42) * 40; X.px(c, p[0] + Math.cos(an) * sp * td + dir[0] * 20 * td, p[1] + Math.sin(an) * sp * td * 0.6 + 40 * td * td, k % 3 ? '#e0ffff' : '#ffd0a0'); }
+      for (let j = 0; j < ch.length; j++) if (landed(j) && melt < 1) for (const q of emit(td, 3, 0.8, (i, age) => ({ x: pos[j][0] + (rand(i, j, 199) - 0.5) * 3 + age * 2, y: pos[j][1] - 2 - age * 11, age }), 0.45 + j * 0.02)) K.puff(c, q.x, q.y, 1 + q.age * 2, '#f0f4f8', (1 - q.age) * 0.8 * (1 - melt));
+    },
+    lights: [[g0.x, gy - 4, 60, '#9ff4ff', 1.0 * (1 - seg(td, 0, 0.5))], [g0.x + dir[0] * 12, gy - 2, 40, '#ff9a30', 0.35 * (1 - melt) * seg(td, 0.1, 0.4)]],
+  };
+}
+const IMP: ArchDef = {
+  // fire does nothing to an imp, so a fire kill is the base; the scald mix is its water half
+  pick: (k) => (k === 'fire' ? 'base' : k === 'steam' || k === 'water' ? 'water' : k),
+  ov: {
+    base: {
+      motion: { fall: 'topple', exitCols: EMBER }, body: (td) => ({ crown: 1 - seg(td, 0.2, 0.55) }),
+      fx(c, { m, td, A }) { if (td > 0.2 && td < m.exitAt) for (const p of emit(td, 6, 0.9, (i, age) => ({ x: A.head[0] + (rand(i, 171) - 0.5) * 3 + age * 4, y: A.head[1] - 3 - age * 12, age }), 0.25)) K.puff(c, p.x, p.y, 1 + p.age * 2.5, '#4a4250', (1 - p.age) * 0.8); },
+    },
+    // doused: a burst of hissing steam, the crown snuffed, blackening as it shrinks; a smoking lump is left
+    water: {
+      motion: { fall: 'slump', slumpAt: 0.25, exitAt: 1.2, exit: 'fizzle', club: false, hitCol: '#e0f6ff' },
+      body: (td) => ({ crown: 0, wet: 0.8 * (1 - seg(td, 0.4, 0.9)), tint: '#1e181c', tintK: 0.85 * smooth(seg(td, 0.08, 0.8)), sq: 0.45 * smooth(seg(td, 0.2, 1.1)), eyeCol: '#ff7a30', eyesShut: td > 0.85 ? 1 : 0, burn: 0 }),
+      fx(c, { m, td, fade }) {
+        const x = m.g0.x, y = m.g0.y;
+        if (td < 0.06) X.ellipse(c, x, y - 7, 8, 7, '#ffffff');
+        const k = 1 - seg(td, 0.3, 1.1);
+        if (k > 0) for (const p of emit(td, 26, 0.9, (i, age) => ({ x: x + (rand(i, 181) - 0.5) * 10 + (rand(i, 182) - 0.5) * age * 22, y: y - 6 - rand(i, 183) * 6 - age * 20, age }), 0)) K.puff(c, p.x, p.y, 1.5 + p.age * 4, p.age < 0.3 ? STEAM[0] : p.age < 0.6 ? STEAM[1] : STEAM[2], (1 - p.age) * 0.95 * k);
+        if (td < 0.9) { const f = Math.floor(td * 20); for (let i = 0; i < 4; i++) if (rand(i, f, 184) < 0.6) X.px(c, m.g.x + (rand(i, f, 185) - 0.5) * 8, m.g.y - 2 - rand(i, f, 186) * 9, '#ffffff'); }
+        if (td > m.exitAt - 0.15 && td < m.exitAt + 0.5) poof(c, x, y - 4, (td - m.exitAt + 0.15) / 0.65, STEAM, 6, 13);
+        if (td > m.exitAt) for (const p of emit(td, 3, 1.2, (i, age) => ({ x: x + 1 + (rand(i, 187) - 0.5) * 3 + age * 3, y: y - 2 - age * 13, age }), m.exitAt)) K.puff(c, p.x, p.y, 1 + p.age * 2, '#6e6878', (1 - p.age) * 0.75 * fade);
+      },
+      ground(c, { m, td, fade }) {
+        const x = m.g0.x, y = m.g0.y + 1, k = seg(td, 0.05, 0.4) * fade;
+        if (k > 0.02) { X.poly(c, K.blobPts(x + 1, y, 9 * k, 3 * k, 5), rgba(20, 30, 46, 0.8)); X.poly(c, K.blobPts(x + 1, y - 0.5, 6 * k, 2 * k, 5), rgba(32, 52, 80, 0.7)); }
+        if (td > m.exitAt - 0.05 && keep(x, y, fade)) { X.ellipse(c, x, y - 1, 3.5, 2, OL); X.ellipse(c, x, y - 1.5, 2.6, 1.4, '#2a2226'); X.px(c, x - 1, y - 2, '#4a4046'); }
+        if (td > 0.3) for (let i = 0; i < 4; i++) if (rand(i, Math.floor(td * 6), 188) < 0.45 * (1 - seg(td, 1.6, 2.6))) X.px(c, x + (rand(i, 189) - 0.5) * 14, y + (rand(i, 190) - 0.5) * 4, '#e0f0ff');
+      },
+      lights: ({ m, td }) => [[m.g.x, m.g.y - 6, 30, '#ffffff', 0.35 * (1 - seg(td, 0.1, 0.8))]],
+    },
+  },
+  bs: { cold: impCold, shatter: impShatter },
+  drop(c, x, y, _side, ex, { fade }) {
+    // its crown flame, left on the ground, flickering out, then a wisp of smoke
+    const h = (3.5 + 1.2 * Math.sin(ex * 19)) * (1 - seg(ex, 0.35, 1.2));
+    if (h > 0.4) { K.tongue(c, x, y - 1, 1.2, h, Math.sin(ex * 8)); X.px(c, x, y, '#ff5a20'); }
+    else if (ex < 1.8 && keep(x, y, fade)) for (let j = 0; j < 3; j++) X.px(c, x + Math.sin(ex * 4 + j), y - 2 - j * 2 - (ex - 1.1) * 6, '#6e6878');
+    if (ex < 1.6) for (let i = 0; i < 3; i++) if (rand(i, Math.floor(ex * 5), 201) < 0.6) X.px(c, x - 4 + rand(i, 202) * 8, y + (rand(i, 203) - 0.5) * 3, i % 2 ? '#ff9a30' : '#c8502a');
+  },
+};
+
+// --- GRABBER --------------------------------------------------------------------------------
+function clawArc(c: Ctx, claws: Pt[], s: number): void {
+  if (claws.length < 2) return;
+  const [p, q] = claws, mid: Pt = [(p[0] + q[0]) / 2 + 2, (p[1] + q[1]) / 2 - 4];
+  X.lines(c, K.bolt(p, mid, s * 7 + 1, 0.5, 2).concat(K.bolt(mid, q, s * 7 + 2, 0.5, 2)), s % 2 ? '#ffffff' : EL.lightning[1]);
+  for (const h of claws) { X.px(c, h[0], h[1], '#ffffff'); X.px(c, h[0] + 1, h[1] - 1, EL.lightning[1]); X.px(c, h[0] - 1, h[1] + 1, EL.lightning[1]); }
+}
+const GRABBER: ArchDef = {
+  ov: {
+    // skids face down along the blow, claws dragging two furrows
+    base: {
+      motion: { fall: 'slide', slide: 30, spinS: 0.5, exitAt: 1.4, club: false },
+      fx(c, { d, m, td }) { if (td < 1.0) for (const p of emit(td, 14, 0.5, (i, age) => ({ x: m.g.x + d.dir[0] * 3 + (rand(i, 211) - 0.5) * 4, y: m.g.y + (rand(i, 212) - 0.5) * 3 - age * 4, age }), 0.1)) K.puff(c, p.x, p.y, 1 + p.age * 2.5, '#8a7a68', (1 - p.age) * 0.85 * (1 - seg(td, 0.6, 1.0))); },
+      ground(c, { d, m, td, fade }) {
+        if (seg(td, 0.1, 0.2) <= 0) return;
+        const back = -Math.sign(Math.cos(m.g0.face)) || 1, a = 0.75 * fade, x0 = m.g0.x + d.dir[0] * 3, x1 = m.g.x - back * 2;
+        for (const s of [-1.5, 1.5]) { const y0 = m.g0.y + s, y1 = m.g.y + s; X.line(c, x0, y0, x1, y1, rgba(28, 20, 14, a)); X.line(c, x0, y0 + 1, x1, y1 + 1, rgba(154, 122, 84, a * 0.7)); }
+        for (let i = 0; i < 6; i++) { const q = rand(i, 213), x = lerp(x0, x1, q), y = lerp(m.g0.y, m.g.y, q) + (rand(i, 214) - 0.5) * 6; if (keep(x, y, fade) && td > 0.2 + q * 0.6) X.rect(c, x, y, 1 + (i % 2), 1, i % 2 ? DIRT[2] : DIRT[1]); }
+      },
+    },
+    // the long arms close the circuit: the arc jumps claw to claw while the skeleton flashes
+    lightning: wrap(OVERLAY.lightning!, {
+      motion: { ...OVERLAY.lightning!.motion, club: false },
+      fx(c, q) { OVERLAY.lightning!.fx!(c, q); if (q.td < 0.42 && Math.floor(q.td * 18) % 3 !== 2) clawArc(c, q.A.hands, Math.floor(q.td * 18)); },
+      lights: (q) => [...OVERLAY.lightning!.lights!(q), [q.m.g.x + Math.cos(q.m.g0.face) * 7, q.m.g.y - 5, 30, '#ffffff', 0.5 * (1 - seg(q.td, 0, 0.42))]],
+    }),
+  },
+  bs: { arcane: (d, td, fade) => arcane(d, td, fade, true) },
+  drop() { /* bare-handed */ },
+};
+
+// --- SHIELDBEARER ---------------------------------------------------------------------------
+const CLANG = 0.42, SDROP = 0.22;
+function shieldDrop(td: number, g0: Pose, t0 = 0.04, dur = CLANG - 0.04): { x: number; y: number; tilt: number; e: number } {
+  const p0 = shieldAt(g0), p1: Pt = [p0[0] + Math.cos(g0.face) * 5, p0[1] + Math.sin(g0.face) * 2 + 1];
+  const e = td - t0, k = clamp(e / dur, 0, 1), fall = k * k;
+  const rockA = e > dur ? 0.28 * Math.abs(Math.sin((e - dur) * 26)) * Math.exp(-(e - dur) * 7) : 0;
+  return { x: lerp(p0[0], p1[0], fall), y: lerp(p0[1], p1[1], fall), tilt: Math.max(1 - fall, rockA), e: e - dur };
+}
+function clang(c: Ctx, p: Pt, e: number): void {
+  if (e < 0 || e > 0.3) return;
+  star(c, [p[0], p[1] - 2], e, '#ffffff', 5);
+  if (e < 0.2) K.gring(c, p[0], p[1], 4 + e * 40, '#e8e8f0', 1 - e / 0.2, 1);
+  for (let k = 0; k < 5; k++) { const an = -Math.PI / 2 + (k - 2) * 0.6, dd = 3 + e * 30; X.px(c, p[0] + Math.cos(an) * dd, p[1] - 2 + Math.sin(an) * dd * 0.6 + 40 * e * e, k % 2 ? '#ffffff' : '#ffe8a0'); }
+}
+function splinters(push: Push, td: number, g0: Pose, dir: Pt, fade: number): void {
+  const p0 = shieldAt(g0);
+  for (let k = 0; k < 9; k++) {
+    const far = 10 + rand(k, 231) * 26, ang0 = Math.atan2(dir[1], dir[0]) + (rand(k, 232) - 0.5) * 1.4;
+    const kind = k < 6 ? 0 : k < 8 ? 1 : 2, fl = kind === 2 ? 2.2 : 1;
+    const p = toss(td, 0, p0, [p0[0] + Math.cos(ang0) * far * fl, p0[1] + Math.sin(ang0) * far * fl * FY + (rand(k, 233) - 0.5) * 6], 10 + rand(k, 234) * 10, 0.4 + rand(k, 235) * 0.2, 5);
+    if (!p) continue;
+    const rot = rand(k, 236) * TAU + Math.min(p.e, 0.5) * (8 + rand(k, 237) * 10);
+    push(p.y, (c) => {
+      if (!keep(p.x, p.y, fade)) return;
+      const x = p.x, y = p.y - p.z, ux = Math.cos(rot), uy = Math.sin(rot) * 0.75;
+      if (kind === 0) { const l = 2 + (k % 2); X.line(c, x - ux * l, y - uy * l + 1, x + ux * l, y + uy * l + 1, OL); X.line(c, x - ux * l, y - uy * l, x + ux * l, y + uy * l, k % 3 ? '#8a6a48' : '#6a4a2c'); X.px(c, x + ux * l, y + uy * l, '#c8a070'); }
+      else if (kind === 1) X.lines(c, [[x - ux * 3, y - uy * 3], [x, y - 1], [x + ux * 3, y + uy * 2]], '#8a8e98');
+      else { X.rect(c, x - 1, y - 1, 3, 3, OL); X.rect(c, x, y, 2, 2, '#c8ccd8'); X.px(c, x, y, '#ffffff'); }
+    });
+  }
+}
+const sbBurn = (td: number): number => Math.min(seg(td, SDROP + 0.12, SDROP + 0.3), 1 - seg(td, 2.1, 2.7));
+const SHIELDBEARER: ArchDef = {
+  ov: {
+    // the shield is knocked from its grip, tips forward and lands flat with a clang, rocking like a lid
+    base: {
+      motion: { fall: 'topple', club: false }, body: (td) => ({ bare: td > 0.04 ? 1 : 0 }),
+      fx(c, { m, td }) { const s = shieldDrop(td, m.g0); clang(c, [s.x, s.y], s.e); K.dust(c, s.x, s.y + 1, s.e, 221, 3, 7, '#8a7a68', 0.3); },
+      stand({ m, td, fade }, push) { const s = shieldDrop(td, m.g0); push(s.y, (c) => { if (keep(s.x, s.y, fade)) shieldProp(c, s.x, s.y, s.tilt); }); },
+    },
+    // earth splinters the shield; the boulder throws the body a shorter way (armoured)
+    earth: wrap(OVERLAY.earth!, {
+      motion: { ...OVERLAY.earth!.motion, club: false },
+      motionFor: (o) => ({ ...OVERLAY.earth!.motionFor!(o), fling: 22 + 12 * clamp(o.overkill ?? 0, 0, 1), flatten: false, club: false }),
+      body: () => ({ bare: 1 }),
+      fx(c, q) {
+        OVERLAY.earth!.fx!(c, q);
+        const p0 = shieldAt(q.m.g0), td = q.td;
+        if (td < 0.05) X.ellipse(c, p0[0], p0[1] - 6, 7, 6, '#fff4e0');
+        star(c, [p0[0], p0[1] - 6], td, '#ffe8c0', 9);
+        K.debris(c, p0[0], p0[1] - 1, td, 241, 10, 36, ['#8a6a48', '#6a4a2c', '#c8a070'], 40);
+      },
+      stand({ d, m, td, fade }, push) { splinters(push, td, m.g0, d.dir, fade); },
+    }),
+    // the wooden shield drops and burns on after the body has crumbled, leaving the iron rim and boss
+    fire: wrap(OVERLAY.fire!, {
+      body: (td) => ({ ...OVERLAY.fire!.body!(td), bare: td > SDROP ? 1 : 0 }),
+      fx(c, q) {
+        OVERLAY.fire!.fx!(c, q);
+        const td = q.td, s = shieldDrop(td, q.m.g0, SDROP, 0.3), k = sbBurn(td);
+        clang(c, [s.x, s.y], s.e);
+        if (k > 0.04) for (let j = -3; j <= 3; j++) K.tongue(c, s.x + j * 1.3, s.y - 2 + (j % 2), 1.1, (2.5 + 2 * Math.sin(td * 14 + j * 1.9)) * k * (1 - Math.abs(j) * 0.1), Math.sin(td * 6 + j) * 1.2);
+        if (k > 0.2) for (const p of emit(td, 4, 1.2, (i, age) => ({ x: s.x + (rand(i, 251) - 0.5) * 6 + age * 5, y: s.y - 6 - age * 15, age }), SDROP + 0.3)) K.puff(c, p.x, p.y, 1.5 + p.age * 3, '#3a3644', (1 - p.age) * 0.7 * k);
+      },
+      ground(c, q) { OVERLAY.fire!.ground!(c, q); const s = shieldDrop(9, q.m.g0, SDROP, 0.3); K.scorch(c, s.x, s.y, 7 * seg(q.td, SDROP + 0.3, 1.4), 0.75 * q.fade); },
+      lights(q) { const s = shieldDrop(9, q.m.g0, SDROP, 0.3); return [...OVERLAY.fire!.lights!(q), [s.x, s.y - 3, 30, '#ff7020', 0.6 * sbBurn(q.td)]]; },
+      stand({ m, td, fade }, push) {
+        const s = shieldDrop(td, m.g0, SDROP, 0.3), ch = smooth(seg(td, SDROP + 0.3, 2.0)), wood = 1 - smooth(seg(td, 1.9, 2.7)) * 0.85;
+        push(s.y, (c) => { if (keep(s.x, s.y, fade)) shieldProp(c, s.x, s.y, s.tilt, ch, wood); });
+      },
+    }),
+  },
+  drop(c, x, y, _side, _ex, { fade }) { if (keep(x, y, fade)) shieldProp(c, x, y + 1, 0); },
+};
+
+const ARCH: Partial<Record<Arch, ArchDef>> = { brute: BRUTE, archer: ARCHER, imp: IMP, grabber: GRABBER, shieldbearer: SHIELDBEARER };
 
 // ---------------------------------------------------------------------------------------------
 /** The pool of death sprites, and the deaths playing in them. */
@@ -691,13 +1176,15 @@ export class Deaths {
     const L = Math.hypot(info.dirX, info.dirY);
     const dir: Pt = L > 1e-6 ? [info.dirX / L, info.dirY / L] : [g0.seed & 1 ? 1 : -1, 0];
     // other archetypes play the goblin's deaths on their own rig, scaled to its height (for now)
-    const S = HEIGHT[g0.kind] / HEIGHT.goblin;
-    const d: Death = { who, tick, t0: NaN, g0: { ...g0, alpha: 1, spd: 0, vx: 0, vy: 0, sq: 0, flash: 0, punch: -1, smash: -1, draw: 0 }, dir, ov: info.overkill, kind: pickDeath(info), S, slot: this.slot(), cache: new Map() };
+    const S = HEIGHT[g0.kind] / HEIGHT.goblin, arch = archOf(g0);
+    let kind = pickDeath(info); const AD = ARCH[arch]; if (AD?.pick) kind = AD.pick(kind);
+    const d: Death = { who, tick, t0: NaN, g0: { ...g0, alpha: 1, spd: 0, vx: 0, vy: 0, sq: 0, flash: 0, punch: -1, smash: -1, draw: 0, bare: 0, crown: 1 }, dir, ov: info.overkill, kind, arch, S, slot: this.slot(), cache: new Map() };
     this.live.push(d);
   }
 
   /** Clears the old effects' ground and over canvases each frame first (vfx.ts); this draws into them. */
   draw(g: Ctx, o: Ctx, ct: number, light: LightFn, fx0: number, fy0: number): void {
+    this.shake = 0;
     for (const d of this.live.slice()) {
       if (Number.isNaN(d.t0)) d.t0 = ct;
       const td = ct - d.t0;
@@ -707,6 +1194,8 @@ export class Deaths {
   }
 
   get count(): number { return this.live.length; }
+  /** The strongest screen shake asked for this frame (art px; a brute slamming down). */
+  shake = 0;
 
   private slot(): Slot {
     const free = this.slots.find((s) => !this.live.some((d) => d.slot === s));
@@ -732,11 +1221,14 @@ export class Deaths {
     let fxFn: (c: Ctx, A: Anchors) => void = () => {};
     let underFn: (c: Ctx) => void = () => {};
     let A: Anchors = anchorsAt(g0, S);
-    if (d.kind === 'shatter' || d.kind === 'arcane') {
-      const b = d.kind === 'shatter' ? shatter(d, td, fade) : arcane(d, td);
+    const AD = ARCH[d.arch];
+    const BF = AD?.bs?.[d.kind] ?? (d.kind === 'shatter' ? shatter : d.kind === 'arcane' ? arcane : null);
+    if (BF) {
+      const b = BF(d, td, fade);
       stand = b.stand; lights = b.lights; underFn = b.under; fxFn = (cc) => b.fx(cc);
+      this.shake = Math.max(this.shake, b.shake ?? 0);
     } else {
-      const O = d.kind === 'base' ? null : OVERLAY[d.kind] ?? null;
+      const O = AD?.ov?.[d.kind] ?? (d.kind === 'base' || d.kind === 'water' ? null : OVERLAY[d.kind] ?? null);
       let mo: Motion = { overkill: d.ov, ...O?.motion };
       if (O?.motionFor) mo = O.motionFor(mo);
       const m = baseDeath(g0, td, d.dir, mo, S);
@@ -751,7 +1243,7 @@ export class Deaths {
         A = anchorsAt(m.g, S); drawn = true;
       } else if (m.rot != null) {
         // the plank: the captured body tipped about its feet
-        const cx = Math.round(g0.x + d.dir[0] * 1.5), cy = Math.round(g0.y + d.dir[1] * 1.5 * FY);
+        const cx = Math.round(m.pivot ? m.pivot[0] : g0.x + d.dir[0] * 1.5), cy = Math.round(m.pivot ? m.pivot[1] : g0.y + d.dir[1] * 1.5 * FY);
         const px = capture(d, 'rigid', { ...m.g, x: cx, y: cy, z: 0, flash: 0, dead: 0 }), pv: Pt = [cx, cy], a = bodyA, rot = m.rot;
         if (a > 0.05) stand.push([m.g.y, (cc) => rigid(cc, px, pv, rot * m.side, m.g.flash, a, [0, -m.g.z])]);
         A = anchorsAt(m.g, S); drawn = true;
@@ -781,16 +1273,19 @@ export class Deaths {
         const pose: Pose = { ...m.g, alpha: bodyA, flash: flashLvl(m.g.flash) };
         stand.push([m.g.y, (cc) => {
           const a = paint(pose, cc, Math.round(pose.x), Math.round(pose.y - pose.z));
-          A = { chest: [pose.x + a.chest[0], pose.y - pose.z + a.chest[1]], head: [pose.x + a.head[0], pose.y - pose.z + a.head[1]], tip: [pose.x + a.tip[0], pose.y - pose.z + a.tip[1]], charge: [pose.x + a.charge[0], pose.y - pose.z + a.charge[1]], hands: [] };
+          A = { chest: [pose.x + a.chest[0], pose.y - pose.z + a.chest[1]], head: [pose.x + a.head[0], pose.y - pose.z + a.head[1]], tip: [pose.x + a.tip[0], pose.y - pose.z + a.tip[1]], charge: [pose.x + a.charge[0], pose.y - pose.z + a.charge[1]], hands: a.hands.map((h) => [pose.x + h[0], pose.y - pose.z + h[1]] as [number, number]) };
         }]);
       }
       // the dropped weapon pops out of the poof and lands beside it (clubStill: it is simply there when
       // the cloud clears, lying still)
       if (exit === 'poof' && mo.club !== false && ex > 0) {
         const gx = m.g.x + m.side * 6 * S, z = mo.clubStill ? 0 : hop(ex, 0, 6, 0.35), x = mo.clubStill ? gx : lerp(m.mid[0], gx, seg(ex, 0, 0.35));
-        if (!(mo.clubStill && ex < 0.25)) stand.push([m.g.y + 1, (cc) => { if (keep(x, m.g.y, fade)) weapon(cc, g0, x, m.g.y + 1 - z, m.side, mo.clubCol); }]);
+        if (mo.clubStill && ex < 0.25) { /* hidden inside the cloud */ } else if (AD?.drop) { const dr = AD.drop; stand.push([m.g.y + 1, (cc) => dr(cc, x, m.g.y + 1 - z, m.side, ex, q())]); }
+        else stand.push([m.g.y + 1, (cc) => { if (keep(x, m.g.y, fade)) weapon(cc, g0, x, m.g.y + 1 - z, m.side, mo.clubCol); }]);
       }
-      const q = (): Ctx2 => ({ d, m, td, fade, A });
+      const q = (): Ctx2 => ({ d, m, td, fade, A, O });
+      O?.stand?.(q(), (y, fn) => stand.push([y, fn]));
+      this.shake = Math.max(this.shake, O?.shake?.(q()) ?? 0);
       lights = O?.lights ? O.lights(q()) : [];
       underFn = (cc) => {
         // the body's shadow while it is there (shrinking as it is thrown up, flat once it lies)

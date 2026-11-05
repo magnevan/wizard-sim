@@ -58,6 +58,10 @@ export interface RigState {
   fallSide: number;
   /** Hit flash colour (null = white). */
   flashCol: string | null;
+  /** The weapon has left its hands (a dropped bow or shield), so it isn't drawn. */
+  bare: number;
+  /** The imp's crown flame, 1 = burning, 0 = out. */
+  crown: number;
   /** Opacity, ordered-dithered (1 = solid). */
   alpha: number;
 }
@@ -65,7 +69,7 @@ export interface RigState {
 export const newRigState = (): RigState => ({
   kind: 'goblin', pal: 0, variant: 0, seed: 0, face: 0, spd: 0, ph: 0, idle: 0, vx: 0, vy: 0, prep: 0, cast: 0, sq: 0, dead: 0,
   burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0,
-  tint: null, tintK: 0, outline: null, eyeCol: null, eyesShut: 0, fallSide: 0, flashCol: null, alpha: 1,
+  tint: null, tintK: 0, outline: null, eyeCol: null, eyesShut: 0, fallSide: 0, flashCol: null, bare: 0, crown: 1, alpha: 1,
 });
 
 /** Anchor points relative to the feet, in art px: where effects attach. */
@@ -279,6 +283,7 @@ function drawGoblin(s: RigState, archer: boolean): void {
   const hR: V3 = archer ? [4.2 - draw * 3.6, 0.6, 9.4 + bob] : reach ? [6.5 + draw * 2, 3, 6 + bob] : [1 - st * 0.5, 4.2, 5 + bob];
   const weapon = () => {
     const hp = P(...hR);
+    if (s.bare) return;
     if (archer) {
       const top = P(4.4, -0.8, 14.2 + bob), mid = P(6.0, -0.8, 9 + bob), bot = P(4.4, -0.8, 3.8 + bob), pull = P(4.4 - draw * 3.4, -0.8, 9 + bob);
       X.lines(sc, [[top[0], top[1]], [mid[0], mid[1]], [bot[0], bot[1]]], '#b8844a');
@@ -335,12 +340,16 @@ function drawGoblin(s: RigState, archer: boolean): void {
   if (s.variant === 3) {
     // the imp: two small horns and a flicker of flame on its crown (emissive: it glows)
     for (const r of [-1.6, 1.6]) { const a = P(0.4, r, 14 + bob), b = P(-0.2, r * 1.3, 16.5 + bob); X.line(sc, a[0], a[1], b[0], b[1], '#2a1410'); }
-    const cr = P(0, 0, 15.5 + bob); X.px(se, cr[0], cr[1] - 1, '#ffd860'); X.px(se, cr[0] - 1, cr[1], '#ff9a30'); X.px(se, cr[0] + 1, cr[1], '#ff5a20');
+    const cr = P(0, 0, 15.5 + bob);
+    if (s.crown > 0.66) { X.px(se, cr[0], cr[1] - 1, '#ffd860'); X.px(se, cr[0] - 1, cr[1], '#ff9a30'); X.px(se, cr[0] + 1, cr[1], '#ff5a20'); }
+    else if (s.crown > 0.25) X.px(se, cr[0], cr[1], '#ff5a20');
   }
   if (dL >= -0.3) arm(-1, hL);
   if (dR >= -0.3) { arm(1, hR); weapon(); }
   const c2 = P(1, 0, 7 + bob), h2 = P(0.6, 0, 12 + bob), bt = P(8, -0.8, 9 + bob);
   out.chest = [c2[0], c2[1]]; out.head = [h2[0], h2[1]]; out.tip = [bt[0], bt[1]];
+  // the grabber's claws (deaths: the lightning arc jumps between them)
+  if (reach) { const a = P(hL[0] + 1, hL[1], hL[2]), b = P(hR[0] + 1, hR[1], hR[2]); out.hands = [[a[0], a[1]], [b[0], b[1]]]; }
 }
 
 // ======================================================================

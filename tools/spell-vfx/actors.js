@@ -27,6 +27,11 @@
     { main: '#7aa83a', light: '#a4cc5a', dark: '#4e7228', deep: '#2e4a1c' },
     { main: '#86a034', light: '#b0c452', dark: '#566a22', deep: '#34421a' },
     { main: '#6a9e48', light: '#94c266', dark: '#466a30', deep: '#28421e' },
+    // (pass 7, from the game's rigs.ts) 3: the fire imp (red skin, hot), 4: the grabber (grey-green,
+    // long arms), 5: the shieldbearer (dark, armoured). Pick them with s.pal.
+    { main: '#c8442a', light: '#f07a3a', dark: '#7e2218', deep: '#4a1210' },
+    { main: '#6a8a6e', light: '#94b498', dark: '#425a46', deep: '#263a2a' },
+    { main: '#5a7a3a', light: '#80a058', dark: '#3a5226', deep: '#22341a' },
   ];
   const BRUTE = { main: '#8a7aa6', light: '#b2a4cc', dark: '#584a74', deep: '#342a4a', belly: '#c4b4d0' };
 
@@ -237,7 +242,7 @@
   // Goblin (and archer)
   // ======================================================================
   function drawGoblin(s, t, out, archer) {
-    const pal = GOB[s.seed % 3], T = tinter(s), { cs, sn, kx, P } = frame(s);
+    const pal = GOB[s.pal != null ? s.pal % GOB.length : s.seed % 3], T = tinter(s), { cs, sn, kx, P } = frame(s);
     const walk = Math.min(1.2, s.spd), dead = s.dead || 0;
     const bob = Math.abs(Math.sin(s.ph)) * 1.4 * walk + Math.sin(t * 3.4 + s.seed) * 0.3 * (1 - walk);
     const st = Math.sin(s.ph) * 2.6 * walk, lift = (k) => Math.max(0, Math.cos(s.ph + k)) * 1.8 * walk;
@@ -250,16 +255,32 @@
     const draw = s.draw || 0;
     // arms / weapon / bow
     const arm = (side, h) => { const sh = P(0, side * 3.1, 8.4 + bob), hp = P(...h); X.line(sc, sh[0], sh[1], hp[0], hp[1], T(pal.dark)); X.px(sc, hp[0], hp[1], T(pal.main)); return hp; };
-    const hL = archer ? [4.6, -0.8, 9 + bob] : [1 + st * 0.5, -4.2, 5 + bob];
-    const hR = archer ? [4.2 - draw * 3.6, 0.6, 9.4 + bob] : [1 - st * 0.5, 4.2, 5 + bob];
+    // (pass 7, from the game) the grabber reaches forward with both long arms; the shieldbearer
+    // holds its shield out front. s.bare (deaths): the weapon has left its hands, so it isn't drawn.
+    const reach = s.variant === 4 ? 1 : 0, guard = s.variant === 5 ? 1 : 0;
+    const hL = archer ? [4.6, -0.8, 9 + bob] : reach ? [6.5 + draw * 2, -3, 6 + bob] : guard ? [4.2, -2.2, 6 + bob] : [1 + st * 0.5, -4.2, 5 + bob];
+    const hR = archer ? [4.2 - draw * 3.6, 0.6, 9.4 + bob] : reach ? [6.5 + draw * 2, 3, 6 + bob] : [1 - st * 0.5, 4.2, 5 + bob];
     const weapon = () => {
       const hp = P(...hR);
+      if (s.bare) return;
       if (archer) {
         const top = P(4.4, -0.8, 14.2 + bob), mid = P(6.0, -0.8, 9 + bob), bot = P(4.4, -0.8, 3.8 + bob), pull = P(4.4 - draw * 3.4, -0.8, 9 + bob);
         X.lines(sc, [top, mid, bot], '#b8844a');
         X.px(sc, top[0], top[1], '#d8a868'); X.px(sc, bot[0], bot[1], '#d8a868');
         X.line(sc, top[0], top[1], pull[0], pull[1], '#d0d0dc'); X.line(sc, pull[0], pull[1], bot[0], bot[1], '#d0d0dc');
         if (draw > 0.05) { const tipA = P(8.6 - draw * 1.2, -0.8, 9 + bob); X.line(sc, pull[0], pull[1], tipA[0], tipA[1], '#e8d8b0'); X.px(sc, tipA[0], tipA[1], '#c0cbdc'); }
+        return;
+      }
+      if (s.variant === 4) { for (const h of [hL, hR]) { const p = P(...h); X.px(sc, p[0] + 1, p[1], '#e8e0c8'); X.px(sc, p[0] + 1, p[1] + 1, '#e8e0c8'); } return; }
+      if (s.variant === 3) return;   // the imp fights with its claws
+      if (s.variant === 5) {
+        // a tall wooden shield with an iron rim and boss, held out in front
+        const c0 = P(4.6, -3.6, 1.5 + bob), c1 = P(4.6, 3.6, 1.5 + bob), c2 = P(4.6, 3.6, 12 + bob), c3 = P(4.6, -3.6, 12 + bob);
+        if (P(5, 0, 6)[2] > -0.5) {
+          X.poly(sc, [c0, c1, c2, c3], T('#6a4a2c'));
+          X.lines(sc, [c0, c1, c2, c3, c0], T('#8a8e98'));
+          const m = P(4.8, 0, 6.5 + bob); X.rect(sc, m[0] - 1, m[1] - 1, 2, 2, '#c8ccd8'); X.px(sc, m[0] - 1, m[1] - 1, '#ffffff');
+        }
         return;
       }
       if (s.variant === 1) { const tp = P(hR[0] + 3.5, hR[1], hR[2] + 1.5); X.line(sc, hp[0], hp[1], tp[0], tp[1], '#c8ccd8'); X.px(sc, tp[0], tp[1], '#ffffff'); return; }
@@ -296,9 +317,19 @@
       for (const r of [-1.4, 1.4]) if (visible(sn, cs, 3, r)) { const e = P(3.1, r, 12.2 + bob), shut = dead > 0.3 || s.eyesShut; X.px(shut ? sc : se, e[0], e[1], shut ? '#1a1420' : s.eyeCol || '#ffe040'); }   // (deaths: s.eyeCol, s.eyesShut)
     }
     ear(-earBack);
+    if (s.variant === 3) {
+      // the imp: two small horns and a flicker of flame on its crown (emissive: it glows). s.crown
+      // (deaths) scales the flame: 0 = out
+      for (const r of [-1.6, 1.6]) { const a = P(0.4, r, 14 + bob), b = P(-0.2, r * 1.3, 16.5 + bob); X.line(sc, a[0], a[1], b[0], b[1], '#2a1410'); }
+      const cr = P(0, 0, 15.5 + bob), ck = s.crown == null ? 1 : s.crown;
+      if (ck > 0.66) { X.px(se, cr[0], cr[1] - 1, '#ffd860'); X.px(se, cr[0] - 1, cr[1], '#ff9a30'); X.px(se, cr[0] + 1, cr[1], '#ff5a20'); }
+      else if (ck > 0.25) X.px(se, cr[0], cr[1], '#ff5a20');
+    }
     if (dL >= -0.3) arm(-1, hL);
     if (dR >= -0.3) { arm(1, hR); weapon(); }
     out.chest = P(1, 0, 7 + bob); out.head = P(0.6, 0, 12 + bob); out.bowTip = P(8, -0.8, 9 + bob);
+    if (reach) out.claws = [P(hL[0] + 1, hL[1], hL[2]), P(hR[0] + 1, hR[1], hR[2])];
+    if (guard) out.shield = P(4.8, 0, 6.5 + bob);
   }
 
   // ======================================================================
@@ -355,7 +386,7 @@
       for (const r of [-1.3, 1.3]) if (visible(sn, cs, 5, r)) {
         const e = P(5.6, r, 21.6 + bob);
         if (dead) { X.px(sc, e[0] - 1, e[1] - 1, '#1a1420'); X.px(sc, e[0] + 1, e[1] + 1, '#1a1420'); X.px(sc, e[0] + 1, e[1] - 1, '#1a1420'); X.px(sc, e[0] - 1, e[1] + 1, '#1a1420'); X.px(sc, e[0], e[1], '#1a1420'); }
-        else { X.px(se, e[0], e[1], '#ffe8a0'); X.px(sc, e[0], e[1] - 1, '#2a1a30'); }
+        else { X.px(s.eyesShut ? sc : se, e[0], e[1], s.eyesShut ? '#1a1420' : s.eyeCol || '#ffe8a0'); X.px(sc, e[0], e[1] - 1, '#2a1a30'); }   // (deaths: s.eyeCol, s.eyesShut)
       }
       for (const r of [-1.5, 1.5]) if (visible(sn, cs, 5, r)) { const k = P(6, r, 19.2 + bob); X.px(sc, k[0], k[1], '#fffaf0'); X.px(sc, k[0], k[1] - 1, '#fffaf0'); }
     }

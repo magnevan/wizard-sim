@@ -9,12 +9,13 @@ Each item runs in its own agent and git worktree, and Claude merges into main, r
 
 | Item | Who | Status |
 |---|---|---|
-| Guards round (design doc and review page round 2) | agent (main tree, `tools/weapon-moves/` only) | running |
+| Guards round (design doc and review page round 2) | agent | done: published round 2 to the same link (`explorations/2026-11-05-guards.md`) |
 | Survive mode: arena, waves, power-ups | agent (worktree) | running |
 | Deaths for brute, archer, imp, grabber and shieldbearer: gallery round and game port | agent (worktree) | running |
 | Remote prediction: world-space aim, late remote spells shown from their first frame | agent (worktree) | running |
-| After the guards round: weapon-specific Heavies (spear dash, earth wave, fire wave, Life link), guard Retreats | next | waiting |
-| Inert audit, Life family | needs the user's call | proposal in `explorations/2026-11-05-inert-audit.md` |
+| Weapon-specific Heavies and guard Retreats in the game | next | wait for the user's round-2 ratings before building |
+| Inert audit, Life family | partly decided | sprays sized by the lending element (built); earth, cold and lightning proposed in the decisions log |
+| 4. Host tuning online without desync | Claude | done |
 | TURN relay | waits on the user | — |
 
 When Claude resumes, it reads this file, checks what has landed, merges, and updates the table.

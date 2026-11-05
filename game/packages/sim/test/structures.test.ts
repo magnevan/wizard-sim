@@ -74,6 +74,8 @@ describe('Shield', () => {
   });
 
   it('a long drawn wall has no gaps: it stops at the segments you may keep, never eating itself', () => {
+    const cap = STRUCT.wallsPerOwner;
+    STRUCT.wallsPerOwner = 12; // a 16 u drag is more than 12 segments
     const { w, d } = arena();
     d.aimAt(0, 3).queue('shield', 'earth').cast(BTN.area, 20, 20); // an arc first (5 segments)
     d.aimAt(-8, -5).queue('shield', 'earth').tick({ buttons: BTN.area }, 4);
@@ -83,6 +85,7 @@ describe('Shield', () => {
     segs.sort((a, b) => a[0] - b[0]);
     expect(segs.length).toBe(STRUCT.wallsPerOwner); // the arc made way
     for (let k = 1; k < segs.length; k++) expect(segs[k][0] - segs[k - 1][1]).toBeLessThan(0.01); // contiguous
+    STRUCT.wallsPerOwner = cap;
   });
 
   it('a rock wall stops bodies', () => {

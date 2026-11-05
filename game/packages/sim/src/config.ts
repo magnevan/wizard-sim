@@ -103,7 +103,7 @@ export const CELL = 0.5;
 /** Shield and Sigil structures. */
 export const STRUCT = {
   rockHp: 120, rockHpPerRune: 40, energyHp: 80, energyHpPerRune: 20,
-  wallsPerOwner: 12, // segments; raising more drops the oldest
+  wallsPerOwner: 30, // segments (about 36 u of drawn wall); raising more drops the oldest
   arcRadius: 2.2, arcHalf: 0.14, arcSegs: 5, ringRadius: 2.6, ringSegs: 10, drawnSeg: 1.2,
   wallThickness: 0.25,
   waveSpeed: 7, waveRange: 6, waveHalf: 1.6, waveHalfPerRune: 0.4, shove: 8,

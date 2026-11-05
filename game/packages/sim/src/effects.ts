@@ -364,13 +364,8 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
       const dealt = hit(w, i, p, hitOpts(p, src, rate * share, dx, dy, COMBAT.channelStatus * DT, true), false);
       if (t % 12 === 0) hitEvent(w, i, dealt * 12, spec.look, src);
     });
-    // The spray wets, freezes or burns the floor near its tip.
-    if (!spec.heal && t % 6 === 0) {
-      // Every half cell along the cone's far half, so whether a cell under a target catches doesn't hang on where samples fall.
-      for (let d = range * 0.45; d <= range; d += 0.5) {
-        for (const el of [EL.water, EL.cold, EL.fire]) if (spec.counts[el - 1]) touchFloor(w, cellAt(x + dx * d, y + dy * d), el);
-      }
-    }
+    // Sprays leave the floor alone (the user: walking forward into your own spray's puddle or fire
+    // was awkward). Floors come from Place patches and novas.
     return;
   }
   if (spec.shape === 'arc') {

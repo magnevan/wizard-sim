@@ -222,6 +222,8 @@ export interface Devices {
   look: Uint8Array;
   /** Tick it was made (the oldest is recalled first). */
   born: Int32Array;
+  /** Turrets: ticks left of the spray, beam or arc they're channelling (0 = none). Its far end is x2, y2. */
+  chan: Int32Array;
 }
 export const DEVICE = { none: 0, turret: 1, glyph: 2, lineglyph: 3, orbital: 4, lens: 5 } as const;
 
@@ -323,7 +325,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
     devices: {
       type: u8(MAX_DEVICES), x: f64(MAX_DEVICES), y: f64(MAX_DEVICES), x2: f64(MAX_DEVICES), y2: f64(MAX_DEVICES), owner: new Int16Array(MAX_DEVICES),
       els: u8(MAX_DEVICES * N_EL), timer: i32(MAX_DEVICES), life: i32(MAX_DEVICES), charges: u8(MAX_DEVICES), phase: f64(MAX_DEVICES),
-      heal: u8(MAX_DEVICES), look: u8(MAX_DEVICES), born: i32(MAX_DEVICES),
+      heal: u8(MAX_DEVICES), look: u8(MAX_DEVICES), born: i32(MAX_DEVICES), chan: i32(MAX_DEVICES),
     },
     events: [],
   };

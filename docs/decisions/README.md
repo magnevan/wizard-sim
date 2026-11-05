@@ -248,3 +248,15 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
 - **Coated rock acts on contact:** its non-Earth elements pulse on whoever touches it, like a curtain on whoever crosses it.
 - **The death set for the goblin is complete:** base, cold, lightning, quake, steam v2, fire v2 (no combustion flame) and frozen shatter v2 (body-shaped ice) are keeps. Water uses the base death; wet lightning is not its own death; the boulder death is for boulders, not quakes. Arcane needs a third, calmer version.
 - **Open:** inspect mode (hold Alt), Shield ring balance (one budget per cast, recommended), the game-wide "every element changes the spell" audit, and the weapon proposals (`explorations/2026-11-04-weapons-and-movesets.md`).
+
+## 2026-11-05: Play-test round 2, answers and notes 8–11
+- **The user's answers:**
+  - Inspect mode: yes, start small and grow it.
+  - Shield ring: one effect budget per cast.
+  - "Adding an element always changes the spell": a sim audit enforces it.
+  - Weapons: the high level is approved, and a full review page of weapons and move sets comes first. Block goes on Space ("you can only do these things without runes queued anyway").
+- **Turrets cast the real spell** (the user: "turrets should always cast the actual spell you embued them with, not just a projectile"). A spray or beam turret channels it for the natural channel length, following the nearest target; a lightning one keeps zapping. It used to turn channels into bolts. This reverses an earlier call of mine.
+- **Turrets fire uncharged**, like your tap cast. A rock + fire turret hit for 25 against your 14, because its shots were 60 % charged.
+- **Turrets are paced by your regen:** a shot (or a whole channel) costs half its runes, and all your turrets together spend at most 60 % of your regen of any element (`structures.turretShotCost`, `structures.turretShare`). They used to fire every second at full price, about 4.5× your regen, and emptied your pool.
+- **The rune HUD handles bigger pools:** up to 5 runes are pips, 6–10 are two rows, and more is a bar with the count.
+- Golden hash re-recorded (`36a48e1b`): turrets carry channel state (`devices.chan`).

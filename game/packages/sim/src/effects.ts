@@ -318,14 +318,18 @@ function chain(w: World, src: number, spec: SpellSpec, face: number, scale: numb
  * Double's echo of seat `follow.seat`'s: it keeps that seat's timing, draws its end to dblEnd, and
  * deals `follow.scale` of the damage.
  */
-export function channelTick(w: World, src: number, spec: SpellSpec, face: number, follow?: { seat: number; scale: number }): void {
-  const b = w.bodies, s = w.seats, x = b.x[src], y = b.y[src], p = payloadOf(spec);
+/**
+ * One tick of a channel (beam, spray, arc) from `src`, or, with `from`, from a turret's spot: the
+ * hits are still `src`'s, but the channel runs from there, keeps its own clock and its own far end.
+ */
+export function channelTick(w: World, src: number, spec: SpellSpec, face: number, follow?: { seat: number; scale: number }, from?: { x: number; y: number; t: number; end: (ex: number, ey: number) => void }): void {
+  const b = w.bodies, s = w.seats, x = from ? from.x : b.x[src], y = from ? from.y : b.y[src], p = payloadOf(spec);
   const dx = cosTurns(face), dy = sinTurns(face);
   const rate = COMBAT.channelRate * DT * (follow ? follow.scale : 1);
   const seat = follow ? follow.seat : src;
-  const t = s.chanTicks[seat];
+  const t = from ? from.t : s.chanTicks[seat];
   setHitKind(HIT_KIND.channel);
-  const setEnd = (ex: number, ey: number) => { if (follow) { s.dblEndX[seat] = ex; s.dblEndY[seat] = ey; } else { s.chanEndX[src] = ex; s.chanEndY[src] = ey; } };
+  const setEnd = (ex: number, ey: number) => { if (from) from.end(ex, ey); else if (follow) { s.dblEndX[seat] = ex; s.dblEndY[seat] = ey; } else { s.chanEndX[src] = ex; s.chanEndY[src] = ey; } };
   if (spec.shape === 'beam') {
     let reach = SHAPES.beamRange + spec.formN, target = -1;
     for (let i = 0; i < b.kind.length; i++) {

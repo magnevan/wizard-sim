@@ -13,7 +13,8 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import {
-  ARENA, CELL, GRID_W, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PHASE, QUEUE_MAX, SURF, ZONE, elementName, specOf,
+  ARENA, CELL, DEVICE, GRID_W, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PHASE, QUEUE_MAX, RHYTHM, SURF, T, ZONE,
+  compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
@@ -461,7 +462,29 @@ export class Vfx {
         X.glow(o, dt[0], dt[1], 4, EL.sigil[2], 0.6);
       }
     }
+    this.turretChannels(w, t, light);
   }
+  /** Turrets channel the spray or beam they were made with, from their orb (structures.ts). */
+  private turretChannels(w: World, t: number, light: LightFn): void {
+    const dv = w.devices, o = this.o.x;
+    for (let k = 0; k < MAX_DEVICES; k++) {
+      if (dv.type[k] !== DEVICE.turret || dv.chan[k] <= 0) continue;
+      const spec = compile(queueFromCounts(dv.els, k), 'force'), look = elName(spec.look || spec.form);
+      const tip: Pt = [gx(dv.x[k]), gy(dv.y[k]) - 16], ex = gx(dv.x2[k]), ey = gy(dv.y2[k]);
+      const t0 = t - (T(RHYTHM.naturalChannel) - dv.chan[k]) / 60, sd = k * 613 + 7;
+      if (spec.shape === 'beam') {
+        const R = spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look);
+        K.beam(o, tip, [ex, ey - LIFT], t, R, { on: easeOut(seg(t, t0, t0 + 0.12)), w: 0.7, hit: this.beamHits(w, dv.x2[k], dv.y2[k], -1), seed: sd });
+        light(ex, ey, 40, spec.heal ? '#8ef07e' : R[2], 0.45);
+      } else if (spec.shape === 'spray') {
+        const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
+        if (spec.heal && look !== 'water') K.warmCone(o, tip, [ex, ey - 6], t, t0, X.WARM, sd);
+        else K.cone(o, tip, [ex, ey - 6], t, kind, t0, { spread: 0.24, power: 0.7, seed: sd });
+        light(lerp(tip[0], ex, 0.55), lerp(tip[1], ey, 0.55), 44, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : '#2a8cff', 0.5);
+      }
+    }
+  }
+
   /** Did a beam end on a body (so it splashes), or in the air? */
   private beamHits(w: World, x: number, y: number, src: number): boolean {
     const b = w.bodies;

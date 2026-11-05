@@ -119,12 +119,43 @@ describe('Sigil', () => {
     const t = dummy(6, 0);
     d.aimAt(6, 0).queue('sigil', 'fire').cast(BTN.force, 1, 20);
     expect(devices(w, DEVICE.turret)).toBe(1);
-    const fire0 = rune(w, 'fire');
-    d.tick({}, 200);
+    w.seats.runes[elementId('fire') - 1] = 2;
+    d.tick({}, 300);
     expect(w.bodies.hp[t]).toBeLessThan(400);
-    expect(rune(w, 'fire')).toBeLessThan(fire0);
+    // It draws fire runes, but slower than you regenerate them: the pool still climbs.
+    const climbed = rune(w, 'fire') - 2;
+    expect(climbed).toBeLessThan((RUNES.regen * 300) / 60 - 0.1);
+    expect(climbed).toBeGreaterThan(0);
     d.tick({}, 600);
     expect(rune(w, 'sigil')).toBeLessThanOrEqual(RUNES.max.sigil - 1 + 1e-9);
+  });
+
+  it('a Fire turret sprays fire (the spell you made it with), not a bolt', () => {
+    const { w, d, dummy } = arena();
+    const t = dummy(5, 0);
+    d.aimAt(5, 0).queue('sigil', 'fire').cast(BTN.force, 1, 60); // it takes a moment to set up
+    const k = Array.from(w.devices.type).indexOf(DEVICE.turret);
+    expect(w.devices.chan[k]).toBeGreaterThan(0);
+    expect(Array.from(w.missiles.alive).some((a) => a)).toBe(false); // no bolt in flight
+    expect(w.devices.x2[k]).toBeGreaterThan(w.devices.x[k]); // the spray reaches toward the target
+    const hp = w.bodies.hp[t];
+    d.tick({}, 60);
+    expect(w.bodies.hp[t]).toBeLessThan(hp - 3); // a second of spray burns steadily
+    d.tick({}, 200);
+    expect(w.devices.chan[k]).toBe(0); // done after the natural channel, then it rests
+  });
+
+  it('a turret shot hits as hard as your own tap cast (it fires uncharged)', () => {
+    const hits: number[] = [];
+    for (const turret of [false, true]) {
+      const { w, d, dummy } = arena();
+      const t = dummy(6, 0);
+      if (turret) d.aimAt(6, 0).queue('sigil', 'earth', 'fire').cast(BTN.force, 1, 150);
+      else d.aimAt(6, 0).queue('earth', 'fire').cast(BTN.force, 1, 150);
+      hits.push(400 - w.bodies.hp[t]);
+    }
+    expect(hits[0]).toBeGreaterThan(0);
+    expect(Math.abs(hits[1] - hits[0])).toBeLessThan(hits[0] * 0.1); // burn ticks land a frame or two apart
   });
 
   it('a turret stalls when you run dry, and picks up as you regenerate', () => {

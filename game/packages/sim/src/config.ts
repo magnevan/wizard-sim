@@ -111,6 +111,10 @@ export const STRUCT = {
   idleDrain: 0.03, wardDrainMult: 2, absorbPerHp: 0.01, barrierAbsorb: 0.1, reserve: 0.5,
   wardHp: 60, wardHpPerRune: 20, wardResist: 0.4, mirrorShots: 3, mendPerSec: 2,
   turretInterval: 1.0, turretRange: 8, turretAhead: 2.5,
+  /** A turret shot costs this share of its payload's runes, and fires uncharged, as your tap cast does. */
+  turretShotCost: 0.5,
+  /** Your turrets together spend at most this share of your regen: shots slow down to fit (and with more turrets). */
+  turretShare: 0.6,
   glyphArm: 0.8, glyphRadius: 0.8,
   orbitRadius: 1.3, orbitSpeed: 0.5, orbitStrike: 1.6,
   lensRadius: 0.9, lensMult: 1.5,

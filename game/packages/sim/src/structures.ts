@@ -19,9 +19,9 @@
  *   Self   an aura around you (fire burns, cold chills, life regenerates, lightning hastes...).
  */
 import { compile, WALL, type SpellSpec } from './compile';
-import { BODY, RUNES, STRUCT, T } from './config';
+import { BODY, RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
-import { burstEvent, fireSpell, hit, hitOpts, nearest, payloadOf, stored } from './effects';
+import { burstEvent, channelTick, fireSpell, hit, hitOpts, nearest, payloadOf, stored } from './effects';
 import { len } from './geom';
 import { HIT_KIND, addKnock, setHitKind } from './hit';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
@@ -107,7 +107,7 @@ function spawnDevice(w: World, src: number, type: number, spec: SpellSpec, x: nu
     if (dv.type[k]) continue;
     dv.type[k] = type; dv.owner[k] = src; dv.x[k] = x; dv.y[k] = y; dv.x2[k] = x2; dv.y2[k] = y2;
     dv.els.set(restCounts(spec), k * N_EL);
-    dv.timer[k] = 0; dv.life[k] = 0; dv.charges[k] = 0; dv.phase[k] = 0;
+    dv.timer[k] = 0; dv.life[k] = 0; dv.charges[k] = 0; dv.phase[k] = 0; dv.chan[k] = 0;
     dv.heal[k] = spec.sub === EL.life ? 1 : 0;
     dv.born[k] = w.clock[0];
     dv.look[k] = spec.sub || spec.look;
@@ -119,12 +119,25 @@ function spawnDevice(w: World, src: number, type: number, spec: SpellSpec, x: nu
 /** The spell a device casts: its carried elements, as Force (turrets) or Place (glyphs). */
 const deviceSpell = (w: World, k: number, cast: 'force' | 'place'): SpellSpec => compile(queueFromCounts(w.devices.els, k), cast);
 
-/** A seat pays a device's shot from its pool: every rune of the payload, or nothing (it stalls). */
-function payShot(w: World, owner: number, els: Uint8Array, at: number): boolean {
+/** A seat pays a device's shot from its pool: `share` of every rune of the payload, or nothing (it stalls). */
+function payShot(w: World, owner: number, els: Uint8Array, at: number, share = 1): boolean {
   const s = w.seats;
-  for (let id = 1; id <= N_EL; id++) if (s.runes[owner * N_EL + id - 1] < els[at * N_EL + id - 1]) return false;
-  for (let id = 1; id <= N_EL; id++) s.runes[owner * N_EL + id - 1] -= els[at * N_EL + id - 1];
+  for (let id = 1; id <= N_EL; id++) if (s.runes[owner * N_EL + id - 1] < els[at * N_EL + id - 1] * share) return false;
+  for (let id = 1; id <= N_EL; id++) s.runes[owner * N_EL + id - 1] -= els[at * N_EL + id - 1] * share;
   return true;
+}
+
+/**
+ * Seconds between a turret's shots: slow enough that all your turrets together spend at most
+ * STRUCT.turretShare of your regen of any element, so a turret can't empty your pool.
+ */
+function turretGap(w: World, k: number): number {
+  const dv = w.devices, owner = dv.owner[k];
+  let turrets = 0;
+  for (let j = 0; j < MAX_DEVICES; j++) if (dv.type[j] === DEVICE.turret && dv.owner[j] === owner) turrets++;
+  let most = 0;
+  for (let id = 1; id <= N_EL; id++) if (id !== EL.sigil) most = Math.max(most, dv.els[k * N_EL + id - 1]);
+  return Math.max(STRUCT.turretInterval, (turrets * most * STRUCT.turretShotCost) / (RUNES.regen * STRUCT.turretShare));
 }
 
 // ---- casting -----------------------------------------------------------------------------------
@@ -424,22 +437,31 @@ export function tickStructures(w: World): void {
     if (!type) continue;
     const owner = dv.owner[k];
     if (type === DEVICE.turret) {
-      if (dv.timer[k] > 0) { dv.timer[k]--; continue; }
       const target = dv.heal[k] ? nearest(w, dv.x[k], dv.y[k], STRUCT.turretRange, [owner], b.team[owner]) : nearestFoe(w, dv.x[k], dv.y[k], STRUCT.turretRange, owner);
+      // Channelling its spell (a spray, beam or arc, as you would): it follows the nearest target
+      // for the channel's natural length, then rests as long as a shot would.
+      if (dv.chan[k] > 0) {
+        const spec = deviceSpell(w, k, 'force'), run = T(RHYTHM.naturalChannel) - dv.chan[k];
+        if (target >= 0) dv.phase[k] = atan2Of(b.x[target] - dv.x[k], b.y[target] - dv.y[k]);
+        if (spec.shape === 'arc') { if (run % T(SHAPES.arcInterval) === 0 && target >= 0) fireArc(w, owner, spec, dv.x[k], dv.y[k], target); }
+        else channelTick(w, owner, spec, dv.phase[k], undefined, { x: dv.x[k], y: dv.y[k], t: run, end: (ex, ey) => { dv.x2[k] = ex; dv.y2[k] = ey; } });
+        if (--dv.chan[k] === 0) dv.timer[k] = T(turretGap(w, k));
+        continue;
+      }
+      if (dv.timer[k] > 0) { dv.timer[k]--; continue; }
       if (target < 0) { dv.timer[k] = T(0.2); continue; }
-      if (!payShot(w, owner, dv.els, k)) { // dry: it waits for your regen
+      if (!payShot(w, owner, dv.els, k, STRUCT.turretShotCost)) { // dry: it waits for your regen
         if (tick % 30 === 0) w.events.push({ tick, kind: 'dry', who: owner, x: dv.x[k], y: dv.y[k], look: dv.look[k] });
         dv.timer[k] = T(0.25);
         continue;
       }
+      // The turret casts the spell it was made with: a channel channels (above), the rest fire once.
       const spec = deviceSpell(w, k, 'force');
-      // Channel shapes come out of a turret as bolts that carry the spell's elements.
-      const shot: SpellSpec = spec.channel || spec.charge ? { ...spec, shape: spec.shape === 'arc' ? 'arc' : 'missile', channel: false, charge: false } : spec;
       const face = atan2Of(b.x[target] - dv.x[k], b.y[target] - dv.y[k]);
-      if (shot.shape === 'arc') fireArc(w, owner, shot, dv.x[k], dv.y[k], target);
-      else fireSpell(w, owner, shot, face, b.x[target], b.y[target], 0.6, { ox: dv.x[k], oy: dv.y[k] });
+      if (spec.channel) { dv.chan[k] = T(RHYTHM.naturalChannel); dv.phase[k] = face; dv.x2[k] = dv.x[k]; dv.y2[k] = dv.y[k]; }
+      else fireSpell(w, owner, spec.charge ? { ...spec, charge: false } : spec, face, b.x[target], b.y[target], 0, { ox: dv.x[k], oy: dv.y[k] });
       w.events.push({ tick, kind: 'zap', who: owner, x: dv.x[k], y: dv.y[k] - 0.5, x2: dv.x[k], y2: dv.y[k], look: dv.look[k] });
-      dv.timer[k] = T(STRUCT.turretInterval);
+      dv.timer[k] = T(turretGap(w, k));
     } else if (type === DEVICE.glyph || type === DEVICE.lineglyph) {
       if (dv.timer[k] > 0) { dv.timer[k]--; continue; }
       const allies = dv.heal[k] === 1; // the Life glyph is for allies only; the rest wait for enemies

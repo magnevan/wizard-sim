@@ -109,17 +109,8 @@ export class Hud {
       X.icon(c, el, sx + 2, sy + 2 - pulse, ramp[drain ? 1 : 2]);
       X.text(c, rules.ELEMENTS[el].key, sx + 13, sy + 3, dryK ? '#ff6a6a' : '#6a6484');
       if (drain) { X.rect(c, sx + 13, sy + 9, 3, 1, '#ff6a6a'); X.px(c, sx + 18, sy + 9 + mod(t * 2.2, 1) * 4, ramp[2]); }
-      const v = s.runes[i * N_EL + id - 1], max = RUNES.max[el], full = Math.floor(v + 1e-6), frac = v - full;
-      for (let p = 0; p < max; p++) {
-        const px = sx + 2 + p * 4 - (max > 4 ? 1 : 0), py = sy + 11;
-        X.rect(c, px, py, 3, 6, '#0e0c16');
-        if (p < full) { X.rect(c, px, py, 3, 6, ramp[2]); X.rect(c, px, py, 1, 6, ramp[1]); X.px(c, px + 1, py, ramp[0]); }
-        else if (p === full && frac > 0.01) {
-          const fh = Math.round(frac * 6); X.rect(c, px, py + 6 - fh, 3, fh, ramp[3]);
-          if (fh > 0) X.rect(c, px, py + 6 - fh, 3, 1, Math.floor(t * 6) % 2 ? ramp[1] : ramp[2]);
-          X.rect(c, px, py - 1, 3, 1, '#2a2638');
-        } else X.rect(c, px + 1, py + 2, 1, 2, '#2a2638');
-      }
+      const v = s.runes[i * N_EL + id - 1], max = Math.round(RUNES.max[el]);
+      this.pips(c, sx, sy + 11, v, max, ramp, t);
     });
 
     // the chip above: the queue while building, the spell while casting
@@ -152,4 +143,32 @@ export class Hud {
 
   /** A rune was spent from the pool (a cast): its icon hops. */
   spent(id: number, t: number): void { this.spentAt[id] = t; }
+
+  /**
+   * One cap's runes. Up to 5: a row of pips (the regenerating one fills from the bottom). 6 to 10:
+   * two rows of shorter pips, the first five on top. More: a bar with a tick every 5 runes, and the count.
+   */
+  private pips(c: X.Ctx, sx: number, py: number, v: number, max: number, ramp: readonly string[], t: number): void {
+    const full = Math.floor(v + 1e-6), frac = v - full;
+    if (max > 10) {
+      const bw = 11, fill = Math.round((Math.min(v, max) / max) * bw);
+      X.rect(c, sx + 2, py + 1, bw, 4, '#0e0c16');
+      if (fill > 0) { X.rect(c, sx + 2, py + 1, fill, 4, ramp[2]); X.rect(c, sx + 2, py + 1, fill, 1, ramp[1]); }
+      for (let k = 5; k < max; k += 5) X.rect(c, sx + 2 + Math.round((k / max) * bw), py + 1, 1, 4, '#0e0c16');
+      X.text(c, String(full), sx + 14, py, '#cfc9e6');
+      return;
+    }
+    const rows = max > 5 ? 2 : 1, h = rows === 1 ? 6 : 2, per = rows === 1 ? max : 5;
+    for (let p = 0; p < max; p++) {
+      const col = p % per, row = Math.floor(p / per);
+      const px = sx + 2 + col * 4 - (per > 4 ? 1 : 0), y = py + row * (h + 2);
+      X.rect(c, px, y, 3, h, '#0e0c16');
+      if (p < full) { X.rect(c, px, y, 3, h, ramp[2]); X.rect(c, px, y, 1, h, ramp[1]); X.px(c, px + 1, y, ramp[0]); }
+      else if (p === full && frac > 0.01) {
+        const fh = Math.max(1, Math.round(frac * h)); X.rect(c, px, y + h - fh, 3, fh, ramp[3]);
+        X.rect(c, px, y + h - fh, 3, 1, Math.floor(t * 6) % 2 ? ramp[1] : ramp[2]);
+        if (rows === 1) X.rect(c, px, y - 1, 3, 1, '#2a2638');
+      } else if (rows === 1) X.rect(c, px + 1, y + 2, 1, 2, '#2a2638');
+    }
+  }
 }

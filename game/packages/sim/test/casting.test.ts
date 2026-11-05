@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  BTN, EL, KIND, N_EL, NO_INPUT, PHASE, RUNES, SURF, compile, createWorld, elementId, fullMask, quantize, regenRate, step,
+  BTN, EL, KIND, N_EL, NO_INPUT, PHASE, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step,
   type PlayerInput, type World,
 } from '../src';
 import { cellAt } from '../src/effects';
@@ -246,6 +246,37 @@ describe('Area and Place', () => {
     const before = w.bodies.hp[dummy];
     d.queue('lightning').place(4, 0);
     expect(w.bodies.hp[dummy]).toBeLessThan(before);
+  });
+
+  it('Water Place rains for about 5 s (+1 s a rune), soaking whoever stands under it', () => {
+    const rainOf = (w: World) => { for (let k = 0; k < w.zones.type.length; k++) if (w.zones.type[k] === ZONE.rain) return k; return -1; };
+    const one = range(8);
+    one.d.queue('water').place(4, 0, 30); // released at tick 30, then 40 ticks of play-out
+    const k = rainOf(one.w);
+    expect(k).toBeGreaterThanOrEqual(0);
+    expect(one.w.zones.life[k]).toBeGreaterThan(T(SHAPES.rainLife) - 70);
+    expect(one.w.zones.life[k]).toBeLessThanOrEqual(T(SHAPES.rainLife));
+    one.d.tick({}, T(SHAPES.rainLife));
+    expect(rainOf(one.w)).toBe(-1); // and then it stops
+    const two = range(8);
+    two.d.queue('water', 'water').place(4, 0, 30);
+    expect(two.w.zones.life[rainOf(two.w)]).toBeGreaterThan(T(SHAPES.rainLife + SHAPES.rainPerRune) - 70);
+  });
+
+  it('rain keeps dousing: a burning body walking in at 3 s is put out and soaked', () => {
+    const { w, d, dummy } = range(8);
+    const b = w.bodies;
+    d.queue('water').place(4, 0, 30); // the dummy at (8, 0) is outside the rain at (4, 0)
+    expect(b.wet[dummy]).toBe(0);
+    d.tick({}, T(3) - 70); // 3 s after the cast
+    b.burn[dummy] = T(STATUS.burn); b.x[dummy] = 4; b.y[dummy] = 0.5;
+    d.tick({}, 1);
+    expect(b.burn[dummy]).toBe(0);
+    // soaked for the full wet time (a puddle alone only keeps you wet for a second)
+    expect(b.wet[dummy]).toBeGreaterThan(T(STATUS.wet) - 5);
+    d.tick({}, T(1));
+    expect(b.wet[dummy]).toBeGreaterThan(T(STATUS.wet) - 5); // still raining on it
+    expect(w.surf.kind[cellAt(w, 4, 0)]).toBe(SURF.water);
   });
 
   it('cold on water makes walkable ice; fire on ice melts it', () => {

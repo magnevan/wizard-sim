@@ -248,7 +248,7 @@ export class Vfx {
         if (who >= MAX_SEATS) { this.add('slam', t, 1.3, { x: e.x, y: e.y, r, look, seed }); return; }
         const shape = spec()?.shape ?? 'nova';
         if (shape === 'swing' || shape === 'palm') this.add(shape, t, shape === 'palm' ? 0.9 : 0.4, { who, x: e.x, y: e.y, r, look, seed, x2: w.bodies.x[who], y2: w.bodies.y[who] });
-        else if (shape === 'patch') { if (!spec()?.scald) this.add('patch', t, look === 1 ? 1.8 : 1.0, { x: e.x, y: e.y, r, look, seed }); }
+        else if (shape === 'patch') { if (!spec()?.scald && !this.rainAt(w, e.x, e.y)) this.add('patch', t, 1.0, { x: e.x, y: e.y, r, look, seed }); } // rain draws as its zone, for its whole life
         else this.add(shape === 'quake' ? 'quake' : 'nova', t, 1.3, { who, x: e.x, y: e.y, r, look, seed });
         return;
       }
@@ -372,7 +372,14 @@ export class Vfx {
     }
   }
 
-  // ---- zones: delayed blasts, geysers, healing springs, steam -----------------------------------
+  /** Is a rain zone falling on (x, y)? (A Water Place's burst then draws nothing of its own.) */
+  private rainAt(w: World, x: number, y: number): boolean {
+    const z = w.zones;
+    for (let k = 0; k < MAX_ZONES; k++) if (z.type[k] === ZONE.rain && Math.abs(z.x[k] - x) < 0.6 && Math.abs(z.y[k] - y) < 0.6) return true;
+    return false;
+  }
+
+  // ---- zones: delayed blasts, geysers, healing springs, steam, rain -------------------------------
   private zones(w: World, simT: number, light: LightFn, t: number): void {
     const z = w.zones, g = this.g.x, o = this.o.x;
     for (let k = 0; k < MAX_ZONES; k++) {
@@ -409,6 +416,19 @@ export class Vfx {
         }
         for (const p of emit(t, 6, 1.5, (i, age) => ({ x: x + (rand(i, 21, sd) - 0.5) * r * 2, y: y - 14 - age * 16, age }))) K.puff(o, p.x, p.y, 3 + p.age * 4, EL.steam[2], (1 - p.age) * 0.7 * cl);
         light(x, y - 6, r + 20, '#d8e0f0', 0.3 * cl);
+      } else if (ty === ZONE.rain) {
+        // rain: a dark cloud over the spot, streaks and splashes, for as long as the sim says it falls
+        const t0 = this.zoneT0[k], end = simT + z.life[k] / 60;
+        const cloud = Math.min(seg(e, 0, 0.3), seg(z.life[k], 0, 24)), CY = y - 46;
+        for (const p of emit(simT, 90, 0.42, (i, age) => { const a = rand(i, 81, sd) * TAU, q = Math.sqrt(rand(i, 82, sd)) * r; return { gx2: x + Math.cos(a) * q, gy2: y + Math.sin(a) * q * FY, age, top: CY + 6 + rand(i, 83, sd) * 6 }; }, t0 + 0.1, end - 0.4)) {
+          if (p.age <= 0.8) { const q = p.age / 0.8, px2 = lerp(p.gx2 + 9, p.gx2, q), py2 = lerp(p.top, p.gy2, q * q * 0.35 + q * 0.65); X.line(o, px2 + 1, py2 - 3, px2, py2, '#5aa8e8'); X.px(o, px2, py2, '#cfefff'); }
+          else { const q = (p.age - 0.8) / 0.2; X.ring(g, p.gx2, p.gy2, 1 + q * 2.5, (1 + q * 2.5) * 0.45, '#8ad0ff', 1 - q); }
+        }
+        if (cloud > 0.05) for (let i = 0; i < 14; i++) {
+          const cx = x + 6 + (rand(i, 91, sd) - 0.5) * r * 1.8 * (0.6 + 0.4 * cloud) + Math.sin(t * 0.8 + i) * 1.5, cy = CY + (rand(i, 92, sd) - 0.5) * 10, cr = (5 + rand(i, 93, sd) * 4) * (0.5 + 0.5 * cloud);
+          K.puff(o, cx, cy + 2, cr, '#2e3246', cloud); K.puff(o, cx - 1, cy, cr * 0.85, i % 3 ? '#4a5068' : '#5c6480', cloud);
+        }
+        light(x, y, r + 16, '#2a8cff', 0.3 * cloud);
       }
     }
   }
@@ -805,18 +825,6 @@ export class Vfx {
       case 'patch': {
         if (f.look === 8) {
           if (e < 0.9) for (let i = 0; i < 48; i++) { const a = (i / 48) * TAU, rr = r * easeOut(e / 0.9) + (rand(i, Math.floor(t * 20), 62) - 0.5) * 2; X.px(o, x + Math.cos(a) * rr, y + Math.sin(a) * rr * FY - 1, i % 2 ? EL.fire[1] : EL.fire[0]); }
-        } else if (f.look === 1) {
-          // a localized downpour: a dark cloud over the spot, rain streaks, splashes
-          const cloud = Math.min(seg(e, 0, 0.3), 1 - seg(e, f.life - 0.4, f.life)), CY = y - 46;
-          for (const p of emit(t, 90, 0.42, (i, age) => { const a = rand(i, 81, sd) * TAU, q = Math.sqrt(rand(i, 82, sd)) * r; return { gx2: x + Math.cos(a) * q, gy2: y + Math.sin(a) * q * FY, age, top: CY + 6 + rand(i, 83, sd) * 6 }; }, f.t0 + 0.1, f.t0 + f.life - 0.4)) {
-            if (p.age <= 0.8) { const q = p.age / 0.8, px2 = lerp(p.gx2 + 9, p.gx2, q), py2 = lerp(p.top, p.gy2, q * q * 0.35 + q * 0.65); X.line(o, px2 + 1, py2 - 3, px2, py2, '#5aa8e8'); X.px(o, px2, py2, '#cfefff'); }
-            else { const q = (p.age - 0.8) / 0.2; X.ring(g, p.gx2, p.gy2, 1 + q * 2.5, (1 + q * 2.5) * 0.45, '#8ad0ff', 1 - q); }
-          }
-          if (cloud > 0.05) for (let i = 0; i < 14; i++) {
-            const cx = x + 6 + (rand(i, 91, sd) - 0.5) * r * 1.8 * (0.6 + 0.4 * cloud) + Math.sin(t * 0.8 + i) * 1.5, cy = CY + (rand(i, 92, sd) - 0.5) * 10, cr = (5 + rand(i, 93, sd) * 4) * (0.5 + 0.5 * cloud);
-            K.puff(o, cx, cy + 2, cr, '#2e3246', cloud); K.puff(o, cx - 1, cy, cr * 0.85, i % 3 ? '#4a5068' : '#5c6480', cloud);
-          }
-          light(x, y, r + 16, '#2a8cff', 0.3 * cloud);
         } else if (f.look === 4) {
           if (e < 0.6) { const front = x - r - 8 + (e / 0.6) * (r * 2 + 16); for (let i = 0; i < 10; i++) X.px(o, front + (rand(i, Math.floor(t * 20), sd) - 0.5) * 4, y - r * FY + i * r * FY * 0.2, i % 2 ? '#ffffff' : EL.cold[1]); }
           light(x, y, r + 20, '#9ff4ff', 0.4 * (1 - e / f.life));

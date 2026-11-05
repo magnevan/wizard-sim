@@ -269,19 +269,19 @@ const module = { exports: {} };
     water: {
       force: () => ['Water spray', 'A cone that soaks and pushes.'],
       area: () => ['Splash ring', 'A splash that pushes everything away from you.'],
-      place: () => ['Flood', 'Floods the ground at the cursor: a surface to freeze or electrify.'],
+      place: () => ['Rain', 'Rain falls at the cursor for about 5 seconds (a second longer per extra Water). It soaks and douses whoever stands under it and floods the ground: a surface to freeze or electrify.'],
       conjure: swing('water'),
     },
     fire: {
       force: () => ['Flamethrower', 'A cone of fire.'],
       area: () => ['Fire ring', 'A ring of flame bursts from you.'],
-      place: () => ['Fire patch', 'Sets the ground at the cursor burning for a while.'],
+      place: () => ['Fire patch', 'Sets the ground at the cursor burning for about 10 seconds.'],
       conjure: swing('fire'),
     },
     cold: {
       force: () => ['Frost spray', 'A cone of cold.'],
       area: () => ['Frost ring', 'A ring of cold around you.'],
-      place: () => ['Frost patch', 'Freezes the ground at the cursor. Freezes water into walkable ice.'],
+      place: () => ['Frost patch', 'Freezes the ground at the cursor for about 15 seconds. Freezes water into walkable ice.'],
       conjure: swing('cold'),
     },
   };

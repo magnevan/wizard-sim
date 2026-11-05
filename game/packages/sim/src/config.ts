@@ -91,6 +91,8 @@ export const SHAPES = {
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,
   patchRadius: 1.6, patchLife: 6,
+  /** Rain (Water Place): it keeps falling this long, plus rainPerRune per extra Water, soaking and dousing whoever is under it. */
+  rainLife: 5, rainPerRune: 1,
   delayedBlast: 0.6, // geyser rumble / arcane blast fuse
   swingRange: 1.6, swingHalfAngle: 0.15,
   /** The imbued burst (Weapon cast with elements, no Sigil or Shield): a cone in front of you, a little longer per extra rune. */

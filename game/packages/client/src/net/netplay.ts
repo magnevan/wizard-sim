@@ -47,6 +47,13 @@ const FLUSH_MS = 33;
 const PING_MS = 1000;
 /** A seat we hear nothing from for this long is dropped. */
 const SILENT_MS = 2500;
+/**
+ * A gap this long between two of our own pumps means our page stalled (a hitch, a background tab):
+ * the silence was ours. What the others sent meanwhile is still queued behind this frame, so every
+ * seat gets a fresh SILENT_MS instead of being dropped (and, as we'd then be our own coordinator,
+ * telling the healthy players they were the ones who left).
+ */
+const STALL_MS = 500;
 /** The coordinator decides a drop once every live seat has reported, or this long after the first report. */
 const DECIDE_MS = 1000;
 /** A newcomer's seat starts this many ticks after the coordinator's present, so the news reaches everyone first. */
@@ -142,6 +149,8 @@ export class NetPlay {
   private now = 0;
   /** When we last heard each seat, on that clock (unset until the first pump of a match). */
   private heard: number[] = [];
+  /** The clock of the previous pump (0 before the first). */
+  private lastPump = 0;
   /** Drops being agreed: seat -> reports by reporting seat, and when the first came in. */
   private reports = new Map<number, { first: number; by: Map<number, { have: number; tail: string }> }>();
   private lastReport = 0;
@@ -426,6 +435,8 @@ export class NetPlay {
     const s = this.session;
     if (!s) return;
     for (let p = 0; p < this.players; p++) this.heard[p] ??= now;
+    if (this.lastPump && now - this.lastPump > STALL_MS) for (let p = 0; p < this.players; p++) this.heard[p] = Math.max(this.heard[p], now);
+    this.lastPump = now;
     s.poll();
     if (now - this.lastFlush >= FLUSH_MS) { s.flush(); this.lastFlush = now; }
     // The host repeats the start for ~10 s, in case a joiner missed it (it starts a joiner still waiting, nobody else).

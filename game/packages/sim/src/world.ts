@@ -32,8 +32,12 @@ export { ARENA };
  */
 export interface Dims { readonly w: number; readonly h: number; readonly gw: number; readonly gh: number }
 const dimsOf = (w: number, h: number): Dims => ({ w, h, gw: Math.round(w / CELL), gh: Math.round(h / CELL) });
-/** Survive's arena: about three and a half times the Arena's floor, too big to fit on screen (the camera follows). */
-export const SURVIVE_ARENA = { w: 44, h: 30 } as const;
+/**
+ * Survive's arena: over four times the Arena's floor, too big to fit on screen at any scale the
+ * camera picks for a 1280 x 800 window or larger (at 2x such a window shows 40 x 31 u of play area;
+ * the camera follows).
+ */
+export const SURVIVE_ARENA = { w: 48, h: 34 } as const;
 export const ROOM_DIMS: Readonly<Record<Room, Dims>> = {
   sanctum: dimsOf(ARENA.w, ARENA.h), arena: dimsOf(ARENA.w, ARENA.h), survive: dimsOf(SURVIVE_ARENA.w, SURVIVE_ARENA.h),
 };
@@ -428,15 +432,15 @@ const mirrored = (segs: Seg[], mx: boolean, my: boolean): Seg[] => {
 };
 
 /**
- * The survive arena's static rock (44 x 30 u), as segments, in zones from the middle out:
+ * The survive arena's static rock (48 x 34 u), as segments, in zones from the middle out:
  *
  *   the keep     a walled courtyard (17 x 12 u) round the altar plaza, its corners cut, with a
  *                3.6 u door on each axis: the place to hold, and four doors to watch or wall shut.
  *                Two pillars inside screen the plaza from the west and east doors.
- *   causeways    west and east, a 4.4 u wide walled lane, 5 u long, from the gate to the keep's door:
+ *   causeways    west and east, a 4.4 u wide walled lane, 7 u long, from the gate to the keep's door:
  *                a long, narrow approach to fight down (a wave spray or a rock fills it).
  *   gates        six V-shaped funnels at the far edges (west, east, and two each north and south),
- *                each with its portal at the back: enemies leave them by a 2.8-3 u mouth, 12-14 u
+ *                each with its portal at the back: enemies leave them by a 2.8-3 u mouth, 12-15 u
  *                from the keep, so a wave arrives over several seconds.
  *   the field    the ring of open ground between the keep and the gates: screens in front of the
  *                north and south doors and an L of cover in each corner (archer cover, ricochet angles).
@@ -449,18 +453,18 @@ export const SURVIVE_ROCK: readonly Seg[] = [
   // pillars flanking the plaza
   [-5.2, -0.8, -5.2, 0.8], [5.2, -0.8, 5.2, 0.8],
   // causeways, west and east
-  ...mirrored([[-16.5, -2.2, -11.5, -2.2], [-16.5, 2.2, -11.5, 2.2]], true, false),
+  ...mirrored([[-18.5, -2.2, -11.5, -2.2], [-18.5, 2.2, -11.5, 2.2]], true, false),
   // gate funnels: west and east (the walls run a little past the edge, so nothing slips round their ends)
-  ...mirrored([[-22.4, -5.4, -18.8, -1.5], [-22.4, 5.4, -18.8, 1.5]], true, false),
+  ...mirrored([[-24.4, -5.4, -20.8, -1.5], [-24.4, 5.4, -20.8, 1.5]], true, false),
   // gate funnels: north-west, north-east, south-west, south-east
-  ...mirrored([[-14.6, -15.4, -12.4, -11.6], [-7.4, -15.4, -9.6, -11.6]], true, true),
+  ...mirrored([[-15.6, -17.4, -13.4, -13.6], [-8.4, -17.4, -10.6, -13.6]], true, true),
   // screens before the north and south doors
-  [-2.2, -9.5, 2.2, -9.5], [-2.2, 9.5, 2.2, 9.5],
+  [-2.2, -10.5, 2.2, -10.5], [-2.2, 10.5, 2.2, 10.5],
   // corner cover: an L in each quadrant, its corner pointing out
-  ...mirrored([[-17.5, -9, -15, -9], [-17.5, -9, -17.5, -7]], true, true),
+  ...mirrored([[-19, -10, -16.5, -10], [-19, -10, -19, -8]], true, true),
 ];
 /** Where survive's portals open: at the back of each gate funnel. */
-export const SURVIVE_GATES: readonly (readonly [number, number])[] = [[-21, 0], [21, 0], [-11, -13.8], [11, -13.8], [-11, 13.8], [11, 13.8]];
+export const SURVIVE_GATES: readonly (readonly [number, number])[] = [[-23, 0], [23, 0], [-12, -15.8], [12, -15.8], [-12, 15.8], [12, 15.8]];
 export const ALTAR_SPOTS: readonly (readonly [number, number])[] = [[-2.6, -0.4], [0, 2.1], [2.6, -0.4]];
 
 /** Max runes of element `id` for seat `i`: the config, plus the seat's survive power-ups. */

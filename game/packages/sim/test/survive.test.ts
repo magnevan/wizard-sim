@@ -74,7 +74,7 @@ describe('survive: the arena', () => {
 });
 
 describe('survive: the big arena', () => {
-  it('is 44 x 30 with grids to match; the other rooms keep the 24 x 16 arena', () => {
+  it('is 48 x 34 with grids to match; the other rooms keep the 24 x 16 arena', () => {
     const w = createWorld(1, 1, { room: 'survive' });
     expect(w.dims).toMatchObject({ w: SURVIVE_ARENA.w, h: SURVIVE_ARENA.h, gw: SURVIVE_ARENA.w / CELL, gh: SURVIVE_ARENA.h / CELL });
     expect(w.surf.kind.length).toBe(w.dims.gw * w.dims.gh);
@@ -104,7 +104,8 @@ describe('survive: the big arena', () => {
     // surfaces reach the far corners too
     floorDisc(w, 20, 13.5, 1, EL.water);
     expect(w.surf.kind[cellAt(w, 20, 13.5)]).toBe(SURF.water);
-    expect(cellAt(w, 23, 0)).toBe(-1);
+    expect(cellAt(w, 23, 0)).toBeGreaterThanOrEqual(0);
+    expect(cellAt(w, 25, 0)).toBe(-1);
   });
 
   it('nav reaches the whole arena: an enemy from every gate finds its way to the plaza', () => {

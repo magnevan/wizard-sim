@@ -1124,11 +1124,27 @@ export class StructureView {
       if (hpk < 0.5) X.lines(c, [[x - hw + 1, y - hh + 2], [x, y], [x - 1, y + hh - 2]], '#1a120c');
       if (braced) { K.dust(g, x, y + hh, 0.2 + (t % 0.6), i, 6, 12, '#8a7a68', 0.6); K.cracks(g, x, y + hh + 1, 7, i * 5 + 1, 1); }
     } else guardShape(c, name, x, y, 0.8 + 0.4 * raise, t, sn, hpk);
+    // On the far side of the body (facing away, or slung on the hidden hip) the guard is drawn under the
+    // wizard as it should be, and its rim shows through on top, dithered: a partner can always see
+    // that you carry a guard and which one (the rim is in its colour, the Bulwark's square).
+    const away = c === g;
+    if (away) {
+      const k = blocking ? 0.75 : 0.5, sz = 0.8 + 0.4 * raise, wx = 0.55 + 0.45 * sn;
+      if (bulwark) {
+        const hw = 2.5 + (blocking || braced ? 3 : 2) * sn, hh = blocking || braced ? 8 : 6;
+        for (let q = -hw; q <= hw; q++) for (const yy of [y - hh - 1, y + hh]) if (k > X.bay(Math.round(x + q), Math.round(yy))) X.px(o, x + q, yy, X.EARTH[0]);
+        for (let q = -hh; q <= hh; q++) for (const xx of [x - hw - 1, x + hw]) if (k > X.bay(Math.round(xx), Math.round(y + q))) X.px(o, xx, y + q, X.EARTH[0]);
+      } else X.ring(o, x, y, 4.6 * sz * wx + 0.5, 5 * sz + 0.5, R[1], k);
+    }
     if (blocking) {
-      // an energy face in front of the guard while it blocks, in the guard's colour; the Bulwark's is wide, the Mirror's narrow
-      const front = P(9, 0, 9), pulse = 0.6 + 0.3 * Math.sin(t * 12), wide = bulwark ? 1.6 : id === GUARD.mirror ? 0.9 : 1.2;
+      // an energy face in front of the guard while it blocks, in the guard's colour; the Bulwark's is wide, the Mirror's narrow.
+      // Facing away it would hide behind the body, so there it is drawn on top and wider, its two ends bright ticks
+      // either side of the wizard: the block reads from behind as a glow wrapping round you.
+      const front = P(9, 0, 9), pulse = 0.6 + 0.3 * Math.sin(t * 12), behind = front[2] < -1;
+      const wide0 = bulwark ? 1.6 : id === GUARD.mirror ? 0.9 : 1.2, wide = behind ? Math.max(2.3, wide0 * 1.6) : wide0;
       const arcPts: Pt[] = []; for (let q = -4; q <= 4; q++) { const p = P(9 - Math.abs(q) * 0.4, q * wide, 9 + (4 - Math.abs(q)) * 0.6); arcPts.push([p[0], p[1]]); }
-      for (const p of arcPts) X.px(front[2] < -1 ? g : o, p[0], p[1], pulse > 0.75 ? R[0] : R[1]);
+      for (const p of arcPts) X.px(o, p[0], p[1], pulse > 0.75 ? R[0] : R[1]);
+      if (behind) for (const p of [arcPts[0], arcPts[8]]) { X.rect(o, p[0] - 0.5, p[1] - 3, 1, 5, R[0]); X.px(o, p[0], p[1] - 4, '#ffffff'); }
       if (raise < 1) X.ring(o, x, y, 3 + raise * 8, 4 + raise * 8, R[1], 1 - raise);
       light(x, y + 8, 26, R[2], 0.4 * pulse);
     }

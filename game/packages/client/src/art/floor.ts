@@ -30,7 +30,7 @@ export const FLOOR = { OX: 0, OY: 0, W: 0, H: 0 };
 export type Ruin = (x: number, y: number) => number;
 export const surviveRuin: Ruin = (x, y) => {
   const keep = Math.max(Math.abs(x) - 8.5, (Math.abs(y) - 6) * 1.4, (Math.abs(x) + Math.abs(y) - 12.6) * 0.8);
-  const causeway = Math.max(Math.abs(y) - 2.6, 11 - Math.abs(x), Math.abs(x) - 19);
+  const causeway = Math.max(Math.abs(y) - 2.6, 11 - Math.abs(x), Math.abs(x) - 21);
   const near = Math.min(keep, causeway);
   return clamp((near - 0.6) / 7, 0, 0.5);
 };

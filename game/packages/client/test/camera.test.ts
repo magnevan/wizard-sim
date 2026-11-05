@@ -34,6 +34,18 @@ describe('camera', () => {
     expect(bottom).toBeGreaterThan(14);
   });
 
+  it('the survive arena overflows the play view both ways at the scale picked for common windows', () => {
+    for (const [sw, sh] of [[1280, 800], [1280, 720], [1366, 768], [1440, 900], [1920, 1080], [2560, 1440]]) {
+      const c = new Camera();
+      c.fit(sw, sh);
+      settle(c, [{ x: 0, y: 0 }]);
+      const r = c.playRect();
+      expect(c.following).toBe(true);
+      expect(c.w / PPU).toBeLessThan(S.w);
+      expect((r.y1 - r.y0) / c.scale / (PPU * FY)).toBeLessThan(S.h);
+    }
+  });
+
   it('steps out one integer scale when the team spreads, and back in when it gathers', () => {
     const c = new Camera();
     c.fit(1920, 1080);

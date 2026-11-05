@@ -1,6 +1,6 @@
 # Vision (draft)
 
-Working draft, distilled from the first conversation (2026-11-02). Change it on purpose, and log changes in `decisions/`.
+Distilled from the first conversation (2026-11-02) and revised since; the game built on it is public at https://magnevan.github.io/wizard-sim/. Change it on purpose, and log changes in `decisions/`. For what's built and decided right now, see `current-state.md`.
 
 ## Pillars
 
@@ -27,13 +27,15 @@ Working draft, distilled from the first conversation (2026-11-02). Change it on 
 
 ## Platform
 
-Top-down. Mouse and keyboard first; don't design out gamepad prematurely. Mouse is for moving and aiming, so spell input shouldn't depend on drawing shapes with it.
+Top-down. Mouse and keyboard first; gamepads already work for local co-op (seats 1–3), so don't design them out. Mouse is for moving and aiming, so spell input shouldn't depend on drawing shapes with it. Online co-op for two to four players runs in the browser.
 
 ## Open questions
 
-- What does the spell structure look like beyond "elements → derived shape"? Approach: list cool leaf spells, find the tree, then explore the rest of the tree.
-- What does a dedicated support player actually *press*?
+- ~~What does the spell structure look like beyond "elements → derived shape"?~~ **Answered:** proposal C, form × cast + payload; the strongest element picks the form, Shield and Sigil are elements, and with nothing queued the same gestures are weapon moves (`decisions/README.md`: "The overnight drafts, reviewed", "Grammar v2 in the game").
+- What does a dedicated support player actually *press*? **Partly answered:** wards and auras cast on the ally under the cursor, Life spells that only heal and lend resistance, the Healing link and Mend (Healing hands), the Leaf aegis, the Lens, and Rally in Survive. Still open: what makes support *skillful* rather than a heal-bot.
 - What do playstyle-leaning progression and warm-up progression look like concretely?
-- Is there a casting resource, and what is it?
+- ~~Is there a casting resource, and what is it?~~ **Answered:** element runes: a small pool per element (about 4), slow regen, reserved when queued and spent on cast; stuff costs once, energy costs upkeep; Sigil devices bind a rune (`decisions/README.md`: "Resources and battlefield", "Calls Claude made while building milestone 1").
 - Where in the campaign does practice happen, and how does it avoid feeling like homework?
-- How slow is "slower"? Is it about enemy design, casting time, or both?
+- How slow is "slower"? Is it about enemy design, casting time, or both? *So far:* both. Wind-up grows with a spell's size, recovery is fixed, and rune regen sets the pace; enemies were made tougher and slower-hitting after the Magicka baseline. Whether it feels right is a play-test question for the balance pass.
+- Is Air a tenth element (`ideas/air-element.md`)?
+- Does a run mode (Survive) get to bend pillar 1 with flat-number power-ups, or is it held to the campaign's rule? (Built on the recommendation that run modes may; `explorations/2026-11-05-survive-mode.md` question 3.)

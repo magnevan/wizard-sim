@@ -484,3 +484,13 @@ Recorded after the fact during a docs cleanup: the switch happened while buildin
 - **Why (from that commit and the engine research):** rollback removes the input delay that lockstep needs, and the sim was already snapshot-able, as "Engine stack" required so that rollback stayed possible. Tests at the time: 2 peers at 100 ms and 4 peers at 200 ms with 15 % loss stay identical and never wait.
 - **Later on top of it:** world-space aim prediction and late remote spells caught up ("Smoother remote players online"); drop-out and rejoin ("Network test, drop-out and rejoin").
 - This supersedes "lockstep first, with rollback kept possible" ("Engine stack") and the lockstep delay in "Online co-op, first route". `LockstepSession` stays in `@wizard-sim/net` as the base class.
+
+## 2026-11-05: Vision open questions updated; the other enemies' deaths are keeps
+
+- **vision.md** (the user approved the cleanup proposal: "Sounds good"):
+  - The opening line points to the live game and to `current-state.md`.
+  - Platform notes that gamepads and online co-op work.
+  - The spell-structure and casting-resource questions are answered. Support is partly answered. Pacing has a "so far" note.
+  - Two questions are new: Air as a tenth element, and whether run modes may bend pillar 1.
+  - The pillars are unchanged.
+- **Deaths for the other enemies (Spell VFX gallery, group `deaths2`):** the user rated all 18 bespoke deaths keep: brute, archer, imp, grabber and shieldbearer. *(Read back late: the ratings were left on 2026-11-05 at 15:54–15:57.)* The goblin's calmer Arcane death (v3) is in the game but was never shown in the gallery, so it gets a gallery card to rate.

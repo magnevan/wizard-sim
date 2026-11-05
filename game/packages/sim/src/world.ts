@@ -341,7 +341,7 @@ export interface Run {
   /** Slipstream: ticks left of the free-spell window after a hop. Charm: ticks until the mirror regrows. */
   dodge: Int32Array; charm: Int32Array;
   /** Rally, per downed seat: ticks of revive so far, and the seat reviving them (-1: nobody). */
-  rally: Int32Array; rallyBy: Int8Array;
+  rally: Int32Array; rallyBy: Int8Array; rallyCd: Int32Array;
   /** Echo: the body of the seat's free Double (-1: none). See freeDouble. */
   echo: Int16Array;
 }
@@ -414,7 +414,7 @@ function run(): Run {
     picked: new Int8Array(n).fill(-1), stand: i32(n), standOn: new Int8Array(n).fill(-1),
     log: u8(n * PICK_LOG), logEl: u8(n * PICK_LOG), logN: u8(n),
     dodge: i32(n), charm: i32(n),
-    rally: i32(n), rallyBy: new Int8Array(n).fill(-1), echo: new Int16Array(n).fill(-1),
+    rally: i32(n), rallyBy: new Int8Array(n).fill(-1), rallyCd: i32(n), echo: new Int16Array(n).fill(-1),
   };
 }
 

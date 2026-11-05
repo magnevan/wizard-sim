@@ -126,7 +126,7 @@
     {
       slug: 'pu-rally', name: 'Rally', ramp: 'life', glyph: G.RALLY, status: 'built', cap: 1, scene: 'rally',
       rule: 'Stand by a downed ally 3s to revive them',
-      does: 'Stand within 1.6 u of a downed ally for 3 s with your hands free, and they get up mid-wave with 40% health (the breather gives 50%). Queueing runes doesn’t break it. Casting, a weapon move, blocking, the healing link, a hit, a grab, a stun or stepping away empties the ring. Two rescuers don’t fill it faster.',
+      does: 'Stand within 1.6 u of a downed ally for 3 s with your hands free, and they get up mid-wave with 40% health (the breather gives 50%). Queueing runes doesn’t break it. Casting, a weapon move, blocking, the healing link, a grab, a stun or stepping away empties the ring; a hit drains 1 s of it (at most every 0.5 s) and the ring doesn’t fill while you’re being hit. Two rescuers don’t fill it faster.',
       sees: 'A dashed green ring round the fallen ally shows where to stand. While a rally runs, a ring fills in the rescuer’s colour, Life motes flow, RALLY floats overhead and the strip reads “P1 RALLYING P2 66%”. The revive is a column of Life light; a broken ring snaps.',
       cost: 'You stop casting to do it, and a grabber or brute punishes the rescuer.',
       pillar: 'Pillar 3’s dance, and it answers the death-and-revival idea.',
@@ -258,10 +258,10 @@
     },
     {
       id: 'q-10-rally', n: 'Q10', title: 'Rally: should a break empty the ring, or drain part of it?',
-      text: 'Built: 3 s, 1.6 u, back with 40% health, and any break empties the ring. A single archer bolt resets a rescue at 90%. Claude’s pick splits the two kinds of break: your own choices (cast, swing, block, walk away) still empty it, because rallying is a commitment, but a hit only takes a second off, so chip damage doesn’t make rescue hopeless.',
+      text: 'Built (since this page went up): 3 s, 1.6 u, back with 40% health; your own breaks empty the ring and a hit drains 1 s. Before, any break emptied it, so a single archer bolt reset a rescue at 90%. Claude’s pick splits the two kinds of break: your own choices (cast, swing, block, walk away) still empty it, because rallying is a commitment, but a hit only takes a second off, so chip damage doesn’t make rescue hopeless.',
       choices: [
-        ['hit-drains', 'Hits drain 1 s; your own actions empty it', 'Commitment stays; chip damage doesn’t reset it.', 'rec'],
-        ['empty', 'Any break empties the ring', 'What’s built now. Harsh against archers.', 'built'],
+        ['hit-drains', 'Hits drain 1 s; your own actions empty it', 'Commitment stays; chip damage doesn’t reset it.', 'rec built'],
+        ['empty', 'Any break empties the ring', 'What was built first. Harsh against archers.', ''],
         ['drain-all', 'Every break drains 1 s', 'Most forgiving; rescue while casting in bursts.', ''],
       ],
     },

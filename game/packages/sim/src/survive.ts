@@ -174,19 +174,21 @@ function endEchoes(w: World): void {
   }
 }
 
-/** Seat `s` can rally right now: up, holding Rally, and with hands and mind free (not casting, swinging, blocking, hit or held). */
+/** Seat `s` can rally right now: up, holding Rally, and with hands and mind free (not casting, swinging, blocking or held). */
 function canRally(w: World, s: number): boolean {
-  const b = w.bodies, se = w.seats, tick = w.clock[0];
+  const b = w.bodies, se = w.seats;
   if (!se.active[s] || b.kind[s] !== KIND.wizard || b.downed[s] || !stackOf(w, s, PU.rally)) return false;
   if (!canAct(w, s) || b.heldBy[s] >= 0) return false;
-  if (se.phase[s] !== PHASE.idle || se.handT[s] || se.specT[s] || se.guardT[s] || se.linkTo[s] >= 0) return false;
-  return !(b.lastHit[s] > 0 && b.lastHit[s] >= tick - 1); // a hit since the last tick
+  return !(se.phase[s] !== PHASE.idle || se.handT[s] || se.specT[s] || se.guardT[s] || se.linkTo[s] >= 0);
 }
+/** Seat `s` took a hit since the last tick. */
+const justHit = (w: World, s: number): boolean => w.bodies.lastHit[s] > 0 && w.bodies.lastHit[s] >= w.clock[0] - 1;
 
 /**
  * Rally: a wizard holding it who stands within PERKS.rallyRange of a downed ally, hands free, fills
- * that ally's ring; after PERKS.rallyTime the ally gets up with PERKS.rallyHp of their health. Any
- * break (a cast, a weapon move, a block, a hit, a grab, a stun, stepping away) empties the ring.
+ * that ally's ring; after PERKS.rallyTime the ally gets up with PERKS.rallyHp of their health. Your
+ * own break (a cast, a weapon move, a block, a grab, a stun, stepping away) empties the ring; a hit
+ * only drains PERKS.rallyDrain of it, so one arrow doesn't undo a nearly finished rally.
  * Two rescuers don't fill it faster: one is enough, and the other can cover them.
  */
 function tickRally(w: World): void {
@@ -204,6 +206,11 @@ function tickRally(w: World): void {
       r.rally[d] = 0;
     }
     r.rallyBy[d] = by;
+    if (r.rallyCd[d] > 0) r.rallyCd[d]--;
+    if (by >= 0 && justHit(w, by)) { // the ring doesn't fill while you're hit, and each hit drains some
+      if (!r.rallyCd[d]) { r.rally[d] = Math.max(0, r.rally[d] - T(PERKS.rallyDrain)); r.rallyCd[d] = T(PERKS.rallyDrainGap); }
+      continue;
+    }
     if (by < 0 || ++r.rally[d] < T(PERKS.rallyTime)) continue;
     b.downed[d] = 0; b.hp[d] = b.maxHp[d] * PERKS.rallyHp;
     b.burn[d] = b.frozen[d] = b.stun[d] = b.down[d] = 0; b.chill[d] = 0;

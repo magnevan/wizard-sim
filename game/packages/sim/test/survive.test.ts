@@ -398,7 +398,7 @@ describe('survive: power-ups', () => {
     expect(r.rally[1]).toBe(0);
   });
 
-  it('Rally: casting or taking a hit starts it over, but queueing runes does not', () => {
+  it('Rally: casting starts it over, a hit only drains some, queueing runes does nothing', () => {
     const { w, d } = fallen(), r = w.run!;
     grant(w, 0, PU.rally);
     d.tick({}, 60);
@@ -406,22 +406,23 @@ describe('survive: power-ups', () => {
     expect(r.rally[1]).toBe(62);
     d.aimAt(5, 0).tick({ buttons: BTN.force });
     expect(r.rally[1]).toBe(0); // the cast broke it
-    d.tick({}, 60); // wind-up and recovery, then it fills again
-    expect(r.rally[1]).toBeGreaterThan(10);
+    d.tick({}, 150); // wind-up and recovery, then it fills again
+    const before = r.rally[1];
+    expect(before).toBeGreaterThan(T(PERKS.rallyDrain) + 10);
     w.bodies.lastHit[0] = w.clock[0]; // a goblin's blow lands
-    d.tick({}, 2);
-    expect(r.rally[1]).toBeLessThanOrEqual(1);
+    d.tick({}, 1);
+    expect(r.rally[1]).toBe(before - T(PERKS.rallyDrain)); // drained, not emptied
     expect(w.bodies.downed[1]).toBe(1);
   });
 
-  it('Rally: a goblin hitting the rescuer keeps the ally down', () => {
+  it('Rally: a goblin hitting the rescuer slows the rally well past rallyTime', () => {
     const { w, d } = fallen();
     grant(w, 0, PU.rally);
     w.bodies.hp[0] = w.bodies.maxHp[0] = 1e6; // the rescuer outlasts it
     foe(w, ARCH.swarmer, -1, 0);
-    d.tick({}, T(PERKS.rallyTime) * 3);
+    d.tick({}, Math.round(T(PERKS.rallyTime) * 1.5));
     expect(w.bodies.hp[0]).toBeLessThan(1e6); // it was hit
-    expect(w.bodies.downed[1]).toBe(1);
+    expect(w.bodies.downed[1]).toBe(1); // still down: each blow drained the ring
   });
 
   it('Echo: a free Double stands with you, binds no Sigil rune, draws enemies, and fades when the wave is cleared', () => {

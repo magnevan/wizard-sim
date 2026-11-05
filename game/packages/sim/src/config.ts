@@ -99,6 +99,8 @@ export const BODY = {
 export const PERKS = {
   /** Rally: seconds standing by a downed ally to bring them back. Casting, a weapon move, blocking, a hit or being held starts it over. */
   rallyTime: 3,
+  /** A hit on the rescuer drains this many seconds of the ring (at most once every rallyDrainGap s; burning counts), instead of emptying it. */
+  rallyDrain: 1, rallyDrainGap: 0.5,
   /** Rally: how close you must stand, centre to centre (two wizards touching are 0.9 apart). */
   rallyRange: 1.6,
   /** Rally: the share of max health the ally comes back with (the breather gives half). */

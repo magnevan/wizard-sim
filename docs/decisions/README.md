@@ -494,3 +494,11 @@ Recorded after the fact during a docs cleanup: the switch happened while buildin
   - Two questions are new: Air as a tenth element, and whether run modes may bend pillar 1.
   - The pillars are unchanged.
 - **Deaths for the other enemies (Spell VFX gallery, group `deaths2`):** the user rated all 18 bespoke deaths keep: brute, archer, imp, grabber and shieldbearer. *(Read back late: the ratings were left on 2026-11-05 at 15:54–15:57.)* The goblin's calmer Arcane death (v3) is in the game but was never shown in the gallery, so it gets a gallery card to rate.
+
+## 2026-11-05: Rally: a hit drains the ring instead of emptying it
+
+This is built on the recommendation for Survive q10 (`tools/survive-review`, `q-10-rally`), pending the user's answer:
+- Your own breaks still empty the ring: casting, a weapon move, blocking, the link, a grab, a stun, or stepping away.
+- A hit drains 1 s (`PERKS.rallyDrain`), at most every 0.5 s (`rallyDrainGap`), and the ring doesn't fill while you're being hit.
+- So one archer bolt no longer resets a 90 % rescue, while a goblin chewing on the rescuer still keeps the ally down for a long time.
+- Golden hash unchanged: the state lives in `world.run`.

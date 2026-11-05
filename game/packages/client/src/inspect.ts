@@ -5,11 +5,32 @@
  * card is plain DOM text beside the cursor. A start, to grow as the game does.
  */
 import { rules, type Element } from '@wizard-sim/rules';
-import { ARCHETYPES, ARENA, CELL, DEVICE, GRID_H, GRID_W, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, N_EL, SURF, WALL, WARD, elementName, type World } from '@wizard-sim/sim';
+import { ARCHETYPES, ARENA, CELL, DEVICE, GRID_H, GRID_W, GUARD_NAME, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, N_EL, SURF, WALL, WARD, elementName, type World } from '@wizard-sim/sim';
 import type { Camera } from './camera';
 
 const HOVER = 0.9;
 const elName = (id: number) => rules.ELEMENTS[elementName(id) as Element].name;
+/** Each guard: its name, Defend (block / parry), Retreat, and passive (docs/explorations/2026-11-05-guards.md). */
+const GUARD_TEXT: Record<string, [string, string, string, string]> = {
+  mirror: ['Mirror buckler', 'narrow block, parry reflects a shot', 'Backstep', 'Light: full speed blocking, widest parry'],
+  bulwark: ['Bulwark', 'wide block that stops melee, parry bashes down', 'Brace (no move, 1 s)', 'Anchored: no knockback; 15 % slower'],
+  ember: ['Ember targe', 'thorns burn biters, parry blows flame', 'Flame step (leaves fire)', 'Warm: no chill or freeze; fire immune'],
+  rime: ['Rime kite', 'frosts the floor ahead, parry freezes a biter', 'Ice slide (leaves ice)', 'Sure-footed: never slips; cold immune'],
+  spark: ['Spark ring', 'weakest block, parry discharges', 'Blink 3 u (leaves a spark)', 'Grounded: chain lightning skips you'],
+  tide: ['Tide shield', 'shoves and soaks biters, parry throws a wave', 'Surge (shoves what is in front)', 'Doused: always wet, cannot burn'],
+  prism: ['Prism pane', 'stops beams, parry returns them', 'Phase (through bodies)', 'Hovering ward: halves frontal beams'],
+  leaf: ['Leaf aegis', 'heals allies behind you, parry burst-heals', 'Regroup (toward an ally, heals both)', 'Regrowth: slow healing'],
+};
+/** Each weapon: its name, Heavy and Special. */
+const WEAPON_TEXT: Record<string, [string, string, string]> = {
+  water: ['Tide trident', 'wave slash (shoves, soaks)', 'Sweep'],
+  life: ['Healing hands', 'Healing link on the ally under the cursor (1 use a second)', 'Sweep'],
+  cold: ['Frost spear', 'impaling dash (frozen targets shatter)', 'javelin: pins and frosts (3 uses)'],
+  lightning: ['Lightning whip', 'chain lash (up to 3 more)', 'Sweep'],
+  arcane: ['Echo focus', 'Echo: your remembered spell at half power (5 uses)', 'Copy an ally’s last spell'],
+  fire: ['Flame sword', 'fire wave (ignites, no lingering fire)', 'Sweep'],
+  earth: ['Stone maul', 'fissure down one lane (knocks down)', 'Sweep'],
+};
 
 /** The elements in a 9-per-slot counts array, as "Fire ×2, Life". */
 function elements(els: Uint8Array, at: number, skip: number[] = []): string {
@@ -104,8 +125,16 @@ export class Inspect {
       const ward = s.ward[i];
       if (ward) out.push(`· ${ward === WARD.mirror ? 'mirror ward (sends shots back)' : ward === WARD.stone ? 'stone ward' : 'ward'}${elements(s.wardEls, i, [ID('shield')]) ? `: resists ${elements(s.wardEls, i, [ID('shield'), ID('earth')])}` : ''}`);
       if (s.aura[i] > 0) out.push(`· aura: ${elements(s.auraEls, i, [ID('sigil')])}`);
-      if (s.guard[i]) out.push('· holding a conjured guard');
-      if (s.weapon[i]) out.push(`· holding a conjured ${elName(s.weapon[i])} weapon (${s.weaponUses[i]} uses)`);
+      if (s.guard[i]) {
+        const gd = GUARD_TEXT[GUARD_NAME[s.guard[i]]];
+        if (gd) out.push(`· ${gd[0]} (guard ${Math.ceil(s.guardHp[i])}): Space ${gd[1]} · Shift+LMB ${gd[2]} · ${gd[3]}${s.guardT[i] > 0 ? ' · blocking' : ''}`);
+      }
+      if (s.weapon[i]) {
+        const wd = WEAPON_TEXT[elementName(s.weapon[i])];
+        out.push(`· ${wd ? wd[0] : `a conjured ${elName(s.weapon[i])} weapon`} (${s.weaponUses[i]} uses)${wd ? `: RMB hold ${wd[1]} · Shift+RMB ${wd[2]}` : ''}`);
+        if (s.weapon[i] === ID('arcane')) out.push(`· the orb remembers ${s.echoCast[i] ? elements(s.echoEls, i) || 'nothing' : 'nothing yet'}`);
+      }
+      if (s.linkTo[i] >= 0) out.push(`· Healing link on Player ${s.linkTo[i] + 1}`);
     }
     return out;
   }

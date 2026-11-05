@@ -26,7 +26,8 @@ import { len } from './geom';
 import { HIT_KIND, addKnock, setHitKind } from './hit';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { boundSigil, drainShield, energyLoad, segDist } from './walls';
-import { DEVICE, GUARD, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
+import { conjureGuard } from './guards';
+import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
 
 const alive = (w: World, i: number) => w.bodies.kind[i] !== KIND.none;
 
@@ -78,13 +79,18 @@ function drawnWall(w: World, src: number, spec: SpellSpec, x1: number, y1: numbe
 }
 
 function spawnWave(w: World, src: number, spec: SpellSpec, face: number): void {
+  spawnFront(w, src, spec.counts, face, STRUCT.waveHalf + STRUCT.waveHalfPerRune * (spec.formN - 1), 1, STRUCT.waveRange);
+}
+
+/** A front sweeping forward from `src` (a Shield wave, or a weapon's wave: the trident slash, the fire wave, the fissure). */
+export function spawnFront(w: World, src: number, els: Uint8Array, face: number, half: number, scale: number, range: number): void {
   const v = w.waves, b = w.bodies;
   for (let k = 0; k < MAX_WAVES; k++) {
     if (v.alive[k]) continue;
     v.alive[k] = 1; v.owner[k] = src; v.dx[k] = cosTurns(face); v.dy[k] = sinTurns(face);
     v.x[k] = b.x[src] + v.dx[k] * 0.8; v.y[k] = b.y[src] + v.dy[k] * 0.8;
-    v.half[k] = STRUCT.waveHalf + STRUCT.waveHalfPerRune * (spec.formN - 1); v.travelled[k] = 0;
-    v.els.set(spec.counts, k * N_EL);
+    v.half[k] = half; v.travelled[k] = 0; v.scale[k] = scale; v.range[k] = range;
+    v.els.set(els.subarray(0, N_EL), k * N_EL);
     v.hit.fill(0, k * MAX_BODIES, (k + 1) * MAX_BODIES);
     v.hit[k * MAX_BODIES + src] = 1;
     return;
@@ -162,13 +168,7 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
     case 'arcwall': arcWall(w, src, spec, x, y, STRUCT.arcRadius, face, STRUCT.arcHalf, STRUCT.arcSegs); break;
     case 'drawnwall': drawnWall(w, src, spec, hx, hy, tx, ty); break;
     case 'ward': putWard(w, on, spec, src); break;
-    case 'guard': {
-      const bulwark = spec.counts[EL.earth - 1] > 0;
-      s.guard[src] = bulwark ? GUARD.bulwark : GUARD.buckler;
-      s.guardHp[src] = bulwark ? STRUCT.bulwarkHp : STRUCT.bucklerHp;
-      // held alongside your weapon: the weapon hand and the guard hand (no two-handed weapons)
-      break;
-    }
+    case 'guard': conjureGuard(w, src, spec.counts); break; // held alongside your weapon (no two-handed weapons)
     case 'turret': {
       const k = spawnDevice(w, src, DEVICE.turret, spec, x + cosTurns(face) * STRUCT.turretAhead, y + sinTurns(face) * STRUCT.turretAhead);
       if (k >= 0) w.devices.timer[k] = T(0.4);
@@ -192,6 +192,8 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
     case 'weapon': {
       s.wand[src] = 0; s.weapon[src] = spec.sub; s.wandBorn[src] = w.clock[0];
       s.weaponEls.set(restCounts(spec), src * N_EL); s.weaponUses[src] = STRUCT.weaponUses;
+      // The Echo focus starts out remembering the last spell you cast.
+      if (spec.sub === EL.arcane) { s.echoEls.set(s.lastEls.subarray(src * N_EL, src * N_EL + N_EL), src * N_EL); s.echoCast[src] = s.lastCast[src]; }
       break;
     }
     case 'aura': s.auraEls.set(restCounts(spec), on * N_EL); s.aura[on] = T(STRUCT.auraTime); break;
@@ -441,7 +443,7 @@ export function tickStructures(w: World): void {
       v.hit[k * MAX_BODIES + i] = 1;
       const p = stored(v.els, k, life ? PF.heal : 0, water ? 1 : 0, earth ? EL.earth : water ? EL.water : EL.shield);
       setHitKind(HIT_KIND.wave);
-      hit(w, i, p, hitOpts(p, v.owner[k], 1, v.dx[k], v.dy[k]));
+      hit(w, i, p, hitOpts(p, v.owner[k], v.scale[k], v.dx[k], v.dy[k]));
       if (onlyShield || water) addKnock(w, i, v.dx[k], v.dy[k], onlyShield ? STRUCT.shove : 4);
     }
     // The Shove wave sweeps shots away.
@@ -453,7 +455,7 @@ export function tickStructures(w: World): void {
         if (Math.abs(rx * v.dx[k] + ry * v.dy[k]) < 0.6 && Math.abs(-rx * v.dy[k] + ry * v.dx[k]) < v.half[k]) m.alive[j] = 0;
       }
     }
-    if (v.travelled[k] >= STRUCT.waveRange) v.alive[k] = 0;
+    if (v.travelled[k] >= v.range[k]) v.alive[k] = 0;
   }
 
   // Devices.

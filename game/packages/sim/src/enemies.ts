@@ -17,6 +17,7 @@ import { burstEvent, disc, spawnMissile, stored, type Payload } from './effects'
 import { angleDiff, len } from './geom';
 import { HIT_KIND, addKnock, applyHit, setHitKind } from './hit';
 import { cutOff, steer } from './nav';
+import { guardMelee, unburnable } from './guards';
 import { WALL } from './compile';
 import { damageWall, segDist } from './walls';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
@@ -53,6 +54,12 @@ function setAi(w: World, i: number, state: number): void { w.bodies.ai[i] = stat
 function strike(w: World, src: number, t: number, dmg: number, knock: number, dx: number, dy: number, burn: boolean): void {
   const b = w.bodies, s = w.seats;
   let d = dmg;
+  // A conjured guard (guards.ts): a parry or a Bulwark block stops the blow; resistance cuts it.
+  if (t < MAX_SEATS && s.guard[t]) {
+    const land = guardMelee(w, t, src, dmg, dx, dy);
+    if (land <= 0) { w.events.push({ tick: w.clock[0], kind: 'fizzle', who: t, x: b.x[t], y: b.y[t], text: 'Blocked' }); return; }
+    d *= land;
+  }
   if (t < MAX_SEATS && s.ward[t] === WARD.stone) {
     d *= 0.6;
     // Melee attackers get the armour's coat (Shield + Earth + Fire burns them, and so on).
@@ -65,7 +72,7 @@ function strike(w: World, src: number, t: number, dmg: number, knock: number, dx
   b.hp[t] -= d;
   b.lastHit[t] = w.clock[0];
   addKnock(w, t, dx, dy, knock);
-  if (burn) b.burn[t] = Math.max(b.burn[t], T(3));
+  if (burn && !(t < MAX_SEATS && unburnable(w, t))) b.burn[t] = Math.max(b.burn[t], T(3));
   w.events.push({ tick: w.clock[0], kind: 'hit', who: t, x: b.x[t], y: b.y[t], amount: d, look: 0 });
 }
 

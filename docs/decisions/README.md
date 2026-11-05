@@ -325,3 +325,28 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
 
 ## 2026-11-05: Deaths for every enemy
 - **Bespoke deaths for the other five enemies**, in the game and in the gallery (group `deaths2`, waiting for ratings). They cover the brute's felled-tree fall, the archer's bow and arrows, the imp guttering out or cooling to stone under cold or water, the grabber's claws, and the shieldbearer's dropped or splintered shield. Anything not bespoke plays the goblin death, scaled.
+
+## 2026-11-05: Round-2 weapons and guards built into the game (on the recommendations, pending the user's round-2 ratings)
+The user said "build optimistically", so the game now has what `explorations/2026-11-05-guards.md` proposes, with Claude's recommended answer to each of its four open questions. All of it is open to change once the round-2 ratings come in.
+- **Weapon Heavies** (`packages/sim/src/hands.ts`):
+  - Tide trident: a wave slash that shoves and soaks.
+  - Flame sword: a rolling fire wave that ignites what it passes and leaves no lingering fire.
+  - Stone maul: a narrow fissure that knocks down everything in its lane.
+  - Frost spear: an impaling dash at 2.5x its reach. Frozen bodies on the way shatter, and the dash ends on the first body that isn't frozen.
+  - Lightning whip: a chain lash to up to 3 more targets.
+  - Healing hands: the Healing link. Hold RMB on an ally. It holds up to 8 u or until a wall comes between you, heals 12 hp/s, costs 1 use a second, and does nothing on release.
+  - Staff: the big shove.
+  - The three waves reuse the Shield wave pool, which now stores its own power and range.
+- **Specials:** Sweep for most weapons. The spear's **javelin** (3 uses) pins its target (a new body state, `root`: it can't walk but can act), frosts the ground, and the spear stays in your hand.
+- **The arcane weapon is now the Echo focus.** It remembers your last spell (seat state: counts and cast; structures, Blink and Self casts aren't remembered). Its Heavy re-casts that spell from you at half power for 5 uses and no runes. An echoed channel runs on its own for 1 s. Its Strike is a weak bolt. Its Special, **Copy**, takes the last spell an ally cast within 6 u in the last 2 s. The hook and its yank are gone.
+- **Eight guards** (`packages/sim/src/guards.ts`): one per lead element, and Shield alone is the Mirror buckler. Each has its own Defend, Retreat, passive and resistances, as in the doc's tables. Every guard blocks shots. Only the Bulwark's block stops melee. The other guards' block effects still answer a melee hit (Ember thorns, the Tide shove). Only the Prism stops beams (sprays count as beams here). A timed parry stops any frontal hit and fires the guard's parry effect.
+- **Open questions, as recommended:** (1) resistances apply while the guard is carried; (2) Retreat is free, with a fixed 0.5 s recovery in which you can't Retreat or Defend; (3) a second element adds only its own resistance at half strength; (4) the Bulwark keeps Brace, which doesn't move you. Without a guard, Shift+LMB is still the generic hop.
+- **Claude's calls:**
+  - Enemy blows and arrows count as physical damage.
+  - Ember and Rime immunity also stops the matching status (no burn; no chill or freeze).
+  - Any weapon move or spell drops the block.
+  - The Mirror's parry window is 0.2 s, and the other guards' is 0.12 s.
+  - Blocking slows you to 0.7 (the Bulwark to 0.4 on top of its always-on 0.85; the Mirror isn't slowed).
+  - Every new number is a tunable (the F1 group "Weapons & guards", `ARMS` in `config.ts`).
+- **Client:** each guard has its own look, ported from the review page's drawings. The trident replaces the glaive. The Echo orb shows the remembered runes circling it. Also new: the healing-link beam, the Blink spark, a short effect for each Heavy and Retreat, parry and block flashes, the guard's HP bar in its colour on the HUD, the inspect card text and the controls hint.
+- **Golden hash re-recorded** (`485c0373` → `14440468`): new seat, body and wave state (guard elements, Retreat timers, the link, the echo memory, the last spell cast, `root`, wave power and range). The scripted run doesn't use weapons or guards.

@@ -9,7 +9,7 @@
  * carry it. Tuning live is a local, dev-only thing until then.
  */
 import { ARCHETYPES } from './archetypes';
-import { BODY, COMBAT, DAMAGE, RHYTHM, RUNES, SHAPES, STATUS, STRUCT, SURFACE } from './config';
+import { ARMS, BODY, COMBAT, DAMAGE, RHYTHM, RUNES, SHAPES, STATUS, STRUCT, SURFACE } from './config';
 import { WAVE_TIMES } from './waves';
 
 export interface Tunable {
@@ -86,6 +86,7 @@ table('combat', 'Damage per rune', COMBAT as unknown as Record<string, unknown>)
 table('status', 'Statuses', STATUS as unknown as Record<string, unknown>);
 table('shapes', 'Spell shapes', SHAPES as unknown as Record<string, unknown>);
 table('structures', 'Shield & Sigil', STRUCT as unknown as Record<string, unknown>);
+table('arms', 'Weapons & guards', ARMS as unknown as Record<string, unknown>);
 table('body', 'Bodies', BODY as unknown as Record<string, unknown>);
 table('surface', 'Surfaces', SURFACE as unknown as Record<string, unknown>);
 table('waves', 'Waves', WAVE_TIMES as unknown as Record<string, unknown>);

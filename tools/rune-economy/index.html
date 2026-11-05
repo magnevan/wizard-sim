@@ -1,0 +1,731 @@
+<title>Rune Economy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Silkscreen&display=swap">
+<style>
+  /* Layout: a reading column. The simulator opens the page (controls on the left, the rune HUD and the
+     throughput chart on the right), then the glyphs as four cards, then the open questions with answers
+     beside them. Dusk-first, the same tokens as the Survive Review. Chart series use a validated
+     categorical order (blue, orange, aqua, yellow), stepped per theme. */
+  :root {
+    color-scheme: dark;
+    --bg: #0d0b14;
+    --surface: #161322;
+    --raise: #1f1b2e;
+    --fg: #ecebf2;
+    --muted: #a8a3bb;
+    --faint: #6f6a85;
+    --line: #2a2539;
+    --line-2: #3c3552;
+    --accent: #f2c44a;
+    --built: #7fd88a;
+    --cut: #e69191;
+    --on-mark: #15111c;
+    --screen: #07060b;
+    --grid: #262134;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --pixel: "Silkscreen", "Courier New", monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) { --bg: #f1eff5; --surface: #ffffff; --raise: #f6f4fa; --fg: #1b1726; --muted: #57516b; --faint: #8a8499; --line: #e0dce8; --line-2: #c9c3d6; --accent: #a8740c; --built: #2f8a3e; --cut: #c25656; --on-mark: #ffffff; --screen: #0d0b14; --grid: #ece9f2; --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; color-scheme: light; }
+  }
+  :root[data-theme="light"] { --bg: #f1eff5; --surface: #ffffff; --raise: #f6f4fa; --fg: #1b1726; --muted: #57516b; --faint: #8a8499; --line: #e0dce8; --line-2: #c9c3d6; --accent: #a8740c; --built: #2f8a3e; --cut: #c25656; --on-mark: #ffffff; --screen: #0d0b14; --grid: #ece9f2; --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body); margin: 0;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+  .wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 30px; }
+  .wrap > * { min-width: 0; }
+  header { display: grid; gap: 12px; }
+  header > p, header .eyebrow, header h1 { max-width: 76ch; }
+  .eyebrow { font: 400 11px/1 var(--pixel); letter-spacing: 0.08em; color: var(--accent); text-transform: uppercase; }
+  h1 { font: 400 clamp(26px, 4vw, 38px)/1.1 var(--pixel); margin: 0; letter-spacing: 0.01em; text-wrap: balance; }
+  header p { margin: 0; color: var(--muted); }
+  header p b { color: var(--fg); }
+  code { font-size: 13px; color: var(--fg); }
+
+  .toolbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+    padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  .toolbar nav { display: flex; flex-wrap: wrap; gap: 6px; }
+  .toolbar nav a { font: 700 13px/1 var(--body); color: var(--fg); text-decoration: none; padding: 7px 11px; border-radius: 99px; border: 1px solid var(--line-2); }
+  .toolbar nav a:hover { border-color: var(--muted); }
+  .tally { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .tally b { color: var(--fg); }
+  .save { font-size: 12px; color: var(--faint); }
+  .save.warn { color: var(--cut); }
+
+  section.block { display: grid; gap: 16px; min-width: 0; scroll-margin-top: 70px; }
+  section.block > h2 { font: 400 17px/1.2 var(--pixel); margin: 6px 0 0; letter-spacing: 0.03em; }
+  section.block > p.lead { margin: -6px 0 0; color: var(--muted); max-width: 82ch; font-size: 14px; }
+  section.block > p.lead b { color: var(--fg); }
+  .slug { font: 400 11px/1 var(--body); color: var(--faint); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; min-width: 0; }
+
+  /* simulator */
+  .simgrid { display: grid; grid-template-columns: minmax(0, 330px) minmax(0, 1fr); gap: 18px; align-items: start; }
+  .controls { padding: 14px; display: grid; gap: 16px; }
+  .ctl { display: grid; gap: 6px; min-width: 0; }
+  .ctl > label, .ctl > .lbl { font: 400 10px/1.4 var(--pixel); letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); display: flex; justify-content: space-between; gap: 8px; }
+  .ctl output { font: 700 13px/1.2 var(--body); color: var(--fg); text-transform: none; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .ctl .ends { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--faint); }
+  .ctl.off { opacity: 0.45; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+  .seg { display: flex; flex-wrap: wrap; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; }
+  .seg button { appearance: none; flex: 1 1 auto; border: 0; background: transparent; color: var(--fg); font: 700 13px/1.2 var(--body); padding: 8px 10px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--line-2); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-mark); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { appearance: none; border: 1px solid var(--line-2); background: var(--bg); color: var(--fg); border-radius: 99px; padding: 6px 10px; font: 700 12.5px/1 var(--body); cursor: pointer; white-space: nowrap; }
+  .chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--on-mark); }
+  .chip.preset { border-style: dashed; }
+  select { background: var(--raise); color: var(--fg); border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 8px; font: 14px/1.2 var(--body); max-width: 100%; }
+  .help { margin: 0; font-size: 12.5px; color: var(--faint); }
+  .help b { color: var(--muted); }
+
+  .right { display: grid; gap: 14px; min-width: 0; }
+  .stylebar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .stylebar .chip { display: inline-flex; align-items: center; gap: 7px; }
+  .stylebar .chip i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .transport { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-left: auto; }
+  .transport .clock { font: 400 12px/1 var(--pixel); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 9ch; text-align: right; }
+  .btn { appearance: none; border: 1px solid var(--line-2); background: var(--raise); color: var(--fg); border-radius: 8px; padding: 6px 10px; font: 700 13px/1 var(--body); cursor: pointer; }
+  .btn:hover { border-color: var(--muted); }
+
+  /* the rune HUD: always on the dark game screen, in both themes */
+  .hud { background: var(--screen); color: #ecebf2; border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; min-width: 0; }
+  .hudhead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; font: 400 11px/1.3 var(--pixel); letter-spacing: 0.04em; color: #a8a3bb; }
+  .hudhead b { color: #ecebf2; font-weight: 400; }
+  .hudhead .wait { color: #f2c44a; }
+  .prow { display: grid; grid-template-columns: 16px 74px minmax(0, 1fr) 62px; gap: 8px; align-items: center; min-width: 0; transition: opacity .2s; }
+  .prow.idle { opacity: 0.42; }
+  .prow .nm { font: 400 10px/1 var(--pixel); letter-spacing: 0.04em; text-transform: uppercase; color: #ecebf2; }
+  .prow .rate { font: 700 12px/1 var(--body); color: #a8a3bb; text-align: right; font-variant-numeric: tabular-nums; }
+  .prow .rate.hot { color: #ecebf2; }
+  .pips { display: flex; gap: 3px; min-width: 0; }
+  .pip { flex: 0 1 22px; height: 12px; background: #1a1726; border-radius: 2px; position: relative; overflow: hidden; box-shadow: inset 0 0 0 1px #2a2539; }
+  .pip > span { position: absolute; inset: 0 auto 0 0; display: block; }
+  .glyph { width: 14px; height: 14px; display: block; }
+  .casts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 22px; font: 400 10px/1 var(--pixel); color: #6f6a85; letter-spacing: 0.04em; }
+  .spell { display: inline-flex; gap: 1px; padding: 2px; border-radius: 4px; background: #1a1726; }
+  .spell svg { width: 12px; height: 12px; display: block; }
+  .spell.fresh { box-shadow: 0 0 0 1px #f2c44a; }
+
+  .chartpanel { padding: 14px; display: grid; gap: 10px; min-width: 0; }
+  .chartpanel h3 { margin: 0; font: 700 15px/1.3 var(--body); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); align-items: center; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+  .legend .dash { width: 18px; height: 0; border-top: 2px dashed var(--muted); border-radius: 0; background: none; }
+  .chartbox { position: relative; min-width: 0; }
+  .chartbox svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+  .tip { position: absolute; pointer-events: none; background: var(--raise); border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--fg); min-width: 170px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+  .tip b { font: 400 10px/1.4 var(--pixel); color: var(--muted); letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+  .tip div { display: grid; grid-template-columns: 10px 1fr auto; gap: 6px; align-items: center; font-variant-numeric: tabular-nums; }
+  .tip i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .tablewrap { overflow-x: auto; max-width: 100%; }
+  table { border-collapse: collapse; font-size: 13.5px; width: 100%; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th { font: 400 10px/1.2 var(--pixel); letter-spacing: 0.05em; color: var(--muted); text-transform: uppercase; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 7px; vertical-align: -1px; }
+  .up { color: var(--built); } .down { color: var(--cut); }
+
+  /* the rule */
+  .rule { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+  .rule .panel { padding: 14px 16px; display: grid; gap: 8px; align-content: start; }
+  .rule h3 { margin: 0; font: 400 13px/1.3 var(--pixel); letter-spacing: 0.04em; }
+  .rule p, .rule li { margin: 0; color: var(--muted); font-size: 14px; }
+  .rule p b, .rule li b { color: var(--fg); }
+  .rule ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+  pre.formula { margin: 0; background: var(--raise); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 13px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace; color: var(--fg); overflow-x: auto; }
+
+  /* glyphs */
+  .ggrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 14px; }
+  .gcard { padding: 14px; display: grid; gap: 10px; align-content: start; }
+  .gcard h3 { margin: 0; font: 400 15px/1.25 var(--pixel); }
+  .gcard .game { font-size: 12.5px; color: var(--faint); margin: -6px 0 0; }
+  .gcard .does { margin: 0; font-size: 14px; color: var(--fg); }
+  .gcard .why { margin: 0; font-size: 13px; color: var(--muted); }
+  .gbars { display: grid; gap: 6px; }
+  .gbar { display: grid; grid-template-columns: 68px minmax(0, 1fr) 92px; gap: 8px; align-items: center; font-size: 12.5px; }
+  .gbar .who { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gbar .track { height: 10px; background: var(--raise); border-radius: 3px; position: relative; overflow: hidden; }
+  .gbar .base { position: absolute; inset: 0 auto 0 0; background: var(--line-2); border-radius: 0 3px 3px 0; }
+  .gbar .gain { position: absolute; top: 0; bottom: 0; border-radius: 0 3px 3px 0; }
+  .gbar .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--fg); }
+  .gbar .val small { color: var(--muted); font-size: 11.5px; }
+
+  /* questions (as on the Survive Review) */
+  #questions { display: grid; gap: 14px; }
+  .qrow { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 16px 24px; scroll-margin-top: 70px; }
+  .qtext h3 { margin: 0 0 6px; font: 700 17px/1.3 var(--body); text-wrap: balance; }
+  .qn { font: 400 12px/1 var(--pixel); color: var(--accent); margin-right: 4px; }
+  .qtext p { margin: 0 0 8px; color: var(--muted); font-size: 14px; max-width: 70ch; }
+  .qtext p b { color: var(--fg); }
+  .qtext .try { appearance: none; border: 1px dashed var(--line-2); background: transparent; color: var(--fg); border-radius: 99px; padding: 5px 10px; font: 700 12.5px/1 var(--body); cursor: pointer; margin: 0 6px 8px 0; }
+  .qtext .try:hover { border-color: var(--accent); }
+  .qside { display: grid; gap: 8px; align-content: start; min-width: 0; }
+  .choices { display: grid; gap: 6px; }
+  .choices button { appearance: none; text-align: left; border: 1px solid var(--line-2); background: var(--bg); color: var(--fg); border-radius: 8px; padding: 9px 11px; font: 14px/1.35 var(--body); cursor: pointer; }
+  .choices button small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .choices button .tags { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: 1px; }
+  .choices button:disabled { cursor: not-allowed; opacity: 0.55; }
+  .tag { font: 400 9px/1 var(--pixel); letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 5px; border-radius: 4px; white-space: nowrap; }
+  .tag.rec { background: var(--accent); color: var(--on-mark); }
+  .tag.built { border: 1px solid var(--built); color: var(--built); }
+  .choices button:hover:not(:disabled) { border-color: var(--muted); }
+  .choices button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); opacity: 1; }
+  .choices button[aria-pressed="true"] b::after { content: "  ✓"; color: var(--accent); }
+  .hint { margin: 0; font-size: 12.5px; color: var(--faint); }
+  textarea { width: 100%; min-width: 0; resize: vertical; min-height: 34px; background: var(--raise); color: var(--fg); border: 1px solid var(--line-2); border-radius: 8px; padding: 7px 9px; font: 14px/1.4 var(--body); }
+  textarea:disabled { opacity: 0.6; }
+  .general { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 8px; max-width: 820px; }
+  .general h2 { margin: 0; font: 400 15px/1.2 var(--pixel); }
+  .general p { margin: 0; color: var(--muted); font-size: 14px; }
+  .general textarea { min-height: 110px; }
+  button:focus-visible, textarea:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #errs { white-space: pre-wrap; color: var(--cut); font: 12px/1.4 monospace; }
+  #errs:empty { display: none; }
+
+  @media (max-width: 980px) { .simgrid { grid-template-columns: 1fr; } .qrow { grid-template-columns: 1fr; } .rule { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .tally { margin-left: 0; } .prow { grid-template-columns: 14px 58px minmax(0, 1fr) 54px; gap: 6px; } .transport { margin-left: 0; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Wizard Sim · Rune economy · review 1 · 2026-11-05</div>
+    <h1>Rune Economy</h1>
+    <p>Today every element refills on its own at <b>0.22 runes a second</b>. A Fire-only wizard sustains 0.22 runes/s, and a wizard who rotates through four elements sustains 0.88, so the resource itself pushes everyone to diversify. The proposal in <code>docs/explorations/2026-11-05-rune-economy.md</code> splits the jobs: <b>max per element is depth and burst</b>, and <b>one total regen rate R is sustain</b>, shared out by a weight α.</p>
+    <p>The simulator below runs four scripted wizards through the same fight. Each one casts its play style’s 3-rune spells the moment it can, so the chart shows how many runes each style gets out under the rules you set. <b>Dashed lines are today as built</b>, for comparison. Then answer the four questions at the bottom. <b>A question you leave blank means you accept Claude’s recommendation</b>, which is marked on each one.</p>
+  </header>
+
+  <div class="toolbar" role="toolbar" aria-label="Sections">
+    <nav><a href="#sec-sim">Simulator</a><a href="#sec-rule">The rule</a><a href="#sec-glyphs">Glyphs</a><a href="#sec-questions">Questions</a></nav>
+    <div class="tally" id="tally"></div>
+    <div class="save" id="saveState" aria-live="polite"></div>
+  </div>
+
+  <section class="block" id="sec-sim" aria-labelledby="h-sim">
+    <h2 id="h-sim">The simulator</h2>
+    <p class="lead">Pools start full. A wizard needs a short beat between spells (0.8 s to key three runes and cast) and otherwise casts whichever of its spells it can afford, draining its fullest pools first. Nothing here models damage or enemies: this is pure rune flow. <b>Sigil</b> builds structures, so none of these wizards spend it, but its pool still counts in the shared rule.</p>
+    <div class="simgrid">
+      <div class="panel controls" aria-label="Simulator settings">
+        <div class="ctl">
+          <div class="lbl">Presets</div>
+          <div class="chips">
+            <button type="button" class="chip preset" id="preToday">Today as built</button>
+            <button type="button" class="chip preset" id="preRec">Claude’s proposal</button>
+          </div>
+        </div>
+        <div class="ctl">
+          <div class="lbl" id="lblModel">Regen model</div>
+          <div class="seg" role="group" aria-labelledby="lblModel">
+            <button type="button" id="mToday" aria-pressed="false">Today: flat per element</button>
+            <button type="button" id="mShared" aria-pressed="true">Shared budget</button>
+          </div>
+          <p class="help" id="modelHelp"></p>
+        </div>
+        <div class="ctl" id="ctlAlpha">
+          <label for="alpha">α, the floor share <output id="alphaOut" for="alpha"></output></label>
+          <input type="range" id="alpha" min="0" max="1" step="0.05" value="0.25">
+          <div class="ends"><span>0: one shared budget</span><span>1: regen ∝ max</span></div>
+        </div>
+        <div class="ctl" id="ctlR">
+          <label for="rate">R, total runes per second <output id="rateOut" for="rate"></output></label>
+          <input type="range" id="rate" min="0.4" max="2" step="0.05" value="1">
+          <div class="ends"><span>0.4</span><span>2.0</span></div>
+        </div>
+        <div class="ctl">
+          <label for="pool">Starting pool per element <output id="poolOut" for="pool"></output></label>
+          <input type="range" id="pool" min="2" max="6" step="1" value="3">
+          <div class="ends"><span>2</span><span>6 (Sigil is always one less)</span></div>
+        </div>
+        <div class="ctl">
+          <div class="lbl" id="lblGlyph">Glyphs taken</div>
+          <div class="chips" role="group" aria-labelledby="lblGlyph" id="glyphChips"></div>
+          <div class="ctl" id="ctlOne" style="gap:4px">
+            <label for="oneEl">“+2 to one” names</label>
+            <select id="oneEl"></select>
+          </div>
+        </div>
+        <div class="ctl">
+          <label for="len">Encounter length <output id="lenOut" for="len"></output></label>
+          <input type="range" id="len" min="15" max="180" step="5" value="60">
+          <div class="ends"><span>15 s skirmish</span><span>3 min siege</span></div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="stylebar">
+          <span class="slug" style="font-size:12px">Pools of</span>
+          <div class="chips" role="group" aria-label="Whose pools to show" id="styleChips"></div>
+          <div class="transport">
+            <button type="button" class="btn" id="play">Pause</button>
+            <button type="button" class="btn" id="restart">Restart</button>
+            <select id="speed" aria-label="Playback speed"><option value="1">×1</option><option value="3">×3</option><option value="6" selected>×6</option><option value="12">×12</option></select>
+            <span class="clock" id="clock">0.0 s</span>
+          </div>
+        </div>
+        <div class="hud" aria-live="off">
+          <div class="hudhead"><span id="hudWho"></span><span id="hudState"></span></div>
+          <div id="pools" style="display:grid;gap:6px"></div>
+          <div class="casts" id="casts"></div>
+        </div>
+        <div class="panel chartpanel">
+          <h3>Runes cast over the encounter</h3>
+          <div class="legend" id="legend"></div>
+          <div class="chartbox" id="chartbox">
+            <svg id="chart" role="img" aria-label="Runes cast over time for the four play styles"></svg>
+            <div class="tip" id="tip" hidden></div>
+          </div>
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th scope="col">Play style</th><th scope="col">Spells</th><th scope="col" class="num">Runes cast</th><th scope="col" class="num">Runes/s</th><th scope="col" class="num">Today as built</th><th scope="col" class="num">Change</th></tr></thead>
+              <tbody id="summary"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="sec-rule" aria-labelledby="h-rule">
+    <h2 id="h-rule">The rule in the proposal</h2>
+    <div class="rule">
+      <div class="panel">
+        <h3>Each element that isn’t full gets</h3>
+        <pre class="formula">regen_e = α · R · max_e / Σmax_all          (floor)
+        + (1−α) · R · max_e / Σmax_notfull  (shared part)</pre>
+        <ul>
+          <li><b>α = 1:</b> per element, proportional to max. Every pool refills in the same time, and diversity multiplies throughput, as it does today.</li>
+          <li><b>α = 0:</b> one shared budget. Throughput is R whatever you cast; a Fire-only wizard pours all of it into Fire.</li>
+          <li><b>α ≈ 0.25 (recommended):</b> rotating pays a little without starving a specialist. At R = 1 and pools of 3, a Fire-only wizard sustains about 0.78 runes/s of Fire, not 0.22.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>What it costs</h3>
+        <ul>
+          <li><b>The coupling is invisible.</b> How fast Fire refills depends on whether your Cold pool is full. The HUD has to show it, for example pools that shimmer brighter the bigger their share (the rate column in the simulator).</li>
+          <li><b>A specialist’s rhythm changes</b> from burst-then-wait to a steady stream. Fire-heavy enemies and resistances have to carry the counterplay.</li>
+          <li><b>Attune and Siphon</b> multiply R instead of every element’s regen, which is simpler.</li>
+          <li><b>Starting at 3 per element</b> means no 4- or 5-stacks of one element early. Drag the pool slider to 2 and the Fire specialist can’t cast at all: max caps depth as well as burst.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="sec-glyphs" aria-labelledby="h-glyphs">
+    <h2 id="h-glyphs">The four glyphs, under your settings</h2>
+    <p class="lead">Each card runs the encounter again with that one glyph and nothing else, using the model, α, R, pool and length set in the simulator. Grey is the run without a glyph; the colour is what the glyph adds. “+2 to one” names each style’s main element (Fire, Cold, Fire, Life). Switch the model to see the built four next to the proposed set.</p>
+    <div class="ggrid" id="glyphs"></div>
+  </section>
+
+  <section class="block" id="sec-questions" aria-labelledby="h-questions">
+    <h2 id="h-questions">Open questions</h2>
+    <p class="lead">Each option shows <span class="tag rec">Recommended</span> for Claude’s pick and <span class="tag built">Built now</span> for what the game does today. The dashed buttons set the simulator to that option so you can feel it first.</p>
+    <div id="questions"></div>
+  </section>
+
+  <section class="general" aria-labelledby="genH">
+    <h2 id="genH">General notes</h2>
+    <p>Anything about the rune economy as a whole: how a specialist should feel, what the HUD must show, numbers that felt wrong in the simulator.</p>
+    <textarea id="general" rows="5" placeholder="Your notes"></textarea>
+  </section>
+  <div id="errs" role="status"></div>
+</div>
+
+<script>
+  window.addEventListener('error', (e) => { const el = document.getElementById('errs'); if (el) el.textContent += 'Error: ' + e.message + ' (line ' + e.lineno + ')\n'; });
+</script>
+<script>
+/* Rune Economy: a rune-flow simulator for the rune-economy exploration, and answer boxes.
+ * db: answers/<question id> { choice, note, updatedAt }; answers/general { choice: null, note, updatedAt }
+ * Without the db the page is read-only (answers disabled); the simulator always works. */
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- elements (order, colours and 7x7 icons from the game's pixel art) ----------
+  const ELS = ['fire', 'cold', 'water', 'lightning', 'earth', 'life', 'shield', 'arcane', 'sigil'];
+  const NAME = { fire: 'Fire', cold: 'Cold', water: 'Water', lightning: 'Lightning', earth: 'Earth', life: 'Life', shield: 'Shield', arcane: 'Arcane', sigil: 'Sigil' };
+  const COL = { fire: '#ff5a20', cold: '#4ad0f4', water: '#3a98ff', lightning: '#a07af6', earth: '#b8946a', life: '#46c450', shield: '#ffc83a', arcane: '#ff4a9a', sigil: '#d64cff' };
+  const ICON = {
+    water: ['...#...', '..###..', '.#####.', '###.###', '##.####', '.#####.', '..###..'],
+    life: ['..###..', '..###..', '#######', '#######', '#######', '..###..', '..###..'],
+    shield: ['#######', '#.....#', '#.###.#', '#.###.#', '.#.#.#.', '..#.#..', '...#...'],
+    cold: ['#..#..#', '.#.#.#.', '..###..', '#######', '..###..', '.#.#.#.', '#..#..#'],
+    lightning: ['....###', '...###.', '..###..', '.######', '...###.', '..##...', '.#.....'],
+    arcane: ['...#...', '..#.#..', '.#.#.#.', '#.###.#', '.#.#.#.', '..#.#..', '...#...'],
+    earth: ['..###..', '.##.##.', '###.###', '#######', '##.####', '.#####.', '.......'],
+    fire: ['...#...', '..##...', '..###.#', '.#####.', '###.###', '##...##', '.#####.'],
+    sigil: ['...#...', '..#.#..', '.#####.', '#..#..#', '.#####.', '..#.#..', '...#...'],
+  };
+  const icon = (e, cls) => { let r = ''; ICON[e].forEach((row, j) => { for (let i = 0; i < 7; i++) if (row[i] === '#') r += `<rect x="${i}" y="${j}" width="1" height="1"/>`; }); return `<svg class="${cls || ''}" viewBox="0 0 7 7" shape-rendering="crispEdges" fill="${COL[e]}" aria-hidden="true">${r}</svg>`; };
+  const spellHtml = (sp, fresh) => `<span class="spell${fresh ? ' fresh' : ''}" title="${sp.map((e) => NAME[e]).join(' + ')}">${sp.map((e) => icon(e)).join('')}</span>`;
+
+  // ---------- play styles ----------
+  const STYLES = [
+    { id: 'fire', name: 'Fire specialist', short: 'Fire', main: 'fire', spells: [['fire', 'fire', 'fire']] },
+    { id: 'frost', name: 'Frost mage', short: 'Frost', main: 'cold', spells: [['cold', 'cold', 'water'], ['water', 'water', 'lightning'], ['lightning', 'lightning', 'cold']] },
+    { id: 'rot', name: '4-element rotator', short: 'Rotator', main: 'fire', spells: [['fire', 'fire', 'cold'], ['cold', 'cold', 'lightning'], ['lightning', 'lightning', 'earth'], ['earth', 'earth', 'fire']] },
+    { id: 'sup', name: 'Support', short: 'Support', main: 'life', spells: [['life', 'life', 'shield'], ['shield', 'shield', 'arcane'], ['arcane', 'arcane', 'life']] },
+  ];
+  STYLES.forEach((s, i) => { s.color = `var(--s${i + 1})`; s.uses = new Set(s.spells.flat()); });
+
+  // ---------- the sim ----------
+  const TODAY_REGEN = 0.22, CAST_GAP = 0.8, DT = 0.05, SAMPLE = 5; // samples every 0.25 s
+  const P = { model: 'shared', alpha: 0.25, R: 1, pool: 3, len: 60, g: { all: false, one: false, r: false, sigil: false }, oneEl: 'fire' };
+  const AS_BUILT = { model: 'today', built: true, alpha: 0, R: 0, pool: 4, len: 60, g: { all: false, one: false, r: false, sigil: false }, oneEl: 'fire' };
+
+  function maxes(p) {
+    const m = {};
+    for (const e of ELS) m[e] = e === 'sigil' ? p.pool - 1 : p.pool;
+    if (p.built) m.fire += 1; // as built: Fire 5, Sigil 3, the rest 4
+    if (p.g.all) for (const e of ELS) m[e] += 1;
+    if (p.g.one) m[p.oneEl] += 2;
+    if (p.g.sigil) m.sigil += p.model === 'today' ? 1 : 2;
+    return m;
+  }
+  function rates(p, pools, m) {
+    const out = {}; const full = (e) => pools[e] >= m[e] - 1e-9;
+    if (p.model === 'today') { const r = TODAY_REGEN * (p.g.r ? 1.3 : 1); for (const e of ELS) out[e] = full(e) ? 0 : r; return out; }
+    const R = p.R * (p.g.r ? 1.15 : 1);
+    let all = 0, nf = 0; for (const e of ELS) { all += m[e]; if (!full(e)) nf += m[e]; }
+    for (const e of ELS) out[e] = full(e) || all <= 0 ? 0 : p.alpha * R * m[e] / all + (1 - p.alpha) * R * m[e] / nf;
+    return out;
+  }
+  function simulate(style, p, keepFrames) {
+    const m = maxes(p), pools = {}; for (const e of ELS) pools[e] = m[e];
+    const need = style.spells.map((sp) => { const n = {}; for (const e of sp) n[e] = (n[e] || 0) + 1; return n; });
+    const never = need.every((n) => Object.keys(n).some((e) => n[e] > m[e]));
+    const steps = Math.round(p.len / DT);
+    const res = { m, never, t: [0], cum: [0], frames: [], casts: [] };
+    let cum = 0, gap = 0, rt = rates(p, pools, m);
+    const snap = (waiting) => { if (keepFrames) res.frames.push({ pools: Object.assign({}, pools), rates: rt, waiting }); };
+    snap(false);
+    for (let s = 1; s <= steps; s++) {
+      const t = s * DT;
+      rt = rates(p, pools, m);
+      for (const e of ELS) pools[e] = Math.min(m[e], pools[e] + rt[e] * DT);
+      gap -= DT;
+      let waiting = false;
+      if (gap <= 1e-9) {
+        let best = -1, bestScore = -1;
+        need.forEach((n, k) => {
+          if (Object.keys(n).some((e) => pools[e] + 1e-6 < n[e])) return;
+          const score = Object.keys(n).reduce((a, e) => a + pools[e] / m[e], 0);
+          if (score > bestScore + 1e-9) { best = k; bestScore = score; }
+        });
+        if (best >= 0) { for (const e in need[best]) pools[e] = Math.max(0, pools[e] - need[best][e]); cum += 3; gap = CAST_GAP; res.casts.push({ t, k: best }); }
+        else waiting = true;
+      }
+      if (s % SAMPLE === 0) { res.t.push(+t.toFixed(2)); res.cum.push(cum); snap(waiting); }
+    }
+    res.total = cum;
+    return res;
+  }
+
+  // ---------- controls ----------
+  const GLYPHS = [
+    { k: 'all', chip: '+1 all', name: '+1 to every element', game: 'Deep pools in the game today',
+      today: 'Every pool holds one more rune, Sigil included.', shared: 'Every pool holds one more rune: more burst and one more depth everywhere.',
+      why: { today: 'Throughput barely moves: regen per element is fixed, so a bigger pool is only a bigger first burst.', shared: 'A one-off burst, plus a little sustain for wizards whose pools are often full.' } },
+    { k: 'one', chip: '+2 to one', name: '+2 to one element', game: 'Deep (element) in the game today',
+      today: '+2 max runes of one element (here, each style’s main element).', shared: '+2 max runes of one element: depth and a bigger share of R. This is the specialist pick.',
+      why: { today: 'Depth only. A Fire specialist gets one bigger burst, then the same 0.22 a second.', shared: 'Weighting by max means the named element also refills faster, so specialising is one number.' } },
+    { k: 'r', chip: '+R', name: '+R, sustain', game: 'Wellspring (+30 % regen) in the game today',
+      today: 'Every element regenerates 30 % faster (as built).', shared: 'R goes up 15 %, offered only in a draw that also has a depth glyph.',
+      why: { today: 'The biggest pick by far for a rotator, the weakest for a specialist: it scales with how many elements you drain.', shared: 'Even across styles: everyone gets the same 15 % more sustain.' } },
+    { k: 'sigil', chip: 'Sigil', name: 'Sigil as an element', game: 'Spare sigil (+1 Sigil) in the game today',
+      today: '+1 Sigil rune: one more turret, glyph or aura standing at once.', shared: '+2 Sigil, as one of the elements “+2 to one” can name, not its own glyph.',
+      why: { today: 'Nothing for spell throughput; it only buys one more structure.', shared: 'It buys structures. Under the shared rule a bigger Sigil pool also thins everyone’s floor slightly, because Σmax grows.' } },
+  ];
+  for (const g of GLYPHS) {
+    const b = el('button', 'chip', esc(g.chip)); b.type = 'button'; b.id = 'g-' + g.k; b.dataset.k = g.k; b.title = g.name;
+    b.addEventListener('click', () => { P.g[g.k] = !P.g[g.k]; update(true); });
+    $('glyphChips').append(b);
+  }
+  for (const e of ELS) { const o = el('option', null, NAME[e]); o.value = e; $('oneEl').append(o); }
+  $('oneEl').value = P.oneEl;
+  $('oneEl').addEventListener('change', () => { P.oneEl = $('oneEl').value; update(true); });
+
+  let shown = 0; // index of the style whose pools are shown
+  STYLES.forEach((s, i) => {
+    const b = el('button', 'chip', `<i style="background:${s.color}"></i>${esc(s.short)}`); b.type = 'button'; b.dataset.i = i; b.title = s.name;
+    b.addEventListener('click', () => { shown = i; update(false); });
+    $('styleChips').append(b);
+  });
+
+  const bindRange = (id, key, fmt) => { const r = $(id); r.addEventListener('input', () => { P[key] = parseFloat(r.value); update(true); }); return () => { r.value = P[key]; $(id + 'Out').textContent = fmt(P[key]); }; };
+  const syncAlpha = bindRange('alpha', 'alpha', (v) => v.toFixed(2));
+  const syncR = bindRange('rate', 'R', (v) => v.toFixed(2) + ' /s');
+  const syncPool = bindRange('pool', 'pool', (v) => `${v} (Sigil ${v - 1})`);
+  const syncLen = bindRange('len', 'len', (v) => v + ' s');
+  $('mToday').addEventListener('click', () => { P.model = 'today'; update(true); });
+  $('mShared').addEventListener('click', () => { P.model = 'shared'; update(true); });
+  function setPreset(o) { Object.assign(P, o); P.g = Object.assign({ all: false, one: false, r: false, sigil: false }, o.g || {}); update(true); }
+  $('preToday').addEventListener('click', () => setPreset({ model: 'today', pool: 4 }));
+  $('preRec').addEventListener('click', () => setPreset({ model: 'shared', alpha: 0.25, R: 1, pool: 3 }));
+
+  // ---------- pools HUD ----------
+  const rows = {};
+  for (const e of ELS) {
+    const r = el('div', 'prow', `${icon(e, 'glyph')}<span class="nm">${NAME[e]}</span><div class="pips"></div><span class="rate"></span>`);
+    rows[e] = { r, pips: r.querySelector('.pips'), rate: r.querySelector('.rate'), n: -1 };
+    $('pools').append(r);
+  }
+
+  // ---------- state ----------
+  let RES = [], BUILT = [], pt = 0, playing = !REDUCED, last = performance.now(), hold = 0;
+  function update(rerun) {
+    if (rerun) {
+      RES = STYLES.map((s) => simulate(s, P, true));
+      BUILT = STYLES.map((s) => simulate(s, Object.assign({}, AS_BUILT, { len: P.len }), false));
+      pt = Math.min(pt, P.len);
+      if (REDUCED) pt = P.len;
+      buildGlyphs();
+    }
+    syncAlpha(); syncR(); syncPool(); syncLen();
+    $('mToday').setAttribute('aria-pressed', String(P.model === 'today'));
+    $('mShared').setAttribute('aria-pressed', String(P.model === 'shared'));
+    $('ctlAlpha').classList.toggle('off', P.model === 'today'); $('alpha').disabled = P.model === 'today';
+    $('ctlR').classList.toggle('off', P.model === 'today'); $('rate').disabled = P.model === 'today';
+    $('ctlOne').hidden = !P.g.one;
+    $('modelHelp').innerHTML = P.model === 'today'
+      ? '<b>Today:</b> every element that isn’t full gains 0.22 runes a second, on its own. α and R don’t apply.'
+      : `<b>Shared budget:</b> ${P.R.toFixed(2)} runes a second in total, shared over the pools that aren’t full, weighted by max, with ${Math.round(P.alpha * 100)} % kept as a floor.`;
+    for (const b of $('glyphChips').children) b.setAttribute('aria-pressed', String(!!P.g[b.dataset.k]));
+    for (const b of $('styleChips').children) b.setAttribute('aria-pressed', String(+b.dataset.i === shown));
+    if (rerun) { summary(); drawChart(); }
+    frame();
+  }
+
+  function summary() {
+    $('summary').innerHTML = STYLES.map((s, i) => {
+      const r = RES[i], b = BUILT[i], d = b.total ? (r.total - b.total) / b.total : 0;
+      const spells = s.spells.map((sp) => spellHtml(sp)).join(' ');
+      const ch = b.total ? `<span class="${d > 0.005 ? 'up' : d < -0.005 ? 'down' : ''}">${d > 0 ? '+' : ''}${Math.round(d * 100)} %</span>` : '–';
+      return `<tr><th scope="row" style="font-weight:700"><span class="sw" style="background:${s.color}"></span>${esc(s.name)}</th><td><span class="hudspells" style="display:inline-flex;gap:4px;flex-wrap:wrap;background:var(--screen);padding:3px;border-radius:5px">${spells}</span></td>`
+        + `<td class="num">${r.never ? 'can’t cast' : r.total}</td><td class="num">${(r.total / P.len).toFixed(2)}</td><td class="num">${b.total}</td><td class="num">${ch}</td></tr>`;
+    }).join('');
+  }
+
+  // the frame at time pt: pools of the shown style, the clock, the playhead
+  function frame() {
+    const r = RES[shown], s = STYLES[shown];
+    const idx = Math.min(r.frames.length - 1, Math.round(pt / (DT * SAMPLE)));
+    const f = r.frames[idx], m = r.m;
+    let totalRate = 0;
+    for (const e of ELS) {
+      const row = rows[e], mx = m[e];
+      if (row.n !== mx) { row.pips.innerHTML = ''; for (let k = 0; k < mx; k++) row.pips.append(el('span', 'pip', `<span style="background:${COL[e]}"></span>`)); row.n = mx; }
+      const v = f.pools[e];
+      [...row.pips.children].forEach((pip, k) => { const fill = Math.max(0, Math.min(1, v - k)); const inner = pip.firstChild; inner.style.width = (fill * 100) + '%'; inner.style.opacity = fill >= 1 ? '1' : '0.55'; });
+      const rr = f.rates[e]; totalRate += rr;
+      row.rate.textContent = rr > 0 ? '+' + rr.toFixed(2) + '/s' : 'full';
+      row.rate.classList.toggle('hot', rr > 0.3);
+      row.r.classList.toggle('idle', !s.uses.has(e));
+    }
+    $('hudWho').innerHTML = `<b>${esc(s.name)}</b> · ${r.never ? 'can’t cast' : (r.cum[idx] + ' runes cast')}`;
+    $('hudState').innerHTML = r.never ? `<span class="wait">Every spell needs more of one element than the pool holds</span>`
+      : f.waiting ? `<span class="wait">Waiting for runes</span> · regen ${totalRate.toFixed(2)}/s` : `regen ${totalRate.toFixed(2)}/s`;
+    const t = r.t[idx];
+    const recent = r.casts.filter((c) => c.t <= t + 1e-6).slice(-8);
+    $('casts').innerHTML = recent.length ? 'Cast: ' + recent.map((c, k) => spellHtml(s.spells[c.k], k === recent.length - 1 && t - c.t < 0.8)).join('') : (r.never ? '' : 'Pools start full');
+    $('clock').textContent = t.toFixed(1) + ' s';
+    $('play').textContent = playing ? 'Pause' : 'Play';
+    playhead(t);
+  }
+
+  // ---------- the chart ----------
+  const svg = $('chart'), NS = 'http://www.w3.org/2000/svg';
+  let CH = null;
+  function niceStep(max, n) { const raw = max / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
+  function drawChart() {
+    const W = Math.max(300, $('chartbox').clientWidth || 700), narrow = W < 520;
+    const H = narrow ? 240 : 300, ml = 40, mr = narrow ? 84 : 120, mt = 10, mb = 30;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', W); svg.setAttribute('height', H);
+    const ymaxRaw = Math.max(9, ...RES.map((r) => r.total), ...BUILT.map((r) => r.total));
+    const ys = niceStep(ymaxRaw, 4), ymax = Math.ceil(ymaxRaw / ys) * ys;
+    const xs = niceStep(P.len, narrow ? 4 : 6);
+    const X = (t) => ml + (t / P.len) * (W - ml - mr), Y = (v) => mt + (1 - v / ymax) * (H - mt - mb);
+    let h = '';
+    for (let v = 0; v <= ymax + 1e-9; v += ys) h += `<line x1="${ml}" x2="${W - mr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(${v === 0 ? '--line-2' : '--grid'})" stroke-width="1"/><text x="${ml - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="var(--faint)" style="font-variant-numeric:tabular-nums">${v}</text>`;
+    for (let t = 0; t <= P.len + 1e-9; t += xs) h += `<text x="${X(t)}" y="${H - mb + 17}" text-anchor="middle" font-size="11" fill="var(--faint)">${t}${t === 0 ? '' : ' s'}</text>`;
+    const path = (r) => { let d = ''; for (let k = 0; k < r.t.length; k++) { const x = X(r.t[k]).toFixed(1), y = Y(r.cum[k]).toFixed(1); d += k ? `H${x}V${y}` : `M${x},${y}`; } return d; };
+    BUILT.forEach((r, i) => { h += `<path d="${path(r)}" fill="none" stroke="${STYLES[i].color}" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6"/>`; });
+    RES.forEach((r, i) => { h += `<path d="${path(r)}" fill="none" stroke="${STYLES[i].color}" stroke-width="2" stroke-linejoin="round"/>`; });
+    // direct end labels, pushed apart so they never collide
+    const labs = RES.map((r, i) => ({ i, y: Y(r.total), v: r.never ? 0 : r.total })).sort((a, b) => a.y - b.y);
+    for (let k = 1; k < labs.length; k++) if (labs[k].y - labs[k - 1].y < 15) labs[k].y = labs[k - 1].y + 15;
+    const over = labs.length ? labs[labs.length - 1].y - (H - mb) : 0; if (over > 0) labs.forEach((l) => { l.y -= over; });
+    for (const l of labs) h += `<rect x="${W - mr + 8}" y="${l.y - 5}" width="9" height="9" rx="2" fill="${STYLES[l.i].color}"/><text x="${W - mr + 22}" y="${l.y + 4}" font-size="12" fill="var(--fg)" style="font-variant-numeric:tabular-nums">${esc(STYLES[l.i].short)} <tspan fill="var(--muted)">${RES[l.i].never ? '0' : l.v}</tspan></text>`;
+    h += `<g id="ph"><line id="phl" y1="${mt}" y2="${H - mb}" stroke="var(--muted)" stroke-width="1"/>${RES.map((r, i) => `<circle r="4.5" fill="${STYLES[i].color}" stroke="var(--surface)" stroke-width="2"/>`).join('')}</g>`;
+    h += `<line id="hx" y1="${mt}" y2="${H - mb}" stroke="var(--fg)" stroke-width="1" stroke-dasharray="2 3" opacity="0" />`;
+    h += `<rect id="hit" x="${ml}" y="${mt}" width="${W - ml - mr}" height="${H - mt - mb}" fill="transparent"/>`;
+    svg.innerHTML = h;
+    CH = { X, Y, W, H, ml, mr, mt, mb };
+    const hit = svg.querySelector('#hit');
+    hit.addEventListener('pointermove', hover); hit.addEventListener('pointerdown', hover);
+    hit.addEventListener('pointerleave', () => { $('tip').hidden = true; svg.querySelector('#hx').setAttribute('opacity', '0'); });
+    playhead(pt);
+  }
+  const valAt = (r, t) => r.cum[Math.min(r.cum.length - 1, Math.max(0, Math.round(t / (DT * SAMPLE))))];
+  function playhead(t) {
+    if (!CH) return;
+    const x = CH.X(t);
+    const g = svg.querySelector('#ph'); if (!g) return;
+    g.querySelector('#phl').setAttribute('x1', x); g.querySelector('#phl').setAttribute('x2', x);
+    [...g.querySelectorAll('circle')].forEach((c, i) => { c.setAttribute('cx', x); c.setAttribute('cy', CH.Y(valAt(RES[i], t))); });
+  }
+  function hover(ev) {
+    const box = svg.getBoundingClientRect(), sx = CH.W / box.width;
+    const px = (ev.clientX - box.left) * sx;
+    const t = Math.max(0, Math.min(P.len, ((px - CH.ml) / (CH.W - CH.ml - CH.mr)) * P.len));
+    const x = CH.X(t), hx = svg.querySelector('#hx'); hx.setAttribute('x1', x); hx.setAttribute('x2', x); hx.setAttribute('opacity', '0.6');
+    const rowsH = STYLES.map((s, i) => ({ s, v: valAt(RES[i], t), b: valAt(BUILT[i], t) })).sort((a, b) => b.v - a.v)
+      .map((o) => `<div><i style="background:${o.s.color}"></i><span>${esc(o.s.short)}</span><span>${o.v} <span style="color:var(--muted)">· today ${o.b}</span></span></div>`).join('');
+    const tip = $('tip'); tip.innerHTML = `<b>At ${t.toFixed(1)} s · runes cast</b>${rowsH}`; tip.hidden = false;
+    const left = x / sx, tw = tip.offsetWidth;
+    tip.style.left = Math.max(0, Math.min(box.width - tw, left + (left + 14 + tw > box.width ? -tw - 14 : 14))) + 'px';
+    tip.style.top = '8px';
+  }
+  $('legend').innerHTML = STYLES.map((s) => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join('') + '<span><i class="dash"></i>Today as built</span>';
+  let rsT; new ResizeObserver(() => { clearTimeout(rsT); rsT = setTimeout(() => { if (RES.length) drawChart(); }, 80); }).observe($('chartbox'));
+
+  // ---------- glyph cards ----------
+  function buildGlyphs() {
+    const base = { g: { all: false, one: false, r: false, sigil: false } };
+    const runs = (g) => STYLES.map((s) => simulate(s, Object.assign({}, P, base, { g: Object.assign({}, base.g, { [g]: true }), oneEl: s.main }), false).total);
+    const none = STYLES.map((s) => simulate(s, Object.assign({}, P, base), false).total);
+    const all = GLYPHS.map((g) => runs(g.k));
+    const top = Math.max(9, ...none, ...all.flat());
+    $('glyphs').innerHTML = GLYPHS.map((g, gi) => {
+      const bars = STYLES.map((s, i) => {
+        const v = all[gi][i], b = none[i], d = v - b;
+        const pct = b ? Math.round((d / b) * 100) : (v ? 100 : 0);
+        return `<div class="gbar"><span class="who" title="${esc(s.name)}">${esc(s.short)}</span><span class="track"><span class="base" style="width:${(Math.min(v, b) / top) * 100}%"></span>${d > 0 ? `<span class="gain" style="left:${(b / top) * 100}%;width:${(d / top) * 100}%;background:${s.color}"></span>` : ''}</span><span class="val">${v} <small class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d === 0 ? '±0' : (d > 0 ? '+' : '') + pct + ' %'}</small></span></div>`;
+      }).join('');
+      return `<article class="panel gcard" id="glyph-${g.k}"><h3>${esc(g.name)}</h3><p class="game">${esc(g.game)}</p><p class="does">${esc(P.model === 'today' ? g.today : g.shared)}</p><div class="gbars" aria-label="Runes cast in ${P.len} s with this glyph">${bars}</div><p class="why">${esc(g.why[P.model])}</p></article>`;
+    }).join('');
+  }
+
+  // ---------- playback ----------
+  $('play').addEventListener('click', () => { playing = !playing; if (playing && pt >= P.len) pt = 0; last = performance.now(); frame(); });
+  $('restart').addEventListener('click', () => { pt = 0; hold = 0; playing = true; last = performance.now(); frame(); });
+  function tick(now) {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (playing) {
+      if (pt >= P.len) { hold += dt; if (hold > 1.6) { pt = 0; hold = 0; } }
+      else pt = Math.min(P.len, pt + dt * parseFloat($('speed').value));
+      frame();
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- questions ----------
+  const QUESTIONS = [
+    { id: 'q-1-alpha', n: 'Q1', title: 'A shared budget with a floor, or per-element regen proportional to max?',
+      text: 'The toolkit and the battlefield already push you to use more elements, so the resource can stay close to neutral on throughput. A small floor (α ≈ 0.25) keeps rotation slightly ahead without starving a specialist. Try the α slider: at 0 every style lands near the same line, at 1 the rotator pulls far ahead.',
+      tries: [['α 0.25', { model: 'shared', alpha: 0.25 }], ['α 0', { model: 'shared', alpha: 0 }], ['α 1', { model: 'shared', alpha: 1 }], ['Today', { model: 'today' }]],
+      choices: [['floor', 'Shared budget with a small floor (α ≈ 0.25)', 'Rotating pays a little; a Fire-only wizard sustains about 0.8 runes/s.', ['rec']],
+        ['shared', 'Fully shared (α = 0)', 'Throughput is R whatever you cast.', []],
+        ['per-max', 'Per element, proportional to max (α = 1)', 'Every pool refills in the same time; diversity multiplies throughput, as today.', []],
+        ['today', 'Keep flat 0.22/s per element', 'What the game does now.', ['built']]] },
+    { id: 'q-2-start', n: 'Q2', title: 'Start with pools of 3 (Sigil 2), growing to about 6?',
+      text: 'Fewer runes at the start keeps early play simple: no 4- or 5-stacks of one element, so complex spells wait for a run or a campaign to grow the pools. R ≈ 1.0 rune/s in total is one 3-rune spell every 3 s. These numbers are placeholders for the balance harness.',
+      tries: [['Pools 3', { pool: 3 }], ['Pools 4', { pool: 4 }], ['Pools 2', { pool: 2 }]],
+      choices: [['three', 'Start at 3 (Sigil 2), grow to about 6', 'The friendly frontier pillar 1 already accepts.', ['rec']],
+        ['four', 'Keep about 4 (Fire 5, Sigil 3)', 'What the game does now.', ['built']],
+        ['two', 'Start at 2, grow from there', 'Only pairs early; a 3-of-one spell needs a pickup first.', []]] },
+    { id: 'q-3-lull', n: 'Q3', title: 'Should lulls refill faster?',
+      text: 'If the time between waves refills fast (say 3× R), max matters per fight and R inside a fight, and long-versus-short encounters stop deciding everything. Pillar 7: downtime is for preparing. The simulator shows one fight; drag the encounter length to see how much R decides a long one.',
+      tries: [['15 s fight', { len: 15 }], ['3 min fight', { len: 180 }]],
+      choices: [['fast', 'Yes, about 3× R between waves', 'Each wave starts close to full without a dead wait.', ['rec']],
+        ['full', 'Refill to full when a wave ends', 'Simplest to read; the lull is only for building.', []],
+        ['same', 'No, the same rate as in a fight', 'What the game does now.', ['built']]] },
+    { id: 'q-4-glyphs', n: 'Q4', title: 'The glyph set under the new rule?',
+      text: '+1 to every element (burst and depth everywhere), +2 to one element (depth and a bigger share of R, the specialist pick), +R at about 15 % offered only beside a depth glyph, and Sigil as one of the elements “+2 to one” can name instead of its own weak glyph. Compare the cards above under both models.',
+      tries: [['Proposed set', { model: 'shared' }], ['Built four', { model: 'today' }]],
+      choices: [['set', 'The set above', '+1 all, +2 one (Sigil can be named), +R at 15 % beside a depth glyph.', ['rec']],
+        ['keep', 'Keep the built four', 'Deep pools, Deep (element), Wellspring +30 %, Spare sigil.', ['built']],
+        ['other', 'Something else', 'Say what in the note.', []]] },
+  ];
+  const answers = {}; let db = null; const askers = [];
+  const setSave = (t, w) => { $('saveState').textContent = t; $('saveState').classList.toggle('warn', !!w); };
+  const chains = {};
+  function put(id, body) {
+    answers[id] = Object.assign({}, answers[id], body);
+    paint();
+    if (!db) return;
+    setSave('Saving…');
+    const doc = { choice: answers[id].choice || null, note: answers[id].note || '', updatedAt: new Date().toISOString() };
+    const k = 'answers/' + id;
+    chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set(doc)).then(() => setSave('All saved')).catch(() => setSave('Couldn’t save that. Check your connection and try again.', true));
+  }
+  function noteBox(ta, id) {
+    let timer;
+    ta.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => put(id, { note: ta.value }), 900); });
+    ta.addEventListener('blur', () => { clearTimeout(timer); if ((answers[id]?.note || '') !== ta.value) put(id, { note: ta.value }); });
+  }
+  for (const q of QUESTIONS) {
+    const row = el('article', 'qrow'); row.id = q.id;
+    const rec = q.choices.find((c) => c[3].includes('rec')), built = q.choices.find((c) => c[3].includes('built'));
+    const qt = el('div', 'qtext', `<h3><span class="qn">${esc(q.n)}</span> ${esc(q.title)}</h3><p>${esc(q.text)}</p><p><b>Recommended:</b> ${esc(rec[1])}. <b>Built now:</b> ${esc(built ? built[1] : 'none')}.</p>`);
+    const tr = el('div');
+    for (const [label, o] of q.tries) { const b = el('button', 'try', 'Try: ' + esc(label)); b.type = 'button'; b.addEventListener('click', () => { Object.assign(P, o); update(true); $('sec-sim').scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth' }); }); tr.append(b); }
+    qt.append(tr, el('span', 'slug', 'answers/' + q.id));
+    row.append(qt);
+    const side = el('div', 'qside');
+    const ch = el('div', 'choices'); ch.setAttribute('role', 'group'); ch.setAttribute('aria-label', q.title);
+    for (const [v, l, sub, flags] of q.choices) {
+      const tags = (flags.includes('rec') ? '<span class="tag rec">Recommended</span>' : '') + (flags.includes('built') ? '<span class="tag built">Built now</span>' : '');
+      const b = el('button', null, `<b>${esc(l)}</b>${tags ? `<span class="tags">${tags}</span>` : ''}${sub ? `<small>${esc(sub)}</small>` : ''}`); b.type = 'button'; b.dataset.v = v; b.disabled = true;
+      b.addEventListener('click', () => put(q.id, { choice: answers[q.id]?.choice === v ? null : v }));
+      ch.append(b);
+    }
+    const ta = el('textarea'); ta.rows = 2; ta.id = 'ans-' + q.id; ta.placeholder = 'Note (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on ' + q.title);
+    noteBox(ta, q.id);
+    side.append(ch, el('p', 'hint', 'No answer means you accept the recommended option.'), ta);
+    row.append(side);
+    askers.push({ id: q.id, ch, ta });
+    $('questions').append(row);
+  }
+  const gen = $('general'); gen.disabled = true; noteBox(gen, 'general');
+  function paint() {
+    let a = 0;
+    for (const A of askers) {
+      const ans = answers[A.id] || {};
+      if (ans.choice) a++;
+      for (const b of A.ch.children) { b.setAttribute('aria-pressed', String(b.dataset.v === ans.choice)); b.disabled = !db; }
+      A.ta.disabled = !db;
+      if (document.activeElement !== A.ta && A.ta.value !== (ans.note || '')) A.ta.value = ans.note || '';
+    }
+    gen.disabled = !db;
+    if (document.activeElement !== gen && gen.value !== (answers.general?.note || '')) gen.value = answers.general?.note || '';
+    $('tally').innerHTML = `<b>${a}</b> of ${askers.length} answered`;
+  }
+
+  // ---------- go ----------
+  update(true);
+  if (REDUCED) { playing = false; pt = P.len; frame(); }
+  requestAnimationFrame((n) => { last = n; tick(n); });
+  setSave('Connecting to saved answers…');
+  paint();
+  (async () => {
+    try { db = await window.claude?.use?.('db'); } catch { db = null; }
+    if (!db) { setSave('Read-only here: answers need the page’s saved-answers store, which isn’t available in this view.', true); paint(); return; }
+    paint();
+    const timer = setTimeout(() => setSave('Saved answers are slow to load. You can still answer; changes save when the connection returns.', true), 10000);
+    db.collection('answers').onSnapshot((snap) => {
+      for (const d of snap.docs) { const x = d.data(); answers[d.id] = { choice: x.choice || null, note: x.note || '' }; }
+      if (!snap.metadata.fromCache) { clearTimeout(timer); if (!snap.metadata.hasPendingWrites) setSave('All saved'); }
+      paint();
+    }, () => { clearTimeout(timer); db = null; setSave('Saved answers are unavailable, so the page is read-only. Reload to try again.', true); paint(); });
+  })();
+})();
+</script>

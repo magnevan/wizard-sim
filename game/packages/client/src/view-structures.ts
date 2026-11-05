@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, guardCoatLook, guardSize, queueOf, selfTarget,
+  N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PU, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, guardCoatLook, guardSize, queueOf, selfTarget, stackOf,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
@@ -320,6 +320,11 @@ export class StructureView {
     const near = (ax: number, ay: number, bx: number, by: number, r = 0.7) => Math.abs(ax - bx) < r && Math.abs(ay - by) < r;
     const dismissed = new Set<number>();
     for (const e of w.events) if (e.kind === 'burst' && e.text === 'dismissed') { dismissed.add(e.who); skip.add(e); this.add('dismiss', t, 0.6, { who: e.who, x: e.x, y: e.y, seed: tick }); }
+    // Survive's Rally: the revive moment, and a ring that breaks
+    for (const e of w.events) {
+      if (e.kind === 'burst' && e.text === 'Rally') { skip.add(e); this.add('rally', t, 1.4, { who: e.who, n: e.src ?? -1, x: e.x, y: e.y, seed: tick }); }
+      if (e.kind === 'fizzle' && e.text === 'rally broken') this.add('rallybreak', t, 0.6, { who: e.who, n: e.src ?? -1, x: e.x, y: e.y, seed: tick });
+    }
     // weapon and guard moves (hands.ts, guards.ts): each its own short readable effect
     for (const e of w.events) {
       if (e.kind !== 'move' || !e.text) continue;
@@ -429,7 +434,7 @@ export class StructureView {
     this.scorch.draw(w, st);
     const off = OFF;
     if (!off.includes('walls')) this.walls(w, t, g, o, light);
-    if (w.run) this.altars(w, t, g, o, light);
+    if (w.run) { this.altars(w, t, g, o, light); this.rallies(w, t, g, o, bodies, light); }
     if (!off.includes('waves')) { this.waves(w, t, g, o, light); this.sparks(w, t, g, o, light); }
     if (!off.includes('devices')) this.devices(w, t, g, o, bodies, light);
     if (!off.includes('wizards')) this.onWizards(w, t, g, o, bodies, light);
@@ -513,6 +518,50 @@ export class StructureView {
       // the name, over everything
       const name = p.name.toUpperCase(), tw = name.length * 4 - 1, ty = y - 3 - H - 32;
       if (rise >= 1) X.text(o, name, x - Math.floor(tw / 2), ty, R[0], '#0a0810');
+    }
+  }
+
+  /**
+   * Survive's Rally, readable from across the arena: a downed wizard whose team holds Rally lies in a
+   * faint green ring the size of the rally range (stand in it). While someone rallies them, a second
+   * ring fills clockwise in the rescuer's colour, Life motes stream from the rescuer to them, the glow
+   * grows, and RALLY floats over them. The revive itself and a broken ring are effects (drawFx).
+   */
+  private rallies(w: World, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
+    const r = w.run!, b = w.bodies;
+    let anyRally = false;
+    for (let s = 0; s < MAX_SEATS; s++) if (w.seats.active[s] && stackOf(w, s, PU.rally)) anyRally = true;
+    if (!anyRally) return;
+    for (let d = 0; d < MAX_SEATS; d++) {
+      if (b.kind[d] !== KIND.wizard || !b.downed[d]) continue;
+      const v = bodies[d], x = v?.on ? v.x : gx(b.x[d]), y = v?.on ? v.y : gy(b.y[d]);
+      // where to stand: the rally range, a slow dashed ring
+      const R0 = PERKS.rallyRange * PPU, p = 0.5 + 0.5 * Math.sin(t * 3);
+      for (let k = 0; k < 16; k++) { const a0 = (k / 16) * TAU + t * 0.4; X.ring(g, x, y, R0, R0 * FY, LIFE[2], 0.35 + 0.15 * p, a0, a0 + TAU / 32); }
+      const by = r.rallyBy[d], f = clamp(r.rally[d] / T(PERKS.rallyTime), 0, 1);
+      if (by < 0 || f <= 0) continue;
+      // the ring sits outside the fallen body (which lies about 20 art px wide), so it reads past them
+      const team = X.TEAMS[by % 4], rr = b.r[d] * PPU + 12;
+      // the progress ring: dim track, the filled arc in the rescuer's colour, a bright head
+      X.ellipse(g, x, y, rr, rr * FY, LIFE[3] ?? LIFE[2], 0.15 + 0.2 * f);
+      for (let k = -1; k <= 1; k++) X.ring(g, x, y, rr + k, (rr + k) * FY, '#1a1726', 0.7);
+      X.ring(g, x, y, rr - 1, (rr - 1) * FY, LIFE[1], 0.9, -Math.PI / 2, -Math.PI / 2 + f * TAU);
+      X.ring(g, x, y, rr, rr * FY, team.light, 1, -Math.PI / 2, -Math.PI / 2 + f * TAU);
+      X.ring(g, x, y, rr + 1, (rr + 1) * FY, team.main, 1, -Math.PI / 2, -Math.PI / 2 + f * TAU);
+      const ha = -Math.PI / 2 + f * TAU;
+      X.rect(g, x + Math.cos(ha) * rr - 1, y + Math.sin(ha) * rr * FY - 1, 3, 3, '#ffffff');
+      // Life motes from the rescuer's hands to the fallen
+      const u = bodies[by];
+      if (u?.on && u.a) {
+        const hx = u.x + u.a.chest[0], hy = u.y + u.a.chest[1];
+        for (let j = 0; j < 6; j++) {
+          const q = mod(t * 1.4 + j / 6, 1), mx = lerp(hx, x, q), my = lerp(hy, y - 4, q) - Math.sin(q * Math.PI) * 10;
+          X.rect(o, mx - 1, my - 1, 2, 2, j % 2 ? LIFE[1] : LIFE[0]);
+        }
+      }
+      light(x, y - 4, 24 + 24 * f, LIFE[2], 0.15 + 0.3 * f);
+      const label = 'RALLY', tw = label.length * 4 - 1;
+      X.text(o, label, x - Math.floor(tw / 2), y - 34 - Math.round(p), team.light, '#0a0810');
     }
   }
 
@@ -1359,6 +1408,24 @@ export class StructureView {
         const q = seg(e, 0.2, 0.75), yy = d.y - q * 22;
         if (q > 0 && q < 1) { X.ring(o, d.x, yy, 7, 2.5, SV[0], 1); X.ring(o, d.x, yy + 1, 6, 2, SV[2], 0.8); for (let j = 0; j < 6; j++) X.px(o, d.x + (rand(j, Math.floor(t * 20)) - 0.5) * 14, yy - rand(j, 9) * 4, j % 2 ? '#ffffff' : SV[1]); }
         light(d.x, d.y, 40, '#d400ff', 0.7 * (1 - e / f.life));
+        return;
+      }
+      case 'rally': {
+        // the fallen get up: a white flash, a column of Life light, rings out along the floor, sparks rising
+        const v = bodies[f.who], cx = v?.on ? v.x : x, cy = v?.on ? v.y : y, q = e / f.life;
+        if (e < 0.08) X.ellipse(o, cx, cy - 10, 10, 16, '#ffffff');
+        const colA = 1 - seg(e, 0.15, 0.9);
+        // the column stands behind the wizard (and the RALLIED pop), on the ground layer
+        if (colA > 0) { X.rect(g, cx - 4, cy - 60, 9, 60, LIFE[2]); X.rect(g, cx - 2, cy - 60, 5, 60, LIFE[1]); X.rect(g, cx, cy - 60, 1, 60, '#ffffff'); }
+        if (e < 0.7) { K.gring(g, cx, cy, 6 + e * 60, LIFE[1], 1 - e / 0.7, 2); K.gring(g, cx, cy, 4 + e * 36, (f.n >= 0 ? X.TEAMS[f.n % 4].light : LIFE[0]), 0.9 - e / 0.7, 1); }
+        for (let j = 0; j < 16; j++) { if (rand(j, 3, sd) < q) continue; X.px(o, cx + (rand(j, 1, sd) - 0.5) * 22, cy - 4 - rand(j, 2, sd) * 10 - e * 40, j % 3 ? LIFE[1] : '#ffffff'); }
+        light(cx, cy - 10, 70, LIFE[2], 1 - q);
+        return;
+      }
+      case 'rallybreak': {
+        // the ring snaps: its pieces fly off in the rescuer's colour and fade
+        const v = bodies[f.who], cx = v?.on ? v.x : x, cy = v?.on ? v.y : y, q = e / f.life, col = f.n >= 0 ? X.TEAMS[f.n % 4].light : LIFE[1];
+        for (let j = 0; j < 10; j++) { const a = (j / 10) * TAU, rr = 10 + q * 14; if (rand(j, 2, sd) < q) continue; X.rect(o, cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * FY + q * q * 8, 2, 1, j % 2 ? col : '#4a4560'); }
         return;
       }
       case 'dblgone': {

@@ -95,6 +95,18 @@ export const BODY = {
   friction: 0.25, // fraction of the gap to the wanted velocity closed per tick
 };
 
+/** Survive's power-ups that carry numbers of their own (survive.ts). */
+export const PERKS = {
+  /** Rally: seconds standing by a downed ally to bring them back. Casting, a weapon move, blocking, a hit or being held starts it over. */
+  rallyTime: 3,
+  /** Rally: how close you must stand, centre to centre (two wizards touching are 0.9 apart). */
+  rallyRange: 1.6,
+  /** Rally: the share of max health the ally comes back with (the breather gives half). */
+  rallyHp: 0.4,
+  /** Echo: the free Double's health (a cast Double has structures.doubleHp). */
+  echoHp: 60,
+};
+
 /** The placeholder arena, in world units (a wizard is about 0.9 u wide). */
 export const ARENA = { w: 24, h: 16 } as const;
 /** Surface grid cell size. */

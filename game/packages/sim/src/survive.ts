@@ -14,15 +14,17 @@
  * Power-ups are per-seat stacks in `w.run` (world.ts PU); the sim reads them where they apply.
  */
 import { ARCH, ARCHETYPES } from './archetypes';
-import { STRUCT, T } from './config';
+import { canAct } from './cast';
+import { PERKS, STRUCT, T } from './config';
 import { EL, N_EL } from './elements';
 import { len } from './geom';
 import { BTN, type PlayerInput } from './input';
 import { nextInt } from './rng';
 import { snapshot } from './state';
+import { spawnDouble } from './structures';
 import {
-  ALTAR_SPOTS, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_PU, PHASE_ENC, PICK_LOG, PU, PU_CAP, SURVIVE_GATES, TEAM, WARD,
-  buffers, createWorld, joinSeat, spawnBody, stackOf, type World,
+  ALTAR_SPOTS, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_PU, PHASE, PHASE_ENC, PICK_LOG, PU, PU_CAP, SURVIVE_GATES, TEAM, WARD,
+  buffers, createWorld, freeDouble, joinSeat, spawnBody, stackOf, type World,
 } from './world';
 
 export const SURVIVE_TIMES = { firstLull: 10, lull: 6, breather: 3, pickMax: 30, stand: 0.75, spawnEvery: 0.45, portalStagger: 1, restartAfter: 1.5, charm: 12 };
@@ -119,6 +121,7 @@ export function grant(w: World, s: number, pu: number, el = 0): void {
   if (pu === PU.deepEl && el >= 1 && el <= N_EL) add(el, 2);
   if (pu === PU.spareSigil) add(EL.sigil, 1);
   if (pu === PU.charm) r.charm[s] = T(1); // the first mirror comes almost at once
+  if (pu === PU.echo) summonEcho(w, s);
   const n = r.logN[s];
   if (n < PICK_LOG) { r.log[s * PICK_LOG + n] = pu; r.logEl[s * PICK_LOG + n] = el; r.logN[s] = n + 1; }
 }
@@ -150,8 +153,69 @@ function tickPick(w: World): boolean {
   return waiting === 0 || r.state[0] >= T(SURVIVE_TIMES.pickMax);
 }
 
-/** Per-seat power-ups that tick: Slipstream's window, Charm's mirror ward. */
+/**
+ * Echo: a free Double appears beside you at once (so you can plan round it during the lull) and
+ * stands until the next wave is cleared. It is the cast Double in every way (it repeats your spells
+ * at half power for half their runes, and enemies want it more), except that it binds no Sigil rune.
+ * A Double you cast replaces it.
+ */
+function summonEcho(w: World, s: number): void {
+  if (w.bodies.kind[s] !== KIND.wizard) return;
+  const i = spawnDouble(w, s, w.bodies.face[s], PERKS.echoHp);
+  if (i >= 0) w.run!.echo[s] = i;
+}
+
+/** The wave is cleared: Echo's Doubles fade. */
+function endEchoes(w: World): void {
+  const r = w.run!;
+  for (let s = 0; s < MAX_SEATS; s++) {
+    if (freeDouble(w, s)) { w.bodies.kind[w.seats.double[s]] = KIND.none; w.seats.double[s] = -1; }
+    r.echo[s] = -1;
+  }
+}
+
+/** Seat `s` can rally right now: up, holding Rally, and with hands and mind free (not casting, swinging, blocking, hit or held). */
+function canRally(w: World, s: number): boolean {
+  const b = w.bodies, se = w.seats, tick = w.clock[0];
+  if (!se.active[s] || b.kind[s] !== KIND.wizard || b.downed[s] || !stackOf(w, s, PU.rally)) return false;
+  if (!canAct(w, s) || b.heldBy[s] >= 0) return false;
+  if (se.phase[s] !== PHASE.idle || se.handT[s] || se.specT[s] || se.guardT[s] || se.linkTo[s] >= 0) return false;
+  return !(b.lastHit[s] > 0 && b.lastHit[s] >= tick - 1); // a hit since the last tick
+}
+
+/**
+ * Rally: a wizard holding it who stands within PERKS.rallyRange of a downed ally, hands free, fills
+ * that ally's ring; after PERKS.rallyTime the ally gets up with PERKS.rallyHp of their health. Any
+ * break (a cast, a weapon move, a block, a hit, a grab, a stun, stepping away) empties the ring.
+ * Two rescuers don't fill it faster: one is enough, and the other can cover them.
+ */
+function tickRally(w: World): void {
+  const r = w.run!, b = w.bodies, tick = w.clock[0];
+  for (let d = 0; d < MAX_SEATS; d++) {
+    if (b.kind[d] !== KIND.wizard || !b.downed[d]) { r.rally[d] = 0; r.rallyBy[d] = -1; continue; }
+    let by = -1;
+    // whoever was already rallying keeps it while they can; otherwise the first able seat in range
+    const keep = r.rallyBy[d];
+    const inRange = (s: number) => len(b.x[s] - b.x[d], b.y[s] - b.y[d]) <= PERKS.rallyRange;
+    if (keep >= 0 && canRally(w, keep) && inRange(keep)) by = keep;
+    else for (let s = 0; s < MAX_SEATS && by < 0; s++) if (s !== d && b.team[s] === b.team[d] && canRally(w, s) && inRange(s)) by = s;
+    if (by < 0 || by !== keep) {
+      if (r.rally[d] > T(0.25) && keep >= 0) w.events.push({ tick, kind: 'fizzle', who: d, src: keep, x: b.x[d], y: b.y[d], text: 'rally broken' });
+      r.rally[d] = 0;
+    }
+    r.rallyBy[d] = by;
+    if (by < 0 || ++r.rally[d] < T(PERKS.rallyTime)) continue;
+    b.downed[d] = 0; b.hp[d] = b.maxHp[d] * PERKS.rallyHp;
+    b.burn[d] = b.frozen[d] = b.stun[d] = b.down[d] = 0; b.chill[d] = 0;
+    r.rally[d] = 0; r.rallyBy[d] = -1;
+    w.events.push({ tick, kind: 'burst', who: d, src: by, x: b.x[d], y: b.y[d], amount: 1.2, look: EL.life, text: 'Rally' });
+    w.events.push({ tick, kind: 'heal', who: d, src: by, x: b.x[d], y: b.y[d], amount: 0, look: EL.life, text: 'RALLIED' });
+  }
+}
+
+/** Per-seat power-ups that tick: Slipstream's window, Charm's mirror ward, Rally. */
 function tickPerks(w: World): void {
+  tickRally(w);
   const r = w.run!, s = w.seats, b = w.bodies;
   for (let i = 0; i < MAX_SEATS; i++) {
     if (r.dodge[i] > 0) r.dodge[i]--;
@@ -228,6 +292,7 @@ export function tickSurvive(w: World): void {
     if (!pending && !enemiesAlive(w)) {
       st[0] = PHASE_ENC.breather; st[2] = T(SURVIVE_TIMES.breather); st[3]++; st[1]++;
       for (let p = 0; p < MAX_PORTALS; p++) e.total[p] = 0;
+      endEchoes(w);
       w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: 'Cleared' });
     }
     return;

@@ -8,7 +8,7 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
-import { ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, elementId, elementName, runeMax, specOf, type World } from '@wizard-sim/sim';
+import { ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, elementId, elementName, runeMax, specOf, type World } from '@wizard-sim/sim';
 import { badge, perkOf } from './art/perks';
 import * as X from './art/px';
 import { mod } from './art/util';
@@ -170,6 +170,13 @@ export class Hud {
       }
     } else if (st[0] === PHASE_ENC.over) { line = 'RUN OVER'; sub = `WAVES SURVIVED: ${w.run ? w.run.state[1] : st[3]}`; }
     else { line = `BREATHER ${secs}S`; sub = `${st[3]} CLEARED`; }
+    // Rally in progress: who is bringing whom back, and how far along
+    if (w.run && st[0] !== PHASE_ENC.over) {
+      for (let d = 0; d < MAX_SEATS; d++) {
+        const by = w.run.rallyBy[d];
+        if (by >= 0 && w.run.rally[d] > 0) sub += `${sub ? '  ' : ''}P${by + 1} RALLYING P${d + 1} ${Math.floor((100 * w.run.rally[d]) / T(PERKS.rallyTime))}%`;
+      }
+    }
     const clean = (str: string) => str.toUpperCase().replace(/[^A-Z0-9 +\-/.!×:%]/g, ' ');
     line = clean(line); sub = clean(sub);
     const wd = Math.max(line.length, sub.length) * 4 + 10, x = Math.round(TW / 2 - wd / 2);

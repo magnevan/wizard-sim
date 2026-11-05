@@ -437,3 +437,13 @@ The user chose the Capacitor and Lance (q-prism = lance) and kept the new Prism 
   - Golden hash `7184435b` → `a258615b` (new bless state).
 - **Guard ties (the user: "Didn't we decide lead is based on the type of rune, not the count?"):** yes. A strong element leads by type. Count only matters among Water, Fire and Cold, and ties go Water, Fire, Cold, the same as spells. The tie note in `explorations/2026-11-05-guards-round-2.md` predates that and is superseded. No change.
 - **Correction:** the remote-prediction fixes (world-space aim guesses, late remote spells caught up) were already built in 3c28950. The 2026-11-04 "Not built yet" line above is superseded by the entry "Smoother remote players online".
+
+## 2026-11-05: Survive gets Rally and Echo
+
+The user approved building both, Rally first (`explorations/2026-11-05-survive-mode.md`, question 5). Claude's calls, all in `PERKS` in `config.ts` and on the tuning panel:
+- **Rally** (once per seat): stand within 1.6 u of a downed ally for 3 s and they get up with 40 % health (the breather gives 50 %). It works in any phase but the run's end.
+  - **What breaks it:** casting, a weapon move, blocking, the Healing link, a hit, a grab, a stun or knock-down, or stepping out of range. Any break empties the ring. Queueing runes doesn't break it, so you can get up swinging.
+  - **Rescuers:** two rescuers don't fill the ring faster, so the second one covers the first.
+  - **What a partner sees:** a dashed green ring round the fallen ally, the size of the range. While a rally runs, a ring fills in the rescuer's colour, Life motes flow between them, RALLY floats overhead, and the wave strip reads "P1 RALLYING P2 66%". The revive is a column of Life light and a RALLIED pop. A broken ring snaps.
+- **Echo** (a one-shot that can be picked again): a free Double appears at once, so you can plan round it in the lull, and fades when the next wave is cleared. It is the cast Double in every way (60 HP, repeats your spells at half power for half their runes, and enemies want it more), except that it binds no Sigil rune. A Double you cast replaces it. The Double's spawn is now `spawnDouble` in `structures.ts`.
+- Golden hash unchanged (`7184435b`): all the new state is in `world.run`, which only Survive has.

@@ -14,6 +14,7 @@
  *   ?scale=N      force the integer pixel scale
  *   ?debug=0      hide the debug line (tick, hash); the backquote key toggles it
  *   ?renderer=webgpu   try WebGPU instead of WebGL
+ *   ?scene=rally  with ?room=survive and a headless loop: a Rally in progress, nobody pressing anything (demo.ts)
  *   ?pauseAt=N    pause the sim at tick N (like P in the tuning panel; cosmetic animation keeps running)
  *   ?tune=1       open the tuning panel at boot (F1 or the Tune button toggles it; tune-panel.ts)
  *   ?net=bc       online co-op between tabs of this page on one machine (BroadcastChannel), for testing
@@ -25,7 +26,7 @@ import {
   DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, hashWorld, hex, newBotMemory, runReplay, scriptedInput, scriptedReplay, step,
   type PlayerInput, type Room,
 } from '@wizard-sim/sim';
-import { demoInput, parseDemo } from './demo';
+import { demoInput, parseDemo, rallyScene } from './demo';
 import { PadSeats } from './gamepad';
 import { KeyboardMouse } from './input';
 import { TunePanel } from './tune-panel';
@@ -106,6 +107,9 @@ async function boot(): Promise<void> {
   // the saved tuning goes in before the world exists, so spawn-time numbers (hp, radii) use it too
   loadSaved();
   const world = createWorld(7, players, { room });
+  // ?scene=rally (Survive, headless): a rally in progress, for screenshots (demo.ts)
+  const scene = headless && params.get('scene') === 'rally' && !!world.run;
+  if (scene) rallyScene(world);
   const bots = [newBotMemory(), newBotMemory()];
   const pads = new PadSeats();
   const keyboard = new KeyboardMouse(app.canvas, view.camera);
@@ -116,7 +120,7 @@ async function boot(): Promise<void> {
   const inputsFor = (tick: number): PlayerInput[] => {
     const out: PlayerInput[] = [];
     if (headless) {
-      for (let p = 0; p < MAX_SEATS; p++) out.push(p >= players ? NO_INPUT : autoplay ? botInput(world, p, bots[p]) : demo[0] ? (demo[p] ? demoInput(world, tick, p, demo[p]!) : NO_INPUT) : scriptedInput(tick, p));
+      for (let p = 0; p < MAX_SEATS; p++) out.push(p >= players || scene ? NO_INPUT : autoplay ? botInput(world, p, bots[p]) : demo[0] ? (demo[p] ? demoInput(world, tick, p, demo[p]!) : NO_INPUT) : scriptedInput(tick, p));
       return out;
     }
     pads.poll((seat) => world.seats.active[seat] === 1 || (ally && seat === 1));

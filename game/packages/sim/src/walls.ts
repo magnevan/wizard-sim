@@ -12,7 +12,7 @@ import { WALL } from './compile';
 import { DAMAGE, STRUCT } from './config';
 import { EL, N_EL, elementName } from './elements';
 import { len } from './geom';
-import { DEVICE, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, TERRAIN, WARD, type World } from './world';
+import { DEVICE, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, TERRAIN, WARD, freeDouble, type World } from './world';
 
 /** Closest point on segment (x1,y1)-(x2,y2) to (px,py): returns [distance, t in 0..1]. */
 export function segDist(px: number, py: number, x1: number, y1: number, x2: number, y2: number): [number, number] {
@@ -130,7 +130,7 @@ export function boundSigil(w: World, seat: number): number {
   if (s.aura[seat] > 0) n++;
   if (s.motes[seat] > 0) n++;
   if (s.weapon[seat] || s.wand[seat]) n++;
-  if (s.double[seat] >= 0 && w.bodies.kind[s.double[seat]] === KIND.double) n++;
+  if (s.double[seat] >= 0 && w.bodies.kind[s.double[seat]] === KIND.double && !freeDouble(w, seat)) n++; // Echo's is free
   return n;
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  ARCH, ARCHETYPES, ARENA, BTN, CELL, DEVICE, EL, KIND, SURF, SURVIVE_ARENA, SURVIVE_GATES, scriptedInput, NO_INPUT, PHASE_ENC, PU, RUNES, STRUCT, SURVIVE_ROCK, SURVIVE_TIMES, TEAM, TERRAIN, WALL, WARD,
+  ARCH, ARCHETYPES, ARENA, BTN, CELL, DEVICE, EL, KIND, PERKS, SURF, SURVIVE_ARENA, SURVIVE_GATES, T, scriptedInput, NO_INPUT, PHASE_ENC, PU, RUNES, STRUCT, SURVIVE_ROCK, SURVIVE_TIMES, TEAM, TERRAIN, WALL, WARD,
   botInput, buffers, createWorld, elementId, grant, hashWorld, newBotMemory, quantize, replaceWorld, restore, runeMax, snapshot, spawnBody, step,
   type PlayerInput, type World,
 } from '../src';
@@ -357,6 +357,119 @@ describe('survive: power-ups', () => {
     const paid = run(false), free = run(true);
     expect(free.hp).toBeLessThan(paid.hp); // it never stalls on an empty pool
     expect(free.fire).toBeCloseTo(RUNES.regen * 300 / 60, 1);
+  });
+
+  /** P2 down beside P1 in a lull that never ends (downed wizards stay down until a breather). */
+  const fallen = () => {
+    const q = quiet(2);
+    q.w.enc.state[0] = PHASE_ENC.lull; q.w.enc.state[2] = 1e6;
+    q.w.bodies.hp[1] = 0; q.w.bodies.downed[1] = 1;
+    return q;
+  };
+
+  it('Rally: stand by a downed ally for rallyTime and they get up mid-wave', () => {
+    const plain = fallen();
+    plain.d.tick({}, T(PERKS.rallyTime) + 30);
+    expect(plain.w.bodies.downed[1]).toBe(1); // without Rally, standing there does nothing
+    const { w, d } = fallen(), r = w.run!;
+    grant(w, 0, PU.rally);
+    d.tick({}, T(PERKS.rallyTime) - 2);
+    expect(w.bodies.downed[1]).toBe(1);
+    expect(r.rallyBy[1]).toBe(0);
+    expect(r.rally[1]).toBe(T(PERKS.rallyTime) - 2);
+    d.tick({}, 3);
+    expect(w.bodies.downed[1]).toBe(0);
+    expect(w.bodies.hp[1]).toBeCloseTo(w.bodies.maxHp[1] * PERKS.rallyHp, 6);
+    expect(r.rally[1]).toBe(0);
+    expect(r.rallyBy[1]).toBe(-1);
+  });
+
+  it('Rally: too far away, nothing; stepping away empties the ring', () => {
+    const { w, d } = fallen(), r = w.run!;
+    grant(w, 0, PU.rally);
+    w.bodies.x[0] = -PERKS.rallyRange; // 1.5 + 1.6 from P2
+    d.tick({}, 30);
+    expect(r.rally[1]).toBe(0);
+    w.bodies.x[0] = 0;
+    d.tick({}, 60);
+    expect(r.rally[1]).toBeGreaterThan(50);
+    w.bodies.x[0] = -PERKS.rallyRange;
+    d.tick({}, 2);
+    expect(r.rally[1]).toBe(0);
+  });
+
+  it('Rally: casting or taking a hit starts it over, but queueing runes does not', () => {
+    const { w, d } = fallen(), r = w.run!;
+    grant(w, 0, PU.rally);
+    d.tick({}, 60);
+    d.queue('fire', 'fire'); // preparing the next spell is fine
+    expect(r.rally[1]).toBe(62);
+    d.aimAt(5, 0).tick({ buttons: BTN.force });
+    expect(r.rally[1]).toBe(0); // the cast broke it
+    d.tick({}, 60); // wind-up and recovery, then it fills again
+    expect(r.rally[1]).toBeGreaterThan(10);
+    w.bodies.lastHit[0] = w.clock[0]; // a goblin's blow lands
+    d.tick({}, 2);
+    expect(r.rally[1]).toBeLessThanOrEqual(1);
+    expect(w.bodies.downed[1]).toBe(1);
+  });
+
+  it('Rally: a goblin hitting the rescuer keeps the ally down', () => {
+    const { w, d } = fallen();
+    grant(w, 0, PU.rally);
+    w.bodies.hp[0] = w.bodies.maxHp[0] = 1e6; // the rescuer outlasts it
+    foe(w, ARCH.swarmer, -1, 0);
+    d.tick({}, T(PERKS.rallyTime) * 3);
+    expect(w.bodies.hp[0]).toBeLessThan(1e6); // it was hit
+    expect(w.bodies.downed[1]).toBe(1);
+  });
+
+  it('Echo: a free Double stands with you, binds no Sigil rune, draws enemies, and fades when the wave is cleared', () => {
+    const w = createWorld(3, 1, { room: 'survive' });
+    const d = new Driver(w), s = w.seats, b = w.bodies;
+    grant(w, 0, PU.echo);
+    const dbl = s.double[0];
+    expect(dbl).toBeGreaterThanOrEqual(4);
+    expect(b.kind[dbl]).toBe(KIND.double);
+    expect(b.hp[dbl]).toBe(PERKS.echoHp);
+    expect(w.run!.echo[0]).toBe(dbl);
+    // every Sigil rune is still free: three devices stand beside it
+    for (let k = 0; k < RUNES.max.sigil; k++) d.aimAt(3, -3 + k * 1.5).queue('sigil', 'fire').cast(BTN.area, 30, 30);
+    expect(Array.from(w.devices.type).filter((t) => t === DEVICE.glyph).length).toBe(RUNES.max.sigil);
+    expect(b.kind[dbl]).toBe(KIND.double); // and recalling the oldest never took the Double
+    // through the lull into the wave; enemies go for the Double
+    d.tick({}, 60 * SURVIVE_TIMES.firstLull + 5);
+    expect(w.enc.state[0]).toBe(PHASE_ENC.wave);
+    const g = foe(w, ARCH.swarmer, b.x[dbl] + 3, b.y[dbl]);
+    d.tick({}, 30);
+    expect(b.target[g]).toBe(dbl);
+    expect(b.kind[dbl]).toBe(KIND.double);
+    w.enc.left.fill(0);
+    killAll(w);
+    d.tick({}, 2);
+    expect(w.enc.state[0]).toBe(PHASE_ENC.breather);
+    expect(b.kind[dbl]).not.toBe(KIND.double);
+    expect(s.double[0]).toBe(-1);
+    expect(w.run!.echo[0]).toBe(-1);
+  });
+
+  it('Echo: a Double you cast replaces it (and binds a rune as usual)', () => {
+    const { w, d } = quiet();
+    grant(w, 0, PU.echo);
+    const echo = w.seats.double[0];
+    d.queue('sigil').cast(BTN.self, 1, 30);
+    expect(w.seats.double[0]).toBeGreaterThanOrEqual(4);
+    expect(w.bodies.kind[w.seats.double[0]]).toBe(KIND.double);
+    expect(w.run!.echo[0]).toBe(-1);
+    expect(w.bodies.kind[echo] === KIND.double && echo !== w.seats.double[0]).toBe(false);
+  });
+
+  it('Echo can be picked again (a one-shot), Rally only once', () => {
+    const { w } = quiet();
+    grant(w, 0, PU.echo); grant(w, 0, PU.echo);
+    grant(w, 0, PU.rally); grant(w, 0, PU.rally);
+    expect(w.run!.stacks[PU.echo]).toBe(2);
+    expect(w.run!.stacks[PU.rally]).toBe(1);
   });
 
   it('caps: a unique power-up is not granted twice', () => {

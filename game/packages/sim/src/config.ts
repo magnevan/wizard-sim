@@ -195,6 +195,28 @@ export const ARMS = {
   rimeChill: 1,
   /** Guard damage multipliers: the Spark ring is the weakest block; Water douses the Ember targe. */
   sparkBlock: 1.5, emberWater: 2,
+  /** A Water shot blocked by the Ember targe counts as at least this much damage (before emberWater). */
+  emberDouseMin: 10,
+  /** A Tide shield's block shoves a melee attacker back this hard. */
+  tideShove: 8,
+  // ---- Parry effects ----
+  /** Bulwark: bashes down an attacker within bashRange, knocking it back at bashKnock. */
+  bashRange: 3, bashKnock: 9,
+  /** Ember: a burst of flame in a cone this long and this wide (half, turns). */
+  flameBurstRange: 2.5, flameBurstHalf: 0.16,
+  /** Rime: freezes a melee attacker this long (s). */
+  rimeFreeze: 1.5,
+  /** Spark: a discharge that jumps to this many enemies within dischargeRange, at this power each. */
+  dischargeJumps: 3, dischargeRange: 4, dischargePower: 0.8,
+  /** Tide: a wave in a cone this long and wide (half, turns) that shoves at tideWaveKnock. */
+  tideWaveRange: 3.2, tideWaveHalf: 0.2, tideWaveKnock: 10,
+  // ---- Retreat effects ----
+  /** Surge (Tide): the wave left in front, its cone (half, turns) and its shove. */
+  surgeReach: 3, surgeHalf: 0.18, surgeKnock: 9,
+  /** Ice slide (Rime): push per unit of slide (ice barely slows you, so it needs far less than plain floor). */
+  iceSlidePush: 1.8,
+  /** Blink (Spark): the radius of the spark it leaves where you stood. */
+  sparkRadius: 0.75,
   /** Mixing (explorations/2026-11-05-guards-round-2.md): a mixed-in element brings this share of its resistance row per rune (2 runes: all of it), and its coat bites at this power. */
   mixShare: 0.5, coatScale: 0.5,
   /** Each rune in a guard past the first adds this much guard HP and Retreat distance. */

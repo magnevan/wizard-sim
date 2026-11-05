@@ -318,32 +318,32 @@ function parryEffect(w: World, i: number, src: number, melee: boolean): void {
   const away = (j: number): [number, number] => { const dx = b.x[j] - b.x[i], dy = b.y[j] - b.y[i], d = len(dx, dy) || 1; return [dx / d, dy / d]; };
   switch (g) {
     case GUARD.bulwark: // bashes the attacker down
-      if (foe && len(b.x[src] - b.x[i], b.y[src] - b.y[i]) < 3) { const [ux, uy] = away(src); b.down[src] = Math.max(b.down[src], T(STATUS.knockdown * 2)); b.kx[src] += ux * 9; b.ky[src] += uy * 9; }
+      if (foe && len(b.x[src] - b.x[i], b.y[src] - b.y[i]) < ARMS.bashRange) { const [ux, uy] = away(src); b.down[src] = Math.max(b.down[src], T(STATUS.knockdown * 2)); b.kx[src] += ux * ARMS.bashKnock; b.ky[src] += uy * ARMS.bashKnock; }
       break;
     case GUARD.ember: // a short burst of flame forward
-      cone(w, i, 2.5, 0.16, (j, ux, uy) => { hit(w, j, one(EL.fire), hitOpts(one(EL.fire), i, 1, ux, uy)); });
+      cone(w, i, ARMS.flameBurstRange, ARMS.flameBurstHalf, (j, ux, uy) => { hit(w, j, one(EL.fire), hitOpts(one(EL.fire), i, 1, ux, uy)); });
       move(w, i, 'flameburst');
       break;
     case GUARD.rime: // freezes a melee attacker for a moment
-      if (foe && melee) { b.frozen[src] = Math.max(b.frozen[src], T(1.5)); w.events.push({ tick: w.clock[0], kind: 'freeze', who: src, x: b.x[src], y: b.y[src] }); }
+      if (foe && melee) { b.frozen[src] = Math.max(b.frozen[src], T(ARMS.rimeFreeze)); w.events.push({ tick: w.clock[0], kind: 'freeze', who: src, x: b.x[src], y: b.y[src] }); }
       break;
     case GUARD.spark: { // discharges a chain arc to the nearest enemies, stunning them
       const done: number[] = [i];
-      for (let k = 0; k < 3; k++) {
-        let best = -1, bd = 4;
+      for (let k = 0; k < ARMS.dischargeJumps; k++) {
+        let best = -1, bd = ARMS.dischargeRange;
         for (let j = 0; j < b.kind.length; j++) {
           if (!alive(w, j) || done.includes(j) || b.team[j] === b.team[i]) continue;
           const d = len(b.x[j] - b.x[i], b.y[j] - b.y[i]) - b.r[j];
           if (d < bd) { bd = d; best = j; }
         }
         if (best < 0) break;
-        zap(w, i, best, one(EL.lightning), 0.8);
+        zap(w, i, best, one(EL.lightning), ARMS.dischargePower);
         done.push(best);
       }
       break;
     }
     case GUARD.tide: // a wave that shoves everything in front
-      cone(w, i, 3.2, 0.2, (j, ux, uy) => { hit(w, j, one(EL.water), hitOpts(one(EL.water), i, 1, ux, uy)); b.kx[j] += ux * 10; b.ky[j] += uy * 10; });
+      cone(w, i, ARMS.tideWaveRange, ARMS.tideWaveHalf, (j, ux, uy) => { hit(w, j, one(EL.water), hitOpts(one(EL.water), i, 1, ux, uy)); b.kx[j] += ux * ARMS.tideWaveKnock; b.ky[j] += uy * ARMS.tideWaveKnock; });
       move(w, i, 'tidewave');
       break;
     case GUARD.leaf: healAround(w, i, ARMS.leafParryHeal, true, true); break;
@@ -388,7 +388,7 @@ export function guardMissile(w: World, i: number, j: number, ux: number, uy: num
     return 2;
   }
   let dmg = payloadDamage(m.els, j, m.scale[j]);
-  if (g === GUARD.ember && m.els[j * N_EL + EL.water - 1]) dmg = Math.max(dmg, 10) * ARMS.emberWater; // Water douses it
+  if (g === GUARD.ember && m.els[j * N_EL + EL.water - 1]) dmg = Math.max(dmg, ARMS.emberDouseMin) * ARMS.emberWater; // Water douses it
   damageGuard(w, i, dmg);
   move(w, i, 'block');
   return 1;
@@ -410,7 +410,7 @@ export function guardMelee(w: World, t: number, src: number, dmg: number, dx: nu
   if (g === GUARD.prism) store(w, t, dmg); // the blow still lands, and the Prism keeps its force
   if (foe && g === GUARD.ember) { b.burn[src] = Math.max(b.burn[src], T(STATUS.burn)); b.burnSrc[src] = t; } // thorns
   if (foe && g === GUARD.rime) { b.chill[src] = Math.min(STATUS.chillMax, b.chill[src] + ARMS.rimeChill); w.events.push({ tick: w.clock[0], kind: 'move', who: t, x: b.x[src], y: b.y[src], text: 'chill', look: EL.cold }); } // frost bites back
-  if (foe && g === GUARD.tide) { applyHit(w, src, one(EL.water).counts, 0, { scale: 1, heal: false, scald: false, freeze: false, source: t, dirX: -dx, dirY: -dy, push: 0 }); b.kx[src] -= dx * 8; b.ky[src] -= dy * 8; }
+  if (foe && g === GUARD.tide) { applyHit(w, src, one(EL.water).counts, 0, { scale: 1, heal: false, scald: false, freeze: false, source: t, dirX: -dx, dirY: -dy, push: 0 }); b.kx[src] -= dx * ARMS.tideShove; b.ky[src] -= dy * ARMS.tideShove; }
   if (g === GUARD.bulwark) { damageGuard(w, t, dmg); move(w, t, 'block'); return 0; }
   return land;
 }
@@ -488,7 +488,7 @@ export function guardRetreat(w: World, i: number, face: number): void {
       const d = (ARMS.iceSlide * k);
       floorLine(w, x, y, x + bx * (d + 0.5), y + by * (d + 0.5), EL.cold);
       // on ice, knockback decays by 0.985 a tick, so the slide needs far less push
-      b.kx[i] += bx * d * 1.8; b.ky[i] += by * d * 1.8; // most of it in the first 0.7 s; the strip's end stops you
+      b.kx[i] += bx * d * ARMS.iceSlidePush; b.ky[i] += by * d * ARMS.iceSlidePush; // most of it in the first 0.7 s; the strip's end stops you
       move(w, i, 'iceslide', x + bx * d, y + by * d);
       return;
     }
@@ -496,7 +496,7 @@ export function guardRetreat(w: World, i: number, face: number): void {
       let nx = x + bx * (ARMS.blink * k), ny = y + by * (ARMS.blink * k);
       for (let n = 0; n < 16 && !free(w, i, nx, ny); n++) { nx -= bx * ((ARMS.blink * k) / 16); ny -= by * ((ARMS.blink * k) / 16); }
       if (!free(w, i, nx, ny)) { nx = x; ny = y; }
-      spawnZone(w, ZONE.spark, i, one(EL.lightning), x, y, 0.75, T(ARMS.spark), 0);
+      spawnZone(w, ZONE.spark, i, one(EL.lightning), x, y, ARMS.sparkRadius, T(ARMS.spark), 0);
       w.events.push({ tick: w.clock[0], kind: 'blink', who: i, x, y, x2: nx, y2: ny });
       move(w, i, 'spark', nx, ny);
       b.x[i] = nx; b.y[i] = ny;
@@ -505,7 +505,7 @@ export function guardRetreat(w: World, i: number, face: number): void {
     }
     case GUARD.tide: {
       push((ARMS.surge * k));
-      cone(w, i, 3, 0.18, (j, ux, uy) => { hit(w, j, one(EL.water), hitOpts(one(EL.water), i, 1, ux, uy)); b.kx[j] += ux * 9; b.ky[j] += uy * 9; });
+      cone(w, i, ARMS.surgeReach, ARMS.surgeHalf, (j, ux, uy) => { hit(w, j, one(EL.water), hitOpts(one(EL.water), i, 1, ux, uy)); b.kx[j] += ux * ARMS.surgeKnock; b.ky[j] += uy * ARMS.surgeKnock; });
       floorDisc(w, x, y, 0.8, EL.water);
       move(w, i, 'surge', x + bx * (ARMS.surge * k), y + by * (ARMS.surge * k));
       return;

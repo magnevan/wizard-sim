@@ -46,11 +46,26 @@ export interface RigState {
   flash: number;
   /** Brute arm poses (-1 = none) and the archer's draw. */
   punch: number; smash: number; draw: number;
+  // Deaths only (art/deaths.ts paints these states uncached each frame; the view's cached states
+  // never set them, so the frame cache key leaves them out):
+  /** Tint every colour toward `tint` by tintK (a char, a scald flush). */
+  tint: string | null; tintK: number;
+  /** Outline colour (embers round a charred body); null = the usual dark outline. */
+  outline: string | null;
+  /** Eye colour (null = the usual), or eyes shut (a blink). */
+  eyeCol: string | null; eyesShut: number;
+  /** Which way a fall topples on screen: -1 / 1, or 0 to go by the seed. */
+  fallSide: number;
+  /** Hit flash colour (null = white). */
+  flashCol: string | null;
+  /** Opacity, ordered-dithered (1 = solid). */
+  alpha: number;
 }
 
 export const newRigState = (): RigState => ({
   kind: 'goblin', pal: 0, variant: 0, seed: 0, face: 0, spd: 0, ph: 0, idle: 0, vx: 0, vy: 0, prep: 0, cast: 0, sq: 0, dead: 0,
   burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0,
+  tint: null, tintK: 0, outline: null, eyeCol: null, eyesShut: 0, fallSide: 0, flashCol: null, alpha: 1,
 });
 
 /** Anchor points relative to the feet, in art px: where effects attach. */
@@ -90,6 +105,7 @@ function tinter(s: RigState): (col: string) => string {
     if (s.burn > 0) col = X.mix(col, '#3a1410', 0.4 * s.burn);
     if (s.wet > 0) col = X.mix(col, '#14284e', 0.42 * s.wet); // wet: darker and bluer
     if (s.chill > 0) col = X.mix(col, '#9cdcff', 0.42 * s.chill);
+    if (s.tint) col = X.mix(col, s.tint, s.tintK);
     return col;
   };
 }
@@ -97,7 +113,7 @@ function frame(s: RigState): { cs: number; sn: number; kx: number; ku: number; P
   const cs = Math.cos(s.face), sn = Math.sin(s.face), fall = s.dead;
   const kx = (1 + 0.24 * s.sq) * (1 + 0.35 * fall), ku = (1 - 0.24 * s.sq) * (1 - 0.6 * fall);
   // falling over topples the body sideways on screen (top rows shift most)
-  const side = s.seed & 1 ? 1 : -1, tip = fall * fall * 0.85 * side;
+  const side = s.fallSide || (s.seed & 1 ? 1 : -1), tip = fall * fall * 0.85 * side;
   const P: Proj = (f, r, u) => {
     const fx = f * cs - r * sn, fy = f * sn + r * cs, uu = u * CU;
     return [AX + fx * kx + uu * tip, AY + fy * FY - uu * ku, fy];
@@ -313,7 +329,7 @@ function drawGoblin(s: RigState, archer: boolean): void {
   if (sn > -0.45) {
     const nose = P(4.1, 0, 11.3 + bob); X.px(sc, nose[0], nose[1], T(pal.dark));
     const m = P(3.4, 0, 9.9 + bob); X.px(sc, m[0], m[1], '#2a1a1a'); if (sn > 0.3) X.px(sc, m[0] + 1, m[1], '#f0f0e0');
-    for (const r of [-1.4, 1.4]) if (visible(sn, cs, 3, r)) { const e = P(3.1, r, 12.2 + bob); X.px(dead > 0.3 ? sc : se, e[0], e[1], dead > 0.3 ? '#1a1420' : '#ffe040'); }
+    for (const r of [-1.4, 1.4]) if (visible(sn, cs, 3, r)) { const e = P(3.1, r, 12.2 + bob), shut = dead > 0.3 || s.eyesShut; X.px(shut ? sc : se, e[0], e[1], shut ? '#1a1420' : s.eyeCol ?? '#ffe040'); }
   }
   ear(-earBack);
   if (s.variant === 3) {
@@ -380,7 +396,7 @@ function drawBrute(s: RigState): void {
     for (const r of [-1.3, 1.3]) if (visible(sn, cs, 5, r)) {
       const e = P(5.6, r, 21.6 + bob);
       if (dead) for (const [dx, dy] of [[-1, -1], [1, 1], [1, -1], [-1, 1], [0, 0]]) X.px(sc, e[0] + dx, e[1] + dy, '#1a1420');
-      else { X.px(se, e[0], e[1], '#ffe8a0'); X.px(sc, e[0], e[1] - 1, '#2a1a30'); }
+      else { X.px(s.eyesShut ? sc : se, e[0], e[1], s.eyesShut ? '#1a1420' : s.eyeCol ?? '#ffe8a0'); X.px(sc, e[0], e[1] - 1, '#2a1a30'); }
     }
     for (const r of [-1.5, 1.5]) if (visible(sn, cs, 5, r)) { const k = P(6, r, 19.2 + bob); X.px(sc, k[0], k[1], '#fffaf0'); X.px(sc, k[0], k[1] - 1, '#fffaf0'); }
   }
@@ -472,26 +488,78 @@ function rime(s: RigState): void {
   }
   for (const [x, y, col] of pts) X.px(sc, BX + x, BY + y, col);
 }
-/** Frozen: the body is rimed, tinted icy and set inside a faceted block that grows from the feet. */
-function iceBlock(s: RigState): void {
-  const H = Math.round((HEIGHT[s.kind] * 0.8 + 2) * s.frozen), w = WIDTH[s.kind] + 2, x0 = AX - w, x1 = AX + w, y1 = AY + 3, y0 = y1 - H, TD = 6;
-  if (H < 2) return;
-  onBody(sc, (c) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const r = rand(x, y, s.seed + 13); if (r < 0.2) X.px(c, x, y, r < 0.07 ? '#ffffff' : '#c8f0ff'); } });
-  sc.save(); sc.beginPath(); sc.rect(x0, y0, x1 - x0 + 1, H + 1); sc.clip();
-  sc.globalCompositeOperation = 'source-atop'; sc.globalAlpha = 0.4; X.fs(sc, '#9fe8ff'); sc.fillRect(x0, y0, x1 - x0 + 1, H + 1);
-  sc.globalAlpha = 1;
-  // the block itself, behind the body
-  sc.globalCompositeOperation = 'destination-over';
-  X.rect(sc, x0, y0, x1 - x0 + 1, H + 1, '#3a96cc');
-  X.rect(sc, x0, y0, Math.round((x1 - x0) * 0.4), H + 1, '#7ad0f0');
-  sc.restore(); sc._fs = null;
-  sc.globalCompositeOperation = 'source-over';
-  X.rect(sc, x0 - 1, y0, 1, H + 2, '#2a78b8'); X.rect(sc, x1 + 1, y0, 1, H + 2, '#2a78b8'); X.rect(sc, x0 - 1, y1 + 1, x1 - x0 + 3, 1, '#1e5a96');
-  // the block's top face: a ground square at the 3/4 camera; clear ice, so the head shows through
-  sc.globalAlpha = 0.72; X.rect(sc, x0, y0 - TD, x1 - x0 + 1, TD, '#bfeefc'); sc.globalAlpha = 1;
-  X.rect(sc, x0 + 1, y0 - TD - 1, x1 - x0 - 1, 1, '#ffffff');
-  X.rect(sc, x0, y0 - 1, x1 - x0 + 1, 1, '#e8ffff'); X.rect(sc, x0 + 1, y0 - TD, 3, 2, '#ffffff'); X.px(sc, x1 - 1, y0 - 3, '#8fd8f0'); X.rect(sc, x1 - 3, y0 - TD + 1, 3, TD - 2, '#9fdcf2');
-  X.line(sc, x0 + 1, y0 + 2, x0 + 4, y0 + 5, '#ffffff'); X.px(sc, x1 - 2, y1 - 3, '#ffffff');
+/**
+ * Body-shaped ice (Spell VFX gallery, pass 6; the user's pick over the old cube). A pure function
+ * of an alpha mask, so it serves the rig and the frozen shatter alike: give it the silhouette
+ * (solid(x, y)), a colour reader (col(x, y) -> '#rrggbb'), the box size, how far the ice has grown
+ * (0..1, from the feet up) and a seed; it returns the pixels to paint, [x, y, colour]:
+ *   - the body under the ice: tinted pale blue, rime (white) on every sky-facing pixel
+ *   - a shell of clear ice hugging the silhouette: 1 px all round, 2 px below the waist (ice pools
+ *     thicker at the base), lit pale on the left, deep blue at the foot, a white lip on top and a
+ *     diagonal glint
+ *   - a few jagged crystal spikes growing out of the shell, leaning up and outward
+ * Deterministic per seed, so the spikes don't crawl from frame to frame.
+ */
+export function frozenBody(solid: (x: number, y: number) => boolean, col: (x: number, y: number) => string, w: number, h: number, grow: number, seed: number): [number, number, string][] {
+  const res: [number, number, string][] = [], B = new Uint8Array(w * h);
+  let top = h, bot = -1, sx = 0, n = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (solid(x, y)) { B[y * w + x] = 1; top = Math.min(top, y); bot = Math.max(bot, y); sx += x; n++; }
+  if (!n) return res;
+  const at = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && B[y * w + x] === 1;
+  const cx = sx / n, mid = (top + bot) / 2, yk = bot + 2 - (bot - top + 5) * clamp(grow, 0, 1);
+  // the shell: every empty pixel within reach of the body
+  const S = new Uint8Array(w * h), sh = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && (S[y * w + x] === 1 || B[y * w + x] === 1);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (B[y * w + x] || y < yk) continue;
+    const r = y > bot - 3 ? 2 : 1;
+    let hit = false;
+    for (let dy = -r; dy <= r && !hit; dy++) for (let dx = -r; dx <= r && !hit; dx++) if (Math.abs(dx) + Math.abs(dy) <= r && at(x + dx, y + dy)) hit = true;
+    if (hit && y <= bot + 1) S[y * w + x] = 1;
+  }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (y < yk) continue;
+    const up = !sh(x, y - 1), r = rand(x, y, seed);
+    if (B[y * w + x]) {
+      // the body seen through the ice
+      let c = X.mix(col(x, y), '#7cc8f0', 0.38);
+      if (!at(x, y - 1) && r < 0.7) c = r < 0.3 ? '#ffffff' : '#d8f6ff';
+      else if (r < 0.03) c = '#ffffff';
+      res.push([x, y, c]);
+    } else if (S[y * w + x]) {
+      let c = x < cx - 1 ? '#a2e2fa' : '#6cc0ea';
+      if (y >= bot) c = '#3e9ad4';
+      else if (y > mid + 3 && x >= cx - 1) c = '#64b8e6';
+      if (up) c = '#ffffff';
+      if ((x - y + seed) % 11 === 0 && x < cx + 2 && !up) c = '#ffffff';
+      res.push([x, y, c]);
+    }
+  }
+  // crystal spikes: from sky- or side-facing shell pixels, spaced apart
+  const cand: [number, number, number][] = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (!S[y * w + x] || y > bot - 2) continue;
+    if (!sh(x, y - 1) || !sh(x - 1, y) || !sh(x + 1, y)) cand.push([x, y, rand(x, y, seed + 3)]);
+  }
+  cand.sort((p, q) => p[2] - q[2]);
+  const picked: [number, number, number][] = [];
+  for (const p of cand) { if (picked.length >= 4) break; if (picked.every((q) => Math.abs(q[0] - p[0]) + Math.abs(q[1] - p[1]) > 5)) picked.push(p); }
+  for (const [x0, y0, r] of picked) {
+    let dx = x0 - cx, dy = (y0 - mid) - 4;
+    const L0 = Math.hypot(dx, dy) || 1; dx /= L0; dy /= L0;
+    const L = 3 + Math.floor(r * 5 * 4) % 4, px2 = -dy, py2 = dx;
+    for (let j = 1; j <= L; j++) {
+      const x = Math.round(x0 + dx * j), y = Math.round(y0 + dy * j);
+      res.push([x, y, j === L ? '#ffffff' : '#dcfaff']);
+      if (j < L * 0.55) res.push([Math.round(x + px2), Math.round(y + py2), '#5ab0e0']);
+    }
+  }
+  return res;
+}
+/** Frozen: body-shaped ice over the scratch canvas (it grows from the feet up with s.frozen). */
+function iceShell(s: RigState): void {
+  const d = sc.getImageData(BX, BY, BW, BH).data;
+  const px = frozenBody((x, y) => d[(y * BW + x) * 4 + 3] > 100, (x, y) => { const k = (y * BW + x) * 4; return X.toHex(d[k], d[k + 1], d[k + 2]); }, BW, BH, s.frozen, (s.seed | 0) + 29);
+  for (const [x, y, col] of px) X.px(sc, BX + x, BY + y, col);
 }
 /** Shocked: a dark silhouette with bright bones (drawn on alternate frames). */
 function skeleton(): void {
@@ -525,19 +593,24 @@ export function paint(s: RigState, dst: Ctx, fx: number, fy: number): Anchors {
   if (s.chill > 0.05 && s.frozen < 0.2) rime(s);
   if (s.wet > 0.05 && s.frozen < 0.2) wetSheen(s);
   if (s.burn > 0.05) burning(s);
-  if (s.frozen > 0.05) iceBlock(s);
+  if (s.frozen > 0.05) iceShell(s);
   if (s.shock > 0) skeleton();
   if (s.flash > 0) {
     // hit flash: the whole silhouette pops white, dithered as it fades
-    sil.globalCompositeOperation = 'copy'; cp(sil, SC.c, 0, 0); sil.globalCompositeOperation = 'source-in'; X.fs(sil, '#ffffff'); sil.fillRect(BX, BY, BW, BH);
+    sil.globalCompositeOperation = 'copy'; cp(sil, SC.c, 0, 0); sil.globalCompositeOperation = 'source-in'; X.fs(sil, s.flashCol ?? '#ffffff'); sil.fillRect(BX, BY, BW, BH);
     sil.globalCompositeOperation = 'destination-in'; cp(sil, X.mask(s.flash), 0, 0); sil.globalCompositeOperation = 'source-over'; sil._fs = null;
     cp(se, SIL.c, 0, 0);
+  }
+  if (s.alpha < 0.98) {
+    // a fading body (deaths): ordered-dithered away, outline and all
+    const m = X.mask(s.alpha * 16);
+    for (const x of [sc, se]) { x.globalCompositeOperation = 'destination-in'; cp(x, m, 0, 0); x.globalCompositeOperation = 'source-over'; }
   }
   // compose: silhouette in outline colour, offset four ways, then colour, then emissive
   const dx = Math.round(fx - AX), dy = Math.round(fy - AY);
   sil.globalCompositeOperation = 'copy'; cp(sil, SC.c, 0, 0);
   sil.globalCompositeOperation = 'source-over'; cp(sil, SE.c, 0, 0);
-  sil.globalCompositeOperation = 'source-in'; X.fs(sil, OUTLINE); sil.fillRect(BX, BY, BW, BH);
+  sil.globalCompositeOperation = 'source-in'; X.fs(sil, s.outline ?? OUTLINE); sil.fillRect(BX, BY, BW, BH);
   sil.globalCompositeOperation = 'source-over'; sil._fs = null;
   for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) cp(dst, SIL.c, dx + ox, dy + oy);
   cp(dst, SC.c, dx, dy); cp(dst, SE.c, dx, dy);

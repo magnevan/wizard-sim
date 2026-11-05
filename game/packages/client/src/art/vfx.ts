@@ -160,9 +160,7 @@ export class Vfx {
       case 'surge': this.add('surge', t, 0.45, { x: e.x, y: e.y, seed }); return;
       case 'cancel': this.add('cancel', t, 0.3, { who, look, seed }); return;
       case 'dry': this.add('dry', t, 0.5, { who, x: e.x, y: e.y, seed }); return;
-      case 'fizzle':
-        if (e.text === 'dies') this.add('death', t, 1.4, { x: e.x, y: e.y, n: look, seed });
-        return;
+      // a death ('fizzle', 'dies') plays in art/deaths.ts, from the view
       default:
     }
   }
@@ -870,12 +868,6 @@ export class Vfx {
       case 'dry': {
         if (!body?.on) return;
         for (let k = 0; k < 4; k++) K.puff(o, body.x + (rand(k, sd) - 0.5) * 8, body.y - 18 - e * 14, 1.5 + e * 3, '#6a6478', (1 - e / 0.5) * 0.8);
-        return;
-      }
-      case 'death': {
-        const big = f.n === 2;
-        for (let k = 0; k < (big ? 9 : 5); k++) { const age = e / 1.4, a2 = rand(sd, k, 91) * TAU, d = (big ? 12 : 7) * easeOut(age); K.puff(o, x + Math.cos(a2) * d, y - 3 + Math.sin(a2) * d * 0.5 - age * 8, (big ? 3 : 2) + age * 3, '#6a6478', (1 - age) * 0.7); }
-        if (e < 0.5) K.debris(o, x, y - 6, e, sd, big ? 10 : 6, 30, f.n === 6 ? [EL.fire[1], EL.fire[3]] : ['#4e7228', '#2e4a1c', '#8a6040'], 40);
         return;
       }
       case 'banner': {

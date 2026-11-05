@@ -44,7 +44,7 @@ Play it: https://magnevan.github.io/wizard-sim/ (code in `../game/`, commands in
 - **Remote aim is predicted in world space;** a late remote spell is drawn from its first frame and catches up. D: [Smoother remote players online](decisions/README.md#2026-11-05-smoother-remote-players-online-the-two-fixes-approved-on-2026-11-04).
 - **Drop-out after 2.5 s of silence; anyone can rejoin an empty seat;** only the host tunes online. D: [Network test, drop-out and rejoin](decisions/README.md#2026-11-04-network-test-drop-out-and-rejoin), [The host tunes online matches](decisions/README.md#2026-11-05-the-host-tunes-online-matches).
 - **Local co-op:** gamepads join seats 1–3 with any button; the camera frames everyone.
-- **The golden hash is `a258615b`** (`game/packages/sim/test/golden.json`, 1800 ticks of the scripted run). It last moved with the heal resistance lend. D: [Every element in a heal lends its resistance](decisions/README.md#2026-11-05-every-element-in-a-heal-lends-its-resistance-guard-ties-settled).
+- **The golden hash is `9382eb5b`** (`game/packages/sim/test/golden.json`, 1800 ticks of the scripted run). It last moved with the code cleanup, which removed two write-only buffers (no gameplay change; merge commit on 2026-11-05).
 
 ## Open questions (live)
 - **From `vision.md`, still open:** what playstyle-leaning and warm-up progression look like concretely; where practice happens in a campaign without feeling like homework; how slow "slower" is (enemy design, casting time, or both); what makes support *skillful*. (Proposed vision edits that mark the answered ones are with the user.)

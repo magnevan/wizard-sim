@@ -1159,17 +1159,17 @@ export class StructureView {
 
   /**
    * The eight guards (docs/explorations/2026-11-05-guards.md), each its own silhouette: held in front
-   * while blocking, slung at the side otherwise. The Bulwark planted in the ground is the Brace tell.
+   * while blocking, slung at the side otherwise.
    */
   private guard(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], up: number, light: LightFn): void {
     const s = w.seats, id = s.guard[i], name = GUARD_NAME[id] ?? 'mirror', blocking = s.guardT[i] > 0, raise = blocking ? easeOut(Math.min(1, s.guardT[i] / 6)) : 0;
-    const bulwark = id === GUARD.bulwark, braced = bulwark && s.retreatT[i] > 0;
+    const bulwark = id === GUARD.bulwark;
     const hpk = clamp(s.guardHp[i] / (((ARMS.hp as Record<string, number>)[name] || 70) * guardSize(w, i)), 0, 1);
-    const at = braced ? P(5, 0, 5) : P(lerp(1, 6, raise), lerp(-5, 0, raise), lerp(6, 9, raise)), c = at[2] < -1.5 ? g : o;
+    const at = P(lerp(1, 6, raise), lerp(-5, 0, raise), lerp(6, 9, raise)), c = at[2] < -1.5 ? g : o;
     const face = (Math.round(w.bodies.face[i] * 16) / 16) * TAU, sn = Math.abs(Math.sin(face)), csn = Math.cos(face);
     const x = at[0], y = at[1], R = GUARD_RAMP[name] ?? EL.shield;
     if (bulwark) {
-      const hw = 2.5 + (blocking || braced ? 3 : 2) * sn, hh = blocking || braced ? 8 : 6, th = Math.round(Math.abs(csn) * 2);
+      const hw = 2.5 + (blocking ? 3 : 2) * sn, hh = blocking ? 8 : 6, th = Math.round(Math.abs(csn) * 2);
       if (th) X.rect(c, x - hw - (csn > 0 ? th : -hw * 2) - 1, y - hh, th + 1, hh * 2, X.EARTH[4]);
       X.rect(c, x - hw - 1, y - hh - 1, hw * 2 + 2, hh * 2 + 2, '#1a120c');
       X.rect(c, x - hw, y - hh, hw * 2, hh * 2, X.EARTH[2]);
@@ -1177,7 +1177,6 @@ export class StructureView {
       X.rect(c, x - hw, y + hh - 1, hw * 2, 1, X.EARTH[4]);
       if (hw > 2.5) { X.rect(c, x - 1, y - hh + 2, 2, hh * 2 - 4, EL.shield[2]); X.rect(c, x - hw + 1, y - 1, hw * 2 - 2, 1, EL.shield[3]); }
       if (hpk < 0.5) X.lines(c, [[x - hw + 1, y - hh + 2], [x, y], [x - 1, y + hh - 2]], '#1a120c');
-      if (braced) { K.dust(g, x, y + hh, 0.2 + (t % 0.6), i, 6, 12, '#8a7a68', 0.6); K.cracks(g, x, y + hh + 1, 7, i * 5 + 1, 1); }
     } else guardShape(c, name, x, y, 0.8 + 0.4 * raise, t, sn, hpk);
     // On the far side of the body (facing away, or slung on the hidden hip) the guard is drawn under the
     // wizard as it should be, and its rim shows through on top, dithered: a partner can always see
@@ -1186,7 +1185,7 @@ export class StructureView {
     if (away) {
       const k = blocking ? 0.75 : 0.5, sz = 0.8 + 0.4 * raise, wx = 0.55 + 0.45 * sn;
       if (bulwark) {
-        const hw = 2.5 + (blocking || braced ? 3 : 2) * sn, hh = blocking || braced ? 8 : 6;
+        const hw = 2.5 + (blocking ? 3 : 2) * sn, hh = blocking ? 8 : 6;
         for (let q = -hw; q <= hw; q++) for (const yy of [y - hh - 1, y + hh]) if (k > X.bay(Math.round(x + q), Math.round(yy))) X.px(o, x + q, yy, X.EARTH[0]);
         for (let q = -hh; q <= hh; q++) for (const xx of [x - hw - 1, x + hw]) if (k > X.bay(Math.round(xx), Math.round(y + q))) X.px(o, xx, y + q, X.EARTH[0]);
       } else X.ring(o, x, y, 4.6 * sz * wx + 0.5, 5 * sz + 0.5, R[1], k);

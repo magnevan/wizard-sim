@@ -343,19 +343,6 @@ export function recallOldest(w: World, seat: number): boolean {
   return true;
 }
 
-/** Dev helper: every Sigil thing of a seat goes away. */
-export function dismissSigil(w: World, seat: number): void {
-  const s = w.seats, b = w.bodies, dv = w.devices;
-  let any = false;
-  for (let k = 0; k < MAX_DEVICES; k++) if (dv.type[k] && dv.owner[k] === seat) { dv.type[k] = DEVICE.none; any = true; }
-  const d = s.double[seat];
-  if (d >= 0 && b.kind[d] === KIND.double) { b.kind[d] = KIND.none; any = true; }
-  s.double[seat] = -1;
-  if (s.aura[seat] || s.wand[seat] || s.weapon[seat] || s.motes[seat]) any = true;
-  s.aura[seat] = 0; s.wand[seat] = 0; s.weapon[seat] = 0; s.motes[seat] = 0;
-  if (any) w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: b.x[seat], y: b.y[seat], amount: 1, look: EL.sigil, text: 'dismissed' });
-}
-
 /** Doubles keep to their spot beside their owner, walking there like a wizard would. */
 function tickDoubleMoves(w: World): void {
   const b = w.bodies, s = w.seats;

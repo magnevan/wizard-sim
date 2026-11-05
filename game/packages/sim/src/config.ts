@@ -122,7 +122,7 @@ export const STRUCT = {
   wallThickness: 0.25,
   waveSpeed: 7, waveRange: 6, waveHalf: 1.6, waveHalfPerRune: 0.4, shove: 8,
   /** Model A: energy structures drain the Shield pool; at the reserve floor the oldest breaks. */
-  idleDrain: 0.03, wardDrainMult: 2, absorbPerHp: 0.01, barrierAbsorb: 0.1, reserve: 0.5,
+  idleDrain: 0.03, wardDrainMult: 2, absorbPerHp: 0.01, reserve: 0.5,
   wardHp: 60, wardHpPerRune: 20, wardResist: 0.4, mirrorShots: 3, mendPerSec: 2,
   turretInterval: 1.0, turretRange: 8, turretAhead: 2.5,
   /** Your hands (hands.ts): a Heavy's power and reach against a Strike, a Sweep's power, the Retreat hop. */

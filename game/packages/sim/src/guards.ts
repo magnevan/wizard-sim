@@ -26,7 +26,7 @@
  *   Leaf aegis (S+Li)      heals allies around you / burst heal   Seed step     Regrowth: slow healing
  */
 import { ARMS, STATUS, T } from './config';
-import { EL, N_EL } from './elements';
+import { EL, N_EL, formOf } from './elements';
 import { cellAt, floorDisc, hit, hitOpts, spawnZone, touchFloor, zap, type Payload } from './effects';
 import { inCone, len } from './geom';
 import { addKnock, applyHit, bloom } from './hit';
@@ -57,26 +57,16 @@ const RES_TABLE: readonly (readonly number[])[] = [
 /** The guard an element leads to, and the resistance column that is "its own" (-1: Water and Life deal no damage). */
 const GUARD_OF: Record<number, number> = { [EL.earth]: GUARD.bulwark, [EL.fire]: GUARD.ember, [EL.cold]: GUARD.rime, [EL.lightning]: GUARD.spark, [EL.water]: GUARD.tide, [EL.arcane]: GUARD.prism, [EL.life]: GUARD.leaf };
 const OWN_COL: Record<number, number> = { [EL.earth]: RES.physical, [EL.fire]: RES.fire, [EL.cold]: RES.cold, [EL.lightning]: RES.lightning, [EL.arcane]: RES.arcane };
-/**
- * Who leads, as in spells (rules-c.js PRIORITY): the strongest element present (Life, then Earth, then
- * Arcane, then Lightning); without one, the most runes of Water, Fire or Cold (ties in that order).
- */
-const STRONG = [EL.life, EL.earth, EL.arcane, EL.lightning];
-const SPRAY = [EL.water, EL.fire, EL.cold];
 /** A guard's colour element (the view, events). */
 export const GUARD_EL: readonly number[] = [0, EL.earth, EL.shield, EL.fire, EL.cold, EL.lightning, EL.water, EL.arcane, EL.life];
 
-/** The lead element of a 9-count block; 0 for none (Shield alone: the Mirror buckler). */
-function leadOf(els: Uint8Array, at: number): number {
-  for (const id of STRONG) if (els[at * N_EL + id - 1]) return id;
-  let best = 0, n = 0;
-  for (const id of SPRAY) { const c = els[at * N_EL + id - 1]; if (c > n) { best = id; n = c; } }
-  return best;
-}
-
 export const guardOf = (w: World, i: number): number => (i >= 0 && i < MAX_SEATS ? w.seats.guard[i] : 0);
-/** The guard's lead element (0 for the Mirror buckler). */
-export const guardLead = (w: World, i: number): number => leadOf(w.seats.guardEls, i);
+/**
+ * The guard's lead element, as in spells: formOf on guardEls, which hold no Shield or Sigil, so the
+ * strongest element present leads (Life, then Earth, then Arcane, then Lightning); without one, the
+ * most runes of Water, Fire or Cold (ties in that order). 0 for none (Shield alone: the Mirror buckler).
+ */
+export const guardLead = (w: World, i: number): number => formOf(w.seats.guardEls, i);
 /** Runes of element `id` in seat i's guard other than its lead (its mixed-in elements). */
 const extra = (w: World, i: number, id: number): number => (id === guardLead(w, i) ? 0 : w.seats.guardEls[i * N_EL + id - 1]);
 /** How much of its row a mixed-in element brings: half at 1 rune, all of it at 2. */
@@ -88,7 +78,7 @@ export function conjureGuard(w: World, src: number, counts: Uint8Array): void {
   s.guardEls.set(counts.subarray(0, N_EL), src * N_EL);
   s.guardEls[src * N_EL + EL.shield - 1] = 0;
   s.guardEls[src * N_EL + EL.sigil - 1] = 0;
-  const lead = leadOf(s.guardEls, src);
+  const lead = guardLead(w, src);
   s.guard[src] = lead ? GUARD_OF[lead] : GUARD.mirror;
   s.guardHp[src] = (ARMS.hp as Record<string, number>)[GUARD_NAME[s.guard[src]]] * guardSize(w, src);
   s.guardT[src] = 0; s.guardCd[src] = 0; s.retreatT[src] = 0; s.guardCharge[src] = 0;

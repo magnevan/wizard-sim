@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PU, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, guardCoatLook, guardSize, queueOf, selfTarget, stackOf,
+  N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PU, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, guardCoatLook, guardSize, queueOf, selfTarget, stackOf,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
@@ -47,11 +47,24 @@ const RGB: Record<string, string> = {
   shield: '255,214,110', fire: '255,140,60', cold: '170,236,255', water: '90,160,255', lightning: '196,164,255', arcane: '255,106,176', life: '142,240,126', earth: '184,148,106', sigil: '236,140,255',
 };
 
-/** The strongest element in a 9-count block, skipping `skip` ids. */
+/** The most numerous element in a 9-count block, skipping `skip` ids (wards and waves: plain argmax). */
 function lead(els: Uint8Array, at: number, ...skip: number[]): number {
   let best = 0, n = 0;
   for (let id = 1; id <= N_EL; id++) if (!skip.includes(id) && els[at * N_EL + id - 1] > n) { n = els[at * N_EL + id - 1]; best = id; }
   return best;
+}
+const LEAD = new Uint8Array(N_EL);
+/**
+ * A wall's colour element by the sim's rule (formOf, as guards and spells pick their lead): Life,
+ * Earth, Arcane, Lightning first, else the most of Water, Fire, Cold. Shield and Sigil never lead, nor
+ * `skip` ids. A curtain or a coated rock pulses as a Place spell of these elements, so any Life heals:
+ * it should look like Life.
+ */
+function wallLead(els: Uint8Array, at: number, ...skip: number[]): number {
+  LEAD.set(els.subarray(at * N_EL, at * N_EL + N_EL));
+  LEAD[ELID.shield - 1] = 0; LEAD[ELID.sigil - 1] = 0;
+  for (const id of skip) LEAD[id - 1] = 0;
+  return formOf(LEAD);
 }
 const has = (els: Uint8Array, at: number, id: number) => els[at * N_EL + id - 1] > 0;
 
@@ -338,7 +351,7 @@ export class StructureView {
       if (!ty && this.wType[k]) {
         const mx = (this.wX1[k] + this.wX2[k]) / 2, my = (this.wY1[k] + this.wY2[k]) / 2;
         for (const e of w.events) if (e.kind === 'burst' && near(e.x, e.y, mx, my)) skip.add(e);
-        const coat = lead(this.wEls, k, ELID.shield, ELID.earth);
+        const coat = wallLead(this.wEls, k, ELID.earth);
         this.add(this.wType[k] === WALL.rock ? 'crumble' : 'shatter', t, this.wType[k] === WALL.rock ? 3.2 : 0.7, { x: this.wX1[k], y: this.wY1[k], x2: this.wX2[k], y2: this.wY2[k], seed: tick * 3 + k, look: this.wType[k] === WALL.barrier ? ELID.shield : coat || ELID.shield });
       }
       if (ty && !this.wType[k]) this.wHitT[k] = -9;
@@ -577,7 +590,7 @@ export class StructureView {
       const a: Pt = [gx(wl.x1[k]), gy(wl.y1[k])], bb: Pt = [gx(wl.x2[k]), gy(wl.y2[k])];
       const age = (tick - (w.walls.born[k] ?? 0)) / 60, hpf = clamp(wl.hp[k] / Math.max(1, wl.maxHp[k]), 0, 1), hitE = this.st - this.wHitT[k];
       if (ty === WALL.rock) {
-        const cold = has(wl.els, k, ELID.cold), coat = lead(wl.els, k, ELID.shield, ELID.earth);
+        const cold = has(wl.els, k, ELID.cold), coat = wallLead(wl.els, k, ELID.earth);
         const endA = !joins(k, wl.x1[k], wl.y1[k]), endB = !joins(k, wl.x2[k], wl.y2[k]);
         const pre = `${k}:${wl.born[k]}:${+endA}${+endB}:${+cold}`;
         live.add(pre);
@@ -654,7 +667,7 @@ export class StructureView {
 
   /** A curtain: walk through it, but crossing it pulses its element. Life's is a healing zone. */
   private curtain(w: World, k: number, t: number, g: Ctx, a: Pt, bb: Pt, cols: Pt[], mid: Pt, rise: number, kS: number, hitE: number, light: LightFn): void {
-    const wl = w.walls, coat = lead(wl.els, k, ELID.shield) || ELID.arcane, el = elName(coat), R = ramp(coat), sd = k * 13;
+    const wl = w.walls, coat = wallLead(wl.els, k) || ELID.arcane, el = elName(coat), R = ramp(coat), sd = k * 13;
     const pulse = 1 - clamp(((w.clock[0] - wl.born[k]) % 30) / 8, 0, 1);
     const x0 = Math.min(a[0], bb[0]), x1 = Math.max(a[0], bb[0]), y0 = Math.min(a[1], bb[1]), y1 = Math.max(a[1], bb[1]);
     const h = (el === 'fire' ? 15 : 14) * rise, head = 18;

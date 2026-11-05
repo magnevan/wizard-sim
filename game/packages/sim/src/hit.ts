@@ -9,6 +9,7 @@ import { ARCHETYPES } from './archetypes';
 import { angleDiff, len } from './geom';
 import { atan2Turns } from './trig';
 import { drainShield } from './walls';
+import { RES, anchored, colOf, guardBeam, resist, unburnable, warm } from './guards';
 import { KIND, MAX_SEATS, PU, WARD, stackOf, type World } from './world';
 
 export interface HitOpts {
@@ -38,6 +39,9 @@ const c = (els: Uint8Array, at: number, id: number) => els[at * N_EL + id - 1];
 export const HIT_KIND = { other: 0, missile: 1, burst: 2, channel: 3, arc: 4, melee: 5, wave: 6 } as const;
 let hitKind = 0;
 export function setHitKind(k: number): void { hitKind = k; }
+/** A power multiplier on every hit while it's set (the Echo focus's half-power channels). Not state: set and reset around one call. */
+let power = 1;
+export function setPower(k: number): void { power = k; }
 
 /**
  * Applies the payload in `els` (9 counts at slot `at`) to body `t`.
@@ -46,6 +50,7 @@ export function setHitKind(k: number): void { hitKind = k; }
 export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: HitOpts): number {
   const b = w.bodies;
   if (b.kind[t] === KIND.none) return 0;
+  if (power !== 1) o = { ...o, scale: o.scale * power };
   const ss = o.statusScale ?? 1;
   const tick = w.clock[0];
   const water = c(els, at, EL.water), fire = c(els, at, EL.fire), cold = c(els, at, EL.cold);
@@ -60,6 +65,15 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     }
   }
   const srcSeat = src >= 0 && src < MAX_SEATS ? src : -1, tSeat = t < MAX_SEATS ? t : -1;
+  // A guard (guards.ts): the Prism pane stops beams from the front (and halves them unraised); resistances below.
+  const guard = tSeat >= 0 ? s.guard[tSeat] : 0;
+  if (guard && !o.heal && hitKind === HIT_KIND.channel && o.frontal) {
+    const k = guardBeam(w, tSeat, src, els, at, o.scale, o.dirX, o.dirY);
+    if (k === 0) return 0;
+    if (k !== 1) o = { ...o, scale: o.scale * k };
+  }
+  // Enemy blows and arrows are physical, whatever they carry.
+  const physical = src >= MAX_SEATS && b.kind[src] === KIND.enemy;
 
   // The sculpting wand: your harm spares allies, your heals spare enemies.
   if (srcSeat >= 0 && s.wand[srcSeat] && t !== src) {
@@ -87,6 +101,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     let d = DAMAGE[elementName(id)] * (id === form && n > 1 ? formCurve(form, n, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling) : n);
     if (arch && id === EL.fire && arch.fireMult !== undefined) d *= arch.fireMult;
     if (arch && id === EL.cold && arch.coldMult !== undefined) d *= arch.coldMult;
+    if (guard && d) { const col = physical ? RES.physical : colOf(id); if (col >= 0) d *= 1 - resist(w, tSeat, col); }
     const resisted = (ward === WARD.ward || ward === WARD.stone) && s.wardEls[tSeat * N_EL + id - 1] > 0;
     if (resisted) { dmg += d * (1 - STRUCT.wardResist); absorbed += d * STRUCT.wardResist; } else dmg += d;
   }
@@ -110,18 +125,21 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   if (fire) {
     if (b.frozen[t] || b.chill[t] > 0) { b.frozen[t] = 0; b.chill[t] = 0; }
     else if (b.wet[t] && !water) b.wet[t] = 0;
-    else if (!water && !arch?.burnImmune) { b.burn[t] = Math.max(b.burn[t], Math.round(T(STATUS.burn) * Math.min(1, ss * 4))); b.burnSrc[t] = o.source; }
+    else if (!water && !arch?.burnImmune && !(guard && unburnable(w, tSeat))) { b.burn[t] = Math.max(b.burn[t], Math.round(T(STATUS.burn) * Math.min(1, ss * 4))); b.burnSrc[t] = o.source; }
   }
-  if (cold) {
+  const noChill = guard > 0 && warm(w, tSeat);
+  if (cold && !noChill) {
     b.burn[t] = 0;
-    b.chill[t] = Math.min(STATUS.chillMax, b.chill[t] + STATUS.chillPerRune * cold * ss);
+    // a guard weak to cold (the Tide shield) chills faster, a resistant one slower
+    b.chill[t] = Math.min(STATUS.chillMax, b.chill[t] + STATUS.chillPerRune * cold * ss * (guard ? 1 - resist(w, tSeat, RES.cold) : 1));
     if (b.chill[t] >= STATUS.chillMax && !b.frozen[t]) freezeBody(w, t);
   }
-  if (o.freeze && b.wet[t] && !b.frozen[t]) freezeBody(w, t);
+  if (o.freeze && b.wet[t] && !b.frozen[t] && !noChill) freezeBody(w, t);
   if (o.scald) dmg += STATUS.scaldBonus * o.scale;
   if (lightning) {
-    if (b.wet[t]) dmg += DAMAGE.lightning * lightning * o.scale * (STATUS.wetShockMult - 1);
-    b.stun[t] = Math.max(b.stun[t], Math.round(T(STATUS.stunPerRune) * lightning * Math.min(1, ss * 4)));
+    const lr = guard ? resist(w, tSeat, physical ? RES.physical : RES.lightning) : 0;
+    if (b.wet[t]) dmg += DAMAGE.lightning * lightning * o.scale * (STATUS.wetShockMult - 1) * (1 - lr);
+    if (lr < 1) b.stun[t] = Math.max(b.stun[t], Math.round(T(STATUS.stunPerRune) * lightning * Math.min(1, ss * 4)));
   }
   if (arcane) b.expose[t] = Math.max(b.expose[t], Math.round(T(STATUS.expose) * Math.min(1, ss * 4)));
   if (earth) {
@@ -156,7 +174,7 @@ function freezeBody(w: World, t: number): void {
 }
 
 export function addKnock(w: World, t: number, dx: number, dy: number, speed: number): void {
-  if (!speed || w.bodies.frozen[t]) return;
+  if (!speed || w.bodies.frozen[t] || anchored(w, t)) return; // Anchored (the Bulwark): no knockback
   w.bodies.kx[t] += dx * speed;
   w.bodies.ky[t] += dy * speed;
 }
@@ -170,7 +188,7 @@ export function tickStatuses(w: World): void {
       b.burn[i]--;
       // A ward made with Fire (or stone armour coated in it) resists the burning too.
       const fireWard = i < MAX_SEATS && (w.seats.ward[i] === WARD.ward || w.seats.ward[i] === WARD.stone) && w.seats.wardEls[i * N_EL + EL.fire - 1] > 0;
-      b.hp[i] -= (STATUS.burnDps / 60) * (fireWard ? 1 - STRUCT.wardResist : 1);
+      b.hp[i] -= (STATUS.burnDps / 60) * (fireWard ? 1 - STRUCT.wardResist : 1) * (i < MAX_SEATS ? 1 - resist(w, i, RES.fire) : 1);
       if (b.hp[i] <= 0) b.lastEl[i] = EL.fire; // burned to death
       b.lastHit[i] = w.clock[0];
       // Credit the fire to whoever lit it, twice a second (meters; the view's damage pops).

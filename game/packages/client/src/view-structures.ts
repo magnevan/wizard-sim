@@ -19,7 +19,7 @@
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
-  AI, ARCHETYPES, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES,
+  AI, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
   N_ALTARS, N_EL, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, queueOf, selfTarget,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
@@ -213,6 +213,72 @@ class Scorch {
   }
 }
 
+/** How long each weapon or guard move's effect plays (s). */
+const MOVE_LIFE: Record<string, number> = {
+  dash: 0.45, flamestep: 0.5, iceslide: 0.7, backstep: 0.5, phase: 0.6, regroup: 0.8, brace: 1.0, surge: 0.6, tidewave: 0.6,
+  parry: 0.4, block: 0.25, guardbreak: 0.8, flameburst: 0.45, echo: 0.6, copy: 0.5, link: 0.5, linkbreak: 0.5,
+};
+/** Each guard's colour. */
+const GUARD_RAMP: Record<string, Ramp> = {
+  mirror: EL.shield, bulwark: X.EARTH, ember: EL.fire, rime: EL.cold, spark: EL.lightning, tide: EL.water, prism: EL.arcane, leaf: X.LIFE,
+};
+
+/** One of the guards (not the Bulwark, drawn with its facing) centred at (x, y), after the round-2 review page's drawings. */
+function guardShape(c: Ctx, id: string, x: number, y: number, sz: number, t: number, sn: number, hpk: number): void {
+  const fl = Math.floor(t * 14), wx = 0.55 + 0.45 * sn; // seen edge-on the guard is narrower
+  const ell = (rx: number, ry: number, col: string, a = 1) => X.ellipse(c, x, y, rx * sz * wx, ry * sz, col, a);
+  const P = (a: number, b: number): Pt => [x + a * sz * wx, y + b * sz];
+  switch (id) {
+    case 'ember': {
+      ell(4.6, 4.8, '#3a1a14'); ell(3.6, 3.8, '#6a3424'); ell(1.4, 1.5, '#c8c0d0');
+      for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU + 0.2; X.px(c, x + Math.cos(a) * 5.4 * sz * wx, y + Math.sin(a) * 5.6 * sz, '#c8c0d0'); }
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU, px2 = x + Math.cos(a) * 4.2 * sz * wx, py2 = y + Math.sin(a) * 4.4 * sz; X.px(c, px2, py2, EL.fire[((i + fl) % 3) + 1]); if (a > Math.PI * 1.1 && a < Math.PI * 1.9 && (i + fl) % 3 === 0) X.px(c, px2, py2 - 1 - (fl % 2), EL.fire[1]); }
+      break;
+    }
+    case 'rime': {
+      X.poly(c, [P(-4.5, -4), P(4.5, -4), P(3.5, 1), P(0, 7), P(-3.5, 1)], '#163e7a');
+      X.poly(c, [P(-3.6, -3.2), P(3.6, -3.2), P(2.8, 0.8), P(0, 5.8), P(-2.8, 0.8)], EL.cold[3]);
+      X.poly(c, [P(-3.6, -3.2), P(0, -3.2), P(0, 5.8), P(-2.8, 0.8)], EL.cold[2]);
+      X.line(c, ...P(-3, -3.2), ...P(3, -3.2), '#ffffff'); X.px(c, ...P(-1, -1), '#ffffff');
+      if (fl % 3 === 0) X.px(c, ...P(-5, 2 + (fl % 4)), EL.cold[1]);
+      break;
+    }
+    case 'spark': {
+      X.ring(c, x, y, 4.2 * sz * wx, 4.5 * sz, EL.lightning[3]); X.ring(c, x, y, 3.4 * sz * wx, 3.7 * sz, EL.lightning[2]);
+      for (let i = 0; i < 5; i++) { const a = rand(i, fl, 3) * TAU; X.px(c, x + Math.cos(a) * 4.8 * sz * wx, y + Math.sin(a) * 5 * sz, i % 2 ? '#ffffff' : EL.lightning[1]); }
+      break;
+    }
+    case 'tide': {
+      ell(4.8, 5.2, EL.water[3], 0.9); ell(3.8, 4.2, EL.water[2], 0.9);
+      const rr = 1.5 + ((t * 3) % 1) * 3; X.ring(c, x, y, rr * sz * wx, rr * 1.1 * sz, EL.water[0], 0.9);
+      X.px(c, x - 2, y - 3, '#ffffff');
+      break;
+    }
+    case 'prism': {
+      const pts: Pt[] = []; for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU + Math.PI / 6; pts.push([x + Math.cos(a) * 5 * sz * wx, y - 3 + Math.sin(a) * 5.6 * sz]); }
+      X.poly(c, pts, EL.arcane[3], 0.55); X.lines(c, pts.concat([pts[0]]), EL.arcane[1]);
+      X.line(c, pts[3][0] + 1, pts[3][1], pts[0][0] - 1, pts[0][1], '#ffffff');
+      X.px(c, x + 2, y - 5, ['#ff6a6a', '#ffe070', '#6aff9a', '#6ab0ff'][fl % 4]);
+      break;
+    }
+    case 'leaf': {
+      X.glow(c, x - 1, y, 7, X.LIFE[3], 0.4);
+      X.poly(c, [P(0, -7), P(4, -3), P(4.5, 2), P(0, 7.5), P(-4.5, 2), P(-4, -3)], '#0e3a1e');
+      X.poly(c, [P(0, -6), P(3.2, -2.6), P(3.6, 1.8), P(0, 6.4), P(-3.6, 1.8), P(-3.2, -2.6)], X.LIFE[3]);
+      X.poly(c, [P(0, -6), P(0, 6.4), P(-3.6, 1.8), P(-3.2, -2.6)], X.LIFE[4]);
+      X.line(c, ...P(0, -5), ...P(0, 6), '#9af07a');
+      X.px(c, ...P(-2, -2), X.LIFE[0]);
+      break;
+    }
+    default: { // the Mirror buckler: a small polished disc with a bright glint
+      ell(3.6, 4, '#6a4a10'); ell(3, 3.4, '#c8901a'); ell(2.2, 2.6, '#ffe68a');
+      X.px(c, x - 1, y - 1, '#ffffff'); X.px(c, x, y - 2, '#ffffff');
+      if (fl % 6 === 0) { X.px(c, x - 1, y - 3, '#ffffff'); X.px(c, x - 2, y - 1, '#ffffff'); X.px(c, x + 1, y - 1, '#fffbe0'); }
+    }
+  }
+  if (hpk < 0.4) X.lines(c, [P(-2, -3), P(0, 0), P(-1, 3)], '#1a120c'); // cracked
+}
+
 // =====================================================================================================
 interface SFx { kind: string; t0: number; life: number; seed: number; x: number; y: number; x2: number; y2: number; who: number; look: number; n: number; els?: Uint8Array }
 
@@ -254,6 +320,12 @@ export class StructureView {
     const near = (ax: number, ay: number, bx: number, by: number, r = 0.7) => Math.abs(ax - bx) < r && Math.abs(ay - by) < r;
     const dismissed = new Set<number>();
     for (const e of w.events) if (e.kind === 'burst' && e.text === 'dismissed') { dismissed.add(e.who); skip.add(e); this.add('dismiss', t, 0.6, { who: e.who, x: e.x, y: e.y, seed: tick }); }
+    // weapon and guard moves (hands.ts, guards.ts): each its own short readable effect
+    for (const e of w.events) {
+      if (e.kind !== 'move' || !e.text) continue;
+      const life = MOVE_LIFE[e.text] ?? 0.5;
+      this.add('mv-' + e.text, t, life, { who: e.who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, look: e.look ?? 0, seed: tick * 7 + e.who, n: e.who < MAX_SEATS ? s.guard[e.who] : 0 });
+    }
     // walls: hits and breaks
     for (let k = 0; k < MAX_WALLS; k++) {
       const ty = wl.type[k];
@@ -358,7 +430,7 @@ export class StructureView {
     const off = OFF;
     if (!off.includes('walls')) this.walls(w, t, g, o, light);
     if (w.run) this.altars(w, t, g, o, light);
-    if (!off.includes('waves')) this.waves(w, t, g, o, light);
+    if (!off.includes('waves')) { this.waves(w, t, g, o, light); this.sparks(w, t, g, o, light); }
     if (!off.includes('devices')) this.devices(w, t, g, o, bodies, light);
     if (!off.includes('wizards')) this.onWizards(w, t, g, o, bodies, light);
     if (!off.includes('preview')) { this.preview(w, t, g, o, bodies); this.allyCue(w, t, g, o); }
@@ -600,7 +672,7 @@ export class StructureView {
     for (let k = 0; k < MAX_WAVES; k++) {
       if (!v.alive[k]) continue;
       const els = v.els, earth = has(els, k, ELID.earth), water = has(els, k, ELID.water), coat = lead(els, k, ELID.shield);
-      const fade = Math.min(seg(v.travelled[k], 0, 0.5), 1 - seg(v.travelled[k], STRUCT.waveRange - 1.2, STRUCT.waveRange));
+      const range = v.range[k] || STRUCT.waveRange, fade = Math.min(seg(v.travelled[k], 0, 0.5), 1 - seg(v.travelled[k], range - 1.2, range));
       const fdx = v.dx[k], fdy = v.dy[k], px = -fdy, py = fdx, half = v.half[k], sd = k * 17 + 5;
       // the front, bowed forward in the middle; sorted back to front on screen
       const N = Math.max(8, Math.round(half * 2 * PPU / 3));
@@ -776,6 +848,13 @@ export class StructureView {
       if (s.wand[i]) this.wand(v, t, g, o, P, conj, light);
       if (s.weapon[i]) this.weapon(w, i, v, t, g, o, P, conj, light);
       if (s.guard[i]) this.guard(w, i, v, t, g, o, P, conj, light);
+      if (s.linkTo[i] >= 0) this.link(i, v, bodies[s.linkTo[i]], t, o, light);
+      // Phase (Prism pane): a hex afterimage round you while you drift through bodies
+      if (s.guard[i] === GUARD.prism && s.retreatT[i] > 0) {
+        const k = s.retreatT[i] / T(ARMS.phaseTime), cy = v.y - 12;
+        for (let q = 0; q < 2; q++) { const r = 9 + q * 4 + (1 - k) * 4, pts: Pt[] = []; for (let j = 0; j <= 6; j++) { const a = (j / 6) * TAU + Math.PI / 6 + t; pts.push([v.x + Math.cos(a) * r, cy + Math.sin(a) * r * 0.8]); } X.lines(o, pts, q ? EL.arcane[3] : EL.arcane[1]); }
+        light(v.x, v.y, 30, '#ff4f9b', 0.4 * k);
+      }
     }
     // Doubles: a translucent violet copy (the sprite is tinted and faded) with a violet edge and a seal
     for (let i = MAX_SEATS; i < MAX_BODIES; i++) {
@@ -963,13 +1042,22 @@ export class StructureView {
       X.rect(c, tp[0] - 4, tp[1] - 3, 8, 6, '#1a120c'); X.rect(c, tp[0] - 3, tp[1] - 2, 6, 4, X.EARTH[2]); X.rect(c, tp[0] - 3, tp[1] - 2, 6, 1, X.EARTH[0]); X.rect(c, tp[0] - 3, tp[1] + 1, 6, 1, X.EARTH[4]);
       X.px(c, tp[0] + 1, tp[1], X.EARTH[3]);
     } else if (el === 'arcane') {
-      const tp = dir(12 * k, 0.3);
-      X.line(c, h[0], h[1] + 1, tp[0], tp[1], '#1a0a14', 3); X.line(c, h[0], h[1] + 1, tp[0], tp[1], EL.arcane[3], 1);
-      // the hook: a curved barb at the top
-      const hk: Pt[] = []; for (let q = 0; q <= 6; q++) { const a = -Math.PI / 2 + (q / 6) * Math.PI * 1.1 * fwd; hk.push([tp[0] + Math.cos(a) * 3 * fwd + 3 * fwd, tp[1] + Math.sin(a) * 3 + 3]); }
-      X.lines(c, hk, '#1a0a14', 3); X.lines(c, hk, EL.arcane[1], 1); X.px(c, hk[hk.length - 1][0], hk[hk.length - 1][1], '#ffffff');
-      X.glow(c, tp[0], tp[1], 5, EL.arcane[2], 0.7);
-      light(tp[0], v.y, 24, '#ff4f9b', 0.4);
+      // the Echo focus: a violet orb hovering over your palm; the runes of the spell it remembers circle it
+      const cx = h[0] + fwd * 2, cy = h[1] - 7 * k + Math.sin(t * 4) * 0.6, r = 3.2 * k + 0.5, s = w.seats;
+      X.ellipse(o, cx, h[1] + 0.5, 2.2, 0.9, EL.arcane[3], 0.6);
+      X.glow(o, cx, cy, 6, EL.arcane[2], 0.6);
+      X.ellipse(c, cx, cy, r + 1, r + 1, '#120e1a'); X.ring(c, cx, cy, r + 0.4, r + 0.4, '#fbe6ff', 0.9);
+      X.ellipse(c, cx, cy, r, r, EL.arcane[3]); X.ellipse(c, cx - 0.4, cy - 0.4, r * 0.66, r * 0.66, EL.arcane[2]);
+      X.rect(c, cx - 1.5, cy - 1.5, 2, 2, EL.arcane[0]); X.px(c, cx - 1, cy - 1, '#ffffff');
+      const runes: number[] = [];
+      if (s.echoCast[i]) for (let id = 1; id <= N_EL; id++) for (let q = 0; q < s.echoEls[i * N_EL + id - 1]; q++) runes.push(id);
+      const n = runes.length || 3;
+      for (let q = 0; q < n; q++) {
+        const a = t * 2.2 + (q / n) * TAU, px2 = cx + Math.cos(a) * 7.5 * k, py2 = cy + Math.sin(a) * 3.8 * k, cc = Math.sin(a) < 0 ? g : o;
+        if (runes.length) { const R = runes[q] === ELID.life ? LIFE : ramp(runes[q]); X.rect(cc, px2 - 2, py2 - 2, 4, 4, '#120e1a'); X.rect(cc, px2 - 1, py2 - 1, 2, 2, R[1]); X.px(cc, px2, py2 - 1, R[0]); }
+        else X.px(cc, px2, py2, q % 2 ? EL.arcane[1] : EL.arcane[2]);
+      }
+      light(cx, v.y, 26, '#ff4f9b', 0.45);
     } else if (el === 'fire') {
       const tp = dir(14 * k, 0.4);
       X.line(c, h[0] - fwd * 3, h[1] + 1, h[0] + fwd * 3, h[1] - 1, '#3a2a1a', 2); X.px(c, h[0], h[1] + 2, '#3a2a1a');
@@ -995,12 +1083,17 @@ export class StructureView {
       const e = pts[pts.length - 1]; X.px(c, e[0], e[1], '#ffffff');
       light(h[0], v.y, 28, '#b08aff', 0.45);
     } else if (el === 'water') {
-      const tp = dir(13 * k, 0.3);
+      // the tide trident: a long shaft, a crossbar and three barbed prongs, water running off them
+      const tp = dir(16 * k, 0.28), L = Math.hypot(tp[0] - h[0], tp[1] - h[1]) || 1, fx = (tp[0] - h[0]) / L, fy = (tp[1] - h[1]) / L, nx = -fy, ny = fx;
       X.line(c, h[0], h[1] + 3, tp[0], tp[1], '#1a2a3a', 3); X.line(c, h[0], h[1] + 3, tp[0], tp[1], '#6a8aa8', 1);
-      // the tide blade: a curved crescent of water at the head
-      const bl: Pt[] = []; for (let q = 0; q <= 6; q++) { const a = -Math.PI * 0.9 + (q / 6) * Math.PI * 0.9; bl.push([tp[0] + Math.cos(a) * 4 * fwd, tp[1] + Math.sin(a) * 4 + 2]); }
-      X.lines(c, bl, EL.water[3], 3); X.lines(c, bl, EL.water[1], 1); X.px(c, bl[0][0], bl[0][1], '#ffffff');
-      for (const p of emit(t, 5, 0.5, (q, age) => ({ x: tp[0] + (rand(q, 4, i) - 0.5) * 6, y: tp[1] + 2 + age * age * 14, age }))) X.px(o, p.x, p.y, '#8ad0ff');
+      X.line(c, tp[0] - nx * 3.5, tp[1] - ny * 3.5, tp[0] + nx * 3.5, tp[1] + ny * 3.5, '#163a7a', 2);
+      X.line(c, tp[0] - nx * 3, tp[1] - ny * 3, tp[0] + nx * 3, tp[1] + ny * 3, EL.water[2], 1);
+      for (const sd of [-3, 0, 3]) {
+        const b0: Pt = [tp[0] + nx * sd, tp[1] + ny * sd], L2 = sd ? 4 : 5.5, tip: Pt = [b0[0] + fx * L2, b0[1] + fy * L2];
+        X.line(c, b0[0], b0[1], tip[0], tip[1], EL.water[1], 1); X.px(c, tip[0], tip[1], '#ffffff');
+        if (sd) X.px(c, tip[0] - fx * 1.5 - nx * Math.sign(sd), tip[1] - fy * 1.5 - ny * Math.sign(sd), EL.water[1]); // the barb
+      }
+      for (const p of emit(t, 6, 0.5, (q, age) => ({ x: tp[0] + (rand(q, 4, i) - 0.5) * 7, y: tp[1] + 2 + age * age * 14, age }))) X.px(o, p.x, p.y, '#8ad0ff');
       light(tp[0], v.y, 24, '#3a98ff', 0.35);
     } else {
       const R = ramp(w.seats.weapon[i]), tp = dir(11 * k);
@@ -1009,15 +1102,19 @@ export class StructureView {
     if (up < 1) X.ring(o, h[0], h[1] - 4, 2 + up * 10, 2 + up * 8, SV[1], 1 - up);
   }
 
-  /** The Bulwark (Earth: a stone tower shield) and the Buckler: held in front while guarding, slung at the side otherwise. */
+  /**
+   * The eight guards (docs/explorations/2026-11-05-guards.md), each its own silhouette: held in front
+   * while blocking, slung at the side otherwise. The Bulwark planted in the ground is the Brace tell.
+   */
   private guard(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], up: number, light: LightFn): void {
-    const s = w.seats, bulwark = s.guard[i] === GUARD.bulwark, blocking = s.guardT[i] > 0, raise = blocking ? easeOut(Math.min(1, s.guardT[i] / 6)) : 0;
-    const hpk = clamp(s.guardHp[i] / (bulwark ? STRUCT.bulwarkHp : STRUCT.bucklerHp), 0, 1);
-    const at = P(lerp(1, 6, raise), lerp(-5, 0, raise), lerp(6, 9, raise)), c = at[2] < -1.5 ? g : o;
+    const s = w.seats, id = s.guard[i], name = GUARD_NAME[id] ?? 'mirror', blocking = s.guardT[i] > 0, raise = blocking ? easeOut(Math.min(1, s.guardT[i] / 6)) : 0;
+    const bulwark = id === GUARD.bulwark, braced = bulwark && s.retreatT[i] > 0;
+    const hpk = clamp(s.guardHp[i] / ((ARMS.hp as Record<string, number>)[name] || 70), 0, 1);
+    const at = braced ? P(5, 0, 5) : P(lerp(1, 6, raise), lerp(-5, 0, raise), lerp(6, 9, raise)), c = at[2] < -1.5 ? g : o;
     const face = (Math.round(w.bodies.face[i] * 16) / 16) * TAU, sn = Math.abs(Math.sin(face)), csn = Math.cos(face);
-    const x = at[0], y = at[1];
+    const x = at[0], y = at[1], R = GUARD_RAMP[name] ?? EL.shield;
     if (bulwark) {
-      const hw = 2.5 + (blocking ? 3 : 2) * sn, hh = blocking ? 8 : 6, th = Math.round(Math.abs(csn) * 2);
+      const hw = 2.5 + (blocking || braced ? 3 : 2) * sn, hh = blocking || braced ? 8 : 6, th = Math.round(Math.abs(csn) * 2);
       if (th) X.rect(c, x - hw - (csn > 0 ? th : -hw * 2) - 1, y - hh, th + 1, hh * 2, X.EARTH[4]);
       X.rect(c, x - hw - 1, y - hh - 1, hw * 2 + 2, hh * 2 + 2, '#1a120c');
       X.rect(c, x - hw, y - hh, hw * 2, hh * 2, X.EARTH[2]);
@@ -1025,22 +1122,44 @@ export class StructureView {
       X.rect(c, x - hw, y + hh - 1, hw * 2, 1, X.EARTH[4]);
       if (hw > 2.5) { X.rect(c, x - 1, y - hh + 2, 2, hh * 2 - 4, EL.shield[2]); X.rect(c, x - hw + 1, y - 1, hw * 2 - 2, 1, EL.shield[3]); }
       if (hpk < 0.5) X.lines(c, [[x - hw + 1, y - hh + 2], [x, y], [x - 1, y + hh - 2]], '#1a120c');
-    } else {
-      const rx = 1.5 + 2.6 * sn, ry = 4;
-      X.ellipse(c, x, y, rx + 1, ry + 1, '#3a2a10');
-      X.ellipse(c, x, y, rx, ry, EL.shield[3]);
-      X.ellipse(c, x - 0.5, y - 0.5, rx * 0.7, ry * 0.7, EL.shield[2]);
-      X.px(c, x, y, EL.shield[0]); X.px(c, x - 1, y - 2, '#ffffff');
-    }
+      if (braced) { K.dust(g, x, y + hh, 0.2 + (t % 0.6), i, 6, 12, '#8a7a68', 0.6); K.cracks(g, x, y + hh + 1, 7, i * 5 + 1, 1); }
+    } else guardShape(c, name, x, y, 0.8 + 0.4 * raise, t, sn, hpk);
     if (blocking) {
-      // an energy face in front of the shield while it blocks
-      const front = P(9, 0, 9), R = EL.shield, pulse = 0.6 + 0.3 * Math.sin(t * 12);
-      const arcPts: Pt[] = []; for (let q = -4; q <= 4; q++) { const p = P(9 - Math.abs(q) * 0.4, q * (bulwark ? 1.6 : 1.1), 9 + (4 - Math.abs(q)) * 0.6); arcPts.push([p[0], p[1]]); }
+      // an energy face in front of the guard while it blocks, in the guard's colour; the Bulwark's is wide, the Mirror's narrow
+      const front = P(9, 0, 9), pulse = 0.6 + 0.3 * Math.sin(t * 12), wide = bulwark ? 1.6 : id === GUARD.mirror ? 0.9 : 1.2;
+      const arcPts: Pt[] = []; for (let q = -4; q <= 4; q++) { const p = P(9 - Math.abs(q) * 0.4, q * wide, 9 + (4 - Math.abs(q)) * 0.6); arcPts.push([p[0], p[1]]); }
       for (const p of arcPts) X.px(front[2] < -1 ? g : o, p[0], p[1], pulse > 0.75 ? R[0] : R[1]);
       if (raise < 1) X.ring(o, x, y, 3 + raise * 8, 4 + raise * 8, R[1], 1 - raise);
-      light(x, y + 8, 26, '#ffc83a', 0.4 * pulse);
+      light(x, y + 8, 26, R[2], 0.4 * pulse);
     }
     if (up < 1) X.ring(o, x, y, 2 + up * 10, 2 + up * 8, SV[1], 1 - up);
+  }
+
+  /** The Healing link: a green channel from your hands to the ally it holds, sparkles running along it. */
+  private link(i: number, v: BodyView, to: BodyView | undefined, t: number, o: Ctx, light: LightFn): void {
+    if (!v.a || !to?.on || !to.a) return;
+    const a: Pt = [v.x + (v.a.hands[0][0] + v.a.hands[1][0]) / 2, v.y + (v.a.hands[0][1] + v.a.hands[1][1]) / 2], z: Pt = [to.x + to.a.chest[0], to.y + to.a.chest[1]];
+    const L = Math.hypot(z[0] - a[0], z[1] - a[1]) || 1, nx = -(z[1] - a[1]) / L, ny = (z[0] - a[0]) / L, n = Math.max(8, Math.round(L / 3));
+    const pts: Pt[] = [];
+    for (let q = 0; q <= n; q++) { const f = q / n, wv = Math.sin(f * 9 - t * 8) * 2 * Math.sin(f * Math.PI); pts.push([lerp(a[0], z[0], f) + nx * wv, lerp(a[1], z[1], f) + ny * wv]); }
+    X.lines(o, pts, LIFE[4], 2); X.lines(o, pts, LIFE[2], 1);
+    for (let q = 0; q < 4; q++) { const f = mod(t * 0.9 + q / 4, 1), p = pts[Math.min(n, Math.round(f * n))]; X.rect(o, p[0] - 1, p[1] - 1, 2, 2, LIFE[1]); X.px(o, p[0], p[1] - 2, '#ffffff'); }
+    K.sparkle(o, z[0], z[1], t, 1, 6, i, LIFE, 10);
+    light(lerp(a[0], z[0], 0.5), lerp(v.y, to.y, 0.5), 40, '#8ef07e', 0.35);
+  }
+
+  /** The Blink spark left on a Spark ring carrier's old spot: it shocks whoever steps on it. */
+  private sparks(w: World, t: number, g: Ctx, o: Ctx, light: LightFn): void {
+    const z = w.zones;
+    for (let k = 0; k < MAX_ZONES; k++) {
+      if (z.type[k] !== ZONE.spark) continue;
+      const x = gx(z.x[k]), y = gy(z.y[k]), q = clamp(z.life[k] / T(ARMS.spark), 0, 1), fl = Math.floor(t * 20);
+      K.scorch(g, x, y, 5, 0.5 * q + 0.1);
+      K.gring(g, x, y, 5 + Math.sin(t * 9 + k) * 0.8, EL.lightning[3], 0.5 + 0.4 * q);
+      for (let j = 0; j < 3; j++) { const a = rand(j, fl, k) * TAU, b = rand(j, fl, k + 3) * TAU; X.lines(o, K.bolt([x + Math.cos(a) * 4, y - 2 + Math.sin(a) * 2], [x + Math.cos(b) * 3, y - 6 - rand(j, fl, 9) * 5], fl + j, 0.5, 2), j ? EL.lightning[2] : EL.lightning[1]); }
+      if (fl % 3 === 0) X.px(o, x, y - 4, '#ffffff');
+      light(x, y, 26, '#b08aff', 0.4 * q);
+    }
   }
 
   // ---- Placement preview for seat 0 ------------------------------------------------------------------
@@ -1225,6 +1344,75 @@ export class StructureView {
       }
       case 'dblgone': {
         for (let j = 0; j < 14; j++) { const a = rand(j, 1, sd) * TAU, d = e * 24; if (rand(j, 2, sd) < e / f.life) continue; X.px(o, x + Math.cos(a) * d, y - 10 + Math.sin(a) * d * 0.6 - e * 10, j % 2 ? SV[0] : SV[2]); }
+        return;
+      }
+      case 'mv-dash': case 'mv-flamestep': case 'mv-iceslide': {
+        // a streak along the move: frost for the spear's lunge and the ice slide, flame for the flame step
+        const x2 = gx(f.x2), y2 = gy(f.y2), q = e / f.life, Rs = f.kind === 'mv-flamestep' ? EL.fire : X.FROST;
+        for (let j = 0; j < 14; j++) {
+          const kq = rand(j, 1, sd), px2 = lerp(x, x2, kq), py2 = lerp(y, y2, kq) - 6 - rand(j, 2, sd) * 8;
+          if (rand(j, 3, sd) < q) continue;
+          X.line(o, px2, py2, px2 - (x2 - x) * 0.08, py2 - (y2 - y) * 0.08, j % 3 ? Rs[1] : '#ffffff');
+        }
+        if (f.kind === 'mv-dash' && q < 0.5) for (let j = 0; j < 4; j++) K.shard(o, lerp(x, x2, 0.25 + j * 0.2), lerp(y, y2, 0.25 + j * 0.2) - 6, Math.atan2(y2 - y, x2 - x), 6 * (1 - q * 2), sd + j, 1 - q * 2);
+        if (f.kind === 'mv-flamestep') K.dust(o, x, y - 2, e, sd, 5, 10, '#4a3a3a', 0.6);
+        return;
+      }
+      case 'mv-backstep': case 'mv-phase': case 'mv-regroup': {
+        // hop dust (Mirror), a hex afterimage (Prism), a leaf trail (Leaf) where you were
+        const q = e / f.life;
+        if (f.kind === 'mv-backstep') { K.dust(g, x, y, e, sd, 7, 12, '#8a7a68', 0.7); K.gring(g, x, y, 3 + q * 9, EL.shield[1], 1 - q, 1); return; }
+        if (f.kind === 'mv-phase') {
+          for (let r = 0; r < 2; r++) { const rr = 10 + r * 5, pts: Pt[] = []; for (let j = 0; j <= 6; j++) { const a = (j / 6) * TAU + Math.PI / 6; pts.push([x + Math.cos(a) * rr, y - 12 + Math.sin(a) * rr * 0.8]); } if (rand(r, Math.floor(t * 20), sd) > q) X.lines(o, pts, r ? EL.arcane[3] : EL.arcane[1]); }
+          return;
+        }
+        const x2 = gx(f.x2), y2 = gy(f.y2);
+        for (let j = 0; j < 12; j++) { const kq = j / 12, px2 = lerp(x, x2, kq * 0.8) + Math.sin(kq * 6 + sd) * 4, py2 = lerp(y, y2, kq * 0.8) - 2; if (rand(j, 4, sd) < q) continue; X.px(g, px2, py2, j % 2 ? LIFE[2] : LIFE[3]); X.px(o, px2 + 1, py2 - 4 - q * 6, LIFE[1]); }
+        return;
+      }
+      case 'mv-brace': {
+        // the slab planted: a shock ring and dust where it bites the ground
+        const q = e / f.life;
+        if (q < 0.4) K.gring(g, x, y, 4 + q * 30, X.EARTH[1], 1 - q / 0.4, 2);
+        K.dust(o, x, y, e, sd, 8, 16, '#8a7a68', 0.8);
+        return;
+      }
+      case 'mv-surge': case 'mv-tidewave': {
+        // a wave shoving forward from you (Surge rides back on it; the Tide parry throws it)
+        const x2 = gx(f.x2), y2 = gy(f.y2), L = Math.hypot(x - x2, y - y2) || 1, ux = (x - x2) / L, uy = (y - y2) / L, q = e / f.life;
+        const cx = x + ux * (6 + q * 30), cy = y + uy * (6 + q * 30) * FY;
+        for (let j = -5; j <= 5; j++) { const px2 = cx - uy * j * 2.4, py2 = cy + ux * j * 2.4 * FY, h = (8 - Math.abs(j)) * (1 - q); if (h < 1) continue; X.line(o, px2, py2, px2, py2 - h, EL.water[2]); X.px(o, px2, py2 - h, '#ffffff'); }
+        for (let j = 0; j < 8; j++) K.puff(o, cx + (rand(j, 1, sd) - 0.5) * 20, cy - 4 - e * 14, 2 + e * 5, j % 2 ? '#ffffff' : EL.water[0], 1 - q);
+        return;
+      }
+      case 'mv-parry': case 'mv-block': case 'mv-guardbreak': {
+        // parry: a big, brief flash in the guard's colour; block: a small spark; break: shards flying off
+        const v = bodies[f.who]; if (!v?.on) return;
+        const R2 = f.look === ELID.life ? LIFE : ramp(f.look || ELID.shield), q = e / f.life, fx = gx(w.bodies.x[f.who] + Math.cos(w.bodies.face[f.who] * TAU) * 0.6), fy = gy(w.bodies.y[f.who] + Math.sin(w.bodies.face[f.who] * TAU) * 0.6) - 10;
+        if (f.kind === 'mv-parry') { if (q < 0.3) X.ellipse(o, fx, fy, 9 * (1 - q), 9 * (1 - q), '#ffffff'); K.gring(o, fx, fy + 8, 4 + q * 26, R2[1], 1 - q, 2); X.glow(o, fx, fy, 14 * (1 - q), R2[2], 0.9 * (1 - q)); light(fx, fy + 10, 60, R2[2], 0.9 * (1 - q)); return; }
+        if (f.kind === 'mv-block') { for (let j = 0; j < 6; j++) { const a = rand(j, 1, sd) * TAU, d = e * 30; X.px(o, fx + Math.cos(a) * d, fy + Math.sin(a) * d * 0.7, j % 2 ? '#ffffff' : R2[1]); } return; }
+        for (let j = 0; j < 14; j++) { const a = rand(j, 1, sd) * TAU, d = e * (14 + rand(j, 2, sd) * 16); if (rand(j, 3, sd) < q) continue; X.px(o, fx + Math.cos(a) * d, fy + Math.sin(a) * d * 0.7 + e * e * 30, j % 3 ? R2[1] : '#ffffff'); }
+        return;
+      }
+      case 'mv-flameburst': {
+        const v = bodies[f.who]; if (!v?.on) return;
+        const a0 = w.bodies.face[f.who] * TAU, q = e / f.life;
+        for (let j = 0; j < 9; j++) { const a = a0 + (rand(j, 1, sd) - 0.5) * 1.0, d = 6 + q * 26 * (0.6 + rand(j, 2, sd) * 0.4); K.tongue(o, v.x + Math.cos(a) * d, v.y + Math.sin(a) * d * FY - 4, 2.2 * (1 - q), 8 * (1 - q), Math.cos(a)); }
+        light(v.x, v.y, 50, '#ff7020', 0.8 * (1 - q));
+        return;
+      }
+      case 'mv-echo': case 'mv-copy': {
+        // Echo: violet rings bloom off the orb as it re-casts; Copy: a mote flies from the ally into your orb
+        const v = bodies[f.who]; if (!v?.on || !v.a) return;
+        const orb: Pt = [v.x + v.a.hands[0][0], v.y + v.a.hands[0][1] - 7], q = e / f.life;
+        if (f.kind === 'mv-copy') { S.mote(o, [gx(f.x2), gy(f.y2) - 14], orb, q, EL.arcane, 14); if (q > 0.8) X.glow(o, orb[0], orb[1], 7, EL.arcane[1], 1); return; }
+        K.gring(o, orb[0], orb[1] + 4, 3 + q * 18, EL.arcane[1], 1 - q, 1); X.glow(o, orb[0], orb[1], 9 * (1 - q), EL.arcane[2], 0.9);
+        return;
+      }
+      case 'mv-link': case 'mv-linkbreak': {
+        const x2 = gx(f.x2), y2 = gy(f.y2), q = e / f.life;
+        if (f.kind === 'mv-link') { K.gring(g, x2, y2, 4 + q * 12, LIFE[2], 1 - q, 1); return; }
+        for (let j = 0; j < 10; j++) { const kq = rand(j, 1, sd); X.px(o, lerp(x, x2, kq), lerp(y, y2, kq) - 10 + q * q * 20, j % 2 ? LIFE[1] : LIFE[3]); }
         return;
       }
       case 'echo': {

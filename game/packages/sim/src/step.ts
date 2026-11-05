@@ -15,6 +15,7 @@ import { hasteOf, tickStructures } from './structures';
 import { tickWaves } from './waves';
 import { survivePress, tickSurvive } from './survive';
 import { tickStatuses } from './hit';
+import { sureFooted, tickGuards, walkMult } from './guards';
 import { BTN, type PlayerInput } from './input';
 import { DT, KIND, MAX_SEATS, PHASE, joinSeat, type World } from './world';
 
@@ -36,11 +37,11 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
     let mx = inp.moveX / 127, my = inp.moveY / 127;
     const m = Math.sqrt(mx * mx + my * my);
     if (m > 1) { mx /= m; my /= m; }
-    let speed = BODY.walkSpeed * Math.max(0.2, 1 - 0.22 * b.chill[i]) * hasteOf(w, i);
+    let speed = BODY.walkSpeed * Math.max(0.2, 1 - 0.22 * b.chill[i]) * hasteOf(w, i) * walkMult(w, i); // a guard: blocking, the Bulwark, Brace
     const ph = s.phase[i];
     if (ph === PHASE.channel || ph === PHASE.charge || s.handT[i] > TAP) speed *= BODY.castWalk; // a Heavy charges like a spell
-    if (!canAct(w, i) || b.heldBy[i] >= 0) speed = 0; // held by a grabber: you can still cast, not walk
-    const grip = onIce(w, i) ? 0.03 : BODY.friction;
+    if (!canAct(w, i) || b.heldBy[i] >= 0 || b.root[i] > 0) speed = 0; // held by a grabber or pinned: you can still cast, not walk
+    const grip = onIce(w, i) && !sureFooted(w, i) ? 0.03 : BODY.friction; // the Rime kite never slips
     b.vx[i] += (mx * speed - b.vx[i]) * grip;
     b.vy[i] += (my * speed - b.vy[i]) * grip;
   }
@@ -54,7 +55,8 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
     if (b.kind[i] === KIND.none) continue;
     if (b.frozen[i]) { b.kx[i] = b.ky[i] = 0; continue; }
     const rooted = b.kind[i] === KIND.dummy;
-    if (!rooted) { b.x[i] += (b.vx[i] + b.kx[i]) * DT; b.y[i] += (b.vy[i] + b.ky[i]) * DT; }
+    const pinned = b.root[i] > 0; // pinned by the spear's javelin: no walking, but blows still move it
+    if (!rooted) { b.x[i] += ((pinned ? 0 : b.vx[i]) + b.kx[i]) * DT; b.y[i] += ((pinned ? 0 : b.vy[i]) + b.ky[i]) * DT; }
     const decay = onIce(w, i) ? 0.985 : 0.86;
     b.kx[i] *= decay; b.ky[i] *= decay;
     if (Math.abs(b.kx[i]) < 1e-3) b.kx[i] = 0;
@@ -65,6 +67,7 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
   tickZones(w);
   tickStructures(w);
   tickSurfaces(w);
+  tickGuards(w);
   tickStatuses(w);
   collide(w);
   tickHealth(w);

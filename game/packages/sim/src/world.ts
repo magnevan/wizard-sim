@@ -79,6 +79,8 @@ export interface Bodies {
   lastMix: Uint8Array;
   /** How the last damaging hit was delivered (HIT_KIND in hit.ts): a boulder and an earthquake kill differently. */
   lastKind: Uint8Array;
+  /** Pinned (the spear's javelin): ticks left it can't walk. It can still act. */
+  root: Int32Array;
 }
 
 export const AI = { approach: 0, windup: 1, cooldown: 2, dash: 3, grab: 4 } as const;
@@ -127,13 +129,31 @@ export interface Seats {
   guard: Uint8Array; guardHp: Float64Array; guardT: Int32Array;
   /** Ticks RMB has been held for a Strike or Heavy with no runes queued (0: not held). */
   handT: Int32Array;
+  /** A guard's elements other than Shield (9 per seat): the lead picks the guard, a second adds half its resistance. */
+  guardEls: Uint8Array;
+  /** Ticks left of the fixed recovery after a Retreat (no Retreat or Defend), and of the Retreat itself (Brace, Phase). */
+  guardCd: Int32Array; retreatT: Int32Array;
+  /** Ticks left of the spear's impaling dash (you pass through bodies). */
+  dashT: Int32Array;
+  /** The Healing link: the ally it holds (-1 none) and ticks it has held (it costs a use a second). */
+  linkTo: Int16Array; linkT: Int32Array;
+  /** The Echo focus's memory: a spell's 9 counts and cast (CAST_ID, 0 none); ticks left of an echo being cast (half power). */
+  echoEls: Uint8Array; echoCast: Uint8Array; echoT: Int32Array;
+  /** The last spell this seat cast (9 counts, cast id, tick), for an ally's Copy. */
+  lastEls: Uint8Array; lastCast: Uint8Array; lastTick: Int32Array;
   /** Your Double's body, or -1; where it keeps itself relative to you; whether it paid for the current channel; where its beam reached. */
   double: Int16Array; dblOX: Float64Array; dblOY: Float64Array; dblPaid: Uint8Array; dblEndX: Float64Array; dblEndY: Float64Array;
   /** When the Double, and the wand or conjured weapon, were made (for recalling the oldest). */
   dblBorn: Int32Array; wandBorn: Int32Array;
 }
 
-export const GUARD = { none: 0, bulwark: 1, buckler: 2 } as const;
+/**
+ * Conjured guards, one per lead element (Shield + it), and Shield alone = the Mirror buckler
+ * (docs/explorations/2026-11-05-guards.md). `buckler` is the Mirror's old name.
+ */
+export const GUARD = { none: 0, bulwark: 1, mirror: 2, buckler: 2, ember: 3, rime: 4, spark: 5, tide: 6, prism: 7, leaf: 8 } as const;
+/** Guard id -> its name in ARMS.hp (and the view). */
+export const GUARD_NAME: readonly string[] = ['none', 'bulwark', 'mirror', 'ember', 'rime', 'spark', 'tide', 'prism', 'leaf'];
 
 export const WARD = { none: 0, ward: 1, mirror: 2, stone: 3 } as const;
 
@@ -169,11 +189,11 @@ export interface Zones {
   flags: Uint8Array; mod: Uint8Array; look: Uint8Array;
 }
 /** Payload flags. */
-export const PF = { heal: 1, scald: 2, freeze: 4, lensed: 8 } as const;
+export const PF = { heal: 1, scald: 2, freeze: 4, lensed: 8, pin: 16 } as const;
 /** Lens amplification (kept here so effects and structures share it). */
 export const STRUCT_SCALE = { lens: 1.5 } as const;
 export const MOD_ID = { none: 0, push: 1, shatter: 2, chain: 3, burst: 4 } as const;
-export const ZONE = { none: 0, blast: 1, geyser: 2, spring: 3, steam: 4 } as const;
+export const ZONE = { none: 0, blast: 1, geyser: 2, spring: 3, steam: 4, spark: 5 } as const;
 
 /** The floor: one byte of surface per cell, plus ticks left. */
 export const SURF = { none: 0, water: 1, ice: 2, fire: 3 } as const;
@@ -185,7 +205,9 @@ export interface Surfaces {
 /** What happened this tick, for the view (VFX, sound). Not state: cleared every step. */
 export interface SimEvent {
   tick: number;
-  kind: 'queue' | 'cancel' | 'dry' | 'cast' | 'hit' | 'heal' | 'fizzle' | 'burst' | 'zap' | 'surge' | 'blink' | 'shatter' | 'freeze' | 'todo';
+  kind: 'queue' | 'cancel' | 'dry' | 'cast' | 'hit' | 'heal' | 'fizzle' | 'burst' | 'zap' | 'surge' | 'blink' | 'shatter' | 'freeze' | 'todo'
+    /** A weapon or guard move (hands.ts, guards.ts): `text` names it (dash, link, retreat kinds, block, parry...). */
+    | 'move';
   who: number;
   /** hit / heal: the body that dealt it (-1 for the world: burning, surfaces). */
   src?: number;
@@ -224,6 +246,8 @@ export interface Waves {
   owner: Int16Array; els: Uint8Array;
   /** One flag per body: already hit. MAX_WAVES x MAX_BODIES. */
   hit: Uint8Array;
+  /** Power and how far it rolls: Shield waves 1 and STRUCT.waveRange; weapon waves (trident, fire wave, fissure) their own. */
+  scale: Float64Array; range: Float64Array;
 }
 
 /** Sigil devices. Each binds one of its owner's Sigil runes while it stands. */
@@ -347,6 +371,7 @@ function bodies(n: number): Bodies {
     arch: u8(n), ai: u8(n), aiT: i32(n), target: new Int16Array(n), lockX: f64(n), lockY: f64(n),
     holding: new Int16Array(n).fill(-1), grabHp: f64(n), heldBy: new Int16Array(n).fill(-1),
     dmgMult: f64(n).fill(1), speedMult: f64(n).fill(1), downed: u8(n), burnSrc: new Int16Array(n).fill(-1), lastEl: u8(n), lastDX: f64(n), lastDY: f64(n), lastMix: u8(n), lastKind: u8(n),
+    root: i32(n),
   };
 }
 function seats(n: number): Seats {
@@ -357,6 +382,8 @@ function seats(n: number): Seats {
     ward: u8(n), wardEls: u8(n * N_EL), wardHp: f64(n), wardBy: new Int16Array(n).fill(-1), auraEls: u8(n * N_EL), aura: i32(n), wand: u8(n),
     weapon: u8(n), weaponEls: u8(n * N_EL), weaponUses: i32(n), motes: u8(n),
     guard: u8(n), guardHp: f64(n), guardT: i32(n), handT: i32(n), double: new Int16Array(n).fill(-1), dblOX: f64(n), dblOY: f64(n), dblPaid: u8(n), dblEndX: f64(n), dblEndY: f64(n), dblBorn: i32(n), wandBorn: i32(n),
+    guardEls: u8(n * N_EL), guardCd: i32(n), retreatT: i32(n), dashT: i32(n), linkTo: new Int16Array(n).fill(-1), linkT: i32(n),
+    echoEls: u8(n * N_EL), echoCast: u8(n), echoT: i32(n), lastEls: u8(n * N_EL), lastCast: u8(n), lastTick: i32(n),
   };
 }
 function missiles(n: number): Missiles {
@@ -467,6 +494,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
     waves: {
       alive: u8(MAX_WAVES), x: f64(MAX_WAVES), y: f64(MAX_WAVES), dx: f64(MAX_WAVES), dy: f64(MAX_WAVES), half: f64(MAX_WAVES), travelled: f64(MAX_WAVES),
       owner: new Int16Array(MAX_WAVES), els: u8(MAX_WAVES * N_EL), hit: u8(MAX_WAVES * MAX_BODIES),
+      scale: f64(MAX_WAVES), range: f64(MAX_WAVES),
     },
     enc: {
       state: i32(4), px: f64(MAX_PORTALS), py: f64(MAX_PORTALS), arch: u8(MAX_PORTALS),
@@ -514,7 +542,7 @@ export function spawnBody(w: World, slot: number, kind: number, team: number, x:
   b.r[i] = r; b.hp[i] = b.maxHp[i] = hp; b.face[i] = 0;
   b.wet[i] = b.burn[i] = b.frozen[i] = b.stun[i] = b.expose[i] = b.down[i] = 0; b.chill[i] = 0; b.lastHit[i] = 0;
   b.arch[i] = 0; b.ai[i] = 0; b.aiT[i] = 0; b.target[i] = -1; b.holding[i] = -1; b.heldBy[i] = -1; b.grabHp[i] = 0;
-  b.dmgMult[i] = 1; b.speedMult[i] = 1; b.downed[i] = 0;
+  b.dmgMult[i] = 1; b.speedMult[i] = 1; b.downed[i] = 0; b.root[i] = 0;
   return i;
 }
 

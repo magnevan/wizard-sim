@@ -1,63 +1,248 @@
 /**
  * Your hands: with no runes queued, the cast gestures are weapon moves (grammar v2,
- * docs/explorations/2026-11-05-weapons-review-1.md). Runes queued = magic, none = your hands.
+ * docs/explorations/2026-11-05-weapons-review-1.md; the round-2 weapons in 2026-11-05-guards.md,
+ * built on its recommendations pending the user's round-2 ratings). Runes queued = magic, none = your hands.
  *
- *   RMB tap     Strike   your weapon's swing, or the staff's shove           1 use
- *   RMB hold    Heavy    charge, then a bigger blow                          2 uses
- *   Shift+RMB   Special  the weapon's own move: a full-circle Sweep, the spear's javelin   2 uses
- *   Shift+LMB   Retreat  a quick hop backwards, away from where you face
- *   Space       Defend   hold to block with your conjured guard (cast.ts: guardT)
+ *   RMB tap     Strike   your weapon's swing, or the staff's shove                     1 use
+ *   RMB hold    Heavy    charge, then the weapon's own big move                        2 uses
+ *   Shift+RMB   Special  a full-circle Sweep for most; the spear's javelin; the Echo focus's Copy
+ *   Shift+LMB   Retreat  your guard's Retreat (guards.ts), or a quick hop back without one
+ *   Space       Defend   hold to block with your guard, tap as a hit lands to parry (cast.ts: guardT)
  *
- * The weapon-specific Heavies (a fire wave, an earth wave, the spear's long dash, Life's healing
- * link) and the guards' own Retreats come after the guards round; for now every weapon shares
- * these, so the grammar can be felt in the hands.
+ *   Weapon            Heavy                                               Special
+ *   Bare staff        a big shove                                         Sweep
+ *   Tide trident      a wave slash rolling along the floor: shoves, soaks Sweep
+ *   Healing hands     Healing link: hold to heal the ally under the cursor, no release; 1 use a second
+ *   Frost spear       an impaling dash 2.5x its reach; frozen targets on the way shatter   Javelin (pins, frosts; 3 uses)
+ *   Lightning whip    a chain lash: the first target, then up to 3 more   Sweep
+ *   Echo focus        Echo: re-casts the spell it remembers at half power (5 uses)          Copy an ally's spell
+ *   Flame sword       a rolling crescent of flame that ignites, no lingering fire           Sweep
+ *   Stone maul        a fissure down one lane, knocking down all in it    Sweep
  */
 import { compile, type SpellSpec } from './compile';
-import { RHYTHM, STRUCT, T } from './config';
-import { EL, elementName, queueFromCounts } from './elements';
-import { fireSpell, type FireExtra } from './effects';
-import { addKnock } from './hit';
+import { ARMS, RHYTHM, STATUS, STRUCT, T } from './config';
+import { EL, N_EL, elementName, queueFromCounts } from './elements';
+import { fireSpell, hit, hitOpts, nearest, payloadOf, spawnMissile, zap, type FireExtra } from './effects';
+import { inCone, len } from './geom';
+import { addKnock, bloom } from './hit';
+import { grounded, guardRetreat } from './guards';
+import { spawnFront } from './structures';
 import { cosTurns, sinTurns } from './trig';
-import { PU, stackOf, type World } from './world';
+import { clipRay } from './walls';
+import { CAST_ID, KIND, MAX_SEATS, PF, PHASE, PU, QUEUE_MAX, stackOf, type World } from './world';
 
 /** Ticks a press may last and still be a tap (Strike rather than Heavy). */
 export const TAP = T(0.25);
 
 const weaponSpec = (w: World, i: number): SpellSpec => compile(queueFromCounts(w.seats.weaponEls, i), 'conjure');
+const weaponEls = (w: World, i: number): Uint8Array => w.seats.weaponEls.subarray(i * N_EL, i * N_EL + N_EL);
+const held = (w: World, i: number): number => (w.seats.weapon[i] && w.seats.weaponUses[i] > 0 ? w.seats.weapon[i] : 0);
+
+function spend(w: World, i: number, uses: number): void {
+  const s = w.seats;
+  s.weaponUses[i] -= uses;
+  if (s.weaponUses[i] <= 0) { s.weapon[i] = 0; s.linkTo[i] = -1; }
+}
+
+const move = (w: World, i: number, text: string, look: number, x2?: number, y2?: number, amount?: number) =>
+  w.events.push({ tick: w.clock[0], kind: 'move', who: i, x: w.bodies.x[i], y: w.bodies.y[i], x2, y2, text, look, amount });
 
 /** One blow of your conjured weapon, or the staff's shove when you hold none. Spends `uses`. */
 function blow(w: World, i: number, face: number, ex: FireExtra, uses: number): void {
   const s = w.seats;
-  if (!s.weapon[i] || s.weaponUses[i] <= 0) { fireSpell(w, i, compile([], 'conjure'), face, 0, 0, 0, { ...ex, knock: (ex.knock ?? 3) * (ex.scale ?? 1) }); return; }
+  if (!held(w, i)) { fireSpell(w, i, compile([], 'conjure'), face, 0, 0, 0, { ...ex, knock: (ex.knock ?? 3) * (ex.scale ?? 1) }); return; }
   const el = elementName(s.weapon[i]), reach = (STRUCT.reach[el] ?? 1.8) * (ex.reach ?? 1);
-  fireSpell(w, i, weaponSpec(w, i), face, 0, 0, 0, { ...ex, reach, yank: el === 'arcane' });
-  s.weaponUses[i] -= uses;
-  if (s.weaponUses[i] <= 0) s.weapon[i] = 0;
+  fireSpell(w, i, weaponSpec(w, i), face, 0, 0, 0, { ...ex, reach });
+  spend(w, i, uses);
 }
 
 export function strike(w: World, i: number, face: number): void {
+  if (held(w, i) === EL.arcane) { // the Echo focus: a weak orb bolt
+    const m = spawnMissile(w, i, payloadOf(weaponSpec(w, i)), cosTurns(face), sinTurns(face), 0, ARMS.boltScale, 0, 0);
+    if (m >= 0) w.missiles.r[m] = 0.2;
+    spend(w, i, 1);
+    return;
+  }
   blow(w, i, face, {}, 1);
 }
 
-/** `charge` 0..1: how long past a tap the button was held, against RHYTHM.chargeMax. */
-export function heavy(w: World, i: number, face: number, charge: number): void {
-  blow(w, i, face, { scale: STRUCT.heavyScale * (0.6 + 0.4 * charge), reach: STRUCT.heavyReach, knock: 8 }, 2);
+/**
+ * Released after a hold: `charge` 0..1 is how long past a tap it was held, against RHYTHM.chargeMax.
+ * Returns true when it started a cast (the Echo), so the caller leaves the seat's phase alone.
+ */
+export function heavy(w: World, i: number, face: number, charge: number): boolean {
+  const el = held(w, i), k = STRUCT.heavyScale * (0.6 + 0.4 * charge);
+  switch (el) {
+    case 0: blow(w, i, face, { scale: k, reach: STRUCT.heavyReach, knock: 8 }, 2); return false; // the staff's big shove
+    case EL.life: return false; // the Healing link was the hold itself (holdTick): nothing on release
+    case EL.water: case EL.fire: case EL.earth: {
+      // a wave from the weapon: the trident's slash, the flame sword's rolling crescent, the maul's fissure down one lane
+      const half = el === EL.water ? ARMS.tideHalf : el === EL.fire ? ARMS.fireHalf : ARMS.quakeHalf;
+      const range = el === EL.water ? ARMS.tideRange : el === EL.fire ? ARMS.fireRange : ARMS.quakeRange;
+      spawnFront(w, i, weaponEls(w, i), face, half, ARMS.waveScale * (0.6 + 0.4 * charge), range);
+      move(w, i, el === EL.water ? 'tideslash' : el === EL.fire ? 'firewave' : 'fissure', el, w.bodies.x[i] + cosTurns(face) * range, w.bodies.y[i] + sinTurns(face) * range);
+      spend(w, i, 2);
+      return false;
+    }
+    case EL.cold: dash(w, i, face, k); spend(w, i, 2); return false;
+    case EL.lightning: lash(w, i, face, k); spend(w, i, 2); return false;
+    case EL.arcane: return echo(w, i);
+    default: blow(w, i, face, { scale: k, reach: STRUCT.heavyReach, knock: 8 }, 2); return false;
+  }
+}
+
+/** The spear's impaling dash: far forward, through frozen bodies (they shatter), stopping at the first one that isn't. */
+function dash(w: World, i: number, face: number, k: number): void {
+  const b = w.bodies, x = b.x[i], y = b.y[i], dx = cosTurns(face), dy = sinTurns(face);
+  let reach = (STRUCT.reach.cold ?? 2.8) * ARMS.dashMult;
+  const [wd, wk] = clipRay(w, x, y, dx, dy, reach);
+  if (wk >= 0) reach = Math.max(0, wd - b.r[i]);
+  const p = payloadOf(weaponSpec(w, i));
+  // bodies along the lane, nearest first
+  const lane: number[] = [];
+  for (let j = 0; j < b.kind.length; j++) {
+    if (j === i || b.kind[j] === KIND.none) continue;
+    const rx = b.x[j] - x, ry = b.y[j] - y, along = rx * dx + ry * dy, side = Math.abs(-rx * dy + ry * dx);
+    if (along > 0 && along < reach + b.r[j] && side < b.r[j] + 0.5) lane.push(j);
+  }
+  lane.sort((a, c) => (b.x[a] - x) * dx + (b.y[a] - y) * dy - ((b.x[c] - x) * dx + (b.y[c] - y) * dy) || a - c);
+  let stop = reach;
+  for (const j of lane) {
+    if (b.frozen[j]) { // straight through: it shatters
+      hit(w, j, p, hitOpts(p, i, k * STATUS.shatterMult, dx, dy));
+      b.frozen[j] = 0; b.chill[j] = 0;
+      w.events.push({ tick: w.clock[0], kind: 'shatter', who: j, x: b.x[j], y: b.y[j] });
+      continue;
+    }
+    hit(w, j, p, hitOpts(p, i, k, dx, dy)); // impaled: the dash ends on it
+    addKnock(w, j, dx, dy, 6);
+    stop = Math.max(0, (b.x[j] - x) * dx + (b.y[j] - y) * dy - b.r[j] - b.r[i] - 0.05);
+    break;
+  }
+  b.kx[i] += dx * stop * 0.14 * 60; b.ky[i] += dy * stop * 0.14 * 60; // your own lunge: not stopped by Anchored
+  w.seats.dashT[i] = T(0.3); // through the bodies it shattered (guards.ts phased)
+  move(w, i, 'dash', EL.cold, x + dx * stop, y + dy * stop);
+}
+
+/** The whip's chain lash: the first body in front within the whip's reach, then up to ARMS.lashJumps more. */
+function lash(w: World, i: number, face: number, k: number): void {
+  const b = w.bodies, x = b.x[i], y = b.y[i], range = (STRUCT.reach.lightning ?? 3.4) * STRUCT.heavyReach, p = payloadOf(weaponSpec(w, i));
+  let first = -1, bd = range + 1;
+  for (let j = 0; j < b.kind.length; j++) {
+    if (j === i || b.kind[j] === KIND.none || grounded(w, j) || !inCone(x, y, face, 0.12, range, b.x[j], b.y[j], b.r[j])) continue;
+    const d = len(b.x[j] - x, b.y[j] - y);
+    if (d < bd) { bd = d; first = j; }
+  }
+  move(w, i, 'lash', EL.lightning, first >= 0 ? b.x[first] : x + cosTurns(face) * range, first >= 0 ? b.y[first] : y + sinTurns(face) * range);
+  if (first < 0) { w.events.push({ tick: w.clock[0], kind: 'zap', who: i, x, y, x2: x + cosTurns(face) * range, y2: y + sinTurns(face) * range, look: EL.lightning }); return; }
+  zap(w, i, first, p, k * 0.8);
+  const visited = [i, first];
+  for (let g = 0; g < MAX_SEATS; g++) if (grounded(w, g)) visited.push(g);
+  let cur = first;
+  for (let n = 0; n < ARMS.lashJumps; n++) {
+    const next = nearest(w, b.x[cur], b.y[cur], ARMS.lashJump * (b.wet[cur] ? 1.5 : 1), visited, 0);
+    if (next < 0) break;
+    zap(w, cur, next, p, k * 0.6);
+    visited.push(next);
+    cur = next;
+  }
+}
+
+/** The Echo focus's Heavy: re-casts the remembered spell from the orb at half power, for uses instead of runes. */
+function echo(w: World, i: number): boolean {
+  const s = w.seats;
+  if (!s.echoCast[i]) { w.events.push({ tick: w.clock[0], kind: 'fizzle', who: i, x: w.bodies.x[i], y: w.bodies.y[i], text: 'Nothing to echo' }); return false; }
+  // The cast state machine casts it (cast.ts): its queue is the memory, and echoT marks it as an echo.
+  let n = 0;
+  s.castQueue.fill(0, i * QUEUE_MAX, (i + 1) * QUEUE_MAX);
+  for (let id = 1; id <= N_EL; id++) for (let c = 0; c < s.echoEls[i * N_EL + id - 1] && n < QUEUE_MAX; c++) s.castQueue[i * QUEUE_MAX + n++] = id;
+  s.castLen[i] = n; s.castId[i] = s.echoCast[i]; s.dragged[i] = 0;
+  s.phase[i] = PHASE.windup; s.timer[i] = T(0.08); s.chanTicks[i] = 0; s.chanTimer[i] = 0;
+  s.echoT[i] = T(ARMS.echoChannel);
+  move(w, i, 'echo', EL.arcane);
+  spend(w, i, ARMS.echoUses);
+  return true;
+}
+
+/** Each tick RMB is held past a tap: the Healing link (Life) finds and holds an ally. */
+export function holdTick(w: World, i: number): void {
+  const s = w.seats, b = w.bodies;
+  if (held(w, i) !== EL.life) { s.linkTo[i] = -1; return; }
+  const x = b.x[i], y = b.y[i];
+  if (s.linkTo[i] < 0) {
+    // the ally under (or near) the cursor, within the link's range
+    const cx = x + s.aimX[i], cy = y + s.aimY[i];
+    let best = -1, bd = ARMS.linkPick;
+    for (let j = 0; j < MAX_SEATS; j++) {
+      if (j === i || !s.active[j] || b.kind[j] !== KIND.wizard || b.downed[j] || b.team[j] !== b.team[i]) continue;
+      const d = len(b.x[j] - cx, b.y[j] - cy);
+      if (d < bd && len(b.x[j] - x, b.y[j] - y) <= ARMS.linkRange) { bd = d; best = j; }
+    }
+    if (best < 0) return;
+    s.linkTo[i] = best; s.linkT[i] = 0;
+    move(w, i, 'link', EL.life, b.x[best], b.y[best]);
+  }
+  const j = s.linkTo[i], dx = b.x[j] - x, dy = b.y[j] - y, d = len(dx, dy);
+  // It holds while they move, up to the link's range or until a wall comes between you.
+  const walled = d > 1e-6 && clipRay(w, x, y, dx / d, dy / d, d)[1] >= 0;
+  if (b.kind[j] !== KIND.wizard || b.downed[j] || d > ARMS.linkRange || walled) { s.linkTo[i] = -1; move(w, i, 'linkbreak', EL.life, b.x[j], b.y[j]); return; }
+  const before = b.hp[j];
+  b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + ARMS.linkHeal / 60);
+  bloom(w, i, j, b.hp[j] - before);
+  if (s.linkT[i] % 30 === 0) w.events.push({ tick: w.clock[0], kind: 'heal', who: j, src: i, x: b.x[j], y: b.y[j], amount: ARMS.linkHeal / 2, look: EL.life });
+  if (++s.linkT[i] % 60 === 0) spend(w, i, ARMS.linkUses);
 }
 
 export function special(w: World, i: number, face: number, tx: number, ty: number): void {
-  const s = w.seats;
-  if (s.weapon[i] === EL.cold && s.weaponUses[i] > 0) { // the spear's javelin: thrown at the cursor, carrying its elements
-    fireSpell(w, i, { ...weaponSpec(w, i), shape: 'missile', charge: false }, face, tx, ty, 0);
-    s.weaponUses[i] -= 2;
-    if (s.weaponUses[i] <= 0) s.weapon[i] = 0;
+  const b = w.bodies, el = held(w, i);
+  if (el === EL.cold) { // the spear's javelin: an ice copy splits off and flies; the spear stays in your hand
+    const dx = tx - b.x[i], dy = ty - b.y[i], d = len(dx, dy);
+    const ux = d > 1e-6 ? dx / d : cosTurns(face), uy = d > 1e-6 ? dy / d : sinTurns(face);
+    const m = spawnMissile(w, i, payloadOf(weaponSpec(w, i)), ux, uy, 2, 1, 0, 0);
+    if (m >= 0) {
+      const mm = w.missiles;
+      mm.vx[m] = ux * ARMS.javelinSpeed; mm.vy[m] = uy * ARMS.javelinSpeed; mm.life[m] = T(1.1); mm.r[m] = 0.22; mm.flags[m] |= PF.pin;
+    }
+    move(w, i, 'javelin', EL.cold, tx, ty);
+    spend(w, i, ARMS.javelinUses);
     return;
   }
+  if (el === EL.arcane) { copy(w, i); return; }
   blow(w, i, face, { half: 0.5, scale: STRUCT.sweepScale }, 2); // a full circle round you, your partner too
 }
 
-/** A hop backwards, away from where you face. */
+/** The Echo focus's Copy: the orb takes the last spell an ally cast near you (recently) as the one it remembers. */
+function copy(w: World, i: number): void {
+  const s = w.seats, b = w.bodies, now = w.clock[0];
+  let best = -1;
+  for (let j = 0; j < MAX_SEATS; j++) {
+    if (j === i || !s.active[j] || !s.lastCast[j] || b.kind[j] !== KIND.wizard || b.team[j] !== b.team[i]) continue;
+    if (now - s.lastTick[j] > T(ARMS.copyWindow) || len(b.x[j] - b.x[i], b.y[j] - b.y[i]) > ARMS.copyRange) continue;
+    if (best < 0 || s.lastTick[j] > s.lastTick[best]) best = j;
+  }
+  if (best < 0) { w.events.push({ tick: now, kind: 'fizzle', who: i, x: b.x[i], y: b.y[i], text: 'Nothing to copy' }); return; }
+  s.echoEls.set(s.lastEls.subarray(best * N_EL, best * N_EL + N_EL), i * N_EL);
+  s.echoCast[i] = s.lastCast[best];
+  move(w, i, 'copy', EL.arcane, b.x[best], b.y[best]);
+  spend(w, i, 1);
+}
+
+/**
+ * Remembers a spell seat i just cast: for an ally's Copy, and in the Echo focus if you hold one.
+ * Structures, Blink and Self casts aren't remembered (the focus echoes attacks and heals).
+ */
+export function remember(w: World, i: number, spec: SpellSpec, castId: number): void {
+  if (!spec.power || spec.shape === 'blink' || spec.shape === 'self' || spec.shape === 'todo' || castId === CAST_ID.self) return;
+  const s = w.seats;
+  s.lastEls.set(spec.counts.subarray(0, N_EL), i * N_EL); s.lastCast[i] = castId; s.lastTick[i] = w.clock[0];
+  if (held(w, i) === EL.arcane) { s.echoEls.set(spec.counts.subarray(0, N_EL), i * N_EL); s.echoCast[i] = castId; }
+}
+
+/** Shift+LMB with nothing queued: your guard's Retreat, or a quick hop backwards without one. */
 export function retreat(w: World, i: number, face: number): void {
-  addKnock(w, i, -cosTurns(face), -sinTurns(face), STRUCT.retreatPush);
+  const s = w.seats;
+  if (s.guard[i]) { if (s.guardCd[i] > 0) return; guardRetreat(w, i, face); }
+  else addKnock(w, i, -cosTurns(face), -sinTurns(face), STRUCT.retreatPush);
   if (w.run && stackOf(w, i, PU.slipstream)) w.run.dodge[i] = T(2); // survive: the next spell is free
 }
 

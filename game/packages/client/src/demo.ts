@@ -10,6 +10,7 @@
  * placement preview), holddrag (held while dragging, never let go), guard (Weapon cast, then the button held to block).
  * wait does nothing for a cycle (?spell=shield+earth/place;wait;wait keeps one wall up to watch it break).
  * A target after @ overrides where the seat aims: ?spell=shield+earth/drag@0,-2
+ * Your hands, with nothing queued: strike, heavy, special, retreat, block (?spell=sigil+cold/weapon;heavy).
  * Pure integer maths on the tick, so a given --ms shows the same moment.
  */
 import { rules, type Element } from '@wizard-sim/rules';
@@ -31,9 +32,11 @@ function parseOne(s: string): Demo | null {
   const [cast, at] = c0.split('@');
   const xy = at ? at.split(',').map(Number) : null;
   const els = q.split(/[+ ,]/).filter((e) => (rules.BASE as readonly string[]).includes(e)).map((e) => elementId(e as Element));
-  return els.length || cast === 'weapon' || cast === 'wait' ? { els, cast, at: xy && xy.length === 2 && xy.every(Number.isFinite) ? [xy[0], xy[1]] : undefined } : null;
+  return els.length || HANDS.includes(cast) ? { els, cast, at: xy && xy.length === 2 && xy.every(Number.isFinite) ? [xy[0], xy[1]] : undefined } : null;
 }
 
+/** Casts that work with nothing queued: your hands (weapon moves and the guard's gestures). */
+const HANDS = ['weapon', 'wait', 'strike', 'heavy', 'special', 'block', 'retreat'];
 const PERIOD = 170;
 /** Where seat i aims: the middle dummy for seat 0, the left one for seat 1. */
 const TARGET = [[0, -5], [-6, -4]] as const;
@@ -54,6 +57,12 @@ export function demoInput(w: World, tick: number, seat: number, d: Demo): Player
   else if (d.cast === 'weapon') buttons = ph >= go && ph < go + 2 ? BTN.weapon : 0;
   else if (d.cast === 'drag') buttons = ph >= go && ph < go + 40 ? BTN.area : 0;
   else if (d.cast === 'hold' || d.cast === 'holddrag') buttons = ph >= go ? BTN.area : 0;
+  // nothing queued: your hands. strike (RMB tap), heavy (RMB held 1 s), special (Shift+RMB), retreat (Shift+LMB), block (Space held)
+  else if (d.cast === 'strike') buttons = ph >= go && ph < go + 2 ? BTN.force : 0;
+  else if (d.cast === 'heavy') buttons = ph >= go && ph < go + 60 ? BTN.force : 0;
+  else if (d.cast === 'special') buttons = ph >= go && ph < go + 2 ? BTN.area : 0;
+  else if (d.cast === 'retreat') buttons = ph >= go && ph < go + 2 ? BTN.weapon : 0;
+  else if (d.cast === 'block') buttons = ph >= go && ph < go + 140 ? BTN.self : 0;
   else if (d.cast === 'guard') buttons = (ph >= go && ph < go + 2) || ph >= go + 30 ? BTN.weapon : 0;
   let [tx, ty] = d.at ?? TARGET[seat % 2];
   if (d.cast === 'drag' || d.cast === 'holddrag') tx += -2 + 4 * Math.min(1, Math.max(0, (ph - go) / 36));

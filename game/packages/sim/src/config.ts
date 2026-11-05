@@ -124,12 +124,56 @@ export const STRUCT = {
   lensRadius: 0.9, lensMult: 1.5,
   auraTime: 12, auraRadius: 2.5, hasteMult: 1.4, glassMult: 1.3,
   weaponUses: 30, motes: 3, moteRefund: 0.5,
-  /** Conjured shields: what they take before breaking, their frontal arc (half, turns), and the Buckler's parry window. */
-  bulwarkHp: 160, bucklerHp: 70, guardHalf: 0.2, parry: 0.2,
   /** The Double: its health, its power and rune share per repeat, and how much more enemies want it. */
   doubleHp: 60, doubleShare: 0.5, doubleTaunt: 6,
   /** Blink goes to the cursor, up to this far (the user: start generous, nerf from there). */
   blinkRange: 30,
   /** Reach of each conjured weapon, by its leading element. */
   reach: { earth: 1.6, arcane: 3.2, life: 1.2, lightning: 3.4, water: 2.2, fire: 1.8, cold: 2.8 } as Partial<Record<Element, number>>,
+};
+
+/**
+ * Weapons and guards, round 2 (docs/explorations/2026-11-05-guards.md): the weapon-specific Heavies
+ * and Specials, the Echo focus, and the eight guards' Defend, Retreat and passives. Built on the
+ * doc's recommendations, pending the user's round-2 ratings. Distances in world units.
+ */
+export const ARMS = {
+  // ---- Heavies (2 uses unless noted) ----
+  /** Weapon waves (trident slash, fire wave, earth fissure): their power, half-width and how far they roll. */
+  waveScale: 1.4,
+  tideHalf: 1.0, tideRange: 5,
+  fireHalf: 1.5, fireRange: 6,
+  quakeHalf: 0.45, quakeRange: 7.5,
+  /** Healing link (Life): picks the ally within linkPick of the cursor, holds to linkRange (or a wall), heals linkHeal hp/s, costs linkUses uses a second. */
+  linkRange: 8, linkPick: 1.5, linkHeal: 12, linkUses: 1,
+  /** Impaling dash (Cold): this many times the spear's reach; frozen targets on the way shatter. */
+  dashMult: 2.5,
+  /** Chain lash (Lightning): jumps after the first target, and how far each jump reaches. */
+  lashJumps: 3, lashJump: 3.5,
+  // ---- Specials ----
+  /** The spear's javelin: uses, speed, how long it pins (roots) the target, and the frost it leaves. */
+  javelinUses: 3, javelinSpeed: 16, pin: 1.5, frostRadius: 1.0,
+  /** Echo focus: uses per echo, its power, how long an echoed channel runs, Copy's reach and window, the Strike bolt's power. */
+  echoUses: 5, echoPower: 0.5, echoChannel: 1.0, copyRange: 6, copyWindow: 2, boltScale: 0.35,
+  // ---- Guards ----
+  /** Retreat and Defend share this fixed recovery after a Retreat (pillar 4: a rhythm, not a hidden cooldown). */
+  retreatRecovery: 0.5,
+  /** Parry windows (s): the Mirror buckler's is the widest. */
+  parryMirror: 0.2, parry: 0.12,
+  /** Frontal block arcs (half, turns). */
+  blockMirror: 0.09, blockBulwark: 0.2, block: 0.13,
+  /** Walking while blocking (x walk speed): the Mirror is Light (1); the Bulwark slows you most; and the Bulwark's always-on slow. */
+  blockWalk: 0.7, bulwarkBlockWalk: 0.4, bulwarkWalk: 0.85,
+  /** Retreat distances: Backstep, Flame step, Ice slide, Blink, Surge, Phase; Regroup looks this far for an ally. */
+  backstep: 2, flameStep: 3, iceSlide: 5, blink: 3, surge: 3, phase: 2.5, regroup: 4,
+  /** Brace (no move, no knockback), Phase (through bodies), the Flame step's fire line and the Blink spark, in seconds. */
+  brace: 1, phaseTime: 0.5, flameLine: 1, spark: 4,
+  /** Heals: Regroup (both of you), Leaf regrowth (hp/s), a Leaf block to allies behind (hp/s), a Leaf parry. */
+  regroupHeal: 8, regrowth: 1, leafBlockHeal: 8, leafParryHeal: 20,
+  /** Guard damage multipliers: the Spark ring is the weakest block; Water douses the Ember targe. */
+  sparkBlock: 1.5, emberWater: 2,
+  /** A second element in a guard adds its own resistance at this share (the doc's recommendation: half). */
+  secondRes: 0.5,
+  /** What each guard takes before it breaks. */
+  hp: { mirror: 70, bulwark: 160, ember: 90, rime: 90, spark: 45, tide: 90, prism: 90, leaf: 90 },
 };

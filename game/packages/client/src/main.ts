@@ -212,7 +212,7 @@ async function boot(): Promise<void> {
     if (showDebug && world.clock[0] % 6 === 0) hud.textContent = `tick ${world.clock[0]}  hash ${hex(hashWorld(world))}  ${view.camera.scale}×  ${app.renderer.name}
 ${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
       (autoplay ? '  autoplay' : demo[0] ? '  spell demo' : scripted ? '  scripted run' : '\nLMB walk · RMB Force (hold) · Shift+RMB Area, hold for Place · Space Self · Shift+LMB Weapon · Esc clear · hold Alt: inspect' +
-        '\nNothing queued: RMB strike, hold for heavy · Shift+RMB special · Shift+LMB step back · Space block (with a guard)');
+        '\nNothing queued: RMB Strike, hold for the weapon’s Heavy · Shift+RMB Special · Shift+LMB your guard’s Retreat (or a hop) · Space Defend: hold to block, tap as a hit lands to parry');
     schedule(frame);
   };
   // ?timerloop=1: timers instead of animation frames, so a background tab keeps running (the co-op e2e test).

@@ -6,7 +6,7 @@
  * in their typed arrays (els, flags, mod, look) and rebuild the view object when they hit.
  */
 import type { Mod, SpellSpec } from './compile';
-import { BODY, CELL, COMBAT, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
+import { ARMS, BODY, CELL, COMBAT, RUNES, SHAPES, STATUS, SURFACE, T } from './config';
 import { EL, N_EL } from './elements';
 import { inCone, len, rayCircle } from './geom';
 import { HIT_KIND, addKnock, applyHit, bloom, setHitKind, type HitOpts } from './hit';
@@ -14,7 +14,8 @@ import { cosTurns, sinTurns } from './trig';
 import { clipRay, collideWalls, damageWall, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
 import { WALL } from './compile';
 import { ARCHETYPES } from './archetypes';
-import { DT, GUARD, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, STRUCT_SCALE, SURF, WARD, ZONE, type World } from './world';
+import { grounded, guardMissile, phased } from './guards';
+import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, STRUCT_SCALE, SURF, WARD, ZONE, type World } from './world';
 
 export interface Payload {
   counts: Uint8Array;
@@ -295,7 +296,7 @@ function chain(w: World, src: number, spec: SpellSpec, face: number, scale: numb
   const team = spec.heal ? b.team[src] : 0; // Chain heal looks for hurt allies
   let first = -1, bd = SHAPES.arcRange;
   for (let i = 0; i < b.kind.length; i++) {
-    if (!alive(w, i) || i === src) continue;
+    if (!alive(w, i) || i === src || grounded(w, i)) continue; // Grounded (Spark ring): chain lightning skips you
     if (team && (b.team[i] !== team || b.hp[i] >= b.maxHp[i])) continue;
     if (!inCone(x, y, face, team ? 0.25 : 0.12, SHAPES.arcRange, b.x[i], b.y[i], b.r[i])) continue;
     const d = len(b.x[i] - x, b.y[i] - y);
@@ -307,6 +308,7 @@ function chain(w: World, src: number, spec: SpellSpec, face: number, scale: numb
   }
   const jumps = SHAPES.arcJumps + Math.max(0, spec.counts[EL.lightning - 1] - 1) + (spec.mod === 'chain' ? 1 : 0);
   const visited = [src, first];
+  for (let g = 0; g < MAX_SEATS; g++) if (grounded(w, g)) visited.push(g);
   zap(w, src, first, p, scale);
   let cur = first;
   for (let j = 0; j < jumps; j++) {
@@ -438,17 +440,11 @@ export function tickMissiles(w: World): void {
         // Enemy bolts pass through other enemies.
         if (b.kind[m.owner[j]] === KIND.enemy && b.team[i] === b.team[m.owner[j]]) continue;
         if (len(b.x[i] - m.x[j], b.y[i] - m.y[j]) > b.r[i] + m.r[j]) continue;
-        // A conjured shield held up blocks shots from the front; a Buckler raised just in time sends them back.
-        if (i < MAX_SEATS && w.seats.guardT[i] > 0) {
-          const s = w.seats, inFront = (-ux * cosTurns(b.face[i]) - uy * sinTurns(b.face[i])) > 0.81; // within about 36 degrees
-          if (inFront) {
-            const parry = s.guard[i] === GUARD.buckler && s.guardT[i] <= T(STRUCT.parry);
-            if (parry) { m.vx[j] = -m.vx[j]; m.vy[j] = -m.vy[j]; m.owner[j] = i; m.lastHit[j] = i; w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: b.x[i], y: b.y[i], amount: 0.6, look: EL.shield }); break; }
-            s.guardHp[i] -= payloadDamage(m.els, j, m.scale[j]);
-            if (s.guardHp[i] <= 0) { s.guard[i] = GUARD.none; s.guardT[i] = 0; }
-            dead = true;
-            break;
-          }
+        // A conjured guard held up blocks shots from the front; a parry sets off its own effect (guards.ts).
+        if (i < MAX_SEATS) {
+          const g = guardMissile(w, i, j, ux, uy);
+          if (g === 2) break;
+          if (g === 1) { dead = true; break; }
         }
         // A mirror ward (Shield alone on yourself) turns the next few shots back.
         if (i < MAX_SEATS && w.seats.ward[i] === WARD.mirror) {
@@ -459,6 +455,8 @@ export function tickMissiles(w: World): void {
         setHitKind(HIT_KIND.missile);
         hit(w, i, p, hitOpts(p, m.owner[j], m.scale[j], ux, uy, 1, true));
         m.lastHit[j] = i;
+        // The spear's javelin pins what it hits and frosts the ground there.
+        if (m.flags[j] & PF.pin) { b.root[i] = Math.max(b.root[i], T(ARMS.pin)); floorDisc(w, m.x[j], m.y[j], ARMS.frostRadius, EL.cold); }
         if (p.mod === 'burst') disc(w, p, m.owner[j], m.x[j], m.y[j], SHAPES.burstRadius, 0.4 * m.scale[j], i);
         if (p.mod === 'chain') { const n2 = nearest(w, b.x[i], b.y[i], SHAPES.arcJump, [i, m.owner[j]], 0); if (n2 >= 0) zap(w, i, n2, p, 0.4 * m.scale[j]); }
         if (p.mod === 'shatter' && m.type[j] !== 2) {
@@ -476,7 +474,7 @@ export function tickMissiles(w: World): void {
   }
 }
 
-function spawnZone(w: World, type: number, src: number, p: Payload, x: number, y: number, r: number, life: number, timer: number): void {
+export function spawnZone(w: World, type: number, src: number, p: Payload, x: number, y: number, r: number, life: number, timer: number): void {
   const z = w.zones;
   for (let k = 0; k < MAX_ZONES; k++) {
     if (z.type[k]) continue;
@@ -522,7 +520,7 @@ export function collide(w: World): void {
   for (let i = 0; i < b.kind.length; i++) {
     if (!alive(w, i)) continue;
     for (let j = i + 1; j < b.kind.length; j++) {
-      if (!alive(w, j)) continue;
+      if (!alive(w, j) || phased(w, i) || phased(w, j)) continue; // the Prism's Phase drifts through bodies
       const dx = b.x[j] - b.x[i], dy = b.y[j] - b.y[i], d = len(dx, dy), min = b.r[i] + b.r[j];
       if (d >= min || d < 1e-9) continue;
       const wi = b.kind[i] === KIND.dummy ? 0 : 1, wj = b.kind[j] === KIND.dummy ? 0 : 1;

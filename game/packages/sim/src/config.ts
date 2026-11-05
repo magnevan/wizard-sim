@@ -196,6 +196,8 @@ export const ARMS = {
   chargeMax: 60, chargeFade: 6, lanceMin: 10, lanceBase: 8, lanceRange: 7, lanceWidth: 0.45,
   /** Weapon Specials scale with every rune too: each weapon rune past the first adds this much Mend healing; each rune of an element in a Siphon wand refills that element siphonFocus times faster again. */
   specialRune: 0.25, siphonFocus: 1,
+  /** A heal lends each other element's guard strengths to whoever it heals: blessShare of the guard row per rune (2 runes: double), for blessTime s. */
+  blessShare: 0.25, blessTime: 4,
   /** What each guard takes before it breaks. */
   hp: { mirror: 90, bulwark: 160, ember: 90, rime: 90, spark: 45, tide: 90, prism: 90, leaf: 90 },
 };

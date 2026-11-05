@@ -112,10 +112,34 @@ export function resist(w: World, t: number, col: number): number {
   }
   return r;
 }
-/** The share of `col` damage seat t takes through its guard: 1 / (1 + r), or 1 - r for a weakness. */
+/**
+ * The share of `col` damage body t takes: 1 / (1 + r), or 1 - r for a weakness. r is its guard's
+ * resistance (seats only) plus what a heal lent it (any body).
+ */
 export function taken(w: World, t: number, col: number): number {
-  const r = resist(w, t, col);
+  const b = w.bodies, r = resist(w, t, col) + (b.blessT[t] > 0 ? b.bless[t * 5 + col] : 0);
   return r >= 0 ? 1 / (1 + r) : 1 - r;
+}
+
+/**
+ * A heal carrying elements besides Life lends whoever it heals each one's guard strengths (never its
+ * weaknesses, as under the Leaf: Life preserves): blessShare of the row per rune, for blessTime s.
+ * So every element in a heal does something, the ones not lending the shape included.
+ */
+export function bless(w: World, t: number, els: Uint8Array, at: number): void {
+  const b = w.bodies;
+  let any = false;
+  for (let id = 1; id <= N_EL; id++) {
+    const n = els[at * N_EL + id - 1], g = GUARD_OF[id];
+    if (!n || !g || id === EL.life) continue;
+    if (!any && b.blessT[t] <= 0) b.bless.fill(0, t * 5, t * 5 + 5); // a lapsed blessing starts afresh
+    any = true;
+    for (let col = 0; col < 5; col++) {
+      const v = RES_TABLE[g][col];
+      if (v > 0) b.bless[t * 5 + col] = Math.max(b.bless[t * 5 + col], ARMS.blessShare * n * v);
+    }
+  }
+  if (any) b.blessT[t] = T(ARMS.blessTime);
 }
 /** The resistance column of an element's damage (Earth is physical), or -1. */
 export const colOf = (id: number): number => OWN_COL[id] ?? -1;

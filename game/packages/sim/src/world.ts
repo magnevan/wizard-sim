@@ -61,6 +61,8 @@ export interface Bodies {
   face: Float64Array;
   // Statuses, in ticks left (chill is stacks).
   wet: Int32Array; burn: Int32Array; frozen: Int32Array; stun: Int32Array; expose: Int32Array; down: Int32Array;
+  /** A heal's lent resistance (guards.ts bless): r per resistance column (5 a body), and ticks left. */
+  bless: Float64Array; blessT: Int32Array;
   chill: Float64Array;
   /** Tick of the last hit taken (dummies reset after a quiet spell). */
   lastHit: Int32Array;
@@ -369,7 +371,7 @@ function bodies(n: number): Bodies {
   return {
     kind: u8(n), team: u8(n), x: f64(n), y: f64(n), vx: f64(n), vy: f64(n), kx: f64(n), ky: f64(n), r: f64(n),
     hp: f64(n), maxHp: f64(n), face: f64(n),
-    wet: i32(n), burn: i32(n), frozen: i32(n), stun: i32(n), expose: i32(n), down: i32(n), chill: f64(n), lastHit: i32(n),
+    wet: i32(n), burn: i32(n), frozen: i32(n), stun: i32(n), expose: i32(n), down: i32(n), bless: f64(n * 5), blessT: i32(n), chill: f64(n), lastHit: i32(n),
     arch: u8(n), ai: u8(n), aiT: i32(n), target: new Int16Array(n), lockX: f64(n), lockY: f64(n),
     holding: new Int16Array(n).fill(-1), grabHp: f64(n), heldBy: new Int16Array(n).fill(-1),
     dmgMult: f64(n).fill(1), speedMult: f64(n).fill(1), downed: u8(n), burnSrc: new Int16Array(n).fill(-1), lastEl: u8(n), lastDX: f64(n), lastDY: f64(n), lastMix: u8(n), lastKind: u8(n),
@@ -542,7 +544,7 @@ export function spawnBody(w: World, slot: number, kind: number, team: number, x:
   if (i < 0) return -1;
   b.kind[i] = kind; b.team[i] = team; b.x[i] = x; b.y[i] = y; b.vx[i] = b.vy[i] = b.kx[i] = b.ky[i] = 0;
   b.r[i] = r; b.hp[i] = b.maxHp[i] = hp; b.face[i] = 0;
-  b.wet[i] = b.burn[i] = b.frozen[i] = b.stun[i] = b.expose[i] = b.down[i] = 0; b.chill[i] = 0; b.lastHit[i] = 0;
+  b.wet[i] = b.burn[i] = b.frozen[i] = b.stun[i] = b.expose[i] = b.down[i] = b.blessT[i] = 0; b.bless.fill(0, i * 5, i * 5 + 5); b.chill[i] = 0; b.lastHit[i] = 0;
   b.arch[i] = 0; b.ai[i] = 0; b.aiT[i] = 0; b.target[i] = -1; b.holding[i] = -1; b.heldBy[i] = -1; b.grabHp[i] = 0;
   b.dmgMult[i] = 1; b.speedMult[i] = 1; b.downed[i] = 0; b.root[i] = 0;
   return i;

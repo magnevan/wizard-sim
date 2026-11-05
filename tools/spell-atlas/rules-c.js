@@ -105,6 +105,8 @@
     fire: ['Healing spray', 'Lends its spray: the heal comes out as a cone, and dries and thaws whoever it heals.'],
   };
   const LIFE_LEND_ORDER = ['earth', 'lightning', 'cold', 'fire', 'water'];
+  // What each element lends a heal's target to resist: its guard's strengths (the sim's guards.ts bless).
+  const LIFE_RESIST = { earth: 'blows, and a little fire and cold', fire: 'fire and cold', cold: 'cold, and a little of blows', lightning: 'lightning', water: 'fire' };
   function lendOf(restQ) {
     let best = null, n = 0;
     for (const e of LIFE_LEND_ORDER) { const c = count(restQ, e); if (c > n) { best = e; n = c; } }
@@ -370,7 +372,9 @@
     const verb = PAYLOAD[e].hit;
     // a support spell: the element lends its shape or a helpful interaction, never its harm
     if (form === 'life' || (form === 'sigil' && o.sub === 'life' && e !== 'life')) {
-      return LIFE_LEND[e] ? `${LIFE_LEND[e][1]}${e === (o.lend || o.subLend) ? '' : ' (Another element leads the shape, so this one only adds its help.)'} It never harms.` : 'It never harms.';
+      // every element in a heal also lends its guard's strengths to whoever it heals, for a few seconds (Life preserves)
+      const keeps = LIFE_RESIST[e] ? ` Whoever it heals resists ${LIFE_RESIST[e]} for a few seconds.` : '';
+      return LIFE_LEND[e] ? `${LIFE_LEND[e][1]}${e === (o.lend || o.subLend) ? '' : ' (Another element leads the shape, so this one only adds its help.)'}${keeps} It never harms.` : 'It never harms.';
     }
     // S2: the leading shape element bends the spell; the others only add their status
     const shape = SHAPE[e] && form !== 'shield' && e !== o.sub ? (e === o.shape ? ` The spell ${SHAPE[e][1]} (${SHAPE[e][0]}).` : ` No ${SHAPE[e][0].toLowerCase()}: ${ELEMENTS[o.shape].name} leads the shape.`) : '';

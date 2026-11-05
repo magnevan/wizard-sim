@@ -5,6 +5,7 @@ import {
   type PlayerInput, type World,
 } from '../src';
 import { cellAt } from '../src/effects';
+import { RES, taken } from '../src/guards';
 
 // A tiny driver: seat 0 acts, everyone else idles. Aim is a world point, kept between steps.
 class Driver {
@@ -167,6 +168,19 @@ describe('Life (support)', () => {
     d.queue('life').cast(BTN.area, 2);
     expect(w.bodies.hp[dummy]).toBeGreaterThan(100);
     expect(w.bodies.hp[0]).toBeGreaterThan(50);
+  });
+
+  it('every other element in a heal lends its resistance for a few seconds: Life + Lightning + Cold', () => {
+    const { w, d, dummy } = range(2);
+    w.bodies.hp[dummy] = 100;
+    d.queue('life', 'lightning', 'cold').cast(BTN.area, 2);
+    expect(w.bodies.hp[dummy]).toBeGreaterThan(100);
+    expect(w.bodies.blessT[dummy]).toBeGreaterThan(0);
+    expect(taken(w, dummy, RES.cold)).toBeLessThan(1); // the Cold, not leading the shape, still counts
+    expect(taken(w, dummy, RES.lightning)).toBeLessThan(1);
+    expect(taken(w, dummy, RES.fire)).toBe(1); // strengths only: no Rime weakness to fire
+    d.tick({}, 300);
+    expect(taken(w, dummy, RES.cold)).toBe(1); // it lapses
   });
 
   it('a Life spray: more Fire widens the cone, more Life heals harder', () => {

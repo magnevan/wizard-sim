@@ -426,3 +426,14 @@ The user asked for it so that effective HP scales linearly and stacking never re
 ## 2026-11-05: Round 4 ratings: the Lance Prism is adopted
 
 The user chose the Capacitor and Lance (q-prism = lance) and kept the new Prism cards, Mend's extras and Siphon's focus, with a balance pass to come. The guard rim was "maybe a little too subtle", so it is now drawn stronger.
+
+## 2026-11-05: Every element in a heal lends its resistance; guard ties settled
+
+- **Heals:** the user approved it ("That sounds like a good addition").
+  - Every element in a Life spell besides Life lends whoever it heals that element's guard strengths for 4 s (never its weaknesses, as under the Leaf). Each rune adds a quarter of the guard's row.
+  - This closes the last open case from the Life size rule: Life + Lightning + Cold, where the Cold used to do nothing, now also makes the healed resist cold.
+  - It works on any body, enemies included (pillar 3). It stacks with a guard's own resistance before the hyperbolic formula.
+  - The Atlas text says what each element lends.
+  - Golden hash `7184435b` → `a258615b` (new bless state).
+- **Guard ties (the user: "Didn't we decide lead is based on the type of rune, not the count?"):** yes. A strong element leads by type. Count only matters among Water, Fire and Cold, and ties go Water, Fire, Cold, the same as spells. The tie note in `explorations/2026-11-05-guards-round-2.md` predates that and is superseded. No change.
+- **Correction:** the remote-prediction fixes (world-space aim guesses, late remote spells caught up) were already built in 3c28950. The 2026-11-04 "Not built yet" line above is superseded by the entry "Smoother remote players online".

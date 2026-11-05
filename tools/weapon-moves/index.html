@@ -103,6 +103,10 @@
   .badge { font: 400 10px/1 var(--pixel); letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; white-space: nowrap; }
   .badge.new { background: var(--accent); color: var(--on-mark); }
   .badge.kept { border: 1px solid var(--line-2); color: var(--muted); }
+  .badge.r3 { background: var(--maybe); }
+  .mixtable th[scope="row"] { white-space: nowrap; }
+  .mixtable td, .mixtable th { vertical-align: top; }
+  .qtext .badge { display: inline-block; margin: 2px 0 4px; }
   .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
   .changed { margin: 0; font-size: 14px; color: var(--muted); } .changed b { color: var(--fg); }
   .prior { border-left: 3px solid var(--line-2); background: var(--raise); border-radius: 0 6px 6px 0; padding: 6px 9px; font-size: 13px; color: var(--muted); display: grid; gap: 3px; }
@@ -184,9 +188,10 @@
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Weapons and guards · review round 2 · 2026-11-05</div>
+    <div class="eyebrow">Weapons and guards · review round 3 · 2026-11-05</div>
     <h1>Weapon Moveset Review</h1>
-    <p>Round 2, after your round-1 ratings. The rule is still <b>runes queued = magic, no runes = your hands</b>, but the grammar is now v2: <b>five gestures, one job each.</b> The weapon owns the three attacks, and the guard owns Retreat and Defend. There are no two-handed weapons, so every weapon pairs with every guard.</p>
+    <p><b>Round 3</b> is at the top: everything your round-2 notes changed, already built in the game. Each new item has your round-2 rating and note beside it, read-only. Below it, the weapons and guards that didn’t change, with your ratings as they were.</p>
+    <p>The rule is still <b>runes queued = magic, no runes = your hands</b>, but the grammar is now v2: <b>five gestures, one job each.</b> The weapon owns the three attacks, and the guard owns Retreat and Defend. There are no two-handed weapons, so every weapon pairs with every guard.</p>
     <div class="tablewrap grammar">
       <table>
         <thead><tr><th scope="col">Gesture (empty queue)</th><th scope="col">Move</th><th scope="col">Defined by</th><th scope="col">In the hands</th><th scope="col">Uses</th></tr></thead>
@@ -194,36 +199,59 @@
       </table>
     </div>
     <p>Thrust, Send and the weapon Defend are cut. Moves you kept keep their slug, so <b>your round-1 rating shows on them</b>. Changed moves have new slugs, and your round-1 note sits beside them, read-only. The key in each screen’s corner shows which gesture is being pressed. <b>Red</b> is you, <b>blue</b> is your partner, and green goblins and the purple brute are enemies. Click a screen to pause it.</p>
-    <p>Rate the new items: <b>★ Keep</b>, <b>? Maybe</b> or <b>✗ Cut</b>, with a note if you like. Each card and each move is rated on its own. The guards are new this round, and the full design is in <code>docs/explorations/2026-11-05-guards.md</code>.</p>
+    <p>Rate the round-3 items: <b>★ Keep</b>, <b>? Maybe</b> or <b>✗ Cut</b>, with a note if you like. Each card and each move is rated on its own. The guard design is in <code>docs/explorations/2026-11-05-guards.md</code>, and the round-3 changes in <code>docs/explorations/2026-11-05-guards-round-2.md</code>.</p>
   </header>
 
   <div class="toolbar" role="toolbar" aria-label="Sections">
-    <nav><a href="#sec-weapons">Weapons</a><a href="#sec-guards">Guards</a><a href="#sec-questions">Questions</a></nav>
+    <nav><a href="#sec-mix">Mixing</a><a href="#sec-round3">Round 3</a><a href="#sec-weapons">Weapons</a><a href="#sec-guards">Guards</a><a href="#sec-questions">Questions</a></nav>
     <div class="tally" id="tally"></div>
     <div class="save" id="saveState" aria-live="polite"></div>
   </div>
 
+  <section class="block" id="sec-mix" aria-labelledby="h-mix">
+    <h2 id="h-mix">How elements mix</h2>
+    <p class="lead">Opposites cancel in the queue (Fire/Cold, Water/Lightning, Life/Arcane, Earth/Lightning, Shield/Shield), so a guard is Shield plus up to 4 runes of elements that don’t cancel, at most 3 different ones. <b>Built today:</b> the lead element (most runes) sets Defend, Retreat and the lead passive. Only the <b>second</b> element mixes in, bringing its passive and its whole resistance row at half strength, and a third element does nothing. That breaks your rule that adding an element must always change the spell. Weapons already mix: every extra rune rides on the blows, but Siphon and Mend ignore extra runes. The four questions below would make one rule for both.</p>
+    <div class="tablewrap mixtable">
+      <table>
+        <caption>One guard, Shield + Earth + Earth + Fire, under each answer</caption>
+        <thead><tr><th scope="col"></th><th scope="col">Today</th><th scope="col">Recommended (M1–M3: yes)</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Lead (Earth ×2)</th><td>Bulwark: Defend, Shove step, Anchored</td><td>Same, plus 25 % more guard HP and Shove-step distance for the second Earth</td></tr>
+          <tr><th scope="row">Fire ×1</th><td>Warm, plus half of the Ember resistance row</td><td>Warm, half the Ember row, and a fire coat: your block, your parry and the shoved goblins catch fire</td></tr>
+          <tr><th scope="row">A third element</th><td>Nothing</td><td>Its passive, its row by rune count, and its coat as well</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="mixq"></div>
+  </section>
+
+  <section class="block" id="sec-round3" aria-labelledby="h-round3">
+    <h2 id="h-round3">Round 3: your round-2 notes, built</h2>
+    <p class="lead">Three weapons and six guards changed. The Arcane wand replaces the Echo focus; the healing hands get Mend; the javelin is re-animated. The Bulwark, Mirror, Rime, Tide, Prism and Leaf guards changed their Retreat, Defend or passive. Kept moves inside these cards keep their slug and rating. One new question is at the bottom of the page.</p>
+    <div id="round3"></div>
+  </section>
+
   <section class="block" id="sec-weapons" aria-labelledby="h-weapons">
-    <h2 id="h-weapons">Weapons</h2>
+    <h2 id="h-weapons">Weapons, unchanged since round 2</h2>
     <p class="lead">One per lead element, plus the bare staff, which gets the same grammar weakly (shoves only). Each weapon has exactly three moves: Strike (RMB tap), Heavy (RMB hold) and Special (Shift+RMB). The redesigns: the trident, the healing link, the long spear dash with the javelin on Shift+RMB, the fire wave, the directed quake, and the Echo focus in place of the hook.</p>
     <div id="weapons"></div>
   </section>
 
   <section class="block" id="sec-guards" aria-labelledby="h-guards">
-    <h2 id="h-guards">Guards</h2>
+    <h2 id="h-guards">Guards, unchanged since round 2</h2>
     <p class="lead">Shield + the lead element picks the guard. A guard owns <b>Defend</b> (Space: hold to block, tap to parry) and <b>Retreat</b> (Shift+LMB: away from where you face), and while you carry it you get a <b>passive</b> and its <b>resistances</b>. Each guard is immune or strong against its own element and weak against its opposite. Any weapon move drops the block for its wind-up and recovery.</p>
     <div id="guards"></div>
   </section>
 
   <section class="block" id="sec-questions" aria-labelledby="h-questions">
     <h2 id="h-questions">Open questions</h2>
-    <div class="decided"><b>Decided in round 1:</b> grammar v2 (above), no two-handed weapons, about 30 uses per weapon with no rune cost, and eight guards picked by the lead element. These questions come from the guards doc.</div>
+    <div class="decided"><b>Decided:</b> grammar v2 (above), no two-handed weapons, about 30 uses per weapon with no rune cost, and eight guards picked by the lead element (round 1). Resistances while carried, Retreat with a fixed recovery, a Shove step for the Bulwark, and mixing traits for a second element (round 2). Q1 is new (the mixing questions are in their own section near the top); the round-2 questions stay below with your answers.</div>
     <div id="questions"></div>
   </section>
 
   <section class="general" aria-labelledby="genH">
     <h2 id="genH">General notes</h2>
-    <p>Anything across the whole set: which guards feel distinct, which retreats you can’t tell apart, whether the Echo focus is the right arcane weapon, and what should go first into the game.</p>
+    <p>Anything across the whole set: which guards feel distinct, which retreats you can’t tell apart, whether the Arcane wand is the right arcane weapon, and what should go first into the game.</p>
     <textarea id="general" rows="5" placeholder="Your notes"></textarea>
   </section>
   <div id="errs" role="status"></div>
@@ -240,5 +268,6 @@
 <script src="kit.js"></script>
 <script src="weapons.js"></script>
 <script src="moves.js"></script>
+<script src="round3.js"></script>
 <script src="copy.js"></script>
 <script src="app.js"></script>

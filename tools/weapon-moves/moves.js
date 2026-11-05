@@ -557,13 +557,13 @@
   }
 
   // Weapon cards: conjure it, hold it, one show-off swing
-  for (const W of WM.WEAPONS) {
+  for (const W of WM.WEAPONS) for (const cardId of new Set([WM.R2[W.id].card, WM.CUR[W.id].card])) {
     const D = 3.6, c1 = 0.62;
     const show = WM.track([[0, {}], [1.5, {}], [1.75, { hR: [0.5, 5, 13], p: 1.3, y: 1.5 }], [1.88, { hR: [7.5, 1, 9], p: -0.05, y: -1.15 }, 'lin'], [2.2, {}], [2.8, WM.IDLE]]);
-    add({ id: WM.R2[W.id].card, kind: 'weapon', weapon: W.id, w: 88, h: 80, dur: D, ground: 'plaza', seed: 11 + W.len, still: 2.4,
+    add({ id: cardId, kind: 'weapon', weapon: W.id, w: 88, h: 80, dur: D, ground: 'plaza', seed: 11 + W.len, still: 2.4,
       frame(t) {
         const grow = W.id === 'staff' ? 1 : seg(t, c1, c1 + 0.2);
-        const me = wizard(W, show, t, { x: 40, y: 56, face: 0.35, sm: W.id === 'arcane' ? [] : [[1.75, 1.92]], hidden: () => grow < 0.05, size: 0.3 + 0.7 * grow, runes: W.id === 'arcane' ? (tt) => (tt > 1.2 ? FIREBALL : null) : null, s: W.id === 'staff' || t > c1 ? {} : { prep: smooth(seg(t, 0.05, 0.2)), prepKind: 'conjure' } });
+        const me = wizard(W, show, t, { x: 40, y: 56, face: 0.35, sm: W.id === 'arcane' ? [] : [[1.75, 1.92]], hidden: () => grow < 0.05, size: 0.3 + 0.7 * grow, s: W.id === 'staff' || t > c1 ? {} : { prep: smooth(seg(t, 0.05, 0.2)), prepKind: 'conjure' } });
         return {
           actors: [me],
           lights: [[me.x + 8, me.y - 10, 26, W.R[2], W.id === 'staff' ? 0.15 : 0.45]],
@@ -854,4 +854,7 @@
         rKey(c, t);
       } };
   }, 1.5);
+  // helpers for round3.js
+  PB.WMH = { add, gob, archer, allyWiz, fade, spark, arrow, chestOf, keycap, status, statusFx, hitBy, after, wizard, tipW, moveVignette, MOVEFX, hpBar, sparkleHeal,
+    guardWiz, guardPt, block, rWiz, chaser, whiff, rKey, tag, orbBolt, splash, W_, G_, MW, MH, GW, GH, GME, RX, RY, T0, STAFF, holdTrack, COLD_THROW };
 })();

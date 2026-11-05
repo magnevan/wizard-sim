@@ -28,18 +28,18 @@
     { id: 'water', el: 'water', name: 'Tide trident', q: ['sigil', 'water'], hands: 'two', reach: 2.6, len: 20,
       silhouette: 'A trident: a long shaft, a crossbar and three barbed prongs, water running off them', feel: 'Crowd herding',
       sig: 'Sweep and soak: everything it hits is shoved and wet, which sets up Lightning and Cold partners.' },
-    { id: 'life', el: 'life', name: 'Healing hands', q: ['sigil', 'life'], hands: 'two', reach: 1.4, len: 0,
+    { id: 'life', el: 'life', name: 'Healing hands', q: ['sigil', 'life'], hands: 'one', reach: 1.4, len: 0,
       silhouette: 'Both hands glowing green', feel: 'Close, brave support',
-      sig: 'Contact healing: the moves heal allies you touch. Two-handed on purpose, so protecting the healer is the partner’s job.' },
+      sig: 'Contact healing: the moves heal allies you touch or stand near. One-handed like every weapon, so it pairs with any guard; being close to the fight is the risk.' },
     { id: 'cold', el: 'cold', name: 'Frost spear', q: ['sigil', 'cold'], hands: 'one', reach: 3.5, len: 22,
       silhouette: 'Long and thin, an ice shard at the tip', feel: 'Patient spacing',
       sig: 'Reach, plus setting up shatters: the longest thrust in the game, and frozen targets break on it.' },
     { id: 'lightning', el: 'lightning', name: 'Lightning whip', q: ['sigil', 'lightning'], hands: 'one', reach: 3.6, len: 24,
       silhouette: 'A swaying, crackling lash', feel: 'Flicky and precise',
       sig: 'Sweet spot at the tip, plus chain: only the tip hits hard, and the heavy lash jumps between bodies.' },
-    { id: 'arcane', el: 'arcane', name: 'Echo focus', q: ['sigil', 'arcane'], hands: 'one', reach: 4.0, len: 6,
-      silhouette: 'A violet orb hovering over your palm; the runes of the spell it remembers circle it', feel: 'Spell amplifier',
-      sig: 'Echo: it remembers the last spell you cast and re-casts it at half power for uses, not runes. Your partner sees what is loaded by the runes circling the orb.' },
+    { id: 'arcane', el: 'arcane', name: 'Arcane wand', q: ['sigil', 'arcane'], hands: 'one', reach: 4.0, len: 10,
+      silhouette: 'A short dark rod with a violet orb at its tip; the orb swells while you Siphon', feel: 'Ranged, and a rune battery',
+      sig: 'The only ranged weapon: light bolts, a charged bolt that pierces, and Siphon, which roots you while your runes come back four times as fast.' },
     { id: 'fire', el: 'fire', name: 'Flame sword', q: ['sigil', 'fire'], hands: 'one', reach: 1.8, len: 12,
       silhouette: 'Short blade, tongues of flame up the edge', feel: 'Fast and aggressive',
       sig: 'Combo: the third hit of a chain throws flame, and every move sets things alight.' },
@@ -100,20 +100,15 @@
         break;
       }
       case 'arcane': {
-        // Echo focus: a violet orb hovering at the tip point, a rune ring around it.
-        // o.runes = the remembered spell (element ids), drawn as pips in their colours.
-        const s = o.size || 1, r = 3.4 * s, cx = tip[0], cy = tip[1] - 4 + Math.sin(t * 4) * 0.6;
-        X.ellipse(se, cx, cy + 4.5, 2.2 * s, 0.9 * s, EL.arcane[3], 0.6);        // light pooled in the palm
-        X.glow(se, cx, cy, 5 + glow * 5, EL.arcane[2], 0.55 + 0.35 * glow);
-        X.ellipse(sc, cx, cy, r + 1, r + 1, '#120e1a'); X.ring(se, cx, cy, r + 0.4, r + 0.4, '#fbe6ff', 0.9);
-        X.ellipse(se, cx, cy, r, r, EL.arcane[3]); X.ellipse(se, cx - 0.4, cy - 0.4, r * 0.66, r * 0.66, EL.arcane[2]);
-        X.rect(se, cx - 1.5, cy - 1.5, 2, 2, EL.arcane[0]); X.px(se, cx - 1, cy - 1, '#ffffff');
-        const runes = o.runes && o.runes.length ? o.runes : null, n = runes ? runes.length : 3, sp = o.spin || 2.2;
-        for (let i = 0; i < n; i++) {
-          const a = t * sp + (i / n) * TAU, rx = (r + 4.5) * (o.tight || 1), px2 = cx + Math.cos(a) * rx, py2 = cy + Math.sin(a) * rx * 0.5;
-          if (runes) { const R = EL[runes[i]] || EL.arcane; X.rect(se, px2 - 2, py2 - 2, 4, 4, '#120e1a'); X.rect(se, px2 - 1, py2 - 1, 2, 2, R[1]); X.px(se, px2, py2 - 1, R[0]); }
-          else X.px(se, px2, py2, i % 2 ? EL.arcane[1] : EL.arcane[2]);
-        }
+        // Arcane wand: a short dark rod, a violet orb at the tip. o.glow swells the orb (charge, Siphon).
+        const sz = o.size || 1, r = (2.2 + glow * 1.4) * sz;
+        ln(sc, at(-3), at(L - 2), '#120e1a', 2); ln(sc, at(-2), at(L - 2.5), '#5a3a6a'); X.px(sc, ...at(-3), '#c8c0d0');
+        X.px(se, ...at(L * 0.45), '#ee8cff');
+        X.glow(se, tip[0], tip[1], 4 + glow * 6, EL.arcane[2], 0.5 + 0.4 * glow);
+        X.ellipse(sc, tip[0], tip[1], r + 1, r + 1, '#120e1a');
+        X.ellipse(se, tip[0], tip[1], r, r, EL.arcane[3]); X.ellipse(se, tip[0] - 0.4, tip[1] - 0.4, r * 0.66, r * 0.66, EL.arcane[2]);
+        X.px(se, tip[0] - 1, tip[1] - 1, '#ffffff');
+        if (o.siphon) for (let i = 0; i < 5; i++) { const a2 = t * 5 + (i / 5) * TAU, rr = 9 - ((t * 3 + i * 0.2) % 1) * 7; X.px(se, tip[0] + Math.cos(a2) * rr, tip[1] + Math.sin(a2) * rr * 0.5, i % 2 ? EL.arcane[1] : '#ffffff'); }
         break;
       }
       case 'earth': {
@@ -288,7 +283,7 @@
             const q = P(...tipOf(poseAt(t - 0.07)));
             ctrl = [lerp(g[0], q[0], 0.7), lerp(g[1], q[1], 0.7) + 2.5];
           }
-          prop(sc, se, W, g, tip, { t, glow: o.glow ? o.glow(t) : 0, ctrl, size: o.size, runes: o.runes ? o.runes(t) : null, tight: o.tight ? o.tight(t) : 1, spin: o.spin ? o.spin(t) : 2.2 });
+          prop(sc, se, W, g, tip, { t, glow: o.glow ? o.glow(t) : 0, ctrl, size: o.size, siphon: o.siphon ? o.siphon(t) : false });
         },
         drawL(sc, se, P, out) {
           const h = P(...hL); out.lhand = h;
@@ -305,13 +300,13 @@
   // lightning, arcane, as display strings ('' = none).
   const GUARDS = [
     { id: 'mirror', name: 'Mirror buckler', q: ['shield'], el: 'shield', silhouette: 'Small polished disc with a bright glint', hp: 'Medium',
-      block: 'A narrow block.', parry: 'Reflects a missile back at its shooter.',
-      retreatName: 'Backstep', retreat: 'A crisp hop back about 2 units, still facing the enemy.',
+      block: 'A narrow block that glances shots off to the side, so the buckler isn’t worn down by them.', parry: 'Reflects a missile back at its shooter.',
+      retreatName: 'Backstep', retreat: 'A crisp hop back about 3 units, still facing the enemy.',
       passiveName: 'Light', passive: 'Full speed while blocking, and the widest parry window (0.2 s).',
-      cost: 'The baseline: no special resistance.', res: ['25 %', '', '', '', ''] },
+      cost: 'The baseline: no special resistance, and it doesn’t stop melee.', res: ['25 %', '', '', '', ''] },
     { id: 'bulwark', name: 'Bulwark', q: ['shield', 'earth'], el: 'earth', silhouette: 'Tall stone slab', hp: 'High',
       block: 'Wide, and stops melee as well as shots; you walk slowly while blocking.', parry: 'Bashes the attacker down.',
-      retreatName: 'Brace', retreat: 'You don’t move: you plant the slab and nothing moves you for 1 s, not even a brute.',
+      retreatName: 'Shove step', retreat: 'A short step back (1.5 units) while the slab slams forward: whatever is in front within 2.6 units is knocked back and stunned for 0.4 s.',
       passiveName: 'Anchored', passive: 'No knockback while you carry it.',
       cost: 'You walk 15 % slower all the time.', res: ['50 %', '25 %', '25 %', '', ''] },
     { id: 'ember', name: 'Ember targe', q: ['shield', 'fire'], el: 'fire', silhouette: 'Round, spiked, a burning rim', hp: 'Medium',
@@ -320,7 +315,7 @@
       passiveName: 'Warm', passive: 'You can’t be chilled or frozen, and you dry at once.',
       cost: 'Water douses it: double guard damage from Water.', res: ['', 'immune', '50 %', '', ''] },
     { id: 'rime', name: 'Rime kite', q: ['shield', 'cold'], el: 'cold', silhouette: 'Angular faceted ice, frost trailing from it', hp: 'Medium',
-      block: 'Blocking frosts the floor in front of you, so chargers slip and slow.', parry: 'Freezes a melee attacker for a moment.',
+      block: 'Frost bites back: a melee attacker who hits the block is chilled and slows down. No ice on the floor.', parry: 'Freezes a melee attacker for a moment.',
       retreatName: 'Ice slide', retreat: 'A long slide back on a strip of ice that stays; whoever chases you over it slips.',
       passiveName: 'Sure-footed', passive: 'You never slip on ice, yours or anyone’s.',
       cost: 'Fire melts it.', res: ['25 %', '−25 %', 'immune', '', ''] },
@@ -332,16 +327,16 @@
     { id: 'tide', name: 'Tide shield', q: ['shield', 'water'], el: 'water', silhouette: 'A standing disc of water that ripples on every hit', hp: 'Medium',
       block: 'Absorb and shove: blocked hits push the attacker back and soak them.', parry: 'Throws a wave that shoves everything in front.',
       retreatName: 'Surge', retreat: 'You ride back on a wave, and it shoves whatever is in front of you away.',
-      passiveName: 'Doused', passive: 'You are always wet, so you can’t burn.',
-      cost: 'Wet: you freeze faster and lightning hurts more.', res: ['', '50 %', '−25 %', '−50 %', ''] },
+      passiveName: 'Quenched', passive: 'You can’t burn. You aren’t kept wet, so your own lightning is safe.',
+      cost: 'Cold and lightning hurt you more.', res: ['', '50 %', '−25 %', '−50 %', ''] },
     { id: 'prism', name: 'Prism pane', q: ['shield', 'arcane'], el: 'arcane', silhouette: 'A hexagonal pane floating in front of you', hp: 'Medium',
-      block: 'The only block that stops beams; a held block bends the beam off to the side.', parry: 'Returns the beam to its caster.',
+      block: 'The only block that stops beams and sprays from the front.', parry: 'Returns the beam or spray to its caster.',
       retreatName: 'Phase', retreat: 'You drift back half there, through bodies, and they can’t hold you.',
-      passiveName: 'Hovering ward', passive: 'The pane halves beams from the front even when you aren’t blocking.',
+      passiveName: 'Clear', passive: 'Your allies’ beams and sprays don’t hurt you, so a partner can beam straight through you.',
       cost: 'Glass: weak to blows.', res: ['−25 %', '', '', '', '50 %'] },
     { id: 'leaf', name: 'Leaf aegis', q: ['shield', 'life'], el: 'life', silhouette: 'A broad, leaf-shaped green shield with a glow behind it', hp: 'Medium',
-      block: 'Allies directly behind you heal slowly while you block.', parry: 'A burst heal to the ally behind you.',
-      retreatName: 'Regroup', retreat: 'The step back curves to the nearest ally within 4 units, and you both get a small heal.',
+      block: 'Allies around you (within 3.5 units, any side) heal slowly while you block.', parry: 'A burst heal to everyone around you, you included.',
+      retreatName: 'Seed step', retreat: 'A hop back about 2.5 units that leaves a healing bloom where you stood for 4 s. Works with or without an ally near.',
       passiveName: 'Regrowth', passive: 'You heal slowly while you carry it.',
       cost: 'Leaf burns.', res: ['', '−25 %', '', '', '50 %'] },
   ];
@@ -359,7 +354,29 @@
     fire:      { card: 'w-fire',      strike: 'w-fire-strike',      heavy: 'w-fire-heavy-v2',      special: 'w-fire-sweep' },
     earth:     { card: 'w-earth',     strike: 'w-earth-strike',     heavy: 'w-earth-heavy-v2',     special: 'w-earth-sweep' },
   };
-  const prevSlug = (id) => (id.includes('-v2') ? id.replace('-v2', '') : null);
+  // Round 3: the current slugs (a slot changed in round 3 has a new slug), and what each new slug
+  // replaces (its round-2 doc holds the rating and note shown read-only beside it).
+  const CUR = JSON.parse(JSON.stringify(R2));
+  Object.assign(CUR.life, { special: 'w-life-mend' });
+  Object.assign(CUR.cold, { special: 'w-cold-send-v3' });
+  CUR.arcane = { card: 'w-arcane-v3', strike: 'w-arcane-v3-strike', heavy: 'w-arcane-v3-heavy', special: 'w-arcane-v3-special' };
+  const GSLUG = {};
+  for (const id of ['mirror', 'bulwark', 'ember', 'rime', 'spark', 'tide', 'prism', 'leaf']) GSLUG[id] = { card: `g-${id}-v2`, defend: `g-${id}-defend`, retreat: `g-${id}-retreat` };
+  Object.assign(GSLUG.mirror, { card: 'g-mirror-v3', retreat: 'g-mirror-retreat-v2' });
+  Object.assign(GSLUG.bulwark, { retreat: 'g-bulwark-retreat-v2' });
+  Object.assign(GSLUG.rime, { defend: 'g-rime-defend-v2' });
+  Object.assign(GSLUG.tide, { card: 'g-tide-v3' });
+  Object.assign(GSLUG.prism, { card: 'g-prism-v3', defend: 'g-prism-defend-v2' });
+  Object.assign(GSLUG.leaf, { defend: 'g-leaf-defend-v2', retreat: 'g-leaf-retreat-v2' });
+  const PREV3 = {
+    'w-life-mend': 'w-life-sweep', 'w-cold-send-v3': 'w-cold-send-v2',
+    'w-arcane-v3': 'w-arcane-v2', 'w-arcane-v3-strike': 'w-arcane-v2-strike', 'w-arcane-v3-heavy': 'w-arcane-v2-heavy', 'w-arcane-v3-special': 'w-arcane-v2-special',
+    'g-mirror-v3': 'g-mirror-v2', 'g-mirror-retreat-v2': 'g-mirror-retreat', 'g-bulwark-retreat-v2': 'g-bulwark-retreat', 'g-rime-defend-v2': 'g-rime-defend',
+    'g-tide-v3': 'g-tide-v2', 'g-prism-v3': 'g-prism-v2', 'g-prism-defend-v2': 'g-prism-defend', 'g-leaf-defend-v2': 'g-leaf-defend', 'g-leaf-retreat-v2': 'g-leaf-retreat',
+  };
+  const isR3 = (id) => id in PREV3;
+  // the slug whose rating shows read-only beside this one: round 3 -> round 2, round 2 (-v2) -> round 1
+  const prevSlug = (id) => PREV3[id] || (id.includes('-v2') ? id.replace('-v2', '') : null);
   // draw a guard centred at (x, y). k = how far it is raised (0 carried, 1 blocking).
   // o: { hit (0..1 flash), size }
   function guard(sc, se, id, x, y, k, t, o = {}) {
@@ -431,5 +448,5 @@
     }
   }
 
-  Object.assign(WM, { WEAPONS, GUARDS, RES_COLS, SLOTS, R2, prevSlug, MOVES, MOVE_IDS, RAMP, prop, flatProp, glowHand, track, keysFor, rig, guard, world, dirOf, IDLE, POKES });
+  Object.assign(WM, { WEAPONS, GUARDS, RES_COLS, SLOTS, R2, CUR, GSLUG, PREV3, isR3, prevSlug, MOVES, MOVE_IDS, RAMP, prop, flatProp, glowHand, track, keysFor, rig, guard, world, dirOf, IDLE, POKES });
 })();

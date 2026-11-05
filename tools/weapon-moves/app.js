@@ -3,7 +3,9 @@
  * ?scale=<n> forces the pixel scale; ?static=1 behaves like prefers-reduced-motion.
  * db: ratings/<slug> { mark: 'keep'|'maybe'|'cut'|null, note, updatedAt }
  *     answers/<question id> { choice, note, updatedAt }; answers/general { choice: null, note, updatedAt }
- * Round-1 notes: a -v2 slug shows its round-1 doc (the same slug without -v2) read-only beside it.
+ * Earlier notes: a round-3 slug shows its round-2 doc (WM.PREV3) read-only beside it; a -v2 slug
+ * from round 2 shows its round-1 doc (the same slug without -v2). Cards changed in round 3 are
+ * built in the Round 3 section at the top, the rest below. 
  * Without the db the page is read-only (ratings disabled). */
 (function () {
   'use strict';
@@ -109,30 +111,33 @@
   // round-1 notes, read-only, next to the round-2 item they were about
   const priors = [];
   const MARKL = { keep: '★ Keep', maybe: '? Maybe', cut: '✗ Cut' };
-  function prior(prev) {
+  function prior(id) {
     const box = el('div', 'prior'); box.hidden = true;
-    priors.push({ prev, box });
+    priors.push({ prev: WM.prevSlug(id), box, label: WM.isR3(id) ? 'Round 2' : 'Round 1' });
     return box;
   }
-  const isNew = (id) => id.includes('-v2');
+  const isNew = (id) => WM.isR3(id) || id.includes('-v2');
+  const badge = (id, keptText) => (WM.isR3(id) ? '<span class="badge new r3">New in round 3</span>' : id.includes('-v2') ? '<span class="badge new">Changed in round 2</span>' : `<span class="badge kept">${keptText}</span>`);
 
   // weapons: card + Strike / Heavy / Special
   const SLOT_KEY = { strike: 'RMB tap', heavy: 'RMB hold', special: 'Shift+RMB' };
-  const USES = (W, s) => (s === 'strike' ? '1 use' : s === 'heavy' ? (W.id === 'life' ? '1 use/s' : W.id === 'arcane' ? '5 uses' : '2 uses') : W.id === 'cold' ? '3 uses' : '2 uses');
-  const SPECIAL_NAME = { cold: 'Javelin', arcane: 'Copy' };
-  const HEAVY_NAME = { life: 'Healing link', cold: 'Impaling dash', arcane: 'Echo', fire: 'Fire wave', earth: 'Directed quake' };
-  const wHost = $('weapons');
-  for (const W of WM.WEAPONS) {
-    const ids = WM.R2[W.id];
-    if (!show(ids.card) && !['strike', 'heavy', 'special'].some((s) => show(ids[s]))) continue;
+  const USES = (W, s) => (s === 'strike' ? '1 use' : s === 'heavy' ? (W.id === 'life' ? '1 use/s' : '2 uses') : W.id === 'life' || W.id === 'arcane' ? '1 use/s' : '2 uses');
+  const SPECIAL_NAME = { cold: 'Javelin', arcane: 'Siphon', life: 'Mend' };
+  const SPECIAL_KEY = { arcane: 'Shift+RMB hold', life: 'Shift+RMB hold' };
+  const HEAVY_NAME = { life: 'Healing link', cold: 'Impaling dash', arcane: 'Charged bolt', fire: 'Fire wave', earth: 'Directed quake' };
+  const r3Host = $('round3');
+  const changedIn3 = (ids) => Object.values(ids).some(WM.isR3);
+  function buildWeapon(W, wHost) {
+    const ids = WM.CUR[W.id], r3 = changedIn3(ids);
+    if (!show(ids.card) && !['strike', 'heavy', 'special'].some((s) => show(ids[s]))) return;
     const card = el('article', 'wcard'); card.id = ids.card; card.dataset.rid = ids.card;
     const head = el('div', 'whead');
     head.append(screen(ids.card, W.name + ' held'));
     const info = el('div', 'winfo');
-    info.append(el('h3', null, `${esc(W.name)} <span class="slug">${ids.card}</span>${isNew(ids.card) ? '<span class="badge new">New in round 2</span>' : ''}`), recipe(W.q, 'Weapon'));
-    info.append(el('p', 'changed', `<b>Round 2:</b> ${esc(C.changed[W.id])}`));
+    info.append(el('h3', null, `${esc(W.name)} <span class="slug">${ids.card}</span>${WM.isR3(ids.card) ? '<span class="badge new r3">New in round 3</span>' : isNew(ids.card) ? '<span class="badge new">New in round 2</span>' : ''}`), recipe(W.q, 'Weapon'));
+    info.append(el('p', 'changed', r3 ? `<b>Round 3:</b> ${esc(C.changed3[W.id])}` : `<b>Round 2:</b> ${esc(C.changed[W.id])}`));
     info.append(el('dl', 'facts', `<div><dt>Signature</dt><dd>${esc(W.sig)}</dd></div><div><dt>Silhouette</dt><dd>${esc(W.silhouette)}</dd></div><div><dt>Feel</dt><dd>${esc(W.feel)}</dd></div><div><dt>Reach</dt><dd class="num">${W.reach.toFixed(1)} units</dd></div><div><dt>Hands</dt><dd>One-handed: pairs with any guard. About 30 uses.</dd></div>`));
-    if (isNew(ids.card)) info.append(prior(WM.prevSlug(ids.card)));
+    if (isNew(ids.card)) info.append(prior(ids.card));
     info.append(rater(ids.card, W.name));
     head.append(info);
     card.append(head);
@@ -143,30 +148,33 @@
       const cell = el('div', 'mcell'); cell.id = id; cell.dataset.rid = id;
       cell.append(screen(id, `${W.name}: ${name}`));
       const cap = el('div', 'mcap');
-      cap.append(el('h4', null, `${esc(name)} <kbd>${SLOT_KEY[s]}</kbd><span class="uses" title="Uses spent">${USES(W, s)}</span>`));
+      cap.append(el('h4', null, `${esc(name)} <kbd>${s === 'special' && SPECIAL_KEY[W.id] ? SPECIAL_KEY[W.id] : SLOT_KEY[s]}</kbd><span class="uses" title="Uses spent">${USES(W, s)}</span>`));
       cap.append(el('p', null, esc(C.moves[id] || '')));
-      cap.append(el('div', 'meta', `${isNew(id) ? '<span class="badge new">Changed in round 2</span>' : '<span class="badge kept">Kept from round 1</span>'}<span class="slug">${id}</span>`));
-      if (isNew(id)) cap.append(prior(WM.prevSlug(id)));
+      cap.append(el('div', 'meta', `${badge(id, 'Kept from round 1')}<span class="slug">${id}</span>`));
+      if (isNew(id)) cap.append(prior(id));
       cap.append(rater(id, `${W.name} ${name}`, true));
       cell.append(cap);
       grid.append(cell);
     }
     card.append(grid);
-    wHost.append(card);
+    (r3 ? r3Host : wHost).append(card);
   }
+  for (const W of WM.WEAPONS) buildWeapon(W, $('weapons'));
 
   // guards: card (passive, resistances) + Defend + Retreat
   const gHost = $('guards');
   for (const G of WM.GUARDS) {
-    const cid = `g-${G.id}-v2`, dId = `g-${G.id}-defend`, rId = `g-${G.id}-retreat`;
+    const gs = WM.GSLUG[G.id], cid = gs.card, dId = gs.defend, rId = gs.retreat, r3 = changedIn3(gs);
     if (![cid, dId, rId].some(show)) continue;
     const fx = C.guardFx[G.id];
     const card = el('article', 'wcard gcard'); card.id = cid; card.dataset.rid = cid;
     const info = el('div', 'ginfo');
-    info.append(el('h3', null, `${esc(G.name)} <span class="slug">${cid}</span>`), recipe(G.q, 'Weapon'));
+    info.append(el('h3', null, `${esc(G.name)} <span class="slug">${cid}</span>${WM.isR3(cid) ? '<span class="badge new r3">New in round 3</span>' : ''}`), recipe(G.q, 'Weapon'));
+    if (r3) info.append(el('p', 'changed', `<b>Round 3:</b> ${esc(C.changedG3[G.id])}`));
     info.append(el('dl', 'facts', `<div><dt>Passive: ${esc(G.passiveName)}</dt><dd>${esc(G.passive)}</dd></div><div><dt>Trade-off</dt><dd>${esc(G.cost)}</dd></div><div><dt>Silhouette</dt><dd>${esc(G.silhouette)} · HP ${esc(G.hp)}</dd></div>`));
     const cells = G.res.map((v) => `<td class="num${v.startsWith('−') ? ' weak' : v ? ' strong' : ''}">${v ? esc(v) : '<span class="nil">·</span>'}</td>`).join('');
     info.append(el('div', 'tablewrap restable', `<table><caption>Resistances while carried</caption><thead><tr>${WM.RES_COLS.map((c) => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody><tr>${cells}</tr></tbody></table>`));
+    if (WM.isR3(cid)) info.append(prior(cid));
     info.append(rater(cid, G.name + ' as a whole'));
     card.append(info);
     const grid = el('div', 'ggrid');
@@ -177,22 +185,22 @@
       const cap = el('div', 'mcap');
       cap.append(el('h4', null, `${esc(title)} <kbd>${key}</kbd><span class="uses">free</span>`));
       cap.append(el('p', null, lines));
-      cap.append(el('p', 'small', '<b>On screen:</b> ' + esc(cap0)));
-      cap.append(el('div', 'meta', `<span class="badge new">New in round 2</span><span class="slug">${id}</span>`));
+      cap.append(el('p', 'small', '<b>On screen:</b> ' + esc(C.guardFx3[id] || cap0)));
+      cap.append(el('div', 'meta', `${badge(id, 'From round 2')}<span class="slug">${id}</span>`));
+      if (WM.isR3(id)) cap.append(prior(id));
       cap.append(rater(id, `${G.name} ${title}`, true));
       cell.append(cap); grid.append(cell);
     };
     part(dId, 'Defend', 'Space', `<b>Block:</b> ${esc(G.block)} <b>Parry:</b> ${esc(G.parry)}`, fx[0]);
     part(rId, `Retreat: ${G.retreatName}`, 'Shift+LMB', esc(G.retreat), fx[1]);
     card.append(grid);
-    gHost.append(card);
+    (r3 ? r3Host : gHost).append(card);
   }
 
   // open questions with answer boxes next to the text
-  const qHost = $('questions');
-  for (const q of C.questions) {
+  const askRow = (q, qHost) => {
     const row = el('article', 'qrow'); row.id = q.id;
-    row.append(el('div', 'qtext', `<h3><span class="qn">Q${q.n}</span> ${esc(q.title)}</h3><p>${esc(q.text)}</p><span class="slug">answers/${q.id}</span>`));
+    row.append(el('div', 'qtext', `<h3><span class="qn">${typeof q.n === "number" ? "Q" + q.n : q.n}</span> ${esc(q.title)}</h3>${q.round === 3 ? '<span class="badge new r3">New in round 3</span>' : '<span class="badge kept">Round 2, answered</span>'}<p>${esc(q.text)}</p><span class="slug">answers/${q.id}</span>`));
     const side = el('div', 'qside');
     const ch = el('div', 'choices'); ch.setAttribute('role', 'group'); ch.setAttribute('aria-label', q.title);
     for (const [v, l, sub] of q.choices) {
@@ -206,7 +214,9 @@
     row.append(side);
     askers.push({ id: q.id, ch, ta });
     qHost.append(row);
-  }
+  };
+  for (const q of C.questions) askRow(q, $('questions'));
+  for (const q of C.mixQuestions) askRow(q, $('mixq'));
   const gen = $('general'); gen.disabled = true;
   noteBox(gen, () => answers.general, (p) => put('answers', 'general', p));
 
@@ -230,7 +240,7 @@
       const r = ratings[P.prev];
       if (!r || (!r.mark && !r.note)) { P.box.hidden = true; continue; }
       P.box.hidden = false;
-      P.box.innerHTML = `<span class="plabel">Round 1 <span class="slug">${esc(P.prev)}</span></span>${r.mark ? `<b class="pm pm-${r.mark}">${MARKL[r.mark]}</b>` : ''}${r.note ? `<q>${esc(r.note)}</q>` : ''}`;
+      P.box.innerHTML = `<span class="plabel">${P.label} <span class="slug">${esc(P.prev)}</span></span>${r.mark ? `<b class="pm pm-${r.mark}">${MARKL[r.mark]}</b>` : ''}${r.note ? `<q>${esc(r.note)}</q>` : ''}`;
     }
     gen.disabled = !db;
     if (document.activeElement !== gen && gen.value !== (answers.general?.note || '')) gen.value = answers.general?.note || '';

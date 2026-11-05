@@ -1,4 +1,4 @@
-/* Weapon Moveset Review: the words on the page (round 2, grammar v2).
+/* Weapon Moveset Review: the words on the page (round 3, grammar v2).
  * Sources: docs/explorations/2026-11-05-weapons-review-1.md (grammar v2, the round-1 verdicts)
  * and docs/explorations/2026-11-05-guards.md (the guards, the redesigns, the open questions). */
 (function () {
@@ -9,7 +9,7 @@
     grammar: [
       ['RMB tap', 'Strike', 'weapon', 'The default swing. Three in rhythm make a combo; the third hit is the weapon’s finisher.', '1'],
       ['RMB hold', 'Heavy', 'weapon', 'Charge, then release (the healing link is held instead). The weapon’s big blow.', '2'],
-      ['Shift+RMB', 'Special', 'weapon', 'The one move that sets this weapon apart: a Sweep for most, the javelin for the spear, Copy for the Echo focus.', '2–3'],
+      ['Shift+RMB', 'Special', 'weapon', 'The one move that sets this weapon apart: a Sweep for most, the javelin for the spear; held for Siphon (the wand) and Mend (the healing hands).', '2, or 1/s held'],
       ['Shift+LMB', 'Retreat', 'guard', 'A quick move away from where you face. Each guard moves you differently.', 'free'],
       ['Space', 'Defend', 'guard', 'Hold to block, tap as a hit lands to parry. Each guard adds a block effect and a parry effect.', 'free'],
     ],
@@ -39,6 +39,18 @@
       'w-earth-strike': 'Slow and heavy. Against a shieldbearer, the first two hits break on the shield and the third breaks the shield (exposed).',
       'w-earth-heavy-v2': 'Directed quake: the slam sends a fissure down one lane, and rocks burst up in sequence. It knocks down everything in the line; the goblin beside it is untouched.',
       'w-earth-sweep': 'A slow, huge spin with big knockback.',
+      // round 3
+      'w-arcane-v3-strike': 'Light bolts from the orb at the wand’s tip, at range. Never your main damage, but the only weapon that hits from across the room.',
+      'w-arcane-v3-heavy': 'Charged bolt: hold to charge, release a heavy bolt. From half charge it pierces, going through the first goblin into the one behind. 2 uses.',
+      'w-arcane-v3-special': 'Siphon: hold Shift+RMB. You’re rooted, motes stream into the orb, and your runes come back four times as fast (the mini HUD). 1 use a second.',
+      'w-life-mend': 'Mend: hold Shift+RMB. Allies within 3.5 units heal while you walk at half speed; the one outside the ring doesn’t. Not you. 1 use a second.',
+      'w-cold-send-v3': 'Javelin, re-animated: frost creeps up the shaft as you draw back, and the thrust sends the ice javelin off the spearhead along the same line. It pins and frosts. The spear stays in your hand. 2 uses (of 30).',
+    },
+    // round 3: what changed per weapon card, from your round-2 notes
+    changed3: {
+      life: 'Special is now Mend, a held healing aura (you cut the sweep: “channel healing energy… kinda like beam, weaker, but aoe”). The card no longer says two-handed.',
+      cold: 'The javelin animation is redone, and it costs 2 uses, not 3.',
+      arcane: 'Redesigned again as a ranged wand (“making it into a ranged wand is good. Maybe a special around regenerating runes?”). Echo and Copy are gone.',
     },
     // what changed this round, per weapon card
     changed: {
@@ -62,18 +74,54 @@
       prism: ['The only guard that stops beams: the held block bends a fire beam off to the side.', 'you pass straight through the goblin that was flanking you.'],
       leaf: ['While you block, the ally behind you heals.', 'you land beside your partner and both health bars tick up.'],
     },
-    // open questions from docs/explorations/2026-11-05-guards.md (first choice = recommended)
+    // round-3 guard vignette captions, by slug
+    guardFx3: {
+      'g-mirror-retreat-v2': 'the hop now covers 3 units (the line under it); the goblin swings at air.',
+      'g-bulwark-retreat-v2': 'you step back as the slab slams forward; both goblins in front fly back and are stunned.',
+      'g-rime-defend-v2': 'the goblin hits your block and is chilled (slower, no ice on the floor); a tap as its second blow lands freezes it.',
+      'g-prism-defend-v2': 'your partner’s cold beam passes through you (Clear) and hits the goblin; then a caster’s fire beam stops on the raised pane, and a tap returns it.',
+      'g-leaf-defend-v2': 'allies in front and behind both heal inside the ring while you block; the parry bursts a heal to all three of you.',
+      'g-leaf-retreat-v2': 'you hop back alone and a bloom grows where you stood; your partner walks into it later and heals.',
+    },
+    // what changed per guard card in round 3
+    changedG3: {
+      mirror: 'You said it felt weak: a plain block now glances shots aside without wearing the buckler down, HP is up (90), and the Backstep is 3 units.',
+      bulwark: 'Brace is gone. The Retreat is a Shove step: a step back plus a kickback on whatever is in front (your note).',
+      rime: 'The block no longer frosts the floor; attackers who hit it are chilled instead (your note: “I don’t want too many accidental ground effects”).',
+      tide: 'Doused (always wet) is gone, so you can cast lightning safely. The passive is Quenched: you can’t burn.',
+      prism: 'The passive no longer halves beams, so the block matters. New passive, Clear: your allies’ beams and sprays don’t hurt you. The block stops sprays too.',
+      leaf: 'Healing no longer depends on standing behind you: the block heals allies on any side, the parry heals you too, and the Retreat is a Seed step that works with no ally near.',
+    },
+    // How elements mix (round 3): the questions in the section near the top (first choice = recommended)
+    mixQuestions: [
+      { id: 'q-mix-all', n: 'M1', round: 3, title: 'Every extra element mixes in, not just the second.',
+        text: 'Today only the second element of a guard does anything; a third is ignored. That breaks your rule that adding an element can’t ever not change the spell.',
+        choices: [['all', 'Yes, all of them (recommended)', 'Every element in the guard brings something'], ['second', 'Only the second', 'Keep today’s build']] },
+      { id: 'q-mix-coat', n: 'M2', round: 3, title: 'An extra element also coats the guard’s active effects.',
+        text: 'Like a weapon’s extra runes ride on its blows. A block bites back with its coat (Bulwark + Fire: whoever hits your block catches fire). Parries and Retreat marks carry it too (Shove step + Fire sets the shoved alight). The Ember thorns and the Rime chill become simply the lead’s own coat.',
+        choices: [['coat', 'Yes, coat the active effects (recommended)', 'One rule for weapons and guards'], ['passive', 'Passives and resistances only', 'Today’s kind of mixing, for every element'], ['none', 'No mixing', 'Extra elements do nothing in a guard']] },
+      { id: 'q-mix-scale', n: 'M3', round: 3, title: 'Rune counts scale what an element brings.',
+        text: 'An extra element at 1 rune gives half its resistance row; at 2 runes, the full row. Each extra rune of the lead adds 25 % guard HP and 25 % Retreat distance (the Life rule: more of the shape element makes the shape bigger).',
+        choices: [['count', 'Scale by rune count (recommended)', 'More runes always change something'], ['flat', 'Flat half, whatever the count', 'Simpler, but a second rune of the same element does nothing']] },
+      { id: 'q-mix-weapons', n: 'M4', round: 3, title: 'Weapons: extra runes keep riding on every blow, and the held Specials take the coat.',
+        text: 'Each extra rune of the lead adds 10 uses. Mend and Siphon take the coat: Mend + Water also washes off burning and freezing; Siphon + an element refills that element twice as fast.',
+        choices: [['yes', 'Yes (recommended)', 'Mend and Siphon stop ignoring extra runes'], ['leave', 'Leave weapons as they are', 'Blows mix; Mend and Siphon ignore extras']] },
+    ],
+    // open questions (first choice = recommended). Round 3 first; round 2's are answered.
     questions: [
-      { id: 'q-res-when', n: 1, title: 'Do resistances apply while you carry the guard, or only while you block?',
+      { id: 'q-carry', n: 1, round: 3, title: 'Carrying a guard or a weapon costs 5 % walk speed each (the Bulwark another 15 %). Enough?',
+        text: 'Your note on resistances: carrying weapons should slow you a little. A guard plus a weapon is about 10 % slower than empty hands. Siphon roots you and Mend halves your speed while held.',
+        choices: [['yes', 'Yes, as a starting point (recommended)', 'Tune it in play'], ['more', 'More: 10 % each', ''], ['none', 'No slow-down', 'Keep carrying free']] },
+      { id: 'q-res-when', n: 2, round: 2, title: 'Do resistances apply while you carry the guard, or only while you block?',
         text: 'Blocking already stops frontal hits completely. Resistances while carried give the guard an identity in the 80 % of the fight when you are swinging or casting.',
         choices: [['carried', 'While carried (recommended)', 'Blocking is the frontal 100 %; resistances cover the rest'], ['blocking', 'Only while blocking', 'Simpler to balance, but guards only matter with Space down'], ['none', 'No resistances at all', 'Guards are only Defend, Retreat and a passive']] },
-      { id: 'q-retreat-cost', n: 2, title: 'What does Retreat cost?',
+      { id: 'q-retreat-cost', n: 3, round: 2, title: 'What does Retreat cost?',
         text: 'Retreat is the guard’s escape, on Shift+LMB. It needs some limit so it isn’t spammed, and the limit should be readable (pillar 4: explicit rhythm, no hidden cooldowns).',
         choices: [['recovery', 'Nothing, with a fixed 0.5 s recovery (recommended)', 'No Retreat or Defend during the recovery'], ['cooldown', 'A cooldown timer', 'Shown on the HUD'], ['hp', 'Some guard HP per Retreat', 'Punishes the fragile guards twice']] },
-      { id: 'q-guard-mix', n: 3, title: 'What does a second element do in a guard (Shield + Fire + Cold)?',
+      { id: 'q-guard-mix', n: 4, round: 2, title: 'What does a second element do in a guard (Shield + Fire + Cold)?',
         text: 'The lead element picks the guard. The question is what a payload element adds on top.',
         choices: [['half-res', 'Only its own resistance at half strength, plus a colour coat (recommended)', 'Defend, Retreat and passive stay the lead element’s'], ['nothing', 'Nothing', 'Extra elements are wasted in a guard'], ['mix', 'Mix the traits', 'For example Ember thorns on a Rime kite. Fun to discover, hard for a partner to read']] },
-      { id: 'q-brace', n: 4, title: 'The Bulwark’s Retreat doesn’t move you (Brace). Keep that exception?',
+      { id: 'q-brace', n: 5, round: 2, title: 'The Bulwark’s Retreat doesn’t move you (Brace). Keep that exception?',
         text: 'The tank’s way out is to stop being moved, and the planted slab is a clear tell. The alternative reads like a weak Backstep.',
         choices: [['brace', 'Yes, keep Brace (recommended)', ''], ['shove', 'No, give it a slow shove-back step', ''], ['both', 'Tap to step back, hold to brace', 'Costs a tap/hold distinction on Shift+LMB']] },
     ],

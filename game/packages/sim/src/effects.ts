@@ -356,13 +356,13 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     return;
   }
   if (spec.shape === 'spray') {
-    const range = SHAPES.sprayRange + 0.5 * (spec.formN - 1);
+    const range = SHAPES.sprayRange + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
     setEnd(x + dx * range, y + dy * range);
     // Falloff (combat.sprayFalloff): the nearest body takes it all, each one behind takes a share less.
     const inside: number[] = [];
     for (let i = 0; i < b.kind.length; i++) {
       if (!alive(w, i) || i === src) continue;
-      if (inCone(x, y, face, SHAPES.sprayHalfAngle, range, b.x[i], b.y[i], b.r[i])) inside.push(i);
+      if (inCone(x, y, face, half, range, b.x[i], b.y[i], b.r[i])) inside.push(i);
     }
     if (COMBAT.sprayFalloff < 1) inside.sort((a, c) => len(b.x[a] - x, b.y[a] - y) - len(b.x[c] - x, b.y[c] - y) || a - c);
     inside.forEach((i, k) => {

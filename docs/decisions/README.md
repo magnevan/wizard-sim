@@ -299,3 +299,12 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
   - **Joining:** the host's tuning travels in the start message (and in a rejoin's welcome), so a different local tuning no longer refuses the join.
   - **Leaving:** the match's tuning isn't saved as your own; your saved tuning comes back when you leave.
 - **Online, only the host tunes.** Other players' panels refuse with a note. Cheats (spawn, heal, refill, god mode, infinite runes, the wave tools) are off online, because they change the world on one page only. NET_VERSION 3.
+
+## 2026-11-05: Life spells, the size rule (the inert audit's Life group)
+- **Decided (the user):** in a Life spell, the element lending the shape sets its size, and Life sets the healing. "Fire could cause life to be a spray... more life is stronger healing, more fire is bigger cone." This is built for sprays (Fire or Water lending): each extra lending rune widens and lengthens the cone, and the Life count sets the strength. It used to be the Life count that sized the cone.
+- **Proposed for the others, by the same rule (the user: "I don't know exactly what could be the equivalent for earth and ice yet"):**
+  - Earth lends the lobbed heal-stone: more Earth, a bigger splash.
+  - Cold lends healing shards: more Cold, more shards.
+  - Lightning lends the chain heal: more Lightning, more jumps.
+  Not built yet.
+- **Still open:** a second, non-lending element in a heal (Life + Lightning + Cold) still does nothing.

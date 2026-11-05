@@ -30,6 +30,8 @@ export interface SpellSpec {
   counts: Uint8Array;
   form: number; // element id, 0 for none
   formN: number; // runes of the form element
+  /** Runes that set the shape's size: the form's, or for a Life spell the element lending its shape (more Fire, a wider healing cone; more Life, stronger healing). */
+  sizeN: number;
   power: number; // queue length
   look: number; // element id the spell looks like
   mod: Mod;
@@ -69,7 +71,7 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
   const scald = !heal && has('water') && has('fire');
   const freeze = !heal && has('water') && has('cold');
   const spec: SpellSpec = {
-    title: d.title, cast, shape: 'todo', counts, form, formN: form ? counts[form - 1] : 0, power: queue.length,
+    title: d.title, cast, shape: 'todo', counts, form, formN: form ? counts[form - 1] : 0, sizeN: form ? counts[form - 1] : 0, power: queue.length,
     look: d.look ? (EL as Record<string, number>)[d.look] ?? form : form,
     mod: d.shape ? MOD[d.shape as string] ?? null : null,
     heal, scald, freeze, channel: false, charge: false, wall: 0, sub: d.sub ? EL[d.sub as Element] : 0,
@@ -87,6 +89,7 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
   switch (d.form as Element) {
     case 'life': {
       const L = lendOf(counts);
+      if (L) spec.sizeN = counts[EL[L] - 1];
       if (cast === 'force') {
         spec.shape = L === 'lightning' ? 'arc' : L === 'cold' ? 'shards' : L === 'water' || L === 'fire' ? 'spray' : L === 'earth' ? 'missile' : 'beam';
         spec.channel = spec.shape === 'beam' || spec.shape === 'spray' || spec.shape === 'arc';

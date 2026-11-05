@@ -627,3 +627,16 @@ See `explorations/2026-11-05-effect-durations.md`, "Follow-up: consistency audit
   - The per-rune rules disagree in places: the geyser and spring grow +0.3 u (other Place shapes +0.4), Discharge grows +1.0 (other Area shapes +0.6), the spring gains +33 % life a rune (rain and rock +20 %), and steam, patch floors and the aura don't grow at all.
 - **Proposed, not built (balance):** "more of the lead element makes it bigger, and if it lingers, longer (+20 % a rune); every rune adds strength". The six questions and Claude's picks are in the exploration. In short: the geyser and spring step goes to +0.4 (yes); Discharge stays an exception (keep); the spring keeps +2 s (keep); steam +20 % (yes); patch floors +20 % (yes); the aura stays fixed.
 - Golden hash unchanged (`dda18ae2`): only drawing changed.
+
+## 2026-11-05: Rune scaling: the audit's recommendations accepted
+
+The user: "sounds good", on the six scaling questions from "Floors fade; the consistency audit".
+- **Change:**
+  - Geyser and healing spring radius goes to +0.4 u a rune.
+  - Steam lasts +20 % a rune.
+  - Floors left by a Place patch last +20 % a rune (Place only; novas are unchanged).
+- **Keep:**
+  - Discharge's +1.0 u reach a rune: the reason to stack Lightning on yourself.
+  - The spring's +2 s a rune: extra Life heals by lasting longer.
+  - The aura doesn't grow with Sigil.
+- To be built after the weapons pass lands, since both touch `effects.ts`.

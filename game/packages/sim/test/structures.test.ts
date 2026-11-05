@@ -60,6 +60,19 @@ describe('Shield', () => {
     }
   });
 
+  it('one budget per cast: a Life ring heals half as much per pulse as a Life arc', () => {
+    const healed: number[] = [];
+    for (const [r, hold] of [[STRUCT.arcRadius, 20], [STRUCT.ringRadius, 1]] as const) {
+      const { w, d } = arena(2);
+      w.bodies.x[1] = r; w.bodies.y[1] = 0; w.bodies.hp[1] = 40;
+      d.aimAt(5, 0).queue('shield', 'life').cast(BTN.area, hold, 100); // hold: the arc; tap: the ring
+      healed.push(w.bodies.hp[1] - 40);
+    }
+    expect(healed[0]).toBeGreaterThan(0);
+    expect(healed[1]).toBeGreaterThan(0);
+    expect(healed[1] / healed[0]).toBeCloseTo(STRUCT.arcSegs / STRUCT.ringSegs, 1);
+  });
+
   it('a rock wall stops bodies', () => {
     const { w, d } = arena(2);
     d.aimAt(4, 0).queue('shield', 'earth').cast(BTN.area, 20, 20);

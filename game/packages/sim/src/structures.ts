@@ -392,10 +392,18 @@ export function tickStructures(w: World): void {
     els[EL.shield - 1] = 0;
     if (ty === WALL.rock) { els[EL.earth - 1] = 0; if (!els.some((n) => n > 0)) continue; }
     const heal = els[EL.life - 1] > 0;
+    // One budget per cast: a ring (twice an arc's segments) pulses each at half strength, and a
+    // body touching several segments of the same wall is pulsed once.
+    let segs = 0;
+    for (let j = 0; j < MAX_WALLS; j++) if (wl.type[j] === ty && wl.owner[j] === wl.owner[k] && wl.born[j] === wl.born[k]) segs++;
+    const scale = 0.4 * Math.min(1, STRUCT.arcSegs / segs);
+    const touches = (i: number, j: number) => segDist(b.x[i], b.y[i], wl.x1[j], wl.y1[j], wl.x2[j], wl.y2[j])[0] <= b.r[i] + 0.35;
     for (let i = 0; i < b.kind.length; i++) {
-      if (!alive(w, i)) continue;
-      if (segDist(b.x[i], b.y[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] > b.r[i] + 0.35) continue;
-      hit(w, i, stored(els, 0, heal ? PF.heal : 0, 0, heal ? EL.life : 0), hitOpts(payloadOf(compile(queueFromCounts(els), 'place')), wl.owner[k], 0.4));
+      if (!alive(w, i) || !touches(i, k)) continue;
+      let first = true;
+      for (let j = 0; j < k && first; j++) if (wl.type[j] === ty && wl.owner[j] === wl.owner[k] && wl.born[j] === wl.born[k] && touches(i, j)) first = false;
+      if (!first) continue;
+      hit(w, i, stored(els, 0, heal ? PF.heal : 0, 0, heal ? EL.life : 0), hitOpts(payloadOf(compile(queueFromCounts(els), 'place')), wl.owner[k], scale));
     }
   }
 

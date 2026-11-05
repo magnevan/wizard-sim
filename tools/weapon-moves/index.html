@@ -3,8 +3,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Silkscreen&display=swap">
 <style>
-  /* Layout: a reading column for the grammar, then one wide card per weapon (its held pose beside the facts,
-     its six moves in a grid below), then guards, both hands, and the open questions with answers beside them.
+  /* Layout: a reading column for the v2 grammar, then one wide card per weapon (its held pose beside the facts,
+     its three moves below), then one wide card per guard (facts and resistances, then Defend and Retreat), then
+     the open questions with answers beside them.
      Dusk-first like the Spell VFX gallery it follows. */
   :root {
     color-scheme: dark;
@@ -49,6 +50,8 @@
   .grammar { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; max-width: 980px; }
   .grammar th[scope="row"] { white-space: nowrap; }
   .grammar td:last-child, .grammar th:last-child { text-align: right; }
+  .by { font: 400 10px/1 var(--pixel); letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--line-2); white-space: nowrap; }
+  .by-weapon { color: var(--accent); } .by-guard { color: var(--maybe); }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex: none; }
@@ -95,6 +98,32 @@
   .mcap h4 { margin: 0; font: 700 16px/1.25 var(--body); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .uses { margin-left: auto; font: 400 12px/1 var(--body); color: var(--faint); font-variant-numeric: tabular-nums; }
   .mcap p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  /* round-2 markers and round-1 notes */
+  .badge { font: 400 10px/1 var(--pixel); letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; white-space: nowrap; }
+  .badge.new { background: var(--accent); color: var(--on-mark); }
+  .badge.kept { border: 1px solid var(--line-2); color: var(--muted); }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+  .changed { margin: 0; font-size: 14px; color: var(--muted); } .changed b { color: var(--fg); }
+  .prior { border-left: 3px solid var(--line-2); background: var(--raise); border-radius: 0 6px 6px 0; padding: 6px 9px; font-size: 13px; color: var(--muted); display: grid; gap: 3px; }
+  .prior[hidden] { display: none; }
+  .prior .plabel { font: 400 10px/1.3 var(--pixel); letter-spacing: 0.05em; text-transform: uppercase; color: var(--faint); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .prior q { font-style: italic; color: var(--fg); }
+  .prior .pm { font-size: 12px; } .pm-keep { color: var(--keep); } .pm-maybe { color: var(--maybe); } .pm-cut { color: var(--cut); }
+  code { font-size: 13px; color: var(--fg); }
+  /* guard cards: facts and resistances on top, Defend and Retreat side by side below */
+  #guards { display: grid; gap: 22px; }
+  .ginfo { padding: 14px 16px; display: grid; gap: 10px; border-bottom: 1px solid var(--line); min-width: 0; }
+  .ginfo h3 { margin: 0; font: 400 19px/1.2 var(--pixel); display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .gcard .facts div:first-child dd { color: var(--fg); }
+  .restable { max-width: 560px; }
+  .restable table { font-size: 13px; }
+  .restable caption { text-align: left; font: 400 10px/1.4 var(--pixel); letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); padding-bottom: 4px; }
+  .restable th, .restable td { padding: 5px 8px; text-align: center; }
+  .restable td.strong { color: var(--fg); font-weight: 700; } .restable td.weak { color: var(--cut); font-weight: 700; } .restable .nil { color: var(--faint); }
+  .ggrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ggrid .mcell:first-child { border-right: 1px solid var(--line); }
+  .ggrid .mcell { border-bottom: 0; }
 
   /* guard + dual cards */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 18px; }
@@ -148,59 +177,53 @@
   .general textarea { min-height: 110px; }
   #errs { white-space: pre-wrap; color: var(--cut); font: 12px/1.4 monospace; }
 
-  @media (max-width: 980px) { .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mcell:nth-child(3n) { border-right: 1px solid var(--line); } .mcell:nth-child(2n) { border-right: 0; } .mcell:nth-last-child(-n+3) { border-bottom: 1px solid var(--line); } .mcell:nth-last-child(-n+2) { border-bottom: 0; } .qrow { grid-template-columns: 1fr; } }
-  @media (max-width: 640px) { .grammar thead { display: none; } .grammar tr { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; padding: 10px; border-bottom: 1px solid var(--line); } .grammar th, .grammar td { display: block; padding: 0; border: 0; } .grammar td:nth-child(3) { grid-column: 1 / -1; grid-row: 2; color: var(--muted); } .grammar kbd { white-space: normal; } }
-  @media (max-width: 640px) { .whead { grid-template-columns: 1fr; } .mgrid { grid-template-columns: 1fr; } .mcell { border-right: 0 !important; border-bottom: 1px solid var(--line) !important; } .mcell:last-child { border-bottom: 0 !important; } .rate { grid-template-columns: 1fr; } .tally { margin-left: 0; } }
+  @media (max-width: 980px) { .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mcell:nth-child(3n) { border-right: 1px solid var(--line); } .mcell:nth-child(2n) { border-right: 0; } .mcell:nth-last-child(-n+3) { border-bottom: 1px solid var(--line); } .mcell:nth-last-child(-n+2) { border-bottom: 0; } .mgrid .mcell:last-child { grid-column: 1 / -1; } .qrow { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .grammar thead { display: none; } .grammar tr { display: grid; grid-template-columns: auto 1fr auto auto; gap: 4px 10px; padding: 10px; border-bottom: 1px solid var(--line); } .grammar th, .grammar td { display: block; padding: 0; border: 0; } .grammar td:nth-child(4) { grid-column: 1 / -1; grid-row: 2; color: var(--muted); } .grammar kbd { white-space: normal; } }
+  @media (max-width: 640px) { .whead { grid-template-columns: 1fr; } .mgrid { grid-template-columns: 1fr; } .mcell { border-right: 0 !important; border-bottom: 1px solid var(--line) !important; } .mcell:last-child { border-bottom: 0 !important; } .ggrid { grid-template-columns: 1fr; } .ggrid .mcell:first-child { border-bottom: 1px solid var(--line) !important; } .rate { grid-template-columns: 1fr; } .tally { margin-left: 0; } }
 </style>
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Weapons and move sets · review · 2026-11-05</div>
+    <div class="eyebrow">Weapons and guards · review round 2 · 2026-11-05</div>
     <h1>Weapon Moveset Review</h1>
-    <p>The whole set from the weapons exploration, one screen per move. The rule is one sentence: <b>runes queued = magic, no runes = your hands.</b> With an empty queue, every cast gesture is a weapon move, and the lead element of the conjure picks the weapon (Sigil) or the guard (Shield).</p>
+    <p>Round 2, after your round-1 ratings. The rule is still <b>runes queued = magic, no runes = your hands</b>, but the grammar is now v2: <b>five gestures, one job each.</b> The weapon owns the three attacks, and the guard owns Retreat and Defend. There are no two-handed weapons, so every weapon pairs with every guard.</p>
     <div class="tablewrap grammar">
       <table>
-        <thead><tr><th scope="col">Gesture (empty queue)</th><th scope="col">Move</th><th scope="col">In the hands</th><th scope="col">Uses</th></tr></thead>
+        <thead><tr><th scope="col">Gesture (empty queue)</th><th scope="col">Move</th><th scope="col">Defined by</th><th scope="col">In the hands</th><th scope="col">Uses</th></tr></thead>
         <tbody id="grammar"></tbody>
       </table>
     </div>
-    <p>Every weapon uses the <b>same pose per move</b>, so a partner learns six tells, not 48; the weapon changes the colour and the effect. The key in each screen’s corner shows which gesture is being pressed. <b>Red</b> is you, <b>blue</b> (and gold) are allies, green goblins and the purple brute are enemies. Click a screen to pause it.</p>
-    <p>Rate the look and the idea: <b>★ Keep</b>, <b>? Maybe</b> or <b>✗ Cut</b>, with a note if you like. Each weapon card and each move is rated on its own.</p>
+    <p>Thrust, Send and the weapon Defend are cut. Moves you kept keep their slug, so <b>your round-1 rating shows on them</b>. Changed moves have new slugs, and your round-1 note sits beside them, read-only. The key in each screen’s corner shows which gesture is being pressed. <b>Red</b> is you, <b>blue</b> is your partner, and green goblins and the purple brute are enemies. Click a screen to pause it.</p>
+    <p>Rate the new items: <b>★ Keep</b>, <b>? Maybe</b> or <b>✗ Cut</b>, with a note if you like. Each card and each move is rated on its own. The guards are new this round, and the full design is in <code>docs/explorations/2026-11-05-guards.md</code>.</p>
   </header>
 
   <div class="toolbar" role="toolbar" aria-label="Sections">
-    <nav><a href="#sec-weapons">Weapons</a><a href="#sec-guards">Guards</a><a href="#sec-hands">Both hands</a><a href="#sec-questions">Questions</a></nav>
+    <nav><a href="#sec-weapons">Weapons</a><a href="#sec-guards">Guards</a><a href="#sec-questions">Questions</a></nav>
     <div class="tally" id="tally"></div>
     <div class="save" id="saveState" aria-live="polite"></div>
   </div>
 
   <section class="block" id="sec-weapons" aria-labelledby="h-weapons">
     <h2 id="h-weapons">Weapons</h2>
-    <p class="lead">One per lead element, plus the bare staff, which gets the same grammar weakly (shoves only) so it is learned from minute one. The sculpting wand (Sigil alone) has no move set: its job is to make your spells spare allies.</p>
+    <p class="lead">One per lead element, plus the bare staff, which gets the same grammar weakly (shoves only). Each weapon has exactly three moves: Strike (RMB tap), Heavy (RMB hold) and Special (Shift+RMB). The redesigns: the trident, the healing link, the long spear dash with the javelin on Shift+RMB, the fire wave, the directed quake, and the Echo focus in place of the hook.</p>
     <div id="weapons"></div>
   </section>
 
   <section class="block" id="sec-guards" aria-labelledby="h-guards">
     <h2 id="h-guards">Guards</h2>
-    <p class="lead">Shield + the lead element picks the guard; its signature is what happens when it blocks. Space holds the block (decided 2026-11-04), a tap as a shot lands is a parry, and Shift+LMB bashes when you hold no weapon.</p>
-    <div class="grid" id="guards"></div>
-  </section>
-
-  <section class="block" id="sec-hands" aria-labelledby="h-hands">
-    <h2 id="h-hands">Both hands</h2>
-    <p class="lead">Two slots: a weapon hand and a guard hand. Every attack uses the weapon, Space uses the guard, and any attack drops the guard for its wind-up and recovery.</p>
-    <div class="grid" id="duals"></div>
+    <p class="lead">Shield + the lead element picks the guard. A guard owns <b>Defend</b> (Space: hold to block, tap to parry) and <b>Retreat</b> (Shift+LMB: away from where you face), and while you carry it you get a <b>passive</b> and its <b>resistances</b>. Each guard is immune or strong against its own element and weak against its opposite. Any weapon move drops the block for its wind-up and recovery.</p>
+    <div id="guards"></div>
   </section>
 
   <section class="block" id="sec-questions" aria-labelledby="h-questions">
     <h2 id="h-questions">Open questions</h2>
-    <div class="decided"><b>Decided:</b> the guard block lives on Space (question 2). You said it’s fine, since you can only do these things without runes queued anyway.</div>
+    <div class="decided"><b>Decided in round 1:</b> grammar v2 (above), no two-handed weapons, about 30 uses per weapon with no rune cost, and eight guards picked by the lead element. These questions come from the guards doc.</div>
     <div id="questions"></div>
   </section>
 
   <section class="general" aria-labelledby="genH">
     <h2 id="genH">General notes</h2>
-    <p>Anything across the whole set: which weapons feel distinct, which moves you can’t tell apart, what should go first into the game.</p>
+    <p>Anything across the whole set: which guards feel distinct, which retreats you can’t tell apart, whether the Echo focus is the right arcane weapon, and what should go first into the game.</p>
     <textarea id="general" rows="5" placeholder="Your notes"></textarea>
   </section>
   <div id="errs" role="status"></div>

@@ -1,52 +1,86 @@
 # Weapon Moveset Review
 
-A rateable page for the full weapon set and move sets proposed in `docs/explorations/2026-11-04-weapons-and-movesets.md`: empty queue = weapon moves on every cast gesture, the lead element picks the weapon (Sigil) or the guard (Shield), and a weapon hand plus a guard hand with two-handed exceptions. Everything is drawn in the Pixel Battlefield style (high-res pixel art, 3/4 camera) with the rigs and kit copied from `tools/spell-vfx/`. The page is self-contained, with no runtime imports from other tool directories.
+A rateable page for the weapons and guards. **Round 2** (2026-11-05) follows the round-1 verdicts in `docs/explorations/2026-11-05-weapons-review-1.md` and the guard design in `docs/explorations/2026-11-05-guards.md`.
 
-Every vignette is a pure function of its local time, so loops are seamless and any frame can be reproduced. The six moves share one pose track each (`weapons.js` `MOVES`), so the tells are the same across weapons; only a few weapon × move pairs override the pose where the doc gives them a different shape (spear pokes, spear dash, spear brace, whip cracks, hook throws, maul shoulder bash and rooted plant, staff brace, boomerang sword).
+Grammar v2 with an empty queue:
+- **The weapon:** RMB tap Strike, RMB hold Heavy, Shift+RMB Special.
+- **The guard:** Shift+LMB Retreat, Space Defend (hold to block, tap to parry).
+
+There are no two-handed weapons, and a weapon has about 30 uses. Everything is drawn in the Pixel Battlefield style (high-res pixel art, 3/4 camera), with the rigs and kit copied from `tools/spell-vfx/`. The page is self-contained, with no runtime imports from other tool directories.
+
+Every vignette is a pure function of its local time, so loops are seamless and any frame can be reproduced.
 
 ## What is on the page
-- Header: the grammar (gesture → move → uses) as a table.
-- **8 weapon cards** (staff, water, life, cold, lightning, arcane, fire, earth). Each card has a held vignette (conjure, hold, one swing), the facts (signature, silhouette, feel, hands, reach) and six move vignettes. The key in each screen's corner shows which gesture is pressed.
-- **8 guards**, each showing its block behaviour (Mirror reflects a parried arrow, Bulwark takes melee and an arrow while you walk slowly, Ember thorns ignite a clubber, Rime frosts the floor so a charger slips, Spark ring discharges a chain arc on a parry, Tide shoves and soaks, Prism bends a beam, Leaf heals the ally behind you).
-- **Both hands**: spear + Bulwark, sword + Ember targe, a maul conjured over a Mirror buckler, and the two-handed table.
-- **Open questions** 1, 3, 4 and 5 from the doc, with answer boxes beside the text. Question 2 (block on Space) is shown as decided.
+- **Header:** the v2 grammar table (gesture → move → defined by → uses).
+- **8 weapon cards** (staff, water, life, cold, lightning, arcane, fire, earth). Each card has:
+  - the held vignette and the facts;
+  - exactly three move vignettes: Strike, Heavy and Special.
+
+  Kept moves keep their round-1 slug, so the old rating shows on them. Changed moves have a `-v2` slug, and the round-1 rating and note of the old slug sit beside them, read-only.
+- **8 guard cards** (mirror, bulwark, ember, rime, spark, tide, prism, leaf). Each card has:
+  - the passive, the trade-off and a resistance table;
+  - a Defend vignette (block and parry) and a Retreat vignette.
+- **Open questions** from the guards doc, with answer boxes beside the text, plus `answers/general`.
+
+Round 1 had these, and round 2 dropped them: Thrust, Send, the weapon Defend, the arcane hook, the both-hands scenes and the two-handed table. Their ratings stay in the db.
 
 ## Slugs (db doc ids)
-- Weapon cards: `w-staff`, `w-water`, `w-life`, `w-cold`, `w-lightning`, `w-arcane`, `w-fire`, `w-earth`.
-- Moves: `w-<weapon>-<move>`, with move in `strike | thrust | heavy | sweep | send | defend` (48 slugs, for example `w-fire-thrust`).
-- Guards: `g-mirror`, `g-bulwark`, `g-ember`, `g-rime`, `g-spark`, `g-tide`, `g-prism`, `g-leaf`.
-- Both hands: `d-spear-bulwark`, `d-sword-ember`, `d-maul-over-buckler`, `d-hands-table`.
-- Questions: `q-grammar` (Q1), `q-guards` (Q3), `q-hands` (Q4), `q-uses` (Q5), plus `general`.
+- **Weapon cards:** `w-staff`, `w-water-v2` (the trident), `w-life`, `w-cold`, `w-lightning`, `w-arcane-v2` (the Echo focus), `w-fire`, `w-earth`.
+- **Weapon moves (Strike / Heavy / Special),** also listed in `weapons.js` `R2`:
+  - staff: `w-staff-strike`, `w-staff-heavy`, `w-staff-sweep`
+  - water: `w-water-strike`, `w-water-heavy`, `w-water-sweep`
+  - life: `w-life-strike`, `w-life-heavy-v2` (healing link), `w-life-sweep`
+  - cold: `w-cold-strike`, `w-cold-heavy-v2` (long dash), `w-cold-send-v2` (javelin on Shift+RMB, no recall)
+  - lightning: `w-lightning-strike`, `w-lightning-heavy`, `w-lightning-sweep`
+  - arcane: `w-arcane-v2-strike`, `w-arcane-v2-heavy` (Echo), `w-arcane-v2-special` (Copy)
+  - fire: `w-fire-strike`, `w-fire-heavy-v2` (fire wave), `w-fire-sweep`
+  - earth: `w-earth-strike`, `w-earth-heavy-v2` (directed quake), `w-earth-sweep`
+- **Guards:** `g-<id>-v2` (the card: passive and resistances), `g-<id>-defend` and `g-<id>-retreat`. `<id>` is one of `mirror | bulwark | ember | rime | spark | tide | prism | leaf`.
+- **Questions:** `q-res-when`, `q-retreat-cost`, `q-guard-mix`, `q-brace`, plus `general`. Round-1 answers (`q-grammar`, `q-guards`, `q-hands`, `q-uses`) stay in the db but aren't shown.
 
-That makes 68 rated items. Never rename a slug that has ratings; give a reworked visual a new slug (`-v2`).
+That's 56 rated items on the page. Never rename a slug that has ratings. A reworked visual gets a new slug with `-v2`, and a `-v2` slug's round-1 doc is the same id without `-v2` (`WM.prevSlug`).
 
 ## Ratings and answers
-- Capabilities: `db` (the page calls `window.claude.use('db')`). If that returns null, the page renders read-only and disables the rating controls. It doesn't use localStorage.
+- **Capabilities:** `db` (the page calls `window.claude.use('db')`). If that returns null, the page renders read-only and disables the rating controls. It doesn't use localStorage.
 - `ratings/<slug>`: `{ mark: 'keep'|'maybe'|'cut'|null, note, updatedAt }`.
-- `answers/<question id>`: `{ choice, note, updatedAt }`. The choice ids are in `copy.js` (`questions[].choices`); the recommended option of each is the first one and is labelled "(recommended)". No answer means the user accepts the recommendation.
+- `answers/<question id>`: `{ choice, note, updatedAt }`. The choice ids are in `copy.js` (`questions[].choices`). Each question's first option is the recommended one and is labelled so. No answer means the user accepts the recommendation.
 - `answers/general`: `{ choice: null, note, updatedAt }`.
 
-To read them back: `ArtifactData` `list` on `ratings` and `answers`. Then fold them into `docs/ideas/conjured-weapons.md` and a new exploration.
+To read them back, run `ArtifactData` `list` on `ratings` and `answers`. Then fold them into `docs/ideas/conjured-weapons.md` and a new exploration.
 
 ## Files
 - `index.html`: the page (styles, header, sections).
-- `app.js`: cards, canvas sizing, the animation loop (only on-screen cards render, at about 30 fps), and the db wiring (same pattern as `tools/spell-vfx/app.js` and `tools/engine-choice`).
-- `copy.js`: captions for all 48 moves, the two-handed table, and the open questions.
-- `weapons.js`: the weapon and guard data, `prop()` (draws a held weapon between a grip and a tip point), `track()` (keyframed poses), the six `MOVES`, per-weapon pose overrides, `rig()` (turns a track into an actor rig with a motion smear), and `guard()` (the eight guard sprites).
-- `moves.js`: every vignette (`PB.WMV`): the default scene per move plus the weapon-specific effects, the weapon cards, the guards, and the both-hands scenes.
-- Copied from `tools/spell-vfx/`: `core.js`, `pixel.js`, `fx.js` unchanged; `kit.js` (the shared helpers from `vfx-forms.js`); `stage.js` (the stage size is now per vignette, `w`/`h`); `actors.js` (adds `s.rig` for posing both hands and drawing a held weapon or guard inside the rig, and widens the actor box to 80 × 76 for long weapons).
-- `filmstrip.html`: QA only, **don't publish it**. It shows frames side by side: `?weapon=fire`, `?kind=move|weapon|guard|dual`, `?move=sweep`, `?ids=a,b`, `&n=7&scale=2`, `&times=0.5,1`.
+- `app.js`: cards, canvas sizing, the animation loop (only on-screen cards render, at about 30 fps), the read-only round-1 notes, and the db wiring (same pattern as `tools/spell-vfx/app.js`).
+- `copy.js`: the grammar table, the captions per slug, the guard captions and the open questions.
+- `weapons.js`:
+  - the weapon and guard data (guards: block, parry, retreat, passive, trade-off, resistances) and the `R2` slug map;
+  - `prop()` (draws a held weapon, including the trident and the Echo orb with its remembered runes), `track()` (keyframed poses), `MOVES`, `rig()` and `guard()` (the eight guard sprites).
+- `moves.js`: every vignette (`PB.WMV`). It holds the default Strike / Heavy / Sweep scenes plus the weapon-specific ones, the round-2 redesigns (`cold-heavy2`, `cold-javelin`, `fire-heavy2`, `earth-heavy2`, `life-heavy2`, `arcane2-*`), the weapon cards, the guard Defends and the guard Retreats.
+- **Copied from `tools/spell-vfx/`:**
+  - `core.js`, `pixel.js` and `fx.js`, unchanged;
+  - `kit.js` (the shared helpers);
+  - `stage.js` (per-vignette size);
+  - `actors.js` (`s.rig` for posing both hands and drawing a held weapon or guard).
+- `filmstrip.html`: QA only, **don't publish it**. It shows frames side by side. Parameters: `?ids=a,b`, `?kind=move|weapon|guard`, `?weapon=fire`, `&n=7&scale=2`, `&times=0.5,1`.
 
 ## URL parameters (index.html)
-`?t=<sec>` freezes every vignette, `?only=<slug>,<slug>` shows only those, `?scale=<n>` forces the pixel scale, and `?static=1` behaves like prefers-reduced-motion.
+- `?t=<sec>` freezes every vignette.
+- `?only=<slug>,<slug>` shows only those.
+- `?scale=<n>` forces the pixel scale.
+- `?static=1` behaves like prefers-reduced-motion.
 
 ## QA
-Screenshots were taken headless with puppeteer-core from `game/node_modules` (Chrome with `--use-angle=swiftshader --enable-unsafe-swiftshader`, `--allow-file-access-from-files`): `filmstrip.html?weapon=<id>&n=7&scale=2` for each weapon, `?kind=guard` and `?kind=dual`, then `index.html` at 1440 px and 390 px. No script errors, and there's no horizontal scroll at 390 px.
+Screenshots were taken headless with puppeteer-core from `game/node_modules`. Chrome ran with `--use-angle=swiftshader --enable-unsafe-swiftshader` and `--allow-file-access-from-files`.
+- The filmstrip for every new vignette.
+- `index.html` at 1440 px and 390 px, with a fake db injected so the round-1 notes show.
+
+There were no script errors, and there's no horizontal scroll at 390 px.
 
 ## Known weak spots
-- The vignettes are small (128 × 80 for moves). At 2× the weapons read mostly by colour and motion; at the page's usual 3× they read better.
-- Hit flashes turn a struck body fully white for a few frames, the same as the Spell VFX rigs.
-- The Healing hands have no weapon silhouette, so their moves read through the allies' health bars and the green motes.
-- The maul head picks up the lilac light around the wizard and can look pinkish.
-- The staff's Send (a ping for your partner) is a proposal; the doc gives the staff no Send.
+- **The Echo orb:** the arcane palette is magenta, so the orb sits close to the red robe. The remembered-rune pips are small at 2× and read better at the page's usual 3× to 4×.
+- **The javelin:** the in-flight ice javelin is only on screen for about 0.3 s. The pinned shard and the frost carry the read.
+- **The quake:** the rocks read mostly as a dusty line at 2×.
+- **The Phase retreat** tints the wizard magenta and dithers it. It reads as "half there" but is close to the Prism's colour.
+- **The Defend vignettes** are the round-1 guard scenes. Only the Bulwark gained a parry (a bash). The Ember, Rime, Tide and Leaf parries are described but not animated.
+- **The trident** is drawn with both hands on the shaft in its kept moves, though it's one-handed now. The maul is the same.
 - Knocked-down goblins use the base topple, which reads as a green lump.

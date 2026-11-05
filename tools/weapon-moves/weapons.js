@@ -25,8 +25,8 @@
     { id: 'staff', el: 'staff', name: 'Bare staff', q: [], hands: 'one', reach: 1.6, len: 17,
       silhouette: 'Your own staff, no conjure needed.', feel: 'Teaches the grammar from minute one',
       sig: 'Shoves only: no element and almost no damage. Every gesture already does something, so conjuring a weapon makes moves you know stronger.' },
-    { id: 'water', el: 'water', name: 'Tide glaive', q: ['sigil', 'water'], hands: 'two', reach: 2.6, len: 18,
-      silhouette: 'A polearm with a crescent of water', feel: 'Crowd herding',
+    { id: 'water', el: 'water', name: 'Tide trident', q: ['sigil', 'water'], hands: 'two', reach: 2.6, len: 20,
+      silhouette: 'A trident: a long shaft, a crossbar and three barbed prongs, water running off them', feel: 'Crowd herding',
       sig: 'Sweep and soak: everything it hits is shoved and wet, which sets up Lightning and Cold partners.' },
     { id: 'life', el: 'life', name: 'Healing hands', q: ['sigil', 'life'], hands: 'two', reach: 1.4, len: 0,
       silhouette: 'Both hands glowing green', feel: 'Close, brave support',
@@ -37,9 +37,9 @@
     { id: 'lightning', el: 'lightning', name: 'Lightning whip', q: ['sigil', 'lightning'], hands: 'one', reach: 3.6, len: 24,
       silhouette: 'A swaying, crackling lash', feel: 'Flicky and precise',
       sig: 'Sweet spot at the tip, plus chain: only the tip hits hard, and the heavy lash jumps between bodies.' },
-    { id: 'arcane', el: 'arcane', name: 'Arcane hook', q: ['sigil', 'arcane'], hands: 'one', reach: 2.0, len: 13,
-      silhouette: 'A chain with a barbed hook', feel: 'Control',
-      sig: 'Displacement: yank others to you, or grapple yourself to the cursor.' },
+    { id: 'arcane', el: 'arcane', name: 'Echo focus', q: ['sigil', 'arcane'], hands: 'one', reach: 4.0, len: 6,
+      silhouette: 'A violet orb hovering over your palm; the runes of the spell it remembers circle it', feel: 'Spell amplifier',
+      sig: 'Echo: it remembers the last spell you cast and re-casts it at half power for uses, not runes. Your partner sees what is loaded by the runes circling the orb.' },
     { id: 'fire', el: 'fire', name: 'Flame sword', q: ['sigil', 'fire'], hands: 'one', reach: 1.8, len: 12,
       silhouette: 'Short blade, tongues of flame up the edge', feel: 'Fast and aggressive',
       sig: 'Combo: the third hit of a chain throws flame, and every move sets things alight.' },
@@ -100,21 +100,20 @@
         break;
       }
       case 'arcane': {
-        X.rect(sc, g[0] - 1, g[1] - 1, 2, 2, '#5a5068');
-        const c = o.ctrl || [(g[0] + tip[0]) / 2, (g[1] + tip[1]) / 2 + 2];
-        const n = Math.max(4, Math.ceil(L / 1.5));
-        for (let i = 1; i <= n; i++) {
-          const k = i / n, a = (1 - k) * (1 - k), b = 2 * (1 - k) * k, cc = k * k;
-          const x = a * g[0] + b * c[0] + cc * tip[0], y = a * g[1] + b * c[1] + cc * tip[1];
-          X.px(sc, x, y, i % 2 ? '#a89cb8' : '#5a5068');
-          if (i % 4 === (fl % 4)) X.px(se, x, y, EL.arcane[2]);
+        // Echo focus: a violet orb hovering at the tip point, a rune ring around it.
+        // o.runes = the remembered spell (element ids), drawn as pips in their colours.
+        const s = o.size || 1, r = 3.4 * s, cx = tip[0], cy = tip[1] - 4 + Math.sin(t * 4) * 0.6;
+        X.ellipse(se, cx, cy + 4.5, 2.2 * s, 0.9 * s, EL.arcane[3], 0.6);        // light pooled in the palm
+        X.glow(se, cx, cy, 5 + glow * 5, EL.arcane[2], 0.55 + 0.35 * glow);
+        X.ellipse(sc, cx, cy, r + 1, r + 1, '#120e1a'); X.ring(se, cx, cy, r + 0.4, r + 0.4, '#fbe6ff', 0.9);
+        X.ellipse(se, cx, cy, r, r, EL.arcane[3]); X.ellipse(se, cx - 0.4, cy - 0.4, r * 0.66, r * 0.66, EL.arcane[2]);
+        X.rect(se, cx - 1.5, cy - 1.5, 2, 2, EL.arcane[0]); X.px(se, cx - 1, cy - 1, '#ffffff');
+        const runes = o.runes && o.runes.length ? o.runes : null, n = runes ? runes.length : 3, sp = o.spin || 2.2;
+        for (let i = 0; i < n; i++) {
+          const a = t * sp + (i / n) * TAU, rx = (r + 4.5) * (o.tight || 1), px2 = cx + Math.cos(a) * rx, py2 = cy + Math.sin(a) * rx * 0.5;
+          if (runes) { const R = EL[runes[i]] || EL.arcane; X.rect(se, px2 - 2, py2 - 2, 4, 4, '#120e1a'); X.rect(se, px2 - 1, py2 - 1, 2, 2, R[1]); X.px(se, px2, py2 - 1, R[0]); }
+          else X.px(se, px2, py2, i % 2 ? EL.arcane[1] : EL.arcane[2]);
         }
-        // the barbed hook: the shank carries on to the tip, then curls back
-        const h = (a, b) => [tip[0] + ux * a + nx * b, tip[1] + uy * a + ny * b];
-        X.lines(sc, [h(-1, 0), h(1.5, 0), h(2.5, 1.6), h(1.8, 3.2), h(0, 3.4)], '#d8d0e0');
-        X.px(sc, ...h(0.6, 2.4), '#d8d0e0');
-        X.px(se, ...h(1.5, 0), EL.arcane[1]); X.px(se, ...h(0, 3.4), EL.arcane[2]);
-        if (glow > 0.1) X.glow(se, tip[0], tip[1], 3 + glow * 4, EL.arcane[2], 0.7 * glow);
         break;
       }
       case 'earth': {
@@ -128,17 +127,18 @@
         break;
       }
       case 'water': {
-        ln(sc, at(-8), at(L - 3), '#2e3c5c'); X.px(se, ...at(L - 3.5), '#ee8cff');
-        const c0 = at(L - 4);
-        let prev = null;
-        for (let i = 0; i <= 8; i++) {
-          const a = -1.5 + (i / 8) * 3.0, p = [c0[0] + ux * Math.cos(a) * 3.6 + nx * Math.sin(a) * 4.6, c0[1] + uy * Math.cos(a) * 3.6 + ny * Math.sin(a) * 4.6];
-          if (prev) { X.line(sc, prev[0], prev[1], p[0], p[1], EL.water[3], 2); X.line(se, prev[0], prev[1], p[0], p[1], i % 3 === fl % 3 ? EL.water[0] : EL.water[1]); }
-          prev = p;
-        }
-        X.px(se, ...at(L - 4 + 3.6), '#ffffff');
-        if (fl % 4 === 0) X.px(se, ...at(L - 6, 6.5), EL.water[1]);
-        if (glow > 0.1) X.glow(se, ...at(L), 3 + glow * 5, EL.water[2], 0.6 * glow);
+        // Tide trident: shaft, a crossbar, three prongs (the outer two flare out a touch), barbs
+        const base = L - 7, w = 3.2, pr = '#a8c8e8';
+        ln(sc, at(-8), at(base), '#2e3c5c'); X.px(sc, ...at(-8), '#c8c0d0'); X.px(se, ...at(base - 1.5), '#ee8cff');
+        ln(sc, at(base, -w), at(base, w), pr, 2);
+        ln(sc, at(base), tip, pr, 1); ln(sc, at(base, -w), at(L - 1.5, -w - 0.8), pr, 1); ln(sc, at(base, w), at(L - 1.5, w + 0.8), pr, 1);
+        // water edge and barbs on the emissive pass, so the prongs read at night
+        ln(se, at(base + 1), at(L - 1), EL.water[1]);
+        X.px(se, ...at(L - 1.5, -w - 0.8), '#ffffff'); X.px(se, ...at(L - 1.5, w + 0.8), '#ffffff'); X.px(se, tip[0], tip[1], '#ffffff');
+        X.px(se, ...at(L - 3, -w + 0.6), EL.water[0]); X.px(se, ...at(L - 3, w - 0.6), EL.water[0]); X.px(se, ...at(L - 2.5, -1), EL.water[1]);
+        if (fl % 4 === 0) X.px(se, ...at(base - 1, w + 2.5), EL.water[1]);
+        if (fl % 4 === 2) X.px(se, ...at(base - 2, -w - 2), EL.water[0]);
+        if (glow > 0.1) X.glow(se, ...at(L - 2), 3 + glow * 5, EL.water[2], 0.6 * glow);
         break;
       }
       case 'staff': {
@@ -189,7 +189,7 @@
 
   // The six moves. hits = when a blow lands; sm = motion smear windows.
   const MOVES = {
-    strike: { name: 'Strike', gesture: 'Shift+LMB tap ×3', uses: 1, dur: 2.6, hits: [0.42, 0.72, 1.22], sm: [[0.32, 0.46], [0.6, 0.76], [1.12, 1.3]],
+    strike: { name: 'Strike', gesture: 'RMB tap ×3', uses: 1, dur: 2.6, hits: [0.42, 0.72, 1.22], sm: [[0.32, 0.46], [0.6, 0.76], [1.12, 1.3]],
       keys: [[0, {}], [0.18, {}], [0.32, { hR: [0.5, 5, 13], p: 1.3, y: 1.5 }], [0.42, { hR: [7.5, 1, 9], p: -0.05, y: -1.15 }, 'lin'], [0.6, { hR: [7, 0.5, 9], p: 0.05, y: -1.25 }],
         [0.72, { hR: [6.5, 5, 9.5], p: 0.2, y: 1.35 }, 'lin'], [0.98, { hR: [0, 3, 16], p: 2.05, y: 0.15 }], [1.12, { hR: [-0.5, 3, 17], p: 2.25 }],
         [1.22, { hR: [8.5, 2, 6], p: -0.6, y: 0.05 }, 'lin'], [1.65, {}], [2.2, IDLE]] },
@@ -284,11 +284,11 @@
           if (W.id === 'life') { glowHand(se, g, t, o.glow ? o.glow(t) : 0); return; }
           if (p.hide || (o.hidden && o.hidden(t))) return;
           let ctrl = null;
-          if (W.id === 'lightning' || W.id === 'arcane') {
+          if (W.id === 'lightning') {
             const q = P(...tipOf(poseAt(t - 0.07)));
             ctrl = [lerp(g[0], q[0], 0.7), lerp(g[1], q[1], 0.7) + 2.5];
           }
-          prop(sc, se, W, g, tip, { t, glow: o.glow ? o.glow(t) : 0, ctrl, size: o.size });
+          prop(sc, se, W, g, tip, { t, glow: o.glow ? o.glow(t) : 0, ctrl, size: o.size, runes: o.runes ? o.runes(t) : null, tight: o.tight ? o.tight(t) : 1, spin: o.spin ? o.spin(t) : 2.2 });
         },
         drawL(sc, se, P, out) {
           const h = P(...hL); out.lhand = h;
@@ -300,25 +300,66 @@
   }
 
   // ---------------------------------------------------------------------------
-  // The eight guards (section 3: the lead element picks the block behaviour)
+  // The eight guards (explorations/2026-11-05-guards.md). A guard owns Defend (Space) and Retreat
+  // (Shift+LMB), and carries a passive and resistances while held. res: physical, fire, cold,
+  // lightning, arcane, as display strings ('' = none).
   const GUARDS = [
-    { id: 'mirror', name: 'Mirror buckler', q: ['shield'], el: 'shield', silhouette: 'Small polished disc with a bright glint',
-      block: 'A parry (tap Space as the shot lands) sends the shot back. Shield alone is the mirror.', bash: 'Shove', hp: 'Medium' },
-    { id: 'bulwark', name: 'Bulwark', q: ['shield', 'earth'], el: 'earth', silhouette: 'Tall stone slab',
-      block: 'Wide arc, high HP, blocks melee too; you walk slowly while blocking. Send plants it as free-standing cover.', bash: 'Knockdown bash', hp: 'High' },
-    { id: 'ember', name: 'Ember targe', q: ['shield', 'fire'], el: 'fire', silhouette: 'Round, spiked, a burning rim',
-      block: 'Thorns: melee attackers who hit it catch fire. Blocked fire shots don’t damage it.', bash: 'Ignites', hp: 'Medium' },
-    { id: 'rime', name: 'Rime kite', q: ['shield', 'cold'], el: 'cold', silhouette: 'Angular faceted ice, frost trailing from it',
-      block: 'Blocking frosts the floor in front of you, so chargers slip and slow. Melee attackers are chilled.', bash: 'Chills', hp: 'Medium' },
-    { id: 'spark', name: 'Spark ring', q: ['shield', 'lightning'], el: 'lightning', silhouette: 'A hollow, crackling ring',
-      block: 'Counter-discharge: a parry doesn’t reflect, it sends a chain arc to the nearest enemies and stuns casters. Lowest HP of all.', bash: 'Shock', hp: 'Lowest' },
-    { id: 'tide', name: 'Tide shield', q: ['shield', 'water'], el: 'water', silhouette: 'A standing disc of water that ripples on every hit',
-      block: 'Absorb and shove: blocked hits push the attacker back and soak them. Barely loses HP to fire.', bash: 'Soak and push', hp: 'Medium' },
-    { id: 'prism', name: 'Prism pane', q: ['shield', 'arcane'], el: 'arcane', silhouette: 'A hexagonal pane floating in front of you',
-      block: 'Beam bender: the only guard that blocks beams, and a blocked beam bends off to the side.', bash: 'Burst', hp: 'Medium' },
-    { id: 'leaf', name: 'Leaf aegis', q: ['shield', 'life'], el: 'life', silhouette: 'A broad, leaf-shaped green shield with a glow behind it',
-      block: 'Cover healing: allies directly behind you heal slowly while you block. A support guard.', bash: 'Shove only (never heals through a bash)', hp: 'Medium' },
+    { id: 'mirror', name: 'Mirror buckler', q: ['shield'], el: 'shield', silhouette: 'Small polished disc with a bright glint', hp: 'Medium',
+      block: 'A narrow block.', parry: 'Reflects a missile back at its shooter.',
+      retreatName: 'Backstep', retreat: 'A crisp hop back about 2 units, still facing the enemy.',
+      passiveName: 'Light', passive: 'Full speed while blocking, and the widest parry window (0.2 s).',
+      cost: 'The baseline: no special resistance.', res: ['25 %', '', '', '', ''] },
+    { id: 'bulwark', name: 'Bulwark', q: ['shield', 'earth'], el: 'earth', silhouette: 'Tall stone slab', hp: 'High',
+      block: 'Wide, and stops melee as well as shots; you walk slowly while blocking.', parry: 'Bashes the attacker down.',
+      retreatName: 'Brace', retreat: 'You don’t move: you plant the slab and nothing moves you for 1 s, not even a brute.',
+      passiveName: 'Anchored', passive: 'No knockback while you carry it.',
+      cost: 'You walk 15 % slower all the time.', res: ['50 %', '25 %', '25 %', '', ''] },
+    { id: 'ember', name: 'Ember targe', q: ['shield', 'fire'], el: 'fire', silhouette: 'Round, spiked, a burning rim', hp: 'Medium',
+      block: 'Thorns: melee attackers who hit it catch fire. Fire shots don’t hurt it.', parry: 'A short burst of flame forward.',
+      retreatName: 'Flame step', retreat: 'A dash back that leaves a line of fire where you stood for 1 s. It burns your partner too.',
+      passiveName: 'Warm', passive: 'You can’t be chilled or frozen, and you dry at once.',
+      cost: 'Water douses it: double guard damage from Water.', res: ['', 'immune', '50 %', '', ''] },
+    { id: 'rime', name: 'Rime kite', q: ['shield', 'cold'], el: 'cold', silhouette: 'Angular faceted ice, frost trailing from it', hp: 'Medium',
+      block: 'Blocking frosts the floor in front of you, so chargers slip and slow.', parry: 'Freezes a melee attacker for a moment.',
+      retreatName: 'Ice slide', retreat: 'A long slide back on a strip of ice that stays; whoever chases you over it slips.',
+      passiveName: 'Sure-footed', passive: 'You never slip on ice, yours or anyone’s.',
+      cost: 'Fire melts it.', res: ['25 %', '−25 %', 'immune', '', ''] },
+    { id: 'spark', name: 'Spark ring', q: ['shield', 'lightning'], el: 'lightning', silhouette: 'A hollow, crackling ring', hp: 'Lowest',
+      block: 'The weakest block.', parry: 'Discharges a chain arc to the nearest enemies and stuns casters.',
+      retreatName: 'Blink', retreat: 'A 3-unit teleport back. A spark stays on your old spot and shocks whoever steps on it.',
+      passiveName: 'Grounded', passive: 'Chain lightning skips you, so your partner’s lightning never jumps through you.',
+      cost: 'Fragile: lowest HP.', res: ['−25 %', '', '', 'immune', ''] },
+    { id: 'tide', name: 'Tide shield', q: ['shield', 'water'], el: 'water', silhouette: 'A standing disc of water that ripples on every hit', hp: 'Medium',
+      block: 'Absorb and shove: blocked hits push the attacker back and soak them.', parry: 'Throws a wave that shoves everything in front.',
+      retreatName: 'Surge', retreat: 'You ride back on a wave, and it shoves whatever is in front of you away.',
+      passiveName: 'Doused', passive: 'You are always wet, so you can’t burn.',
+      cost: 'Wet: you freeze faster and lightning hurts more.', res: ['', '50 %', '−25 %', '−50 %', ''] },
+    { id: 'prism', name: 'Prism pane', q: ['shield', 'arcane'], el: 'arcane', silhouette: 'A hexagonal pane floating in front of you', hp: 'Medium',
+      block: 'The only block that stops beams; a held block bends the beam off to the side.', parry: 'Returns the beam to its caster.',
+      retreatName: 'Phase', retreat: 'You drift back half there, through bodies, and they can’t hold you.',
+      passiveName: 'Hovering ward', passive: 'The pane halves beams from the front even when you aren’t blocking.',
+      cost: 'Glass: weak to blows.', res: ['−25 %', '', '', '', '50 %'] },
+    { id: 'leaf', name: 'Leaf aegis', q: ['shield', 'life'], el: 'life', silhouette: 'A broad, leaf-shaped green shield with a glow behind it', hp: 'Medium',
+      block: 'Allies directly behind you heal slowly while you block.', parry: 'A burst heal to the ally behind you.',
+      retreatName: 'Regroup', retreat: 'The step back curves to the nearest ally within 4 units, and you both get a small heal.',
+      passiveName: 'Regrowth', passive: 'You heal slowly while you carry it.',
+      cost: 'Leaf burns.', res: ['', '−25 %', '', '', '50 %'] },
   ];
+  const RES_COLS = ['Physical', 'Fire', 'Cold', 'Lightning', 'Arcane'];
+  // Round 2 slugs per weapon slot. A slug with -v2 is a changed move; its round-1 slug is the
+  // same id without '-v2' (whose db doc holds the round-1 rating and note).
+  const SLOTS = { strike: 'Strike', heavy: 'Heavy', special: 'Special' };
+  const R2 = {
+    staff:     { card: 'w-staff',     strike: 'w-staff-strike',     heavy: 'w-staff-heavy',        special: 'w-staff-sweep' },
+    water:     { card: 'w-water-v2',  strike: 'w-water-strike',     heavy: 'w-water-heavy',        special: 'w-water-sweep' },
+    life:      { card: 'w-life',      strike: 'w-life-strike',      heavy: 'w-life-heavy-v2',      special: 'w-life-sweep' },
+    cold:      { card: 'w-cold',      strike: 'w-cold-strike',      heavy: 'w-cold-heavy-v2',      special: 'w-cold-send-v2' },
+    lightning: { card: 'w-lightning', strike: 'w-lightning-strike', heavy: 'w-lightning-heavy',    special: 'w-lightning-sweep' },
+    arcane:    { card: 'w-arcane-v2', strike: 'w-arcane-v2-strike', heavy: 'w-arcane-v2-heavy',    special: 'w-arcane-v2-special' },
+    fire:      { card: 'w-fire',      strike: 'w-fire-strike',      heavy: 'w-fire-heavy-v2',      special: 'w-fire-sweep' },
+    earth:     { card: 'w-earth',     strike: 'w-earth-strike',     heavy: 'w-earth-heavy-v2',     special: 'w-earth-sweep' },
+  };
+  const prevSlug = (id) => (id.includes('-v2') ? id.replace('-v2', '') : null);
   // draw a guard centred at (x, y). k = how far it is raised (0 carried, 1 blocking).
   // o: { hit (0..1 flash), size }
   function guard(sc, se, id, x, y, k, t, o = {}) {
@@ -390,5 +431,5 @@
     }
   }
 
-  Object.assign(WM, { WEAPONS, GUARDS, MOVES, MOVE_IDS, RAMP, prop, flatProp, glowHand, track, keysFor, rig, guard, world, dirOf, IDLE });
+  Object.assign(WM, { WEAPONS, GUARDS, RES_COLS, SLOTS, R2, prevSlug, MOVES, MOVE_IDS, RAMP, prop, flatProp, glowHand, track, keysFor, rig, guard, world, dirOf, IDLE, POKES });
 })();

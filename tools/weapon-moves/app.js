@@ -3,6 +3,7 @@
  * ?scale=<n> forces the pixel scale; ?static=1 behaves like prefers-reduced-motion.
  * db: ratings/<slug> { mark: 'keep'|'maybe'|'cut'|null, note, updatedAt }
  *     answers/<question id> { choice, note, updatedAt }; answers/general { choice: null, note, updatedAt }
+ * Round-1 notes: a -v2 slug shows its round-1 doc (the same slug without -v2) read-only beside it.
  * Without the db the page is read-only (ratings disabled). */
 (function () {
   'use strict';
@@ -99,45 +100,54 @@
   const show = (id) => !ONLY || ONLY.includes(id);
 
   // ---------- build ----------
-  // the control table in the header
-  const GR = {
-    strike: 'Your basic swing. Three in rhythm make a combo; the third hit is the weapon’s finisher.',
-    thrust: 'Aimed and narrow, with a step forward. For reach and lining up.',
-    heavy: 'Charge it like a Force charge, let go for a big blow. A full charge triggers the signature.',
-    sweep: 'A full circle round you, for crowds. The move most likely to hit your partner.',
-    send: 'The weapon goes to the cursor, thrown or planted. Shift+LMB calls it back.',
-    defend: 'With a guard: hold to block, tap as a shot lands to parry. Weapon only: a short parry.',
-  };
+  // the v2 control table in the header
   const tb = $('grammar');
-  for (const mv of WM.MOVE_IDS) {
-    const M = WM.MOVES[mv];
-    const tr = el('tr', null, `<th scope="row"><kbd>${esc(M.gesture.replace(' ×3', ''))}</kbd></th><td><b>${M.name}</b></td><td>${esc(GR[mv])}</td><td class="num">${M.uses}</td>`);
-    tb.append(tr);
+  for (const [g, mv, by, text, uses] of C.grammar) {
+    tb.append(el('tr', null, `<th scope="row"><kbd>${esc(g)}</kbd></th><td><b>${esc(mv)}</b></td><td><span class="by by-${by}">${by === 'weapon' ? 'Weapon' : 'Guard'}</span></td><td>${esc(text)}</td><td class="num">${esc(uses)}</td>`));
   }
 
-  // weapons
+  // round-1 notes, read-only, next to the round-2 item they were about
+  const priors = [];
+  const MARKL = { keep: '★ Keep', maybe: '? Maybe', cut: '✗ Cut' };
+  function prior(prev) {
+    const box = el('div', 'prior'); box.hidden = true;
+    priors.push({ prev, box });
+    return box;
+  }
+  const isNew = (id) => id.includes('-v2');
+
+  // weapons: card + Strike / Heavy / Special
+  const SLOT_KEY = { strike: 'RMB tap', heavy: 'RMB hold', special: 'Shift+RMB' };
+  const USES = (W, s) => (s === 'strike' ? '1 use' : s === 'heavy' ? (W.id === 'life' ? '1 use/s' : W.id === 'arcane' ? '5 uses' : '2 uses') : W.id === 'cold' ? '3 uses' : '2 uses');
+  const SPECIAL_NAME = { cold: 'Javelin', arcane: 'Copy' };
+  const HEAVY_NAME = { life: 'Healing link', cold: 'Impaling dash', arcane: 'Echo', fire: 'Fire wave', earth: 'Directed quake' };
   const wHost = $('weapons');
   for (const W of WM.WEAPONS) {
-    if (!show('w-' + W.id) && !WM.MOVE_IDS.some((m) => show(`w-${W.id}-${m}`))) continue;
-    const card = el('article', 'wcard'); card.id = 'w-' + W.id; card.dataset.rid = 'w-' + W.id;
+    const ids = WM.R2[W.id];
+    if (!show(ids.card) && !['strike', 'heavy', 'special'].some((s) => show(ids[s]))) continue;
+    const card = el('article', 'wcard'); card.id = ids.card; card.dataset.rid = ids.card;
     const head = el('div', 'whead');
-    head.append(screen('w-' + W.id, W.name + ' held'));
+    head.append(screen(ids.card, W.name + ' held'));
     const info = el('div', 'winfo');
-    info.append(el('h3', null, `${esc(W.name)} <span class="slug">w-${W.id}</span>`), recipe(W.q, 'Weapon'));
-    info.append(el('dl', 'facts', `<div><dt>Signature</dt><dd>${esc(W.sig)}</dd></div><div><dt>Silhouette</dt><dd>${esc(W.silhouette)}</dd></div><div><dt>Feel</dt><dd>${esc(W.feel)}</dd></div><div><dt>Hands</dt><dd>${W.hands === 'two' ? '<b>Two-handed</b>: no guard' : 'One-handed: pairs with a guard'}</dd></div><div><dt>Reach</dt><dd class="num">${W.reach.toFixed(1)} units</dd></div>`));
-    info.append(rater('w-' + W.id, W.name));
+    info.append(el('h3', null, `${esc(W.name)} <span class="slug">${ids.card}</span>${isNew(ids.card) ? '<span class="badge new">New in round 2</span>' : ''}`), recipe(W.q, 'Weapon'));
+    info.append(el('p', 'changed', `<b>Round 2:</b> ${esc(C.changed[W.id])}`));
+    info.append(el('dl', 'facts', `<div><dt>Signature</dt><dd>${esc(W.sig)}</dd></div><div><dt>Silhouette</dt><dd>${esc(W.silhouette)}</dd></div><div><dt>Feel</dt><dd>${esc(W.feel)}</dd></div><div><dt>Reach</dt><dd class="num">${W.reach.toFixed(1)} units</dd></div><div><dt>Hands</dt><dd>One-handed: pairs with any guard. About 30 uses.</dd></div>`));
+    if (isNew(ids.card)) info.append(prior(WM.prevSlug(ids.card)));
+    info.append(rater(ids.card, W.name));
     head.append(info);
     card.append(head);
     const grid = el('div', 'mgrid');
-    for (const mv of WM.MOVE_IDS) {
-      const id = `w-${W.id}-${mv}`; if (!show(id)) continue;
-      const M = WM.MOVES[mv], cell = el('div', 'mcell'); cell.id = id; cell.dataset.rid = id;
-      cell.append(screen(id, `${W.name}: ${M.name}`));
+    for (const s of ['strike', 'heavy', 'special']) {
+      const id = ids[s]; if (!show(id)) continue;
+      const name = s === 'strike' ? 'Strike' : s === 'heavy' ? `Heavy${HEAVY_NAME[W.id] ? ': ' + HEAVY_NAME[W.id] : ''}` : `Special: ${SPECIAL_NAME[W.id] || 'Sweep'}`;
+      const cell = el('div', 'mcell'); cell.id = id; cell.dataset.rid = id;
+      cell.append(screen(id, `${W.name}: ${name}`));
       const cap = el('div', 'mcap');
-      cap.append(el('h4', null, `${M.name} <kbd>${esc(M.gesture.replace(' ×3', ''))}</kbd><span class="uses" title="Uses spent">${M.uses ? M.uses + (M.uses > 1 ? ' uses' : ' use') : 'free'}</span>`));
-      cap.append(el('p', null, esc(C.moves[W.id][mv])));
-      cap.append(el('span', 'slug', id));
-      cap.append(rater(id, `${W.name} ${M.name}`, true));
+      cap.append(el('h4', null, `${esc(name)} <kbd>${SLOT_KEY[s]}</kbd><span class="uses" title="Uses spent">${USES(W, s)}</span>`));
+      cap.append(el('p', null, esc(C.moves[id] || '')));
+      cap.append(el('div', 'meta', `${isNew(id) ? '<span class="badge new">Changed in round 2</span>' : '<span class="badge kept">Kept from round 1</span>'}<span class="slug">${id}</span>`));
+      if (isNew(id)) cap.append(prior(WM.prevSlug(id)));
+      cap.append(rater(id, `${W.name} ${name}`, true));
       cell.append(cap);
       grid.append(cell);
     }
@@ -145,46 +155,37 @@
     wHost.append(card);
   }
 
-  // guards
+  // guards: card (passive, resistances) + Defend + Retreat
   const gHost = $('guards');
   for (const G of WM.GUARDS) {
-    const id = 'g-' + G.id; if (!show(id)) continue;
-    const card = el('article', 'card'); card.id = id; card.dataset.rid = id;
-    card.append(screen(id, G.name + ' blocking'));
-    const cap = el('div', 'cap');
-    cap.append(el('h3', null, `${esc(G.name)} <span class="slug">${id}</span>`), recipe(G.q, 'Weapon'));
-    cap.append(el('p', null, `<b>Block:</b> ${esc(G.block)}`));
-    cap.append(el('p', 'small', `<b>Silhouette:</b> ${esc(G.silhouette)} · <b>Bash</b> (Shift+LMB, guard only): ${esc(G.bash)} · <b>HP:</b> ${esc(G.hp)}`));
-    cap.append(rater(id, G.name));
-    card.append(cap);
+    const cid = `g-${G.id}-v2`, dId = `g-${G.id}-defend`, rId = `g-${G.id}-retreat`;
+    if (![cid, dId, rId].some(show)) continue;
+    const fx = C.guardFx[G.id];
+    const card = el('article', 'wcard gcard'); card.id = cid; card.dataset.rid = cid;
+    const info = el('div', 'ginfo');
+    info.append(el('h3', null, `${esc(G.name)} <span class="slug">${cid}</span>`), recipe(G.q, 'Weapon'));
+    info.append(el('dl', 'facts', `<div><dt>Passive: ${esc(G.passiveName)}</dt><dd>${esc(G.passive)}</dd></div><div><dt>Trade-off</dt><dd>${esc(G.cost)}</dd></div><div><dt>Silhouette</dt><dd>${esc(G.silhouette)} · HP ${esc(G.hp)}</dd></div>`));
+    const cells = G.res.map((v) => `<td class="num${v.startsWith('−') ? ' weak' : v ? ' strong' : ''}">${v ? esc(v) : '<span class="nil">·</span>'}</td>`).join('');
+    info.append(el('div', 'tablewrap restable', `<table><caption>Resistances while carried</caption><thead><tr>${WM.RES_COLS.map((c) => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody><tr>${cells}</tr></tbody></table>`));
+    info.append(rater(cid, G.name + ' as a whole'));
+    card.append(info);
+    const grid = el('div', 'ggrid');
+    const part = (id, title, key, lines, cap0) => {
+      if (!show(id)) return;
+      const cell = el('div', 'mcell'); cell.id = id; cell.dataset.rid = id;
+      cell.append(screen(id, `${G.name}: ${title}`));
+      const cap = el('div', 'mcap');
+      cap.append(el('h4', null, `${esc(title)} <kbd>${key}</kbd><span class="uses">free</span>`));
+      cap.append(el('p', null, lines));
+      cap.append(el('p', 'small', '<b>On screen:</b> ' + esc(cap0)));
+      cap.append(el('div', 'meta', `<span class="badge new">New in round 2</span><span class="slug">${id}</span>`));
+      cap.append(rater(id, `${G.name} ${title}`, true));
+      cell.append(cap); grid.append(cell);
+    };
+    part(dId, 'Defend', 'Space', `<b>Block:</b> ${esc(G.block)} <b>Parry:</b> ${esc(G.parry)}`, fx[0]);
+    part(rId, `Retreat: ${G.retreatName}`, 'Shift+LMB', esc(G.retreat), fx[1]);
+    card.append(grid);
     gHost.append(card);
-  }
-
-  // both hands
-  const dHost = $('duals');
-  const DUAL = {
-    'd-spear-bulwark': ['Frost spear + Bulwark', 'The tank build. Space holds the slab up and an arrow sticks in it; RMB thrusts, and the guard drops for the wind-up and recovery.'],
-    'd-sword-ember': ['Flame sword + Ember targe', 'Block a club (the attacker catches fire on the thorns), then Shift+LMB for the combo. Block or swing, never both.'],
-    'd-maul-over-buckler': ['Stone maul conjured over a Mirror buckler', 'The maul is two-handed, so conjuring it replaces the buckler. Neither is “slung on your back”.'],
-  };
-  for (const [id, [name, text]] of Object.entries(DUAL)) {
-    if (!show(id)) continue;
-    const card = el('article', 'card'); card.id = id; card.dataset.rid = id;
-    card.append(screen(id, name));
-    const cap = el('div', 'cap');
-    cap.append(el('h3', null, `${esc(name)} <span class="slug">${id}</span>`), el('p', null, esc(text)), rater(id, name));
-    card.append(cap);
-    dHost.append(card);
-  }
-  if (show('d-hands-table')) {
-    const card = el('article', 'card tablecard'); card.id = 'd-hands-table'; card.dataset.rid = 'd-hands-table';
-    const cap = el('div', 'cap');
-    cap.append(el('h3', null, `Which hands each weapon takes <span class="slug">d-hands-table</span>`));
-    cap.append(el('div', 'tablewrap', `<table><thead><tr><th scope="col">Weapon</th><th scope="col">Hands</th><th scope="col">Guard hand</th></tr></thead><tbody>${C.hands.map((r) => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join('')}</tbody></table>`));
-    cap.append(el('p', 'small', 'Conjuring a weapon replaces your weapon, conjuring a guard replaces your guard, and neither touches the other, except where this table says. Any attack drops the guard for its wind-up and recovery.'));
-    cap.append(rater('d-hands-table', 'the two-handed table'));
-    card.append(cap);
-    dHost.append(card);
   }
 
   // open questions with answer boxes next to the text
@@ -224,6 +225,12 @@
       for (const b of A.ch.children) { b.setAttribute('aria-pressed', String(b.dataset.v === a.choice)); b.disabled = !db; }
       A.ta.disabled = !db;
       if (document.activeElement !== A.ta && A.ta.value !== (a.note || '')) A.ta.value = a.note || '';
+    }
+    for (const P of priors) {
+      const r = ratings[P.prev];
+      if (!r || (!r.mark && !r.note)) { P.box.hidden = true; continue; }
+      P.box.hidden = false;
+      P.box.innerHTML = `<span class="plabel">Round 1 <span class="slug">${esc(P.prev)}</span></span>${r.mark ? `<b class="pm pm-${r.mark}">${MARKL[r.mark]}</b>` : ''}${r.note ? `<q>${esc(r.note)}</q>` : ''}`;
     }
     gen.disabled = !db;
     if (document.activeElement !== gen && gen.value !== (answers.general?.note || '')) gen.value = answers.general?.note || '';

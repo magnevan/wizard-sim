@@ -90,7 +90,10 @@ export class LockstepSession {
 
   /** Hand over this peer's input for the next scheduled tick, and send what peers still need. */
   pushLocal(input: PlayerInput): void {
-    this.slot(this.scheduled)[this.me()] = quantize(input);
+    // quantize() can leave a -0 (Math.round(-0.3)), which the wire turns into 0 for everyone else;
+    // the sim keeps aim in Float64Arrays, so our own world would hold different bytes. `+ 0` makes it 0.
+    const q = quantize(input);
+    this.slot(this.scheduled)[this.me()] = { buttons: q.buttons, press0: q.press0, press1: q.press1, moveX: q.moveX + 0, moveY: q.moveY + 0, aimX: q.aimX + 0, aimY: q.aimY + 0 };
     this.scheduled++;
     if (this.autoFlush) this.flush();
   }

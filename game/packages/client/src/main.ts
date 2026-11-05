@@ -132,15 +132,16 @@ async function boot(): Promise<void> {
     const bus = params.get('net') === 'bc' ? broadcastBus() : (await roomBus()) ?? webrtcBus();
     if (bus) net = new NetPlay(bus, world, room, () => {
       acc = 0;
-      // While rollback replays ticks it already showed, skip effects and meters (they'd play twice).
+      // While rollback replays ticks it already showed, skip effects and meters (they'd play twice);
+      // the view only notes remote spells the replay started, to show them from their first frame.
       const s = net!.session!;
       view.setLocalSeat(net!.seat);
       s.hooks = {
-        before: (w) => view.beforeStep(w), after: (w) => { if (!s.replaying) { view.afterStep(w); tune.afterStep(); } },
+        before: (w) => view.beforeStep(w), after: (w) => { if (!s.replaying) { view.afterStep(w); tune.afterStep(); } else view.replayStep(w); },
         preRewind: (w) => view.notePreRewind(w), postRewind: (w) => view.notePostRewind(w, net!.seat),
       };
     });
-    if (net) tune.addSection('Network test', (body) => net!.attachDebug(body));
+    if (net) tune.addSection('Network test', (body) => net!.attachDebug(body, view));
   }
 
   const runStep = () => {
@@ -211,5 +212,5 @@ ${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
   schedule(frame);
 
   // Expose the recorder for debugging: copy a replay of this session from the console.
-  (window as unknown as { wizardSim: unknown }).wizardSim = { world, recorder, tune, get net() { return net; } };
+  (window as unknown as { wizardSim: unknown }).wizardSim = { world, recorder, tune, view, get net() { return net; } };
 }

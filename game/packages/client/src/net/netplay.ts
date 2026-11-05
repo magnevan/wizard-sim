@@ -23,7 +23,7 @@
  * Everyone must run the same build and the same tuning (tuningHash), or the worlds drift apart, so
  * a join is refused on a mismatch.
  */
-import { RollbackSession, type Gone, type Handover, type Transport } from '@wizard-sim/net';
+import { RollbackSession, type AimPrediction, type Gone, type Handover, type Transport } from '@wizard-sim/net';
 import { createWorld, hex, restore, snapshot, tuningHash, type Snapshot, type World } from '@wizard-sim/sim';
 import { fromB64, toB64, type Bus } from './bus';
 import { LinkSim, PRESETS } from './linksim';
@@ -139,8 +139,10 @@ export class NetPlay {
   private rejoin: { match: string; transport: SeatTransport; asked: number } | null = null;
   private transport: (SeatTransport) | null = null;
   private lastAnnounce = 0;
-  /** Stats for the Network test section. */
-  private stat = { at: 0, replayed: 0, rewindsPerS: 0 };
+  /** How remote aim is guessed (Network test: world space, or the old repeat-the-last-aim, to compare). */
+  aimPrediction: AimPrediction = 'world';
+  /** Stats for the Network test section: rewound ticks a second, and the share of guesses that were wrong, over the last second. */
+  readonly stat = { at: 0, replayed: 0, rewindsPerS: 0, checked: 0, wrong: 0, wrongPct: 0 };
 
   constructor(private bus: Bus, private world: World, private room: string, private onStart: () => void) {
     bus.on('lobby', (raw, from) => this.lobby(raw as LobbyMsg, from));
@@ -247,6 +249,7 @@ export class NetPlay {
     this.transport.self = this.seat;
     this.session = new RollbackSession(this.world, this.transport, seats, m.delay, false, ROLLBACK_WINDOW);
     this.session.delay = this.inputDelay;
+    this.session.aimPrediction = this.aimPrediction;
     this.playing(`Playing as seat ${this.seat + 1} of ${this.players}. Cheats and tuning changes would desync the match.`);
   }
 
@@ -389,6 +392,7 @@ export class NetPlay {
     this.session = new RollbackSession(this.world, r.transport, seats, m.delay, false, ROLLBACK_WINDOW);
     this.session.startMidway({ tick: m.tick, snap, inputs: fromB64(m.inputs), gone: m.gone }, m.at);
     this.session.delay = this.inputDelay;
+    this.session.aimPrediction = this.aimPrediction;
     this.playing(`Rejoined as seat ${this.seat + 1} of ${this.players}.`);
   }
 
@@ -415,6 +419,9 @@ export class NetPlay {
     if (now - this.stat.at >= 1000) {
       this.stat.rewindsPerS = (s.replayed - this.stat.replayed) / ((now - this.stat.at) / 1000 || 1);
       this.stat.replayed = s.replayed; this.stat.at = now;
+      const c = s.guesses.checked - this.stat.checked, x = s.guesses.wrong - this.stat.wrong;
+      this.stat.wrongPct = c > 0 ? (x * 100) / c : 0;
+      this.stat.checked = s.guesses.checked; this.stat.wrong = s.guesses.wrong;
     }
   }
 
@@ -433,7 +440,7 @@ export class NetPlay {
   // ---- Network test (a section of the tuning panel) ----
 
   /** Fills the tuning panel's Network test section: the pretend slow link, input delay and live numbers. */
-  attachDebug(body: HTMLElement): void {
+  attachDebug(body: HTMLElement, view?: { catchUp: boolean; readonly caught: Readonly<{ missiles: number; channels: number; casts: number }> }): void {
     body.innerHTML = `
       <div class="tune-hint">Pretend this page is far away: lag, jitter and loss on its match traffic, both ways. Only this page changes, so set it on one window.</div>
       <div class="tune-line" data-presets></div>
@@ -441,7 +448,20 @@ export class NetPlay {
       <div class="tune-row"><span class="tune-k" style="min-width:7em">Jitter</span><input type="range" min="0" max="200" step="5" data-k="jitter"><span data-v="jitter"></span></div>
       <div class="tune-row"><span class="tune-k" style="min-width:7em">Loss</span><input type="range" min="0" max="30" step="1" data-k="loss"><span data-v="loss"></span></div>
       <div class="tune-row" title="How far ahead your inputs are scheduled. Higher: fewer corrections of remote players, but your own actions start later."><span class="tune-k" style="min-width:7em">Input delay</span><input type="range" min="0" max="8" step="1" data-k="delay"><span data-v="delay"></span></div>
+      <div class="tune-line" title="How the other players' aim is guessed until their input arrives. World: their cursor stays on the same spot of the floor (or a steady sweep carries on). Repeat: their last aim relative to their wizard (the old way). Compare the rewinds."><span class="tune-k" style="min-width:7em">Remote aim</span><button class="seg" data-aim="world">World point</button><button class="seg" data-aim="relative">Repeat last</button></div>
+      <div class="tune-line" title="A remote spell that arrives late: play it from its first frame, fast-forwarded over 0.15 s (on), or let it pop in where it already is (off)."><span class="tune-k" style="min-width:7em">Late spells</span><button class="seg" data-catch="1">Catch up</button><button class="seg" data-catch="0">Pop in</button></div>
       <div class="tune-hint" data-stats></div>`;
+    const modes = () => {
+      body.querySelectorAll<HTMLElement>('[data-aim]').forEach((b) => b.classList.toggle('on', b.dataset.aim === this.aimPrediction));
+      body.querySelectorAll<HTMLElement>('[data-catch]').forEach((b) => b.classList.toggle('on', (b.dataset.catch === '1') === (view?.catchUp ?? true)));
+    };
+    body.querySelectorAll<HTMLElement>('[data-aim]').forEach((b) => b.addEventListener('click', () => {
+      this.aimPrediction = b.dataset.aim as AimPrediction;
+      if (this.session) this.session.aimPrediction = this.aimPrediction;
+      modes();
+    }));
+    body.querySelectorAll<HTMLElement>('[data-catch]').forEach((b) => b.addEventListener('click', () => { if (view) view.catchUp = b.dataset.catch === '1'; modes(); }));
+    modes();
     const presets = body.querySelector('[data-presets]')!;
     for (const p of PRESETS) {
       const b = document.createElement('button');
@@ -470,7 +490,8 @@ export class NetPlay {
     setInterval(() => {
       const s = this.session;
       stats.textContent = !s ? 'Not in a match: start one from the Co-op panel to see the numbers.'
-        : `Round trip ${Math.round(this.rtt)} ms · rewinds ${this.stat.rewindsPerS.toFixed(0)} ticks/s · waited ${(s.waitedTicks / 60).toFixed(1)} s · behind ${Math.max(0, s.lag)} ticks`;
+        : `Round trip ${Math.round(this.rtt)} ms · rewinds ${this.stat.rewindsPerS.toFixed(0)} ticks/s · wrong guesses ${this.stat.wrongPct.toFixed(0)} % · waited ${(s.waitedTicks / 60).toFixed(1)} s · behind ${Math.max(0, s.lag)} ticks` +
+          (view ? ` · late spells caught up: ${view.caught.missiles} missiles, ${view.caught.channels} channels, ${view.caught.casts} casts` : '');
     }, 500);
   }
 

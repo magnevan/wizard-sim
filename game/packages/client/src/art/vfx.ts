@@ -45,6 +45,8 @@ const ramp = (id: number): Ramp => EL[elName(id)] ?? EL.arcane;
 const SEAT_EL = [6, 4, 5, 9];
 const STAFF_Z = 10; // missiles fly about this high (art px)
 const LIFT = 9; // a beam or spray end is lifted to about chest height
+/** A late remote spell (rollback) catches up with where it really is over this much real time, s. */
+const CATCH_S = 0.15;
 
 export class Vfx {
   /** The local player's seat: their ring is solid and their rune swirl sparse (their HUD shows the detail). */
@@ -74,6 +76,79 @@ export class Vfx {
   /** Events another view part (view-structures.ts) already turned into effects: skipped here. */
   readonly skip = new Set<SimEvent>();
 
+  // ---- late remote spells (rollback): shown from their first frame, fast-forwarded ----------------
+  // A remote cast usually reaches us a few ticks after it happened; rollback then inserts it in the
+  // past, and the replay skips the view (it would play effects twice). Without help, the missile
+  // pops in mid-flight and the beam at full length. Instead the replay notes where each new
+  // missile started and which casts we never showed, and after it the missile is drawn sliding
+  // from its start to where it really is over CATCH_S of real time, a channel plays its opening
+  // at speed, and the cast flash plays. Purely cosmetic: the sim never sees any of it.
+  /** Off: late spells pop in where they are (for comparing in the Network test). */
+  catchUp = true;
+  /** Missile slots alive before the current step (beforeStep), to see which ones a replayed step made. */
+  private rpAlive = new Uint8Array(MAX_MISSILES);
+  /** Per missile slot: the tick a replayed step spawned it and where (-1: none). */
+  private spTick = new Int32Array(MAX_MISSILES).fill(-1);
+  private spX = new Float64Array(MAX_MISSILES); private spY = new Float64Array(MAX_MISSILES);
+  /** Per missile slot / seat: the real time (s) a catch-up began; -1 pending (set at the next draw), NaN none. */
+  private mCatch = new Float64Array(MAX_MISSILES).fill(NaN);
+  private chCatch = new Float64Array(MAX_SEATS).fill(NaN);
+  /** Per seat: channelling or charging as of the last shown step. */
+  private chanSeen = new Uint8Array(MAX_SEATS);
+  /** Cast events already shown, as tick * 8 + seat (recent ones only), and late ones a replay found. */
+  private shownCast = new Set<number>();
+  private late: SimEvent[] = [];
+  /** Late spells caught up so far (missiles, channels, casts), for the Network test. */
+  readonly caught = { missiles: 0, channels: 0, casts: 0 };
+
+  /** Before every step, shown or replayed. */
+  noteBefore(w: World): void { this.rpAlive.set(w.missiles.alive); }
+
+  /** After a step the rollback replay runs (the view skips its effects): note late remote spell starts. */
+  replayStep(w: World): void {
+    const m = w.missiles, tick = w.clock[0];
+    for (let j = 0; j < MAX_MISSILES; j++) if (m.alive[j] && !this.rpAlive[j]) { this.spTick[j] = tick; this.spX[j] = m.x[j] - m.vx[j] / 60; this.spY[j] = m.y[j] - m.vy[j] / 60; }
+    for (const e of w.events) if (e.kind === 'cast' && e.who >= 0 && e.who < MAX_SEATS && e.who !== this.localSeat && !this.shownCast.has(e.tick * 8 + e.who)) this.late.push(e);
+  }
+
+  /** The replay is done (t = sim seconds now): start the catch-ups. Returns the late cast events, for the poses. */
+  postRewind(w: World, t: number): SimEvent[] {
+    const m = w.missiles, s = w.seats, tick = w.clock[0];
+    if (this.catchUp) {
+      for (let j = 0; j < MAX_MISSILES; j++) {
+        if (!m.alive[j] || this.mAlive[j] || this.spTick[j] < 0 || this.spTick[j] >= tick || m.owner[j] === this.localSeat) continue;
+        this.mAlive[j] = 1; this.mT0[j] = this.spTick[j] / 60; this.mLife0[j] = m.life[j] + (tick - this.spTick[j]);
+        this.mType[j] = m.type[j]; this.mLook[j] = m.look[j]; this.mX[j] = m.x[j]; this.mY[j] = m.y[j]; this.mVX[j] = m.vx[j]; this.mVY[j] = m.vy[j];
+        this.mCatch[j] = -1; this.caught.missiles++;
+      }
+      for (let i = 0; i < MAX_SEATS; i++) {
+        const on = s.active[i] && (s.phase[i] === PHASE.channel || s.phase[i] === PHASE.charge);
+        if (on && !this.chanSeen[i] && i !== this.localSeat && s.chanTicks[i] > 1) { this.chCatch[i] = -1; this.chanSeen[i] = 1; this.caught.channels++; }
+      }
+    }
+    this.spTick.fill(-1);
+    const late = this.late;
+    this.late = [];
+    if (!this.catchUp) return [];
+    for (const e of late) { this.shownCast.add(e.tick * 8 + e.who); this.onEvent(w, e, t, [], [], () => false); this.caught.casts++; }
+    return late;
+  }
+
+  /** How far a catch-up that began at c0 has got at real time ct (0..1, eased); 1 when there is none. */
+  private catchK(c: Float64Array, i: number, ct: number): number {
+    const c0 = c[i];
+    if (Number.isNaN(c0)) return 1;
+    if (c0 < 0) { c[i] = ct; return 0; }
+    const k = (ct - c0) / CATCH_S;
+    if (k >= 1) { c[i] = NaN; return 1; }
+    return 1 - (1 - k) * (1 - k);
+  }
+  /** Where missile j is drawn: its true spot, or on its way there from where it started while catching up. */
+  missileAt(w: World, j: number, ct: number): Pt {
+    const m = w.missiles, k = this.catchK(this.mCatch, j, ct);
+    return k >= 1 ? [m.x[j], m.y[j]] : [lerp(this.spX[j], m.x[j], k), lerp(this.spY[j], m.y[j], k)];
+  }
+
   constructor() {
     this.gt = Texture.from(this.g.c); this.gt.source.scaleMode = 'nearest';
     this.ot = Texture.from(this.o.c); this.ot.source.scaleMode = 'nearest';
@@ -98,6 +173,7 @@ export class Vfx {
         else this.add('impact', t, 1.4, { x: this.mX[j], y: this.mY[j], x2: this.mVX[j], y2: this.mVY[j], look: this.mLook[j], n: this.mType[j], seed: tick * 7 + j, r: m.r[j] });
       }
       this.mAlive[j] = m.alive[j];
+      if (!m.alive[j]) this.mCatch[j] = NaN;
       if (m.alive[j]) { this.mType[j] = m.type[j]; this.mLook[j] = m.look[j]; this.mX[j] = m.x[j]; this.mY[j] = m.y[j]; this.mVX[j] = m.vx[j]; this.mVY[j] = m.vy[j]; }
     }
     // zones: when each began, and which ended this step
@@ -110,6 +186,12 @@ export class Vfx {
     const near = (ax: number, ay: number, bx: number, by: number) => Math.abs(ax - bx) < 0.6 && Math.abs(ay - by) < 0.6;
     for (const e of w.events) if (!this.skip.has(e)) this.onEvent(w, e, t, ended, healStones, near);
     this.skip.clear();
+    const s = w.seats;
+    for (let i = 0; i < MAX_SEATS; i++) {
+      this.chanSeen[i] = s.active[i] && (s.phase[i] === PHASE.channel || s.phase[i] === PHASE.charge) ? 1 : 0;
+      if (!this.chanSeen[i]) this.chCatch[i] = NaN;
+    }
+    if (this.shownCast.size > 64) for (const k of this.shownCast) if (k < (tick - 300) * 8) this.shownCast.delete(k);
     this.fx = this.fx.filter((f) => t - f.t0 < f.life);
     void b;
   }
@@ -121,6 +203,7 @@ export class Vfx {
     switch (e.kind) {
       case 'cast':
         if (who < 0) { if (e.text) this.add('banner', t, 2.4, { text: e.text }); return; }
+        this.shownCast.add(e.tick * 8 + who);
         this.add('release', t, 0.25, { who, look, els: this.motes[who]?.map((q) => q.el) });
         if (spec()?.shape === 'self') this.add('self', t, 1.0, { who, look, x: e.x, y: e.y, seed });
         return;
@@ -180,7 +263,7 @@ export class Vfx {
     this.groundMarks(w, bodies, t);
     if (structures) { structures(g, o); g._fs = o._fs = null; }
     for (const f of this.fx) this.drawFx(f, t - f.t0, t, w, bodies, light);
-    this.missiles(w, t, light);
+    this.missiles(w, t, light, ct);
     this.channels(w, ct, bodies, light);
     this.casters(w, ct, bodies, light);
     this.statuses(w, t, bodies, light, ct);
@@ -330,12 +413,13 @@ export class Vfx {
   }
 
   // ---- missiles: the form sets the shape, the look element the material ------------------------
-  private missiles(w: World, t: number, light: LightFn): void {
+  private missiles(w: World, t: number, light: LightFn, ct: number): void {
     const m = w.missiles, o = this.o.x, g = this.g.x;
     for (let j = 0; j < MAX_MISSILES; j++) {
       if (!m.alive[j]) continue;
       const ty = m.type[j], look = m.look[j], el = elName(look), R = ramp(look), sd = j * 17 + 3;
-      const x = gx(m.x[j]), yg = gy(m.y[j]), vx = m.vx[j], vy = m.vy[j] * FY, L = Math.hypot(vx, vy) || 1, ux = vx / L, uy = vy / L;
+      const [mx, my] = this.missileAt(w, j, ct);
+      const x = gx(mx), yg = gy(my), vx = m.vx[j], vy = m.vy[j] * FY, L = Math.hypot(vx, vy) || 1, ux = vx / L, uy = vy / L;
       const e = t - this.mT0[j];
       if (ty === 3) {
         // a heal-stone lobbed over everything: a stone with green light seeping from its cracks
@@ -399,8 +483,10 @@ export class Vfx {
       const ph = s.phase[i], v = bodies[i];
       if (!v?.on || !v.a) continue;
       const tip: Pt = [v.x + v.a.tip[0], v.y + v.a.tip[1]];
+      // a late remote channel (rollback) plays its opening at speed: its drawn age runs from 0 up to the true one
+      const age = (s.chanTicks[i] / 60) * this.catchK(this.chCatch, i, t);
       if (ph === PHASE.charge) {
-        const spec = specOf(w, i), ch: Pt = [v.x + v.a.charge[0], v.y + v.a.charge[1]], k = smooth(clamp(s.chanTicks[i] / 60, 0, 1)), el = elName(spec.look);
+        const spec = specOf(w, i), ch: Pt = [v.x + v.a.charge[0], v.y + v.a.charge[1]], k = smooth(clamp(age, 0, 1)), el = elName(spec.look);
         for (let q = 0; q < 7; q++) { const a = t * 8 + q * 0.9, r = 10 - k * 6; X.px(o, ch[0] + Math.cos(a) * r, ch[1] + Math.sin(a) * r * 0.7, ramp(spec.look)[q % 2 ? 1 : 2]); }
         if (spec.heal) { K.rock(o, ch[0], ch[1] + 2, 1.5 + k * 3.5, 6, K.ROCK_MAT.life); X.glow(o, ch[0], ch[1] + 2, 4 + k * 3, X.LIFE[3], 0.5); }
         else if (el === 'fire') { K.fireball(o, ch[0], ch[1], 1.2 + k * 3.2, t, 0.2, -1, 4); light(ch[0], v.y, 30, '#ff7a2a', 0.5 * k + 0.2); }
@@ -408,7 +494,7 @@ export class Vfx {
         continue;
       }
       if (ph !== PHASE.channel) continue;
-      const spec = specOf(w, i), t0 = t - s.chanTicks[i] / 60, sd = i * 977;
+      const spec = specOf(w, i), t0 = t - age, sd = i * 977;
       const ex = gx(s.chanEndX[i]), ey = gy(s.chanEndY[i]);
       const look = elName(spec.look || spec.form);
       if (spec.shape === 'beam') {

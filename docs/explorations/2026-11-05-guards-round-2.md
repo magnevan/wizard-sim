@@ -117,3 +117,32 @@ The user: "for resistance we should use the hyperbolic formula so that effective
 - That own-element level (`ARMS.resStatus`) still wards off the element's status. The Ember can't burn, the Rime can't be chilled, and the Spark can't be stunned by lightning.
 - Mixing adds r values before the formula, so the extras now stack without a cap. For example, a Bulwark carrying 2 Fire has r = 3⅓ against fire and takes 23 %.
 - Wards (Shield + element cast on yourself) are spells, not guards, and keep their flat resistance.
+
+## The Arcane guard redesigned (built), and the open mixing items
+
+The user: "let's figure out a redesign of the arcane shield". Their notes so far: the block "seems a little meaningless", the card is "maybe too beam specific", "Phasing is cool", and on mixing "not totally sold on prism yet".
+
+**What Arcane is everywhere else.** In spells it's raw, aimed power: the beam. In the hands it's the ranged wand that imbues its extras. So a Shield + Arcane guard should turn defence into reach.
+
+**Options considered:**
+- **A. Capacitor and Lance (recommended, built).** Whatever the raised Prism takes is stored as charge: shots, beams, sprays, and melee blows (melee still lands). When you lower the block with enough stored, it fires the **Lance**, an instant arcane line straight ahead.
+- **B. Projected pane.** Defend raises the pane at range, on the cursor, to cover an ally. It's very co-op, but it's a second aim gesture on Space, and it overlaps the Shield wall spell.
+- **C. Keep the beam mirror and tune it.** This is the smallest change, but it doesn't fix "too beam specific".
+
+**Option A in numbers:**
+- Charge holds up to 60, and fades by 6 a second once the block is lowered.
+- The Lance needs at least 10 charge to fire. It is 7 u long, stops at rock, and hits everything on it, allies too. It deals 8 + the charge.
+- The Prism keeps its parry (a beam goes back, mixed with the coat), Phase, and Clear.
+- **Mixing:** the coat rides on the Lance, as on the wand's bolts. A Prism + Fire's Lance burns. The total damage stays 8 + the charge, and the coat only changes its element.
+- **In play:** a partner sees a violet glow on the pane that swells as it fills. Then a white-hot line flashes in the coat's colour.
+- **Cost:** release-to-fire puts a second meaning on letting go of Space. That only matters for the Prism, and below 10 charge nothing fires.
+
+**The open mixing items, now built:**
+- **Siphon:** each rune of an element in the wand refills that element faster again (+100 % per rune).
+- **Mend:**
+  - Every rune past the first heals 25 % more.
+  - Water or Cold in the hands also puts out burning allies.
+  - Fire dries, unchills and thaws them.
+- **Guard rim:** a dotted ring in the colour of what the guard carries.
+
+Golden hash `e055dcdb` → `7184435b`: the Prism's charge is new state.

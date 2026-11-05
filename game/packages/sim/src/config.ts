@@ -188,6 +188,14 @@ export const ARMS = {
   runeSize: 0.15,
   /** A guard resistance this high (an own-element guard's) also wards off that element's status: no stun, burn or chill. */
   resStatus: 3,
+  /**
+   * Prism (Arcane): what its raised block takes is stored as charge (up to chargeMax; it fades chargeFade
+   * a second once lowered). Lowering the block with at least lanceMin stored fires the Lance: an arcane
+   * line lanceRange long that deals lanceBase + the charge to everything on it, carrying the coat.
+   */
+  chargeMax: 60, chargeFade: 6, lanceMin: 10, lanceBase: 8, lanceRange: 7, lanceWidth: 0.45,
+  /** Weapon Specials scale with every rune too: each weapon rune past the first adds this much Mend healing; each rune of an element in a Siphon wand refills that element siphonFocus times faster again. */
+  specialRune: 0.25, siphonFocus: 1,
   /** What each guard takes before it breaks. */
   hp: { mirror: 90, bulwark: 160, ember: 90, rime: 90, spark: 45, tide: 90, prism: 90, leaf: 90 },
 };

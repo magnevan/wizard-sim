@@ -9,7 +9,7 @@ import {
   ARCH, ARCHETYPES, ARMS, BTN, EL, GUARD, KIND, NO_INPUT, SURF, TEAM, ZONE, createWorld, elementId, quantize, spawnBody, step,
   type PlayerInput, type World,
 } from '../src';
-import { anchored, guardBeam, resist, RES, taken, walkMult } from '../src/guards';
+import { anchored, damageGuard, guardBeam, resist, RES, taken, walkMult } from '../src/guards';
 import { N_EL } from '../src/elements';
 import { cellAt } from '../src/effects';
 
@@ -225,6 +225,32 @@ describe('guards: one per lead element', () => {
     const hp = (q: Element[]) => { const { w, d } = arena(); d.conjure(...q); return w.seats.guardHp[0]; };
     expect(hp(['shield', 'earth', 'earth'])).toBeCloseTo(ARMS.hp.bulwark * (1 + ARMS.runeSize));
     expect(hp(['shield', 'earth', 'fire', 'water'])).toBeCloseTo(ARMS.hp.bulwark * (1 + 2 * ARMS.runeSize));
+  });
+
+  it('the Prism stores what it blocks; lowering it fires the Lance, carrying the coat', () => {
+    const { w, d, dummy } = arena();
+    d.conjure('shield', 'arcane', 'fire');
+    d.aimAt(5, 0).tick({}, 2);
+    const t = dummy(5, 0);
+    d.tick({ buttons: BTN.self }, 20);
+    damageGuard(w, 0, 30); // as if a blocked hit
+    expect(w.seats.guardCharge[0]).toBe(30);
+    d.tick({}, 2); // lowered: the Lance
+    expect(w.seats.guardCharge[0]).toBe(0);
+    expect(400 - w.bodies.hp[t]).toBeGreaterThan(30);
+    expect(w.bodies.burn[t]).toBeGreaterThan(0); // the Fire coat rides on it
+  });
+
+  it('a Prism lowered with little charge fires nothing; the charge fades', () => {
+    const { w, d, dummy } = arena();
+    d.conjure('shield', 'arcane');
+    d.aimAt(5, 0).tick({}, 2);
+    const t = dummy(5, 0);
+    d.tick({ buttons: BTN.self }, 5);
+    damageGuard(w, 0, ARMS.lanceMin / 2);
+    d.tick({}, 120);
+    expect(w.bodies.hp[t]).toBe(400);
+    expect(w.seats.guardCharge[0]).toBe(0);
   });
 
   it('Grounded: an ally\'s chain lightning skips the Spark ring carrier', () => {
@@ -453,5 +479,30 @@ describe('the Arcane wand (Sigil + Arcane) and Mend', () => {
     d.tick({ buttons: BTN.area }, 120);
     expect(w.bodies.hp[1]).toBeGreaterThan(48);
     expect(w.seats.weapon[0]).toBe(EL.life);
+  });
+
+  it('Siphon refills the elements in the wand faster still', () => {
+    const fire = (q: Element[]) => {
+      const { w, d } = arena();
+      d.aimAt(5, 0).conjure(...q);
+      w.seats.runes[EL.fire - 1] = 0;
+      d.tick({ buttons: BTN.area }, 100);
+      return w.seats.runes[EL.fire - 1];
+    };
+    expect(fire(['sigil', 'arcane', 'fire'])).toBeGreaterThan(fire(['sigil', 'arcane']) * 1.5);
+  });
+
+  it('Mend scales with every rune, and Water in the hands puts out a burning ally', () => {
+    const mend = (q: Element[]) => {
+      const { w, d } = arena(2);
+      d.aimAt(5, 0).conjure(...q);
+      w.bodies.x[1] = -2; w.bodies.y[1] = 1; w.bodies.hp[1] = 40; w.bodies.burn[1] = 600;
+      d.tick({ buttons: BTN.area }, 60);
+      return w;
+    };
+    const plain = mend(['sigil', 'life']), wet = mend(['sigil', 'life', 'water']);
+    expect(wet.bodies.burn[1]).toBe(0);
+    expect(plain.bodies.burn[1]).toBeGreaterThan(0);
+    expect(mend(['sigil', 'life', 'life']).bodies.hp[1]).toBeGreaterThan(plain.bodies.hp[1]);
   });
 });

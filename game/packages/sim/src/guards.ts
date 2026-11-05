@@ -21,7 +21,8 @@
  *   Rime kite (S+C)        chills melee attackers / freezes them  Ice slide     Sure-footed: no slipping on ice
  *   Spark ring (S+L)       weakest / chain discharge              Blink         Grounded: chain lightning skips you
  *   Tide shield (S+W)      shoves and soaks / a shoving wave      Surge         Quenched: can't burn
- *   Prism pane (S+A)       stops beams and sprays / returns them  Phase         Clear: allies' beams and sprays don't hurt you
+ *   Prism (S+A)            stores what it blocks; lower it: Lance Phase         Clear: allies' beams and sprays don't hurt you
+ *                          (also stops beams and sprays; a parry returns them)
  *   Leaf aegis (S+Li)      heals allies around you / burst heal   Seed step     Regrowth: slow healing
  */
 import { ARMS, STATUS, T } from './config';
@@ -90,7 +91,7 @@ export function conjureGuard(w: World, src: number, counts: Uint8Array): void {
   const lead = leadOf(s.guardEls, src);
   s.guard[src] = lead ? GUARD_OF[lead] : GUARD.mirror;
   s.guardHp[src] = (ARMS.hp as Record<string, number>)[GUARD_NAME[s.guard[src]]] * guardSize(w, src);
-  s.guardT[src] = 0; s.guardCd[src] = 0; s.retreatT[src] = 0;
+  s.guardT[src] = 0; s.guardCd[src] = 0; s.retreatT[src] = 0; s.guardCharge[src] = 0;
 }
 
 /**
@@ -227,11 +228,48 @@ const move = (w: World, i: number, text: string, x2?: number, y2?: number, look 
 export function damageGuard(w: World, i: number, amount: number): void {
   const s = w.seats, g = s.guard[i];
   if (!g) return;
+  if (g === GUARD.prism) store(w, i, amount);
   s.guardHp[i] -= amount * (g === GUARD.spark ? ARMS.sparkBlock : 1);
   if (s.guardHp[i] <= 0) {
     move(w, i, 'guardbreak');
+    s.guardCharge[i] = 0;
     s.guard[i] = GUARD.none; s.guardT[i] = 0; s.guardEls.fill(0, i * N_EL, (i + 1) * N_EL);
   }
+}
+
+/** The Prism stores what its raised block takes, as charge. */
+function store(w: World, i: number, amount: number): void {
+  w.seats.guardCharge[i] = Math.min(ARMS.chargeMax, w.seats.guardCharge[i] + amount);
+}
+
+const LANCE = new Uint8Array(N_EL);
+/**
+ * Seat i lowered its block. A Prism holding at least lanceMin charge fires the Lance: an instant arcane
+ * line straight ahead (stopped by rock) that hits everything on it, allies too, for lanceBase + the
+ * charge. The coat rides on it (imbue, like the wand), opposites cancelled.
+ */
+export function guardRelease(w: World, i: number): void {
+  const s = w.seats, b = w.bodies;
+  if (guardOf(w, i) !== GUARD.prism || s.guardCharge[i] < ARMS.lanceMin) return;
+  const f = b.face[i], ux = cosTurns(f), uy = sinTurns(f), x = b.x[i], y = b.y[i];
+  let reach = ARMS.lanceRange;
+  for (let d = 0.5; d < reach; d += 0.25) {
+    const k = wallAt(w, x + ux * d, y + uy * d, 0.1);
+    if (k >= 0 && w.walls.type[k] === WALL.rock) { reach = d; break; }
+  }
+  const mixed = mixCoat(w, i, one(EL.arcane).counts, 0);
+  if (mixed) {
+    LANCE.set(mixed);
+    const scale = (ARMS.lanceBase + s.guardCharge[i]) / payloadDamage(LANCE, 0, 1);
+    for (let j = 0; j < b.kind.length; j++) {
+      if (j === i || !alive(w, j)) continue;
+      const rx = b.x[j] - x, ry = b.y[j] - y, along = rx * ux + ry * uy;
+      if (along < 0 || along > reach + b.r[j] || Math.abs(rx * uy - ry * ux) > b.r[j] + ARMS.lanceWidth) continue;
+      applyHit(w, j, LANCE, 0, { scale, heal: false, scald: false, freeze: false, source: i, dirX: ux, dirY: uy, push: 0 });
+    }
+  }
+  s.guardCharge[i] = 0;
+  move(w, i, 'lance', x + ux * reach, y + uy * reach, guardCoatLook(w, i) || EL.arcane);
 }
 
 // Scratch payloads (one rune of an element), never kept.
@@ -351,6 +389,7 @@ export function guardMelee(w: World, t: number, src: number, dmg: number, dx: nu
   if (parrying(w, t)) { parryEffect(w, t, src, true); biteBack(w, t, src, -dx, -dy); return 0; }
   const foe = src >= 0 && alive(w, src);
   if (foe) biteBack(w, t, src, -dx, -dy); // the coat bites back
+  if (g === GUARD.prism) store(w, t, dmg); // the blow still lands, and the Prism keeps its force
   if (foe && g === GUARD.ember) { b.burn[src] = Math.max(b.burn[src], T(STATUS.burn)); b.burnSrc[src] = t; } // thorns
   if (foe && g === GUARD.rime) { b.chill[src] = Math.min(STATUS.chillMax, b.chill[src] + ARMS.rimeChill); w.events.push({ tick: w.clock[0], kind: 'move', who: t, x: b.x[src], y: b.y[src], text: 'chill', look: EL.cold }); } // frost bites back
   if (foe && g === GUARD.tide) { applyHit(w, src, one(EL.water).counts, 0, { scale: 1, heal: false, scald: false, freeze: false, source: t, dirX: -dx, dirY: -dy, push: 0 }); b.kx[src] -= dx * 8; b.ky[src] -= dy * 8; }
@@ -482,5 +521,6 @@ export function tickGuards(w: World): void {
     if (hasPassive(w, i, GUARD.tide)) b.burn[i] = 0; // Quenched
     if (hasPassive(w, i, GUARD.leaf) && b.hp[i] > 0) b.hp[i] = Math.min(b.maxHp[i], b.hp[i] + ARMS.regrowth / 60); // Regrowth
     if (s.guardT[i] && g === GUARD.leaf) healAround(w, i, ARMS.leafBlockHeal / 60, false);
+    if (!s.guardT[i] && s.guardCharge[i] > 0) s.guardCharge[i] = Math.max(0, s.guardCharge[i] - ARMS.chargeFade / 60);
   }
 }

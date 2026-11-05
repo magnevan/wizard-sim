@@ -8,7 +8,7 @@ export * from './state';
 export { compile, WALL, type SpellSpec, type Shape, type Mod } from './compile';
 export { queueOf, selfTarget, specOf } from './cast';
 export { HIT_KIND } from './hit';
-export { GUARD_EL, guardSize } from './guards';
+export { GUARD_EL, guardCoatLook, guardSize } from './guards';
 export { step } from './step';
 export * from './replay';
 export { scriptedInput, scriptedReplay } from './script';

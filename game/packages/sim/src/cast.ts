@@ -20,6 +20,7 @@ import { EL, N_EL, elementName } from './elements';
 import { channelTick, fireSpell } from './effects';
 import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, recallOldest, sigilCap, spendMote, weaponSwing } from './structures';
 import { len } from './geom';
+import { guardRelease } from './guards';
 import { AIM_UNIT, BTN, type PlayerInput } from './input';
 import { TAP, channelsSpecial, heavy, heavyCharge, holdTick, retreat, special, specialTick, strike } from './hands';
 import { atan2Turns } from './trig';
@@ -178,7 +179,9 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   // A conjured guard blocks while Space is held with an empty queue (Defend, grammar v2; guards.ts).
   // Any weapon move or spell drops the block, and so does the fixed recovery after a Retreat.
   const defend = s.guard[i] && held & BTN.self && s.queueLen[i] === 0;
+  const wasUp = s.guardT[i] > 0;
   s.guardT[i] = defend && !s.guardCd[i] && s.phase[i] === PHASE.idle && !s.handT[i] && canAct(w, i) ? s.guardT[i] + 1 : 0;
+  if (wasUp && !s.guardT[i]) guardRelease(w, i); // the Prism's Lance
   if (defend) pressed &= ~BTN.self; // holding it to block is not a Self cast
 
   if (pressed & BTN.clear) refundQueue(w, i);

@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, guardSize, queueOf, selfTarget,
+  N_ALTARS, N_EL, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, guardCoatLook, guardSize, queueOf, selfTarget,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
@@ -216,7 +216,7 @@ class Scorch {
 /** How long each weapon or guard move's effect plays (s). */
 const MOVE_LIFE: Record<string, number> = {
   dash: 0.45, flamestep: 0.5, iceslide: 0.7, backstep: 0.5, phase: 0.6, seedstep: 0.8, shovestep: 0.7, surge: 0.6, tidewave: 0.6,
-  parry: 0.4, block: 0.25, glance: 0.3, chill: 0.5, coat: 0.45, guardbreak: 0.8, flameburst: 0.45, chargedbolt: 0.4, javelin: 0.45, siphon: 0.5, mend: 0.6, link: 0.5, linkbreak: 0.5,
+  parry: 0.4, block: 0.25, glance: 0.3, chill: 0.5, coat: 0.45, guardbreak: 0.8, flameburst: 0.45, chargedbolt: 0.4, lance: 0.4, javelin: 0.45, siphon: 0.5, mend: 0.6, link: 0.5, linkbreak: 0.5,
 };
 /** Each guard's colour. */
 const GUARD_RAMP: Record<string, Ramp> = {
@@ -1141,6 +1141,12 @@ export class StructureView {
       if (raise < 1) X.ring(o, x, y, 3 + raise * 8, 4 + raise * 8, R[1], 1 - raise);
       light(x, y + 8, 26, R[2], 0.4 * pulse);
     }
+    // What the guard carries besides its lead: a dotted rim in that colour, so a partner can read the coat.
+    const coat = guardCoatLook(w, i);
+    if (coat) { const Rc = ramp(coat); for (let q = 0; q < 12; q++) { const a = (q / 12) * TAU + t * 0.6; X.px(o, x + Math.cos(a) * 6.5, y + Math.sin(a) * 7, q % 2 ? Rc[1] : Rc[0]); } }
+    // The Prism's stored charge: a violet glow that swells as it fills, ready to Lance.
+    const ch = id === GUARD.prism ? s.guardCharge[i] / ARMS.chargeMax : 0;
+    if (ch > 0) { X.glow(o, x, y, 3 + 7 * ch, EL.arcane[1], 0.35 + 0.5 * ch); light(x, y, 20 + 30 * ch, EL.arcane[2], 0.5 * ch); }
     if (up < 1) X.ring(o, x, y, 2 + up * 10, 2 + up * 8, SV[1], 1 - up);
   }
 
@@ -1425,6 +1431,17 @@ export class StructureView {
         const a0 = w.bodies.face[f.who] * TAU, q = e / f.life;
         for (let j = 0; j < 9; j++) { const a = a0 + (rand(j, 1, sd) - 0.5) * 1.0, d = 6 + q * 26 * (0.6 + rand(j, 2, sd) * 0.4); K.tongue(o, v.x + Math.cos(a) * d, v.y + Math.sin(a) * d * FY - 4, 2.2 * (1 - q), 8 * (1 - q), Math.cos(a)); }
         light(v.x, v.y, 50, '#ff7020', 0.8 * (1 - q));
+        return;
+      }
+      case 'mv-lance': {
+        // the Prism's Lance: a white-hot line straight ahead in the coat's colour (violet bare), thinning as it fades
+        const x2 = gx(f.x2), y2 = gy(f.y2), q = e / f.life, R = ramp(f.look || ELID.arcane), yo = -8;
+        const wd = Math.max(1, Math.round(4 * (1 - q)));
+        X.line(o, x, y + yo, x2, y2 + yo, R[2], wd + 2); X.line(o, x, y + yo, x2, y2 + yo, R[0], wd);
+        if (q < 0.4) X.line(o, x, y + yo, x2, y2 + yo, '#ffffff', 1);
+        for (let j = 0; j < 10; j++) { const kq = rand(j, 1, sd); if (rand(j, 2, sd) < q) continue; X.px(o, lerp(x, x2, kq), lerp(y, y2, kq) + yo + (rand(j, 3, sd) - 0.5) * 8 * (1 + q * 2), j % 2 ? R[1] : '#ffffff'); }
+        X.glow(o, x2, y2 + yo, 8 * (1 - q), R[1], 0.8);
+        light((x + x2) / 2, y + yo, 60, R[2], 0.8 * (1 - q));
         return;
       }
       case 'mv-chargedbolt': case 'mv-siphon': {

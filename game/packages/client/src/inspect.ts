@@ -18,16 +18,16 @@ const GUARD_TEXT: Record<string, [string, string, string, string]> = {
   rime: ['Rime kite', 'chills biters, parry freezes them', 'Ice slide (leaves ice)', 'Sure-footed: never slips; takes 1/4 cold'],
   spark: ['Spark ring', 'weakest block, parry discharges', 'Blink 3 u (leaves a spark)', 'Grounded: chain lightning skips you'],
   tide: ['Tide shield', 'shoves and soaks biters, parry throws a wave', 'Surge (shoves what is in front)', 'Quenched: cannot burn'],
-  prism: ['Prism pane', 'stops beams and sprays, parry returns them', 'Phase (through bodies)', 'Clear: allies’ beams and sprays don’t hurt you'],
+  prism: ['Prism', 'stores what it blocks (stops beams too); lower it to fire the Lance', 'Phase (through bodies)', 'Clear: allies’ beams and sprays don’t hurt you'],
   leaf: ['Leaf aegis', 'heals allies around you, parry burst-heals you all', 'Seed step (leaves a healing bloom)', 'Regrowth: slow healing'],
 };
 /** Each weapon: its name, Heavy and Special. */
 const WEAPON_TEXT: Record<string, [string, string, string]> = {
   water: ['Tide trident', 'wave slash (shoves, soaks)', 'Sweep'],
-  life: ['Healing hands', 'Healing link on the ally under the cursor (1 use a second)', 'hold: Mend (heals allies around you)'],
+  life: ['Healing hands', 'Healing link on the ally under the cursor (1 use a second)', 'hold: Mend (heals allies around you; Water douses, Fire dries)'],
   cold: ['Frost spear', 'impaling dash (frozen targets shatter)', 'javelin: pins and frosts (2 uses)'],
   lightning: ['Lightning whip', 'chain lash (up to 3 more)', 'Sweep'],
-  arcane: ['Arcane wand', 'a charged bolt that pierces', 'hold: Siphon (rooted, runes regenerate 4x)'],
+  arcane: ['Arcane wand', 'a charged bolt that pierces', 'hold: Siphon (rooted, runes regenerate 4x; the wand’s elements faster)'],
   fire: ['Flame sword', 'fire wave (ignites, no lingering fire)', 'Sweep'],
   earth: ['Stone maul', 'fissure down one lane (knocks down)', 'Sweep'],
 };

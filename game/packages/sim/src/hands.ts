@@ -210,17 +210,27 @@ export function specialTick(w: World, i: number): void {
   if (el === EL.arcane) {
     for (let e = 1; e <= N_EL; e++) {
       const k = i * N_EL + e - 1;
-      if (e !== EL.sigil) s.runes[k] = Math.min(runeMax(w, i, e), s.runes[k] + (regenOf(w, i) * (ARMS.siphonMult - 1)) / 60);
+      // every rune of an element in the wand siphons that element faster still
+      const focus = 1 + ARMS.siphonFocus * s.weaponEls[k];
+      if (e !== EL.sigil) s.runes[k] = Math.min(runeMax(w, i, e), s.runes[k] + (regenOf(w, i) * (ARMS.siphonMult - 1) * focus) / 60);
     }
     if (t % 30 === 0) move(w, i, 'siphon', EL.arcane);
     if (t > 0 && t % 60 === 0) spend(w, i, ARMS.siphonUses);
     return;
   }
+  // Every rune past the first heals more; Water or Cold in the hands also puts out burning, Fire dries and thaws.
+  const els = weaponEls(w, i);
+  let runes = 0;
+  for (let e = 0; e < N_EL; e++) runes += els[e];
+  const heal = (ARMS.auraHeal / 60) * (1 + ARMS.specialRune * Math.max(0, runes - 1));
+  const douse = els[EL.water - 1] > 0 || els[EL.cold - 1] > 0, warmth = els[EL.fire - 1] > 0;
   for (let j = 0; j < MAX_SEATS; j++) {
     if (j === i || !s.active[j] || b.kind[j] !== KIND.wizard || b.downed[j] || b.team[j] !== b.team[i]) continue;
     if (len(b.x[j] - b.x[i], b.y[j] - b.y[i]) > ARMS.auraRange) continue;
+    if (douse) b.burn[j] = 0;
+    if (warmth) { b.wet[j] = 0; b.chill[j] = 0; b.frozen[j] = 0; }
     const before = b.hp[j];
-    b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + ARMS.auraHeal / 60);
+    b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + heal);
     bloom(w, i, j, b.hp[j] - before);
     if (t % 30 === 0) w.events.push({ tick: w.clock[0], kind: 'heal', who: j, src: i, x: b.x[j], y: b.y[j], amount: ARMS.auraHeal / 2, look: EL.life });
   }

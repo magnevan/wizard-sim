@@ -409,3 +409,16 @@ The user kept the strength lead, Lightning as strong, and the Leaf, Bulwark, wea
 ## 2026-11-05: Guard resistance is hyperbolic
 
 The user asked for it so that effective HP scales linearly and stacking never reaches immunity. Damage taken is 1 / (1 + r), and a weakness takes 1 − r. The old immunities become r = 3 (takes 25 %), and that level still blocks the element's status. Details are in `explorations/2026-11-05-guards-round-2.md`. The golden hash is unchanged.
+
+## 2026-11-05: The Prism stores and Lances; Mend and Siphon take their extras
+
+- **The Prism (Shield + Arcane) is redesigned** as a Capacitor. It stores what its raised block takes. Lowering it with 10+ charge fires the Lance, a 7 u arcane line for 8 + the charge, carrying the coat.
+  - It keeps its parry, Phase and Clear.
+  - The alternatives (a projected pane, or keeping the beam mirror) and the reasons are in `explorations/2026-11-05-guards-round-2.md`. Asked on the review page.
+- **Siphon:** the wand's elements refill faster.
+- **Mend:**
+  - Every extra rune heals more.
+  - Water or Cold douses burning allies.
+  - Fire dries and thaws them.
+- **Guard rim:** guards show their extras as a dotted rim.
+- Golden hash `e055dcdb` → `7184435b` (new Prism charge state).

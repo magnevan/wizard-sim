@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  ARCH, ARCHETYPES, BTN, DEVICE, EL, KIND, NO_INPUT, PHASE_ENC, PU, RUNES, STRUCT, SURVIVE_ROCK, SURVIVE_TIMES, TEAM, TERRAIN, WALL, WARD,
+  ARCH, ARCHETYPES, ARENA, BTN, CELL, DEVICE, EL, KIND, SURF, SURVIVE_ARENA, SURVIVE_GATES, scriptedInput, NO_INPUT, PHASE_ENC, PU, RUNES, STRUCT, SURVIVE_ROCK, SURVIVE_TIMES, TEAM, TERRAIN, WALL, WARD,
   botInput, buffers, createWorld, elementId, grant, hashWorld, newBotMemory, quantize, replaceWorld, restore, runeMax, snapshot, spawnBody, step,
   type PlayerInput, type World,
 } from '../src';
+import { cellAt, floorDisc } from '../src/effects';
 
 /** Drives seat `seat`; the other seats stand still. */
 class Driver {
@@ -60,14 +61,88 @@ describe('survive: the arena', () => {
     const terrain = () => Array.from(w.walls.owner).filter((o, k) => o === TERRAIN && w.walls.type[k] === WALL.rock).length;
     expect(terrain()).toBe(SURVIVE_ROCK.length);
     w.enc.state[0] = PHASE_ENC.off;
-    // a brute slams right on a gate funnel, for a minute
-    const e = foe(w, ARCH.brute, -9.2, -2.6);
-    w.bodies.x[0] = -8.2; w.bodies.y[0] = -2.6;
+    // a brute slams right on the keep's wall, for a minute
+    const [x1, y1, x2, y2] = SURVIVE_ROCK[0], mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    const e = foe(w, ARCH.brute, mx - 1, my);
+    w.bodies.x[0] = mx + 1; w.bodies.y[0] = my;
     new Driver(w).tick({}, 60 * 40);
     expect(w.bodies.kind[e]).toBe(KIND.enemy);
     expect(terrain()).toBe(SURVIVE_ROCK.length);
     expect(w.walls.hp[0]).toBe(w.walls.maxHp[0]);
     expect(w.nav.blocked.some((c) => c === 1)).toBe(true);
+  });
+});
+
+describe('survive: the big arena', () => {
+  it('is 44 x 30 with grids to match; the other rooms keep the 24 x 16 arena', () => {
+    const w = createWorld(1, 1, { room: 'survive' });
+    expect(w.dims).toMatchObject({ w: SURVIVE_ARENA.w, h: SURVIVE_ARENA.h, gw: SURVIVE_ARENA.w / CELL, gh: SURVIVE_ARENA.h / CELL });
+    expect(w.surf.kind.length).toBe(w.dims.gw * w.dims.gh);
+    expect(w.nav.field.length).toBe(4 * w.dims.gw * w.dims.gh);
+    for (const room of ['sanctum', 'arena'] as const) {
+      const o = createWorld(1, 1, { room });
+      expect(o.dims).toMatchObject({ w: ARENA.w, h: ARENA.h });
+      expect(o.surf.kind.length).toBe((ARENA.w / CELL) * (ARENA.h / CELL));
+    }
+    // every terrain segment, gate and altar is inside the arena (walls may run just past the edge)
+    for (const [x1, y1, x2, y2] of SURVIVE_ROCK) for (const [x, y] of [[x1, y1], [x2, y2]]) {
+      expect(Math.abs(x)).toBeLessThanOrEqual(w.dims.w / 2 + 0.5);
+      expect(Math.abs(y)).toBeLessThanOrEqual(w.dims.h / 2 + 0.5);
+    }
+    for (const [x, y] of SURVIVE_GATES) { expect(Math.abs(x)).toBeLessThan(w.dims.w / 2); expect(Math.abs(y)).toBeLessThan(w.dims.h / 2); }
+  });
+
+  it('bodies are free past the old bounds and clamped to the new ones', () => {
+    const { w, d } = quiet();
+    w.bodies.x[0] = 19; w.bodies.y[0] = 13;
+    d.tick();
+    expect(w.bodies.x[0]).toBeCloseTo(19, 1); expect(w.bodies.y[0]).toBeCloseTo(13, 1);
+    w.bodies.x[0] = 40; w.bodies.y[0] = -40;
+    d.tick();
+    expect(w.bodies.x[0]).toBeLessThanOrEqual(w.dims.w / 2 - w.bodies.r[0] + 1e-9);
+    expect(w.bodies.y[0]).toBeGreaterThanOrEqual(-w.dims.h / 2 + w.bodies.r[0] - 1e-9);
+    // surfaces reach the far corners too
+    floorDisc(w, 20, 13.5, 1, EL.water);
+    expect(w.surf.kind[cellAt(w, 20, 13.5)]).toBe(SURF.water);
+    expect(cellAt(w, 23, 0)).toBe(-1);
+  });
+
+  it('nav reaches the whole arena: an enemy from every gate finds its way to the plaza', () => {
+    const w = createWorld(1, 1, { room: 'survive' });
+    w.enc.state[0] = PHASE_ENC.off;
+    w.bodies.x[0] = 0; w.bodies.y[0] = 0.5; w.bodies.hp[0] = w.bodies.maxHp[0] = 1e6;
+    const ids = SURVIVE_GATES.map(([x, y]) => foe(w, ARCH.swarmer, x, y));
+    const best = ids.map(() => Infinity);
+    new Driver(w).tick({}, 2);
+    // the field has a finite distance at every gate's cell
+    const INF = 0x3fffffff, gw = w.dims.gw;
+    for (const [x, y] of SURVIVE_GATES) {
+      const c = Math.floor((y + w.dims.h / 2) / CELL) * gw + Math.floor((x + w.dims.w / 2) / CELL);
+      expect(w.nav.field[c]).toBeLessThan(INF);
+    }
+    for (let t = 0; t < 60 * 25; t++) {
+      new Driver(w).tick();
+      ids.forEach((i, k) => { if (w.bodies.kind[i] === KIND.enemy) best[k] = Math.min(best[k], Math.hypot(w.bodies.x[i], w.bodies.y[i] - 0.5)); });
+    }
+    for (const d of best) expect(d).toBeLessThan(2);
+  });
+
+  it('a scripted survive run hashes the same twice', () => {
+    const run = () => {
+      const w = createWorld(5, 2, { room: 'survive' });
+      const trail: number[] = [];
+      let most = 0;
+      for (let t = 0; t < 60 * 40; t++) {
+        step(w, [scriptedInput(t, 0), scriptedInput(t, 1)]);
+        if (t % 300 === 0) trail.push(hashWorld(w));
+        most = Math.max(most, enemies(w));
+      }
+      return { trail, hash: hashWorld(w), most };
+    };
+    const a = run(), b = run();
+    expect(a.trail).toEqual(b.trail);
+    expect(a.hash).toBe(b.hash);
+    expect(a.most).toBeGreaterThan(0); // the first wave came
   });
 });
 

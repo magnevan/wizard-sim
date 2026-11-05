@@ -19,7 +19,7 @@
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
-  AI, ARCHETYPES, ARENA, ATTACK, BTN, CELL, DEVICE, EL as ELID, GRID_W, GUARD, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES,
+  AI, ARCHETYPES, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES,
   N_ALTARS, N_EL, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, queueOf, selfTarget,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
@@ -162,13 +162,21 @@ class Scorch {
     this.tex = Texture.from(this.cv.c); this.tex.source.scaleMode = 'nearest';
     this.sprite = new Sprite(this.tex);
   }
+  /** FIELD changed size: a new canvas to match (the marks belong to the old floor). */
+  resize(): void {
+    const old = this.tex;
+    this.cv = X.canvas(FIELD.W, FIELD.H);
+    this.tex = Texture.from(this.cv.c); this.tex.source.scaleMode = 'nearest';
+    this.sprite.texture = this.tex; old.destroy(true);
+    this.marks = []; this.key = ''; this.prev = new Uint8Array(0);
+  }
   afterStep(w: World, t: number): void {
     const s = w.surf.kind;
     if (this.prev.length !== s.length) this.prev = new Uint8Array(s.length);
     for (let c = 0; c < s.length; c++) {
       const was = this.prev[c], now = s[c];
       if (was && was !== now) {
-        const x = gx(-ARENA.w / 2 + ((c % GRID_W) + 0.5) * CELL), y = gy(-ARENA.h / 2 + (Math.floor(c / GRID_W) + 0.5) * CELL);
+        const x = gx(-w.dims.w / 2 + ((c % w.dims.gw) + 0.5) * CELL), y = gy(-w.dims.h / 2 + (Math.floor(c / w.dims.gw) + 0.5) * CELL);
         // fire leaves a scorch that fades slowly; dried water a damp patch; melted ice a wet sheen
         if (was === SURF.fire) this.marks.push({ x, y, t0: t, life: 40 + rand(c, 3) * 15, kind: 0, seed: c });
         else if (was === SURF.water && !now) this.marks.push({ x, y, t0: t, life: 6, kind: 1, seed: c });

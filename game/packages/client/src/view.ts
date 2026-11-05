@@ -16,14 +16,15 @@
  */
 import { Container, Graphics, Sprite } from 'pixi.js';
 import {
-  AI, ARCH, ARCHETYPES, ATTACK, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, PHASE,
+  AI, ARCH, ARCHETYPES, ARENA, ATTACK, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, PHASE,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
-import { Camera, PPU } from './camera';
+import { Camera, FY, PPU } from './camera';
 import { ActorFrames, FEET_X, FEET_Y } from './art/actors';
 import { Deaths } from './art/deaths';
-import { FIELD, gx, gy } from './art/field';
-import { FLOOR, floorTexture } from './art/floor';
+import { FIELD, fitField, gx, gy } from './art/field';
+import { FLOOR, floorTexture, surviveRuin } from './art/floor';
+import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { stats } from './art/px';
 import { newRigState, type RigKind, type RigState } from './art/rigs';
@@ -38,12 +39,20 @@ const AMBIENT = 0xe4e8ff;
 
 export class WorldView {
   readonly camera = new Camera();
-  /** The scene in art pixels; add it to the stage. Its scale is the camera's integer scale. */
+  /** Add this to the stage: the scene, and the HUD over it. */
   readonly root = new Container();
+  /** The scene in art pixels, scaled by the camera's integer scale (which steps out when the team spreads). */
+  private scene = new Container();
+  /** The rune HUD, wave strip and off-screen marks, at the screen's base scale (it doesn't zoom). */
+  private hudLayer = new Container();
+  private edges = new EdgeMarks();
   readonly hud = new Hud(0);
   /** Online, the local player may sit in any seat: the HUD and the rune swirl follow it. */
   setLocalSeat(seat: number): void { this.hud.seat = seat; this.vfx.localSeat = seat; this.structs.localSeat = seat; }
-  private floor = new Sprite(floorTexture());
+  /** Painted for the Sanctum's and the Arena's play area; repainted at the first draw of a world with another (fitArena). */
+  private floor = new Sprite(floorTexture(ARENA.w, ARENA.h));
+  /** The play area the floor and effect canvases are painted for. */
+  private arenaKey = `${ARENA.w}x${ARENA.h}x0`;
   private vfx = new Vfx();
   private sGround = new Graphics(); // structures' floor layer (view-structures.ts)
   private sOverlay = new Graphics();
@@ -110,7 +119,9 @@ export class WorldView {
     this.actors.sortableChildren = true;
     this.structs = new StructureView(this.actors);
     this.deaths = new Deaths(this.actors);
-    this.root.addChild(this.floor, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over);
+    this.scene.addChild(this.floor, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
+    this.hudLayer.addChild(this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over);
+    this.root.addChild(this.scene, this.hudLayer);
     for (let i = 0; i < MAX_BODIES; i++) {
       const s = new Sprite(); s.visible = false; s.tint = AMBIENT;
       this.actors.addChild(s); this.sprites.push(s);
@@ -123,7 +134,8 @@ export class WorldView {
 
   resize(screenW: number, screenH: number, forcedScale?: number): void {
     this.camera.fit(screenW, screenH, forcedScale);
-    this.root.scale.set(this.camera.scale);
+    this.scene.scale.set(this.camera.scale);
+    this.hudLayer.scale.set(this.camera.base);
   }
 
   /** Call right before each sim step, so the view can interpolate from here to the new state. */
@@ -198,16 +210,23 @@ export class WorldView {
   draw(w: World, alpha: number, now = performance.now()): void {
     this.frame++;
     const b = w.bodies, t = (w.clock[0] + alpha) / 60, cam = this.camera, ct = now / 1000;
+    const dt = this.lastCt ? ct - this.lastCt : 0;
     this.lastCt = ct;
+    this.fitArena(w);
+    this.aim(w, alpha, dt);
     // a death's screen shake (a brute slamming down; last frame's, in whole art px): cosmetic only
     const sh = this.deaths.shake, sx = sh > 0.3 ? Math.round(Math.sin(ct * 83) * sh) : 0, sy = sh > 0.3 ? Math.round(Math.cos(ct * 71) * sh * 0.6) : 0;
-    this.root.position.set(sx * cam.scale, sy * cam.scale);
+    this.scene.scale.set(cam.scale);
+    this.scene.position.set(sx * cam.scale + cam.subX(), sy * cam.scale + cam.subY());
     // how long the sim has stood still (capped): lets sim-driven loops (orbitals) carry on smoothly
     if (t !== this.lastSimT) { this.lastSimT = t; this.stillSince = ct; }
     const lead = Math.min(0.5, ct - this.stillSince);
     const ox = cam.originX(), oy = cam.originY(), fx0 = ox - FIELD.OX, fy0 = oy - FIELD.OY;
     this.floor.position.set(ox - FLOOR.OX, oy - FLOOR.OY);
     this.vfx.ground.position.set(fx0, fy0); this.vfx.over.position.set(fx0, fy0); this.structs.scorch.sprite.position.set(fx0, fy0);
+    // the wave banner: over the arena's north edge, or near the top of the view when that is off screen
+    this.vfx.bannerX = Math.round(cam.w / 2 - fx0);
+    this.vfx.bannerY = Math.round(Math.max(FIELD.OY - (w.dims.h / 2) * PPU * FY + 22, (28 * cam.base) / cam.scale + 10 - fy0));
     this.frames.begin();
 
     for (let i = 0; i < MAX_BODIES; i++) {
@@ -239,8 +258,40 @@ export class WorldView {
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); }, ct);
     this.lights.end();
     this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;
-    this.hud.draw(w, t, cam.w, cam.h);
+    this.hud.draw(w, t, cam.hudW, cam.hudH);
+    this.edges.draw(w, cam, ct, (i) => this.drawnAt(i, w, alpha));
     this.frames.upload();
+  }
+
+  /** Repaints the floor and resizes the effect canvases when the world's play area changes (a survive world is bigger). */
+  private fitArena(w: World): void {
+    const d = w.dims, key = `${d.w}x${d.h}x${w.run ? 1 : 0}`;
+    if (key === this.arenaKey) return;
+    this.arenaKey = key;
+    if (fitField(d.w, d.h)) { this.vfx.resize(); this.structs.scorch.resize(); }
+    const old = this.floor.texture;
+    this.floor.texture = floorTexture(d.w, d.h, w.run ? surviveRuin : undefined);
+    old?.destroy(true);
+    this.camera.reset();
+  }
+
+  /** Where body i is drawn this frame (interpolated), world units. */
+  private drawnAt(i: number, w: World, alpha: number): [number, number] {
+    const b = w.bodies;
+    return [this.prevBX[i] + (b.x[i] - this.prevBX[i]) * alpha, this.prevBY[i] + (b.y[i] - this.prevBY[i]) * alpha];
+  }
+
+  /** Points the camera: at the living wizards (all of them if everyone is down), keeping the local player in view. */
+  private aim(w: World, alpha: number, dt: number): void {
+    const b = w.bodies, spots: { x: number; y: number }[] = [], down: { x: number; y: number }[] = [];
+    let local: { x: number; y: number } | null = null;
+    for (let s = 0; s < MAX_SEATS; s++) {
+      if (b.kind[s] !== KIND.wizard) continue;
+      const [x, y] = this.drawnAt(s, w, alpha), p = { x, y };
+      (b.downed[s] ? down : spots).push(p);
+      if (s === this.hud.seat && !b.downed[s]) local = p;
+    }
+    this.camera.follow(w.dims.w, w.dims.h, spots.length ? spots : down, local, dt);
   }
 
   private fxMs = 0;
@@ -248,7 +299,7 @@ export class WorldView {
   private lastSimT = -1;
   private stillSince = 0;
   /** For the debug line: the effects' cost and the actor frame cache. */
-  debug(): string { return `fx ${(stats.fills / 1000).toFixed(1)}k fills ${this.fxMs.toFixed(1)}ms  frames ${this.frames.size} (${this.frames.painted} painted)  deaths ${this.deaths.count}`; }
+  debug(): string { return `fx ${(stats.fills / 1000).toFixed(1)}k fills ${this.fxMs.toFixed(1)}ms  frames ${this.frames.size} (${this.frames.painted} painted)  deaths ${this.deaths.count}  view ${this.camera.w}x${this.camera.h}${this.camera.following ? ' follow' : ''}`; }
 
   private ownerOf(w: World, i: number): number {
     for (let k = 0; k < MAX_SEATS; k++) if (w.seats.double[k] === i) return k;

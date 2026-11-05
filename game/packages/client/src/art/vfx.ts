@@ -13,7 +13,7 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import {
-  ARENA, CELL, DEVICE, GRID_W, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PHASE, QUEUE_MAX, RHYTHM, SURF, T, ZONE,
+  CELL, DEVICE, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PHASE, QUEUE_MAX, RHYTHM, SURF, T, ZONE,
   compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
@@ -156,6 +156,21 @@ export class Vfx {
     this.over = new Sprite(this.ot);
   }
 
+  /** FIELD changed size (a world with another play area): new canvases and textures to match. */
+  resize(): void {
+    this.g = X.canvas(FIELD.W, FIELD.H); this.o = X.canvas(FIELD.W, FIELD.H); this.surf = X.canvas(FIELD.W, FIELD.H);
+    const old = [this.gt, this.ot];
+    this.gt = Texture.from(this.g.c); this.gt.source.scaleMode = 'nearest';
+    this.ot = Texture.from(this.o.c); this.ot.source.scaleMode = 'nearest';
+    this.ground.texture = this.gt; this.over.texture = this.ot;
+    for (const t of old) t.destroy(true);
+    this.surfKey = '';
+  }
+
+  /** Where the wave banner goes, in field px: the top middle of the view (set by the view each frame). */
+  bannerX = 0;
+  bannerY = 0;
+
   private add(kind: string, t0: number, life: number, o: Partial<Fx>): void {
     if (this.fx.length > 500) this.fx.shift();
     this.fx.push({ kind, t0, life, seed: 0, x: 0, y: 0, x2: 0, y2: 0, look: 0, who: -1, r: 0, n: 0, ...o });
@@ -279,8 +294,9 @@ export class Vfx {
     if (key !== this.surfKey) { this.surfKey = key; this.paintSurfaces(w); }
     if (key) g.drawImage(this.surf.c, 0, 0);
     const cw = CELL * 16, FR = EL.fire;
-    const at = (c: number): Pt => [gx(-ARENA.w / 2 + ((c % GRID_W) + 0.5) * CELL), gy(-ARENA.h / 2 + (Math.floor(c / GRID_W) + 0.5) * CELL)];
-    const kindAt = (c: number, dx: number, dy: number) => { const x = (c % GRID_W) + dx, y = Math.floor(c / GRID_W) + dy; return x < 0 || y < 0 || x >= GRID_W || y * GRID_W + x >= n ? 0 : s.kind[y * GRID_W + x]; };
+    const GW = w.dims.gw, AW = w.dims.w, AH = w.dims.h;
+    const at = (c: number): Pt => [gx(-AW / 2 + ((c % GW) + 0.5) * CELL), gy(-AH / 2 + (Math.floor(c / GW) + 0.5) * CELL)];
+    const kindAt = (c: number, dx: number, dy: number) => { const x = (c % GW) + dx, y = Math.floor(c / GW) + dy; return x < 0 || y < 0 || x >= GW || y * GW + x >= n ? 0 : s.kind[y * GW + x]; };
     for (let c = 0; c < n; c++) {
       const k = s.kind[c]; if (!k) continue;
       const [x, y] = at(c);
@@ -325,12 +341,13 @@ export class Vfx {
   private paintSurfaces(w: World): void {
     const s = w.surf, c = this.surf.x, n = s.kind.length;
     c.clearRect(0, 0, FIELD.W, FIELD.H); c._fs = null;
-    const at = (k: number): Pt => [gx(-ARENA.w / 2 + ((k % GRID_W) + 0.5) * CELL), gy(-ARENA.h / 2 + (Math.floor(k / GRID_W) + 0.5) * CELL)];
+    const GW = w.dims.gw, AW = w.dims.w, AH = w.dims.h;
+    const at = (k: number): Pt => [gx(-AW / 2 + ((k % GW) + 0.5) * CELL), gy(-AH / 2 + (Math.floor(k / GW) + 0.5) * CELL)];
     const same = (k: number) => {
-      const x = k % GRID_W, y = Math.floor(k / GRID_W), v = s.kind[k];
+      const x = k % GW, y = Math.floor(k / GW), v = s.kind[k];
       let m = 0;
-      if (x > 0 && s.kind[k - 1] === v) m++; if (x < GRID_W - 1 && s.kind[k + 1] === v) m++;
-      if (y > 0 && s.kind[k - GRID_W] === v) m++; if (k + GRID_W < n && s.kind[k + GRID_W] === v) m++;
+      if (x > 0 && s.kind[k - 1] === v) m++; if (x < GW - 1 && s.kind[k + 1] === v) m++;
+      if (y > 0 && s.kind[k - GW] === v) m++; if (k + GW < n && s.kind[k + GW] === v) m++;
       return m;
     };
     // rims first, so neighbouring cells merge into one soft blob, then the interiors
@@ -938,7 +955,7 @@ export class Vfx {
         const s = w.surf, f2 = Math.floor(t * 20);
         for (let c = 0; c < s.kind.length; c++) {
           if (s.kind[c] !== SURF.water) continue;
-          const cx = -ARENA.w / 2 + ((c % GRID_W) + 0.5) * CELL, cy = -ARENA.h / 2 + (Math.floor(c / GRID_W) + 0.5) * CELL;
+          const cx = -w.dims.w / 2 + ((c % w.dims.gw) + 0.5) * CELL, cy = -w.dims.h / 2 + (Math.floor(c / w.dims.gw) + 0.5) * CELL;
           if (Math.abs(cx - f.x) > 6 || Math.abs(cy - f.y) > 6 || rand(c, f2, sd) > 0.4) continue;
           X.px(o, gx(cx) + (rand(c, f2, 1) - 0.5) * 7, gy(cy) + (rand(c, f2, 2) - 0.5) * 4, rand(c, f2, 3) < 0.3 ? '#ffffff' : EL.lightning[1]);
         }
@@ -961,8 +978,8 @@ export class Vfx {
         const q = e / f.life, txt = (f.text ?? '').toUpperCase(), k = 2, wd = txt.length * 4 * k;
         if (q > 0.75 && X.bay(Math.round(e * 30), 1) < (q - 0.75) / 0.25) return;
         const col = /CLEAR/.test(txt) ? X.LIFE[1] : /WIPE/.test(txt) ? '#ff6a6a' : '#ffd860';
-        const by = Math.round(FIELD.OY - (ARENA.h / 2) * 16 * FY + 22 - easeOut(Math.min(1, e * 4)) * 6); // over the arena's north edge, clear of the wave strip
-        X.text(o, txt, Math.round(FIELD.W / 2 - wd / 2), by, col, '#120e1a', k);
+        const by = Math.round(this.bannerY - easeOut(Math.min(1, e * 4)) * 6); // near the top of the view, clear of the wave strip
+        X.text(o, txt, Math.round(this.bannerX - wd / 2), by, col, '#120e1a', k);
         return;
       }
       default:

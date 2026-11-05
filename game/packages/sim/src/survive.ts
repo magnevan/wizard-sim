@@ -25,7 +25,7 @@ import {
   buffers, createWorld, joinSeat, spawnBody, stackOf, type World,
 } from './world';
 
-export const SURVIVE_TIMES = { firstLull: 10, lull: 6, breather: 3, pickMax: 30, stand: 0.75, spawnEvery: 0.45, restartAfter: 1.5, charm: 12 };
+export const SURVIVE_TIMES = { firstLull: 10, lull: 6, breather: 3, pickMax: 30, stand: 0.75, spawnEvery: 0.45, portalStagger: 1, restartAfter: 1.5, charm: 12 };
 
 /** Eight authored waves; past them they loop with more enemies. Every wave also grows tougher (survivePlan). */
 const WAVES: readonly (readonly [number, number])[][] = [
@@ -41,14 +41,17 @@ const WAVES: readonly (readonly [number, number])[][] = [
 
 export interface SurvivePlan { groups: [number, number][]; hp: number; dmg: number; speed: number }
 
+/** The big arena takes bigger waves: the authored counts are scaled by this. */
+export const SURVIVE_CROWD = 1.3;
+
 /**
- * Wave n for `players` wizards: the authored mix, with counts that grow each loop of eight and with
- * the team's size (a quarter more per extra wizard), and enemies 7% tougher and 4% harder-hitting
- * each wave from the 4th.
+ * Wave n for `players` wizards: the authored mix, scaled for the big arena (SURVIVE_CROWD), with
+ * counts that grow each loop of eight and with the team's size (a quarter more per extra wizard),
+ * and enemies 7% tougher and 4% harder-hitting each wave from the 4th.
  */
 export function survivePlan(n: number, players = 1): SurvivePlan {
   const i = Math.max(0, n - 1), loop = Math.floor(i / WAVES.length), ramp = Math.max(0, n - 3);
-  const size = (1 + 0.35 * loop) * (0.75 + 0.25 * Math.max(1, players));
+  const size = SURVIVE_CROWD * (1 + 0.35 * loop) * (0.75 + 0.25 * Math.max(1, players));
   return {
     groups: WAVES[i % WAVES.length].map(([a, c]) => [a, Math.max(1, Math.round(c * size))] as [number, number]),
     hp: 1 + 0.07 * ramp, dmg: 1 + 0.04 * ramp, speed: 1 + 0.015 * Math.min(ramp, 12),
@@ -59,7 +62,11 @@ const seatsIn = (w: World): number => { let n = 0; for (let s = 0; s < MAX_SEATS
 const wizardsUp = (w: World): number => { let n = 0; for (let s = 0; s < MAX_SEATS; s++) if (w.bodies.kind[s] === KIND.wizard && !w.bodies.downed[s]) n++; return n; };
 const enemiesAlive = (w: World): number => { let n = 0; for (let i = MAX_SEATS; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy) n++; return n; };
 
-/** Opens the next wave's portals behind the gates farthest from the wizards (one archetype per gate). */
+/**
+ * Opens the next wave's portals at the back of the gates farthest from the wizards and from each
+ * other (one archetype per gate). The gates are at the far edges, so enemies take a while to come
+ * in; the portals start a second apart, so a wave arrives from its gates in turn.
+ */
 export function openGates(w: World): void {
   const e = w.enc, b = w.bodies, { groups } = survivePlan(e.state[1], seatsIn(w));
   for (let p = 0; p < MAX_PORTALS; p++) e.left[p] = e.total[p] = 0;
@@ -71,10 +78,11 @@ export function openGates(w: World): void {
       const [x, y] = SURVIVE_GATES[k];
       let d = 1e9;
       for (let s = 0; s < MAX_SEATS; s++) if (b.kind[s] === KIND.wizard) d = Math.min(d, len(b.x[s] - x, b.y[s] - y));
+      for (const u of used) d = Math.min(d, len(SURVIVE_GATES[u][0] - x, SURVIVE_GATES[u][1] - y) * 1.2);
       if (d > bestD) { bestD = d; best = k; }
     }
     used.push(best);
-    e.px[p] = SURVIVE_GATES[best][0]; e.py[p] = SURVIVE_GATES[best][1]; e.arch[p] = arch; e.left[p] = e.total[p] = count; e.next[p] = p * 8;
+    e.px[p] = SURVIVE_GATES[best][0]; e.py[p] = SURVIVE_GATES[best][1]; e.arch[p] = arch; e.left[p] = e.total[p] = count; e.next[p] = p * T(SURVIVE_TIMES.portalStagger);
   });
 }
 

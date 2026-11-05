@@ -6,7 +6,7 @@
  * in their typed arrays (els, flags, mod, look) and rebuild the view object when they hit.
  */
 import type { Mod, SpellSpec } from './compile';
-import { ARENA, BODY, CELL, COMBAT, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
+import { BODY, CELL, COMBAT, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
 import { EL, N_EL } from './elements';
 import { inCone, len, rayCircle } from './geom';
 import { HIT_KIND, addKnock, applyHit, bloom, setHitKind, type HitOpts } from './hit';
@@ -14,7 +14,7 @@ import { cosTurns, sinTurns } from './trig';
 import { clipRay, collideWalls, damageWall, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
 import { WALL } from './compile';
 import { ARCHETYPES } from './archetypes';
-import { DT, GRID_H, GRID_W, GUARD, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, STRUCT_SCALE, SURF, WARD, ZONE, type World } from './world';
+import { DT, GUARD, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, STRUCT_SCALE, SURF, WARD, ZONE, type World } from './world';
 
 export interface Payload {
   counts: Uint8Array;
@@ -56,9 +56,10 @@ export function hit(w: World, i: number, p: Payload, o: HitOpts, event = true): 
 
 // ---- surfaces -----------------------------------------------------------------------------
 
-export const cellAt = (x: number, y: number): number => {
-  const cx = Math.floor((x + ARENA.w / 2) / CELL), cy = Math.floor((y + ARENA.h / 2) / CELL);
-  return cx < 0 || cy < 0 || cx >= GRID_W || cy >= GRID_H ? -1 : cy * GRID_W + cx;
+/** The surface cell under (x, y) in this world's grid, or -1 off the floor. */
+export const cellAt = (w: World, x: number, y: number): number => {
+  const d = w.dims, cx = Math.floor((x + d.w / 2) / CELL), cy = Math.floor((y + d.h / 2) / CELL);
+  return cx < 0 || cy < 0 || cx >= d.gw || cy >= d.gh ? -1 : cy * d.gw + cx;
 };
 
 const surfLife = (k: number): number => T(k === SURF.water ? SURFACE.water : k === SURF.ice ? SURFACE.ice : SURFACE.fire);
@@ -78,11 +79,11 @@ export function touchFloor(w: World, cell: number, el: number): void {
 
 export function floorDisc(w: World, x: number, y: number, r: number, el: number): void {
   for (let gy = -r; gy <= r; gy += CELL) for (let gx = -r; gx <= r; gx += CELL) {
-    if (gx * gx + gy * gy <= r * r) touchFloor(w, cellAt(x + gx, y + gy), el);
+    if (gx * gx + gy * gy <= r * r) touchFloor(w, cellAt(w, x + gx, y + gy), el);
   }
 }
 
-const surfAt = (w: World, x: number, y: number): number => { const c = cellAt(x, y); return c < 0 ? 0 : w.surf.kind[c]; };
+const surfAt = (w: World, x: number, y: number): number => { const c = cellAt(w, x, y); return c < 0 ? 0 : w.surf.kind[c]; };
 
 export function tickSurfaces(w: World): void {
   const s = w.surf, b = w.bodies;
@@ -218,8 +219,8 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     case 'blink': {
       // To the cursor (tx, ty, already clamped to blinkRange), or the nearest free spot short of it.
       const r = b.r[src];
-      let nx = Math.max(-ARENA.w / 2 + r, Math.min(ARENA.w / 2 - r, tx));
-      let ny = Math.max(-ARENA.h / 2 + r, Math.min(ARENA.h / 2 - r, ty));
+      let nx = Math.max(-w.dims.w / 2 + r, Math.min(w.dims.w / 2 - r, tx));
+      let ny = Math.max(-w.dims.h / 2 + r, Math.min(w.dims.h / 2 - r, ty));
       const bx = x - nx, by = y - ny, bl = len(bx, by);
       for (let k = 0; k < 200 && !freeSpot(w, src, nx, ny); k++) {
         if (bl < 1e-6) break;
@@ -411,7 +412,7 @@ export function tickMissiles(w: World): void {
   for (let j = 0; j < MAX_MISSILES; j++) {
     if (!m.alive[j]) continue;
     m.x[j] += m.vx[j] * DT; m.y[j] += m.vy[j] * DT;
-    const out = Math.abs(m.x[j]) > ARENA.w / 2 || Math.abs(m.y[j]) > ARENA.h / 2;
+    const out = Math.abs(m.x[j]) > w.dims.w / 2 || Math.abs(m.y[j]) > w.dims.h / 2;
     const p = stored(m.els, j, m.flags[j], m.mod[j], m.look[j]);
     if (m.type[j] === 3) { // heal-stone: lands, bursts
       // more Earth lent to the heal, a bigger splash
@@ -532,8 +533,8 @@ export function collide(w: World): void {
   }
   collideWalls(w);
   for (let i = 0; i < b.kind.length; i++) {
-    b.x[i] = Math.max(-ARENA.w / 2 + b.r[i], Math.min(ARENA.w / 2 - b.r[i], b.x[i]));
-    b.y[i] = Math.max(-ARENA.h / 2 + b.r[i], Math.min(ARENA.h / 2 - b.r[i], b.y[i]));
+    b.x[i] = Math.max(-w.dims.w / 2 + b.r[i], Math.min(w.dims.w / 2 - b.r[i], b.x[i]));
+    b.y[i] = Math.max(-w.dims.h / 2 + b.r[i], Math.min(w.dims.h / 2 - b.r[i], b.y[i]));
   }
 }
 

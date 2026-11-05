@@ -330,3 +330,11 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
 - **The user's process change:** "Can you build optimistically and we can go back and change if I have feedback?" Review pages no longer gate building. The recommended options go into the game straight away, and later ratings revise them.
 - **Survive's six questions** are built on their recommendations (altars per player, portals open during the pick, flat power-ups allowed in run modes, Bloom as a deliberate pick).
 - **In progress:** the round-2 weapons and guards in the game, and a much bigger Survive arena with a camera that follows the players (the user: "Arena looks tiny btw, I expected it to not even fit everything in the screen at once").
+
+## 2026-11-05: Survive's arena is big, and the camera follows
+- **Why:** the user: "Arena looks tiny btw, I expected it to not even fit everything in the screen at once."
+- **The play area is per world** (`w.dims`, fixed by the room when the world is made; not state). The surface and nav grids are sized from it. The Sanctum and the Arena keep 24 x 16, so their layout and **the golden hash are unchanged** (`485c0373`). Survive is 44 x 30, about 3.4x the floor.
+  - Rejected: one fixed maximum grid for every room. It would have grown every room's snapshot and changed the golden hash for nothing.
+- **Survive's layout** (`SURVIVE_ROCK`, 40 terrain segments) has four zones: a keep round the altar plaza with four doors; walled causeways west and east; six V-shaped gate funnels at the far edges, each with its portal; and a field of cover between them. Waves are 1.3x bigger, and portals open on gates far from the wizards and from each other, a second apart. Details: `explorations/2026-11-05-survive-mode.md` (addendum).
+- **The camera follows** an arena that doesn't fit. It frames the living wizards and keeps the local player in view. It steps out one integer scale (never below 2x) when the team spreads, and it clamps a couple of units past the arena's edge. Panning stays pixel-crisp. Off-screen enemies and portals get edge marks. Rooms that fit are framed as before.
+- Proposed defaults, open for the user: the size (44 x 30), zooming out when the team splits, and the online camera framing the whole team rather than only you.

@@ -9,23 +9,24 @@
  * Integer costs (10 straight, 14 diagonal) and a fixed neighbour order keep it deterministic.
  */
 import { WALL } from './compile';
-import { ARENA, CELL, STRUCT, T } from './config';
+import { CELL, STRUCT, T } from './config';
 import { len } from './geom';
 import { segDist } from './walls';
-import { GRID_H, GRID_W, KIND, MAX_SEATS, MAX_WALLS, type World } from './world';
+import { KIND, MAX_CELLS, MAX_SEATS, MAX_WALLS, type World } from './world';
 
-const CELLS = GRID_W * GRID_H;
 const INF = 0x3fffffff;
 const INFLATE = 0.45;
 const NB = [[1, 0, 10], [-1, 0, 10], [0, 1, 10], [0, -1, 10], [1, 1, 14], [-1, 1, 14], [1, -1, 14], [-1, -1, 14]] as const;
 
-const cellOf = (x: number, y: number): number => {
-  const cx = Math.max(0, Math.min(GRID_W - 1, Math.floor((x + ARENA.w / 2) / CELL)));
-  const cy = Math.max(0, Math.min(GRID_H - 1, Math.floor((y + ARENA.h / 2) / CELL)));
-  return cy * GRID_W + cx;
+// The grid is the world's (w.dims): the survive arena's is bigger than the other rooms'.
+const cellOf = (w: World, x: number, y: number): number => {
+  const d = w.dims;
+  const cx = Math.max(0, Math.min(d.gw - 1, Math.floor((x + d.w / 2) / CELL)));
+  const cy = Math.max(0, Math.min(d.gh - 1, Math.floor((y + d.h / 2) / CELL)));
+  return cy * d.gw + cx;
 };
-const centreX = (c: number) => -ARENA.w / 2 + ((c % GRID_W) + 0.5) * CELL;
-const centreY = (c: number) => -ARENA.h / 2 + (Math.floor(c / GRID_W) + 0.5) * CELL;
+const centreX = (w: World, c: number) => -w.dims.w / 2 + ((c % w.dims.gw) + 0.5) * CELL;
+const centreY = (w: World, c: number) => -w.dims.h / 2 + (Math.floor(c / w.dims.gw) + 0.5) * CELL;
 
 function rebuildBlocked(w: World): void {
   const nb = w.nav.blocked, wl = w.walls;
@@ -36,15 +37,16 @@ function rebuildBlocked(w: World): void {
     const minX = Math.min(wl.x1[k], wl.x2[k]) - pad, maxX = Math.max(wl.x1[k], wl.x2[k]) + pad;
     const minY = Math.min(wl.y1[k], wl.y2[k]) - pad, maxY = Math.max(wl.y1[k], wl.y2[k]) + pad;
     for (let y = minY; y <= maxY + CELL; y += CELL) for (let x = minX; x <= maxX + CELL; x += CELL) {
-      const c = cellOf(x, y);
-      if (segDist(centreX(c), centreY(c), wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] < pad) nb[c] = 1;
+      const c = cellOf(w, x, y);
+      if (segDist(centreX(w, c), centreY(w, c), wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] < pad) nb[c] = 1;
     }
   }
 }
 
 // A binary heap over (distance, cell); ties broken by cell index so the order never varies.
-const heapD = new Int32Array(CELLS * 8), heapC = new Int32Array(CELLS * 8);
+const heapD = new Int32Array(MAX_CELLS * 8), heapC = new Int32Array(MAX_CELLS * 8);
 function dijkstra(w: World, seat: number, goal: number): void {
+  const GW = w.dims.gw, GH = w.dims.gh, CELLS = GW * GH;
   const f = w.nav.field, base = seat * CELLS, nb = w.nav.blocked;
   f.fill(INF, base, base + CELLS);
   let n = 0;
@@ -76,13 +78,13 @@ function dijkstra(w: World, seat: number, goal: number): void {
     const d0 = heapD[0];
     const c = pop();
     if (d0 > f[base + c]) continue;
-    const cx = c % GRID_W, cy = (c - cx) / GRID_W;
+    const cx = c % GW, cy = (c - cx) / GW;
     for (const [dx, dy, cost] of NB) {
       const nx = cx + dx, ny = cy + dy;
-      if (nx < 0 || ny < 0 || nx >= GRID_W || ny >= GRID_H) continue;
-      const nc = ny * GRID_W + nx;
+      if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
+      const nc = ny * GW + nx;
       if (nb[nc]) continue;
-      if (dx && dy && (nb[cy * GRID_W + nx] || nb[ny * GRID_W + cx])) continue; // no corner cutting
+      if (dx && dy && (nb[cy * GW + nx] || nb[ny * GW + cx])) continue; // no corner cutting
       const nd = d0 + cost;
       if (nd < f[base + nc]) { f[base + nc] = nd; push(nd, nc); }
     }
@@ -97,7 +99,7 @@ export function tickNav(w: World): void {
   const b = w.bodies;
   for (let s = 0; s < MAX_SEATS; s++) {
     if (!w.seats.active[s] || b.kind[s] !== KIND.wizard) continue;
-    dijkstra(w, s, cellOf(b.x[s], b.y[s]));
+    dijkstra(w, s, cellOf(w, b.x[s], b.y[s]));
   }
 }
 
@@ -123,13 +125,14 @@ function clearLine(w: World, ax: number, ay: number, bx: number, by: number): bo
 /** No way round to that seat's wizard: walls close it off (enemies then break through, enemies.ts). */
 export function cutOff(w: World, i: number, seat: number): boolean {
   if (seat < 0 || seat >= MAX_SEATS) return false;
-  const c = cellOf(w.bodies.x[i], w.bodies.y[i]);
+  const c = cellOf(w, w.bodies.x[i], w.bodies.y[i]);
   if (c < 0) return false;
+  const GW = w.dims.gw, GH = w.dims.gh, CELLS = GW * GH;
   // Its own cell can be blocked just from standing against a wall: cut off only if no neighbour has a way either.
-  const f = w.nav.field, base = seat * CELLS, cx = c % GRID_W, cy = (c - cx) / GRID_W;
+  const f = w.nav.field, base = seat * CELLS, cx = c % GW, cy = (c - cx) / GW;
   for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
     const nx = cx + ox, ny = cy + oy;
-    if (nx >= 0 && ny >= 0 && nx < GRID_W && ny < GRID_H && f[base + ny * GRID_W + nx] < INF) return false;
+    if (nx >= 0 && ny >= 0 && nx < GW && ny < GH && f[base + ny * GW + nx] < INF) return false;
   }
   return true;
 }
@@ -139,24 +142,25 @@ export function steer(w: World, i: number, tx: number, ty: number, seat: number)
   const dx = tx - x, dy = ty - y, d = len(dx, dy);
   if (d < 1e-6) return [0, 0, false];
   if (seat < 0 || clearLine(w, x, y, tx, ty) || cutOff(w, i, seat)) return [dx / d, dy / d, false];
-  const f = w.nav.field, base = seat * CELLS;
-  let c = cellOf(x, y), aim = -1;
+  const GW = w.dims.gw, GH = w.dims.gh;
+  const f = w.nav.field, base = seat * GW * GH;
+  let c = cellOf(w, x, y), aim = -1;
   // Walk the field downhill up to 8 cells, and head for the farthest one still in clear view
   // (heading for one behind a corner would walk into the wall's end).
   for (let s = 0; s < 8; s++) {
-    const cx = c % GRID_W, cy = (c - cx) / GRID_W;
+    const cx = c % GW, cy = (c - cx) / GW;
     let best = c;
     for (const [ox, oy] of NB) {
       const nx = cx + ox, ny = cy + oy;
-      if (nx < 0 || ny < 0 || nx >= GRID_W || ny >= GRID_H) continue;
-      const nc = ny * GRID_W + nx;
+      if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
+      const nc = ny * GW + nx;
       if (f[base + nc] < f[base + best]) best = nc;
     }
     if (best === c) break;
     c = best;
-    if (aim < 0 || clearLine(w, x, y, centreX(c), centreY(c))) aim = c;
+    if (aim < 0 || clearLine(w, x, y, centreX(w, c), centreY(w, c))) aim = c;
   }
   if (aim < 0) aim = c;
-  const ex = centreX(aim) - x, ey = centreY(aim) - y, el = len(ex, ey);
+  const ex = centreX(w, aim) - x, ey = centreY(w, aim) - y, el = len(ex, ey);
   return el < 1e-6 ? [dx / d, dy / d, false] : [ex / el, ey / el, true];
 }

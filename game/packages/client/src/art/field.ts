@@ -11,11 +11,18 @@ import { FY, PPU } from '../camera';
 
 /** Margins in world units round the arena, and the sky above it in art px. */
 const MX = 2, MY = 1, SKY = 72, BELOW = 10;
-export const FIELD = {
-  OX: (ARENA.w / 2 + MX) * PPU,
-  OY: Math.ceil((ARENA.h / 2 + MY) * PPU * FY) + SKY,
-  W: (ARENA.w + 2 * MX) * PPU,
-  H: Math.ceil((ARENA.h / 2 + MY) * PPU * FY) * 2 + SKY + BELOW,
-};
+/** Sized for the world's play area (fitField): the canvases are remade when it changes (a survive world is bigger). */
+export const FIELD = { OX: 0, OY: 0, W: 0, H: 0, aw: 0, ah: 0 };
+/** Sizes FIELD for an arena of aw x ah world units. True if it changed. */
+export function fitField(aw: number, ah: number): boolean {
+  if (FIELD.aw === aw && FIELD.ah === ah) return false;
+  FIELD.aw = aw; FIELD.ah = ah;
+  FIELD.OX = (aw / 2 + MX) * PPU;
+  FIELD.OY = Math.ceil((ah / 2 + MY) * PPU * FY) + SKY;
+  FIELD.W = (aw + 2 * MX) * PPU;
+  FIELD.H = Math.ceil((ah / 2 + MY) * PPU * FY) * 2 + SKY + BELOW;
+  return true;
+}
+fitField(ARENA.w, ARENA.h);
 export const gx = (x: number): number => x * PPU + FIELD.OX;
 export const gy = (y: number): number => y * PPU * FY + FIELD.OY;

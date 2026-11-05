@@ -5,7 +5,7 @@
  * card is plain DOM text beside the cursor. A start, to grow as the game does.
  */
 import { rules, type Element } from '@wizard-sim/rules';
-import { ARCHETYPES, ARENA, CELL, DEVICE, GRID_H, GRID_W, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, N_EL, SURF, WALL, WARD, elementName, type World } from '@wizard-sim/sim';
+import { ARCHETYPES, CELL, DEVICE, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, N_EL, SURF, WALL, WARD, elementName, type World } from '@wizard-sim/sim';
 import type { Camera } from './camera';
 
 const HOVER = 0.9;
@@ -131,9 +131,9 @@ export class Inspect {
   }
 
   private floor(x: number, y: number): string[] {
-    const cx = Math.floor((x + ARENA.w / 2) / CELL), cy = Math.floor((y + ARENA.h / 2) / CELL);
-    if (cx < 0 || cy < 0 || cx >= GRID_W || cy >= GRID_H) return ['Outside the arena'];
-    const kind = this.world.surf.kind[cy * GRID_W + cx];
+    const d = this.world.dims, cx = Math.floor((x + d.w / 2) / CELL), cy = Math.floor((y + d.h / 2) / CELL);
+    if (cx < 0 || cy < 0 || cx >= d.gw || cy >= d.gh) return ['Outside the arena'];
+    const kind = this.world.surf.kind[cy * d.gw + cx];
     if (kind === SURF.water) return ['Wet floor', '· whoever stands in it gets wet', '· lightning through it spreads; cold freezes it to ice'];
     if (kind === SURF.ice) return ['Ice', '· slippery: hard to stop or turn'];
     if (kind === SURF.fire) return ['Burning floor', '· sets whoever stands in it burning', '· water puts it out'];

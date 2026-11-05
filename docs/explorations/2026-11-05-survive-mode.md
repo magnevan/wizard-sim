@@ -108,6 +108,35 @@ Ideas considered and dropped: **+1 queue length** (the queue is the grammar, and
 - **Built power-ups**: 1–10 in the table, each with a test (`packages/sim/test/survive.test.ts`). The tests also cover the loop, a pick, two players picking, the run's end and its restart, and determinism (a bot run through a pick hashes the same twice; snapshot and restore mid-run).
 - **Client**: the altars (a stone plinth on a rune ring in the power-up's colour, the glyph floating over it, its name above; standing fills the ring in your robe's colour; takers leave a pip). The wave strip gains PICK A POWER-UP, with the rule of the altar you stand by and who is still choosing, and RUN OVER. A badge row per player sits top left. The run-over card lists waves survived and everyone's picks. The tuning panel gains a Survive line: New run, and Give P1 any power-up. The bot (`?autoplay=1&room=survive`) walks to an altar in the pick.
 
+## Addendum (2026-11-05, later): the big arena
+
+The user, on the first build: "Arena looks tiny btw, I expected it to not even fit everything in the screen at once." So Survive got its own, much bigger arena, and a camera that follows.
+
+**Size.** 44 x 30 units, against the Arena's 24 x 16: about 3.4 times the floor. At 1080p (4x, 30 x 18 units of floor in view) you see about a third of it. At 3x you see most of its height and 30 of its 44 units of width. At 2x (a window under about 810 px tall) only the west and east gates are off screen. The play area is per world now (`w.dims`, fixed by the room). The Sanctum and the Arena keep 24 x 16 and their state layout, so the golden hash is unchanged.
+
+**Zones, from the middle out.** All rock is `TERRAIN`: 40 segments, so players keep 120 of the 160 wall slots.
+- **The keep**: a walled courtyard (17 x 12 u) round the altar plaza, its corners cut, with a 3.6 u door on each axis. It's the place to hold, with four doors to watch or wall shut. Two pillars inside screen the plaza from the west and east doors.
+- **Causeways**: west and east, a 4.4 u wide walled lane, 5 u long, between the gate and the keep's door. It's a long, narrow approach to fight down: a wave spray or a single rock fills it. This stands in for the "narrow bridge". A true bridge would need ground you can't walk on, and the sim has none yet.
+- **Six gates**: V-shaped funnels at the far edges (west, east, and two each on the north and south), each with its portal at the back. Enemies leave by a 2.8–3 u mouth, 12–14 u from the keep.
+- **The field**: the open ground between the keep and the gates. It has screens in front of the north and south doors and an L of cover in each corner. Its paving is broken up into grass (the keep and the causeways are whole), so the zones read from the floor as well as from the walls.
+
+**Waves for the space.** Counts are scaled by 1.3 (`SURVIVE_CROWD`). Portals pick the gates farthest from the wizards *and* from each other, and they start a second apart, so a wave comes in from its gates in turn over several seconds rather than all at once. The bot holds the keep (in Survive it ignores enemies more than 14 u away), and a two-bot run still clears waves and picks.
+
+**Camera.** When the arena doesn't fit the view, the camera follows. It eases toward the middle of the living wizards (all of them, when everyone is down), keeps the local player in view when the team is too spread out to frame, and stops a couple of units past the arena's edge. When the team spreads further than the view, the scene steps out one integer scale (4x to 3x; never below 2x, and not with `?scale=`). It steps back in only once the team fits with room to spare, so it doesn't flicker. The HUD keeps its size. Panning moves the scene by whole screen pixels, with the part finer than an art pixel as an offset, so the motion is smooth and every art pixel stays square. The Sanctum and the Arena fit, so they're framed exactly as before.
+
+**Off-screen threats.** Marks sit on the edge of the view. A red pixel arrow points to enemies outside it; close enemies share one arrow, which grows for three or more and flashes for five or more. A pulsing violet diamond with an arrow marks each open portal. Both are hidden when the camera isn't following.
+
+**The costs.** Every added thing costs readability, and these are the ones to watch:
+- **You can't see everything any more.** That's the point, but archers and imps can now shoot from off screen. The edge marks are the only warning.
+- **Zooming out is a jump.** Integer scales allow nothing smoother. One step out means 4x to 3x, a third more ground, and it happens only when the team splits.
+- **Online, each player's camera frames the whole team.** If you'd rather follow only yourself online, that's one line to change.
+- **Effect canvases cover the whole arena.** They're redrawn and re-uploaded every frame: about 768 x 390 art px in Survive, against 448 x 256 elsewhere.
+
+### Questions for the user (the big arena)
+7. **Size**: is 44 x 30 big enough? At 2x (smaller windows) nearly all of it still fits on screen. 48 x 34 would push it off screen at every scale.
+8. **Zoom out when the team splits**: helpful, or would you rather the camera always stay at one scale and just show the edge marks?
+9. **The keep's walls**: a held courtyard with four doors, or too static? Its corners could open into four more gaps.
+
 ## Questions for the user
 1. **The pick**: in-world altars, one each and shareable, is Claude's pick. Or would you rather the team choose one together?
 2. **Pick timing**: the next wave's portals open *during* the pick, so you can pick for what's coming. Good, or too much to read at once?

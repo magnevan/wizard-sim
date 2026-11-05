@@ -102,7 +102,7 @@ Ideas considered and dropped: **+1 queue length** (the queue is the grammar, and
 
 ## What was built (game/, 2026-11-05)
 
-- **Room `survive`**: `#survive` or `?room=survive` in the client, the 3 key (1 Sanctum, 2 Arena), and the lobby's room field carries it, so online co-op plays it too. It's the same lockstep sim. A page in another room turns its world into a survive world when it joins, and a rejoin works too (checked with the BroadcastChannel e2e run in the survive room).
+- **Room `survive`**: `#survive` or `?room=survive` in the client, the 3 key (1 Sanctum, 2 Arena), and the lobby's room field carries it, so online co-op plays it too. It's the same lockstep sim *(online matches actually run rollback: see "Netcode is rollback" in the decisions log)*. A page in another room turns its world into a survive world when it joins, and a rejoin works too (checked with the BroadcastChannel e2e run in the survive room).
 - **Sim** (`survive.ts`, state in `world.run`, which only a survive world has): the arena's static rock (owner `TERRAIN`, which never times out or breaks), the loop above, altars from the world's RNG, the pick by standing, the run's end, and the restart on Space. The restart is an input, so every peer restarts on the same tick. It runs in place: the tick and the RNG carry on.
 - **Per-seat rune max and regen**: `runeMax(w, seat, el)` and `regenOf(w, seat)` replace the global `RUNES` reads in the sim and the HUD. Outside Survive they return exactly the config values, and the other rooms' state layout is unchanged, so **the golden hash is unchanged** (`485c0373`).
 - **Built power-ups**: 1–10 in the table, each with a test (`packages/sim/test/survive.test.ts`). The tests also cover the loop, a pick, two players picking, the run's end and its restart, and determinism (a bot run through a pick hashes the same twice; snapshot and restore mid-run).
@@ -134,6 +134,7 @@ The user, on the first build: "Arena looks tiny btw, I expected it to not even f
 
 ### Questions for the user (the big arena)
 7. **Size**: is 44 x 30 big enough? At 2x (smaller windows) nearly all of it still fits on screen. 48 x 34 would push it off screen at every scale.
+   *(Decided: 48 x 34. See "Survive grows to 48 x 34" in the decisions log.)*
 8. **Zoom out when the team splits**: helpful, or would you rather the camera always stay at one scale and just show the edge marks?
 9. **The keep's walls**: a held courtyard with four doors, or too static? Its corners could open into four more gaps.
 
@@ -152,6 +153,8 @@ The user answered question 5 by approving both, Rally first. The details are in 
 12. **Echo as a one-shot**: it can be picked again each pick. Or should one pick give a Double every wave for the rest of the run?
 
 ## Questions for the user
+*(Questions 1–4 were built on Claude's recommendations when the user said "build optimistically": see "Build optimistically" in the decisions log. They stay open to revision.)*
+
 1. **The pick**: in-world altars, one each and shareable, is Claude's pick. Or would you rather the team choose one together?
 2. **Pick timing**: the next wave's portals open *during* the pick, so you can pick for what's coming. Good, or too much to read at once?
 3. **Wellspring and Glass heart** are flat numbers. Keep them in a run mode, or hold Survive to pillar 1 as strictly as the campaign?

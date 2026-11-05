@@ -18,6 +18,8 @@ Each item runs in its own agent and git worktree, and Claude merges into main, r
 | 4. Host tuning online without desync | Claude | done |
 | TURN relay | waits on the user | — |
 
+*(Archived 2026-11-05. The one live item, the TURN relay, moved to the open list in `../current-state.md`.)*
+
 When Claude resumes, it reads this file, checks what has landed, merges, and updates the table.
 
 ## Summary for the user

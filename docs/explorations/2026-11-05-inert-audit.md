@@ -18,4 +18,6 @@ The user's rule (decided 2026-11-04): **adding an element must always change the
 
 Some may be scene blind spots, not true gaps. Fire on a self-cast only shows on someone burning or wet, and the scene's caster is only wet. When a family turns out to be a blind spot, the scene gets richer, not the rules looser.
 
+*(Since: the Life family is resolved, by the size rule ("Life spells, the size rule") and then "Every element in a heal lends its resistance" in the decisions log. The Weapon, Self and Place families' status is untracked: no re-run of the audit after the weapons and guards rounds is recorded. They're listed as an open item in `../ideas/README.md` and `../current-state.md`.)*
+
 **Next:** decide the Life family first, since it's the biggest and touches pillar 3 (support verbs). Let the weapons review settle the Weapon family, then make the audit fail at any count above 0.

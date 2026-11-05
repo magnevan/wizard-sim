@@ -85,6 +85,7 @@ See the chat of 2026-11-03. Answers will be recorded here as an addendum.
 2. **Cost = the elements you queue.** Each form then has a natural duration: a beam channels for ~5 s, and a weapon has durability. Past that it can continue with a **recast as regen debt**. Example: rune regen is 0.3/s; after the free 5 s the beam costs −0.2/s (one rune per 5 s). If net regen is negative, the fractional value runs down and a whole rune disappears at 0. It's a float underneath and discrete in the UI.
 3. **Refill:** mostly passive.
 4. **Upkeep:** probably a mix. A turret fires using your runes. A rock wall could *reserve* runes and release them as it's destroyed. A shield could *consume* as it absorbs. One modality would be simpler; undecided.
+   *(Later: decided as "stuff costs once, energy costs upkeep" (the entry for this exploration in `../decisions/README.md`); Earth walls don't reserve runes and time out after 25 s; Sigil devices bind a Sigil rune. See `../ideas/battlefield-building.md`.)*
 5. **Building input:** undecided. Freeform, or a hidden internal grid.
 6. **Encounters:** a mix of pushing and defending, to be tested. Retreat means falling back to prepared lines.
 7. **Support refill skill:** maybe just knowing when to use it.
@@ -99,6 +100,8 @@ See the chat of 2026-11-03. Answers will be recorded here as an addendum.
 | 2 | 52 | 966 |
 | 3+ | 52 | 976 |
 
+*(Superseded counts: since Atlas v4 (Steam and Ice dropped, Sigil an element) the grid has 39 cells and 678 spells; depth 1 reaches all 39 cells and 670 spells, depth 2 all 678. Run `node tools/spell-atlas/depth-c.js`.)*
+
 Under C, repeating an element adds *power*, not a new spell. A depth-1 player can already reach every form and cast, and depth 2 reaches 99% of spells. Depth 2 mostly unlocks steam and ice paired with another water spell.
 So "two fire opens magic you didn't have with one" needs content that C doesn't have yet: Magicks keyed to depth, or intensity tiers where 3+ of an element changes the form. Raised with the user.
 
@@ -111,6 +114,7 @@ So "two fire opens magic you didn't have with one" needs content that C doesn't 
 - **Seal + Place** is a glyph. Dragging it makes a **line glyph**, the same drag as walls; this replaces the old Seal + Force line glyph.
 - **Every spell now has a cost kind:**
   - *stuff*: Earth/Ice structures, conjured weapons and sealed vessels other than turrets. Paid once and capped.
+    *(Later: Ice is no longer an element, Seal became the Sigil element, and Sigil devices bind a rune. See `2026-11-03-structures-review-and-elements.md` and `2026-11-04-sigil-identity-and-buffs.md`.)*
   - *energy*: pure or elemental Shield structures, and turrets. Upkeep, with a reserve floor.
   - *sustain*: beams. Free for about 5 s, then regen debt.
   - *one-off*: everything else.

@@ -23,6 +23,8 @@ That changes the question. "Which engine" splits into two choices:
 
 ## Netcode: lockstep first, rollback later
 
+*(Superseded: the game went to rollback with a 2-tick input delay the same day. See "Netcode is rollback (recorded after the fact)" in `../decisions/README.md`.)*
+
 Precedent:
 - **Magicka** was host-based. Its patch notes list desyncs for items, statuses and animations, plus heavy uplink bandwidth and problems above about 400 ms ping. That points to state replication without a firm authority model.
 - **Nuclear Throne Together**, the closest analogue (a fast top-down shooter with lots of bullets, a GameMaker mod), uses deterministic lockstep. It sends only inputs, plays well at about 100 ms of input delay, and runs camera and aim locally with no delay.
@@ -152,6 +154,7 @@ This is the best ready-made rollback stack: bevy_ggrs, cheap ECS snapshots, matc
 
 - The engine and stack. Claude recommends **PixiJS v8 + our own TS sim + Electron later**.
 - Lockstep first, upgradeable to rollback (Claude recommends it).
+  *(Decided, then superseded by rollback: see the decisions log.)*
 - Whether a visual level editor matters. It is the main reason to pick Godot.
 - When to decide the desktop wrapper (Claude: Electron, decided at the first Steam build).
 

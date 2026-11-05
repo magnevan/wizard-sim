@@ -1,6 +1,7 @@
 # 2026-11-05: Round-2 ratings on weapons and guards, and how elements mix
 
 Follows `2026-11-05-guards.md`. The user rated round 2 of the Weapon Moveset Review. Following "build optimistically", everything below is built into the game and shown as round 3 of the same review page. The mixing section at the end is a proposal and is not built yet.
+*(Superseded: the mixing rule was built later in this same file ("Merged with the user's identities" and after). See also "How elements mix in guards" in `../decisions/README.md`.)*
 
 ## What the user said, and what changed
 
@@ -26,6 +27,8 @@ Kept as they were: Bulwark Defend, Ember (all of it), Rime Retreat and card, Spa
 
 ## How elements mix (proposal, not built)
 
+*(Superseded: built as merged below.)*
+
 The user: "We should think through more about how elements will mix too." The questions are on the review page, next to their text.
 
 **What the rules already give us.** Opposites cancel in the queue: fire/cold, water/lightning, life/arcane, earth/lightning, and shield/shield. So a guard is Shield plus at most 4 runes of non-opposed elements, with at most 3 different ones. Most conflicting passives can never meet. Warm (Ember) and Sure-footed (Rime) can't share a guard, and neither can Leaf and Prism.
@@ -42,6 +45,7 @@ The user: "We should think through more about how elements will mix too." The qu
 **Costs.** Coating doubles what a partner has to read: a block that bites back in two colours. Rule 3 keeps it readable by tying each effect's colour to the rim. Scaling by count (rule 4) adds no new input; the queue already counts runes.
 
 **Ties.** Today a tie between equally many runes goes to a fixed element order (earth, fire, cold, lightning, water, arcane, life). That's a hidden rule. Making the first element queued win would be readable, but it needs the queue order stored with the guard. Not asked yet.
+*(Superseded: a strong element leads by type; count only matters among Water, Fire and Cold, ties going Water, Fire, Cold. See "Every element in a heal lends its resistance; guard ties settled" in the decisions log.)*
 
 ### Revision: the strong element leads, as in spells
 
@@ -91,6 +95,8 @@ Merged rule, now in the game:
    - coats on Mend and Siphon;
    - the guard rim drawn in the coat's colours.
 
+   *(Superseded: all three were built further down: rune scaling in "The user's ratings on the merge", the Mend and Siphon coats and the rim in "The open mixing items, now built".)*
+
    A bite-back flashes in the coat's colour on whoever it bit.
 
 ### The user's ratings on the merge (built)
@@ -105,6 +111,7 @@ Merged rule, now in the game:
 | q-mix-scale | count: "Not just lead runes, all runes cause some form of scaling, like in spells" | **Every rune in a guard past the first adds 15 % guard HP and 15 % Retreat distance** (`ARMS.runeSize`). The mixed-in elements already scale by count (resistance share, and coat strength through the payload), and so do weapons (each rune adds payload damage). Weapon uses stay fixed at 30, since damage already scales |
 
 Not built yet: coats on Mend and Siphon, and the guard rim drawn in the coat's colours.
+*(Superseded: built below, in "The open mixing items, now built".)*
 
 ### Resistance is hyperbolic (built)
 

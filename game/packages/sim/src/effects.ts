@@ -180,6 +180,8 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       const r = SHAPES.patchRadius + 0.4 * (n - 1);
       if (spec.scald) spawnZone(w, ZONE.steam, src, p, tx, ty, r, T(SHAPES.patchLife), 0);
       else for (const el of [EL.water, EL.cold, EL.fire]) if (spec.counts[el - 1]) floorDisc(w, tx, ty, r, el);
+      // Rain: Water Place keeps falling for a while (the user: a rain that lasts 1 s felt far too short).
+      if (spec.form === EL.water && !spec.scald && !spec.freeze) spawnZone(w, ZONE.rain, src, p, tx, ty, r, T(SHAPES.rainLife + SHAPES.rainPerRune * (n - 1)), 0);
       if (spec.freeze) floorDisc(w, tx, ty, r, EL.cold); // Ice sheet: the water becomes walkable ice
       disc(w, p, src, tx, ty, r, 0.5 * k, -1);
       burstEvent(w, src, tx, ty, r, spec.look);
@@ -482,6 +484,9 @@ export function spawnZone(w: World, type: number, src: number, p: Payload, x: nu
   }
 }
 
+/** What rain carries after it lands: one Water, nothing else. Never written. */
+const RAIN = (() => { const a = new Uint8Array(N_EL); a[EL.water - 1] = 1; return a; })();
+
 export function tickZones(w: World): void {
   const z = w.zones, b = w.bodies;
   for (let k = 0; k < MAX_ZONES; k++) {
@@ -493,6 +498,18 @@ export function tickZones(w: World): void {
         burstEvent(w, z.owner[k], z.x[k], z.y[k], z.r[k], p.look);
         z.type[k] = ZONE.none;
       }
+      continue;
+    }
+    if (z.type[k] === ZONE.rain) {
+      // Rain soaks and douses whoever is under it every tick (water deals no damage, so nothing
+      // piles up: the spell's other elements hit once, when it lands), and keeps the puddle topped up.
+      setHitKind(HIT_KIND.burst);
+      for (let i = 0; i < b.kind.length; i++) {
+        if (!alive(w, i) || len(b.x[i] - z.x[k], b.y[i] - z.y[k]) > z.r[k] + b.r[i]) continue;
+        hitEvent(w, i, applyHit(w, i, RAIN, 0, { scale: 1, heal: false, scald: false, freeze: false, source: z.owner[k], dirX: 0, dirY: 0, push: 0 }), EL.water, z.owner[k]);
+      }
+      if (z.life[k] % 30 === 0) floorDisc(w, z.x[k], z.y[k], z.r[k], EL.water);
+      if (--z.life[k] <= 0) z.type[k] = ZONE.none;
       continue;
     }
     // Lingering zones (springs, steam) work every half second.

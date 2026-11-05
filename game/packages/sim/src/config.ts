@@ -91,6 +91,8 @@ export const SHAPES = {
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,
   patchRadius: 1.6, patchLife: 6,
+  /** Rain (Water Place): it keeps falling this long, plus rainPerRune per extra Water, soaking and dousing whoever is under it. */
+  rainLife: 5, rainPerRune: 1,
   delayedBlast: 0.6, // geyser rumble / arcane blast fuse
   swingRange: 1.6, swingHalfAngle: 0.15,
   push: 6, // u/s added per water rune (Push)

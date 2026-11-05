@@ -180,7 +180,7 @@ export interface Missiles {
   flags: Uint8Array; mod: Uint8Array;
 }
 
-/** Things that sit in the world for a while: delayed blasts, geysers, healing springs, steam clouds. */
+/** Things that sit in the world for a while: delayed blasts, geysers, healing springs, steam clouds, rain. */
 export interface Zones {
   type: Uint8Array; // ZONE
   x: Float64Array; y: Float64Array; r: Float64Array;
@@ -193,7 +193,7 @@ export interface Zones {
 /** Payload flags. */
 export const PF = { heal: 1, scald: 2, freeze: 4, lensed: 8, pin: 16 } as const;
 export const MOD_ID = { none: 0, push: 1, shatter: 2, chain: 3, burst: 4 } as const;
-export const ZONE = { none: 0, blast: 1, geyser: 2, spring: 3, steam: 4, spark: 5 } as const;
+export const ZONE = { none: 0, blast: 1, geyser: 2, spring: 3, steam: 4, spark: 5, rain: 6 } as const;
 
 /** The floor: one byte of surface per cell, plus ticks left. */
 export const SURF = { none: 0, water: 1, ice: 2, fire: 3 } as const;

@@ -27,9 +27,7 @@ import { HIT_KIND, addKnock, setHitKind } from './hit';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { boundSigil, drainShield, energyLoad, segDist } from './walls';
 import { conjureGuard } from './guards';
-import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, freeDouble, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
-
-const alive = (w: World, i: number) => w.bodies.kind[i] !== KIND.none;
+import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, alive, freeDouble, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
 
 /** The spell minus its form element: what a Sigil device carries, or what a Shield structure is coated in. */
 function restCounts(spec: SpellSpec): Uint8Array {

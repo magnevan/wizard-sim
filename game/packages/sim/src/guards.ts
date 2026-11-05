@@ -28,6 +28,7 @@
  *                          the only block that stops beams and sprays; lowered with charge, it fires the Lance
  *   Leaf aegis (S+Li)      heals allies around you / burst heal   Seed step     Regrowth: slow healing
  */
+import { rules } from '@wizard-sim/rules';
 import { ARMS, STATUS, T } from './config';
 import { EL, N_EL, formOf } from './elements';
 import { cellAt, floorDisc, hit, hitOpts, spawnZone, touchFloor, zap, type Payload } from './effects';
@@ -36,7 +37,7 @@ import { addKnock, applyHit, bloom } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { payloadDamage, wallAt } from './walls';
 import { WALL } from './compile';
-import { GUARD, GUARD_NAME, KIND, MAX_SEATS, ZONE, type World } from './world';
+import { GUARD, GUARD_NAME, KIND, MAX_SEATS, ZONE, alive, type World } from './world';
 
 /** Resistance columns. */
 export const RES = { physical: 0, fire: 1, cold: 2, lightning: 3, arcane: 4 } as const;
@@ -157,8 +158,10 @@ function biteBack(w: World, i: number, j: number, ux: number, uy: number): void 
   applyHit(w, j, c, 0, { scale: ARMS.coatScale, heal: false, scald: false, freeze: false, source: i, dirX: ux, dirY: uy, push: 0 });
   w.events.push({ tick: w.clock[0], kind: 'move', who: i, x: w.bodies.x[j], y: w.bodies.y[j], text: 'coat', look: guardCoatLook(w, i) });
 }
-/** Opposites that cancel rune for rune, as in the queue. */
-const OPPOSED: readonly (readonly [number, number])[] = [[EL.fire, EL.cold], [EL.water, EL.lightning], [EL.life, EL.arcane], [EL.earth, EL.lightning]];
+/** Opposites that cancel rune for rune, as in the queue (the rules' CANCEL pairs, without Shield and Sigil's). */
+const OPPOSED: readonly (readonly [number, number])[] = rules.CANCEL
+  .filter(([a, o]) => ![a, o].some((e) => e === 'shield' || e === 'sigil'))
+  .map(([a, o]) => [EL[a], EL[o]] as const);
 const MIX = new Uint8Array(N_EL);
 /** A payload (els at `at`) plus seat i's coat, opposites cancelled; null when nothing is left. */
 function mixCoat(w: World, i: number, els: Uint8Array, at: number): Uint8Array | null {
@@ -295,8 +298,6 @@ function one(id: number): Payload {
   if (!ONE[id]) { const c = new Uint8Array(N_EL); c[id - 1] = 1; ONE[id] = { counts: c, at: 0, heal: id === EL.life, scald: false, freeze: false, mod: id === EL.water ? 'push' : null, look: id, formN: 1 }; }
   return ONE[id];
 }
-
-const alive = (w: World, i: number) => w.bodies.kind[i] !== KIND.none;
 
 /** Every body in a cone in front of seat i (not i): `fn(body, ux, uy)` with the push direction. */
 function cone(w: World, i: number, range: number, half: number, fn: (j: number, ux: number, uy: number) => void): void {

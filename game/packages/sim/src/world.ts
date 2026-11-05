@@ -559,6 +559,8 @@ export function spawnBody(w: World, slot: number, kind: number, team: number, x:
 }
 
 export const tickOf = (w: World): number => w.clock[0];
+/** Is body slot i in use (anything that can be hit: a wizard, a dummy, an enemy, a Double)? */
+export const alive = (w: World, i: number): boolean => w.bodies.kind[i] !== KIND.none;
 
 /** Every typed array in the world, in a fixed order. Snapshot, restore and hash all walk this list. */
 export function buffers(w: World): ArrayBufferView[] {

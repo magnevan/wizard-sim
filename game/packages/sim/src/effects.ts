@@ -15,7 +15,7 @@ import { clipRay, collideWalls, damageWall, lensAt, payloadDamage, rayThroughLen
 import { WALL } from './compile';
 import { ARCHETYPES } from './archetypes';
 import { grounded, guardMissile, phased } from './guards';
-import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, SURF, WARD, ZONE, type World } from './world';
+import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, SURF, WARD, ZONE, alive, type World } from './world';
 
 export interface Payload {
   counts: Uint8Array;
@@ -41,8 +41,6 @@ export function stored(els: Uint8Array, at: number, flags: number, mod: number, 
 export function hitOpts(p: Payload, source: number, scale: number, dirX = 0, dirY = 0, statusScale = 1, frontal = false): HitOpts {
   return { scale, heal: p.heal, scald: p.scald, freeze: p.freeze, source, dirX, dirY, push: p.mod === 'push' ? SHAPES.push : 0, statusScale, frontal };
 }
-
-const alive = (w: World, i: number) => w.bodies.kind[i] !== KIND.none;
 
 export function hitEvent(w: World, i: number, dealt: number, look: number, src = -1): void {
   if (!dealt) return;

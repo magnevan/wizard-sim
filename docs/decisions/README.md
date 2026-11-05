@@ -4,6 +4,7 @@ Append-only. Each entry records the date, the decision, why it was made, and the
 
 ## 2026-11-02: Repo is design-first
 The repo holds docs and throwaway prototypes, and there's no production codebase. The pillars in `vision.md` guide every proposal.
+*(Superseded: the engine phase started 2026-11-04 and the game lives in `game/`, public since then. See "Engine phase starts" and "Going public as Wizard Sim".)*
 
 ## 2026-11-02: Feedback round 1 (see `explorations/2026-11-02-feedback-round-1.md`)
 - **Rejected: priming elements into a teammate's queue.** Communicating it costs far more than the teammate typing the element themselves, so it reads as sabotage.
@@ -31,6 +32,7 @@ The repo holds docs and throwaway prototypes, and there's no production codebase
   - Phaser / PixiJS: more rendering power than needed so far.
 - **Revisit** if the prototype grows past "test one question", or if performance becomes the bottleneck.
 - Made by Claude while the user was away (they asked for a game skeleton to be built).
+*(Superseded for the game by "Engine stack" (2026-11-04): PixiJS v8 for drawing over our own TypeScript sim. Prototypes may still use Canvas2D.)*
 
 ## 2026-11-03: Round 3 (see `explorations/2026-11-03-feedback-round-3.md`)
 - **Rejected: Loaded Blow** (one spell loaded onto your weapon). The user prefers reusable conjured weapons.
@@ -51,8 +53,10 @@ The repo holds docs and throwaway prototypes, and there's no production codebase
 - **Separate idea:** battlefield building stays its own idea, compatible with runes but not the same thing.
 - **Naming:** a *rune* is one unit of an element. Placed seal traps are renamed **glyphs** (Trap Glyph, Puddle Glyph, Line glyph). The Atlas is republished with the new names.
 - **Deferred: depth-gated progression.** Pools stay unlocked for now. Revisit if a system suggests itself, or confirm later that none is needed. (Under C, depth 1 already reaches all 52 cells.)
+  *(Superseded counts: since Atlas v4 the grid has 39 cells and 678 distinct spells; depth 1 reaches all 39 cells and 670 spells, depth 2 all 678 (`tools/spell-atlas/depth-c.js`).)*
 - **Upkeep rule: stuff costs once, energy costs upkeep.**
   - Stuff (Earth or Ice walls and the like) is paid from the queue and exists until it breaks.
+    *(Later: Ice stopped being an element the same day ("Seal becomes an element; Steam and Ice dropped"), and rock walls time out after 25 s ("Rings, wall lifetime, Self on allies").)*
   - Energy (shields, turrets, fields, sustained beams) is paid as regen debt that scales with the work it does.
   - "Stuff" needs some cap on how much you can prepare; the exact cap is left for balancing later.
 
@@ -158,6 +162,7 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
 ## 2026-11-04: Engine stack (the user's answers on the Engine Choice page)
 - **Decided: PixiJS v8 for drawing, our own deterministic TypeScript sim.** Electron for Steam later. The user rated the Pixi stack "keep" and picked it, matching Claude's recommendation. Godot 4.7 was the runner-up.
 - **Decided: lockstep first, with rollback kept possible.** The sim stays snapshot-able.
+  *(Superseded: online play runs rollback with a 2-tick delay. See "Netcode is rollback (recorded after the fact)".)*
 - **Decided: arenas are data files now,** with our own editor when we need one. No visual editor is required.
 - **Decided: milestone 1 is a deterministic core.** Two wizards on one machine, the Atlas rules driving real casts, the Pixel Battlefield look, and a replay that hashes the same in node and in the browser. Online play waits until that holds.
 - **The workspace is `game/`,** an npm workspace with three packages:
@@ -177,9 +182,11 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
   - A cast pressed during recovery is buffered for 0.3 s, so no press is lost (casting-rhythm: "every key press is registered").
 - **Blink has no wind-up at all** (the user's "super snappy" note).
 - **Turrets carrying a channelled spell (beam, spray) shoot bolts** that carry its elements. A Lightning turret zaps. A real beam emplacement can come later.
+  *(Superseded: turrets cast the real spell. See "Play-test round 2, answers and notes 8–11".)*
 - **The sculpting wand stops your spells from harming allies, but not the burning ground they leave.** The floor is the world.
 - **Shield alone on yourself is a mirror ward** that turns back the next 3 shots. A barrier of Shield alone turns shots back at whoever cast them.
 - **Not in the engine yet:** the Shield conjures (Bulwark, Buckler) and the Double. Both are in the rules; the engine shows a "todo" event when you cast them.
+  *(Superseded: the Double is built (it follows you, "Play-test notes, round 1"; Survive's Echo spawns one, "Survive gets Rally and Echo"), and the Shield conjures became the eight guards ("Round-2 weapons and guards built into the game").)*
 - **Enemies are the skeleton's six archetypes**, named as the Battlefield draws them (goblin swarmers, archer casters). Waves and portals work as in the skeleton.
 - **A new player joins through the input record** (a join button bit), so every peer will spawn them on the same tick.
 
@@ -213,6 +220,7 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
 
 ## 2026-11-04: Online co-op, first route
 - **Decided (the user): start with the artifact route, and move to WebRTC soon.** Online play runs over the claude.ai artifact's room: everyone with the page open, relayed by the platform, with no server of ours. Lockstep sends one broadcast packet 20 times a second with an 8-tick (about 130 ms) input delay. The lobby refuses a different build or tuning.
+  *(Superseded: matches run rollback with a 2-tick delay, over WebRTC on the hosted page. See "Netcode is rollback (recorded after the fact)" and "Going public as Wizard Sim".)*
 - The limits are the room's own: about 40 messages a second per sender, and messages can drop (the session resends). The other player must be invited to the artifact with Contributor access. Latency is untested with two real people.
 - Next: a WebRTC bus behind the same interface (with self-hosted builds), local prediction of aim and cast starts, and drop-out and rejoin.
 
@@ -241,6 +249,7 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
 - **Rejoin:** anyone can take an empty seat, whether by reloading or re-entering the room code. The coordinator sends a confirmed snapshot (gzipped, a few KB) and the inputs after it; the seat plays again 0.75 s later, and the newcomer runs extra ticks to catch up. A page that falls behind for other reasons (a hidden tab) catches up the same way.
 - **Limits:** if the host's page leaves, the match goes on, but its room code stops working, so nobody can join or rejoin by code. Rejoin needs WebRTC or the tab bus: a snapshot doesn't fit the artifact room's 4 KiB messages. The dropped wizard is still in the world: enemies can hit it, and it can be revived.
 - **On remote snapping (the user asked why prediction isn't faster):** nothing can guess a key press before its packet arrives. The fixes are better guesses for aim (in world space, carrying on a sweep) and showing a late remote spell from its first frame. Not built yet.
+  *(Superseded: built in 3c28950. See "Smoother remote players online".)*
 
 ## 2026-11-04: Play-test notes, round 2 (`explorations/2026-11-04-playtest-2.md`)
 - **Shield gets the Sigil dismiss:** double-tap Shield over your wall and the whole cast comes down. Over yourself, it drops your ward and guard.
@@ -352,6 +361,7 @@ The user said "build optimistically", so the game now has what `explorations/202
   - The three waves reuse the Shield wave pool, which now stores its own power and range.
 - **Specials:** Sweep for most weapons. The spear's **javelin** (3 uses) pins its target (a new body state, `root`: it can't walk but can act), frosts the ground, and the spear stays in your hand.
 - **The arcane weapon is now the Echo focus.** It remembers your last spell (seat state: counts and cast; structures, Blink and Self casts aren't remembered). Its Heavy re-casts that spell from you at half power for 5 uses and no runes. An echoed channel runs on its own for 1 s. Its Strike is a weak bolt. Its Special, **Copy**, takes the last spell an ally cast within 6 u in the last 2 s. The hook and its yank are gone.
+  *(Superseded: the Echo focus was replaced by the Arcane wand (bolt, charged bolt, Siphon). See "Round-2 ratings built".)*
 - **Eight guards** (`packages/sim/src/guards.ts`): one per lead element, and Shield alone is the Mirror buckler. Each has its own Defend, Retreat, passive and resistances, as in the doc's tables. Every guard blocks shots. Only the Bulwark's block stops melee. The other guards' block effects still answer a melee hit (Ember thorns, the Tide shove). Only the Prism stops beams (sprays count as beams here). A timed parry stops any frontal hit and fires the guard's parry effect.
 - **Open questions, as recommended:** (1) resistances apply while the guard is carried; (2) Retreat is free, with a fixed 0.5 s recovery in which you can't Retreat or Defend; (3) a second element adds only its own resistance at half strength; (4) the Bulwark keeps Brace, which doesn't move you. Without a guard, Shift+LMB is still the generic hop.
 - **Claude's calls:**
@@ -388,6 +398,7 @@ From the user's round-2 ratings on the Weapon Moveset Review (`explorations/2026
   - The javelin costs 2 uses, and is drawn peeling off the spearhead.
 - **Carrying a guard or a weapon costs 5 % walking speed each** (q-res-when note).
 - **Mixing, first cut:** the lead sets the moves; the second element mixes in its passive and its whole resistance row at half. A fuller rule (every element mixes, coats, rune counts scale) is proposed in the exploration and asked on the page; it is not built.
+  *(Superseded: the fuller rule is built. See "How elements mix in guards" and "Mixing ratings: every rune scales".)*
 - Golden hash `14440468` → `e055dcdb` (the Echo state is removed; the Special channel state is new).
 
 ## 2026-11-05: How elements mix in guards (merged with the user's identities)
@@ -447,3 +458,13 @@ The user approved building both, Rally first (`explorations/2026-11-05-survive-m
   - **What a partner sees:** a dashed green ring round the fallen ally, the size of the range. While a rally runs, a ring fills in the rescuer's colour, Life motes flow between them, RALLY floats overhead, and the wave strip reads "P1 RALLYING P2 66%". The revive is a column of Life light and a RALLIED pop. A broken ring snaps.
 - **Echo** (a one-shot that can be picked again): a free Double appears at once, so you can plan round it in the lull, and fades when the next wave is cleared. It is the cast Double in every way (60 HP, repeats your spells at half power for half their runes, and enemies want it more), except that it binds no Sigil rune. A Double you cast replaces it. The Double's spawn is now `spawnDouble` in `structures.ts`.
 - Golden hash unchanged (`7184435b`): all the new state is in `world.run`, which only Survive has.
+
+## 2026-11-05: Netcode is rollback (recorded after the fact)
+
+Recorded after the fact during a docs cleanup: the switch happened while building, and no entry logged it.
+- **Decided: online matches run rollback, not lockstep.** `RollbackSession` (`game/packages/net/src/rollback.ts`) runs every tick at once with predicted remote inputs, snapshots each tick, and rewinds and replays when a real input differs, within a 1 s window. Your own input acts at once.
+- **Input delay: 2 ticks** (`NET_DELAY` in `game/packages/client/src/net/netplay.ts`; the host can change it in the F1 Network test). This replaces the 8-tick lockstep delay of "Online co-op, first route".
+- **When:** commit `14c15ae`, 2026-11-04 20:37 UTC ("Rollback netcode: RollbackSession ... online play uses it with a 2-tick delay"). That commit is on the local branch `private-history`, which is never pushed; the public history's first commit `ce6edb6` (2026-11-04 22:41 UTC) already contains it.
+- **Why (from that commit and the engine research):** rollback removes the input delay that lockstep needs, and the sim was already snapshot-able, as "Engine stack" required so that rollback stayed possible. Tests at the time: 2 peers at 100 ms and 4 peers at 200 ms with 15 % loss stay identical and never wait.
+- **Later on top of it:** world-space aim prediction and late remote spells caught up ("Smoother remote players online"); drop-out and rejoin ("Network test, drop-out and rejoin").
+- This supersedes "lockstep first, with rollback kept possible" ("Engine stack") and the lockstep delay in "Online co-op, first route". `LockstepSession` stays in `@wizard-sim/net` as the base class.

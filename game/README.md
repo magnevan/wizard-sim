@@ -1,6 +1,6 @@
 # game/
 
-The real game, after the design phase. The stack is in `docs/decisions/` (2026-11-04: Engine stack): **PixiJS v8 for drawing, our own deterministic TypeScript sim, lockstep netcode later, Electron for Steam later.** The research behind it is in `docs/explorations/2026-11-04-engine-options.md`.
+The real game, after the design phase. The stack is in `docs/decisions/` (2026-11-04: Engine stack): **PixiJS v8 for drawing, our own deterministic TypeScript sim, Electron for Steam later.** Online play runs rollback netcode (`RollbackSession`, a 2-tick input delay) over WebRTC; the decision began as "lockstep first" and moved to rollback on 2026-11-04 (`docs/decisions/`: "Netcode is rollback"). The research behind the stack is in `docs/explorations/2026-11-04-engine-options.md`. The game is public at https://magnevan.github.io/wizard-sim/.
 
 ## Run
 
@@ -43,7 +43,8 @@ packages/
     hit.ts     what a hit does (damage, healing, statuses, wards, the wand, guards); walls.ts + structures.ts Shield and Sigil
     archetypes.ts, enemies.ts, nav.ts, waves.ts   enemies, their steering and the Arena's wave director
     survive.ts the Survive mode: its waves, the altar pick, the run's end; power-ups are per-seat stacks in world.run
-  net/     @wizard-sim/net: lockstep over a swappable unreliable Transport (loopback hub for tests; WebRTC / Steam later)
+  net/     @wizard-sim/net: LockstepSession and RollbackSession (what matches run) over a swappable unreliable Transport
+           (loopback hub for tests; the client's WebRTC bus, BroadcastChannel and artifact room; Steam later)
   client/  @wizard-sim/client: Vite + PixiJS v8. The loop (main.ts), keyboard and gamepads -> PlayerInput (input.ts, gamepad.ts),
            the view (view.ts, reads the sim and never writes it), the HUD (hud.ts), structures and telegraphs
            (view-structures.ts), and the Battlefield / VFX gallery art ported into art/ (rigs, frame cache, floor, effects, lights).
@@ -52,7 +53,7 @@ scripts/   sync-rules, browser-check, screenshot, make-artifact (serve.mjs is sh
 
 ## The rules that keep it deterministic
 
-These matter from day one, because lockstep (and later rollback) only works if every peer computes the same bits:
+These matter from day one, because rollback (like lockstep) only works if every peer computes the same bits:
 
 - **The sim sees only `PlayerInput` records and its own state.** No `Date.now`, `performance.now`, timers, promises, DOM or network. The client owns real time and decides how many steps to run.
 - **Exact maths only:** `+ - * /`, `Math.sqrt`, `floor`, `round`, `abs`, `min`, `max`, `imul`. Use `trig.ts` instead of `Math.sin`, `cos`, `atan2`, `pow`, `exp` or `**`. Those may differ between V8, SpiderMonkey and JavaScriptCore.
@@ -65,7 +66,7 @@ These matter from day one, because lockstep (and later rollback) only works if e
 
 ## Status
 
-Milestone 1 (deterministic core) is under way. Done in the sim, with tests for each:
+Milestone 1 (deterministic core) is done, and the game has grown past it (online co-op, weapons and guards, Survive). Built in the sim, with tests for each:
 - **Runes and the queue:** reserved on queue, spent on cast, refunded on clear or cancel; slow regen; Attune.
 - **Cast rhythm:**
   - wind-up grows with the spell's size
@@ -94,16 +95,22 @@ Milestone 1 (deterministic core) is under way. Done in the sim, with tests for e
   - turrets that pay each shot from your pool
   - glyphs and line glyphs, orbitals, rune motes
   - the lens
-  - the sculpting wand, conjured weapons with reach (the hook yanks)
+  - the sculpting wand, conjured weapons with reach
+  - the Double (pure Sigil on yourself): a copy that follows you and repeats your spells at half power
   - auras: fire, frost, mist, regeneration, bulldoze, haste, glass cannon
 - **Enemies:**
   - six archetypes with telegraphs: goblin, brute, shieldbearer, archer, grabber, fire imp
   - steering around rock on flow fields
   - the Arena's wave director with portals, lulls and breathers
-  - downed wizards are out until the wave ends
-- **Joining:** a new player joins through the input record (`BTN.join`). Gamepad mapping in `packages/client/src/gamepad.ts`.
+  - downed wizards are out until the wave ends (in Survive, the Rally power-up revives mid-wave)
+- **Joining:** a new player joins through the input record (`BTN.join`). Gamepads join seats 1–3 with any button (`packages/client/src/gamepad.ts`, polled in `main.ts`).
 
-**Weapons and guards** (round 2, `docs/explorations/2026-11-05-guards.md`, built on its recommendations pending the user's ratings): with nothing queued, RMB tap = Strike, RMB hold = the weapon's Heavy (wave slash, fire wave, fissure, impaling dash, chain lash, Healing link, the Echo), Shift+RMB = Special (Sweep, the spear's javelin, the Echo focus's Copy); Space = your guard's Defend (hold to block, tap as a hit lands to parry), Shift+LMB = its Retreat. Eight guards, one per lead element (`packages/sim/src/guards.ts`), with passives and resistances while carried. Numbers: `ARMS` in `config.ts`.
+**Weapons and guards** (grammar v2; designed in `docs/explorations/2026-11-05-guards.md`, revised by the user's ratings through round 4 in `docs/explorations/2026-11-05-guards-round-2.md`). With nothing queued, your hands act:
+- RMB tap = Strike, RMB hold = the weapon's Heavy, Shift+RMB = its Special (some are held), Space = your guard's Defend (hold to block, tap as a hit lands to parry), Shift+LMB = its Retreat.
+- **Weapons** (`packages/sim/src/hands.ts`), Heavy / Special: bare staff (big shove / Sweep), Tide trident (wave slash / Sweep), Healing hands (Healing link / **Mend**, held), Frost spear (impaling dash / javelin), Lightning whip (chain lash / Sweep), **Arcane wand** (Strike a light bolt, Heavy a charged piercing bolt / **Siphon**, held: rooted, runes regenerate fast), Flame sword (fire wave / Sweep), Stone maul (fissure / Sweep).
+- **Eight guards** (`packages/sim/src/guards.ts`), one per lead element: Mirror buckler, Bulwark, Ember targe, Rime kite, Spark ring, Tide shield, **Prism** (a Capacitor: it stores what its raised block takes, and lowering it fires the **Lance**), Leaf aegis. Each has its Defend, Retreat, passive and resistances while carried.
+- **Mixing:** the strongest element leads (Life > Earth > Arcane > Lightning; else the most runes of Water, Fire or Cold). Every other element brings its passive and resistance row (half per rune, all at 2). The Leaf takes only the extras' strengths; the other guards' extras are a coat that bites whoever hits the block. Resistance is hyperbolic (damage taken 1 / (1 + r)). Each guard rune past the first adds 15 % guard HP and Retreat distance. Source: `docs/explorations/2026-11-05-guards-round-2.md` ("Merged" and after).
+- Numbers: `ARMS` in `config.ts`.
 
 Not yet: audio, campaign rooms.
 
@@ -116,8 +123,8 @@ Not yet: audio, campaign rooms.
 Two wizards on one machine, the Atlas rules driving real casts, the Pixel Battlefield look, and a replay that hashes the same in node and in the browser.
 
 1. ~~The cast pipeline~~, ~~spell shapes, statuses, surfaces~~, ~~structures~~, ~~enemies and waves~~ (steps A–C).
-2. **The look** (step D): port the Pixel Battlefield actors, floor and HUD and the VFX gallery's effects. In progress.
-3. **Local co-op** (step E): gamepads join seats (done in the sim and in `gamepad.ts`); wire them into the loop. The camera that frames everyone is done (`camera.ts` follows the living wizards in an arena bigger than the view, such as Survive's).
+2. ~~**The look** (step D)~~: the Pixel Battlefield actors, floor, lights and HUD and the VFX gallery's effects and deaths are ported (`packages/client/src/art/`). New effects keep being added as features land.
+3. ~~**Local co-op** (step E)~~: gamepads join seats 1–3 in the loop (`gamepad.ts`, `main.ts`), and the camera frames everyone (`camera.ts` follows the living wizards in an arena bigger than the view, such as Survive's). Online co-op came on top (above).
 4. The rules stay as the generated copy of the Atlas's `rules-c.js` (Claude's call: the Atlas is where the user reviews rules, so one source is simpler than a TypeScript port; the typed wrapper covers what the game needs).
 
 Open:

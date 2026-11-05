@@ -4,7 +4,7 @@ A page of looping pixel-art vignettes, one per spell of the current spell gramma
 
 Everything is procedural (no image assets), and every vignette is a pure function of its local time, so loops are seamless and any frame can be reproduced.
 
-Not published yet. The first publish needs `capabilities: { db: {} }`.
+Published at https://claude.ai/artifact/F2LeDE6z1FWx3HuAPsP9Vz (private to the user), with `capabilities: { db: {} }`. Republish to the same URL.
 
 ## What is on the page (87 vignettes)
 - **New and reworked (17)** come first, in their own section with a badge (`fresh: 'new' | 'reworked'` on the vignette; `?fresh=0` puts them back in their groups, the "Changed" chip filters to them). Only this pass's changes are marked: the pass 6 marks were cleared once the user had rated the goblin set. New slugs are new visuals, so old ratings stay on the old slugs; reworked ones kept their slug.

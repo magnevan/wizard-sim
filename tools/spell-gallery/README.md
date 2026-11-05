@@ -3,6 +3,8 @@
 A page of animated spell scenes for rating spell ideas: ★ keep, ? maybe, ✗ cut, plus a note.
 Published at https://claude.ai/artifact/5GLNfuBM3npBdMBLefATSQ (private to the user).
 
+**Which gallery is current:** this one holds the early wishlist scenes (rounds 1–3, rated) from before the spell grammar and art direction were settled. For the current spells, the enemy deaths and the game's look, use the Spell VFX gallery (`tools/spell-vfx/`, https://claude.ai/artifact/F2LeDE6z1FWx3HuAPsP9Vz). New spell visuals go there, not here.
+
 ## Files
 - `engine.js`: the drawing kit `g` and `SG.register`. Every vignette is a **pure function of time**, `draw(g, t)`, so loops are seamless and frames are reproducible.
 - `vignettes/*.js`: one file per batch, each calling `SG.register({...})`. They're loaded in the order `index.html` lists them.

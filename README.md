@@ -1,30 +1,39 @@
 # Wizard Sim
 
-A co-op, top-down spellcasting game inspired by Magicka: a design sandbox plus the game itself. Start with `docs/vision.md`.
+A co-op, top-down spellcasting game inspired by Magicka: a design sandbox plus the game itself. Start with `docs/vision.md` for the pillars, and `docs/current-state.md` for what's true right now.
 
 **Play:** https://magnevan.github.io/wizard-sim/ (two to four players; open **Co-op online**, create a room and share the four-letter code).
 
 This is a fan project with no connection to Magicka's makers, and it uses none of their code or assets.
 
-## Feedback pages
+## Published pages
 
-These are private claude.ai pages where the design was rated. Links to claude.ai in the docs won't open for anyone else.
-| Page | What it's for |
-|---|---|
-| [Spell Atlas](https://claude.ai/artifact/GiZ7G7eQ4pMqXLaPEZK6Cw) | **Start here.** The whole tree under proposal C, as a form × cast grid. Rate cells and answer the questions. |
-| [Spell Wishlist Gallery](https://claude.ai/artifact/5GLNfuBM3npBdMBLefATSQ) | Animated spell scenes to rate (rounds 1–3 rated). |
-| [Spell Tree Explorer](https://claude.ai/artifact/88XcXP6YU3iL35bTYuNL3X) | The older proposals A and A.1 (superseded by the Atlas). |
-| [Art Style Explorer](https://claude.ai/artifact/33DELSAis34SSDvLJ69rwG) | The same fight in six art directions, with a chaos slider. Rate them. |
-| [Skeleton prototype](https://claude.ai/artifact/HmEKJfEUvzY7amrNTCXHSv) | Playable (mouse and keyboard). See `prototypes/01-skeleton/PLAYTEST.md`. |
+The live game is public. The rest are private claude.ai pages where the design was rated: links to claude.ai won't open for anyone else.
+
+| Page | Source | What it's for |
+|---|---|---|
+| [Wizard Sim (the game)](https://magnevan.github.io/wizard-sim/) | `game/` | The game, deployed on every push to main. |
+| [Spell Atlas](https://claude.ai/artifact/GiZ7G7eQ4pMqXLaPEZK6Cw) | `tools/spell-atlas/` | The whole spell tree under proposal C, as a form × cast grid, plus Structures. Rate cells and answer the questions. |
+| [Weapon Moveset Review](https://claude.ai/artifact/F3FyhonePFv5JVeSLfk1U9) | `tools/weapon-moves/` | Conjured weapons and guards, move by move (rounds 1–4 rated). |
+| [Spell VFX gallery](https://claude.ai/artifact/F2LeDE6z1FWx3HuAPsP9Vz) | `tools/spell-vfx/` | Looping pixel-art vignettes of the current spells and the enemy deaths, in the game's look. |
+| [Balance Notes](https://claude.ai/artifact/5cTMLv4PTnGvGS3QCBdDHg) | `tools/balance-notes/` | The balance harness's measurements, with questions. |
+| [Engine Choice](https://claude.ai/artifact/LyrRxR1uZjwDFibLNL4Y4c) | `tools/engine-choice/` | The stack comparison behind PixiJS v8 + our own sim (decided). |
+| [Pixel Battlefield](https://claude.ai/artifact/BwW5WDghxYLXBniwYYBuRi) | `tools/art-pixel-hd/` | The chosen art direction, full screen, with structures and the rune HUD. |
+| [Art Style Explorer](https://claude.ai/artifact/33DELSAis34SSDvLJ69rwG) | `tools/art-styles/` | The same fight in six art directions (rated; the Pixel Battlefield look won). |
+| [Spell Wishlist Gallery](https://claude.ai/artifact/5GLNfuBM3npBdMBLefATSQ) | `tools/spell-gallery/` | The early animated wishlist scenes (rounds 1–3 rated). Superseded by the Spell VFX gallery for current visuals. |
+| [Spell Tree Explorer](https://claude.ai/artifact/88XcXP6YU3iL35bTYuNL3X) | `tools/spell-tree/` | The older proposals A and A.1 (superseded by the Atlas). |
+| [Skeleton prototype](https://claude.ai/artifact/HmEKJfEUvzY7amrNTCXHSv) | `prototypes/01-skeleton/` | The first playable (Proposal A). Superseded by `game/`. |
 
 ## Docs
-- `docs/vision.md`: pillars
-- `docs/explorations/`: dated thinking sessions, including the spell tree, its audit, encounters, and co-op Magicks
-- `docs/ideas/`: one file per mechanic (index in `docs/ideas/README.md`)
-- `docs/decisions/README.md`: what was decided and why
+- `docs/vision.md`: pillars and the big open questions
+- `docs/current-state.md`: what's true now, each line linked to its decision, and the live open questions
+- `docs/decisions/README.md`: what was decided and why (append-only, with a topic index at the top)
+- `docs/ideas/`: one file per mechanic (index and statuses in `docs/ideas/README.md`)
+- `docs/explorations/`: dated thinking sessions (index in `docs/explorations/README.md`)
 - `docs/reference/`: Magicka notes and research on other games
+- `docs/archive/`: old worklogs
 
 ## Code
 - `game/`: the game (TypeScript, PixiJS v8, a deterministic sim, rollback netcode over WebRTC). See `game/README.md`.
-- `prototypes/01-skeleton/`: TypeScript + Vite + Canvas2D game skeleton (`npm install && npm run dev`)
-- `tools/`: the gallery, explorer and art pages (plain HTML/JS, published as artifacts)
+- `tools/`: the review pages above (plain HTML/JS, published as artifacts)
+- `prototypes/01-skeleton/`: the first TypeScript + Vite + Canvas2D skeleton, superseded by `game/` (`npm install && npm run dev`)

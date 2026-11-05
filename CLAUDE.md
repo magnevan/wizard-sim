@@ -4,13 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A design sandbox for a cooperative spellcasting game inspired by Magicka. It's mostly design writing, with small throwaway prototypes added over time. There's no shipped product, so ideas matter more than polish.
+A design sandbox for a cooperative spellcasting game inspired by Magicka, plus the game itself (Wizard Sim). The design writing and review pages decide what the game should be; `game/` builds it. The game is public and playable at https://magnevan.github.io/wizard-sim/ (repo https://github.com/magnevan/wizard-sim), deployed on every push to main, so keep main working. It's still early: ideas matter more than polish.
+
+For what's true right now (controls, rules, rooms, netcode, open questions), read `docs/current-state.md`.
 
 The source of truth for what the game is trying to be is `docs/vision.md`. Read it before proposing or judging a mechanic. When an idea conflicts with a pillar, say so plainly; don't quietly bend the pillar.
 
 ## Layout
 
 - `docs/vision.md`: design pillars and open questions. It changes slowly and only when the user agrees.
+- `docs/current-state.md`: one page of what's true now, each line linked to its decision, plus the live open questions. Update it when a decision changes what's built.
+- `docs/archive/`: old worklogs, kept as records.
 - `docs/reference/`: notes on Magicka and other reference games. Facts recalled from memory are marked *(unverified)*.
 - `docs/explorations/`: dated, long-form thinking sessions (`YYYY-MM-DD-topic.md`). Once written, they're a record and aren't rewritten. Newer explorations supersede older ones.
 - `docs/ideas/`: one file per mechanic idea, written from `docs/ideas/_template.md`. Each has a status: `raw` → `developing` → `prototyping` → `adopted` / `parked` / `rejected`.
@@ -18,10 +22,12 @@ The source of truth for what the game is trying to be is `docs/vision.md`. Read 
 - `tools/spell-gallery/`: a published page of animated spell vignettes the user rates. Ratings are stored in the artifact's db, and Claude reads them back into the docs. See its README for adding spells, the headless-Chrome filmstrip check, and how to read ratings.
 - `tools/spell-tree/`: the Spell Tree Explorer, an interactive page for proposal A. `resolver.js` holds the rules. The user's answers to the open questions are in its db collection `answers`.
 - `tools/spell-atlas/`: the Spell Atlas, the whole tree under proposal C as one form × cast grid, plus a Structures section. `depth-c.js` counts what each rune-pool depth can reach. `rules-c.js` holds the rules (runs in node too). `audit-c.js` and `audit-a1.js` count element additions that change nothing; run them after any rule change, and keep inert additions at 0. Its db holds `answers` (questions) and `cells` (per-cell ratings).
-- **Feedback lives in artifact dbs.** At the start of every session, read all of them (see the memory file of artifact URLs) and fold any new ratings or notes into the docs before doing anything else.
+- **Feedback lives in artifact dbs.** At the start of every session, read all of them (the root `README.md` lists every published page's URL, as does the memory file of artifact URLs) and fold any new ratings or notes into the docs before doing anything else.
 - `tools/art-styles/`: the Art Style Explorer, the same fight in six art directions. Ratings are in its db collection `ratings`.
 - `tools/art-pixel-hd/`: Pixel Battlefield, the leading art direction (high-res pixel art, 3/4 camera) shown full screen with structures and the rune HUD. Answers are in its db collection `answers`.
 - `tools/spell-vfx/`: the Spell VFX gallery, looping pixel-art vignettes of the current spells in the Pixel Battlefield style. Its `rules-c.js` is a snapshot of the Atlas rules: re-copy it after rule changes. Ratings are in its db collection `ratings`, one doc per vignette slug. `filmstrip.html` is QA only, so don't publish it.
+- `tools/weapon-moves/`: the Weapon Moveset Review, the conjured weapons and guards drawn move by move, in rounds (round 4 is the Prism's Capacitor and Lance). Ratings are in its db collection `ratings`, question answers in `answers`. Its README lists each round's slugs.
+- `tools/balance-notes/`: the Balance Notes page, the balance harness's findings (`npm run balance` in `game/`) with questions for the user.
 - `tools/engine-choice/`: the Engine Choice page, comparing stacks for the real game (see `explorations/2026-11-04-engine-options.md`). Option verdicts are in db `ratings`; question answers (`q-*`, `general`) are in `answers`.
 - `game/`: the real game (engine phase, from 2026-11-04). Rooms: the Sanctum, the Arena (`#arena`) and Survive (`#survive`, with power-ups between waves). An npm workspace: `rules` (spell grammar C, generated from the Atlas's `rules-c.js`), `sim` (the deterministic game: typed-array state, `step(world, inputs)`, replays, state hashes) and `client` (Vite + PixiJS v8). Its own `README.md` and `CLAUDE.md` cover the commands, the determinism rules and milestone 1.
 - `prototypes/`: each prototype is self-contained in `prototypes/NN-short-name/` and has its own README covering the question it answers, how to run it, and what we learned. See `prototypes/README.md`.
@@ -45,4 +51,4 @@ The user wants Claude to actively maintain the docs and keep the process on trac
 - Lead with the player experience: what does it feel like in the hands, and what does a co-op partner see or do? Engine or implementation detail comes later.
 - Name the trade-off. Every added axis of spell input costs finger complexity and readability. Say what an idea costs, not only what it adds.
 - Prototypes answer exactly one question and are allowed to be ugly. Don't build shared engine code across prototypes until at least two prototypes need it.
-- Tech stack (decided 2026-11-04): PixiJS v8 for drawing, our own deterministic TypeScript sim, lockstep netcode later, Electron for Steam later. Prototypes may still use plain Canvas2D.
+- Tech stack (decided 2026-11-04): PixiJS v8 for drawing, our own deterministic TypeScript sim, rollback netcode (2-tick input delay) over WebRTC, Electron for Steam later. Prototypes may still use plain Canvas2D.

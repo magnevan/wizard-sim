@@ -23,6 +23,7 @@
     ['sigil', 'Sigil devices', 'Sigil (violet) makes things in the world: turrets, orbitals, glyphs, a lens, a blink, a double, a wand.'],
     ['aura', 'Sigil auras', 'Sigil on yourself is an aura: it affects whoever is around you and never boosts your own spells.'],
     ['deaths', 'Deaths: goblin', 'A trial: one base death per enemy plus an element overlay, driven only by what the game knows at the kill (element, how the hit was delivered, direction, statuses, overkill). Frozen shatters; a scald steams; earth splits into boulder (missile) and quake (burst); fire, cold, lightning and arcane have their own; everything else, water included, uses the base. Each card says whether it is the base plus an overlay, or a bespoke death that replaces the body. Playful poofs, no gore.'],
+    ['deaths2', 'Deaths: the other enemies', 'Brute, archer, fire imp, grabber and shieldbearer play the goblin set on their own rig, except where their body or character changes how a death reads: the brute is too heavy to fly, the archer and shieldbearer have gear that falls, burns and breaks, the imp is a living ember that water and cold put out, the grabber has long arms. Only those bespoke deaths are shown here; every other element inherits the goblin death.'],
   ];
   const CASTN = { force: 'Force', area: 'Area', place: 'Place', self: 'Self', conjure: 'Weapon' };
 

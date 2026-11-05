@@ -182,6 +182,9 @@ export class WorldView {
     this.frame++;
     const b = w.bodies, t = (w.clock[0] + alpha) / 60, cam = this.camera, ct = now / 1000;
     this.lastCt = ct;
+    // a death's screen shake (a brute slamming down; last frame's, in whole art px): cosmetic only
+    const sh = this.deaths.shake, sx = sh > 0.3 ? Math.round(Math.sin(ct * 83) * sh) : 0, sy = sh > 0.3 ? Math.round(Math.cos(ct * 71) * sh * 0.6) : 0;
+    this.root.position.set(sx * cam.scale, sy * cam.scale);
     // how long the sim has stood still (capped): lets sim-driven loops (orbitals) carry on smoothly
     if (t !== this.lastSimT) { this.lastSimT = t; this.stillSince = ct; }
     const lead = Math.min(0.5, ct - this.stillSince);

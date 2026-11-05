@@ -210,7 +210,9 @@
     }
     const ta = el('textarea'); ta.rows = 2; ta.id = 'ans-' + q.id; ta.placeholder = 'Note (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on ' + q.title);
     noteBox(ta, () => answers[q.id], (p) => put('answers', q.id, p));
-    side.append(ch, el('p', 'hint', 'No answer means you accept the recommended option.'), ta);
+    if (q.suggest) side.append(el('p', 'suggest', `<b>My suggestion:</b> ${esc(q.suggest)}`));
+    if (q.choices.length) side.append(ch);
+    side.append(el('p', 'hint', q.choices.length ? 'No answer means you accept the recommended option.' : 'No answer means you accept the suggestion.'), ta);
     row.append(side);
     askers.push({ id: q.id, ch, ta });
     qHost.append(row);
@@ -222,8 +224,8 @@
   for (const [id, lead, le, carried, text] of C.mixPairs) {
     const row = el('article', 'pairrow'); row.id = id; row.dataset.rid = id;
     const lhs = el('div', 'ptext');
-    const lab = id === 'mix-weak' ? 'Ember, Rime, Tide' : `${lead} carries ${carried.map((e) => ELN[e]).join(', ')}`;
-    lhs.append(el('div', 'picons', `${id === 'mix-weak' ? ['fire', 'cold', 'water'].map(chip).join('') : chip(le) + '<span class="plus">+</span>' + carried.map(chip).join('')}`));
+    const lab = lead;
+    lhs.append(el('div', 'picons', id === 'mix-weak' ? ['fire', 'cold', 'water', 'lightning'].map(chip).join('') : chip(le) + '<span class="plus">+</span>' + carried.map(chip).join('')));
     lhs.append(el('div', null, `<b>${esc(lab)}</b><p>${esc(text)}</p><span class="slug">${id}</span>`));
     row.append(lhs, rater(id, lab, true));
     $('mixpairs').append(row);

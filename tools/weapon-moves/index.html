@@ -105,6 +105,7 @@
   .badge.kept { border: 1px solid var(--line-2); color: var(--muted); }
   .badge.r3 { background: var(--maybe); }
   .mixtable th[scope="row"] { white-space: nowrap; }
+  .suggest { margin: 0; font-size: 14px; color: var(--fg); background: var(--raise); border-left: 3px solid var(--maybe); padding: 6px 9px; border-radius: 0 6px 6px 0; }
   .subh { font: 400 13px/1.3 var(--pixel); letter-spacing: 0.04em; margin: 18px 0 0; }
   .pairs { display: grid; gap: 8px; }
   .pairrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
@@ -220,21 +221,11 @@
 
   <section class="block" id="sec-mix" aria-labelledby="h-mix">
     <h2 id="h-mix">How elements mix</h2>
-    <p class="lead">Opposites cancel in the queue (Fire/Cold, Water/Lightning, Life/Arcane, Earth/Lightning, Shield/Shield), so a guard is Shield plus up to 4 runes of elements that don’t cancel, at most 3 different ones. <b>Built today:</b> the element with the most runes leads and sets Defend, Retreat and the lead passive; only the second element mixes in (its passive and its resistance row at half strength), and a third does nothing. <b>Proposed, after your note</b> (“stronger elements are the ones that need more flexibility, since they set the form”): as in spells, the <b>strongest</b> element leads (Life, Earth, Arcane, Lightning), and what it carries becomes the material of its moves, the way Earth + Fire is a fireball. The pairings are listed below; rate each one.</p>
-    <div class="tablewrap mixtable">
-      <table>
-        <caption>One guard, Shield + Earth + Earth + Fire, under each answer</caption>
-        <thead><tr><th scope="col"></th><th scope="col">Today</th><th scope="col">Recommended (M1–M3: yes)</th></tr></thead>
-        <tbody>
-          <tr><th scope="row">Lead (Earth, the strongest)</th><td>Bulwark: Defend, Shove step, Anchored</td><td>Same, plus 25 % more guard HP and Shove-step distance for the second Earth</td></tr>
-          <tr><th scope="row">Fire ×1</th><td>Warm, plus half of the Ember resistance row</td><td>Warm, half the Ember row, and Fire as the slab’s material: biters burn and the Shove step sets the shoved alight</td></tr>
-          <tr><th scope="row">A third element</th><td>Nothing</td><td>Its passive, its row by rune count, and its material as well</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <p class="lead">You said: <q>The stronger elements are life, rock, arcane. For shield+life, the identity is around life and preservation. Probably mixing in elements should mostly be about granting more resistance. Shield Rock is a sturdy barrier, adding elements can add effects like burning attackers, chilling them, etc. Sigil Arcane is the ranged option, so it can just imbue the element in attacks.</q></p>
+    <p class="lead"><span class="badge new r3">Built in the game</span> The merged rule. <b>1.</b> The strongest element leads, as in spells: Life, Earth, Arcane, then Lightning; without one, Water, Fire or Cold leads by count. <b>2.</b> Every other element mixes in: it brings its guard’s passive and its resistance row by rune count (half at 1 rune, all of it at 2). <b>3.</b> What the extras do depends on the lead’s identity: the five rows below. A bite-back flashes in the coat’s colour on whoever it bit. Opposites still cancel in the queue (Fire/Cold, Water/Lightning, Life/Arcane, Earth/Lightning), so a guard is Shield plus up to 4 runes, at most 3 different elements.</p>
     <div id="mixq"></div>
-    <h3 class="subh">The pairings: a strong lead and what it carries</h3>
-    <p class="lead">About 15 once opposites are cut (Life can’t carry Arcane, Earth can’t carry Lightning, Lightning can’t carry Water or Earth). The Leaf rows reuse the Life spell lends you already accepted.</p>
+    <h3 class="subh">What the extras do, by the lead’s identity (built)</h3>
+    <p class="lead">Rate each row. Not built yet: more of the lead making the shape bigger (M3), coats on Mend and Siphon, and the guard rim drawn in the coat’s colours.</p>
     <div id="mixpairs" class="pairs"></div>
   </section>
 

@@ -9,7 +9,7 @@ import {
   ARCH, ARCHETYPES, ARMS, BTN, EL, GUARD, KIND, NO_INPUT, SURF, TEAM, ZONE, createWorld, elementId, quantize, spawnBody, step,
   type PlayerInput, type World,
 } from '../src';
-import { anchored, guardBeam, resist, RES, walkMult } from '../src/guards';
+import { anchored, guardBeam, resist, RES, taken, walkMult } from '../src/guards';
 import { N_EL } from '../src/elements';
 import { cellAt } from '../src/effects';
 
@@ -69,24 +69,26 @@ describe('guards: one per lead element', () => {
     const { w, d } = arena();
     d.conjure('shield', 'fire', 'fire', 'earth');
     expect(w.seats.guard[0]).toBe(GUARD.bulwark);
-    expect(resist(w, 0, RES.physical)).toBe(0.5); // the Bulwark's own
-    expect(resist(w, 0, RES.fire)).toBe(1); // 25 % + all of the Ember's (2 runes: the full row), capped
-    expect(resist(w, 0, RES.cold)).toBe(0.75); // 25 % + the Ember's 50 %
+    expect(resist(w, 0, RES.physical)).toBe(1); // the Bulwark's own: takes half
+    expect(resist(w, 0, RES.fire)).toBeCloseTo(1 / 3 + 3); // own + all of the Ember's (2 runes: the full row)
+    expect(taken(w, 0, RES.fire)).toBeCloseTo(0.23); // hyperbolic: never immune
+    expect(resist(w, 0, RES.cold)).toBeCloseTo(1 / 3 + 1);
     expect(anchored(w, 0)).toBe(true);
   });
 
   it('every mixed-in element counts, and one rune brings half its row', () => {
     const { w, d } = arena();
     d.conjure('shield', 'earth', 'fire', 'water'); // Bulwark + Fire + Water
-    expect(resist(w, 0, RES.fire)).toBe(0.25 + 0.5 + 0.25); // own + half the Ember's + half the Tide's
+    expect(resist(w, 0, RES.fire)).toBeCloseTo(1 / 3 + 1.5 + 0.5); // own + half the Ember's + half the Tide's
     expect(resist(w, 0, RES.lightning)).toBe(-0.25); // the Tide's weakness comes too
+    expect(taken(w, 0, RES.lightning)).toBe(1.25);
   });
 
   it('a Leaf (Life: preservation) takes only the strengths of what it carries', () => {
     const { w, d } = arena();
     d.conjure('shield', 'life', 'water');
     expect(w.seats.guard[0]).toBe(GUARD.leaf);
-    expect(resist(w, 0, RES.fire)).toBe(-0.25 + 0.25); // its own weakness, offset by half the Tide's 50 %
+    expect(resist(w, 0, RES.fire)).toBe(-0.25 + 0.5); // its own weakness, offset by half the Tide's
     expect(resist(w, 0, RES.lightning)).toBe(0); // no Tide weakness under a Leaf
   });
 
@@ -109,7 +111,7 @@ describe('guards: one per lead element', () => {
     expect(walkMult(w, 0)).toBeCloseTo(ARMS.carryWalk * ARMS.carryWalk);
   });
 
-  it('resistances apply while carried: an Ember targe takes no fire, a Rime kite takes more', () => {
+  it('resistances apply while carried: an Ember targe takes a quarter of the fire, a Rime kite takes more', () => {
     const took: Record<string, number> = {};
     for (const q of [[], ['shield', 'fire'], ['shield', 'cold']] as Element[][]) {
       const { w, d } = arena(2);
@@ -119,7 +121,8 @@ describe('guards: one per lead element', () => {
       took[q.join('+') || 'none'] = 100 - w.bodies.hp[0];
     }
     expect(took.none).toBeGreaterThan(5);
-    expect(took['shield+fire']).toBe(0);
+    expect(took['shield+fire']).toBeGreaterThan(0);
+    expect(took['shield+fire']).toBeLessThan(took.none * 0.3);
     expect(took['shield+cold']).toBeGreaterThan(took.none);
   });
 

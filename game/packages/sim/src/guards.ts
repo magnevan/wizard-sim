@@ -37,19 +37,21 @@ import { GUARD, GUARD_NAME, KIND, MAX_SEATS, ZONE, type World } from './world';
 /** Resistance columns. */
 export const RES = { physical: 0, fire: 1, cold: 2, lightning: 3, arcane: 4 } as const;
 /**
- * Share of damage each guard takes off (negative: extra), by column, while carried. Coarse tiers on
- * purpose (25 / 50 / immune): each guard is strong against its own element and weak against its opposite.
+ * Each guard's resistance by column, while carried, on a hyperbolic scale: damage taken is 1 / (1 + r),
+ * so every point adds the same effective HP (r = 1 doubles it) and stacking never reaches immunity.
+ * A negative r is a weakness: damage taken is 1 - r. Coarse tiers on purpose (1/3: takes 75 %; 1: takes
+ * 50 %; 3: takes 25 %): each guard is strong against its own element and weak against its opposite.
  */
 const RES_TABLE: readonly (readonly number[])[] = [
   /* none    */ [0, 0, 0, 0, 0],
-  /* bulwark */ [0.5, 0.25, 0.25, 0, 0],
-  /* mirror  */ [0.25, 0, 0, 0, 0],
-  /* ember   */ [0, 1, 0.5, 0, 0],
-  /* rime    */ [0.25, -0.25, 1, 0, 0],
-  /* spark   */ [-0.25, 0, 0, 1, 0],
-  /* tide    */ [0, 0.5, -0.25, -0.5, 0],
-  /* prism   */ [-0.25, 0, 0, 0, 0.5],
-  /* leaf    */ [0, -0.25, 0, 0, 0.5],
+  /* bulwark */ [1, 1 / 3, 1 / 3, 0, 0],
+  /* mirror  */ [1 / 3, 0, 0, 0, 0],
+  /* ember   */ [0, 3, 1, 0, 0],
+  /* rime    */ [1 / 3, -0.25, 3, 0, 0],
+  /* spark   */ [-0.25, 0, 0, 3, 0],
+  /* tide    */ [0, 1, -0.25, -0.5, 0],
+  /* prism   */ [-0.25, 0, 0, 0, 1],
+  /* leaf    */ [0, -0.25, 0, 0, 1],
 ];
 /** The guard an element leads to, and the resistance column that is "its own" (-1: Water and Life deal no damage). */
 const GUARD_OF: Record<number, number> = { [EL.earth]: GUARD.bulwark, [EL.fire]: GUARD.ember, [EL.cold]: GUARD.rime, [EL.lightning]: GUARD.spark, [EL.water]: GUARD.tide, [EL.arcane]: GUARD.prism, [EL.life]: GUARD.leaf };
@@ -92,7 +94,7 @@ export function conjureGuard(w: World, src: number, counts: Uint8Array): void {
 }
 
 /**
- * Share of damage in `col` that seat t's guard takes off (1 = immune, negative = takes more). 0 without
+ * Seat t's guard's resistance to `col` (the hyperbolic r of RES_TABLE; negative = a weakness). 0 without
  * a guard. Every mixed-in element adds its guard's row by its share. Under a Leaf (Life: preservation)
  * they add only their strengths; under any other lead, their weaknesses come too.
  */
@@ -107,7 +109,12 @@ export function resist(w: World, t: number, col: number): number {
     if (g === GUARD.leaf && v < 0) continue;
     r += share(n) * v;
   }
-  return Math.min(1, r);
+  return r;
+}
+/** The share of `col` damage seat t takes through its guard: 1 / (1 + r), or 1 - r for a weakness. */
+export function taken(w: World, t: number, col: number): number {
+  const r = resist(w, t, col);
+  return r >= 0 ? 1 / (1 + r) : 1 - r;
 }
 /** The resistance column of an element's damage (Earth is physical), or -1. */
 export const colOf = (id: number): number => OWN_COL[id] ?? -1;
@@ -170,10 +177,10 @@ export function hasPassive(w: World, i: number, g: number): boolean {
 }
 /** Anchored (Bulwark): no knockback while carried. */
 export const anchored = (w: World, i: number): boolean => hasPassive(w, i, GUARD.bulwark);
-/** No chill or freeze: Warm (Ember) and anything immune to cold. */
-export const warm = (w: World, i: number): boolean => hasPassive(w, i, GUARD.ember) || resist(w, i, RES.cold) >= 1;
-/** Can't burn: immune to fire, or Quenched (Tide). */
-export const unburnable = (w: World, i: number): boolean => hasPassive(w, i, GUARD.tide) || resist(w, i, RES.fire) >= 1;
+/** No chill or freeze: Warm (Ember) and an own-element cold resistance (Rime). */
+export const warm = (w: World, i: number): boolean => hasPassive(w, i, GUARD.ember) || resist(w, i, RES.cold) >= ARMS.resStatus;
+/** Can't burn: an own-element fire resistance (Ember), or Quenched (Tide). */
+export const unburnable = (w: World, i: number): boolean => hasPassive(w, i, GUARD.tide) || resist(w, i, RES.fire) >= ARMS.resStatus;
 /** Never slips on ice (Rime). */
 export const sureFooted = (w: World, i: number): boolean => hasPassive(w, i, GUARD.rime);
 /** Grounded (Spark): chain lightning skips this seat. */
@@ -339,7 +346,7 @@ export function guardMissile(w: World, i: number, j: number, ux: number, uy: num
 export function guardMelee(w: World, t: number, src: number, dmg: number, dx: number, dy: number): number {
   const g = guardOf(w, t);
   if (!g) return 1;
-  const b = w.bodies, land = 1 - resist(w, t, RES.physical);
+  const b = w.bodies, land = taken(w, t, RES.physical);
   if (!blocking(w, t) || !fromFront(w, t, dx, dy)) return land;
   if (parrying(w, t)) { parryEffect(w, t, src, true); biteBack(w, t, src, -dx, -dy); return 0; }
   const foe = src >= 0 && alive(w, src);

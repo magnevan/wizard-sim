@@ -405,3 +405,7 @@ The user kept the strength lead, Lightning as strong, and the Leaf, Bulwark, wea
 - **Every rune scales** (q-mix-scale: "all runes cause some form of scaling, like in spells"): each guard rune past the first adds 15 % guard HP and Retreat distance. Weapons already scale through payload damage.
 - **A Prism parry returns the beam mixed with its coat; opposites cancel rune for rune**, as in the queue, so a Cold Prism can swallow a Fire beam.
 - Golden hash unchanged (`e055dcdb`).
+
+## 2026-11-05: Guard resistance is hyperbolic
+
+The user asked for it so that effective HP scales linearly and stacking never reaches immunity. Damage taken is 1 / (1 + r), and a weakness takes 1 − r. The old immunities become r = 3 (takes 25 %), and that level still blocks the element's status. Details are in `explorations/2026-11-05-guards-round-2.md`. The golden hash is unchanged.

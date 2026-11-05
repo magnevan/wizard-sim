@@ -14,8 +14,8 @@ const elName = (id: number) => rules.ELEMENTS[elementName(id) as Element].name;
 const GUARD_TEXT: Record<string, [string, string, string, string]> = {
   mirror: ['Mirror buckler', 'narrow block, parry reflects a shot', 'Backstep', 'Light: full speed blocking, widest parry'],
   bulwark: ['Bulwark', 'wide block that stops melee, parry bashes down', 'Shove step (a step back; knocks back what is in front)', 'Anchored: no knockback; 15 % slower'],
-  ember: ['Ember targe', 'thorns burn biters, parry blows flame', 'Flame step (leaves fire)', 'Warm: no chill or freeze; fire immune'],
-  rime: ['Rime kite', 'chills biters, parry freezes them', 'Ice slide (leaves ice)', 'Sure-footed: never slips; cold immune'],
+  ember: ['Ember targe', 'thorns burn biters, parry blows flame', 'Flame step (leaves fire)', 'Warm: no chill or freeze; takes 1/4 fire'],
+  rime: ['Rime kite', 'chills biters, parry freezes them', 'Ice slide (leaves ice)', 'Sure-footed: never slips; takes 1/4 cold'],
   spark: ['Spark ring', 'weakest block, parry discharges', 'Blink 3 u (leaves a spark)', 'Grounded: chain lightning skips you'],
   tide: ['Tide shield', 'shoves and soaks biters, parry throws a wave', 'Surge (shoves what is in front)', 'Quenched: cannot burn'],
   prism: ['Prism pane', 'stops beams and sprays, parry returns them', 'Phase (through bodies)', 'Clear: allies’ beams and sprays don’t hurt you'],

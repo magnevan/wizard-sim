@@ -186,6 +186,8 @@ export const ARMS = {
   mixShare: 0.5, coatScale: 0.5,
   /** Each rune in a guard past the first adds this much guard HP and Retreat distance. */
   runeSize: 0.15,
+  /** A guard resistance this high (an own-element guard's) also wards off that element's status: no stun, burn or chill. */
+  resStatus: 3,
   /** What each guard takes before it breaks. */
   hp: { mirror: 90, bulwark: 160, ember: 90, rime: 90, spark: 45, tide: 90, prism: 90, leaf: 90 },
 };

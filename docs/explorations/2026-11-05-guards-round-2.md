@@ -105,3 +105,15 @@ Merged rule, now in the game:
 | q-mix-scale | count: "Not just lead runes, all runes cause some form of scaling, like in spells" | **Every rune in a guard past the first adds 15 % guard HP and 15 % Retreat distance** (`ARMS.runeSize`). The mixed-in elements already scale by count (resistance share, and coat strength through the payload), and so do weapons (each rune adds payload damage). Weapon uses stay fixed at 30, since damage already scales |
 
 Not built yet: coats on Mend and Siphon, and the guard rim drawn in the coat's colours.
+
+### Resistance is hyperbolic (built)
+
+The user: "for resistance we should use the hyperbolic formula so that effective health scales linearly rather than being immortal by hitting 100%".
+
+- A guard's resistance r is now a point value: damage taken is **1 / (1 + r)**, so each point adds the same effective HP (r = 1 doubles it) and no amount of mixing reaches immunity.
+- A weakness (negative r) adds damage linearly: taken is 1 − r, so −0.25 takes 125 %.
+- The single guards keep their old numbers where possible: 25 % off is r = 1/3, 50 % off is r = 1.
+- **What was "immune" is now r = 3: the guard takes 25 %.** This applies to the Ember (fire), the Rime (cold) and the Spark (lightning).
+- That own-element level (`ARMS.resStatus`) still wards off the element's status. The Ember can't burn, the Rime can't be chilled, and the Spark can't be stunned by lightning.
+- Mixing adds r values before the formula, so the extras now stack without a cap. For example, a Bulwark carrying 2 Fire has r = 3⅓ against fire and takes 23 %.
+- Wards (Shield + element cast on yourself) are spells, not guards, and keep their flat resistance.

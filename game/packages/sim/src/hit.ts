@@ -3,13 +3,13 @@
  * (the rules' PAYLOAD table). Friendly fire is on: harm lands on whoever is hit, ally or not
  * (pillar 3). A Life spell only heals, and its other elements only help.
  */
-import { COMBAT, DAMAGE, STATUS, STRUCT, T } from './config';
+import { ARMS, COMBAT, DAMAGE, STATUS, STRUCT, T } from './config';
 import { EL, N_EL, elementName, formCurve, formOf } from './elements';
 import { ARCHETYPES } from './archetypes';
 import { angleDiff, len } from './geom';
 import { atan2Turns } from './trig';
 import { drainShield } from './walls';
-import { RES, anchored, colOf, guardBeam, resist, unburnable, warm } from './guards';
+import { RES, anchored, colOf, guardBeam, resist, taken, unburnable, warm } from './guards';
 import { KIND, MAX_SEATS, PU, WARD, stackOf, type World } from './world';
 
 export interface HitOpts {
@@ -97,7 +97,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     let d = DAMAGE[elementName(id)] * (id === form && n > 1 ? formCurve(form, n, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling) : n);
     if (arch && id === EL.fire && arch.fireMult !== undefined) d *= arch.fireMult;
     if (arch && id === EL.cold && arch.coldMult !== undefined) d *= arch.coldMult;
-    if (guard && d) { const col = physical ? RES.physical : colOf(id); if (col >= 0) d *= 1 - resist(w, tSeat, col); }
+    if (guard && d) { const col = physical ? RES.physical : colOf(id); if (col >= 0) d *= taken(w, tSeat, col); }
     const resisted = (ward === WARD.ward || ward === WARD.stone) && s.wardEls[tSeat * N_EL + id - 1] > 0;
     if (resisted) { dmg += d * (1 - STRUCT.wardResist); absorbed += d * STRUCT.wardResist; } else dmg += d;
   }
@@ -127,15 +127,15 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   if (cold && !noChill) {
     b.burn[t] = 0;
     // a guard weak to cold (the Tide shield) chills faster, a resistant one slower
-    b.chill[t] = Math.min(STATUS.chillMax, b.chill[t] + STATUS.chillPerRune * cold * ss * (guard ? 1 - resist(w, tSeat, RES.cold) : 1));
+    b.chill[t] = Math.min(STATUS.chillMax, b.chill[t] + STATUS.chillPerRune * cold * ss * (guard ? taken(w, tSeat, RES.cold) : 1));
     if (b.chill[t] >= STATUS.chillMax && !b.frozen[t]) freezeBody(w, t);
   }
   if (o.freeze && b.wet[t] && !b.frozen[t] && !noChill) freezeBody(w, t);
   if (o.scald) dmg += STATUS.scaldBonus * o.scale;
   if (lightning) {
-    const lr = guard ? resist(w, tSeat, physical ? RES.physical : RES.lightning) : 0;
-    if (b.wet[t]) dmg += DAMAGE.lightning * lightning * o.scale * (STATUS.wetShockMult - 1) * (1 - lr);
-    if (lr < 1) b.stun[t] = Math.max(b.stun[t], Math.round(T(STATUS.stunPerRune) * lightning * Math.min(1, ss * 4)));
+    const col = physical ? RES.physical : RES.lightning, lr = guard ? resist(w, tSeat, col) : 0;
+    if (b.wet[t]) dmg += DAMAGE.lightning * lightning * o.scale * (STATUS.wetShockMult - 1) * (guard ? taken(w, tSeat, col) : 1);
+    if (lr < ARMS.resStatus) b.stun[t] = Math.max(b.stun[t], Math.round(T(STATUS.stunPerRune) * lightning * Math.min(1, ss * 4)));
   }
   if (arcane) b.expose[t] = Math.max(b.expose[t], Math.round(T(STATUS.expose) * Math.min(1, ss * 4)));
   if (earth) {
@@ -184,7 +184,7 @@ export function tickStatuses(w: World): void {
       b.burn[i]--;
       // A ward made with Fire (or stone armour coated in it) resists the burning too.
       const fireWard = i < MAX_SEATS && (w.seats.ward[i] === WARD.ward || w.seats.ward[i] === WARD.stone) && w.seats.wardEls[i * N_EL + EL.fire - 1] > 0;
-      b.hp[i] -= (STATUS.burnDps / 60) * (fireWard ? 1 - STRUCT.wardResist : 1) * (i < MAX_SEATS ? 1 - resist(w, i, RES.fire) : 1);
+      b.hp[i] -= (STATUS.burnDps / 60) * (fireWard ? 1 - STRUCT.wardResist : 1) * (i < MAX_SEATS ? taken(w, i, RES.fire) : 1);
       if (b.hp[i] <= 0) b.lastEl[i] = EL.fire; // burned to death
       b.lastHit[i] = w.clock[0];
       // Credit the fire to whoever lit it, twice a second (meters; the view's damage pops).

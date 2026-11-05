@@ -47,6 +47,11 @@ const STAFF_Z = 10; // missiles fly about this high (art px)
 const LIFT = 9; // a beam or spray end is lifted to about chest height
 /** A late remote spell (rollback) catches up with where it really is over this much real time, s. */
 const CATCH_S = 0.15;
+/** Floors fade out over their last second (ticks), in this many dither steps. */
+export const FLOOR_FADE = 60;
+const FADE_STEPS = 6;
+/** How much of a floor cell is still drawn, given its sim life in ticks: 1, then down in steps to 1/FADE_STEPS. */
+export const floorFade = (life: number): number => (life >= FLOOR_FADE ? 1 : Math.max(1, Math.floor((FADE_STEPS * life) / FLOOR_FADE)) / FADE_STEPS);
 
 export class Vfx {
   /** The local player's seat: their ring is solid and their rune swirl sparse (their HUD shows the detail). */
@@ -287,10 +292,12 @@ export class Vfx {
   }
 
   // ---- the floor: water, ice and one continuous sheet of fire ----------------------------------
+  // Every floor fades out over its last FLOOR_FADE ticks (1 s): water and ice dither away in
+  // FADE_STEPS steps, fire's flames shrink (the user: water and ice used to just vanish).
   private surfaces(w: World, t: number, light: LightFn): void {
     const s = w.surf, g = this.g.x, n = s.kind.length;
     let key = '';
-    for (let c = 0; c < n; c++) if (s.kind[c]) key += c.toString(36) + s.kind[c];
+    for (let c = 0; c < n; c++) if (s.kind[c]) { key += c.toString(36) + s.kind[c]; if (s.life[c] < FLOOR_FADE) key += '~' + Math.round(floorFade(s.life[c]) * FADE_STEPS); }
     if (key !== this.surfKey) { this.surfKey = key; this.paintSurfaces(w); }
     if (key) g.drawImage(this.surf.c, 0, 0);
     const cw = CELL * 16, FR = EL.fire;
@@ -299,18 +306,18 @@ export class Vfx {
     const kindAt = (c: number, dx: number, dy: number) => { const x = (c % GW) + dx, y = Math.floor(c / GW) + dy; return x < 0 || y < 0 || x >= GW || y * GW + x >= n ? 0 : s.kind[y * GW + x]; };
     for (let c = 0; c < n; c++) {
       const k = s.kind[c]; if (!k) continue;
-      const [x, y] = at(c);
+      const [x, y] = at(c), af = floorFade(s.life[c]);
       if (k === SURF.water) {
         // ripples on a few cells
-        if (rand(c, 5) < 0.08) { const e = mod(t * 0.7 + rand(c, 6), 1); X.ring(g, x, y, 1 + e * 5, (1 + e * 5) * 0.4, '#5aa8e8', (1 - e) * 0.8); }
-        if (rand(c, 7) < 0.04 && mod(t * 0.5 + rand(c, 8), 1) < 0.15) X.line(g, x - 2, y, x + 1, y - 1, '#8ad0ff');
+        if (rand(c, 5) < 0.08) { const e = mod(t * 0.7 + rand(c, 6), 1); X.ring(g, x, y, 1 + e * 5, (1 + e * 5) * 0.4, '#5aa8e8', (1 - e) * 0.8 * af); }
+        if (af > 0.5 && rand(c, 7) < 0.04 && mod(t * 0.5 + rand(c, 8), 1) < 0.15) X.line(g, x - 2, y, x + 1, y - 1, '#8ad0ff');
       } else if (k === SURF.ice) {
-        if (rand(c, 9) < 0.05 && Math.floor(t * 3 + rand(c, 10) * 9) % 6 === 0) { X.px(g, x, y - 1, '#ffffff'); X.px(g, x - 1, y - 1, '#c4eefa'); X.px(g, x + 1, y - 1, '#c4eefa'); }
+        if (af > 0.5 && rand(c, 9) < 0.05 && Math.floor(t * 3 + rand(c, 10) * 9) % 6 === 0) { X.px(g, x, y - 1, '#ffffff'); X.px(g, x - 1, y - 1, '#c4eefa'); X.px(g, x + 1, y - 1, '#c4eefa'); }
       } else {
         // the flame body: a solid low base everywhere and tongues where travelling waves peak,
         // so neighbouring cells merge into one sheet with ragged tips (fire-place-v3)
         const nb = (kindAt(c, -1, 0) === k ? 1 : 0) + (kindAt(c, 1, 0) === k ? 1 : 0) + (kindAt(c, 0, -1) === k ? 1 : 0) + (kindAt(c, 0, 1) === k ? 1 : 0);
-        const inner = nb / 4, life = Math.min(1, s.life[c] / 40);
+        const inner = nb / 4, life = Math.min(1, s.life[c] / FLOOR_FADE);
         // edges round off: columns near a side with no fire beyond it are shorter, and jittered
         const openL = kindAt(c, -1, 0) !== k, openR = kindAt(c, 1, 0) !== k, openF = kindAt(c, 0, 1) !== k, openB = kindAt(c, 0, -1) !== k;
         for (let row = 0; row < 2; row++) {
@@ -351,24 +358,25 @@ export class Vfx {
       return m;
     };
     // rims first, so neighbouring cells merge into one soft blob, then the interiors
+    // a cell in its last second is dithered thinner, step by step (af: 1 down to 1/FADE_STEPS)
     for (let k = 0; k < n; k++) {
       const v = s.kind[k]; if (!v) continue;
-      const [x, y] = at(k), j = (rand(k, 1) - 0.5) * 1.2;
-      if (v === SURF.water) X.ellipse(c, x + j, y, 6.4, 3.9, '#18325a');
-      else if (v === SURF.ice) X.ellipse(c, x + j, y, 6.4, 3.9, '#7ab8d4');
-      else { X.ellipse(c, x + j, y + 0.5, 7.2, 4.4, '#2a1a12', 0.6); X.ellipse(c, x, y, 5.8, 3.4, EL.fire[4], 0.75); }
+      const [x, y] = at(k), j = (rand(k, 1) - 0.5) * 1.2, af = floorFade(s.life[k]);
+      if (v === SURF.water) X.ellipse(c, x + j, y, 6.4, 3.9, '#18325a', af);
+      else if (v === SURF.ice) X.ellipse(c, x + j, y, 6.4, 3.9, '#7ab8d4', af);
+      else { X.ellipse(c, x + j, y + 0.5, 7.2, 4.4, '#2a1a12', 0.6 * af); X.ellipse(c, x, y, 5.8, 3.4, EL.fire[4], 0.75 * af); }
     }
     for (let k = 0; k < n; k++) {
       const v = s.kind[k]; if (!v) continue;
-      const [x, y] = at(k), m = same(k);
+      const [x, y] = at(k), m = same(k), af = floorFade(s.life[k]), lines = af > 0.5;
       if (v === SURF.water) {
-        if (m >= 3) X.ellipse(c, x, y - 0.5, 5.4, 3.0, '#204a80');
-        if (rand(k, 2) < 0.12) X.line(c, x - 2, y - 1, x + 1, y - 2, '#5aa8e8');
+        if (m >= 3) X.ellipse(c, x, y - 0.5, 5.4, 3.0, '#204a80', af);
+        if (lines && rand(k, 2) < 0.12) X.line(c, x - 2, y - 1, x + 1, y - 2, '#5aa8e8');
       } else if (v === SURF.ice) {
-        if (m >= 3) X.ellipse(c, x, y - 0.5, 5.4, 3.0, '#b4e4f4');
-        if (rand(k, 3) < 0.16) X.line(c, x - 2, y, x + 2 + rand(k, 4) * 2, y, '#ffffff');
-        if (rand(k, 5) < 0.1) X.lines(c, [[x - 3, y + 1], [x, y + 2], [x + 3, y + 1]], '#5a90b0');
-      } else if (m >= 3) X.ellipse(c, x, y, 5, 2.8, EL.fire[3]);
+        if (m >= 3) X.ellipse(c, x, y - 0.5, 5.4, 3.0, '#b4e4f4', af);
+        if (lines && rand(k, 3) < 0.16) X.line(c, x - 2, y, x + 2 + rand(k, 4) * 2, y, '#ffffff');
+        if (lines && rand(k, 5) < 0.1) X.lines(c, [[x - 3, y + 1], [x, y + 2], [x + 3, y + 1]], '#5a90b0');
+      } else if (m >= 3) X.ellipse(c, x, y, 5, 2.8, EL.fire[3], af);
     }
   }
 

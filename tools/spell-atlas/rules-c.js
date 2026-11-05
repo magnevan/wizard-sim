@@ -266,7 +266,7 @@
     water: {
       force: () => ['Water spray', 'A cone that soaks and pushes.'],
       area: () => ['Splash ring', 'A splash that pushes everything away from you.'],
-      place: () => ['Rain', 'Rain falls at the cursor for about 5 seconds (a second longer per extra Water). It soaks and douses whoever stands under it and floods the ground: a surface to freeze or electrify.'],
+      place: () => ['Rain', 'Rain falls at the cursor for about 5 seconds. Each extra Water makes it a second longer and a little wider. It soaks and douses whoever stands under it and floods the ground: a surface to freeze or electrify.'],
       conjure: swing('water'),
     },
     fire: {

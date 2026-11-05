@@ -256,11 +256,14 @@ describe('Area and Place', () => {
     expect(k).toBeGreaterThanOrEqual(0);
     expect(one.w.zones.life[k]).toBeGreaterThan(T(SHAPES.rainLife) - 70);
     expect(one.w.zones.life[k]).toBeLessThanOrEqual(T(SHAPES.rainLife));
+    expect(one.w.zones.r[k]).toBeCloseTo(SHAPES.patchRadius);
     one.d.tick({}, T(SHAPES.rainLife));
     expect(rainOf(one.w)).toBe(-1); // and then it stops
     const two = range(8);
     two.d.queue('water', 'water').place(4, 0, 30);
     expect(two.w.zones.life[rainOf(two.w)]).toBeGreaterThan(T(SHAPES.rainLife + SHAPES.rainPerRune) - 70);
+    // and wider: the user wanted both. The same +0.4 u a rune as every Place patch.
+    expect(two.w.zones.r[rainOf(two.w)]).toBeCloseTo(SHAPES.patchRadius + 0.4);
   });
 
   it('rain keeps dousing: a burning body walking in at 3 s is put out and soaked', () => {

@@ -99,6 +99,27 @@ describe('view', async () => {
     expect(view.camera.following).toBe(false);
   }, 60000);
 
+  // water, ice and fire floors fade out over their last second instead of popping out
+  test('floors fade over their last second', async () => {
+    const { floorFade, FLOOR_FADE } = await import('../src/art/vfx');
+    const { SURF } = await import('@wizard-sim/sim');
+    expect(FLOOR_FADE).toBe(60);
+    expect(floorFade(FLOOR_FADE * 10)).toBe(1);
+    expect(floorFade(FLOOR_FADE)).toBe(1);
+    expect(floorFade(FLOOR_FADE - 1)).toBeLessThan(1);
+    expect(floorFade(FLOOR_FADE / 2)).toBeCloseTo(0.5);
+    expect(floorFade(1)).toBeGreaterThan(0); // still drawn on its last tick
+    for (let l = 1; l < FLOOR_FADE; l++) expect(floorFade(l)).toBeLessThanOrEqual(floorFade(l + 1)); // only ever thins
+    // and a world whose floors run out draws every step of the way
+    const view = new WorldView();
+    view.resize(1280, 800, 3);
+    const w = createWorld(7, 1);
+    const gw = w.dims.gw, row = Math.floor(w.dims.gh / 2) * gw; // water, ice and fire patches side by side mid-floor
+    for (let c = 4; c < 40; c++) for (const dy of [0, 1, 2]) { const k = row + dy * gw + c; w.surf.kind[k] = c < 16 ? SURF.water : c < 28 ? SURF.ice : SURF.fire; w.surf.life[k] = FLOOR_FADE + 5; }
+    for (let t = 0; t < FLOOR_FADE + 10; t++) { view.beforeStep(w); step(w, [0, 1, 2, 3].map(() => ({ ...NO_INPUT }))); view.afterStep(w); view.draw(w, 0.5); }
+    expect(Array.from(w.surf.kind).some((k) => k !== SURF.none)).toBe(false);
+  }, 60000);
+
   test('online, each screen follows its own wizard: the partner gets an edge arrow, not the frame', async () => {
     const view = new WorldView();
     view.resize(1920, 1080);

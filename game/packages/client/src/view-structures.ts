@@ -1315,12 +1315,13 @@ export class StructureView {
     const z = w.zones;
     for (let k = 0; k < MAX_ZONES; k++) {
       if (z.type[k] !== ZONE.spark) continue;
-      const x = gx(z.x[k]), y = gy(z.y[k]), q = clamp(z.life[k] / T(ARMS.spark), 0, 1), fl = Math.floor(t * 20);
-      K.scorch(g, x, y, 5, 0.5 * q + 0.1);
-      K.gring(g, x, y, 5 + Math.sin(t * 9 + k) * 0.8, EL.lightning[3], 0.5 + 0.4 * q);
-      for (let j = 0; j < 3; j++) { const a = rand(j, fl, k) * TAU, b = rand(j, fl, k + 3) * TAU; X.lines(o, K.bolt([x + Math.cos(a) * 4, y - 2 + Math.sin(a) * 2], [x + Math.cos(b) * 3, y - 6 - rand(j, fl, 9) * 5], fl + j, 0.5, 2), j ? EL.lightning[2] : EL.lightning[1]); }
-      if (fl % 3 === 0) X.px(o, x, y - 4, '#ffffff');
-      light(x, y, 26, '#b08aff', 0.4 * q);
+      // q dims it over its life; end fades it out over its last half second (it used to pop out at half strength)
+      const x = gx(z.x[k]), y = gy(z.y[k]), q = clamp(z.life[k] / T(ARMS.spark), 0, 1), end = seg(z.life[k], 0, 30), fl = Math.floor(t * 20);
+      K.scorch(g, x, y, 5, (0.5 * q + 0.1) * end);
+      K.gring(g, x, y, 5 + Math.sin(t * 9 + k) * 0.8, EL.lightning[3], (0.5 + 0.4 * q) * end);
+      for (let j = 0; j < 3; j++) { if (j && end < 0.5) break; const a = rand(j, fl, k) * TAU, b = rand(j, fl, k + 3) * TAU; X.lines(o, K.bolt([x + Math.cos(a) * 4, y - 2 + Math.sin(a) * 2], [x + Math.cos(b) * 3, y - 6 - rand(j, fl, 9) * 5], fl + j, 0.5, 2), j ? EL.lightning[2] : EL.lightning[1]); }
+      if (fl % 3 === 0 && end > 0.5) X.px(o, x, y - 4, '#ffffff');
+      light(x, y, 26, '#b08aff', 0.4 * q * end);
     }
   }
 

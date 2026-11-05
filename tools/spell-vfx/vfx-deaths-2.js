@@ -459,8 +459,7 @@
   // unravelling from their edges inward. o.limbs: the long arms go first, from the claws inward.
   function arcane3(ev, t, td, g0, D, key, fade, o = {}) {
     const R = EL.arcane, dir = ev.dir, S = o.S || 1;
-    const px = sprite(key, Object.assign({}, g0, { flash: 0 }), t - td), PC = L.piecesOf(key + '#v3', px, Math.round(12 * Math.sqrt(S)), 13);
-    if (!PC.idx) PC.idx = PC.threads.map((th) => [PC.P.findIndex((c) => c.pts.includes(th.pa)), PC.P.findIndex((c) => c.pts.includes(th.pb))]);
+    const px = sprite(key, Object.assign({}, g0, { flash: 0 }), t - td), PC = L.piecesOf(key + '#v3', px, Math.round(12 * Math.sqrt(S)), 13, true);
     const sh = 2 * easeOut(seg(td, 0, 0.16)), ox = dir[0] * sh, oy = dir[1] * sh * FY;
     const imp = [PC.cx - dir[0] * 3, PC.cy - 2];
     const SEAM = (p) => 0.05 + 0.3 * Math.min(1, Math.hypot(p.x - imp[0], p.y - imp[1]) / (14 * S));
@@ -499,16 +498,15 @@
       fx(c) {
         star(c, imp, td, R[1], 4 * S);
         if (td < 0.18) { const q = td / 0.18; X.ring(c, imp[0], imp[1], 2 + q * 5 * S, (2 + q * 5 * S) * 0.8, R[1], 1 - q); }
-        if (td > STRAIN0 - 0.05) PC.threads.forEach((th, n) => {
-          const [ia, ib] = PC.idx[n]; if (ia < 0 || ib < 0) return;
-          const ts = Math.min(goOf(ia), goOf(ib)) + th.r * 0.05;
+        if (td > STRAIN0 - 0.05) PC.threads.forEach((th) => {
+          const ia = th.a, ib = th.b, ts = Math.min(goOf(ia), goOf(ib)) + th.r * 0.05;
           const a = [th.pa.x + D2[ia][0], th.pa.y + D2[ia][1]], b = [th.pb.x + D2[ib][0], th.pb.y + D2[ib][1]];
           if (Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) < 1.5) return;
           if (td < ts) X.line(c, a[0], a[1], b[0], b[1], strain > 0.6 && Math.floor(td * 20 + th.r * 7) % 4 === 0 ? R[1] : R[3]);
           else if (td < ts + 0.1) X.px(c, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, R[2]);
         });
         PC.P.forEach((pc, j) => {
-          const sp = goOf(j);
+          const sp = goOf(j); if (!o.limbs && td < sp + 0.1) return;
           for (const p of pc.pts) {
             if (p.i % (limb(p) ? 3 : 9)) continue;
             const e = td - vanish(p, sp); if (e < 0 || e > 0.06) continue;

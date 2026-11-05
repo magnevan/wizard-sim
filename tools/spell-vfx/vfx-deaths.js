@@ -450,7 +450,9 @@
   // the seams, held by threads of magic that strain, then snap one after another; the pieces
   // fly apart in the camera plane (no lift, no spiral) and unravel from their edges inward,
   // each pixel popping into nothing. No dust, no ash: that is fire's.
-  function piecesOf(key, px, n, seed) {
+  // v3 (the game's piecesOf, deaths.ts): one thread per seam, and empty pieces stay in the list so
+  // the threads' piece indices (a, b) index P directly.
+  function piecesOf(key, px, n, seed, v3 = false) {
     const ck = key + '#pieces'; if (SPR.has(ck)) return SPR.get(ck);
     let cx = 0, cy = 0; for (const p of px) { cx += p.x; cy += p.y; } cx /= px.length; cy /= px.length;
     // seeds by farthest-point sampling, so the pieces come out about the same size
@@ -489,10 +491,11 @@
     const threads = [];
     P.forEach((c, j) => c.nb.forEach((pts, o) => {
       if (o < j) return;
-      const back = P[o].nb.get(j) || pts, k = pts.length > 10 ? 2 : 1;
-      for (let q = 0; q < k; q++) threads.push({ a: j, b: o, pa: pts[Math.floor(((q + 0.5) / k) * pts.length)], pb: back[Math.floor(((q + 0.5) / k) * back.length)], r: rand(j, o, q, seed) });
+      const back = P[o].nb.get(j) || pts, k = !v3 && pts.length > 10 ? 2 : 1;
+      if (v3) threads.push({ a: j, b: o, pa: pts[Math.floor(pts.length / 2)], pb: back[Math.floor(back.length / 2)], r: rand(j, o, seed) });
+      else for (let q = 0; q < k; q++) threads.push({ a: j, b: o, pa: pts[Math.floor(((q + 0.5) / k) * pts.length)], pb: back[Math.floor(((q + 0.5) / k) * back.length)], r: rand(j, o, q, seed) });
     }));
-    const out = { P: P.filter((c) => c.pts.length), threads, cx, cy };
+    const out = { P: v3 ? P : P.filter((c) => c.pts.length), threads, cx, cy };
     SPR.set(ck, out);
     return out;
   }
@@ -614,7 +617,8 @@
     if (td < 0) return { actor: g0, stand: [], under() {}, fx() {}, lights: [], td, alive: true };
     const AH = ARCH[ev.archetype] || {};
     let kind = pick(ev); if (AH.pick) kind = AH.pick(ev, kind);
-    const BF = (AH.bespoke && AH.bespoke[kind]) || BESPOKE[kind];
+    // ev.v picks a later version of a bespoke death (v: 3 -> BESPOKE.arcane3, from vfx-deaths-2.js)
+    const BF = (AH.bespoke && AH.bespoke[kind]) || (ev.v && BESPOKE[kind + ev.v]) || BESPOKE[kind];
     if (BF) return Object.assign({ td, kind }, BF(ev, t, td, g0, D, key, fade));
     const O = (AH.overlay && AH.overlay[kind]) || OVERLAY[kind] || null;
     let mo = Object.assign({ overkill: ev.overkill || 0, S: AH.S || 1 }, O && O.motion);
@@ -781,6 +785,21 @@
     frame(t, K) {
       const D = 3.8, c0 = 0.55, tH = 1.15, c1 = tH + 0.2, me = caster(t, 'arcane', c0, c1), on = Math.min(easeOut(seg(t, c0, c0 + 0.12)), 1 - seg(t, c1, c1 + 0.1));
       const g0 = gob(t, D, { flash: t < tH && on > 0.5 && Math.floor(t * 12) % 3 === 0 ? 0.1 : 0, flashCol: EL.arcane[1] }), dd = death(this.event, t, tH, g0, D, 'arcane2');
+      return {
+        actors: [me, dd.actor], stand: dd.stand, under: dd.under,
+        lights: [...lightsOf(dd), ...(on > 0.05 ? [[95, 74, 54, '#d02a78', 0.45 * on]] : [])],
+        fx(c, A) { K.prep(c, me, A, t, ['arcane'], 0.05, c0); if (on > 0.02) K.beam(c, A.me.tip, [G.x, G.y - 10], t, EL.arcane, { on }); dd.fx(c, A); },
+      };
+    } });
+
+  // Arcane v3: bespoke, the game's calm tear (deaths.ts arcane(); here BESPOKE.arcane3 from
+  // vfx-deaths-2.js). Same scene as v2, so the two compare side by side.
+  V({ id: 'death-goblin-arcane-v3', fresh: 'new', approach: 'bespoke', still: 1.95, title: 'Goblin death: arcane v3', q: ['arcane'], cast: 'force', dur: 3.8, seed: 87, ground: 'plaza',
+    event: { archetype: 'goblin', element: 'arcane', delivery: 'channel', dir: [1, 0], statuses: {}, overkill: 0.3, v: 3 },
+    line: 'The magic that binds it comes undone, calmly (the game’s version). Your notes: on v1, “the magic that creates your body is torn apart”, not fire’s dust and no spiral upward; on v2, “the spread radius is too big, maybe too few pieces too… a bit too dramatic”. v3: a smaller nudge, fine pink seams crack across the body, a dozen small pieces (v2 had five) creep a few pixels apart (about a third of v2’s spread) on short threads that let go quietly instead of snapping, and each piece unravels from its edges inward, pixel by pixel.',
+    frame(t, K) {
+      const D = 3.8, c0 = 0.55, tH = 1.15, c1 = tH + 0.2, me = caster(t, 'arcane', c0, c1), on = Math.min(easeOut(seg(t, c0, c0 + 0.12)), 1 - seg(t, c1, c1 + 0.1));
+      const g0 = gob(t, D, { flash: t < tH && on > 0.5 && Math.floor(t * 12) % 3 === 0 ? 0.1 : 0, flashCol: EL.arcane[1] }), dd = death(this.event, t, tH, g0, D, 'arcane3');
       return {
         actors: [me, dd.actor], stand: dd.stand, under: dd.under,
         lights: [...lightsOf(dd), ...(on > 0.05 ? [[95, 74, 54, '#d02a78', 0.45 * on]] : [])],

@@ -6,16 +6,16 @@
  * in their typed arrays (els, flags, mod, look) and rebuild the view object when they hit.
  */
 import type { Mod, SpellSpec } from './compile';
-import { ARMS, BODY, CELL, COMBAT, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
-import { EL, N_EL } from './elements';
+import { ARMS, BODY, CELL, COMBAT, PERKS, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
+import { EL, N_EL, elementName, queueFromCounts } from './elements';
 import { inCone, len, rayCircle } from './geom';
 import { HIT_KIND, addKnock, applyHit, setHitKind, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { clipRay, collideWalls, damageWall, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
-import { WALL } from './compile';
+import { WALL, compile } from './compile';
 import { ARCHETYPES } from './archetypes';
-import { grounded, guardMissile, phased } from './guards';
-import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, SURF, WARD, ZONE, alive, type World } from './world';
+import { RES, grounded, guardMissile, phased, taken } from './guards';
+import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, PU, SURF, WARD, ZONE, alive, stackOf, type World } from './world';
 
 export interface Payload {
   counts: Uint8Array;
@@ -129,8 +129,6 @@ export interface FireExtra {
   ox?: number; oy?: number;
   /** Swing reach (conjured weapons). */
   reach?: number;
-  /** The arcane hook: a hit pulls the body to you. */
-  yank?: boolean;
   /** Power multiplier (the Double casts at half power). */
   scale?: number;
   /** Swing cone half-angle in turns (0.5: a full circle, the Sweep). */
@@ -193,19 +191,23 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       disc(w, p, src, tx, ty, 0.9, 1.2 * k, -1);
       surge(w, tx, ty, p, src);
       break;
-    case 'swing': {
-      const empty = spec.power === 0, reach = ex.reach ?? SHAPES.swingRange;
-      setHitKind(HIT_KIND.melee);
+    case 'swing': // the bare staff's shove (hands.ts calls weaponBlow itself, with its Strike / Sweep / Heavy numbers)
+      weaponBlow(w, src, face, {
+        half: ex.half ?? ARMS.blowHalf.staff, reach: ex.reach ?? SHAPES.swingRange, dmg: ARMS.blowDmg.staff, knock: ex.knock ?? ARMS.blowKnock.staff,
+        scale: k, look: 0, p: null, move: ex.half && ex.half >= 0.5 ? 'sweep' : 'strike', ox: ex.ox, oy: ex.oy,
+      });
+      break;
+    case 'imbue': {
+      // The imbued burst: every queued element at full power in a short cone in front of you, as Magicka's imbue-and-release. Nothing stays in hand.
+      const reach = SHAPES.imbueRange + SHAPES.imbuePerRune * Math.max(0, spec.power - 1);
+      setHitKind(HIT_KIND.burst);
       for (let i = 0; i < b.kind.length; i++) {
-        if (!alive(w, i) || i === src) continue;
-        if (!inCone(x, y, face, ex.half ?? SHAPES.swingHalfAngle, reach, b.x[i], b.y[i], b.r[i])) continue;
-        // a full-circle sweep pushes outward from you, not along your facing
-        const ox = b.x[i] - x, oy = b.y[i] - y, ol = len(ox, oy) || 1, ux = ex.half ? ox / ol : dx, uy = ex.half ? oy / ol : dy;
-        if (empty) { b.hp[i] -= 6; b.lastHit[i] = w.clock[0]; addKnock(w, i, ux, uy, ex.knock ?? 3); hitEvent(w, i, 6, 0, src); }
-        else { hit(w, i, p, hitOpts(p, src, 0.8 * k, ux, uy)); if (ex.knock) addKnock(w, i, ux, uy, ex.knock); }
-        if (ex.yank) addKnock(w, i, -dx, -dy, 10); // pulled toward you, ally or enemy
+        if (!alive(w, i) || i === src || !inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
+        hit(w, i, p, hitOpts(p, src, k, dx, dy));
       }
-      burstEvent(w, src, x + dx * 0.9, y + dy * 0.9, reach, spec.look);
+      let mask = 0;
+      for (let e = 1; e <= N_EL; e++) if (spec.counts[e - 1]) mask |= 1 << e;
+      w.events.push({ tick: w.clock[0], kind: 'move', who: src, x, y, x2: x + dx * reach, y2: y + dy * reach, text: 'imbue', look: spec.look, amount: reach, els: mask });
       break;
     }
     case 'palm':
@@ -233,6 +235,67 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     case 'todo': w.events.push({ tick: w.clock[0], kind: 'todo', who: src, x, y, text: spec.title }); break;
     default: break;
   }
+}
+
+/** One blow of a weapon, or of the bare staff (p null). */
+export interface Blow {
+  /** Cone half-angle (turns; 0.5 or more is a full circle that pushes outward) and reach (u). */
+  half: number; reach: number;
+  /** Physical damage and knockback (u/s), before `scale`'s share of the damage. */
+  dmg: number; knock: number;
+  /** Power multiplier (a Heavy, a Sweep). */
+  scale: number;
+  /** The weapon's element (0 for the staff): the move's look and a death's element. */
+  look: number;
+  /** The weapon's elements, landing at ARMS.blowPayload x scale; null for the staff. */
+  p: Payload | null;
+  /** The move event the view draws ('strike', 'sweep'). */
+  move: string;
+  ox?: number; oy?: number;
+}
+
+/**
+ * A weapon blow: everything in the cone takes a physical hit (damage and knockback) plus the
+ * weapon's elements, so a weapon whose element deals no damage (the trident's Water) still lands.
+ * The hands heal instead: their payload is a heal, with no physical hit. Emits the move event the
+ * view draws as the weapon thrusting or spinning (no burst event: it would read as a nova).
+ */
+export function weaponBlow(w: World, src: number, face: number, o: Blow): void {
+  const b = w.bodies, x = o.ox ?? b.x[src], y = o.oy ?? b.y[src], dx = cosTurns(face), dy = sinTurns(face), full = o.half >= 0.5, tick = w.clock[0];
+  const heal = !!o.p?.heal, glass = 1 + PERKS.glassDmg * stackOf(w, src, PU.glass);
+  setHitKind(HIT_KIND.melee);
+  for (let i = 0; i < b.kind.length; i++) {
+    if (!alive(w, i) || i === src || !inCone(x, y, face, o.half, o.reach, b.x[i], b.y[i], b.r[i])) continue;
+    // a full-circle sweep pushes outward from you, not along your facing
+    const ox = b.x[i] - x, oy = b.y[i] - y, ol = len(ox, oy) || 1, ux = full ? ox / ol : dx, uy = full ? oy / ol : dy;
+    let dealt = o.p ? hit(w, i, o.p, hitOpts(o.p, src, o.scale * ARMS.blowPayload, ux, uy), false) : 0;
+    if (!heal && o.dmg > 0) {
+      const d = o.dmg * o.scale * glass * taken(w, i, RES.physical) * (b.expose[i] ? STATUS.exposeMult : 1);
+      b.hp[i] -= d;
+      if (dealt <= 0) { b.lastEl[i] = o.look || EL.earth; b.lastMix[i] = 0; }
+      b.lastHit[i] = tick; b.lastDX[i] = ux; b.lastDY[i] = uy; b.lastKind[i] = HIT_KIND.melee;
+      dealt += d;
+    }
+    if (!heal) addKnock(w, i, ux, uy, o.knock);
+    hitEvent(w, i, dealt, o.look, src);
+  }
+  w.events.push({ tick, kind: 'move', who: src, x, y, x2: x + dx * o.reach, y2: y + dy * o.reach, text: o.move, look: o.look, amount: o.reach });
+}
+
+/**
+ * A blow with seat i's conjured weapon (the staff's if it holds none), with that weapon's numbers
+ * (ARMS.blow*): a Strike with half undefined, a Sweep with half 0.5. `scale` multiplies the power,
+ * `reach` the reach, `knock` the knockback. Spends nothing (hands.ts does).
+ */
+export function heldBlow(w: World, i: number, face: number, move: string, o: { half?: number; scale?: number; reach?: number; knock?: number } = {}): void {
+  const s = w.seats, el = s.weapon[i] && s.weaponUses[i] > 0 ? s.weapon[i] : 0, key = el ? elementName(el) : 'staff';
+  const num = (t: Record<string, number>, d: number) => t[key] ?? d;
+  const p = el ? payloadOf(compile(queueFromCounts(s.weaponEls, i), 'conjure')) : null;
+  const reach = (el ? (STRUCT.reach[elementName(el)] ?? 1.8) : SHAPES.swingRange) * num(ARMS.blowReach, 1) * (o.reach ?? 1);
+  weaponBlow(w, i, face, {
+    half: o.half ?? num(ARMS.blowHalf, SHAPES.swingHalfAngle), reach, dmg: num(ARMS.blowDmg, 6), knock: num(ARMS.blowKnock, 3) * (o.knock ?? 1),
+    scale: o.scale ?? 1, look: el, p, move,
+  });
 }
 
 /** Can body `self` stand at (x, y): not inside rock, not overlapping another body? */

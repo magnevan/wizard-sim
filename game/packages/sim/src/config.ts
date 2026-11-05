@@ -93,6 +93,8 @@ export const SHAPES = {
   patchRadius: 1.6, patchLife: 6,
   delayedBlast: 0.6, // geyser rumble / arcane blast fuse
   swingRange: 1.6, swingHalfAngle: 0.15,
+  /** The imbued burst (Weapon cast with elements, no Sigil or Shield): a cone in front of you, a little longer per extra rune. */
+  imbueRange: 2.5, imbuePerRune: 0.25, imbueHalf: 0.17,
   push: 6, // u/s added per water rune (Push)
   burstRadius: 1.4,
 };
@@ -167,6 +169,18 @@ export const STRUCT = {
 export const ARMS = {
   /** Your hands (hands.ts): a Heavy's power and reach against a Strike, a Sweep's power, the Retreat hop without a guard. */
   heavyScale: 1.8, heavyReach: 1.3, sweepScale: 0.8, retreatPush: 11,
+  /**
+   * Every blow (Strike, Sweep, the staff's shove) is a physical hit as well as the weapon's elements,
+   * so an element that deals no damage (Water) still lands. Per weapon (staff = none held): the
+   * physical damage, the knockback (u/s), the Strike's cone half-angle (turns) and its reach as a
+   * multiple of the weapon's (STRUCT.reach). The hands heal, so they deal no physical hit.
+   */
+  blowDmg: { staff: 6, water: 7, life: 0, cold: 8, lightning: 4, fire: 7, earth: 4 }, // the maul's Earth is already the weight: 4 on top of its 17.6
+  blowKnock: { staff: 3, water: 12, life: 0, cold: 4, lightning: 3, fire: 4, earth: 9 },
+  blowHalf: { staff: 0.15, water: 0.11, life: 0.12, cold: 0.07, lightning: 0.1, fire: 0.15, earth: 0.15 },
+  blowReach: { staff: 1, water: 1.2, life: 1.5, cold: 1, lightning: 1, fire: 1, earth: 1 },
+  /** A blow's elements land at this share of a spell's power (a Sweep at sweepScale of that again). */
+  blowPayload: 0.8,
   // ---- Heavies (2 uses unless noted) ----
   /** Weapon waves (trident slash, fire wave, earth fissure): their power, half-width and how far they roll. */
   waveScale: 1.4,

@@ -21,8 +21,8 @@
  */
 import { compile, type SpellSpec } from './compile';
 import { ARMS, RHYTHM, STATUS, STRUCT, T } from './config';
-import { EL, N_EL, elementName, queueFromCounts } from './elements';
-import { fireSpell, hit, hitOpts, nearest, payloadOf, spawnMissile, zap, type FireExtra } from './effects';
+import { EL, N_EL, queueFromCounts } from './elements';
+import { heldBlow, hit, hitOpts, nearest, payloadOf, spawnMissile, zap } from './effects';
 import { inCone, len } from './geom';
 import { addKnock } from './hit';
 import { grounded, guardRetreat } from './guards';
@@ -47,18 +47,18 @@ function spend(w: World, i: number, uses: number): void {
 const move = (w: World, i: number, text: string, look: number, x2?: number, y2?: number, amount?: number) =>
   w.events.push({ tick: w.clock[0], kind: 'move', who: i, x: w.bodies.x[i], y: w.bodies.y[i], x2, y2, text, look, amount });
 
-/** One blow of your conjured weapon, or the staff's shove when you hold none. Spends `uses`. */
-function blow(w: World, i: number, face: number, ex: FireExtra, uses: number): void {
-  const s = w.seats;
-  if (!held(w, i)) { fireSpell(w, i, compile([], 'conjure'), face, 0, 0, 0, { ...ex, knock: (ex.knock ?? 3) * (ex.scale ?? 1) }); return; }
-  const el = elementName(s.weapon[i]), reach = (STRUCT.reach[el] ?? 1.8) * (ex.reach ?? 1);
-  fireSpell(w, i, weaponSpec(w, i), face, 0, 0, 0, { ...ex, reach });
-  spend(w, i, uses);
+/**
+ * One blow of your conjured weapon, or the staff's shove when you hold none: a physical hit plus the
+ * weapon's elements (effects.ts heldBlow, numbers in ARMS.blow*). Spends `uses`.
+ */
+function blow(w: World, i: number, face: number, move: string, o: { half?: number; scale?: number; reach?: number; knock?: number }, uses: number): void {
+  heldBlow(w, i, face, move, o);
+  if (held(w, i)) spend(w, i, uses);
 }
 
 export function strike(w: World, i: number, face: number): void {
   if (held(w, i) === EL.arcane) { bolt(w, i, face, ARMS.boltScale, false); spend(w, i, 1); return; } // the wand: a light bolt
-  blow(w, i, face, {}, 1);
+  blow(w, i, face, 'strike', {}, 1);
 }
 
 /** The Arcane wand's bolt: a light one (Strike) or a charged one that pierces (Heavy). */
@@ -74,7 +74,7 @@ function bolt(w: World, i: number, face: number, scale: number, pierce: boolean)
 export function heavy(w: World, i: number, face: number, charge: number): void {
   const el = held(w, i), k = ARMS.heavyScale * (0.6 + 0.4 * charge);
   switch (el) {
-    case 0: blow(w, i, face, { scale: k, reach: ARMS.heavyReach, knock: 8 }, 2); return; // the staff's big shove
+    case 0: blow(w, i, face, 'strike', { scale: k, reach: ARMS.heavyReach, knock: (8 / 3) * k }, 2); return; // the staff's big shove
     case EL.life: return; // the Healing link was the hold itself (holdTick): nothing on release
     case EL.water: case EL.fire: case EL.earth: {
       // a wave from the weapon: the trident's slash, the flame sword's rolling crescent, the maul's fissure down one lane
@@ -88,7 +88,7 @@ export function heavy(w: World, i: number, face: number, charge: number): void {
     case EL.cold: dash(w, i, face, k); spend(w, i, 2); return;
     case EL.lightning: lash(w, i, face, k); spend(w, i, 2); return;
     case EL.arcane: bolt(w, i, face, ARMS.chargedBolt * (0.5 + 0.5 * charge), charge >= 0.5); move(w, i, 'chargedbolt', EL.arcane); spend(w, i, 2); return;
-    default: blow(w, i, face, { scale: k, reach: ARMS.heavyReach, knock: 8 }, 2); return;
+    default: blow(w, i, face, 'strike', { scale: k, reach: ARMS.heavyReach }, 2); return;
   }
 }
 
@@ -191,7 +191,7 @@ export function special(w: World, i: number, face: number, tx: number, ty: numbe
     return;
   }
   if (el === EL.arcane || el === EL.life) return; // Siphon and Mend are held (specialTick); a tap does nothing
-  blow(w, i, face, { half: 0.5, scale: ARMS.sweepScale }, 2); // a full circle round you, your partner too
+  blow(w, i, face, 'sweep', { half: 0.5, scale: ARMS.sweepScale }, 2); // a full circle round you, your partner too
 }
 
 /** Does seat i's weapon have a held Special (the wand's Siphon, the hands' Mend)? */

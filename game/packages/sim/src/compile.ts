@@ -13,7 +13,7 @@ export type Shape =
   | 'beam' | 'spray' | 'arc' | 'missile' | 'shards'      // Force
   | 'nova' | 'quake' | 'discharge'                        // Area
   | 'patch' | 'blast' | 'geyser' | 'strike' | 'spring'    // Place
-  | 'swing' | 'palm'                                      // Weapon
+  | 'swing' | 'palm' | 'imbue'                            // Weapon (swing: the bare staff; imbue: the imbued burst)
   | 'self' | 'blink'
   | 'wave' | 'ring' | 'arcwall' | 'drawnwall' | 'ward' | 'guard' // Shield
   | 'turret' | 'orbitals' | 'motes' | 'glyph' | 'lineglyph' | 'lens' | 'wand' | 'weapon' | 'aura' | 'double' // Sigil
@@ -99,22 +99,22 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
       return spec;
     }
     case 'earth':
-      spec.shape = cast === 'force' ? 'missile' : cast === 'area' ? 'quake' : cast === 'place' ? 'geyser' : 'swing';
+      spec.shape = cast === 'force' ? 'missile' : cast === 'area' ? 'quake' : cast === 'place' ? 'geyser' : 'imbue';
       spec.charge = cast === 'force';
       return spec;
     case 'arcane':
-      spec.shape = cast === 'force' ? 'beam' : cast === 'area' ? 'nova' : cast === 'place' ? 'blast' : 'swing';
+      spec.shape = cast === 'force' ? 'beam' : cast === 'area' ? 'nova' : cast === 'place' ? 'blast' : 'imbue';
       spec.channel = cast === 'force';
       return spec;
     case 'lightning':
-      spec.shape = cast === 'force' ? 'arc' : cast === 'area' ? 'discharge' : cast === 'place' ? 'strike' : 'swing';
+      spec.shape = cast === 'force' ? 'arc' : cast === 'area' ? 'discharge' : cast === 'place' ? 'strike' : 'imbue';
       spec.channel = cast === 'force';
       return spec;
     case 'water': case 'fire': case 'cold':
       if (cast === 'force') {
         spec.shape = freeze ? 'shards' : 'spray'; // Ice shards: the freezing spray was too strong
         spec.channel = !freeze;
-      } else spec.shape = cast === 'area' ? 'nova' : cast === 'place' ? 'patch' : 'swing';
+      } else spec.shape = cast === 'area' ? 'nova' : cast === 'place' ? 'patch' : 'imbue';
       return spec;
     case 'sigil':
       if (cast === 'force') spec.shape = d.sub ? 'turret' : 'blink';

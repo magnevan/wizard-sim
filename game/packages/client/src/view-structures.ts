@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, guardCoatLook, guardSize, queueOf, selfTarget,
+  N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
@@ -42,6 +42,12 @@ const OFF = (typeof location !== 'undefined' ? new URLSearchParams(location.sear
 const elName = (id: number): string => (id >= 1 && id <= N_EL ? elementName(id) : 'arcane');
 const ramp = (id: number): Ramp => EL[elName(id)] ?? EL.arcane;
 const LIFE = X.LIFE;
+/** The bare staff's blows: plain greys. */
+const STAFF: Ramp = ['#ffffff', '#e8e4f0', '#b8b4c8', '#8a8498', '#5a5468'];
+/** A weapon blow's colours by its look (0: the staff). */
+const blowRamp = (look: number): Ramp => (look === 0 ? STAFF : look === ELID.life ? LIFE : ramp(look));
+/** How long the held weapon's thrust (Strike) and spin (Sweep) take on the wizard (s). */
+const THRUST = 0.22, SPIN = 0.3;
 /** Sheet colours (rgb for the translucent fill) per element. */
 const RGB: Record<string, string> = {
   shield: '255,214,110', fire: '255,140,60', cold: '170,236,255', water: '90,160,255', lightning: '196,164,255', arcane: '255,106,176', life: '142,240,126', earth: '184,148,106', sigil: '236,140,255',
@@ -229,6 +235,7 @@ class Scorch {
 /** How long each weapon or guard move's effect plays (s). */
 const MOVE_LIFE: Record<string, number> = {
   dash: 0.45, flamestep: 0.5, iceslide: 0.7, backstep: 0.5, phase: 0.6, seedstep: 0.8, shovestep: 0.7, surge: 0.6, tidewave: 0.6,
+  strike: 0.3, sweep: 0.42, imbue: 0.5,
   parry: 0.4, block: 0.25, glance: 0.3, chill: 0.5, coat: 0.45, guardbreak: 0.8, flameburst: 0.45, chargedbolt: 0.4, lance: 0.4, javelin: 0.45, siphon: 0.5, mend: 0.6, link: 0.5, linkbreak: 0.5,
 };
 /** Each guard's colour. */
@@ -317,6 +324,8 @@ export class StructureView {
   // per seat
   private sMotes = new Uint8Array(MAX_SEATS); private sWard = new Uint8Array(MAX_SEATS); private sWardT0 = new Float64Array(MAX_SEATS); private sWardEls = new Uint8Array(MAX_SEATS * N_EL);
   private sAuraT0 = new Float64Array(MAX_SEATS); private sAura = new Int32Array(MAX_SEATS); private sConjT0 = new Float64Array(MAX_SEATS); private sConj = new Uint8Array(MAX_SEATS * 3);
+  /** Each seat's last weapon blow: when (sim time), which (1 Strike, 2 Sweep) and its direction (radians, world). */
+  private blowT0 = new Float64Array(MAX_SEATS).fill(-9); private blowKind = new Uint8Array(MAX_SEATS); private blowAng = new Float64Array(MAX_SEATS);
   private prevKind = new Uint8Array(MAX_BODIES); private bornT = new Float64Array(MAX_BODIES).fill(-9); private echoT = new Float64Array(MAX_BODIES).fill(-9);
 
   constructor(actors: Container) { this.pieces = new Pieces(actors); }
@@ -342,7 +351,10 @@ export class StructureView {
     for (const e of w.events) {
       if (e.kind !== 'move' || !e.text) continue;
       const life = MOVE_LIFE[e.text] ?? 0.5;
-      this.add('mv-' + e.text, t, life, { who: e.who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, look: e.look ?? 0, seed: tick * 7 + e.who, n: e.who < MAX_SEATS ? s.guard[e.who] : 0 });
+      if ((e.text === 'strike' || e.text === 'sweep') && e.who >= 0 && e.who < MAX_SEATS) {
+        this.blowT0[e.who] = t; this.blowKind[e.who] = e.text === 'strike' ? 1 : 2; this.blowAng[e.who] = Math.atan2((e.y2 ?? e.y) - e.y, (e.x2 ?? e.x) - e.x);
+      }
+      this.add('mv-' + e.text, t, life, { who: e.who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, look: e.look ?? 0, seed: tick * 7 + e.who, n: e.text === 'imbue' ? e.els ?? 0 : e.who < MAX_SEATS ? s.guard[e.who] : 0 });
     }
     // walls: hits and breaks
     for (let k = 0; k < MAX_WALLS; k++) {
@@ -906,6 +918,7 @@ export class StructureView {
       const conj = seg(this.st - this.sConjT0[i], 0, 0.3);
       if (s.wand[i]) this.wand(v, t, g, o, P, conj, light);
       if (s.weapon[i]) this.weapon(w, i, v, t, g, o, P, conj, light);
+      if (s.handT[i] > TAP && s.weapon[i] !== ELID.life) this.charging(w, i, v, t, g, o, light);
       if (s.guard[i]) this.guard(w, i, v, t, g, o, P, conj, light);
       if (s.linkTo[i] >= 0) this.link(i, v, bodies[s.linkTo[i]], t, o, light);
       // Phase (Prism): a hex afterimage round you while you drift through bodies
@@ -1076,14 +1089,86 @@ export class StructureView {
     light(tp[0], v.y, 24, '#d400ff', 0.5);
   }
 
+  /**
+   * A held RMB past the tap window is a Heavy charging: a ring at your feet fills round in the weapon's
+   * colour (the staff's grey), so a partner (and you) can tell a Strike from a Heavy coming. Full: it
+   * flashes white and the weapon glows.
+   */
+  private charging(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, light: LightFn): void {
+    const ch = heavyCharge(w.seats.handT[i]), Rb = blowRamp(w.seats.weapon[i]), r = 13, top = -Math.PI / 2;
+    X.ring(g, v.x, v.y, r, r * FY, Rb[3] ?? Rb[2], 0.5);
+    X.ring(g, v.x, v.y, r, r * FY, ch >= 1 ? '#ffffff' : Rb[1], 1, top, top + ch * TAU);
+    X.ring(g, v.x, v.y, r - 1, (r - 1) * FY, Rb[2], 0.8, top, top + ch * TAU);
+    if (ch < 1) return;
+    const pulse = 0.5 + 0.5 * Math.sin(t * 18), hd: Pt = v.a ? [v.x + v.a.hands[0][0], v.y + v.a.hands[0][1] - 8] : [v.x, v.y - 14];
+    K.gring(g, v.x, v.y, r + 2 + pulse * 2, Rb[1], 0.6, 1);
+    X.glow(o, hd[0], hd[1], 7 + pulse * 2, Rb[1], 0.85);
+    X.px(o, hd[0], hd[1], '#ffffff');
+    light(hd[0], v.y, 34, Rb[2], 0.5 + 0.3 * pulse);
+  }
+
+  /** What a blow throws off where it lands, by element ('' for the staff): droplets, flames, shards, a crack, dust or sparks. */
+  private blowSpray(el: string, Rb: Ramp, p: Pt, a: number, e: number, sd: number, o: Ctx, n: number): void {
+    if (e < 0 || e > 0.4) return;
+    const q = e / 0.4, ux = Math.cos(a), uy = Math.sin(a) * FY;
+    if (el === 'earth') { K.dust(o, p[0], p[1] + 6, e, sd, n, 14, '#8a7a68', 0.4); return; }
+    if (el === 'lightning' && q < 0.5) {
+      const r = 2 + q * 10;
+      X.line(o, p[0] - r, p[1], p[0] + r, p[1], '#ffffff'); X.line(o, p[0], p[1] - r, p[0], p[1] + r, '#ffffff');
+      X.px(o, p[0] + r * 0.6, p[1] - r * 0.6, Rb[1]); X.px(o, p[0] - r * 0.6, p[1] + r * 0.6, Rb[1]);
+      return;
+    }
+    for (let j = 0; j < n; j++) {
+      const sp = (rand(j, 1, sd) - 0.5) * 1.6, d = e * (30 + rand(j, 2, sd) * 30), dx = ux * Math.cos(sp) - uy * Math.sin(sp), dy = uy * Math.cos(sp) + ux * Math.sin(sp);
+      const px2 = p[0] + dx * d, py2 = p[1] + dy * d + (el === 'water' ? e * e * 60 : 0) - (el === 'fire' ? e * 18 : 0);
+      if (rand(j, 3, sd) < q) continue;
+      if (el === 'fire') K.tongue(o, px2, py2, 1.4 * (1 - q), 4 * (1 - q), dx);
+      else if (el === 'cold') K.shard(o, px2, py2, Math.atan2(dy, dx), 4 * (1 - q), sd + j, 1 - q);
+      else X.px(o, px2, py2, j % 2 ? '#ffffff' : el === 'water' ? '#8ad0ff' : Rb[1]);
+    }
+  }
+
+  /** The imbued burst: a crescent of the queued elements leaving the staff and rolling out over the cone. */
+  private imbueFx(f: SFx, e: number, q: number, aw: number, reach: number, at: (a: number, r: number) => Pt, o: Ctx, g: Ctx, light: LightFn): void {
+    const ids: number[] = [];
+    for (let id = 1; id <= N_EL; id++) if (f.n & (1 << id)) ids.push(id);
+    if (!ids.length) ids.push(f.look || ELID.arcane);
+    const half = SHAPES.imbueHalf * TAU, k = easeOut(clamp(q / 0.6, 0, 1)), fade = 1 - seg(q, 0.55, 1), r = 6 + (reach - 6) * k, n = 18;
+    for (let j = 0; j <= n; j++) {
+      const u = j / n, a = aw - half + 2 * half * u, Re = blowRamp(ids[j % ids.length]), bulge = Math.sin(u * Math.PI);
+      if (rand(j, 4, f.seed) > fade) continue;
+      const front = at(a, r * (0.85 + 0.15 * bulge)), back = at(a, r * (0.85 + 0.15 * bulge) - 4 - 3 * bulge);
+      X.line(o, back[0], back[1], front[0], front[1], Re[2], 2);
+      X.px(o, front[0], front[1], u > 0.2 && u < 0.8 && q < 0.4 ? '#ffffff' : Re[1]);
+    }
+    // each element sheds its own bits behind the crescent
+    ids.forEach((id, m) => { const a = aw + (m - (ids.length - 1) / 2) * (half / Math.max(1, ids.length)); this.blowSpray(elName(id), blowRamp(id), at(a, r * 0.8), a, e * 0.8, f.seed + m * 31, o, 4); });
+    const mid = at(aw, r * 0.7), R0 = blowRamp(ids[0]);
+    K.gring(g, gx(f.x), gy(f.y), 4 + k * 10, R0[2], 0.6 * fade, 1);
+    light(mid[0], gy(f.y), 40 + reach * 0.3, R0[2], 0.7 * fade);
+  }
+
   /** Conjured weapons, distinct per element: stone maul, arcane hook, flame sword, frost spear, lightning whip, tide glaive, healing hands. */
   private weapon(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], up: number, light: LightFn): void {
     if (!v.a) return;
-    const el = elName(w.seats.weapon[i]), side = P(1, -4, 8)[2], c = side < -3.5 ? g : o;
+    const el = elName(w.seats.weapon[i]), side = P(1, -4, 8)[2];
+    let c = side < -3.5 ? g : o;
     const h: Pt = [v.x + v.a.hands[0][0], v.y + v.a.hands[0][1]];
     const fwd = Math.sign(P(1, 0, 0)[0] - v.x) || 1;
     // held up and a little forward
-    const dir = (L: number, lean = 0.45): Pt => [h[0] + fwd * L * lean, h[1] - L * Math.sqrt(1 - lean * lean)];
+    const rest = (L: number, lean = 0.45): Pt => [h[0] + fwd * L * lean, h[1] - L * Math.sqrt(1 - lean * lean)];
+    let dir = rest;
+    // a blow in progress: the Strike thrusts the weapon out along the aim and back; the Sweep spins it once round you
+    const age = this.st - this.blowT0[i], kind = this.blowKind[i];
+    if (kind === 1 && age >= 0 && age < THRUST) {
+      const q = age / THRUST, m = q < 0.3 ? smooth(q / 0.3) : 1 - smooth((q - 0.3) / 0.7), a = this.blowAng[i], cx = Math.cos(a), cy = Math.sin(a) * FY;
+      dir = (L, lean = 0.45) => { const r0 = rest(L, lean), ext = L * (1 + 0.45 * m); return [lerp(r0[0], h[0] + cx * ext, m), lerp(r0[1], h[1] - 3 + cy * ext, m)]; };
+      if (m > 0.5) c = Math.sin(a) < -0.3 ? g : o;
+    } else if (kind === 2 && age >= 0 && age < SPIN) {
+      const q = age / SPIN, a = this.blowAng[i] - smooth(q) * TAU, m = Math.min(1, Math.sin(Math.PI * q) * 3), cx = Math.cos(a), cy = Math.sin(a) * FY;
+      dir = (L, lean = 0.45) => { const r0 = rest(L, lean), ext = L * 1.2; return [lerp(r0[0], h[0] + cx * ext, m), lerp(r0[1], h[1] - 3 + cy * ext, m)]; };
+      c = Math.sin(a) < -0.2 ? g : o;
+    }
     const k = Math.min(1, up * 1.4 + 0.1);
     if (el === 'life') {
       for (const hh of v.a.hands) {
@@ -1553,6 +1638,46 @@ export class StructureView {
         const x2 = gx(f.x2), y2 = gy(f.y2), q = e / f.life;
         if (f.kind === 'mv-link') { K.gring(g, x2, y2, 4 + q * 12, LIFE[2], 1 - q, 1); return; }
         for (let j = 0; j < 10; j++) { const kq = rand(j, 1, sd); X.px(o, lerp(x, x2, kq), lerp(y, y2, kq) - 10 + q * q * 20, j % 2 ? LIFE[1] : LIFE[3]); }
+        return;
+      }
+      case 'mv-strike': case 'mv-sweep': case 'mv-imbue': {
+        // weapon blows (hands.ts) and the imbued burst: drawn from where the wizard stood, toward (x2, y2)
+        const aw = Math.atan2(f.y2 - f.y, f.x2 - f.x), reach = Math.hypot(f.x2 - f.x, f.y2 - f.y) * PPU, q = e / f.life, cy0 = y - 8;
+        const at = (a: number, r: number): Pt => [x + Math.cos(a) * r, cy0 + Math.sin(a) * r * FY];
+        if (f.kind === 'mv-imbue') { this.imbueFx(f, e, q, aw, reach, at, o, g, light); return; }
+        const Rb = blowRamp(f.look), key = f.look ? elName(f.look) : 'staff', el = f.look ? key : '';
+        if (f.kind === 'mv-strike') {
+          // the thrust: streaks shooting out along the aim (three prongs for the trident), then a smear across the cone at the reach
+          const half = ((ARMS.blowHalf as Record<string, number>)[key] ?? 0.15) * TAU, k = easeOut(clamp(q / 0.35, 0, 1));
+          const prongs = el === 'water' ? [-0.09, 0, 0.09] : [0];
+          if (q < 0.6) for (const off of prongs) {
+            const p0 = at(aw + off * 0.6, reach * (0.25 + 0.4 * k)), p1 = at(aw + off, reach * k);
+            X.line(o, p0[0], p0[1], p1[0], p1[1], Rb[2], 2); X.line(o, p0[0], p0[1], p1[0], p1[1], Rb[1], 1); X.px(o, p1[0], p1[1], '#ffffff');
+          }
+          if (half >= 0.6 && el !== 'water' && q < 0.75) {
+            const n = 12;
+            for (let j = 0; j < n; j++) {
+              const u = j / n; if (u > k || rand(j, 3, sd) < q * 1.2) continue;
+              const a0 = aw - half + 2 * half * u, a1 = a0 + (2 * half) / n, p0 = at(a0, reach), p1 = at(a1, reach);
+              X.line(o, p0[0], p0[1], p1[0], p1[1], u > k - 0.25 ? '#ffffff' : Rb[1], 2);
+            }
+          }
+          const tip = at(aw, reach);
+          if (q > 0.25) this.blowSpray(el, Rb, tip, aw, e - 0.25 * f.life, sd, o, 7);
+          if (q < 0.4) light(tip[0], y, 30, Rb[2], 0.6 * (1 - q / 0.4));
+          return;
+        }
+        // the Sweep: one full turn of the weapon, a bright head and a trail in its colour, then the ring left behind fades
+        const k = smooth(clamp(q / 0.7, 0, 1)), head = aw - k * TAU, trail = Math.min(2.4, k * TAU);
+        X.ring(o, x, cy0, reach, reach * FY, Rb[2], 0.7 * (1 - q), head, head + trail);
+        X.ring(o, x, cy0, reach - 1, (reach - 1) * FY, Rb[1], 1 - q, head, head + Math.min(1.2, trail));
+        X.ring(o, x, cy0, reach + 1, (reach + 1) * FY, '#ffffff', 1 - q, head, head + Math.min(0.4, trail));
+        K.gring(g, x, y, reach * (0.9 + 0.1 * k), Rb[2], 0.5 * (1 - q), 1);
+        for (let j = 0; j < 10; j++) {
+          const a = aw - (j / 10) * TAU; if ((j / 10) > k) break;
+          this.blowSpray(el, Rb, at(a, reach), a, e - (j / 10) * 0.7 * f.life, sd + j, o, 2);
+        }
+        light(x, y, reach + 20, Rb[2], 0.5 * (1 - q));
         return;
       }
       case 'echo': {

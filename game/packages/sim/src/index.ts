@@ -11,6 +11,7 @@ export { HIT_KIND } from './hit';
 export { GUARD_EL, guardCoatLook, guardSize } from './guards';
 export { fullMask, poolCap } from './structures';
 export { step } from './step';
+export { TAP, heavyCharge } from './hands';
 export * from './replay';
 export { scriptedInput, scriptedReplay } from './script';
 export { ARCHETYPES, ARCH, ATTACK, type Archetype } from './archetypes';

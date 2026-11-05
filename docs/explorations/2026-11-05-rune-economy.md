@@ -62,6 +62,11 @@ Weighting by max means investing in an element also raises its share of the rege
 - **+R (sustain):** the regen glyph stays, but at about +15 %, and only in a draw that also offers depth, so it's a real choice.
 - **Sigil** becomes one of the elements "+2 to one" can name, rather than its own weak glyph.
 
+## Side notes from the same conversation
+
+- **Echo redesign:** "very strong for the next wave". Its only cost is the opportunity cost of not taking a permanent pick: no rune loss, no lasting penalty (user, 2026-11-05).
+- **Camera:** every room follows your own wizard, with ally arrows at the screen edge. The exception is couch co-op on one screen (user, 2026-11-05).
+
 ## Open questions (on the Rune Economy page)
 
 1. Shared budget with a floor (α), or per-element regen proportional to max (α = 1)?

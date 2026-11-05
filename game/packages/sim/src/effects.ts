@@ -133,6 +133,10 @@ export interface FireExtra {
   yank?: boolean;
   /** Power multiplier (the Double casts at half power). */
   scale?: number;
+  /** Swing cone half-angle in turns (0.5: a full circle, the Sweep). */
+  half?: number;
+  /** Extra knockback on each body a swing hits (a Heavy), and the staff's shove strength. */
+  knock?: number;
 }
 
 /** Fires a one-shot spell. `face` is the aim in turns, (tx, ty) the clamped target point, `charge` 0..1. */
@@ -194,9 +198,11 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       setHitKind(HIT_KIND.melee);
       for (let i = 0; i < b.kind.length; i++) {
         if (!alive(w, i) || i === src) continue;
-        if (!inCone(x, y, face, SHAPES.swingHalfAngle, reach, b.x[i], b.y[i], b.r[i])) continue;
-        if (empty) { b.hp[i] -= 6; b.lastHit[i] = w.clock[0]; addKnock(w, i, dx, dy, 3); hitEvent(w, i, 6, 0, src); }
-        else hit(w, i, p, hitOpts(p, src, 0.8 * k, dx, dy));
+        if (!inCone(x, y, face, ex.half ?? SHAPES.swingHalfAngle, reach, b.x[i], b.y[i], b.r[i])) continue;
+        // a full-circle sweep pushes outward from you, not along your facing
+        const ox = b.x[i] - x, oy = b.y[i] - y, ol = len(ox, oy) || 1, ux = ex.half ? ox / ol : dx, uy = ex.half ? oy / ol : dy;
+        if (empty) { b.hp[i] -= 6; b.lastHit[i] = w.clock[0]; addKnock(w, i, ux, uy, ex.knock ?? 3); hitEvent(w, i, 6, 0, src); }
+        else { hit(w, i, p, hitOpts(p, src, 0.8 * k, ux, uy)); if (ex.knock) addKnock(w, i, ux, uy, ex.knock); }
         if (ex.yank) addKnock(w, i, -dx, -dy, 10); // pulled toward you, ally or enemy
       }
       burstEvent(w, src, x + dx * 0.9, y + dy * 0.9, reach, spec.look);

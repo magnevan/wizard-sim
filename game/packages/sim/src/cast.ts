@@ -21,6 +21,7 @@ import { channelTick, fireSpell } from './effects';
 import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, recallOldest, sigilCap, spendMote, weaponSwing } from './structures';
 import { len } from './geom';
 import { AIM_UNIT, BTN, type PlayerInput } from './input';
+import { TAP, heavy, heavyCharge, retreat, special, strike } from './hands';
 import { atan2Turns } from './trig';
 import { CAST_ID, KIND, PHASE, QUEUE_MAX, type World } from './world';
 
@@ -168,9 +169,9 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
     s.runes[k] = Math.min(Math.max(cap, 0), s.runes[k] + (RUNES.regen * mult) / 60);
   }
 
-  // A conjured shield blocks while the Weapon button is held with an empty queue.
-  s.guardT[i] = s.guard[i] && held & BTN.weapon && s.queueLen[i] === 0 ? s.guardT[i] + 1 : 0;
-  if (s.guardT[i]) pressed &= ~BTN.weapon; // holding it to block is not a swing
+  // A conjured guard blocks while Space is held with an empty queue (Defend, grammar v2).
+  s.guardT[i] = s.guard[i] && held & BTN.self && s.queueLen[i] === 0 ? s.guardT[i] + 1 : 0;
+  if (s.guardT[i]) pressed &= ~BTN.self; // holding it to block is not a Self cast
 
   if (pressed & BTN.clear) refundQueue(w, i);
   pressElement(w, i, inp.press0);
@@ -192,6 +193,28 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   else if (s.bufTicks[i] > 0 && --s.bufTicks[i] === 0) s.bufCast[i] = 0;
 
   const act = canAct(w, i);
+  // Your hands (hands.ts): with no runes queued, the gestures are weapon moves.
+  if (s.phase[i] === PHASE.idle && act && (s.queueLen[i] === 0 || s.handT[i] > 0)) {
+    // Gestures pressed during the last recovery wait in the cast buffer, as spells do.
+    const face = aimFace(w, i), c = s.handT[i] === 0 && s.queueLen[i] === 0 ? s.bufCast[i] : 0;
+    if (c) { s.bufCast[i] = 0; s.bufTicks[i] = 0; }
+    if (c === CAST_ID.force) {
+      if (held & BTN.force) s.handT[i] = 1;
+      else { strike(w, i, face); toRecovery(w, i); return; } // tapped while busy: a Strike
+    } else if (s.handT[i] > 0 && held & BTN.force) s.handT[i]++;
+    else if (s.handT[i] > 0) {
+      const t = s.handT[i];
+      s.handT[i] = 0;
+      if (t <= TAP) strike(w, i, face); else heavy(w, i, face, heavyCharge(t));
+      toRecovery(w, i);
+      return;
+    }
+    if (c === CAST_ID.area || c === CAST_ID.place) { const [tx, ty] = target(w, i); special(w, i, face, tx, ty); toRecovery(w, i); return; }
+    if (c === CAST_ID.conjure) { retreat(w, i, face); toRecovery(w, i); return; }
+    if (c === CAST_ID.self) return; // Space with nothing queued: Defend, when you hold a guard (guardT above)
+    if (s.handT[i] > 0) return;
+  }
+  if (!act) s.handT[i] = 0;
   switch (s.phase[i]) {
     case PHASE.idle: {
       const c = s.bufCast[i];

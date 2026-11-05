@@ -113,6 +113,8 @@ export const STRUCT = {
   idleDrain: 0.03, wardDrainMult: 2, absorbPerHp: 0.01, barrierAbsorb: 0.1, reserve: 0.5,
   wardHp: 60, wardHpPerRune: 20, wardResist: 0.4, mirrorShots: 3, mendPerSec: 2,
   turretInterval: 1.0, turretRange: 8, turretAhead: 2.5,
+  /** Your hands (hands.ts): a Heavy's power and reach against a Strike, a Sweep's power, the Retreat hop. */
+  heavyScale: 1.8, heavyReach: 1.3, sweepScale: 0.8, retreatPush: 11,
   /** A turret shot costs this share of its payload's runes, and fires uncharged, as your tap cast does. */
   turretShotCost: 0.5,
   /** Your turrets together spend at most this share of your regen: shots slow down to fit (and with more turrets). */

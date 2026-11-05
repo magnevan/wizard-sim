@@ -131,14 +131,14 @@ describe('Shield', () => {
     expect(100 - a.w.bodies.hp[0]).toBeLessThan((100 - b.w.bodies.hp[0]) * 0.8);
   });
 
-  it('a Bulwark held up blocks shots from the front', () => {
+  it('a Bulwark held up (Space, nothing queued) blocks shots from the front', () => {
     const { w, d } = arena(2);
     d.aimAt(4, 0).queue('shield', 'earth').cast(BTN.weapon, 1, 20);
     expect(w.seats.guard[0]).toBe(1);
     const ally = new Driver(w, 1).aimAt(0, 0);
     // Block while the ally throws a rock at us.
     for (let t = 0; t < 90; t++) {
-      step(w, [quantize({ ...NO_INPUT, buttons: BTN.weapon, aimX: 4 * 32, aimY: 0 }), t === 0 ? quantize({ ...NO_INPUT, press0: elementId('earth') }) : t < 40 ? quantize({ ...NO_INPUT, buttons: BTN.force, aimX: -4 * 32, aimY: 0 }) : NO_INPUT]);
+      step(w, [quantize({ ...NO_INPUT, buttons: BTN.self, aimX: 4 * 32, aimY: 0 }), t === 0 ? quantize({ ...NO_INPUT, press0: elementId('earth') }) : t < 40 ? quantize({ ...NO_INPUT, buttons: BTN.force, aimX: -4 * 32, aimY: 0 }) : NO_INPUT]);
     }
     void ally;
     expect(w.bodies.hp[0]).toBe(100);
@@ -254,13 +254,59 @@ describe('Sigil', () => {
     expect(w.bodies.burn[t]).toBeGreaterThan(0);
   });
 
-  it('a conjured flame sword swings with the empty Weapon cast and burns', () => {
+  it('your hands: with nothing queued, RMB tap strikes with the conjured sword (1 use) and it burns', () => {
     const { w, d, dummy } = arena();
     const t = dummy(1.2, 0);
     d.aimAt(1.2, 0).queue('sigil', 'fire').cast(BTN.weapon, 1, 20);
     expect(w.seats.weapon[0]).toBe(EL.fire);
-    d.cast(BTN.weapon, 1, 20);
+    const uses = w.seats.weaponUses[0];
+    d.cast(BTN.force, 1, 20);
     expect(w.bodies.burn[t]).toBeGreaterThan(0);
+    expect(w.seats.weaponUses[0]).toBe(uses - 1);
+  });
+
+  it('your hands: a held RMB is a Heavy (harder, 2 uses), Shift+RMB a full-circle Sweep (2 uses)', () => {
+    const dealt: number[] = [];
+    for (const hold of [1, 70]) {
+      const { w, d, dummy } = arena();
+      const t = dummy(1.2, 0);
+      d.aimAt(1.2, 0).queue('sigil', 'earth').cast(BTN.weapon, 1, 20);
+      const uses = w.seats.weaponUses[0];
+      d.cast(BTN.force, hold, 20);
+      dealt.push(400 - w.bodies.hp[t]);
+      expect(w.seats.weaponUses[0]).toBe(uses - (hold > 1 ? 2 : 1));
+    }
+    expect(dealt[1]).toBeGreaterThan(dealt[0] * 1.3);
+    const { w, d, dummy } = arena();
+    const behind = dummy(-1.0, 0.2, 9);
+    d.aimAt(1.2, 0).queue('sigil', 'earth').cast(BTN.weapon, 1, 20);
+    d.cast(BTN.area, 1, 20); // a Sweep hits behind you too
+    expect(w.bodies.hp[behind]).toBeLessThan(400);
+  });
+
+  it('your hands: the spear Special is a javelin thrown at the cursor', () => {
+    const { w, d, dummy } = arena();
+    const t = dummy(6, 0);
+    d.aimAt(6, 0).queue('sigil', 'cold').cast(BTN.weapon, 1, 20);
+    d.cast(BTN.area, 1, 60);
+    expect(w.bodies.hp[t]).toBeLessThan(400);
+  });
+
+  it('your hands: Shift+LMB with nothing queued hops you backwards', () => {
+    const { w, d } = arena();
+    d.aimAt(5, 0).cast(BTN.weapon, 1, 30);
+    expect(w.bodies.x[0]).toBeLessThan(-0.8);
+  });
+
+  it('a guard and a weapon are held together (no two-handed weapons)', () => {
+    const { w, d } = arena();
+    d.queue('sigil', 'fire').cast(BTN.weapon, 1, 20);
+    d.queue('shield', 'earth').cast(BTN.weapon, 1, 20);
+    expect(w.seats.weapon[0]).toBe(EL.fire);
+    expect(w.seats.guard[0]).not.toBe(0);
+    d.queue('sigil', 'cold').cast(BTN.weapon, 1, 20); // a new weapon replaces only the weapon
+    expect(w.seats.weapon[0]).toBe(EL.cold);
+    expect(w.seats.guard[0]).not.toBe(0);
   });
 
   it('the Double repeats your spell from its own spot, for half the runes', () => {
@@ -344,9 +390,10 @@ describe('Sigil', () => {
     expect(w.seats.ward[1]).not.toBe(WARD.none);
     expect(w.seats.ward[0]).toBe(WARD.none);
     expect(w.seats.wardBy[1]).toBe(0);
-    d.aimAt(0.1, 0).queue('shield', 'cold').cast(BTN.self, 1, 20); // you keep one ward at a time: it moves to you
+    d.aimAt(0.1, 0).queue('shield', 'cold').cast(BTN.self, 1, 20); // and one on yourself too: both stand, both drain you
     expect(w.seats.ward[0]).not.toBe(WARD.none);
-    expect(w.seats.ward[1]).toBe(WARD.none);
+    expect(w.seats.ward[1]).not.toBe(WARD.none);
+    expect(w.seats.wardBy[0]).toBe(0);
   });
 
   it('plain elements on Self stay on you, even with the cursor on an ally', () => {

@@ -280,3 +280,15 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
 - **Weapons run on uses** (about 30).
 - **Guards are eight, one per lead element.** Each defines its Defend, its Retreat, a passive effect and its resistances (the user's direction; the set is designed next).
 - **Redesigns:** water becomes a trident. New Heavies: a much longer spear dash, a directed earthquake wave for earth, a fire wave for fire, and a continuous healing link for life. Arcane is reworked toward enhancing your spellcasting.
+
+## 2026-11-05: Grammar v2 in the game; wards for support
+- **Your hands are in the game.** With nothing queued:
+  - RMB tap strikes with your conjured weapon (1 use); held, it charges a Heavy (2 uses, harder, longer reach).
+  - Shift+RMB is the Special (2 uses): a full-circle Sweep, or the spear's javelin.
+  - Shift+LMB hops you backwards.
+  - Space blocks with your guard.
+  - Without a weapon, the staff does weak shoves.
+  - Weapon and guard are held together. The HUD shows the weapon's element and uses left under your badge, plus a bar while you hold a guard.
+  - The weapon-specific Heavies and the guards' own Retreats wait for the guards round.
+- **A caster may keep up any number of wards** (the user: one-per-caster "feels like it'll hurt a support playstyle"). Each wizard still wears only one ward. Every ward drains its caster's Shield pool, which is the real limit.
+- Golden re-recorded (`485c0373`): seats carry `handT`, the held-RMB counter for a Heavy.

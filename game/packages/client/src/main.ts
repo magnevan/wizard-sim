@@ -202,7 +202,8 @@ async function boot(): Promise<void> {
     // the debug line: small, and only hashed when shown (hashing walks every state byte)
     if (showDebug && world.clock[0] % 6 === 0) hud.textContent = `tick ${world.clock[0]}  hash ${hex(hashWorld(world))}  ${view.camera.scale}×  ${app.renderer.name}
 ${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
-      (autoplay ? '  autoplay' : demo[0] ? '  spell demo' : scripted ? '  scripted run' : '\nLMB walk · RMB Force (hold) · Shift+RMB Area, hold for Place · Space Self · Shift+LMB Weapon · Esc clear · hold Alt: inspect');
+      (autoplay ? '  autoplay' : demo[0] ? '  spell demo' : scripted ? '  scripted run' : '\nLMB walk · RMB Force (hold) · Shift+RMB Area, hold for Place · Space Self · Shift+LMB Weapon · Esc clear · hold Alt: inspect' +
+        '\nNothing queued: RMB strike, hold for heavy · Shift+RMB special · Shift+LMB step back · Space block (with a guard)');
     schedule(frame);
   };
   // ?timerloop=1: timers instead of animation frames, so a background tab keeps running (the co-op e2e test).

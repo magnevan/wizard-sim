@@ -91,10 +91,13 @@ function spawnWave(w: World, src: number, spec: SpellSpec, face: number): void {
   }
 }
 
-/** A ward on `i`, kept up by `by` (yourself, or an ally the cursor was on). You keep one ward at a time. */
+/**
+ * A ward on `i`, kept up by `by` (yourself, or an ally the cursor was on). Each wizard wears one
+ * ward (a new one replaces it); a caster may keep up as many as their Shield pool can drain
+ * (every ward drains it), so a support player can ward the whole team and themselves.
+ */
 function putWard(w: World, i: number, spec: SpellSpec, by = i): void {
   const s = w.seats, c = spec.counts;
-  for (let j = 0; j < s.ward.length; j++) if (j !== i && s.ward[j] && s.wardBy[j] === by) { s.ward[j] = WARD.none; s.wardBy[j] = -1; }
   s.wardBy[i] = by;
   const rest = restCounts(spec);
   let any = false;
@@ -162,7 +165,7 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
       const bulwark = spec.counts[EL.earth - 1] > 0;
       s.guard[src] = bulwark ? GUARD.bulwark : GUARD.buckler;
       s.guardHp[src] = bulwark ? STRUCT.bulwarkHp : STRUCT.bucklerHp;
-      s.weapon[src] = 0; s.wand[src] = 0; // it takes your Weapon cast
+      // held alongside your weapon: the weapon hand and the guard hand (no two-handed weapons)
       break;
     }
     case 'turret': {
@@ -184,9 +187,9 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
       spawnDevice(w, src, DEVICE.lens, spec, tx, ty);
       break;
     }
-    case 'wand': s.wand[src] = 1; s.weapon[src] = 0; s.guard[src] = 0; s.wandBorn[src] = w.clock[0]; break;
+    case 'wand': s.wand[src] = 1; s.weapon[src] = 0; s.wandBorn[src] = w.clock[0]; break;
     case 'weapon': {
-      s.wand[src] = 0; s.guard[src] = 0; s.weapon[src] = spec.sub; s.wandBorn[src] = w.clock[0];
+      s.wand[src] = 0; s.weapon[src] = spec.sub; s.wandBorn[src] = w.clock[0];
       s.weaponEls.set(restCounts(spec), src * N_EL); s.weaponUses[src] = STRUCT.weaponUses;
       break;
     }

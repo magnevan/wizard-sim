@@ -94,6 +94,14 @@ export class Hud {
     // the player's colour tab
     const team = X.TEAMS[i % 4];
     X.rect(c, x0 - 14, y0 + RH - 4, 13, 15, '#0a0810'); X.rect(c, x0 - 13, y0 + RH - 3, 12, 13, team.dark); X.text(c, 'P' + (i + 1), x0 - 11, y0 + RH + 1, team.light);
+    // what's in your hands: the conjured weapon (its element and uses left) and a guard, under the badge
+    if (s.weapon[i]) {
+      const el = elementName(s.weapon[i]);
+      X.rect(c, x0 - 14, y0 + RH + 12, 13, 16, '#0a0810');
+      X.icon(c, el as Element, x0 - 12, y0 + RH + 13, X.EL[el][2]);
+      X.text(c, String(s.weaponUses[i]), x0 - 13, y0 + RH + 22, s.weaponUses[i] <= 5 ? '#ff6a6a' : '#cfc9e6');
+    }
+    if (s.guard[i]) X.rect(c, x0 - 3, y0 + RH + 12, 2, 16, X.EL.shield[2]);
 
     const channel = s.phase[i] === PHASE.channel, spec = s.phase[i] !== PHASE.idle ? specOf(w, i) : null;
     const upkeep = channel && spec && s.chanTicks[i] >= T(RHYTHM.naturalChannel) ? spec.form : 0;

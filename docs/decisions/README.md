@@ -260,3 +260,11 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
 - **Turrets are paced by your regen:** a shot (or a whole channel) costs half its runes, and all your turrets together spend at most 60 % of your regen of any element (`structures.turretShotCost`, `structures.turretShare`). They used to fire every second at full price, about 4.5× your regen, and emptied your pool.
 - **The rune HUD handles bigger pools:** up to 5 runes are pips, 6–10 are two rows, and more is a bar with the count.
 - Golden hash re-recorded (`36a48e1b`): turrets carry channel state (`devices.chan`).
+- **Inspect mode is built:** hold Alt for a card on what's under the cursor.
+- **The game-side audit** (`npm run audit`, `explorations/2026-11-05-inert-audit.md`) finds 210 inert additions in play, grouped into families. Life payloads are the biggest.
+- **Walls (notes 12–13):**
+  - A long drawn wall no longer eats its own segments; that's where the gap came from.
+  - Walled-off enemies head straight for you and break the rock.
+  - Each player can keep 30 segments (was 12; the user: "way too low").
+- **Sprays leave the floor alone** (note 14: walking forward into your own puddle or fire was awkward). Floors come from Place patches and novas.
+- **Open:** a length budget per wall cast. Today a drawn wall's length is free up to the cap.

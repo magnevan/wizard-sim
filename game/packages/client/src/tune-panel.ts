@@ -14,7 +14,7 @@
  */
 import {
   ARCHETYPES, ARENA, KIND, MAX_SEATS, TEAM, devClearEnemies, devHeal, devRefillRunes, devSkipLull, devSpawnEnemy,
-  devStartWave, devStopWaves, findTunable, tunables, tuningHash, hex, type Tunable, type World,
+  devStartWave, devStopWaves, findTunable, overrides, tunables, tuningHash, hex, type Tunable, type World,
 } from '@wizard-sim/sim';
 import type { Camera } from './camera';
 import { Meters } from './meters';
@@ -106,6 +106,7 @@ export class TunePanel {
       encPhase: () => w.enc.state[0],
       waveNo: () => w.enc.state[1],
     });
+    if (this.online) return;
     if (this.infiniteRunes) devRefillRunes(w, 0);
     if (this.godMode) for (let s = 0; s < MAX_SEATS; s++) if (w.bodies.kind[s] === KIND.wizard && w.bodies.team[s] === TEAM.players) devHeal(w, s);
   }
@@ -125,12 +126,36 @@ export class TunePanel {
 
   // ---- actions ----
 
+  /**
+   * Online play (netplay.ts): tuning goes through the match, so every peer changes it on the same
+   * tick. The host proposes, everyone else reads. Cheats change the world directly, so they're off.
+   */
+  gate: { online(): boolean; canTune(): boolean; propose(map: Record<string, number>): void } | null = null;
+  private get online(): boolean { return !!this.gate?.online(); }
+
+  /** Replace the whole tuning with `map`: here at once, or through the match when online. */
+  private write(map: Record<string, number>): boolean {
+    if (!this.online) { replaceTuning(map); this.changed(); return true; }
+    if (!this.gate!.canTune()) { this.say('In a match only the host changes the tuning.'); this.changed(); return false; }
+    this.gate!.propose(map);
+    this.say('Sent to everyone: it applies in half a second.');
+    return true;
+  }
+
+  private say(text: string): void { if (this.el) this.el.msg.textContent = text; }
+
+  /** The match changed the tuning (the host's): show it, without saving it as this page's own. */
+  refresh(): void { this.changed(undefined, false); }
+
   private cheat(): void { this.devEdited = true; this.renderFlags(); }
+  /** Cheats online would desync the match. */
+  private offline(): boolean { if (this.online) { this.say('Cheats are off in an online match.'); return false; } return true; }
 
   private setPaused(p: boolean): void { this.paused = p; this.renderTime(); }
   private stepOnce(): void { this.setPaused(true); this.steps++; }
 
   private spawn(): void {
+    if (!this.offline()) return;
     const w = this.world;
     let x = w.bodies.x[0] + 3, y = w.bodies.y[0];
     if (this.cursor) ({ x, y } = this.camera.screenToWorld(this.cursor.x, this.cursor.y));
@@ -141,15 +166,21 @@ export class TunePanel {
 
   private setValue(t: Tunable, v: number): void {
     if (!Number.isFinite(v)) return;
+    if (this.online) {
+      const map = overrides();
+      if (v === t.def) delete map[t.id]; else map[t.id] = v;
+      this.write(map);
+      return;
+    }
     t.set(v);
     this.changed([t.id]);
   }
 
   /** After any tuning write: refresh those rows (or all), save, and update the hash and export. */
-  private changed(ids?: string[]): void {
+  private changed(ids?: string[], save = true): void {
     if (ids) for (const id of ids) for (const r of this.rows.get(id) ?? []) this.renderRow(r);
     else for (const rs of this.rows.values()) for (const r of rs) this.renderRow(r);
-    saveTuning();
+    if (save && !this.online) saveTuning();
     const hash = tuningHash();
     this.tuned = hash !== 0;
     if (!this.el) return;
@@ -219,7 +250,7 @@ export class TunePanel {
     for (const [key, label] of [['infiniteRunes', 'Infinite runes'], ['godMode', 'God mode']] as const) {
       const lab = h('label', 'tune-check'), box = h('input');
       box.type = 'checkbox';
-      box.addEventListener('change', () => { this[key] = box.checked; if (box.checked) this.cheat(); });
+      box.addEventListener('change', () => { if (box.checked && !this.offline()) { box.checked = false; return; } this[key] = box.checked; if (box.checked) this.cheat(); });
       lab.append(box, document.createTextNode(label));
       tg.appendChild(lab); this.toggles.push({ key, box });
     }
@@ -249,7 +280,7 @@ export class TunePanel {
 
     const wv = h('div', 'tune-line');
     const wn = h('input', 'tune-num'); wn.type = 'number'; wn.min = '1'; wn.step = '1'; wn.value = '1';
-    const act = (label: string, fn: () => void, tip = '') => { const b = h('button', '', label); if (tip) b.title = tip; b.addEventListener('click', () => { fn(); this.cheat(); }); return b; };
+    const act = (label: string, fn: () => void, tip = '') => { const b = h('button', '', label); if (tip) b.title = tip; b.addEventListener('click', () => { if (!this.offline()) return; fn(); this.cheat(); }); return b; };
     wv.append(h('span', 'tune-k', 'Wave'), wn,
       act('Start', () => devStartWave(this.world, Math.max(1, Number(wn.value) || 1), 2), 'Clears the field, then wave N after a 2 s lull'),
       act('Skip lull', () => devSkipLull(this.world)),
@@ -278,12 +309,12 @@ export class TunePanel {
     apply.addEventListener('click', () => {
       const p = parseOverrides(imp.value);
       if (!p.ok) { msg.textContent = p.error; return; }
-      const unknown = replaceTuning(p.map);
-      this.changed();
-      msg.textContent = `Applied ${Object.keys(p.map).length - unknown.length} values.` + (unknown.length ? ` Unknown: ${unknown.join(', ')}` : '');
+      const unknown = Object.keys(p.map).filter((id) => !findTunable(id));
+      if (!this.write(p.map)) return;
+      if (!this.online) msg.textContent = `Applied ${Object.keys(p.map).length - unknown.length} values.` + (unknown.length ? ` Unknown: ${unknown.join(', ')}` : '');
     });
     const resetAll = h('button', 'warn', 'Reset all');
-    resetAll.addEventListener('click', () => { replaceTuning({}); this.changed(); msg.textContent = 'Back to the defaults.'; });
+    resetAll.addEventListener('click', () => { if (this.write({}) && !this.online) msg.textContent = 'Back to the defaults.'; });
     share.append(h('div', 'tune-k', 'Export (what differs from the defaults)'), exp, copy,
       h('div', 'tune-k', 'Import (replaces the current tuning)'), imp, apply, resetAll, msg);
 

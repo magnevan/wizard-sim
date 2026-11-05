@@ -292,3 +292,10 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
   - The weapon-specific Heavies and the guards' own Retreats wait for the guards round.
 - **A caster may keep up any number of wards** (the user: one-per-caster "feels like it'll hurt a support playstyle"). Each wizard still wears only one ward. Every ward drains its caster's Shield pool, which is the real limit.
 - Golden re-recorded (`485c0373`): seats carry `handT`, the held-RMB counter for a Heavy.
+
+## 2026-11-05: The host tunes online matches
+- **The host can tune during an online match without a desync** (the user's ask).
+  - **How it works:** the host's panel edits go out as "the whole tuning becomes this map at tick T", about half a second ahead. Every peer applies the change at T; the match keeps the schedule, so every tick, replays included, runs with the tuning it had. A change that arrives late rewinds to its tick.
+  - **Joining:** the host's tuning travels in the start message (and in a rejoin's welcome), so a different local tuning no longer refuses the join.
+  - **Leaving:** the match's tuning isn't saved as your own; your saved tuning comes back when you leave.
+- **Online, only the host tunes.** Other players' panels refuse with a note. Cheats (spawn, heal, refill, god mode, infinite runes, the wave tools) are off online, because they change the world on one page only. NET_VERSION 3.

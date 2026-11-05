@@ -136,11 +136,16 @@ async function boot(): Promise<void> {
       const s = net!.session!;
       view.setLocalSeat(net!.seat);
       s.hooks = {
-        before: (w) => view.beforeStep(w), after: (w) => { if (!s.replaying) { view.afterStep(w); tune.afterStep(); } },
+        before: (w) => { net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); tune.afterStep(); } },
         preRewind: (w) => view.notePreRewind(w), postRewind: (w) => view.notePostRewind(w, net!.seat),
       };
     });
-    if (net) tune.addSection('Network test', (body) => net!.attachDebug(body));
+    if (net) {
+      tune.addSection('Network test', (body) => net!.attachDebug(body));
+      const n = net;
+      tune.gate = { online: () => n.state === 'playing', canTune: () => n.canTune, propose: (map) => n.proposeTuning(map) };
+      n.onTuning = () => tune.refresh();
+    }
   }
 
   const runStep = () => {

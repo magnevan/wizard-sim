@@ -20,17 +20,22 @@
  *   welcome {to, seat, at, players, room, delay, tick, snap, inputs, gone}   the world for the newcomer
  * The coordinator is the lowest seat still playing, so it changes by itself when the host leaves.
  *
- * Everyone must run the same build and the same tuning (tuningHash), or the worlds drift apart, so
- * a join is refused on a mismatch.
+ * Everyone must run the same build, or the worlds drift apart, so a join is refused on a mismatch.
+ * Tuning is the host's: the start (and a rejoin's welcome) carries the host's overrides, and during a
+ * match only the host may change it. A change is scheduled a moment ahead,
+ *   tune    {n, at, map}                  every peer swaps to `map` (the whole tuning) at tick `at`
+ * and the match keeps the schedule, so every tick, replays included, runs with the tuning it had
+ * (beforeTick). A change heard after its tick rewinds to it.
  */
 import { RollbackSession, type Gone, type Handover, type Transport } from '@wizard-sim/net';
-import { createWorld, hex, restore, snapshot, tuningHash, type Snapshot, type World } from '@wizard-sim/sim';
+import { createWorld, overrides, restore, snapshot, tuningHash, type Snapshot, type World } from '@wizard-sim/sim';
+import { loadSaved, replaceTuning } from '../tune-io';
 import { fromB64, toB64, type Bus } from './bus';
 import { LinkSim, PRESETS } from './linksim';
 import type { RtcBus } from './webrtc';
 
 /** Bump when the sim or the protocol changes in a way that breaks lockstep between builds. */
-export const NET_VERSION = 2;
+export const NET_VERSION = 3;
 /** Input delay in ticks with rollback: tiny (your own actions are instant); the rest is predicted and corrected. */
 export const NET_DELAY = 2;
 /** How far rollback may rewind (1 s): past that, a peer waits for the slowest. */
@@ -47,16 +52,19 @@ const RESUME_AHEAD = 45;
 
 interface HostMsg { t: 'host'; match: string; name: string; version: number; tuning: number; room: string; players: string[]; rejoin?: boolean }
 interface JoinMsg { t: 'join'; match: string; version: number; tuning: number }
-interface StartMsg { t: 'start'; match: string; seed: number; room: string; delay: number; players: string[] }
+interface StartMsg { t: 'start'; match: string; seed: number; room: string; delay: number; players: string[]; tuning: Record<string, number> }
+/** A tuning in force from tick `at` (the whole map of overrides, so applying one never depends on the last). */
+interface TuneAt { n: number; at: number; map: Record<string, number> }
 type LobbyMsg = HostMsg | JoinMsg | StartMsg;
 
-interface Welcome { t: 'welcome'; m: string; to: string; seat: number; at: number; players: string[]; room: string; delay: number; tick: number; snap: string; inputs: string; gone: (Gone | null)[] }
+interface Welcome { t: 'welcome'; m: string; to: string; seat: number; at: number; players: string[]; room: string; delay: number; tick: number; snap: string; inputs: string; gone: (Gone | null)[]; tunes: TuneAt[] }
 type Control =
   | { t: 'bye'; m: string; f: number }
   | { t: 'lost'; m: string; f: number; seat: number; have: number; tail: string }
   | { t: 'drop'; m: string; seat: number; end: number; tail: string }
   | { t: 'rejoin'; m: string; peer: string; version: number; tuning: number }
   | { t: 'resume'; m: string; seat: number; at: number; since: number; peer: string }
+  | ({ t: 'tune'; m: string } & TuneAt)
   | Welcome;
 
 /** A transport whose seat is set once it's known (a rejoining page learns it from the welcome). */
@@ -139,6 +147,11 @@ export class NetPlay {
   private rejoin: { match: string; transport: SeatTransport; asked: number } | null = null;
   private transport: (SeatTransport) | null = null;
   private lastAnnounce = 0;
+  /** The match's tuning schedule, oldest first, and which entry is in force in the world now. */
+  private tunes: TuneAt[] = [];
+  private tuneOn = -1;
+  /** Called when the match's tuning changes what the panel should show. */
+  onTuning: () => void = () => {};
   /** Stats for the Network test section. */
   private stat = { at: 0, replayed: 0, rewindsPerS: 0 };
 
@@ -184,7 +197,6 @@ export class NetPlay {
     const h = this.open.get(match);
     if (!h || this.state !== 'off') return;
     if (h.version !== NET_VERSION) { this.message = 'That host runs a different build.'; this.render(); return; }
-    if (h.tuning !== tuningHash()) { this.message = `Tunings differ (host ${hex(h.tuning)}, you ${hex(tuningHash())}). Import the host's tuning or both reset.`; this.render(); return; }
     if (h.rejoin) { this.askRejoin(match); return; }
     this.match = match; this.state = 'joining';
     this.bus.emit('lobby', { t: 'join', match, version: NET_VERSION, tuning: tuningHash() } satisfies JoinMsg);
@@ -195,7 +207,7 @@ export class NetPlay {
   start(): void {
     if (this.state !== 'hosting') return;
     clearInterval(this.hostTimer);
-    const msg: StartMsg = { t: 'start', match: this.match, seed: (Date.now() & 0x7fffffff) >>> 0, room: this.room, delay: NET_DELAY, players: this.joinedPlayers };
+    const msg: StartMsg = { t: 'start', match: this.match, seed: (Date.now() & 0x7fffffff) >>> 0, room: this.room, delay: NET_DELAY, players: this.joinedPlayers, tuning: overrides() };
     // The room can drop a moment; say it a few times.
     for (const ms of [0, 250, 600, 1200]) setTimeout(() => this.bus.emit('lobby', msg), ms);
     this.startMsg = msg;
@@ -204,6 +216,7 @@ export class NetPlay {
 
   leave(): void {
     this.sayBye();
+    this.restoreOwnTuning();
     clearInterval(this.hostTimer);
     this.state = 'off'; this.session = null; this.match = ''; this.startMsg = null; this.rejoin = null; this.transport = null; this.reports.clear();
     this.message = 'Left the match.';
@@ -224,7 +237,7 @@ export class NetPlay {
       if (this.autoJoin && this.state === 'off') { this.autoJoin = false; this.join(m.match); }
       this.render();
     } else if (m.t === 'join' && this.state === 'hosting' && m.match === this.match) {
-      if (m.version !== NET_VERSION || m.tuning !== tuningHash() || this.joinedPlayers.length >= 4 || this.joinedPlayers.includes(from)) return;
+      if (m.version !== NET_VERSION || this.joinedPlayers.length >= 4 || this.joinedPlayers.includes(from)) return;
       this.joinedPlayers.push(from);
       this.render();
     } else if (m.t === 'start' && this.state === 'joining' && m.match === this.match && Array.isArray(m.players) && m.players.includes(this.bus.self)) {
@@ -237,6 +250,9 @@ export class NetPlay {
   }
 
   private begin(m: StartMsg): void {
+    // The host's tuning, before the world is made (spawn-time numbers read it).
+    this.tunes = [{ n: 0, at: 0, map: m.tuning ?? {} }]; this.tuneOn = -1;
+    this.applyTuning(0);
     this.seat = m.players.indexOf(this.bus.self);
     this.players = m.players.length;
     this.joinedPlayers = m.players.slice();
@@ -247,7 +263,7 @@ export class NetPlay {
     this.transport.self = this.seat;
     this.session = new RollbackSession(this.world, this.transport, seats, m.delay, false, ROLLBACK_WINDOW);
     this.session.delay = this.inputDelay;
-    this.playing(`Playing as seat ${this.seat + 1} of ${this.players}. Cheats and tuning changes would desync the match.`);
+    this.playing(`Playing as seat ${this.seat + 1} of ${this.players}. ${this.seat === 0 ? 'Your tuning changes go to everyone.' : 'The host sets the tuning; cheats are off online.'}`);
   }
 
   private playing(message: string): void {
@@ -306,8 +322,10 @@ export class NetPlay {
       this.joinedPlayers[m.seat] = m.peer;
       this.heard[m.seat] = this.now + 3000; // the newcomer needs a moment to load
       this.message = `Player ${m.seat + 1} rejoined.`;
+    } else if (m.t === 'tune') {
+      this.addTune({ n: m.n, at: m.at, map: m.map });
     } else if (m.t === 'rejoin') {
-      if (this.coordinator() !== this.seat || m.version !== NET_VERSION || m.tuning !== tuningHash()) return;
+      if (this.coordinator() !== this.seat || m.version !== NET_VERSION) return;
       await this.admit(m.peer);
     }
   }
@@ -332,6 +350,7 @@ export class NetPlay {
   /** We were dropped (our link went quiet too long): back to the lobby, where Rejoin waits. */
   private dropped(): void {
     clearInterval(this.hostTimer);
+    this.restoreOwnTuning();
     this.state = 'off'; this.session = null; this.transport = null; this.reports.clear();
     this.message = 'Your connection dropped and the match went on without you. Rejoin it below.';
     this.match = '';
@@ -370,7 +389,7 @@ export class NetPlay {
     for (const ms of [0, 300, 800]) setTimeout(() => this.bus.emit('nc', resume), ms);
     const welcome: Welcome = {
       t: 'welcome', m: this.match, to: peer, seat, at, players: this.joinedPlayers.slice(), room: this.room, delay: NET_DELAY,
-      tick: h.tick, snap: await packSnap(h.snap), inputs: toB64(h.inputs), gone: h.gone,
+      tick: h.tick, snap: await packSnap(h.snap), inputs: toB64(h.inputs), gone: h.gone, tunes: this.tunes,
     };
     this.bus.emit('nc', welcome);
     this.message = `Player ${seat + 1} is rejoining.`;
@@ -385,9 +404,11 @@ export class NetPlay {
     const seats = m.players.map((_, i) => i);
     r.transport.self = m.seat;
     this.transport = r.transport;
+    this.tunes = (m.tunes ?? []).slice(); this.tuneOn = -1;
     const snap = await unpackSnap(m.snap);
     this.session = new RollbackSession(this.world, r.transport, seats, m.delay, false, ROLLBACK_WINDOW);
     this.session.startMidway({ tick: m.tick, snap, inputs: fromB64(m.inputs), gone: m.gone }, m.at);
+    this.applyTuning(m.tick);
     this.session.delay = this.inputDelay;
     this.playing(`Rejoined as seat ${this.seat + 1} of ${this.players}.`);
   }
@@ -416,6 +437,49 @@ export class NetPlay {
       this.stat.rewindsPerS = (s.replayed - this.stat.replayed) / ((now - this.stat.at) / 1000 || 1);
       this.stat.replayed = s.replayed; this.stat.at = now;
     }
+  }
+
+  // ---- tuning, the host's ----
+
+  /** Only the host's page changes the tuning in a match (and anyone's, out of one). */
+  get canTune(): boolean { return !this.session || this.seat === 0; }
+
+  /** The host's panel changed the tuning to `map` (all of it): schedule it for everyone, a moment ahead. */
+  proposeTuning(map: Record<string, number>): void {
+    const s = this.session;
+    if (!s || this.seat !== 0) return;
+    const t: TuneAt = { n: (this.tunes[this.tunes.length - 1]?.n ?? 0) + 1, at: s.tick + s.delay + 30, map };
+    this.addTune(t);
+    const msg = { t: 'tune', m: this.match, ...t } satisfies Control;
+    for (const ms of [0, 250, 700]) setTimeout(() => this.bus.emit('nc', msg), ms);
+  }
+
+  private addTune(t: TuneAt): void {
+    if (this.tunes.some((x) => x.n === t.n)) return;
+    this.tunes.push(t);
+    this.tunes.sort((a, b) => a.at - b.at || a.n - b.n);
+    // heard after its tick: those ticks ran with the old tuning, so run them again
+    if (this.session && t.at < this.session.tick) this.session.rewindFrom(t.at);
+  }
+
+  /** Call before every sim step of the match, replays included: the tuning in force at that tick. */
+  beforeTick(tick: number): void { this.applyTuning(tick); }
+
+  private applyTuning(tick: number): void {
+    let k = -1;
+    for (let j = 0; j < this.tunes.length; j++) if (this.tunes[j].at <= tick) k = j;
+    if (k === this.tuneOn || k < 0) return;
+    this.tuneOn = k;
+    replaceTuning(this.tunes[k].map);
+    this.onTuning();
+  }
+
+  /** Out of the match: back to this page's own saved tuning. */
+  private restoreOwnTuning(): void {
+    if (!this.tunes.length) return;
+    this.tunes = []; this.tuneOn = -1;
+    replaceTuning({}); loadSaved();
+    this.onTuning();
   }
 
   /** A measured round trip, smoothed. */

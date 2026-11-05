@@ -112,17 +112,50 @@ describe('online co-op over the bus', () => {
     vi.useRealTimers();
   });
 
-  it('refuses to join a host with a different tuning', async () => {
+  it('a joiner takes the host tuning, and the host can retune mid-match without a desync', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
     const { NetPlay } = await import('../src/net/netplay');
-    const { findTunable, resetTuning } = await import('@wizard-sim/sim');
+    const { findTunable, resetTuning, overrides, applyOverrides } = await import('@wizard-sim/sim');
     const bus = hub();
-    const a = new NetPlay(bus('h'), createWorld(1, 1), 'sanctum', () => {});
-    const b = new NetPlay(bus('j'), createWorld(1, 1), 'sanctum', () => {});
+    const wa = createWorld(1, 1), wb = createWorld(2, 1);
+    const a = new NetPlay(bus('h'), wa, 'arena', () => {});
+    const b = new NetPlay(bus('j'), wb, 'arena', () => {});
+    // Two pages in one process share the tuning tables, so each page's tuning is swapped in around its own steps.
+    const own = new Map<unknown, Record<string, number>>();
+    const swap = (p: unknown) => { resetTuning(); applyOverrides(own.get(p) ?? {}); };
+    const keep = (p: unknown) => own.set(p, overrides());
+    findTunable('runes.regen')!.set(0.9); keep(a);
     a.host();
-    findTunable('runes.regen')!.set(0.9);
-    b.join([...(b as unknown as { open: Map<string, unknown> }).open.keys()][0]);
-    expect(b.state).toBe('off');
-    expect(b.message).toMatch(/Tunings differ/);
+    vi.advanceTimersByTime(1600);
+    resetTuning(); keep(b);
+    swap(b); b.join([...(b as unknown as { open: Map<string, unknown> }).open.keys()][0]);
+    expect(b.state).toBe('joining'); // a different tuning no longer refuses the join
+    swap(a); a.start(); keep(a);
+    vi.advanceTimersByTime(1500); keep(b);
+    expect(own.get(b)!['runes.regen']).toBe(0.9); // the joiner took the host tuning
+    for (const p of [a, b]) p.session!.hooks = { before: (w) => p.beforeTick(w.clock[0]) }; // as main.ts does
+    let now = 0;
+    for (let f = 0; f < 600 && (wa.clock[0] < 400 || wb.clock[0] < 400); f++) {
+      now += 17;
+      for (const [p, w] of [[a, wa], [b, wb]] as const) {
+        swap(p);
+        p.pump(now);
+        const s = p.session!;
+        if (w.clock[0] < 400) {
+          if (s.nextScheduled <= w.clock[0] + s.delay) s.pushLocal(quantize({ ...NO_INPUT, moveX: p.seat ? -60 : 60, buttons: f % 60 < 3 ? BTN.force : 0, press0: f % 60 === 30 ? 8 : 0, aimX: 64, aimY: 0 }));
+          s.advance(1);
+        }
+        if (p === a && f === 120) p.proposeTuning({ 'runes.regen': 0.4, 'body.walkSpeed': 6 }); // the host retunes
+        keep(p);
+      }
+      vi.advanceTimersByTime(17);
+    }
+    expect([wa.clock[0], wb.clock[0]]).toEqual([400, 400]);
+    expect(own.get(b)!['body.walkSpeed']).toBe(6);
+    expect(hashWorld(wa)).toBe(hashWorld(wb));
+    expect(a.session!.desyncs).toEqual([]);
+    expect(b.canTune).toBe(false);
     resetTuning();
+    vi.useRealTimers();
   });
 });

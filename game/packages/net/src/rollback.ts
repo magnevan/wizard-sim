@@ -103,6 +103,16 @@ export class RollbackSession extends LockstepSession {
   /** Who is gone, for a handover. */
   goneSeats(): readonly (Gone | null)[] { return this.gone; }
 
+  /**
+   * Something outside the inputs changed from tick t on (the host's tuning, netplay.ts): the ticks
+   * from t that already ran are replayed, and none of them stays confirmed.
+   */
+  rewindFrom(t: number): void {
+    if (t >= this.tick) return;
+    this.rewindTo = Math.min(this.rewindTo, t);
+    this.unconfirm(t);
+  }
+
   /** Stop listening to seat p, so what we hold from it stays put while its drop is agreed. */
   mute(p: number): void { this.muted[p] = true; }
 

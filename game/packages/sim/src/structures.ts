@@ -27,7 +27,7 @@ import { HIT_KIND, addKnock, setHitKind } from './hit';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { boundSigil, drainShield, energyLoad, segDist } from './walls';
 import { conjureGuard } from './guards';
-import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
+import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, freeDouble, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
 
 const alive = (w: World, i: number) => w.bodies.kind[i] !== KIND.none;
 
@@ -195,17 +195,25 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
       break;
     }
     case 'aura': s.auraEls.set(restCounts(spec), on * N_EL); s.aura[on] = T(STRUCT.auraTime); break;
-    case 'double': {
-      if (s.double[src] >= 0 && b.kind[s.double[src]] === KIND.double) b.kind[s.double[src]] = KIND.none; // one at a time
-      const ox = cosTurns(face + 0.25) * 1.2, oy = sinTurns(face + 0.25) * 1.2;
-      const i = spawnBody(w, -1, KIND.double, b.team[src], x + ox, y + oy, STRUCT.doubleHp, b.r[src]);
-      s.double[src] = i; s.dblOX[src] = ox; s.dblOY[src] = oy; s.dblBorn[src] = w.clock[0];
-      if (i >= 0) b.face[i] = b.face[src];
-      break;
-    }
+    case 'double': spawnDouble(w, src, face); break;
     default: break;
   }
   w.events.push({ tick: w.clock[0], kind: 'cast', who: src, x, y, text: spec.title, look: spec.look });
+}
+
+/**
+ * Seat `src`'s Double appears at its left hand (one at a time: an older one goes). Returns its body,
+ * or -1 if no slot was free. Survive's Echo spawns its free Double through here too.
+ */
+export function spawnDouble(w: World, src: number, face: number, hp = STRUCT.doubleHp): number {
+  const b = w.bodies, s = w.seats;
+  if (s.double[src] >= 0 && b.kind[s.double[src]] === KIND.double) b.kind[s.double[src]] = KIND.none;
+  if (w.run) w.run.echo[src] = -1; // a cast Double replaces Echo's
+  const ox = cosTurns(face + 0.25) * 1.2, oy = sinTurns(face + 0.25) * 1.2;
+  const i = spawnBody(w, -1, KIND.double, b.team[src], b.x[src] + ox, b.y[src] + oy, hp, b.r[src]);
+  s.double[src] = i; s.dblOX[src] = ox; s.dblOY[src] = oy; s.dblBorn[src] = w.clock[0];
+  if (i >= 0) b.face[i] = b.face[src];
+  return i;
 }
 
 /** A swing with your conjured weapon: its element's swing, at its reach (the hook yanks). Returns false without one. */
@@ -286,8 +294,9 @@ export function dismissAt(w: World, seat: number, x: number, y: number): boolean
   const h = hovered(w, seat, x, y);
   if (!h) return false;
   if (h[0] === Q.onYou) for (let k = 0; k < MAX_DEVICES; k++) if (w.devices.type[k] === DEVICE.orbital && w.devices.owner[k] === seat) w.devices.type[k] = DEVICE.none;
+  const free = h[0] === Q.double && freeDouble(w, seat); // Echo's Double bound no rune
   removeOne(w, seat, h[0], h[1]);
-  giveRune(w, seat);
+  if (!free) giveRune(w, seat);
   return true;
 }
 
@@ -325,7 +334,7 @@ export function recallOldest(w: World, seat: number): boolean {
   let what = 0, idx = -1, born = Infinity;
   for (let k = 0; k < MAX_DEVICES; k++) if (dv.type[k] && dv.owner[k] === seat && dv.born[k] < born) { born = dv.born[k]; what = Q.device; idx = k; }
   const d = s.double[seat];
-  if (d >= 0 && b.kind[d] === KIND.double && s.dblBorn[seat] < born) { born = s.dblBorn[seat]; what = Q.double; idx = d; }
+  if (d >= 0 && b.kind[d] === KIND.double && !freeDouble(w, seat) && s.dblBorn[seat] < born) { born = s.dblBorn[seat]; what = Q.double; idx = d; }
   if ((s.wand[seat] || s.weapon[seat]) && s.wandBorn[seat] < born) { born = s.wandBorn[seat]; what = Q.onYou; idx = seat; }
   if (!what) return false;
   if (what === Q.onYou) { s.wand[seat] = 0; s.weapon[seat] = 0; w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: b.x[seat], y: b.y[seat], amount: 1, look: EL.sigil, text: 'dismissed' }); }

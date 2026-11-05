@@ -9,7 +9,7 @@
  * carry it. Tuning live is a local, dev-only thing until then.
  */
 import { ARCHETYPES } from './archetypes';
-import { ARMS, BODY, COMBAT, DAMAGE, RHYTHM, RUNES, SHAPES, STATUS, STRUCT, SURFACE } from './config';
+import { ARMS, BODY, COMBAT, DAMAGE, PERKS, RHYTHM, RUNES, SHAPES, STATUS, STRUCT, SURFACE } from './config';
 import { WAVE_TIMES } from './waves';
 
 export interface Tunable {
@@ -90,6 +90,7 @@ table('arms', 'Weapons & guards', ARMS as unknown as Record<string, unknown>);
 table('body', 'Bodies', BODY as unknown as Record<string, unknown>);
 table('surface', 'Surfaces', SURFACE as unknown as Record<string, unknown>);
 table('waves', 'Waves', WAVE_TIMES as unknown as Record<string, unknown>);
+table('perks', 'Survive power-ups', PERKS as unknown as Record<string, unknown>);
 for (const a of ARCHETYPES) {
   if (a.id === 'none') continue;
   for (const k of ['hp', 'speed', 'damage', 'windup', 'cooldown', 'reach', 'knockback']) add(`enemy.${a.id}.${k}`, `Enemy: ${a.name}`, a as unknown as Record<string, unknown>, k);

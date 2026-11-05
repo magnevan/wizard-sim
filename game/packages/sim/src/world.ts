@@ -317,9 +317,13 @@ export const PU = {
   bloom: 9,
   /** Your turrets' shots cost no runes. */
   clockwork: 10,
+  /** A free Double stands with you until the next wave is cleared (one-shot: it can be picked again). */
+  echo: 11,
+  /** Stand by a downed ally for PERKS.rallyTime to bring them back mid-wave. */
+  rally: 12,
 } as const;
-export const N_PU = 11;
-export const PU_CAP: readonly number[] = [0, 3, 4, 3, 2, 1, 1, 1, 1, 1, 1];
+export const N_PU = 13;
+export const PU_CAP: readonly number[] = [0, 3, 4, 3, 2, 1, 1, 1, 1, 1, 1, 9, 1];
 export const N_ALTARS = 3;
 /** Picks remembered per seat, in order, for the HUD and the results. */
 export const PICK_LOG = 32;
@@ -340,6 +344,10 @@ export interface Run {
   log: Uint8Array; logEl: Uint8Array; logN: Uint8Array;
   /** Slipstream: ticks left of the free-spell window after a hop. Charm: ticks until the mirror regrows. */
   dodge: Int32Array; charm: Int32Array;
+  /** Rally, per downed seat: ticks of revive so far, and the seat reviving them (-1: nobody). */
+  rally: Int32Array; rallyBy: Int8Array;
+  /** Echo: the body of the seat's free Double (-1: none). See freeDouble. */
+  echo: Int16Array;
 }
 
 export interface World {
@@ -410,6 +418,7 @@ function run(): Run {
     picked: new Int8Array(n).fill(-1), stand: i32(n), standOn: new Int8Array(n).fill(-1),
     log: u8(n * PICK_LOG), logEl: u8(n * PICK_LOG), logN: u8(n),
     dodge: i32(n), charm: i32(n),
+    rally: i32(n), rallyBy: new Int8Array(n).fill(-1), echo: new Int16Array(n).fill(-1),
   };
 }
 
@@ -470,6 +479,11 @@ export const runeMax = (w: World, i: number, id: number): number =>
   w.run ? RUNES.max[elementName(id)] + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
 /** A seat's power-up stacks (0 outside survive). */
 export const stackOf = (w: World, i: number, pu: number): number => (w.run && i >= 0 && i < MAX_SEATS ? w.run.stacks[i * N_PU + pu] : 0);
+/** True when seat `i`'s Double is Echo's free one: it binds no Sigil rune, and recalling it gives none back. */
+export const freeDouble = (w: World, i: number): boolean => {
+  const d = w.seats.double[i];
+  return !!w.run && d >= 0 && w.run.echo[i] === d && w.bodies.kind[d] === KIND.double;
+};
 /** Runes per second for seat `i` (Wellspring adds 30% a stack). */
 export const regenOf = (w: World, i: number): number => {
   const k = stackOf(w, i, PU.wellspring);

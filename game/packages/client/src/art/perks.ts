@@ -16,6 +16,10 @@ const BOLT = ['..#....', '.##....', '#######', '.##..#.', '..#.##.', '....###', 
 const MIRROR = ['.#####.', '#.....#', '#..#..#', '#.#.#.#', '#.....#', '.#...#.', '..###..'];
 const BLOOM = ['..#.#..', '.#####.', '##.#.##', '.#####.', '..###..', '...#...', '..###..'];
 const WALL = ['.......', '##.##.#', '##.##.#', '.......', '#.##.##', '#.##.##', '.......'];
+/** Two figures, one a step behind the other. */
+const ECHO = ['.#...#.', '###.###', '.#...#.', '###.###', '.#...#.', '#.#.#.#', '#.#.#.#'];
+/** A hand reaching down to a figure lying flat. */
+const RALLY = ['...#...', '..###..', '...#...', '..#.#..', '.......', '##.###.', '#######'];
 
 export const PERKS: Record<number, PerkArt> = {
   [PU.deep]: { name: 'Deep pools', rule: '+1 max rune of every element', ramp: X.EL.sigil, glyph: POOLS },
@@ -28,6 +32,8 @@ export const PERKS: Record<number, PerkArt> = {
   [PU.charm]: { name: 'Mirror charm', rule: 'A mirror ward regrows on you', ramp: X.EL.shield, glyph: MIRROR },
   [PU.bloom]: { name: 'Bloom', rule: 'Your heals splash onto allies', ramp: X.EL.life, glyph: BLOOM },
   [PU.clockwork]: { name: 'Clockwork', rule: 'Your turrets fire for free', ramp: X.EL.shield, glyph: GEAR },
+  [PU.echo]: { name: 'Echo', rule: 'A free Double stands with you next wave', ramp: X.EL.sigil, glyph: ECHO },
+  [PU.rally]: { name: 'Rally', rule: 'Stand by a downed ally 3s to revive them', ramp: X.EL.life, glyph: RALLY },
 };
 
 /** What a pick shows: Deep (one element) takes its element's colour, icon and name. */

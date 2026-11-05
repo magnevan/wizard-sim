@@ -14,7 +14,24 @@
  * Pure integer maths on the tick, so a given --ms shows the same moment.
  */
 import { rules, type Element } from '@wizard-sim/rules';
-import { AIM_UNIT, BTN, elementId, quantize, type PlayerInput, type World } from '@wizard-sim/sim';
+import { AIM_UNIT, ARCH, BTN, PHASE_ENC, PU, devSpawnEnemy, elementId, grant, quantize, type PlayerInput, type World } from '@wizard-sim/sim';
+
+/**
+ * ?room=survive&scene=rally (with the headless loop, e.g. the screenshot script): mid-wave, P2 is
+ * down and P1, holding Rally and Echo, stands beside them with Echo's Double; a goblin and a brute
+ * close in. Nobody presses anything, so the ring fills and P2 gets up after PERKS.rallyTime unless
+ * a hit lands first.
+ */
+export function rallyScene(w: World): void {
+  if (!w.run) return;
+  const b = w.bodies, e = w.enc;
+  b.x[0] = -0.5; b.y[0] = 0.4; b.face[0] = 0;
+  b.x[1] = 0.7; b.y[1] = 0.9; b.hp[1] = 0; b.downed[1] = 1;
+  grant(w, 0, PU.rally); grant(w, 0, PU.echo);
+  e.state[0] = PHASE_ENC.wave; e.state[1] = 6; e.state[2] = 0; e.left.fill(0); e.total.fill(0);
+  devSpawnEnemy(w, ARCH.swarmer, 8, -3);
+  devSpawnEnemy(w, ARCH.brute, -9, 5);
+}
 
 export interface Demo { els: number[]; cast: string; at?: [number, number]; seq?: Demo[] }
 

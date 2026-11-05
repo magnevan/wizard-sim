@@ -1,0 +1,221 @@
+{
+ "generated": "npm run balance:weapons",
+ "rows": [
+  {
+   "row": "staff strike",
+   "dps10": 6.4,
+   "dps30": 6.3,
+   "runes30": 0,
+   "perRune30": null,
+   "dmg30": 188
+  },
+  {
+   "row": "staff heavy",
+   "dps10": 5,
+   "dps30": 5,
+   "runes30": 0,
+   "perRune30": null,
+   "dmg30": 149
+  },
+  {
+   "row": "staff sweep",
+   "dps10": 5.1,
+   "dps30": 5,
+   "runes30": 0,
+   "perRune30": null,
+   "dmg30": 150
+  },
+  {
+   "row": "Arcane wand strike",
+   "dps10": 7.7,
+   "dps30": 7.4,
+   "runes30": 4,
+   "perRune30": 55.2,
+   "dmg30": 221
+  },
+  {
+   "row": "Arcane wand heavy",
+   "dps10": 8,
+   "dps30": 7.9,
+   "runes30": 4,
+   "perRune30": 59.4,
+   "dmg30": 238
+  },
+  {
+   "row": "Flame sword strike",
+   "dps10": 12,
+   "dps30": 12,
+   "runes30": 4,
+   "perRune30": 90,
+   "dmg30": 360
+  },
+  {
+   "row": "Flame sword heavy",
+   "dps10": 8.5,
+   "dps30": 8.9,
+   "runes30": 4,
+   "perRune30": 66.9,
+   "dmg30": 268
+  },
+  {
+   "row": "Flame sword sweep",
+   "dps10": 10.8,
+   "dps30": 10.5,
+   "runes30": 6,
+   "perRune30": 52.7,
+   "dmg30": 316
+  },
+  {
+   "row": "Stone maul strike",
+   "dps10": 9.1,
+   "dps30": 9.1,
+   "runes30": 2,
+   "perRune30": 136.5,
+   "dmg30": 273
+  },
+  {
+   "row": "Stone maul heavy",
+   "dps10": 11.9,
+   "dps30": 11.6,
+   "runes30": 4,
+   "perRune30": 87.3,
+   "dmg30": 349
+  },
+  {
+   "row": "Stone maul sweep",
+   "dps10": 7.3,
+   "dps30": 7.3,
+   "runes30": 4,
+   "perRune30": 54.6,
+   "dmg30": 218
+  },
+  {
+   "row": "Frost spear strike",
+   "dps10": 7.2,
+   "dps30": 6.9,
+   "runes30": 4,
+   "perRune30": 52,
+   "dmg30": 208
+  },
+  {
+   "row": "Frost spear heavy",
+   "dps10": 6.1,
+   "dps30": 4.2,
+   "runes30": 4,
+   "perRune30": 31.5,
+   "dmg30": 126
+  },
+  {
+   "row": "Lightning whip strike",
+   "dps10": 11.2,
+   "dps30": 10.9,
+   "runes30": 4,
+   "perRune30": 82,
+   "dmg30": 328
+  },
+  {
+   "row": "Lightning whip heavy",
+   "dps10": 9.7,
+   "dps30": 9.5,
+   "runes30": 4,
+   "perRune30": 71.4,
+   "dmg30": 286
+  },
+  {
+   "row": "Lightning whip sweep",
+   "dps10": 8.3,
+   "dps30": 8.3,
+   "runes30": 6,
+   "perRune30": 41.6,
+   "dmg30": 250
+  },
+  {
+   "row": "Tide trident strike",
+   "dps10": 7.5,
+   "dps30": 7.2,
+   "runes30": 4,
+   "perRune30": 53.8,
+   "dmg30": 215
+  },
+  {
+   "row": "Tide trident heavy",
+   "dps10": 0,
+   "dps30": 0,
+   "runes30": 4,
+   "perRune30": 0,
+   "dmg30": 0
+  },
+  {
+   "row": "Tide trident sweep",
+   "dps10": 5.6,
+   "dps30": 5.5,
+   "runes30": 6,
+   "perRune30": 27.3,
+   "dmg30": 164
+  },
+  {
+   "row": "Arcane beam",
+   "dps10": 13.5,
+   "dps30": 13.5,
+   "runes30": 11,
+   "perRune30": 36.8,
+   "dmg30": 404
+  },
+  {
+   "row": "Arcane beam x2",
+   "dps10": 14.7,
+   "dps30": 14.5,
+   "runes30": 12,
+   "perRune30": 36.3,
+   "dmg30": 435
+  },
+  {
+   "row": "Fire spray",
+   "dps10": 11.2,
+   "dps30": 11.1,
+   "runes30": 11,
+   "perRune30": 30.3,
+   "dmg30": 333
+  },
+  {
+   "row": "Fire spray x2",
+   "dps10": 13.1,
+   "dps30": 13,
+   "runes30": 22,
+   "perRune30": 17.8,
+   "dmg30": 391
+  },
+  {
+   "row": "Earth rock",
+   "dps10": 15.4,
+   "dps30": 15.3,
+   "runes30": 21,
+   "perRune30": 21.9,
+   "dmg30": 459
+  },
+  {
+   "row": "Earth rock x2",
+   "dps10": 31.1,
+   "dps30": 27,
+   "runes30": 26,
+   "perRune30": 31.1,
+   "dmg30": 809
+  },
+  {
+   "row": "Ice shards",
+   "dps10": 4.2,
+   "dps30": 4.2,
+   "runes30": 11,
+   "perRune30": 11.5,
+   "dmg30": 126
+  },
+  {
+   "row": "Lightning arc",
+   "dps10": 20.5,
+   "dps30": 20.5,
+   "runes30": 11,
+   "perRune30": 55.9,
+   "dmg30": 615
+  }
+ ]
+}

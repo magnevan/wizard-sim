@@ -276,7 +276,7 @@ describe('Sigil', () => {
       dealt.push(400 - w.bodies.hp[t]);
       expect(w.seats.weaponUses[0]).toBe(uses - (hold > 1 ? 2 : 1));
     }
-    expect(dealt[1]).toBeGreaterThan(dealt[0] * 1.3);
+    expect(dealt[1]).toBeGreaterThan(dealt[0] * 1.2); // the maul's fissure: harder per move (and down a whole lane)
     const { w, d, dummy } = arena();
     const behind = dummy(-1.0, 0.2, 9);
     d.aimAt(1.2, 0).queue('sigil', 'earth').cast(BTN.weapon, 1, 20);

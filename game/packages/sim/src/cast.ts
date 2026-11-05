@@ -22,7 +22,7 @@ import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepe
 import { len } from './geom';
 import { guardRelease } from './guards';
 import { AIM_UNIT, BTN, type PlayerInput } from './input';
-import { TAP, channelsSpecial, heavy, heavyCharge, holdTick, retreat, special, specialTick, strike } from './hands';
+import { TAP, channelsSpecial, heavy, heavyCharge, holdTick, retreat, special, specialTick, strike, strikeRecovery } from './hands';
 import { atan2Turns } from './trig';
 import { chooseElement } from './survive';
 import { CAST_ID, KIND, PHASE, QUEUE_MAX, regenRate, type World } from './world';
@@ -130,9 +130,9 @@ function release(w: World, i: number, spec: SpellSpec, charge: number): void {
   w.events.push({ tick: w.clock[0], kind: 'cast', who: i, x: w.bodies.x[i], y: w.bodies.y[i], text: spec.title, look: spec.look });
 }
 
-function toRecovery(w: World, i: number): void {
+function toRecovery(w: World, i: number, seconds = RHYTHM.recovery): void {
   w.seats.phase[i] = PHASE.recover;
-  w.seats.timer[i] = T(RHYTHM.recovery);
+  w.seats.timer[i] = T(seconds);
 }
 
 function windupTick(w: World, i: number, held: number, act: boolean): void {
@@ -207,20 +207,21 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
     if (c) { s.bufCast[i] = 0; s.bufTicks[i] = 0; }
     if (c === CAST_ID.force) {
       if (held & BTN.force) s.handT[i] = 1;
-      else { strike(w, i, face); toRecovery(w, i); return; } // tapped while busy: a Strike
+      else { const r = strikeRecovery(w, i); strike(w, i, face); toRecovery(w, i, r); return; } // tapped while busy: a Strike
     } else if (s.handT[i] > 0 && held & BTN.force) { if (++s.handT[i] > TAP) holdTick(w, i); }
     else if (s.handT[i] > 0) {
       const t = s.handT[i];
       s.handT[i] = 0; s.linkTo[i] = -1;
-      if (t <= TAP) strike(w, i, face);
-      else heavy(w, i, face, heavyCharge(t));
-      toRecovery(w, i);
+      // a Strike's recovery is its weapon's follow-through (read before the blow: the last use takes the weapon)
+      if (t <= TAP) { const r = strikeRecovery(w, i); strike(w, i, face); toRecovery(w, i, r); } else { heavy(w, i, face, heavyCharge(t)); toRecovery(w, i); }
       return;
     }
     if (c === CAST_ID.area || c === CAST_ID.place) {
       const ch = s.specT[i] > 0; s.specT[i] = 0;
-      if (!ch) { const [tx, ty] = target(w, i); special(w, i, face, tx, ty); } // a held Special (Siphon, Mend) ended on release
-      toRecovery(w, i); return;
+      // a held Special (Siphon, Mend) ended on release; a Sweep recovers as a Strike does
+      const sweeps = !ch && !channelsSpecial(w, i) && w.seats.weapon[i] !== EL.cold, r = sweeps ? strikeRecovery(w, i) : RHYTHM.recovery;
+      if (!ch) { const [tx, ty] = target(w, i); special(w, i, face, tx, ty); }
+      toRecovery(w, i, r); return;
     }
     // Shift+RMB held: the wand's Siphon and the hands' Mend channel while it's down.
     if (held & BTN.area && s.areaHeld[i] > TAP && channelsSpecial(w, i)) { specialTick(w, i); return; }

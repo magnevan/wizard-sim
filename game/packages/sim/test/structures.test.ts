@@ -60,7 +60,7 @@ describe('Shield', () => {
     }
   });
 
-  it('one budget per cast: a Life ring heals half as much per pulse as a Life arc', () => {
+  it('a Life ring is small but heals as much per pulse as a Life arc', () => {
     const healed: number[] = [];
     for (const [r, hold] of [[STRUCT.arcRadius, 20], [STRUCT.ringRadius, 1]] as const) {
       const { w, d } = arena(2);
@@ -69,8 +69,19 @@ describe('Shield', () => {
       healed.push(w.bodies.hp[1] - 40);
     }
     expect(healed[0]).toBeGreaterThan(0);
-    expect(healed[1]).toBeGreaterThan(0);
-    expect(healed[1] / healed[0]).toBeCloseTo(STRUCT.arcSegs / STRUCT.ringSegs, 1);
+    expect(healed[1]).toBeCloseTo(healed[0], 5);
+  });
+
+  it('rock times out: it crumbles over its last seconds, then falls', () => {
+    const { w, d } = arena();
+    d.aimAt(5, 0).queue('shield', 'earth').cast(BTN.area, 20, 20);
+    const hp0 = w.walls.hp[Array.from(w.walls.type).indexOf(WALL.rock)];
+    d.tick({}, 60 * (STRUCT.rockLife - 2) - 40);
+    const k = Array.from(w.walls.type).indexOf(WALL.rock);
+    expect(k).toBeGreaterThanOrEqual(0);
+    expect(w.walls.hp[k]).toBeLessThan(hp0); // crumbling
+    d.tick({}, 60 * 3);
+    expect(walls(w, WALL.rock)).toBe(0);
   });
 
   it('a long drawn wall has no gaps: it stops at the segments you may keep, never eating itself', () => {
@@ -338,14 +349,19 @@ describe('Sigil', () => {
     expect(w.seats.ward[1]).toBe(WARD.none);
   });
 
-  it('Self with the cursor on an ally heals them; off them, it heals you', () => {
+  it('plain elements on Self stay on you, even with the cursor on an ally', () => {
     const { w, d } = arena(2);
     w.bodies.hp[0] = 50; w.bodies.hp[1] = 50;
     d.aimAt(4, 0).queue('life').cast(BTN.self, 1, 20);
-    expect(w.bodies.hp[1]).toBeGreaterThan(50);
-    expect(w.bodies.hp[0]).toBe(50);
-    d.aimAt(2, 3).queue('life').cast(BTN.self, 1, 20); // a miss lands on you
     expect(w.bodies.hp[0]).toBeGreaterThan(50);
+    expect(w.bodies.hp[1]).toBe(50);
+  });
+
+  it('Self with Sigil on an ally gives them the aura', () => {
+    const { w, d } = arena(2);
+    d.aimAt(4, 0).queue('sigil', 'lightning').cast(BTN.self, 1, 20);
+    expect(w.seats.aura[1]).toBeGreaterThan(0);
+    expect(w.seats.aura[0]).toBe(0);
   });
 
   it('double-tapping Shield on yourself drops your ward', () => {

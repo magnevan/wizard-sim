@@ -371,6 +371,16 @@ export function tickStructures(w: World): void {
   tickDoubleMoves(w);
   const b = w.bodies, s = w.seats, wl = w.walls, v = w.waves, dv = w.devices, tick = w.clock[0];
 
+  // Rock times out: it stands rockLife seconds (more with Earth) and crumbles over the last few.
+  for (let k = 0; k < MAX_WALLS; k++) {
+    if (wl.type[k] !== WALL.rock) continue;
+    const life = T(STRUCT.rockLife + STRUCT.rockLifePerEarth * Math.max(0, wl.els[k * N_EL + EL.earth - 1] - 1));
+    const left = life - (tick - wl.born[k]);
+    if (left <= 0) { w.events.push({ tick, kind: 'burst', who: wl.owner[k], x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.5, look: EL.earth }); wl.type[k] = WALL.none; continue; }
+    const crumble = T(STRUCT.rockCrumble);
+    if (left < crumble) wl.hp[k] = Math.min(wl.hp[k], (wl.maxHp[k] * left) / crumble);
+  }
+
   // Model A: energy drains the Shield pool; at the reserve floor the oldest energy structure breaks.
   for (let i = 0; i < MAX_SEATS; i++) {
     if (!s.active[i]) continue;
@@ -397,11 +407,8 @@ export function tickStructures(w: World): void {
     els[EL.shield - 1] = 0;
     if (ty === WALL.rock) { els[EL.earth - 1] = 0; if (!els.some((n) => n > 0)) continue; }
     const heal = els[EL.life - 1] > 0;
-    // One budget per cast: a ring (twice an arc's segments) pulses each at half strength, and a
-    // body touching several segments of the same wall is pulsed once.
-    let segs = 0;
-    for (let j = 0; j < MAX_WALLS; j++) if (wl.type[j] === ty && wl.owner[j] === wl.owner[k] && wl.born[j] === wl.born[k]) segs++;
-    const scale = 0.4 * Math.min(1, STRUCT.arcSegs / segs);
+    // A body touching several segments of the same wall is pulsed once.
+    const scale = 0.4;
     const touches = (i: number, j: number) => segDist(b.x[i], b.y[i], wl.x1[j], wl.y1[j], wl.x2[j], wl.y2[j])[0] <= b.r[i] + 0.35;
     for (let i = 0; i < b.kind.length; i++) {
       if (!alive(w, i) || !touches(i, k)) continue;

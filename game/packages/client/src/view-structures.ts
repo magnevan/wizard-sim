@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCHETYPES, ARENA, ATTACK, BTN, CELL, DEVICE, EL as ELID, GRID_W, GUARD, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES,
-  N_EL, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, T, WALL, WARD, WAVE_TIMES, compile, elementName, queueOf,
+  N_EL, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, T, WALL, WARD, WAVE_TIMES, compile, elementName, queueOf, selfTarget,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
@@ -351,9 +351,29 @@ export class StructureView {
     if (!off.includes('waves')) this.waves(w, t, g, o, light);
     if (!off.includes('devices')) this.devices(w, t, g, o, bodies, light);
     if (!off.includes('wizards')) this.onWizards(w, t, g, o, bodies, light);
-    if (!off.includes('preview')) this.preview(w, t, g, o, bodies);
+    if (!off.includes('preview')) { this.preview(w, t, g, o, bodies); this.allyCue(w, t, g, o); }
     if (!off.includes('fx')) for (const f of this.fx) this.drawFx(w, f, st - f.t0, t, g, o, bodies, light);
     this.pieces.end();
+  }
+
+  /**
+   * With a ward (Shield) or an aura (Sigil + elements) queued, the ally under your cursor gets a
+   * pulsing ring at their feet and a marker overhead: Self will go on them, not on you.
+   */
+  private allyCue(w: World, t: number, g: Ctx, o: Ctx): void {
+    const i = this.localSeat, s = w.seats, b = w.bodies;
+    if (!s.active[i] || s.phase[i] !== PHASE.idle || !s.queueLen[i]) return;
+    const shape = compile(queueOf(w, i), 'self').shape;
+    if (shape !== 'ward' && shape !== 'aura') return;
+    const j = selfTarget(w, i);
+    if (j === i) return;
+    const R = X.EL[shape === 'ward' ? 'shield' : 'sigil'], x = gx(b.x[j]), y = gy(b.y[j]), p = 0.5 + 0.5 * Math.sin(t * 6);
+    const r = b.r[j] * PPU + 4 + p * 1.5;
+    X.ellipse(g, x, y, r, r * FY, R[2], 0.22 + 0.12 * p);
+    X.ring(g, x, y, r, r * FY, R[0], 0.8 + 0.2 * p);
+    X.ring(g, x, y, r + 1, (r + 1) * FY, R[1], 0.6);
+    const hy = y - 30 - Math.round(p * 2); // a chevron over their head, pointing down at them
+    for (let k = 0; k < 4; k++) { X.rect(o, x - 4 + k, hy + k, 2, 1, R[0]); X.rect(o, x + 3 - k, hy + k, 2, 1, R[0]); }
   }
 
   // ---- Shield walls ---------------------------------------------------------------------------------

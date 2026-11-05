@@ -103,8 +103,10 @@ export const CELL = 0.5;
 /** Shield and Sigil structures. */
 export const STRUCT = {
   rockHp: 120, rockHpPerRune: 40, energyHp: 80, energyHpPerRune: 20,
-  wallsPerOwner: 30, // segments (about 36 u of drawn wall); raising more drops the oldest
-  arcRadius: 2.2, arcHalf: 0.14, arcSegs: 5, ringRadius: 2.6, ringSegs: 10, drawnSeg: 1.2,
+  wallsPerOwner: 40, // a technical ceiling: rock times out (rockLife) and energy drains your pool, so play rarely meets it
+  arcRadius: 2.2, arcHalf: 0.14, arcSegs: 5, ringRadius: 1.5, ringSegs: 8, drawnSeg: 1.2,
+  /** Rock walls stand this long (s), plus rockLifePerEarth per extra Earth, crumbling over the last rockCrumble s. */
+  rockLife: 25, rockLifePerEarth: 5, rockCrumble: 3,
   wallThickness: 0.25,
   waveSpeed: 7, waveRange: 6, waveHalf: 1.6, waveHalfPerRune: 0.4, shove: 8,
   /** Model A: energy structures drain the Shield pool; at the reserve floor the oldest breaks. */

@@ -6,7 +6,7 @@ export * from './rng';
 export * from './trig';
 export * from './state';
 export { compile, WALL, type SpellSpec, type Shape, type Mod } from './compile';
-export { queueOf, specOf } from './cast';
+export { queueOf, selfTarget, specOf } from './cast';
 export { HIT_KIND } from './hit';
 export { step } from './step';
 export * from './replay';

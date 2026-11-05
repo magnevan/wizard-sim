@@ -268,3 +268,8 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
   - Each player can keep 30 segments (was 12; the user: "way too low").
 - **Sprays leave the floor alone** (note 14: walking forward into your own puddle or fire was awkward). Floors come from Place patches and novas.
 - **Open:** a length budget per wall cast. Today a drawn wall's length is free up to the cap.
+
+## 2026-11-05: Rings, wall lifetime, Self on allies
+- **Rings are small and full strength** (the user: "I'd never want to use the version with lower heal per second"). Radius 1.5, 8 segments, so it fits you and a partner pressed close. A body touching several segments of one wall is still pulsed once. This replaces the one-budget-per-cast halving.
+- **Rock walls time out instead of a tight cap** (the user's suggestion; my recommendation too). A count cap fails both ways: 30 segments plug a corridor but not a wide gap. Rock stands 25 s, plus 5 s per extra Earth, and crumbles over its last 3 s. Energy walls are already limited by the Shield pool. The per-player cap (40) and pool (160) stay only as a technical ceiling. *Trade-off:* less long-range preparation, since a wall raised in the lull lasts into the first rush, not the whole wave.
+- **Self on an ally only for Shield (a ward) and Sigil + elements (an aura)** (the user: other elements don't need it). Plain elements on Self always hit you. With a ward or aura queued, the ally under the cursor shows a ring at their feet and a chevron overhead. The pick is as generous as the inspect card.

@@ -9,7 +9,7 @@ There's one file per mechanic, copied from `_template.md`. The status lives in t
 | [spell-preparation](spell-preparation.md) | raw | 4, 6 |
 | [support-verbs](support-verbs.md) | developing | 3 |
 | [enchantments](enchantments.md) | raw | 3, 6 |
-| [conjured-weapons](conjured-weapons.md) | developing (move sets, guards and dual-wield proposed: explorations/2026-11-04-weapons-and-movesets.md) | 2, 6 |
+| [conjured-weapons](conjured-weapons.md) | developing (grammar v2 decided, guards next: explorations/2026-11-05-weapons-review-1.md) | 2, 6 |
 | [minions-and-clones](minions-and-clones.md) | raw | 2, 3 |
 | [death-and-revival](death-and-revival.md) | raw | 3, 4 |
 | [casting-rhythm](casting-rhythm.md) | prototyping (in the engine: wind-up by spell size, cast buffer, channels with upkeep) | 1, 4 |

@@ -273,3 +273,10 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
 - **Rings are small and full strength** (the user: "I'd never want to use the version with lower heal per second"). Radius 1.5, 8 segments, so it fits you and a partner pressed close. A body touching several segments of one wall is still pulsed once. This replaces the one-budget-per-cast halving.
 - **Rock walls time out instead of a tight cap** (the user's suggestion; my recommendation too). A count cap fails both ways: 30 segments plug a corridor but not a wide gap. Rock stands 25 s, plus 5 s per extra Earth, and crumbles over its last 3 s. Energy walls are already limited by the Shield pool. The per-player cap (40) and pool (160) stay only as a technical ceiling. *Trade-off:* less long-range preparation, since a wall raised in the lull lasts into the first rush, not the whole wave.
 - **Self on an ally only for Shield (a ward) and Sigil + elements (an aura)** (the user: other elements don't need it). Plain elements on Self always hit you. With a ward or aura queued, the ally under the cursor shows a ring at their feet and a chevron overhead. The pick is as generous as the inspect card.
+
+## 2026-11-05: Weapons review, round 1 (`explorations/2026-11-05-weapons-review-1.md`)
+- **Weapon grammar v2:** with an empty queue, RMB tap is Strike (the default swing), RMB hold is Heavy, and Shift+RMB is the weapon's one Special (a Sweep for most, the spear's javelin). The guard defines Space (Defend) and Shift+LMB (Retreat, a quick move backwards). Thrust, Send and weapon Defend are cut.
+- **No two-handed weapons** (the user's call): every weapon pairs with every guard.
+- **Weapons run on uses** (about 30).
+- **Guards are eight, one per lead element.** Each defines its Defend, its Retreat, a passive effect and its resistances (the user's direction; the set is designed next).
+- **Redesigns:** water becomes a trident. New Heavies: a much longer spear dash, a directed earthquake wave for earth, a fire wave for fire, and a continuous healing link for life. Arcane is reworked toward enhancing your spellcasting.

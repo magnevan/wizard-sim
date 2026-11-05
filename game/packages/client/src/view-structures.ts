@@ -1143,7 +1143,11 @@ export class StructureView {
     }
     // What the guard carries besides its lead: a dotted rim in that colour, so a partner can read the coat.
     const coat = guardCoatLook(w, i);
-    if (coat) { const Rc = ramp(coat); for (let q = 0; q < 12; q++) { const a = (q / 12) * TAU + t * 0.6; X.px(o, x + Math.cos(a) * 6.5, y + Math.sin(a) * 7, q % 2 ? Rc[1] : Rc[0]); } }
+    if (coat) {
+      const Rc = ramp(coat);
+      X.glow(o, x, y, 8, Rc[1], 0.25);
+      for (let q = 0; q < 16; q++) { const a = (q / 16) * TAU + t * 0.6, px2 = x + Math.cos(a) * 7, py2 = y + Math.sin(a) * 7.5; X.rect(o, px2 - 0.5, py2 - 0.5, 2, 2, q % 2 ? Rc[2] : Rc[1]); }
+    }
     // The Prism's stored charge: a violet glow that swells as it fills, ready to Lance.
     const ch = id === GUARD.prism ? s.guardCharge[i] / ARMS.chargeMax : 0;
     if (ch > 0) { X.glow(o, x, y, 3 + 7 * ch, EL.arcane[1], 0.35 + 0.5 * ch); light(x, y, 20 + 30 * ch, EL.arcane[2], 0.5 * ch); }

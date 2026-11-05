@@ -422,3 +422,7 @@ The user asked for it so that effective HP scales linearly and stacking never re
   - Fire dries and thaws them.
 - **Guard rim:** guards show their extras as a dotted rim.
 - Golden hash `e055dcdb` → `7184435b` (new Prism charge state).
+
+## 2026-11-05: Round 4 ratings: the Lance Prism is adopted
+
+The user chose the Capacitor and Lance (q-prism = lance) and kept the new Prism cards, Mend's extras and Siphon's focus, with a balance pass to come. The guard rim was "maybe a little too subtle", so it is now drawn stronger.

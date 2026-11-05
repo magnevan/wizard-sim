@@ -146,3 +146,15 @@ The user: "let's figure out a redesign of the arcane shield". Their notes so far
 - **Guard rim:** a dotted ring in the colour of what the guard carries.
 
 Golden hash `e055dcdb` → `7184435b`: the Prism's charge is new state.
+
+### Round 4 ratings
+
+The user: "It's a pretty cool idea".
+
+| Item | Rating | Change |
+|---|---|---|
+| q-prism | **lance** | Option A stands: the Prism stores what it blocks, and lowering it fires the Lance |
+| g-prism-v4, g-prism-lance-fire | keep | Unchanged |
+| mix-siphon-focus | keep: "may need a balance pass" | Unchanged. Added to the balance to-do list |
+| mix-mend-coat | keep | Unchanged |
+| mix-guard-rim | maybe: "maybe a little too subtle, we'll see" | **Stronger rim:** 16 two-pixel dots in the element's deeper tones over a faint glow. The old pale tone read as Shield gold |

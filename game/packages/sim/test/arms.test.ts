@@ -12,6 +12,7 @@ import {
 import { anchored, damageGuard, guardBeam, resist, RES, taken, walkMult } from '../src/guards';
 import { N_EL } from '../src/elements';
 import { cellAt } from '../src/effects';
+import { measure } from '../../../tools/weapon-dps';
 
 class Driver {
   aim = { x: 1, y: 0 };
@@ -458,7 +459,7 @@ describe('the Arcane wand (Sigil + Arcane) and Mend', () => {
     const { w, d, dummy } = arena();
     const a = dummy(3, 0, 8), b = dummy(6, 0, 9);
     d.aimAt(6, 0).conjure('sigil', 'arcane').cast(BTN.force, 60, 60);
-    expect(400 - w.bodies.hp[a]).toBeGreaterThan(10);
+    expect(400 - w.bodies.hp[a]).toBeGreaterThan(16 * ARMS.boltScale * 1.5); // harder than a Strike's light bolt
     expect(w.bodies.hp[b]).toBeLessThan(400);
   });
 
@@ -592,5 +593,31 @@ describe('the imbued burst (Weapon cast with elements, no Sigil or Shield)', () 
     const run = (q: Element[]) => { const { w, d, dummy } = arena(); const t = dummy(3.3, 0); d.aimAt(5, 0).queue(...q).cast(BTN.weapon, 1, 40); return 400 - w.bodies.hp[t]; };
     expect(run(['fire'])).toBe(0);
     expect(run(['fire', 'fire', 'fire'])).toBeGreaterThan(0);
+  });
+});
+
+describe('weapon rhythm: a weapon is the cheap option, not the strongest (explorations/2026-11-05-weapon-dps.md)', () => {
+  it('a spammed wand Strike stays near half the Arcane beam\'s sustained DPS; the whip\'s below the arc\'s', () => {
+    const beam = measure({ name: 'beam', spell: ['arcane'], dist: 3 }, 10).dps;
+    const wand = measure({ name: 'wand', weapon: ['sigil', 'arcane'], move: 'strike', dist: 3 }, 10).dps;
+    const heavy = measure({ name: 'wand heavy', weapon: ['sigil', 'arcane'], move: 'heavy', dist: 3 }, 10).dps;
+    expect(wand).toBeLessThan(beam * 0.65);
+    expect(wand).toBeGreaterThan(beam * 0.4);
+    expect(heavy).toBeLessThan(beam * 0.7);
+    const whip = measure({ name: 'whip', weapon: ['sigil', 'lightning'], move: 'strike', dist: 1 }, 10).dps;
+    expect(whip).toBeLessThan(measure({ name: 'arc', spell: ['lightning'], dist: 2 }, 10).dps * 0.65);
+  });
+
+  it('a Strike\'s recovery is its weapon\'s follow-through: the maul\'s is slow, the staff\'s quicker', () => {
+    const recovery = (q: Element[]) => {
+      const { w, d } = arena();
+      if (q.length) d.aimAt(4, 0).conjure(...q);
+      d.tick({}, 40).tick({ buttons: BTN.force }).tick();
+      let n = 0;
+      while (w.seats.phase[0] !== 0 && n < 300) { d.tick(); n++; }
+      return n;
+    };
+    expect(recovery(['sigil', 'earth'])).toBeGreaterThan(recovery([]) + 30);
+    expect(Math.abs(recovery(['sigil', 'arcane']) - Math.round(ARMS.strikeRecovery.arcane * 60))).toBeLessThan(3);
   });
 });

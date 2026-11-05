@@ -19,7 +19,7 @@
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
-  AI, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
+  AI, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
   N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
@@ -30,6 +30,7 @@ import * as X from './art/px';
 import type { Ctx, Pt, Ramp } from './art/px';
 import { CELL_H, CELL_W, FEET_X, FEET_Y } from './art/rigs';
 import * as S from './art/sigil';
+import * as A from './art/accent';
 import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './art/util';
 import type { BodyView, LightFn } from './art/vfx';
 import { glyph, perkOf } from './art/perks';
@@ -300,7 +301,9 @@ function guardShape(c: Ctx, id: string, x: number, y: number, sz: number, t: num
 }
 
 // =====================================================================================================
-interface SFx { kind: string; t0: number; life: number; seed: number; x: number; y: number; x2: number; y2: number; who: number; look: number; n: number; els?: Uint8Array }
+interface SFx { kind: string; t0: number; life: number; seed: number; x: number; y: number; x2: number; y2: number; who: number; look: number; n: number; els?: Uint8Array; xs?: number[] }
+/** Moves made with a guard (guards.ts): their extras are the guard's; every other move's are the weapon's. */
+const GUARD_MOVES = new Set(['parry', 'block', 'glance', 'chill', 'coat', 'guardbreak', 'flameburst', 'lance', 'backstep', 'phase', 'seedstep', 'shovestep', 'surge', 'tidewave', 'flamestep', 'iceslide']);
 
 export class StructureView {
   readonly scorch = new Scorch();
@@ -354,7 +357,10 @@ export class StructureView {
       if ((e.text === 'strike' || e.text === 'sweep') && e.who >= 0 && e.who < MAX_SEATS) {
         this.blowT0[e.who] = t; this.blowKind[e.who] = e.text === 'strike' ? 1 : 2; this.blowAng[e.who] = Math.atan2((e.y2 ?? e.y) - e.y, (e.x2 ?? e.x) - e.x);
       }
-      this.add('mv-' + e.text, t, life, { who: e.who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, look: e.look ?? 0, seed: tick * 7 + e.who, n: e.text === 'imbue' ? e.els ?? 0 : e.who < MAX_SEATS ? s.guard[e.who] : 0 });
+      // what the weapon or guard carries besides its lead, at the moment of the move (the last use takes the weapon)
+      const seat = e.who >= 0 && e.who < MAX_SEATS, gm = GUARD_MOVES.has(e.text);
+      const xs = !seat || e.text === 'imbue' ? [] : gm ? A.extrasOf(s.guardEls, e.who, ELID.shield, GUARD_EL[s.guard[e.who]] ?? 0) : e.look ? A.extrasOf(s.weaponEls, e.who, e.look) : [];
+      this.add('mv-' + e.text, t, life, { who: e.who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, look: e.look ?? 0, seed: tick * 7 + e.who, n: e.text === 'imbue' ? e.els ?? 0 : seat ? s.guard[e.who] : 0, xs });
     }
     // walls: hits and breaks
     for (let k = 0; k < MAX_WALLS; k++) {
@@ -1160,8 +1166,11 @@ export class StructureView {
     let dir = rest;
     // a blow in progress: the Strike thrusts the weapon out along the aim and back; the Sweep spins it once round you
     const age = this.st - this.blowT0[i], kind = this.blowKind[i];
-    if (kind === 1 && age >= 0 && age < THRUST) {
-      const q = age / THRUST, m = q < 0.3 ? smooth(q / 0.3) : 1 - smooth((q - 0.3) / 0.7), a = this.blowAng[i], cx = Math.cos(a), cy = Math.sin(a) * FY;
+    // The Strike's recovery is drawn as its follow-through (ARMS.strikeRecovery): out fast, a beat held, then
+    // back to rest slowly over the weapon's recovery, so the rhythm is seen, not a hidden cooldown.
+    const dur = Math.max(THRUST, (ARMS.strikeRecovery as Record<string, number>)[el] ?? THRUST);
+    if (kind === 1 && age >= 0 && age < dur) {
+      const out = 0.07, m = age < out ? smooth(age / out) : 1 - smooth(clamp((age - out - 0.05) / (dur - out - 0.05), 0, 1)), a = this.blowAng[i], cx = Math.cos(a), cy = Math.sin(a) * FY;
       dir = (L, lean = 0.45) => { const r0 = rest(L, lean), ext = L * (1 + 0.45 * m); return [lerp(r0[0], h[0] + cx * ext, m), lerp(r0[1], h[1] - 3 + cy * ext, m)]; };
       if (m > 0.5) c = Math.sin(a) < -0.3 ? g : o;
     } else if (kind === 2 && age >= 0 && age < SPIN) {
@@ -1170,6 +1179,9 @@ export class StructureView {
       c = Math.sin(a) < -0.2 ? g : o;
     }
     const k = Math.min(1, up * 1.4 + 0.1);
+    // the extras it carries besides its lead (art/accent.ts): a band and particles along the blade, whatever the weapon
+    const extras = A.extrasOf(w.seats.weaponEls, i, w.seats.weapon[i]);
+    let blade: Pt[] | null = null;
     if (el === 'life') {
       for (const hh of v.a.hands) {
         const p: Pt = [v.x + hh[0], v.y + hh[1]];
@@ -1178,10 +1190,12 @@ export class StructureView {
         for (const q of emit(t, 6, 0.6, (j, age) => ({ x: p[0] + (rand(j, 3, i) - 0.5) * 4, y: p[1] - age * 7, age }))) X.px(o, q.x, q.y, q.age < 0.5 ? LIFE[1] : LIFE[3]);
       }
       light(v.x, v.y - 8, 28, '#8ef07e', 0.5 * k);
+      for (const [m, hh] of v.a.hands.entries()) A.around(o, v.x + hh[0], v.y + hh[1], 4, 4, extras, t + m * 0.5, i * 31 + m);
       return;
     }
     if (el === 'earth') {
       const tp = dir(11 * k, 0.35);
+      blade = [[h[0], h[1] + 2], tp];
       X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#1a120c', 3); X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#8a6a48', 1);
       X.rect(c, tp[0] - 4, tp[1] - 3, 8, 6, '#1a120c'); X.rect(c, tp[0] - 3, tp[1] - 2, 6, 4, X.EARTH[2]); X.rect(c, tp[0] - 3, tp[1] - 2, 6, 1, X.EARTH[0]); X.rect(c, tp[0] - 3, tp[1] + 1, 6, 1, X.EARTH[4]);
       X.px(c, tp[0] + 1, tp[1], X.EARTH[3]);
@@ -1193,10 +1207,14 @@ export class StructureView {
       X.ellipse(c, tp[0], tp[1], r + 1, r + 1, '#120e1a');
       X.ellipse(c, tp[0], tp[1], r, r, EL.arcane[3]); X.ellipse(c, tp[0] - 0.4, tp[1] - 0.4, r * 0.66, r * 0.66, EL.arcane[2]);
       X.px(c, tp[0] - 1, tp[1] - 1, '#ffffff');
+      blade = [[h[0], h[1] + 2], tp];
+      // the wand's orb carries its extras too: a ring of their colours round it
+      A.around(o, tp[0], tp[1], r + 2.5, r + 2.5, extras, t, i * 7);
       if (sip) for (let q = 0; q < 5; q++) { const a = t * 5 + (q / 5) * TAU, rr = 9 - mod(t * 3 + q * 0.2, 1) * 7; X.px(Math.sin(a) < 0 ? g : o, tp[0] + Math.cos(a) * rr, tp[1] + Math.sin(a) * rr * 0.5, q % 2 ? EL.arcane[1] : '#ffffff'); }
       light(tp[0], v.y, 26, '#ff4f9b', sip ? 0.7 : 0.4);
     } else if (el === 'fire') {
       const tp = dir(14 * k, 0.4);
+      blade = [[h[0], h[1] - 1], tp];
       X.line(c, h[0] - fwd * 3, h[1] + 1, h[0] + fwd * 3, h[1] - 1, '#3a2a1a', 2); X.px(c, h[0], h[1] + 2, '#3a2a1a');
       // a blade of flame: a hot body with tongues licking up along it, a white core
       X.glow(c, lerp(h[0], tp[0], 0.6), lerp(h[1], tp[1], 0.6), 7, EL.fire[2], 0.6);
@@ -1207,6 +1225,7 @@ export class StructureView {
       light(tp[0], v.y, 30, '#ff7020', 0.5);
     } else if (el === 'cold') {
       const tp = dir(15 * k, 0.25);
+      blade = [[h[0], h[1] + 4], tp];
       X.line(c, h[0], h[1] + 4, tp[0], tp[1], '#163e7a', 3); X.line(c, h[0], h[1] + 4, tp[0], tp[1], '#c4eefa', 1);
       K.shard(c, tp[0], tp[1] - 2, -Math.PI / 2 + fwd * 0.25, 6, i * 3 + 1, 1);
       if (Math.floor(t * 4 + i) % 5 === 0) X.px(c, tp[0] - 1, tp[1] - 5, '#ffffff');
@@ -1218,10 +1237,12 @@ export class StructureView {
       X.line(c, h[0], h[1], h[0] - fwd, h[1] + 2, '#3a2a4a', 2);
       if (Math.floor(t * 20) % 3 !== 2) { X.lines(c, pts, EL.lightning[3], 2); X.lines(c, pts, EL.lightning[1], 1); } else X.lines(c, pts, EL.lightning[2], 1);
       const e = pts[pts.length - 1]; X.px(c, e[0], e[1], '#ffffff');
+      blade = pts;
       light(h[0], v.y, 28, '#b08aff', 0.45);
     } else if (el === 'water') {
       // the tide trident: a long shaft, a crossbar and three barbed prongs, water running off them
-      const tp = dir(16 * k, 0.28), L = Math.hypot(tp[0] - h[0], tp[1] - h[1]) || 1, fx = (tp[0] - h[0]) / L, fy = (tp[1] - h[1]) / L, nx = -fy, ny = fx;
+      const tp = dir(16 * k, 0.28); blade = [[h[0], h[1] + 3], tp];
+      const L = Math.hypot(tp[0] - h[0], tp[1] - h[1]) || 1, fx = (tp[0] - h[0]) / L, fy = (tp[1] - h[1]) / L, nx = -fy, ny = fx;
       X.line(c, h[0], h[1] + 3, tp[0], tp[1], '#1a2a3a', 3); X.line(c, h[0], h[1] + 3, tp[0], tp[1], '#6a8aa8', 1);
       X.line(c, tp[0] - nx * 3.5, tp[1] - ny * 3.5, tp[0] + nx * 3.5, tp[1] + ny * 3.5, '#163a7a', 2);
       X.line(c, tp[0] - nx * 3, tp[1] - ny * 3, tp[0] + nx * 3, tp[1] + ny * 3, EL.water[2], 1);
@@ -1235,7 +1256,9 @@ export class StructureView {
     } else {
       const R = ramp(w.seats.weapon[i]), tp = dir(11 * k);
       X.line(c, h[0], h[1], tp[0], tp[1], '#140e0a', 3); X.line(c, h[0], h[1], tp[0], tp[1], R[1], 1); X.glow(c, tp[0], tp[1], 4, R[2], 0.7);
+      blade = [h, tp];
     }
+    if (blade) A.along(c, o, blade, extras, t, i * 131, light);
     if (up < 1) X.ring(o, h[0], h[1] - 4, 2 + up * 10, 2 + up * 8, SV[1], 1 - up);
   }
 
@@ -1284,12 +1307,15 @@ export class StructureView {
       if (raise < 1) X.ring(o, x, y, 3 + raise * 8, 4 + raise * 8, R[1], 1 - raise);
       light(x, y + 8, 26, R[2], 0.4 * pulse);
     }
-    // What the guard carries besides its lead: a dotted rim in that colour, so a partner can read the coat.
-    const coat = guardCoatLook(w, i);
-    if (coat) {
-      const Rc = ramp(coat);
-      X.glow(o, x, y, 8, Rc[1], 0.25);
-      for (let q = 0; q < 16; q++) { const a = (q / 16) * TAU + t * 0.6, px2 = x + Math.cos(a) * 7, py2 = y + Math.sin(a) * 7.5; X.rect(o, px2 - 0.5, py2 - 0.5, 2, 2, q % 2 ? Rc[2] : Rc[1]); }
+    // What the guard carries besides its lead (art/accent.ts, as on weapons): each extra a thick arc of the rim
+    // in its colour with its own bits shed off it, and a glow of the strongest, so a partner can read the coat.
+    const xs = A.extrasOf(s.guardEls, i, ELID.shield, GUARD_EL[id] ?? 0), coat = guardCoatLook(w, i);
+    if (xs.length) {
+      const sz = 0.8 + 0.4 * raise, wx = bulwark ? 1 : 0.55 + 0.45 * sn, rx = (bulwark ? 6 + 2 * sn : 6.2 * sz * wx) + 1, ry = (bulwark ? (blocking ? 9 : 7) : 6.6 * sz) + 1;
+      if (coat) { const Rc = A.accentRamp(coat); X.glow(o, x, y, 10, Rc[2], 0.35); light(x, y + 8, 22, Rc[2], 0.35); }
+      A.around(o, x, y, rx, ry, xs, t, i * 53);
+      // blocking, the energy face carries them too: its ends in their colours
+      if (blocking) xs.forEach((id2, m) => { const Rx = A.accentRamp(id2); for (const q of [-4 + m, 4 - m]) { const p = P(9 - Math.abs(q) * 0.4, q * 1.3, 9); X.rect(o, p[0] - 1, p[1] - 1, 3, 3, Rx[1]); X.px(o, p[0], p[1], '#ffffff'); } });
     }
     // The Prism's stored charge: a violet glow that swells as it fills, ready to Lance.
     const ch = id === GUARD.prism ? s.guardCharge[i] / ARMS.chargeMax : 0;
@@ -1390,6 +1416,14 @@ export class StructureView {
   // ---- short-lived effects -------------------------------------------------------------------------
   private drawFx(w: World, f: SFx, e: number, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
     const sd = f.seed, x = gx(f.x), y = gy(f.y), R = f.look === ELID.life ? LIFE : ramp(f.look);
+    // Every weapon and guard move shows the extras it carries (art/accent.ts), beside its own effect:
+    // along its path (a dash, lash, wave, Retreat) or thrown off where it happens (a parry, a charged bolt).
+    // The Strike and the Sweep lay theirs along their own shapes, below.
+    if (f.xs?.length && f.kind !== 'mv-strike' && f.kind !== 'mv-sweep') {
+      const q = e / f.life, x2 = gx(f.x2), y2 = gy(f.y2), far = Math.hypot(x2 - x, y2 - y) > 6;
+      if (far) { A.trail(o, [x, y - 8], [x2, y2 - 8], f.xs, q, sd, 10); A.burst(o, [x2, y2 - 8], f.xs, q, sd + 1, 6, 16); }
+      else A.burst(o, [x, y - 10], f.xs, q, sd, 7, 18);
+    }
     switch (f.kind) {
       case 'whit': {
         K.dust(o, x, y - 2, e, sd, 5, 10, '#8a7a68', 0.7);
@@ -1664,6 +1698,8 @@ export class StructureView {
           }
           const tip = at(aw, reach);
           if (q > 0.25) this.blowSpray(el, Rb, tip, aw, e - 0.25 * f.life, sd, o, 7);
+          // the extras: a stripe of each beside the thrust, and their bits thrown off at the tip
+          if (f.xs?.length) { A.trail(o, at(aw, reach * 0.2), at(aw, reach * k), f.xs, q, sd, 6); A.burst(o, tip, f.xs, q, sd + 3, 6, 14, Math.atan2(Math.sin(aw) * FY, Math.cos(aw))); }
           if (q < 0.4) light(tip[0], y, 30, Rb[2], 0.6 * (1 - q / 0.4));
           return;
         }
@@ -1673,6 +1709,9 @@ export class StructureView {
         X.ring(o, x, cy0, reach - 1, (reach - 1) * FY, Rb[1], 1 - q, head, head + Math.min(1.2, trail));
         X.ring(o, x, cy0, reach + 1, (reach + 1) * FY, '#ffffff', 1 - q, head, head + Math.min(0.4, trail));
         K.gring(g, x, y, reach * (0.9 + 0.1 * k), Rb[2], 0.5 * (1 - q), 1);
+        // the extras ride the ring: a band of each just outside it, their bits shed along the turn
+        f.xs?.forEach((id, m) => { const Rx = A.accentRamp(id), rr = reach + 2 + m * 2; X.ring(o, x, cy0, rr, rr * FY, Rx[1], 1 - q, head, head + Math.min(1.6, trail)); X.ring(o, x, cy0, rr + 1, (rr + 1) * FY, Rx[2], 0.8 * (1 - q), head, head + Math.min(1.6, trail)); });
+        if (f.xs?.length) for (let j = 0; j < 6; j++) { const a = aw - (j / 6) * TAU; if (j / 6 > k) break; A.burst(o, at(a, reach + 2), f.xs, q, sd + j * 5, 2, 8); }
         for (let j = 0; j < 10; j++) {
           const a = aw - (j / 10) * TAU; if ((j / 10) > k) break;
           this.blowSpray(el, Rb, at(a, reach), a, e - (j / 10) * 0.7 * f.life, sd + j, o, 2);

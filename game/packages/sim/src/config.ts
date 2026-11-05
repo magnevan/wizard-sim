@@ -177,22 +177,29 @@ export const ARMS = {
    * physical damage, the knockback (u/s), the Strike's cone half-angle (turns) and its reach as a
    * multiple of the weapon's (STRUCT.reach). The hands heal, so they deal no physical hit.
    */
-  blowDmg: { staff: 6, water: 7, life: 0, cold: 8, lightning: 4, fire: 7, earth: 4 }, // the maul's Earth is already the weight: 4 on top of its 17.6
+  blowDmg: { staff: 4, water: 5, life: 0, cold: 4, lightning: 3, fire: 2, earth: 2 }, // the maul's Earth is already the weight: 2 on top of its 11
+  /**
+   * Strike rhythm (s): the recovery after a Strike or a Sweep with each weapon, drawn as the weapon's
+   * follow-through (pillar 4: a visible rhythm, not a hidden cooldown). It keeps a spammed Strike near
+   * half the DPS of the same element's committed spell (docs/explorations/2026-11-05-weapon-dps.md):
+   * a weapon is the cheap, always-ready option, not the strongest. Light weapons recover fast, the maul slowly.
+   */
+  strikeRecovery: { staff: 0.6, water: 0.65, life: 0.35, cold: 0.9, lightning: 0.68, fire: 0.8, earth: 1.4, arcane: 0.62 },
   blowKnock: { staff: 3, water: 12, life: 0, cold: 4, lightning: 3, fire: 4, earth: 9 },
   blowHalf: { staff: 0.15, water: 0.11, life: 0.12, cold: 0.07, lightning: 0.1, fire: 0.15, earth: 0.15 },
   blowReach: { staff: 1, water: 1.2, life: 1.5, cold: 1, lightning: 1, fire: 1, earth: 1 },
   /** A blow's elements land at this share of a spell's power (a Sweep at sweepScale of that again). */
-  blowPayload: 0.8,
+  blowPayload: 0.5,
   // ---- Heavies (2 uses unless noted) ----
   /** Weapon waves (trident slash, fire wave, earth fissure): their power, half-width and how far they roll. */
-  waveScale: 1.4,
+  waveScale: 0.8,
   tideHalf: 1.0, tideRange: 5,
   fireHalf: 1.5, fireRange: 6,
   quakeHalf: 0.45, quakeRange: 7.5,
   /** Healing link (Life): picks the ally within linkPick of the cursor, holds to linkRange (or a wall), heals linkHeal hp/s, costs linkUses uses a second. */
   linkRange: 8, linkPick: 1.5, linkHeal: 12, linkUses: 1,
   /** Charged bolt (Arcane wand): its power at full charge, and how fast it flies. */
-  chargedBolt: 1.1, boltSpeed: 14,
+  chargedBolt: 0.75, boltSpeed: 14,
   /** Impaling dash (Cold): this many times the spear's reach; frozen targets on the way shatter. */
   dashMult: 2.5,
   /** Chain lash (Lightning): jumps after the first target, and how far each jump reaches. */
@@ -201,7 +208,7 @@ export const ARMS = {
   /** The spear's javelin: uses, speed, how long it pins (roots) the target, and the frost it leaves. */
   javelinUses: 2, javelinSpeed: 16, pin: 1.5, frostRadius: 1.0,
   /** Arcane wand: the Strike bolt's power; Siphon (held Special, rooted) multiplies your rune regen, for siphonUses a second. */
-  boltScale: 0.45, siphonMult: 4, siphonUses: 1,
+  boltScale: 0.3, siphonMult: 4, siphonUses: 1,
   /** Mend (Healing hands' held Special): heals allies within auraRange (not you) auraHeal hp/s, auraUses a second; you walk at auraWalk. */
   auraRange: 3.5, auraHeal: 7, auraUses: 1, auraWalk: 0.5,
   /** Carrying a guard, or a weapon, costs this much walking speed each (the user: carrying should slow you a little). */

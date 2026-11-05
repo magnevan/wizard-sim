@@ -21,7 +21,7 @@
  */
 import { compile, type SpellSpec } from './compile';
 import { ARMS, RHYTHM, STATUS, STRUCT, T } from './config';
-import { EL, N_EL, queueFromCounts } from './elements';
+import { EL, N_EL, elementName, queueFromCounts } from './elements';
 import { heldBlow, hit, hitOpts, nearest, payloadOf, spawnMissile, zap } from './effects';
 import { inCone, len } from './geom';
 import { addKnock } from './hit';
@@ -241,6 +241,15 @@ export function retreat(w: World, i: number, face: number): void {
   const s = w.seats;
   if (s.guard[i]) { if (s.guardCd[i] > 0) return; guardRetreat(w, i, face); }
   else addKnock(w, i, -cosTurns(face), -sinTurns(face), ARMS.retreatPush);
+}
+
+/**
+ * The recovery (s) after a Strike or Sweep with seat i's weapon (the staff's with none): its follow-through,
+ * drawn as the weapon swinging back to rest (ARMS.strikeRecovery). Heavies and Specials keep RHYTHM.recovery.
+ */
+export function strikeRecovery(w: World, i: number): number {
+  const el = held(w, i), t = ARMS.strikeRecovery as Record<string, number>;
+  return t[el ? elementName(el) : 'staff'] ?? RHYTHM.recovery;
 }
 
 /** How far a held RMB has charged a Heavy (0 at the end of the tap window, 1 when full). */

@@ -18,6 +18,7 @@ import {
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
+import * as A from './accent';
 import * as K from './kit';
 import * as X from './px';
 import type { Ctx, Pt, Ramp } from './px';
@@ -515,10 +516,15 @@ export class Vfx {
         void e;
         continue;
       }
-      // a plain bolt in the look's colours
-      for (let k2 = 6; k2 >= 1; k2--) K.sq(o, x - ux * k2 * 2.5, y - uy * k2 * 2.5, k2 < 3 ? 2 : 1, R[Math.min(R.length - 1, 1 + (k2 >> 1))]);
-      X.glow(o, x, y, 6, R[2], 0.7); K.sq(o, x, y, 3, R[2]); K.sq(o, x, y, 2, R[1]); X.px(o, x, y - 1, '#ffffff');
-      light(x, yg, 30, R[2], 0.5);
+      // a plain bolt in the look's colours. The Arcane wand's (a wizard's bolt carrying Arcane) stays violet at its
+      // heart, and every other element in it changes the bolt its own way (art/accent.ts: a flaming streak, an icy
+      // shard head, crackle, a droplet trail, a stone pebble, life motes), so wand + Fire reads apart from wand + Cold.
+      const wandBolt = m.owner[j] >= 0 && m.owner[j] < MAX_SEATS && m.els[j * N_EL + 5] > 0; // Arcane is element 6
+      const RB = wandBolt ? X.EL.arcane : R, xs = wandBolt ? A.extrasOf(m.els, j, 6, 3) : [];
+      for (let k2 = 6; k2 >= 1; k2--) K.sq(o, x - ux * k2 * 2.5, y - uy * k2 * 2.5, k2 < 3 ? 2 : 1, RB[Math.min(RB.length - 1, 1 + (k2 >> 1))]);
+      X.glow(o, x, y, 6, RB[2], 0.7); K.sq(o, x, y, 3, RB[2]); K.sq(o, x, y, 2, RB[1]); X.px(o, x, y - 1, '#ffffff');
+      if (xs.length) A.bolt(o, x, y, ux, uy, xs, t, this.mT0[j], sd, light);
+      light(x, yg, 30, RB[2], 0.5);
     }
   }
 

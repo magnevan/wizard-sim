@@ -11,12 +11,12 @@ Append-only. Each entry records the date, the decision, why it was made, and the
 - **Shield and walls:** [The overnight drafts, reviewed](#2026-11-04-the-overnight-drafts-reviewed-see-explorations2026-11-04-overnight-draftsmd) (Model A) · [Play-test notes, round 2](#2026-11-04-play-test-notes-round-2-explorations2026-11-04-playtest-2md) · [Play-test round 2, answers](#2026-11-05-play-test-round-2-answers-and-notes-811) · [Rings, wall lifetime, Self on allies](#2026-11-05-rings-wall-lifetime-self-on-allies)
 - **Sigil, devices, the Double:** [Sigil's identity](#2026-11-04-sigils-identity-see-explorations2026-11-04-sigil-identity-and-buffsmd) · [The look rule, ice shards, turret draw](#2026-11-04-the-look-rule-ice-shards-turret-draw-the-users-feedback-on-the-vfx-gallery-and-pixel-battlefield-pass-3) · [Play-test notes, round 1](#2026-11-04-play-test-notes-round-1-the-users-first-session-with-the-build) · [Play-test round 2, answers](#2026-11-05-play-test-round-2-answers-and-notes-811) (turrets)
 - **Life and support:** [The overnight drafts, reviewed](#2026-11-04-the-overnight-drafts-reviewed-see-explorations2026-11-04-overnight-draftsmd) (L3) · [Grammar v2; wards for support](#2026-11-05-grammar-v2-in-the-game-wards-for-support) · [Life spells, the size rule](#2026-11-05-life-spells-the-size-rule-the-inert-audits-life-group) · [Every element in a heal lends its resistance](#2026-11-05-every-element-in-a-heal-lends-its-resistance-guard-ties-settled)
-- **Weapons and guards:** [Weapons review, round 1](#2026-11-05-weapons-review-round-1-explorations2026-11-05-weapons-review-1md) · [Grammar v2 in the game](#2026-11-05-grammar-v2-in-the-game-wards-for-support) · [Round-2 weapons and guards built](#2026-11-05-round-2-weapons-and-guards-built-into-the-game-on-the-recommendations-pending-the-users-round-2-ratings) · [Round-2 ratings built](#2026-11-05-round-2-ratings-built-new-retreats-and-passives-the-arcane-wand-mend-carrying-slows-you) · [How elements mix in guards](#2026-11-05-how-elements-mix-in-guards-merged-with-the-users-identities) · [Mixing ratings](#2026-11-05-mixing-ratings-every-rune-scales-the-prism-mixes-its-return) · [Hyperbolic resistance](#2026-11-05-guard-resistance-is-hyperbolic) · [The Prism stores and Lances](#2026-11-05-the-prism-stores-and-lances-mend-and-siphon-take-their-extras) · [Round 4 ratings](#2026-11-05-round-4-ratings-the-lance-prism-is-adopted) · [Guard ties settled](#2026-11-05-every-element-in-a-heal-lends-its-resistance-guard-ties-settled) · [Weapon blows fixed; the imbued burst](#2026-11-05-weapon-blows-fixed-the-imbued-swing-becomes-a-burst)
+- **Weapons and guards:** [Weapons review, round 1](#2026-11-05-weapons-review-round-1-explorations2026-11-05-weapons-review-1md) · [Grammar v2 in the game](#2026-11-05-grammar-v2-in-the-game-wards-for-support) · [Round-2 weapons and guards built](#2026-11-05-round-2-weapons-and-guards-built-into-the-game-on-the-recommendations-pending-the-users-round-2-ratings) · [Round-2 ratings built](#2026-11-05-round-2-ratings-built-new-retreats-and-passives-the-arcane-wand-mend-carrying-slows-you) · [How elements mix in guards](#2026-11-05-how-elements-mix-in-guards-merged-with-the-users-identities) · [Mixing ratings](#2026-11-05-mixing-ratings-every-rune-scales-the-prism-mixes-its-return) · [Hyperbolic resistance](#2026-11-05-guard-resistance-is-hyperbolic) · [The Prism stores and Lances](#2026-11-05-the-prism-stores-and-lances-mend-and-siphon-take-their-extras) · [Round 4 ratings](#2026-11-05-round-4-ratings-the-lance-prism-is-adopted) · [Guard ties settled](#2026-11-05-every-element-in-a-heal-lends-its-resistance-guard-ties-settled) · [Weapon blows fixed; the imbued burst](#2026-11-05-weapon-blows-fixed-the-imbued-swing-becomes-a-burst) � [Weapons are the cheap option; extras you can see](#2026-11-05-weapons-are-the-cheap-option-a-strike-rhythm-per-weapon-and-extras-you-can-see)
 - **Visuals and deaths:** [The look rule](#2026-11-04-the-look-rule-ice-shards-turret-draw-the-users-feedback-on-the-vfx-gallery-and-pixel-battlefield-pass-3) · [Play-test notes, round 1](#2026-11-04-play-test-notes-round-1-the-users-first-session-with-the-build) · [Deaths for every enemy](#2026-11-05-deaths-for-every-enemy) · [Lingering effects last as long as they look](#2026-11-05-lingering-effects-last-as-long-as-they-look)
 - **Engine and stack:** [Prototype stack](#2026-11-03-prototype-stack-provisional-the-user-can-veto) · [Engine phase starts](#2026-11-04-engine-phase-starts) · [Engine stack](#2026-11-04-engine-stack-the-users-answers-on-the-engine-choice-page)
 - **Online and netcode:** [Online co-op, first route](#2026-11-04-online-co-op-first-route) · [Network test, drop-out and rejoin](#2026-11-04-network-test-drop-out-and-rejoin) · [The host tunes online matches](#2026-11-05-the-host-tunes-online-matches) · [Smoother remote players online](#2026-11-05-smoother-remote-players-online-the-two-fixes-approved-on-2026-11-04) · [Survive grows to 48 x 34 …; a stalled page](#2026-11-05-survive-grows-to-48-x-34-guards-read-from-behind-a-stalled-page-no-longer-drops-the-others) · [Netcode is rollback](#2026-11-05-netcode-is-rollback-recorded-after-the-fact)
 - **Rooms, Survive, death:** [Preparation pillar; death is harsher](#2026-11-03-preparation-pillar-death-is-harsher) · [Survive mode in the game](#2026-11-05-survive-mode-in-the-game-explorations2026-11-05-survive-modemd) · [Survive's arena is big](#2026-11-05-survives-arena-is-big-and-the-camera-follows) · [Survive grows to 48 x 34](#2026-11-05-survive-grows-to-48-x-34-guards-read-from-behind-a-stalled-page-no-longer-drops-the-others) · [Survive gets Rally and Echo](#2026-11-05-survive-gets-rally-and-echo) · [Survive Review answers, round 1](#2026-11-05-survive-review-answers-round-1)
-- **Balance and tuning:** [Balance tooling and the first measurements](#2026-11-04-balance-tooling-and-the-first-measurements) · [The host tunes online matches](#2026-11-05-the-host-tunes-online-matches)
+- **Balance and tuning:** [Balance tooling and the first measurements](#2026-11-04-balance-tooling-and-the-first-measurements) · [The host tunes online matches](#2026-11-05-the-host-tunes-online-matches) � [Weapons are the cheap option; extras you can see](#2026-11-05-weapons-are-the-cheap-option-a-strike-rhythm-per-weapon-and-extras-you-can-see)
 
 ## 2026-11-02: Repo is design-first
 The repo holds docs and throwaway prototypes, and there's no production codebase. The pillars in `vision.md` guide every proposal.
@@ -612,3 +612,42 @@ See `explorations/2026-11-05-effect-durations.md`.
 - **The audit found nothing else to change:** the Fire patch already burns the ground for 10 s and the Frost patch freezes it for 16 s. Their short opening flourishes are only the moment they appear. Steam (6 s), the Healing spring (4 + 2n s) and the Blink spark (4 s) were already drawn for their whole lives.
 - **Rejected:** shortening the Fire patch to the ~5 s the note suggested. It already reads as lasting, and a shorter patch would only be weaker.
 - Golden hash unchanged (`dda18ae2`): the scripted run never casts plain Water Place.
+
+## 2026-11-05: Weapons are the cheap option: a Strike rhythm per weapon, and extras you can see
+See `explorations/2026-11-05-weapon-dps.md` (the before/after table).
+- **The user's play-test:** "The arcane wand feels a bit too powerful. You can spam it very fast, leading to high dps for very low cost." And: "I also am not seeing enough visual difference based on any extra elements I add". That was about the wand first, then about every weapon (the trident with extras looked like a plain trident), then the guards.
+- **Measured** (`npm run balance:weapons`, `game/tools/weapon-dps.ts`): each Strike recovered in 0.18 s, so a mashed Strike landed about 4.3 times a second, and 30 uses cost 2 runes. The wand did 31 DPS against the Arcane beam's 13.5. The maul did 92 against the Earth rock's 15. The free staff did 26, out-damaging every one-rune spell.
+- **The principle: a weapon is the cheap, always-available option.** Its sustained DPS sits clearly below a committed spell of the same element. A spammed Strike should be about 50�60% of that spell. A Heavy hits harder per move but comes slower. The wand must not out-damage the beam.
+- **Built: each weapon has its own Strike rhythm** (`ARMS.strikeRecovery`). The recovery after a Strike or Sweep is: staff 0.6 s, Healing hands 0.35, trident 0.65, whip 0.68, wand 0.62, sword 0.8, spear 0.9, maul 1.4.
+  - This keeps pillar 4: it's the same recovery phase spells have, with a length per weapon.
+  - It's drawn as the weapon's follow-through: out fast, a beat held, back to rest over the recovery. You can see the maul's slow swing and the wand's quick flick.
+  - Presses during it wait in the cast buffer.
+- **Damage changes with it:**
+  - Blow physical damage: staff 4, trident 5, spear 4, whip 3, sword 2, maul 2.
+  - A blow carries 0.5 of a spell's elements (was 0.8).
+  - The wand's light bolt is 0.3 (was 0.45), and its full charged bolt 0.75 (was 1.1).
+  - Weapon waves are 0.8 (was 1.4).
+- **After the fix:**
+  - Wand Strike: 7.4 DPS, 55% of the beam. Wand Heavy: 59%.
+  - Whip: 53% of the arc.
+  - Maul: 59% of the rock.
+  - Staff: 47% of the beam, for free.
+- **Two exceptions:**
+  - **The flame sword is 108% of Fire spray x1.** Burning is a 6 DPS floor that any igniting touch sets, and the regen-limited spray is barely above it. This is open question 1 in the exploration.
+  - **The frost spear is 164% of Ice shards.** Cold spells deal little damage by design. At 6.9 DPS the spear is still below the wand and the whip.
+- A test holds the wand below 65% of the beam and the whip below 65% of the arc (`arms.test.ts`).
+- **Built: extras you can see, one shared system** (`game/packages/client/src/art/accent.ts`). The look rule still holds: the lead element sets the weapon or guard, and each extra rides on it with equal weight.
+  - **On the held weapon**, each extra gets a band of its colour along the blade, a tip glow and its own particle:
+    - Fire: licks and embers.
+    - Cold: rime on the blade.
+    - Lightning: crackle hopping along it.
+    - Water: drips.
+    - Earth: stone chunks set in it.
+    - Arcane: rune sparks.
+    - Life: motes.
+    - The wand's orb and the Healing hands get a ring in the extras' colours instead.
+  - **In every move**, the extras show along the Strike's thrust and round the Sweep's ring. The Heavies and guard moves trail or burst them.
+  - **The wand's bolts** stay violet at the heart and change with each extra: a flaming streak, an ice-shard head, crackle, a droplet trail, a stone pebble, motes.
+  - **Guards** replace the faint dotted coat rim with a thick turning arc per extra, a glow of the strongest, and coloured ends on the blocking face.
+- **Noted:** "Sigil + Fire + Lightning" is the Lightning whip, not a flame sword, because Lightning leads by type, as in guards and spells. Open question 2.
+- Golden hash unchanged (`dda18ae2`): the scripted run uses no weapon moves.

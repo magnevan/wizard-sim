@@ -28,6 +28,7 @@ import { demoInput, parseDemo } from './demo';
 import { PadSeats } from './gamepad';
 import { KeyboardMouse } from './input';
 import { TunePanel } from './tune-panel';
+import { Inspect } from './inspect';
 import { loadSaved } from './tune-io';
 import { WorldView } from './view';
 import { broadcastBus, roomBus } from './net/bus';
@@ -107,6 +108,7 @@ async function boot(): Promise<void> {
   const keyboard = new KeyboardMouse(app.canvas, view.camera);
   const recorder = new ReplayRecorder(7, MAX_SEATS);
   const tune = new TunePanel(world, view.camera, app.canvas, params.get('tune') === '1');
+  const inspect = new Inspect(world, view.camera);
 
   const inputsFor = (tick: number): PlayerInput[] => {
     const out: PlayerInput[] = [];
@@ -186,6 +188,7 @@ async function boot(): Promise<void> {
     }
     last = now;
     tune.frame(now);
+    inspect.frame();
     try {
       view.draw(world, acc / DT, now);
       app.render();
@@ -199,7 +202,7 @@ async function boot(): Promise<void> {
     // the debug line: small, and only hashed when shown (hashing walks every state byte)
     if (showDebug && world.clock[0] % 6 === 0) hud.textContent = `tick ${world.clock[0]}  hash ${hex(hashWorld(world))}  ${view.camera.scale}×  ${app.renderer.name}
 ${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
-      (autoplay ? '  autoplay' : demo[0] ? '  spell demo' : scripted ? '  scripted run' : '\nLMB walk · RMB Force (hold) · Shift+RMB Area, hold for Place · Space Self · Shift+LMB Weapon · Esc clear');
+      (autoplay ? '  autoplay' : demo[0] ? '  spell demo' : scripted ? '  scripted run' : '\nLMB walk · RMB Force (hold) · Shift+RMB Area, hold for Place · Space Self · Shift+LMB Weapon · Esc clear · hold Alt: inspect');
     schedule(frame);
   };
   // ?timerloop=1: timers instead of animation frames, so a background tab keeps running (the co-op e2e test).

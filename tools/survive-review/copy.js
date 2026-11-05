@@ -30,7 +30,8 @@
   const BASE_REGEN = 0.22;
   const ws = (k) => (BASE_REGEN * (1 + 0.3 * k)).toFixed(3).replace(/0$/, '');
 
-  // status: 'built' (in the sim with a test) or 'designed' (only in the exploration doc)
+  // status: 'built' (in the sim with a test), 'designed' (only in the exploration doc), 'cut' (rated
+  // cut; code removed) or 'default' (no longer a power-up: every wizard has it)
   const PERKS = [
     {
       slug: 'pu-deep', name: 'Deep pools', ramp: 'sigil', glyph: G.POOLS, status: 'built', cap: 3,
@@ -83,12 +84,12 @@
       pillar: 'Pillar 2: a new interaction from existing parts (burning + death).',
     },
     {
-      slug: 'pu-slipstream', name: 'Slipstream', ramp: 'lightning', glyph: G.BOLT, status: 'built', cap: 1,
+      slug: 'pu-slipstream', name: 'Slipstream', ramp: 'lightning', glyph: G.BOLT, status: 'cut', cap: 1,
       rule: 'First spell after a hop is free',
-      does: 'The first spell you cast within 2 s of a Retreat hop costs no runes.',
+      does: 'Was: the first spell you cast within 2 s of a Retreat hop cost no runes. Cut on your rating (degenerate: hop back from nothing and cast a free 5-rune spell); its code is gone.',
       sees: 'A hop, then a big spell straight after it.',
-      cost: 'Useless if you never hop. Big spells gain most, so it pushes you to dodge before a 5-rune cast.',
-      pillar: 'Mastery in the hands (pillar 1), but it adds a timing habit. Watch that it doesn’t feel mandatory.',
+      cost: 'Useless if you never hop. Big spells gained most, so it pushed you to hop before every 5-rune cast.',
+      pillar: 'Cut.',
     },
     {
       slug: 'pu-charm', name: 'Mirror charm', ramp: 'shield', glyph: G.MIRROR, status: 'built', cap: 1,
@@ -99,9 +100,9 @@
       pillar: 'Passive power. Fine for a run mode; too strong as permanent progression.',
     },
     {
-      slug: 'pu-bloom', name: 'Bloom', ramp: 'life', glyph: G.BLOOM, status: 'built', cap: 1,
+      slug: 'pu-bloom', name: 'Bloom', ramp: 'life', glyph: G.BLOOM, status: 'cut', cap: 1,
       rule: 'Your heals splash onto allies',
-      does: 'Every heal you give splashes half its amount onto the other wizards within 2.5 u of the one healed. It only ever heals.',
+      does: 'Was: every heal you gave splashed half its amount onto the other wizards within 2.5 u of the one healed. Cut on your rating (not useful); its code is gone.',
       sees: 'Green heal numbers on everyone standing near the one you healed.',
       cost: 'Makes the support role stronger and pulls the team together, which is exactly where a brute’s slam or your own Pyre hurts most.',
       pillar: 'Touches pillar 3 (“hitting a friend never helps them by accident”). It only heals, and only from heals you chose to cast, so picking it is the intent.',
@@ -124,19 +125,19 @@
       pillar: '“The Double for a wave”, from your list.',
     },
     {
-      slug: 'pu-rally', name: 'Rally', ramp: 'life', glyph: G.RALLY, status: 'built', cap: 1, scene: 'rally',
-      rule: 'Stand by a downed ally 3s to revive them',
-      does: 'Stand within 1.6 u of a downed ally for 3 s with your hands free, and they get up mid-wave with 40% health (the breather gives 50%). Queueing runes doesn’t break it. Casting, a weapon move, blocking, the healing link, a grab, a stun or stepping away empties the ring; a hit drains 1 s of it (at most every 0.5 s) and the ring doesn’t fill while you’re being hit. Two rescuers don’t fill it faster.',
+      slug: 'pu-rally', name: 'Rally', ramp: 'life', glyph: G.RALLY, status: 'default', cap: 1, scene: 'rally',
+      rule: 'Everyone: stand by a downed ally 3s to revive them',
+      does: 'No longer a power-up (your answer): every wizard can do it. Stand within 1.6 u of a downed ally for 3 s with your hands free, and they get up mid-wave with 40% health (the breather gives 50%). Queueing runes doesn’t break it. Casting, a weapon move, blocking, the healing link, a grab, a stun or stepping away empties the ring; a hit drains 1 s of it (at most every 0.5 s) and the ring doesn’t fill while you’re being hit. Two rescuers don’t fill it faster.',
       sees: 'A dashed green ring round the fallen ally shows where to stand. While a rally runs, a ring fills in the rescuer’s colour, Life motes flow, RALLY floats overhead and the strip reads “P1 RALLYING P2 66%”. The revive is a column of Life light; a broken ring snaps.',
       cost: 'You stop casting to do it, and a grabber or brute punishes the rescuer.',
       pillar: 'Pillar 3’s dance, and it answers the death-and-revival idea.',
     },
     {
-      slug: 'pu-glass-heart', name: 'Glass heart', ramp: 'fire', glyph: G.HEART, status: 'designed',
+      slug: 'pu-glass-heart', name: 'Glass heart', ramp: 'fire', glyph: G.HEART, status: 'built', cap: 2,
       rule: '+25% damage, −25% max health',
-      does: 'You deal 25% more damage and have 25% less max health.',
-      sees: 'Bigger hits from you, and a partner who goes down faster.',
-      cost: 'A real trade-off build. It conflicts with Bloom-style support play.',
+      does: 'You deal 25% more damage (every hit, your partner included) and have 25% less max health, per stack, up to two (+50% / −50%). Your current health shrinks with the max.',
+      sees: 'Bigger hits from you, and a partner who goes down faster. Fun with someone to hide behind.',
+      cost: 'A real trade-off build: you need a partner, walls or wards between you and the wave.',
       pillar: 'Flat +X%, so it conflicts with pillar 1 as written. It’s here because a run mode is where such trades are fun.',
       flag: 'pillar 1',
     },
@@ -169,7 +170,7 @@
   const LOOP = [
     ['wave', 'Wave', 'until cleared', 'Enemies leave the open portals one every 0.45 s; portals start 1 s apart. Downed wizards stay down until the wave ends. Everyone down ends the run.'],
     ['breather', 'Breather', '3 s', 'The downed get back up with half their health.'],
-    ['pick', 'Pick', 'up to 30 s', 'Three altars rise in the keep, and the next wave’s portals open. Stand on one for 0.75 s to take it. The lull starts once everyone has picked.'],
+    ['pick', 'Pick', 'no time limit', 'Three altars rise in the keep, and the next wave’s portals open (nothing leaves them yet). Stand on one for 0.75 s to take it. The lull starts once everyone has picked.'],
     ['lull', 'Lull', '6 s (10 s before wave 1)', 'The strip counts down with the next wave’s mix. Time to prepare: walls, glyphs, turrets.'],
   ];
 
@@ -214,20 +215,11 @@
     },
     {
       id: 'q-3-flat', n: 'Q3', title: 'Wellspring and Glass heart: keep the flat-number ones?',
-      text: 'Built: Wellspring is in (you asked for regen). Glass heart is designed but not built. This is the per-power-up half of the pillar question above.',
+      text: 'Built: Wellspring is in (you asked for regen), and Glass heart is now built too (you rated it keep). Wellspring itself is still under discussion. This is the per-power-up half of the pillar question above.',
       choices: [
-        ['both', 'Keep both; build Glass heart', 'A run mode is where trade-off builds are fun.', 'rec'],
-        ['wellspring', 'Keep Wellspring only', 'What’s built now.', 'built'],
+        ['both', 'Keep both; build Glass heart', 'A run mode is where trade-off builds are fun.', 'rec built'],
+        ['wellspring', 'Keep Wellspring only', 'Cut Glass heart again.', ''],
         ['neither', 'Cut both', 'Survive holds to pillar 1 as strictly as the campaign.', ''],
-      ],
-    },
-    {
-      id: 'q-4-bloom', n: 'Q4', title: 'Bloom: is picking it enough intent for pillar 3?',
-      text: 'Pillar 3: “hitting a friend never helps them by accident; empowering an ally is something you set up on purpose.” Bloom splashes your heals onto allies you didn’t aim at. It only ever heals, and only from heals you chose to cast.',
-      choices: [
-        ['enough', 'Picking it is enough intent', 'Keep it as built.', 'rec built'],
-        ['aimed', 'Only splash onto allies you also aim at', 'Tighter, but it barely differs from a plain heal.', ''],
-        ['cut', 'It crosses the pillar: cut it', '', ''],
       ],
     },
     {
@@ -237,14 +229,6 @@
         ['loop', 'Authored to 8, then loop harder', 'Predictable; easy to tune.', 'rec built'],
         ['pool', 'Past 8, draw from a pool', 'More variety on long runs; harder to balance.', ''],
         ['more', 'Author more waves first', 'Grow the authored list before looping.', ''],
-      ],
-    },
-    {
-      id: 'q-8-zoom', n: 'Q8', title: 'Zoom out a step when the team splits?',
-      text: 'Built: when the team spreads further than the view, the camera steps out one integer scale (4x to 3x, never below 2x) and steps back in once everyone fits with room to spare. The other choice: one fixed scale, with only the edge marks for off-screen enemies and portals.',
-      choices: [
-        ['zoom', 'Zoom out a step', 'You see both players; it’s a visible jump.', 'rec built'],
-        ['fixed', 'Stay at one scale', 'Steadier; you rely on the edge marks.', ''],
       ],
     },
     {
@@ -286,6 +270,9 @@
   const DECIDED = [
     ['Q5', 'Next to build: Rally and Echo. Answered: both, Rally first. Both are built.'],
     ['Q7', 'Arena size. Decided: 48 × 34, so it overflows the screen at every scale.'],
+    ['Q8', 'Zoom when the team splits? Answered: no zoom. Each screen follows its own wizard, in every room; other wizards off screen get an arrow at the edge in their seat colour (blinking while down). Couch co-op on one screen still shares the view. Built.'],
+    ['Pick', 'Answered: no time limit; the pick ends once everyone has picked, and the open portals release nothing until the wave. Built.'],
+    ['Power-ups', 'Answered: Slipstream and Bloom are cut (so Q4, Bloom and pillar 3, is moot); Rally is something everyone can do, not a power-up; Glass heart is built (+25% damage, −25% max health, two stacks at most).'],
   ];
 
   PB.SR = { PERKS, DROPPED, LOOP, WAVES, QUESTIONS, DECIDED, G };

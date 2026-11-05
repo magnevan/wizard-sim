@@ -15,6 +15,7 @@
  *   ?debug=0      hide the debug line (tick, hash); the backquote key toggles it
  *   ?renderer=webgpu   try WebGPU instead of WebGL
  *   ?scene=rally  with ?room=survive and a headless loop: a Rally in progress, nobody pressing anything (demo.ts)
+ *   ?local=N      the camera follows seat N only, as a networked player's screen would (others get edge arrows)
  *   ?pauseAt=N    pause the sim at tick N (like P in the tuning panel; cosmetic animation keeps running)
  *   ?tune=1       open the tuning panel at boot (F1 or the Tune button toggles it; tune-panel.ts)
  *   ?net=bc       online co-op between tabs of this page on one machine (BroadcastChannel), for testing
@@ -99,6 +100,11 @@ async function boot(): Promise<void> {
   addEventListener('keydown', (e) => { if (e.code === 'Backquote') { showDebug = !showDebug; hud.style.display = showDebug ? '' : 'none'; } });
   const view = new WorldView();
   view.lightsOn = params.get('lights') !== '0';
+  // ?ally=1's bot stands in for a partner on another screen: the camera doesn't follow it
+  if (ally && !headless) view.isLocal = (s) => s !== 1;
+  // tests and screenshots: ?local=0 frames seat 0 only (the others get edge arrows)
+  const onlySeat = params.get('local');
+  if (onlySeat !== null && onlySeat !== '') { const k = Number(onlySeat); view.isLocal = (s) => s === k; }
   app.stage.addChild(view.root);
   const fit = () => view.resize(host.clientWidth, host.clientHeight, Number(params.get('scale')) || undefined);
   fit();

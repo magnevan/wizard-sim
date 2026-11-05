@@ -305,21 +305,17 @@ export const PU = {
   bedrock: 5,
   /** Enemies you set burning explode in fire when they die. */
   pyre: 6,
-  /** The first spell within 1.5 s of a Retreat hop costs no runes. */
-  slipstream: 7,
   /** A mirror ward regrows on you 12 s after you last wore a ward. */
-  charm: 8,
-  /** Your heals splash half their healing onto allies near the one healed. */
-  bloom: 9,
+  charm: 7,
   /** Your turrets' shots cost no runes. */
-  clockwork: 10,
+  clockwork: 8,
   /** A free Double stands with you until the next wave is cleared (one-shot: it can be picked again). */
-  echo: 11,
-  /** Stand by a downed ally for PERKS.rallyTime to bring them back mid-wave. */
-  rally: 12,
+  echo: 9,
+  /** Glass heart: PERKS.glassDmg more damage dealt and PERKS.glassHp less max health, per stack. */
+  glass: 10,
 } as const;
-export const N_PU = 13;
-export const PU_CAP: readonly number[] = [0, 3, 4, 3, 2, 1, 1, 1, 1, 1, 1, 9, 1];
+export const N_PU = 11;
+export const PU_CAP: readonly number[] = [0, 3, 4, 3, 2, 1, 1, 1, 1, 9, 2];
 export const N_ALTARS = 3;
 /** Picks remembered per seat, in order, for the HUD and the results. */
 export const PICK_LOG = 32;
@@ -338,9 +334,9 @@ export interface Run {
   picked: Int8Array; stand: Int32Array; standOn: Int8Array;
   /** Every pick so far, per seat (power-up, element). */
   log: Uint8Array; logEl: Uint8Array; logN: Uint8Array;
-  /** Slipstream: ticks left of the free-spell window after a hop. Charm: ticks until the mirror regrows. */
-  dodge: Int32Array; charm: Int32Array;
-  /** Rally, per downed seat: ticks of revive so far, and the seat reviving them (-1: nobody). */
+  /** Charm: ticks until the mirror regrows. */
+  charm: Int32Array;
+  /** Rally (everyone can), per downed seat: ticks of revive so far, and the seat reviving them (-1: nobody). */
   rally: Int32Array; rallyBy: Int8Array; rallyCd: Int32Array;
   /** Echo: the body of the seat's free Double (-1: none). See freeDouble. */
   echo: Int16Array;
@@ -413,7 +409,7 @@ function run(): Run {
     offer: u8(N_ALTARS), offerEl: u8(N_ALTARS), ax: f64(N_ALTARS), ay: f64(N_ALTARS),
     picked: new Int8Array(n).fill(-1), stand: i32(n), standOn: new Int8Array(n).fill(-1),
     log: u8(n * PICK_LOG), logEl: u8(n * PICK_LOG), logN: u8(n),
-    dodge: i32(n), charm: i32(n),
+    charm: i32(n),
     rally: i32(n), rallyBy: new Int8Array(n).fill(-1), rallyCd: i32(n), echo: new Int16Array(n).fill(-1),
   };
 }

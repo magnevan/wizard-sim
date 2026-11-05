@@ -3,10 +3,10 @@
  * (the rules' PAYLOAD table). Friendly fire is on: harm lands on whoever is hit, ally or not
  * (pillar 3). A Life spell only heals, and its other elements only help.
  */
-import { ARMS, COMBAT, DAMAGE, STATUS, STRUCT, T } from './config';
+import { ARMS, COMBAT, DAMAGE, PERKS, STATUS, STRUCT, T } from './config';
 import { EL, N_EL, elementName, formCurve, formOf } from './elements';
 import { ARCHETYPES } from './archetypes';
-import { angleDiff, len } from './geom';
+import { angleDiff } from './geom';
 import { atan2Turns } from './trig';
 import { drainShield } from './walls';
 import { RES, anchored, bless, colOf, guardBeam, resist, taken, unburnable, warm } from './guards';
@@ -81,7 +81,6 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     // Support: Life heals; the lending elements only help (Rescue spray, Healing spray).
     const amount = COMBAT.healPerLife * life * o.scale;
     b.hp[t] = Math.min(b.maxHp[t], b.hp[t] + amount);
-    bloom(w, srcSeat, t, amount);
     if (water) { b.burn[t] = 0; addKnock(w, t, o.dirX, o.dirY, o.push * water * 0.4 * ss); }
     if (fire) { b.wet[t] = 0; b.frozen[t] = 0; b.chill[t] = 0; }
     bless(w, t, els, at); // and every other element lends its resistance for a few seconds
@@ -111,6 +110,9 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   // Glass cannon (Sigil + Arcane aura): you deal more and take more.
   if (srcSeat >= 0 && s.aura[srcSeat] > 0 && s.auraEls[srcSeat * N_EL + EL.arcane - 1]) dmg *= STRUCT.glassMult;
   if (tSeat >= 0 && s.aura[tSeat] > 0 && s.auraEls[tSeat * N_EL + EL.arcane - 1]) dmg *= STRUCT.glassMult;
+  // Glass heart (survive): your spells and blows hit harder (your health is lower: survive.ts grant).
+  const glass = stackOf(w, srcSeat, PU.glass);
+  if (glass) dmg *= 1 + PERKS.glassDmg * glass;
 
   // Statuses, in the order that lets them interact: water first (it douses), then fire (it dries).
   if (water) {
@@ -150,17 +152,6 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   if (dmg > 0) { b.lastHit[t] = tick; b.lastEl[t] = form || EL.earth; b.lastDX[t] = o.dirX; b.lastDY[t] = o.dirY; b.lastMix[t] = o.scald ? 1 : o.freeze ? 2 : 0; b.lastKind[t] = hitKind; }
   if (life) b.hp[t] = Math.min(b.maxHp[t], b.hp[t] + COMBAT.healPerLife * life * o.scale); // Life inside a Shield/Sigil spell
   return dmg;
-}
-
-/** Bloom (survive): a heal by seat `src` splashes half onto the other wizards near the one healed. It only ever heals. */
-export function bloom(w: World, src: number, t: number, healed: number): void {
-  if (!w.run || healed <= 0 || src < 0 || !stackOf(w, src, PU.bloom)) return;
-  const b = w.bodies, amount = healed * 0.5;
-  for (let j = 0; j < MAX_SEATS; j++) {
-    if (j === t || b.kind[j] !== KIND.wizard || b.downed[j] || len(b.x[j] - b.x[t], b.y[j] - b.y[t]) > 2.5) continue;
-    b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + amount);
-    if (w.clock[0] % 20 === 0) w.events.push({ tick: w.clock[0], kind: 'heal', who: j, src: t, x: b.x[j], y: b.y[j], amount, look: EL.life });
-  }
 }
 
 function freezeBody(w: World, t: number): void {

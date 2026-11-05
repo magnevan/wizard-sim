@@ -116,7 +116,7 @@
   // power-up cards (Rally and Echo first and wide, with their scenes)
   const order = [...SR.PERKS.filter((p) => p.scene).reverse(), ...SR.PERKS.filter((p) => !p.scene)];
   for (const p of order) {
-    const card = el('article', 'pu' + (p.scene ? ' wide' : '') + (p.status === 'designed' ? ' designed' : '')); card.id = p.slug; card.dataset.rid = p.slug;
+    const card = el('article', 'pu' + (p.scene ? ' wide' : '') + (p.status === 'designed' ? ' designed' : p.status === 'cut' ? ' cut' : '')); card.id = p.slug; card.dataset.rid = p.slug;
     if (p.scene) card.append(screen(V[p.scene], p.name + ' in play'));
     const main = el('div');
     const head = el('div', 'puhead');
@@ -125,7 +125,7 @@
     ht.append(el('h3', null, esc(p.name)), el('p', 'rule', esc(p.rule)));
     head.append(gb, ht);
     const body = el('div', 'pubody');
-    body.append(el('div', 'meta', `<span class="badge ${p.status}">${p.status === 'built' ? 'Built' : 'Designed'}</span>${capText(p) ? `<span class="badge cap">${esc(capText(p))}</span>` : ''}${p.flag ? `<span class="badge flag">${esc(p.flag)}</span>` : ''}<span class="slug">${p.slug}</span>`));
+    body.append(el('div', 'meta', `<span class="badge ${p.status}">${({ built: 'Built', designed: 'Designed', cut: 'Cut', default: 'Everyone has it' })[p.status] || p.status}</span>${capText(p) ? `<span class="badge cap">${esc(capText(p))}</span>` : ''}${p.flag ? `<span class="badge flag">${esc(p.flag)}</span>` : ''}<span class="slug">${p.slug}</span>`));
     body.append(el('dl', null, `<div><dt>What it does</dt><dd class="does">${esc(p.does)}</dd></div><div><dt>What your partner sees</dt><dd>${esc(p.sees)}</dd></div><div><dt>The cost</dt><dd>${esc(p.cost)}</dd></div><div><dt>Pillars</dt><dd>${esc(p.pillar)}</dd></div>`));
     if (p.glyphNote) body.append(el('p', 'note', esc(p.glyphNote)));
     if (p.scene === 'rally') body.append(el('p', 'note', 'The scene: P1 walks into the dashed ring and starts to fill it; a goblin’s hit empties it (the break rule in Q10). P1 burns the goblin down, stands again for the full 3 s, and P2 gets up in a column of Life light with 40% health.'));

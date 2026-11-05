@@ -86,7 +86,7 @@
     frame(t) {
       const W = 224, rise = Math.min(smooth(seg(t, 0.2, 1.0)), 1 - smooth(seg(t, 5.0, 5.7)));
       const deepFire = Object.assign({}, P('Deep (element)'), { ramp: 'fire', glyph: SR.G.FIRE });
-      const alt = [[70, 62, P('Pyre'), 'PYRE'], [112, 82, P('Bloom'), 'BLOOM'], [154, 62, deepFire, 'DEEP FIRE']];
+      const alt = [[70, 62, P('Pyre'), 'PYRE'], [112, 82, P('Glass heart'), 'GLASS HEART'], [154, 62, deepFire, 'DEEP FIRE']];
       const p1t = 2.2, p2t = 3.0, ST = 0.75;
       const [x1, y1, w1] = walkTo(t, 0.9, p1t, [36, 104], [70, 63]);
       const [x2, y2, w2] = walkTo(t, 1.3, p2t, [196, 108], [112, 83]);

@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  ARCH, ARCHETYPES, ARENA, BTN, CELL, DEVICE, EL, KIND, PERKS, SURF, SURVIVE_ARENA, SURVIVE_GATES, T, scriptedInput, NO_INPUT, PHASE_ENC, PU, RUNES, STRUCT, SURVIVE_ROCK, SURVIVE_TIMES, TEAM, TERRAIN, WALL, WARD,
+  ARCH, ARCHETYPES, ARENA, BTN, CELL, DEVICE, EL, KIND, N_PU, PERKS, SURF, SURVIVE_ARENA, SURVIVE_GATES, T, scriptedInput, NO_INPUT, PHASE_ENC, PU, RUNES, STRUCT, SURVIVE_ROCK, SURVIVE_TIMES, TEAM, TERRAIN, WALL, WARD,
   botInput, buffers, createWorld, elementId, grant, hashWorld, newBotMemory, quantize, replaceWorld, restore, runeMax, snapshot, spawnBody, step,
   type PlayerInput, type World,
 } from '../src';
 import { cellAt, floorDisc } from '../src/effects';
+import { applyHit } from '../src/hit';
+
+/** One Fire and one Earth rune, as a payload (9 counts). */
+const fireEarth = new Uint8Array(9);
+fireEarth[EL.fire - 1] = 1; fireEarth[EL.earth - 1] = 1;
 
 /** Drives seat `seat`; the other seats stand still. */
 class Driver {
@@ -181,6 +186,27 @@ describe('survive: the wave loop', () => {
     expect(w.enc.state[1]).toBe(2);
   });
 
+  it('the pick has no time limit, and nothing leaves the open portals while it lasts', () => {
+    const w = createWorld(3, 2, { room: 'survive' });
+    w.enc.state[0] = PHASE_ENC.breather; w.enc.state[2] = 1; w.enc.state[1] = 2;
+    const d = new Driver(w);
+    d.tick({}, 2);
+    expect(w.enc.state[0]).toBe(PHASE_ENC.pick);
+    const r = w.run!;
+    w.bodies.x[0] = r.ax[0]; w.bodies.y[0] = r.ay[0];
+    d.tick({}, 60); // P1 picks; P2 dawdles for two minutes
+    expect(r.picked[0]).toBe(0);
+    const left = Array.from(w.enc.left).reduce((a, n) => a + n, 0);
+    expect(left).toBeGreaterThan(0); // the next wave's portals are open...
+    d.tick({}, 60 * 120);
+    expect(w.enc.state[0]).toBe(PHASE_ENC.pick);
+    expect(enemies(w)).toBe(0); // ...and release nothing
+    expect(Array.from(w.enc.left).reduce((a, n) => a + n, 0)).toBe(left);
+    w.bodies.x[1] = r.ax[2]; w.bodies.y[1] = r.ay[2];
+    d.tick({}, 60);
+    expect(w.enc.state[0]).toBe(PHASE_ENC.lull);
+  });
+
   it('walking past an altar does not take it: you must stand on it', () => {
     const w = createWorld(3, 1, { room: 'survive' });
     w.enc.state[0] = PHASE_ENC.breather; w.enc.state[2] = 1; w.enc.state[1] = 2;
@@ -307,18 +333,6 @@ describe('survive: power-ups', () => {
     expect(run(true)).toBeGreaterThan(5);
   });
 
-  it('Slipstream: the first spell after a Retreat hop costs nothing', () => {
-    const run = (slip: boolean) => {
-      const { w, d } = quiet();
-      if (slip) grant(w, 0, PU.slipstream);
-      d.aimAt(5, 0).cast(BTN.weapon, 1, 20); // the hop
-      d.queue('fire', 'fire').cast(BTN.force, 1, 30);
-      return rune(w, 'fire');
-    };
-    expect(run(false)).toBeLessThan(RUNES.max.fire - 1.5);
-    expect(run(true)).toBeGreaterThan(RUNES.max.fire - 0.5);
-  });
-
   it('Charm: a mirror ward grows on you, and regrows after it breaks', () => {
     const { w, d } = quiet();
     grant(w, 0, PU.charm);
@@ -332,16 +346,49 @@ describe('survive: power-ups', () => {
     expect(w.seats.ward[0]).toBe(WARD.mirror);
   });
 
-  it('Bloom: healing yourself splashes half onto an ally beside you', () => {
-    const run = (bloom: boolean) => {
-      const { w, d } = quiet(2);
-      if (bloom) grant(w, 0, PU.bloom);
-      w.bodies.hp[0] = 40; w.bodies.hp[1] = 40;
-      d.queue('life', 'life').cast(BTN.self, 1, 30);
-      return w.bodies.hp[1];
+  it('Glass heart: more damage dealt, less max health, per stack (two at most)', () => {
+    const run = (k: number) => {
+      const { w } = quiet();
+      for (let n = 0; n < k; n++) grant(w, 0, PU.glass);
+      const t = dummy(w, 4, 0);
+      const dealt = applyHit(w, t, fireEarth, 0, { scale: 1, heal: false, scald: false, freeze: false, source: 0, dirX: 1, dirY: 0, push: 0 });
+      return { dealt, maxHp: w.bodies.maxHp[0], hp: w.bodies.hp[0], stacks: w.run!.stacks[PU.glass] };
     };
-    expect(run(false)).toBeLessThan(40.5);
-    expect(run(true)).toBeGreaterThan(45);
+    const plain = run(0), one = run(1), three = run(3);
+    expect(plain.dealt).toBeGreaterThan(5);
+    expect(one.dealt).toBeCloseTo(plain.dealt * (1 + PERKS.glassDmg), 6);
+    expect(one.maxHp).toBeCloseTo(plain.maxHp * (1 - PERKS.glassHp), 6);
+    expect(one.hp).toBeCloseTo(one.maxHp, 6); // full health stays full: it shrinks with the max
+    expect(three.stacks).toBe(2); // capped
+    expect(three.dealt).toBeCloseTo(plain.dealt * (1 + 2 * PERKS.glassDmg), 6);
+    expect(three.maxHp).toBeCloseTo(plain.maxHp * (1 - 2 * PERKS.glassHp), 6);
+  });
+
+  it('Glass heart: your own spells hurt a partner more too (friendly fire stays)', () => {
+    const run = (glass: boolean) => {
+      const { w, d } = quiet(2);
+      if (glass) grant(w, 0, PU.glass);
+      w.bodies.x[1] = 4; w.bodies.y[1] = 0;
+      d.aimAt(4, 0).queue('earth').cast(BTN.force, 1, 60); // a rock, thrown at your partner
+      return w.bodies.maxHp[1] - w.bodies.hp[1];
+    };
+    const plain = run(false);
+    expect(plain).toBeGreaterThan(1);
+    expect(run(true)).toBeCloseTo(plain * (1 + PERKS.glassDmg), 6);
+  });
+
+  it('the pool: Slipstream, Bloom and Rally are not power-ups; Glass heart is', () => {
+    const seen = new Set<number>();
+    for (let seed = 1; seed <= 40; seed++) {
+      const w = createWorld(seed, 1, { room: 'survive' });
+      w.enc.state[0] = PHASE_ENC.breather; w.enc.state[2] = 1;
+      new Driver(w).tick({}, 2);
+      for (const p of w.run!.offer) seen.add(p);
+    }
+    expect(seen.has(PU.glass)).toBe(true);
+    expect(Math.max(...seen)).toBeLessThan(N_PU);
+    expect(seen.has(0)).toBe(false);
+    expect('slipstream' in PU || 'bloom' in PU || 'rally' in PU).toBe(false);
   });
 
   it('Clockwork: your turrets fire for free', () => {
@@ -367,12 +414,9 @@ describe('survive: power-ups', () => {
     return q;
   };
 
-  it('Rally: stand by a downed ally for rallyTime and they get up mid-wave', () => {
-    const plain = fallen();
-    plain.d.tick({}, T(PERKS.rallyTime) + 30);
-    expect(plain.w.bodies.downed[1]).toBe(1); // without Rally, standing there does nothing
+  it('Rally (everyone has it): stand by a downed ally for rallyTime and they get up mid-wave', () => {
     const { w, d } = fallen(), r = w.run!;
-    grant(w, 0, PU.rally);
+    expect(r.stacks.every((n) => n === 0)).toBe(true); // no power-up needed
     d.tick({}, T(PERKS.rallyTime) - 2);
     expect(w.bodies.downed[1]).toBe(1);
     expect(r.rallyBy[1]).toBe(0);
@@ -386,7 +430,6 @@ describe('survive: power-ups', () => {
 
   it('Rally: too far away, nothing; stepping away empties the ring', () => {
     const { w, d } = fallen(), r = w.run!;
-    grant(w, 0, PU.rally);
     w.bodies.x[0] = -PERKS.rallyRange; // 1.5 + 1.6 from P2
     d.tick({}, 30);
     expect(r.rally[1]).toBe(0);
@@ -400,7 +443,6 @@ describe('survive: power-ups', () => {
 
   it('Rally: casting starts it over, a hit only drains some, queueing runes does nothing', () => {
     const { w, d } = fallen(), r = w.run!;
-    grant(w, 0, PU.rally);
     d.tick({}, 60);
     d.queue('fire', 'fire'); // preparing the next spell is fine
     expect(r.rally[1]).toBe(62);
@@ -417,7 +459,6 @@ describe('survive: power-ups', () => {
 
   it('Rally: a goblin hitting the rescuer slows the rally well past rallyTime', () => {
     const { w, d } = fallen();
-    grant(w, 0, PU.rally);
     w.bodies.hp[0] = w.bodies.maxHp[0] = 1e6; // the rescuer outlasts it
     foe(w, ARCH.swarmer, -1, 0);
     d.tick({}, Math.round(T(PERKS.rallyTime) * 1.5));
@@ -465,12 +506,12 @@ describe('survive: power-ups', () => {
     expect(w.bodies.kind[echo] === KIND.double && echo !== w.seats.double[0]).toBe(false);
   });
 
-  it('Echo can be picked again (a one-shot), Rally only once', () => {
+  it('Echo can be picked again (a one-shot), Mirror charm only once', () => {
     const { w } = quiet();
     grant(w, 0, PU.echo); grant(w, 0, PU.echo);
-    grant(w, 0, PU.rally); grant(w, 0, PU.rally);
+    grant(w, 0, PU.charm); grant(w, 0, PU.charm);
     expect(w.run!.stacks[PU.echo]).toBe(2);
-    expect(w.run!.stacks[PU.rally]).toBe(1);
+    expect(w.run!.stacks[PU.charm]).toBe(1);
   });
 
   it('caps: a unique power-up is not granted twice', () => {

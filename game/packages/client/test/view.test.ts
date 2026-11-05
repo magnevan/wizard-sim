@@ -90,8 +90,26 @@ describe('view', async () => {
     }
     expect(view.debug()).toContain('follow');
     expect(view.camera.following).toBe(true);
+    // the Sanctum: one player is followed too; two seats sharing the screen get the still framing
     replaceWorld(w, createWorld(7, 1));
     view.draw(w, 0, now + 16);
+    expect(view.camera.following).toBe(true);
+    replaceWorld(w, createWorld(7, 2));
+    view.draw(w, 0, now + 32);
     expect(view.camera.following).toBe(false);
+  }, 60000);
+
+  test('online, each screen follows its own wizard: the partner gets an edge arrow, not the frame', async () => {
+    const view = new WorldView();
+    view.resize(1920, 1080);
+    view.setLocalSeat(1);
+    const w = createWorld(7, 2, { room: 'survive' });
+    w.enc.state[0] = 0; // the director off
+    w.bodies.x[0] = -20; w.bodies.y[0] = 0; w.bodies.x[1] = 18; w.bodies.y[1] = 4;
+    view.beforeStep(w); // where they are drawn from
+    for (let k = 1; k < 120; k++) view.draw(w, 0, k * 16);
+    expect(view.camera.cx).toBeGreaterThan(9); // toward P2 (as far as the arena's edge allows), not the pair's middle
+    const p = view.camera.worldToScreen(-20, 0);
+    expect(p.x).toBeLessThan(0); // P1 is off screen
   }, 60000);
 });

@@ -7,11 +7,21 @@ import type { Element } from '@wizard-sim/rules';
 
 export const T = (seconds: number): number => Math.round(seconds * 60);
 
-/** Rune pools, from the Pixel Battlefield mock-up: about 4 per element, slow regen. */
+/**
+ * Rune pools, from the Pixel Battlefield mock-up: about 4 per element. Regen is one shared budget
+ * (docs/decisions 2026-11-05, "The rune economy"): `regen` runes a second in total, split among the
+ * pools that aren't full, weighted by their max; `floor` of it always reaches every pool that isn't
+ * full. Per pool: floor·R·max/Σmax_all + (1-floor)·R·max/Σmax_notfull (world.ts regenRate).
+ */
 export const RUNES = {
   max: { water: 4, life: 4, shield: 4, cold: 4, lightning: 4, arcane: 4, sigil: 3, fire: 5, earth: 4 } as Record<Element, number>,
-  /** Runes per second, per element. */
-  regen: 0.22,
+  /** R: runes per second in total, shared among the pools that aren't full. */
+  regen: 1.0,
+  /** α: the share of R that always reaches every pool that isn't full (weighted by max over all pools). */
+  floor: 0.25,
+  /** Survive starts weak: this many runes per element, Sigil surviveSigil. */
+  surviveStart: 2,
+  surviveSigil: 1,
   /** Attune (plain Arcane on yourself): regen multiplier and how long it lasts. */
   attuneMult: 2.5,
   attuneTime: 6,
@@ -109,6 +119,8 @@ export const PERKS = {
   echoHp: 60,
   /** Glass heart, per stack: the share more damage you deal, and the share of max health you lose (additive: two stacks are +50% / -50%). */
   glassDmg: 0.25, glassHp: 0.25,
+  /** Wellspring, per stack: the share more total regen R (additive). */
+  wellspring: 0.15,
 };
 
 /** The placeholder arena, in world units (a wizard is about 0.9 u wide). */
@@ -131,8 +143,8 @@ export const STRUCT = {
   turretInterval: 1.0, turretRange: 8, turretAhead: 2.5,
   /** A turret shot costs this share of its payload's runes, and fires uncharged, as your tap cast does. */
   turretShotCost: 0.5,
-  /** Your turrets together spend at most this share of your regen: shots slow down to fit (and with more turrets). */
-  turretShare: 0.6,
+  /** Your turrets together spend at most this share of your total regen R from their main element: shots slow down to fit (and with more turrets). 0.13 keeps the pace they had under the flat 0.22/s regen (60% of it). */
+  turretShare: 0.13,
   glyphArm: 0.8, glyphRadius: 0.8,
   orbitRadius: 1.3, orbitSpeed: 0.5, orbitStrike: 1.6,
   /** The lens: its radius; what passes through it is multiplied by lensMult, and a shot through it grows lensGrow times wider. */

@@ -239,7 +239,7 @@ describe('survive: the wave loop', () => {
 
   it('everyone down ends the run; Space starts a new one, the tick carrying on', () => {
     const w = createWorld(3, 1, { room: 'survive' });
-    grant(w, 0, PU.deep);
+    grant(w, 0, PU.wellspring);
     w.enc.state[1] = 4; w.enc.state[3] = 3;
     const d = new Driver(w);
     d.tick({}, 60 * SURVIVE_TIMES.firstLull + 5);
@@ -256,55 +256,119 @@ describe('survive: the wave loop', () => {
     expect(w.clock[0]).toBe(tick + 1);
     expect(w.enc.state[0]).toBe(PHASE_ENC.lull);
     expect(w.enc.state[1]).toBe(1);
-    expect(w.run!.stacks[PU.deep]).toBe(0);
+    expect(w.run!.stacks[PU.wellspring]).toBe(0);
     expect(w.run!.state[2]).toBe(1);
     expect(w.bodies.hp[0]).toBe(w.bodies.maxHp[0]);
-    expect(rune(w, 'fire')).toBe(RUNES.max.fire);
+    expect(rune(w, 'fire')).toBe(RUNES.surviveStart);
     expect(enemies(w)).toBe(0);
   });
 });
 
 describe('survive: power-ups', () => {
-  it('no power-up: rune max and regen are the config values', () => {
+  it('no power-up: Survive starts weak (2 per element, Sigil 1), and the shared regen fills an empty pool', () => {
     const { w, d } = quiet();
-    for (let id = 1; id <= 9; id++) expect(runeMax(w, 0, id)).toBe(runeMax(createWorld(1, 1), 0, id));
+    for (let id = 1; id <= 9; id++) expect(runeMax(w, 0, id)).toBe(id === EL.sigil ? RUNES.surviveSigil : RUNES.surviveStart);
+    expect(rune(w, 'fire')).toBe(RUNES.surviveStart);
+    expect(runeMax(createWorld(1, 1), 0, EL.fire)).toBe(RUNES.max.fire); // the Sanctum keeps its pools
     w.seats.runes[EL.fire - 1] = 0;
-    d.tick({}, 60);
-    expect(rune(w, 'fire')).toBeCloseTo(RUNES.regen, 6);
+    d.tick({}, 30);
+    // Fire is the only pool refilling: the floor's share plus all of the shared part
+    const all = 8 * RUNES.surviveStart + RUNES.surviveSigil, m = RUNES.surviveStart;
+    expect(rune(w, 'fire')).toBeCloseTo(0.5 * RUNES.regen * m * (RUNES.floor / all + (1 - RUNES.floor) / m), 6);
   });
 
-  it('Deep pools: +1 max of every element, filled at once', () => {
+  it('+1 to three: the wizard taps three different element keys (not Shield or Sigil), which queue nothing', () => {
     const { w, d } = quiet();
-    grant(w, 0, PU.deep);
-    expect(runeMax(w, 0, EL.fire)).toBe(RUNES.max.fire + 1);
-    expect(rune(w, 'earth')).toBe(RUNES.max.earth + 1);
-    w.seats.runes[EL.cold - 1] = RUNES.max.cold;
-    d.tick({}, 60 * 6);
-    expect(rune(w, 'cold')).toBeCloseTo(RUNES.max.cold + 1, 6);
+    grant(w, 0, PU.three);
+    expect(w.run!.choose[0]).toBe(3);
+    d.queue('fire', 'fire', 'shield', 'sigil', 'cold');
+    expect(w.run!.choose[0]).toBe(1);
+    expect(w.seats.queueLen[0]).toBe(0);
+    expect(runeMax(w, 0, EL.fire)).toBe(RUNES.surviveStart + 1);
+    expect(rune(w, 'fire')).toBe(RUNES.surviveStart + 1); // filled at once
+    expect(runeMax(w, 0, EL.shield)).toBe(RUNES.surviveStart);
+    expect(runeMax(w, 0, EL.sigil)).toBe(RUNES.surviveSigil);
+    d.queue('earth');
+    expect(w.run!.choose[0]).toBe(0);
+    expect(Array.from(w.run!.chosen.subarray(0, 3))).toEqual([EL.fire, EL.cold, EL.earth]);
+    expect(runeMax(w, 0, EL.earth)).toBe(RUNES.surviveStart + 1);
+    d.queue('water'); // done choosing: the keys queue runes again
+    expect(w.seats.queueLen[0]).toBe(1);
+    expect(runeMax(w, 0, EL.water)).toBe(RUNES.surviveStart);
+  });
+
+  it('+1 to three holds the pick until the wizard has chosen, and the choice survives a rollback', () => {
+    const w = createWorld(5, 1, { room: 'survive' });
+    w.enc.state[0] = PHASE_ENC.breather; w.enc.state[2] = 1; w.enc.state[1] = 2;
+    const d = new Driver(w);
+    d.tick({}, 2);
+    const r = w.run!;
+    r.offer[0] = PU.three; r.offerEl[0] = 0;
+    w.bodies.x[0] = r.ax[0]; w.bodies.y[0] = r.ay[0];
+    d.tick({}, 60);
+    expect(r.picked[0]).toBe(0);
+    expect(r.choose[0]).toBe(3);
+    expect(w.enc.state[0]).toBe(PHASE_ENC.pick); // still waiting for the three taps
+    d.queue('life', 'arcane');
+    const snap = snapshot(w);
+    d.queue('lightning');
+    const after = hashWorld(w);
+    restore(w, snap);
+    expect(r.choose[0]).toBe(1);
+    d.queue('lightning');
+    expect(hashWorld(w)).toBe(after);
+    d.tick({}, 1);
+    expect(w.enc.state[0]).toBe(PHASE_ENC.lull);
+    expect(runeMax(w, 0, EL.lightning)).toBe(RUNES.surviveStart + 1);
+  });
+
+  it('+1 Shield and +1 Sigil', () => {
+    const { w } = quiet();
+    grant(w, 0, PU.shieldSigil);
+    expect(runeMax(w, 0, EL.shield)).toBe(RUNES.surviveStart + 1);
+    expect(runeMax(w, 0, EL.sigil)).toBe(RUNES.surviveSigil + 1);
+    expect(runeMax(w, 0, EL.fire)).toBe(RUNES.surviveStart);
+  });
+
+  it('pools refill to full when a wave is cleared', () => {
+    const w = createWorld(3, 1, { room: 'survive' });
+    const d = new Driver(w);
+    d.tick({}, 60 * SURVIVE_TIMES.firstLull + 5);
+    expect(w.enc.state[0]).toBe(PHASE_ENC.wave);
+    for (let e = 0; e < 9; e++) w.seats.runes[e] = 0;
+    d.tick({}, 30);
+    w.enc.left.fill(0); killAll(w);
+    d.tick({}, 2);
+    expect(w.enc.state[0]).toBe(PHASE_ENC.breather);
+    expect(rune(w, 'fire')).toBe(RUNES.surviveStart);
+    expect(rune(w, 'sigil')).toBe(RUNES.surviveSigil);
   });
 
   it('Deep (one element): +2 of the altar\'s element only, and they fit in one spell', () => {
     const { w, d } = quiet();
     grant(w, 0, PU.deepEl, EL.earth);
-    expect(runeMax(w, 0, EL.earth)).toBe(RUNES.max.earth + 2);
-    expect(runeMax(w, 0, EL.fire)).toBe(RUNES.max.fire);
+    expect(runeMax(w, 0, EL.earth)).toBe(RUNES.surviveStart + 2);
+    expect(runeMax(w, 0, EL.fire)).toBe(RUNES.surviveStart);
     d.queue('earth', 'earth', 'earth', 'earth', 'earth');
-    expect(w.seats.queueLen[0]).toBe(5);
+    expect(w.seats.queueLen[0]).toBe(RUNES.surviveStart + 2);
   });
 
-  it('Wellspring: 30% faster regen', () => {
-    const { w, d } = quiet();
-    grant(w, 0, PU.wellspring);
-    w.seats.runes[EL.fire - 1] = 0;
-    d.tick({}, 60);
-    expect(rune(w, 'fire')).toBeCloseTo(RUNES.regen * 1.3, 6);
+  it('Wellspring: more total regen R', () => {
+    const fill = (well: boolean) => {
+      const { w, d } = quiet();
+      if (well) grant(w, 0, PU.wellspring);
+      w.seats.runes[EL.fire - 1] = 0;
+      d.tick({}, 30);
+      return rune(w, 'fire');
+    };
+    expect(fill(true)).toBeCloseTo(fill(false) * (1 + PERKS.wellspring), 6);
   });
 
-  it('Spare Sigil: one more device stands', () => {
+  it('Shield and Sigil: one more device stands', () => {
     const { w, d } = quiet();
-    grant(w, 0, PU.spareSigil);
-    for (let k = 0; k < RUNES.max.sigil + 1; k++) d.aimAt(3, -3 + k * 1.5).queue('sigil', 'fire').cast(BTN.area, 30, 30);
-    expect(Array.from(w.devices.type).filter((t) => t === DEVICE.glyph).length).toBe(RUNES.max.sigil + 1);
+    grant(w, 0, PU.shieldSigil);
+    for (let k = 0; k < RUNES.surviveSigil + 1; k++) d.aimAt(3, -3 + k * 1.5).queue('sigil', 'fire').cast(BTN.area, 30, 120);
+    expect(Array.from(w.devices.type).filter((t) => t === DEVICE.glyph).length).toBe(RUNES.surviveSigil + 1);
   });
 
   it('Bedrock: your rock stands twice as long, with more hit points', () => {
@@ -403,7 +467,7 @@ describe('survive: power-ups', () => {
     };
     const paid = run(false), free = run(true);
     expect(free.hp).toBeLessThan(paid.hp); // it never stalls on an empty pool
-    expect(free.fire).toBeCloseTo(RUNES.regen * 300 / 60, 1);
+    expect(free.fire).toBeCloseTo(RUNES.surviveStart, 6); // and never draws on it: the pool refills to full
   });
 
   /** P2 down beside P1 in a lull that never ends (downed wizards stay down until a breather). */
@@ -475,9 +539,10 @@ describe('survive: power-ups', () => {
     expect(b.kind[dbl]).toBe(KIND.double);
     expect(b.hp[dbl]).toBe(PERKS.echoHp);
     expect(w.run!.echo[0]).toBe(dbl);
-    // every Sigil rune is still free: three devices stand beside it
-    for (let k = 0; k < RUNES.max.sigil; k++) d.aimAt(3, -3 + k * 1.5).queue('sigil', 'fire').cast(BTN.area, 30, 30);
-    expect(Array.from(w.devices.type).filter((t) => t === DEVICE.glyph).length).toBe(RUNES.max.sigil);
+    // every Sigil rune is still free: as many devices stand beside it as you have Sigil runes
+    grant(w, 0, PU.shieldSigil);
+    for (let k = 0; k < RUNES.surviveSigil + 1; k++) d.aimAt(3, -3 + k * 1.5).queue('sigil', 'fire').cast(BTN.area, 30, 120);
+    expect(Array.from(w.devices.type).filter((t) => t === DEVICE.glyph).length).toBe(RUNES.surviveSigil + 1);
     expect(b.kind[dbl]).toBe(KIND.double); // and recalling the oldest never took the Double
     // through the lull into the wave; enemies go for the Double
     d.tick({}, 60 * SURVIVE_TIMES.firstLull + 5);

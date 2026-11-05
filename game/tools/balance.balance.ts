@@ -10,13 +10,16 @@
  * 3. Enemies: how fast each archetype kills a wizard who just stands there.
  * 4. Waves: two bot pilots in the Arena for 5 minutes under the current numbers and a few
  *    alternatives, to see which knobs move survival the most.
+ * 5. Survive, solo: one bot (its spells are 1-2 runes) through Survive's first waves from 2-rune
+ *    pools, over a few seeds. The bot doesn't path round the keep's walls, so it is set on its
+ *    altar during the pick; it never goes round a Shieldbearer, so wave 3 is its usual wall.
  */
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  ARCHETYPES, BTN, KIND, NO_INPUT, RHYTHM, RUNES, applyOverrides, botInput, compile, createWorld, elementId, newBotMemory,
+  ARCHETYPES, BTN, KIND, NO_INPUT, PHASE_ENC, RHYTHM, RUNES, applyOverrides, botInput, compile, createWorld, elementId, newBotMemory,
   quantize, resetTuning, step, type PlayerInput, type World,
 } from '../packages/sim/src';
 
@@ -120,6 +123,23 @@ function arena(tuning: Record<string, number>, seconds = 300) {
   };
 }
 
+/** One solo bot through Survive until it falls or clears `upTo` waves: waves cleared, each clear's seconds, and its lowest health. */
+function surviveSolo(seed: number, upTo = 4) {
+  const w = createWorld(seed, 1, { room: 'survive' }), mem = newBotMemory(), clears: number[] = [];
+  let start = 0, minHp = 100;
+  for (let t = 0; t < 60 * 60 * 5 && w.enc.state[0] !== PHASE_ENC.over && w.enc.state[3] < upTo; t++) {
+    const r = w.run!;
+    if (w.enc.state[0] === PHASE_ENC.pick && r.picked[0] < 0) { const a = w.enc.state[1] % 3; w.bodies.x[0] = r.ax[a]; w.bodies.y[0] = r.ay[a]; }
+    step(w, [botInput(w, 0, mem)]);
+    for (const e of w.events) {
+      if (e.who === -1 && e.text?.startsWith('Wave')) start = t;
+      if (e.who === -1 && e.text === 'Cleared') clears.push(Math.round((t - start) / 6) / 10);
+    }
+    if (w.enc.state[0] === PHASE_ENC.wave) minHp = Math.min(minHp, Math.max(0, Math.round(w.bodies.hp[0])));
+  }
+  return { seed, cleared: w.enc.state[3], fell: w.enc.state[0] === PHASE_ENC.over, clearSeconds: clears.join(' '), minHp };
+}
+
 it('balance report', () => {
   const spellRows = spells();
   // Time to kill: burst uses the spell's own dps; sustained divides by how long the runes take to come back.
@@ -127,7 +147,10 @@ it('balance report', () => {
     archetype: a.name, hp: a.hp,
     spells: spellRows.filter((s) => s.damage > 0 && s.cast === 'force').map((s) => {
       const castsToKill = a.hp / Math.max(1, s.damage);
-      const regenSeconds = s.runes / (RUNES.regen * Math.max(1, new Set(s.queue.split('+')).size));
+      // the shared budget: with only this spell's pools draining, they get the floor's share plus all the rest
+      const all = Object.values(RUNES.max).reduce((x, y) => x + y, 0);
+      const used = [...new Set(s.queue.split('+'))].reduce((x, e) => x + (RUNES.max as Record<string, number>)[e], 0);
+      const regenSeconds = s.runes / (RUNES.regen * (RUNES.floor * used / all + 1 - RUNES.floor));
       return { spell: s.title, burst: Math.round((castsToKill * s.seconds) * 10) / 10, sustained: Math.round(castsToKill * Math.max(s.seconds, regenSeconds) * 10) / 10 };
     }),
   }));
@@ -137,16 +160,19 @@ it('balance report', () => {
   });
   const variants: [string, Record<string, number>][] = [
     ['current', {}],
-    ['slower regen (0.15)', { 'runes.regen': 0.15 }],
-    ['faster regen (0.3)', { 'runes.regen': 0.3 }],
+    ['slower regen (R 0.7)', { 'runes.regen': 0.7 }],
+    ['faster regen (R 1.4)', { 'runes.regen': 1.4 }],
     ['enemies hit 1.5x harder', Object.fromEntries(ARCHETYPES.filter((a) => a.id !== 'none').map((a) => [`enemy.${a.id}.damage`, a.damage * 1.5]))],
     ['enemies 1.5x tougher', Object.fromEntries(ARCHETYPES.filter((a) => a.id !== 'none').map((a) => [`enemy.${a.id}.hp`, a.hp * 1.5]))],
     ['heavier casts (windup x2)', { 'rhythm.windup': RHYTHM.windup * 2, 'rhythm.windupPerRune': RHYTHM.windupPerRune * 2 }],
   ];
   const waves = variants.map(([name, t]) => ({ name, ...arena(t) }));
-  const report = { generated: 'npm run balance', regen: RUNES.regen, max: RUNES.max, spells: spellRows, ttk, threat, waves };
+  resetTuning();
+  const survive = [1, 2, 3, 4, 5, 6, 7, 8].map((seed) => surviveSolo(seed));
+  const report = { generated: 'npm run balance', regen: RUNES.regen, floor: RUNES.floor, max: RUNES.max, surviveStart: RUNES.surviveStart, spells: spellRows, ttk, threat, waves, survive };
   writeFileSync(join(__dirname, 'balance-report.json'), JSON.stringify(report, null, 1));
   console.table(spellRows.map((s) => ({ spell: s.title, cast: s.cast, runes: s.runes, sec: s.seconds, dmg: s.damage, crowd: s.crowd, dps: s.dps, perRune: s.perRune, heal: s.heal })));
   console.table(waves);
+  console.table(survive);
   expect(spellRows.length).toBe(QUEUES.length);
 }, 600_000);

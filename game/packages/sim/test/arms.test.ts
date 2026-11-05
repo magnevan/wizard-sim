@@ -486,7 +486,7 @@ describe('the Arcane wand (Sigil + Arcane) and Mend', () => {
       const { w, d } = arena();
       d.aimAt(5, 0).conjure(...q);
       w.seats.runes[EL.fire - 1] = 0;
-      d.tick({ buttons: BTN.area }, 100);
+      d.tick({ buttons: BTN.area }, 40); // short of full: the shared budget pours most of R into the one empty pool
       return w.seats.runes[EL.fire - 1];
     };
     expect(fire(['sigil', 'arcane', 'fire'])).toBeGreaterThan(fire(['sigil', 'arcane']) * 1.5);

@@ -548,6 +548,16 @@ export const hasteOf = (w: World, i: number): number =>
 /** Sigil regen cap: bound runes don't come back while their device stands. */
 export const sigilCap = (w: World, seat: number): number => runeMax(w, seat, EL.sigil) - boundSigil(w, seat);
 
+/** The level element `id`'s pool refills to: its max (Sigil: less the runes bound in devices). Never below 0. */
+export const poolCap = (w: World, seat: number, id: number): number => Math.max(0, id === EL.sigil ? sigilCap(w, seat) : runeMax(w, seat, id));
+
+/** Which of seat's pools are full, as a bitmask (1 << element id), for the shared regen budget (world.ts regenRate). */
+export function fullMask(w: World, seat: number): number {
+  let m = 0;
+  for (let e = 1; e <= N_EL; e++) if (w.seats.runes[seat * N_EL + e - 1] >= poolCap(w, seat, e)) m |= 1 << e;
+  return m;
+}
+
 function nearestFoe(w: World, x: number, y: number, r: number, owner: number): number {
   const b = w.bodies;
   let best = -1, bd = r;

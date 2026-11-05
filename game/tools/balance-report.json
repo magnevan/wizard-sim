@@ -1,6 +1,7 @@
 {
  "generated": "npm run balance",
- "regen": 0.22,
+ "regen": 1,
+ "floor": 0.25,
  "max": {
   "water": 4,
   "life": 4,
@@ -12,6 +13,7 @@
   "fire": 5,
   "earth": 4
  },
+ "surviveStart": 2,
  "spells": [
   {
    "title": "Flamethrower",
@@ -19,23 +21,23 @@
    "cast": "force",
    "runes": 1,
    "seconds": 2.92,
-   "damage": 54,
+   "damage": 36,
    "heal": 0,
-   "crowd": 192,
-   "dps": 19,
-   "perRune": 54
+   "crowd": 156,
+   "dps": 12,
+   "perRune": 36
   },
   {
    "title": "Flamethrower",
    "queue": "fire+fire",
    "cast": "force",
-   "runes": 2,
+   "runes": 1.99,
    "seconds": 2.93,
-   "damage": 60,
+   "damage": 42,
    "heal": 0,
-   "crowd": 211,
-   "dps": 20,
-   "perRune": 30
+   "crowd": 175,
+   "dps": 14,
+   "perRune": 21
   },
   {
    "title": "Arcane beam",
@@ -53,7 +55,7 @@
    "title": "Arcane beam",
    "queue": "arcane+arcane",
    "cast": "force",
-   "runes": 2,
+   "runes": 1.99,
    "seconds": 5.43,
    "damage": 79,
    "heal": 0,
@@ -89,7 +91,7 @@
    "title": "Lightning arc",
    "queue": "lightning+lightning",
    "cast": "force",
-   "runes": 2,
+   "runes": 1.99,
    "seconds": 2.93,
    "damage": 102,
    "heal": 0,
@@ -113,7 +115,7 @@
    "title": "Frost spray",
    "queue": "cold+cold",
    "cast": "force",
-   "runes": 2,
+   "runes": 1.99,
    "seconds": 2.93,
    "damage": 17,
    "heal": 0,
@@ -149,7 +151,7 @@
    "title": "Rock",
    "queue": "earth+earth",
    "cast": "force",
-   "runes": 2,
+   "runes": 1.99,
    "seconds": 1.4,
    "damage": 60,
    "heal": 0,
@@ -173,13 +175,13 @@
    "title": "Rock",
    "queue": "earth+earth+earth",
    "cast": "force",
-   "runes": 2.99,
+   "runes": 2.97,
    "seconds": 1.42,
    "damage": 109,
    "heal": 0,
    "crowd": 109,
    "dps": 77,
-   "perRune": 36
+   "perRune": 37
   },
   {
    "title": "Ice shards",
@@ -269,7 +271,7 @@
    "title": "Frost ring",
    "queue": "cold+cold",
    "cast": "area",
-   "runes": 2,
+   "runes": 1.99,
    "seconds": 0.48,
    "damage": 7,
    "heal": 0,
@@ -353,7 +355,7 @@
    "title": "Healing ring",
    "queue": "life+life",
    "cast": "area",
-   "runes": 2,
+   "runes": 1.99,
    "seconds": 0.48,
    "damage": 0,
    "heal": 28,
@@ -381,83 +383,83 @@
    "spells": [
     {
      "spell": "Flamethrower",
-     "burst": 1.6,
-     "sustained": 2.5
+     "burst": 2.4,
+     "sustained": 2.4
     },
     {
      "spell": "Flamethrower",
-     "burst": 1.5,
-     "sustained": 4.5
+     "burst": 2.1,
+     "sustained": 2.1
     },
     {
      "spell": "Arcane beam",
      "burst": 2.2,
-     "sustained": 3.4
+     "sustained": 2.2
     },
     {
      "spell": "Arcane beam",
      "burst": 2.1,
-     "sustained": 3.5
+     "sustained": 2.1
     },
     {
      "spell": "Fire beam",
      "burst": 1.2,
-     "sustained": 1.8
+     "sustained": 1.2
     },
     {
      "spell": "Lightning arc",
      "burst": 1.5,
-     "sustained": 2.3
+     "sustained": 1.5
     },
     {
      "spell": "Lightning arc",
      "burst": 0.9,
-     "sustained": 2.7
+     "sustained": 0.9
     },
     {
      "spell": "Frost spray",
      "burst": 6.7,
-     "sustained": 10.5
+     "sustained": 6.7
     },
     {
      "spell": "Frost spray",
      "burst": 5.2,
-     "sustained": 16
+     "sustained": 5.2
     },
     {
      "spell": "Rock",
      "burst": 1.9,
-     "sustained": 6.2
+     "sustained": 1.9
     },
     {
      "spell": "Rock",
      "burst": 0.7,
-     "sustained": 4.5
+     "sustained": 1.3
     },
     {
      "spell": "Fireball",
      "burst": 0.8,
-     "sustained": 2.7
+     "sustained": 1.5
     },
     {
      "spell": "Rock",
      "burst": 0.4,
-     "sustained": 3.7
+     "sustained": 1.1
     },
     {
      "spell": "Ice shards",
      "burst": 1.7,
-     "sustained": 17
+     "sustained": 9.3
     },
     {
      "spell": "Arcane boulder",
      "burst": 1.1,
-     "sustained": 3.7
+     "sustained": 2
     },
     {
      "spell": "Frost boulder",
      "burst": 1.6,
-     "sustained": 5.2
+     "sustained": 2.9
     }
    ]
   },
@@ -467,83 +469,83 @@
    "spells": [
     {
      "spell": "Flamethrower",
-     "burst": 18.7,
-     "sustained": 29
+     "burst": 28,
+     "sustained": 28
     },
     {
      "spell": "Flamethrower",
-     "burst": 16.8,
-     "sustained": 52.3
+     "burst": 24.1,
+     "sustained": 24.1
     },
     {
      "spell": "Arcane beam",
      "burst": 25.2,
-     "sustained": 39.2
+     "sustained": 25.2
     },
     {
      "spell": "Arcane beam",
      "burst": 23.7,
-     "sustained": 39.7
+     "sustained": 23.7
     },
     {
      "spell": "Fire beam",
      "burst": 13.5,
-     "sustained": 20.9
+     "sustained": 13.5
     },
     {
      "spell": "Lightning arc",
      "burst": 16.8,
-     "sustained": 26.1
+     "sustained": 16.8
     },
     {
      "spell": "Lightning arc",
      "burst": 9.9,
-     "sustained": 30.7
+     "sustained": 9.9
     },
     {
      "spell": "Frost spray",
      "burst": 77.5,
-     "sustained": 120.6
+     "sustained": 77.5
     },
     {
      "spell": "Frost spray",
      "burst": 59.5,
-     "sustained": 184.5
+     "sustained": 59.5
     },
     {
      "spell": "Rock",
      "burst": 21.6,
-     "sustained": 71.3
+     "sustained": 21.6
     },
     {
      "spell": "Rock",
      "burst": 8,
-     "sustained": 52.3
+     "sustained": 14.7
     },
     {
      "spell": "Fireball",
      "burst": 9.7,
-     "sustained": 31.4
+     "sustained": 17
     },
     {
      "spell": "Rock",
      "burst": 4.5,
-     "sustained": 43
+     "sustained": 12.1
     },
     {
      "spell": "Ice shards",
      "burst": 19.4,
-     "sustained": 196
+     "sustained": 107.1
     },
     {
      "spell": "Arcane boulder",
      "burst": 13.1,
-     "sustained": 42.4
+     "sustained": 23.2
     },
     {
      "spell": "Frost boulder",
      "burst": 18.6,
-     "sustained": 60.3
+     "sustained": 32.9
     }
    ]
   },
@@ -553,83 +555,83 @@
    "spells": [
     {
      "spell": "Flamethrower",
-     "burst": 7.3,
-     "sustained": 11.4
+     "burst": 11,
+     "sustained": 11
     },
     {
      "spell": "Flamethrower",
-     "burst": 6.6,
-     "sustained": 20.5
+     "burst": 9.4,
+     "sustained": 9.4
     },
     {
      "spell": "Arcane beam",
      "burst": 9.9,
-     "sustained": 15.3
+     "sustained": 9.9
     },
     {
      "spell": "Arcane beam",
      "burst": 9.3,
-     "sustained": 15.5
+     "sustained": 9.3
     },
     {
      "spell": "Fire beam",
      "burst": 5.3,
-     "sustained": 8.2
+     "sustained": 5.3
     },
     {
      "spell": "Lightning arc",
      "burst": 6.6,
-     "sustained": 10.2
+     "sustained": 6.6
     },
     {
      "spell": "Lightning arc",
      "burst": 3.9,
-     "sustained": 12
+     "sustained": 3.9
     },
     {
      "spell": "Frost spray",
      "burst": 30.3,
-     "sustained": 47.2
+     "sustained": 30.3
     },
     {
      "spell": "Frost spray",
      "burst": 23.3,
-     "sustained": 72.2
+     "sustained": 23.3
     },
     {
      "spell": "Rock",
      "burst": 8.5,
-     "sustained": 27.9
+     "sustained": 8.5
     },
     {
      "spell": "Rock",
      "burst": 3.2,
-     "sustained": 20.5
+     "sustained": 5.8
     },
     {
      "spell": "Fireball",
      "burst": 3.8,
-     "sustained": 12.3
+     "sustained": 6.6
     },
     {
      "spell": "Rock",
      "burst": 1.8,
-     "sustained": 16.8
+     "sustained": 4.7
     },
     {
      "spell": "Ice shards",
      "burst": 7.6,
-     "sustained": 76.7
+     "sustained": 41.9
     },
     {
      "spell": "Arcane boulder",
      "burst": 5.1,
-     "sustained": 16.6
+     "sustained": 9.1
     },
     {
      "spell": "Frost boulder",
      "burst": 7.3,
-     "sustained": 23.6
+     "sustained": 12.9
     }
    ]
   },
@@ -639,83 +641,83 @@
    "spells": [
     {
      "spell": "Flamethrower",
-     "burst": 3.7,
-     "sustained": 5.7
+     "burst": 5.5,
+     "sustained": 5.5
     },
     {
      "spell": "Flamethrower",
-     "burst": 3.3,
-     "sustained": 10.3
+     "burst": 4.7,
+     "sustained": 4.7
     },
     {
      "spell": "Arcane beam",
      "burst": 5,
-     "sustained": 7.7
+     "sustained": 5
     },
     {
      "spell": "Arcane beam",
      "burst": 4.7,
-     "sustained": 7.8
+     "sustained": 4.7
     },
     {
      "spell": "Fire beam",
      "burst": 2.7,
-     "sustained": 4.1
+     "sustained": 2.7
     },
     {
      "spell": "Lightning arc",
      "burst": 3.3,
-     "sustained": 5.2
+     "sustained": 3.3
     },
     {
      "spell": "Lightning arc",
      "burst": 2,
-     "sustained": 6.1
+     "sustained": 2
     },
     {
      "spell": "Frost spray",
      "burst": 15.3,
-     "sustained": 23.8
+     "sustained": 15.3
     },
     {
      "spell": "Frost spray",
      "burst": 11.7,
-     "sustained": 36.4
+     "sustained": 11.7
     },
     {
      "spell": "Rock",
      "burst": 4.3,
-     "sustained": 14
+     "sustained": 4.3
     },
     {
      "spell": "Rock",
      "burst": 1.6,
-     "sustained": 10.3
+     "sustained": 2.9
     },
     {
      "spell": "Fireball",
      "burst": 1.9,
-     "sustained": 6.2
+     "sustained": 3.3
     },
     {
      "spell": "Rock",
      "burst": 0.9,
-     "sustained": 8.5
+     "sustained": 2.4
     },
     {
      "spell": "Ice shards",
      "burst": 3.8,
-     "sustained": 38.6
+     "sustained": 21.1
     },
     {
      "spell": "Arcane boulder",
      "burst": 2.6,
-     "sustained": 8.4
+     "sustained": 4.6
     },
     {
      "spell": "Frost boulder",
      "burst": 3.7,
-     "sustained": 11.9
+     "sustained": 6.5
     }
    ]
   },
@@ -725,83 +727,83 @@
    "spells": [
     {
      "spell": "Flamethrower",
-     "burst": 4.9,
-     "sustained": 7.6
+     "burst": 7.3,
+     "sustained": 7.3
     },
     {
      "spell": "Flamethrower",
-     "burst": 4.4,
-     "sustained": 13.6
+     "burst": 6.3,
+     "sustained": 6.3
     },
     {
      "spell": "Arcane beam",
      "burst": 6.6,
-     "sustained": 10.2
+     "sustained": 6.6
     },
     {
      "spell": "Arcane beam",
      "burst": 6.2,
-     "sustained": 10.4
+     "sustained": 6.2
     },
     {
      "spell": "Fire beam",
      "burst": 3.5,
-     "sustained": 5.5
+     "sustained": 3.5
     },
     {
      "spell": "Lightning arc",
      "burst": 4.4,
-     "sustained": 6.8
+     "sustained": 4.4
     },
     {
      "spell": "Lightning arc",
      "burst": 2.6,
-     "sustained": 8
+     "sustained": 2.6
     },
     {
      "spell": "Frost spray",
      "burst": 20.2,
-     "sustained": 31.5
+     "sustained": 20.2
     },
     {
      "spell": "Frost spray",
      "burst": 15.5,
-     "sustained": 48.1
+     "sustained": 15.5
     },
     {
      "spell": "Rock",
      "burst": 5.6,
-     "sustained": 18.6
+     "sustained": 5.6
     },
     {
      "spell": "Rock",
      "burst": 2.1,
-     "sustained": 13.6
+     "sustained": 3.8
     },
     {
      "spell": "Fireball",
      "burst": 2.5,
-     "sustained": 8.2
+     "sustained": 4.4
     },
     {
      "spell": "Rock",
      "burst": 1.2,
-     "sustained": 11.2
+     "sustained": 3.2
     },
     {
      "spell": "Ice shards",
      "burst": 5.1,
-     "sustained": 51.1
+     "sustained": 27.9
     },
     {
      "spell": "Arcane boulder",
      "burst": 3.4,
-     "sustained": 11.1
+     "sustained": 6
     },
     {
      "spell": "Frost boulder",
      "burst": 4.8,
-     "sustained": 15.7
+     "sustained": 8.6
     }
    ]
   },
@@ -811,83 +813,83 @@
    "spells": [
     {
      "spell": "Flamethrower",
-     "burst": 3.2,
-     "sustained": 5.1
+     "burst": 4.9,
+     "sustained": 4.9
     },
     {
      "spell": "Flamethrower",
-     "burst": 2.9,
-     "sustained": 9.1
+     "burst": 4.2,
+     "sustained": 4.2
     },
     {
      "spell": "Arcane beam",
      "burst": 4.4,
-     "sustained": 6.8
+     "sustained": 4.4
     },
     {
      "spell": "Arcane beam",
      "burst": 4.1,
-     "sustained": 6.9
+     "sustained": 4.1
     },
     {
      "spell": "Fire beam",
      "burst": 2.3,
-     "sustained": 3.6
+     "sustained": 2.3
     },
     {
      "spell": "Lightning arc",
      "burst": 2.9,
-     "sustained": 4.5
+     "sustained": 2.9
     },
     {
      "spell": "Lightning arc",
      "burst": 1.7,
-     "sustained": 5.3
+     "sustained": 1.7
     },
     {
      "spell": "Frost spray",
      "burst": 13.5,
-     "sustained": 21
+     "sustained": 13.5
     },
     {
      "spell": "Frost spray",
      "burst": 10.3,
-     "sustained": 32.1
+     "sustained": 10.3
     },
     {
      "spell": "Rock",
      "burst": 3.8,
-     "sustained": 12.4
+     "sustained": 3.8
     },
     {
      "spell": "Rock",
      "burst": 1.4,
-     "sustained": 9.1
+     "sustained": 2.6
     },
     {
      "spell": "Fireball",
      "burst": 1.7,
-     "sustained": 5.5
+     "sustained": 3
     },
     {
      "spell": "Rock",
      "burst": 0.8,
-     "sustained": 7.5
+     "sustained": 2.1
     },
     {
      "spell": "Ice shards",
      "burst": 3.4,
-     "sustained": 34.1
+     "sustained": 18.6
     },
     {
      "spell": "Arcane boulder",
      "burst": 2.3,
-     "sustained": 7.4
+     "sustained": 4
     },
     {
      "spell": "Frost boulder",
      "burst": 3.2,
-     "sustained": 10.5
+     "sustained": 5.7
     }
    ]
   }
@@ -945,102 +947,157 @@
  "waves": [
   {
    "name": "current",
-   "cleared": 5.3,
-   "clearedMin": 4,
-   "clearedMax": 7,
-   "downs": 6.3,
-   "wipes": 2.5,
-   "kills": 36.3,
-   "damageTaken": 1902,
-   "clearSeconds": [
-    10,
-    30.1,
-    33.8,
-    21.7
-   ]
-  },
-  {
-   "name": "slower regen (0.15)",
-   "cleared": 3.8,
-   "clearedMin": 3,
-   "clearedMax": 4,
-   "downs": 8,
-   "wipes": 3.3,
-   "kills": 31.8,
-   "damageTaken": 1700.8,
-   "clearSeconds": [
-    10,
-    60,
-    18.8,
-    60.9
-   ]
-  },
-  {
-   "name": "faster regen (0.3)",
    "cleared": 6,
+   "clearedMin": 4,
+   "clearedMax": 8,
+   "downs": 6.8,
+   "wipes": 2.8,
+   "kills": 49,
+   "damageTaken": 1755.8,
+   "clearSeconds": [
+    11.2,
+    29.7,
+    4.4,
+    15.9
+   ]
+  },
+  {
+   "name": "slower regen (R 0.7)",
+   "cleared": 4.5,
+   "clearedMin": 4,
+   "clearedMax": 5,
+   "downs": 10,
+   "wipes": 4.5,
+   "kills": 39.3,
+   "damageTaken": 1755.3,
+   "clearSeconds": [
+    11.2,
+    23.5,
+    10.8,
+    13.3,
+    38
+   ]
+  },
+  {
+   "name": "faster regen (R 1.4)",
+   "cleared": 5.8,
    "clearedMin": 5,
    "clearedMax": 7,
-   "downs": 5.3,
-   "wipes": 1.8,
-   "kills": 39.5,
-   "damageTaken": 1577.3,
+   "downs": 7.8,
+   "wipes": 3.5,
+   "kills": 41,
+   "damageTaken": 1919.3,
    "clearSeconds": [
-    10,
-    40.5,
-    22.7,
-    17.8,
-    22.6,
-    26.7
+    11.2,
+    29.9,
+    8.1,
+    20.7,
+    18.5
    ]
   },
   {
    "name": "enemies hit 1.5x harder",
-   "cleared": 3.8,
-   "clearedMin": 3,
-   "clearedMax": 4,
-   "downs": 11.5,
-   "wipes": 4.8,
-   "kills": 41.8,
-   "damageTaken": 1829.3,
+   "cleared": 3.5,
+   "clearedMin": 1,
+   "clearedMax": 5,
+   "downs": 13,
+   "wipes": 6,
+   "kills": 42,
+   "damageTaken": 1858.3,
    "clearSeconds": [
-    10,
-    62.7,
-    30.4
+    11.2,
+    12.4,
+    5.4,
+    20.9
    ]
   },
   {
    "name": "enemies 1.5x tougher",
-   "cleared": 4.8,
-   "clearedMin": 4,
+   "cleared": 3.5,
+   "clearedMin": 1,
    "clearedMax": 5,
-   "downs": 5.8,
-   "wipes": 2.3,
-   "kills": 33.5,
-   "damageTaken": 1684.8,
+   "downs": 9.3,
+   "wipes": 3.8,
+   "kills": 35.8,
+   "damageTaken": 1917.5,
    "clearSeconds": [
-    11.6,
-    30.8,
-    18.5,
-    30.7,
-    96.8
+    13.6
    ]
   },
   {
    "name": "heavier casts (windup x2)",
-   "cleared": 5,
-   "clearedMin": 4,
-   "clearedMax": 6,
-   "downs": 7.3,
-   "wipes": 2.5,
-   "kills": 36.3,
-   "damageTaken": 1832.3,
+   "cleared": 5.5,
+   "clearedMin": 5,
+   "clearedMax": 7,
+   "downs": 7,
+   "wipes": 3,
+   "kills": 38.5,
+   "damageTaken": 1824,
    "clearSeconds": [
-    9.4,
-    21.7,
-    20.7,
-    14.1,
-    64.9
+    9.1,
+    37.3,
+    78.3,
+    21.1,
+    16.4
    ]
+  }
+ ],
+ "survive": [
+  {
+   "seed": 1,
+   "cleared": 4,
+   "fell": false,
+   "clearSeconds": "12.9 15.7 19.6 35.8",
+   "minHp": 6
+  },
+  {
+   "seed": 2,
+   "cleared": 3,
+   "fell": true,
+   "clearSeconds": "12.9 14.2 15.3",
+   "minHp": 0
+  },
+  {
+   "seed": 3,
+   "cleared": 3,
+   "fell": true,
+   "clearSeconds": "12.9 15.7 15.3",
+   "minHp": 0
+  },
+  {
+   "seed": 4,
+   "cleared": 3,
+   "fell": true,
+   "clearSeconds": "12.9 15.7 19.6",
+   "minHp": 0
+  },
+  {
+   "seed": 5,
+   "cleared": 4,
+   "fell": false,
+   "clearSeconds": "12.9 19.6 12.2 39.3",
+   "minHp": 14
+  },
+  {
+   "seed": 6,
+   "cleared": 2,
+   "fell": true,
+   "clearSeconds": "12.9 15.7",
+   "minHp": 0
+  },
+  {
+   "seed": 7,
+   "cleared": 2,
+   "fell": true,
+   "clearSeconds": "12.9 15.7",
+   "minHp": 0
+  },
+  {
+   "seed": 8,
+   "cleared": 3,
+   "fell": true,
+   "clearSeconds": "12.9 15 17.9",
+   "minHp": 0
   }
  ]
 }

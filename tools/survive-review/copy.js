@@ -18,7 +18,7 @@
     WALL: ['.......', '##.##.#', '##.##.#', '.......', '#.##.##', '#.##.##', '.......'],
     ECHO: ['.#...#.', '###.###', '.#...#.', '###.###', '.#...#.', '#.#.#.#', '#.#.#.#'],
     RALLY: ['...#...', '..###..', '...#...', '..#.#..', '.......', '##.###.', '#######'],
-    // the element icons (px.ts ICON) the game uses for Spare sigil, Pyre and Deep (element)
+    // the element icons (px.ts ICON) the game uses for Shield and Sigil, Pyre and Deep (element)
     SIGIL: ['...#...', '..#.#..', '.#####.', '#..#..#', '.#####.', '..#.#..', '...#...'],
     FIRE: ['...#...', '..##...', '..###.#', '.#####.', '###.###', '##...##', '.#####.'],
     // designed only: no glyph in the game yet; drafted here in the same style
@@ -27,18 +27,19 @@
     STEP: ['...##..', '..###..', '.###...', '####...', '..#.#..', '.#...#.', '#.....#'],
   };
 
-  const BASE_REGEN = 0.22;
-  const ws = (k) => (BASE_REGEN * (1 + 0.3 * k)).toFixed(3).replace(/0$/, '');
+  // Regen is one shared budget (decisions 2026-11-05, the rune economy): R runes a second in total
+  const BASE_R = 1.0, WELL = 0.15, START = 2;
+  const ws = (k) => (BASE_R * (1 + WELL * k)).toFixed(2).replace(/0$/, '');
 
   // status: 'built' (in the sim with a test), 'designed' (only in the exploration doc), 'cut' (rated
   // cut; code removed) or 'default' (no longer a power-up: every wizard has it)
   const PERKS = [
     {
-      slug: 'pu-deep', name: 'Deep pools', ramp: 'sigil', glyph: G.POOLS, status: 'built', cap: 3,
-      rule: '+1 max rune of every element',
-      does: 'Every pool gets one more rune, Sigil included: 4 → 5 for most elements, Fire 5 → 6, Sigil 3 → 4. You get the rune straight away, not on the next regen tick.',
-      sees: 'Your badge appears in the top-left row. Bigger pools mean bigger spells, so your partner sees five-rune sprays and boulders sooner.',
-      cost: 'Pure power. Its only cost is the two altars you didn’t take.',
+      slug: 'pu-three', name: '+1 to three', ramp: 'sigil', glyph: G.POOLS, status: 'built', cap: 6,
+      rule: '+1 max rune of three elements you tap',
+      does: `Replaces Deep pools (+1 to all). Step on the altar, then tap three different element keys (the keys you cast with; not Shield or Sigil). While you choose they pick instead of queueing, and the HUD shows “+1 to: _ _ _”. Each gets one more max rune, ${START} → ${START + 1}, filled at once. The pick waits until you’ve tapped all three.`,
+      sees: 'Your badge appears in the top-left row, and your pools grow where you lean, so your partner sees which elements you’re building toward.',
+      cost: 'Pure power, but narrower than +1 to all: three of the eight, your choice.',
       pillar: 'Pillar 1’s accepted exception: deeper pools open magic you couldn’t reach.',
     },
     {
@@ -52,18 +53,18 @@
     },
     {
       slug: 'pu-wellspring', name: 'Wellspring', ramp: 'water', glyph: G.SPRING, status: 'built', cap: 3,
-      rule: 'Runes regenerate 30% faster',
-      does: `Rune regen goes from ${BASE_REGEN} runes a second per element to ${ws(1)} (one stack), ${ws(2)} (two) or ${ws(3)} (three).`,
+      rule: `Runes regenerate ${Math.round(WELL * 100)}% faster`,
+      does: `Your total regen R goes from ${BASE_R} rune a second (shared among the pools that aren’t full) to ${ws(1)} (one stack), ${ws(2)} (two) or ${ws(3)} (three).`,
       sees: 'Nothing directly: you just cast more often.',
       cost: 'Pure pace. It shortens “room to think”, because you cast more and choose less.',
       pillar: 'Mild conflict with pillar 1 (“prefer … over flat +X% numbers”). It stays because you asked for regen by name.',
       flag: 'pillar 1',
     },
     {
-      slug: 'pu-spare-sigil', name: 'Spare sigil', ramp: 'sigil', glyph: G.SIGIL, status: 'built', cap: 2,
-      rule: '+1 Sigil rune: one more device',
-      does: 'Sigil max 3 → 4 (→ 5 at two stacks): one more turret, glyph or aura standing at once.',
-      sees: 'One more of your devices on the field.',
+      slug: 'pu-shield-sigil', name: 'Shield and Sigil', ramp: 'shield', glyph: G.SIGIL, status: 'built', cap: 3,
+      rule: '+1 max Shield and +1 max Sigil rune',
+      does: `Replaces Spare sigil. Shield ${START} → ${START + 1} and Sigil 1 → 2: a bigger ward or wall, and one more turret, glyph or aura standing at once.`,
+      sees: 'One more of your devices on the field, and sturdier shields.',
       cost: 'More to babysit. Each turret still draws its shots from your pools.',
       pillar: '“Do more things at once”: exactly pillar 1’s preferred kind.',
     },
@@ -111,7 +112,7 @@
     {
       slug: 'pu-clockwork', name: 'Clockwork', ramp: 'shield', glyph: G.GEAR, status: 'built', cap: 1,
       rule: 'Your turrets fire for free',
-      does: 'Your turrets’ shots cost no runes and fire at their full rate. Normally a shot costs half its payload’s runes, and all your turrets together may spend at most 60% of your regen.',
+      does: 'Your turrets’ shots cost no runes and fire at their full rate. Normally a shot costs half its payload’s runes, and all your turrets together may spend at most 13% of your total regen R from their main element.',
       sees: 'Your turrets keep firing while you cast.',
       cost: 'Turrets become “set and forget”. Your Sigil runes are still bound, and shots are still uncharged tap casts.',
       pillar: 'Strongly rewards preparing (pillar 7). Could make turret builds a no-brainer: watch it.',
@@ -175,9 +176,9 @@
   ];
 
   const WAVES = [
-    ['1', 'Goblin ×5', 'Hit many at once'],
-    ['2', 'Goblin ×5, Fire imp ×2', 'Read the battlefield'],
-    ['3', 'Shieldbearer, Goblin ×6', 'Go round'],
+    ['1', 'Goblin ×4', 'Hit many at once'],
+    ['2', 'Goblin ×4, Fire imp', 'Read the battlefield'],
+    ['3', 'Shieldbearer, Goblin ×3', 'Go round'],
     ['4', 'Archer ×2, Shieldbearer, Goblin ×4', 'Reach past the front'],
     ['5', 'Brute, Goblin ×6', 'Sustain, and protect its target'],
     ['6', 'Grabber, Fire imp ×3, Archer', 'Rescue'],

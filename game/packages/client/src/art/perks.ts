@@ -20,10 +20,10 @@ const ECHO = ['.#...#.', '###.###', '.#...#.', '###.###', '.#...#.', '#.#.#.#', 
 const HEART = ['.##.##.', '#######', '###.###', '##.#.##', '.#####.', '..###..', '...#...'];
 
 export const PERKS: Record<number, PerkArt> = {
-  [PU.deep]: { name: 'Deep pools', rule: '+1 max rune of every element', ramp: X.EL.sigil, glyph: POOLS },
+  [PU.three]: { name: '+1 to three', rule: '+1 max rune of three elements you tap', ramp: X.EL.sigil, glyph: POOLS },
   [PU.deepEl]: { name: 'Deep', rule: '+2 max runes of one element', ramp: X.EL.arcane, glyph: POOLS },
-  [PU.wellspring]: { name: 'Wellspring', rule: 'Runes regenerate 30% faster', ramp: X.EL.water, glyph: SPRING },
-  [PU.spareSigil]: { name: 'Spare sigil', rule: '+1 Sigil rune: one more device', ramp: X.EL.sigil, glyph: X.ICON.sigil },
+  [PU.wellspring]: { name: 'Wellspring', rule: `Runes regenerate ${Math.round(SIM_PERKS.wellspring * 100)}% faster`, ramp: X.EL.water, glyph: SPRING },
+  [PU.shieldSigil]: { name: 'Shield and Sigil', rule: '+1 max Shield and +1 max Sigil rune', ramp: X.EL.shield, glyph: X.ICON.sigil },
   [PU.bedrock]: { name: 'Bedrock', rule: 'Your rock walls last twice as long', ramp: X.EL.earth, glyph: WALL },
   [PU.pyre]: { name: 'Pyre', rule: 'Foes you set burning explode on death', ramp: X.EL.fire, glyph: X.ICON.fire },
   [PU.charm]: { name: 'Mirror charm', rule: 'A mirror ward regrows on you', ramp: X.EL.shield, glyph: MIRROR },
@@ -34,7 +34,7 @@ export const PERKS: Record<number, PerkArt> = {
 
 /** What a pick shows: Deep (one element) takes its element's colour, icon and name. */
 export function perkOf(pu: number, el: number): PerkArt {
-  const p = PERKS[pu] ?? PERKS[PU.deep];
+  const p = PERKS[pu] ?? PERKS[PU.three];
   if (pu !== PU.deepEl || el < 1) return p;
   const name = elementName(el);
   return { ...p, name: `Deep ${name}`, rule: `+2 max ${name} runes`, ramp: X.EL[name] ?? p.ramp, glyph: X.ICON[name] ?? p.glyph };

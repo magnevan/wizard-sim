@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  BTN, EL, KIND, N_EL, NO_INPUT, PHASE, RUNES, SURF, compile, createWorld, elementId, quantize, step,
+  BTN, EL, KIND, N_EL, NO_INPUT, PHASE, RUNES, SURF, compile, createWorld, elementId, fullMask, quantize, regenRate, step,
   type PlayerInput, type World,
 } from '../src';
 import { cellAt } from '../src/effects';
@@ -66,10 +66,27 @@ describe('runes and the queue', () => {
 
   it('a cast spends the runes; regen brings them back slowly, faster when attuned', () => {
     const { w, d } = range();
-    d.queue('arcane').cast(BTN.self, 1, 2); // Attune
-    const after = rune(w, 'arcane');
-    d.tick({}, 60);
-    expect(rune(w, 'arcane') - after).toBeCloseTo(RUNES.regen * RUNES.attuneMult, 1);
+    d.queue('arcane').cast(BTN.self, 1, 20); // Attune (it lands after the wind-up)
+    w.seats.runes[elementId('arcane') - 1] = 0;
+    const rate = regenRate(w, 0, elementId('arcane'), fullMask(w, 0));
+    d.tick({}, 30);
+    expect(rune(w, 'arcane')).toBeCloseTo((rate * RUNES.attuneMult) / 2, 6);
+  });
+
+  it('regen is one shared budget R, weighted by max, with a floor for every pool that is not full', () => {
+    const { w, d } = range();
+    const max = RUNES.max as Record<string, number>, all = Object.values(max).reduce((a, b) => a + b, 0);
+    // only Fire is empty: it gets the floor's share plus all of the shared part
+    w.seats.runes[elementId('fire') - 1] = 0;
+    d.tick({}, 30);
+    expect(rune(w, 'fire')).toBeCloseTo(0.5 * RUNES.regen * max.fire * (RUNES.floor / all + (1 - RUNES.floor) / max.fire), 6);
+    // every pool empty: the whole of R is shared out by max, so the total is R
+    for (let e = 0; e < 9; e++) w.seats.runes[e] = 0;
+    d.tick({}, 30);
+    let total = 0;
+    for (let e = 0; e < 9; e++) total += w.seats.runes[e];
+    expect(total).toBeCloseTo(0.5 * RUNES.regen, 6);
+    expect(rune(w, 'fire') / rune(w, 'cold')).toBeCloseTo(max.fire / max.cold, 6);
   });
 });
 

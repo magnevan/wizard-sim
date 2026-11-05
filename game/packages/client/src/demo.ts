@@ -14,7 +14,7 @@
  * Pure integer maths on the tick, so a given --ms shows the same moment.
  */
 import { rules, type Element } from '@wizard-sim/rules';
-import { AIM_UNIT, ARCH, BTN, PHASE_ENC, PU, devSpawnEnemy, elementId, grant, quantize, type PlayerInput, type World } from '@wizard-sim/sim';
+import { AIM_UNIT, ARCH, BTN, EL, PHASE_ENC, PU, chooseElement, devSpawnEnemy, elementId, grant, quantize, raiseAltars, type PlayerInput, type World } from '@wizard-sim/sim';
 
 /**
  * ?room=survive&scene=rally (with the headless loop, e.g. the screenshot script): mid-wave, P2 is
@@ -31,6 +31,19 @@ export function rallyScene(w: World): void {
   e.state[0] = PHASE_ENC.wave; e.state[1] = 6; e.state[2] = 0; e.left.fill(0); e.total.fill(0);
   devSpawnEnemy(w, ARCH.swarmer, 8, -3);
   devSpawnEnemy(w, ARCH.brute, -9, 5);
+}
+
+/**
+ * ?room=survive&scene=three (headless): the pick, with P1 on "+1 to three" having tapped Fire, and
+ * a few pools drained so the HUD's regen flow shows (the emptiest pools glow brightest).
+ */
+export function threeScene(w: World): void {
+  if (!w.run) return;
+  const e = w.enc;
+  e.state[0] = PHASE_ENC.pick; e.state[1] = 2; e.state[2] = 0;
+  raiseAltars(w);
+  w.run.picked[0] = 0; grant(w, 0, PU.three); chooseElement(w, 0, EL.fire);
+  w.seats.runes[EL.cold - 1] = 0.3; w.seats.runes[EL.earth - 1] = 1.4; w.seats.runes[EL.life - 1] = 0.8;
 }
 
 export interface Demo { els: number[]; cast: string; at?: [number, number]; seq?: Demo[] }

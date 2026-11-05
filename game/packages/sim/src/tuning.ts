@@ -28,9 +28,12 @@ export interface Tunable {
 /** One-line explanations for the numbers that matter most to feel. */
 const HELP: Record<string, string> = {
   'structures.turretShotCost': 'A turret shot costs this share of its runes (0.5 = half). Shots fire uncharged, like your tap cast.',
-  'structures.turretShare': 'All your turrets together spend at most this share of your rune regen; shots slow down to fit (and slow further with more turrets).',
+  'structures.turretShare': 'All your turrets together spend at most this share of your total regen R from their main element; shots slow down to fit (and slow further with more turrets).',
   'body.castWalk': 'How fast you walk while holding a channel or charge, as a fraction of walk speed (1 = no slow-down, 0 = rooted). Hold LMB and RMB together to walk and cast.',
-  'runes.regen': 'Runes per second, per element. The main pace knob: lower means fewer, more deliberate casts.',
+  'runes.regen': 'R: runes per second in total, shared among the pools that are not full (weighted by max). The main pace knob: lower means fewer, more deliberate casts.',
+  'runes.floor': 'The share of R that always reaches every pool that is not full (0 = one fully shared budget, 1 = each pool refills at its own rate in proportion to its max).',
+  'runes.surviveStart': 'Survive: runes per element at the start of a run (Sigil: surviveSigil).',
+  'perks.wellspring': 'Wellspring: the share more total regen R per stack.',
   'runes.max.fire': 'How many Fire runes fit in your pool (also caps how many you can put in one spell).',
   'rhythm.windup': 'Seconds before any spell goes off. Plus windupPerRune for each rune in it.',
   'rhythm.windupPerRune': 'Extra wind-up per rune: what makes big spells feel heavy.',

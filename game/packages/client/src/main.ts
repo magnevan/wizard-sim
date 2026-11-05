@@ -15,6 +15,7 @@
  *   ?debug=0      hide the debug line (tick, hash); the backquote key toggles it
  *   ?renderer=webgpu   try WebGPU instead of WebGL
  *   ?scene=rally  with ?room=survive and a headless loop: a Rally in progress, nobody pressing anything (demo.ts)
+ *   ?scene=three  the same, but the pick with +1 to three half chosen and some pools refilling
  *   ?local=N      the camera follows seat N only, as a networked player's screen would (others get edge arrows)
  *   ?pauseAt=N    pause the sim at tick N (like P in the tuning panel; cosmetic animation keeps running)
  *   ?tune=1       open the tuning panel at boot (F1 or the Tune button toggles it; tune-panel.ts)
@@ -27,7 +28,7 @@ import {
   DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, hashWorld, hex, newBotMemory, runReplay, scriptedInput, scriptedReplay, step,
   type PlayerInput, type Room,
 } from '@wizard-sim/sim';
-import { demoInput, parseDemo, rallyScene } from './demo';
+import { demoInput, parseDemo, rallyScene, threeScene } from './demo';
 import { PadSeats } from './gamepad';
 import { KeyboardMouse } from './input';
 import { TunePanel } from './tune-panel';
@@ -113,9 +114,11 @@ async function boot(): Promise<void> {
   // the saved tuning goes in before the world exists, so spawn-time numbers (hp, radii) use it too
   loadSaved();
   const world = createWorld(7, players, { room });
-  // ?scene=rally (Survive, headless): a rally in progress, for screenshots (demo.ts)
-  const scene = headless && params.get('scene') === 'rally' && !!world.run;
-  if (scene) rallyScene(world);
+  // ?scene=rally / ?scene=three (Survive, headless): a rally in progress, or +1 to three being chosen, for screenshots (demo.ts)
+  const sceneName = headless && world.run ? params.get('scene') : null;
+  const scene = sceneName === 'rally' || sceneName === 'three';
+  if (sceneName === 'rally') rallyScene(world);
+  if (sceneName === 'three') threeScene(world);
   const bots = [newBotMemory(), newBotMemory()];
   const pads = new PadSeats();
   const keyboard = new KeyboardMouse(app.canvas, view.camera);

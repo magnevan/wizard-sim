@@ -13,7 +13,7 @@ Everything is drawn in the Pixel Battlefield style (high-res pixel art, 3/4 came
 - **General notes.**
 
 ## Slugs (db doc ids)
-- **Ratings** (`ratings/<slug>`): `pu-deep`, `pu-deep-el`, `pu-wellspring`, `pu-spare-sigil`, `pu-bedrock`, `pu-pyre`, `pu-charm`, `pu-clockwork`, `pu-echo`, `pu-glass-heart` (built); `pu-rally` (default); `pu-slipstream`, `pu-bloom` (cut); `pu-long-fuse`, `pu-quickstep` (designed). 15 in all.
+- **Ratings** (`ratings/<slug>`): `pu-three` (was `pu-deep`, Deep pools, before 2026-11-05), `pu-deep-el`, `pu-wellspring`, `pu-shield-sigil` (was `pu-spare-sigil`), `pu-bedrock`, `pu-pyre`, `pu-charm`, `pu-clockwork`, `pu-echo`, `pu-glass-heart` (built); `pu-rally` (default); `pu-slipstream`, `pu-bloom` (cut); `pu-long-fuse`, `pu-quickstep` (designed). 15 in all.
 - **Answers** (`answers/<id>`), with choice ids:
   - `q-pillar1`: `run-only` (rec, built) | `never` | `case`
   - `q-1-pick`: `altars` (rec, built) | `shared` | `menu`

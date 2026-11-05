@@ -537,3 +537,22 @@ The user's first answers on the Survive Review page (`tools/survive-review`), bu
 - **Power-up ids are renumbered** (charm 7, clockwork 8, echo 9, glass 10; `N_PU` 11). That's fine because `world.run` is only ever built fresh.
 - **Not changed,** because they're under discussion: Echo, Wellspring, the rune power-ups and the wave list.
 - Golden hash unchanged (`9382eb5b`): the scripted run is in the Sanctum, which has no `world.run`, and the camera is client-only.
+
+## 2026-11-05: The rune economy, built
+
+Built from "The rune economy: a shared regen budget with a floor" above. Claude's calls are marked; the user can veto any.
+- **Regen, every room:** one total rate R = 1.0 rune/s (`RUNES.regen`) shared among the pools that aren't full: `regen_e = α·R·max_e/Σmax_all + (1−α)·R·max_e/Σmax_notfull`, α = 0.25 (`RUNES.floor`). Code: `regenRate` in `world.ts`, `fullMask` / `poolCap` in `structures.ts`. Sigil counts as full when every unbound rune is back.
+- **Attune multiplies R by 2.5, Siphon by 4,** and the wand's focus multiplies that element's share again, as before. Channel upkeep and the Shield drain are unchanged; a drained pool simply takes a bigger share.
+- **Claude's call, turrets:** their pacing was "at most 60 % of your 0.22/s regen". It is now 13 % of R (`STRUCT.turretShare` 0.13), which keeps their old fire rate.
+- **The HUD shows the flow:** a refilling pool's pip glows brighter, and its rim shimmers faster, the bigger its share of R, and a line under the pips grows with that share.
+- **Survive starts at 2 per element (Sigil 1)** and every pool refills to full when a wave is cleared. The Sanctum and the Arena keep their pools (about 4, Fire 5, Sigil 3).
+- **Survive's glyphs:**
+  - **+1 to three** replaces Deep pools. Step on the altar, then tap three different element keys (not Shield or Sigil); they pick instead of queueing, and the HUD shows "+1 to: _ _ _". The pick waits until you've tapped all three. The choice is input-driven and lives in `world.run` (`choose`, `chosen`), so it rolls back with everything else.
+  - **+1 Shield and +1 Sigil** replaces Spare sigil.
+  - **Wellspring is +15 % R** a stack. Deep (element) stays +2 to one.
+  - **Claude's call, caps:** +1 to three up to 6 stacks (was 3, since pools now start smaller), Shield and Sigil up to 3 (was 2); the others are unchanged.
+- **Claude's call, the early waves are lighter** for 2-rune pools: wave 1 is 4 goblins (was 5), wave 2 is 4 goblins and 1 fire imp (was 5 and 2), wave 3 is a shieldbearer and 3 goblins (was 6). The counts are still scaled by 1.3 for the big arena. The list's shape is unchanged.
+  - The bot now drops Place spells (a geyser, else a fire patch) on shieldbearers instead of throwing shots into their guard.
+  - The balance harness has a new Survive section (one bot, 8 seeds). The solo bot casts only 1–2-rune spells, and it now clears wave 2 in 8 of 8 runs and wave 3 in 6 of 8 (it falls after picking Clockwork, which does nothing for it).
+  - Before this change, the bot cleared wave 2 but fell at wave 3 in 7 of 8 runs.
+- **The golden hash moved to `dda18ae2`** (from `9382eb5b`). The scripted Sanctum run regenerates differently under the shared budget.

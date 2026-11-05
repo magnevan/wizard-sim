@@ -5,10 +5,11 @@
  *   LULL      the next wave's portals are open behind their gates, its mix announced (6 s; 10 s
  *             before the first wave).
  *   WAVE      as the Arena's. Downed wizards are out until it ends. Everyone down: the run is OVER.
- *   BREATHER  3 s: the downed get back up at half health.
+ *   BREATHER  3 s: the downed get back up at half health. Every pool refilled when the wave ended.
  *   PICK      three altars rise in the plaza and the next wave's portals open (so you can pick for
  *             what is coming; nothing leaves them yet). Each player stands on one for STAND_TIME
- *             to take it; two players may take the same one. There is no time limit: once every
+ *             to take it; two players may take the same one. "+1 to three" then waits for its
+ *             wizard to tap three element keys (chooseElement). There is no time limit: once every
  *             wizard has picked, the lull starts.
  *   OVER      the results; any player pressing Self (Space) after a moment starts a new run.
  *
@@ -23,7 +24,7 @@ import { len } from './geom';
 import { BTN, type PlayerInput } from './input';
 import { nextInt } from './rng';
 import { snapshot } from './state';
-import { spawnDouble } from './structures';
+import { poolCap, spawnDouble } from './structures';
 import {
   ALTAR_SPOTS, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_PU, PHASE, PHASE_ENC, PICK_LOG, PU, PU_CAP, SURVIVE_GATES, TEAM, WARD,
   buffers, createWorld, freeDouble, joinSeat, spawnBody, stackOf, type World,
@@ -33,9 +34,9 @@ export const SURVIVE_TIMES = { firstLull: 10, lull: 6, breather: 3, stand: 0.75,
 
 /** Eight authored waves; past them they loop with more enemies. Every wave also grows tougher (survivePlan). */
 const WAVES: readonly (readonly [number, number])[][] = [
-  [[ARCH.swarmer, 5]],
-  [[ARCH.swarmer, 5], [ARCH.imp, 2]],
-  [[ARCH.shieldbearer, 1], [ARCH.swarmer, 6]],
+  [[ARCH.swarmer, 4]],
+  [[ARCH.swarmer, 4], [ARCH.imp, 1]],
+  [[ARCH.shieldbearer, 1], [ARCH.swarmer, 3]],
   [[ARCH.caster, 2], [ARCH.shieldbearer, 1], [ARCH.swarmer, 4]],
   [[ARCH.brute, 1], [ARCH.swarmer, 6]],
   [[ARCH.grabber, 1], [ARCH.imp, 3], [ARCH.caster, 1]],
@@ -102,7 +103,7 @@ export function raiseAltars(w: World): void {
   const pool: number[] = [];
   for (let pu = 1; pu < N_PU; pu++) if (offerable(w, pu)) pool.push(pu);
   for (let a = 0; a < N_ALTARS; a++) {
-    let pu: number = PU.deep;
+    let pu: number = PU.three;
     if (pool.length) { const k = nextInt(w.rng, 0, pool.length - 1); pu = pool[k]; pool.splice(k, 1); }
     r.offer[a] = pu;
     // Deep (one element) names one of the eight non-Sigil elements.
@@ -119,9 +120,9 @@ export function grant(w: World, s: number, pu: number, el = 0): void {
   if (!r || pu <= 0 || pu >= N_PU || r.stacks[s * N_PU + pu] >= PU_CAP[pu]) return;
   r.stacks[s * N_PU + pu]++;
   const add = (id: number, n: number) => { r.maxBonus[s * N_EL + id - 1] += n; w.seats.runes[s * N_EL + id - 1] += n; };
-  if (pu === PU.deep) for (let id = 1; id <= N_EL; id++) add(id, 1);
+  if (pu === PU.three) { r.choose[s] = 3; r.chosen.fill(0, s * 3, s * 3 + 3); } // the wizard taps three element keys (chooseElement)
   if (pu === PU.deepEl && el >= 1 && el <= N_EL) add(el, 2);
-  if (pu === PU.spareSigil) add(EL.sigil, 1);
+  if (pu === PU.shieldSigil) { add(EL.shield, 1); add(EL.sigil, 1); }
   if (pu === PU.charm) r.charm[s] = T(1); // the first mirror comes almost at once
   if (pu === PU.echo) summonEcho(w, s);
   if (pu === PU.glass) { // less max health, and your current health shrinks with it
@@ -131,6 +132,25 @@ export function grant(w: World, s: number, pu: number, el = 0): void {
   }
   const n = r.logN[s];
   if (n < PICK_LOG) { r.log[s * PICK_LOG + n] = pu; r.logEl[s * PICK_LOG + n] = el; r.logN[s] = n + 1; }
+}
+
+/**
+ * +1 to three: while seat `s` is choosing, an element key picks that element instead of queueing a
+ * rune (cast.ts routes the presses here). Three different elements, not Shield or Sigil; each gets
+ * +1 max at once, filled. Returns true if the press was taken (always, while choosing).
+ */
+export function chooseElement(w: World, s: number, id: number): boolean {
+  const r = w.run;
+  if (!r || !r.choose[s]) return false;
+  if (id < 1 || id > N_EL) return true;
+  const b = w.bodies, tick = w.clock[0], at = s * 3;
+  const taken = r.chosen[at] === id || r.chosen[at + 1] === id || r.chosen[at + 2] === id;
+  if (id === EL.shield || id === EL.sigil || taken) { w.events.push({ tick, kind: 'dry', who: s, x: b.x[s], y: b.y[s], look: id }); return true; }
+  r.chosen[at + 3 - r.choose[s]] = id;
+  r.choose[s]--;
+  r.maxBonus[s * N_EL + id - 1] += 1; w.seats.runes[s * N_EL + id - 1] += 1;
+  w.events.push({ tick, kind: 'burst', who: s, x: b.x[s], y: b.y[s], amount: 0.6, look: id, text: '+1' });
+  return true;
 }
 
 /** The altar a wizard stands on, or -1. */
@@ -146,7 +166,7 @@ function tickPick(w: World): boolean {
   let waiting = 0;
   for (let s = 0; s < MAX_SEATS; s++) {
     if (!w.seats.active[s] || b.kind[s] !== KIND.wizard || b.downed[s]) continue;
-    if (r.picked[s] >= 0) continue;
+    if (r.picked[s] >= 0) { if (r.choose[s]) waiting++; continue; } // still tapping +1 to three's elements
     waiting++;
     const a = altarUnder(w, s);
     if (a !== r.standOn[s]) { r.standOn[s] = a; r.stand[s] = 0; }
@@ -155,7 +175,7 @@ function tickPick(w: World): boolean {
     r.picked[s] = a;
     grant(w, s, r.offer[a], r.offerEl[a]);
     w.events.push({ tick, kind: 'burst', who: s, x: r.ax[a], y: r.ay[a], amount: 1.2, look: EL.sigil, text: 'Picked' });
-    waiting--;
+    if (!r.choose[s]) waiting--;
   }
   return waiting === 0;
 }
@@ -170,6 +190,17 @@ function summonEcho(w: World, s: number): void {
   if (w.bodies.kind[s] !== KIND.wizard) return;
   const i = spawnDouble(w, s, w.bodies.face[s], PERKS.echoHp);
   if (i >= 0) w.run!.echo[s] = i;
+}
+
+/** The wave is cleared: every wizard's pools refill to full (Sigil: less what devices bind). */
+function refillPools(w: World): void {
+  for (let s = 0; s < MAX_SEATS; s++) {
+    if (!w.seats.active[s]) continue;
+    for (let e = 1; e <= N_EL; e++) {
+      const k = s * N_EL + e - 1;
+      w.seats.runes[k] = Math.max(w.seats.runes[k], poolCap(w, s, e));
+    }
+  }
 }
 
 /** The wave is cleared: Echo's Doubles fade. */
@@ -306,6 +337,7 @@ export function tickSurvive(w: World): void {
       st[0] = PHASE_ENC.breather; st[2] = T(SURVIVE_TIMES.breather); st[3]++; st[1]++;
       for (let p = 0; p < MAX_PORTALS; p++) e.total[p] = 0;
       endEchoes(w);
+      refillPools(w);
       w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: 'Cleared' });
     }
     return;
@@ -321,6 +353,7 @@ export function tickSurvive(w: World): void {
   if (st[0] === PHASE_ENC.pick) {
     if (!tickPick(w)) return;
     for (let a = 0; a < N_ALTARS; a++) r.offer[a] = 0;
+    r.choose.fill(0);
     st[0] = PHASE_ENC.lull; st[2] = 0;
   }
 }

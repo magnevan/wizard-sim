@@ -7,7 +7,7 @@
  * keep the element counts and recompute what they need.
  */
 import { rules, type Cast, type Element } from '@wizard-sim/rules';
-import { EL, N_EL, countsOf } from './elements';
+import { EL, countsOf } from './elements';
 
 export type Shape =
   | 'beam' | 'spray' | 'arc' | 'missile' | 'shards'      // Force
@@ -132,6 +132,3 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
       return spec;
   }
 }
-
-/** Element counts as a fresh array (for tests and the HUD). */
-export const emptyCounts = (): Uint8Array => new Uint8Array(N_EL);

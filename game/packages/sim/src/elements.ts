@@ -23,13 +23,6 @@ export function countsOf(queue: readonly Element[], out = new Uint8Array(N_EL)):
   return out;
 }
 
-/** Copy 9 counts into a pool's flat array at slot `i`. */
-export function putCounts(dst: Uint8Array, i: number, src: Uint8Array): void {
-  dst.set(src, i * N_EL);
-}
-
-export const countIn = (flat: Uint8Array, i: number, id: number): number => flat[i * N_EL + id - 1];
-
 /** A queue (element names) from 9 counts at slot `at`, in BASE order. Spells only depend on counts. */
 export function queueFromCounts(flat: Uint8Array, at = 0): Element[] {
   const q: Element[] = [];

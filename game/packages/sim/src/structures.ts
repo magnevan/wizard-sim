@@ -27,9 +27,7 @@ import { HIT_KIND, addKnock, setHitKind } from './hit';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { boundSigil, drainShield, energyLoad, segDist } from './walls';
 import { conjureGuard } from './guards';
-import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, freeDouble, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
-
-const alive = (w: World, i: number) => w.bodies.kind[i] !== KIND.none;
+import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, alive, freeDouble, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
 
 /** The spell minus its form element: what a Sigil device carries, or what a Shield structure is coated in. */
 function restCounts(spec: SpellSpec): Uint8Array {
@@ -50,7 +48,7 @@ function raiseWall(w: World, owner: number, type: number, els: Uint8Array, x1: n
   for (let k = 0; k < MAX_WALLS; k++) {
     if (wl.type[k]) continue;
     wl.type[k] = type; wl.owner[k] = owner; wl.x1[k] = x1; wl.y1[k] = y1; wl.x2[k] = x2; wl.y2[k] = y2;
-    wl.hp[k] = wl.maxHp[k] = type === WALL.rock && stackOf(w, owner, PU.bedrock) ? hp * 1.5 : hp; wl.born[k] = w.clock[0]; wl.pulse[k] = 0;
+    wl.hp[k] = wl.maxHp[k] = type === WALL.rock && stackOf(w, owner, PU.bedrock) ? hp * 1.5 : hp; wl.born[k] = w.clock[0];
     wl.els.set(els, k * N_EL);
     return true;
   }
@@ -341,19 +339,6 @@ export function recallOldest(w: World, seat: number): boolean {
   else removeOne(w, seat, what, idx);
   giveRune(w, seat);
   return true;
-}
-
-/** Dev helper: every Sigil thing of a seat goes away. */
-export function dismissSigil(w: World, seat: number): void {
-  const s = w.seats, b = w.bodies, dv = w.devices;
-  let any = false;
-  for (let k = 0; k < MAX_DEVICES; k++) if (dv.type[k] && dv.owner[k] === seat) { dv.type[k] = DEVICE.none; any = true; }
-  const d = s.double[seat];
-  if (d >= 0 && b.kind[d] === KIND.double) { b.kind[d] = KIND.none; any = true; }
-  s.double[seat] = -1;
-  if (s.aura[seat] || s.wand[seat] || s.weapon[seat] || s.motes[seat]) any = true;
-  s.aura[seat] = 0; s.wand[seat] = 0; s.weapon[seat] = 0; s.motes[seat] = 0;
-  if (any) w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: b.x[seat], y: b.y[seat], amount: 1, look: EL.sigil, text: 'dismissed' });
 }
 
 /** Doubles keep to their spot beside their owner, walking there like a wizard would. */

@@ -43,6 +43,8 @@ export interface SpellRules {
   ELEMENTS: Record<Element, { name: string; key: string; color: string }>;
   BASE: Element[];
   MAX: number;
+  /** Pairs that cancel rune for rune in the queue (the elements' opposites, then Shield and Sigil's own). */
+  CANCEL: readonly (readonly [Element, Element])[];
   addElement(queue: readonly Element[], el: Element): { queue: Element[]; event: string | null };
   resolve(queue: readonly Element[], cast: Cast, opts?: { drag?: boolean; onAlly?: boolean }): SpellDescriptor;
   [table: string]: unknown;

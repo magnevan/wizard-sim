@@ -189,7 +189,7 @@ describe('guards: one per lead element', () => {
     expect(hurt[1]).toBe(0);
   });
 
-  it('a raised Prism pane stops an enemy beam from the front; unraised it only resists', () => {
+  it('a raised Prism stops an enemy beam from the front; unraised it only resists', () => {
     const hurt: number[] = [];
     for (const raised of [false, true]) {
       const { w, d } = arena(2);

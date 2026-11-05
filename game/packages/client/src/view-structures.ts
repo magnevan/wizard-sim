@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PU, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, guardCoatLook, guardSize, queueOf, selfTarget, stackOf,
+  N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PU, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, guardCoatLook, guardSize, queueOf, selfTarget, stackOf,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
@@ -47,11 +47,24 @@ const RGB: Record<string, string> = {
   shield: '255,214,110', fire: '255,140,60', cold: '170,236,255', water: '90,160,255', lightning: '196,164,255', arcane: '255,106,176', life: '142,240,126', earth: '184,148,106', sigil: '236,140,255',
 };
 
-/** The strongest element in a 9-count block, skipping `skip` ids. */
+/** The most numerous element in a 9-count block, skipping `skip` ids (wards and waves: plain argmax). */
 function lead(els: Uint8Array, at: number, ...skip: number[]): number {
   let best = 0, n = 0;
   for (let id = 1; id <= N_EL; id++) if (!skip.includes(id) && els[at * N_EL + id - 1] > n) { n = els[at * N_EL + id - 1]; best = id; }
   return best;
+}
+const LEAD = new Uint8Array(N_EL);
+/**
+ * A wall's colour element by the sim's rule (formOf, as guards and spells pick their lead): Life,
+ * Earth, Arcane, Lightning first, else the most of Water, Fire, Cold. Shield and Sigil never lead, nor
+ * `skip` ids. A curtain or a coated rock pulses as a Place spell of these elements, so any Life heals:
+ * it should look like Life.
+ */
+function wallLead(els: Uint8Array, at: number, ...skip: number[]): number {
+  LEAD.set(els.subarray(at * N_EL, at * N_EL + N_EL));
+  LEAD[ELID.shield - 1] = 0; LEAD[ELID.sigil - 1] = 0;
+  for (const id of skip) LEAD[id - 1] = 0;
+  return formOf(LEAD);
 }
 const has = (els: Uint8Array, at: number, id: number) => els[at * N_EL + id - 1] > 0;
 
@@ -338,7 +351,7 @@ export class StructureView {
       if (!ty && this.wType[k]) {
         const mx = (this.wX1[k] + this.wX2[k]) / 2, my = (this.wY1[k] + this.wY2[k]) / 2;
         for (const e of w.events) if (e.kind === 'burst' && near(e.x, e.y, mx, my)) skip.add(e);
-        const coat = lead(this.wEls, k, ELID.shield, ELID.earth);
+        const coat = wallLead(this.wEls, k, ELID.earth);
         this.add(this.wType[k] === WALL.rock ? 'crumble' : 'shatter', t, this.wType[k] === WALL.rock ? 3.2 : 0.7, { x: this.wX1[k], y: this.wY1[k], x2: this.wX2[k], y2: this.wY2[k], seed: tick * 3 + k, look: this.wType[k] === WALL.barrier ? ELID.shield : coat || ELID.shield });
       }
       if (ty && !this.wType[k]) this.wHitT[k] = -9;
@@ -577,7 +590,7 @@ export class StructureView {
       const a: Pt = [gx(wl.x1[k]), gy(wl.y1[k])], bb: Pt = [gx(wl.x2[k]), gy(wl.y2[k])];
       const age = (tick - (w.walls.born[k] ?? 0)) / 60, hpf = clamp(wl.hp[k] / Math.max(1, wl.maxHp[k]), 0, 1), hitE = this.st - this.wHitT[k];
       if (ty === WALL.rock) {
-        const cold = has(wl.els, k, ELID.cold), coat = lead(wl.els, k, ELID.shield, ELID.earth);
+        const cold = has(wl.els, k, ELID.cold), coat = wallLead(wl.els, k, ELID.earth);
         const endA = !joins(k, wl.x1[k], wl.y1[k]), endB = !joins(k, wl.x2[k], wl.y2[k]);
         const pre = `${k}:${wl.born[k]}:${+endA}${+endB}:${+cold}`;
         live.add(pre);
@@ -654,7 +667,7 @@ export class StructureView {
 
   /** A curtain: walk through it, but crossing it pulses its element. Life's is a healing zone. */
   private curtain(w: World, k: number, t: number, g: Ctx, a: Pt, bb: Pt, cols: Pt[], mid: Pt, rise: number, kS: number, hitE: number, light: LightFn): void {
-    const wl = w.walls, coat = lead(wl.els, k, ELID.shield) || ELID.arcane, el = elName(coat), R = ramp(coat), sd = k * 13;
+    const wl = w.walls, coat = wallLead(wl.els, k) || ELID.arcane, el = elName(coat), R = ramp(coat), sd = k * 13;
     const pulse = 1 - clamp(((w.clock[0] - wl.born[k]) % 30) / 8, 0, 1);
     const x0 = Math.min(a[0], bb[0]), x1 = Math.max(a[0], bb[0]), y0 = Math.min(a[1], bb[1]), y1 = Math.max(a[1], bb[1]);
     const h = (el === 'fire' ? 15 : 14) * rise, head = 18;
@@ -898,7 +911,7 @@ export class StructureView {
       if (s.weapon[i]) this.weapon(w, i, v, t, g, o, P, conj, light);
       if (s.guard[i]) this.guard(w, i, v, t, g, o, P, conj, light);
       if (s.linkTo[i] >= 0) this.link(i, v, bodies[s.linkTo[i]], t, o, light);
-      // Phase (Prism pane): a hex afterimage round you while you drift through bodies
+      // Phase (Prism): a hex afterimage round you while you drift through bodies
       if (s.guard[i] === GUARD.prism && s.retreatT[i] > 0) {
         const k = s.retreatT[i] / T(ARMS.phaseTime), cy = v.y - 12;
         for (let q = 0; q < 2; q++) { const r = 9 + q * 4 + (1 - k) * 4, pts: Pt[] = []; for (let j = 0; j <= 6; j++) { const a = (j / 6) * TAU + Math.PI / 6 + t; pts.push([v.x + Math.cos(a) * r, cy + Math.sin(a) * r * 0.8]); } X.lines(o, pts, q ? EL.arcane[3] : EL.arcane[1]); }
@@ -1146,17 +1159,17 @@ export class StructureView {
 
   /**
    * The eight guards (docs/explorations/2026-11-05-guards.md), each its own silhouette: held in front
-   * while blocking, slung at the side otherwise. The Bulwark planted in the ground is the Brace tell.
+   * while blocking, slung at the side otherwise.
    */
   private guard(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], up: number, light: LightFn): void {
     const s = w.seats, id = s.guard[i], name = GUARD_NAME[id] ?? 'mirror', blocking = s.guardT[i] > 0, raise = blocking ? easeOut(Math.min(1, s.guardT[i] / 6)) : 0;
-    const bulwark = id === GUARD.bulwark, braced = bulwark && s.retreatT[i] > 0;
+    const bulwark = id === GUARD.bulwark;
     const hpk = clamp(s.guardHp[i] / (((ARMS.hp as Record<string, number>)[name] || 70) * guardSize(w, i)), 0, 1);
-    const at = braced ? P(5, 0, 5) : P(lerp(1, 6, raise), lerp(-5, 0, raise), lerp(6, 9, raise)), c = at[2] < -1.5 ? g : o;
+    const at = P(lerp(1, 6, raise), lerp(-5, 0, raise), lerp(6, 9, raise)), c = at[2] < -1.5 ? g : o;
     const face = (Math.round(w.bodies.face[i] * 16) / 16) * TAU, sn = Math.abs(Math.sin(face)), csn = Math.cos(face);
     const x = at[0], y = at[1], R = GUARD_RAMP[name] ?? EL.shield;
     if (bulwark) {
-      const hw = 2.5 + (blocking || braced ? 3 : 2) * sn, hh = blocking || braced ? 8 : 6, th = Math.round(Math.abs(csn) * 2);
+      const hw = 2.5 + (blocking ? 3 : 2) * sn, hh = blocking ? 8 : 6, th = Math.round(Math.abs(csn) * 2);
       if (th) X.rect(c, x - hw - (csn > 0 ? th : -hw * 2) - 1, y - hh, th + 1, hh * 2, X.EARTH[4]);
       X.rect(c, x - hw - 1, y - hh - 1, hw * 2 + 2, hh * 2 + 2, '#1a120c');
       X.rect(c, x - hw, y - hh, hw * 2, hh * 2, X.EARTH[2]);
@@ -1164,7 +1177,6 @@ export class StructureView {
       X.rect(c, x - hw, y + hh - 1, hw * 2, 1, X.EARTH[4]);
       if (hw > 2.5) { X.rect(c, x - 1, y - hh + 2, 2, hh * 2 - 4, EL.shield[2]); X.rect(c, x - hw + 1, y - 1, hw * 2 - 2, 1, EL.shield[3]); }
       if (hpk < 0.5) X.lines(c, [[x - hw + 1, y - hh + 2], [x, y], [x - 1, y + hh - 2]], '#1a120c');
-      if (braced) { K.dust(g, x, y + hh, 0.2 + (t % 0.6), i, 6, 12, '#8a7a68', 0.6); K.cracks(g, x, y + hh + 1, 7, i * 5 + 1, 1); }
     } else guardShape(c, name, x, y, 0.8 + 0.4 * raise, t, sn, hpk);
     // On the far side of the body (facing away, or slung on the hidden hip) the guard is drawn under the
     // wizard as it should be, and its rim shows through on top, dithered: a partner can always see
@@ -1173,7 +1185,7 @@ export class StructureView {
     if (away) {
       const k = blocking ? 0.75 : 0.5, sz = 0.8 + 0.4 * raise, wx = 0.55 + 0.45 * sn;
       if (bulwark) {
-        const hw = 2.5 + (blocking || braced ? 3 : 2) * sn, hh = blocking || braced ? 8 : 6;
+        const hw = 2.5 + (blocking ? 3 : 2) * sn, hh = blocking ? 8 : 6;
         for (let q = -hw; q <= hw; q++) for (const yy of [y - hh - 1, y + hh]) if (k > X.bay(Math.round(x + q), Math.round(yy))) X.px(o, x + q, yy, X.EARTH[0]);
         for (let q = -hh; q <= hh; q++) for (const xx of [x - hw - 1, x + hw]) if (k > X.bay(Math.round(xx), Math.round(y + q))) X.px(o, xx, y + q, X.EARTH[0]);
       } else X.ring(o, x, y, 4.6 * sz * wx + 0.5, 5 * sz + 0.5, R[1], k);

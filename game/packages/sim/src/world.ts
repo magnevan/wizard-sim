@@ -135,9 +135,9 @@ export interface Seats {
   guard: Uint8Array; guardHp: Float64Array; guardT: Int32Array; guardCharge: Float64Array;
   /** Ticks RMB has been held for a Strike or Heavy with no runes queued (0: not held). */
   handT: Int32Array;
-  /** A guard's elements other than Shield (9 per seat): the lead picks the guard, a second adds half its resistance. */
+  /** A guard's elements other than Shield and Sigil (9 per seat): the lead picks the guard, the others mix in (guards.ts). */
   guardEls: Uint8Array;
-  /** Ticks left of the fixed recovery after a Retreat (no Retreat or Defend), and of the Retreat itself (Brace, Phase). */
+  /** Ticks left of the fixed recovery after a Retreat (no Retreat or Defend), and of the Prism's Phase (through bodies). */
   guardCd: Int32Array; retreatT: Int32Array;
   /** Ticks left of the spear's impaling dash (you pass through bodies). */
   dashT: Int32Array;
@@ -178,8 +178,6 @@ export interface Missiles {
   lastHit: Int16Array;
   /** Payload flags (PF) and shape modifier (MOD_ID). */
   flags: Uint8Array; mod: Uint8Array;
-  /** Heal-stone: where it lands. */
-  tx: Float64Array; ty: Float64Array;
 }
 
 /** Things that sit in the world for a while: delayed blasts, geysers, healing springs, steam clouds. */
@@ -194,8 +192,6 @@ export interface Zones {
 }
 /** Payload flags. */
 export const PF = { heal: 1, scald: 2, freeze: 4, lensed: 8, pin: 16 } as const;
-/** Lens amplification (kept here so effects and structures share it). */
-export const STRUCT_SCALE = { lens: 1.5 } as const;
 export const MOD_ID = { none: 0, push: 1, shatter: 2, chain: 3, burst: 4 } as const;
 export const ZONE = { none: 0, blast: 1, geyser: 2, spring: 3, steam: 4, spark: 5 } as const;
 
@@ -238,8 +234,6 @@ export interface Walls {
   els: Uint8Array;
   /** Tick it was raised (the oldest breaks first). */
   born: Int32Array;
-  /** Curtain: tick of the last pulse. */
-  pulse: Int32Array;
 }
 
 /** Shield + Force: a front that sweeps forward and hits each body once. */
@@ -401,7 +395,7 @@ function seats(n: number): Seats {
 function missiles(n: number): Missiles {
   return {
     alive: u8(n), x: f64(n), y: f64(n), vx: f64(n), vy: f64(n), life: i32(n), owner: new Int16Array(n), els: u8(n * N_EL),
-    scale: f64(n), r: f64(n), type: u8(n), pierce: u8(n), look: u8(n), lastHit: new Int16Array(n), tx: f64(n), ty: f64(n),
+    scale: f64(n), r: f64(n), type: u8(n), pierce: u8(n), look: u8(n), lastHit: new Int16Array(n),
     flags: u8(n), mod: u8(n),
   };
 }
@@ -507,7 +501,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
     surf: { kind: u8(cells), life: i32(cells) },
     walls: {
       type: u8(MAX_WALLS), x1: f64(MAX_WALLS), y1: f64(MAX_WALLS), x2: f64(MAX_WALLS), y2: f64(MAX_WALLS), hp: f64(MAX_WALLS), maxHp: f64(MAX_WALLS),
-      owner: new Int16Array(MAX_WALLS), els: u8(MAX_WALLS * N_EL), born: i32(MAX_WALLS), pulse: i32(MAX_WALLS),
+      owner: new Int16Array(MAX_WALLS), els: u8(MAX_WALLS * N_EL), born: i32(MAX_WALLS),
     },
     waves: {
       alive: u8(MAX_WAVES), x: f64(MAX_WAVES), y: f64(MAX_WAVES), dx: f64(MAX_WAVES), dy: f64(MAX_WAVES), half: f64(MAX_WAVES), travelled: f64(MAX_WAVES),
@@ -565,6 +559,8 @@ export function spawnBody(w: World, slot: number, kind: number, team: number, x:
 }
 
 export const tickOf = (w: World): number => w.clock[0];
+/** Is body slot i in use (anything that can be hit: a wizard, a dummy, an enemy, a Double)? */
+export const alive = (w: World, i: number): boolean => w.bodies.kind[i] !== KIND.none;
 
 /** Every typed array in the world, in a fixed order. Snapshot, restore and hash all walk this list. */
 export function buffers(w: World): ArrayBufferView[] {

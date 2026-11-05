@@ -19,7 +19,8 @@
     "check:net": "npm run build && node scripts/net-e2e.mjs",
     "check:webrtc": "npm run build && node scripts/net-e2e.mjs --webrtc",
     "sync-rules": "node scripts/sync-rules.mjs",
-    "balance": "vitest run --config vitest.balance.config.ts",
+    "balance": "vitest run --config vitest.balance.config.ts tools/balance.balance.ts",
+    "audit": "vitest run --config vitest.balance.config.ts tools/audit.balance.ts",
     "artifact": "npm run build && node scripts/make-artifact.mjs"
   },
   "devDependencies": {

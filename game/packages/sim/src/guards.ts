@@ -351,12 +351,12 @@ function parryEffect(w: World, i: number, src: number, melee: boolean): void {
   }
 }
 
-/** Allies around seat i (within ARMS.leafRange, any side; `self`: i too) are healed `amount`. */
-function healAround(w: World, i: number, amount: number, event: boolean, self = false): void {
+/** Allies around seat i (within ARMS.leafRange of it, or of (cx, cy); any side; `self`: i too) are healed `amount`. */
+function healAround(w: World, i: number, amount: number, event: boolean, self = false, cx = w.bodies.x[i], cy = w.bodies.y[i]): void {
   const b = w.bodies;
   for (let j = 0; j < MAX_SEATS; j++) {
     if ((j === i && !self) || b.kind[j] !== KIND.wizard || b.downed[j] || b.team[j] !== b.team[i]) continue;
-    if (len(b.x[j] - b.x[i], b.y[j] - b.y[i]) > ARMS.leafRange) continue;
+    if (j !== i && len(b.x[j] - cx, b.y[j] - cy) > ARMS.leafRange) continue;
     b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + amount);
     if (event) w.events.push({ tick: w.clock[0], kind: 'heal', who: j, src: i, x: b.x[j], y: b.y[j], amount, look: EL.life });
   }
@@ -509,11 +509,13 @@ export function guardRetreat(w: World, i: number, face: number): void {
       return;
     }
     case GUARD.prism: push((ARMS.phase * k)); s.retreatT[i] = T(ARMS.phaseTime); move(w, i, 'phase', x + bx * (ARMS.phase * k), y + by * (ARMS.phase * k)); return;
-    case GUARD.leaf: // Seed step: a hop back that leaves a healing bloom where you stood, for whoever steps in
+    case GUARD.leaf: { // Seed step: a hop back that blooms where you land, healing you and the allies there (never enemies)
+      const lx = x + bx * (ARMS.seedStep * k), ly = y + by * (ARMS.seedStep * k);
       push((ARMS.seedStep * k));
-      spawnZone(w, ZONE.spring, i, one(EL.life), x, y, ARMS.seedRadius, T(ARMS.seedLife), 0);
-      move(w, i, 'seedstep', x + bx * (ARMS.seedStep * k), y + by * (ARMS.seedStep * k));
+      healAround(w, i, ARMS.seedHeal, true, true, lx, ly);
+      move(w, i, 'seedstep', lx, ly);
       return;
+    }
     default: break;
   }
   push((ARMS.backstep * k)); // the Mirror's crisp hop

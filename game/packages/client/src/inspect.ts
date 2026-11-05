@@ -19,7 +19,7 @@ const GUARD_TEXT: Record<string, [string, string, string, string]> = {
   spark: ['Spark ring', 'weakest block, parry discharges', 'Blink 3 u (leaves a spark)', 'Grounded: chain lightning skips you'],
   tide: ['Tide shield', 'shoves and soaks biters, parry throws a wave', 'Surge (shoves what is in front)', 'Quenched: cannot burn'],
   prism: ['Prism', 'stores what it blocks (stops beams too); lower it to fire the Lance', 'Phase (through bodies)', 'Clear: allies’ beams and sprays don’t hurt you'],
-  leaf: ['Leaf aegis', 'heals allies around you, parry burst-heals you all', 'Seed step (leaves a healing bloom)', 'Regrowth: slow healing'],
+  leaf: ['Leaf aegis', 'heals allies around you, parry burst-heals you all', 'Seed step (blooms where you land: heals you and allies there)', 'Regrowth: slow healing'],
 };
 /** Each weapon: its name, Heavy and Special. */
 const WEAPON_TEXT: Record<string, [string, string, string]> = {

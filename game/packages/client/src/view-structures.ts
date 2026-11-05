@@ -1463,6 +1463,8 @@ export class StructureView {
         }
         const x2 = gx(f.x2), y2 = gy(f.y2);
         for (let j = 0; j < 12; j++) { const kq = j / 12, px2 = lerp(x, x2, kq * 0.8) + Math.sin(kq * 6 + sd) * 4, py2 = lerp(y, y2, kq * 0.8) - 2; if (rand(j, 4, sd) < q) continue; X.px(g, px2, py2, j % 2 ? LIFE[2] : LIFE[3]); X.px(o, px2 + 1, py2 - 4 - q * 6, LIFE[1]); }
+        // the bloom where you land: a ring of leaves opening out over the allies it healed
+        K.gring(g, x2, y2, 4 + q * 20, LIFE[2], 1 - q, 1);
         return;
       }
       case 'mv-shovestep': {

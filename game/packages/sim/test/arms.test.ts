@@ -328,11 +328,18 @@ describe('guards: Retreat (Shift+LMB, nothing queued)', () => {
     expect(w.bodies.x[0]).toBeLessThan(-2);
   });
 
-  it('Seed step (Leaf): a hop back that leaves a healing bloom where you stood, ally or not', () => {
-    const { w } = retreatOf(['shield', 'life'], (a) => { a.w.bodies.x[1] = 0.3; a.w.bodies.y[1] = 0.8; a.w.bodies.hp[1] = 50; });
+  it('Seed step (Leaf): a hop back that blooms where you land, healing you and allies there, never enemies', () => {
+    let foe = -1;
+    const { w } = retreatOf(['shield', 'life'], (a) => {
+      a.w.bodies.x[1] = -2.5; a.w.bodies.y[1] = 0.8; a.w.bodies.hp[1] = 50; // waiting where you land
+      a.w.bodies.hp[0] = 50;
+      foe = spawnBody(a.w, -1, KIND.enemy, TEAM.enemies, 1, 0, 100, 0.4); a.w.bodies.hp[foe] = 40; // chasing you
+    });
     expect(w.bodies.x[0]).toBeLessThan(-2);
-    expect(Array.from(w.zones.type).includes(ZONE.spring)).toBe(true);
-    expect(w.bodies.hp[1]).toBeGreaterThan(50); // the ally standing in it
+    expect(Array.from(w.zones.type).includes(ZONE.spring)).toBe(false); // nothing left on the ground
+    expect(w.bodies.hp[1]).toBeGreaterThan(50);
+    expect(w.bodies.hp[0]).toBeGreaterThan(50);
+    expect(w.bodies.hp[foe]).toBeLessThanOrEqual(40);
   });
 
   it('Leaf block heals allies on any side of you', () => {

@@ -537,3 +537,16 @@ The user's first answers on the Survive Review page (`tools/survive-review`), bu
 - **Power-up ids are renumbered** (charm 7, clockwork 8, echo 9, glass 10; `N_PU` 11). That's fine because `world.run` is only ever built fresh.
 - **Not changed,** because they're under discussion: Echo, Wellspring, the rune power-ups and the wave list.
 - Golden hash unchanged (`9382eb5b`): the scripted run is in the Sanctum, which has no `world.run`, and the camera is client-only.
+
+## 2026-11-05: The Leaf's Seed step blooms where you land, for allies only
+
+- **The user's play-test:** "you take a step back and leave a healing aura behind ... you'd just help the enemies who are about to walk into it."
+  - A Retreat moves away from enemies, so anything it leaves behind sits in their path.
+  - The round-2 choice ("like the Life spring, it heals anyone standing in it") made the Leaf's escape a gift to whoever was chasing you.
+- **Built:**
+  - The hop back is unchanged (2.5 u).
+  - On landing, an instant bloom heals you and every ally within 3.5 u of where you land (`ARMS.seedHeal` 15, `leafRange`).
+  - Nothing lingers on the ground, and enemies are never healed.
+  - It's drawn as a leaf ring opening at the landing spot.
+- **Why allies only:** a guard's moves are deliberate support. The Leaf's block and parry already heal only allies, so the Retreat now matches them (pillar 3: empowering an ally is set up on purpose). Life *spells* still heal anyone they touch.
+- Golden hash unchanged.

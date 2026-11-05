@@ -192,7 +192,7 @@ export const ARMS = {
   /** Shove step (Bulwark): the slab's reach, its knockback and the stun it leaves. */
   shoveRange: 2.6, shoveKnock: 14, shoveStun: 0.6,
   /** Phase (through bodies), the Flame step's fire line, the Blink spark, and the Seed step's healing bloom, in seconds; the bloom's radius. */
-  phaseTime: 0.5, flameLine: 1, spark: 4, seedLife: 4, seedRadius: 1.2,
+  phaseTime: 0.5, flameLine: 1, spark: 4, seedHeal: 15,
   /** Heals: Leaf regrowth (hp/s), a Leaf block to allies around you (hp/s), a Leaf parry (you too), and how far "around" reaches. */
   regrowth: 1, leafBlockHeal: 8, leafParryHeal: 20, leafRange: 3.5,
   /** A Rime block chills a melee attacker by this much (chill stacks). */

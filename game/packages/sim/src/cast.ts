@@ -23,7 +23,7 @@ import { len } from './geom';
 import { AIM_UNIT, BTN, type PlayerInput } from './input';
 import { TAP, heavy, heavyCharge, retreat, special, strike } from './hands';
 import { atan2Turns } from './trig';
-import { CAST_ID, KIND, PHASE, QUEUE_MAX, type World } from './world';
+import { CAST_ID, KIND, PHASE, PU, QUEUE_MAX, regenOf, runeMax, stackOf, type World } from './world';
 
 const CASTS: Cast[] = ['force', 'force', 'area', 'place', 'self', 'conjure']; // index = CAST_ID
 
@@ -80,6 +80,12 @@ function startCast(w: World, i: number, castId: number): void {
   s.castQueue.set(s.queue.subarray(i * QUEUE_MAX, (i + 1) * QUEUE_MAX), i * QUEUE_MAX);
   s.castLen[i] = s.queueLen[i];
   setQueue(w, i, []); // the reserved runes are now spent
+  // Slipstream (survive): the first spell soon after a Retreat hop is free; its runes come back.
+  if (w.run && w.run.dodge[i] > 0 && s.castLen[i] > 0 && stackOf(w, i, PU.slipstream)) {
+    w.run.dodge[i] = 0;
+    for (let k = 0; k < s.castLen[i]; k++) { const id = s.castQueue[i * QUEUE_MAX + k]; s.runes[rune(w, i, id)] = Math.min(runeMax(w, i, id), s.runes[rune(w, i, id)] + 1); }
+    w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: w.bodies.x[i], y: w.bodies.y[i], amount: 0.6, look: EL.arcane, text: 'Free cast' });
+  }
   const spec = specOf(w, i);
   spendMote(w, i, spec.form);
   s.phase[i] = PHASE.windup;
@@ -165,8 +171,8 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   for (let e = 1; e <= N_EL; e++) {
     const k = rune(w, i, e);
     // Sigil runes bound in devices don't come back while those devices stand.
-    const cap = e === EL.sigil ? sigilCap(w, i) : RUNES.max[elementName(e)];
-    s.runes[k] = Math.min(Math.max(cap, 0), s.runes[k] + (RUNES.regen * mult) / 60);
+    const cap = e === EL.sigil ? sigilCap(w, i) : runeMax(w, i, e);
+    s.runes[k] = Math.min(Math.max(cap, 0), s.runes[k] + (regenOf(w, i) * mult) / 60);
   }
 
   // A conjured guard blocks while Space is held with an empty queue (Defend, grammar v2).

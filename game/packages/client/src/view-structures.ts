@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCHETYPES, ARENA, ATTACK, BTN, CELL, DEVICE, EL as ELID, GRID_W, GUARD, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES,
-  N_EL, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, T, WALL, WARD, WAVE_TIMES, compile, elementName, queueOf, selfTarget,
+  N_ALTARS, N_EL, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, queueOf, selfTarget,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
@@ -32,6 +32,7 @@ import { CELL_H, CELL_W, FEET_X, FEET_Y } from './art/rigs';
 import * as S from './art/sigil';
 import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './art/util';
 import type { BodyView, LightFn } from './art/vfx';
+import { glyph, perkOf } from './art/perks';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
 
 const EL = X.EL, SV = EL.sigil;
@@ -348,6 +349,7 @@ export class StructureView {
     this.scorch.draw(w, st);
     const off = OFF;
     if (!off.includes('walls')) this.walls(w, t, g, o, light);
+    if (w.run) this.altars(w, t, g, o, light);
     if (!off.includes('waves')) this.waves(w, t, g, o, light);
     if (!off.includes('devices')) this.devices(w, t, g, o, bodies, light);
     if (!off.includes('wizards')) this.onWizards(w, t, g, o, bodies, light);
@@ -376,6 +378,64 @@ export class StructureView {
     for (let k = 0; k < 4; k++) { X.rect(o, x - 4 + k, hy + k, 2, 1, R[0]); X.rect(o, x + 3 - k, hy + k, 2, 1, R[0]); }
   }
 
+  // ---- Survive's altars ------------------------------------------------------------------------------
+  /** When each altar last rose (view time), and what it offered then. */
+  private altarT0 = new Float64Array(N_ALTARS).fill(-9);
+  private altarPU = new Uint8Array(N_ALTARS);
+
+  /**
+   * The pick's three altars: a stone plinth on a rune ring in the power-up's colour, its glyph
+   * floating over it and its name above. Standing on one fills the ring in your robe's colour;
+   * every wizard who took it leaves a pip of their colour on the plinth.
+   */
+  private altars(w: World, t: number, g: Ctx, o: Ctx, light: LightFn): void {
+    const r = w.run!, st = w.enc.state[0];
+    for (let a = 0; a < N_ALTARS; a++) {
+      const pu = st === PHASE_ENC.pick ? r.offer[a] : 0;
+      if (pu !== this.altarPU[a]) { this.altarPU[a] = pu; this.altarT0[a] = pu ? t : -9; }
+      if (!pu) continue;
+      const p = perkOf(pu, r.offerEl[a]), R = p.ramp, x = Math.round(gx(r.ax[a])), y = Math.round(gy(r.ay[a]));
+      const rise = easeOut(clamp((t - this.altarT0[a]) / 0.5, 0, 1)), bob = Math.round(Math.sin(t * 2.4 + a * 2) * 1.5);
+      // the rune ring you stand in (the sim's pick radius)
+      const rr = 0.85 * PPU;
+      X.ellipse(g, x, y, rr, rr * FY, R[3] ?? R[2], 0.25 * rise);
+      X.ring(g, x, y, rr, rr * FY, R[2], 0.9 * rise);
+      X.ring(g, x, y, rr - 3, (rr - 3) * FY, R[4] ?? R[3], 0.6 * rise);
+      for (let k = 0; k < 8; k++) { const an = t * 0.6 + (k / 8) * TAU; X.px(g, x + Math.cos(an) * (rr - 1.5), y + Math.sin(an) * (rr - 1.5) * FY, R[1]); }
+      // whoever stands here fills the ring in their colour
+      for (let s = 0; s < MAX_SEATS; s++) {
+        if (r.standOn[s] !== a || r.picked[s] >= 0 || !r.stand[s]) continue;
+        const f = clamp(r.stand[s] / T(SURVIVE_TIMES.stand), 0, 1);
+        X.ring(g, x, y, rr + 1, (rr + 1) * FY, X.TEAMS[s].light, 1, -Math.PI / 2, -Math.PI / 2 + f * TAU);
+        X.ring(g, x, y, rr + 2, (rr + 2) * FY, X.TEAMS[s].main, 1, -Math.PI / 2, -Math.PI / 2 + f * TAU);
+      }
+      // the plinth, depth-sorted with the wizards (it rises out of the floor)
+      const H = Math.round(16 * rise);
+      const c = this.pieces.canvas(x - 12, y - 46, 25, 52, y);
+      X.ellipse(c, x + 2, y + 1, 10, 4, 'rgba(8,6,16,0.45)');
+      X.rect(c, x - 9, y - 3, 19, 5, '#2c2e38'); X.rect(c, x - 8, y - 3, 17, 1, '#868c9a'); X.rect(c, x - 9, y + 1, 19, 1, '#1c1d25');
+      if (H > 3) {
+        X.rect(c, x - 6, y - 3 - H, 13, H, '#555a68'); X.rect(c, x - 6, y - 3 - H, 3, H, '#6c7280'); X.rect(c, x + 5, y - 3 - H, 2, H, '#40434f');
+        X.rect(c, x - 8, y - 6 - H, 17, 4, '#868c9a'); X.rect(c, x - 8, y - 6 - H, 17, 1, '#c8ccd4'); X.rect(c, x - 8, y - 3 - H, 17, 1, '#2c2e38');
+        // a carved channel down the front, glowing in the power-up's colour
+        X.rect(c, x, y - 1 - H, 1, H - 2, R[2]);
+        // pips for the wizards who took it
+        let n = 0;
+        for (let s = 0; s < MAX_SEATS; s++) if (r.picked[s] === a) { X.rect(c, x - 6 + n * 4, y - 9 - H, 3, 3, '#0a0810'); X.rect(c, x - 5 + n * 4, y - 8 - H, 2, 2, X.TEAMS[s].light); n++; }
+      }
+      // the glyph floats over it
+      if (rise >= 1) {
+        const gy0 = y - 3 - H - 22 + bob;
+        X.rect(c, x - 8, gy0 - 1, 17, 17, '#0a0810'); X.rect(c, x - 7, gy0, 15, 15, R[4] ?? R[3]);
+        glyph(c, p.glyph, x - 6, gy0 + 1, R[1], 2);
+        light(x, gy0 + 7, 34, R[2], 0.5);
+      }
+      // the name, over everything
+      const name = p.name.toUpperCase(), tw = name.length * 4 - 1, ty = y - 3 - H - 32;
+      if (rise >= 1) X.text(o, name, x - Math.floor(tw / 2), ty, R[0], '#0a0810');
+    }
+  }
+
   // ---- Shield walls ---------------------------------------------------------------------------------
   private walls(w: World, t: number, g: Ctx, o: Ctx, light: LightFn): void {
     const wl = w.walls, s = w.seats, tick = w.clock[0], live = new Set<string>();
@@ -395,7 +455,8 @@ export class StructureView {
         let gm = this.geoms.get(pre);
         if (!gm) {
           const lenPx = Math.hypot(bb[0] - a[0], (bb[1] - a[1]) / FY);
-          const spec: WallSpec = { a: [a[0], a[1]], b: [bb[0], bb[1]], n: Math.max(1, Math.round(lenPx / 12)), H: 14, T: 7, mat: cold ? 'frost' : 'stone', seed: (k * 7 + wl.born[k]) & 1023, endA, endB };
+          const ruin = wl.owner[k] === TERRAIN; // the arena's own rock: taller, older stone
+          const spec: WallSpec = { a: [a[0], a[1]], b: [bb[0], bb[1]], n: Math.max(1, Math.round(lenPx / 12)), H: ruin ? 19 : 14, T: ruin ? 8 : 7, mat: ruin ? 'ruin' : cold ? 'frost' : 'stone', seed: (k * 7 + wl.born[k]) & 1023, endA, endB };
           gm = { spec, g: wallGeom(spec) };
           this.geoms.set(pre, gm);
         }

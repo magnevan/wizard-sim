@@ -29,6 +29,15 @@ export function hashWorld(w: World): number {
   return h >>> 0;
 }
 
+/**
+ * Makes `w` the world `fresh` is, keeping the object (everything holds it). Same layout: a copy
+ * of its state. A different layout (a survive world and another room): its pools are swapped in.
+ */
+export function replaceWorld(w: World, fresh: World): void {
+  if ((w.run === null) === (fresh.run === null)) { restore(w, snapshot(fresh)); return; }
+  Object.assign(w, fresh);
+}
+
 export const hex = (h: number): string => h.toString(16).padStart(8, '0');
 
 /** Snapshot into existing buffers (no garbage): rollback takes one every tick. */

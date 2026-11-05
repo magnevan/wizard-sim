@@ -12,7 +12,7 @@ import { ARCH } from './archetypes';
 import { EL } from './elements';
 import { len } from './geom';
 import { AIM_UNIT, BTN, NO_INPUT, quantize, type PlayerInput } from './input';
-import { KIND, MAX_SEATS, PHASE, type World } from './world';
+import { KIND, MAX_SEATS, PHASE, PHASE_ENC, type World } from './world';
 
 /** Per-seat plan, kept by the caller between ticks (a few numbers, not world state). */
 export interface BotMemory {
@@ -52,6 +52,12 @@ export function botInput(w: World, seat: number, mem: BotMemory): PlayerInput {
     const d = len(b.x[i] - b.x[seat], b.y[i] - b.y[seat]);
     if (d < 5) crowd++;
     if (d < fd) { fd = d; foe = i; }
+  }
+  // Survive's pick: walk onto an altar (each seat its own, so a bot team shows different picks).
+  const r = w.run;
+  if (foe < 0 && r && w.enc.state[0] === PHASE_ENC.pick && r.picked[seat] < 0) {
+    const a = (seat + w.enc.state[1]) % r.offer.length, mx = r.ax[a] - b.x[seat], my = r.ay[a] - b.y[seat], ml = len(mx, my);
+    return quantize({ ...NO_INPUT, moveX: ml > 0.2 ? (mx / ml) * 127 : 0, moveY: ml > 0.2 ? (my / ml) * 127 : 0, aimX: 32, aimY: 0 });
   }
   if (foe < 0) { // nothing to fight: drift back toward the middle
     const mx = -b.x[seat], my = -b.y[seat], ml = len(mx, my);

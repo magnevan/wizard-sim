@@ -13,6 +13,7 @@ import { tickDeaths, tickEnemies } from './enemies';
 import { tickNav } from './nav';
 import { hasteOf, tickStructures } from './structures';
 import { tickWaves } from './waves';
+import { survivePress, tickSurvive } from './survive';
 import { tickStatuses } from './hit';
 import { BTN, type PlayerInput } from './input';
 import { DT, KIND, MAX_SEATS, PHASE, joinSeat, type World } from './world';
@@ -22,6 +23,7 @@ export { elementId, elementName } from './elements';
 export function step(w: World, inputs: readonly PlayerInput[]): void {
   w.events.length = 0;
   const b = w.bodies, s = w.seats;
+  if (w.run) survivePress(w, inputs);
 
   for (let i = 0; i < MAX_SEATS; i++) {
     const inp = inputs[i];
@@ -43,7 +45,7 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
     b.vy[i] += (my * speed - b.vy[i]) * grip;
   }
 
-  tickWaves(w);
+  if (w.run) tickSurvive(w); else tickWaves(w);
   tickNav(w);
   tickEnemies(w);
 

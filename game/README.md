@@ -19,7 +19,7 @@ npm run sync-rules     # after a rules change in tools/spell-atlas/rules-c.js
 npm run balance        # the balance harness: measures every common spell and bot wave runs -> tools/balance-report.json
 ```
 
-URL params: `?room=arena` (the waves; the default is the Sanctum with dummies), `?ally=1` (a bot wizard on seat 1), `?autoplay=1` (bots fight the Arena, for screenshots), `?script=1` (the scripted two-wizard run), `?spell=arcane,fire/force` (both seats cast one spell at the dummies; casts force, area, place, self, weapon, drag, hold, holddrag, guard, wait; `@x,y` sets the target and `;` chains spells one per cycle, see `demo.ts`), `?pauseAt=N` (pause the sim at tick N; cosmetic animation keeps running on real time), `?structoff=walls,waves,devices,wizards,preview,fx` (hide parts of the structure view), `?selftest=1` (no rendering; runs the golden replay and writes its hash to `<html data-hash>`), `?scale=N`, `?lights=0`, `?debug=0`, `?renderer=webgpu`. Artifact links carry no query string, so `#arena`, `#ally` and `#arena-ally` work as well, and the 1 / 2 keys switch between the Sanctum and the Arena. Gamepads join seats 1–3 with any button.
+URL params: `?room=arena` (the waves; the default is the Sanctum with dummies), `?room=survive` (Survive: endless waves in a walled arena, a power-up pick between waves), `?ally=1` (a bot wizard on seat 1), `?autoplay=1` (bots fight the Arena, for screenshots), `?script=1` (the scripted two-wizard run), `?spell=arcane,fire/force` (both seats cast one spell at the dummies; casts force, area, place, self, weapon, drag, hold, holddrag, guard, wait; `@x,y` sets the target and `;` chains spells one per cycle, see `demo.ts`), `?pauseAt=N` (pause the sim at tick N; cosmetic animation keeps running on real time), `?structoff=walls,waves,devices,wizards,preview,fx` (hide parts of the structure view), `?selftest=1` (no rendering; runs the golden replay and writes its hash to `<html data-hash>`), `?scale=N`, `?lights=0`, `?debug=0`, `?renderer=webgpu`. Artifact links carry no query string, so `#arena`, `#survive`, `#ally` and `#arena-ally` work as well, and the 1 / 2 / 3 keys switch between the Sanctum, the Arena and Survive. Gamepads join seats 1–3 with any button.
 
 **Online co-op:** the Co-op panel (bottom left) hosts or joins a match. On the hosted page and the dev server it runs over WebRTC (Create room, share the four-letter code); `?net=bc` plays between tabs on one machine; on claude.ai it uses the artifact's room. The lobby checks the build and the tuning hash; the match runs `RollbackSession` (2-tick input delay, 1 s rollback window). A player who goes quiet for 2.5 s, or closes the tab, is dropped: the others agree on the last tick anyone holds from them and carry on, their wizard standing still. Anyone can then take the empty seat with **Rejoin** (a reload, or re-entering the room code), starting from a gzipped snapshot. The tuning panel (F1) has a **Network test** section: added lag, jitter and loss on this page's traffic, and the input delay. Code: `packages/client/src/net/`, `packages/net/src/rollback.ts`.
 
@@ -42,6 +42,7 @@ packages/
     cast.ts    runes, the queue and the cast state machine; effects.ts the shapes in the world, missiles, zones, surfaces
     hit.ts     what a hit does (damage, healing, statuses, wards, the wand, guards); walls.ts + structures.ts Shield and Sigil
     archetypes.ts, enemies.ts, nav.ts, waves.ts   enemies, their steering and the Arena's wave director
+    survive.ts the Survive mode: its waves, the altar pick, the run's end; power-ups are per-seat stacks in world.run
   net/     @wizard-sim/net: lockstep over a swappable unreliable Transport (loopback hub for tests; WebRTC / Steam later)
   client/  @wizard-sim/client: Vite + PixiJS v8. The loop (main.ts), keyboard and gamepads -> PlayerInput (input.ts, gamepad.ts),
            the view (view.ts, reads the sim and never writes it), the HUD (hud.ts), structures and telegraphs
@@ -105,6 +106,8 @@ Milestone 1 (deterministic core) is under way. Done in the sim, with tests for e
 Not yet: the Shield conjures (Bulwark, Buckler) and the Double, rollback/lockstep netcode, audio, campaign rooms.
 
 `?room=arena` runs the waves. The default is the Sanctum, with three practice dummies.
+
+**Survive** (`#survive`, `docs/explorations/2026-11-05-survive-mode.md`): a walled arena (gate funnels, cover, pillars: static rock that never breaks), endless waves (wave → 3 s breather → pick → 6 s lull), and between waves three altars with power-ups: each player stands on one for 0.75 s. When everyone is down, the run ends; Space starts a new one (an input, so it works online). Its state is `world.run`, which only a survive world has, so the other rooms' layout and the golden hash are untouched; `runeMax` / `regenOf` give per-seat rune max and regen (the config values outside Survive). Ten power-ups are built: Deep pools, Deep (element), Wellspring, Spare sigil, Bedrock, Pyre, Slipstream, Mirror charm, Bloom, Clockwork. The tuning panel's Survive line restarts a run or gives P1 a power-up.
 
 ### Milestone 1: deterministic core (the user's pick)
 

@@ -18,3 +18,4 @@ There's one file per mechanic, copied from `_template.md`. The status lives in t
 | [sanctum](sanctum.md) | parked (later) | 4, 5 |
 | [element-economy](element-economy.md) (element runes) | prototyping (rune pools, reserve on queue, regen, Attune, Bind, Model A drain in the engine) | 1, 4, 6 |
 | [battlefield-building](battlefield-building.md) | prototyping (walls, curtains, turrets, glyphs in the engine) | 6, 7, 3 |
+| [survive-mode](survive-mode.md) | prototyping (`#survive` in the game: explorations/2026-11-05-survive-mode.md) | 1, 3, 7 |

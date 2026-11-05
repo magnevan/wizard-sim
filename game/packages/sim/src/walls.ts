@@ -12,7 +12,7 @@ import { WALL } from './compile';
 import { DAMAGE, STRUCT } from './config';
 import { EL, N_EL, elementName } from './elements';
 import { len } from './geom';
-import { DEVICE, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, WARD, type World } from './world';
+import { DEVICE, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, TERRAIN, WARD, type World } from './world';
 
 /** Closest point on segment (x1,y1)-(x2,y2) to (px,py): returns [distance, t in 0..1]. */
 export function segDist(px: number, py: number, x1: number, y1: number, x2: number, y2: number): [number, number] {
@@ -45,6 +45,7 @@ export function payloadDamage(els: Uint8Array, at: number, scale: number): numbe
 
 export function damageWall(w: World, k: number, dmg: number): void {
   const wl = w.walls;
+  if (wl.owner[k] === TERRAIN) return; // the arena's own rock doesn't break
   wl.hp[k] -= dmg;
   if (wl.type[k] !== WALL.rock) drainShield(w, wl.owner[k], STRUCT.absorbPerHp * dmg);
   if (wl.hp[k] <= 0) {

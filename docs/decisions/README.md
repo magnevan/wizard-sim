@@ -523,3 +523,4 @@ The user's answers on the Rune Economy page (`tools/rune-economy`, db `answers`)
   - **Echo is redesigned** as "very strong for the next wave", where the only cost is the permanent pick you skipped (no rune loss).
   - **The camera follows your own wizard in every room, with arrows at the screen edge pointing to allies.** Couch co-op on one screen is the exception.
 - **How "+1 to three" picks its elements:** the user expected to always choose the three. They agreed to try Claude's version first: each altar names three elements from a fixed rotation, with no menu. If that feels too random, switch to choosing.
+  - **Revised the same evening, by Claude:** choosing is cheap without a menu. You step on the altar, then tap the three element keys you want (the keys you already cast with), and the HUD shows "+1 to: _ _ _". This is built in place of the fixed rotation.

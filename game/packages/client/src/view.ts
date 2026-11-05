@@ -74,6 +74,22 @@ export class WorldView {
       if (dx * dx + dy * dy > 9) { this.smoothX[i] = 0; this.smoothY[i] = 0; continue; } // a real teleport: snap
       this.smoothX[i] += dx; this.smoothY[i] += dy;
     }
+    // remote spells the replay started: shown from their first frame (art/vfx.ts), with the cast pose
+    const t = w.clock[0] / 60;
+    for (const e of this.vfx.postRewind(w, t)) this.castPose(w, e.who, t);
+  }
+  /** After each step the rollback replay runs (afterStep is skipped then): notes late remote spell starts. */
+  replayStep(w: World): void { this.vfx.replayStep(w); }
+  /** Late remote spells: fast-forwarded from their first frame (true), or popping in where they are (false). */
+  get catchUp(): boolean { return this.vfx.catchUp; }
+  set catchUp(on: boolean) { this.vfx.catchUp = on; }
+  /** How many late remote spells were caught up (Network test). */
+  get caught(): Readonly<{ missiles: number; channels: number; casts: number }> { return this.vfx.caught; }
+  /** Where missile j is drawn (world units) at real time ct, s: for tests. */
+  missileDrawnAt(w: World, j: number, ct: number): [number, number] { const p = this.vfx.missileAt(w, j, ct); return [p[0], p[1]]; }
+  private castPose(w: World, who: number, t: number): void {
+    const id = w.seats.castId[who];
+    if (id === CAST_ID.force || id === CAST_ID.conjure) this.holdUntil[who] = t + 0.35;
   }
   private prevBX = new Float64Array(MAX_BODIES);
   private prevBY = new Float64Array(MAX_BODIES);
@@ -113,6 +129,7 @@ export class WorldView {
   /** Call right before each sim step, so the view can interpolate from here to the new state. */
   beforeStep(w: World): void {
     this.prevBX.set(w.bodies.x); this.prevBY.set(w.bodies.y); this.prevKind.set(w.bodies.kind);
+    this.vfx.noteBefore(w);
   }
 
   /** Call right after each sim step with its events. */
@@ -128,7 +145,7 @@ export class WorldView {
       if (e.kind === 'blink' && e.who >= 0) { this.prevBX[e.who] = b.x[e.who]; this.prevBY[e.who] = b.y[e.who]; }
       if (e.kind === 'fizzle' && e.text === 'dies' && e.who >= 0) this.onDeath(w, e, t);
       if (e.kind === 'cast' && e.who >= 0 && e.who < MAX_SEATS) {
-        if (s.castId[e.who] === CAST_ID.force || s.castId[e.who] === CAST_ID.conjure) this.holdUntil[e.who] = t + 0.35;
+        this.castPose(w, e.who, t);
         for (let k = 0; k < s.castLen[e.who]; k++) if (e.who === this.hud.seat) this.hud.spent(s.castQueue[e.who * 5 + k], t);
       }
     }

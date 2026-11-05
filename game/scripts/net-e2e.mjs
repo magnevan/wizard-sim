@@ -105,6 +105,22 @@ try {
   if (sa.rtt < 120) fail(`the simulated lag didn't show in the round trip (${sa.rtt} ms)`);
   if (sa.desyncs || sb.desyncs) fail('desync over the slow link');
   if (Math.abs(sa.tick - sb.tick) > 90) fail(`pages drifted apart over the slow link (${sa.tick} vs ${sb.tick})`);
+
+  // 2b. Still on the slow link: how remote aim is guessed. B walks to a spot and back with the mouse
+  // still (the cursor rests on the floor while the wizard moves), once per guess; A counts its rewinds.
+  const rewinds = {};
+  for (const mode of ['relative', 'world']) {
+    await Promise.all([a, b].map((p) => p.evaluate((m) => { window.wizardSim.net.aimPrediction = m; window.wizardSim.net.session.aimPrediction = m; }, mode)));
+    const r0 = await a.evaluate(() => { const s = window.wizardSim.net.session; return { t: s.tick, replayed: s.replayed, checked: s.guesses.checked, wrong: s.guesses.wrong }; });
+    for (const x of [600, 40]) { await b.mouse.move(x, 200); await b.mouse.down(); await sleep(2000); await b.mouse.up(); }
+    await sleep(800);
+    const r1 = await a.evaluate(() => { const s = window.wizardSim.net.session; return { t: s.tick, replayed: s.replayed, checked: s.guesses.checked, wrong: s.guesses.wrong }; });
+    const secs = (r1.t - r0.t) / 60;
+    rewinds[mode] = { perS: Math.round((r1.replayed - r0.replayed) / secs), wrongPct: Math.round(((r1.wrong - r0.wrong) * 100) / Math.max(1, r1.checked - r0.checked)) };
+  }
+  const [ca, cb] = [await net(a), await net(b)];
+  console.log(`slow link, B walking with the mouse still: A rewound ${rewinds.relative.perS} ticks/s guessing aim as before (${rewinds.relative.wrongPct}% of guesses wrong), ${rewinds.world.perS} ticks/s in world space (${rewinds.world.wrongPct}% wrong)`);
+  if (ca.desyncs || cb.desyncs) fail('desync while comparing aim guesses');
   await a.evaluate(() => { const l = window.wizardSim.net.link; l.lag = 0; l.jitter = 0; l.loss = 0; });
 
   // 3. B reloads mid-match: A drops it (the seat shows as gone), then B rejoins its seat.

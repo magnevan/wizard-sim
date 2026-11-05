@@ -2,8 +2,10 @@
  * Rollback (GGPO-style) on the lockstep session's input pipeline and packets.
  *
  * Every tick runs at once: our own input is known, and each other seat's input is predicted (the
- * buttons, walk and aim of the last input we have from them, with no element presses, which
- * would otherwise repeat). Before each tick the world is snapshotted. When a real input arrives
+ * buttons and walk of the last input we have from them, with no element presses, which would
+ * otherwise repeat). Aim is guessed in world space: their cursor is assumed to stay on the same
+ * spot of the floor while they walk, or to carry on a steady sweep (see predictAim). Before each
+ * tick the world is snapshotted. When a real input arrives
  * for a tick we already ran and it differs from what we predicted, the world rewinds to that tick
  * and replays to now. So nobody waits on the network for their own actions; remote players
  * may snap a little when a prediction was wrong.
@@ -18,12 +20,34 @@
  * A newcomer takes a gone seat back from a later tick with resumeSeat() on the peers and
  * startMidway() on its own page, from a handover(): a confirmed snapshot and the inputs after it.
  */
-import { INPUT_BYTES, NO_INPUT, decodeInput, encodeInput, hashSnapshot, restore, snapshot, snapshotInto, step, type PlayerInput, type Snapshot, type World } from '@wizard-sim/sim';
+import { AIM_UNIT, INPUT_BYTES, NO_INPUT, decodeInput, encodeInput, hashSnapshot, restore, snapshot, snapshotInto, step, type PlayerInput, type Snapshot, type World } from '@wizard-sim/sim';
 import { HASH_EVERY, LockstepSession } from './lockstep';
 import type { Transport } from './transport';
 
+/**
+ * A guessed aim as a whole number in range. `+ 0` turns -0 into 0: `same()` can't tell them apart,
+ * but the sim stores the aim in a Float64Array, so a -0 that ran would leave different state bytes
+ * than the real 0 without any rewind to correct it.
+ */
+const clampAim = (v: number) => Math.max(-32768, Math.min(32767, Math.round(v))) + 0;
+
 const same = (a: PlayerInput, b: PlayerInput) =>
   a.buttons === b.buttons && a.press0 === b.press0 && a.press1 === b.press1 && a.moveX === b.moveX && a.moveY === b.moveY && a.aimX === b.aimX && a.aimY === b.aimY;
+
+/** Ticks of wizard positions kept for aim prediction (more than the window plus the history it looks at). */
+const POS_RING = 256;
+/** How many recent real inputs the world-point estimate may intersect. */
+const AIM_HISTORY = 24;
+/** Sampling delays (ticks between a peer reading its world and the tick its input is for) that are tried. */
+const MAX_SAMPLE_DELAY = 8;
+/** A sweep carries on for at most this many ticks, at most this fast (radians per tick). */
+const SWEEP_TICKS = 10, SWEEP_MAX = 0.12;
+
+/**
+ * How a remote seat's aim is guessed. 'world': the cursor stays on the same world point (or a
+ * steady sweep carries on). 'relative': the last relative aim repeats (the old way; for comparing).
+ */
+export type AimPrediction = 'world' | 'relative';
 
 /** A seat is gone for ticks from..until-1 (until is Infinity while nobody has taken it back). */
 export interface Gone { from: number; until: number }
@@ -79,6 +103,12 @@ export class RollbackSession extends LockstepSession {
   replayed = 0;
   /** Set while replaying, so the client can skip effects it already showed. */
   replaying = false;
+  /** How remote aim is guessed (only predictions change: confirmed ticks always run the real inputs). */
+  aimPrediction: AimPrediction = 'world';
+  /** Per tick in a ring: where each seat's wizard stood at the start of that tick (what the aim guess works from). */
+  private posTick = new Int32Array(POS_RING).fill(-1);
+  private posX: Float64Array;
+  private posY: Float64Array;
 
   constructor(world: World, net: Transport, seats: readonly number[], delay = 1, autoFlush = true, readonly window = 40) {
     super(world, net, seats, delay, autoFlush);
@@ -86,11 +116,23 @@ export class RollbackSession extends LockstepSession {
     this.snaps = Array.from({ length: window + 2 }, () => null);
     this.gone = seats.map(() => null);
     this.muted = seats.map(() => false);
+    this.posX = new Float64Array(POS_RING * seats.length);
+    this.posY = new Float64Array(POS_RING * seats.length);
   }
+
+  /**
+   * How good the guesses were, over real inputs that arrived for ticks already run: how many,
+   * how many were wrong (each wrong one rewinds), and the summed aim error in aim units.
+   */
+  readonly guesses = { checked: 0, wrong: 0, aimErr: 0 };
 
   protected onInput(t: number, p: number, input: PlayerInput): void {
     const ran = this.used.get(t);
-    if (ran && !same(ran[p], input)) this.rewindTo = Math.min(this.rewindTo, t);
+    if (!ran) return;
+    const g = this.guesses, x = ran[p];
+    g.checked++;
+    g.aimErr += Math.hypot(x.aimX - input.aimX, x.aimY - input.aimY);
+    if (!same(x, input)) { g.wrong++; this.rewindTo = Math.min(this.rewindTo, t); }
   }
 
   protected out(p: number): boolean { return this.muted[p] || this.gone[p]?.until === Infinity; }
@@ -171,7 +213,7 @@ export class RollbackSession extends LockstepSession {
   /** Start this (fresh) session inside a running match from a handover; our own seat plays from tick `at`. */
   startMidway(h: Handover, at: number): void {
     restore(this.world, h.snap);
-    this.inputs.clear(); this.used.clear(); this.hashes.clear(); this.snaps.fill(null);
+    this.inputs.clear(); this.used.clear(); this.hashes.clear(); this.snaps.fill(null); this.posTick.fill(-1);
     this.lastHash = [0, 0];
     const { first, rows } = decodeInputs(h.inputs);
     rows.forEach((row, k) => row.forEach((x, p) => { if (x) this.slot(first + k)[p] = x; }));
@@ -223,9 +265,80 @@ export class RollbackSession extends LockstepSession {
     if (real) return real;
     for (let k = t - 1; k >= Math.max(0, t - 120); k--) {
       const prev = this.inputs.get(k)?.[p];
-      if (prev) return { ...prev, press0: 0, press1: 0 };
+      if (!prev) continue;
+      const [aimX, aimY] = this.predictAim(t, p, k, prev);
+      return { ...prev, press0: 0, press1: 0, aimX, aimY };
     }
     return NO_INPUT;
+  }
+
+  /** Index into posX / posY of seat p's wizard at the start of tick t, or -1 if we don't have it. */
+  private posAt(t: number, p: number): number {
+    if (t < 0) return -1;
+    const r = t % POS_RING;
+    return this.posTick[r] === t ? r * this.seats.length + p : -1;
+  }
+
+  /**
+   * Seat p's aim for tick t, guessed from its last real input (tick k). Players aim with a cursor on
+   * the floor, so while they walk with the mouse still, the relative aim changes every tick and the
+   * point on the floor doesn't. Each real input pins that point to within half an aim unit (it was
+   * rounded), measured from where their wizard stood when they sampled it, `d` ticks before the
+   * tick it is for (their input delay, which we don't know: the d that explains the longest run of
+   * recent inputs wins). The intersection of those intervals is the guess, aimed at from where the
+   * wizard stands at tick t. When recent inputs don't fit a still point but turn steadily, the
+   * sweep carries on for a few ticks instead. These are only guesses: they never reach a confirmed
+   * tick, so they need not match between peers (Math.atan2 is fine here).
+   */
+  private predictAim(t: number, p: number, k: number, last: PlayerInput): [number, number] {
+    if (this.aimPrediction === 'relative') return [last.aimX, last.aimY];
+    const U = AIM_UNIT;
+    // 1. A still cursor.
+    let bestD = -1, bestN = 0, mx = 0, my = 0;
+    for (let d = 0; d <= MAX_SAMPLE_DELAY; d++) {
+      if (this.posAt(t - d, p) < 0) continue;
+      let x0 = -Infinity, x1 = Infinity, y0 = -Infinity, y1 = Infinity, n = 0;
+      for (let j = k; j > k - AIM_HISTORY; j--) {
+        const x = this.inputs.get(j)?.[p], q = this.posAt(j - d, p);
+        if (!x || q < 0) break;
+        const nx0 = Math.max(x0, this.posX[q] + (x.aimX - 0.5) * U), nx1 = Math.min(x1, this.posX[q] + (x.aimX + 0.5) * U);
+        const ny0 = Math.max(y0, this.posY[q] + (x.aimY - 0.5) * U), ny1 = Math.min(y1, this.posY[q] + (x.aimY + 0.5) * U);
+        if (nx0 > nx1 || ny0 > ny1) break; // the cursor moved before this input
+        x0 = nx0; x1 = nx1; y0 = ny0; y1 = ny1; n++;
+      }
+      if (n > bestN || (n > 0 && n === bestN && d === this.delay)) { bestD = d; bestN = n; mx = (x0 + x1) / 2; my = (y0 + y1) / 2; }
+    }
+    // 2. Aim that holds still relative to the wizard (a gamepad stick, or a cursor that follows):
+    // when that explains more recent inputs than a still point on the floor, repeat it (and on a tie,
+    // unless a sweep is under way: the aim just changed, and repeating it is the old, cautious guess).
+    let rel = 0;
+    for (let j = k; j > k - AIM_HISTORY; j--) {
+      const x = this.inputs.get(j)?.[p];
+      if (!x || x.aimX !== last.aimX || x.aimY !== last.aimY) break;
+      rel++;
+    }
+    if (rel > bestN) return [last.aimX, last.aimY];
+    // 3. A steady sweep (only when the aim is neither resting on the floor nor on the wizard).
+    if (bestN < 3 && rel < 3) {
+      const ang: number[] = [];
+      for (let j = k; j > k - 5; j--) {
+        const x = this.inputs.get(j)?.[p];
+        if (!x || (x.aimX === 0 && x.aimY === 0)) break;
+        ang.push(Math.atan2(x.aimY, x.aimX));
+      }
+      if (ang.length === 5) {
+        const dl: number[] = [];
+        for (let i = 0; i < 4; i++) { let v = ang[i] - ang[i + 1]; if (v > Math.PI) v -= 2 * Math.PI; if (v < -Math.PI) v += 2 * Math.PI; dl.push(v); }
+        const mean = (dl[0] + dl[1] + dl[2] + dl[3]) / 4;
+        if (Math.abs(mean) >= 0.01 && dl.every((v) => Math.abs(v - mean) <= 0.5 * Math.abs(mean))) {
+          const w = Math.max(-SWEEP_MAX, Math.min(SWEEP_MAX, mean)), a = ang[0] + w * Math.min(t - k, SWEEP_TICKS), r = Math.hypot(last.aimX, last.aimY);
+          return [clampAim(r * Math.cos(a)), clampAim(r * Math.sin(a))];
+        }
+      }
+    }
+    if (bestD < 0 || rel >= bestN) return [last.aimX, last.aimY];
+    const q = this.posAt(t - bestD, p);
+    return [clampAim((mx - this.posX[q]) / U), clampAim((my - this.posY[q]) / U)];
   }
 
   /** Every seat's input for tick t is real (or the seat is gone then). */
@@ -237,6 +350,10 @@ export class RollbackSession extends LockstepSession {
   private runTick(): void {
     const t = this.tick;
     this.snaps[t % this.snaps.length] = snapshotInto(this.world, this.snaps[t % this.snaps.length]);
+    // Where every wizard stands now (the aim guess works from it); a wizard's body slot is its seat.
+    const r = t % POS_RING, b = this.world.bodies;
+    this.posTick[r] = t;
+    this.seats.forEach((seat, p) => { this.posX[r * this.seats.length + p] = b.x[seat]; this.posY[r * this.seats.length + p] = b.y[seat]; });
     const ins = this.seats.map((_, p) => this.inputFor(t, p));
     this.used.set(t, ins);
     const all: PlayerInput[] = [];

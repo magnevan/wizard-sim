@@ -50,7 +50,7 @@ function raiseWall(w: World, owner: number, type: number, els: Uint8Array, x1: n
   for (let k = 0; k < MAX_WALLS; k++) {
     if (wl.type[k]) continue;
     wl.type[k] = type; wl.owner[k] = owner; wl.x1[k] = x1; wl.y1[k] = y1; wl.x2[k] = x2; wl.y2[k] = y2;
-    wl.hp[k] = wl.maxHp[k] = type === WALL.rock && stackOf(w, owner, PU.bedrock) ? hp * 1.5 : hp; wl.born[k] = w.clock[0]; wl.pulse[k] = 0;
+    wl.hp[k] = wl.maxHp[k] = type === WALL.rock && stackOf(w, owner, PU.bedrock) ? hp * 1.5 : hp; wl.born[k] = w.clock[0];
     wl.els.set(els, k * N_EL);
     return true;
   }

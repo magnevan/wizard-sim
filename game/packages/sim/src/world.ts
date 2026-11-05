@@ -178,8 +178,6 @@ export interface Missiles {
   lastHit: Int16Array;
   /** Payload flags (PF) and shape modifier (MOD_ID). */
   flags: Uint8Array; mod: Uint8Array;
-  /** Heal-stone: where it lands. */
-  tx: Float64Array; ty: Float64Array;
 }
 
 /** Things that sit in the world for a while: delayed blasts, geysers, healing springs, steam clouds. */
@@ -236,8 +234,6 @@ export interface Walls {
   els: Uint8Array;
   /** Tick it was raised (the oldest breaks first). */
   born: Int32Array;
-  /** Curtain: tick of the last pulse. */
-  pulse: Int32Array;
 }
 
 /** Shield + Force: a front that sweeps forward and hits each body once. */
@@ -399,7 +395,7 @@ function seats(n: number): Seats {
 function missiles(n: number): Missiles {
   return {
     alive: u8(n), x: f64(n), y: f64(n), vx: f64(n), vy: f64(n), life: i32(n), owner: new Int16Array(n), els: u8(n * N_EL),
-    scale: f64(n), r: f64(n), type: u8(n), pierce: u8(n), look: u8(n), lastHit: new Int16Array(n), tx: f64(n), ty: f64(n),
+    scale: f64(n), r: f64(n), type: u8(n), pierce: u8(n), look: u8(n), lastHit: new Int16Array(n),
     flags: u8(n), mod: u8(n),
   };
 }
@@ -505,7 +501,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
     surf: { kind: u8(cells), life: i32(cells) },
     walls: {
       type: u8(MAX_WALLS), x1: f64(MAX_WALLS), y1: f64(MAX_WALLS), x2: f64(MAX_WALLS), y2: f64(MAX_WALLS), hp: f64(MAX_WALLS), maxHp: f64(MAX_WALLS),
-      owner: new Int16Array(MAX_WALLS), els: u8(MAX_WALLS * N_EL), born: i32(MAX_WALLS), pulse: i32(MAX_WALLS),
+      owner: new Int16Array(MAX_WALLS), els: u8(MAX_WALLS * N_EL), born: i32(MAX_WALLS),
     },
     waves: {
       alive: u8(MAX_WAVES), x: f64(MAX_WAVES), y: f64(MAX_WAVES), dx: f64(MAX_WAVES), dy: f64(MAX_WAVES), half: f64(MAX_WAVES), travelled: f64(MAX_WAVES),

@@ -398,7 +398,6 @@ export function spawnMissile(w: World, src: number, p: Payload, dx: number, dy: 
     m.life[j] = T(type === 2 ? 0.6 : SHAPES.missileLife);
     m.look[j] = p.look; m.flags[j] = flagsOf(p); m.mod[j] = modId(p.mod);
     m.els.set(p.counts.subarray(p.at * N_EL, p.at * N_EL + N_EL), j * N_EL);
-    m.tx[j] = tx; m.ty[j] = ty;
     if (type === 3) { // a lobbed heal-stone: flies to its target point over everything
       const ddx = tx - m.x[j], ddy = ty - m.y[j], d = len(ddx, ddy);
       const flight = Math.max(T(0.35), Math.round((d / 9) * 60));

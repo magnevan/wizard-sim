@@ -14,7 +14,7 @@
  */
 import { perkOf } from './art/perks';
 import {
-  ARCHETYPES, ARENA, KIND, MAX_SEATS, TEAM, devClearEnemies, devHeal, devRefillRunes, devSkipLull, devSpawnEnemy,
+  ARCHETYPES, KIND, MAX_SEATS, TEAM, devClearEnemies, devHeal, devRefillRunes, devSkipLull, devSpawnEnemy,
   devStartWave, devStopWaves, devRestartRun, grant, EL, N_PU, PU, findTunable, overrides, tunables, tuningHash, hex, type Tunable, type World,
 } from '@wizard-sim/sim';
 import type { Camera } from './camera';
@@ -160,7 +160,7 @@ export class TunePanel {
     const w = this.world;
     let x = w.bodies.x[0] + 3, y = w.bodies.y[0];
     if (this.cursor) ({ x, y } = this.camera.screenToWorld(this.cursor.x, this.cursor.y));
-    const hx = ARENA.w / 2 - 0.6, hy = ARENA.h / 2 - 0.6;
+    const hx = w.dims.w / 2 - 0.6, hy = w.dims.h / 2 - 0.6;
     devSpawnEnemy(w, this.arch, Math.max(-hx, Math.min(hx, x)), Math.max(-hy, Math.min(hy, y)));
     this.cheat();
   }

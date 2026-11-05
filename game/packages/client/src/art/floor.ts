@@ -9,18 +9,30 @@
  * darker toward the edges. Lights from spells are added on top each frame (art/lights.ts).
  */
 import { Texture } from 'pixi.js';
-import { ARENA } from '@wizard-sim/sim';
 import { FY, PPU } from '../camera';
 import * as X from './px';
 import { clamp, lerp, rand } from './util';
 
-/** Margin round the arena, world units: enough to fill a 1080p view at 4x and 1280x800 at 2x (the camera sits a little low). */
-const M = 19;
-export const FLOOR = {
-  OX: (ARENA.w / 2 + M) * PPU,
-  OY: Math.ceil((ARENA.h / 2 + M) * PPU * FY),
-  W: (ARENA.w + 2 * M) * PPU,
-  H: Math.ceil((ARENA.h / 2 + M) * PPU * FY) * 2,
+/**
+ * Margin round the arena, world units: for an arena that fits the view, enough to fill a 1080p view
+ * at 4x and 1280x800 at 2x (the camera sits a little low); one the camera pans over shows at most
+ * a few units past its edge (camera.ts clamps), so it needs less.
+ */
+const marginFor = (aw: number): number => (aw > 30 ? 14 : 19);
+/** The floor texture's layout for the current world (set by floorTexture). */
+export const FLOOR = { OX: 0, OY: 0, W: 0, H: 0 };
+
+/**
+ * How ruined the paving is at a world point, 0 (whole) to about 0.5: survive's big arena is
+ * whole in the keep, on the causeways and in the gate funnels' mouths, and breaks up across the
+ * field between them, so the zones read from the floor too.
+ */
+export type Ruin = (x: number, y: number) => number;
+export const surviveRuin: Ruin = (x, y) => {
+  const keep = Math.max(Math.abs(x) - 8.5, (Math.abs(y) - 6) * 1.4, (Math.abs(x) + Math.abs(y) - 12.6) * 0.8);
+  const causeway = Math.max(Math.abs(y) - 2.6, 11 - Math.abs(x), Math.abs(x) - 19);
+  const near = Math.min(keep, causeway);
+  return clamp((near - 0.6) / 7, 0, 0.5);
 };
 
 function vnoise(x: number, y: number, s: number): number {
@@ -70,11 +82,15 @@ function slabPixel(wx: number, wy: number, st: ReturnType<typeof flagstone>, pz:
   return col;
 }
 
-export function floorTexture(): Texture {
+/** Paints the floor for an arena of aw x ah world units (ruin: how broken the paving is where, for survive). */
+export function floorTexture(aw: number, ah: number, ruin?: Ruin): Texture {
+  const M = marginFor(aw);
+  FLOOR.OX = (aw / 2 + M) * PPU; FLOOR.OY = Math.ceil((ah / 2 + M) * PPU * FY);
+  FLOOR.W = (aw + 2 * M) * PPU; FLOOR.H = Math.ceil((ah / 2 + M) * PPU * FY) * 2;
   const { W, H, OX, OY } = FLOOR;
   const { c, x: g } = X.canvas(W, H);
   const img = g.createImageData(W, H), d = img.data;
-  const AW = ARENA.w / 2 * PPU, AH = ARENA.h / 2 * PPU * FY; // arena half sizes in art px
+  const AW = aw / 2 * PPU, AH = ah / 2 * PPU * FY; // arena half sizes in art px
   const KX = 6, KY = 4, KF = 3; // kerb width (sides), depth (north/south) and its front face (south)
   for (let y = 0; y < H; y++) {
     const wy = y - OY;
@@ -93,8 +109,10 @@ export function floorTexture(): Texture {
       const lx = wx + AW, ly = wy + AH;
       let shade = 1;
       if (out < 0) {
-        // the plaza
-        col = slabPixel(Math.floor(lx), Math.floor(ly), flagstone(Math.floor(lx), Math.floor(ly)), 0, col) ?? col;
+        // the plaza (in survive's field, breaking up into grass between the paved zones)
+        // (a slab is ruined with a chance that grows with the ruin there, so the paving thins out gradually)
+        const st = flagstone(Math.floor(lx), Math.floor(ly)), rz = ruin ? ruin(wx / PPU, wy / (PPU * FY)) : 0;
+        col = slabPixel(Math.floor(lx), Math.floor(ly), st, rz > 0 && rand(st.id, 41) < rz * 1.5 ? rz : 0, col) ?? col;
         // the kerb throws a short shadow onto the slabs (light from the upper left)
         if (ly < 3 || lx < 3) shade = 0.72;
       } else if (oyS >= KY && oyS < KY + KF && ox < KX) {

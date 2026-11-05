@@ -21,10 +21,24 @@ export const MAX_WALLS = 160; // four players at structures.wallsPerOwner (40) e
 export const MAX_WAVES = 8;
 export const MAX_DEVICES = 48;
 export const QUEUE_MAX = 5;
-export const GRID_W = Math.round(ARENA.w / CELL);
-export const GRID_H = Math.round(ARENA.h / CELL);
 
 export { ARENA };
+
+/**
+ * A world's play area: its size in world units (centred on the origin) and its surface / nav grid
+ * in CELL-sized cells. Fixed by the room when the world is made, so it is not state: two worlds of
+ * the same room always share it, and the grids' arrays (which are state) are sized from it. The
+ * Sanctum and the Arena use ARENA, as before, so their layout and the golden hash are unchanged.
+ */
+export interface Dims { readonly w: number; readonly h: number; readonly gw: number; readonly gh: number }
+const dimsOf = (w: number, h: number): Dims => ({ w, h, gw: Math.round(w / CELL), gh: Math.round(h / CELL) });
+/** Survive's arena: about three and a half times the Arena's floor, too big to fit on screen (the camera follows). */
+export const SURVIVE_ARENA = { w: 44, h: 30 } as const;
+export const ROOM_DIMS: Readonly<Record<Room, Dims>> = {
+  sanctum: dimsOf(ARENA.w, ARENA.h), arena: dimsOf(ARENA.w, ARENA.h), survive: dimsOf(SURVIVE_ARENA.w, SURVIVE_ARENA.h),
+};
+/** The most cells any room's grid has (nav's scratch heap is sized for it). */
+export const MAX_CELLS = Math.max(...Object.values(ROOM_DIMS).map((d) => d.gw * d.gh));
 
 export const KIND = { none: 0, wizard: 1, dummy: 2, enemy: 3, double: 4 } as const;
 export const TEAM = { players: 1, enemies: 2 } as const;
@@ -303,6 +317,8 @@ export interface Run {
 }
 
 export interface World {
+  /** The play area (not state: fixed by the room, see Dims). */
+  dims: Dims;
   /** [0] = tick, [1] = seed. */
   clock: Uint32Array;
   rng: RngState;
@@ -371,28 +387,53 @@ function run(): Run {
 /** The owner of the arena's own rock (survive's cover and gates): it never times out or breaks. */
 export const TERRAIN = -2;
 
+/** A segment and its mirror images across x = 0 and / or y = 0 (the survive arena is symmetric both ways). */
+type Seg = readonly [number, number, number, number];
+const mirrored = (segs: Seg[], mx: boolean, my: boolean): Seg[] => {
+  const out: Seg[] = [];
+  for (const [x1, y1, x2, y2] of segs) {
+    out.push([x1, y1, x2, y2]);
+    if (mx) out.push([-x1, y1, -x2, y2]);
+    if (my) out.push([x1, -y1, x2, -y2]);
+    if (mx && my) out.push([-x1, -y1, -x2, -y2]);
+  }
+  return out;
+};
+
 /**
- * The survive arena's static rock, as segments: funnels in front of the four gates (a chokepoint to
- * hold or wall shut), L-shaped cover on the diagonals (archer cover, ricochet angles) and two
- * pillars flanking the central plaza where the altars rise.
+ * The survive arena's static rock (44 x 30 u), as segments, in zones from the middle out:
+ *
+ *   the keep     a walled courtyard (17 x 12 u) round the altar plaza, its corners cut, with a
+ *                3.6 u door on each axis: the place to hold, and four doors to watch or wall shut.
+ *                Two pillars inside screen the plaza from the west and east doors.
+ *   causeways    west and east, a 4.4 u wide walled lane, 5 u long, from the gate to the keep's door:
+ *                a long, narrow approach to fight down (a wave spray or a rock fills it).
+ *   gates        six V-shaped funnels at the far edges (west, east, and two each north and south),
+ *                each with its portal at the back: enemies leave them by a 2.8-3 u mouth, 12-14 u
+ *                from the keep, so a wave arrives over several seconds.
+ *   the field    the ring of open ground between the keep and the gates: screens in front of the
+ *                north and south doors and an L of cover in each corner (archer cover, ricochet angles).
+ *
+ * 40 segments, so players keep 120 of the 160 wall slots.
  */
-export const SURVIVE_ROCK: readonly (readonly [number, number, number, number])[] = [
-  // gate funnels: west, east, north, south (a 2.8 u gap in each)
-  [-9.2, -3.8, -9.2, -1.4], [-9.2, 1.4, -9.2, 3.8],
-  [9.2, -3.8, 9.2, -1.4], [9.2, 1.4, 9.2, 3.8],
-  [-4.0, -5.4, -1.4, -5.4], [1.4, -5.4, 4.0, -5.4],
-  [-4.0, 5.4, -1.4, 5.4], [1.4, 5.4, 4.0, 5.4],
-  // L-shaped cover on the diagonals, corners pointing out
-  [-7.6, -4.2, -5.6, -4.2], [-7.6, -4.2, -7.6, -2.6],
-  [7.6, -4.2, 5.6, -4.2], [7.6, -4.2, 7.6, -2.6],
-  [-7.6, 4.2, -5.6, 4.2], [-7.6, 4.2, -7.6, 2.6],
-  [7.6, 4.2, 5.6, 4.2], [7.6, 4.2, 7.6, 2.6],
+export const SURVIVE_ROCK: readonly Seg[] = [
+  // the keep: one cut corner (three segments) per quadrant, doors on the axes
+  ...mirrored([[-8.5, -1.8, -8.5, -3.6], [-8.5, -3.6, -6.2, -6], [-6.2, -6, -1.8, -6]], true, true),
   // pillars flanking the plaza
-  [-5.2, -0.9, -5.2, 0.9], [5.2, -0.9, 5.2, 0.9],
+  [-5.2, -0.8, -5.2, 0.8], [5.2, -0.8, 5.2, 0.8],
+  // causeways, west and east
+  ...mirrored([[-16.5, -2.2, -11.5, -2.2], [-16.5, 2.2, -11.5, 2.2]], true, false),
+  // gate funnels: west and east (the walls run a little past the edge, so nothing slips round their ends)
+  ...mirrored([[-22.4, -5.4, -18.8, -1.5], [-22.4, 5.4, -18.8, 1.5]], true, false),
+  // gate funnels: north-west, north-east, south-west, south-east
+  ...mirrored([[-14.6, -15.4, -12.4, -11.6], [-7.4, -15.4, -9.6, -11.6]], true, true),
+  // screens before the north and south doors
+  [-2.2, -9.5, 2.2, -9.5], [-2.2, 9.5, 2.2, 9.5],
+  // corner cover: an L in each quadrant, its corner pointing out
+  ...mirrored([[-17.5, -9, -15, -9], [-17.5, -9, -17.5, -7]], true, true),
 ];
-/** Where survive's portals open: behind each gate. */
-export const SURVIVE_GATES: readonly (readonly [number, number])[] = [[-11, 0], [11, 0], [0, -7.1], [0, 7.1]];
-/** The altars' spots in the plaza. */
+/** Where survive's portals open: at the back of each gate funnel. */
+export const SURVIVE_GATES: readonly (readonly [number, number])[] = [[-21, 0], [21, 0], [-11, -13.8], [11, -13.8], [-11, 13.8], [11, 13.8]];
 export const ALTAR_SPOTS: readonly (readonly [number, number])[] = [[-2.6, -0.4], [0, 2.1], [2.6, -0.4]];
 
 /** Max runes of element `id` for seat `i`: the config, plus the seat's survive power-ups. */
@@ -413,10 +454,12 @@ const DUMMIES = [[-6, -4], [0, -5], [6, -4]] as const;
 export type Room = 'sanctum' | 'arena' | 'survive';
 
 export function createWorld(seed: number, players: number, opts: { dummies?: boolean; room?: Room } = {}): World {
+  const dims = ROOM_DIMS[opts.room ?? 'sanctum'], cells = dims.gw * dims.gh;
   const w: World = {
+    dims,
     clock: new Uint32Array([0, seed >>> 0]), rng: createRng(seed),
     bodies: bodies(MAX_BODIES), seats: seats(MAX_SEATS), missiles: missiles(MAX_MISSILES), zones: zones(MAX_ZONES),
-    surf: { kind: u8(GRID_W * GRID_H), life: i32(GRID_W * GRID_H) },
+    surf: { kind: u8(cells), life: i32(cells) },
     walls: {
       type: u8(MAX_WALLS), x1: f64(MAX_WALLS), y1: f64(MAX_WALLS), x2: f64(MAX_WALLS), y2: f64(MAX_WALLS), hp: f64(MAX_WALLS), maxHp: f64(MAX_WALLS),
       owner: new Int16Array(MAX_WALLS), els: u8(MAX_WALLS * N_EL), born: i32(MAX_WALLS), pulse: i32(MAX_WALLS),
@@ -429,7 +472,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
       state: i32(4), px: f64(MAX_PORTALS), py: f64(MAX_PORTALS), arch: u8(MAX_PORTALS),
       left: i32(MAX_PORTALS), next: i32(MAX_PORTALS), total: i32(MAX_PORTALS),
     },
-    nav: { blocked: u8(GRID_W * GRID_H), field: i32(MAX_SEATS * GRID_W * GRID_H), timer: i32(1) },
+    nav: { blocked: u8(cells), field: i32(MAX_SEATS * cells), timer: i32(1) },
     devices: {
       type: u8(MAX_DEVICES), x: f64(MAX_DEVICES), y: f64(MAX_DEVICES), x2: f64(MAX_DEVICES), y2: f64(MAX_DEVICES), owner: new Int16Array(MAX_DEVICES),
       els: u8(MAX_DEVICES * N_EL), timer: i32(MAX_DEVICES), life: i32(MAX_DEVICES), charges: u8(MAX_DEVICES), phase: f64(MAX_DEVICES),

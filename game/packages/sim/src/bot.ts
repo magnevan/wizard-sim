@@ -59,7 +59,7 @@ export function botInput(w: World, seat: number, mem: BotMemory): PlayerInput {
     const a = (seat + w.enc.state[1]) % r.offer.length, mx = r.ax[a] - b.x[seat], my = r.ay[a] - b.y[seat], ml = len(mx, my);
     return quantize({ ...NO_INPUT, moveX: ml > 0.2 ? (mx / ml) * 127 : 0, moveY: ml > 0.2 ? (my / ml) * 127 : 0, aimX: 32, aimY: 0 });
   }
-  if (foe < 0) { // nothing to fight: drift back toward the middle
+  if (foe < 0 || (r && fd > 14)) { // nothing to fight (near, in survive's big arena): drift back toward the middle
     const mx = -b.x[seat], my = -b.y[seat], ml = len(mx, my);
     return quantize({ ...NO_INPUT, moveX: ml > 1 ? (mx / ml) * 80 : 0, moveY: ml > 1 ? (my / ml) * 80 : 0, aimX: 32, aimY: 0 });
   }
@@ -69,8 +69,8 @@ export function botInput(w: World, seat: number, mem: BotMemory): PlayerInput {
   let mx = 0, my = 0;
   if (fd < 4) { mx = -ux; my = -uy; } else if (fd > 7) { mx = ux; my = uy; } else { mx = -uy * 0.6; my = ux * 0.6; }
   // Stay off the arena's edge.
-  if (Math.abs(b.x[seat]) > 10) mx = -Math.sign(b.x[seat]);
-  if (Math.abs(b.y[seat]) > 6) my = -Math.sign(b.y[seat]);
+  if (Math.abs(b.x[seat]) > w.dims.w / 2 - 2) mx = -Math.sign(b.x[seat]);
+  if (Math.abs(b.y[seat]) > w.dims.h / 2 - 2) my = -Math.sign(b.y[seat]);
 
   let buttons = 0, press0 = 0;
   if (mem.rest > 0) mem.rest--;

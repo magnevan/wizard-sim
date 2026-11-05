@@ -115,7 +115,7 @@ Two wizards on one machine, the Atlas rules driving real casts, the Pixel Battle
 
 1. ~~The cast pipeline~~, ~~spell shapes, statuses, surfaces~~, ~~structures~~, ~~enemies and waves~~ (steps A–C).
 2. **The look** (step D): port the Pixel Battlefield actors, floor and HUD and the VFX gallery's effects. In progress.
-3. **Local co-op** (step E): gamepads join seats (done in the sim and in `gamepad.ts`); wire them into the loop, and a camera that frames everyone.
+3. **Local co-op** (step E): gamepads join seats (done in the sim and in `gamepad.ts`); wire them into the loop. The camera that frames everyone is done (`camera.ts` follows the living wizards in an arena bigger than the view, such as Survive's).
 4. The rules stay as the generated copy of the Atlas's `rules-c.js` (Claude's call: the Atlas is where the user reviews rules, so one source is simpler than a TypeScript port; the typed wrapper covers what the game needs).
 
 Open:

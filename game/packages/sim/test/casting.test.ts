@@ -193,7 +193,7 @@ describe('Area and Place', () => {
   it('a flood leaves water on the floor, and a lightning strike on it surges', () => {
     const { w, d, dummy } = range(4);
     d.queue('water').place(4, 0);
-    expect(w.surf.kind[cellAt(4, 0)]).toBe(SURF.water);
+    expect(w.surf.kind[cellAt(w, 4, 0)]).toBe(SURF.water);
     const before = w.bodies.hp[dummy];
     d.queue('lightning').place(4, 0);
     expect(w.bodies.hp[dummy]).toBeLessThan(before);
@@ -202,9 +202,9 @@ describe('Area and Place', () => {
   it('cold on water makes walkable ice; fire on ice melts it', () => {
     const { w, d } = range(8);
     d.queue('water').place(3, 3).queue('cold').place(3, 3);
-    expect(w.surf.kind[cellAt(3, 3)]).toBe(SURF.ice);
+    expect(w.surf.kind[cellAt(w, 3, 3)]).toBe(SURF.ice);
     d.queue('fire').place(3, 3);
-    expect(w.surf.kind[cellAt(3, 3)]).toBe(SURF.water);
+    expect(w.surf.kind[cellAt(w, 3, 3)]).toBe(SURF.water);
   });
 
   it('an earthquake knocks down everyone around you', () => {

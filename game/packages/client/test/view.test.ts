@@ -76,4 +76,22 @@ describe('view', async () => {
       expect(view.debug()).toContain('deaths 0');
     }
   }, 60000);
+
+  // the big survive arena: the view repaints its floor and effect canvases for it, follows the bots, and back to the Sanctum
+  test('survive draws, following the wizards', async () => {
+    const { botInput, newBotMemory, replaceWorld } = await import('@wizard-sim/sim');
+    const view = new WorldView();
+    view.resize(1920, 1080);
+    const w = createWorld(7, 2, { room: 'survive' }), mem = [newBotMemory(), newBotMemory()];
+    let now = 0;
+    for (let t = 0; t < 60 * 14; t++) {
+      view.beforeStep(w); step(w, [botInput(w, 0, mem[0]), botInput(w, 1, mem[1]), NO_INPUT, NO_INPUT]); view.afterStep(w);
+      if (t % 4 === 0) { now += 66; view.draw(w, 0.5, now); }
+    }
+    expect(view.debug()).toContain('follow');
+    expect(view.camera.following).toBe(true);
+    replaceWorld(w, createWorld(7, 1));
+    view.draw(w, 0, now + 16);
+    expect(view.camera.following).toBe(false);
+  }, 60000);
 });

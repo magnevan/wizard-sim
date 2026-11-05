@@ -11,7 +11,7 @@
  *     A Yank (arcane hook), enough damage, a stun or a freeze breaks the hold.
  */
 import { ARCHETYPES, ATTACK, ARCH } from './archetypes';
-import { ARENA, STRUCT, T } from './config';
+import { STRUCT, T } from './config';
 import { EL, N_EL } from './elements';
 import { burstEvent, disc, spawnMissile, stored, type Payload } from './effects';
 import { angleDiff, len } from './geom';
@@ -216,7 +216,7 @@ function grab(w: World, i: number): void {
   // Broken free by damage, or yanked away (a big pull on the victim).
   if (b.hp[i] <= b.grabHp[i] - g.breakDamage || len(b.kx[t], b.ky[t]) > 6) { release(w, i, 'Broke free!'); return; }
   // Drag toward the nearest edge.
-  const ex = b.x[i] < 0 ? -ARENA.w / 2 + EDGE_MARGIN : ARENA.w / 2 - EDGE_MARGIN, ey = b.y[i] < 0 ? -ARENA.h / 2 + EDGE_MARGIN : ARENA.h / 2 - EDGE_MARGIN;
+  const hw = w.dims.w / 2, hh = w.dims.h / 2, ex = b.x[i] < 0 ? -hw + EDGE_MARGIN : hw - EDGE_MARGIN, ey = b.y[i] < 0 ? -hh + EDGE_MARGIN : hh - EDGE_MARGIN;
   const toX = Math.abs(ex - b.x[i]) < Math.abs(ey - b.y[i]);
   const dx = toX ? Math.sign(ex - b.x[i]) : 0, dy = toX ? 0 : Math.sign(ey - b.y[i]);
   const atEdge = toX ? Math.abs(ex - b.x[i]) < 0.3 : Math.abs(ey - b.y[i]) < 0.3;

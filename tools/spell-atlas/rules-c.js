@@ -74,9 +74,9 @@
   // aura: the mix inside a Sigil + Self aura; coat: the same when Earth makes it a bulldoze.
   const MIX = [
     { id: 'scald', els: ['water', 'fire'], trait: 'Scald', hit: 'scalds, and leaves a mist that blocks sight', aura: ['Steam veil', 'the mist and the flames make a scalding steam around {w} that hides {w} from enemies'], coat: 'whoever is shoved is scalded', self: 'The steam scalds {w}, but the mist hides {w}.',
-      titles: { force: 'Scalding spray', area: 'Steam burst', place: 'Steam cloud', conjure: 'Scalding swing' } },
+      titles: { force: 'Scalding spray', area: 'Steam burst', place: 'Steam cloud', conjure: 'Scalding burst' } },
     { id: 'freeze', els: ['water', 'cold'], trait: 'Freeze', hit: 'freezes soaked targets solid; frozen targets are brittle and shatter from a heavy hit', aura: ['Freezing mist', 'enemies the mist soaks freeze solid in the cold around {w}'], coat: 'soaked enemies freeze solid as they are shoved', self: '{W} freeze solid for a moment (a heavy hit would shatter {w}).',
-      titles: { force: 'Ice shards', area: 'Freezing splash', place: 'Ice sheet', conjure: 'Freezing swing' },
+      titles: { force: 'Ice shards', area: 'Freezing splash', place: 'Ice sheet', conjure: 'Freezing burst' },
       // A freezing spray was too strong, so as Force the mix changes shape: shards, not a cone.
       forceText: 'A volley of jagged ice shards along your aim. Each shard pierces and chills; enough of them freeze a target, and a frozen target shatters from a heavy hit.' },
   ];
@@ -178,8 +178,8 @@
     fire: ['Flame sword', 'A blade that burns.'],
     cold: ['Frost spear', 'A long spear with a chilling thrust.'],
   };
-  const SWING = { earth: 'Heavy swing', arcane: 'Arcane swing', life: 'Healing swing', lightning: 'Shock swing', water: 'Soaking swing', fire: 'Flaming swing', cold: 'Frost swing' };
-  const swing = (f) => () => [SWING[f], 'One swing of your staff, imbued with the queue, as in Magicka. Nothing stays in your hand: add Sigil for a conjured weapon, or Shield for a defensive one.'];
+  const SWING = { earth: 'Stone burst', arcane: 'Arcane burst', life: 'Healing burst', lightning: 'Shock burst', water: 'Water burst', fire: 'Fire burst', cold: 'Frost burst' };
+  const swing = (f) => () => [SWING[f], 'Imbue your staff with the queue and release it, as in Magicka: a burst of every queued element in a short cone in front of you (about 2.5 units, a little more per extra rune), at full spell power. Nothing stays in your hand: add Sigil for a conjured weapon, or Shield for a defensive one.'];
   const glyphName = (o) => o.sub ? ELEMENTS[o.sub].name + ' ' : '';
 
   const CELLS = {
@@ -289,7 +289,7 @@
     ['area', 'Area', 'Shift+RMB tap', 'around you'],
     ['place', 'Place', 'Shift+RMB hold', 'at the cursor (hold, let go; or drag)'],
     ['self', 'Self', 'MMB / Space', 'on you, or on the ally under the cursor'],
-    ['conjure', 'Weapon', 'Shift+LMB', 'a conjured weapon, or one imbued swing'],
+    ['conjure', 'Weapon', 'Shift+LMB', 'a conjured weapon, or one imbued burst'],
   ];
 
   const names = (els) => els.map((e) => ELEMENTS[e].name);
@@ -391,7 +391,7 @@
       if (cast === 'place') return `${lead}When it goes off, whatever it hits ${verb}.${shape}`;
       return `${lead}Whatever it hits ${verb}.${shape}`;
     }
-    if (cast === 'conjure') return `Whatever the swing hits ${verb}.`;
+    if (cast === 'conjure') return `Whatever the burst hits ${verb}.`;
     return `Whatever it hits ${verb}.${shape}`;
   }
 

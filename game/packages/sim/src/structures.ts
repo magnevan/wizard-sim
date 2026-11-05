@@ -20,8 +20,8 @@
  */
 import { compile, WALL, type SpellSpec } from './compile';
 import { BODY, RHYTHM, SHAPES, STRUCT, T } from './config';
-import { EL, N_EL, elementName, queueFromCounts } from './elements';
-import { burstEvent, channelTick, fireSpell, hit, hitOpts, nearest, payloadOf, stored } from './effects';
+import { EL, N_EL, queueFromCounts } from './elements';
+import { burstEvent, channelTick, fireSpell, heldBlow, hit, hitOpts, nearest, payloadOf, stored } from './effects';
 import { len } from './geom';
 import { HIT_KIND, addKnock, setHitKind } from './hit';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
@@ -214,13 +214,11 @@ export function spawnDouble(w: World, src: number, face: number, hp = STRUCT.dou
   return i;
 }
 
-/** A swing with your conjured weapon: its element's swing, at its reach (the hook yanks). Returns false without one. */
+/** A Strike with your conjured weapon (effects.ts heldBlow). Returns false without one. */
 export function weaponSwing(w: World, src: number, face: number): boolean {
   const s = w.seats;
   if (!s.weapon[src] || s.weaponUses[src] <= 0) return false;
-  const el = elementName(s.weapon[src]);
-  const spec = compile(queueFromCounts(s.weaponEls, src), 'conjure');
-  fireSpell(w, src, spec, face, 0, 0, 0, { reach: STRUCT.reach[el] ?? 1.8, yank: el === 'arcane' });
+  heldBlow(w, src, face, 'strike');
   if (--s.weaponUses[src] <= 0) s.weapon[src] = 0;
   return true;
 }

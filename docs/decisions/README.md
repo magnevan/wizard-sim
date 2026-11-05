@@ -11,7 +11,7 @@ Append-only. Each entry records the date, the decision, why it was made, and the
 - **Shield and walls:** [The overnight drafts, reviewed](#2026-11-04-the-overnight-drafts-reviewed-see-explorations2026-11-04-overnight-draftsmd) (Model A) · [Play-test notes, round 2](#2026-11-04-play-test-notes-round-2-explorations2026-11-04-playtest-2md) · [Play-test round 2, answers](#2026-11-05-play-test-round-2-answers-and-notes-811) · [Rings, wall lifetime, Self on allies](#2026-11-05-rings-wall-lifetime-self-on-allies)
 - **Sigil, devices, the Double:** [Sigil's identity](#2026-11-04-sigils-identity-see-explorations2026-11-04-sigil-identity-and-buffsmd) · [The look rule, ice shards, turret draw](#2026-11-04-the-look-rule-ice-shards-turret-draw-the-users-feedback-on-the-vfx-gallery-and-pixel-battlefield-pass-3) · [Play-test notes, round 1](#2026-11-04-play-test-notes-round-1-the-users-first-session-with-the-build) · [Play-test round 2, answers](#2026-11-05-play-test-round-2-answers-and-notes-811) (turrets)
 - **Life and support:** [The overnight drafts, reviewed](#2026-11-04-the-overnight-drafts-reviewed-see-explorations2026-11-04-overnight-draftsmd) (L3) · [Grammar v2; wards for support](#2026-11-05-grammar-v2-in-the-game-wards-for-support) · [Life spells, the size rule](#2026-11-05-life-spells-the-size-rule-the-inert-audits-life-group) · [Every element in a heal lends its resistance](#2026-11-05-every-element-in-a-heal-lends-its-resistance-guard-ties-settled)
-- **Weapons and guards:** [Weapons review, round 1](#2026-11-05-weapons-review-round-1-explorations2026-11-05-weapons-review-1md) · [Grammar v2 in the game](#2026-11-05-grammar-v2-in-the-game-wards-for-support) · [Round-2 weapons and guards built](#2026-11-05-round-2-weapons-and-guards-built-into-the-game-on-the-recommendations-pending-the-users-round-2-ratings) · [Round-2 ratings built](#2026-11-05-round-2-ratings-built-new-retreats-and-passives-the-arcane-wand-mend-carrying-slows-you) · [How elements mix in guards](#2026-11-05-how-elements-mix-in-guards-merged-with-the-users-identities) · [Mixing ratings](#2026-11-05-mixing-ratings-every-rune-scales-the-prism-mixes-its-return) · [Hyperbolic resistance](#2026-11-05-guard-resistance-is-hyperbolic) · [The Prism stores and Lances](#2026-11-05-the-prism-stores-and-lances-mend-and-siphon-take-their-extras) · [Round 4 ratings](#2026-11-05-round-4-ratings-the-lance-prism-is-adopted) · [Guard ties settled](#2026-11-05-every-element-in-a-heal-lends-its-resistance-guard-ties-settled)
+- **Weapons and guards:** [Weapons review, round 1](#2026-11-05-weapons-review-round-1-explorations2026-11-05-weapons-review-1md) · [Grammar v2 in the game](#2026-11-05-grammar-v2-in-the-game-wards-for-support) · [Round-2 weapons and guards built](#2026-11-05-round-2-weapons-and-guards-built-into-the-game-on-the-recommendations-pending-the-users-round-2-ratings) · [Round-2 ratings built](#2026-11-05-round-2-ratings-built-new-retreats-and-passives-the-arcane-wand-mend-carrying-slows-you) · [How elements mix in guards](#2026-11-05-how-elements-mix-in-guards-merged-with-the-users-identities) · [Mixing ratings](#2026-11-05-mixing-ratings-every-rune-scales-the-prism-mixes-its-return) · [Hyperbolic resistance](#2026-11-05-guard-resistance-is-hyperbolic) · [The Prism stores and Lances](#2026-11-05-the-prism-stores-and-lances-mend-and-siphon-take-their-extras) · [Round 4 ratings](#2026-11-05-round-4-ratings-the-lance-prism-is-adopted) · [Guard ties settled](#2026-11-05-every-element-in-a-heal-lends-its-resistance-guard-ties-settled) · [Weapon blows fixed; the imbued burst](#2026-11-05-weapon-blows-fixed-the-imbued-swing-becomes-a-burst)
 - **Visuals and deaths:** [The look rule](#2026-11-04-the-look-rule-ice-shards-turret-draw-the-users-feedback-on-the-vfx-gallery-and-pixel-battlefield-pass-3) · [Play-test notes, round 1](#2026-11-04-play-test-notes-round-1-the-users-first-session-with-the-build) · [Deaths for every enemy](#2026-11-05-deaths-for-every-enemy)
 - **Engine and stack:** [Prototype stack](#2026-11-03-prototype-stack-provisional-the-user-can-veto) · [Engine phase starts](#2026-11-04-engine-phase-starts) · [Engine stack](#2026-11-04-engine-stack-the-users-answers-on-the-engine-choice-page)
 - **Online and netcode:** [Online co-op, first route](#2026-11-04-online-co-op-first-route) · [Network test, drop-out and rejoin](#2026-11-04-network-test-drop-out-and-rejoin) · [The host tunes online matches](#2026-11-05-the-host-tunes-online-matches) · [Smoother remote players online](#2026-11-05-smoother-remote-players-online-the-two-fixes-approved-on-2026-11-04) · [Survive grows to 48 x 34 …; a stalled page](#2026-11-05-survive-grows-to-48-x-34-guards-read-from-behind-a-stalled-page-no-longer-drops-the-others) · [Netcode is rollback](#2026-11-05-netcode-is-rollback-recorded-after-the-fact)
@@ -537,3 +537,37 @@ The user's first answers on the Survive Review page (`tools/survive-review`), bu
 - **Power-up ids are renumbered** (charm 7, clockwork 8, echo 9, glass 10; `N_PU` 11). That's fine because `world.run` is only ever built fresh.
 - **Not changed,** because they're under discussion: Echo, Wellspring, the rune power-ups and the wave list.
 - Golden hash unchanged (`9382eb5b`): the scripted run is in the Sanctum, which has no `world.run`, and the camera is client-only.
+
+## 2026-11-05: Weapon blows fixed; the imbued swing becomes a burst
+
+The user's report from the live game: a conjured Tide trident's Strike (RMB tap) and Sweep (Shift+RMB) "do nothing", and look like "a small jab of the default wand and a water nova". Confirmed in the sim: an enemy 1.2 u ahead kept its health and position, and only got wet. The blow fired the weapon's elements and nothing else, and Water deals no damage. Its only picture was the generic burst event, drawn as a nova. Fixed, with the imbued swing redesigned at the user's request:
+- **Every blow is a physical hit plus the weapon's elements.** Strike, Sweep and the staff's shove all deal physical damage and knockback, then the weapon's payload at 0.8 power. A hit is recorded (last hit, direction, melee). Each weapon has its own numbers (`ARMS.blowDmg`, `blowKnock`, `blowHalf`, `blowReach`, all tunable):
+
+  | Weapon | Physical dmg | Knock (u/s) | Strike half-angle | Reach |
+  |---|---|---|---|---|
+  | Staff | 6 | 3 | 54° | 1.6 u |
+  | Tide trident | 7 | **12** | **40°** (narrower) | **2.6 u** (×1.2) |
+  | Frost spear | 8 | 4 | 25° | 2.8 u |
+  | Lightning whip | 4 | 3 | 36° | 3.4 u |
+  | Flame sword | 7 | 4 | 54° | 1.8 u |
+  | Stone maul | 4 (its Earth already deals 17.6, knocks down) | 9 | 54° | 1.6 u |
+  | Healing hands | heal only, no physical hit | 0 | 43° | 1.8 u |
+
+  - The Sweep is the same blow in a full circle at 0.8 power, pushing outward.
+  - The wand's Strike stays a bolt.
+  - The maul's physical part is kept small so its Heavy (the fissure) still hits clearly harder than a Strike.
+- **The blows are drawn as moves, not novas.**
+  - The sim emits `move` events `strike` and `sweep` with the weapon's element and no burst.
+  - On a Strike, the held weapon thrusts out along the aim and back. Narrow weapons show streaks to their reach (three prongs for the trident), wide ones a smear across the cone.
+  - On a Sweep, the weapon spins once round you, leaving an element-tinted trail ring.
+  - Each element sheds its own bits: droplets, flames, shards, a crack or dust.
+  - These are drawn in the game's own pixel style after the Weapon Moveset Review's Strike and Sweep vignettes, not ported line for line, since those are keyframed poses.
+- **Tap or hold is readable.** Once RMB is held past the 0.25 s tap window, a ring at your feet fills in the weapon's colour (grey for the staff). At full charge it flashes white and the weapon glows. The Healing link, which is a hold but not a charge, has no ring.
+- **The imbued swing is now the imbued burst** (a Weapon cast with elements but no Sigil or Shield). The user wanted Magicka's imbue-then-release: a burst of the queued elements in front of you, with no lasting weapon.
+  - It's a cone 2.5 u long (+0.25 u per extra rune) with a 61° half-angle (`SHAPES.imbue*`).
+  - It hits at full spell power, so damage grows with the runes like any other spell, and carries every queued element.
+  - It's drawn as a crescent of those elements leaving the staff and rolling out over the cone.
+  - In the Atlas it's "Water burst", "Fire burst", "Stone burst"..., and the mixes are "Scalding burst" and "Freezing burst" (`tools/spell-atlas/rules-c.js`, synced to the game and the VFX gallery). Atlas audit: 0 inert additions.
+  - Life + Weapon stays the Healing palm.
+- *Rejected:* making Water itself deal damage, which would change every Water spell.
+- Golden hash unchanged (`9382eb5b`): the scripted run uses no weapon blows or imbued casts.

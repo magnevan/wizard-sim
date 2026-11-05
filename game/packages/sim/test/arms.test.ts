@@ -506,3 +506,84 @@ describe('the Arcane wand (Sigil + Arcane) and Mend', () => {
     expect(mend(['sigil', 'life', 'life']).bodies.hp[1]).toBeGreaterThan(plain.bodies.hp[1]);
   });
 });
+
+describe('weapon blows land: a physical hit plus the weapon\'s elements (the trident bug)', () => {
+  /** Conjures, then puts a swarmer `ahead` units in front (behind if negative) and taps `btn`, collecting the events. */
+  const blowAt = (q: Element[], ahead: number, btn: number) => {
+    const a = arena();
+    if (q.length) a.d.aimAt(4, 0).conjure(...q); else a.d.aimAt(4, 0).tick({}, 2);
+    const e = a.enemy(ARCH.swarmer, ahead, 0), hp = a.w.bodies.hp[e];
+    const events: string[] = [];
+    const log = () => { for (const ev of a.w.events) events.push(ev.kind === 'move' ? `move:${ev.text}` : ev.who === 0 ? ev.kind : ''); };
+    a.d.tick({ buttons: btn }); log();
+    for (let k = 0; k < 12; k++) { a.d.tick(); log(); }
+    return { ...a, e, hp, events };
+  };
+
+  it('a trident Strike damages and shoves an enemy straight ahead, and soaks it', () => {
+    const { w, e, hp, events } = blowAt(['sigil', 'water'], 1.2, BTN.force);
+    expect(w.bodies.hp[e]).toBeLessThan(hp);
+    expect(w.bodies.x[e]).toBeGreaterThan(1.5); // shoved hard
+    expect(w.bodies.lastHit[e]).toBeGreaterThan(0);
+    expect(w.bodies.wet[e]).toBeGreaterThan(0);
+    expect(events).toContain('move:strike');
+    expect(events).not.toContain('burst'); // drawn as a thrust, not a nova
+  });
+
+  it('a trident Sweep hits behind you too, shoving outward', () => {
+    const { w, e, hp, events } = blowAt(['sigil', 'water'], -1.2, BTN.area);
+    expect(w.bodies.hp[e]).toBeLessThan(hp);
+    expect(w.bodies.x[e]).toBeLessThan(-1.5);
+    expect(events).toContain('move:sweep');
+  });
+
+  it('every weapon\'s Strike and the staff\'s deal damage; the trident shoves hardest', () => {
+    const shove: Record<string, number> = {};
+    for (const q of [[], ['sigil', 'water'], ['sigil', 'cold'], ['sigil', 'lightning'], ['sigil', 'fire'], ['sigil', 'earth']] as Element[][]) {
+      const { w, e, hp } = blowAt(q, 1.2, BTN.force);
+      expect(w.bodies.hp[e], q.join('+') || 'staff').toBeLessThan(hp);
+      shove[q[1] ?? 'staff'] = w.bodies.x[e];
+    }
+    for (const k of ['staff', 'cold', 'lightning', 'fire']) expect(shove.water).toBeGreaterThan(shove[k]);
+  });
+
+  it('the trident\'s Strike is a narrow thrust: a body well off to the side is missed', () => {
+    const a = arena();
+    a.d.aimAt(4, 0).conjure('sigil', 'water');
+    const side = a.enemy(ARCH.swarmer, 1.0, 1.3), hp = a.w.bodies.hp[side];
+    a.d.cast(BTN.force, 1, 12);
+    expect(a.w.bodies.hp[side]).toBe(hp);
+  });
+
+  it('the Healing hands\' Strike heals, with no physical hit', () => {
+    const { w, d } = arena(2);
+    d.aimAt(1.2, 0).conjure('sigil', 'life');
+    w.bodies.x[1] = 1.2; w.bodies.y[1] = 0; w.bodies.hp[1] = 50;
+    d.cast(BTN.force, 1, 12);
+    expect(w.bodies.hp[1]).toBeGreaterThan(50);
+  });
+});
+
+describe('the imbued burst (Weapon cast with elements, no Sigil or Shield)', () => {
+  it('bursts every queued element at full power in a short cone in front; nothing stays in hand', () => {
+    const { w, d, dummy } = arena();
+    const front = dummy(2.2, 0.3, 8), behind = dummy(-1.5, 0, 9), far = dummy(5, 0, 10);
+    d.aimAt(5, 0).queue('fire', 'lightning');
+    const events: string[] = [];
+    d.tick({ buttons: BTN.weapon });
+    for (let k = 0; k < 30; k++) { d.tick(); for (const ev of w.events) if (ev.kind === 'move' || ev.kind === 'burst') events.push(`${ev.kind}:${ev.text ?? ''}`); }
+    expect(400 - w.bodies.hp[front]).toBeGreaterThan(10); // fire 6 + lightning 10, at full power
+    expect(w.bodies.burn[front]).toBeGreaterThan(0);
+    expect(w.bodies.hp[behind]).toBe(400);
+    expect(w.bodies.hp[far]).toBe(400);
+    expect(w.seats.weapon[0]).toBe(0);
+    expect(events).toContain('move:imbue');
+    expect(events.filter((e) => e.startsWith('burst'))).toEqual([]);
+  });
+
+  it('more runes reach a little further and hit harder', () => {
+    const run = (q: Element[]) => { const { w, d, dummy } = arena(); const t = dummy(3.3, 0); d.aimAt(5, 0).queue(...q).cast(BTN.weapon, 1, 40); return 400 - w.bodies.hp[t]; };
+    expect(run(['fire'])).toBe(0);
+    expect(run(['fire', 'fire', 'fire'])).toBeGreaterThan(0);
+  });
+});

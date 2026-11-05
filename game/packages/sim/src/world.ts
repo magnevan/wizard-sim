@@ -223,6 +223,8 @@ export interface SimEvent {
   text?: string;
   look?: number;
   amount?: number;
+  /** The imbued burst's move: which elements it carried (bit 1 << element id). */
+  els?: number;
 }
 
 /** Shield structures: rock walls (stuff), barriers and curtains (energy). Segments x1,y1 -> x2,y2. */

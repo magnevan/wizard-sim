@@ -72,3 +72,23 @@ In the spell rules (`rules-c.js`, `PRIORITY`), the form is never picked by count
 Arithmetic, checked against the cancel pairs: Life can't carry Arcane, Earth can't carry Lightning, and Lightning can't carry Water or Earth.
 
 **Cost.** About 15 bespoke pairings to design, draw and keep readable, against the 8 single guards. The Leaf row mostly reuses the Life spell lends the user has already accepted, so the guard and the spell teach each other.
+
+### Merged with the user's identities (built)
+
+The user, before reading the above: "The stronger elements are life, rock, arcane. For shield+life, the identity is around life and preservation. Probably mixing in elements should mostly be about granting more resistance. Shield Rock is a sturdy barrier, adding elements can add effects like burning attackers, chilling them, etc. Sigil Arcane is the ranged option, so it can just imbue the element in attacks. Haven't thought through the rest yet."
+
+Merged rule, now in the game:
+1. **The strongest element leads, as in spells:** Life, Earth, Arcane, then Lightning. Without one, Water, Fire or Cold leads by count. Lightning keeps its place because in spells it's a form element (the arc). The user named only three strong elements, so that's an open point.
+2. **Every other element mixes in.** It brings its guard's passive and its resistance row by its rune count: half at 1 rune, all of it at 2. This replaces the "second element only" cut.
+3. **What the extras do depends on the lead's identity:**
+   - **Leaf (Life, preservation):** the extras grant resistance only. They bring their strengths, never their weaknesses, and they don't bite back. The Life spell lends from the pairing table above are dropped for guards.
+   - **Bulwark (Earth, sturdy barrier):** the extras are a **coat that bites back.** Whoever hits the block, or is shoved by the Shove step, takes the coat at half power: Fire burns, Cold chills, Water soaks and pushes.
+   - **Prism (Arcane):** a parried beam goes back carrying the coat.
+   - **Weak leads and the Spark:** the coat bites on block contact as well.
+   - **Arcane wand (Sigil + Arcane):** its bolts already carry every extra rune (imbue), as the user described. Weapons already pick their lead by strength in the rules (`dominant`).
+4. **Not built yet:**
+   - more of the lead making the shape bigger (HP, Retreat distance, uses);
+   - coats on Mend and Siphon;
+   - the guard rim drawn in the coat's colours.
+
+   A bite-back flashes in the coat's colour on whoever it bit.

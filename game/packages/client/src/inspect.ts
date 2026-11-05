@@ -5,7 +5,7 @@
  * card is plain DOM text beside the cursor. A start, to grow as the game does.
  */
 import { rules, type Element } from '@wizard-sim/rules';
-import { ARCHETYPES, CELL, DEVICE, GUARD_NAME, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, N_EL, SURF, WALL, WARD, elementName, type World } from '@wizard-sim/sim';
+import { ARCHETYPES, CELL, DEVICE, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, N_EL, SURF, WALL, WARD, elementName, type World } from '@wizard-sim/sim';
 import type { Camera } from './camera';
 
 const HOVER = 0.9;
@@ -128,6 +128,8 @@ export class Inspect {
       if (s.guard[i]) {
         const gd = GUARD_TEXT[GUARD_NAME[s.guard[i]]];
         if (gd) out.push(`· ${gd[0]} (guard ${Math.ceil(s.guardHp[i])}): Space ${gd[1]} · Shift+LMB ${gd[2]} · ${gd[3]}${s.guardT[i] > 0 ? ' · blocking' : ''}`);
+        const lead = GUARD_EL[s.guard[i]], mixed = elements(s.guardEls, i, [lead]);
+        if (mixed) out.push(`· mixed in: ${mixed} (${s.guard[i] === GUARD.leaf ? 'their resistances' : 'their passives and resistances; blocks bite back with them'})`);
       }
       if (s.weapon[i]) {
         const wd = WEAPON_TEXT[elementName(s.weapon[i])];

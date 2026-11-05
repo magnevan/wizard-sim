@@ -389,3 +389,12 @@ From the user's round-2 ratings on the Weapon Moveset Review (`explorations/2026
 - **Carrying a guard or a weapon costs 5 % walking speed each** (q-res-when note).
 - **Mixing, first cut:** the lead sets the moves; the second element mixes in its passive and its whole resistance row at half. A fuller rule (every element mixes, coats, rune counts scale) is proposed in the exploration and asked on the page; it is not built.
 - Golden hash `14440468` → `e055dcdb` (the Echo state is removed; the Special channel state is new).
+
+## 2026-11-05: How elements mix in guards (merged with the user's identities)
+
+The user: the strong elements are Life, Earth and Arcane. Shield + Life is preservation, so extras mostly grant resistance. Shield + Earth is a sturdy barrier whose extras burn or chill attackers. Sigil + Arcane is the ranged option that imbues its attacks. Built (`explorations/2026-11-05-guards-round-2.md`, "Merged"):
+- **Lead:** the strongest element present leads (Life > Earth > Arcane > Lightning, as in spells), else the most runes of Water, Fire or Cold.
+- **Extras:** every other element mixes in its passive and its resistance row (half per rune, all at 2).
+- **Leaf:** takes only the extras' strengths.
+- **Other guards:** the extras are a coat that bites whoever hits the block (and the Shove step's shoved, and the Prism's returned beam) at half power.
+- **Open:** Lightning's place among the strong elements, and how the remaining guards and weapons should use their extras.

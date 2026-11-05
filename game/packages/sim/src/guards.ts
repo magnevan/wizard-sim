@@ -54,22 +54,30 @@ const RES_TABLE: readonly (readonly number[])[] = [
 /** The guard an element leads to, and the resistance column that is "its own" (-1: Water and Life deal no damage). */
 const GUARD_OF: Record<number, number> = { [EL.earth]: GUARD.bulwark, [EL.fire]: GUARD.ember, [EL.cold]: GUARD.rime, [EL.lightning]: GUARD.spark, [EL.water]: GUARD.tide, [EL.arcane]: GUARD.prism, [EL.life]: GUARD.leaf };
 const OWN_COL: Record<number, number> = { [EL.earth]: RES.physical, [EL.fire]: RES.fire, [EL.cold]: RES.cold, [EL.lightning]: RES.lightning, [EL.arcane]: RES.arcane };
-/** Ties between equally many runes go in this order. */
-const LEAD_ORDER = [EL.earth, EL.fire, EL.cold, EL.lightning, EL.water, EL.arcane, EL.life];
+/**
+ * Who leads, as in spells (rules-c.js PRIORITY): the strongest element present (Life, then Earth, then
+ * Arcane, then Lightning); without one, the most runes of Water, Fire or Cold (ties in that order).
+ */
+const STRONG = [EL.life, EL.earth, EL.arcane, EL.lightning];
+const SPRAY = [EL.water, EL.fire, EL.cold];
 /** A guard's colour element (the view, events). */
 export const GUARD_EL: readonly number[] = [0, EL.earth, EL.shield, EL.fire, EL.cold, EL.lightning, EL.water, EL.arcane, EL.life];
 
-/** The element with the most runes in a 9-count block (skipping `skip`), ties in LEAD_ORDER; 0 for none. */
-function leadOf(els: Uint8Array, at: number, skip = 0): number {
+/** The lead element of a 9-count block; 0 for none (Shield alone: the Mirror buckler). */
+function leadOf(els: Uint8Array, at: number): number {
+  for (const id of STRONG) if (els[at * N_EL + id - 1]) return id;
   let best = 0, n = 0;
-  for (const id of LEAD_ORDER) { const c = els[at * N_EL + id - 1]; if (id !== skip && c > n) { best = id; n = c; } }
+  for (const id of SPRAY) { const c = els[at * N_EL + id - 1]; if (c > n) { best = id; n = c; } }
   return best;
 }
 
 export const guardOf = (w: World, i: number): number => (i >= 0 && i < MAX_SEATS ? w.seats.guard[i] : 0);
-/** The guard's lead element (0 for the Mirror buckler) and its second element (0 for none). */
+/** The guard's lead element (0 for the Mirror buckler). */
 export const guardLead = (w: World, i: number): number => leadOf(w.seats.guardEls, i);
-export const guardSecond = (w: World, i: number): number => leadOf(w.seats.guardEls, i, guardLead(w, i));
+/** Runes of element `id` in seat i's guard other than its lead (its mixed-in elements). */
+const extra = (w: World, i: number, id: number): number => (id === guardLead(w, i) ? 0 : w.seats.guardEls[i * N_EL + id - 1]);
+/** How much of its row a mixed-in element brings: half at 1 rune, all of it at 2. */
+const share = (n: number): number => Math.min(1, n * ARMS.mixShare);
 
 /** Shield + `counts` conjured as a guard by seat `src`: the lead element picks it. */
 export function conjureGuard(w: World, src: number, counts: Uint8Array): void {
@@ -83,27 +91,63 @@ export function conjureGuard(w: World, src: number, counts: Uint8Array): void {
   s.guardT[src] = 0; s.guardCd[src] = 0; s.retreatT[src] = 0;
 }
 
-/** Share of damage in `col` that seat t's guard takes off (1 = immune, negative = takes more). 0 without a guard. */
+/**
+ * Share of damage in `col` that seat t's guard takes off (1 = immune, negative = takes more). 0 without
+ * a guard. Every mixed-in element adds its guard's row by its share. Under a Leaf (Life: preservation)
+ * they add only their strengths; under any other lead, their weaknesses come too.
+ */
 export function resist(w: World, t: number, col: number): number {
   const g = guardOf(w, t);
   if (!g) return 0;
   let r = RES_TABLE[g][col];
-  const e2 = guardSecond(w, t);
-  if (e2) r += ARMS.secondRes * RES_TABLE[GUARD_OF[e2]][col]; // the second element's whole row, strengths and weaknesses
+  for (let id = 1; id <= N_EL; id++) {
+    const n = extra(w, t, id), mg = GUARD_OF[id];
+    if (!n || !mg) continue;
+    const v = RES_TABLE[mg][col];
+    if (g === GUARD.leaf && v < 0) continue;
+    r += share(n) * v;
+  }
   return Math.min(1, r);
 }
 /** The resistance column of an element's damage (Earth is physical), or -1. */
 export const colOf = (id: number): number => OWN_COL[id] ?? -1;
 
+/**
+ * The coat: seat i's mixed-in elements, as a payload's 9 counts (0 when it has none, or under a Leaf,
+ * whose extras only preserve). A block, parry or Retreat that touches someone bites them with it:
+ * the Bulwark's sturdy barrier burns, chills, soaks...; a Prism's returned beam carries it.
+ */
+const COAT = new Uint8Array(N_EL);
+function coatOf(w: World, i: number): Uint8Array | null {
+  const g = guardOf(w, i);
+  if (!g || g === GUARD.leaf) return null;
+  let any = false;
+  for (let id = 1; id <= N_EL; id++) { COAT[id - 1] = extra(w, i, id); if (COAT[id - 1]) any = true; }
+  return any ? COAT : null;
+}
+/** Bites body j with seat i's coat, pushing along (ux, uy). */
+function biteBack(w: World, i: number, j: number, ux: number, uy: number): void {
+  const c = coatOf(w, i);
+  if (!c || j < 0 || !alive(w, j) || j === i) return;
+  applyHit(w, j, c, 0, { scale: ARMS.coatScale, heal: false, scald: false, freeze: false, source: i, dirX: ux, dirY: uy, push: 0 });
+  w.events.push({ tick: w.clock[0], kind: 'move', who: i, x: w.bodies.x[j], y: w.bodies.y[j], text: 'coat', look: guardCoatLook(w, i) });
+}
+/** The colour of seat i's coat: its most numerous mixed-in element (0 for none). */
+export function guardCoatLook(w: World, i: number): number {
+  let best = 0, n = 0;
+  for (let id = 1; id <= N_EL; id++) { const c = extra(w, i, id); if (c > n) { best = id; n = c; } }
+  return best;
+}
+
 // ---- passives ----------------------------------------------------------------------------------
 
-/** Does seat i's guard have guard g's passive: its lead, or its second element mixed in? */
+/** Does seat i's guard have guard g's passive: its lead's, or a mixed-in element's? */
 export function hasPassive(w: World, i: number, g: number): boolean {
   const lead = guardOf(w, i);
   if (!lead) return false;
   if (lead === g) return true;
-  const e2 = guardSecond(w, i);
-  return e2 !== 0 && GUARD_OF[e2] === g;
+  const id = GUARD_EL[g];
+  return g !== GUARD.mirror && extra(w, i, id) > 0;
 }
 /** Anchored (Bulwark): no knockback while carried. */
 export const anchored = (w: World, i: number): boolean => hasPassive(w, i, GUARD.bulwark);
@@ -278,8 +322,9 @@ export function guardMelee(w: World, t: number, src: number, dmg: number, dx: nu
   if (!g) return 1;
   const b = w.bodies, land = 1 - resist(w, t, RES.physical);
   if (!blocking(w, t) || !fromFront(w, t, dx, dy)) return land;
-  if (parrying(w, t)) { parryEffect(w, t, src, true); return 0; }
+  if (parrying(w, t)) { parryEffect(w, t, src, true); biteBack(w, t, src, -dx, -dy); return 0; }
   const foe = src >= 0 && alive(w, src);
+  if (foe) biteBack(w, t, src, -dx, -dy); // the coat bites back
   if (foe && g === GUARD.ember) { b.burn[src] = Math.max(b.burn[src], T(STATUS.burn)); b.burnSrc[src] = t; } // thorns
   if (foe && g === GUARD.rime) { b.chill[src] = Math.min(STATUS.chillMax, b.chill[src] + ARMS.rimeChill); w.events.push({ tick: w.clock[0], kind: 'move', who: t, x: b.x[src], y: b.y[src], text: 'chill', look: EL.cold }); } // frost bites back
   if (foe && g === GUARD.tide) { applyHit(w, src, one(EL.water).counts, 0, { scale: 1, heal: false, scald: false, freeze: false, source: t, dirX: -dx, dirY: -dy, push: 0 }); b.kx[src] -= dx * 8; b.ky[src] -= dy * 8; }
@@ -298,7 +343,7 @@ export function guardBeam(w: World, t: number, src: number, els: Uint8Array, at:
   if (guardOf(w, t) !== GUARD.prism || !blocking(w, t) || !fromFront(w, t, dx, dy)) return 1;
   if (parrying(w, t) && src >= 0 && src !== t && alive(w, src)) {
     applyHit(w, src, els, at, { scale, heal: false, scald: false, freeze: false, source: t, dirX: -dx, dirY: -dy, push: 0 });
-    if (w.clock[0] % 6 === 0) move(w, t, 'parry');
+    if (w.clock[0] % 6 === 0) { move(w, t, 'parry'); biteBack(w, t, src, -dx, -dy); } // the returned beam carries the coat
   } else {
     damageGuard(w, t, payloadDamage(els, at, scale));
     if (w.clock[0] % 12 === 0) move(w, t, 'block');
@@ -342,7 +387,7 @@ export function guardRetreat(w: World, i: number, face: number): void {
   switch (g) {
     case GUARD.bulwark: { // Shove step: a short step back, and the slab knocks back whatever was in front
       push(ARMS.shoveStep);
-      cone(w, i, ARMS.shoveRange, 0.2, (j, ux, uy) => { if (b.team[j] !== b.team[i]) { addKnock(w, j, ux, uy, ARMS.shoveKnock); b.stun[j] = Math.max(b.stun[j], T(ARMS.shoveStun)); } });
+      cone(w, i, ARMS.shoveRange, 0.2, (j, ux, uy) => { if (b.team[j] !== b.team[i]) { addKnock(w, j, ux, uy, ARMS.shoveKnock); b.stun[j] = Math.max(b.stun[j], T(ARMS.shoveStun)); biteBack(w, i, j, ux, uy); } });
       move(w, i, 'shovestep', x + bx * ARMS.shoveStep, y + by * ARMS.shoveStep);
       return;
     }

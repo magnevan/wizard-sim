@@ -64,14 +64,39 @@ describe('guards: one per lead element', () => {
     }
   });
 
-  it('a second element mixes in its passive and its whole resistance row at half strength', () => {
+  it('the strongest element leads, as in spells: Earth beats two Fire, and the Fire mixes in', () => {
     const { w, d } = arena();
-    d.conjure('shield', 'fire', 'fire', 'earth'); // Ember targe, led by Fire, with Earth second
-    expect(w.seats.guard[0]).toBe(GUARD.ember);
-    expect(resist(w, 0, RES.fire)).toBe(1);
-    expect(resist(w, 0, RES.physical)).toBe(0.25); // half of the Bulwark's 50 % physical
-    expect(resist(w, 0, RES.cold)).toBe(0.625); // the Ember's 50 % plus half the Bulwark's 25 %
-    expect(anchored(w, 0)).toBe(true); // the Bulwark's passive, mixed in
+    d.conjure('shield', 'fire', 'fire', 'earth');
+    expect(w.seats.guard[0]).toBe(GUARD.bulwark);
+    expect(resist(w, 0, RES.physical)).toBe(0.5); // the Bulwark's own
+    expect(resist(w, 0, RES.fire)).toBe(1); // 25 % + all of the Ember's (2 runes: the full row), capped
+    expect(resist(w, 0, RES.cold)).toBe(0.75); // 25 % + the Ember's 50 %
+    expect(anchored(w, 0)).toBe(true);
+  });
+
+  it('every mixed-in element counts, and one rune brings half its row', () => {
+    const { w, d } = arena();
+    d.conjure('shield', 'earth', 'fire', 'water'); // Bulwark + Fire + Water
+    expect(resist(w, 0, RES.fire)).toBe(0.25 + 0.5 + 0.25); // own + half the Ember's + half the Tide's
+    expect(resist(w, 0, RES.lightning)).toBe(-0.25); // the Tide's weakness comes too
+  });
+
+  it('a Leaf (Life: preservation) takes only the strengths of what it carries', () => {
+    const { w, d } = arena();
+    d.conjure('shield', 'life', 'water');
+    expect(w.seats.guard[0]).toBe(GUARD.leaf);
+    expect(resist(w, 0, RES.fire)).toBe(-0.25 + 0.25); // its own weakness, offset by half the Tide's 50 %
+    expect(resist(w, 0, RES.lightning)).toBe(0); // no Tide weakness under a Leaf
+  });
+
+  it('the coat bites back: a goblin biting a Bulwark + Fire block catches fire', () => {
+    const { w, d, enemy } = arena();
+    d.conjure('shield', 'earth', 'fire');
+    const e = enemy(ARCH.swarmer, 1.4, 0);
+    let burnt = false;
+    for (let t = 0; t < 200 && !burnt; t++) { d.aimAt(5, 0).tick({ buttons: BTN.self }); if (w.bodies.burn[e] > 0) burnt = true; }
+    expect(burnt).toBe(true);
+    expect(w.bodies.hp[0]).toBe(100);
   });
 
   it('carrying costs a little walking speed: a guard and a weapon 5 % each', () => {

@@ -182,8 +182,8 @@ export const ARMS = {
   rimeChill: 1,
   /** Guard damage multipliers: the Spark ring is the weakest block; Water douses the Ember targe. */
   sparkBlock: 1.5, emberWater: 2,
-  /** A second element in a guard mixes in its passive and its resistance row at this share. */
-  secondRes: 0.5,
+  /** Mixing (explorations/2026-11-05-guards-round-2.md): a mixed-in element brings this share of its resistance row per rune (2 runes: all of it), and its coat bites at this power. */
+  mixShare: 0.5, coatScale: 0.5,
   /** What each guard takes before it breaks. */
   hp: { mirror: 90, bulwark: 160, ember: 90, rime: 90, spark: 45, tide: 90, prism: 90, leaf: 90 },
 };

@@ -216,7 +216,7 @@ class Scorch {
 /** How long each weapon or guard move's effect plays (s). */
 const MOVE_LIFE: Record<string, number> = {
   dash: 0.45, flamestep: 0.5, iceslide: 0.7, backstep: 0.5, phase: 0.6, seedstep: 0.8, shovestep: 0.7, surge: 0.6, tidewave: 0.6,
-  parry: 0.4, block: 0.25, glance: 0.3, chill: 0.5, guardbreak: 0.8, flameburst: 0.45, chargedbolt: 0.4, javelin: 0.45, siphon: 0.5, mend: 0.6, link: 0.5, linkbreak: 0.5,
+  parry: 0.4, block: 0.25, glance: 0.3, chill: 0.5, coat: 0.45, guardbreak: 0.8, flameburst: 0.45, chargedbolt: 0.4, javelin: 0.45, siphon: 0.5, mend: 0.6, link: 0.5, linkbreak: 0.5,
 };
 /** Each guard's colour. */
 const GUARD_RAMP: Record<string, Ramp> = {
@@ -1384,6 +1384,13 @@ export class StructureView {
         const x2 = gx(f.x2), y2 = gy(f.y2), L = Math.hypot(x - x2, y - y2) || 1, ux = (x - x2) / L, uy = (y - y2) / L, q = e / f.life;
         if (q < 0.5) for (let j = -4; j <= 4; j++) { const a = Math.atan2(uy, ux) + j * 0.16, rr = 8 + q * 40; X.px(g, x + Math.cos(a) * rr, y + Math.sin(a) * rr * FY, j % 2 ? X.EARTH[1] : '#e8dcc8'); X.px(g, x + Math.cos(a) * (rr - 2), y + Math.sin(a) * (rr - 2) * FY, X.EARTH[3]); }
         K.dust(o, x + ux * 10, y + uy * 10 * FY, e, sd, 8, 16, '#8a7a68', 0.8);
+        return;
+      }
+      case 'mv-coat': {
+        // a guard's coat biting back: a puff and sparks in the mixed-in element's colour on whoever it bit
+        const q = e / f.life, R4 = f.look === ELID.life ? LIFE : ramp(f.look || ELID.shield);
+        for (let j = 0; j < 7; j++) K.puff(o, x + (rand(j, 1, sd) - 0.5) * 12, y - 8 - e * 12, 1.5 + e * 4, j % 2 ? R4[0] : R4[2], 1 - q);
+        light(x, y, 30, R4[2], 0.6 * (1 - q));
         return;
       }
       case 'mv-glance': case 'mv-chill': {

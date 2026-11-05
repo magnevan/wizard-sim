@@ -39,19 +39,21 @@ function restCounts(spec: SpellSpec): Uint8Array {
 
 // ---- Shield ------------------------------------------------------------------------------------
 
-function raiseWall(w: World, owner: number, type: number, els: Uint8Array, x1: number, y1: number, x2: number, y2: number, hp: number): void {
-  const wl = w.walls;
-  // Too many segments of yours: the oldest one crumbles.
+function raiseWall(w: World, owner: number, type: number, els: Uint8Array, x1: number, y1: number, x2: number, y2: number, hp: number): boolean {
+  const wl = w.walls, now = w.clock[0];
+  // Too many segments of yours: the oldest from an earlier cast crumbles. A cast never eats its
+  // own segments (that left gaps in long walls): with only this cast's left, the wall stops here.
   let mine = 0, oldest = -1;
-  for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] && wl.owner[k] === owner) { mine++; if (oldest < 0 || wl.born[k] < wl.born[oldest]) oldest = k; }
-  if (mine >= STRUCT.wallsPerOwner && oldest >= 0) wl.type[oldest] = WALL.none;
+  for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] && wl.owner[k] === owner) { mine++; if (wl.born[k] < now && (oldest < 0 || wl.born[k] < wl.born[oldest])) oldest = k; }
+  if (mine >= STRUCT.wallsPerOwner) { if (oldest < 0) return false; wl.type[oldest] = WALL.none; }
   for (let k = 0; k < MAX_WALLS; k++) {
     if (wl.type[k]) continue;
     wl.type[k] = type; wl.owner[k] = owner; wl.x1[k] = x1; wl.y1[k] = y1; wl.x2[k] = x2; wl.y2[k] = y2;
     wl.hp[k] = wl.maxHp[k] = hp; wl.born[k] = w.clock[0]; wl.pulse[k] = 0;
     wl.els.set(els, k * N_EL);
-    return;
+    return true;
   }
+  return false;
 }
 
 function wallHp(spec: SpellSpec): number {
@@ -71,7 +73,7 @@ function arcWall(w: World, src: number, spec: SpellSpec, cx: number, cy: number,
 function drawnWall(w: World, src: number, spec: SpellSpec, x1: number, y1: number, x2: number, y2: number): void {
   const d = len(x2 - x1, y2 - y1), n = Math.max(1, Math.ceil(d / STRUCT.drawnSeg)), hp = wallHp(spec);
   for (let k = 0; k < n; k++) {
-    raiseWall(w, src, spec.wall, spec.counts, x1 + ((x2 - x1) * k) / n, y1 + ((y2 - y1) * k) / n, x1 + ((x2 - x1) * (k + 1)) / n, y1 + ((y2 - y1) * (k + 1)) / n, hp);
+    if (!raiseWall(w, src, spec.wall, spec.counts, x1 + ((x2 - x1) * k) / n, y1 + ((y2 - y1) * k) / n, x1 + ((x2 - x1) * (k + 1)) / n, y1 + ((y2 - y1) * (k + 1)) / n, hp)) break;
   }
 }
 

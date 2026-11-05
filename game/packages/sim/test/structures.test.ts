@@ -73,6 +73,18 @@ describe('Shield', () => {
     expect(healed[1] / healed[0]).toBeCloseTo(STRUCT.arcSegs / STRUCT.ringSegs, 1);
   });
 
+  it('a long drawn wall has no gaps: it stops at the segments you may keep, never eating itself', () => {
+    const { w, d } = arena();
+    d.aimAt(0, 3).queue('shield', 'earth').cast(BTN.area, 20, 20); // an arc first (5 segments)
+    d.aimAt(-8, -5).queue('shield', 'earth').tick({ buttons: BTN.area }, 4);
+    d.aimAt(8, -5).tick({ buttons: BTN.area }, 30).tick({}, 20); // drag 16 u: more than you may keep
+    const wl = w.walls, segs: [number, number][] = [];
+    for (let k = 0; k < wl.type.length; k++) if (wl.type[k] && Math.abs(wl.y1[k] + 5) < 0.6) segs.push([Math.min(wl.x1[k], wl.x2[k]), Math.max(wl.x1[k], wl.x2[k])]);
+    segs.sort((a, b) => a[0] - b[0]);
+    expect(segs.length).toBe(STRUCT.wallsPerOwner); // the arc made way
+    for (let k = 1; k < segs.length; k++) expect(segs[k][0] - segs[k - 1][1]).toBeLessThan(0.01); // contiguous
+  });
+
   it('a rock wall stops bodies', () => {
     const { w, d } = arena(2);
     d.aimAt(4, 0).queue('shield', 'earth').cast(BTN.area, 20, 20);

@@ -16,7 +16,9 @@ import { EL, N_EL } from './elements';
 import { spawnMissile, type Payload } from './effects';
 import { angleDiff, len } from './geom';
 import { addKnock, applyHit } from './hit';
-import { steer } from './nav';
+import { cutOff, steer } from './nav';
+import { WALL } from './compile';
+import { damageWall, segDist } from './walls';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { AI, KIND, MAX_SEATS, STATUS_BIT, TEAM, WARD, type World } from './world';
 
@@ -96,7 +98,8 @@ export function tickEnemies(w: World): void {
     if (b.ai[i] === AI.approach) {
       move(w, i, approachSpot(w, i, t), t, speed);
       const ranged = a.attack === ATTACK.bolt || a.attack === ATTACK.grab;
-      const ready = ranged ? d <= a.reach && b.aiT[i] > T(0.4) : gap <= a.reach;
+      // Walled off with no way round: a wall it's pressed against is what it attacks.
+      const ready = ranged ? d <= a.reach && b.aiT[i] > T(0.4) : gap <= a.reach || (cutOff(w, i, t) && wallInReach(w, i, a.reach + 0.45) >= 0);
       if (ready) { setAi(w, i, AI.windup); b.lockX[i] = b.x[t]; b.lockY[i] = b.y[t]; }
     } else if (b.ai[i] === AI.windup) {
       if ((a.attack === ATTACK.bolt || a.attack === ATTACK.grab) && b.aiT[i] < T(a.windup * TRACK_SHARE)) { b.lockX[i] = b.x[t]; b.lockY[i] = b.y[t]; }
@@ -143,6 +146,18 @@ function approachSpot(w: World, i: number, t: number): [number, number] {
   return [b.x[t] + (ax / al) * a.bolt!.keepAway, b.y[t] + (ay / al) * a.bolt!.keepAway];
 }
 
+/** The nearest rock wall within `reach` of the body's edge, or -1. */
+function wallInReach(w: World, i: number, reach: number): number {
+  const b = w.bodies, wl = w.walls;
+  let best = -1, bd = b.r[i] + STRUCT.wallThickness + reach;
+  for (let k = 0; k < wl.type.length; k++) {
+    if (wl.type[k] !== WALL.rock) continue;
+    const d = segDist(b.x[i], b.y[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0];
+    if (d < bd) { bd = d; best = k; }
+  }
+  return best;
+}
+
 function attack(w: World, i: number, t: number, gap: number): void {
   const b = w.bodies, a = ARCHETYPES[b.arch[i]];
   const dmg = a.damage * b.dmgMult[i];
@@ -150,6 +165,7 @@ function attack(w: World, i: number, t: number, gap: number): void {
     const dx = b.x[t] - b.x[i], dy = b.y[t] - b.y[i], d = len(dx, dy) || 1;
     const inFront = Math.abs(angleDiff(atan2Turns(dy, dx), b.face[i])) < 0.19;
     if (gap <= a.reach + 0.45 && inFront) strike(w, i, t, dmg, a.knockback, dx / d, dy / d, !!a.hitBurn);
+    else if (cutOff(w, i, t)) { const k = wallInReach(w, i, a.reach + 0.45); if (k >= 0) damageWall(w, k, dmg); }
   } else if (a.attack === ATTACK.slam) {
     const r = a.slamRadius!;
     for (let s = 0; s < b.kind.length; s++) {
@@ -158,6 +174,9 @@ function attack(w: World, i: number, t: number, gap: number): void {
       if (od - b.r[s] > r) continue;
       strike(w, i, s, dmg, a.knockback, od > 0.05 ? ox / od : cosTurns(b.face[i]), od > 0.05 ? oy / od : sinTurns(b.face[i]), false);
     }
+    // a slam breaks the rock it lands on, too
+    const wl = w.walls;
+    for (let k = 0; k < wl.type.length; k++) if (wl.type[k] === WALL.rock && segDist(b.lockX[i], b.lockY[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] <= r) damageWall(w, k, dmg);
     w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: b.lockX[i], y: b.lockY[i], amount: r, look: EL.earth });
   } else if (a.attack === ATTACK.bolt) {
     const dx = b.lockX[i] - b.x[i], dy = b.lockY[i] - b.y[i], d = len(dx, dy) || 1;

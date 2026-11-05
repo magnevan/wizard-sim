@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
+  STRUCT,
   AI, ARCH, ARCHETYPES, BTN, KIND, NO_INPUT, PHASE_ENC, TEAM, WALL, createWorld, elementId, hashWorld, quantize, spawnBody, step,
   type PlayerInput, type World,
 } from '../src';
@@ -87,6 +88,17 @@ describe('enemies', () => {
     for (let t = 0; t < 600 && w.bodies.hp[0] === 100; t++) d.tick();
     expect(w.bodies.hp[0]).toBeLessThan(100);
     expect(w.bodies.kind[e]).toBe(KIND.enemy);
+  });
+
+  it('walled in completely, you are not safe: enemies break through the rock', () => {
+    const { w, d, e } = pit(ARCH.swarmer, 6);
+    d.aimAt(6, 0).queue('shield', 'earth').cast(BTN.area, 1, 20); // a closed stone ring around you
+    const ring = () => Array.from(w.walls.type).filter((t) => t === WALL.rock).length;
+    expect(ring()).toBe(STRUCT.ringSegs);
+    const x0 = w.bodies.x[e], hp0 = Array.from(w.walls.hp).reduce((a, b) => a + b, 0);
+    d.tick({}, 60 * 10);
+    expect(w.bodies.x[e]).toBeLessThan(x0 - 1); // it came to the wall instead of standing still
+    expect(Array.from(w.walls.hp).reduce((a, b) => a + b, 0)).toBeLessThan(hp0 - 20); // and is breaking it
   });
 });
 

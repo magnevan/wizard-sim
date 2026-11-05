@@ -120,11 +120,25 @@ function clearLine(w: World, ax: number, ay: number, bx: number, by: number): bo
  * Unit direction for enemy `i` to walk toward (tx, ty), chasing wizard `seat` (its field), and
  * whether it is detouring (detours are walked at 80%).
  */
+/** No way round to that seat's wizard: walls close it off (enemies then break through, enemies.ts). */
+export function cutOff(w: World, i: number, seat: number): boolean {
+  if (seat < 0 || seat >= MAX_SEATS) return false;
+  const c = cellOf(w.bodies.x[i], w.bodies.y[i]);
+  if (c < 0) return false;
+  // Its own cell can be blocked just from standing against a wall: cut off only if no neighbour has a way either.
+  const f = w.nav.field, base = seat * CELLS, cx = c % GRID_W, cy = (c - cx) / GRID_W;
+  for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
+    const nx = cx + ox, ny = cy + oy;
+    if (nx >= 0 && ny >= 0 && nx < GRID_W && ny < GRID_H && f[base + ny * GRID_W + nx] < INF) return false;
+  }
+  return true;
+}
+
 export function steer(w: World, i: number, tx: number, ty: number, seat: number): [number, number, boolean] {
   const b = w.bodies, x = b.x[i], y = b.y[i];
   const dx = tx - x, dy = ty - y, d = len(dx, dy);
   if (d < 1e-6) return [0, 0, false];
-  if (seat < 0 || clearLine(w, x, y, tx, ty)) return [dx / d, dy / d, false];
+  if (seat < 0 || clearLine(w, x, y, tx, ty) || cutOff(w, i, seat)) return [dx / d, dy / d, false];
   const f = w.nav.field, base = seat * CELLS;
   let c = cellOf(x, y), aim = -1;
   // Walk the field downhill up to 8 cells, and head for the farthest one still in clear view

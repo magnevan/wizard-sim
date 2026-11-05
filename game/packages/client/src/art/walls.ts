@@ -6,7 +6,7 @@
  * visible end face, damage notches and rubble come out with correct occlusion on the pixel grid.
  *
  * States: damage 0..4 (whole, cracked, a chunk out of the top, half height, rubble) and a rise
- * fraction (quantised to RISE_STEPS). Materials: raised earth (turf on top) and frost-coated
+ * fraction (quantised to RISE_STEPS). Materials: raised earth (turf on top), Survive's mossy ruin stone, and frost-coated
  * stone (Shield + Earth + Cold). Light is the pixel-art cheat: tops brightest, faces turned west
  * (toward the upper-left light) brighter than faces turned east.
  */
@@ -22,6 +22,11 @@ const MAT: Record<string, { rock: RGB[]; turf?: RGB[]; rime?: RGB[] }> = {
   stone: {
     rock: ['#e4cfac', '#c8ab86', '#a88d6c', '#8a7156', '#6c5744', '#503f33', '#362a23', '#221a16'].map(X.hex),
     turf: ['#7ca85a', '#5e8a48', '#46703a', '#2e4e2a'].map(X.hex),
+  },
+  /** Survive's arena rock: old weathered grey-blue stone with moss, so it reads apart from a wizard's raised earth. */
+  ruin: {
+    rock: ['#c8ccd4', '#a4aab6', '#868c9a', '#6c7280', '#555a68', '#40434f', '#2c2e38', '#1c1d25'].map(X.hex),
+    turf: ['#6a8a5a', '#4e6e46', '#3a5638', '#263a28'].map(X.hex),
   },
   frost: {
     rock: ['#bcc0c8', '#9da2ae', '#81868f', '#686c76', '#52555f', '#3d3f48', '#2b2c34', '#1c1d23'].map(X.hex),
@@ -40,7 +45,7 @@ export function vnoise(x: number, y: number, seed: number): number {
 export interface WallSpec {
   /** Ends on the ground, field px. */
   a: [number, number]; b: [number, number];
-  n: number; H: number; T: number; mat: 'stone' | 'frost'; seed: number;
+  n: number; H: number; T: number; mat: 'stone' | 'frost' | 'ruin'; seed: number;
   /** Outline the two ends (no neighbouring wall joins there). */
   endA: boolean; endB: boolean;
 }

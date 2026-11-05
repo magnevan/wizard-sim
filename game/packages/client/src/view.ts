@@ -94,7 +94,7 @@ export class WorldView {
     this.actors.sortableChildren = true;
     this.structs = new StructureView(this.actors);
     this.deaths = new Deaths(this.actors);
-    this.root.addChild(this.floor, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay, this.hud.top, this.hud.sprite);
+    this.root.addChild(this.floor, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over);
     for (let i = 0; i < MAX_BODIES; i++) {
       const s = new Sprite(); s.visible = false; s.tint = AMBIENT;
       this.actors.addChild(s); this.sprites.push(s);

@@ -8,7 +8,8 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
-import { ARCHETYPES, KIND, MAX_PORTALS, N_EL, PHASE, PHASE_ENC, QUEUE_MAX, RHYTHM, RUNES, T, elementId, elementName, specOf, type World } from '@wizard-sim/sim';
+import { ARCHETYPES, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, elementId, elementName, runeMax, specOf, type World } from '@wizard-sim/sim';
+import { badge, perkOf } from './art/perks';
 import * as X from './art/px';
 import { mod } from './art/util';
 
@@ -19,6 +20,8 @@ const PW = Math.max(TOP.length * SLOT, STAG + BOT.length * SLOT) + 6, PH = RH * 
 const CW = 240, CH = PH + 22;
 
 const TW = 320, TH = 22;
+/** Survive: the power-ups panel (top left) and the run-over card. */
+const PKW = 150, PKH = 4 * 13 + 2, OVW = 220, OVH = 132;
 
 export class Hud {
   readonly sprite: Sprite;
@@ -33,6 +36,14 @@ export class Hud {
   private spentAt = new Float64Array(N_EL + 1).fill(-9);
   private lastTitle = '';
   private lastCastAt = -9;
+  /** Survive: each player's power-ups (top left), and the run-over card (centre). */
+  readonly perks: Sprite;
+  readonly over: Sprite;
+  private pk = X.canvas(PKW, PKH);
+  private pkTex: Texture;
+  private ov = X.canvas(OVW, OVH);
+  private ovTex: Texture;
+  private pkKey = '';
 
   /** Whose runes and queue the HUD shows: the local player's seat (online it isn't always 0). */
   constructor(public seat = 0) {
@@ -42,6 +53,89 @@ export class Hud {
     this.ttex = Texture.from(this.tc.c);
     this.ttex.source.scaleMode = 'nearest';
     this.top = new Sprite(this.ttex);
+    this.pkTex = Texture.from(this.pk.c); this.pkTex.source.scaleMode = 'nearest'; this.perks = new Sprite(this.pkTex);
+    this.ovTex = Texture.from(this.ov.c); this.ovTex.source.scaleMode = 'nearest'; this.over = new Sprite(this.ovTex);
+    this.perks.visible = false; this.over.visible = false;
+  }
+
+  /** One player's picks, stacked: [power-up, element, count] in the order first taken. */
+  private picksOf(w: World, s: number): [number, number, number][] {
+    const r = w.run!, out: [number, number, number][] = [];
+    for (let k = 0; k < r.logN[s]; k++) {
+      const pu = r.log[s * PICK_LOG + k], el = r.logEl[s * PICK_LOG + k];
+      const same = out.find((q) => q[0] === pu && q[1] === el);
+      if (same) same[2]++; else out.push([pu, el, 1]);
+    }
+    return out;
+  }
+
+  /** Survive: who holds which power-ups, as badges in a row per player (top left). */
+  private drawPerks(w: World): void {
+    const r = w.run;
+    this.perks.visible = !!r;
+    if (!r) return;
+    const seats: number[] = [];
+    for (let s = 0; s < MAX_SEATS; s++) if (w.seats.active[s]) seats.push(s);
+    const key = seats.map((s) => `${s}:${Array.from(r.log.subarray(s * PICK_LOG, s * PICK_LOG + r.logN[s])).join(',')}/${Array.from(r.logEl.subarray(s * PICK_LOG, s * PICK_LOG + r.logN[s])).join(',')}`).join(';');
+    if (key === this.pkKey) return;
+    this.pkKey = key;
+    const c = this.pk.x;
+    c.clearRect(0, 0, PKW, PKH); c._fs = null;
+    seats.forEach((s, row) => {
+      const y = 1 + row * 13, team = X.TEAMS[s % 4], picks = this.picksOf(w, s);
+      X.rect(c, 0, y, 13, 11, '#0a0810'); X.rect(c, 1, y + 1, 11, 9, team.dark); X.text(c, 'P' + (s + 1), 2, y + 3, team.light);
+      if (!picks.length) { X.text(c, '-', 16, y + 3, '#4a4560'); return; }
+      let x = 15;
+      for (const [pu, el, n] of picks) {
+        if (x > PKW - 12) break;
+        badge(c, perkOf(pu, el), x, y + 1);
+        x += 10;
+        if (n > 1) { X.rect(c, x - 1, y + 3, 9, 7, '#0a0810'); X.text(c, '×' + n, x, y + 4, '#cfc9e6'); x += 9; }
+        x += 1;
+      }
+    });
+    this.pkTex.source.update();
+  }
+
+  /** Survive: the run is over. Waves survived, everyone's power-ups, and how to go again. */
+  private drawOver(w: World, t: number, viewW: number, viewH: number): void {
+    const r = w.run, on = !!r && w.enc.state[0] === PHASE_ENC.over;
+    this.over.visible = on;
+    if (!on) return;
+    const c = this.ov.x;
+    c.clearRect(0, 0, OVW, OVH); c._fs = null;
+    X.rect(c, 0, 0, OVW, OVH, '#0a0810'); X.rect(c, 1, 1, OVW - 2, OVH - 2, '#141220'); X.rect(c, 1, 1, OVW - 2, 1, '#3a3450');
+    const mid = (str: string, y: number, col: string, k = 1) => X.text(c, str, Math.round(OVW / 2 - (str.length * 4 - 1) * k / 2), y, col, '#0a0810', k);
+    mid('THE ARENA FELL', 7, '#ff6a6a', 2);
+    const n = r!.state[1];
+    mid(`WAVES SURVIVED: ${n}`, 23, '#ffd860');
+    mid(`FELL ON WAVE ${r!.state[4]}`, 31, '#8a8498');
+    // everyone's picks, badge and name, wrapping under the player's tab
+    let y = 43;
+    for (let s = 0; s < MAX_SEATS; s++) {
+      if (!w.seats.active[s]) continue;
+      const team = X.TEAMS[s % 4], picks = this.picksOf(w, s);
+      X.rect(c, 8, y, 13, 11, team.dark); X.text(c, 'P' + (s + 1), 10, y + 3, team.light);
+      if (!picks.length) X.text(c, 'NO POWER-UPS', 26, y + 3, '#4a4560');
+      let x = 26;
+      for (const [pu, el, k] of picks) {
+        const p = perkOf(pu, el), label = p.name.toUpperCase() + (k > 1 ? ' ×' + k : ''), wd = 12 + label.length * 4 + 6;
+        if (x + wd > OVW - 6 && x > 26) { x = 26; y += 12; }
+        if (y > OVH - 30) break;
+        badge(c, p, x, y + 1);
+        X.text(c, label, x + 12, y + 3, p.ramp[1]);
+        x += wd;
+      }
+      y += 14;
+    }
+    const h = Math.min(OVH, y + 14);
+    const ready = r!.state[3] >= T(SURVIVE_TIMES.restartAfter);
+    if (ready && Math.floor(t * 2.5) % 2 === 0) mid('SPACE: NEW RUN', h - 11, '#e8e4f0');
+    else if (!ready) mid('...', h - 11, '#4a4560');
+    // the card ends under its last line (the canvas is the tallest it can be)
+    c.clearRect(0, h, OVW, OVH - h); X.rect(c, 0, h - 1, OVW, 1, '#0a0810');
+    this.ovTex.source.update();
+    this.over.position.set(Math.round(viewW / 2 - OVW / 2), Math.round(viewH / 2 - h / 2 - 20));
   }
 
   /** The wave director's state: the lull's countdown and the incoming mix, the wave's foes left. */
@@ -62,8 +156,21 @@ export class Hud {
       for (let i = 0; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy) foes++;
       for (let p = 0; p < MAX_PORTALS; p++) left += e.left[p];
       line = `WAVE ${st[1]}`; sub = `${foes + left} LEFT`;
-    } else { line = `BREATHER ${secs}S`; sub = `${st[3]} CLEARED`; }
-    const clean = (str: string) => str.toUpperCase().replace(/[^A-Z0-9 +\-/.!×]/g, ' ');
+    } else if (st[0] === PHASE_ENC.pick && w.run) {
+      // which altar am I on (or nearest), and who still has to choose
+      const r = w.run, b = w.bodies, me = this.seat;
+      let near = -1, nd = 1e9;
+      for (let a = 0; a < N_ALTARS; a++) { const d = Math.hypot(b.x[me] - r.ax[a], b.y[me] - r.ay[a]); if (r.offer[a] && d < nd) { nd = d; near = a; } }
+      const left = [];
+      for (let s = 0; s < MAX_SEATS; s++) if (w.seats.active[s] && !w.bodies.downed[s] && r.picked[s] < 0) left.push('P' + (s + 1));
+      if (r.picked[me] >= 0) { line = 'PICKED: ' + perkOf(r.offer[r.picked[me]], r.offerEl[r.picked[me]]).name; sub = left.length ? `WAITING FOR ${left.join(' ')}` : ''; }
+      else {
+        line = 'PICK A POWER-UP: STAND ON AN ALTAR';
+        sub = near >= 0 && nd < 2.2 ? perkOf(r.offer[near], r.offerEl[near]).rule : `${Math.max(0, Math.ceil((T(SURVIVE_TIMES.pickMax) - r.state[0]) / 60))}S`;
+      }
+    } else if (st[0] === PHASE_ENC.over) { line = 'RUN OVER'; sub = `WAVES SURVIVED: ${w.run ? w.run.state[1] : st[3]}`; }
+    else { line = `BREATHER ${secs}S`; sub = `${st[3]} CLEARED`; }
+    const clean = (str: string) => str.toUpperCase().replace(/[^A-Z0-9 +\-/.!×:%]/g, ' ');
     line = clean(line); sub = clean(sub);
     const wd = Math.max(line.length, sub.length) * 4 + 10, x = Math.round(TW / 2 - wd / 2);
     X.rect(c, x - 1, 0, wd + 2, sub ? 17 : 10, '#0a0810'); X.rect(c, x, 1, wd, sub ? 15 : 8, '#1a1726');
@@ -84,6 +191,9 @@ export class Hud {
   /** Redraws the HUD for time t (sim seconds) and places it at the bottom of a view w x h art px. */
   draw(w: World, t: number, viewW: number, viewH: number): void {
     this.drawWave(w, t, viewW);
+    this.drawPerks(w);
+    this.perks.position.set(3, 3);
+    this.drawOver(w, t, viewW, viewH);
     const c = this.c.x, s = w.seats, i = this.seat;
     c.clearRect(0, 0, CW, CH); c._fs = null;
     const x0 = Math.round(CW / 2 - PW / 2 + 7), y0 = CH - PH - 1;
@@ -117,7 +227,7 @@ export class Hud {
       X.icon(c, el, sx + 2, sy + 2 - pulse, ramp[drain ? 1 : 2]);
       X.text(c, rules.ELEMENTS[el].key, sx + 13, sy + 3, dryK ? '#ff6a6a' : '#6a6484');
       if (drain) { X.rect(c, sx + 13, sy + 9, 3, 1, '#ff6a6a'); X.px(c, sx + 18, sy + 9 + mod(t * 2.2, 1) * 4, ramp[2]); }
-      const v = s.runes[i * N_EL + id - 1], max = Math.round(RUNES.max[el]);
+      const v = s.runes[i * N_EL + id - 1], max = Math.round(runeMax(w, i, id));
       this.pips(c, sx, sy + 11, v, max, ramp, t);
     });
 

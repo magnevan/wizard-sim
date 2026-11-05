@@ -18,7 +18,7 @@ import { EL, elementName, queueFromCounts } from './elements';
 import { fireSpell, type FireExtra } from './effects';
 import { addKnock } from './hit';
 import { cosTurns, sinTurns } from './trig';
-import type { World } from './world';
+import { PU, stackOf, type World } from './world';
 
 /** Ticks a press may last and still be a tap (Strike rather than Heavy). */
 export const TAP = T(0.25);
@@ -58,6 +58,7 @@ export function special(w: World, i: number, face: number, tx: number, ty: numbe
 /** A hop backwards, away from where you face. */
 export function retreat(w: World, i: number, face: number): void {
   addKnock(w, i, -cosTurns(face), -sinTurns(face), STRUCT.retreatPush);
+  if (w.run && stackOf(w, i, PU.slipstream)) w.run.dodge[i] = T(2); // survive: the next spell is free
 }
 
 /** How far a held RMB has charged a Heavy (0 at the end of the tap window, 1 when full). */

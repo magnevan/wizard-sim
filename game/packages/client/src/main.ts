@@ -9,7 +9,8 @@
  *   ?selftest=1   no rendering: run the golden replay and publish its hash on <html data-hash>
  *   ?autoplay=1   the Arena with bots piloting seats 0 and 1 (setTimeout loop too: the way to screenshot enemies and waves)
  *   ?spell=arcane+fire/force   both seats cast chosen spells at the dummies (demo.ts; &spell2= for seat 1)
- *   ?room=arena   play the Arena (waves of enemies) instead of the Sanctum's dummies
+ *   ?room=arena   play the Arena (waves of enemies) instead of the Sanctum's dummies; ?room=survive (or #survive):
+ *                 Survive, endless waves in a walled arena with a power-up pick between them
  *   ?scale=N      force the integer pixel scale
  *   ?debug=0      hide the debug line (tick, hash); the backquote key toggles it
  *   ?renderer=webgpu   try WebGPU instead of WebGL
@@ -22,7 +23,7 @@ import { Application } from 'pixi.js';
 import { TextureSource } from 'pixi.js';
 import {
   DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, hashWorld, hex, newBotMemory, runReplay, scriptedInput, scriptedReplay, step,
-  type PlayerInput,
+  type PlayerInput, type Room,
 } from '@wizard-sim/sim';
 import { demoInput, parseDemo } from './demo';
 import { PadSeats } from './gamepad';
@@ -39,12 +40,13 @@ const params = new URLSearchParams(location.search);
 // Artifact links carry no query string, only a plain #anchor: #arena, #ally or #arena-ally work there too.
 for (const tok of location.hash.slice(1).split('-')) {
   if (tok === 'arena') params.set('room', 'arena');
+  if (tok === 'survive') params.set('room', 'survive');
   if (tok === 'ally') params.set('ally', '1');
 }
-// 1 / 2 switch between the Sanctum (dummies) and the Arena (waves), keeping the ally choice.
+// 1 / 2 / 3 switch between the Sanctum (dummies), the Arena (waves) and Survive, keeping the ally choice.
 addEventListener('keydown', (e) => {
-  if (e.code !== 'Digit1' && e.code !== 'Digit2') return;
-  const toks = [e.code === 'Digit2' ? 'arena' : 'sanctum', ...(params.get('ally') === '1' ? ['ally'] : [])];
+  if (e.code !== 'Digit1' && e.code !== 'Digit2' && e.code !== 'Digit3') return;
+  const toks = [e.code === 'Digit2' ? 'arena' : e.code === 'Digit3' ? 'survive' : 'sanctum', ...(params.get('ally') === '1' ? ['ally'] : [])];
   location.hash = toks.join('-');
   location.reload();
 });
@@ -67,7 +69,8 @@ async function boot(): Promise<void> {
   const autoplay = params.get('autoplay') === '1';
   const demo = [parseDemo(params.get('spell')), parseDemo(params.get('spell2') ?? params.get('spell'))];
   const headless = scripted || autoplay || !!demo[0];
-  const room = autoplay || params.get('room') === 'arena' ? 'arena' : 'sanctum';
+  const asked = params.get('room');
+  const room: Room = asked === 'survive' ? 'survive' : autoplay || asked === 'arena' ? 'arena' : 'sanctum';
   TextureSource.defaultOptions.scaleMode = 'nearest';
   // Headless runs seat two wizards. Interactive play starts with you alone; gamepads join seats 1-3
   // with any button, and ?ally=1 puts a bot wizard on seat 1 (a dev ally for trying co-op solo).

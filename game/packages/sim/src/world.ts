@@ -231,8 +231,8 @@ export interface Devices {
 }
 export const DEVICE = { none: 0, turret: 1, glyph: 2, lineglyph: 3, orbital: 4, lens: 5 } as const;
 
-/** The arena's wave director. */
-export const PHASE_ENC = { off: 0, lull: 1, wave: 2, breather: 3 } as const;
+/** The arena's wave director. Survive adds the altar pick between waves and the run's end. */
+export const PHASE_ENC = { off: 0, lull: 1, wave: 2, breather: 3, pick: 4, over: 5 } as const;
 export const MAX_PORTALS = 4;
 export interface Encounter {
   /** [0] phase (PHASE_ENC), [1] wave number, [2] ticks left in the lull or breather (or ticks into the wave), [3] waves cleared. */
@@ -251,6 +251,57 @@ export interface Nav {
   timer: Int32Array;
 }
 
+/**
+ * Survive's power-ups (docs/explorations/2026-11-05-survive-mode.md): per-seat modifiers the sim
+ * applies. `cap` is how many of one a seat can hold.
+ */
+export const PU = {
+  none: 0,
+  /** +1 max rune of every element. */
+  deep: 1,
+  /** +2 max runes of one element (the altar names it). */
+  deepEl: 2,
+  /** +30% rune regen. */
+  wellspring: 3,
+  /** +1 Sigil rune: one more standing device. */
+  spareSigil: 4,
+  /** Your rock walls stand twice as long, with half again the hit points. */
+  bedrock: 5,
+  /** Enemies you set burning explode in fire when they die. */
+  pyre: 6,
+  /** The first spell within 1.5 s of a Retreat hop costs no runes. */
+  slipstream: 7,
+  /** A mirror ward regrows on you 12 s after you last wore a ward. */
+  charm: 8,
+  /** Your heals splash half their healing onto allies near the one healed. */
+  bloom: 9,
+  /** Your turrets' shots cost no runes. */
+  clockwork: 10,
+} as const;
+export const N_PU = 11;
+export const PU_CAP: readonly number[] = [0, 3, 4, 3, 2, 1, 1, 1, 1, 1, 1];
+export const N_ALTARS = 3;
+/** Picks remembered per seat, in order, for the HUD and the results. */
+export const PICK_LOG = 32;
+
+/** Survive's run: the altar pick and every seat's power-ups. Only a survive world has one. */
+export interface Run {
+  /** [0] ticks into the pick, [1] waves survived when the run ended, [2] restarts, [3] ticks since the run ended, [4] the wave the run ended on. */
+  state: Int32Array;
+  /** Power-up stacks, N_PU per seat. */
+  stacks: Uint8Array;
+  /** Extra max runes, N_EL per seat (from deep, deepEl and spareSigil). */
+  maxBonus: Float64Array;
+  /** The altars of this pick: their power-up, its element (deepEl) and where they stand. */
+  offer: Uint8Array; offerEl: Uint8Array; ax: Float64Array; ay: Float64Array;
+  /** The altar each seat took this pick (-1: none yet), and ticks it has stood on one. */
+  picked: Int8Array; stand: Int32Array; standOn: Int8Array;
+  /** Every pick so far, per seat (power-up, element). */
+  log: Uint8Array; logEl: Uint8Array; logN: Uint8Array;
+  /** Slipstream: ticks left of the free-spell window after a hop. Charm: ticks until the mirror regrows. */
+  dodge: Int32Array; charm: Int32Array;
+}
+
 export interface World {
   /** [0] = tick, [1] = seed. */
   clock: Uint32Array;
@@ -265,6 +316,8 @@ export interface World {
   devices: Devices;
   enc: Encounter;
   nav: Nav;
+  /** Survive only (null elsewhere, so the other rooms' state, and the golden hash, are untouched). */
+  run: Run | null;
   events: SimEvent[];
 }
 
@@ -304,11 +357,62 @@ function zones(n: number): Zones {
   };
 }
 
+function run(): Run {
+  const n = MAX_SEATS;
+  return {
+    state: i32(6), stacks: u8(n * N_PU), maxBonus: f64(n * N_EL),
+    offer: u8(N_ALTARS), offerEl: u8(N_ALTARS), ax: f64(N_ALTARS), ay: f64(N_ALTARS),
+    picked: new Int8Array(n).fill(-1), stand: i32(n), standOn: new Int8Array(n).fill(-1),
+    log: u8(n * PICK_LOG), logEl: u8(n * PICK_LOG), logN: u8(n),
+    dodge: i32(n), charm: i32(n),
+  };
+}
+
+/** The owner of the arena's own rock (survive's cover and gates): it never times out or breaks. */
+export const TERRAIN = -2;
+
+/**
+ * The survive arena's static rock, as segments: funnels in front of the four gates (a chokepoint to
+ * hold or wall shut), L-shaped cover on the diagonals (archer cover, ricochet angles) and two
+ * pillars flanking the central plaza where the altars rise.
+ */
+export const SURVIVE_ROCK: readonly (readonly [number, number, number, number])[] = [
+  // gate funnels: west, east, north, south (a 2.8 u gap in each)
+  [-9.2, -3.8, -9.2, -1.4], [-9.2, 1.4, -9.2, 3.8],
+  [9.2, -3.8, 9.2, -1.4], [9.2, 1.4, 9.2, 3.8],
+  [-4.0, -5.4, -1.4, -5.4], [1.4, -5.4, 4.0, -5.4],
+  [-4.0, 5.4, -1.4, 5.4], [1.4, 5.4, 4.0, 5.4],
+  // L-shaped cover on the diagonals, corners pointing out
+  [-7.6, -4.2, -5.6, -4.2], [-7.6, -4.2, -7.6, -2.6],
+  [7.6, -4.2, 5.6, -4.2], [7.6, -4.2, 7.6, -2.6],
+  [-7.6, 4.2, -5.6, 4.2], [-7.6, 4.2, -7.6, 2.6],
+  [7.6, 4.2, 5.6, 4.2], [7.6, 4.2, 7.6, 2.6],
+  // pillars flanking the plaza
+  [-5.2, -0.9, -5.2, 0.9], [5.2, -0.9, 5.2, 0.9],
+];
+/** Where survive's portals open: behind each gate. */
+export const SURVIVE_GATES: readonly (readonly [number, number])[] = [[-11, 0], [11, 0], [0, -7.1], [0, 7.1]];
+/** The altars' spots in the plaza. */
+export const ALTAR_SPOTS: readonly (readonly [number, number])[] = [[-2.6, -0.4], [0, 2.1], [2.6, -0.4]];
+
+/** Max runes of element `id` for seat `i`: the config, plus the seat's survive power-ups. */
+export const runeMax = (w: World, i: number, id: number): number =>
+  w.run ? RUNES.max[elementName(id)] + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
+/** A seat's power-up stacks (0 outside survive). */
+export const stackOf = (w: World, i: number, pu: number): number => (w.run && i >= 0 && i < MAX_SEATS ? w.run.stacks[i * N_PU + pu] : 0);
+/** Runes per second for seat `i` (Wellspring adds 30% a stack). */
+export const regenOf = (w: World, i: number): number => {
+  const k = stackOf(w, i, PU.wellspring);
+  return k ? RUNES.regen * (1 + 0.3 * k) : RUNES.regen;
+};
+
 const START = [[-4, 2], [4, 2], [-4, -2], [4, -2]] as const;
 /** The Sanctum's practice dummies. */
 const DUMMIES = [[-6, -4], [0, -5], [6, -4]] as const;
 
-export function createWorld(seed: number, players: number, opts: { dummies?: boolean; room?: 'sanctum' | 'arena' } = {}): World {
+export type Room = 'sanctum' | 'arena' | 'survive';
+
+export function createWorld(seed: number, players: number, opts: { dummies?: boolean; room?: Room } = {}): World {
   const w: World = {
     clock: new Uint32Array([0, seed >>> 0]), rng: createRng(seed),
     bodies: bodies(MAX_BODIES), seats: seats(MAX_SEATS), missiles: missiles(MAX_MISSILES), zones: zones(MAX_ZONES),
@@ -331,10 +435,19 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
       els: u8(MAX_DEVICES * N_EL), timer: i32(MAX_DEVICES), life: i32(MAX_DEVICES), charges: u8(MAX_DEVICES), phase: f64(MAX_DEVICES),
       heal: u8(MAX_DEVICES), look: u8(MAX_DEVICES), born: i32(MAX_DEVICES), chan: i32(MAX_DEVICES),
     },
+    run: opts.room === 'survive' ? run() : null,
     events: [],
   };
+  if (w.run) {
+    SURVIVE_ROCK.forEach(([x1, y1, x2, y2], k) => {
+      const wl = w.walls;
+      wl.type[k] = 1; // WALL.rock (compile.ts)
+      wl.owner[k] = TERRAIN; wl.x1[k] = x1; wl.y1[k] = y1; wl.x2[k] = x2; wl.y2[k] = y2;
+      wl.hp[k] = wl.maxHp[k] = 1e6;
+    });
+  }
   for (let i = 0; i < Math.min(players, MAX_SEATS); i++) joinSeat(w, i);
-  const arena = opts.room === 'arena';
+  const arena = opts.room === 'arena' || opts.room === 'survive';
   if (arena) { w.enc.state[0] = PHASE_ENC.lull; w.enc.state[1] = 1; w.enc.state[2] = 0; }
   else if (opts.dummies !== false) for (const [x, y] of DUMMIES) spawnBody(w, -1, KIND.dummy, TEAM.enemies, x, y, BODY.dummyHp, BODY.dummyRadius);
   return w;
@@ -345,7 +458,7 @@ export function joinSeat(w: World, i: number): void {
   if (w.seats.active[i]) return;
   w.seats.active[i] = 1;
   spawnBody(w, i, KIND.wizard, TEAM.players, START[i][0], START[i][1], BODY.wizardHp, BODY.wizardRadius);
-  for (let e = 1; e <= N_EL; e++) w.seats.runes[i * N_EL + e - 1] = RUNES.max[elementName(e)];
+  for (let e = 1; e <= N_EL; e++) w.seats.runes[i * N_EL + e - 1] = runeMax(w, i, e);
 }
 
 /** Puts a body in `slot` (or the first free slot from MAX_SEATS on, if slot < 0). Returns the slot or -1. */
@@ -367,7 +480,9 @@ export const tickOf = (w: World): number => w.clock[0];
 /** Every typed array in the world, in a fixed order. Snapshot, restore and hash all walk this list. */
 export function buffers(w: World): ArrayBufferView[] {
   const out: ArrayBufferView[] = [w.clock, w.rng];
-  for (const pool of [w.bodies, w.seats, w.missiles, w.zones, w.surf, w.walls, w.waves, w.devices, w.enc, w.nav] as object[]) {
+  const pools: object[] = [w.bodies, w.seats, w.missiles, w.zones, w.surf, w.walls, w.waves, w.devices, w.enc, w.nav];
+  if (w.run) pools.push(w.run); // survive only: the other rooms keep their layout (and hash) exactly
+  for (const pool of pools) {
     // Sorted by field name, so the order never depends on how a pool object was built.
     for (const k of Object.keys(pool).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) out.push((pool as Record<string, ArrayBufferView>)[k]);
   }

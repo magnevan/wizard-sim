@@ -13,6 +13,7 @@ export * from './replay';
 export { scriptedInput, scriptedReplay } from './script';
 export { ARCHETYPES, ARCH, ATTACK, type Archetype } from './archetypes';
 export { wavePlan, WAVE_TIMES } from './waves';
+export { survivePlan, SURVIVE_TIMES, grant, restartRun, raiseAltars } from './survive';
 export { botInput, newBotMemory, type BotMemory } from './bot';
 export { tunables, findTunable, overrides, applyOverrides, resetTuning, tuningHash, type Tunable } from './tuning';
-export { devSpawnEnemy, devRefillRunes, devHeal, devClearEnemies, devStartWave, devSkipLull, devStopWaves } from './dev';
+export { devSpawnEnemy, devRefillRunes, devHeal, devClearEnemies, devStartWave, devSkipLull, devStopWaves, devRestartRun } from './dev';

@@ -28,8 +28,10 @@
  * (beforeTick). A change heard after its tick rewinds to it.
  */
 import { RollbackSession, type Gone, type Handover, type Transport } from '@wizard-sim/net';
-import { createWorld, overrides, restore, snapshot, tuningHash, type Snapshot, type World } from '@wizard-sim/sim';
+import { createWorld, overrides, replaceWorld, tuningHash, type Room, type Snapshot, type World } from '@wizard-sim/sim';
 import { loadSaved, replaceTuning } from '../tune-io';
+
+const roomOf = (r: string): Room => (r === 'arena' || r === 'survive' ? r : 'sanctum');
 import { fromB64, toB64, type Bus } from './bus';
 import { LinkSim, PRESETS } from './linksim';
 import type { RtcBus } from './webrtc';
@@ -256,8 +258,8 @@ export class NetPlay {
     this.seat = m.players.indexOf(this.bus.self);
     this.players = m.players.length;
     this.joinedPlayers = m.players.slice();
-    // A fresh world, copied into the one everything already holds (same layout, so restore works).
-    restore(this.world, snapshot(createWorld(m.seed, this.players, { room: m.room === 'arena' ? 'arena' : 'sanctum' })));
+    // A fresh world, put into the one everything already holds (a copy; or, from or to Survive, its pools swapped in).
+    replaceWorld(this.world, createWorld(m.seed, this.players, { room: roomOf(m.room) }));
     const seats = m.players.map((_, i) => i);
     this.transport = this.newTransport(m.match);
     this.transport.self = this.seat;
@@ -406,6 +408,7 @@ export class NetPlay {
     this.transport = r.transport;
     this.tunes = (m.tunes ?? []).slice(); this.tuneOn = -1;
     const snap = await unpackSnap(m.snap);
+    replaceWorld(this.world, createWorld(0, this.players, { room: roomOf(m.room) })); // the snapshot's layout
     this.session = new RollbackSession(this.world, r.transport, seats, m.delay, false, ROLLBACK_WINDOW);
     this.session.startMidway({ tick: m.tick, snap, inputs: fromB64(m.inputs), gone: m.gone }, m.at);
     this.applyTuning(m.tick);

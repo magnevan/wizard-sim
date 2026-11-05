@@ -13,14 +13,14 @@
 import { ARCHETYPES, ATTACK, ARCH } from './archetypes';
 import { ARENA, STRUCT, T } from './config';
 import { EL, N_EL } from './elements';
-import { spawnMissile, type Payload } from './effects';
+import { burstEvent, disc, spawnMissile, stored, type Payload } from './effects';
 import { angleDiff, len } from './geom';
-import { addKnock, applyHit } from './hit';
+import { HIT_KIND, addKnock, applyHit, setHitKind } from './hit';
 import { cutOff, steer } from './nav';
 import { WALL } from './compile';
 import { damageWall, segDist } from './walls';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
-import { AI, KIND, MAX_SEATS, STATUS_BIT, TEAM, WARD, type World } from './world';
+import { AI, KIND, MAX_SEATS, PU, STATUS_BIT, TEAM, WARD, stackOf, type World } from './world';
 
 const TRACK_SHARE = 0.55;
 const COVER_DIST = 2.2;
@@ -249,5 +249,17 @@ export function tickDeaths(w: World): void {
     // look = archetype; el, status and the blow's direction (x2, y2) let the view pick a death that fits.
     w.events.push({ tick: w.clock[0], kind: 'fizzle', who: i, x: b.x[i], y: b.y[i], text: 'dies', look: b.arch[i], el: b.lastEl[i], mix: b.lastMix[i], shape: b.lastKind[i], status, x2: b.lastDX[i], y2: b.lastDY[i], amount: -b.hp[i] });
     b.kind[i] = KIND.none;
+    // Pyre (survive): an enemy you set burning goes up in a fire burst when it dies. It burns allies too.
+    const src = b.burnSrc[i];
+    if (w.run && b.burn[i] > 0 && src >= 0 && src < MAX_SEATS && stackOf(w, src, PU.pyre)) {
+      setHitKind(HIT_KIND.burst);
+      disc(w, stored(PYRE_ELS, 0, 0, 0, EL.fire), src, b.x[i], b.y[i], PYRE_RADIUS, 1, i);
+      burstEvent(w, src, b.x[i], b.y[i], PYRE_RADIUS, EL.fire);
+    }
   }
 }
+
+/** Pyre's burst: two Fire runes' worth, on everyone within reach. */
+const PYRE_ELS = new Uint8Array(N_EL);
+PYRE_ELS[EL.fire - 1] = 2;
+const PYRE_RADIUS = 1.8;

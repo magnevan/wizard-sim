@@ -308,3 +308,10 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
   - Lightning lends the chain heal: more Lightning, more jumps.
   Not built yet.
 - **Still open:** a second, non-lending element in a heal (Life + Lightning + Cold) still does nothing.
+
+## 2026-11-05: Survive mode in the game (`explorations/2026-11-05-survive-mode.md`)
+- **The user asked for an arena and a survive mode with power-ups between waves.** Claude built it as the room `survive` (`#survive`): a walled arena with gate chokepoints, endless waves, and an altar pick between waves. The proposals below are Claude's; the user hasn't reviewed them yet.
+- **The pick is in the world:** three altars rise in the breather. Each player stands on one (0.75 s) and gets its power-up, and two players may take the same one. The next wave's portals open during the pick, so you can pick for what's coming. No new keys.
+- **Power-ups are per-seat and per-run.** Rune max and regen became per-seat (`runeMax`, `regenOf`), equal to the config outside Survive. Ten are built: the easy ones (Deep pools, Deep element, Wellspring, Spare sigil) and six that bend spell rules (Bedrock, Pyre, Slipstream, Mirror charm, Bloom, Clockwork). Five more are designed only.
+- **Pillar notes, open for the user:** Wellspring and Glass heart are flat numbers (pillar 1), and Bloom helps allies you didn't aim at (pillar 3).
+- The golden hash is unchanged (`485c0373`): the survive state exists only in a survive world.

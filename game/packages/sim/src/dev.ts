@@ -4,10 +4,11 @@
  * longer replays from its inputs alone (the panel marks such runs).
  */
 import { ARCHETYPES } from './archetypes';
-import { RUNES, T } from './config';
-import { N_EL, elementName } from './elements';
+import { T } from './config';
+import { N_EL } from './elements';
 import { openPortals } from './waves';
-import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, TEAM, spawnBody, type World } from './world';
+import { openGates, restartRun, SURVIVE_TIMES } from './survive';
+import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, TEAM, runeMax, spawnBody, type World } from './world';
 
 export function devSpawnEnemy(w: World, arch: number, x: number, y: number): number {
   const a = ARCHETYPES[arch];
@@ -18,7 +19,7 @@ export function devSpawnEnemy(w: World, arch: number, x: number, y: number): num
 }
 
 export function devRefillRunes(w: World, seat: number): void {
-  for (let e = 1; e <= N_EL; e++) w.seats.runes[seat * N_EL + e - 1] = RUNES.max[elementName(e)];
+  for (let e = 1; e <= N_EL; e++) w.seats.runes[seat * N_EL + e - 1] = runeMax(w, seat, e);
 }
 
 export function devHeal(w: World, seat: number): void {
@@ -37,14 +38,18 @@ export function devStartWave(w: World, n: number, lullSeconds = 2): void {
   devClearEnemies(w);
   const st = w.enc.state;
   st[0] = PHASE_ENC.lull; st[1] = Math.max(1, Math.floor(n)); st[3] = Math.max(st[3], 1);
-  openPortals(w);
+  if (w.run) { for (let a = 0; a < w.run.offer.length; a++) w.run.offer[a] = 0; openGates(w); } else openPortals(w);
   st[2] = T(lullSeconds);
 }
 
 /** Skips the rest of a lull or breather. */
 export function devSkipLull(w: World): void {
   if (w.enc.state[0] === PHASE_ENC.lull || w.enc.state[0] === PHASE_ENC.breather) w.enc.state[2] = 1;
+  if (w.enc.state[0] === PHASE_ENC.pick && w.run) w.run.state[0] = T(SURVIVE_TIMES.pickMax); // unpicked seats go without
 }
+
+/** Survive: start a new run now (the run-over screen does this with Space). */
+export function devRestartRun(w: World): void { if (w.run) restartRun(w); }
 
 /** Stops the wave director (enemies stay). */
 export function devStopWaves(w: World): void { w.enc.state[0] = PHASE_ENC.off; }

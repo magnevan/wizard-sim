@@ -6,10 +6,10 @@
 import { COMBAT, DAMAGE, STATUS, STRUCT, T } from './config';
 import { EL, N_EL, elementName, formCurve, formOf } from './elements';
 import { ARCHETYPES } from './archetypes';
-import { angleDiff } from './geom';
+import { angleDiff, len } from './geom';
 import { atan2Turns } from './trig';
 import { drainShield } from './walls';
-import { KIND, MAX_SEATS, WARD, type World } from './world';
+import { KIND, MAX_SEATS, PU, WARD, stackOf, type World } from './world';
 
 export interface HitOpts {
   /** Multiplier on everything (channels pass DT x rate, charge and spread pass their share). */
@@ -71,6 +71,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     // Support: Life heals; the lending elements only help (Rescue spray, Healing spray).
     const amount = COMBAT.healPerLife * life * o.scale;
     b.hp[t] = Math.min(b.maxHp[t], b.hp[t] + amount);
+    bloom(w, srcSeat, t, amount);
     if (water) { b.burn[t] = 0; addKnock(w, t, o.dirX, o.dirY, o.push * water * 0.4 * ss); }
     if (fire) { b.wet[t] = 0; b.frozen[t] = 0; b.chill[t] = 0; }
     return -amount;
@@ -134,6 +135,17 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   if (dmg > 0) { b.lastHit[t] = tick; b.lastEl[t] = form || EL.earth; b.lastDX[t] = o.dirX; b.lastDY[t] = o.dirY; b.lastMix[t] = o.scald ? 1 : o.freeze ? 2 : 0; b.lastKind[t] = hitKind; }
   if (life) b.hp[t] = Math.min(b.maxHp[t], b.hp[t] + COMBAT.healPerLife * life * o.scale); // Life inside a Shield/Sigil spell
   return dmg;
+}
+
+/** Bloom (survive): a heal by seat `src` splashes half onto the other wizards near the one healed. It only ever heals. */
+export function bloom(w: World, src: number, t: number, healed: number): void {
+  if (!w.run || healed <= 0 || src < 0 || !stackOf(w, src, PU.bloom)) return;
+  const b = w.bodies, amount = healed * 0.5;
+  for (let j = 0; j < MAX_SEATS; j++) {
+    if (j === t || b.kind[j] !== KIND.wizard || b.downed[j] || len(b.x[j] - b.x[t], b.y[j] - b.y[t]) > 2.5) continue;
+    b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + amount);
+    if (w.clock[0] % 20 === 0) w.events.push({ tick: w.clock[0], kind: 'heal', who: j, src: t, x: b.x[j], y: b.y[j], amount, look: EL.life });
+  }
 }
 
 function freezeBody(w: World, t: number): void {

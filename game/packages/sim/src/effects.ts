@@ -9,7 +9,7 @@ import type { Mod, SpellSpec } from './compile';
 import { ARENA, BODY, CELL, COMBAT, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
 import { EL, N_EL } from './elements';
 import { inCone, len, rayCircle } from './geom';
-import { HIT_KIND, addKnock, applyHit, setHitKind, type HitOpts } from './hit';
+import { HIT_KIND, addKnock, applyHit, bloom, setHitKind, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { clipRay, collideWalls, damageWall, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
 import { WALL } from './compile';
@@ -252,7 +252,7 @@ const SELF_TMP = new Uint8Array(N_EL); // scratch, never kept
 export function selfHit(w: World, i: number, spec: SpellSpec): void {
   const b = w.bodies, c = spec.counts;
   const life = c[EL.life - 1], arcane = c[EL.arcane - 1];
-  if (life) { const h = COMBAT.healPerLife * life * 1.5; b.hp[i] = Math.min(b.maxHp[i], b.hp[i] + h); hitEvent(w, i, -h, EL.life); }
+  if (life) { const h = COMBAT.healPerLife * life * 1.5; b.hp[i] = Math.min(b.maxHp[i], b.hp[i] + h); hitEvent(w, i, -h, EL.life); bloom(w, i, i, h); }
   if (arcane) { // Attune: it stings, and your runes regenerate faster for a while
     if (i < w.seats.active.length) w.seats.attune[i] = T(RUNES.attuneTime);
     b.hp[i] -= 3 * arcane;

@@ -12,9 +12,10 @@
  * so Space and the element keys go back to the game. The panel is a sibling of the canvas, so
  * clicks on it never reach the canvas's walk / cast handlers.
  */
+import { perkOf } from './art/perks';
 import {
   ARCHETYPES, ARENA, KIND, MAX_SEATS, TEAM, devClearEnemies, devHeal, devRefillRunes, devSkipLull, devSpawnEnemy,
-  devStartWave, devStopWaves, findTunable, overrides, tunables, tuningHash, hex, type Tunable, type World,
+  devStartWave, devStopWaves, devRestartRun, grant, EL, N_PU, PU, findTunable, overrides, tunables, tuningHash, hex, type Tunable, type World,
 } from '@wizard-sim/sim';
 import type { Camera } from './camera';
 import { Meters } from './meters';
@@ -286,6 +287,15 @@ export class TunePanel {
       act('Skip lull', () => devSkipLull(this.world)),
       act('Stop', () => devStopWaves(this.world), 'Stops the wave director; enemies stay'));
     tools.appendChild(wv);
+    if (this.world.run) {
+      // Survive: a new run, or a power-up for P1 without walking to an altar.
+      const sv = h('div', 'tune-line');
+      const pu = h('select');
+      for (let k = 1; k < N_PU; k++) { const o = h('option', '', perkOf(k, k === PU.deepEl ? EL.fire : 0).name); o.value = String(k); pu.appendChild(o); }
+      sv.append(h('span', 'tune-k', 'Survive'), act('New run', () => devRestartRun(this.world), 'Starts a new run now (Space does it on the run-over screen)'),
+        pu, act('Give P1', () => grant(this.world, 0, Number(pu.value), Number(pu.value) === PU.deepEl ? EL.fire : 0), 'P1 takes this power-up now'));
+      tools.appendChild(sv);
+    }
     const misc = h('div', 'tune-line');
     misc.append(act('Clear enemies', () => devClearEnemies(this.world)), act('Refill runes', () => devRefillRunes(this.world, 0)), act('Heal', () => devHeal(this.world, 0)));
     tools.appendChild(misc);

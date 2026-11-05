@@ -19,14 +19,14 @@
  *   Self   an aura around you (fire burns, cold chills, life regenerates, lightning hastes...).
  */
 import { compile, WALL, type SpellSpec } from './compile';
-import { BODY, RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
+import { BODY, RHYTHM, SHAPES, STRUCT, T } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
 import { burstEvent, channelTick, fireSpell, hit, hitOpts, nearest, payloadOf, stored } from './effects';
 import { len } from './geom';
 import { HIT_KIND, addKnock, setHitKind } from './hit';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { boundSigil, drainShield, energyLoad, segDist } from './walls';
-import { DEVICE, GUARD, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, WARD, spawnBody, type World } from './world';
+import { DEVICE, GUARD, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
 
 const alive = (w: World, i: number) => w.bodies.kind[i] !== KIND.none;
 
@@ -49,7 +49,7 @@ function raiseWall(w: World, owner: number, type: number, els: Uint8Array, x1: n
   for (let k = 0; k < MAX_WALLS; k++) {
     if (wl.type[k]) continue;
     wl.type[k] = type; wl.owner[k] = owner; wl.x1[k] = x1; wl.y1[k] = y1; wl.x2[k] = x2; wl.y2[k] = y2;
-    wl.hp[k] = wl.maxHp[k] = hp; wl.born[k] = w.clock[0]; wl.pulse[k] = 0;
+    wl.hp[k] = wl.maxHp[k] = type === WALL.rock && stackOf(w, owner, PU.bedrock) ? hp * 1.5 : hp; wl.born[k] = w.clock[0]; wl.pulse[k] = 0;
     wl.els.set(els, k * N_EL);
     return true;
   }
@@ -145,7 +145,8 @@ function turretGap(w: World, k: number): number {
   for (let j = 0; j < MAX_DEVICES; j++) if (dv.type[j] === DEVICE.turret && dv.owner[j] === owner) turrets++;
   let most = 0;
   for (let id = 1; id <= N_EL; id++) if (id !== EL.sigil) most = Math.max(most, dv.els[k * N_EL + id - 1]);
-  return Math.max(STRUCT.turretInterval, (turrets * most * STRUCT.turretShotCost) / (RUNES.regen * STRUCT.turretShare));
+  if (stackOf(w, owner, PU.clockwork)) return STRUCT.turretInterval; // free shots: no regen budget to fit
+  return Math.max(STRUCT.turretInterval, (turrets * most * STRUCT.turretShotCost) / (regenOf(w, owner) * STRUCT.turretShare));
 }
 
 // ---- casting -----------------------------------------------------------------------------------
@@ -252,7 +253,7 @@ const Q = { device: 1, double: 2, onYou: 3 } as const;
 
 function giveRune(w: World, seat: number): void {
   const k = seat * N_EL + EL.sigil - 1;
-  w.seats.runes[k] = Math.min(RUNES.max.sigil, w.seats.runes[k] + 1);
+  w.seats.runes[k] = Math.min(runeMax(w, seat, EL.sigil), w.seats.runes[k] + 1);
 }
 
 function removeOne(w: World, seat: number, what: number, k: number): void {
@@ -365,7 +366,7 @@ export function spendMote(w: World, seat: number, form: number): void {
   if (!s.motes[seat] || !form) return;
   s.motes[seat]--;
   const k = seat * N_EL + form - 1;
-  s.runes[k] = Math.min(RUNES.max[elementName(form)], s.runes[k] + STRUCT.moteRefund);
+  s.runes[k] = Math.min(runeMax(w, seat, form), s.runes[k] + STRUCT.moteRefund);
 }
 
 // ---- per tick ----------------------------------------------------------------------------------
@@ -376,8 +377,9 @@ export function tickStructures(w: World): void {
 
   // Rock times out: it stands rockLife seconds (more with Earth) and crumbles over the last few.
   for (let k = 0; k < MAX_WALLS; k++) {
-    if (wl.type[k] !== WALL.rock) continue;
-    const life = T(STRUCT.rockLife + STRUCT.rockLifePerEarth * Math.max(0, wl.els[k * N_EL + EL.earth - 1] - 1));
+    if (wl.type[k] !== WALL.rock || wl.owner[k] === TERRAIN) continue; // the arena's own rock stays
+    const base = T(STRUCT.rockLife + STRUCT.rockLifePerEarth * Math.max(0, wl.els[k * N_EL + EL.earth - 1] - 1));
+    const life = stackOf(w, wl.owner[k], PU.bedrock) ? base * 2 : base;
     const left = life - (tick - wl.born[k]);
     if (left <= 0) { w.events.push({ tick, kind: 'burst', who: wl.owner[k], x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.5, look: EL.earth }); wl.type[k] = WALL.none; continue; }
     const crumble = T(STRUCT.rockCrumble);
@@ -473,7 +475,7 @@ export function tickStructures(w: World): void {
       }
       if (dv.timer[k] > 0) { dv.timer[k]--; continue; }
       if (target < 0) { dv.timer[k] = T(0.2); continue; }
-      if (!payShot(w, owner, dv.els, k, STRUCT.turretShotCost)) { // dry: it waits for your regen
+      if (!stackOf(w, owner, PU.clockwork) && !payShot(w, owner, dv.els, k, STRUCT.turretShotCost)) { // dry: it waits for your regen
         if (tick % 30 === 0) w.events.push({ tick, kind: 'dry', who: owner, x: dv.x[k], y: dv.y[k], look: dv.look[k] });
         dv.timer[k] = T(0.25);
         continue;
@@ -550,7 +552,7 @@ export const hasteOf = (w: World, i: number): number =>
   i < MAX_SEATS && w.seats.aura[i] > 0 && w.seats.auraEls[i * N_EL + EL.lightning - 1] ? STRUCT.hasteMult : 1;
 
 /** Sigil regen cap: bound runes don't come back while their device stands. */
-export const sigilCap = (w: World, seat: number): number => RUNES.max.sigil - boundSigil(w, seat);
+export const sigilCap = (w: World, seat: number): number => runeMax(w, seat, EL.sigil) - boundSigil(w, seat);
 
 function nearestFoe(w: World, x: number, y: number, r: number, owner: number): number {
   const b = w.bodies;

@@ -38,7 +38,7 @@ const SPELLS = [
 
 describe('view', async () => {
   const { WorldView } = await import('../src/view');
-  const { createWorld, step } = await import('@wizard-sim/sim');
+  const { createWorld, step, NO_INPUT } = await import('@wizard-sim/sim');
   const { demoInput, parseDemo } = await import('../src/demo');
   test.each(SPELLS)('%s draws', (spell) => {
     const view = new WorldView();
@@ -55,5 +55,23 @@ describe('view', async () => {
       worst = Math.max(worst, performance.now() - t0);
     }
     expect(worst).toBeLessThan(400);
+  }, 60000);
+
+  // every death (element x delivery x status) on every archetype plays to its end; past 32 at once the oldest give way
+  test('deaths draw', async () => {
+    const { ARCH, devSpawnEnemy } = await import('@wizard-sim/sim');
+    const view = new WorldView();
+    view.resize(1280, 800, 3);
+    const w = createWorld(7, 1), b = w.bodies;
+    const kills = [[3, 6, 0, 0], [1, 3, 0, 2], [8, 3, 0, 4], [4, 3, 0, 16], [5, 4, 0, 2], [9, 1, 0, 0], [9, 2, 0, 0], [9, 6, 0, 0], [1, 3, 1, 2], [9, 1, 0, 1], [6, 3, 0, 0], [2, 0, 0, 0]];
+    let now = 0, k = 0;
+    for (const arch of [ARCH.swarmer, ARCH.brute, ARCH.caster, ARCH.imp]) for (const [el, kind, mix, status] of kills) {
+      const i = devSpawnEnemy(w, arch, -8 + (k % 8) * 2, -4 + Math.floor(k / 8) * 1.5); k++;
+      if (status & 1) b.frozen[i] = 100;
+      b.hp[i] = -5; b.lastEl[i] = el; b.lastKind[i] = kind; b.lastMix[i] = mix; b.lastDX[i] = 1;
+    }
+    view.beforeStep(w); step(w, [0, 1, 2, 3].map(() => ({ ...NO_INPUT }))); view.afterStep(w);
+    for (let f = 0; f < 220; f++) { now += 16; view.draw(w, 0, now); if (f === 10) expect(view.debug()).toContain(`deaths ${Math.min(k, 32)}`); }
+    expect(view.debug()).toContain('deaths 0');
   }, 60000);
 });

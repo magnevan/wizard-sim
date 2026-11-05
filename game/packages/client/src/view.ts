@@ -17,10 +17,11 @@
 import { Container, Graphics, Sprite } from 'pixi.js';
 import {
   AI, ARCH, ARCHETYPES, ATTACK, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, PHASE,
-  type World,
+  type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, PPU } from './camera';
 import { ActorFrames, FEET_X, FEET_Y } from './art/actors';
+import { Deaths } from './art/deaths';
 import { FIELD, gx, gy } from './art/field';
 import { FLOOR, floorTexture } from './art/floor';
 import { Lights } from './art/lights';
@@ -53,6 +54,7 @@ export class WorldView {
   private views: BodyView[] = [];
   private rig: RigState = newRigState();
   private structs: StructureView;
+  private deaths: Deaths;
   private frame = 0;
 
   /**
@@ -91,6 +93,7 @@ export class WorldView {
   constructor() {
     this.actors.sortableChildren = true;
     this.structs = new StructureView(this.actors);
+    this.deaths = new Deaths(this.actors);
     this.root.addChild(this.floor, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay, this.hud.top, this.hud.sprite);
     for (let i = 0; i < MAX_BODIES; i++) {
       const s = new Sprite(); s.visible = false; s.tint = AMBIENT;
@@ -123,6 +126,7 @@ export class WorldView {
       }
       // Blink is instant: no sliding between the two spots
       if (e.kind === 'blink' && e.who >= 0) { this.prevBX[e.who] = b.x[e.who]; this.prevBY[e.who] = b.y[e.who]; }
+      if (e.kind === 'fizzle' && e.text === 'dies' && e.who >= 0) this.onDeath(w, e, t);
       if (e.kind === 'cast' && e.who >= 0 && e.who < MAX_SEATS) {
         if (s.castId[e.who] === CAST_ID.force || s.castId[e.who] === CAST_ID.conjure) this.holdUntil[e.who] = t + 0.35;
         for (let k = 0; k < s.castLen[e.who]; k++) if (e.who === this.hud.seat) this.hud.spent(s.castQueue[e.who * 5 + k], t);
@@ -150,6 +154,16 @@ export class WorldView {
     this.vfx.afterStep(w, t);
   }
 
+  /** An enemy died this step: its death plays from the rig state it had (its slot is already empty). */
+  private onDeath(w: World, e: SimEvent, t: number): void {
+    const i = e.who, b = w.bodies;
+    const s = this.rigState(w, i, t, this.lastCt);
+    this.deaths.add({ ...s, x: Math.round(gx(b.x[i])), y: Math.round(gy(b.y[i])), z: 0 }, {
+      el: e.el ?? 0, mix: e.mix ?? 0, shape: e.shape ?? 0, status: e.status ?? 0, dirX: e.x2 ?? 0, dirY: e.y2 ?? 0,
+      overkill: Math.max(0, e.amount ?? 0) / Math.max(1, b.maxHp[i]), arch: e.look ?? 0,
+    }, i, e.tick);
+  }
+
   private rigOf(w: World, i: number): RigKind {
     const k = w.bodies.kind[i];
     if (k === KIND.wizard || k === KIND.double) return 'wizard';
@@ -167,6 +181,7 @@ export class WorldView {
   draw(w: World, alpha: number, now = performance.now()): void {
     this.frame++;
     const b = w.bodies, t = (w.clock[0] + alpha) / 60, cam = this.camera, ct = now / 1000;
+    this.lastCt = ct;
     // how long the sim has stood still (capped): lets sim-driven loops (orbitals) carry on smoothly
     if (t !== this.lastSimT) { this.lastSimT = t; this.stillSince = ct; }
     const lead = Math.min(0.5, ct - this.stillSince);
@@ -201,7 +216,7 @@ export class WorldView {
     stats.fills = 0;
     const t0 = performance.now();
     const light = (x: number, y: number, r: number, col: string, a: number) => this.lights.add(fx0 + x, fy0 + y, r, col, a);
-    this.vfx.draw(w, t, this.views, light, (g, o) => this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0), ct);
+    this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); }, ct);
     this.lights.end();
     this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;
     this.hud.draw(w, t, cam.w, cam.h);
@@ -209,10 +224,11 @@ export class WorldView {
   }
 
   private fxMs = 0;
+  private lastCt = 0;
   private lastSimT = -1;
   private stillSince = 0;
   /** For the debug line: the effects' cost and the actor frame cache. */
-  debug(): string { return `fx ${(stats.fills / 1000).toFixed(1)}k fills ${this.fxMs.toFixed(1)}ms  frames ${this.frames.size} (${this.frames.painted} painted)`; }
+  debug(): string { return `fx ${(stats.fills / 1000).toFixed(1)}k fills ${this.fxMs.toFixed(1)}ms  frames ${this.frames.size} (${this.frames.painted} painted)  deaths ${this.deaths.count}`; }
 
   private ownerOf(w: World, i: number): number {
     for (let k = 0; k < MAX_SEATS; k++) if (w.seats.double[k] === i) return k;
@@ -227,7 +243,7 @@ export class WorldView {
     // a Double is its owner's wizard (drawn translucent and violet-tinted by the sprite)
     const owner = b.kind[i] === KIND.double ? this.ownerOf(w, i) : i;
     if (kind === 'wizard') s.pal = owner % 4;
-    else if (b.kind[i] === KIND.enemy) {
+    else if (b.kind[i] === KIND.enemy || b.kind[i] === KIND.none) { // none: an enemy that just died (onDeath)
       if (arch === ARCH.shieldbearer) { s.pal = 5; s.variant = 5; }
       else if (arch === ARCH.grabber) { s.pal = 4; s.variant = 4; }
       else if (arch === ARCH.imp) { s.pal = 3; s.variant = 3; }

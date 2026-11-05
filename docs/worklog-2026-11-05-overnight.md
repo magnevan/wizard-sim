@@ -10,7 +10,7 @@ Each item runs in its own agent and git worktree, and Claude merges into main, r
 | Item | Who | Status |
 |---|---|---|
 | Guards round (design doc and review page round 2) | agent | done: published round 2 to the same link (`explorations/2026-11-05-guards.md`) |
-| Survive mode: arena, waves, power-ups | agent (worktree) | running |
+| Survive mode: arena, waves, power-ups | agent | merged: `#survive`; 10 power-ups built; 6 questions in `explorations/2026-11-05-survive-mode.md` |
 | Deaths for brute, archer, imp, grabber and shieldbearer: gallery round and game port | agent (worktree) | running |
 | Remote prediction: world-space aim, late remote spells shown from their first frame | agent (worktree) | running |
 | Weapon-specific Heavies and guard Retreats in the game | next | wait for the user's round-2 ratings before building |

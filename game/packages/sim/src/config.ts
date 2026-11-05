@@ -125,8 +125,6 @@ export const STRUCT = {
   idleDrain: 0.03, wardDrainMult: 2, absorbPerHp: 0.01, reserve: 0.5,
   wardHp: 60, wardHpPerRune: 20, wardResist: 0.4, mirrorShots: 3, mendPerSec: 2,
   turretInterval: 1.0, turretRange: 8, turretAhead: 2.5,
-  /** Your hands (hands.ts): a Heavy's power and reach against a Strike, a Sweep's power, the Retreat hop. */
-  heavyScale: 1.8, heavyReach: 1.3, sweepScale: 0.8, retreatPush: 11,
   /** A turret shot costs this share of its payload's runes, and fires uncharged, as your tap cast does. */
   turretShotCost: 0.5,
   /** Your turrets together spend at most this share of your regen: shots slow down to fit (and with more turrets). */
@@ -147,10 +145,12 @@ export const STRUCT = {
 
 /**
  * Weapons and guards, round 2 (docs/explorations/2026-11-05-guards.md): the weapon-specific Heavies
- * and Specials, the Echo focus, and the eight guards' Defend, Retreat and passives. Built on the
- * doc's recommendations, pending the user's round-2 ratings. Distances in world units.
+ * and Specials, the Arcane wand, and the eight guards' Defend, Retreat and passives. Built on the
+ * doc's recommendations, revised by the user's round-2 ratings. Distances in world units.
  */
 export const ARMS = {
+  /** Your hands (hands.ts): a Heavy's power and reach against a Strike, a Sweep's power, the Retreat hop without a guard. */
+  heavyScale: 1.8, heavyReach: 1.3, sweepScale: 0.8, retreatPush: 11,
   // ---- Heavies (2 uses unless noted) ----
   /** Weapon waves (trident slash, fire wave, earth fissure): their power, half-width and how far they roll. */
   waveScale: 1.4,

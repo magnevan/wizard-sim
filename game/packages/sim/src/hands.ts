@@ -5,7 +5,7 @@
  *
  *   RMB tap     Strike   your weapon's swing, or the staff's shove                     1 use
  *   RMB hold    Heavy    charge, then the weapon's own big move                        2 uses
- *   Shift+RMB   Special  a full-circle Sweep for most; the spear's javelin; held: the wand's Siphon, the hands' Mend
+ *   Shift+RMB   Special  a full-circle Sweep for most (2 uses); the spear's javelin; held: the wand's Siphon, the hands' Mend
  *   Shift+LMB   Retreat  your guard's Retreat (guards.ts), or a quick hop back without one
  *   Space       Defend   hold to block with your guard, tap as a hit lands to parry (cast.ts: guardT)
  *
@@ -72,9 +72,9 @@ function bolt(w: World, i: number, face: number, scale: number, pierce: boolean)
 
 /** Released after a hold: `charge` 0..1 is how long past a tap it was held, against RHYTHM.chargeMax. */
 export function heavy(w: World, i: number, face: number, charge: number): void {
-  const el = held(w, i), k = STRUCT.heavyScale * (0.6 + 0.4 * charge);
+  const el = held(w, i), k = ARMS.heavyScale * (0.6 + 0.4 * charge);
   switch (el) {
-    case 0: blow(w, i, face, { scale: k, reach: STRUCT.heavyReach, knock: 8 }, 2); return; // the staff's big shove
+    case 0: blow(w, i, face, { scale: k, reach: ARMS.heavyReach, knock: 8 }, 2); return; // the staff's big shove
     case EL.life: return; // the Healing link was the hold itself (holdTick): nothing on release
     case EL.water: case EL.fire: case EL.earth: {
       // a wave from the weapon: the trident's slash, the flame sword's rolling crescent, the maul's fissure down one lane
@@ -88,7 +88,7 @@ export function heavy(w: World, i: number, face: number, charge: number): void {
     case EL.cold: dash(w, i, face, k); spend(w, i, 2); return;
     case EL.lightning: lash(w, i, face, k); spend(w, i, 2); return;
     case EL.arcane: bolt(w, i, face, ARMS.chargedBolt * (0.5 + 0.5 * charge), charge >= 0.5); move(w, i, 'chargedbolt', EL.arcane); spend(w, i, 2); return;
-    default: blow(w, i, face, { scale: k, reach: STRUCT.heavyReach, knock: 8 }, 2); return;
+    default: blow(w, i, face, { scale: k, reach: ARMS.heavyReach, knock: 8 }, 2); return;
   }
 }
 
@@ -127,7 +127,7 @@ function dash(w: World, i: number, face: number, k: number): void {
 
 /** The whip's chain lash: the first body in front within the whip's reach, then up to ARMS.lashJumps more. */
 function lash(w: World, i: number, face: number, k: number): void {
-  const b = w.bodies, x = b.x[i], y = b.y[i], range = (STRUCT.reach.lightning ?? 3.4) * STRUCT.heavyReach, p = payloadOf(weaponSpec(w, i));
+  const b = w.bodies, x = b.x[i], y = b.y[i], range = (STRUCT.reach.lightning ?? 3.4) * ARMS.heavyReach, p = payloadOf(weaponSpec(w, i));
   let first = -1, bd = range + 1;
   for (let j = 0; j < b.kind.length; j++) {
     if (j === i || b.kind[j] === KIND.none || grounded(w, j) || !inCone(x, y, face, 0.12, range, b.x[j], b.y[j], b.r[j])) continue;
@@ -193,7 +193,7 @@ export function special(w: World, i: number, face: number, tx: number, ty: numbe
     return;
   }
   if (el === EL.arcane || el === EL.life) return; // Siphon and Mend are held (specialTick); a tap does nothing
-  blow(w, i, face, { half: 0.5, scale: STRUCT.sweepScale }, 2); // a full circle round you, your partner too
+  blow(w, i, face, { half: 0.5, scale: ARMS.sweepScale }, 2); // a full circle round you, your partner too
 }
 
 /** Does seat i's weapon have a held Special (the wand's Siphon, the hands' Mend)? */
@@ -242,7 +242,7 @@ export function specialTick(w: World, i: number): void {
 export function retreat(w: World, i: number, face: number): void {
   const s = w.seats;
   if (s.guard[i]) { if (s.guardCd[i] > 0) return; guardRetreat(w, i, face); }
-  else addKnock(w, i, -cosTurns(face), -sinTurns(face), STRUCT.retreatPush);
+  else addKnock(w, i, -cosTurns(face), -sinTurns(face), ARMS.retreatPush);
   if (w.run && stackOf(w, i, PU.slipstream)) w.run.dodge[i] = T(2); // survive: the next spell is free
 }
 

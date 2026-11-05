@@ -502,3 +502,23 @@ This is built on the recommendation for Survive q10 (`tools/survive-review`, `q-
 - A hit drains 1 s (`PERKS.rallyDrain`), at most every 0.5 s (`rallyDrainGap`), and the ring doesn't fill while you're being hit.
 - So one archer bolt no longer resets a 90 % rescue, while a goblin chewing on the rescuer still keeps the ally down for a long time.
 - Golden hash unchanged: the state lives in `world.run`.
+
+## 2026-11-05: The rune economy: a shared regen budget with a floor ([explorations/2026-11-05-rune-economy.md](../explorations/2026-11-05-rune-economy.md))
+
+The user's answers on the Rune Economy page (`tools/rune-economy`, db `answers`):
+- **q-1 Regen model: the shared budget with a floor (α ≈ 0.25).**
+  - One total regen rate R is shared among the pools that aren't full, weighted by max.
+  - A quarter of R always reaches every pool that isn't full.
+  - The user's own reason: a floor also stops "one rune short in every element" from taking forever to refill.
+  - This replaces the flat 0.22/s per element, in every room.
+- **q-2 Starting pools: Survive starts at 2 per element.**
+  - "Start quite weak". The campaign will start very weak and build up.
+  - Survive can grow faster, and its waves must be retuned to match.
+- **q-3 Lulls: pools refill to full when a wave ends.**
+- **q-4 Glyphs (the user's own option):**
+  - "+1 to all" becomes **+1 to three elements**.
+  - Shield and Sigil, being "pretty different as elements", get their own glyph: **+1 Shield and +1 Sigil**.
+  - "+2 to one" and "+R" stay.
+- **Same conversation:**
+  - **Echo is redesigned** as "very strong for the next wave", where the only cost is the permanent pick you skipped (no rune loss).
+  - **The camera follows your own wizard in every room, with arrows at the screen edge pointing to allies.** Couch co-op on one screen is the exception.

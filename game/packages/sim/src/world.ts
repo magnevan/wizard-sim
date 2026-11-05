@@ -194,8 +194,6 @@ export interface Zones {
 }
 /** Payload flags. */
 export const PF = { heal: 1, scald: 2, freeze: 4, lensed: 8, pin: 16 } as const;
-/** Lens amplification (kept here so effects and structures share it). */
-export const STRUCT_SCALE = { lens: 1.5 } as const;
 export const MOD_ID = { none: 0, push: 1, shatter: 2, chain: 3, burst: 4 } as const;
 export const ZONE = { none: 0, blast: 1, geyser: 2, spring: 3, steam: 4, spark: 5 } as const;
 

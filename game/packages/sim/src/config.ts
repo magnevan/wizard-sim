@@ -133,7 +133,8 @@ export const STRUCT = {
   turretShare: 0.6,
   glyphArm: 0.8, glyphRadius: 0.8,
   orbitRadius: 1.3, orbitSpeed: 0.5, orbitStrike: 1.6,
-  lensRadius: 0.9, lensMult: 1.5,
+  /** The lens: its radius; what passes through it is multiplied by lensMult, and a shot through it grows lensGrow times wider. */
+  lensRadius: 0.9, lensMult: 1.5, lensGrow: 1.3,
   auraTime: 12, auraRadius: 2.5, hasteMult: 1.4, glassMult: 1.3,
   weaponUses: 30, motes: 3, moteRefund: 0.5,
   /** The Double: its health, its power and rune share per repeat, and how much more enemies want it. */

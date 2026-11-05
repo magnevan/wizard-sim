@@ -6,7 +6,7 @@
  * in their typed arrays (els, flags, mod, look) and rebuild the view object when they hit.
  */
 import type { Mod, SpellSpec } from './compile';
-import { ARMS, BODY, CELL, COMBAT, RUNES, SHAPES, STATUS, SURFACE, T } from './config';
+import { ARMS, BODY, CELL, COMBAT, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
 import { EL, N_EL } from './elements';
 import { inCone, len, rayCircle } from './geom';
 import { HIT_KIND, addKnock, applyHit, bloom, setHitKind, type HitOpts } from './hit';
@@ -15,7 +15,7 @@ import { clipRay, collideWalls, damageWall, lensAt, payloadDamage, rayThroughLen
 import { WALL } from './compile';
 import { ARCHETYPES } from './archetypes';
 import { grounded, guardMissile, phased } from './guards';
-import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, STRUCT_SCALE, SURF, WARD, ZONE, type World } from './world';
+import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, SURF, WARD, ZONE, type World } from './world';
 
 export interface Payload {
   counts: Uint8Array;
@@ -350,7 +350,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     const [wallD, wk] = clipRay(w, x, y, dx, dy, reach);
     if (wk >= 0) { reach = wallD; target = -1; damageWall(w, wk, payloadDamage(spec.counts, 0, rate)); }
     setEnd(x + dx * reach, y + dy * reach);
-    const lensed = rayThroughLens(w, x, y, dx, dy, reach) ? STRUCT_SCALE.lens : 1;
+    const lensed = rayThroughLens(w, x, y, dx, dy, reach) ? STRUCT.lensMult : 1;
     if (target >= 0) {
       const dealt = hit(w, target, p, hitOpts(p, src, rate * lensed, dx, dy, COMBAT.channelStatus * DT, true), false);
       if (t % 12 === 0) hitEvent(w, target, dealt * 12, spec.look, src);
@@ -424,7 +424,7 @@ export function tickMissiles(w: World): void {
     }
     let dead = out || --m.life[j] <= 0;
     // A lens amplifies whatever passes through it, once.
-    if (!(m.flags[j] & PF.lensed) && lensAt(w, m.x[j], m.y[j]) >= 0) { m.flags[j] |= PF.lensed; m.scale[j] *= STRUCT_SCALE.lens; m.r[j] *= 1.3; }
+    if (!(m.flags[j] & PF.lensed) && lensAt(w, m.x[j], m.y[j]) >= 0) { m.flags[j] |= PF.lensed; m.scale[j] *= STRUCT.lensMult; m.r[j] *= STRUCT.lensGrow; }
     // Rock and barriers stop shots (a barrier of Shield alone turns them back).
     const wk = dead ? -1 : wallAt(w, m.x[j], m.y[j], m.r[j]);
     if (wk >= 0) {

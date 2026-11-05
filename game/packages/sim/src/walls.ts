@@ -138,6 +138,7 @@ export function energyLoad(w: World, seat: number): number {
   const wl = w.walls;
   let n = 0;
   for (let k = 0; k < MAX_WALLS; k++) if ((wl.type[k] === WALL.barrier || wl.type[k] === WALL.curtain) && wl.owner[k] === seat) n++;
-  if (w.seats.ward[seat] && w.seats.ward[seat] !== WARD.stone) n += STRUCT.wardDrainMult;
+  const s = w.seats;
+  for (let j = 0; j < s.ward.length; j++) if (s.ward[j] && s.ward[j] !== WARD.stone && s.wardBy[j] === seat) n += STRUCT.wardDrainMult;
   return n;
 }

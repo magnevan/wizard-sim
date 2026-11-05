@@ -243,7 +243,7 @@ function freeSpot(w: World, self: number, x: number, y: number): boolean {
 const SELF_TMP = new Uint8Array(N_EL); // scratch, never kept
 
 /** Self casts without Shield or Sigil: the elements hit you, as in Magicka (Heal, Douse, Attune...). */
-function selfHit(w: World, i: number, spec: SpellSpec): void {
+export function selfHit(w: World, i: number, spec: SpellSpec): void {
   const b = w.bodies, c = spec.counts;
   const life = c[EL.life - 1], arcane = c[EL.arcane - 1];
   if (life) { const h = COMBAT.healPerLife * life * 1.5; b.hp[i] = Math.min(b.maxHp[i], b.hp[i] + h); hitEvent(w, i, -h, EL.life); }

@@ -99,6 +99,8 @@ export interface Seats {
   // ---- Shield and Sigil on yourself ----
   /** Ward: WARD kind, what it resists (9 counts per seat), how much it can still absorb. */
   ward: Uint8Array; wardEls: Uint8Array; wardHp: Float64Array;
+  /** Who keeps this seat's ward up (it drains their Shield pool; a ward cast on an ally is still yours), -1 none. */
+  wardBy: Int16Array;
   /** Sigil aura: what it carries (9 per seat) and ticks left. */
   auraEls: Uint8Array; aura: Int32Array;
   /** The sculpting wand: your harm spares allies and your heals spare enemies. */
@@ -281,7 +283,7 @@ function seats(n: number): Seats {
     active: u8(n), runes: f64(n * N_EL), queue: u8(n * QUEUE_MAX), queueLen: u8(n), prevButtons: new Uint16Array(n),
     aimX: f64(n), aimY: f64(n), phase: u8(n), timer: i32(n), castId: u8(n), castQueue: u8(n * QUEUE_MAX), castLen: u8(n),
     areaHeld: i32(n), holdX: f64(n), holdY: f64(n), dragged: u8(n), chanTicks: i32(n), chanTimer: i32(n), chanEndX: f64(n), chanEndY: f64(n), attune: i32(n), bufCast: u8(n), bufTicks: i32(n),
-    ward: u8(n), wardEls: u8(n * N_EL), wardHp: f64(n), auraEls: u8(n * N_EL), aura: i32(n), wand: u8(n),
+    ward: u8(n), wardEls: u8(n * N_EL), wardHp: f64(n), wardBy: new Int16Array(n).fill(-1), auraEls: u8(n * N_EL), aura: i32(n), wand: u8(n),
     weapon: u8(n), weaponEls: u8(n * N_EL), weaponUses: i32(n), motes: u8(n),
     guard: u8(n), guardHp: f64(n), guardT: i32(n), double: new Int16Array(n).fill(-1), dblOX: f64(n), dblOY: f64(n), dblPaid: u8(n), dblEndX: f64(n), dblEndY: f64(n), dblBorn: i32(n), wandBorn: i32(n),
   };

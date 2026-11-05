@@ -17,7 +17,7 @@ import { rules, type Cast, type Element } from '@wizard-sim/rules';
 import { compile, type SpellSpec } from './compile';
 import { RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
 import { EL, N_EL, elementName } from './elements';
-import { channelTick, fireSpell } from './effects';
+import { channelTick, fireSpell, selfHit } from './effects';
 import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, recallOldest, sigilCap, spendMote, weaponSwing } from './structures';
 import { len } from './geom';
 import { AIM_UNIT, BTN, type PlayerInput } from './input';
@@ -100,9 +100,31 @@ function target(w: World, i: number, range = SHAPES.placeRange): [number, number
   return [b.x[i] + s.aimX[i] * k, b.y[i] + s.aimY[i] * k];
 }
 
+/**
+ * Who a Self cast lands on: the ally wizard the cursor is on (near enough to their body), else you.
+ * A miss lands on you, which is harmless (explorations/2026-11-03-full-tree.md).
+ */
+function selfTarget(w: World, i: number): number {
+  const b = w.bodies, s = w.seats, cx = b.x[i] + s.aimX[i], cy = b.y[i] + s.aimY[i];
+  let best = i, bd = Infinity;
+  for (let j = 0; j < s.active.length; j++) {
+    if (j === i || !s.active[j] || b.kind[j] !== KIND.wizard || b.downed[j] || b.team[j] !== b.team[i]) continue;
+    const d = len(b.x[j] - cx, b.y[j] - cy);
+    if (d < b.r[j] + 0.6 && d < bd) { bd = d; best = j; }
+  }
+  return best;
+}
+
 function release(w: World, i: number, spec: SpellSpec, charge: number): void {
   const [tx, ty] = target(w, i, spec.shape === 'blink' ? STRUCT.blinkRange : SHAPES.placeRange);
-  if (STRUCTURE_SHAPES.includes(spec.shape)) { castStructure(w, i, spec, aimFace(w, i), tx, ty, w.seats.holdX[i], w.seats.holdY[i]); return; }
+  // Self on an ally: their ward, their aura, their heal or douse (your Double stays yours).
+  const on = spec.cast === 'self' && spec.shape !== 'double' ? selfTarget(w, i) : i;
+  if (STRUCTURE_SHAPES.includes(spec.shape)) { castStructure(w, i, spec, aimFace(w, i), tx, ty, w.seats.holdX[i], w.seats.holdY[i], on); return; }
+  if (spec.shape === 'self' && on !== i) {
+    selfHit(w, on, spec);
+    w.events.push({ tick: w.clock[0], kind: 'cast', who: i, x: w.bodies.x[i], y: w.bodies.y[i], text: spec.title, look: spec.look });
+    return;
+  }
   // An empty Weapon cast swings your conjured weapon, if you hold one.
   if (spec.cast === 'conjure' && spec.power === 0 && weaponSwing(w, i, aimFace(w, i))) return;
   fireSpell(w, i, spec, aimFace(w, i), tx, ty, charge);

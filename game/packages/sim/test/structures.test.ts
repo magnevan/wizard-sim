@@ -327,6 +327,27 @@ describe('Sigil', () => {
     expect(walls(w, WALL.rock)).toBe(0);
   });
 
+  it('Self with the cursor on an ally puts the ward on them, kept up by you', () => {
+    const { w, d } = arena(2); // the ally stands at (4, 0)
+    d.aimAt(4, 0).queue('shield', 'fire').cast(BTN.self, 1, 20);
+    expect(w.seats.ward[1]).not.toBe(WARD.none);
+    expect(w.seats.ward[0]).toBe(WARD.none);
+    expect(w.seats.wardBy[1]).toBe(0);
+    d.aimAt(0.1, 0).queue('shield', 'cold').cast(BTN.self, 1, 20); // you keep one ward at a time: it moves to you
+    expect(w.seats.ward[0]).not.toBe(WARD.none);
+    expect(w.seats.ward[1]).toBe(WARD.none);
+  });
+
+  it('Self with the cursor on an ally heals them; off them, it heals you', () => {
+    const { w, d } = arena(2);
+    w.bodies.hp[0] = 50; w.bodies.hp[1] = 50;
+    d.aimAt(4, 0).queue('life').cast(BTN.self, 1, 20);
+    expect(w.bodies.hp[1]).toBeGreaterThan(50);
+    expect(w.bodies.hp[0]).toBe(50);
+    d.aimAt(2, 3).queue('life').cast(BTN.self, 1, 20); // a miss lands on you
+    expect(w.bodies.hp[0]).toBeGreaterThan(50);
+  });
+
   it('double-tapping Shield on yourself drops your ward', () => {
     const { w, d } = arena();
     d.queue('shield', 'fire').cast(BTN.self, 1, 20);

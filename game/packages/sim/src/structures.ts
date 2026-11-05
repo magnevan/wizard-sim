@@ -91,8 +91,11 @@ function spawnWave(w: World, src: number, spec: SpellSpec, face: number): void {
   }
 }
 
-function putWard(w: World, i: number, spec: SpellSpec): void {
+/** A ward on `i`, kept up by `by` (yourself, or an ally the cursor was on). You keep one ward at a time. */
+function putWard(w: World, i: number, spec: SpellSpec, by = i): void {
   const s = w.seats, c = spec.counts;
+  for (let j = 0; j < s.ward.length; j++) if (j !== i && s.ward[j] && s.wardBy[j] === by) { s.ward[j] = WARD.none; s.wardBy[j] = -1; }
+  s.wardBy[i] = by;
   const rest = restCounts(spec);
   let any = false;
   for (let k = 0; k < N_EL; k++) if (rest[k]) any = true;
@@ -147,14 +150,14 @@ function turretGap(w: World, k: number): number {
 export const STRUCTURE_SHAPES: readonly string[] = ['wave', 'ring', 'arcwall', 'drawnwall', 'ward', 'guard', 'turret', 'orbitals', 'motes', 'glyph', 'lineglyph', 'lens', 'wand', 'weapon', 'aura', 'double'];
 
 /** Raises a structure. (tx, ty) is the clamped cursor; (hx, hy) where a Place drag started. */
-export function castStructure(w: World, src: number, spec: SpellSpec, face: number, tx: number, ty: number, hx: number, hy: number): void {
+export function castStructure(w: World, src: number, spec: SpellSpec, face: number, tx: number, ty: number, hx: number, hy: number, on = src): void {
   const b = w.bodies, s = w.seats, x = b.x[src], y = b.y[src];
   switch (spec.shape) {
     case 'wave': spawnWave(w, src, spec, face); break;
     case 'ring': arcWall(w, src, spec, x, y, STRUCT.ringRadius, 0, 0.5, STRUCT.ringSegs); break;
     case 'arcwall': arcWall(w, src, spec, x, y, STRUCT.arcRadius, face, STRUCT.arcHalf, STRUCT.arcSegs); break;
     case 'drawnwall': drawnWall(w, src, spec, hx, hy, tx, ty); break;
-    case 'ward': putWard(w, src, spec); break;
+    case 'ward': putWard(w, on, spec, src); break;
     case 'guard': {
       const bulwark = spec.counts[EL.earth - 1] > 0;
       s.guard[src] = bulwark ? GUARD.bulwark : GUARD.buckler;
@@ -187,7 +190,7 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
       s.weaponEls.set(restCounts(spec), src * N_EL); s.weaponUses[src] = STRUCT.weaponUses;
       break;
     }
-    case 'aura': s.auraEls.set(restCounts(spec), src * N_EL); s.aura[src] = T(STRUCT.auraTime); break;
+    case 'aura': s.auraEls.set(restCounts(spec), on * N_EL); s.aura[on] = T(STRUCT.auraTime); break;
     case 'double': {
       if (s.double[src] >= 0 && b.kind[s.double[src]] === KIND.double) b.kind[s.double[src]] = KIND.none; // one at a time
       const ox = cosTurns(face + 0.25) * 1.2, oy = sinTurns(face + 0.25) * 1.2;
@@ -378,7 +381,7 @@ export function tickStructures(w: World): void {
       let oldest = -1;
       for (let k = 0; k < MAX_WALLS; k++) if ((wl.type[k] === WALL.barrier || wl.type[k] === WALL.curtain) && wl.owner[k] === i && (oldest < 0 || wl.born[k] < wl.born[oldest])) oldest = k;
       if (oldest >= 0) wl.type[oldest] = WALL.none;
-      else if (s.ward[i] !== WARD.stone) s.ward[i] = WARD.none;
+      else for (let j = 0; j < s.ward.length; j++) if (s.wardBy[j] === i && s.ward[j] !== WARD.stone) s.ward[j] = WARD.none;
     }
     // Mending ward: heals you slowly while it holds.
     if (s.ward[i] && s.wardEls[i * N_EL + EL.life - 1]) b.hp[i] = Math.min(b.maxHp[i], b.hp[i] + STRUCT.mendPerSec / 60);

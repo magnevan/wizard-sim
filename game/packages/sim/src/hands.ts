@@ -26,10 +26,10 @@ import { fireSpell, hit, hitOpts, nearest, payloadOf, spawnMissile, zap, type Fi
 import { inCone, len } from './geom';
 import { addKnock } from './hit';
 import { grounded, guardRetreat } from './guards';
-import { spawnFront } from './structures';
+import { fullMask, spawnFront } from './structures';
 import { cosTurns, sinTurns } from './trig';
 import { clipRay } from './walls';
-import { KIND, MAX_SEATS, PF, regenOf, runeMax, type World } from './world';
+import { KIND, MAX_SEATS, PF, regenRate, runeMax, type World } from './world';
 
 /** Ticks a press may last and still be a tap (Strike rather than Heavy). */
 export const TAP = T(0.25);
@@ -206,11 +206,13 @@ export function specialTick(w: World, i: number): void {
   const s = w.seats, b = w.bodies, el = held(w, i);
   const t = s.specT[i]++;
   if (el === EL.arcane) {
+    // Siphon multiplies the shared budget R (the regen in cast.ts already paid one share of it)
+    const full = fullMask(w, i);
     for (let e = 1; e <= N_EL; e++) {
       const k = i * N_EL + e - 1;
-      // every rune of an element in the wand siphons that element faster still
+      // every rune of an element in the wand multiplies that element's share again
       const focus = 1 + ARMS.siphonFocus * s.weaponEls[k];
-      if (e !== EL.sigil) s.runes[k] = Math.min(runeMax(w, i, e), s.runes[k] + (regenOf(w, i) * (ARMS.siphonMult - 1) * focus) / 60);
+      if (e !== EL.sigil) s.runes[k] = Math.min(runeMax(w, i, e), s.runes[k] + (regenRate(w, i, e, full) * (ARMS.siphonMult - 1) * focus) / 60);
     }
     if (t % 30 === 0) move(w, i, 'siphon', EL.arcane);
     if (t > 0 && t % 60 === 0) spend(w, i, ARMS.siphonUses);

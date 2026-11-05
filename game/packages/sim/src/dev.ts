@@ -46,7 +46,7 @@ export function devStartWave(w: World, n: number, lullSeconds = 2): void {
 export function devSkipLull(w: World): void {
   const st = w.enc.state;
   if (st[0] === PHASE_ENC.lull || st[0] === PHASE_ENC.breather) st[2] = 1;
-  if (st[0] === PHASE_ENC.pick && w.run) { w.run.offer.fill(0); st[0] = PHASE_ENC.lull; st[2] = 0; }
+  if (st[0] === PHASE_ENC.pick && w.run) { w.run.offer.fill(0); w.run.choose.fill(0); st[0] = PHASE_ENC.lull; st[2] = 0; }
 }
 
 /** Survive: start a new run now (the run-over screen does this with Space). */

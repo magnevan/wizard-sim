@@ -8,7 +8,7 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
-import { ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, elementId, elementName, runeMax, specOf, type World } from '@wizard-sim/sim';
+import { ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, elementId, elementName, fullMask, regenOf, regenRate, runeMax, specOf, type World } from '@wizard-sim/sim';
 import { badge, perkOf } from './art/perks';
 import * as X from './art/px';
 import { mod } from './art/util';
@@ -16,6 +16,8 @@ import { mod } from './art/util';
 const TOP: Element[] = ['water', 'life', 'shield', 'cold'];
 const BOT: Element[] = ['lightning', 'arcane', 'sigil', 'fire', 'earth'];
 const SLOT = 24, RH = 21, STAG = Math.round(SLOT / 3);
+/** A refilling pool's colour by its share of the shared regen budget: dim when it gets a trickle, bright when most of R flows into it. */
+const flowCol = (ramp: readonly string[], share: number): string => (share >= 0.35 ? ramp[1] : share >= 0.15 ? ramp[2] : ramp[3]);
 const PW = Math.max(TOP.length * SLOT, STAG + BOT.length * SLOT) + 6, PH = RH * 2 + 7;
 const CW = 240, CH = PH + 22;
 
@@ -156,13 +158,18 @@ export class Hud {
       for (let i = 0; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy) foes++;
       for (let p = 0; p < MAX_PORTALS; p++) left += e.left[p];
       line = `WAVE ${st[1]}`; sub = `${foes + left} LEFT`;
+    } else if (w.run && w.run.choose[this.seat]) {
+      // +1 to three: the element keys pick, and the blanks fill in as you tap
+      const r = w.run, at = this.seat * 3;
+      line = '+1 TO: ' + [0, 1, 2].map((k) => (r.chosen[at + k] ? elementName(r.chosen[at + k]) : '_')).join(' ');
+      sub = 'TAP THREE ELEMENT KEYS (NOT SHIELD OR SIGIL)';
     } else if (st[0] === PHASE_ENC.pick && w.run) {
       // which altar am I on (or nearest), and who still has to choose
       const r = w.run, b = w.bodies, me = this.seat;
       let near = -1, nd = 1e9;
       for (let a = 0; a < N_ALTARS; a++) { const d = Math.hypot(b.x[me] - r.ax[a], b.y[me] - r.ay[a]); if (r.offer[a] && d < nd) { nd = d; near = a; } }
       const left = [];
-      for (let s = 0; s < MAX_SEATS; s++) if (w.seats.active[s] && !w.bodies.downed[s] && r.picked[s] < 0) left.push('P' + (s + 1));
+      for (let s = 0; s < MAX_SEATS; s++) if (w.seats.active[s] && !w.bodies.downed[s] && (r.picked[s] < 0 || r.choose[s])) left.push('P' + (s + 1));
       if (r.picked[me] >= 0) { line = 'PICKED: ' + perkOf(r.offer[r.picked[me]], r.offerEl[r.picked[me]]).name; sub = left.length ? `WAITING FOR ${left.join(' ')}` : ''; }
       else {
         line = 'PICK A POWER-UP: STAND ON AN ALTAR';
@@ -177,7 +184,7 @@ export class Hud {
         if (by >= 0 && w.run.rally[d] > 0) sub += `${sub ? '  ' : ''}P${by + 1} RALLYING P${d + 1} ${Math.floor((100 * w.run.rally[d]) / T(PERKS.rallyTime))}%`;
       }
     }
-    const clean = (str: string) => str.toUpperCase().replace(/[^A-Z0-9 +\-/.!×:%]/g, ' ');
+    const clean = (str: string) => str.toUpperCase().replace(/[^A-Z0-9 +\-/.!×:%_()]/g, ' ');
     line = clean(line); sub = clean(sub);
     const wd = Math.max(line.length, sub.length) * 4 + 10, x = Math.round(TW / 2 - wd / 2);
     X.rect(c, x - 1, 0, wd + 2, sub ? 17 : 10, '#0a0810'); X.rect(c, x, 1, wd, sub ? 15 : 8, '#1a1726');
@@ -228,6 +235,8 @@ export class Hud {
 
     const channel = s.phase[i] === PHASE.channel, spec = s.phase[i] !== PHASE.idle ? specOf(w, i) : null;
     const upkeep = channel && spec && s.chanTicks[i] >= T(RHYTHM.naturalChannel) ? spec.form : 0;
+    // the shared regen budget: each refilling pool's share of R (0..1) sets how bright its flow shows
+    const full = fullMask(w, i), R = regenOf(w, i);
     // queued runes are reserved: they show as spent pips until cast or refunded
     [...TOP, ...BOT].forEach((el, k) => {
       const row = k < TOP.length ? 0 : 1, col = row ? k - TOP.length : k, id = elementId(el), ramp = X.EL[el];
@@ -241,7 +250,14 @@ export class Hud {
       X.text(c, rules.ELEMENTS[el].key, sx + 13, sy + 3, dryK ? '#ff6a6a' : '#6a6484');
       if (drain) { X.rect(c, sx + 13, sy + 9, 3, 1, '#ff6a6a'); X.px(c, sx + 18, sy + 9 + mod(t * 2.2, 1) * 4, ramp[2]); }
       const v = s.runes[i * N_EL + id - 1], max = Math.round(runeMax(w, i, id));
-      this.pips(c, sx, sy + 11, v, max, ramp, t);
+      const share = R > 0 ? regenRate(w, i, id, full) / R : 0;
+      this.pips(c, sx, sy + 11, v, max, ramp, t, share);
+      // the flow line under the pips: as long and as bright as this pool's share of the regen
+      if (share > 0.005) {
+        const fw = Math.max(1, Math.round((SLOT - 6) * Math.min(1, share * 1.6)));
+        X.rect(c, sx + 2, sy + RH - 3, fw, 1, flowCol(ramp, share));
+        X.px(c, sx + 2 + Math.floor(mod(t * (2 + 10 * share), 1) * fw), sy + RH - 3, ramp[0]);
+      }
     });
 
     // the chip above: the queue while building, the spell while casting
@@ -279,7 +295,7 @@ export class Hud {
    * One cap's runes. Up to 5: a row of pips (the regenerating one fills from the bottom). 6 to 10:
    * two rows of shorter pips, the first five on top. More: a bar with a tick every 5 runes, and the count.
    */
-  private pips(c: X.Ctx, sx: number, py: number, v: number, max: number, ramp: readonly string[], t: number): void {
+  private pips(c: X.Ctx, sx: number, py: number, v: number, max: number, ramp: readonly string[], t: number, share = 0): void {
     const full = Math.floor(v + 1e-6), frac = v - full;
     if (max > 10) {
       const bw = 11, fill = Math.round((Math.min(v, max) / max) * bw);
@@ -296,8 +312,9 @@ export class Hud {
       X.rect(c, px, y, 3, h, '#0e0c16');
       if (p < full) { X.rect(c, px, y, 3, h, ramp[2]); X.rect(c, px, y, 1, h, ramp[1]); X.px(c, px + 1, y, ramp[0]); }
       else if (p === full && frac > 0.01) {
-        const fh = Math.max(1, Math.round(frac * h)); X.rect(c, px, y + h - fh, 3, fh, ramp[3]);
-        X.rect(c, px, y + h - fh, 3, 1, Math.floor(t * 6) % 2 ? ramp[1] : ramp[2]);
+        // the filling pip glows brighter, and its rim shimmers faster, the bigger its share of the regen
+        const fh = Math.max(1, Math.round(frac * h)); X.rect(c, px, y + h - fh, 3, fh, flowCol(ramp, share));
+        X.rect(c, px, y + h - fh, 3, 1, Math.floor(t * (4 + 14 * share)) % 2 ? ramp[0] : ramp[1]);
         if (rows === 1) X.rect(c, px, y - 1, 3, 1, '#2a2638');
       } else if (rows === 1) X.rect(c, px + 1, y + 2, 1, 2, '#2a2638');
     }

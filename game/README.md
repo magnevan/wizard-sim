@@ -67,7 +67,7 @@ These matter from day one, because rollback (like lockstep) only works if every 
 ## Status
 
 Milestone 1 (deterministic core) is done, and the game has grown past it (online co-op, weapons and guards, Survive). Built in the sim, with tests for each:
-- **Runes and the queue:** reserved on queue, spent on cast, refunded on clear or cancel; slow regen; Attune.
+- **Runes and the queue:** reserved on queue, spent on cast, refunded on clear or cancel; regen is one shared budget (R runes/s split among the pools that aren't full, by max, with a floor: `regenRate` in `world.ts`); Attune.
 - **Cast rhythm:**
   - wind-up grows with the spell's size
   - Earth Force charges
@@ -116,7 +116,7 @@ Not yet: audio, campaign rooms.
 
 `?room=arena` runs the waves. The default is the Sanctum, with three practice dummies.
 
-**Survive** (`#survive`, `docs/explorations/2026-11-05-survive-mode.md`): a walled arena (gate funnels, cover, pillars: static rock that never breaks), endless waves (wave → 3 s breather → pick → 6 s lull), and between waves three altars with power-ups: each player stands on one for 0.75 s. When everyone is down, the run ends; Space starts a new one (an input, so it works online). Its state is `world.run`, which only a survive world has, so the other rooms' layout and the golden hash are untouched; `runeMax` / `regenOf` give per-seat rune max and regen (the config values outside Survive). Twelve power-ups are built: Deep pools, Deep (element), Wellspring, Spare sigil, Bedrock, Pyre, Slipstream, Mirror charm, Bloom, Clockwork, Echo (a free Double until the next wave is cleared) and Rally (stand by a downed ally for 3 s to revive them; numbers in `PERKS`). `?room=survive&scene=rally` with a headless loop (the screenshot script) stages a rally. The tuning panel's Survive line restarts a run or gives P1 a power-up.
+**Survive** (`#survive`, `docs/explorations/2026-11-05-survive-mode.md`): a walled arena (gate funnels, cover, pillars: static rock that never breaks), endless waves (wave → 3 s breather → pick → 6 s lull), and between waves three altars with power-ups: each player stands on one for 0.75 s. When everyone is down, the run ends; Space starts a new one (an input, so it works online). Its state is `world.run`, which only a survive world has, so the other rooms' layout and the golden hash are untouched; `runeMax` / `regenOf` give per-seat rune max and regen (the config values outside Survive). Survive starts at 2 runes per element (Sigil 1) and refills every pool when a wave is cleared. Ten power-ups are built: +1 to three (tap three element keys after stepping on it; `chooseElement`), Deep (element), Wellspring (+15 % R), +1 Shield and +1 Sigil, Bedrock, Pyre, Mirror charm, Clockwork, Echo (a free Double until the next wave is cleared) and Glass heart (numbers in `PERKS`). Any wizard can Rally a downed ally (stand by them for 3 s). `?room=survive&scene=rally` with a headless loop (the screenshot script) stages a rally; `scene=three` stages +1 to three half chosen. The tuning panel's Survive line restarts a run or gives P1 a power-up.
 
 ### Milestone 1: deterministic core (the user's pick)
 

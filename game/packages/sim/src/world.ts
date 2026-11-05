@@ -6,8 +6,8 @@
  * Entities are slots in a pool: `alive[i]` (or `kind[i]`) marks a used slot, and iteration
  * always runs in slot order, so every peer visits entities in the same order.
  */
-import { ARENA, BODY, CELL, RUNES } from './config';
-import { N_EL, elementName } from './elements';
+import { ARENA, BODY, CELL, PERKS, RUNES } from './config';
+import { EL, N_EL, elementName } from './elements';
 import { createRng, type RngState } from './rng';
 
 export const SIM_HZ = 60;
@@ -293,14 +293,14 @@ export interface Nav {
  */
 export const PU = {
   none: 0,
-  /** +1 max rune of every element. */
-  deep: 1,
+  /** +1 to three: +1 max rune of three different elements the wizard picks by tapping their keys (not Shield or Sigil). */
+  three: 1,
   /** +2 max runes of one element (the altar names it). */
   deepEl: 2,
-  /** +30% rune regen. */
+  /** +PERKS.wellspring total rune regen R. */
   wellspring: 3,
-  /** +1 Sigil rune: one more standing device. */
-  spareSigil: 4,
+  /** +1 Shield and +1 Sigil max rune. */
+  shieldSigil: 4,
   /** Your rock walls stand twice as long, with half again the hit points. */
   bedrock: 5,
   /** Enemies you set burning explode in fire when they die. */
@@ -315,7 +315,7 @@ export const PU = {
   glass: 10,
 } as const;
 export const N_PU = 11;
-export const PU_CAP: readonly number[] = [0, 3, 4, 3, 2, 1, 1, 1, 1, 9, 2];
+export const PU_CAP: readonly number[] = [0, 6, 4, 3, 3, 1, 1, 1, 1, 9, 2];
 export const N_ALTARS = 3;
 /** Picks remembered per seat, in order, for the HUD and the results. */
 export const PICK_LOG = 32;
@@ -326,8 +326,12 @@ export interface Run {
   state: Int32Array;
   /** Power-up stacks, N_PU per seat. */
   stacks: Uint8Array;
-  /** Extra max runes, N_EL per seat (from deep, deepEl and spareSigil). */
+  /** Extra max runes, N_EL per seat (from three, deepEl and shieldSigil). */
   maxBonus: Float64Array;
+  /** +1 to three, per seat: picks still to make (0: not choosing). While choosing, element keys pick instead of queueing. */
+  choose: Uint8Array;
+  /** +1 to three: the elements picked so far, 3 per seat (0: not yet). */
+  chosen: Uint8Array;
   /** The altars of this pick: their power-up, its element (deepEl) and where they stand. */
   offer: Uint8Array; offerEl: Uint8Array; ax: Float64Array; ay: Float64Array;
   /** The altar each seat took this pick (-1: none yet), and ticks it has stood on one. */
@@ -405,7 +409,7 @@ function zones(n: number): Zones {
 function run(): Run {
   const n = MAX_SEATS;
   return {
-    state: i32(6), stacks: u8(n * N_PU), maxBonus: f64(n * N_EL),
+    state: i32(6), stacks: u8(n * N_PU), maxBonus: f64(n * N_EL), choose: u8(n), chosen: u8(n * 3),
     offer: u8(N_ALTARS), offerEl: u8(N_ALTARS), ax: f64(N_ALTARS), ay: f64(N_ALTARS),
     picked: new Int8Array(n).fill(-1), stand: i32(n), standOn: new Int8Array(n).fill(-1),
     log: u8(n * PICK_LOG), logEl: u8(n * PICK_LOG), logN: u8(n),
@@ -466,9 +470,9 @@ export const SURVIVE_ROCK: readonly Seg[] = [
 export const SURVIVE_GATES: readonly (readonly [number, number])[] = [[-23, 0], [23, 0], [-12, -15.8], [12, -15.8], [-12, 15.8], [12, 15.8]];
 export const ALTAR_SPOTS: readonly (readonly [number, number])[] = [[-2.6, -0.4], [0, 2.1], [2.6, -0.4]];
 
-/** Max runes of element `id` for seat `i`: the config, plus the seat's survive power-ups. */
+/** Max runes of element `id` for seat `i`: the config; in Survive, its weak start plus the seat's power-ups. */
 export const runeMax = (w: World, i: number, id: number): number =>
-  w.run ? RUNES.max[elementName(id)] + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
+  w.run ? (id === EL.sigil ? RUNES.surviveSigil : RUNES.surviveStart) + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
 /** A seat's power-up stacks (0 outside survive). */
 export const stackOf = (w: World, i: number, pu: number): number => (w.run && i >= 0 && i < MAX_SEATS ? w.run.stacks[i * N_PU + pu] : 0);
 /** True when seat `i`'s Double is Echo's free one: it binds no Sigil rune, and recalling it gives none back. */
@@ -476,11 +480,26 @@ export const freeDouble = (w: World, i: number): boolean => {
   const d = w.seats.double[i];
   return !!w.run && d >= 0 && w.run.echo[i] === d && w.bodies.kind[d] === KIND.double;
 };
-/** Runes per second for seat `i` (Wellspring adds 30% a stack). */
+/** Seat `i`'s total regen R, runes per second shared among its pools (Wellspring adds PERKS.wellspring a stack). */
 export const regenOf = (w: World, i: number): number => {
   const k = stackOf(w, i, PU.wellspring);
-  return k ? RUNES.regen * (1 + 0.3 * k) : RUNES.regen;
+  return k ? RUNES.regen * (1 + PERKS.wellspring * k) : RUNES.regen;
 };
+
+/**
+ * The shared regen budget (docs/decisions 2026-11-05, "The rune economy"): seat `i`'s runes per
+ * second into element `id`, given `full`, a bitmask (1 << id) of the pools that are full. A full pool
+ * gets nothing; the others get α·R·max/Σmax_all (the floor) plus (1-α)·R·max/Σmax_notfull (the
+ * shared part), α = RUNES.floor. Attune and Siphon multiply the result.
+ */
+export function regenRate(w: World, i: number, id: number, full: number): number {
+  if (full & (1 << id)) return 0;
+  let all = 0, open = 0;
+  for (let e = 1; e <= N_EL; e++) { const m = runeMax(w, i, e); all += m; if (!(full & (1 << e))) open += m; }
+  if (all <= 0 || open <= 0) return 0;
+  const m = runeMax(w, i, id), a = RUNES.floor;
+  return regenOf(w, i) * m * (a / all + (1 - a) / open);
+}
 
 const START = [[-4, 2], [4, 2], [-4, -2], [4, -2]] as const;
 /** The Sanctum's practice dummies. */

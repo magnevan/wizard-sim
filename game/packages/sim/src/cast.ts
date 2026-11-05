@@ -18,13 +18,14 @@ import { compile, type SpellSpec } from './compile';
 import { RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
 import { EL, N_EL, elementName } from './elements';
 import { channelTick, fireSpell } from './effects';
-import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, recallOldest, sigilCap, spendMote, weaponSwing } from './structures';
+import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, fullMask, poolCap, recallOldest, spendMote, weaponSwing } from './structures';
 import { len } from './geom';
 import { guardRelease } from './guards';
 import { AIM_UNIT, BTN, type PlayerInput } from './input';
 import { TAP, channelsSpecial, heavy, heavyCharge, holdTick, retreat, special, specialTick, strike } from './hands';
 import { atan2Turns } from './trig';
-import { CAST_ID, KIND, PHASE, QUEUE_MAX, regenOf, runeMax, type World } from './world';
+import { chooseElement } from './survive';
+import { CAST_ID, KIND, PHASE, QUEUE_MAX, regenRate, type World } from './world';
 
 const CASTS: Cast[] = ['force', 'force', 'area', 'place', 'self', 'conjure']; // index = CAST_ID
 
@@ -160,14 +161,14 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   s.aimY[i] = inp.aimY * AIM_UNIT;
   if (s.aimX[i] !== 0 || s.aimY[i] !== 0) b.face[i] = aimFace(w, i);
 
-  // Regen (Attune speeds it up).
+  // Regen: one shared budget R among the pools that aren't full (world.ts regenRate). Attune multiplies R.
   const mult = s.attune[i] > 0 ? RUNES.attuneMult : 1;
   if (s.attune[i] > 0) s.attune[i]--;
+  const full = fullMask(w, i);
   for (let e = 1; e <= N_EL; e++) {
     const k = rune(w, i, e);
     // Sigil runes bound in devices don't come back while those devices stand.
-    const cap = e === EL.sigil ? sigilCap(w, i) : runeMax(w, i, e);
-    s.runes[k] = Math.min(Math.max(cap, 0), s.runes[k] + (regenOf(w, i) * mult) / 60);
+    s.runes[k] = Math.min(poolCap(w, i, e), s.runes[k] + (regenRate(w, i, e, full) * mult) / 60);
   }
 
   // A conjured guard blocks while Space is held with an empty queue (Defend, grammar v2; guards.ts).
@@ -179,8 +180,9 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   if (defend) pressed &= ~BTN.self; // holding it to block is not a Self cast
 
   if (pressed & BTN.clear) refundQueue(w, i);
-  pressElement(w, i, inp.press0);
-  pressElement(w, i, inp.press1);
+  // Survive's +1 to three: while choosing, the element keys pick elements instead of queueing runes.
+  if (!chooseElement(w, i, inp.press0)) pressElement(w, i, inp.press0);
+  if (!chooseElement(w, i, inp.press1)) pressElement(w, i, inp.press1);
 
   // The Area button: tap for Area, hold for Place, drag while holding for a drawn Place.
   if (pressed & BTN.area) { s.areaHeld[i] = 0; s.dragged[i] = 0; s.holdX[i] = b.x[i] + s.aimX[i]; s.holdY[i] = b.y[i] + s.aimY[i]; }

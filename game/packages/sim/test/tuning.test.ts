@@ -19,7 +19,7 @@ describe('tuning registry', () => {
     const h = tuningHash();
     expect(h).not.toBe(0);
     resetTuning();
-    expect(RUNES.regen).toBe(0.22);
+    expect(RUNES.regen).toBe(1);
     expect(applyOverrides({ 'runes.regen': 0.5, 'nope.x': 1 })).toEqual(['nope.x']);
     expect(tuningHash()).toBe(h);
   });

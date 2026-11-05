@@ -4,7 +4,8 @@
  * It is pure and deterministic (no randomness of its own), so a bot run is a replay like any other.
  *
  * Its habits: keep 4-6 units from the nearest enemy, heal when hurt, raise a stone arc when a
- * crowd closes in, throw rocks at brutes, spray fire at goblins, and soak-then-shock groups.
+ * crowd closes in, throw rocks at brutes, drop Place spells on shieldbearers, spray fire at goblins,
+ * and soak-then-shock groups.
  * It only queues what its pools can pay for.
  */
 import type { Element } from '@wizard-sim/rules';
@@ -25,6 +26,9 @@ export interface BotMemory {
 }
 export const newBotMemory = (): BotMemory => ({ plan: [], button: 0, hold: 0, rest: 30 });
 
+/** What the bot takes from +1 to three, in order: the elements its spells use most. */
+const CHOICE = [EL.earth, EL.water, EL.fire, EL.life, EL.lightning, EL.arcane, EL.cold];
+
 const runes = (w: World, seat: number, el: Element) => w.seats.runes[seat * 9 + EL[el] - 1];
 
 function choose(w: World, seat: number, foe: number, crowd: number, d: number): [Element[], number, number] {
@@ -33,6 +37,9 @@ function choose(w: World, seat: number, foe: number, crowd: number, d: number): 
   if (b.hp[seat] < 45 && can(['life', 'life'])) return [['life', 'life'], BTN.self, 2];
   if (crowd >= 3 && d < 5 && can(['shield', 'earth'])) return [['shield', 'earth'], BTN.area, 22];
   if (b.arch[foe] === ARCH.brute && can(['earth', 'earth'])) return [['earth', 'earth'], BTN.force, 64];
+  // a Shieldbearer's guard turns shots, beams and sprays: drop a Place spell on it instead (a geyser, else a fire patch)
+  if (b.arch[foe] === ARCH.shieldbearer && d < 9 && can(['earth', 'arcane'])) return [['earth', 'arcane'], BTN.area, 20];
+  if (b.arch[foe] === ARCH.shieldbearer && d < 9 && can(['fire'])) return [['fire'], BTN.area, 20];
   if (b.arch[foe] === ARCH.imp && can(['water', 'cold'])) return [['water', 'cold'], BTN.force, 2];
   if (crowd >= 2 && b.wet[foe] && can(['lightning'])) return [['lightning'], BTN.force, 50];
   if (crowd >= 2 && can(['water'])) return [['water'], BTN.force, 30];
@@ -53,8 +60,13 @@ export function botInput(w: World, seat: number, mem: BotMemory): PlayerInput {
     if (d < 5) crowd++;
     if (d < fd) { fd = d; foe = i; }
   }
-  // Survive's pick: walk onto an altar (each seat its own, so a bot team shows different picks).
+  // Survive's +1 to three: tap the first three of its favourite elements, one a tick.
   const r = w.run;
+  if (r && r.choose[seat]) {
+    const at = seat * 3, id = CHOICE.find((e) => r.chosen[at] !== e && r.chosen[at + 1] !== e && r.chosen[at + 2] !== e) ?? EL.fire;
+    return quantize({ ...NO_INPUT, press0: w.clock[0] % 2 ? 0 : id, aimX: 32, aimY: 0 });
+  }
+  // Survive's pick: walk onto an altar (each seat its own, so a bot team shows different picks).
   if (foe < 0 && r && w.enc.state[0] === PHASE_ENC.pick && r.picked[seat] < 0) {
     const a = (seat + w.enc.state[1]) % r.offer.length, mx = r.ax[a] - b.x[seat], my = r.ay[a] - b.y[seat], ml = len(mx, my);
     return quantize({ ...NO_INPUT, moveX: ml > 0.2 ? (mx / ml) * 127 : 0, moveY: ml > 0.2 ? (my / ml) * 127 : 0, aimX: 32, aimY: 0 });

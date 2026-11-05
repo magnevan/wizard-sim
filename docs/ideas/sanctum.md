@@ -25,3 +25,4 @@ It could feel like homework, so it should be optional and fun on its own terms.
 
 ## Smallest test
 This is whatever prototype comes first. Every prototype is effectively a sanctum room.
+*(Since 2026-11-04 the game's default room is the Sanctum: three practice dummies, with the tuning panel (F1) for readouts, spawning and time control. It's a test room, not the shared hub this idea describes, which stays parked.)*

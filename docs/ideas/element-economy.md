@@ -30,10 +30,15 @@ Each element is a pool of **runes** (charges up to a maximum) that regenerate ov
 - **Naming:** "rune" means one unit of an element. Seal traps are now **glyphs** (Trap Glyph, Puddle Glyph, Line glyph), as of 2026-11-03.
 
 ## Open questions
-- *(Deferred 2026-11-03: pools stay unlocked for now.)* What does depth unlock? Under proposal C, depth 1 already reaches all 52 cells and 606 of 976 spells, and depth 2 reaches 966 (`tools/spell-atlas/depth-c.js`). Repeats are power, not new spells, so depth-gated content (Magicks, intensity tiers) has to be added on purpose.
+- *(Deferred 2026-11-03: pools stay unlocked for now.)* What does depth unlock? Under proposal C (Atlas v4 onward), depth 1 already reaches all 39 cells and 670 of 678 spells, and depth 2 reaches all 678 (`tools/spell-atlas/depth-c.js`, 2026-11-05). Repeats are power, not new spells, so depth-gated content (Magicks, intensity tiers) has to be added on purpose.
 - Are partial runes ever shown (e.g. a half-spent rune regenerating faster)?
+  *Partly answered:* the HUD shows up to 5 runes as pips, 6–10 as two rows, and more as a bar with the count ([Play-test round 2, answers](../decisions/README.md#2026-11-05-play-test-round-2-answers-and-notes-811)). Partial runes aren't shown.
 - A wildcard rune: kept in reserve if needed later.
 - Is support's refill skill just timing, or is there more to it?
+  *So far:* refills are your own (Attune, the Arcane wand's Siphon, Survive's Wellspring). No spell refills an ally's runes.
 
 ## Smallest test
 A one-player arena with visible rune pools, a beam with natural duration and regen debt, and weapons. Does the pace slow down, and do players switch between cheap and big casts without being told?
+
+## Where it stands (2026-11-05)
+Built in the game: pools of about 4 runes per element (Fire 5, Sigil 3), slow regen, runes reserved on queue and spent on cast, Attune, Sigil Bind and Shield Model A drain ([Calls Claude made while building milestone 1](../decisions/README.md#2026-11-04-calls-claude-made-while-building-milestone-1-the-user-can-veto-any)). Channels are free for 5 s, then cost upkeep. Depth-gated progression stays deferred; Survive's Deep pools power-ups are the only place pool depth grows.

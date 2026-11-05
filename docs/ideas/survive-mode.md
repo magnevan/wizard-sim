@@ -19,11 +19,13 @@ Walk onto an altar and stand there for under a second. That's the whole input. Y
 
 ## Costs & risks
 - Flat-number power-ups (Wellspring, Glass heart) press on pillar 1.
-- Ten power-ups to read; each needs a glyph and a one-line rule that read at a glance.
+- Twelve built power-ups to read; each needs a glyph and a one-line rule that read at a glance.
 - Balance is placeholder.
 
 ## Open questions
-See the questions at the end of `explorations/2026-11-05-survive-mode.md`.
+See the questions in `../explorations/2026-11-05-survive-mode.md`.
+- **Answered:** 1–4 are built on Claude's recommendations (altars, one each and shareable; portals open during the pick; flat power-ups allowed in run modes; Bloom as a deliberate pick) ([Build optimistically](../decisions/README.md#2026-11-05-build-optimistically)). 5: Rally and Echo, both built ([Survive gets Rally and Echo](../decisions/README.md#2026-11-05-survive-gets-rally-and-echo)). 7: the arena grew to 48 x 34 ([Survive grows to 48 x 34](../decisions/README.md#2026-11-05-survive-grows-to-48-x-34-guards-read-from-behind-a-stalled-page-no-longer-drops-the-others)).
+- **Still open:** 6 (the difficulty curve past wave 8), 8 (zooming out when the team splits), 9 (the keep's walls), and 10–12 (Rally's break rule, Echo's repeat cost, Echo as a one-shot).
 
 ## Smallest test
 Built: `#survive` in the game. Play a few runs solo and with a partner; rate which power-ups get picked and which feel dead.

@@ -1,5 +1,5 @@
 ---
-status: raw
+status: developing
 pillars: [4, 6]
 related: [spell-wishlist.md, casting-rhythm.md, ../explorations/2026-11-03-wishlist-round-1.md]
 ---
@@ -28,3 +28,7 @@ Preparing your environment while waiting for enemies becomes a skill. It suits t
 ## Open questions
 - How many stored spells? One slot, or more as progression?
 - Does releasing a stored spell cost anything (resource, cooldown)?
+
+## Where it stands (2026-11-05)
+- **The trap and primed-object half is built** as Sigil devices in the game: glyphs and line glyphs, turrets, orbitals and rune motes, each binding a Sigil rune ([Sigil's identity](../decisions/README.md#2026-11-04-sigils-identity-see-explorations2026-11-04-sigil-identity-and-buffsmd); tracked in `battlefield-building.md`). Survive's lulls are where they get placed.
+- **The stored spell is deferred:** "preparing a spell becomes its own mechanism, deferred" ([Seal becomes an element](../decisions/README.md#2026-11-03-seal-becomes-an-element-steam-and-ice-dropped-see-explorations2026-11-03-structures-review-and-elementsmd)). Its open questions above (how many slots, what releasing costs) are still open, which is why this stays `developing`.

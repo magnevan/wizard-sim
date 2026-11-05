@@ -1,5 +1,5 @@
 ---
-status: developing
+status: adopted
 pillars: [5]
 related: [../../tools/art-styles/]
 ---
@@ -201,3 +201,7 @@ Built from the pass 2 feedback and published as v4. Feedback ids are `p3-*`.
   - **Water:** not needed; it's the base death (spells make their own puddles).
   - **Wet lightning:** not a unique effect; it's the lightning death plus what water already does with lightning. Drop it.
   - **Conclusion:** fewer, more distinct deaths. Base, fire, cold, frozen shatter, lightning, arcane, earth (missile), steam, and an earthquake variant.
+
+## Where it stands (2026-11-05): adopted
+The Pixel Battlefield look (high-res pixel art, the ~67° 3/4 camera, banded dusk light, outlined procedural wizards) is the game's look. Its actors, floor, lights, HUD and the Spell VFX gallery's effects and deaths are ported into `game/packages/client/src/art/` ([Engine stack](../decisions/README.md#2026-11-04-engine-stack-the-users-answers-on-the-engine-choice-page): milestone 1 uses "the Pixel Battlefield look"; [the look rule](../decisions/README.md#2026-11-04-the-look-rule-ice-shards-turret-draw-the-users-feedback-on-the-vfx-gallery-and-pixel-battlefield-pass-3)). New visuals are rated in the Spell VFX gallery (`tools/spell-vfx/`) and the Weapon Moveset Review.
+- Open question "Which direction?" **Answered:** the Pixel Battlefield direction, rated over the Art Style Explorer rounds above.

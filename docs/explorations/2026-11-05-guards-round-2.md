@@ -92,3 +92,16 @@ Merged rule, now in the game:
    - the guard rim drawn in the coat's colours.
 
    A bite-back flashes in the coat's colour on whoever it bit.
+
+### The user's ratings on the merge (built)
+
+| Item | Answer | Change |
+|---|---|---|
+| q-mix-lead | strength | Kept: the strongest element leads |
+| q-mix-lightning | strong | Kept: Lightning stays a strong element |
+| Leaf resistance, Bulwark coat, weak guards, wand | keep | Unchanged |
+| q-mix-rest | "Agreed, except I'm not totally sold on prism yet, but it can be what we build for now" | My suggestions for healing hands, the maul and the weak elements stand. The Prism stays as built and is still open |
+| Prism mixing | maybe: "What would happen with opposing elements?" | **The returned beam mixes with the coat as in the queue: opposites cancel rune for rune.** A Cold Prism parrying a 1-Fire beam swallows it, and a 2-Fire beam comes back as 1 Fire. Any element left over rides back with the beam. The separate coat bite on a Prism parry is gone |
+| q-mix-scale | count: "Not just lead runes, all runes cause some form of scaling, like in spells" | **Every rune in a guard past the first adds 15 % guard HP and 15 % Retreat distance** (`ARMS.runeSize`). The mixed-in elements already scale by count (resistance share, and coat strength through the payload), and so do weapons (each rune adds payload damage). Weapon uses stay fixed at 30, since damage already scales |
+
+Not built yet: coats on Mend and Siphon, and the guard rim drawn in the coat's colours.

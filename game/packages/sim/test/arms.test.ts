@@ -9,7 +9,8 @@ import {
   ARCH, ARCHETYPES, ARMS, BTN, EL, GUARD, KIND, NO_INPUT, SURF, TEAM, ZONE, createWorld, elementId, quantize, spawnBody, step,
   type PlayerInput, type World,
 } from '../src';
-import { anchored, resist, RES, walkMult } from '../src/guards';
+import { anchored, guardBeam, resist, RES, walkMult } from '../src/guards';
+import { N_EL } from '../src/elements';
 import { cellAt } from '../src/effects';
 
 class Driver {
@@ -201,6 +202,28 @@ describe('guards: one per lead element', () => {
     expect(hurt[1]).toBe(0);
   });
 
+  it('a Prism parry returns the beam mixed with its coat; opposites cancel rune for rune', () => {
+    const back = (q: Element[], fire: number) => {
+      const { w, d, dummy } = arena();
+      d.conjure(...q);
+      d.aimAt(3, 0).tick({}, 2);
+      const foe = dummy(3, 0);
+      w.seats.guardT[0] = 1; // just raised: parrying
+      const els = new Uint8Array(N_EL); els[EL.fire - 1] = fire;
+      guardBeam(w, 0, foe, els, 0, 1, -1, 0);
+      return 400 - w.bodies.hp[foe];
+    };
+    expect(back(['shield', 'arcane'], 1)).toBeGreaterThan(0); // a plain Prism sends it back
+    expect(back(['shield', 'arcane', 'cold'], 1)).toBe(0); // one Cold swallows one Fire
+    expect(back(['shield', 'arcane', 'cold'], 2)).toBeGreaterThan(0); // two Fire: one comes back
+  });
+
+  it('every rune past the first makes a guard bigger: more HP, a longer Retreat', () => {
+    const hp = (q: Element[]) => { const { w, d } = arena(); d.conjure(...q); return w.seats.guardHp[0]; };
+    expect(hp(['shield', 'earth', 'earth'])).toBeCloseTo(ARMS.hp.bulwark * (1 + ARMS.runeSize));
+    expect(hp(['shield', 'earth', 'fire', 'water'])).toBeCloseTo(ARMS.hp.bulwark * (1 + 2 * ARMS.runeSize));
+  });
+
   it('Grounded: an ally\'s chain lightning skips the Spark ring carrier', () => {
     const { w, d, dummy } = arena(2);
     d.conjure('shield', 'lightning');
@@ -239,6 +262,7 @@ describe('guards: Retreat (Shift+LMB, nothing queued)', () => {
     expect(retreatOf([]).w.bodies.x[0]).toBeLessThan(-0.8);
     const m = retreatOf(['shield']).w.bodies.x[0];
     expect(m).toBeLessThan(-2.5); expect(m).toBeGreaterThan(-3.5);
+    expect(retreatOf(['shield', 'water', 'water']).w.bodies.x[0]).toBeLessThan(retreatOf(['shield', 'water']).w.bodies.x[0]); // a 2-rune Tide surges further
   });
 
   it('Shove step (Bulwark): a short step back, and what was in front is knocked back and stunned', () => {

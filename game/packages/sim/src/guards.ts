@@ -87,7 +87,7 @@ export function conjureGuard(w: World, src: number, counts: Uint8Array): void {
   s.guardEls[src * N_EL + EL.sigil - 1] = 0;
   const lead = leadOf(s.guardEls, src);
   s.guard[src] = lead ? GUARD_OF[lead] : GUARD.mirror;
-  s.guardHp[src] = (ARMS.hp as Record<string, number>)[GUARD_NAME[s.guard[src]]];
+  s.guardHp[src] = (ARMS.hp as Record<string, number>)[GUARD_NAME[s.guard[src]]] * guardSize(w, src);
   s.guardT[src] = 0; s.guardCd[src] = 0; s.retreatT[src] = 0;
 }
 
@@ -132,6 +132,25 @@ function biteBack(w: World, i: number, j: number, ux: number, uy: number): void 
   applyHit(w, j, c, 0, { scale: ARMS.coatScale, heal: false, scald: false, freeze: false, source: i, dirX: ux, dirY: uy, push: 0 });
   w.events.push({ tick: w.clock[0], kind: 'move', who: i, x: w.bodies.x[j], y: w.bodies.y[j], text: 'coat', look: guardCoatLook(w, i) });
 }
+/** Opposites that cancel rune for rune, as in the queue. */
+const OPPOSED: readonly (readonly [number, number])[] = [[EL.fire, EL.cold], [EL.water, EL.lightning], [EL.life, EL.arcane], [EL.earth, EL.lightning]];
+const MIX = new Uint8Array(N_EL);
+/** A payload (els at `at`) plus seat i's coat, opposites cancelled; null when nothing is left. */
+function mixCoat(w: World, i: number, els: Uint8Array, at: number): Uint8Array | null {
+  const c = coatOf(w, i);
+  for (let k = 0; k < N_EL; k++) MIX[k] = els[at * N_EL + k] + (c ? c[k] : 0);
+  for (const [a, o] of OPPOSED) { const m = Math.min(MIX[a - 1], MIX[o - 1]); MIX[a - 1] -= m; MIX[o - 1] -= m; }
+  for (let k = 0; k < N_EL; k++) if (MIX[k]) return MIX;
+  return null;
+}
+/** Runes in seat i's guard (Shield aside), at least 1. */
+const guardRunes = (w: World, i: number): number => {
+  let n = 0;
+  for (let k = 0; k < N_EL; k++) n += w.seats.guardEls[i * N_EL + k];
+  return Math.max(1, n);
+};
+/** Every rune past the first makes the guard bigger, as in spells: more guard HP and a longer Retreat. */
+export const guardSize = (w: World, i: number): number => 1 + ARMS.runeSize * (guardRunes(w, i) - 1);
 /** The colour of seat i's coat: its most numerous mixed-in element (0 for none). */
 export function guardCoatLook(w: World, i: number): number {
   let best = 0, n = 0;
@@ -342,8 +361,11 @@ export function guardBeam(w: World, t: number, src: number, els: Uint8Array, at:
   if (src >= 0 && src !== t && clear(w, t) && b.team[src] === b.team[t]) return 0;
   if (guardOf(w, t) !== GUARD.prism || !blocking(w, t) || !fromFront(w, t, dx, dy)) return 1;
   if (parrying(w, t) && src >= 0 && src !== t && alive(w, src)) {
-    applyHit(w, src, els, at, { scale, heal: false, scald: false, freeze: false, source: t, dirX: -dx, dirY: -dy, push: 0 });
-    if (w.clock[0] % 6 === 0) { move(w, t, 'parry'); biteBack(w, t, src, -dx, -dy); } // the returned beam carries the coat
+    // The returned beam carries the coat, mixed as in the queue: opposites cancel rune for rune, so a
+    // Cold Prism sends a Fire beam back weaker, and swallows it whole when the coat matches its runes.
+    const r = mixCoat(w, t, els, at);
+    if (r) applyHit(w, src, r, 0, { scale, heal: false, scald: false, freeze: false, source: t, dirX: -dx, dirY: -dy, push: 0 });
+    if (w.clock[0] % 6 === 0) move(w, t, 'parry');
   } else {
     damageGuard(w, t, payloadDamage(els, at, scale));
     if (w.clock[0] % 12 === 0) move(w, t, 'block');
@@ -381,24 +403,25 @@ function free(w: World, i: number, x: number, y: number): boolean {
 export function guardRetreat(w: World, i: number, face: number): void {
   const b = w.bodies, s = w.seats, g = guardOf(w, i);
   const bx = -cosTurns(face), by = -sinTurns(face), x = b.x[i], y = b.y[i];
+  const k = guardSize(w, i); // more runes, a longer Retreat
   s.guardCd[i] = T(ARMS.retreatRecovery);
   s.guardT[i] = 0;
   const push = (d: number, ux = bx, uy = by) => { b.kx[i] += ux * glide(d); b.ky[i] += uy * glide(d); }; // your own move: never blocked by Anchored
   switch (g) {
     case GUARD.bulwark: { // Shove step: a short step back, and the slab knocks back whatever was in front
-      push(ARMS.shoveStep);
+      push((ARMS.shoveStep * k));
       cone(w, i, ARMS.shoveRange, 0.2, (j, ux, uy) => { if (b.team[j] !== b.team[i]) { addKnock(w, j, ux, uy, ARMS.shoveKnock); b.stun[j] = Math.max(b.stun[j], T(ARMS.shoveStun)); biteBack(w, i, j, ux, uy); } });
-      move(w, i, 'shovestep', x + bx * ARMS.shoveStep, y + by * ARMS.shoveStep);
+      move(w, i, 'shovestep', x + bx * (ARMS.shoveStep * k), y + by * (ARMS.shoveStep * k));
       return;
     }
     case GUARD.ember: {
-      push(ARMS.flameStep);
-      floorLine(w, x, y, x + bx * ARMS.flameStep, y + by * ARMS.flameStep, EL.fire, T(ARMS.flameLine));
-      move(w, i, 'flamestep', x + bx * ARMS.flameStep, y + by * ARMS.flameStep);
+      push((ARMS.flameStep * k));
+      floorLine(w, x, y, x + bx * (ARMS.flameStep * k), y + by * (ARMS.flameStep * k), EL.fire, T(ARMS.flameLine));
+      move(w, i, 'flamestep', x + bx * (ARMS.flameStep * k), y + by * (ARMS.flameStep * k));
       return;
     }
     case GUARD.rime: {
-      const d = ARMS.iceSlide;
+      const d = (ARMS.iceSlide * k);
       floorLine(w, x, y, x + bx * (d + 0.5), y + by * (d + 0.5), EL.cold);
       // on ice, knockback decays by 0.985 a tick, so the slide needs far less push
       b.kx[i] += bx * d * 1.8; b.ky[i] += by * d * 1.8; // most of it in the first 0.7 s; the strip's end stops you
@@ -406,8 +429,8 @@ export function guardRetreat(w: World, i: number, face: number): void {
       return;
     }
     case GUARD.spark: {
-      let nx = x + bx * ARMS.blink, ny = y + by * ARMS.blink;
-      for (let k = 0; k < 16 && !free(w, i, nx, ny); k++) { nx -= bx * (ARMS.blink / 16); ny -= by * (ARMS.blink / 16); }
+      let nx = x + bx * (ARMS.blink * k), ny = y + by * (ARMS.blink * k);
+      for (let n = 0; n < 16 && !free(w, i, nx, ny); n++) { nx -= bx * ((ARMS.blink * k) / 16); ny -= by * ((ARMS.blink * k) / 16); }
       if (!free(w, i, nx, ny)) { nx = x; ny = y; }
       spawnZone(w, ZONE.spark, i, one(EL.lightning), x, y, 0.75, T(ARMS.spark), 0);
       w.events.push({ tick: w.clock[0], kind: 'blink', who: i, x, y, x2: nx, y2: ny });
@@ -417,22 +440,22 @@ export function guardRetreat(w: World, i: number, face: number): void {
       return;
     }
     case GUARD.tide: {
-      push(ARMS.surge);
+      push((ARMS.surge * k));
       cone(w, i, 3, 0.18, (j, ux, uy) => { hit(w, j, one(EL.water), hitOpts(one(EL.water), i, 1, ux, uy)); b.kx[j] += ux * 9; b.ky[j] += uy * 9; });
       floorDisc(w, x, y, 0.8, EL.water);
-      move(w, i, 'surge', x + bx * ARMS.surge, y + by * ARMS.surge);
+      move(w, i, 'surge', x + bx * (ARMS.surge * k), y + by * (ARMS.surge * k));
       return;
     }
-    case GUARD.prism: push(ARMS.phase); s.retreatT[i] = T(ARMS.phaseTime); move(w, i, 'phase', x + bx * ARMS.phase, y + by * ARMS.phase); return;
+    case GUARD.prism: push((ARMS.phase * k)); s.retreatT[i] = T(ARMS.phaseTime); move(w, i, 'phase', x + bx * (ARMS.phase * k), y + by * (ARMS.phase * k)); return;
     case GUARD.leaf: // Seed step: a hop back that leaves a healing bloom where you stood, for whoever steps in
-      push(ARMS.seedStep);
+      push((ARMS.seedStep * k));
       spawnZone(w, ZONE.spring, i, one(EL.life), x, y, ARMS.seedRadius, T(ARMS.seedLife), 0);
-      move(w, i, 'seedstep', x + bx * ARMS.seedStep, y + by * ARMS.seedStep);
+      move(w, i, 'seedstep', x + bx * (ARMS.seedStep * k), y + by * (ARMS.seedStep * k));
       return;
     default: break;
   }
-  push(ARMS.backstep); // the Mirror's crisp hop
-  move(w, i, 'backstep', x + bx * ARMS.backstep, y + by * ARMS.backstep);
+  push((ARMS.backstep * k)); // the Mirror's crisp hop
+  move(w, i, 'backstep', x + bx * (ARMS.backstep * k), y + by * (ARMS.backstep * k));
 }
 
 // ---- per tick ----------------------------------------------------------------------------------

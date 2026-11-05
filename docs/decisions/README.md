@@ -398,3 +398,10 @@ The user: the strong elements are Life, Earth and Arcane. Shield + Life is prese
 - **Leaf:** takes only the extras' strengths.
 - **Other guards:** the extras are a coat that bites whoever hits the block (and the Shove step's shoved, and the Prism's returned beam) at half power.
 - **Open:** Lightning's place among the strong elements, and how the remaining guards and weapons should use their extras.
+
+## 2026-11-05: Mixing ratings: every rune scales, the Prism mixes its return
+
+The user kept the strength lead, Lightning as strong, and the Leaf, Bulwark, weak-guard and wand rows. The Prism is a maybe ("not totally sold"), built as is for now. Built (`explorations/2026-11-05-guards-round-2.md`, "The user's ratings on the merge"):
+- **Every rune scales** (q-mix-scale: "all runes cause some form of scaling, like in spells"): each guard rune past the first adds 15 % guard HP and Retreat distance. Weapons already scale through payload damage.
+- **A Prism parry returns the beam mixed with its coat; opposites cancel rune for rune**, as in the queue, so a Cold Prism can swallow a Fire beam.
+- Golden hash unchanged (`e055dcdb`).

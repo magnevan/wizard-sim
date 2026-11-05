@@ -8,7 +8,7 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
-import { ARCHETYPES, ARMS, GUARD_NAME, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, elementId, elementName, runeMax, specOf, type World } from '@wizard-sim/sim';
+import { ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, elementId, elementName, runeMax, specOf, type World } from '@wizard-sim/sim';
 import { badge, perkOf } from './art/perks';
 import * as X from './art/px';
 import { mod } from './art/util';
@@ -214,7 +214,7 @@ export class Hud {
     // the guard: a bar in its colour (Shield gold for the Mirror buckler), as tall as the HP it has left
     if (s.guard[i]) {
       const GE = ['shield', 'earth', 'shield', 'fire', 'cold', 'lightning', 'water', 'arcane', 'life'][s.guard[i]] ?? 'shield';
-      const name = GUARD_NAME[s.guard[i]] ?? 'mirror', k = Math.max(0, Math.min(1, s.guardHp[i] / ((ARMS.hp as Record<string, number>)[name] || 70)));
+      const name = GUARD_NAME[s.guard[i]] ?? 'mirror', k = Math.max(0, Math.min(1, s.guardHp[i] / (((ARMS.hp as Record<string, number>)[name] || 70) * guardSize(w, i))));
       X.rect(c, x0 - 4, y0 + RH + 12, 4, 16, '#0a0810');
       X.rect(c, x0 - 3, y0 + RH + 12 + Math.round(16 * (1 - k)), 2, Math.max(1, Math.round(16 * k)), X.EL[GE][2]);
     }

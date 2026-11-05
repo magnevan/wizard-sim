@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, queueOf, selfTarget,
+  N_ALTARS, N_EL, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, guardSize, queueOf, selfTarget,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
@@ -1102,7 +1102,7 @@ export class StructureView {
   private guard(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], up: number, light: LightFn): void {
     const s = w.seats, id = s.guard[i], name = GUARD_NAME[id] ?? 'mirror', blocking = s.guardT[i] > 0, raise = blocking ? easeOut(Math.min(1, s.guardT[i] / 6)) : 0;
     const bulwark = id === GUARD.bulwark, braced = bulwark && s.retreatT[i] > 0;
-    const hpk = clamp(s.guardHp[i] / ((ARMS.hp as Record<string, number>)[name] || 70), 0, 1);
+    const hpk = clamp(s.guardHp[i] / (((ARMS.hp as Record<string, number>)[name] || 70) * guardSize(w, i)), 0, 1);
     const at = braced ? P(5, 0, 5) : P(lerp(1, 6, raise), lerp(-5, 0, raise), lerp(6, 9, raise)), c = at[2] < -1.5 ? g : o;
     const face = (Math.round(w.bodies.face[i] * 16) / 16) * TAU, sn = Math.abs(Math.sin(face)), csn = Math.cos(face);
     const x = at[0], y = at[1], R = GUARD_RAMP[name] ?? EL.shield;

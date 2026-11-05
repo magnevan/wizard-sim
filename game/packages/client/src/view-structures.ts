@@ -911,7 +911,7 @@ export class StructureView {
       if (s.weapon[i]) this.weapon(w, i, v, t, g, o, P, conj, light);
       if (s.guard[i]) this.guard(w, i, v, t, g, o, P, conj, light);
       if (s.linkTo[i] >= 0) this.link(i, v, bodies[s.linkTo[i]], t, o, light);
-      // Phase (Prism pane): a hex afterimage round you while you drift through bodies
+      // Phase (Prism): a hex afterimage round you while you drift through bodies
       if (s.guard[i] === GUARD.prism && s.retreatT[i] > 0) {
         const k = s.retreatT[i] / T(ARMS.phaseTime), cy = v.y - 12;
         for (let q = 0; q < 2; q++) { const r = 9 + q * 4 + (1 - k) * 4, pts: Pt[] = []; for (let j = 0; j <= 6; j++) { const a = (j / 6) * TAU + Math.PI / 6 + t; pts.push([v.x + Math.cos(a) * r, cy + Math.sin(a) * r * 0.8]); } X.lines(o, pts, q ? EL.arcane[3] : EL.arcane[1]); }

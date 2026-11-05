@@ -61,7 +61,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     }
   }
   const srcSeat = src >= 0 && src < MAX_SEATS ? src : -1, tSeat = t < MAX_SEATS ? t : -1;
-  // A guard (guards.ts): Clear lets allies' beams through harmlessly; a raised Prism pane stops them from the front. Resistances below.
+  // A guard (guards.ts): Clear lets allies' beams through harmlessly; a raised Prism stops them from the front. Resistances below.
   const guard = tSeat >= 0 ? s.guard[tSeat] : 0;
   if (guard && !o.heal && hitKind === HIT_KIND.channel && o.frontal) {
     const k = guardBeam(w, tSeat, src, els, at, o.scale, o.dirX, o.dirY);

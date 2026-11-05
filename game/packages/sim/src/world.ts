@@ -135,9 +135,9 @@ export interface Seats {
   guard: Uint8Array; guardHp: Float64Array; guardT: Int32Array; guardCharge: Float64Array;
   /** Ticks RMB has been held for a Strike or Heavy with no runes queued (0: not held). */
   handT: Int32Array;
-  /** A guard's elements other than Shield (9 per seat): the lead picks the guard, a second adds half its resistance. */
+  /** A guard's elements other than Shield and Sigil (9 per seat): the lead picks the guard, the others mix in (guards.ts). */
   guardEls: Uint8Array;
-  /** Ticks left of the fixed recovery after a Retreat (no Retreat or Defend), and of the Retreat itself (Brace, Phase). */
+  /** Ticks left of the fixed recovery after a Retreat (no Retreat or Defend), and of the Prism's Phase (through bodies). */
   guardCd: Int32Array; retreatT: Int32Array;
   /** Ticks left of the spear's impaling dash (you pass through bodies). */
   dashT: Int32Array;

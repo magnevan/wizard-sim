@@ -11,18 +11,21 @@
  *            Free, with a fixed 0.5 s recovery in which you can't Retreat or Defend again.
  *   Passive  always on while carried.
  *   Resists  always on while carried, from any direction. Carrying a guard costs a little walking speed.
- *   Mixing   the lead element sets Defend and Retreat; a second element mixes in its passive and its
- *            whole resistance row at half strength (the user's pick: "mix").
+ *   Mixing   the lead element sets Defend and Retreat. Every other element mixes in its passive and
+ *            min(1, n·0.5) of its guard's resistance row (n: its runes; ARMS.mixShare): under a Leaf
+ *            only its strengths, under any other lead its weaknesses too. It also coats the guard
+ *            (not a Leaf): a block, parry or Retreat that touches someone bites them with it.
  *
  *   Guard (queue)          Defend: block / parry                 Retreat       Passive
  *   Mirror buckler (S)     narrow, glances shots / reflects one   Backstep 3u   Light: full speed blocking, widest parry
  *   Bulwark (S+E)          wide, stops melee / bashes down        Shove step    Anchored: no knockback (and 15 % slower)
- *   Ember targe (S+F)      thorns / a burst of flame              Flame step    Warm: no chill or freeze, dry at once
+ *   Ember targe (S+F)      thorns / a burst of flame              Flame step    Warm: no chill, freeze or burning; dry at once
  *   Rime kite (S+C)        chills melee attackers / freezes them  Ice slide     Sure-footed: no slipping on ice
  *   Spark ring (S+L)       weakest / chain discharge              Blink         Grounded: chain lightning skips you
  *   Tide shield (S+W)      shoves and soaks / a shoving wave      Surge         Quenched: can't burn
- *   Prism (S+A)            stores what it blocks; lower it: Lance Phase         Clear: allies' beams and sprays don't hurt you
- *                          (also stops beams and sprays; a parry returns them)
+ *   Prism (S+A)            stores what it blocks as charge /      Phase         Clear: allies' beams and sprays don't hurt you
+ *                          returns the shot, beam or spray;
+ *                          the only block that stops beams and sprays; lowered with charge, it fires the Lance
  *   Leaf aegis (S+Li)      heals allies around you / burst heal   Seed step     Regrowth: slow healing
  */
 import { ARMS, STATUS, T } from './config';
@@ -202,7 +205,7 @@ export const sureFooted = (w: World, i: number): boolean => hasPassive(w, i, GUA
 export const grounded = (w: World, i: number): boolean => hasPassive(w, i, GUARD.spark);
 /** Clear (Prism): an ally's beams and sprays don't hurt this seat. */
 export const clear = (w: World, i: number): boolean => i < MAX_SEATS && hasPassive(w, i, GUARD.prism);
-/** Phasing back (Prism pane's Retreat): passes through bodies. */
+/** Phasing back (the Prism's Retreat) or the spear's dash: passes through bodies. */
 export const phased = (w: World, i: number): boolean => i < MAX_SEATS && ((guardOf(w, i) === GUARD.prism && w.seats.retreatT[i] > 0) || w.seats.dashT[i] > 0);
 export const blocking = (w: World, i: number): boolean => guardOf(w, i) !== 0 && w.seats.guardT[i] > 0;
 
@@ -413,7 +416,7 @@ export function guardMelee(w: World, t: number, src: number, dmg: number, dx: nu
 
 /**
  * A beam (or spray) tick on seat t from `src`. Returns the scale left of it: an ally's does nothing
- * to a Clear seat (the Prism's passive, or mixed in); the Prism pane stops it from the front while
+ * to a Clear seat (the Prism's passive, or mixed in); the Prism stops it from the front while
  * blocking, and a parry turns it on its caster.
  */
 export function guardBeam(w: World, t: number, src: number, els: Uint8Array, at: number, scale: number, dx: number, dy: number): number {

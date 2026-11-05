@@ -112,10 +112,44 @@
     mixPairs: [
       ['mix-leaf-resist', 'Leaf', 'life', ['fire', 'water', 'earth'], 'Leaf: extras grant only their strengths (no weaknesses, no bite-back). Life is preservation.'],
       ['mix-bulwark-coat', 'Bulwark', 'earth', ['cold', 'water'], 'Bulwark: extras are a coat that bites whoever hits the block or is shoved by the Shove step, at half power: Fire burns, Cold chills, Water soaks and pushes.'],
-      ['mix-prism', 'Prism', 'arcane', ['fire', 'water'], 'Prism: a parried beam goes back carrying the coat.'],
+      ['mix-prism', 'Prism', 'arcane', ['fire', 'water'], 'Prism: a parried beam goes back carrying the coat.',
+        'Your question, “What would happen with opposing elements?”: the returned beam mixes with the coat as in the queue, and opposites cancel rune for rune. A Cold Prism parrying a 1-Fire beam swallows it; a 2-Fire beam comes back as 1 Fire. Whatever is left rides back with the beam (built).'],
       ['mix-weak', 'Weak leads and the Spark', 'fire', ['cold', 'water', 'lightning'], 'Ember, Rime, Tide and the Spark ring: the coat bites back on block contact.'],
       ['mix-wand', 'Arcane wand', 'arcane', ['fire', 'lightning'], 'Arcane wand: bolts carry every extra rune (imbue).'],
     ],
+    // Round 4: the Arcane guard redesign (docs/explorations/2026-11-05-guards-round-2.md, last section)
+    round4: {
+      since: 'Since your last ratings (all built): resistance is hyperbolic, so damage taken is 1 / (1 + r) and the old immunities (Ember to fire, Rime to cold, Spark to lightning) now take 25 %. Every guard rune past the first adds 15 % guard HP and 15 % Retreat distance. A Prism parry mixes the returned beam with the coat, and opposites cancel.',
+      card: {
+        id: 'g-prism-v4', name: 'Prism pane, v4: Capacitor and Lance',
+        what: 'Whatever the raised pane takes is stored as charge: shots, beams, sprays and melee blows (melee still lands). Lower the block with at least 10 stored and it fires the Lance.',
+        numbers: 'Charge holds up to 60 and fades by 6 a second once lowered. The Lance is an instant line, 7 u straight ahead; it stops at rock and hits everything on it, allies too. Damage: 8 + the charge. The parry (return a beam, mixed with the coat), Phase and Clear stay.',
+        partner: 'A violet glow swells on the pane as it fills; then a white-hot line flashes in the coat’s colour.',
+        cost: 'Letting go of Space now has a second meaning, but only for the Prism, and below 10 charge nothing fires.',
+        fx: 'the pane goes up; two arrows and two club blows land on it and the violet charge swells (the meter counts it). You lower it and the Lance goes through all three goblins in the line.',
+      },
+      moves: [
+        { id: 'g-prism-lance', title: 'Lance', key: 'Space release',
+          text: 'Lowering a charged pane fires the Lance: instant, 7 u straight ahead, 8 + the charge. It hits everything on the line, your partner too, and stops at rock.',
+          fx: 'a 40 charge goes through the goblin and your partner and stops at the rock, so the goblin behind it is safe. Then one arrow (6 charge) is not enough: lowering does nothing.' },
+        { id: 'g-prism-lance-fire', title: 'Lance with a Fire coat', key: 'Shield + Arcane + Fire',
+          text: 'The coat rides on the Lance, as on the wand’s bolts. The total stays 8 + the charge; the coat only changes its element. A Prism + Fire’s Lance burns.',
+          fx: 'the pane wears a dotted fire rim; the charge still glows violet, but the Lance comes out orange and the three goblins burn.' },
+      ],
+      question: { id: 'q-prism', n: 'R4', round: 4, title: 'How should the Arcane guard work?',
+        text: 'Your notes: the block “seems a little meaningless”, the card is “maybe too beam specific”, “Phasing is cool”, and on mixing you’re “not totally sold on prism yet”. In spells Arcane is raw, aimed power (the beam); in the hands it’s the ranged wand. So Shield + Arcane should turn defence into reach.',
+        choices: [
+          ['lance', 'A. Capacitor and Lance (built, recommended)', 'Every hit you take becomes reach. Cost: release-to-fire is a second meaning on letting go of Space, for the Prism only.'],
+          ['pane', 'B. Projected pane: Defend raises the pane at the cursor to cover an ally', 'Very co-op, but a second aim gesture on Space, and it overlaps the Shield wall spell.'],
+          ['mirror', 'C. Keep the beam mirror and tune it', 'The smallest change, but it doesn’t fix “too beam specific”.'],
+        ] },
+      // more mixing, built: rated like the mix-* rows
+      pairs: [
+        ['mix-siphon-focus', 'Siphon focus', 'arcane', ['fire', 'fire'], 'Siphon refills the wand’s own elements faster: +100 % per rune of that element in the wand.'],
+        ['mix-mend-coat', 'Mend with extras', 'life', ['water', 'cold', 'fire'], 'Mend: every rune past the first heals 25 % more. Water or Cold in the hands also douses burning allies; Fire dries, unchills and thaws them.'],
+        ['mix-guard-rim', 'Guard rim', 'earth', ['fire', 'cold'], 'Guards show their extras as a dotted rim in that colour, so a partner can read what yours carries (the fire rim on the Prism above).'],
+      ],
+    },
     // open questions (first choice = recommended). Round 3 first; round 2's are answered.
     questions: [
       { id: 'q-carry', n: 1, round: 3, title: 'Carrying a guard or a weapon costs 5 % walk speed each (the Bulwark another 15 %). Enough?',

@@ -200,7 +200,7 @@
   // open questions with answer boxes next to the text
   const askRow = (q, qHost) => {
     const row = el('article', 'qrow'); row.id = q.id;
-    row.append(el('div', 'qtext', `<h3><span class="qn">${typeof q.n === "number" ? "Q" + q.n : q.n}</span> ${esc(q.title)}</h3>${q.round === 3 ? '<span class="badge new r3">New in round 3</span>' : '<span class="badge kept">Round 2, answered</span>'}<p>${esc(q.text)}</p><span class="slug">answers/${q.id}</span>`));
+    row.append(el('div', 'qtext', `<h3><span class="qn">${typeof q.n === "number" ? "Q" + q.n : q.n}</span> ${esc(q.title)}</h3>${q.round === 4 ? '<span class="badge new r4">New in round 4</span>' : q.round === 3 ? '<span class="badge new r3">New in round 3</span>' : '<span class="badge kept">Round 2, answered</span>'}<p>${esc(q.text)}</p><span class="slug">answers/${q.id}</span>`));
     const side = el('div', 'qside');
     const ch = el('div', 'choices'); ch.setAttribute('role', 'group'); ch.setAttribute('aria-label', q.title);
     for (const [v, l, sub] of q.choices) {
@@ -221,15 +221,61 @@
   for (const q of C.mixQuestions) askRow(q, $('mixq'));
   // the pairings: an icon pair (lead + carried colours), the effect, and a rating per row
   const chip = (e) => `<i class="px" style="background:${X.EL[e][2]};box-shadow:inset 0 -3px 0 ${X.EL[e][4] || X.EL[e][3]}, inset 0 3px 0 ${X.EL[e][1]}" title="${ELN[e]}"></i>`;
-  for (const [id, lead, le, carried, text] of C.mixPairs) {
+  // [id, label, lead element, carried, text, reply?]; reply = an answer to the user's earlier note on this row
+  function pairRow([id, lead, le, carried, text, reply], host) {
     const row = el('article', 'pairrow'); row.id = id; row.dataset.rid = id;
     const lhs = el('div', 'ptext');
     const lab = lead;
     lhs.append(el('div', 'picons', id === 'mix-weak' ? ['fire', 'cold', 'water', 'lightning'].map(chip).join('') : chip(le) + '<span class="plus">+</span>' + carried.map(chip).join('')));
-    lhs.append(el('div', null, `<b>${esc(lab)}</b><p>${esc(text)}</p><span class="slug">${id}</span>`));
+    lhs.append(el('div', null, `<b>${esc(lab)}</b><p>${esc(text)}</p>${reply ? `<p class="reply"><span class="badge new r4">Round 4</span> ${esc(reply)}</p>` : ''}<span class="slug">${id}</span>`));
     row.append(lhs, rater(id, lab, true));
-    $('mixpairs').append(row);
+    host.append(row);
   }
+  for (const p of C.mixPairs) pairRow(p, $('mixpairs'));
+
+  // Round 4: the Arcane guard redesign: one card (Capacitor), its Lance and the Fire variant,
+  // the q-prism question, and three more rated mixing rows
+  (function buildRound4() {
+    const R4 = C.round4, host = $('round4');
+    if (!host) return;
+    $('r4since').textContent = R4.since;
+    const cd = R4.card, ids = [cd.id, ...R4.moves.map((m) => m.id)];
+    if (ids.some(show)) {
+      const card = el('article', 'wcard gcard'); card.id = cd.id; card.dataset.rid = cd.id;
+      const info = el('div', 'ginfo');
+      info.append(el('h3', null, `${esc(cd.name)} <span class="slug">${cd.id}</span><span class="badge new r4">New in round 4</span>`), recipe(['shield', 'arcane'], 'Weapon'));
+      info.append(el('dl', 'facts', `<div><dt>Capacitor</dt><dd>${esc(cd.what)}</dd></div><div><dt>Numbers</dt><dd>${esc(cd.numbers)}</dd></div><div><dt>What your partner sees</dt><dd>${esc(cd.partner)}</dd></div><div><dt>Cost</dt><dd>${esc(cd.cost)}</dd></div>`));
+      const pb = el('div', 'prior'); pb.hidden = true; priors.push({ prev: 'g-prism-v3', box: pb, label: 'Round 3' }); info.append(pb);
+      info.append(rater(cd.id, cd.name));
+      card.append(info);
+      const grid = el('div', 'mgrid');
+      if (show(cd.id)) {
+        const cell = el('div', 'mcell');
+        cell.append(screen(cd.id, 'Prism v4: charge, then the Lance'));
+        const cap = el('div', 'mcap');
+        cap.append(el('h4', null, 'Block, store, release <kbd>Space hold, then let go</kbd><span class="uses">free</span>'));
+        cap.append(el('p', 'small', '<b>On screen:</b> ' + esc(cd.fx)));
+        cap.append(el('div', 'meta', `<span class="badge new r4">New in round 4</span><span class="slug">${cd.id} (rated with the card above)</span>`));
+        cell.append(cap); grid.append(cell);
+      }
+      for (const m of R4.moves) {
+        if (!show(m.id)) continue;
+        const cell = el('div', 'mcell'); cell.id = m.id; cell.dataset.rid = m.id;
+        cell.append(screen(m.id, `Prism: ${m.title}`));
+        const cap = el('div', 'mcap');
+        cap.append(el('h4', null, `${esc(m.title)} <kbd>${esc(m.key)}</kbd>`));
+        cap.append(el('p', null, esc(m.text)));
+        cap.append(el('p', 'small', '<b>On screen:</b> ' + esc(m.fx)));
+        cap.append(el('div', 'meta', `<span class="badge new r4">New in round 4</span><span class="slug">${m.id}</span>`));
+        cap.append(rater(m.id, `Prism ${m.title}`, true));
+        cell.append(cap); grid.append(cell);
+      }
+      card.append(grid);
+      host.append(card);
+    }
+    askRow(R4.question, $('r4q'));
+    for (const p of R4.pairs) pairRow(p, $('r4pairs'));
+  })();
   const gen = $('general'); gen.disabled = true;
   noteBox(gen, () => answers.general, (p) => put('answers', 'general', p));
 

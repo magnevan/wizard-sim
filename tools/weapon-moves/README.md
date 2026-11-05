@@ -1,5 +1,7 @@
 # Weapon Moveset Review
 
+**Round 4** (2026-11-05): `round4.js` adds the Arcane guard redesign (Capacitor and Lance) at the top of the page, in the section `#sec-round4`, with its words in `copy.js` `round4`. New rated slugs: `g-prism-v4` (the card; its vignette sits in the first cell and is rated with the card, with the round-3 `g-prism-v3` doc shown read-only), `g-prism-lance`, `g-prism-lance-fire`, and the rows `mix-siphon-focus`, `mix-mend-coat`, `mix-guard-rim`. New question: `q-prism` (`lance` | `pane` | `mirror`). The `mix-prism` row carries a reply to the user's note (the optional 6th field of a `mixPairs` row). `GSLUG.prism` is unchanged, so the round-3 Prism card still shows in Round 3.
+
 **Round 3** (2026-11-05): `round3.js` adds the redesigns built in the game from the round-2 ratings. Cards with a round-3 slug are built in the Round 3 section at the top; the rest stay below. New slugs: `w-arcane-v3` (+ `-strike`, `-heavy`, `-special`: the Arcane wand, Siphon), `w-life-mend`, `w-cold-send-v3`, `g-mirror-v3`, `g-mirror-retreat-v2`, `g-bulwark-retreat-v2`, `g-rime-defend-v2`, `g-tide-v3`, `g-prism-v3`, `g-prism-defend-v2`, `g-leaf-defend-v2`, `g-leaf-retreat-v2`. `weapons.js` `CUR`, `GSLUG` and `PREV3` map each slot to its current slug and each new slug to the round-2 slug whose rating shows beside it. New questions: `q-carry`, and in the "How elements mix" section `q-mix-lead`, `q-mix-lightning`, `q-mix-scale`, `q-mix-rest` (free text, with a suggestion) (`copy.js` `mixQuestions`), plus 5 rated rows `mix-leaf-resist`, `mix-bulwark-coat`, `mix-prism`, `mix-weak`, `mix-wand` (`copy.js` `mixPairs`, stored in `ratings`). Earlier pairing slugs (`mix-leaf-earth`... `mix-spark-cold`) and `q-mix-all`, `q-mix-coat`, `q-mix-weapons` are no longer shown.
 
 A rateable page for the weapons and guards. **Round 2** (2026-11-05) follows the round-1 verdicts in `docs/explorations/2026-11-05-weapons-review-1.md` and the guard design in `docs/explorations/2026-11-05-guards.md`.
@@ -57,6 +59,7 @@ To read them back, run `ArtifactData` `list` on `ratings` and `answers`. Then fo
 - `weapons.js`:
   - the weapon and guard data (guards: block, parry, retreat, passive, trade-off, resistances) and the `R2` slug map;
   - `prop()` (draws a held weapon, including the trident and the Echo orb with its remembered runes), `track()` (keyframed poses), `MOVES`, `rig()` and `guard()` (the eight guard sprites).
+- `round3.js`, `round4.js`: the round-3 and round-4 vignettes, added to `PB.WMV` after `moves.js`.
 - `moves.js`: every vignette (`PB.WMV`). It holds the default Strike / Heavy / Sweep scenes plus the weapon-specific ones, the round-2 redesigns (`cold-heavy2`, `cold-javelin`, `fire-heavy2`, `earth-heavy2`, `life-heavy2`, `arcane2-*`), the weapon cards, the guard Defends and the guard Retreats.
 - **Copied from `tools/spell-vfx/`:**
   - `core.js`, `pixel.js` and `fx.js`, unchanged;

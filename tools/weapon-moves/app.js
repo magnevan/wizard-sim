@@ -217,6 +217,17 @@
   };
   for (const q of C.questions) askRow(q, $('questions'));
   for (const q of C.mixQuestions) askRow(q, $('mixq'));
+  // the pairings: an icon pair (lead + carried colours), the effect, and a rating per row
+  const chip = (e) => `<i class="px" style="background:${X.EL[e][2]};box-shadow:inset 0 -3px 0 ${X.EL[e][4] || X.EL[e][3]}, inset 0 3px 0 ${X.EL[e][1]}" title="${ELN[e]}"></i>`;
+  for (const [id, lead, le, carried, text] of C.mixPairs) {
+    const row = el('article', 'pairrow'); row.id = id; row.dataset.rid = id;
+    const lhs = el('div', 'ptext');
+    const lab = id === 'mix-weak' ? 'Ember, Rime, Tide' : `${lead} carries ${carried.map((e) => ELN[e]).join(', ')}`;
+    lhs.append(el('div', 'picons', `${id === 'mix-weak' ? ['fire', 'cold', 'water'].map(chip).join('') : chip(le) + '<span class="plus">+</span>' + carried.map(chip).join('')}`));
+    lhs.append(el('div', null, `<b>${esc(lab)}</b><p>${esc(text)}</p><span class="slug">${id}</span>`));
+    row.append(lhs, rater(id, lab, true));
+    $('mixpairs').append(row);
+  }
   const gen = $('general'); gen.disabled = true;
   noteBox(gen, () => answers.general, (p) => put('answers', 'general', p));
 

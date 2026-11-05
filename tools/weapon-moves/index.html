@@ -105,6 +105,16 @@
   .badge.kept { border: 1px solid var(--line-2); color: var(--muted); }
   .badge.r3 { background: var(--maybe); }
   .mixtable th[scope="row"] { white-space: nowrap; }
+  .subh { font: 400 13px/1.3 var(--pixel); letter-spacing: 0.04em; margin: 18px 0 0; }
+  .pairs { display: grid; gap: 8px; }
+  .pairrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .pairrow[data-mark="keep"] { border-color: var(--keep); } .pairrow[data-mark="maybe"] { border-color: var(--maybe); } .pairrow[data-mark="cut"] { border-color: var(--cut); }
+  .ptext { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; min-width: 0; }
+  .ptext p { margin: 2px 0; color: var(--muted); font-size: 14px; }
+  .picons { display: flex; align-items: center; gap: 3px; padding-top: 2px; }
+  .picons .px { display: inline-block; width: 14px; height: 14px; image-rendering: pixelated; outline: 2px solid #120e1a; }
+  .picons .plus { color: var(--faint); font-size: 12px; margin: 0 2px; }
+  @media (max-width: 720px) { .pairrow { grid-template-columns: 1fr; } }
   .mixtable td, .mixtable th { vertical-align: top; }
   .qtext .badge { display: inline-block; margin: 2px 0 4px; }
   .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
@@ -210,19 +220,22 @@
 
   <section class="block" id="sec-mix" aria-labelledby="h-mix">
     <h2 id="h-mix">How elements mix</h2>
-    <p class="lead">Opposites cancel in the queue (Fire/Cold, Water/Lightning, Life/Arcane, Earth/Lightning, Shield/Shield), so a guard is Shield plus up to 4 runes of elements that don’t cancel, at most 3 different ones. <b>Built today:</b> the lead element (most runes) sets Defend, Retreat and the lead passive. Only the <b>second</b> element mixes in, bringing its passive and its whole resistance row at half strength, and a third element does nothing. That breaks your rule that adding an element must always change the spell. Weapons already mix: every extra rune rides on the blows, but Siphon and Mend ignore extra runes. The four questions below would make one rule for both.</p>
+    <p class="lead">Opposites cancel in the queue (Fire/Cold, Water/Lightning, Life/Arcane, Earth/Lightning, Shield/Shield), so a guard is Shield plus up to 4 runes of elements that don’t cancel, at most 3 different ones. <b>Built today:</b> the element with the most runes leads and sets Defend, Retreat and the lead passive; only the second element mixes in (its passive and its resistance row at half strength), and a third does nothing. <b>Proposed, after your note</b> (“stronger elements are the ones that need more flexibility, since they set the form”): as in spells, the <b>strongest</b> element leads (Life, Earth, Arcane, Lightning), and what it carries becomes the material of its moves, the way Earth + Fire is a fireball. The pairings are listed below; rate each one.</p>
     <div class="tablewrap mixtable">
       <table>
         <caption>One guard, Shield + Earth + Earth + Fire, under each answer</caption>
         <thead><tr><th scope="col"></th><th scope="col">Today</th><th scope="col">Recommended (M1–M3: yes)</th></tr></thead>
         <tbody>
-          <tr><th scope="row">Lead (Earth ×2)</th><td>Bulwark: Defend, Shove step, Anchored</td><td>Same, plus 25 % more guard HP and Shove-step distance for the second Earth</td></tr>
-          <tr><th scope="row">Fire ×1</th><td>Warm, plus half of the Ember resistance row</td><td>Warm, half the Ember row, and a fire coat: your block, your parry and the shoved goblins catch fire</td></tr>
-          <tr><th scope="row">A third element</th><td>Nothing</td><td>Its passive, its row by rune count, and its coat as well</td></tr>
+          <tr><th scope="row">Lead (Earth, the strongest)</th><td>Bulwark: Defend, Shove step, Anchored</td><td>Same, plus 25 % more guard HP and Shove-step distance for the second Earth</td></tr>
+          <tr><th scope="row">Fire ×1</th><td>Warm, plus half of the Ember resistance row</td><td>Warm, half the Ember row, and Fire as the slab’s material: biters burn and the Shove step sets the shoved alight</td></tr>
+          <tr><th scope="row">A third element</th><td>Nothing</td><td>Its passive, its row by rune count, and its material as well</td></tr>
         </tbody>
       </table>
     </div>
     <div id="mixq"></div>
+    <h3 class="subh">The pairings: a strong lead and what it carries</h3>
+    <p class="lead">About 15 once opposites are cut (Life can’t carry Arcane, Earth can’t carry Lightning, Lightning can’t carry Water or Earth). The Leaf rows reuse the Life spell lends you already accepted.</p>
+    <div id="mixpairs" class="pairs"></div>
   </section>
 
   <section class="block" id="sec-round3" aria-labelledby="h-round3">

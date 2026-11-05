@@ -42,3 +42,33 @@ The user: "We should think through more about how elements will mix too." The qu
 **Costs.** Coating doubles what a partner has to read: a block that bites back in two colours. Rule 3 keeps it readable by tying each effect's colour to the rim. Scaling by count (rule 4) adds no new input; the queue already counts runes.
 
 **Ties.** Today a tie between equally many runes goes to a fixed element order (earth, fire, cold, lightning, water, arcane, life). That's a hidden rule. Making the first element queued win would be readable, but it needs the queue order stored with the guard. Not asked yet.
+
+### Revision: the strong element leads, as in spells
+
+The user: "Also stronger elements are the ones that need more flexibility, since they set the form."
+
+In the spell rules (`rules-c.js`, `PRIORITY`), the form is never picked by count. The strongest element present wins: Shield, Sigil, Life, Earth, Arcane, Lightning. The element it carries is the material: Earth + Fire is a fireball, Arcane + Fire a fire beam. For guards, Shield is already the form, so the same rule gives:
+
+1. **The lead is the strongest element present: Life, then Earth, then Arcane, then Lightning.** Fire, Cold and Water lead only when no strong element is in the guard, and then by count. This replaces rule 1 above. It also removes most of the hidden tie-break, because the order is the same one players learn from spells.
+2. **So the strong guards lead in most mixes, and they're the ones that must flex.** A Leaf, Bulwark, Prism or Spark keeps its moves' shape, but the element it carries becomes their material (rule 3's coat, given a real shape per pairing). The weak guards (Ember, Rime, Tide) only ever mix with each other, so a coat is enough for them.
+3. **Opposites cut the pairings down to about 15.** The same rule applies to weapons: Sigil plus a strong lead (healing hands, maul, wand, whip) bends to what it carries.
+
+| Lead | Carries | Proposed material effect |
+|---|---|---|
+| **Leaf** (Life) | Earth | Seed step leaves a heal-stone that bursts on allies; +HP (the Life lend: heal-stone) |
+| | Lightning | The block's heal chains from ally to ally (Chain heal) |
+| | Cold | The parry's burst heal flies out as shards that each find a hurt ally (Healing shards) |
+| | Fire | Heals also dry and thaw (Healing spray) |
+| | Water | Heals nudge allies out of danger and put out burning (Rescue spray) |
+| **Bulwark** (Earth) | Fire | The slab glows hot: biters burn, and the Shove step sets the shoved alight |
+| | Cold | Biters and the shoved are chilled; a frozen target shoved into a wall shatters |
+| | Water | The Shove step is a wave: it shoves further and soaks |
+| | Arcane | The slab hits as arcane force and knocks further |
+| **Prism** (Arcane) | Fire, Cold, Water, Lightning | A parried beam comes back in the carried element. Phase leaves that element on bodies you pass through |
+| **Spark** (Lightning) | Fire | The Blink spark bursts into flame, and the discharge ignites |
+| | Cold | The Blink spark chills, and the discharge chills |
+| **Ember / Rime / Tide** | each other (Fire + Water, Cold + Water, Water + Fire...) | A coat only: Ember + Water thorns scald (steam); Tide + Cold Surge leaves ice; Rime + Water freezes longer |
+
+Arithmetic, checked against the cancel pairs: Life can't carry Arcane, Earth can't carry Lightning, and Lightning can't carry Water or Earth.
+
+**Cost.** About 15 bespoke pairings to design, draw and keep readable, against the 8 single guards. The Leaf row mostly reuses the Life spell lends the user has already accepted, so the guard and the spell teach each other.

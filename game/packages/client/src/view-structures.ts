@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PU, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, guardCoatLook, guardSize, queueOf, selfTarget, stackOf,
+  N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, guardCoatLook, guardSize, queueOf, selfTarget,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
@@ -535,16 +535,13 @@ export class StructureView {
   }
 
   /**
-   * Survive's Rally, readable from across the arena: a downed wizard whose team holds Rally lies in a
+   * Survive's Rally (every wizard can), readable from across the arena: a downed wizard lies in a
    * faint green ring the size of the rally range (stand in it). While someone rallies them, a second
    * ring fills clockwise in the rescuer's colour, Life motes stream from the rescuer to them, the glow
    * grows, and RALLY floats over them. The revive itself and a broken ring are effects (drawFx).
    */
   private rallies(w: World, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
     const r = w.run!, b = w.bodies;
-    let anyRally = false;
-    for (let s = 0; s < MAX_SEATS; s++) if (w.seats.active[s] && stackOf(w, s, PU.rally)) anyRally = true;
-    if (!anyRally) return;
     for (let d = 0; d < MAX_SEATS; d++) {
       if (b.kind[d] !== KIND.wizard || !b.downed[d]) continue;
       const v = bodies[d], x = v?.on ? v.x : gx(b.x[d]), y = v?.on ? v.y : gy(b.y[d]);

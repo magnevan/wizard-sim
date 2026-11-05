@@ -95,9 +95,9 @@ export const BODY = {
   friction: 0.25, // fraction of the gap to the wanted velocity closed per tick
 };
 
-/** Survive's power-ups that carry numbers of their own (survive.ts). */
+/** Survive's power-ups that carry numbers of their own, and Rally, which every wizard has there (survive.ts). */
 export const PERKS = {
-  /** Rally: seconds standing by a downed ally to bring them back. Casting, a weapon move, blocking, a hit or being held starts it over. */
+  /** Rally: seconds standing by a downed ally to bring them back. Casting, a weapon move, blocking or being held starts it over; a hit drains some. */
   rallyTime: 3,
   /** A hit on the rescuer drains this many seconds of the ring (at most once every rallyDrainGap s; burning counts), instead of emptying it. */
   rallyDrain: 1, rallyDrainGap: 0.5,
@@ -107,6 +107,8 @@ export const PERKS = {
   rallyHp: 0.4,
   /** Echo: the free Double's health (a cast Double has structures.doubleHp). */
   echoHp: 60,
+  /** Glass heart, per stack: the share more damage you deal, and the share of max health you lose (additive: two stacks are +50% / -50%). */
+  glassDmg: 0.25, glassHp: 0.25,
 };
 
 /** The placeholder arena, in world units (a wizard is about 0.9 u wide). */

@@ -166,7 +166,7 @@ export class Hud {
       if (r.picked[me] >= 0) { line = 'PICKED: ' + perkOf(r.offer[r.picked[me]], r.offerEl[r.picked[me]]).name; sub = left.length ? `WAITING FOR ${left.join(' ')}` : ''; }
       else {
         line = 'PICK A POWER-UP: STAND ON AN ALTAR';
-        sub = near >= 0 && nd < 2.2 ? perkOf(r.offer[near], r.offerEl[near]).rule : `${Math.max(0, Math.ceil((T(SURVIVE_TIMES.pickMax) - r.state[0]) / 60))}S`;
+        sub = near >= 0 && nd < 2.2 ? perkOf(r.offer[near], r.offerEl[near]).rule : 'NO RUSH: THE WAVE WAITS FOR EVERYONE';
       }
     } else if (st[0] === PHASE_ENC.over) { line = 'RUN OVER'; sub = `WAVES SURVIVED: ${w.run ? w.run.state[1] : st[3]}`; }
     else { line = `BREATHER ${secs}S`; sub = `${st[3]} CLEARED`; }

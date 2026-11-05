@@ -13,19 +13,19 @@ Endless waves in a walled arena. Between waves, each player walks onto one of th
 Walk onto an altar and stand there for under a second. That's the whole input. Your partner sees you walk there, and your colour lands on the altar. The rest is the normal game: the gates are chokepoints to hold or wall shut.
 
 ## Why it's interesting
-- A run-scoped build: lean into a style for one run (Pyre for a fire player, Bloom for the healer, Bedrock and Clockwork for the builder) without permanent number creep.
+- A run-scoped build: lean into a style for one run (Pyre for a fire player, Glass heart for whoever hides behind a partner, Bedrock and Clockwork for the builder) without permanent number creep.
 - The pick happens while the next wave's portals are visible, so it's a question with an answer, not a lottery.
 - Preparation pays (pillar 7): the lull before each wave is where gates get walled and glyphed.
 
 ## Costs & risks
 - Flat-number power-ups (Wellspring, Glass heart) press on pillar 1.
-- Twelve built power-ups to read; each needs a glyph and a one-line rule that read at a glance.
+- Ten built power-ups to read; each needs a glyph and a one-line rule that read at a glance.
 - Balance is placeholder.
 
 ## Open questions
 See the questions in `../explorations/2026-11-05-survive-mode.md`.
-- **Answered:** 1–4 are built on Claude's recommendations (altars, one each and shareable; portals open during the pick; flat power-ups allowed in run modes; Bloom as a deliberate pick) ([Build optimistically](../decisions/README.md#2026-11-05-build-optimistically)). 5: Rally and Echo, both built ([Survive gets Rally and Echo](../decisions/README.md#2026-11-05-survive-gets-rally-and-echo)). 7: the arena grew to 48 x 34 ([Survive grows to 48 x 34](../decisions/README.md#2026-11-05-survive-grows-to-48-x-34-guards-read-from-behind-a-stalled-page-no-longer-drops-the-others)).
-- **Still open:** 6 (the difficulty curve past wave 8), 8 (zooming out when the team splits), 9 (the keep's walls), and 10–12 (Rally's break rule, Echo's repeat cost, Echo as a one-shot).
+- **Answered:** 1–4 are built on Claude's recommendations (altars, one each and shareable; portals open during the pick; flat power-ups allowed in run modes; Bloom as a deliberate pick) ([Build optimistically](../decisions/README.md#2026-11-05-build-optimistically)). 5: Rally and Echo, both built ([Survive gets Rally and Echo](../decisions/README.md#2026-11-05-survive-gets-rally-and-echo)). 7: the arena grew to 48 x 34 ([Survive grows to 48 x 34](../decisions/README.md#2026-11-05-survive-grows-to-48-x-34-guards-read-from-behind-a-stalled-page-no-longer-drops-the-others)). 8: no zoom; each screen follows its own wizard, allies get edge arrows. Slipstream and Bloom are cut, Rally is everyone's by default, Glass heart is built, and the pick is untimed ([Survive Review answers, round 1](../decisions/README.md#2026-11-05-survive-review-answers-round-1)).
+- **Still open:** 6 (the difficulty curve past wave 8), 9 (the keep's walls), and 10–12 (Rally's break rule, Echo's repeat cost, Echo as a one-shot).
 
 ## Smallest test
 Built: `#survive` in the game. Play a few runs solo and with a partner; rate which power-ups get picked and which feel dead.

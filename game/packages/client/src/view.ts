@@ -41,14 +41,16 @@ export class WorldView {
   readonly camera = new Camera();
   /** Add this to the stage: the scene, and the HUD over it. */
   readonly root = new Container();
-  /** The scene in art pixels, scaled by the camera's integer scale (which steps out when the team spreads). */
+  /** The scene in art pixels, scaled by the camera's integer scale. */
   private scene = new Container();
-  /** The rune HUD, wave strip and off-screen marks, at the screen's base scale (it doesn't zoom). */
+  /** The rune HUD, wave strip and off-screen marks, at the screen's base scale. */
   private hudLayer = new Container();
   private edges = new EdgeMarks();
   readonly hud = new Hud(0);
   /** Online, the local player may sit in any seat: the HUD and the rune swirl follow it. */
-  setLocalSeat(seat: number): void { this.hud.seat = seat; this.vfx.localSeat = seat; this.structs.localSeat = seat; }
+  setLocalSeat(seat: number): void { this.hud.seat = seat; this.vfx.localSeat = seat; this.structs.localSeat = seat; this.isLocal = (s) => s === seat; }
+  /** The seats played on this screen: a following camera frames their wizards. Offline, every seat (local co-op); online, just yours. */
+  isLocal: (seat: number) => boolean = () => true;
   /** Painted for the Sanctum's and the Arena's play area; repainted at the first draw of a world with another (fitArena). */
   private floor = new Sprite(floorTexture(ARENA.w, ARENA.h));
   /** The play area the floor and effect canvases are painted for. */
@@ -281,17 +283,22 @@ export class WorldView {
     return [this.prevBX[i] + (b.x[i] - this.prevBX[i]) * alpha, this.prevBY[i] + (b.y[i] - this.prevBY[i]) * alpha];
   }
 
-  /** Points the camera: at the living wizards (all of them if everyone is down), keeping the local player in view. */
+  /**
+   * Points the camera at this screen's own wizards: the local seats' living ones (their middle, for
+   * local co-op), or the downed ones if none is up, in every room. Other players' wizards don't pull
+   * it: they get an arrow at the edge of the view (edge-marks.ts). With no local wizard at all, it
+   * frames everyone. Several local seats share the screen (camera.ts `shared`).
+   */
   private aim(w: World, alpha: number, dt: number): void {
-    const b = w.bodies, spots: { x: number; y: number }[] = [], down: { x: number; y: number }[] = [];
-    let local: { x: number; y: number } | null = null;
+    const b = w.bodies, up: { x: number; y: number }[] = [], down: { x: number; y: number }[] = [], all: { x: number; y: number }[] = [];
     for (let s = 0; s < MAX_SEATS; s++) {
       if (b.kind[s] !== KIND.wizard) continue;
       const [x, y] = this.drawnAt(s, w, alpha), p = { x, y };
-      (b.downed[s] ? down : spots).push(p);
-      if (s === this.hud.seat && !b.downed[s]) local = p;
+      all.push(p);
+      if (this.isLocal(s)) (b.downed[s] ? down : up).push(p);
     }
-    this.camera.follow(w.dims.w, w.dims.h, spots.length ? spots : down, local, dt);
+    const mine = up.length + down.length;
+    this.camera.follow(w.dims.w, w.dims.h, mine ? (up.length ? up : down) : all, mine !== 1, dt);
   }
 
   private fxMs = 0;

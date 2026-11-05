@@ -3,7 +3,7 @@
  * glyph in the element-icon style (px.ts ICON). The altars (view-structures.ts), the HUD's pick
  * badges and the run-over screen all draw from here.
  */
-import { PU, elementName } from '@wizard-sim/sim';
+import { PERKS as SIM_PERKS, PU, elementName } from '@wizard-sim/sim';
 import * as X from './px';
 import type { Ctx, Ramp } from './px';
 
@@ -12,14 +12,12 @@ export interface PerkArt { name: string; rule: string; ramp: Ramp; glyph: string
 const GEAR = ['.#.#.#.', '#######', '.##.##.', '###.###', '.##.##.', '#######', '.#.#.#.'];
 const POOLS = ['#.#.#.#', '#.#.#.#', '#.#.#.#', '.......', '...#...', '..###..', '.#####.'];
 const SPRING = ['...#...', '..###..', '.#.#.#.', '...#...', '.#...#.', '#.###.#', '.#####.'];
-const BOLT = ['..#....', '.##....', '#######', '.##..#.', '..#.##.', '....###', '...####'];
 const MIRROR = ['.#####.', '#.....#', '#..#..#', '#.#.#.#', '#.....#', '.#...#.', '..###..'];
-const BLOOM = ['..#.#..', '.#####.', '##.#.##', '.#####.', '..###..', '...#...', '..###..'];
 const WALL = ['.......', '##.##.#', '##.##.#', '.......', '#.##.##', '#.##.##', '.......'];
 /** Two figures, one a step behind the other. */
 const ECHO = ['.#...#.', '###.###', '.#...#.', '###.###', '.#...#.', '#.#.#.#', '#.#.#.#'];
-/** A hand reaching down to a figure lying flat. */
-const RALLY = ['...#...', '..###..', '...#...', '..#.#..', '.......', '##.###.', '#######'];
+/** A heart with a crack down it (the Survive Review's draft). */
+const HEART = ['.##.##.', '#######', '###.###', '##.#.##', '.#####.', '..###..', '...#...'];
 
 export const PERKS: Record<number, PerkArt> = {
   [PU.deep]: { name: 'Deep pools', rule: '+1 max rune of every element', ramp: X.EL.sigil, glyph: POOLS },
@@ -28,12 +26,10 @@ export const PERKS: Record<number, PerkArt> = {
   [PU.spareSigil]: { name: 'Spare sigil', rule: '+1 Sigil rune: one more device', ramp: X.EL.sigil, glyph: X.ICON.sigil },
   [PU.bedrock]: { name: 'Bedrock', rule: 'Your rock walls last twice as long', ramp: X.EL.earth, glyph: WALL },
   [PU.pyre]: { name: 'Pyre', rule: 'Foes you set burning explode on death', ramp: X.EL.fire, glyph: X.ICON.fire },
-  [PU.slipstream]: { name: 'Slipstream', rule: 'First spell after a hop is free', ramp: X.EL.lightning, glyph: BOLT },
   [PU.charm]: { name: 'Mirror charm', rule: 'A mirror ward regrows on you', ramp: X.EL.shield, glyph: MIRROR },
-  [PU.bloom]: { name: 'Bloom', rule: 'Your heals splash onto allies', ramp: X.EL.life, glyph: BLOOM },
   [PU.clockwork]: { name: 'Clockwork', rule: 'Your turrets fire for free', ramp: X.EL.shield, glyph: GEAR },
   [PU.echo]: { name: 'Echo', rule: 'A free Double stands with you next wave', ramp: X.EL.sigil, glyph: ECHO },
-  [PU.rally]: { name: 'Rally', rule: 'Stand by a downed ally 3s to revive them', ramp: X.EL.life, glyph: RALLY },
+  [PU.glass]: { name: 'Glass heart', rule: `+${Math.round(SIM_PERKS.glassDmg * 100)}% damage, -${Math.round(SIM_PERKS.glassHp * 100)}% max health`, ramp: X.EL.fire, glyph: HEART },
 };
 
 /** What a pick shows: Deep (one element) takes its element's colour, icon and name. */

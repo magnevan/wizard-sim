@@ -33,7 +33,7 @@ import { ARMS, STATUS, T } from './config';
 import { EL, N_EL, formOf } from './elements';
 import { cellAt, floorDisc, hit, hitOpts, spawnZone, touchFloor, zap, type Payload } from './effects';
 import { inCone, len } from './geom';
-import { addKnock, applyHit, bloom } from './hit';
+import { addKnock, applyHit } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { payloadDamage, wallAt } from './walls';
 import { WALL } from './compile';
@@ -357,9 +357,7 @@ function healAround(w: World, i: number, amount: number, event: boolean, self = 
   for (let j = 0; j < MAX_SEATS; j++) {
     if ((j === i && !self) || b.kind[j] !== KIND.wizard || b.downed[j] || b.team[j] !== b.team[i]) continue;
     if (len(b.x[j] - b.x[i], b.y[j] - b.y[i]) > ARMS.leafRange) continue;
-    const before = b.hp[j];
     b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + amount);
-    bloom(w, i, j, b.hp[j] - before);
     if (event) w.events.push({ tick: w.clock[0], kind: 'heal', who: j, src: i, x: b.x[j], y: b.y[j], amount, look: EL.life });
   }
 }

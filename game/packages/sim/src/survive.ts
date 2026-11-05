@@ -7,11 +7,13 @@
  *   WAVE      as the Arena's. Downed wizards are out until it ends. Everyone down: the run is OVER.
  *   BREATHER  3 s: the downed get back up at half health.
  *   PICK      three altars rise in the plaza and the next wave's portals open (so you can pick for
- *             what is coming). Each player stands on one for STAND_TIME to take it; two players
- *             may take the same one. Once everyone has picked (or after PICK_MAX), the lull starts.
+ *             what is coming; nothing leaves them yet). Each player stands on one for STAND_TIME
+ *             to take it; two players may take the same one. There is no time limit: once every
+ *             wizard has picked, the lull starts.
  *   OVER      the results; any player pressing Self (Space) after a moment starts a new run.
  *
  * Power-ups are per-seat stacks in `w.run` (world.ts PU); the sim reads them where they apply.
+ * Rally (reviving a downed ally mid-wave) is not a power-up: every wizard can do it.
  */
 import { ARCH, ARCHETYPES } from './archetypes';
 import { canAct } from './cast';
@@ -27,7 +29,7 @@ import {
   buffers, createWorld, freeDouble, joinSeat, spawnBody, stackOf, type World,
 } from './world';
 
-export const SURVIVE_TIMES = { firstLull: 10, lull: 6, breather: 3, pickMax: 30, stand: 0.75, spawnEvery: 0.45, portalStagger: 1, restartAfter: 1.5, charm: 12 };
+export const SURVIVE_TIMES = { firstLull: 10, lull: 6, breather: 3, stand: 0.75, spawnEvery: 0.45, portalStagger: 1, restartAfter: 1.5, charm: 12 };
 
 /** Eight authored waves; past them they loop with more enemies. Every wave also grows tougher (survivePlan). */
 const WAVES: readonly (readonly [number, number])[][] = [
@@ -122,6 +124,11 @@ export function grant(w: World, s: number, pu: number, el = 0): void {
   if (pu === PU.spareSigil) add(EL.sigil, 1);
   if (pu === PU.charm) r.charm[s] = T(1); // the first mirror comes almost at once
   if (pu === PU.echo) summonEcho(w, s);
+  if (pu === PU.glass) { // less max health, and your current health shrinks with it
+    const b = w.bodies, k = r.stacks[s * N_PU + pu];
+    const f = (1 - PERKS.glassHp * k) / (1 - PERKS.glassHp * (k - 1));
+    b.maxHp[s] *= f; b.hp[s] *= f;
+  }
   const n = r.logN[s];
   if (n < PICK_LOG) { r.log[s * PICK_LOG + n] = pu; r.logEl[s * PICK_LOG + n] = el; r.logN[s] = n + 1; }
 }
@@ -150,7 +157,7 @@ function tickPick(w: World): boolean {
     w.events.push({ tick, kind: 'burst', who: s, x: r.ax[a], y: r.ay[a], amount: 1.2, look: EL.sigil, text: 'Picked' });
     waiting--;
   }
-  return waiting === 0 || r.state[0] >= T(SURVIVE_TIMES.pickMax);
+  return waiting === 0;
 }
 
 /**
@@ -174,10 +181,10 @@ function endEchoes(w: World): void {
   }
 }
 
-/** Seat `s` can rally right now: up, holding Rally, and with hands and mind free (not casting, swinging, blocking or held). */
+/** Seat `s` can rally right now: up, and with hands and mind free (not casting, swinging, blocking or held). */
 function canRally(w: World, s: number): boolean {
   const b = w.bodies, se = w.seats;
-  if (!se.active[s] || b.kind[s] !== KIND.wizard || b.downed[s] || !stackOf(w, s, PU.rally)) return false;
+  if (!se.active[s] || b.kind[s] !== KIND.wizard || b.downed[s]) return false;
   if (!canAct(w, s) || b.heldBy[s] >= 0) return false;
   return !(se.phase[s] !== PHASE.idle || se.handT[s] || se.specT[s] || se.guardT[s] || se.linkTo[s] >= 0);
 }
@@ -185,7 +192,7 @@ function canRally(w: World, s: number): boolean {
 const justHit = (w: World, s: number): boolean => w.bodies.lastHit[s] > 0 && w.bodies.lastHit[s] >= w.clock[0] - 1;
 
 /**
- * Rally: a wizard holding it who stands within PERKS.rallyRange of a downed ally, hands free, fills
+ * Rally (every wizard can): a wizard who stands within PERKS.rallyRange of a downed ally, hands free, fills
  * that ally's ring; after PERKS.rallyTime the ally gets up with PERKS.rallyHp of their health. Your
  * own break (a cast, a weapon move, a block, a grab, a stun, stepping away) empties the ring; a hit
  * only drains PERKS.rallyDrain of it, so one arrow doesn't undo a nearly finished rally.
@@ -220,12 +227,11 @@ function tickRally(w: World): void {
   }
 }
 
-/** Per-seat power-ups that tick: Slipstream's window, Charm's mirror ward, Rally. */
+/** What ticks per seat: Rally, and Charm's mirror ward. */
 function tickPerks(w: World): void {
   tickRally(w);
   const r = w.run!, s = w.seats, b = w.bodies;
   for (let i = 0; i < MAX_SEATS; i++) {
-    if (r.dodge[i] > 0) r.dodge[i]--;
     if (!stackOf(w, i, PU.charm) || b.kind[i] !== KIND.wizard) continue;
     if (s.ward[i] !== WARD.none) { r.charm[i] = T(SURVIVE_TIMES.charm); continue; }
     if (b.downed[i] || --r.charm[i] > 0) continue;

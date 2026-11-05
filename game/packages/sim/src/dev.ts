@@ -7,7 +7,7 @@ import { ARCHETYPES } from './archetypes';
 import { T } from './config';
 import { N_EL } from './elements';
 import { openPortals } from './waves';
-import { openGates, restartRun, SURVIVE_TIMES } from './survive';
+import { openGates, restartRun } from './survive';
 import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, TEAM, runeMax, spawnBody, type World } from './world';
 
 export function devSpawnEnemy(w: World, arch: number, x: number, y: number): number {
@@ -42,10 +42,11 @@ export function devStartWave(w: World, n: number, lullSeconds = 2): void {
   st[2] = T(lullSeconds);
 }
 
-/** Skips the rest of a lull or breather. */
+/** Skips the rest of a lull or breather, or (survive) ends the pick: unpicked seats go without. */
 export function devSkipLull(w: World): void {
-  if (w.enc.state[0] === PHASE_ENC.lull || w.enc.state[0] === PHASE_ENC.breather) w.enc.state[2] = 1;
-  if (w.enc.state[0] === PHASE_ENC.pick && w.run) w.run.state[0] = T(SURVIVE_TIMES.pickMax); // unpicked seats go without
+  const st = w.enc.state;
+  if (st[0] === PHASE_ENC.lull || st[0] === PHASE_ENC.breather) st[2] = 1;
+  if (st[0] === PHASE_ENC.pick && w.run) { w.run.offer.fill(0); st[0] = PHASE_ENC.lull; st[2] = 0; }
 }
 
 /** Survive: start a new run now (the run-over screen does this with Space). */

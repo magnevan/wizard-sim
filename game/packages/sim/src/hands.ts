@@ -24,12 +24,12 @@ import { ARMS, RHYTHM, STATUS, STRUCT, T } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
 import { fireSpell, hit, hitOpts, nearest, payloadOf, spawnMissile, zap, type FireExtra } from './effects';
 import { inCone, len } from './geom';
-import { addKnock, bloom } from './hit';
+import { addKnock } from './hit';
 import { grounded, guardRetreat } from './guards';
 import { spawnFront } from './structures';
 import { cosTurns, sinTurns } from './trig';
 import { clipRay } from './walls';
-import { KIND, MAX_SEATS, PF, PU, regenOf, runeMax, stackOf, type World } from './world';
+import { KIND, MAX_SEATS, PF, regenOf, runeMax, type World } from './world';
 
 /** Ticks a press may last and still be a tap (Strike rather than Heavy). */
 export const TAP = T(0.25);
@@ -171,9 +171,7 @@ export function holdTick(w: World, i: number): void {
   // It holds while they move, up to the link's range or until a wall comes between you.
   const walled = d > 1e-6 && clipRay(w, x, y, dx / d, dy / d, d)[1] >= 0;
   if (b.kind[j] !== KIND.wizard || b.downed[j] || d > ARMS.linkRange || walled) { s.linkTo[i] = -1; move(w, i, 'linkbreak', EL.life, b.x[j], b.y[j]); return; }
-  const before = b.hp[j];
   b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + ARMS.linkHeal / 60);
-  bloom(w, i, j, b.hp[j] - before);
   if (s.linkT[i] % 30 === 0) w.events.push({ tick: w.clock[0], kind: 'heal', who: j, src: i, x: b.x[j], y: b.y[j], amount: ARMS.linkHeal / 2, look: EL.life });
   if (++s.linkT[i] % 60 === 0) spend(w, i, ARMS.linkUses);
 }
@@ -229,9 +227,7 @@ export function specialTick(w: World, i: number): void {
     if (len(b.x[j] - b.x[i], b.y[j] - b.y[i]) > ARMS.auraRange) continue;
     if (douse) b.burn[j] = 0;
     if (warmth) { b.wet[j] = 0; b.chill[j] = 0; b.frozen[j] = 0; }
-    const before = b.hp[j];
     b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + heal);
-    bloom(w, i, j, b.hp[j] - before);
     if (t % 30 === 0) w.events.push({ tick: w.clock[0], kind: 'heal', who: j, src: i, x: b.x[j], y: b.y[j], amount: ARMS.auraHeal / 2, look: EL.life });
   }
   if (t % 30 === 0) move(w, i, 'mend', EL.life, b.x[i], b.y[i], ARMS.auraRange);
@@ -243,7 +239,6 @@ export function retreat(w: World, i: number, face: number): void {
   const s = w.seats;
   if (s.guard[i]) { if (s.guardCd[i] > 0) return; guardRetreat(w, i, face); }
   else addKnock(w, i, -cosTurns(face), -sinTurns(face), ARMS.retreatPush);
-  if (w.run && stackOf(w, i, PU.slipstream)) w.run.dodge[i] = T(2); // survive: the next spell is free
 }
 
 /** How far a held RMB has charged a Heavy (0 at the end of the tap window, 1 when full). */

@@ -87,8 +87,8 @@ The user's easy ones come first, then ones that bend a rule of the spell system.
 | 8 | **Mirror charm** | A mirror ward grows on you, and regrows 12 s after you last wore a ward. It drains no Shield pool | Free defence, but only against shots (mirrors reflect missiles). It does nothing against a brute. Casting a real ward replaces it. | Passive power. Fine for a run mode; too strong as permanent progression. | Built |
 | 9 | **Bloom** | Your heals splash half onto allies within 2.5 u of the one healed | Makes the support role stronger and pulls the team together, which is exactly where a brute's slam or your own Pyre hurts most. | **Touches pillar 3** ("hitting a friend never helps them by accident"). It only ever heals, and only from heals you chose to cast, so the help is set up on purpose by picking it. Still, flag it. | Built |
 | 10 | **Clockwork** | Your turrets' shots cost no runes | Turrets become "set and forget". Your Sigil runes are still bound, and the turret still fires uncharged tap casts. | Strongly rewards preparing (pillar 7). Could make turret builds a no-brainer: watch it. | Built |
-| 11 | **Echo** | A free Double stands with you for the next wave | The Double is a magnet (enemies want it more), so you must play round it. | "The Double for a wave", from the user's list. Not built: it wants the Double's spawn exposed from `structures.ts`. | Designed |
-| 12 | **Rally** | Stand next to a downed ally for 3 s to bring them back mid-wave | You stop casting to do it; a grabber or brute punishes the rescuer. | Pillar 3's dance, and it answers the death-and-revival idea. A strong candidate to build next. | Designed |
+| 11 | **Echo** | A free Double stands with you for the next wave | The Double is a magnet (enemies want it more), so you must play round it. | "The Double for a wave", from the user's list. It appears when you pick it, binds no Sigil rune, and fades when the next wave is cleared. It can be picked again. | Built |
+| 12 | **Rally** | Stand next to a downed ally for 3 s to bring them back mid-wave (with 40% health) | You stop casting to do it; a grabber or brute punishes the rescuer. Casting, a weapon move, blocking, a hit, a grab or stepping away empties the ring. | Pillar 3's dance, and it answers the death-and-revival idea. | Built |
 | 13 | **Glass heart** | +25% damage dealt, −25% max health | A real trade-off build. It conflicts with Bloom-style support play. | Flat +X%, so it **conflicts with pillar 1** as written. It's here because a run mode is where such trades are fun. The user decides. | Designed |
 | 14 | **Long fuse** | Your delayed blasts and glyphs are 50% bigger, and arm 50% slower | Prep-heavy, bad in a panic. | Pillar 7. | Designed |
 | 15 | **Quickstep** | Recovery after a cast is 40% shorter | Pure pace, like Wellspring. | Pillar 4: it eats "slower, more deliberate". Probably reject. | Designed |
@@ -137,10 +137,24 @@ The user, on the first build: "Arena looks tiny btw, I expected it to not even f
 8. **Zoom out when the team splits**: helpful, or would you rather the camera always stay at one scale and just show the edge marks?
 9. **The keep's walls**: a held courtyard with four doors, or too static? Its corners could open into four more gaps.
 
+## Addendum (2026-11-05, later): Rally and Echo are built
+
+The user answered question 5 by approving both, Rally first. The details are in `decisions/README.md` (2026-11-05: Survive gets Rally and Echo). In brief:
+- **Rally**: stand within 1.6 u of a downed ally for 3 s, hands free, and they get up with 40% health.
+  - A partner sees a dashed green ring round the fallen ally (where to stand). While a rally runs, a ring fills in the rescuer's colour, with RALLY overhead and "P1 RALLYING P2 66%" in the wave strip. The revive is a column of Life light.
+  - Any break empties the ring: a cast, a weapon move, a block, a hit, a grab, a stun, or stepping away. Queueing runes doesn't break it.
+- **Echo**: a free Double appears when you pick it, binds no Sigil rune, and fades when the next wave is cleared. It's the cast Double otherwise: it repeats your spells at half power for half their runes, and enemies want it more.
+- Numbers: `PERKS` in `config.ts`, on the tuning panel. `?room=survive&scene=rally` (headless) stages a rally for screenshots.
+
+### Questions for the user (Rally and Echo)
+10. **Rally's numbers**: 3 s, 1.6 u, back with 40% health, and any break empties the ring. Should a break only drain part of the ring instead?
+11. **Echo's repeats** still cost half the spell's runes, like the cast Double. Should Echo's Double repeat for free?
+12. **Echo as a one-shot**: it can be picked again each pick. Or should one pick give a Double every wave for the rest of the run?
+
 ## Questions for the user
 1. **The pick**: in-world altars, one each and shareable, is Claude's pick. Or would you rather the team choose one together?
 2. **Pick timing**: the next wave's portals open *during* the pick, so you can pick for what's coming. Good, or too much to read at once?
 3. **Wellspring and Glass heart** are flat numbers. Keep them in a run mode, or hold Survive to pillar 1 as strictly as the campaign?
 4. **Bloom**: does healing allies near your heal's target cross pillar 3's "never helps by accident", or is picking it enough intent?
-5. **Next to build**: Rally (revive mid-wave) and Echo (a Double for a wave) look like the most co-op of the unbuilt ones. Which first?
+5. **Next to build**: Rally (revive mid-wave) and Echo (a Double for a wave) look like the most co-op of the unbuilt ones. Which first? *(Answered: both, Rally first. Built; see the addendum above.)*
 6. **Difficulty**: is the curve the right shape? Authored waves to 8, then loop harder. Or should waves past 8 draw from a pool (the encounters doc's question 3)?

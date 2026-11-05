@@ -182,6 +182,24 @@ describe('Life (support)', () => {
     expect(healAt(['life', 'life', 'fire'], 2.5, 0)).toBeGreaterThan(healAt(['life', 'fire'], 2.5, 0));
   });
 
+  it('heal + element: more Cold lends more healing shards, more Lightning more chain-heal jumps', () => {
+    expect(compile(['life', 'cold', 'cold'], 'force').sizeN).toBe(2);
+    expect(compile(['life', 'cold'], 'force').sizeN).toBe(1);
+    const shards = (q: Element[]) => { const { w, d } = range(8, 2); d.queue(...q).cast(BTN.force, 1, 20); return Array.from(w.missiles.alive).filter((a) => a).length; };
+    expect(shards(['life', 'cold', 'cold'])).toBeGreaterThan(shards(['life', 'cold']));
+  });
+
+  it('heal + element: more Earth gives the lobbed heal-stone a bigger splash', () => {
+    const healAt = (q: Element[]) => {
+      const { w, d } = range(8, 2);
+      w.bodies.x[1] = 4.0; w.bodies.y[1] = 2.75; w.bodies.hp[1] = 20; // off to the side of where the stone lands
+      d.aimAt(4, 0).queue(...q).cast(BTN.force, 1, 90);
+      return w.bodies.hp[1] - 20;
+    };
+    expect(healAt(['life', 'earth'])).toBe(0);
+    expect(healAt(['life', 'earth', 'earth', 'earth'])).toBeGreaterThan(0);
+  });
+
   it('life + lightning is Chain heal, which seeks hurt allies', () => {
     const spec = compile(['life', 'lightning'], 'force');
     expect(spec.title).toBe('Chain heal');

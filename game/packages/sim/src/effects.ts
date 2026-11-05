@@ -157,7 +157,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       break;
     }
     case 'shards': {
-      const count = SHAPES.shardCount + n;
+      const count = SHAPES.shardCount + spec.sizeN; // for a Life spell, more Cold lends more shards
       for (let k = 0; k < count; k++) {
         const a = face + (k - (count - 1) / 2) * SHAPES.shardSpread;
         spawnMissile(w, src, p, cosTurns(a), sinTurns(a), 2, 0.3 * k, 0, 0, ex.ox, ex.oy);
@@ -414,7 +414,9 @@ export function tickMissiles(w: World): void {
     const out = Math.abs(m.x[j]) > ARENA.w / 2 || Math.abs(m.y[j]) > ARENA.h / 2;
     const p = stored(m.els, j, m.flags[j], m.mod[j], m.look[j]);
     if (m.type[j] === 3) { // heal-stone: lands, bursts
-      if (--m.life[j] <= 0 || out) { m.alive[j] = 0; disc(w, p, m.owner[j], m.x[j], m.y[j], 2, m.scale[j], -1); burstEvent(w, m.owner[j], m.x[j], m.y[j], 2, m.look[j]); }
+      // more Earth lent to the heal, a bigger splash
+      const r = 2 + 0.6 * Math.max(0, m.els[j * N_EL + EL.earth - 1] - 1);
+      if (--m.life[j] <= 0 || out) { m.alive[j] = 0; disc(w, p, m.owner[j], m.x[j], m.y[j], r, m.scale[j], -1); burstEvent(w, m.owner[j], m.x[j], m.y[j], r, m.look[j]); }
       continue;
     }
     let dead = out || --m.life[j] <= 0;

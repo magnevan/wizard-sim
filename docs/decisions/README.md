@@ -306,7 +306,7 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
   - Earth lends the lobbed heal-stone: more Earth, a bigger splash.
   - Cold lends healing shards: more Cold, more shards.
   - Lightning lends the chain heal: more Lightning, more jumps.
-  Not built yet.
+  Built 2026-11-05 (the user: "Your heal plus element suggestion sounds fine"). Chain heals already added a jump per extra Lightning.
 - **Still open:** a second, non-lending element in a heal (Life + Lightning + Cold) still does nothing.
 
 ## 2026-11-05: Survive mode in the game (`explorations/2026-11-05-survive-mode.md`)
@@ -325,3 +325,8 @@ The user's rule for this review: unanswered questions mean Claude's recommendati
 
 ## 2026-11-05: Deaths for every enemy
 - **Bespoke deaths for the other five enemies**, in the game and in the gallery (group `deaths2`, waiting for ratings). They cover the brute's felled-tree fall, the archer's bow and arrows, the imp guttering out or cooling to stone under cold or water, the grabber's claws, and the shieldbearer's dropped or splintered shield. Anything not bespoke plays the goblin death, scaled.
+
+## 2026-11-05: Build optimistically
+- **The user's process change:** "Can you build optimistically and we can go back and change if I have feedback?" Review pages no longer gate building. The recommended options go into the game straight away, and later ratings revise them.
+- **Survive's six questions** are built on their recommendations (altars per player, portals open during the pick, flat power-ups allowed in run modes, Bloom as a deliberate pick).
+- **In progress:** the round-2 weapons and guards in the game, and a much bigger Survive arena with a camera that follows the players (the user: "Arena looks tiny btw, I expected it to not even fit everything in the screen at once").

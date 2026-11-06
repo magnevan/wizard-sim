@@ -34,6 +34,18 @@ const BOLT_ELS = new Uint8Array(N_EL);
 BOLT_ELS[EL.arcane - 1] = 1;
 const BOLT: Payload = { counts: BOLT_ELS, at: 0, heal: false, scald: false, freeze: false, mod: null, look: EL.arcane, formN: 1 };
 
+/** How much of its normal pace a chilled body keeps, walking and attacking. */
+const chillPace = (chill: number) => Math.max(0.2, 1 - 0.22 * chill);
+
+/** This tick, chill holds back a wind-up or a recovery. A brute's rolling shockwave is exempt: its age is aiT. */
+function chillHolds(w: World, i: number): boolean {
+  const b = w.bodies, ai = b.ai[i], chill = b.chill[i];
+  if (!chill || (ai !== AI.windup && ai !== AI.cooldown)) return false;
+  if (ai === AI.cooldown && ARCHETYPES[b.arch[i]].attack === ATTACK.slam && b.aiT[i] < T(0.8)) return false;
+  const pace = chillPace(chill), c = w.clock[0];
+  return Math.floor(c * pace) === Math.floor((c - 1) * pace);
+}
+
 const canAct = (w: World, i: number) => !w.bodies.stun[i] && !w.bodies.frozen[i] && !w.bodies.down[i];
 
 /** The wizard (or Double: enemies want it more) to go after. */
@@ -90,7 +102,7 @@ export function tickEnemies(w: World): void {
       if (b.ai[i] !== AI.approach) setAi(w, i, AI.approach);
       continue;
     }
-    b.aiT[i]++;
+    if (!chillHolds(w, i)) b.aiT[i]++;
     if (b.ai[i] === AI.cooldown && a.attack === ATTACK.slam) slamWave(w, i);
     if (b.ai[i] === AI.dash) { dash(w, i); continue; }
     if (b.ai[i] === AI.grab) { grab(w, i); continue; }
@@ -104,7 +116,7 @@ export function tickEnemies(w: World): void {
     if (t < 0) continue;
     const dx = b.x[t] - b.x[i], dy = b.y[t] - b.y[i], d = len(dx, dy), gap = d - b.r[i] - b.r[t];
     turnToward(w, i, atan2Turns(dy, dx));
-    const speed = a.speed * b.speedMult[i] * Math.max(0.2, 1 - 0.22 * b.chill[i]);
+    const speed = a.speed * b.speedMult[i] * chillPace(b.chill[i]);
 
     if (b.ai[i] === AI.approach) {
       move(w, i, approachSpot(w, i, t), t, speed);

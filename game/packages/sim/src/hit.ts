@@ -118,11 +118,13 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   if (glass) dmg *= 1 + PERKS.glassDmg * glass;
 
   // Statuses, in the order that lets them interact: water first (it douses), then fire (it dries).
+  const wasWet = b.wet[t] > 0; // Cold freezes what was wet before this hit: one spell can't soak and freeze
   if (water) {
     if (arch?.soakDamage && !b.wet[t]) { dmg += arch.soakDamage; w.events.push({ tick, kind: 'hit', who: t, x: b.x[t], y: b.y[t], amount: arch.soakDamage, text: 'Doused' }); }
     // water on someone burning only puts the fire out (they come out dry), as fire on someone wet only dries them
+    // Water + Cold is ice: it douses but doesn't soak, so it can't set up its own freeze
     if (b.burn[t] > 0) b.burn[t] = 0;
-    else b.wet[t] = Math.max(b.wet[t], Math.round(T(STATUS.wet) * Math.min(1, ss * 4)));
+    else if (!o.freeze) b.wet[t] = Math.max(b.wet[t], Math.round(T(STATUS.wet) * Math.min(1, ss * 4)));
     if (o.push) addKnock(w, t, o.dirX, o.dirY, o.push * water * ss);
   }
   if (fire) {
@@ -135,9 +137,8 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     b.burn[t] = 0;
     // a guard weak to cold (the Tide shield) chills faster, a resistant one slower
     b.chill[t] = Math.min(STATUS.chillMax, b.chill[t] + STATUS.chillPerRune * cold * ss * taken(w, t, RES.cold));
-    if (b.chill[t] >= STATUS.chillMax && !b.frozen[t]) freezeBody(w, t);
+    if ((b.chill[t] >= STATUS.chillMax || (wasWet && b.wet[t] > 0)) && !b.frozen[t]) freezeBody(w, t);
   }
-  if (o.freeze && b.wet[t] && !b.frozen[t] && !noChill) freezeBody(w, t);
   if (o.scald) dmg += STATUS.scaldBonus * o.scale;
   if (lightning) {
     const col = physical ? RES.physical : RES.lightning, lr = guard ? resist(w, tSeat, col) : 0;
@@ -159,7 +160,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   return dmg;
 }
 
-function freezeBody(w: World, t: number): void {
+export function freezeBody(w: World, t: number): void {
   const b = w.bodies;
   b.frozen[t] = T(STATUS.freeze);
   b.wet[t] = 0;

@@ -116,6 +116,26 @@ describe('Force casts', () => {
     expect(before - w.bodies.hp[dummy]).toBeGreaterThan(16 * 0.7 * 2 - 1);
   });
 
+  it('cold freezes the wet: a plain frost ring on a soaked target', () => {
+    const { w, d, dummy } = range(2);
+    w.bodies.wet[dummy] = 600;
+    d.queue('cold').cast(BTN.area, 1, 30);
+    expect(w.bodies.frozen[dummy]).toBeGreaterThan(0);
+    expect(w.bodies.wet[dummy]).toBe(0);
+  });
+
+  it('water + cold is ice: it neither soaks nor freezes a dry target, but freezes one already wet', () => {
+    const dry = range(2);
+    dry.d.queue('water', 'cold').cast(BTN.area, 1, 30);
+    expect(dry.w.bodies.chill[dry.dummy]).toBeGreaterThan(0);
+    expect(dry.w.bodies.wet[dry.dummy]).toBe(0);
+    expect(dry.w.bodies.frozen[dry.dummy]).toBe(0);
+    const wet = range(2);
+    wet.w.bodies.wet[wet.dummy] = 600;
+    wet.d.queue('water', 'cold').cast(BTN.area, 1, 30);
+    expect(wet.w.bodies.frozen[wet.dummy]).toBeGreaterThan(0);
+  });
+
   it('water + cold as Force is Ice shards: a volley of missiles, not a spray', () => {
     const spec = compile(['water', 'cold'], 'force');
     expect(spec.title).toBe('Ice shards');

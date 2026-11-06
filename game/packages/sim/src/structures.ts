@@ -23,7 +23,7 @@ import { BODY, PERKS, RHYTHM, SHAPES, STRUCT, T } from './config';
 import { EL, N_EL, queueFromCounts } from './elements';
 import { burstEvent, channelTick, fireSpell, heldBlow, hit, hitOpts, nearest, payloadOf, stored } from './effects';
 import { len } from './geom';
-import { HIT_KIND, addKnock, setHitKind } from './hit';
+import { HIT_KIND, addKnock, freezeBody, setHitKind } from './hit';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { boundSigil, drainShield, energyLoad, segDist } from './walls';
 import { conjureGuard } from './guards';
@@ -542,11 +542,17 @@ export function tickStructures(w: World): void {
       const d = len(b.x[t] - b.x[i], b.y[t] - b.y[i]);
       if (d > STRUCT.auraRadius + b.r[t]) continue;
       const foe = b.team[t] !== b.team[i];
-      if (life) { const h = 3 * life; if (!(s.wand[i] && foe)) b.hp[t] = Math.min(b.maxHp[t], b.hp[t] + h); }
+      if (life && !(s.wand[i] && foe)) {
+        const h = Math.min(3 * life, b.maxHp[t] - b.hp[t]);
+        if (h > 0) { b.hp[t] += h; w.events.push({ tick: w.clock[0], kind: 'heal', who: t, src: i, x: b.x[t], y: b.y[t], amount: h, look: EL.life }); }
+      }
       if (t === i) continue;
       if (foe) {
         if (fire) b.burn[t] = Math.max(b.burn[t], T(1.5));
-        if (cold) b.chill[t] = Math.min(3, b.chill[t] + 0.5 * cold);
+        if (cold) {
+          b.chill[t] = Math.min(3, b.chill[t] + 0.5 * cold);
+          if (!water && b.wet[t] && !b.frozen[t]) freezeBody(w, t); // Cold on the wet, as in hit.ts; a Mist + Frost aura can't do both
+        }
         if (water) b.wet[t] = Math.max(b.wet[t], T(3));
         if (earth && d < b.r[t] + b.r[i] + 0.3) { const ux = (b.x[t] - b.x[i]) / (d || 1), uy = (b.y[t] - b.y[i]) / (d || 1); addKnock(w, t, ux, uy, 6 * earth); }
       } else if (water) b.burn[t] = 0; // the mist douses burning allies

@@ -19,6 +19,7 @@ There's one file per mechanic, copied from `_template.md`. The status lives in t
 | [element-economy](element-economy.md) (element runes) | prototyping (rune pools, reserve on queue, regen, Attune, Bind, Model A drain in the engine) | 1, 4, 6 |
 | [battlefield-building](battlefield-building.md) | prototyping (walls, curtains, turrets, glyphs in the engine) | 6, 7, 3 |
 | [survive-mode](survive-mode.md) | prototyping (`#survive` in the game, 12 power-ups: explorations/2026-11-05-survive-mode.md) | 1, 3, 7 |
+| [tutorial](tutorial.md) | developing (19 practical beats designed in `explorations/2026-11-06-tutorial.md`; a first cut of 8 beats waits on the Esc-menu scenario picker) | 2, 4, 1, 7 |
 | [air-element](air-element.md) | parked (deferred; a full draft waits on the user's `air-*` answers) | 2, 3, 5 |
 
 ## Open design lists (not idea files)

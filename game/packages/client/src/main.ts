@@ -11,6 +11,8 @@
  *   ?spell=arcane+fire/force   both seats cast chosen spells at the dummies (demo.ts; &spell2= for seat 1)
  *   ?room=arena   play the Arena (waves of enemies) instead of the Sanctum's dummies; ?room=survive (or #survive):
  *                 Survive, endless waves in a walled arena with a power-up pick between them
+ *   ?room=tutorial (or #tutorial)   the tutorial's first prototype (sim tutorial.ts); &beat=N (or #tutorial-N) starts
+ *                 at beat N; with ?autoplay=1 a bot plays it through (screenshots of each beat)
  *   ?scale=N      force the integer pixel scale
  *   ?debug=0      hide the debug line (tick, hash); the backquote key toggles it
  *   ?renderer=webgpu   try WebGPU instead of WebGL
@@ -25,7 +27,7 @@
 import { Application } from 'pixi.js';
 import { TextureSource } from 'pixi.js';
 import {
-  DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, hashWorld, hex, newBotMemory, runReplay, scriptedInput, scriptedReplay, step,
+  DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, hashWorld, hex, newBotMemory, newTutorialBot, runReplay, scriptedInput, scriptedReplay, step, tutorialBotInput,
   type PlayerInput, type Room,
 } from '@wizard-sim/sim';
 import { demoInput, parseDemo, rallyScene, threeScene } from './demo';
@@ -44,6 +46,8 @@ const params = new URLSearchParams(location.search);
 for (const tok of location.hash.slice(1).split('-')) {
   if (tok === 'arena') params.set('room', 'arena');
   if (tok === 'survive') params.set('room', 'survive');
+  if (tok === 'tutorial') params.set('room', 'tutorial');
+  if (/^\d+$/.test(tok) && params.get('room') === 'tutorial') params.set('beat', tok); // #tutorial-7: start at beat 7
   if (tok === 'ally') params.set('ally', '1');
 }
 // 1 / 2 / 3 switch between the Sanctum (dummies), the Arena (waves) and Survive, keeping the ally choice.
@@ -73,7 +77,7 @@ async function boot(): Promise<void> {
   const demo = [parseDemo(params.get('spell')), parseDemo(params.get('spell2') ?? params.get('spell'))];
   const headless = scripted || autoplay || !!demo[0];
   const asked = params.get('room');
-  const room: Room = asked === 'survive' ? 'survive' : autoplay || asked === 'arena' ? 'arena' : 'sanctum';
+  const room: Room = asked === 'tutorial' ? 'tutorial' : asked === 'survive' ? 'survive' : autoplay || asked === 'arena' ? 'arena' : 'sanctum';
   TextureSource.defaultOptions.scaleMode = 'nearest';
   // Headless runs seat two wizards. Interactive play starts with you alone; gamepads join seats 1-3
   // with any button, and ?ally=1 puts a bot wizard on seat 1 (a dev ally for trying co-op solo).
@@ -113,13 +117,16 @@ async function boot(): Promise<void> {
 
   // the saved tuning goes in before the world exists, so spawn-time numbers (hp, radii) use it too
   loadSaved();
-  const world = createWorld(7, players, { room });
+  const world = createWorld(7, players, { room, tutorialBeat: Number(params.get('beat')) || undefined });
+  // the tutorial's end card: walking into an arch switches rooms, as the 1 / 2 / 3 keys do
+  if (!headless) view.tut.onExit = (to) => { location.hash = to; location.reload(); };
   // ?scene=rally / ?scene=three (Survive, headless): a rally in progress, or +1 to three being chosen, for screenshots (demo.ts)
   const sceneName = headless && world.run ? params.get('scene') : null;
   const scene = sceneName === 'rally' || sceneName === 'three';
   if (sceneName === 'rally') rallyScene(world);
   if (sceneName === 'three') threeScene(world);
   const bots = [newBotMemory(), newBotMemory()];
+  const tutBots = [newTutorialBot(), newTutorialBot()];
   const pads = new PadSeats();
   const keyboard = new KeyboardMouse(app.canvas, view.camera);
   const recorder = new ReplayRecorder(7, MAX_SEATS);
@@ -129,7 +136,7 @@ async function boot(): Promise<void> {
   const inputsFor = (tick: number): PlayerInput[] => {
     const out: PlayerInput[] = [];
     if (headless) {
-      for (let p = 0; p < MAX_SEATS; p++) out.push(p >= players || scene ? NO_INPUT : autoplay ? botInput(world, p, bots[p]) : demo[0] ? (demo[p] ? demoInput(world, tick, p, demo[p]!) : NO_INPUT) : scriptedInput(tick, p));
+      for (let p = 0; p < MAX_SEATS; p++) out.push(p >= players || scene ? NO_INPUT : autoplay ? (world.tut ? tutorialBotInput(world, p, tutBots[p]) : botInput(world, p, bots[p])) : demo[0] ? (demo[p] ? demoInput(world, tick, p, demo[p]!) : NO_INPUT) : scriptedInput(tick, p));
       return out;
     }
     pads.poll((seat) => world.seats.active[seat] === 1 || (ally && seat === 1));

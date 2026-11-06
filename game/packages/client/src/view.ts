@@ -16,7 +16,7 @@
  */
 import { Container, Graphics, Sprite } from 'pixi.js';
 import {
-  AI, ARCH, ARCHETYPES, ARENA, ATTACK, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, PHASE,
+  AI, ARCH, ARCHETYPES, ARENA, ATTACK, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, PHASE, TUT_TAG,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
@@ -32,8 +32,9 @@ import { TAU, mod } from './art/util';
 import { Vfx, type BodyView } from './art/vfx';
 import { StructureView, drawTelegraphs } from './view-structures';
 import { Hud } from './hud';
+import { TutorialHud } from './tutorial-view';
 
-const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10 };
+const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10, bramble: 10, sack: 9 };
 /** Dusk on the lit layers (the floor has it baked in): a touch of blue. */
 const AMBIENT = 0xe4e8ff;
 
@@ -47,8 +48,10 @@ export class WorldView {
   private hudLayer = new Container();
   private edges = new EdgeMarks();
   readonly hud = new Hud(0);
+  /** The tutorial's prompt line, beat titles and fade (tutorial-view.ts); hidden in other rooms. */
+  readonly tut = new TutorialHud(0);
   /** Online, the local player may sit in any seat: the HUD and the rune swirl follow it. */
-  setLocalSeat(seat: number): void { this.hud.seat = seat; this.vfx.localSeat = seat; this.structs.localSeat = seat; this.isLocal = (s) => s === seat; }
+  setLocalSeat(seat: number): void { this.hud.seat = seat; this.tut.seat = seat; this.vfx.localSeat = seat; this.structs.localSeat = seat; this.isLocal = (s) => s === seat; }
   /** The seats played on this screen: a following camera frames their wizards. Offline, every seat (local co-op); online, just yours. */
   isLocal: (seat: number) => boolean = () => true;
   /** Painted for the Sanctum's and the Arena's play area; repainted at the first draw of a world with another (fitArena). */
@@ -122,7 +125,7 @@ export class WorldView {
     this.structs = new StructureView(this.actors);
     this.deaths = new Deaths(this.actors);
     this.scene.addChild(this.floor, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
-    this.hudLayer.addChild(this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over);
+    this.hudLayer.addChild(this.tut.fade, this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over, this.tut.sprite, this.tut.banner);
     this.root.addChild(this.scene, this.hudLayer);
     for (let i = 0; i < MAX_BODIES; i++) {
       const s = new Sprite(); s.visible = false; s.tint = AMBIENT;
@@ -200,6 +203,8 @@ export class WorldView {
     if (k === KIND.wizard || k === KIND.double) return 'wizard';
     if (k === KIND.dummy) return 'dummy';
     const a = w.bodies.arch[i];
+    if (a === ARCH.bramble) return 'bramble';
+    if (a === ARCH.straw && w.tut?.tag[i] === TUT_TAG.sack) return 'sack';
     return a === ARCH.brute ? 'brute' : a === ARCH.caster ? 'archer' : 'goblin';
   }
 
@@ -261,6 +266,7 @@ export class WorldView {
     this.lights.end();
     this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;
     this.hud.draw(w, t, cam.hudW, cam.hudH);
+    this.tut.draw(w, ct, cam.hudW, cam.hudH);
     this.edges.draw(w, cam, ct, (i) => this.drawnAt(i, w, alpha));
     this.frames.upload();
   }
@@ -325,10 +331,12 @@ export class WorldView {
       if (arch === ARCH.shieldbearer) { s.pal = 5; s.variant = 5; }
       else if (arch === ARCH.grabber) { s.pal = 4; s.variant = 4; }
       else if (arch === ARCH.imp) { s.pal = 3; s.variant = 3; }
+      else if (arch === ARCH.straw) { s.pal = 6; s.variant = 0; } // the tutorial's straw goblin
+      else if (arch === ARCH.bramble) { s.variant = b.maxHp[i] > 20 ? 1 : 0; s.seed = i & 3; }
       else { s.pal = i % 3; s.variant = kind === 'goblin' ? i % 3 : 0; }
     }
     // facing in 16 directions; the dummy faces the camera
-    s.face = kind === 'dummy' ? Math.PI / 2 : (Math.round(b.face[i] * 16) / 16) * TAU;
+    s.face = kind === 'dummy' || kind === 'bramble' || kind === 'sack' ? Math.PI / 2 : (Math.round(b.face[i] * 16) / 16) * TAU;
     const sp = this.spd[i];
     s.spd = sp < 0.15 ? 0 : sp < 0.6 ? 0.5 : 1;
     s.ph = s.spd ? (Math.round(mod(this.ph[i], TAU) / TAU * 8) / 8) * TAU : 0;

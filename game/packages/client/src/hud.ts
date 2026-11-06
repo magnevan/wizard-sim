@@ -211,13 +211,20 @@ export class Hud {
     const c = this.c.x, s = w.seats, i = this.seat;
     c.clearRect(0, 0, CW, CH); c._fs = null;
     const x0 = Math.round(CW / 2 - PW / 2 + 7), y0 = CH - PH - 1;
+    // Locked elements (the tutorial's gating: max 0) get no cap; with every one locked, there is no rune bar at all.
+    let unlocked = 0;
+    for (let e = 1; e <= N_EL; e++) if (runeMax(w, i, e) > 0) unlocked++;
+    // a few unlocked: each cap gets its own backing instead of the whole plate
+    const some = unlocked > 0 && unlocked < N_EL;
     // the backing plate follows the stagger: the top row is narrower than the bottom
-    X.rect(c, x0 - 1, y0 - 1, TOP.length * SLOT + 8, RH + 5, '#0a0810'); X.rect(c, x0 - 1, y0 + RH + 2, PW + 2, RH + 6, '#0a0810');
-    X.rect(c, x0, y0, TOP.length * SLOT + 6, RH + 5, '#141220'); X.rect(c, x0, y0 + RH + 3, PW, RH + 4, '#141220');
-    X.rect(c, x0, y0, TOP.length * SLOT + 6, 1, '#3a3450');
+    if (unlocked === N_EL) {
+      X.rect(c, x0 - 1, y0 - 1, TOP.length * SLOT + 8, RH + 5, '#0a0810'); X.rect(c, x0 - 1, y0 + RH + 2, PW + 2, RH + 6, '#0a0810');
+      X.rect(c, x0, y0, TOP.length * SLOT + 6, RH + 5, '#141220'); X.rect(c, x0, y0 + RH + 3, PW, RH + 4, '#141220');
+      X.rect(c, x0, y0, TOP.length * SLOT + 6, 1, '#3a3450');
+    }
     // the player's colour tab
     const team = X.TEAMS[i % 4];
-    X.rect(c, x0 - 14, y0 + RH - 4, 13, 15, '#0a0810'); X.rect(c, x0 - 13, y0 + RH - 3, 12, 13, team.dark); X.text(c, 'P' + (i + 1), x0 - 11, y0 + RH + 1, team.light);
+    if (unlocked || s.guard[i] || s.weapon[i]) { X.rect(c, x0 - 14, y0 + RH - 4, 13, 15, '#0a0810'); X.rect(c, x0 - 13, y0 + RH - 3, 12, 13, team.dark); X.text(c, 'P' + (i + 1), x0 - 11, y0 + RH + 1, team.light); }
     // what's in your hands: the conjured weapon (its element and uses left) and a guard, under the badge
     if (s.weapon[i]) {
       const el = elementName(s.weapon[i]);
@@ -240,6 +247,8 @@ export class Hud {
     // queued runes are reserved: they show as spent pips until cast or refunded
     [...TOP, ...BOT].forEach((el, k) => {
       const row = k < TOP.length ? 0 : 1, col = row ? k - TOP.length : k, id = elementId(el), ramp = X.EL[el];
+      if (runeMax(w, i, id) <= 0) return; // locked
+      if (some) { X.rect(c, sx - 2, sy - 2, SLOT + 2, RH + 3, '#0a0810'); X.rect(c, sx - 1, sy - 1, SLOT, RH + 1, '#141220'); }
       const sx = x0 + 3 + col * SLOT + (row ? STAG : 0), sy = y0 + 3 + row * (RH + 3);
       const dryK = t - this.dryAt[id] < 0.5, dry = dryK && Math.floor(t * 8) % 2 === 0;
       X.rect(c, sx, sy, SLOT - 2, RH - 1, dry ? '#3a1418' : '#1f1c2e'); X.rect(c, sx, sy, SLOT - 2, 1, dry ? '#a03040' : '#3e3854'); X.rect(c, sx, sy + RH - 2, SLOT - 2, 1, '#0c0a14');

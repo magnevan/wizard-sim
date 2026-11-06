@@ -97,6 +97,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     let d = DAMAGE[elementName(id)] * (id === form && n > 1 ? formCurve(form, n, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling) : n);
     if (arch && id === EL.fire && arch.fireMult !== undefined) d *= arch.fireMult;
     if (arch && id === EL.cold && arch.coldMult !== undefined) d *= arch.coldMult;
+    if (arch?.onlyFire && id !== EL.fire) d = 0; // a bramble: only fire hurts it
     if (d) { const col = physical ? RES.physical : colOf(id); if (col >= 0) d *= taken(w, t, col); } // a guard's resistance, or a heal's lent one
     const resisted = (ward === WARD.ward || ward === WARD.stone) && s.wardEls[tSeat * N_EL + id - 1] > 0;
     if (resisted) { dmg += d * (1 - STRUCT.wardResist); absorbed += d * STRUCT.wardResist; } else dmg += d;
@@ -147,6 +148,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     addKnock(w, t, o.dirX, o.dirY, 3 * earth * ss);
   }
   if (b.expose[t] && !arcane) dmg *= STATUS.exposeMult;
+  if (arch?.onlyFire && !fire) dmg = 0; // nor do the mixes' bonuses without fire in them
 
   b.hp[t] -= dmg;
   if (dmg > 0) { b.lastHit[t] = tick; b.lastEl[t] = form || EL.earth; b.lastDX[t] = o.dirX; b.lastDY[t] = o.dirY; b.lastMix[t] = o.scald ? 1 : o.freeze ? 2 : 0; b.lastKind[t] = hitKind; }

@@ -31,7 +31,7 @@ import { RollbackSession, type AimPrediction, type Gone, type Handover, type Tra
 import { createWorld, overrides, replaceWorld, tuningHash, type Room, type Snapshot, type World } from '@wizard-sim/sim';
 import { loadSaved, replaceTuning } from '../tune-io';
 
-const roomOf = (r: string): Room => (r === 'arena' || r === 'survive' ? r : 'sanctum');
+const roomOf = (r: string): Room => (r === 'arena' || r === 'survive' || r === 'tutorial' ? r : 'sanctum');
 import { fromB64, toB64, type Bus } from './bus';
 import { LinkSim, PRESETS } from './linksim';
 import type { RtcBus } from './webrtc';

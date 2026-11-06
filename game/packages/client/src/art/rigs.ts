@@ -14,7 +14,7 @@ import { CU, FY, clamp, lerp, rand, smooth } from './util';
 import * as X from './px';
 import type { Ctx } from './px';
 
-export type RigKind = 'wizard' | 'goblin' | 'archer' | 'brute' | 'dummy';
+export type RigKind = 'wizard' | 'goblin' | 'archer' | 'brute' | 'dummy' | 'bramble' | 'sack';
 
 /** Everything a rig needs to draw one frame. art/actors.ts fills it with quantized values. */
 export interface RigState {
@@ -75,8 +75,8 @@ export const newRigState = (): RigState => ({
 /** Anchor points relative to the feet, in art px: where effects attach. */
 export interface Anchors { tip: [number, number]; chest: [number, number]; head: [number, number]; hands: [number, number][]; charge: [number, number] }
 
-export const HEIGHT: Record<RigKind, number> = { wizard: 23, goblin: 12, archer: 12, brute: 23, dummy: 18 };
-export const WIDTH: Record<RigKind, number> = { wizard: 6, goblin: 5, archer: 5, brute: 9, dummy: 6 };
+export const HEIGHT: Record<RigKind, number> = { wizard: 23, goblin: 12, archer: 12, brute: 23, dummy: 18, bramble: 11, sack: 12 };
+export const WIDTH: Record<RigKind, number> = { wizard: 6, goblin: 5, archer: 5, brute: 9, dummy: 6, bramble: 8, sack: 5 };
 
 const SW = 88, SH = 88, AX = 44, AY = 70;
 /** Only this box of the scratch canvases is ever cleared or copied. */
@@ -96,6 +96,8 @@ const GOB = [
   { main: '#c8442a', light: '#f07a3a', dark: '#7e2218', deep: '#4a1210' },
   { main: '#6a8a6e', light: '#94b498', dark: '#425a46', deep: '#263a2a' },
   { main: '#5a7a3a', light: '#80a058', dark: '#3a5226', deep: '#22341a' },
+  // 6: the tutorial's straw goblin (a goblin-shaped target stuffed with straw)
+  { main: '#c9a45a', light: '#e2c47a', dark: '#94733a', deep: '#5a4426' },
 ];
 const BRUTE = { main: '#8a7aa6', light: '#b2a4cc', dark: '#584a74', deep: '#342a4a', belly: '#c4b4d0' };
 const STRAW = { main: '#c9a45a', light: '#e2c47a', dark: '#94733a', deep: '#5a4426' };
@@ -446,6 +448,57 @@ function drawDummy(s: RigState): void {
 }
 
 // ======================================================================
+// The tutorial's props: a bramble (only fire clears it) and a straw sack to shove
+// ======================================================================
+const THORN = { stem: '#4a2e1c', stemL: '#74502e', leaf: '#3a6428', leafL: '#5e8a32', leafD: '#203c18', thorn: '#e4d6aa', berry: '#c02a40' };
+/** A thornbush: a dark leafy mound with thorny canes arching out of it. variant 1 is the thick one. */
+function drawBramble(s: RigState): void {
+  const T = tinter(s), { kx, P } = frame(s), big = s.variant === 1 ? 1.5 : 1, wob = s.sq * 2;
+  const top = Math.round(8 * big);
+  const cane = (k: number, front: boolean) => {
+    const a = (k / 9) * Math.PI * 2 + 0.35 + rand(k, 1, s.seed) * 0.4, rr = (3.6 + rand(k, 2, s.seed) * 1.6) * big;
+    const pts = [P(Math.cos(a) * 1.2, Math.sin(a) * 1.2, 2 * big), P(Math.cos(a) * rr * 0.75, Math.sin(a) * rr * 0.75 + wob, (6 + rand(k, 3, s.seed) * 3) * big), P(Math.cos(a) * rr * 1.15, Math.sin(a) * rr * 1.15 + wob, (3.5 + rand(k, 4, s.seed) * 2) * big)];
+    if ((pts[1][2] >= 0) !== front) return;
+    for (let j = 1; j < pts.length; j++) X.line(sc, pts[j - 1][0], pts[j - 1][1], pts[j][0], pts[j][1], T(j === 1 ? THORN.stemL : THORN.stem));
+    // thorns along the cane, pale points on alternating sides
+    for (let j = 1; j < pts.length; j++) for (let q = 1; q <= 2; q++) {
+      const m = q / 3, x = lerp(pts[j - 1][0], pts[j][0], m), y = lerp(pts[j - 1][1], pts[j][1], m);
+      X.px(sc, x + ((j + q) & 1 ? 1 : -1), y - 1, T(THORN.thorn));
+    }
+  };
+  for (let k = 0; k < 9; k++) cane(k, false);
+  bodyRows(sc, (f, r, u) => P(f, r + wob * (u / 10), u), 0, top, (u) => (4.6 * big - Math.max(0, u - 2.5 * big) * 0.62) * kx * (0.92 + 0.08 * Math.sin(u * 2.3 + s.seed)), null,
+    { light: THORN.leafL, main: THORN.leaf, dark: THORN.leafD }, T, (u, x) => {
+      const r = rand(x, u, s.seed + 3);
+      if (r < 0.2) return THORN.leafD;
+      if (r > 0.93) return THORN.leafL;
+      if (r > 0.9 && u > 1) return THORN.stem; // a cane showing through the leaves
+      return null;
+    });
+  for (let k = 0; k < 9; k++) cane(k, true);
+  // a few red berries on the near side
+  for (let k = 0; k < Math.round(3 * big); k++) { const b = P(1.5 + rand(k, 7, s.seed) * 2.5 * big, (rand(k, 8, s.seed) - 0.5) * 6 * big, (2 + rand(k, 9, s.seed) * 5) * big); X.px(sc, b[0], b[1], T(THORN.berry)); }
+  const c = P(0, 0, 4 * big), h = P(0, 0, top);
+  out.chest = [c[0], c[1]]; out.head = [h[0], h[1]]; out.tip = [h[0], h[1]];
+}
+
+const BURLAP = { light: '#d2b27e', main: '#a8875a', dark: '#765a38', rope: '#5a3e22', patch: '#8a6a44' };
+/** A burlap sack stuffed with straw, tied at the neck: rocks when hit, slides when shoved. */
+function drawSack(s: RigState): void {
+  const T = tinter(s), { kx, P } = frame(s), wob = s.sq * 3;
+  const prof = (u: number) => (u <= 7 ? 3.4 + Math.sin((u / 7) * Math.PI) * 1.4 : u <= 9 ? 2.6 - (u - 8) * 0.9 : u === 10 ? 1.2 : 2) * kx;
+  bodyRows(sc, (f, r, u) => P(f, r + wob * (u / 12), u), 0, 11, prof, null, BURLAP, T, (u, x, k) => {
+    if (u === 9) return BURLAP.rope;
+    if (u >= 2 && u <= 4 && k > 0.55 && k < 0.8) return u === 3 ? BURLAP.dark : BURLAP.patch; // a stitched patch
+    if ((x + u * 2) % 5 === 0 && u < 9) return BURLAP.dark; // the weave
+    if (u === 11 && (x & 1)) return STRAW.light; // straw poking out of the neck
+    return null;
+  });
+  const c = P(0, wob * 0.4, 5), h = P(0, wob * 0.8, 10);
+  out.chest = [c[0], c[1]]; out.head = [h[0], h[1]]; out.tip = [h[0], h[1]];
+}
+
+// ======================================================================
 // Status on the body (Battlefield pass 4: on the body itself, never a symbol above it)
 // ======================================================================
 const cp = (dst: Ctx, src: HTMLCanvasElement, dx: number, dy: number) => dst.drawImage(src, BX, BY, BW, BH, dx + BX, dy + BY, BW, BH);
@@ -598,6 +651,8 @@ export function paint(s: RigState, dst: Ctx, fx: number, fy: number): Anchors {
   if (s.kind === 'wizard') drawWizard(s);
   else if (s.kind === 'brute') drawBrute(s);
   else if (s.kind === 'dummy') drawDummy(s);
+  else if (s.kind === 'bramble') drawBramble(s);
+  else if (s.kind === 'sack') drawSack(s);
   else drawGoblin(s, s.kind === 'archer');
   if (s.chill > 0.05 && s.frozen < 0.2) rime(s);
   if (s.wet > 0.05 && s.frozen < 0.2) wetSheen(s);

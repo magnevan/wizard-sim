@@ -8,7 +8,8 @@
 import { canAct, tickSeat } from './cast';
 import { BODY } from './config';
 import { TAP } from './hands';
-import { collide, onIce, tickDoubles, tickHealth, tickMissiles, tickSurfaces, tickZones } from './effects';
+import { collide, fixedBody, onIce, tickDoubles, tickHealth, tickMissiles, tickSurfaces, tickZones } from './effects';
+import { beginTutorialTick, tickTutorial } from './tutorial';
 import { tickDeaths, tickEnemies } from './enemies';
 import { tickNav } from './nav';
 import { hasteOf, tickStructures } from './structures';
@@ -24,6 +25,7 @@ export { elementId, elementName } from './elements';
 export function step(w: World, inputs: readonly PlayerInput[]): void {
   w.events.length = 0;
   const b = w.bodies, s = w.seats;
+  if (w.tut) beginTutorialTick(w);
   if (w.run) survivePress(w, inputs);
 
   for (let i = 0; i < MAX_SEATS; i++) {
@@ -54,7 +56,7 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
   for (let i = 0; i < b.kind.length; i++) {
     if (b.kind[i] === KIND.none) continue;
     if (b.frozen[i]) { b.kx[i] = b.ky[i] = 0; continue; }
-    const rooted = b.kind[i] === KIND.dummy;
+    const rooted = fixedBody(w, i); // dummies, and the tutorial's brambles
     const pinned = b.root[i] > 0; // pinned by the spear's javelin: no walking, but blows still move it
     if (!rooted) { b.x[i] += ((pinned ? 0 : b.vx[i]) + b.kx[i]) * DT; b.y[i] += ((pinned ? 0 : b.vy[i]) + b.ky[i]) * DT; }
     const decay = onIce(w, i) ? 0.985 : 0.86;
@@ -73,5 +75,7 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
   tickHealth(w);
   tickDeaths(w);
   tickDoubles(w);
+  // The tutorial goes last, so its checks see every event of the tick (casts, parries, faints, deaths).
+  if (w.tut) tickTutorial(w);
   w.clock[0]++;
 }

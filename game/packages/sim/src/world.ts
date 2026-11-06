@@ -9,6 +9,7 @@
 import { ARENA, BODY, CELL, PERKS, RUNES } from './config';
 import { EL, N_EL, elementName } from './elements';
 import { createRng, type RngState } from './rng';
+import { TUT_ORDER, tutPool } from './tutorial-data';
 
 export const SIM_HZ = 60;
 export const DT = 1 / SIM_HZ;
@@ -40,6 +41,7 @@ const dimsOf = (w: number, h: number): Dims => ({ w, h, gw: Math.round(w / CELL)
 export const SURVIVE_ARENA = { w: 48, h: 34 } as const;
 export const ROOM_DIMS: Readonly<Record<Room, Dims>> = {
   sanctum: dimsOf(ARENA.w, ARENA.h), arena: dimsOf(ARENA.w, ARENA.h), survive: dimsOf(SURVIVE_ARENA.w, SURVIVE_ARENA.h),
+  tutorial: dimsOf(ARENA.w, ARENA.h),
 };
 /** The most cells any room's grid has (nav's scratch heap is sized for it). */
 export const MAX_CELLS = Math.max(...Object.values(ROOM_DIMS).map((d) => d.gw * d.gh));
@@ -348,6 +350,20 @@ export interface Run {
   echo: Int16Array;
 }
 
+/**
+ * The tutorial's state (tutorial.ts; docs/explorations/2026-11-06-tutorial.md). Only a tutorial world
+ * has one. `state` slots are TS in tutorial-data.ts.
+ */
+export interface Tutorial {
+  state: Int32Array;
+  /** Personal done-bits, per seat (the prototype completes a personal beat when any one player does it). */
+  done: Uint8Array;
+  /** Ticks each seat stays fainted (you can't die in the tutorial: you faint and get up). */
+  faint: Int32Array;
+  /** What each body is to the tutorial (TAG). */
+  tag: Uint8Array;
+}
+
 export interface World {
   /** The play area (not state: fixed by the room, see Dims). */
   dims: Dims;
@@ -366,6 +382,8 @@ export interface World {
   nav: Nav;
   /** Survive only (null elsewhere, so the other rooms' state, and the golden hash, are untouched). */
   run: Run | null;
+  /** Tutorial only (null elsewhere, like run). */
+  tut: Tutorial | null;
   events: SimEvent[];
 }
 
@@ -420,6 +438,13 @@ function run(): Run {
   };
 }
 
+function tutorial(beat: number): Tutorial {
+  const t: Tutorial = { state: i32(8), done: u8(MAX_SEATS), faint: i32(MAX_SEATS), tag: u8(MAX_BODIES) };
+  t.state[0] = TUT_ORDER.includes(beat) ? beat : TUT_ORDER[0];
+  t.state[4] = -1; // the beat is laid out on the first step (tutorial.ts; world.ts can't import it)
+  return t;
+}
+
 /** The owner of the arena's own rock (survive's cover and gates): it never times out or breaks. */
 export const TERRAIN = -2;
 
@@ -472,9 +497,9 @@ export const SURVIVE_ROCK: readonly Seg[] = [
 export const SURVIVE_GATES: readonly (readonly [number, number])[] = [[-23, 0], [23, 0], [-12, -15.8], [12, -15.8], [-12, 15.8], [12, 15.8]];
 export const ALTAR_SPOTS: readonly (readonly [number, number])[] = [[-2.6, -0.4], [0, 2.1], [2.6, -0.4]];
 
-/** Max runes of element `id` for seat `i`: the config; in Survive, its weak start plus the seat's power-ups. */
+/** Max runes of element `id` for seat `i`: the config; in the tutorial, the beat's pools (0 = locked); in Survive, its weak start plus the seat's power-ups. */
 export const runeMax = (w: World, i: number, id: number): number =>
-  w.run ? (id === EL.sigil ? RUNES.surviveSigil : RUNES.surviveStart) + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
+  w.tut ? tutPool(w.tut.state[0], id) : w.run ? (id === EL.sigil ? RUNES.surviveSigil : RUNES.surviveStart) + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
 /** A seat's power-up stacks (0 outside survive). */
 export const stackOf = (w: World, i: number, pu: number): number => (w.run && i >= 0 && i < MAX_SEATS ? w.run.stacks[i * N_PU + pu] : 0);
 /** True when seat `i`'s Double is Echo's free one: it binds no Sigil rune, and recalling it gives none back. */
@@ -507,9 +532,10 @@ const START = [[-4, 2], [4, 2], [-4, -2], [4, -2]] as const;
 /** The Sanctum's practice dummies. */
 const DUMMIES = [[-6, -4], [0, -5], [6, -4]] as const;
 
-export type Room = 'sanctum' | 'arena' | 'survive';
+export type Room = 'sanctum' | 'arena' | 'survive' | 'tutorial';
 
-export function createWorld(seed: number, players: number, opts: { dummies?: boolean; room?: Room } = {}): World {
+/** `tutorialBeat` starts a tutorial world at that beat (design numbering; the first if it isn't one the build has). */
+export function createWorld(seed: number, players: number, opts: { dummies?: boolean; room?: Room; tutorialBeat?: number } = {}): World {
   const dims = ROOM_DIMS[opts.room ?? 'sanctum'], cells = dims.gw * dims.gh;
   const w: World = {
     dims,
@@ -536,6 +562,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
       heal: u8(MAX_DEVICES), look: u8(MAX_DEVICES), born: i32(MAX_DEVICES), chan: i32(MAX_DEVICES),
     },
     run: opts.room === 'survive' ? run() : null,
+    tut: opts.room === 'tutorial' ? tutorial(opts.tutorialBeat ?? TUT_ORDER[0]) : null,
     events: [],
   };
   if (w.run) {
@@ -549,7 +576,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
   for (let i = 0; i < Math.min(players, MAX_SEATS); i++) joinSeat(w, i);
   const arena = opts.room === 'arena' || opts.room === 'survive';
   if (arena) { w.enc.state[0] = PHASE_ENC.lull; w.enc.state[1] = 1; w.enc.state[2] = 0; }
-  else if (opts.dummies !== false) for (const [x, y] of DUMMIES) spawnBody(w, -1, KIND.dummy, TEAM.enemies, x, y, BODY.dummyHp, BODY.dummyRadius);
+  else if (opts.dummies !== false && !w.tut) for (const [x, y] of DUMMIES) spawnBody(w, -1, KIND.dummy, TEAM.enemies, x, y, BODY.dummyHp, BODY.dummyRadius);
   return w;
 }
 
@@ -584,6 +611,7 @@ export function buffers(w: World): ArrayBufferView[] {
   const out: ArrayBufferView[] = [w.clock, w.rng];
   const pools: object[] = [w.bodies, w.seats, w.missiles, w.zones, w.surf, w.walls, w.waves, w.devices, w.enc, w.nav];
   if (w.run) pools.push(w.run); // survive only: the other rooms keep their layout (and hash) exactly
+  if (w.tut) pools.push(w.tut); // the tutorial only, likewise
   for (const pool of pools) {
     // Sorted by field name, so the order never depends on how a pool object was built.
     for (const k of Object.keys(pool).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) out.push((pool as Record<string, ArrayBufferView>)[k]);

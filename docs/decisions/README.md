@@ -683,3 +683,9 @@ See `explorations/2026-11-05-weapon-dps.md` (the before/after table).
   - Geyser and spring radius are now `0.9 + 0.4n` and `1.4 + 0.4n`, the same size at one rune.
   - New `SHAPES.lingerPerRune` 0.2 stretches steam and a Place patch's floors.
   - The golden hash moves from `dda18ae2` to `d13d22ff`, because the scripted replay casts a multi-rune Place spell.
+
+## 2026-11-06: Weapons pass questions answered
+
+- **Lead by type stands for weapons.** Sigil + Fire + Lightning is the Lightning whip with Fire extras, and there's no "lightning flame sword". User: "no that's fine".
+- **The Flame sword stays at 108 % of the 1-rune Fire spray.** The 1-rune Fire spray will be revisited in the balance pass. User: "sure, we could revisit fire spray later".
+- **Heavies keep about the same DPS as mashed Strikes, but hit harder per move.** The user had no strong opinion, so Claude's pick stands. Revisit if play-testing says charging isn't worth it.

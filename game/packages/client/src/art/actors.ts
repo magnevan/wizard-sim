@@ -2,7 +2,7 @@
  * Actor frames: each distinct quantized rig state is painted once (art/rigs.ts) into a cell
  * of an atlas page and kept as a Pixi texture. Facing snaps to 16 directions, the walk cycle
  * to 8 phases, poses and statuses to a few levels, so a crowd of identical goblins shares a
- * handful of frames. Pages are small (512 px) because a page is re-uploaded whole whenever a
+ * handful of frames. Pages are small (256 px) because a page is re-uploaded whole whenever a
  * new frame lands on it.
  *
  * Painting is budgeted per frame: past the budget a body keeps its last texture for a frame
@@ -15,9 +15,11 @@ import { CELL_H, CELL_W, FEET_X, FEET_Y, paint, type Anchors, type RigState } fr
 /** A cached frame: its texture, anchors, and where it sits on its page canvas (for silhouette effects). */
 export interface Frame { tex: Texture; a: Anchors; c: HTMLCanvasElement; sx: number; sy: number }
 
-const PAGE = 512, COLS = Math.floor(PAGE / CELL_W), ROWS = Math.floor(PAGE / CELL_H), PER_PAGE = COLS * ROWS;
-/** About 5k frames (32 MB of pages) before the cache starts over. */
-const MAX_PAGES = 56;
+// Pages are 256 px: a page is re-uploaded whole whenever a frame lands on it, so a smaller page makes
+// each new frame cost a quarter of the upload a 512 px page did (the perf pass, 2026-11-06).
+const PAGE = 256, COLS = Math.floor(PAGE / CELL_W), ROWS = Math.floor(PAGE / CELL_H), PER_PAGE = COLS * ROWS;
+/** About 5k frames (66 MB of pages) before the cache starts over. */
+const MAX_PAGES = 250;
 
 interface Page { c: HTMLCanvasElement; x: X.Ctx; tex: Texture; dirty: boolean }
 
@@ -76,8 +78,14 @@ function newPage(): Page {
 export { FEET_X, FEET_Y };
 
 const q = (v: number, steps: number) => Math.round(v * steps);
+/**
+ * The idle sway only shows where a rig draws it (art/rigs.ts): wizards always, goblins, archers and the
+ * brute only while not at full walking speed (their bob is idle * (1 - walk)), the dummy, bramble and
+ * sack never. Leaving it out of the key there paints the same pixels, and saves a frame per idle step.
+ */
+const idleOf = (s: RigState): number => (s.kind === 'wizard' ? s.idle : s.kind === 'dummy' || s.kind === 'bramble' || s.kind === 'sack' || s.spd >= 1 ? 0 : s.idle);
 function keyOf(s: RigState): string {
-  return s.kind + s.pal + '.' + s.variant + '.' + (s.seed & 1) + '|' + q(s.face, 100) + '|' + q(s.spd, 10) + '.' + q(s.ph, 100) + '.' + q(s.idle, 10) +
+  return s.kind + s.pal + '.' + s.variant + '.' + (s.seed & 1) + '|' + q(s.face, 100) + '|' + q(s.spd, 10) + '.' + q(s.ph, 100) + '.' + q(idleOf(s), 10) +
     '|' + q(s.vx, 1) + '.' + q(s.vy, 1) + '|' + q(s.prep, 10) + '.' + q(s.cast, 10) + '.' + q(s.sq, 10) + '.' + q(s.dead, 10) +
     '|' + q(s.burn, 10) + '.' + s.burnF + '.' + q(s.wet, 10) + '.' + s.wetF + '.' + q(s.frozen, 10) + '.' + q(s.chill, 10) + '.' + s.shock + '.' + s.flash +
     '|' + q(s.punch, 10) + '.' + q(s.smash, 10) + '.' + q(s.draw, 10) + '.' + q(s.atk, 100) + '.' + s.hold;

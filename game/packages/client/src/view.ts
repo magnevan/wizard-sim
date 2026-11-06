@@ -228,7 +228,11 @@ export class WorldView {
     const lead = Math.min(0.5, ct - this.stillSince);
     const ox = cam.originX(), oy = cam.originY(), fx0 = ox - FIELD.OX, fy0 = oy - FIELD.OY;
     this.floor.position.set(ox - FLOOR.OX, oy - FLOOR.OY);
-    this.vfx.ground.position.set(fx0, fy0); this.vfx.over.position.set(fx0, fy0); this.structs.scorch.sprite.position.set(fx0, fy0);
+    // the effect canvases cover the field in view (a margin for shake and things at the edge): art/vfx.ts view()
+    const M = 24;
+    this.vfx.view(-fx0 - M, -fy0 - M, cam.w + 2 * M, cam.h + 2 * M);
+    this.vfx.ground.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy); this.vfx.over.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy);
+    this.structs.scorch.sprite.position.set(fx0, fy0);
     // the wave banner: over the arena's north edge, or near the top of the view when that is off screen
     this.vfx.bannerX = Math.round(cam.w / 2 - fx0);
     this.vfx.bannerY = Math.round(Math.max(FIELD.OY - (w.dims.h / 2) * PPU * FY + 22, (28 * cam.base) / cam.scale + 10 - fy0));

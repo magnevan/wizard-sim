@@ -59,6 +59,8 @@ export function ring(c: Ctx, cx: number, cy: number, rx: number, ry: number, col
   }
 }
 
+/** poly's crossings per row: one buffer for every call (it runs per body part, per frame). */
+const xs: number[] = [];
 /** Scanline polygon fill (pixel centres), optional dither alpha. */
 export function poly(c: Ctx, pts: readonly Pt[], col: string, a = 1): void {
   if (pts.length < 3 || a <= 0) return;
@@ -67,16 +69,20 @@ export function poly(c: Ctx, pts: readonly Pt[], col: string, a = 1): void {
   for (const p of pts) { if (!ok(p[0], p[1])) return; if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1]; }
   stats.fills += Math.ceil(y1 - y0) * (a >= 1 ? 1 : 8);
   y0 = Math.floor(y0); y1 = Math.ceil(y1);
-  const xs: number[] = [];
   for (let y = y0; y <= y1; y++) {
     const yc = y + 0.5;
-    xs.length = 0;
+    let n = 0;
     for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-      const [xi, yi] = pts[i], [xj, yj] = pts[j];
-      if ((yi > yc) !== (yj > yc)) xs.push(xi + ((yc - yi) * (xj - xi)) / (yj - yi));
+      const xi = pts[i][0], yi = pts[i][1], xj = pts[j][0], yj = pts[j][1];
+      if ((yi > yc) !== (yj > yc)) {
+        // insertion sort as it fills (a row crosses a handful of edges): no sort call, no comparator
+        const v = xi + ((yc - yi) * (xj - xi)) / (yj - yi);
+        let k = n++;
+        while (k > 0 && xs[k - 1] > v) { xs[k] = xs[k - 1]; k--; }
+        xs[k] = v;
+      }
     }
-    xs.sort((p, q) => p - q);
-    for (let k = 0; k + 1 < xs.length; k += 2) {
+    for (let k = 0; k + 1 < n; k += 2) {
       const xa = R(xs[k]), xb = R(xs[k + 1]);
       if (xb <= xa) continue;
       if (a >= 1) c.fillRect(xa, y, xb - xa, 1);

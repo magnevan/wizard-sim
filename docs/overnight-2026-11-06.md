@@ -9,7 +9,7 @@ The user's list for the night, in their words, with how Claude is running it. **
 | 2 | Tutorial: design it (start with no runes, learn attacks, then runes one at a time; mostly practical, some text), then build a prototype you can go to | design done (f444095, `explorations/2026-11-06-tutorial.md`); prototype **done**, live: 8 beats (Walk, Strike, Heavy, Retreat, Defend, Fire, Water, Steam) + end card | 13527c4 | `#tutorial`, key 4, Esc → Tutorial. Rough: the brambles read small and boxy |
 | 3 | Esc menu: navigation, multiplayer connect, a scenario picker (tutorial, sandbox, survive, arena…) | **done**, live | a7725ff | Esc clears queued runes, otherwise opens the menu. Scenarios, Multiplayer (host/join, online room switch by the host), Controls, Settings. Registry in `client/src/scenarios.ts`: a sim `tutorial` room turns the Tutorial row on (key 4) |
 | 4 | Enemy attack animations: some enemies have none | **done**, live | e92861a | All six have a telegraph, strike, impact and recovery (client only, `art/enemy-attacks.ts`). Worth showing in the VFX gallery: grabber hold ring, archer lock glint, brute crack, imp spit. Open question: should the brute's slam travel as a shockwave? |
-| 5 | Final pass: (a) anything left incomplete / worth another pass; (b) code review, bugs, docs; (c) code quality; (d) performance low-hanging fruit | running: (b) bugs and docs plus (d) performance in parallel, then (a) and (c) | | |
+| 5 | Final pass: (a) anything left incomplete / worth another pass; (b) code review, bugs, docs; (c) code quality; (d) performance low-hanging fruit | (b) **done** (d7951a0: rules text fixed incl. Arcane wand, Ice sheet and guards; room-switch fx bug; D-pad and number keys in the menu; docs audited). (d) performance running. (a)+(c) loose ends and code quality running | | |
 
 ## How it runs
 
@@ -26,3 +26,4 @@ The user's list for the night, in their words, with how Claude is running it. **
 - 2026-11-06: enemy attacks merged and pushed (316 tests, golden d13d22ff). The main.ts conflict with the Esc menu was resolved by hand.
 - 2026-11-06: help panel merged and pushed (330 tests). check:net failed once under load and passed on rerun (a known flake: a page stalls for about 3.5 s).
 - 2026-11-06: tutorial prototype merged and pushed (341 tests, golden d13d22ff, check:tutorial passes). Final pass started.
+- 2026-11-06: VFX gallery v9 (enemy attack cards) published. 5(b) merged and pushed (349 tests). 5(a)+(c) started.

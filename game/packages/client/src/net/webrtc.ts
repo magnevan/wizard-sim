@@ -10,8 +10,13 @@
  * (`npm run dev:lan`, then the printed address on any device on the network) or a hosted page.
  * Players behind very strict routers may need a TURN relay one day; most home networks don't.
  */
-import Peer, { type DataConnection } from 'peerjs';
+import type Peer from 'peerjs';
+import type { DataConnection } from 'peerjs';
 import type { Bus } from './bus';
+
+/** PeerJS (and its WebRTC shims, about 60 kB gzipped) loads on the first Create room or Join, not at boot. */
+let peerjs: Promise<typeof import('peerjs')> | null = null;
+const loadPeer = () => (peerjs ??= import('peerjs'));
 
 const PREFIX = 'wizard-sim-v1-';
 const LETTERS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no I, L, O, 0, 1: easy to read out
@@ -51,8 +56,12 @@ export function webrtcBus(): RtcBus {
   };
   const open = (id: string) => { if (peer) attach(peer.connect(id, { reliable: false, serialization: 'json' })); };
 
-  const start = (id?: string) => new Promise<Peer>((resolve, reject) => {
-    const p = id ? new Peer(id, { debug: 0 }) : new Peer({ debug: 0 });
+  const start = async (id?: string): Promise<Peer> => {
+    const { default: PeerCtor } = await loadPeer();
+    return startWith(PeerCtor, id);
+  };
+  const startWith = (PeerCtor: typeof Peer, id?: string) => new Promise<Peer>((resolve, reject) => {
+    const p = id ? new PeerCtor(id, { debug: 0 }) : new PeerCtor({ debug: 0 });
     p.on('open', () => resolve(p));
     p.on('connection', attach);
     p.on('error', (e: { type?: string; message?: string }) => reject(e));

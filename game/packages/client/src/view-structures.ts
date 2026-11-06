@@ -313,6 +313,10 @@ export class StructureView {
   private slabs = new SlabCache();
   private geoms = new Map<string, { spec: WallSpec; g: WallGeom }>();
   private lastTex = new Map<string, Texture>();
+  /** Per wall slot: its slab textures as of the last frame, by (wall, damage, rise): reused while those hold (perf pass). */
+  private slabMemo: ({ key: string; tex: (Texture | null)[] } | undefined)[] = [];
+  /** The live walls last frame: prune only when they change. */
+  private liveSig = '';
   private fx: SFx[] = [];
   // per wall slot
   private wType = new Uint8Array(MAX_WALLS); private wHp = new Float64Array(MAX_WALLS); private wHitT = new Float64Array(MAX_WALLS).fill(-9);
@@ -622,13 +626,26 @@ export class StructureView {
         const st = hpf > 0.8 ? 0 : hpf > 0.6 ? 1 : hpf > 0.4 ? 2 : hpf > 0.2 ? 3 : 4;
         const rs = clamp(Math.ceil((age / 0.28) * RISE_STEPS), 1, RISE_STEPS);
         const jolt = hitE >= 0 && hitE < 0.12 ? (Math.floor(hitE * 60) % 2 ? 1 : -1) : 0;
-        for (let i = 0; i < gm.spec.n; i++) {
-          const key = `${pre}|${i}|${st}|${rs}`, sl = gm.g.slabs[i], spec = gm.spec, geo = gm.g;
-          let tex = this.slabs.get(key, () => paintSlab(spec, geo, i, st, rs / RISE_STEPS), !this.lastTex.has(pre + i));
-          if (tex === undefined) tex = this.lastTex.get(pre + i) ?? null;
-          else if (tex) this.lastTex.set(pre + i, tex);
-          if (!tex) continue;
-          this.pieces.tex(tex, Math.round(sl.cx) - SLAB_OX + jolt, Math.round(sl.cy) - SLAB_OY, sl.cy);
+        // the same wall, damage and rise as last frame, every slab painted: last frame's textures, no keys to build
+        const mk = `${pre}|${st}|${rs}`, memo = this.slabMemo[k];
+        if (memo && memo.key === mk) {
+          for (let i = 0; i < gm.spec.n; i++) {
+            const tex = memo.tex[i], sl = gm.g.slabs[i];
+            if (tex) this.pieces.tex(tex, Math.round(sl.cx) - SLAB_OX + jolt, Math.round(sl.cy) - SLAB_OY, sl.cy);
+          }
+        } else {
+          const got: (Texture | null)[] = [];
+          let done = true;
+          for (let i = 0; i < gm.spec.n; i++) {
+            const key = `${pre}|${i}|${st}|${rs}`, sl = gm.g.slabs[i], spec = gm.spec, geo = gm.g;
+            let tex = this.slabs.get(key, () => paintSlab(spec, geo, i, st, rs / RISE_STEPS), !this.lastTex.has(pre + i));
+            if (tex === undefined) { tex = this.lastTex.get(pre + i) ?? null; done = false; } // over the paint budget: a stand-in
+            else if (tex) this.lastTex.set(pre + i, tex);
+            got.push(tex);
+            if (!tex) continue;
+            this.pieces.tex(tex, Math.round(sl.cx) - SLAB_OX + jolt, Math.round(sl.cy) - SLAB_OY, sl.cy);
+          }
+          this.slabMemo[k] = done ? { key: mk, tex: got } : undefined;
         }
         // a fresh wall tears out of the ground in dust
         if (age < 0.6) for (let i = 0; i < 4; i++) K.dust(o, lerp(a[0], bb[0], (i + 0.5) / 4), lerp(a[1], bb[1], (i + 0.5) / 4), age, k * 5 + i, 3, 8, '#8a7a68', 0.7);
@@ -654,6 +671,11 @@ export class StructureView {
       }
       this.curtain(w, k, t, g, a, bb, cols, mid, rise, kS, hitE, light);
     }
+    // nothing to drop while the same walls stand (prune only ever removes walls that are gone)
+    let sig = '';
+    for (const p of live) sig += p + ',';
+    if (sig === this.liveSig) return;
+    this.liveSig = sig;
     this.slabs.prune(live);
     for (const key of this.geoms.keys()) if (!live.has(key)) { this.geoms.delete(key); }
     for (const key of this.lastTex.keys()) { const p = key.slice(0, key.lastIndexOf(':') + 2); if (!live.has(p)) this.lastTex.delete(key); }

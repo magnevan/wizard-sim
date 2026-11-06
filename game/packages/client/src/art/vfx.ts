@@ -64,7 +64,8 @@ export class Vfx {
   private surf = X.canvas(FIELD.W, FIELD.H);
   private gt: Texture; private ot: Texture;
   private fx: Fx[] = [];
-  private surfKey = '';
+  /** What the floor canvas was painted for: each cell's kind and fade step (repainted when any changes). */
+  private surfSeen = new Uint8Array(0);
   // per slot: when a zone or a lobbed stone appeared, and the stone's flight time
   private zoneT0 = new Float64Array(MAX_ZONES);
   private zoneType = new Uint8Array(MAX_ZONES);
@@ -164,13 +165,35 @@ export class Vfx {
 
   /** FIELD changed size (a world with another play area): new canvases and textures to match. */
   resize(): void {
-    this.g = X.canvas(FIELD.W, FIELD.H); this.o = X.canvas(FIELD.W, FIELD.H); this.surf = X.canvas(FIELD.W, FIELD.H);
+    this.surf = X.canvas(FIELD.W, FIELD.H);
+    this.remake(FIELD.W, FIELD.H);
+    this.surfSeen = new Uint8Array(0);
+  }
+  private remake(W: number, H: number): void {
+    this.g = X.canvas(W, H); this.o = X.canvas(W, H);
     const old = [this.gt, this.ot];
     this.gt = Texture.from(this.g.c); this.gt.source.scaleMode = 'nearest';
     this.ot = Texture.from(this.o.c); this.ot.source.scaleMode = 'nearest';
     this.ground.texture = this.gt; this.over.texture = this.ot;
     for (const t of old) t.destroy(true);
-    this.surfKey = '';
+    this.wx = this.wy = 0;
+  }
+
+  /**
+   * The two effect canvases hold only the part of the field in view (a window, in field px), not the
+   * whole field: they are cleared, drawn and re-uploaded every frame, and Survive's field is several
+   * times the view. Drawing still happens in field px (the canvases are translated by the window), so
+   * nothing else changes. The view calls this before draw with the field rect it shows; the sprites go
+   * at the window's origin (wx, wy). A view bigger than the field gets the whole field, as before.
+   */
+  wx = 0;
+  wy = 0;
+  view(x0: number, y0: number, w: number, h: number): void {
+    // sizes in steps of 32 px, so a camera easing about doesn't remake the canvases
+    const W = Math.min(FIELD.W, Math.ceil(w / 32) * 32), H = Math.min(FIELD.H, Math.ceil(h / 32) * 32);
+    if (W !== this.g.c.width || H !== this.g.c.height) this.remake(W, H);
+    this.wx = Math.max(0, Math.min(FIELD.W - W, Math.floor(x0)));
+    this.wy = Math.max(0, Math.min(FIELD.H - H, Math.floor(y0)));
   }
 
   /** Where the wave banner goes, in field px: the top middle of the view (set by the view each frame). */
@@ -276,8 +299,9 @@ export class Vfx {
    * bodies[i] says where body i stands this frame.
    */
   draw(w: World, t: number, bodies: BodyView[], light: LightFn, structures?: (g: Ctx, o: Ctx) => void, ct = t): void {
-    const g = this.g.x, o = this.o.x;
-    g.clearRect(0, 0, FIELD.W, FIELD.H); o.clearRect(0, 0, FIELD.W, FIELD.H);
+    const g = this.g.x, o = this.o.x, W = this.g.c.width, H = this.g.c.height;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
+    o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, W, H); o.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
     g._fs = o._fs = null;
     this.surfaces(w, ct, light);
     this.zones(w, t, light, ct);
@@ -297,10 +321,17 @@ export class Vfx {
   // FADE_STEPS steps, fire's flames shrink (the user: water and ice used to just vanish).
   private surfaces(w: World, t: number, light: LightFn): void {
     const s = w.surf, g = this.g.x, n = s.kind.length;
-    let key = '';
-    for (let c = 0; c < n; c++) if (s.kind[c]) { key += c.toString(36) + s.kind[c]; if (s.life[c] < FLOOR_FADE) key += '~' + Math.round(floorFade(s.life[c]) * FADE_STEPS); }
-    if (key !== this.surfKey) { this.surfKey = key; this.paintSurfaces(w); }
-    if (key) g.drawImage(this.surf.c, 0, 0);
+    // a cell's kind and fade step (no strings: this runs every frame, in every view)
+    if (this.surfSeen.length !== n * 2) { this.surfSeen = new Uint8Array(n * 2).fill(255); }
+    const seen = this.surfSeen;
+    let changed = false, any = false;
+    for (let c = 0; c < n; c++) {
+      const k = s.kind[c], f = k && s.life[c] < FLOOR_FADE ? Math.round(floorFade(s.life[c]) * FADE_STEPS) : 0;
+      if (k) any = true;
+      if (seen[c * 2] !== k || seen[c * 2 + 1] !== f) { seen[c * 2] = k; seen[c * 2 + 1] = f; changed = true; }
+    }
+    if (changed) this.paintSurfaces(w);
+    if (any) g.drawImage(this.surf.c, 0, 0);
     const cw = CELL * 16, FR = EL.fire;
     const GW = w.dims.gw, AW = w.dims.w, AH = w.dims.h;
     const at = (c: number): Pt => [gx(-AW / 2 + ((c % GW) + 0.5) * CELL), gy(-AH / 2 + (Math.floor(c / GW) + 0.5) * CELL)];

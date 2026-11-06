@@ -16,11 +16,28 @@ import { DEVICE, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, TERRAIN, WARD, freeDev
 
 /** Closest point on segment (x1,y1)-(x2,y2) to (px,py): returns [distance, t in 0..1]. */
 export function segDist(px: number, py: number, x1: number, y1: number, x2: number, y2: number): [number, number] {
-  const dx = x2 - x1, dy = y2 - y1, l2 = dx * dx + dy * dy;
-  let t = l2 > 1e-12 ? ((px - x1) * dx + (py - y1) * dy) / l2 : 0;
-  t = Math.max(0, Math.min(1, t));
-  return [len(px - (x1 + dx * t), py - (y1 + dy * t)), t];
+  const t = segT(px, py, x1, y1, x2, y2);
+  return [len(px - (x1 + (x2 - x1) * t), py - (y1 + (y2 - y1) * t)), t];
 }
+/** Where on the segment (x1,y1)-(x2,y2) the closest point to (px,py) is: t in 0..1. */
+export function segT(px: number, py: number, x1: number, y1: number, x2: number, y2: number): number {
+  const dx = x2 - x1, dy = y2 - y1, l2 = dx * dx + dy * dy;
+  const t = l2 > 1e-12 ? ((px - x1) * dx + (py - y1) * dy) / l2 : 0;
+  return Math.max(0, Math.min(1, t));
+}
+/** segDist's distance alone, without the array (the same arithmetic, so the same bits): for hot loops. */
+export function segLen(px: number, py: number, x1: number, y1: number, x2: number, y2: number): number {
+  const t = segT(px, py, x1, y1, x2, y2);
+  return len(px - (x1 + (x2 - x1) * t), py - (y1 + (y2 - y1) * t));
+}
+/**
+ * Is (px, py) surely farther than `r` from segment k? A box test: points outside the segment's box grown
+ * by r (plus a hair for rounding) can't be within r, so callers skip the exact distance for them.
+ */
+const far = (wl: World['walls'], k: number, px: number, py: number, r: number): boolean => {
+  const m = r + 1e-6;
+  return px < Math.min(wl.x1[k], wl.x2[k]) - m || px > Math.max(wl.x1[k], wl.x2[k]) + m || py < Math.min(wl.y1[k], wl.y2[k]) - m || py > Math.max(wl.y1[k], wl.y2[k]) + m;
+};
 
 /** Distance along a ray (unit d) to a segment, or -1 if it misses (thick by `pad`). */
 function raySeg(ox: number, oy: number, dx: number, dy: number, x1: number, y1: number, x2: number, y2: number, pad: number): number {
@@ -71,20 +88,30 @@ export function wallAt(w: World, x: number, y: number, r: number): number {
   const wl = w.walls;
   for (let k = 0; k < MAX_WALLS; k++) {
     if (!blocksShots(wl.type[k])) continue;
-    if (segDist(x, y, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] <= r + STRUCT.wallThickness) return k;
+    if (segLen(x, y, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]) <= r + STRUCT.wallThickness) return k;
   }
   return -1;
 }
 
-/** Rock walls push bodies out. */
+/** Scratch for collideWalls: this step's rock walls, in slot order. */
+const rocks = new Int32Array(MAX_WALLS);
+/**
+ * Rock walls push bodies out. Body by body, each through the rock walls in slot order: a body's
+ * push depends only on its own position, so this is the same as walls-then-bodies, with less looping.
+ */
 export function collideWalls(w: World): void {
   const b = w.bodies, wl = w.walls;
-  for (let k = 0; k < MAX_WALLS; k++) {
-    if (wl.type[k] !== WALL.rock) continue;
-    for (let i = 0; i < b.kind.length; i++) {
-      if (b.kind[i] === KIND.none || b.kind[i] === KIND.dummy) continue;
-      const [d, t] = segDist(b.x[i], b.y[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
+  let nr = 0;
+  for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.rock) rocks[nr++] = k;
+  if (!nr) return;
+  for (let i = 0; i < b.kind.length; i++) {
+    if (b.kind[i] === KIND.none || b.kind[i] === KIND.dummy) continue;
+    for (let q = 0; q < nr; q++) {
+      const k = rocks[q];
       const min = b.r[i] + STRUCT.wallThickness;
+      if (far(wl, k, b.x[i], b.y[i], min)) continue;
+      const t = segT(b.x[i], b.y[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
+      const d = len(b.x[i] - (wl.x1[k] + (wl.x2[k] - wl.x1[k]) * t), b.y[i] - (wl.y1[k] + (wl.y2[k] - wl.y1[k]) * t));
       if (d >= min) continue;
       const cx = wl.x1[k] + (wl.x2[k] - wl.x1[k]) * t, cy = wl.y1[k] + (wl.y2[k] - wl.y1[k]) * t;
       let nx = b.x[i] - cx, ny = b.y[i] - cy;

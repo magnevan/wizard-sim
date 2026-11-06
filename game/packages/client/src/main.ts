@@ -27,6 +27,7 @@
  *                 ?helpq=water,cold or ?helpq=hands:water shows that queue or those hands, ?helphint=1 the first-session hint
  *   ?net=bc       online co-op between tabs of this page on one machine (BroadcastChannel), for testing
  *                 alone; on claude.ai the Co-op panel uses the artifact's room instead (net/)
+ *   ?perf=1       record each frame's sim, draw and render time on wizardSim.perf (scripts/perf.mjs)
  *   ?menu=Scenarios  open the Esc menu at boot on that section (Resume, Scenarios, Multiplayer, Controls,
  *                 Settings); &menuAt=N opens it at tick N instead (screenshots of the menu over a fight)
  *
@@ -36,7 +37,7 @@
 import { Application } from 'pixi.js';
 import { TextureSource } from 'pixi.js';
 import {
-  DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, hashWorld, hex, newBotMemory, newTutorialBot, replaceWorld, runReplay, scriptedInput, scriptedReplay, step, tutorialBotInput,
+  DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, devStartWave, hashWorld, hex, newBotMemory, newTutorialBot, replaceWorld, runReplay, scriptedInput, scriptedReplay, step, tutorialBotInput,
   type PlayerInput, type Room,
 } from '@wizard-sim/sim';
 import { demoInput, enemyAttackScene, parseDemo, rallyScene, threeScene } from './demo';
@@ -258,6 +259,7 @@ async function boot(): Promise<void> {
     view.afterStep(world);
     tune.afterStep();
     help.afterStep(world);
+    stepsRun++;
   };
 
   // Fixed step: real time accumulates, the sim consumes it in DT slices (at most 8 per frame).
@@ -285,8 +287,12 @@ async function boot(): Promise<void> {
   // ?pauseAt=N pauses the sim at tick N as the tuning panel's P does (for checking that cosmetic
   // animation keeps running on real time while the sim stands still)
   const pauseAt = Number(params.get('pauseAt')) || 0;
+  // ?perf=1: per-frame timings (ms) for scripts/perf.mjs; steps = sim steps run that frame
+  const perf = params.get('perf') === '1' ? { sim: [] as number[], steps: [] as number[], help: [] as number[], draw: [] as number[], render: [] as number[], frame: [] as number[] } : null;
+  let stepsRun = 0;
   const frame = () => {
     const now = performance.now();
+    stepsRun = 0;
     if (pauseAt && world.clock[0] >= pauseAt && !tune.paused) tune.paused = true;
     if (menuAsk && menuAt && world.clock[0] >= menuAt && !menu!.open) menu!.show(menuSection ?? 'Resume');
     menu!.frame(now);
@@ -302,9 +308,16 @@ async function boot(): Promise<void> {
     tune.frame(now);
     inspect.frame();
     try {
+      const t1 = performance.now();
       help.frame(now);
+      const t2 = performance.now();
       view.draw(world, acc / DT, now);
+      const t3 = performance.now();
       app.render();
+      if (perf) {
+        const t4 = performance.now();
+        perf.sim.push(t1 - now); perf.steps.push(stepsRun); perf.help.push(t2 - t1); perf.draw.push(t3 - t2); perf.render.push(t4 - t3); perf.frame.push(t4 - now);
+      }
     } catch (err) {
       // keep the loop alive and say what broke (a frozen frame is much harder to debug)
       hud.style.display = '';
@@ -324,5 +337,8 @@ ${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
   schedule(frame);
 
   // Expose the recorder for debugging: copy a replay of this session from the console.
-  (window as unknown as { wizardSim: unknown }).wizardSim = { world, get recorder() { return recorder; }, tune, view, menu, help, get net() { return net; } };
+  (window as unknown as { wizardSim: unknown }).wizardSim = {
+    world, get recorder() { return recorder; }, tune, view, menu, help, get net() { return net; },
+    app, perf, switchScenario, startWave: (n: number) => devStartWave(world, n, 1),
+  };
 }

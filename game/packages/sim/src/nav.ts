@@ -11,12 +11,13 @@
 import { WALL } from './compile';
 import { CELL, STRUCT, T } from './config';
 import { len } from './geom';
-import { segDist } from './walls';
+import { segLen } from './walls';
 import { KIND, MAX_CELLS, MAX_SEATS, MAX_WALLS, type World } from './world';
 
 const INF = 0x3fffffff;
 const INFLATE = 0.45;
-const NB = [[1, 0, 10], [-1, 0, 10], [0, 1, 10], [0, -1, 10], [1, 1, 14], [-1, 1, 14], [1, -1, 14], [-1, -1, 14]] as const;
+// The eight neighbours (dx, dy, cost), in a fixed order; flat arrays, so the hot loops allocate nothing.
+const NBX = [1, -1, 0, 0, 1, -1, 1, -1] as const, NBY = [0, 0, 1, -1, 1, 1, -1, -1] as const, NBC = [10, 10, 10, 10, 14, 14, 14, 14] as const;
 
 // The grid is the world's (w.dims): the survive arena's is bigger than the other rooms'.
 const cellOf = (w: World, x: number, y: number): number => {
@@ -38,7 +39,7 @@ function rebuildBlocked(w: World): void {
     const minY = Math.min(wl.y1[k], wl.y2[k]) - pad, maxY = Math.max(wl.y1[k], wl.y2[k]) + pad;
     for (let y = minY; y <= maxY + CELL; y += CELL) for (let x = minX; x <= maxX + CELL; x += CELL) {
       const c = cellOf(w, x, y);
-      if (segDist(centreX(w, c), centreY(w, c), wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] < pad) nb[c] = 1;
+      if (segLen(centreX(w, c), centreY(w, c), wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]) < pad) nb[c] = 1;
     }
   }
 }
@@ -79,7 +80,8 @@ function dijkstra(w: World, seat: number, goal: number): void {
     const c = pop();
     if (d0 > f[base + c]) continue;
     const cx = c % GW, cy = (c - cx) / GW;
-    for (const [dx, dy, cost] of NB) {
+    for (let q = 0; q < 8; q++) {
+      const dx = NBX[q], dy = NBY[q], cost = NBC[q];
       const nx = cx + dx, ny = cy + dy;
       if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
       const nc = ny * GW + nx;
@@ -107,12 +109,16 @@ export function tickNav(w: World): void {
 function clearLine(w: World, ax: number, ay: number, bx: number, by: number): boolean {
   const wl = w.walls, d = len(bx - ax, by - ay);
   if (d < 1e-6) return true;
-  const steps = Math.ceil(d / 0.4);
+  const steps = Math.ceil(d / 0.4), lim = STRUCT.wallThickness + 0.3;
+  // Every sample lies in the line's box, so a wall whose box, grown by lim, misses it can't come within
+  // lim of any of them: skip it (a hair of slack covers rounding, so the answer is exactly the same).
+  const m = lim + 1e-6, lx = Math.min(ax, bx) - m, hx = Math.max(ax, bx) + m, ly = Math.min(ay, by) - m, hy = Math.max(ay, by) + m;
   for (let k = 0; k < MAX_WALLS; k++) {
     if (wl.type[k] !== WALL.rock) continue;
+    if (Math.max(wl.x1[k], wl.x2[k]) < lx || Math.min(wl.x1[k], wl.x2[k]) > hx || Math.max(wl.y1[k], wl.y2[k]) < ly || Math.min(wl.y1[k], wl.y2[k]) > hy) continue;
     for (let s = 1; s < steps; s++) {
       const px = ax + ((bx - ax) * s) / steps, py = ay + ((by - ay) * s) / steps;
-      if (segDist(px, py, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] < STRUCT.wallThickness + 0.3) return false;
+      if (segLen(px, py, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]) < lim) return false;
     }
   }
   return true;
@@ -150,8 +156,8 @@ export function steer(w: World, i: number, tx: number, ty: number, seat: number)
   for (let s = 0; s < 8; s++) {
     const cx = c % GW, cy = (c - cx) / GW;
     let best = c;
-    for (const [ox, oy] of NB) {
-      const nx = cx + ox, ny = cy + oy;
+    for (let q = 0; q < 8; q++) {
+      const nx = cx + NBX[q], ny = cy + NBY[q];
       if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
       const nc = ny * GW + nx;
       if (f[base + nc] < f[base + best]) best = nc;

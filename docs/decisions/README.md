@@ -817,3 +817,10 @@ The user rated the six enemy attack cards in the VFX gallery (v9): all six **kee
   - This is a gameplay change: the far side of the circle is hit about 0.3 s later than before, so standing at the edge buys a little time. New sim state: `slamX/slamY` (the start point) and `slamBy/slamAt` (once per wizard per slam). **Golden hash re-recorded: `d13d22ff` → `ca05db3f`.**
 - **Goblin:** the user asked whether it cycles weapons. It doesn't: there are three kinds of goblin, each with its own weapon for life (club, dagger or spear, every third one in a crowd). The card shows the three in turn; its title and text now say so.
 - The gallery's cards were re-ported to match.
+
+## 2026-11-06: Stacked orbitals share one ring; they strike sooner
+
+From the user's play-testing:
+- **"When stacking orbitals, can we make them orbit you uniformly?"** Each orbital cast was its own ring starting at the same angle, so stacked casts sat on top of each other. Now all of one wizard's orbitals share one ring and phase, with their orbs spaced evenly in cast order (`orbitAngle`, sim). When an orb is spent or a new cast adds more, the client eases the others to the new spacing over about 0.1 s rather than snapping.
+- **"The goblin basically had to walk into them for them to trigger, is that intentional?"** No. An orb struck only foes within 0.9 u of itself (`orbitStrike − orbitRadius + 0.6`), so a goblin coming in between two orbs was nearly touching you first. An orb now strikes a foe within `orbitStrike` = 1.6 u of it (to the foe's edge), which is about 3 u from you.
+- Golden hash unchanged (`ca05db3f`): the scripted run casts no orbitals.

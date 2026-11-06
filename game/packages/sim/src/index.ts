@@ -9,7 +9,7 @@ export { compile, WALL, type SpellSpec, type Shape, type Mod } from './compile';
 export { queueOf, selfTarget, specOf } from './cast';
 export { HIT_KIND, hitKindNow, setHitKind } from './hit';
 export { GUARD_EL, guardCoatLook, guardSize } from './guards';
-export { fullMask, poolCap, glyphRadiusOf, hasteOf } from './structures';
+export { fullMask, poolCap, glyphRadiusOf, hasteOf, orbitAngle } from './structures';
 export { step } from './step';
 export { TAP, heavyCharge, strikeRecovery } from './hands';
 export * from './replay';

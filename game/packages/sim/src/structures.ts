@@ -113,6 +113,21 @@ function putWard(w: World, i: number, spec: SpellSpec, by = i): void {
 
 // ---- Sigil -------------------------------------------------------------------------------------
 
+/**
+ * Where orb p of orbital device k sits on its owner's ring, in turns. All of one wizard's orbitals
+ * share the ring (and its phase): their orbs are spaced evenly round it, in device order.
+ */
+export function orbitAngle(w: World, k: number, p: number): number {
+  const dv = w.devices, owner = dv.owner[k];
+  let before = 0, total = 0;
+  for (let j = 0; j < MAX_DEVICES; j++) {
+    if (dv.type[j] !== DEVICE.orbital || dv.owner[j] !== owner) continue;
+    if (j < k) before += dv.charges[j];
+    total += dv.charges[j];
+  }
+  return dv.phase[k] + (before + p) / Math.max(1, total);
+}
+
 function spawnDevice(w: World, src: number, type: number, spec: SpellSpec, x: number, y: number, x2 = x, y2 = y): number {
   const dv = w.devices;
   for (let k = 0; k < MAX_DEVICES; k++) {
@@ -173,7 +188,11 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
     }
     case 'orbitals': {
       const k = spawnDevice(w, src, DEVICE.orbital, spec, x, y);
-      if (k >= 0) { let n = 0; for (let e = 0; e < N_EL; e++) if (e !== EL.sigil - 1) n += spec.counts[e]; w.devices.charges[k] = Math.max(1, n); }
+      if (k >= 0) {
+        let n = 0; for (let e = 0; e < N_EL; e++) if (e !== EL.sigil - 1) n += spec.counts[e]; w.devices.charges[k] = Math.max(1, n);
+        // stacked orbitals share one ring: the new one takes up the phase of the caster's others
+        for (let j = 0; j < MAX_DEVICES; j++) if (j !== k && w.devices.type[j] === DEVICE.orbital && w.devices.owner[j] === src) { w.devices.phase[k] = w.devices.phase[j]; break; }
+      }
       break;
     }
     case 'motes': s.motes[src] = STRUCT.motes; break;
@@ -495,8 +514,8 @@ export function tickStructures(w: World): void {
       dv.x[k] = b.x[owner]; dv.y[k] = b.y[owner];
       const n = dv.charges[k];
       for (let o = 0; o < n; o++) {
-        const a = dv.phase[k] + o / n, ox = b.x[owner] + cosTurns(a) * STRUCT.orbitRadius, oy = b.y[owner] + sinTurns(a) * STRUCT.orbitRadius;
-        const target = dv.heal[k] ? nearest(w, ox, oy, STRUCT.orbitStrike - STRUCT.orbitRadius + 0.6, [owner], b.team[owner]) : nearestFoe(w, ox, oy, STRUCT.orbitStrike - STRUCT.orbitRadius + 0.6, owner);
+        const a = orbitAngle(w, k, o), ox = b.x[owner] + cosTurns(a) * STRUCT.orbitRadius, oy = b.y[owner] + sinTurns(a) * STRUCT.orbitRadius;
+        const target = dv.heal[k] ? nearest(w, ox, oy, STRUCT.orbitStrike, [owner], b.team[owner]) : nearestFoe(w, ox, oy, STRUCT.orbitStrike, owner);
         if (target < 0) continue;
         const spec = deviceSpell(w, k, 'force');
         const p = payloadOf(spec);

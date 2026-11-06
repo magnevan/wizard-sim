@@ -158,6 +158,7 @@ export const STRUCT = {
   /** Your turrets together spend at most this share of your total regen R from their main element: shots slow down to fit (and with more turrets). 0.13 keeps the pace they had under the flat 0.22/s regen (60% of it). */
   turretShare: 0.13,
   glyphArm: 0.8, glyphRadius: 0.8,
+  /** Orbitals: ring radius, turns a second, and how far from an orb (to the enemy's edge) it strikes: 1.6 u, so a foe is struck as it closes to about 3 u of you, not when it walks into the orb. */
   orbitRadius: 1.3, orbitSpeed: 0.5, orbitStrike: 1.6,
   /** The lens: its radius; what passes through it is multiplied by lensMult, and a shot through it grows lensGrow times wider. */
   lensRadius: 0.9, lensMult: 1.5, lensGrow: 1.3,

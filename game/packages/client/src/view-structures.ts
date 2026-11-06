@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCH, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
+  N_ALTARS, N_EL, PERKS, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
@@ -457,6 +457,9 @@ export class StructureView {
   private st = 0;
   /** How far the cosmetic clock ran ahead of a stalled sim (s, capped): extrapolates sim-driven loops like the orbitals. */
   private lead = 0;
+  /** Each drawn orbital orb's slot on the shared ring (turns past the ring's phase), eased so orbs glide to their new spacing when one is spent or a cast adds more. Keyed device * 32 + orb. */
+  private orbSlot = new Map<number, number>();
+  private orbT = -1;
 
   /**
    * Draws everything into the field canvases (g under the actors, o over) and the depth-sorted pieces.
@@ -858,6 +861,8 @@ export class StructureView {
   // ---- Sigil devices -----------------------------------------------------------------------------
   private devices(w: World, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
     const dv = w.devices, s = w.seats;
+    const ease = this.orbT < 0 ? 1 : clamp(t - this.orbT, 0, 0.1), live = new Set<number>();
+    this.orbT = t;
     for (let k = 0; k < MAX_DEVICES; k++) {
       const ty = dv.type[k]; if (!ty) continue;
       const x = gx(dv.x[k]), y = gy(dv.y[k]), look = dv.look[k], R = look === ELID.life ? LIFE : ramp(look), age = this.st - this.dT0[k], up = easeOut(clamp(age / 0.3, 0, 1));
@@ -888,7 +893,10 @@ export class StructureView {
         for (let q = 0; q < 56; q++) { const a = (q / 56) * TAU, sy2 = Math.sin(a); if ((q + Math.floor(t * 10)) % 3) continue; X.px(sy2 < 0 ? g : o, v.x + Math.cos(a) * RR, v.y + sy2 * RR * FY - Z, SV[3]); }
         S.seal(g, v.x, v.y, RR + 2, t, 0.45 * up);
         for (let p = 0; p < n; p++) {
-          const a = (dv.phase[k] + this.lead * STRUCT.orbitSpeed + p / n) * TAU, ox = v.x + Math.cos(a) * RR, oy = v.y + Math.sin(a) * RR * FY, oz = Z + Math.sin(t * 4 + p) * 1.5;
+          const want = orbitAngle(w, k, p) - dv.phase[k], key = k * 32 + p, had = this.orbSlot.get(key);
+          const slot = had === undefined ? want : had + (((want - had) % 1 + 1.5) % 1 - 0.5) * Math.min(1, ease * 10);
+          this.orbSlot.set(key, slot); live.add(key);
+          const a = (dv.phase[k] + this.lead * STRUCT.orbitSpeed + slot) * TAU, ox = v.x + Math.cos(a) * RR, oy = v.y + Math.sin(a) * RR * FY, oz = Z + Math.sin(t * 4 + p) * 1.5;
           X.ellipse(g, ox, oy, 2.5, 1, 'rgba(8,6,16,0.5)');
           const c = this.pieces.canvas(ox - 12, oy - oz - 10, 24, 20, oy);
           for (let j = 1; j <= 5; j++) { const b2 = a - j * 0.16, tx = v.x + Math.cos(b2) * RR, ty2 = v.y + Math.sin(b2) * RR * FY - oz; K.sq(c, tx, ty2, j < 2 ? 2 : 1, j < 2 ? SV[1] : j < 4 ? SV[2] : SV[3]); }
@@ -908,6 +916,7 @@ export class StructureView {
         light(x, y - 8, 30, '#d400ff', 0.45 * up); if (pass) light(x, y - 10, 70, '#f0c0ff', 0.9 * pass);
       }
     }
+    for (const key of this.orbSlot.keys()) if (!live.has(key)) this.orbSlot.delete(key);
   }
   /** An orbital: a small orb in its element (the look rule). */
   private orb(c: Ctx, x: number, y: number, look: number, t: number, sd: number): void {

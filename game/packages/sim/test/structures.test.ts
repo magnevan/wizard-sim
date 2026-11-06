@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  BTN, DEVICE, EL, KIND, NO_INPUT, RUNES, STRUCT, WALL, WARD, compile, createWorld, elementId, quantize, step,
+  BTN, DEVICE, EL, KIND, NO_INPUT, RUNES, STRUCT, WALL, WARD, compile, createWorld, elementId, orbitAngle, quantize, step,
   type PlayerInput, type World,
 } from '../src';
 
@@ -221,6 +221,25 @@ describe('Sigil', () => {
     const { w, d, dummy } = arena();
     const t = dummy(1.6, 0);
     d.queue('sigil', 'earth', 'earth').cast(BTN.area, 2, 120);
+    expect(w.bodies.hp[t]).toBeLessThan(400);
+  });
+
+  it('stacked orbitals share one ring, spaced evenly', () => {
+    const { w, d } = arena();
+    d.aimAt(6, 0); // aimed at yourself, a Sigil cast would dismiss the orbitals instead
+    d.queue('sigil', 'earth', 'earth').cast(BTN.area, 2, 40);
+    w.seats.runes.fill(5); // the first cast emptied Earth
+    d.queue('sigil', 'earth', 'earth').cast(BTN.area, 2, 40);
+    const ks = [...w.devices.type.keys()].filter((k) => w.devices.type[k] === DEVICE.orbital);
+    expect(ks.length).toBe(2);
+    const angles = ks.flatMap((k) => [0, 1].map((p) => ((orbitAngle(w, k, p) % 1) + 1) % 1)).sort((a, b) => a - b);
+    for (let i = 0; i < 4; i++) expect(((angles[(i + 1) % 4] - angles[i] + 1) % 1)).toBeCloseTo(0.25, 6);
+  });
+
+  it('orbitals strike a foe closing in before it reaches the ring', () => {
+    const { w, d, dummy } = arena();
+    const t = dummy(2.8, 0);
+    d.queue('sigil', 'earth').cast(BTN.area, 2, 120);
     expect(w.bodies.hp[t]).toBeLessThan(400);
   });
 

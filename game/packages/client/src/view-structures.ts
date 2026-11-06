@@ -22,6 +22,7 @@ import {
   AI, ARCH, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
   N_ALTARS, N_EL, PERKS, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
+  isPropWall,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
 import { FIELD, gx, gy } from './art/field';
@@ -610,7 +611,7 @@ export class StructureView {
       return false;
     };
     for (let k = 0; k < MAX_WALLS; k++) {
-      const ty = wl.type[k]; if (!ty) continue;
+      const ty = wl.type[k]; if (!ty || isPropWall(w, k)) continue; // a blocking prop: the prop is what shows
       const a: Pt = [gx(wl.x1[k]), gy(wl.y1[k])], bb: Pt = [gx(wl.x2[k]), gy(wl.y2[k])];
       const age = (tick - (w.walls.born[k] ?? 0)) / 60, hpf = clamp(wl.hp[k] / Math.max(1, wl.maxHp[k]), 0, 1), hitE = this.st - this.wHitT[k];
       if (ty === WALL.rock) {
@@ -622,7 +623,9 @@ export class StructureView {
         if (!gm) {
           const lenPx = Math.hypot(bb[0] - a[0], (bb[1] - a[1]) / FY);
           const ruin = wl.owner[k] === TERRAIN; // the arena's own rock: taller, older stone
-          const spec: WallSpec = { a: [a[0], a[1]], b: [bb[0], bb[1]], n: Math.max(1, Math.round(lenPx / 12)), H: ruin ? 19 : 14, T: ruin ? 8 : 7, mat: ruin ? 'ruin' : cold ? 'frost' : 'stone', seed: (k * 7 + wl.born[k]) & 1023, endA, endB };
+          // a room with furniture: its far wall stands as high as a room's, for shelves and banners to stand against
+          const backWall = ruin && w.def.props.length > 0 && wl.y1[k] === wl.y2[k] && wl.y1[k] < 0;
+          const spec: WallSpec = { a: [a[0], a[1]], b: [bb[0], bb[1]], n: Math.max(1, Math.round(lenPx / 12)), H: ruin ? (backWall ? 34 : 19) : 14, T: ruin ? 8 : 7, mat: ruin ? 'ruin' : cold ? 'frost' : 'stone', seed: (k * 7 + wl.born[k]) & 1023, endA, endB };
           gm = { spec, g: wallGeom(spec) };
           this.geoms.set(pre, gm);
         }

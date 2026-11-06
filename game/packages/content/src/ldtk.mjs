@@ -6,7 +6,7 @@
 // world = (px - pxWid / 2) / 20. Both operands are integers, so the division is correctly rounded:
 // every coordinate that is a multiple of 0.05 u round-trips exactly (-2.6 u is 428 px in a 960 px
 // level, and (428 - 480) / 20 is the same double as the literal -2.6).
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,6 +15,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const GAME = resolve(here, '../../..');
 export const CONTENT = join(GAME, 'content');
 export const PROJECT = join(CONTENT, 'maps/world.ldtk');
+/** The asset registry: assets/<kind>/<id>/meta.json and its images. */
+export const ASSETS = join(CONTENT, 'assets');
 /** The generated module the sim imports. */
 export const GEN_OUT = join(GAME, 'packages/sim/src/rooms.gen.ts');
 /** LDtk's official JSON schema, fetched from https://ldtk.io/files/JSON_SCHEMA.json and pinned. */
@@ -46,6 +48,17 @@ export function loadProject(path = PROJECT) {
     return { level: JSON.parse(readFileSync(file, 'utf8')), path: file };
   });
   return { project, levels, path };
+}
+
+/** The prop assets: id -> meta.json, with `dir`, the asset's folder. */
+export function loadProps(root = ASSETS) {
+  const dir = join(root, 'props'), props = new Map();
+  if (!existsSync(dir)) return props;
+  for (const id of readdirSync(dir)) {
+    const file = join(dir, id, 'meta.json');
+    if (existsSync(file)) props.set(id, { ...JSON.parse(readFileSync(file, 'utf8')), dir: join(dir, id) });
+  }
+  return props;
 }
 
 /** A level by room id or identifier (case-insensitive). */

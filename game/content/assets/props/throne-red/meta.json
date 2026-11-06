@@ -1,0 +1,41 @@
+{
+  "id": "throne-red",
+  "kind": "prop",
+  "name": "Red throne",
+  "base": "throne",
+  "footprint": [
+    1.4,
+    0.9
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        13,
+        40
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-7.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "ramp swap: violet cushion to red"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "simple": {
+      "file": "simple.png",
+      "foot": [
+        13,
+        40
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-7.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "ramp swap: violet cushion to red",
+        "reduce_detail"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

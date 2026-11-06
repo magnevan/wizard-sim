@@ -10,6 +10,9 @@ content/
     world/Arena.ldtkl
     world/Survive.ldtkl
     world/Tutorial.ldtkl   the tutorial's chamber (its per-beat layouts are still code: sim/src/tutorial-data.ts)
+    world/Academy.ldtkl    the mock room for judging art (#academy)
+  assets/props/<id>/       the asset registry: meta.json and images, below
+  generated/               every raw image bought from an AI tool (its README). Never edited; look here before any call
 packages/content/          the build, the check and the grid CLI (node, no runtime part)
   schema/ldtk-1.5.3.schema.json   LDtk's official JSON schema, pinned (from https://ldtk.io/files/JSON_SCHEMA.json)
 ```
@@ -60,24 +63,47 @@ Only values the game understands are defined. Pits, water and the like come when
 | **Altar** | | Survive: where the power-up altars rise between waves. None, or exactly three: left, middle, right in list order. |
 | **Rock** | `x1`, `y1`, `x2`, `y2` (world units) | A free rock wall segment, for walls that don't follow the grid (Survive's diagonal funnels, its cut keep corners). The fields are what the game reads; the box LDtk draws only shows roughly where it is (its bounding box). Edit the numbers in the entity's panel. For grid-aligned walls, paint Terrain rock instead. |
 
-Static rock shares the 160 wall slots with the players' walls, so **a room may have at most 40 rock wall segments** (Rock entities plus traced outlines). Survive uses exactly 40.
+| **Prop** | `asset` (an id in `assets/props`), `blocks` | Furniture or decoration. It's drawn at the entity's spot: the middle of its footprint on the ground. If `blocks` is on, its footprint stops bodies and shots like rock (and draws no wall). It has no other gameplay. |
 
-The room's id is the level's name with a lower-case first letter (`Survive` → `survive`). The game's code names `sanctum`, `arena`, `survive` and `tutorial`, so don't rename those. A new level becomes a new room in the sim automatically; to play it, add a scenario in `packages/client/src/scenarios.ts`.
+Static rock shares the 160 wall slots with the players' walls, so **a room may have at most 40 rock wall segments** (Rock entities, traced outlines and blocking props). A blocking prop takes one wall if its footprint is up to 0.6 u deep, two if deeper. Survive uses exactly 40, the Academy 38.
+
+## The asset registry
+
+`assets/props/<id>/` is one prop: `meta.json` and its images. The client loads images when a room needs them, as textures; the build reads only the footprint.
+
+```json
+{ "id": "banner-red", "kind": "prop", "name": "Red banner", "base": "banner", "footprint": [1.6, 0.2], "lift": 3,
+  "sets": { "lean": { "file": "lean.png", "foot": [14, 31], "source": "pixellab + local", "raw": "game/content/generated/pixellab/pl-obj-11.png",
+                      "tool": "tools/art-trial/variants.py", "ops": ["palette swap: cloth to #a83030"], "status": "Trial asset: not cleared to ship. PixelLab terms unread." } } }
+```
+
+| Field | Meaning |
+|---|---|
+| `footprint` | `[w, h]` in world units: what blocks. Every set shares it, so the room plays the same in each. |
+| `sets` | The art treatments: `lean`, `simple`, `code`. A set needs `file`, `foot` (the image pixel standing on the prop's spot) and `source`; a generated one needs `raw`. |
+| `base` | A variant's original. A set the variant lacks comes from its base. |
+| `flat` | Lies on the floor, under everything (a rune circle). |
+| `lift` | Hangs this many art px above its spot (a banner on a wall). |
+
+To add a prop: put a folder here (`tools/art-trial/props.py` and `variants.py` write these), place a Prop in LDtk, and build. Art direction, how sets are made and variants: `tools/art-trial/README.md`.
+
+The room's id is the level's name with a lower-case first letter (`Survive` → `survive`). The game's code names `sanctum`, `arena`, `survive`, `tutorial` and `academy`, so don't rename those. A new level becomes a new room in the sim automatically; to play it, add a scenario in `packages/client/src/scenarios.ts`.
 
 ## What content:check checks
 
 1. The project and every level file against LDtk's official JSON schema (1.5.3), and the pinned version.
 2. References: every layer, entity and field instance has its definition, IntGrid values are defined, level files exist and match the project's list, iids are unique, entity-reference fields (none yet) point at real entities.
 3. The rooms compile: known entities only, all four seats' starts, three altars or none, at least four portals in the Arena and Survive, at most 40 rock walls.
-4. Placement: every start, dummy, portal and altar is inside the room, not on painted rock and at least 0.7 u from any rock wall, and **reachable on foot from seat 0's start** on the enemies' pathfinding grid (rock widened as `nav.ts` widens it).
+4. Placement: every start, dummy, portal and altar is inside the room, not on painted rock and at least 0.7 u from any rock wall or blocking prop, and **reachable on foot from seat 0's start** on the enemies' pathfinding grid (rock widened as `nav.ts` widens it). Every prop is inside the room.
 5. `packages/sim/src/rooms.gen.ts` is what the maps compile to.
+6. The asset registry: every Prop names an asset that exists; every `meta.json` is whole; its images exist and none are left out; a generated image names a raw file that exists.
 
 ## The grid CLI (for Claude, and for diffs)
 
 ```sh
 npm run content -- list                         # each level: size, room hash, rock walls, entity counts
 npm run content -- grid survive                 # the Terrain layer as text: '.' floor, '#' rock, row 0 at the top
-npm run content -- grid survive --entities      # the same with S starts, D dummies, P portals, A altars, + free rock (a view only)
+npm run content -- grid survive --entities      # the same with S starts, D dummies, P portals, A altars, + free rock, O props (a view only)
 npm run content -- grid sanctum --write rows.txt   # write text rows back into the level ('-' reads stdin); lines starting // are ignored
 ```
 

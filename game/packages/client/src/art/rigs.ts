@@ -70,12 +70,14 @@ export interface RigState {
   crown: number;
   /** Opacity, ordered-dithered (1 = solid). */
   alpha: number;
+  /** The wizard's detailed drawing (the art test): 1 on. */
+  hd: number;
 }
 
 export const newRigState = (): RigState => ({
   kind: 'goblin', pal: 0, variant: 0, seed: 0, face: 0, spd: 0, ph: 0, idle: 0, vx: 0, vy: 0, prep: 0, cast: 0, sq: 0, dead: 0,
   burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0, atk: -1, hold: 0,
-  tint: null, tintK: 0, outline: null, eyeCol: null, eyesShut: 0, fallSide: 0, flashCol: null, bare: 0, crown: 1, alpha: 1,
+  tint: null, tintK: 0, outline: null, eyeCol: null, eyesShut: 0, fallSide: 0, flashCol: null, bare: 0, crown: 1, alpha: 1, hd: 0,
 });
 
 /** Anchor points relative to the feet, in art px: where effects attach. */
@@ -163,13 +165,13 @@ const out: Partial<Anchors> = {};
 // ======================================================================
 function drawWizard(s: RigState): void {
   const pal = X.TEAMS[s.pal % 4], T = tinter(s), { cs, sn, kx, P } = frame(s);
-  const walk = Math.min(1, s.spd), cast = s.cast, prep = s.prep;
+  const walk = Math.min(1, s.spd), cast = s.cast, prep = s.prep, hd = s.hd > 0;
   const bob = Math.abs(Math.sin(s.ph)) * 1.3 * walk + Math.sin(s.idle) * 0.35 * (1 - walk);
   const st = Math.sin(s.ph) * 3.4 * walk;
   const lift = (k: number) => Math.max(0, Math.cos(s.ph + k)) * 1.8 * walk;
   // feet
   const fl = P(st, -2, lift(0)), fr = P(-st, 2, lift(Math.PI));
-  for (const f of fl[2] < fr[2] ? [fl, fr] : [fr, fl]) { X.rect(sc, f[0] - 1, f[1] - 1, 3, 2, '#2a2030'); X.px(sc, f[0] - 1, f[1] - 1, '#4a3a4a'); }
+  for (const f of fl[2] < fr[2] ? [fl, fr] : [fr, fl]) { X.rect(sc, f[0] - 1, f[1] - 1, 3, 2, '#2a2030'); X.px(sc, f[0] - 1, f[1] - 1, '#4a3a4a'); if (hd) X.px(sc, f[0] + 1, f[1], '#5a4636'); }
   // arms: shoulder -> hand. Poses: idle, prep (gathering: staff held up in front, the off hand
   // cupped under the orb), cast (the staff held out in front along the aim, nearly level).
   const idleL: V3 = [0.8 - st * 0.5, -4.3, 6.6 + bob], idleR: V3 = [0.8 + st * 0.5, 4.3, 6.6 + bob];
@@ -180,7 +182,11 @@ function drawWizard(s: RigState): void {
   const arm = (side: number, h: V3) => {
     const sh = P(0, side * 3.4, 11.4 + bob), hp = P(...h);
     X.line(sc, sh[0], sh[1], hp[0], hp[1], T(pal.dark), 2);
-    X.px(sc, hp[0], hp[1] - 1, T(pal.trim));
+    if (hd) {
+      X.line(sc, sh[0], sh[1] + 1, hp[0], hp[1] + 1, T(pal.deep), 2); // the sleeve hangs below the arm
+      X.line(sc, sh[0], sh[1] - 1, hp[0], hp[1] - 1, T(pal.main));
+      X.rect(sc, hp[0] - 1, hp[1] - 1, 3, 1, T(pal.trim)); // the cuff
+    } else X.px(sc, hp[0], hp[1] - 1, T(pal.trim));
     X.rect(sc, hp[0] - 0.5, hp[1] - 0.5, 2, 2, T(SKIN.main));
   };
   const armDepth = (h: V3) => P(...h)[2];
@@ -191,6 +197,14 @@ function drawWizard(s: RigState): void {
   const drawStaff = () => {
     const b = P(...staffBot), a = P(...staffTop);
     X.line(sc, b[0], b[1], a[0], a[1], '#7a5034'); X.px(sc, a[0], a[1] + 1, '#a8784a');
+    if (hd) {
+      const at = (k: number): [number, number] => [lerp(b[0], a[0], k), lerp(b[1], a[1], k)];
+      for (const k of [0.56, 0.62, 0.68]) { const q = at(k); X.px(sc, q[0], q[1], '#d8c0a0'); } // the wrapped grip
+      for (const k of [0.3, 0.9]) { const q = at(k); X.px(sc, q[0], q[1], '#3e2c20'); }
+      const f = at(0.04); X.px(sc, f[0], f[1], '#8a8e98'); // the iron foot
+      X.px(sc, a[0] - 2, a[1] - 2, '#a8784a'); X.px(sc, a[0] + 2, a[1] - 2, '#7a5034'); // the claw
+      X.px(sc, a[0] - 2, a[1] - 1, '#7a5034'); X.px(sc, a[0] + 2, a[1] - 1, '#5a3a26');
+    }
     // the orb's socket; the orb itself glows in the overlay, in the colour of what is being cast
     X.rect(se, a[0] - 1, a[1] - 2, 3, 3, '#3a3048');
     out.tip = [a[0], a[1] - 1];
@@ -206,6 +220,15 @@ function drawWizard(s: RigState): void {
   bodyRows(sc, (f, r, u) => { const p = P(f, r, u + bob); return [p[0] + sway(u), p[1]]; }, 1, 12, prof, null,
     { light: pal.light, main: pal.main, dark: pal.dark }, T,
     (u, _x, k) => {
+      if (hd && frontVis) {
+        if (u === 7) return k > 0.44 && k < 0.58 ? '#ffd860' : '#4a3226'; // a leather belt, a brass buckle
+        if (u === 8) { if (k > 0.3 && k < 0.7) return X.mix(pal.main, pal.deep, 0.35); } // the robe gathers over it
+      }
+      if (hd && u > 2 && u < 7) {
+        // folds fall from the belt, fanning toward the hem: a dark crease with a lit edge beside it
+        const fan = (7 - u) * 0.022;
+        for (const c of [0.3 - fan, 0.72 + fan]) { if (Math.abs(k - c) < 0.05) return pal.deep; if (Math.abs(k - c + 0.1) < 0.045) return pal.light; }
+      }
       if (u <= 1) return pal.deep;
       if (u <= 2.5) return k < 0.3 ? pal.trim : X.mix(pal.trim, pal.dark, 0.35);
       if (u === 7) return k > 0.42 && k < 0.6 && frontVis ? pal.trim : pal.deep; // belt
@@ -219,6 +242,10 @@ function drawWizard(s: RigState): void {
   const sh = P(0.3, 0, 11.4 + bob);
   X.ellipse(sc, sh[0], sh[1], 3.6 * kx, 2.2, T(pal.dark));
   X.ellipse(sc, sh[0] - 0.5, sh[1] - 0.5, 2.6 * kx, 1.4, T(X.mix(pal.trim, pal.main, 0.4)));
+  if (hd) {
+    X.ring(sc, sh[0], sh[1], 3.6 * kx, 2.2, T(pal.deep), 1, 0.1, Math.PI - 0.1); // the mantle's lower edge
+    if (frontVis) { const cl = P(3, 0, 11 + bob); X.px(sc, cl[0], cl[1], '#ffd860'); }
+  }
   // head: hood from behind; face and beard from the front and side
   const hc = P(0.2, 0, 14.4 + bob);
   X.ellipse(sc, hc[0], hc[1], 3 * kx, 2.6, T(pal.dark));
@@ -228,6 +255,10 @@ function drawWizard(s: RigState): void {
     X.px(sc, fc[0] + 1, fc[1] + 1, T(SKIN.dark));
     for (const r of [-1.2, 1.2]) if (visible(sn, cs, 2.7, r)) { const e = P(3.2, r, 14.2 + bob); X.px(sc, e[0], e[1], '#1a1420'); }
     const nose = P(4.0, 0, 13.6 + bob); if (Math.abs(cs) > 0.5) X.px(sc, nose[0], nose[1], T(SKIN.dark));
+    if (hd) {
+      for (const r of [-1.2, 1.2]) if (visible(sn, cs, 2.7, r)) { const e = P(3.2, r, 15.2 + bob); X.px(sc, e[0], e[1], T('#d8d4e0')); } // brows
+      X.px(sc, fc[0] - 1, fc[1], T('#f0c8a8'));
+    }
   }
   if (sn > -0.55) {
     // beard: a white wedge on the chest from the front; from the side it juts forward
@@ -235,6 +266,12 @@ function drawWizard(s: RigState): void {
     const a = P(2.8, -2.4, 12.6 + bob), b = P(2.8, 2.4, 12.6 + bob), tip = P(4.4, 0, 6.6 + bob);
     X.poly(sc, [[a[0], a[1]], [b[0], b[1]], [tip[0] + sway2, tip[1]]], T('#f2f0f6'));
     X.line(sc, (a[0] + b[0]) / 2 + 1, a[1] + 1, tip[0] + sway2 + 0.5, tip[1] - 1, T('#b8b4c8'));
+    if (hd) {
+      // fuller, ending lower, with one shaded side: at this size strands only read as noise
+      const low = P(4.4, 0, 5 + bob);
+      X.poly(sc, [[a[0] - 1, a[1]], [b[0] + 1, b[1]], [low[0] + sway2, low[1]]], T('#f2f0f6'));
+      X.line(sc, b[0] + 1, b[1] + 1, low[0] + sway2 + 1, low[1] - 1, T('#b8b4c8'));
+    }
   }
   front.forEach((f) => f());
   // hat, one value darker than the robe. The brim is a disc (steep camera) with a light band;
@@ -243,6 +280,16 @@ function drawWizard(s: RigState): void {
   X.ellipse(sc, brim[0], brim[1] + 1, 6.8 * kx, bry, T(pal.deep));
   X.ellipse(sc, brim[0], brim[1], 6.5 * kx, bry - 0.5, T(pal.dark));
   X.ellipse(sc, brim[0] - 1.2, brim[1] - 0.7, 4.4 * kx, bry - 1.8, T(pal.main));
+  if (hd) {
+    X.ring(sc, brim[0], brim[1], 6.5 * kx, bry - 0.5, T(pal.light), 1, Math.PI * 0.95, Math.PI * 1.55);
+    // the camera looks down past the brim, so the head is hidden: the face shows as a strip just under it
+    if (sn > 0.25 && s.dead < 0.3) {
+      const fx = brim[0] + cs * 2.2, fy = brim[1] + bry + 1.5;
+      X.rect(sc, fx - 2.5, fy, 6, 2, T(SKIN.main)); X.rect(sc, fx - 2.5, fy + 2, 6, 1, T('#f2f0f6'));
+      for (const r of [-1.5, 1.5]) if (Math.abs(r + cs * 1.5) < 2.4) X.px(sc, fx + r, fy, '#1a1420');
+      X.px(sc, fx + cs * 1.2 + 0.5, fy + 1, T(SKIN.dark));
+    }
+  }
   const lagX = -s.vx * 0.04 + Math.sin(s.idle * 0.85) * 0.35, lagY = -s.vy * 0.02;
   // Seen from behind a tip falling "back" would fold over the cone: there it stands taller and flops sideways.
   const backV = clamp(-sn * 1.6, 0, 1), side = s.seed & 1 ? 1 : -1;
@@ -256,13 +303,17 @@ function drawWizard(s: RigState): void {
     for (let x = xa; x <= xb; x++) {
       const q = (x - xa) / Math.max(1, xb - xa);
       let col = q < 0.3 ? pal.main : q > 0.72 ? pal.deep : pal.dark;
+      if (hd && k > 0.2 && k < 0.62 && Math.abs((k * 3.2) % 1 - 0.5) < 0.09 && q > 0.2) col = pal.deep; // the cone's creases
       if (u < u0 + 1.3) col = q < 0.3 ? pal.trim : X.mix(pal.trim, pal.dark, 0.45); // hat band
       X.px(sc, x, cy, T(col));
     }
     if (u + 0.6 > tipU) X.px(sc, Math.round(cx), Math.round(cy), T(pal.light));
   }
   // a star on the hat band, on the side that faces the camera
-  if (sn > 0.1) { const em = P(3.0, 0, 20.2 + bob); X.px(se, em[0], em[1], pal.trim); }
+  if (sn > 0.1) {
+    const em = P(3.0, 0, 20.2 + bob); X.px(se, em[0], em[1], pal.trim);
+    if (hd) { X.rect(sc, em[0] - 1, em[1] - 1, 3, 3, T('#2a1c14')); X.rect(sc, em[0] - 1, em[1] - 1, 3, 1, T('#ffd860')); X.px(sc, em[0] - 1, em[1], T('#ffd860')); X.px(sc, em[0] + 1, em[1], T('#ffd860')); X.rect(sc, em[0] - 1, em[1] + 1, 3, 1, T('#b8844a')); }
+  }
   const c2 = P(2, 0, 11 + bob), h2 = P(0, 0, 16 + bob);
   out.chest = [c2[0], c2[1]]; out.head = [h2[0], h2[1]];
   const a = P(...hL), b = P(...hR);

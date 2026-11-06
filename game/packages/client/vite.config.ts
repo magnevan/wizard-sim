@@ -12,6 +12,8 @@ export default defineConfig({
     // made or joined (net/webrtc.ts). The two boot chunks are each about 510 kB (150-190 kB gzipped),
     // just over Vite's default 500 kB warning, hence the limit.
     chunkSizeWarningLimit: 600,
+    // The registry's images stay files, fetched when a room needs them (art/assets.ts), however small.
+    assetsInlineLimit: (file) => (file.replace(/\\/g, '/').includes('/content/assets/') ? false : undefined),
     rolldownOptions: { output: { codeSplitting: { groups: [{ name: 'pixi', test: /node_modules[\\/](pixi\.js|@pixi)[\\/]/ }] } } },
   },
 });

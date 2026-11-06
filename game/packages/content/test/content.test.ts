@@ -5,7 +5,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { BODY, CELL, CONTENT_HASH, MAX_WALLS, N_ALTARS, ROOM_HASH, ROOMS, STRUCT, createWorld, roomHash as simRoomHash } from '@wizard-sim/sim';
+import { BODY, CELL, CONTENT_HASH, MAX_WALLS, NO_INPUT, N_ALTARS, ROOM_HASH, ROOMS, STRUCT, createWorld, isPropWall, roomHash as simRoomHash, step } from '@wizard-sim/sim';
 import * as C from '../src/index.mjs';
 
 /** A scratch copy of the maps and of the generated module, to break. */
@@ -89,6 +89,62 @@ describe('content:check', () => {
     expect(C.SIM.altars).toBe(N_ALTARS);
     expect(C.SIM.terrainWalls).toBeLessThan(MAX_WALLS);
     expect(Object.keys(ROOMS).sort()).toEqual([...C.SIM.rooms].sort());
+  });
+});
+
+describe('props', () => {
+  const academy = (l: any) => entitiesOf(l).find((e: any) => e.__identifier === 'Prop');
+
+  it('a prop must name an asset that exists', () => {
+    const s = scratch();
+    s.edit('world/Academy.ldtkl', (l) => { academy(l).fieldInstances[0].__value = 'no-such-thing'; });
+    expect(s.check().some((e) => e.includes('no prop asset "no-such-thing"'))).toBe(true);
+  });
+
+  it("a blocking prop counts as rock: a start can't stand in it, and it spends the wall budget", () => {
+    const s = scratch();
+    s.edit('world/Academy.ldtkl', (l) => {
+      const p = entitiesOf(l).find((e: any) => e.__identifier === 'PlayerStart');
+      const desk = entitiesOf(l).find((e: any) => e.fieldInstances[0]?.__value === 'desk');
+      p.px = [...desk.px];
+    });
+    expect(s.check().some((e) => e.includes('start 0') && e.includes('from the rock wall'))).toBe(true);
+    const t = scratch();
+    t.edit('world/Academy.ldtkl', (l) => { const es = entitiesOf(l), d = es.find((e: any) => e.fieldInstances[0]?.__value === 'desk'); for (let i = 0; i < 4; i++) es.push({ ...d, iid: 'copy-' + i }); });
+    expect(t.check().some((e) => e.includes('blocking-prop walls; the budget is 40'))).toBe(true);
+  });
+
+  it('a footprint becomes one wall when shallow, two side by side when deep, along its long side', () => {
+    expect(C.footprintWalls(0, 0, [2.4, 0.6])).toEqual([[-0.95, 0, 0.95, 0]]);
+    expect(C.footprintWalls(1, 1, [2, 1])).toEqual([[0.25, 0.75, 1.75, 0.75], [0.25, 1.25, 1.75, 1.25]]);
+    expect(C.footprintWalls(0, 0, [0.6, 2])).toEqual([[0, -0.75, 0, 0.75]]);
+  });
+
+  it("every asset's meta.json is whole, and a generated image names its raw file", () => {
+    const assets = C.loadProps(), errors: string[] = [];
+    C.checkAssets(assets, errors);
+    expect(errors).toEqual([]);
+    const m = structuredClone(assets.get('banner-red'));
+    delete m.sets.lean.raw;
+    const bad: string[] = [];
+    C.checkAssets(new Map([...assets, ['banner-red', m]]), bad);
+    expect(bad.some((e) => e.includes('must name its raw file'))).toBe(true);
+  });
+
+  it('blocking props stop a body, take wall slots after the rock, and other rooms have none', () => {
+    const w = createWorld(7, 1, { room: 'academy' });
+    const n = ROOMS.academy.rock.length, m = ROOMS.academy.propRock.length;
+    expect(m).toBeGreaterThan(0);
+    expect(isPropWall(w, n - 1)).toBe(false);
+    expect(isPropWall(w, n)).toBe(true);
+    expect(isPropWall(w, n + m)).toBe(false);
+    expect(w.walls.type[n + m - 1]).toBe(1);
+    expect(ROOMS.sanctum.props.length + ROOMS.arena.propRock.length + ROOMS.survive.propRock.length).toBe(0);
+    const k = n, b = w.bodies;
+    b.x[0] = (w.walls.x1[k] + w.walls.x2[k]) / 2; b.y[0] = w.walls.y1[k] + 0.1;
+    const before = b.y[0];
+    step(w, [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT]);
+    expect(b.y[0] - before).toBeGreaterThan(0.3);
   });
 });
 

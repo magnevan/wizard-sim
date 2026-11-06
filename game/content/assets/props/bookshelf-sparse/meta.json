@@ -1,0 +1,41 @@
+{
+  "id": "bookshelf-sparse",
+  "kind": "prop",
+  "name": "Bookshelf, half empty",
+  "base": "bookshelf",
+  "footprint": [
+    2.4,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        16,
+        44
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-1.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "half the spines removed"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "simple": {
+      "file": "simple.png",
+      "foot": [
+        16,
+        44
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-1.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "half the spines removed",
+        "reduce_detail"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

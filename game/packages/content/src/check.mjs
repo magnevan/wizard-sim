@@ -5,11 +5,13 @@
 //   3. the rooms compile, and the game's own rules for them (starts, altars, the wall budget);
 //   4. placement: every spawn, portal, altar and dummy inside the room and clear of rock, and
 //      reachable on foot from seat 0's start;
-//   5. the generated module (packages/sim/src/rooms.gen.ts) is up to date.
-import { existsSync, readFileSync } from 'node:fs';
+//   5. the generated module (packages/sim/src/rooms.gen.ts) is up to date;
+//   6. the asset registry: every prop's meta.json is whole and names images that exist.
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { compileProject, emitModule, ROCK } from './compile.mjs';
-import { CELL, GEN_OUT, LDTK_VERSION, SCHEMA, loadProject } from './ldtk.mjs';
+import { CELL, GAME, GEN_OUT, LDTK_VERSION, SCHEMA, loadProject, loadProps } from './ldtk.mjs';
 
 const require = createRequire(import.meta.url);
 
@@ -27,7 +29,7 @@ export const SIM = {
    * players 120; that is the ceiling for any room's terrain. */
   terrainWalls: 40,
   /** The rooms the sim's code names (createWorld, the scenarios). */
-  rooms: ['sanctum', 'arena', 'survive', 'tutorial'],
+  rooms: ['sanctum', 'arena', 'survive', 'tutorial', 'academy'],
 };
 
 let validators = null;
@@ -122,7 +124,8 @@ function checkRoom(room, errors) {
   if (room.altars.length !== 0 && room.altars.length !== SIM.altars) errors.push(`${R}: ${room.altars.length} altars; a room has none or exactly ${SIM.altars}`);
   if (room.id === 'survive' && room.altars.length !== SIM.altars) errors.push(`${R}: Survive needs ${SIM.altars} altars`);
   if ((room.id === 'survive' || room.id === 'arena') && room.portals.length < 4) errors.push(`${R}: needs at least 4 portal spots (a wave opens up to 4)`);
-  if (room.rock.length > SIM.terrainWalls) errors.push(`${R}: ${room.rock.length} rock walls; the budget is ${SIM.terrainWalls} (players need the other wall slots). Merge rock, or use fewer free Rock segments.`);
+  const walls = [...room.rock, ...room.propRock];
+  if (walls.length > SIM.terrainWalls) errors.push(`${R}: ${room.rock.length} rock walls and ${room.propRock.length} blocking-prop walls; the budget is ${SIM.terrainWalls} (players need the other wall slots). Merge rock, or use fewer free Rock segments or blocking props.`);
   const gw = Math.round(room.w / CELL), gh = Math.round(room.h / CELL);
   const rockCell = (cx, cy) => room.terrain[cy]?.[cx] === ROCK;
   const cellX = (x) => Math.floor((x + hw) / CELL), cellY = (y) => Math.floor((y + hh) / CELL);
@@ -132,11 +135,12 @@ function checkRoom(room, errors) {
     ...room.starts.map((p, i) => ['start ' + i, p]), ...room.dummies.map((p, i) => ['dummy ' + i, p]),
     ...room.portals.map((p, i) => ['portal ' + i, p]), ...room.altars.map((p, i) => ['altar ' + i, p]),
   ];
+  for (const p of room.props) if (Math.abs(p.x) > hw || Math.abs(p.y) > hh) errors.push(`${R}: prop ${p.asset} at ${p.x},${p.y} is outside the room`);
   const clear = SIM.wallThickness + SIM.wizardRadius;
   for (const [name, [x, y]] of points) {
     if (Math.abs(x) > hw || Math.abs(y) > hh) { errors.push(`${R}: ${name} at ${x},${y} is outside the room`); continue; }
     if (rockCell(cellX(x), cellY(y))) errors.push(`${R}: ${name} at ${x},${y} is inside painted rock`);
-    for (const s of room.rock) {
+    for (const s of walls) {
       const d = segDist(x, y, ...s);
       if (d < clear) { errors.push(`${R}: ${name} at ${x},${y} is ${d.toFixed(2)} u from the rock wall ${s.join(',')} (needs ${clear})`); break; }
     }
@@ -148,7 +152,7 @@ function checkRoom(room, errors) {
   for (let cy = 0; cy < gh; cy++) for (let cx = 0; cx < gw; cx++) {
     if (rockCell(cx, cy)) { blocked[cy * gw + cx] = 1; continue; }
     const x = -hw + (cx + 0.5) * CELL, y = -hh + (cy + 0.5) * CELL;
-    for (const s of room.rock) if (segDist(x, y, ...s) < pad) { blocked[cy * gw + cx] = 1; break; }
+    for (const s of walls) if (segDist(x, y, ...s) < pad) { blocked[cy * gw + cx] = 1; break; }
   }
   if (!room.starts[0]) return;
   const seen = new Uint8Array(gw * gh), queue = [];
@@ -173,6 +177,27 @@ function checkRoom(room, errors) {
   }
 }
 
+/** The registry: each prop's meta.json has what the build and the client read, and its images exist. */
+export function checkAssets(assets, errors) {
+  for (const [id, m] of assets) {
+    const A = `asset ${id}`;
+    if (m.id !== id) errors.push(`${A}: meta.json says its id is ${m.id}`);
+    if (m.kind !== 'prop') errors.push(`${A}: kind ${m.kind}; only prop is known`);
+    if (!Array.isArray(m.footprint) || m.footprint.length !== 2 || m.footprint.some((v) => !(v > 0))) errors.push(`${A}: footprint must be [w, h] in world units`);
+    if (m.base && !assets.has(m.base)) errors.push(`${A}: its base ${m.base} doesn't exist`);
+    const sets = Object.entries(m.sets ?? {});
+    if (!sets.length) errors.push(`${A}: no sets`);
+    for (const [name, s] of sets) {
+      if (!s.file || !existsSync(join(m.dir, s.file))) errors.push(`${A}: set ${name}'s image ${s.file} is missing`);
+      if (!Array.isArray(s.foot) || s.foot.length !== 2) errors.push(`${A}: set ${name} has no foot [x, y]`);
+      if (!s.source) errors.push(`${A}: set ${name} doesn't say its source`);
+      if (s.raw && !existsSync(join(GAME, '..', s.raw))) errors.push(`${A}: set ${name}'s raw file ${s.raw} is missing`);
+      if (/pixellab|gemini/.test(s.source ?? '') && !s.raw) errors.push(`${A}: set ${name} is generated, so it must name its raw file (game/content/generated)`);
+    }
+    for (const f of readdirSync(m.dir)) if (f.endsWith('.png') && !sets.some(([, s]) => s.file === f)) errors.push(`${A}: ${f} isn't in its meta.json`);
+  }
+}
+
 /** Runs every check. Returns { errors, rooms, source } (source: the module the maps compile to). */
 export function runCheck({ project = undefined, genOut = GEN_OUT } = {}) {
   const errors = [];
@@ -184,6 +209,7 @@ export function runCheck({ project = undefined, genOut = GEN_OUT } = {}) {
   errors.push(...compileErrors);
   for (const id of SIM.rooms) if (!rooms.some((r) => r.id === id)) errors.push(`no level for the room "${id}" (the game's code names it)`);
   for (const room of rooms) checkRoom(room, errors);
+  checkAssets(loadProps(), errors);
   const source = emitModule(rooms);
   const current = existsSync(genOut) ? readFileSync(genOut, 'utf8').replace(/\r\n/g, '\n') : '';
   if (current !== source) errors.push(`${genOut} is stale: run \`npm run content:build\``);

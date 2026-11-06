@@ -28,6 +28,8 @@
  *   ?net=bc       online co-op between tabs of this page on one machine (BroadcastChannel), for testing
  *                 alone; on claude.ai the Co-op panel uses the artifact's room instead (net/)
  *   ?perf=1       record each frame's sim, draw and render time on wizardSim.perf (scripts/perf.mjs)
+ *   ?props=lean|simple|code   the art test's prop set (the Academy; O cycles it there)
+ *   ?wizard=hd    the detailed wizard, in any room (I toggles it in the Academy)
  *   ?menu=Scenarios  open the Esc menu at boot on that section (Resume, Scenarios, Multiplayer, Controls,
  *                 Settings); &menuAt=N opens it at tick N instead (screenshots of the menu over a fight)
  *
@@ -48,6 +50,8 @@ import { Inspect } from './inspect';
 import { HelpPanel } from './help-panel';
 import { loadSaved } from './tune-io';
 import { WorldView } from './view';
+import { PROP_SETS } from './art/assets';
+import { newRigState, paint } from './art/rigs';
 import { broadcastBus, roomBus } from './net/bus';
 import { webrtcBus } from './net/webrtc';
 import { NetPlay } from './net/netplay';
@@ -89,7 +93,7 @@ async function boot(): Promise<void> {
   const demo = [parseDemo(params.get('spell')), parseDemo(params.get('spell2') ?? params.get('spell'))];
   const headless = scripted || autoplay || !!demo[0];
   // ?autoplay=1: bots fight the Arena, or play the tutorial through when it was asked for
-  let scenario: Scenario = autoplay && start.scenario.id !== 'tutorial' ? scenarioById('arena')! : start.scenario;
+  let scenario: Scenario = autoplay && start.scenario.id !== 'tutorial' && start.scenario.id !== 'academy' ? scenarioById('arena')! : start.scenario;
   const room = scenario.room as Room;
   TextureSource.defaultOptions.scaleMode = 'nearest';
   // Headless runs seat two wizards. Interactive play starts with you alone; gamepads join seats 1-3
@@ -118,6 +122,10 @@ async function boot(): Promise<void> {
   addEventListener('keydown', (e) => { if (e.code === 'Backquote') { showDebug = !showDebug; hud.style.display = showDebug ? '' : 'none'; } });
   const view = new WorldView();
   view.lightsOn = params.get('lights') !== '0';
+  // the art test (the Academy): which props and which wizard. Client only: each player picks their own.
+  const askedSet = PROP_SETS.find((s) => s === params.get('props'));
+  if (askedSet) view.props.set = askedSet;
+  view.wizardHd = params.get('wizard') === 'hd';
   // ?ally=1's bot stands in for a partner on another screen: the camera doesn't follow it
   if (ally && !headless) view.isLocal = (s) => s !== 1;
   // tests and screenshots: ?local=0 frames seat 0 only (the others get edge arrows)
@@ -213,6 +221,13 @@ async function boot(): Promise<void> {
   addEventListener('keydown', (e) => {
     const s = scenarioForKey(e.code);
     if (s && !e.repeat && net?.state !== 'playing') switchScenario(s);
+  });
+
+  // O and I, in the Academy only: nothing a player can hit by accident elsewhere.
+  addEventListener('keydown', (e) => {
+    if (e.repeat || scenario.id !== 'academy' || menu?.open) return;
+    if (e.code === 'KeyO') { const s = PROP_SETS[(PROP_SETS.indexOf(view.props.set) + 1) % PROP_SETS.length]; view.props.set = s; setParam('props', s === 'lean' ? null : s); }
+    if (e.code === 'KeyI') { view.wizardHd = !view.wizardHd; setParam('wizard', view.wizardHd ? 'hd' : null); }
   });
 
   const scaleSteps = [0, 1, 2, 3, 4];
@@ -340,6 +355,6 @@ ${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
   // Expose the recorder for debugging: copy a replay of this session from the console.
   (window as unknown as { wizardSim: unknown }).wizardSim = {
     world, get recorder() { return recorder; }, tune, view, menu, help, get net() { return net; },
-    app, perf, switchScenario, startWave: (n: number) => devStartWave(world, n, 1),
+    app, perf, switchScenario, startWave: (n: number) => devStartWave(world, n, 1), art: { newRigState, paint },
   };
 }

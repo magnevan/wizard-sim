@@ -5,7 +5,7 @@
  * card is plain DOM text beside the cursor. A start, to grow as the game does.
  */
 import { rules, type Element } from '@wizard-sim/rules';
-import { ARCHETYPES, CELL, DEVICE, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, N_EL, SURF, WALL, WARD, elementName, type World } from '@wizard-sim/sim';
+import { ARCHETYPES, CELL, DEVICE, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, N_EL, SURF, WALL, WARD, elementName, isPropWall, type World } from '@wizard-sim/sim';
 import type { Camera } from './camera';
 
 const HOVER = 0.9;
@@ -152,6 +152,7 @@ export class Inspect {
 
   private wall(k: number): string[] {
     const wl = this.world.walls, ty = wl.type[k], who = owner(wl.owner[k]);
+    if (isPropWall(this.world, k)) return ['Furniture', '· blocks bodies and shots'];
     const coat = elements(wl.els, k, [ID('shield'), ID('earth')]);
     const hp = `Health ${Math.ceil(wl.hp[k])} / ${Math.round(wl.maxHp[k])}`;
     if (ty === WALL.rock) return [`${who} stone wall`, hp, '· blocks bodies and shots', coat ? `· coated with ${coat}: pulses on whoever touches it` : '· plain stone'];

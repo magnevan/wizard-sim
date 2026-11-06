@@ -6,7 +6,12 @@ Everything is procedural (no image assets), and every vignette is a pure functio
 
 Published at https://claude.ai/artifact/F2LeDE6z1FWx3HuAPsP9Vz (private to the user), with `capabilities: { db: {} }`. Republish to the same URL.
 
-## What is on the page (88 vignettes)
+## What is on the page (94 vignettes)
+- **Enemy attacks (6, `vfx-attacks.js`, group `attacks`, pass 8)** come first, in their own section (`keepGroup: true` keeps them out of "New and reworked"; they still carry the New badge and count under the "Changed" chip). A port of the game's `game/packages/client/src/art/enemy-attacks.ts` (`attackK`, `drawAttackFx`, `BEATS`, line for line), the attack poses of `art/rigs.ts` and the ground telegraphs of `view-structures.ts`, against the red wizard. Each card fakes the sim's per-body `{ ai, aiT }` with the real timings from `archetypes.ts`, so the quantized poses match the game. The game's g (ground) and o (over) canvases are two offscreen layers built in `frame()` (so the lights are known in time), drawn in `under2` and `fx`. 16 px per sim unit; the gallery's steeper camera (FY 0.88) makes ground offsets taller than in the game.
+  - `atk-goblin` (club, dagger, spear in turn), `atk-brute` (fists, the slam, the crack, the 2.5 px shake; carries the card question `q-brute-shockwave`), `atk-shieldbearer` (the bash), `atk-archer` (draw, lock glint, release and string snap; the wizard sidesteps after the lock), `atk-imp` (the spit; the wizard burns), `atk-grabber` (coil, dash, catch, the hold ring teal → gold → red blink, the throw).
+  - Not the game's: the grabber's drag is scaled to 2.2 u over the hold (the game drags at 2.3 u/s) so it fits the card; the brute and archer face toward the camera, the others away (so the target stands behind them and doesn't hide the blow).
+  - Cards may now carry `enemy: true` (no spell recipe: `tags` are shown instead), `calls` (a bullet list of the judgment calls to rate) and `question: { id, text, pick }` (an answer box under the caption, saved to collection `answers`, doc `id`; blank = Claude's pick stands).
+  - `actors.js` gained the game's attack poses: `s.atk` (-1 / unset none; 0..0.5 wind-up; 0.55 mid-swing; 0.6 strike held; 0.6..1 recovery) and `s.hold` on goblin-sized rigs (per-variant wind-up and strike hands, lean, lunge, stance, the club / dagger / spear / shield / claw poses, the imp's glowing mouth, claws and crown, the archer's lock glint, string snap and recoil), and the brute's slam lean from `s.smash`. With `s.atk` unset every rig draws exactly as before (the club keeps its old rest pose).
 - **New and reworked (18)** come first, in their own section with a badge (`fresh: 'new' | 'reworked'` on the vignette; `?fresh=0` puts them back in their groups, the "Changed" chip filters to them). Only this pass's changes are marked: the pass 6 marks were cleared once the user had rated the goblin set. New slugs are new visuals, so old ratings stay on the old slugs; reworked ones kept their slug.
   - Pass 7 new: the 17 deaths of the other enemies (see Deaths: the other enemies below), and `death-goblin-arcane-v3` (the game's calm v3 on the goblin, same scene as v2).
 - **Forms (21):** the seven plain elements × Force / Area / Place. The fire patch is `fire-place-v3`: one continuous sheet of merged flame over glowing ground, with char only at the rim and once it dies down.
@@ -65,12 +70,12 @@ Visual conventions:
   - dust, debris, cracks, rocks
   - walls extruded from a line, with damage (`dmg: [{ f, k }]`): a jagged bite out of the top, dark cracks with a lit lip, pale spalls, a hole at heavy damage and rubble at the foot. Each segment draws its own share of the pattern, so depth order holds. Energy sheets that fade; fire curtains
   - glyphs, line glyphs, the Sigil device (`sigilDevice`, wrapped by `device`), rune rings, seal rings, ammo and rune-pool pips, auras
-- `vfx-forms.js`, `vfx-payload.js`, `vfx-shield.js`, `vfx-sigil.js`, `vfx-life.js`, `vfx-deaths.js`: the vignettes. `vfx-forms.js` also adds the shared helpers (`K.life`, `K.kb`, `K.down`, `K.hop`, `K.flash`, `K.walk`, `K.hp`, `K.puddle`, `K.caster`).
+- `vfx-forms.js`, `vfx-payload.js`, `vfx-shield.js`, `vfx-sigil.js`, `vfx-life.js`, `vfx-deaths.js`, `vfx-deaths-2.js`, `vfx-attacks.js`: the vignettes. `vfx-forms.js` also adds the shared helpers (`K.life`, `K.kb`, `K.down`, `K.hop`, `K.flash`, `K.walk`, `K.hp`, `K.puddle`, `K.caster`).
 - `filmstrip.html`: QA only, not for publishing. It shows frames side by side: `?ids=a,b&n=4&scale=2`, `?group=shield`, `?times=0.5,1,1.5`, and `?crop=x,y,w,h` (stage pixels, zoomed by `scale`) for a close look.
 
 ## URL parameters (index.html)
 - `?t=<sec>` freezes every vignette at that time (taken modulo each loop). Use it for screenshots.
-- `?only=<slug>,<slug>` shows only those vignettes. `?group=forms|payload|shield|life|sigil|aura|deaths` shows one group.
+- `?only=<slug>,<slug>` shows only those vignettes. `?group=attacks|forms|payload|shield|life|sigil|aura|deaths|deaths2` shows one group.
 - `?scale=<n>` forces the pixel scale. By default it is the largest integer that fits the card. Below 2× the canvas fills the card width instead (phones).
 - `?static=1` behaves like prefers-reduced-motion: still frames, and a click plays that card.
 - `?bench=1` writes timings to `body[data-bench]`: the first pass, and the steady-state mean per frame.
@@ -79,7 +84,7 @@ Animation: only cards on screen render (IntersectionObserver), at about 30 fps. 
 
 ## Ratings
 - Ratings live in the artifact's db, collection `ratings`, one doc per vignette slug: `{ mark: 'keep'|'maybe'|'cut'|null, note, updatedAt }`.
-- General notes are in collection `answers`, doc `general`: `{ mark: null, note, updatedAt }`.
+- General notes are in collection `answers`, doc `general`: `{ mark: null, note, updatedAt }`. Card questions are in `answers` too, one doc per question id (`q-brute-shockwave`: should the brute's slam travel out from its fists as a shockwave?).
 - Without the db, ratings are kept in this browser only (localStorage `spell-vfx-v1`).
 
 Read them with `ArtifactData` `list` on `ratings` and `answers`, then fold them into `docs/ideas/art-direction.md`.

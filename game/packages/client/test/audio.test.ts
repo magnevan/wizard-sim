@@ -4,7 +4,7 @@
  * what can be checked without ears; `npm run check:sound` renders the real thing offline in Chrome.
  */
 import { describe, expect, test } from 'vitest';
-import { ELEMENT_NAMES, ENEMY_KINDS, INTERACTIONS, SHAPE_NAMES, UI_SOUNDS, WEAPON_MOVES, clipsOf, composeCharge, composeDeath, composeDowned, composeDry, composeElement, composeFlight, composeFootstep, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak, composeShape, composeSpell, composeStop, composeSpring, composeSteamCloud, composeStrike, composeSustain, composeTelegraph, composeUi, composeBurning, composeFloorFire, composeSparkField, composeBlink, composeBlocked, composeHeal, composeStinger, runesOf, shapeOf, type ElementName, type Plan, type SpellSound } from '../src/audio/recipes';
+import { ELEMENT_NAMES, ENEMY_KINDS, INTERACTIONS, SHAPE_NAMES, UI_SOUNDS, WEAPON_MOVES, clipsOf, composeCharge, composeDeath, composeDismiss, composeDowned, composeDry, composeElement, composeFlight, composeFootstep, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak, composeShape, composeSpell, composeStop, composeSpring, composeSteamCloud, composeStrike, composeSustain, composeTelegraph, composeUi, composeBurning, composeFloorFire, composeSparkField, composeBlink, composeBlocked, composeHeal, composeStinger, runesOf, shapeOf, type ElementName, type Plan, type SpellSound } from '../src/audio/recipes';
 import { BANK } from '../src/audio/bank.gen';
 import { FIRE_KIT, useKit } from '../src/audio/kits';
 import { SYNTH_IDS, SYNTH_LOOPS, renderSynth } from '../src/audio/synth';
@@ -230,6 +230,23 @@ describe('recipes', () => {
       expect(composeFlight('earth').layers).toEqual([]);
       expect(composeStop(rock)).toBeNull();
     } finally { useKit('earth', null); }
+  });
+  test('a spell can have its own sound, and its own with one element in it', () => {
+    const one = { clips: ['fire-catch'], gain: 0.5 }, two = { clips: ['fire-thud'], gain: 0.5 }, three = { clips: ['fire-lick'], gain: 0.5 };
+    useKit('sigil', { place: [three], spells: { lens: [one], aura: [one], 'aura+lightning': [two], turret: [] } });
+    try {
+      const clip = (s: SpellSound) => composeSpell(s, seeded(1)).layers[0].clip;
+      expect(clip({ els: { sigil: 1 }, shape: 'place', lead: 'sigil', form: 'lens' })).toBe('fire-catch');
+      expect(clip({ els: { sigil: 1, cold: 1 }, shape: 'place', lead: 'sigil', form: 'glyph' })).toBe('fire-lick');
+      expect(clip({ els: { sigil: 1, lightning: 1 }, shape: 'self', lead: 'sigil', form: 'aura' })).toBe('fire-thud');
+      expect(composeSpell({ els: { sigil: 1, cold: 1 }, shape: 'place', lead: 'sigil', form: 'turret' }).layers).toEqual([]);
+      expect(clip({ els: { sigil: 1, water: 1 }, shape: 'self', lead: 'water', form: 'aura' })).toBe('fire-catch');
+    } finally { useKit('sigil', null); }
+  });
+  test('dismissing is silent to a kit that has no sound for it', () => {
+    expect(composeDismiss('sigil')).toBeNull();
+    useKit('sigil', { dismiss: [{ clips: ['fire-catch'], gain: 0.5 }] });
+    try { expect(composeDismiss('sigil')?.name).toBe('kit:dismiss'); } finally { useKit('sigil', null); }
   });
   test("a kit's held layers loop, and nothing else does", () => {
     const loops = new Set(BANK.filter((c) => c.loop).map((c) => c.id));

@@ -153,6 +153,20 @@ describe('Shield', () => {
 });
 
 describe('Sigil', () => {
+  it('a turret is held to aim, and stands at the cursor from when you let go, at most Place range away', () => {
+    const { w, d } = arena();
+    d.aimAt(6, 1).queue('sigil', 'fire').tick({ buttons: BTN.force }, 30);
+    expect(devices(w, DEVICE.turret)).toBe(0);
+    d.tick({}, 20);
+    const k = Array.from(w.devices.type).indexOf(DEVICE.turret);
+    expect(w.devices.x[k]).toBeCloseTo(w.bodies.x[0] + 6);
+    expect(w.devices.y[k]).toBeCloseTo(w.bodies.y[0] + 1);
+    const far = arena();
+    far.d.aimAt(30, 0).queue('sigil', 'fire').cast(BTN.force, 1, 20);
+    const j = Array.from(far.w.devices.type).indexOf(DEVICE.turret);
+    expect(far.w.devices.x[j] - far.w.bodies.x[0]).toBeCloseTo(9);
+  });
+
   it('a fire turret shoots the nearest enemy, drawing fire runes from you, and binds a Sigil rune', () => {
     const { w, d, dummy } = arena();
     const t = dummy(6, 0);
@@ -189,7 +203,7 @@ describe('Sigil', () => {
     for (const turret of [false, true]) {
       const { w, d, dummy } = arena();
       const t = dummy(6, 0);
-      if (turret) d.aimAt(6, 0).queue('sigil', 'earth', 'fire').cast(BTN.force, 1, 150);
+      if (turret) d.aimAt(2.5, 0).queue('sigil', 'earth', 'fire').cast(BTN.force, 1, 150);
       else d.aimAt(6, 0).queue('earth', 'fire').cast(BTN.force, 1, 150);
       hits.push(400 - w.bodies.hp[t]);
     }

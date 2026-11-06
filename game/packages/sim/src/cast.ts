@@ -96,6 +96,9 @@ export function specOf(w: World, i: number): SpellSpec {
 
 const aimFace = (w: World, i: number) => atan2Turns(w.seats.aimY[i], w.seats.aimX[i]);
 
+/** Would Force make a turret? Those are placed: held to aim, they go at the cursor on release. */
+const forcePlaces = (w: World, i: number) => w.seats.queueLen[i] > 0 && compile(queueOf(w, i), 'force').shape === 'turret';
+
 /** The target point for Place (and Blink): the aim point, at most `range` away. */
 function target(w: World, i: number, range = SHAPES.placeRange): [number, number] {
   const s = w.seats, b = w.bodies, d = len(s.aimX[i], s.aimY[i]);
@@ -196,7 +199,8 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   }
 
   // A cast pressed while busy is buffered briefly, so no press is lost to recovery.
-  const want = pressed & BTN.force ? CAST_ID.force : areaCast || (pressed & BTN.self ? CAST_ID.self : pressed & BTN.weapon ? CAST_ID.conjure : 0);
+  const forceCast = (pressed | released) & BTN.force && forcePlaces(w, i) ? released & BTN.force : pressed & BTN.force;
+  const want = forceCast ? CAST_ID.force : areaCast || (pressed & BTN.self ? CAST_ID.self : pressed & BTN.weapon ? CAST_ID.conjure : 0);
   if (want) { s.bufCast[i] = want; s.bufTicks[i] = T(RHYTHM.castBuffer); }
   else if (s.bufTicks[i] > 0 && --s.bufTicks[i] === 0) s.bufCast[i] = 0;
 

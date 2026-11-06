@@ -136,6 +136,8 @@ export interface SpellSound {
   shape: ShapeName;
   /** The element that leads (the spell's look). */
   lead?: ElementName;
+  /** The sim's own shape, finer than `shape`: a kit can give it a sound of its own. */
+  form?: string;
 }
 
 export const runesOf = (els: SpellSound['els']): number => Object.values(els).reduce((a, b) => a + (b ?? 0), 0);
@@ -156,6 +158,9 @@ const kitFor = (s: SpellSound): Kit | undefined => kitOf(mixOf(s)[0]?.el);
 /** A spell's cast: the shape's structure with its elements poured in, or its element's kit if it has one for this shape. */
 export function composeSpell(s: SpellSound, rand: Rand = Math.random): Plan {
   const sh = SHAPES[s.shape], m = runeMod(runesOf(s.els)), mix = mixOf(s), layers: Layer[] = [], kit = kitFor(s);
+  // any element in the spell can own it: a Sigil aura may look like its water, and it's still Sigil's aura
+  const els = Object.keys(s.els) as ElementName[], own = s.form ? els.flatMap((k) => { const sp = kitOf(k)?.spells; return sp ? [...els.map((e) => sp[`${s.form}+${e}`]), sp[s.form!]] : []; }).find(Boolean) : null;
+  if (own) return kitPlan(`kit:${s.shape}`, own, rand, m.rate, m.gain, sh.wet + m.wet); // an empty one means silence
   const ls = !kit ? null : s.shape === 'spray' ? kit.start : s.shape === 'beam' ? kit.beamStart ?? kit.start : s.shape === 'missile' ? kit.launch : s.shape === 'nova' ? kit.burst
     : s.shape === 'force' ? kit.force : s.shape === 'place' ? kit.place : s.shape === 'wall' ? kit.wall : s.shape === 'self' ? kit.self ?? kit.land : null;
   if (ls?.length) return kitPlan(`kit:${s.shape}`, ls, rand, m.rate, m.gain, sh.wet + m.wet);
@@ -325,6 +330,11 @@ export function composeMove(move: WeaponMove, el: ElementName | null, rand: Rand
   }
 }
 
+/** A device taken back, if its element's kit has a sound for that. */
+export function composeDismiss(el: ElementName, rand: Rand = Math.random): Plan | null {
+  const d = kitOf(el)?.dismiss;
+  return d ? kitPlan('kit:dismiss', d, rand) : null; // an empty one means silence
+}
 export const composeBlink = (): Plan => one('blink', 'y-blink', 0.7, 1, 0.05);
 export const composeRockBreak = (rand: Rand = Math.random): Plan => many('wall:break', 0.04, [pick(['earth-hit-3', 'earth-hit-4'], rand), 0.8, 0.8], ['debris', 0.7], ['y-sub', 0.4]);
 export const composeBlocked = (rand: Rand = Math.random): Plan => one('blocked', pick(['shield-hit-2', 'shield-hit-3'], rand), 0.5, 1.1);

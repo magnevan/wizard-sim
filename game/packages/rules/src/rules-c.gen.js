@@ -233,7 +233,7 @@ const module = { exports: {} };
         // (swapped with Place on the user's note: placing the lens is more intuitive, and a teleport needn't be a glyph)
         if (!o.sub) return ['Blink', 'You blink a short way along your aim, instantly: an escape or a gap-closer. It binds your Sigil rune for a moment after, so you can\'t chain blinks.'];
         const shot = o.subTitle.force, target = o.sub === 'life' ? 'the nearest hurt ally' : 'the nearest enemy';
-        return [`${shot} turret`, `A device planted a few steps ahead along your aim. It casts the ${shot.toLowerCase()} by itself at ${target}, carrying all its elements. It never runs out on its own: each shot draws its elements from your rune pool, so it only stalls when you run dry of them, and picks up again as you regenerate. Release fires one big shot, drawing a full queue from your pool.`];
+        return [`${shot} turret`, `Hold Force to aim it: a device planted at the cursor when you let go. It casts the ${shot.toLowerCase()} by itself at ${target}, carrying all its elements. It never runs out on its own: each shot draws its elements from your rune pool, so it only stalls when you run dry of them, and picks up again as you regenerate. Release fires one big shot, drawing a full queue from your pool.`];
       },
       area: (p, o) => {
         if (!o.sub) return ['Rune motes', 'Three motes circle you. Each time you cast, one mote is spent and gives back part of one rune of that spell (at most one mote per spell, never a whole rune). Rune-positive, but slow to set up, and it holds a Sigil rune while it lasts.'];

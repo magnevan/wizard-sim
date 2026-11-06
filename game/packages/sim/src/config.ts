@@ -152,7 +152,7 @@ export const STRUCT = {
   /** Model A: energy structures drain the Shield pool; at the reserve floor the oldest breaks. */
   idleDrain: 0.03, wardDrainMult: 2, absorbPerHp: 0.01, reserve: 0.5,
   wardHp: 60, wardHpPerRune: 20, wardResist: 0.4, mirrorShots: 3, mendPerSec: 2,
-  turretInterval: 1.0, turretRange: 8, turretAhead: 2.5,
+  turretInterval: 1.0, turretRange: 8,
   /** A turret shot costs this share of its payload's runes, and fires uncharged, as your tap cast does. */
   turretShotCost: 0.5,
   /** Your turrets together spend at most this share of your total regen R from their main element: shots slow down to fit (and with more turrets). 0.13 keeps the pace they had under the flat 0.22/s regen (60% of it). */

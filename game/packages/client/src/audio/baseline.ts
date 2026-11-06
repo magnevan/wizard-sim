@@ -6,7 +6,7 @@
  * ?baseline=0 turns it off.
  */
 import type { GameAudio } from './game-audio';
-import { useKit, type Kit } from './kits';
+import { layersOf, useKit, type Kit } from './kits';
 import type { ElementName } from './recipes';
 
 /** Clips decoded at once: they're large, and there's no hurry. */
@@ -21,7 +21,7 @@ async function load(audio: GameAudio): Promise<Partial<Record<ElementName, Kit>>
   for (let tries = 0; !audio.engine && tries < 300; tries++) await new Promise((f) => setTimeout(f, 100));
   const e = audio.engine;
   if (!e) return null;
-  const layers = Object.values(kits).flatMap((k) => Object.values(k ?? {})).flat();
+  const layers = Object.values(kits).flatMap((k) => (k ? layersOf(k) : []));
   const ids = [...new Set(layers.flatMap((l) => l.clips))], looped = new Set(layers.filter((l) => l.loop).flatMap((l) => l.clips));
   for (let i = 0; i < ids.length; i += BATCH) {
     await Promise.all(ids.slice(i, i + BATCH).map(async (id) => {

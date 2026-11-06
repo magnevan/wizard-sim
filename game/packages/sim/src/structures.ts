@@ -182,7 +182,7 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
     case 'ward': putWard(w, on, spec, src); break;
     case 'guard': conjureGuard(w, src, spec.counts); break; // held alongside your weapon (no two-handed weapons)
     case 'turret': {
-      const k = spawnDevice(w, src, DEVICE.turret, spec, x + cosTurns(face) * STRUCT.turretAhead, y + sinTurns(face) * STRUCT.turretAhead);
+      const k = spawnDevice(w, src, DEVICE.turret, spec, tx, ty);
       if (k >= 0) w.devices.timer[k] = T(0.4);
       break;
     }

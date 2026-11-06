@@ -6,7 +6,7 @@
  */
 import * as X from './px';
 import type { Ctx, Pt, Ramp } from './px';
-import { FY, TAU, lerp, mod, rand, smooth } from './util';
+import { FY, TAU, clamp, lerp, mod, rand, seg, smooth } from './util';
 
 const EL = X.EL;
 export const SV = EL.sigil;
@@ -107,6 +107,38 @@ export function sigilDevice(c: Ctx, x: number, y: number, t: number, o: DeviceOp
   if (!dry) for (let k = 0; k <= 12; k++) { const a = (k / 12) * Math.PI, q = (k + Math.floor(t * 8)) % 4; if (q === 3) continue; X.px(c, x + Math.cos(a) * 7, cy + 1 + Math.sin(a) * 2, q === 0 ? SV[1] : SV[2]); }
   for (const p of plates) if (p.s >= 0) plate(p);
   return [x, cy];
+}
+
+/** Seconds a turret takes to arrive: its first shot is 0.4 s after it's placed (structures.ts). */
+export const TURRET_SUMMON = 0.4;
+
+/**
+ * A turret arriving, around the device as it rises: a ring closes on the spot, a shaft of light stands up
+ * in it and thins, and a flash where the orb comes to rest as it's ready. Ground to `g`, the rest to `o`.
+ */
+export function turretSummon(g: Ctx, o: Ctx, x: number, y: number, age: number, R: Ramp): void {
+  const k = clamp(age / TURRET_SUMMON, 0, 1);
+  if (k >= 1) return;
+  x = Math.round(x); y = Math.round(y);
+  const closing = smooth(seg(k, 0, 0.6)), r = 26 - 14 * closing;
+  X.ring(g, x, y, r, r * FY, SV[1], 0.9 * (1 - seg(k, 0.6, 1)));
+  X.ring(g, x, y, r + 3, (r + 3) * FY, SV[3], 0.5 * (1 - closing));
+  for (let i = 0; i < 4; i++) { const a = (i * TAU) / 4 + k * 3; X.px(g, x + Math.cos(a) * r, y + Math.sin(a) * r * FY, '#ffffff'); }
+  // the shaft: up fast, then thinning away from the bottom as the device takes its place
+  const top = 34 * smooth(seg(k, 0.08, 0.45)), w = 7 - 5 * seg(k, 0.4, 1), base = 22 * seg(k, 0.55, 1), a0 = o.globalAlpha;
+  for (let z = Math.floor(base); z < top; z++) {
+    o.globalAlpha = a0 * (0.75 - 0.5 * (z / 34)) * (1 - seg(k, 0.7, 1) * 0.6);
+    const half = Math.max(0.5, (w / 2) * (1 - 0.35 * (z / 34)));
+    X.rect(o, x - half, y - z, half * 2 + 1, 1, (z + Math.floor(age * 40)) % 3 ? SV[1] : R[1]);
+    X.px(o, x, y - z, '#ffffff');
+  }
+  o.globalAlpha = a0;
+  for (let i = 0; i < 7; i++) {
+    const p = mod(k * 1.6 + rand(i, 3), 1), a = rand(i, 7) * TAU;
+    X.px(o, x + Math.cos(a) * (10 - 7 * p), y + Math.sin(a) * (10 - 7 * p) * FY - p * 26, p < 0.5 ? SV[1] : R[1]);
+  }
+  const flash = seg(k, 0.75, 0.88) * (1 - seg(k, 0.88, 1));
+  if (flash > 0) { X.glow(o, x, y - 16, 4 + 11 * flash, R[1], 0.9 * flash); X.glow(o, x, y - 16, 2 + 5 * flash, '#ffffff', flash); }
 }
 
 /** A glyph on the ground. draw 0..1 writes it in; armed pulses; inner = an element icon. */

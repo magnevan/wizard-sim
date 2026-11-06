@@ -1,0 +1,9 @@
+[
+  { "id": "sigil-etch-1", "secs": 0.8, "influence": 0.6, "text": "Light being scratched into stone: a precise, dry, continuous etching stroke with a dark charged crackle along it, tightening towards the end. Close and deliberate. No bell, no chime, no hum, no voices, no music." },
+  { "id": "sigil-etch-2", "secs": 0.8, "influence": 0.6, "text": "A sharp point of energy carving a rune into a stone floor: a quick scraping engrave, fine and controlled, with a faint electric edge. Close and dry. No bell, no chime, no hum, no voices, no music." },
+  { "id": "sigil-click-1", "secs": 0.5, "influence": 0.7, "text": "One small precise mechanical click of a stone seal locking into place, with a short clean decay. Dry and close. No bell, no chime, no hum, no voices, no music." },
+  { "id": "sigil-mote-1", "secs": 0.5, "influence": 0.6, "text": "One small soft spark of energy popping into being: a tiny, gentle, rounded puff with a slight dark charged edge and a short clean decay. No bell, no chime, no hum, no voices, no music." },
+  { "id": "sigil-mote-2", "secs": 0.5, "influence": 0.6, "text": "A tiny mote of light snapping into existence: a soft, quick, airy tick with a very short tail. Subtle and small. No bell, no chime, no hum, no voices, no music." },
+  { "id": "sigil-haste-1", "secs": 0.7, "influence": 0.6, "text": "A fast clean voosh of air rushing past as someone suddenly speeds up, with a light crackle of electricity in it. Quick and energetic, short tail. No bell, no chime, no hum, no voices, no music." },
+  { "id": "sigil-haste-2", "secs": 0.7, "influence": 0.6, "text": "A sharp whoosh, like a burst of speed: wind snapping past with a thin charged sizzle, gone almost at once. No bell, no chime, no hum, no voices, no music." }
+]

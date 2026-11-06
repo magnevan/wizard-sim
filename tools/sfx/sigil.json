@@ -1,0 +1,11 @@
+[
+  { "id": "sigil-place-1", "secs": 1.5, "text": "A glowing magic rune stamped into a stone floor: one deep resonant glass bell strike with a soft low thud, then a clean shimmering tail. Fantasy game spell sound effect, no voices, no music." },
+  { "id": "sigil-place-2", "secs": 1.5, "text": "A heavy bronze seal pressed into stone with a crystalline ring that fades out. Fantasy game spell sound effect, dry and close, no voices, no music." },
+  { "id": "sigil-self-1", "secs": 1.5, "text": "A magical aura settling around a person: a soft rising crystalline shimmer that blooms into a warm glassy chord. Fantasy game spell sound effect, no voices, no music." },
+  { "id": "sigil-self-2", "secs": 1.5, "text": "Enchantment taking hold: a quick upward sweep of glass chimes ending in a calm resonant hum. Fantasy game spell sound effect, no voices, no music." },
+  { "id": "sigil-burst-1", "secs": 2, "text": "An arcane seal bursting outward: a struck bronze gong with a sweep of glassy shards scattering in a ring. Powerful fantasy game spell sound effect, no voices, no music." },
+  { "id": "sigil-burst-2", "secs": 2, "text": "A magic circle flaring open all at once: a deep bell hit and a fast rush of bright crystalline energy. Powerful fantasy game spell sound effect, no voices, no music." },
+  { "id": "sigil-land-1", "secs": 0.7, "text": "A short crystalline magic hit: one bright glassy tick with a tiny bell ring. Fantasy game impact sound effect, no voices, no music." },
+  { "id": "sigil-land-2", "secs": 0.7, "text": "A small rune discharging: a quick metallic glass ping with a soft low knock. Fantasy game impact sound effect, no voices, no music." },
+  { "id": "sigil-hold-1", "secs": 5, "loop": true, "text": "The steady hum of a glowing magic rune: a sustained glass harmonica drone with slow gentle shimmer, even in volume throughout. Fantasy game spell loop, no voices, no music." }
+]

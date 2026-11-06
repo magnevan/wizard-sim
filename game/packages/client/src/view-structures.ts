@@ -38,6 +38,10 @@ import { glyph, perkOf } from './art/perks';
 import { drawTutorialWorld } from './tutorial-view';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
 
+/** Seconds between one rune mote appearing and the next. */
+const MOTE_GAP = 0.16;
+/** Seconds Force is held before a turret's preview shows, so a plain click doesn't flash it. */
+const AIM_SHOWS = 0.15;
 const EL = X.EL, SV = EL.sigil;
 const AMBIENT = 0xe4e8ff;
 /** ?structoff=walls,waves,... hides parts of this view (for isolating a slow or broken part). */
@@ -331,7 +335,8 @@ export class StructureView {
   private vAlive = new Uint8Array(MAX_WAVES); private vSX = new Float64Array(MAX_WAVES); private vSY = new Float64Array(MAX_WAVES); private vT0 = new Float64Array(MAX_WAVES);
   private vX = new Float64Array(MAX_WAVES); private vY = new Float64Array(MAX_WAVES); private vEls = new Uint8Array(MAX_WAVES * N_EL);
   // per seat
-  private sMotes = new Uint8Array(MAX_SEATS); private sWard = new Uint8Array(MAX_SEATS); private sWardT0 = new Float64Array(MAX_SEATS); private sWardEls = new Uint8Array(MAX_SEATS * N_EL);
+  private aimT0 = -1;
+  private sMotesT0 = new Float64Array(MAX_SEATS); private sMotes = new Uint8Array(MAX_SEATS); private sWard = new Uint8Array(MAX_SEATS); private sWardT0 = new Float64Array(MAX_SEATS); private sWardEls = new Uint8Array(MAX_SEATS * N_EL);
   private sAuraT0 = new Float64Array(MAX_SEATS); private sAura = new Int32Array(MAX_SEATS); private sConjT0 = new Float64Array(MAX_SEATS); private sConj = new Uint8Array(MAX_SEATS * 3);
   /** Each seat's last weapon blow: when (sim time), which (1 Strike, 2 Sweep) and its direction (radians, world). */
   private blowT0 = new Float64Array(MAX_SEATS).fill(-9); private blowKind = new Uint8Array(MAX_SEATS); private blowAng = new Float64Array(MAX_SEATS);
@@ -423,6 +428,7 @@ export class StructureView {
     }
     // seats: motes spent, wards and auras coming and going, conjures
     for (let i = 0; i < MAX_SEATS; i++) {
+      if (s.motes[i] > this.sMotes[i]) this.sMotesT0[i] = t;
       if (s.motes[i] < this.sMotes[i] && !dismissed.has(i)) this.add('motein', t, 0.6, { who: i, n: s.motes[i], seed: tick });
       this.sMotes[i] = s.motes[i];
       if (s.ward[i] && !this.sWard[i]) this.sWardT0[i] = t;
@@ -874,10 +880,12 @@ export class StructureView {
         const dry = this.st - this.dDry[k] < 0.7 ? 1 : 0, se = this.st - this.dShot[k];
         const recoil = se >= 0 && se < 0.3 ? 0.7 * (1 - se / 0.3) : 0;
         const charge = !dry && dv.timer[k] > 0 && dv.timer[k] < 12 ? 1 - dv.timer[k] / 12 : 0;
+        const rise = smooth(seg(age, 0.1, S.TURRET_SUMMON));
         S.runeRing(g, x, y, 12, t, up, dry);
         X.shadow(g, x, y - 1, 5, 3, 8, 'rgba(8,6,16,0.45)');
         const c = this.pieces.canvas(x - 22, y - 40, 44, 50, y);
-        const orb = S.sigilDevice(c, x, y, t, { R: R.length >= 5 ? R : [...R, R[R.length - 1]], rise: up, recoil, charge, dry, orbZ: 16 });
+        const orb = S.sigilDevice(c, x, y, t, { R: R.length >= 5 ? R : [...R, R[R.length - 1]], rise, recoil, charge, dry, orbZ: 16 });
+        if (age < S.TURRET_SUMMON) { S.turretSummon(g, o, x, y, age, R); light(x, y - 12, 52, R[2], 0.8 * (1 - age / S.TURRET_SUMMON)); }
         if (orb) light(orb[0], y, 36, R[2], (recoil > 0 ? 0.8 : 0.4) * up * (dry ? 0.3 : 1));
         if (dry && orb) for (const p of emit(t, 4, 1.2, (i, a2) => ({ x: orb[0] + a2 * 4, y: orb[1] - 2 - a2 * 14, age: a2 }))) K.puff(o, p.x, p.y, 1.5 + p.age * 2, '#4a4458', 1 - p.age);
       } else if (ty === DEVICE.glyph) {
@@ -951,9 +959,12 @@ export class StructureView {
         const n = s.motes[i], MR = 15, CY = v.y - 12;
         for (let q = 0; q < 56; q++) if ((q + Math.floor(t * 10)) % 3 === 0) { const a = (q / 56) * TAU; X.px(Math.sin(a) < 0 ? g : o, v.x + Math.cos(a) * MR, CY + Math.sin(a) * MR * FY, SV[3]); }
         for (let p = 0; p < n; p++) {
+          // they come one at a time, each with a flash: a sound goes with each (the baseline's Sigil kit)
+          const born = this.st - this.sMotesT0[i] - p * MOTE_GAP;
+          if (born < 0) continue;
           const ang = t * 2.2 + (p * TAU) / 3, x = v.x + Math.cos(ang) * MR, y = CY + Math.sin(ang) * MR * FY, c = Math.sin(ang) < -0.2 ? g : o;
           for (let j = 1; j <= 5; j++) { const a2 = ang - j * 0.14; K.sq(c, v.x + Math.cos(a2) * MR, CY + Math.sin(a2) * MR * FY, j < 3 ? 2 : 1, j < 2 ? SV[1] : j < 4 ? SV[2] : SV[3]); }
-          X.glow(c, x, y, 5, SV[2], 0.75); X.rect(c, x - 2, y - 1, 5, 3, SV[1]); X.rect(c, x - 1, y - 2, 3, 5, SV[1]); X.rect(c, x - 1, y - 1, 3, 3, SV[0]); X.px(c, x, y, '#ffffff');
+          X.glow(c, x, y, 5 + 7 * (1 - seg(born, 0, 0.2)), SV[2], 0.75); X.rect(c, x - 2, y - 1, 5, 3, SV[1]); X.rect(c, x - 1, y - 2, 3, 5, SV[1]); X.rect(c, x - 1, y - 1, 3, 3, SV[0]); X.px(c, x, y, '#ffffff');
         }
         light(v.x, v.y - 6, 30, '#d400ff', 0.3);
       }
@@ -1388,11 +1399,31 @@ export class StructureView {
   }
 
   // ---- Placement preview for seat 0 ------------------------------------------------------------------
+  /** Force held with a turret queued: it shows where it will stand, and the reach if the cursor's past it. */
+  private turretPreview(w: World, t: number, g: Ctx, o: Ctx, v: BodyView): void {
+    const s = w.seats, b = w.bodies, i = this.localSeat;
+    let spec;
+    try { spec = compile(queueOf(w, i), 'force'); } catch { return; }
+    if (spec.shape !== 'turret') return;
+    const d = Math.hypot(s.aimX[i], s.aimY[i]), far = d > SHAPES.placeRange, lim = far ? SHAPES.placeRange / d : 1;
+    const x = gx(b.x[i] + s.aimX[i] * lim), y = gy(b.y[i] + s.aimY[i] * lim), col = X.TEAMS[i % 4].light;
+    const look = spec.sub || spec.look || spec.form, R = look === ELID.life ? LIFE : ramp(look);
+    if (far) X.ring(g, v.x, v.y, SHAPES.placeRange * PPU, SHAPES.placeRange * PPU * FY, col, 0.35);
+    S.seal(g, x, y, 12, t, 0.6);
+    S.reticle(g, x, y, t, col, 1);
+    const a = o.globalAlpha;
+    o.globalAlpha = a * 0.55;
+    S.sigilDevice(o, x, y, t, { R: R.length >= 5 ? R : [...R, R[R.length - 1]], rise: 1, orbZ: 16 });
+    o.globalAlpha = a;
+  }
+
   private preview(w: World, t: number, g: Ctx, o: Ctx, bodies: BodyView[]): void {
     const s = w.seats, b = w.bodies, i = this.localSeat;
-    const held = !!(s.prevButtons[i] & BTN.area);
-    if (!s.active[i] || !held || !s.queueLen[i] || s.phase[i] !== PHASE.idle) return;
+    const held = !!(s.prevButtons[i] & BTN.area), aiming = !held && !!(s.prevButtons[i] & BTN.force);
+    if (!aiming) this.aimT0 = -1; else if (this.aimT0 < 0) this.aimT0 = this.st;
+    if (!s.active[i] || !(held || aiming) || !s.queueLen[i] || s.phase[i] !== PHASE.idle) return;
     const v = bodies[i]; if (!v?.on) return;
+    if (aiming) { if (this.st - this.aimT0 >= AIM_SHOWS) this.turretPreview(w, t, g, o, v); return; }
     const drag = s.dragged[i] === 1;
     let spec;
     try { spec = compile(queueOf(w, i), 'place', { drag }); } catch { return; }

@@ -1,0 +1,12 @@
+[
+  { "id": "sigil-summon-1", "secs": 0.5, "influence": 0.6, "text": "A beam of light rising from stone and focusing into a single point: a soft, low swell climbs quickly, narrows and brightens, then settles into one firm, solid landing that fades quickly." },
+  { "id": "sigil-summon-2", "secs": 0.5, "influence": 0.6, "text": "Energy rushing up out of a stone floor and condensing to a point of light: a quick rising swell ending on one firm, solid thump with a short fade." },
+  { "id": "sigil-aura-fire-1", "secs": 2, "influence": 0.6, "text": "A low, warm rush of flame wrapping around someone, with a steady soft burn beneath it." },
+  { "id": "sigil-aura-fire-2", "secs": 2, "influence": 0.6, "text": "Soft flames sweeping up and curling around a body, a deep warm whoomp settling into a gentle steady burn." },
+  { "id": "sigil-aura-frost-1", "secs": 2, "influence": 0.6, "text": "A cold breath drawn in, with fine ice crystals tinkling and forming in the air around it." },
+  { "id": "sigil-aura-frost-2", "secs": 2, "influence": 0.6, "text": "Freezing air gathering around someone: a slow icy inhale as tiny ice crystals form and glitter." },
+  { "id": "sigil-aura-mist-1", "secs": 2, "influence": 0.6, "text": "A soft, damp hiss of fine water vapour spreading outward, gentle and hushed." },
+  { "id": "sigil-aura-mist-2", "secs": 2, "influence": 0.6, "text": "A cool, wet mist rolling out in all directions: a hushed, airy spray of fine droplets, soft and even." },
+  { "id": "sigil-aura-earth-1", "secs": 2, "influence": 0.6, "text": "A deep, heavy rumble of stone settling onto someone, like a boulder shifting its weight." },
+  { "id": "sigil-aura-earth-2", "secs": 2, "influence": 0.6, "text": "Heavy rock grinding slowly into place around a body: a low rumbling shift of great weight that comes to rest." }
+]

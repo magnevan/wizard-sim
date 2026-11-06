@@ -15,11 +15,11 @@
  *   the last shown step saw, so a change made inside a replay is heard at the next shown step.
  */
 import {
-  AI, ARCH, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, PHASE, QUEUE_MAX, SURF, ZONE, elementName, specOf,
+  AI, ARCH, DEVICE, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, PHASE, QUEUE_MAX, SURF, ZONE, compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import {
-  composeBlink, composeBlocked, composeBurning, composeCharge, composeDeath, composeDowned, composeDry, composeFlight, composeFloorFire,
+  composeBlink, composeBlocked, composeBurning, composeCharge, composeDeath, composeDismiss, composeDowned, composeDry, composeFlight, composeFloorFire,
   composeFootstep, composeHeal, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak,
   composeSparkField, composeSpell, composeSpring, composeSteamCloud, composeStinger, composeStrike, composeStop, composeSustain, composeTelegraph, composeUi,
   shapeOf, type ElementName, type EnemyKind, type Plan, type ShapeName, type SpellSound, type UiSound, type WeaponMove,
@@ -87,7 +87,7 @@ const MOVES: Readonly<Record<string, WeaponMove>> = {
 export function spellSoundOf(spec: SpellSpec): SpellSound {
   const els: SpellSound['els'] = {};
   for (let i = 0; i < 9; i++) if (spec.counts[i]) els[elementName(i + 1) as ElementName] = spec.counts[i];
-  return { els, shape: shapeOf(spec.shape), lead: elOf(spec.look) ?? undefined };
+  return { els, shape: shapeOf(spec.shape), lead: elOf(spec.look) ?? undefined, form: spec.shape };
 }
 
 export class SoundDirector {
@@ -194,7 +194,9 @@ export class SoundDirector {
         if (e.who < 0) { this.onBanner(e.text ?? ''); return; }
         if (spell) {
           this.lastCastTick[e.who] = e.tick;
-          this.ask('cast', x, y, () => composeSpell(spell, r));
+          // what's placed sounds from where it lands, not from the hand
+          const out = spell.shape === 'place';
+          this.ask('cast', out ? x + w.seats.aimX[e.who] : x, out ? y + w.seats.aimY[e.who] : y, () => composeSpell(spell, r));
         }
         return;
       case 'hit': {
@@ -209,6 +211,8 @@ export class SoundDirector {
       case 'burst': {
         // a nova's own burst: the cast this same tick already is that sound
         if (e.who >= 0 && e.who < MAX_SEATS && e.tick - this.lastCastTick[e.who] <= 2) return;
+        const gone = e.text === 'dismissed' && el ? composeDismiss(el, r) : null;
+        if (gone) { this.ask('burst', x, y, () => gone); return; }
         const size = Math.max(0.4, (e.amount ?? 1) / 2);
         this.ask('burst', x, y, () => composeImpact(el ?? 'arcane', size * 1.4, r));
         return;
@@ -340,6 +344,13 @@ export class SoundDirector {
         const lead = this.heldSpell(w, i).snd.lead ?? 'earth';
         add(`charge:${i}|${lead}`, { plan: () => composeCharge(lead), x: b.x[i], y: b.y[i], gain: 1 });
       }
+    }
+    // a turret's spray or beam is held, as a wizard's is (structures.ts)
+    const dv = w.devices;
+    for (let k = 0; k < MAX_DEVICES; k++) {
+      if (dv.type[k] !== DEVICE.turret || dv.chan[k] <= 0) continue;
+      const snd = spellSoundOf(compile(queueFromCounts(dv.els, k), 'force'));
+      add(`chan:device${k}|${snd.shape}`, { plan: () => composeSustain(sustainOf(snd), this.rand), tail: () => composeStop(sustainOf(snd), this.rand), x: dv.x[k], y: dv.y[k], gain: 0.8 });
     }
     for (let k = 0; k < MAX_ZONES; k++) {
       const t = z.type[k];

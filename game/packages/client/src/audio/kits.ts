@@ -57,6 +57,14 @@ export interface Kit {
   /** Building up in the hand, and in the air on its way. Empty means silent. */
   charge?: readonly KitLayer[];
   flight?: readonly KitLayer[];
+  /** A device taken back. */
+  dismiss?: readonly KitLayer[];
+  /**
+   * One spell's own cast, in place of its shape's, by the sim's shape: `lens`, or `aura+lightning` for that
+   * one with Lightning in it. A spell is its own thing on screen, so it wants a sound cut to what you see.
+   * Empty means silent, for a spell with no sound of its own yet that shouldn't borrow a wrong one.
+   */
+  spells?: Readonly<Record<string, readonly KitLayer[]>>;
 }
 
 const FIRE_PUFFS = ['fire-puff-1', 'fire-puff-2', 'fire-puff-3'];
@@ -74,6 +82,12 @@ export const FIRE_KIT: Required<Pick<Kit, 'start' | 'hold' | 'stop' | 'beam' | '
   ground: [{ clips: ['fire-lick'], gain: 0.45, rate: 1.15, loop: true, attack: 0.3, release: 0.3 }, { clips: ['fire-crackle'], gain: 0.3, rate: 0.8, loop: true, attack: 0.3, release: 0.3 }],
   charge: [{ clips: ['fire-jet'], gain: 0.5, rate: 0.7, glide: 1.25, loop: true, attack: 0.15 }],
   flight: [{ clips: ['fire-jet'], gain: 0.28, rate: 1.2, loop: true, attack: 0.05 }],
+};
+
+/** Every layer in a kit. */
+export const layersOf = (kit: Kit): readonly KitLayer[] => {
+  const { spells, ...roles } = kit;
+  return [...Object.values(roles), ...Object.values(spells ?? {})].flat();
 };
 
 const live: Partial<Record<ElementName, Kit>> = {};

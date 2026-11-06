@@ -1,0 +1,3173 @@
+{
+	"__header__": {
+		"fileType": "LDtk Project JSON",
+		"app": "LDtk",
+		"doc": "https://ldtk.io/json",
+		"schema": "https://ldtk.io/files/JSON_SCHEMA.json",
+		"appAuthor": "Sebastien 'deepnight' Benard",
+		"appVersion": "1.5.3",
+		"url": "https://ldtk.io"
+	},
+	"identifier": "Survive",
+	"iid": "76fac3fa-7afb-4db4-abd5-6a6df2e28f8b",
+	"uid": 102,
+	"worldX": 1360,
+	"worldY": 0,
+	"worldDepth": 0,
+	"pxWid": 960,
+	"pxHei": 680,
+	"__bgColor": "#3F6443",
+	"bgColor": "#3F6443",
+	"useAutoIdentifier": false,
+	"bgRelPath": null,
+	"bgPos": null,
+	"bgPivotX": 0.5,
+	"bgPivotY": 0.5,
+	"__smartColor": "#8FA28E",
+	"__bgPos": null,
+	"externalRelPath": null,
+	"fieldInstances": [],
+	"layerInstances": [
+		{
+			"__identifier": "Entities",
+			"__type": "Entities",
+			"__cWid": 96,
+			"__cHei": 68,
+			"__gridSize": 10,
+			"__opacity": 1,
+			"__pxTotalOffsetX": 0,
+			"__pxTotalOffsetY": 0,
+			"__tilesetDefUid": null,
+			"__tilesetRelPath": null,
+			"iid": "5b6580d4-199b-41f2-b307-8fbca6d18128",
+			"levelId": 102,
+			"layerDefUid": 1,
+			"pxOffsetX": 0,
+			"pxOffsetY": 0,
+			"visible": true,
+			"optionalRules": [],
+			"intGridCsv": [],
+			"autoLayerTiles": [],
+			"seed": 6947111,
+			"overrideTilesetUid": null,
+			"gridTiles": [],
+			"entityInstances": [
+				{
+					"__identifier": "PlayerStart",
+					"__grid": [ 40, 38 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#5FCDE4",
+					"iid": "d34adc67-6381-4449-a5de-8ee098ff534a",
+					"width": 10,
+					"height": 10,
+					"defUid": 10,
+					"px": [ 400, 380 ],
+					"fieldInstances": [
+						{
+							"__identifier": "seat",
+							"__type": "Int",
+							"__value": 0,
+							"__tile": null,
+							"defUid": 20,
+							"realEditorValues": [
+								{
+									"id": "V_Int",
+									"params": [ 0 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "PlayerStart",
+					"__grid": [ 56, 38 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#5FCDE4",
+					"iid": "af13391f-c957-4615-b57f-2fad811a5917",
+					"width": 10,
+					"height": 10,
+					"defUid": 10,
+					"px": [ 560, 380 ],
+					"fieldInstances": [
+						{
+							"__identifier": "seat",
+							"__type": "Int",
+							"__value": 1,
+							"__tile": null,
+							"defUid": 20,
+							"realEditorValues": [
+								{
+									"id": "V_Int",
+									"params": [ 1 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "PlayerStart",
+					"__grid": [ 40, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#5FCDE4",
+					"iid": "e344dae0-3bad-4da5-9223-db134e631380",
+					"width": 10,
+					"height": 10,
+					"defUid": 10,
+					"px": [ 400, 300 ],
+					"fieldInstances": [
+						{
+							"__identifier": "seat",
+							"__type": "Int",
+							"__value": 2,
+							"__tile": null,
+							"defUid": 20,
+							"realEditorValues": [
+								{
+									"id": "V_Int",
+									"params": [ 2 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "PlayerStart",
+					"__grid": [ 56, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#5FCDE4",
+					"iid": "184bb135-03bb-4783-8486-a29ea9223aee",
+					"width": 10,
+					"height": 10,
+					"defUid": 10,
+					"px": [ 560, 300 ],
+					"fieldInstances": [
+						{
+							"__identifier": "seat",
+							"__type": "Int",
+							"__value": 3,
+							"__tile": null,
+							"defUid": 20,
+							"realEditorValues": [
+								{
+									"id": "V_Int",
+									"params": [ 3 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 2, 34 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "3e2c29f1-37fc-4f8a-a5f7-ace9b8391e4b",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 20, 340 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 94, 34 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "247fc25a-e3d0-4ba4-89a5-c378f66c5f94",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 940, 340 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 24, 2 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "55d28134-be09-433c-9442-856faf76972f",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 240, 24 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 72, 2 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "7a48a635-203b-4770-9c99-2612ca7687ca",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 720, 24 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 24, 65 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "75f9a181-d015-47ea-bbe6-864d75e0ea8d",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 240, 656 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 72, 65 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "d91925d6-ac29-4439-805f-fc154a475197",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 720, 656 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Altar",
+					"__grid": [ 42, 33 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#F0D060",
+					"iid": "2daf2a6b-3659-43f6-a131-d5f408ce9df0",
+					"width": 10,
+					"height": 10,
+					"defUid": 13,
+					"px": [ 428, 332 ],
+					"fieldInstances": []
+				},
+				{
+					"__identifier": "Altar",
+					"__grid": [ 48, 38 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#F0D060",
+					"iid": "3932ee8e-c876-4423-8b29-8586c7437e2c",
+					"width": 10,
+					"height": 10,
+					"defUid": 13,
+					"px": [ 480, 382 ],
+					"fieldInstances": []
+				},
+				{
+					"__identifier": "Altar",
+					"__grid": [ 53, 33 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#F0D060",
+					"iid": "480ba7a2-a872-4592-b5e2-3bb3513aa813",
+					"width": 10,
+					"height": 10,
+					"defUid": 13,
+					"px": [ 532, 332 ],
+					"fieldInstances": []
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 30, 26 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "df5e461d-cdc7-49b6-aaa8-56c44efc667c",
+					"width": 2,
+					"height": 36,
+					"defUid": 14,
+					"px": [ 309, 268 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -8.5,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -8.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -1.8,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -1.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -8.5,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -8.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -3.6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -3.6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 64, 26 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "56ea43cd-d4aa-47b1-8761-2b719ea2e294",
+					"width": 2,
+					"height": 36,
+					"defUid": 14,
+					"px": [ 649, 268 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 8.5,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 8.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -1.8,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -1.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 8.5,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 8.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -3.6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -3.6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 30, 37 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "a1a42d9d-c6a5-4e80-a87f-231b8bde6464",
+					"width": 2,
+					"height": 36,
+					"defUid": 14,
+					"px": [ 309, 376 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -8.5,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -8.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 1.8,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 1.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -8.5,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -8.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 3.6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 3.6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 64, 37 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "3ceeecc2-5eb2-48dd-928c-5645fdf7e185",
+					"width": 2,
+					"height": 36,
+					"defUid": 14,
+					"px": [ 649, 376 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 8.5,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 8.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 1.8,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 1.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 8.5,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 8.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 3.6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 3.6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 31, 22 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "bbd75774-dd1c-46c2-87f8-7dfd87541b73",
+					"width": 46,
+					"height": 48,
+					"defUid": 14,
+					"px": [ 310, 220 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -8.5,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -8.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -3.6,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -3.6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -6.2,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -6.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 60, 22 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "7b4147e1-47f8-451a-992f-7e250e0b0cb8",
+					"width": 46,
+					"height": 48,
+					"defUid": 14,
+					"px": [ 604, 220 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 8.5,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 8.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -3.6,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -3.6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 6.2,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 6.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 31, 41 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "27ba4057-b74c-44b4-a09c-fa27d30aa0ae",
+					"width": 46,
+					"height": 48,
+					"defUid": 14,
+					"px": [ 310, 412 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -8.5,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -8.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 3.6,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 3.6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -6.2,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -6.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 60, 41 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "f6580ca2-0eb5-41eb-af70-79b4e9aa8354",
+					"width": 46,
+					"height": 48,
+					"defUid": 14,
+					"px": [ 604, 412 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 8.5,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 8.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 3.6,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 3.6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 6.2,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 6.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 35, 21 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "9b566b3c-9f62-4e27-964a-68c02b9456f2",
+					"width": 88,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 356, 219 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -6.2,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -6.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -6,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -1.8,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -1.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 51, 21 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "c684d802-efb9-49c6-9339-e3e29faf4a36",
+					"width": 88,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 516, 219 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 6.2,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 6.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -6,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 1.8,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 1.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 35, 45 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "b38dc77d-4125-49d7-8ef7-8f714122bd3f",
+					"width": 88,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 356, 459 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -6.2,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -6.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 6,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -1.8,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -1.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 51, 45 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "4f59314d-f15f-4d9e-8a36-df795ece57f7",
+					"width": 88,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 516, 459 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 6.2,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 6.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 6,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 1.8,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 1.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 37, 32 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "36d1fa84-f357-433f-b331-9bbaa31da808",
+					"width": 2,
+					"height": 32,
+					"defUid": 14,
+					"px": [ 375, 324 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -5.2,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -5.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -0.8,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -0.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -5.2,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -5.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 0.8,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 0.8 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 58, 32 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "eb6f2905-3635-4857-af5d-fa03b1ab2f97",
+					"width": 2,
+					"height": 32,
+					"defUid": 14,
+					"px": [ 583, 324 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 5.2,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 5.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -0.8,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -0.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 5.2,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 5.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 0.8,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 0.8 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 11, 29 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "d3b6db81-1907-4e0f-a589-e77f0e0462c2",
+					"width": 140,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 110, 295 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -18.5,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -18.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -2.2,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -2.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -11.5,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -11.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -2.2,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -2.2 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 71, 29 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "23729731-4835-4607-8de4-717c71cd6385",
+					"width": 140,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 710, 295 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 18.5,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 18.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -2.2,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -2.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 11.5,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 11.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -2.2,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -2.2 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 11, 38 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "f96c66b4-00f5-41b1-b0c1-e463be6b8aa1",
+					"width": 140,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 110, 383 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -18.5,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -18.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 2.2,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 2.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -11.5,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -11.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 2.2,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 2.2 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 71, 38 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "07c42fdd-a633-4216-a6f4-b8a8aa4a55eb",
+					"width": 140,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 710, 383 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 18.5,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 18.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 2.2,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 2.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 11.5,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 11.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 2.2,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 2.2 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 0, 23 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "93661622-9e55-49c4-b1ab-be3063432421",
+					"width": 64,
+					"height": 78,
+					"defUid": 14,
+					"px": [ 0, 232 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -24.4,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -24.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -5.4,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -5.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -20.8,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -20.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -1.5,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -1.5 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 89, 23 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "47b8c990-d2aa-419e-b15c-35d1d9a1653b",
+					"width": 64,
+					"height": 78,
+					"defUid": 14,
+					"px": [ 896, 232 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 24.4,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 24.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -5.4,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -5.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 20.8,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 20.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -1.5,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -1.5 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 0, 37 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "bddc2f31-c6fb-40ae-b49d-cce668a1b999",
+					"width": 64,
+					"height": 78,
+					"defUid": 14,
+					"px": [ 0, 370 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -24.4,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -24.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 5.4,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 5.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -20.8,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -20.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 1.5,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 1.5 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 89, 37 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "79dd7c74-c45f-48d7-b8da-7b68328d4b1f",
+					"width": 64,
+					"height": 78,
+					"defUid": 14,
+					"px": [ 896, 370 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 24.4,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 24.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 5.4,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 5.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 20.8,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 20.8 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 1.5,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 1.5 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 16, 0 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "7b2f32fd-4315-4009-bf9e-c7a8cdc78acb",
+					"width": 44,
+					"height": 68,
+					"defUid": 14,
+					"px": [ 168, 0 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -15.6,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -15.6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -17.4,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -17.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -13.4,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -13.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -13.6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -13.6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 74, 0 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "5f1ce70a-2865-4130-9353-c125e69f394f",
+					"width": 44,
+					"height": 68,
+					"defUid": 14,
+					"px": [ 748, 0 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 15.6,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 15.6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -17.4,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -17.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 13.4,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 13.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -13.6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -13.6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 16, 61 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "fdb6f037-8f9f-4425-aeaa-4d8445f281f0",
+					"width": 44,
+					"height": 68,
+					"defUid": 14,
+					"px": [ 168, 612 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -15.6,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -15.6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 17.4,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 17.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -13.4,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -13.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 13.6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 13.6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 74, 61 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "724ed96b-1c96-4e8d-8536-ae2faddca9e6",
+					"width": 44,
+					"height": 68,
+					"defUid": 14,
+					"px": [ 748, 612 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 15.6,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 15.6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 17.4,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 17.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 13.4,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 13.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 13.6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 13.6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 26, 0 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "c053aed1-931b-492e-b53a-902a0615a99f",
+					"width": 44,
+					"height": 68,
+					"defUid": 14,
+					"px": [ 268, 0 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -8.4,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -8.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -17.4,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -17.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -10.6,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -10.6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -13.6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -13.6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 64, 0 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "dbcff12a-dbb3-4aa0-b337-7529a61fc7d6",
+					"width": 44,
+					"height": 68,
+					"defUid": 14,
+					"px": [ 648, 0 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 8.4,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 8.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -17.4,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -17.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 10.6,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 10.6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -13.6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -13.6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 26, 61 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "5af05152-22c8-4a3b-b899-9fe373272216",
+					"width": 44,
+					"height": 68,
+					"defUid": 14,
+					"px": [ 268, 612 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -8.4,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -8.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 17.4,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 17.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -10.6,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -10.6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 13.6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 13.6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 64, 61 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "835e14c0-62fb-45d2-a902-915b08ae182b",
+					"width": 44,
+					"height": 68,
+					"defUid": 14,
+					"px": [ 648, 612 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 8.4,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 8.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 17.4,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 17.4 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 10.6,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 10.6 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 13.6,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 13.6 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 43, 12 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "4df4d249-e57d-4ba0-8e32-7db815cc116b",
+					"width": 88,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 436, 129 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -2.2,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -2.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -10.5,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -10.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 2.2,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 2.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -10.5,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -10.5 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 43, 54 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "684d31fe-d773-4009-841a-7f5f252d8417",
+					"width": 88,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 436, 549 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -2.2,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -2.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 10.5,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 10.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 2.2,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 2.2 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 10.5,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 10.5 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 10, 13 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "69966f10-f88b-466c-b8cb-b64db9e60d35",
+					"width": 50,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 100, 139 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -19,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -19 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -10,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -10 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -16.5,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -16.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -10,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -10 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 81, 13 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "5b28d13b-f15b-4d79-8b2d-d91d4f6b9e92",
+					"width": 50,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 810, 139 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 19,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 19 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -10,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -10 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 16.5,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 16.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -10,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -10 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 10, 53 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "738b4c65-883f-44d4-8dc4-aa1047744941",
+					"width": 50,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 100, 539 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -19,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -19 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 10,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 10 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -16.5,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -16.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 10,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 10 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 81, 53 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "2fc5eb53-9585-4f7c-af76-60b5ede3770c",
+					"width": 50,
+					"height": 2,
+					"defUid": 14,
+					"px": [ 810, 539 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 19,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 19 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 10,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 10 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 16.5,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 16.5 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 10,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 10 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 9, 14 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "df1114ec-753d-4d5c-ab08-3e1e64e275ab",
+					"width": 2,
+					"height": 40,
+					"defUid": 14,
+					"px": [ 99, 140 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -19,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -19 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -10,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -10 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -19,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -19 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -8,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -8 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 85, 14 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "fa04c468-1bcc-44db-afcd-d0cb4fc5e43c",
+					"width": 2,
+					"height": 40,
+					"defUid": 14,
+					"px": [ 859, 140 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 19,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 19 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": -10,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -10 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 19,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 19 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": -8,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -8 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 9, 50 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "058cc176-7120-46a8-abc7-2f694d0b7b00",
+					"width": 2,
+					"height": 40,
+					"defUid": 14,
+					"px": [ 99, 500 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": -19,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -19 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 10,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 10 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": -19,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -19 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 8,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 8 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Rock",
+					"__grid": [ 85, 50 ],
+					"__pivot": [ 0, 0 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#74786C",
+					"iid": "d4e9e20a-5ca0-41ea-9219-154a4a2ff71f",
+					"width": 2,
+					"height": 40,
+					"defUid": 14,
+					"px": [ 859, 500 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x1",
+							"__type": "Float",
+							"__value": 19,
+							"__tile": null,
+							"defUid": 23,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 19 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y1",
+							"__type": "Float",
+							"__value": 10,
+							"__tile": null,
+							"defUid": 24,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 10 ]
+								}
+							]
+						},
+						{
+							"__identifier": "x2",
+							"__type": "Float",
+							"__value": 19,
+							"__tile": null,
+							"defUid": 25,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 19 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y2",
+							"__type": "Float",
+							"__value": 8,
+							"__tile": null,
+							"defUid": 26,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 8 ]
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"__identifier": "Terrain",
+			"__type": "IntGrid",
+			"__cWid": 96,
+			"__cHei": 68,
+			"__gridSize": 10,
+			"__opacity": 1,
+			"__pxTotalOffsetX": 0,
+			"__pxTotalOffsetY": 0,
+			"__tilesetDefUid": null,
+			"__tilesetRelPath": null,
+			"iid": "dbb2d535-52cf-417f-85cd-d956309bd249",
+			"levelId": 102,
+			"layerDefUid": 2,
+			"pxOffsetX": 0,
+			"pxOffsetY": 0,
+			"visible": true,
+			"optionalRules": [],
+			"intGridCsv": [
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+			],
+			"autoLayerTiles": [],
+			"seed": 412365,
+			"overrideTilesetUid": null,
+			"gridTiles": [],
+			"entityInstances": []
+		}
+	],
+	"__neighbours": []
+}

@@ -9,6 +9,8 @@
 import { ARENA, BODY, CELL, PERKS, RUNES } from './config';
 import { EL, N_EL, elementName } from './elements';
 import { createRng, type RngState } from './rng';
+import { roomHash, type RoomDef, type Seg } from './room';
+import { ROOM_DEFS } from './rooms.gen';
 import { TS_LEN, TUT_ORDER, tutPool } from './tutorial-data';
 
 export const SIM_HZ = 60;
@@ -28,21 +30,28 @@ export { ARENA };
 /**
  * A world's play area: its size in world units (centred on the origin) and its surface / nav grid
  * in CELL-sized cells. Fixed by the room when the world is made, so it is not state: two worlds of
- * the same room always share it, and the grids' arrays (which are state) are sized from it. The
- * Sanctum and the Arena use ARENA, as before, so their layout and the golden hash are unchanged.
+ * the same room always share it, and the grids' arrays (which are state) are sized from it.
+ *
+ * Rooms come from the LDtk maps in game/content/maps, compiled into rooms.gen.ts (plain data; see
+ * room.ts). A level added there is a room here.
  */
 export interface Dims { readonly w: number; readonly h: number; readonly gw: number; readonly gh: number }
 const dimsOf = (w: number, h: number): Dims => ({ w, h, gw: Math.round(w / CELL), gh: Math.round(h / CELL) });
+export type Room = keyof typeof ROOM_DEFS;
+/** Every room's layout, by id. */
+export const ROOMS: Readonly<Record<Room, RoomDef>> = ROOM_DEFS;
+const ROOM_IDS = Object.keys(ROOMS).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)) as Room[];
+/** Each room's hash (room.ts roomHash): what peers compare before a match. */
+export const ROOM_HASH: Readonly<Record<Room, number>> = Object.fromEntries(ROOM_IDS.map((id) => [id, roomHash(ROOMS[id])])) as Record<Room, number>;
+/** One hash for every room (FNV-1a over the rooms' hashes, by id): the lobby compares it. */
+export const CONTENT_HASH: number = ROOM_IDS.reduce((h, id) => Math.imul(h ^ ROOM_HASH[id], 0x01000193), 0x811c9dc5) >>> 0;
 /**
  * Survive's arena: over four times the Arena's floor, too big to fit on screen at any scale the
  * camera picks for a 1280 x 800 window or larger (at 2x such a window shows 40 x 31 u of play area;
  * the camera follows).
  */
-export const SURVIVE_ARENA = { w: 48, h: 34 } as const;
-export const ROOM_DIMS: Readonly<Record<Room, Dims>> = {
-  sanctum: dimsOf(ARENA.w, ARENA.h), arena: dimsOf(ARENA.w, ARENA.h), survive: dimsOf(SURVIVE_ARENA.w, SURVIVE_ARENA.h),
-  tutorial: dimsOf(ARENA.w, ARENA.h),
-};
+export const SURVIVE_ARENA = { w: ROOMS.survive.w, h: ROOMS.survive.h } as const;
+export const ROOM_DIMS: Readonly<Record<Room, Dims>> = Object.fromEntries(ROOM_IDS.map((id) => [id, dimsOf(ROOMS[id].w, ROOMS[id].h)])) as Record<Room, Dims>;
 /** The most cells any room's grid has (nav's scratch heap is sized for it). */
 export const MAX_CELLS = Math.max(...Object.values(ROOM_DIMS).map((d) => d.gw * d.gh));
 
@@ -379,6 +388,8 @@ export interface Tutorial {
 export interface World {
   /** The play area (not state: fixed by the room, see Dims). */
   dims: Dims;
+  /** The room's layout (not state either: fixed by the room, from the maps; room.ts). */
+  def: RoomDef;
   /** [0] = tick, [1] = seed. */
   clock: Uint32Array;
   rng: RngState;
@@ -463,21 +474,9 @@ function tutorial(beat: number): Tutorial {
 /** The owner of the arena's own rock (survive's cover and gates): it never times out or breaks. */
 export const TERRAIN = -2;
 
-/** A segment and its mirror images across x = 0 and / or y = 0 (the survive arena is symmetric both ways). */
-type Seg = readonly [number, number, number, number];
-const mirrored = (segs: Seg[], mx: boolean, my: boolean): Seg[] => {
-  const out: Seg[] = [];
-  for (const [x1, y1, x2, y2] of segs) {
-    out.push([x1, y1, x2, y2]);
-    if (mx) out.push([-x1, y1, -x2, y2]);
-    if (my) out.push([x1, -y1, x2, -y2]);
-    if (mx && my) out.push([-x1, -y1, -x2, -y2]);
-  }
-  return out;
-};
-
 /**
- * The survive arena's static rock (48 x 34 u), as segments, in zones from the middle out:
+ * The survive arena's static rock (48 x 34 u), as segments, in zones from the middle out (the map is
+ * game/content/maps/world/Survive.ldtkl; these are its free Rock entities):
  *
  *   the keep     a walled courtyard (17 x 12 u) round the altar plaza, its corners cut, with a
  *                3.6 u door on each axis: the place to hold, and four doors to watch or wall shut.
@@ -490,27 +489,12 @@ const mirrored = (segs: Seg[], mx: boolean, my: boolean): Seg[] => {
  *   the field    the ring of open ground between the keep and the gates: screens in front of the
  *                north and south doors and an L of cover in each corner (archer cover, ricochet angles).
  *
- * 40 segments, so players keep 120 of the 160 wall slots.
+ * 40 segments, so players keep 120 of the 160 wall slots (content:check holds every room to 40).
  */
-export const SURVIVE_ROCK: readonly Seg[] = [
-  // the keep: one cut corner (three segments) per quadrant, doors on the axes
-  ...mirrored([[-8.5, -1.8, -8.5, -3.6], [-8.5, -3.6, -6.2, -6], [-6.2, -6, -1.8, -6]], true, true),
-  // pillars flanking the plaza
-  [-5.2, -0.8, -5.2, 0.8], [5.2, -0.8, 5.2, 0.8],
-  // causeways, west and east
-  ...mirrored([[-18.5, -2.2, -11.5, -2.2], [-18.5, 2.2, -11.5, 2.2]], true, false),
-  // gate funnels: west and east (the walls run a little past the edge, so nothing slips round their ends)
-  ...mirrored([[-24.4, -5.4, -20.8, -1.5], [-24.4, 5.4, -20.8, 1.5]], true, false),
-  // gate funnels: north-west, north-east, south-west, south-east
-  ...mirrored([[-15.6, -17.4, -13.4, -13.6], [-8.4, -17.4, -10.6, -13.6]], true, true),
-  // screens before the north and south doors
-  [-2.2, -10.5, 2.2, -10.5], [-2.2, 10.5, 2.2, 10.5],
-  // corner cover: an L in each quadrant, its corner pointing out
-  ...mirrored([[-19, -10, -16.5, -10], [-19, -10, -19, -8]], true, true),
-];
+export const SURVIVE_ROCK: readonly Seg[] = ROOMS.survive.rock;
 /** Where survive's portals open: at the back of each gate funnel. */
-export const SURVIVE_GATES: readonly (readonly [number, number])[] = [[-23, 0], [23, 0], [-12, -15.8], [12, -15.8], [-12, 15.8], [12, 15.8]];
-export const ALTAR_SPOTS: readonly (readonly [number, number])[] = [[-2.6, -0.4], [0, 2.1], [2.6, -0.4]];
+export const SURVIVE_GATES: readonly (readonly [number, number])[] = ROOMS.survive.portals;
+export const ALTAR_SPOTS: readonly (readonly [number, number])[] = ROOMS.survive.altars;
 
 /** Max runes of element `id` for seat `i`: the config; in the tutorial, the beat's pools (0 = locked); in Survive, its weak start plus the seat's power-ups. */
 export const runeMax = (w: World, i: number, id: number): number =>
@@ -545,17 +529,11 @@ export function regenRate(w: World, i: number, id: number, full: number): number
   return regenOf(w, i) * m * (a / all + (1 - a) / open);
 }
 
-const START = [[-4, 2], [4, 2], [-4, -2], [4, -2]] as const;
-/** The Sanctum's practice dummies. */
-const DUMMIES = [[-6, -4], [0, -5], [6, -4]] as const;
-
-export type Room = 'sanctum' | 'arena' | 'survive' | 'tutorial';
-
 /** `tutorialBeat` starts a tutorial world at that beat (design numbering; the first if it isn't one the build has). */
 export function createWorld(seed: number, players: number, opts: { dummies?: boolean; room?: Room; tutorialBeat?: number } = {}): World {
-  const dims = ROOM_DIMS[opts.room ?? 'sanctum'], cells = dims.gw * dims.gh;
+  const room = opts.room ?? 'sanctum', def = ROOMS[room], dims = ROOM_DIMS[room], cells = dims.gw * dims.gh;
   const w: World = {
-    dims,
+    dims, def,
     clock: new Uint32Array([0, seed >>> 0]), rng: createRng(seed),
     bodies: bodies(MAX_BODIES), seats: seats(MAX_SEATS), missiles: missiles(MAX_MISSILES), zones: zones(MAX_ZONES),
     surf: { kind: u8(cells), life: i32(cells) },
@@ -582,18 +560,17 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
     tut: opts.room === 'tutorial' ? tutorial(opts.tutorialBeat ?? TUT_ORDER[0]) : null,
     events: [],
   };
-  if (w.run) {
-    SURVIVE_ROCK.forEach(([x1, y1, x2, y2], k) => {
-      const wl = w.walls;
-      wl.type[k] = 1; // WALL.rock (compile.ts)
-      wl.owner[k] = TERRAIN; wl.x1[k] = x1; wl.y1[k] = y1; wl.x2[k] = x2; wl.y2[k] = y2;
-      wl.hp[k] = wl.maxHp[k] = 1e6;
-    });
-  }
+  // The room's static rock takes the first wall slots (so far only Survive's map has any).
+  def.rock.forEach(([x1, y1, x2, y2], k) => {
+    const wl = w.walls;
+    wl.type[k] = 1; // WALL.rock (compile.ts)
+    wl.owner[k] = TERRAIN; wl.x1[k] = x1; wl.y1[k] = y1; wl.x2[k] = x2; wl.y2[k] = y2;
+    wl.hp[k] = wl.maxHp[k] = 1e6;
+  });
   for (let i = 0; i < Math.min(players, MAX_SEATS); i++) joinSeat(w, i);
   const arena = opts.room === 'arena' || opts.room === 'survive';
   if (arena) { w.enc.state[0] = PHASE_ENC.lull; w.enc.state[1] = 1; w.enc.state[2] = 0; }
-  else if (opts.dummies !== false && !w.tut) for (const [x, y] of DUMMIES) spawnBody(w, -1, KIND.dummy, TEAM.enemies, x, y, BODY.dummyHp, BODY.dummyRadius);
+  else if (opts.dummies !== false && !w.tut) for (const [x, y] of def.dummies) spawnBody(w, -1, KIND.dummy, TEAM.enemies, x, y, BODY.dummyHp, BODY.dummyRadius);
   return w;
 }
 
@@ -601,7 +578,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
 export function joinSeat(w: World, i: number): void {
   if (w.seats.active[i]) return;
   w.seats.active[i] = 1;
-  spawnBody(w, i, KIND.wizard, TEAM.players, START[i][0], START[i][1], BODY.wizardHp, BODY.wizardRadius);
+  spawnBody(w, i, KIND.wizard, TEAM.players, w.def.starts[i][0], w.def.starts[i][1], BODY.wizardHp, BODY.wizardRadius);
   for (let e = 1; e <= N_EL; e++) w.seats.runes[i * N_EL + e - 1] = runeMax(w, i, e);
 }
 

@@ -1,0 +1,14 @@
+{
+  "name": "@wizard-sim/content",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "The map pipeline: game/content/maps (LDtk) -> packages/sim/src/rooms.gen.ts, the content check and the grid CLI.",
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "@wizard-sim/sim": "*"
+  }
+}

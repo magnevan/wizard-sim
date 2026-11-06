@@ -44,6 +44,25 @@ try {
   const d = await st();
   console.log('after the arch', d);
   if (d.tut || !d.run) fail('the Survive arch did not switch to Survive');
+
+  // every beat draws and plays in the page: each one starts at its own beat, the bot plays a moment, no errors
+  for (let beat = 1; beat <= 20; beat++) {
+    await p.goto(`${BASE}?timerloop=1&debug=0&room=tutorial&autoplay=1&beat=${beat}&n=${beat}`);
+    await p.waitForFunction(() => !!window.wizardSim?.world?.tut, { timeout: 20000, polling: 100 });
+    await sleep(1200);
+    const e = await st();
+    if (e.beat !== beat) fail(`beat ${beat}: the page shows beat ${e.beat}`);
+  }
+  console.log('every beat loaded and played');
+
+  // the bot plays a short beat through to the next in the page (the calm, the ready stone, the arrivals, the arch)
+  await p.goto(`${BASE}?timerloop=1&debug=0&room=tutorial&autoplay=1&beat=6`);
+  await p.waitForFunction(() => !!window.wizardSim?.world?.tut, { timeout: 20000, polling: 100 });
+  const t0 = Date.now();
+  let f = await st();
+  while (f.beat === 6 && Date.now() - t0 < 40000) { await sleep(500); f = await st(); }
+  console.log('after the hands test', f, `${((Date.now() - t0) / 1000).toFixed(1)} s`);
+  if (f.beat !== 7) fail('the bot did not play the hands test through to the Fire beat in the page');
 } finally {
   await browser.close();
   stop();

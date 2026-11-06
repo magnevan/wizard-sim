@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BTN, EL, KIND, NO_INPUT, N_EL, TUT_BEAT, TUT_END, TUT_ORDER, TUT_PLACES, TUT_STATE as TS, TUT_TAG, T,
-  buffers, createWorld, hashWorld, newTutorialBot, quantize, restore, runeMax, scriptedReplay, runReplay, hex, snapshot, spawnBody, step, tutorialBotInput,
+  BTN, EL, KIND, NO_INPUT, N_EL, TUT_ARRIVALS, TUT_BEAT, TUT_END, TUT_ORDER, TUT_PLACES, TUT_STATE as TS, TUT_TAG, TUT_TIMES, T, calmOf,
+  buffers, createWorld, skipOpen, hashWorld, newTutorialBot, quantize, restore, runeMax, scriptedReplay, runReplay, hex, snapshot, spawnBody, step, tutorialBotInput,
   type PlayerInput, type World,
 } from '../src';
 import golden from './golden.json';
@@ -30,16 +30,16 @@ describe('tutorial', () => {
     expect(hex(runReplay(scriptedReplay(golden.ticks)).hash)).toBe(golden.hash);
   });
 
-  it('a bot plays every beat of the prototype through to the end card, and takes an arch', () => {
+  it('a bot plays every beat through to the end card, and takes an arch', () => {
     const w = createWorld(3, 1, { room: 'tutorial' });
-    const seen = play(w, T(600), (w) => w.tut!.state[TS.exit] !== 0);
+    const seen = play(w, T(900), (w) => w.tut!.state[TS.exit] !== 0);
     expect(seen).toEqual(TUT_ORDER);
     expect(w.tut!.state[TS.exit]).toBe(2); // the Survive arch
   });
 
   it('two players play it through together (personal beats complete when either does them)', () => {
     const w = createWorld(5, 2, { room: 'tutorial' });
-    const seen = play(w, T(600), (w) => w.tut!.state[TS.beat] === TUT_END);
+    const seen = play(w, T(900), (w) => w.tut!.state[TS.beat] === TUT_END);
     expect(seen).toEqual(TUT_ORDER);
   });
 
@@ -51,7 +51,7 @@ describe('tutorial', () => {
       const mem = [newTutorialBot()];
       const tickBot = () => step(w, [tutorialBotInput(w, 0, mem[0]), NO_INPUT, NO_INPUT, NO_INPUT]);
       for (let k = 0; k < 90; k++) tickBot();
-      const snap = snapshot(w), keep = { ...mem[0], presses: mem[0].presses.slice() };
+      const snap = snapshot(w), keep = structuredClone(mem[0]);
       for (let k = 0; k < 60; k++) tickBot();
       const h = hashWorld(w);
       restore(w, snap); mem[0] = keep;
@@ -171,5 +171,86 @@ describe('tutorial', () => {
     expect(b.x[0]).toBeCloseTo(TUT_PLACES.entry[0], 5); // lying still
     idle(w, T(1.5), { moveX: 127 });
     expect(b.x[0]).toBeGreaterThan(TUT_PLACES.entry[0] + 0.5);
+  });
+  it('covers all nine elements, each unlocked for good once given', () => {
+    const seen = new Set<number>();
+    for (const beat of TUT_ORDER) for (let e = 1; e <= N_EL; e++) {
+      const w = createWorld(1, 1, { room: 'tutorial', tutorialBeat: beat });
+      if (runeMax(w, 0, e) > 0) seen.add(e);
+      else expect(seen.has(e), `element ${e} locked again in beat ${beat}`).toBe(false);
+    }
+    expect(seen.size).toBe(N_EL);
+  });
+
+  it('a calm start: nothing hostile in the chamber until the calm ends, then they walk in from the far gates', () => {
+    const hostile = (w: World) => { let n = 0; for (let i = 4; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy && [TUT_TAG.foe, TUT_TAG.goblin].includes(w.tut!.tag[i] as 5 | 6)) n++; return n; };
+    for (const beat of Object.keys(TUT_ARRIVALS).map(Number)) {
+      const w = createWorld(1, 1, { room: 'tutorial', tutorialBeat: beat });
+      idle(w, T(calmOf(beat, 0)) - 2);
+      expect(hostile(w), `beat ${beat} during the calm`).toBe(0);
+      idle(w, 4);
+      expect(hostile(w), `beat ${beat} after the calm`).toBeGreaterThan(0);
+      // and none arrives near the entry
+      for (let i = 4; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy && w.tut!.tag[i] !== TUT_TAG.straw) {
+        expect(Math.hypot(w.bodies.x[i] - TUT_PLACES.entry[0], w.bodies.y[i] - TUT_PLACES.entry[1]), `beat ${beat}`).toBeGreaterThan(6);
+      }
+    }
+  });
+
+  it('the ready stone lets them in after a short warning, and the skip stone closes once they are in', () => {
+    const w = createWorld(1, 1, { room: 'tutorial', tutorialBeat: TUT_BEAT.hands });
+    idle(w, 1);
+    expect(skipOpen(w)).toBe(true);
+    w.bodies.x[0] = TUT_PLACES.ready[0]; w.bodies.y[0] = TUT_PLACES.ready[1];
+    idle(w, T(TUT_TIMES.warn) - 3);
+    expect(w.tut!.state[TS.go]).toBe(0);
+    idle(w, 4);
+    expect(w.tut!.state[TS.go]).toBeGreaterThan(0);
+    expect(skipOpen(w)).toBe(false);
+    w.bodies.x[0] = TUT_PLACES.skip[0]; w.bodies.y[0] = TUT_PLACES.skip[1];
+    idle(w, T(1.5));
+    expect(w.tut!.state[TS.lit]).toBe(0);
+  });
+
+  it('the test: a faint retries the current wave, calm again', () => {
+    const w = createWorld(1, 1, { room: 'tutorial', tutorialBeat: TUT_BEAT.test });
+    idle(w, 1);
+    w.tut!.state[TS.wave] = 1;
+    w.bodies.hp[0] = -5;
+    idle(w, 1);
+    expect(w.tut!.state[TS.wave]).toBe(1);
+    expect(w.tut!.state[TS.go]).toBe(0);
+  });
+
+  it('the pit: you can not step in, and a flamethrower from its lip falls short; a fireball does not', () => {
+    const w = createWorld(1, 1, { room: 'tutorial', tutorialBeat: TUT_BEAT.fireball });
+    idle(w, 1);
+    const b = w.bodies, [px, py] = TUT_PLACES.pit;
+    b.x[0] = px - TUT_PLACES.pitR - 1; b.y[0] = py;
+    idle(w, T(1), { moveX: 127, aimX: 32 });
+    expect(Math.hypot(b.x[0] - px, b.y[0] - py)).toBeGreaterThanOrEqual(TUT_PLACES.pitR + b.r[0] - 1e-9);
+    const k = (() => { for (let i = 4; i < b.kind.length; i++) if (w.tut!.tag[i] === TUT_TAG.far) return i; return -1; })();
+    const aim = { aimX: (px - b.x[0]) * 32, aimY: (py - b.y[0]) * 32 };
+    idle(w, 1, { ...aim, press0: EL.fire }); idle(w, 1, { ...aim, press0: EL.fire });
+    idle(w, 120, { ...aim, buttons: BTN.force });
+    idle(w, 60, aim);
+    expect(b.hp[k]).toBe(b.maxHp[k]);
+    idle(w, 1, { ...aim, press0: EL.earth }); idle(w, 1, { ...aim, press0: EL.fire });
+    idle(w, 30, { ...aim, buttons: BTN.force });
+    idle(w, 180, aim);
+    expect(b.kind[k]).toBe(KIND.none);
+  });
+
+  it('the Life beat: the dummy stays hurt until healed, and a healing ring wakes the goblin asleep beside it', () => {
+    const w = createWorld(1, 1, { room: 'tutorial', tutorialBeat: TUT_BEAT.life });
+    idle(w, T(5));
+    const b = w.bodies, t = w.tut!;
+    let d = -1, z = -1;
+    for (let i = 4; i < b.kind.length; i++) { if (t.tag[i] === TUT_TAG.patient) d = i; if (t.tag[i] === TUT_TAG.sleeper) z = i; }
+    expect(b.hp[d]).toBeLessThan(b.maxHp[d]); // no dummy reset
+    expect(b.down[z]).toBeGreaterThan(0); // asleep
+    b.x[0] = (b.x[d] + b.x[z]) / 2 - 0.8; b.y[0] = (b.y[d] + b.y[z]) / 2;
+    for (let k = 0; k < 3; k++) { idle(w, 1, { press0: EL.life }); idle(w, 1, { press0: EL.life }); idle(w, 1, { buttons: BTN.area }); idle(w, 60); idle(w, T(2)); }
+    expect(t.tag[z]).toBe(TUT_TAG.foe); // awake
   });
 });

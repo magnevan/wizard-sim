@@ -1,23 +1,41 @@
 /**
- * The tutorial (docs/explorations/2026-11-06-tutorial.md), the prototype cut: nine beats in one
- * chamber, each a small problem the new skill solves, then an end card with three arches.
+ * The tutorial (docs/explorations/2026-11-06-tutorial.md; pass 2: 2026-11-06-tutorial-pass-2.md):
+ * nineteen beats in one chamber, each a small problem the new skill solves, then an end card.
  *
- *   1 Walk     step on three glowing floor stones
- *   2 Strike   knock down three straw goblins with the staff
- *   3 Heavy    shove a straw sack into the painted ring with a Heavy
- *   4 Retreat  a soft Brute slams twice and hits nobody
- *   5 Defend   parry an archer's bolt with the training buckler
- *   6 Hands    four soft goblins close in round you: Sweep (Shift+RMB) catches them all
- *   7 Fire     burn the bramble hedge across the way out (only fire hurts brambles)
- *   8 Douse    cross the burning floor, then put yourself out (Water on yourself)
- *   9 Steam    three straw goblins in the rain: Water + Fire scalds through the wet
- *   20 End     three arches: the Sanctum, Survive, the Arena
+ *   chapter 1, your hands (no runes)
+ *   1 Walk       step on three glowing floor stones
+ *   2 Strike     knock down three straw goblins with the staff
+ *   3 Heavy      shove a straw sack into the painted ring with a Heavy
+ *   4 Retreat    a soft Brute walks in and slams twice; hop out of it
+ *   5 Defend     parry an archer's bolt with the training buckler
+ *   6 Hands      four soft goblins walk in from four sides: Sweep (Shift+RMB) catches them all
+ *   chapter 2, one rune at a time
+ *   7 Fire       burn the bramble hedge across the way out (only fire hurts brambles)        Force
+ *   8 Douse      cross the burning floor, then put yourself out (Water on yourself)          Self
+ *   9 Steam      three straw goblins in the rain: Water + Fire scalds through the wet       a mix
+ *   10 Cold      five goblins walk in: a frost ring (Cold, Shift+RMB tap) chills them all    Area
+ *   11 Opposites queue Fire, then Cold: they cancel and the runes come back
+ *   12 Lightning rain on a cluster (Water, hold Shift+RMB), then a lightning arc            Place
+ *   13 Shatter   two straw goblins in a puddle: ice freezes the wet, a rock shatters them
+ *   14 Fireball  a bramble out in a pit you can't step into: Earth + Fire throws the fire
+ *   15 Life      heal the wounded dummy without waking the goblin asleep beside it
+ *   16 Shield    two archers walk in: walls stop three of their arrows                       Place (wall)
+ *   17 Arcane    the same archers, soft: an Arcane beam reaches them
+ *   18 Sigil     two lanes of goblins: a flame sword (Shift+LMB) or a turret (RMB)           Weapon
+ *   chapter 3
+ *   19 The test  two announced waves, real fights at 0.6x damage
+ *   20 End       three arches: the Sanctum, Survive, the Arena
  *
  * Shared rules: when a beat's check passes (or everyone stands on its "I know this" stone for a
  * second) the exit arch on the east lights; walking into it fades the chamber out and lays out the
  * next beat, with everyone back at the entry and the new beat's pools full (runeMax reads them, so
  * locked elements are max 0). You can't die: at 0 hp you faint for a moment and get up at full; if
- * every wizard has fainted, the beat starts over.
+ * every wizard has fainted, the beat starts over (the test: its current wave).
+ *
+ * A calm start: nothing hostile stands in the chamber when a beat begins. Enemies walk in through
+ * gates on the far walls (tutorial-data TUT_ARRIVALS) only once the calm is over: when someone steps
+ * on the ready stone ahead of the entry (after a short warning), or after a few seconds by
+ * themselves. Straw targets, brambles and the sleeping goblin stand ready, away from the entry.
  *
  * The prototype completes the personal beats (Walk, Retreat, Defend, Douse) when any one player
  * does them; the full build gives each seat a done-bit (w.tut.done) and waits for everyone.
@@ -31,10 +49,13 @@ import { EL, N_EL } from './elements';
 import { WALL } from './compile';
 import { cellAt, spawnZone, stored, touchFloor } from './effects';
 import { conjureGuard } from './guards';
+import { atan2Turns } from './trig';
 import {
   CAST_ID, KIND, MAX_SEATS, PHASE, QUEUE_MAX, SURF, TEAM, TERRAIN, WARD, ZONE, runeMax, spawnBody, type World,
 } from './world';
-import { TAG, TS, TUT_BEAT, TUT_BUCKLER_HP, TUT_END, TUT_PLACES as P, TUT_TIMES, nextBeat } from './tutorial-data';
+import {
+  TAG, TS, TUT_BEAT, TUT_BUCKLER_HP, TUT_END, TUT_PLACES as P, TUT_TIMES, arrivalsOf, calmOf, nextBeat, wavesOf, type Arrival,
+} from './tutorial-data';
 
 const dist = (ax: number, ay: number, bx: number, by: number): number => Math.sqrt((ax - bx) * (ax - bx) + (ay - by) * (ay - by));
 
@@ -46,15 +67,17 @@ function wizards(w: World): number[] {
 }
 /** Is any body tagged `tag` still standing? */
 function anyTagged(w: World, tag: number): boolean {
-  const b = w.bodies, t = w.tut!;
-  for (let i = MAX_SEATS; i < b.kind.length; i++) if (b.kind[i] === KIND.enemy && t.tag[i] === tag) return true;
-  return false;
+  return firstTagged(w, tag) >= 0;
 }
-/** The first body tagged `tag`, or -1. */
+/** The first body tagged `tag`, or -1 (enemies and the tutorial's dummy). */
 function firstTagged(w: World, tag: number): number {
   const b = w.bodies, t = w.tut!;
-  for (let i = MAX_SEATS; i < b.kind.length; i++) if (b.kind[i] === KIND.enemy && t.tag[i] === tag) return i;
+  for (let i = MAX_SEATS; i < b.kind.length; i++) if ((b.kind[i] === KIND.enemy || b.kind[i] === KIND.dummy) && t.tag[i] === tag) return i;
   return -1;
+}
+/** Is anything that walked in still standing (the sleeper doesn't count until it wakes)? */
+function anyHostile(w: World): boolean {
+  return anyTagged(w, TAG.foe) || anyTagged(w, TAG.goblin) || anyTagged(w, TAG.chilled);
 }
 
 /** Spawns an enemy of archetype `arch` tagged for the tutorial. hp / radius default to the archetype's. */
@@ -67,6 +90,11 @@ function spawn(w: World, arch: number, tag: number, x: number, y: number, o: { h
   if (o.speed !== undefined) b.speedMult[i] = o.speed;
   w.tut!.tag[i] = tag;
   return i;
+}
+/** Someone walks in through their gate, facing into the chamber. */
+function arrive(w: World, a: Arrival): void {
+  const [x, y] = P.gates[a.gate], i = spawn(w, a.arch, a.tag, x, y, a);
+  if (i >= 0) w.bodies.face[i] = atan2Turns(-y, -x);
 }
 
 /** Lays a rock segment the players can't break (the chamber's own). */
@@ -88,6 +116,17 @@ function layFire(w: World): void {
     const c = cellAt(w, x, y);
     if (c >= 0 && w.surf.kind[c] !== SURF.fire) touchFloor(w, c, EL.fire);
     if (c >= 0) w.surf.life[c] = Math.max(w.surf.life[c], T(4));
+  }
+}
+
+/** Beat 13's puddle: water, laid again every so often (whatever froze or burned it). */
+function layPuddle(w: World): void {
+  const [px, py] = P.puddle, r = P.puddleR;
+  for (let y = -r; y <= r; y += 0.5) for (let x = -r; x <= r; x += 0.5) {
+    if (x * x + y * y > r * r) continue;
+    const c = cellAt(w, px + x, py + y);
+    if (c < 0) continue;
+    w.surf.kind[c] = SURF.water; w.surf.life[c] = Math.max(w.surf.life[c], T(4));
   }
 }
 
@@ -134,7 +173,7 @@ function resetWizards(w: World, beat: number): void {
   });
 }
 
-/** Lays out `beat` (design numbering): the chamber's rock, its targets, everyone at the entry. */
+/** Lays out `beat` (design numbering): the chamber's rock, its targets, everyone at the entry. Arrivals wait for the calm to end. */
 export function setupBeat(w: World, beat: number): void {
   const t = w.tut!, st = t.state;
   st.fill(0);
@@ -147,21 +186,6 @@ export function setupBeat(w: World, beat: number): void {
       break;
     case TUT_BEAT.heavy:
       spawn(w, ARCH.straw, TAG.sack, P.sack[0], P.sack[1], { hp: 999, r: 0.45 });
-      break;
-    case TUT_BEAT.retreat:
-      spawn(w, ARCH.brute, TAG.foe, 4, 0, { dmg: 0.25, speed: 0.6 });
-      break;
-    case TUT_BEAT.defend:
-      // a soft archer that stays put; low rock on either side of it, so it reads as a firing post
-      spawn(w, ARCH.caster, TAG.foe, 0.5, 0, { hp: 20, dmg: 0.25, speed: 0 });
-      rock(w, 1.6, -2.4, 1.6, -1.2); rock(w, 1.6, 1.2, 1.6, 2.4);
-      break;
-    case TUT_BEAT.hands:
-      // four soft, slow goblins on the diagonals round the entry, closing in
-      for (const [dx, dy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
-        const k = P.ringGoblins / Math.SQRT2;
-        spawn(w, ARCH.swarmer, TAG.goblin, P.entry[0] + dx * k, P.entry[1] + dy * k, { hp: 6, dmg: 0.25, speed: 0.6 });
-      }
       break;
     case TUT_BEAT.fire: {
       // a rock line across the chamber, the way out stopped by a hedge of brambles; a thick one off to the side
@@ -178,6 +202,24 @@ export function setupBeat(w: World, beat: number): void {
       for (const [x, y] of [[3.4, -0.9], [4.8, -0.6], [4, 0.9]]) spawn(w, ARCH.straw, TAG.straw, x, y, { hp: 25 });
       layRain(w);
       break;
+    case TUT_BEAT.lightning:
+      for (const [x, y] of P.cluster) spawn(w, ARCH.straw, TAG.straw, x, y, { hp: 30 });
+      break;
+    case TUT_BEAT.shatter:
+      layPuddle(w);
+      for (const [x, y] of P.puddled) spawn(w, ARCH.straw, TAG.straw, x, y, { hp: 40 });
+      break;
+    case TUT_BEAT.fireball:
+      spawn(w, ARCH.bramble, TAG.far, P.pit[0], P.pit[1], { r: 0.6 });
+      break;
+    case TUT_BEAT.life: {
+      // a training dummy on the players' side, badly hurt, and a goblin asleep (at 1 hp) beside it
+      const k = spawnBody(w, -1, KIND.dummy, TEAM.players, P.patient[0], P.patient[1], 40, 0.42);
+      if (k >= 0) { w.bodies.hp[k] = 10; t.tag[k] = TAG.patient; }
+      const z = spawn(w, ARCH.swarmer, TAG.sleeper, P.sleeper[0], P.sleeper[1], { hp: 20, dmg: 0.25, speed: 0.8 });
+      if (z >= 0) w.bodies.hp[z] = 1;
+      break;
+    }
     default:
       break;
   }
@@ -189,6 +231,43 @@ export function beginTutorialTick(w: World): void {
   if (t.state[TS.fade] < 0) setupBeat(w, t.state[TS.beat]);
 }
 
+/** The latest `at` (ticks) of the current wave's arrivals. */
+const lastAt = (beat: number, wave: number): number => arrivalsOf(beat, wave).reduce((m, a) => Math.max(m, T(a.at)), 0);
+/** Have this wave's arrivals all walked in? (False while the calm lasts.) */
+export function allArrived(w: World): boolean {
+  const st = w.tut!.state;
+  return st[TS.go] >= 2 && st[TS.go] - 2 >= lastAt(st[TS.beat], st[TS.wave]);
+}
+
+/**
+ * The calm, the release and the arrivals: the calm counts up (the ready stone jumps it to a short
+ * warning); at its end the wave is released, and its arrivals walk in through their gates on time.
+ * The test's next wave starts its own calm once the last one is cleared.
+ */
+function tickArrivals(w: World): void {
+  const st = w.tut!.state, beat = st[TS.beat], b = w.bodies;
+  const waves = wavesOf(beat);
+  if (!waves || st[TS.lit]) return;
+  if (st[TS.go] === 0) {
+    const full = T(calmOf(beat, st[TS.wave]));
+    st[TS.calm]++;
+    if (st[TS.wave] === 0 && wizards(w).some((i) => dist(b.x[i], b.y[i], P.ready[0], P.ready[1]) < P.readyR)) st[TS.calm] = Math.max(st[TS.calm], full - T(TUT_TIMES.warn));
+    if (st[TS.calm] < full) return;
+    st[TS.go] = 1;
+  }
+  const k = st[TS.go] - 1;
+  for (const a of arrivalsOf(beat, st[TS.wave])) if (T(a.at) === k) arrive(w, a);
+  if (k <= lastAt(beat, st[TS.wave])) st[TS.go]++;
+  // the test: a cleared wave lets the next one's calm begin
+  if (allArrived(w) && !anyHostile(w) && st[TS.wave] < waves - 1) { st[TS.wave]++; st[TS.go] = 0; st[TS.calm] = 0; }
+}
+
+/** Is the "I know this" stone there? Always, but in a beat with enemies only until they're let in (it's for skipping a lesson, not a fight). */
+export function skipOpen(w: World): boolean {
+  const st = w.tut!.state;
+  return !st[TS.lit] && (!wavesOf(st[TS.beat]) || (st[TS.go] === 0 && st[TS.wave] === 0));
+}
+
 /** Has the current beat been done? May bump its counters (state). Reads this tick's events. */
 function check(w: World): boolean {
   const t = w.tut!, st = t.state, b = w.bodies, s = w.seats, ws = wizards(w);
@@ -198,6 +277,7 @@ function check(w: World): boolean {
       return st[TS.a] === (1 << P.stones.length) - 1;
     case TUT_BEAT.strike:
     case TUT_BEAT.steam:
+    case TUT_BEAT.lightning:
       return !anyTagged(w, TAG.straw);
     case TUT_BEAT.heavy: {
       // a Heavy is the staff's long shove: a 'strike' move with the Heavy's longer reach
@@ -211,7 +291,8 @@ function check(w: World): boolean {
       for (const e of w.events) if (e.kind === 'move' && e.text === 'parry' && e.who < MAX_SEATS) st[TS.a]++;
       return st[TS.a] >= 1;
     case TUT_BEAT.hands:
-      return !anyTagged(w, TAG.goblin);
+    case TUT_BEAT.arcane:
+      return allArrived(w) && !anyHostile(w);
     case TUT_BEAT.fire:
       return !anyTagged(w, TAG.hedge);
     case TUT_BEAT.douse: {
@@ -224,6 +305,33 @@ function check(w: World): boolean {
       }
       return st[TS.a] === 1;
     }
+    case TUT_BEAT.cold: {
+      // every goblin the frost touches counts; done when none walks in unchilled
+      for (let i = MAX_SEATS; i < b.kind.length; i++) if (b.kind[i] === KIND.enemy && t.tag[i] === TAG.goblin && b.chill[i] > 0) { t.tag[i] = TAG.chilled; st[TS.a]++; }
+      return allArrived(w) && !anyTagged(w, TAG.goblin);
+    }
+    case TUT_BEAT.cancel:
+      for (const e of w.events) if (e.kind === 'cancel' && e.who >= 0 && e.who < MAX_SEATS) st[TS.a] = 1;
+      return st[TS.a] === 1;
+    case TUT_BEAT.shatter:
+      for (const e of w.events) if (e.kind === 'shatter' && e.who >= MAX_SEATS && t.tag[e.who] === TAG.straw) st[TS.a]++;
+      return st[TS.a] >= 2;
+    case TUT_BEAT.fireball:
+      return !anyTagged(w, TAG.far);
+    case TUT_BEAT.life: {
+      const k = firstTagged(w, TAG.patient);
+      return k >= 0 && b.hp[k] >= b.maxHp[k] - 0.01;
+    }
+    case TUT_BEAT.shield:
+      return st[TS.a] >= 3; // noteBlocked counts them
+    case TUT_BEAT.sigil: {
+      // something conjured with Sigil: a weapon in hand, or a device of yours standing
+      for (const i of ws) if (s.weapon[i]) st[TS.b] = 1;
+      for (let k = 0; k < w.devices.type.length; k++) if (w.devices.type[k] && w.devices.owner[k] >= 0 && w.devices.owner[k] < MAX_SEATS) st[TS.b] = 1;
+      return st[TS.b] === 1 && allArrived(w) && !anyHostile(w);
+    }
+    case TUT_BEAT.test:
+      return st[TS.wave] === wavesOf(TUT_BEAT.test) - 1 && allArrived(w) && !anyHostile(w);
     default:
       return false;
   }
@@ -239,6 +347,32 @@ function tickExits(w: World): void {
   if (++st[TS.b] >= T(P.exitTime)) st[TS.exit] = on + 1;
 }
 
+/** What a beat keeps up while it runs: fire, rain, the puddle, the pit's edge, the sleeper's sleep. */
+function keepUp(w: World): void {
+  const t = w.tut!, st = t.state, b = w.bodies;
+  switch (st[TS.beat]) {
+    case TUT_BEAT.douse: if (st[TS.ticks] % 30 === 0) layFire(w); break;
+    case TUT_BEAT.steam: layRain(w); break;
+    case TUT_BEAT.shatter: if (st[TS.ticks] % 30 === 0) layPuddle(w); break;
+    case TUT_BEAT.fireball:
+      // nobody steps into the pit: wizards at its lip are held there (shots fly over it)
+      for (const i of wizards(w)) {
+        const dx = b.x[i] - P.pit[0], dy = b.y[i] - P.pit[1], d = Math.sqrt(dx * dx + dy * dy), min = P.pitR + b.r[i];
+        if (d < min) { const k = d > 1e-6 ? min / d : 0; b.x[i] = d > 1e-6 ? P.pit[0] + dx * k : P.pit[0] - min; b.y[i] = d > 1e-6 ? P.pit[1] + dy * k : b.y[i]; }
+      }
+      break;
+    case TUT_BEAT.life:
+      // the goblin sleeps (lying still) until something heals it past half; then it's up and coming for you
+      for (let i = MAX_SEATS; i < b.kind.length; i++) {
+        if (b.kind[i] !== KIND.enemy || t.tag[i] !== TAG.sleeper) continue;
+        if (b.hp[i] > b.maxHp[i] / 2) { t.tag[i] = TAG.foe; st[TS.c] = 1; } else b.down[i] = Math.max(b.down[i], 2);
+      }
+      break;
+    default:
+      break;
+  }
+}
+
 /** One tick of the tutorial, last in the step. */
 export function tickTutorial(w: World): void {
   const t = w.tut!, st = t.state, b = w.bodies, ws = wizards(w);
@@ -250,9 +384,10 @@ export function tickTutorial(w: World): void {
   let fainted = 0;
   for (const i of ws) if (t.faint[i] > 0) { fainted++; t.faint[i]--; b.down[i] = Math.max(b.down[i], t.faint[i]); }
   if (fresh && ws.length && fainted === ws.length && st[TS.beat] !== TUT_END) {
-    // everyone is down at once: the beat starts over (they still lie there a moment)
-    const keep = ws.map((i) => t.faint[i]);
+    // everyone is down at once: the beat starts over (the test: its current wave), calm again; they still lie there a moment
+    const keep = ws.map((i) => t.faint[i]), wave = st[TS.wave];
     setupBeat(w, st[TS.beat]);
+    if (st[TS.beat] === TUT_BEAT.test) st[TS.wave] = wave;
     ws.forEach((i, k) => { t.faint[i] = keep[k]; b.down[i] = keep[k]; });
     return;
   }
@@ -261,14 +396,13 @@ export function tickTutorial(w: World): void {
   if (st[TS.fade] > 0) { if (--st[TS.fade] === 0) setupBeat(w, nextBeat(st[TS.beat])); return; }
   if (st[TS.beat] === TUT_END) { tickExits(w); return; }
 
-  // What a beat keeps up while it runs.
-  if (st[TS.beat] === TUT_BEAT.douse && st[TS.ticks] % 30 === 0) layFire(w);
-  if (st[TS.beat] === TUT_BEAT.steam) layRain(w);
+  keepUp(w);
+  tickArrivals(w);
 
   if (!st[TS.lit] && check(w)) st[TS.lit] = 1;
 
-  // "I know this": everyone stands on the stone for a second and the beat counts as done.
-  if (!st[TS.lit]) {
+  // "I know this": everyone stands on the stone for a second and the beat counts as done (once a fight is on, it waits for the next calm).
+  if (!st[TS.lit] && skipOpen(w)) {
     const all = ws.length > 0 && ws.every((i) => dist(b.x[i], b.y[i], P.skip[0], P.skip[1]) < P.skipR);
     st[TS.skip] = all ? st[TS.skip] + 1 : 0;
     if (st[TS.skip] >= T(P.skipTime)) st[TS.lit] = 2;

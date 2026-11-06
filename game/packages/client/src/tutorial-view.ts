@@ -1,17 +1,22 @@
 /**
  * The tutorial's look (docs/explorations/2026-11-06-tutorial.md), in the Pixel Battlefield style:
  *
- *   on the floor   beat 1's glowing floor stones, beat 3's chalk ring, the "I know this" stone with
- *                  its fill ring, all drawn into the field canvas under the actors
+ *   on the floor   beat 1's glowing floor stones, beat 3's chalk ring, beat 14's pit, the gates
+ *                  enemies walk in through (dim in the calm, glowing as they open), the ready stone,
+ *                  the "I know this" stone with its fill ring; all drawn into the field canvas under
+ *                  the actors
  *   standing       the exit arch on the east (dark until the beat is done, then a lit portal) and the
  *                  end card's three arches, depth-sorted with the actors
- *   HUD            the prompt line at the top of the view: the step, the beat's title, its one line
- *                  of text and its counter; a big title when a beat begins; the fade between beats
+ *   HUD            the prompt box at the top of the view: the step, the beat's title, its lines, its
+ *                  counter and the calm's countdown; a big title when a beat begins; the fade between beats
  *
- * Reads the sim, never writes it. Bodies (brambles, straw goblins, the sack) are rigs (art/rigs.ts).
+ * Reads the sim, never writes it, and every word comes from tutorial-text.ts. Bodies (brambles,
+ * straw goblins, the sack) are rigs (art/rigs.ts).
  */
 import { Graphics, Sprite, Texture } from 'pixi.js';
-import { KIND, MAX_SEATS, T, TUT_BEAT, TUT_END, TUT_ORDER, TUT_PLACES as P, TUT_STATE as TS, TUT_TAG, TUT_TIMES, type World } from '@wizard-sim/sim';
+import {
+  KIND, MAX_SEATS, T, TUT_BEAT, TUT_END, TUT_ORDER, TUT_PLACES as P, TUT_STATE as TS, TUT_TAG, TUT_TIMES, allArrived, arrivalsOf, calmOf, skipOpen, wavesOf, type World,
+} from '@wizard-sim/sim';
 import { PPU } from './camera';
 import { gx, gy } from './art/field';
 import * as X from './art/px';
@@ -41,6 +46,16 @@ export function drawTutorialWorld(w: World, t: number, g: Ctx, o: Ctx, light: Li
     chalkRing(g, light, gx(P.ring[0]), gy(P.ring[1]), P.ringR * PPU, inside, t);
   }
 
+  if (beat === TUT_BEAT.fireball) pit(g, light, gx(P.pit[0]), gy(P.pit[1]), P.pitR * PPU, t);
+  // the Life beat's sleeping goblin: little z's drifting up off it
+  if (beat === TUT_BEAT.life) for (let i = MAX_SEATS; i < b.kind.length; i++) {
+    if (b.kind[i] !== KIND.enemy || tut.tag[i] !== TUT_TAG.sleeper) continue;
+    for (let k = 0; k < 3; k++) {
+      const u = mod(t * 0.4 + k / 3, 1), zx = Math.round(gx(b.x[i]) + 4 + u * 6 + Math.sin(u * 6 + k) * 2), zy = Math.round(gy(b.y[i]) - 14 - u * 14);
+      X.text(o, LINES.asleep, zx, zy, u > 0.7 ? '#6a6484' : '#cfc9e6');
+    }
+  }
+
   if (beat === TUT_END) {
     P.exits.forEach(([x, y], k) => {
       const on = st[TS.a] === k + 1 ? clamp(st[TS.b] / T(P.exitTime), 0, 1) : 0;
@@ -48,8 +63,73 @@ export function drawTutorialWorld(w: World, t: number, g: Ctx, o: Ctx, light: Li
     });
     return;
   }
-  if (!st[TS.lit]) skipStone(g, o, light, w, t);
-  arch(piece, o, light, gx(P.arch[0]), gy(P.arch[1]), !!st[TS.lit], t, 7, 0, st[TS.lit] ? 'Next' : '');
+  // the gates this beat's enemies come through, and the ready stone while the calm lasts
+  if (wavesOf(beat)) {
+    const gates = new Set<number>();
+    for (let k = 0; k < wavesOf(beat); k++) for (const a of arrivalsOf(beat, k)) gates.add(a.gate);
+    const now = new Set(arrivalsOf(beat, st[TS.wave]).map((a) => a.gate));
+    const left = st[TS.go] === 0 ? T(calmOf(beat, st[TS.wave])) - st[TS.calm] : 0;
+    // 0 shut; warming as the calm runs out; 1 open while they walk in; a faint glow after
+    const heat = st[TS.lit] ? 0 : st[TS.go] === 0 ? 0.8 * clamp(1 - left / T(TUT_TIMES.warn * 2), 0, 1) : allArrived(w) ? 0.15 : 1;
+    gates.forEach((k) => gate(g, o, light, gx(P.gates[k][0]), gy(P.gates[k][1]), now.has(k) ? heat : Math.min(heat, 0.15), t, k));
+    if (st[TS.go] === 0 && st[TS.wave] === 0 && !st[TS.lit]) readyStone(g, o, light, w, t);
+  }
+  if (skipOpen(w)) skipStone(g, o, light, w, t);
+  arch(piece, o, light, gx(P.arch[0]), gy(P.arch[1]), !!st[TS.lit], t, 7, 0, st[TS.lit] ? LINES.arch : '');
+}
+
+/** Beat 14: a round pit in the floor nobody can step into, and a stone pillar in its middle the bramble grows on. */
+function pit(g: Ctx, light: LightFn, x: number, y: number, r: number, t: number): void {
+  x = Math.round(x); y = Math.round(y);
+  X.ellipse(g, x, y + 2, r + 3, (r + 3) * FY, STONE.dark);
+  X.ellipse(g, x, y, r + 1, (r + 1) * FY, STONE.side);
+  X.ellipse(g, x, y + 2, r - 1, (r - 1) * FY, '#0c0a12');
+  X.ellipse(g, x, y + 5, r - 6, (r - 6) * FY, '#06050a');
+  // the lip's chipped edge on the far side
+  for (let k = 0; k < 40; k++) { const a = Math.PI + (k / 40) * Math.PI; X.px(g, x + Math.cos(a) * (r + 1), y + Math.sin(a) * (r + 1) * FY, k % 3 ? STONE.top : STONE.light); }
+  // the pillar
+  X.ellipse(g, x, y + 3, 9, 9 * FY, STONE.deep);
+  X.ellipse(g, x, y, 8, 8 * FY, STONE.main);
+  X.ellipse(g, x - 1, y - 1, 6, 6 * FY, STONE.top);
+  light(x, y + 4, 40, '#3a2a60', 0.15 + 0.05 * Math.sin(t * 1.3));
+}
+
+const HOT = ['#fff0e0', '#ffb090', '#ff5a4a', '#b02a3a', '#5a1428'] as const;
+/** A gate in the floor by the wall, where enemies walk in: a dark ring of stone, glowing red as it opens. */
+function gate(g: Ctx, o: Ctx, light: LightFn, x: number, y: number, heat: number, t: number, k: number): void {
+  x = Math.round(x); y = Math.round(y);
+  const r = 13, p = 0.5 + 0.5 * Math.sin(t * (3 + 6 * heat) + k);
+  X.ellipse(g, x, y + 1, r + 2, (r + 2) * FY, STONE.deep);
+  X.ellipse(g, x, y, r, r * FY, STONE.side);
+  X.ellipse(g, x, y, r - 3, (r - 3) * FY, '#0e0a14');
+  // runes round the rim, lit as it opens
+  for (let q = 0; q < 8; q++) { const a = (q / 8) * TAU + t * 0.2; X.px(g, x + Math.cos(a) * (r - 1.5), y + Math.sin(a) * (r - 1.5) * FY, heat > 0.05 ? HOT[heat > 0.6 ? 1 : 2] : '#3a3450'); }
+  if (heat > 0.05) {
+    X.ellipse(g, x, y, (r - 4) * heat, (r - 4) * heat * FY, HOT[3], 0.5 + 0.3 * p);
+    X.ellipse(g, x, y, (r - 7) * heat, (r - 7) * heat * FY, HOT[2], 0.4 * heat);
+    for (let q = 0; q < 5; q++) { const a = t * 2 + (q / 5) * TAU, rr = (r - 5) * heat; X.px(g, x + Math.cos(a) * rr, y + Math.sin(a) * rr * FY, HOT[1]); }
+    // embers rising out of it
+    for (let q = 0; q < 4; q++) { const u = mod(t * 0.8 + q / 4 + k * 0.13, 1); X.px(o, x - 6 + ((q * 5 + k * 3) % 12), y - u * 18 * heat, u > 0.6 ? HOT[2] : HOT[1]); }
+    light(x, y, 30 + 30 * heat, HOT[2], 0.25 + 0.35 * heat * p);
+  }
+}
+
+/** The ready stone ahead of the entry: a gold-runed stone; stepping on it lets the enemies in. */
+function readyStone(g: Ctx, o: Ctx, light: LightFn, w: World, t: number): void {
+  const b = w.bodies, x = Math.round(gx(P.ready[0])), y = Math.round(gy(P.ready[1])), r = P.readyR * PPU * 0.85, p = 0.5 + 0.5 * Math.sin(t * 2.6);
+  let on = false;
+  for (let s = 0; s < MAX_SEATS; s++) if (w.seats.active[s] && b.kind[s] === KIND.wizard && Math.hypot(b.x[s] - P.ready[0], b.y[s] - P.ready[1]) < P.readyR) on = true;
+  X.ellipse(g, x, y + 1, r + 1, (r + 1) * FY, STONE.deep);
+  X.ellipse(g, x, y, r, r * FY, STONE.main);
+  X.ellipse(g, x - 1, y - 1, r - 2, (r - 2) * FY, STONE.top);
+  X.ring(g, x, y, r - 3, (r - 3) * FY, GOLD[on ? 1 : 3]);
+  // an arrow cut in it, pointing on into the chamber
+  for (let k = -3; k <= 3; k++) X.px(g, x + k, y, GOLD[on ? 0 : 2]);
+  for (const [dx, dy] of [[2, -1], [2, 1], [1, -2], [1, 2]]) X.px(g, x + dx, y + dy, GOLD[2]);
+  X.ellipse(g, x, y, r + 3 + p, (r + 3 + p) * FY, GOLD[2], on ? 0.3 : 0.1 + 0.08 * p);
+  light(x, y - 2, 28, GOLD[2], on ? 0.5 : 0.2 + 0.12 * p);
+  const label = LINES.readyStone.toUpperCase(), tw = label.length * 4 - 1;
+  X.text(o, label, x - Math.floor(tw / 2), y - 14 - Math.round(p), on ? GOLD[1] : '#cfc9e6', '#0a0810');
 }
 
 /** Beat 1: a round stone set in the floor with a rune that glows until someone steps on it. */
@@ -152,7 +232,19 @@ function arch(piece: PieceFn, o: Ctx, light: LightFn, x: number, y: number, lit:
 
 // ---- the HUD ----------------------------------------------------------------------------------------
 
-const HW = 440, HH = 40, BW = 300, BH = 30;
+const HW = 440, HH = 64, BW = 300, BH = 30;
+
+/** The calm's line under the prompt, if any: before enemies come, as they're about to, and just after. */
+function cueFor(w: World): { text: string; urgent: boolean } | null {
+  const st = w.tut!.state, beat = st[TS.beat];
+  if (!wavesOf(beat) || st[TS.lit] || st[TS.fade]) return null;
+  if (st[TS.go] === 0) {
+    const left = T(calmOf(beat, st[TS.wave])) - st[TS.calm], secs = Math.max(1, Math.ceil(left / T(1)));
+    if (left <= T(3)) return { text: LINES.coming(secs), urgent: true };
+    return { text: beat === TUT_BEAT.test ? LINES.nextWave(secs) : LINES.calm, urgent: false };
+  }
+  return st[TS.go] - 1 < T(1.5) ? { text: LINES.here, urgent: true } : null;
+}
 /** Words that fit a line of `max` characters, greedily. */
 function wrap(str: string, max: number): string[] {
   const out: string[] = [];
@@ -208,19 +300,23 @@ export class TutorialHud {
     const c = this.c.x;
     c.clearRect(0, 0, HW, HH); c._fs = null;
     const text = BEAT_TEXT[beat], step = TUT_ORDER.indexOf(beat) + 1, steps = TUT_ORDER.length - 1;
-    const head = beat === TUT_END ? 'THE END' : `STEP ${step} OF ${steps}: ${(text?.title ?? '').toUpperCase()}`;
+    const head = (beat === TUT_END ? LINES.endHead : LINES.step(step, steps, text?.title ?? '')).toUpperCase();
     const counter = beat === TUT_END ? '' : counterFor(w).toUpperCase();
-    let prompt = promptFor(w, this.seat);
-    if (beat === TUT_BEAT.fire && !st[TS.lit]) prompt += ' ' + LINES.fireHint;
-    const lines = wrap(prompt.toUpperCase(), Math.floor((Math.min(HW, viewW - 8) - 12) / 4));
-    const wd = Math.min(HW - 2, Math.max(head.length + (counter ? counter.length + 3 : 0), ...lines.map((l) => l.length)) * 4 + 12);
-    const h = 12 + lines.length * 7 + 2, x0 = Math.round(HW / 2 - wd / 2);
+    const max = Math.floor((Math.min(HW, viewW - 8) - 12) / 4);
+    const lines = promptFor(w, this.seat).flatMap((l) => wrap(l.toUpperCase(), max));
+    const cue = cueFor(w);
+    const cues = cue ? wrap(cue.text.toUpperCase(), max) : [];
+    const wd = Math.min(HW - 2, Math.max(head.length + (counter ? counter.length + 3 : 0), ...lines.map((l) => l.length), ...cues.map((l) => l.length)) * 4 + 12);
+    const h = 12 + (lines.length + cues.length) * 7 + 2 + (cues.length ? 2 : 0), x0 = Math.round(HW / 2 - wd / 2);
     X.rect(c, x0 - 1, 0, wd + 2, h + 1, '#0a0810'); X.rect(c, x0, 1, wd, h - 1, '#1a1726'); X.rect(c, x0, 1, wd, 1, '#3a3450');
     const done = st[TS.lit] > 0;
     X.text(c, head, x0 + 6, 4, done ? '#8ef07e' : '#ffd860');
     if (counter) X.text(c, counter, x0 + wd - 6 - (counter.length * 4 - 1), 4, '#cfc9e6');
     const flash = done && Math.floor(ct * 3) % 2 === 0;
     lines.forEach((l, k) => X.text(c, l, Math.round(HW / 2 - (l.length * 4 - 1) / 2), 12 + k * 7, flash ? '#ffffff' : '#e8e4f0'));
+    // the calm's cue under the prompt: step on the stone / coming in 3... / here they come
+    const urgent = cue?.urgent && Math.floor(ct * 4) % 2 === 0;
+    cues.forEach((l, k) => X.text(c, l, Math.round(HW / 2 - (l.length * 4 - 1) / 2), 14 + (lines.length + k) * 7, cue!.urgent ? (urgent ? '#ffffff' : '#ff8a6a') : '#a8a0c0'));
     this.tex.source.update();
     this.sprite.position.set(Math.round(viewW / 2 - HW / 2), 3);
 
@@ -228,7 +324,7 @@ export class TutorialHud {
     const age = ct - this.beatAt, show = age < 2.4 && st[TS.fade] === 0;
     this.banner.visible = show;
     if (show) {
-      const b = this.bc.x, title = beat === TUT_END ? 'WELL DONE' : (text?.title ?? '').toUpperCase().split(':')[0];
+      const b = this.bc.x, title = (beat === TUT_END ? LINES.endBanner : (text?.title ?? '').split(':')[0]).toUpperCase();
       b.clearRect(0, 0, BW, BH); b._fs = null;
       const k = 2, tw = (title.length * 4 - 1) * k, rise = Math.round(easeOut(Math.min(1, age * 3)) * 4);
       X.text(b, title, Math.round(BW / 2 - tw / 2), 12 - rise, age > 2 && Math.floor(age * 10) % 2 ? '#8a8498' : '#ffd860', '#0a0810', k);

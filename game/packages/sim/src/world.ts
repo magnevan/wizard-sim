@@ -9,7 +9,7 @@
 import { ARENA, BODY, CELL, PERKS, RUNES } from './config';
 import { EL, N_EL, elementName } from './elements';
 import { createRng, type RngState } from './rng';
-import { TUT_ORDER, tutPool } from './tutorial-data';
+import { TS_LEN, TUT_ORDER, tutPool } from './tutorial-data';
 
 export const SIM_HZ = 60;
 export const DT = 1 / SIM_HZ;
@@ -454,7 +454,7 @@ function run(): Run {
 }
 
 function tutorial(beat: number): Tutorial {
-  const t: Tutorial = { state: i32(8), done: u8(MAX_SEATS), faint: i32(MAX_SEATS), tag: u8(MAX_BODIES) };
+  const t: Tutorial = { state: i32(TS_LEN), done: u8(MAX_SEATS), faint: i32(MAX_SEATS), tag: u8(MAX_BODIES) };
   t.state[0] = TUT_ORDER.includes(beat) ? beat : TUT_ORDER[0];
   t.state[4] = -1; // the beat is laid out on the first step (tutorial.ts; world.ts can't import it)
   return t;

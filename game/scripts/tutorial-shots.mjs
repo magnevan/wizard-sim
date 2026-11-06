@@ -7,7 +7,7 @@ import { BASE, chrome, startPreview } from './serve.mjs';
 const arg = (name, dflt) => { const i = process.argv.indexOf('--' + name); return i > 0 ? process.argv[i + 1] : dflt; };
 const out = resolve(arg('out', 'shots/tutorial'));
 const ms = arg('ms', '2500');
-const beats = arg('beats', '1,2,3,4,5,6,7,8,9,20').split(',');
+const beats = arg('beats', Array.from({ length: 20 }, (_, k) => k + 1).join(',')).split(',');
 const extra = arg('query', '');
 mkdirSync(out, { recursive: true });
 

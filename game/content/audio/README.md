@@ -51,6 +51,15 @@ Licence read per file from the Commons API on 2026-11-06. "PD" is Commons' publi
 
 Commons rate-limits hard: a burst of searches or quick downloads gets a 429 with `retry-after: 600`. Send one request a minute with a descriptive user agent.
 
+### Wikimedia Commons (CC BY 4.0: these need a credit)
+
+Licence read from the Commons API on 2026-11-06. Kept whole in `sources/commons-fire/`; `scripts/make-fire-kit.py` slows and reshapes them into `sources/made/`.
+
+| Recording | Licence | Author | Page | Used for |
+|---|---|---|---|---|
+| WWS Bonfireburning | CC BY 4.0 | Work With Sounds / Werstas | https://commons.wikimedia.org/wiki/File:WWS_Bonfireburning.ogg | Fire's roar, its dying breath, a burning body |
+| WWS Bonfireignition | CC BY 4.0 | Work With Sounds / Werstas | https://commons.wikimedia.org/wiki/File:WWS_Bonfireignition.ogg | Fire catching, bursts, blooms |
+
 ## Looked at and not used
 
 - **OpenGameArt:** its robots.txt disallows Claude's agents by name (`Claude-Code`, `Claude-User`, `ClaudeBot`), so agents should not fetch from it. It has good CC0 packs ("Spell Sounds Starter Pack" and others). The user can download one by hand, drop it in `sources/` and add it here.

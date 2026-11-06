@@ -930,3 +930,13 @@ Claude's calls, which the user can veto:
 
 **Proposed by the user, not built:** "both freeze and stun are at risk of being quite powerful. I think we could avoid it by giving stronger enemies some forms of resistance. Instead of freezing being instant from wet+cold, characters have a freeze level that has to build up before they're frozen (and decays otherwise). So concentrated freeze is needed to chill a large/strong enemy. Stun feels a little different, maybe its more probabilistic". This will replace the instant freeze above.
 
+## 2026-11-06: Sound goes depth first (`explorations/2026-11-06-sound-depth-first.md`)
+The user stopped the gallery review: "I can't get a page with 100+ sounds to review", and "we probably want to go more depth first on elements, and use the knowledge we gain to build other elements", judged "alongside" the game, compared with Magicka.
+- **Element kits replace element-times-shape layers,** one element at a time. Their ratings and the reference agree: an element sounds different for each job. Supersedes stage 1's "sound is built the way spells are" as each element is approved.
+- **The Sound Lab replaces the gallery for judging:** in the game on the dev server (`?lab=fire`), five moments, swapping Before, New and a local reference while watching.
+- **Fire goes first, and stays in the lab until the user approves it.** The live game doesn't play it yet.
+- **Recordings before code-made sounds:** the code-made ones rated worst.
+
+Claude's calls, which the user can veto:
+- **The reference is decoded from the user's own copy, kept in a gitignored folder and served only by the dev server.** Nothing from it is in the repo or a build. Our clips are matched to its broad balance, not made from it.
+- **CC BY is accepted for recordings,** with a credit in `game/content/audio/README.md`. The game will need a credits page before release.

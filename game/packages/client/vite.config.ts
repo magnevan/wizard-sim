@@ -1,8 +1,45 @@
-import { defineConfig } from 'vite';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, normalize } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { defineConfig, type Plugin } from 'vite';
+
+const here = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * The Sound Lab's two helpers (audio/lab.ts). They exist on the dev server only, so nothing here can reach
+ * a build: /__ref/ serves the local, never-published .reference folder, and /__lab/notes keeps the lab's
+ * notes in content/audio/lab-notes.json.
+ */
+function soundLab(): Plugin {
+  const ref = join(here, '../../../.reference/audio'), notes = join(here, '../../content/audio/lab-notes.json');
+  const read = () => (existsSync(notes) ? JSON.parse(readFileSync(notes, 'utf8')) : {});
+  return {
+    name: 'sound-lab', apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/__ref/', (req, res) => {
+        const file = join(ref, normalize(decodeURIComponent((req.url ?? '').split('?')[0])));
+        if (!file.startsWith(ref) || !existsSync(file)) { res.statusCode = 404; res.end(); return; }
+        res.end(readFileSync(file));
+      });
+      server.middlewares.use('/__lab/notes', (req, res) => {
+        if (req.method !== 'POST') { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify(read())); return; }
+        let body = '';
+        req.on('data', (c) => { body += c; });
+        req.on('end', () => {
+          const { id, ...note } = JSON.parse(body), all = read();
+          all[id] = { ...note, at: new Date().toISOString() };
+          writeFileSync(notes, `${JSON.stringify(all, null, 2)}\n`);
+          res.end('ok');
+        });
+      });
+    },
+  };
+}
 
 // base './' so the built dist/ works from any path (the artifact, itch.io, a file server).
 export default defineConfig({
   base: './',
+  plugins: [soundLab()],
   server: { port: 5187 },
   preview: { port: 4187 },
   build: {

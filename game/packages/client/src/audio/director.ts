@@ -21,7 +21,7 @@ import {
 import {
   composeBlink, composeBlocked, composeBurning, composeCharge, composeDeath, composeDowned, composeDry, composeFlight, composeFloorFire,
   composeFootstep, composeHeal, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak,
-  composeSparkField, composeSpell, composeSpring, composeSteamCloud, composeStinger, composeStrike, composeSustain, composeTelegraph, composeUi,
+  composeSparkField, composeSpell, composeSpring, composeSteamCloud, composeStinger, composeStrike, composeStop, composeSustain, composeTelegraph, composeUi,
   shapeOf, type ElementName, type EnemyKind, type Plan, type ShapeName, type SpellSound, type UiSound, type WeaponMove,
 } from './recipes';
 import { LoopTable, Limiter, envOfRoom, jitter, placeOf, type EnvName, type GroupRule, type Listener, type Place, type Rand } from './variation';
@@ -68,7 +68,7 @@ const MAX_LOOPS = 10;
 const STILL_S = 0.2;
 
 interface Req { group: string; key: string; x: number; y: number; make: () => Plan; centred: boolean; gain: number; }
-interface Want { plan: () => Plan; x: number; y: number; gain: number; centred?: boolean }
+interface Want { plan: () => Plan; x: number; y: number; gain: number; centred?: boolean; /** What it sounds like as it ends, if not just a fade. */ tail?: () => Plan | null }
 
 const elOf = (id: number | undefined): ElementName | null => (id !== undefined && id >= 1 && id <= 9 ? elementName(id) as ElementName : null);
 
@@ -114,6 +114,8 @@ export class SoundDirector {
   private floorFire = { n: 0, x: 0, y: 0, at: -1 };
   private held: ({ key: number; snd: SpellSound; sig: string } | null)[] = new Array(MAX_SEATS).fill(null);
   private frames = 0;
+  /** Sustained sounds with an ending of their own, and where they last were. */
+  private tails = new Map<string, { plan: () => Plan | null; x: number; y: number }>();
 
   constructor(private sink: SoundSink, private rand: Rand = Math.random) {}
 
@@ -131,7 +133,7 @@ export class SoundDirector {
   /** The world started over (a room switch, a new match): forget the old one, quietly. */
   private reset(): void {
     for (const id of this.loops.clear()) this.sink.stop(id);
-    this.pending = []; this.late = []; this.heard = []; this.heardAt = 0;
+    this.pending = []; this.late = []; this.heard = []; this.heardAt = 0; this.tails.clear();
     this.prevAi = this.prevWall = this.walked = this.lastX = this.lastY = null;
     this.mAlive.fill(0); this.lastCastTick.fill(-999); this.floorFire.at = -1;
     this.limiter.reset();
@@ -322,7 +324,7 @@ export class SoundDirector {
       const ph = s.phase[i];
       if (ph === PHASE.channel) {
         const { snd, sig } = this.heldSpell(w, i);
-        add(`chan:${i}|${sig}`, { plan: () => composeSustain(sustainOf(snd)), x: b.x[i], y: b.y[i], gain: 1 });
+        add(`chan:${i}|${sig}`, { plan: () => composeSustain(sustainOf(snd), this.rand), tail: () => composeStop(sustainOf(snd), this.rand), x: b.x[i], y: b.y[i], gain: 1 });
       } else if (ph === PHASE.charge) {
         const lead = this.heldSpell(w, i).snd.lead ?? 'earth';
         add(`charge:${i}|${lead}`, { plan: () => composeCharge(lead), x: b.x[i], y: b.y[i], gain: 1 });
@@ -392,10 +394,20 @@ export class SoundDirector {
     }
     // the sim standing still (a pause, a stalled link): sustained sounds fade until it moves again
     if (w.clock[0] !== this.lastNowTick) { this.lastNowTick = w.clock[0]; this.stillSince = now; }
-    const want = now - this.stillSince > STILL_S ? new Map<string, Want>() : this.wanted(w, l);
+    const still = now - this.stillSince > STILL_S;
+    const want = still ? new Map<string, Want>() : this.wanted(w, l);
     const d = this.loops.sync(want);
-    for (const id of d.stop) this.sink.stop(id);
-    for (const { id, want: q } of d.start) this.sink.loop(id, q.plan(), placeOf(q.x, q.y, l, walls), q.gain);
+    for (const id of d.stop) {
+      this.sink.stop(id);
+      const t = this.tails.get(id), plan = t && !still ? t.plan() : null;
+      this.tails.delete(id);
+      if (t && plan) this.sink.play(plan, placeOf(t.x, t.y, l, walls), 1);
+    }
+    for (const { id, want: q } of d.start) {
+      this.sink.loop(id, q.plan(), placeOf(q.x, q.y, l, walls), q.gain);
+      if (q.tail) this.tails.set(id, { plan: q.tail, x: q.x, y: q.y });
+    }
+    for (const { id, want: q } of d.update) { const t = this.tails.get(id); if (t) { t.x = q.x; t.y = q.y; } }
     if (this.frames % 4 === 0) for (const { id, want: q } of d.update) this.sink.place(id, placeOf(q.x, q.y, l, walls), q.gain);
   }
 

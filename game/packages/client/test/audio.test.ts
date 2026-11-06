@@ -4,8 +4,9 @@
  * what can be checked without ears; `npm run check:sound` renders the real thing offline in Chrome.
  */
 import { describe, expect, test } from 'vitest';
-import { ELEMENT_NAMES, ENEMY_KINDS, INTERACTIONS, SHAPE_NAMES, UI_SOUNDS, WEAPON_MOVES, clipsOf, composeCharge, composeDeath, composeDowned, composeDry, composeElement, composeFlight, composeFootstep, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak, composeShape, composeSpell, composeSpring, composeSteamCloud, composeStrike, composeSustain, composeTelegraph, composeUi, composeBurning, composeFloorFire, composeSparkField, composeBlink, composeBlocked, composeHeal, composeStinger, runesOf, shapeOf, type ElementName, type Plan } from '../src/audio/recipes';
+import { ELEMENT_NAMES, ENEMY_KINDS, INTERACTIONS, SHAPE_NAMES, UI_SOUNDS, WEAPON_MOVES, clipsOf, composeCharge, composeDeath, composeDowned, composeDry, composeElement, composeFlight, composeFootstep, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak, composeShape, composeSpell, composeStop, composeSpring, composeSteamCloud, composeStrike, composeSustain, composeTelegraph, composeUi, composeBurning, composeFloorFire, composeSparkField, composeBlink, composeBlocked, composeHeal, composeStinger, runesOf, shapeOf, type ElementName, type Plan, type SpellSound } from '../src/audio/recipes';
 import { BANK } from '../src/audio/bank.gen';
+import { FIRE_KIT, useKit } from '../src/audio/kits';
 import { SYNTH_IDS, SYNTH_LOOPS, renderSynth } from '../src/audio/synth';
 import { ENVS, LOOP_GRACE, Limiter, LoopTable, OPEN_HZ, envOfRoom, impulse, jitter, occlusion, pick, placeOf, runeMod, seeded, wallsBetween, type EnvName, type Listener, type WallSet } from '../src/audio/variation';
 import { SoundDirector, type SoundSink } from '../src/audio/director';
@@ -194,9 +195,32 @@ function everyPlan(): Plan[] {
 
 describe('recipes', () => {
   test('every clip a recipe names exists, and every bank clip is used', () => {
-    const known = new Set([...BANK.map((c) => c.id), ...SYNTH_IDS]), used = new Set(everyPlan().flatMap(clipsOf));
+    const kitClips = Object.values(FIRE_KIT).flat().flatMap((l) => l.clips);
+    const known = new Set([...BANK.map((c) => c.id), ...SYNTH_IDS]), used = new Set([...everyPlan().flatMap(clipsOf), ...kitClips]);
     expect([...used].filter((c) => !known.has(c))).toEqual([]);
     expect(BANK.map((c) => c.id).filter((c) => !used.has(c))).toEqual([]);
+  });
+  test('a kit takes over only while it is in use, and only the spells its element leads', () => {
+    const flame: SpellSound = { els: { fire: 3 }, shape: 'spray', lead: 'fire' }, wet: SpellSound = { els: { water: 3 }, shape: 'spray', lead: 'water' };
+    const before = composeSustain(flame).name;
+    expect(composeStop(flame)).toBeNull();
+    useKit('fire', FIRE_KIT);
+    try {
+      expect(composeSustain(flame).layers.map((l) => l.clip)).toEqual(['fire-jet', 'fire-jet-sub']);
+      expect(composeSpell(flame).name).toBe('kit:spray');
+      expect(composeStop(flame)?.layers[0].clip).toMatch(/^fire-die/);
+      expect(composeSpell({ ...flame, shape: 'nova' }).name).toBe('kit:nova');
+      expect(composeSpell({ ...flame, shape: 'wall' }).name).not.toMatch(/^kit/);
+      expect(composeImpact('fire', 1).name).toBe('kit:land');
+      expect(composeStop(wet)).toBeNull();
+      expect(composeSustain(wet).name).not.toMatch(/^kit/);
+    } finally { useKit('fire', null); }
+    expect(composeSustain(flame).name).toBe(before);
+  });
+  test("a kit's held layers loop, and nothing else does", () => {
+    const loops = new Set(BANK.filter((c) => c.loop).map((c) => c.id));
+    for (const l of [...FIRE_KIT.hold, ...FIRE_KIT.beam, ...FIRE_KIT.status]) { expect(l.loop).toBe(true); for (const c of l.clips) expect(loops.has(c), c).toBe(true); }
+    for (const l of [...FIRE_KIT.start, ...FIRE_KIT.stop, ...FIRE_KIT.launch, ...FIRE_KIT.burst, ...FIRE_KIT.land]) expect(l.loop).toBeFalsy();
   });
   test('sustained layers have looping clips', () => {
     const loops = new Set([...BANK.filter((c) => c.loop).map((c) => c.id), ...SYNTH_LOOPS]);
@@ -367,6 +391,16 @@ describe('the director', () => {
         const starts = r.sink.started.filter((x) => x === k).length, stops = r.sink.stopped.filter((x) => x === k).length;
         expect(starts - stops).toBe(r.sink.live.has(k) ? 1 : 0);
       }
+    });
+    test("a kit's held spell ends in its dying breath, once per time it stops", () => {
+      useKit('fire', FIRE_KIT);
+      try {
+        const r = online('fire,fire,fire/force', 900);
+        const stops = r.sink.stopped.filter((k) => k.startsWith('chan:1')).length;
+        expect(stops).toBeGreaterThan(0);
+        expect(r.sink.count('kit:stop')).toBe(stops);
+        expect(r.sink.doubled).toEqual([]);
+      } finally { useKit('fire', null); }
     });
     test('a replayed event that was already heard is not heard again', () => {
       const s = new FakeSink(), d = new SoundDirector(s), w = world();

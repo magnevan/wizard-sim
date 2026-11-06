@@ -41,7 +41,7 @@ import { Application } from 'pixi.js';
 import { TextureSource } from 'pixi.js';
 import {
   DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, devStartWave, hashWorld, hex, newBotMemory, newTutorialBot, replaceWorld, runReplay, scriptedInput, scriptedReplay, step, tutorialBotInput,
-  type PlayerInput, type Room,
+  type PlayerInput, type Room, type World,
 } from '@wizard-sim/sim';
 import { demoInput, enemyAttackScene, parseDemo, rallyScene, threeScene } from './demo';
 import { PadSeats } from './gamepad';
@@ -137,6 +137,9 @@ async function boot(): Promise<void> {
   // Sound is prepared after boot and starts on the first input, as browsers ask; ?sound=0 leaves it out (audio/game-audio.ts).
   const audio = params.get('sound') === '0' ? null : new GameAudio(loadVolumes(params), !headless);
   view.sound = audio?.director ?? null;
+  // ?lab=fire on the dev server: the Sound Lab. The check goes first so a build drops the whole file.
+  let lab: { input(w: World): PlayerInput | null } | null = null;
+  if (import.meta.env.DEV && audio && params.get('lab')) void import('./audio/lab').then((m) => { lab = new m.SoundLab(audio, params.get('lab')!); });
   const fit = () => view.resize(host.clientWidth, host.clientHeight, Number(params.get('scale')) || undefined);
   fit();
   addEventListener('resize', fit);
@@ -172,7 +175,7 @@ async function boot(): Promise<void> {
     }
     pads.poll((seat) => world.seats.active[seat] === 1 || (ally && seat === 1));
     for (let p = 0; p < MAX_SEATS; p++) {
-      if (p === 0) out.push(keyboard.sample(world, 0));
+      if (p === 0) out.push(lab?.input(world) ?? keyboard.sample(world, 0));
       else if (ally && p === 1) out.push(botInput(world, 1, bots[1]));
       else out.push(pads.sample(p) ?? NO_INPUT);
     }

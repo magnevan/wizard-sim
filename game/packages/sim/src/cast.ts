@@ -24,7 +24,7 @@ import { guardRelease } from './guards';
 import { AIM_UNIT, BTN, type PlayerInput } from './input';
 import { TAP, channelsSpecial, heavy, heavyCharge, holdTick, retreat, special, specialTick, strike, strikeRecovery } from './hands';
 import { atan2Turns } from './trig';
-import { chooseElement } from './survive';
+import { chooseElement, echoChannel, echoLater } from './survive';
 import { CAST_ID, KIND, PHASE, QUEUE_MAX, regenRate, type World } from './world';
 
 const CASTS: Cast[] = ['force', 'force', 'area', 'place', 'self', 'conjure']; // index = CAST_ID
@@ -126,13 +126,14 @@ function release(w: World, i: number, spec: SpellSpec, charge: number): void {
   // An empty Weapon cast swings your conjured weapon, if you hold one.
   if (spec.cast === 'conjure' && spec.power === 0 && weaponSwing(w, i, aimFace(w, i))) return;
   fireSpell(w, i, spec, aimFace(w, i), tx, ty, charge);
-  if (spec.shape !== 'blink' && spec.shape !== 'self') doubleRepeat(w, i, spec, tx, ty, charge);
+  if (spec.shape !== 'blink' && spec.shape !== 'self') { doubleRepeat(w, i, spec, tx, ty, charge); echoLater(w, i, charge); }
   w.events.push({ tick: w.clock[0], kind: 'cast', who: i, x: w.bodies.x[i], y: w.bodies.y[i], text: spec.title, look: spec.look });
 }
 
+/** Recovery after a cast or a hand move; Haste (and Quickstep) shorten it as they do the wind-up. */
 function toRecovery(w: World, i: number, seconds = RHYTHM.recovery): void {
   w.seats.phase[i] = PHASE.recover;
-  w.seats.timer[i] = T(seconds);
+  w.seats.timer[i] = Math.round(T(seconds) / hasteOf(w, i));
 }
 
 function windupTick(w: World, i: number, held: number, act: boolean): void {
@@ -264,6 +265,7 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
         if (s.runes[k] <= 0) { s.runes[k] = 0; toRecovery(w, i); break; }
       }
       channelTick(w, i, spec, aimFace(w, i));
+      echoChannel(w, i, spec, aimFace(w, i)); // Survive's Echo: a free copy trailing your aim
       const d = s.double[i];
       if (s.dblPaid[i] && d >= 0 && w.bodies.kind[d] === KIND.double) {
         const [tx, ty] = target(w, i, 30);

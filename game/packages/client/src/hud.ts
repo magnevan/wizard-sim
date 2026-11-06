@@ -184,6 +184,8 @@ export class Hud {
         if (by >= 0 && w.run.rally[d] > 0) sub += `${sub ? '  ' : ''}P${by + 1} RALLYING P${d + 1} ${Math.floor((100 * w.run.rally[d]) / T(PERKS.rallyTime))}%`;
       }
     }
+    // Echo is a one-wave power: say so while it lasts
+    if (w.run && w.run.echoOn[this.seat] && (st[0] === PHASE_ENC.lull || st[0] === PHASE_ENC.wave)) sub += `${sub ? '  ' : ''}ECHO: YOUR SPELLS GO OFF TWICE`;
     const clean = (str: string) => str.toUpperCase().replace(/[^A-Z0-9 +\-/.!×:%_()]/g, ' ');
     line = clean(line); sub = clean(sub);
     const wd = Math.max(line.length, sub.length) * 4 + 10, x = Math.round(TW / 2 - wd / 2);

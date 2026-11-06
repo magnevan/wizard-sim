@@ -13,7 +13,7 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import {
-  CELL, DEVICE, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SURF, T, ZONE,
+  CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SURF, T, ZONE,
   compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
@@ -605,6 +605,21 @@ export class Vfx {
           light(lerp(dt[0], dex, 0.5), lerp(dv.y, dey, 0.5), 34, kind === 'fire' ? '#ff7a2a' : '#7fb0ff', 0.3);
         }
         X.glow(o, dt[0], dt[1], 4, EL.sigil[2], 0.6);
+      }
+      // Survive's Echo: a free copy of the channel from your staff, trailing your aim (the sim's echoEnd)
+      const r = w.run;
+      if (r && r.echoOn[i] && s.chanTicks[i] >= ECHO_LAG && (spec.shape === 'beam' || spec.shape === 'spray')) {
+        const eex = gx(r.echoEndX[i]), eey = gy(r.echoEndY[i]), sd3 = sd + 57, te = t0 + ECHO_LAG / 60;
+        if (spec.shape === 'beam') {
+          const R = spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look);
+          K.beam(o, tip, [eex, eey - LIFT], t, R, { on: easeOut(seg(t, te, te + 0.12)), w: 0.5, hit: this.beamHits(w, r.echoEndX[i], r.echoEndY[i], i), seed: sd3 });
+          light(eex, eey, 34, spec.heal ? '#8ef07e' : R[2], 0.35);
+        } else {
+          const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
+          if (spec.heal && look !== 'water') K.warmCone(o, tip, [eex, eey - 6], t, te, X.WARM, sd3);
+          else K.cone(o, tip, [eex, eey - 6], t, kind, te, { spread: 0.2, power: 0.45, seed: sd3 });
+        }
+        X.glow(o, tip[0], tip[1], 3, EL.sigil[2], 0.5);
       }
     }
     this.turretChannels(w, t, light);

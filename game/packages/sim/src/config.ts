@@ -121,8 +121,14 @@ export const PERKS = {
   rallyRange: 1.6,
   /** Rally: the share of max health the ally comes back with (the breather gives half). */
   rallyHp: 0.4,
-  /** Echo: the free Double's health (a cast Double has structures.doubleHp). */
-  echoHp: 60,
+  /** Echo: seconds after a spell before its free echo goes off (from where you stand then, along your aim then); a channel's echo trails your aim by as much. */
+  echoDelay: 0.4,
+  /** Echo is this many times as likely to be on an altar before a key wave (survive.ts keyWave: the 5th and 8th of every eight). */
+  echoKeyWeight: 3,
+  /** Lingering: what you place or leave lingering lasts this many times as long, and is this many times as wide. */
+  lingerLife: 1.5, lingerSize: 1.25,
+  /** Quickstep, per stack: the share faster you walk, wind up and recover (a permanent, weaker Haste; the Haste aura is STRUCT.hasteMult). */
+  quickstep: 0.15,
   /** Glass heart, per stack: the share more damage you deal, and the share of max health you lose (additive: two stacks are +50% / -50%). */
   glassDmg: 0.25, glassHp: 0.25,
   /** Wellspring, per stack: the share more total regen R (additive). */

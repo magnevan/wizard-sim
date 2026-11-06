@@ -1,4 +1,5 @@
-/* Survive Review: the words and numbers. Every number here was read from the game on 2026-11-05:
+/* Survive Review: the words and numbers. Every number here was read from the game on 2026-11-06 (the second power-up pass:
+ * docs/explorations/2026-11-06-survive-powerups-2.md):
  * game/packages/sim/src/survive.ts (SURVIVE_TIMES, the waves, survivePlan), config.ts (RUNES,
  * PERKS, STRUCT), world.ts (PU, PU_CAP, SURVIVE_ROCK, SURVIVE_GATES, ALTAR_SPOTS, regenOf),
  * and the client's art/perks.ts (names, rules, colours, glyphs). The design text is from
@@ -16,15 +17,16 @@
     MIRROR: ['.#####.', '#.....#', '#..#..#', '#.#.#.#', '#.....#', '.#...#.', '..###..'],
     BLOOM: ['..#.#..', '.#####.', '##.#.##', '.#####.', '..###..', '...#...', '..###..'],
     WALL: ['.......', '##.##.#', '##.##.#', '.......', '#.##.##', '#.##.##', '.......'],
-    ECHO: ['.#...#.', '###.###', '.#...#.', '###.###', '.#...#.', '#.#.#.#', '#.#.#.#'],
+    ECHO: ['#..#...', '.#..#..', '..#..#.', '...#..#', '..#..#.', '.#..#..', '#..#...'],
+    LINGER: ['.#####.', '..#.#..', '...#...', '..#.#..', '.#####.', '.......', '#######'],
+    STEP: ['...##..', '..###..', '.###...', '####...', '..#.#..', '.#...#.', '#.....#'],
     RALLY: ['...#...', '..###..', '...#...', '..#.#..', '.......', '##.###.', '#######'],
     // the element icons (px.ts ICON) the game uses for Shield and Sigil, Pyre and Deep (element)
     SIGIL: ['...#...', '..#.#..', '.#####.', '#..#..#', '.#####.', '..#.#..', '...#...'],
     FIRE: ['...#...', '..##...', '..###.#', '.#####.', '###.###', '##...##', '.#####.'],
-    // designed only: no glyph in the game yet; drafted here in the same style
     HEART: ['.##.##.', '#######', '###.###', '##.#.##', '.#####.', '..###..', '...#...'],
-    FUSE: ['.....#.', '....#..', '...#...', '..###..', '.#####.', '.#####.', '..###..'],
-    STEP: ['...##..', '..###..', '.###...', '####...', '..#.#..', '.#...#.', '#.....#'],
+    // designed only: no glyph in the game yet; drafted here in the same style
+    TRIAGE: ['..###..', '..#.#..', '###.###', '#.....#', '###.###', '..#.#..', '..###..'],
   };
 
   // Regen is one shared budget (decisions 2026-11-05, the rune economy): R runes a second in total
@@ -110,20 +112,20 @@
       flag: 'pillar 3',
     },
     {
-      slug: 'pu-clockwork', name: 'Clockwork', ramp: 'shield', glyph: G.GEAR, status: 'built', cap: 1,
-      rule: 'Your turrets fire for free',
-      does: 'Your turrets’ shots cost no runes and fire at their full rate. Normally a shot costs half its payload’s runes, and all your turrets together may spend at most 13% of your total regen R from their main element.',
-      sees: 'Your turrets keep firing while you cast.',
-      cost: 'Turrets become “set and forget”. Your Sigil runes are still bound, and shots are still uncharged tap casts.',
-      pillar: 'Strongly rewards preparing (pillar 7). Could make turret builds a no-brainer: watch it.',
+      slug: 'pu-clockwork-v2', name: 'Clockwork', ramp: 'shield', glyph: G.GEAR, status: 'built', cap: 1,
+      rule: 'Your turrets bind no Sigil rune',
+      does: 'Redesigned (your note: free shots were far too strong). A turret still costs its runes when you cast it, and its shots still cost half their payload, but it no longer holds a Sigil rune while it stands: the rune comes back by regen, so a turret, a glyph and an aura can stand together on Survive’s single Sigil rune. Shots still fit the shared budget (all your turrets together spend at most 13% of your regen R), so a second turret splits the fire of the first: more coverage, about the same damage. Dismissing a Clockwork turret gives no rune back, and pressing Sigil with none free never recalls one.',
+      sees: 'Turrets at two gates, and your glyphs and aura besides.',
+      cost: 'Little extra damage: it buys coverage and room for your other devices, not DPS. Placing turrets still costs runes each time.',
+      pillar: 'Pillar 1’s preferred kind: do more things at once. Pillar 7: rewards setting up before the wave.',
     },
     {
-      slug: 'pu-echo', name: 'Echo', ramp: 'sigil', glyph: G.ECHO, status: 'built', cap: 9, scene: 'echo',
-      rule: 'A free Double stands with you next wave',
-      does: 'A Double appears beside you the moment you pick it, so you can plan round it in the lull, and fades when the next wave is cleared. It binds no Sigil rune. Otherwise it’s the cast Double: 60 HP, repeats your spells at half power for half their runes, and enemies treat it as 6 u closer than it is. A Double you cast replaces it. It can be picked again at the next altar.',
-      sees: 'A translucent violet copy of you with a seal at its feet. Enemies peel off toward it.',
-      cost: 'The Double is a magnet, so you must play round it. Its repeats still cost runes.',
-      pillar: '“The Double for a wave”, from your list.',
+      slug: 'pu-echo-v2', name: 'Echo', ramp: 'sigil', glyph: G.ECHO, status: 'built', cap: 9, scene: 'echo',
+      rule: 'Next wave, every spell goes off twice',
+      does: 'Redesigned (your note: be super powerful for one wave; the cost is the permanent upgrade you didn’t take). From the pick until the next wave is cleared, every spell you cast goes off a second time 0.4 s later, free, from where you stand then and along your aim then. Bolts, rocks, shards, novas, patches, rain, springs, strikes, blasts and the imbued burst repeat whole; a beam or spray is joined by a second one that trails your aim by 0.4 s; an arc zaps again after each zap. Walls, wards, devices, weapons, Blink and Self casts don’t echo. Measured on a dummy: a rock ×2.0 damage, a beam ×1.9, a fireball ×1.8, a fire spray ×1.5 (burning doesn’t stack). It is three times as likely to be on an altar before a key wave (the 5th and 8th of every eight) and can be picked again.',
+      sees: 'A violet ring at your feet, and every spell of yours twice: the second one a beat later, from your staff.',
+      cost: 'Gone after one wave, and the pick is a permanent upgrade you didn’t take. Friendly fire echoes too.',
+      pillar: 'Pillar 7’s cousin: a pick for a moment you can see coming (the next wave shows itself during the pick).',
     },
     {
       slug: 'pu-rally', name: 'Rally', ramp: 'life', glyph: G.RALLY, status: 'default', cap: 1, scene: 'rally',
@@ -143,21 +145,28 @@
       flag: 'pillar 1',
     },
     {
-      slug: 'pu-long-fuse', name: 'Long fuse', ramp: 'shield', glyph: G.FUSE, status: 'designed',
-      rule: 'Delayed blasts and glyphs: 50% bigger, 50% slower',
-      does: 'Your delayed blasts and glyphs are 50% bigger and take 50% longer to arm.',
-      sees: 'Bigger glyphs in the gates, armed well before the wave arrives.',
-      cost: 'Prep-heavy, bad in a panic.',
-      pillar: 'Pillar 7.',
+      slug: 'pu-lingering', name: 'Lingering', ramp: 'earth', glyph: G.LINGER, status: 'built', cap: 1,
+      rule: 'What you place lasts 50% longer, 25% bigger',
+      does: 'Replaces Long fuse (your note: lean into glyphs, fire walls and persistent areas, not the arming delay). Everything you place or leave lingering lasts 1.5× as long and is 1.25× as wide: Place patches and the floors they leave (burning ground, frost, ice, water), steam, rain, Healing springs, the floor a nova leaves, rock walls (with any coat, so a Fire wall burns 1.5× as long; with Bedrock 3×), and glyphs (their trigger ring is wider and the patch they cast is the bigger one). Instant blasts stay instant.',
+      sees: 'Bigger fire patches and rain that stays, so the zones you both have to read and walk round are bigger too.',
+      cost: 'Only matters if you place things. Your burning ground and walls also block and burn your partner for longer (friendly fire stays).',
+      pillar: 'Pillar 1’s leaning kind (a placer’s build) and pillar 7 (prepare the field).',
     },
     {
-      slug: 'pu-quickstep', name: 'Quickstep', ramp: 'lightning', glyph: G.STEP, status: 'designed',
-      rule: 'Recovery after a cast 40% shorter',
-      does: 'The recovery after each cast is 40% shorter.',
-      sees: 'You cast faster.',
-      cost: 'Pure pace, like Wellspring.',
-      pillar: 'Pillar 4: it eats “slower, more deliberate”. Claude would reject it.',
-      flag: 'pillar 4',
+      slug: 'pu-quickstep-v2', name: 'Quickstep', ramp: 'lightning', glyph: G.STEP, status: 'built', cap: 2,
+      rule: 'A lasting haste: 15% faster steps and casts',
+      does: 'Redesigned as a permanent, weaker Haste (your note). +15% walking speed, and 15% shorter wind-ups and recoveries, per stack (two at most: +30%). It multiplies with the Haste aura (Sigil + Lightning on yourself, ×1.4), which now shortens your recovery too, as it always did your wind-up. Measured: casting barely speeds up (you wait on runes, as you said), a staff Strike spam is +20% (+27% at two stacks), and you walk 15% further.',
+      sees: 'You move a little quicker, and your weapon swings come round faster.',
+      cost: 'Small and steady; spells stay rune-bound. Mostly a mover’s and a weapon-user’s pick.',
+      pillar: 'Pillar 1’s “speed up as you warm up”, kept small so pillar 4 (deliberate casting) holds: runes still set the pace.',
+    },
+    {
+      slug: 'pu-triage', name: 'Triage', ramp: 'life', glyph: G.TRIAGE, status: 'designed', cap: 1,
+      rule: 'Your heals on a badly hurt ally heal double',
+      does: 'Claude’s proposal to replace Bloom (your note: a heal tweak, but a useful one). Any heal you give another wizard below 35% health heals twice as much (springs, beams, the healing link, Mend, Life bolts). Not on yourself.',
+      sees: 'A partner on the brink jumps back up when you reach them: the save is visible and it was your timing.',
+      cost: 'Does nothing while everyone is healthy; rewards watching your partner’s bar, not spamming heals.',
+      pillar: 'Answers the open question “what makes support skillful”: timing and attention, not volume. Pillar 3 holds (it only heals, and only your chosen heals).',
     },
   ];
 
@@ -251,24 +260,44 @@
       ],
     },
     {
-      id: 'q-11-echo-free', n: 'Q11', title: 'Echo: should its Double repeat your spells for free?',
-      text: 'Built: Echo’s Double repeats your spells at half power for half their runes, like the cast Double. Free repeats would double your output with nothing to decide.',
+      id: 'q-12-echo-run', n: 'Q12', title: 'Echo: one wave per pick, or every wave for the run?',
+      text: 'Still built as a one-shot after the redesign: your spells echo until the next wave is cleared, and Echo can be offered and picked again at later altars. The other way: one pick makes your spells echo for the rest of the run (that would double your damage for good, so it would need a real drawback).',
       choices: [
-        ['half', 'Keep half the runes', 'Each repeat is still a choice.', 'rec built'],
-        ['free', 'Repeats are free', 'Stronger and simpler; less to think about.', ''],
+        ['oneshot', 'One wave per pick', 'Strong for one wave; the cost is the permanent pick you passed on.', 'rec built'],
+        ['run', 'Every wave', 'A build-defining pick; would need a drawback.', ''],
       ],
     },
     {
-      id: 'q-12-echo-run', n: 'Q12', title: 'Echo: one wave per pick, or a Double every wave for the run?',
-      text: 'Built: a one-shot. The Double stands until the next wave is cleared, and Echo can be offered and picked again at later altars. The other way: one pick gives you a Double at the start of every wave for the rest of the run.',
+      id: 'q-13-echo-key', n: 'Q13', title: 'Echo: how should it find the key waves?',
+      text: 'Built: Echo is one wave of double spells, and it is three times as likely to be on an altar before a key wave (the 5th and 8th of every eight: the first brute, and everything at once). The pick already shows the next wave’s portals and mix, so you can tell. The alternatives: offer it only before key waves, or weight it evenly and let you judge.',
       choices: [
-        ['oneshot', 'One wave per pick', 'The pick stays a recurring choice.', 'rec built'],
-        ['run', 'A Double every wave', 'A build-defining pick; strong early.', ''],
+        ['weighted', 'More often before key waves (×3)', 'Usually there when it matters; sometimes a surprise.', 'rec built'],
+        ['only', 'Only before key waves', 'Predictable; Echo becomes the boss-wave pick.', ''],
+        ['even', 'Even odds every pick', 'Simplest; the timing is all yours.', ''],
+      ],
+    },
+    {
+      id: 'q-14-clockwork', n: 'Q14', title: 'Clockwork: which cost reduction?',
+      text: 'Built: turrets bind no Sigil rune (they still cost their runes, and shots still share the 13%-of-regen budget, so a second turret splits the first one’s fire). That buys coverage and room for other devices, not damage. The other modest options from your note: a turret costs one rune less to cast (at least 1), or shots cost a quarter of their payload instead of half (about +50% turret damage, the strongest of the three).',
+      choices: [
+        ['nobind', 'Turrets bind no Sigil rune', 'More at once; about the same DPS.', 'rec built'],
+        ['minus-one', '−1 rune off a turret’s cast (min 1)', 'Cheaper to set up; same shots.', ''],
+        ['cheap-shots', 'Shots cost a quarter, not half', 'More turret damage; closest to the old one.', ''],
+      ],
+    },
+    {
+      id: 'q-15-linger', n: 'Q15', title: 'Lingering: is ×1.5 time and ×1.25 size the right size, and should auras count?',
+      text: 'Built: everything you place or leave lingering lasts 1.5× as long and is 1.25× as wide (about 1.56× the area), once per run. Auras (Sigil + Self) are not included: they sit on you, not on the field. Including them would make Haste and the fire aura last 18 s instead of 12 s.',
+      choices: [
+        ['as-built', 'As built: placed things only', '', 'rec built'],
+        ['auras', 'Auras last 1.5× too', 'Also helps the aura player.', ''],
+        ['bigger', 'Bigger numbers (×2 time, ×1.4 size)', 'A build-defining pick for placers.', ''],
       ],
     },
   ];
 
   const DECIDED = [
+    ['Round 2', 'Your Maybe notes (2026-11-06): Echo is now “every spell twice for one wave” (so Q11, the Double’s repeat cost, is moot), Long fuse became Lingering, Quickstep is a permanent small Haste (and Haste now shortens recovery), Clockwork no longer makes shots free. All four are built; Bloom stays cut, and Triage is proposed in its place.'],
     ['Q5', 'Next to build: Rally and Echo. Answered: both, Rally first. Both are built.'],
     ['Q7', 'Arena size. Decided: 48 × 34, so it overflows the screen at every scale.'],
     ['Q8', 'Zoom when the team splits? Answered: no zoom. Each screen follows its own wizard, in every room; other wizards off screen get an arrow at the edge in their seat colour (blinking while down). Couch co-op on one screen still shares the view. Built.'],

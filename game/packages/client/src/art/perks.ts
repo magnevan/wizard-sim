@@ -14,8 +14,12 @@ const POOLS = ['#.#.#.#', '#.#.#.#', '#.#.#.#', '.......', '...#...', '..###..',
 const SPRING = ['...#...', '..###..', '.#.#.#.', '...#...', '.#...#.', '#.###.#', '.#####.'];
 const MIRROR = ['.#####.', '#.....#', '#..#..#', '#.#.#.#', '#.....#', '.#...#.', '..###..'];
 const WALL = ['.......', '##.##.#', '##.##.#', '.......', '#.##.##', '#.##.##', '.......'];
-/** Two figures, one a step behind the other. */
-const ECHO = ['.#...#.', '###.###', '.#...#.', '###.###', '.#...#.', '#.#.#.#', '#.#.#.#'];
+/** Two chevrons, one after the other: a spell, and its echo. */
+const ECHO = ['#..#...', '.#..#..', '..#..#.', '...#..#', '..#..#.', '.#..#..', '#..#...'];
+/** An hourglass over the ground: what you place stays longer. */
+const LINGER = ['.#####.', '..#.#..', '...#...', '..#.#..', '.#####.', '.......', '#######'];
+/** A running figure (the Survive Review's draft). */
+const STEP = ['...##..', '..###..', '.###...', '####...', '..#.#..', '.#...#.', '#.....#'];
 /** A heart with a crack down it (the Survive Review's draft). */
 const HEART = ['.##.##.', '#######', '###.###', '##.#.##', '.#####.', '..###..', '...#...'];
 
@@ -27,8 +31,10 @@ export const PERKS: Record<number, PerkArt> = {
   [PU.bedrock]: { name: 'Bedrock', rule: 'Your rock walls last twice as long', ramp: X.EL.earth, glyph: WALL },
   [PU.pyre]: { name: 'Pyre', rule: 'Foes you set burning explode on death', ramp: X.EL.fire, glyph: X.ICON.fire },
   [PU.charm]: { name: 'Mirror charm', rule: 'A mirror ward regrows on you', ramp: X.EL.shield, glyph: MIRROR },
-  [PU.clockwork]: { name: 'Clockwork', rule: 'Your turrets fire for free', ramp: X.EL.shield, glyph: GEAR },
-  [PU.echo]: { name: 'Echo', rule: 'A free Double stands with you next wave', ramp: X.EL.sigil, glyph: ECHO },
+  [PU.clockwork]: { name: 'Clockwork', rule: 'Your turrets bind no Sigil rune', ramp: X.EL.shield, glyph: GEAR },
+  [PU.echo]: { name: 'Echo', rule: 'Next wave, every spell goes off twice', ramp: X.EL.sigil, glyph: ECHO },
+  [PU.lingering]: { name: 'Lingering', rule: `What you place lasts ${Math.round((SIM_PERKS.lingerLife - 1) * 100)}% longer, ${Math.round((SIM_PERKS.lingerSize - 1) * 100)}% bigger`, ramp: X.EL.earth, glyph: LINGER },
+  [PU.quickstep]: { name: 'Quickstep', rule: `A lasting haste: ${Math.round(SIM_PERKS.quickstep * 100)}% faster steps and casts`, ramp: X.EL.lightning, glyph: STEP },
   [PU.glass]: { name: 'Glass heart', rule: `+${Math.round(SIM_PERKS.glassDmg * 100)}% damage, -${Math.round(SIM_PERKS.glassHp * 100)}% max health`, ramp: X.EL.fire, glyph: HEART },
 };
 

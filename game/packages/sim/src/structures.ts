@@ -19,7 +19,7 @@
  *   Self   an aura around you (fire burns, cold chills, life regenerates, lightning hastes...).
  */
 import { compile, WALL, type SpellSpec } from './compile';
-import { BODY, RHYTHM, SHAPES, STRUCT, T } from './config';
+import { BODY, PERKS, RHYTHM, SHAPES, STRUCT, T } from './config';
 import { EL, N_EL, queueFromCounts } from './elements';
 import { burstEvent, channelTick, fireSpell, heldBlow, hit, hitOpts, nearest, payloadOf, stored } from './effects';
 import { len } from './geom';
@@ -27,7 +27,7 @@ import { HIT_KIND, addKnock, setHitKind } from './hit';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { boundSigil, drainShield, energyLoad, segDist } from './walls';
 import { conjureGuard } from './guards';
-import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, alive, freeDouble, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
+import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, alive, freeDevice, lingerLife, lingerSize, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
 
 /** The spell minus its form element: what a Sigil device carries, or what a Shield structure is coated in. */
 function restCounts(spec: SpellSpec): Uint8Array {
@@ -149,7 +149,6 @@ function turretGap(w: World, k: number): number {
   for (let j = 0; j < MAX_DEVICES; j++) if (dv.type[j] === DEVICE.turret && dv.owner[j] === owner) turrets++;
   let most = 0;
   for (let id = 1; id <= N_EL; id++) if (id !== EL.sigil) most = Math.max(most, dv.els[k * N_EL + id - 1]);
-  if (stackOf(w, owner, PU.clockwork)) return STRUCT.turretInterval; // free shots: no regen budget to fit
   return Math.max(STRUCT.turretInterval, (turrets * most * STRUCT.turretShotCost) / (regenOf(w, owner) * STRUCT.turretShare));
 }
 
@@ -206,7 +205,6 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
 export function spawnDouble(w: World, src: number, face: number, hp = STRUCT.doubleHp): number {
   const b = w.bodies, s = w.seats;
   if (s.double[src] >= 0 && b.kind[s.double[src]] === KIND.double) b.kind[s.double[src]] = KIND.none;
-  if (w.run) w.run.echo[src] = -1; // a cast Double replaces Echo's
   const ox = cosTurns(face + 0.25) * 1.2, oy = sinTurns(face + 0.25) * 1.2;
   const i = spawnBody(w, -1, KIND.double, b.team[src], b.x[src] + ox, b.y[src] + oy, hp, b.r[src]);
   s.double[src] = i; s.dblOX[src] = ox; s.dblOY[src] = oy; s.dblBorn[src] = w.clock[0];
@@ -290,7 +288,7 @@ export function dismissAt(w: World, seat: number, x: number, y: number): boolean
   const h = hovered(w, seat, x, y);
   if (!h) return false;
   if (h[0] === Q.onYou) for (let k = 0; k < MAX_DEVICES; k++) if (w.devices.type[k] === DEVICE.orbital && w.devices.owner[k] === seat) w.devices.type[k] = DEVICE.none;
-  const free = h[0] === Q.double && freeDouble(w, seat); // Echo's Double bound no rune
+  const free = h[0] === Q.device && freeDevice(w, h[1]); // a Clockwork turret bound no rune
   removeOne(w, seat, h[0], h[1]);
   if (!free) giveRune(w, seat);
   return true;
@@ -328,9 +326,10 @@ export function dismissShieldAt(w: World, seat: number, x: number, y: number): b
 export function recallOldest(w: World, seat: number): boolean {
   const dv = w.devices, s = w.seats, b = w.bodies;
   let what = 0, idx = -1, born = Infinity;
-  for (let k = 0; k < MAX_DEVICES; k++) if (dv.type[k] && dv.owner[k] === seat && dv.born[k] < born) { born = dv.born[k]; what = Q.device; idx = k; }
+  // a Clockwork turret binds no rune, so recalling it would free none
+  for (let k = 0; k < MAX_DEVICES; k++) if (dv.type[k] && dv.owner[k] === seat && !freeDevice(w, k) && dv.born[k] < born) { born = dv.born[k]; what = Q.device; idx = k; }
   const d = s.double[seat];
-  if (d >= 0 && b.kind[d] === KIND.double && !freeDouble(w, seat) && s.dblBorn[seat] < born) { born = s.dblBorn[seat]; what = Q.double; idx = d; }
+  if (d >= 0 && b.kind[d] === KIND.double && s.dblBorn[seat] < born) { born = s.dblBorn[seat]; what = Q.double; idx = d; }
   if ((s.wand[seat] || s.weapon[seat]) && s.wandBorn[seat] < born) { born = s.wandBorn[seat]; what = Q.onYou; idx = seat; }
   if (!what) return false;
   if (what === Q.onYou) { s.wand[seat] = 0; s.weapon[seat] = 0; w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: b.x[seat], y: b.y[seat], amount: 1, look: EL.sigil, text: 'dismissed' }); }
@@ -371,7 +370,7 @@ export function tickStructures(w: World): void {
   for (let k = 0; k < MAX_WALLS; k++) {
     if (wl.type[k] !== WALL.rock || wl.owner[k] === TERRAIN) continue; // the arena's own rock stays
     const base = T(STRUCT.rockLife + STRUCT.rockLifePerEarth * Math.max(0, wl.els[k * N_EL + EL.earth - 1] - 1));
-    const life = stackOf(w, wl.owner[k], PU.bedrock) ? base * 2 : base;
+    const life = Math.round((stackOf(w, wl.owner[k], PU.bedrock) ? base * 2 : base) * lingerLife(w, wl.owner[k]));
     const left = life - (tick - wl.born[k]);
     if (left <= 0) { w.events.push({ tick, kind: 'burst', who: wl.owner[k], x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.5, look: EL.earth }); wl.type[k] = WALL.none; continue; }
     const crumble = T(STRUCT.rockCrumble);
@@ -467,7 +466,7 @@ export function tickStructures(w: World): void {
       }
       if (dv.timer[k] > 0) { dv.timer[k]--; continue; }
       if (target < 0) { dv.timer[k] = T(0.2); continue; }
-      if (!stackOf(w, owner, PU.clockwork) && !payShot(w, owner, dv.els, k, STRUCT.turretShotCost)) { // dry: it waits for your regen
+      if (!payShot(w, owner, dv.els, k, STRUCT.turretShotCost)) { // dry: it waits for your regen
         if (tick % 30 === 0) w.events.push({ tick, kind: 'dry', who: owner, x: dv.x[k], y: dv.y[k], look: dv.look[k] });
         dv.timer[k] = T(0.25);
         continue;
@@ -486,11 +485,11 @@ export function tickStructures(w: World): void {
         if (!alive(w, i)) continue;
         if (allies ? b.team[i] !== b.team[owner] : b.team[i] === b.team[owner]) continue;
         const d = type === DEVICE.glyph ? len(b.x[i] - dv.x[k], b.y[i] - dv.y[k]) : segDist(b.x[i], b.y[i], dv.x[k], dv.y[k], dv.x2[k], dv.y2[k])[0];
-        if (d > STRUCT.glyphRadius + b.r[i]) continue;
+        if (d > glyphRadiusOf(w, owner) + b.r[i]) continue;
         const spec = deviceSpell(w, k, 'place');
         if (type === DEVICE.glyph) fireSpell(w, owner, spec, 0, dv.x[k], dv.y[k], 0, { ox: dv.x[k], oy: dv.y[k] });
         else for (let f = 0; f <= 2; f++) { const px = dv.x[k] + (dv.x2[k] - dv.x[k]) * f / 2, py = dv.y[k] + (dv.y2[k] - dv.y[k]) * f / 2; fireSpell(w, owner, spec, 0, px, py, 0, { ox: px, oy: py }); }
-        burstEvent(w, owner, dv.x[k], dv.y[k], STRUCT.glyphRadius * 1.5, dv.look[k]);
+        burstEvent(w, owner, dv.x[k], dv.y[k], glyphRadiusOf(w, owner) * 1.5, dv.look[k]);
         dv.type[k] = DEVICE.none;
         break;
       }
@@ -539,9 +538,20 @@ export function tickStructures(w: World): void {
   }
 }
 
-/** Haste (Sigil + Lightning aura): faster walking and casting. */
-export const hasteOf = (w: World, i: number): number =>
-  i < MAX_SEATS && w.seats.aura[i] > 0 && w.seats.auraEls[i * N_EL + EL.lightning - 1] ? STRUCT.hasteMult : 1;
+/**
+ * Haste: how many times as fast seat `i` walks, winds up and recovers. The Haste aura (Sigil +
+ * Lightning on yourself) gives STRUCT.hasteMult; Survive's Quickstep is a permanent, weaker one
+ * (PERKS.quickstep a stack), and the two multiply.
+ */
+export const hasteOf = (w: World, i: number): number => {
+  if (i < 0 || i >= MAX_SEATS) return 1;
+  const aura = w.seats.aura[i] > 0 && w.seats.auraEls[i * N_EL + EL.lightning - 1] ? STRUCT.hasteMult : 1;
+  const q = stackOf(w, i, PU.quickstep);
+  return q ? aura * (1 + PERKS.quickstep * q) : aura;
+};
+
+/** A glyph's trigger radius: STRUCT.glyphRadius, wider with Lingering. */
+export const glyphRadiusOf = (w: World, owner: number): number => STRUCT.glyphRadius * lingerSize(w, owner);
 
 /** Sigil regen cap: bound runes don't come back while their device stands. */
 export const sigilCap = (w: World, seat: number): number => runeMax(w, seat, EL.sigil) - boundSigil(w, seat);

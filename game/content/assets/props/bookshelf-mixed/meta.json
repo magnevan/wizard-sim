@@ -1,0 +1,54 @@
+{
+  "id": "bookshelf-mixed",
+  "kind": "prop",
+  "name": "Bookshelf, bright books",
+  "base": "bookshelf",
+  "footprint": [
+    2.4,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        16,
+        44
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-1.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "spines repainted: five colours"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "simple": {
+      "file": "simple.png",
+      "foot": [
+        16,
+        44
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-1.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "spines repainted: five colours",
+        "reduce_detail"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "code": {
+      "file": "code.png",
+      "foot": [
+        20,
+        42
+      ],
+      "source": "code + local",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "spines repainted: five colours"
+      ],
+      "status": "Ours."
+    }
+  }
+}

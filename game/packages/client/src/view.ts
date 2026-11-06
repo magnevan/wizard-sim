@@ -14,7 +14,7 @@
  * reached the presented frame (tested on SwiftShader and D3D11). Nothing here rotates or
  * scales a sprite, so it isn't needed: rotation lives inside the Canvas2D effect drawing.
  */
-import { Container, Graphics, Sprite } from 'pixi.js';
+import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCH, ARCHETYPES, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, PHASE, TUT_TAG,
   type SimEvent, type World,
@@ -26,7 +26,9 @@ import { FIELD, fitField, gx, gy } from './art/field';
 import { FLOOR, floorTexture, surviveRuin } from './art/floor';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
-import { stats } from './art/px';
+import { PropView } from './art/props';
+import type { PropSet } from './art/assets';
+import { canvas as pxCanvas, stats, text as pxText } from './art/px';
 import { newRigState, type RigKind, type RigState } from './art/rigs';
 import { TAU, mod } from './art/util';
 import { Vfx, type BodyView } from './art/vfx';
@@ -38,6 +40,7 @@ import { TutorialHud } from './tutorial-view';
 const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10, bramble: 10, sack: 9 };
 /** Dusk on the lit layers (the floor has it baked in): a touch of blue. */
 const AMBIENT = 0xe4e8ff;
+const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL', simple: 'SIMPLE, ANGLED, LOW DETAIL', code: 'CODE, STRAIGHT-ON' };
 
 export class WorldView {
   readonly camera = new Camera();
@@ -65,6 +68,13 @@ export class WorldView {
   private actors = new Container();
   private lights = new Lights();
   private frames = new ActorFrames();
+  /** The room's props (art/props.ts). The art test's prop set is `props.set`. */
+  readonly props: PropView;
+  /** The art test: the detailed wizard (art/rigs.ts), client side only. */
+  wizardHd = false;
+  private artLabel = new Sprite();
+  private artTex: Texture | null = null;
+  private artKey = '';
   private sprites: Sprite[] = [];
   private views: BodyView[] = [];
   private rig: RigState = newRigState();
@@ -122,9 +132,10 @@ export class WorldView {
   constructor() {
     this.actors.sortableChildren = true;
     this.structs = new StructureView(this.actors);
+    this.props = new PropView(this.actors, AMBIENT, 'lean');
     this.deaths = new Deaths(this.actors);
-    this.scene.addChild(this.floor, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
-    this.hudLayer.addChild(this.tut.fade, this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over, this.tut.sprite, this.tut.banner);
+    this.scene.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
+    this.hudLayer.addChild(this.tut.fade, this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over, this.tut.sprite, this.tut.banner, this.artLabel);
     this.root.addChild(this.scene, this.hudLayer);
     for (let i = 0; i < MAX_BODIES; i++) {
       const s = new Sprite(); s.visible = false; s.tint = AMBIENT;
@@ -218,6 +229,7 @@ export class WorldView {
     const dt = this.lastCt ? ct - this.lastCt : 0;
     this.lastCt = ct;
     this.fitArena(w);
+    this.props.room(w.def);
     this.aim(w, alpha, dt);
     // a death's or a brute slam's screen shake (last frame's, in whole art px): cosmetic only
     const sh = Math.max(this.deaths.shake, this.atkShake), sx = sh > 0.3 ? Math.round(Math.sin(ct * 83) * sh) : 0, sy = sh > 0.3 ? Math.round(Math.cos(ct * 71) * sh * 0.6) : 0;
@@ -233,6 +245,8 @@ export class WorldView {
     this.vfx.view(-fx0 - M, -fy0 - M, cam.w + 2 * M, cam.h + 2 * M);
     this.vfx.ground.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy); this.vfx.over.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy);
     this.structs.scorch.sprite.position.set(fx0, fy0);
+    this.props.place(fx0, fy0);
+    this.drawArtLabel(w);
     // the wave banner: over the arena's north edge, or near the top of the view when that is off screen
     this.vfx.bannerX = Math.round(cam.w / 2 - fx0);
     this.vfx.bannerY = Math.round(Math.max(FIELD.OY - (w.dims.h / 2) * PPU * FY + 22, (28 * cam.base) / cam.scale + 10 - fy0));
@@ -271,6 +285,24 @@ export class WorldView {
     this.tut.draw(w, ct, cam.hudW, cam.hudH);
     this.edges.draw(w, cam, ct, (i) => this.drawnAt(i, w, alpha));
     this.frames.upload();
+  }
+
+  /** Which art is on show, top right: in a room with props, or wherever the detailed wizard is on. */
+  private drawArtLabel(w: World): void {
+    const inRoom = w.def.props.length > 0, on = inRoom || this.wizardHd;
+    this.artLabel.visible = on;
+    if (!on) return;
+    const lines = [...(inRoom ? [`PROPS: ${PROP_LABEL[this.props.set]} (O)`] : []), `WIZARD: ${this.wizardHd ? 'DETAILED' : 'TODAY'}${inRoom ? ' (I)' : ''}`];
+    const key = lines.join('|');
+    if (key !== this.artKey) {
+      this.artKey = key;
+      const wd = Math.max(...lines.map((l) => l.length)) * 4 + 4, { c, x } = pxCanvas(wd, lines.length * 7 + 3);
+      lines.forEach((l, i) => pxText(x, l, wd - 2 - (l.length * 4 - 1), 2 + i * 7, '#ffd860', '#0a0810'));
+      this.artTex?.destroy(true);
+      this.artTex = Texture.from(c);
+      this.artLabel.texture = this.artTex;
+    }
+    this.artLabel.position.set(this.camera.hudW - this.artTex!.width - 2, 30); // under the Tune button and the help hint
   }
 
   /** The last tick drawn or stepped, and how far the view's clock runs ahead of the world's (s). */
@@ -344,7 +376,7 @@ export class WorldView {
   /** The quantized rig state of body i: what its cached frame is keyed by. */
   private rigState(w: World, i: number, t: number, ct: number): RigState {
     const b = w.bodies, s = this.rig, kind = this.rigOf(w, i), arch = b.arch[i];
-    s.kind = kind; s.seed = i & 1; s.variant = 0; s.pal = 0;
+    s.kind = kind; s.seed = i & 1; s.variant = 0; s.pal = 0; s.hd = kind === 'wizard' && this.wizardHd ? 1 : 0;
     s.punch = -1; s.smash = -1; s.draw = 0; s.atk = -1; s.hold = 0; s.prep = 0; s.cast = 0; s.vx = 0; s.vy = 0;
     // a Double is its owner's wizard (drawn translucent and violet-tinted by the sprite)
     const owner = b.kind[i] === KIND.double ? this.ownerOf(w, i) : i;

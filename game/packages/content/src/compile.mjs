@@ -1,14 +1,29 @@
 // LDtk levels -> room definitions (plain data), and room definitions -> the generated module
 // packages/sim/src/rooms.gen.ts. The build reads only the data layers: the Terrain IntGrid and
 // the Entities layer. Auto-tiles LDtk may bake are ignored (the client draws with our art).
-import { GRID_PX, PX_PER_UNIT, layerOf, fieldOf, roomId, toWorldX, toWorldY } from './ldtk.mjs';
+import { GRID_PX, PX_PER_UNIT, layerOf, fieldOf, loadProps, roomId, toWorldX, toWorldY } from './ldtk.mjs';
 
 /** Terrain: IntGrid value identifier -> the character in a room's terrain rows. 0 (unpainted) is floor. */
 export const TERRAIN_CHARS = { floor: '.', rock: '#' };
 export const FLOOR = TERRAIN_CHARS.floor, ROCK = TERRAIN_CHARS.rock;
 
 /** The entities the game understands, and what each becomes in a room. */
-export const ENTITY_KINDS = ['PlayerStart', 'Dummy', 'Portal', 'Altar', 'Rock'];
+export const ENTITY_KINDS = ['PlayerStart', 'Dummy', 'Portal', 'Altar', 'Rock', 'Prop'];
+
+/** A wall's half-thickness (the sim's STRUCT.wallThickness; check.mjs's SIM copy is tested against it). */
+const WALL_HALF = 0.25;
+const r3 = (v) => Math.round(v * 1000) / 1000;
+/**
+ * A blocking prop's footprint (w x h, world units, centred on x, y) -> wall segments. A wall is a
+ * capsule 0.5 u thick, so a footprint up to 0.6 deep is one segment down its long side, and a deeper
+ * one two side by side: that fills the box with one or two of a room's 40 wall slots, where tracing
+ * its outline would take four.
+ */
+export function footprintWalls(x, y, [fw, fh]) {
+  const along = Math.max(0, Math.max(fw, fh) / 2 - WALL_HALF), short = Math.min(fw, fh);
+  const rows = short <= 0.6 ? [0] : [-(short / 2 - WALL_HALF), short / 2 - WALL_HALF];
+  return rows.map((o) => (fw >= fh ? [x - along, y + o, x + along, y + o] : [x + o, y - along, x + o, y + along]).map(r3));
+}
 
 /** Value -> char for a project's Terrain layer, from its definition (unknown identifiers -> null). */
 export function terrainLegend(project) {
@@ -69,7 +84,7 @@ export function terrainRows(project, level) {
  * One level -> a room definition. Returns { room, errors }. The room's key order is fixed: it is
  * what the room hash is taken over.
  */
-export function compileLevel(project, level) {
+export function compileLevel(project, level, assets = loadProps()) {
   const errors = [];
   const id = roomId(level.identifier);
   const { pxWid, pxHei } = level;
@@ -80,7 +95,7 @@ export function compileLevel(project, level) {
   const layer = layerOf(level, 'Entities');
   if (!layer) errors.push(`${level.identifier}: no Entities layer`);
   const ox = layer?.__pxTotalOffsetX ?? 0, oy = layer?.__pxTotalOffsetY ?? 0;
-  const starts = [], dummies = [], portals = [], altars = [], rock = [];
+  const starts = [], dummies = [], portals = [], altars = [], rock = [], props = [], propRock = [];
   for (const e of layer?.entityInstances ?? []) {
     const where = `${level.identifier}: ${e.__identifier} at px ${e.px[0]},${e.px[1]}`;
     const x = toWorldX(e.px[0] + ox, pxWid), y = toWorldY(e.px[1] + oy, pxHei);
@@ -110,20 +125,27 @@ export function compileLevel(project, level) {
         else rock.push(s);
         break;
       }
+      case 'Prop': {
+        const asset = fieldOf(e, 'asset'), blocks = fieldOf(e, 'blocks') === true, meta = assets.get(asset);
+        if (!meta) { errors.push(`${where}: no prop asset "${asset}" (game/content/assets/props/${asset}/meta.json)`); break; }
+        props.push({ asset, x, y, blocks });
+        if (blocks) propRock.push(...footprintWalls(x, y, meta.footprint));
+        break;
+      }
       default: errors.push(`${where}: the game doesn't know this entity (known: ${ENTITY_KINDS.join(', ')})`);
     }
   }
   for (let s = 0; s < 4; s++) if (!starts[s]) errors.push(`${level.identifier}: no PlayerStart for seat ${s}`);
   if (rows) rock.push(...traceRock(rows, w, h));
-  const room = { id, w, h, terrain: rows ?? [], rock, starts: [...starts], dummies, portals, altars };
+  const room = { id, w, h, terrain: rows ?? [], rock, starts: [...starts], dummies, portals, altars, props, propRock };
   return { room, errors };
 }
 
 /** Every level -> rooms. Returns { rooms, errors }. */
 export function compileProject(loaded) {
-  const rooms = [], errors = [];
+  const rooms = [], errors = [], assets = loadProps();
   for (const { level } of loaded.levels) {
-    const r = compileLevel(loaded.project, level);
+    const r = compileLevel(loaded.project, level, assets);
     rooms.push(r.room);
     errors.push(...r.errors);
   }
@@ -172,6 +194,8 @@ export function emitModule(rooms) {
     out.push(`    dummies: ${pts(r.dummies)},`);
     out.push(`    portals: ${pts(r.portals)},`);
     out.push(`    altars: ${pts(r.altars)},`);
+    out.push(r.props.length ? `    props: [\n${r.props.map((p) => `      { asset: '${p.asset}', x: ${num(p.x)}, y: ${num(p.y)}, blocks: ${p.blocks} },`).join('\n')}\n    ],` : '    props: [],');
+    out.push(`    propRock: ${pts(r.propRock, 3)},`);
     out.push('  },');
   }
   out.push('} as const satisfies Readonly<Record<string, RoomDef>>;', '');

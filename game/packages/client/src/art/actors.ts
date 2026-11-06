@@ -85,7 +85,7 @@ const q = (v: number, steps: number) => Math.round(v * steps);
  */
 const idleOf = (s: RigState): number => (s.kind === 'wizard' ? s.idle : s.kind === 'dummy' || s.kind === 'bramble' || s.kind === 'sack' || s.spd >= 1 ? 0 : s.idle);
 function keyOf(s: RigState): string {
-  return s.kind + s.pal + '.' + s.variant + '.' + (s.seed & 1) + '|' + q(s.face, 100) + '|' + q(s.spd, 10) + '.' + q(s.ph, 100) + '.' + q(idleOf(s), 10) +
+  return s.kind + s.hd + s.pal + '.' + s.variant + '.' + (s.seed & 1) + '|' + q(s.face, 100) + '|' + q(s.spd, 10) + '.' + q(s.ph, 100) + '.' + q(idleOf(s), 10) +
     '|' + q(s.vx, 1) + '.' + q(s.vy, 1) + '|' + q(s.prep, 10) + '.' + q(s.cast, 10) + '.' + q(s.sq, 10) + '.' + q(s.dead, 10) +
     '|' + q(s.burn, 10) + '.' + s.burnF + '.' + q(s.wet, 10) + '.' + s.wetF + '.' + q(s.frozen, 10) + '.' + q(s.chill, 10) + '.' + s.shock + '.' + s.flash +
     '|' + q(s.punch, 10) + '.' + q(s.smash, 10) + '.' + q(s.draw, 10) + '.' + q(s.atk, 100) + '.' + s.hold;

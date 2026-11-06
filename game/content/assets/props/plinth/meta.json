@@ -1,0 +1,53 @@
+{
+  "id": "plinth",
+  "kind": "prop",
+  "name": "Stone plinth",
+  "footprint": [
+    1.0,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        10,
+        20
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-14.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "cut from the crystal ball: ball and glow removed"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "simple": {
+      "file": "simple.png",
+      "foot": [
+        10,
+        20
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-14.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "cut from the crystal ball: ball and glow removed",
+        "reduce_detail"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "code": {
+      "file": "code.png",
+      "foot": [
+        10,
+        18
+      ],
+      "source": "code + local",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "cut from the crystal ball: ball and glow removed"
+      ],
+      "status": "Ours."
+    }
+  }
+}

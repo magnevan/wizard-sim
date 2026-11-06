@@ -26,6 +26,7 @@ export const SCENARIOS: readonly Scenario[] = [
   { id: 'sanctum', name: 'Sanctum', blurb: 'The sandbox: three practice dummies and the tuning panel (F1).', room: 'sanctum', key: '1' },
   { id: 'arena', name: 'Arena', blurb: 'Waves of enemies from portals, with lulls and breathers.', room: 'arena', key: '2' },
   { id: 'survive', name: 'Survive', blurb: 'Endless waves in a walled arena; pick a power-up between them.', room: 'survive', key: '3' },
+  { id: 'academy', name: 'Academy (art test)', blurb: 'A mock room for judging art: O swaps the props, I the wizard.', room: 'academy', key: '5' },
 ];
 
 /** Where you start when the URL names nothing (or something that isn't playable yet). */

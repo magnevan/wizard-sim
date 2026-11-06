@@ -18,6 +18,8 @@ npm run check:menu     # build, then the Esc menu in headless Chrome: Esc opens 
 npm run check:tutorial # build, then in headless Chrome: key 4 into the tutorial and key 1 back out, in place, and the
                        # end card's Survive arch lands you in Survive; every beat loads with the bot playing; the
                        # bot plays the hands test through to the next beat; no page errors
+npm run check:academy  # build, then the Academy in headless Chrome: every prop set's images load, O / I and the URL params
+                       # switch the art, a wizard can't enter a prop; screenshots in shots/academy (--out dir)
 npm run check:webrtc   # the same as check:net over real WebRTC (needs internet: PeerJS's public signalling server)
 npm run build && npm run shot -- --ms 4000 --out shots/run.png   # headless screenshot of the scripted run
                        # (also --size 1280x800, --query "room=arena&autoplay=1": any URL params below)
@@ -44,6 +46,7 @@ npm run perf           # build, then step() timed in node (Arena, Survive wave 1
 
 URL params (`packages/client/src/main.ts` lists them too):
 - **Rooms:** `?room=arena` (the waves; the default is the Sanctum with dummies), `?room=survive` (Survive: endless waves in a walled arena, a power-up pick between waves), `?room=tutorial` (the tutorial; `&beat=N` starts at beat N). Artifact links carry no query string, so the `#anchor` works as well: `#arena`, `#survive`, `#tutorial`, `#tutorial-7`, `#ally`, `#arena-ally`. In the game the 1 / 2 / 3 / 4 keys switch between the Sanctum, the Arena, Survive and the tutorial (in place, not online).
+- **The art test:** `#academy` (or key 5), then `?props=lean|simple|code` (O cycles it there) and `?wizard=hd` (I toggles it there; the URL works in any room). `node scripts/academy-shots.mjs` and `scripts/wizard-sheet.mjs` make the art trial page's shots.
 - **Players:** `?ally=1` (a bot wizard on seat 1), `?local=N` (the camera follows seat N only, as a networked player's screen would), `?net=bc` (online co-op between tabs on one machine, BroadcastChannel), `?timerloop=1` (timers instead of animation frames, so a background tab keeps running; the co-op e2e test).
 - **Headless runs and screenshots:** `?autoplay=1` (bots fight the Arena, or play the tutorial through with `room=tutorial`), `?script=1` (the scripted two-wizard run), `?spell=arcane,fire/force` (both seats cast one spell at the dummies, `&spell2=` for seat 1; casts force, area, place, self, weapon, drag, hold, holddrag, guard, wait, and with nothing queued strike, heavy, special, retreat, block (`?spell=sigil+cold/weapon;/heavy`); `@x,y` sets the target and `;` chains spells one per cycle, see `demo.ts`), `?scene=rally` and `?scene=three` (Survive: a Rally in progress, or +1 to three half chosen), `?scene=enemyattacks` (every enemy frozen at one beat of its attack, `&phase=wind|strike|impact|recover|loop`, `&face=` turns; `art/enemy-attacks.ts`), `?selftest=1` (no rendering; runs the golden replay, `&ticks=N`, and writes its hash to `<html data-hash>`).
 - **Panels:** `?tune=1` (the tuning panel at boot), `?help=1` (the help panel at boot; `?helpq=water,cold` or `?helpq=hands:water:tide` shows a queue or hands, `?helphint=1` the first-session hint), `?menu=scenarios` (the Esc menu at boot on a section; `&menuAt=N` at tick N).
@@ -60,7 +63,8 @@ URL params (`packages/client/src/main.ts` lists them too):
 ## Layout
 
 ```
-content/   the maps: maps/world.ldtk (LDtk 1.5.3) and one .ldtkl per room. README.md says how to open and edit them in LDtk
+content/   the maps: maps/world.ldtk (LDtk 1.5.3) and one .ldtkl per room. README.md says how to open and edit them in LDtk.
+           assets/props/<id>/: the asset registry (meta.json and images; client art/assets.ts, art/props.ts). generated/: raw AI images, never edited
            and what each Terrain value and entity means.
 packages/
   content/ @wizard-sim/content (node only): the map build (LDtk -> sim/src/rooms.gen.ts), content:check (with LDtk's pinned

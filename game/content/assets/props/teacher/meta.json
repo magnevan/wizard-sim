@@ -1,0 +1,45 @@
+{
+  "id": "teacher",
+  "kind": "prop",
+  "name": "Robed teacher",
+  "footprint": [
+    0.9,
+    0.5
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        14,
+        40
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/pl-obj-4.png",
+      "tool": "create_1_direction_object",
+      "edits": "trimmed only",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "simple": {
+      "file": "simple.png",
+      "foot": [
+        14,
+        40
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-4.png",
+      "tool": "tools/art-trial/imgops.py reduce_detail",
+      "edits": "fewer colours, flat shading, single pixels removed",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "code": {
+      "file": "code.png",
+      "foot": [
+        10,
+        31
+      ],
+      "source": "code",
+      "tool": "tools/art-trial/code-props.html",
+      "status": "Ours."
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "bookshelf-pro",
+  "kind": "prop",
+  "name": "Bookshelf, PixelLab Pro",
+  "base": "bookshelf",
+  "footprint": [
+    2.4,
+    0.6
+  ],
+  "sets": {
+    "code": {
+      "file": "code.png",
+      "foot": [
+        14,
+        34
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/pl-front-bookshelf.png",
+      "tool": "create_object_pro_flash",
+      "edits": "trimmed only",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

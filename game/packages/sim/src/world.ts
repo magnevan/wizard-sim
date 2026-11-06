@@ -560,8 +560,8 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
     tut: opts.room === 'tutorial' ? tutorial(opts.tutorialBeat ?? TUT_ORDER[0]) : null,
     events: [],
   };
-  // The room's static rock takes the first wall slots (so far only Survive's map has any).
-  def.rock.forEach(([x1, y1, x2, y2], k) => {
+  // The room's static rock takes the first wall slots, then its blocking props' walls (isPropWall).
+  [...def.rock, ...def.propRock].forEach(([x1, y1, x2, y2], k) => {
     const wl = w.walls;
     wl.type[k] = 1; // WALL.rock (compile.ts)
     wl.owner[k] = TERRAIN; wl.x1[k] = x1; wl.y1[k] = y1; wl.x2[k] = x2; wl.y2[k] = y2;
@@ -596,6 +596,9 @@ export function spawnBody(w: World, slot: number, kind: number, team: number, x:
   if (w.tut) w.tut.tag[i] = 0; // a reused slot is nobody's target until the tutorial tags it again
   return i;
 }
+
+/** Is wall slot k a blocking prop's footprint? The client draws the prop there, not a wall. */
+export const isPropWall = (w: World, k: number): boolean => k >= w.def.rock.length && k < w.def.rock.length + w.def.propRock.length;
 
 export const tickOf = (w: World): number => w.clock[0];
 /** Is body slot i in use (anything that can be hit: a wizard, a dummy, an enemy, a Double)? */

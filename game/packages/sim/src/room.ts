@@ -9,6 +9,9 @@
 export type Pt = readonly [number, number];
 export type Seg = readonly [number, number, number, number];
 
+/** A placed prop: art only, drawn by the client from the asset registry. A blocking one also has walls in propRock. */
+export interface PropDef { readonly asset: string; readonly x: number; readonly y: number; readonly blocks: boolean }
+
 export interface RoomDef {
   readonly id: string;
   /** The play area in world units, centred on the origin. */
@@ -26,6 +29,10 @@ export interface RoomDef {
   readonly portals: readonly Pt[];
   /** Survive's altar spots (left, middle, right). */
   readonly altars: readonly Pt[];
+  /** Furniture and decoration. The sim never reads this; the client draws it. */
+  readonly props: readonly PropDef[];
+  /** The blocking props' footprints as static rock: they stop bodies and shots like rock, and aren't drawn as walls. */
+  readonly propRock: readonly Seg[];
 }
 
 /**

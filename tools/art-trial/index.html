@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Academy Art Trial</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -53,9 +54,80 @@ details img { margin-top: 10px; }
 <main>
   <header class="lede">
     <h1>Academy Art Trial</h1>
-    <p>The same five academy props from five art sources, placed on the game's real floor beside a real wizard at the game's pixel size. Each strip is shown at 3×. The wizard on the left of every strip is the game's, for scale.</p>
+    <p>Round 2 puts the chosen sources together in a mock room in the running game. Round 1, further down, compared five art sources on the same five props, each on the game's real floor beside a real wizard, shown at 3×.</p>
     <p class="dim">Rate each source under its strip. Your marks and notes save as you go.</p>
   </header>
+
+  <section id="round2">
+    <h2>Round 2: the mock room</h2>
+    <p>One mock room, in the running game, furnished three ways. Everything here came from images already paid for, or from code. It cost no new generations. In the game: press Esc and pick Academy (art test), or press 5, or add #academy to the address. <strong>O</strong> swaps the props and <strong>I</strong> swaps the wizard; the label at the top right says which you’re seeing.</p>
+    <p class="dim">Each room shot is the game at 2×. Your answers save as you go. If you leave one empty, my pick stands.</p>
+
+    <article class="source">
+      <div class="head"><h3>Lean: PixelLab’s props as they came</h3><span class="tag">angled, full detail</span></div>
+      <img src="img/room-lean.png" width="830" height="410" alt="The mock room with PixelLab's angled props: bookshelves, banners, desks, targets, a teacher and a wizard">
+      <p>The richest of the three, and the room has real character. The catch shows along the back wall: the shelves are turned about 30° but the wall runs straight across, so they look parked at an angle to it. Free-standing things (desks, lectern, cauldron, chest) don’t have that problem. The teacher is also about 40% taller than a player’s wizard, because the sheet’s props are drawn at their own scale.</p>
+    </article>
+    <article class="source">
+      <div class="head"><h3>Simple: the same props, reduced locally</h3><span class="tag">angled, nine colours at most, single pixels removed</span></div>
+      <img src="img/room-simple.png" width="830" height="410" alt="The same room with the props reduced in detail">
+      <p>The reduction worked: the shapes hold, the spines and potions keep their colour, and it’s free. But at game size the difference from Lean is small, and what goes is mostly the charm (sparkles, wood grain). It stops props outshining a wizard less than I expected, because their size and contrast do that, not their pixel count.</p>
+    </article>
+    <article class="source">
+      <div class="head"><h3>Code: straight-on, drawn in the game’s pixel library</h3><span class="tag">straight-on, sixteen props, one shelf from PixelLab Pro</span></div>
+      <img src="img/room-code.png" width="830" height="410" alt="The same room with straight-on code-drawn props">
+      <p>The tidiest fit with the floor and walls: everything sits square to the room. It’s also the plainest, and it reads more like a board game’s tokens. The shelf at the classroom’s left is PixelLab Pro’s straight-on one, and it sits happily among code-drawn neighbours, which suggests the two mix.</p>
+    </article>
+
+    <div class="q" data-q="q-5-angle"></div>
+    <div class="q" data-q="q-6-prop-detail"></div>
+
+    <h3>The wizard</h3>
+    <img src="img/wizard-sheet.png" width="1224" height="900" alt="Today's wizard and the detailed one side by side: rows alternate, in eight facings and the poses, in all four seat colours" loading="lazy">
+    <p class="dim">Rows 1 and 3 are today’s wizard; rows 2 and 4 the detailed one, then yellow and violet detailed. Eight facings, then gathering, casting, walking and knocked down.</p>
+    <img src="img/wizard-in-room.png" width="1048" height="385" alt="Close view at 4x: today's wizard on the left, the detailed wizard on the right, between the desks" loading="lazy">
+    <p>Close up at 4×, today’s on the left. The detailed wizard adds robe folds, a belt, sleeves with cuffs, a hat buckle and creases, a claw on the staff, and a face. The camera looks down past the hat brim, so the head was never visible: the face is painted as a strip just under the brim, and that’s the biggest gain. From behind, the folds work well. From the front it’s a modest step, because at this size the beard and hands cover the belt and folds.</p>
+    <img src="img/wizard-depth.png" width="1048" height="385" alt="A wizard standing between two rows of desks, in front of one and behind the other" loading="lazy">
+    <p class="dim">The depth sort: the wizard stands in front of the far desk and behind the near one, in both drawings.</p>
+    <div class="q" data-q="q-7-wizard-detail"></div>
+
+    <h3>True isometric, for comparison</h3>
+    <img src="img/iso-still.png" width="1080" height="795" alt="A still picture of a room on diamond floor tiles, with the same PixelLab props and a wizard" loading="lazy">
+    <p>This is only a picture: nothing in the game draws this way. I think you were right. The same props look far better here than in the mock room, because they finally stand square to the walls. Two different things get called “isometric”, though:</p>
+    <ul class="facts">
+      <li><strong>Angled props on today’s floor</strong> is what Lean is. It costs nothing, and the mismatch along the walls stays.</li>
+      <li><strong>A true isometric camera</strong> rotates the whole world 45°. The sim doesn’t change, and neither do the depth sort, round spell areas (a circle stays the same ellipse), the mouse (one function) or the wizards’ facings (one angle offset).</li>
+      <li><strong>What it does cost:</strong> about 210 lines of drawing code assume the ground squashes straight down the screen, and about 135 more place things one axis at a time. Those lines are mostly spell effects, walls and telegraphs. Walls need a new painter, because two faces show rather than one. The floor needs repainting as diamonds. Pad sticks need turning 45°. A rectangular room becomes a diamond on a wide screen, so far less of it fits. I’d guess a few focused sessions, and the risk is in the spell effects, not the camera.</li>
+      <li><strong>The cost grows:</strong> every room, wall style and effect built on today’s camera adds to it.</li>
+    </ul>
+    <div class="q" data-q="q-8-isometric"></div>
+
+    <h3>Variations, for free</h3>
+    <img src="img/variants.png" width="1050" height="600" alt="Original props on the left of each row, with local variants beside them: banners, bookshelves, stone plinths, an old chest and a red throne" loading="lazy">
+    <p class="dim">The left of each row is the original. Banners: red, green, violet with gold, ash with silver, frayed. Shelves: red books, bright books, half empty, dark oak, mirrored, shelves swapped. Then the crystal ball, a plinth cut from it, worn, mossy, overgrown; a chest and an old chest. Last row: a throne and a red one.</p>
+    <img src="img/wall-variants.png" width="1200" height="312" alt="The game's wall four times: as it is, with more moss, aged with cracks, and recoloured as sandstone" loading="lazy">
+    <p class="dim">The same tools on the game’s own wall, top to bottom: today, more moss, aged, sandstone. These four are pictures for now. In the game the walls are painted live, so these would become settings of that painter.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Kind</th><th>Verdict</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Palette swap on flat colour (banners)</td><td>Convincing</td><td>I can’t tell them from generated ones. The banner’s cloth is one flat colour, which is why it’s so clean.</td></tr>
+        <tr><td>Ramp swap (dark oak, sandstone wall)</td><td>Convincing</td><td>Whole shade ramps move together, so the lighting survives.</td></tr>
+        <tr><td>Repainting contents (book spines)</td><td>Convincing at game size</td><td>Each spine gets its own colour. Up close they’re streaks, but in the room the shelves look different at a glance.</td></tr>
+        <tr><td>Cutting a part out (the plinth)</td><td>Convincing</td><td>A new prop from an old one. It only works where the part is clearly separate.</td></tr>
+        <tr><td>Mirroring</td><td>Convincing, with a catch</td><td>A second angle for nothing. The light flips too, which is mild at this size.</td></tr>
+        <tr><td>Light moss on stone</td><td>Good</td><td>The plinth and the wall both take it well.</td></tr>
+        <tr><td>Heavy moss</td><td>Weak</td><td>The overgrown plinth turns into a green lump. Shape goes first.</td></tr>
+        <tr><td>Wear on stone</td><td>Fair</td><td>Chipped edges work; the cracks are subtle.</td></tr>
+        <tr><td>Wear on busy art (old chest, frayed banner)</td><td>Weak</td><td>The chest just gets noisier. The fraying is barely visible.</td></tr>
+        <tr><td>Swapping regions (shelves)</td><td>Works, not worth it</td><td>It’s clean, but nobody could notice. Repainting does more for the same work.</td></tr>
+        <tr><td>Ramp swap on speckled colour (the red throne)</td><td>Fair</td><td>It needed a hand-picked ramp to avoid going muddy.</td></tr>
+      </tbody>
+    </table></div>
+    <p>Other savings I found: PixelLab’s 16-object sheet cost 10 generations against 5 for each Pro prop, so a sheet plus local variants gives by far the most per generation. The room shows 30 placed props from 16 generated images. Each variant is about a kilobyte or two, can be remade by script and shares its base’s footprint, so it adds no map or collision work. Keeping every raw result also means a tool can be improved and rerun without paying again.</p>
+    <div class="q" data-q="q-9-variants"></div>
+  </section>
+
+  <h2>Round 1: five sources, five props</h2>
 
   <section id="sources"></section>
 
@@ -114,6 +186,14 @@ const QUESTIONS = [
   { id: 'q-4-next', text: 'What should the next art test be?', pick: 'One mock academy room with the chosen sources together, in the running game, so the style is judged as a whole rather than prop by prop.' },
 ];
 
+const ROUND2 = [
+  { id: 'q-5-angle', text: 'Prop angle: angled props on our floor, or straight-on?', pick: 'Angled for now, since you liked that style. It suits free-standing furniture. Things against a wall are where it looks wrong, so the answer to the isometric question below settles this one for good.' },
+  { id: 'q-6-prop-detail', text: 'Prop detail: full or simplified?', pick: 'Full. The reduced set works, but it gives up the charm for little gain in play. Keep the tool for any single prop that turns out too busy.' },
+  { id: 'q-7-wizard-detail', text: 'Wizard detail: today\u2019s or the detailed one?', pick: 'The detailed one. It costs no frame time, keeps the seat colours and poses, and the face helps most. Enemies would want the same pass later.' },
+  { id: 'q-8-isometric', text: 'Should we look at a true isometric camera?', pick: 'Yes, as a test before building more rooms: switch the camera on a branch for one room and count what breaks in the spell effects. That turns my estimate into a measurement while the cost is still small. Don\u2019t commit to it yet.' },
+  { id: 'q-9-variants', text: 'Which variations should we rely on?', pick: 'Palette and ramp swaps, repainted contents, part cut-outs, mirroring and light moss. Skip heavy moss, wear on busy art and region swaps. Plan to buy few base props and make the rest locally.' },
+];
+
 const state = {}, chains = {}, timers = {};
 const saveEl = document.getElementById('save');
 const setSave = (t, bad) => { saveEl.textContent = t; saveEl.classList.toggle('bad', !!bad); };
@@ -163,6 +243,12 @@ for (const s of SOURCES) {
     d.append(sum, r); el.append(d);
   }
   host.append(el);
+}
+for (const q of ROUND2) {
+  const el = document.querySelector('[data-q="' + q.id + '"]');
+  const h = document.createElement('h3'); h.textContent = q.text; h.style.fontFamily = 'var(--body)'; h.style.fontWeight = '700';
+  const p = document.createElement('p'); p.innerHTML = '<span class="pick">My pick:</span> '; p.append(q.pick);
+  el.append(h, p, noteBox('answers', q.id, q.text));
 }
 const qHost = document.getElementById('questions');
 for (const q of QUESTIONS) {

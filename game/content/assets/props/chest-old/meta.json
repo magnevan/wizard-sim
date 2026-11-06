@@ -1,0 +1,54 @@
+{
+  "id": "chest-old",
+  "kind": "prop",
+  "name": "Old chest",
+  "base": "chest",
+  "footprint": [
+    1.7,
+    0.9
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        15,
+        30
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-10.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "wear 0.6"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "simple": {
+      "file": "simple.png",
+      "foot": [
+        15,
+        30
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-10.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "wear 0.6",
+        "reduce_detail"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "code": {
+      "file": "code.png",
+      "foot": [
+        14,
+        19
+      ],
+      "source": "code + local",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "wear 0.6"
+      ],
+      "status": "Ours."
+    }
+  }
+}

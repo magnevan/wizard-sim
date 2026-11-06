@@ -19,6 +19,7 @@
     "check:net": "npm run build && node scripts/net-e2e.mjs",
     "check:menu": "npm run build && node scripts/menu-check.mjs",
     "check:tutorial": "npm run build && node scripts/tutorial-check.mjs",
+    "check:academy": "npm run build && node scripts/academy-check.mjs",
     "shots:tutorial": "npm run build && node scripts/tutorial-shots.mjs",
     "check:webrtc": "npm run build && node scripts/net-e2e.mjs --webrtc",
     "sync-rules": "node scripts/sync-rules.mjs",

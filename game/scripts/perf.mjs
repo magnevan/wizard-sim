@@ -36,6 +36,8 @@ const SCENES = [
   },
   { name: 'help-open', url: '?autoplay=1&help=1&helpq=fire,arcane', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tune.godMode = true; window.wizardSim.startWave(4); }); } },
   { name: 'tutorial', url: '?room=tutorial&autoplay=1' },
+  { name: 'academy', url: '?room=academy&autoplay=1', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tune.godMode = true; window.wizardSim.startWave(6); }); } },
+  { name: 'academy-hd', url: '?room=academy&autoplay=1&wizard=hd', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tune.godMode = true; window.wizardSim.startWave(6); }); } },
 ];
 
 const stats = (a) => {

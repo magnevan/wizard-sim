@@ -1,0 +1,45 @@
+{
+  "id": "weapon-rack",
+  "kind": "prop",
+  "name": "Weapon rack",
+  "footprint": [
+    2.0,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        17,
+        37
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/pl-obj-13.png",
+      "tool": "create_1_direction_object",
+      "edits": "trimmed only",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "simple": {
+      "file": "simple.png",
+      "foot": [
+        17,
+        37
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-13.png",
+      "tool": "tools/art-trial/imgops.py reduce_detail",
+      "edits": "fewer colours, flat shading, single pixels removed",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "code": {
+      "file": "code.png",
+      "foot": [
+        18,
+        33
+      ],
+      "source": "code",
+      "tool": "tools/art-trial/code-props.html",
+      "status": "Ours."
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "id": "bookshelf-oak",
+  "kind": "prop",
+  "name": "Bookshelf, dark oak",
+  "base": "bookshelf",
+  "footprint": [
+    2.4,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        16,
+        44
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-1.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "wood ramp swapped to dark oak",
+        "spines repainted"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "simple": {
+      "file": "simple.png",
+      "foot": [
+        16,
+        44
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-1.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "wood ramp swapped to dark oak",
+        "spines repainted",
+        "reduce_detail"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "id": "banner-ash",
+  "kind": "prop",
+  "name": "Ash banner",
+  "base": "banner",
+  "footprint": [
+    1.6,
+    0.2
+  ],
+  "lift": 3,
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        14,
+        32
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-11.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "palette swap: cloth to #56565e",
+        "emblem recoloured"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "simple": {
+      "file": "simple.png",
+      "foot": [
+        14,
+        32
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-11.png",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "palette swap: cloth to #56565e",
+        "emblem recoloured",
+        "reduce_detail"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    },
+    "code": {
+      "file": "code.png",
+      "foot": [
+        11,
+        34
+      ],
+      "source": "code + local",
+      "tool": "tools/art-trial/variants.py",
+      "ops": [
+        "palette swap: cloth to #56565e",
+        "emblem recoloured"
+      ],
+      "status": "Ours."
+    }
+  }
+}

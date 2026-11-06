@@ -203,7 +203,9 @@ function save(coll, id) {
   if (!db) { setSave('Saving isn\'t available in this view.', true); return; }
   const k = coll + '/' + id, doc = { mark: state[k]?.mark ?? null, note: state[k]?.note ?? '', updatedAt: new Date().toISOString() };
   setSave('Saving…');
-  chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set(doc)).then(() => setSave('All saved')).catch(() => setSave('Couldn\'t save that. Check your connection and try again.', true));
+  const write = () => db.doc(k).set(doc);
+  // one retry: a dropped write used to lose the end of a note, with only the corner label to say so
+  chains[k] = (chains[k] || Promise.resolve()).then(write).catch(() => new Promise((ok) => setTimeout(ok, 1500)).then(write)).then(() => setSave('All saved')).catch(() => setSave('Couldn\'t save that. Check your connection and try again.', true));
 }
 function noteBox(coll, id, label) {
   const t = document.createElement('textarea');
@@ -212,6 +214,8 @@ function noteBox(coll, id, label) {
     const k = coll + '/' + id; state[k] = { ...state[k], note: t.value };
     clearTimeout(timers[k]); timers[k] = setTimeout(() => save(coll, id), 500);
   });
+  // leaving the box saves at once, so the last words typed never wait on the timer
+  t.addEventListener('blur', () => { const k = coll + '/' + id; if (timers[k]) { clearTimeout(timers[k]); timers[k] = 0; save(coll, id); } });
   return t;
 }
 

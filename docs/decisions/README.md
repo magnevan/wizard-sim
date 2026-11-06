@@ -891,3 +891,5 @@ The user's verdicts on the Academy Art Trial, rounds 1 and 2:
 - **The detailed wizard wins.** q-7: "Detailed one is better. We'll probably iterate on the wizard look over time too."
 - **Art sources.** Ratings: PixelLab object sheet keep; code-drawn cut ("Significantly worse than pixellab"); Pixflux, Gemini Pro and Gemini Flash cut. This is for props. The role split the user agreed to in round 1 still stands for tiles, variants and anything driven by game state, unless they say otherwise.
 - **Variants.** q-9: "I think all your variations worked reasonably well. We could potentially start with code variations, and if they're not judged good enough go back to pixellab." The weakest was the cut-out, which changed the plinth's geometry from square to triangular.
+
+**Clarified by the user, same day:** code-drawn art is "developer art": a placeholder for assets that can be replaced later. "I do think we can probably look into pixellab for characters and tiles as well", while "super-dynamic things like spells will probably always be code drawn". This replaces the entry above's line about the round 1 role split.

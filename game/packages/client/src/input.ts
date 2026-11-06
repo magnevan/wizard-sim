@@ -5,7 +5,8 @@
  *
  * Bindings follow the skeleton and the Atlas: hold LMB to walk toward the cursor; RMB Force (hold to
  * channel or charge); Shift+RMB Area (tap) or Place (hold, drag to draw); Space Self; Shift+LMB Weapon;
- * element keys from the rules (Q W E R / A S D F G); Esc clears the queue.
+ * element keys from the rules (Q W E R / A S D F G); Esc clears the queue. With an empty queue Esc
+ * opens the menu instead: menu.ts catches that press before it gets here (menu-nav.ts escAction).
  */
 import { rules, type Element } from '@wizard-sim/rules';
 import { AIM_UNIT, BTN, elementId, quantize, type PlayerInput, type World } from '@wizard-sim/sim';
@@ -14,6 +15,8 @@ import type { Camera } from './camera';
 export class KeyboardMouse {
   private presses: number[] = [];
   private held = 0;
+  /** Esc went down since the last sample: a tap shorter than a tick still clears the queue. */
+  private tapClear = false;
   private walking = false;
   /** Mouse buttons down that started on the game (PointerEvent.buttons bits: 1 LMB, 2 RMB). */
   private mouse = 0;
@@ -27,7 +30,7 @@ export class KeyboardMouse {
       if (e.repeat) return;
       const id = this.keyToElement.get(e.code);
       if (id) this.presses.push(id);
-      if (e.code === 'Escape') this.held |= BTN.clear;
+      if (e.code === 'Escape') { this.held |= BTN.clear; this.tapClear = true; }
       if (e.code === 'Space') this.held |= BTN.self;
     });
     addEventListener('keyup', (e) => {
@@ -43,6 +46,9 @@ export class KeyboardMouse {
     addEventListener('pointerup', (e) => this.sync(e));
     addEventListener('blur', () => { this.walking = false; this.held = 0; this.mouse = 0; });
   }
+
+  /** Let go of everything (the menu opened over the game): no button stays held, no walk, no queued press. */
+  release(): void { this.walking = false; this.held = 0; this.mouse = 0; this.presses.length = 0; this.tapClear = false; }
 
   /** Mouse buttons that went down or up since the last event. */
   private sync(e: PointerEvent): void {
@@ -61,7 +67,7 @@ export class KeyboardMouse {
     const len = Math.hypot(dx, dy);
     const walk = this.walking && len > 0.3;
     const input = quantize({
-      buttons: this.held,
+      buttons: this.held | (this.tapClear ? BTN.clear : 0),
       press0: this.presses.shift() ?? 0,
       press1: this.presses.shift() ?? 0,
       moveX: walk ? (dx / len) * 127 : 0,
@@ -69,6 +75,7 @@ export class KeyboardMouse {
       aimX: dx / AIM_UNIT,
       aimY: dy / AIM_UNIT,
     });
+    this.tapClear = false;
     return input;
   }
 }

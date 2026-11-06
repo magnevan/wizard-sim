@@ -4,8 +4,9 @@
  * flame are not the same noise at two lengths: they need their own starts, bodies and ends, and a kit
  * says so. The clips are shared, so a kit is about a dozen files, not one recording per spell.
  *
- * A kit takes over for spells its element leads. Nothing uses one until useKit says so: this is being
- * built an element at a time, in the Sound Lab (lab.ts), and an element joins the game once it's approved.
+ * A kit takes over for spells its element leads. Nothing uses one until useKit says so: on the dev server
+ * that's the local baseline (baseline.ts) and the Sound Lab (lab.ts). An element's kit joins the public
+ * game once its own clips are approved.
  */
 import type { ElementName, Layer, Plan } from './recipes';
 import { pick, type Rand } from './variation';
@@ -26,32 +27,42 @@ export interface KitLayer {
   release?: number;
 }
 
+/** What a kit can cover. Anything it leaves out falls through to the element's stage 1 sound. */
 export interface Kit {
   /** A held spell catching, then what it sounds like held, then its dying breath. */
-  start: readonly KitLayer[];
-  hold: readonly KitLayer[];
-  stop: readonly KitLayer[];
-  /** A beam, held. */
-  beam: readonly KitLayer[];
+  start?: readonly KitLayer[];
+  hold?: readonly KitLayer[];
+  stop?: readonly KitLayer[];
+  /** A beam catching, and held. */
+  beamStart?: readonly KitLayer[];
+  beam?: readonly KitLayer[];
+  /** A quick shove of it, at arm's length. */
+  force?: readonly KitLayer[];
   /** Something thrown leaving the hand. */
-  launch: readonly KitLayer[];
+  launch?: readonly KitLayer[];
   /** Going off all around you. */
-  burst: readonly KitLayer[];
+  burst?: readonly KitLayer[];
+  /** Set down at a distance. */
+  place?: readonly KitLayer[];
+  /** Raised as a barrier. */
+  wall?: readonly KitLayer[];
+  /** Cast on yourself. */
+  self?: readonly KitLayer[];
   /** Landing on something. */
-  land: readonly KitLayer[];
+  land?: readonly KitLayer[];
   /** A body with this on it. */
-  status: readonly KitLayer[];
+  status?: readonly KitLayer[];
   /** The floor, burning or otherwise covered in it. */
-  ground: readonly KitLayer[];
-  /** Building up in the hand, and in the air on its way. Either can be empty. */
-  charge: readonly KitLayer[];
-  flight: readonly KitLayer[];
+  ground?: readonly KitLayer[];
+  /** Building up in the hand, and in the air on its way. Empty means silent. */
+  charge?: readonly KitLayer[];
+  flight?: readonly KitLayer[];
 }
 
 const FIRE_PUFFS = ['fire-puff-1', 'fire-puff-2', 'fire-puff-3'];
 
 /** Fire, as it stands in the lab. */
-export const FIRE_KIT: Kit = {
+export const FIRE_KIT: Required<Pick<Kit, 'start' | 'hold' | 'stop' | 'beam' | 'launch' | 'burst' | 'land' | 'status' | 'ground' | 'charge' | 'flight'>> = {
   start: [{ clips: ['fire-catch'], gain: 0.9, cents: 100 }],
   hold: [{ clips: ['fire-jet'], gain: 0.95, loop: true, attack: 0.05 }, { clips: ['fire-jet-sub'], gain: 0.7, loop: true, attack: 0.08 }],
   stop: [{ clips: ['fire-die-1', 'fire-die-2'], gain: 0.5, cents: 150 }],

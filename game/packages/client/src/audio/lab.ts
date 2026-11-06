@@ -9,6 +9,7 @@
  */
 import { NO_INPUT, type PlayerInput, type World } from '@wizard-sim/sim';
 import { demoInput, parseDemo, type Demo } from '../demo';
+import { loadBaseline } from './baseline';
 import type { GameAudio } from './game-audio';
 import { FIRE_KIT, useKit, type Kit } from './kits';
 import type { ElementName } from './recipes';
@@ -106,24 +107,14 @@ export class SoundLab {
     await this.loadReference();
   }
 
-  /** The local comparison, if this machine has one. Its clips are loaded straight into the engine. */
+  /** The local baseline, if this machine has one: it's what you hear first, as it's what the game plays here. */
   private async loadReference(): Promise<void> {
-    try {
-      const r = await fetch(`/__ref/${this.lab.el}-kit.json`);
-      if (!r.ok) return;
-      const kit = await r.json() as Kit;
-      for (let tries = 0; !this.audio.engine && tries < 100; tries++) await new Promise((f) => setTimeout(f, 100));
-      const e = this.audio.engine;
-      if (!e) return;
-      const all = Object.values(kit).flat();
-      await Promise.all([...new Set(all.flatMap((l) => l.clips))].map(async (id) => {
-        const b = await e.ctx.decodeAudioData(await (await fetch(`/__ref/spells/${id.replace('mk-', 'w')}.wav`)).arrayBuffer());
-        e.addClip(id, b, all.some((l) => l.loop && l.clips.includes(id)));
-      }));
-      this.ref = kit;
-      const b = this.setButtons.get('reference');
-      if (b) { b.disabled = false; b.title = ''; }
-    } catch { /* it stays greyed out */ }
+    const kits = await loadBaseline(this.audio);
+    this.ref = kits?.[this.lab.el] ?? null;
+    const b = this.setButtons.get('reference');
+    if (!this.ref || !b) return;
+    b.disabled = false; b.title = '';
+    this.choose('reference');
   }
 
   private choose(s: Set): void {

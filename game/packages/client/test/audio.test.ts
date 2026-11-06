@@ -220,6 +220,17 @@ describe('recipes', () => {
     } finally { useKit('fire', null); }
     expect(composeSustain(flame).name).toBe(before);
   });
+  test('what a kit leaves out falls through to our own sounds', () => {
+    const rock: SpellSound = { els: { earth: 2 }, shape: 'nova', lead: 'earth' }, ours = composeSpell(rock, seeded(1)).name;
+    useKit('earth', { force: [{ clips: ['fire-catch'], gain: 0.5 }], flight: [] });
+    try {
+      expect(composeSpell(rock, seeded(1)).name).toBe(ours);
+      expect(composeSpell({ ...rock, shape: 'force' }).name).toBe('kit:force');
+      expect(composeImpact('earth', 1).name).not.toMatch(/^kit/);
+      expect(composeFlight('earth').layers).toEqual([]);
+      expect(composeStop(rock)).toBeNull();
+    } finally { useKit('earth', null); }
+  });
   test("a kit's held layers loop, and nothing else does", () => {
     const loops = new Set(BANK.filter((c) => c.loop).map((c) => c.id));
     for (const l of [...FIRE_KIT.hold, ...FIRE_KIT.beam, ...FIRE_KIT.status]) { expect(l.loop).toBe(true); for (const c of l.clips) expect(loops.has(c), c).toBe(true); }

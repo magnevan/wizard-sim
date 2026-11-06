@@ -156,8 +156,9 @@ const kitFor = (s: SpellSound): Kit | undefined => kitOf(mixOf(s)[0]?.el);
 /** A spell's cast: the shape's structure with its elements poured in, or its element's kit if it has one for this shape. */
 export function composeSpell(s: SpellSound, rand: Rand = Math.random): Plan {
   const sh = SHAPES[s.shape], m = runeMod(runesOf(s.els)), mix = mixOf(s), layers: Layer[] = [], kit = kitFor(s);
-  const ls = !kit ? null : s.shape === 'spray' || s.shape === 'beam' ? kit.start : s.shape === 'missile' ? kit.launch : s.shape === 'nova' ? kit.burst : s.shape === 'self' ? kit.land : null;
-  if (ls) return kitPlan(`kit:${s.shape}`, ls, rand, m.rate, m.gain, sh.wet + m.wet);
+  const ls = !kit ? null : s.shape === 'spray' ? kit.start : s.shape === 'beam' ? kit.beamStart ?? kit.start : s.shape === 'missile' ? kit.launch : s.shape === 'nova' ? kit.burst
+    : s.shape === 'force' ? kit.force : s.shape === 'place' ? kit.place : s.shape === 'wall' ? kit.wall : s.shape === 'self' ? kit.self ?? kit.land : null;
+  if (ls?.length) return kitPlan(`kit:${s.shape}`, ls, rand, m.rate, m.gain, sh.wet + m.wet);
   const baseRate = m.rate;
   for (const g of sh.sig) layers.push({ ...g, gain: g.gain * m.gain, rate: baseRate, hold: g.hold ? g.hold * m.length : 0, release: g.release * m.length });
   mix.forEach(({ el, g }, i) => {
@@ -178,7 +179,8 @@ export function composeSpell(s: SpellSound, rand: Rand = Math.random): Plan {
 /** What a beam or spray sounds like while it's held: looping layers, played until stopped. */
 export function composeSustain(s: SpellSound, rand: Rand = Math.random): Plan {
   const m = runeMod(runesOf(s.els)), mix = mixOf(s), layers: Layer[] = [], kit = kitFor(s);
-  if (kit) return kitPlan(`kit:hold:${s.shape}`, s.shape === 'beam' ? kit.beam : kit.hold, rand, m.rate, m.gain, m.wet);
+  const held = s.shape === 'beam' ? kit?.beam ?? kit?.hold : kit?.hold ?? kit?.beam;
+  if (held) return kitPlan(`kit:hold:${s.shape}`, held, rand, m.rate, m.gain, m.wet);
   for (const { el, g } of mix) {
     const v = ELEMENTS[el];
     for (const [clip, cg] of v.body) layers.push({ clip, gain: 0.72 * g * cg * m.gain * v.gain, rate: m.rate * v.rate, at: 0, attack: 0.06, hold: 0, release: 0.1, loop: true });
@@ -192,13 +194,13 @@ export function composeSustain(s: SpellSound, rand: Rand = Math.random): Plan {
 /** A held spell's last breath as it's let go. Only a kit has one: without it, the sound just fades. */
 export function composeStop(s: SpellSound, rand: Rand = Math.random): Plan | null {
   const kit = kitFor(s), m = runeMod(runesOf(s.els));
-  return kit && kit.stop.length ? kitPlan('kit:stop', kit.stop, rand, m.rate, m.gain, m.wet) : null;
+  return kit?.stop?.length ? kitPlan('kit:stop', kit.stop, rand, m.rate, m.gain, m.wet) : null;
 }
 
 /** Charging a held spell: a rising tone in its element, `k` from 0 to 1. */
 export function composeCharge(lead: ElementName): Plan {
   const kit = kitOf(lead);
-  if (kit) return kitPlan('kit:charge', kit.charge, Math.random);
+  if (kit?.charge) return kitPlan('kit:charge', kit.charge, Math.random);
   const [clip, g] = ELEMENTS[lead].body[0];
   return { name: `charge:${lead}`, layers: [{ clip, gain: 0.55 * g, rate: 0.8, rateTo: 1.5, at: 0, attack: 0.15, hold: 0, release: 0.1, loop: true }], wet: 0 };
 }
@@ -221,7 +223,8 @@ export function composeShape(shape: ShapeName): Plan {
 /** An element landing: a missile's second half, a hit, a burst somewhere. `size` 0.3 is a tap, 1 a full blow, 2 a boulder. */
 export function composeImpact(el: ElementName, size = 1, rand: Rand = Math.random): Plan {
   const v = ELEMENTS[el], k = clamp(size, 0.2, 2.2), rate = v.rate * (1.2 - 0.25 * Math.min(k, 1.6)), kit = kitOf(el);
-  if (kit) return kitPlan('kit:land', k >= 1.4 ? kit.burst : kit.land, rand, 1, Math.min(1, 0.45 + 0.45 * k), 0.02 * k);
+  const landing = k >= 1.4 ? kit?.burst ?? kit?.land : kit?.land;
+  if (landing) return kitPlan('kit:land', landing, rand, 1, Math.min(1, 0.45 + 0.45 * k), 0.02 * k);
   const layers: Layer[] = [{ clip: pick(v.impact, rand), gain: v.gain * Math.min(1, 0.45 + 0.45 * k), rate, at: 0, attack: 0.002, hold: 0, release: 0.08 }];
   if (k >= 0.9) layers.push({ clip: 'y-sub', gain: 0.5 * Math.min(1, k - 0.3), rate: 1, at: 0, attack: 0.002, hold: 0, release: 0.08 });
   if (k >= 1.4) layers.push({ clip: pick(['boom-1', 'boom-2', 'boom-3'], rand), gain: 0.5, rate, at: 0, attack: 0.002, hold: 0, release: 0.1 });
@@ -254,7 +257,7 @@ export function composeHit(el: ElementName | null, amount: number, rand: Rand = 
   const layers: Layer[] = punched ? [{ clip: punch, gain: big ? 0.8 : 0.55, rate: 1, at: 0, attack: 0.002, hold: 0, release: 0.05 }] : [];
   if (el) {
     const v = ELEMENTS[el], kit = kitOf(el);
-    if (kit) layers.push(...kitPlan('', kit.land, rand, 1, 0.42).layers);
+    if (kit?.land) layers.push(...kitPlan('', kit.land, rand, 1, 0.42).layers);
     else layers.push({ clip: pick(v.impact, rand), gain: 0.42 * v.gain, rate: v.rate * 1.15, at: 0, attack: 0.002, hold: 0, release: 0.05 });
   }
   return { name: `hit:${el ?? 'plain'}`, layers, wet: 0 };
@@ -356,13 +359,13 @@ export const composeRain = (): Plan => ({ name: 'zone:rain', wet: 0, layers: [
 export const composeSteamCloud = (): Plan => ({ name: 'zone:steam', wet: 0, layers: [{ clip: 'y-steam', gain: 0.36, rate: 1, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }] });
 export const composeSpring = (): Plan => ({ name: 'zone:spring', wet: 0, layers: [{ clip: 'water-gurgle', gain: 0.32, rate: 1.1, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }, { clip: 'y-life', gain: 0.16, rate: 1, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }] });
 export const composeSparkField = (): Plan => ({ name: 'zone:spark', wet: 0, layers: [{ clip: 'y-buzz', gain: 0.4, rate: 1.2, at: 0, attack: 0.1, hold: 0, release: 0.2, loop: true }] });
-export const composeBurning = (): Plan => { const k = kitOf('fire'); return k ? kitPlan('kit:burn', k.status, Math.random) : burningPlan(); };
+export const composeBurning = (): Plan => { const k = kitOf('fire')?.status; return k ? kitPlan('kit:burn', k, Math.random) : burningPlan(); };
 const burningPlan = (): Plan => ({ name: 'burn', wet: 0, layers: [{ clip: 'fire-crackle', gain: 0.5, rate: 1.1, at: 0, attack: 0.15, hold: 0, release: 0.25, loop: true }] });
-export const composeFloorFire = (): Plan => { const k = kitOf('fire'); return k ? kitPlan('kit:ground', k.ground, Math.random) : floorFirePlan(); };
+export const composeFloorFire = (): Plan => { const k = kitOf('fire')?.ground; return k ? kitPlan('kit:ground', k, Math.random) : floorFirePlan(); };
 const floorFirePlan = (): Plan => ({ name: 'floorfire', wet: 0, layers: [{ clip: 'fire-crackle', gain: 0.42, rate: 0.9, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }, { clip: 'fire-roar', gain: 0.2, rate: 0.7, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }] });
 export function composeFlight(el: ElementName): Plan {
   const kit = kitOf(el);
-  if (kit) return kitPlan('kit:flight', kit.flight, Math.random);
+  if (kit?.flight) return kitPlan('kit:flight', kit.flight, Math.random);
   const v = ELEMENTS[el], [clip, g] = v.body[0];
   return { name: `flight:${el}`, wet: 0, layers: [{ clip, gain: 0.3 * g * v.gain, rate: 1.2 * v.rate, at: 0, attack: 0.05, hold: 0, release: 0.1, loop: true }] };
 }

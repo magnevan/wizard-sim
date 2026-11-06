@@ -940,3 +940,8 @@ The user stopped the gallery review: "I can't get a page with 100+ sounds to rev
 Claude's calls, which the user can veto:
 - **The reference is decoded from the user's own copy, kept in a gitignored folder and served only by the dev server.** Nothing from it is in the repo or a build. Our clips are matched to its broad balance, not made from it.
 - **CC BY is accepted for recordings,** with a credit in `game/content/audio/README.md`. The game will need a credits page before release.
+
+**Follow-up, same day.** The user on Fire's first kit: "they all sound really bad", and asked to use Magicka's sounds "as a baseline for our spells, and then just fill in the gaps / gradually replace them". Claude advised against publishing them, since the repo and site are public and non-commercial use doesn't make redistribution all right. The user agreed to the local route.
+- **The baseline is local:** on the dev server, kits made from the user's own copy cover what they can, and anything else falls through to our sounds (`client/src/audio/baseline.ts`, `?baseline=0` turns it off). It's in the gitignored `.reference` folder and is never in the repo or a build. The public game keeps stage 1.
+- **Reshaping recordings towards a measured target doesn't work:** the numbers matched and the user heard "almost like crowd noises". Measurement can catch faults; it can't make a sound good. Replacements should start from recordings or generated sounds that are already the right thing.
+- **Fire's own kit stays for now,** unused outside the lab, until the user decides whether anything in it is worth keeping.

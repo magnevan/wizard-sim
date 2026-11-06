@@ -140,6 +140,7 @@ async function boot(): Promise<void> {
   // ?lab=fire on the dev server: the Sound Lab. The check goes first so a build drops the whole file.
   let lab: { input(w: World): PlayerInput | null } | null = null;
   if (import.meta.env.DEV && audio && params.get('lab')) void import('./audio/lab').then((m) => { lab = new m.SoundLab(audio, params.get('lab')!); });
+  else if (import.meta.env.DEV && audio && params.get('baseline') !== '0') void import('./audio/baseline').then((m) => m.loadBaseline(audio));
   const fit = () => view.resize(host.clientWidth, host.clientHeight, Number(params.get('scale')) || undefined);
   fit();
   addEventListener('resize', fit);

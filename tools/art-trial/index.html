@@ -204,7 +204,7 @@ function save(coll, id) {
   const k = coll + '/' + id, doc = { mark: state[k]?.mark ?? null, note: state[k]?.note ?? '', updatedAt: new Date().toISOString() };
   setSave('Saving…');
   const write = () => db.doc(k).set(doc);
-  // one retry: a dropped write used to lose the end of a note, with only the corner label to say so
+  // one retry, so a brief network failure doesn't cost a note
   chains[k] = (chains[k] || Promise.resolve()).then(write).catch(() => new Promise((ok) => setTimeout(ok, 1500)).then(write)).then(() => setSave('All saved')).catch(() => setSave('Couldn\'t save that. Check your connection and try again.', true));
 }
 function noteBox(coll, id, label) {

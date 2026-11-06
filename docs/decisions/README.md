@@ -893,3 +893,5 @@ The user's verdicts on the Academy Art Trial, rounds 1 and 2:
 - **Variants.** q-9: "I think all your variations worked reasonably well. We could potentially start with code variations, and if they're not judged good enough go back to pixellab." The weakest was the cut-out, which changed the plinth's geometry from square to triangular.
 
 **Clarified by the user, same day:** code-drawn art is "developer art": a placeholder for assets that can be replaced later. "I do think we can probably look into pixellab for characters and tiles as well", while "super-dynamic things like spells will probably always be code drawn". This replaces the entry above's line about the round 1 role split.
+
+The plinth went triangular because the orb hides that corner in the source art, so a cut-out has nothing to show there (the user's reading). Parts hidden in a sprite can't be recovered by cutting.

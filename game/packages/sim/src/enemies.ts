@@ -4,7 +4,8 @@
  * ai, aiT and lockX/Y), strikes, and cools down. Stuns and freezes interrupt a wind-up.
  *
  *   melee (goblin, shieldbearer, imp): a bite in front of it.
- *   slam (brute): locks a circle on its target's spot, then slams it.
+ *   slam (brute): locks a circle on its target's spot, then slams the ground: a shockwave rolls out
+ *     from its fists and hits whoever is in the circle as it reaches them.
  *   bolt (archer): keeps its distance or hides behind a brute or shieldbearer, aims (tracking, then
  *     locked: the dodge window), then looses a slow bolt.
  *   grab (grabber): dashes, holds a wizard and drags them toward the edge, then throws them.
@@ -90,6 +91,7 @@ export function tickEnemies(w: World): void {
       continue;
     }
     b.aiT[i]++;
+    if (b.ai[i] === AI.cooldown && a.attack === ATTACK.slam) slamWave(w, i);
     if (b.ai[i] === AI.dash) { dash(w, i); continue; }
     if (b.ai[i] === AI.grab) { grab(w, i); continue; }
 
@@ -176,20 +178,11 @@ function attack(w: World, i: number, t: number, gap: number): void {
     if (gap <= a.reach + 0.45 && inFront) strike(w, i, t, dmg, a.knockback, dx / d, dy / d, !!a.hitBurn);
     else if (cutOff(w, i, t)) { const k = wallInReach(w, i, a.reach + 0.45); if (k >= 0) damageWall(w, k, dmg); }
   } else if (a.attack === ATTACK.slam) {
-    const r = a.slamRadius!;
-    let hits = 0;
-    for (let s = 0; s < b.kind.length; s++) {
-      if (b.team[s] !== TEAM.players || b.kind[s] === KIND.none || b.downed[s]) continue;
-      const ox = b.x[s] - b.lockX[i], oy = b.y[s] - b.lockY[i], od = len(ox, oy);
-      if (od - b.r[s] > r) continue;
-      hits++;
-      strike(w, i, s, dmg, a.knockback, od > 0.05 ? ox / od : cosTurns(b.face[i]), od > 0.05 ? oy / od : sinTurns(b.face[i]), false);
-    }
-    // a slam breaks the rock it lands on, too
-    const wl = w.walls;
-    for (let k = 0; k < wl.type.length; k++) if (wl.type[k] === WALL.rock && segDist(b.lockX[i], b.lockY[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] <= r) damageWall(w, k, dmg);
-    w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: b.lockX[i], y: b.lockY[i], amount: r, look: EL.earth });
-    if (w.tut) noteSlam(w.tut, hits > 0); // the tutorial's Retreat beat counts slams that hit nobody
+    // the fists hit the ground just ahead; the shockwave rolls out from there (slamWave, during the cooldown)
+    b.slamX[i] = b.x[i] + cosTurns(b.face[i]) * b.r[i] * 0.6; b.slamY[i] = b.y[i] + sinTurns(b.face[i]) * b.r[i] * 0.6;
+    setAi(w, i, AI.cooldown);
+    slamWave(w, i);
+    return;
   } else if (a.attack === ATTACK.bolt) {
     const dx = b.lockX[i] - b.x[i], dy = b.lockY[i] - b.y[i], d = len(dx, dy) || 1;
     b.face[i] = atan2Turns(dy, dx);
@@ -204,6 +197,38 @@ function attack(w: World, i: number, t: number, gap: number): void {
     return;
   }
   setAi(w, i, AI.cooldown);
+}
+
+/**
+ * A brute's shockwave: a front rolling out from its fists at slamSpeed. It hits the wizards inside the
+ * locked circle as it reaches them (each once), and breaks rock when it reaches the circle's centre.
+ * Its age is the cooldown's aiT, so it needs no state of its own beyond the start point.
+ */
+function slamWave(w: World, i: number): void {
+  const b = w.bodies, a = ARCHETYPES[b.arch[i]], r = a.slamRadius!, v = a.slamSpeed! / 60;
+  const front = b.aiT[i] * v, prev = front - v, at = w.clock[0] - b.aiT[i];
+  const ox = b.slamX[i], oy = b.slamY[i], lx = b.lockX[i], ly = b.lockY[i], dc = len(lx - ox, ly - oy);
+  if (prev > dc + r) return;
+  const dmg = a.damage * b.dmgMult[i];
+  for (let s = 0; s < b.kind.length; s++) {
+    if (b.team[s] !== TEAM.players || b.kind[s] === KIND.none || b.downed[s]) continue;
+    if (b.slamBy[s] === i && b.slamAt[s] === at) continue;
+    const ox2 = b.x[s] - lx, oy2 = b.y[s] - ly, od = len(ox2, oy2);
+    if (od - b.r[s] > r || len(b.x[s] - ox, b.y[s] - oy) - b.r[s] > front) continue;
+    b.slamBy[s] = i; b.slamAt[s] = at;
+    strike(w, i, s, dmg, a.knockback, od > 0.05 ? ox2 / od : cosTurns(b.face[i]), od > 0.05 ? oy2 / od : sinTurns(b.face[i]), false);
+  }
+  if (prev < dc && front >= dc) {
+    // it breaks the rock it rolls into, too
+    const wl = w.walls;
+    for (let k = 0; k < wl.type.length; k++) if (wl.type[k] === WALL.rock && segDist(lx, ly, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] <= r) damageWall(w, k, dmg);
+    w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: lx, y: ly, amount: r, look: EL.earth });
+  }
+  if (front >= dc + r && w.tut) {
+    let hit = false;
+    for (let s = 0; s < b.kind.length; s++) if (b.slamBy[s] === i && b.slamAt[s] === at) hit = true;
+    noteSlam(w.tut, hit); // the tutorial's Retreat beat counts slams that hit nobody
+  }
 }
 
 function dash(w: World, i: number): void {

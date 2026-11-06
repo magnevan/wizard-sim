@@ -19,7 +19,7 @@
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
-  AI, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
+  AI, ARCH, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
   N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
@@ -1782,22 +1782,24 @@ export function drawTelegraphs(w: World, L: StructureLayers, frame: number): voi
     if (b.kind[i] !== KIND.enemy || b.ai[i] !== AI.windup) continue;
     const a = ARCHETYPES[b.arch[i]], f = Math.min(1, b.aiT[i] / Math.max(1, a.windup * 60));
     const x = L.ax(b.x[i]), y = L.ay(b.y[i]);
+    // Only what you need to read: archers and imps get none (the bolt's flight and the spit's short
+    // reach are the warning), the brute's circle and the shieldbearer's cone stay faint (the user, 2026-11-06).
     if (a.attack === ATTACK.slam) {
       const r = (a.slamRadius ?? 2) * PPU, cx = L.ax(b.lockX[i]), cy = L.ay(b.lockY[i]);
-      g.ellipse(cx, cy, r, r * CFY).stroke({ color: 0xff8a3a, width: 1, alpha: 0.9 });
-      g.ellipse(cx, cy, r * f, r * f * CFY).fill({ color: 0xff8a3a, alpha: 0.28 });
-    } else if (a.attack === ATTACK.bolt || a.attack === ATTACK.grab) {
+      g.ellipse(cx, cy, r, r * CFY).stroke({ color: 0xff8a3a, width: 1, alpha: 0.12 + 0.3 * f });
+      g.ellipse(cx, cy, r, r * CFY).fill({ color: 0xff8a3a, alpha: 0.07 * f });
+    } else if (a.attack === ATTACK.grab) {
       const tx = L.ax(b.lockX[i]), ty = L.ay(b.lockY[i]);
-      const c = a.attack === ATTACK.bolt ? 0x7cff9a : 0x4fe0d6;
       for (let k = 0; k < 10; k += 2) {
         const f1 = k / 10, f2 = (k + 1) / 10;
-        g.moveTo(x + (tx - x) * f1, y + (ty - y) * f1).lineTo(x + (tx - x) * f2, y + (ty - y) * f2).stroke({ color: c, width: 1, alpha: 0.4 + 0.5 * f });
+        g.moveTo(x + (tx - x) * f1, y + (ty - y) * f1).lineTo(x + (tx - x) * f2, y + (ty - y) * f2).stroke({ color: 0x4fe0d6, width: 1, alpha: 0.4 + 0.5 * f });
       }
-    } else {
+    } else if (a.attack === ATTACK.melee && b.arch[i] !== ARCH.imp) {
       const reach = (a.reach + b.r[i] + 0.5) * PPU, face = b.face[i] * 6.283185307179586;
       const pts: number[] = [x, y];
       for (let k = -2; k <= 2; k++) { const an = face + k * 0.3; pts.push(x + Math.cos(an) * reach, y + Math.sin(an) * reach * CFY); }
-      g.poly(pts).fill({ color: 0xff3a3a, alpha: 0.15 + 0.3 * f });
+      const shy = b.arch[i] === ARCH.shieldbearer;
+      g.poly(pts).fill({ color: 0xff3a3a, alpha: shy ? 0.04 + 0.12 * f : 0.15 + 0.3 * f });
     }
   }
 }

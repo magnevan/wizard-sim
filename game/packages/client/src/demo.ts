@@ -80,6 +80,7 @@ export function enemyAttackScene(w: World, phase: string, face: number, now: num
     b.face[i] = face; b.target[i] = 1;
     const reach = a.slamRadius ? 2.6 : a.bolt ? 8 : a.grab ? 2.5 : 1;
     b.lockX[i] = b.x[i] + Math.cos(face * 6.283185307179586) * reach; b.lockY[i] = b.y[i] + Math.sin(face * 6.283185307179586) * reach;
+    b.slamX[i] = b.x[i] + Math.cos(face * 6.283185307179586) * b.r[i] * 0.6; b.slamY[i] = b.y[i] + Math.sin(face * 6.283185307179586) * b.r[i] * 0.6; // the brute's shockwave start
     // which beat: a tick count into the cycle (the wind-up, then the cooldown from the strike, then a rest)
     const cyc = W + 90 + 40;
     const tk = phase === 'loop' ? Math.floor((now * 60) / 1000 + i * 23) % cyc : phase === 'strike' ? W : phase === 'impact' ? W + 5 : phase === 'recover' ? W + 24 : Math.round(W * 0.75);

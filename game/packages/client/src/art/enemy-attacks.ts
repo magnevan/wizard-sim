@@ -16,7 +16,7 @@ import { AI, ARCH, ARCHETYPES, MAX_SEATS, KIND, type World } from '@wizard-sim/s
 import * as K from './kit';
 import * as X from './px';
 import type { Ctx } from './px';
-import { CU, FY, TAU, clamp, easeOut, emit, lerp, rand } from './util';
+import { CU, FY, TAU, clamp, easeOut, lerp, rand } from './util';
 import type { BodyView, LightFn } from './vfx';
 
 /** Per archetype, seconds: how long the strike pose is held, then how long the recovery takes. */
@@ -70,7 +70,6 @@ export function drawAttackFx(w: World, bodies: BodyView[], g: Ctx, o: Ctx, light
     if (!v?.on) continue;
     const arch = b.arch[i], ai = b.ai[i], A = ARCHETYPES[arch];
     const at = frameAt(v, b.face[i]), sd = i * 7 + 3;
-    const wind = ai === AI.windup ? Math.min(1, (b.aiT[i] + alpha) / Math.max(1, A.windup * 60)) : -1;
     const age = sinceStrike(w, i, alpha);
     const fwd = at(1, 0, 0), dirX = fwd[0] - v.x, dirY = fwd[1] - v.y;
     switch (arch) {
@@ -99,11 +98,7 @@ export function drawAttackFx(w: World, bodies: BodyView[], g: Ctx, o: Ctx, light
       }
       case ARCH.imp: {
         const mouth = at(4.2, 0, 9.9);
-        if (wind >= 0) {
-          // the wind-up: its mouth and claws glow brighter and embers rise off it
-          light(mouth[0], mouth[1], 10 + 14 * wind, '#ff8a30', 0.2 + 0.5 * wind);
-          for (const p of emit(ct, 10 * wind + 2, 0.5, (k, a2) => ({ x: mouth[0] + (rand(k, 2, sd) - 0.5) * 6, y: mouth[1] - a2 * 10, a2 }))) X.px(o, p.x, p.y, p.a2 < 0.4 ? '#ffd860' : '#ff5a20');
-        }
+        // no wind-up glow: its reach is short, so the spit is the warning (the user, 2026-11-06)
         if (age >= 0 && age < 0.3) {
           // the spit: a short gout of flame out of its mouth, to the end of its reach
           const e = age / 0.3, len = (A.reach + b.r[i] + 0.5) * 16 * 0.9;
@@ -119,7 +114,7 @@ export function drawAttackFx(w: World, bodies: BodyView[], g: Ctx, o: Ctx, light
       }
       case ARCH.caster: {
         const tip = at(8, -0.8, 9);
-        if (wind >= 0.55) light(tip[0], tip[1], 10, '#ff6ab0', 0.35);
+        // no aim glint: the bolt's flight is the warning (the user, 2026-11-06)
         if (age >= 0 && age < 0.12) {
           // the release: a puff of sparks off the bow
           const e = age / 0.12;
@@ -153,22 +148,42 @@ export function drawAttackFx(w: World, bodies: BodyView[], g: Ctx, o: Ctx, light
         if (age < 0) break;
         // the fists come down in one heavy arc
         if (age < 0.1) for (const r of [-3.6, 3.6]) smearArc(o, at, [1.6, r, 17], 15, 1.75, -0.2, age / 0.1, '#ffffff', '#b2a4cc', 2);
-        // the impact: a flash on the ground it hit, chunks of floor thrown up, a short shake
-        const lx = Math.round(v.x + (b.lockX[i] - b.x[i]) * 16), ly = Math.round(v.y + (b.lockY[i] - b.y[i]) * 16 * FY);
-        if (age < 0.15) { const q = age / 0.15; K.gring(o, lx, ly - 1, 4 + q * 20, q < 0.4 ? '#ffffff' : '#fff6d0', 1, 2); if (q < 0.5) star(o, [lx, ly - 2], 5, '#ffffff'); light(lx, ly, 44, '#fff6d0', 0.8 * (1 - q)); }
-        // the ground cracks from its fists out to where the blow lands (its reach is the slam's, not its arms')
+        // the shockwave (sim: enemies.ts slamWave) rolls from the fists through the locked circle, so the
+        // impact lands at the circle's centre when the front gets there, not when the fists hit
+        const toPx = (x: number, y: number): [number, number] => [v.x + (x - b.x[i]) * 16, v.y + (y - b.y[i]) * 16 * FY];
+        const [ox, oy] = toPx(b.slamX[i], b.slamY[i]), [lx, ly] = toPx(b.lockX[i], b.lockY[i]);
+        const R = A.slamRadius!, dc = Math.hypot(b.lockX[i] - b.slamX[i], b.lockY[i] - b.slamY[i]), front = age * A.slamSpeed!;
+        if (age < 0.12) { star(o, [Math.round(ox), Math.round(oy) - 1], 3, '#ffffff'); light(ox, oy, 20, '#fff6d0', 0.5 * (1 - age / 0.12)); }
+        if (front < dc + R) {
+          // the front: an arc round the fists, only where it crosses the circle, kicking up grit
+          const an = Math.atan2(b.lockY[i] - b.slamY[i], b.lockX[i] - b.slamX[i]);
+          for (let k = -24; k <= 24; k++) {
+            const t2 = an + k * 0.045, wx = b.slamX[i] + Math.cos(t2) * front, wy = b.slamY[i] + Math.sin(t2) * front;
+            if (Math.hypot(wx - b.lockX[i], wy - b.lockY[i]) > R) continue;
+            const [px, py] = toPx(wx, wy);
+            X.px(g, px, py, k % 3 ? '#fff6d0' : '#ffffff');
+            X.px(g, px - Math.cos(t2) * 2, py - Math.sin(t2) * 2 * FY, '#8a7a68');
+            if (rand(k, sd, Math.floor(front * 4)) < 0.25) X.px(o, px, py - 2 - rand(k, sd, 3) * 3, '#b8946a');
+          }
+        }
+        // the ground cracks from the fists out to the centre as the front passes
+        const ia = age - dc / A.slamSpeed!;
         if (age < 1.4) {
-          const f0 = at(8, 0, 0), run = Math.min(1, age / 0.08), n = 7;
-          let px0 = f0[0], py0 = f0[1];
+          const run = Math.min(1, front / Math.max(0.1, dc)), n = 7;
+          let px0 = ox, py0 = oy;
           for (let k = 1; k <= n * run; k++) {
             const q = k / n, j = k === n ? 0 : (rand(k, sd, 9) - 0.5) * 5;
-            const nx = lerp(f0[0], lx, q) - dirY * j, ny = lerp(f0[1], ly, q) + dirX * j * FY;
+            const nx = lerp(ox, lx, q) - dirY * j, ny = lerp(oy, ly, q) + dirX * j * FY;
             X.line(g, px0, py0, nx, ny, age < 0.9 ? '#1a120c' : '#33241a', k < 3 ? 2 : 1); px0 = nx; py0 = ny;
           }
         }
-        if (age < 1.2) K.debris(o, lx, ly, age, sd, 12, 34, ['#977552', '#553e2a', '#b8946a'], 46);
-        if (age < 0.9) K.dust(g, lx, ly - 2, age, sd + 1, 10, 26, '#8a7a68', 0.9);
-        if (age < 0.25) shake = Math.max(shake, 2.5 * (1 - age / 0.25));
+        if (ia >= 0) {
+          // the impact at the centre: a flash, chunks of floor thrown up, a short shake
+          if (ia < 0.15) { const q = ia / 0.15; K.gring(o, lx, ly - 1, 4 + q * 20, q < 0.4 ? '#ffffff' : '#fff6d0', 1, 2); if (q < 0.5) star(o, [lx, ly - 2], 5, '#ffffff'); light(lx, ly, 44, '#fff6d0', 0.8 * (1 - q)); }
+          if (ia < 1.2) K.debris(o, lx, ly, ia, sd, 12, 34, ['#977552', '#553e2a', '#b8946a'], 46);
+          if (ia < 0.9) K.dust(g, lx, ly - 2, ia, sd + 1, 10, 26, '#8a7a68', 0.9);
+          if (ia < 0.25) shake = Math.max(shake, 2.5 * (1 - ia / 0.25));
+        }
         break;
       }
       default:

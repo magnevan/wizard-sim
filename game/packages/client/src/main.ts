@@ -21,11 +21,16 @@
  *   ?tune=1       open the tuning panel at boot (F1 or the Tune button toggles it; tune-panel.ts)
  *   ?net=bc       online co-op between tabs of this page on one machine (BroadcastChannel), for testing
  *                 alone; on claude.ai the Co-op panel uses the artifact's room instead (net/)
+ *   ?menu=Scenarios  open the Esc menu at boot on that section (Resume, Scenarios, Multiplayer, Controls,
+ *                 Settings); &menuAt=N opens it at tick N instead (screenshots of the menu over a fight)
+ *
+ * Scenarios (rooms) are listed in scenarios.ts: the number keys and the Esc menu (menu.ts) switch
+ * between them in place, without a reload, so an open online lobby survives the switch.
  */
 import { Application } from 'pixi.js';
 import { TextureSource } from 'pixi.js';
 import {
-  DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, hashWorld, hex, newBotMemory, runReplay, scriptedInput, scriptedReplay, step,
+  DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, hashWorld, hex, newBotMemory, replaceWorld, runReplay, scriptedInput, scriptedReplay, step,
   type PlayerInput, type Room,
 } from '@wizard-sim/sim';
 import { demoInput, parseDemo, rallyScene, threeScene } from './demo';
@@ -38,21 +43,22 @@ import { WorldView } from './view';
 import { broadcastBus, roomBus } from './net/bus';
 import { webrtcBus } from './net/webrtc';
 import { NetPlay } from './net/netplay';
+import { EscMenu, type Setting } from './menu';
+import { fromLocation, hashFor, scenarioById, scenarioForKey, scenarioOfRoom, type Scenario } from './scenarios';
 
 const params = new URLSearchParams(location.search);
 // Artifact links carry no query string, only a plain #anchor: #arena, #ally or #arena-ally work there too.
-for (const tok of location.hash.slice(1).split('-')) {
-  if (tok === 'arena') params.set('room', 'arena');
-  if (tok === 'survive') params.set('room', 'survive');
-  if (tok === 'ally') params.set('ally', '1');
-}
-// 1 / 2 / 3 switch between the Sanctum (dummies), the Arena (waves) and Survive, keeping the ally choice.
-addEventListener('keydown', (e) => {
-  if (e.code !== 'Digit1' && e.code !== 'Digit2' && e.code !== 'Digit3') return;
-  const toks = [e.code === 'Digit2' ? 'arena' : e.code === 'Digit3' ? 'survive' : 'sanctum', ...(params.get('ally') === '1' ? ['ally'] : [])];
-  location.hash = toks.join('-');
-  location.reload();
-});
+const start = fromLocation(location.search, location.hash);
+if (start.ally) params.set('ally', '1');
+/** Rewrites one URL param in place (no reload), so a reload keeps the menu's settings. */
+const setParam = (k: string, v: string | null) => {
+  try {
+    const q = new URLSearchParams(location.search);
+    if (v === null) q.delete(k); else q.set(k, v);
+    const qs = q.toString();
+    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+  } catch { /* a sandboxed page may refuse: the setting still applies until a reload */ }
+};
 const hud = document.getElementById('hud')!;
 
 if (params.get('selftest') === '1') selftest();
@@ -72,8 +78,8 @@ async function boot(): Promise<void> {
   const autoplay = params.get('autoplay') === '1';
   const demo = [parseDemo(params.get('spell')), parseDemo(params.get('spell2') ?? params.get('spell'))];
   const headless = scripted || autoplay || !!demo[0];
-  const asked = params.get('room');
-  const room: Room = asked === 'survive' ? 'survive' : autoplay || asked === 'arena' ? 'arena' : 'sanctum';
+  let scenario: Scenario = autoplay ? scenarioById('arena')! : start.scenario;
+  const room = scenario.room as Room;
   TextureSource.defaultOptions.scaleMode = 'nearest';
   // Headless runs seat two wizards. Interactive play starts with you alone; gamepads join seats 1-3
   // with any button, and ?ally=1 puts a bot wizard on seat 1 (a dev ally for trying co-op solo).
@@ -122,7 +128,7 @@ async function boot(): Promise<void> {
   const bots = [newBotMemory(), newBotMemory()];
   const pads = new PadSeats();
   const keyboard = new KeyboardMouse(app.canvas, view.camera);
-  const recorder = new ReplayRecorder(7, MAX_SEATS);
+  let recorder = new ReplayRecorder(7, MAX_SEATS);
   const tune = new TunePanel(world, view.camera, app.canvas, params.get('tune') === '1');
   const inspect = new Inspect(world, view.camera);
 
@@ -143,11 +149,14 @@ async function boot(): Promise<void> {
 
   // Online co-op: the artifact's room on claude.ai, or other tabs with ?net=bc. Nothing headless.
   let net: NetPlay | null = null;
+  let menu: EscMenu | null = null;
   if (!headless) {
     // On claude.ai: the artifact's room. Elsewhere (the dev server, a hosted page): WebRTC, or tabs with ?net=bc.
     const bus = params.get('net') === 'bc' ? broadcastBus() : (await roomBus()) ?? webrtcBus();
     if (bus) net = new NetPlay(bus, world, room, () => {
       acc = 0;
+      menu?.hide(); // the match begins (or moved): back to the game
+      scenario = scenarioOfRoom(net!.roomName);
       // While rollback replays ticks it already showed, skip effects and meters (they'd play twice);
       // the view only notes remote spells the replay started, to show them from their first frame.
       const s = net!.session!;
@@ -164,6 +173,64 @@ async function boot(): Promise<void> {
       n.onTuning = () => tune.refresh();
     }
   }
+
+  /**
+   * Go to another scenario. Alone (or in a lobby that hasn't started) the world is rebuilt in place,
+   * keeping everyone who is seated; in a match only the host can, and everyone follows (netplay.ts).
+   */
+  const switchScenario = (s: Scenario) => {
+    if (net?.state === 'playing') { net.switchRoom(s.room); return; }
+    let seated = players;
+    for (let p = 0; p < MAX_SEATS; p++) if (world.seats.active[p]) seated = Math.max(seated, p + 1);
+    replaceWorld(world, createWorld(7, seated, { room: s.room as Room }));
+    scenario = s;
+    net?.setRoom(s.room);
+    recorder = new ReplayRecorder(7, MAX_SEATS);
+    acc = 0;
+    try { history.replaceState(null, '', location.pathname + location.search + hashFor(s, ally)); } catch { /* sandboxed */ }
+  };
+  // 1 / 2 / 3 switch between the Sanctum (dummies), the Arena (waves) and Survive (scenarios.ts keys).
+  // Not in an online match: one stray key would move everyone; the host uses the menu there.
+  addEventListener('keydown', (e) => {
+    const s = scenarioForKey(e.code);
+    if (s && !e.repeat && net?.state !== 'playing') switchScenario(s);
+  });
+
+  const scaleSteps = [0, 1, 2, 3, 4];
+  const settings: Setting[] = [
+    {
+      label: 'Pixel scale', blurb: 'How big each art pixel is on screen. Auto fits about 270 art pixels of height.',
+      value: () => (Number(params.get('scale')) ? `${params.get('scale')}x` : 'AUTO'),
+      adjust: (by) => {
+        const i = Math.max(0, scaleSteps.indexOf(Number(params.get('scale')) || 0));
+        const next = scaleSteps[(i + by + scaleSteps.length) % scaleSteps.length];
+        if (next) params.set('scale', String(next)); else params.delete('scale');
+        setParam('scale', next ? String(next) : null);
+        fit();
+      },
+    },
+    {
+      label: 'Lights', blurb: 'The glow of spells and fire. Off is lighter on slow machines.',
+      value: () => (view.lightsOn ? 'ON' : 'OFF'),
+      adjust: () => { view.lightsOn = !view.lightsOn; setParam('lights', view.lightsOn ? null : '0'); },
+    },
+    {
+      label: 'Debug line', blurb: 'Tick, state hash and the key hints, top left (the backquote key too).',
+      value: () => (showDebug ? 'ON' : 'OFF'),
+      adjust: () => { showDebug = !showDebug; hud.style.display = showDebug ? '' : 'none'; setParam('debug', showDebug ? null : '0'); },
+    },
+  ];
+  menu = new EscMenu({
+    queued: () => world.seats.queueLen[net?.state === 'playing' ? net.seat : 0],
+    net,
+    scenario: () => scenario,
+    switchScenario,
+    settings,
+    onToggle: () => { keyboard.release(); pads.resync(); },
+  });
+  const menuAsk = params.get('menu'), menuAt = Number(params.get('menuAt')) || 0;
+  const menuSection = (['Resume', 'Scenarios', 'Multiplayer', 'Controls', 'Settings'] as const).find((x) => x.toLowerCase() === (menuAsk ?? '').toLowerCase());
+  if (menuAsk && !menuAt) menu.show(menuSection ?? 'Resume');
 
   const runStep = () => {
     const inputs = inputsFor(world.clock[0]);
@@ -202,7 +269,10 @@ async function boot(): Promise<void> {
   const frame = () => {
     const now = performance.now();
     if (pauseAt && world.clock[0] >= pauseAt && !tune.paused) tune.paused = true;
+    if (menuAsk && menuAt && world.clock[0] >= menuAt && !menu!.open) menu!.show(menuSection ?? 'Resume');
+    menu!.frame(now);
     if (net?.state === 'playing') netSteps(now);
+    else if (menu!.pausing) { /* the menu is open: the world stands still */ }
     else if (tune.paused) for (let n = tune.takeSteps(); n > 0; n--) runStep();
     else {
       acc = Math.min(acc + ((now - last) / 1000) * tune.timeScale, 8 * DT);
@@ -224,7 +294,7 @@ async function boot(): Promise<void> {
     // the debug line: small, and only hashed when shown (hashing walks every state byte)
     if (showDebug && world.clock[0] % 6 === 0) hud.textContent = `tick ${world.clock[0]}  hash ${hex(hashWorld(world))}  ${view.camera.scale}×  ${app.renderer.name}
 ${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
-      (autoplay ? '  autoplay' : demo[0] ? '  spell demo' : scripted ? '  scripted run' : '\nLMB walk · RMB Force (hold) · Shift+RMB Area, hold for Place · Space Self · Shift+LMB Weapon · Esc clear · hold Alt: inspect' +
+      (autoplay ? '  autoplay' : demo[0] ? '  spell demo' : scripted ? '  scripted run' : '\nLMB walk · RMB Force (hold) · Shift+RMB Area, hold for Place · Space Self · Shift+LMB Weapon · Esc clear (empty: menu) · hold Alt: inspect' +
         '\nNothing queued: RMB Strike, hold for the weapon’s Heavy · Shift+RMB Special · Shift+LMB your guard’s Retreat (or a hop) · Space Defend: hold to block, tap as a hit lands to parry');
     schedule(frame);
   };
@@ -233,5 +303,5 @@ ${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
   schedule(frame);
 
   // Expose the recorder for debugging: copy a replay of this session from the console.
-  (window as unknown as { wizardSim: unknown }).wizardSim = { world, recorder, tune, view, get net() { return net; } };
+  (window as unknown as { wizardSim: unknown }).wizardSim = { world, get recorder() { return recorder; }, tune, view, menu, get net() { return net; } };
 }

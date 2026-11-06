@@ -158,4 +158,50 @@ describe('online co-op over the bus', () => {
     resetTuning();
     vi.useRealTimers();
   });
+  it('the host moves the match to another scenario and everyone follows', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
+    const { NetPlay } = await import('../src/net/netplay');
+    type Page = InstanceType<typeof NetPlay>;
+    const bus = hub();
+    const wa = createWorld(1, 1), wb = createWorld(2, 1);
+    const a = new NetPlay(bus('hh'), wa, 'arena', () => {});
+    const b = new NetPlay(bus('jj'), wb, 'sanctum', () => {});
+    a.host();
+    vi.advanceTimersByTime(1600);
+    b.join([...(b as unknown as { open: Map<string, unknown> }).open.keys()][0]);
+    a.start();
+    vi.advanceTimersByTime(1500);
+    expect(b.roomName).toBe('arena');
+    expect(a.isHost && !b.isHost).toBe(true);
+    let now = 0, f = 0;
+    const play = (pages: [Page, ReturnType<typeof createWorld>][], until: number) => {
+      for (let n = 0; n < until * 3 && pages.some(([, w]) => w.clock[0] < until); n++, f++) {
+        now += 17;
+        for (const [p, w] of pages) {
+          p.pump(now);
+          const s = p.session!;
+          if (w.clock[0] >= until) continue;
+          while (s.nextScheduled <= w.clock[0] + s.delay) s.pushLocal(quantize({ ...NO_INPUT, moveX: p.seat ? -60 : 60, buttons: f % 90 < 3 ? BTN.force : 0, press0: f % 90 === 50 ? 8 : 0, aimX: 64, aimY: 0 }));
+          s.advance(1);
+        }
+        vi.advanceTimersByTime(17);
+      }
+    };
+    play([[a, wa], [b, wb]], 150);
+    const old = a.match;
+    expect(b.switchRoom('survive')).toBe(false); // only the host
+    expect(a.switchRoom('survive')).toBe(true);
+    vi.advanceTimersByTime(50);
+    expect(b.state).toBe('playing');
+    expect(b.match).toBe(a.match);
+    expect(a.match).not.toBe(old);
+    expect(b.roomName).toBe('survive');
+    expect(wa.run && wb.run).toBeTruthy(); // both are Survive worlds now
+    expect([wa.clock[0], wb.clock[0]]).toEqual([0, 0]);
+    play([[a, wa], [b, wb]], 300);
+    expect([wa.clock[0], wb.clock[0]]).toEqual([300, 300]);
+    expect(hashWorld(wa)).toBe(hashWorld(wb));
+    expect(a.session!.desyncs.length + b.session!.desyncs.length).toBe(0);
+    vi.useRealTimers();
+  });
 });

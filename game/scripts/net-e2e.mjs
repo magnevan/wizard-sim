@@ -158,6 +158,23 @@ try {
   if (Math.abs(ra.tick - rb2.tick) > 90) fail(`the rejoined page didn't catch up (${ra.tick} vs ${rb2.tick})`);
   if (!(Math.abs(rx1 - rx0) > 1)) fail(`A didn't see the rejoined wizard walk (x ${rx0.toFixed(2)} -> ${rx1.toFixed(2)})`);
 
+  // 3b. The host moves the match to Survive (the Esc menu's Scenarios): B follows into the new match.
+  const before = await a.evaluate(() => window.wizardSim.net.match);
+  const moved = await a.evaluate(() => window.wizardSim.net.switchRoom('survive'));
+  if (!moved) fail('the host could not switch the scenario');
+  await b.waitForFunction((m) => { const n = window.wizardSim.net; return n.state === 'playing' && n.match !== m && !!n.session?.world.run; }, { timeout: 15000, polling: 100 }, before)
+    .catch(() => fail('B did not follow the host into Survive'));
+  await b.mouse.move(600, 200); await b.mouse.down();
+  await sleep(2000);
+  await b.mouse.up();
+  await sleep(1000);
+  const [ma, mb] = [await net(a), await net(b)];
+  console.log('after the move to Survive: A', ma, 'B', mb);
+  if (ma.desyncs || mb.desyncs) fail('desync after the scenario switch');
+  if (ma.tick < 60 || Math.abs(ma.tick - mb.tick) > 90) fail(`the moved match did not run in step (${ma.tick} vs ${mb.tick})`);
+  const roomB = await b.evaluate(() => window.wizardSim.net.roomName);
+  if (roomB !== 'survive') fail(`B's page plays ${roomB}, not survive`);
+
   // 4. B's page hitches for 3.5 s (its loop and its messages both stall, as a frozen tab's would). A
   // rightly drops it; B, catching up, must see that the silence was its own and not drop A in turn
   // (it would be its own coordinator then, and its "drop" would kick the host out of the match).
@@ -166,10 +183,10 @@ try {
   const [ha, hb] = [await net(a), await net(b)];
   console.log('after B hitched: A', ha, 'B', hb);
   if (ha.state !== 'playing' || ha.tick < 0) fail(`the host left the match after B's hitch: "${ha.message}"`);
-  if (ha.tick < ra.tick + 200) fail(`the host stalled after B's hitch (tick ${ra.tick} -> ${ha.tick})`);
+  if (ha.tick < ma.tick + 200) fail(`the host stalled after B's hitch (tick ${ma.tick} -> ${ha.tick})`);
   if (hb.state === 'playing' && !ha.gone[1]) console.log('(A kept B: the hitch was under the drop limit)');
   else if (hb.state === 'playing') fail('B still plays but A dropped it');
-  if (!process.exitCode) console.log(`OK: ${webrtc ? 'WebRTC' : 'BroadcastChannel'} match ran in both pages (rtt ${fast} ms; ${sa.rtt} ms with the simulated link), B rejoined after a reload, and a hitch on B didn't drop the host`);
+  if (!process.exitCode) console.log(`OK: ${webrtc ? 'WebRTC' : 'BroadcastChannel'} match ran in both pages (rtt ${fast} ms; ${sa.rtt} ms with the simulated link), B rejoined after a reload, followed the host to Survive, and a hitch on B didn't drop the host`);
 } catch (e) {
   fail(e.stack ?? e);
 } finally {

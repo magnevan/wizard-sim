@@ -28,10 +28,9 @@
  * (beforeTick). A change heard after its tick rewinds to it.
  */
 import { RollbackSession, type AimPrediction, type Gone, type Handover, type Transport } from '@wizard-sim/net';
-import { createWorld, overrides, replaceWorld, tuningHash, type Room, type Snapshot, type World } from '@wizard-sim/sim';
+import { createWorld, overrides, replaceWorld, tuningHash, type Snapshot, type World } from '@wizard-sim/sim';
 import { loadSaved, replaceTuning } from '../tune-io';
-
-const roomOf = (r: string): Room => (r === 'arena' || r === 'survive' ? r : 'sanctum');
+import { roomOf, scenarioOfRoom } from '../scenarios';
 import { fromB64, toB64, type Bus } from './bus';
 import { LinkSim, PRESETS } from './linksim';
 import type { RtcBus } from './webrtc';
@@ -61,7 +60,8 @@ const RESUME_AHEAD = 45;
 
 interface HostMsg { t: 'host'; match: string; name: string; version: number; tuning: number; room: string; players: string[]; rejoin?: boolean }
 interface JoinMsg { t: 'join'; match: string; version: number; tuning: number }
-interface StartMsg { t: 'start'; match: string; seed: number; room: string; delay: number; players: string[]; tuning: Record<string, number> }
+/** prev: the match this one replaces (the host moved everyone to another scenario); its players follow without joining. */
+interface StartMsg { t: 'start'; match: string; seed: number; room: string; delay: number; players: string[]; tuning: Record<string, number>; prev?: string }
 /** A tuning in force from tick `at` (the whole map of overrides, so applying one never depends on the last). */
 interface TuneAt { n: number; at: number; map: Record<string, number> }
 type LobbyMsg = HostMsg | JoinMsg | StartMsg;
@@ -119,6 +119,15 @@ function busTransport(bus: Bus, match: string, link: LinkSim, heard: (seat: numb
 }
 
 export type NetState = 'off' | 'hosting' | 'joining' | 'playing';
+export type SeatStatus = 'you' | 'here' | 'quiet' | 'gone';
+export interface LobbyView {
+  kind: Bus['kind']; state: NetState;
+  /** WebRTC: the room code ('' until a room is open or joined), the bus's status line, and how many pages we're connected to. */
+  code: string; rtcStatus: string; connected: number;
+  matches: { match: string; name: string; players: number; room: string; rejoin: boolean }[];
+  seats: { seat: number; status: SeatStatus }[];
+  seat: number; isHost: boolean; rejoining: boolean; rtt: number; message: string;
+}
 
 export class NetPlay {
   state: NetState = 'off';
@@ -236,6 +245,77 @@ export class NetPlay {
     this.render();
   }
 
+  // ---- scenarios ----
+
+  /** The scenario's room this page plays (or would host). */
+  get roomName(): string { return this.room; }
+
+  /** Is this page the one that decides for the match: the lobby's host, or the coordinator (lowest live seat) in a match? */
+  get isHost(): boolean {
+    if (this.state === 'hosting') return true;
+    return this.state === 'playing' && !!this.session && this.coordinator() === this.seat;
+  }
+
+  /** Out of a match (alone, or hosting a lobby that hasn't started): the room this page announces and will start. */
+  setRoom(room: string): void {
+    if (this.state === 'playing') return;
+    this.room = room;
+    this.render();
+  }
+
+  /**
+   * The host moves the whole match to another scenario: a new match with everyone still playing
+   * (in their seat order), which their pages follow by themselves (the start names this match as
+   * `prev`). Returns false when this page can't (not in a match, or not the host).
+   */
+  switchRoom(room: string): boolean {
+    const s = this.session;
+    if (this.state !== 'playing' || !s || !this.isHost) return false;
+    const players = this.joinedPlayers.filter((_, p) => p === this.seat || !s.isOut(p));
+    const prev = this.match;
+    this.room = room;
+    this.match = `${this.bus.self.slice(0, 6)}${Date.now().toString(36).slice(-4)}`;
+    const msg: StartMsg = { t: 'start', match: this.match, seed: (Date.now() & 0x7fffffff) >>> 0, room, delay: NET_DELAY, players, tuning: overrides(), prev };
+    for (const ms of [0, 250, 600, 1200]) setTimeout(() => this.bus.emit('lobby', msg), ms);
+    this.startMsg = msg; this.startSent = 0;
+    this.reports.clear(); this.rejoin = null;
+    this.begin(msg);
+    this.message = `Moved the match to ${scenarioOfRoom(room).name}.`;
+    return true;
+  }
+
+  // ---- for the Esc menu (menu.ts): the same lobby as the panel, as data ----
+
+  /** WebRTC: open a room with a fresh code and host a match in it. */
+  createRoom(): Promise<void> {
+    return (this.bus as RtcBus).createRoom().then(() => this.host()).catch(() => {}).finally(() => this.render());
+  }
+
+  /** WebRTC: join a room by its code; its host's match is joined as soon as we hear it. */
+  joinCode(code: string): Promise<void> {
+    if (!code.trim()) return Promise.resolve();
+    this.autoJoin = true;
+    return (this.bus as RtcBus).joinRoom(code).catch(() => {}).finally(() => this.render());
+  }
+
+  /** What the menu shows: how we're connected, the room code, the open matches and who is in ours. */
+  lobbyView(): LobbyView {
+    const rtc = this.bus.kind === 'webrtc' ? (this.bus as RtcBus) : null;
+    const s = this.session;
+    const now = Date.now();
+    const matches = [...this.open.values()].filter((h) => now - h.seen <= 5000 && !(h.match === this.match && this.state === 'hosting'))
+      .map((h) => ({ match: h.match, name: String(h.name), players: Array.isArray(h.players) ? h.players.length : 0, room: String(h.room), rejoin: !!h.rejoin }));
+    const seats = s
+      ? Array.from({ length: this.players }, (_, p) => ({ seat: p, status: (p === this.seat ? 'you' : s.isGone(s.tick, p) ? 'gone' : s.isOut(p) ? 'quiet' : 'here') as SeatStatus }))
+      : this.state === 'hosting' || this.state === 'joining'
+        ? this.joinedPlayers.map((peer, p) => ({ seat: p, status: (peer === this.bus.self ? 'you' : 'here') as SeatStatus }))
+        : [];
+    return {
+      kind: this.bus.kind, state: this.state, code: rtc?.code ?? '', rtcStatus: rtc?.status ?? '', connected: rtc ? rtc.peerCount() : 0,
+      matches, seats, seat: this.seat, isHost: this.isHost, rejoining: !!this.rejoin, rtt: Math.round(this.rtt), message: this.message,
+    };
+  }
+
   private sayBye(): void {
     if (this.session) this.bus.emit('nc', { t: 'bye', m: this.match, f: this.seat } satisfies Control);
   }
@@ -255,6 +335,11 @@ export class NetPlay {
       this.render();
     } else if (m.t === 'start' && this.state === 'joining' && m.match === this.match && Array.isArray(m.players) && m.players.includes(this.bus.self)) {
       this.begin(m);
+    } else if (m.t === 'start' && this.state === 'playing' && m.prev && m.prev === this.match && Array.isArray(m.players) && m.players.includes(this.bus.self)) {
+      // The host moved the match to another scenario: follow it into the new one.
+      this.match = m.match; this.reports.clear(); this.rejoin = null;
+      this.begin(m);
+      this.message = `The host moved the match to ${scenarioOfRoom(m.room).name}.`;
     }
   }
 
@@ -268,6 +353,8 @@ export class NetPlay {
     this.applyTuning(0);
     this.seat = m.players.indexOf(this.bus.self);
     this.players = m.players.length;
+    // The match plays the host's room (a joiner's own page may have been elsewhere): a rejoin's welcome must name it.
+    this.room = m.room;
     this.joinedPlayers = m.players.slice();
     // A fresh world, put into the one everything already holds (a copy; or, from or to Survive, its pools swapped in).
     replaceWorld(this.world, createWorld(m.seed, this.players, { room: roomOf(m.room) }));
@@ -589,13 +676,12 @@ export class NetPlay {
       else if (a === 'start') this.start();
       else if (a === 'leave') this.leave();
       else if (a === 'join' && t.dataset.match) this.join(t.dataset.match);
-      else if (a === 'rtc-create') void (this.bus as RtcBus).createRoom().then(() => this.host()).catch(() => {}).finally(() => this.render());
+      else if (a === 'rtc-create') void this.createRoom();
       else if (a === 'rtc-join') {
         const code = (el.querySelector('#rtc-code') as HTMLInputElement | null)?.value ?? '';
         if (code.trim()) {
-          this.autoJoin = true;
           (document.activeElement as HTMLElement | null)?.blur(); // give the keyboard back to the game
-          void (this.bus as RtcBus).joinRoom(code).catch(() => {}).finally(() => this.render());
+          void this.joinCode(code);
         }
       }
       else if (a === 'toggle') { el.dataset.open = el.dataset.open === '1' ? '' : '1'; this.render(); }

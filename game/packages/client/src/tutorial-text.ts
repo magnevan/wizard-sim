@@ -4,7 +4,7 @@
  * file, so a grammar change (a key, a cast, a mix) is one search away. One line at a time; it names
  * keys, never rules. The 3x5 pixel font has no apostrophe.
  */
-import { EL, KIND, MAX_SEATS, TUT_BEAT, TUT_PLACES, TUT_STATE as TS, TUT_TAG, type World } from '@wizard-sim/sim';
+import { KIND, MAX_SEATS, TUT_BEAT, TUT_PLACES, TUT_STATE as TS, TUT_TAG, type World } from '@wizard-sim/sim';
 
 export interface BeatText { title: string; prompt: string }
 
@@ -54,10 +54,8 @@ export function counterFor(w: World): string {
     case TUT_BEAT.walk: { let n = 0; for (let k = 0; k < TUT_PLACES.stones.length; k++) if (st[TS.a] & (1 << k)) n++; return `${n} / ${TUT_PLACES.stones.length}`; }
     case TUT_BEAT.strike: case TUT_BEAT.steam: return `${3 - count(w, TUT_TAG.straw)} / 3`;
     case TUT_BEAT.retreat: return `${Math.min(2, st[TS.a])} / 2 dodged`;
-    case TUT_BEAT.fire: return `${5 - count(w, TUT_TAG.hedge)} / 5`;
+    case TUT_BEAT.fire: return `${TUT_PLACES.hedgeN - count(w, TUT_TAG.hedge)} / ${TUT_PLACES.hedgeN}`;
     default: return '';
   }
 }
 
-/** Element keys a beat brings in, for the banner ("+ F Fire"). */
-export const NEW_RUNES: Readonly<Record<number, readonly number[]>> = { [TUT_BEAT.fire]: [EL.fire], [TUT_BEAT.douse]: [EL.water] };

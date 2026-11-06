@@ -158,7 +158,7 @@ export function setupBeat(w: World, beat: number): void {
       // a rock line across the chamber, the way out stopped by a hedge of brambles; a thick one off to the side
       const x = P.hedgeX, g = P.hedgeGap, h = w.dims.h / 2;
       rock(w, x, -h, x, -g); rock(w, x, g, x, h);
-      for (let k = 0; k < 5; k++) spawn(w, ARCH.bramble, TAG.hedge, x, -1.2 + k * 0.6);
+      for (let k = 0; k < P.hedgeN; k++) spawn(w, ARCH.bramble, TAG.hedge, x, -1 + k, { r: 0.55 });
       spawn(w, ARCH.bramble, TAG.bramble, P.thick[0], P.thick[1], { hp: 40, r: 0.7 });
       break;
     }

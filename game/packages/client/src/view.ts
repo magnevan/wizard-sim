@@ -333,7 +333,7 @@ export class WorldView {
       else if (arch === ARCH.grabber) { s.pal = 4; s.variant = 4; }
       else if (arch === ARCH.imp) { s.pal = 3; s.variant = 3; }
       else if (arch === ARCH.straw) { s.pal = 6; s.variant = 0; } // the tutorial's straw goblin
-      else if (arch === ARCH.bramble) { s.variant = b.maxHp[i] > 20 ? 1 : 0; s.seed = i & 3; }
+      else if (arch === ARCH.bramble) { s.variant = b.r[i] >= 0.65 ? 1 : 0; s.seed = i & 3; }
       else { s.pal = i % 3; s.variant = kind === 'goblin' ? i % 3 : 0; }
     }
     // facing in 16 directions; the dummy faces the camera

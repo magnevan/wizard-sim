@@ -1,5 +1,5 @@
 ---
-status: developing
+status: prototyping
 pillars: [2, 4, 1, 7]
 related: [../explorations/2026-11-06-tutorial.md, sanctum.md, spell-grammar.md]
 ---

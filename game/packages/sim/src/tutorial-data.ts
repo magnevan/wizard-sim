@@ -67,13 +67,13 @@ export const TUT_PLACES = {
   /** Beat 3: where the sack starts, and the ring to shove it into. */
   sack: [-1.5, 0] as const, ring: [2.2, 0] as const, ringR: 1.15,
   /** Beat 7: the hedge line and the thick bramble. */
-  hedgeX: 5.5, hedgeGap: 1.6, thick: [-1, -5] as const,
+  hedgeX: 5.5, hedgeGap: 1.6, hedgeN: 3, thick: [-1, -5] as const,
   /** Beat 8: the burning band you cross (x from, x to). */
   fireBand: [0, 2.2] as const,
   /** Beat 9: the rain over the pen. */
   pen: [4, 0] as const, penR: 2.3,
   /** The end card's three arches (Sanctum, Survive, Arena). */
-  exits: [[6, -5], [6, 0], [6, 5]] as const, exitR: 1, exitTime: 1,
+  exits: [[-1, -1.5], [4, -1.5], [9, -1.5]] as const, exitR: 1, exitTime: 1,
 } as const;
 
 /** Seconds a wizard lies fainted, and the fade between beats. */

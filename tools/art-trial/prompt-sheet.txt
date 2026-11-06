@@ -1,0 +1,10 @@
+Pixel art game props in EXACTLY the style of the attached game screenshot, which is shown at 4x zoom: chunky pixels, dark near-black outlines, muted stone and warm wood colours, soft 3/4 top-down view with light from the upper left.
+
+Draw a single sprite sheet of five separate props for a wizard academy, in a row, on a flat solid magenta (#ff00ff) background with no shadows on the background, no text, no labels, no grid:
+1. a wooden lectern holding an open book
+2. a tall wooden bookshelf full of old books
+3. a straw archery target on a wooden stand
+4. a glowing violet rune circle carved flat into the floor
+5. a robed teacher figure with a pointed hat, the same size and proportions as the wizards in the screenshot
+
+Keep the same pixel size as the screenshot's sprites: every art pixel is a clean 4x4 block, and the wizards in the screenshot are about 30 art pixels tall, so the props are scaled to match them.

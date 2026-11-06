@@ -1,0 +1,133 @@
+<!doctype html>
+<meta charset="utf8">
+<title>Code-drawn academy props</title>
+<!-- The art trial's code-drawn set, in the game's own pixel primitives. Headless Chrome dumps the
+     sheet as base64 in #out: chrome --headless=new --dump-dom this-file -->
+<canvas id="sheet" width="210" height="56"></canvas>
+<pre id="out"></pre>
+<script src="../spell-vfx/core.js"></script>
+<script src="../spell-vfx/pixel.js"></script>
+<script>
+const X = PB.px, bay = X.bay;
+const OUTL = '#1a120c';
+const WOOD = ['#d8b88a', '#b8946a', '#977552', '#76583c', '#553e2a', '#33241a'];
+const PAPER = ['#fff4e0', '#e8d8b0', '#d8c0a0', '#b8946a'];
+const VIO = ['#ffffff', '#efe4ff', '#b08aff', '#7a4ad8', '#4a2a78', '#2a1848'];
+const rnd = (a, b = 0) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); };
+
+function layer(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; return x; }
+
+/** The game's sprites all carry a one-pixel dark outline. */
+function outline(x) {
+  const { width: w, height: h } = x.canvas, d = x.getImageData(0, 0, w, h).data, on = (a, b) => a >= 0 && b >= 0 && a < w && b < h && d[(b * w + a) * 4 + 3] > 0;
+  for (let b = 0; b < h; b++) for (let a = 0; a < w; a++) if (!on(a, b) && (on(a + 1, b) || on(a - 1, b) || on(a, b + 1) || on(a, b - 1))) X.px(x, a, b, OUTL);
+}
+
+/** Wood with a grain: a ramp step, broken up by short darker streaks. */
+function plank(x, l, t, w, h, step, seed = 1, vertical = false) {
+  X.rect(x, l, t, w, h, WOOD[step]);
+  for (let i = 0; i < (w * h) / 9; i++) {
+    const a = l + Math.floor(rnd(i, seed) * w), b = t + Math.floor(rnd(i, seed + 1) * h), n = 1 + Math.floor(rnd(i, seed + 2) * 3);
+    for (let k = 0; k < n; k++) { const px = vertical ? a : a + k, py = vertical ? b + k : b; if (px < l + w && py < t + h) X.px(x, px, py, WOOD[Math.min(5, step + 1)]); }
+  }
+}
+
+function lectern() {
+  const x = layer(26, 34);
+  // the foot
+  X.rect(x, 5, 28, 16, 4, WOOD[3]); X.rect(x, 5, 28, 16, 1, WOOD[1]); X.rect(x, 5, 31, 16, 1, WOOD[4]);
+  // the column, lit from the upper left
+  plank(x, 9, 15, 8, 13, 3, 3, true); X.rect(x, 9, 15, 2, 13, WOOD[2]); X.rect(x, 15, 15, 2, 13, WOOD[4]);
+  // the sloped top
+  X.poly(x, [[4, 7], [22, 7], [24, 16], [2, 16]], WOOD[2]);
+  X.rect(x, 2, 16, 22, 2, WOOD[4]); X.rect(x, 3, 7, 20, 1, WOOD[0]);
+  // the open book
+  X.poly(x, [[6, 6], [12, 7], [13, 14], [5, 13]], PAPER[0]); X.poly(x, [[14, 7], [20, 6], [21, 13], [13, 14]], PAPER[1]);
+  X.line(x, 13, 7, 13, 14, PAPER[3]);
+  for (let r = 0; r < 3; r++) { X.line(x, 7, 8 + r * 2, 11, 9 + r * 2, PAPER[3]); X.line(x, 15, 9 + r * 2, 19, 8 + r * 2, PAPER[2]); }
+  outline(x); return x;
+}
+
+function bookshelf() {
+  const x = layer(40, 48), COLS = ['#8a2a2a', '#2a5a3a', '#2a4a7a', '#7a5a2a', '#5a2a6a', '#3a3a4a', '#a8743a'];
+  // the top, seen from above, then the frame
+  X.poly(x, [[3, 3], [36, 3], [38, 8], [1, 8]], WOOD[1]); X.rect(x, 3, 3, 33, 1, WOOD[0]);
+  plank(x, 1, 8, 38, 38, 3, 7); X.rect(x, 1, 8, 2, 38, WOOD[2]); X.rect(x, 37, 8, 2, 38, WOOD[4]);
+  for (let s = 0; s < 3; s++) {
+    const top = 10 + s * 12;
+    X.rect(x, 4, top, 32, 10, WOOD[5]);
+    let bx = 5;
+    while (bx < 34) {
+      const i = s * 31 + bx, w = 2 + Math.floor(rnd(i, 1) * 2), h = 6 + Math.floor(rnd(i, 2) * 4), col = COLS[Math.floor(rnd(i, 3) * COLS.length)];
+      if (rnd(i, 5) < 0.14) { bx += 2; continue; } // a gap on the shelf
+      if (bx + w > 35) break;
+      X.rect(x, bx, top + 10 - h, w, h, col);
+      X.rect(x, bx, top + 10 - h, 1, h, X.mix(col, '#ffffff', 0.22));
+      X.px(x, bx + w - 1, top + 12 - h, '#e8d8b0');
+      bx += w;
+    }
+    X.rect(x, 3, top + 10, 34, 2, WOOD[2]); X.rect(x, 3, top + 10, 34, 1, WOOD[1]);
+  }
+  outline(x); return x;
+}
+
+function target() {
+  const x = layer(30, 36), cx = 15, cy = 13;
+  // the stand, behind the disc
+  X.line(x, 9, 18, 4, 34, WOOD[3], 2); X.line(x, 21, 18, 26, 34, WOOD[4], 2); X.line(x, 15, 20, 15, 31, WOOD[4], 2);
+  X.line(x, 7, 27, 23, 27, WOOD[3]);
+  // the straw: rings of colour, with a dithered thatch running round them
+  const RINGS = [[12, '#e0c8a0'], [10, '#f4ece0'], [8, '#c8502a'], [5, '#f4ece0'], [3, '#ffd860']];
+  for (const [r, c] of RINGS) X.ellipse(x, cx, cy, r, r * 0.94, c);
+  for (let a = -13; a <= 13; a++) for (let b = -13; b <= 13; b++) {
+    const d = Math.hypot(a, b / 0.94);
+    if (d > 12 || (Math.floor(d * 1.5) + Math.floor(Math.atan2(b, a) * 9)) % 5) continue;
+    if (bay(cx + a, cy + b) < 0.5) X.px(x, cx + a, cy + b, d > 10.2 ? '#b8946a' : d > 8.2 ? '#d8c0a0' : d > 5.2 ? '#a8401f' : '#e0c8a0');
+  }
+  // lit from the upper left
+  X.ring(x, cx, cy, 12, 11.3, '#fff4c0', 1, Math.PI * 1.05, Math.PI * 1.6);
+  X.ring(x, cx, cy, 12, 11.3, '#8a6a48', 1, Math.PI * 0.05, Math.PI * 0.6);
+  outline(x); return x;
+}
+
+function runeCircle() {
+  const x = layer(54, 30), cx = 27, cy = 15, FY = 0.55, R = 25;
+  X.glow(x, cx, cy, R - 4, VIO[3], 0.35, FY);
+  X.ring(x, cx, cy, R, R * FY, VIO[2]); X.ring(x, cx, cy, R - 6, (R - 6) * FY, VIO[2]);
+  // two triangles, then the glyphs in the band between the rings
+  for (const off of [0, Math.PI]) {
+    const p = [0, 1, 2].map((k) => { const a = off - Math.PI / 2 + (k * Math.PI * 2) / 3; return [cx + Math.cos(a) * (R - 7), cy + Math.sin(a) * (R - 7) * FY]; });
+    X.lines(x, [...p, p[0]], VIO[3]);
+  }
+  for (let k = 0; k < 16; k++) {
+    const a = (k / 16) * Math.PI * 2, gx = cx + Math.cos(a) * (R - 3), gy = cy + Math.sin(a) * (R - 3) * FY;
+    X.px(x, gx, gy, VIO[1]); X.px(x, gx + (k % 2 ? 1 : -1), gy, VIO[2]); if (k % 3 === 0) X.px(x, gx, gy - 1, VIO[0]);
+  }
+  X.ellipse(x, cx, cy, 2.5, 1.5, VIO[1]);
+  return x; // a floor mark: no outline
+}
+
+function teacher() {
+  const x = layer(24, 34), ROBE = ['#8a5ac8', '#6a3aa8', '#4a2a78', '#2e1a50'], GOLD = '#d8a868';
+  // the robe: a bell, lit from the left, with a gold hem and front
+  X.poly(x, [[8, 15], [16, 15], [20, 32], [4, 32]], ROBE[2]);
+  X.poly(x, [[8, 15], [10, 15], [8, 32], [4, 32]], ROBE[1]);
+  X.poly(x, [[15, 15], [16, 15], [20, 32], [17, 32]], ROBE[3]);
+  X.rect(x, 4, 31, 16, 1, GOLD); X.line(x, 12, 18, 12, 31, GOLD);
+  // the hands, the face and the beard
+  X.rect(x, 5, 21, 2, 2, '#e0c8a0'); X.rect(x, 17, 21, 2, 2, '#c8a888');
+  X.rect(x, 8, 11, 8, 5, '#e0c8a0'); X.px(x, 10, 12, '#1a1420'); X.px(x, 13, 12, '#1a1420');
+  X.poly(x, [[8, 14], [16, 14], [14, 21], [12, 23], [10, 21]], '#d0d0dc'); X.line(x, 10, 15, 11, 20, '#ffffff');
+  // the hat: a brim and a bent cone
+  X.ellipse(x, 12, 10, 9, 2.5, ROBE[2]); X.ring(x, 12, 10, 9, 2.5, ROBE[1], 1, Math.PI, Math.PI * 1.6);
+  X.poly(x, [[7, 9], [17, 9], [14, 3], [11, 1]], ROBE[2]); X.poly(x, [[7, 9], [10, 9], [11, 1]], ROBE[1]);
+  X.line(x, 7, 8, 17, 8, GOLD);
+  outline(x); return x;
+}
+
+const sheet = document.getElementById('sheet').getContext('2d');
+sheet.fillStyle = '#ff00ff'; sheet.fillRect(0, 0, 210, 56);
+let at = 3;
+for (const p of [lectern(), bookshelf(), target(), runeCircle(), teacher()]) { sheet.drawImage(p.canvas, at, 52 - p.canvas.height); at += p.canvas.width + 6; }
+document.getElementById('out').textContent = document.getElementById('sheet').toDataURL('image/png');
+</script>

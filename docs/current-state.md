@@ -64,6 +64,7 @@ Play it: https://magnevan.github.io/wizard-sim/ (code in `../game/`, commands in
 - **The golden hash is `afcc1d3f`** (`game/packages/sim/test/golden.json`, 1800 ticks of the scripted run). It last moved on 2026-11-06, when water on a burning body stopped leaving it wet. D: [Water on a fire leaves you dry](decisions/README.md#2026-11-06-water-on-a-fire-leaves-you-dry-the-tutorial-prototypes-review).
 
 ## Open questions (live)
+- **The art trial** (`explorations/2026-11-06-art-trial.md`, [the page](https://claude.ai/artifact/S2wttPmXSg7YXZhJQbL4gN)): each source's role, how much prop detail, a paid PixelLab plan, the next art test.
 - **The campaign and content pipeline** (`explorations/2026-11-06-campaign-and-content.md`): 1, Sigil and Shield conjure-only early; 2, how "low rune" works (elements, queue length, pools); 5, a rated trial of AI pixel-art tools; 6, generic academy pieces before the story. (3 and 4 are settled: LDtk is the editor, and stage 1 ported the rooms.)
 - **The map pipeline, stage 1** (`explorations/2026-11-06-map-pipeline-stage-1.md`): 1, free Rock walls as number fields or as a line LDtk draws; 2, the 40-wall terrain budget; 3, a preview tileset in LDtk; 4, porting the tutorial's beats; 5, the room hash in replays; 6, what stage 2 builds first.
 - **The Esc menu** (`explorations/2026-11-06-esc-menu.md`): 1, should a host pause pause everyone online; 2, should an online scenario switch ask first; 3, can the corner Co-op panel go; 4, the tutorial's place and key; 5, should the number keys stay.

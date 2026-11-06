@@ -1,0 +1,197 @@
+<title>Academy Art Trial</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* One dark look on purpose: the page is a stone room for judging pixel art on the game's own floor colours.
+   Layout: one reading column; each art source is a full-width strip with its verdict directly under it. */
+:root {
+  color-scheme: dark;
+  --stone: #1b2421; --slab: #26322e; --line: #3e4a44;
+  --ink: #e8e4d8; --dim: #a9b0a4;
+  --gold: #ffd860; --keep: #7fd08a; --maybe: #e8c060; --cut: #e8836a;
+  --display: 'Silkscreen', ui-monospace, 'Courier New', monospace;
+  --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+body { background: var(--stone); color: var(--ink); font: 16px/1.55 var(--body); }
+main { max-width: 1120px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(28px, 5vw, 42px); color: var(--gold); }
+h2 { font-size: 22px; }
+h3 { font-size: 16px; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 10px; }
+.dim { color: var(--dim); }
+section { display: grid; gap: 18px; min-width: 0; }
+img { image-rendering: pixelated; display: block; width: 100%; height: auto; }
+.source { display: grid; gap: 10px; min-width: 0; }
+.head { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; }
+.tag { font-size: 14px; color: var(--dim); }
+.facts { margin: 0; padding-left: 20px; display: grid; gap: 2px; max-width: 72ch; }
+.rate { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.marks { display: flex; gap: 6px; flex: none; }
+button { font: 13px var(--display); color: var(--ink); background: var(--slab); border: 1px solid var(--line); padding: 8px 12px; cursor: pointer; }
+button:hover { border-color: var(--dim); }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+button[aria-pressed="true"][data-mark="keep"] { background: var(--keep); border-color: var(--keep); color: var(--stone); }
+button[aria-pressed="true"][data-mark="maybe"] { background: var(--maybe); border-color: var(--maybe); color: var(--stone); }
+button[aria-pressed="true"][data-mark="cut"] { background: var(--cut); border-color: var(--cut); color: var(--stone); }
+textarea { flex: 1 1 280px; min-width: 0; min-height: 40px; font: 15px/1.4 var(--body); color: var(--ink); background: var(--slab); border: 1px solid var(--line); padding: 8px 10px; resize: vertical; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 15px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 12px var(--display); color: var(--dim); }
+.scroll { overflow-x: auto; }
+.q { display: grid; gap: 8px; }
+.q textarea { flex: none; width: 100%; box-sizing: border-box; }
+.pick { color: var(--gold); }
+details summary { cursor: pointer; color: var(--dim); }
+details img { margin-top: 10px; }
+#save { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); font-size: 13px; background: var(--slab); border: 1px solid var(--line); padding: 4px 10px; color: var(--dim); }
+#save.bad { color: var(--cut); }
+</style>
+
+<main>
+  <header class="lede">
+    <h1>Academy Art Trial</h1>
+    <p>The same five academy props from five art sources, placed on the game's real floor beside a real wizard at the game's pixel size. Each strip is shown at 3×. The wizard on the left of every strip is the game's, for scale.</p>
+    <p class="dim">Rate each source under its strip. Your marks and notes save as you go.</p>
+  </header>
+
+  <section id="sources"></section>
+
+  <section>
+    <h2>The angle</h2>
+    <p>Our world is drawn straight-on with a little of the top showing. PixelLab's cheap object sheet leans isometric, which is a mismatch. Its Pro model drew the third bookshelf below straight-on, in our palette, from our sprites as a reference.</p>
+    <img src="img/angle-bookshelf.png" alt="Three bookshelves on the game floor: code-drawn, PixelLab sheet leaning isometric, and PixelLab Pro straight-on" width="720" height="264" style="max-width:720px">
+    <p class="dim">Left to right: code-drawn, PixelLab object sheet, PixelLab Pro.</p>
+  </section>
+
+  <section>
+    <h2>The bonus props</h2>
+    <p>PixelLab's sheet always returns 16 objects. I named five, and it invented eleven more in the same style. That sheet cost 10 generations in total.</p>
+    <img src="img/pl-obj-sheet-4x.png" alt="Sixteen PixelLab props: lectern, bookshelf, target, rune circle, wizard, cauldron, desk, throne, potion shelf, armillary sphere, chest, banner, training dummy, weapon rack, crystal ball, clock" width="1536" height="384">
+  </section>
+
+  <section>
+    <h2>What each one took</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Source</th><th>Spent</th><th>Time</th><th>On palette</th><th>Clean pixels</th></tr></thead>
+      <tbody>
+        <tr><td>Code-drawn</td><td>Nothing but my work</td><td>About 180 lines</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td>PixelLab object sheet</td><td>10 generations for 16 props</td><td>2 minutes</td><td>Yes, native</td><td>Yes</td></tr>
+        <tr><td>PixelLab Pro</td><td>5 generations per prop</td><td>Under 3 minutes</td><td>Yes, native</td><td>Yes</td></tr>
+        <tr><td>PixelLab Pixflux</td><td>1 generation per prop</td><td>15–40 seconds</td><td>Not asked for here</td><td>Yes</td></tr>
+        <tr><td>Gemini 3 Pro Image</td><td>1 call for all five</td><td>16 seconds</td><td>After cleanup</td><td>After cleanup, some detail lost</td></tr>
+        <tr><td>Gemini 3.1 Flash Image</td><td>1 call for all five</td><td>11 seconds</td><td>After cleanup</td><td>After cleanup, more detail lost</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dim">PixelLab's trial had 40 generations and 20 are left. Gemini's API doesn't report a price per call, so check your billing page for the two calls' real cost.</p>
+  </section>
+
+  <section id="questions">
+    <h2>Questions</h2>
+  </section>
+</main>
+<div id="save" role="status">Loading your ratings…</div>
+
+<script>
+const SOURCES = [
+  { id: 'src-code', name: 'Code-drawn', tag: 'the game\'s own pixel library', img: 'strip-code.png',
+    facts: ['Closest to the game\'s chunky look, because it uses the same primitives and ramps.', 'Free, and any variant is a parameter away: more shelves, other woods, seeded book colours.', 'Plainer than the others. Fine detail and character are slow to get this way.'] },
+  { id: 'src-pixellab', name: 'PixelLab object sheet', tag: 'with our sprites as style reference, palette locked', img: 'strip-pixellab.png',
+    facts: ['Real pixels with no cleanup, and on our palette from the start.', 'The richest detail here. It’s busier than our wizards, so a room of it could outshine the characters.', 'Leans isometric, and adds unrequested bits: stray arrows, scrolls, sparkles.'] },
+  { id: 'src-pixflux', name: 'PixelLab Pixflux', tag: 'cheapest model, no style reference', img: 'strip-pixflux.png',
+    facts: ['One generation each, and the look wanders: an anime teacher, a saturated purple circle.', 'With no reference it’s a different game\'s art, so it isn’t a fair style test.'] },
+  { id: 'src-gemini-pro', name: 'Gemini 3 Pro Image', tag: 'our screenshot as reference, then my cleanup', img: 'strip-gemini-pro.png', raw: 'raw-gemini-pro.png',
+    facts: ['Understood the straight-on angle and the proportions best.', 'The raw image is beautiful but isn’t true pixel art. Shrinking it to game size turned small detail to mud: look at the book spines.', 'Would improve if we asked for simpler, larger shapes, or one prop per call.'] },
+  { id: 'src-gemini-flash', name: 'Gemini 3.1 Flash Image', tag: 'same prompt and cleanup', img: 'strip-gemini-flash.png', raw: 'raw-gemini-flash.png',
+    facts: ['Faster, with a stronger isometric lean. It kept the floor tiles under the rune circle, which would need cutting out.', 'The bookshelf’s books dissolved in cleanup.'] },
+];
+const QUESTIONS = [
+  { id: 'q-1-role', text: 'What should each art source do?', pick: 'PixelLab Pro, straight-on and palette-locked, for unique props and set pieces. Code-drawn for tiles, anything with variants, and everything driven by game state (spells, characters). Gemini for concept art and mood references, not sprites.' },
+  { id: 'q-2-detail', text: 'PixelLab\'s props are more detailed than our wizards. Do we hold props to the wizards\' chunky level, or let the world get richer?', pick: 'Hold them closer to the wizards: ask for low detail, and rate a small set in a mock room before deciding. Characters should stay the most readable thing on screen.' },
+  { id: 'q-3-plan', text: 'PixelLab\'s trial has 20 generations left, which is about four Pro props. Is a paid plan worth it?', pick: 'Spend the remaining 20 on a mock academy room first, then decide. A straight-on object sheet is worth testing too, if the cheap sheet can be made to hold the angle.' },
+  { id: 'q-4-next', text: 'What should the next art test be?', pick: 'One mock academy room with the chosen sources together, in the running game, so the style is judged as a whole rather than prop by prop.' },
+];
+
+const state = {}, chains = {}, timers = {};
+const saveEl = document.getElementById('save');
+const setSave = (t, bad) => { saveEl.textContent = t; saveEl.classList.toggle('bad', !!bad); };
+let db = null;
+
+function save(coll, id) {
+  if (!db) { setSave('Saving isn\'t available in this view.', true); return; }
+  const k = coll + '/' + id, doc = { mark: state[k]?.mark ?? null, note: state[k]?.note ?? '', updatedAt: new Date().toISOString() };
+  setSave('Saving…');
+  chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set(doc)).then(() => setSave('All saved')).catch(() => setSave('Couldn\'t save that. Check your connection and try again.', true));
+}
+function noteBox(coll, id, label) {
+  const t = document.createElement('textarea');
+  t.id = 'note-' + id; t.setAttribute('aria-label', label); t.placeholder = 'Notes';
+  t.addEventListener('input', () => {
+    const k = coll + '/' + id; state[k] = { ...state[k], note: t.value };
+    clearTimeout(timers[k]); timers[k] = setTimeout(() => save(coll, id), 500);
+  });
+  return t;
+}
+
+const host = document.getElementById('sources');
+for (const s of SOURCES) {
+  const el = document.createElement('article');
+  el.className = 'source';
+  el.innerHTML = `<div class="head"><h2></h2><span class="tag"></span></div><img width="1080" height="198"><ul class="facts"></ul><div class="rate"><div class="marks"></div></div>`;
+  el.querySelector('h2').textContent = s.name;
+  el.querySelector('.tag').textContent = s.tag;
+  const img = el.querySelector('img'); img.src = 'img/' + s.img; img.alt = s.name + ' props on the game floor beside a wizard';
+  for (const f of s.facts) { const li = document.createElement('li'); li.textContent = f; el.querySelector('.facts').append(li); }
+  const marks = el.querySelector('.marks');
+  for (const m of ['keep', 'maybe', 'cut']) {
+    const b = document.createElement('button');
+    b.textContent = m; b.dataset.mark = m; b.dataset.id = s.id; b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => {
+      const k = 'ratings/' + s.id, on = state[k]?.mark === m;
+      state[k] = { ...state[k], mark: on ? null : m };
+      paint(); save('ratings', s.id);
+    });
+    marks.append(b);
+  }
+  el.querySelector('.rate').append(noteBox('ratings', s.id, 'Notes on ' + s.name));
+  if (s.raw) {
+    const d = document.createElement('details'), sum = document.createElement('summary'), r = document.createElement('img');
+    sum.textContent = 'See the raw image before cleanup';
+    r.src = 'img/' + s.raw; r.alt = 'Raw ' + s.name + ' output'; r.style.imageRendering = 'auto'; r.loading = 'lazy';
+    d.append(sum, r); el.append(d);
+  }
+  host.append(el);
+}
+const qHost = document.getElementById('questions');
+for (const q of QUESTIONS) {
+  const el = document.createElement('div');
+  el.className = 'q';
+  const h = document.createElement('h3'); h.textContent = q.text; h.style.fontFamily = 'var(--body)'; h.style.fontWeight = '700';
+  const p = document.createElement('p'); p.innerHTML = '<span class="pick">My pick:</span> '; p.append(q.pick);
+  el.append(h, p, noteBox('answers', q.id, q.text));
+  qHost.append(el);
+}
+function paint() {
+  for (const b of document.querySelectorAll('button[data-mark]')) b.setAttribute('aria-pressed', String(state['ratings/' + b.dataset.id]?.mark === b.dataset.mark));
+}
+function fill(coll, snap) {
+  for (const d of snap.docs) {
+    const data = d.data() ?? {}, k = coll + '/' + d.id;
+    state[k] = { ...state[k], ...data };
+    const t = document.getElementById('note-' + d.id);
+    if (t && document.activeElement !== t) t.value = data.note ?? '';
+  }
+  paint();
+}
+(async () => {
+  const stop = setTimeout(() => setSave('Couldn\'t load your ratings. Reload to try again.', true), 10000);
+  try {
+    db = await window.claude?.use?.('db');
+    if (!db) { clearTimeout(stop); setSave('Saving isn\'t available in this view.', true); return; }
+    let first = 2;
+    for (const coll of ['ratings', 'answers']) db.collection(coll).onSnapshot((snap) => { fill(coll, snap); if (--first === 0) { clearTimeout(stop); setSave('All saved'); } }, () => { clearTimeout(stop); setSave('Couldn’t load your ratings. Reload to try again.', true); });
+  } catch { clearTimeout(stop); setSave('Couldn\'t load your ratings. Reload to try again.', true); }
+})();
+</script>

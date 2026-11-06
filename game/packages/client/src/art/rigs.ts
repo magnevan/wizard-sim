@@ -46,6 +46,12 @@ export interface RigState {
   flash: number;
   /** Brute arm poses (-1 = none) and the archer's draw. */
   punch: number; smash: number; draw: number;
+  /**
+   * An enemy's attack (art/enemy-attacks.ts): -1 none; 0..0.5 the wind-up (the telegraph pose builds
+   * to 0.5), 0.5..0.6 the blow landing, 0.6 the strike held, 0.6..1 the recovery back to rest.
+   * The grabber's dash is 0.6. hold: the grabber has a wizard in its claws (1 / 2: the squeeze frames).
+   */
+  atk: number; hold: number;
   // Deaths only (art/deaths.ts paints these states uncached each frame; the view's cached states
   // never set them, so the frame cache key leaves them out):
   /** Tint every colour toward `tint` by tintK (a char, a scald flush). */
@@ -68,7 +74,7 @@ export interface RigState {
 
 export const newRigState = (): RigState => ({
   kind: 'goblin', pal: 0, variant: 0, seed: 0, face: 0, spd: 0, ph: 0, idle: 0, vx: 0, vy: 0, prep: 0, cast: 0, sq: 0, dead: 0,
-  burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0,
+  burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0, atk: -1, hold: 0,
   tint: null, tintK: 0, outline: null, eyeCol: null, eyesShut: 0, fallSide: 0, flashCol: null, bare: 0, crown: 1, alpha: 1,
 });
 
@@ -265,48 +271,129 @@ function drawWizard(s: RigState): void {
 // ======================================================================
 // Goblin (and archer)
 // ======================================================================
+/**
+ * An attack's blend weights from s.atk (see RigState): wW the wind-up pose, wS the strike pose.
+ * The wind-up builds over the whole telegraph, the blow lands in one step, the recovery eases out.
+ */
+export function atkWeights(k: number): [number, number] {
+  if (k < 0) return [0, 0];
+  if (k < 0.5) return [smooth(k / 0.5), 0];
+  if (k < 0.6) { const q = (k - 0.5) / 0.1; return [1 - q, q]; }
+  return [0, 1 - smooth(clamp((k - 0.6) / 0.4, 0, 1))];
+}
+const blend = (a: V3, w: V3, sk: V3, wW: number, wS: number): V3 => [0, 1, 2].map((i) => a[i] + (w[i] - a[i]) * wW + (sk[i] - a[i]) * wS) as V3;
+const add = (a: V3, b: V3, k = 1): V3 => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
+
 function drawGoblin(s: RigState, archer: boolean): void {
-  const pal = GOB[s.pal % GOB.length], T = tinter(s), { cs, sn, kx, P } = frame(s);
-  const walk = Math.min(1.2, s.spd), dead = s.dead;
-  const bob = Math.abs(Math.sin(s.ph)) * 1.4 * walk + Math.sin(s.idle * 1.3) * 0.3 * (1 - walk);
+  const pal = GOB[s.pal % GOB.length], T = tinter(s), { cs, sn, kx, P: P0 } = frame(s);
+  const walk = Math.min(1.2, s.spd), dead = s.dead, v = s.variant;
+  const [wW, wS] = archer ? [0, 0] : atkWeights(s.atk);
+  // the attack leans the body: back while it winds up (the coil), forward into the blow
+  const imp = v === 3, grabber = v === 4, guardV = v === 5;
+  const leanW = grabber ? -0.16 : imp ? -0.16 : guardV ? -0.12 : -0.1, leanS = grabber ? (s.hold ? 0.08 : 0.3) : 0.2;
+  const lean = leanW * wW + leanS * wS, lunge = (grabber ? 2.5 : guardV ? 1.5 : 1) * wS;
+  const P: Proj = (f, r, u) => P0(f + lunge + lean * Math.max(0, u - 2), r, u);
+  const bob = Math.abs(Math.sin(s.ph)) * 1.4 * walk + Math.sin(s.idle * 1.3) * 0.3 * (1 - walk) - (grabber ? wW * 1.2 : 0);
   const st = Math.sin(s.ph) * 2.6 * walk, lift = (k: number) => Math.max(0, Math.cos(s.ph + k)) * 1.8 * walk;
   for (const side of [-1, 1]) {
-    const k = side < 0 ? 0 : Math.PI, f = P(side * st * -1, side * 1.7, lift(k)), hip = P(0, side * 1.6, 4 + bob);
+    // feet: a wide stance in the wind-up, the front foot stepping into the blow
+    const spread = 1.7 + (wW + wS) * 0.6, stepF = side < 0 ? wS * 1.5 - wW * 0.6 : -wS * 0.8 + wW * 0.4;
+    const k = side < 0 ? 0 : Math.PI, f = P0(side * st * -1 + stepF + lunge * 0.5, side * spread, lift(k)), hip = P(0, side * 1.6, 4 + bob);
     X.line(sc, hip[0], hip[1], f[0], f[1], T(pal.deep));
     X.rect(sc, f[0] - 1, f[1], 2, 1, '#2a2018');
   }
+  // the archer's draw, and after the release its string snapping (atk 0.6..1: it shudders and settles)
   const draw = s.draw;
+  const snap = archer && s.atk >= 0.6 ? [1.4, -0.8, 0.5, 0][Math.min(3, Math.floor((s.atk - 0.6) / 0.1))] : 0;
+  const recoil = archer && s.atk >= 0.6 && s.atk < 0.75 ? -0.8 : 0;
   const arm = (side: number, h: V3) => { const sh = P(0, side * 3.1, 8.4 + bob), hp = P(...h); X.line(sc, sh[0], sh[1], hp[0], hp[1], T(pal.dark)); X.px(sc, hp[0], hp[1], T(pal.main)); };
   // the grabber reaches forward with both long arms; the shieldbearer holds its shield out front
-  const reach = s.variant === 4 ? 1 : 0, guard = s.variant === 5 ? 1 : 0;
-  const hL: V3 = archer ? [4.6, -0.8, 9 + bob] : reach ? [6.5 + draw * 2, -3, 6 + bob] : guard ? [4.2, -2.2, 6 + bob] : [1 + st * 0.5, -4.2, 5 + bob];
-  const hR: V3 = archer ? [4.2 - draw * 3.6, 0.6, 9.4 + bob] : reach ? [6.5 + draw * 2, 3, 6 + bob] : [1 - st * 0.5, 4.2, 5 + bob];
+  const reach = grabber ? 1 : 0, guard = guardV ? 1 : 0;
+  let hL: V3, hR: V3;
+  if (archer) { hL = [4.6 + recoil, -0.8, 9 + bob]; hR = [4.2 - draw * 3.6, 0.6, 9.4 + bob]; }
+  else if (reach) {
+    // coil: arms flung back and wide, claws up; dash: both arms thrown forward; hold: clamped shut
+    const sq = s.hold === 2 ? 0.5 : 0;
+    const idle = (side: number): V3 => [6.5 + draw * 2, side * 3, 6 + bob];
+    const W = (side: number): V3 => [1.2, side * 5.6, 10 + bob];
+    const S = (side: number): V3 => s.hold ? [7.2, side * (1.5 - sq), 6.5 + bob] : [9.5, side * 2.6, 7 + bob];
+    hL = blend(idle(-1), W(-1), S(-1), wW, s.hold ? 1 : wS); hR = blend(idle(1), W(1), S(1), wW, s.hold ? 1 : wS);
+  } else if (guard) {
+    hL = blend([4.2, -2.2, 6 + bob], [2.6, -2.2, 6 + bob], [5.6, -2.2, 7 + bob], wW, wS);
+    hR = blend([1 - st * 0.5, 4.2, 5 + bob], [-0.5, 4.2, 6 + bob], [1.5, 3.6, 6 + bob], wW, wS);
+  } else if (imp) {
+    // fire-spit: claws cupped at the glowing mouth, then flung forward as it spits
+    hL = blend([1 + st * 0.5, -4.2, 5 + bob], [3.2, -1.9, 10 + bob], [6, -2.6, 8 + bob], wW, wS);
+    hR = blend([1 - st * 0.5, 4.2, 5 + bob], [3.2, 1.9, 10 + bob], [6, 2.6, 8 + bob], wW, wS);
+  } else {
+    // goblins: the weapon hand draws back for the whole wind-up, then the blow lands; the off hand counters
+    const W: V3 = v === 0 ? [-1.6, 3.4, 11 + bob] : v === 1 ? [-1.8, 3.8, 7 + bob] : [-1.2, 3, 7 + bob];
+    const S: V3 = v === 0 ? [5.2, 1.6, 4.5 + bob] : v === 1 ? [6.4, 1.2, 6.5 + bob] : [5, 1.6, 7 + bob];
+    hR = blend([1 - st * 0.5, 4.2, 5 + bob], W, S, wW, wS);
+    hL = blend([1 + st * 0.5, -4.2, 5 + bob], [3, -3.6, 7 + bob], [-1.2, -4.2, 6 + bob], wW, wS);
+  }
   const weapon = () => {
     const hp = P(...hR);
     if (s.bare) return;
     if (archer) {
-      const top = P(4.4, -0.8, 14.2 + bob), mid = P(6.0, -0.8, 9 + bob), bot = P(4.4, -0.8, 3.8 + bob), pull = P(4.4 - draw * 3.4, -0.8, 9 + bob);
+      const top = P(4.4 + recoil, -0.8, 14.2 + bob), mid = P(6.0 + recoil, -0.8, 9 + bob), bot = P(4.4 + recoil, -0.8, 3.8 + bob), pull = P(4.4 + recoil - draw * 3.4 + snap, -0.8, 9 + bob);
       X.lines(sc, [[top[0], top[1]], [mid[0], mid[1]], [bot[0], bot[1]]], '#b8844a');
       X.px(sc, top[0], top[1], '#d8a868'); X.px(sc, bot[0], bot[1], '#d8a868');
-      X.line(sc, top[0], top[1], pull[0], pull[1], '#d0d0dc'); X.line(sc, pull[0], pull[1], bot[0], bot[1], '#d0d0dc');
-      if (draw > 0.05) { const tipA = P(8.6 - draw * 1.2, -0.8, 9 + bob); X.line(sc, pull[0], pull[1], tipA[0], tipA[1], '#e8d8b0'); X.px(sc, tipA[0], tipA[1], '#c0cbdc'); }
-      return;
-    }
-    if (s.variant === 4) { for (const h of [hL, hR]) { const p = P(...h); X.px(sc, p[0] + 1, p[1], '#e8e0c8'); X.px(sc, p[0] + 1, p[1] + 1, '#e8e0c8'); } return; }
-    if (s.variant === 3) return; // the imp fights with its claws
-    if (s.variant === 5) {
-      // a tall wooden shield with an iron rim and boss, held out in front
-      const c0 = P(4.6, -3.6, 1.5 + bob), c1 = P(4.6, 3.6, 1.5 + bob), c2 = P(4.6, 3.6, 12 + bob), c3 = P(4.6, -3.6, 12 + bob);
-      if (P(5, 0, 6)[2] > -0.5) {
-        X.poly(sc, [[c0[0], c0[1]], [c1[0], c1[1]], [c2[0], c2[1]], [c3[0], c3[1]]], T('#6a4a2c'));
-        X.lines(sc, [[c0[0], c0[1]], [c1[0], c1[1]], [c2[0], c2[1]], [c3[0], c3[1]], [c0[0], c0[1]]], T('#8a8e98'));
-        const m = P(4.8, 0, 6.5 + bob); X.rect(sc, m[0] - 1, m[1] - 1, 2, 2, '#c8ccd8'); X.px(sc, m[0] - 1, m[1] - 1, '#ffffff');
+      const strCol = snap ? '#ffffff' : '#d0d0dc';
+      X.line(sc, top[0], top[1], pull[0], pull[1], strCol); X.line(sc, pull[0], pull[1], bot[0], bot[1], strCol);
+      if (draw > 0.05) {
+        // the arrow nocked; once the aim locks (the dodge window) its head glows in the bolt's colour
+        const tipA = P(8.6 - draw * 1.2, -0.8, 9 + bob); X.line(sc, pull[0], pull[1], tipA[0], tipA[1], '#e8d8b0');
+        const locked = s.atk >= 0.275;
+        X.px(locked ? se : sc, tipA[0], tipA[1], locked ? '#ff6ab0' : '#c0cbdc');
+        if (locked) { X.px(se, tipA[0] + 1, tipA[1], '#ffc0e0'); X.px(sc, pull[0], pull[1], '#e8d8b0'); }
       }
       return;
     }
-    if (s.variant === 1) { const tp = P(hR[0] + 3.5, hR[1], hR[2] + 1.5); X.line(sc, hp[0], hp[1], tp[0], tp[1], '#c8ccd8'); X.px(sc, tp[0], tp[1], '#ffffff'); return; }
-    if (s.variant === 2) { const a = P(hR[0] - 3, hR[1] + 0.5, hR[2] - 4), b = P(hR[0] + 2, hR[1] + 0.5, hR[2] + 12); X.line(sc, a[0], a[1], b[0], b[1], '#8a6a48'); X.rect(sc, b[0] - 0.5, b[1] - 2, 2, 3, '#c8ccd8'); return; }
-    const top = P(hR[0] + 1.2, hR[1] + 0.8, hR[2] + 7);
+    if (reach) {
+      // claws: splayed while it coils and dashes, closed on a held wizard
+      for (const h of [hL, hR]) {
+        const p = P(...h);
+        if (s.hold) { X.px(sc, p[0] + 1, p[1], '#e8e0c8'); X.px(sc, p[0], p[1] + 1, '#e8e0c8'); continue; }
+        X.px(sc, p[0] + 1, p[1], '#e8e0c8'); X.px(sc, p[0] + 1, p[1] + 1, '#e8e0c8');
+        if (wW > 0.3 || wS > 0.3) { X.px(sc, p[0], p[1] - 1, '#e8e0c8'); X.px(sc, p[0] + 2, p[1] - 1, '#fffaf0'); }
+      }
+      return;
+    }
+    if (imp) {
+      // claws glowing with the fire it is about to spit
+      if (wW > 0.2 || wS > 0.2) for (const h of [hL, hR]) { const p = P(...h); X.px(se, p[0], p[1] - 1, wW > 0.7 || wS > 0.5 ? '#ffd860' : '#ff9a30'); }
+      return;
+    }
+    if (guard) {
+      // a tall wooden shield with an iron rim and boss, held out in front (pulled in to wind up, shoved out to bash)
+      const sf = hL[0] + 0.4, su = hL[2] - 6 - bob;
+      const c0 = P(sf, -3.6, 1.5 + su + bob), c1 = P(sf, 3.6, 1.5 + su + bob), c2 = P(sf, 3.6, 12 + su + bob), c3 = P(sf, -3.6, 12 + su + bob);
+      if (P0(5, 0, 6)[2] > -0.5) {
+        X.poly(sc, [[c0[0], c0[1]], [c1[0], c1[1]], [c2[0], c2[1]], [c3[0], c3[1]]], T('#6a4a2c'));
+        X.lines(sc, [[c0[0], c0[1]], [c1[0], c1[1]], [c2[0], c2[1]], [c3[0], c3[1]], [c0[0], c0[1]]], T(wS > 0.5 ? '#c8ccd8' : '#8a8e98'));
+        const m = P(sf + 0.2, 0, 6.5 + su + bob); X.rect(sc, m[0] - 1, m[1] - 1, 2, 2, '#c8ccd8'); X.px(wS > 0.5 ? se : sc, m[0] - 1, m[1] - 1, '#ffffff');
+      }
+      return;
+    }
+    if (v === 1) {
+      // a dagger: always pointing at the target, drawn back and stabbed out
+      const tp = add(hR, [3.5, 0, 1.5 * (1 - wS) + 0.3 * wS]), t2 = P(...tp);
+      X.line(sc, hp[0], hp[1], t2[0], t2[1], '#c8ccd8'); X.px(wS > 0.5 ? se : sc, t2[0], t2[1], '#ffffff');
+      return;
+    }
+    if (v === 2) {
+      // a spear: upright at rest, levelled at the target for the thrust
+      const lv = Math.max(wW, wS), dir: V3 = [1, -0.12, 0.04];
+      const a = blend(add(hR, [-3, 0.5, -4]), add(hR, dir, -5), add(hR, dir, -5), lv, 0), b = blend(add(hR, [2, 0.5, 12]), add(hR, dir, 11), add(hR, dir, 11), lv, 0);
+      const pa = P(...a), pb = P(...b);
+      X.line(sc, pa[0], pa[1], pb[0], pb[1], '#8a6a48'); X.rect(sc, pb[0] - 0.5, pb[1] - (lv > 0.5 ? 1 : 2), 2, lv > 0.5 ? 2 : 3, '#c8ccd8');
+      if (wS > 0.5) X.px(se, pb[0] + (cs > 0 ? 1 : -1), pb[1], '#ffffff');
+      return;
+    }
+    // a club: raised over the shoulder for the wind-up, brought down in front for the blow
+    const dir = blend([0.17, 0.11, 1], [-0.55, 0.1, 0.83], [0.95, -0.15, -0.25], wW, wS), dl = Math.hypot(...dir) || 1;
+    const top = P(...add(hR, dir, 7 / dl));
     X.line(sc, hp[0], hp[1], top[0], top[1], '#7a5234', 2); X.rect(sc, top[0] - 1, top[1] - 1, 3, 3, '#5a3a24'); X.px(sc, top[0] - 1, top[1] - 1, '#9a6a44');
   };
   const dL = P(...hL)[2], dR = P(...hR)[2];
@@ -325,7 +412,7 @@ function drawGoblin(s: RigState, archer: boolean): void {
     const a = P(0, side * 3.2, 12.4 + bob), b = P(-1.6, side * 7.6, 14.2 + bob), c2 = P(0.4, side * 3.2, 10.6 + bob);
     X.poly(sc, [[a[0], a[1]], [b[0], b[1]], [c2[0], c2[1]]], T(pal.main)); X.px(sc, (a[0] * 2 + b[0]) / 3, (a[1] * 2 + b[1]) / 3 + 0.5, T('#c87a6a'));
   };
-  const earBack = P(0, -6, 13)[2] < P(0, 6, 13)[2] ? -1 : 1;
+  const earBack = P0(0, -6, 13)[2] < P0(0, 6, 13)[2] ? -1 : 1;
   ear(earBack);
   X.ellipse(sc, head[0], head[1], 3.9 * kx, 3.1, T(pal.main));
   X.rect(sc, head[0] - 2, head[1] - 3, 3, 1, T(pal.light));
@@ -333,15 +420,24 @@ function drawGoblin(s: RigState, archer: boolean): void {
   if (archer) { X.ellipse(sc, head[0] - cs * 0.6, head[1] - 1.5, 4.2 * kx, 2.2, T('#5a3448')); X.px(sc, head[0] - 2, head[1] - 3, T('#7a4a5a')); }
   if (sn > -0.45) {
     const nose = P(4.1, 0, 11.3 + bob); X.px(sc, nose[0], nose[1], T(pal.dark));
-    const m = P(3.4, 0, 9.9 + bob); X.px(sc, m[0], m[1], '#2a1a1a'); if (sn > 0.3) X.px(sc, m[0] + 1, m[1], '#f0f0e0');
-    for (const r of [-1.4, 1.4]) if (visible(sn, cs, 3, r)) { const e = P(3.1, r, 12.2 + bob), shut = dead > 0.3 || s.eyesShut; X.px(shut ? sc : se, e[0], e[1], shut ? '#1a1420' : s.eyeCol ?? '#ffe040'); }
+    const m = P(3.4, 0, 9.9 + bob);
+    // the mouth: a snarl as the blow lands; the imp's glows as it winds up its spit and flares as it spits
+    const glowing = imp && (wW > 0.2 || wS > 0.2);
+    if (glowing) {
+      const hot = wW > 0.7 || wS > 0.5;
+      X.px(se, m[0], m[1], hot ? '#fff4c0' : '#ffd860'); X.px(se, m[0] + 1, m[1], hot ? '#ffd860' : '#ff9a30');
+      if (hot) { X.px(se, m[0], m[1] + 1, '#ff9a30'); X.px(se, m[0] - 1, m[1], '#ff5a20'); }
+    } else {
+      X.px(sc, m[0], m[1], '#2a1a1a'); if (sn > 0.3 || wS > 0.5) X.px(sc, m[0] + 1, m[1], '#f0f0e0');
+    }
+    for (const r of [-1.4, 1.4]) if (visible(sn, cs, 3, r)) { const e = P(3.1, r, 12.2 + bob), shut = dead > 0.3 || s.eyesShut; X.px(shut ? sc : se, e[0], e[1], shut ? '#1a1420' : s.eyeCol ?? (wW > 0.6 && !archer ? '#fff4c0' : '#ffe040')); }
   }
   ear(-earBack);
-  if (s.variant === 3) {
-    // the imp: two small horns and a flicker of flame on its crown (emissive: it glows)
+  if (imp) {
+    // the imp: two small horns and a flicker of flame on its crown (emissive: it glows); it flares up as it winds up
     for (const r of [-1.6, 1.6]) { const a = P(0.4, r, 14 + bob), b = P(-0.2, r * 1.3, 16.5 + bob); X.line(sc, a[0], a[1], b[0], b[1], '#2a1410'); }
     const cr = P(0, 0, 15.5 + bob);
-    if (s.crown > 0.66) { X.px(se, cr[0], cr[1] - 1, '#ffd860'); X.px(se, cr[0] - 1, cr[1], '#ff9a30'); X.px(se, cr[0] + 1, cr[1], '#ff5a20'); }
+    if (s.crown > 0.66) { X.px(se, cr[0], cr[1] - 1, '#ffd860'); X.px(se, cr[0] - 1, cr[1], '#ff9a30'); X.px(se, cr[0] + 1, cr[1], '#ff5a20'); if (wW > 0.5) { X.px(se, cr[0], cr[1] - 2, '#fff4c0'); X.px(se, cr[0], cr[1] - 1, '#fff4c0'); } }
     else if (s.crown > 0.25) X.px(se, cr[0], cr[1], '#ff5a20');
   }
   if (dL >= -0.3) arm(-1, hL);
@@ -356,7 +452,10 @@ function drawGoblin(s: RigState, archer: boolean): void {
 // Brute
 // ======================================================================
 function drawBrute(s: RigState): void {
-  const pal = BRUTE, T = tinter(s), { cs, sn, kx, P } = frame(s);
+  const pal = BRUTE, T = tinter(s), { cs, sn, kx, P: P0 } = frame(s);
+  // the slam leans the whole body: rearing back under the raised fists, then folding over the blow
+  const [sW, sS] = atkWeights(s.smash), lean = -0.08 * sW + 0.16 * sS;
+  const P: Proj = (f, r, u) => P0(f + lean * Math.max(0, u - 4), r, u);
   const walk = Math.min(1, s.spd);
   const bob = Math.abs(Math.sin(s.ph)) * 1.8 * walk + Math.sin(s.idle * 0.8) * 0.5 * (1 - walk);
   const st = Math.sin(s.ph) * 3.6 * walk, lift = (k: number) => Math.max(0, Math.cos(s.ph + k)) * 2.4 * walk;

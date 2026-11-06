@@ -14,7 +14,7 @@
  * Pure integer maths on the tick, so a given --ms shows the same moment.
  */
 import { rules, type Element } from '@wizard-sim/rules';
-import { AIM_UNIT, ARCH, BTN, EL, PHASE_ENC, PU, chooseElement, devSpawnEnemy, elementId, grant, quantize, raiseAltars, type PlayerInput, type World } from '@wizard-sim/sim';
+import { AI, AIM_UNIT, ARCH, ARCHETYPES, BTN, KIND, MAX_SEATS, EL, PHASE_ENC, PU, chooseElement, devSpawnEnemy, elementId, grant, quantize, raiseAltars, type PlayerInput, type World } from '@wizard-sim/sim';
 
 /**
  * ?room=survive&scene=rally (with the headless loop, e.g. the screenshot script): mid-wave, P2 is
@@ -44,6 +44,58 @@ export function threeScene(w: World): void {
   raiseAltars(w);
   w.run.picked[0] = 0; grant(w, 0, PU.three); chooseElement(w, 0, EL.fire);
   w.seats.runes[EL.cold - 1] = 0.3; w.seats.runes[EL.earth - 1] = 1.4; w.seats.runes[EL.life - 1] = 0.8;
+}
+
+/**
+ * ?scene=enemyattacks (with a headless loop, e.g. the screenshot script): every enemy in a row,
+ * frozen at one beat of its attack, the sim not stepping. &phase= picks the beat:
+ *   wind (default: 75% through the wind-up, the telegraph pose), strike (the blow just landed: smears,
+ *   flames, sparks), impact (a few ticks later), recover (halfway back to rest), loop (each one
+ *   cycles wind-up, strike, recovery on real time, out of step with the others).
+ * &face= the facing in turns (0 = east, 0.25 = toward the camera; default 0.06).
+ * Seat 0 is the grabber's victim (held, from strike on); seat 1 stands in the middle.
+ * The view reads ai / aiT / lockX / lockY / holding exactly as in play (art/enemy-attacks.ts).
+ */
+const SCENE_ROW: [number, number, number][] = [
+  [ARCH.swarmer, -4.6, -3.4], [ARCH.brute, -0.6, -3.6], [ARCH.shieldbearer, 4.4, -3.4],
+  [ARCH.caster, -5, 0], [ARCH.imp, -1, 0], [ARCH.grabber, 2.4, 0],
+];
+let sceneBuilt = false;
+export function enemyAttackScene(w: World, phase: string, face: number, now: number): void {
+  const b = w.bodies;
+  if (!sceneBuilt) {
+    sceneBuilt = true;
+    for (let i = MAX_SEATS; i < b.kind.length; i++) b.kind[i] = KIND.none;
+    for (const [arch, x, y] of SCENE_ROW) {
+      // three goblins (club, dagger, spear: the variant is the slot's index mod 3)
+      if (arch === ARCH.swarmer) { devSpawnEnemy(w, arch, x - 1.4, y + 0.4); devSpawnEnemy(w, arch, x + 0.6, y - 1.2); devSpawnEnemy(w, arch, x + 0.8, y + 1.3); }
+      else devSpawnEnemy(w, arch, x, y);
+    }
+    b.x[1] = -8; b.y[1] = -1.6; b.face[1] = 0.25;
+  }
+  for (let i = MAX_SEATS; i < b.kind.length; i++) {
+    if (b.kind[i] !== KIND.enemy) continue;
+    const a = ARCHETYPES[b.arch[i]], W = Math.round(a.windup * 60);
+    b.face[i] = face; b.target[i] = 1;
+    const reach = a.slamRadius ? 2.6 : a.bolt ? 8 : a.grab ? 2.5 : 1;
+    b.lockX[i] = b.x[i] + Math.cos(face * 6.283185307179586) * reach; b.lockY[i] = b.y[i] + Math.sin(face * 6.283185307179586) * reach;
+    // which beat: a tick count into the cycle (the wind-up, then the cooldown from the strike, then a rest)
+    const cyc = W + 90 + 40;
+    const tk = phase === 'loop' ? Math.floor((now * 60) / 1000 + i * 23) % cyc : phase === 'strike' ? W : phase === 'impact' ? W + 5 : phase === 'recover' ? W + 24 : Math.round(W * 0.75);
+    const grabber = b.arch[i] === ARCH.grabber;
+    if (grabber && b.holding[i] >= 0) { b.heldBy[b.holding[i]] = -1; b.holding[i] = -1; }
+    if (tk < W) { b.ai[i] = AI.windup; b.aiT[i] = tk; }
+    else if (grabber && tk < W + 70) {
+      // the grabber: the dash, then the hold (seat 0 in its claws, the timer ring closing)
+      if (phase === 'strike' || (phase === 'loop' && tk < W + 12)) { b.ai[i] = AI.dash; b.aiT[i] = tk - W; }
+      else { b.ai[i] = AI.grab; b.aiT[i] = phase === 'loop' ? (tk - W - 12) * 3 : 80; b.holding[i] = 0; b.heldBy[0] = i; }
+    } else if (tk < W + 90) { b.ai[i] = AI.cooldown; b.aiT[i] = tk - W; }
+    else { b.ai[i] = AI.approach; b.aiT[i] = 0; }
+    if (grabber) {
+      const held = b.holding[i] >= 0;
+      b.x[0] = held ? b.x[i] + 0.95 : b.x[i] + 2.6; b.y[0] = b.y[i]; b.face[0] = 0.5;
+    }
+  }
 }
 
 export interface Demo { els: number[]; cast: string; at?: [number, number]; seq?: Demo[] }

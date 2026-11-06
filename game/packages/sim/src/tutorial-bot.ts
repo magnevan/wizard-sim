@@ -1,7 +1,8 @@
 /**
  * A pilot that plays the tutorial through, beat by beat, as a new player is asked to: it walks the
  * stones, strikes the straw, shoves the sack with a Heavy, steps out of the slam, parries a bolt,
- * burns the hedge, douses itself and steams the wet goblins, then takes an arch on the end card.
+ * sweeps the goblins round it, burns the hedge, douses itself and steams the wet goblins, then takes
+ * an arch on the end card.
  * Tests run it to the end, and headless screenshots use it (?room=tutorial&autoplay=1) to show
  * each beat being played. Pure and deterministic: it reads the world and its own small memory.
  */
@@ -92,6 +93,14 @@ export function tutorialBotInput(w: World, s: number, m: TutorialBotMemory): Pla
       // a bolt about to land: raise the buckler now, so it lands while a parry still counts
       const mm = w.missiles;
       for (let j = 0; j < mm.alive.length; j++) if (mm.alive[j] && mm.owner[j] === e && d2(mm.x[j], mm.y[j], x, y) < 1.25) { plan([], BTN.self, 14, 20); break; }
+      break;
+    }
+    case TUT_BEAT.hands: {
+      // let them close in, then Sweep (Shift+RMB: a tap of Area with nothing queued)
+      const e = nearest(w, s, TAG.goblin);
+      if (e < 0) break;
+      aim(b.x[e], b.y[e]);
+      if (walk(b.x[e], b.y[e], 1.0) <= 1.3 && !busy() && idle) plan([], BTN.area, 1, 30);
       break;
     }
     case TUT_BEAT.fire: {

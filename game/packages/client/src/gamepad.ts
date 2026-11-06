@@ -9,7 +9,7 @@
  *   RT Force (hold to channel or charge). LT Area (tap) or Place (hold). RB Self. LB + RT Weapon.
  *   Back clears the queue. Start (Options) opens the Esc menu (menu.ts).
  *   D-pad up opens the help panel for this pad's seat (help-panel.ts).
- *   Any button on an unseated pad joins the next free seat.
+ *   Any button but Start, freshly pressed on an unseated pad, joins the next free seat.
  */
 import { AIM_UNIT, BTN, elementId, quantize, type PlayerInput } from '@wizard-sim/sim';
 import type { Element } from '@wizard-sim/rules';
@@ -60,8 +60,6 @@ export function padStep(mem: PadMemory, cur: PadState): PlayerInput {
   return quantize({ buttons, press0: presses[0] ?? 0, press1: presses[1] ?? 0, moveX: mx * 127, moveY: my * 127, aimX: mem.aimX / AIM_UNIT, aimY: mem.aimY / AIM_UNIT });
 }
 
-export const anyPressed = (p: PadState | null): boolean => !!p && p.buttons.some(Boolean);
-
 /** Snapshot navigator.getGamepads()[i] (null when unplugged). */
 export function readPad(i: number): PadState | null {
   const g = navigator.getGamepads?.()[i];
@@ -79,15 +77,18 @@ export class PadSeats {
   private padOf = new Map<number, number>();
   private mem = new Map<number, PadMemory>();
   private joining = new Set<number>();
+  /** Unseated pads' last seen state: a join takes a fresh press, not a button still held from the menu. */
+  private seen: (PadState | null)[] = [null, null, null, null];
 
   constructor(private readonly read: (i: number) => PadState | null = readPad) {}
 
-  /** Call once per tick: seats a pad that pressed something, if a seat is free. */
+  /** Call once per tick: seats a pad that pressed something (not Start: that's the menu), if a seat is free. */
   poll(activeSeats: (seat: number) => boolean): void {
     for (let pad = 0; pad < 4; pad++) {
       if ([...this.padOf.values()].includes(pad)) continue;
-      const st = this.read(pad);
-      if (!anyPressed(st)) continue;
+      const st = this.read(pad), prev = this.seen[pad];
+      this.seen[pad] = st;
+      if (!st || !st.buttons.some((on, b) => on && b !== PAD.START && !prev?.buttons[b])) continue;
       for (let seat = 1; seat < 4; seat++) {
         if (activeSeats(seat) || this.padOf.has(seat)) continue;
         this.padOf.set(seat, pad);
@@ -100,9 +101,10 @@ export class PadSeats {
 
   has(seat: number): boolean { return this.padOf.has(seat); }
 
-  /** Take each seated pad's current state as already seen (after the menu: its A press doesn't also cast). */
+  /** Take every pad's current state as already seen (after the menu: its A press doesn't also cast, or join). */
   resync(): void {
     for (const [seat, pad] of this.padOf) { const m = this.mem.get(seat); if (m) m.prev = this.read(pad) ?? { buttons: [], axes: [] }; }
+    for (let pad = 0; pad < 4; pad++) this.seen[pad] = this.read(pad);
   }
   /** The seat pad index `pad` plays, or -1 (the help panel opens for that seat). */
   seatOfPad(pad: number): number {

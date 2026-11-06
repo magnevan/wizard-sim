@@ -30,11 +30,7 @@ import { helpPadPresses } from './menu-nav';
 import type { PadSeats } from './gamepad';
 import type { WorldView } from './view';
 
-// a few signs the help text needs that the 3x5 font lacks
-Object.assign(X.FONT, {
-  '?': '110001010000010', "'": '010010000000000', ';': '000010000010100', '"': '101101000000000', '=': '000111000111000', '>': '100010001010100', '<': '001010100010001',
-});
-const clean = (s: string): string => s.toUpperCase().replace(/[‘’]/g, "'").replace(/[–—]/g, '-').split('').map((ch) => (X.FONT[ch] ? ch : ' ')).join('');
+const clean = X.fontText;
 
 /** Panel width in its art px, and the preview box's width. */
 const PW = 184, BOX_W = 64;

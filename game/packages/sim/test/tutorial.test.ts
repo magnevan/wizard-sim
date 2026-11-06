@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BTN, EL, KIND, NO_INPUT, N_EL, TUT_BEAT, TUT_END, TUT_ORDER, TUT_PLACES, TUT_STATE as TS, TUT_TAG, T,
-  buffers, createWorld, hashWorld, newTutorialBot, quantize, restore, runeMax, scriptedReplay, runReplay, hex, snapshot, step, tutorialBotInput,
+  buffers, createWorld, hashWorld, newTutorialBot, quantize, restore, runeMax, scriptedReplay, runReplay, hex, snapshot, spawnBody, step, tutorialBotInput,
   type PlayerInput, type World,
 } from '../src';
 import golden from './golden.json';
@@ -120,6 +120,39 @@ describe('tutorial', () => {
     idle(w, 60, { ...aim, buttons: BTN.force });
     idle(w, 120, aim);
     expect(b.kind[e]).toBe(KIND.none);
+  });
+
+  it('a new beat starts everyone fresh: no blessing, dash, Phase or Retreat cooldown carried over', () => {
+    const w = createWorld(1, 1, { room: 'tutorial', tutorialBeat: TUT_BEAT.defend });
+    idle(w, 1);
+    const b = w.bodies, s = w.seats;
+    b.blessT[0] = 900; b.bless[0] = 0.5; s.dashT[0] = 900; s.retreatT[0] = 900; s.guardCd[0] = 900; // longer than the walk to the arch
+    w.tut!.state[TS.lit] = 1;
+    b.x[0] = TUT_PLACES.arch[0]; b.y[0] = TUT_PLACES.arch[1];
+    idle(w, T(1));
+    expect(w.tut!.state[TS.beat]).toBe(TUT_BEAT.hands);
+    expect([b.blessT[0], b.bless[0], s.dashT[0], s.retreatT[0], s.guardCd[0]]).toEqual([0, 0, 0, 0, 0]);
+  });
+
+  it('a body spawned into a reused slot carries no tutorial tag', () => {
+    const w = createWorld(1, 1, { room: 'tutorial', tutorialBeat: TUT_BEAT.strike });
+    idle(w, 1);
+    let k = -1;
+    for (let i = 4; i < w.bodies.kind.length; i++) if (w.tut!.tag[i] === TUT_TAG.straw) { k = i; break; }
+    w.bodies.kind[k] = KIND.none; // gone, but its tag stays behind
+    const j = spawnBody(w, -1, KIND.double, 0, 0, 0, 10, 0.4);
+    expect(j).toBe(k);
+    expect(w.tut!.tag[j]).toBe(TUT_TAG.none);
+  });
+
+  it('the hedge stops the gap in the rock: no walking round it', () => {
+    for (const y of [-1.4, -0.7, 0, 0.7, 1.4]) {
+      const w = createWorld(1, 1, { room: 'tutorial', tutorialBeat: TUT_BEAT.fire });
+      idle(w, 1);
+      w.bodies.x[0] = 3; w.bodies.y[0] = y;
+      idle(w, T(3), { moveX: 127, aimX: 32 });
+      expect(w.bodies.x[0], `from y ${y}`).toBeLessThan(TUT_PLACES.rockX);
+    }
   });
 
   it('you faint instead of dying, and the beat starts over when everyone has fainted', () => {

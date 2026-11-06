@@ -163,7 +163,12 @@ export const FONT: Record<string, string> = {
   4: '101101111001001', 5: '111100110001110', 6: '011100110101010', 7: '111001010010010', 8: '010101010101010',
   9: '010101011001110', '+': '000010111010000', '-': '000000111000000', '.': '000000000000010', ' ': '000000000000000',
   '/': '001001010100100', '!': '010010010000010', '×': '000101010101000', ':': '000010000010000', '_': '000000000000111', '(': '001010010010001', ')': '100010010010100', ',': '000000000010100', '%': '101001010100101',
+  '?': '110001010000010', "'": '010010000000000', '`': '100010000000000', '>': '100010001010100', '<': '001010100010001',
+  ';': '000010000010100', '=': '000111000111000', '#': '101111101111101', '"': '101101000000000', '·': '000000010000000',
 };
+/** Upper-cases text for the 3x5 font: curly quotes and dashes to plain ones, an ellipsis to three dots, anything else it lacks to a space. */
+export const fontText = (s: string): string =>
+  [...s.toUpperCase().replace(/[‘’]/g, "'").replace(/[–—]/g, '-').replace(/…/g, '...')].map((ch) => (FONT[ch] ? ch : ' ')).join('');
 /** Draws text in the 3x5 font; returns its width. shadow draws a 1 px outline round it. */
 export function text(c: Ctx, str: string, x: number, y: number, col: string, shadowCol?: string, k = 1): number {
   const s = str.toUpperCase();

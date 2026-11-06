@@ -10,7 +10,8 @@
  * placement preview), holddrag (held while dragging, never let go), guard (Weapon cast, then the button held to block).
  * wait does nothing for a cycle (?spell=shield+earth/place;wait;wait keeps one wall up to watch it break).
  * A target after @ overrides where the seat aims: ?spell=shield+earth/drag@0,-2
- * Your hands, with nothing queued: strike, heavy, special, channel (Special held), retreat, block (?spell=sigil+cold/weapon;heavy).
+ * Your hands, with nothing queued: strike, heavy, special, channel (Special held), retreat, block, on their
+ * own or after a slash (?spell=sigil+cold/weapon;heavy and ?spell=sigil+cold/weapon;/heavy are the same).
  * Pure integer maths on the tick, so a given --ms shows the same moment.
  */
 import { rules, type Element } from '@wizard-sim/rules';
@@ -110,7 +111,8 @@ export function parseDemo(s: string | null): Demo | null {
   return parseOne(s);
 }
 function parseOne(s: string): Demo | null {
-  const [q, c0 = s === 'wait' ? 'wait' : 'force'] = s.split('/');
+  // a bare hands word (wait, heavy, block...) is a cast with nothing queued, as if written /heavy
+  const [q, c0 = HANDS.includes(s.split('@')[0]) ? s : 'force'] = s.split('/');
   const [cast, at] = c0.split('@');
   const xy = at ? at.split(',').map(Number) : null;
   const els = q.split(/[+ ,]/).filter((e) => (rules.BASE as readonly string[]).includes(e)).map((e) => elementId(e as Element));

@@ -46,4 +46,22 @@ describe('PadSeats', () => {
     state = pad();
     expect(seats.sample(1)!.buttons & BTN.join).toBe(0);
   });
+
+  it('Start (the menu button) never seats a pad, and a press made in the menu does not join on closing it', () => {
+    let state: PadState | null = pad([PAD.START]);
+    const seats = new PadSeats((i) => (i === 0 ? state : null));
+    seats.poll(() => false);
+    expect(seats.has(1)).toBe(false);
+    // A held to pick Resume: the menu closes (main.ts calls resync), the button is still down
+    state = pad([PAD.A]);
+    seats.resync();
+    seats.poll(() => false);
+    expect(seats.has(1)).toBe(false);
+    // a fresh press joins
+    state = pad();
+    seats.poll(() => false);
+    state = pad([PAD.B]);
+    seats.poll(() => false);
+    expect(seats.has(1)).toBe(true);
+  });
 });

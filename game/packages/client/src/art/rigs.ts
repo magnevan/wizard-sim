@@ -81,8 +81,8 @@ export const newRigState = (): RigState => ({
 /** Anchor points relative to the feet, in art px: where effects attach. */
 export interface Anchors { tip: [number, number]; chest: [number, number]; head: [number, number]; hands: [number, number][]; charge: [number, number] }
 
-export const HEIGHT: Record<RigKind, number> = { wizard: 23, goblin: 12, archer: 12, brute: 23, dummy: 18, bramble: 11, sack: 12 };
-export const WIDTH: Record<RigKind, number> = { wizard: 6, goblin: 5, archer: 5, brute: 9, dummy: 6, bramble: 8, sack: 5 };
+export const HEIGHT: Record<RigKind, number> = { wizard: 23, goblin: 12, archer: 12, brute: 23, dummy: 18, bramble: 15, sack: 12 };
+export const WIDTH: Record<RigKind, number> = { wizard: 6, goblin: 5, archer: 5, brute: 9, dummy: 6, bramble: 10, sack: 5 };
 
 const SW = 88, SH = 88, AX = 44, AY = 70;
 /** Only this box of the scratch canvases is ever cleared or copied. */
@@ -550,34 +550,56 @@ function drawDummy(s: RigState): void {
 // The tutorial's props: a bramble (only fire clears it) and a straw sack to shove
 // ======================================================================
 const THORN = { stem: '#4a2e1c', stemL: '#74502e', leaf: '#3a6428', leafL: '#5e8a32', leafD: '#203c18', thorn: '#e4d6aa', berry: '#c02a40' };
-/** A thornbush: a dark leafy mound with thorny canes arching out of it. variant 1 is the thick one. */
+/**
+ * A thornbush: a lumpy mound of leaf clumps, wider than tall, with long thorny canes arching up and
+ * out past its edge, so the silhouette bristles. variant 1 is the thick one.
+ */
 function drawBramble(s: RigState): void {
-  const T = tinter(s), { kx, P } = frame(s), big = s.variant === 1 ? 1.5 : 1, wob = s.sq * 2;
-  const top = Math.round(8 * big);
+  const T = tinter(s), { kx, P } = frame(s), big = s.variant === 1 ? 1.3 : 1, wob = s.sq * 2;
+  const R = 7 * big, H = 7 * big, sd = s.seed;
+  /** A cane from inside the mound, arching up over it and out past its edge; thorns stick out of it. */
   const cane = (k: number, front: boolean) => {
-    const a = (k / 9) * Math.PI * 2 + 0.35 + rand(k, 1, s.seed) * 0.4, rr = (3.6 + rand(k, 2, s.seed) * 1.6) * big;
-    const pts = [P(Math.cos(a) * 1.2, Math.sin(a) * 1.2, 2 * big), P(Math.cos(a) * rr * 0.75, Math.sin(a) * rr * 0.75 + wob, (6 + rand(k, 3, s.seed) * 3) * big), P(Math.cos(a) * rr * 1.15, Math.sin(a) * rr * 1.15 + wob, (3.5 + rand(k, 4, s.seed) * 2) * big)];
+    const a = (k / 7) * Math.PI * 2 + 0.3 + rand(k, 1, sd) * 0.5, reach = R * (1.05 + rand(k, 2, sd) * 0.35), ca = Math.cos(a), sa = Math.sin(a);
+    const pts = [
+      P(ca * R * 0.25, sa * R * 0.25, H * 0.5),
+      P(ca * reach * 0.6, sa * reach * 0.6 + wob, H * (1.35 + rand(k, 3, sd) * 0.45)),
+      P(ca * reach, sa * reach + wob, H * (0.85 + rand(k, 4, sd) * 0.3)),
+      P(ca * reach * 1.12, sa * reach * 1.12 + wob, H * (0.45 + rand(k, 5, sd) * 0.2)), // the tip droops
+    ];
     if ((pts[1][2] >= 0) !== front) return;
     for (let j = 1; j < pts.length; j++) X.line(sc, pts[j - 1][0], pts[j - 1][1], pts[j][0], pts[j][1], T(j === 1 ? THORN.stemL : THORN.stem));
-    // thorns along the cane, pale points on alternating sides
-    for (let j = 1; j < pts.length; j++) for (let q = 1; q <= 2; q++) {
-      const m = q / 3, x = lerp(pts[j - 1][0], pts[j][0], m), y = lerp(pts[j - 1][1], pts[j][1], m);
-      X.px(sc, x + ((j + q) & 1 ? 1 : -1), y - 1, T(THORN.thorn));
+    // thorns: pale hooks pointing up and out along the arch
+    const side = pts[3][0] >= pts[0][0] ? 1 : -1;
+    for (let j = 2; j < pts.length; j++) {
+      const x = lerp(pts[j - 1][0], pts[j][0], 0.5), y = lerp(pts[j - 1][1], pts[j][1], 0.5);
+      X.px(sc, x + side, y - 1, T(THORN.stemL)); X.px(sc, x + side * 2, y - 2, T(THORN.thorn));
     }
   };
-  for (let k = 0; k < 9; k++) cane(k, false);
-  bodyRows(sc, (f, r, u) => P(f, r + wob * (u / 10), u), 0, top, (u) => (4.6 * big - Math.max(0, u - 2.5 * big) * 0.62) * kx * (0.92 + 0.08 * Math.sin(u * 2.3 + s.seed)), null,
-    { light: THORN.leafL, main: THORN.leaf, dark: THORN.leafD }, T, (u, x) => {
-      const r = rand(x, u, s.seed + 3);
-      if (r < 0.2) return THORN.leafD;
-      if (r > 0.93) return THORN.leafL;
-      if (r > 0.9 && u > 1) return THORN.stem; // a cane showing through the leaves
-      return null;
-    });
-  for (let k = 0; k < 9; k++) cane(k, true);
+  for (let k = 0; k < 7; k++) cane(k, false);
+  // the mound: overlapping clumps, back ones first, each dark below and lit at its upper left
+  const clumps: [number, number, number, number][] = [];
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * Math.PI * 2 + rand(k, 11, sd) * 0.6, d = k === 0 ? 0 : 0.55;
+    clumps.push([Math.cos(a) * R * d * (k ? 1 : 0), Math.sin(a) * R * d, (k ? 2.5 : 4.5) * big + rand(k, 12, sd) * 1.5, (k ? 3.6 : 4.6) * big * (0.85 + rand(k, 13, sd) * 0.3)]);
+  }
+  clumps.sort((p, q) => p[0] - q[0]); // f is toward the camera: far clumps first
+  for (const [f, r, u, rad] of clumps) {
+    const c = P(f, r + wob * (u / 10), u), cx = c[0], cy = c[1];
+    X.ellipse(sc, cx, cy + 1, rad * kx, rad * 0.8, T(THORN.leafD));
+    X.ellipse(sc, cx, cy, rad * kx, rad * 0.75, T(THORN.leaf));
+    X.ellipse(sc, cx - rad * 0.3, cy - rad * 0.3, rad * 0.5 * kx, rad * 0.4, T(THORN.leafL));
+    // leaf speckle, and a cane showing through here and there
+    for (let y = Math.floor(cy - rad * 0.75); y <= cy + rad * 0.8; y++) for (let x = Math.floor(cx - rad * kx); x <= cx + rad * kx; x++) {
+      const dx = (x - cx) / (rad * kx), dy = (y - cy) / (rad * 0.78);
+      if (dx * dx + dy * dy > 0.8) continue;
+      const q = rand(x, y, sd + 3);
+      if (q < 0.14) X.px(sc, x, y, T(THORN.leafD)); else if (q > 0.95) X.px(sc, x, y, T(THORN.stem));
+    }
+  }
+  for (let k = 0; k < 7; k++) cane(k, true);
   // a few red berries on the near side
-  for (let k = 0; k < Math.round(3 * big); k++) { const b = P(1.5 + rand(k, 7, s.seed) * 2.5 * big, (rand(k, 8, s.seed) - 0.5) * 6 * big, (2 + rand(k, 9, s.seed) * 5) * big); X.px(sc, b[0], b[1], T(THORN.berry)); }
-  const c = P(0, 0, 4 * big), h = P(0, 0, top);
+  for (let k = 0; k < Math.round(4 * big); k++) { const b = P(R * (0.2 + rand(k, 7, sd) * 0.5), (rand(k, 8, sd) - 0.5) * R * 1.2, (2 + rand(k, 9, sd) * 4) * big); X.px(sc, b[0], b[1], T(THORN.berry)); }
+  const c = P(0, 0, 4 * big), h = P(0, 0, H * 1.3);
   out.chest = [c[0], c[1]]; out.head = [h[0], h[1]]; out.tip = [h[0], h[1]];
 }
 

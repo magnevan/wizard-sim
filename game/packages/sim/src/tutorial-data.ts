@@ -4,14 +4,14 @@
  * beyond the element ids, so world.ts (runeMax) can read the pools without a cycle. The logic is in
  * tutorial.ts; the prompt text is the client's (packages/client/src/tutorial-text.ts).
  *
- * Beats keep the design's numbers (1-19), so the full build slots in without renumbering. The first
- * prototype runs 1-5 and 7-9 (the hands test, 6, is deferred), then the end card (TUT_END).
+ * Beats keep the design's numbers (1-19), so the full build slots in without renumbering. The
+ * prototype runs 1-9, then the end card (TUT_END).
  */
 import { EL, N_EL } from './elements';
 
-export const TUT_BEAT = { walk: 1, strike: 2, heavy: 3, retreat: 4, defend: 5, fire: 7, douse: 8, steam: 9, end: 20 } as const;
+export const TUT_BEAT = { walk: 1, strike: 2, heavy: 3, retreat: 4, defend: 5, hands: 6, fire: 7, douse: 8, steam: 9, end: 20 } as const;
 /** The beats in order, the end card last. */
-export const TUT_ORDER: readonly number[] = [1, 2, 3, 4, 5, 7, 8, 9, 20];
+export const TUT_ORDER: readonly number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 20];
 export const TUT_END = TUT_BEAT.end;
 /** The beat after `beat` (the end card stays the end card). */
 export const nextBeat = (beat: number): number => TUT_ORDER[Math.min(TUT_ORDER.length - 1, TUT_ORDER.indexOf(beat) + 1)] ?? TUT_END;
@@ -35,7 +35,7 @@ export const TS = {
 } as const;
 
 /** What a body is to the tutorial (w.tut.tag). */
-export const TAG = { none: 0, straw: 1, sack: 2, hedge: 3, bramble: 4, foe: 5 } as const;
+export const TAG = { none: 0, straw: 1, sack: 2, hedge: 3, bramble: 4, foe: 5, goblin: 6 } as const;
 
 /** Each beat's rune pools: max runes per element id (index = id; 0 unused). Locked = 0. */
 const pools = (o: Partial<Record<number, number>>): readonly number[] => {
@@ -66,8 +66,13 @@ export const TUT_PLACES = {
   stones: [[-4, -4.5], [1.5, 4.5], [6, -2.5]] as const, stoneR: 0.75,
   /** Beat 3: where the sack starts, and the ring to shove it into. */
   sack: [-1.5, 0] as const, ring: [2.2, 0] as const, ringR: 1.15,
-  /** Beat 7: the hedge line and the thick bramble. */
-  hedgeX: 5.5, hedgeGap: 1.6, hedgeN: 3, thick: [-1, -5] as const,
+  /** Beat 6: the goblins start on a ring this far round the entry, on the diagonals. */
+  ringGoblins: 2.4,
+  /**
+   * Beat 7: the rock line across the chamber and its gap, the hedge of brambles stopping the gap
+   * (just in front of the rock, so the rock rising behind doesn't hide it), and the thick bramble.
+   */
+  rockX: 5.5, hedgeGap: 1.6, hedgeX: 4.6, hedgeN: 4, thick: [-1, -5] as const,
   /** Beat 8: the burning band you cross (x from, x to). */
   fireBand: [0, 2.2] as const,
   /** Beat 9: the rain over the pen. */

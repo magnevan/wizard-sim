@@ -613,6 +613,7 @@ export function spawnBody(w: World, slot: number, kind: number, team: number, x:
   b.wet[i] = b.burn[i] = b.frozen[i] = b.stun[i] = b.expose[i] = b.down[i] = b.blessT[i] = 0; b.bless.fill(0, i * 5, i * 5 + 5); b.chill[i] = 0; b.lastHit[i] = 0;
   b.arch[i] = 0; b.ai[i] = 0; b.aiT[i] = 0; b.target[i] = -1; b.holding[i] = -1; b.heldBy[i] = -1; b.grabHp[i] = 0;
   b.dmgMult[i] = 1; b.speedMult[i] = 1; b.downed[i] = 0; b.root[i] = 0;
+  if (w.tut) w.tut.tag[i] = 0; // a reused slot is nobody's target until the tutorial tags it again
   return i;
 }
 

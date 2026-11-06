@@ -925,3 +925,8 @@ Claude's calls, which the user can veto:
 - **Footsteps:** wizards and brutes only. A wave's feet would be noise.
 - **A mispredicted one-shot can't be taken back.** It's short, so that's accepted.
 - **Audio prepares in idle time after boot, and the first input only resumes.** Doing it all on the first input froze the page for 1.3 s, enough to break a rejoin in `check:net` now and then.
+
+**Follow-up, same day.** The user: "regen aura like the self regen shouldn't heal anyone around you". Built: a Life aura heals its wearer only.
+
+**Proposed by the user, not built:** "both freeze and stun are at risk of being quite powerful. I think we could avoid it by giving stronger enemies some forms of resistance. Instead of freezing being instant from wet+cold, characters have a freeze level that has to build up before they're frozen (and decays otherwise). So concentrated freeze is needed to chill a large/strong enemy. Stun feels a little different, maybe its more probabilistic". This will replace the instant freeze above.
+

@@ -143,7 +143,7 @@
     fire: ['Fire aura', 'flames around {w} burn enemies close by'],
     cold: ['Frost aura', 'cold around {w} slows enemies close by'],
     water: ['Mist aura', 'a mist around {w} wets enemies close by (a set-up for lightning) and douses burning allies'],
-    life: ['Regeneration', 'health comes back over time to {w} and to everyone close by (enemies too, unless {w} hold the sculpting wand)'],
+    life: ['Regeneration', 'health comes back over time to {w}, and to nobody else'],
     earth: ['Bulldoze', 'walking into enemies shoves them aside, and small ones fall over'],
     lightning: ['Haste', 'faster movement and casting for {w}'],
     arcane: ['Glass cannon', '{s} hits deal more damage, but anything knocks {w} down easily'],

@@ -542,7 +542,7 @@ export function tickStructures(w: World): void {
       const d = len(b.x[t] - b.x[i], b.y[t] - b.y[i]);
       if (d > STRUCT.auraRadius + b.r[t]) continue;
       const foe = b.team[t] !== b.team[i];
-      if (life && !(s.wand[i] && foe)) {
+      if (life && t === i) { // regeneration is the wearer's alone
         const h = Math.min(3 * life, b.maxHp[t] - b.hp[t]);
         if (h > 0) { b.hp[t] += h; w.events.push({ tick: w.clock[0], kind: 'heal', who: t, src: i, x: b.x[t], y: b.y[t], amount: h, look: EL.life }); }
       }

@@ -20,6 +20,21 @@ describe('statuses', () => {
     expect(cold.w.bodies.aiT[cold.e]).toBeLessThan(20);
   });
 
+  it('a regen aura heals its wearer and nobody around them', () => {
+    const w = createWorld(1, 2, { dummies: false }), b = w.bodies;
+    b.x[0] = 0; b.y[0] = 0; b.x[1] = 0; b.y[1] = 1.5; // off the aim: a Sigil Self aimed at an ally is theirs
+    const a = ARCHETYPES[ARCH.swarmer], e = spawnBody(w, -1, KIND.enemy, TEAM.enemies, -1, 0, a.hp, a.radius);
+    b.arch[e] = ARCH.swarmer;
+    for (const el of ['sigil', 'life'] as const) press(w, { press0: elementId(el) });
+    press(w, { buttons: BTN.self });
+    idle(w, 40);
+    b.hp[0] = 50; b.hp[1] = 50; b.hp[e] = 5;
+    idle(w, 60);
+    expect(b.hp[0]).toBeGreaterThan(50);
+    expect(b.hp[1]).toBe(50);
+    expect(b.hp[e]).toBeLessThanOrEqual(5);
+  });
+
   it('a regen aura announces its heals, so the numbers show', () => {
     const w = createWorld(1, 1, { dummies: false }), b = w.bodies;
     for (const el of ['sigil', 'life'] as const) press(w, { press0: elementId(el) });

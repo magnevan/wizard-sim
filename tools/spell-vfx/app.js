@@ -13,8 +13,10 @@
   // Vignettes with `fresh: 'new' | 'reworked'` changed since the last rating round. They are
   // shown first, in their own section, with a badge; ?fresh=0 puts them back in their groups.
   const FRESH = Q.get('fresh') !== '0';
-  const sectionOf = (d) => (FRESH && d.fresh ? 'changed' : d.group);
+  // (pass 8) a whole new group (`keepGroup`) stays in its own section, badge and all
+  const sectionOf = (d) => (FRESH && d.fresh && !d.keepGroup ? 'changed' : d.group);
   const GROUPS = [
+    ['attacks', 'Enemy attacks', 'New: every enemy’s attack as the game now draws it, in four beats: a telegraph pose held for the whole wind-up, a strike frame with a smear, an impact or release, and a recovery. The timings are the game’s own. Rate whether you can tell who is about to hit you, and when, from the body alone (the ground telegraphs are unchanged).'],
     ['changed', 'New and reworked', 'Changed in this pass, since your last ratings: new slugs are new visuals (old ratings stay on the old slugs), reworked ones kept their slug. Your earlier rating, if any, still shows on a reworked card.'],
     ['forms', 'Forms', 'Seven plain elements, each as Force (from you, along your aim), Area (around you) and Place (at the cursor).'],
     ['payload', 'Payloads and mixes', 'Every element that is not the form adds one trait. Water with fire scalds and leaves mist; water with cold freezes.'],
@@ -62,9 +64,10 @@
   }
 
   // ---------- cards ----------
-  const cards = [];
+  const cards = [], qboxes = [];
   const elChip = (e, n) => { const s = document.createElement('span'); s.className = 'el'; s.innerHTML = `<i class="dot" style="background:${R.ELEMENTS[e].color}"></i>`; s.append(R.ELEMENTS[e].name + (n > 1 ? ' ×' + n : '')); return s; };
   function caption(d) {
+    if (d.enemy) return { title: d.title, line: d.line, r: null };   // (pass 8) enemy attacks: no spell recipe
     const r = R.resolve(d.q, d.cast, d.opts || {});
     const firstSentence = (s) => { const m = s.match(/^.*?[.!?](\s|$)/); return m ? m[0].trim() : s; };
     return { title: d.title || r.title, line: d.line || firstSentence(r.text), r };
@@ -95,6 +98,8 @@
     const slug = document.createElement('span'); slug.className = 'slug'; slug.textContent = d.id; h.append(slug);
     const p = document.createElement('p'); p.textContent = line;
     const rec = document.createElement('div'); rec.className = 'recipe';
+    if (d.enemy) for (const x of d.tags || []) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = x; rec.append(t); }
+    else {
     const cs = document.createElement('span'); cs.className = 'cast'; cs.textContent = CASTN[d.cast] + (d.opts && d.opts.drag ? ' (drag)' : '') + (d.opts && d.opts.onAlly ? ' (on ally)' : '') + ':'; rec.append(cs);
     const counts = []; for (const e of d.q) { const f = counts.find((x) => x[0] === e); if (f) f[1]++; else counts.push([e, 1]); }
     counts.forEach(([e, n], i) => { if (i) { const pl = document.createElement('span'); pl.className = 'plus'; pl.textContent = '+'; rec.append(pl); } rec.append(elChip(e, n)); });
@@ -108,6 +113,21 @@
     // death trial cards: how the death is built, and the death event that drives it
     if (d.approach) { const t = document.createElement('span'); t.className = 'tag approach' + (d.approach === 'bespoke' ? ' bespoke' : ''); t.textContent = d.approach; rec.append(t); }
     if (d.event) { const t = document.createElement('span'); t.className = 'tag'; const st = Object.entries(d.event.statuses || {}).filter(([, v]) => v).map(([k]) => k); t.textContent = 'Death event: ' + d.event.element + (d.event.mix ? ' (' + d.event.mix + ')' : '') + (d.event.delivery ? ' ' + d.event.delivery : '') + ', ' + (st.length ? st.join(', ') : 'no status') + ', overkill ' + d.event.overkill; rec.append(t); }
+    }
+    // (pass 8) the judgment calls to rate, as a list under the caption
+    let calls = null;
+    if (d.calls) { calls = document.createElement('ul'); calls.className = 'calls'; for (const x of d.calls) { const li = document.createElement('li'); li.textContent = x; calls.append(li); } }
+    // (pass 8) a card question: answered in collection `answers`, doc d.question.id; blank = Claude's pick stands
+    let qbox = null;
+    if (d.question) {
+      const Qd = d.question; qbox = document.createElement('div'); qbox.className = 'cardq';
+      const lab = document.createElement('label'); lab.htmlFor = 'ans-' + Qd.id; lab.innerHTML = '<b>Question.</b> '; lab.append(Qd.text);
+      const pick = document.createElement('p'); pick.className = 'pick'; pick.textContent = 'Claude’s pick: ' + Qd.pick + ' Leave it blank to accept.';
+      const qa = document.createElement('textarea'); qa.rows = 2; qa.id = 'ans-' + Qd.id; qa.placeholder = 'Your answer (optional)';
+      noteBox(qa, () => answers[Qd.id], (patch) => persist('answers', Qd.id, answers, patch));
+      qboxes.push([qa, Qd.id]);
+      qbox.append(lab, pick, qa);
+    }
     const rate = document.createElement('div'); rate.className = 'rate';
     const seg = document.createElement('div'); seg.className = 'verdict'; seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Rate ' + title);
     const get = () => ratings[d.id], set = (patch) => persist('ratings', d.id, ratings, patch);
@@ -119,7 +139,7 @@
     const ta = document.createElement('textarea'); ta.rows = 1; ta.id = 'note-' + d.id; ta.placeholder = 'Note (optional)'; ta.setAttribute('aria-label', 'Note on ' + title);
     noteBox(ta, get, set);
     rate.append(seg, ta);
-    cap.append(h, p, rec, rate);
+    cap.append(h, p, rec); if (calls) cap.append(calls); if (qbox) cap.append(qbox); cap.append(rate);
     el.append(scr, cap);
     const C = { d, el, cv, ctx: cv.getContext('2d', { willReadFrequently: true }), seg, ta, ps, visible: false, paused: STATIC, t0: performance.now() - Math.random() * 1000, last: -1, tShown: null };
     C.ctx.imageSmoothingEnabled = false;
@@ -185,6 +205,7 @@
       const f = b.dataset.f, k = cards.filter((C) => matches(C, f)).length;
       b.querySelector('.n').textContent = k;
     }
+    for (const [qa, id] of qboxes) if (document.activeElement !== qa && qa.value !== (answers[id]?.note || '')) qa.value = answers[id]?.note || '';
     const g = $('general'); if (document.activeElement !== g && g.value !== (answers.general?.note || '')) g.value = answers.general?.note || '';
     if (filter === 'unrated') applyFilter();
   }

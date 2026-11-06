@@ -93,6 +93,11 @@
   .general h2 { margin: 0; font: 400 15px/1.2 var(--pixel); }
   .general p { margin: 0; color: var(--muted); font-size: 14px; }
   .general textarea { min-height: 110px; }
+  .calls { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; display: grid; gap: 2px; }
+  .calls li::marker { color: var(--accent); }
+  .cardq { display: grid; gap: 6px; padding: 10px 12px; border: 1px dashed var(--accent); border-radius: 8px; background: var(--raise); }
+  .cardq label { font-size: 14px; }
+  .cardq .pick { font-size: 13px; color: var(--muted); margin: 0; }
   #errs { white-space: pre-wrap; color: var(--cut); font: 12px/1.4 monospace; }
   @media (max-width: 520px) { .rate { grid-template-columns: 1fr; } .tally { margin-left: 0; } }
 </style>
@@ -101,7 +106,7 @@
   <header>
     <div class="eyebrow">Spell grammar C · high-res pixel art · 67° camera</div>
     <h1>Spell VFX Gallery</h1>
-    <p>Each screen loops one spell from the current rules, drawn in the Pixel Battlefield style. <b>Red</b> is the caster, <b>blue</b> is an ally, and the goblins and the brute are enemies. Before every cast, the queued runes fly to the staff in their element colours, so the recipe is on screen as well as in the caption.</p>
+    <p>Each screen loops one spell from the current rules, drawn in the Pixel Battlefield style. <b>Red</b> is the caster, <b>blue</b> is an ally, and the goblins and the brute are enemies. The Enemy attacks group at the top is new: rate it first. Before every cast, the queued runes fly to the staff in their element colours, so the recipe is on screen as well as in the caption.</p>
     <p>The question for each one: <b>can you tell what the spell does without reading the caption?</b> Rate the look, not the mechanic. Click a screen to pause it.</p>
     <div class="legend" id="legend" aria-label="Element colours"></div>
   </header>
@@ -138,4 +143,5 @@
 <script src="vfx-life.js"></script>
 <script src="vfx-deaths.js"></script>
 <script src="vfx-deaths-2.js"></script>
+<script src="vfx-attacks.js"></script>
 <script src="app.js"></script>

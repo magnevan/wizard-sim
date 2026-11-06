@@ -34,6 +34,7 @@ import { attackK, drawAttackFx } from './art/enemy-attacks';
 import { StructureView, drawTelegraphs } from './view-structures';
 import { Hud } from './hud';
 import { TutorialHud } from './tutorial-view';
+import type { SoundDirector } from './audio/director';
 
 const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10, bramble: 10, sack: 9 };
 /** Dusk on the lit layers (the floor has it baked in): a touch of blue. */
@@ -92,9 +93,12 @@ export class WorldView {
     // remote spells the replay started: shown from their first frame (art/vfx.ts), with the cast pose
     const t = this.simTime(w);
     for (const e of this.vfx.postRewind(w, t)) this.castPose(w, e.who, t);
+    this.sound?.postRewind(w);
   }
   /** After each step the rollback replay runs (afterStep is skipped then): notes late remote spell starts. */
-  replayStep(w: World): void { this.vfx.replayStep(w); }
+  replayStep(w: World): void { this.vfx.replayStep(w); this.sound?.replayStep(w, this.vfx.localSeat); }
+  /** The game's sound (audio/director.ts): null in the help panel's previews and with ?sound=0. */
+  sound: SoundDirector | null = null;
   /** Late remote spells: fast-forwarded from their first frame (true), or popping in where they are (false). */
   get catchUp(): boolean { return this.vfx.catchUp; }
   set catchUp(on: boolean) { this.vfx.catchUp = on; }
@@ -184,6 +188,7 @@ export class WorldView {
     }
     this.structs.afterStep(w, t, this.vfx.skip);
     this.vfx.afterStep(w, t);
+    this.sound?.afterStep(w, this.isLocal);
   }
 
   /** An enemy died this step: its death plays from the rig state it had (its slot is already empty). */
@@ -271,6 +276,8 @@ export class WorldView {
     this.tut.draw(w, ct, cam.hudW, cam.hudH);
     this.edges.draw(w, cam, ct, (i) => this.drawnAt(i, w, alpha));
     this.frames.upload();
+    const me = this.vfx.localSeat;
+    this.sound?.frame(w, { cx: cam.cx, cy: cam.cy, halfW: cam.w / 2 / PPU, earX: b.x[me], earY: b.y[me] }, ct);
   }
 
   /** The last tick drawn or stepped, and how far the view's clock runs ahead of the world's (s). */

@@ -18,6 +18,11 @@ npm run check:menu     # build, then the Esc menu in headless Chrome: Esc opens 
 npm run check:tutorial # build, then in headless Chrome: key 4 into the tutorial and key 1 back out, in place, and the
                        # end card's Survive arch lands you in Survive; every beat loads with the bot playing; the
                        # bot plays the hands test through to the next beat; no page errors
+npm run check:sound    # build, then in headless Chrome: every sound of the Sound Gallery rendered offline through the game's audio graph (none
+                       # silent or clipping, the variations really differ), then the game: sound starts on input, clips load, voices play,
+                       # volumes persist, it runs with ?sound=0 and with no Web Audio; levels and screenshots in shots/
+npm run audio:bank     # after changing content/audio: cuts and tunes the sample bank with local ffmpeg
+npm run sound-gallery  # after changing the audio code or the bank: rebuilds tools/sound-gallery/engine.js and bank.js
 npm run check:webrtc   # the same as check:net over real WebRTC (needs internet: PeerJS's public signalling server)
 npm run build && npm run shot -- --ms 4000 --out shots/run.png   # headless screenshot of the scripted run
                        # (also --size 1280x800, --query "room=arena&autoplay=1": any URL params below)
@@ -47,7 +52,10 @@ URL params (`packages/client/src/main.ts` lists them too):
 - **Players:** `?ally=1` (a bot wizard on seat 1), `?local=N` (the camera follows seat N only, as a networked player's screen would), `?net=bc` (online co-op between tabs on one machine, BroadcastChannel), `?timerloop=1` (timers instead of animation frames, so a background tab keeps running; the co-op e2e test).
 - **Headless runs and screenshots:** `?autoplay=1` (bots fight the Arena, or play the tutorial through with `room=tutorial`), `?script=1` (the scripted two-wizard run), `?spell=arcane,fire/force` (both seats cast one spell at the dummies, `&spell2=` for seat 1; casts force, area, place, self, weapon, drag, hold, holddrag, guard, wait, and with nothing queued strike, heavy, special, retreat, block (`?spell=sigil+cold/weapon;/heavy`); `@x,y` sets the target and `;` chains spells one per cycle, see `demo.ts`), `?scene=rally` and `?scene=three` (Survive: a Rally in progress, or +1 to three half chosen), `?scene=enemyattacks` (every enemy frozen at one beat of its attack, `&phase=wind|strike|impact|recover|loop`, `&face=` turns; `art/enemy-attacks.ts`), `?selftest=1` (no rendering; runs the golden replay, `&ticks=N`, and writes its hash to `<html data-hash>`).
 - **Panels:** `?tune=1` (the tuning panel at boot), `?help=1` (the help panel at boot; `?helpq=water,cold` or `?helpq=hands:water:tide` shows a queue or hands, `?helphint=1` the first-session hint), `?menu=scenarios` (the Esc menu at boot on a section; `&menuAt=N` at tick N).
+- **Sound:** `?sound=0` (none at all), `&vol-master=0.5` (also `vol-effects`, `vol-music`).
 - **Debugging and display:** `?perf=1` (record per-frame timings for `npm run perf`), `?pauseAt=N` (pause the sim at tick N; cosmetic animation keeps running on real time), `?structoff=walls,waves,devices,wizards,preview,fx` (hide parts of the structure view), `?scale=N`, `?lights=0`, `?debug=0`, `?renderer=webgpu`.
+
+**Sound** (`packages/client/src/audio/`; `docs/explorations/2026-11-06-sound.md`): built the way spells are, each element a layer and each cast shape a structure (`recipes.ts`), with the variations in `variation.ts`. It's prepared in idle time after boot and starts on your first input, as browsers ask (making an AudioContext blocks the page for hundreds of ms, so it must not happen on that input); headless runs stay silent. `director.ts` turns sim events and state into sounds and holds the rollback rules: one-shots from shown steps only, late remote events after the replay, sustained sounds following the state. To add a sound, add a recipe, and a clip in `content/audio/bank.json` if it needs a recording; `content/audio/README.md` lists every source and licence. Rate them on the Sound Gallery (`tools/sound-gallery/`). A new room gets the hall reverb until it's listed in `ROOM_ENV`.
 
 **The Esc menu** (`packages/client/src/menu.ts`; `docs/explorations/2026-11-06-esc-menu.md`): Esc with runes queued clears them; with an empty queue it opens the menu (Start / Options on a gamepad). Resume, Scenarios, Multiplayer (the same lobby as the Co-op panel), Controls, Settings. Offline it pauses the sim; online the match keeps running. The number keys work in it too (offline), and while it's open a gamepad's D-pad moves the menu rather than opening the help panel. The scenarios are one registry, `packages/client/src/scenarios.ts` (id, name, one line, room, key): a new room is one entry there, and it shows greyed until the sim has the room. Online, only the host switches the scenario and everyone follows (`NetPlay.switchRoom`). Gamepads join seats 1–3 with any button.
 
@@ -61,7 +69,7 @@ URL params (`packages/client/src/main.ts` lists them too):
 
 ```
 content/   the maps: maps/world.ldtk (LDtk 1.5.3) and one .ldtkl per room. README.md says how to open and edit them in LDtk
-           and what each Terrain value and entity means.
+           and what each Terrain value and entity means. audio/: sound sources, their licences, and the bank's recipe.
 packages/
   content/ @wizard-sim/content (node only): the map build (LDtk -> sim/src/rooms.gen.ts), content:check (with LDtk's pinned
            JSON schema in schema/) and the grid CLI.

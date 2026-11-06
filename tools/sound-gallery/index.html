@@ -1,0 +1,308 @@
+<title>Sound Gallery</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* The game's stone look, shared with the Art Trial: one dark room on purpose.
+   Layout: the spell mixer first, as the rune bar it is in the game; then rateable cards in sections, the variation demos side by side. */
+:root {
+  color-scheme: dark;
+  --stone: #1b2421; --slab: #26322e; --line: #3e4a44;
+  --ink: #e8e4d8; --dim: #a9b0a4;
+  --gold: #ffd860; --keep: #7fd08a; --maybe: #e8c060; --cut: #e8836a;
+  --water: #5aa9e6; --life: #7fd08a; --shield: #d8d4c0; --cold: #a8e0f0; --lightning: #f0e070; --arcane: #d070e0; --sigil: #b0a0f0; --fire: #f08040; --earth: #b89060;
+  --display: 'Silkscreen', ui-monospace, 'Courier New', monospace;
+  --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+body { background: var(--stone); color: var(--ink); font: 16px/1.55 var(--body); }
+main { max-width: 1120px; margin: 0 auto; padding-block: 28px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 44px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(28px, 5vw, 42px); color: var(--gold); }
+h2 { font-size: 22px; }
+h3 { font-size: 15px; }
+p { margin: 0; max-width: 68ch; }
+.lede, section { display: grid; gap: 14px; min-width: 0; }
+.dim { color: var(--dim); }
+button { font: 13px var(--display); color: var(--ink); background: var(--slab); border: 1px solid var(--line); padding: 8px 12px; cursor: pointer; }
+button:hover { border-color: var(--dim); }
+button:focus-visible, textarea:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+button[aria-pressed="true"][data-mark="keep"] { background: var(--keep); border-color: var(--keep); color: var(--stone); }
+button[aria-pressed="true"][data-mark="maybe"] { background: var(--maybe); border-color: var(--maybe); color: var(--stone); }
+button[aria-pressed="true"][data-mark="cut"] { background: var(--cut); border-color: var(--cut); color: var(--stone); }
+textarea { width: 100%; box-sizing: border-box; min-height: 38px; font: 15px/1.4 var(--body); color: var(--ink); background: var(--stone); border: 1px solid var(--line); padding: 6px 8px; resize: vertical; }
+
+.mixer { background: var(--slab); border: 1px solid var(--line); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.runes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; max-width: 520px; }
+.rune { padding: 8px 4px; display: grid; gap: 2px; justify-items: center; border-bottom: 3px solid var(--tint); }
+.rune kbd { font: 15px var(--display); color: var(--tint); }
+.rune span { font: 14px var(--body); }
+.rune.gap { visibility: hidden; }
+.queue { display: flex; gap: 8px; align-items: center; min-height: 40px; flex-wrap: wrap; }
+.slot { width: 30px; height: 30px; border: 1px dashed var(--line); box-sizing: border-box; }
+.slot.on { background: var(--tint); border: 0; }
+.casts, .envs { display: flex; flex-wrap: wrap; gap: 6px; }
+.casts button[aria-pressed="true"], .envs button[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: var(--stone); }
+.go { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.go .play { background: var(--gold); border-color: var(--gold); color: var(--stone); font-size: 15px; padding: 10px 18px; }
+.label { font: 12px var(--display); color: var(--dim); }
+#spell { font-weight: 700; }
+
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.card { display: grid; gap: 8px; align-content: start; min-width: 0; padding: 12px; background: var(--slab); border: 1px solid var(--line); }
+.top { display: flex; gap: 10px; align-items: center; }
+.top .play { flex: none; width: 40px; height: 40px; padding: 0; font-size: 15px; color: var(--stone); background: var(--gold); border-color: var(--gold); }
+.top .play.on { background: var(--keep); border-color: var(--keep); }
+.src { font-size: 13px; color: var(--dim); }
+.blurb { font-size: 15px; }
+.marks { display: flex; gap: 6px; }
+.marks button { flex: 1; padding: 6px 4px; font-size: 12px; }
+.q { display: grid; gap: 8px; }
+.q h3 { font: 700 17px/1.35 var(--body); }
+.pick { color: var(--gold); }
+.note { background: var(--slab); border: 1px solid var(--line); padding: 10px 14px; }
+#save { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); font-size: 13px; background: var(--slab); border: 1px solid var(--line); padding: 4px 10px; color: var(--dim); }
+#save.bad { color: var(--cut); }
+@media (max-width: 720px) { .grid.three { grid-template-columns: minmax(0, 1fr); } }
+</style>
+
+<main>
+  <header class="lede">
+    <h1>Sound Gallery</h1>
+    <p>The first sounds of Wizard Sim, for your ears. Sound is built the way spells are: each element is a layer, each cast shape is a structure, and together they make the spell. I can't hear any of this. I measured levels and lengths, so whether it sounds good is your call.</p>
+    <p class="dim">Mark each sound keep, maybe or cut, with a note if you like. Everything saves as you go. Headphones help with the side-by-side rows.</p>
+  </header>
+
+  <section aria-labelledby="mix-h">
+    <h2 id="mix-h">Spell mixer</h2>
+    <div class="mixer">
+      <p class="dim">Tap runes or press their game keys, pick a cast, then play. Opposites cancel, as they do in the game. Each rune deepens the spell.</p>
+      <div class="runes" id="runes"></div>
+      <div>
+        <div class="label">Queue</div>
+        <div class="queue" id="queue"></div>
+      </div>
+      <div><div class="label">Cast</div><div class="casts" id="casts"></div></div>
+      <div><div class="label">Room</div><div class="envs" id="envs"></div></div>
+      <div class="go">
+        <button class="play" id="mix-play" type="button">Play spell</button>
+        <button id="mix-clear" type="button">Clear queue</button>
+        <span id="spell" role="status"></span>
+      </div>
+      <div class="go">
+        <label class="label" for="vol">Volume</label>
+        <input id="vol" type="range" min="0" max="1" step="0.05" value="0.9">
+      </div>
+    </div>
+    <div class="grid" id="mix-rate"></div>
+  </section>
+
+  <div id="sections" style="display:contents"></div>
+
+  <section id="questions" aria-labelledby="q-h">
+    <h2 id="q-h">Questions</h2>
+    <p class="dim">Leave one blank and my pick stands.</p>
+  </section>
+
+  <section aria-labelledby="src-h">
+    <h2 id="src-h">Where the sounds come from</h2>
+    <p>Recordings are from Kenney's packs (CC0) and Wikimedia Commons (public domain or CC0), tuned with ffmpeg. The rest is made in code. Nothing comes from Magicka. Each card says what it is made of.</p>
+  </section>
+</main>
+<div id="save" role="status">Loading your ratings…</div>
+
+<script src="bank.js"></script>
+<script src="engine.js"></script>
+<script>
+const Lab = window.SoundLab;
+const SECTIONS = [
+  { group: 'elements', title: 'Elements', text: 'The nine layers, each alone. You should be able to name each one with your eyes shut.' },
+  { group: 'shapes', title: 'Cast shapes', text: 'The structures with no element in them. This is what tells you what a partner just did.' },
+  { group: 'spells', title: 'Composed spells', text: 'Layers and shapes together, chosen by the game’s own rules.' },
+  { group: 'var-runes', title: 'Rune count', text: 'The same spell with 1, 3 and 5 runes.', three: true },
+  { group: 'var-env', title: 'Rooms', text: 'The same spell in each reverb profile.', three: true },
+  { group: 'var-wall', title: 'Behind walls', text: 'The same spell in the open and through rock.', three: true },
+  { group: 'var-crowd', title: 'Crowds', text: 'How a pile of hits stays bearable.' },
+  { group: 'interactions', title: 'Elements meeting', text: 'What happens when elements touch.' },
+  { group: 'bodies', title: 'Bodies and the floor', text: 'Hits, deaths and feet.' },
+  { group: 'enemies', title: 'Enemy attacks', text: 'Each enemy’s wind-up and blow, so you can dodge by ear.' },
+  { group: 'weapons', title: 'Weapon moves', text: 'What your hands do with nothing queued.' },
+  { group: 'world', title: 'Things that linger', text: 'Sustained sounds from spells left in the world.' },
+  { group: 'ui', title: 'Interface', text: 'Queue, menu and wave calls.' },
+];
+const QUESTIONS = [
+  { id: 'q-1-feel', text: 'Is this the right overall feel? The aim is Magicka’s: lively, punchy, slightly comic and exaggerated. (That description is from memory, so it’s unverified.)', pick: 'Keep the direction, and tell me which sounds are too realistic or too thin. I expect the recordings to be drier than they should be, and I’d push those further.' },
+  { id: 'q-2-source', text: 'Do you prefer the recordings, the code-made sounds, or the blends?', pick: 'Blends for elements: a recording for texture, code for punch and pitch. Code alone for the interface. Each card says which one it is.' },
+  { id: 'q-3-element-identity', text: 'Can you tell all nine elements apart by ear, with your eyes shut? Which ones blur?', pick: 'By measurement the closest pairs are Cold and Lightning, Life and Sigil, and Cold and Sigil, because all three are bright and thin. Listen to those first. If they blur, I’ll move them apart in pitch before replacing any sounds.' },
+  { id: 'q-4-variations', text: 'Which variations earn their place: rune count, rooms, walls, crowd limits? Is any too strong or too weak?', pick: 'Keep all four. Rune count should be the strongest, because it tells you how big a partner’s spell is. Walls can stay subtle.' },
+  { id: 'q-5-ai-sfx', text: 'Which sounds should we try AI generation on first?', pick: 'Narration first, as you suggested, since nothing free will fit. For effects, try the two weakest elements here and the enemy voices, and rate them against these.' },
+];
+
+const state = {}, chains = {}, timers = {};
+const saveEl = document.getElementById('save');
+const setSave = (t, bad) => { saveEl.textContent = t; saveEl.classList.toggle('bad', !!bad); };
+let db = null;
+
+function save(coll, id) {
+  if (!db) { setSave('Saving isn’t available in this view.', true); return; }
+  const k = coll + '/' + id, doc = { mark: state[k]?.mark ?? null, note: state[k]?.note ?? '', updatedAt: new Date().toISOString() };
+  setSave('Saving…');
+  chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set(doc)).then(() => setSave('All saved')).catch(() => setSave('Couldn’t save that. Check your connection and try again.', true));
+}
+function noteBox(coll, id, label) {
+  const t = document.createElement('textarea');
+  t.id = 'note-' + id; t.setAttribute('aria-label', label); t.placeholder = 'Notes';
+  t.addEventListener('input', () => {
+    const k = coll + '/' + id; state[k] = { ...state[k], note: t.value };
+    clearTimeout(timers[k]); timers[k] = setTimeout(() => save(coll, id), 500);
+  });
+  return t;
+}
+function marks(id, name) {
+  const m = document.createElement('div');
+  m.className = 'marks';
+  for (const mark of ['keep', 'maybe', 'cut']) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = mark; b.dataset.mark = mark; b.dataset.id = id;
+    b.setAttribute('aria-pressed', 'false'); b.setAttribute('aria-label', mark + ': ' + name);
+    b.addEventListener('click', () => {
+      const k = 'ratings/' + id, on = state[k]?.mark === mark;
+      state[k] = { ...state[k], mark: on ? null : mark };
+      paint(); save('ratings', id);
+    });
+    m.append(b);
+  }
+  return m;
+}
+function card(it) {
+  const el = document.createElement('article');
+  el.className = 'card';
+  const top = document.createElement('div'); top.className = 'top';
+  const play = document.createElement('button');
+  play.type = 'button'; play.className = 'play'; play.textContent = '▶'; play.setAttribute('aria-label', 'Play ' + it.title);
+  play.addEventListener('click', () => {
+    play.classList.add('on'); setTimeout(() => play.classList.remove('on'), 300);
+    Lab.playItem(it.id).catch(() => setSave('This browser wouldn’t play that. Try Chrome or Firefox.', true));
+  });
+  const head = document.createElement('div');
+  const h = document.createElement('h3'); h.textContent = it.title;
+  const s = document.createElement('div'); s.className = 'src'; s.textContent = it.source;
+  head.append(h, s); top.append(play, head);
+  const b = document.createElement('p'); b.className = 'blurb'; b.textContent = it.blurb;
+  el.append(top, b, marks(it.id, it.title), noteBox('ratings', it.id, 'Notes on ' + it.title));
+  return el;
+}
+
+const host = document.getElementById('sections');
+for (const s of SECTIONS) {
+  const sec = document.createElement('section');
+  const h = document.createElement('h2'); h.textContent = s.title;
+  const p = document.createElement('p'); p.className = 'dim'; p.textContent = s.text;
+  const g = document.createElement('div'); g.className = 'grid' + (s.three ? ' three' : '');
+  for (const it of Lab.items.filter((x) => x.group === s.group)) g.append(card(it));
+  sec.append(h, p, g);
+  host.append(sec);
+}
+const qHost = document.getElementById('questions');
+for (const q of QUESTIONS) {
+  const el = document.createElement('div');
+  el.className = 'q';
+  const h = document.createElement('h3'); h.textContent = q.text;
+  const p = document.createElement('p');
+  const pk = document.createElement('span'); pk.className = 'pick'; pk.textContent = 'My pick: ';
+  p.append(pk, q.pick);
+  el.append(h, p, noteBox('answers', q.id, q.text));
+  qHost.append(el);
+}
+
+// ---- the mixer: the game's rune bar ----
+const RUNES = [['Q', 'water'], ['W', 'life'], ['E', 'shield'], ['R', 'cold'], [null], ['A', 'lightning'], ['S', 'arcane'], ['D', 'sigil'], ['F', 'fire'], ['G', 'earth']];
+const CASTS = [['force', 'Force'], ['area', 'Area'], ['place', 'Place'], ['self', 'Self'], ['conjure', 'Weapon']];
+const ENVS = [['hall', 'Hall'], ['cave', 'Cave'], ['outdoor', 'Outdoor']];
+let queue = ['earth', 'fire'], cast = 'force', env = 'hall';
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
+const runesEl = document.getElementById('runes'), queueEl = document.getElementById('queue'), spellEl = document.getElementById('spell');
+
+function press(el) {
+  const r = Lab.addRune(queue, el);
+  if (r.full) return;
+  queue = r.queue;
+  (r.cancelled ? Lab.playCancel() : Lab.playQueue(el, queue.length)).catch(() => {});
+  showMix(r.cancelled);
+}
+function showMix(said) {
+  queueEl.textContent = '';
+  for (let i = 0; i < 5; i++) {
+    const d = document.createElement('div');
+    d.className = 'slot' + (queue[i] ? ' on' : '');
+    if (queue[i]) { d.style.setProperty('--tint', 'var(--' + queue[i] + ')'); d.title = cap(queue[i]); }
+    queueEl.append(d);
+  }
+  if (!queue.length) spellEl.textContent = said || 'Queue some runes.';
+  else { const m = Lab.mix(queue, cast); spellEl.textContent = (said ? said + '. ' : '') + m.title + ' (' + m.shape + ', ' + queue.length + (queue.length > 1 ? ' runes)' : ' rune)'); }
+  for (const b of document.querySelectorAll('[data-cast]')) b.setAttribute('aria-pressed', String(b.dataset.cast === cast));
+  for (const b of document.querySelectorAll('[data-env]')) b.setAttribute('aria-pressed', String(b.dataset.env === env));
+}
+for (const [key, el] of RUNES) {
+  if (!key) { const g = document.createElement('div'); g.className = 'rune gap'; runesEl.append(g); continue; }
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'rune'; b.style.setProperty('--tint', 'var(--' + el + ')');
+  const k = document.createElement('kbd'); k.textContent = key;
+  const n = document.createElement('span'); n.textContent = cap(el);
+  b.append(k, n);
+  b.addEventListener('click', () => press(el));
+  runesEl.append(b);
+}
+for (const [id, label] of CASTS) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.textContent = label; b.dataset.cast = id;
+  b.addEventListener('click', () => { cast = id; showMix(); });
+  document.getElementById('casts').append(b);
+}
+for (const [id, label] of ENVS) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.textContent = label; b.dataset.env = id;
+  b.addEventListener('click', () => { env = id; showMix(); });
+  document.getElementById('envs').append(b);
+}
+document.getElementById('mix-play').addEventListener('click', () => { if (queue.length) Lab.playMix(queue, cast, env).catch(() => setSave('This browser wouldn’t play that. Try Chrome or Firefox.', true)); });
+document.getElementById('mix-clear').addEventListener('click', () => { queue = []; showMix(); });
+document.getElementById('vol').addEventListener('input', (e) => { Lab.volume(Number(e.target.value)).catch(() => {}); });
+addEventListener('keydown', (e) => {
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || /^(TEXTAREA|INPUT)$/.test(e.target.tagName)) return;
+  const hit = RUNES.find(([k]) => k && e.code === 'Key' + k);
+  if (hit) press(hit[1]);
+});
+showMix();
+{
+  const it = { id: 'mixer', title: 'The mixer overall', source: 'How composing spells works for you', blurb: 'Do the spells you build sound like what they are?' };
+  const el = document.createElement('article');
+  el.className = 'card';
+  const h = document.createElement('h3'); h.textContent = it.title;
+  const b = document.createElement('p'); b.className = 'blurb'; b.textContent = it.blurb;
+  el.append(h, b, marks(it.id, it.title), noteBox('ratings', it.id, 'Notes on the mixer'));
+  document.getElementById('mix-rate').append(el);
+}
+
+function paint() {
+  for (const b of document.querySelectorAll('button[data-mark]')) b.setAttribute('aria-pressed', String(state['ratings/' + b.dataset.id]?.mark === b.dataset.mark));
+}
+function fill(coll, snap) {
+  for (const d of snap.docs) {
+    const data = d.data() ?? {}, k = coll + '/' + d.id;
+    state[k] = { ...state[k], ...data };
+    const t = document.getElementById('note-' + d.id);
+    if (t && document.activeElement !== t) t.value = data.note ?? '';
+  }
+  paint();
+}
+(async () => {
+  const stop = setTimeout(() => setSave('Couldn’t load your ratings. Reload to try again.', true), 10000);
+  try {
+    db = await window.claude?.use?.('db');
+    if (!db) { clearTimeout(stop); setSave('Saving isn’t available in this view.', true); return; }
+    let first = 2;
+    for (const coll of ['ratings', 'answers']) db.collection(coll).onSnapshot((snap) => { fill(coll, snap); if (--first === 0) { clearTimeout(stop); setSave('All saved'); } }, () => { clearTimeout(stop); setSave('Couldn’t load your ratings. Reload to try again.', true); });
+  } catch { clearTimeout(stop); setSave('Couldn’t load your ratings. Reload to try again.', true); }
+})();
+</script>

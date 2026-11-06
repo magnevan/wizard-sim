@@ -16,7 +16,7 @@ The live game is public. The rest are private claude.ai pages where the design w
 | [Spell Atlas](https://claude.ai/artifact/GiZ7G7eQ4pMqXLaPEZK6Cw) | `tools/spell-atlas/` | The whole spell tree under proposal C, as a form × cast grid, plus Structures. Rate cells and answer the questions. |
 | [Weapon Moveset Review](https://claude.ai/artifact/F3FyhonePFv5JVeSLfk1U9) | `tools/weapon-moves/` | Conjured weapons and guards, move by move (rounds 1–4 rated). |
 | [Survive Review](https://claude.ai/artifact/HMQPuLJQWvMsXezHSHJn1a) | `tools/survive-review/` | The Survive mode: the arena and wave loop, every power-up as a rateable card, Rally and Echo in motion, and the open questions. |
-| [Rune Economy](https://claude.ai/artifact/HnMgNHWfFop3Xhy4eRcFAe) | `tools/rune-economy/` | A rune-flow simulator: four play styles under today's flat regen or a shared budget (α, R, pool size, glyphs), runes cast over time, and the open questions. |
+| [Rune Economy](https://claude.ai/artifact/HnMgNHWfFop3Xhy4eRcFAe) | `tools/rune-economy/` | A rune-flow simulator: four play styles under the old flat regen or the shared budget (α, R, pool size, glyphs), runes cast over time, and its questions (answered; the shared budget is built). |
 | [Spell VFX gallery](https://claude.ai/artifact/F2LeDE6z1FWx3HuAPsP9Vz) | `tools/spell-vfx/` | Looping pixel-art vignettes of the current spells and the enemy deaths, in the game's look. |
 | [Balance Notes](https://claude.ai/artifact/5cTMLv4PTnGvGS3QCBdDHg) | `tools/balance-notes/` | The balance harness's measurements, with questions. |
 | [Engine Choice](https://claude.ai/artifact/LyrRxR1uZjwDFibLNL4Y4c) | `tools/engine-choice/` | The stack comparison behind PixiJS v8 + our own sim (decided). |

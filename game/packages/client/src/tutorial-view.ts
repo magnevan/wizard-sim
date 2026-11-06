@@ -189,7 +189,7 @@ export class TutorialHud {
   draw(w: World, ct: number, viewW: number, viewH: number): void {
     const tut = w.tut;
     this.sprite.visible = this.banner.visible = this.fade.visible = !!tut;
-    if (!tut) return;
+    if (!tut) { this.beat = -1; return; } // coming back later greets the beat again
     const st = tut.state, beat = st[TS.beat];
     if (beat !== this.beat) { this.beat = beat; this.beatAt = ct; }
     if (!st[TS.exit]) this.exited = false;

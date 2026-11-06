@@ -77,11 +77,14 @@ const module = { exports: {} };
   // aura: the mix inside a Sigil + Self aura; coat: the same when Earth makes it a bulldoze.
   const MIX = [
     { id: 'scald', els: ['water', 'fire'], trait: 'Scald', hit: 'scalds, and leaves a mist that blocks sight', aura: ['Steam veil', 'the mist and the flames make a scalding steam around {w} that hides {w} from enemies'], coat: 'whoever is shoved is scalded', self: 'The steam scalds {w}, but the mist hides {w}.',
-      titles: { force: 'Scalding spray', area: 'Steam burst', place: 'Steam cloud', conjure: 'Scalding burst' } },
+      titles: { force: 'Scalding spray', area: 'Steam burst', place: 'Steam cloud', conjure: 'Scalding burst' },
+      // the mix's own Area and Place, whichever of the two leads (the plain cells describe rain, a fire patch...)
+      texts: { area: 'A ring of scalding steam bursts from you.', place: 'A cloud of scalding steam at the cursor for about 6 seconds: it scalds whoever stands in it and hides them.' } },
     { id: 'freeze', els: ['water', 'cold'], trait: 'Freeze', hit: 'freezes soaked targets solid; frozen targets are brittle and shatter from a heavy hit', aura: ['Freezing mist', 'enemies the mist soaks freeze solid in the cold around {w}'], coat: 'soaked enemies freeze solid as they are shoved', self: '{W} freeze solid for a moment (a heavy hit would shatter {w}).',
       titles: { force: 'Ice shards', area: 'Freezing splash', place: 'Ice sheet', conjure: 'Freezing burst' },
       // A freezing spray was too strong, so as Force the mix changes shape: shards, not a cone.
-      forceText: 'A volley of jagged ice shards along your aim. Each shard pierces and chills; enough of them freeze a target, and a frozen target shatters from a heavy hit.' },
+      forceText: 'A volley of jagged ice shards along your aim. Each shard pierces and chills; enough of them freeze a target, and a frozen target shatters from a heavy hit.',
+      texts: { area: 'A freezing splash bursts from you: soaked targets freeze solid.', place: 'Freezes the ground at the cursor into a sheet of ice for about 16 seconds: it chills whoever crosses it, and feet slip on it.' } },
   ];
   const mixesOf = (q) => MIX.filter((m) => m.els.every((e) => q.includes(e)));
 
@@ -172,17 +175,33 @@ const module = { exports: {} };
 
   // 4. The grid: form × geometry. CELLS[form][cast](p, o) -> [title, what it does]
   // p = the set of other elements, o = { drag, sub } (sub = Sigil's leading other element).
-  const WEAPON = { // what Sigil conjures, picked by its leading other element
-    earth: ['Stone maul', 'A slow, heavy hammer. Every hit knocks down.'],
-    arcane: ['Arcane hook', 'A chain hook. A hit pulls the body to you, ally or enemy (Yank).'],
-    life: ['Healing hands', 'Your hands glow: touch an ally to heal them for as long as you keep contact. Short reach, but it lasts long (the plain Healing palm is the one-off with reach).'],
-    lightning: ['Lightning whip', 'A long-reach whip.'],
-    water: ['Tide glaive', 'A glaive whose hits shove hard.'],
-    fire: ['Flame sword', 'A blade that burns.'],
-    cold: ['Frost spear', 'A long spear with a chilling thrust.'],
+  // What Sigil conjures, picked by its leading other element: the game's weapons (its hands.ts), used
+  // with nothing queued: RMB Strike (hold for the Heavy), Shift+RMB the Special. The other elements ride on every blow.
+  const WEAPON = {
+    earth: ['Stone maul', 'A slow, heavy hammer: every hit knocks down. Its Heavy is a fissure down one lane, knocking down all in it; its Special a Sweep round you.'],
+    arcane: ['Arcane wand', 'A wand that shoots light arcane bolts; hold to charge a bolt that pierces. Its Special, Siphon, is held: you stand rooted while your runes regenerate fast.'],
+    life: ['Healing hands', 'Your hands glow: a Strike heals whoever is in front of you. Hold for the Healing link, which heals the ally under the cursor while it holds; the held Special, Mend, heals the allies around you as you walk slowly.'],
+    lightning: ['Lightning whip', 'A long-reach whip that shocks. Its Heavy is a chain lash: the first target, then up to 3 more; its Special a Sweep round you.'],
+    water: ['Tide trident', 'A trident: a narrow, long thrust that shoves hard. Its Heavy is a wave slash rolling along the floor that shoves and soaks; its Special a Sweep round you.'],
+    fire: ['Flame sword', 'A blade that sets alight. Its Heavy is a rolling crescent of flame; its Special a Sweep round you.'],
+    cold: ['Frost spear', 'A long spear with a chilling thrust. Its Heavy is an impaling dash (frozen targets on the way shatter); its Special throws a javelin that pins and frosts.'],
+  };
+  // What Shield conjures, picked by its leading other element as a spell's form is (Life, Earth,
+  // Arcane, Lightning, then the most of Water, Fire and Cold): the game's eight guards (its guards.ts),
+  // used with nothing queued: hold Space to block, tap it as a hit lands to parry, Shift+LMB to Retreat.
+  const GUARD = {
+    none: ['Mirror buckler', 'A light conjured shield: hold Space to block a narrow arc, where shots glance off, and tap it as a shot lands to reflect it. Its Retreat is a quick backstep, and you block at full speed.'],
+    earth: ['Bulwark', 'A conjured tower shield: it blocks a wide arc, melee too, and a parry bashes the attacker down. Its Retreat is a shove step; nothing knocks you back while you carry it, but you walk slower.'],
+    fire: ['Ember targe', 'A burning shield: blocking burns melee attackers, and a parry sends a burst of flame. Its Retreat is a flame step that leaves a line of fire; you can\'t be chilled, frozen or set alight while you carry it.'],
+    cold: ['Rime kite', 'A shield of ice: blocking chills melee attackers, and a parry freezes them. Its Retreat is an ice slide; you never slip on ice while you carry it.'],
+    lightning: ['Spark ring', 'A ring of sparks, the weakest block: a parry discharges into the enemies near you. Its Retreat is a blink that leaves a spark; chain lightning skips you while you carry it.'],
+    water: ['Tide shield', 'A shield of water: blocking shoves and soaks attackers, and a parry sends a shoving wave. Its Retreat is a surge behind a wave; you can\'t burn while you carry it.'],
+    arcane: ['Prism', 'A capacitor: the only block that stops beams and sprays, and it stores what it blocks as charge; lower it charged to fire the Lance. A parry returns the shot. Its Retreat phases you back through bodies, and allies\' beams and sprays don\'t hurt you.'],
+    life: ['Leaf aegis', 'A living shield: blocking heals the allies around you, and a parry is a burst heal. Its Retreat is a seed step that leaves a healing bloom; you heal slowly while you carry it.'],
   };
   const SWING = { earth: 'Stone burst', arcane: 'Arcane burst', life: 'Healing burst', lightning: 'Shock burst', water: 'Water burst', fire: 'Fire burst', cold: 'Frost burst' };
-  const swing = (f) => () => [SWING[f], 'Imbue your staff with the queue and release it, as in Magicka: a burst of every queued element in a short cone in front of you (about 2.5 units, a little more per extra rune), at full spell power. Nothing stays in your hand: add Sigil for a conjured weapon, or Shield for a defensive one.'];
+  // the imbued burst: the staff imbued with the queue and released, as in Magicka
+  const swing = (f) => () => [SWING[f], 'A burst of every queued element in a short cone in front of you, at full power. Nothing stays in your hand. The cone reaches about 2.5 units, a little more per extra rune; add Sigil for a conjured weapon, or Shield for a defensive one.'];
   const glyphName = (o) => o.sub ? ELEMENTS[o.sub].name + ' ' : '';
 
   const CELLS = {
@@ -201,7 +220,11 @@ const module = { exports: {} };
         if (o.drag) return [`Drawn ${what[0]}`, `Hold at the cursor, drag, and let go: the ${what[0]} rises along the line you drew. Curve the drag and the wall bends with it${p.has('earth') ? ' (curl it round an enemy for a cage)' : ''}. ${what[1]}`];
         return [what[2], `Let go without dragging: an arc of ${what[0]} rises around you, centred on you and facing the cursor, at a default length. The quick wall. ${what[1]} Drag before letting go to draw the wall instead.`];
       },
-      conjure: (p) => p.has('earth') ? ['Bulwark', 'A conjured tower shield. Hold to block a frontal arc, swing to bash. Lasts until it breaks or you conjure another.'] : ['Buckler', 'A light conjured shield. Block just as a shot lands to send it back. Lasts until it breaks or you conjure another.'],
+      conjure: (p, o) => {
+        const [t, x] = GUARD[o.guard || 'none'];
+        const more = [...p].some((e) => e !== o.guard && e !== 'sigil') ? ' The other elements mix in their passives and resistances, and coat it.' : '';
+        return [t, `${x}${more} Lasts until it breaks or you conjure another.`];
+      },
     },
     sigil: {
       // Sigil makes things in the world: Force plants a turret, Area raises orbitals, Place writes a glyph.
@@ -281,7 +304,7 @@ const module = { exports: {} };
     cold: {
       force: () => ['Frost spray', 'A cone of cold.'],
       area: () => ['Frost ring', 'A ring of cold around you.'],
-      place: () => ['Frost patch', 'Freezes the ground at the cursor for about 15 seconds. Freezes water into walkable ice.'],
+      place: () => ['Frost patch', 'Freezes the ground at the cursor for about 16 seconds. Freezes water into walkable ice.'],
       conjure: swing('cold'),
     },
   };
@@ -323,6 +346,7 @@ const module = { exports: {} };
         if (o.sub === 'life') o.subLend = lendOf(restQ);
         o.subTitle = { force: plainTitle(o.sub, 'force', restQ), place: plainTitle(o.sub, 'place', restQ) };
       }
+      if (form === 'shield' && cast === 'conjure') { const g = restQ.filter((e) => e !== 'sigil'); o.guard = g.length ? dominant(g) : null; }
       if (form === 'life') o.lend = lendOf(restQ);
       else if (form !== 'shield' && form !== 'sigil') o.shape = leadShape(restQ);
       else if (form === 'sigil' && o.sub && o.sub !== 'life') o.shape = leadShape(restQ.filter((e) => e !== o.sub));
@@ -330,6 +354,7 @@ const module = { exports: {} };
       if (form !== 'shield' && form !== 'sigil' && form !== 'life') title = plainTitle(form, cast, queue);
       const fm = SPRAY.includes(form) ? mixesOf(queue)[0] : null;
       if (fm && cast === 'force' && fm.forceText) text = fm.forceText;
+      if (fm && fm.texts && fm.texts[cast]) text = fm.texts[cast];
       if (LOOK_FORMS.includes(form) && rest.length && cast !== 'conjure') {
         out.look = lookOf(restQ);
         title = LOOK_SPECIAL[`${form}/${cast}/${out.look}`] || `${LOOK[out.look]} ${LOOK_NOUN[form][cast]}`;

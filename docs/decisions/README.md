@@ -7,7 +7,7 @@ Append-only. Each entry records the date, the decision, why it was made, and the
 - **Process and repo:** [Repo is design-first](#2026-11-02-repo-is-design-first) · [Engine phase starts](#2026-11-04-engine-phase-starts) · [Going public as Wizard Sim](#2026-11-04-going-public-as-wizard-sim) · [Build optimistically](#2026-11-05-build-optimistically)
 - **Pillars:** [Feedback round 1](#2026-11-02-feedback-round-1-see-explorations2026-11-02-feedback-round-1md) · [Preparation pillar; death is harsher](#2026-11-03-preparation-pillar-death-is-harsher) · [Resources and battlefield](#2026-11-03-resources-and-battlefield-see-explorations2026-11-03-resources-and-battlefieldmd)
 - **Spell grammar and elements:** [Round 3](#2026-11-03-round-3-see-explorations2026-11-03-feedback-round-3md) · [Structures in proposal C](#2026-11-03-structures-in-proposal-c-weapon-column-merged) · [Seal becomes an element; Steam and Ice dropped](#2026-11-03-seal-becomes-an-element-steam-and-ice-dropped-see-explorations2026-11-03-structures-review-and-elementsmd) · [Overnight proposals](#2026-11-04-overnight-proposals-nothing-decided) · [The overnight drafts, reviewed](#2026-11-04-the-overnight-drafts-reviewed-see-explorations2026-11-04-overnight-draftsmd)
-- **Runes and economy:** [Resources and battlefield](#2026-11-03-resources-and-battlefield-see-explorations2026-11-03-resources-and-battlefieldmd) · [Calls Claude made while building milestone 1](#2026-11-04-calls-claude-made-while-building-milestone-1-the-user-can-veto-any) · [Balance tooling](#2026-11-04-balance-tooling-and-the-first-measurements)
+- **Runes and economy:** [Resources and battlefield](#2026-11-03-resources-and-battlefield-see-explorations2026-11-03-resources-and-battlefieldmd) · [Calls Claude made while building milestone 1](#2026-11-04-calls-claude-made-while-building-milestone-1-the-user-can-veto-any) · [Balance tooling](#2026-11-04-balance-tooling-and-the-first-measurements) · [The rune economy: a shared regen budget](#2026-11-05-the-rune-economy-a-shared-regen-budget-with-a-floor-explorations2026-11-05-rune-economymd) · [The rune economy, built](#2026-11-05-the-rune-economy-built) · [Rune scaling](#2026-11-05-rune-scaling-the-audits-recommendations-accepted)
 - **Shield and walls:** [The overnight drafts, reviewed](#2026-11-04-the-overnight-drafts-reviewed-see-explorations2026-11-04-overnight-draftsmd) (Model A) · [Play-test notes, round 2](#2026-11-04-play-test-notes-round-2-explorations2026-11-04-playtest-2md) · [Play-test round 2, answers](#2026-11-05-play-test-round-2-answers-and-notes-811) · [Rings, wall lifetime, Self on allies](#2026-11-05-rings-wall-lifetime-self-on-allies)
 - **Sigil, devices, the Double:** [Sigil's identity](#2026-11-04-sigils-identity-see-explorations2026-11-04-sigil-identity-and-buffsmd) · [The look rule, ice shards, turret draw](#2026-11-04-the-look-rule-ice-shards-turret-draw-the-users-feedback-on-the-vfx-gallery-and-pixel-battlefield-pass-3) · [Play-test notes, round 1](#2026-11-04-play-test-notes-round-1-the-users-first-session-with-the-build) · [Play-test round 2, answers](#2026-11-05-play-test-round-2-answers-and-notes-811) (turrets)
 - **Life and support:** [The overnight drafts, reviewed](#2026-11-04-the-overnight-drafts-reviewed-see-explorations2026-11-04-overnight-draftsmd) (L3) · [Grammar v2; wards for support](#2026-11-05-grammar-v2-in-the-game-wards-for-support) · [Life spells, the size rule](#2026-11-05-life-spells-the-size-rule-the-inert-audits-life-group) · [Every element in a heal lends its resistance](#2026-11-05-every-element-in-a-heal-lends-its-resistance-guard-ties-settled)
@@ -17,8 +17,8 @@ Append-only. Each entry records the date, the decision, why it was made, and the
 - **Online and netcode:** [Online co-op, first route](#2026-11-04-online-co-op-first-route) · [Network test, drop-out and rejoin](#2026-11-04-network-test-drop-out-and-rejoin) · [The host tunes online matches](#2026-11-05-the-host-tunes-online-matches) · [Smoother remote players online](#2026-11-05-smoother-remote-players-online-the-two-fixes-approved-on-2026-11-04) · [Survive grows to 48 x 34 …; a stalled page](#2026-11-05-survive-grows-to-48-x-34-guards-read-from-behind-a-stalled-page-no-longer-drops-the-others) · [Netcode is rollback](#2026-11-05-netcode-is-rollback-recorded-after-the-fact) · [The host moves the match](#2026-11-06-the-esc-menu-and-the-scenario-registry)
 - **Rooms, Survive, death:** [Preparation pillar; death is harsher](#2026-11-03-preparation-pillar-death-is-harsher) · [Survive mode in the game](#2026-11-05-survive-mode-in-the-game-explorations2026-11-05-survive-modemd) · [Survive's arena is big](#2026-11-05-survives-arena-is-big-and-the-camera-follows) · [Survive grows to 48 x 34](#2026-11-05-survive-grows-to-48-x-34-guards-read-from-behind-a-stalled-page-no-longer-drops-the-others) · [Survive gets Rally and Echo](#2026-11-05-survive-gets-rally-and-echo) · [Survive Review answers, round 1](#2026-11-05-survive-review-answers-round-1) · [Survive power-ups, pass 2](#2026-11-06-survive-power-ups-pass-2-the-maybes-explorations2026-11-06-survive-powerups-2md)
 - **Balance and tuning:** [Balance tooling and the first measurements](#2026-11-04-balance-tooling-and-the-first-measurements) · [The host tunes online matches](#2026-11-05-the-host-tunes-online-matches) · [Weapons are the cheap option; extras you can see](#2026-11-05-weapons-are-the-cheap-option-a-strike-rhythm-per-weapon-and-extras-you-can-see)
-- **Menus and navigation:** [The Esc menu and the scenario registry](#2026-11-06-the-esc-menu-and-the-scenario-registry) · [The tutorial prototype](#2026-11-06-the-tutorial-prototype-explorations2026-11-06-tutorialmd)
-- **UI and onboarding:** [The help panel (F2)](#2026-11-06-the-help-panel-f2-explorations2026-11-06-help-panelmd)
+- **Menus and navigation:** [The Esc menu and the scenario registry](#2026-11-06-the-esc-menu-and-the-scenario-registry) · [The tutorial prototype](#2026-11-06-the-tutorial-prototype-explorations2026-11-06-tutorialmd) · [Final-pass review](#2026-11-06-final-pass-review-rules-text-room-switches-and-shared-keys)
+- **UI and onboarding:** [The help panel (F2)](#2026-11-06-the-help-panel-f2-explorations2026-11-06-help-panelmd) · [Final-pass review: rules text, room switches and shared keys](#2026-11-06-final-pass-review-rules-text-room-switches-and-shared-keys)
 
 ## 2026-11-02: Repo is design-first
 The repo holds docs and throwaway prototypes, and there's no production codebase. The pillars in `vision.md` guide every proposal.
@@ -478,6 +478,8 @@ The user approved building both, Rally first (`explorations/2026-11-05-survive-m
 - **Echo** (a one-shot that can be picked again): a free Double appears at once, so you can plan round it in the lull, and fades when the next wave is cleared. It is the cast Double in every way (60 HP, repeats your spells at half power for half their runes, and enemies want it more), except that it binds no Sigil rune. A Double you cast replaces it. The Double's spawn is now `spawnDouble` in `structures.ts`.
 - Golden hash unchanged (`7184435b`): all the new state is in `world.run`, which only Survive has.
 
+*(Superseded: Rally is everyone's, not a power-up, since "Survive Review answers, round 1"; Echo is no longer a free Double but a free repeat of every spell, since "Survive power-ups, pass 2".)*
+
 ## 2026-11-05: Netcode is rollback (recorded after the fact)
 
 Recorded after the fact during a docs cleanup: the switch happened while building, and no entry logged it.
@@ -537,7 +539,9 @@ The user's first answers on the Survive Review page (`tools/survive-review`), bu
 - **Rally is everyone's by default** (the user: "doesn't sound like it should be a power-up"). Any wizard can rally a downed ally, with the same rules (3 s, 1.6 u, back at 40 %, your own breaks empty the ring, a hit drains 1 s). It's no longer offered at the altars, and the green ring shows round every downed wizard.
 - **Glass heart is built** (the user: keep, "fun especially in co-op if you have people you can stay safe behind"). It uses the exploration's numbers: +25 % damage dealt and −25 % max health per stack, additive, up to two stacks (+50 % / −50 %). Your current health shrinks with the max. The bonus applies to every hit you deal, friendly fire included.
 - **Power-up ids are renumbered** (charm 7, clockwork 8, echo 9, glass 10; `N_PU` 11). That's fine because `world.run` is only ever built fresh.
+  *(Since pass 2: Lingering 11 and Quickstep 12, `N_PU` 13.)*
 - **Not changed,** because they're under discussion: Echo, Wellspring, the rune power-ups and the wave list.
+  *(Echo was redesigned in "Survive power-ups, pass 2".)*
 - Golden hash unchanged (`9382eb5b`): the scripted run is in the Sanctum, which has no `world.run`, and the camera is client-only.
 
 ## 2026-11-05: The Leaf's Seed step blooms where you land, for allies only
@@ -628,6 +632,7 @@ See `explorations/2026-11-05-effect-durations.md`, "Follow-up: consistency audit
   - No effect is drawn for a different time than it lives in the sim.
   - The per-rune rules disagree in places: the geyser and spring grow +0.3 u (other Place shapes +0.4), Discharge grows +1.0 (other Area shapes +0.6), the spring gains +33 % life a rune (rain and rock +20 %), and steam, patch floors and the aura don't grow at all.
 - **Proposed, not built (balance):** "more of the lead element makes it bigger, and if it lingers, longer (+20 % a rune); every rune adds strength". The six questions and Claude's picks are in the exploration. In short: the geyser and spring step goes to +0.4 (yes); Discharge stays an exception (keep); the spring keeps +2 s (keep); steam +20 % (yes); patch floors +20 % (yes); the aura stays fixed.
+  *(Accepted in "Rune scaling: the audit's recommendations accepted" and built on 2026-11-06; see the end of "Weapons are the cheap option".)*
 - Golden hash unchanged (`dda18ae2`): only drawing changed.
 
 ## 2026-11-05: Rune scaling: the audit's recommendations accepted
@@ -642,6 +647,7 @@ The user: "sounds good", on the six scaling questions from "Floors fade; the con
   - The spring's +2 s a rune: extra Life heals by lasting longer.
   - The aura doesn't grow with Sigil.
 - To be built after the weapons pass lands, since both touch `effects.ts`.
+  *(Built 2026-11-06: the "Built" lines at the end of "Weapons are the cheap option".)*
 
 ## 2026-11-05: Weapons are the cheap option: a Strike rhythm per weapon, and extras you can see
 See `explorations/2026-11-05-weapon-dps.md` (the before/after table).
@@ -709,6 +715,7 @@ The user asked for an Esc menu "where we can start having some navigation": mult
 - **The menu draws like the HUD:** art pixels, the 3x5 font, at the HUD's automatic scale. Its sections are Resume, Scenarios, Multiplayer, Controls and Settings, and keyboard, mouse and gamepad all work.
 - **Offline it pauses; online it doesn't,** and it says so. Your wizard stands still while the menu is open.
 - **One scenario registry** (`client/src/scenarios.ts`: id, name, one line, room, key) feeds the menu, the number keys, the URL and the netcode's room names. A switch rebuilds the world in place instead of reloading, so a lobby survives it. The Tutorial row is in, greyed until the sim has a `tutorial` room.
+  *(The sim has it since "The tutorial prototype": the row and key 4 are live.)*
 - **Online, the host moves everyone:** `NetPlay.switchRoom` starts a new match with the players still in, and their pages follow it by the old match's id (`prev` on the start message). Non-hosts see the scenarios greyed. The number keys do nothing in an online match.
 - **Fixed on the way:** a joiner's page now remembers the host's room. A rejoin welcome sent by a joiner acting as coordinator used to name the joiner's own room.
 - **Alternatives:**
@@ -738,6 +745,7 @@ Built on the user's request, with Claude's calls (the user can veto any):
 - **Pixel text, one scale under the HUD's on big screens** (3x at 1080p), so 25 characters fit beside a preview. The panel stops above the rune bar when the two would overlap.
 - **New-player touches:** every element key with its letter in the panel; a cancel shows "X cancels Y: opposites cancel, runes back" in the panel's footer, and as a toast over the rune bar the first 5 times a browser sees one; the first session shows "F2: what will my runes do?" under the "?" button for 14 s (kept in localStorage).
 - **Text written here, not taken from the rules:** a few cells whose rule text describes the form's plain spell instead of the mix (Ice sheet, Steam cloud, Freezing splash, Steam burst), the imbued burst, the Self cast without Shield or Sigil (its traits instead), and every hands move (from `hands.ts` and `guards.ts`). The rules' own text for Ice sheet describes Rain, which is worth fixing in `rules-c.js`.
+  *(Fixed in "Final-pass review: rules text, room switches and shared keys": the rules now describe the mixes, the burst, the weapons and the guards, and the panel's overrides are gone, except Self without Shield or Sigil.)*
 - **Rejected:** a DOM panel with a system font (more readable at small sizes, but it wouldn't look like the game); per-shape icon animations (cheaper, but they can't show a turret, a Bulwark block or a Surge the way the game does).
 
 
@@ -759,3 +767,16 @@ The first cut of the tutorial design is built and playable at `#tutorial` (Esc m
 - **How it's built:** a `tutorial` room; `w.tut` state (null in every other room, so the golden hash `d13d22ff` is unchanged); rune gating through `runeMax` (locked elements are max 0, show dry, and the HUD hides their caps, or the whole rune bar when all are locked); the beat table in `sim/src/tutorial.ts` with setup and checks, run last in `step` so the checks see the tick's events; prompt text in `client/src/tutorial-text.ts`. Shared-code hooks, each inert outside the tutorial: archetype flags `passive`, `rooted` and `onlyFire`, and the Brute's slam reporting whether it hit anyone.
 - **Not in this cut** (as the design deferred): beats 6 and 10–19, the apprentice and sleeper, bolts on walls, the test waves, per-seat spawns and done-bits, the F2 row highlight, the "Tutorial: runes / the test" menu entries, the first-visit offer.
 - **Alternatives:** a staff block for everyone (rejected for now, open question 1); straw targets as softened goblins with multipliers (replaced by a passive `straw` archetype, because a goblin with zero damage still bites and shoves).
+
+## 2026-11-06: Final-pass review: rules text, room switches and shared keys
+A review of the day's merges (item 5b of `overnight-2026-11-06.md`). Each fix has a test that failed first. Claude's calls; the user can veto any.
+- **The rules describe what the game builds** (`tools/spell-atlas/rules-c.js`, synced to the game and the VFX gallery; Atlas audit still 0 inert additions, 678 spells):
+  - The water mixes have their own Area and Place text, whichever of the two leads: the Ice sheet no longer reads as Rain, the Steam cloud no longer as Rain or a fire patch, the Freezing splash and Steam burst no longer as a pushing splash.
+  - Sigil + Weapon names the game's weapons and their moves: the **Arcane wand** (bolts, a charged piercing bolt, the held Siphon) instead of the Arcane hook (Yank), the **Tide trident** instead of the Tide glaive, the Healing hands with their link and Mend.
+  - Shield + Weapon names the guard its lead element picks, as `guards.ts` does (the eight guards: Mirror buckler, Bulwark, Ember targe, Rime kite, Spark ring, Tide shield, Prism, Leaf aegis), with its real Defend, Retreat and passive. The Bulwark's "swing to bash" is gone.
+  - The imbued burst's text starts with what it does; the Frost patch lasts about 16 s (it said 15).
+  - So the help panel's per-cell overrides are gone; only Self without Shield or Sigil is still put together in `help-model.ts`.
+- **An in-place room switch leaves nothing of the old room behind.** A new world's clock starts at 0; the view kept the old room's scorch marks (drawn darker than full for up to a minute) and effects keyed by the old clock. The view's clock now carries on across a switch (`WorldView.simTime`), and the scorch marks are cleared. Client only.
+- **Coming back to the tutorial greets the beat again** (its title and fade-in were skipped when you returned to the beat you left).
+- **Shared keys:** a gamepad's D-pad up no longer toggles the help panel while the Esc menu is open (the D-pad moves the menu there). The number keys switch scenarios from inside the menu too, offline and when not typing a room code, as the "(1)"–"(4)" beside each scenario promise. The menu's Controls list has key 4 and the D-pad's help.
+- Golden hash unchanged (`d13d22ff`): nothing in the sim changed.

@@ -120,6 +120,48 @@ describe('view', async () => {
     expect(Array.from(w.surf.kind).some((k) => k !== SURF.none)).toBe(false);
   }, 60000);
 
+  // An in-place room switch (the Esc menu, the number keys, a new online match) starts the world's clock
+  // at 0 again: the old room's scorch marks and effects must not linger on the new floor.
+  test('a world switched in place leaves nothing of the old room behind', async () => {
+    const { replaceWorld } = await import('@wizard-sim/sim');
+    const view = new WorldView();
+    view.resize(1280, 800, 3);
+    const { SURF } = await import('@wizard-sim/sim');
+    const w = createWorld(7, 1), d = parseDemo('fire,fire/force')!;
+    const scorch = () => (view as any).structs.scorch.marks.length as number;
+    const row = Math.floor(w.dims.gh / 2) * w.dims.gw;
+    for (let c = 4; c < 30; c++) { w.surf.kind[row + c] = SURF.fire; w.surf.life[row + c] = 20; }
+    let now = 0;
+    for (let t = 0; t < 600; t++) {
+      view.beforeStep(w); step(w, [demoInput(w, t, 0, d), NO_INPUT, NO_INPUT, NO_INPUT]); view.afterStep(w);
+      if (t % 10 === 0) view.draw(w, 0, (now += 160));
+    }
+    expect(scorch()).toBeGreaterThan(0); // the burnt-out floor left its marks
+    replaceWorld(w, createWorld(7, 1, { room: 'arena' }));
+    for (let t = 0; t < 30; t++) { view.beforeStep(w); step(w, [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT]); view.afterStep(w); view.draw(w, 0, (now += 16)); }
+    expect(scorch()).toBe(0);
+    // and every effect still running is younger than the new world (none from the old room's clock)
+    const fx = (view as any).vfx.fx as { t0: number }[], simT = (view as any).simTime(w) as number;
+    for (const f of fx) expect(simT - f.t0).toBeLessThan(1);
+  }, 60000);
+
+  test('the tutorial greets a beat again after you leave and come back', async () => {
+    const { replaceWorld } = await import('@wizard-sim/sim');
+    const view = new WorldView();
+    view.resize(1280, 800, 3);
+    const w = createWorld(7, 1, { room: 'tutorial' });
+    const tick = (n: number, now: number) => { for (let k = 0; k < n; k++) { view.beforeStep(w); step(w, [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT]); view.afterStep(w); view.draw(w, 0, now + k * 16); } };
+    tick(10, 1000);
+    expect(view.tut.banner.visible).toBe(true);
+    tick(10, 9000); // long after: the beat's title has gone
+    expect(view.tut.banner.visible).toBe(false);
+    replaceWorld(w, createWorld(7, 1));
+    tick(10, 10000);
+    replaceWorld(w, createWorld(7, 1, { room: 'tutorial' }));
+    tick(10, 11000);
+    expect(view.tut.banner.visible).toBe(true); // the same first beat, shown again
+  }, 60000);
+
   test('online, each screen follows its own wizard: the partner gets an edge arrow, not the frame', async () => {
     const view = new WorldView();
     view.resize(1920, 1080);

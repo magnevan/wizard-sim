@@ -81,23 +81,15 @@ const plural = (n: number, w: string): string => `${n} ${w}${n === 1 ? '' : 'S'}
 const sentences = (t: string): string[] => t.split(/(?<=[.!?])\s+/).filter(Boolean);
 
 /**
- * A spell's text, one or two sentences: the first, and the second too while both stay short. A few
- * cells say something better in other words (the rules' cell text describes the form's plain spell,
- * not the mix): those are written here.
+ * A spell's text, one or two sentences: the first, and the second too while both stay short. The
+ * rules' own text otherwise (the water mixes' Area and Place, the imbued burst and the conjured
+ * weapons and guards are described there since 2026-11-06); only Self on yourself is put together here.
  */
 export function shortText(d: SpellDescriptor): string {
-  const mix = (d.mix as { trait: string; text: string }[] | undefined)?.[0];
   if (d.id === 'elements/self') {
     // the elements simply hit you: each trait says what it does to you
     return d.payload.map((p) => `${p.trait}: ${lower1(p.text)}`).join(' ') || sentences(d.text)[0];
   }
-  if (d.cast === 'conjure' && d.form && ['water', 'fire', 'cold', 'arcane', 'lightning', 'earth'].includes(d.form)) {
-    return 'A burst of every queued element in a short cone in front of you, at full power. Nothing stays in your hand.';
-  }
-  if (mix && d.cast === 'place' && mix.trait === 'Scald') return 'A cloud of scalding steam at the cursor: it scalds whoever stands in it and hides them.';
-  if (mix && d.cast === 'place' && mix.trait === 'Freeze') return 'Freezes the ground at the cursor into a sheet of ice that chills whoever crosses it.';
-  if (mix && d.cast === 'area' && mix.trait === 'Scald') return 'A ring of scalding steam bursts from you.';
-  if (mix && d.cast === 'area' && mix.trait === 'Freeze') return 'A freezing splash bursts from you: soaked targets freeze solid.';
   const s = sentences(d.text);
   let out = s[0] ?? '';
   if (s[1] && out.length + s[1].length < 120) out += ' ' + s[1];

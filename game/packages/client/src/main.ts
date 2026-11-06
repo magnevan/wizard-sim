@@ -246,6 +246,7 @@ async function boot(): Promise<void> {
     settings,
     onToggle: () => { keyboard.release(); pads.resync(); },
   });
+  help.padsBlocked = () => menu!.open; // the D-pad moves the menu while it's open
   const menuAsk = params.get('menu'), menuAt = Number(params.get('menuAt')) || 0;
   const menuSection = (['Resume', 'Scenarios', 'Multiplayer', 'Controls', 'Settings'] as const).find((x) => x.toLowerCase() === (menuAsk ?? '').toLowerCase());
   if (menuAsk && !menuAt) menu.show(menuSection ?? 'Resume');

@@ -49,7 +49,7 @@ describe('help panel model: queue -> rows', () => {
   });
 
   it('Sigil + Arcane: devices, and a conjured weapon is used on the next loop', () => {
-    expect(titles(['sigil', 'arcane'])).toEqual(['Arcane beam turret', 'Arcane orbitals', 'Arcane glyph', 'Glass cannon', 'Arcane hook']);
+    expect(titles(['sigil', 'arcane'])).toEqual(['Arcane beam turret', 'Arcane orbitals', 'Arcane glyph', 'Glass cannon', 'Arcane wand']);
     const m = helpModel(['sigil', 'arcane'], bare);
     expect(m.rows[4].demo.seq?.map((d) => d.cast)).toEqual(['weapon', 'strike']);
     expect(m.rows[0].stats[0]).toMatch(/BINDS 1 SIGIL/);
@@ -110,6 +110,53 @@ describe('help panel model: queue -> rows', () => {
     expect(shortText(rules.resolve(['arcane'], 'force'))).toBe('A sustained beam.');
   });
 });
+
+// The rules' own cell text matches what the game builds (hands.ts, guards.ts), so the help panel
+// needn't patch it (the final-pass review, 2026-11-06).
+describe('the rules describe what the game builds', () => {
+  const r = (q: Element[], cast: Parameters<typeof rules.resolve>[1]) => rules.resolve(q, cast);
+  it('the water mixes have their own Area and Place text (the Ice sheet is not Rain)', () => {
+    expect(r(['water', 'cold'], 'place').text).not.toMatch(/rain/i);
+    expect(r(['water', 'cold'], 'place').text).toMatch(/ice/i);
+    expect(r(['water', 'cold', 'cold'], 'place').text).toMatch(/ice/i); // Cold leading: still the sheet
+    expect(r(['water', 'fire'], 'place').text).toMatch(/steam/i);
+    expect(r(['fire', 'fire', 'water'], 'place').text).toMatch(/steam/i);
+    expect(r(['water', 'fire'], 'area').text).toMatch(/steam/i);
+    expect(r(['water', 'cold'], 'area').text).toMatch(/freez/i);
+  });
+  it('Sigil conjures the weapons hands.ts builds', () => {
+    expect(r(['sigil', 'arcane'], 'conjure').title).toBe('Arcane wand');
+    expect(r(['sigil', 'arcane'], 'conjure').text).toMatch(/Siphon/);
+    expect(r(['sigil', 'arcane'], 'conjure').text).not.toMatch(/hook|Yank/i);
+    expect(r(['sigil', 'water'], 'conjure').title).toBe('Tide trident');
+    expect(r(['sigil', 'life'], 'conjure').text).toMatch(/Mend/);
+  });
+  it('Shield conjures the guard its lead element picks (guards.ts), with its real Defend', () => {
+    const guard = (q: Element[]) => r(q, 'conjure').title;
+    expect(guard(['shield'])).toBe('Mirror buckler');
+    expect(guard(['shield', 'earth'])).toBe('Bulwark');
+    expect(guard(['shield', 'fire'])).toBe('Ember targe');
+    expect(guard(['shield', 'cold'])).toBe('Rime kite');
+    expect(guard(['shield', 'lightning'])).toBe('Spark ring');
+    expect(guard(['shield', 'water'])).toBe('Tide shield');
+    expect(guard(['shield', 'arcane'])).toBe('Prism');
+    expect(guard(['shield', 'life'])).toBe('Leaf aegis');
+    expect(guard(['shield', 'earth', 'life'])).toBe('Leaf aegis'); // Life leads, as in spells
+    expect(guard(['shield', 'water', 'cold', 'cold'])).toBe('Rime kite'); // the most runes of the sprays
+    expect(r(['shield', 'earth'], 'conjure').text).not.toMatch(/swing to bash/);
+  });
+  it('the help panel uses the rules text as it is (no per-cell overrides left)', () => {
+    for (const q of [['water', 'cold'], ['water', 'fire']] as Element[][]) for (const cast of ['area', 'place'] as const) {
+      expect(shortText(r(q, cast))).toBe(shortTextOf(r(q, cast).text));
+    }
+    expect(shortText(r(['fire'], 'conjure'))).toBe(shortTextOf(r(['fire'], 'conjure').text));
+  });
+});
+/** The first sentence, and the second while both stay short (help-model.ts shortText's rule). */
+function shortTextOf(t: string): string {
+  const s = t.split(/(?<=[.!?])\s+/).filter(Boolean);
+  return s[0] + (s[1] && s[0].length + s[1].length < 120 ? ' ' + s[1] : '');
+}
 
 describe('help panel text', () => {
   it('wraps at spaces and cuts a word longer than a line', () => {

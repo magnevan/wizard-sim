@@ -14,7 +14,7 @@
  * lobbyView() and its host / join / start / leave calls; nothing about the netcode lives here.
  */
 import { SCENARIOS, isPlayable, type Scenario } from './scenarios';
-import { escAction, keyToNav, navigate, padMenuKeys, type NavItem, type NavKey, type NavState } from './menu-nav';
+import { escAction, keyToNav, menuScenarioKey, navigate, padMenuKeys, type NavItem, type NavKey, type NavState } from './menu-nav';
 import { readPad, type PadState } from './gamepad';
 import type { LobbyView, NetPlay } from './net/netplay';
 import * as X from './art/px';
@@ -74,8 +74,9 @@ const CONTROLS: [string, string][] = [
   ['RT / LT / RB', 'Force / Area, Place / Self'],
   ['LB + RT', 'Weapon'],
   ['Back / Start', 'Clear / this menu'],
+  ['D-up', 'Help panel'],
   ['', 'Other'],
-  ['1 2 3', 'Sanctum, Arena, Survive'],
+  ['1 2 3 4', 'Sanctum, Arena, Survive, Tutorial'],
   ['F1 / F2', 'Tuning panel / help'],
   ['Hold Alt', 'Inspect what is under the cursor'],
   ['`', 'Debug line'],
@@ -192,6 +193,9 @@ export class EscMenu {
       if (e.code === 'Enter' || e.code === 'NumpadEnter') { it.act?.(); this.dirty = true; return; }
       if (/^Key[A-Z]$/.test(e.code) || /^Digit/.test(e.code) || e.code === 'Space') return; // typing, not moving
     }
+    // the number keys go where they say in the Scenarios list, as they do in the game
+    const sc = menuScenarioKey(e.code, !!it?.field, this.online);
+    if (sc && !e.repeat) { this.host.switchScenario(sc); this.hide(); return; }
     const key = keyToNav(e.code);
     if (key) this.press(key);
   }

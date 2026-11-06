@@ -26,6 +26,7 @@ import {
 import * as X from './art/px';
 import { clip, helpModel, wrap, type HandsState, type HelpModel, type HelpRow, type KeyGlyph } from './help-model';
 import { Preview, type Setup } from './help-preview';
+import { helpPadPresses } from './menu-nav';
 import type { PadSeats } from './gamepad';
 import type { WorldView } from './view';
 
@@ -443,20 +444,20 @@ export class HelpPanel {
   }
 
   /** D-pad up on a seated gamepad opens the panel for that pad's seat, with the pad's buttons. */
+  /** While this is true (the Esc menu is open, main.ts) D-pad up moves the menu and leaves the panel alone. */
+  padsBlocked: () => boolean = () => false;
+
   private pollPads(): void {
     if (!this.pads) return;
     const list = navigator.getGamepads?.() ?? [];
-    for (let p = 0; p < 4; p++) {
-      const g = list[p], down = !!g && g.connected && !!g.buttons[12]?.pressed;
-      if (down && !this.padPrev[p]) {
-        const seat = this.pads.seatOfPad(p);
-        if (seat >= 0) {
-          if (this.isOpen && this.seat !== seat) { this.seat = seat; this.padGlyphs = true; this.drawnKey = ''; }
-          else { this.seat = seat; this.padGlyphs = true; this.toggle(); }
-        }
-      }
-      this.padPrev[p] = down;
+    const down = [0, 1, 2, 3].map((p) => { const g = list[p]; return !!g && g.connected && !!g.buttons[12]?.pressed; });
+    for (const p of helpPadPresses(this.padPrev, down, this.padsBlocked())) {
+      const seat = this.pads.seatOfPad(p);
+      if (seat < 0) continue;
+      if (this.isOpen && this.seat !== seat) { this.seat = seat; this.padGlyphs = true; this.drawnKey = ''; }
+      else { this.seat = seat; this.padGlyphs = true; this.toggle(); }
     }
+    this.padPrev = down;
   }
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ROOM_DIMS } from '@wizard-sim/sim';
 import { SCENARIOS, fromLocation, hashFor, isPlayable, roomOf, scenarioById, scenarioForKey, scenarioOfRoom } from '../src/scenarios';
-import { escAction, keyToNav, navigate, padMenuKeys, type NavItem, type NavState } from '../src/menu-nav';
+import { escAction, helpPadPresses, keyToNav, menuScenarioKey, navigate, padMenuKeys, type NavItem, type NavState } from '../src/menu-nav';
 import { PAD, type PadState } from '../src/gamepad';
 
 describe('the scenario registry', () => {
@@ -126,5 +126,21 @@ describe('the menu on a gamepad', () => {
     expect(padMenuKeys(pad([], [0, -0.9, 0, 0]), pad([], [0, -0.95, 0, 0]))).toEqual([]);
     expect(padMenuKeys(pad(), pad([], [0.9, 0, 0, 0]))).toEqual(['right']);
     expect(padMenuKeys(pad(), pad([], [0.3, 0.3, 0, 0]))).toEqual([]); // a light tilt isn't a push
+  });
+});
+
+describe('keys shared between the menu and the game', () => {
+  it('D-pad up opens the help panel, but not while the Esc menu is open (it moves the menu there)', () => {
+    expect(helpPadPresses([false, false], [true, false], false)).toEqual([0]);
+    expect(helpPadPresses([true, false], [true, true], false)).toEqual([1]); // held: once per press
+    expect(helpPadPresses([false, false], [true, true], true)).toEqual([]);
+  });
+
+  it('the number keys switch scenarios from the menu too, offline and when not typing a room code', () => {
+    expect(menuScenarioKey('Digit3', false, false)?.id).toBe('survive');
+    expect(menuScenarioKey('Digit4', false, false)?.id).toBe('tutorial');
+    expect(menuScenarioKey('Digit3', true, false)).toBeUndefined(); // typing the code
+    expect(menuScenarioKey('Digit3', false, true)).toBeUndefined(); // online: the host picks from the list
+    expect(menuScenarioKey('KeyQ', false, false)).toBeUndefined();
   });
 });

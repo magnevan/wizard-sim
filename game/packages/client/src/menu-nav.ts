@@ -3,6 +3,7 @@
  * mean what. menu.ts draws and wires them; test/menu.test.ts checks them.
  */
 import { PAD, type PadState } from './gamepad';
+import { scenarioForKey, type Scenario } from './scenarios';
 
 export type EscAction = 'clear' | 'open' | 'close';
 
@@ -77,6 +78,25 @@ export function keyToNav(code: string): NavKey | null {
     case 'Backspace': return 'back';
     default: return null;
   }
+}
+
+/**
+ * The number keys while the menu is open: the scenario they name (as they do in the game), unless
+ * a room code is being typed or the match is online (there only the host switches, from the list).
+ */
+export function menuScenarioKey(code: string, typing: boolean, online: boolean): Scenario | undefined {
+  return typing || online ? undefined : scenarioForKey(code);
+}
+
+/**
+ * D-pad up toggles the help panel for that pad's seat (help-panel.ts): the pads whose D-pad up went
+ * down since the last poll. While the Esc menu is open the D-pad moves the menu instead, so none.
+ */
+export function helpPadPresses(prev: readonly boolean[], down: readonly boolean[], menuOpen: boolean): number[] {
+  if (menuOpen) return [];
+  const out: number[] = [];
+  for (let p = 0; p < down.length; p++) if (down[p] && !prev[p]) out.push(p);
+  return out;
 }
 
 const D_LEFT = 14, D_RIGHT = 15;

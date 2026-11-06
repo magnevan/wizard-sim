@@ -90,7 +90,7 @@ export class WorldView {
       this.smoothX[i] += dx; this.smoothY[i] += dy;
     }
     // remote spells the replay started: shown from their first frame (art/vfx.ts), with the cast pose
-    const t = w.clock[0] / 60;
+    const t = this.simTime(w);
     for (const e of this.vfx.postRewind(w, t)) this.castPose(w, e.who, t);
   }
   /** After each step the rollback replay runs (afterStep is skipped then): notes late remote spell starts. */
@@ -151,7 +151,7 @@ export class WorldView {
 
   /** Call right after each sim step with its events. */
   afterStep(w: World): void {
-    const b = w.bodies, s = w.seats, t = w.clock[0] / 60;
+    const b = w.bodies, s = w.seats, t = this.simTime(w);
     for (const e of w.events) {
       this.hud.onEvent(e.kind, e.who, e.look, e.text, t);
       if ((e.kind === 'hit' && (e.amount ?? 0) > 0) && e.who >= 0) {
@@ -214,7 +214,7 @@ export class WorldView {
    */
   draw(w: World, alpha: number, now = performance.now()): void {
     this.frame++;
-    const b = w.bodies, t = (w.clock[0] + alpha) / 60, cam = this.camera, ct = now / 1000;
+    const b = w.bodies, t = this.simTime(w, alpha), cam = this.camera, ct = now / 1000;
     const dt = this.lastCt ? ct - this.lastCt : 0;
     this.lastCt = ct;
     this.fitArena(w);
@@ -267,6 +267,25 @@ export class WorldView {
     this.tut.draw(w, ct, cam.hudW, cam.hudH);
     this.edges.draw(w, cam, ct, (i) => this.drawnAt(i, w, alpha));
     this.frames.upload();
+  }
+
+  /** The last tick drawn or stepped, and how far the view's clock runs ahead of the world's (s). */
+  private lastTick = 0;
+  private epoch = 0;
+  /**
+   * Sim time as the view keys its effects by (s). A world replaced in place (an in-place room switch,
+   * a restart from the menu, a new online match) starts its clock at 0 again; the view's clock carries
+   * on instead, so nothing of the old room is left with an age that runs backwards, and the old room's
+   * scorch marks go. Rollback never shows the view an earlier tick (replays skip afterStep).
+   */
+  private simTime(w: World, alpha = 0): number {
+    const tick = w.clock[0];
+    if (tick < this.lastTick) {
+      this.epoch += this.lastTick / 60 + 60; // a minute on: every effect of the old room has run out
+      this.structs.scorch.resize(); // the marks belong to the old floor
+    }
+    this.lastTick = tick;
+    return (tick + alpha) / 60 + this.epoch;
   }
 
   /** Repaints the floor and resizes the effect canvases when the world's play area changes (a survive world is bigger). */

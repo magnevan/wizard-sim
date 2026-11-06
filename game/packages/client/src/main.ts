@@ -30,6 +30,7 @@
  *   ?perf=1       record each frame's sim, draw and render time on wizardSim.perf (scripts/perf.mjs)
  *   ?props=lean|simple|code   the art test's prop set (the Academy; O cycles it there)
  *   ?wizard=hd    the detailed wizard, in any room (I toggles it in the Academy)
+ *   ?sound=0      no sound at all; &vol-master=0.5 (also vol-effects, vol-music) sets a volume from 0 to 1
  *   ?menu=Scenarios  open the Esc menu at boot on that section (Resume, Scenarios, Multiplayer, Controls,
  *                 Settings); &menuAt=N opens it at tick N instead (screenshots of the menu over a fight)
  *
@@ -56,6 +57,7 @@ import { broadcastBus, roomBus } from './net/bus';
 import { webrtcBus } from './net/webrtc';
 import { NetPlay } from './net/netplay';
 import { EscMenu, type Setting } from './menu';
+import { GameAudio, loadVolumes, volumeSettings } from './audio/game-audio';
 import { fromLocation, hashFor, scenarioById, scenarioForKey, scenarioOfRoom, worldFor, type Scenario } from './scenarios';
 
 const params = new URLSearchParams(location.search);
@@ -132,6 +134,9 @@ async function boot(): Promise<void> {
   const onlySeat = params.get('local');
   if (onlySeat !== null && onlySeat !== '') { const k = Number(onlySeat); view.isLocal = (s) => s === k; }
   app.stage.addChild(view.root);
+  // Sound is prepared after boot and starts on the first input, as browsers ask; ?sound=0 leaves it out (audio/game-audio.ts).
+  const audio = params.get('sound') === '0' ? null : new GameAudio(loadVolumes(params), !headless);
+  view.sound = audio?.director ?? null;
   const fit = () => view.resize(host.clientWidth, host.clientHeight, Number(params.get('scale')) || undefined);
   fit();
   addEventListener('resize', fit);
@@ -253,6 +258,7 @@ async function boot(): Promise<void> {
       value: () => (showDebug ? 'ON' : 'OFF'),
       adjust: () => { showDebug = !showDebug; hud.style.display = showDebug ? '' : 'none'; setParam('debug', showDebug ? null : '0'); },
     },
+    ...volumeSettings(audio, setParam),
   ];
   menu = new EscMenu({
     queued: () => world.seats.queueLen[net?.state === 'playing' ? net.seat : 0],
@@ -260,7 +266,8 @@ async function boot(): Promise<void> {
     scenario: () => scenario,
     switchScenario,
     settings,
-    onToggle: () => { keyboard.release(); pads.resync(); },
+    onToggle: (open) => { keyboard.release(); pads.resync(); audio?.director.ui(open ? 'open' : 'close'); },
+    uiSound: (k) => audio?.director.ui(k),
   });
   help.padsBlocked = () => menu!.open; // the D-pad moves the menu while it's open
   const menuAsk = params.get('menu'), menuAt = Number(params.get('menuAt')) || 0;
@@ -354,7 +361,7 @@ ${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
 
   // Expose the recorder for debugging: copy a replay of this session from the console.
   (window as unknown as { wizardSim: unknown }).wizardSim = {
-    world, get recorder() { return recorder; }, tune, view, menu, help, get net() { return net; },
+    world, get recorder() { return recorder; }, tune, view, menu, help, audio, get net() { return net; },
     app, perf, switchScenario, startWave: (n: number) => devStartWave(world, n, 1), art: { newRigState, paint },
   };
 }

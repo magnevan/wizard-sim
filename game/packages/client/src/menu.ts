@@ -29,6 +29,8 @@ export interface MenuHost {
   settings: Setting[];
   /** The menu opened or closed (let go of the keyboard; pads forget the presses made in it). */
   onToggle(open: boolean): void;
+  /** A click for moving, choosing or changing something in the menu. */
+  uiSound?(kind: 'move' | 'select' | 'adjust'): void;
 }
 
 export interface Setting { label: string; blurb: string; value(): string; adjust(by: -1 | 1): void }
@@ -203,6 +205,7 @@ export class EscMenu {
     else if (r.kind === 'tab') { if (SECTIONS[this.nav.section] === 'Resume') this.hide(); }
     else if (r.kind === 'activate') this.items[r.item]?.act?.();
     else if (r.kind === 'adjust') this.items[r.item]?.adjust?.(r.by);
+    if (r.kind !== 'close') this.host.uiSound?.(r.kind === 'activate' ? 'select' : r.kind === 'adjust' ? 'adjust' : 'move');
     this.dirty = true;
   }
 

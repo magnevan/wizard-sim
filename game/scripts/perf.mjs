@@ -5,6 +5,7 @@
 //        [--profile dir]  also writes a .cpuprofile per scene (build with `npx vite build --minify false`
 //        in packages/client for readable function names)
 //        [--shots dir]    a screenshot per scene at the end (for before/after comparisons)
+//        [--sound]        press a key first, so the sound runs too (it only starts on input)
 //        [--size 1920x1080] the page size (default 1280x800; the pixel scale follows it, so the view's size in art px does)
 // SwiftShader renders on the CPU in another process, so the GPU side isn't measured here: the numbers are
 // what the page's own JavaScript costs. Compare runs on one machine; absolute values vary.
@@ -72,6 +73,7 @@ async function measure(browser, sc) {
     }
   });
   await p.goto(`${BASE}${sc.url}&perf=1&debug=0`);
+  if (has('sound')) await p.keyboard.press('KeyQ');
   await p.waitForFunction(() => !!window.wizardSim?.perf, { timeout: 30000, polling: 100 });
   await sc.setup?.(p);
   await sleep(3000); // warm up: JIT, the actor frame cache, the help previews
@@ -125,7 +127,7 @@ if (!has('no-sim') && !only) {
 }
 if (shotsDir) mkdirSync(resolve(shotsDir), { recursive: true });
 const stop = await startPreview();
-const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', ...(has('sound') ? ['--autoplay-policy=no-user-gesture-required'] : [])] });
 try {
   report.scenes = [];
   for (const sc of SCENES) {

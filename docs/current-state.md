@@ -58,6 +58,13 @@ Play it: https://magnevan.github.io/wizard-sim/ (code in `../game/`, commands in
 
 - **Cold and water:** any Cold hit on a body already wet freezes it. Water + Cold in one spell is ice: it hurts and chills without soaking, so it can't set up its own freeze, though it does freeze a target that was already wet. Chill slows an enemy's wind-up and recovery as well as its walking. D: [Cold freezes the wet](decisions/README.md#2026-11-06-cold-freezes-the-wet-ice-doesnt-soak-chill-slows-attacks).
 
+## Sound
+- **Sound is built the way spells are:** each element is a layer, each cast shape a structure (nine of each), and they compose, so a partner's spell can be read by ear. Nobody has heard it yet: it's waiting on the Sound Gallery's ratings. D: [Sound, stage 1](decisions/README.md#2026-11-06-sound-stage-1-explorations2026-11-06-soundmd).
+- **The engine** is client-only, in `game/packages/client/src/audio/`: sim events and state drive it, and the sim didn't change. One-shots come from shown steps, late remote events play after the replay, and sustained sounds follow the state and fade. Same decision.
+- **Every sound varies** by rune count, room (hall, cave or outdoor reverb), walls in the way, pan and distance from the camera, and random pitch and clip; a limiter keeps crowds pleasant. Same decision.
+- **The sounds** are 65 tuned clips from Kenney (CC0) and Wikimedia Commons (public domain or CC0), plus code-made ones. Sources and licences: `game/content/audio/README.md`. Same decision.
+- **Sound starts on your first input.** Master, Effects and Music (reserved) volumes are in the Esc menu's Settings. `?sound=0` turns it off. Same decision.
+
 ## Netcode and determinism
 - **Rollback** (`RollbackSession`) with a **2-tick input delay** and a 1 s window, over WebRTC rooms with four-letter codes on the hosted page. D: [Netcode is rollback](decisions/README.md#2026-11-05-netcode-is-rollback-recorded-after-the-fact), [Going public as Wizard Sim](decisions/README.md#2026-11-04-going-public-as-wizard-sim).
 - **Remote aim is predicted in world space;** a late remote spell is drawn from its first frame and catches up. D: [Smoother remote players online](decisions/README.md#2026-11-05-smoother-remote-players-online-the-two-fixes-approved-on-2026-11-04).
@@ -70,6 +77,7 @@ Play it: https://magnevan.github.io/wizard-sim/ (code in `../game/`, commands in
 ## Open questions (live)
 - **The isometric switch** (decided by the user 2026-11-06, not built): the game is still on today's camera. Next is one room on a branch. D: [Art direction](decisions/README.md#2026-11-06-art-direction-true-isometric-pixellab-props-the-detailed-wizard).
 - **The art trial, round 2** (`explorations/2026-11-06-art-trial-round-2.md`, [the page](https://claude.ai/artifact/S2wttPmXSg7YXZhJQbL4gN)): `q-5` prop angle, `q-6` prop detail, `q-7` wizard detail, `q-8` a true isometric camera, `q-9` which local variations to rely on. Also: prop scale against the wizards, and PixelLab's terms before anything ships.
+- **Sound** (`explorations/2026-11-06-sound.md`, the Sound Gallery): 1, the feel; 2, recordings, code or blends; 3, can the nine elements be told apart; 4, which variations earn their place; 5, what to try AI generation on first.
 - **The art trial** (`explorations/2026-11-06-art-trial.md`, [the page](https://claude.ai/artifact/S2wttPmXSg7YXZhJQbL4gN)): each source's role, how much prop detail, a paid PixelLab plan, the next art test.
 - **The campaign and content pipeline** (`explorations/2026-11-06-campaign-and-content.md`): 1, Sigil and Shield conjure-only early; 2, how "low rune" works (elements, queue length, pools); 5, a rated trial of AI pixel-art tools; 6, generic academy pieces before the story. (3 and 4 are settled: LDtk is the editor, and stage 1 ported the rooms.)
 - **The map pipeline, stage 1** (`explorations/2026-11-06-map-pipeline-stage-1.md`): 1, free Rock walls as number fields or as a line LDtk draws; 2, the 40-wall terrain budget; 3, a preview tileset in LDtk; 4, porting the tutorial's beats; 5, the room hash in replays; 6, what stage 2 builds first.

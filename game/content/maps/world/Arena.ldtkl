@@ -1,0 +1,1465 @@
+{
+	"__header__": {
+		"fileType": "LDtk Project JSON",
+		"app": "LDtk",
+		"doc": "https://ldtk.io/json",
+		"schema": "https://ldtk.io/files/JSON_SCHEMA.json",
+		"appAuthor": "Sebastien 'deepnight' Benard",
+		"appVersion": "1.5.3",
+		"url": "https://ldtk.io"
+	},
+	"identifier": "Arena",
+	"iid": "cddc457e-9984-49b4-8f5e-e611debad128",
+	"uid": 101,
+	"worldX": 680,
+	"worldY": 0,
+	"worldDepth": 0,
+	"pxWid": 480,
+	"pxHei": 320,
+	"__bgColor": "#3F6443",
+	"bgColor": "#3F6443",
+	"useAutoIdentifier": false,
+	"bgRelPath": null,
+	"bgPos": null,
+	"bgPivotX": 0.5,
+	"bgPivotY": 0.5,
+	"__smartColor": "#8FA28E",
+	"__bgPos": null,
+	"externalRelPath": null,
+	"fieldInstances": [],
+	"layerInstances": [
+		{
+			"__identifier": "Entities",
+			"__type": "Entities",
+			"__cWid": 48,
+			"__cHei": 32,
+			"__gridSize": 10,
+			"__opacity": 1,
+			"__pxTotalOffsetX": 0,
+			"__pxTotalOffsetY": 0,
+			"__tilesetDefUid": null,
+			"__tilesetRelPath": null,
+			"iid": "6a8ec31a-9a7a-48d6-b52d-939441f42bec",
+			"levelId": 101,
+			"layerDefUid": 1,
+			"pxOffsetX": 0,
+			"pxOffsetY": 0,
+			"visible": true,
+			"optionalRules": [],
+			"intGridCsv": [],
+			"autoLayerTiles": [],
+			"seed": 5055709,
+			"overrideTilesetUid": null,
+			"gridTiles": [],
+			"entityInstances": [
+				{
+					"__identifier": "PlayerStart",
+					"__grid": [ 16, 20 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#5FCDE4",
+					"iid": "692b5bb4-ec12-4cac-844d-6e4f72401f9b",
+					"width": 10,
+					"height": 10,
+					"defUid": 10,
+					"px": [ 160, 200 ],
+					"fieldInstances": [
+						{
+							"__identifier": "seat",
+							"__type": "Int",
+							"__value": 0,
+							"__tile": null,
+							"defUid": 20,
+							"realEditorValues": [
+								{
+									"id": "V_Int",
+									"params": [ 0 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "PlayerStart",
+					"__grid": [ 32, 20 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#5FCDE4",
+					"iid": "dc104f39-5ac2-40ff-a1f1-ea6675624ced",
+					"width": 10,
+					"height": 10,
+					"defUid": 10,
+					"px": [ 320, 200 ],
+					"fieldInstances": [
+						{
+							"__identifier": "seat",
+							"__type": "Int",
+							"__value": 1,
+							"__tile": null,
+							"defUid": 20,
+							"realEditorValues": [
+								{
+									"id": "V_Int",
+									"params": [ 1 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "PlayerStart",
+					"__grid": [ 16, 12 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#5FCDE4",
+					"iid": "0b528a80-dcf8-4210-994b-8ed6d02c1b77",
+					"width": 10,
+					"height": 10,
+					"defUid": 10,
+					"px": [ 160, 120 ],
+					"fieldInstances": [
+						{
+							"__identifier": "seat",
+							"__type": "Int",
+							"__value": 2,
+							"__tile": null,
+							"defUid": 20,
+							"realEditorValues": [
+								{
+									"id": "V_Int",
+									"params": [ 2 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "PlayerStart",
+					"__grid": [ 32, 12 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#5FCDE4",
+					"iid": "5d594874-a23d-49d0-97b4-55f424dcadf8",
+					"width": 10,
+					"height": 10,
+					"defUid": 10,
+					"px": [ 320, 120 ],
+					"fieldInstances": [
+						{
+							"__identifier": "seat",
+							"__type": "Int",
+							"__value": 3,
+							"__tile": null,
+							"defUid": 20,
+							"realEditorValues": [
+								{
+									"id": "V_Int",
+									"params": [ 3 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 3, 1 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "cf3a163f-0a43-429c-933b-2a1395470218",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 38, 16 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": -10.083333333333334,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -10.083333333333334 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 3, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "939610a7-aa2f-490b-b756-1451ca3ceb67",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 38, 304 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": -10.083333333333334,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -10.083333333333334 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 7, 1 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "17811d74-7a46-4913-bd98-06fedcf1dc26",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 75, 16 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 7, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "65ed4db7-b8b4-4e8d-900d-9e3177cfd6a3",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 75, 304 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 11, 1 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "b14eaa29-f825-43e7-b9fc-a539dee7d34b",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 112, 16 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": -6.416666666666666,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -6.416666666666666 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 11, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "c2d17e10-c027-4e6c-98e7-602bd4586ce1",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 112, 304 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": -6.416666666666666,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -6.416666666666666 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 14, 1 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "82d1c8a5-0595-4417-a395-c2fca1df6785",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 148, 16 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": -4.583333333333333,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -4.583333333333333 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 14, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "a21b9b50-0f9f-47cc-9022-c7018984870a",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 148, 304 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": -4.583333333333333,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -4.583333333333333 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 18, 1 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "d023b3d5-5cc4-499c-a11c-d64792ce758b",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 185, 16 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 18, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "d076b5e0-acd0-4e99-9b13-c20332c708b2",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 185, 304 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 22, 1 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "c4674e50-1371-485f-8f04-c3653019c1f5",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 222, 16 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": -0.9166666666666679,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -0.9166666666666679 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 22, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "0a44ad24-fc7e-48fe-8a4b-62ad2082ffd3",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 222, 304 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": -0.9166666666666679,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -0.9166666666666679 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 25, 1 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "899418e7-b8bc-4400-b4ad-1ef4c4ca8811",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 258, 16 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": 0.9166666666666661,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 0.9166666666666661 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 25, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "2331541c-bc2d-4b33-a6c5-a25bae8b7a96",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 258, 304 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": 0.9166666666666661,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 0.9166666666666661 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 29, 1 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "59d7adad-4042-49f4-b2c7-88c42aa04fef",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 295, 16 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 29, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "2912da5e-b882-4b69-8ac7-c054800a95e4",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 295, 304 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 33, 1 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "0412c171-27f6-4ba6-8f97-48d54f974d4a",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 332, 16 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": 4.583333333333334,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 4.583333333333334 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 33, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "0e5698bd-6064-4b0d-bf00-357165fe4df3",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 332, 304 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": 4.583333333333334,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 4.583333333333334 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 36, 1 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "6b08376b-b6b4-4725-a638-86e6474363f6",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 368, 16 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": 6.416666666666664,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 6.416666666666664 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 36, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "4d22816d-3e1b-4d2f-97a6-c3007d23d712",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 368, 304 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": 6.416666666666664,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 6.416666666666664 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 40, 1 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "123829d8-a95f-4da1-aa17-916920997183",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 405, 16 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 40, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "b0ff0fb0-1de8-4faa-a33e-8b1f9b36f996",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 405, 304 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 44, 1 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "54de9bce-d4d8-4bca-8891-981b30b0a410",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 442, 16 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": 10.083333333333336,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 10.083333333333336 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 44, 30 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "f60e7d6a-af02-4e2a-8662-edbe05605e9a",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 442, 304 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": 10.083333333333336,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 10.083333333333336 ]
+								}
+							]
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 1, 4 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "91fb33c8-338a-492c-a609-8f48c6a58b23",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 16, 43 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": -5.833333333333334,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -5.833333333333334 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 46, 4 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "22c78a67-940c-4c98-84fc-4724f8b5431d",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 464, 43 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": -5.833333333333334,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -5.833333333333334 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 1, 9 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "37afa625-49f4-4028-89c0-766ac5e66350",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 16, 90 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 46, 9 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "9b130635-dff0-4431-9b8d-09f7d3c02584",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 464, 90 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 1, 13 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "b38add79-0d04-464f-9c60-165b6958fe49",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 16, 137 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": -1.166666666666666,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -1.166666666666666 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 46, 13 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "3464e840-52cf-41b6-a380-62f3ee569b22",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 464, 137 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": -1.166666666666666,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ -1.166666666666666 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 1, 18 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "68ab4eea-d5ba-4e88-b7de-562e7165eab6",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 16, 183 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": 1.1666666666666679,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 1.1666666666666679 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 46, 18 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "085ea4c2-be9e-43b3-96b1-94df1e0b6d6f",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 464, 183 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": 1.1666666666666679,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 1.1666666666666679 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 1, 23 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "ab96bdfa-3c98-42af-8a03-9d37425d0b0d",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 16, 230 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 46, 23 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "871ecc64-107a-405a-8270-db53bcd011dc",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 464, 230 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": []
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 1, 27 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "4d3705fa-5808-4e30-be40-ccd4f18c69e0",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 16, 277 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": 5.833333333333332,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 5.833333333333332 ]
+								}
+							]
+						}
+					]
+				},
+				{
+					"__identifier": "Portal",
+					"__grid": [ 46, 27 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#B05CE0",
+					"iid": "79d4c2dc-d8c5-4232-aadf-eff8850d450a",
+					"width": 10,
+					"height": 10,
+					"defUid": 12,
+					"px": [ 464, 277 ],
+					"fieldInstances": [
+						{
+							"__identifier": "x",
+							"__type": "Float",
+							"__value": null,
+							"__tile": null,
+							"defUid": 21,
+							"realEditorValues": []
+						},
+						{
+							"__identifier": "y",
+							"__type": "Float",
+							"__value": 5.833333333333332,
+							"__tile": null,
+							"defUid": 22,
+							"realEditorValues": [
+								{
+									"id": "V_Float",
+									"params": [ 5.833333333333332 ]
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"__identifier": "Terrain",
+			"__type": "IntGrid",
+			"__cWid": 48,
+			"__cHei": 32,
+			"__gridSize": 10,
+			"__opacity": 1,
+			"__pxTotalOffsetX": 0,
+			"__pxTotalOffsetY": 0,
+			"__tilesetDefUid": null,
+			"__tilesetRelPath": null,
+			"iid": "2c27f9b7-25f5-4012-b626-8b6e36b3782b",
+			"levelId": 101,
+			"layerDefUid": 2,
+			"pxOffsetX": 0,
+			"pxOffsetY": 0,
+			"visible": true,
+			"optionalRules": [],
+			"intGridCsv": [
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+			],
+			"autoLayerTiles": [],
+			"seed": 3402293,
+			"overrideTilesetUid": null,
+			"gridTiles": [],
+			"entityInstances": []
+		}
+	],
+	"__neighbours": []
+}

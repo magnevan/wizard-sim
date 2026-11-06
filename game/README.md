@@ -25,6 +25,12 @@ npm run shots:tutorial # build, then one screenshot per tutorial beat, a bot pla
 npm run preview        # serve the last build (vite preview)
 npm run artifact       # build + package artifact/ for a claude.ai link
 npm run sync-rules     # after a rules change in tools/spell-atlas/rules-c.js
+npm run content:build  # after editing the maps (content/maps, LDtk): compile them into packages/sim/src/rooms.gen.ts
+npm run content:check  # the maps: LDtk schema, references, spawns clear of rock and reachable, rooms.gen.ts up to date
+                       # (npm run check runs it too, as a test)
+npm run content -- list                        # each room: size, hash, rock walls, entities
+npm run content -- grid survive [--entities]   # a room's Terrain layer as text rows ('.' floor, '#' rock)
+npm run content -- grid survive --write f.txt  # write edited rows back into the level file ('-' for stdin)
 npm run audit          # inert additions in play: every queue of up to 3 runes cast every way, an added element
                        # that changes nothing is listed -> tools/audit-report.json (the Atlas audits check the rules text)
 npm run balance        # the balance harness: measures every common spell and bot wave runs -> tools/balance-report.json
@@ -54,11 +60,17 @@ URL params (`packages/client/src/main.ts` lists them too):
 ## Layout
 
 ```
+content/   the maps: maps/world.ldtk (LDtk 1.5.3) and one .ldtkl per room. README.md says how to open and edit them in LDtk
+           and what each Terrain value and entity means.
 packages/
+  content/ @wizard-sim/content (node only): the map build (LDtk -> sim/src/rooms.gen.ts), content:check (with LDtk's pinned
+           JSON schema in schema/) and the grid CLI.
   rules/   @wizard-sim/rules: spell grammar C. rules-c.gen.js is generated from the Atlas's rules-c.js (the source of truth
            while rules are reviewed there); index.ts types it. Pure data and string logic, so it is safe in the sim.
   sim/     @wizard-sim/sim: the game. No DOM, no clock, no async, no Math.sin. tsconfig has no DOM lib and a test bans the rest.
     world.ts   all state, in fixed-capacity typed arrays (struct of arrays); buffers() lists them
+    room.ts    RoomDef, a room's layout (size, terrain rows, rock, starts, dummies, portals, altars) and roomHash;
+               rooms.gen.ts holds every room, generated from content/maps (npm run content:build; never edit it by hand)
     step.ts    step(world, inputs): one 60 Hz tick
     input.ts   PlayerInput: the 9-byte per-player, per-tick record (all that netcode will ever send)
     state.ts   snapshot / restore / hashWorld (FNV-1a over every state byte)
@@ -144,7 +156,7 @@ Milestone 1 (deterministic core) is done, and the game has grown past it (online
 - **Mixing:** the strongest element leads (Life > Earth > Arcane > Lightning; else the most runes of Water, Fire or Cold). Every other element brings its passive and resistance row (half per rune, all at 2). The Leaf takes only the extras' strengths; the other guards' extras are a coat that bites whoever hits the block. Resistance is hyperbolic (damage taken 1 / (1 + r)). Each guard rune past the first adds 15 % guard HP and Retreat distance. Source: `docs/explorations/2026-11-05-guards-round-2.md` ("Merged" and after).
 - Numbers: `ARMS` in `config.ts`.
 
-Not yet: audio, campaign rooms.
+Not yet: audio, campaign rooms. The rooms themselves are LDtk maps since 2026-11-06 (`content/README.md`; stage 1 of the map pipeline, `docs/explorations/2026-11-06-map-pipeline-stage-1.md`).
 
 `?room=arena` runs the waves. The default is the Sanctum, with three practice dummies.
 

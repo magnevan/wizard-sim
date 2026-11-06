@@ -2,9 +2,9 @@
  * Online co-op: a lobby on the bus, then a rollback session over it.
  *
  * Lobby (topic "lobby"):
- *   host   {t: "host", match, name, version, tuning, room, players: [peer...], rejoin?}  every 1.5 s
+ *   host   {t: "host", match, name, version, maps, tuning, room, players: [peer...], rejoin?}  every 1.5 s
  *          while open, and during a match with an empty seat (rejoin: true)
- *   join   {t: "join", match, version, tuning}   a page asks to join; the host adds it (up to 4)
+ *   join   {t: "join", match, version, maps, tuning}   a page asks to join; the host adds it (up to 4)
  *   start  {t: "start", match, seed, room, delay, players}   sent a few times; seats follow the players order
  * In a match (topic "ls"): {m: match, f: seat, d: base64 packet} from LockstepSession's broadcast mode.
  *
@@ -15,12 +15,13 @@
  *   drop    {seat, end, tail}            the coordinator's call, once every live seat reported (or
  *                                        after a second): seat is gone from `end`, the highest tick
  *                                        anyone held, so nobody needs to forget an input
- *   rejoin  {peer, version, tuning}      a page asks for an empty seat
+ *   rejoin  {peer, version, maps, tuning}  a page asks for an empty seat
  *   resume  {seat, at, since, peer}      the coordinator gives it: that seat plays again from `at`
  *   welcome {to, seat, at, players, room, delay, tick, snap, inputs, gone}   the world for the newcomer
  * The coordinator is the lowest seat still playing, so it changes by itself when the host leaves.
  *
- * Everyone must run the same build, or the worlds drift apart, so a join is refused on a mismatch.
+ * Everyone must run the same build, or the worlds drift apart, so a join is refused on a mismatch:
+ * of NET_VERSION, or of `maps` (the sim's CONTENT_HASH over every room's layout, from game/content).
  * Tuning is the host's: the start (and a rejoin's welcome) carries the host's overrides, and during a
  * match only the host may change it. A change is scheduled a moment ahead,
  *   tune    {n, at, map}                  every peer swaps to `map` (the whole tuning) at tick `at`
@@ -28,7 +29,7 @@
  * (beforeTick). A change heard after its tick rewinds to it.
  */
 import { RollbackSession, type AimPrediction, type Gone, type Handover, type Transport } from '@wizard-sim/net';
-import { createWorld, overrides, replaceWorld, tuningHash, type Snapshot, type World } from '@wizard-sim/sim';
+import { CONTENT_HASH, createWorld, overrides, replaceWorld, tuningHash, type Snapshot, type World } from '@wizard-sim/sim';
 import { loadSaved, replaceTuning } from '../tune-io';
 import { roomOf, scenarioOfRoom } from '../scenarios';
 import { fromB64, toB64, type Bus } from './bus';
@@ -58,8 +59,8 @@ const DECIDE_MS = 1000;
 /** A newcomer's seat starts this many ticks after the coordinator's present, so the news reaches everyone first. */
 const RESUME_AHEAD = 45;
 
-interface HostMsg { t: 'host'; match: string; name: string; version: number; tuning: number; room: string; players: string[]; rejoin?: boolean }
-interface JoinMsg { t: 'join'; match: string; version: number; tuning: number }
+interface HostMsg { t: 'host'; match: string; name: string; version: number; maps: number; tuning: number; room: string; players: string[]; rejoin?: boolean }
+interface JoinMsg { t: 'join'; match: string; version: number; maps: number; tuning: number }
 /** prev: the match this one replaces (the host moved everyone to another scenario); its players follow without joining. */
 interface StartMsg { t: 'start'; match: string; seed: number; room: string; delay: number; players: string[]; tuning: Record<string, number>; prev?: string }
 /** A tuning in force from tick `at` (the whole map of overrides, so applying one never depends on the last). */
@@ -71,7 +72,7 @@ type Control =
   | { t: 'bye'; m: string; f: number }
   | { t: 'lost'; m: string; f: number; seat: number; have: number; tail: string }
   | { t: 'drop'; m: string; seat: number; end: number; tail: string }
-  | { t: 'rejoin'; m: string; peer: string; version: number; tuning: number }
+  | { t: 'rejoin'; m: string; peer: string; version: number; maps: number; tuning: number }
   | { t: 'resume'; m: string; seat: number; at: number; since: number; peer: string }
   | ({ t: 'tune'; m: string } & TuneAt)
   | Welcome;
@@ -208,7 +209,7 @@ export class NetPlay {
     this.joinedPlayers = [this.bus.self];
     const announce = () => {
       if (this.state !== 'hosting') return;
-      this.bus.emit('lobby', { t: 'host', match: this.match, name: `Wizard ${this.bus.self.slice(0, 4)}`, version: NET_VERSION, tuning: tuningHash(), room: this.room, players: this.joinedPlayers } satisfies HostMsg);
+      this.bus.emit('lobby', { t: 'host', match: this.match, name: `Wizard ${this.bus.self.slice(0, 4)}`, version: NET_VERSION, maps: CONTENT_HASH, tuning: tuningHash(), room: this.room, players: this.joinedPlayers } satisfies HostMsg);
     };
     announce();
     this.hostTimer = window.setInterval(announce, 1500);
@@ -219,9 +220,10 @@ export class NetPlay {
     const h = this.open.get(match);
     if (!h || this.state !== 'off') return;
     if (h.version !== NET_VERSION) { this.message = 'That host runs a different build.'; this.render(); return; }
+    if (h.maps !== CONTENT_HASH) { this.message = 'That host has different maps (another version of the game).'; this.render(); return; }
     if (h.rejoin) { this.askRejoin(match); return; }
     this.match = match; this.state = 'joining';
-    this.bus.emit('lobby', { t: 'join', match, version: NET_VERSION, tuning: tuningHash() } satisfies JoinMsg);
+    this.bus.emit('lobby', { t: 'join', match, version: NET_VERSION, maps: CONTENT_HASH, tuning: tuningHash() } satisfies JoinMsg);
     this.render();
   }
 
@@ -330,7 +332,7 @@ export class NetPlay {
       if (this.autoJoin && this.state === 'off') { this.autoJoin = false; this.join(m.match); }
       this.render();
     } else if (m.t === 'join' && this.state === 'hosting' && m.match === this.match) {
-      if (m.version !== NET_VERSION || this.joinedPlayers.length >= 4 || this.joinedPlayers.includes(from)) return;
+      if (m.version !== NET_VERSION || m.maps !== CONTENT_HASH || this.joinedPlayers.length >= 4 || this.joinedPlayers.includes(from)) return;
       this.joinedPlayers.push(from);
       this.render();
     } else if (m.t === 'start' && this.state === 'joining' && m.match === this.match && Array.isArray(m.players) && m.players.includes(this.bus.self)) {
@@ -426,7 +428,7 @@ export class NetPlay {
     } else if (m.t === 'tune') {
       this.addTune({ n: m.n, at: m.at, map: m.map });
     } else if (m.t === 'rejoin') {
-      if (this.coordinator() !== this.seat || m.version !== NET_VERSION) return;
+      if (this.coordinator() !== this.seat || m.version !== NET_VERSION || m.maps !== CONTENT_HASH) return;
       await this.admit(m.peer);
     }
   }
@@ -470,7 +472,7 @@ export class NetPlay {
   private sendRejoin(): void {
     if (!this.rejoin) return;
     this.rejoin.asked = performance.now();
-    this.bus.emit('nc', { t: 'rejoin', m: this.rejoin.match, peer: this.bus.self, version: NET_VERSION, tuning: tuningHash() } satisfies Control);
+    this.bus.emit('nc', { t: 'rejoin', m: this.rejoin.match, peer: this.bus.self, version: NET_VERSION, maps: CONTENT_HASH, tuning: tuningHash() } satisfies Control);
   }
 
   /** Coordinator: give a newcomer the first empty seat, from a little ahead of now. */
@@ -536,7 +538,7 @@ export class NetPlay {
     // An empty seat: say so in the lobby, so a dropped player (or anyone) can take it.
     if (this.coordinator() === this.seat && s.goneSeats().some((g) => g?.until === Infinity) && now - this.lastAnnounce > 1500) {
       this.lastAnnounce = now;
-      this.bus.emit('lobby', { t: 'host', match: this.match, name: `Wizard ${this.bus.self.slice(0, 4)}`, version: NET_VERSION, tuning: tuningHash(), room: this.room, players: this.joinedPlayers, rejoin: true } satisfies HostMsg);
+      this.bus.emit('lobby', { t: 'host', match: this.match, name: `Wizard ${this.bus.self.slice(0, 4)}`, version: NET_VERSION, maps: CONTENT_HASH, tuning: tuningHash(), room: this.room, players: this.joinedPlayers, rejoin: true } satisfies HostMsg);
     }
     if (now - this.stat.at >= 1000) {
       this.stat.rewindsPerS = (s.replayed - this.stat.replayed) / ((now - this.stat.at) / 1000 || 1);

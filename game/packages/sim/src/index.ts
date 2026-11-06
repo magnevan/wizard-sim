@@ -1,4 +1,5 @@
 export * from './world';
+export { roomHash, type RoomDef, type Pt as RoomPt, type Seg as RoomSeg } from './room';
 export * from './config';
 export * from './elements';
 export * from './input';

@@ -10,9 +10,10 @@
  * Six authored waves of two or three archetypes, then they loop with more and tougher enemies.
  */
 import { ARCH, ARCHETYPES } from './archetypes';
-import { ARENA, T } from './config';
+import { T } from './config';
 import { len } from './geom';
-import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, TEAM, spawnBody, type World } from './world';
+import type { RoomDef } from './room';
+import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, ROOMS, TEAM, spawnBody, type World } from './world';
 
 const WAVES: readonly (readonly [number, number])[][] = [
   [[ARCH.swarmer, 6]],
@@ -24,16 +25,12 @@ const WAVES: readonly (readonly [number, number])[][] = [
 ];
 export const WAVE_TIMES = { firstLull: 8, lull: 10, breather: 3, spawnEvery: 0.45 };
 
-/** Candidate portal spots around the edge, in a fixed order. */
-const SPOTS: [number, number][] = [];
-for (let k = 0; k < 12; k++) {
-  const f = (k + 0.5) / 12;
-  SPOTS.push([-ARENA.w / 2 + 1 + f * (ARENA.w - 2), -ARENA.h / 2 + 0.8], [-ARENA.w / 2 + 1 + f * (ARENA.w - 2), ARENA.h / 2 - 0.8]);
-}
-for (let k = 0; k < 6; k++) {
-  const f = (k + 0.5) / 6;
-  SPOTS.push([-ARENA.w / 2 + 0.8, -ARENA.h / 2 + 1 + f * (ARENA.h - 2)], [ARENA.w / 2 - 0.8, -ARENA.h / 2 + 1 + f * (ARENA.h - 2)]);
-}
+/**
+ * Candidate portal spots, in a fixed order: the room's Portal entities (the Arena's ring round the
+ * edge, from game/content/maps). A room with none (the Sanctum, when the tuning panel starts waves)
+ * borrows the Arena's.
+ */
+const spotsOf = (w: World): RoomDef['portals'] => (w.def.portals.length ? w.def.portals : ROOMS.arena.portals);
 
 export function wavePlan(n: number): { groups: [number, number][]; loop: number } {
   const i = Math.max(0, n - 1), loop = Math.floor(i / WAVES.length);
@@ -41,7 +38,7 @@ export function wavePlan(n: number): { groups: [number, number][]; loop: number 
 }
 
 export function openPortals(w: World): void {
-  const e = w.enc, b = w.bodies, { groups } = wavePlan(e.state[1]);
+  const e = w.enc, b = w.bodies, { groups } = wavePlan(e.state[1]), SPOTS = spotsOf(w);
   const used: number[] = [];
   for (let p = 0; p < MAX_PORTALS; p++) e.left[p] = e.total[p] = 0;
   groups.forEach(([arch, count], p) => {

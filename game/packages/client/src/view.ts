@@ -16,7 +16,7 @@
  */
 import { Container, Graphics, Sprite } from 'pixi.js';
 import {
-  AI, ARCH, ARCHETYPES, ARENA, ATTACK, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, PHASE,
+  AI, ARCH, ARCHETYPES, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, PHASE,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
@@ -30,6 +30,7 @@ import { stats } from './art/px';
 import { newRigState, type RigKind, type RigState } from './art/rigs';
 import { TAU, mod } from './art/util';
 import { Vfx, type BodyView } from './art/vfx';
+import { attackK, drawAttackFx } from './art/enemy-attacks';
 import { StructureView, drawTelegraphs } from './view-structures';
 import { Hud } from './hud';
 
@@ -105,13 +106,11 @@ export class WorldView {
   private prevBX = new Float64Array(MAX_BODIES);
   private prevBY = new Float64Array(MAX_BODIES);
   private prevKind = new Uint8Array(MAX_BODIES);
-  // cosmetic per-body state: walk phase, speed, hit flash, attack timing
+  // cosmetic per-body state: walk phase, speed, hit flash (attack poses come straight from the sim's ai / aiT)
   private ph = new Float64Array(MAX_BODIES);
   private spd = new Float64Array(MAX_BODIES);
   private flashT = new Float64Array(MAX_BODIES).fill(-9);
   private flashSoft = new Uint8Array(MAX_BODIES);
-  private prevAi = new Uint8Array(MAX_BODIES);
-  private attackT = new Float64Array(MAX_BODIES).fill(-9);
   // per seat: eased poses (staff raised / staff forward) and how long a Force pose lingers
   private prepS = new Float64Array(MAX_SEATS);
   private castS = new Float64Array(MAX_SEATS);
@@ -170,8 +169,6 @@ export class WorldView {
       const d = Math.hypot(b.x[i] - this.prevBX[i], b.y[i] - this.prevBY[i]);
       this.spd[i] += (d * 60 / 4.2 - this.spd[i]) * 0.3;
       this.ph[i] += (d * PPU / STRIDE[this.rigOf(w, i)]) * Math.PI;
-      if (b.ai[i] !== this.prevAi[i] && this.prevAi[i] === AI.windup) this.attackT[i] = t;
-      this.prevAi[i] = b.ai[i];
     }
     // eased poses: staff raised while gathering, Area and Place; held out level for Force
     for (let i = 0; i < MAX_SEATS; i++) {
@@ -217,8 +214,8 @@ export class WorldView {
     this.lastCt = ct;
     this.fitArena(w);
     this.aim(w, alpha, dt);
-    // a death's screen shake (a brute slamming down; last frame's, in whole art px): cosmetic only
-    const sh = this.deaths.shake, sx = sh > 0.3 ? Math.round(Math.sin(ct * 83) * sh) : 0, sy = sh > 0.3 ? Math.round(Math.cos(ct * 71) * sh * 0.6) : 0;
+    // a death's or a brute slam's screen shake (last frame's, in whole art px): cosmetic only
+    const sh = Math.max(this.deaths.shake, this.atkShake), sx = sh > 0.3 ? Math.round(Math.sin(ct * 83) * sh) : 0, sy = sh > 0.3 ? Math.round(Math.cos(ct * 71) * sh * 0.6) : 0;
     this.scene.scale.set(cam.scale);
     this.scene.position.set(sx * cam.scale + cam.subX(), sy * cam.scale + cam.subY());
     // how long the sim has stood still (capped): lets sim-driven loops (orbitals) carry on smoothly
@@ -258,7 +255,7 @@ export class WorldView {
     stats.fills = 0;
     const t0 = performance.now();
     const light = (x: number, y: number, r: number, col: string, a: number) => this.lights.add(fx0 + x, fy0 + y, r, col, a);
-    this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); }, ct);
+    this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
     this.lights.end();
     this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;
     this.hud.draw(w, t, cam.hudW, cam.hudH);
@@ -303,6 +300,7 @@ export class WorldView {
   }
 
   private fxMs = 0;
+  private atkShake = 0;
   private lastCt = 0;
   private lastSimT = -1;
   private stillSince = 0;
@@ -318,7 +316,7 @@ export class WorldView {
   private rigState(w: World, i: number, t: number, ct: number): RigState {
     const b = w.bodies, s = this.rig, kind = this.rigOf(w, i), arch = b.arch[i];
     s.kind = kind; s.seed = i & 1; s.variant = 0; s.pal = 0;
-    s.punch = -1; s.smash = -1; s.draw = 0; s.prep = 0; s.cast = 0; s.vx = 0; s.vy = 0;
+    s.punch = -1; s.smash = -1; s.draw = 0; s.atk = -1; s.hold = 0; s.prep = 0; s.cast = 0; s.vx = 0; s.vy = 0;
     // a Double is its owner's wizard (drawn translucent and violet-tinted by the sprite)
     const owner = b.kind[i] === KIND.double ? this.ownerOf(w, i) : i;
     if (kind === 'wizard') s.pal = owner % 4;
@@ -353,17 +351,23 @@ export class WorldView {
     s.chill = Math.round(Math.min(1, b.chill[i] / 3) * 3) / 3;
     s.shock = b.stun[i] > 0 ? Math.floor(ct * 26) % 2 : 0;
     if (b.heldBy[i] >= 0) s.sq = Math.floor(ct * 12) % 2 ? 0.2 : -0.2; // struggling in a grab
-    // enemy attack poses from the AI state
+    // enemy attack poses, from the sim's attack state (art/enemy-attacks.ts)
     if (b.kind[i] === KIND.enemy) {
-      const A = ARCHETYPES[arch], f = Math.min(1, b.aiT[i] / Math.max(1, A.windup * 60)), wind = b.ai[i] === AI.windup;
-      if (kind === 'archer' && wind) s.draw = Math.round(f * 4) / 4;
-      if (kind === 'brute') {
-        const after = t - this.attackT[i];
-        if (wind && A.attack === ATTACK.slam) s.smash = Math.round(f * 5) / 10;
-        else if (after < 0.5) s.smash = 0.5 + Math.round((after / 0.5) * 5) / 10;
+      const k = attackK(w, i);
+      if (kind === 'brute') s.smash = k;
+      else if (kind === 'archer') {
+        const A = ARCHETYPES[arch];
+        if (b.ai[i] === AI.windup) s.draw = Math.round(Math.min(1, b.aiT[i] / Math.max(1, A.windup * 60)) * 4) / 4;
+        s.atk = k;
+      } else {
+        s.atk = k;
+        // goblin-sized bodies crouch into the wind-up and stretch into the blow (it reads from any side)
+        if (k >= 0 && s.flash === 0) s.sq = k < 0.5 ? Math.round(k * 4) / 10 : k <= 0.6 ? -0.2 : 0;
       }
-      if (arch === ARCH.grabber && (b.ai[i] === AI.dash || b.ai[i] === AI.grab || b.holding[i] >= 0)) { s.draw = 1; s.spd = 1; }
-      if (kind === 'goblin' && wind && arch !== ARCH.grabber) s.sq = -0.2;
+      if (arch === ARCH.grabber) {
+        if (b.ai[i] === AI.dash) s.spd = 1;
+        if (b.ai[i] === AI.grab && b.holding[i] >= 0) { s.atk = -1; s.hold = Math.floor(ct * 6) % 2 ? 2 : 1; }
+      }
     }
     return s;
   }

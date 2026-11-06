@@ -16,6 +16,8 @@
  *   ?renderer=webgpu   try WebGPU instead of WebGL
  *   ?scene=rally  with ?room=survive and a headless loop: a Rally in progress, nobody pressing anything (demo.ts)
  *   ?scene=three  the same, but the pick with +1 to three half chosen and some pools refilling
+ *   ?scene=enemyattacks  (any room, headless) every enemy frozen at one beat of its attack, the sim not stepping;
+ *                 &phase=wind|strike|impact|recover|loop, &face=turns (demo.ts)
  *   ?local=N      the camera follows seat N only, as a networked player's screen would (others get edge arrows)
  *   ?pauseAt=N    pause the sim at tick N (like P in the tuning panel; cosmetic animation keeps running)
  *   ?tune=1       open the tuning panel at boot (F1 or the Tune button toggles it; tune-panel.ts)
@@ -33,7 +35,7 @@ import {
   DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, hashWorld, hex, newBotMemory, replaceWorld, runReplay, scriptedInput, scriptedReplay, step,
   type PlayerInput, type Room,
 } from '@wizard-sim/sim';
-import { demoInput, parseDemo, rallyScene, threeScene } from './demo';
+import { demoInput, enemyAttackScene, parseDemo, rallyScene, threeScene } from './demo';
 import { PadSeats } from './gamepad';
 import { KeyboardMouse } from './input';
 import { TunePanel } from './tune-panel';
@@ -125,6 +127,9 @@ async function boot(): Promise<void> {
   const scene = sceneName === 'rally' || sceneName === 'three';
   if (sceneName === 'rally') rallyScene(world);
   if (sceneName === 'three') threeScene(world);
+  // ?scene=enemyattacks (headless, any room): the sim never steps; each frame poses every enemy at one beat of its attack
+  const atkScene = headless && params.get('scene') === 'enemyattacks';
+  const atkPhase = params.get('phase') ?? 'wind', atkFace = Number(params.get('face') ?? 0.06);
   const bots = [newBotMemory(), newBotMemory()];
   const pads = new PadSeats();
   const keyboard = new KeyboardMouse(app.canvas, view.camera);
@@ -271,7 +276,8 @@ async function boot(): Promise<void> {
     if (pauseAt && world.clock[0] >= pauseAt && !tune.paused) tune.paused = true;
     if (menuAsk && menuAt && world.clock[0] >= menuAt && !menu!.open) menu!.show(menuSection ?? 'Resume');
     menu!.frame(now);
-    if (net?.state === 'playing') netSteps(now);
+    if (atkScene) { enemyAttackScene(world, atkPhase, atkFace, now); view.beforeStep(world); }
+    else if (net?.state === 'playing') netSteps(now);
     else if (menu!.pausing) { /* the menu is open: the world stands still */ }
     else if (tune.paused) for (let n = tune.takeSteps(); n > 0; n--) runStep();
     else {

@@ -1178,7 +1178,7 @@ export class Deaths {
     // other archetypes play the goblin's deaths on their own rig, scaled to its height (for now)
     const S = HEIGHT[g0.kind] / HEIGHT.goblin, arch = archOf(g0);
     let kind = pickDeath(info); const AD = ARCH[arch]; if (AD?.pick) kind = AD.pick(kind);
-    const d: Death = { who, tick, t0: NaN, g0: { ...g0, alpha: 1, spd: 0, vx: 0, vy: 0, sq: 0, flash: 0, punch: -1, smash: -1, draw: 0, bare: 0, crown: 1 }, dir, ov: info.overkill, kind, arch, S, slot: this.slot(), cache: new Map() };
+    const d: Death = { who, tick, t0: NaN, g0: { ...g0, alpha: 1, spd: 0, vx: 0, vy: 0, sq: 0, flash: 0, punch: -1, smash: -1, draw: 0, atk: -1, hold: 0, bare: 0, crown: 1 }, dir, ov: info.overkill, kind, arch, S, slot: this.slot(), cache: new Map() };
     this.live.push(d);
   }
 

@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
+  N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
@@ -852,8 +852,8 @@ export class StructureView {
         if (dry && orb) for (const p of emit(t, 4, 1.2, (i, a2) => ({ x: orb[0] + a2 * 4, y: orb[1] - 2 - a2 * 14, age: a2 }))) K.puff(o, p.x, p.y, 1.5 + p.age * 2, '#4a4458', 1 - p.age);
       } else if (ty === DEVICE.glyph) {
         const draw = clamp(1 - dv.timer[k] / T(STRUCT.glyphArm), 0, 1), armed = dv.timer[k] <= 0;
-        S.glyph(g, x, y, STRUCT.glyphRadius * PPU, SV, t, draw, armed, elName(look), R[1]);
-        if (!armed) X.ring(g, x, y, STRUCT.glyphRadius * PPU * (1.6 - draw * 0.6), STRUCT.glyphRadius * PPU * (1.6 - draw * 0.6) * FY, SV[1], 0.4 + draw * 0.4);
+        S.glyph(g, x, y, glyphRadiusOf(w, dv.owner[k]) * PPU, SV, t, draw, armed, elName(look), R[1]);
+        if (!armed) X.ring(g, x, y, glyphRadiusOf(w, dv.owner[k]) * PPU * (1.6 - draw * 0.6), glyphRadiusOf(w, dv.owner[k]) * PPU * (1.6 - draw * 0.6) * FY, SV[1], 0.4 + draw * 0.4);
         light(x, y, 22, armed ? R[2] : SV[2], armed ? 0.3 + 0.12 * Math.sin(t * 5) : 0.2 * draw);
       } else if (ty === DEVICE.lineglyph) {
         const draw = clamp(1 - dv.timer[k] / T(STRUCT.glyphArm), 0, 1), armed = dv.timer[k] <= 0, x2 = gx(dv.x2[k]), y2 = gy(dv.y2[k]);

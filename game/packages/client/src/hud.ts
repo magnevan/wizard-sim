@@ -184,6 +184,8 @@ export class Hud {
         if (by >= 0 && w.run.rally[d] > 0) sub += `${sub ? '  ' : ''}P${by + 1} RALLYING P${d + 1} ${Math.floor((100 * w.run.rally[d]) / T(PERKS.rallyTime))}%`;
       }
     }
+    // Echo is a one-wave power: say so while it lasts
+    if (w.run && w.run.echoOn[this.seat] && (st[0] === PHASE_ENC.lull || st[0] === PHASE_ENC.wave)) sub += `${sub ? '  ' : ''}ECHO: YOUR SPELLS GO OFF TWICE`;
     const clean = (str: string) => str.toUpperCase().replace(/[^A-Z0-9 +\-/.!×:%_()]/g, ' ');
     line = clean(line); sub = clean(sub);
     const wd = Math.max(line.length, sub.length) * 4 + 10, x = Math.round(TW / 2 - wd / 2);
@@ -248,8 +250,8 @@ export class Hud {
     [...TOP, ...BOT].forEach((el, k) => {
       const row = k < TOP.length ? 0 : 1, col = row ? k - TOP.length : k, id = elementId(el), ramp = X.EL[el];
       if (runeMax(w, i, id) <= 0) return; // locked
-      if (some) { X.rect(c, sx - 2, sy - 2, SLOT + 2, RH + 3, '#0a0810'); X.rect(c, sx - 1, sy - 1, SLOT, RH + 1, '#141220'); }
       const sx = x0 + 3 + col * SLOT + (row ? STAG : 0), sy = y0 + 3 + row * (RH + 3);
+      if (some) { X.rect(c, sx - 2, sy - 2, SLOT + 2, RH + 3, '#0a0810'); X.rect(c, sx - 1, sy - 1, SLOT, RH + 1, '#141220'); }
       const dryK = t - this.dryAt[id] < 0.5, dry = dryK && Math.floor(t * 8) % 2 === 0;
       X.rect(c, sx, sy, SLOT - 2, RH - 1, dry ? '#3a1418' : '#1f1c2e'); X.rect(c, sx, sy, SLOT - 2, 1, dry ? '#a03040' : '#3e3854'); X.rect(c, sx, sy + RH - 2, SLOT - 2, 1, '#0c0a14');
       X.rect(c, sx, sy, 1, RH - 1, '#2c2840'); X.rect(c, sx + SLOT - 3, sy, 1, RH - 1, '#110e1a');

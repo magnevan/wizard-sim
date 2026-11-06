@@ -101,7 +101,7 @@
     cv.setAttribute('aria-label', p.name + ' glyph');
     return cv;
   }
-  const capText = (p) => (p.status !== 'built' ? '' : p.slug === 'pu-echo' ? 'One wave; can be picked again' : p.cap === 1 ? 'Once per run' : `Stacks ×${p.cap}`);
+  const capText = (p) => (p.status !== 'built' ? '' : p.slug === 'pu-echo-v2' ? 'One wave; can be picked again' : p.cap === 1 ? 'Once per run' : `Stacks ×${p.cap}`);
 
   // ---------- build ----------
   // the map and the loop
@@ -129,7 +129,7 @@
     body.append(el('dl', null, `<div><dt>What it does</dt><dd class="does">${esc(p.does)}</dd></div><div><dt>What your partner sees</dt><dd>${esc(p.sees)}</dd></div><div><dt>The cost</dt><dd>${esc(p.cost)}</dd></div><div><dt>Pillars</dt><dd>${esc(p.pillar)}</dd></div>`));
     if (p.glyphNote) body.append(el('p', 'note', esc(p.glyphNote)));
     if (p.scene === 'rally') body.append(el('p', 'note', 'The scene: P1 walks into the dashed ring and starts to fill it; a goblin’s hit empties it (the break rule in Q10). P1 burns the goblin down, stands again for the full 3 s, and P2 gets up in a column of Life light with 40% health.'));
-    if (p.scene === 'echo') body.append(el('p', 'note', 'The scene: the Double appears at the pick. Both goblins head for it, not for you. It repeats each of your bolts at half power (Q11), takes a hit, and fades when the wave is cleared (Q12).'));
+    if (p.scene === 'echo') body.append(el('p', 'note', 'The scene: Echo is picked before wave 5, a key wave. You bolt the first goblin, then turn to the second, so the first bolt’s free echo, 0.4 s later, follows your new aim and hits the second. Your next bolt and its echo finish it. When the wave is cleared, Echo ends (Q12).'));
     body.append(rater(p.slug, p.name));
     main.append(head, body);
     card.append(main);

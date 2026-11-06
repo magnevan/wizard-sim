@@ -135,6 +135,7 @@ export class WorldView {
   }
 
   /** Hide the additive lights (?lights=0), for checking what they add. */
+  get lightsOn(): boolean { return this.lights.layer.visible; }
   set lightsOn(on: boolean) { this.lights.layer.visible = on; }
 
   resize(screenW: number, screenH: number, forcedScale?: number): void {

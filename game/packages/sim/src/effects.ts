@@ -15,7 +15,7 @@ import { clipRay, collideWalls, damageWall, lensAt, payloadDamage, rayThroughLen
 import { WALL, compile } from './compile';
 import { ARCHETYPES } from './archetypes';
 import { RES, grounded, guardMissile, phased, taken } from './guards';
-import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, PU, SURF, WARD, ZONE, alive, stackOf, type World } from './world';
+import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, PU, SURF, WARD, ZONE, alive, lingerLife, lingerSize, stackOf, type World } from './world';
 
 export interface Payload {
   counts: Uint8Array;
@@ -166,7 +166,8 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     case 'nova': case 'quake': {
       const r = (spec.shape === 'quake' ? SHAPES.novaRadius + 1 : SHAPES.novaRadius) + SHAPES.novaPerRune * (n - 1);
       disc(w, p, src, x, y, r, k, spec.heal ? -1 : src); // the Healing ring heals you too
-      if (!spec.heal) for (const el of [EL.water, EL.fire, EL.cold]) if (spec.counts[el - 1]) floorDisc(w, x, y, r * 0.6, el);
+      // the floor a nova leaves lingers, so Lingering stretches it (the blast itself is instant)
+      if (!spec.heal) for (const el of [EL.water, EL.fire, EL.cold]) if (spec.counts[el - 1]) floorDisc(w, x, y, r * 0.6 * lingerSize(w, src), el, lingerLife(w, src));
       burstEvent(w, src, x, y, r, spec.look);
       break;
     }
@@ -177,11 +178,12 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       break;
     case 'patch': {
       // each extra rune of the lead: +0.4 u, and what lingers lasts SHAPES.lingerPerRune longer (steam, the floors it leaves)
-      const r = SHAPES.patchRadius + 0.4 * (n - 1), longer = 1 + SHAPES.lingerPerRune * (n - 1);
+      // Lingering (Survive) makes the whole patch wider and what it leaves last longer
+      const r = (SHAPES.patchRadius + 0.4 * (n - 1)) * lingerSize(w, src), longer = (1 + SHAPES.lingerPerRune * (n - 1)) * lingerLife(w, src);
       if (spec.scald) spawnZone(w, ZONE.steam, src, p, tx, ty, r, T(SHAPES.patchLife * longer), 0);
       else for (const el of [EL.water, EL.cold, EL.fire]) if (spec.counts[el - 1]) floorDisc(w, tx, ty, r, el, longer);
       // Rain: Water Place keeps falling for a while (the user: a rain that lasts 1 s felt far too short).
-      if (spec.form === EL.water && !spec.scald && !spec.freeze) spawnZone(w, ZONE.rain, src, p, tx, ty, r, T(SHAPES.rainLife + SHAPES.rainPerRune * (n - 1)), 0);
+      if (spec.form === EL.water && !spec.scald && !spec.freeze) spawnZone(w, ZONE.rain, src, p, tx, ty, r, Math.round(T(SHAPES.rainLife + SHAPES.rainPerRune * (n - 1)) * lingerLife(w, src)), 0);
       if (spec.freeze) floorDisc(w, tx, ty, r, EL.cold, longer); // Ice sheet: the water becomes walkable ice
       disc(w, p, src, tx, ty, r, 0.5 * k, -1);
       burstEvent(w, src, tx, ty, r, spec.look);
@@ -189,7 +191,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     }
     case 'blast': spawnZone(w, ZONE.blast, src, p, tx, ty, 2 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); break;
     case 'geyser': spawnZone(w, ZONE.geyser, src, p, tx, ty, 0.9 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); break;
-    case 'spring': spawnZone(w, ZONE.spring, src, p, tx, ty, 1.4 + 0.4 * n, T(4 + 2 * n), 0); break;
+    case 'spring': spawnZone(w, ZONE.spring, src, p, tx, ty, (1.4 + 0.4 * n) * lingerSize(w, src), Math.round(T(4 + 2 * n) * lingerLife(w, src)), 0); break;
     case 'strike':
       w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x: tx, y: ty - 6, x2: tx, y2: ty, look: spec.look });
       disc(w, p, src, tx, ty, 0.9, 1.2 * k, -1);
@@ -356,7 +358,7 @@ export function nearest(w: World, x: number, y: number, r: number, skip: readonl
 }
 
 /** A chain: the first target in front of the caster, then jumps (more with more lightning, further through wet). */
-function chain(w: World, src: number, spec: SpellSpec, face: number, scale: number): void {
+export function chain(w: World, src: number, spec: SpellSpec, face: number, scale: number): void {
   const b = w.bodies, x = b.x[src], y = b.y[src], p = payloadOf(spec);
   const team = spec.heal ? b.team[src] : 0; // Chain heal looks for hurt allies
   let first = -1, bd = SHAPES.arcRange;

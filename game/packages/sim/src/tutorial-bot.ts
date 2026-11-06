@@ -89,7 +89,7 @@ export function tutorialBotInput(w: World, s: number, m: TutorialBotMemory): Pla
       const e = nearest(w, s, TAG.foe);
       if (e < 0) break;
       aim(b.x[e], b.y[e]);
-      // a bolt about to land: raise the buckler now, so it lands inside the parry window
+      // a bolt about to land: raise the buckler now, so it lands while a parry still counts
       const mm = w.missiles;
       for (let j = 0; j < mm.alive.length; j++) if (mm.alive[j] && mm.owner[j] === e && d2(mm.x[j], mm.y[j], x, y) < 1.25) { plan([], BTN.self, 14, 20); break; }
       break;

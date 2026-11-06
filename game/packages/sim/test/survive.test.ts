@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  ARCH, ARCHETYPES, ARENA, BTN, CELL, DEVICE, EL, KIND, N_PU, PERKS, SURF, SURVIVE_ARENA, SURVIVE_GATES, T, scriptedInput, NO_INPUT, PHASE_ENC, PU, RUNES, STRUCT, SURVIVE_ROCK, SURVIVE_TIMES, TEAM, TERRAIN, WALL, WARD,
-  botInput, buffers, createWorld, elementId, grant, hashWorld, newBotMemory, quantize, replaceWorld, restore, runeMax, snapshot, spawnBody, step,
+  ARCH, ARCHETYPES, ARENA, BTN, CELL, DEVICE, EL, KIND, N_PU, PERKS, PHASE, ZONE, SURF, SURVIVE_ARENA, SURVIVE_GATES, T, scriptedInput, NO_INPUT, PHASE_ENC, PU, RUNES, STRUCT, SURVIVE_ROCK, SURVIVE_TIMES, TEAM, TERRAIN, WALL, WARD,
+  botInput, buffers, createWorld, elementId, grant, hashWorld, raiseAltars, newBotMemory, quantize, replaceWorld, restore, runeMax, snapshot, spawnBody, step,
   type PlayerInput, type World,
 } from '../src';
 import { cellAt, floorDisc } from '../src/effects';
+import { glyphRadiusOf, hasteOf } from '../src/structures';
+import { keyWave } from '../src/survive';
 import { applyHit } from '../src/hit';
 
 /** One Fire and one Earth rune, as a payload (9 counts). */
@@ -382,6 +384,81 @@ describe('survive: power-ups', () => {
     expect(k(bed.w)).toBeGreaterThanOrEqual(0);
   });
 
+  it('Lingering: springs, rain and fire patches are bigger and last longer; so do glyphs and rock', () => {
+    const cast = (linger: boolean) => {
+      const { w, d } = quiet();
+      if (linger) grant(w, 0, PU.lingering);
+      for (const id of [EL.life, EL.water, EL.fire, EL.sigil]) { w.run!.maxBonus[id - 1] += 3; w.seats.runes[id - 1] += 3; }
+      // hold Area to Place, then wait for what it leaves to appear, and read it on its first tick
+      const place = (el: Element, x: number, y: number, seen: () => boolean) => {
+        d.aimAt(x, y).queue(el).tick({ buttons: BTN.area }, 30);
+        for (let t = 0; t < 90 && !seen(); t++) d.tick();
+      };
+      const zone = (type: number) => { const k = Array.from(w.zones.type).indexOf(type); return { r: w.zones.r[k], life: w.zones.life[k] }; };
+      place('life', 4, 0, () => w.zones.type.includes(ZONE.spring));
+      const spring = zone(ZONE.spring);
+      d.tick({}, 30);
+      place('water', -4, 0, () => w.zones.type.includes(ZONE.rain));
+      const rain = zone(ZONE.rain);
+      d.tick({}, 30);
+      place('fire', 0, 5, () => w.surf.kind.includes(SURF.fire));
+      const fire = Array.from(w.surf.kind).filter((k) => k === SURF.fire).length;
+      const fireLife = Math.max(...Array.from(w.surf.life).filter((_, c) => w.surf.kind[c] === SURF.fire));
+      return { spring, rain, fire, fireLife, glyph: glyphRadiusOf(w, 0) };
+    };
+    const a = cast(false), b = cast(true);
+    expect(b.spring.r).toBeCloseTo(a.spring.r * PERKS.lingerSize, 6);
+    expect(b.spring.life).toBeCloseTo(a.spring.life * PERKS.lingerLife, -1);
+    expect(b.rain.r).toBeCloseTo(a.rain.r * PERKS.lingerSize, 6);
+    expect(b.rain.life).toBeCloseTo(a.rain.life * PERKS.lingerLife, -1);
+    expect(b.fire).toBeGreaterThan(a.fire * 1.3);
+    expect(b.fireLife).toBeGreaterThan(a.fireLife * 1.4);
+    expect(b.glyph).toBeCloseTo(STRUCT.glyphRadius * PERKS.lingerSize, 6);
+    // rock walls stand lingerLife times as long
+    const plain = quiet(), ling = quiet();
+    grant(ling.w, 0, PU.lingering);
+    for (const { d } of [plain, ling]) d.aimAt(5, 0).queue('shield', 'earth').cast(BTN.area, 20, 20);
+    for (const { d } of [plain, ling]) d.tick({}, 60 * (STRUCT.rockLife + 2));
+    const k = (w: World) => Array.from(w.walls.type).indexOf(WALL.rock);
+    expect(k(plain.w)).toBe(-1);
+    expect(k(ling.w)).toBeGreaterThanOrEqual(0);
+  });
+
+  it('Quickstep: a permanent, weaker haste (walk, wind-up, recovery), two stacks, and it multiplies the Haste aura', () => {
+    const { w, d } = quiet();
+    expect(hasteOf(w, 0)).toBe(1);
+    grant(w, 0, PU.quickstep);
+    expect(hasteOf(w, 0)).toBeCloseTo(1 + PERKS.quickstep, 9);
+    grant(w, 0, PU.quickstep); grant(w, 0, PU.quickstep);
+    expect(w.run!.stacks[PU.quickstep]).toBe(2);
+    expect(hasteOf(w, 0)).toBeCloseTo(1 + 2 * PERKS.quickstep, 9);
+    w.seats.aura[0] = T(5); w.seats.auraEls[EL.lightning - 1] = 1;
+    expect(hasteOf(w, 0)).toBeCloseTo(STRUCT.hasteMult * (1 + 2 * PERKS.quickstep), 9);
+    w.seats.aura[0] = 0;
+    // walking: further in the same time
+    const walk = (q: boolean) => { const o = quiet(); if (q) grant(o.w, 0, PU.quickstep); o.d.tick({ moveX: 127 }, 60); return o.w.bodies.x[0]; };
+    expect(walk(true)).toBeCloseTo(walk(false) * (1 + PERKS.quickstep), 1);
+    void d;
+  });
+
+  it('Haste and Quickstep shorten the recovery after a cast as they do the wind-up', () => {
+    const recovery = (setup: (w: World) => void) => {
+      const { w, d } = quiet();
+      setup(w);
+      d.aimAt(5, 0).queue('earth').tick({ buttons: BTN.force });
+      let n = 0;
+      for (let t = 0; t < 120; t++) { d.tick(); if (w.seats.phase[0] === PHASE.recover) n++; }
+      return n;
+    };
+    const plain = recovery(() => {});
+    const quick = recovery((w) => grant(w, 0, PU.quickstep));
+    const haste = recovery((w) => { w.seats.aura[0] = T(5); w.seats.auraEls[EL.lightning - 1] = 1; });
+    expect(plain).toBeGreaterThan(5);
+    expect(quick).toBeLessThan(plain);
+    expect(haste).toBeLessThan(quick);
+    expect(Math.abs(haste - Math.round(plain / STRUCT.hasteMult))).toBeLessThanOrEqual(1);
+  });
+
   it('Pyre: a burning enemy you lit explodes when it dies, hurting what is near', () => {
     const run = (pyre: boolean) => {
       const { w, d } = quiet();
@@ -455,19 +532,52 @@ describe('survive: power-ups', () => {
     expect('slipstream' in PU || 'bloom' in PU || 'rally' in PU).toBe(false);
   });
 
-  it('Clockwork: your turrets fire for free', () => {
+  it('Clockwork: your turrets bind no Sigil rune, so a glyph stands beside two of them', () => {
     const run = (cw: boolean) => {
       const { w, d } = quiet();
       if (cw) grant(w, 0, PU.clockwork);
-      const t = dummy(w, 6, 0);
+      dummy(w, 6, 0);
       d.aimAt(6, 0).queue('sigil', 'fire').cast(BTN.force, 1, 20);
-      w.seats.runes[EL.fire - 1] = 0;
-      d.tick({}, 300);
-      return { hp: w.bodies.hp[t], fire: rune(w, 'fire') };
+      d.tick({}, 360); // the Sigil rune comes back only if the turret binds none
+      const sigil = rune(w, 'sigil');
+      d.aimAt(6, 2).queue('sigil', 'fire').cast(BTN.force, 1, 20);
+      // a glyph beside them: with Clockwork the rune it needs is free
+      d.tick({}, 360).aimAt(3, -3).queue('sigil', 'fire').cast(BTN.area, 30, 60);
+      const n = (t: number) => Array.from(w.devices.type).filter((x) => x === t).length;
+      return { sigil, turrets: n(DEVICE.turret), glyphs: n(DEVICE.glyph), fire: rune(w, 'fire') };
     };
-    const paid = run(false), free = run(true);
-    expect(free.hp).toBeLessThan(paid.hp); // it never stalls on an empty pool
-    expect(free.fire).toBeCloseTo(RUNES.surviveStart, 6); // and never draws on it: the pool refills to full
+    const plain = run(false), cw = run(true);
+    expect(plain.sigil).toBe(0); // bound
+    expect(cw.sigil).toBeGreaterThanOrEqual(1); // free, so it refills
+    expect(plain.turrets + plain.glyphs).toBe(1); // each new device recalled the last
+    expect(cw.turrets).toBe(2);
+    expect(cw.glyphs).toBe(1);
+  });
+
+  it('Clockwork: dismissing a turret gives no rune back, and pressing Sigil never recalls one', () => {
+    const { w, d } = quiet();
+    grant(w, 0, PU.clockwork);
+    d.aimAt(6, 0).queue('sigil', 'fire').cast(BTN.force, 1, 20);
+    w.seats.runes[EL.sigil - 1] = 0;
+    d.queue('sigil'); // no free rune and nothing bound: nothing to recall, so it's dry
+    expect(Array.from(w.devices.type).filter((x) => x === DEVICE.turret).length).toBe(1);
+    expect(w.seats.queueLen[0]).toBe(0);
+  });
+
+  it('Clockwork: two turrets fire no more often than the one did (the regen budget is shared)', () => {
+    const shots = (turrets: number) => {
+      const { w, d } = quiet();
+      grant(w, 0, PU.clockwork);
+      for (const id of [EL.fire]) { w.run!.maxBonus[id - 1] += 20; w.seats.runes[id - 1] += 20; }
+      dummy(w, 6, 0); w.bodies.hp[8] = w.bodies.maxHp[8] = 1e6;
+      for (let k = 0; k < turrets; k++) d.aimAt(6, k).queue('sigil', 'fire').cast(BTN.force, 1, 20);
+      const before = rune(w, 'fire');
+      let zaps = 0;
+      for (let t = 0; t < 600; t++) { d.tick(); zaps += w.events.filter((e) => e.kind === 'zap' && e.who === 0).length; }
+      return { zaps, before };
+    };
+    const one = shots(1), two = shots(2);
+    expect(two.zaps).toBeLessThanOrEqual(one.zaps + 2);
   });
 
   /** P2 down beside P1 in a lull that never ends (downed wizards stay down until a breather). */
@@ -530,45 +640,87 @@ describe('survive: power-ups', () => {
     expect(w.bodies.downed[1]).toBe(1); // still down: each blow drained the ring
   });
 
-  it('Echo: a free Double stands with you, binds no Sigil rune, draws enemies, and fades when the wave is cleared', () => {
+  it('Echo: a spell goes off again echoDelay later, free, and Echo ends when the wave is cleared', () => {
     const w = createWorld(3, 1, { room: 'survive' });
-    const d = new Driver(w), s = w.seats, b = w.bodies;
+    const d = new Driver(w), b = w.bodies;
+    b.x[0] = 0; b.y[0] = 0;
     grant(w, 0, PU.echo);
-    const dbl = s.double[0];
-    expect(dbl).toBeGreaterThanOrEqual(4);
-    expect(b.kind[dbl]).toBe(KIND.double);
-    expect(b.hp[dbl]).toBe(PERKS.echoHp);
-    expect(w.run!.echo[0]).toBe(dbl);
-    // every Sigil rune is still free: as many devices stand beside it as you have Sigil runes
-    grant(w, 0, PU.shieldSigil);
-    for (let k = 0; k < RUNES.surviveSigil + 1; k++) d.aimAt(3, -3 + k * 1.5).queue('sigil', 'fire').cast(BTN.area, 30, 120);
-    expect(Array.from(w.devices.type).filter((t) => t === DEVICE.glyph).length).toBe(RUNES.surviveSigil + 1);
-    expect(b.kind[dbl]).toBe(KIND.double); // and recalling the oldest never took the Double
-    // through the lull into the wave; enemies go for the Double
+    expect(w.run!.echoOn[0]).toBe(1);
+    expect(b.kind.some((k) => k === KIND.double)).toBe(false); // no Double any more
+    const missiles = () => Array.from(w.missiles.alive).filter((a) => a).length;
+    d.aimAt(0, 8).queue('earth').tick({ buttons: BTN.force });
+    let first = -1, second = -1;
+    for (let t = 0; t < 90; t++) {
+      const before = missiles();
+      d.tick();
+      if (missiles() > before) { if (first < 0) first = t; else if (second < 0) second = t; }
+    }
+    expect(first).toBeGreaterThanOrEqual(0);
+    expect(second - first).toBe(T(PERKS.echoDelay));
+    expect(rune(w, 'earth')).toBeGreaterThan(RUNES.surviveStart - 1.01); // one rune spent, not two
+    // through the lull into the wave; clearing it ends Echo
     d.tick({}, 60 * SURVIVE_TIMES.firstLull + 5);
     expect(w.enc.state[0]).toBe(PHASE_ENC.wave);
-    const g = foe(w, ARCH.swarmer, b.x[dbl] + 3, b.y[dbl]);
-    d.tick({}, 30);
-    expect(b.target[g]).toBe(dbl);
-    expect(b.kind[dbl]).toBe(KIND.double);
+    expect(w.run!.echoOn[0]).toBe(1);
     w.enc.left.fill(0);
     killAll(w);
     d.tick({}, 2);
     expect(w.enc.state[0]).toBe(PHASE_ENC.breather);
-    expect(b.kind[dbl]).not.toBe(KIND.double);
-    expect(s.double[0]).toBe(-1);
-    expect(w.run!.echo[0]).toBe(-1);
+    expect(w.run!.echoOn[0]).toBe(0);
   });
 
-  it('Echo: a Double you cast replaces it (and binds a rune as usual)', () => {
+  it('Echo doubles a one-shot spell on a target', () => {
+    const run = (echo: boolean) => {
+      const { w, d } = quiet();
+      if (echo) grant(w, 0, PU.echo);
+      const t = dummy(w, 4, 0);
+      d.aimAt(4, 0).queue('earth').cast(BTN.force, 1, 90);
+      return 400 - w.bodies.hp[t];
+    };
+    const plain = run(false);
+    expect(plain).toBeGreaterThan(1);
+    expect(run(true)).toBeGreaterThan(plain * 1.8);
+  });
+
+  it('Echo is offered more often before a key wave', () => {
+    const offered = (wave: number) => {
+      let n = 0;
+      for (let seed = 1; seed <= 300; seed++) {
+        const w = createWorld(seed, 1, { room: 'survive' });
+        w.enc.state[1] = wave;
+        raiseAltars(w);
+        if (w.run!.offer.includes(PU.echo)) n++;
+      }
+      return n;
+    };
+    expect(keyWave(5) && keyWave(8) && keyWave(13) && !keyWave(4) && !keyWave(1)).toBe(true);
+    expect(offered(5)).toBeGreaterThan(offered(4) * 1.5);
+  });
+
+  it('Echo: a channel is followed by a free one trailing your aim', () => {
+    const run = (echo: boolean) => {
+      const { w, d } = quiet();
+      if (echo) grant(w, 0, PU.echo);
+      const t = dummy(w, 5, 0);
+      d.aimAt(5, 0).queue('arcane').tick({ buttons: BTN.force }, 150);
+      const arcane = rune(w, 'arcane');
+      return { dmg: 400 - w.bodies.hp[t], arcane, end: w.run!.echoEndX[0] };
+    };
+    const plain = run(false), echo = run(true);
+    expect(echo.dmg).toBeGreaterThan(plain.dmg * 1.6);
+    expect(echo.arcane).toBeCloseTo(plain.arcane, 6); // free
+    expect(echo.end).toBeGreaterThan(3); // its far end is on the dummy, for the view to draw
+  });
+
+  it('Echo: structures, devices and Self casts do not echo', () => {
     const { w, d } = quiet();
     grant(w, 0, PU.echo);
-    const echo = w.seats.double[0];
-    d.queue('sigil').cast(BTN.self, 1, 30);
-    expect(w.seats.double[0]).toBeGreaterThanOrEqual(4);
-    expect(w.bodies.kind[w.seats.double[0]]).toBe(KIND.double);
-    expect(w.run!.echo[0]).toBe(-1);
-    expect(w.bodies.kind[echo] === KIND.double && echo !== w.seats.double[0]).toBe(false);
+    d.aimAt(4, 0).queue('sigil', 'fire').cast(BTN.area, 30, 60);
+    expect(Array.from(w.devices.type).filter((t) => t === DEVICE.glyph).length).toBe(1);
+    d.queue('shield', 'earth').cast(BTN.area, 20, 60);
+    const born = new Set(Array.from(w.walls.born).filter((_, k) => w.walls.type[k] === WALL.rock));
+    expect(born.size).toBe(1); // one wall cast, not two
+    expect(w.run!.echoAt.every((t) => t === 0)).toBe(true);
   });
 
   it('Echo can be picked again (a one-shot), Mirror charm only once', () => {

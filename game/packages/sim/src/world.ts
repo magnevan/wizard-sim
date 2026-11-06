@@ -311,15 +311,21 @@ export const PU = {
   pyre: 6,
   /** A mirror ward regrows on you 12 s after you last wore a ward. */
   charm: 7,
-  /** Your turrets' shots cost no runes. */
+  /** Clockwork: your turrets bind no Sigil rune (they still cost their runes, and their shots still fit the regen budget). */
   clockwork: 8,
-  /** A free Double stands with you until the next wave is cleared (one-shot: it can be picked again). */
+  /** Echo: until the next wave is cleared, every spell you cast goes off again PERKS.echoDelay s later, free (one-shot: it can be picked again). */
   echo: 9,
   /** Glass heart: PERKS.glassDmg more damage dealt and PERKS.glassHp less max health, per stack. */
   glass: 10,
+  /** Lingering: your placed and lingering areas (patches, floors, rain, steam, springs, glyphs, rock walls) last PERKS.lingerLife times as long and are PERKS.lingerSize times as big. */
+  lingering: 11,
+  /** Quickstep: a permanent, weaker haste (PERKS.quickstep a stack): faster walking, wind-up and recovery. */
+  quickstep: 12,
 } as const;
-export const N_PU = 11;
-export const PU_CAP: readonly number[] = [0, 6, 4, 3, 3, 1, 1, 1, 1, 9, 2];
+export const N_PU = 13;
+export const PU_CAP: readonly number[] = [0, 6, 4, 3, 3, 1, 1, 1, 1, 9, 2, 1, 2];
+/** Echo: spells waiting to go off again, per seat; and how many ticks of aim a channel's echo trails by. */
+export const ECHO_Q = 4, ECHO_LAG = 24;
 export const N_ALTARS = 3;
 /** Picks remembered per seat, in order, for the HUD and the results. */
 export const PICK_LOG = 32;
@@ -346,8 +352,12 @@ export interface Run {
   charm: Int32Array;
   /** Rally (everyone can), per downed seat: ticks of revive so far, and the seat reviving them (-1: nobody). */
   rally: Int32Array; rallyBy: Int8Array; rallyCd: Int32Array;
-  /** Echo: the body of the seat's free Double (-1: none). See freeDouble. */
-  echo: Int16Array;
+  /** Echo: 1 while the seat's spells echo (from the pick until the next wave is cleared). */
+  echoOn: Uint8Array;
+  /** Echo's pending repeats, ECHO_Q per seat: the tick each goes off (0: an empty slot), its runes (QUEUE_MAX each) and their count, its cast (CAST_ID), whether it was dragged, its charge. */
+  echoAt: Int32Array; echoQ: Uint8Array; echoLen: Uint8Array; echoCast: Uint8Array; echoDrag: Uint8Array; echoCharge: Float64Array;
+  /** Echo of a channel: the seat's aim over the last ECHO_LAG ticks (a ring, by tick), and where the trailing channel ends. */
+  echoFace: Float64Array; echoEndX: Float64Array; echoEndY: Float64Array;
 }
 
 /**
@@ -434,7 +444,9 @@ function run(): Run {
     picked: new Int8Array(n).fill(-1), stand: i32(n), standOn: new Int8Array(n).fill(-1),
     log: u8(n * PICK_LOG), logEl: u8(n * PICK_LOG), logN: u8(n),
     charm: i32(n),
-    rally: i32(n), rallyBy: new Int8Array(n).fill(-1), rallyCd: i32(n), echo: new Int16Array(n).fill(-1),
+    rally: i32(n), rallyBy: new Int8Array(n).fill(-1), rallyCd: i32(n),
+    echoOn: u8(n), echoAt: i32(n * ECHO_Q), echoQ: u8(n * ECHO_Q * QUEUE_MAX), echoLen: u8(n * ECHO_Q), echoCast: u8(n * ECHO_Q), echoDrag: u8(n * ECHO_Q), echoCharge: f64(n * ECHO_Q),
+    echoFace: f64(n * ECHO_LAG), echoEndX: f64(n), echoEndY: f64(n),
   };
 }
 
@@ -502,11 +514,13 @@ export const runeMax = (w: World, i: number, id: number): number =>
   w.tut ? tutPool(w.tut.state[0], id) : w.run ? (id === EL.sigil ? RUNES.surviveSigil : RUNES.surviveStart) + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
 /** A seat's power-up stacks (0 outside survive). */
 export const stackOf = (w: World, i: number, pu: number): number => (w.run && i >= 0 && i < MAX_SEATS ? w.run.stacks[i * N_PU + pu] : 0);
-/** True when seat `i`'s Double is Echo's free one: it binds no Sigil rune, and recalling it gives none back. */
-export const freeDouble = (w: World, i: number): boolean => {
-  const d = w.seats.double[i];
-  return !!w.run && d >= 0 && w.run.echo[i] === d && w.bodies.kind[d] === KIND.double;
-};
+/** True when device `k` binds no Sigil rune: a turret of a seat with Clockwork. Dismissing or recalling it gives none back. */
+export const freeDevice = (w: World, k: number): boolean =>
+  !!w.run && w.devices.type[k] === DEVICE.turret && stackOf(w, w.devices.owner[k], PU.clockwork) > 0;
+/** Lingering: how many times as long what `src` places or leaves lingering lasts (1 without it; a Double's or an enemy's spells never). */
+export const lingerLife = (w: World, src: number): number => (stackOf(w, src, PU.lingering) ? PERKS.lingerLife : 1);
+/** Lingering: how many times as wide what `src` places or leaves lingering is. */
+export const lingerSize = (w: World, src: number): number => (stackOf(w, src, PU.lingering) ? PERKS.lingerSize : 1);
 /** Seat `i`'s total regen R, runes per second shared among its pools (Wellspring adds PERKS.wellspring a stack). */
 export const regenOf = (w: World, i: number): number => {
   const k = stackOf(w, i, PU.wellspring);

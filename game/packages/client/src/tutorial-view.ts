@@ -192,7 +192,8 @@ export class TutorialHud {
     if (!tut) return;
     const st = tut.state, beat = st[TS.beat];
     if (beat !== this.beat) { this.beat = beat; this.beatAt = ct; }
-    if (st[TS.exit] && !this.exited) { this.exited = true; this.onExit?.(EXITS[st[TS.exit] - 1].room); }
+    if (!st[TS.exit]) this.exited = false;
+    else if (!this.exited) { this.exited = true; const to = EXITS[st[TS.exit] - 1].room; queueMicrotask(() => this.onExit?.(to)); }
 
     // the fade: out while walking through the arch, back in as the next beat begins
     const out = st[TS.fade] > 0 ? 1 - st[TS.fade] / T(TUT_TIMES.fade) : 0, back = 1 - clamp((ct - this.beatAt) / 0.35, 0, 1);

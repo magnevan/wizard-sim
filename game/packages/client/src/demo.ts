@@ -18,7 +18,7 @@ import { AIM_UNIT, ARCH, BTN, EL, PHASE_ENC, PU, chooseElement, devSpawnEnemy, e
 
 /**
  * ?room=survive&scene=rally (with the headless loop, e.g. the screenshot script): mid-wave, P2 is
- * down and P1 (everyone can rally), holding Echo, stands beside them with Echo's Double; a goblin
+ * down and P1 (everyone can rally), holding Echo (the strip says so), stands beside them; a goblin
  * and a brute close in. Nobody presses anything, so the ring fills and P2 gets up after
  * PERKS.rallyTime unless a hit lands first.
  */

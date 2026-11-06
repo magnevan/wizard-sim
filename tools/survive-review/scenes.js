@@ -3,7 +3,7 @@
  * Every scene is a pure function of its local time, so ?t= freezes any frame.
  *   pick   the altars rise, P1 and P2 each stand on one, their colours land on the plinths
  *   rally  P1 walks to downed P2, a goblin breaks the ring, P1 clears it, the ring fills, P2 gets up
- *   echo   the Double appears, the goblins go for it, it repeats P1's bolts, it fades at wave end
+ *   echo   Echo picked: each of P1's bolts goes off again 0.4 s later along P1's aim then, free; it ends at wave end
  *   arena  the 48 x 34 arena (world.ts SURVIVE_ROCK, SURVIVE_GATES, ALTAR_SPOTS) through one loop
  * Stage scenes: { id, w, h, dur, ground, seed, frame(t) } (see stage.js). The map: { id, w, h, dur, map: true, draw(c, t) }. */
 (function () {
@@ -189,52 +189,52 @@
     },
   };
 
-  // ---------- echo ----------
+  // ---------- echo (redesigned 2026-11-06: every spell goes off twice for one wave, free) ----------
   const echo = {
-    id: 'echo', w: 224, h: 128, dur: 9, ground: 'grass', seed: 8,
+    id: 'echo', w: 224, h: 128, dur: 8.5, ground: 'grass', seed: 8,
     frame(t) {
-      const W = 224, me = [62, 76], db = [84, 96];
-      const born = smooth(seg(t, 0.35, 1.0)), gone = smooth(seg(t, 5.0, 5.8)), dk = born * (1 - gone);
-      // two goblins come for the Double, not for you
-      const gA0 = [226, 58], gB0 = [226, 104];
-      const [ax, ay, aw] = walkTo(t, 1.1, 3.0, gA0, [150, 74]);
-      const [bx0, by0, bw0] = walkTo(t, 1.3, 3.6, gB0, [db[0] + 12, db[1] + 1]);
-      const c1 = 2.45, c1hit = 2.75, r1 = 2.6, r1hit = 2.95, c2 = 3.9, c2hit = 4.15, r2 = 4.05, r2hit = 4.3;
-      const aDead = smooth(seg(t, c1hit, c1hit + 0.35)), aFade = 1 - seg(t, c1hit + 0.8, c1hit + 1.2);
-      const bDead = smooth(seg(t, c2hit, c2hit + 0.35)), bFade = 1 - seg(t, c2hit + 0.8, c2hit + 1.2);
-      const pose = t < 3.2 ? S.pose(t, c1 - 0.15, c1, c1 + 0.12) : S.pose(t, c2 - 0.15, c2, c2 + 0.12);
-      const dpose = t < 3.4 ? S.pose(t, r1 - 0.1, r1, r1 + 0.12) : S.pose(t, r2 - 0.1, r2, r2 + 0.12);
-      const bt = [bx0, by0];
-      const actors = [S.wiz({ id: 'me', x: me[0], y: me[1], team: 'p1', el: 'fire', face: t > 2.1 && t < 4.6 ? S.faceTo(me, t < 3.2 ? [ax, ay] : bt) : 0.2, prep: pose.prep, cast: pose.cast })];
-      if (dk > 0.03) actors.push(S.wiz({ id: 'dbl', x: db[0], y: db[1], team: 'p1', el: 'fire', face: t > 2.1 && t < 4.6 ? S.faceTo(db, t < 3.2 ? [ax, ay] : bt) : 0.2, prep: dpose.prep, cast: dpose.cast, tint: '#d8b4ff', tintK: 0.5, alpha: Math.min(0.97, dk) * (Math.floor(t * 6) % 7 === 0 ? 0.8 : 1), outline: SIG[3], noShadow: true, flash: t > 3.55 && t < 3.8 ? 1 - (t - 3.55) / 0.25 : 0 }));
-      if (aFade > 0.02) actors.push(S.gob({ id: 'ga', x: ax, y: ay, face: S.faceTo([ax, ay], db), spd: aw, ph: t * 11, seed: 0, burn: t > c1hit ? 1 : 0, dead: aDead, alpha: aFade }));
-      if (bFade > 0.02) actors.push(S.gob({ id: 'gb', x: bx0, y: by0, face: S.faceTo([bx0, by0], db), spd: bw0, ph: t * 11 + 2, seed: 2, swing: t > 3.35 && t < 3.75 ? (t - 3.35) / 0.4 : -1, burn: t > r1hit ? 1 : 0, dead: bDead, alpha: bFade }));
-      const lights = [[db[0], db[1] - 8, 30, SIG[2], 0.45 * dk]];
+      const W = 224, me = [62, 82], D = 0.4; // PERKS.echoDelay
+      const on = smooth(seg(t, 0.3, 0.9)) * (1 - smooth(seg(t, 5.6, 6.3))); // Echo's violet ring at your feet, while it lasts
+      // two goblins: A from the upper right, B from the lower right
+      const [ax, ay, aw] = walkTo(t, 1.0, 2.6, [226, 50], [150, 62]);
+      const [bx, by, bw] = walkTo(t, 1.2, 3.6, [226, 112], [128, 96]);
+      // cast 1 at A; you turn to B, so its echo (0.4 s later, along your aim then) goes to B. Cast 2 at B, and its echo.
+      const c1 = 2.2, c2 = 3.4, fly = 0.3;
+      const e1 = c1 + D, e2 = c2 + D;
+      const aim = t < c1 + 0.2 ? [ax, ay] : [bx, by];
+      const aDead = smooth(seg(t, c1 + fly, c1 + fly + 0.35)), aFade = 1 - seg(t, c1 + fly + 0.8, c1 + fly + 1.2);
+      const bDead = smooth(seg(t, e2 + fly, e2 + fly + 0.35)), bFade = 1 - seg(t, e2 + fly + 0.8, e2 + fly + 1.2);
+      const pose = t < 2.9 ? S.pose(t, c1 - 0.15, c1, c1 + 0.12) : S.pose(t, c2 - 0.15, c2, c2 + 0.12);
+      const actors = [S.wiz({ id: 'me', x: me[0], y: me[1], team: 'p1', el: 'fire', face: t > 1.9 && t < 4.6 ? S.faceTo(me, aim) : 0.2, prep: pose.prep, cast: pose.cast })];
+      if (aFade > 0.02) actors.push(S.gob({ id: 'ga', x: ax, y: ay, face: S.faceTo([ax, ay], me), spd: aw, ph: t * 11, seed: 0, burn: t > c1 + fly ? 1 : 0, dead: aDead, alpha: aFade }));
+      if (bFade > 0.02) actors.push(S.gob({ id: 'gb', x: bx, y: by, face: S.faceTo([bx, by], me), spd: bw, ph: t * 11 + 2, seed: 2, burn: t > e1 + fly ? 1 : 0, dead: bDead, alpha: bFade, flash: (t > c2 + fly && t < c2 + fly + 0.15) || (t > e1 + fly && t < e1 + fly + 0.15) ? 1 : 0 }));
+      const lights = [[me[0], me[1] - 6, 30, SIG[2], 0.35 * on]];
       return {
         actors, lights,
-        under(c) { seal(c, db[0], db[1], t, dk); },
-        fx(c, A) {
-          if (dk > 0.05) for (let q = 0; q < 4; q++) { const a = t * 3 + q * 1.57; X.px(c, db[0] + Math.cos(a) * 9, db[1] - 12 + Math.sin(a) * 4, SIG[q % 2 ? 1 : 2]); }
-          if (t > 0.4 && t < 1.8) label(c, 'ECHO', db[0], db[1] - 36, SIG[1]);
-          // your bolts, and the Double's half-power repeats from where it stands
-          bolt(c, me[0] + 6, me[1] - 12, ax, ay - 6, seg(t, c1, c1hit));
-          bolt(c, db[0] + 6, db[1] - 12, bx0, by0 - 6, seg(t, r1, r1hit), 0.6);
-          bolt(c, me[0] + 6, me[1] - 12, bx0, by0 - 6, seg(t, c2, c2hit));
-          for (const r of [r1, r2]) if (t > r && t < r + 0.5) { const q = (t - r) / 0.5; X.ring(c, db[0], db[1], 4 + q * 12, (4 + q * 12) * FY * 0.6, SIG[1], 1 - q); }
-          if (t > c1hit) burst(c, ax, ay, (t - c1hit) / 0.4);
-          if (t > r1hit) burst(c, bx0, by0, (t - r1hit) / 0.4);
-          if (t > c2hit) burst(c, bx0, by0, (t - c2hit) / 0.4);
-          if (t > r1 && t < r1 + 1.1) label(c, 'HALF POWER', db[0] + 6, db[1] + 8, SIG[1]);
-          if (t > 3.47 && t < 3.71) X.ring(c, db[0] + 4, db[1] - 10, 8, 6, '#ffffff', 1, -0.6, 1.4);
-          // the Double takes a hit (60 HP)
-          if (dk > 0.3) hpBar(c, db[0], db[1] - 30, t < 3.55 ? 1 : 0.7);
-          // the wave is cleared: the Double fades in violet sparks
-          if (t > 5.0 && t < 6.2) for (let i = 0; i < 12; i++) { const q = PB.mod(i / 12 + (t - 5) * 0.9, 1); X.px(c, db[0] + (rand(i, 7) - 0.5) * 16, db[1] - 4 - q * 30, SIG[i % 3]); }
-          const msg = t < 1.1 ? 'ECHO PICKED' : t < 4.7 ? 'WAVE 3' : 'WAVE 3 CLEARED';
+        under(c) { seal(c, me[0], me[1], t, 0.9 * on); },
+        fx(c) {
+          if (t > 0.3 && t < 1.6) label(c, 'ECHO', me[0], me[1] - 34, SIG[1]);
+          const from = [me[0] + 6, me[1] - 12];
+          // your bolts (fire), and their echoes: the same bolt, rimmed in violet, from where you stand along your aim then
+          bolt(c, from[0], from[1], ax, ay - 6, seg(t, c1, c1 + fly));
+          bolt(c, from[0], from[1], bx, by - 6, seg(t, c2, c2 + fly));
+          for (const [e, tx, ty] of [[e1, bx, by], [e2, bx, by]]) {
+            const q = seg(t, e, e + fly);
+            if (q > 0 && q < 1) X.glow(c, lerp(from[0], tx, q), lerp(from[1], ty - 6, q), 7, SIG[2], 0.8);
+            bolt(c, from[0], from[1], tx, ty - 6, q);
+            if (t > e && t < e + 0.45) { const k = (t - e) / 0.45; X.ring(c, me[0], me[1], 4 + k * 12, (4 + k * 12) * FY * 0.6, SIG[1], 1 - k); }
+            if (t > e && t < e + 0.9) label(c, 'ECHO  FREE', me[0], me[1] + 8, SIG[1]);
+            if (t > e + fly) burst(c, tx, ty, (t - e - fly) / 0.4);
+          }
+          if (t > c1 + fly) burst(c, ax, ay, (t - c1 - fly) / 0.4);
+          if (t > c2 + fly) burst(c, bx, by, (t - c2 - fly) / 0.4);
+          // the wave is cleared: Echo ends, its ring fading in violet sparks
+          if (t > 5.6 && t < 6.6) for (let i = 0; i < 12; i++) { const q = PB.mod(i / 12 + (t - 5.6) * 0.9, 1); X.px(c, me[0] + (rand(i, 7) - 0.5) * 18, me[1] - 2 - q * 24, SIG[i % 3]); }
+          const msg = t < 1.0 ? 'ECHO PICKED (WAVE 5: A KEY WAVE)' : t < 5.5 ? 'WAVE 5  ECHO: YOUR SPELLS GO OFF TWICE' : 'WAVE 5 CLEARED: ECHO ENDS';
           strip(c, W, msg);
           seam(c, W, 128, t, this.dur);
         },
-        dur: 9,
+        dur: 8.5,
       };
     },
   };

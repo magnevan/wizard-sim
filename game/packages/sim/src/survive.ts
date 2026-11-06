@@ -16,18 +16,22 @@
  * Power-ups are per-seat stacks in `w.run` (world.ts PU); the sim reads them where they apply.
  * Rally (reviving a downed ally mid-wave) is not a power-up: every wizard can do it.
  */
+import type { Element } from '@wizard-sim/rules';
 import { ARCH, ARCHETYPES } from './archetypes';
 import { canAct } from './cast';
-import { PERKS, STRUCT, T } from './config';
-import { EL, N_EL } from './elements';
+import { compile, type SpellSpec } from './compile';
+import { PERKS, SHAPES, STRUCT, T } from './config';
+import { chain, channelTick, fireSpell } from './effects';
+import { EL, N_EL, elementName } from './elements';
 import { len } from './geom';
 import { BTN, type PlayerInput } from './input';
 import { nextInt } from './rng';
 import { snapshot } from './state';
-import { poolCap, spawnDouble } from './structures';
+import { poolCap } from './structures';
+import { atan2Turns } from './trig';
 import {
-  ALTAR_SPOTS, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_PU, PHASE, PHASE_ENC, PICK_LOG, PU, PU_CAP, SURVIVE_GATES, TEAM, WARD,
-  buffers, createWorld, freeDouble, joinSeat, spawnBody, stackOf, type World,
+  ALTAR_SPOTS, ECHO_LAG, ECHO_Q, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_PU, PHASE, PHASE_ENC, PICK_LOG, PU, PU_CAP, QUEUE_MAX, SURVIVE_GATES, TEAM, WARD,
+  buffers, createWorld, joinSeat, spawnBody, stackOf, type World,
 } from './world';
 
 export const SURVIVE_TIMES = { firstLull: 10, lull: 6, breather: 3, stand: 0.75, spawnEvery: 0.45, portalStagger: 1, restartAfter: 1.5, charm: 12 };
@@ -97,14 +101,18 @@ function offerable(w: World, pu: number): boolean {
   return false;
 }
 
-/** Raises three altars with three different power-ups, drawn from the world's RNG. */
+/**
+ * Raises three altars with three different power-ups, drawn from the world's RNG. Before a key wave
+ * (keyWave) Echo is PERKS.echoKeyWeight times as likely: it's the pick for a hard wave.
+ */
 export function raiseAltars(w: World): void {
   const r = w.run!;
   const pool: number[] = [];
-  for (let pu = 1; pu < N_PU; pu++) if (offerable(w, pu)) pool.push(pu);
+  const echoes = keyWave(w.enc.state[1]) ? PERKS.echoKeyWeight : 1;
+  for (let pu = 1; pu < N_PU; pu++) if (offerable(w, pu)) for (let n = pu === PU.echo ? echoes : 1; n > 0; n--) pool.push(pu);
   for (let a = 0; a < N_ALTARS; a++) {
     let pu: number = PU.three;
-    if (pool.length) { const k = nextInt(w.rng, 0, pool.length - 1); pu = pool[k]; pool.splice(k, 1); }
+    if (pool.length) { const k = nextInt(w.rng, 0, pool.length - 1); pu = pool[k]; for (let j = pool.length - 1; j >= 0; j--) if (pool[j] === pu) pool.splice(j, 1); }
     r.offer[a] = pu;
     // Deep (one element) names one of the eight non-Sigil elements.
     r.offerEl[a] = pu === PU.deepEl ? [EL.water, EL.life, EL.shield, EL.cold, EL.lightning, EL.arcane, EL.fire, EL.earth][nextInt(w.rng, 0, 7)] : 0;
@@ -124,7 +132,7 @@ export function grant(w: World, s: number, pu: number, el = 0): void {
   if (pu === PU.deepEl && el >= 1 && el <= N_EL) add(el, 2);
   if (pu === PU.shieldSigil) { add(EL.shield, 1); add(EL.sigil, 1); }
   if (pu === PU.charm) r.charm[s] = T(1); // the first mirror comes almost at once
-  if (pu === PU.echo) summonEcho(w, s);
+  if (pu === PU.echo) r.echoOn[s] = 1; // until the next wave is cleared
   if (pu === PU.glass) { // less max health, and your current health shrinks with it
     const b = w.bodies, k = r.stacks[s * N_PU + pu];
     const f = (1 - PERKS.glassHp * k) / (1 - PERKS.glassHp * (k - 1));
@@ -181,16 +189,66 @@ function tickPick(w: World): boolean {
 }
 
 /**
- * Echo: a free Double appears beside you at once (so you can plan round it during the lull) and
- * stands until the next wave is cleared. It is the cast Double in every way (it repeats your spells
- * at half power for half their runes, and enemies want it more), except that it binds no Sigil rune.
- * A Double you cast replaces it.
+ * Echo (redesigned 2026-11-06, explorations/2026-11-06-survive-powerups-2.md): from the pick until
+ * the next wave is cleared, every spell you cast goes off a second time, free, PERKS.echoDelay s
+ * later, from where you stand then and along your aim then. One-shot spells (missiles, shards,
+ * novas, patches, rain, springs, strikes, blasts, geysers, the imbued burst) are queued here and fire
+ * in tickEchoes; a beam or spray is followed by a second one trailing your aim by the same delay
+ * (echoChannel); an arc zaps again after each zap. Structures, devices, wards, Blink and Self casts
+ * don't echo: they would double what stands, not what happens. It's the "be super powerful for
+ * the next wave" pick: no Double to babysit, and its cost is the permanent upgrade you didn't take.
  */
-function summonEcho(w: World, s: number): void {
-  if (w.bodies.kind[s] !== KIND.wizard) return;
-  const i = spawnDouble(w, s, w.bodies.face[s], PERKS.echoHp);
-  if (i >= 0) w.run!.echo[s] = i;
+export function echoLater(w: World, i: number, charge: number): void {
+  const r = w.run, s = w.seats;
+  if (!r || i < 0 || i >= MAX_SEATS || !r.echoOn[i]) return;
+  for (let q = 0; q < ECHO_Q; q++) {
+    const k = i * ECHO_Q + q;
+    if (r.echoAt[k]) continue;
+    r.echoAt[k] = w.clock[0] + T(PERKS.echoDelay);
+    r.echoQ.set(s.castQueue.subarray(i * QUEUE_MAX, (i + 1) * QUEUE_MAX), k * QUEUE_MAX);
+    r.echoLen[k] = s.castLen[i]; r.echoCast[k] = s.castId[i]; r.echoDrag[k] = s.dragged[i]; r.echoCharge[k] = charge;
+    return;
+  }
 }
+
+const ECHO_CASTS = ['force', 'force', 'area', 'place', 'self', 'conjure'] as const; // index = CAST_ID, as cast.ts
+
+/** Echo's queued repeats go off when due: from the wizard's spot, along their aim now. */
+function tickEchoes(w: World): void {
+  const r = w.run!, b = w.bodies, s = w.seats, tick = w.clock[0];
+  for (let i = 0; i < MAX_SEATS; i++) for (let q = 0; q < ECHO_Q; q++) {
+    const k = i * ECHO_Q + q;
+    if (!r.echoAt[k] || r.echoAt[k] > tick) continue;
+    r.echoAt[k] = 0;
+    if (b.kind[i] !== KIND.wizard || b.downed[i]) continue;
+    const els: Element[] = [];
+    for (let n = 0; n < r.echoLen[k]; n++) els.push(elementName(r.echoQ[k * QUEUE_MAX + n]));
+    const spec = compile(els, ECHO_CASTS[r.echoCast[k]], { drag: r.echoDrag[k] === 1 });
+    const ax = s.aimX[i], ay = s.aimY[i], d = len(ax, ay), c = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
+    const face = ax || ay ? atan2Turns(ay, ax) : b.face[i];
+    w.events.push({ tick, kind: 'burst', who: i, x: b.x[i], y: b.y[i], amount: 0.5, look: EL.sigil });
+    if (spec.shape === 'arc') chain(w, i, spec, face, 0.5);
+    else fireSpell(w, i, spec, face, b.x[i] + ax * c, b.y[i] + ay * c, r.echoCharge[k]);
+  }
+}
+
+/**
+ * Echo of a channel, called each tick seat `i` channels: a free beam or spray from you, aimed where
+ * you aimed ECHO_LAG ticks ago (so it sweeps after yours), starting that long after yours.
+ */
+export function echoChannel(w: World, i: number, spec: SpellSpec, face: number): void {
+  const r = w.run, b = w.bodies;
+  if (!r || !r.echoOn[i]) return;
+  if (spec.shape === 'arc') { if (w.seats.chanTimer[i] === T(SHAPES.arcInterval)) echoLater(w, i, 0); return; } // it just zapped
+  const t = w.seats.chanTicks[i], at = i * ECHO_LAG + (t % ECHO_LAG);
+  const lagged = r.echoFace[at]; // written ECHO_LAG ticks ago, before this overwrite
+  r.echoFace[at] = face;
+  if (t < ECHO_LAG) return;
+  channelTick(w, i, spec, lagged, undefined, { x: b.x[i], y: b.y[i], t: t - ECHO_LAG, end: (ex, ey) => { r.echoEndX[i] = ex; r.echoEndY[i] = ey; } });
+}
+
+/** Echo's key waves: the 5th and the 8th of every eight (the first brute, and everything at once). */
+export const keyWave = (n: number): boolean => n >= 1 && (n % 8 === 5 || n % 8 === 0);
 
 /** The wave is cleared: every wizard's pools refill to full (Sigil: less what devices bind). */
 function refillPools(w: World): void {
@@ -203,13 +261,10 @@ function refillPools(w: World): void {
   }
 }
 
-/** The wave is cleared: Echo's Doubles fade. */
+/** The wave is cleared: Echo ends (a repeat still on its way is dropped). */
 function endEchoes(w: World): void {
   const r = w.run!;
-  for (let s = 0; s < MAX_SEATS; s++) {
-    if (freeDouble(w, s)) { w.bodies.kind[w.seats.double[s]] = KIND.none; w.seats.double[s] = -1; }
-    r.echo[s] = -1;
-  }
+  r.echoOn.fill(0); r.echoAt.fill(0);
 }
 
 /** Seat `s` can rally right now: up, and with hands and mind free (not casting, swinging, blocking or held). */
@@ -258,9 +313,10 @@ function tickRally(w: World): void {
   }
 }
 
-/** What ticks per seat: Rally, and Charm's mirror ward. */
+/** What ticks per seat: Rally, Echo's repeats, and Charm's mirror ward. */
 function tickPerks(w: World): void {
   tickRally(w);
+  tickEchoes(w);
   const r = w.run!, s = w.seats, b = w.bodies;
   for (let i = 0; i < MAX_SEATS; i++) {
     if (!stackOf(w, i, PU.charm) || b.kind[i] !== KIND.wizard) continue;

@@ -11,7 +11,7 @@
  *   ?spell=arcane+fire/force   both seats cast chosen spells at the dummies (demo.ts; &spell2= for seat 1)
  *   ?room=arena   play the Arena (waves of enemies) instead of the Sanctum's dummies; ?room=survive (or #survive):
  *                 Survive, endless waves in a walled arena with a power-up pick between them
- *   ?room=tutorial (or #tutorial)   the tutorial's first prototype (sim tutorial.ts); &beat=N (or #tutorial-N) starts
+ *   ?room=tutorial (or #tutorial)   the tutorial, 19 beats (sim tutorial.ts); &beat=N (or #tutorial-N) starts
  *                 at beat N; with ?autoplay=1 a bot plays it through (screenshots of each beat)
  *   ?scale=N      force the integer pixel scale
  *   ?debug=0      hide the debug line (tick, hash); the backquote key toggles it

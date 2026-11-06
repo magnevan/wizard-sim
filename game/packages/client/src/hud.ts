@@ -8,7 +8,7 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
-import { ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, elementId, elementName, fullMask, regenOf, regenRate, runeMax, specOf, type World } from '@wizard-sim/sim';
+import { ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, regenOf, regenRate, runeMax, specOf, type World } from '@wizard-sim/sim';
 import { badge, perkOf } from './art/perks';
 import * as X from './art/px';
 import { mod } from './art/util';
@@ -36,6 +36,9 @@ export class Hud {
   /** Seconds (sim time) when each element last ran dry or was spent, for seat 0. */
   private dryAt = new Float64Array(N_EL + 1).fill(-9);
   private spentAt = new Float64Array(N_EL + 1).fill(-9);
+  /** Which elements had a pool last frame, and when each was last given (the tutorial fills its sockets one by one). */
+  private unlocked = new Uint8Array(N_EL + 1);
+  private unlockAt = new Float64Array(N_EL + 1).fill(-9);
   private lastTitle = '';
   private lastCastAt = -9;
   /** Survive: each player's power-ups (top left), and the run-over card (centre). */
@@ -212,20 +215,26 @@ export class Hud {
     const c = this.c.x, s = w.seats, i = this.seat;
     c.clearRect(0, 0, CW, CH); c._fs = null;
     const x0 = Math.round(CW / 2 - PW / 2 + 7), y0 = CH - PH - 1;
-    // Locked elements (the tutorial's gating: max 0) get no cap; with every one locked, there is no rune bar at all.
+    // Locked elements (the tutorial's gating: max 0) show as empty sockets in the whole bar, filling in as
+    // they're given; the bar shows once any rune is (in the tutorial, from the rune chapter on, even empty).
     let unlocked = 0;
-    for (let e = 1; e <= N_EL; e++) if (runeMax(w, i, e) > 0) unlocked++;
-    // a few unlocked: each cap gets its own backing instead of the whole plate
-    const some = unlocked > 0 && unlocked < N_EL;
+    for (let e = 1; e <= N_EL; e++) {
+      const open = runeMax(w, i, e) > 0;
+      if (open) unlocked++;
+      // an element this beat gives (the last one didn't): its socket fills with a flash
+      if (open && !this.unlocked[e] && w.tut) { const k = TUT_ORDER.indexOf(w.tut.state[TUT_STATE.beat]); if (k <= 0 || tutPool(TUT_ORDER[k - 1], e) <= 0) this.unlockAt[e] = t; }
+      this.unlocked[e] = open ? 1 : 0;
+    }
+    const bar = unlocked > 0 || (!!w.tut && w.tut.state[TUT_STATE.beat] >= TUT_RUNES_FROM);
     // the backing plate follows the stagger: the top row is narrower than the bottom
-    if (unlocked === N_EL) {
+    if (bar) {
       X.rect(c, x0 - 1, y0 - 1, TOP.length * SLOT + 8, RH + 5, '#0a0810'); X.rect(c, x0 - 1, y0 + RH + 2, PW + 2, RH + 6, '#0a0810');
       X.rect(c, x0, y0, TOP.length * SLOT + 6, RH + 5, '#141220'); X.rect(c, x0, y0 + RH + 3, PW, RH + 4, '#141220');
       X.rect(c, x0, y0, TOP.length * SLOT + 6, 1, '#3a3450');
     }
     // the player's colour tab
     const team = X.TEAMS[i % 4];
-    if (unlocked || s.guard[i] || s.weapon[i]) { X.rect(c, x0 - 14, y0 + RH - 4, 13, 15, '#0a0810'); X.rect(c, x0 - 13, y0 + RH - 3, 12, 13, team.dark); X.text(c, 'P' + (i + 1), x0 - 11, y0 + RH + 1, team.light); }
+    if (bar || s.guard[i] || s.weapon[i]) { X.rect(c, x0 - 14, y0 + RH - 4, 13, 15, '#0a0810'); X.rect(c, x0 - 13, y0 + RH - 3, 12, 13, team.dark); X.text(c, 'P' + (i + 1), x0 - 11, y0 + RH + 1, team.light); }
     // what's in your hands: the conjured weapon (its element and uses left) and a guard, under the badge
     if (s.weapon[i]) {
       const el = elementName(s.weapon[i]);
@@ -248,9 +257,15 @@ export class Hud {
     // queued runes are reserved: they show as spent pips until cast or refunded
     [...TOP, ...BOT].forEach((el, k) => {
       const row = k < TOP.length ? 0 : 1, col = row ? k - TOP.length : k, id = elementId(el), ramp = X.EL[el];
-      if (runeMax(w, i, id) <= 0) return; // locked
+      if (!bar) return;
       const sx = x0 + 3 + col * SLOT + (row ? STAG : 0), sy = y0 + 3 + row * (RH + 3);
-      if (some) { X.rect(c, sx - 2, sy - 2, SLOT + 2, RH + 3, '#0a0810'); X.rect(c, sx - 1, sy - 1, SLOT, RH + 1, '#141220'); }
+      if (runeMax(w, i, id) <= 0) {
+        // locked: an empty socket, sunk into the plate
+        X.rect(c, sx, sy, SLOT - 2, RH - 1, '#0c0a14'); X.rect(c, sx, sy + RH - 2, SLOT - 2, 1, '#221e30');
+        X.rect(c, sx + SLOT - 3, sy, 1, RH - 1, '#1c1828');
+        X.ring(c, sx + 5, sy + 6, 3, 3, '#1f1c2e');
+        return;
+      }
       const dryK = t - this.dryAt[id] < 0.5, dry = dryK && Math.floor(t * 8) % 2 === 0;
       X.rect(c, sx, sy, SLOT - 2, RH - 1, dry ? '#3a1418' : '#1f1c2e'); X.rect(c, sx, sy, SLOT - 2, 1, dry ? '#a03040' : '#3e3854'); X.rect(c, sx, sy + RH - 2, SLOT - 2, 1, '#0c0a14');
       X.rect(c, sx, sy, 1, RH - 1, '#2c2840'); X.rect(c, sx + SLOT - 3, sy, 1, RH - 1, '#110e1a');
@@ -262,6 +277,12 @@ export class Hud {
       const v = s.runes[i * N_EL + id - 1], max = Math.round(runeMax(w, i, id));
       const share = R > 0 ? regenRate(w, i, id, full) / R : 0;
       this.pips(c, sx, sy + 11, v, max, ramp, t, share);
+      // the tutorial just gave you this element: its socket flashes in its colour
+      const fresh = w.tut ? t - this.unlockAt[id] : 9;
+      if (fresh >= 0 && fresh < 1.2 && Math.floor(fresh * 8) % 2 === 0) {
+        X.rect(c, sx - 1, sy - 1, SLOT, 1, ramp[1]); X.rect(c, sx - 1, sy + RH - 1, SLOT, 1, ramp[1]);
+        X.rect(c, sx - 1, sy - 1, 1, RH, ramp[1]); X.rect(c, sx + SLOT - 2, sy - 1, 1, RH, ramp[1]);
+      }
       // the flow line under the pips: as long and as bright as this pool's share of the regen
       if (share > 0.005) {
         const fw = Math.max(1, Math.round((SLOT - 6) * Math.min(1, share * 1.6)));

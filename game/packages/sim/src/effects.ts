@@ -15,6 +15,7 @@ import { clipRay, collideWalls, damageWall, lensAt, payloadDamage, rayThroughLen
 import { WALL, compile } from './compile';
 import { ARCHETYPES } from './archetypes';
 import { RES, grounded, guardMissile, phased, taken } from './guards';
+import { noteBlocked } from './tutorial-data';
 import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, PU, SURF, WARD, ZONE, alive, lingerLife, lingerSize, stackOf, type World } from './world';
 
 export interface Payload {
@@ -491,6 +492,7 @@ export function tickMissiles(w: World): void {
     const wk = dead ? -1 : wallAt(w, m.x[j], m.y[j], m.r[j]);
     if (wk >= 0) {
       const mirror = w.walls.type[wk] === WALL.barrier && m.owner[j] !== w.walls.owner[wk];
+      if (w.tut && w.walls.owner[wk] >= 0 && w.walls.owner[wk] < MAX_SEATS && b.kind[m.owner[j]] === KIND.enemy) noteBlocked(w.tut); // the tutorial's Shield beat
       damageWall(w, wk, payloadDamage(m.els, j, m.scale[j]) * (mirror ? 0.5 : 1));
       if (mirror) { m.vx[j] = -m.vx[j]; m.vy[j] = -m.vy[j]; m.owner[j] = w.walls.owner[wk]; m.lastHit[j] = -1; continue; }
       dead = true;
@@ -631,7 +633,8 @@ export function tickHealth(w: World): void {
   const b = w.bodies;
   for (let i = 0; i < b.kind.length; i++) {
     if (b.kind[i] === KIND.dummy) {
-      if (b.hp[i] < b.maxHp[i] && w.clock[0] - b.lastHit[i] > T(BODY.dummyResetAfter)) b.hp[i] = b.maxHp[i];
+      // (the tutorial's wounded dummy stays wounded until someone heals it)
+      if (b.hp[i] < b.maxHp[i] && w.clock[0] - b.lastHit[i] > T(BODY.dummyResetAfter) && !w.tut?.tag[i]) b.hp[i] = b.maxHp[i];
       if (b.hp[i] < 1) b.hp[i] = 1;
     } else if (b.kind[i] === KIND.wizard && b.hp[i] <= 0 && w.enc.state[0] && !b.downed[i]) {
       // In the Arena a downed wizard is out until the wave ends.

@@ -1,7 +1,7 @@
 ---
 status: prototyping
 pillars: [2, 4, 1, 7]
-related: [../explorations/2026-11-06-tutorial.md, sanctum.md, spell-grammar.md]
+related: [../explorations/2026-11-06-tutorial.md, ../explorations/2026-11-06-tutorial-pass-2.md, sanctum.md, spell-grammar.md]
 ---
 
 # Tutorial
@@ -56,3 +56,6 @@ See `../explorations/2026-11-06-tutorial.md`, *Open questions*:
 
 ## Smallest test
 The first eight beats (Walk, Strike, Heavy, Retreat, Defend, Fire, Water on yourself, Steam) at `#tutorial`, about 4 minutes. Do a newcomer cast steam on wet goblins without being told the rule twice?
+
+## Status (2026-11-06, pass 2)
+All nineteen beats are playable, after the user's review: calm starts (enemies walk in through far gates once you're ready), the whole rune bar with empty sockets from beat 7, and every word in `game/packages/client/src/tutorial-text.ts` as placeholders for the user's lore. The apprentice is a training dummy for now. See `../explorations/2026-11-06-tutorial-pass-2.md`.

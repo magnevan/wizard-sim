@@ -17,7 +17,7 @@ The live game is public. The rest are private claude.ai pages where the design w
 | [Weapon Moveset Review](https://claude.ai/artifact/F3FyhonePFv5JVeSLfk1U9) | `tools/weapon-moves/` | Conjured weapons and guards, move by move (rounds 1–4 rated). |
 | [Survive Review](https://claude.ai/artifact/HMQPuLJQWvMsXezHSHJn1a) | `tools/survive-review/` | The Survive mode: the arena and wave loop, every power-up as a rateable card, Rally and Echo in motion, and the open questions. |
 | [Rune Economy](https://claude.ai/artifact/HnMgNHWfFop3Xhy4eRcFAe) | `tools/rune-economy/` | A rune-flow simulator: four play styles under the old flat regen or the shared budget (α, R, pool size, glyphs), runes cast over time, and its questions (answered; the shared budget is built). |
-| Sound Gallery (not published yet) | `tools/sound-gallery/` | The game's sounds to rate: every element and cast shape, a spell mixer, and the rune, room and wall variations side by side. |
+| [Sound Gallery](https://claude.ai/artifact/1q44UnJP32BfR4wFVfkvVi) | `tools/sound-gallery/` | The game's sounds to rate: every element and cast shape, a spell mixer, and the rune, room and wall variations side by side. |
 | [Academy Art Trial](https://claude.ai/artifact/S2wttPmXSg7YXZhJQbL4gN) | `tools/art-trial/` | Five art sources (code-drawn, PixelLab, Gemini) drawing the same academy props on the game's real floor, with ratings and questions. |
 | [Spell VFX gallery](https://claude.ai/artifact/F2LeDE6z1FWx3HuAPsP9Vz) | `tools/spell-vfx/` | Looping pixel-art vignettes of the current spells and the enemy deaths, in the game's look. |
 | [Balance Notes](https://claude.ai/artifact/5cTMLv4PTnGvGS3QCBdDHg) | `tools/balance-notes/` | The balance harness's measurements, with questions. |

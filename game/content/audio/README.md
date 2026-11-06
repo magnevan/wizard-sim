@@ -57,3 +57,5 @@ Commons rate-limits hard: a burst of searches or quick downloads gets a 429 with
 - **Kenney's donation pack on GitHub** (`ismetcabbar9-oss/kenney-audio-assets`): a 2014 copy of a paid pack, so its provenance isn't clear.
 - **Aggregator repos claiming "CC0 sound effects":** skipped, since the licence couldn't be traced to each sound's author.
 - **Commons `Bubbles.wav`:** someone saying the word. `Chime (1) Sample.wav`: unclear origin. `Alien technology scanning device.ogg` and `Emptying syringe in water slow.ogg` are PD and fine, but nothing uses them yet.
+
+**Agents: don't fetch from OpenGameArt.** Its robots.txt disallows Claude's agents. The user can add its packs by hand.

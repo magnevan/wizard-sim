@@ -30,6 +30,8 @@ URL params: `?room=arena` (the waves; the default is the Sanctum with dummies), 
 
 **Tuning panel:** F1 (or the Tune button, or `?tune=1`) opens it. Every number in the sim is a slider; changes apply next tick and persist in the browser; Export / Import share a tuning as JSON. While it's open: N spawns the chosen enemy at the cursor, P pauses, `.` steps one tick. Tools: infinite runes, god mode, time scale, start wave N, skip the lull. Meters: DPS, damage per rune by spell, runes per minute, time-to-kill per enemy, wave clear times. The registry is `packages/sim/src/tuning.ts`; the panel is `packages/client/src/tune-panel.ts`.
 
+**Help panel:** F2 (or the ? button, or D-pad up on a gamepad) slides out a panel on the right that says what your queued runes will do: one row per gesture, with its key, the spell's name and text from the rules, and a live preview (a tiny world of its own, drawn by the game's view). With nothing queued it shows your hands' moves. Shift+F2 shows the numbers. `?help=1` opens it at boot; `?helpq=water,cold` or `?helpq=hands:water:tide` shows a queue or hands for screenshots. Code: `packages/client/src/help-panel.ts`, `help-model.ts` (pure, tested) and `help-preview.ts`. The previews warm up slowly under headless Chrome's virtual time, so `npm run shot` with the panel open can take minutes; a real-time puppeteer screenshot is quicker.
+
 ## Layout
 
 ```

@@ -290,6 +290,12 @@ export class Hud {
     this.sprite.position.set(Math.round(viewW / 2 - CW / 2), Math.max(0, viewH - CH - 3));
   }
 
+  /** The rune bar's plate with the player tab and the queue chip above it, in HUD px (overlays such as the help panel keep clear of it). */
+  barRect(): { x: number; y: number; w: number; h: number } {
+    const x0 = Math.round(CW / 2 - PW / 2 + 7), y0 = CH - PH - 1;
+    return { x: this.sprite.x + x0 - 14, y: this.sprite.y + y0 - 15, w: PW + 16, h: PH + 16 };
+  }
+
   /** A rune was spent from the pool (a cast): its icon hops. */
   spent(id: number, t: number): void { this.spentAt[id] = t; }
 

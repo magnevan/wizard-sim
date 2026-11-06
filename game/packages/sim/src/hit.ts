@@ -39,6 +39,8 @@ const c = (els: Uint8Array, at: number, id: number) => els[at * N_EL + id - 1];
 export const HIT_KIND = { other: 0, missile: 1, burst: 2, channel: 3, arc: 4, melee: 5, wave: 6 } as const;
 let hitKind = 0;
 export function setHitKind(k: number): void { hitKind = k; }
+/** The current hit kind, so a client stepping a second world (the help panel's previews) can put it back afterwards. */
+export const hitKindNow = (): number => hitKind;
 
 /**
  * Applies the payload in `els` (9 counts at slot `at`) to body `t`.

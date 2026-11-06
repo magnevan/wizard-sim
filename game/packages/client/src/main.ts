@@ -21,6 +21,8 @@
  *   ?local=N      the camera follows seat N only, as a networked player's screen would (others get edge arrows)
  *   ?pauseAt=N    pause the sim at tick N (like P in the tuning panel; cosmetic animation keeps running)
  *   ?tune=1       open the tuning panel at boot (F1 or the Tune button toggles it; tune-panel.ts)
+ *   ?help=1       open the help panel at boot (F2, the ? button or D-pad up toggles it; help-panel.ts);
+ *                 ?helpq=water,cold or ?helpq=hands:water shows that queue or those hands, ?helphint=1 the first-session hint
  *   ?net=bc       online co-op between tabs of this page on one machine (BroadcastChannel), for testing
  *                 alone; on claude.ai the Co-op panel uses the artifact's room instead (net/)
  *   ?menu=Scenarios  open the Esc menu at boot on that section (Resume, Scenarios, Multiplayer, Controls,
@@ -40,6 +42,7 @@ import { PadSeats } from './gamepad';
 import { KeyboardMouse } from './input';
 import { TunePanel } from './tune-panel';
 import { Inspect } from './inspect';
+import { HelpPanel } from './help-panel';
 import { loadSaved } from './tune-io';
 import { WorldView } from './view';
 import { broadcastBus, roomBus } from './net/bus';
@@ -136,6 +139,8 @@ async function boot(): Promise<void> {
   let recorder = new ReplayRecorder(7, MAX_SEATS);
   const tune = new TunePanel(world, view.camera, app.canvas, params.get('tune') === '1');
   const inspect = new Inspect(world, view.camera);
+  const help = new HelpPanel(world, view, headless ? null : pads, { headless, open: params.get('help') === '1', force: params.get('helpq'), hint: params.get('helphint') === '1' });
+  app.stage.addChild(help.root);
 
   const inputsFor = (tick: number): PlayerInput[] => {
     const out: PlayerInput[] = [];
@@ -167,7 +172,7 @@ async function boot(): Promise<void> {
       const s = net!.session!;
       view.setLocalSeat(net!.seat);
       s.hooks = {
-        before: (w) => { net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); tune.afterStep(); } else view.replayStep(w); },
+        before: (w) => { net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); tune.afterStep(); help.afterStep(w); } else view.replayStep(w); },
         preRewind: (w) => view.notePreRewind(w), postRewind: (w) => view.notePostRewind(w, net!.seat),
       };
     });
@@ -244,6 +249,7 @@ async function boot(): Promise<void> {
     step(world, inputs);
     view.afterStep(world);
     tune.afterStep();
+    help.afterStep(world);
   };
 
   // Fixed step: real time accumulates, the sim consumes it in DT slices (at most 8 per frame).
@@ -288,6 +294,7 @@ async function boot(): Promise<void> {
     tune.frame(now);
     inspect.frame();
     try {
+      help.frame(now);
       view.draw(world, acc / DT, now);
       app.render();
     } catch (err) {
@@ -301,7 +308,7 @@ async function boot(): Promise<void> {
     if (showDebug && world.clock[0] % 6 === 0) hud.textContent = `tick ${world.clock[0]}  hash ${hex(hashWorld(world))}  ${view.camera.scale}×  ${app.renderer.name}
 ${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
       (autoplay ? '  autoplay' : demo[0] ? '  spell demo' : scripted ? '  scripted run' : '\nLMB walk · RMB Force (hold) · Shift+RMB Area, hold for Place · Space Self · Shift+LMB Weapon · Esc clear (empty: menu) · hold Alt: inspect' +
-        '\nNothing queued: RMB Strike, hold for the weapon’s Heavy · Shift+RMB Special · Shift+LMB your guard’s Retreat (or a hop) · Space Defend: hold to block, tap as a hit lands to parry');
+        '\nNothing queued: RMB Strike, hold for the weapon’s Heavy · Shift+RMB Special · Shift+LMB your guard’s Retreat (or a hop) · Space Defend: hold to block, tap as a hit lands to parry · F2: what will my runes do?');
     schedule(frame);
   };
   // ?timerloop=1: timers instead of animation frames, so a background tab keeps running (the co-op e2e test).
@@ -309,5 +316,5 @@ ${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
   schedule(frame);
 
   // Expose the recorder for debugging: copy a replay of this session from the console.
-  (window as unknown as { wizardSim: unknown }).wizardSim = { world, get recorder() { return recorder; }, tune, view, menu, get net() { return net; } };
+  (window as unknown as { wizardSim: unknown }).wizardSim = { world, get recorder() { return recorder; }, tune, view, menu, help, get net() { return net; } };
 }

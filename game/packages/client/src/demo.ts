@@ -119,7 +119,8 @@ function parseOne(s: string): Demo | null {
 
 /** Casts that work with nothing queued: your hands (weapon moves and the guard's gestures). */
 const HANDS = ['weapon', 'wait', 'strike', 'heavy', 'special', 'channel', 'block', 'retreat'];
-const PERIOD = 170;
+/** Ticks per demo cycle (the help panel's previews loop on it too). */
+export const PERIOD = 170;
 /** Where seat i aims: the middle dummy for seat 0, the left one for seat 1. */
 const TARGET = [[0, -5], [-6, -4]] as const;
 

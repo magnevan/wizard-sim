@@ -7,7 +7,9 @@
  *   A B X Y = Water Life Shield Cold. Hold LB for Lightning Arcane Sigil Fire (the keys' second row).
  *   Earth: LB + RB, or D-pad down.
  *   RT Force (hold to channel or charge). LT Area (tap) or Place (hold). RB Self. LB + RT Weapon.
- *   Back clears the queue. Start (Options) opens the Esc menu (menu.ts). Any button on an unseated pad joins the next free seat.
+ *   Back clears the queue. Start (Options) opens the Esc menu (menu.ts).
+ *   D-pad up opens the help panel for this pad's seat (help-panel.ts).
+ *   Any button on an unseated pad joins the next free seat.
  */
 import { AIM_UNIT, BTN, elementId, quantize, type PlayerInput } from '@wizard-sim/sim';
 import type { Element } from '@wizard-sim/rules';
@@ -101,6 +103,11 @@ export class PadSeats {
   /** Take each seated pad's current state as already seen (after the menu: its A press doesn't also cast). */
   resync(): void {
     for (const [seat, pad] of this.padOf) { const m = this.mem.get(seat); if (m) m.prev = this.read(pad) ?? { buttons: [], axes: [] }; }
+  }
+  /** The seat pad index `pad` plays, or -1 (the help panel opens for that seat). */
+  seatOfPad(pad: number): number {
+    for (const [seat, p] of this.padOf) if (p === pad) return seat;
+    return -1;
   }
 
   sample(seat: number): PlayerInput | null {

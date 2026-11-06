@@ -116,6 +116,10 @@ export class SoundDirector {
   private frames = 0;
   /** Sustained sounds with an ending of their own, and where they last were. */
   private tails = new Map<string, { plan: () => Plan | null; x: number; y: number }>();
+  /** The Sound Lab's ears: which kinds of sound may play (by group, or a loop's first word), whether blows have their punch, and a tap on what's played. */
+  hear: ((kind: string) => boolean) | null = null;
+  punches = true;
+  onPlan: ((name: string, looped: boolean, id?: string) => void) | null = null;
 
   constructor(private sink: SoundSink, private rand: Rand = Math.random) {}
 
@@ -172,6 +176,7 @@ export class SoundDirector {
 
   /** `sub` gives a kind of sound its own gap and ceiling within the group: a douse mustn't swallow a shatter. */
   private ask(group: string, x: number, y: number, make: () => Plan, gain = 1, centred = false, sub = ''): void {
+    if (this.hear && !this.hear(group)) return;
     this.pending.push({ group, key: group + sub, x, y, make, gain, centred });
   }
 
@@ -197,7 +202,7 @@ export class SoundDirector {
         if (e.text === 'Parry!') { this.ask('move', x, y, () => composeMove('parry', null, r)); return; }
         if (e.text === 'Grabbed!') { this.ask('attack', x, y, () => composeHit(null, 20, r)); return; }
         const amount = e.amount ?? 0;
-        if (amount > 0) this.ask(`hit`, x, y, () => composeHit(el, amount, r));
+        if (amount > 0) this.ask(`hit`, x, y, () => composeHit(el, amount, r, this.punches));
         return;
       }
       case 'heal': this.ask('heal', x, y, () => composeHeal(r)); return;
@@ -297,6 +302,12 @@ export class SoundDirector {
     }
   }
 
+  /** Everything sustained stops, and whatever should still be sounding starts over as it now is. */
+  restartLoops(): void {
+    for (const id of this.loops.clear()) { this.sink.stop(id); this.onPlan?.('', true, id); }
+    this.tails.clear();
+  }
+
   /** The sim stands still while a menu is open offline; the UI still clicks. */
   ui(kind: UiSound): void {
     if (!this.ok()) return;
@@ -317,7 +328,7 @@ export class SoundDirector {
   /** What the state says should be sounding, nearest first. */
   private wanted(w: World, l: Listener): Map<string, Want> {
     const out: [number, string, Want][] = [];
-    const add = (id: string, want: Want) => out.push([Math.hypot(want.x - l.cx, want.y - l.cy), id, want]);
+    const add = (id: string, want: Want) => { if (!this.hear || this.hear(id.split(/[:|]/)[0])) out.push([Math.hypot(want.x - l.cx, want.y - l.cy), id, want]); };
     const s = w.seats, b = w.bodies, z = w.zones, m = w.missiles;
     for (let i = 0; i < MAX_SEATS; i++) {
       if (!s.active[i]) continue;
@@ -390,6 +401,7 @@ export class SoundDirector {
         const plan = q.make();
         for (const layer of plan.layers) { layer.rate *= j.rate; if (layer.rateTo) layer.rateTo *= j.rate; }
         this.sink.play(plan, place, q.gain * g * j.gain);
+        this.onPlan?.(plan.name, false);
       }
     }
     // the sim standing still (a pause, a stalled link): sustained sounds fade until it moves again
@@ -401,10 +413,13 @@ export class SoundDirector {
       this.sink.stop(id);
       const t = this.tails.get(id), plan = t && !still ? t.plan() : null;
       this.tails.delete(id);
-      if (t && plan) this.sink.play(plan, placeOf(t.x, t.y, l, walls), 1);
+      if (t && plan) { this.sink.play(plan, placeOf(t.x, t.y, l, walls), 1); this.onPlan?.(plan.name, false); }
+      this.onPlan?.('', true, id);
     }
     for (const { id, want: q } of d.start) {
-      this.sink.loop(id, q.plan(), placeOf(q.x, q.y, l, walls), q.gain);
+      const plan = q.plan();
+      this.sink.loop(id, plan, placeOf(q.x, q.y, l, walls), q.gain);
+      this.onPlan?.(plan.name, true, id);
       if (q.tail) this.tails.set(id, { plan: q.tail, x: q.x, y: q.y });
     }
     for (const { id, want: q } of d.update) { const t = this.tails.get(id); if (t) { t.x = q.x; t.y = q.y; } }

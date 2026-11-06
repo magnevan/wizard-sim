@@ -210,7 +210,10 @@ describe('recipes', () => {
       expect(composeSpell(flame).name).toBe('kit:spray');
       expect(composeStop(flame)?.layers[0].clip).toMatch(/^fire-die/);
       expect(composeSpell({ ...flame, shape: 'nova' }).name).toBe('kit:nova');
+      expect(composeSpell({ ...flame, shape: 'self' }).layers[0].clip).toMatch(/^fire-puff/);
       expect(composeSpell({ ...flame, shape: 'wall' }).name).not.toMatch(/^kit/);
+      for (const p of [composeCharge('fire'), composeFlight('fire'), composeFloorFire(), composeBurning()]) expect(p.name).toMatch(/^kit:/);
+      expect(composeHit('fire', 5, seeded(1), false).layers.every((l) => l.clip.startsWith('fire-puff'))).toBe(true);
       expect(composeImpact('fire', 1).name).toBe('kit:land');
       expect(composeStop(wet)).toBeNull();
       expect(composeSustain(wet).name).not.toMatch(/^kit/);

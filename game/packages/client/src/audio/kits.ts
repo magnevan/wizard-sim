@@ -19,6 +19,9 @@ export interface KitLayer {
   /** Random pitch either way, in cents. */
   cents?: number;
   loop?: boolean;
+  /** Playback rate, and where it glides to. */
+  rate?: number;
+  glide?: number;
   attack?: number;
   release?: number;
 }
@@ -38,6 +41,11 @@ export interface Kit {
   land: readonly KitLayer[];
   /** A body with this on it. */
   status: readonly KitLayer[];
+  /** The floor, burning or otherwise covered in it. */
+  ground: readonly KitLayer[];
+  /** Building up in the hand, and in the air on its way. Either can be empty. */
+  charge: readonly KitLayer[];
+  flight: readonly KitLayer[];
 }
 
 const FIRE_PUFFS = ['fire-puff-1', 'fire-puff-2', 'fire-puff-3'];
@@ -52,6 +60,9 @@ export const FIRE_KIT: Kit = {
   burst: [{ clips: ['fire-bloom-1', 'fire-bloom-2'], gain: 0.85, cents: 100 }, { clips: FIRE_PUFFS, gain: 0.6, cents: 200 }, { clips: ['fire-thud'], gain: 0.8, at: 0.05, cents: 100 }],
   land: [{ clips: FIRE_PUFFS, gain: 0.85, cents: 200 }],
   status: [{ clips: ['fire-lick'], gain: 0.7, loop: true, attack: 0.3, release: 0.3 }],
+  ground: [{ clips: ['fire-lick'], gain: 0.45, rate: 1.15, loop: true, attack: 0.3, release: 0.3 }, { clips: ['fire-crackle'], gain: 0.3, rate: 0.8, loop: true, attack: 0.3, release: 0.3 }],
+  charge: [{ clips: ['fire-jet'], gain: 0.5, rate: 0.7, glide: 1.25, loop: true, attack: 0.15 }],
+  flight: [{ clips: ['fire-jet'], gain: 0.28, rate: 1.2, loop: true, attack: 0.05 }],
 };
 
 const live: Partial<Record<ElementName, Kit>> = {};
@@ -67,7 +78,8 @@ export function kitPlan(name: string, ls: readonly KitLayer[], rand: Rand, rate 
   const layers = ls.map((l): Layer => ({
     clip: pick(l.clips, rand),
     gain: l.gain * gain,
-    rate: rate * Math.pow(2, ((rand() * 2 - 1) * (l.cents ?? 0)) / 1200),
+    rate: rate * (l.rate ?? 1) * Math.pow(2, ((rand() * 2 - 1) * (l.cents ?? 0)) / 1200),
+    rateTo: l.glide ? rate * l.glide : undefined,
     at: l.at ?? 0,
     attack: l.attack ?? 0.002,
     hold: 0,

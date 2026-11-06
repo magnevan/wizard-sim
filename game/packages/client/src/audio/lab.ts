@@ -32,7 +32,7 @@ const CSS = `
 #lab{position:fixed;top:12px;right:12px;width:310px;max-height:calc(100vh - 24px);overflow:auto;z-index:50;background:#14121bf2;color:#ece6d8;
   border:1px solid #4a4257;border-radius:8px;padding:12px;font:13px/1.4 system-ui,sans-serif}
 #lab h2{margin:0 0 2px;font-size:15px}#lab p{margin:0 0 8px;color:#a9a1b5;font-size:12px}
-#lab .sets,#lab .marks{display:flex;gap:4px}#lab .sets{margin-bottom:10px}
+#lab .sets,#lab .marks{display:flex;gap:4px}#lab .sets{margin-bottom:8px}
 #lab button{flex:1;background:#2a2535;color:inherit;border:1px solid #4a4257;border-radius:5px;padding:5px 6px;font:inherit;cursor:pointer}
 #lab button:hover{background:#393246}#lab button.on{background:#d9772b;border-color:#f0a35e;color:#1b1209;font-weight:600}
 #lab button:disabled{opacity:.4;cursor:default}
@@ -43,6 +43,15 @@ const CSS = `
 #lab .saved{color:#8fc98f;font-size:11px;height:14px}`;
 
 type Set = 'before' | 'new' | 'reference';
+type Part = 'spell' | 'hits' | 'burning' | 'other';
+const PARTS: readonly [Part, string][] = [['spell', 'Spell'], ['hits', 'Hits'], ['burning', 'Burning'], ['other', 'Runes, steps']];
+/** Every kind of sound the fire moments make, by the part it's switched with. Anything unlisted is "other". */
+const PART_OF: Readonly<Record<string, Part>> = { cast: 'spell', chan: 'spell', charge: 'spell', flight: 'spell', hit: 'hits', impact: 'hits', burst: 'hits', floorfire: 'burning', burn: 'burning' };
+/** The Now playing line's names. */
+const SAYS: readonly [RegExp, string][] = [
+  [/^kit:hold|^hold:/, 'held loop'], [/^kit:stop/, 'dying breath'], [/^kit:charge|^charge/, 'charge'], [/^kit:flight|^flight/, 'in flight'],
+  [/^kit:land|^impact|^hit/, 'hit'], [/^kit:ground|^floorfire/, 'burning ground'], [/^kit:burn|^burn/, 'burning body'], [/^kit:|^(spray|beam|missile|nova|force|self|place):/, 'cast'],
+];
 const MARKS = ['Right', 'Close', 'Wrong'];
 
 export class SoundLab {
@@ -53,10 +62,25 @@ export class SoundLab {
   private lab: typeof LABS[string];
   private notes: Record<string, { mark?: string; note?: string }> = {};
   private setButtons = new Map<Set, HTMLButtonElement>();
+  /** Which parts are on. Rune blips, footsteps and the like start off, so what you compare is the spell. */
+  private parts: Record<Part, boolean> = { spell: true, hits: true, burning: true, other: false };
+  private recent: { name: string; at: number }[] = [];
+  private loops = new Map<string, string>();
+  private now: HTMLElement | null = null;
 
   constructor(private audio: GameAudio, name: string) {
     this.lab = LABS[name] ?? LABS.fire;
     useKit(this.lab.el, this.lab.kit);
+    const d = audio.director;
+    d.hear = (k) => this.parts[PART_OF[k] ?? 'other'];
+    d.punches = false;
+    d.onPlan = (name, looped, id) => {
+      const say = SAYS.find(([re]) => re.test(name))?.[1] ?? name;
+      if (!looped) this.recent.push({ name: say, at: performance.now() });
+      else if (name && id) this.loops.set(id, say);
+      else if (id) this.loops.delete(id);
+    };
+    setInterval(() => this.showNow(), 150);
     void this.boot();
   }
 
@@ -66,6 +90,14 @@ export class SoundLab {
     for (let k = 0; k < 9; k++) w.seats.runes[k] = 5;
     w.bodies.hp[0] = 100;
     return demoInput(w, this.tick++, 0, this.demo) ?? NO_INPUT;
+  }
+
+  private showNow(): void {
+    if (!this.now) return;
+    const t = performance.now();
+    this.recent = this.recent.filter((r) => t - r.at < 900);
+    const names = [...new Set([...this.loops.values(), ...this.recent.map((r) => r.name)])];
+    this.now.textContent = `Now playing: ${names.join(', ') || 'nothing'}`;
   }
 
   private async boot(): Promise<void> {
@@ -98,6 +130,7 @@ export class SoundLab {
     this.set = s;
     useKit(this.lab.el, s === 'before' ? null : s === 'new' ? this.lab.kit : this.ref);
     for (const [k, b] of this.setButtons) b.classList.toggle('on', k === s);
+    this.audio.director.restartLoops(); // or a loop already going would carry on as the old set
   }
 
   private save(id: string, saved: HTMLElement): void {
@@ -124,6 +157,18 @@ export class SoundLab {
       b.onclick = () => this.choose(k);
       this.setButtons.set(k, b);
     }
+    el('p', 'Hear only:').style.margin = '0 0 3px';
+    const parts = el('div'); parts.className = 'sets';
+    for (const [k, label] of PARTS) {
+      const b = el('button', label, parts) as HTMLButtonElement;
+      b.classList.toggle('on', this.parts[k]);
+      b.onclick = () => {
+        this.parts[k] = !this.parts[k];
+        b.classList.toggle('on', this.parts[k]);
+        if (k === 'other') this.audio.director.punches = this.parts[k];
+      };
+    }
+    this.now = el('p', 'Now playing: nothing');
     const rows: HTMLElement[] = [];
     for (const m of this.lab.moments) {
       const key = `${this.lab.el}/${m.id}`, n = (this.notes[key] ??= {});

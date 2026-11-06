@@ -156,7 +156,7 @@ const kitFor = (s: SpellSound): Kit | undefined => kitOf(mixOf(s)[0]?.el);
 /** A spell's cast: the shape's structure with its elements poured in, or its element's kit if it has one for this shape. */
 export function composeSpell(s: SpellSound, rand: Rand = Math.random): Plan {
   const sh = SHAPES[s.shape], m = runeMod(runesOf(s.els)), mix = mixOf(s), layers: Layer[] = [], kit = kitFor(s);
-  const ls = !kit ? null : s.shape === 'spray' || s.shape === 'beam' ? kit.start : s.shape === 'missile' ? kit.launch : s.shape === 'nova' ? kit.burst : null;
+  const ls = !kit ? null : s.shape === 'spray' || s.shape === 'beam' ? kit.start : s.shape === 'missile' ? kit.launch : s.shape === 'nova' ? kit.burst : s.shape === 'self' ? kit.land : null;
   if (ls) return kitPlan(`kit:${s.shape}`, ls, rand, m.rate, m.gain, sh.wet + m.wet);
   const baseRate = m.rate;
   for (const g of sh.sig) layers.push({ ...g, gain: g.gain * m.gain, rate: baseRate, hold: g.hold ? g.hold * m.length : 0, release: g.release * m.length });
@@ -197,6 +197,8 @@ export function composeStop(s: SpellSound, rand: Rand = Math.random): Plan | nul
 
 /** Charging a held spell: a rising tone in its element, `k` from 0 to 1. */
 export function composeCharge(lead: ElementName): Plan {
+  const kit = kitOf(lead);
+  if (kit) return kitPlan('kit:charge', kit.charge, Math.random);
   const [clip, g] = ELEMENTS[lead].body[0];
   return { name: `charge:${lead}`, layers: [{ clip, gain: 0.55 * g, rate: 0.8, rateTo: 1.5, at: 0, attack: 0.15, hold: 0, release: 0.1, loop: true }], wet: 0 };
 }
@@ -246,10 +248,10 @@ export function composeInteraction(kind: Interaction, rand: Rand = Math.random):
 export const DEATH_KINDS = ['small', 'big', 'wizard'] as const;
 
 /** A body's blow: flesh, and the element on it if there is one. */
-export function composeHit(el: ElementName | null, amount: number, rand: Rand = Math.random): Plan {
+export function composeHit(el: ElementName | null, amount: number, rand: Rand = Math.random, punched = true): Plan {
   const big = amount >= 12;
   const punch = pick(big ? ['punch-heavy-1', 'punch-heavy-2', 'punch-heavy-3'] : ['punch-1', 'punch-2', 'punch-3'], rand);
-  const layers: Layer[] = [{ clip: punch, gain: big ? 0.8 : 0.55, rate: 1, at: 0, attack: 0.002, hold: 0, release: 0.05 }];
+  const layers: Layer[] = punched ? [{ clip: punch, gain: big ? 0.8 : 0.55, rate: 1, at: 0, attack: 0.002, hold: 0, release: 0.05 }] : [];
   if (el) {
     const v = ELEMENTS[el], kit = kitOf(el);
     if (kit) layers.push(...kitPlan('', kit.land, rand, 1, 0.42).layers);
@@ -356,8 +358,11 @@ export const composeSpring = (): Plan => ({ name: 'zone:spring', wet: 0, layers:
 export const composeSparkField = (): Plan => ({ name: 'zone:spark', wet: 0, layers: [{ clip: 'y-buzz', gain: 0.4, rate: 1.2, at: 0, attack: 0.1, hold: 0, release: 0.2, loop: true }] });
 export const composeBurning = (): Plan => { const k = kitOf('fire'); return k ? kitPlan('kit:burn', k.status, Math.random) : burningPlan(); };
 const burningPlan = (): Plan => ({ name: 'burn', wet: 0, layers: [{ clip: 'fire-crackle', gain: 0.5, rate: 1.1, at: 0, attack: 0.15, hold: 0, release: 0.25, loop: true }] });
-export const composeFloorFire = (): Plan => ({ name: 'floorfire', wet: 0, layers: [{ clip: 'fire-crackle', gain: 0.42, rate: 0.9, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }, { clip: 'fire-roar', gain: 0.2, rate: 0.7, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }] });
+export const composeFloorFire = (): Plan => { const k = kitOf('fire'); return k ? kitPlan('kit:ground', k.ground, Math.random) : floorFirePlan(); };
+const floorFirePlan = (): Plan => ({ name: 'floorfire', wet: 0, layers: [{ clip: 'fire-crackle', gain: 0.42, rate: 0.9, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }, { clip: 'fire-roar', gain: 0.2, rate: 0.7, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }] });
 export function composeFlight(el: ElementName): Plan {
+  const kit = kitOf(el);
+  if (kit) return kitPlan('kit:flight', kit.flight, Math.random);
   const v = ELEMENTS[el], [clip, g] = v.body[0];
   return { name: `flight:${el}`, wet: 0, layers: [{ clip, gain: 0.3 * g * v.gain, rate: 1.2 * v.rate, at: 0, attack: 0.05, hold: 0, release: 0.1, loop: true }] };
 }

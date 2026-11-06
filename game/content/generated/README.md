@@ -11,7 +11,10 @@ Every image bought from an AI tool is kept here, raw and unedited, so nothing is
 6. Generate once, derive the rest: buy a chair once, and make the broken or burnt chair locally.
 7. Note the balance before and after each paid call.
 
-Status: trial material. Read the tool's terms before any of it ships.
+Status: trial material, and the terms were read on 2026-11-06 (a summary, not legal advice; re-check before release):
+- **PixelLab** (pixellab.ai/termsofservice): you own what you make and may "use, modify, and distribute the outputs", commercially too, with no attribution and no stated difference for trial plans. You may not train models on outputs. It also binds you to the Open RAIL-M licence's use limits, which haven't been read yet.
+- **Gemini API** (aistudio.google.com/docs/terms): Google claims no ownership and states no general limit on publishing, but it doesn't address commercial use directly. On a paid key, prompts and outputs aren't used to improve Google's products.
+- **Copyright:** raw AI output may not be protectable, so anything in this public repo may be free for others to copy. Steam's AI disclosure still applies at release.
 
 | Files | Tool | Cost | Brief |
 |---|---|---|---|

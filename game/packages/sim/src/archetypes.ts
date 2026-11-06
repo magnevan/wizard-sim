@@ -24,6 +24,12 @@ export interface Archetype {
   guard?: { half: number; turnRate: number };
   /** Imp: fire does nothing and it can't burn; cold hurts more; getting wet hurts. */
   fireMult?: number; coldMult?: number; burnImmune?: boolean; soakDamage?: number; hitBurn?: boolean;
+  /** Never attacks or walks (the tutorial's straw targets and brambles). */
+  passive?: boolean;
+  /** Nothing moves it: not blows, not other bodies (brambles, like the Sanctum's dummies). */
+  rooted?: boolean;
+  /** Only fire hurts it (a bramble): every other element, and every blow, does nothing. */
+  onlyFire?: boolean;
 }
 
 export const ARCHETYPES: readonly Archetype[] = [
@@ -34,6 +40,9 @@ export const ARCHETYPES: readonly Archetype[] = [
   { id: 'caster', name: 'Archer', question: 'Can you reach past the front?', radius: 0.4, hp: 68, speed: 2.4, attack: ATTACK.bolt, reach: 11, windup: 1.0, cooldown: 2.4, damage: 20, knockback: 4, bolt: { speed: 6, keepAway: 8 } },
   { id: 'grabber', name: 'Grabber', question: 'Can you rescue?', radius: 0.45, hp: 90, speed: 2.8, attack: ATTACK.grab, reach: 5, windup: 0.8, cooldown: 3, damage: 13, knockback: 9, grab: { dashSpeed: 12, dashTime: 0.55, dragSpeed: 2.3, hold: 3.5, breakDamage: 25 } },
   { id: 'imp', name: 'Fire imp', question: 'Do you read the battlefield?', radius: 0.36, hp: 60, speed: 3.0, attack: ATTACK.melee, reach: 0.3, windup: 0.6, cooldown: 1.0, damage: 9, knockback: 2, fireMult: 0, coldMult: 2.5, burnImmune: true, soakDamage: 14, hitBurn: true },
+  // The tutorial's (docs/explorations/2026-11-06-tutorial.md): a thornbush only fire clears, and a goblin stuffed with straw.
+  { id: 'bramble', name: 'Bramble', question: 'Can you burn it?', radius: 0.45, hp: 10, speed: 0, attack: ATTACK.melee, reach: 0, windup: 1, cooldown: 1, damage: 0, knockback: 0, passive: true, rooted: true, onlyFire: true },
+  { id: 'straw', name: 'Straw goblin', question: 'Can you hit it?', radius: 0.3, hp: 12, speed: 0, attack: ATTACK.melee, reach: 0, windup: 1, cooldown: 1, damage: 0, knockback: 0, passive: true },
 ];
 
-export const ARCH = { none: 0, swarmer: 1, brute: 2, shieldbearer: 3, caster: 4, grabber: 5, imp: 6 } as const;
+export const ARCH = { none: 0, swarmer: 1, brute: 2, shieldbearer: 3, caster: 4, grabber: 5, imp: 6, bramble: 7, straw: 8 } as const;

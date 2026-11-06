@@ -29,6 +29,7 @@
  *   Leaf aegis (S+Li)      heals allies around you / burst heal   Seed step     Regrowth: slow healing
  */
 import { rules } from '@wizard-sim/rules';
+import { ARCHETYPES } from './archetypes';
 import { ARMS, STATUS, T } from './config';
 import { EL, N_EL, formOf } from './elements';
 import { cellAt, floorDisc, hit, hitOpts, spawnZone, touchFloor, zap, type Payload } from './effects';
@@ -111,6 +112,7 @@ export function resist(w: World, t: number, col: number): number {
  * resistance (seats only) plus what a heal lent it (any body).
  */
 export function taken(w: World, t: number, col: number): number {
+  if (col !== RES.fire && w.bodies.kind[t] === KIND.enemy && ARCHETYPES[w.bodies.arch[t]].onlyFire) return 0; // a bramble: blows bounce off
   const b = w.bodies, r = resist(w, t, col) + (b.blessT[t] > 0 ? b.bless[t * 5 + col] : 0);
   return r >= 0 ? 1 / (1 + r) : 1 - r;
 }

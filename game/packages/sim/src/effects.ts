@@ -595,6 +595,9 @@ export function tickZones(w: World): void {
 /** Ice under foot: you slide (much lower grip). */
 export const onIce = (w: World, i: number): boolean => surfAt(w, w.bodies.x[i], w.bodies.y[i]) === SURF.ice;
 
+/** Bodies nothing moves: the Sanctum's dummies, and rooted archetypes (the tutorial's brambles). */
+export const fixedBody = (w: World, i: number): boolean => w.bodies.kind[i] === KIND.dummy || (w.bodies.kind[i] === KIND.enemy && !!ARCHETYPES[w.bodies.arch[i]].rooted);
+
 /** Bodies push apart, and everyone stays in the arena. Dummies are rooted. */
 export function collide(w: World): void {
   const b = w.bodies;
@@ -604,7 +607,7 @@ export function collide(w: World): void {
       if (!alive(w, j) || phased(w, i) || phased(w, j)) continue; // the Prism's Phase drifts through bodies
       const dx = b.x[j] - b.x[i], dy = b.y[j] - b.y[i], d = len(dx, dy), min = b.r[i] + b.r[j];
       if (d >= min || d < 1e-9) continue;
-      const wi = b.kind[i] === KIND.dummy ? 0 : 1, wj = b.kind[j] === KIND.dummy ? 0 : 1;
+      const wi = fixedBody(w, i) ? 0 : 1, wj = fixedBody(w, j) ? 0 : 1;
       const tot = wi + wj || 1, push = min - d, ux = dx / d, uy = dy / d;
       b.x[i] -= (ux * push * wi) / tot; b.y[i] -= (uy * push * wi) / tot;
       b.x[j] += (ux * push * wj) / tot; b.y[j] += (uy * push * wj) / tot;

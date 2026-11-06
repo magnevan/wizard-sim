@@ -22,6 +22,7 @@ import { WALL } from './compile';
 import { damageWall, segDist } from './walls';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { AI, KIND, MAX_SEATS, PU, STATUS_BIT, TEAM, WARD, stackOf, type World } from './world';
+import { noteSlam } from './tutorial-data';
 
 const TRACK_SHARE = 0.55;
 const COVER_DIST = 2.2;
@@ -82,6 +83,7 @@ export function tickEnemies(w: World): void {
     if (b.kind[i] !== KIND.enemy) continue;
     const a = ARCHETYPES[b.arch[i]];
     b.vx[i] = 0; b.vy[i] = 0;
+    if (a.passive) continue; // the tutorial's straw targets and brambles
     if (!canAct(w, i)) {
       if (b.ai[i] === AI.grab) release(w, i);
       if (b.ai[i] !== AI.approach) setAi(w, i, AI.approach);
@@ -175,16 +177,19 @@ function attack(w: World, i: number, t: number, gap: number): void {
     else if (cutOff(w, i, t)) { const k = wallInReach(w, i, a.reach + 0.45); if (k >= 0) damageWall(w, k, dmg); }
   } else if (a.attack === ATTACK.slam) {
     const r = a.slamRadius!;
+    let hits = 0;
     for (let s = 0; s < b.kind.length; s++) {
       if (b.team[s] !== TEAM.players || b.kind[s] === KIND.none || b.downed[s]) continue;
       const ox = b.x[s] - b.lockX[i], oy = b.y[s] - b.lockY[i], od = len(ox, oy);
       if (od - b.r[s] > r) continue;
+      hits++;
       strike(w, i, s, dmg, a.knockback, od > 0.05 ? ox / od : cosTurns(b.face[i]), od > 0.05 ? oy / od : sinTurns(b.face[i]), false);
     }
     // a slam breaks the rock it lands on, too
     const wl = w.walls;
     for (let k = 0; k < wl.type.length; k++) if (wl.type[k] === WALL.rock && segDist(b.lockX[i], b.lockY[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] <= r) damageWall(w, k, dmg);
     w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: b.lockX[i], y: b.lockY[i], amount: r, look: EL.earth });
+    if (w.tut) noteSlam(w.tut, hits > 0); // the tutorial's Retreat beat counts slams that hit nobody
   } else if (a.attack === ATTACK.bolt) {
     const dx = b.lockX[i] - b.x[i], dy = b.lockY[i] - b.y[i], d = len(dx, dy) || 1;
     b.face[i] = atan2Turns(dy, dx);

@@ -34,6 +34,7 @@ import * as A from './art/accent';
 import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './art/util';
 import type { BodyView, LightFn } from './art/vfx';
 import { glyph, perkOf } from './art/perks';
+import { drawTutorialWorld } from './tutorial-view';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
 
 const EL = X.EL, SV = EL.sigil;
@@ -466,6 +467,7 @@ export class StructureView {
     const off = OFF;
     if (!off.includes('walls')) this.walls(w, t, g, o, light);
     if (w.run) { this.altars(w, t, g, o, light); this.rallies(w, t, g, o, bodies, light); }
+    if (w.tut) drawTutorialWorld(w, t, g, o, light, (rx, ry, cw, ch, z) => this.pieces.canvas(rx, ry, cw, ch, z));
     if (!off.includes('waves')) { this.waves(w, t, g, o, light); this.sparks(w, t, g, o, light); }
     if (!off.includes('devices')) this.devices(w, t, g, o, bodies, light);
     if (!off.includes('wizards')) this.onWizards(w, t, g, o, bodies, light);

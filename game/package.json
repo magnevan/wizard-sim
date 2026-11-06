@@ -18,6 +18,8 @@
     "shot": "node scripts/screenshot.mjs",
     "check:net": "npm run build && node scripts/net-e2e.mjs",
     "check:menu": "npm run build && node scripts/menu-check.mjs",
+    "check:tutorial": "npm run build && node scripts/tutorial-check.mjs",
+    "shots:tutorial": "npm run build && node scripts/tutorial-shots.mjs",
     "check:webrtc": "npm run build && node scripts/net-e2e.mjs --webrtc",
     "sync-rules": "node scripts/sync-rules.mjs",
     "balance": "vitest run --config vitest.balance.config.ts tools/balance.balance.ts",

@@ -806,9 +806,12 @@ export class Vfx {
       }
       case 'pop': {
         // small damage and heal numbers: rise a few pixels and fade (dithered), never noisy
+        // it follows the body; once the body is gone (the hit killed it) it stays where the body was last
+        // drawn, or where it was hit, so the killing blow's number shows too. r marks x2/y2 as set.
         const v = bodies[f.who];
-        if (!v?.on || !v.a) return;
-        const k = e / f.life, px2 = v.x + (rand(sd, 1) - 0.5) * 8, py2 = v.y + v.a.head[1] - 12 - easeOut(Math.min(1, k * 1.6)) * 8;
+        if (v?.on && v.a) { f.x2 = v.x; f.y2 = v.y + v.a.head[1]; f.r = 1; }
+        const ax = f.r ? f.x2 : gx(f.x), ay = f.r ? f.y2 : gy(f.y) - 14;
+        const k = e / f.life, px2 = ax + (rand(sd, 1) - 0.5) * 8, py2 = ay - 12 - easeOut(Math.min(1, k * 1.6)) * 8;
         if (k > 0.7 && X.bay(Math.round(px2), Math.round(py2 + e * 60)) < (k - 0.7) / 0.3) return;
         const heal = f.look === 1, str = f.text ? f.text : (heal ? '+' : '') + f.n;
         const col = f.text ? '#ffd36b' : heal ? X.LIFE[1] : f.n >= 20 ? '#ffd860' : '#f4f0f8';

@@ -14,3 +14,7 @@ game/shots/
 # Kept locally only: numbers read from the user's own game install
 docs/reference/magicka-numbers-extracted.md
 .claude/worktrees/
+
+# API keys and other secrets (never committed): see tools/art-trial/README.md
+.secrets/
+tools/art-trial/out/

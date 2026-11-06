@@ -8,7 +8,7 @@ The user's list for the night, in their words, with how Claude is running it. **
 | 1 | In-game help panel: a hotkey slides out a side panel showing an animation and a description of the spell your current runes make, one per cast variant (like the Atlas, in game); maybe stats | running | | |
 | 2 | Tutorial: design it (start with no runes, learn attacks, then runes one at a time; mostly practical, some text), then build a prototype you can go to | design done (f444095, `explorations/2026-11-06-tutorial.md`); prototype build running (8 beats at `#tutorial`) | | Claude adds the scenario-registry entry at merge |
 | 3 | Esc menu: navigation, multiplayer connect, a scenario picker (tutorial, sandbox, survive, arena…) | **done**, live | a7725ff | Esc clears queued runes, otherwise opens the menu. Scenarios, Multiplayer (host/join, online room switch by the host), Controls, Settings. Registry in `client/src/scenarios.ts`: a sim `tutorial` room turns the Tutorial row on (key 4) |
-| 4 | Enemy attack animations: some enemies have none | running | | |
+| 4 | Enemy attack animations: some enemies have none | **done**, live | e92861a | All six have a telegraph, strike, impact and recovery (client only, `art/enemy-attacks.ts`). Worth showing in the VFX gallery: grabber hold ring, archer lock glint, brute crack, imp spit. Open question: should the brute's slam travel as a shockwave? |
 | 5 | Final pass: (a) anything left incomplete / worth another pass; (b) code review, bugs, docs; (c) code quality; (d) performance low-hanging fruit | after 0–4 | | |
 
 ## How it runs
@@ -23,3 +23,4 @@ The user's list for the night, in their words, with how Claude is running it. **
 - 2026-11-06: tutorial design landed (19 beats, about 10.7 min); prototype build started in parallel with the Esc menu.
 - 2026-11-06: power-ups pass 2 merged and pushed (302 tests, golden d13d22ff). The decisions log had 3 cp1252-encoded lines; re-encoded as UTF-8.
 - 2026-11-06: Esc menu merged and pushed (316 tests; check:browser, check:menu and check:net pass). Decisions-log conflicts are now resolved with a script (scratchpad `resolve_decisions.py`: merge topic links, keep both entries).
+- 2026-11-06: enemy attacks merged and pushed (316 tests, golden d13d22ff). The main.ts conflict with the Esc menu was resolved by hand.

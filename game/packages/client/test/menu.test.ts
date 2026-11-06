@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ROOM_DIMS } from '@wizard-sim/sim';
-import { SCENARIOS, fromLocation, hashFor, isPlayable, roomOf, scenarioById, scenarioForKey, scenarioOfRoom } from '../src/scenarios';
+import { KIND, ROOM_DIMS, createWorld, joinSeat } from '@wizard-sim/sim';
+import { SCENARIOS, fromLocation, hashFor, isPlayable, roomOf, scenarioById, scenarioForKey, scenarioOfRoom, worldFor } from '../src/scenarios';
 import { escAction, helpPadPresses, keyToNav, menuScenarioKey, navigate, padMenuKeys, type NavItem, type NavState } from '../src/menu-nav';
 import { PAD, type PadState } from '../src/gamepad';
 
@@ -46,6 +46,17 @@ describe('the scenario registry', () => {
     expect(roomOf('garbage')).toBe('sanctum');
     expect(roomOf(undefined)).toBe('sanctum');
     expect(scenarioOfRoom('arena').name).toBe('Arena');
+  });
+
+  it('a switch keeps exactly the seats that were taken: a pad on seat 2 does not conjure a wizard on seat 1', () => {
+    const old = createWorld(7, 1);
+    joinSeat(old, 2);
+    const w = worldFor(old, 1, 'arena');
+    expect([...w.seats.active]).toEqual([1, 0, 1, 0]);
+    expect(w.bodies.kind[1]).toBe(KIND.none);
+    expect(w.bodies.kind[2]).toBe(KIND.wizard);
+    // the dev ally's seat stays, even before its bot has stepped
+    expect([...worldFor(createWorld(7, 1), 2, 'sanctum').seats.active]).toEqual([1, 1, 0, 0]);
   });
 });
 

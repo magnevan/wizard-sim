@@ -36,13 +36,7 @@ export interface Setting { label: string; blurb: string; value(): string; adjust
 const SECTIONS = ['Resume', 'Scenarios', 'Multiplayer', 'Controls', 'Settings'] as const;
 type Section = typeof SECTIONS[number];
 
-/** Glyphs the menu's text needs that the HUD's font lacks (added only if missing). */
-const EXTRA: Record<string, string> = {
-  '?': '110001010000010', "'": '010010000000000', '`': '100010000000000', '>': '100010001010100', '<': '001010100010001',
-  ';': '000010000010100', '=': '000111000111000', '#': '101111101111101', '"': '101101000000000', '·': '000000010000000',
-};
-for (const [k, g] of Object.entries(EXTRA)) X.FONT[k] ??= g;
-const clean = (s: string): string => [...s.toUpperCase()].map((ch) => (X.FONT[ch] ? ch : ch === '…' ? '...' : ' ')).join('');
+const clean = X.fontText;
 
 const COL = {
   edge: '#0a0810', fill: '#1a1726', line: '#3c3552', sel: '#2a2440', text: '#cfc9e6', bright: '#ffffff', sub: '#8a8498',

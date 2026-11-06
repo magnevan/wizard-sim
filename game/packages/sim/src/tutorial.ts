@@ -1,5 +1,5 @@
 /**
- * The tutorial (docs/explorations/2026-11-06-tutorial.md), the first prototype cut: eight beats in one
+ * The tutorial (docs/explorations/2026-11-06-tutorial.md), the prototype cut: nine beats in one
  * chamber, each a small problem the new skill solves, then an end card with three arches.
  *
  *   1 Walk     step on three glowing floor stones
@@ -7,6 +7,7 @@
  *   3 Heavy    shove a straw sack into the painted ring with a Heavy
  *   4 Retreat  a soft Brute slams twice and hits nobody
  *   5 Defend   parry an archer's bolt with the training buckler
+ *   6 Hands    four soft goblins close in round you: Sweep (Shift+RMB) catches them all
  *   7 Fire     burn the bramble hedge across the way out (only fire hurts brambles)
  *   8 Douse    cross the burning floor, then put yourself out (Water on yourself)
  *   9 Steam    three straw goblins in the rain: Water + Fire scalds through the wet
@@ -119,7 +120,8 @@ function resetWizards(w: World, beat: number): void {
     const [ox, oy] = P.seatOff[i];
     b.x[i] = P.entry[0] + ox; b.y[i] = P.entry[1] + oy; b.vx[i] = b.vy[i] = b.kx[i] = b.ky[i] = 0; b.face[i] = 0;
     b.hp[i] = b.maxHp[i];
-    b.wet[i] = b.burn[i] = b.frozen[i] = b.stun[i] = b.expose[i] = b.down[i] = b.root[i] = 0; b.chill[i] = 0; b.heldBy[i] = -1;
+    b.wet[i] = b.burn[i] = b.frozen[i] = b.stun[i] = b.expose[i] = b.down[i] = b.root[i] = b.blessT[i] = 0; b.bless.fill(0, i * 5, i * 5 + 5); b.chill[i] = 0; b.heldBy[i] = -1;
+    s.dashT[i] = s.retreatT[i] = s.guardCd[i] = s.guardT[i] = 0;
     s.queue.fill(0, i * QUEUE_MAX, (i + 1) * QUEUE_MAX); s.queueLen[i] = 0;
     s.phase[i] = PHASE.idle; s.timer[i] = 0; s.chanTicks[i] = 0; s.handT[i] = 0; s.specT[i] = 0; s.bufCast[i] = 0; s.bufTicks[i] = 0;
     s.ward[i] = WARD.none; s.wardBy[i] = -1; s.aura[i] = 0; s.wand[i] = 0; s.weapon[i] = 0; s.weaponUses[i] = 0; s.motes[i] = 0;
@@ -154,11 +156,18 @@ export function setupBeat(w: World, beat: number): void {
       spawn(w, ARCH.caster, TAG.foe, 0.5, 0, { hp: 20, dmg: 0.25, speed: 0 });
       rock(w, 1.6, -2.4, 1.6, -1.2); rock(w, 1.6, 1.2, 1.6, 2.4);
       break;
+    case TUT_BEAT.hands:
+      // four soft, slow goblins on the diagonals round the entry, closing in
+      for (const [dx, dy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        const k = P.ringGoblins / Math.SQRT2;
+        spawn(w, ARCH.swarmer, TAG.goblin, P.entry[0] + dx * k, P.entry[1] + dy * k, { hp: 6, dmg: 0.25, speed: 0.6 });
+      }
+      break;
     case TUT_BEAT.fire: {
       // a rock line across the chamber, the way out stopped by a hedge of brambles; a thick one off to the side
-      const x = P.hedgeX, g = P.hedgeGap, h = w.dims.h / 2;
+      const x = P.rockX, g = P.hedgeGap, h = w.dims.h / 2;
       rock(w, x, -h, x, -g); rock(w, x, g, x, h);
-      for (let k = 0; k < P.hedgeN; k++) spawn(w, ARCH.bramble, TAG.hedge, x, -1 + k, { r: 0.55 });
+      for (let k = 0; k < P.hedgeN; k++) spawn(w, ARCH.bramble, TAG.hedge, P.hedgeX, (k - (P.hedgeN - 1) / 2) * 1.0, { r: 0.6 });
       spawn(w, ARCH.bramble, TAG.bramble, P.thick[0], P.thick[1], { hp: 40, r: 0.7 });
       break;
     }
@@ -201,6 +210,8 @@ function check(w: World): boolean {
     case TUT_BEAT.defend:
       for (const e of w.events) if (e.kind === 'move' && e.text === 'parry' && e.who < MAX_SEATS) st[TS.a]++;
       return st[TS.a] >= 1;
+    case TUT_BEAT.hands:
+      return !anyTagged(w, TAG.goblin);
     case TUT_BEAT.fire:
       return !anyTagged(w, TAG.hedge);
     case TUT_BEAT.douse: {

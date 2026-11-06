@@ -185,6 +185,9 @@ export class TutorialHud {
     this.sprite.visible = this.banner.visible = this.fade.visible = false;
   }
 
+  /** A new world (the menu's restart, a room switch): greet whatever beat it starts on, even the one showing now. */
+  restart(): void { this.beat = -1; this.exited = false; }
+
   /** ct: real time (s), for the banner and the fade-in; viewW / viewH in HUD px. */
   draw(w: World, ct: number, viewW: number, viewH: number): void {
     const tut = w.tut;

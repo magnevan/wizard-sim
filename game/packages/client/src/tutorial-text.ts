@@ -2,7 +2,7 @@
  * Every line of text the tutorial shows, keyed by beat (docs/explorations/2026-11-06-tutorial.md).
  * Text isn't state: the sim only knows the beat number and its counters. Keep it all in this one
  * file, so a grammar change (a key, a cast, a mix) is one search away. One line at a time; it names
- * keys, never rules. The 3x5 pixel font has no apostrophe.
+ * keys, never rules. The 3x5 pixel font (art/px.ts FONT) has plain signs only: no curly quotes.
  */
 import { KIND, MAX_SEATS, TUT_BEAT, TUT_PLACES, TUT_STATE as TS, TUT_TAG, type World } from '@wizard-sim/sim';
 
@@ -14,6 +14,7 @@ export const BEAT_TEXT: Readonly<Record<number, BeatText>> = {
   [TUT_BEAT.heavy]: { title: 'Heavy', prompt: 'Hold RMB, then let go: a Heavy shoves hard. Shove the sack into the ring.' },
   [TUT_BEAT.retreat]: { title: 'Retreat', prompt: 'Shift+LMB hops you back. Get out of the red circle.' },
   [TUT_BEAT.defend]: { title: 'Defend: the training buckler', prompt: 'Hold Space to block. Tap it just as the arrow lands to send it back.' },
+  [TUT_BEAT.hands]: { title: 'Hands test', prompt: 'Shift+RMB sweeps all the way round you. Let them come close.' },
   [TUT_BEAT.fire]: { title: 'Fire', prompt: 'Press F to ready Fire, then RMB to cast it. Thick brambles need F F.' },
   [TUT_BEAT.douse]: { title: 'Water', prompt: 'Cross the burning floor to the arch.' },
   [TUT_BEAT.steam]: { title: 'Steam', prompt: 'Wet things will not burn. Q + F together: steam scalds them anyway.' },
@@ -53,6 +54,7 @@ export function counterFor(w: World): string {
   switch (st[TS.beat]) {
     case TUT_BEAT.walk: { let n = 0; for (let k = 0; k < TUT_PLACES.stones.length; k++) if (st[TS.a] & (1 << k)) n++; return `${n} / ${TUT_PLACES.stones.length}`; }
     case TUT_BEAT.strike: case TUT_BEAT.steam: return `${3 - count(w, TUT_TAG.straw)} / 3`;
+    case TUT_BEAT.hands: return `${4 - count(w, TUT_TAG.goblin)} / 4`;
     case TUT_BEAT.retreat: return `${Math.min(2, st[TS.a])} / 2 dodged`;
     case TUT_BEAT.fire: return `${TUT_PLACES.hedgeN - count(w, TUT_TAG.hedge)} / ${TUT_PLACES.hedgeN}`;
     default: return '';

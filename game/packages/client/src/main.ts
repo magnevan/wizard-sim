@@ -51,7 +51,7 @@ import { broadcastBus, roomBus } from './net/bus';
 import { webrtcBus } from './net/webrtc';
 import { NetPlay } from './net/netplay';
 import { EscMenu, type Setting } from './menu';
-import { fromLocation, hashFor, scenarioById, scenarioForKey, scenarioOfRoom, type Scenario } from './scenarios';
+import { fromLocation, hashFor, scenarioById, scenarioForKey, scenarioOfRoom, worldFor, type Scenario } from './scenarios';
 
 const params = new URLSearchParams(location.search);
 // Artifact links carry no query string, only a plain #anchor: #arena, #ally or #arena-ally work there too.
@@ -175,6 +175,7 @@ async function boot(): Promise<void> {
       acc = 0;
       menu?.hide(); // the match begins (or moved): back to the game
       scenario = scenarioOfRoom(net!.roomName);
+      view.tut.restart();
       // While rollback replays ticks it already showed, skip effects and meters (they'd play twice);
       // the view only notes remote spells the replay started, to show them from their first frame.
       const s = net!.session!;
@@ -198,9 +199,8 @@ async function boot(): Promise<void> {
    */
   const switchScenario = (s: Scenario) => {
     if (net?.state === 'playing') { net.switchRoom(s.room); return; }
-    let seated = players;
-    for (let p = 0; p < MAX_SEATS; p++) if (world.seats.active[p]) seated = Math.max(seated, p + 1);
-    replaceWorld(world, createWorld(7, seated, { room: s.room as Room }));
+    replaceWorld(world, worldFor(world, players, s.room as Room));
+    view.tut.restart(); // the same tutorial again greets its first beat again
     scenario = s;
     net?.setRoom(s.room);
     recorder = new ReplayRecorder(7, MAX_SEATS);

@@ -186,8 +186,7 @@ export class Hud {
     }
     // Echo is a one-wave power: say so while it lasts
     if (w.run && w.run.echoOn[this.seat] && (st[0] === PHASE_ENC.lull || st[0] === PHASE_ENC.wave)) sub += `${sub ? '  ' : ''}ECHO: YOUR SPELLS GO OFF TWICE`;
-    const clean = (str: string) => str.toUpperCase().replace(/[^A-Z0-9 +\-/.!×:%_()]/g, ' ');
-    line = clean(line); sub = clean(sub);
+    line = X.fontText(line); sub = X.fontText(sub);
     const wd = Math.max(line.length, sub.length) * 4 + 10, x = Math.round(TW / 2 - wd / 2);
     X.rect(c, x - 1, 0, wd + 2, sub ? 17 : 10, '#0a0810'); X.rect(c, x, 1, wd, sub ? 15 : 8, '#1a1726');
     const pulse = st[0] === PHASE_ENC.lull && secs <= 3 && Math.floor(t * 4) % 2 === 0;

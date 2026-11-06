@@ -8,7 +8,7 @@
  *   bolt (archer): keeps its distance or hides behind a brute or shieldbearer, aims (tracking, then
  *     locked: the dodge window), then looses a slow bolt.
  *   grab (grabber): dashes, holds a wizard and drags them toward the edge, then throws them.
- *     A Yank (arcane hook), enough damage, a stun or a freeze breaks the hold.
+ *     A hard shove on the held wizard, enough damage, a stun or a freeze breaks the hold.
  */
 import { ARCHETYPES, ATTACK, ARCH } from './archetypes';
 import { STRUCT, T } from './config';
@@ -225,7 +225,7 @@ function dash(w: World, i: number): void {
 function grab(w: World, i: number): void {
   const b = w.bodies, a = ARCHETYPES[b.arch[i]], g = a.grab!, t = b.holding[i];
   if (t < 0 || b.kind[t] !== KIND.wizard || b.downed[t]) { release(w, i); return; }
-  // Broken free by damage, or yanked away (a big pull on the victim).
+  // Broken free by damage, or shoved out of its claws (a big knock on the victim).
   if (b.hp[i] <= b.grabHp[i] - g.breakDamage || len(b.kx[t], b.ky[t]) > 6) { release(w, i, 'Broke free!'); return; }
   // Drag toward the nearest edge.
   const hw = w.dims.w / 2, hh = w.dims.h / 2, ex = b.x[i] < 0 ? -hw + EDGE_MARGIN : hw - EDGE_MARGIN, ey = b.y[i] < 0 ? -hh + EDGE_MARGIN : hh - EDGE_MARGIN;

@@ -124,18 +124,12 @@ export function disc(w: World, p: Payload, src: number, x: number, y: number, r:
 export const burstEvent = (w: World, src: number, x: number, y: number, r: number, look: number) =>
   w.events.push({ tick: w.clock[0], kind: 'burst', who: src, x, y, amount: r, look });
 
-/** Extra options when a spell is fired by a device or a conjured weapon rather than from the staff. */
+/** Extra options when a spell is fired by a device or the Double rather than from your staff. */
 export interface FireExtra {
   /** Fire from here instead of the caster's body (turrets, glyphs). */
   ox?: number; oy?: number;
-  /** Swing reach (conjured weapons). */
-  reach?: number;
   /** Power multiplier (the Double casts at half power). */
   scale?: number;
-  /** Swing cone half-angle in turns (0.5: a full circle, the Sweep). */
-  half?: number;
-  /** Extra knockback on each body a swing hits (a Heavy), and the staff's shove strength. */
-  knock?: number;
 }
 
 /** Fires a one-shot spell. `face` is the aim in turns, (tx, ty) the clamped target point, `charge` 0..1. */
@@ -197,11 +191,8 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       disc(w, p, src, tx, ty, 0.9, 1.2 * k, -1);
       surge(w, tx, ty, p, src);
       break;
-    case 'swing': // the bare staff's shove (hands.ts calls weaponBlow itself, with its Strike / Sweep / Heavy numbers)
-      weaponBlow(w, src, face, {
-        half: ex.half ?? ARMS.blowHalf.staff, reach: ex.reach ?? SHAPES.swingRange, dmg: ARMS.blowDmg.staff, knock: ex.knock ?? ARMS.blowKnock.staff,
-        scale: k, look: 0, p: null, move: ex.half && ex.half >= 0.5 ? 'sweep' : 'strike', ox: ex.ox, oy: ex.oy,
-      });
+    case 'swing': // an empty Weapon cast: the bare staff's shove (your hands' moves go through heldBlow)
+      weaponBlow(w, src, face, { ...blowOf('staff'), scale: k, look: 0, p: null, move: 'strike', ox: ex.ox, oy: ex.oy });
       break;
     case 'imbue': {
       // The imbued burst: every queued element at full power in a short cone in front of you, as Magicka's imbue-and-release. Nothing stays in hand.
@@ -294,14 +285,19 @@ export function weaponBlow(w: World, src: number, face: number, o: Blow): void {
  * `reach` the reach, `knock` the knockback. Spends nothing (hands.ts does).
  */
 export function heldBlow(w: World, i: number, face: number, move: string, o: { half?: number; scale?: number; reach?: number; knock?: number } = {}): void {
-  const s = w.seats, el = s.weapon[i] && s.weaponUses[i] > 0 ? s.weapon[i] : 0, key = el ? elementName(el) : 'staff';
-  const num = (t: Record<string, number>, d: number) => t[key] ?? d;
+  const s = w.seats, el = s.weapon[i] && s.weaponUses[i] > 0 ? s.weapon[i] : 0, n = blowOf(el ? elementName(el) : 'staff');
   const p = el ? payloadOf(compile(queueFromCounts(s.weaponEls, i), 'conjure')) : null;
-  const reach = (el ? (STRUCT.reach[elementName(el)] ?? 1.8) : SHAPES.swingRange) * num(ARMS.blowReach, 1) * (o.reach ?? 1);
   weaponBlow(w, i, face, {
-    half: o.half ?? num(ARMS.blowHalf, SHAPES.swingHalfAngle), reach, dmg: num(ARMS.blowDmg, 6), knock: num(ARMS.blowKnock, 3) * (o.knock ?? 1),
+    half: o.half ?? n.half, reach: n.reach * (o.reach ?? 1), dmg: n.dmg, knock: n.knock * (o.knock ?? 1),
     scale: o.scale ?? 1, look: el, p, move,
   });
+}
+
+/** A weapon's blow from ARMS.blow* (key: its lead element's name, or 'staff'): cone, reach, damage, knockback. */
+function blowOf(key: string): { half: number; reach: number; dmg: number; knock: number } {
+  const num = (t: Record<string, number>, d: number) => t[key] ?? d;
+  const base = key === 'staff' ? SHAPES.swingRange : ((STRUCT.reach as Record<string, number>)[key] ?? 1.8);
+  return { half: num(ARMS.blowHalf, SHAPES.swingHalfAngle), reach: base * num(ARMS.blowReach, 1), dmg: num(ARMS.blowDmg, 6), knock: num(ARMS.blowKnock, 3) };
 }
 
 /** Can body `self` stand at (x, y): not inside rock, not overlapping another body? */

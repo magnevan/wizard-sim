@@ -198,15 +198,12 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
   w.events.push({ tick: w.clock[0], kind: 'cast', who: src, x, y, text: spec.title, look: spec.look });
 }
 
-/**
- * Seat `src`'s Double appears at its left hand (one at a time: an older one goes). Returns its body,
- * or -1 if no slot was free. Survive's Echo spawns its free Double through here too.
- */
-export function spawnDouble(w: World, src: number, face: number, hp = STRUCT.doubleHp): number {
+/** Seat `src`'s Double appears at its left hand (one at a time: an older one goes). Returns its body, or -1 if no slot was free. */
+function spawnDouble(w: World, src: number, face: number): number {
   const b = w.bodies, s = w.seats;
   if (s.double[src] >= 0 && b.kind[s.double[src]] === KIND.double) b.kind[s.double[src]] = KIND.none;
   const ox = cosTurns(face + 0.25) * 1.2, oy = sinTurns(face + 0.25) * 1.2;
-  const i = spawnBody(w, -1, KIND.double, b.team[src], b.x[src] + ox, b.y[src] + oy, hp, b.r[src]);
+  const i = spawnBody(w, -1, KIND.double, b.team[src], b.x[src] + ox, b.y[src] + oy, STRUCT.doubleHp, b.r[src]);
   s.double[src] = i; s.dblOX[src] = ox; s.dblOY[src] = oy; s.dblBorn[src] = w.clock[0];
   if (i >= 0) b.face[i] = b.face[src];
   return i;
@@ -221,10 +218,6 @@ export function weaponSwing(w: World, src: number, face: number): boolean {
   return true;
 }
 
-/**
- * The Double repeats a one-shot spell from its own spot, at half power, aimed at the same point.
- * It costs half the spell's runes from your pool; if you can't pay, it skips that spell.
- */
 /** Pays the Double's half of a spell from your pool; false (and nothing paid) if you can't, or have no Double. */
 export function payDouble(w: World, src: number, spec: SpellSpec): boolean {
   const s = w.seats, d = s.double[src];
@@ -234,6 +227,10 @@ export function payDouble(w: World, src: number, spec: SpellSpec): boolean {
   return true;
 }
 
+/**
+ * The Double repeats a one-shot spell from its own spot, at half power, aimed at the same point.
+ * It costs half the spell's runes from your pool; if you can't pay, it skips that spell.
+ */
 export function doubleRepeat(w: World, src: number, spec: SpellSpec, tx: number, ty: number, charge: number): void {
   const b = w.bodies, d = w.seats.double[src];
   if (!payDouble(w, src, spec)) return;

@@ -120,8 +120,9 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   // Statuses, in the order that lets them interact: water first (it douses), then fire (it dries).
   if (water) {
     if (arch?.soakDamage && !b.wet[t]) { dmg += arch.soakDamage; w.events.push({ tick, kind: 'hit', who: t, x: b.x[t], y: b.y[t], amount: arch.soakDamage, text: 'Doused' }); }
-    b.burn[t] = 0;
-    b.wet[t] = Math.max(b.wet[t], Math.round(T(STATUS.wet) * Math.min(1, ss * 4)));
+    // water on someone burning only puts the fire out (they come out dry), as fire on someone wet only dries them
+    if (b.burn[t] > 0) b.burn[t] = 0;
+    else b.wet[t] = Math.max(b.wet[t], Math.round(T(STATUS.wet) * Math.min(1, ss * 4)));
     if (o.push) addKnock(w, t, o.dirX, o.dirY, o.push * water * ss);
   }
   if (fire) {

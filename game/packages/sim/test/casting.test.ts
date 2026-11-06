@@ -266,7 +266,7 @@ describe('Area and Place', () => {
     expect(two.w.zones.r[rainOf(two.w)]).toBeCloseTo(SHAPES.patchRadius + 0.4);
   });
 
-  it('rain keeps dousing: a burning body walking in at 3 s is put out and soaked', () => {
+  it('rain keeps dousing: a burning body walking in at 3 s is put out, then soaked', () => {
     const { w, d, dummy } = range(8);
     const b = w.bodies;
     d.queue('water').place(4, 0, 30); // the dummy at (8, 0) is outside the rain at (4, 0)
@@ -275,8 +275,9 @@ describe('Area and Place', () => {
     b.burn[dummy] = T(STATUS.burn); b.x[dummy] = 4; b.y[dummy] = 0.5;
     d.tick({}, 1);
     expect(b.burn[dummy]).toBe(0);
-    // soaked for the full wet time (a puddle alone only keeps you wet for a second)
-    expect(b.wet[dummy]).toBeGreaterThan(T(STATUS.wet) - 5);
+    // the water that puts a fire out doesn't soak you; the rain keeps falling, so it soaks you after
+    // for the full wet time (a puddle alone only keeps you wet for a second)
+    expect(b.wet[dummy]).toBeLessThan(T(STATUS.wet) - 5);
     d.tick({}, T(1));
     expect(b.wet[dummy]).toBeGreaterThan(T(STATUS.wet) - 5); // still raining on it
     expect(w.surf.kind[cellAt(w, 4, 0)]).toBe(SURF.water);

@@ -824,3 +824,13 @@ From the user's play-testing:
 - **"When stacking orbitals, can we make them orbit you uniformly?"** Each orbital cast was its own ring starting at the same angle, so stacked casts sat on top of each other. Now all of one wizard's orbitals share one ring and phase, with their orbs spaced evenly in cast order (`orbitAngle`, sim). When an orb is spent or a new cast adds more, the client eases the others to the new spacing over about 0.1 s rather than snapping.
 - **"The goblin basically had to walk into them for them to trigger, is that intentional?"** No. An orb struck only foes within 0.9 u of itself (`orbitStrike − orbitRadius + 0.6`), so a goblin coming in between two orbs was nearly touching you first. An orb now strikes a foe within `orbitStrike` = 1.6 u of it (to the foe's edge), which is about 3 u from you.
 - Golden hash unchanged (`ca05db3f`): the scripted run casts no orbitals.
+
+## 2026-11-06: Water on a fire leaves you dry; the tutorial prototype's review
+
+**Bug, from the user:** "dousing yourself while on fire leaves you wet. I think it should just leave you dry. Maybe a little unrealistic, but feels better with canceling elements, and how magicka 1 worked." Now water on a burning body only puts the fire out, the mirror of fire on a wet body only drying it (`hit.ts`). Water on a body that isn't burning still soaks it, and standing in rain soaks you on its next pulse. **Golden hash re-recorded: `ca05db3f` → `afcc1d3f`** (the scripted run douses a burning body).
+
+**The tutorial prototype, the user's high-level review** ("a good prototype"; their per-step notes are to come):
+1. **A lore wrapper is coming, and it's the user's to write.** The tutorial feels barebones without one. Claude doesn't invent the story; text stays neutral and in one place (`client/src/tutorial-text.ts`) so the wrapper can drop in. This supersedes the tutorial exploration's open question 7 (neutral lines now): a voice will come, from the user.
+2. **Lessons start too fast,** above all those with enemies: "You can't just start with a brute charging towards you, or start surrounded by enemies." Each beat with enemies needs a calm start, with the enemies arriving from a distance after you're ready.
+3. **An empty rune UI,** instead of rune slots appearing as "floating islands" one by one as you get new runes: the whole rune bar shows from the start, empty, and fills as runes are given.
+4. **Lessons are missing:** the prototype covers 2 of 9 elements and few of the spell types. The design's remaining beats (10–19: the other elements and the casts) are to be built.

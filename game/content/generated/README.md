@@ -2,6 +2,15 @@
 
 Every image bought from an AI tool is kept here, raw and unedited, so nothing is generated twice. **Look here before making any PixelLab or Gemini call.** After a call, add the raw output and a line to the table below in the same change. Local edits and variants go elsewhere; this folder stays raw.
 
+**Spending rules (the user's, 2026-11-06):**
+1. Keep every result here, so nothing is generated twice.
+2. Make variations with local tools instead of new calls: flag colours, aged or mossy stone, altered bookshelf contents.
+3. Batch: `create_1_direction_object` charges per job (10 generations for 16 objects at 48 px; Pro is 5 per prop). That's checked against the balance, through the MCP tool only.
+4. Name every slot in `item_descriptions` when a room needs them all.
+5. Use free tools first: local scripts, and PixelLab's `pixelart_workbench`.
+6. Generate once, derive the rest: buy a chair once, and make the broken or burnt chair locally.
+7. Note the balance before and after each paid call.
+
 Status: trial material. Read the tool's terms before any of it ships.
 
 | Files | Tool | Cost | Brief |

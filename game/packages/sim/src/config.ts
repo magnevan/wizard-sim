@@ -91,6 +91,8 @@ export const SHAPES = {
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,
   patchRadius: 1.6, patchLife: 6,
+  /** Each extra rune of a Place patch's lead: steam and the floors it leaves last this share of their life longer. */
+  lingerPerRune: 0.2,
   /** Rain (Water Place): it keeps falling this long, plus rainPerRune per extra Water, soaking and dousing whoever is under it. */
   rainLife: 5, rainPerRune: 1,
   delayedBlast: 0.6, // geyser rumble / arcane blast fuse

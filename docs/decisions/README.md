@@ -679,3 +679,7 @@ See `explorations/2026-11-05-weapon-dps.md` (the before/after table).
   - **Guards** replace the faint dotted coat rim with a thick turning arc per extra, a glow of the strongest, and coloured ends on the blocking face.
 - **Noted:** "Sigil + Fire + Lightning" is the Lightning whip, not a flame sword, because Lightning leads by type, as in guards and spells. Open question 2.
 - Golden hash unchanged (`dda18ae2`): the scripted run uses no weapon moves.
+- **Built (2026-11-06):**
+  - Geyser and spring radius are now `0.9 + 0.4n` and `1.4 + 0.4n`, the same size at one rune.
+  - New `SHAPES.lingerPerRune` 0.2 stretches steam and a Place patch's floors.
+  - The golden hash moves from `dda18ae2` to `d13d22ff`, because the scripted replay casts a multi-rune Place spell.

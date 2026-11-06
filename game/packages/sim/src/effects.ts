@@ -64,7 +64,8 @@ export const cellAt = (w: World, x: number, y: number): number => {
 const surfLife = (k: number): number => T(k === SURF.water ? SURFACE.water : k === SURF.ice ? SURFACE.ice : SURFACE.fire);
 
 /** An element reaching the floor. Water floods, cold freezes water (or frosts the ground), fire burns or melts. */
-export function touchFloor(w: World, cell: number, el: number): void {
+/** `mult` stretches the floor's life (a Place patch with more of its lead element lasts longer). */
+export function touchFloor(w: World, cell: number, el: number, mult = 1): void {
   if (cell < 0) return;
   const s = w.surf, k = s.kind[cell];
   let next: number = k;
@@ -73,12 +74,12 @@ export function touchFloor(w: World, cell: number, el: number): void {
   else if (el === EL.fire) next = k === SURF.ice ? SURF.water : k === SURF.water ? SURF.none : SURF.fire;
   else return;
   s.kind[cell] = next;
-  s.life[cell] = next ? surfLife(next) : 0;
+  s.life[cell] = next ? Math.round(surfLife(next) * mult) : 0;
 }
 
-export function floorDisc(w: World, x: number, y: number, r: number, el: number): void {
+export function floorDisc(w: World, x: number, y: number, r: number, el: number, mult = 1): void {
   for (let gy = -r; gy <= r; gy += CELL) for (let gx = -r; gx <= r; gx += CELL) {
-    if (gx * gx + gy * gy <= r * r) touchFloor(w, cellAt(w, x + gx, y + gy), el);
+    if (gx * gx + gy * gy <= r * r) touchFloor(w, cellAt(w, x + gx, y + gy), el, mult);
   }
 }
 
@@ -175,19 +176,20 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       }
       break;
     case 'patch': {
-      const r = SHAPES.patchRadius + 0.4 * (n - 1);
-      if (spec.scald) spawnZone(w, ZONE.steam, src, p, tx, ty, r, T(SHAPES.patchLife), 0);
-      else for (const el of [EL.water, EL.cold, EL.fire]) if (spec.counts[el - 1]) floorDisc(w, tx, ty, r, el);
+      // each extra rune of the lead: +0.4 u, and what lingers lasts SHAPES.lingerPerRune longer (steam, the floors it leaves)
+      const r = SHAPES.patchRadius + 0.4 * (n - 1), longer = 1 + SHAPES.lingerPerRune * (n - 1);
+      if (spec.scald) spawnZone(w, ZONE.steam, src, p, tx, ty, r, T(SHAPES.patchLife * longer), 0);
+      else for (const el of [EL.water, EL.cold, EL.fire]) if (spec.counts[el - 1]) floorDisc(w, tx, ty, r, el, longer);
       // Rain: Water Place keeps falling for a while (the user: a rain that lasts 1 s felt far too short).
       if (spec.form === EL.water && !spec.scald && !spec.freeze) spawnZone(w, ZONE.rain, src, p, tx, ty, r, T(SHAPES.rainLife + SHAPES.rainPerRune * (n - 1)), 0);
-      if (spec.freeze) floorDisc(w, tx, ty, r, EL.cold); // Ice sheet: the water becomes walkable ice
+      if (spec.freeze) floorDisc(w, tx, ty, r, EL.cold, longer); // Ice sheet: the water becomes walkable ice
       disc(w, p, src, tx, ty, r, 0.5 * k, -1);
       burstEvent(w, src, tx, ty, r, spec.look);
       break;
     }
     case 'blast': spawnZone(w, ZONE.blast, src, p, tx, ty, 2 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); break;
-    case 'geyser': spawnZone(w, ZONE.geyser, src, p, tx, ty, 1.3 + 0.3 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); break;
-    case 'spring': spawnZone(w, ZONE.spring, src, p, tx, ty, 1.8 + 0.3 * n, T(4 + 2 * n), 0); break;
+    case 'geyser': spawnZone(w, ZONE.geyser, src, p, tx, ty, 0.9 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); break;
+    case 'spring': spawnZone(w, ZONE.spring, src, p, tx, ty, 1.4 + 0.4 * n, T(4 + 2 * n), 0); break;
     case 'strike':
       w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x: tx, y: ty - 6, x2: tx, y2: ty, look: spec.look });
       disc(w, p, src, tx, ty, 0.9, 1.2 * k, -1);

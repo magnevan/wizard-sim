@@ -274,6 +274,12 @@
   ],
   "questions": [
     {
+      "id": "q-5-place",
+      "title": "Which place is it?",
+      "text": "A, B or C, or a mix. For example, the first lesson on the practice field, the camp as a later stop, and the stones as a duel or encounter space.",
+      "pick": "A for the first lesson: it says plainly what the place is and links the academy to the world. Keep B and C for later places. The story is yours, so this is about layout and use, not lore."
+    },
+    {
       "id": "q-1-ground",
       "title": "Paint the ground from a terrain map?",
       "text": "The yard has no ground tiles. A map says where grass and dirt are, and the game paints that through the camera. Paths can wander, there's no grid to see, and the same map worked under both cameras. The cost is a new floor painter and a Ground layer in LDtk.",
@@ -296,6 +302,54 @@
       "title": "Anything missing, or not needed?",
       "text": "Add or strike anything here, or in a job's note above. Lists can change until the job is bought.",
       "pick": "Nothing more until the first outdoor room shows what it lacks."
+    }
+  ],
+  "concepts": [
+    {
+      "id": "place-a",
+      "name": "A. The practice field",
+      "img": "img/concept-a.png",
+      "where": "Just outside the academy's wall, between its gate and the wild. It's the first time the player steps outside, and the lesson's ground is the academy's own.",
+      "zones": [
+        "The gate and cobbled yard: the way out of the academy. Its wall needs art we don't have yet.",
+        "The dummy line: Strike and Heavy, with the teacher walking the line.",
+        "Racks by the gate: you take a weapon on the way out, so the lesson starts by arming up.",
+        "The sparring ring: partners spar inside a ring of stones. The hands test happens here.",
+        "The parry lane: an archer shoots from the butts at the far end, and you block with a buckler. The target has its own length of ground now.",
+        "The bridge over the stream: the edge of the academy's ground.",
+        "The wild beyond: the hands test's goblins come out of the trees and over the bridge, so the danger has a direction."
+      ],
+      "cost": "The most orderly, so it has the least wild variety. Its edge needs academy wall art. It ties the first lesson to the academy, and crossing the bridge is a natural first step into the world."
+    },
+    {
+      "id": "place-b",
+      "name": "B. The road camp",
+      "img": "img/concept-b.png",
+      "where": "On the road out from the academy: a drill camp at a crossroads, where people on the road keep their hands sharp. It could come back between chapters.",
+      "zones": [
+        "The camp: tents, a fire, firewood and stores. Here the hay and wood belong.",
+        "The crossroads and signpost: where the road splits towards later places.",
+        "The fenced drill square: dummies and pells, and the lesson.",
+        "The butts: hay stacked behind a target, with room for the parry lane in front.",
+        "A pond: the camp's water.",
+        "The forest edge: where trouble comes from."
+      ],
+      "cost": "Less like school, more like the world. It answers the vision's open question of where practice happens, as a place to return to. It needs no academy art. The first lesson would happen away from the academy, though, and that's a story choice."
+    },
+    {
+      "id": "place-c",
+      "name": "C. The old stones",
+      "img": "img/concept-c.png",
+      "where": "A ruin in the meadows near the academy, older than it: a broken paved floor inside a ring of standing stones, used as a duelling ground.",
+      "zones": [
+        "The ruined arch: the way in.",
+        "The floor among the stones: a duelling ground. Broken pillars are cover, for teaching Retreat and moving round things.",
+        "A shrine, where the teacher stands.",
+        "The lake.",
+        "Dummies at the edge, for warming up.",
+        "The forest."
+      ],
+      "cost": "The most atmospheric, and the cover adds play. It carries the most lore, because who built it is your call. It has the least room for rows of dummies."
     }
   ]
 }

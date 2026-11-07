@@ -55,12 +55,18 @@ textarea { flex: 1 1 280px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
 <main>
   <header class="lede">
     <h1>Outdoor Art Kit</h1>
-    <p>Art for an outdoor sword lesson and the countryside around it, bought for 70 generations. It's all placeable in LDtk now. The yard below is a picture built from that art; the game can't draw this ground yet.</p>
+    <p>Art for an outdoor sword lesson and the countryside around it, bought for 70 generations and placeable in LDtk now. These pictures are built from that art; the game can't draw this ground yet. First: what this place should be.</p>
     <p class="dim">Marks and notes save as you go. An unmarked item stays as it is.</p>
   </header>
 
+  <section aria-labelledby="place">
+    <h2 id="place">What is this place?</h2>
+    <p>The first yard was too tight, its terrain was all one thing, and its props had no reason to be there. Here are three answers to what the spot is, each laid out for what people do there, with about three times the room, water, cobbles and tall grass. The numbers in each picture match its list. The trees now have outlines and full contrast, so they match the other props.</p>
+    <div id="concepts" style="display:grid;gap:40px"></div>
+  </section>
+
   <section aria-labelledby="yard">
-    <h2 id="yard">The yard in bought art</h2>
+    <h2 id="yard">The first yard in bought art</h2>
     <figure><img src="img/yard-bought-pro.png" alt="A fenced dirt training yard on grass in isometric view, with dummies, pells, a target, racks, a teacher and two wizards, surrounded by trees, hay, a well, a cart and flowers."><figcaption>True isometric, with the painted ground. The small things are the scatter sheet at half size.</figcaption></figure>
   </section>
 
@@ -167,6 +173,18 @@ function render(b) {
     const r = el('div', 'rate');
     r.append(marks('ratings', j.id, [['keep', 'Keep', 'keep'], ['redo', 'Redo', 'maybe'], ['cut', 'Cut', 'cut']]), note('ratings', j.id, 'What to redo or add'));
     box.append(r); $('jobs').append(box);
+  }
+  for (const c of b.concepts ?? []) {
+    const box = el('article', 'job');
+    const img = el('img'); img.src = c.img; img.alt = c.name + ': the layout, with numbered zones.';
+    const ol = el('ol'); ol.style.cssText = 'margin:0;padding-left:22px;display:grid;gap:2px;max-width:72ch';
+    c.zones.forEach((z) => ol.append(el('li', '', z)));
+    const where = el('p'); where.append(el('b', '', 'Where it sits: '), c.where);
+    const cost = el('p'); cost.append(el('b', '', 'Trade-off: '), c.cost);
+    const r = el('div', 'rate');
+    r.append(marks('ratings', c.id, [['keep', 'Keep', 'keep'], ['maybe', 'Maybe', 'maybe'], ['cut', 'Cut', 'cut']]), note('ratings', c.id, 'What works, what doesn\'t'));
+    box.append(el('h3', '', c.name), img, where, ol, cost, r);
+    $('concepts').append(box);
   }
   for (const v of b.variants) {
     const box = el('div', 'job');

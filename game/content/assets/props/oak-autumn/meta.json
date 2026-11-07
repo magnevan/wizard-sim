@@ -11,8 +11,8 @@
     "lean": {
       "file": "lean.png",
       "foot": [
-        22,
-        57
+        23,
+        59
       ],
       "source": "pixellab + local",
       "raw": "game/content/generated/pixellab/outdoor/trees/oak.png",

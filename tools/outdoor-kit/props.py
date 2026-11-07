@@ -92,21 +92,35 @@ LEAF = [(0x1e, 0x3a, 0x2a), (0x2a, 0x52, 0x36), (0x3a, 0x6e, 0x3e), (0x54, 0x90,
 
 
 def leaves(a):
-    """The map object tool takes no palette, so its greens come out neon: each goes to the leaf ramp by lightness."""
+    """The map object tool takes no palette, so its greens come out neon and flat. Each green goes to the leaf ramp
+    by its rank in lightness, so the whole ramp is used and the canopy keeps the contrast the sheet props have."""
     out = a.copy()
     ys, xs = np.nonzero(a[:, :, 3])
+    greens, ls = [], []
     for y, x in zip(ys, xs):
-        r, g, b = a[y, x, :3] / 255
-        h, l, s = colorsys.rgb_to_hls(r, g, b)
-        if 0.17 < h < 0.47 and s > 0.12: out[y, x, :3] = LEAF[min(4, int(l * 7.5))]
-    return out
+        h, l, s = colorsys.rgb_to_hls(*(a[y, x, :3] / 255))
+        if 0.17 < h < 0.47 and s > 0.08: greens.append((y, x)); ls.append(l)
+    if not greens: return out
+    cuts = np.quantile(ls, [0.14, 0.4, 0.7, 0.9])
+    for (y, x), l in zip(greens, ls): out[y, x, :3] = LEAF[int(np.searchsorted(cuts, l))]
+    return outlined(out)
+
+
+def outlined(a):
+    """A one-pixel dark outline round the silhouette, as the sheet props have."""
+    a = np.pad(a, ((1, 1), (1, 1), (0, 0)))
+    m = a[:, :, 3] > 0
+    p = np.pad(m, 1)
+    e = (p[:-2, 1:-1] | p[2:, 1:-1] | p[1:-1, :-2] | p[1:-1, 2:]) & ~m
+    a[e] = (0x12, 0x0E, 0x1A, 255)
+    return a
 
 
 TOOL = 'create_1_direction_object'
 for sheet, table in (('yard', YARD), ('rural', RURAL)):
     for i, (pid, name, fp) in enumerate(table):
         write(pid, name, rgba(os.path.join(ROOT, RAWREL, sheet, f'{i:02d}.png')), fp, f'{sheet}/{i:02d}.png', TOOL, [])
-for pid, name, raw, ops, fix in (('oak', 'Oak', 'trees/oak.png', ['halved', 'greens onto the game\'s leaf ramp'], lambda a: leaves(halve(a))), ('pine', 'Pine', 'trees/pine.png', ['halved'], halve)):
+for pid, name, raw, ops, fix in (('oak', 'Oak', 'trees/oak.png', ['halved', 'greens onto the game\'s leaf ramp'], lambda a: leaves(halve(a))), ('pine', 'Pine', 'trees/pine.png', ['halved', 'greens onto the game\'s leaf ramp'], lambda a: leaves(halve(a)))):
     write(pid, name, fix(rgba(os.path.join(ROOT, RAWREL, raw))), [1.0, 0.6], raw, 'create_map_object + tools/outdoor-kit/props.py', ops)
 
 briefs = json.load(open(os.path.join(HERE, 'briefs.json'), encoding='utf8'))

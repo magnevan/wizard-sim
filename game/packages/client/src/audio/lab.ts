@@ -33,10 +33,9 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[]; takes?
     ],
   },
   sigil: {
-    el: 'sigil', takes: 3,
+    el: 'sigil', takes: 1,
     moments: [
-      { id: 'haste-loop-r7', name: 'Haste loop', spell: 'sigil,lightning/self', only: 'hold:aura+lightning', listen: 'Comes in after the intro. Take 1: the reference low thrum. Take 2: that, faster. Take 3: that, with your sped-up buzz over it.' },
-      { id: 'rune-tick', name: 'Rune queue', spell: 'sigil,fire/self', only: 'queue', listen: 'NEW: Take 1, 2, 3 are a soft tick for each rune, pitched by its element. Listen right at the start.' },
+      { id: 'haste-loop-r8', name: 'Haste aura', spell: 'sigil,lightning/self', listen: 'Take 1, the one that felt right, with its pulsing evened out. Comes in after the intro.', single: true },
     ],
   },
 };

@@ -118,7 +118,6 @@ The Lab now plays rune sounds with the spell, as they're part of it, and the gen
 
 ## Where it stands
 
-**Awaiting the user in the Lab (`?lab=sigil`):** Haste's loop and the rune tick.
+**Awaiting the user in the Lab (`?lab=sigil`):** Haste's loop: Take 1 of the low thrum "feels right", and it's now evened out after "very unstable pulsing in and out". Rune tick Take 2 is chosen.
 
 **Done:** Lens, rune motes, Frost glyph, turret summon, dismiss, and the Fire, Frost, Bulldoze and Regeneration auras. **Nearly done:** Glass cannon, Mist. **Open:** Haste, the turret's shots, orbitals, other elements' glyphs, big Sigil bursts. All of these are local: the public game's sounds haven't changed. Whether the next element comes next is still to decide.
-

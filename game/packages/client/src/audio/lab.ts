@@ -33,16 +33,9 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[]; takes?
     ],
   },
   sigil: {
-    el: 'sigil', takes: 3,
+    el: 'sigil', takes: 1,
     moments: [
-      { id: 'fire-r5', name: 'Fire aura', spell: 'sigil,fire/self', listen: "The lead-up should be audible now. Try Runes, steps on: the staff's buildup has rune sounds too.", single: true },
-      { id: 'frost-r5', name: 'Frost aura', spell: 'sigil,cold/self', listen: "The lead-up should be audible now. Try Runes, steps on: the staff's buildup has rune sounds too.", single: true },
-      { id: 'arcane-r5', name: 'Glass cannon', spell: 'sigil,arcane/self', listen: "The lead-up should be audible now. Try Runes, steps on: the staff's buildup has rune sounds too.", single: true },
-      { id: 'earth-r5', name: 'Bulldoze', spell: 'sigil,earth/self', listen: "The lead-up should be audible now. Try Runes, steps on: the staff's buildup has rune sounds too.", single: true },
-      { id: 'life-r5', name: 'Regeneration', spell: 'sigil,life/self', listen: "The lead-up should be audible now. Try Runes, steps on: the staff's buildup has rune sounds too.", single: true },
-      { id: 'mist-r5', name: 'Mist aura', spell: 'sigil,water/self', listen: 'The intro now opens on the burst, with a lead-up. The loop is the slower one.', single: true },
-      { id: 'haste-intro-r5', name: 'Haste intro', spell: 'sigil,lightning/self', only: 'aura+lightning', listen: 'NEW: Take 1, 2, 3 are a sharp rising zip. The loop stays on one take.' },
-      { id: 'haste-loop-r5', name: 'Haste loop', spell: 'sigil,lightning/self', only: 'hold:aura+lightning', listen: 'NEW: Take 1, 2, 3 are a faint electric buzz.' },
+      { id: 'haste-r6', name: 'Haste aura', spell: 'sigil,lightning/self', listen: 'The earlier intro, then your best loop (Take 3) played twice as fast.', single: true },
     ],
   },
 };
@@ -84,7 +77,7 @@ const PARTS: readonly [Part, string][] = [['spell', 'Spell'], ['hits', 'Hits'], 
 const PART_OF: Readonly<Record<string, Part>> = { cast: 'spell', chan: 'spell', charge: 'spell', flight: 'spell', aura: 'spell', hit: 'hits', impact: 'hits', burst: 'hits', floorfire: 'burning', burn: 'burning' };
 /** The Now playing line's names. */
 const SAYS: readonly [RegExp, string][] = [
-  [/^kit:aura/, 'aura loop'], [/^kit:lead/, 'lead-up'], [/^kit:hold|^hold:/, 'held loop'], [/^kit:stop/, 'dying breath'], [/^kit:charge|^charge/, 'charge'], [/^kit:flight|^flight/, 'in flight'],
+  [/^kit:aura/, 'aura loop'], [/^kit:hold|^hold:/, 'held loop'], [/^kit:stop/, 'dying breath'], [/^kit:charge|^charge/, 'charge'], [/^kit:flight|^flight/, 'in flight'],
   [/^kit:land|^impact|^hit/, 'hit'], [/^kit:ground|^floorfire/, 'burning ground'], [/^kit:burn|^burn/, 'burning body'], [/^kit:|^(spray|beam|missile|nova|force|self|place):/, 'cast'],
 ];
 const MARKS = ['Right', 'Close', 'Wrong'];
@@ -228,6 +221,7 @@ export class SoundLab {
     const el = (tag: string, text = '', parent: HTMLElement = root) => { const n = document.createElement(tag); n.textContent = text; parent.appendChild(n); return n; };
     el('h2', `Sound Lab: ${this.lab.el}`);
     el('p', 'Open a moment and play it once or on a loop, switching sets as you go. With nothing playing, your keys cast as usual.');
+    el('p', "Your wizard queues the spell's runes first, as you would: the staff flashing is that, not the spell.");
     const sets = el('div'); sets.className = 'sets';
     const takes = Array.from({ length: this.lab.takes ?? 0 }, (_, i): [Set, string] => [`take${i + 1}`, `Take ${i + 1}`]);
     const choices: [Set, string][] = takes.length ? [...takes, ...(this.lab.ref ? [[`take${takes.length + 1}`, 'Reference'] as [Set, string]] : [])] : [['before', 'Before'], ['reference', 'Reference']];

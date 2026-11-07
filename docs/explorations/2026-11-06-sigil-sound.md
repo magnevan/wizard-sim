@@ -96,3 +96,15 @@ The new Haste sounds went too far the other way: "super subtle, nothing like" th
 
 The lead-ups couldn't be heard, as they were built from the wrong end of each clip: fixed. The staff's visible buildup isn't only the 0.2 s wind-up. It's also the rune motes flying in and orbiting as each rune is queued, and the Lab has rune sounds off by default, so the buildup was being watched without its sound. Mist's loop now "sounds about right", and its intro opens on the burst. Haste has a new direction, approved: a sharp rising zip and a faint electric buzz, leaning on Lightning.
 
+## Twelfth round
+
+Every aura: "flashing starts before sound". A lead-up on the wind-up can't reach it, as the staff flashes from the first rune queued, which can be long before the cast. So a kit's charge sound now runs from the first rune until the cast. This is about the staff, so it applies to every spell, not only auras, wherever a kit has a charge sound.
+
+Haste's new intros were "too short, much shorter than the casting animation", and its loops gave no sense of speed: "magicka had a fast more intense vibration, these are more like a slow static aura". Take 3 was the best but "too slow", so it's played at double speed, and the reference intro is back.
+
+## Thirteenth round: a false trail
+
+The user saw that the staff's flashing was only the runes being queued, which the Lab does for them: "I wonder if the problem here is just via the tool I was reviewing it with". So the lead-ups and the charge from the first rune came out. The burst waiting for its sound stays. The Lab now says what the flashing is. The lesson: a reviewer who isn't pressing the keys can't tell what's the spell and what's the build-up to it.
+
+Queueing runes may want sounds of its own, but today's are "way too dramatic".
+

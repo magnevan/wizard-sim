@@ -330,15 +330,6 @@ export function composeMove(move: WeaponMove, el: ElementName | null, rand: Rand
   }
 }
 
-/** A spell's lead-up, through its wind-up, if a kit has one. It rises into the cast, so more runes start it later. */
-export function composeLead(s: SpellSound, rand: Rand = Math.random): Plan | null {
-  const els = Object.keys(s.els) as ElementName[];
-  const lead = s.form ? els.flatMap((k) => { const sp = kitOf(k)?.spells; return sp ? els.map((e) => sp[`lead:${s.form}+${e}`]) : []; }).find(Boolean) : null;
-  if (!lead?.length) return null;
-  const late = Math.max(0, runesOf(s.els) - 2) * 0.04; // RHYTHM.windupPerRune
-  return kitPlan('kit:lead', lead.map((l) => ({ ...l, at: (l.at ?? 0) + late })), rand);
-}
-
 /** What an aura with this element in it sounds like while it lasts, if Sigil's kit has that. */
 export function composeAuraLoop(el: ElementName, rand: Rand = Math.random): Plan | null {
   const l = kitOf('sigil')?.spells?.[`hold:aura+${el}`];

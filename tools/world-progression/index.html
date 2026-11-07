@@ -1,0 +1,417 @@
+<title>World and Progression</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a field atlas. One reading column; each topic is a plate with its picture, its text, and the question beside it. */
+:root {
+  --bg: #e9edf1; --panel: #f7f9fb; --fg: #18202b; --muted: #556170; --line: #c7d0da; --accent: #7a3fa6; --accent-ink: #ffffff; --warn: #a2401c; --ok: #2f6d3c;
+  --halo: #f7f9fb;
+  --el-fire: #e2603a; --el-water: #3a84d6; --el-cold: #7cc6e4; --el-lightning: #a77ee6; --el-earth: #a07646; --el-life: #4fae5e; --el-arcane: #c8479f; --el-shield: #d9b84a; --el-sigil: #6f74d8; --el-air: #3f9c84;
+  --display: "Alegreya SC", "Palatino Linotype", Georgia, serif;
+  --body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161d; --panel: #18202a; --fg: #e3e8ee; --muted: #98a5b4; --line: #2c3846; --accent: #c99af0; --accent-ink: #1a0f24; --warn: #f0916c; --ok: #85cf93; --halo: #18202a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #11161d; --panel: #18202a; --fg: #e3e8ee; --muted: #98a5b4; --line: #2c3846; --accent: #c99af0; --accent-ink: #1a0f24; --warn: #f0916c; --ok: #85cf93; --halo: #18202a; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font: 17px/1.55 var(--body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; }
+.wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 40px; }
+header.top { padding-block: 40px 8px; display: grid; gap: 10px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); letter-spacing: .01em; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.15rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 1.12rem; color: var(--muted); }
+.eyebrow { font: 500 .78rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.status { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: .95rem; color: var(--muted); }
+.status .warn { color: var(--warn); }
+a { color: var(--accent); }
+section.plate { display: grid; gap: 18px; padding-top: 28px; border-top: 1px solid var(--line); }
+.prose { display: grid; gap: 12px; }
+.prose ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 68ch; }
+.settled { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.settled div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.settled b { display: block; font-weight: 700; }
+.settled span { color: var(--muted); font-size: .95rem; }
+
+/* field map */
+.figure { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; overflow-x: auto; }
+.figure svg { display: block; width: 100%; height: auto; min-width: 520px; }
+.cap { font-size: .9rem; color: var(--muted); margin-top: 6px; }
+svg text { font-family: var(--body); fill: var(--fg); }
+svg .lbl { font-size: 15px; font-weight: 700; paint-order: stroke; stroke: var(--halo); stroke-width: 4px; stroke-linejoin: round; }
+svg .sub { font-size: 12.5px; fill: var(--muted); paint-order: stroke; stroke: var(--halo); stroke-width: 4px; }
+svg .fld { font-family: var(--display); font-size: 17px; font-weight: 700; letter-spacing: .04em; }
+svg .axis { stroke: var(--line); }
+svg .tick { font-size: 12px; fill: var(--muted); }
+
+/* elements */
+.els { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.el { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px 14px; background: var(--panel); display: grid; gap: 6px; align-content: start; min-width: 0; border-top: 4px solid var(--c); }
+.el h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.el h3 small { font: 500 .72rem var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.el .ess { font-style: italic; }
+.el p { font-size: .94rem; }
+.el .k { color: var(--muted); }
+
+/* bands */
+.bands { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.band { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+.band .bar { display: grid; grid-template-columns: 6.5em 1fr 3em; gap: 8px; align-items: center; font-size: .9rem; }
+.band .track { height: 12px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.band .fill { height: 100%; border-radius: 3px; }
+.band .num { font: 500 .85rem var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+
+/* cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.card .tag { font: 500 .72rem var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.card p { font-size: .95rem; }
+.card .ex { color: var(--muted); font-size: .92rem; }
+
+/* questions */
+.q { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 18px; background: var(--panel); border: 1px solid var(--accent); border-radius: 10px; padding: 16px; }
+@media (max-width: 760px) { .q { grid-template-columns: 1fr; } }
+.q .qtext { display: grid; gap: 8px; align-content: start; }
+.qn { font: 500 .8rem var(--mono); color: var(--accent); margin-right: 6px; }
+.slug { font: .74rem var(--mono); color: var(--muted); }
+.q .side { display: grid; gap: 8px; align-content: start; }
+.choices { display: grid; gap: 6px; }
+.choices button { text-align: left; font: inherit; font-size: .95rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 8px 11px; cursor: pointer; display: grid; gap: 2px; }
+.choices button small { color: var(--muted); font-size: .86rem; }
+.choices button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.choices button[aria-pressed="true"] b::before { content: "✓ "; color: var(--accent); }
+.choices button:disabled { cursor: default; opacity: .75; }
+.choices .rec { font: 500 .68rem var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--ok); margin-left: 6px; }
+textarea { font: inherit; font-size: .95rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; width: 100%; box-sizing: border-box; resize: vertical; }
+.hint { font-size: .85rem; color: var(--muted); }
+button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.small-mult { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
+.small-mult .figure svg { min-width: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .88rem; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 5px; background: var(--c); }
+.legend i.dash { background: repeating-linear-gradient(90deg, var(--c) 0 4px, transparent 4px 7px); }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Wizard Sim · design · round 2 · 2026-11-07</span>
+    <h1>World and Progression</h1>
+    <p class="lede">The world as fields of magic, how hard a region pushes your casting, when the magic opens up, shrines, encounters, and a story that works for one wizard or four. Round 1 is folded in; the questions below are round 2. An unanswered question means you accept the recommended option.</p>
+    <div class="status"><span id="tally"></span><span id="saveState"></span></div>
+  </header>
+
+  <section class="plate" id="sec-settled">
+    <span class="eyebrow">Settled in round 1</span>
+    <h2>What you agreed</h2>
+    <div class="settled">
+      <div><b>Pillar 5: classic fantasy, told through places</b><span>An RPG-paced campaign; many characters met in simple ways, not deep companions.</span></div>
+      <div><b>Pillar 1: growth widens what your hands can do</b><span>Runes and regen raise the ceiling, not the floor. A veteran has a big edge.</span></div>
+      <div><b>Pillar 6: devices take spells as input</b><span>A forge you feed Fire is fine; a minigame with its own controls isn't.</span></div>
+      <div><b>The world is fields and veins</b><span>Life a living field, Arcane the deep one; Shield and Sigil innate.</span></div>
+      <div><b>Zones bend regen, not damage</b><span>Enemies attack more with the local element; their resistance is only a splash.</span></div>
+      <div><b>The academy is on an Arcane vein</b><span>Arcane draws out a wizard's innate abilities.</span></div>
+      <div><b>Hubs are reusable; encounters are a library</b><span>No fixed "a defence and a hunt" per region.</span></div>
+      <div><b>Co-op catch-up, later</b><span>Some catch-up mechanic for mismatched progress, designed when we get there.</span></div>
+    </div>
+  </section>
+
+  <section class="plate" id="sec-fields">
+    <span class="eyebrow">The world</span>
+    <h2>Fields shape where people live</h2>
+    <div class="prose">
+      <p>Seven elements run through the land as fields and veins. People settle where a field helps them, the way towns grow along rivers. Where two fields meet, the spell rules for that pair show in the landscape, so a player who knows the magic can read the map. A sketch of one possible stretch of the world:</p>
+    </div>
+    <div class="figure">
+      <svg viewBox="0 0 900 470" role="img" aria-labelledby="mapT">
+        <title id="mapT">A schematic map of overlapping magic fields with settlements where they meet</title>
+        <g fill-opacity=".28" stroke-opacity=".7" stroke-width="2">
+          <ellipse cx="560" cy="80" rx="250" ry="105" fill="var(--el-cold)" stroke="var(--el-cold)"/>
+          <ellipse cx="200" cy="230" rx="185" ry="165" fill="var(--el-earth)" stroke="var(--el-earth)"/>
+          <ellipse cx="350" cy="250" rx="120" ry="95" fill="var(--el-fire)" stroke="var(--el-fire)"/>
+          <ellipse cx="560" cy="270" rx="170" ry="120" fill="var(--el-water)" stroke="var(--el-water)"/>
+          <ellipse cx="770" cy="250" rx="130" ry="130" fill="var(--el-lightning)" stroke="var(--el-lightning)"/>
+          <ellipse cx="520" cy="420" rx="230" ry="80" fill="var(--el-life)" stroke="var(--el-life)"/>
+        </g>
+        <path d="M120 360 C 160 330, 150 300, 190 290 S 230 250, 260 262" fill="none" stroke="var(--el-arcane)" stroke-width="5" stroke-linecap="round"/>
+        <text class="fld" x="610" y="45" style="fill:var(--el-cold)">COLD</text>
+        <text class="fld" x="70" y="120" style="fill:var(--el-earth)">EARTH</text>
+        <text class="fld" x="330" y="190" style="fill:var(--el-fire)">FIRE</text>
+        <text class="fld" x="600" y="225" style="fill:var(--el-water)">WATER</text>
+        <text class="fld" x="790" y="170" style="fill:var(--el-lightning)">LIGHTNING</text>
+        <text class="fld" x="300" y="455" style="fill:var(--el-life)">LIFE</text>
+        <text class="fld" x="62" y="385" style="fill:var(--el-arcane)">ARCANE VEIN</text>
+        <g>
+          <circle cx="285" cy="260" r="6" fill="var(--fg)"/><text class="lbl" x="235" y="245">Forge city</text><text class="sub" x="225" y="282">Earth + Fire</text>
+          <circle cx="445" cy="268" r="6" fill="var(--fg)"/><text class="lbl" x="420" y="305">Steam towns</text><text class="sub" x="420" y="322">Fire + Water: the first engines</text>
+          <circle cx="665" cy="275" r="6" fill="var(--fg)"/><text class="lbl" x="645" y="305">Storm marsh</text><text class="sub" x="645" y="322">Lightning + Water</text>
+          <circle cx="545" cy="168" r="6" fill="var(--fg)"/><text class="lbl" x="560" y="173">Ice roads</text><text class="sub" x="560" y="190">Cold + Water, winter only</text>
+          <circle cx="555" cy="370" r="6" fill="var(--fg)"/><text class="lbl" x="570" y="375">The breadbasket</text><text class="sub" x="570" y="392">Life + Water, fought over</text>
+          <circle cx="770" cy="125" r="6" fill="var(--fg)"/><text class="lbl" x="758" y="120" text-anchor="end">Spark towns</text><text class="sub" x="758" y="137" text-anchor="end">Lightning + Cold peaks</text>
+          <rect x="182" y="282" width="14" height="14" fill="var(--el-arcane)" stroke="var(--halo)" stroke-width="2"/><text class="lbl" x="120" y="322">The academy</text>
+        </g>
+      </svg>
+      <p class="cap">Shield and Sigil aren't on the map: they belong to the caster, so no zone touches them.</p>
+    </div>
+
+    <h3>The elements' essences</h3>
+    <p>The living version is <code>docs/world/elements.md</code>; edit it as the world and the spells change.</p>
+    <div class="els" id="els"></div>
+    <div class="q" data-q="q-11-essences"></div>
+  </section>
+
+  <section class="plate" id="sec-zones">
+    <span class="eyebrow">Zones</span>
+    <h2>A region pushes harder the deeper you go</h2>
+    <div class="prose">
+      <p>Total regen stays the same everywhere. A zone only changes how the shared budget is split: the local element gets a bigger share, its opposite a smaller one. You're never weaker, only steered. The quarter of regen that always reaches every pool still holds, so nothing stops refilling.</p>
+      <p>The fairness loop: the region's enemies attack mostly with its element, and every guard, ward and heal carrying an element lends resistance to it. So the abundant local element is also your cheapest defence against the local threat. In a fire region you have fire to burn with and fire to ward against fire.</p>
+    </div>
+    <div class="bands" id="bands"></div>
+    <p class="cap">Example for a fire region: Fire is local, Cold its opposite. The multipliers are placeholders for a play-test.</p>
+    <div class="q" data-q="q-1-bands"></div>
+    <div class="q" data-q="q-2-total"></div>
+  </section>
+
+  <section class="plate" id="sec-pacing">
+    <span class="eyebrow">Unlock pacing</span>
+    <h2>When the "press anything" moment comes</h2>
+    <div class="prose">
+      <p>Queue length cuts complexity about as much as locked elements do: all nine elements with a 2-rune queue make 200 spells, against 228 for seven elements with a full queue. So the start can be wide but shallow, keeping Magicka's wow moment, while depth grows gently.</p>
+      <p><b>U2</b> gives the academy seven field elements plus conjure-only Sigil and Shield (weapons and guards). Later, a story beat opens the innate arts' world casts: turrets, glyphs, walls, wards, Blink. In the world that's a real step: you could only shape what you hold; now you shape the world around you. In the HUD, the locked casts show as dim slots from the start, so it reads as the rune growing, not changing. Air, if added, could be a second wow moment mid-game.</p>
+    </div>
+    <div class="legend"><span><i style="--c:var(--accent)"></i>Elements and casts open</span><span><i style="--c:var(--el-air)" class="dash"></i>Air (optional)</span><span><i style="--c:var(--muted)"></i>Queue length (rune pool depth)</span></div>
+    <div class="small-mult" id="pacing"></div>
+    <div class="q" data-q="q-3-pacing"></div>
+    <div class="q" data-q="q-4-held"></div>
+  </section>
+
+  <section class="plate" id="sec-shrines">
+    <span class="eyebrow">Shrines</span>
+    <h2>Practice that doesn't feel like homework</h2>
+    <div class="prose">
+      <p>A shrine is a small, optional space off the main path: one to three rooms, three to eight minutes, one idea. Its rules:</p>
+      <ul>
+        <li><b>The room states the problem,</b> not text.</li>
+        <li><b>Only the spell language.</b> No new controls; any device takes spells as input.</li>
+        <li><b>Solvable alone, richer together.</b> Co-op can split the work; fights scale to the party.</li>
+        <li><b>More than one answer</b> where possible: steam or freeze-and-shatter both open the frozen door.</li>
+        <li><b>The entrance shows the reward,</b> so the detour is a choice. Once solved, it stays lit on the map.</li>
+      </ul>
+    </div>
+    <div class="cards" id="shrines"></div>
+    <div class="q" data-q="q-7-shrines"></div>
+  </section>
+
+  <section class="plate" id="sec-encounters">
+    <span class="eyebrow">Encounters</span>
+    <h2>A library to draw from</h2>
+    <p>Regions pick freely from these. Each is a prototype to borrow from, not a slot to fill.</p>
+    <div class="cards" id="encounters"></div>
+    <div class="q" data-q="q-8-encounters"></div>
+  </section>
+
+  <section class="plate" id="sec-story">
+    <span class="eyebrow">Story</span>
+    <h2>For one wizard or four</h2>
+    <div class="prose">
+      <p><b>Many characters, simply met.</b> Recurring faces with one trait and one want (a trader in every hub, a cartographer, a rival cohort); locals with a request, a rumour or a reaction; a mentor who writes or meets you at wells; an antagonist seen more than heard. The world changing visibly between visits does the work dialogue would.</p>
+      <p><b>The party is a cohort.</b> The academy sends journeymen out together; solo, you're the one sent. Every line is written to "you", which in English doesn't say how many. No beat needs a particular number, and no puzzle requires two people. The alternative, one named hero with partners as unnamed companions, is simpler to write but makes partners second-class.</p>
+    </div>
+    <div class="q" data-q="q-5-cohort"></div>
+    <h3>Five spines, to combine</h3>
+    <p>A is the frame; the others give it a cause, a faction or a turn. The lore is yours: these are hooks to react to.</p>
+    <div class="cards" id="spines"></div>
+    <div class="q" data-q="q-6-spine"></div>
+  </section>
+
+  <section class="plate" id="sec-growth">
+    <span class="eyebrow">Growth</span>
+    <h2>Carried from round 1</h2>
+    <p>After the unlocks comes the capitalizing phase: more runes and more regen turn one- and two-element casts and melee into a full kit. How far it scales, and whether it needs artifacts or more workings, is for play-testing.</p>
+    <div class="q" data-q="q-9-pool"></div>
+    <div class="q" data-q="q-10-gear"></div>
+    <div class="q" data-q="general"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  const ELEMENTS = [
+    ['Water', 'water', 'field', 'What flows and fills', 'Rivers, lakes, rain, tides; the most common field. Mills, ports, farms.', 'Soaks, douses, sets up freezes and conduction.'],
+    ['Fire', 'fire', 'field', 'What consumes and transforms', 'Volcanic swells, hot springs; unstable, flares and fades. Smiths, glass, kilns.', 'Burning that keeps hurting; patches deny ground.'],
+    ['Cold', 'cold', 'field', 'What stills and preserves', 'Mountains, the far north, deep caves. Storehouses, ice roads, archives.', 'Chill slows; freezes the wet; shatter.'],
+    ['Lightning', 'lightning', 'field', 'What leaps and connects', 'Storm coasts, high peaks, iron plains. Rods, coils, crude lamps.', 'Jumps between bodies and through water; stuns.'],
+    ['Earth', 'earth', 'field', 'What holds and endures', 'Mountains, stone plains, ore. Miners, masons, fortress towns.', 'Stuff, paid once: rocks, walls, mass; carries others.'],
+    ['Life', 'life', 'field', 'What grows', 'Made by living things; thick in old forests, thin in blights. Can be harmed and restored.', 'Only heals; other elements in a heal lend resistance.'],
+    ['Arcane', 'arcane', 'field', 'The deep field', 'Under all the others, surfacing only where they tear: rifts, ruins. Draws out a caster’s gifts.', 'The raw, piercing beam; Attune floods every pool.'],
+    ['Shield', 'shield', 'innate', 'The will to refuse', 'The caster’s own. Refusing takes continuous concentration.', 'Drains while it stands; the oldest gives way first.'],
+    ['Sigil', 'sigil', 'innate', 'The will to shape', 'The caster’s own. Holding a shape takes attention, in pieces.', 'Each device binds one rune until it ends.'],
+  ];
+  for (const [name, key, kind, ess, world, play] of ELEMENTS) {
+    const c = el('article', 'el'); c.style.setProperty('--c', `var(--el-${key})`);
+    c.innerHTML = `<h3>${esc(name)} <small>${kind}</small></h3><p class="ess">${esc(ess)}</p><p><span class="k">World:</span> ${esc(world)}</p><p><span class="k">Play:</span> ${esc(play)}</p>`;
+    $('els').append(c);
+  }
+
+  const BANDS = [
+    ['The edge', 'First chapters. A hint: Fire pips fill fast.', 1.5, 1],
+    ['The heartland', 'A push: your usual style still works but costs more.', 2, 0.6],
+    ['The well', 'Set pieces and the boss: briefly, play the region’s way.', 3, 0.3],
+  ];
+  for (const [name, text, loc, opp] of BANDS) {
+    const b = el('div', 'band');
+    const bar = (label, v, c) => `<div class="bar"><span>${label}</span><span class="track"><span class="fill" style="display:block;width:${(v / 3) * 100}%;background:${c}"></span></span><span class="num">×${v}</span></div>`;
+    b.innerHTML = `<h3>${esc(name)}</h3><p class="cap" style="margin:0">${esc(text)}</p>${bar('Fire (local)', loc, 'var(--el-fire)')}${bar('Cold (opposite)', opp, 'var(--el-cold)')}${bar('The others', 1, 'var(--muted)')}`;
+    $('bands').append(b);
+  }
+
+  // pacing small multiples: x = progress 0..1, y = elements open 0..10, queue length 1..5 on the same scale x2
+  const PACE = [
+    ['U1', 'Everything after the intro', [[0, 2], [0.1, 9]], null, [[0, 2], [0.4, 3], [0.7, 4], [1, 5]]],
+    ['U2', 'A core set fast, a few held for story', [[0, 2], [0.06, 7], [0.36, 9]], [[0.36, 9], [0.58, 10]], [[0, 2], [0.36, 3], [0.65, 4], [1, 5]]],
+    ['U3', 'A drip over the first third', [[0, 2], [0.06, 3], [0.12, 4], [0.17, 5], [0.22, 6], [0.27, 7], [0.31, 8], [0.35, 9]], null, [[0, 2], [0.4, 3], [0.7, 4], [1, 5]]],
+  ];
+  const W = 340, H = 170, L = 34, R = 10, T = 26, B = 30;
+  const X = (x) => L + x * (W - L - R), Y = (y) => T + (1 - y / 10) * (H - T - B);
+  const step = (pts) => { let d = `M${X(pts[0][0])},${Y(pts[0][1])}`; for (let i = 1; i < pts.length; i++) d += ` H${X(pts[i][0])} V${Y(pts[i][1])}`; return d; };
+  for (const [id, label, open, air, depth] of PACE) {
+    const f = el('div', 'figure');
+    const lastOpen = air ? air[air.length - 1] : open[open.length - 1];
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(id + ': ' + label)}"><text x="${L}" y="16" style="font-weight:700;font-size:14px">${id} · ${esc(label)}</text>`;
+    for (const t of [0, 5, 10]) s += `<line class="axis" x1="${L}" x2="${W - R}" y1="${Y(t)}" y2="${Y(t)}"/><text class="tick" x="${L - 6}" y="${Y(t) + 4}" text-anchor="end">${t}</text>`;
+    const xl = [['Academy', 0.04], ['Region 1', 0.25], ['Region 2', 0.5], ['Region 3', 0.75]];
+    for (const [t, x] of xl) s += `<text class="tick" x="${X(x)}" y="${H - 10}">${t}</text>`;
+    s += `<path d="${step(open)} H${X(1)}" fill="none" stroke="var(--accent)" stroke-width="3"/>`;
+    if (air) s += `<path d="M${X(air[0][0])},${Y(air[0][1])} ${step(air).slice(step(air).indexOf(' '))} H${X(1)}" fill="none" stroke="var(--el-air)" stroke-width="3" stroke-dasharray="6 4"/>`;
+    s += `<path d="${step(depth.map(([x, q]) => [x, q * 2]))} H${X(1)}" fill="none" stroke="var(--muted)" stroke-width="2"/>`;
+    s += `<text class="tick" x="${W - R}" y="${Y(10) - 6}" text-anchor="end">queue 5 ↔ 10</text></svg>`;
+    f.innerHTML = s;
+    $('pacing').append(f);
+  }
+
+  const SHRINES = [
+    ['Puzzle room', 'A systemic problem, no enemies.', 'The drowned bell: freeze a path across a flooded hall, but braziers melt the ice; douse them, or cross on Earth stepping stones. Any hit rings the bell.'],
+    ['Constraint trial', 'A fight under one rule.', 'The cold hall: fast waves, and only Cold and Water refill. Wet, freeze, shatter becomes the only good answer.'],
+    ['Keeping trial', 'Keep something fragile alive.', 'A sapling, a lantern, a sleeping traveller that enemies go for. Wards on others, heals that lend resistance and well-placed walls are the whole game: a test of skilful support.'],
+    ['The echo', 'Discovery without text.', 'A ghost wizard casts a combination once, its rune pips showing like a partner’s. Only that spell opens the room; read it and copy it.'],
+    ['Proving ground', 'One strong enemy, one skill.', 'Parry timing, turret placement, reading a telegraph.'],
+  ];
+  for (const [name, one, ex] of SHRINES) $('shrines').append(el('article', 'card', `<span class="tag">Shrine</span><h3>${esc(name)}</h3><p>${esc(one)}</p><p class="ex">${esc(ex)}</p>`));
+
+  const ENC = [
+    ['Set-piece battle', 'A designed fight on one screen or a larger field.'],
+    ['Defence', 'Many forms: a city or camp under attack, a ruin you set off, a ritual to finish, a well’s machinery to keep running. Prep time first (pillar 7).'],
+    ['Gauntlet', 'Move under pressure: a collapsing mine, a storm front.'],
+    ['Ambush', 'No prep, the opposite of defence.'],
+    ['Escort', 'Someone slow and fragile: the keeping trial at scale.'],
+    ['Native boss', 'A large creature of the land, in its own arena; it examines the region’s idea.'],
+    ['Rival casters', 'Enemies using the same spell grammar, readable by their rune pips.'],
+    ['Puzzle room', 'As in the shrines, on the main path where it helps the pacing.'],
+    ['Traversal', 'Paths opened by magic: freeze a river, burn a bramble, Blink a gap. Old regions open up as you return.'],
+  ];
+  for (const [name, text] of ENC) $('encounters').append(el('article', 'card', `<h3>${esc(name)}</h3><p>${esc(text)}</p>`));
+
+  const SPINES = [
+    ['A', 'The journeyman’s circuit', 'Frame', 'The cohort travels to each great well to attune, by tradition.', '“Can we finish the circuit?” A cohort is natural; on its own it has no stakes.'],
+    ['B', 'The shifting fields', 'Cause', 'A field is moving like a river changing course: the forge’s fire dying, the marsh spreading.', '“Why are the fields moving?” The answer has to be good.'],
+    ['C', 'The overtap', 'Faction', 'The steam-and-spark side draws fields down faster than they renew, for good reasons too.', '“Who pays for progress?” Enemies with field devices you can turn. Risk: a simple message.'],
+    ['D', 'The academy’s vein', 'Turn', 'The Arcane vein under the academy is part of why the fields move; your teachers are implicated.', '“What did our teachers know?” Ties first place to last. Better mistaken than evil.'],
+    ['E', 'The rekindling', 'Hopeful cause', 'The fields broke long ago; the wells are waking, and the cohort rekindles them.', '“What can we bring back?” Each region visibly recovers as you grow stronger. Softer stakes.'],
+  ];
+  for (const [k, name, role, text, q] of SPINES) $('spines').append(el('article', 'card', `<span class="tag">${k} · ${esc(role)}</span><h3>${esc(name)}</h3><p>${esc(text)}</p><p class="ex">${esc(q)}</p>`));
+
+  const QUESTIONS = {
+    'q-1-bands': ['Q1', 'Three bands as you go deeper?', 'Edge, heartland and well, with the local element’s share at about ×1.5, ×2 and ×3 and its opposite’s falling to ×0.3 at the well.',
+      [['bands', 'Three bands, as shown', 'A hint, a push, an exam.', true], ['flat', 'One strength per region', 'Simpler; no gradient inside a region.'], ['softer', 'Three bands, gentler', 'Cap at about ×2; the opposite never below ×0.6.']]],
+    'q-2-total': ['Q2', 'Do zones only redistribute regen?', 'Total regen stays the same, so a zone steers but never weakens you.',
+      [['split', 'Only redistribute', 'You’re never weaker in total.', true], ['cut', 'Deep zones also lower the total', 'Harsher; the well becomes a real squeeze.'], ['boost', 'Zones raise the total too', 'Every region feels like a power-up.']]],
+    'q-3-pacing': ['Q3', 'How should the magic open up?', 'See the three charts above.',
+      [['u2', 'U2: a core set fast, a few held for story', 'The wow moment early; later unlocks are real verbs.', true], ['u1', 'U1: everything after the intro', 'Magicka’s moment intact; after that, numbers and found workings.'], ['u3', 'U3: a drip over the first third', 'The longest exploration phase.']]],
+    'q-4-held': ['Q4', 'What’s held back for story beats?', 'Under U2, what opens later.',
+      [['innate', 'The innate arts’ world casts', 'Turrets, glyphs, walls, wards, Blink; locked casts dim in the HUD.', true], ['both', 'Those, and Air as a tenth element', 'A second wow moment; costs a key and about 81 % more spells.'], ['casts', 'Whole casts for every element', 'Like Magicka’s shapes: Area and Place come later.'], ['other', 'Something else', 'Say what in the note.']]],
+    'q-5-cohort': ['Q5', 'The party as a cohort?', 'Every line written to “you”; no beat needs a particular number.',
+      [['cohort', 'A cohort of journeymen', 'Solo, you’re the one sent.', true], ['hero', 'One hero, partners as companions', 'Simpler to write; partners second-class.'], ['other', 'Something else', 'Say what in the note.']]],
+    'q-6-spine': ['Q6', 'Which spines to develop next?', 'The next round would draft the chosen mix as a region-by-region outline, still without lore you haven’t written.',
+      [['abd', 'A + B, with D as the late turn', 'The most drama.', true], ['ae', 'A + E', 'Best for visible progress; gentler.'], ['abe', 'A + B + E', 'Fields moving because they’re waking.'], ['other', 'Another mix', 'Say which in the note.']]],
+    'q-7-shrines': ['Q7', 'Which shrine kinds appeal?', 'Puzzle room, constraint trial, keeping trial, the echo, proving ground. Anything missing, or one to cut?', null],
+    'q-8-encounters': ['Q8', 'What’s missing from the encounter library?', 'Or what doesn’t belong in this game.', null],
+    'q-9-pool': ['Q9', 'Does the player choose which pool deepens?', 'At each attunement. A fire specialist and a generalist end up with different characters.',
+      [['choose', 'The player chooses', 'Playstyle-leaning progression.', true], ['region', 'The region decides', 'Fire deepens at the fire well.'], ['both', 'Both', 'The region’s element, plus one of your choice.']]],
+    'q-10-gear': ['Q10', 'Gear as sidegrades only?', 'Staffs, robes and trinkets that bend one rule (“glyphs arm instantly, but you hold two”), never stat items.',
+      [['side', 'Sidegrades that bend a rule', 'Loot people talk about; pillar 1 holds.', true], ['some', 'Mostly sidegrades, a few stat items', 'Small, capped numbers.'], ['none', 'No gear', 'Growth only from runes and workings.']]],
+    'q-11-essences': ['Q11', 'What’s off in the essences?', 'Anything that doesn’t match how you see an element, in the world or in play.', null],
+    'general': ['', 'Anything else', 'Thoughts that don’t fit a question.', null],
+  };
+
+  const answers = {}; let db = null; const askers = []; const chains = {};
+  const setSave = (t, w) => { $('saveState').textContent = t; $('saveState').className = w ? 'warn' : ''; };
+  function put(id, body) {
+    answers[id] = Object.assign({}, answers[id], body);
+    paint();
+    if (!db) return;
+    setSave('Saving…');
+    const doc = { choice: answers[id].choice || null, note: answers[id].note || '', updatedAt: new Date().toISOString() };
+    const k = 'answers/' + id;
+    chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set(doc)).then(() => setSave('All saved')).catch(() => setSave('Couldn’t save that. Check your connection and try again.', true));
+  }
+  function noteBox(ta, id) {
+    let timer;
+    ta.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => put(id, { note: ta.value }), 900); });
+    ta.addEventListener('blur', () => { clearTimeout(timer); if ((answers[id]?.note || '') !== ta.value) put(id, { note: ta.value }); });
+  }
+  for (const box of document.querySelectorAll('.q[data-q]')) {
+    const id = box.dataset.q; const [n, title, text, choices] = QUESTIONS[id];
+    const qt = el('div', 'qtext', `<h3>${n ? `<span class="qn">${n}</span>` : ''}${esc(title)}</h3><p>${esc(text)}</p><span class="slug">answers/${id}</span>`);
+    const side = el('div', 'side');
+    let ch = null;
+    if (choices) {
+      ch = el('div', 'choices'); ch.setAttribute('role', 'group'); ch.setAttribute('aria-label', title);
+      for (const [v, l, sub, rec] of choices) {
+        const b = el('button', null, `<b>${esc(l)}${rec ? '<span class="rec">Recommended</span>' : ''}</b>${sub ? `<small>${esc(sub)}</small>` : ''}`);
+        b.type = 'button'; b.dataset.v = v; b.disabled = true;
+        b.addEventListener('click', () => put(id, { choice: answers[id]?.choice === v ? null : v }));
+        ch.append(b);
+      }
+      side.append(ch, el('p', 'hint', 'No answer means you accept the recommended option.'));
+    }
+    const ta = el('textarea'); ta.rows = choices ? 2 : 3; ta.id = 'ans-' + id; ta.placeholder = choices ? 'Note (optional)' : 'Your note'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on ' + title);
+    noteBox(ta, id);
+    side.append(ta);
+    box.append(qt, side);
+    askers.push({ id, ch, ta, counts: !!choices || id !== 'general' });
+  }
+  function paint() {
+    let a = 0, total = 0;
+    for (const A of askers) {
+      const ans = answers[A.id] || {};
+      if (A.id !== 'general') { total++; if (ans.choice || ans.note) a++; }
+      if (A.ch) for (const b of A.ch.children) { b.setAttribute('aria-pressed', String(b.dataset.v === ans.choice)); b.disabled = !db; }
+      A.ta.disabled = !db;
+      if (document.activeElement !== A.ta && A.ta.value !== (ans.note || '')) A.ta.value = ans.note || '';
+    }
+    $('tally').innerHTML = `<b>${a}</b> of ${total} answered`;
+  }
+  setSave('Connecting to saved answers…');
+  paint();
+  (async () => {
+    try { db = await window.claude?.use?.('db'); } catch { db = null; }
+    if (!db) { setSave('Read-only here: answers need the page’s saved-answers store, which isn’t available in this view.', true); paint(); return; }
+    paint();
+    const timer = setTimeout(() => setSave('Saved answers are slow to load. You can still answer; changes save when the connection returns.', true), 10000);
+    db.collection('answers').onSnapshot((snap) => {
+      for (const d of snap.docs) { const x = d.data(); answers[d.id] = { choice: x.choice || null, note: x.note || '' }; }
+      if (!snap.metadata.fromCache) { clearTimeout(timer); if (!snap.metadata.hasPendingWrites) setSave('All saved'); }
+      paint();
+    }, () => { clearTimeout(timer); db = null; setSave('Saved answers are unavailable, so the page is read-only. Reload to try again.', true); paint(); });
+  })();
+})();
+</script>

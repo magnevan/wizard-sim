@@ -4,8 +4,8 @@ Distilled from the first conversation (2026-11-02) and revised since; the game b
 
 ## Pillars
 
-1. **Mastery lives mostly in the player's hands.**
-   Most power comes from what *you* know and can execute. A returning player should be strong from minute one, because they remember how to cast. Unlocks may add real power (as Magicka's Magicks did), but the bulk of skill stays with the player. Prefer progression that lets you lean into a playstyle, do more things at once, or speed up as you warm up, over flat +X% numbers. Deeper element pools that open magic you couldn't reach before are an accepted exception, because they make the frontier smaller and friendlier early on. *(2026-11-03.)*
+1. **Mastery lives mostly in the player's hands; character growth widens what your hands can do.**
+   Most power comes from what *you* know and can execute. A returning player should be strong from minute one, because they remember how to cast; a veteran has a far bigger edge here than in most RPGs. The character still grows a lot over the campaign (more runes, faster regen, unlocked elements and casts), but that growth raises the *ceiling* of what skilled hands can express, not the floor: longer queues, more things standing at once. It doesn't make a spell hit harder or play it for you. Prefer progression that lets you lean into a playstyle, do more things at once, or speed up as you warm up, over flat +X% numbers. *(2026-11-03; reworded 2026-11-07 for the RPG-paced campaign.)*
 
 2. **Spells are a language, not a menu.**
    Players compose spells from parts and discover combinations nobody told them about. The space should feel wider than Magicka's fixed set of shapes, without becoming unreadable to the caster, to teammates, or in the heat of play.
@@ -16,11 +16,11 @@ Distilled from the first conversation (2026-11-02) and revised since; the game b
 4. **Room to think and to play.**
    The pace is slightly slower and more deliberate than Magicka's: choosing the right spell beats twitch reflexes. Casting rhythm is explicit and consistent, not hidden input cooldowns, and a spell isn't strong just because its keys are easy to type. A resource may encourage mindful casting. The campaign has dedicated, low-pressure spaces for experimenting with magic.
 
-5. **Cartoony and arcadey, with more depth over a longer campaign.**
-   Keep the playful tone. Add character development and a campaign structure that rewards sticking around.
+5. **Classic fantasy, told through places; an RPG-paced campaign.**
+   A grounded fantasy world with a light touch (warmth, the odd dry joke), not Magicka's slapstick; friendly fire makes its own comedy. Magic runs through the world as fields and veins that shaped where people live (`world/elements.md`). The campaign is long and the character grows across it. The world carries the story more than deep companions do: many characters, met in simple ways. *(Replaces "Cartoony and arcadey" on 2026-11-07.)*
 
 6. **A reproducible playstyle.**
-   Players should be able to build a personal style that works across the game. Elemental interactions with the battlefield are a given, but levels don't each lean on an environmental gimmick. Occasional gimmicks that force adaptation are fine. Level twists that boost or suppress your existing magic (a place where fire runs hot, a dampening zone) are welcome. What to avoid is a novel level-only mechanic, such as "knock over pillars here" or "use this laser contraption". *(Clarified 2026-11-03.)*
+   Players should be able to build a personal style that works across the game. Elemental interactions with the battlefield are a given, but levels don't each lean on an environmental gimmick. Occasional gimmicks that force adaptation are fine. Level twists that boost or suppress your existing magic (a place where fire runs hot, a dampening zone) are welcome, and so are devices in the world whose input is your spells (a forge you feed Fire, a coil you charge with Lightning, a sluice you freeze shut). What to avoid is a minigame: a device or level mechanic with its own controls, outside the spell language. *(Clarified 2026-11-03; devices allowed 2026-11-07.)*
 
 7. **Downtime is for preparing, and preparing well pays off.**
    Traps, primed spells, stored spells, and structures for allies reward using lulls wisely. Encounters need breaks and visible approaches for this to matter, but preparation is rewarded, not mandatory. Every spell shape must have a situation where it's clearly the best answer.

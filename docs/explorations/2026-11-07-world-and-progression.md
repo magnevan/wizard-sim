@@ -1,119 +1,152 @@
 # World, story spine and campaign progression (2026-11-07)
 
-The user's brief, Claude's feedback as a design partner, and the questions that need settling before the campaign's first assets. The lore stays the user's: the story spines below are options to react to, not a written story.
+The user's brief, Claude's feedback as a design partner, the user's first round of answers (same day), and what's still open. The lore stays the user's: the story spines here are options to react to. The page for answering is the **World and Progression** artifact (`tools/world-progression/`, db `answers`). The element essences now live in `../world/elements.md`.
 
-## The user's brief
+## The brief
 
-- **Tone:** classic fantasy, not Magicka's goofy, ridiculous world.
-- **Genre:** less arcade, more RPG-like. Gradual character progression (the rune system and maybe more), and a longer game to carry it.
-- **Little dialogue, few deep characters.** The user doesn't trust their own skill there.
-- **Power growth you can feel:** from the player's mastery, and from the character literally getting more runes, faster regen, unlocked runes.
-- **World premise:** magic exists as *fields and veins* that can be tapped, shaping civilization the way rivers do. Smiths at a swell of fire, farming on water and life, mining on earth, lightning powering rudimentary electricity, so some places are a bit steampunk. Arcane, Sigil and Shield are unplaced. Maybe Sigil and Shield aren't fields but innate to casters.
-- **Gameplay from the world:** zones where elements run strong or weak (maybe through regen), creatures that suit the zone, devices and artifacts that tap fields.
-- **Progression:** start with a small kit and add to it through an intro. Low regen early keeps complexity down. Early combat is single-element spells and melee; late is several turrets, persistent self-effects, five-element casts.
-- **Structure:** Magicka's linear worlds of distinct combat scenarios work. Maybe add defending against intruders, and puzzles. The user worries about over-fitting to Magicka.
+- **Tone:** classic fantasy, not Magicka's goofy world.
+- **Genre:** more RPG than arcade. Gradual character progression (runes and maybe more), and a longer game to carry it.
+- **Characters:** not Mass Effect, Baldur's Gate 3 or Dragon Age depth. *Clarified:* "the world doesn't have to be barren. You can have lots of characters you interact with, but in more simple ways."
+- **Power growth you can feel,** from mastery and from more runes, faster regen, unlocked runes.
+- **The world:** magic as fields and veins that shaped civilization like rivers (smiths at fire, farms on water and life, mines on earth, lightning powering rudimentary electricity).
+- **Gameplay from the world:** zones where elements run strong or weak (maybe through regen), native creatures, devices that tap fields.
+- **Progression:** a small kit, grown through an intro; low regen early. Early combat is single-element spells and melee; late is turrets, persistent self-effects, five-element casts.
+- **Structure:** Magicka's linear worlds work; maybe defence and puzzles too, without over-fitting to Magicka.
+- **Single player and co-op:** "the game should ideally be possible to play both single player and with a group, so ideally the story works reasonable for both."
 
-## Where this meets the pillars
+## Settled in round 1
 
-Two pillars no longer say what the user wants, and one needs a line drawn.
+- **Pillars 1, 5 and 6 reworded** (in `../vision.md`; decision "Pillars 1, 5 and 6 reworded; the world is fields"). Pillar 5 is classic fantasy told through places with an RPG-paced campaign; pillar 1 adds that growth widens what your hands can do (the user: "a veteran player has a much bigger advantage in this game than in most RPGs"); pillar 6 allows devices whose input is your spells and rules out minigames.
+- **The world is fields;** Life a living field, Arcane the deep field; Shield and Sigil innate. The user on the innate pair: Sigil holds a rune because shaping takes attention, "and shield also has a similar thing where you need to concentrate to maintain, it's just more continuous and less discrete."
+- **Zones bend regen.**
+- **Native creatures have only a splash of resistance** to their region's element. The user: "It would be a little stupid from a gameplay perspective if we give you a bunch of extra fire power, but everyone is resistant. However it just feels... realistic". Instead, "everyone is attacking more with fire in that region".
+- **The academy sits on an Arcane vein,** which "could utilize to help bring about and develop a wizard's natural abilities".
+- **Co-op with mismatched progress gets some catch-up mechanic,** designed when we get there.
+- **Progression's shape is broadly right** but needs play-testing.
+- **Hubs are a reusable set piece; encounters are a library,** not a fixed per-region recipe ("a defence and a hunt sound more like prototypes for an encounter or a quest").
 
-1. **Pillar 5 ("Cartoony and arcadey, with more depth over a longer campaign") contradicts the brief.** Proposed rewording: *"Classic fantasy, told through places. A grounded world with a light touch (warmth and the odd dry joke, not slapstick). An RPG-paced campaign where the character grows over a long journey, and the world explains the story more than dialogue does."* Friendly fire still produces comedy by itself; the world doesn't have to.
-2. **Pillar 1 ("the bulk of power stays with the player") pulls against "significantly more powerful from more runes and regen."** They can coexist if character growth raises the *ceiling* of what hands can express and not the *floor*. More runes allow longer queues and more devices; more regen allows more things at once. Neither makes a spell hit harder, and none of it plays the spell for you. Proposed rewording: *"Character growth widens what your hands can do; it doesn't do it for you."* The test: a veteran on a fresh character is competent at once (short queues, but every one well chosen), and a novice on a late character still fails if they cast badly. Flat damage percentages stay rejected.
-3. **Pillar 6 already welcomes zones that boost or suppress magic, and forbids "use this laser contraption".** Field devices sit on that line. **Allowed:** devices whose *input is your spell vocabulary* (a forge that accepts Fire, a coil you charge with Lightning, a sluice you freeze shut, a ward-stone you feed Shield). They reward knowing the language and work the same everywhere. **Avoided:** devices that are self-contained minigames with their own controls.
+## Zones: how hard they push
 
-## The world: fields as geography
+The user wants zones to push you into other parts of your kit ("maybe you need to spend some new time experimenting") without making you reinvent yourself, and floated "a sliding scale as you go deeper into a region".
 
-The premise is strong because one idea drives three things: the map (where cities and creatures are), combat (zones that bend magic) and progression (where you go to grow). Some ways to push it:
+**Proposal: zones only redistribute regen, and deepen in bands.**
+- **Total regen R stays the same.** A zone changes the *weights* in the shared budget's split: the local element gets a bigger share, its opposite a smaller one. You're never weaker in total, only steered. The α floor (a quarter of R always reaches every pool that isn't full) still holds, so nothing stops refilling.
+- **Three bands per region,** felt as you travel in:
 
-- **Confluences are the interesting places.** Where two fields meet, the spell rules already say what happens, so the geography follows the grammar.
-  - Fire + Water: hot springs and steam, the cradle of steam engines (the steampunk towns).
-  - Lightning + Water: storm marshes; dangerous, and the reason a coastal town has lightning rods.
-  - Earth + Fire: volcanic forges, the smith city.
-  - Cold + Water: frozen lakes, ice roads that only exist in winter.
-  - Life + Water: the breadbasket; also why that land is fought over.
-  - A player who knows the spell rules can *read the landscape*. That fits pillar 2.
-- **Fields move and dry up, like rivers.** A river metaphor isn't only about where towns are; it's also about what happens when the river changes course. That is a story engine needing no named characters: dead towns, migrating creatures, cities quarrelling over a shared well.
-- **Placing the four odd ones** (Claude's proposal):
-  - **Life is a field, the one living things make.** Strong in old forests and farmland, thin in deserts and blights. Unlike the others, it grows and shrinks with what lives there, so it can be harmed or restored.
-  - **Arcane is the deep field under all the others.** Rare, only near the surface where the crust of other fields is torn: rifts, ruins, very old places. Coveted and dangerous. That fits Arcane in play (the raw, piercing beam, Attune refilling every pool) and gives a natural late-game region and a likely plot hook.
-  - **Shield and Sigil are innate: the caster's own.** Shield is the will to *refuse* (to hold, to not be moved); Sigil is the will to *shape* (to bind magic into a form). This already matches the rules: weapons, turrets and glyphs need Sigil because they are shaped; Sigil *binds* a rune because shaping holds your attention; wards are Shield lent to someone.
-  - **The gameplay consequence is clean:** zones affect only the seven field elements. Shield and Sigil behave the same everywhere, so they are your reliable baseline in a dampening zone. And it divides progression in two: Shield and Sigil grow through *training* (the academy, practice, mastery); the seven field elements grow through *attunement* at places in the world.
-- **Zones in play.** Recommendation: a zone changes the *regen share* of its element, not damage. In a fire swell, Fire pips refill faster for everyone, enemies included, and burning ground lingers longer. In a dead zone, one element barely refills. It's legible (the HUD's pips already glow by share), it's the same lever everywhere, and it leaves the player the choice to ride the local element or counter it. Fire-resistant creatures in a fire zone are fine *sometimes*, but if every zone hard-counters its own element, the player is pushed into a forced loadout per level, which pillar 6 warns against.
-
-## Story with little dialogue
-
-Recommendation: **let the journey be the story, and let places carry it.** Light-dialogue games that work tell their story through where you go and what you find there: ruins, inscriptions, machines, abandoned camps, creatures out of place. A handful of characters is enough: a mentor who sends letters or appears at wells, a rival or antagonist seen from a distance, and locals who are functional (they ask for help, they point the way).
-
-Three story spines to react to. They aren't exclusive; one could be the structure and another the cause.
-
-- **A. The journeyman's circuit.** After the academy, a new wizard travels to each great well to attune to it, a tradition. Each region is a well and a city. The plot is light: something is wrong at the wells, and it grows. *Strength:* the structure gives progression for free (attunement *is* the unlock). *Risk:* it's a familiar shape (gym circuit, temple tour).
-- **B. The shifting fields.** A field is moving, the way a river changes course. The forge city's fire is dying and the marsh is spreading. You follow the change to its source. *Strength:* it uses the premise most fully, and every region has a visible consequence to show. *Risk:* "why is it moving" needs a good answer, and that's the lore's hardest question.
-- **C. The overtap.** The newer, steam-and-spark side of the world is drawing on fields with machines faster than they renew. *Strength:* gives enemy factions that use field devices, which you can turn against them (fits pillar 6's allowed devices). *Risk:* it can read as a simple "industry bad" message unless it's given nuance (the machines also feed cities).
-
-Claude's pick: **A as the structure and B as the cause**, with C available for one faction. It needs the least dialogue: the map tells the story.
-
-## Progression: what grows, and from where
-
-Give each kind of growth its own *source in the world*, so a player always knows why they're stronger.
-
-| Axis | What grows | Where it comes from | When |
+| Band | Local element's share | Its opposite | What it's for |
 |---|---|---|---|
-| Breadth | Elements, then the rest of Sigil and Shield's casts (conjure-only first, per `2026-11-06-campaign-and-content.md`) | The academy, then the first wells | Early: all nine elements by about a third of the game |
-| Depth | Pool size (2 → 4 → 5), so longer queues and five-element casts | Attunement at wells; the player picks which pool deepens | Early to mid |
-| Flow | Regen R, Sigil binds, how many wards stand at once | Training in the innate arts (Shield/Sigil) and milestones | Mid to late |
-| Workings | Named special spells, like Magicka's Magicks | Found in the world: ruins, rifts, optional shrines | Throughout, optional |
-| Leaning | Staffs, robes, trinkets that bend one rule ("glyphs arm instantly, but you hold two") | Loot and rewards | Mid to late |
+| The edge (first chapters) | ×1.5 | normal | A hint. You notice Fire pips filling fast. |
+| The heartland | ×2 | ×0.6 | A push. Your usual style still works but costs more. |
+| The well (set pieces, the boss) | ×3 | ×0.3 | The region's exam. Briefly, you play the region's way. |
 
-Notes on the table:
-- **Don't hold elements back too long.** Composition is the fun (pillar 2). Breadth should finish early; the long tail of the game is depth and flow. Queue length is as strong a complexity lever as locked elements (the spell counts in the campaign exploration), and it grows more gradually.
-- **Choosing which pool deepens is the playstyle-leaning progression** that `vision.md` lists as open. A fire specialist and a generalist end up with different characters, and both are valid.
-- **Avoid scaling enemies to match.** The classic RPG trap is enemy health rising with you, so nothing feels stronger. Late enemies should differ in *kind* (mixed resistances, organized groups, elites that need a combo), and early enemies should stay weak, so going back to an early area with a late kit feels like the power fantasy it is.
-- **Late game is more things at once, not faster.** Pillar 4 wants room to think, so a big regen budget should pay for turrets, auras and wards standing together, not for spamming.
-- **Gear as sidegrades only.** "RPG-like" invites stat-stick loot, which pillar 1 rejects. Gear that bends a rule is loot people talk about, and it's a reason to explore.
+- **The numbers are placeholders** for a play-test; the Rune Economy simulator can model them.
+- **The loop that makes it feel fair:** the region's enemies attack mostly with its element, and every Shield or Weapon spell carrying an element lends resistance to it (guards, wards, heals). So the abundant local element is also your cheapest defence against the local threat. A fire region gives you fire to burn with and fire to ward against fire. The push is into *defending* with the local element as much as attacking with it.
+- **Creatures:** a splash of resistance only (r ≈ 0.25 on some types, none on most). The region's character comes from what they *do* (fire attacks, burning ground, creatures that flee water), not from what they shrug off.
+- **Readable without text:** the HUD's pips already glow by their share, so a zone shows itself in the rune bar. The ground and light can show the band too (embers in the air, frost on the edges).
 
-**The co-op problem this creates.** Once characters progress, two friends at different points have to play together. Magicka never had this problem. Options:
-1. **Per-character progress with a chapter floor.** Joining a chapter raises you to its minimum for that session. Keeps pillar 1: hands still matter.
-2. **Party progress.** The save belongs to the group; everyone shares it. Simple, but solo play and drop-ins get awkward.
-3. **The host's world.** Your character keeps what it earns, and the host's chapter decides the encounters.
+## Unlock pacing: the "press anything" moment
 
-Recommendation: 1, the chapter floor.
+The user's tension: a third of the game to unlock everything "feels a bit intense", and Magicka's "oh wow, you can just press anything" moment came early. But drip-feeding stretches the exploration phase. The user floated a core set unlocked fast and one or two held back for story beats, maybe a tenth element (the odd count is annoying), or holding back conjuring devices in the world, "although it feels awkward to have to change this around."
 
-## What you do: beyond corridors of fights
+Three ways to pace it:
 
-Keep Magicka's backbone of linear chapters with distinct encounters, and add these, each of which reuses the systems instead of needing bespoke content:
+- **U1, everything after the intro.** The academy ends with all nine elements, and the rest of the game is depth (pools, queue length) and flow (regen, binds). Pro: Magicka's wow moment, intact. Con: the frontier is at its widest when the player knows least; the only new things after that are numbers and found workings.
+- **U2, a core set fast, a few held for story beats** (Claude's pick). The academy gives the "press anything" moment with seven field elements and conjure-only Sigil and Shield (weapons and guards), but a 2-rune queue, so the space is wide but shallow (a little over 120 spells, the weapons and guards included, instead of 678). Later, two story beats each open something genuinely new:
+  - **The innate arts open** (Sigil's and Shield's other casts: turrets, glyphs, walls, wards, Blink). This is the user's "conjure items in the world" idea. It isn't awkward if it's framed as what it is in the world: you were only able to shape something you hold; now you learn to shape the world around you. In the HUD, Sigil's and Shield's locked casts show as dim slots from the start, so the change reads as "this rune grew", not "this rune changed".
+  - **Air, if it's added,** found mid-game at a high place as Earth's opposite: a tenth element, the second wow moment. It costs a key, about 81 % more spells and changes to Water and the Shield wave (`../ideas/air-element.md`), so it's optional. The pacing works with the innate arts alone.
+- **U3, a drip over the first third.** Pro: the longest exploration phase. Con: the user finds it intense, and every new element arrives after the player has settled into habits.
 
-- **Defence.** Hold a village or a well against waves with prep time first. It's pillar 7's natural home, and Survive already prototypes it.
-- **Spell puzzles,** built only from the systemic vocabulary (freeze water to cross, conduct lightning through a puddle, burn brambles, feed a ward-stone). They teach combinations by doing.
-- **Optional shrines** that are short puzzle or combat trials, paying out workings or pool depth. This answers the vision's open question about *where practice happens without feeling like homework*: practice is optional, rewarded and in the world.
-- **Traversal gated by magic.** A frozen river you can only cross once you have Cold; a rift you can only enter once you have Arcane. Going back to an earlier region with new runes opens paths there. It makes breadth progression felt on the map, not only in the HUD.
-- **Hunts.** A large creature native to a field, fought in its own arena; a boss that examines one idea.
-- **Hubs.** One city per region, at its well, as a place to return to, shop gear, practice and see the story's change (the city's well is weaker each visit).
+**Why U2:** queue length cuts complexity about as much as locked elements do (200 spells with all nine at a 2-rune queue, against 228 with seven at a full queue), and it grows more gently. The wide-and-shallow start keeps the wow; each later unlock is a real verb, not a number.
 
-**Scope warning.** A longer game made by a small team gets long by reusing its systems in new mixes (new enemy groups, zones, defence variants, shrines), not by more bespoke set pieces. Regions are worth designing as kits: a tileset, a field, three or four creatures, one device, one hunt.
+**After unlocks: the capitalizing phase.** The user: "there's joy in really being able to capitalize on it with more runes and more regen." How far it scales into the late game, and whether it needs artifacts or more Magicks, is to be learned by playing. Candidates to keep in reserve: workings (named special spells), rule-bending gear, and co-op Magicks (`2026-11-03-coop-magicks.md`).
 
-**Suggested shape:** regions, each with a hub city at a well, three to five linear chapters, one defence, two or three optional shrines and a hunt. Not open world.
+## Optional shrines, in detail
+
+A shrine is a **small, optional, self-contained space**, found off the main path: one to three rooms, three to eight minutes, built around one idea. It's where practice happens without feeling like homework (an open question in `vision.md`), because it's a found place with a reward, not a lesson.
+
+**Rules for every shrine:**
+- **One idea,** stated by the room, not by text. The layout shows the problem.
+- **Only the spell language.** No new controls, no minigame (pillar 6). Any device in it takes spells as input.
+- **Solvable alone, richer together.** Every solution works solo; co-op can split it (one holds a ward while the other freezes the gate), and the shrine scales its fights to the party.
+- **More than one answer where possible.** Steam or a freeze-and-shatter both open the frozen door.
+- **Once solved, solved.** No replays required; a cleared shrine stays lit as a mark on the map.
+
+**Kinds of shrine:**
+
+- **The puzzle room.** A systemic problem with no enemies. *Example, the drowned bell:* a flooded hall with a bell on a far ledge. Freeze a path across the water, but the ice melts near the braziers; douse them first, or burn a different way across with Earth stepping stones. Ringing the bell (any hit) opens the reward.
+- **The constraint trial.** A fight under one rule: only two pools, or a dampening field on everything but Cold, or no weapons. *Example, the cold hall:* waves of fast enemies, and only Cold and Water refill. It teaches wet → freeze → shatter by making it the only good answer.
+- **The keeping trial,** a support skill test. Keep something fragile alive: a sapling, a lantern, a sleeping traveller. Enemies go for it, not you. It's where wards on others, heals that lend resistance and walls placed well become the whole game. It also answers the vision's question of what makes support *skillful*.
+- **The echo,** discovery without text. A ghostly wizard casts a combination, once, and the room is built so that only that spell opens it. You read the ghost's runes (its rune pips show above it, like a partner's) and copy it. It's how the game can teach a spell nobody explains.
+- **The proving ground.** One hard fight against a single strong enemy that examines one skill (parry timing, turret placement, reading a telegraph).
+
+**Rewards:** a working (a named special spell), a pool deepening, a rule-bending trinket, or a piece of the world's history (an inscription, a mural). One reward per shrine, and the shrine shows what it is at the entrance, so a player can choose whether it's worth the detour.
+
+## Encounters: a library, not a recipe
+
+Regions draw freely from a growing set of encounter types. Each is a prototype to borrow from, not a slot to fill.
+
+- **Set-piece battle:** a designed fight on one screen or a larger field.
+- **Defence**, which takes many forms (the user: "City under attack, camp under attack, you're in a ruin and you triggered something to happen"): hold a gate, protect a caravan's wagons, survive until a ritual finishes, keep a well's machinery running. Pillar 7's home, since there's prep time before. Survive is its prototype.
+- **Gauntlet:** move under pressure (a collapsing mine, a storm front).
+- **Ambush:** no prep, the opposite of defence.
+- **Escort:** someone slow and fragile, the keeping trial at scale.
+- **Native boss:** a large creature of the land, fought in its own arena (what "hunt" meant). It examines the region's idea.
+- **Rival casters:** enemies who use the same spell grammar, readable by their rune pips; they teach by example.
+- **Puzzle room:** as in the shrines, on the main path where it helps the pacing.
+- **Traversal:** paths opened by magic (freeze a river to cross, burn a bramble, Blink a gap). Coming back to an old region with new magic opens its side paths.
+
+## Story, for one player or four
+
+**Characters, revised.** Many characters met in simple ways, not a few deep companions:
+- **Recurring faces:** a trader who turns up in every hub, a cartographer who buys your maps, a rival cohort you cross paths with. Each has one trait and one want.
+- **Locals with a request,** a rumour or a reaction. A hub's people remember what you did there.
+- **A mentor** who sends letters or meets you at wells, and **an antagonist seen from a distance** more than heard.
+- **The world changes visibly:** a hub's well weaker on each visit (or restored), a town rebuilt, a road reopened. Change does the work that dialogue would.
+
+**Working solo and in a group.** The story has to work whether one wizard or four are standing there.
+- **The party is a cohort** (Claude's pick). The academy sends journeymen out together; solo, you're the one sent. The story never depends on how many you are.
+- **Write every line to "you",** which in English doesn't say how many: "you came back" works for one or four. Avoid lines that name a protagonist or pick one player.
+- **No beat needs a particular number,** and no puzzle *requires* two people.
+- **Choices,** if there are any, are the host's in co-op, or shown as a quick vote.
+- **The alternative,** one named protagonist with co-op partners as unnamed companions, makes partners second-class. It's simpler to write, but it costs co-op its feel.
+
+**The spines, deeper.** The user liked the A and B hooks and wants to explore before committing. Each below has its question, how regions serve it, the antagonist's shape and how it fits a cohort.
+
+- **A. The journeyman's circuit** (structure). After the academy, the cohort travels to each great well to attune, by tradition. *Question:* "can we finish the circuit?" *Regions:* one well each, with a city. *Antagonist:* none needed; the obstacles are the land. *Fit:* a cohort is natural. *Weakness:* on its own, no stakes. It's a frame for a cause.
+- **B. The shifting fields** (cause). A field is moving, like a river changing course: the forge city's fire dying, the marsh spreading. *Question:* "why are the fields moving?" *Regions:* each shows a consequence. *Antagonist:* possibly nobody, a force of nature, or somebody behind it. *Hard part:* the answer to "why" has to be good.
+- **C. The overtap** (a faction). The steam-and-spark side draws fields down faster than they renew. *Question:* "who pays for progress?" *Antagonist:* a guild or a city, with good reasons too (the machines feed people). *Gives:* enemies with field devices you can turn on them. *Risk:* a simple "industry bad" message.
+- **D. The academy's vein** (a twist for B). The Arcane vein under the academy is part of why the fields are moving; the institution that trained you is implicated. *Question:* "what did our teachers know?" *Fit:* it ties the first place to the last, and the late game comes home. *Risk:* the "your mentor was the villain" twist is common; it works better if the academy is mistaken than evil.
+- **E. The rekindling** (a hopeful variant). Long ago, the fields were broken and the world went quiet; the wells are waking again, and the cohort travels to rekindle them. *Question:* "what can we bring back?" *Regions:* each well relit makes its region and hub visibly recover. That matches power growth: you get stronger and the world gets better. *Antagonist:* whatever broke them, or whoever profits from them staying dark. *Risk:* softer stakes than a disaster.
+
+**Ways to combine:** A + B, with D as the late turn, is Claude's pick for drama. **A + E** suits the visible-progress idea best and is gentler in tone. Either way, A is the frame. The world can hold C as one region's faction in any of them.
 
 ## What needs settling before the first campaign assets
 
-Most of this can wait. To start building the academy and the first region, only these need an answer:
-1. The tone (pillar 5's rewording).
-2. Fields as the world's premise, with Shield and Sigil innate.
-3. The first hour's unlock path (academy: staff and hands, then Fire and Water, conjure-only Sigil for the first weapon...).
-4. Where the academy sits, and what the first region's field is.
+1. ~~The tone.~~ Settled.
+2. ~~Fields as the premise, Shield and Sigil innate.~~ Settled.
+3. **The first hour's unlock path:** U2's academy (staff and hands; Fire and Water first; the rest of the core set; conjure-only Sigil for the first weapon; a 2-rune queue).
+4. **The academy:** on an Arcane vein (settled). Still open: what's around it, and which field the first region beyond it has.
 
-The main plot's cause, the ending and the later regions can wait until the first region plays.
+The main plot's cause, the ending and later regions can wait until the first region plays.
 
-## Open questions for the user
+## Open questions (round 2)
 
-Each has Claude's recommendation; unanswered means it stands.
+On the page, with Claude's recommendation on each; unanswered means it stands.
 
-1. **Pillar 5:** reword it as above (classic fantasy, told through places)? Recommendation: yes.
-2. **Pillar 1:** add "character growth widens what your hands can do; it doesn't do it for you"? Recommendation: yes.
-3. **The odd four:** Life a living field, Arcane the deep field under the others, Shield and Sigil innate? Recommendation: yes. Zones then affect only the seven field elements.
-4. **How zones bend magic:** through regen share (recommended), damage, or both?
-5. **Story spine:** A, B, C or a mix? Recommendation: A as structure, B as cause.
-6. **Which pool deepens is the player's choice** at each attunement? Recommendation: yes.
-7. **Co-op with mismatched progress:** chapter floor (recommended), party save, or host's world?
-8. **Gear:** sidegrades that bend rules, no stat items? Recommendation: yes.
-9. **Where's the academy?** One idea: on an Arcane vein, the reason it was built there, which ties the first place to the late-game mystery.
-10. **What did Magicka not do that you want?** The traversal gating, the hubs and the shrines are the main non-Magicka ideas here. Which feel right?
+1. **Zone strength:** the three bands (edge, heartland, well)? Recommended.
+2. **Zones redistribute only,** total regen unchanged? Recommended.
+3. **Unlock pacing:** U1, U2 (recommended) or U3?
+4. **What's held back:** the innate arts' world casts (recommended), Air as well, or something else?
+5. **The party as a cohort,** every line written to "you"? Recommended.
+6. **Spines:** A + B + D, A + E, or another mix?
+7. **Shrines:** which kinds appeal?
+8. **The encounter library:** what's missing?
+9. **Which pool deepens is the player's choice** at each attunement? Recommended (carried from round 1, unanswered).
+10. **Gear as sidegrades that bend a rule,** no stat items? Recommended (carried from round 1, unanswered).
+11. **The element essences** (`../world/elements.md`): what's off?
+
+## Round-1 recommendations superseded
+
+- *"All nine elements by about a third of the game"* became U2 above.
+- *"Each region: a hub, three to five chapters, one defence, two or three shrines and a hunt"* became the encounter library.
+- *"Per-character progress with a chapter floor"* is deferred: the user wants some catch-up mechanic, decided later.

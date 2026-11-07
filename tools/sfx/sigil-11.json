@@ -1,0 +1,5 @@
+[
+  { "id": "sigil-tick-1", "secs": 0.5, "influence": 0.7, "text": "A tiny, soft tick of energy gathering at the tip of a staff, barely louder than a footstep." },
+  { "id": "sigil-tick-2", "secs": 0.5, "influence": 0.7, "text": "A very small, gentle pulse of magic, one soft muted tap, quiet and short." },
+  { "id": "sigil-tick-3", "secs": 0.5, "influence": 0.7, "text": "A faint little spark of energy settling into place, delicate and quick." }
+]

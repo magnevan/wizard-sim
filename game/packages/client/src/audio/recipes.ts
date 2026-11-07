@@ -361,6 +361,8 @@ export function composeUi(kind: UiSound): Plan {
 
 /** A rune going into the queue: `n` runes in it, so the blips climb. */
 export function composeQueue(el: ElementName, n: number): Plan {
+  const tick = kitOf('sigil')?.spells?.queue;
+  if (tick?.length) return kitPlan(`queue:${el}`, tick, Math.random, ELEMENTS[el].blip);
   return { name: `queue:${el}`, wet: 0, layers: [{ clip: 'y-blip', gain: 0.34, rate: ELEMENTS[el].blip * Math.pow(1.06, Math.max(0, n - 1)), at: 0, attack: 0.002, hold: 0, release: 0.03 }] };
 }
 export const composeDry = (): Plan => one('dry', 'y-dry', 0.5);

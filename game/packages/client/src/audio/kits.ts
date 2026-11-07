@@ -63,7 +63,8 @@ export interface Kit {
    * One spell's own cast, in place of its shape's, by the sim's shape: `lens`, or `aura+lightning` for that
    * one with Lightning in it. A spell is its own thing on screen, so it wants a sound cut to what you see.
    * Empty means silent, for a spell with no sound of its own yet that shouldn't borrow a wrong one.
-   * `hold:aura+fire` is what plays for as long as that aura lasts, after its cast.
+   * `hold:aura+fire` is what plays for as long as that aura lasts, after its cast. `queue`, in Sigil's
+   * kit, is the tick of any rune being queued, pitched by its element.
    */
   spells?: Readonly<Record<string, readonly KitLayer[]>>;
 }

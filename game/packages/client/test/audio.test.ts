@@ -250,6 +250,14 @@ describe('recipes', () => {
       expect(composeAuraLoop('cold')).toBeNull();
     } finally { useKit('sigil', null); }
   });
+  test("a kit's rune tick is pitched by the element", () => {
+    useKit('sigil', { spells: { queue: [{ clips: ['fire-catch'], gain: 0.3 }] } });
+    try {
+      const fire = composeQueue('fire', 1).layers[0], water = composeQueue('water', 1).layers[0];
+      expect(fire.clip).toBe('fire-catch');
+      expect(fire.rate).not.toBe(water.rate);
+    } finally { useKit('sigil', null); }
+  });
   test('dismissing is silent to a kit that has no sound for it', () => {
     expect(composeDismiss('sigil')).toBeNull();
     useKit('sigil', { dismiss: [{ clips: ['fire-catch'], gain: 0.5 }] });

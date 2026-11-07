@@ -108,3 +108,17 @@ The user saw that the staff's flashing was only the runes being queued, which th
 
 Queueing runes may want sounds of its own, but today's are "way too dramatic".
 
+## Fourteenth round: why Haste was hard
+
+Double speed was "ok-ish", with its repetition too obvious. Measuring the reference explained the whole trail: 86% of its energy is under 150 Hz, centred near 170 Hz, swelling in over 0.8 s. Every prompt had aimed high and airy (woosh, zip, buzz), and came back as steam, a rattlesnake and a shower. The user's "fast more intense vibration" is a low thrum.
+
+Lesson: measure a reference the user likes before writing its prompts. Their words describe how it feels, and the numbers say what it is.
+
+The Lab now plays rune sounds with the spell, as they're part of it, and the generic rune tick is up for review.
+
+## Where it stands
+
+**Awaiting the user in the Lab (`?lab=sigil`):** Haste's loop and the rune tick.
+
+**Done:** Lens, rune motes, Frost glyph, turret summon, dismiss, and the Fire, Frost, Bulldoze and Regeneration auras. **Nearly done:** Glass cannon, Mist. **Open:** Haste, the turret's shots, orbitals, other elements' glyphs, big Sigil bursts. All of these are local: the public game's sounds haven't changed. Whether the next element comes next is still to decide.
+

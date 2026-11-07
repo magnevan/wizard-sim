@@ -33,9 +33,10 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[]; takes?
     ],
   },
   sigil: {
-    el: 'sigil', takes: 1,
+    el: 'sigil', takes: 3,
     moments: [
-      { id: 'haste-r6', name: 'Haste aura', spell: 'sigil,lightning/self', listen: 'The earlier intro, then your best loop (Take 3) played twice as fast.', single: true },
+      { id: 'haste-loop-r7', name: 'Haste loop', spell: 'sigil,lightning/self', only: 'hold:aura+lightning', listen: 'Comes in after the intro. Take 1: the reference low thrum. Take 2: that, faster. Take 3: that, with your sped-up buzz over it.' },
+      { id: 'rune-tick', name: 'Rune queue', spell: 'sigil,fire/self', only: 'queue', listen: 'NEW: Take 1, 2, 3 are a soft tick for each rune, pitched by its element. Listen right at the start.' },
     ],
   },
 };
@@ -72,9 +73,9 @@ const CSS = `
 
 type Set = 'before' | 'reference' | `take${number}`;
 type Part = 'spell' | 'hits' | 'burning' | 'other';
-const PARTS: readonly [Part, string][] = [['spell', 'Spell'], ['hits', 'Hits'], ['burning', 'Burning'], ['other', 'Runes, steps']];
+const PARTS: readonly [Part, string][] = [['spell', 'Spell'], ['hits', 'Hits'], ['burning', 'Burning'], ['other', 'Steps']];
 /** Every kind of sound the fire moments make, by the part it's switched with. Anything unlisted is "other". */
-const PART_OF: Readonly<Record<string, Part>> = { cast: 'spell', chan: 'spell', charge: 'spell', flight: 'spell', aura: 'spell', hit: 'hits', impact: 'hits', burst: 'hits', floorfire: 'burning', burn: 'burning' };
+const PART_OF: Readonly<Record<string, Part>> = { ui: 'spell', cast: 'spell', chan: 'spell', charge: 'spell', flight: 'spell', aura: 'spell', hit: 'hits', impact: 'hits', burst: 'hits', floorfire: 'burning', burn: 'burning' };
 /** The Now playing line's names. */
 const SAYS: readonly [RegExp, string][] = [
   [/^kit:aura/, 'aura loop'], [/^kit:hold|^hold:/, 'held loop'], [/^kit:stop/, 'dying breath'], [/^kit:charge|^charge/, 'charge'], [/^kit:flight|^flight/, 'in flight'],

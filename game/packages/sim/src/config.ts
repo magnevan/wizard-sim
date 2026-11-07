@@ -57,7 +57,7 @@ export const COMBAT = {
   channelStatus: 3,
   /** Sprays: share of the damage each body behind the nearest one takes (1 = everyone takes it all). */
   sprayFalloff: 0.6,
-  /** Forms without their own curve (lightning, shield, sigil): each extra rune adds this share of the first rune's damage. */
+  /** Forms without their own curve (lightning, arcane, shield, sigil): each extra rune adds this share of the first rune's damage. A beam's form counts once (its runes buy time). */
   formScaling: 0.7,
   /** Sprays grow with n^sprayExp (0.5 = square root, as Magicka's); rocks with n^rockExp (1.5: going all-in pays). */
   sprayExp: 0.5,
@@ -88,6 +88,8 @@ export const SHAPES = {
   arcRange: 6, arcJump: 3.5, arcInterval: 0.2, arcJumps: 2, // jumps, plus one per extra lightning rune (Chain)
   missileSpeed: 12, missileLife: 1.4, missileRadius: 0.3,
   shardCount: 5, shardSpread: 0.035, // turns between shards
+  /** Each ice shard's share of the payload: 0.75, so a full 6-shard volley lands the 4.5x it did before every shard hit alike. */
+  shardPower: 0.75,
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,
   patchRadius: 1.6, patchLife: 6,

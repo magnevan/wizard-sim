@@ -28,6 +28,8 @@ export interface HitOpts {
   statusScale?: number;
   /** A shot, beam or spray arriving along (dirX, dirY): a shieldbearer's guard can block it from the front. */
   frontal?: boolean;
+  /** A beam: its form element counts as one rune, for damage and for healing (its extra runes buy time, cast.ts). */
+  flatForm?: boolean;
 }
 
 const c = (els: Uint8Array, at: number, id: number) => els[at * N_EL + id - 1];
@@ -81,7 +83,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
 
   if (o.heal) {
     // Support: Life heals; the lending elements only help (Rescue spray, Healing spray).
-    const amount = COMBAT.healPerLife * life * o.scale;
+    const amount = COMBAT.healPerLife * (o.flatForm ? Math.min(1, life) : life) * o.scale;
     b.hp[t] = Math.min(b.maxHp[t], b.hp[t] + amount);
     if (water) { b.burn[t] = 0; addKnock(w, t, o.dirX, o.dirY, o.push * water * 0.4 * ss); }
     if (fire) { b.wet[t] = 0; b.frozen[t] = 0; b.chill[t] = 0; }
@@ -95,8 +97,8 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   const form = formOf(els, at);
   for (let id = 1; id <= N_EL; id++) {
     const n = c(els, at, id);
-    // Each extra rune of the form element adds formScaling of the first rune's damage.
-    let d = DAMAGE[elementName(id)] * (id === form && n > 1 ? formCurve(form, n, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling) : n);
+    // The form element grows on its curve (elements.ts formCurve); a beam's counts once. The rest add a rune's worth each.
+    let d = DAMAGE[elementName(id)] * (id === form && n > 1 ? (o.flatForm ? 1 : formCurve(form, n, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling)) : n);
     if (arch && id === EL.fire && arch.fireMult !== undefined) d *= arch.fireMult;
     if (arch && id === EL.cold && arch.coldMult !== undefined) d *= arch.coldMult;
     if (arch?.onlyFire && id !== EL.fire) d = 0; // a bramble: only fire hurts it

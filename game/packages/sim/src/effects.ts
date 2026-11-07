@@ -39,8 +39,8 @@ export function stored(els: Uint8Array, at: number, flags: number, mod: number, 
   return { counts: els, at, heal: !!(flags & PF.heal), scald: !!(flags & PF.scald), freeze: !!(flags & PF.freeze), mod: MODS[mod], look, formN: 1 };
 }
 
-export function hitOpts(p: Payload, source: number, scale: number, dirX = 0, dirY = 0, statusScale = 1, frontal = false): HitOpts {
-  return { scale, heal: p.heal, scald: p.scald, freeze: p.freeze, source, dirX, dirY, push: p.mod === 'push' ? SHAPES.push : 0, statusScale, frontal };
+export function hitOpts(p: Payload, source: number, scale: number, dirX = 0, dirY = 0, statusScale = 1, frontal = false, flatForm = false): HitOpts {
+  return { scale, heal: p.heal, scald: p.scald, freeze: p.freeze, source, dirX, dirY, push: p.mod === 'push' ? SHAPES.push : 0, statusScale, frontal, flatForm };
 }
 
 export function hitEvent(w: World, i: number, dealt: number, look: number, src = -1): void {
@@ -152,9 +152,10 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     }
     case 'shards': {
       const count = SHAPES.shardCount + spec.sizeN; // for a Life spell, more Cold lends more shards
-      for (let k = 0; k < count; k++) {
-        const a = face + (k - (count - 1) / 2) * SHAPES.shardSpread;
-        spawnMissile(w, src, p, cosTurns(a), sinTurns(a), 2, 0.3 * k, 0, 0, ex.ox, ex.oy);
+      // every shard at the same power (each used to hit at 0.3 x its index, the loop's k shadowing the scale)
+      for (let j = 0; j < count; j++) {
+        const a = face + (j - (count - 1) / 2) * SHAPES.shardSpread;
+        spawnMissile(w, src, p, cosTurns(a), sinTurns(a), 2, SHAPES.shardPower * k, 0, 0, ex.ox, ex.oy);
       }
       break;
     }
@@ -416,7 +417,8 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     setEnd(x + dx * reach, y + dy * reach);
     const lensed = rayThroughLens(w, x, y, dx, dy, reach) ? STRUCT.lensMult : 1;
     if (target >= 0) {
-      const dealt = hit(w, target, p, hitOpts(p, src, rate * lensed, dx, dy, COMBAT.channelStatus * DT, true), false);
+      // a beam's extra runes of its form buy time, not power (cast.ts): the form counts once, healing too
+      const dealt = hit(w, target, p, hitOpts(p, src, rate * lensed, dx, dy, COMBAT.channelStatus * DT, true, true), false);
       if (t % 12 === 0) hitEvent(w, target, dealt * 12, spec.look, src);
       if (spec.mod === 'burst' && t % 30 === 0) disc(w, p, src, b.x[target], b.y[target], SHAPES.burstRadius, 0.3, src);
     }

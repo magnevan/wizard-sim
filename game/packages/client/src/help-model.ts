@@ -9,7 +9,7 @@
  */
 import { rules, type Cast, type Element, type SpellDescriptor } from '@wizard-sim/rules';
 import {
-  ARMS, COMBAT, DAMAGE, GUARD_NAME, RHYTHM, SHAPES, STRUCT, SURFACE,
+  ARMS, COMBAT, DAMAGE, GUARD_NAME, QUEUE_MAX, RHYTHM, RUNES, SHAPES, STATUS, STRUCT, SURFACE,
   compile, elementName, formCurve, type SpellSpec,
 } from '@wizard-sim/sim';
 import type { Demo } from './demo';
@@ -29,6 +29,8 @@ export interface HelpRow {
   tags: Tag[];
   /** Compact numbers, shown only with stats on. */
   stats: string[];
+  /** What one more rune would change (scaleLine), shown with the stats; '' for none. */
+  scale: string;
   /** The element the row is drawn in (the spell's look), or null for plain. */
   look: Element | null;
   /** What the row's preview wizard does over and over (demo.ts). */
@@ -122,59 +124,242 @@ export function clip(lines: string[], max: number, cols: number): string[] {
 
 // ---- spell stats --------------------------------------------------------------------------
 
-/** How hard one hit of the spell lands, relative to the per-rune table (fireSpell's scales). */
-const SHAPE_SCALE: Partial<Record<SpellSpec['shape'], number>> = { patch: 0.5, strike: 1.2, discharge: 0.8, palm: 1.2 };
-const PER_SECOND = new Set<SpellSpec['shape']>(['beam', 'spray', 'arc']);
+/**
+ * How hard one hit lands, against the per-rune table (the scales in fireSpell, channelTick and the
+ * zones). Channels are per second: beams and sprays hit every tick at channelRate, an arc zaps at
+ * 0.5 every arcInterval, a spring heals at 0.35 every half second.
+ */
+const SHAPE_SCALE: Partial<Record<SpellSpec['shape'], number>> = {
+  patch: 0.5, strike: 1.2, discharge: 0.8, palm: 1.2, geyser: 1.3, spring: 0.7,
+  beam: COMBAT.channelRate, spray: COMBAT.channelRate, arc: 0.5 / SHAPES.arcInterval,
+};
+const PER_SECOND = new Set<SpellSpec['shape']>(['beam', 'spray', 'arc', 'spring']);
+/** Shapes that hit with their own payload when cast. Devices and structures are handled one by one. */
+const HITS = new Set<SpellSpec['shape']>(['beam', 'spray', 'arc', 'missile', 'shards', 'nova', 'quake', 'discharge', 'patch', 'blast', 'geyser', 'strike', 'spring', 'palm', 'imbue', 'wave']);
 
-/** The numbers worth a glance: cost, damage (or healing) by element, reach, how long it lasts, hold. */
+/** One number about a spell: shown in the stats line (unless hidden) and compared by the +1 rune line. */
+export interface Metric {
+  key: string;
+  label: string;
+  v: number;
+  unit: string;
+  /** Not in the stats line (the +1 line still compares it). */
+  hidden?: boolean;
+}
+
+/** Everything the panel knows about a spell's numbers. */
+export interface SpellNumbers {
+  /** Damage by element (key dmg:<el>) or healing (key heal), then the rest. */
+  metrics: Metric[];
+  /** Said after the damage: CHARGED, ALL SHARDS. */
+  note: string;
+}
+
+const count = (spec: SpellSpec, e: Element): number => spec.counts[EL_ID(e) - 1];
+
+/**
+ * The payload's damage by element at scale k (hit.ts: the form element on its curve, the rest linear),
+ * or its healing. `flat`: a beam, whose form element counts once (its extra runes buy time).
+ */
+function payload(spec: SpellSpec, k: number, unit: string, out: Metric[], flat = false): void {
+  if (spec.heal) { out.push({ key: 'heal', label: 'HEALS', v: COMBAT.healPerLife * (flat ? Math.min(1, count(spec, 'life')) : count(spec, 'life')) * k, unit }); return; }
+  for (const e of ELS) {
+    const c = count(spec, e);
+    if (!c || !DAMAGE[e]) continue;
+    const id = EL_ID(e), mult = id === spec.form && c > 1 ? (flat ? 1 : formCurve(spec.form, c, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling)) : c;
+    out.push({ key: 'dmg:' + e, label: name(e).toUpperCase(), v: DAMAGE[e] * mult * k, unit });
+  }
+}
+
+/** The statuses one hit leaves: Burn is the same for any amount of Fire; Chill and Stun grow with each rune. */
+function statuses(spec: SpellSpec, out: Metric[]): void {
+  if (spec.heal) return;
+  if (count(spec, 'fire') && !spec.scald) out.push({ key: 'burn', label: `BURN ${STATUS.burnDps}/S FOR`, v: STATUS.burn, unit: 'S' });
+  if (count(spec, 'cold')) out.push({ key: 'chill', label: 'CHILL', v: STATUS.chillPerRune * count(spec, 'cold'), unit: `/${STATUS.chillMax}`, hidden: spec.channel });
+  if (count(spec, 'lightning')) out.push({ key: 'stun', label: 'STUN', v: STATUS.stunPerRune * count(spec, 'lightning'), unit: 'S', hidden: spec.channel });
+}
+
+/** The queue without its Sigil runes (what a device or a conjured weapon carries). */
+const rest = (queue: readonly Element[]): Element[] => queue.filter((e) => e !== 'sigil');
+
+/**
+ * A spell's numbers, from the same formulas the sim uses (effects.ts, structures.ts, cast.ts). The
+ * stats line prints them; scaleLine compares them with one more rune. Statuses and floors that tick
+ * later (burn, a burning floor) aren't in the damage.
+ */
+export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellSpec = compile(queue, cast)): SpellNumbers {
+  const m: Metric[] = [];
+  const n = spec.formN, sh = spec.shape;
+  let note = '';
+  if (HITS.has(sh)) {
+    const unit = PER_SECOND.has(sh) ? '/S' : '';
+    let k = SHAPE_SCALE[sh] ?? 1;
+    if (sh === 'shards') {
+      // the whole volley, if every shard hits
+      const shards = SHAPES.shardCount + spec.sizeN;
+      k = SHAPES.shardPower * shards;
+      note = 'ALL SHARDS';
+      m.push({ key: 'shards', label: 'SHARDS', v: shards, unit: '', hidden: true });
+    }
+    if (sh === 'missile') note = 'CHARGED';
+    payload(spec, k, unit, m, sh === 'beam');
+    statuses(spec, m);
+    if (spec.mod === 'push') m.push({ key: 'push', label: 'PUSH', v: SHAPES.push * count(spec, 'water') * (spec.channel ? COMBAT.channelStatus : 1), unit: spec.channel ? 'U/S A SECOND' : 'U/S' });
+  }
+  const reach = (label: string, v: number, hidden = false) => m.push({ key: 'reach', label, v, unit: 'U', hidden });
+  const lasts = (v: number, label = 'LASTS') => m.push({ key: 'lasts', label, v, unit: 'S' });
+  const longer = 1 + SHAPES.lingerPerRune * (n - 1);
+  switch (sh) {
+    case 'beam': reach('RANGE', SHAPES.beamRange + spec.formN); break;
+    case 'spray':
+      reach('RANGE', SHAPES.sprayRange + 0.5 * (spec.sizeN - 1));
+      m.push({ key: 'cone', label: 'CONE', v: 100 * (1 + 0.25 * (spec.sizeN - 1)), unit: '%', hidden: true });
+      break;
+    case 'arc':
+      reach('RANGE', SHAPES.arcRange);
+      m.push({ key: 'jumps', label: 'JUMPS', v: SHAPES.arcJumps + Math.max(0, count(spec, 'lightning') - 1) + (spec.mod === 'chain' ? 1 : 0), unit: '' });
+      break;
+    case 'missile': m.push({ key: 'size', label: 'SIZE', v: 0.22 + 0.08 * n, unit: 'U', hidden: true }); break;
+    case 'nova': reach('RADIUS', SHAPES.novaRadius + SHAPES.novaPerRune * (n - 1)); break;
+    case 'quake': reach('RADIUS', SHAPES.novaRadius + 1 + SHAPES.novaPerRune * (n - 1)); break;
+    case 'discharge': reach('RADIUS', 4 + n); break;
+    case 'patch': {
+      reach('RADIUS', SHAPES.patchRadius + 0.4 * (n - 1));
+      const water = spec.form === EL_ID('water');
+      lasts(spec.scald ? SHAPES.patchLife * longer : spec.freeze || count(spec, 'cold') ? SURFACE.ice * longer : water ? SHAPES.rainLife + SHAPES.rainPerRune * (n - 1) : SURFACE.fire * longer);
+      break;
+    }
+    case 'blast': reach('RADIUS', 2 + 0.4 * n); m.push({ key: 'fuse', label: 'FUSE', v: SHAPES.delayedBlast, unit: 'S' }); break;
+    case 'geyser': reach('RADIUS', 0.9 + 0.4 * n); m.push({ key: 'fuse', label: 'FUSE', v: SHAPES.delayedBlast, unit: 'S' }); break;
+    case 'spring': reach('RADIUS', 1.4 + 0.4 * n); lasts(4 + 2 * n); break;
+    case 'strike': reach('RADIUS', 0.9); break;
+    case 'imbue': reach('REACH', SHAPES.imbueRange + SHAPES.imbuePerRune * Math.max(0, spec.power - 1)); break;
+    case 'blink': reach('UP TO', STRUCT.blinkRange); break;
+    case 'wave': m.push({ key: 'width', label: 'WIDTH', v: 2 * (STRUCT.waveHalf + STRUCT.waveHalfPerRune * (spec.formN - 1)), unit: 'U' }); break;
+    case 'arcwall': case 'drawnwall': case 'ring': {
+      const earth = count(spec, 'earth');
+      m.push({ key: 'hp', label: 'HP', v: spec.wall === 1 ? STRUCT.rockHp + STRUCT.rockHpPerRune * (earth - 1) : STRUCT.energyHp + STRUCT.energyHpPerRune * (spec.power - 1), unit: ' A PIECE' });
+      if (spec.wall === 1) lasts(STRUCT.rockLife + STRUCT.rockLifePerEarth * (earth - 1), 'STANDS');
+      break;
+    }
+    case 'ward': if (spec.power > 1 || count(spec, 'shield') !== 1) m.push({ key: 'hp', label: 'WARD HP', v: STRUCT.wardHp + STRUCT.wardHpPerRune * (spec.power - 1), unit: '' }); break;
+    case 'guard': m.push({ key: 'size', label: 'GUARD HP AND RETREAT', v: 100 * (1 + ARMS.runeSize * (Math.max(1, spec.power - 1) - 1)), unit: '%' }); break;
+    case 'turret': case 'glyph': case 'lineglyph': {
+      // the device casts its elements' own spell: a turret their Force (a tap: uncharged), a glyph their Place
+      const inner = rest(queue);
+      if (inner.length) {
+        const ic: Cast = sh === 'turret' ? 'force' : 'place', is = compile(inner, ic);
+        const sub = spellNumbers(inner, ic, sh === 'turret' ? { ...is, charge: false } : is);
+        const k = sh === 'turret' && is.shape === 'missile' ? 0.5 : 1; // a tap: half a charged rock
+        for (const x of sub.metrics) if (x.key !== 'windup') m.push({ ...x, v: x.key.startsWith('dmg:') || x.key === 'heal' ? x.v * k : x.v });
+        note = sub.note === 'CHARGED' ? '' : sub.note;
+      }
+      if (sh === 'turret') {
+        m.push({ key: 'range', label: 'TURRET RANGE', v: STRUCT.turretRange, unit: 'U' });
+        m.push({ key: 'shot', label: 'A SHOT COSTS', v: STRUCT.turretShotCost * inner.length, unit: ' RUNES' });
+      }
+      break;
+    }
+    case 'orbitals': {
+      const inner = rest(queue), orbs = Math.max(1, inner.length);
+      if (inner.length) payload(compile(inner, 'force'), 1.2 / Math.max(1, orbs * 0.5), '', m);
+      m.push({ key: 'orbs', label: 'ORBS', v: orbs, unit: '' });
+      note = 'AN ORB';
+      break;
+    }
+    case 'weapon': {
+      const inner = rest(queue);
+      if (inner.length) payload(compile(inner, 'force'), ARMS.blowPayload, '', m);
+      note = 'A BLOW';
+      m.push({ key: 'uses', label: 'USES', v: STRUCT.weaponUses, unit: '' });
+      break;
+    }
+    case 'aura': {
+      // every half second (structures.ts): Life regenerates the wearer, Cold chills, Earth shoves; Fire, Haste and Glass don't grow
+      const life = count(spec, 'life'), cold = count(spec, 'cold'), earth = count(spec, 'earth');
+      if (life) m.push({ key: 'regen', label: 'REGEN', v: 6 * life, unit: '/S' });
+      if (cold) m.push({ key: 'chill', label: 'CHILL', v: 1 * cold, unit: '/S' });
+      if (earth) m.push({ key: 'shove', label: 'SHOVE', v: 6 * earth, unit: 'U/S' });
+      lasts(STRUCT.auraTime); reach('RADIUS', STRUCT.auraRadius);
+      break;
+    }
+    default: break;
+  }
+  // a beam's extra runes buy time, not damage (cast.ts); every channel is free this long
+  if (spec.channel) m.push({ key: 'free', label: 'FREE FOR', v: RHYTHM.naturalChannel * (sh === 'beam' ? Math.max(1, spec.formN) : 1), unit: 'S', hidden: true });
+  if (sh !== 'blink') m.push({ key: 'windup', label: 'WIND-UP', v: RHYTHM.windup + RHYTHM.windupPerRune * queue.length, unit: 'S', hidden: true });
+  return { metrics: m, note };
+}
+
+const isDmg = (x: Metric) => x.key.startsWith('dmg:');
+const fmt = (x: Metric) => `${x.label} ${n1(x.v)}${x.unit}`;
+
+/** The numbers worth a glance: cost, damage (or healing) by element, statuses, reach, how long it lasts, hold. */
 export function spellStats(queue: readonly Element[], cast: Cast, d: SpellDescriptor, spec: SpellSpec): string[] {
   const out: string[] = [];
   const kind = d.cost?.kind;
   out.push(plural(queue.length, 'RUNE') + (kind === 'bind' ? ', BINDS 1 SIGIL' : kind === 'stuff' ? ', STANDS' : ''));
-  const n = spec.formN, sh = spec.shape;
-  // damage or healing, for shapes that hit with the payload
-  const hits = !['self', 'blink', 'ward', 'guard', 'wand', 'weapon', 'aura', 'double', 'motes', 'lens', 'turret', 'orbitals', 'glyph', 'lineglyph', 'arcwall', 'drawnwall', 'ring', 'todo'].includes(sh);
-  if (hits) {
-    const k = (SHAPE_SCALE[sh] ?? 1) * (PER_SECOND.has(sh) ? COMBAT.channelRate : 1), unit = PER_SECOND.has(sh) ? '/S' : '';
-    if (spec.heal) out.push(`HEALS ${n1(COMBAT.healPerLife * spec.counts[EL_ID('life') - 1] * k)}${unit}`);
-    else {
-      const parts: string[] = [];
-      for (const e of ELS) {
-        const c = spec.counts[EL_ID(e) - 1];
-        if (!c || !DAMAGE[e]) continue;
-        const id = EL_ID(e), dmg = DAMAGE[e] * (id === spec.form && c > 1 ? formCurve(spec.form, c, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling) : c) * k;
-        parts.push(`${name(e).toUpperCase()} ${n1(dmg)}${unit}`);
-      }
-      if (parts.length) out.push(parts.join(' ') + (sh === 'missile' ? ' CHARGED' : ''));
-    }
-  }
-  // reach
-  const reach: Partial<Record<SpellSpec['shape'], string>> = {
-    beam: `RANGE ${SHAPES.beamRange}U`, spray: `RANGE ${SHAPES.sprayRange}U`, arc: `RANGE ${SHAPES.arcRange}U`,
-    nova: `RADIUS ${n1(SHAPES.novaRadius + SHAPES.novaPerRune * (n - 1))}U`, quake: `RADIUS ${n1(SHAPES.novaRadius + 1 + SHAPES.novaPerRune * (n - 1))}U`,
-    discharge: `RADIUS ${4 + n}U`, patch: `RADIUS ${n1(SHAPES.patchRadius + 0.4 * (n - 1))}U`, blast: `RADIUS ${n1(2 + 0.4 * n)}U`,
-    geyser: `RADIUS ${n1(0.9 + 0.4 * n)}U`, spring: `RADIUS ${n1(1.4 + 0.4 * n)}U`, strike: 'RADIUS 0.9U',
-    imbue: `REACH ${n1(SHAPES.imbueRange + SHAPES.imbuePerRune * Math.max(0, spec.power - 1))}U`, blink: `UP TO ${STRUCT.blinkRange}U`,
-    turret: `RANGE ${STRUCT.turretRange}U`, aura: `RADIUS ${STRUCT.auraRadius}U`,
-  };
-  if (reach[sh]) out.push(reach[sh]!);
-  // how long it lasts
-  const longer = 1 + SHAPES.lingerPerRune * (n - 1);
-  if (sh === 'patch') {
-    const water = spec.form === EL_ID('water');
-    const life = spec.scald ? SHAPES.patchLife * longer : spec.freeze || spec.counts[EL_ID('cold') - 1] ? SURFACE.ice * longer : water ? SHAPES.rainLife + SHAPES.rainPerRune * (n - 1) : SURFACE.fire * longer;
-    out.push(`LASTS ${n1(life)}S`);
-  }
-  if (sh === 'spring') out.push(`LASTS ${4 + 2 * n}S`);
-  if (sh === 'blast' || sh === 'geyser') out.push(`FUSE ${SHAPES.delayedBlast}S`);
-  if (spec.wall === 1 && (sh === 'arcwall' || sh === 'drawnwall' || sh === 'ring')) out.push(`STANDS ${STRUCT.rockLife + STRUCT.rockLifePerEarth * (spec.counts[EL_ID('earth') - 1] - 1)}S`);
-  if (sh === 'aura') out.push(`LASTS ${STRUCT.auraTime}S`);
-  if (sh === 'weapon') out.push(`${STRUCT.weaponUses} USES`);
-  // hold
-  if (spec.channel) out.push(`HOLD: CHANNEL, FREE ${RHYTHM.naturalChannel}S THEN ${RHYTHM.upkeep}/S`);
+  const { metrics, note } = spellNumbers(queue, cast, spec);
+  const dmg = metrics.filter(isDmg);
+  if (dmg.length) out.push(dmg.map(fmt).join(' ') + (note ? ' ' + note : ''));
+  const heal = metrics.find((x) => x.key === 'heal');
+  if (heal) out.push(fmt(heal) + (note && !dmg.length ? ' ' + note : ''));
+  for (const x of metrics) if (!isDmg(x) && x.key !== 'heal' && !x.hidden) out.push(fmt(x));
+  const free = metrics.find((x) => x.key === 'free');
+  if (spec.channel && free) out.push(`HOLD: CHANNEL, FREE ${n1(free.v)}S THEN ${RHYTHM.upkeep}/S`);
   if (spec.charge) out.push(`HOLD: CHARGE UP TO ${RHYTHM.chargeMax}S`);
-  void cast;
   return out;
+}
+
+/**
+ * The element a +1 rune adds: the form's, or for Shield and Sigil spells the element they carry (most
+ * runes, the earliest on a tie), since another Shield or Sigil only changes the spell's kind.
+ */
+export function leadOf(queue: readonly Element[], spec: SpellSpec): Element | null {
+  if (!queue.length) return null;
+  const form = spec.form ? (elementName(spec.form) as Element) : null;
+  if (form === 'shield' || form === 'sigil') {
+    let best: Element | null = null, bn = 0;
+    for (const e of queue) { const c = count(spec, e); if (e !== form && c > bn) { best = e; bn = c; } }
+    return best ?? form;
+  }
+  return form ?? queue[0];
+}
+
+/**
+ * What one more rune of the lead element would change: DMG X1.4, RANGE +0.5U, JUMPS +1, ... Damage and
+ * healing as a ratio (the whole spell's, before statuses), the rest as differences. Says so when the
+ * queue is full, when the rune would cancel, or when it makes another spell.
+ */
+export function scaleLine(queue: readonly Element[], cast: Cast): string {
+  const spec = compile(queue, cast), lead = leadOf(queue, spec);
+  if (!lead || spec.shape === 'self' || spec.shape === 'double') return '';
+  const L = name(lead).toUpperCase();
+  if (queue.length >= QUEUE_MAX) return `QUEUE FULL: ${QUEUE_MAX} RUNES IS THE MOST`;
+  const next = rules.addElement(queue, lead);
+  if (next.event) return `+1 ${L}: ${next.event.toUpperCase()}`;
+  const spec2 = compile(next.queue, cast);
+  if (spec2.shape !== spec.shape || spec2.title !== spec.title) return `+1 ${L}: BECOMES ${spec2.title.toUpperCase()}`;
+  const a = spellNumbers(queue, cast, spec).metrics, b = spellNumbers(next.queue, cast, spec2).metrics;
+  const parts: string[] = [];
+  const total = (ms: Metric[], f: (x: Metric) => boolean) => ms.filter(f).reduce((s, x) => s + x.v, 0);
+  for (const [f, label] of [[isDmg, 'DMG'], [(x: Metric) => x.key === 'heal', 'HEAL']] as const) {
+    const t0 = total(a, f), t1 = total(b, f);
+    if (t0 > 0 && Math.abs(t1 / t0 - 1) > 0.005) parts.push(`${label} ×${(Math.round((t1 / t0) * 100) / 100).toString()}`);
+  }
+  for (const y of b) {
+    if (isDmg(y) || y.key === 'heal') continue;
+    const x = a.find((z) => z.key === y.key);
+    if (!x) { parts.push(fmt(y)); continue; }
+    const dv = y.v - x.v;
+    if (Math.abs(dv) < 1e-6) continue;
+    const v = Math.abs(dv) < 0.1 ? (Math.round(dv * 100) / 100).toString() : n1(dv);
+    parts.push(`${y.label} ${dv > 0 ? '+' : ''}${v}${y.unit === '%' ? '%' : y.unit.startsWith('/') && y.unit !== '/S' ? '' : y.unit}`);
+  }
+  const pool = RUNES.max[lead], have = next.queue.filter((e) => e === lead).length;
+  const full = have > pool ? ` (A ${L} POOL HOLDS ${pool})` : '';
+  const only = parts.length === 1 && parts[0].startsWith('WIND-UP') ? `NOTHING MORE, ${parts[0]}` : parts.join(', ') || 'NO CHANGE';
+  return `+1 ${L}: ${only}${full}`;
 }
 
 // ---- spell rows ---------------------------------------------------------------------------
@@ -193,7 +378,7 @@ export function spellRows(queue: readonly Element[]): HelpRow[] {
     if (cast === 'conjure' && spec.shape === 'weapon') dm = { els, cast: 'weapon', seq: [{ els, cast: 'weapon' }, { els: [], cast: 'strike' }] };
     if (cast === 'conjure' && spec.shape === 'guard') dm = { els, cast: 'weapon', seq: [{ els, cast: 'weapon' }, { els: [], cast: 'block' }] };
     const look = (spec.look ? elementName(spec.look) : queue[0] ?? null) as Element | null;
-    return { slot: cast, keys, title: d.title, text: shortText(d), tags, stats: spellStats(queue, cast, d, spec), look, demo: dm };
+    return { slot: cast, keys, title: d.title, text: shortText(d), tags, stats: spellStats(queue, cast, d, spec), scale: scaleLine(queue, cast), look, demo: dm };
   });
 }
 
@@ -238,19 +423,19 @@ export function handsRows(h: HandsState): HelpRow[] {
   const no: Demo = { els: [], cast: 'wait' };
   return [
     { slot: 'strike', keys: K('R', false, 'TAP', 'RT'), title: 'Strike', text: W.strike, tags: [], look,
-      stats: [`HIT ${dmg}${els}`, `RECOVERY ${rec}S${uses(1)}`], demo: { els: [], cast: 'strike' } },
+      scale: '', stats: [`HIT ${dmg}${els}`, `RECOVERY ${rec}S${uses(1)}`], demo: { els: [], cast: 'strike' } },
     { slot: 'heavy', keys: K('R', false, 'HOLD', 'RT HOLD'), title: 'Heavy', text: W.heavy, tags: [], look,
-      stats: [`${ARMS.heavyScale}X A STRIKE`, `CHARGE UP TO ${RHYTHM.chargeMax}S${uses(2)}`], demo: { els: [], cast: 'heavy' } },
+      scale: '', stats: [`${ARMS.heavyScale}X A STRIKE`, `CHARGE UP TO ${RHYTHM.chargeMax}S${uses(2)}`], demo: { els: [], cast: 'heavy' } },
     { slot: 'special', keys: K('R', true, W.held ? 'HOLD' : '', W.held ? 'LT HOLD' : 'LT'), title: W.specialName, text: W.special, tags: [], look,
-      stats: [W.held ? `HOLD${h.weapon ? ', 1 USE/S' : ''}` : `${ARMS.sweepScale}X A STRIKE${uses(2)}`], demo: { els: [], cast: W.held ? 'channel' : 'special' } },
+      scale: '', stats: [W.held ? `HOLD${h.weapon ? ', 1 USE/S' : ''}` : `${ARMS.sweepScale}X A STRIKE${uses(2)}`], demo: { els: [], cast: W.held ? 'channel' : 'special' } },
     G
       ? { slot: 'defend', keys: K(null, false, 'HOLD', 'RB', true), title: 'Defend', text: 'Hold to block; tap as a hit lands to parry. ' + G.defend, tags: [], look: G.el,
-        stats: [`PARRY WINDOW ${gName === 'mirror' ? ARMS.parryMirror : ARMS.parry}S`], demo: { els: [], cast: 'block' } }
-      : { slot: 'defend', keys: K(null, false, '', 'RB', true), title: 'Defend', text: 'No guard. Queue Shield and an element, then Shift+LMB, to conjure one.', tags: [], look: null, stats: [], demo: no, idle: true },
+        scale: '', stats: [`PARRY WINDOW ${gName === 'mirror' ? ARMS.parryMirror : ARMS.parry}S`], demo: { els: [], cast: 'block' } }
+      : { slot: 'defend', keys: K(null, false, '', 'RB', true), title: 'Defend', text: 'No guard. Queue Shield and an element, then Shift+LMB, to conjure one.', tags: [], look: null, scale: '', stats: [], demo: no, idle: true },
     G
       ? { slot: 'retreat', keys: K('L', true, '', 'LB+RT'), title: G.retreatName, text: G.retreat, tags: [], look: G.el,
-        stats: [`${G.dist}U`, `RECOVERY ${ARMS.retreatRecovery}S, FREE`], demo: { els: [], cast: 'retreat' } }
-      : { slot: 'retreat', keys: K('L', true, '', 'LB+RT'), title: 'Hop back', text: 'A quick hop back. A guard gives you a better Retreat.', tags: [], look: null, stats: ['FREE'], demo: { els: [], cast: 'retreat' } },
+        scale: '', stats: [`${G.dist}U`, `RECOVERY ${ARMS.retreatRecovery}S, FREE`], demo: { els: [], cast: 'retreat' } }
+      : { slot: 'retreat', keys: K('L', true, '', 'LB+RT'), title: 'Hop back', text: 'A quick hop back. A guard gives you a better Retreat.', tags: [], look: null, scale: '', stats: ['FREE'], demo: { els: [], cast: 'retreat' } },
   ];
 }
 

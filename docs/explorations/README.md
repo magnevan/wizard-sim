@@ -27,3 +27,5 @@ Dated, long-form thinking sessions. Once written, each is a record and isn't rew
 | 2026-11-05 | [guards-round-2](2026-11-05-guards-round-2.md) | Round 2–4 ratings, element mixing, hyperbolic resistance, the Capacitor and Lance Prism | Supersedes guards where they differ |
 | 2026-11-05 | [inert-audit](2026-11-05-inert-audit.md) | The game's inert additions (210 at first run) | Life family resolved; the rest untracked |
 | 2026-11-05 | [survive-mode](2026-11-05-survive-mode.md) | Survive: waves, altars, power-ups, the big arena, Rally and Echo | |
+
+| 2026-11-07 | [rune-scaling](2026-11-07-rune-scaling.md) | What each extra rune buys: ladders for every form, four fixes, the F2 +1 rune line | |

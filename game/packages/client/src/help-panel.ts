@@ -16,7 +16,7 @@
  *
  * URL params, for screenshots: ?help=1 opens it at boot; ?helpq=water,cold shows a queue
  * (?helpq=hands:water shows the hands with a Tide trident, ?helpq=hands:water:tide with a Tide shield too);
- * ?helphint=1 shows the first-session hint even when headless.
+ * ?helphint=1 shows the first-session hint even when headless; ?helpstats=1 turns the numbers on.
  */
 import { Container, Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
@@ -36,7 +36,7 @@ const clean = X.fontText;
 const PW = 184, BOX_W = 64;
 /** Rows start here; the footer is this tall. */
 const HEAD = 40, FOOT = 13;
-const COL = { edge: '#0a0810', fill: '#141220', rowA: '#1a1726', rowOn: '#262038', hi: '#3a3450', text: '#cfc9e6', dim: '#8a8498', faint: '#4a4560', gold: '#ffd860', warn: '#ff9a50', white: '#e8e4f0' };
+const COL = { edge: '#0a0810', fill: '#141220', rowA: '#1a1726', rowOn: '#262038', hi: '#3a3450', text: '#cfc9e6', dim: '#8a8498', faint: '#4a4560', gold: '#ffd860', scale: '#8fd0f0', warn: '#ff9a50', white: '#e8e4f0' };
 /** The element keys in the HUD's order (Q W E R over A S D F G). */
 const LEGEND: Element[] = ['water', 'life', 'shield', 'cold', 'lightning', 'arcane', 'sigil', 'fire', 'earth'];
 const SLIDE_S = 0.18;
@@ -58,6 +58,8 @@ export interface HelpOptions {
   force?: string | null;
   /** ?helphint=1. */
   hint?: boolean;
+  /** ?helpstats=1: numbers on, without touching the stored switch. */
+  stats?: boolean;
 }
 
 interface Forced { queue: Element[]; hands: HandsState | null }
@@ -121,6 +123,7 @@ export class HelpPanel {
     this.panel.visible = this.hint.visible = this.toast.visible = false;
     this.root.addChild(this.panel, this.hint, this.toast);
     this.forced = parseForce(o.force);
+    if (o.stats) this.stats = true;
 
     injectStyle();
     this.btn = document.createElement('button');
@@ -359,6 +362,10 @@ export class HelpPanel {
     // the numbers: a line or two under the box, full width
     const cols = Math.floor((w - 4) / 4);
     const stats = this.stats ? clip(wrap(r.stats.join(' - '), cols), 2, cols) : [];
+    // what one more rune would change, under the numbers, while the preview keeps at least 16 px
+    const room = Math.floor((h - 13 - stats.length * 6 - 1 - 16) / 6);
+    const more = this.stats && r.scale && room > 0 ? clip(wrap(r.scale, cols), Math.min(2, room), cols) : [];
+    stats.push(...more);
     const statsH = stats.length * 6;
     const bh = Math.max(0, Math.min(46, h - 13 - statsH - 1));
     const bx = x + 2, by = y + 12;
@@ -378,7 +385,7 @@ export class HelpPanel {
         ttx += X.text(c, s, ttx, ty, tg.el ? X.EL[tg.el][1] : COL.dim) + 4;
       }
     }
-    stats.forEach((ln, k) => X.text(c, ln, x + 2, by + bh + 2 + k * 6, COL.gold));
+    stats.forEach((ln, k) => X.text(c, ln, x + 2, by + bh + 2 + k * 6, k >= stats.length - more.length ? COL.scale : COL.gold));
   }
 
   /** A key cap with a label. */

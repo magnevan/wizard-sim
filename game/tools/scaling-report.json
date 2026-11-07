@@ -1,0 +1,2389 @@
+{
+ "generated": "npm run scaling",
+ "ladders": [
+  {
+   "form": "fire",
+   "cast": "force",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Flamethrower",
+     "shape": "spray",
+     "value": 35.9,
+     "crowd": 155.5,
+     "runes": 1,
+     "seconds": 2.93,
+     "perRune": 35.9,
+     "perSecond": 12.2,
+     "gain": null,
+     "reach": 4.5,
+     "help": "+1 FIRE: DMG ×1.41, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Flamethrower",
+     "shape": "spray",
+     "value": 41.6,
+     "crowd": 174.7,
+     "runes": 2,
+     "seconds": 2.95,
+     "perRune": 20.8,
+     "perSecond": 14.1,
+     "gain": 1.16,
+     "reach": 5,
+     "help": "+1 FIRE: DMG ×1.22, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Flamethrower",
+     "shape": "spray",
+     "value": 45.8,
+     "crowd": 188.5,
+     "runes": 3,
+     "seconds": 2.97,
+     "perRune": 15.3,
+     "perSecond": 15.4,
+     "gain": 1.1,
+     "reach": 5.5,
+     "help": "+1 FIRE: DMG ×1.15, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Flamethrower",
+     "shape": "spray",
+     "value": 48.8,
+     "crowd": 198.2,
+     "runes": 4,
+     "seconds": 2.98,
+     "perRune": 12.2,
+     "perSecond": 16.4,
+     "gain": 1.07,
+     "reach": 6,
+     "help": "+1 FIRE: DMG ×1.12, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+    },
+    {
+     "n": 5,
+     "title": "Flamethrower",
+     "shape": "spray",
+     "value": 51.5,
+     "crowd": 207.2,
+     "runes": 5,
+     "seconds": 3,
+     "perRune": 10.3,
+     "perSecond": 17.2,
+     "gain": 1.06,
+     "reach": 6.5,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "fire",
+   "cast": "area",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Fire ring",
+     "shape": "nova",
+     "value": 84.2,
+     "crowd": 372.8,
+     "runes": 1,
+     "seconds": 0.45,
+     "perRune": 84.2,
+     "perSecond": 187.1,
+     "gain": null,
+     "reach": 3,
+     "help": "+1 FIRE: DMG ×1.41, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Fire ring",
+     "shape": "nova",
+     "value": 86.7,
+     "crowd": 385.2,
+     "runes": 2,
+     "seconds": 0.5,
+     "perRune": 43.3,
+     "perSecond": 173.4,
+     "gain": 1.03,
+     "reach": 3.6,
+     "help": "+1 FIRE: DMG ×1.22, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Fire ring",
+     "shape": "nova",
+     "value": 88.6,
+     "crowd": 443,
+     "runes": 3,
+     "seconds": 0.55,
+     "perRune": 29.5,
+     "perSecond": 161.1,
+     "gain": 1.02,
+     "reach": 4.2,
+     "help": "+1 FIRE: DMG ×1.15, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Fire ring",
+     "shape": "nova",
+     "value": 90.2,
+     "crowd": 451,
+     "runes": 4,
+     "seconds": 0.62,
+     "perRune": 22.5,
+     "perSecond": 146.3,
+     "gain": 1.02,
+     "reach": 4.8,
+     "help": "+1 FIRE: DMG ×1.12, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 5,
+     "title": "Fire ring",
+     "shape": "nova",
+     "value": 91.6,
+     "crowd": 458.1,
+     "runes": 5,
+     "seconds": 0.67,
+     "perRune": 18.3,
+     "perSecond": 137.4,
+     "gain": 1.02,
+     "reach": 5.4,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "fire",
+   "cast": "place",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Fire patch",
+     "shape": "patch",
+     "value": 81.2,
+     "crowd": 406,
+     "runes": 1,
+     "seconds": 0.92,
+     "perRune": 81.2,
+     "perSecond": 88.6,
+     "gain": null,
+     "reach": 1.6,
+     "help": "+1 FIRE: DMG ×1.41, RADIUS +0.4U, LASTS +2S, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Fire patch",
+     "shape": "patch",
+     "value": 82.4,
+     "crowd": 412.2,
+     "runes": 2,
+     "seconds": 0.97,
+     "perRune": 41.2,
+     "perSecond": 85.3,
+     "gain": 1.02,
+     "reach": 2,
+     "help": "+1 FIRE: DMG ×1.22, RADIUS +0.4U, LASTS +2S, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Fire patch",
+     "shape": "patch",
+     "value": 93.7,
+     "crowd": 468.5,
+     "runes": 3,
+     "seconds": 1.02,
+     "perRune": 31.2,
+     "perSecond": 92.2,
+     "gain": 1.14,
+     "reach": 2.4,
+     "help": "+1 FIRE: DMG ×1.15, RADIUS +0.4U, LASTS +2S, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Fire patch",
+     "shape": "patch",
+     "value": 94.2,
+     "crowd": 471,
+     "runes": 4,
+     "seconds": 1.08,
+     "perRune": 23.5,
+     "perSecond": 87,
+     "gain": 1.01,
+     "reach": 2.8,
+     "help": "+1 FIRE: DMG ×1.12, RADIUS +0.4U, LASTS +2S, WIND-UP +0.04S"
+    },
+    {
+     "n": 5,
+     "title": "Fire patch",
+     "shape": "patch",
+     "value": 94.7,
+     "crowd": 473.5,
+     "runes": 5,
+     "seconds": 1.13,
+     "perRune": 18.9,
+     "perSecond": 83.6,
+     "gain": 1.01,
+     "reach": 3.2,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "cold",
+   "cast": "force",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Frost spray",
+     "shape": "spray",
+     "value": 12.5,
+     "crowd": 42.5,
+     "runes": 1,
+     "seconds": 2.93,
+     "perRune": 12.5,
+     "perSecond": 4.3,
+     "gain": null,
+     "reach": 4.5,
+     "help": "+1 COLD: DMG ×1.41, CHILL +0.6, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Frost spray",
+     "shape": "spray",
+     "value": 17.4,
+     "crowd": 59.3,
+     "runes": 2,
+     "seconds": 2.95,
+     "perRune": 8.7,
+     "perSecond": 5.9,
+     "gain": 1.4,
+     "reach": 5,
+     "help": "+1 COLD: DMG ×1.22, CHILL +0.6, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Frost spray",
+     "shape": "spray",
+     "value": 21.1,
+     "crowd": 71.6,
+     "runes": 3,
+     "seconds": 2.97,
+     "perRune": 7,
+     "perSecond": 7.1,
+     "gain": 1.21,
+     "reach": 5.5,
+     "help": "+1 COLD: DMG ×1.15, CHILL +0.6, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Frost spray",
+     "shape": "spray",
+     "value": 23.8,
+     "crowd": 81,
+     "runes": 4,
+     "seconds": 2.98,
+     "perRune": 6,
+     "perSecond": 8,
+     "gain": 1.13,
+     "reach": 6,
+     "help": "+1 COLD: DMG ×1.12, CHILL +0.6, RANGE +0.5U, CONE +25%, WIND-UP +0.04S (A COLD POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Frost spray",
+     "shape": "spray",
+     "value": 26.3,
+     "crowd": 89.3,
+     "runes": 5,
+     "seconds": 3,
+     "perRune": 5.3,
+     "perSecond": 8.8,
+     "gain": 1.1,
+     "reach": 6.5,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "cold",
+   "cast": "area",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Frost ring",
+     "shape": "nova",
+     "value": 5,
+     "crowd": 25,
+     "runes": 1,
+     "seconds": 0.45,
+     "perRune": 5,
+     "perSecond": 11.1,
+     "gain": null,
+     "reach": 3,
+     "help": "+1 COLD: DMG ×1.41, CHILL +0.6, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Frost ring",
+     "shape": "nova",
+     "value": 7.1,
+     "crowd": 35.4,
+     "runes": 2,
+     "seconds": 0.5,
+     "perRune": 3.5,
+     "perSecond": 14.1,
+     "gain": 1.41,
+     "reach": 3.6,
+     "help": "+1 COLD: DMG ×1.22, CHILL +0.6, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Frost ring",
+     "shape": "nova",
+     "value": 8.7,
+     "crowd": 43.3,
+     "runes": 3,
+     "seconds": 0.55,
+     "perRune": 2.9,
+     "perSecond": 15.7,
+     "gain": 1.22,
+     "reach": 4.2,
+     "help": "+1 COLD: DMG ×1.15, CHILL +0.6, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Frost ring",
+     "shape": "nova",
+     "value": 10,
+     "crowd": 50,
+     "runes": 4,
+     "seconds": 0.62,
+     "perRune": 2.5,
+     "perSecond": 16.2,
+     "gain": 1.15,
+     "reach": 4.8,
+     "help": "+1 COLD: DMG ×1.12, CHILL +0.6, RADIUS +0.6U, WIND-UP +0.04S (A COLD POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Frost ring",
+     "shape": "nova",
+     "value": 11.2,
+     "crowd": 55.9,
+     "runes": 5,
+     "seconds": 0.67,
+     "perRune": 2.2,
+     "perSecond": 16.8,
+     "gain": 1.12,
+     "reach": 5.4,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "cold",
+   "cast": "place",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Frost patch",
+     "shape": "patch",
+     "value": 2.5,
+     "crowd": 12.5,
+     "runes": 1,
+     "seconds": 0.92,
+     "perRune": 2.5,
+     "perSecond": 2.7,
+     "gain": null,
+     "reach": 1.6,
+     "help": "+1 COLD: DMG ×1.41, CHILL +0.6, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Frost patch",
+     "shape": "patch",
+     "value": 3.5,
+     "crowd": 17.7,
+     "runes": 2,
+     "seconds": 0.97,
+     "perRune": 1.8,
+     "perSecond": 3.7,
+     "gain": 1.41,
+     "reach": 2,
+     "help": "+1 COLD: DMG ×1.22, CHILL +0.6, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Frost patch",
+     "shape": "patch",
+     "value": 4.3,
+     "crowd": 21.7,
+     "runes": 3,
+     "seconds": 1.02,
+     "perRune": 1.4,
+     "perSecond": 4.3,
+     "gain": 1.22,
+     "reach": 2.4,
+     "help": "+1 COLD: DMG ×1.15, CHILL +0.6, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Frost patch",
+     "shape": "patch",
+     "value": 5,
+     "crowd": 25,
+     "runes": 4,
+     "seconds": 1.08,
+     "perRune": 1.3,
+     "perSecond": 4.6,
+     "gain": 1.15,
+     "reach": 2.8,
+     "help": "+1 COLD: DMG ×1.12, CHILL +0.6, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.04S (A COLD POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Frost patch",
+     "shape": "patch",
+     "value": 5.6,
+     "crowd": 28,
+     "runes": 5,
+     "seconds": 1.13,
+     "perRune": 1.1,
+     "perSecond": 4.9,
+     "gain": 1.12,
+     "reach": 3.2,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "water",
+   "cast": "force",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Water spray",
+     "shape": "spray",
+     "value": 0,
+     "crowd": 0,
+     "runes": 1,
+     "seconds": 2.93,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 4.5,
+     "help": "+1 WATER: PUSH +18U/S A SECOND, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Water spray",
+     "shape": "spray",
+     "value": 0,
+     "crowd": 0,
+     "runes": 2,
+     "seconds": 2.95,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 5,
+     "help": "+1 WATER: PUSH +18U/S A SECOND, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Water spray",
+     "shape": "spray",
+     "value": 0,
+     "crowd": 0,
+     "runes": 3,
+     "seconds": 2.97,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 5.5,
+     "help": "+1 WATER: PUSH +18U/S A SECOND, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Water spray",
+     "shape": "spray",
+     "value": 0,
+     "crowd": 0,
+     "runes": 4,
+     "seconds": 2.98,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 6,
+     "help": "+1 WATER: PUSH +18U/S A SECOND, RANGE +0.5U, CONE +25%, WIND-UP +0.04S (A WATER POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Water spray",
+     "shape": "spray",
+     "value": 0,
+     "crowd": 0,
+     "runes": 5,
+     "seconds": 3,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 6.5,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "water",
+   "cast": "area",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Splash ring",
+     "shape": "nova",
+     "value": 0,
+     "crowd": 0,
+     "runes": 1,
+     "seconds": 0.45,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 3,
+     "help": "+1 WATER: PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Splash ring",
+     "shape": "nova",
+     "value": 0,
+     "crowd": 0,
+     "runes": 2,
+     "seconds": 0.5,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 3.6,
+     "help": "+1 WATER: PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Splash ring",
+     "shape": "nova",
+     "value": 0,
+     "crowd": 0,
+     "runes": 3,
+     "seconds": 0.55,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 4.2,
+     "help": "+1 WATER: PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Splash ring",
+     "shape": "nova",
+     "value": 0,
+     "crowd": 0,
+     "runes": 4,
+     "seconds": 0.62,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 4.8,
+     "help": "+1 WATER: PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.04S (A WATER POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Splash ring",
+     "shape": "nova",
+     "value": 0,
+     "crowd": 0,
+     "runes": 5,
+     "seconds": 0.67,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 5.4,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "water",
+   "cast": "place",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Rain",
+     "shape": "patch",
+     "value": 0,
+     "crowd": 0,
+     "runes": 1,
+     "seconds": 0.92,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 1.6,
+     "help": "+1 WATER: RADIUS +0.4U, LASTS +1S, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Rain",
+     "shape": "patch",
+     "value": 0,
+     "crowd": 0,
+     "runes": 2,
+     "seconds": 0.97,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 2,
+     "help": "+1 WATER: RADIUS +0.4U, LASTS +1S, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Rain",
+     "shape": "patch",
+     "value": 0,
+     "crowd": 0,
+     "runes": 3,
+     "seconds": 1.02,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 2.4,
+     "help": "+1 WATER: RADIUS +0.4U, LASTS +1S, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Rain",
+     "shape": "patch",
+     "value": 0,
+     "crowd": 0,
+     "runes": 4,
+     "seconds": 1.08,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 2.8,
+     "help": "+1 WATER: RADIUS +0.4U, LASTS +1S, WIND-UP +0.04S (A WATER POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Rain",
+     "shape": "patch",
+     "value": 0,
+     "crowd": 0,
+     "runes": 5,
+     "seconds": 1.13,
+     "perRune": 0,
+     "perSecond": 0,
+     "gain": null,
+     "reach": 3.2,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "lightning",
+   "cast": "force",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Lightning arc",
+     "shape": "arc",
+     "value": 60,
+     "crowd": 156,
+     "runes": 1,
+     "seconds": 2.93,
+     "perRune": 60,
+     "perSecond": 20.5,
+     "gain": null,
+     "reach": 6,
+     "help": "+1 LIGHTNING: DMG ×1.7, STUN +0.4S, JUMPS +1, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Lightning arc",
+     "shape": "arc",
+     "value": 102,
+     "crowd": 346.8,
+     "runes": 2,
+     "seconds": 2.95,
+     "perRune": 51,
+     "perSecond": 34.6,
+     "gain": 1.7,
+     "reach": 6,
+     "help": "+1 LIGHTNING: DMG ×1.41, STUN +0.3S, JUMPS +1, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Lightning arc",
+     "shape": "arc",
+     "value": 144,
+     "crowd": 604.8,
+     "runes": 3,
+     "seconds": 2.97,
+     "perRune": 48,
+     "perSecond": 48.5,
+     "gain": 1.41,
+     "reach": 6,
+     "help": "+1 LIGHTNING: DMG ×1.29, STUN +0.4S, JUMPS +1, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Lightning arc",
+     "shape": "arc",
+     "value": 170.5,
+     "crowd": 716.1,
+     "runes": 4,
+     "seconds": 2.98,
+     "perRune": 42.6,
+     "perSecond": 57.2,
+     "gain": 1.18,
+     "reach": 6,
+     "help": "+1 LIGHTNING: DMG ×1.23, STUN +0.4S, JUMPS +1, WIND-UP +0.04S (A LIGHTNING POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Lightning arc",
+     "shape": "arc",
+     "value": 209,
+     "crowd": 877.8,
+     "runes": 5,
+     "seconds": 3,
+     "perRune": 41.8,
+     "perSecond": 69.7,
+     "gain": 1.23,
+     "reach": 6,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "lightning",
+   "cast": "area",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Discharge",
+     "shape": "discharge",
+     "value": 8,
+     "crowd": 40,
+     "runes": 1,
+     "seconds": 0.45,
+     "perRune": 8,
+     "perSecond": 17.8,
+     "gain": null,
+     "reach": 5,
+     "help": "+1 LIGHTNING: DMG ×1.7, STUN +0.4S, RADIUS +1U, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Discharge",
+     "shape": "discharge",
+     "value": 13.6,
+     "crowd": 68,
+     "runes": 2,
+     "seconds": 0.5,
+     "perRune": 6.8,
+     "perSecond": 27.2,
+     "gain": 1.7,
+     "reach": 6,
+     "help": "+1 LIGHTNING: DMG ×1.41, STUN +0.3S, RADIUS +1U, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Discharge",
+     "shape": "discharge",
+     "value": 19.2,
+     "crowd": 96,
+     "runes": 3,
+     "seconds": 0.55,
+     "perRune": 6.4,
+     "perSecond": 34.9,
+     "gain": 1.41,
+     "reach": 7,
+     "help": "+1 LIGHTNING: DMG ×1.29, STUN +0.4S, RADIUS +1U, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Discharge",
+     "shape": "discharge",
+     "value": 24.8,
+     "crowd": 124,
+     "runes": 4,
+     "seconds": 0.62,
+     "perRune": 6.2,
+     "perSecond": 40.2,
+     "gain": 1.29,
+     "reach": 8,
+     "help": "+1 LIGHTNING: DMG ×1.23, STUN +0.4S, RADIUS +1U, WIND-UP +0.04S (A LIGHTNING POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Discharge",
+     "shape": "discharge",
+     "value": 30.4,
+     "crowd": 152,
+     "runes": 5,
+     "seconds": 0.67,
+     "perRune": 6.1,
+     "perSecond": 45.6,
+     "gain": 1.23,
+     "reach": 9,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "lightning",
+   "cast": "place",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Lightning strike",
+     "shape": "strike",
+     "value": 12,
+     "crowd": 60,
+     "runes": 1,
+     "seconds": 0.92,
+     "perRune": 12,
+     "perSecond": 13.1,
+     "gain": null,
+     "reach": 0.9,
+     "help": "+1 LIGHTNING: DMG ×1.7, STUN +0.4S, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Lightning strike",
+     "shape": "strike",
+     "value": 20.4,
+     "crowd": 102,
+     "runes": 2,
+     "seconds": 0.97,
+     "perRune": 10.2,
+     "perSecond": 21.1,
+     "gain": 1.7,
+     "reach": 0.9,
+     "help": "+1 LIGHTNING: DMG ×1.41, STUN +0.3S, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Lightning strike",
+     "shape": "strike",
+     "value": 28.8,
+     "crowd": 144,
+     "runes": 3,
+     "seconds": 1.02,
+     "perRune": 9.6,
+     "perSecond": 28.3,
+     "gain": 1.41,
+     "reach": 0.9,
+     "help": "+1 LIGHTNING: DMG ×1.29, STUN +0.4S, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Lightning strike",
+     "shape": "strike",
+     "value": 37.2,
+     "crowd": 186,
+     "runes": 4,
+     "seconds": 1.08,
+     "perRune": 9.3,
+     "perSecond": 34.3,
+     "gain": 1.29,
+     "reach": 0.9,
+     "help": "+1 LIGHTNING: DMG ×1.23, STUN +0.4S, WIND-UP +0.04S (A LIGHTNING POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Lightning strike",
+     "shape": "strike",
+     "value": 45.6,
+     "crowd": 228,
+     "runes": 5,
+     "seconds": 1.13,
+     "perRune": 9.1,
+     "perSecond": 40.2,
+     "gain": 1.23,
+     "reach": 0.9,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "arcane",
+   "cast": "force",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Arcane beam",
+     "shape": "beam",
+     "value": 40,
+     "crowd": 40,
+     "runes": 1,
+     "seconds": 2.93,
+     "perRune": 40,
+     "perSecond": 13.6,
+     "gain": null,
+     "reach": 13,
+     "help": "+1 ARCANE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Arcane beam",
+     "shape": "beam",
+     "value": 79.5,
+     "crowd": 79.5,
+     "runes": 2,
+     "seconds": 5.45,
+     "perRune": 39.7,
+     "perSecond": 14.6,
+     "gain": 1.99,
+     "reach": 14,
+     "help": "+1 ARCANE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Arcane beam",
+     "shape": "beam",
+     "value": 118.9,
+     "crowd": 118.9,
+     "runes": 3,
+     "seconds": 7.97,
+     "perRune": 39.6,
+     "perSecond": 14.9,
+     "gain": 1.5,
+     "reach": 15,
+     "help": "+1 ARCANE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Arcane beam",
+     "shape": "beam",
+     "value": 158.1,
+     "crowd": 158.1,
+     "runes": 4,
+     "seconds": 10.48,
+     "perRune": 39.5,
+     "perSecond": 15.1,
+     "gain": 1.33,
+     "reach": 16,
+     "help": "+1 ARCANE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S (A ARCANE POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Arcane beam",
+     "shape": "beam",
+     "value": 197.6,
+     "crowd": 197.6,
+     "runes": 5,
+     "seconds": 13,
+     "perRune": 39.5,
+     "perSecond": 15.2,
+     "gain": 1.25,
+     "reach": 17,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "arcane",
+   "cast": "area",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Arcane nova",
+     "shape": "nova",
+     "value": 16,
+     "crowd": 80,
+     "runes": 1,
+     "seconds": 0.45,
+     "perRune": 16,
+     "perSecond": 35.6,
+     "gain": null,
+     "reach": 3,
+     "help": "+1 ARCANE: DMG ×1.7, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Arcane nova",
+     "shape": "nova",
+     "value": 27.2,
+     "crowd": 136,
+     "runes": 2,
+     "seconds": 0.5,
+     "perRune": 13.6,
+     "perSecond": 54.4,
+     "gain": 1.7,
+     "reach": 3.6,
+     "help": "+1 ARCANE: DMG ×1.41, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Arcane nova",
+     "shape": "nova",
+     "value": 38.4,
+     "crowd": 192,
+     "runes": 3,
+     "seconds": 0.55,
+     "perRune": 12.8,
+     "perSecond": 69.8,
+     "gain": 1.41,
+     "reach": 4.2,
+     "help": "+1 ARCANE: DMG ×1.29, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Arcane nova",
+     "shape": "nova",
+     "value": 49.6,
+     "crowd": 248,
+     "runes": 4,
+     "seconds": 0.62,
+     "perRune": 12.4,
+     "perSecond": 80.4,
+     "gain": 1.29,
+     "reach": 4.8,
+     "help": "+1 ARCANE: DMG ×1.23, RADIUS +0.6U, WIND-UP +0.04S (A ARCANE POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Arcane nova",
+     "shape": "nova",
+     "value": 60.8,
+     "crowd": 304,
+     "runes": 5,
+     "seconds": 0.67,
+     "perRune": 12.2,
+     "perSecond": 91.2,
+     "gain": 1.23,
+     "reach": 5.4,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "arcane",
+   "cast": "place",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Arcane blast",
+     "shape": "blast",
+     "value": 16,
+     "crowd": 80,
+     "runes": 1,
+     "seconds": 0.92,
+     "perRune": 16,
+     "perSecond": 17.5,
+     "gain": null,
+     "reach": 2.4,
+     "help": "+1 ARCANE: DMG ×1.7, RADIUS +0.4U, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Arcane blast",
+     "shape": "blast",
+     "value": 27.2,
+     "crowd": 136,
+     "runes": 2,
+     "seconds": 0.97,
+     "perRune": 13.6,
+     "perSecond": 28.1,
+     "gain": 1.7,
+     "reach": 2.8,
+     "help": "+1 ARCANE: DMG ×1.41, RADIUS +0.4U, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Arcane blast",
+     "shape": "blast",
+     "value": 38.4,
+     "crowd": 192,
+     "runes": 3,
+     "seconds": 1.02,
+     "perRune": 12.8,
+     "perSecond": 37.8,
+     "gain": 1.41,
+     "reach": 3.2,
+     "help": "+1 ARCANE: DMG ×1.29, RADIUS +0.4U, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Arcane blast",
+     "shape": "blast",
+     "value": 49.6,
+     "crowd": 248,
+     "runes": 4,
+     "seconds": 1.08,
+     "perRune": 12.4,
+     "perSecond": 45.8,
+     "gain": 1.29,
+     "reach": 3.6,
+     "help": "+1 ARCANE: DMG ×1.23, RADIUS +0.4U, WIND-UP +0.04S (A ARCANE POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Arcane blast",
+     "shape": "blast",
+     "value": 60.8,
+     "crowd": 304,
+     "runes": 5,
+     "seconds": 1.13,
+     "perRune": 12.2,
+     "perSecond": 53.6,
+     "gain": 1.23,
+     "reach": 4,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "earth",
+   "cast": "force",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Rock",
+     "shape": "missile",
+     "value": 21.6,
+     "crowd": 21.6,
+     "runes": 1,
+     "seconds": 1.4,
+     "perRune": 21.6,
+     "perSecond": 15.5,
+     "gain": null,
+     "reach": null,
+     "help": "+1 EARTH: DMG ×2.83, SIZE +0.08U, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Rock",
+     "shape": "missile",
+     "value": 60.2,
+     "crowd": 60.2,
+     "runes": 2,
+     "seconds": 1.42,
+     "perRune": 30.1,
+     "perSecond": 42.5,
+     "gain": 2.78,
+     "reach": null,
+     "help": "+1 EARTH: DMG ×1.84, SIZE +0.08U, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Rock",
+     "shape": "missile",
+     "value": 108.6,
+     "crowd": 108.6,
+     "runes": 3,
+     "seconds": 1.43,
+     "perRune": 36.2,
+     "perSecond": 75.8,
+     "gain": 1.81,
+     "reach": null,
+     "help": "+1 EARTH: DMG ×1.54, SIZE +0.08U, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Rock",
+     "shape": "missile",
+     "value": 162.8,
+     "crowd": 162.8,
+     "runes": 4,
+     "seconds": 1.45,
+     "perRune": 40.7,
+     "perSecond": 112.3,
+     "gain": 1.5,
+     "reach": null,
+     "help": "+1 EARTH: DMG ×1.4, SIZE +0.08U, WIND-UP +0.04S (A EARTH POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Rock",
+     "shape": "missile",
+     "value": 223.4,
+     "crowd": 223.4,
+     "runes": 5,
+     "seconds": 1.47,
+     "perRune": 44.7,
+     "perSecond": 152.3,
+     "gain": 1.37,
+     "reach": null,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "earth",
+   "cast": "area",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Earthquake",
+     "shape": "quake",
+     "value": 22,
+     "crowd": 110,
+     "runes": 1,
+     "seconds": 0.45,
+     "perRune": 22,
+     "perSecond": 48.9,
+     "gain": null,
+     "reach": 4,
+     "help": "+1 EARTH: DMG ×2.83, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Earthquake",
+     "shape": "quake",
+     "value": 62.2,
+     "crowd": 311.1,
+     "runes": 2,
+     "seconds": 0.5,
+     "perRune": 31.1,
+     "perSecond": 124.5,
+     "gain": 2.83,
+     "reach": 4.6,
+     "help": "+1 EARTH: DMG ×1.84, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Earthquake",
+     "shape": "quake",
+     "value": 114.3,
+     "crowd": 571.6,
+     "runes": 3,
+     "seconds": 0.55,
+     "perRune": 38.1,
+     "perSecond": 207.8,
+     "gain": 1.84,
+     "reach": 5.2,
+     "help": "+1 EARTH: DMG ×1.54, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Earthquake",
+     "shape": "quake",
+     "value": 176,
+     "crowd": 880,
+     "runes": 4,
+     "seconds": 0.62,
+     "perRune": 44,
+     "perSecond": 285.4,
+     "gain": 1.54,
+     "reach": 5.8,
+     "help": "+1 EARTH: DMG ×1.4, RADIUS +0.6U, WIND-UP +0.04S (A EARTH POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Earthquake",
+     "shape": "quake",
+     "value": 246,
+     "crowd": 1229.8,
+     "runes": 5,
+     "seconds": 0.67,
+     "perRune": 49.2,
+     "perSecond": 369,
+     "gain": 1.4,
+     "reach": 6.4,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "earth",
+   "cast": "place",
+   "heals": false,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Geyser",
+     "shape": "geyser",
+     "value": 28.6,
+     "crowd": 143,
+     "runes": 1,
+     "seconds": 0.92,
+     "perRune": 28.6,
+     "perSecond": 31.2,
+     "gain": null,
+     "reach": 1.3,
+     "help": "+1 EARTH: DMG ×2.83, RADIUS +0.4U, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Geyser",
+     "shape": "geyser",
+     "value": 80.9,
+     "crowd": 404.5,
+     "runes": 2,
+     "seconds": 0.97,
+     "perRune": 40.4,
+     "perSecond": 83.7,
+     "gain": 2.83,
+     "reach": 1.7,
+     "help": "+1 EARTH: DMG ×1.84, RADIUS +0.4U, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Geyser",
+     "shape": "geyser",
+     "value": 148.6,
+     "crowd": 743,
+     "runes": 3,
+     "seconds": 1.02,
+     "perRune": 49.5,
+     "perSecond": 146.2,
+     "gain": 1.84,
+     "reach": 2.1,
+     "help": "+1 EARTH: DMG ×1.54, RADIUS +0.4U, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Geyser",
+     "shape": "geyser",
+     "value": 228.8,
+     "crowd": 1144,
+     "runes": 4,
+     "seconds": 1.08,
+     "perRune": 57.2,
+     "perSecond": 211.2,
+     "gain": 1.54,
+     "reach": 2.5,
+     "help": "+1 EARTH: DMG ×1.4, RADIUS +0.4U, WIND-UP +0.04S (A EARTH POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Geyser",
+     "shape": "geyser",
+     "value": 319.8,
+     "crowd": 1598.8,
+     "runes": 5,
+     "seconds": 1.13,
+     "perRune": 64,
+     "perSecond": 282.1,
+     "gain": 1.4,
+     "reach": 2.9,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "life",
+   "cast": "force",
+   "heals": true,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Life beam",
+     "shape": "beam",
+     "value": 35,
+     "crowd": 0,
+     "runes": 1,
+     "seconds": 2.93,
+     "perRune": 35,
+     "perSecond": 11.9,
+     "gain": null,
+     "reach": 13,
+     "help": "+1 LIFE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Life beam",
+     "shape": "beam",
+     "value": 69.5,
+     "crowd": 0,
+     "runes": 2,
+     "seconds": 5.45,
+     "perRune": 34.8,
+     "perSecond": 12.8,
+     "gain": 1.99,
+     "reach": 14,
+     "help": "+1 LIFE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Life beam",
+     "shape": "beam",
+     "value": 104.1,
+     "crowd": 0,
+     "runes": 3,
+     "seconds": 7.97,
+     "perRune": 34.7,
+     "perSecond": 13.1,
+     "gain": 1.5,
+     "reach": 15,
+     "help": "+1 LIFE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Life beam",
+     "shape": "beam",
+     "value": 138.4,
+     "crowd": 0,
+     "runes": 4,
+     "seconds": 10.48,
+     "perRune": 34.6,
+     "perSecond": 13.2,
+     "gain": 1.33,
+     "reach": 16,
+     "help": "+1 LIFE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S (A LIFE POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Life beam",
+     "shape": "beam",
+     "value": 172.9,
+     "crowd": 0,
+     "runes": 5,
+     "seconds": 13,
+     "perRune": 34.6,
+     "perSecond": 13.3,
+     "gain": 1.25,
+     "reach": 17,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "life",
+   "cast": "area",
+   "heals": true,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Healing ring",
+     "shape": "nova",
+     "value": 14,
+     "crowd": 0,
+     "runes": 1,
+     "seconds": 0.45,
+     "perRune": 14,
+     "perSecond": 31.1,
+     "gain": null,
+     "reach": 3,
+     "help": "+1 LIFE: HEAL ×2, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Healing ring",
+     "shape": "nova",
+     "value": 28,
+     "crowd": 0,
+     "runes": 2,
+     "seconds": 0.5,
+     "perRune": 14,
+     "perSecond": 56,
+     "gain": 2,
+     "reach": 3.6,
+     "help": "+1 LIFE: HEAL ×1.5, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Healing ring",
+     "shape": "nova",
+     "value": 42,
+     "crowd": 0,
+     "runes": 3,
+     "seconds": 0.55,
+     "perRune": 14,
+     "perSecond": 76.4,
+     "gain": 1.5,
+     "reach": 4.2,
+     "help": "+1 LIFE: HEAL ×1.33, RADIUS +0.6U, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Healing ring",
+     "shape": "nova",
+     "value": 56,
+     "crowd": 0,
+     "runes": 4,
+     "seconds": 0.62,
+     "perRune": 14,
+     "perSecond": 90.8,
+     "gain": 1.33,
+     "reach": 4.8,
+     "help": "+1 LIFE: HEAL ×1.25, RADIUS +0.6U, WIND-UP +0.04S (A LIFE POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Healing ring",
+     "shape": "nova",
+     "value": 70,
+     "crowd": 0,
+     "runes": 5,
+     "seconds": 0.67,
+     "perRune": 14,
+     "perSecond": 105,
+     "gain": 1.25,
+     "reach": 5.4,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  },
+  {
+   "form": "life",
+   "cast": "place",
+   "heals": true,
+   "steps": [
+    {
+     "n": 1,
+     "title": "Healing spring",
+     "shape": "spring",
+     "value": 58.8,
+     "crowd": 0,
+     "runes": 1,
+     "seconds": 0.92,
+     "perRune": 58.8,
+     "perSecond": 64.1,
+     "gain": null,
+     "reach": 1.8,
+     "help": "+1 LIFE: HEAL ×2, RADIUS +0.4U, LASTS +2S, WIND-UP +0.04S"
+    },
+    {
+     "n": 2,
+     "title": "Healing spring",
+     "shape": "spring",
+     "value": 156.8,
+     "crowd": 0,
+     "runes": 2,
+     "seconds": 0.97,
+     "perRune": 78.4,
+     "perSecond": 162.2,
+     "gain": 2.67,
+     "reach": 2.2,
+     "help": "+1 LIFE: HEAL ×1.5, RADIUS +0.4U, LASTS +2S, WIND-UP +0.04S"
+    },
+    {
+     "n": 3,
+     "title": "Healing spring",
+     "shape": "spring",
+     "value": 294,
+     "crowd": 0,
+     "runes": 3,
+     "seconds": 1.02,
+     "perRune": 98,
+     "perSecond": 289.2,
+     "gain": 1.87,
+     "reach": 2.6,
+     "help": "+1 LIFE: HEAL ×1.33, RADIUS +0.4U, LASTS +2S, WIND-UP +0.04S"
+    },
+    {
+     "n": 4,
+     "title": "Healing spring",
+     "shape": "spring",
+     "value": 470.4,
+     "crowd": 0,
+     "runes": 4,
+     "seconds": 1.08,
+     "perRune": 117.6,
+     "perSecond": 434.2,
+     "gain": 1.6,
+     "reach": 3,
+     "help": "+1 LIFE: HEAL ×1.25, RADIUS +0.4U, LASTS +2S, WIND-UP +0.04S (A LIFE POOL HOLDS 4)"
+    },
+    {
+     "n": 5,
+     "title": "Healing spring",
+     "shape": "spring",
+     "value": 686,
+     "crowd": 0,
+     "runes": 5,
+     "seconds": 1.13,
+     "perRune": 137.2,
+     "perSecond": 605.3,
+     "gain": 1.46,
+     "reach": 3.4,
+     "help": "QUEUE FULL: 5 RUNES IS THE MOST"
+    }
+   ]
+  }
+ ],
+ "second": [
+  {
+   "form": "fire",
+   "cast": "force",
+   "heals": false,
+   "base": 35.9,
+   "baseCrowd": 155.5,
+   "rows": [
+    {
+     "add": "fire",
+     "title": "Flamethrower",
+     "value": 41.6,
+     "crowd": 174.7,
+     "gain": 1.16,
+     "crowdGain": 1.12
+    }
+   ]
+  },
+  {
+   "form": "fire",
+   "cast": "area",
+   "heals": false,
+   "base": 84.2,
+   "baseCrowd": 372.8,
+   "rows": [
+    {
+     "add": "fire",
+     "title": "Fire ring",
+     "value": 86.7,
+     "crowd": 385.2,
+     "gain": 1.03,
+     "crowdGain": 1.03
+    }
+   ]
+  },
+  {
+   "form": "fire",
+   "cast": "place",
+   "heals": false,
+   "base": 81.2,
+   "baseCrowd": 406,
+   "rows": [
+    {
+     "add": "fire",
+     "title": "Fire patch",
+     "value": 82.4,
+     "crowd": 412.2,
+     "gain": 1.02,
+     "crowdGain": 1.02
+    }
+   ]
+  },
+  {
+   "form": "cold",
+   "cast": "force",
+   "heals": false,
+   "base": 12.5,
+   "baseCrowd": 42.5,
+   "rows": [
+    {
+     "add": "cold",
+     "title": "Frost spray",
+     "value": 17.4,
+     "crowd": 59.3,
+     "gain": 1.4,
+     "crowdGain": 1.4
+    }
+   ]
+  },
+  {
+   "form": "cold",
+   "cast": "area",
+   "heals": false,
+   "base": 5,
+   "baseCrowd": 25,
+   "rows": [
+    {
+     "add": "cold",
+     "title": "Frost ring",
+     "value": 7.1,
+     "crowd": 35.4,
+     "gain": 1.41,
+     "crowdGain": 1.41
+    }
+   ]
+  },
+  {
+   "form": "cold",
+   "cast": "place",
+   "heals": false,
+   "base": 2.5,
+   "baseCrowd": 12.5,
+   "rows": [
+    {
+     "add": "cold",
+     "title": "Frost patch",
+     "value": 3.5,
+     "crowd": 17.7,
+     "gain": 1.41,
+     "crowdGain": 1.41
+    }
+   ]
+  },
+  {
+   "form": "water",
+   "cast": "force",
+   "heals": false,
+   "base": 0,
+   "baseCrowd": 0,
+   "rows": [
+    {
+     "add": "water",
+     "title": "Water spray",
+     "value": 0,
+     "crowd": 0,
+     "gain": null,
+     "crowdGain": null
+    },
+    {
+     "add": "cold",
+     "title": "Ice shards",
+     "value": 7.5,
+     "crowd": 15,
+     "gain": null,
+     "crowdGain": null
+    },
+    {
+     "add": "fire",
+     "title": "Scalding spray",
+     "value": 34.5,
+     "crowd": 117.4,
+     "gain": null,
+     "crowdGain": null
+    }
+   ]
+  },
+  {
+   "form": "water",
+   "cast": "area",
+   "heals": false,
+   "base": 0,
+   "baseCrowd": 0,
+   "rows": [
+    {
+     "add": "water",
+     "title": "Splash ring",
+     "value": 0,
+     "crowd": 0,
+     "gain": null,
+     "crowdGain": null
+    },
+    {
+     "add": "cold",
+     "title": "Freezing splash",
+     "value": 5,
+     "crowd": 25,
+     "gain": null,
+     "crowdGain": null
+    },
+    {
+     "add": "fire",
+     "title": "Steam burst",
+     "value": 14,
+     "crowd": 70,
+     "gain": null,
+     "crowdGain": null
+    }
+   ]
+  },
+  {
+   "form": "water",
+   "cast": "place",
+   "heals": false,
+   "base": 0,
+   "baseCrowd": 0,
+   "rows": [
+    {
+     "add": "water",
+     "title": "Rain",
+     "value": 0,
+     "crowd": 0,
+     "gain": null,
+     "crowdGain": null
+    },
+    {
+     "add": "cold",
+     "title": "Ice sheet",
+     "value": 2.5,
+     "crowd": 12.5,
+     "gain": null,
+     "crowdGain": null
+    },
+    {
+     "add": "fire",
+     "title": "Steam cloud",
+     "value": 49,
+     "crowd": 245,
+     "gain": null,
+     "crowdGain": null
+    }
+   ]
+  },
+  {
+   "form": "lightning",
+   "cast": "force",
+   "heals": false,
+   "base": 60,
+   "baseCrowd": 156,
+   "rows": [
+    {
+     "add": "cold",
+     "title": "Frost arc",
+     "value": 90,
+     "crowd": 234,
+     "gain": 1.5,
+     "crowdGain": 1.5
+    },
+    {
+     "add": "lightning",
+     "title": "Lightning arc",
+     "value": 102,
+     "crowd": 346.8,
+     "gain": 1.7,
+     "crowdGain": 2.22
+    },
+    {
+     "add": "fire",
+     "title": "Flame arc",
+     "value": 140.3,
+     "crowd": 382.5,
+     "gain": 2.34,
+     "crowdGain": 2.45
+    }
+   ]
+  },
+  {
+   "form": "lightning",
+   "cast": "area",
+   "heals": false,
+   "base": 8,
+   "baseCrowd": 40,
+   "rows": [
+    {
+     "add": "cold",
+     "title": "Frost discharge",
+     "value": 12,
+     "crowd": 60,
+     "gain": 1.5,
+     "crowdGain": 1.5
+    },
+    {
+     "add": "lightning",
+     "title": "Discharge",
+     "value": 13.6,
+     "crowd": 68,
+     "gain": 1.7,
+     "crowdGain": 1.7
+    },
+    {
+     "add": "fire",
+     "title": "Fire discharge",
+     "value": 42.8,
+     "crowd": 214,
+     "gain": 5.35,
+     "crowdGain": 5.35
+    }
+   ]
+  },
+  {
+   "form": "lightning",
+   "cast": "place",
+   "heals": false,
+   "base": 12,
+   "baseCrowd": 60,
+   "rows": [
+    {
+     "add": "cold",
+     "title": "Frost strike",
+     "value": 18,
+     "crowd": 90,
+     "gain": 1.5,
+     "crowdGain": 1.5
+    },
+    {
+     "add": "lightning",
+     "title": "Lightning strike",
+     "value": 20.4,
+     "crowd": 102,
+     "gain": 1.7,
+     "crowdGain": 1.7
+    },
+    {
+     "add": "fire",
+     "title": "Fire strike",
+     "value": 49.2,
+     "crowd": 246,
+     "gain": 4.1,
+     "crowdGain": 4.1
+    }
+   ]
+  },
+  {
+   "form": "arcane",
+   "cast": "force",
+   "heals": false,
+   "base": 40,
+   "baseCrowd": 40,
+   "rows": [
+    {
+     "add": "water",
+     "title": "Water beam",
+     "value": 39.5,
+     "crowd": 39.5,
+     "gain": 0.99,
+     "crowdGain": 0.99
+    },
+    {
+     "add": "cold",
+     "title": "Frost beam",
+     "value": 51.8,
+     "crowd": 51.8,
+     "gain": 1.29,
+     "crowdGain": 1.29
+    },
+    {
+     "add": "lightning",
+     "title": "Lightning beam",
+     "value": 64.1,
+     "crowd": 64.1,
+     "gain": 1.6,
+     "crowdGain": 1.6
+    },
+    {
+     "add": "arcane",
+     "title": "Arcane beam",
+     "value": 79.5,
+     "crowd": 79.5,
+     "gain": 1.99,
+     "crowdGain": 1.99
+    },
+    {
+     "add": "fire",
+     "title": "Fire beam",
+     "value": 75,
+     "crowd": 75,
+     "gain": 1.87,
+     "crowdGain": 1.87
+    }
+   ]
+  },
+  {
+   "form": "arcane",
+   "cast": "area",
+   "heals": false,
+   "base": 16,
+   "baseCrowd": 80,
+   "rows": [
+    {
+     "add": "water",
+     "title": "Water nova",
+     "value": 16,
+     "crowd": 80,
+     "gain": 1,
+     "crowdGain": 1
+    },
+    {
+     "add": "cold",
+     "title": "Frost nova",
+     "value": 21,
+     "crowd": 105,
+     "gain": 1.31,
+     "crowdGain": 1.31
+    },
+    {
+     "add": "lightning",
+     "title": "Lightning nova",
+     "value": 26,
+     "crowd": 130,
+     "gain": 1.63,
+     "crowdGain": 1.63
+    },
+    {
+     "add": "arcane",
+     "title": "Arcane nova",
+     "value": 27.2,
+     "crowd": 136,
+     "gain": 1.7,
+     "crowdGain": 1.7
+    },
+    {
+     "add": "fire",
+     "title": "Fire nova",
+     "value": 100.2,
+     "crowd": 452.8,
+     "gain": 6.26,
+     "crowdGain": 5.66
+    }
+   ]
+  },
+  {
+   "form": "arcane",
+   "cast": "place",
+   "heals": false,
+   "base": 16,
+   "baseCrowd": 80,
+   "rows": [
+    {
+     "add": "water",
+     "title": "Water blast",
+     "value": 16,
+     "crowd": 80,
+     "gain": 1,
+     "crowdGain": 1
+    },
+    {
+     "add": "cold",
+     "title": "Frost blast",
+     "value": 21,
+     "crowd": 105,
+     "gain": 1.31,
+     "crowdGain": 1.31
+    },
+    {
+     "add": "lightning",
+     "title": "Lightning blast",
+     "value": 26,
+     "crowd": 130,
+     "gain": 1.63,
+     "crowdGain": 1.63
+    },
+    {
+     "add": "arcane",
+     "title": "Arcane blast",
+     "value": 27.2,
+     "crowd": 136,
+     "gain": 1.7,
+     "crowdGain": 1.7
+    },
+    {
+     "add": "fire",
+     "title": "Fire blast",
+     "value": 52,
+     "crowd": 260,
+     "gain": 3.25,
+     "crowdGain": 3.25
+    }
+   ]
+  },
+  {
+   "form": "earth",
+   "cast": "force",
+   "heals": false,
+   "base": 21.6,
+   "baseCrowd": 21.6,
+   "rows": [
+    {
+     "add": "water",
+     "title": "Mud ball",
+     "value": 21.3,
+     "crowd": 21.3,
+     "gain": 0.98,
+     "crowdGain": 0.98
+    },
+    {
+     "add": "cold",
+     "title": "Frost boulder",
+     "value": 26.1,
+     "crowd": 45.7,
+     "gain": 1.21,
+     "crowdGain": 2.11
+    },
+    {
+     "add": "arcane",
+     "title": "Arcane boulder",
+     "value": 36.7,
+     "crowd": 80.8,
+     "gain": 1.7,
+     "crowdGain": 3.74
+    },
+    {
+     "add": "fire",
+     "title": "Fireball",
+     "value": 57.1,
+     "crowd": 57.1,
+     "gain": 2.64,
+     "crowdGain": 2.64
+    },
+    {
+     "add": "earth",
+     "title": "Rock",
+     "value": 60.2,
+     "crowd": 60.2,
+     "gain": 2.78,
+     "crowdGain": 2.78
+    }
+   ]
+  },
+  {
+   "form": "earth",
+   "cast": "area",
+   "heals": false,
+   "base": 22,
+   "baseCrowd": 110,
+   "rows": [
+    {
+     "add": "water",
+     "title": "Water quake",
+     "value": 22,
+     "crowd": 110,
+     "gain": 1,
+     "crowdGain": 1
+    },
+    {
+     "add": "cold",
+     "title": "Frost quake",
+     "value": 27,
+     "crowd": 135,
+     "gain": 1.23,
+     "crowdGain": 1.23
+    },
+    {
+     "add": "arcane",
+     "title": "Arcane quake",
+     "value": 38,
+     "crowd": 190,
+     "gain": 1.73,
+     "crowdGain": 1.73
+    },
+    {
+     "add": "fire",
+     "title": "Fire quake",
+     "value": 106.2,
+     "crowd": 482.8,
+     "gain": 4.83,
+     "crowdGain": 4.39
+    },
+    {
+     "add": "earth",
+     "title": "Earthquake",
+     "value": 62.2,
+     "crowd": 311.1,
+     "gain": 2.83,
+     "crowdGain": 2.83
+    }
+   ]
+  },
+  {
+   "form": "earth",
+   "cast": "place",
+   "heals": false,
+   "base": 28.6,
+   "baseCrowd": 143,
+   "rows": [
+    {
+     "add": "water",
+     "title": "Water geyser",
+     "value": 28.6,
+     "crowd": 143,
+     "gain": 1,
+     "crowdGain": 1
+    },
+    {
+     "add": "cold",
+     "title": "Frost geyser",
+     "value": 35.1,
+     "crowd": 175.5,
+     "gain": 1.23,
+     "crowdGain": 1.23
+    },
+    {
+     "add": "arcane",
+     "title": "Arcane geyser",
+     "value": 49.4,
+     "crowd": 247,
+     "gain": 1.73,
+     "crowdGain": 1.73
+    },
+    {
+     "add": "fire",
+     "title": "Fire geyser",
+     "value": 66.4,
+     "crowd": 332,
+     "gain": 2.32,
+     "crowdGain": 2.32
+    },
+    {
+     "add": "earth",
+     "title": "Geyser",
+     "value": 80.9,
+     "crowd": 404.5,
+     "gain": 2.83,
+     "crowdGain": 2.83
+    }
+   ]
+  },
+  {
+   "form": "life",
+   "cast": "force",
+   "heals": true,
+   "base": 35,
+   "baseCrowd": 0,
+   "rows": [
+    {
+     "add": "water",
+     "title": "Rescue spray",
+     "value": 33.4,
+     "crowd": 0,
+     "gain": 0.95,
+     "crowdGain": null
+    },
+    {
+     "add": "life",
+     "title": "Life beam",
+     "value": 69.5,
+     "crowd": 0,
+     "gain": 1.99,
+     "crowdGain": null
+    },
+    {
+     "add": "cold",
+     "title": "Healing shards",
+     "value": 21,
+     "crowd": 0,
+     "gain": 0.6,
+     "crowdGain": null
+    },
+    {
+     "add": "lightning",
+     "title": "Chain heal",
+     "value": 84,
+     "crowd": 0,
+     "gain": 2.4,
+     "crowdGain": null
+    },
+    {
+     "add": "fire",
+     "title": "Healing spray",
+     "value": 34.5,
+     "crowd": 0,
+     "gain": 0.99,
+     "crowdGain": null
+    },
+    {
+     "add": "earth",
+     "title": "Heal-stone",
+     "value": 13.7,
+     "crowd": 0,
+     "gain": 0.39,
+     "crowdGain": null
+    }
+   ]
+  },
+  {
+   "form": "life",
+   "cast": "area",
+   "heals": true,
+   "base": 14,
+   "baseCrowd": 0,
+   "rows": [
+    {
+     "add": "water",
+     "title": "Healing ring",
+     "value": 14,
+     "crowd": 0,
+     "gain": 1,
+     "crowdGain": null
+    },
+    {
+     "add": "life",
+     "title": "Healing ring",
+     "value": 28,
+     "crowd": 0,
+     "gain": 2,
+     "crowdGain": null
+    },
+    {
+     "add": "cold",
+     "title": "Healing ring",
+     "value": 14,
+     "crowd": 0,
+     "gain": 1,
+     "crowdGain": null
+    },
+    {
+     "add": "lightning",
+     "title": "Healing ring",
+     "value": 14,
+     "crowd": 0,
+     "gain": 1,
+     "crowdGain": null
+    },
+    {
+     "add": "fire",
+     "title": "Healing ring",
+     "value": 14,
+     "crowd": 0,
+     "gain": 1,
+     "crowdGain": null
+    },
+    {
+     "add": "earth",
+     "title": "Healing ring",
+     "value": 14,
+     "crowd": 0,
+     "gain": 1,
+     "crowdGain": null
+    }
+   ]
+  },
+  {
+   "form": "life",
+   "cast": "place",
+   "heals": true,
+   "base": 58.8,
+   "baseCrowd": 0,
+   "rows": [
+    {
+     "add": "water",
+     "title": "Healing spring",
+     "value": 58.8,
+     "crowd": 0,
+     "gain": 1,
+     "crowdGain": null
+    },
+    {
+     "add": "life",
+     "title": "Healing spring",
+     "value": 156.8,
+     "crowd": 0,
+     "gain": 2.67,
+     "crowdGain": null
+    },
+    {
+     "add": "cold",
+     "title": "Healing spring",
+     "value": 58.8,
+     "crowd": 0,
+     "gain": 1,
+     "crowdGain": null
+    },
+    {
+     "add": "lightning",
+     "title": "Healing spring",
+     "value": 58.8,
+     "crowd": 0,
+     "gain": 1,
+     "crowdGain": null
+    },
+    {
+     "add": "fire",
+     "title": "Healing spring",
+     "value": 58.8,
+     "crowd": 0,
+     "gain": 1,
+     "crowdGain": null
+    },
+    {
+     "add": "earth",
+     "title": "Healing spring",
+     "value": 58.8,
+     "crowd": 0,
+     "gain": 1,
+     "crowdGain": null
+    }
+   ]
+  }
+ ]
+}

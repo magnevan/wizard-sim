@@ -33,12 +33,13 @@ export function queueFromCounts(flat: Uint8Array, at = 0): Element[] {
 /**
  * How much the form element's damage grows with its rune count n (1 = one rune's worth). Each form
  * has its own curve, as in Magicka: sprays flatten (stacking a spray barely pays), rocks steepen
- * (going all-in does), beams don't hit harder at all (extra runes make them last longer, cast.ts).
+ * (going all-in does), the rest grow linearly. Beams don't hit harder at all: their extra runes make
+ * them last longer (cast.ts), so a beam's hits pass flatForm and skip this (hit.ts).
  * Exponents use exp/log-free maths: n is a small integer, so the curves are tabled by n.
  */
 export function formCurve(form: number, n: number, sprayExp: number, rockExp: number, linear: number): number {
   if (n <= 1) return n;
-  if (form === EL.arcane || form === EL.life) return 1;
+  if (form === EL.life) return 1; // Life heals: its damage is none, its healing counts every rune
   if (form === EL.water || form === EL.fire || form === EL.cold) return powSmall(n, sprayExp);
   if (form === EL.earth) return powSmall(n, rockExp);
   return 1 + linear * (n - 1);

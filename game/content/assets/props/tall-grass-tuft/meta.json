@@ -1,0 +1,25 @@
+{
+  "id": "tall-grass-tuft",
+  "kind": "prop",
+  "name": "Tall grass tuft",
+  "footprint": [
+    0.3,
+    0.2
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        6,
+        12
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/scatter/13.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "halved"
+      ]
+    }
+  }
+}

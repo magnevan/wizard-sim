@@ -1,0 +1,22 @@
+{
+  "id": "firewood",
+  "kind": "prop",
+  "name": "Firewood stack",
+  "footprint": [
+    1.4,
+    0.8
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        19,
+        33
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/yard/14.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

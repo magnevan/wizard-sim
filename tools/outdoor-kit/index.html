@@ -55,22 +55,45 @@ textarea { flex: 1 1 280px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
 <main>
   <header class="lede">
     <h1>Outdoor Art Kit</h1>
-    <p>Art for an outdoor sword lesson and the countryside around it. Below is a mock training yard made for free, then the exact list I'd buy from PixelLab. Nothing has been bought yet: each purchase waits for your approval.</p>
-    <p class="dim">Marks and notes save as you go. An unmarked purchase stays unbought.</p>
+    <p>Art for an outdoor sword lesson and the countryside around it, bought for 70 generations. It's all placeable in LDtk now. The yard below is a picture built from that art; the game can't draw this ground yet.</p>
+    <p class="dim">Marks and notes save as you go. An unmarked item stays as it is.</p>
   </header>
 
+  <section aria-labelledby="yard">
+    <h2 id="yard">The yard in bought art</h2>
+    <figure><img src="img/yard-bought-pro.png" alt="A fenced dirt training yard on grass in isometric view, with dummies, pells, a target, racks, a teacher and two wizards, surrounded by trees, hay, a well, a cart and flowers."><figcaption>True isometric, with the painted ground. The small things are the scatter sheet at half size.</figcaption></figure>
+  </section>
+
+  <section aria-labelledby="sheets">
+    <h2 id="sheets">What came back</h2>
+    <figure><img src="img/sheet-scatter.png" alt="64 small outdoor objects: flowers, weeds, stones, fungi, ground marks, dropped items and small animals."><figcaption>Small scatter sheet, 64 objects, at 4× before halving.</figcaption></figure>
+    <figure><img src="img/sheet-yard.png" alt="16 yard props including fences, a gate, a pell, a sword rack, a well and a handcart."><figcaption>Yard and countryside sheet, 16 objects.</figcaption></figure>
+    <figure><img src="img/sheet-rural.png" alt="16 rural props including a scarecrow, a tent, a footbridge, a ruined arch and a shrine."><figcaption>Rural life sheet, 16 objects.</figcaption></figure>
+  </section>
+
+  <section aria-labelledby="ground">
+    <h2 id="ground">The ground, compared</h2>
+    <p>The same idea in each set. Painted ground beat the isometric tiles: the corner tiles show their diamond grid, and the path pieces keep paths straight on a raised slab. Neither was given our palette, so their neon green is partly fixable, but the grid isn't.</p>
+    <div class="two">
+      <figure><img src="img/ground-pro.png" alt="Pro tileset: muted grass with tufts around pebbly dirt."><figcaption>Pro set: in our palette, richest. The tufts repeat.</figcaption></figure>
+      <figure><img src="img/ground-standard.png" alt="Standard tileset: plainer grass around dirt."><figcaption>Standard set: plainer, calmer.</figcaption></figure>
+      <figure><img src="img/ground-iso-corner.png" alt="Isometric corner tiles with a visible diamond grid."><figcaption>Isometric corner tiles.</figcaption></figure>
+      <figure><img src="img/ground-iso-path.png" alt="Isometric path pieces on a raised slab."><figcaption>Isometric path pieces.</figcaption></figure>
+    </div>
+  </section>
+
   <section aria-labelledby="mock">
-    <h2 id="mock">The mock yard</h2>
-    <p>The dummies, target, rack, teacher and wizards are real game art. The grass, dirt, fence, trees, rocks and flowers are developer art drawn by a script, standing in for what's on the list below.</p>
+    <h2 id="mock">Before: the free mock</h2>
+    <p>The first version, for comparison. Its grass, dirt, fence, trees and flowers are developer art, and it shows the terrain map working under both cameras.</p>
     <figure><img src="img/yard-iso.png" alt="A fenced dirt training yard on grass in true isometric view, with dummies, a target, weapon racks, a teacher and two wizards, and a path leading away between trees."><figcaption>True isometric, the camera you chose. It isn't built yet, so this is a picture, not the game.</figcaption></figure>
     <figure><img src="img/yard-today.png" alt="The same yard from the game's current straight-on camera."><figcaption>The same terrain map under today's camera. The ground needed no new art to change view.</figcaption></figure>
     <figure><img src="img/kit-sheet.png" alt="The developer art pieces: flowers, tufts, stones, a stump, hay, bushes, trees and fence sections."><figcaption>All the developer art at 3×. It's meant to be replaced.</figcaption></figure>
   </section>
 
   <section aria-labelledby="buy">
-    <h2 id="buy">What I'd buy</h2>
+    <h2 id="buy">What was bought</h2>
     <div class="budget" id="budget"></div>
-    <p class="dim">Prices come from PixelLab's tool descriptions. Its help says the isometric tile and path tools need a paid plan, so everything here uses tools open to the trial. The $12 plan would lift that limit (see the last question), but nothing on this list needs it. Approve, change or skip each one; a note can add or strike items.</p>
+    <p class="dim">The prompts as sent. Mark each: Keep it, Redo it, or Cut it. A note can name single items to redo.</p>
     <div id="jobs" style="display:grid;gap:34px"></div>
   </section>
 
@@ -83,7 +106,7 @@ textarea { flex: 1 1 280px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
 
   <section aria-labelledby="qs">
     <h2 id="qs">Questions</h2>
-    <p class="dim">An empty box means my pick stands. The purchases above are different: those wait for your mark.</p>
+    <p class="dim">An empty box means my pick stands.</p>
     <div id="questions" style="display:grid;gap:26px"></div>
   </section>
 </main>
@@ -127,9 +150,9 @@ function paint() {
   document.querySelectorAll('button[data-key]').forEach((b) => b.setAttribute('aria-pressed', String(state[b.dataset.key]?.mark === b.dataset.value)));
 }
 function render(b) {
-  const total = b.jobs.reduce((n, j) => n + j.cost, 0), have = b.balance.generations + b.balance.bonusToday;
+  const total = b.jobs.reduce((n, j) => n + j.cost, 0);
   const bud = $('budget');
-  for (const [k, v] of [['Whole list', total + ' generations'], ['Available today', have + ' (' + b.balance.generations + ' + ' + b.balance.bonusToday + ' daily bonus)'], ['After that', '+5 a night']]) {
+  for (const [k, v] of [['Spent', total + ' generations'], ['Left this month', b.balance.generations.toLocaleString('en') + ' on ' + b.balance.plan], ['Resets', b.balance.resets]]) {
     const s = el('span'); s.append(k + ': ', el('b', '', v)); bud.append(s);
   }
   for (const j of b.jobs) {
@@ -142,7 +165,7 @@ function render(b) {
       const p = el('p', 'group'); p.append(el('b', '', g.name + ' (' + g.items.length + '): '), g.items.join(', ') + '.'); box.append(p);
     }
     const r = el('div', 'rate');
-    r.append(marks('ratings', j.id, [['approve', 'Buy', 'keep'], ['change', 'Change', 'maybe'], ['skip', 'Skip', 'cut']]), note('ratings', j.id, 'What to change, add or strike'));
+    r.append(marks('ratings', j.id, [['keep', 'Keep', 'keep'], ['redo', 'Redo', 'maybe'], ['cut', 'Cut', 'cut']]), note('ratings', j.id, 'What to redo or add'));
     box.append(r); $('jobs').append(box);
   }
   for (const v of b.variants) {

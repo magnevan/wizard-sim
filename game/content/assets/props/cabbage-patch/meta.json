@@ -1,0 +1,22 @@
+{
+  "id": "cabbage-patch",
+  "kind": "prop",
+  "name": "Cabbage patch",
+  "footprint": [
+    1.6,
+    1.0
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        22,
+        21
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/rural/04.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

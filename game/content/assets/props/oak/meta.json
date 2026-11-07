@@ -1,0 +1,26 @@
+{
+  "id": "oak",
+  "kind": "prop",
+  "name": "Oak",
+  "footprint": [
+    1.0,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        22,
+        57
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/trees/oak.png",
+      "tool": "create_map_object + tools/outdoor-kit/props.py",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "halved",
+        "greens onto the game's leaf ramp"
+      ]
+    }
+  }
+}

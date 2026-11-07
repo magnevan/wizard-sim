@@ -1,0 +1,22 @@
+{
+  "id": "fence-rail",
+  "kind": "prop",
+  "name": "Rail fence",
+  "footprint": [
+    1.8,
+    0.3
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        18,
+        36
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/yard/00.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

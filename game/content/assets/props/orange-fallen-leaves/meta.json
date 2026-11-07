@@ -1,0 +1,26 @@
+{
+  "id": "orange-fallen-leaves",
+  "kind": "prop",
+  "name": "Orange fallen leaves",
+  "footprint": [
+    0.3,
+    0.2
+  ],
+  "flat": true,
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        7,
+        5
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/scatter/40.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "halved"
+      ]
+    }
+  }
+}

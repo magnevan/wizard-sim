@@ -1,0 +1,26 @@
+{
+  "id": "fence-picket-flip",
+  "kind": "prop",
+  "name": "Picket fence, mirrored",
+  "base": "fence-picket",
+  "footprint": [
+    1.8,
+    0.3
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        20,
+        37
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/rural/05.png",
+      "tool": "tools/outdoor-kit/props.py",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "mirrored"
+      ]
+    }
+  }
+}

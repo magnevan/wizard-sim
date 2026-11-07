@@ -1,0 +1,26 @@
+{
+  "id": "stone-wall-low-flip",
+  "kind": "prop",
+  "name": "Low stone wall, mirrored",
+  "base": "stone-wall-low",
+  "footprint": [
+    1.8,
+    0.5
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        20,
+        32
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/yard/03.png",
+      "tool": "tools/outdoor-kit/props.py",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "mirrored"
+      ]
+    }
+  }
+}

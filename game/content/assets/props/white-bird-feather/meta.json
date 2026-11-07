@@ -1,0 +1,26 @@
+{
+  "id": "white-bird-feather",
+  "kind": "prop",
+  "name": "White bird feather",
+  "footprint": [
+    0.3,
+    0.2
+  ],
+  "flat": true,
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        5,
+        6
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/scatter/42.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "halved"
+      ]
+    }
+  }
+}

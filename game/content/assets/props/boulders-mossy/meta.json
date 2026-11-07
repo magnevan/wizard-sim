@@ -1,0 +1,22 @@
+{
+  "id": "boulders-mossy",
+  "kind": "prop",
+  "name": "Mossy boulders",
+  "footprint": [
+    1.6,
+    1.0
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        20,
+        31
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/yard/09.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

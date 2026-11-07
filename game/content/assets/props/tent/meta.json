@@ -1,0 +1,22 @@
+{
+  "id": "tent",
+  "kind": "prop",
+  "name": "Tent",
+  "footprint": [
+    1.8,
+    1.1
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        22,
+        34
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/rural/09.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

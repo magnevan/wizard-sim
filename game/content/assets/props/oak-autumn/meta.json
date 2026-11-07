@@ -1,0 +1,26 @@
+{
+  "id": "oak-autumn",
+  "kind": "prop",
+  "name": "Autumn oak",
+  "base": "oak",
+  "footprint": [
+    1.0,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        22,
+        57
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/trees/oak.png",
+      "tool": "tools/outdoor-kit/props.py",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "greens to autumn"
+      ]
+    }
+  }
+}

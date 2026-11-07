@@ -1,0 +1,22 @@
+{
+  "id": "fence-corner",
+  "kind": "prop",
+  "name": "Fence corner",
+  "footprint": [
+    0.8,
+    0.8
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        20,
+        29
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/yard/01.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

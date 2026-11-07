@@ -1,0 +1,11 @@
+[
+  { "id": "sigil-hold-fire-1", "secs": 6, "loop": true, "influence": 0.6, "text": "A steady soft burn of low warm flames around someone, gently rolling, even in volume throughout." },
+  { "id": "sigil-hold-fire-2", "secs": 6, "loop": true, "influence": 0.6, "text": "Soft flames burning steadily close by: a warm, low, gentle flutter of fire, calm and constant." },
+  { "id": "sigil-hold-fire-3", "secs": 6, "loop": true, "influence": 0.6, "text": "A quiet, continuous bed of warm fire, deep and soft, breathing slowly, even in volume throughout." },
+  { "id": "sigil-hold-frost-1", "secs": 6, "loop": true, "influence": 0.6, "text": "A light blizzard wind in the background: cold and airy, gentle and steady, with soft drifting gusts." },
+  { "id": "sigil-hold-frost-2", "secs": 6, "loop": true, "influence": 0.6, "text": "Thin icy wind blowing steadily around someone, a soft winter howl with fine snow hissing in it, low in volume." },
+  { "id": "sigil-hold-frost-3", "secs": 6, "loop": true, "influence": 0.6, "text": "A mild snowstorm heard from close by: a calm, continuous cold wind, airy and hushed." },
+  { "id": "sigil-hold-mist-1", "secs": 6, "loop": true, "influence": 0.6, "text": "A soft, damp, gentle hiss of fine water vapour drifting around someone, hushed and even." },
+  { "id": "sigil-hold-mist-2", "secs": 6, "loop": true, "influence": 0.6, "text": "Cool mist hanging in the air: a very faint, wet, airy whisper of tiny droplets, calm and constant." },
+  { "id": "sigil-hold-mist-3", "secs": 6, "loop": true, "influence": 0.6, "text": "A quiet bed of fine drifting spray, soft and airy, like fog moving slowly over water." }
+]

@@ -15,11 +15,11 @@
  *   the last shown step saw, so a change made inside a replay is heard at the next shown step.
  */
 import {
-  AI, ARCH, DEVICE, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, PHASE, QUEUE_MAX, SURF, ZONE, compile, elementName, queueFromCounts, specOf,
+  AI, ARCH, DEVICE, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PHASE, QUEUE_MAX, SURF, ZONE, compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import {
-  composeBlink, composeBlocked, composeBurning, composeCharge, composeDeath, composeDismiss, composeDowned, composeDry, composeFlight, composeFloorFire,
+  composeAuraLoop, composeBlink, composeLead, composeBlocked, composeBurning, composeCharge, composeDeath, composeDismiss, composeDowned, composeDry, composeFlight, composeFloorFire,
   composeFootstep, composeHeal, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak,
   composeSparkField, composeSpell, composeSpring, composeSteamCloud, composeStinger, composeStrike, composeStop, composeSustain, composeTelegraph, composeUi,
   shapeOf, type ElementName, type EnemyKind, type Plan, type ShapeName, type SpellSound, type UiSound, type WeaponMove,
@@ -111,6 +111,7 @@ export class SoundDirector {
   private walked: Float64Array | null = null;
   private lastX: Float64Array | null = null; private lastY: Float64Array | null = null;
   private lastCastTick = new Int32Array(MAX_SEATS).fill(-999);
+  private windingUp = new Uint8Array(MAX_SEATS);
   private floorFire = { n: 0, x: 0, y: 0, at: -1 };
   private held: ({ key: number; snd: SpellSound; sig: string } | null)[] = new Array(MAX_SEATS).fill(null);
   private frames = 0;
@@ -154,6 +155,7 @@ export class SoundDirector {
     this.watchEnemies(w);
     this.watchWalls(w);
     this.watchFeet(w);
+    this.watchWindups(w);
   }
 
   /** After each step a rollback replays: keep what was never heard, with the spell as it stood at that tick. */
@@ -288,6 +290,19 @@ export class SoundDirector {
   }
 
   /** Footfalls by distance walked: wizards and brutes (a whole wave's feet would be noise). */
+  /** A wind-up starting: the spell's lead-up, if it has one. The cast is the event; this is only what comes before it. */
+  private watchWindups(w: World): void {
+    const s = w.seats, b = w.bodies;
+    for (let i = 0; i < MAX_SEATS; i++) {
+      const up = s.active[i] && s.phase[i] === PHASE.windup;
+      if (up && !this.windingUp[i]) {
+        const plan = composeLead(spellSoundOf(specOf(w, i)), this.rand);
+        if (plan) this.ask('cast', b.x[i], b.y[i], () => plan);
+      }
+      this.windingUp[i] = up ? 1 : 0;
+    }
+  }
+
   private watchFeet(w: World): void {
     const b = w.bodies, n = b.kind.length;
     if (!this.walked) { this.walked = new Float64Array(n); this.lastX = Float64Array.from(b.x); this.lastY = Float64Array.from(b.y); return; }
@@ -343,6 +358,15 @@ export class SoundDirector {
       } else if (ph === PHASE.charge) {
         const lead = this.heldSpell(w, i).snd.lead ?? 'earth';
         add(`charge:${i}|${lead}`, { plan: () => composeCharge(lead), x: b.x[i], y: b.y[i], gain: 1 });
+      }
+    }
+    // an aura sounds for as long as it lasts, each element in it its own
+    for (let i = 0; i < MAX_SEATS; i++) {
+      if (!s.active[i] || s.aura[i] <= 0) continue;
+      for (let e = 0; e < N_EL; e++) {
+        if (!s.auraEls[i * N_EL + e]) continue;
+        const el = elOf(e + 1), plan = el ? composeAuraLoop(el, this.rand) : null;
+        if (plan) add(`aura:${i}|${el}`, { plan: () => plan, x: b.x[i], y: b.y[i], gain: 1 });
       }
     }
     // a turret's spray or beam is held, as a wizard's is (structures.ts)

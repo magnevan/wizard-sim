@@ -7,7 +7,7 @@
  *
  * Before is what the game plays today. Reference is a local comparison the dev server offers if it's on this
  * machine (vite.config.ts): it's never in a build. An element whose kit is itself local (?lab=sigil) offers
- * each take of it instead. A set the user has rejected comes out, so it needn't be heard again.
+ * each take of it instead. Only what's up for review is listed: a rejected set, or a finished spell, comes out.
  * Notes go through the dev server into content/audio/lab-notes.json, where Claude reads them.
  */
 import { NO_INPUT, type PlayerInput, type World } from '@wizard-sim/sim';
@@ -17,8 +17,8 @@ import type { GameAudio } from './game-audio';
 import { useKit, type Kit, type KitLayer } from './kits';
 import type { ElementName } from './recipes';
 
-/** `single`: its takes are the same sound, so there's one to hear and rate. `ref`: Reference has this one too. */
-interface Moment { id: string; name: string; spell: string; listen: string; single?: boolean; ref?: boolean }
+/** `single`: its takes are the same sound, so there's one to hear and rate. `ref`: Reference has this one too. `only`: the takes change this one kit entry, the rest staying on Take 1. */
+interface Moment { id: string; name: string; spell: string; listen: string; single?: boolean; ref?: boolean; only?: string }
 
 /** An element whose kit is local (`takes`) compares each take of it with what the game plays today. */
 const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[]; takes?: number; ref?: boolean }>> = {
@@ -33,19 +33,16 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[]; takes?
     ],
   },
   sigil: {
-    el: 'sigil', takes: 2,
+    el: 'sigil', takes: 3,
     moments: [
-      { id: 'lens', name: 'Lens', spell: 'sigil/place', listen: 'Set down where the lens lands.', single: true },
-      { id: 'motes', name: 'Rune motes', spell: 'sigil/area', listen: 'Three small sounds, each with a mote appearing.' },
-      { id: 'glyph', name: 'Frost glyph', spell: 'sigil,cold/place', listen: 'Scratched in as it draws, then a small crack of ice as it arms.' },
-      { id: 'turret', name: 'Frost turret', spell: 'sigil,cold/force@3,-1', listen: 'The summon, landing on the flash, then its shots: try Hits off too.' },
-      { id: 'haste', name: 'Haste aura', spell: 'sigil,lightning/self', listen: 'The local baseline, as you picked it.', single: true },
-      { id: 'aura-fire', name: 'Fire aura', spell: 'sigil,fire/self', listen: 'Warm flame wrapping around you.' },
-      { id: 'aura-frost', name: 'Frost aura', spell: 'sigil,cold/self', listen: 'A cold breath, with ice crystals forming.' },
-      { id: 'aura-mist', name: 'Mist aura', spell: 'sigil,water/self', listen: 'A soft damp hiss spreading outward.' },
-      { id: 'aura-earth', name: 'Bulldoze', spell: 'sigil,earth/self', listen: 'Heavy stone settling onto you.' },
-      { id: 'aura-life', name: 'Regeneration', spell: 'sigil,life/self', listen: "A stand-in: its element's self-cast sound.", single: true },
-      { id: 'aura-arcane', name: 'Glass cannon', spell: 'sigil,arcane/self', listen: "A stand-in: its element's self-cast sound.", single: true },
+      { id: 'fire-r5', name: 'Fire aura', spell: 'sigil,fire/self', listen: "The lead-up should be audible now. Try Runes, steps on: the staff's buildup has rune sounds too.", single: true },
+      { id: 'frost-r5', name: 'Frost aura', spell: 'sigil,cold/self', listen: "The lead-up should be audible now. Try Runes, steps on: the staff's buildup has rune sounds too.", single: true },
+      { id: 'arcane-r5', name: 'Glass cannon', spell: 'sigil,arcane/self', listen: "The lead-up should be audible now. Try Runes, steps on: the staff's buildup has rune sounds too.", single: true },
+      { id: 'earth-r5', name: 'Bulldoze', spell: 'sigil,earth/self', listen: "The lead-up should be audible now. Try Runes, steps on: the staff's buildup has rune sounds too.", single: true },
+      { id: 'life-r5', name: 'Regeneration', spell: 'sigil,life/self', listen: "The lead-up should be audible now. Try Runes, steps on: the staff's buildup has rune sounds too.", single: true },
+      { id: 'mist-r5', name: 'Mist aura', spell: 'sigil,water/self', listen: 'The intro now opens on the burst, with a lead-up. The loop is the slower one.', single: true },
+      { id: 'haste-intro-r5', name: 'Haste intro', spell: 'sigil,lightning/self', only: 'aura+lightning', listen: 'NEW: Take 1, 2, 3 are a sharp rising zip. The loop stays on one take.' },
+      { id: 'haste-loop-r5', name: 'Haste loop', spell: 'sigil,lightning/self', only: 'hold:aura+lightning', listen: 'NEW: Take 1, 2, 3 are a faint electric buzz.' },
     ],
   },
 };
@@ -56,9 +53,9 @@ function pickTake(clips: readonly string[], n: number): readonly string[] {
   return these.length ? these : clips.slice(0, 1);
 }
 
-function takeOf(kit: Kit, n: number): Kit {
-  const one = (ls: readonly KitLayer[]) => ls.map((l) => ({ ...l, clips: pickTake(l.clips, n) }));
-  const all = <T extends Readonly<Record<string, readonly KitLayer[]>>>(ls: T) => Object.fromEntries(Object.entries(ls).map(([k, v]) => [k, one(v)]));
+function takeOf(kit: Kit, n: number, only: string | null): Kit {
+  const one = (ls: readonly KitLayer[], t = n) => ls.map((l) => ({ ...l, clips: pickTake(l.clips, t) }));
+  const all = <T extends Readonly<Record<string, readonly KitLayer[]>>>(ls: T) => Object.fromEntries(Object.entries(ls).map(([k, v]) => [k, one(v, !only || k === only ? n : 1)]));
   const { spells, ...roles } = kit;
   return { ...all(roles), spells: all(spells ?? {}) };
 }
@@ -84,10 +81,10 @@ type Set = 'before' | 'reference' | `take${number}`;
 type Part = 'spell' | 'hits' | 'burning' | 'other';
 const PARTS: readonly [Part, string][] = [['spell', 'Spell'], ['hits', 'Hits'], ['burning', 'Burning'], ['other', 'Runes, steps']];
 /** Every kind of sound the fire moments make, by the part it's switched with. Anything unlisted is "other". */
-const PART_OF: Readonly<Record<string, Part>> = { cast: 'spell', chan: 'spell', charge: 'spell', flight: 'spell', hit: 'hits', impact: 'hits', burst: 'hits', floorfire: 'burning', burn: 'burning' };
+const PART_OF: Readonly<Record<string, Part>> = { cast: 'spell', chan: 'spell', charge: 'spell', flight: 'spell', aura: 'spell', hit: 'hits', impact: 'hits', burst: 'hits', floorfire: 'burning', burn: 'burning' };
 /** The Now playing line's names. */
 const SAYS: readonly [RegExp, string][] = [
-  [/^kit:hold|^hold:/, 'held loop'], [/^kit:stop/, 'dying breath'], [/^kit:charge|^charge/, 'charge'], [/^kit:flight|^flight/, 'in flight'],
+  [/^kit:aura/, 'aura loop'], [/^kit:lead/, 'lead-up'], [/^kit:hold|^hold:/, 'held loop'], [/^kit:stop/, 'dying breath'], [/^kit:charge|^charge/, 'charge'], [/^kit:flight|^flight/, 'in flight'],
   [/^kit:land|^impact|^hit/, 'hit'], [/^kit:ground|^floorfire/, 'burning ground'], [/^kit:burn|^burn/, 'burning body'], [/^kit:|^(spray|beam|missile|nova|force|self|place):/, 'cast'],
 ];
 const MARKS = ['Right', 'Close', 'Wrong'];
@@ -102,6 +99,8 @@ export class SoundLab {
   private ratings = new Map<Set, HTMLElement[]>();
   /** Take away what the last moment left standing: a turret would go on firing over the next one. */
   private clear = false;
+  /** The kit entry the open moment's takes change. */
+  private only: string | null = null;
   private set: Set = 'before';
   private ref: Kit | null = null;
   private lab: typeof LABS[string];
@@ -133,7 +132,7 @@ export class SoundLab {
   input(w: World): PlayerInput | null {
     for (let k = 0; k < 9; k++) w.seats.runes[k] = 5;
     w.bodies.hp[0] = 100;
-    if (this.clear) { w.devices.type.fill(0); w.devices.chan.fill(0); this.clear = false; }
+    if (this.clear) { w.devices.type.fill(0); w.devices.chan.fill(0); w.seats.aura.fill(0); this.clear = false; }
     if (this.once && this.tick >= PERIOD) this.stop();
     if (!this.demo) return null;
     return demoInput(w, this.tick++, 0, this.demo) ?? NO_INPUT;
@@ -180,7 +179,7 @@ export class SoundLab {
   private choose(s: Set): void {
     this.set = s;
     const take = s.startsWith('take') ? Number(s.slice(4)) : 0;
-    useKit(this.lab.el, s === 'before' ? null : take && this.ref ? takeOf(this.ref, take) : this.ref);
+    useKit(this.lab.el, s === 'before' ? null : take && this.ref ? takeOf(this.ref, take, this.only) : this.ref);
     for (const [k, b] of this.setButtons) b.classList.toggle('on', k === s);
     for (const [k, rs] of this.ratings) for (const r of rs) r.classList.toggle('now', k === s);
     this.audio.director.restartLoops(); // or a loop already going would carry on as the old set
@@ -263,7 +262,7 @@ export class SoundLab {
       const idle = () => { once.classList.remove('on'); loop.classList.remove('on'); };
       once.onclick = () => { this.play(m.spell, true, idle); once.classList.add('on'); };
       loop.onclick = () => { this.play(m.spell, false, idle); loop.classList.add('on'); };
-      stop.onclick = () => this.stop();
+      stop.onclick = () => { this.stop(); this.clear = true; };
       const own: [Set, string][] = m.single ? [[choices[0][0], 'This sound']] : choices.filter(([, label]) => label !== 'Reference' || m.ref || !takes.length);
       for (const [k, label] of own) {
         const r = this.rating(more, `${key}/${k}`, label, `${label}: what is off, in your own words`);
@@ -277,6 +276,8 @@ export class SoundLab {
         this.clear = true;
         for (const r of rows) { r.classList.remove('open'); r.querySelector('button')!.classList.remove('on'); }
         if (!was) { row.classList.add('open'); open.classList.add('on'); }
+        this.only = was ? null : m.only ?? null;
+        this.choose(this.set);
       };
     }
     document.body.append(style, root);

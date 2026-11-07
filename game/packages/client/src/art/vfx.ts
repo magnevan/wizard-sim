@@ -54,6 +54,9 @@ const FADE_STEPS = 6;
 /** How much of a floor cell is still drawn, given its sim life in ticks: 1, then down in steps to 1/FADE_STEPS. */
 export const floorFade = (life: number): number => (life >= FLOOR_FADE ? 1 : Math.max(1, Math.floor((FADE_STEPS * life) / FLOOR_FADE)) / FADE_STEPS);
 
+/** Seconds a cast's sound takes to reach the ear (measured: about 0.06). It can't start sooner, so the burst waits for it. */
+const HEARD = 0.06;
+
 export class Vfx {
   /** The local player's seat: their ring is solid and their rune swirl sparse (their HUD shows the detail). */
   localSeat = 0;
@@ -248,7 +251,7 @@ export class Vfx {
       case 'cast':
         if (who < 0) { if (e.text) this.add('banner', t, 2.4, { text: e.text }); return; }
         this.shownCast.add(e.tick * 8 + who);
-        this.add('release', t, 0.25, { who, look, els: this.motes[who]?.map((q) => q.el) });
+        this.add('release', t + HEARD, 0.25, { who, look, els: this.motes[who]?.map((q) => q.el) });
         if (spec()?.shape === 'self') this.add('self', t, 1.0, { who, look, x: e.x, y: e.y, seed });
         return;
       case 'hit': case 'heal': {
@@ -307,7 +310,7 @@ export class Vfx {
     this.zones(w, t, light, ct);
     this.groundMarks(w, bodies, t);
     if (structures) { structures(g, o); g._fs = o._fs = null; }
-    for (const f of this.fx) this.drawFx(f, t - f.t0, t, w, bodies, light);
+    for (const f of this.fx) if (t >= f.t0) this.drawFx(f, t - f.t0, t, w, bodies, light);
     this.missiles(w, t, light, ct);
     this.channels(w, ct, bodies, light);
     this.casters(w, ct, bodies, light);

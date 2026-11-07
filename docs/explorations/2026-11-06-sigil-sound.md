@@ -59,3 +59,40 @@ The general buff sound "sounds weird with all the auras", and "it's especially b
 
 The user approved descriptions for the turret's summon and four auras: a body that lasts plus something marking the aura taking hold, following what they heard in the reference. Prompts say only what each sound is. Ten takes, not yet heard. Hold to place and the summon animation shipped with this round; the sounds stay local.
 
+## Sixth round
+
+Right: rune motes Take 2, glyph Take 2, turret summon Take 2 ("a low hum and a sharp swoop as the light summons it"), and both Fire aura takes ("really good"). Dismiss "sounds much better".
+
+**An aura is a continuous effect, so it wants an intro and a loop for its 12 seconds.** The user asked for that on Fire, and for "some sort of blizzard ish wind effect (not too strong)" under Frost's intro. Bulldoze "doesn't sound like something that can loop", and its stone scraping gives "a very slow moving vibe". Regeneration was "too sharp", not healing or loopable. Glass cannon was too sharp and intense for a buff, and might loop too. The game now has a loop per element in an aura (`hold:aura+fire` in a kit). Mist's intro is quieter after "a bit too intense" and "industrial steam accident".
+
+The daily cap went from 30 to 60, and three or four variants of a sound are fine: credits have been going slowly.
+
+## Seventh round
+
+The user approved intros and 4-second loops for Bulldoze and Regeneration, and loops for Glass cannon and Haste. Three takes of each, at about 10 credits a second of audio. The Lab now lists only what's up for review, and says what each take is, so the user needn't cross-reference the chat.
+
+## Eighth round
+
+The strongest note: auras were "too loud and dramatic". "Haste is not such a big effect on the world, I'd expect a subtle effect", and "I wouldn't expect auras to be so loud". All of them came down by about half.
+
+- **Picks:** Fire loop Take 1 ("1>3>2, but they're all quite good"), Frost Take 1 (Right), Bulldoze loop Take 3 ("a pushing things out of the way vibe"), Regeneration intro Take 2 with loop Take 1, Glass cannon loop Take 2.
+- **Rejected:** all three Haste loops (steam, a rattlesnake, not subtle), all three Mist loops, and Bulldoze's intros ("snare kick").
+- **Sync:** the wand's burst is on the cast's tick and sharpest in its first 0.06 s, and the intros peaked later, Frost by over a second. They're trimmed to open on their loudest moment. The loops now start as the intros fade, instead of over them.
+- **Loops:** a looped clip can still pulse. The chosen ones are evened out and their ends folded over their starts locally. The API's own `loop` is already on; ElevenLabs' docs disagree on whether it works with this model.
+
+## Ninth round
+
+Every intro felt "a little late". The sound starts on the same frame as the burst, but this machine's audio output adds about 58 ms and the clips peaked up to 50 ms in, while the burst's white flash lasts 60 ms. The clips now open tighter, and the cast's burst waits 0.06 s for its sound. It's only drawn later: the sim doesn't change.
+
+Regeneration's swell "doesn't match" a clear burst, Bulldoze "feels like there's no intro", and Haste's old sound doesn't match either, so all three got short burst-shaped intros. The user gave a free hand on new sounds for this round. The Lab now has separate rows for an intro and a loop, each changing only its own part.
+
+## Tenth round
+
+The burst timing is good now. Bulldoze intro Take 1 and loop Take 3, and Regeneration intro Take 1, are chosen. What's missing is a sound "while the staff is flashing": the wind-up has a lead-up on screen and silence in the ears. A spell can now have a lead-up (`lead:aura+fire`), played as its wind-up starts; for now it's the start of each intro played backwards.
+
+The new Haste sounds went too far the other way: "super subtle, nothing like" the reference, and all three loops were wrong (birds, shuffling, a shower). The reference is back while it's worked out what Haste should be. Mist's best loop was "a bit too... fast", so it's played slower.
+
+## Eleventh round
+
+The lead-ups couldn't be heard, as they were built from the wrong end of each clip: fixed. The staff's visible buildup isn't only the 0.2 s wind-up. It's also the rune motes flying in and orbiting as each rune is queued, and the Lab has rune sounds off by default, so the buildup was being watched without its sound. Mist's loop now "sounds about right", and its intro opens on the burst. Haste has a new direction, approved: a sharp rising zip and a faint electric buzz, leaning on Lightning.
+

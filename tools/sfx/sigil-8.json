@@ -1,0 +1,20 @@
+[
+  { "id": "sigil-hold-damp-1", "secs": 4, "loop": true, "influence": 0.6, "text": "Cool, still, damp air, with an occasional faint droplet. Almost silent, more a change in the room than a sound." },
+  { "id": "sigil-hold-damp-2", "secs": 4, "loop": true, "influence": 0.6, "text": "The quiet of a misty morning: soft, damp, motionless air with a very faint drip now and then." },
+  { "id": "sigil-hold-damp-3", "secs": 4, "loop": true, "influence": 0.6, "text": "A barely audible, cool, moist hush in the air, gentle and still, even in volume throughout." },
+  { "id": "sigil-hit-earth-1", "secs": 0.6, "influence": 0.7, "text": "One short, deep, heavy push of force: a single dull thump of great weight shoving outward, brief and soft at the end." },
+  { "id": "sigil-hit-earth-2", "secs": 0.6, "influence": 0.7, "text": "A quick, low, solid shove of stone and earth, one deep thud that is over at once." },
+  { "id": "sigil-hit-earth-3", "secs": 0.6, "influence": 0.7, "text": "A heavy body bracing to charge: one short, muffled, deep burst of weight." },
+  { "id": "sigil-hit-life-1", "secs": 0.6, "influence": 0.7, "text": "One soft, warm puff of bright living energy: a quick gentle bloom that opens at once and fades." },
+  { "id": "sigil-hit-life-2", "secs": 0.6, "influence": 0.7, "text": "A short, tender burst of healing light, warm and round, opening immediately and melting away." },
+  { "id": "sigil-hit-life-3", "secs": 0.6, "influence": 0.7, "text": "A small, bright, gentle pulse of life energy, one soft warm pop that fades quickly." },
+  { "id": "sigil-hit-haste-1", "secs": 0.6, "influence": 0.7, "text": "One quick, light whoosh of air, small and crisp: a soft flick of speed." },
+  { "id": "sigil-hit-haste-2", "secs": 0.6, "influence": 0.7, "text": "A short, clean snap of moving air, light and fast, gone at once." },
+  { "id": "sigil-hit-haste-3", "secs": 0.6, "influence": 0.7, "text": "A subtle, swift puff of wind, like someone darting away, small and airy." },
+  { "id": "sigil-hold-air-1", "secs": 4, "loop": true, "influence": 0.6, "text": "A very faint, soft flutter of moving air, barely there, light and quick, even in volume throughout." },
+  { "id": "sigil-hold-air-2", "secs": 4, "loop": true, "influence": 0.6, "text": "The gentlest rush of air moving past someone walking quickly, quiet, smooth and constant." },
+  { "id": "sigil-hold-air-3", "secs": 4, "loop": true, "influence": 0.6, "text": "A light, subtle hum of energy in the air, soft and quick, staying low and steady." },
+  { "id": "sigil-hold-push-1", "secs": 4, "loop": true, "influence": 0.6, "text": "A low, steady, unbroken rumble of heavy things being pushed aside, even in volume throughout." },
+  { "id": "sigil-hold-push-2", "secs": 4, "loop": true, "influence": 0.6, "text": "The continuous muffled rolling of a great weight moving steadily forward, smooth, constant and quiet." },
+  { "id": "sigil-hold-push-3", "secs": 4, "loop": true, "influence": 0.6, "text": "A deep, soft, constant grind of earth shouldering its way ahead, steady from start to end." }
+]

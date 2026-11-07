@@ -1,0 +1,8 @@
+[
+  { "id": "sigil-hit-zip-1", "secs": 0.6, "influence": 0.7, "text": "A sharp burst of energy that kicks someone into motion, with a quick rising zip, medium in strength and over in half a second." },
+  { "id": "sigil-hit-zip-2", "secs": 0.6, "influence": 0.7, "text": "A crisp electric zap that rises fast and snaps forward, like a jolt of speed, short and punchy." },
+  { "id": "sigil-hit-zip-3", "secs": 0.6, "influence": 0.7, "text": "A quick charged zip of energy shooting upward, bright and tight, gone in an instant." },
+  { "id": "sigil-hold-wire-1", "secs": 4, "loop": true, "influence": 0.6, "text": "A faint, tight electric buzz, like a charged wire humming quickly, sitting low and steady under everything." },
+  { "id": "sigil-hold-wire-2", "secs": 4, "loop": true, "influence": 0.6, "text": "A thin, fast electrical hum of static energy, quiet and constant, even in volume throughout." },
+  { "id": "sigil-hold-wire-3", "secs": 4, "loop": true, "influence": 0.6, "text": "A soft, rapid crackling buzz of live current, low in volume, tight and steady." }
+]

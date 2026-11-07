@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = join(ROOT, '.reference', 'audio', 'generated');
 const LOG = join(OUT, 'calls.jsonl');
-const MAX_PER_DAY = 30;
+const MAX_PER_DAY = 60;
 const MODEL = 'eleven_text_to_sound_v3';
 const FORMAT = 'wav_48000';
 

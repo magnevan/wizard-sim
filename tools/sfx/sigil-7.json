@@ -1,0 +1,20 @@
+[
+  { "id": "sigil-charge-earth-1", "secs": 1.5, "influence": 0.6, "text": "A deep, heavy surge of weight gathering and lurching forward, like something huge starting to charge." },
+  { "id": "sigil-charge-earth-2", "secs": 1.5, "influence": 0.6, "text": "A huge mass heaving into motion: a deep, powerful thrust of weight that bursts forward." },
+  { "id": "sigil-charge-earth-3", "secs": 1.5, "influence": 0.6, "text": "A low, forceful whump of great weight shifting and launching ahead, heavy and fast." },
+  { "id": "sigil-hold-earth-1", "secs": 4, "loop": true, "influence": 0.6, "text": "A driving, powerful rumble of heavy mass moving fast, steady and forceful, even in volume throughout." },
+  { "id": "sigil-hold-earth-2", "secs": 4, "loop": true, "influence": 0.6, "text": "The continuous deep roar of something enormous rolling quickly over the ground, strong and constant." },
+  { "id": "sigil-hold-earth-3", "secs": 4, "loop": true, "influence": 0.6, "text": "A heavy, fast, thundering rumble that keeps pushing forward, low and steady." },
+  { "id": "sigil-swell-life-1", "secs": 1.5, "influence": 0.6, "text": "A warm, gentle swell of soft light, like a slow breath in." },
+  { "id": "sigil-swell-life-2", "secs": 1.5, "influence": 0.6, "text": "Soft living warmth rising gently around someone, a calm and tender bloom of energy." },
+  { "id": "sigil-swell-life-3", "secs": 1.5, "influence": 0.6, "text": "A slow, soothing wave of warm energy, like a peaceful breath filling the air." },
+  { "id": "sigil-hold-life-1", "secs": 4, "loop": true, "influence": 0.6, "text": "A soft, warm glow of living energy pulsing slowly and calmly, like quiet breathing." },
+  { "id": "sigil-hold-life-2", "secs": 4, "loop": true, "influence": 0.6, "text": "A gentle, soothing pulse of healing warmth, soft and slow, even in volume throughout." },
+  { "id": "sigil-hold-life-3", "secs": 4, "loop": true, "influence": 0.6, "text": "A calm bed of soft living energy, breathing slowly in and out, warm and quiet." },
+  { "id": "sigil-hold-arcane-1", "secs": 4, "loop": true, "influence": 0.6, "text": "A thin, tense shimmer of brittle energy trembling faintly, steady and quiet." },
+  { "id": "sigil-hold-arcane-2", "secs": 4, "loop": true, "influence": 0.6, "text": "Fragile energy quivering in the air: a fine, nervous, glassy tremble, low in volume and constant." },
+  { "id": "sigil-hold-arcane-3", "secs": 4, "loop": true, "influence": 0.6, "text": "A faint, strained shiver of power, delicate and tight, holding steady." },
+  { "id": "sigil-hold-haste-1", "secs": 4, "loop": true, "influence": 0.6, "text": "A light, fast vibration in the air, quick and energetic, steady underneath everything." },
+  { "id": "sigil-hold-haste-2", "secs": 4, "loop": true, "influence": 0.6, "text": "A rapid, airy flutter of energy, buzzing lightly and constantly, even in volume throughout." },
+  { "id": "sigil-hold-haste-3", "secs": 4, "loop": true, "influence": 0.6, "text": "Quick, thrumming energy humming fast around someone, light and lively." }
+]

@@ -1,0 +1,27 @@
+{
+  "id": "target-weathered",
+  "kind": "prop",
+  "name": "Weathered target",
+  "base": "target",
+  "footprint": [
+    1.6,
+    0.5
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        15,
+        35
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-2.png",
+      "tool": "tools/outdoor-kit/variants.py",
+      "ops": [
+        "wear 0.5",
+        "moss 0.3"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

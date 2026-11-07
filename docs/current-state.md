@@ -77,6 +77,7 @@ Play it: https://magnevan.github.io/wizard-sim/ (code in `../game/`, commands in
 
 ## Open questions (live)
 - **The isometric switch** (decided by the user 2026-11-06, not built): the game is still on today's camera. Next is one room on a branch. D: [Art direction](decisions/README.md#2026-11-06-art-direction-true-isometric-pixellab-props-the-detailed-wizard).
+- **The outdoor art kit** (`explorations/2026-11-07-outdoor-art-kit.md`, [the page](https://claude.ai/artifact/QNKgjigTb14KmCe8mod1kT)): which PixelLab purchases to make (nothing is bought yet; each waits for the user's mark), `q-1` painting the ground from a terrain map, `q-2` buying before the isometric test, `q-3` dummies against wizards, `q-4` what's missing, `q-5` the paid plan.
 - **The art trial, round 2** (`explorations/2026-11-06-art-trial-round-2.md`, [the page](https://claude.ai/artifact/S2wttPmXSg7YXZhJQbL4gN)): `q-5` prop angle, `q-6` prop detail, `q-7` wizard detail, `q-8` a true isometric camera, `q-9` which local variations to rely on. Also: prop scale against the wizards, and PixelLab's terms before anything ships.
 - **Sound** (`explorations/2026-11-06-sound.md`, the Sound Gallery): 1, the feel; 2, recordings, code or blends; 3, can the nine elements be told apart; 4, which variations earn their place; 5, what to try AI generation on first.
 - **The art trial** (`explorations/2026-11-06-art-trial.md`, [the page](https://claude.ai/artifact/S2wttPmXSg7YXZhJQbL4gN)): each source's role, how much prop detail, a paid PixelLab plan, the next art test.

@@ -1,0 +1,26 @@
+{
+  "id": "dummy-worn",
+  "kind": "prop",
+  "name": "Worn training dummy",
+  "base": "training-dummy",
+  "footprint": [
+    0.9,
+    0.5
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        13,
+        38
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-12.png",
+      "tool": "tools/outdoor-kit/variants.py",
+      "ops": [
+        "wear 0.7"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

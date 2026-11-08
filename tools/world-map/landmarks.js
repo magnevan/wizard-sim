@@ -181,5 +181,41 @@
       for (const [x, y] of [[-84, 2], [-40, -12], [6, -16], [52, -14], [92, -8]]) { line(g, [[x, y], [x, y - 40]], INK, 3); circ(g, x, y - 44, 6.5, '#ffd77a', 1.8); for (let i = 0; i < 3; i++) poly(g, [[x + 7 + i * 6, y + 4], [x + 11 + i * 6, y - 6 - i * 3], [x + 15 + i * 6, y + 4]], '#a8a39a', 1.2); }
     } },
   ];
+  // What each one is, for the paint prompt: enough that an image model doesn't reinterpret the shape.
+  const LOOKS = {
+    'glacier': 'a huge glacier spilling down to the sea, blue-white ice with deep crevasses (ice, not a white mountain or a dome)',
+    'frozen-colossus': 'a giant crowned humanoid figure trapped inside a block of ice, seen dimly through it (keep the figure inside the ice)',
+    'aurora-spire': 'a thin needle of ice with green and violet aurora ribbons of light in the air behind it (the ribbons are glowing light, not solid objects)',
+    'ice-ship': 'an old wooden sailing ship stuck fast and tilted in sea ice, abandoned, with a broken mast',
+    'caldera': 'a broken volcanic crater holding a bright lake of molten lava (a crater seen from the side, not a bowl or an eye)',
+    'great-forge': 'a vast stepped stone foundry in three tiers, with glowing furnace doors and two smoking chimneys',
+    'basalt-steps': 'a cluster of dark hexagonal basalt columns of uneven height, rising like a natural stair (natural rock, not buildings)',
+    'ember-tree': 'a huge dead charred tree with glowing orange cracks in its trunk and sparks drifting up (burning from within, no leaves)',
+    'great-falls': 'a great waterfall dropping over a rock cliff into a pool, with spray at the base',
+    'tide-mills': 'a stone mill building with two large wooden waterwheels at its sides, standing in a river',
+    'drowned-city': 'the leaning stone towers of a sunken city standing in shallow water, windows dark, ruined and abandoned',
+    'maelstrom': 'a giant whirlpool spiralling down into the open sea (water only, seen at an angle)',
+    'rod-fields': 'rows of tall thin iron masts with crossbars, catching lightning bolts between them (metal lightning rods, not trees or crosses)',
+    'coil-tower': 'a tall metal tower wrapped in copper rings with a metal sphere on top throwing arcs of electricity (a tesla coil in a medieval world, not a lighthouse)',
+    'storm-eye': 'a permanent spiralling storm cloud with lightning, hanging over a dark peak',
+    'glass-scar': 'a dark scorched crater with spikes of pale blue-green natural glass growing out of it, formed by lightning (glass, not ice crystals)',
+    'red-mesas': 'flat-topped red rock mesas with visible horizontal strata',
+    'deep-mine': 'an enormous terraced open-pit mine seen from above at an angle, with a wooden hoist frame and a rope at its edge (a pit in the ground, not a target or a volcano)',
+    'carved-faces': 'two enormous human faces carved into a grey cliff, side by side',
+    'stone-arch': 'a single huge natural rock arch with open sky through the middle (natural rock, not a building or a bridge)',
+    'elder-tree': 'one colossal ancient tree towering far above any forest, thick roots, golden fruit in its canopy (keep it much bigger than other trees)',
+    'terraces': 'curving stepped farm terraces climbing a hillside in shades of green and gold (farmland, not a rainbow or striped mound)',
+    'giant-blooms': 'three flowers as tall as trees, pink, orange and violet (keep them enormous; they are a landmark, not decoration)',
+    'swallowed-temple': 'a columned stone temple with a triangular roof, overgrown with vines and tree crowns',
+    'hanging-isles': 'chunks of rocky land with grass on top floating in the air above a glowing violet crater, with small rocks drifting around them (they must float, with visible air beneath)',
+    'crystal-spires': 'a cluster of huge magenta crystals thrusting out of the ground',
+    'unmade-tower': 'a stone tower broken into separate sections hanging in mid-air, each section floating above the last, with a purple cone roof at the top (keep clear gaps between sections; do not rebuild it into a whole tower)',
+    'mirror-lake': 'a perfectly round black lake full of reflected stars, ringed by stone posts (still water, not a hole or portal)',
+    'steam-fields': 'cones of pale mineral rock around hot pools, each venting a column of white steam (geysers, not volcanoes: no lava)',
+    'storm-marsh': 'a reedy marsh of shallow pools under dark storm clouds with lightning striking down',
+    'arc-foundry': 'a long stone factory with glowing furnace mouths, smoking chimneys, and a metal tesla tower at one end throwing electricity',
+    'lantern-road': 'a frozen river used as a road, lined with lit lantern posts and small stone cairns',
+  };
+  for (const l of LANDMARKS) l.looks = LOOKS[l.id];
   root.FieldLandmarks = LANDMARKS;
 })(window);

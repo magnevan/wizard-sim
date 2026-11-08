@@ -101,6 +101,9 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   <section style="display:grid;gap:12px">
     <h2>For the paint pass</h2>
     <p>A paint model keeps the layout but garbles small lettering. So <b>For painting</b> is the map with no names, banners or key: run that through the model. <b>Lettering</b> is everything written, on a transparent layer, to lay back on top afterwards. Right-click or long-press the map to save it (3000 × 2400).</p>
+    <p>The prompt below is written for the world on screen: it names each landmark by where it sits and what it is, so the model doesn’t reinterpret it. Change the seed or cut a landmark and it updates. Give it to the model together with the <b>For painting</b> image.</p>
+    <div class="seedrate"><button id="copyPrompt" type="button">Copy prompt</button><span class="cap" id="copyState"></span></div>
+    <textarea id="paintPrompt" rows="12" readonly aria-label="Prompt for the paint model"></textarea>
   </section>
 
   <section style="display:grid;gap:12px">
@@ -158,6 +161,7 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
     const towns = $('towns').checked;
     let info = {};
     if (style === 'fields') drawFields(g, world, { show, towns }); else info = drawChart(g, world, { towns, veil: style === 'veil' ? show : null, layer: style === 'paint' ? 'paint' : style === 'letters' ? 'letters' : 'all', cut: new Set(Object.keys(store.ratings).filter((k) => store.ratings[k].mark === 'cut').map((k) => k.slice(3))) });
+    if (info.landmarks) writePrompt(world, info.landmarks);
     $('fieldToggles').hidden = style !== 'veil' && style !== 'fields';
     const pairs = new Set(world.towns.filter((t) => t.ks.length > 1).map((t) => t.kind));
     $('seedInfo').textContent = `Seed ${world.seed}: ${world.towns.length} towns, ${pairs.size} kinds of confluence.`;
@@ -165,6 +169,35 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
     cv.dataset.stats = JSON.stringify(window.__mapStats);
     cv.dataset.ready = String(world.seed);
   }
+  const LAND_DESC = {
+    cold: ['white and pale blue', 'a frozen land of snow and ice, with ice shards and snow-laden pines'],
+    fire: ['charred dark brown', 'a burnt volcanic land of ash, dead trees and glowing lava pools'],
+    earth: ['ochre and orange', 'bare rocky badlands of red mesas, dunes and cacti'],
+    water: ['teal green', 'waterlogged fens of ponds and reeds'],
+    lightning: ['slate violet', 'a stormy moor under permanent dark clouds with lightning, iron rods and broken rock'],
+    life: ['vivid emerald green', 'overgrown, lush land of dense broadleaf forest and bright flowers'],
+    arcane: ['purple', 'a land warped by magic, studded with magenta crystals and torn by glowing magenta rifts in the ground'],
+  };
+  function writePrompt(w, marks) {
+    const here = [...new Set(w.regK)].filter((k) => LAND_DESC[k]);
+    const place = (m) => { const v = m.y < .4 ? 'upper' : m.y < .68 ? 'middle' : 'lower', u = m.x < .36 ? 'left' : m.x < .64 ? 'centre' : 'right'; return v === 'middle' && u === 'centre' ? 'centre' : v + ' ' + u; };
+    const lines = [...marks].sort((a, b) => a.y - b.y || a.x - b.x).map((m) => `- ${place(m)}, ${m.atSea ? 'out at sea' : `in the ${LAND_DESC[m.k][0]} land`}: ${m.looks}.`);
+    $('paintPrompt').textContent = `Repaint this fantasy world map as a hand-drawn illustration by a master cartographer: confident ink linework, watercolour and gouache on aged parchment. Make it feel handmade and custom, and fix graphic problems such as clipped or awkwardly overlapping drawings.
+
+KEEP THE LAYOUT EXACTLY. Same 5:4 framing. Every coastline, river, lake, mountain, forest, town, road and landmark stays where it is, at about the same size. Names will be laid over this image afterwards at fixed positions, so nothing may move. Do not add new landmarks, towns or islands, and do not remove any.
+
+NO WRITING OF ANY KIND. This image deliberately has no text. Do not add letters, labels, banners, scrolls, signs, numbers or a map key.
+
+EACH COLOURED LAND IS A DIFFERENT MAGICAL REGION. Keep them distinct, with their colours strong. Do not soften them into ordinary green countryside.
+${here.map((k) => `- ${LAND_DESC[k][0]}: ${LAND_DESC[k][1]}.`).join('\n')}
+The top of the map fades into blank parchment on purpose: that land is unexplored. Keep the fade and leave it empty.
+
+SMALL SYMBOLS. Tiny castles and houses are settlements: keep their roof colours, which show the region they belong to. Small pillared gateways are shrines. Black dotted lines are roads; white dotted lines at sea are shipping routes. Ships and sea monsters are decoration on the water; keep the compass rose and the plain checkered border.
+
+THESE SPECIFIC LANDMARKS MUST STAY RECOGNISABLE. Paint each as described, in the place it already is:
+${lines.join('\n')}`;
+  }
+  $('copyPrompt').addEventListener('click', async () => { const t = $('paintPrompt'); let ok = false; try { await navigator.clipboard.writeText(t.value); ok = true; } catch { t.focus(); t.select(); try { ok = document.execCommand('copy'); } catch { ok = false; } } $('copyState').textContent = ok ? 'Copied' : 'Select the text below and copy it'; });
   function build() { const s = Math.max(1, Math.min(999999, parseInt($('seed').value, 10) || 1)); $('seed').value = s; world = generate(s); render(); paintSeed(); }
   for (const [k, n, c] of FIELDS) { const l = el('label', null, `<input type="checkbox" checked data-f="${k}"> <span class="sw" style="--c:${c}"></span> ${n}`); l.querySelector('input').addEventListener('change', (e) => { show[k] = e.target.checked; render(); }); $('fieldToggles').append(l); }
   for (const b of document.querySelectorAll('[data-style]')) b.addEventListener('click', () => { style = b.dataset.style; for (const o of document.querySelectorAll('[data-style]')) o.setAttribute('aria-pressed', String(o === b)); render(); });

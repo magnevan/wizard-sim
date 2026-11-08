@@ -526,7 +526,7 @@
     const key = (ct) => { ct.save(); ct.translate(W - FRAME - KEYW, H - FRAME - KEYH); ct.scale(1.4, 1.4); mapKey(ct, 0, 0, 500, 226, w); ct.restore(); };
     if (layer === 'letters') { g.clearRect(0, 0, W, H); g.drawImage(L.canvas, 0, 0); key(g); } else if (layer === 'all') key(g);
     g.restore();
-    return { peaks: placed, glyphs: items.length };
+    return { peaks: placed, glyphs: items.length, landmarks: picked.map((p) => ({ id: p.l.id, k: p.l.k, looks: p.l.looks, atSea: p.l.place === 'sea', x: p.x / GW, y: p.y / GH })) };
   }
   function cloud(g, x, y, s, r) {
     g.save(); g.translate(x, y); g.scale(s, s); g.lineJoin = 'round';

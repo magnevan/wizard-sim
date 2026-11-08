@@ -182,20 +182,26 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
     const here = [...new Set(w.regK)].filter((k) => LAND_DESC[k]);
     const place = (m) => { const v = m.y < .4 ? 'upper' : m.y < .68 ? 'middle' : 'lower', u = m.x < .36 ? 'left' : m.x < .64 ? 'centre' : 'right'; return v === 'middle' && u === 'centre' ? 'centre' : v + ' ' + u; };
     const lines = [...marks].sort((a, b) => a.y - b.y || a.x - b.x).map((m) => `- ${place(m)}, ${m.atSea ? 'out at sea' : `in the ${LAND_DESC[m.k][0]} land`}: ${m.looks}.`);
-    $('paintPrompt').textContent = `Repaint this fantasy world map as a hand-drawn illustration by a master cartographer: confident ink linework, watercolour and gouache on aged parchment. Make it feel handmade and custom, and fix graphic problems such as clipped or awkwardly overlapping drawings.
+    $('paintPrompt').textContent = `Repaint this fantasy world map in place, as one hand-inked, hand-painted map: ink linework with watercolour and gouache. Make every drawing feel handmade, and fix clipped or awkwardly overlapping drawings.
 
-KEEP THE LAYOUT EXACTLY. Same 5:4 framing. Every coastline, river, lake, mountain, forest, town, road and landmark stays where it is, at about the same size. Names will be laid over this image afterwards at fixed positions, so nothing may move. Do not add new landmarks, towns or islands, and do not remove any.
+SAME SIZE, SAME PLACE. This is a whole world seen from far away, and every feature is a small map symbol. Nothing may get bigger than it is in this image. Do not zoom in, add close-ups or insets, or let any drawing spill past the coast onto the sea or the border. Every coastline, river, lake, mountain, forest, town, road and landmark stays exactly where it is. Same 5:4 framing. Add nothing and remove nothing.
 
-NO WRITING OF ANY KIND. This image deliberately has no text. Do not add letters, labels, banners, scrolls, signs, numbers or a map key.
+KEEP THE SEA. All the water stays deep blue-teal painted water with fine wave marks. Do not turn the sea into paper.
 
-EACH COLOURED LAND IS A DIFFERENT MAGICAL REGION. Keep them distinct, with their colours strong. Do not soften them into ordinary green countryside.
+REDRAW EVERYTHING. Nothing should stay as flat, repeated clip-art. Repeated symbols (mesas, lava pools, cacti, ponds, pines, ice shards, storm clouds, tiny castles) should each be redrawn by hand with small variations, at their current size.
+
+NO WRITING. No letters, labels, banners, signs, numbers or map key.
+
+EACH COLOURED LAND IS A DIFFERENT MAGICAL REGION. Keep the colours strong and distinct.
 ${here.map((k) => `- ${LAND_DESC[k][0]}: ${LAND_DESC[k][1]}.`).join('\n')}
-The top of the map fades into blank parchment on purpose: that land is unexplored. Keep the fade and leave it empty.
+The top edge fades to blank on purpose: that land is unexplored. Keep the fade.
 
-SMALL SYMBOLS. Tiny castles and houses are settlements: keep their roof colours, which show the region they belong to. Small pillared gateways are shrines. Black dotted lines are roads; white dotted lines at sea are shipping routes. Ships and sea monsters are decoration on the water; keep the compass rose and the plain checkered border.
+Tiny castles and houses are settlements; keep their roof colours. Small pillared gateways are shrines. Black dotted lines are roads; white dotted lines at sea are shipping routes. Keep the compass rose and the plain checkered border.
 
-THESE SPECIFIC LANDMARKS MUST STAY RECOGNISABLE. Paint each as described, in the place it already is:
-${lines.join('\n')}`;
+LANDMARKS. These notes only say what each one is, so it isn't misread. Each stays a small symbol at the size it is now:
+${lines.join('\n')}
+
+Last check: nothing is larger than in the original image, the sea is still blue water, and there is no writing.`;
   }
   $('copyPrompt').addEventListener('click', async () => { const t = $('paintPrompt'); let ok = false; try { await navigator.clipboard.writeText(t.value); ok = true; } catch { t.focus(); t.select(); try { ok = document.execCommand('copy'); } catch { ok = false; } } $('copyState').textContent = ok ? 'Copied' : 'Select the text below and copy it'; });
   function build() { const s = Math.max(1, Math.min(999999, parseInt($('seed').value, 10) || 1)); $('seed').value = s; world = generate(s); render(); paintSeed(); }

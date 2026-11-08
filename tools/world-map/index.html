@@ -36,7 +36,7 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px
 .plate { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #d9cfb6; }
 .plate canvas { display: block; width: 100%; height: auto; }
 .plate.zoomed { overflow: auto; max-height: 85vh; }
-.plate.zoomed canvas { width: 2000px; max-width: none; }
+.plate.zoomed canvas { width: 3000px; max-width: none; }
 .plate-only body { padding: 0; margin: 0; background: #000; }
 .plate-only .wrap { display: block; max-width: none; }
 .plate-only .wrap > :not(.plate) { display: none; }
@@ -69,7 +69,7 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   <header>
     <span class="eyebrow">Wizard Sim · world · map prototype · 2026-11-08</span>
     <h1>Field Atlas</h1>
-    <p class="lede">A world generated the way the fiction says it formed: land, mountains, rivers and climate first; the seven fields from those; then towns where fields meet, named by the pair they sit on. No place has a proper name; naming is yours. Chart paints it like an old fantasy map, every mountain, forest and town drawn from the world’s data. Reroll the seed, switch the look, and mark the worlds that feel right.</p>
+    <p class="lede">A world generated the way the fiction says it formed: land, mountains, rivers and climate first; the seven fields from those; then towns where fields meet, named by the pair they sit on. Every field holds ground of its own, so you can read which is strong without a legend. Chart paints it like an old fantasy map, with made-up names and every mountain, forest and town drawn from the world’s data. Reroll the seed, switch the look, and mark the worlds that feel right.</p>
     <div class="status"><span id="tally"></span><span id="saveState"></span></div>
   </header>
 
@@ -82,12 +82,14 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
       <button type="button" data-style="chart" aria-pressed="true">Chart</button>
       <button type="button" data-style="veil" aria-pressed="false">Chart + fields</button>
       <button type="button" data-style="fields" aria-pressed="false">Fields</button>
+      <button type="button" data-style="paint" aria-pressed="false">For painting</button>
+      <button type="button" data-style="letters" aria-pressed="false">Lettering</button>
     </div>
     <div class="grp" id="fieldToggles"><span class="lbl">Fields</span></div>
     <div class="grp"><label><input type="checkbox" id="towns" checked> Places and names</label><button type="button" id="zoom" aria-pressed="false">Zoom in</button></div>
   </div>
 
-  <div class="plate"><canvas id="map" width="2000" height="1600" role="img" aria-label="A generated world map with magic fields and towns"></canvas></div>
+  <div class="plate"><canvas id="map" width="3000" height="2400" role="img" aria-label="A generated world map with magic fields and towns"></canvas></div>
   <div class="seedrate">
     <span class="cap" id="seedInfo"></span>
     <span class="lbl" style="font:500 .72rem var(--mono);color:var(--muted)">THIS WORLD:</span>
@@ -95,6 +97,17 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
     <button type="button" data-mark="no" disabled>Not this one</button>
     <input id="seedNote" type="text" placeholder="Note on this seed (optional)" style="flex:1;min-width:200px;font:inherit;font-size:.92rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:5px 9px" disabled aria-label="Note on this seed">
   </div>
+
+  <section style="display:grid;gap:12px">
+    <h2>For the paint pass</h2>
+    <p>A paint model keeps the layout but garbles small lettering. So <b>For painting</b> is the map with no names, banners or key: run that through the model. <b>Lettering</b> is everything written, on a transparent layer, to lay back on top afterwards. Right-click or long-press the map to save it (3000 × 2400).</p>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Landmarks</h2>
+    <p>What each field leaves on the land, with a reason to be there. They’re drawn plainly on purpose: clear shapes for the paint pass to work over. Mark Cut and it leaves the maps; Keep what feels like this world.</p>
+    <div id="landmarks" class="cards"></div>
+  </section>
 
   <section style="display:grid;gap:12px">
     <h2>How the fields are placed</h2>
@@ -122,13 +135,14 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
 </div>
 
 <script src="gen.js"></script>
+<script src="landmarks.js"></script>
 <script src="chart.js"></script>
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
   const el = (t, c, h) => { const e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const askers = []; const store = { seeds: {}, answers: {} }; let db = null; const chains = {};
+  const askers = []; const store = { seeds: {}, answers: {}, ratings: {} }; let db = null; const chains = {};
 
   const { FIELDS, generate, GW, GH } = window.FieldGen, { W, H, drawChart, drawFields } = window.FieldChart;
   for (const [k, n, c, why] of FIELDS) $('rules').append(el('tr', null, `<td><span class="sw" style="--c:${c}"></span> ${n}</td><td>${esc(why)}</td>`));
@@ -136,16 +150,16 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   if (params.seed) $('seed').value = params.seed;
   if (params.plate) document.documentElement.classList.add('plate-only');
   const cv = $('map'), g = cv.getContext('2d');
-  let style = ['chart', 'veil', 'fields'].includes(params.look) ? params.look : 'chart', world = null;
+  let style = ['chart', 'veil', 'fields', 'paint', 'letters'].includes(params.look) ? params.look : 'chart', world = null;
   const show = Object.fromEntries(FIELDS.map(([k]) => [k, true]));
   function render() {
     const t0 = performance.now();
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
     const towns = $('towns').checked;
     let info = {};
-    if (style === 'fields') drawFields(g, world, { show, towns }); else info = drawChart(g, world, { towns, veil: style === 'veil' ? show : null });
-    $('fieldToggles').hidden = style === 'chart';
-    const pairs = new Set(world.towns.filter((t) => t.ks.length > 1).map((t) => t.name));
+    if (style === 'fields') drawFields(g, world, { show, towns }); else info = drawChart(g, world, { towns, veil: style === 'veil' ? show : null, layer: style === 'paint' ? 'paint' : style === 'letters' ? 'letters' : 'all', cut: new Set(Object.keys(store.ratings).filter((k) => store.ratings[k].mark === 'cut').map((k) => k.slice(3))) });
+    $('fieldToggles').hidden = style !== 'veil' && style !== 'fields';
+    const pairs = new Set(world.towns.filter((t) => t.ks.length > 1).map((t) => t.kind));
     $('seedInfo').textContent = `Seed ${world.seed}: ${world.towns.length} towns, ${pairs.size} kinds of confluence.`;
     window.__mapStats = { genMs: world.ms, drawMs: Math.round(performance.now() - t0), towns: world.towns.length, rivers: world.paths.length, chains: world.chains.length, roads: world.roads.length, routes: world.routes.length, woods: world.woods.length, regions: world.regions.map((r) => r.k), wells: world.wells.map((r) => r.k), ...info };
     cv.dataset.stats = JSON.stringify(window.__mapStats);
@@ -180,6 +194,10 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
       [['plain', 'Keep them plain until you name things', 'Nothing invented that you’d have to undo.', true], ['made-up', 'Generate made-up fantasy names', 'Reads more like your reference, rerollable per seed, but they’d be names you didn’t choose.'], ['yours', 'Let me type names onto a kept seed', 'A small naming pass on the world you keep.']]],
     ['q-7-fields', 'Q7', 'How much should the map show the fields?', 'Right now they show through the land itself (ash near volcanoes, frost north, storms overhead) and each town’s roof colour; Chart + fields lays them on top.',
       [['through', 'Through the land, with the overlay as a toggle', 'A map first; the magic reads when you look.', true], ['always', 'Always tinted on the map', 'The fields are the point of this world, so show them.'], ['design', 'Keep them for design only', 'Players read towns and places; the field map is ours.']]],
+    ['q-8-scale', 'Q8', 'Is this the right size of world?', 'The map went up by half: more land, more regions and more towns at the same drawn size, so glyphs are smaller on the whole sheet. A paint model may lose the smallest ones.',
+      [['this', 'This size', '', true], ['bigger', 'Bigger still', ''], ['smaller', 'Back down a bit', 'Bigger glyphs, more readable, less world.']]],
+    ['q-9-veins', 'Q9', 'Should the other fields’ veins show on the map too?', 'Rifts are the only veins drawn, because they’re the ones that tear the land. The world docs say every field has veins, narrow lines of strength.',
+      [['fields-only', 'Only in the Fields view', 'The Chart stays a map; the design view shows all veins.', true], ['all', 'Faintly on the Chart for every field', 'Pretty, but one more thing on a busy map.'], ['rifts', 'Rifts only, everywhere', 'Other veins stay something you find in the levels.']]],
     ['general', '', 'Anything else', '', null],
   ];
   for (const [id, n, title, text, ch] of QS) {
@@ -193,9 +211,23 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   function put(coll, id, body) {
     store[coll][id] = Object.assign({}, store[coll][id], body); paint();
     if (!db) return; setSave('Saving…');
-    const d = store[coll][id]; const doc = coll === 'seeds' ? { seed: d.seed, mark: d.mark || null, note: d.note || '', updatedAt: new Date().toISOString() } : { choice: d.choice || null, note: d.note || '', updatedAt: new Date().toISOString() };
+    const d = store[coll][id], at = new Date().toISOString(); const doc = coll === 'seeds' ? { seed: d.seed, mark: d.mark || null, note: d.note || '', updatedAt: at } : coll === 'ratings' ? { mark: d.mark || null, note: d.note || '', updatedAt: at } : { choice: d.choice || null, note: d.note || '', updatedAt: at };
     const k = coll + '/' + id; chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set(doc)).then(() => setSave('All saved')).catch(() => setSave('Couldn’t save that. Check your connection and try again.', true));
   }
+  // ---------- the landmark catalogue ----------
+  const LM_CARDS = [], FIELD_COL = Object.fromEntries(FIELDS.map(([k, n, c]) => [k, [n, c]]));
+  const LM_BG = { cold: '#e3edf2', fire: '#c9a58e', water: '#b9d6c8', lightning: '#c5c2da', earth: '#e0c29a', life: '#c5dca0', arcane: '#d6c2e4' };
+  for (const l of window.FieldLandmarks) {
+    const card = el('article', 'card'), cvs = el('canvas'); cvs.width = 520; cvs.height = 420; cvs.style.cssText = 'width:100%;height:auto;border-radius:6px;display:block'; cvs.setAttribute('role', 'img'); cvs.setAttribute('aria-label', l.name);
+    const c = cvs.getContext('2d'); c.fillStyle = LM_BG[l.k]; c.fillRect(0, 0, 520, 420); c.save(); c.translate(260, 342); c.scale(1.7, 1.7); c.lineCap = 'round'; c.lineJoin = 'round'; l.draw(c, window.FieldGen.rng(77)); c.restore();
+    const [fn, col] = FIELD_COL[l.k], also = l.also ? ` + ${FIELD_COL[l.also][0]}` : '';
+    card.append(cvs, el('span', 'tag', `<span class="sw" style="--c:${col}"></span> ${esc(fn + also)}`), el('h3', null, esc(l.name)), el('p', null, esc(l.why)));
+    const row = el('div', 'seedrate'), id = 'lm-' + l.id, marks = ['keep', 'maybe', 'cut'].map((m) => { const b = el('button', null, m[0].toUpperCase() + m.slice(1)); b.type = 'button'; b.disabled = true; b.dataset.m = m; b.addEventListener('click', () => { put('ratings', id, { mark: store.ratings[id]?.mark === m ? null : m }); paintLandmarks(); render(); }); return b; });
+    const note = el('input'); note.type = 'text'; note.placeholder = 'Note (optional)'; note.disabled = true; note.setAttribute('aria-label', 'Note on ' + l.name); note.style.cssText = 'flex:1;min-width:120px;font:inherit;font-size:.9rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:4px 8px';
+    let t2; note.addEventListener('input', () => { clearTimeout(t2); t2 = setTimeout(() => put('ratings', id, { note: note.value }), 900); });
+    row.append(...marks, note); card.append(row); $('landmarks').append(card); LM_CARDS.push({ id, marks, note });
+  }
+  function paintLandmarks() { for (const C of LM_CARDS) { const d = store.ratings[C.id] || {}; for (const b of C.marks) { b.setAttribute('aria-pressed', String(b.dataset.m === d.mark)); b.disabled = !db; } C.note.disabled = !db; if (document.activeElement !== C.note && C.note.value !== (d.note || '')) C.note.value = d.note || ''; } }
   function setSave(t, w) { $('saveState').textContent = t; $('saveState').className = w ? 'warn' : ''; }
   function paint() {
     for (const A of askers) { const d = store.answers[A.id] || {}; if (A.btns) for (const b of A.btns.children) { b.setAttribute('aria-pressed', String(b.dataset.v === d.choice)); b.disabled = !db; } A.ta.disabled = !db; if (document.activeElement !== A.ta && A.ta.value !== (d.note || '')) A.ta.value = d.note || ''; }
@@ -210,12 +242,12 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   (async () => {
     try { db = await window.claude?.use?.('db'); } catch { db = null; }
     if (!db) { setSave('Read-only here: marks need the page’s saved-answers store, which isn’t available in this view.', true); paint(); return; }
-    paint();
+    paint(); paintLandmarks();
     const timer = setTimeout(() => setSave('Saved marks are slow to load. You can still mark; changes save when the connection returns.', true), 10000);
-    for (const coll of ['seeds', 'answers']) db.collection(coll).onSnapshot((snap) => {
+    for (const coll of ['seeds', 'answers', 'ratings']) db.collection(coll).onSnapshot((snap) => {
       for (const d of snap.docs) { const x = d.data(); store[coll][d.id] = { seed: x.seed, mark: x.mark || null, choice: x.choice || null, note: x.note || '' }; }
       if (!snap.metadata.fromCache) { clearTimeout(timer); if (!snap.metadata.hasPendingWrites) setSave('All saved'); }
-      paint();
+      paint(); if (coll === 'ratings') paintLandmarks();
     }, () => { clearTimeout(timer); db = null; setSave('Saved marks are unavailable, so the page is read-only. Reload to try again.', true); paint(); });
   })();
 })();

@@ -988,3 +988,11 @@ The user's answers on the World and Progression page.
 ## 2026-11-08: The world map's scale and look (`explorations/2026-11-08-fantasy-map.md`)
 - **The world is one continent with several regions** (Field Atlas Q3).
 - **The map should have a fantasy feel,** like an inked fantasy map rather than a diagram (the user's brief). The Field Atlas now paints that way; whether it's the right route is open (Q5).
+
+## 2026-11-08: The world map, round 3 (`explorations/2026-11-08-fantasy-map-round-3.md`)
+- **The map approach is the fields-first generator, then paint over a kept seed** (Field Atlas Q1). The user passes the laid-out map through an image model to enhance the painted feel; lettering stays out of that pass and goes back on afterwards, since the model garbles it.
+- **Both looks stay:** the Chart for players, the field view for design (Q2, Q7). On the Chart, the land itself must make plain which field is strong: the user's note on Q7.
+- **Places get generated made-up names** (Q6), withdrawing "no proper names" for the map. The world's lore stays the user's.
+- **Every field holds its own ground on the map, Arcane included.** Rifts stay as Arcane's landmark.
+- **The north runs off the map** as uncharted frozen land.
+

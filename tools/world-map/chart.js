@@ -1,12 +1,10 @@
 // Field Atlas renderer: the painted Chart look, and the plain Fields diagram. Everything drawn here is procedural; a seed always paints the same map.
 (function (root) {
   const { GW, GH, N, K, TAU, FIELDS, fbm, hash, rng, cl, idx, chaikin } = root.FieldGen;
-  const W = 2000, H = 1600, S = W / GW, FRAME = 48;
+  const S = 5, W = GW * S, H = GH * S, FRAME = 48, KEYW = 700, KEYH = 316;
   const INK = '#2a2015', PAPER = '#efe4c8';
   const F_GOTH = '"Grenze Gotisch", "Almendra", Georgia, serif', F_TOWN = '"Almendra", Georgia, serif', F_REGION = '"Almendra SC", "Palatino Linotype", Georgia, serif';
   const ROOF = { earth: '#a07c42', cold: '#5b8fb3', fire: '#b43f28', water: '#2f6f9e', lightning: '#7658bd', life: '#4a8a3f', arcane: '#a43a8a' };
-  const REGION_NAME = { earth: 'The Stonelands', cold: 'The Frost Reach', fire: 'The Ember Waste', water: 'The Drowned Fen', lightning: 'The Storm Coast', life: 'The Green Vale' };
-  const RANGE_NAME = ['The High Range', 'The Long Ridge', 'The Spine', 'The Broken Teeth', 'The Old Wall'];
   const mix = (a, b, t) => a + (b - a) * t;
   const mix3 = (a, b, t) => [mix(a[0], b[0], t), mix(a[1], b[1], t), mix(a[2], b[2], t)];
   const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
@@ -40,7 +38,7 @@
   function geometry(w) {
     if (w._geo) return w._geo;
     const sample = (px, py) => { const x = Math.min(GW - 1.001, px), y = Math.min(GH - 1.001, py), i = x | 0, j = y | 0, u = x - i, v = y - j, a = w.h[idx(i, j)], b = w.h[idx(i + 1, j)], c = w.h[idx(i, j + 1)], d = w.h[idx(i + 1, j + 1)]; return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v; };
-    const coast = contour((i, j) => sample(i / 2, j / 2) + (fbm(i * .09, j * .09, w.seed + 77, 4) - .5) * .05, GW * 2, GH * 2, S / 2, 14);
+    const coast = contour((i, j) => (i === 0 || j === 0 || i === GW * 2 || j === GH * 2) ? -1 : sample(i / 2, j / 2) + (fbm(i * .09, j * .09, w.seed + 77, 4) - .5) * .05, GW * 2, GH * 2, S / 2, 14);
     const lakeSm = Float32Array.from(w.lake); for (let p = 0; p < 2; p++) { const t = Float32Array.from(lakeSm); for (let y = 1; y < GH - 1; y++) for (let x = 1; x < GW - 1; x++) { const i = idx(x, y); lakeSm[i] = (t[i] * 2 + t[i - 1] + t[i + 1] + t[i - GW] + t[i + GW]) / 6; } }
     const lakes = contour((i, j) => (i < GW && j < GH ? lakeSm[idx(i, j)] : 0) - .45, GW, GH, S, 8).map((l) => { const c = chaikin([...l, l[0]], 2); c.pop(); return c; });
     return (w._geo = { coast, coastPath: toPath(coast), lakes, lakePath: toPath(lakes) });
@@ -63,6 +61,10 @@
     const u = a === b ? 0 : cl((t - a[0]) / (b[0] - a[0])), mm = cl((m - .28) / .42), s = mm * mm * (3 - 2 * mm);
     return mix3(mix3(a[1], b[1], u), mix3(a[2], b[2], u), s);
   }
+  const BIOME = {
+    earth: [[186, 132, 78], [150, 96, 52]], cold: [[240, 245, 247], [204, 222, 234]], fire: [[122, 72, 54], [68, 44, 42]], water: [[94, 156, 130], [62, 124, 114]],
+    lightning: [[124, 118, 162], [84, 80, 126]], life: [[98, 164, 64], [58, 126, 46]], arcane: [[150, 96, 176], [102, 58, 138]],
+  };
   function paintBase(w) {
     const c = mk(GW, GH), g = c.getContext('2d'), im = g.createImageData(GW, GH), d = im.data;
     const ocean = mk(GW, GH), og = ocean.getContext('2d'), om = og.createImageData(GW, GH), o = om.data;
@@ -71,9 +73,10 @@
       o[p] = col[0] + n; o[p + 1] = col[1] + n; o[p + 2] = col[2] + n; o[p + 3] = 255;
       let c3 = landColour(w.temp[i], w.moist[i]);
       if (!w.sea[i]) {
-        c3 = mix3(c3, [168, 130, 82], cl((w.h[i] - .22) / .32) * .62);
-        const a = cl((w.F.fire[i] - .55) / .3) * .5; if (a > 0) c3 = mix3(c3, [122, 88, 74], a);
-        const az = cl((w.F.arcane[i] - .4) / .4) * .4; if (az > 0) c3 = mix3(c3, [120, 70, 124], az);
+        const pa = BIOME[w.regK[w.region[i]]], pb = BIOME[w.regK[w.region2[i]]], tn = cl((fbm(x / 18, y / 18, w.seed + 66, 4) - .3) / .4);
+        const ca = mix3(pa[0], pa[1], tn), cb = mix3(pb[0], pb[1], tn);
+        c3 = mix3(mix3(cb, ca, w.w1[i]), c3, .14);
+        c3 = mix3(c3, [158, 124, 82], cl((w.h[i] - .3) / .3) * .45);
       }
       const dx = w.h[Math.min(N - 1, i + 1)] - w.h[Math.max(0, i - 1)], dy = w.h[Math.min(N - 1, i + GW)] - w.h[Math.max(0, i - GW)], sh = cl(.5 + (dx - dy) * 2.5) - .5;
       d[p] = c3[0] - sh * 60; d[p + 1] = c3[1] - sh * 60; d[p + 2] = c3[2] - sh * 56; d[p + 3] = 255;
@@ -84,7 +87,7 @@
 
   // ---------- glyph sprites ----------
   function makeSprites() {
-    const R = rng(77), out = { broad: [], pine: [], snowpine: [], hill: [], dune: [], cactus: [], dead: [], tuft: [], ice: [] };
+    const R = rng(77), out = { broad: [], pine: [], snowpine: [], hill: [], dune: [], cactus: [], dead: [], tuft: [], ice: [], mesa: [], lava: [], flower: [], crystal: [], pond: [], rod: [], shard: [] };
     const greens = [[[78, 112, 44], [122, 152, 62], [52, 80, 34]], [[92, 122, 46], [142, 164, 70], [62, 88, 36]], [[66, 102, 46], [108, 142, 60], [44, 72, 32]]];
     for (let v = 0; v < 9; v++) {
       const pal = greens[v % 3];
@@ -125,6 +128,13 @@
       out.dead.push(sprite(32, 36, (g) => { g.strokeStyle = INK; g.lineWidth = 2.2; g.beginPath(); g.moveTo(16, 34); g.lineTo(16, 16); g.lineTo(9, 7); g.moveTo(16, 20); g.lineTo(25, 10); g.moveTo(13, 12); g.lineTo(7, 14); g.moveTo(20, 15); g.lineTo(26, 18); g.stroke(); }));
       out.tuft.push(sprite(34, 20, (g) => { g.strokeStyle = 'rgba(58,76,40,.92)'; g.lineWidth = 1.4; for (let i = 0; i < 6; i++) { g.beginPath(); const x = 7 + i * 4 + R() * 2; g.moveTo(x, 15); g.lineTo(x + (R() - .5) * 7, 4 + R() * 5); g.stroke(); } g.strokeStyle = 'rgba(52,96,110,.7)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(3, 17); g.quadraticCurveTo(10, 15, 17, 17); g.quadraticCurveTo(24, 19, 31, 17); g.stroke(); }));
       out.ice.push(sprite(36, 44, (g) => { const hw = 7 + R() * 5, top = 5 + R() * 8, lean = (R() - .5) * 8; g.beginPath(); g.moveTo(18 + lean, top); g.lineTo(18 + hw, 40); g.lineTo(18 - hw, 40); g.closePath(); g.fillStyle = '#cfe4ec'; g.fill(); g.lineWidth = 1.6; g.strokeStyle = '#2f3e48'; g.stroke(); g.beginPath(); g.moveTo(18 + lean, top); g.lineTo(18 + hw * .25, 40); g.lineTo(18 + hw, 40); g.closePath(); g.fillStyle = '#8fb7c8'; g.fill(); g.stroke(); }));
+      out.mesa.push(sprite(72, 50, (g) => { const w = 22 + R() * 10, h = 24 + R() * 16, x = 36; g.beginPath(); g.moveTo(x - w, 46); g.lineTo(x - w * .68, 46 - h); g.lineTo(x + w * .68, 46 - h); g.lineTo(x + w, 46); g.closePath(); g.fillStyle = '#b86c3e'; g.fill(); g.lineWidth = 1.8; g.strokeStyle = INK; g.stroke(); g.lineWidth = 1.3; g.strokeStyle = 'rgba(70,34,14,.7)'; for (const f of [.3, .62]) { g.beginPath(); g.moveTo(x - w + f * w * .32, 46 - h * f); g.lineTo(x + w - f * w * .32, 46 - h * f); g.stroke(); } }));
+      out.lava.push(sprite(64, 26, (g) => { const rx = 20 + R() * 8; g.beginPath(); g.ellipse(32, 14, rx + 4, 9, 0, 0, TAU); g.fillStyle = '#2a1410'; g.fill(); g.lineWidth = 1.6; g.strokeStyle = INK; g.stroke(); g.beginPath(); g.ellipse(32, 14, rx, 6, 0, 0, TAU); g.fillStyle = '#f07a2e'; g.fill(); g.beginPath(); g.ellipse(30, 13, rx * .55, 3, 0, 0, TAU); g.fillStyle = '#ffd36b'; g.fill(); }));
+      out.flower.push(sprite(34, 26, (g) => { const cols = ['#e27aa8', '#f2c14a', '#a26be0', '#f0f0d8']; for (let i = 0; i < 4; i++) { const x = 7 + i * 7, y = 8 + R() * 10; g.strokeStyle = 'rgb(62,110,44)'; g.lineWidth = 1.3; g.beginPath(); g.moveTo(x, 25); g.lineTo(x, y); g.stroke(); g.fillStyle = cols[Math.floor(R() * cols.length)]; g.beginPath(); g.arc(x, y, 3.4, 0, TAU); g.fill(); g.strokeStyle = INK; g.lineWidth = 1; g.stroke(); } }));
+      out.crystal.push(sprite(36, 46, (g) => { for (const [x, w, h, l] of [[12, 5, 20 + R() * 10, 2], [24, 7, 30 + R() * 12, -3]]) { g.beginPath(); g.moveTo(x + l, 44 - h); g.lineTo(x + w, 40); g.lineTo(x - w, 40); g.closePath(); g.fillStyle = '#d85cc0'; g.fill(); g.strokeStyle = INK; g.lineWidth = 1.4; g.stroke(); g.beginPath(); g.moveTo(x + l, 44 - h); g.lineTo(x + w, 40); g.lineTo(x + w * .15, 40); g.closePath(); g.fillStyle = '#8f2d86'; g.fill(); g.stroke(); } }));
+      out.pond.push(sprite(64, 24, (g) => { g.beginPath(); g.ellipse(32, 12, 22 + R() * 8, 7 + R() * 3, 0, 0, TAU); g.fillStyle = '#6da3b8'; g.fill(); g.lineWidth = 1.5; g.strokeStyle = INK; g.stroke(); }));
+      out.rod.push(sprite(22, 50, (g) => { g.strokeStyle = INK; g.lineWidth = 2.6; g.beginPath(); g.moveTo(11, 48); g.lineTo(11, 8); g.stroke(); g.lineWidth = 1.8; g.beginPath(); g.moveTo(5, 16); g.lineTo(17, 16); g.stroke(); g.fillStyle = '#e8cf52'; g.beginPath(); g.arc(11, 6, 3.6, 0, TAU); g.fill(); g.lineWidth = 1.2; g.stroke(); }));
+      out.shard.push(sprite(46, 30, (g) => { g.beginPath(); g.moveTo(5, 28); g.lineTo(13, 8 + R() * 6); g.lineTo(23, 16); g.lineTo(32, 3 + R() * 6); g.lineTo(42, 28); g.closePath(); g.fillStyle = '#6c6880'; g.fill(); g.strokeStyle = INK; g.lineWidth = 1.7; g.stroke(); }));
     }
     return out;
   }
@@ -157,7 +167,7 @@
     g.lineWidth = 1.3; g.beginPath(); g.moveTo(ridge[0][0], ridge[0][1]); for (let i = 1; i < ridge.length - 1; i++) g.lineTo(ridge[i][0], ridge[i][1]); g.stroke();
     g.fillStyle = 'rgba(38,26,14,.5)'; for (let i = 0; i < w * .35; i++) g.fillRect(x + (r() - .3) * w * .55, y - r() * ht * .22, 1.2, 1.2);
   }
-  const TONE = { rock: { lit: [205, 170, 118], dark: [130, 92, 54] }, ash: { lit: [138, 118, 110], dark: [78, 62, 60] }, cold: { lit: [186, 180, 168], dark: [112, 108, 106] } };
+  const TONE = { storm: { lit: [146, 142, 172], dark: [82, 78, 112] }, moss: { lit: [158, 170, 114], dark: [92, 108, 68] }, arc: { lit: [176, 140, 190], dark: [98, 66, 124] }, rock: { lit: [205, 170, 118], dark: [130, 92, 54] }, ash: { lit: [138, 118, 110], dark: [78, 62, 60] }, cold: { lit: [186, 180, 168], dark: [112, 108, 106] } };
 
   function drawVolcano(g, x, y, w, r) {
     const ht = w * .72, rim = w * .13, top = y - ht;
@@ -316,7 +326,7 @@
     const allT = w.academy ? [w.academy, ...w.towns] : w.towns;
     let cB = -1, cX = W / 2, cY = H / 2;
     for (let y = Math.floor(GH * .16); y < GH * .72; y += 2) for (let x = Math.floor(GW * .16); x < GW * .84; x += 2) { const i = idx(x, y); if (w.sea[i] && !(x > GW * .62 && y > GH * .6) && w.dLand[i] > cB) { cB = w.dLand[i]; cX = x * S; cY = y * S; } }
-    const cR = Math.max(92, Math.min(130, cB * S * .5));
+    const cR = Math.max(120, Math.min(175, cB * S * .5));
     g.save(); g.clip(oceanClip, 'evenodd');
     g.strokeStyle = 'rgba(30,48,58,.14)'; g.lineWidth = 1.5;
     for (let i = 0; i < 16; i++) { const a = i * TAU / 16; g.beginPath(); g.moveTo(cX, cY); g.lineTo(cX + Math.cos(a) * 2600, cY + Math.sin(a) * 2600); g.stroke(); }
@@ -384,62 +394,92 @@
     for (const [x, y] of w.volc) mark(x, y, 12, 2);
     for (const p of w.rifts) for (const [x, y] of p) mark(Math.round(x), Math.round(y), 3, 1);
 
+    const LM = (root.FieldLandmarks || []).filter((l) => !opts.cut || !opts.cut.has(l.id)), picked = [], lmUsed = {};
+    const regionCells = w.sites.map(() => []), seaCells = [], pairCells = new Map();
+    for (let i = 0; i < N; i++) { if (w.sea[i]) { if (i % 7 === 0) seaCells.push(i); continue; } if (w.w1[i] > .62) regionCells[w.region[i]].push(i); else { const key = [w.regK[w.region[i]], w.regK[w.region2[i]]].sort().join('|'); if (!pairCells.has(key)) pairCells.set(key, []); pairCells.get(key).push(i); } }
+    const spotOk = (l, i) => {
+      const x = i % GW, y = (i / GW) | 0, v = w.h[i]; if (y < GH * .18 || block[i] > 1 || (x > GW * .72 && y > GH * .8)) return false;
+      if (l.place === 'coast') { if (w.sea[i] || w.lake[i] || w.dSea[i] > 4 * K || v > .3) return false; }
+      else if (l.place === 'river') { if (!w.river[i] || v > .34) return false; }
+      else if (l.place === 'high') { if (w.sea[i] || w.lake[i] || v < .38) return false; }
+      else if (l.place === 'sea') { if (!w.sea[i] || w.dLand[i] < 14 * K || w.dLand[i] > 46 * K) return false; }
+      else if (w.sea[i] || w.lake[i] || w.river[i] || v > .4) return false;
+      return picked.every((p) => Math.hypot(p.x - x, p.y - y) > p.l.rad + l.rad + 6) && allT.every((t) => Math.hypot(t.x - x, t.y - y) > l.rad + 8);
+    };
+    const tryPlace = (l, cells) => { if (!cells || !cells.length) return false; for (let t = 0; t < 300; t++) { const i = cells[Math.floor(r() * cells.length)]; if (spotOk(l, i)) { const p = { l, x: i % GW, y: (i / GW) | 0 }; picked.push(p); mark(p.x, p.y, l.rad * .7, 2); lmUsed[l.id] = (lmUsed[l.id] || 0) + 1; return true; } } return false; };
+    w.sites.map((s, j) => [s, j]).filter(([s]) => s.deep && s.y > GH * .12).sort((a, b) => b[0].n - a[0].n).forEach(([s, j]) => {
+      let done = 0; const want = s.n > 7000 ? 3 : 2;
+      for (const l of LM.filter((m) => m.k === s.k && !m.confluence && !lmUsed[m.id]).sort((a, b) => (lmUsed[a.id] || 0) - (lmUsed[b.id] || 0) + (r() - .5) * .2)) { if (done >= want) break; if (tryPlace(l, l.place === 'sea' ? seaCells : regionCells[j])) done++; }
+    });
+    for (const l of LM) if (l.confluence) tryPlace(l, pairCells.get([l.k, l.also].sort().join('|')));
+
     const items = [], add = (y, fn) => items.push([y, fn]);
     const occ = new Uint8Array(N);
     const peaks = []; for (let i = 0; i < N; i++) if (!w.sea[i] && !w.lake[i] && w.h[i] > .36) peaks.push(i);
     peaks.sort((a, b) => w.h[b] - w.h[a]);
     let placed = 0;
     for (const i of peaks) {
-      if (occ[i] || block[i] > 1 || w.dSea[i] < 2 * K || placed > 460) continue;
-      const x = i % GW, y = (i / GW) | 0, v = w.h[i], big = v > .46, pw = big ? 72 + (v - .46) * 190 : 42 + (v - .36) * 220, wc = pw / S, rad = wc * (big ? .36 : .62), rr = Math.ceil(rad);
+      if (occ[i] || block[i] > 1 || w.dSea[i] < 2 * K || placed > 1000) continue;
+      const x = i % GW, y = (i / GW) | 0, v = w.h[i], big = v > .46, pw = big ? 92 + (v - .46) * 230 : 50 + (v - .36) * 260, wc = pw / S, rad = wc * (big ? .36 : .62), rr = Math.ceil(rad);
       for (let cy = Math.max(0, y - rr); cy <= Math.min(GH - 1, y + rr); cy++) for (let cx = Math.max(0, x - rr); cx <= Math.min(GW - 1, x + rr); cx++) if ((cx - x) ** 2 + (cy - y) ** 2 <= rad * rad) occ[idx(cx, cy)] = 1;
       if (y * S - pw * 1.1 < FRAME + 12) continue;
       placed++;
-      const px = x * S + (r() - .5) * S * 2, py = y * S + S * .5 + (r() - .5) * S, cold = w.temp[i] < .34, ash = w.F.fire[i] > .6, tone = ash ? TONE.ash : cold ? TONE.cold : TONE.rock, snow = !ash && (w.temp[i] < .26 || v > .93), seed2 = hash(x, y, w.seed + 5) * 1e9 + 1;
+      const px = x * S + (r() - .5) * S * 2, py = y * S + S * .5 + (r() - .5) * S, cold = w.temp[i] < .34, ash = w.F.fire[i] > .6, fk = w.regK[w.region[i]], tone = ash || fk === 'fire' ? TONE.ash : cold || fk === 'cold' ? TONE.cold : fk === 'lightning' ? TONE.storm : fk === 'life' ? TONE.moss : fk === 'arcane' ? TONE.arc : TONE.rock, snow = !ash && (w.temp[i] < .26 || v > .93), seed2 = hash(x, y, w.seed + 5) * 1e9 + 1;
       add(py, (c) => drawPeak(c, px, py, pw, pw * (.82 + hash(x, y, 3) * .24), tone, snow, rng(seed2)));
     }
     const jit = () => (r() - .5) * S * 2;
     for (let y = 2; y < GH - 2; y += 3) for (let x = 2 + (y % 2 ? 1 : 0); x < GW - 2; x += 3) { const i = idx(x, y); if (!w.forest[i] || block[i] || occ[i] || y * S < FRAME + 62) continue; if (r() < .07) continue; const px = x * S + jit(), py = y * S + jit(), conifer = w.temp[i] < .44 + (hash(x, y, 9) - .5) * .08, snowy = w.temp[i] < .2, list = conifer ? (snowy ? sp.snowpine : sp.pine) : sp.broad, img = list[Math.floor(r() * list.length)], s = .92 + r() * .3; add(py, (c) => stamp(c, img, px, py, s)); }
-    for (let y = 3; y < GH - 3; y += 6) for (let x = 3 + (y % 4 ? 3 : 0); x < GW - 3; x += 6) { const i = idx(x, y); if (w.sea[i] || w.lake[i] || block[i] || occ[i] || w.forest[i]) continue; const v = w.h[i];
-      if (y * S < FRAME + 62) continue;
-      const px = x * S + jit(), py = y * S + jit(), pick = (a) => a[Math.floor(r() * a.length)];
-      if (v > .24 && v < .36 && r() < .78) { const img = pick(sp.hill), s = .9 + r() * .55; add(py, (c) => stamp(c, img, px, py, s)); }
-      else if (w.temp[i] < .16 && r() < .55) { const img = pick(sp.ice), s = .85 + r() * .5; add(py, (c) => stamp(c, img, px, py, s)); }
-      else if (w.moist[i] < .36 && w.temp[i] > .56 && v < .3) { if (r() < .82) { const img = pick(sp.dune), s = .9 + r() * .5; add(py, (c) => stamp(c, img, px, py, s)); } if (r() < .14) { const img = pick(sp.cactus), s2 = .8 + r() * .3, x2 = px + 16; add(py + 4, (c) => stamp(c, img, x2, py + 4, s2)); } }
-      else if (w.F.fire[i] > .55 && r() < .3) { const img = pick(sp.dead), s = .85 + r() * .4; add(py, (c) => stamp(c, img, px, py, s)); }
-      else if (w.F.water[i] > .7 && v < .06 && w.moist[i] > .55 && r() < .6) { const img = pick(sp.tuft); add(py, (c) => stamp(c, img, px, py, 1)); }
-      else if (w.moist[i] > .45 && w.temp[i] > .2 && v < .24 && r() < .14) { const list = w.temp[i] < .42 ? sp.pine : sp.broad, img = pick(list), s = .85 + r() * .25; add(py, (c) => stamp(c, img, px, py, s)); }
+    for (let y = 3; y < GH - 3; y += 6) for (let x = 3 + (y % 4 ? 3 : 0); x < GW - 3; x += 6) {
+      const i = idx(x, y); if (w.sea[i] || w.lake[i] || block[i] || occ[i] || w.forest[i] || y * S < FRAME + 62) continue;
+      const v = w.h[i], k = w.regK[w.region[i]], px = x * S + jit(), py = y * S + jit(), q = r();
+      const put = (a, s) => { const img = a[Math.floor(r() * a.length)], sc = s + r() * .4; add(py, (c) => stamp(c, img, px, py, sc)); };
+      if (v > .24 && v < .36 && k !== 'cold' && q < .5) { put(sp.hill, .9); continue; }
+      if (k === 'cold') { if (w.temp[i] < .24 && q < .2) put(sp.ice, .85); else if (q < .42) put(sp.snowpine, .85); }
+      else if (k === 'fire') { if (q < .15) put(sp.lava, .8); else if (q < .4) put(sp.dead, .85); else if (w.moist[i] < .4 && q < .78) put(sp.dune, .9); }
+      else if (k === 'earth') { if (q < .14) put(sp.mesa, .7); else if (q < .5 && w.moist[i] < .42) put(sp.dune, .85); else if (q < .6) put(sp.cactus, .8); }
+      else if (k === 'water') { if (q < .55) put(sp.tuft, .9); else if (q < .8) put(sp.pond, .9); }
+      else if (k === 'lightning') { if (q < .24) put(sp.rod, .9); else if (q < .48) put(sp.shard, .9); else if (q < .62) put(sp.dead, .8); }
+      else if (k === 'life') { if (q < .36) put(sp.flower, .9); else if (q < .62) put(sp.broad, .85); }
+      else if (k === 'arcane') { if (q < .4) put(sp.crystal, .85); else if (q < .52) put(sp.dead, .75); }
     }
-    for (let k = 0; k < 2200; k++) { const x = 3 + Math.floor(r() * (GW - 6)), y = 3 + Math.floor(r() * (GH - 6)), i = idx(x, y); if (w.sea[i] || w.lake[i] || block[i] || occ[i] || w.forest[i] || w.h[i] > .3 || w.temp[i] < .16) continue; const px = x * S + r() * S, py = y * S + r() * S, dry = w.moist[i] < .36; add(py - 1, (c) => { c.strokeStyle = dry ? 'rgba(112,88,44,.5)' : 'rgba(46,60,26,.5)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(px - 3, py); c.lineTo(px - 4, py - 4); c.moveTo(px, py); c.lineTo(px, py - 5.5); c.moveTo(px + 3, py); c.lineTo(px + 4, py - 4); c.stroke(); }); }
+    for (let k = 0; k < 5000; k++) { const x = 3 + Math.floor(r() * (GW - 6)), y = 3 + Math.floor(r() * (GH - 6)), i = idx(x, y); if (w.sea[i] || w.lake[i] || block[i] || occ[i] || w.forest[i] || w.h[i] > .3 || w.temp[i] < .16 || ['cold', 'fire', 'arcane'].includes(w.regK[w.region[i]])) continue; const px = x * S + r() * S, py = y * S + r() * S, dry = w.moist[i] < .36; add(py - 1, (c) => { c.strokeStyle = dry ? 'rgba(112,88,44,.5)' : 'rgba(46,60,26,.5)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(px - 3, py); c.lineTo(px - 4, py - 4); c.moveTo(px, py); c.lineTo(px, py - 5.5); c.moveTo(px + 3, py); c.lineTo(px + 4, py - 4); c.stroke(); }); }
     for (const p of w.rifts) for (let k = 0; k < 9; k++) { const q = p[Math.floor(r() * p.length)], a = r() * TAU, d = 2 + r() * 5, px = (q[0] + Math.cos(a) * d) * S, py = (q[1] + Math.sin(a) * d) * S, s = 8 + r() * 12, lean = (r() - .5) * s * .7; add(py, (c) => { c.beginPath(); c.moveTo(px + lean, py - s * 2); c.lineTo(px + s * .55, py); c.lineTo(px - s * .55, py); c.closePath(); c.fillStyle = '#d85cc0'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.5; c.stroke(); c.beginPath(); c.moveTo(px + lean, py - s * 2); c.lineTo(px + s * .55, py); c.lineTo(px + s * .12, py); c.closePath(); c.fillStyle = '#8f2d86'; c.fill(); c.stroke(); }); }
     for (const [x, y] of w.volc) { const px = x * S, py = y * S + 10, seed2 = hash(x, y, w.seed) * 1e9 + 1; add(py, (c) => drawVolcano(c, px, py, 138, rng(seed2))); }
 
     // settlements join the glyph field so peaks stand behind them
-    const rects = [[W - FRAME - 530, H - FRAME - 256, W - FRAME, H - FRAME]];
+    const rects = [[W - FRAME - KEYW - 30, H - FRAME - KEYH - 30, W - FRAME, H - FRAME], [0, 0, W, H * .1]];
+    for (const p of picked) { const px = p.x * S + S / 2, py = p.y * S + S / 2 + 6; rects.push([px - p.l.rad * 4, py - 110, px + p.l.rad * 4, py + 6]); }
     if (showT) for (const t of allT) { const px = t.x * S + S / 2, py = t.y * S + S / 2 + 8, f = FOOT[t.tier], roof = ROOF[t.ks[0]]; rects.push([px + f[0], py + f[2], px + f[1], py + f[3]]); add(py + .1, (c) => settlement(c, t.tier, px, py, roof)); }
     if (showT) for (const t of w.shrines) { const px = t.x * S, py = t.y * S; rects.push([px - 14, py - 20, px + 14, py + 3]); add(py, (c) => settlement(c, 'shrine', px, py, ROOF.arcane)); }
+    for (const p of picked) { const px = p.x * S + S / 2, py = p.y * S + S / 2 + 6, seed2 = hash(p.x, p.y, w.seed + 9) * 1e9 + 1; add(py, (c) => { c.save(); c.translate(px, py); c.scale(.82, .82); c.lineJoin = 'round'; c.lineCap = 'round'; p.l.draw(c, rng(seed2)); c.restore(); }); }
     items.sort((a, b) => a[0] - b[0]);
 
     // storm clouds float above everything on the ground
     for (const [, fn] of items) fn(g);
-    for (let y = 6; y < GH - 6; y += 24) for (let x = 6 + (y % 48 ? 12 : 0); x < GW - 6; x += 24) { const i = idx(x, y); if (w.sea[i] || w.F.lightning[i] < .7 || r() > .75) continue; const px = x * S, py = y * S - 26, s = .8 + r() * .6, seed2 = hash(x, y, 2) * 1e9 + 1; cloud(g, px, py, s, rng(seed2)); }
+    for (let y = 6; y < GH - 6; y += 18) for (let x = 6 + (y % 36 ? 9 : 0); x < GW - 6; x += 18) { const i = idx(x, y); if (w.sea[i] || y < GH * .12 || (w.regK[w.region[i]] !== 'lightning' && w.F.lightning[i] < .7) || w.w1[i] < .62 || r() > .62) continue; const px = x * S, py = y * S - 26, s = .8 + r() * .6, seed2 = hash(x, y, 2) * 1e9 + 1; cloud(g, px, py, s, rng(seed2)); }
+
+    // the uncharted north: the land simply stops being known
+    { const fade = mk(GW, GH), fc = fade.getContext('2d'), im = fc.createImageData(GW, GH); for (let y = 0; y < GH * .3; y++) for (let x = 0; x < GW; x++) { const a0 = cl(1.15 - (y / GH) / .17 + (fbm(x / 14, y / 14, w.seed + 70) - .5) * .9), a = a0 * a0 * (3 - 2 * a0), p = idx(x, y) * 4; im.data[p] = 240; im.data[p + 1] = 235; im.data[p + 2] = 222; im.data[p + 3] = a * 255; } fc.putImageData(im, 0, 0); g.drawImage(fade, 0, 0, W, H); }
 
     // the compass
+    const layer = opts.layer || 'all', mainCtx = g, L = mk(W, H).getContext('2d'); L.lineCap = 'round'; L.lineJoin = 'round';
     compass(g, cX, cY - 26, cR);
-    banner(g, cX, cY + cR + 8, 330, 62, 'Field Atlas', `700 44px ${F_GOTH}`);
-    rects.push([cX - 190, cY - cR - 80, cX + 190, cY + cR + 44]);
+    banner(L, cX, cY + cR + 14, 440, 80, 'Field Atlas', `700 58px ${F_GOTH}`);
+    rects.push([cX - 250, cY - cR - 90, cX + 250, cY + cR + 62]);
 
     // lettering: big names first so towns can dodge them
+    g = L;
     const rectHit = (a) => { let n = 0; for (const b of rects) { const ox = Math.min(a[2], b[2]) - Math.max(a[0], b[0]), oy = Math.min(a[3], b[3]) - Math.max(a[1], b[1]); if (ox > 0 && oy > 0) n += ox * oy; } return n; };
     const box = (text, font, spacing, x, y, ang, tall) => { g.font = font; const hw = (g.measureText(text).width + spacing * text.length) / 2 + 8, hh = tall, cs = Math.abs(Math.cos(ang)), sn = Math.abs(Math.sin(ang)), ex = hw * cs + hh * sn, ey = hw * sn + hh * cs; return [x - ex, y - ey, x + ex, y + ey]; };
-    const offMap = (a) => a[0] < FRAME + 14 || a[2] > W - FRAME - 14 || a[1] < FRAME + 14 || a[3] > H - FRAME - 14 || (a[2] > W - FRAME - 520 && a[3] > H - FRAME - 240);
+    const offMap = (a) => a[0] < FRAME + 14 || a[2] > W - FRAME - 14 || a[1] < FRAME + 14 || a[3] > H - FRAME - 14 || (a[2] > W - FRAME - KEYW - 20 && a[3] > H - FRAME - KEYH - 20);
     const putName = (text, font, spacing, spots, ang, tall, style) => { for (const [x, y] of spots) { const b = box(text, font, spacing, x, y, ang, tall); if (offMap(b) || rectHit(b) > 900) continue; arcText(g, text, x, y, { font, spacing, angle: ang, ...style }); rects.push(b); return true; } return false; };
-    if (w.sea[idx(w.rx * GW | 0, w.ry * GH | 0)]) putName('The Inner Sea', `500 46px ${F_REGION}`, 12, [[w.rx * W, w.ry * H], [w.rx * W, w.ry * H - 70], [w.rx * W, w.ry * H + 70], [w.rx * W - 90, w.ry * H], [w.rx * W + 90, w.ry * H]], 0, 28, { curve: .18, fill: 'rgba(232,240,232,.62)', stroke: 'rgba(24,44,56,.28)', strokeW: 3 });
+    arcText(g, 'U N C H A R T E D', W / 2, H * .062, { font: `italic 500 66px ${F_REGION}`, spacing: 18, curve: .1, fill: 'rgba(58,50,40,.6)', stroke: 'rgba(246,240,226,.8)', strokeW: 5 });
+    if (w.sea[idx(w.rx * GW | 0, w.ry * GH | 0)]) putName(w.seaName, `500 58px ${F_REGION}`, 12, [[w.rx * W, w.ry * H], [w.rx * W, w.ry * H - 90], [w.rx * W, w.ry * H + 90], [w.rx * W - 130, w.ry * H], [w.rx * W + 130, w.ry * H]], 0, 34, { curve: .18, fill: 'rgba(232,240,232,.66)', stroke: 'rgba(24,44,56,.3)', strokeW: 3 });
     if (showT) {
       const clampAng = (a, m) => Math.max(-m, Math.min(m, a));
-      w.chains.map((ch, i) => [ch, i]).sort((a, b) => b[0].length - a[0].length).forEach(([ch, i]) => { if (ch.length < 26) return; const p = ch[Math.floor(ch.length * .2)], q = ch[Math.floor(ch.length * .8)], m = ch[Math.floor(ch.length * .5)]; let a0 = Math.atan2(q[1] - p[1], q[0] - p[0]); if (a0 > Math.PI / 2) a0 -= Math.PI; if (a0 < -Math.PI / 2) a0 += Math.PI; const ang = clampAng(a0, .55), mx = m[0] * S, my = m[1] * S, nx = -Math.sin(ang), ny = Math.cos(ang); putName(RANGE_NAME[i % RANGE_NAME.length].toUpperCase(), `600 30px ${F_REGION}`, 9, [34, 70, -46, 108, -84].map((d) => [mx + nx * d, my + ny * d]), ang, 20, { curve: .1, fill: 'rgba(38,24,12,.86)', stroke: 'rgba(246,234,204,.55)', strokeW: 5 }); });
-      w.regions.slice().sort((a, b) => b.n - a.n).forEach((rg) => { const x = rg.x * S, y = rg.y * S; putName(REGION_NAME[rg.k].toUpperCase(), `500 38px ${F_REGION}`, 12, [[0, 0], [0, -46], [0, 46], [-60, 0], [60, 0], [0, -92], [0, 92]].filter(([dx, dy]) => !w.sea[idx(Math.max(0, Math.min(GW - 1, Math.round((x + dx) / S))), Math.max(0, Math.min(GH - 1, Math.round((y + dy) / S))))]).map(([dx, dy]) => [x + dx, y + dy]), clampAng(rg.ang, .3), 24, { curve: .12, fill: 'rgba(40,26,14,.74)', stroke: 'rgba(246,234,204,.45)', strokeW: 5 }); });
-      w.woods.slice(0, 4).forEach((wd, i) => { const name = (wd.conifer ? ['The Old Pines', 'The Dark Pines', 'The Black Firs', 'The Needle Wood'] : ['The Deep Wood', 'The Tangle', 'The Hollow Wood', 'The Green Dark'])[i]; putName(name, `italic 600 26px ${F_TOWN}`, 2, [[0, 0], [0, -34], [0, 34]].map(([dx, dy]) => [wd.x * S + dx, wd.y * S + dy]), clampAng(wd.ang, .25), 17, { curve: .1, fill: '#f4ecd2', stroke: 'rgba(24,32,14,.85)', strokeW: 4.5 }); });
+      w.chains.map((ch, i) => [ch, i]).sort((a, b) => b[0].length - a[0].length).forEach(([ch, i]) => { if (ch.length < 26) return; const p = ch[Math.floor(ch.length * .2)], q = ch[Math.floor(ch.length * .8)], m = ch[Math.floor(ch.length * .5)]; let a0 = Math.atan2(q[1] - p[1], q[0] - p[0]); if (a0 > Math.PI / 2) a0 -= Math.PI; if (a0 < -Math.PI / 2) a0 += Math.PI; const ang = clampAng(a0, .55), mx = m[0] * S, my = m[1] * S, nx = -Math.sin(ang), ny = Math.cos(ang); putName(w.chainNames[i].toUpperCase(), `600 40px ${F_REGION}`, 10, [40, 84, -54, 128, -100].map((d) => [mx + nx * d, my + ny * d]), ang, 25, { curve: .1, fill: 'rgba(38,24,12,.88)', stroke: 'rgba(246,234,204,.6)', strokeW: 6 }); });
+      w.regions.slice().sort((a, b) => b.n - a.n).forEach((rg) => { const x = rg.x * S, y = rg.y * S; const onDark = ['fire', 'arcane', 'lightning'].includes(rg.k); putName(rg.name.toUpperCase(), `500 52px ${F_REGION}`, 15, [[0, 0], [0, -60], [0, 60], [-90, 0], [90, 0], [0, -120], [0, 120]].filter(([dx, dy]) => !w.sea[idx(Math.max(0, Math.min(GW - 1, Math.round((x + dx) / S))), Math.max(0, Math.min(GH - 1, Math.round((y + dy) / S))))]).map(([dx, dy]) => [x + dx, y + dy]), clampAng(rg.ang, .3), 32, { curve: .12, fill: onDark ? 'rgba(246,238,220,.86)' : 'rgba(40,26,14,.82)', stroke: onDark ? 'rgba(24,16,10,.55)' : 'rgba(246,234,204,.55)', strokeW: 6 }); });
+      w.woods.slice(0, 8).forEach((wd) => { putName(wd.name, `italic 600 31px ${F_TOWN}`, 2, [[0, 0], [0, -40], [0, 40]].map(([dx, dy]) => [wd.x * S + dx, wd.y * S + dy]), clampAng(wd.ang, .25), 20, { curve: .1, fill: '#f4ecd2', stroke: 'rgba(24,32,14,.85)', strokeW: 5 }); });
     }
 
     if (showT) {
@@ -447,20 +487,23 @@
       for (const t of [...allT].sort((a, b) => rank[a.tier] - rank[b.tier])) {
         const px = t.x * S + S / 2, py = t.y * S + S / 2 + 8, f = FOOT[t.tier];
         if (t.tier === 'academy' || t.tier === 'city') {
-          const bw = Math.max(150, t.name.length * (t.tier === 'academy' ? 19 : 15.5)), bh = t.tier === 'academy' ? 46 : 34, tx = Math.max(FRAME + bw / 2 + 30, Math.min(W - FRAME - bw / 2 - 30, px));
+          const bw = Math.max(170, t.name.length * (t.tier === 'academy' ? 24 : 20)), bh = t.tier === 'academy' ? 56 : 44, tx = Math.max(FRAME + bw / 2 + 30, Math.min(W - FRAME - bw / 2 - 30, px));
           const spots = [[tx, py + bh * .9], [tx, py + f[2] - bh * .7], [tx - 130, py + bh * .9], [tx + 130, py + bh * .9], [tx - 130, py + f[2] - bh * .7], [tx + 130, py + f[2] - bh * .7]].map(([x, y]) => [Math.max(FRAME + bw / 2 + 30, Math.min(W - FRAME - bw / 2 - 30, x)), Math.max(FRAME + bh, Math.min(H - FRAME - bh, y))]);
           let pick = spots[0], low = 1e12; for (const sp2 of spots) { const hit = rectHit([sp2[0] - bw / 2 - 20, sp2[1] - bh / 2 - 6, sp2[0] + bw / 2 + 20, sp2[1] + bh / 2 + 6]); if (hit < low - 300) { low = hit; pick = sp2; } }
-          banner(g, pick[0], pick[1], bw, bh, t.name, `700 ${t.tier === 'academy' ? 34 : 25}px ${F_GOTH}`); rects.push([pick[0] - bw / 2 - 20, pick[1] - bh / 2 - 6, pick[0] + bw / 2 + 20, pick[1] + bh / 2 + 6]);
+          banner(g, pick[0], pick[1], bw, bh, t.name, `700 ${t.tier === 'academy' ? 42 : 32}px ${F_GOTH}`); rects.push([pick[0] - bw / 2 - 20, pick[1] - bh / 2 - 6, pick[0] + bw / 2 + 20, pick[1] + bh / 2 + 6]);
           continue;
         }
-        const size = t.tier === 'hamlet' ? 23 : 27, font = `700 ${size}px ${F_TOWN}`; g.font = font; const tw = g.measureText(t.name).width + 6;
+        const size = t.tier === 'hamlet' ? 28 : 33, font = `700 ${size}px ${F_TOWN}`; g.font = font; const tw = g.measureText(t.name).width + 6;
         const cands = [[px + f[1] + 6 + tw / 2, py - 12], [px + f[0] - 6 - tw / 2, py - 12], [px, py + 18], [px, py + f[2] - 16], [px + f[1] + tw / 2, py + 12], [px + f[0] - tw / 2, py + 12]];
         let best = cands[0], bs = 1e12;
         for (const c of cands) { const a = [c[0] - tw / 2, c[1] - size * .6, c[0] + tw / 2, c[1] + size * .6]; let s = rectHit(a); if (a[0] < FRAME + 12 || a[2] > W - FRAME - 12 || a[1] < FRAME + 12 || a[3] > H - FRAME - 12) s += 1e7; if (s < bs) { bs = s; best = c; } }
         arcText(g, t.name, best[0], best[1], { font, curve: (hash(t.x, t.y, 6) - .5) * .12, fill: '#f6eeda', stroke: '#23180f', strokeW: 5 });
         rects.push([best[0] - tw / 2, best[1] - size * .6, best[0] + tw / 2, best[1] + size * .6]);
       }
+      for (const p of picked) { const px = p.x * S + S / 2, py = p.y * S + S / 2 + 6; putName(p.l.name, `italic 600 26px ${F_TOWN}`, 1, [[px, py + 26], [px, py - 126], [px - 120, py - 44], [px + 120, py - 44]], 0, 16, { curve: .08, fill: '#f4ecd2', stroke: 'rgba(24,18,10,.85)', strokeW: 4.5 }); }
     }
+
+    g = mainCtx;
 
     // sea life, kept off the names
     const spots = [], free = (x, y, rad) => spots.every(([a, b, rr]) => Math.hypot(a - x, b - y) > rad + rr) && Math.hypot(cX / S - x, cY / S - y) > 60 * K / 1.54 + rad && !(x > GW * .66 && y > GH * .74);
@@ -473,12 +516,15 @@
     if ((at = seaSpot(12, 9 * K))) whale(g, at[0], at[1], .8, r() < .5);
 
 
+    if (layer === 'all') g.drawImage(L.canvas, 0, 0);
+
     // finish: paper, vignette, frame, key
     g.save(); g.globalCompositeOperation = 'soft-light'; g.globalAlpha = .55; g.drawImage(mottleTex, 0, 0, W, H); g.restore();
     g.save(); g.globalCompositeOperation = 'multiply'; g.fillStyle = g.createPattern(grainTex, 'repeat'); g.fillRect(0, 0, W, H); g.restore();
     const V = g.createRadialGradient(W / 2, H / 2, H * .45, W / 2, H / 2, H * .95); V.addColorStop(0, 'rgba(30,20,8,0)'); V.addColorStop(1, 'rgba(30,20,8,.42)'); g.fillStyle = V; g.fillRect(0, 0, W, H);
     frame(g);
-    mapKey(g, W - FRAME - 500, H - FRAME - 226, 500, 226, w);
+    const key = (ct) => { ct.save(); ct.translate(W - FRAME - KEYW, H - FRAME - KEYH); ct.scale(1.4, 1.4); mapKey(ct, 0, 0, 500, 226, w); ct.restore(); };
+    if (layer === 'letters') { g.clearRect(0, 0, W, H); g.drawImage(L.canvas, 0, 0); key(g); } else if (layer === 'all') key(g);
     g.restore();
     return { peaks: placed, glyphs: items.length };
   }
@@ -508,7 +554,7 @@
     g.strokeStyle = 'rgba(47,116,192,.9)'; g.lineCap = 'round'; for (const p of w.paths) { g.lineWidth = 2.4; g.beginPath(); p.pts.forEach(([x, y], i) => i ? g.lineTo(x * S + S / 2, y * S + S / 2) : g.moveTo(x * S + S / 2, y * S + S / 2)); g.stroke(); }
     if (opts.towns !== false) {
       g.textBaseline = 'middle'; g.textAlign = 'left';
-      for (const t of (w.academy ? [w.academy, ...w.towns] : w.towns)) { const px = t.x * S, py = t.y * S; g.fillStyle = '#20262c'; g.beginPath(); g.arc(px, py, 9, 0, TAU); g.fill(); t.ks.forEach((k, j) => { g.fillStyle = hex[k]; g.beginPath(); g.arc(px, py, 6.2, t.ks.length > 1 ? (j ? 0 : Math.PI) : 0, t.ks.length > 1 ? (j ? Math.PI : TAU) : TAU); g.fill(); }); g.font = `600 ${t.tier === 'city' || t.tier === 'academy' ? 25 : 21}px ${F_REGION}`; g.lineWidth = 5; g.strokeStyle = 'rgba(245,245,240,.9)'; g.strokeText(t.name, px + 13, py); g.fillStyle = '#20262c'; g.fillText(t.name, px + 13, py); }
+      for (const t of (w.academy ? [w.academy, ...w.towns] : w.towns)) { const px = t.x * S, py = t.y * S; g.fillStyle = '#20262c'; g.beginPath(); g.arc(px, py, 9, 0, TAU); g.fill(); t.ks.forEach((k, j) => { g.fillStyle = hex[k]; g.beginPath(); g.arc(px, py, 6.2, t.ks.length > 1 ? (j ? 0 : Math.PI) : 0, t.ks.length > 1 ? (j ? Math.PI : TAU) : TAU); g.fill(); }); g.font = `600 ${t.tier === 'city' || t.tier === 'academy' ? 25 : 21}px ${F_REGION}`; g.lineWidth = 5; g.strokeStyle = 'rgba(245,245,240,.9)'; g.strokeText(t.kind || t.name, px + 13, py); g.fillStyle = '#20262c'; g.fillText(t.kind || t.name, px + 13, py); }
     }
     g.restore();
   }

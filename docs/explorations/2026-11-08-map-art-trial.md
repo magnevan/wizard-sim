@@ -20,3 +20,7 @@ Landmarks: paint the rest. Repeated symbols need simpler subjects, a palette mat
 ## Outcome: rejected
 
 The user, on seeing it on the map: "It's very very bad... you generated the assets in isolation, and it shows. They look like stickers on the map and not at all integrated or hand crafted, this approach does not work." The "what it showed" section above judged each object alone and overrated the mine and forge. The art was taken off the page; the plan to paint the rest is cancelled. The originals stay in the gitignored `tools/art-trial/out/map-*.png`.
+
+## Second whole-map pass (same day)
+
+One Gemini call (`gemini-2.5-flash-image`) on seed 647051 with the rewritten prompt, kept in the gitignored `tools/art-trial/out/map-whole-647051.png`. It fixed what the first run got wrong: sizes held, the sea stayed, and there's no writing. But it barely repainted anything, so the map still looks like flat placeholder art. It also came back at 1152 x 896, so towns turned to mush; added an ice-and-lantern landmark on the north coast that doesn't exist; dropped most of the ships and sea monsters; and cropped the frame. A prompt that insists nothing may change seems to get little change.

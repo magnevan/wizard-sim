@@ -28,3 +28,10 @@ One Gemini call (`gemini-2.5-flash-image`) on seed 647051 with the rewritten pro
 ## Third whole-map pass: Gemini Pro (same day)
 
 The same image and prompt on `gemini-3-pro-image`, kept in the gitignored `tools/art-trial/out/map-whole-647051-pro.png`. Far more faithful than Flash: layout, frame, ships and sea monsters all kept, nothing invented, no writing. But it's still the same flat art with slightly cleaner ink, at 1152 x 928. The model follows the prompt, so the prompt's insistence on no change is now the likely limit.
+
+## Fourth pass: a relaxed prompt (same day)
+
+The user on the strict passes: "this is terrible". They agreed the instructions were too restrictive and proposed a new process: "[generate a seed image] -> [generate a beautiful map] -> label the world based on the image model output", since the input is random and needn't be followed strictly.
+
+One `gemini-3-pro-image` call on seed 647051 with a prompt treating the map as a rough thumbnail and giving full freedom (`tools/art-trial/out/map-free-647051-pro.png`, gitignored). The best Gemini pass so far: the frozen north, badlands, fens and sea are properly repainted, with new landmarks of its own. But it's uneven. The south-western land and most mesas are still close to tracings of the flat glyphs, and small garbled marks appear beside towns. Output is 1152 x 922. It seems to copy finished-looking symbols and repaint what's loose, so a looser input (colour and shapes without glyphs) is the next thing to test.
+

@@ -999,3 +999,6 @@ The user's answers on the World and Progression page.
 ## 2026-11-08: Map art painted one subject at a time is rejected (`explorations/2026-11-08-map-art-trial.md`)
 - **Rejected: generating map assets in isolation and placing them by code.** They read as stickers, not integrated or hand-crafted. Integration has to come from painting the map as a whole.
 
+## 2026-11-08: The map pipeline is seed, then painting, then labels (`explorations/2026-11-08-map-art-trial.md`)
+- **Generate a seed image, have an image model paint a beautiful map from it with real freedom, then label the world from what the model painted.** The seed is inspiration, not a layout to preserve. This replaces "keep the layout exactly and lay the lettering back on".
+

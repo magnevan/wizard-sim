@@ -66,3 +66,7 @@ The prompt that produced `-b`:
 ## Upscaling (same day)
 
 Free and local: Real-ESRGAN (`realesrgan-ncnn-vulkan`, v0.2.5.0) on `map-thumb-647051-b.png`, 1152 x 928 to 4608 x 3712. `realesrgan-x4plus-anime` flattened it to a cel-shaded cartoon. `realesrgan-x4plus` is closer but smooths the watercolour grain and over-sharpens ink, so the kept version blends it 62/38 with a plain enlargement and adds fine grain (`tools/art-trial/out/map-thumb-647051-b-x4.png`, gitignored). The tiniest buildings stay blobs, since an upscaler can only sharpen what the painting has. Good enough to label on; real extra detail would need a larger generation.
+
+## ChatGPT on the same sketch and prompt (same day)
+
+The user ran the page's prompt and seed 647051's thumbnail through ChatGPT by hand (`tools/art-trial/out/chatgpt-output-647051-sketch.png`, 1402 x 1122, gitignored). It is the best craft so far: one hand throughout, right scale, towns with readable shapes at native size, and the closest match yet to the sketch's coasts and fields. What it lost against Gemini's `-b`: fewer striking one-off landmarks (mostly castles and towns), the fen reads as green lowland rather than waterlogged, and it added a parchment edge and cloud border that hide the corners and much of the frozen north. The same 62/38 upscale gives 5608 x 4488 (`map-chatgpt-647051-x4.png`): crisper ink, with a slight mosaic look in the fine fen brushwork.

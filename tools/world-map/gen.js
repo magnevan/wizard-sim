@@ -397,6 +397,11 @@
     world.chainNames = chains.map(([p]) => { const k = temp[idx(p[0] | 0, p[1] | 0)] < .3 ? 'cold' : 'earth'; return `The ${newName(k)} ${RANGE_WORD[Math.floor(R() * RANGE_WORD.length)]}`; });
     for (const wd of woods) wd.name = `${newName(wd.conifer ? 'cold' : 'life')} ${wd.conifer ? 'Pines' : 'Wood'}`;
     world.seaName = `The Sea of ${newName('water')}`;
+    // the big shapes of the land, for describing this world to a paint model
+    // (taking only cells well inland splits lands joined by a thin neck, which read as separate lands)
+    // the frozen band is its own feature, and everything south of it is sized against the rest
+    const landC = components(Uint8Array.from(dSea, (d, i) => d >= 8 * K && ((i / GW) | 0) >= GH * .3 ? 1 : 0)), landTotal = landC.list.reduce((n, c) => n + c.length, 0);
+    world.landmasses = [{ north: true }, ...landC.list.filter((c) => c.length >= landTotal * .05).sort((a, b) => b.length - a.length).map((c) => { const m = axis(c); return { ...m, share: c.length / landTotal, long: m.len / Math.sqrt(c.length) > .85 }; })];
     world.ms = Math.round(performance.now() - T0);
     return world;
   }

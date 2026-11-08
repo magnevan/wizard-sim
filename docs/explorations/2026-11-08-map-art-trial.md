@@ -58,3 +58,7 @@ The prompt that produced `-b`:
 > Everything else is yours to invent. This is a whole world seen from far away: mountains and forests are many small map symbols, and no single tree, tower or creature is larger than a small mountain. Scatter many small towns, castles and villages joined by faint dotted roads, and add a few striking landmarks that belong in each land. Everything drawn by one hand and woven into the landscape.
 >
 > No text, labels or banners: the names will be added afterwards.
+
+## Eighth pass: a second seed, prompt written by the page (same day)
+
+`gemini-3-pro-image` on seed 1207's thumbnail with the geography sentence generated from the world data (`tools/art-trial/out/map-thumb-1207-b.png`, gitignored). It repeated: land shapes, the lake, the central sea and most fields held, in one hand. One drift: the green east of the southern land became charred land. The sentence names the frozen band, then the lands south of it, split at narrow necks. The page's prompt box now writes this prompt for any seed, replacing the strict one.

@@ -317,7 +317,8 @@
   // ---------- the painted chart ----------
   function drawChart(g, w, opts) {
     textures();
-    const geo = geometry(w), base = paintBase(w), r = rng(w.seed * 31 + 5), sp = makeSprites();
+    const geo = geometry(w), base = paintBase(w), r = rng(w.seed * 31 + 5), sp = makeSprites(), art = opts.art && root.FieldArt ? root.FieldArt : null;
+    if (art) for (const [k, list] of Object.entries(art.sprites)) sp[k] = list;
     g.save(); g.lineCap = 'round'; g.lineJoin = 'round'; g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
     g.drawImage(base.ocean, 0, 0, W, H);
     const oceanClip = new Path2D(); oceanClip.rect(0, 0, W, H); oceanClip.addPath(geo.coastPath);
@@ -436,7 +437,7 @@
       if (v > .24 && v < .36 && k !== 'cold' && q < .5) { put(sp.hill, .9); continue; }
       if (k === 'cold') { if (w.temp[i] < .24 && q < .2) put(sp.ice, .85); else if (q < .42) put(sp.snowpine, .85); }
       else if (k === 'fire') { if (q < .15) put(sp.lava, .8); else if (q < .4) put(sp.dead, .85); else if (w.moist[i] < .4 && q < .78) put(sp.dune, .9); }
-      else if (k === 'earth') { if (q < .14) put(sp.mesa, .7); else if (q < .5 && w.moist[i] < .42) put(sp.dune, .85); else if (q < .6) put(sp.cactus, .8); }
+      else if (k === 'earth') { if (q < .14) put(sp.mesa, art && art.sprites.mesa ? .75 : .7); else if (q < .5 && w.moist[i] < .42) put(sp.dune, .85); else if (q < .6) put(sp.cactus, .8); }
       else if (k === 'water') { if (q < .55) put(sp.tuft, .9); else if (q < .8) put(sp.pond, .9); }
       else if (k === 'lightning') { if (q < .24) put(sp.rod, .9); else if (q < .48) put(sp.shard, .9); else if (q < .62) put(sp.dead, .8); }
       else if (k === 'life') { if (q < .36) put(sp.flower, .9); else if (q < .62) put(sp.broad, .85); }
@@ -451,7 +452,7 @@
     for (const p of picked) { const px = p.x * S + S / 2, py = p.y * S + S / 2 + 6; rects.push([px - p.l.rad * 4, py - 110, px + p.l.rad * 4, py + 6]); }
     if (showT) for (const t of allT) { const px = t.x * S + S / 2, py = t.y * S + S / 2 + 8, f = FOOT[t.tier], roof = ROOF[t.ks[0]]; rects.push([px + f[0], py + f[2], px + f[1], py + f[3]]); add(py + .1, (c) => settlement(c, t.tier, px, py, roof)); }
     if (showT) for (const t of w.shrines) { const px = t.x * S, py = t.y * S; rects.push([px - 14, py - 20, px + 14, py + 3]); add(py, (c) => settlement(c, 'shrine', px, py, ROOF.arcane)); }
-    for (const p of picked) { const px = p.x * S + S / 2, py = p.y * S + S / 2 + 6, seed2 = hash(p.x, p.y, w.seed + 9) * 1e9 + 1; add(py, (c) => { c.save(); c.translate(px, py); c.scale(.82, .82); c.lineJoin = 'round'; c.lineCap = 'round'; p.l.draw(c, rng(seed2)); c.restore(); }); }
+    for (const p of picked) { const px = p.x * S + S / 2, py = p.y * S + S / 2 + 6, seed2 = hash(p.x, p.y, w.seed + 9) * 1e9 + 1; add(py, (c) => { c.save(); c.translate(px, py); c.scale(.82, .82); c.lineJoin = 'round'; c.lineCap = 'round'; const pa = art && art.landmarks[p.l.id]; if (pa) c.drawImage(pa.img, -pa.w / 2, -pa.h, pa.w, pa.h); else p.l.draw(c, rng(seed2)); c.restore(); }); }
     items.sort((a, b) => a[0] - b[0]);
 
     // storm clouds float above everything on the ground

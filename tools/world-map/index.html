@@ -86,7 +86,7 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
       <button type="button" data-style="letters" aria-pressed="false">Lettering</button>
     </div>
     <div class="grp" id="fieldToggles"><span class="lbl">Fields</span></div>
-    <div class="grp"><label><input type="checkbox" id="towns" checked> Places and names</label><button type="button" id="zoom" aria-pressed="false">Zoom in</button></div>
+    <div class="grp"><label><input type="checkbox" id="towns" checked> Places and names</label><label><input type="checkbox" id="art" checked> Painted art</label><button type="button" id="zoom" aria-pressed="false">Zoom in</button></div>
   </div>
 
   <div class="plate"><canvas id="map" width="3000" height="2400" role="img" aria-label="A generated world map with magic fields and towns"></canvas></div>
@@ -101,6 +101,7 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   <section style="display:grid;gap:12px">
     <h2>For the paint pass</h2>
     <p>A paint model keeps the layout but garbles small lettering. So <b>For painting</b> is the map with no names, banners or key: run that through the model. <b>Lettering</b> is everything written, on a transparent layer, to lay back on top afterwards. Right-click or long-press the map to save it (3000 × 2400).</p>
+    <p><b>Trial:</b> four subjects (the Deep Mine, the Great Forge, mesas and lava pools) are now painted by Gemini one at a time and placed by the generator, so their sizes and the sea can’t drift. Untick <b>Painted art</b> to compare.</p>
     <p>The prompt below is written for the world on screen: it names each landmark by where it sits and what it is, so the model doesn’t reinterpret it. Change the seed or cut a landmark and it updates. Give it to the model together with the <b>For painting</b> image.</p>
     <div class="seedrate"><button id="copyPrompt" type="button">Copy prompt</button><span class="cap" id="copyState"></span></div>
     <textarea id="paintPrompt" rows="12" readonly aria-label="Prompt for the paint model"></textarea>
@@ -139,6 +140,7 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
 
 <script src="gen.js"></script>
 <script src="landmarks.js"></script>
+<script src="art.js"></script>
 <script src="chart.js"></script>
 <script>
 (() => {
@@ -160,7 +162,7 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
     const towns = $('towns').checked;
     let info = {};
-    if (style === 'fields') drawFields(g, world, { show, towns }); else info = drawChart(g, world, { towns, veil: style === 'veil' ? show : null, layer: style === 'paint' ? 'paint' : style === 'letters' ? 'letters' : 'all', cut: new Set(Object.keys(store.ratings).filter((k) => store.ratings[k].mark === 'cut').map((k) => k.slice(3))) });
+    if (style === 'fields') drawFields(g, world, { show, towns }); else info = drawChart(g, world, { towns, veil: style === 'veil' ? show : null, art: $('art').checked && params.art !== '0', layer: style === 'paint' ? 'paint' : style === 'letters' ? 'letters' : 'all', cut: new Set(Object.keys(store.ratings).filter((k) => store.ratings[k].mark === 'cut').map((k) => k.slice(3))) });
     if (info.landmarks) writePrompt(world, info.landmarks);
     $('fieldToggles').hidden = style !== 'veil' && style !== 'fields';
     const pairs = new Set(world.towns.filter((t) => t.ks.length > 1).map((t) => t.kind));
@@ -209,6 +211,7 @@ Last check: nothing is larger than in the original image, the sea is still blue 
   for (const b of document.querySelectorAll('[data-style]')) b.addEventListener('click', () => { style = b.dataset.style; for (const o of document.querySelectorAll('[data-style]')) o.setAttribute('aria-pressed', String(o === b)); render(); });
   for (const o of document.querySelectorAll('[data-style]')) o.setAttribute('aria-pressed', String(o.dataset.style === style));
   $('towns').addEventListener('change', render);
+  $('art').addEventListener('change', render);
   $('seed').addEventListener('change', build);
   $('reroll').addEventListener('click', () => { $('seed').value = 1 + Math.floor(Math.random() * 999998); build(); });
   $('zoom').addEventListener('click', (e) => { const on = document.querySelector('.plate').classList.toggle('zoomed'); e.currentTarget.setAttribute('aria-pressed', String(on)); });
@@ -276,7 +279,7 @@ Last check: nothing is larger than in the original image, the sea is still blue 
     paintSeed();
   }
   const fonts = ['700 28px "Grenze Gotisch"', '700 27px "Almendra"', 'italic 500 18px "Almendra"', '500 38px "Almendra SC"'];
-  Promise.race([Promise.all(fonts.map((f) => document.fonts.load(f, 'Field Atlas'))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => {}).then(build);
+  Promise.race([Promise.all([...fonts.map((f) => document.fonts.load(f, 'Field Atlas')), window.FieldArt.ready]), new Promise((ok) => setTimeout(ok, 4000))]).catch(() => {}).then(build);
   setSave('Connecting to saved marks…'); paint();
   (async () => {
     try { db = await window.claude?.use?.('db'); } catch { db = null; }

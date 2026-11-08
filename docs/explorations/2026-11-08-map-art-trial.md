@@ -62,3 +62,7 @@ The prompt that produced `-b`:
 ## Eighth pass: a second seed, prompt written by the page (same day)
 
 `gemini-3-pro-image` on seed 1207's thumbnail with the geography sentence generated from the world data (`tools/art-trial/out/map-thumb-1207-b.png`, gitignored). It repeated: land shapes, the lake, the central sea and most fields held, in one hand. One drift: the green east of the southern land became charred land. The sentence names the frozen band, then the lands south of it, split at narrow necks. The page's prompt box now writes this prompt for any seed, replacing the strict one.
+
+## Upscaling (same day)
+
+Free and local: Real-ESRGAN (`realesrgan-ncnn-vulkan`, v0.2.5.0) on `map-thumb-647051-b.png`, 1152 x 928 to 4608 x 3712. `realesrgan-x4plus-anime` flattened it to a cel-shaded cartoon. `realesrgan-x4plus` is closer but smooths the watercolour grain and over-sharpens ink, so the kept version blends it 62/38 with a plain enlargement and adds fine grain (`tools/art-trial/out/map-thumb-647051-b-x4.png`, gitignored). The tiniest buildings stay blobs, since an upscaler can only sharpen what the painting has. Good enough to label on; real extra detail would need a larger generation.

@@ -35,3 +35,7 @@ The user on the strict passes: "this is terrible". They agreed the instructions 
 
 One `gemini-3-pro-image` call on seed 647051 with a prompt treating the map as a rough thumbnail and giving full freedom (`tools/art-trial/out/map-free-647051-pro.png`, gitignored). The best Gemini pass so far: the frozen north, badlands, fens and sea are properly repainted, with new landmarks of its own. But it's uneven. The south-western land and most mesas are still close to tracings of the flat glyphs, and small garbled marks appear beside towns. Output is 1152 x 922. It seems to copy finished-looking symbols and repaint what's loose, so a looser input (colour and shapes without glyphs) is the next thing to test.
 
+
+## Fifth pass: a glyph-free thumbnail (same day)
+
+The same relaxed prompt on `gemini-3-pro-image`, with the input stripped to coast, coloured lands, rivers and rough mountain marks (the page's Thumbnail look; `tools/art-trial/out/map-thumb-647051-pro.png`, gitignored). A big jump: the whole map is in one hand, with nothing to copy and no writing. The land's outline survives. It no longer follows the generator's fields, though: the charred south turned purple and the ochre south-west turned green, so Fire shrank to one volcano. It drew no towns or roads, since the input had none; some trees are as big as regions; and it's 1152 x 922. Labelling from the painting means reading the fields and places from it, not from the generator.

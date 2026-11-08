@@ -15,6 +15,13 @@ Seven elements are **fields**: Water, Fire, Cold, Lightning, Earth, Life, Arcane
 - Field elements deepen through *attunement* at places in the world; Shield and Sigil grow through *training*.
 - Where two fields meet, the spell rules for that pair show up in the landscape (a Fire and Water confluence is a land of steam).
 
+## Fields, veins and wells
+
+- **A field** is broad and ambient, like rainfall or a climate. Its strength is what a zone's band measures (edge, heartland, well).
+- **A vein** is a narrow channel of strength inside or between fields, like a river. In levels, veins show on the ground as lines or seams; devices sit on them (a forge on a fire vein).
+- **A well** is where veins surface and converge. A region's push peaks there.
+- **Opposites never meet.** The rules cancel Fire and Cold, Water and Lightning, Life and Arcane, and Earth and Lightning, so those fields never overlap. Where two would meet, the land is a **hush**: a natural dead zone where neither holds. *(Proposed 2026-11-08.)*
+
 ## The field elements
 
 ### Water: what flows and fills
@@ -26,7 +33,7 @@ Seven elements are **fields**: Water, Fire, Cold, Lightning, Earth, Life, Arcane
 
 ### Fire: what consumes and transforms
 - **In the world:** volcanic swells, hot springs, seams under old forges. Unstable: fire fields flare and fade.
-- **People:** smiths, glassmakers, kilns. Where Fire meets Water, steam, and the first engines.
+- **People:** smiths, glassmakers, kilns. Where Fire meets Water, steam and the first engines; where it meets Lightning, arc foundries, the most industrial place in the world.
 - **Creatures:** quick, aggressive, short-lived; drawn to burning.
 - **In play:** burning that keeps hurting; fire patches deny ground; strong but wasteful.
 - **Opposite:** Cold.
@@ -39,7 +46,7 @@ Seven elements are **fields**: Water, Fire, Cold, Lightning, Earth, Life, Arcane
 - **Opposite:** Fire.
 
 ### Lightning: what leaps and connects
-- **In the world:** storm coasts, high peaks, iron-rich plains. It arrives in bursts and strikes the same places again.
+- **In the world:** high, dry, open ground: peaks and steppes. It cancels Water and Earth, so it never pools with them; it arrives in bursts and strikes the same places again. Where it meets Cold, spark peaks; where it meets Fire, arc foundries and wildfire steppe.
 - **People:** the most "modern" towns: rods, coils, crude electric lamps and signals. Also the most dangerous to live in.
 - **Creatures:** fast, twitchy, in swarms that chain.
 - **In play:** jumps between bodies and through water; stuns; fast and hard to aim around allies.
@@ -72,7 +79,7 @@ Both cost the caster's own attention, which is why they behave unlike the field 
 
 ### Shield: the will to refuse
 - **What it is:** a caster's capacity to hold and to not be moved. Not drawn from the land, so no zone weakens it.
-- **Why it drains:** refusing takes **continuous concentration**. Barriers and wards drain the Shield pool while they stand (Model A); when the concentration runs out, the oldest gives way.
+- **Why it drains:** refusing takes **continuous concentration**. Barriers and wards drain the Shield pool while they stand (Model A), and they drain harder as they're hit: refusing a change costs more the harder the world pushes. When the concentration runs out, the oldest gives way. *(The user, 2026-11-08.)*
 - **In play:** barriers, wards on allies, guards (Shield + Weapon), the parry.
 - **Opposite:** Sigil.
 
@@ -85,5 +92,6 @@ Both cost the caster's own attention, which is why they behave unlike the field 
 ## Undecided
 
 - **Air** (`../ideas/air-element.md`): a tenth element would make five clean pairs (Earth's opposite) and is a candidate for the element unlocked late, through the story. As a field: high places, steady winds, maybe what lifts airships. Cost: a tenth key, about 81 % more spells, and changes to Water and the Shield wave.
-- **Confluences** of two fields, and what grows there, are listed in the exploration; they move here once agreed.
+- **Confluences** so far: Earth + Fire, the forge city; Fire + Water, steam towns; Fire + Lightning, arc foundries; Lightning + Cold, spark peaks; Cold + Water, ice roads; Life + Water, the breadbasket. More to come.
+- **Does standing on a vein give a local boost?** Open (exploration round 3, question 6).
 - **Do fields have a cost when tapped?** Can a vein be overdrawn and run dry? It's a story question (spine C in the exploration) as much as a world one.

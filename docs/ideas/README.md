@@ -13,9 +13,9 @@ There's one file per mechanic, copied from `_template.md`. The status lives in t
 | [minions-and-clones](minions-and-clones.md) | prototyping (the Double in the game, and Survive's Echo; the played clone not built) | 2, 3 |
 | [death-and-revival](death-and-revival.md) | prototyping (downed until the wave ends; Rally in Survive) | 3, 4 |
 | [casting-rhythm](casting-rhythm.md) | prototyping (in the engine: wind-up by spell size, cast buffer, channels with upkeep) | 1, 4 |
-| [progression](progression.md) | raw | 1, 5 |
+| [progression](progression.md) | developing (unlock pacing U2, fixed queue, pools and regen grow, pool choice: `explorations/2026-11-07-world-and-progression.md`) | 1, 5 |
 | [spell-grammar](spell-grammar.md) | prototyping (proposal C drives the engine; A and A.1 superseded) | 2, 6 |
-| [sanctum](sanctum.md) | parked (later) | 4, 5 |
+| [sanctum](sanctum.md) | developing (the meditation sandbox, reachable from anywhere; the user, 2026-11-08) | 4, 5 |
 | [element-economy](element-economy.md) (element runes) | prototyping (rune pools, reserve on queue, regen, Attune, Bind, Model A drain in the engine) | 1, 4, 6 |
 | [battlefield-building](battlefield-building.md) | prototyping (walls, curtains, turrets, glyphs in the engine) | 6, 7, 3 |
 | [survive-mode](survive-mode.md) | prototyping (`#survive` in the game, 12 power-ups: explorations/2026-11-05-survive-mode.md) | 1, 3, 7 |

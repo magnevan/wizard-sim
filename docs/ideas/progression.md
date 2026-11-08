@@ -1,5 +1,5 @@
 ---
-status: raw
+status: developing
 pillars: [1, 5]
 related: [../explorations/2026-11-02-what-i-like.md, ../explorations/2026-11-02-feedback-round-1.md]
 ---
@@ -34,3 +34,11 @@ Flat +X% damage as the main axis.
 
 ## Where it stands (2026-11-05)
 No campaign progression is built. Survive's power-ups are the only growth in the game, and they're run-scoped, not kept: see `survive-mode.md`. Its "Where the pillars push back" notes (`../explorations/2026-11-05-survive-mode.md`) are the current thinking on flat numbers versus pillar 1.
+
+## Where it stands (2026-11-08)
+From `../explorations/2026-11-07-world-and-progression.md`, rounds 1 and 2:
+- **Unlocks, U2:** a core set at the academy, a few things held back for story beats; what's held back is open (the etched-focus Sigil and Air are Claude's proposals).
+- **The queue is five runes from the start.** Regen is the main lever (sustain), pool size the second (burst).
+- **The player chooses which pool deepens** at each attunement.
+- **No gear by default;** spell sidegrade customization to explore later.
+- **Co-op catch-up** to be designed later.

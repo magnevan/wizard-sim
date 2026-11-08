@@ -150,3 +150,62 @@ On the page, with Claude's recommendation on each; unanswered means it stands.
 - *"All nine elements by about a third of the game"* became U2 above.
 - *"Each region: a hub, three to five chapters, one defence, two or three shrines and a hunt"* became the encounter library.
 - *"Per-character progress with a chapter floor"* is deferred: the user wants some catch-up mechanic, decided later.
+
+
+## Round 2: the user's answers (2026-11-08)
+
+From the page's db (`answers`).
+
+**Accepted as recommended:** the three zone bands (Q1); zones only redistribute regen (Q2); the party as a cohort (Q5); A + B + D as the story baseline (Q6: "Not totally sure about the turn, but that sounds like a solid baseline"); the player chooses which pool deepens (Q9).
+
+**With changes:**
+- **Q3, pacing: U2, but the queue length never changes.** The user: "You can in theory cast complex spells early, but it would just take you a long time to cast it again, so you're not so incentivized to go deep." Regen is the lever, to be found by play. *So:* the five-rune queue is there from the first hour; what grows is regen (sustain) and, Claude proposes, pool size (burst). Small pools early still limit stacks of one element (three Fire needs a 3-deep Fire pool), but a five-element mix is castable on day one, then slow to repeat.
+- **Q4, what's held back: undecided.** The user leans to one or two elements, "because it's the easiest to remove", and wants an even count in the end. A late element "needs to be evenly balanced, but bring some interesting unique mechanics with it." And "unlocking sigil after a bit feels very correct since it both has a lot of unique mechanics, and a lot of the mechanics are more rune hungry which doesn't fit the early game. The only unfortunate thing is that conjuring swords feels like something you want to do early."
+- **Q10, gear: none by default.** The user wants to explore, later, "some customizations you could make to sidegrade some spell stuff to customize your character."
+- **Q11, essences:** fine for now, to be filled out. "One note on shield is that it also drains as it resists change, i.e. as people hit it." Added to `../world/elements.md`.
+- **Q7, shrines:** the puzzle room, constraint trial and keeping trial "all sound like pretty fun challenges". The echo and the proving ground are kept but not prioritized.
+- **Q8, encounters:** "these all sound fine, we have to experiment via gameplay."
+
+**General notes:**
+1. A Fire and Lightning overlap could be cool.
+2. Fire and Cold should be further apart.
+3. Look into ways to make a fantasy map of the world.
+4. "Are you differentiating some elements as zones, and some as veins, or are the zones just an abstraction of what is actually many veins?"
+5. **On shrines, a correction:** the user's earlier point was that Magicka has no right space to *practise* ("it's very hard to judge spell effects or even damage unless you're just doing friendly fire in co-op"), and shrines answered something else, an optional side quest. The user's two ideas for practice:
+   - each hub has a practice area with training dummies, maybe an enemy that comes at you;
+   - **a meditative state you can enter at any time,** taking you to a sandbox to experiment: cast on dummies, summon enemies, use whatever tools it has. In co-op, others click on you to join your dream, and a button exits at any time.
+
+## Claude's responses to round 2
+
+**Opposites never meet; where they would, the land is dead.** The rules cancel four pairs: Fire and Cold, Water and Lightning, Life and Arcane, Earth and Lightning. Round 1's map had a storm marsh where Water met Lightning, which contradicts them. Proposal: cancelling fields never overlap, and the gap where two of them would meet is a **hush**, a natural dead zone where neither holds (pillar 6's dampening zone, found in nature). Fire and Cold end up on opposite sides of the map. Lightning, which cancels both Water and Earth, lives on high, dry, open ground: peaks and steppes. The redrawn map has **arc foundries** where Fire meets Lightning (lightning-fed furnaces, the most industrial place in the world) and **spark peaks** where Lightning meets Cold.
+
+**Fields and veins are both real, at different scales.** A *field* is broad and ambient, like rainfall or a climate: its strength is what a zone's band measures. *Veins* are narrow channels of strength inside and between fields, like rivers. A *well* is where veins surface and converge, which is why a region's push peaks at its well. In play: the band is the field; veins show on the ground in levels as lines or seams, and devices sit on veins (a forge is built on a fire vein). Whether standing on a vein gives a local boost is open: it's a second layer of the same idea, at the cost of one more thing to read.
+
+**Early swords without early Sigil: the academy's etched focus.** Make the conjure-only stage diegetic. Students are given a focus with the binding already etched into it, so a student only pours an element in and the focus shapes the blade or the guard. In the rules, Sigil queues normally but only works with Conjure (weapons and guards), and each weapon still binds one Sigil rune from a small pool. Later, the innate art is learned for real: you can shape without the etching, and the rest of Sigil (turrets, glyphs, orbitals, Blink, auras, the Double) opens. Swords come in the first hour, and the rune-hungry part of Sigil comes later, as the user wants. Shield can follow the same path (guards early; walls and wards later) or open fully earlier, since its mechanics are less rune-hungry.
+
+**The even count: Air as the late element.** It's the only candidate that already has a draft (`../ideas/air-element.md`), it gives Earth an opposite (five clean pairs on the keys), and its shove and carry are a mechanic no other element has, which meets the "unique mechanics" test. The cost the user named stands: it has to be balanced against nine elements players already know, and the draft changes Water and the Shield wave, so those changes would be in from the start, with Air arriving later.
+
+**Pools and regen: burst and sustain.** With the queue fixed at five, the two levers are pool size (burst: how many big spells before you wait) and regen (sustain: how fast you're back). Claude's pick: both grow, regen most. Pools start small (2–3) and grow to about 4–5; regen starts low and grows the most. Then a big early spell is possible, but it empties you.
+
+**Practice: the meditation sandbox, mostly built already.** The user's dream sandbox is the parked Sanctum idea, made reachable from anywhere. The game's Sanctum room already has dummies and the tuning panel (F1: readouts, spawning, time control). What's new:
+- **Entering:** a key or menu item. The body stays where it was, sitting in a meditation pose. Claude's pick: allowed only when no enemy is engaged, so it can't be used to dodge a fight. Solo, the world pauses; online, it keeps running, and a hit or an enemy noticing you wakes you.
+- **Joining:** in co-op, interact with a meditating ally to join their dream. Leaving is a button at any time.
+- **Tech:** under rollback every peer runs the whole world, so the dream is a room in the same world, away from the map, and the bodies left behind stay in the sim. No new netcode is needed.
+- **What it holds:** your current unlocks only (practice what you have), dummies with damage and status readouts, a summoner for any enemy you've met, reset, and time control.
+- **Hub practice yards** are flavour on top: the academy's training yard, a city's duelling ground. They aren't the main answer.
+
+**Shrines** stay what they were, optional side challenges: the puzzle room, the constraint trial and the keeping trial first.
+
+**Fantasy map tools** *(from Claude's knowledge, unverified for current features)*: Azgaar's Fantasy Map Generator (free, in the browser, generates a whole continent with biomes, rivers and towns, exports SVG and JSON); Inkarnate (in the browser, painted style); Wonderdraft (desktop, painted style). Claude's pick: generate a base in Azgaar, then draw the fields as our own overlay layer, since the fields are what's ours. A page here can show it with the fields toggled on and off.
+
+## Open questions (round 3)
+
+On the page; unanswered means the recommendation stands.
+1. **Early swords:** the academy's etched focus (recommended), mundane weapons imbued with elements, or Sigil from the start with its world casts priced high?
+2. **The even count:** Air as the late element (recommended), stay at nine, or another?
+3. **When can you meditate:** only when no enemy is engaged (recommended), any time, or only at hubs and shrines?
+4. **What goes in the dream** (note).
+5. **Pools and regen:** both grow, regen most (recommended), or pools fixed and only regen grows?
+6. **Fields and veins** as above, and does standing on a vein give a local boost?
+7. **Opposites never meet, with a hush between** (recommended)?
+8. **The map:** an Azgaar base with our field overlay (recommended), a painting tool, or our own generator?

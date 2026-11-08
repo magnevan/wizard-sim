@@ -99,9 +99,9 @@ button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px sol
 
 <div class="wrap">
   <header class="top">
-    <span class="eyebrow">Wizard Sim · design · round 2 · 2026-11-07</span>
+    <span class="eyebrow">Wizard Sim · design · round 3 · 2026-11-08</span>
     <h1>World and Progression</h1>
-    <p class="lede">The world as fields of magic, how hard a region pushes your casting, when the magic opens up, shrines, encounters, and a story that works for one wizard or four. Round 1 is folded in; the questions below are round 2. An unanswered question means you accept the recommended option.</p>
+    <p class="lede">The world as fields of magic, how hard a region pushes your casting, when the magic opens up, shrines, encounters, and a story that works for one wizard or four. Rounds 1 and 2 are folded in; the questions below are round 3. An unanswered question means you accept the recommended option.</p>
     <div class="status"><span id="tally"></span><span id="saveState"></span></div>
   </header>
 
@@ -118,6 +118,17 @@ button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px sol
       <div><b>Hubs are reusable; encounters are a library</b><span>No fixed "a defence and a hunt" per region.</span></div>
       <div><b>Co-op catch-up, later</b><span>Some catch-up mechanic for mismatched progress, designed when we get there.</span></div>
     </div>
+    <span class="eyebrow">Settled in round 2</span>
+    <div class="settled">
+      <div><b>Three zone bands, regen only redistributed</b><span>Edge, heartland, well. You're steered, never weaker.</span></div>
+      <div><b>U2, with the five-rune queue from the start</b><span>Complex spells are possible early, just slow to repeat. Regen is the lever.</span></div>
+      <div><b>The party is a cohort</b><span>Solo, you're the one sent; every line is written to "you".</span></div>
+      <div><b>Story baseline: A + B + D</b><span>The circuit, the shifting fields, the academy's vein. The turn is uncertain.</span></div>
+      <div><b>You choose which pool deepens</b><span>At each attunement.</span></div>
+      <div><b>No gear by default</b><span>Spell sidegrade customization to explore later.</span></div>
+      <div><b>Practice is a meditation dream</b><span>Your idea: a sandbox you enter from anywhere, which friends can join.</span></div>
+      <div><b>Shrines are side challenges</b><span>Puzzle room, constraint trial and keeping trial first.</span></div>
+    </div>
   </section>
 
   <section class="plate" id="sec-fields">
@@ -130,38 +141,49 @@ button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px sol
       <svg viewBox="0 0 900 470" role="img" aria-labelledby="mapT">
         <title id="mapT">A schematic map of overlapping magic fields with settlements where they meet</title>
         <g fill-opacity=".28" stroke-opacity=".7" stroke-width="2">
-          <ellipse cx="560" cy="80" rx="250" ry="105" fill="var(--el-cold)" stroke="var(--el-cold)"/>
-          <ellipse cx="200" cy="230" rx="185" ry="165" fill="var(--el-earth)" stroke="var(--el-earth)"/>
-          <ellipse cx="350" cy="250" rx="120" ry="95" fill="var(--el-fire)" stroke="var(--el-fire)"/>
-          <ellipse cx="560" cy="270" rx="170" ry="120" fill="var(--el-water)" stroke="var(--el-water)"/>
-          <ellipse cx="770" cy="250" rx="130" ry="130" fill="var(--el-lightning)" stroke="var(--el-lightning)"/>
-          <ellipse cx="520" cy="420" rx="230" ry="80" fill="var(--el-life)" stroke="var(--el-life)"/>
+          <ellipse cx="190" cy="260" rx="175" ry="150" fill="var(--el-earth)" stroke="var(--el-earth)"/>
+          <ellipse cx="400" cy="250" rx="140" ry="100" fill="var(--el-fire)" stroke="var(--el-fire)"/>
+          <ellipse cx="580" cy="140" rx="150" ry="85" fill="var(--el-lightning)" stroke="var(--el-lightning)"/>
+          <ellipse cx="800" cy="160" rx="160" ry="130" fill="var(--el-cold)" stroke="var(--el-cold)"/>
+          <ellipse cx="660" cy="335" rx="190" ry="105" fill="var(--el-water)" stroke="var(--el-water)"/>
+          <ellipse cx="470" cy="425" rx="230" ry="65" fill="var(--el-life)" stroke="var(--el-life)"/>
         </g>
-        <path d="M120 360 C 160 330, 150 300, 190 290 S 230 250, 260 262" fill="none" stroke="var(--el-arcane)" stroke-width="5" stroke-linecap="round"/>
-        <text class="fld" x="610" y="45" style="fill:var(--el-cold)">COLD</text>
-        <text class="fld" x="70" y="120" style="fill:var(--el-earth)">EARTH</text>
-        <text class="fld" x="330" y="190" style="fill:var(--el-fire)">FIRE</text>
-        <text class="fld" x="600" y="225" style="fill:var(--el-water)">WATER</text>
-        <text class="fld" x="790" y="170" style="fill:var(--el-lightning)">LIGHTNING</text>
-        <text class="fld" x="300" y="455" style="fill:var(--el-life)">LIFE</text>
-        <text class="fld" x="62" y="385" style="fill:var(--el-arcane)">ARCANE VEIN</text>
+        <path d="M60 205 C 100 185, 130 200, 160 186 S 210 168, 235 176" fill="none" stroke="var(--el-arcane)" stroke-width="5" stroke-linecap="round"/>
+        <text class="fld" x="820" y="62" style="fill:var(--el-cold)">COLD</text>
+        <text class="fld" x="40" y="140" style="fill:var(--el-earth)">EARTH</text>
+        <text class="fld" x="300" y="212" style="fill:var(--el-fire)">FIRE</text>
+        <text class="fld" x="760" y="385" style="fill:var(--el-water)">WATER</text>
+        <text class="fld" x="520" y="88" style="fill:var(--el-lightning)">LIGHTNING</text>
+        <text class="fld" x="300" y="462" style="fill:var(--el-life)">LIFE</text>
+        <text class="fld" x="40" y="236" style="fill:var(--el-arcane)">ARCANE VEIN</text>
         <g>
-          <circle cx="285" cy="260" r="6" fill="var(--fg)"/><text class="lbl" x="235" y="245">Forge city</text><text class="sub" x="225" y="282">Earth + Fire</text>
-          <circle cx="445" cy="268" r="6" fill="var(--fg)"/><text class="lbl" x="420" y="305">Steam towns</text><text class="sub" x="420" y="322">Fire + Water: the first engines</text>
-          <circle cx="665" cy="275" r="6" fill="var(--fg)"/><text class="lbl" x="645" y="305">Storm marsh</text><text class="sub" x="645" y="322">Lightning + Water</text>
-          <circle cx="545" cy="168" r="6" fill="var(--fg)"/><text class="lbl" x="560" y="173">Ice roads</text><text class="sub" x="560" y="190">Cold + Water, winter only</text>
-          <circle cx="555" cy="370" r="6" fill="var(--fg)"/><text class="lbl" x="570" y="375">The breadbasket</text><text class="sub" x="570" y="392">Life + Water, fought over</text>
-          <circle cx="770" cy="125" r="6" fill="var(--fg)"/><text class="lbl" x="758" y="120" text-anchor="end">Spark towns</text><text class="sub" x="758" y="137" text-anchor="end">Lightning + Cold peaks</text>
-          <rect x="182" y="282" width="14" height="14" fill="var(--el-arcane)" stroke="var(--halo)" stroke-width="2"/><text class="lbl" x="120" y="322">The academy</text>
+          <circle cx="310" cy="262" r="6" fill="var(--fg)"/><text class="lbl" x="250" y="292">Forge city</text><text class="sub" x="250" y="309">Earth + Fire</text>
+          <circle cx="470" cy="188" r="6" fill="var(--fg)"/><text class="lbl" x="480" y="184">Arc foundries</text><text class="sub" x="480" y="201">Fire + Lightning</text>
+          <circle cx="500" cy="300" r="6" fill="var(--fg)"/><text class="lbl" x="512" y="305">Steam towns</text><text class="sub" x="512" y="322">Fire + Water: the first engines</text>
+          <circle cx="690" cy="140" r="6" fill="var(--fg)"/><text class="lbl" x="680" y="135" text-anchor="end">Spark peaks</text><text class="sub" x="680" y="152" text-anchor="end">Lightning + Cold</text>
+          <circle cx="790" cy="278" r="6" fill="var(--fg)"/><text class="lbl" x="778" y="282" text-anchor="end">Ice roads</text><text class="sub" x="778" y="299" text-anchor="end">Cold + Water, winter only</text>
+          <circle cx="600" cy="400" r="6" fill="var(--fg)"/><text class="lbl" x="612" y="405">The breadbasket</text><text class="sub" x="612" y="422">Life + Water</text>
+          <circle cx="600" cy="234" r="6" fill="none" stroke="var(--fg)" stroke-width="2" stroke-dasharray="3 2"/><text class="lbl" x="612" y="238">The hush</text><text class="sub" x="612" y="255">Water meets Lightning: dead ground</text>
+          <rect x="143" y="179" width="14" height="14" fill="var(--el-arcane)" stroke="var(--halo)" stroke-width="2"/><text class="lbl" x="110" y="168">The academy</text>
         </g>
       </svg>
-      <p class="cap">Shield and Sigil aren't on the map: they belong to the caster, so no zone touches them.</p>
+      <p class="cap">Elements that cancel in a spell never share ground: Fire and Cold sit far apart, and Lightning keeps to high, dry ground away from Water and Earth. Where two cancelling fields would meet, the land is a hush, a natural dead zone. Shield and Sigil aren't on the map: they belong to the caster, so no zone touches them.</p>
     </div>
 
     <h3>The elements' essences</h3>
     <p>The living version is <code>docs/world/elements.md</code>; edit it as the world and the spells change.</p>
     <div class="els" id="els"></div>
-    <div class="q" data-q="q-11-essences"></div>
+    <h3>Fields, veins and wells</h3>
+    <div class="prose">
+      <p><b>Both are real, at different scales.</b> A field is broad and ambient, like rainfall: its strength is what a zone's band measures. Veins are narrow channels inside and between fields, like rivers; in levels they show on the ground as seams, and devices sit on them (a forge on a fire vein). A well is where veins surface and converge, which is why a region's push peaks there.</p>
+    </div>
+    <div class="q" data-q="r3-6-veins"></div>
+    <div class="q" data-q="r3-7-hush"></div>
+    <h3>The world map</h3>
+    <div class="prose">
+      <p>Tools to try <i>(from memory; current features unverified)</i>: Azgaar's Fantasy Map Generator (free, in the browser, generates a continent with biomes, rivers and towns, exports SVG and JSON), Inkarnate (browser, painted style) and Wonderdraft (desktop, painted style). The fields are what's ours, so the pick is a generated base with the fields drawn as our own overlay, shown here with a toggle.</p>
+    </div>
+    <div class="q" data-q="r3-8-map"></div>
   </section>
 
   <section class="plate" id="sec-zones">
@@ -173,28 +195,46 @@ button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px sol
     </div>
     <div class="bands" id="bands"></div>
     <p class="cap">Example for a fire region: Fire is local, Cold its opposite. The multipliers are placeholders for a play-test.</p>
-    <div class="q" data-q="q-1-bands"></div>
-    <div class="q" data-q="q-2-total"></div>
+
   </section>
 
   <section class="plate" id="sec-pacing">
     <span class="eyebrow">Unlock pacing</span>
     <h2>When the "press anything" moment comes</h2>
     <div class="prose">
-      <p>Queue length cuts complexity about as much as locked elements do: all nine elements with a 2-rune queue make 200 spells, against 228 for seven elements with a full queue. So the start can be wide but shallow, keeping Magicka's wow moment, while depth grows gently.</p>
-      <p><b>U2</b> gives the academy seven field elements plus conjure-only Sigil and Shield (weapons and guards). Later, a story beat opens the innate arts' world casts: turrets, glyphs, walls, wards, Blink. In the world that's a real step: you could only shape what you hold; now you shape the world around you. In the HUD, the locked casts show as dim slots from the start, so it reads as the rune growing, not changing. Air, if added, could be a second wow moment mid-game.</p>
+      <p><b>The five-rune queue is there from the first hour</b> (your round-2 answer). A big mixed spell is possible on day one; it just empties you and takes a long time to repeat. So the two levers are <b>pool size</b> (burst: how many big spells before you wait) and <b>regen</b> (sustain: how fast you're back).</p>
+      <p><b>Early swords without early Sigil: the academy's etched focus.</b> Students get a focus with the binding already etched in: you pour an element in and the focus shapes the blade or the guard. In the rules, Sigil queues normally but only works with Conjure, and each weapon still binds one rune from a small Sigil pool. Later you learn the innate art for real and shape without the etching, which opens turrets, glyphs, orbitals, Blink, auras and the Double: the rune-hungry part, when your regen can carry it. Locked casts show as dim slots from the start, so the rune reads as growing.</p>
+      <p><b>The even count: Air, late.</b> It already has a draft, gives Earth an opposite (five clean pairs on the keys), and its shove and carry are a mechanic no other element has. The cost: it must be balanced against nine elements players know, and the draft's changes to Water and the Shield wave would be in from the start.</p>
     </div>
-    <div class="legend"><span><i style="--c:var(--accent)"></i>Elements and casts open</span><span><i style="--c:var(--el-air)" class="dash"></i>Air (optional)</span><span><i style="--c:var(--muted)"></i>Queue length (rune pool depth)</span></div>
+    <div class="legend"><span><i style="--c:var(--accent)"></i>Elements and casts open</span><span><i style="--c:var(--el-air)" class="dash"></i>Air (optional)</span><span><i style="--c:var(--muted)"></i>Pool depth (burst); the queue is always 5</span></div>
     <div class="small-mult" id="pacing"></div>
-    <div class="q" data-q="q-3-pacing"></div>
-    <div class="q" data-q="q-4-held"></div>
+    <div class="q" data-q="r3-1-swords"></div>
+    <div class="q" data-q="r3-2-tenth"></div>
+    <div class="q" data-q="r3-5-pools"></div>
   </section>
 
   <section class="plate" id="sec-shrines">
-    <span class="eyebrow">Shrines</span>
-    <h2>Practice that doesn't feel like homework</h2>
+    <span class="eyebrow">Practice</span>
+    <h2>The meditation dream</h2>
     <div class="prose">
-      <p>A shrine is a small, optional space off the main path: one to three rooms, three to eight minutes, one idea. Its rules:</p>
+      <p>Your idea: sit down anywhere, enter a dream sandbox, experiment, and wake up. It's the Sanctum made reachable from anywhere, and the Sanctum room in the game already has dummies and the tuning panel (readouts, spawning, time control).</p>
+      <ul>
+        <li><b>Entering:</b> a key or menu item; your body stays where it was, in a meditation pose. Pick: only when no enemy is engaged, so it can't dodge a fight. Solo, the world pauses; online it keeps running, and a hit or an enemy noticing you wakes you.</li>
+        <li><b>Joining:</b> interact with a meditating ally to join their dream; leave with a button at any time.</li>
+        <li><b>Tech:</b> under rollback every peer runs the whole world, so the dream is a room in the same world, off the map. No new netcode.</li>
+        <li><b>What it holds:</b> your current unlocks only, dummies with damage and status readouts, a summoner for any enemy you've met, reset, time control.</li>
+        <li><b>Hub practice yards</b> are flavour on top (the academy's training yard, a city's duelling ground).</li>
+      </ul>
+    </div>
+    <div class="q" data-q="r3-3-dream-when"></div>
+    <div class="q" data-q="r3-4-dream-holds"></div>
+  </section>
+
+  <section class="plate" id="sec-shrines-2">
+    <span class="eyebrow">Shrines</span>
+    <h2>Optional side challenges</h2>
+    <div class="prose">
+      <p>Shrines aren't the practice answer (you corrected that in round 2); they're optional challenges off the main path. One to three rooms, three to eight minutes, one idea. Your picks were the puzzle room, the constraint trial and the keeping trial. Their rules:</p>
       <ul>
         <li><b>The room states the problem,</b> not text.</li>
         <li><b>Only the spell language.</b> No new controls; any device takes spells as input.</li>
@@ -204,7 +244,7 @@ button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px sol
       </ul>
     </div>
     <div class="cards" id="shrines"></div>
-    <div class="q" data-q="q-7-shrines"></div>
+
   </section>
 
   <section class="plate" id="sec-encounters">
@@ -212,7 +252,7 @@ button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px sol
     <h2>A library to draw from</h2>
     <p>Regions pick freely from these. Each is a prototype to borrow from, not a slot to fill.</p>
     <div class="cards" id="encounters"></div>
-    <div class="q" data-q="q-8-encounters"></div>
+
   </section>
 
   <section class="plate" id="sec-story">
@@ -222,20 +262,19 @@ button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px sol
       <p><b>Many characters, simply met.</b> Recurring faces with one trait and one want (a trader in every hub, a cartographer, a rival cohort); locals with a request, a rumour or a reaction; a mentor who writes or meets you at wells; an antagonist seen more than heard. The world changing visibly between visits does the work dialogue would.</p>
       <p><b>The party is a cohort.</b> The academy sends journeymen out together; solo, you're the one sent. Every line is written to "you", which in English doesn't say how many. No beat needs a particular number, and no puzzle requires two people. The alternative, one named hero with partners as unnamed companions, is simpler to write but makes partners second-class.</p>
     </div>
-    <div class="q" data-q="q-5-cohort"></div>
+
     <h3>Five spines, to combine</h3>
     <p>A is the frame; the others give it a cause, a faction or a turn. The lore is yours: these are hooks to react to.</p>
     <div class="cards" id="spines"></div>
-    <div class="q" data-q="q-6-spine"></div>
+
   </section>
 
   <section class="plate" id="sec-growth">
     <span class="eyebrow">Growth</span>
     <h2>Carried from round 1</h2>
     <p>After the unlocks comes the capitalizing phase: more runes and more regen turn one- and two-element casts and melee into a full kit. How far it scales, and whether it needs artifacts or more workings, is for play-testing.</p>
-    <div class="q" data-q="q-9-pool"></div>
-    <div class="q" data-q="q-10-gear"></div>
-    <div class="q" data-q="general"></div>
+
+    <div class="q" data-q="r3-general"></div>
   </section>
 </div>
 
@@ -249,11 +288,11 @@ button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px sol
     ['Water', 'water', 'field', 'What flows and fills', 'Rivers, lakes, rain, tides; the most common field. Mills, ports, farms.', 'Soaks, douses, sets up freezes and conduction.'],
     ['Fire', 'fire', 'field', 'What consumes and transforms', 'Volcanic swells, hot springs; unstable, flares and fades. Smiths, glass, kilns.', 'Burning that keeps hurting; patches deny ground.'],
     ['Cold', 'cold', 'field', 'What stills and preserves', 'Mountains, the far north, deep caves. Storehouses, ice roads, archives.', 'Chill slows; freezes the wet; shatter.'],
-    ['Lightning', 'lightning', 'field', 'What leaps and connects', 'Storm coasts, high peaks, iron plains. Rods, coils, crude lamps.', 'Jumps between bodies and through water; stuns.'],
+    ['Lightning', 'lightning', 'field', 'What leaps and connects', 'High, dry, open ground: peaks and steppes, never with Water or Earth. Rods, coils, crude lamps.', 'Jumps between bodies and through water; stuns.'],
     ['Earth', 'earth', 'field', 'What holds and endures', 'Mountains, stone plains, ore. Miners, masons, fortress towns.', 'Stuff, paid once: rocks, walls, mass; carries others.'],
     ['Life', 'life', 'field', 'What grows', 'Made by living things; thick in old forests, thin in blights. Can be harmed and restored.', 'Only heals; other elements in a heal lend resistance.'],
     ['Arcane', 'arcane', 'field', 'The deep field', 'Under all the others, surfacing only where they tear: rifts, ruins. Draws out a caster’s gifts.', 'The raw, piercing beam; Attune floods every pool.'],
-    ['Shield', 'shield', 'innate', 'The will to refuse', 'The caster’s own. Refusing takes continuous concentration.', 'Drains while it stands; the oldest gives way first.'],
+    ['Shield', 'shield', 'innate', 'The will to refuse', 'The caster’s own. Refusing takes continuous concentration, and more the harder the world pushes.', 'Drains while it stands, harder as it is hit; the oldest gives way first.'],
     ['Sigil', 'sigil', 'innate', 'The will to shape', 'The caster’s own. Holding a shape takes attention, in pieces.', 'Each device binds one rune until it ends.'],
   ];
   for (const [name, key, kind, ess, world, play] of ELEMENTS) {
@@ -293,7 +332,7 @@ button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px sol
     s += `<path d="${step(open)} H${X(1)}" fill="none" stroke="var(--accent)" stroke-width="3"/>`;
     if (air) s += `<path d="M${X(air[0][0])},${Y(air[0][1])} ${step(air).slice(step(air).indexOf(' '))} H${X(1)}" fill="none" stroke="var(--el-air)" stroke-width="3" stroke-dasharray="6 4"/>`;
     s += `<path d="${step(depth.map(([x, q]) => [x, q * 2]))} H${X(1)}" fill="none" stroke="var(--muted)" stroke-width="2"/>`;
-    s += `<text class="tick" x="${W - R}" y="${Y(10) - 6}" text-anchor="end">queue 5 ↔ 10</text></svg>`;
+    s += `<text class="tick" x="${W - R}" y="${Y(10) - 6}" text-anchor="end">pool 5 ↔ 10</text></svg>`;
     f.innerHTML = s;
     $('pacing').append(f);
   }
@@ -349,6 +388,22 @@ button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px sol
     'q-10-gear': ['Q10', 'Gear as sidegrades only?', 'Staffs, robes and trinkets that bend one rule (“glyphs arm instantly, but you hold two”), never stat items.',
       [['side', 'Sidegrades that bend a rule', 'Loot people talk about; pillar 1 holds.', true], ['some', 'Mostly sidegrades, a few stat items', 'Small, capped numbers.'], ['none', 'No gear', 'Growth only from runes and workings.']]],
     'q-11-essences': ['Q11', 'What’s off in the essences?', 'Anything that doesn’t match how you see an element, in the world or in play.', null],
+    'r3-1-swords': ['R3.1', 'How do early swords work?', 'Sigil\u2019s rune-hungry mechanics later, swords in the first hour.',
+      [['etched', 'The academy\u2019s etched focus', 'Sigil works only with Conjure until you learn the innate art.', true], ['mundane', 'Mundane weapons, imbued', 'Carry a real sword; elements imbue it. No Sigil early.'], ['early', 'Sigil from the start', 'Its world casts priced high instead of locked.'], ['other', 'Something else', 'Say what in the note.']]],
+    'r3-2-tenth': ['R3.2', 'An even count?', 'What makes ten.',
+      [['air', 'Air, unlocked late', 'Earth\u2019s opposite; shove and carry are new.', true], ['air-early', 'Air from the start, something else held', 'Ten early; another unlock carries the late wow.'], ['nine', 'Stay at nine', 'No new element.'], ['other', 'Something else', 'Say what in the note.']]],
+    'r3-3-dream-when': ['R3.3', 'When can you meditate?', 'Entering the dream sandbox.',
+      [['calm', 'Only when no enemy is engaged', 'Solo pauses the world; online it keeps running.', true], ['any', 'Any time', 'Your body is vulnerable while you\u2019re away.'], ['places', 'Only at hubs and shrines', 'A place, not a state.']]],
+    'r3-4-dream-holds': ['R3.4', 'What goes in the dream?', 'Dummies, readouts, an enemy summoner, reset, time control. More? Less? Should it show locked elements as previews?', null],
+    'r3-5-pools': ['R3.5', 'Pools and regen?', 'With the queue fixed at five.',
+      [['both', 'Both grow, regen most', 'Pools 2\u20133 to about 4\u20135; regen grows the most.', true], ['regen', 'Pools fixed, only regen grows', 'One lever; today\u2019s pools from the start.'], ['pools', 'Pools grow most', 'Burst grows; sustain stays tight.']]],
+    'r3-6-veins': ['R3.6', 'Fields and veins as above?', 'And does standing on a vein give a local boost?',
+      [['yes-no', 'Yes; veins are for devices only', 'One layer to read: the band.', true], ['yes-boost', 'Yes, and veins give a local boost', 'Hotspots to fight over; one more thing to read.'], ['other', 'Something else', 'Say what in the note.']]],
+    'r3-7-hush': ['R3.7', 'Opposites never meet?', 'Cancelling fields never overlap; where they would, the hush.',
+      [['hush', 'Never meet, with a hush between', 'A dampening zone found in nature.', true], ['apart', 'Never meet, nothing special between', 'Just geography.'], ['meet', 'They can meet', 'Say what happens in the note.']]],
+    'r3-8-map': ['R3.8', 'How do we make the world map?', 'A base for the continent, then the fields.',
+      [['azgaar', 'Generated base, our field overlay', 'Azgaar for land, rivers and towns; fields drawn by us.', true], ['paint', 'Paint it in a map tool', 'Inkarnate or Wonderdraft; hand-made look.'], ['own', 'Our own generator', 'Fields first, land from them.']]],
+    'r3-general': ['', 'Anything else (round 3)', 'Thoughts that don’t fit a question.', null],
     'general': ['', 'Anything else', 'Thoughts that don’t fit a question.', null],
   };
 
@@ -393,7 +448,7 @@ button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px sol
     let a = 0, total = 0;
     for (const A of askers) {
       const ans = answers[A.id] || {};
-      if (A.id !== 'general') { total++; if (ans.choice || ans.note) a++; }
+      if (!/general$/.test(A.id)) { total++; if (ans.choice || ans.note) a++; }
       if (A.ch) for (const b of A.ch.children) { b.setAttribute('aria-pressed', String(b.dataset.v === ans.choice)); b.disabled = !db; }
       A.ta.disabled = !db;
       if (document.activeElement !== A.ta && A.ta.value !== (ans.note || '')) A.ta.value = ans.note || '';

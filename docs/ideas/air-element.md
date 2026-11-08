@@ -36,3 +36,4 @@ The `air-*` questions in the draft, none answered yet:
 
 ## Smallest test
 One corridor, a fire patch and a steam cloud already on the floor, a pack of melee enemies. Does a player with Air find "blow their fire onto them" and "shove them into the wall" without being told, and can a partner read gust streaks apart from frost in the same frame?
+- 2026-11-08: the user wants a brainstorm of candidates before choosing Air; Air is one of three finalists with Blight and Void (`../explorations/2026-11-08-tenth-element.md`).

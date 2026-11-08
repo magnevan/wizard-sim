@@ -1,0 +1,280 @@
+<title>Tenth Element</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a bestiary of candidate elements. Each card is a looping vignette, its verb, its costs and a rating; questions close the page. */
+:root {
+  --bg: #e9edf1; --panel: #f7f9fb; --fg: #18202b; --muted: #556170; --line: #c7d0da; --accent: #7a3fa6; --ok: #2f6d3c; --warn: #a2401c; --stage: #dfe5eb;
+  --display: "Alegreya SC", "Palatino Linotype", Georgia, serif;
+  --body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #11161d; --panel: #18202a; --fg: #e3e8ee; --muted: #98a5b4; --line: #2c3846; --accent: #c99af0; --ok: #85cf93; --warn: #f0916c; --stage: #0d1117; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #11161d; --panel: #18202a; --fg: #e3e8ee; --muted: #98a5b4; --line: #2c3846; --accent: #c99af0; --ok: #85cf93; --warn: #f0916c; --stage: #0d1117; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 17px/1.55 var(--body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; }
+.wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 32px; }
+header { padding-block: 40px 0; display: grid; gap: 10px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; margin: 0; line-height: 1.15; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); }
+h2 { font-size: 1.5rem; }
+p { margin: 0; max-width: 70ch; }
+.lede { color: var(--muted); font-size: 1.1rem; }
+.eyebrow { font: 500 .78rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.status { display: flex; gap: 18px; flex-wrap: wrap; color: var(--muted); font-size: .95rem; }
+.status .warn { color: var(--warn); }
+.verbs { display: flex; flex-wrap: wrap; gap: 6px; }
+.verbs span { font: .85rem var(--mono); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; background: var(--panel); }
+.verbs span.gap { border-style: dashed; color: var(--accent); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+.card.top { border-color: var(--accent); }
+.card canvas { display: block; width: 100%; aspect-ratio: 2 / 1; background: var(--stage); }
+.card .body { padding: 14px; display: grid; gap: 8px; align-content: start; }
+.card h3 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; font-size: 1.25rem; }
+.card h3 small { font: 500 .72rem var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.swatch { display: inline-block; width: .8em; height: .8em; border-radius: 3px; background: var(--c); margin-right: 6px; vertical-align: -1px; }
+.verb { font: 500 .85rem var(--mono); color: var(--accent); }
+.card p { font-size: .95rem; }
+.card .cost { color: var(--muted); font-size: .9rem; }
+.pick { font: 500 .72rem var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ok); }
+.marks { display: flex; gap: 6px; flex-wrap: wrap; }
+.marks button, .choices button { font: inherit; font-size: .9rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 6px 11px; cursor: pointer; }
+.marks button[aria-pressed="true"], .choices button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 700; }
+button:disabled { cursor: default; opacity: .7; }
+textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; width: 100%; box-sizing: border-box; resize: vertical; }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.q { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; background: var(--panel); border: 1px solid var(--accent); border-radius: 10px; padding: 16px; }
+@media (max-width: 720px) { .q { grid-template-columns: 1fr; } }
+.q .side { display: grid; gap: 8px; align-content: start; }
+.choices { display: grid; gap: 6px; }
+.choices button { text-align: left; display: grid; gap: 2px; }
+.choices small { color: var(--muted); }
+.rec { font: 500 .68rem var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--ok); margin-left: 6px; }
+.slug { font: .74rem var(--mono); color: var(--muted); }
+.hint { font-size: .85rem; color: var(--muted); }
+.qn { font: 500 .8rem var(--mono); color: var(--accent); margin-right: 6px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Wizard Sim · design · brainstorm · 2026-11-08</span>
+    <h1>Tenth Element</h1>
+    <p class="lede">Nine candidates for a tenth element, each on T as Earth's opposite, each with a verb the other nine don't own. Rate each one, then answer the four questions at the bottom. This is a brainstorm: nothing here is decided. The write-up is <code>docs/explorations/2026-11-08-tenth-element.md</code>.</p>
+    <div class="status"><span id="tally"></span><span id="saveState"></span></div>
+  </header>
+
+  <section style="display:grid;gap:10px">
+    <h2>What the nine already do</h2>
+    <p>Each element's verb is what it does to a body. The dashed ones are verbs nobody owns yet.</p>
+    <div class="verbs">
+      <span>Water · soak</span><span>Fire · burn</span><span>Cold · chill</span><span>Lightning · shock</span><span>Arcane · expose</span><span>Earth · weight</span><span>Life · mend</span><span>Shield · barrier</span><span>Sigil · device</span>
+      <span class="gap">move</span><span class="gap">pull</span><span class="gap">spread</span><span class="gap">stop healing</span><span class="gap">hide / reveal</span><span class="gap">allegiance</span><span class="gap">time</span><span class="gap">pay in health</span>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>The candidates</h2>
+    <p>The three strongest are marked. Claude leans to Blight, closely followed by Air; your taste decides.</p>
+    <div class="grid" id="cards"></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Questions</h2>
+    <p class="hint">No answer means you accept the recommended option.</p>
+    <div id="questions" style="display:grid;gap:12px"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const el = (t, c, h) => { const e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const askers = []; const store = { ratings: {}, answers: {} }; let db = null; const chains = {};
+
+  const C = [
+    { id: 'air', name: 'Air', tag: 'conservative', color: '#3f9c84', top: 1, verb: 'Gust: shove and carry', text: 'Bodies are pushed; clouds, flames and frozen bodies drift with the wind. Blow a partner’s steam onto the enemy, fan fire further, slide the frozen into walls.', world: 'High places, passes, steady winds. Opposite Earth: lift against weight.', cost: 'Water loses its shove and the Shield wave changes when it arrives; about 81 % more spells; shoving allies is the most annoying friendly fire.' },
+    { id: 'blight', name: 'Blight', tag: 'borrowed', color: '#7d8f2a', top: 1, verb: 'Rot: spreads, and stops healing', text: 'A slow-building status that passes to bodies standing close and blocks healing while it lasts. Packed enemies infect each other; Fire burns it out; Life cures it, giving support a cleansing job.', world: 'Marshes, battlefields, land where Life was drained; maybe met first as the enemy’s magic. Opposite Earth: decay against endurance.', cost: 'A second damage-over-time beside burning (keep its damage low, its spread high); one more status to read.' },
+    { id: 'void', name: 'Void', tag: '', color: '#5a4b8a', top: 1, verb: 'Draw: pull and swallow', text: 'Pulls bodies and shots to the point of impact. A Void Place gathers a crowd for a partner’s nova; a tether yanks one target to you; a Void barrier eats shots.', world: 'Hollows where a field was drawn dry. Opposite Earth: absence against substance.', cost: 'Overlaps Arcane’s deep, dangerous identity; pulling an ally into danger is harsh friendly fire.' },
+    { id: 'light', name: 'Light', tag: '', color: '#e0c64a', verb: 'Dazzle: blind and reveal', text: 'A flash blinds: enemies lose their target and swing wide, archers miss. It reveals what’s hidden and lights dark rooms.', world: 'Sun plateaus, deserts, lighthouses; darkness as a zone it pushes back.', cost: 'Another disable beside stun and chill; vision effects are hard to read in a busy top-down fight.' },
+    { id: 'iron', name: 'Iron', tag: '', color: '#8a929c', verb: 'Magnetize', text: 'Marked bodies pull toward each other and draw shots; lightning runs through rock along it.', world: 'Ore seams, which are already Earth’s.', cost: 'Too close to Earth; armour would have to become a world rule to matter.' },
+    { id: 'sound', name: 'Sound', tag: '', color: '#c48ad6', verb: 'Resonate', text: 'Rings that shatter the brittle (frozen bodies, rock, barriers) and interrupt wind-ups, through walls.', world: 'Canyons, bell towers.', cost: 'Shattering is Earth’s and Arcane’s, interrupting is Lightning’s: a mix of existing verbs.' },
+    { id: 'time', name: 'Time', tag: 'wild', color: '#c9a25a', verb: 'Tempo: slow, quicken, rewind', text: 'Slows or quickens what it touches (a wind-up, a projectile, an ally’s recovery); a self-cast rewinds you two seconds.', world: 'Ancient ruins where time pools.', cost: 'Cold slows and Haste quickens already; a rewind is strange to watch from a partner’s screen.' },
+    { id: 'spirit', name: 'Spirit', tag: 'wild', color: '#8fc4f0', verb: 'Sway: turn an enemy', text: 'An enemy fights on your side for a few seconds.', world: 'Graveyards and old battlefields; or a third innate element.', cost: 'Whose side is it on, and can my friend hit it? Overlaps the Double.' },
+    { id: 'blood', name: 'Blood', tag: 'wild, borrowed', color: '#b3243a', verb: 'Leech: pay in health', text: 'A Blood rune has no pool: it costs health to queue, and its payload heals you for part of what it deals. A way past an empty pool, at your own risk.', world: 'Old pacts; forbidden schools.', cost: 'It bends the rune economy the game is built on; leeching an ally under friendly fire is ugly.' },
+  ];
+
+  // ---------- vignettes ----------
+  const W = 320, H = 160;
+  const tok = () => { const s = getComputedStyle(document.documentElement); return { fg: s.getPropertyValue('--fg').trim(), muted: s.getPropertyValue('--muted').trim(), stage: s.getPropertyValue('--stage').trim() }; };
+  let T = tok();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { T = tok(); });
+  const BASE = [[210, 58], [240, 80], [212, 104], [262, 112]];
+  const ease = (x) => x < 0 ? 0 : x > 1 ? 1 : x * x * (3 - 2 * x);
+  const seg = (t, a, b) => ease((t - a) / (b - a));
+  const mix = (a, b, k) => a + (b - a) * k;
+  function body(g, x, y, fill, ring) {
+    g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(x, y + 11, 10, 3.5, 0, 0, 7); g.fill();
+    g.fillStyle = fill; g.beginPath(); g.arc(x, y, 9, 0, 7); g.fill();
+    if (ring) { g.strokeStyle = ring; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, 12, 0, 7); g.stroke(); }
+  }
+  const ENEMY = '#a8553f';
+  function caster(g, c) {
+    body(g, 52, 84, '#6a5acd');
+    g.strokeStyle = T.fg; g.lineWidth = 2; g.beginPath(); g.moveTo(62, 92); g.lineTo(70, 66); g.stroke();
+    g.fillStyle = c; g.beginPath(); g.arc(70, 64, 4, 0, 7); g.fill();
+  }
+  const A = {
+    air(g, t, c) {
+      const k = seg(t, .15, .55);
+      for (let i = 0; i < 6; i++) { const yy = 60 + i * 9, x0 = 80 + ((t * 600 + i * 37) % 160); if (t > .1 && t < .6) { g.strokeStyle = c; g.globalAlpha = .7; g.lineWidth = 2; g.beginPath(); g.moveTo(x0, yy); g.lineTo(x0 + 26, yy + 2); g.stroke(); g.globalAlpha = 1; } }
+      const fx = mix(140, 230, k); g.fillStyle = '#e2603a'; g.globalAlpha = .85; g.beginPath(); g.arc(fx, 126, 7 + 3 * Math.sin(t * 40), 0, 7); g.fill(); g.globalAlpha = 1;
+      BASE.forEach(([x, y], i) => body(g, x + k * (40 - i * 4), y + (i - 1.5) * k * 6, ENEMY));
+    },
+    blight(g, t, c) {
+      const on = [.1, .35, .5, .7];
+      BASE.forEach(([x, y], i) => {
+        const a = seg(t, on[i], on[i] + .12);
+        body(g, x, y, ENEMY, a > .05 ? c : null);
+        if (a > 0) { for (let m = 0; m < 4; m++) { g.fillStyle = c; g.globalAlpha = a * .8; g.beginPath(); g.arc(x - 6 + m * 4, y - 12 - ((t * 60 + m * 5) % 10), 2, 0, 7); g.fill(); } g.globalAlpha = 1; }
+      });
+      if (t > .1 && t < .2) { g.strokeStyle = c; g.lineWidth = 3; g.beginPath(); g.moveTo(74, 64); g.lineTo(BASE[0][0], BASE[0][1]); g.stroke(); }
+      if (t > .6 && t < .85) { const [x, y] = BASE[1]; g.strokeStyle = '#4fae5e'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 18, 0, 7); g.stroke(); g.strokeStyle = '#c33'; g.lineWidth = 3; g.beginPath(); g.moveTo(x - 8, y - 8); g.lineTo(x + 8, y + 8); g.moveTo(x + 8, y - 8); g.lineTo(x - 8, y + 8); g.stroke(); }
+    },
+    void(g, t, c) {
+      const o = [232, 86], k = seg(t, .2, .55), on = t > .12 && t < .82;
+      if (on) { g.fillStyle = '#120d22'; g.beginPath(); g.arc(o[0], o[1], 10 + 4 * Math.sin(t * 30), 0, 7); g.fill(); g.strokeStyle = c; g.lineWidth = 2; for (let r = 1; r < 4; r++) { g.globalAlpha = .6; g.beginPath(); g.arc(o[0], o[1], 10 + r * 10 * (1 - ((t * 3) % 1)), 0, 7); g.stroke(); } g.globalAlpha = 1; }
+      const nova = seg(t, .62, .78);
+      BASE.forEach(([x, y]) => body(g, mix(x, o[0] + (x - o[0]) * .25, k), mix(y, o[1] + (y - o[1]) * .25, k), nova > 0 && nova < 1 ? '#e8c49a' : ENEMY));
+      if (nova > 0 && nova < 1) { g.strokeStyle = '#a07646'; g.lineWidth = 4; g.beginPath(); g.arc(o[0], o[1], 10 + nova * 50, 0, 7); g.stroke(); }
+    },
+    light(g, t, c) {
+      const f = seg(t, .15, .25) * (1 - seg(t, .25, .45));
+      if (f > 0) { g.fillStyle = c; g.globalAlpha = .55 * f; g.beginPath(); g.moveTo(74, 64); g.lineTo(300, 30); g.lineTo(300, 140); g.closePath(); g.fill(); g.globalAlpha = 1; }
+      const blind = t > .25 && t < .92;
+      BASE.forEach(([x, y], i) => { const w = blind ? Math.sin(t * 25 + i * 2) * 6 : 0; body(g, x + w, y, ENEMY); if (blind) { g.fillStyle = c; g.font = 'bold 14px sans-serif'; g.fillText('?', x - 4 + w, y - 14); } });
+    },
+    iron(g, t, c) {
+      const k = seg(t, .3, .6), cx = 236, cy = 88;
+      BASE.forEach(([x, y]) => body(g, mix(x, cx + (x - cx) * .45, k), mix(y, cy + (y - cy) * .45, k), ENEMY, t > .2 && t < .9 ? c : null));
+      if (t > .2 && t < .6) { g.strokeStyle = c; g.setLineDash([3, 3]); g.lineWidth = 1.5; g.beginPath(); BASE.forEach(([x, y], i) => { const [a, b] = BASE[(i + 1) % 4]; g.moveTo(x, y); g.lineTo(a, b); }); g.stroke(); g.setLineDash([]); }
+    },
+    sound(g, t, c) {
+      g.strokeStyle = c; g.lineWidth = 2;
+      for (let r = 0; r < 3; r++) { const p = (t * 1.5 + r * .33) % 1; g.globalAlpha = 1 - p; g.beginPath(); g.arc(52, 84, 20 + p * 230, -0.6, 0.6); g.stroke(); }
+      g.globalAlpha = 1;
+      const sh = seg(t, .5, .6);
+      BASE.forEach(([x, y], i) => {
+        if (i === 1) { if (sh < 1) body(g, x, y, '#9fd8f0', '#e8f6fc'); else for (let s = 0; s < 6; s++) { const a = s, d = (t - .6) * 120; g.fillStyle = '#bfe6f5'; g.fillRect(x + Math.cos(a) * d, y + Math.sin(a) * d, 4, 4); } }
+        else body(g, x, y, ENEMY);
+      });
+    },
+    time(g, t, c) {
+      g.strokeStyle = c; g.setLineDash([4, 4]); g.lineWidth = 2; g.beginPath(); g.arc(150, 84, 34, 0, 7); g.stroke(); g.setLineDash([]);
+      const p = t < .3 ? t / .3 * .45 : t < .8 ? .45 + (t - .3) * .1 : .5 + (t - .8) * 2.5;
+      const bx = mix(230, 70, Math.min(p, 1)); g.fillStyle = '#e2603a'; g.beginPath(); g.arc(bx, 84, 5, 0, 7); g.fill();
+      for (let k = 1; k < 4; k++) { g.globalAlpha = .15 * (4 - k); g.beginPath(); g.arc(bx + k * 6, 84, 5, 0, 7); g.fill(); } g.globalAlpha = 1;
+      BASE.forEach(([x, y]) => body(g, x + 10, y, ENEMY));
+    },
+    spirit(g, t, c) {
+      const k = seg(t, .15, .3) * (1 - seg(t, .8, .92));
+      BASE.forEach(([x, y], i) => body(g, x, y, i === 0 ? (k > .5 ? '#8fb8e8' : ENEMY) : ENEMY, i === 0 && k > .05 ? c : null));
+      if (t > .15 && t < .25) { g.strokeStyle = c; g.lineWidth = 2; g.beginPath(); g.moveTo(74, 64); g.lineTo(BASE[0][0], BASE[0][1]); g.stroke(); }
+      if (k > .5 && Math.floor(t * 10) % 2 === 0) { const [a, b] = BASE[0], [x, y] = BASE[1]; g.strokeStyle = T.fg; g.lineWidth = 3; g.beginPath(); g.moveTo(a + 8, b + 4); g.lineTo(x - 8, y - 4); g.stroke(); }
+    },
+    blood(g, t, c) {
+      const hp = 1 - .35 * seg(t, .1, .2) + .2 * seg(t, .6, .8);
+      g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(32, 108, 40, 5); g.fillStyle = c; g.fillRect(32, 108, 40 * hp, 5);
+      if (t > .2) { g.fillStyle = c; g.beginPath(); g.arc(52, 58, 4, 0, 7); g.fill(); }
+      if (t > .3 && t < .45) { const bx = mix(74, BASE[1][0], (t - .3) / .15); g.fillStyle = c; g.beginPath(); g.arc(bx, 70, 5, 0, 7); g.fill(); }
+      if (t > .5 && t < .8) for (let m = 0; m < 5; m++) { const p = ((t - .5) / .3 + m * .17) % 1; g.fillStyle = c; g.globalAlpha = .8; g.beginPath(); g.arc(mix(BASE[1][0], 52, p), mix(BASE[1][1], 84, p) - Math.sin(p * 3) * 14, 2.5, 0, 7); g.fill(); } g.globalAlpha = 1;
+      BASE.forEach(([x, y], i) => body(g, x, y, ENEMY, i === 1 && t > .44 && t < .55 ? c : null));
+    },
+  };
+  const stages = [];
+  for (const c of C) {
+    const card = el('article', 'card' + (c.top ? ' top' : '')); card.id = 'el-' + c.id;
+    const cv = el('canvas'); cv.width = W * 2; cv.height = H * 2; cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', `${c.name}: ${c.verb}`);
+    const b = el('div', 'body');
+    b.innerHTML = `<h3><span><span class="swatch" style="--c:${c.color}"></span>${esc(c.name)}</span><small>${esc(c.tag || '')}</small></h3>${c.top ? '<span class="pick">One of the three strongest</span>' : ''}<span class="verb">${esc(c.verb)}</span><p>${esc(c.text)}</p><p><b>World:</b> ${esc(c.world)}</p><p class="cost"><b>Costs:</b> ${esc(c.cost)}</p>`;
+    const marks = el('div', 'marks'); marks.setAttribute('role', 'group'); marks.setAttribute('aria-label', 'Rate ' + c.name);
+    for (const [v, l] of [['love', 'Love it'], ['maybe', 'Maybe'], ['no', 'No']]) { const bt = el('button', null, l); bt.type = 'button'; bt.dataset.v = v; bt.disabled = true; bt.addEventListener('click', () => put('ratings', 'el-' + c.id, { mark: (store.ratings['el-' + c.id]?.mark === v) ? null : v })); marks.append(bt); }
+    const ta = el('textarea'); ta.rows = 2; ta.placeholder = 'Note (optional)'; ta.id = 'note-el-' + c.id; ta.disabled = true; ta.setAttribute('aria-label', 'Note on ' + c.name);
+    noteBox(ta, 'ratings', 'el-' + c.id);
+    b.append(marks, ta);
+    card.append(cv, b); $('cards').append(card);
+    stages.push({ c, g: cv.getContext('2d') });
+    askers.push({ coll: 'ratings', id: 'el-' + c.id, btns: marks, ta, key: 'mark' });
+  }
+  function draw(now) {
+    for (const s of stages) {
+      const t = REDUCED ? .62 : ((now / 3200) + C.indexOf(s.c) * .11) % 1;
+      const g = s.g; g.setTransform(2, 0, 0, 2, 0, 0); g.fillStyle = T.stage; g.fillRect(0, 0, W, H);
+      g.strokeStyle = T.muted; g.globalAlpha = .18; g.lineWidth = 1; for (let x = 0; x < W; x += 20) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); } g.globalAlpha = 1;
+      caster(g, s.c.color); A[s.c.id](g, t, s.c.color);
+    }
+    if (!REDUCED) requestAnimationFrame(draw);
+  }
+
+  // ---------- questions ----------
+  const QS = [
+    ['q-1-verb', 'Q1', 'Which verb excites you most?', 'The finalists, or another card.', [['blight', 'Contagion: Blight', 'Brings something the game has none of.', true], ['air', 'Motion: Air', 'The richest co-op set-ups.'], ['void', 'Pull: Void', 'The strongest combo enabler.'], ['other', 'Another card', 'Say which in the note.']]],
+    ['q-2-enemy-first', 'Q2', 'Meet the late element first as the enemy’s magic?', 'You see what it does to you, then learn it.', [['yes', 'Yes', 'It teaches by example and carries story.', true], ['no', 'No', 'It arrives as a discovery of your own.']]],
+    ['q-3-cure', 'Q3', 'Should Life gain a cure job, whatever the tenth is?', 'Cleansing a status (burning, rot, chill) by healing it, which makes support about timing.', [['yes', 'Yes', 'A skilful support verb.', true], ['no', 'No', 'Life only heals.']]],
+    ['q-4-air-cost', 'Q4', 'If Air: may Water lose its shove and the Shield wave change?', 'The draft’s cost, changing two things already built.', [['ok', 'Yes, that’s fine', 'Each element gets one clear job.', true], ['no', 'No, keep them', 'Air would need another verb.'], ['unsure', 'Unsure', 'Try it first.']]],
+    ['general', '', 'Anything else', 'Other candidates, combinations, or a different slot than T.', null],
+  ];
+  for (const [id, n, title, text, ch] of QS) {
+    const row = el('article', 'q');
+    row.append(el('div', null, `<h3>${n ? `<span class="qn">${n}</span>` : ''}${esc(title)}</h3><p>${esc(text)}</p><span class="slug">answers/${id}</span>`));
+    const side = el('div', 'side'); let btns = null;
+    if (ch) { btns = el('div', 'choices'); for (const [v, l, s, rec] of ch) { const b = el('button', null, `<b>${esc(l)}${rec ? '<span class="rec">Recommended</span>' : ''}</b><small>${esc(s)}</small>`); b.type = 'button'; b.dataset.v = v; b.disabled = true; b.addEventListener('click', () => put('answers', id, { choice: store.answers[id]?.choice === v ? null : v })); btns.append(b); } side.append(btns); }
+    const ta = el('textarea'); ta.rows = ch ? 2 : 3; ta.id = 'ans-' + id; ta.placeholder = ch ? 'Note (optional)' : 'Your note'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on ' + title);
+    noteBox(ta, 'answers', id); side.append(ta); row.append(side); $('questions').append(row);
+    askers.push({ coll: 'answers', id, btns, ta, key: 'choice' });
+  }
+
+  // ---------- store ----------
+  function put(coll, id, body) {
+    store[coll][id] = Object.assign({}, store[coll][id], body); paint();
+    if (!db) return;
+    setSave('Saving…');
+    const d = store[coll][id];
+    const doc = coll === 'ratings' ? { mark: d.mark || null, note: d.note || '', updatedAt: new Date().toISOString() } : { choice: d.choice || null, note: d.note || '', updatedAt: new Date().toISOString() };
+    const k = coll + '/' + id;
+    chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set(doc)).then(() => setSave('All saved')).catch(() => setSave('Couldn’t save that. Check your connection and try again.', true));
+  }
+  function noteBox(ta, coll, id) {
+    let timer;
+    ta.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => put(coll, id, { note: ta.value }), 900); });
+    ta.addEventListener('blur', () => { clearTimeout(timer); if ((store[coll][id]?.note || '') !== ta.value) put(coll, id, { note: ta.value }); });
+  }
+  function setSave(t, w) { $('saveState').textContent = t; $('saveState').className = w ? 'warn' : ''; }
+  function paint() {
+    let rated = 0;
+    for (const A of askers) {
+      const d = store[A.coll][A.id] || {};
+      if (A.coll === 'ratings' && d.mark) rated++;
+      if (A.btns) for (const b of A.btns.children) { b.setAttribute('aria-pressed', String(b.dataset.v === d[A.key])); b.disabled = !db; }
+      A.ta.disabled = !db;
+      if (document.activeElement !== A.ta && A.ta.value !== (d.note || '')) A.ta.value = d.note || '';
+    }
+    $('tally').innerHTML = `<b>${rated}</b> of ${C.length} rated`;
+  }
+  requestAnimationFrame(draw);
+  setSave('Connecting to saved ratings…'); paint();
+  (async () => {
+    try { db = await window.claude?.use?.('db'); } catch { db = null; }
+    if (!db) { setSave('Read-only here: ratings need the page’s saved-answers store, which isn’t available in this view.', true); paint(); return; }
+    paint();
+    const timer = setTimeout(() => setSave('Saved ratings are slow to load. You can still rate; changes save when the connection returns.', true), 10000);
+    for (const coll of ['ratings', 'answers']) db.collection(coll).onSnapshot((snap) => {
+      for (const d of snap.docs) { const x = d.data(); store[coll][d.id] = { mark: x.mark || null, choice: x.choice || null, note: x.note || '' }; }
+      if (!snap.metadata.fromCache) { clearTimeout(timer); if (!snap.metadata.hasPendingWrites) setSave('All saved'); }
+      paint();
+    }, () => { clearTimeout(timer); db = null; setSave('Saved ratings are unavailable, so the page is read-only. Reload to try again.', true); paint(); });
+  })();
+})();
+</script>

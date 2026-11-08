@@ -18,9 +18,9 @@ Seven elements are **fields**: Water, Fire, Cold, Lightning, Earth, Life, Arcane
 ## Fields, veins and wells
 
 - **A field** is broad and ambient, like rainfall or a climate. Its strength is what a zone's band measures (edge, heartland, well).
-- **A vein** is a narrow channel of strength inside or between fields, like a river. In levels, veins show on the ground as lines or seams; devices sit on them (a forge on a fire vein).
+- **A vein** is a narrow channel of strength inside or between fields, like a river. It exists in the world, not as a gameplay effect: no boost for standing on one (the user, 2026-11-08). Devices and towns sit on them (a forge on a fire vein).
 - **A well** is where veins surface and converge. A region's push peaks there.
-- **Opposites never meet.** The rules cancel Fire and Cold, Water and Lightning, Life and Arcane, and Earth and Lightning, so those fields never overlap. Where two would meet, the land is a **hush**: a natural dead zone where neither holds. *(Proposed 2026-11-08.)*
+- **Opposites can meet, depending on how they appear.** The rules cancel Fire and Cold, Water and Lightning, Life and Arcane, and Earth and Lightning, but in the world that's case by case. The user: "fire and frost is a bit weird to overlap. Water and lightning is not so crazy, lightning is not a persistent thing in the world. Rain and lightning is a common thing to happen together." A **hush** (a dead zone where neither holds) is a possible feature where fire meets frost, not a law. *(2026-11-08.)*
 
 ## The field elements
 
@@ -46,7 +46,7 @@ Seven elements are **fields**: Water, Fire, Cold, Lightning, Earth, Life, Arcane
 - **Opposite:** Fire.
 
 ### Lightning: what leaps and connects
-- **In the world:** high, dry, open ground: peaks and steppes. It cancels Water and Earth, so it never pools with them; it arrives in bursts and strikes the same places again. Where it meets Cold, spark peaks; where it meets Fire, arc foundries and wildfire steppe.
+- **In the world:** storm coasts, high peaks, open steppe. It isn't persistent: it arrives in bursts and strikes the same places again, so it can share ground with Water (storms over a marsh). Where it meets Cold, spark peaks; where it meets Fire, arc foundries and wildfire steppe; where it meets Water, the storm marsh.
 - **People:** the most "modern" towns: rods, coils, crude electric lamps and signals. Also the most dangerous to live in.
 - **Creatures:** fast, twitchy, in swarms that chain.
 - **In play:** jumps between bodies and through water; stuns; fast and hard to aim around allies.
@@ -93,5 +93,5 @@ Both cost the caster's own attention, which is why they behave unlike the field 
 
 - **Air** (`../ideas/air-element.md`): a tenth element would make five clean pairs (Earth's opposite) and is a candidate for the element unlocked late, through the story. As a field: high places, steady winds, maybe what lifts airships. Cost: a tenth key, about 81 % more spells, and changes to Water and the Shield wave.
 - **Confluences** so far: Earth + Fire, the forge city; Fire + Water, steam towns; Fire + Lightning, arc foundries; Lightning + Cold, spark peaks; Cold + Water, ice roads; Life + Water, the breadbasket. More to come.
-- **Does standing on a vein give a local boost?** Open (exploration round 3, question 6).
+- **Veins have no direct gameplay effect** (settled 2026-11-08).
 - **Do fields have a cost when tapped?** Can a vein be overdrawn and run dry? It's a story question (spine C in the exploration) as much as a world one.

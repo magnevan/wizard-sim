@@ -29,3 +29,5 @@ This is whatever prototype comes first. Every prototype is effectively a sanctum
 
 ## The meditation sandbox (the user, 2026-11-08)
 The user's answer to "Magicka has no right space to practise": a meditative state you can enter at any time, taking you to a sandbox with dummies and summonable enemies; co-op partners click on you to join your dream; a button exits. Each hub may also have a practice yard. Claude's proposals (when it's allowed, what it holds, the tech under rollback) are in `../explorations/2026-11-07-world-and-progression.md`, "Claude's responses to round 2". This supersedes the parked shared tower: the sandbox is reached from anywhere, not walked to.
+
+**Round 3 (2026-11-08):** entered only when no enemy is engaged; you can't die there; only what you've unlocked is in it; regen matches your current zone.

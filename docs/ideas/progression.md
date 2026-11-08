@@ -38,7 +38,7 @@ No campaign progression is built. Survive's power-ups are the only growth in the
 ## Where it stands (2026-11-08)
 From `../explorations/2026-11-07-world-and-progression.md`, rounds 1 and 2:
 - **Unlocks, U2:** a core set at the academy, a few things held back for story beats; what's held back is open (the etched-focus Sigil and Air are Claude's proposals).
-- **The queue is five runes from the start.** Regen is the main lever (sustain), pool size the second (burst).
+- **The queue is five runes from the start.** Regen is the main lever (sustain), pool size the second (burst). **Pools start at 1** and grow to at most about 5 (2026-11-08), so early spells are mixes, never stacks.
 - **The player chooses which pool deepens** at each attunement.
 - **No gear by default;** spell sidegrade customization to explore later.
 - **Co-op catch-up** to be designed later.

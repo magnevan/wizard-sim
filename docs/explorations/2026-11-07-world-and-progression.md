@@ -209,3 +209,40 @@ On the page; unanswered means the recommendation stands.
 6. **Fields and veins** as above, and does standing on a vein give a local boost?
 7. **Opposites never meet, with a hush between** (recommended)?
 8. **The map:** an Azgaar base with our field overlay (recommended), a painting tool, or our own generator?
+
+
+## Round 3: the user's answers (2026-11-08)
+
+- **R3.1, early swords: the etched focus,** with a worry: "it'll be weird to parse what happens if you have sigil in the queue but make a different cast than conjure." Options are in round 4 below.
+- **R3.2, the even count: open.** "Air could make sense, but we need a brainstorm of elements and what could be cool effects to decide." Done overnight: `2026-11-08-tenth-element.md`.
+- **R3.3, meditating: only when no enemy is engaged.**
+- **R3.4, the dream holds** "basically all the things you mentioned. You have full control and can't die. Nothing you haven't unlocked is there, regen will be the same as your current zone I think."
+- **R3.5, pools and regen: both grow,** and "pools should start at 1, I think that's actually enough, not exactly sure how high they should grow, but probably not more than 5."
+- **R3.6, veins:** they have no direct gameplay effect: "it's more something that exists in the world." Devices may still sit on them.
+- **R3.7, opposites can meet,** depending on how they appear: "fire and frost is a bit weird to overlap. Water and lightning is not so crazy, lightning is not a persistent thing in the world. Rain and lightning is a common thing to happen together." So the round-2 "never meet" rule is withdrawn; the storm marsh is back, and the hush is at most a case-by-case feature (fire against frost), not a law.
+- **R3.8, the map:** an Azgaar base with our overlay for now, but "we may have to try a few approaches". Tried overnight: `../../tools/world-map/`.
+
+## Round 4: Claude's overnight proposals (2026-11-08, nothing decided)
+
+**Sigil in the queue before the art is learned.** Four ways to read it:
+- **S1, Sigil means a weapon.** Until you learn the art, any cast with Sigil queued conjures the weapon, whatever the gesture: one rule, "Sigil is a blade". The HUD's Sigil pip shows a small blade, and the help panel's rows all read "weapon". It's the easiest to parse, but it changes when the art is learned (Force with Sigil becomes a turret).
+- **S2, it fizzles.** A non-Conjure cast with Sigil queued fails with a dull spark and a "the focus can only shape blades" cue; the runes are refunded. Honest, and it hints at more to come, but a failed cast mid-fight feels bad.
+- **S3, Sigil drops out.** The rest of the queue casts as if Sigil weren't there, and the Sigil rune is refunded. Smooth in a fight, but the player gets something they didn't ask for without being told why.
+- **S4, the gestures are locked.** With Sigil queued, the locked gestures do nothing at all and are drawn dim in the help panel (the "dim slots" idea); only Conjure works. No surprise and no failure state, but pressing a gesture that does nothing can read as a dropped input.
+
+Claude's pick: **S4, with S2's cue.** The locked gesture plays a short, soft "the focus can't" sound and spark and spends nothing; the help panel already shows dim slots. It never casts something unasked for, and it's the same rule the full art later lifts. S1 is the runner-up if the dim gesture feels like a dropped input in play.
+
+**Pools that start at 1.** This changes the early game more than it looks:
+- **Every early spell is a mix, never a stack.** With one rune per element, Fire + Fire is impossible; Fire + Water + Earth isn't. The early "press anything" moment becomes about *combining*, which is closer to the spell-language pillar than stacking was.
+- **A five-rune queue is reachable from day one,** but only with five different elements, and it empties you of all five.
+- **One weapon at a time, one ward at a time.** A Sigil pool of 1 holds one bound device; a Shield pool of 1 one barrier. That's a clean early rule.
+- **Stacks become what growth buys.** The first deeper pool is the first time a 2-Fire spray is possible, which makes the pool choice at attunement feel big.
+- **Regen carries the pace.** With pools of 1, how often you cast is almost entirely regen. Early R needs a play-test: around 0.5 runes a second (half today's) is a starting guess.
+- **Per-form stacking curves matter later,** not early, so early balance is mostly about mixes.
+
+## Open questions (round 4)
+
+On the page; unanswered means the recommendation stands.
+1. **Sigil before the art:** S4 with S2's cue (recommended), S1, S2 or S3?
+2. **The tenth element:** see the brainstorm.
+3. **The map approaches:** which direction to push?

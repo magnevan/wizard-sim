@@ -28,3 +28,4 @@ Dated, long-form thinking sessions. Once written, each is a record and isn't rew
 | 2026-11-05 | [inert-audit](2026-11-05-inert-audit.md) | The game's inert additions (210 at first run) | Life family resolved; the rest untracked |
 | 2026-11-05 | [survive-mode](2026-11-05-survive-mode.md) | Survive: waves, altars, power-ups, the big arena, Rally and Echo | |
 | 2026-11-07 | [world-and-progression](2026-11-07-world-and-progression.md) | The world as fields, zones, unlock pacing, shrines, encounters, story spines for one or four players | |
+| 2026-11-08 | [tenth-element](2026-11-08-tenth-element.md) | Nine candidate tenth elements; Blight, Air and Void strongest | |

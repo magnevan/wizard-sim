@@ -317,6 +317,7 @@
   // ---------- the painted chart ----------
   function drawChart(g, w, opts) {
     textures();
+    const sketch = opts.layer === 'sketch'; // a loose thumbnail for a paint model: colour and shapes, nothing finished to copy
     const geo = geometry(w), base = paintBase(w), r = rng(w.seed * 31 + 5), sp = makeSprites();
     g.save(); g.lineCap = 'round'; g.lineJoin = 'round'; g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
     g.drawImage(base.ocean, 0, 0, W, H);
@@ -329,8 +330,8 @@
     const cR = Math.max(120, Math.min(175, cB * S * .5));
     g.save(); g.clip(oceanClip, 'evenodd');
     g.strokeStyle = 'rgba(30,48,58,.14)'; g.lineWidth = 1.5;
-    for (let i = 0; i < 16; i++) { const a = i * TAU / 16; g.beginPath(); g.moveTo(cX, cY); g.lineTo(cX + Math.cos(a) * 2600, cY + Math.sin(a) * 2600); g.stroke(); }
-    for (const [cx, cy] of [[60, 60], [W - 60, 60], [60, H - 60], [W - 60, H - 60]]) for (let i = 0; i < 5; i++) { const a = Math.atan2(H / 2 - cy, W / 2 - cx) + (i - 2) * .28; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * 900, cy + Math.sin(a) * 900); g.stroke(); }
+    if (!sketch) for (let i = 0; i < 16; i++) { const a = i * TAU / 16; g.beginPath(); g.moveTo(cX, cY); g.lineTo(cX + Math.cos(a) * 2600, cY + Math.sin(a) * 2600); g.stroke(); }
+    if (!sketch) for (const [cx, cy] of [[60, 60], [W - 60, 60], [60, H - 60], [W - 60, H - 60]]) for (let i = 0; i < 5; i++) { const a = Math.atan2(H / 2 - cy, W / 2 - cx) + (i - 2) * .28; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * 900, cy + Math.sin(a) * 900); g.stroke(); }
     for (let i = 0; i < 22; i++) { g.strokeStyle = `rgba(14,32,42,${.045})`; g.lineWidth = 3 + i * 3.2; g.stroke(geo.coastPath); }
     g.strokeStyle = 'rgba(214,232,226,.2)'; g.lineWidth = 16; g.stroke(geo.coastPath);
     g.strokeStyle = 'rgba(214,232,226,.26)'; g.lineWidth = 7; g.stroke(geo.coastPath);
@@ -344,7 +345,7 @@
 
     // sea routes
     g.save(); g.setLineDash([.1, 11]); g.lineWidth = 3.6; g.strokeStyle = 'rgba(242,238,224,.66)';
-    for (const p of w.routes) { const c = chaikin(p.map(([x, y]) => [x * S + S / 2, y * S + S / 2]), 3); g.beginPath(); g.moveTo(c[0][0], c[0][1]); for (const q of c) g.lineTo(q[0], q[1]); g.stroke(); }
+    for (const p of sketch ? [] : w.routes) { const c = chaikin(p.map(([x, y]) => [x * S + S / 2, y * S + S / 2]), 3); g.beginPath(); g.moveTo(c[0][0], c[0][1]); for (const q of c) g.lineTo(q[0], q[1]); g.stroke(); }
     g.restore();
 
     // land
@@ -371,17 +372,17 @@
     }
 
     // rifts and fissures
-    for (const p of w.rifts) {
+    for (const p of sketch ? [] : w.rifts) {
       const c = chaikin(p.map(([x, y]) => [x * S, y * S]), 1);
       const trace = () => { g.beginPath(); g.moveTo(c[0][0], c[0][1]); c.forEach((q, i) => g.lineTo(q[0] + (i % 2 ? 2.5 : -2.5), q[1])); };
       for (let i = 6; i > 0; i--) { trace(); g.strokeStyle = `rgba(190,70,160,${.06})`; g.lineWidth = i * 10; g.stroke(); }
       trace(); g.strokeStyle = '#1a0e1f'; g.lineWidth = 6; g.stroke(); trace(); g.strokeStyle = '#e66bc8'; g.lineWidth = 1.6; g.stroke();
     }
-    for (const [vx, vy] of w.volc) for (let i = 0; i < 6; i++) { const a = r() * TAU, d0 = 8 + r() * 16; let x = vx * S + Math.cos(a) * d0, y = vy * S + Math.sin(a) * d0 * .7; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 7; k++) { x += Math.cos(a + (r() - .5)) * (8 + r() * 12); y += Math.sin(a + (r() - .5)) * (6 + r() * 10); g.lineTo(x, y); } g.strokeStyle = 'rgba(42,16,12,.85)'; g.lineWidth = 4; g.stroke(); g.strokeStyle = 'rgba(244,122,48,.95)'; g.lineWidth = 1.6; g.stroke(); }
+    if (!sketch) for (const [vx, vy] of w.volc) for (let i = 0; i < 6; i++) { const a = r() * TAU, d0 = 8 + r() * 16; let x = vx * S + Math.cos(a) * d0, y = vy * S + Math.sin(a) * d0 * .7; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 7; k++) { x += Math.cos(a + (r() - .5)) * (8 + r() * 12); y += Math.sin(a + (r() - .5)) * (6 + r() * 10); g.lineTo(x, y); } g.strokeStyle = 'rgba(42,16,12,.85)'; g.lineWidth = 4; g.stroke(); g.strokeStyle = 'rgba(244,122,48,.95)'; g.lineWidth = 1.6; g.stroke(); }
 
     // roads
     g.save(); g.setLineDash([.1, 11]); g.lineWidth = 4.2; g.strokeStyle = 'rgba(46,32,18,.85)';
-    for (const p of w.roads) { const sub = p.filter((_, i) => i % 3 === 0 || i === p.length - 1), c = chaikin(sub.map(([x, y]) => [x * S + S / 2, y * S + S / 2]), 2); g.beginPath(); g.moveTo(c[0][0], c[0][1]); for (const q of c) g.lineTo(q[0], q[1]); g.stroke(); }
+    for (const p of sketch ? [] : w.roads) { const sub = p.filter((_, i) => i % 3 === 0 || i === p.length - 1), c = chaikin(sub.map(([x, y]) => [x * S + S / 2, y * S + S / 2]), 2); g.beginPath(); g.moveTo(c[0][0], c[0][1]); for (const q of c) g.lineTo(q[0], q[1]); g.stroke(); }
     g.restore();
 
     // keep-outs, then the glyph field
@@ -455,15 +456,21 @@
     items.sort((a, b) => a[0] - b[0]);
 
     // storm clouds float above everything on the ground
-    for (const [, fn] of items) fn(g);
-    for (let y = 6; y < GH - 6; y += 18) for (let x = 6 + (y % 36 ? 9 : 0); x < GW - 6; x += 18) { const i = idx(x, y); if (w.sea[i] || y < GH * .12 || (w.regK[w.region[i]] !== 'lightning' && w.F.lightning[i] < .7) || w.w1[i] < .62 || r() > .62) continue; const px = x * S, py = y * S - 26, s = .8 + r() * .6, seed2 = hash(x, y, 2) * 1e9 + 1; cloud(g, px, py, s, rng(seed2)); }
+    if (!sketch) for (const [, fn] of items) fn(g);
+    else for (const ch of w.chains) {
+      const pts = chaikin(ch.map(([x, y]) => [x * S, y * S]), 2);
+      for (const lw of [120, 80, 44]) { g.strokeStyle = 'rgba(84,66,50,.13)'; g.lineWidth = lw; g.beginPath(); pts.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); g.stroke(); }
+      g.strokeStyle = 'rgba(42,32,21,.6)'; g.lineWidth = 3.4;
+      for (let i = 0; i < pts.length; i += 9) { const [x, y] = pts[i], ox = (r() - .5) * 70, oy = (r() - .5) * 46, s = 26 + r() * 30; g.beginPath(); g.moveTo(x + ox - s, y + oy + s * .5); g.lineTo(x + ox, y + oy - s * .7); g.lineTo(x + ox + s * .9, y + oy + s * .5); g.stroke(); }
+    }
+    if (!sketch) for (let y = 6; y < GH - 6; y += 18) for (let x = 6 + (y % 36 ? 9 : 0); x < GW - 6; x += 18) { const i = idx(x, y); if (w.sea[i] || y < GH * .12 || (w.regK[w.region[i]] !== 'lightning' && w.F.lightning[i] < .7) || w.w1[i] < .62 || r() > .62) continue; const px = x * S, py = y * S - 26, s = .8 + r() * .6, seed2 = hash(x, y, 2) * 1e9 + 1; cloud(g, px, py, s, rng(seed2)); }
 
     // the uncharted north: the land simply stops being known
     { const fade = mk(GW, GH), fc = fade.getContext('2d'), im = fc.createImageData(GW, GH); for (let y = 0; y < GH * .3; y++) for (let x = 0; x < GW; x++) { const a0 = cl(1.15 - (y / GH) / .17 + (fbm(x / 14, y / 14, w.seed + 70) - .5) * .9), a = a0 * a0 * (3 - 2 * a0), p = idx(x, y) * 4; im.data[p] = 240; im.data[p + 1] = 235; im.data[p + 2] = 222; im.data[p + 3] = a * 255; } fc.putImageData(im, 0, 0); g.drawImage(fade, 0, 0, W, H); }
 
     // the compass
     const layer = opts.layer || 'all', mainCtx = g, L = mk(W, H).getContext('2d'); L.lineCap = 'round'; L.lineJoin = 'round';
-    compass(g, cX, cY - 26, cR);
+    if (!sketch) compass(g, cX, cY - 26, cR);
     banner(L, cX, cY + cR + 14, 440, 80, 'Field Atlas', `700 58px ${F_GOTH}`);
     rects.push([cX - 250, cY - cR - 90, cX + 250, cY + cR + 62]);
 
@@ -507,7 +514,7 @@
 
     // sea life, kept off the names
     const spots = [], free = (x, y, rad) => spots.every(([a, b, rr]) => Math.hypot(a - x, b - y) > rad + rr) && Math.hypot(cX / S - x, cY / S - y) > 60 * K / 1.54 + rad && !(x > GW * .66 && y > GH * .74);
-    const seaSpot = (rad, minD) => { for (let t = 0; t < 900; t++) { const x = 26 + Math.floor(r() * (GW - 52)), y = 30 + Math.floor(r() * (GH - 56)), i = idx(x, y); if (w.sea[i] && w.dLand[i] > minD && free(x, y, rad) && rectHit([x * S - 80, y * S - 60, x * S + 80, y * S + 34]) === 0) { spots.push([x, y, rad]); return [x * S, y * S]; } } return null; };
+    const seaSpot = (rad, minD) => { if (sketch) return null; for (let t = 0; t < 900; t++) { const x = 26 + Math.floor(r() * (GW - 52)), y = 30 + Math.floor(r() * (GH - 56)), i = idx(x, y); if (w.sea[i] && w.dLand[i] > minD && free(x, y, rad) && rectHit([x * S - 80, y * S - 60, x * S + 80, y * S + 34]) === 0) { spots.push([x, y, rad]); return [x * S, y * S]; } } return null; };
     let at;
     if ((at = seaSpot(18, 10 * K))) ship(g, at[0], at[1], 1.05, at[0] > W / 2, '#efe6cc');
     if ((at = seaSpot(18, 10 * K))) ship(g, at[0], at[1], .9, at[0] < W / 2, '#d9bf99');
@@ -522,7 +529,7 @@
     g.save(); g.globalCompositeOperation = 'soft-light'; g.globalAlpha = .55; g.drawImage(mottleTex, 0, 0, W, H); g.restore();
     g.save(); g.globalCompositeOperation = 'multiply'; g.fillStyle = g.createPattern(grainTex, 'repeat'); g.fillRect(0, 0, W, H); g.restore();
     const V = g.createRadialGradient(W / 2, H / 2, H * .45, W / 2, H / 2, H * .95); V.addColorStop(0, 'rgba(30,20,8,0)'); V.addColorStop(1, 'rgba(30,20,8,.42)'); g.fillStyle = V; g.fillRect(0, 0, W, H);
-    frame(g);
+    if (!sketch) frame(g);
     const key = (ct) => { ct.save(); ct.translate(W - FRAME - KEYW, H - FRAME - KEYH); ct.scale(1.4, 1.4); mapKey(ct, 0, 0, 500, 226, w); ct.restore(); };
     if (layer === 'letters') { g.clearRect(0, 0, W, H); g.drawImage(L.canvas, 0, 0); key(g); } else if (layer === 'all') key(g);
     g.restore();

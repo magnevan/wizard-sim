@@ -84,6 +84,7 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
       <button type="button" data-style="fields" aria-pressed="false">Fields</button>
       <button type="button" data-style="paint" aria-pressed="false">For painting</button>
       <button type="button" data-style="letters" aria-pressed="false">Lettering</button>
+      <button type="button" data-style="sketch" aria-pressed="false">Thumbnail</button>
     </div>
     <div class="grp" id="fieldToggles"><span class="lbl">Fields</span></div>
     <div class="grp"><label><input type="checkbox" id="towns" checked> Places and names</label><button type="button" id="zoom" aria-pressed="false">Zoom in</button></div>
@@ -153,14 +154,14 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   if (params.seed) $('seed').value = params.seed;
   if (params.plate) document.documentElement.classList.add('plate-only');
   const cv = $('map'), g = cv.getContext('2d');
-  let style = ['chart', 'veil', 'fields', 'paint', 'letters'].includes(params.look) ? params.look : 'chart', world = null;
+  let style = ['chart', 'veil', 'fields', 'paint', 'letters', 'sketch'].includes(params.look) ? params.look : 'chart', world = null;
   const show = Object.fromEntries(FIELDS.map(([k]) => [k, true]));
   function render() {
     const t0 = performance.now();
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
     const towns = $('towns').checked;
     let info = {};
-    if (style === 'fields') drawFields(g, world, { show, towns }); else info = drawChart(g, world, { towns, veil: style === 'veil' ? show : null, layer: style === 'paint' ? 'paint' : style === 'letters' ? 'letters' : 'all', cut: new Set(Object.keys(store.ratings).filter((k) => store.ratings[k].mark === 'cut').map((k) => k.slice(3))) });
+    if (style === 'fields') drawFields(g, world, { show, towns }); else info = drawChart(g, world, { towns, veil: style === 'veil' ? show : null, layer: style === 'paint' ? 'paint' : style === 'letters' ? 'letters' : style === 'sketch' ? 'sketch' : 'all', cut: new Set(Object.keys(store.ratings).filter((k) => store.ratings[k].mark === 'cut').map((k) => k.slice(3))) });
     if (info.landmarks) writePrompt(world, info.landmarks);
     $('fieldToggles').hidden = style !== 'veil' && style !== 'fields';
     const pairs = new Set(world.towns.filter((t) => t.ks.length > 1).map((t) => t.kind));

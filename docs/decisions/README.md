@@ -984,3 +984,7 @@ The user's answers on the World and Progression page.
 - **Cancelling elements can share ground in the world,** case by case (rain and lightning together, but not fire and frost). Round 2's "opposites never meet" is withdrawn.
 - **The tenth element needs a brainstorm** before Air is chosen (`explorations/2026-11-08-tenth-element.md`).
 - **The world map:** try a few approaches, starting from an Azgaar base with our overlay.
+
+## 2026-11-08: The world map's scale and look (`explorations/2026-11-08-fantasy-map.md`)
+- **The world is one continent with several regions** (Field Atlas Q3).
+- **The map should have a fantasy feel,** like an inked fantasy map rather than a diagram (the user's brief). The Field Atlas now paints that way; whether it's the right route is open (Q5).

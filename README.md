@@ -15,7 +15,7 @@ The live game is public. The rest are private claude.ai pages where the design w
 | [Wizard Sim (the game)](https://magnevan.github.io/wizard-sim/) | `game/` | The game, deployed on every push to main. |
 | [World and Progression](https://claude.ai/artifact/YHDPMoL1keyG9AJ649mREc) | `tools/world-progression/` | The world as fields, zone strength, unlock pacing, shrines, encounters and story spines; answer the round-2 questions. |
 | [Tenth Element](https://claude.ai/artifact/EFD5ENtJsssrtPZxFtX49C) | `tools/tenth-element/` | Nine candidate tenth elements with animated vignettes, to rate. |
-| [Field Atlas](https://claude.ai/artifact/GcPxANHrBCEXTC3ioembus) | `tools/world-map/` | A seeded world generator: fields from the land, towns where fields meet. Keep the worlds that feel right. |
+| [Field Atlas](https://claude.ai/artifact/GcPxANHrBCEXTC3ioembus) | `tools/world-map/` | A seeded world generator, painted like an old fantasy map: fields from the land, towns where fields meet. Keep the worlds that feel right. |
 | [Spell Atlas](https://claude.ai/artifact/GiZ7G7eQ4pMqXLaPEZK6Cw) | `tools/spell-atlas/` | The whole spell tree under proposal C, as a form × cast grid, plus Structures. Rate cells and answer the questions. |
 | [Weapon Moveset Review](https://claude.ai/artifact/F3FyhonePFv5JVeSLfk1U9) | `tools/weapon-moves/` | Conjured weapons and guards, move by move (rounds 1–4 rated). |
 | [Survive Review](https://claude.ai/artifact/HMQPuLJQWvMsXezHSHJn1a) | `tools/survive-review/` | The Survive mode: the arena and wave loop, every power-up as a rateable card, Rally and Echo in motion, and the open questions. |

@@ -1,7 +1,7 @@
 <title>Field Atlas</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Almendra:ital,wght@0,400;0,700;1,400&family=Almendra+SC&family=Grenze+Gotisch:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: one big map plate with its controls in a bar above; the approaches and questions follow. The map itself keeps a parchment look in both themes (an atlas is paper); the page around it follows the theme. */
 :root {
@@ -35,6 +35,13 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px
 .sw { display: inline-block; width: .8em; height: .8em; border-radius: 2px; background: var(--c); }
 .plate { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #d9cfb6; }
 .plate canvas { display: block; width: 100%; height: auto; }
+.plate.zoomed { overflow: auto; max-height: 85vh; }
+.plate.zoomed canvas { width: 2000px; max-width: none; }
+.plate-only body { padding: 0; margin: 0; background: #000; }
+.plate-only .wrap { display: block; max-width: none; }
+.plate-only .wrap > :not(.plate) { display: none; }
+.plate-only .plate { border: 0; border-radius: 0; }
+[hidden] { display: none !important; }
 .cap { font-size: .9rem; color: var(--muted); }
 .seedrate { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
@@ -62,7 +69,7 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   <header>
     <span class="eyebrow">Wizard Sim · world · map prototype · 2026-11-08</span>
     <h1>Field Atlas</h1>
-    <p class="lede">A world generated the way the fiction says it formed: land, mountains, rivers and climate first; the seven fields from those; then towns where fields meet, named by the pair they sit on. No place has a proper name; naming is yours. Reroll the seed, switch the look, and mark the worlds that feel right.</p>
+    <p class="lede">A world generated the way the fiction says it formed: land, mountains, rivers and climate first; the seven fields from those; then towns where fields meet, named by the pair they sit on. No place has a proper name; naming is yours. Chart paints it like an old fantasy map, every mountain, forest and town drawn from the world’s data. Reroll the seed, switch the look, and mark the worlds that feel right.</p>
     <div class="status"><span id="tally"></span><span id="saveState"></span></div>
   </header>
 
@@ -72,14 +79,15 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
       <button id="reroll" type="button">New world</button>
     </div>
     <div class="grp"><span class="lbl">Look</span>
-      <button type="button" data-style="atlas" aria-pressed="true">Atlas</button>
+      <button type="button" data-style="chart" aria-pressed="true">Chart</button>
+      <button type="button" data-style="veil" aria-pressed="false">Chart + fields</button>
       <button type="button" data-style="fields" aria-pressed="false">Fields</button>
     </div>
     <div class="grp" id="fieldToggles"><span class="lbl">Fields</span></div>
-    <div class="grp"><label><input type="checkbox" id="towns" checked> Towns</label></div>
+    <div class="grp"><label><input type="checkbox" id="towns" checked> Places and names</label><button type="button" id="zoom" aria-pressed="false">Zoom in</button></div>
   </div>
 
-  <div class="plate"><canvas id="map" width="1300" height="850" role="img" aria-label="A generated world map with magic fields and towns"></canvas></div>
+  <div class="plate"><canvas id="map" width="2000" height="1600" role="img" aria-label="A generated world map with magic fields and towns"></canvas></div>
   <div class="seedrate">
     <span class="cap" id="seedInfo"></span>
     <span class="lbl" style="font:500 .72rem var(--mono);color:var(--muted)">THIS WORLD:</span>
@@ -100,7 +108,7 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   <section style="display:grid;gap:12px">
     <h2>Three approaches</h2>
     <div class="cards">
-      <article class="card"><span class="tag">This page</span><h3>Fields-first generator</h3><p>Our own code: the fields come from the land, and the towns from the fields, so the map argues for the world's premise. Any seed is a candidate world; a kept seed can be rendered at any size or style. Its land and coastlines are plainer than a dedicated tool's.</p></article>
+      <article class="card"><span class="tag">This page</span><h3>Fields-first generator</h3><p>Our own code: the fields come from the land, and the towns from the fields, so the map argues for the world's premise. Any seed is a candidate world; a kept seed can be rendered at any size or style. Round 2 gave it a ring of land around an inner sea, mountain chains, rain shadows, forest masses, roads and sea routes, and the painted Chart look.</p></article>
       <article class="card"><span class="tag">Needs you once</span><h3>Azgaar base, our overlay</h3><p>Generate and hand-edit a continent in Azgaar's Fantasy Map Generator (free, in the browser), export its data, and this page reads the heights, rivers and climate from it and lays the fields on top. To build the importer, it needs one real export file from you; its format is unverified until then.</p></article>
       <article class="card"><span class="tag">Later</span><h3>Painted over a kept seed</h3><p>Pick a seed here, export it large, and paint the final map over it (by hand, a painting tool, or image generation once a description is approved). The generator decides where things are; the painting decides how it looks.</p></article>
     </div>
@@ -113,6 +121,8 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   </section>
 </div>
 
+<script src="gen.js"></script>
+<script src="chart.js"></script>
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -120,164 +130,26 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const askers = []; const store = { seeds: {}, answers: {} }; let db = null; const chains = {};
 
-  const FIELDS = [
-    ['earth', 'Earth', '#8a6a3e', 'Hills and mountains.'],
-    ['cold', 'Cold', '#5fb3d6', 'The north, and anywhere high.'],
-    ['fire', 'Fire', '#d9532c', 'Around a few volcanoes in the mountains, and in hot, dry country.'],
-    ['water', 'Water', '#2f74c0', 'Along rivers, lakes and coasts.'],
-    ['lightning', 'Lightning', '#9a6fe0', 'Storm coasts and high peaks; it shares ground with water freely.'],
-    ['life', 'Life', '#3f9e4f', 'Warm, wet lowlands.'],
-    ['arcane', 'Arcane', '#c13c96', 'Narrow rifts where the crust of the other fields is torn: rare.'],
-  ];
-  const PAIRS = {
-    'earth+fire': 'Forge city', 'fire+water': 'Steam town', 'fire+lightning': 'Arc foundry', 'cold+lightning': 'Spark peak',
-    'cold+water': 'Ice-road town', 'life+water': 'Farm town', 'lightning+water': 'Storm port', 'cold+earth': 'Mine hold',
-    'earth+life': 'Orchard town', 'earth+water': 'Mill town', 'earth+lightning': 'Rod town', 'cold+life': 'Hardy steading',
-    'fire+life': 'Spice town', 'cold+fire': 'Fog hollow', 'arcane+earth': 'Rift hold', 'arcane+water': 'Rift harbour', 'arcane+fire': 'Rift forge',
-    'arcane+cold': 'Rift watch', 'arcane+lightning': 'Rift spire', 'arcane+life': 'Blighted rift', 'life+lightning': 'Storm meadow',
-  };
-  const SINGLE = { earth: 'Quarry', cold: 'Outpost', fire: 'Kiln village', water: 'Fishing village', lightning: 'Rod village', life: 'Hamlet', arcane: 'Rift camp' };
+  const { FIELDS, generate, GW, GH } = window.FieldGen, { W, H, drawChart, drawFields } = window.FieldChart;
   for (const [k, n, c, why] of FIELDS) $('rules').append(el('tr', null, `<td><span class="sw" style="--c:${c}"></span> ${n}</td><td>${esc(why)}</td>`));
-
-  // ---------- generator ----------
-  const GW = 260, GH = 170, N = GW * GH;
-  function rng(seed) { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
-  function hash(i, j, s) { let h = (i * 374761393 + j * 668265263 + s * 1442695041) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
-  function vnoise(x, y, s) { const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
-    const a = hash(i, j, s), b = hash(i + 1, j, s), c = hash(i, j + 1, s), d = hash(i + 1, j + 1, s); return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v; }
-  function fbm(x, y, s, oct = 5) { let t = 0, amp = .5, f = 1, n = 0; for (let o = 0; o < oct; o++) { t += amp * vnoise(x * f, y * f, s + o * 17); n += amp; amp *= .5; f *= 2; } return t / n; }
-  const cl = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
-  const idx = (x, y) => y * GW + x;
-  function bfs(sources) { const d = new Float32Array(N).fill(1e9); const q = new Int32Array(N); let h = 0, t = 0; for (const i of sources) { d[i] = 0; q[t++] = i; }
-    while (h < t) { const i = q[h++], x = i % GW, y = (i / GW) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue; const j = idx(nx, ny); if (d[j] > d[i] + 1) { d[j] = d[i] + 1; q[t++] = j; } } } return d; }
-
-  function generate(seed) {
-    const R = rng(seed * 9973 + 7);
-    const h = new Float32Array(N), sea = new Uint8Array(N);
-    const cx = .5 + (R() - .5) * .1, cy = .52 + (R() - .5) * .1, ax = .55 + R() * .06, ay = .55 + R() * .06;
-    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
-      const nx = x / GW, ny = y / GH;
-      const wx = nx + (fbm(nx * 3, ny * 3, seed + 3) - .5) * .25, wy = ny + (fbm(nx * 3, ny * 3, seed + 5) - .5) * .25;
-      const d = Math.hypot((wx - cx) / ax, (wy - cy) / ay);
-      let v = fbm(nx * 4.2, ny * 4.2, seed) * .75 + (1 - d) * .62 - .1;
-      const ridge = 1 - Math.abs(fbm(nx * 3.1, ny * 3.1, seed + 11) * 2 - 1);
-      v += Math.max(0, v - .45) * ridge * .9;
-      h[idx(x, y)] = v;
-    }
-    const SEA = .47;
-    for (let i = 0; i < N; i++) sea[i] = h[i] < SEA ? 1 : 0;
-    // rivers
-    const flow = new Float32Array(N), river = new Uint8Array(N), lake = new Uint8Array(N), paths = [];
-    for (let k = 0, tries = 0; k < 34 && tries < 3000; tries++) {
-      const x = 2 + Math.floor(R() * (GW - 4)), y = 2 + Math.floor(R() * (GH - 4)), i = idx(x, y);
-      if (sea[i] || h[i] < .66) continue;
-      k++; let cx2 = x, cy2 = y; const path = [[x, y]];
-      for (let step = 0; step < 400; step++) {
-        const ci = idx(cx2, cy2); flow[ci] += 1; river[ci] = 1;
-        if (sea[ci] || lake[ci]) break;
-        let best = null, bh = h[ci];
-        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) { const nx = cx2 + dx, ny = cy2 + dy; if (nx < 1 || ny < 1 || nx >= GW - 1 || ny >= GH - 1) continue; const nh = h[idx(nx, ny)] + hash(nx, ny, seed) * .004; if (nh < bh) { bh = nh; best = [nx, ny]; } }
-        if (!best) { for (let yy = -2; yy <= 2; yy++) for (let xx = -2; xx <= 2; xx++) if (xx * xx + yy * yy <= 5) { const nx = cx2 + xx, ny = cy2 + yy; if (nx >= 0 && ny >= 0 && nx < GW && ny < GH) lake[idx(nx, ny)] = 1; } break; }
-        cx2 = best[0]; cy2 = best[1]; path.push(best);
-      }
-      paths.push(path);
-    }
-    const waterSrc = [], seaSrc = [];
-    for (let i = 0; i < N; i++) { if (sea[i] || lake[i] || river[i]) waterSrc.push(i); if (sea[i]) seaSrc.push(i); }
-    const dW = bfs(waterSrc), dSea = bfs(seaSrc);
-    // climate
-    const temp = new Float32Array(N), moist = new Float32Array(N);
-    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) { const i = idx(x, y);
-      temp[i] = cl(.08 + (y / GH) * .95 - Math.max(0, h[i] - .62) * 1.6 + (fbm(x / 40, y / 40, seed + 21) - .5) * .25);
-      moist[i] = cl(Math.exp(-dW[i] / 14) * .75 + (fbm(x / 30, y / 30, seed + 23) - .5) * .5 + .12); }
-    // volcanoes and rifts
-    const volc = []; for (let t = 0; t < 4000 && volc.length < 3; t++) { const x = Math.floor(R() * GW), y = Math.floor(R() * GH), i = idx(x, y); if (!sea[i] && h[i] > .7 && temp[i] > .3 && volc.every(([a, b]) => Math.hypot(a - x, b - y) > 40)) volc.push([x, y]); }
-    const riftCells = []; for (let r = 0, t = 0; r < 2 && t < 4000; t++) { let x = Math.floor(R() * GW), y = Math.floor(R() * GH); if (sea[idx(x, y)] || h[idx(x, y)] < .52) continue; r++; let ang = R() * 6.28;
-      for (let s = 0; s < 34; s++) { riftCells.push(idx(Math.max(0, Math.min(GW - 1, Math.round(x))), Math.max(0, Math.min(GH - 1, Math.round(y))))); ang += (R() - .5) * .7; x += Math.cos(ang) * 1.2; y += Math.sin(ang) * 1.2; } }
-    const dRift = bfs(riftCells);
-    const F = {}; for (const [k] of FIELDS) F[k] = new Float32Array(N);
-    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) { const i = idx(x, y); if (sea[i]) continue;
-      F.earth[i] = cl((h[i] - .6) / .22 + (fbm(x / 25, y / 25, seed + 31) - .5) * .5);
-      F.cold[i] = cl((.42 - temp[i]) / .2);
-      let fv = 0; for (const [a, b] of volc) fv = Math.max(fv, Math.exp(-Math.hypot(a - x, b - y) / 13));
-      F.fire[i] = cl(Math.max(fv, cl((temp[i] - .62) / .2) * cl((.38 - moist[i]) / .2)));
-      F.water[i] = cl(Math.exp(-dW[i] / 5) * (lake[i] || river[i] ? 1 : .95));
-      const band = fbm(x / 22, y / 22, seed + 41);
-      F.lightning[i] = cl(Math.max(Math.exp(-dSea[i] / 7) * cl((band - .6) / .1), cl((h[i] - .8) / .08) * cl((band - .42) / .1)));
-      F.life[i] = cl((moist[i] * 1.3 - .35) * cl((temp[i] - .38) / .2) * (h[i] < .72 ? 1 : .3) * 1.4);
-      F.arcane[i] = cl(Math.exp(-dRift[i] / 2.2));
-    }
-    // towns
-    const TH = .5, towns = [];
-    const cand = [];
-    for (let y = 3; y < GH - 3; y++) for (let x = 3; x < GW - 3; x++) { const i = idx(x, y); if (sea[i] || lake[i] || river[i] || h[i] > .82) continue;
-      const strong = FIELDS.map(([k]) => [k, F[k][i]]).filter(([, v]) => v > TH).sort((a, b) => b[1] - a[1]);
-      if (!strong.length) continue;
-      const near = dW[i] <= 2 ? .35 : 0, coast = dSea[i] <= 2 ? .2 : 0;
-      const sc = strong.length >= 2 ? strong[0][1] + strong[1][1] + near + coast : strong[0][1] * .6 + near + coast;
-      cand.push([sc + hash(x, y, seed) * .05, x, y, strong.slice(0, 2).map((s) => s[0])]); }
-    cand.sort((a, b) => b[0] - a[0]);
-    const nameOf = (ks) => ks.length > 1 ? (PAIRS[[...ks].sort().join('+')] || 'Crossroads') : SINGLE[ks[0]];
-    const used = {}; const pool = cand.slice(0, 6000);
-    while (towns.length < 20) { let bi = -1, bs = -1e9;
-      for (let k = 0; k < pool.length; k++) { const c = pool[k]; if (!c) continue; const nm = nameOf(c[3]); const sc = c[0] - .35 * (used[nm] || 0); if (sc > bs && towns.every((t) => Math.hypot(t.x - c[1], t.y - c[2]) > 20)) { bs = sc; bi = k; } }
-      if (bi < 0) break; const c = pool[bi]; pool[bi] = null; const nm = nameOf(c[3]); used[nm] = (used[nm] || 0) + 1; towns.push({ x: c[1], y: c[2], ks: c[3], name: nm }); }
-    let ac = null, best = 0; for (let i = 0; i < N; i++) if (!sea[i] && !river[i] && F.arcane[i] > best && h[i] < .8) { best = F.arcane[i]; ac = i; }
-    // nudge the academy just off the rift
-    const academy = ac == null ? null : { x: ac % GW, y: (ac / GW) | 0 };
-    return { seed, h, sea, lake, river, flow, paths, F, towns, academy, volc };
-  }
-
-  // ---------- render ----------
-  const cv = $('map'), g = cv.getContext('2d'); const S = cv.width / GW;
-  const off = document.createElement('canvas'); off.width = GW; off.height = GH; const og = off.getContext('2d');
-  const hex = (c) => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
-  let style = location.hash === '#fields' ? 'fields' : 'atlas', world = null; const show = Object.fromEntries(FIELDS.map(([k]) => [k, true]));
+  const params = Object.fromEntries(location.hash.slice(1).split('&').filter(Boolean).map((p) => p.split('=')));
+  if (params.seed) $('seed').value = params.seed;
+  if (params.plate) document.documentElement.classList.add('plate-only');
+  const cv = $('map'), g = cv.getContext('2d');
+  let style = ['chart', 'veil', 'fields'].includes(params.look) ? params.look : 'chart', world = null;
+  const show = Object.fromEntries(FIELDS.map(([k]) => [k, true]));
   function render() {
-    const w = world, img = og.createImageData(GW, GH), d = img.data;
-    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) { const i = idx(x, y), p = i * 4; let r, gg, b;
-      if (w.sea[i]) { const deep = cl((.47 - w.h[i]) / .25); if (style === 'atlas') { r = 196 - deep * 40; gg = 210 - deep * 34; b = 204 - deep * 22; } else { r = 214 - deep * 30; gg = 222 - deep * 26; b = 228 - deep * 20; } }
-      else if (w.lake[i]) { r = 150; gg = 182; b = 196; }
-      else { const shade = (w.h[Math.min(N - 1, i + 1)] - w.h[i]) * 40 - (w.h[Math.min(N - 1, i + GW)] - w.h[i]) * 40;
-        if (style === 'atlas') { r = 232 - (w.h[i] - .47) * 60 + shade * 30; gg = 220 - (w.h[i] - .47) * 70 + shade * 30; b = 190 - (w.h[i] - .47) * 80 + shade * 30; }
-        else { const v = 236 - (w.h[i] - .47) * 90 + shade * 30; r = gg = b = v; }
-        let ar = 0, ag = 0, ab = 0, aw = 0;
-        for (const [k, , c] of FIELDS) { if (!show[k]) continue; const v = w.F[k][i]; const a = style === 'atlas' ? cl((v - .45) / .2) * .3 : v * .6; if (a <= 0) continue; const [cr, cg, cb] = hex(c); ar += cr * a; ag += cg * a; ab += cb * a; aw += a; }
-        if (aw > 0) { const k2 = Math.min(aw, style === 'atlas' ? .42 : .75); r = r * (1 - k2) + (ar / aw) * k2; gg = gg * (1 - k2) + (ag / aw) * k2; b = b * (1 - k2) + (ab / aw) * k2; } }
-      d[p] = r; d[p + 1] = gg; d[p + 2] = b; d[p + 3] = 255; }
-    og.putImageData(img, 0, 0);
-    g.imageSmoothingEnabled = true; g.drawImage(off, 0, 0, cv.width, cv.height);
-    // coast ink
-    g.fillStyle = 'rgba(60,45,30,.85)';
-    for (let y = 1; y < GH - 1; y++) for (let x = 1; x < GW - 1; x++) { const i = idx(x, y); if (!w.sea[i]) continue; if (!w.sea[i + 1] || !w.sea[i - 1] || !w.sea[i + GW] || !w.sea[i - GW]) g.fillRect(x * S + S * .2, y * S + S * .2, S * .6, S * .6); }
-    if (style === 'atlas') { g.strokeStyle = 'rgba(60,45,30,.18)'; g.lineWidth = 1; for (let y = 2; y < GH - 2; y += 3) for (let x = 2; x < GW - 2; x++) { const i = idx(x, y); if (w.sea[i]) { let near = false; for (let k = 1; k < 5 && !near; k++) if (!w.sea[i - k] || !w.sea[i + k]) near = true; if (near && x % 2 === 0) { g.beginPath(); g.moveTo(x * S, y * S); g.lineTo(x * S + S * 1.5, y * S); g.stroke(); } } } }
-    // zone edges (dotted)
-    for (const [k, , c] of FIELDS) { if (!show[k]) continue; g.fillStyle = c; const f = w.F[k];
-      for (let y = 1; y < GH - 1; y += 1) for (let x = 1; x < GW - 1; x += 1) { const i = idx(x, y); if (f[i] < .5) continue; if (f[i + 1] < .5 || f[i - 1] < .5 || f[i + GW] < .5 || f[i - GW] < .5) if ((x + y) % 2 === 0) g.fillRect(x * S + S / 2 - 1.5, y * S + S / 2 - 1.5, 3, 3); } }
-    // rivers
-    g.strokeStyle = style === 'atlas' ? 'rgba(52,86,120,.9)' : 'rgba(47,116,192,.9)'; g.lineCap = 'round'; g.lineJoin = 'round';
-    for (const p of w.paths) { for (let s = 1; s < p.length; s++) { const [x0, y0] = p[s - 1], [x1, y1] = p[s]; g.lineWidth = Math.min(4.5, 1 + Math.sqrt(w.flow[idx(x1, y1)]) * .9); g.beginPath(); g.moveTo(x0 * S + S / 2, y0 * S + S / 2); g.lineTo(x1 * S + S / 2, y1 * S + S / 2); g.stroke(); } }
-    // mountains
-    if (style === 'atlas') { g.strokeStyle = 'rgba(60,45,30,.8)'; g.fillStyle = 'rgba(250,244,228,.7)'; g.lineWidth = 1.4;
-      for (let y = 2; y < GH - 2; y += 5) for (let x = 2 + (y % 10 ? 3 : 0); x < GW - 2; x += 6) { const i = idx(x, y); if (w.sea[i] || w.h[i] < .8 || hash(x, y, 4) < .35) continue; const s2 = 6 + (w.h[i] - .8) * 40, px = x * S + (hash(x, y, 9) - .5) * 6, py = y * S;
-        g.beginPath(); g.moveTo(px - s2, py + s2 * .6); g.lineTo(px, py - s2 * .7); g.lineTo(px + s2, py + s2 * .6); g.fill(); g.stroke(); g.beginPath(); g.moveTo(px, py - s2 * .7); g.lineTo(px + s2 * .25, py + s2 * .6); g.stroke(); } }
-    for (const [x, y] of w.volc) { g.fillStyle = '#d9532c'; g.beginPath(); g.arc(x * S, y * S - 6, 4, 0, 7); g.fill(); }
-    // towns
-    if ($('towns').checked) {
-      g.font = `600 ${Math.round(S * 3.6)}px "Alegreya SC", Georgia, serif`; g.textBaseline = 'middle';
-      for (const t of w.towns) { const px = t.x * S + S / 2, py = t.y * S + S / 2;
-        g.fillStyle = '#2b2118'; g.beginPath(); g.arc(px, py, 6, 0, 7); g.fill();
-        t.ks.forEach((k, j) => { g.fillStyle = FIELDS.find((f) => f[0] === k)[2]; g.beginPath(); g.arc(px, py, 4, j ? 0 : Math.PI, j ? Math.PI : Math.PI * 2); g.fill(); });
-        if (t.ks.length === 1) { g.fillStyle = FIELDS.find((f) => f[0] === t.ks[0])[2]; g.beginPath(); g.arc(px, py, 4, 0, 7); g.fill(); }
-        const tw = g.measureText(t.name).width, left = px + 10 + tw > cv.width - 16; g.textAlign = left ? 'right' : 'left'; const tx = left ? px - 10 : px + 10; g.lineWidth = 4; g.strokeStyle = 'rgba(245,238,220,.9)'; g.strokeText(t.name, tx, py); g.fillStyle = '#2b2118'; g.fillText(t.name, tx, py); g.textAlign = 'left'; }
-      if (w.academy) { const px = w.academy.x * S + S / 2, py = w.academy.y * S + S / 2; g.fillStyle = '#c13c96'; g.strokeStyle = '#2b2118'; g.lineWidth = 2; g.fillRect(px - 7, py - 7, 14, 14); g.strokeRect(px - 7, py - 7, 14, 14);
-        g.font = `700 ${Math.round(S * 4)}px "Alegreya SC", Georgia, serif`; g.lineWidth = 4; g.strokeStyle = 'rgba(245,238,220,.9)'; g.strokeText('The academy', px + 12, py); g.fillStyle = '#2b2118'; g.fillText('The academy', px + 12, py); }
-    }
-    // compass + frame
-    g.strokeStyle = 'rgba(60,45,30,.7)'; g.lineWidth = 3; g.strokeRect(6, 6, cv.width - 12, cv.height - 12);
-    g.font = `700 ${Math.round(S * 4)}px "Alegreya SC", Georgia, serif`; g.fillStyle = 'rgba(60,45,30,.8)'; g.fillText('N', cv.width - 44, 34); g.beginPath(); g.moveTo(cv.width - 38, 48); g.lineTo(cv.width - 32, 72); g.lineTo(cv.width - 44, 72); g.closePath(); g.fill();
-    const pairs = new Set(w.towns.filter((t) => t.ks.length > 1).map((t) => t.name));
-    $('seedInfo').textContent = `Seed ${w.seed}: ${w.towns.length} towns, ${pairs.size} kinds of confluence.`;
+    const t0 = performance.now();
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
+    const towns = $('towns').checked;
+    let info = {};
+    if (style === 'fields') drawFields(g, world, { show, towns }); else info = drawChart(g, world, { towns, veil: style === 'veil' ? show : null });
+    $('fieldToggles').hidden = style === 'chart';
+    const pairs = new Set(world.towns.filter((t) => t.ks.length > 1).map((t) => t.name));
+    $('seedInfo').textContent = `Seed ${world.seed}: ${world.towns.length} towns, ${pairs.size} kinds of confluence.`;
+    window.__mapStats = { genMs: world.ms, drawMs: Math.round(performance.now() - t0), towns: world.towns.length, rivers: world.paths.length, chains: world.chains.length, roads: world.roads.length, routes: world.routes.length, woods: world.woods.length, regions: world.regions.map((r) => r.k), wells: world.wells.map((r) => r.k), ...info };
+    cv.dataset.stats = JSON.stringify(window.__mapStats);
+    cv.dataset.ready = String(world.seed);
   }
   function build() { const s = Math.max(1, Math.min(999999, parseInt($('seed').value, 10) || 1)); $('seed').value = s; world = generate(s); render(); paintSeed(); }
   for (const [k, n, c] of FIELDS) { const l = el('label', null, `<input type="checkbox" checked data-f="${k}"> <span class="sw" style="--c:${c}"></span> ${n}`); l.querySelector('input').addEventListener('change', (e) => { show[k] = e.target.checked; render(); }); $('fieldToggles').append(l); }
@@ -286,7 +158,7 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   $('towns').addEventListener('change', render);
   $('seed').addEventListener('change', build);
   $('reroll').addEventListener('click', () => { $('seed').value = 1 + Math.floor(Math.random() * 999998); build(); });
-
+  $('zoom').addEventListener('click', (e) => { const on = document.querySelector('.plate').classList.toggle('zoomed'); e.currentTarget.setAttribute('aria-pressed', String(on)); });
   // ---------- seed ratings and questions ----------
   const seedBtns = [...document.querySelectorAll('[data-mark]')], seedNote = $('seedNote');
   const sid = () => 'seed-' + world.seed;
@@ -297,11 +169,17 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
   const QS = [
     ['q-1-approach', 'Q1', 'Which approach should the map push on?', 'See the three approaches above. They combine: the generator places things, a tool or a painter makes it beautiful.',
       [['fields-first', 'Fields-first generator, then paint a kept seed', 'Our logic decides where; painting decides the look.', true], ['azgaar', 'Azgaar base with our overlay', 'Send one export file to build the importer.'], ['hand', 'Draw it by hand from the start', 'Use the generator only for ideas.'], ['other', 'Something else', 'Say what in the note.']]],
-    ['q-2-look', 'Q2', 'Which look suits the world?', 'Atlas is an inked paper map; Fields is the diagram of the magic.',
-      [['both', 'Both: atlas for players, fields for design', 'The fields layer could be a magical overlay in-game.', true], ['atlas', 'Atlas only', ''], ['fields', 'Fields only', '']]],
+    ['q-2-look', 'Q2', 'Which look suits the world?', 'Chart is the painted map; Fields is the diagram of the magic.',
+      [['both', 'Both: chart for players, fields for design', 'The fields layer could be a magical overlay in-game.', true], ['atlas', 'Chart only', ''], ['fields', 'Fields only', '']]],
     ['q-3-scale', 'Q3', 'How big is the world we’re mapping?', 'It decides how many regions and wells there are.',
       [['continent', 'One continent, several regions', 'Each region a field and a well; travel between them.', true], ['country', 'One country', 'Smaller and denser; fewer fields per region.'], ['isles', 'An archipelago', 'Each island its own field.']]],
     ['q-4-rules', 'Q4', 'Do the field rules in the table feel right?', 'Where each field is strong, and the town kinds named by pairs.', null],
+    ['q-5-feel', 'Q5', 'Is the Chart the fantasy feel you were after?', 'Compared with your reference map: the ring of land, ranges, forest masses, inked glyphs, ships and cartouches. Say what’s missing or too much.',
+      [['yes', 'Yes, keep pushing this', 'Refine it from here: more landmark kinds, better coasts.', true], ['closer', 'Closer, but not there', 'Say what’s off in the note.'], ['no', 'No, try another route', 'Azgaar, or painting over a seed.']]],
+    ['q-6-names', 'Q6', 'What should the labels say for now?', 'Town names come from the fields they sit on. The wells, ranges and regions are plain descriptive placeholders, not lore; naming is yours.',
+      [['plain', 'Keep them plain until you name things', 'Nothing invented that you’d have to undo.', true], ['made-up', 'Generate made-up fantasy names', 'Reads more like your reference, rerollable per seed, but they’d be names you didn’t choose.'], ['yours', 'Let me type names onto a kept seed', 'A small naming pass on the world you keep.']]],
+    ['q-7-fields', 'Q7', 'How much should the map show the fields?', 'Right now they show through the land itself (ash near volcanoes, frost north, storms overhead) and each town’s roof colour; Chart + fields lays them on top.',
+      [['through', 'Through the land, with the overlay as a toggle', 'A map first; the magic reads when you look.', true], ['always', 'Always tinted on the map', 'The fields are the point of this world, so show them.'], ['design', 'Keep them for design only', 'Players read towns and places; the field map is ours.']]],
     ['general', '', 'Anything else', '', null],
   ];
   for (const [id, n, title, text, ch] of QS) {
@@ -326,8 +204,8 @@ textarea { font: inherit; font-size: .92rem; color: var(--fg); background: var(-
     for (const b of document.querySelectorAll('.jump')) b.onclick = () => { $('seed').value = b.dataset.s; build(); };
     paintSeed();
   }
-  build();
-  document.fonts?.ready.then(render);
+  const fonts = ['700 28px "Grenze Gotisch"', '700 27px "Almendra"', 'italic 500 18px "Almendra"', '500 38px "Almendra SC"'];
+  Promise.race([Promise.all(fonts.map((f) => document.fonts.load(f, 'Field Atlas'))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => {}).then(build);
   setSave('Connecting to saved marks…'); paint();
   (async () => {
     try { db = await window.claude?.use?.('db'); } catch { db = null; }

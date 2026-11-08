@@ -24,3 +24,7 @@ The user, on seeing it on the map: "It's very very bad... you generated the asse
 ## Second whole-map pass (same day)
 
 One Gemini call (`gemini-2.5-flash-image`) on seed 647051 with the rewritten prompt, kept in the gitignored `tools/art-trial/out/map-whole-647051.png`. It fixed what the first run got wrong: sizes held, the sea stayed, and there's no writing. But it barely repainted anything, so the map still looks like flat placeholder art. It also came back at 1152 x 896, so towns turned to mush; added an ice-and-lantern landmark on the north coast that doesn't exist; dropped most of the ships and sea monsters; and cropped the frame. A prompt that insists nothing may change seems to get little change.
+
+## Third whole-map pass: Gemini Pro (same day)
+
+The same image and prompt on `gemini-3-pro-image`, kept in the gitignored `tools/art-trial/out/map-whole-647051-pro.png`. Far more faithful than Flash: layout, frame, ships and sea monsters all kept, nothing invented, no writing. But it's still the same flat art with slightly cleaner ink, at 1152 x 928. The model follows the prompt, so the prompt's insistence on no change is now the likely limit.

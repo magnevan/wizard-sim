@@ -996,3 +996,6 @@ The user's answers on the World and Progression page.
 - **Every field holds its own ground on the map, Arcane included.** Rifts stay as Arcane's landmark.
 - **The north runs off the map** as uncharted frozen land.
 
+## 2026-11-08: Map art painted one subject at a time is rejected (`explorations/2026-11-08-map-art-trial.md`)
+- **Rejected: generating map assets in isolation and placing them by code.** They read as stickers, not integrated or hand-crafted. Integration has to come from painting the map as a whole.
+

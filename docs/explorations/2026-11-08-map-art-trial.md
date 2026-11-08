@@ -16,3 +16,7 @@ Four Gemini calls (`gemini-2.5-flash-image`, approved by the user), one style li
 ## Going on from here
 
 Landmarks: paint the rest. Repeated symbols need simpler subjects, a palette matched to the ground, and three or four variants each. Mountains, trees and settlements are the bulk of what the eye sees, so they'd come next if landmarks hold up.
+
+## Outcome: rejected
+
+The user, on seeing it on the map: "It's very very bad... you generated the assets in isolation, and it shows. They look like stickers on the map and not at all integrated or hand crafted, this approach does not work." The "what it showed" section above judged each object alone and overrated the mine and forge. The art was taken off the page; the plan to paint the rest is cancelled. The originals stay in the gitignored `tools/art-trial/out/map-*.png`.

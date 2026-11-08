@@ -39,3 +39,22 @@ One `gemini-3-pro-image` call on seed 647051 with a prompt treating the map as a
 ## Fifth pass: a glyph-free thumbnail (same day)
 
 The same relaxed prompt on `gemini-3-pro-image`, with the input stripped to coast, coloured lands, rivers and rough mountain marks (the page's Thumbnail look; `tools/art-trial/out/map-thumb-647051-pro.png`, gitignored). A big jump: the whole map is in one hand, with nothing to copy and no writing. The land's outline survives. It no longer follows the generator's fields, though: the charred south turned purple and the ochre south-west turned green, so Fire shrank to one volcano. It drew no towns or roads, since the input had none; some trees are as big as regions; and it's 1152 x 922. Labelling from the painting means reading the fields and places from it, not from the generator.
+
+## Sixth and seventh passes: anchoring the prompt (same day)
+
+Two more `gemini-3-pro-image` calls on the same thumbnail, in the gitignored `tools/art-trial/out/`.
+
+- **`map-thumb-647051-a`:** added what each colour means, whole-world proportions, towns and roads, and muted old-map colours. The most hand-drawn result yet, but it dropped the seed's geography for one wide continent.
+- **`map-thumb-647051-b`:** the same, plus a sentence naming the big shapes (a land across the top, north-west island, south-west land, southern island, eastern land, one great sea in the middle) and "same 5:4 proportions". It kept the seed's geography and its fields, in one hand, with towns, roads and landmarks of its own. The best so far. The geography sentence was written by hand for this seed, so other seeds need it generated.
+
+The prompt that produced `-b`:
+
+> Paint a beautiful fantasy world map from this rough colour sketch, the way a master illustrator would: confident hand-inked linework with watercolour and gouache, in the slightly muted, natural colours of an old hand-painted map. Same 5:4 proportions as the sketch.
+>
+> The sketch gives you the geography, so follow its big shapes: a wide land across the top that fades into the unknown, an island in the north-west, a large land in the south-west, a smaller island in the south, a long land down the east side, and one great open sea in the middle of them all. Coastlines can wander and gain bays and islets, but the sea stays a large body of deep blue painted water.
+>
+> Each colour in the sketch is a land, so keep it where its colour is: white is frozen waste, ochre is canyon badlands and mesas, dark brown is charred volcanic land with lava, green is deep forest, teal is waterlogged fen, grey violet is stormy moor, purple is land warped by magic.
+>
+> Everything else is yours to invent. This is a whole world seen from far away: mountains and forests are many small map symbols, and no single tree, tower or creature is larger than a small mountain. Scatter many small towns, castles and villages joined by faint dotted roads, and add a few striking landmarks that belong in each land. Everything drawn by one hand and woven into the landscape.
+>
+> No text, labels or banners: the names will be added afterwards.

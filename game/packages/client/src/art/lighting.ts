@@ -21,6 +21,7 @@
  * layers takes the edge off saturated art.
  */
 import { ColorMatrixFilter, Container, Graphics, Mesh, MeshGeometry, RenderTexture, Sprite, Texture, TilingSprite, type Renderer } from 'pixi.js';
+import { castMask } from './cast-shadow';
 import { Lights } from './lights';
 import * as X from './px';
 import { FY, rand } from './util';
@@ -189,6 +190,7 @@ export class SceneLighting {
   readonly lightSprite = new Sprite();
   readonly grade = new ColorMatrixFilter();
   private shadowRoot = new Container();
+  private casts = new WeakMap<Texture, { tex: Texture; sx: number; sy: number }>();
   private lightRoot = new Container();
   private walls = new Graphics();
   private pool: Sprite[] = [];
@@ -307,6 +309,43 @@ export class SceneLighting {
     s.scale.set(1, -Math.hypot(sx, sy));
     s.skew.x = Math.atan2(sx, sy);
     this.used++;
+  }
+
+  /** A prop's cast shadow: like shadow(), but it leaves along the picture's real bottom edge (art/cast-shadow.ts). */
+  castShadow(tex: Texture, footX: number, footY: number, x: number, y: number): void {
+    const [sx, sy] = this.mood.sun;
+    if (!sx && !sy) return;
+    const cast = this.castOf(tex, sx, sy);
+    if (!cast) { this.shadow(tex, footX, footY, x, y); return; }
+    let s = this.pool[this.used];
+    if (!s) { s = new Sprite(); this.shadowRoot.addChild(s); this.pool.push(s); }
+    s.texture = cast.tex;
+    s.visible = true;
+    s.tint = this.shadowCol;
+    s.pivot.set(footX, footY);
+    s.position.set(x, y);
+    s.scale.set(1, 1);
+    s.skew.x = 0;
+    this.used++;
+  }
+  /** Built once per picture and sun: props don't animate, and moods rarely change. */
+  private castOf(tex: Texture, sx: number, sy: number): { tex: Texture; sx: number; sy: number } | null {
+    const had = this.casts.get(tex);
+    if (had && had.sx === sx && had.sy === sy) return had;
+    const f = tex.frame, img = tex.source?.resource as CanvasImageSource | undefined;
+    if (!f || !img || !f.width || !f.height || typeof document === 'undefined') return null;
+    const src = X.canvas(f.width, f.height);
+    src.x.drawImage(img, f.x, f.y, f.width, f.height, 0, 0, f.width, f.height);
+    const m = castMask(src.x.getImageData(0, 0, f.width, f.height).data, f.width, f.height, sx, sy);
+    const out = X.canvas(m.w, m.h), im = out.x.createImageData(m.w, m.h);
+    for (let i = 0; i < m.alpha.length; i++) { im.data[i * 4] = im.data[i * 4 + 1] = im.data[i * 4 + 2] = 255; im.data[i * 4 + 3] = m.alpha[i]; }
+    out.x.putImageData(im, 0, 0);
+    const t = Texture.from(out.c);
+    t.source.scaleMode = 'nearest';
+    had?.tex.destroy(true);
+    const cast = { tex: t, sx, sy };
+    this.casts.set(tex, cast);
+    return cast;
   }
 
   /** The shadow of a rock wall standing on a line in scene px. */

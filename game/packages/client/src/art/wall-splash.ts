@@ -5,7 +5,7 @@
  */
 import * as K from './kit';
 import * as X from './px';
-import type { Ctx } from './px';
+import type { Ctx, Ramp } from './px';
 import { emit, lerp, rand, seg } from './util';
 
 export type SplashKind = 'fire' | 'water' | 'cold' | 'scald' | 'warm';
@@ -15,6 +15,8 @@ export const SPLASH_LIGHT: Readonly<Record<SplashKind, string>> = { fire: '#ff7a
 
 /** How far above the wall's foot the spray lands, and how far along it a full spray spreads, in art px. */
 const HIT = 6, REACH = 22;
+/** How high a beam meets what it hits, art px above the ground (as in vfx.ts's LIFT). */
+const BEAM_Z = 9;
 
 /**
  * (x, y) is where the spray meets the foot of the wall and (ux, uy) the wall's direction on screen, unit length.
@@ -80,4 +82,27 @@ export function wallSplash(c: Ctx, g: Ctx, x: number, y: number, ux: number, uy:
       break;
     }
   }
+}
+
+/**
+ * A beam burning against a wall or a piece of furniture: a hot spot at the contact, crackle running
+ * out along the surface, sparks thrown off it. (x, y) and (ux, uy) as in wallSplash.
+ */
+export function beamImpact(c: Ctx, g: Ctx, x: number, y: number, ux: number, uy: number, t: number, t0: number, R: Ramp, seed: number, power = 1): void {
+  if (t < t0) return;
+  const cy = y - BEAM_Z, pulse = 0.85 + 0.15 * Math.sin(t * 23 + seed), reach = 18 * (0.5 + 0.5 * power);
+  K.scorch(g, x, y + 1, 9 * power, 0.35 * seg(t, t0, t0 + 0.8));
+  X.glow(c, x, cy, 11 * pulse * power, R[2], 0.75);
+  X.glow(c, x, cy, 5 * pulse * power, R[1], 0.95);
+  K.sq(c, x, cy, 3, R[0]);
+  const f = Math.floor(t * 20);
+  for (let q = 0; q < 4; q++) {
+    const a = (q % 2 ? -1 : 1) * (6 + rand(q, f, seed) * reach * 0.7), ex = x + ux * a, ey = cy + uy * a + (rand(q, f + 1, seed) - 0.5) * 6;
+    const mx = lerp(x, ex, 0.5) + (rand(q, f + 2, seed) - 0.5) * 3, my = lerp(cy, ey, 0.5) + (rand(q, f + 3, seed) - 0.5) * 4;
+    X.line(c, x, cy, mx, my, R[1]); X.line(c, mx, my, ex, ey, R[2]);
+  }
+  for (const p of emit(t, 100 * power, 0.45, (i, age) => {
+    const side = rand(i, 1, seed) < 0.5 ? -1 : 1, a = side * age * reach * (0.3 + 0.7 * rand(i, 2, seed));
+    return { x: x + ux * a, y: cy + uy * a + age * (2 + rand(i, 3, seed) * 6) - age * (10 + rand(i, 4, seed) * 22) + age * age * 34, age };
+  }, t0, t)) X.px(c, p.x, p.y, p.age < 0.3 ? R[0] : p.age < 0.7 ? R[1] : R[3]);
 }

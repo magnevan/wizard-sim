@@ -20,7 +20,7 @@ import {
 import { FIELD, gx, gy } from './field';
 import * as A from './accent';
 import * as K from './kit';
-import { SPLASH_LIGHT, wallSplash, type SplashKind } from './wall-splash';
+import { SPLASH_LIGHT, beamImpact, wallSplash, type SplashKind } from './wall-splash';
 import * as X from './px';
 import type { Ctx, Pt, Ramp } from './px';
 import type { Frame } from './actors';
@@ -34,6 +34,7 @@ export interface BodyView { on: boolean; x: number; y: number; a: Anchors | null
 export type LightFn = (x: number, y: number, r: number, col: string, a: number) => void;
 /** A little unsteadiness, so a held beam's light is alive. */
 const flick = (t: number, seed: number): number => 0.9 + 0.1 * Math.sin(t * 17 + seed);
+const beamRamp = (spec: SpellSpec, look: string): Ramp => spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look);
 const splashKind = (spec: SpellSpec, look: string): SplashKind => spec.heal && look !== 'water' ? 'warm' : spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
 /** Light along a line on the ground, a row of overlapping lights, each dimmer to make up for the overlap. */
 function glowAlong(light: LightFn, ax: number, ay: number, bx: number, by: number, r: number, col: string, a: number): void {
@@ -42,6 +43,8 @@ function glowAlong(light: LightFn, ax: number, ay: number, bx: number, by: numbe
 }
 
 /** A short-lived effect born from an event. */
+/** A spray or beam meeting a wall, for the frame it's drawn. */
+interface Strike { x: number; y: number; ux: number; uy: number; kind: SplashKind | 'beam'; t0: number; seed: number; power: number; R?: Ramp }
 interface Fx {
   kind: string; t0: number; life: number; seed: number;
   x: number; y: number; x2: number; y2: number;
@@ -55,6 +58,8 @@ const ramp = (id: number): Ramp => EL[elName(id)] ?? EL.arcane;
 const SEAT_EL = [6, 4, 5, 9];
 const STAFF_Z = 10; // missiles fly about this high (art px)
 const LIFT = 9; // a beam or spray end is lifted to about chest height
+/** How far below a far-side hit (art px) the foot of the wall's near face is. */
+const FAR_FOOT = 6;
 /** How far above the ground a beam or spray is drawn, with a little to spare: above this a standing thing is taken to hide it. */
 const CHEST = LIFT + 3;
 /** A late remote spell (rollback) catches up with where it really is over this much real time, s. */
@@ -76,7 +81,9 @@ export class Vfx {
   /** Reports what stands in the scene: texture, top-left and foot y, in field px. Set by the view. */
   occluders: ((emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean) => void) => void) | null = null;
   /** This frame's sprays that struck the face of a wall we can see: drawn last, over the wall. */
-  private strikes: { x: number; y: number; ux: number; uy: number; kind: SplashKind; t0: number; seed: number; power: number }[] = [];
+  private strikes: Strike[] = [];
+  /** Where this frame's beams and sprays struck the far side of something: what's there hides them whole. */
+  private farHits: Pt[] = [];
   /** The beams and sprays, drawn apart so what's in front can hide them. */
   private b = X.canvas(FIELD.W, FIELD.H);
   private g = X.canvas(FIELD.W, FIELD.H);
@@ -327,7 +334,14 @@ export class Vfx {
     this.zones(w, t, light, ct);
     this.groundMarks(w, bodies, t);
     if (structures) { structures(g, o); g._fs = o._fs = null; }
-    for (const f of this.fx) if (t >= f.t0) this.drawFx(f, t - f.t0, t, w, bodies, light);
+    const hidden: { f: Fx; ux: number; uy: number }[] = [];
+    for (const f of this.fx) {
+      if (t < f.t0) continue;
+      const far = f.kind === 'impact' && this.occluders ? this.farFace(w, f) : null;
+      if (far) hidden.push({ f, ux: far.ux, uy: far.uy });
+      else this.drawFx(f, t - f.t0, t, w, bodies, light);
+    }
+    if (hidden.length) this.impactsBehind(hidden, t, w, bodies, light);
     this.missiles(w, t, light, ct);
     this.occludedChannels(w, ct, bodies, light);
     this.statuses(w, t, bodies, light, ct);
@@ -354,8 +368,8 @@ export class Vfx {
     for (let i = 0; i < MAX_SEATS; i++) if (s.active[i] && s.phase[i] === PHASE.channel && bodies[i]?.on) lowest = Math.max(lowest, bodies[i].y);
     const b = this.b.x, M = 44;
     x0 -= M; y0 -= M + 30; x1 += M; y1 += M;
-    b.setTransform(1, 0, 0, 1, 0, 0); b.clearRect(0, 0, this.b.c.width, this.b.c.height); b.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
-    this.o = this.b; b._fs = null;
+    this.farHits.length = 0;
+    this.scratchStart();
     this.channels(w, t, bodies, light);
     this.casters(w, t, bodies, light);
     this.o = real;
@@ -364,43 +378,111 @@ export class Vfx {
       const f = tex.frame;
       if (!f) return;
       // every caster is behind this wall or desk: none of the effect can be in front of it, right down to its foot
-      const h = solid && lowest < footY ? f.height : Math.min(f.height, Math.floor(footY - CHEST - y));
+      const whole = solid && (lowest < footY || this.farHits.some(([hx, hy]) => footY > hy - 24 && x < hx + 44 && x + f.width > hx - 44));
+      const h = whole ? f.height : Math.min(f.height, Math.floor(footY - CHEST - y));
       if (h <= 0 || x > x1 || x + f.width < x0 || y > y1 || y + h < y0) return;
       const img = tex.source?.resource as CanvasImageSource | undefined;
       if (img) b.drawImage(img, f.x, f.y, f.width, h, x, y, f.width, h);
     });
-    b.globalCompositeOperation = 'source-over';
+    this.scratchBlit(real);
+    this.drawStrikes(t, light);
+  }
+
+  /** Point the drawing at the scratch layer, cleared. */
+  private scratchStart(): void {
+    const b = this.b.x;
+    b.setTransform(1, 0, 0, 1, 0, 0); b.clearRect(0, 0, this.b.c.width, this.b.c.height); b.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
+    this.o = this.b; b._fs = null;
+  }
+  /** Put the scratch layer down on `real` and point the drawing back at it. */
+  private scratchBlit(real: ReturnType<typeof X.canvas>): void {
+    this.b.x.globalCompositeOperation = 'source-over';
+    this.o = real;
     const o = real.x;
     o.save(); o.setTransform(1, 0, 0, 1, 0, 0); o.drawImage(this.b.c, 0, 0); o.restore();
     o._fs = null;
-    this.drawStrikes(t, light);
+  }
+
+  /** The wall this missile burst against, if it was on the side the camera can't see. */
+  private farFace(w: World, f: Fx): { ux: number; uy: number } | null {
+    // its last recorded spot can be up to a step short of the wall
+    const face = this.wallAt(w, f.x, f.y, f.x - f.x2, f.y - f.y2, STRUCT.wallThickness + f.r + Math.hypot(f.x2, f.y2) / 60 + 0.12);
+    return face && !face.front ? face : null;
+  }
+  /** Keep what's drawn next on the far side of a wall running through (x, y): sparks and dust stop at its foot. */
+  private clipFar(c: Ctx, x: number, y: number, ux: number, uy: number): void {
+    const L = 240, H = 480, fy = y + FAR_FOOT;
+    c.save();
+    c.beginPath();
+    c.moveTo(x - ux * L, fy - uy * L); c.lineTo(x + ux * L, fy + uy * L); c.lineTo(x + ux * L, fy + uy * L - H); c.lineTo(x - ux * L, fy - uy * L - H);
+    c.closePath();
+    c.clip();
+  }
+  /** Impacts on the far side of a wall: the wall hides them, and whatever flies up over it still shows. */
+  private impactsBehind(fx: { f: Fx; ux: number; uy: number }[], t: number, w: World, bodies: BodyView[], light: LightFn): void {
+    const real = this.o, b = this.b.x, R = 70, SIDE = 24;
+    this.scratchStart();
+    for (const { f, ux, uy } of fx) {
+      this.clipFar(b, gx(f.x), gy(f.y), ux, uy);
+      this.drawFx(f, t - f.t0, t, w, bodies, light);
+      b.restore(); b._fs = null;
+    }
+    this.o = real;
+    b.globalCompositeOperation = 'destination-out';
+    this.occluders!((tex, x, y, footY, solid) => {
+      const fr = tex.frame, img = tex.source?.resource as CanvasImageSource | undefined;
+      if (!solid || !fr || !img) return;
+      for (const { f } of fx) {
+        const ix = gx(f.x), iy = gy(f.y);
+        if (footY <= iy - SIDE || x > ix + R || x + fr.width < ix - R || y > iy + R || y + fr.height < iy - R) continue;
+        b.drawImage(img, fr.x, fr.y, fr.width, fr.height, x, y, fr.width, fr.height);
+        return;
+      }
+    });
+    this.scratchBlit(real);
   }
 
   /**
    * Did a spray ending at (ex, ey) strike a wall? If it struck the face the camera sees, keep it for
    * drawStrikes. The far face is hidden by the wall itself, so that spray just ends.
    */
-  private strike(w: World, ex: number, ey: number, cx: number, cy: number, kind: SplashKind, t0: number, seed: number, power = 1): void {
-    const wl = w.walls, near = STRUCT.wallThickness + 0.05;
+  private strike(w: World, t: number, light: LightFn, ex: number, ey: number, cx: number, cy: number, kind: SplashKind | 'beam', t0: number, seed: number, power = 1, R?: Ramp): void {
+    const face = this.wallAt(w, ex, ey, cx, cy, STRUCT.wallThickness + 0.05);
+    if (!face) return;
+    const s: Strike = { x: gx(ex), y: gy(ey), ux: face.ux, uy: face.uy, kind, t0, seed, power, R };
+    if (face.front) this.strikes.push(s);
+    else {
+      // on the layer the wall cuts: only what rises over its top still shows
+      this.farHits.push([s.x, s.y]);
+      const o = this.o.x, g = this.g.x;
+      this.clipFar(o, s.x, s.y, s.ux, s.uy); this.clipFar(g, s.x, s.y, s.ux, s.uy);
+      this.drawStrike(s, t, () => {}); // and no light of its own: this close to the wall it would come through it
+      o.restore(); g.restore(); o._fs = g._fs = null;
+    }
+  }
+  /** The wall a point is up against, its direction on screen, and whether (cx, cy) is on the side the camera sees. */
+  private wallAt(w: World, ex: number, ey: number, cx: number, cy: number, near: number): { ux: number; uy: number; front: boolean } | null {
+    const wl = w.walls;
     for (let k = 0; k < MAX_WALLS; k++) {
       if (wl.type[k] !== WALL.rock && wl.type[k] !== WALL.barrier) continue;
       const x1 = wl.x1[k], y1 = wl.y1[k], ux = wl.x2[k] - x1, uy = wl.y2[k] - y1, l2 = ux * ux + uy * uy || 1;
       const q = clamp(((ex - x1) * ux + (ey - y1) * uy) / l2, 0, 1);
       if (Math.hypot(ex - x1 - ux * q, ey - y1 - uy * q) > near) continue;
-      // the wall's normal is (-uy, ux): the caster's side of it has to face down the screen, toward the camera
-      if (ux * (ux * (cy - ey) - uy * (cx - ex)) <= 0) return;
       const sy = uy * FY, l = Math.hypot(ux, sy) || 1;
-      this.strikes.push({ x: gx(ex), y: gy(ey), ux: ux / l, uy: sy / l, kind, t0, seed, power });
-      return;
+      // the wall's normal is (-uy, ux): the side (cx, cy) is on has to face down the screen, toward the camera
+      return { ux: ux / l, uy: sy / l, front: ux * (ux * (cy - ey) - uy * (cx - ex)) > 0 };
     }
+    return null;
   }
   private drawStrikes(t: number, light: LightFn): void {
-    const o = this.o.x, g = this.g.x;
-    for (const s of this.strikes) {
-      wallSplash(o, g, s.x, s.y, s.ux, s.uy, t, s.t0, s.kind, s.seed, s.power);
-      light(s.x, s.y + 2, 46, SPLASH_LIGHT[s.kind], 0.6 * s.power * flick(t, s.seed));
-    }
+    for (const s of this.strikes) this.drawStrike(s, t, light);
     this.strikes.length = 0;
+  }
+  private drawStrike(s: Strike, t: number, light: LightFn): void {
+    const o = this.o.x, g = this.g.x;
+    if (s.kind === 'beam') { beamImpact(o, g, s.x, s.y, s.ux, s.uy, t, s.t0, s.R!, s.seed, s.power); return; }
+    wallSplash(o, g, s.x, s.y, s.ux, s.uy, t, s.t0, s.kind, s.seed, s.power);
+    light(s.x, s.y + 2, 46, SPLASH_LIGHT[s.kind], 0.6 * s.power * flick(t, s.seed));
   }
 
   // ---- the floor: water, ice and one continuous sheet of fire ----------------------------------
@@ -691,6 +773,7 @@ export class Vfx {
         const lc = spec.heal ? '#8ef07e' : look === 'fire' ? '#ff6a20' : ramp(spec.look)[2];
         glowAlong(light, tip[0], v.y, full[0], lerp(v.y, ey, on), 40, lc, 0.55 * flick(t, sd));
         light(ex, ey, 62, lc, 0.85 * flick(t, sd + 3));
+        if (!hitBody) this.strike(w, t, light, s.chanEndX[i], s.chanEndY[i], w.bodies.x[i], w.bodies.y[i], 'beam', t0 + 0.12, sd, 1, beamRamp(spec, look));
       } else if (spec.shape === 'spray') {
         const z: Pt = [ex, ey - 6];
         if (spec.heal) {
@@ -705,7 +788,7 @@ export class Vfx {
           glowAlong(light, lerp(tip[0], ex, 0.25), lerp(v.y, ey, 0.25), ex, ey, 40, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', (kind === 'fire' ? 0.6 : 0.4) * flick(t, sd));
           if (kind === 'cold') for (let q = 0; q < 40; q++) { const a = rand(q, 61, sd) * TAU, r = Math.pow(rand(q, 62, sd), 0.7) * 18 * seg(t, t0 + 0.3, t0 + 1.3); X.px(g, ex + Math.cos(a) * r, ey + Math.sin(a) * r * FY * 0.7, q % 4 === 0 ? '#ffffff' : q % 2 ? '#bfe8f6' : '#8ccce4'); }
         }
-        this.strike(w, s.chanEndX[i], s.chanEndY[i], w.bodies.x[i], w.bodies.y[i], splashKind(spec, look), t0, sd);
+        this.strike(w, t, light, s.chanEndX[i], s.chanEndY[i], w.bodies.x[i], w.bodies.y[i], splashKind(spec, look), t0, sd);
       } else if (spec.shape === 'arc') {
         X.glow(o, tip[0], tip[1], 6, look === 'fire' ? X.PLASMA[2] : spec.heal ? X.LIFE[2] : EL.lightning[2], 0.8);
       }
@@ -718,12 +801,13 @@ export class Vfx {
           K.beam(o, dt, [dex, dey - LIFT], t, R, { on: easeOut(seg(t, t0, t0 + 0.12)), w: 0.5, hit: this.beamHits(w, s.dblEndX[i], s.dblEndY[i], d), seed: sd2 });
           glowAlong(light, dt[0], dv.y, dex, dey, 30, spec.heal ? '#8ef07e' : R[2], 0.3);
           light(dex, dey, 44, spec.heal ? '#8ef07e' : R[2], 0.5);
+          this.strike(w, t, light, s.dblEndX[i], s.dblEndY[i], w.bodies.x[d], w.bodies.y[d], 'beam', t0 + 0.12, sd2, 0.6, R);
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
           if (spec.heal && look !== 'water') K.warmCone(o, dt, [dex, dey - 6], t, t0, X.WARM, sd2);
           else K.cone(o, dt, [dex, dey - 6], t, kind, t0, { spread: 0.2, power: 0.45, seed: sd2 });
           light(lerp(dt[0], dex, 0.5), lerp(dv.y, dey, 0.5), 34, kind === 'fire' ? '#ff7a2a' : '#7fb0ff', 0.3);
-          this.strike(w, s.dblEndX[i], s.dblEndY[i], w.bodies.x[d], w.bodies.y[d], splashKind(spec, look), t0, sd2, 0.6);
+          this.strike(w, t, light, s.dblEndX[i], s.dblEndY[i], w.bodies.x[d], w.bodies.y[d], splashKind(spec, look), t0, sd2, 0.6);
         }
         X.glow(o, dt[0], dt[1], 4, EL.sigil[2], 0.6);
       }
@@ -736,11 +820,12 @@ export class Vfx {
           K.beam(o, tip, [eex, eey - LIFT], t, R, { on: easeOut(seg(t, te, te + 0.12)), w: 0.5, hit: this.beamHits(w, r.echoEndX[i], r.echoEndY[i], i), seed: sd3 });
           glowAlong(light, tip[0], v.y, eex, eey, 30, spec.heal ? '#8ef07e' : R[2], 0.3);
           light(eex, eey, 44, spec.heal ? '#8ef07e' : R[2], 0.5);
+          this.strike(w, t, light, r.echoEndX[i], r.echoEndY[i], w.bodies.x[i], w.bodies.y[i], 'beam', te + 0.12, sd3, 0.6, R);
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
           if (spec.heal && look !== 'water') K.warmCone(o, tip, [eex, eey - 6], t, te, X.WARM, sd3);
           else K.cone(o, tip, [eex, eey - 6], t, kind, te, { spread: 0.2, power: 0.45, seed: sd3 });
-          this.strike(w, r.echoEndX[i], r.echoEndY[i], w.bodies.x[i], w.bodies.y[i], splashKind(spec, look), te, sd3, 0.6);
+          this.strike(w, t, light, r.echoEndX[i], r.echoEndY[i], w.bodies.x[i], w.bodies.y[i], splashKind(spec, look), te, sd3, 0.6);
         }
         X.glow(o, tip[0], tip[1], 3, EL.sigil[2], 0.5);
       }
@@ -760,12 +845,13 @@ export class Vfx {
         K.beam(o, tip, [ex, ey - LIFT], t, R, { on: easeOut(seg(t, t0, t0 + 0.12)), w: 0.7, hit: this.beamHits(w, dv.x2[k], dv.y2[k], -1), seed: sd });
         glowAlong(light, tip[0], tip[1] + LIFT, ex, ey, 30, spec.heal ? '#8ef07e' : R[2], 0.3);
         light(ex, ey, 48, spec.heal ? '#8ef07e' : R[2], 0.6);
+        this.strike(w, t, light, dv.x2[k], dv.y2[k], dv.x[k], dv.y[k], 'beam', t0 + 0.12, sd, 0.7, R);
       } else if (spec.shape === 'spray') {
         const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
         if (spec.heal && look !== 'water') K.warmCone(o, tip, [ex, ey - 6], t, t0, X.WARM, sd);
         else K.cone(o, tip, [ex, ey - 6], t, kind, t0, { spread: 0.24, power: 0.7, seed: sd });
         light(lerp(tip[0], ex, 0.55), lerp(tip[1], ey, 0.55), 44, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : '#2a8cff', 0.5);
-        this.strike(w, dv.x2[k], dv.y2[k], dv.x[k], dv.y[k], splashKind(spec, look), t0, sd, 0.7);
+        this.strike(w, t, light, dv.x2[k], dv.y2[k], dv.x[k], dv.y[k], splashKind(spec, look), t0, sd, 0.7);
       }
     }
   }

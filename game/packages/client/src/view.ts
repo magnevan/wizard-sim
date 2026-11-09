@@ -336,7 +336,7 @@ export class WorldView {
       lit.fit(cam.w, cam.h);
       lit.begin(moodOf(w.def.id, this.mood), ct, fx0, fy0);
       this.props.standing((tex, fx, fy, x, y, asset, flat) => {
-        if (!flat) lit.shadow(tex, fx, fy, x, y);
+        if (!flat) lit.castShadow(tex, fx, fy, x, y);
         const l = PROP_LIGHTS[asset];
         if (l) lit.light(x, y + 2, l[1], l[0], l[2] * (0.92 + 0.08 * Math.sin(ct * 7 + x))); // at its foot, on the camera's side, so it lights itself
       });

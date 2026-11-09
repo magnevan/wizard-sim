@@ -11,6 +11,8 @@
  *   D-pad up opens the help panel for this pad's seat (help-panel.ts).
  *   Any button but Start, freshly pressed on an unseated pad, joins the next free seat.
  */
+import { ISO } from './art/util';
+import { toX, toY } from './iso-world';
 import { AIM_UNIT, BTN, elementId, quantize, type PlayerInput } from '@wizard-sim/sim';
 import type { Element } from '@wizard-sim/rules';
 
@@ -24,6 +26,8 @@ const MOVE_DEADZONE = 0.22, AIM_DEADZONE = 0.3;
 /** Aim reticle distance: 2.5 u at a light tilt, up to the Place range at full tilt. */
 const AIM_MIN = 2.5, AIM_MAX = 9;
 
+/** Under the isometric camera, a stick pushed up should mean up on the screen. */
+function screenStick([u, v]: [number, number]): [number, number] { return ISO ? [toX(u, v), toY(u, v)] : [u, v]; }
 function stick(axes: number[], i: number, dead: number): [number, number] {
   const x = axes[i] ?? 0, y = axes[i + 1] ?? 0, l = Math.hypot(x, y);
   if (l < dead) return [0, 0];
@@ -52,10 +56,10 @@ export function padStep(mem: PadMemory, cur: PadState): PlayerInput {
   if (down(PAD.RB) && !layer) buttons |= BTN.self;
   if (down(PAD.BACK)) buttons |= BTN.clear;
 
-  const [rx, ry] = stick(cur.axes, 2, AIM_DEADZONE);
+  const [rx, ry] = screenStick(stick(cur.axes, 2, AIM_DEADZONE));
   const tilt = Math.hypot(rx, ry);
   if (tilt > 0) { const d = AIM_MIN + (AIM_MAX - AIM_MIN) * Math.min(1, tilt); mem.aimX = (rx / tilt) * d; mem.aimY = (ry / tilt) * d; }
-  const [mx, my] = stick(cur.axes, 0, MOVE_DEADZONE);
+  const [mx, my] = screenStick(stick(cur.axes, 0, MOVE_DEADZONE));
   mem.prev = cur;
   return quantize({ buttons, press0: presses[0] ?? 0, press1: presses[1] ?? 0, moveX: mx * 127, moveY: my * 127, aimX: mem.aimX / AIM_UNIT, aimY: mem.aimY / AIM_UNIT });
 }

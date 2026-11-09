@@ -25,6 +25,8 @@ import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
 import { FLOOR, floorTexture, surviveRuin } from './art/floor';
 import { groundTexture, hasGround } from './art/ground-room';
+import { ISO } from './art/util';
+import { turnedWorld } from './iso-world';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
@@ -66,6 +68,8 @@ export class WorldView {
   private arenaKey = `${ARENA.w}x${ARENA.h}x0`;
   /** False while a room's painted ground is still on its way (tests and screenshots wait on it). */
   groundReady = true;
+  /** The real world behind what's being drawn (under the isometric camera, `w` is its turned copy). */
+  private real!: World;
   private vfx = new Vfx();
   private sGround = new Graphics(); // structures' floor layer (view-structures.ts)
   private sOverlay = new Graphics();
@@ -94,8 +98,12 @@ export class WorldView {
   private smoothY = new Float64Array(MAX_BODIES);
   private preX = new Float64Array(MAX_BODIES);
   private preY = new Float64Array(MAX_BODIES);
-  notePreRewind(w: World): void { this.preX.set(w.bodies.x); this.preY.set(w.bodies.y); }
-  notePostRewind(w: World, localSeat: number): void {
+  /** The world as this view draws it: the real one, or under the isometric camera a turned copy. */
+  private seen(w: World): World { this.real = w; return this.iso ? turnedWorld(w) : w; }
+
+  notePreRewind(real: World): void { const w = this.seen(real); this.preX.set(w.bodies.x); this.preY.set(w.bodies.y); }
+  notePostRewind(real: World, localSeat: number): void {
+    const w = this.seen(real);
     const b = w.bodies;
     for (let i = 0; i < MAX_BODIES; i++) {
       if (i === localSeat || !b.kind[i]) continue;
@@ -109,7 +117,7 @@ export class WorldView {
     this.sound?.postRewind(w);
   }
   /** After each step the rollback replay runs (afterStep is skipped then): notes late remote spell starts. */
-  replayStep(w: World): void { this.vfx.replayStep(w); this.sound?.replayStep(w, this.vfx.localSeat); }
+  replayStep(real: World): void { const w = this.seen(real); this.vfx.replayStep(w); this.sound?.replayStep(w, this.vfx.localSeat); }
   /** The game's sound (audio/director.ts): null in the help panel's previews and with ?sound=0. */
   sound: SoundDirector | null = null;
   /** Late remote spells: fast-forwarded from their first frame (true), or popping in where they are (false). */
@@ -136,7 +144,8 @@ export class WorldView {
   private castS = new Float64Array(MAX_SEATS);
   private holdUntil = new Float64Array(MAX_SEATS);
 
-  constructor() {
+  constructor(private readonly iso = ISO) {
+    this.camera.iso = iso;
     this.actors.sortableChildren = true;
     this.structs = new StructureView(this.actors);
     this.props = new PropView(this.actors, AMBIENT, 'lean');
@@ -162,13 +171,15 @@ export class WorldView {
   }
 
   /** Call right before each sim step, so the view can interpolate from here to the new state. */
-  beforeStep(w: World): void {
+  beforeStep(real: World): void {
+    const w = this.seen(real);
     this.prevBX.set(w.bodies.x); this.prevBY.set(w.bodies.y); this.prevKind.set(w.bodies.kind);
     this.vfx.noteBefore(w);
   }
 
   /** Call right after each sim step with its events. */
-  afterStep(w: World): void {
+  afterStep(real: World): void {
+    const w = this.seen(real);
     const b = w.bodies, s = w.seats, t = this.simTime(w);
     for (const e of w.events) {
       this.hud.onEvent(e.kind, e.who, e.look, e.text, t);
@@ -231,7 +242,8 @@ export class WorldView {
    * runs on it, so nothing freezes while the sim waits on the network or is paused. What stands for
    * sim state (positions, wind-ups, ages of sim events) stays on sim time and interpolation.
    */
-  draw(w: World, alpha: number, now = performance.now()): void {
+  draw(real: World, alpha: number, now = performance.now()): void {
+    const w = this.seen(real);
     this.frame++;
     const b = w.bodies, t = this.simTime(w, alpha), cam = this.camera, ct = now / 1000;
     const dt = this.lastCt ? ct - this.lastCt : 0;
@@ -336,7 +348,7 @@ export class WorldView {
 
   /** Repaints the floor and resizes the effect canvases when the world's play area changes (a survive world is bigger). */
   private fitArena(w: World): void {
-    const painted = hasGround(w.def.id);
+    const painted = this.iso || hasGround(w.def.id);
     const d = w.dims, key = `${d.w}x${d.h}x${w.run ? 1 : 0}${painted ? w.def.id : ''}`;
     if (key === this.arenaKey) return;
     this.arenaKey = key;
@@ -348,7 +360,7 @@ export class WorldView {
     this.groundReady = !painted;
     if (painted) {
       // the code-drawn floor stands in for the moment the images take to arrive
-      void groundTexture(w.def.id, d.w, d.h).then((t) => {
+      void groundTexture(w.def.id, this.real.dims.w, this.real.dims.h, this.iso, d.w).then((t) => {
         if (key !== this.arenaKey) { t.destroy(true); return; }
         const was = this.floor.texture;
         this.floor.texture = t;

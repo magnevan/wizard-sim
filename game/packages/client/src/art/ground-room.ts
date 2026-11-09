@@ -4,7 +4,8 @@
  */
 import { Texture } from 'pixi.js';
 import { GROUNDS } from './grounds.gen';
-import { paintGround, todayCamera, type GroundMap, type Material } from './ground';
+import { isoCamera, paintGround, todayCamera, type GroundMap, type Material } from './ground';
+import { PPU } from '../camera';
 import { FLOOR } from './floor';
 import * as X from './px';
 
@@ -42,18 +43,20 @@ function material(ch: string): Promise<Material> {
 }
 
 /** Paints `room`'s ground at the floor's current size (floorTexture has set FLOOR). The most common material fills unpainted cells. */
-export async function groundTexture(room: string, w: number, h: number): Promise<Texture> {
-  const g: GroundMap = { w, h, rows: GROUNDS[room] };
+export async function groundTexture(room: string, w: number, h: number, iso = false, extent = w): Promise<Texture> {
+  // under the isometric camera an unpainted room still needs a ground: the old floor is drawn for the straight-on view
+  const rows = GROUNDS[room] ?? Array.from({ length: Math.round(h * 2) }, () => 'f'.repeat(Math.round(w * 2)));
+  const g: GroundMap = { w, h, rows, outside: iso ? 'g' : undefined };
   const count = new Map<string, number>();
   for (const r of g.rows) for (const ch of r) if (ch !== '.') count.set(ch, (count.get(ch) ?? 0) + 1);
   const base = [...count].sort((a, b) => b[1] - a[1])[0][0];
-  const chars = [...count.keys()];
+  const chars = [...new Set([...count.keys(), ...(g.outside ? [g.outside] : [])])];
   const mats: Record<string, Material> = {};
   await Promise.all(chars.map(async (ch) => { mats[ch] = await material(ch); }));
   const { W, H, OX, OY } = FLOOR;
   const { c, x } = X.canvas(W, H);
   const img = x.createImageData(W, H);
-  paintGround(img.data, W, H, OX, OY, g, mats, base, todayCamera);
+  paintGround(img.data, W, H, OX, OY, g, mats, base, iso ? isoCamera(PPU * Math.SQRT1_2) : todayCamera, extent);
   x.putImageData(img, 0, 0);
   const t = Texture.from(c);
   t.source.scaleMode = 'nearest';

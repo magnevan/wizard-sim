@@ -53,7 +53,7 @@ export class Preview {
   constructor(bw: number, bh: number, scale: number, frames?: unknown) {
     this.field = previewField(bw, bh);
     // the view's canvases are sized from FIELD when it is made: make it under the preview's field
-    this.view = withField(this.field, () => new WorldView());
+    this.view = withField(this.field, () => new WorldView(false));
     if (frames) (this.view as unknown as { frames: unknown }).frames = frames;
     this.world = createWorld(11, 1, { room: 'sanctum' });
     const b = this.world.bodies;

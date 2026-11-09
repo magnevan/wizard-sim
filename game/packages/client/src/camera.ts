@@ -12,8 +12,11 @@
  * always was. Panning moves the scene by whole screen pixels (the art-pixel part through the
  * layout, the rest as an offset), so it is smooth and still crisp.
  */
+import { FY } from './art/util';
+import { toU, toV, toX, toY } from './iso-world';
+
 export const PPU = 16;
-export const FY = 0.6;
+export { FY };
 /** Art px the rune HUD takes at the bottom of the view (in HUD pixels: the HUD keeps the base scale). */
 const HUD_H = 74;
 /** Art px kept above the arena for hats and the wave strip. */
@@ -39,6 +42,8 @@ export class Camera {
   cy = 0;
   /** Is the camera following (one local seat, or an arena bigger than the view)? Edge marks show only then. */
   following = false;
+  /** True isometric: cx, cy and the rest of this class work in the turned view (iso-world.ts); the two world conversions turn back. */
+  iso = false;
   private sw = 0;
   private sh = 0;
   private placed = false;
@@ -110,10 +115,15 @@ export class Camera {
 
   /** Screen pixel -> world point on the ground. */
   screenToWorld(sx: number, sy: number): { x: number; y: number } {
-    return { x: (sx / this.scale - this.w / 2) / PPU + this.cx, y: (sy / this.scale - this.h / 2) / (PPU * FY) + this.cy };
+    const a = (sx / this.scale - this.w / 2) / PPU + this.cx, b = (sy / this.scale - this.h / 2) / (PPU * FY) + this.cy;
+    return this.iso ? { x: toX(a, b), y: toY(a, b) } : { x: a, y: b };
   }
   /** World point -> screen pixel (the inverse of screenToWorld). */
   worldToScreen(x: number, y: number): { x: number; y: number } {
+    return this.iso ? this.viewToScreen(toU(x, y), toV(x, y)) : this.viewToScreen(x, y);
+  }
+  /** A point in the view's own space (the turned world, under the isometric camera) -> screen pixel. */
+  viewToScreen(x: number, y: number): { x: number; y: number } {
     return { x: ((x - this.cx) * PPU + this.w / 2) * this.scale, y: ((y - this.cy) * PPU * FY + this.h / 2) * this.scale };
   }
   /** The play part of the view in screen px: below the sky strip, above the rune HUD. */

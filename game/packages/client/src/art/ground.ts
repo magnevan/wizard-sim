@@ -30,6 +30,8 @@ export interface GroundMap {
   w: number; h: number;
   /** One character per cell (see GROUND_CHARS in the content build); '.' is unpainted. */
   rows: readonly string[];
+  /** What lies past the map's edge. By default, whatever's at the nearest edge cell. */
+  outside?: string;
 }
 
 const CELL = 0.5;
@@ -41,6 +43,7 @@ const GRADE = [0.92, 0.95, 1.08];
 /** The character at a world point; off the map, the nearest edge cell. */
 export function groundAt(g: GroundMap, wx: number, wy: number): string {
   const gw = g.rows[0].length, gh = g.rows.length;
+  if (g.outside && (Math.abs(wx) > g.w / 2 || Math.abs(wy) > g.h / 2)) return g.outside;
   const cx = clamp(Math.floor((wx + g.w / 2) / CELL), 0, gw - 1), cy = clamp(Math.floor((wy + g.h / 2) / CELL), 0, gh - 1);
   return g.rows[cy][cx];
 }
@@ -50,8 +53,9 @@ export function groundAt(g: GroundMap, wx: number, wy: number): string {
  * material for unpainted cells. Colours come from screen position, so textures don't shear with the
  * camera; a material with a grid in it (flagstones) is the one thing that would need its own version.
  */
-export function paintGround(out: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, g: GroundMap, mats: Readonly<Record<string, Material>>, base: string, cam: GroundCamera): void {
-  const AW = (g.w / 2) * PPU, AH = (g.h / 2) * PPU * FY;
+export function paintGround(out: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, g: GroundMap, mats: Readonly<Record<string, Material>>, base: string, cam: GroundCamera, extent = g.w): void {
+  // the dusk falloff follows what's on screen: for a turned room, the square that holds it (extent)
+  const AW = (extent / 2) * PPU, AH = ((extent === g.w ? g.h : extent) / 2) * PPU * FY;
   for (let y = 0; y < H; y++) {
     const py = y - OY;
     for (let x = 0; x < W; x++) {

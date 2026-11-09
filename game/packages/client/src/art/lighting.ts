@@ -39,7 +39,7 @@ export const MOODS: Readonly<Record<string, Mood>> = {
   day: { ambient: [0.94, 0.92, 0.87], shadow: [0.62, 0.62, 0.76], sun: [0.55, 0.28], saturate: -0.14, clouds: 0.1, vignette: 0.16, carry: 0 },
   dusk: { ambient: [0.76, 0.66, 0.7], shadow: [0.48, 0.44, 0.62], sun: [0.95, 0.42], saturate: -0.2, clouds: 0.06, vignette: 0.32, carry: 0.2 },
   night: { ambient: [0.38, 0.44, 0.66], shadow: [0.26, 0.3, 0.48], sun: [0.3, 0.15], saturate: -0.34, clouds: 0, vignette: 0.42, carry: 0.55 },
-  interior: { ambient: [0.68, 0.61, 0.6], shadow: [0.5, 0.45, 0.5], sun: [0.18, 0.1], saturate: -0.12, clouds: 0, vignette: 0.36, carry: 0.32 },
+  interior: { ambient: [0.68, 0.61, 0.6], shadow: [0.48, 0.44, 0.54], sun: [0.18, 0.1], saturate: -0.12, clouds: 0, vignette: 0.36, carry: 0.32 },
 };
 const ROOM_MOOD: Readonly<Record<string, string>> = { academy: 'interior', survive: 'dusk', arena: 'dusk' };
 export const moodOf = (room: string, override?: string | null): Mood => MOODS[override ?? ''] ?? MOODS[ROOM_MOOD[room] ?? 'day'];

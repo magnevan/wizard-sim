@@ -22,8 +22,12 @@ import { gx, gy } from './art/field';
 import * as X from './art/px';
 import type { Ctx } from './art/px';
 import { FY, TAU, clamp, easeOut, mod } from './art/util';
+import { toU, toV } from './iso-world';
 import type { LightFn } from './art/vfx';
 import { BEAT_TEXT, EXITS, LINES, counterFor, promptFor } from './tutorial-text';
+
+/** Where a fixed spot of the room (real world units) is drawn: the turned world's field px. */
+const sx = (x: number, y: number): number => gx(toU(x, y)), sy = (x: number, y: number): number => gy(toV(x, y));
 
 /** A depth-sorted canvas covering field rect (rx, ry, w, h), sorted at ground y z (view-structures.ts Pieces). */
 export type PieceFn = (rx: number, ry: number, w: number, h: number, z: number) => Ctx;
@@ -39,14 +43,14 @@ export function drawTutorialWorld(w: World, t: number, g: Ctx, o: Ctx, light: Li
   const st = tut.state, beat = st[TS.beat], b = w.bodies;
   if (st[TS.fade] < 0) return; // not laid out yet
 
-  if (beat === TUT_BEAT.walk) P.stones.forEach(([x, y], k) => floorStone(g, light, gx(x), gy(y), !!(st[TS.a] & (1 << k)), t, k));
+  if (beat === TUT_BEAT.walk) P.stones.forEach(([x, y], k) => floorStone(g, light, sx(x, y), sy(x, y), !!(st[TS.a] & (1 << k)), t, k));
   if (beat === TUT_BEAT.heavy) {
     let inside = false;
     for (let i = MAX_SEATS; i < b.kind.length; i++) if (b.kind[i] === KIND.enemy && tut.tag[i] === TUT_TAG.sack) inside = Math.hypot(b.x[i] - P.ring[0], b.y[i] - P.ring[1]) < P.ringR;
-    chalkRing(g, light, gx(P.ring[0]), gy(P.ring[1]), P.ringR * PPU, inside, t);
+    chalkRing(g, light, sx(P.ring[0], P.ring[1]), sy(P.ring[0], P.ring[1]), P.ringR * PPU, inside, t);
   }
 
-  if (beat === TUT_BEAT.fireball) pit(g, light, gx(P.pit[0]), gy(P.pit[1]), P.pitR * PPU, t);
+  if (beat === TUT_BEAT.fireball) pit(g, light, sx(P.pit[0], P.pit[1]), sy(P.pit[0], P.pit[1]), P.pitR * PPU, t);
   // the Life beat's sleeping goblin: little z's drifting up off it
   if (beat === TUT_BEAT.life) for (let i = MAX_SEATS; i < b.kind.length; i++) {
     if (b.kind[i] !== KIND.enemy || tut.tag[i] !== TUT_TAG.sleeper) continue;
@@ -59,7 +63,7 @@ export function drawTutorialWorld(w: World, t: number, g: Ctx, o: Ctx, light: Li
   if (beat === TUT_END) {
     P.exits.forEach(([x, y], k) => {
       const on = st[TS.a] === k + 1 ? clamp(st[TS.b] / T(P.exitTime), 0, 1) : 0;
-      arch(piece, o, light, gx(x), gy(y), true, t, k, on, EXITS[k].label);
+      arch(piece, o, light, sx(x, y), sy(x, y), true, t, k, on, EXITS[k].label);
     });
     return;
   }
@@ -71,11 +75,11 @@ export function drawTutorialWorld(w: World, t: number, g: Ctx, o: Ctx, light: Li
     const left = st[TS.go] === 0 ? T(calmOf(beat, st[TS.wave])) - st[TS.calm] : 0;
     // 0 shut; warming as the calm runs out; 1 open while they walk in; a faint glow after
     const heat = st[TS.lit] ? 0 : st[TS.go] === 0 ? 0.8 * clamp(1 - left / T(TUT_TIMES.warn * 2), 0, 1) : allArrived(w) ? 0.15 : 1;
-    gates.forEach((k) => gate(g, o, light, gx(P.gates[k][0]), gy(P.gates[k][1]), now.has(k) ? heat : Math.min(heat, 0.15), t, k));
+    gates.forEach((k) => gate(g, o, light, sx(P.gates[k][0], P.gates[k][1]), sy(P.gates[k][0], P.gates[k][1]), now.has(k) ? heat : Math.min(heat, 0.15), t, k));
     if (st[TS.go] === 0 && st[TS.wave] === 0 && !st[TS.lit]) readyStone(g, o, light, w, t);
   }
   if (skipOpen(w)) skipStone(g, o, light, w, t);
-  arch(piece, o, light, gx(P.arch[0]), gy(P.arch[1]), !!st[TS.lit], t, 7, 0, st[TS.lit] ? LINES.arch : '');
+  arch(piece, o, light, sx(P.arch[0], P.arch[1]), sy(P.arch[0], P.arch[1]), !!st[TS.lit], t, 7, 0, st[TS.lit] ? LINES.arch : '');
 }
 
 /** Beat 14: a round pit in the floor nobody can step into, and a stone pillar in its middle the bramble grows on. */
@@ -116,7 +120,7 @@ function gate(g: Ctx, o: Ctx, light: LightFn, x: number, y: number, heat: number
 
 /** The ready stone ahead of the entry: a gold-runed stone; stepping on it lets the enemies in. */
 function readyStone(g: Ctx, o: Ctx, light: LightFn, w: World, t: number): void {
-  const b = w.bodies, x = Math.round(gx(P.ready[0])), y = Math.round(gy(P.ready[1])), r = P.readyR * PPU * 0.85, p = 0.5 + 0.5 * Math.sin(t * 2.6);
+  const b = w.bodies, x = Math.round(sx(P.ready[0], P.ready[1])), y = Math.round(sy(P.ready[0], P.ready[1])), r = P.readyR * PPU * 0.85, p = 0.5 + 0.5 * Math.sin(t * 2.6);
   let on = false;
   for (let s = 0; s < MAX_SEATS; s++) if (w.seats.active[s] && b.kind[s] === KIND.wizard && Math.hypot(b.x[s] - P.ready[0], b.y[s] - P.ready[1]) < P.readyR) on = true;
   X.ellipse(g, x, y + 1, r + 1, (r + 1) * FY, STONE.deep);
@@ -165,7 +169,7 @@ function chalkRing(g: Ctx, light: LightFn, x: number, y: number, r: number, insi
 
 /** The "I know this" stone: a carved slab by the entry with a check-mark rune; standing on it fills its ring. */
 function skipStone(g: Ctx, o: Ctx, light: LightFn, w: World, t: number): void {
-  const st = w.tut!.state, x = Math.round(gx(P.skip[0])), y = Math.round(gy(P.skip[1])), r = P.skipR * PPU, b = w.bodies;
+  const st = w.tut!.state, x = Math.round(sx(P.skip[0], P.skip[1])), y = Math.round(sy(P.skip[0], P.skip[1])), r = P.skipR * PPU, b = w.bodies;
   const p = 0.5 + 0.5 * Math.sin(t * 2.2);
   X.ellipse(g, x + 1, y + 2, r + 1, (r + 1) * FY, 'rgba(8,6,16,0.5)');
   X.ellipse(g, x, y + 1, r, r * FY, STONE.dark);

@@ -11,7 +11,6 @@
  *   D-pad up opens the help panel for this pad's seat (help-panel.ts).
  *   Any button but Start, freshly pressed on an unseated pad, joins the next free seat.
  */
-import { ISO } from './art/util';
 import { toX, toY } from './iso-world';
 import { AIM_UNIT, BTN, elementId, quantize, type PlayerInput } from '@wizard-sim/sim';
 import type { Element } from '@wizard-sim/rules';
@@ -26,8 +25,8 @@ const MOVE_DEADZONE = 0.22, AIM_DEADZONE = 0.3;
 /** Aim reticle distance: 2.5 u at a light tilt, up to the Place range at full tilt. */
 const AIM_MIN = 2.5, AIM_MAX = 9;
 
-/** Under the isometric camera, a stick pushed up should mean up on the screen. */
-function screenStick([u, v]: [number, number]): [number, number] { return ISO ? [toX(u, v), toY(u, v)] : [u, v]; }
+/** A stick pushed up means up on the screen, which is diagonal in the world. */
+function screenStick([u, v]: [number, number]): [number, number] { return [toX(u, v), toY(u, v)]; }
 function stick(axes: number[], i: number, dead: number): [number, number] {
   const x = axes[i] ?? 0, y = axes[i + 1] ?? 0, l = Math.hypot(x, y);
   if (l < dead) return [0, 0];

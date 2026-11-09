@@ -37,13 +37,11 @@ export class Camera {
   /** Size of the HUD layer in its art pixels (at the base scale). */
   hudW = 0;
   hudH = 0;
-  /** World point at the centre of the view. */
+  /** The point at the centre of the view, in the view's turned space (iso-world.ts). */
   cx = 0;
   cy = 0;
   /** Is the camera following (one local seat, or an arena bigger than the view)? Edge marks show only then. */
   following = false;
-  /** True isometric: cx, cy and the rest of this class work in the turned view (iso-world.ts); the two world conversions turn back. */
-  iso = false;
   private sw = 0;
   private sh = 0;
   private placed = false;
@@ -116,13 +114,13 @@ export class Camera {
   /** Screen pixel -> world point on the ground. */
   screenToWorld(sx: number, sy: number): { x: number; y: number } {
     const a = (sx / this.scale - this.w / 2) / PPU + this.cx, b = (sy / this.scale - this.h / 2) / (PPU * FY) + this.cy;
-    return this.iso ? { x: toX(a, b), y: toY(a, b) } : { x: a, y: b };
+    return { x: toX(a, b), y: toY(a, b) };
   }
   /** World point -> screen pixel (the inverse of screenToWorld). */
   worldToScreen(x: number, y: number): { x: number; y: number } {
-    return this.iso ? this.viewToScreen(toU(x, y), toV(x, y)) : this.viewToScreen(x, y);
+    return this.viewToScreen(toU(x, y), toV(x, y));
   }
-  /** A point in the view's own space (the turned world, under the isometric camera) -> screen pixel. */
+  /** A point in the view's own space (the turned world, iso-world.ts) -> screen pixel. */
   viewToScreen(x: number, y: number): { x: number; y: number } {
     return { x: ((x - this.cx) * PPU + this.w / 2) * this.scale, y: ((y - this.cy) * PPU * FY + this.h / 2) * this.scale };
   }

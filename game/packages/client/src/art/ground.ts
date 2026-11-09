@@ -15,7 +15,6 @@
  * This file is pure (arrays in, arrays out) so it runs in node for the tests; art/ground-room.ts loads
  * the images and makes the texture. It's client-only: the sim never knows what the ground looks like.
  */
-import { FY, PPU } from '../camera';
 import { clamp, lerp, rand, vnoise } from './util';
 
 /** A tiling texture: width, height and RGBA bytes. `flip` shifts and mirrors it at random per block, for things with no grid in them. */
@@ -39,10 +38,7 @@ const styleOf = (ch: string): MaterialStyle => MATERIAL_STYLES[ch] ?? DEFAULT_ST
 /** From art pixels relative to the room's centre to world units from the room's centre. */
 export interface GroundCamera { x(px: number, py: number): number; y(px: number, py: number): number }
 
-/** Today's camera: straight on, the ground squashed by FY. */
-export const todayCamera: GroundCamera = { x: (px) => px / PPU, y: (_px, py) => py / (PPU * FY) };
-
-/** A true isometric camera, 2:1, with `a` art px of screen x per world unit along each ground axis. */
+/** The isometric camera, 2:1, with `a` art px of screen x per world unit along each ground axis. */
 export const isoCamera = (a: number): GroundCamera => ({
   x: (px, py) => (px / a + (2 * py) / a) / 2,
   y: (px, py) => ((2 * py) / a - px / a) / 2,
@@ -62,8 +58,6 @@ const CELL = 0.5;
 const WANDER = 0.5;
 /** Cells of padding round the map in the blend field, and the blur radius that sets how wide a transition is. */
 const PAD = 6, BLUR = 2;
-/** The floor's dusk grade (art/floor.ts), so painted ground sits under the same light as the actors. */
-const GRADE = [0.92, 0.95, 1.08];
 /** Broad colour drift across a field: dry and warm, or lush and cool. */
 const WARM = [1.09, 1.03, 0.92], COOL = [0.9, 0.98, 1.04];
 
@@ -177,9 +171,7 @@ function texel(base: Material, x: number, y: number, px: number, py: number): vo
  * material for unpainted cells. Colours come from screen position, so textures don't shear with the
  * camera; a material with a grid in it (flagstones) is the one thing that would need its own version.
  */
-export function paintGround(out: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, g: GroundMap, mats: Readonly<Record<string, Material>>, base: string, cam: GroundCamera, extent = g.w, lit = false): void {
-  // the dusk falloff follows what's on screen: for a turned room, the square that holds it (extent)
-  const AW = (extent / 2) * PPU, AH = ((extent === g.w ? g.h : extent) / 2) * PPU * FY;
+export function paintGround(out: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, g: GroundMap, mats: Readonly<Record<string, Material>>, base: string, cam: GroundCamera): void {
   const f = buildField(g, base);
   const layers = f.chars.map((c) => styleOf(c).layer), styles = f.chars.map(styleOf), byIndex = f.chars.map((c) => mats[c] ?? mats[base]);
   const water = f.chars.indexOf('w');
@@ -243,13 +235,11 @@ export function paintGround(out: Uint8ClampedArray, W: number, H: number, OX: nu
       const dk = clamp((drift - 0.5) * 2.6, -1, 1), tint = dk > 0 ? WARM : COOL, ta = Math.abs(dk);
       let stone = 1;
       if (st.edge === 'block') stone = 0.96 + rand(Math.floor(x / 32), Math.floor(y / 32), 81) * 0.08;
-      const e = clamp(Math.hypot(px / (AW + 90), py / (AH + 70)), 0, 1.6);
-      // with scene lighting on, the mood and the falloff come from there and aren't baked in
-      const light = patch * stone * shade * (lit ? 1 : lerp(1, 0.55, clamp((e - 0.55) / 0.9, 0, 1)));
-      const gr = lit ? 1 : GRADE[0], gg = lit ? 1 : GRADE[1], gb = lit ? 1 : GRADE[2];
-      out[i] = rgb[0] * gr * light * lerp(1, tint[0], ta);
-      out[i + 1] = rgb[1] * gg * light * lerp(1, tint[1], ta);
-      out[i + 2] = Math.min(255, rgb[2] * gb * light * lerp(1, tint[2], ta));
+      // the mood and its falloff come from the scene lighting (art/lighting.ts) and aren't baked in
+      const light = patch * stone * shade;
+      out[i] = rgb[0] * light * lerp(1, tint[0], ta);
+      out[i + 1] = rgb[1] * light * lerp(1, tint[1], ta);
+      out[i + 2] = rgb[2] * light * lerp(1, tint[2], ta);
       out[i + 3] = 255;
     }
   }

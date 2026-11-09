@@ -74,7 +74,6 @@ describe('the turned world', () => {
 describe('the isometric camera', () => {
   const cam = new Camera();
   cam.fit(1920, 1080);
-  cam.iso = true;
   it('round-trips the screen and the real world', () => {
     const s = cam.worldToScreen(5, -3), p = cam.screenToWorld(s.x, s.y);
     expect(p.x).toBeCloseTo(5);

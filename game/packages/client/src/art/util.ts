@@ -4,10 +4,8 @@
  * the sim state and the clock and screenshots don't flicker between runs.
  */
 export const TAU = Math.PI * 2;
-/** The true isometric camera, on trial behind ?camera=iso (iso-world.ts). Off everywhere else. */
-export const ISO = typeof location !== 'undefined' && new URLSearchParams(location.search).get('camera') === 'iso';
-/** Ground squash of the camera: Pixel Battlefield's 3/4 view (pass 4), or isometric's 2:1. */
-export const FY = ISO ? 0.5 : 0.6;
+/** Ground squash of the isometric camera: 2:1. */
+export const FY = 0.5;
 /** Height is drawn at CU px per rig unit: squat under the steep camera, but still readable. */
 export const CU = 0.8;
 

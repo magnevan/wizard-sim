@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groundAt, isoCamera, matchColour, paintGround, todayCamera, type GroundMap, type Material } from '../src/art/ground';
+import { groundAt, isoCamera, matchColour, paintGround, type GroundCamera, type GroundMap, type Material } from '../src/art/ground';
 import { FY, PPU } from '../src/camera';
 
 const flat = (r: number, g: number, b: number): Material => {
@@ -7,6 +7,8 @@ const flat = (r: number, g: number, b: number): Material => {
   for (let i = 0; i < 16; i++) { data[i * 4] = r; data[i * 4 + 1] = g; data[i * 4 + 2] = b; data[i * 4 + 3] = 255; }
   return { w: 4, h: 4, data, flip: true };
 };
+/** A plain squashed view, which keeps the tests' geometry simple: the painter takes any camera. */
+const todayCamera: GroundCamera = { x: (px) => px / PPU, y: (_px, py) => py / (PPU * FY) };
 const mats = { g: flat(0, 200, 0), d: flat(200, 0, 0) };
 // 24 x 16 u: the west half grass, the east half dirt
 const map: GroundMap = { w: 24, h: 16, rows: Array.from({ length: 32 }, () => 'g'.repeat(24) + 'd'.repeat(24)) };

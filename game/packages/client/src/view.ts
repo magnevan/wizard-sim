@@ -23,9 +23,8 @@ import { Camera, FY, PPU } from './camera';
 import { ActorFrames, FEET_X, FEET_Y } from './art/actors';
 import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
-import { FLOOR, floorTexture, surviveRuin } from './art/floor';
-import { groundTexture, hasGround } from './art/ground-room';
-import { ISO } from './art/util';
+import { floorLayout, floorPlaceholder } from './art/floor';
+import { groundTexture } from './art/ground-room';
 import { turnedWorld } from './iso-world';
 import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
 import { EdgeMarks } from './edge-marks';
@@ -66,12 +65,15 @@ export class WorldView {
   /** The seats played on this screen: a following camera frames their wizards. Offline, every seat (local co-op); online, just yours. */
   isLocal: (seat: number) => boolean = () => true;
   /** Painted for the Sanctum's and the Arena's play area; repainted at the first draw of a world with another (fitArena). */
-  private floor = new Sprite(floorTexture(ARENA.w, ARENA.h));
+  private floorAt = floorLayout(ARENA.w, ARENA.h);
+  private floor = new Sprite(floorPlaceholder(this.floorAt));
   /** The play area the floor and effect canvases are painted for. */
-  private arenaKey = `${ARENA.w}x${ARENA.h}x0`;
+  private arenaKey = '';
+  /** Whether the floor's current texture is this view's own placeholder (the painted ground is shared). */
+  private ownFloor = true;
   /** False while a room's painted ground is still on its way (tests and screenshots wait on it). */
   groundReady = true;
-  /** The real world behind what's being drawn (under the isometric camera, `w` is its turned copy). */
+  /** The real world behind what's being drawn (`w` is its turned copy). */
   private real!: World;
   private vfx = new Vfx();
   private sGround = new Graphics(); // structures' floor layer (view-structures.ts)
@@ -101,8 +103,8 @@ export class WorldView {
   private smoothY = new Float64Array(MAX_BODIES);
   private preX = new Float64Array(MAX_BODIES);
   private preY = new Float64Array(MAX_BODIES);
-  /** The world as this view draws it: the real one, or under the isometric camera a turned copy. */
-  private seen(w: World): World { this.real = w; return this.iso ? turnedWorld(w) : w; }
+  /** The world as this view draws it: a turned copy of the real one (iso-world.ts). */
+  private seen(w: World): World { this.real = w; return turnedWorld(w); }
 
   notePreRewind(real: World): void { const w = this.seen(real); this.preX.set(w.bodies.x); this.preY.set(w.bodies.y); }
   notePostRewind(real: World, localSeat: number): void {
@@ -147,7 +149,7 @@ export class WorldView {
   private castS = new Float64Array(MAX_SEATS);
   private holdUntil = new Float64Array(MAX_SEATS);
 
-  /** Scene lighting (art/lighting.ts): on with the isometric camera, unless ?lighting=0. Needs the renderer. */
+  /** Scene lighting (art/lighting.ts), unless ?lighting=0; the help panel's little previews go without. Needs the renderer. */
   private lit: SceneLighting | null = null;
   /** A mood to use instead of the room's own (?mood=day, dusk, night or interior). */
   mood: string | null = null;
@@ -156,8 +158,7 @@ export class WorldView {
   private litLayer = new Container();
   setRenderer(r: Renderer): void { this.renderer = r; }
 
-  constructor(private readonly iso = ISO, lighting = iso && LIGHTING) {
-    this.camera.iso = iso;
+  constructor(lighting = LIGHTING) {
     if (lighting) this.lit = new SceneLighting();
     const tint = this.lit ? 0xffffff : AMBIENT;
     this.actors.sortableChildren = true;
@@ -279,7 +280,7 @@ export class WorldView {
     if (t !== this.lastSimT) { this.lastSimT = t; this.stillSince = ct; }
     const lead = Math.min(0.5, ct - this.stillSince);
     const ox = cam.originX(), oy = cam.originY(), fx0 = ox - FIELD.OX, fy0 = oy - FIELD.OY;
-    this.floor.position.set(ox - FLOOR.OX, oy - FLOOR.OY);
+    this.floor.position.set(ox - this.floorAt.OX, oy - this.floorAt.OY);
     // the effect canvases cover the field in view (a margin for shake and things at the edge): art/vfx.ts view()
     const M = 24;
     this.vfx.view(-fx0 - M, -fy0 - M, cam.w + 2 * M, cam.h + 2 * M);
@@ -387,26 +388,24 @@ export class WorldView {
 
   /** Repaints the floor and resizes the effect canvases when the world's play area changes (a survive world is bigger). */
   private fitArena(w: World): void {
-    const painted = this.iso || hasGround(w.def.id);
-    const d = w.dims, key = `${d.w}x${d.h}x${w.run ? 1 : 0}${painted ? w.def.id : ''}`;
+    const d = w.dims, key = `${d.w}x${d.h}${w.def.id}`;
     if (key === this.arenaKey) return;
     this.arenaKey = key;
     if (fitField(d.w, d.h)) { this.vfx.resize(); this.structs.scorch.resize(); }
-    const old = this.floor.texture;
-    this.floor.texture = floorTexture(d.w, d.h, w.run ? surviveRuin : undefined);
-    old?.destroy(true);
+    this.floorAt = floorLayout(d.w, d.h);
+    if (this.ownFloor) this.floor.texture?.destroy(true);
+    this.floor.texture = floorPlaceholder(this.floorAt);
+    this.ownFloor = true;
     this.camera.reset();
-    this.groundReady = !painted;
-    if (painted) {
-      // the code-drawn floor stands in for the moment the images take to arrive
-      void groundTexture(w.def.id, this.real.dims.w, this.real.dims.h, this.iso, d.w, !!this.lit).then((t) => {
-        if (key !== this.arenaKey) { t.destroy(true); return; }
-        const was = this.floor.texture;
-        this.floor.texture = t;
-        was?.destroy(true);
-        this.groundReady = true;
-      }).catch((e) => { console.warn('ground:', e); this.groundReady = true; });
-    }
+    this.groundReady = false;
+    // the plain colour stands in for the moment the images take to arrive. The painted ground is shared with other views, so it's never destroyed here.
+    void groundTexture(w.def.id, this.real.dims.w, this.real.dims.h, this.floorAt).then((t) => {
+      if (key !== this.arenaKey) return;
+      this.floor.texture?.destroy(true);
+      this.ownFloor = false;
+      this.floor.texture = t;
+      this.groundReady = true;
+    }).catch((e) => { console.warn('ground:', e); this.groundReady = true; });
   }
 
   /** Where body i is drawn this frame (interpolated), world units. */

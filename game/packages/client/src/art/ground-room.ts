@@ -1,14 +1,14 @@
 /**
  * A room's painted ground as a texture: fetches its materials (content/assets/ground/*.png, once)
- * and runs art/ground.ts over them. A room with no Ground cells keeps the old code-drawn floor.
+ * and runs art/ground.ts over them. A room with no Ground cells is flagstone, with grass past its edge.
  */
 import { Texture } from 'pixi.js';
 import { GROUNDS } from './grounds.gen';
-import { calmed, groundAt, isoCamera, matchColour, paintGround, todayCamera, type GroundCamera, type GroundMap, type Material } from './ground';
+import { calmed, groundAt, isoCamera, matchColour, paintGround, type GroundCamera, type GroundMap, type Material } from './ground';
 import { loadTexture, propImage } from './assets';
 import { rand, vnoise } from './util';
 import { PPU } from '../camera';
-import { FLOOR } from './floor';
+import type { FloorLayout } from './floor';
 import * as X from './px';
 
 /** Ground character -> its image and whether it can be mirrored at random (not if it has joints to line up). Alternates are <file>-2.png and on. */
@@ -63,8 +63,6 @@ async function scatter(x: CanvasRenderingContext2D, g: GroundMap, W: number, H: 
   x.globalAlpha = 1;
 }
 
-export const hasGround = (room: string): boolean => room in GROUNDS;
-
 const loaded = new Map<string, Promise<Material>>();
 function material(ch: string): Promise<Material> {
   let p = loaded.get(ch);
@@ -92,22 +90,30 @@ function material(ch: string): Promise<Material> {
   return p;
 }
 
-/** Paints `room`'s ground at the floor's current size (floorTexture has set FLOOR). The most common material fills unpainted cells. */
-export async function groundTexture(room: string, w: number, h: number, iso = false, extent = w, lit = false): Promise<Texture> {
-  // under the isometric camera an unpainted room still needs a ground: the old floor is drawn for the straight-on view
+const painted = new Map<string, Promise<Texture>>();
+/** A room's ground at `l`'s size, painted once and shared by every view that shows it. */
+export function groundTexture(room: string, w: number, h: number, l: FloorLayout): Promise<Texture> {
+  const key = `${room}|${l.W}x${l.H}`;
+  let t = painted.get(key);
+  if (!t) { t = paint(room, w, h, l); painted.set(key, t); }
+  return t;
+}
+
+/** The most common material fills unpainted cells. */
+async function paint(room: string, w: number, h: number, l: FloorLayout): Promise<Texture> {
   const rows = GROUNDS[room] ?? Array.from({ length: Math.round(h * 2) }, () => 'f'.repeat(Math.round(w * 2)));
-  const g: GroundMap = { w, h, rows, outside: iso ? 'g' : undefined };
+  const g: GroundMap = { w, h, rows, outside: 'g' };
   const count = new Map<string, number>();
   for (const r of g.rows) for (const ch of r) if (ch !== '.') count.set(ch, (count.get(ch) ?? 0) + 1);
   const base = [...count].sort((a, b) => b[1] - a[1])[0][0];
   const chars = [...new Set([...count.keys(), ...(g.outside ? [g.outside] : [])])];
   const mats: Record<string, Material> = {};
   await Promise.all(chars.map(async (ch) => { mats[ch] = await material(ch); }));
-  const { W, H, OX, OY } = FLOOR;
+  const { W, H, OX, OY } = l;
   const { c, x } = X.canvas(W, H);
   const img = x.createImageData(W, H);
-  const cam = iso ? isoCamera(PPU * Math.SQRT1_2) : todayCamera;
-  paintGround(img.data, W, H, OX, OY, g, mats, base, cam, extent, lit);
+  const cam = isoCamera(PPU * Math.SQRT1_2);
+  paintGround(img.data, W, H, OX, OY, g, mats, base, cam);
   x.putImageData(img, 0, 0);
   await scatter(x, g, W, H, OX, OY, cam);
   const t = Texture.from(c);

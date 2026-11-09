@@ -17,6 +17,7 @@ vi.mock('pixi.js', () => ({
   Container: Base, Sprite: Base, Graphics: class extends Base { constructor() { super(); return any(); } },
   Texture: Object.assign(class extends Base { source = { update() {}, scaleMode: '' }; destroy() {} }, { from: () => ({ source: { update() {}, scaleMode: '' }, destroy() {} }), EMPTY: {} }),
   Rectangle: Base, TextureSource: { defaultOptions: {} },
+  ColorMatrixFilter: class { reset() {} saturate() {} }, TilingSprite: Base, RenderTexture: { create: () => any() }, Mesh: Base, MeshGeometry: Base,
 }));
 function ctx(): any {
   const c: any = new Proxy({}, { get: (t: any, k) => (k in t ? t[k] : () => undefined), set: (t: any, k, v) => { t[k] = v; return true; } });

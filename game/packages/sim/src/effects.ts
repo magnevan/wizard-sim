@@ -343,16 +343,22 @@ export function zap(w: World, from: number, to: number, p: Payload, scale: numbe
 }
 
 /** Nearest body to (x, y) within r that isn't in `skip`; with `team`, only hurt bodies of that team. */
-export function nearest(w: World, x: number, y: number, r: number, skip: readonly number[], team: number): number {
+export function nearest(w: World, x: number, y: number, r: number, skip: readonly number[], team: number, sight = false): number {
   const b = w.bodies;
   let best = -1, bd = r;
   for (let i = 0; i < b.kind.length; i++) {
     if (!alive(w, i) || skip.includes(i)) continue;
     if (team && (b.team[i] !== team || b.hp[i] >= b.maxHp[i])) continue;
     const d = len(b.x[i] - x, b.y[i] - y) - b.r[i];
-    if (d < bd) { bd = d; best = i; }
+    if (d < bd && (!sight || clearLine(w, x, y, b.x[i], b.y[i]))) { bd = d; best = i; }
   }
   return best;
+}
+
+/** No rock or barrier on the straight line between two points. */
+function clearLine(w: World, ax: number, ay: number, bx: number, by: number): boolean {
+  const d = len(bx - ax, by - ay);
+  return d < 1e-6 || clipRay(w, ax, ay, (bx - ax) / d, (by - ay) / d, d)[1] < 0;
 }
 
 /** A chain: the first target in front of the caster, then jumps (more with more lightning, further through wet). */
@@ -365,10 +371,11 @@ export function chain(w: World, src: number, spec: SpellSpec, face: number, scal
     if (team && (b.team[i] !== team || b.hp[i] >= b.maxHp[i])) continue;
     if (!inCone(x, y, face, team ? 0.25 : 0.12, SHAPES.arcRange, b.x[i], b.y[i], b.r[i])) continue;
     const d = len(b.x[i] - x, b.y[i] - y);
-    if (d < bd) { bd = d; first = i; }
+    if (d < bd && clearLine(w, x, y, b.x[i], b.y[i])) { bd = d; first = i; }
   }
-  if (first < 0) { // a short crackle into the air
-    w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x, y, x2: x + cosTurns(face) * 2.5, y2: y + sinTurns(face) * 2.5, look: spec.look });
+  if (first < 0) { // a short crackle into the air, or against the wall in the way
+    const air = clipRay(w, x, y, cosTurns(face), sinTurns(face), 2.5)[0];
+    w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x, y, x2: x + cosTurns(face) * air, y2: y + sinTurns(face) * air, look: spec.look });
     return;
   }
   const jumps = SHAPES.arcJumps + Math.max(0, spec.counts[EL.lightning - 1] - 1) + (spec.mod === 'chain' ? 1 : 0);
@@ -377,7 +384,7 @@ export function chain(w: World, src: number, spec: SpellSpec, face: number, scal
   zap(w, src, first, p, scale);
   let cur = first;
   for (let j = 0; j < jumps; j++) {
-    const next = nearest(w, b.x[cur], b.y[cur], SHAPES.arcJump * (b.wet[cur] ? 1.5 : 1), visited, team);
+    const next = nearest(w, b.x[cur], b.y[cur], SHAPES.arcJump * (b.wet[cur] ? 1.5 : 1), visited, team, true);
     if (next < 0) break;
     zap(w, cur, next, p, scale * 0.8);
     visited.push(next);
@@ -426,12 +433,15 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
   }
   if (spec.shape === 'spray') {
     const range = SHAPES.sprayRange + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
-    setEnd(x + dx * range, y + dy * range);
+    // Rock and barriers stop a spray like a beam: it ends at the wall and wears it down (healing doesn't).
+    const [wallD, wk] = clipRay(w, x, y, dx, dy, range);
+    if (wk >= 0 && !spec.heal) damageWall(w, wk, payloadDamage(spec.counts, 0, rate));
+    setEnd(x + dx * wallD, y + dy * wallD);
     // Falloff (combat.sprayFalloff): the nearest body takes it all, each one behind takes a share less.
     const inside: number[] = [];
     for (let i = 0; i < b.kind.length; i++) {
       if (!alive(w, i) || i === src) continue;
-      if (inCone(x, y, face, half, range, b.x[i], b.y[i], b.r[i])) inside.push(i);
+      if (inCone(x, y, face, half, range, b.x[i], b.y[i], b.r[i]) && clearLine(w, x, y, b.x[i], b.y[i])) inside.push(i);
     }
     if (COMBAT.sprayFalloff < 1) inside.sort((a, c) => len(b.x[a] - x, b.y[a] - y) - len(b.x[c] - x, b.y[c] - y) || a - c);
     inside.forEach((i, k) => {

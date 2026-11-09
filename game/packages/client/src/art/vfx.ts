@@ -13,13 +13,14 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import {
-  CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SURF, T, ZONE,
+  CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, STRUCT, SURF, T, WALL, ZONE,
   compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
 import * as A from './accent';
 import * as K from './kit';
+import { SPLASH_LIGHT, wallSplash, type SplashKind } from './wall-splash';
 import * as X from './px';
 import type { Ctx, Pt, Ramp } from './px';
 import type { Frame } from './actors';
@@ -33,6 +34,7 @@ export interface BodyView { on: boolean; x: number; y: number; a: Anchors | null
 export type LightFn = (x: number, y: number, r: number, col: string, a: number) => void;
 /** A little unsteadiness, so a held beam's light is alive. */
 const flick = (t: number, seed: number): number => 0.9 + 0.1 * Math.sin(t * 17 + seed);
+const splashKind = (spec: SpellSpec, look: string): SplashKind => spec.heal && look !== 'water' ? 'warm' : spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
 /** Light along a line on the ground, a row of overlapping lights, each dimmer to make up for the overlap. */
 function glowAlong(light: LightFn, ax: number, ay: number, bx: number, by: number, r: number, col: string, a: number): void {
   const n = Math.max(1, Math.min(10, Math.ceil(Math.hypot(bx - ax, by - ay) / (r * 0.85))));
@@ -53,6 +55,8 @@ const ramp = (id: number): Ramp => EL[elName(id)] ?? EL.arcane;
 const SEAT_EL = [6, 4, 5, 9];
 const STAFF_Z = 10; // missiles fly about this high (art px)
 const LIFT = 9; // a beam or spray end is lifted to about chest height
+/** How far above the ground a beam or spray is drawn, with a little to spare: above this a standing thing is taken to hide it. */
+const CHEST = LIFT + 3;
 /** A late remote spell (rollback) catches up with where it really is over this much real time, s. */
 const CATCH_S = 0.15;
 /** Floors fade out over their last second (ticks), in this many dither steps. */
@@ -69,6 +73,12 @@ export class Vfx {
   localSeat = 0;
   readonly ground: Sprite;
   readonly over: Sprite;
+  /** Reports what stands in the scene: texture, top-left and foot y, in field px. Set by the view. */
+  occluders: ((emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean) => void) => void) | null = null;
+  /** This frame's sprays that struck the face of a wall we can see: drawn last, over the wall. */
+  private strikes: { x: number; y: number; ux: number; uy: number; kind: SplashKind; t0: number; seed: number; power: number }[] = [];
+  /** The beams and sprays, drawn apart so what's in front can hide them. */
+  private b = X.canvas(FIELD.W, FIELD.H);
   private g = X.canvas(FIELD.W, FIELD.H);
   private o = X.canvas(FIELD.W, FIELD.H);
   private surf = X.canvas(FIELD.W, FIELD.H);
@@ -180,7 +190,7 @@ export class Vfx {
     this.surfSeen = new Uint8Array(0);
   }
   private remake(W: number, H: number): void {
-    this.g = X.canvas(W, H); this.o = X.canvas(W, H);
+    this.g = X.canvas(W, H); this.o = X.canvas(W, H); this.b = X.canvas(W, H);
     const old = [this.gt, this.ot];
     this.gt = Texture.from(this.g.c); this.gt.source.scaleMode = 'nearest';
     this.ot = Texture.from(this.o.c); this.ot.source.scaleMode = 'nearest';
@@ -319,11 +329,78 @@ export class Vfx {
     if (structures) { structures(g, o); g._fs = o._fs = null; }
     for (const f of this.fx) if (t >= f.t0) this.drawFx(f, t - f.t0, t, w, bodies, light);
     this.missiles(w, t, light, ct);
-    this.channels(w, ct, bodies, light);
-    this.casters(w, ct, bodies, light);
+    this.occludedChannels(w, ct, bodies, light);
     this.statuses(w, t, bodies, light, ct);
     this.bars(w, bodies);
     this.gt.source.update(); this.ot.source.update();
+  }
+
+  /**
+   * Beams and sprays are drawn over the standing things, but they run at about chest height along the
+   * ground, so whatever stands in front of them should hide them. They go on a layer of their own, and
+   * each thing near them cuts its silhouette out of that layer, down to where the effect would be in front of it.
+   */
+  private occludedChannels(w: World, t: number, bodies: BodyView[], light: LightFn): void {
+    const s = w.seats, real = this.o;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (let i = 0; i < MAX_SEATS; i++) {
+      const v = bodies[i];
+      if (!s.active[i] || s.phase[i] !== PHASE.channel || !v?.on) continue;
+      const ex = gx(s.chanEndX[i]), ey = gy(s.chanEndY[i]);
+      x0 = Math.min(x0, v.x, ex); x1 = Math.max(x1, v.x, ex); y0 = Math.min(y0, v.y, ey); y1 = Math.max(y1, v.y, ey);
+    }
+    if (x1 < x0 || !this.occluders) { this.channels(w, t, bodies, light); this.casters(w, t, bodies, light); this.drawStrikes(t, light); return; }
+    let lowest = -Infinity;
+    for (let i = 0; i < MAX_SEATS; i++) if (s.active[i] && s.phase[i] === PHASE.channel && bodies[i]?.on) lowest = Math.max(lowest, bodies[i].y);
+    const b = this.b.x, M = 44;
+    x0 -= M; y0 -= M + 30; x1 += M; y1 += M;
+    b.setTransform(1, 0, 0, 1, 0, 0); b.clearRect(0, 0, this.b.c.width, this.b.c.height); b.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
+    this.o = this.b; b._fs = null;
+    this.channels(w, t, bodies, light);
+    this.casters(w, t, bodies, light);
+    this.o = real;
+    b.globalCompositeOperation = 'destination-out';
+    this.occluders((tex, x, y, footY, solid) => {
+      const f = tex.frame;
+      if (!f) return;
+      // every caster is behind this wall or desk: none of the effect can be in front of it, right down to its foot
+      const h = solid && lowest < footY ? f.height : Math.min(f.height, Math.floor(footY - CHEST - y));
+      if (h <= 0 || x > x1 || x + f.width < x0 || y > y1 || y + h < y0) return;
+      const img = tex.source?.resource as CanvasImageSource | undefined;
+      if (img) b.drawImage(img, f.x, f.y, f.width, h, x, y, f.width, h);
+    });
+    b.globalCompositeOperation = 'source-over';
+    const o = real.x;
+    o.save(); o.setTransform(1, 0, 0, 1, 0, 0); o.drawImage(this.b.c, 0, 0); o.restore();
+    o._fs = null;
+    this.drawStrikes(t, light);
+  }
+
+  /**
+   * Did a spray ending at (ex, ey) strike a wall? If it struck the face the camera sees, keep it for
+   * drawStrikes. The far face is hidden by the wall itself, so that spray just ends.
+   */
+  private strike(w: World, ex: number, ey: number, cx: number, cy: number, kind: SplashKind, t0: number, seed: number, power = 1): void {
+    const wl = w.walls, near = STRUCT.wallThickness + 0.05;
+    for (let k = 0; k < MAX_WALLS; k++) {
+      if (wl.type[k] !== WALL.rock && wl.type[k] !== WALL.barrier) continue;
+      const x1 = wl.x1[k], y1 = wl.y1[k], ux = wl.x2[k] - x1, uy = wl.y2[k] - y1, l2 = ux * ux + uy * uy || 1;
+      const q = clamp(((ex - x1) * ux + (ey - y1) * uy) / l2, 0, 1);
+      if (Math.hypot(ex - x1 - ux * q, ey - y1 - uy * q) > near) continue;
+      // the wall's normal is (-uy, ux): the caster's side of it has to face down the screen, toward the camera
+      if (ux * (ux * (cy - ey) - uy * (cx - ex)) <= 0) return;
+      const sy = uy * FY, l = Math.hypot(ux, sy) || 1;
+      this.strikes.push({ x: gx(ex), y: gy(ey), ux: ux / l, uy: sy / l, kind, t0, seed, power });
+      return;
+    }
+  }
+  private drawStrikes(t: number, light: LightFn): void {
+    const o = this.o.x, g = this.g.x;
+    for (const s of this.strikes) {
+      wallSplash(o, g, s.x, s.y, s.ux, s.uy, t, s.t0, s.kind, s.seed, s.power);
+      light(s.x, s.y + 2, 46, SPLASH_LIGHT[s.kind], 0.6 * s.power * flick(t, s.seed));
+    }
+    this.strikes.length = 0;
   }
 
   // ---- the floor: water, ice and one continuous sheet of fire ----------------------------------
@@ -628,6 +705,7 @@ export class Vfx {
           glowAlong(light, lerp(tip[0], ex, 0.25), lerp(v.y, ey, 0.25), ex, ey, 40, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', (kind === 'fire' ? 0.6 : 0.4) * flick(t, sd));
           if (kind === 'cold') for (let q = 0; q < 40; q++) { const a = rand(q, 61, sd) * TAU, r = Math.pow(rand(q, 62, sd), 0.7) * 18 * seg(t, t0 + 0.3, t0 + 1.3); X.px(g, ex + Math.cos(a) * r, ey + Math.sin(a) * r * FY * 0.7, q % 4 === 0 ? '#ffffff' : q % 2 ? '#bfe8f6' : '#8ccce4'); }
         }
+        this.strike(w, s.chanEndX[i], s.chanEndY[i], w.bodies.x[i], w.bodies.y[i], splashKind(spec, look), t0, sd);
       } else if (spec.shape === 'arc') {
         X.glow(o, tip[0], tip[1], 6, look === 'fire' ? X.PLASMA[2] : spec.heal ? X.LIFE[2] : EL.lightning[2], 0.8);
       }
@@ -645,6 +723,7 @@ export class Vfx {
           if (spec.heal && look !== 'water') K.warmCone(o, dt, [dex, dey - 6], t, t0, X.WARM, sd2);
           else K.cone(o, dt, [dex, dey - 6], t, kind, t0, { spread: 0.2, power: 0.45, seed: sd2 });
           light(lerp(dt[0], dex, 0.5), lerp(dv.y, dey, 0.5), 34, kind === 'fire' ? '#ff7a2a' : '#7fb0ff', 0.3);
+          this.strike(w, s.dblEndX[i], s.dblEndY[i], w.bodies.x[d], w.bodies.y[d], splashKind(spec, look), t0, sd2, 0.6);
         }
         X.glow(o, dt[0], dt[1], 4, EL.sigil[2], 0.6);
       }
@@ -661,6 +740,7 @@ export class Vfx {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
           if (spec.heal && look !== 'water') K.warmCone(o, tip, [eex, eey - 6], t, te, X.WARM, sd3);
           else K.cone(o, tip, [eex, eey - 6], t, kind, te, { spread: 0.2, power: 0.45, seed: sd3 });
+          this.strike(w, r.echoEndX[i], r.echoEndY[i], w.bodies.x[i], w.bodies.y[i], splashKind(spec, look), te, sd3, 0.6);
         }
         X.glow(o, tip[0], tip[1], 3, EL.sigil[2], 0.5);
       }
@@ -685,6 +765,7 @@ export class Vfx {
         if (spec.heal && look !== 'water') K.warmCone(o, tip, [ex, ey - 6], t, t0, X.WARM, sd);
         else K.cone(o, tip, [ex, ey - 6], t, kind, t0, { spread: 0.24, power: 0.7, seed: sd });
         light(lerp(tip[0], ex, 0.55), lerp(tip[1], ey, 0.55), 44, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : '#2a8cff', 0.5);
+        this.strike(w, dv.x2[k], dv.y2[k], dv.x[k], dv.y[k], splashKind(spec, look), t0, sd, 0.7);
       }
     }
   }

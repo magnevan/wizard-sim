@@ -1080,3 +1080,9 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **The Academy's walls are the bought school kit;** far walls stand tall, near walls are cut low so the room stays visible. Asked for by the user ("Let's do the wall kit thing").
 - **Survive keeps its drawn walls** (Claude's call): tall kit walls hid the action in the open arena, cutting them low looked like fences, and its angled walls have no kit pieces.
 - **The fortification kit waits for the battery,** where a tall defensive wall is the point.
+
+## 2026-11-09: Sprays and arcs stop at walls
+- **Sprays end at rock and barriers** like beams do, wear them down at the beam's rate, and don't hit anything with a wall between it and the caster. The user: "sprays should not ignore walls", and "ideally sprays would react with walls in some natural way".
+- **A spray spreads along the wall it hits:** fire licks sideways and up the face, water bursts and runs down, frost grows, steam billows. Drawn only on the face the camera sees; a spray on the far side is hidden by the wall.
+- **Healing sprays don't wear walls down** (Claude's call).
+- **Lightning arcs follow the same rule** (Claude's call, not asked for): neither the first strike nor a jump passes a wall, and a crackle into the air stops at one. Otherwise a bolt hidden behind a wall would still hurt what's on the other side.

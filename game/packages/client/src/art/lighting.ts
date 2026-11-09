@@ -139,6 +139,8 @@ export function castRay(c: number, s: number, segs: readonly number[], max: numb
 /** Scratch for the rays of one light, so a frame's light cutting allocates next to nothing. */
 const ANGLES = new Float64Array(MAX_VERTS * 2);
 const OUT = [0, 0, 0];
+/** How far in front of a thing's foot (art px down the screen) the light test aims. */
+const FRONT = 4;
 function putVert(pos: Float32Array, uv: Float32Array, lx: number, ly: number, R: number, v: number, X0: number, Y0: number): void {
   pos[v * 2] = lx + X0; pos[v * 2 + 1] = ly + Y0 * FY;
   uv[v * 2] = (X0 / R + 1) / 2; uv[v * 2 + 1] = (Y0 / R + 1) / 2;
@@ -154,8 +156,12 @@ export function lightOnObject(lights: readonly ObjectLight[], n: number, x: numb
   for (let i = 0; i < n; i++) {
     const L = lights[i], fx = x - L.x, fy = (y - L.y) / FY, d = Math.hypot(fx, fy);
     if (d >= L.R) continue;
-    if (d > 8 && L.near.length && castRay(fx / d, fy / d, L.near, d - 6) < d - 6) continue;
-    const front = L.y - y, facing = front >= -2 ? 1 : Math.max(0.1, 1 + (front + 2) / 16), f = 1 - d / L.R, amt = L.a * f * facing;
+    if (L.near.length) {
+      // aimed at a point just in front of the thing's foot, so the wall it stands against stops a light from behind
+      const tx = fx, ty = (y + FRONT - L.y) / FY, dt = Math.hypot(tx, ty);
+      if (dt > 1 && castRay(tx / dt, ty / dt, L.near, dt - 1) < dt - 1) continue;
+    }
+    const front = L.y - y, facing = front >= 0 ? 1 : Math.max(0.1, 1 + front / 6), f = 1 - d / L.R, amt = L.a * f * facing;
     out[0] += L.cr * amt; out[1] += L.cg * amt; out[2] += L.cb * amt;
   }
 }

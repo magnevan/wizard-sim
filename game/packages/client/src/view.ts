@@ -157,6 +157,18 @@ export class WorldView {
   /** The lit layers grouped, so the colour grade can cover them and not the effects over them. */
   private litLayer = new Container();
   setRenderer(r: Renderer): void { this.renderer = r; }
+  /** What stands in the scene, for effects to go behind (art/vfx.ts). Positions are field px; fx0, fy0 convert from the scene's. */
+  private occluderSource(w: World, fx0: number, fy0: number) {
+    return (emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean) => void) => {
+      for (let i = 0; i < MAX_BODIES; i++) {
+        const spr = this.sprites[i], v = this.views[i];
+        if (!v.on || !spr.visible || (i < MAX_SEATS && w.seats.active[i] && w.seats.phase[i] === PHASE.channel)) continue;
+        emit(spr.texture, spr.position.x - fx0, spr.position.y - fy0, v.y, false);
+      }
+      this.props.sprites((s, _x, y) => emit(s.texture, s.position.x - fx0, s.position.y - fy0, y - fy0, true));
+      this.structs.eachPiece((s, _x, y) => emit(s.texture, s.position.x - fx0, s.position.y - fy0, y - fy0, true));
+    };
+  }
 
   constructor(lighting = LIGHTING) {
     if (lighting) this.lit = new SceneLighting(this.actors);
@@ -343,6 +355,7 @@ export class WorldView {
         lit.wall(x1, y1, x2, y2);
       }
     }
+    this.vfx.occluders = this.occluderSource(w, fx0, fy0);
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
     this.lights.end();
     this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;

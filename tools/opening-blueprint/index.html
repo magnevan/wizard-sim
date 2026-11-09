@@ -101,10 +101,20 @@ ul.tight { margin:0; padding-left:18px; display:grid; gap:4px; }
 
 <section id="assets">
 <h2>The assets it needs</h2>
-<p>Everything each map calls for, sorted by where it comes from. We already own most of the small things. <strong>Nothing is bought until you mark its job Approve.</strong> A job left unmarked waits, unlike the other questions on this page.</p>
+<p>Everything each map calls for, sorted by where it comes from. You asked me to go ahead with the general art, so most of it is bought. <strong>The one thing left, the defence itself, waits for you to mark it Approve,</strong> because it's specific to this segment.</p>
 <div class="sheet">
-<div class="head"><h3>New purchases, if all approved</h3><span class="total" id="total"></span></div>
-<p class="cap">PixelLab balance checked today: 1,930 generations left, resetting 7 December. Prices are from the tool's published rates. Every result is kept, and variants are made locally where possible.</p>
+<h3>Bought so far: 113 generations</h3>
+<p class="cap">Mark anything you'd redo below. Everything is kept, and 1,817 generations remain until 7 December.</p>
+<figure style="margin:0;display:grid;gap:6px"><img src="img/ground-in-game.png" alt="Twelve ground materials meeting grass, painted in the real game with wizards and practice dummies" style="width:100%;height:auto;image-rendering:pixelated"><figcaption class="cap">The new ground painter in the real game, on today's camera, using a throwaway layout to show every material. Is the stone too large against a wizard? Are any colours off?</figcaption></figure>
+<label class="cap" for="note-ratings-ground-look">Notes on the ground</label><textarea id="note-ratings-ground-look" data-c="ratings" data-i="ground-look"></textarea>
+<figure style="margin:0;display:grid;gap:6px"><img src="img/kit-academy.png" alt="Pale stone school walls with oak trim, assembled into a small room" style="width:100%;height:auto;image-rendering:pixelated"><img src="img/kit-fortification.png" alt="Grey fieldstone walls with timber bracing, assembled into a small room" style="width:100%;height:auto;image-rendering:pixelated"><figcaption class="cap">Both wall kits, stamped into test rooms. They include doorways, pillars, stairs and corners. The floors show a diamond grid, so I'd use the painter for floors. These need the isometric camera.</figcaption></figure>
+<label class="cap" for="note-ratings-kits-look">Notes on the walls</label><textarea id="note-ratings-kits-look" data-c="ratings" data-i="kits-look"></textarea>
+<figure style="margin:0;display:grid;gap:6px"><img src="img/sheets.png" alt="Sixteen academy furnishings and sixteen field works props" style="width:100%;height:auto;image-rendering:pixelated"><img src="img/buildings.png" alt="A storehouse, a stone gatehouse and a guard tower" style="width:100%;height:auto;image-rendering:pixelated"><img src="img/clutter.png" alt="Sixty-four small indoor objects: books, tools, bottles, a cat" style="width:100%;height:auto;image-rendering:pixelated"><figcaption class="cap">Furnishings, field works, three buildings and 64 pieces of indoor clutter, an addition you hadn't seen listed. The gatehouse came out straight-on, unlike the others.</figcaption></figure>
+<label class="cap" for="note-ratings-props-look">Notes on the props</label><textarea id="note-ratings-props-look" data-c="ratings" data-i="props-look"></textarea>
+</div>
+<div class="sheet">
+<div class="head"><h3>The original list</h3><span class="total" id="total"></span></div>
+<p class="cap">Each kit cost 10 generations rather than the 15 quoted. Every result is kept, and variants are made locally where possible.</p>
 <div id="jobs" style="display:grid;gap:16px"></div>
 </div>
 <div class="sheet"><h3>Already owned, or free</h3><div class="scroll"><table id="owned"></table></div></div>
@@ -176,26 +186,26 @@ const JOBS=[
 {id:'job-defence',name:'The defence, the segment\'s main object',tool:'create_1_direction_object, 128 px, 4 candidates to pick from; then create_object_state for the broken version',cost:20,
  why:'The thing you spend three minutes inside, and watch die. Large enough to read as a building next to a wizard.',
  lines:['A fixed fire defence on a squat stone tower: a heavy brass nozzle on a swivel mount, fed by brass pipes, with a glowing orange crystal in a cage at its base, medieval fantasy engineering, '+STYLE,'Broken state: the same defence burnt out, the crystal cracked and dark, the nozzle drooping, soot on the stone']},
-{id:'job-academy',name:'Academy sheet',tool:'create_1_direction_object, 48 px, our palette',cost:10,
+{id:'job-academy',bought:true,name:'Academy sheet',tool:'create_1_direction_object, 48 px, our palette',cost:10,
  why:'What makes it an engineering school and not a generic wizard hall.',
  lines:['furnishing for a medieval fantasy guild school of magical engineers, '+STYLE],
  items:['large wooden presentation board on legs, pinned with parchment reports and red string','painted map of a continent in a wooden frame','long tiered wooden lecture bench running diagonally from upper left to lower right','wooden notice board crowded with paper postings','drafting table with a half-drawn plan of a tower','open wooden trunk half packed with rolled plans','rack of rolled parchment charts','brass surveying instrument on a wooden tripod','workbench with brass tools and a plumb line','small brass test rig holding a glowing crystal','stone cloister arch running diagonally from upper left to lower right','stack of heavy ledgers on a stool','chalkboard on a stand covered in diagrams','brass instrument panel with dials on a wooden post','wooden crate of brass fittings','iron lantern hanging from a post']},
-{id:'job-works',name:'Field works sheet',tool:'create_1_direction_object, 48 px, our palette',cost:10,
+{id:'job-works',bought:true,name:'Field works sheet',tool:'create_1_direction_object, 48 px, our palette',cost:10,
  why:'The battery and the yard\'s special pieces. The stakes and palisade are cover in the killing ground.',
  lines:['field fortification and works prop for a medieval fantasy magical defence line, '+STYLE],
  items:['wooden rack holding short sword hilts set with glowing etched crystals','small wooden archer\'s platform','heavy canvas training sack hanging from a wooden frame','waist-high stone pedestal with brass levers and a glowing rune plate','brass pipe section on stone supports, running diagonally from upper left to lower right','brass pipe junction box','row of sharpened wooden stakes running diagonally from upper left to lower right','timber palisade section running diagonally from upper left to lower right','sandbag barricade','iron post with a glass ward lamp','stack of supply crates under canvas','two-wheeled supply cart','hand pump over a stone cistern','surveyor\'s stakes with red flags','cracked stone well cap, dry','signal mast with a pennant']},
-{id:'job-buildings',name:'Three buildings',tool:'create_map_object, high top-down',cost:3,
+{id:'job-buildings',bought:true,name:'Three buildings',tool:'create_map_object, high top-down',cost:3,
  why:'Too large for a sheet\'s 48 pixels, and cheap at one generation each. We recolour them to our palette locally, as we did with the oak.',
  lines:['Small timber storehouse with a shingled roof, '+STYLE+' (128 × 128 px)','Heavy timber double gate in a stone gatehouse arch, '+STYLE+' (192 × 192 px)','Small stone guard tower with a timber roof, '+STYLE+' (128 × 192 px)']},
-{id:'job-kit-academy',name:'Academy building kit',tool:'create_building_kit, isometric, 48 px, walls 2 tiles high, grid layout',cost:15,
+{id:'job-kit-academy',bought:true,name:'Academy building kit',tool:'create_building_kit, isometric, 48 px, walls 2 tiles high, grid layout',cost:10,
  why:'Walls, floors, doorways, pillars and stairs that join up. We haven\'t tried this tool, so I\'d buy this one and look at it before the second kit.',
  lines:['Walls: pale dressed stone block walls with oak trim, a medieval guild school','Floor: worn grey flagstone floor']},
-{id:'job-kit-wall',name:'Fortification building kit',tool:'create_building_kit, isometric, 48 px, walls 2 tiles high, grid layout',cost:15,
+{id:'job-kit-wall',bought:true,name:'Fortification building kit',tool:'create_building_kit, isometric, 48 px, walls 2 tiles high, grid layout',cost:10,
  why:'The long defensive wall and the yard\'s boundary. Bought only if the first kit looks right.',
  lines:['Walls: rough grey fieldstone fortification wall with timber bracing','Floor: packed earth and gravel']},
 ];
 const QS=[
-{id:'q-1-camera',title:'Which camera does the build use?',body:'You chose true isometric, but it isn\'t built, and neither is a way to paint the outdoor ground. The list above is all drawn for isometric. Gameplay is the same either way, and sizes are in world units.',rec:'today',choices:[['today','Block out on today\'s camera, switch to isometric before art goes in (my pick)'],['iso','Build the isometric camera first']]},
+{id:'q-1-camera',title:'Which camera does the build use?',body:'You chose true isometric, but it isn\'t built. The ground painter now is, and works under either camera. The walls and props above are drawn for isometric. Gameplay is the same either way, and sizes are in world units.',rec:'today',choices:[['today','Block out on today\'s camera, switch to isometric before art goes in (my pick)'],['iso','Build the isometric camera first']]},
 {id:'q-2-reach',title:'Can a defence reach further than you can?',body:'Plain Fire sprays only 4.5 units, which is short for a tower. Doubling it for the defence means enemies are hit well before the wall, and losing it hurts more.',rec:'double',choices:[['double','Yes, twice a person\'s reach (my pick)'],['same','No, the same as a person']]},
 {id:'q-3-order',title:'What gets built first?',body:'The battery holds the moment we most need to test.',rec:'battery',choices:[['battery','The battery first, as a plain playable room (my pick)'],['story','In story order, from the hall']]},
 ];
@@ -295,13 +305,13 @@ function noteBox(c,i,label){const d=el('div');const id=`note-${c}-${i}`;const l=
 function marks(c,i,opts){const box=el('div','marks');for(const [v,l] of opts){const b=el('button','',l);b.type='button';b.dataset.key=c+'/'+i;b.dataset.field='mark';b.dataset.value=v;b.setAttribute('aria-pressed','false');b.onclick=()=>write(c,i,{mark:state[c+'/'+i]?.mark===v?null:v});box.append(b);}return box;}
 
 function buildAssets(){
- $('total').textContent=JOBS.reduce((a,j)=>a+j.cost,0)+' generations';
+ $('total').textContent=JOBS.filter(j=>!j.bought).reduce((a,j)=>a+j.cost,0)+' generations waiting';
  for(const j of JOBS){
-  const d=el('div','job'),h=el('div','head');h.append(el('h3','',j.name),el('span','dim',j.cost+' generations'));
+  const d=el('div','job'),h=el('div','head');h.append(el('h3','',j.name),el('span','dim',(j.bought?'Bought · ':'')+j.cost+' generations'));
   d.append(h,el('p','',j.why),el('p','cap',j.tool));
   for(const q of j.lines)d.append(el('div','quote',q));
   if(j.items){const o=el('ol');j.items.forEach(x=>o.append(el('li','',x)));d.append(o);}
-  d.append(marks('ratings',j.id,[['approve','Approve'],['change','Change it'],['cut','Cut']]),noteBox('ratings',j.id,'What to change'));
+  d.append(marks('ratings',j.id,j.bought?[['keep','Keep'],['redo','Redo'],['cut','Cut']]:[['approve','Approve'],['change','Change it'],['cut','Cut']]),noteBox('ratings',j.id,'What to change'));
   $('jobs').append(d);
  }
  const t=$('owned');t.innerHTML='<thead><tr><th>Map</th><th>In the registry</th><th>Made locally or by code</th></tr></thead>';const b=el('tbody');

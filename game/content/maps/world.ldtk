@@ -11,7 +11,7 @@
 	"iid": "c337107f-514c-4883-8916-62ef21941c22",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 108,
+	"nextUid": 109,
 	"identifierStyle": "Capitalize",
 	"toc": [],
 	"worldLayout": "Free",
@@ -108,6 +108,126 @@
 						"value": 1,
 						"identifier": "rock",
 						"color": "#74786C",
+						"tile": null,
+						"groupUid": 0
+					}
+				],
+				"intGridValuesGroups": [],
+				"autoRuleGroups": [],
+				"autoSourceLayerDefUid": null,
+				"tilesetDefUid": null,
+				"tilePivotX": 0,
+				"tilePivotY": 0,
+				"biomeFieldUid": null
+			},
+			{
+				"__type": "IntGrid",
+				"identifier": "Ground",
+				"type": "IntGrid",
+				"uid": 108,
+				"doc": "What the floor looks like, one cell = 0.5 world units. Client only: it never touches the sim or the room hash. See game/content/README.md.",
+				"uiColor": null,
+				"gridSize": 10,
+				"guideGridWid": 0,
+				"guideGridHei": 0,
+				"displayOpacity": 1,
+				"inactiveOpacity": 0.6,
+				"hideInList": false,
+				"hideFieldsWhenInactive": true,
+				"canSelectWhenInactive": true,
+				"renderInWorldView": true,
+				"pxOffsetX": 0,
+				"pxOffsetY": 0,
+				"parallaxFactorX": 0,
+				"parallaxFactorY": 0,
+				"parallaxScaling": true,
+				"requiredTags": [],
+				"excludedTags": [],
+				"autoTilesKilledByOtherLayerUid": null,
+				"uiFilterTags": [],
+				"useAsyncRender": false,
+				"intGridValues": [
+					{
+						"value": 1,
+						"identifier": "grass",
+						"color": "#4B724A",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 2,
+						"identifier": "dirt",
+						"color": "#7A6248",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 3,
+						"identifier": "sand",
+						"color": "#D8C0A0",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 4,
+						"identifier": "flagstone",
+						"color": "#6E6878",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 5,
+						"identifier": "cobble",
+						"color": "#8A8E98",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 6,
+						"identifier": "mud",
+						"color": "#553E2A",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 7,
+						"identifier": "leaves",
+						"color": "#3E4A44",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 8,
+						"identifier": "gravel",
+						"color": "#7A6A5A",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 9,
+						"identifier": "ash",
+						"color": "#2A342E",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 10,
+						"identifier": "planks",
+						"color": "#8A6A48",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 11,
+						"identifier": "slabs",
+						"color": "#C8CCD8",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 12,
+						"identifier": "water",
+						"color": "#1E5A96",
 						"tile": null,
 						"groupUid": 0
 					}

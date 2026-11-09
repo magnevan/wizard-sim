@@ -33,9 +33,9 @@ You walk north throughout, because the view reaches further up the screen than d
 
 ## Assets
 
-The page lists 73 generations of new art (1,930 are left this cycle), and everything else is owned or free. **Paid jobs wait for an explicit Approve on the page,** whatever else defaults. Building kits are untried, so buy one and look before the second.
+On 2026-11-09 the user authorized buying the general art, so everything but the defence is bought (113 generations, with extra ground sets and a clutter sheet; 1,817 are left). Results are on the page. **The defence (20 generations) still waits for an Approve.**
 
-Art can't go in the game until the isometric camera and a ground painter exist (question 1 on the page). That's the largest hidden cost in this segment.
+The ground painter is built. Walls and props can't go in properly until the isometric camera exists (question 1 on the page), which is now the largest hidden cost in this segment.
 
 ## Open questions, on the page
 

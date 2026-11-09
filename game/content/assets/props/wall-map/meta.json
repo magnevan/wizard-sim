@@ -1,0 +1,23 @@
+{
+  "id": "wall-map",
+  "kind": "prop",
+  "name": "Framed map",
+  "footprint": [
+    2.0,
+    0.3
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        22,
+        39
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/academy/01.png",
+      "tool": "create_1_direction_object",
+      "edits": "trimmed only",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

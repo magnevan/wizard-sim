@@ -44,3 +44,10 @@ export function emit<T>(t: number, rate: number, life: number, fn: (i: number, a
   }
   return out;
 }
+
+/** Smooth value noise, 0..1. */
+export function vnoise(x: number, y: number, s: number): number {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  return lerp(lerp(rand(xi, yi, s), rand(xi + 1, yi, s), u), lerp(rand(xi, yi + 1, s), rand(xi + 1, yi + 1, s), u), v);
+}

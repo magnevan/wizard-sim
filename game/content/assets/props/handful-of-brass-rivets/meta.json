@@ -1,0 +1,23 @@
+{
+  "id": "handful-of-brass-rivets",
+  "kind": "prop",
+  "name": "Handful of brass rivets",
+  "footprint": [
+    0.4,
+    0.3
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        5,
+        6
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/clutter/19.png",
+      "tool": "create_1_direction_object",
+      "edits": "trimmed, halved",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

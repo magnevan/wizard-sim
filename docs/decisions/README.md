@@ -1054,3 +1054,10 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **Melee alone isn't enough to stay in for long.** The tutorial segment lasts until the base set of runes is unlocked.
 - **The approved story now lives in `campaign/canon.md`,** with a staged process for segments in `campaign/README.md`.
 - **Not decided:** the opening's exact outline, which the user wants to try in a few versions (`campaign/01-opening/brief.md`).
+
+## 2026-11-09: The ground painter, and the first general art for the opening (`campaign/01-opening/space.md`)
+- **The user asked for work that holds at any map scale, and authorized buying art that's very likely to be used** ("various ground, wall textures. General assets that will fit this vibe"), while unable to review in detail.
+- **Built: a ground painter.** A client-only Ground layer in LDtk, painted per pixel through the camera, as the Outdoor Art Kit's mock proposed. It keeps the golden hash and every room hash. No room uses it yet.
+- **Bought (113 generations, 1,930 → 1,817):** four pro ground sets, two wall kits, the academy and field works sheets, three buildings, and a clutter sheet of 64, which Claude added. All listed on the Opening Blueprint.
+- **Held back: the defence itself,** as specific to this segment and unreviewed.
+- **Found:** the kits' floors show a diamond grid, so the painter should do floors; 32 px stone reads large against a wizard; the gatehouse came out straight-on.

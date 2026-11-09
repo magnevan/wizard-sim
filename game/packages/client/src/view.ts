@@ -24,6 +24,7 @@ import { ActorFrames, FEET_X, FEET_Y } from './art/actors';
 import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
 import { FLOOR, floorTexture, surviveRuin } from './art/floor';
+import { groundTexture, hasGround } from './art/ground-room';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
@@ -63,6 +64,8 @@ export class WorldView {
   private floor = new Sprite(floorTexture(ARENA.w, ARENA.h));
   /** The play area the floor and effect canvases are painted for. */
   private arenaKey = `${ARENA.w}x${ARENA.h}x0`;
+  /** False while a room's painted ground is still on its way (tests and screenshots wait on it). */
+  groundReady = true;
   private vfx = new Vfx();
   private sGround = new Graphics(); // structures' floor layer (view-structures.ts)
   private sOverlay = new Graphics();
@@ -333,7 +336,8 @@ export class WorldView {
 
   /** Repaints the floor and resizes the effect canvases when the world's play area changes (a survive world is bigger). */
   private fitArena(w: World): void {
-    const d = w.dims, key = `${d.w}x${d.h}x${w.run ? 1 : 0}`;
+    const painted = hasGround(w.def.id);
+    const d = w.dims, key = `${d.w}x${d.h}x${w.run ? 1 : 0}${painted ? w.def.id : ''}`;
     if (key === this.arenaKey) return;
     this.arenaKey = key;
     if (fitField(d.w, d.h)) { this.vfx.resize(); this.structs.scorch.resize(); }
@@ -341,6 +345,17 @@ export class WorldView {
     this.floor.texture = floorTexture(d.w, d.h, w.run ? surviveRuin : undefined);
     old?.destroy(true);
     this.camera.reset();
+    this.groundReady = !painted;
+    if (painted) {
+      // the code-drawn floor stands in for the moment the images take to arrive
+      void groundTexture(w.def.id, d.w, d.h).then((t) => {
+        if (key !== this.arenaKey) { t.destroy(true); return; }
+        const was = this.floor.texture;
+        this.floor.texture = t;
+        was?.destroy(true);
+        this.groundReady = true;
+      }).catch((e) => { console.warn('ground:', e); this.groundReady = true; });
+    }
   }
 
   /** Where body i is drawn this frame (interpolated), world units. */

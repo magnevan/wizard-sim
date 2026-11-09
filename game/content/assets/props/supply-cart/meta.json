@@ -1,0 +1,23 @@
+{
+  "id": "supply-cart",
+  "kind": "prop",
+  "name": "Supply cart",
+  "footprint": [
+    1.7,
+    1.0
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        22,
+        35
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/works/11.png",
+      "tool": "create_1_direction_object",
+      "edits": "trimmed only",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

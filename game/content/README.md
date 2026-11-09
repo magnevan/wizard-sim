@@ -116,3 +116,9 @@ The sim hashes each compiled room (FNV-1a over its data: `ROOM_HASH`, `roomHash`
 ## Not yet
 
 No preview tileset: LDtk shows the Terrain as flat colours and the entities as shapes, not our art. The academy rooms, doors between maps, a map viewer page, autotiling art and the AI art trial are later stages (`docs/explorations/2026-11-06-map-pipeline-stage-1.md`).
+
+## Painting the ground
+
+The **Ground** layer (IntGrid, one cell = 0.5 u) says what the floor looks like: grass, dirt, sand, flagstone, cobble, mud, leaves, gravel, ash, planks, slabs or water. It's the client's alone, so it never reaches `rooms.gen.ts` or the room hash, and painting a room can't desync anyone. A level with no Ground cells keeps the code-drawn floor. `npm run content:build` writes the cells to `packages/client/src/art/grounds.gen.ts`.
+
+Edit it in LDtk, or as text with `npm run content -- ground <level>` and `--write <file|->`. Textures are `content/assets/ground/<name>.png`, cut from the tilesets by `tools/art-import/ground.py`. The painter (`client/src/art/ground.ts`) works through any camera.

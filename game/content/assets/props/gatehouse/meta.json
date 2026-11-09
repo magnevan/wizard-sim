@@ -1,0 +1,23 @@
+{
+  "id": "gatehouse",
+  "kind": "prop",
+  "name": "Gatehouse",
+  "footprint": [
+    7.0,
+    1.0
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        86,
+        129
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/buildings/gatehouse.png",
+      "tool": "create_map_object",
+      "edits": "trimmed only",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

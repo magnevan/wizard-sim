@@ -11,7 +11,7 @@ Every image bought from an AI tool is kept here, raw and unedited, so nothing is
 6. Generate once, derive the rest: buy a chair once, and make the broken or burnt chair locally.
 7. Note the balance before and after each paid call.
 
-Balance: 2,000 → 1,930 on Tier 1 (2026-11-07, resets 2026-12-07). Pass inline style images as few and small as you can: two of three were corrupted in transit there.
+Balance: 2,000 → 1,930 on Tier 1 (2026-11-07, resets 2026-12-07) → 1,817 (2026-11-09). Pass inline style images as few and small as you can: two of three were corrupted in transit there.
 
 Status: trial material, and the terms were read on 2026-11-06 (a summary, not legal advice; re-check before release):
 - **PixelLab** (pixellab.ai/termsofservice): you own what you make and may "use, modify, and distribute the outputs", commercially too, with no attribution and no stated difference for trial plans. You may not train models on outputs. It also binds you to the Open RAIL-M licence's use limits, which haven't been read yet.
@@ -30,3 +30,8 @@ Status: trial material, and the terms were read on 2026-11-06 (a summary, not le
 | `pixellab/outdoor/scatter/00..63.png` | `create_1_direction_object`, 32 px, our palette, no reference (`6e24ab84`) | 10 generations for 64 | The named list in `tools/outdoor-kit/briefs.json`, in its order |
 | `pixellab/outdoor/yard/00..15.png`, `rural/00..15.png` | `create_1_direction_object`, 48 px, our palette, 3 props as references (`a9413650`, `096f705e`) | 10 generations per 16 | The named lists in `briefs.json`, in their order |
 | `pixellab/outdoor/trees/oak.png`, `pine.png` | `create_map_object`, high top-down (`bdbf23c0`, `3bd790db`) | 1 generation each | Broad oak; tall pine |
+| `pixellab/opening/ground-sand-flagstone/`, `ground-mud-leaves/`, `ground-gravel-ash/`, `ground-planks-slabs/` | `create_topdown_tileset`, pro, 32 px, high top-down, our palette (`8582d06d`, `305e1d47`, `7b4c332f`, `22eae270`) | 15 generations each | Each folder's two terrains: pale sand, flagstone; trampled mud, forest floor; gravel, ash; oak planks, pale slabs |
+| `pixellab/opening/kit-academy/`, `kit-fortification/` | `create_building_kit`, isometric, 48 px, walls 2 tiles, grid, our palette (`f2a645c8`, `ee6ee5d8`) | 10 generations each | Pale dressed stone with oak trim, flagstone floor; rough fieldstone with timber bracing, packed earth floor |
+| `pixellab/opening/academy/00..15.png`, `works/00..15.png` | `create_1_direction_object`, 48 px, our palette, no reference (`f723347e`, `f4c8376b`) | 10 generations per 16 | Named in `tools/art-import/props.py`, in its order |
+| `pixellab/opening/clutter/00..63.png` | `create_1_direction_object`, 32 px, our palette, no reference (`b412a710`) | 10 generations for 64 | Named in `tools/art-import/props.py`, in its order. Slot 43, chalk dust, is nearly empty |
+| `pixellab/opening/buildings/` | `create_map_object`, high top-down (`d7f380e3`, `38a0d2e4`, `4f32ec99`) | 1 generation each | Storehouse, gatehouse (came out straight-on), guard tower |

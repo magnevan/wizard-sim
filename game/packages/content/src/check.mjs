@@ -10,8 +10,8 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
-import { compileProject, emitModule, ROCK } from './compile.mjs';
-import { CELL, GAME, GEN_OUT, LDTK_VERSION, SCHEMA, loadProject, loadProps } from './ldtk.mjs';
+import { compileProject, emitGrounds, emitModule, ROCK } from './compile.mjs';
+import { CELL, GAME, GEN_OUT, GROUND_OUT, LDTK_VERSION, SCHEMA, loadProject, loadProps } from './ldtk.mjs';
 
 const require = createRequire(import.meta.url);
 
@@ -213,5 +213,9 @@ export function runCheck({ project = undefined, genOut = GEN_OUT } = {}) {
   const source = emitModule(rooms);
   const current = existsSync(genOut) ? readFileSync(genOut, 'utf8').replace(/\r\n/g, '\n') : '';
   if (current !== source) errors.push(`${genOut} is stale: run \`npm run content:build\``);
+  try {
+    const grounds = existsSync(GROUND_OUT) ? readFileSync(GROUND_OUT, 'utf8').replace(/\r\n/g, '\n') : '';
+    if (grounds !== emitGrounds(loaded)) errors.push(`${GROUND_OUT} is stale: run \`npm run content:build\``);
+  } catch (e) { errors.push(e.message); }
   return { errors, rooms, source };
 }

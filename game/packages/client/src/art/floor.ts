@@ -11,7 +11,7 @@
 import { Texture } from 'pixi.js';
 import { FY, PPU } from '../camera';
 import * as X from './px';
-import { clamp, lerp, rand } from './util';
+import { clamp, lerp, rand, vnoise } from './util';
 
 /**
  * Margin round the arena, world units: for an arena that fits the view, enough to fill a 1080p view
@@ -35,11 +35,6 @@ export const surviveRuin: Ruin = (x, y) => {
   return clamp((near - 0.6) / 7, 0, 0.5);
 };
 
-function vnoise(x: number, y: number, s: number): number {
-  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
-  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
-  return lerp(lerp(rand(xi, yi, s), rand(xi + 1, yi, s), u), lerp(rand(xi, yi + 1, s), rand(xi + 1, yi + 1, s), u), v);
-}
 const fbm = (x: number, y: number, s: number) => vnoise(x, y, s) * 0.55 + vnoise(x * 2.1, y * 2.1, s + 1) * 0.3 + vnoise(x * 4.3, y * 4.3, s + 2) * 0.15;
 
 const G = ['#24402f', '#2c4b36', '#35573c', '#3f6443', '#4b724a', '#5a8352'].map(X.hex);

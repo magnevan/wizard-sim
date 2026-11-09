@@ -115,6 +115,8 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
         spec.shape = freeze ? 'shards' : 'spray'; // Ice shards: the freezing spray was too strong
         spec.channel = !freeze;
       } else spec.shape = cast === 'area' ? 'nova' : cast === 'place' ? 'patch' : 'imbue';
+      // Water's own spray and splash push, as the rules say (SHAPES.push a Water rune); steam and ice don't
+      if (d.form === 'water' && !scald && !freeze && (cast === 'force' || cast === 'area')) spec.mod = 'push';
       return spec;
     case 'sigil':
       if (cast === 'force') spec.shape = d.sub ? 'turret' : 'blink';

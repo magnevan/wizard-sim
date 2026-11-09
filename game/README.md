@@ -40,6 +40,7 @@ npm run content -- grid survive [--entities]   # a room's Terrain layer as text 
 npm run content -- grid survive --write f.txt  # write edited rows back into the level file ('-' for stdin)
 npm run audit          # inert additions in play: every queue of up to 3 runes cast every way, an added element
                        # that changes nothing is listed -> tools/audit-report.json (the Atlas audits check the rules text)
+npm run scaling        # rune scaling: every form x cast at 1-5 runes, and every second rune -> tools/scaling-report.json
 npm run balance        # the balance harness: measures every common spell and bot wave runs -> tools/balance-report.json
 npm run balance:weapons # every weapon's Strike, Heavy and Sweep spammed vs the same element's spell, 10 s and 30 s -> tools/weapon-dps-report.json
 npm run perf           # build, then step() timed in node (Arena, Survive wave 12, the golden replay; prints the hashes) and four

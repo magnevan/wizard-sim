@@ -32,6 +32,7 @@
     "balance": "vitest run --config vitest.balance.config.ts tools/balance.balance.ts",
     "balance:weapons": "vitest run --config vitest.balance.config.ts tools/weapon-dps.balance.ts",
     "audit": "vitest run --config vitest.balance.config.ts tools/audit.balance.ts",
+    "scaling": "vitest run --config vitest.balance.config.ts tools/scaling.balance.ts",
     "artifact": "npm run build && node scripts/make-artifact.mjs",
     "perf": "npm run build && node scripts/perf.mjs"
   },

@@ -19,7 +19,7 @@ Append-only. Each entry records the date, the decision, why it was made, and the
 - **Rooms, Survive, death:** [Preparation pillar; death is harsher](#2026-11-03-preparation-pillar-death-is-harsher) · [Survive mode in the game](#2026-11-05-survive-mode-in-the-game-explorations2026-11-05-survive-modemd) · [Survive's arena is big](#2026-11-05-survives-arena-is-big-and-the-camera-follows) · [Survive grows to 48 x 34](#2026-11-05-survive-grows-to-48-x-34-guards-read-from-behind-a-stalled-page-no-longer-drops-the-others) · [Survive gets Rally and Echo](#2026-11-05-survive-gets-rally-and-echo) · [Survive Review answers, round 1](#2026-11-05-survive-review-answers-round-1) · [Survive power-ups, pass 2](#2026-11-06-survive-power-ups-pass-2-the-maybes-explorations2026-11-06-survive-powerups-2md)
 - **Maps and content:** [The mock academy room](#2026-11-06-the-mock-academy-room-explorations2026-11-06-art-trial-round-2md) · [Content direction: LDtk as the user's editor](#2026-11-06-content-direction-our-pipeline-with-ldtk-as-the-users-editor) · [Art direction: true isometric, PixelLab props, the detailed wizard](#2026-11-06-art-direction-true-isometric-pixellab-props-the-detailed-wizard) · [Map pipeline, stage 1: the rooms are LDtk maps](#2026-11-06-map-pipeline-stage-1-the-rooms-are-ldtk-maps-explorations2026-11-06-map-pipeline-stage-1md)
 - **Sound:** [Sound, stage 1](#2026-11-06-sound-stage-1-explorations2026-11-06-soundmd)
-- **Balance and tuning:** [Balance tooling and the first measurements](#2026-11-04-balance-tooling-and-the-first-measurements) · [The host tunes online matches](#2026-11-05-the-host-tunes-online-matches) · [Weapons are the cheap option; extras you can see](#2026-11-05-weapons-are-the-cheap-option-a-strike-rhythm-per-weapon-and-extras-you-can-see)
+- **Balance and tuning:** [Balance tooling and the first measurements](#2026-11-04-balance-tooling-and-the-first-measurements) · [The host tunes online matches](#2026-11-05-the-host-tunes-online-matches) · [Weapons are the cheap option; extras you can see](#2026-11-05-weapons-are-the-cheap-option-a-strike-rhythm-per-weapon-and-extras-you-can-see) · [Rune scaling audit](#2026-11-07-rune-scaling-audit-four-fixes-and-a-1-rune-line-in-f2-explorations2026-11-07-rune-scalingmd)
 - **Menus and navigation:** [The Esc menu and the scenario registry](#2026-11-06-the-esc-menu-and-the-scenario-registry) · [The tutorial prototype](#2026-11-06-the-tutorial-prototype-explorations2026-11-06-tutorialmd) · [The tutorial, pass 2](#2026-11-06-the-tutorial-pass-2-explorations2026-11-06-tutorial-pass-2md) · [Final-pass review](#2026-11-06-final-pass-review-rules-text-room-switches-and-shared-keys) · [Final-pass loose ends and code quality](#2026-11-06-final-pass-loose-ends-and-code-quality)
 - **UI and onboarding:** [The help panel (F2)](#2026-11-06-the-help-panel-f2-explorations2026-11-06-help-panelmd) · [The tutorial, pass 2](#2026-11-06-the-tutorial-pass-2-explorations2026-11-06-tutorial-pass-2md) · [Final-pass review: rules text, room switches and shared keys](#2026-11-06-final-pass-review-rules-text-room-switches-and-shared-keys)
 
@@ -1023,3 +1023,19 @@ The user's answers on the World and Progression page.
 - **Linear travel, region to region. No reputation system.**
 - **Wells are magical infrastructure, and the player isn't a wizard engineer.** Legendary builders can exist as colour, like a legendary swordsmith.
 - **Why the veins are shifting stays unanswered for now,** and people in the world speculate: natural, a big wizarding group doing something nefarious, or a big bad doing something evil.
+## 2026-11-07: Rune scaling audit: four fixes, and a +1 rune line in F2 (`explorations/2026-11-07-rune-scaling.md`)
+
+The user asked for an audit of how spells scale with extra runes, and for it to be in the help panel. Measured with `npm run scaling` (`game/tools/scaling.balance.ts` → `scaling-report.json`).
+- **Built on the recommendation** (revise freely):
+  - Ice shards each fly at `SHAPES.shardPower` (0.75) of the payload. The loop variable used to shadow the scale, so shard *i* hit at 0.3 × *i*.
+  - Arcane is on the +70 % rule in every form, so extra Arcane now strengthens a nova and a blast. A beam's form element counts once (a `flatForm` hit option), which keeps "beams last longer instead of hitting harder" for Arcane.
+  - The same rule now holds for the Life beam, which had grown with n² (more healing per second *and* longer).
+  - Water's own spray and splash push (6 u/s a Water rune), as the rules text says; Rain, steam and ice don't.
+- **Kept, now visible:**
+  - Fire's √n curve: Fire is the mix-in, because its Burn and floor don't grow.
+  - The spring's n × (4 + 2n) healing.
+  - Earth's n^1.5.
+  - Auras that don't grow.
+- **The F2 panel** shows, with numbers on, what one more rune of the lead element changes. Its numbers now come from `spellNumbers()`, which mirrors the sim. That fixed the arc (25/s a Lightning, not 10), the beam and spray reach, the beam's free time, the geyser's 1.3× and the spring's healing rate.
+- Golden hash `20427aa5` → `2f804c92`: the four mechanics changes above.
+- Open: q-1 Fire stacking, q-2 the spring curve, q-3 Ice shards' tuning (all with recommendations in the exploration).

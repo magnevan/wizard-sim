@@ -24,7 +24,8 @@
  *   ?pauseAt=N    pause the sim at tick N (like P in the tuning panel; cosmetic animation keeps running)
  *   ?tune=1       open the tuning panel at boot (F1 or the Tune button toggles it; tune-panel.ts)
  *   ?help=1       open the help panel at boot (F2, the ? button or D-pad up toggles it; help-panel.ts);
- *                 ?helpq=water,cold or ?helpq=hands:water shows that queue or those hands, ?helphint=1 the first-session hint
+ *                 ?helpq=water,cold or ?helpq=hands:water shows that queue or those hands, ?helphint=1 the first-session hint,
+ *                 ?helpstats=1 its numbers
  *   ?net=bc       online co-op between tabs of this page on one machine (BroadcastChannel), for testing
  *                 alone; on claude.ai the Co-op panel uses the artifact's room instead (net/)
  *   ?perf=1       record each frame's sim, draw and render time on wizardSim.perf (scripts/perf.mjs)
@@ -165,7 +166,7 @@ async function boot(): Promise<void> {
   let recorder = new ReplayRecorder(7, MAX_SEATS);
   const tune = new TunePanel(world, view.camera, app.canvas, params.get('tune') === '1');
   const inspect = new Inspect(world, view.camera);
-  const help = new HelpPanel(world, view, headless ? null : pads, { headless, open: params.get('help') === '1', force: params.get('helpq'), hint: params.get('helphint') === '1' });
+  const help = new HelpPanel(world, view, headless ? null : pads, { headless, open: params.get('help') === '1', force: params.get('helpq'), hint: params.get('helphint') === '1', stats: params.get('helpstats') === '1' });
   app.stage.addChild(help.root);
 
   const inputsFor = (tick: number): PlayerInput[] => {

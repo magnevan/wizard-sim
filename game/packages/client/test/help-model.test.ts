@@ -68,6 +68,28 @@ describe('help panel model: queue -> rows', () => {
     expect(heal).toMatch(/HEALS 14/);
   });
 
+  it('the arc counts its zaps: 0.5 a rune every 0.2 s, and the beam its extra reach', () => {
+    expect(helpModel(['lightning'], bare).rows[0].stats.join(' ')).toMatch(/LIGHTNING 25\/S/);
+    expect(helpModel(['arcane', 'arcane'], bare).rows[0].stats.join(' ')).toMatch(/RANGE 14U.*FREE 5S/);
+  });
+
+  it('+1 rune: what one more rune of the lead element changes', () => {
+    const scale = (q: Element[], k: number) => helpModel(q, bare).rows[k].scale;
+    expect(scale(['fire'], 0)).toBe('+1 FIRE: DMG ×1.41, RANGE +0.5U, CONE +25%, WIND-UP +0.04S');
+    expect(scale(['arcane'], 1)).toBe('+1 ARCANE: DMG ×1.7, RADIUS +0.6U, WIND-UP +0.04S');
+    expect(scale(['arcane'], 0)).toBe('+1 ARCANE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S'); // a beam's runes buy time, not damage
+    expect(scale(['life'], 0)).toBe('+1 LIFE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S');
+    expect(helpModel(['water'], bare).rows[0].stats.join(' ')).toMatch(/PUSH 18U\/S A SECOND/);
+    expect(scale(['earth'], 0)).toMatch(/^\+1 EARTH: DMG ×2.83/);
+    expect(scale(['lightning'], 0)).toMatch(/JUMPS \+1/);
+    expect(scale(['shield', 'earth'], 2)).toMatch(/HP \+40 A PIECE, STANDS \+5S/); // the lead of a Shield spell is its material
+    expect(scale(['sigil', 'fire'], 3)).toBe('+1 FIRE: NOTHING MORE, WIND-UP +0.04S'); // a fire aura burns the same
+    expect(scale(['cold', 'cold', 'cold', 'cold'], 1)).toMatch(/\(A COLD POOL HOLDS 4\)$/);
+    expect(scale(['fire', 'fire', 'fire', 'fire', 'fire'], 0)).toBe('QUEUE FULL: 5 RUNES IS THE MOST');
+    expect(scale(['shield'], 2)).toBe('+1 SHIELD: SHIELD CANCELS SHIELD');
+    expect(scale(['fire'], 3)).toBe(''); // Self on yourself: nothing to compare
+  });
+
   it('an empty queue shows your hands: the trident and the Tide shield', () => {
     const m = helpModel([], { weapon: EL.water, uses: 22, guard: GUARD.tide, wand: false });
     expect(m.mode).toBe('hands');

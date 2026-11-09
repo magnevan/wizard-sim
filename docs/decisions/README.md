@@ -1009,3 +1009,10 @@ The user's answers on the World and Progression page.
 ## 2026-11-09: The story's spine isn't a rival system (`explorations/2026-11-09-story/`)
 - **Rejected as the story's spine: "Your Go" and its rival system,** although the blind judges ranked it first. The user likes its creativity, but: the tone is too goofy and slapstick (the vision asks for a light touch); it depends on strong character building to make the rivals likable, and on making PvP battles fun; and getting spells from losing is at odds with the casting system, where spells are composed from runes the player already has.
 - **Which story to carry forward is still open.** The user is reading the others.
+
+## 2026-11-09: Wells are built, and the four story candidates reviewed (`explorations/2026-11-09-story/`)
+- **Wells are constructed, not natural.** The user: "It seems like a constructed element, not necessarily emergent in the world. Like a civilization can choose to build a large well, but there could be smaller ones too." This replaces the round-2 definition of a well as the place where veins surface by themselves. Great wells and small ones both exist.
+- **Attuning doesn't need emphasis.** "It seems like a fine motivation, but we can have others."
+- **A special year or event with the fields appeals, but fields actually moving is out.** It's apocalyptic for civilizations built around a field, and "a nightmare for building maps". This also weighs against the "shifting fields" part of the A + B + D story baseline.
+- **Promises:** befriending an area's people is okay, a ledger of kept and broken promises is "a little... meh". A reputation system with civilizations, perhaps picking one over another, could work. Moving non-linearly through the world is acceptable but "needs a cohesive vision".
+- **The case:** "kind of interesting", but lacks "the connection to you as a wizard". The story needs that connection.

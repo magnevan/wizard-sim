@@ -23,3 +23,8 @@ Main caution on the winner: the wells barely matter in it, and attuning is what 
 
 - **Your Go (2026-11-09):** likes the creativity. "I think the tone is too goofy and slapstick. I don't think the rival system works for me. It depends on strong character building to make them likable, and making pvp battles fun. Getting spells from losing seems at odds with the actual casting system." Rejected as the spine; see `decisions/README.md`. The judges had no way to see this, and two of the three ranked it first.
 - The page's prose was hard to get through and its names went unexplained, so plain summaries and a name guide were added.
+
+- **The Flitting Year:** likes a special year with an event in the fields. Fields actually moving is apocalyptic and a nightmare for maps.
+- **Before All the People:** befriending people is okay, the ledger is "a little... meh". A reputation system with civilizations might work, with non-linear travel if there's a cohesive vision.
+- **What He Had on Him:** interesting, but lacks the connection to you as a wizard.
+- **Wells:** constructed by civilizations, large and small. Attuning needn't be emphasized.

@@ -1016,3 +1016,10 @@ The user's answers on the World and Progression page.
 - **A special year or event with the fields appeals, but fields actually moving is out.** It's apocalyptic for civilizations built around a field, and "a nightmare for building maps". This also weighs against the "shifting fields" part of the A + B + D story baseline.
 - **Promises:** befriending an area's people is okay, a ledger of kept and broken promises is "a little... meh". A reputation system with civilizations, perhaps picking one over another, could work. Moving non-linearly through the world is acceptable but "needs a cohesive vision".
 - **The case:** "kind of interesting", but lacks "the connection to you as a wizard". The story needs that connection.
+
+## 2026-11-09: The story's hook is a year when the veins shift (`explorations/2026-11-09-story-direction.md`)
+- **A special year when the fields behave oddly is the hook.** Veins shift, magical defences lose power, and new territory has to be claimed to build wells on strong sources. It's the reason to go out and explains the world's conflicts.
+- **No explicit circuit.** This replaces the journeyman's circuit as the frame: "you get sent out into the field to solve an issue, this naturally gives you experience and mastery and brings you to new regions."
+- **Linear travel, region to region. No reputation system.**
+- **Wells are magical infrastructure, and the player isn't a wizard engineer.** Legendary builders can exist as colour, like a legendary swordsmith.
+- **Why the veins are shifting is open.**

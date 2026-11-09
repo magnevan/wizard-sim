@@ -159,14 +159,16 @@ export class WorldView {
   setRenderer(r: Renderer): void { this.renderer = r; }
   /** What stands in the scene, for effects to go behind (art/vfx.ts). Positions are field px; fx0, fy0 convert from the scene's. */
   private occluderSource(w: World, fx0: number, fy0: number) {
-    return (emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean) => void) => {
+    return (emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number) => void) => {
       for (let i = 0; i < MAX_BODIES; i++) {
         const spr = this.sprites[i], v = this.views[i];
         if (!v.on || !spr.visible || (i < MAX_SEATS && w.seats.active[i] && w.seats.phase[i] === PHASE.channel)) continue;
-        emit(spr.texture, spr.position.x - fx0, spr.position.y - fy0, v.y, false);
+        emit(spr.texture, spr.position.x - fx0, spr.position.y - fy0, v.y, false, spr.zIndex);
       }
-      this.props.sprites((s, _x, y) => emit(s.texture, s.position.x - fx0, s.position.y - fy0, y - fy0, true));
-      this.structs.eachPiece((s, _x, y) => emit(s.texture, s.position.x - fx0, s.position.y - fy0, y - fy0, true));
+      this.props.sprites((s, _x, y) => emit(s.texture, s.position.x - fx0, s.position.y - fy0, y - fy0, true, s.zIndex));
+      // pieces carry the origin they were laid out with: effects that draw before the walls see last frame's
+      const [px, py] = this.structs.pieceOrigin;
+      this.structs.eachPiece((s, _x, y) => emit(s.texture, s.position.x - px, s.position.y - py, y - py, true, s.zIndex));
     };
   }
 
@@ -331,7 +333,7 @@ export class WorldView {
     stats.fills = 0;
     const t0 = performance.now();
     const lit = this.lit;
-    const light = lit ? (x: number, y: number, r: number, col: string, a: number) => lit.light(fx0 + x, fy0 + y, r, col, a) : (x: number, y: number, r: number, col: string, a: number) => this.lights.add(fx0 + x, fy0 + y, r, col, a);
+    const light = lit ? (x: number, y: number, r: number, col: string, a: number, soft?: boolean) => lit.light(fx0 + x, fy0 + y, r, col, a, soft) : (x: number, y: number, r: number, col: string, a: number, soft?: boolean) => this.lights.add(fx0 + x, fy0 + y, r, col, a, soft);
     if (lit) {
       lit.fit(cam.w, cam.h);
       lit.begin(moodOf(w.def.id, this.mood), ct, fx0, fy0);
@@ -344,7 +346,7 @@ export class WorldView {
         const v = this.views[i];
         if (!v.on || !v.f || b.kind[i] === KIND.double) continue;
         lit.shadow(v.f.tex, FEET_X, FEET_Y, fx0 + v.x, fy0 + v.y);
-        if (i < MAX_SEATS && lit.carry) lit.light(fx0 + v.x, fy0 + v.y - 6, 52, '#ffd9a8', lit.carry);
+        if (i < MAX_SEATS && lit.carry) lit.light(fx0 + v.x, fy0 + v.y, 110, '#ffd9a8', lit.carry * 0.8, true);
       }
       const wl = w.walls;
       for (let k = 0; k < MAX_WALLS; k++) {
@@ -356,6 +358,7 @@ export class WorldView {
       }
     }
     this.vfx.occluders = this.occluderSource(w, fx0, fy0);
+    this.structs.behind = this.vfx.behind;
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
     this.lights.end();
     this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;

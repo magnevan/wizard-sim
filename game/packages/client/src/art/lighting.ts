@@ -73,7 +73,7 @@ const RAYS = 24;
 
 /** What's reused between frames for one blocked light: a shape drawn into the light map and again as the additive glow. */
 interface LitShape { geo: MeshGeometry; map: Mesh; glow: Mesh; pos: Float32Array; uv: Float32Array; idx: Uint32Array }
-interface QueuedLight extends ObjectLight { col: string; num: number }
+interface QueuedLight extends ObjectLight { col: string; num: number; soft: boolean }
 /** One light as the standing things see it. R: its true radius. near: walls within reach, from nearWalls. rgb 0..1. */
 export interface ObjectLight { x: number; y: number; r: number; R: number; a: number; cr: number; cg: number; cb: number; near: number[] }
 const strongest = (a: QueuedLight, b: QueuedLight): number => b.a * b.r - a.a * a.r;
@@ -283,11 +283,11 @@ export class SceneLighting {
   }
 
   /** A light on the ground at scene x, y: radius in art px, colour, strength. */
-  light(x: number, y: number, r: number, col: string, a: number): void {
+  light(x: number, y: number, r: number, col: string, a: number, soft = false): void {
     if (a <= 0.02 || this.queued >= 200) return;
     let q = this.queue[this.queued];
-    if (!q) { q = { x: 0, y: 0, r: 0, R: 0, col: '', num: 0, a: 0, cr: 0, cg: 0, cb: 0, near: [] }; this.queue.push(q); }
-    q.x = x; q.y = y; q.r = r; q.col = col; q.a = a;
+    if (!q) { q = { x: 0, y: 0, r: 0, R: 0, col: '', num: 0, a: 0, cr: 0, cg: 0, cb: 0, near: [], soft: false }; this.queue.push(q); }
+    q.x = x; q.y = y; q.r = r; q.col = col; q.a = a; q.soft = soft;
     this.queued++;
   }
 
@@ -419,11 +419,11 @@ export class SceneLighting {
     order.sort(strongest);
     let used = 0;
     for (const L of order) {
-      const { tex, R } = this.lights.disc(L.r);
+      const { tex, R } = this.lights.disc(L.r, L.soft);
       L.R = R; L.num = X.hexNum(L.col);
       L.cr = ((L.num >> 16) & 255) / 255; L.cg = ((L.num >> 8) & 255) / 255; L.cb = (L.num & 255) / 255;
       const near = nearWalls(this.occ, L.x, L.y, R, L.near);
-      if (!near.length || used >= MAX_BLOCKED) { this.lights.add(L.x, L.y, L.r, L.col, L.a); this.glow.add(L.x, L.y, L.r, L.col, L.a); continue; }
+      if (!near.length || used >= MAX_BLOCKED) { this.lights.add(L.x, L.y, L.r, L.col, L.a, L.soft); this.glow.add(L.x, L.y, L.r, L.col, L.a, L.soft); continue; }
       const s = this.shape(used++);
       fillShape(s.pos, s.uv, s.idx, L.x, L.y, R, near);
       s.geo.getBuffer('aPosition').update();

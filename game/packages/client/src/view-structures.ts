@@ -96,6 +96,7 @@ class Pieces {
   private dyn: Dyn[] = [];
   private fx0 = 0; private fy0 = 0;
   constructor(private parent: Container) {}
+  get origin(): [number, number] { return [this.fx0, this.fy0]; }
   begin(fx0: number, fy0: number): void { this.fx0 = fx0; this.fy0 = fy0; this.nS = 0; for (const d of this.dyn) d.used = false; }
   /** A cached texture at field (rx, ry), sorted at ground y z. */
   tex(tex: Texture, rx: number, ry: number, z: number, tint = AMBIENT, foot = z): void {
@@ -352,6 +353,12 @@ export class StructureView {
   constructor(actors: Container) { this.pieces = new Pieces(actors); }
   /** Every wall piece drawn this frame, and where it stands in the scene, for the lighting. */
   eachPiece(fn: (s: Sprite, x: number, y: number) => void): void { this.pieces.each(fn); }
+  get pieceOrigin(): [number, number] { return this.pieces.origin; }
+  /** Draws something anchored on the ground so what stands in front hides it (Vfx.behind). Set by the view. */
+  behind: ((ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread?: boolean) => void) | null = null;
+  private depth(o: Ctx, ax: number, ay: number, R: number, draw: (o: Ctx) => void): void {
+    if (this.behind) this.behind(ax, ay, R, draw); else draw(o);
+  }
 
   private add(kind: string, t0: number, life: number, o: Partial<SFx>): void {
     if (this.fx.length > 300) this.fx.shift();
@@ -494,8 +501,12 @@ export class StructureView {
     if (!off.includes('waves')) { this.waves(w, t, g, o, light); this.sparks(w, t, g, o, light); }
     if (!off.includes('devices')) this.devices(w, t, g, o, bodies, light);
     if (!off.includes('wizards')) this.onWizards(w, t, g, o, bodies, light);
-    if (!off.includes('preview')) { this.preview(w, t, g, o, bodies); this.allyCue(w, t, g, o); }
-    if (!off.includes('fx')) for (const f of this.fx) this.drawFx(w, f, st - f.t0, t, g, o, bodies, light);
+    if (!off.includes('preview')) {
+      const at = this.aimSpot(w);
+      if (at) this.depth(o, at[0], at[1], 220, (o) => this.preview(w, t, g, o, bodies)); else this.preview(w, t, g, o, bodies);
+      this.allyCue(w, t, g, o);
+    }
+    if (!off.includes('fx')) for (const f of this.fx) this.fxDepth(w, f, st - f.t0, t, g, o, bodies, light);
     this.pieces.end();
   }
 
@@ -907,9 +918,9 @@ export class StructureView {
         X.shadow(g, x, y - 1, 5, 3, 8, 'rgba(8,6,16,0.45)');
         const c = this.pieces.canvas(x - 22, y - 40, 44, 50, y);
         const orb = S.sigilDevice(c, x, y, t, { R: R.length >= 5 ? R : [...R, R[R.length - 1]], rise, recoil, charge, dry, orbZ: 16 });
-        if (age < S.TURRET_SUMMON) { S.turretSummon(g, o, x, y, age, R); light(x, y - 12, 52, R[2], 0.8 * (1 - age / S.TURRET_SUMMON)); }
+        if (age < S.TURRET_SUMMON) { this.depth(o, x, y, 60, (o) => S.turretSummon(g, o, x, y, age, R)); light(x, y - 12, 52, R[2], 0.8 * (1 - age / S.TURRET_SUMMON)); }
         if (orb) light(orb[0], y, 36, R[2], (recoil > 0 ? 0.8 : 0.4) * up * (dry ? 0.3 : 1));
-        if (dry && orb) for (const p of emit(t, 4, 1.2, (i, a2) => ({ x: orb[0] + a2 * 4, y: orb[1] - 2 - a2 * 14, age: a2 }))) K.puff(o, p.x, p.y, 1.5 + p.age * 2, '#4a4458', 1 - p.age);
+        if (dry && orb) this.depth(o, x, y, 40, (o) => { for (const p of emit(t, 4, 1.2, (i, a2) => ({ x: orb[0] + a2 * 4, y: orb[1] - 2 - a2 * 14, age: a2 }))) K.puff(o, p.x, p.y, 1.5 + p.age * 2, '#4a4458', 1 - p.age); });
       } else if (ty === DEVICE.glyph) {
         const draw = clamp(1 - dv.timer[k] / T(STRUCT.glyphArm), 0, 1), armed = dv.timer[k] <= 0;
         S.glyph(g, x, y, glyphRadiusOf(w, dv.owner[k]) * PPU, SV, t, draw, armed, elName(look), R[1]);
@@ -974,6 +985,8 @@ export class StructureView {
       const P = (f: number, r: number, u: number): [number, number, number] => [v.x + f * cs - r * sn, v.y + (f * sn + r * cs) * FY - u * CU, f * sn + r * cs];
       const ch: Pt = [v.x + v.a.chest[0], v.y + v.a.chest[1]];
       if (b.downed[i]) continue;
+      // what a wizard wears and holds goes behind what stands in front of them, as they do
+      this.depth(o, v.x, v.y, 44, (o) => {
       // auras first (ground and around), then the ward, then what is held
       if (s.aura[i] > 0) this.aura(w, i, v, t, g, o, P, light);
       if (s.ward[i]) this.ward(w, i, v, t, g, o, P, ch, light);
@@ -995,13 +1008,14 @@ export class StructureView {
       if (s.weapon[i]) this.weapon(w, i, v, t, g, o, P, conj, light);
       if (s.handT[i] > TAP && s.weapon[i] !== ELID.life) this.charging(w, i, v, t, g, o, light);
       if (s.guard[i]) this.guard(w, i, v, t, g, o, P, conj, light);
-      if (s.linkTo[i] >= 0) this.link(i, v, bodies[s.linkTo[i]], t, o, light);
       // Phase (Prism): a hex afterimage round you while you drift through bodies
       if (s.guard[i] === GUARD.prism && s.retreatT[i] > 0) {
         const k = s.retreatT[i] / T(ARMS.phaseTime), cy = v.y - 12;
         for (let q = 0; q < 2; q++) { const r = 9 + q * 4 + (1 - k) * 4, pts: Pt[] = []; for (let j = 0; j <= 6; j++) { const a = (j / 6) * TAU + Math.PI / 6 + t; pts.push([v.x + Math.cos(a) * r, cy + Math.sin(a) * r * 0.8]); } X.lines(o, pts, q ? EL.arcane[3] : EL.arcane[1]); }
         light(v.x, v.y, 30, '#ff4f9b', 0.4 * k);
       }
+      });
+      if (s.linkTo[i] >= 0) this.link(i, v, bodies[s.linkTo[i]], t, o, light); // runs between two wizards, so no one spot to go behind
     }
     // Doubles: a translucent violet copy (the sprite is tinted and faded) with a violet edge and a seal
     for (let i = MAX_SEATS; i < MAX_BODIES; i++) {
@@ -1504,6 +1518,18 @@ export class StructureView {
   }
 
   // ---- short-lived effects -------------------------------------------------------------------------
+  /** Where the local wizard's placement preview stands, while one can be showing. */
+  private aimSpot(w: World): Pt | null {
+    const s = w.seats, b = w.bodies, i = this.localSeat;
+    if (!s.active[i] || !(s.prevButtons[i] & (BTN.area | BTN.force))) return null;
+    const d = Math.hypot(s.aimX[i], s.aimY[i]), lim = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
+    return [gx(b.x[i] + s.aimX[i] * lim), gy(b.y[i] + s.aimY[i] * lim)];
+  }
+  private fxDepth(w: World, f: SFx, e: number, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
+    const who = f.who >= 0 && f.who < bodies.length ? bodies[f.who] : null, placed = f.x !== 0 || f.y !== 0;
+    if (f.kind === 'whit' || f.kind === 'trail' || (!placed && !who?.on)) { this.drawFx(w, f, e, t, g, o, bodies, light); return; } // a chip off a wall is on that wall
+    this.depth(o, placed ? gx(f.x) : who!.x, placed ? gy(f.y) : who!.y, 90, (o) => this.drawFx(w, f, e, t, g, o, bodies, light));
+  }
   private drawFx(w: World, f: SFx, e: number, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
     const sd = f.seed, x = gx(f.x), y = gy(f.y), R = f.look === ELID.life ? LIFE : ramp(f.look);
     // Every weapon and guard move shows the extras it carries (art/accent.ts), beside its own effect:

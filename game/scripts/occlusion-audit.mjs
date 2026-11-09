@@ -35,6 +35,17 @@ const S = [
   ['17 frost spray at the wall, from in front', 'survive', WALL, [0, 2.2], [0, -4], 'r', 'hold'],
   ['18 steam spray at the wall, from in front', 'survive', WALL, [0, 2.2], [0, -4], 'qf', 'hold'],
   ['19 flame spray at the corner of a wall, enemy unreachable', 'academy', SHELF, [3, 3], [-1, -3], 'f', 'hold'],
+  ['20 runes ready, behind a wall', 'survive', WALL, [0, -1.1], [0, 4], 'ff', 'none'],
+  ['21 fire sword, behind a wall', 'survive', WALL, [0, -1.1], [0, 4], 'df', 'shift-left-tap'],
+  ['22 shield up, behind a wall', 'survive', WALL, [0, -1.1], [0, 4], 'eg', 'shift-left-tap'],
+  ['30 shield up, in front of a wall', 'survive', WALL, [0, 1.1], [0, 4], 'eg', 'shift-left-tap'],
+  ['23 turret preview, behind a wall', 'survive', WALL, [0, -3], [0, -1.1], 'df', 'hold'],
+  ['24 turret summoned, behind a wall', 'survive', WALL, [0, -3], [0, -1.1], 'df', 'tap'],
+  ['25 fire placed behind a wall', 'survive', WALL, [0, -3.5], [0, -1.2], 'ff', 'shift-place'],
+  ['26 frost placed behind a wall', 'survive', WALL, [0, -3.5], [0, -1.2], 'rr', 'shift-place'],
+  ['27 area burst behind a wall', 'survive', WALL, [0, -1.6], [0, 4], 'ff', 'shift-tap'],
+  ['28 fire sword, in front of a wall', 'survive', WALL, [0, 1.1], [0, 4], 'df', 'shift-left-tap'],
+  ['29 runes ready, in front of a wall', 'survive', WALL, [0, 1.1], [0, 4], 'ff', 'none'],
 ];
 
 const stop = await startPreview();
@@ -72,11 +83,17 @@ try {
     if (key) {
       for (const k of key) await p.keyboard.press(k);
       await sleep(150);
-      await p.mouse.down({ button: 'right' });
-      await sleep(mode === 'hold' ? 1100 : 420);
-      if (mode === 'tap') { await p.mouse.up({ button: 'right' }); await sleep(260); }
+      if (mode !== 'none') {
+        const button = mode.includes('left') ? 'left' : 'right', shift = mode.startsWith('shift');
+        if (shift) await p.keyboard.down('Shift');
+        await p.mouse.down({ button });
+        await sleep(mode === 'hold' ? 1100 : mode.endsWith('place') ? 900 : 420);
+        if (mode !== 'hold') { await p.mouse.up({ button }); await sleep(260); }
+        if (shift) await p.keyboard.up('Shift');
+      }
     }
     const mx = Math.round((me.x + tgt.x) / 2), my = Math.round((me.y + tgt.y) / 2) - 40;
+    console.log(' held:', await p.evaluate(() => { const q = window.wizardSim.world.seats; return `weapon ${q.weapon[0]} guard ${q.guard[0]}`; }));
     await p.screenshot({ path: `${OUT}${name.slice(0, 2)}.png`, clip: { x: Math.max(0, Math.min(1920 - 640, mx - 320)), y: Math.max(0, Math.min(1080 - 420, my - 210)), width: 640, height: 420 } });
     console.log(name);
     await p.close();

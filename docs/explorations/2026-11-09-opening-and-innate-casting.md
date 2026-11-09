@@ -75,3 +75,22 @@ Unanswered means the recommendation stands.
 4. Test benches before the reveal, a manual with errata after? Recommended: yes.
 5. Fast-built turrets are the new thing, and that's why they come last? Recommended: yes.
 6. The first job's field and what's failing there. No recommendation: this one's the user's.
+
+## Round 2: the user's answers (2026-11-09)
+
+- **The source of "the connection to you as a wizard":** the user's verdict on one candidate, "What He Had on Him" ("I feel like it doesn't quite have the connection to you as a wizard"). It was Claude who generalized it into a requirement for the story, in the decisions log ("The story needs that connection"). The user didn't say that.
+- **The Arcane vein link:** liked ("I hadn't thought about that").
+- **Problem 1, turrets:** agreed, and it was the user's reasoning too. "Spawning instantly, and you being the 'well' that powers it is fundamentally very different."
+- **Problem 2, withholding magic:** agreed. "I don't think the melee play in itself is that fun," so powers unlock quite quickly, and it's "basically the tutorial segment until you have the base set of runes unlocked."
+- **Problem 3 was wrong.** You don't fix the veins, only the infrastructure: "An earthquake has broke a dam, and we need to build a new one where the river now goes." Fixing things doesn't threaten your power, so this doesn't apply.
+- **Problem 4:** the gameplay isn't engineering, "even if the wizard technically is an engineer".
+- **Problem 5 was wrong too.** "Your clumsyness goes down as you get better at playing the game, the learning curve makes sense. Both you and the in-game wizard is new to spellcasting."
+- **Problem 6, tone:** "Sure... I guess." Not pressed further.
+- **Q1 taken** (the event is why you can now cast; engineering is job, not gameplay). **Q2** "maybe yes, we can try it out". **Q3** "not really sure, maybe we can try a few", with an outline: (a) a presentation or meeting on the strange reports and the overload of jobs, and that you need fighting training ("but don't worry you won't need it wink wink"); (b) a basic control tutorial and fighting; (c) a first job at a misbehaving defence near the academy. Static defences you can control, one element (probably Fire): the camera focuses on it and you cast from its perspective, learning the casting modes. It breaks down or runs dry, and you feel an infusion. It might prompt you to conjure a fire blade and go out, and you get the Fire rune. Repeating this for more elements "may be a bit repetitive".
+
+**Claude's notes on the outline:**
+- Controlling the defence replaces the test bench and is better: it teaches every cast from the first job, and no fiction is needed, because operating defences is your job.
+- It leaves no road beat, so your own first cast moves up to about 10 minutes.
+- The rune bar can tell the story. The defence's deep pool drains in plain sight, it goes dark, and one pip of your own lights up. The contrast also shows how little you have.
+- A rule the blade needs: Fire plus the conjure gesture is today's imbued burst, and a blade takes Sigil. Proposal: the rack's focus in the crash course is charged from the academy's supply, the old world's way. After the infusion you charge it yourself: you are the well.
+- Repetition: one, two, then the rest (`../campaign/01-opening/brief.md`), and the user wants to try versions.

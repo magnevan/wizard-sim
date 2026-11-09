@@ -19,12 +19,18 @@ Started 2026-11-09 from the decisions log, the review pages' answers and the use
 - Wells are built by civilizations, great and small. They're magical infrastructure. Legendary builders can exist as colour, like a legendary swordsmith. (Decisions of 2026-11-09.)
 - Veins are part of the world and have no direct gameplay effect. (`r3-6-veins`.)
 - Cancelling elements can share ground, case by case. (`r3-7-hush`.)
-- The academy sits on an Arcane vein, which helps bring out a wizard's natural abilities. (Decision "Pillars 1, 5 and 6 reworded".) *See the tension below.*
+- The academy sits on an Arcane vein, which helps bring out a wizard's natural abilities. (Decision "Pillars 1, 5 and 6 reworded".) That link is why these characters can use the new magic. (The user liked it, 2026-11-09.)
+- The academy is an analogue to an engineering school, because the world's technology runs on the fields. Engineering is your job, not the gameplay. (The user, 2026-11-09.)
 - The world is one continent. Places get made-up names. The current painted map is a stand-in. (Field Atlas answers; "this isn't necessarily the final map".)
 
 **The hook**
 - A special year when the veins shift: defences lose power, and new territory has to be claimed to build wells on strong sources. (Decision "The story's hook".)
 - Why it's happening stays unanswered. People in the world speculate: natural, a wizarding group up to something, or a big bad. (Same decision.)
+- **Innate casting is new, and the event is why you can now do it.** Before, wizards used structures that tap fields. (The user's twist, taken 2026-11-09.)
+- **You fix infrastructure, not veins.** "An earthquake has broke a dam, and we need to build a new one where the river now goes." (The user, 2026-11-09.)
+- Conjuring a device instantly, with you as the well that powers it, is fundamentally different from building a structure. That's why turrets come later even though wizards know structures. (The user, 2026-11-09.)
+- Both you and your wizard are new to spellcasting, so the clumsiness falls as you get better at the game. (The user, 2026-11-09.)
+- Melee alone isn't that fun. Powers start unlocking quite quickly, and the tutorial segment runs until the base set of runes is unlocked. (The user, 2026-11-09.)
 
 **Progression that the story has to fit**
 - The queue is five runes from the start. Pools start at 1 and grow to at most about 5. Regen is the main lever. (`q-3-pacing`, `r3-5-pools`.)
@@ -38,17 +44,14 @@ Started 2026-11-09 from the decisions log, the review pages' answers and the use
 
 Proposed by the user and not yet settled. Critique and options are in `../explorations/2026-11-09-opening-and-innate-casting.md`.
 
-- The academy is an analogue to an engineering school, because the world's technology runs on the fields.
 - The instability's effects: veins shift within regions, wells run dry or overcharge, defences fall, new territories become magical and get fought over, wildlife and monsters are affected.
 - The hook: the wizard or group gets sent out to fix a reported issue.
-- **The twist:** spellcasting in this form hasn't really existed. Wizards used structures that tap fields, and the instability is letting them draw on fields innately.
 - An early crash course in fighting, because the world is more dangerous and/or the academy can't afford escorts. Room for humour.
+- **The opening, as an outline to try** (`01-opening/brief.md`): a briefing on the strange reports and the overload of jobs ("you won't need it", wink); a basic control and fighting tutorial; a first job at a misbehaving defence near the academy, which you control to cast one element (probably Fire) from its position, until it runs dry, you feel an infusion, and you get the rune and maybe a prompt to conjure a fire blade. Testing the first-cast moment is agreed as "maybe yes, we can try it out".
 
 ## Open tensions
 
-- **Engineer or not.** On 2026-11-09 the user found the *wizard engineer* funny and logged "the player isn't a wizard engineer", when reacting to a story about building wells. The engineering-school idea changes that, at least for your background. Current reading: trained as one, but the game is never about doing engineering. Needs the user's word.
-- **"Innate" and the Arcane vein.** `world/elements.md` calls Shield and Sigil innate and says Arcane draws out a caster's abilities. If the twist is taken, that text needs rewording.
-- **Held-back unlocks against the twist.** If structures are the old world, turrets should be the familiar part, yet they're held for mid-game. See the exploration.
+- **"Innate" and Shield and Sigil.** `world/elements.md` calls these two innate, as against field elements drawn from the land. With the twist, all casting is newly innate, so that word needs a better one.
 
 ## Written down but NOT approved
 

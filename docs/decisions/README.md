@@ -1045,3 +1045,12 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **The outdoor list was approved and bought,** 70 generations: 3 + 1 ground sets, isometric corner and path sets, 96 objects, 2 trees.
 - **Painted ground, built on Claude's recommendation:** the plan is a terrain map painted through the camera, not ground tiles. The isometric tiles were tried and looked worse. Nothing of this is in the game yet, and `q-1` and `q-2` on the page can overturn it.
 - **Scatter is halved locally,** because the sheet fills its canvas whatever the subject.
+
+## 2026-11-09: Casting is new, and you fix infrastructure (`explorations/2026-11-09-opening-and-innate-casting.md`)
+- **Innate casting is a result of the shifting veins.** Before, wizards used structures that tap fields. The academy's Arcane vein is why these characters can do it.
+- **The academy is an analogue to an engineering school. Engineering is your job, not the gameplay.** This refines "the player isn't a wizard engineer", which was about the gameplay.
+- **You fix infrastructure, not veins:** "An earthquake has broke a dam, and we need to build a new one where the river now goes."
+- **Instant devices are different from built structures:** you are the well that powers them, which is why turrets come later.
+- **Melee alone isn't enough to stay in for long.** The tutorial segment lasts until the base set of runes is unlocked.
+- **The approved story now lives in `campaign/canon.md`,** with a staged process for segments in `campaign/README.md`.
+- **Not decided:** the opening's exact outline, which the user wants to try in a few versions (`campaign/01-opening/brief.md`).

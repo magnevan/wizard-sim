@@ -64,7 +64,7 @@ export interface RigState {
   fallSide: number;
   /** Hit flash colour (null = white). */
   flashCol: string | null;
-  /** The weapon has left its hands (a dropped bow or shield), so it isn't drawn. */
+  /** The weapon has left its hands (a dropped bow or shield), so it isn't drawn. On a wizard: a conjured weapon replaces the staff. */
   bare: number;
   /** The imp's crown flame, 1 = burning, 0 = out. */
   crown: number;
@@ -195,6 +195,8 @@ function drawWizard(s: RigState): void {
   const staffBot: V3 = [lerp(lerp(hR[0], 2.6, g), 1.0, cast), lerp(4.6, 3.0, g) - 0.8 * cast, lerp(lerp(-0.5, 7, g), 7, cast)];
   const staffTop: V3 = [lerp(lerp(hR[0] + 0.2, 3.4, g), 12.5, cast), lerp(lerp(4.7, 3.4, g), 1.8, cast), lerp(lerp(21.5 + bob * 0.6, 30 + bob, g), 12.5 + bob, cast)];
   const drawStaff = () => {
+    // a conjured weapon has taken the staff's place: spells gather at the hand instead
+    if (s.bare) { const h = P(...hR); out.tip = [h[0], h[1] - 1]; return; }
     const b = P(...staffBot), a = P(...staffTop);
     X.line(sc, b[0], b[1], a[0], a[1], '#7a5034'); X.px(sc, a[0], a[1] + 1, '#a8784a');
     if (hd) {

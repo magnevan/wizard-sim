@@ -387,6 +387,8 @@ export class WorldView {
     s.punch = -1; s.smash = -1; s.draw = 0; s.atk = -1; s.hold = 0; s.prep = 0; s.cast = 0; s.vx = 0; s.vy = 0;
     // a Double is its owner's wizard (drawn translucent and violet-tinted by the sprite)
     const owner = b.kind[i] === KIND.double ? this.ownerOf(w, i) : i;
+    // a conjured weapon or wand replaces the staff (a Double keeps the staff: only seats draw weapons)
+    s.bare = kind === 'wizard' && i < MAX_SEATS && (w.seats.weapon[i] || w.seats.wand[i]) ? 1 : 0;
     if (kind === 'wizard') s.pal = owner % 4;
     else if (b.kind[i] === KIND.enemy || b.kind[i] === KIND.none) { // none: an enemy that just died (onDeath)
       if (arch === ARCH.shieldbearer) { s.pal = 5; s.variant = 5; }

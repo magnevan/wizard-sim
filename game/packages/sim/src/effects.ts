@@ -161,9 +161,8 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     }
     case 'nova': case 'quake': {
       const r = (spec.shape === 'quake' ? SHAPES.novaRadius + 1 : SHAPES.novaRadius) + SHAPES.novaPerRune * (n - 1);
+      // Leaves the floor alone: a floor laid round you soaks or burns you, the caster (Place is for floors).
       disc(w, p, src, x, y, r, k, spec.heal ? -1 : src); // the Healing ring heals you too
-      // the floor a nova leaves lingers, so Lingering stretches it (the blast itself is instant)
-      if (!spec.heal) for (const el of [EL.water, EL.fire, EL.cold]) if (spec.counts[el - 1]) floorDisc(w, x, y, r * 0.6 * lingerSize(w, src), el, lingerLife(w, src));
       burstEvent(w, src, x, y, r, spec.look);
       break;
     }
@@ -440,7 +439,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
       if (t % 12 === 0) hitEvent(w, i, dealt * 12, spec.look, src);
     });
     // Sprays leave the floor alone (the user: walking forward into your own spray's puddle or fire
-    // was awkward). Floors come from Place patches and novas.
+    // was awkward). Floors come from Place patches.
     return;
   }
   if (spec.shape === 'arc') {

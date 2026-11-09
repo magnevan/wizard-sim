@@ -1045,3 +1045,13 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **The outdoor list was approved and bought,** 70 generations: 3 + 1 ground sets, isometric corner and path sets, 96 objects, 2 trees.
 - **Painted ground, built on Claude's recommendation:** the plan is a terrain map painted through the camera, not ground tiles. The isometric tiles were tried and looked worse. Nothing of this is in the game yet, and `q-1` and `q-2` on the page can overturn it.
 - **Scatter is halved locally,** because the sheet fills its canvas whatever the subject.
+
+## 2026-11-09: Play-test bugs: Area floors, the staff hand, ice shields, a drag undone
+
+The user's bug list from play.
+
+- **An Area cast leaves no floor.** A nova or quake used to lay water, fire or frost round the caster, which then soaked or burned them. Place is what makes floors now; Place patches and Rain are unchanged, since they're aimed away from you and their lingering is [a decision of its own](#2026-11-05-lingering-effects-last-as-long-as-they-look). The golden hash moved, `2f804c92` → `e19c4685`, because the scripted run taps Area with Fire and Water + Cold.
+- **A conjured weapon replaces the staff, in the staff's hand.** It used to be drawn in the same hand the guard hangs from, with the staff still showing. The wand counts as a weapon. Spells cast while holding one gather at the hand.
+- **Shield with Water and Cold is drawn as ice.** Curtains (Area and Place) are a row of still, faceted crystals, the wave is a front of ice spears, the ward has crystals round the feet. Visual only: the sim already treated the mix as ice. The F2 panel still calls these spells by their Water names (Tidal wave, Tide shield).
+- **Bringing a drag back to its start undoes the line.** A wall goes back to the arc and a line glyph to a glyph, and it stays a Place rather than turning into a tap's Area.
+- **Shield radii are the user's to find.** `structures.arcRadius` (2.2) and `structures.ringRadius` (1.5) were already sliders in the tuning panel (F1); they now have help text, and the defaults wait for the value the user settles on.

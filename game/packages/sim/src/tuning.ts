@@ -46,6 +46,8 @@ const HELP: Record<string, string> = {
   'status.wetShockMult': 'Lightning damage multiplier on wet targets.',
   'status.shatterMult': 'Earth damage multiplier on frozen targets (and the freeze ends).',
   'structures.idleDrain': 'Shield runes per second each energy wall drains while it stands (Model A).',
+  'structures.arcRadius': 'How far from you the quick Shield arc (Place, no drag) stands, in world units.',
+  'structures.ringRadius': 'How far from you the closed Shield ring (Area) stands, in world units.',
   'structures.turretInterval': 'Seconds between turret shots.',
   'waves.lull': 'Seconds of preparation before each wave (after the first).',
 };

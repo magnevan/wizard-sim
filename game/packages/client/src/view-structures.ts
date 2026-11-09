@@ -80,6 +80,10 @@ function wallLead(els: Uint8Array, at: number, ...skip: number[]): number {
   return formOf(LEAD);
 }
 const has = (els: Uint8Array, at: number, id: number) => els[at * N_EL + id - 1] > 0;
+/** Water + Cold together are ice: Shield spells carrying both are drawn as crystal, not as either element. */
+const isIce = (els: Uint8Array, at: number) => has(els, at, ELID.water) && has(els, at, ELID.cold);
+/** The hand a conjured weapon or wand is held in (the staff's); a guard hangs on the other arm. */
+const WEAPON_HAND = 1;
 
 // =====================================================================================================
 // Depth-sorted pieces: sprites in the actors container, either cached textures or per-frame canvases.
@@ -761,6 +765,7 @@ export class StructureView {
       light(mid[0], mid[1], 40, '#8ef07e', (0.45 + 0.3 * pulse) * rise);
       return;
     }
+    if ((el === 'water' || el === 'cold') && isIce(wl.els, k)) { this.iceCurtain(c, g, cols, a, bb, mid, rise, Math.max(0.35, kS), pulse, hitE, sd, t, light); return; }
     const Rr: Ramp = el === 'cold' ? X.FROST : R;
     S.sheetCols(c, cols, h, t, Math.max(0.35, kS) * (0.8 + 0.2 * pulse), Rr, RGB[el] ?? RGB.arcane, k, hitE);
     if (el === 'cold') {
@@ -777,6 +782,36 @@ export class StructureView {
       for (const p of emit(t, 3 * P.length, 1, (i, age) => { const q = P[mod(i, P.length)]; return { x: q[0] + Math.sin(age * 5 + i) * 2, y: q[1] - age * (h + 8), age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? R[1] : R[2]);
       light(mid[0], mid[1], 34, R[2], 0.4 * rise);
     }
+  }
+
+  /** An ice curtain (Shield + Water + Cold): a row of still, faceted crystals with frost at their feet, where water's sheet flows. */
+  private iceCurtain(c: Ctx, g: Ctx, cols: Pt[], a: Pt, bb: Pt, mid: Pt, rise: number, kS: number, pulse: number, hitE: number, sd: number, t: number, light: LightFn): void {
+    const F = X.FROST, n = cols.length, flash = hitE >= 0 && hitE < 0.1 ? 1 : 0;
+    // as with fire: columns widen as the wall turns north-south, and far crystals are painted first
+    const adx = Math.abs(bb[0] - a[0]), ady = Math.abs(bb[1] - a[1]), cw = 1 + Math.round((3 * ady) / (adx + ady + 1e-6)), co = Math.floor(cw / 2);
+    const col = (q: number) => cols[bb[1] >= a[1] ? q : n - 1 - q];
+    for (let j = 0, cr = 0; j < n; cr++) {
+      const wd = Math.min(n - j, 4 + Math.floor(rand(cr, 1, sd) * 4)), apex = 17 * rise * (0.55 + 0.45 * rand(cr, 2, sd));
+      for (let q = 0; q < wd; q++) {
+        const [px, py] = col(j + q), xx = Math.round(px), yy = Math.round(py), u = wd > 1 ? q / (wd - 1) : 0.5;
+        const hh = Math.round(apex * (0.35 + 0.65 * (1 - Math.abs(u * 2 - 1))));
+        if (hh < 1 || kS * 1.4 <= X.bay(xx, yy)) continue;
+        // the lit face left of the ridge, the shaded one right of it; the base is deepest
+        const lit = u < 0.5, ridge = Math.abs(u - 0.5) * wd < 0.6, mid2 = Math.round(hh * 0.45);
+        X.rect(c, xx - co, yy - mid2 + 1, cw, mid2, flash ? F[2] : lit ? F[3] : F[4]);
+        X.rect(c, xx - co, yy - hh + 1, cw, hh - mid2, flash ? F[0] : ridge ? F[1] : lit ? F[2] : F[3]);
+        X.px(c, xx, yy - hh, flash || u < 0.7 ? F[0] : F[1]);
+        if (pulse > 0.5 && ridge) X.px(c, xx, yy - Math.round(hh * 0.6), '#ffffff');
+      }
+      // now and then a crystal's tip catches the light
+      const tip = col(j + Math.floor(wd / 2));
+      if (Math.floor(t * 3 + cr * 1.7) % 7 === 0) { const y = tip[1] - Math.round(apex) - 1; X.px(c, tip[0], y, '#ffffff'); X.px(c, tip[0] - 1, y, F[1]); X.px(c, tip[0] + 1, y, F[1]); X.px(c, tip[0], y - 1, F[1]); }
+      j += wd;
+    }
+    for (const p of cols) if (rand(Math.round(p[0]), 7, sd) < 0.55) X.ellipse(g, p[0], p[1] + 1, 2.5, 1.2, '#a8f2ff', 0.3 * rise);
+    const P = S.sample([a, bb], 4);
+    for (const p of emit(t, 2 * P.length, 1.6, (i, age) => { const q = P[mod(i, P.length)]; return { x: q[0] + (rand(i, 3, sd) - 0.5) * 8, y: q[1] - 2 - age * 10, age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? '#ffffff' : F[2]);
+    light(mid[0], mid[1], 36, '#9ff4ff', 0.45 * rise);
   }
 
   // ---- Waves -------------------------------------------------------------------------------------
@@ -797,7 +832,19 @@ export class StructureView {
       pts.sort((p, q) => p.y - q.y);
       const fl = Math.hypot(fdx, fdy * FY) || 1, ux = fdx / fl, uy = (fdy * FY) / fl;
       this.waveTrail(g, this.vSX[k], this.vSY[k], v.x[k], v.y[k], els, k, 1, half);
-      if (water) {
+      if (water && !earth && isIce(els, k)) {
+        // the frozen wave: a front of ice spears bursting up, chips thrown back off it
+        for (const p of pts) for (let j = 0; j < 2; j++) {
+          const h = (15 - j * 5) * (0.7 + rand(p.i, j, sd) * 0.6) * p.q * fade; if (h < 1.5) continue;
+          const x = p.x - ux * j * 5 + (rand(p.i, j, sd + 1) - 0.5) * 3, yy = p.y - uy * j * 5, wd = 1.8 + rand(p.i, j, sd + 2) * 1.5;
+          X.poly(o, [[x - wd - 1, yy + 1], [x + wd + 1, yy + 1], [x + 1, yy - h - 1], [x - 1, yy - h - 1]], '#163e7a');
+          X.poly(o, [[x - wd, yy], [x + wd, yy], [x + 0.5, yy - h]], X.FROST[3]);
+          X.poly(o, [[x - wd, yy], [x - wd * 0.1, yy], [x, yy - h + 1]], X.FROST[1]);
+          X.px(o, x, yy - h, '#ffffff');
+        }
+        for (const p of emit(t, 50, 0.5, (i, age) => { const q = pts[mod(i, pts.length)]; return { x: q.x - ux * age * 14, y: q.y - uy * age * 14 - 8 * q.q - age * 6 + age * age * 18, age }; })) X.px(o, p.x, p.y, p.age < 0.4 ? '#ffffff' : X.FROST[2]);
+        light(gx(v.x[k]), gy(v.y[k]), 55, '#9ff4ff', 0.5 * fade);
+      } else if (water) {
         // the tidal wave: a curling wall of water, white foam on the crest, spray thrown forward
         for (const p of pts) {
           const h = 16 * p.q * fade; if (h < 1) continue;
@@ -853,7 +900,7 @@ export class StructureView {
     const ux = (ex - sx) / L, uy = (ey - sy) / L, px = -uy, py = ux;
     if (water) for (let i = 0; i < L * 3; i++) {
       const f = rand(i, 61, at) * L, s = (rand(i, 62, at) - 0.5) * 1.8 * half;
-      X.poly(g, K.blobPts(gx(sx + ux * f + px * s), gy(sy + uy * f + py * s), 5 + rand(i, 63, at) * 7, 2 + rand(i, 64, at) * 1.5, i), `rgba(30,74,140,${(0.35 * k).toFixed(2)})`);
+      X.poly(g, K.blobPts(gx(sx + ux * f + px * s), gy(sy + uy * f + py * s), 5 + rand(i, 63, at) * 7, 2 + rand(i, 64, at) * 1.5, i), isIce(els, at) ? `rgba(168,242,255,${(0.3 * k).toFixed(2)})` : `rgba(30,74,140,${(0.35 * k).toFixed(2)})`);
     }
     if (earth || fire) {
       const col = earth ? `rgba(26,18,12,${(0.9 * k).toFixed(2)})` : `rgba(22,14,16,${(0.6 * k).toFixed(2)})`;
@@ -1021,8 +1068,10 @@ export class StructureView {
       return;
     }
     // the ward: a shimmering golden skin hugging the silhouette (an elemental ward takes its element's colour)
-    const R: Ramp = coat ? (elName(coat) === 'cold' ? X.FROST : ramp(coat)) : EL.shield;
+    const ice = isIce(s.wardEls, i), R: Ramp = coat ? (ice || elName(coat) === 'cold' ? X.FROST : ramp(coat)) : EL.shield;
     this.sil.halo(o, v, t, R[2], { col2: R[1], hi: R[0], level: Math.round(6 + 10 * k) });
+    // an ice ward: crystals standing round the feet, where a water ward is only a skin
+    if (ice) for (let q = 0; q < 6; q++) { const a = (q / 6) * TAU + 0.4, sn2 = Math.sin(a); K.shard(sn2 < 0 ? g : o, v.x + Math.cos(a) * 9, v.y - 2 + sn2 * 4, -Math.PI / 2 + Math.cos(a) * 0.5, (4 + (q % 3) * 1.5) * k, i * 7 + q, 1); }
     light(v.x, v.y - 8, 30, coat ? R[2] : '#ffc83a', 0.4 * k);
   }
 
@@ -1131,7 +1180,7 @@ export class StructureView {
 
   private wand(v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], up: number, light: LightFn): void {
     if (!v.a) return;
-    const h: Pt = [v.x + v.a.hands[0][0], v.y + v.a.hands[0][1]], side = P(1, -4, 8)[2], c = side < -3.5 ? g : o;
+    const h: Pt = [v.x + v.a.hands[WEAPON_HAND][0], v.y + v.a.hands[WEAPON_HAND][1]], side = P(1, 4, 8)[2], c = side < -3.5 ? g : o;
     const L2 = 10 * Math.min(1, up * 1.5 + 0.05), a = -1.15 + Math.sin(t * 2) * 0.08, tp: Pt = [h[0] + Math.cos(a) * L2 * 0.5, h[1] + Math.sin(a) * L2];
     X.line(c, h[0], h[1], tp[0], tp[1], '#1a0e24', 3); X.line(c, h[0], h[1], tp[0], tp[1], SV[2], 1);
     X.line(c, h[0], h[1], lerp(h[0], tp[0], 0.5), lerp(h[1], tp[1], 0.5), SV[3], 1);
@@ -1153,7 +1202,7 @@ export class StructureView {
     X.ring(g, v.x, v.y, r, r * FY, ch >= 1 ? '#ffffff' : Rb[1], 1, top, top + ch * TAU);
     X.ring(g, v.x, v.y, r - 1, (r - 1) * FY, Rb[2], 0.8, top, top + ch * TAU);
     if (ch < 1) return;
-    const pulse = 0.5 + 0.5 * Math.sin(t * 18), hd: Pt = v.a ? [v.x + v.a.hands[0][0], v.y + v.a.hands[0][1] - 8] : [v.x, v.y - 14];
+    const pulse = 0.5 + 0.5 * Math.sin(t * 18), hd: Pt = v.a ? [v.x + v.a.hands[WEAPON_HAND][0], v.y + v.a.hands[WEAPON_HAND][1] - 8] : [v.x, v.y - 14];
     K.gring(g, v.x, v.y, r + 2 + pulse * 2, Rb[1], 0.6, 1);
     X.glow(o, hd[0], hd[1], 7 + pulse * 2, Rb[1], 0.85);
     X.px(o, hd[0], hd[1], '#ffffff');
@@ -1204,9 +1253,9 @@ export class StructureView {
   /** Conjured weapons, distinct per element: stone maul, arcane hook, flame sword, frost spear, lightning whip, tide glaive, healing hands. */
   private weapon(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], up: number, light: LightFn): void {
     if (!v.a) return;
-    const el = elName(w.seats.weapon[i]), side = P(1, -4, 8)[2];
+    const el = elName(w.seats.weapon[i]), side = P(1, 4, 8)[2];
     let c = side < -3.5 ? g : o;
-    const h: Pt = [v.x + v.a.hands[0][0], v.y + v.a.hands[0][1]];
+    const h: Pt = [v.x + v.a.hands[WEAPON_HAND][0], v.y + v.a.hands[WEAPON_HAND][1]];
     const fwd = Math.sign(P(1, 0, 0)[0] - v.x) || 1;
     // held up and a little forward
     const rest = (L: number, lean = 0.45): Pt => [h[0] + fwd * L * lean, h[1] - L * Math.sqrt(1 - lean * lean)];
@@ -1716,7 +1765,7 @@ export class StructureView {
       case 'mv-chargedbolt': case 'mv-siphon': {
         // the wand: rings off the tip as a charged bolt leaves; Siphon pulls violet motes in from all round
         const v = bodies[f.who]; if (!v?.on || !v.a) return;
-        const tip: Pt = [v.x + v.a.hands[0][0], v.y + v.a.hands[0][1] - 9], q = e / f.life;
+        const tip: Pt = [v.x + v.a.hands[WEAPON_HAND][0], v.y + v.a.hands[WEAPON_HAND][1] - 9], q = e / f.life;
         if (f.kind === 'mv-siphon') { for (let j = 0; j < 6; j++) { const a = rand(j, 1, sd) * TAU; S.mote(o, [tip[0] + Math.cos(a) * 30, tip[1] + 10 + Math.sin(a) * 18], tip, q, EL.arcane, 10); } return; }
         K.gring(o, tip[0], tip[1] + 4, 3 + q * 18, EL.arcane[1], 1 - q, 1); X.glow(o, tip[0], tip[1], 9 * (1 - q), EL.arcane[2], 0.9);
         return;
@@ -1724,7 +1773,7 @@ export class StructureView {
       case 'mv-javelin': {
         // the throw: the spear thrusts and an ice copy peels off its head along the thrust line, shedding frost
         const v = bodies[f.who]; if (!v?.on || !v.a) return;
-        const q = e / f.life, a = w.bodies.face[f.who] * TAU, ux = Math.cos(a), uy = Math.sin(a) * FY, hx = v.x + v.a.hands[0][0], hy = v.y + v.a.hands[0][1];
+        const q = e / f.life, a = w.bodies.face[f.who] * TAU, ux = Math.cos(a), uy = Math.sin(a) * FY, hx = v.x + v.a.hands[WEAPON_HAND][0], hy = v.y + v.a.hands[WEAPON_HAND][1];
         if (q < 0.35) { const k = q / 0.35; X.line(o, hx + ux * (4 + k * 10), hy + uy * (4 + k * 10) - 2, hx + ux * (16 + k * 14), hy + uy * (16 + k * 14) - 2, '#c4eefa', 2); X.glow(o, hx + ux * 16, hy + uy * 16 - 2, 6 * (1 - k), '#9ff4ff', 0.8); }
         for (let j = 0; j < 8; j++) { const d = 14 + rand(j, 1, sd) * 12; if (rand(j, 2, sd) < q) continue; X.px(o, hx + ux * d + (rand(j, 3, sd) - 0.5) * 4, hy + uy * d - 2 + e * 14, j % 2 ? '#ffffff' : X.FROST[1]); }
         return;

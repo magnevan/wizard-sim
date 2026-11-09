@@ -259,6 +259,16 @@ describe('Life (support)', () => {
 });
 
 describe('Area and Place', () => {
+  it('an Area cast leaves no floor, so it neither soaks nor burns its caster', () => {
+    for (const el of ['water', 'fire', 'cold'] as const) {
+      const { w, d } = range(4);
+      d.queue(el, el).cast(BTN.area, 1, 60);
+      expect(Array.from(w.surf.kind).every((k) => k === 0)).toBe(true);
+      expect(w.bodies.wet[0]).toBe(0);
+      expect(w.bodies.burn[0]).toBe(0);
+    }
+  });
+
   it('a flood leaves water on the floor, and a lightning strike on it surges', () => {
     const { w, d, dummy } = range(4);
     d.queue('water').place(4, 0);

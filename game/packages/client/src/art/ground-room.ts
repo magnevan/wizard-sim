@@ -4,7 +4,7 @@
  */
 import { Texture } from 'pixi.js';
 import { GROUNDS } from './grounds.gen';
-import { groundAt, isoCamera, matchColour, paintGround, todayCamera, type GroundCamera, type GroundMap, type Material } from './ground';
+import { calmed, groundAt, isoCamera, matchColour, paintGround, todayCamera, type GroundCamera, type GroundMap, type Material } from './ground';
 import { loadTexture, propImage } from './assets';
 import { rand, vnoise } from './util';
 import { PPU } from '../camera';
@@ -12,8 +12,8 @@ import { FLOOR } from './floor';
 import * as X from './px';
 
 /** Ground character -> its image and whether it can be mirrored at random (not if it has joints to line up). Alternates are <file>-2.png and on. */
-const MATERIALS: Readonly<Record<string, { file: string; flip: boolean }>> = {
-  g: { file: 'grass', flip: true }, d: { file: 'dirt', flip: true }, s: { file: 'sand', flip: true },
+const MATERIALS: Readonly<Record<string, { file: string; flip: boolean; calm?: number }>> = {
+  g: { file: 'grass', flip: true, calm: 0.45 }, d: { file: 'dirt', flip: true }, s: { file: 'sand', flip: true },
   f: { file: 'flagstone', flip: false }, c: { file: 'cobble', flip: false }, m: { file: 'mud', flip: true },
   l: { file: 'leaves', flip: true }, r: { file: 'gravel', flip: true }, a: { file: 'ash', flip: true },
   p: { file: 'planks', flip: false }, h: { file: 'slabs', flip: false }, w: { file: 'water', flip: true },
@@ -26,7 +26,7 @@ const urlOf = new Map(Object.entries(urls).map(([path, url]) => [path.split('/')
  * drifts of one flower rather than an even confetti. `every`: roughly one spot in this many gets something.
  */
 const SCATTER: Readonly<Record<string, { every: number; items: readonly string[] }>> = {
-  g: { every: 13, items: ['white-daisy-clump', 'yellow-buttercup-clump', 'red-poppy-clump', 'clover-patch', 'short-grass-tuft', 'tall-grass-tuft', 'dry-yellow-grass-tuft', 'yellow-dandelion', 'small-violet-cluster', 'pink-clover-blossom', 'three-pebbles'] },
+  g: { every: 26, items: ['white-daisy-clump', 'yellow-buttercup-clump', 'red-poppy-clump', 'clover-patch', 'short-grass-tuft', 'tall-grass-tuft', 'dry-yellow-grass-tuft', 'yellow-dandelion', 'small-violet-cluster', 'pink-clover-blossom', 'three-pebbles'] },
   d: { every: 14, items: ['single-small-pebble', 'three-pebbles', 'cracked-small-rock', 'small-pile-of-twigs'] },
   m: { every: 16, items: ['small-muddy-puddle', 'three-pebbles', 'single-small-pebble'] },
   l: { every: 6, items: ['green-fallen-leaves', 'orange-fallen-leaves', 'brown-mushroom-cluster', 'red-toadstool', 'tiny-white-mushrooms', 'twig-with-bracket-fungus', 'young-fern', 'small-pile-of-twigs', 'pine-cone', 'fallen-acorns'] },
@@ -82,7 +82,11 @@ function material(ch: string): Promise<Material> {
       img.src = u;
     });
     const altUrls = [...urlOf].filter(([n]) => n.startsWith(def.file + '-')).map(([, u]) => u);
-    p = Promise.all([read(url), ...altUrls.map(read)]).then(([first, ...alts]) => ({ ...first, alts: alts.map((m) => matchColour(m, first)) }));
+    p = Promise.all([read(url), ...altUrls.map(read)]).then(([first, ...alts]) => {
+      // a surface this common has to sit quietly behind the action (the user, on the grass: too busy)
+      const quiet = (m: Material) => (def.calm ? calmed(m, def.calm) : m);
+      return { ...quiet(first), alts: alts.map((m) => quiet(matchColour(m, first))) };
+    });
     loaded.set(ch, p);
   }
   return p;

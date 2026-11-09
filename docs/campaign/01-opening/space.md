@@ -44,3 +44,9 @@ Unanswered means the pick stands, except for purchases.
 1. Block out on today's camera, switch before art goes in. Pick: yes.
 2. A defence reaches twice as far as a person. Pick: yes.
 3. Build the battery first, as a plain playable room. Pick: yes.
+
+## The user's notes on the look (2026-11-09)
+
+- The stone floor's scale is fine.
+- The grass was too busy, so its tiles were calmed (`calm` in `art/ground-room.ts`) and its scatter halved.
+- "Overall the look feels a bit intense, but we haven't done anything with lighting yet, so maybe that'll help resolve it." A lighting pass is the next thing to judge the overall look by, before changing materials further.

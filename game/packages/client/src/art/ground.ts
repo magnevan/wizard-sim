@@ -141,6 +141,14 @@ export function matchColour(alt: Material, base: Material): Material {
   return { ...alt, data };
 }
 
+/** A copy of `m` with its colours pulled toward their average by `k` (1 changes nothing): quieter detail, same overall colour. */
+export function calmed(m: Material, k: number): Material {
+  const c = [0, 0, 0], n = m.data.length / 4, data = new Uint8ClampedArray(m.data);
+  for (let i = 0; i < m.data.length; i += 4) for (let j = 0; j < 3; j++) c[j] += m.data[i + j];
+  for (let i = 0; i < data.length; i += 4) for (let j = 0; j < 3; j++) data[i + j] = c[j] / n + (m.data[i + j] - c[j] / n) * k;
+  return { ...m, data };
+}
+
 /** A texel of material `m` at screen pixel x, y, as [r, g, b] in `rgb`; blockwise shift and mirror for loose materials. */
 const rgb = [0, 0, 0];
 function texel(base: Material, x: number, y: number, px: number, py: number): void {

@@ -201,7 +201,7 @@ const module = { exports: {} };
   };
   const SWING = { earth: 'Stone burst', arcane: 'Arcane burst', life: 'Healing burst', lightning: 'Shock burst', water: 'Water burst', fire: 'Fire burst', cold: 'Frost burst' };
   // the imbued burst: the staff imbued with the queue and released, as in Magicka
-  const swing = (f) => () => [SWING[f], 'A burst of every queued element in a short cone in front of you, hitting harder than the same spell as a ring. Nothing stays in your hand. The cone reaches about 2.5 units, a little more per extra rune; add Sigil for a conjured weapon, or Shield for a defensive one.'];
+  const swing = (f) => () => [SWING[f], 'A burst of every queued element in a short cone in front of you, at full power. Nothing stays in your hand. The cone reaches about 2.5 units, a little more per extra rune; add Sigil for a conjured weapon, or Shield for a defensive one.'];
   const glyphName = (o) => o.sub ? ELEMENTS[o.sub].name + ' ' : '';
 
   const CELLS = {

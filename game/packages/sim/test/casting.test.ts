@@ -269,17 +269,18 @@ describe('Area and Place', () => {
     }
   });
 
-  it('a Fire ring hits up front and more Fire pays; the burst hits harder than the ring', () => {
+  it('Fire and Cold rings hit up front, more runes pay, Cold stays under Fire, and the burst follows the ring', () => {
     const first = (q: Element[], btn: number) => {
       const { w, d, dummy } = range(1.6);
       const hp = w.bodies.hp[dummy];
       d.queue(...q).cast(btn, 1, 20); // before much of the burn has ticked
       return hp - w.bodies.hp[dummy];
     };
-    const burn = (STATUS.burnDps * 20) / 60;
     expect(first(['fire'], BTN.area)).toBeGreaterThan(DAMAGE.fire * SHAPES.fireBlast * 0.9);
     expect(first(['fire', 'fire', 'fire'], BTN.area)).toBeGreaterThan(first(['fire'], BTN.area) * 1.8);
-    expect(first(['fire'], BTN.weapon) - burn).toBeGreaterThan((first(['fire'], BTN.area) - burn) * 1.3);
+    expect(first(['cold'], BTN.area)).toBeCloseTo(DAMAGE.cold * SHAPES.coldBlast, 3);
+    expect(first(['cold', 'cold', 'cold'], BTN.area)).toBeCloseTo(DAMAGE.cold * SHAPES.coldBlast * 2.4, 3);
+    expect(first(['cold', 'cold', 'cold'], BTN.area)).toBeLessThan(first(['fire', 'fire', 'fire'], BTN.area));
     expect(first(['arcane'], BTN.weapon)).toBeCloseTo(first(['arcane'], BTN.area) * SHAPES.imbuePower, 3);
   });
 

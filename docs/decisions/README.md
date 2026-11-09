@@ -1066,3 +1066,9 @@ The user: the Fire ring has little reason to exist next to the flamethrower, its
 - **New visuals:** the ring has a white-hot flash, a tall double front of flame, thrown embers, smoke and drawn scorch marks (no floor); the Fire burst has a muzzle flash, a fan of flame and a scorched wedge.
 - **Golden hash** `e19c4685` → `b29ab7f1`: the scripted run taps a Fire ring.
 - **Open:** how burning itself should work; see `ideas/burn-by-damage.md`. Other elements' rings are not touched: Cold's is also weak (5, 7, 9) and Water's does no damage by design.
+
+## 2026-11-09: The burst keeps the ring's power; Cold's first pass
+
+- **The 1.5× burst above is reversed.** The user: the burst's benefit is that friendly fire is easier to control, even if its damage potential is lower. The audit's "no reason to pick it" ignored that. `shapes.imbuePower` is 1 and stays a slider.
+- **Cold's ring and burst, first pass, built on the user's ask for a balance pass on its initial damage:** the direct hit is 1.6× its table rate (`shapes.coldBlast`) and pays +70 % a rune, for 8, 14 and 19 against Fire's 12, 20 and 29, with no burn on top. Cold is meant to be the weaker damage; its essence is the slow. Frost spray, the frost sheet and Ice shards are unchanged. The golden hash didn't move (the scripted run has no Cold-led ring or burst).
+- **Open:** strong enemies should be harder to slow (the user), and today chill builds the same on everything.

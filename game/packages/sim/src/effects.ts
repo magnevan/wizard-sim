@@ -138,9 +138,10 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
   const b = w.bodies, x = ex.ox ?? b.x[src], y = ex.oy ?? b.y[src];
   const dx = cosTurns(face), dy = sinTurns(face);
   const n = spec.formN, p = payloadOf(spec), k = ex.scale ?? 1;
-  // Fire's one-shot casts: its table damage is a spray's per-second rate on the sqrt curve, so a single
-  // blast needs its own multiplier, and it pays +70 % a rune like Arcane's nova rather than sqrt(n).
-  const fireBlast = spec.form === EL.fire && !spec.scald ? (SHAPES.fireBlast * (1 + 0.7 * (n - 1))) / Math.sqrt(n) : 1;
+  // Fire's and Cold's one-shot casts: their table damage is a spray's per-second rate on the sqrt curve, so a
+  // single blast needs its own multiplier, and it pays +70 % a rune like Arcane's nova rather than sqrt(n).
+  const blastBase = spec.form === EL.fire && !spec.scald ? SHAPES.fireBlast : spec.form === EL.cold && !spec.freeze ? SHAPES.coldBlast : 0;
+  const blast = blastBase ? (blastBase * (1 + COMBAT.formScaling * (n - 1))) / Math.sqrt(n) : 1;
   switch (spec.shape) {
     case 'missile': {
       if (spec.heal) { spawnMissile(w, src, p, dx, dy, 3, (0.7 + 0.3 * charge) * k, tx, ty, ex.ox, ex.oy); break; }
@@ -165,7 +166,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     case 'nova': case 'quake': {
       const r = (spec.shape === 'quake' ? SHAPES.novaRadius + 1 : SHAPES.novaRadius) + SHAPES.novaPerRune * (n - 1);
       // Leaves the floor alone: a floor laid round you soaks or burns you, the caster (Place is for floors).
-      disc(w, p, src, x, y, r, k * fireBlast, spec.heal ? -1 : src); // the Healing ring heals you too
+      disc(w, p, src, x, y, r, k * blast, spec.heal ? -1 : src); // the Healing ring heals you too
       burstEvent(w, src, x, y, r, spec.look);
       break;
     }
@@ -204,7 +205,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       setHitKind(HIT_KIND.burst);
       for (let i = 0; i < b.kind.length; i++) {
         if (!alive(w, i) || i === src || !inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
-        hit(w, i, p, hitOpts(p, src, k * fireBlast * SHAPES.imbuePower, dx, dy)); // narrower than the ring, so it hits harder
+        hit(w, i, p, hitOpts(p, src, k * blast * SHAPES.imbuePower, dx, dy));
       }
       let mask = 0;
       for (let e = 1; e <= N_EL; e++) if (spec.counts[e - 1]) mask |= 1 << e;

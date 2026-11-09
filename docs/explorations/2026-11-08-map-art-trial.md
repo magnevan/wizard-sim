@@ -70,3 +70,9 @@ Free and local: Real-ESRGAN (`realesrgan-ncnn-vulkan`, v0.2.5.0) on `map-thumb-6
 ## ChatGPT on the same sketch and prompt (same day)
 
 The user ran the page's prompt and seed 647051's thumbnail through ChatGPT by hand (`tools/art-trial/out/chatgpt-output-647051-sketch.png`, 1402 x 1122, gitignored). It is the best craft so far: one hand throughout, right scale, towns with readable shapes at native size, and the closest match yet to the sketch's coasts and fields. What it lost against Gemini's `-b`: fewer striking one-off landmarks (mostly castles and towns), the fen reads as green lowland rather than waterlogged, and it added a parchment edge and cloud border that hide the corners and much of the frozen north. The same 62/38 upscale gives 5608 x 4488 (`map-chatgpt-647051-x4.png`): crisper ink, with a slight mosaic look in the fine fen brushwork.
+
+## ChatGPT follow-up, and lettering (2026-11-09)
+
+The user asked ChatGPT, in the same chat, to drop the parchment and clouds, run the ice off the top, make the north-east a waterlogged fen, and give each land one signature landmark (`chatgpt-output-647051-sketch-refined-v1.png`, gitignored). All of it landed: a skeleton in the ice, a crystal peak, a giant tree, a mesa fortress, a rock arch, a stilt town, a floating tower and a volcano, with the geography unchanged. Colours are a little more saturated than the muted brief, and the tree runs larger than the "small mountain" limit. This is the map we carry forward. Two passes in one chat beat one long prompt: the first gets the world, the second fixes specific things.
+
+It was upscaled the same way (`map-chatgpt-647051-v1-x4.png`, 5608 x 4488) and put on the new `tools/map-labels/` page with 24 starter names placed by eye from the painting. No towns are named yet.

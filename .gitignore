@@ -21,3 +21,6 @@ tools/art-trial/out/
 
 # Local reference material, never published
 .reference/
+
+# the painted map is generated art, published with the page but kept out of the public repo
+tools/map-labels/map.jpg

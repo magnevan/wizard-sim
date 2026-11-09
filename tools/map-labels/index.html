@@ -1,0 +1,432 @@
+<title>Atlas Lettering</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap">
+<style>
+/* Layout: the painted map fills the room, a narrow scribe's panel sits beside it. One dark look, the colour of the map's sea. */
+:root {
+  --deep: #0e1e29; --panel: #15293a; --raised: #1e3648; --rule: #30495b;
+  --fg: #ece3d0; --muted: #a3b5be; --gold: #e6b868; --danger: #e58f7b;
+  --display: "IM Fell English SC", Georgia, serif;
+  --body: "Alegreya Sans", "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--deep); color: var(--fg); font: 16px/1.4 var(--body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 10px; box-sizing: border-box; }
+.app { height: 100%; display: grid; grid-template: auto minmax(0, 1fr) / minmax(0, 1fr) 310px; gap: 10px 14px; }
+header { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
+h1 { font: 400 26px/1.1 var(--display); margin: 0; letter-spacing: .03em; }
+#hint { color: var(--muted); flex: 1 1 260px; min-width: 0; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+button, select, input[type=text] { font: inherit; color: var(--fg); background: var(--raised); border: 1px solid var(--rule); border-radius: 4px; padding: 5px 11px; }
+button { cursor: pointer; }
+button:hover { border-color: var(--gold); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+button.primary { background: var(--gold); border-color: var(--gold); color: #20150a; font-weight: 700; }
+button[aria-pressed=true] { background: var(--gold); border-color: var(--gold); color: #20150a; }
+#stage { position: relative; overflow: hidden; background: #123447; border-radius: 3px; touch-action: none; cursor: crosshair; min-height: 0; }
+#map { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; user-select: none; -webkit-user-drag: none; }
+#ink { position: absolute; inset: 0; width: 100%; height: 100%; }
+#loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font: 22px var(--display); }
+.zoom { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 4px; }
+.zoom button { background: rgba(14, 30, 41, .86); min-width: 38px; }
+aside { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; padding-right: 2px; }
+.sec { display: grid; gap: 9px; background: var(--panel); padding: 12px; border-radius: 4px; }
+.sec h2 { font: 400 19px/1.1 var(--display); margin: 0; letter-spacing: .03em; }
+.row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.row > input[type=text] { flex: 1 1 120px; min-width: 0; }
+.chips button { padding: 3px 9px; font-size: 15px; }
+label.f { display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: 8px; color: var(--muted); font-size: 15px; }
+input[type=range] { accent-color: var(--gold); width: 100%; }
+select { width: 100%; }
+.danger { color: var(--danger); }
+#list { display: grid; gap: 1px; }
+#list button { display: flex; justify-content: space-between; gap: 8px; background: none; border: 0; padding: 3px 4px; text-align: left; }
+#list button:hover { background: var(--raised); }
+#list button.on { color: var(--gold); }
+#list span:last-child { color: var(--muted); font-size: 14px; flex: none; }
+#list span:first-child { min-width: 0; overflow-wrap: anywhere; }
+#status { color: var(--muted); font-size: 15px; min-height: 1.4em; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+#status button { padding: 1px 8px; }
+@media (max-width: 760px) {
+  html, body { height: auto; }
+  .app { height: auto; grid-template: auto 62vh auto / minmax(0, 1fr); }
+  aside { overflow: visible; }
+}
+</style>
+
+<div class="app">
+  <header>
+    <h1>Atlas Lettering</h1>
+    <div id="hint">Click an empty spot to place a name. Drag a name to move it.</div>
+    <div class="tools">
+      <button id="toggle" aria-pressed="false">Hide names</button>
+      <button id="export" class="primary" hidden>Save lettered map</button>
+    </div>
+  </header>
+
+  <main id="stage" aria-label="The painted world map">
+    <div id="loading">Unrolling the map…</div>
+    <img id="map" src="map.jpg" alt="Painted fantasy world map" draggable="false">
+    <canvas id="ink"></canvas>
+    <div class="zoom">
+      <button id="zout" aria-label="Zoom out">−</button>
+      <button id="fit">Fit</button>
+      <button id="zin" aria-label="Zoom in">+</button>
+    </div>
+  </main>
+
+  <aside>
+    <section class="sec" id="newbox">
+      <h2>Next name</h2>
+      <div class="row chips" id="newKinds"></div>
+      <label class="f">Land <select id="newField"></select></label>
+    </section>
+
+    <section class="sec" id="editbox" hidden>
+      <h2>This name</h2>
+      <div class="row">
+        <input type="text" id="tx" aria-label="Name" autocomplete="off">
+        <button id="reroll">Reroll</button>
+      </div>
+      <div class="row chips" id="kinds"></div>
+      <label class="f">Land <select id="field"></select></label>
+      <label class="f">Size <input type="range" id="scale" min="0.4" max="2.6" step="0.02"></label>
+      <label class="f">Turn <input type="range" id="angle" min="-90" max="90" step="1"></label>
+      <label class="f">Bend <input type="range" id="arc" min="-1" max="1" step="0.02"></label>
+      <div class="row">
+        <button id="inkDark">Dark ink</button>
+        <button id="inkLight">Pale ink</button>
+        <button id="remove" class="danger">Remove</button>
+      </div>
+    </section>
+
+    <div id="status" role="status"></div>
+
+    <section class="sec">
+      <h2>On the map <span id="count"></span></h2>
+      <div id="list"></div>
+    </section>
+  </aside>
+</div>
+
+<script>
+// Names, from the Field Atlas generator (tools/world-map/gen.js).
+const STYLE = {
+  cold: { on: ['Hr', 'Sk', 'Vr', 'Tj', 'Bj', 'Gr', 'Sv', 'Kj', 'Th', 'Ulv'], v: ['a', 'e', 'o', 'au', 'ei', 'u', 'y'], mid: ['r', 'l', 'n', 'v', 'g', 'd', 'k'], end: ['heim', 'vik', 'gard', 'fell', 'dun', 'strand', 'holt', 'nir'] },
+  fire: { on: ['Az', 'Kh', 'Vor', 'Zar', 'Ash', 'Ig', 'Bra', 'Sor', 'Thr', 'Mor'], v: ['a', 'o', 'u', 'ai', 'ar', 'ur'], mid: ['z', 'k', 'r', 'g', 'sh', 'th'], end: ['kar', 'gor', 'zar', 'mar', 'thar', 'ash', 'dun', 'rak'] },
+  water: { on: ['Mer', 'Sel', 'Lin', 'Nai', 'Or', 'Ael', 'Cal', 'Thal', 'Wyn', 'Ris'], v: ['a', 'e', 'i', 'ae', 'o', 'ia'], mid: ['l', 'n', 'r', 'th', 'v', 'm'], end: ['mere', 'wick', 'ford', 'brook', 'haven', 'lun', 'ys', 'water'] },
+  life: { on: ['Sy', 'Ael', 'Ar', 'Fen', 'Lor', 'Mir', 'Tha', 'Wil', 'Bri', 'Ol'], v: ['a', 'e', 'i', 'ia', 'ie', 'o'], mid: ['l', 'n', 'r', 'v', 'dh', 's'], end: ['wen', 'dell', 'thorn', 'lea', 'iel', 'grove', 'wyn', 'mead'] },
+  earth: { on: ['Dur', 'Bor', 'Gor', 'Hal', 'Kro', 'Mag', 'Stor', 'Tor', 'Un', 'Bal'], v: ['a', 'o', 'u', 'e', 'ur'], mid: ['g', 'd', 'n', 'r', 'm', 'b'], end: ['dur', 'grim', 'hold', 'delve', 'mund', 'bar', 'stone', 'gard'] },
+  lightning: { on: ['Ky', 'Zeph', 'Vel', 'Rin', 'Tes', 'Ar', 'Cor', 'Ix', 'Vol', 'Sca'], v: ['a', 'e', 'i', 'y', 'o'], mid: ['r', 'z', 'x', 'l', 'n', 'v'], end: ['rax', 'ix', 'ion', 'vane', 'spire', 'ette', 'ryn', 'vex'] },
+  arcane: { on: ['Xe', 'Ny', 'Qu', 'Vei', 'Zo', 'Ey', 'Mor', 'Ith', 'Oth', 'Aev'], v: ['a', 'e', 'y', 'ae', 'u', 'io'], mid: ['th', 'l', 'x', 'n', 'v', 'r'], end: ['oth', 'eth', 'ael', 'yx', 'uum', 'iun', 'ys', 'ora'] },
+};
+const REGION_WORD = { cold: ['Reach', 'Wastes', 'Fells'], fire: ['Cinders', 'Waste', 'Barrens'], earth: ['Marches', 'Heights', 'Badlands'], water: ['Fen', 'Mire', 'Shallows'], lightning: ['Moors', 'Heath', 'Thunderlands'], life: ['Vale', 'Wilds', 'Weald'], arcane: ['Sunder', 'Expanse', 'Riftlands'] };
+const RANGE_WORD = ['Teeth', 'Spine', 'Range', 'Wall', 'Crown', 'Ridge'];
+const FIELDS = { cold: 'Frozen', fire: 'Volcanic', earth: 'Badlands', water: 'Fen', lightning: 'Moor', life: 'Forest', arcane: 'Arcane' };
+const KINDS = {
+  land:     { label: 'Land',     font: '"IM Fell English SC"', italic: false, size: 150, track: .2,  halo: .13, ink: 'dark' },
+  sea:      { label: 'Sea',      font: '"IM Fell English"',    italic: true,  size: 130, track: .2,  halo: 0,   ink: 'light' },
+  range:    { label: 'Range',    font: '"IM Fell English SC"', italic: false, size: 74,  track: .14, halo: .16, ink: 'dark' },
+  landmark: { label: 'Landmark', font: '"IM Fell English"',    italic: true,  size: 80,  track: .04, halo: .17, ink: 'dark' },
+  town:     { label: 'Town',     font: '"IM Fell English"',    italic: false, size: 58,  track: .03, halo: .2,  ink: 'dark' },
+};
+const INK = {
+  dark:  { fill: '#21140a', wide: 'rgba(245,233,206,.34)', near: 'rgba(245,233,206,.72)' },
+  light: { fill: '#f7eeda', wide: 'rgba(20,14,10,.3)',     near: 'rgba(20,14,10,.66)' },
+};
+
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+function word(k) {
+  const s = STYLE[k];
+  for (let t = 0; t < 40; t++) {
+    let n = pick(s.on) + pick(s.v);
+    if (Math.random() < .4) n += pick(s.mid) + pick(s.v);
+    n += pick(s.end);
+    if (n.length <= 11 && !labels.some((l) => l.text.includes(n))) return n;
+  }
+  return pick(s.on) + pick(s.end);
+}
+function suggest(kind, k) {
+  if (kind === 'land') return `The ${word(k)} ${pick(REGION_WORD[k])}`;
+  if (kind === 'range') return `The ${word(k)} ${pick(RANGE_WORD)}`;
+  if (kind === 'sea') return `The Sea of ${word('water')}`;
+  if (kind === 'landmark') return `${pick(['Old', 'The Hollow of', 'The Eye of', 'The Heart of', 'The Throne of'])} ${word(k)}`;
+  return word(k);
+}
+
+const $ = (id) => document.getElementById(id);
+const stage = $('stage'), img = $('map'), ink = $('ink'), ctx = ink.getContext('2d');
+let MW = 5608, MH = 4488, view = { s: .2, x: 0, y: 0 }, touched = false;
+let labels = (window.__labels || []).map(norm), sel = null, show = true, ready = false;
+let coll = null, downloads = null, nextKind = 'town', nextField = 'earth';
+const timers = new Map();
+
+function norm(d) {
+  const kind = KINDS[d.kind] ? d.kind : 'town';
+  return { id: String(d.id), text: String(d.text || ''), kind, field: FIELDS[d.field] ? d.field : 'earth', x: +d.x || 0, y: +d.y || 0, scale: +d.scale || 1, angle: +d.angle || 0, arc: +d.arc || 0, ink: INK[d.ink] ? d.ink : KINDS[kind].ink };
+}
+
+// One renderer for the screen and the saved image. Units are pixels of the full-size map.
+function layout(c, l) {
+  const k = KINDS[l.kind], size = k.size * l.scale;
+  c.font = `${k.italic ? 'italic ' : ''}${size}px ${k.font}`;
+  const chars = [...l.text], adv = chars.map((ch) => c.measureText(ch).width + size * k.track);
+  const total = Math.max(1, adv.reduce((a, b) => a + b, 0) - size * k.track);
+  const theta = l.arc * 1.5, R = Math.abs(theta) > .01 ? total / theta : 0;
+  let s = -total / 2;
+  const glyphs = chars.map((ch, i) => {
+    const w = adv[i] - size * k.track, mid = s + w / 2; s += adv[i];
+    if (!R) return { ch, x: mid, y: 0, r: 0 };
+    const phi = mid / R;
+    return { ch, x: R * Math.sin(phi), y: R * (1 - Math.cos(phi)), r: phi };
+  });
+  const sag = R ? Math.abs(R * (1 - Math.cos(theta / 2))) : 0;
+  return { glyphs, total, size, sag, halo: size * k.halo, dy: R ? (R > 0 ? sag / 2 : -sag / 2) : 0 };
+}
+function drawLabel(c, l) {
+  const m = layout(c, l), ink_ = INK[l.ink];
+  c.save();
+  c.translate(l.x * MW, l.y * MH);
+  c.rotate(l.angle * Math.PI / 180);
+  c.translate(0, -m.dy);
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+  const pass = (fn) => { for (const g of m.glyphs) { c.save(); c.translate(g.x, g.y); c.rotate(g.r); fn(g.ch); c.restore(); } };
+  if (m.halo) {
+    c.strokeStyle = ink_.wide; c.lineWidth = m.halo * 1.5; pass((ch) => c.strokeText(ch, 0, 0));
+    c.strokeStyle = ink_.near; c.lineWidth = m.halo * .75; pass((ch) => c.strokeText(ch, 0, 0));
+  }
+  c.fillStyle = ink_.fill; pass((ch) => c.fillText(ch, 0, 0));
+  c.restore();
+}
+function bounds(l) {
+  const m = layout(ctx, l);
+  return { w: m.total / 2 + m.size * .3, h: m.size * .7 + m.sag / 2 };
+}
+function hitTest(p) {
+  let best = null, area = Infinity;
+  for (const l of labels) {
+    const b = bounds(l), a = -l.angle * Math.PI / 180, dx = p.x - l.x * MW, dy = p.y - l.y * MH;
+    const lx = dx * Math.cos(a) - dy * Math.sin(a), ly = dx * Math.sin(a) + dy * Math.cos(a);
+    if (Math.abs(lx) <= b.w && Math.abs(ly) <= b.h && b.w * b.h < area) { best = l; area = b.w * b.h; }
+  }
+  return best;
+}
+
+let queued = false;
+function draw() { if (!queued) { queued = true; requestAnimationFrame(paint); } }
+function paint() {
+  queued = false;
+  const dpr = window.devicePixelRatio || 1;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, ink.width, ink.height);
+  if (!ready || !show) return;
+  ctx.setTransform(dpr * view.s, 0, 0, dpr * view.s, dpr * view.x, dpr * view.y);
+  for (const l of labels) drawLabel(ctx, l);
+  if (sel) {
+    const b = bounds(sel);
+    ctx.save();
+    ctx.translate(sel.x * MW, sel.y * MH); ctx.rotate(sel.angle * Math.PI / 180);
+    ctx.strokeStyle = '#e6b868'; ctx.lineWidth = 2 / view.s; ctx.setLineDash([7 / view.s, 5 / view.s]);
+    ctx.strokeRect(-b.w, -b.h, b.w * 2, b.h * 2);
+    ctx.restore();
+  }
+}
+function apply() { img.style.transform = `translate(${view.x}px,${view.y}px) scale(${view.s})`; draw(); }
+function fitView() {
+  const r = stage.getBoundingClientRect(), s = Math.min(r.width / MW, r.height / MH);
+  view = { s, x: (r.width - MW * s) / 2, y: (r.height - MH * s) / 2 };
+  apply();
+}
+function zoomAt(cx, cy, f) {
+  const r = stage.getBoundingClientRect(), min = Math.min(r.width / MW, r.height / MH) * .8;
+  const s = Math.max(min, Math.min(2, view.s * f)), k = s / view.s;
+  view = { s, x: cx - (cx - view.x) * k, y: cy - (cy - view.y) * k };
+  touched = true; apply();
+}
+function sizeInk() {
+  const r = stage.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  ink.width = Math.round(r.width * dpr); ink.height = Math.round(r.height * dpr);
+  if (!touched) fitView(); else draw();
+}
+new ResizeObserver(sizeInk).observe(stage);
+const atPointer = (e) => { const r = stage.getBoundingClientRect(); return { cx: e.clientX - r.left, cy: e.clientY - r.top }; };
+const toMap = (cx, cy) => ({ x: (cx - view.x) / view.s, y: (cy - view.y) / view.s });
+
+// Pointer: drag a name to move it, drag the map to pan, click empty ground to add.
+const pts = new Map();
+let drag = null, pinch = null;
+stage.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('.zoom') || !ready) return;
+  stage.setPointerCapture(e.pointerId);
+  const a = atPointer(e); pts.set(e.pointerId, a);
+  if (pts.size === 2) {
+    const [p, q] = [...pts.values()];
+    pinch = { d: Math.hypot(p.cx - q.cx, p.cy - q.cy) }; drag = null; return;
+  }
+  const m = toMap(a.cx, a.cy), hit = show ? hitTest(m) : null;
+  if (hit) { select(hit); drag = { mode: 'move', l: hit, ox: m.x - hit.x * MW, oy: m.y - hit.y * MH, ...a, moved: false, type: e.pointerType }; }
+  else drag = { mode: 'pan', vx: view.x, vy: view.y, ...a, moved: false, type: e.pointerType };
+});
+stage.addEventListener('pointermove', (e) => {
+  const a = atPointer(e);
+  if (pts.has(e.pointerId)) pts.set(e.pointerId, a);
+  if (pinch && pts.size === 2) {
+    const [p, q] = [...pts.values()], d = Math.hypot(p.cx - q.cx, p.cy - q.cy);
+    zoomAt((p.cx + q.cx) / 2, (p.cy + q.cy) / 2, d / pinch.d); pinch.d = d; return;
+  }
+  if (!drag) { stage.style.cursor = show && ready && hitTest(toMap(a.cx, a.cy)) ? 'move' : 'crosshair'; return; }
+  if (Math.hypot(a.cx - drag.cx, a.cy - drag.cy) > 4) drag.moved = true;
+  if (!drag.moved) return;
+  if (drag.mode === 'pan') { view.x = drag.vx + a.cx - drag.cx; view.y = drag.vy + a.cy - drag.cy; touched = true; apply(); }
+  else { const m = toMap(a.cx, a.cy); drag.l.x = (m.x - drag.ox) / MW; drag.l.y = (m.y - drag.oy) / MH; draw(); }
+});
+function release(e) {
+  pts.delete(e.pointerId);
+  if (pts.size < 2) pinch = null;
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (d.mode === 'move' && d.moved) save(d.l);
+  if (d.mode === 'pan' && !d.moved && e.type === 'pointerup') {
+    if (sel) select(null);
+    else if (show) { const m = toMap(d.cx, d.cy); add(m.x / MW, m.y / MH, d.type === 'mouse'); }
+  }
+}
+stage.addEventListener('pointerup', release);
+stage.addEventListener('pointercancel', release);
+stage.addEventListener('wheel', (e) => { e.preventDefault(); const a = atPointer(e); zoomAt(a.cx, a.cy, Math.exp(-e.deltaY * .0016)); }, { passive: false });
+$('zin').onclick = () => { const r = stage.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, 1.5); };
+$('zout').onclick = () => { const r = stage.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, 1 / 1.5); };
+$('fit').onclick = () => { touched = false; fitView(); };
+
+// Storage: one doc per name, written shortly after the last change.
+function save(l) {
+  if (!coll) return;
+  clearTimeout(timers.get(l.id));
+  timers.set(l.id, setTimeout(async () => {
+    try { const { id, ...data } = l; await coll.doc(id).set(data); }
+    catch { say('That change could not be saved. Check your connection and try again.'); }
+    timers.delete(l.id);
+  }, 350));
+}
+function say(msg, undo) {
+  const s = $('status'); s.textContent = msg;
+  if (undo) { const b = document.createElement('button'); b.textContent = 'Undo'; b.onclick = () => { undo(); s.textContent = ''; }; s.append(b); }
+}
+function add(x, y, focus) {
+  const l = { id: 'n' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36), text: suggest(nextKind, nextField), kind: nextKind, field: nextField, x, y, scale: 1, angle: 0, arc: 0, ink: KINDS[nextKind].ink };
+  labels.push(l); save(l); select(l); list();
+  if (focus) { $('tx').focus(); $('tx').select(); }
+}
+function remove(l) {
+  labels = labels.filter((o) => o !== l);
+  clearTimeout(timers.get(l.id)); timers.delete(l.id);
+  if (coll) coll.doc(l.id).delete().catch(() => say('That name could not be removed. Try again.'));
+  select(null); list();
+  say(`Removed ${l.text}.`, () => { labels.push(l); save(l); select(l); list(); });
+}
+
+// Panel
+function chips(box, active, onPick) {
+  box.replaceChildren(...Object.entries(KINDS).map(([k, v]) => {
+    const b = document.createElement('button');
+    b.textContent = v.label; b.setAttribute('aria-pressed', k === active);
+    b.onclick = () => onPick(k);
+    return b;
+  }));
+}
+function drawNew() { chips($('newKinds'), nextKind, (k) => { nextKind = k; drawNew(); }); }
+function select(l) {
+  sel = l;
+  $('editbox').hidden = !l;
+  $('newbox').hidden = !!l;
+  $('hint').textContent = l ? 'Drag to move it. Click empty ground to finish.' : 'Click an empty spot to place a name. Drag a name to move it.';
+  if (l) sync(); else drawNew();
+  list(); draw();
+}
+function sync() {
+  const l = sel;
+  if (document.activeElement !== $('tx')) $('tx').value = l.text;
+  $('field').value = l.field; $('scale').value = l.scale; $('angle').value = l.angle; $('arc').value = l.arc;
+  chips($('kinds'), l.kind, (k) => { l.kind = k; changed(); sync(); });
+  $('inkDark').setAttribute('aria-pressed', l.ink === 'dark');
+  $('inkLight').setAttribute('aria-pressed', l.ink === 'light');
+}
+function changed() { if (!sel) return; save(sel); draw(); list(); }
+function list() {
+  $('count').textContent = `(${labels.length})`;
+  const order = Object.keys(KINDS);
+  const sorted = [...labels].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind) || a.text.localeCompare(b.text));
+  $('list').replaceChildren(...sorted.map((l) => {
+    const b = document.createElement('button'), n = document.createElement('span'), k = document.createElement('span');
+    n.textContent = l.text || '(blank)'; k.textContent = KINDS[l.kind].label;
+    b.append(n, k); if (l === sel) b.className = 'on';
+    b.onclick = () => select(l);
+    return b;
+  }));
+}
+for (const id of ['field', 'newField']) $(id).replaceChildren(...Object.entries(FIELDS).map(([k, v]) => new Option(v, k)));
+$('newField').value = nextField;
+$('newField').onchange = (e) => { nextField = e.target.value; };
+$('tx').oninput = (e) => { sel.text = e.target.value; changed(); };
+$('reroll').onclick = () => { sel.text = suggest(sel.kind, sel.field); $('tx').value = sel.text; changed(); };
+$('field').onchange = (e) => { sel.field = e.target.value; changed(); };
+for (const id of ['scale', 'angle', 'arc']) $(id).oninput = (e) => { sel[id] = +e.target.value; changed(); };
+$('inkDark').onclick = () => { sel.ink = 'dark'; changed(); sync(); };
+$('inkLight').onclick = () => { sel.ink = 'light'; changed(); sync(); };
+$('remove').onclick = () => remove(sel);
+$('toggle').onclick = (e) => { show = !show; e.target.setAttribute('aria-pressed', !show); e.target.textContent = show ? 'Hide names' : 'Show names'; if (!show) select(null); draw(); };
+addEventListener('keydown', (e) => {
+  if (e.target.matches('input,select')) return;
+  if ((e.key === 'Delete' || e.key === 'Backspace') && sel) remove(sel);
+  if (e.key === 'Escape') select(null);
+});
+
+$('export').onclick = async () => {
+  const b = $('export'); b.disabled = true; say('Lettering the full-size map…');
+  try {
+    const c = document.createElement('canvas'); c.width = MW; c.height = MH;
+    const g = c.getContext('2d');
+    g.drawImage(img, 0, 0, MW, MH);
+    for (const l of labels) drawLabel(g, l);
+    const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', .94));
+    if (!blob) throw 0;
+    await downloads.save({ filename: 'world-map-lettered.jpg', data: blob });
+    say('Saved.');
+  } catch (err) {
+    say(err && err.code === 'declined' ? 'Save cancelled.' : 'This device could not build an image this large. Try a desktop browser.');
+  }
+  b.disabled = false;
+};
+
+drawNew(); list();
+const fontsReady = Promise.all(['40px "IM Fell English SC"', '40px "IM Fell English"', 'italic 40px "IM Fell English"'].map((f) => document.fonts.load(f))).catch(() => {});
+function onMap() {
+  MW = img.naturalWidth; MH = img.naturalHeight;
+  img.style.width = MW + 'px'; img.style.height = MH + 'px';
+  $('loading').hidden = true; ready = true;
+  sizeInk(); fontsReady.then(draw);
+}
+if (img.complete && img.naturalWidth) onMap(); else img.onload = onMap;
+img.onerror = () => { $('loading').textContent = 'The map image did not load. Reload the page.'; };
+
+const use = (n) => (window.claude && window.claude.use ? window.claude.use(n) : Promise.resolve(null));
+use('downloads').then((d) => { downloads = d; $('export').hidden = !d; });
+use('db').then((db) => {
+  if (!db) { say('Names made in this view will not be saved.'); return; }
+  coll = db.collection('labels');
+  coll.onSnapshot((snap) => {
+    const next = [], seen = new Set();
+    for (const d of snap.docs) {
+      seen.add(d.id);
+      const local = labels.find((l) => l.id === d.id);
+      if (local && (timers.has(d.id) || (drag && drag.l === local) || (local === sel && document.activeElement === $('tx')))) { next.push(local); continue; }
+      const fresh = norm({ ...d.data(), id: d.id });
+      if (local) { Object.assign(local, fresh); next.push(local); } else next.push(fresh);
+    }
+    for (const l of labels) if (!seen.has(l.id) && timers.has(l.id)) next.push(l);
+    labels = next;
+    if (sel && !labels.includes(sel)) select(null); else if (sel) sync();
+    list(); draw();
+  }, () => say('Lost the connection to the saved names. Reload the page.'));
+});
+</script>

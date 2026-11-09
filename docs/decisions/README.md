@@ -1002,3 +1002,6 @@ The user's answers on the World and Progression page.
 ## 2026-11-08: The map pipeline is seed, then painting, then labels (`explorations/2026-11-08-map-art-trial.md`)
 - **Generate a seed image, have an image model paint a beautiful map from it with real freedom, then label the world from what the model painted.** The seed is inspiration, not a layout to preserve. This replaces "keep the layout exactly and lay the lettering back on".
 
+## 2026-11-09: ChatGPT paints the world map, in two passes (`explorations/2026-11-08-map-art-trial.md`)
+- **ChatGPT replaces Gemini for the painting, run by hand in its own app.** On the same sketch and prompt it gave better craft, scale and fidelity to the sketch. A second message in the same chat fixed the specific gaps (edges, fen, signature landmarks) without losing the world.
+- **Labels are placed on the painting in `tools/map-labels/`,** with generated names as starting points to reroll or replace.

@@ -177,7 +177,7 @@ function texel(base: Material, x: number, y: number, px: number, py: number): vo
  * material for unpainted cells. Colours come from screen position, so textures don't shear with the
  * camera; a material with a grid in it (flagstones) is the one thing that would need its own version.
  */
-export function paintGround(out: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, g: GroundMap, mats: Readonly<Record<string, Material>>, base: string, cam: GroundCamera, extent = g.w): void {
+export function paintGround(out: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, g: GroundMap, mats: Readonly<Record<string, Material>>, base: string, cam: GroundCamera, extent = g.w, lit = false): void {
   // the dusk falloff follows what's on screen: for a turned room, the square that holds it (extent)
   const AW = (extent / 2) * PPU, AH = ((extent === g.w ? g.h : extent) / 2) * PPU * FY;
   const f = buildField(g, base);
@@ -223,9 +223,14 @@ export function paintGround(out: Uint8ClampedArray, W: number, H: number, OX: nu
           k = on ? a : b;
           if (!on && s > -0.5) shade = 0.84; // the bare ground where a stone used to be sits in shadow
         } else {
-          const n = st.edge === 'grow'
+          // each surface's own light and dark decide who wins: sand settles into cracks, stone tops stay clean
+          texel(byIndex[a], x, y, px, py);
+          const ha = (rgb[0] + rgb[1] + rgb[2]) / 765;
+          texel(byIndex[b], x, y, px, py);
+          const hb = (rgb[0] + rgb[1] + rgb[2]) / 765;
+          const n = (ha - hb) * 0.9 + (st.edge === 'grow' ? 0 : 0) + (st.edge === 'grow'
             ? (vnoise(px * 0.42, py * 0.8, 76) - 0.5) * 1.0 + (rand(x, y, 77) - 0.5) * 0.2
-            : (vnoise(px * 0.14, py * 0.2, 78) - 0.5) * 1.1 + (vnoise(px * 0.4, py * 0.5, 79) - 0.5) * 0.5;
+            : (vnoise(px * 0.14, py * 0.2, 78) - 0.5) * 1.1 + (vnoise(px * 0.4, py * 0.5, 79) - 0.5) * 0.5);
           k = s + n > 0 ? a : b;
           if (k === b && s + n > -0.18) shade = 0.82; // the lower material darkens where the upper one overhangs it
         }
@@ -239,10 +244,12 @@ export function paintGround(out: Uint8ClampedArray, W: number, H: number, OX: nu
       let stone = 1;
       if (st.edge === 'block') stone = 0.96 + rand(Math.floor(x / 32), Math.floor(y / 32), 81) * 0.08;
       const e = clamp(Math.hypot(px / (AW + 90), py / (AH + 70)), 0, 1.6);
-      const light = patch * stone * shade * lerp(1, 0.55, clamp((e - 0.55) / 0.9, 0, 1));
-      out[i] = rgb[0] * GRADE[0] * light * lerp(1, tint[0], ta);
-      out[i + 1] = rgb[1] * GRADE[1] * light * lerp(1, tint[1], ta);
-      out[i + 2] = Math.min(255, rgb[2] * GRADE[2] * light * lerp(1, tint[2], ta));
+      // with scene lighting on, the mood and the falloff come from there and aren't baked in
+      const light = patch * stone * shade * (lit ? 1 : lerp(1, 0.55, clamp((e - 0.55) / 0.9, 0, 1)));
+      const gr = lit ? 1 : GRADE[0], gg = lit ? 1 : GRADE[1], gb = lit ? 1 : GRADE[2];
+      out[i] = rgb[0] * gr * light * lerp(1, tint[0], ta);
+      out[i + 1] = rgb[1] * gg * light * lerp(1, tint[1], ta);
+      out[i + 2] = Math.min(255, rgb[2] * gb * light * lerp(1, tint[2], ta));
       out[i + 3] = 255;
     }
   }

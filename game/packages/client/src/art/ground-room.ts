@@ -93,7 +93,7 @@ function material(ch: string): Promise<Material> {
 }
 
 /** Paints `room`'s ground at the floor's current size (floorTexture has set FLOOR). The most common material fills unpainted cells. */
-export async function groundTexture(room: string, w: number, h: number, iso = false, extent = w): Promise<Texture> {
+export async function groundTexture(room: string, w: number, h: number, iso = false, extent = w, lit = false): Promise<Texture> {
   // under the isometric camera an unpainted room still needs a ground: the old floor is drawn for the straight-on view
   const rows = GROUNDS[room] ?? Array.from({ length: Math.round(h * 2) }, () => 'f'.repeat(Math.round(w * 2)));
   const g: GroundMap = { w, h, rows, outside: iso ? 'g' : undefined };
@@ -107,7 +107,7 @@ export async function groundTexture(room: string, w: number, h: number, iso = fa
   const { c, x } = X.canvas(W, H);
   const img = x.createImageData(W, H);
   const cam = iso ? isoCamera(PPU * Math.SQRT1_2) : todayCamera;
-  paintGround(img.data, W, H, OX, OY, g, mats, base, cam, extent);
+  paintGround(img.data, W, H, OX, OY, g, mats, base, cam, extent, lit);
   x.putImageData(img, 0, 0);
   await scatter(x, g, W, H, OX, OY, cam);
   const t = Texture.from(c);

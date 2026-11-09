@@ -1066,3 +1066,8 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **The true isometric camera exists behind `?camera=iso`,** off for everyone else. The user decided on isometric on 2026-11-06, with one room on a branch first. It's done by handing the view a copy of the world turned 45 degrees (`client/src/iso-world.ts`), with the ground squash at 2:1, so the sim, netcode and drawing code are unchanged. Stick input turns to match.
 - **Not handled yet:** the tutorial's overlays, which draw from fixed room positions, so `#tutorial` isn't right under it. The help panel's previews stay straight on, on purpose.
 - **Ground transitions (the user: "transitions between floor materials too, and many ways to give variation"):** per-material edge styles and layered variation, as in `game/content/README.md`. Three more ground sets bought for alternates (45 generations, 1,817 → 1,772).
+
+## 2026-11-09: Scene lighting, on trial with the isometric camera (`explorations/2026-11-09-lighting.md`)
+- **Built while the user couldn't review,** after they found the look "a bit intense": moods per room, cast shadows, lamps on props, cloud shade, and a colour grade. On with `?camera=iso`, off with `?lighting=0`. The public game doesn't have it.
+- **The user's notes that led here:** the stone floor's scale is fine; the grass was too busy (quieted).
+- **Researched, as the user asked,** rather than from memory; sources are in the exploration.

@@ -14,9 +14,9 @@
  * reached the presented frame (tested on SwiftShader and D3D11). Nothing here rotates or
  * scales a sprite, so it isn't needed: rotation lives inside the Canvas2D effect drawing.
  */
-import { Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
-  AI, ARCH, ARCHETYPES, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, PHASE, TUT_TAG,
+  AI, ARCH, ARCHETYPES, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
@@ -27,6 +27,7 @@ import { FLOOR, floorTexture, surviveRuin } from './art/floor';
 import { groundTexture, hasGround } from './art/ground-room';
 import { ISO } from './art/util';
 import { turnedWorld } from './iso-world';
+import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
@@ -44,6 +45,8 @@ import type { SoundDirector } from './audio/director';
 const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10, bramble: 10, sack: 9 };
 /** Dusk on the lit layers (the floor has it baked in): a touch of blue. */
 const AMBIENT = 0xe4e8ff;
+/** ?lighting=0 turns the scene lighting off, to compare. */
+const LIGHTING = typeof location === 'undefined' || new URLSearchParams(location.search).get('lighting') !== '0';
 const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL', simple: 'SIMPLE, ANGLED, LOW DETAIL', code: 'CODE, STRAIGHT-ON' };
 
 export class WorldView {
@@ -144,17 +147,34 @@ export class WorldView {
   private castS = new Float64Array(MAX_SEATS);
   private holdUntil = new Float64Array(MAX_SEATS);
 
-  constructor(private readonly iso = ISO) {
+  /** Scene lighting (art/lighting.ts): on with the isometric camera, unless ?lighting=0. Needs the renderer. */
+  private lit: SceneLighting | null = null;
+  /** A mood to use instead of the room's own (?mood=day, dusk, night or interior). */
+  mood: string | null = null;
+  private renderer: Renderer | null = null;
+  /** The lit layers grouped, so the colour grade can cover them and not the effects over them. */
+  private litLayer = new Container();
+  setRenderer(r: Renderer): void { this.renderer = r; }
+
+  constructor(private readonly iso = ISO, lighting = iso && LIGHTING) {
     this.camera.iso = iso;
+    if (lighting) this.lit = new SceneLighting();
+    const tint = this.lit ? 0xffffff : AMBIENT;
     this.actors.sortableChildren = true;
     this.structs = new StructureView(this.actors);
-    this.props = new PropView(this.actors, AMBIENT, 'lean');
+    this.props = new PropView(this.actors, tint, 'lean');
     this.deaths = new Deaths(this.actors);
-    this.scene.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
+    if (this.lit) {
+      this.litLayer.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.lit.shadowSprite, this.actors, this.lit.lightSprite);
+      this.litLayer.filters = [this.lit.grade];
+      this.scene.addChild(this.litLayer, this.lights.layer, this.vfx.over, this.sOverlay);
+    } else {
+      this.scene.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
+    }
     this.hudLayer.addChild(this.tut.fade, this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over, this.tut.sprite, this.tut.banner, this.artLabel);
     this.root.addChild(this.scene, this.hudLayer);
     for (let i = 0; i < MAX_BODIES; i++) {
-      const s = new Sprite(); s.visible = false; s.tint = AMBIENT;
+      const s = new Sprite(); s.visible = false; s.tint = tint;
       this.actors.addChild(s); this.sprites.push(s);
       this.views.push({ on: false, x: 0, y: 0, a: null, rig: 'goblin', seat: i < MAX_SEATS ? i : -1, f: null });
     }
@@ -285,7 +305,7 @@ export class WorldView {
       spr.visible = !!v.a;
       const dbl = b.kind[i] === KIND.double;
       spr.alpha = dbl ? 0.62 + 0.08 * Math.sin(ct * 5) : 1;
-      spr.tint = dbl ? 0xd8b4ff : AMBIENT;
+      spr.tint = dbl ? 0xd8b4ff : this.lit ? 0xffffff : AMBIENT;
       spr.position.set(fx0 + fx - FEET_X, fy0 + fy - FEET_Y);
       spr.zIndex = fy * 128 + i;
       v.on = true; v.x = fx; v.y = fy; v.rig = s.kind;
@@ -297,7 +317,25 @@ export class WorldView {
     this.lights.begin();
     stats.fills = 0;
     const t0 = performance.now();
-    const light = (x: number, y: number, r: number, col: string, a: number) => this.lights.add(fx0 + x, fy0 + y, r, col, a);
+    const lit = this.lit;
+    const light = (x: number, y: number, r: number, col: string, a: number) => { this.lights.add(fx0 + x, fy0 + y, r, col, a); lit?.lights.add(fx0 + x, fy0 + y, r, col, a); };
+    if (lit) {
+      lit.fit(cam.w, cam.h);
+      lit.begin(moodOf(w.def.id, this.mood), ct, fx0, fy0);
+      this.props.standing((tex, fx, fy, x, y, asset, flat) => {
+        if (!flat) lit.shadow(tex, fx, fy, x, y);
+        const l = PROP_LIGHTS[asset];
+        if (l) lit.lights.add(x, y - l[3], l[1], l[0], l[2] * (0.92 + 0.08 * Math.sin(ct * 7 + x)));
+      });
+      for (let i = 0; i < MAX_BODIES; i++) {
+        const v = this.views[i];
+        if (!v.on || !v.f || b.kind[i] === KIND.double) continue;
+        lit.shadow(v.f.tex, FEET_X, FEET_Y, fx0 + v.x, fy0 + v.y);
+        if (i < MAX_SEATS && lit.carry) lit.lights.add(fx0 + v.x, fy0 + v.y - 6, 52, '#ffd9a8', lit.carry);
+      }
+      const wl = w.walls;
+      for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.rock && !isPropWall(w, k)) lit.wall(fx0 + gx(wl.x1[k]), fy0 + gy(wl.y1[k]), fx0 + gx(wl.x2[k]), fy0 + gy(wl.y2[k]));
+    }
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
     this.lights.end();
     this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;
@@ -305,6 +343,7 @@ export class WorldView {
     this.tut.draw(w, ct, cam.hudW, cam.hudH);
     this.edges.draw(w, cam, ct, (i) => this.drawnAt(i, w, alpha));
     this.frames.upload();
+    if (lit && this.renderer) lit.render(this.renderer);
     const me = this.vfx.localSeat;
     this.sound?.frame(w, { cx: cam.cx, cy: cam.cy, halfW: cam.w / 2 / PPU, earX: b.x[me], earY: b.y[me] }, ct);
   }
@@ -360,7 +399,7 @@ export class WorldView {
     this.groundReady = !painted;
     if (painted) {
       // the code-drawn floor stands in for the moment the images take to arrive
-      void groundTexture(w.def.id, this.real.dims.w, this.real.dims.h, this.iso, d.w).then((t) => {
+      void groundTexture(w.def.id, this.real.dims.w, this.real.dims.h, this.iso, d.w, !!this.lit).then((t) => {
         if (key !== this.arenaKey) { t.destroy(true); return; }
         const was = this.floor.texture;
         this.floor.texture = t;

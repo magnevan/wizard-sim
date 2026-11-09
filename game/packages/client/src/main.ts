@@ -125,6 +125,8 @@ async function boot(): Promise<void> {
   addEventListener('keydown', (e) => { if (e.code === 'Backquote') { showDebug = !showDebug; hud.style.display = showDebug ? '' : 'none'; } });
   const view = new WorldView();
   view.lightsOn = params.get('lights') !== '0';
+  view.setRenderer(app.renderer);
+  view.mood = params.get('mood');
   // the art test (the Academy): which props and which wizard. Client only: each player picks their own.
   const askedSet = PROP_SETS.find((s) => s === params.get('props'));
   if (askedSet) view.props.set = askedSet;

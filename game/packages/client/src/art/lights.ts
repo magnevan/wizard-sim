@@ -33,6 +33,9 @@ export class Lights {
   private pool: Sprite[] = [];
   private n = 0;
 
+  /** gain: how strong an intensity-1 light is drawn. */
+  constructor(private gain = 0.55) {}
+
   begin(): void { this.n = 0; }
 
   /** A light at art (x, y) on the ground, radius r art px, colour '#rrggbb', intensity a (0..1+). */
@@ -45,7 +48,7 @@ export class Lights {
     s.texture = this.tex[b];
     s.position.set(Math.round(x), Math.round(y));
     s.tint = X.hexNum(col);
-    s.alpha = Math.min(1, a * 0.55);
+    s.alpha = Math.min(1, a * this.gain);
     s.visible = true;
     this.n++;
   }

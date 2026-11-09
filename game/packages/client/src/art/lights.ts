@@ -38,6 +38,13 @@ export class Lights {
 
   begin(): void { this.n = 0; }
 
+  /** The disc a light of radius r is drawn with, and that disc's true radius. */
+  disc(r: number): { tex: Texture; R: number } {
+    let b = 0;
+    while (b < RADII.length - 1 && RADII[b] < r) b++;
+    return { tex: this.tex[b], R: RADII[b] };
+  }
+
   /** A light at art (x, y) on the ground, radius r art px, colour '#rrggbb', intensity a (0..1+). */
   add(x: number, y: number, r: number, col: string, a: number): void {
     if (a <= 0.02 || this.n >= 160) return;

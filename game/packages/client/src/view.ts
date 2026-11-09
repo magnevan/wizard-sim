@@ -25,7 +25,7 @@ import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
 import { floorLayout, floorPlaceholder } from './art/floor';
 import { groundTexture } from './art/ground-room';
-import { turnedWorld } from './iso-world';
+import { toX, toY, turnedWorld } from './iso-world';
 import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
@@ -131,7 +131,7 @@ export class WorldView {
   /** How many late remote spells were caught up (Network test). */
   get caught(): Readonly<{ missiles: number; channels: number; casts: number }> { return this.vfx.caught; }
   /** Where missile j is drawn (world units) at real time ct, s: for tests. */
-  missileDrawnAt(w: World, j: number, ct: number): [number, number] { const p = this.vfx.missileAt(w, j, ct); return [p[0], p[1]]; }
+  missileDrawnAt(real: World, j: number, ct: number): [number, number] { const p = this.vfx.missileAt(this.seen(real), j, ct); return [toX(p[0], p[1]), toY(p[0], p[1])]; }
   private castPose(w: World, who: number, t: number): void {
     const id = w.seats.castId[who];
     if (id === CAST_ID.force || id === CAST_ID.conjure) this.holdUntil[who] = t + 0.35;
@@ -168,7 +168,7 @@ export class WorldView {
     if (this.lit) {
       this.litLayer.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.lit.shadowSprite, this.actors, this.lit.lightSprite);
       this.litLayer.filters = [this.lit.grade];
-      this.scene.addChild(this.litLayer, this.lights.layer, this.vfx.over, this.sOverlay);
+      this.scene.addChild(this.litLayer, this.lit.glowLayer, this.vfx.over, this.sOverlay);
     } else {
       this.scene.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
     }
@@ -183,7 +183,7 @@ export class WorldView {
 
   /** Hide the additive lights (?lights=0), for checking what they add. */
   get lightsOn(): boolean { return this.lights.layer.visible; }
-  set lightsOn(on: boolean) { this.lights.layer.visible = on; }
+  set lightsOn(on: boolean) { this.lights.layer.visible = on; if (this.lit) this.lit.glowLayer.visible = on; }
 
   resize(screenW: number, screenH: number, forcedScale?: number): void {
     this.camera.fit(screenW, screenH, forcedScale);
@@ -319,23 +319,28 @@ export class WorldView {
     stats.fills = 0;
     const t0 = performance.now();
     const lit = this.lit;
-    const light = (x: number, y: number, r: number, col: string, a: number) => { this.lights.add(fx0 + x, fy0 + y, r, col, a); lit?.lights.add(fx0 + x, fy0 + y, r, col, a); };
+    const light = lit ? (x: number, y: number, r: number, col: string, a: number) => lit.light(fx0 + x, fy0 + y, r, col, a) : (x: number, y: number, r: number, col: string, a: number) => this.lights.add(fx0 + x, fy0 + y, r, col, a);
     if (lit) {
       lit.fit(cam.w, cam.h);
       lit.begin(moodOf(w.def.id, this.mood), ct, fx0, fy0);
       this.props.standing((tex, fx, fy, x, y, asset, flat) => {
         if (!flat) lit.shadow(tex, fx, fy, x, y);
         const l = PROP_LIGHTS[asset];
-        if (l) lit.lights.add(x, y - l[3], l[1], l[0], l[2] * (0.92 + 0.08 * Math.sin(ct * 7 + x)));
+        if (l) lit.light(x, y - l[3], l[1], l[0], l[2] * (0.92 + 0.08 * Math.sin(ct * 7 + x)));
       });
       for (let i = 0; i < MAX_BODIES; i++) {
         const v = this.views[i];
         if (!v.on || !v.f || b.kind[i] === KIND.double) continue;
         lit.shadow(v.f.tex, FEET_X, FEET_Y, fx0 + v.x, fy0 + v.y);
-        if (i < MAX_SEATS && lit.carry) lit.lights.add(fx0 + v.x, fy0 + v.y - 6, 52, '#ffd9a8', lit.carry);
+        if (i < MAX_SEATS && lit.carry) lit.light(fx0 + v.x, fy0 + v.y - 6, 52, '#ffd9a8', lit.carry);
       }
       const wl = w.walls;
-      for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.rock && !isPropWall(w, k)) lit.wall(fx0 + gx(wl.x1[k]), fy0 + gy(wl.y1[k]), fx0 + gx(wl.x2[k]), fy0 + gy(wl.y2[k]));
+      for (let k = 0; k < MAX_WALLS; k++) {
+        if (wl.type[k] !== WALL.rock) continue;
+        const x1 = fx0 + gx(wl.x1[k]), y1 = fy0 + gy(wl.y1[k]), x2 = fx0 + gx(wl.x2[k]), y2 = fy0 + gy(wl.y2[k]);
+        lit.occluder(x1, y1, x2, y2);
+        if (!isPropWall(w, k)) lit.wall(x1, y1, x2, y2);
+      }
     }
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
     this.lights.end();

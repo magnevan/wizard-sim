@@ -71,14 +71,14 @@ ul.tight { margin:0; padding-left:18px; display:grid; gap:4px; }
 <header>
 <h1>Opening Blueprint</h1>
 <p class="lede">Five maps for the opening, drawn to true scale before anything is built. Click any plan to see what the camera would show from that spot.</p>
-<p class="cap" style="margin-top:10px">A proposal for you to mark up. Beats and sizes come from <code>docs/campaign/01-opening/brief.md</code>. Nothing here is built or bought, and all names are working labels.</p>
+<p class="cap" style="margin-top:10px">A proposal for you to mark up. Beats and sizes come from <code>docs/campaign/01-opening/brief.md</code>. The maps aren't built yet, and all names are working labels.</p>
 </header>
 
 <div class="saved" id="save">Connecting…</div>
 
 <section>
 <h2>Why our rooms feel tiny</h2>
-<p>One screen shows about 30 by 18 units. Every room we have except Survive is 24 by 16, smaller than a single screen, so you always see all of it at once. A place only feels like a place when you can't.</p>
+<p>One screen shows about 30 by 21 units, measured along the screen, and rooms appear as diamonds. Every room we have except Survive is 24 by 16, so you always see nearly all of it at once. A place only feels like a place when you can't.</p>
 <div class="sheet">
 <div class="scroll"><svg id="ladder" class="ladder" role="img" aria-label="Sizes compared at one scale: one screen, today's rooms, Survive and the five proposed maps"></svg></div>
 <p class="cap">All at one scale. The dot inside One screen is a wizard. Heights are the map's north-to-south size.</p>
@@ -87,7 +87,7 @@ ul.tight { margin:0; padding-left:18px; display:grid; gap:4px; }
 <h3>The sizing rules I used</h3>
 <ul class="tight">
 <li><strong>Every map is bigger than a screen,</strong> at least 1.5 screens in the direction you travel.</li>
-<li><strong>You walk north.</strong> The view reaches 11 units ahead and only 6 behind, because the rune bar covers the bottom. Walking up the screen shows you more of where you're going.</li>
+<li><strong>You walk up the screen.</strong> The view reaches 14 units ahead and 8 behind, because the rune bar covers the bottom. North on these plans is up and to the right on the screen.</li>
 <li><strong>You see enemies coming</strong> (pillar 7). A fight needs at least 15 units of visible approach.</li>
 <li><strong>Four wizards fit.</strong> A Fire ring is 3 units in radius, so a fight wants about 6 units per player, and a room at least 24 by 18.</li>
 <li><strong>Walks are short but real.</strong> You cross a screen in 7 seconds at 4.2 units a second. Stretches between beats stay at 5 to 15 seconds.</li>
@@ -109,6 +109,7 @@ ul.tight { margin:0; padding-left:18px; display:grid; gap:4px; }
 <figure style="margin:0;display:grid;gap:6px"><img src="img/mood-interior.png" alt="The academy art-test room lit indoors, with glowing rune circle and crystal ball" style="width:100%;height:auto;image-rendering:pixelated"><figcaption class="cap">Indoors, the Academy's own mood</figcaption></figure>
 <figure style="margin:0;display:grid;gap:6px"><img src="img/lighting-off.png" alt="The academy room with the lighting off, for comparison" style="width:100%;height:auto;image-rendering:pixelated"><figcaption class="cap">The same room with the lighting off</figcaption></figure>
 <figure style="margin:0;display:grid;gap:6px"><img src="img/lit-survive.png" alt="The Survive arena at dusk with walls casting shadows" style="width:100%;height:auto;image-rendering:pixelated"><figcaption class="cap">Survive at dusk, with walls casting shadows</figcaption></figure>
+<figure style="margin:0;display:grid;gap:6px"><img src="img/beam-arcane.png" alt="An arcane beam throwing pink light along the ground and onto the wall it strikes" style="width:100%;height:auto;image-rendering:pixelated"><img src="img/beam-night.png" alt="The same arcane beam at night, with the wall stopping the light behind it" style="width:100%;height:auto;image-rendering:pixelated"><img src="img/fire-night.png" alt="A flamethrower lighting the ground orange at night" style="width:100%;height:auto;image-rendering:pixelated"><figcaption class="cap">Spells now cast coloured light along their whole length. Walls stop light, and the wall faces turned toward a light catch it.</figcaption></figure>
 <label class="cap" for="note-ratings-lighting-look">Is it calmer now? Are the shadows too strong? Any mood you'd change?</label><textarea id="note-ratings-lighting-look" data-c="ratings" data-i="lighting-look"></textarea>
 </div>
 </section>
@@ -119,8 +120,8 @@ ul.tight { margin:0; padding-left:18px; display:grid; gap:4px; }
 <div class="sheet">
 <h3>Bought so far: 158 generations</h3>
 <p class="cap">Mark anything you'd redo below. Everything is kept, and 1,772 generations remain until 7 December.</p>
-<figure style="margin:0;display:grid;gap:6px"><img src="img/ground-in-game.png" alt="Twelve ground materials meeting grass, painted in the real game with wizards and practice dummies" style="width:100%;height:auto;image-rendering:pixelated"><figcaption class="cap">The ground painter under the new isometric camera, using a throwaway layout to show every material. Each material meets its neighbours in its own way: grass frays, loose ground clumps, paving loses whole stones, water gets a bank and foam. Variation comes from alternate tiles, broad warm and cool drift, and scattered small objects. The grass has been quieted since your note, and this one has the day lighting on.</figcaption></figure>
-<figure style="margin:0;display:grid;gap:6px"><img src="img/iso-academy.png" alt="The academy art-test room under the isometric camera, furniture standing square to the walls" style="width:100%;height:auto;image-rendering:pixelated"><img src="img/iso-survive.png" alt="The Survive arena under the isometric camera, with ruined stone walls" style="width:100%;height:auto;image-rendering:pixelated"><figcaption class="cap">The isometric camera in two existing rooms. Try it yourself by adding ?camera=iso to the game's address, once this branch is merged or run locally.</figcaption></figure>
+<figure style="margin:0;display:grid;gap:6px"><img src="img/ground-in-game.png" alt="Twelve ground materials meeting grass, painted in the real game with wizards and practice dummies" style="width:100%;height:auto;image-rendering:pixelated"><figcaption class="cap">The ground painter under the isometric camera, using a throwaway layout to show every material. Each material meets its neighbours in its own way: grass frays, loose ground clumps, paving loses whole stones, water gets a bank and foam. Variation comes from alternate tiles, broad warm and cool drift, and scattered small objects. The grass has been quieted since your note, and this one has the day lighting on.</figcaption></figure>
+<figure style="margin:0;display:grid;gap:6px"><img src="img/iso-academy.png" alt="The academy art-test room under the isometric camera, furniture standing square to the walls" style="width:100%;height:auto;image-rendering:pixelated"><img src="img/iso-survive.png" alt="The Survive arena under the isometric camera, with ruined stone walls" style="width:100%;height:auto;image-rendering:pixelated"><figcaption class="cap">The isometric camera in two existing rooms.</figcaption></figure>
 <label class="cap" for="note-ratings-ground-look">Notes on the ground</label><textarea id="note-ratings-ground-look" data-c="ratings" data-i="ground-look"></textarea>
 <figure style="margin:0;display:grid;gap:6px"><img src="img/kit-academy.png" alt="Pale stone school walls with oak trim, assembled into a small room" style="width:100%;height:auto;image-rendering:pixelated"><img src="img/kit-fortification.png" alt="Grey fieldstone walls with timber bracing, assembled into a small room" style="width:100%;height:auto;image-rendering:pixelated"><figcaption class="cap">Both wall kits, stamped into test rooms. They include doorways, pillars, stairs and corners. The floors show a diamond grid, so I'd use the painter for floors. These need the isometric camera.</figcaption></figure>
 <label class="cap" for="note-ratings-kits-look">Notes on the walls</label><textarea id="note-ratings-kits-look" data-c="ratings" data-i="kits-look"></textarea>
@@ -136,7 +137,7 @@ ul.tight { margin:0; padding-left:18px; display:grid; gap:4px; }
 </section>
 
 <section>
-<h2>Three questions</h2>
+<h2>Two questions</h2>
 <div class="sheet" id="questions"></div>
 <div class="sheet"><h3>Anything else</h3><label class="cap" for="note-answers-general">Notes on the whole plan</label><textarea id="note-answers-general" data-c="answers" data-i="general"></textarea></div>
 </section>
@@ -144,7 +145,7 @@ ul.tight { margin:0; padding-left:18px; display:grid; gap:4px; }
 
 <script>
 const R=(x,y,w,h,k,l,o)=>({t:'r',x,y,w,h,k,l,...o}), C=(x,y,r,k,l)=>({t:'c',x,y,r,k,l}), L=(p,k)=>({t:'l',p,k});
-const VW=30, UP=11.35, DOWN=6.35, SPEED=4.2;
+const VW=30, UP=13.6, DOWN=7.6, SPEED=4.2;
 const MAPS=[
 {id:'hall',n:1,name:'Lecture hall and cloister',W:50,H:34,base:'void',beats:'1',min:'1–2',
  what:'The briefing. You can walk about while it runs, then leave along the cloister past the postings.',
@@ -220,7 +221,6 @@ const JOBS=[
  lines:['Walls: rough grey fieldstone fortification wall with timber bracing','Floor: packed earth and gravel']},
 ];
 const QS=[
-{id:'q-1-camera',title:'Which camera does the build use?',body:'The isometric camera now exists on trial, and the ground painter works under either. The question is what the blockout uses. Gameplay is the same either way, and sizes are in world units.',rec:'today',choices:[['iso','Block out in isometric from the start (my pick now that it exists)'],['today','Block out on today\'s camera, switch before art goes in']]},
 {id:'q-2-reach',title:'Can a defence reach further than you can?',body:'Plain Fire sprays only 4.5 units, which is short for a tower. Doubling it for the defence means enemies are hit well before the wall, and losing it hurts more.',rec:'double',choices:[['double','Yes, twice a person\'s reach (my pick)'],['same','No, the same as a person']]},
 {id:'q-3-order',title:'What gets built first?',body:'The battery holds the moment we most need to test.',rec:'battery',choices:[['battery','The battery first, as a plain playable room (my pick)'],['story','In story order, from the hall']]},
 ];
@@ -231,7 +231,7 @@ const $=id=>document.getElementById(id);
 const pathLen=p=>p.slice(1).reduce((a,q,i)=>a+Math.hypot(q[0]-p[i][0],q[1]-p[i][1]),0);
 
 function ladder(){
- const items=[['One screen',VW,18,1],['Most rooms',24,16,1],['Survive',48,34,0],...MAPS.map(m=>[m.n+' '+m.name.split(',')[0].replace(/^The /,''),m.W,m.H,2])];
+ const items=[['One screen',VW,21,1],['Most rooms',24,16,1],['Survive',48,34,0],...MAPS.map(m=>[m.n+' '+m.name.split(',')[0].replace(/^The /,''),m.W,m.H,2])];
  const gap=7,H=64,W=items.reduce((a,i)=>a+i[1]+gap,gap),svg=$('ladder');
  svg.setAttribute('viewBox',`0 0 ${W} ${H+17}`);
  let x=gap;
@@ -248,40 +248,43 @@ function ladder(){
 
 function draw(svg,m,mode,cam){
  svg.replaceChildren();
- const plan=mode==='plan',sx=plan?10:16,sy=plan?10:9.6;
- const X=x=>plan?x*10:240+(x-cam[0])*16, Y=y=>plan?y*10:135+(y-cam[1])*9.6;
- const W=plan?m.W*10:480,H=plan?m.H*10:270;
+ const plan=mode==='plan',RT=Math.SQRT1_2,cu=(cam[0]-cam[1])*RT,cv=(cam[0]+cam[1])*RT;
+ const P=(x,y)=>plan?[x*10,y*10]:[240+((x-y)*RT-cu)*16,135+((x+y)*RT-cv)*8];
+ const W=plan?m.W*10:480,H=plan?m.H*10:270,cls=plan?'t':'t tv';
+ const pts=(a,up=0)=>a.map(([x,y])=>{const q=P(x,y);return q[0]+','+(q[1]-up);}).join(' ');
+ const corners=(x,y,w,h)=>[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
  svg.append(S('rect',{x:0,y:0,width:W,height:H,fill:KC('void')}));
- svg.append(S('rect',{x:X(0),y:Y(0),width:m.W*sx,height:m.H*sy,fill:KC(m.base)}));
+ svg.append(S('polygon',{points:pts(corners(0,0,m.W,m.H)),fill:KC(m.base)}));
  const labels=[];
- const cls=plan?'t':'t tv';
  for(const s of m.s){
   if(s.t==='r'){
-   svg.append(S('rect',{x:X(s.x),y:Y(s.y),width:s.w*sx,height:s.h*sy,fill:KC(s.k)}));
-   if(!plan&&(s.k==='wall'||s.k==='struct'))svg.append(S('rect',{x:X(s.x),y:Y(s.y+s.h),width:s.w*sx,height:20,fill:KC('face')}));
+   const c=corners(s.x,s.y,s.w,s.h);
+   if(!plan&&(s.k==='wall'||s.k==='struct')){svg.append(S('polygon',{points:pts(c),fill:KC('face')}));svg.append(S('polygon',{points:pts(c,16),fill:KC(s.k)}));}
+   else svg.append(S('polygon',{points:pts(c),fill:KC(s.k)}));
    if(s.l)labels.push([s.lx!=null?s.lx:s.x+s.w/2,s.ly!=null?s.ly:s.y+s.h/2,s.l,'middle']);
   }else if(s.t==='c'){
-   svg.append(S('ellipse',{cx:X(s.x),cy:Y(s.y),rx:s.r*sx,ry:s.r*sy,fill:s.k==='vein'?'none':KC(s.k),stroke:s.k==='vein'?KC('vein'):'none','stroke-width':3}));
+   const q=P(s.x,s.y);
+   svg.append(S('ellipse',{cx:q[0],cy:q[1],rx:s.r*(plan?10:16),ry:s.r*(plan?10:8),fill:s.k==='vein'?'none':KC(s.k),stroke:s.k==='vein'?KC('vein'):'none','stroke-width':3}));
    if(s.l)labels.push([s.x,s.y,s.l,'middle']);
   }else if(s.t==='l'){
-   svg.append(S('polyline',{points:s.p.map(p=>X(p[0])+','+Y(p[1])).join(' '),fill:'none',stroke:KC(s.k),'stroke-width':s.k==='vein'?3.5:2,'stroke-dasharray':s.k==='feed'?'5 4':''}));
+   svg.append(S('polyline',{points:pts(s.p),fill:'none',stroke:KC(s.k),'stroke-width':s.k==='vein'?3.5:2,'stroke-dasharray':s.k==='feed'?'5 4':''}));
   }else if(s.t==='x')labels.push([s.x,s.y,s.l,s.a||'middle']);
  }
- if(plan)svg.append(S('polyline',{points:m.route.map(p=>X(p[0])+','+Y(p[1])).join(' '),fill:'none',stroke:KC('route'),'stroke-width':1.6,'stroke-dasharray':'2 5','stroke-linecap':'round'}));
- for(const [x,y,t,a] of labels)svg.append(S('text',{x:X(x),y:Y(y)+4,'text-anchor':a,class:cls},t));
+ if(plan)svg.append(S('polyline',{points:pts(m.route),fill:'none',stroke:KC('route'),'stroke-width':1.6,'stroke-dasharray':'2 5','stroke-linecap':'round'}));
+ for(const [x,y,t,a] of labels){const q=P(x,y);svg.append(S('text',{x:q[0],y:q[1]+4,'text-anchor':a,class:cls},t));}
  if(plan){
-  const g=S('g',{});
-  g.append(S('rect',{x:X(0)+2,y:H-12,width:100,height:3,fill:KC('ink')}));
-  g.append(S('text',{x:X(0)+106,y:H-6,class:'t'},'10 units'));
-  svg.append(g);
-  svg.append(S('rect',{class:'frame',x:X(cam[0]-VW/2),y:Y(cam[1]-UP),width:VW*10,height:(UP+DOWN)*10,fill:'none',stroke:KC('accent'),'stroke-width':2.5}));
-  svg.append(S('circle',{cx:X(cam[0]),cy:Y(cam[1]),r:5,fill:KC('accent')}));
+  svg.append(S('rect',{x:2,y:H-12,width:100,height:3,fill:KC('ink')}));
+  svg.append(S('text',{x:106,y:H-6,class:'t'},'10 units'));
+  // one screen, laid on the plan: a turned rectangle, since the camera looks along the diagonal
+  const box=[[cu-VW/2,cv-UP],[cu+VW/2,cv-UP],[cu+VW/2,cv+DOWN],[cu-VW/2,cv+DOWN]].map(([u,v])=>[(u+v)*RT,(v-u)*RT]);
+  svg.append(S('polygon',{class:'frame',points:pts(box),fill:'none',stroke:KC('accent'),'stroke-width':2.5}));
+  const c=P(cam[0],cam[1]);svg.append(S('circle',{cx:c[0],cy:c[1],r:5,fill:KC('accent')}));
  }else{
   for(const [r,t] of [[4.5,'Fire spray 4.5'],[9,'Place 9'],[12,'Beam 12']]){
-   svg.append(S('ellipse',{cx:240,cy:135,rx:r*16,ry:r*9.6,fill:'none',stroke:KC('accent'),'stroke-width':1,'stroke-dasharray':'3 3',opacity:.8}));
-   svg.append(S('text',{x:240,y:135-r*9.6+3,'text-anchor':'middle',class:cls},t));
+   svg.append(S('ellipse',{cx:240,cy:135,rx:r*16,ry:r*8,fill:'none',stroke:KC('accent'),'stroke-width':1,'stroke-dasharray':'3 3',opacity:.8}));
+   svg.append(S('text',{x:240,y:135-r*8+3,'text-anchor':'middle',class:cls},t));
   }
-  svg.append(S('ellipse',{cx:240,cy:135,rx:7.2,ry:4.3,fill:KC('ink'),opacity:.35}));
+  svg.append(S('ellipse',{cx:240,cy:135,rx:7.2,ry:3.6,fill:KC('ink'),opacity:.35}));
   svg.append(S('rect',{x:233,y:113,width:14,height:22,rx:6,fill:KC('accent')}));
   svg.append(S('rect',{x:0,y:0,width:480,height:26,fill:KC('void'),opacity:.75}));
   svg.append(S('rect',{x:0,y:196,width:480,height:74,fill:KC('void')}));
@@ -298,7 +301,7 @@ function buildMaps(){
   const wrap=el('div','scroll'),plan=S('svg',{viewBox:`0 0 ${m.W*10} ${m.H*10}`,class:'plan',role:'img','aria-label':`Plan of ${m.name}, ${m.W} by ${m.H} units`});
   plan.style.width=(m.W/86*100)+'%';plan.style.minWidth=(m.W*7.5)+'px';wrap.append(plan);
   const below=el('div','below'),left=el('div'),view=S('svg',{viewBox:'0 0 480 270',class:'view',role:'img','aria-label':'What the camera shows from the chosen spot'});
-  left.append(view,el('p','cap','One screen at 1080p, drawn at the game\'s proportions. Orange wizard is true size. Rings show reach.'));
+  left.append(view,el('p','cap','One screen at 1080p, in the game\'s isometric view. Orange wizard is true size. Rings show reach. Orange box on the plan: what that screen covers.'));
   const pre=el('div','presets');
   let cam=m.views[0].slice(1);
   const buttons=[];
@@ -348,7 +351,7 @@ function buildRoute(){
  t.append(b);
  const L=[['Floor','floor'],['Sand','sand'],['Grass','grass'],['Fought-over ground','field'],['Dirt','dirt'],['Water','water'],['Trees','tree'],['Wall or rock','wall'],['Structure','struct'],['Furniture or cover','furn'],['Danger or enemy entry','danger']];
  for(const [n,k] of L){const s=el('span');const i=el('i');i.style.background=KC(k);s.append(i,n);$('legend').append(s);}
- const s=el('span','','Dots: your route. Magenta: the vein. Orange box: one screen.');$('legend').append(s);
+ const s=el('span','','Dots: your route. Magenta: the vein. Orange box: one screen, turned because the camera looks along the diagonal.');$('legend').append(s);
 }
 
 const state={},timers={};let db=null;

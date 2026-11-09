@@ -12,7 +12,7 @@
 | A wizard | 0.9 units across |
 | Today's rooms | 24 × 16 (smaller than a screen). Survive is 48 × 34 |
 
-This is today's camera. The true isometric camera the user chose isn't built, and its view will have a different shape.
+Those screen figures were for the old straight-on view. Under the isometric camera a screen is about 30 x 21 units along its diagonal axes, and rooms are diamonds. The page's camera preview is isometric.
 
 ## The five maps
 
@@ -35,15 +35,14 @@ You walk north throughout, because the view reaches further up the screen than d
 
 On 2026-11-09 the user authorized buying the general art, so everything but the defence is bought (158 generations, with extra ground sets, alternates and a clutter sheet; 1,772 are left). Results are on the page. **The defence (20 generations) still waits for an Approve.**
 
-The ground painter is built. The isometric camera is on trial behind `?camera=iso`. What's left before art goes in is switching it on, and using the wall kits.
+The ground painter and the isometric camera are built. What's left before the art is in is using the wall kits.
 
 ## Open questions, on the page
 
 Unanswered means the pick stands, except for purchases.
 
-1. Block out on today's camera, switch before art goes in. Pick: yes.
-2. A defence reaches twice as far as a person. Pick: yes.
-3. Build the battery first, as a plain playable room. Pick: yes.
+1. A defence reaches twice as far as a person. Pick: yes.
+2. Build the battery first, as a plain playable room. Pick: yes.
 
 ## The user's notes on the look (2026-11-09)
 

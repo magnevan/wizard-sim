@@ -7,15 +7,19 @@
  *   the light map, over the ground and the actors: the mood's ambient colour, drifting cloud shade,
  *   every spell's light, lamps on props, a small light each wizard carries, and a vignette.
  *
+ * Walls stop light. A light near a wall is drawn as its visibility polygon (the method in Red Blob
+ * Games' "2D Visibility": a ray to each wall end, and the nearest hit along each), and the wall faces
+ * turned toward it catch the light, since a face stands above the ground line it would otherwise be cut off at.
+ *
  * Effects drawn over the actors stay out of both maps: they're light, not lit. The look follows
  * what shipped pixel-art games do: a graded mood per time of day (Graveyard Keeper keeps ten), shadows
  * as sheared silhouettes, flat bands with dither only at the seams. A colour matrix over the lit
  * layers takes the edge off saturated art.
  */
-import { ColorMatrixFilter, Container, Graphics, RenderTexture, Sprite, Texture, TilingSprite, type Renderer } from 'pixi.js';
+import { ColorMatrixFilter, Container, Graphics, Mesh, MeshGeometry, RenderTexture, Sprite, Texture, TilingSprite, type Renderer } from 'pixi.js';
 import { Lights } from './lights';
 import * as X from './px';
-import { rand } from './util';
+import { FY, rand } from './util';
 
 type RGB = readonly [number, number, number];
 export interface Mood {
@@ -56,6 +60,15 @@ const asNum = (c: RGB): number => (Math.round(c[0] * 255) << 16) | (Math.round(c
 const PAD = 12;
 /** The height, in art px, a rock wall's shadow is cast from. */
 const WALL_H = 22;
+/** How many lights a frame may be cut by walls, strongest first. The rest aren't blocked. */
+const MAX_BLOCKED = 40;
+/** Vertices one blocked light can use. */
+const MAX_VERTS = 180;
+const RAYS = 24;
+
+/** What's reused between frames for one blocked light: a shape drawn into the light map and again as the additive glow. */
+interface LitShape { geo: MeshGeometry; map: Mesh; glow: Mesh; pos: Float32Array; uv: Float32Array; idx: Uint32Array }
+interface QueuedLight { x: number; y: number; r: number; col: string; a: number }
 
 function cloudTexture(): Texture {
   const N = 256, cell = 32, P = N / cell, { c, x } = X.canvas(N, N), img = x.createImageData(N, N), d = img.data;
@@ -88,6 +101,68 @@ function vignetteTexture(w: number, h: number): Texture {
   return t;
 }
 
+/**
+ * The walls within reach of a light, in light-relative ground space: x unchanged, y unsquashed, so a
+ * light's reach is a true circle. Returns ax, ay, bx, by repeating. A light standing on a wall ignores that wall.
+ */
+export function nearWalls(occ: readonly number[], lx: number, ly: number, R: number): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < occ.length; i += 4) {
+    const ax = occ[i] - lx, ay = (occ[i + 1] - ly) / FY, bx = occ[i + 2] - lx, by = (occ[i + 3] - ly) / FY;
+    const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy || 1;
+    const u = Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2));
+    const d = Math.hypot(ax + u * dx, ay + u * dy);
+    if (d < R && d > 2) out.push(ax, ay, bx, by);
+  }
+  return out;
+}
+
+/** How far a ray from the light travels before a wall stops it, up to `max`. */
+export function castRay(c: number, s: number, segs: readonly number[], max: number): number {
+  let best = max;
+  for (let i = 0; i < segs.length; i += 4) {
+    const ax = segs[i], ay = segs[i + 1], D = segs[i + 2] - ax, E = segs[i + 3] - ay, det = D * s - c * E;
+    if (Math.abs(det) < 1e-9) continue;
+    const t = (D * ay - ax * E) / det, u = (c * ay - s * ax) / det;
+    if (t > 0 && t < best && u >= 0 && u <= 1) best = t;
+  }
+  return best;
+}
+
+/** Fills a light's triangle fan, then a quad for each wall face turned toward it. Unused indices are left as empty triangles. */
+function fillShape(pos: Float32Array, uv: Float32Array, idx: Uint32Array, lx: number, ly: number, R: number, segs: readonly number[]): void {
+  const put = (v: number, X0: number, Y0: number, up: number) => {
+    pos[v * 2] = lx + X0; pos[v * 2 + 1] = ly + Y0 * FY - up;
+    uv[v * 2] = (X0 / R + 1) / 2; uv[v * 2 + 1] = (Y0 / R + 1) / 2;
+  };
+  const angles: number[] = [];
+  for (let k = 0; k < RAYS; k++) angles.push((k / RAYS) * Math.PI * 2 - Math.PI);
+  for (let i = 0; i < segs.length; i += 2) if (Math.hypot(segs[i], segs[i + 1]) < R) { const a = Math.atan2(segs[i + 1], segs[i]); angles.push(a - 0.002, a + 0.002); }
+  angles.sort((a, b) => a - b);
+  const rim = Math.min(angles.length, MAX_VERTS - 24);
+  put(0, 0, 0, 0);
+  let v = 1, n = 0;
+  for (let k = 0; k < rim; k++) {
+    const a = angles[k], c = Math.cos(a), sn = Math.sin(a), t = castRay(c, sn, segs, R);
+    put(v, t * c, t * sn, 0);
+    idx[n++] = 0; idx[n++] = v; idx[n++] = k + 1 < rim ? v + 1 : 1;
+    v++;
+  }
+  // a wall's face stands above its ground line: where the light can see it, the face catches the light
+  for (let i = 0; i < segs.length && v + 4 <= MAX_VERTS; i += 4) {
+    const ax = segs[i], ay = segs[i + 1], bx = segs[i + 2], by = segs[i + 3];
+    let nx = ay - by, ny = bx - ax;
+    if (ny < 0) { nx = -nx; ny = -ny; } // the face the camera sees
+    if (nx * -ax + ny * -ay <= 0) continue; // the light is behind it
+    const mx = (ax + bx) / 2, my = (ay + by) / 2, dist = Math.hypot(mx, my) || 1;
+    if (castRay(mx / dist, my / dist, segs, dist + 1) < dist - 2) continue; // another wall is in the way
+    put(v, ax, ay, 0); put(v + 1, bx, by, 0); put(v + 2, bx, by, WALL_H); put(v + 3, ax, ay, WALL_H);
+    idx[n++] = v; idx[n++] = v + 1; idx[n++] = v + 2; idx[n++] = v; idx[n++] = v + 2; idx[n++] = v + 3;
+    v += 4;
+  }
+  idx.fill(0, n);
+}
+
 export class SceneLighting {
   readonly shadowSprite = new Sprite();
   readonly lightSprite = new Sprite();
@@ -100,7 +175,16 @@ export class SceneLighting {
   private bg = new Sprite(Texture.WHITE);
   private clouds = new TilingSprite({ texture: cloudTexture(), width: 16, height: 16 });
   private vig = new Sprite();
-  readonly lights = new Lights(0.9);
+  private lights = new Lights(0.9);
+  /** Light's additive half, which can brighten past the map's limit. Sits over the actors. */
+  private glow = new Lights(0.55);
+  /** Add this to the scene where the plain lights go. */
+  readonly glowLayer = new Container();
+  private meshes: LitShape[] = [];
+  private queue: QueuedLight[] = [];
+  private queued = 0;
+  /** Wall segments in scene px: x1, y1, x2, y2 repeating. */
+  private occ: number[] = [];
   private shadowTex: RenderTexture | null = null;
   private lightTex: RenderTexture | null = null;
   private w = 0;
@@ -115,6 +199,7 @@ export class SceneLighting {
     this.clouds.tint = 0x000000;
     this.vig.tint = 0x000000;
     this.lightRoot.addChild(this.bg, this.clouds, this.lights.layer, this.vig);
+    this.glowLayer.addChild(this.glow.layer);
     this.shadowSprite.position.set(-PAD, -PAD);
     this.lightSprite.position.set(-PAD, -PAD);
     this.shadowRoot.position.set(PAD, PAD);
@@ -153,7 +238,22 @@ export class SceneLighting {
     this.grade.reset();
     this.grade.saturate(mood.saturate);
     this.lights.begin();
+    this.glow.begin();
+    this.queued = 0;
+    this.occ.length = 0;
   }
+
+  /** A light on the ground at scene x, y: radius in art px, colour, strength. */
+  light(x: number, y: number, r: number, col: string, a: number): void {
+    if (a <= 0.02 || this.queued >= 200) return;
+    let q = this.queue[this.queued];
+    if (!q) { q = { x: 0, y: 0, r: 0, col: '', a: 0 }; this.queue.push(q); }
+    q.x = x; q.y = y; q.r = r; q.col = col; q.a = a;
+    this.queued++;
+  }
+
+  /** A wall that stops light, on a ground line in scene px. */
+  occluder(x1: number, y1: number, x2: number, y2: number): void { this.occ.push(x1, y1, x2, y2); }
 
   /** A cast shadow from a sprite standing with its foot at scene x, y. */
   shadow(tex: Texture, footX: number, footY: number, x: number, y: number): void {
@@ -184,9 +284,47 @@ export class SceneLighting {
   render(renderer: Renderer): void {
     if (!this.shadowTex || !this.lightTex) return;
     for (let i = this.used; i < this.pool.length; i++) this.pool[i].visible = false;
+    this.flushLights();
     this.lights.end();
+    this.glow.end();
     renderer.render({ container: this.shadowRoot, target: this.shadowTex, clear: true, clearColor: [1, 1, 1, 1] });
     renderer.render({ container: this.lightRoot, target: this.lightTex, clear: true, clearColor: [1, 1, 1, 1] });
+  }
+
+  private shape(i: number): LitShape {
+    let s = this.meshes[i];
+    if (!s) {
+      const pos = new Float32Array(MAX_VERTS * 2), uv = new Float32Array(MAX_VERTS * 2), idx = new Uint32Array(MAX_VERTS * 3);
+      const geo = new MeshGeometry({ positions: pos, uvs: uv, indices: idx, topology: 'triangle-list' });
+      const map = new Mesh({ geometry: geo, texture: Texture.WHITE }), glow = new Mesh({ geometry: geo, texture: Texture.WHITE });
+      map.blendMode = 'add'; glow.blendMode = 'add';
+      this.lightRoot.addChildAt(map, this.lightRoot.getChildIndex(this.vig));
+      this.glowLayer.addChild(glow);
+      s = this.meshes[i] = { geo, map, glow, pos, uv, idx };
+    }
+    return s;
+  }
+
+  /** Lights near a wall become cut shapes, strongest first, up to the budget; the rest are plain discs. */
+  private flushLights(): void {
+    const order: QueuedLight[] = this.queue.slice(0, this.queued).sort((a, b) => b.a * b.r - a.a * a.r);
+    let used = 0;
+    for (const L of order) {
+      const { tex, R } = this.lights.disc(L.r);
+      const near = used < MAX_BLOCKED ? nearWalls(this.occ, L.x, L.y, R) : null;
+      if (!near || !near.length) { this.lights.add(L.x, L.y, L.r, L.col, L.a); this.glow.add(L.x, L.y, L.r, L.col, L.a); continue; }
+      const s = this.shape(used++);
+      fillShape(s.pos, s.uv, s.idx, L.x, L.y, R, near);
+      s.geo.getBuffer('aPosition').update();
+      s.geo.getBuffer('aUV').update();
+      s.geo.getIndex().update();
+      const tint = X.hexNum(L.col);
+      s.map.texture = tex; s.glow.texture = tex;
+      s.map.tint = tint; s.glow.tint = tint;
+      s.map.alpha = Math.min(1, L.a * 0.9); s.glow.alpha = Math.min(1, L.a * 0.55);
+      s.map.visible = true; s.glow.visible = true;
+    }
+    for (let i = used; i < this.meshes.length; i++) { this.meshes[i].map.visible = false; this.meshes[i].glow.visible = false; }
   }
 
   get carry(): number { return this.mood.carry; }

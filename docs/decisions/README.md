@@ -1071,3 +1071,7 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **Built while the user couldn't review,** after they found the look "a bit intense": moods per room, cast shadows, lamps on props, cloud shade, and a colour grade. On with `?camera=iso`, off with `?lighting=0`. The public game doesn't have it.
 - **The user's notes that led here:** the stone floor's scale is fine; the grass was too busy (quieted).
 - **Researched, as the user asked,** rather than from memory; sources are in the exploration.
+
+## 2026-11-09: Isometric is the only camera; walls and spells in the lighting (`explorations/2026-11-09-lighting.md`)
+- **The straight-on view and the old code-drawn floor are removed** (the user: "we can probably just kill the non isometric stuff. I dont want you to have to duplicate work"). The tutorial and help previews work under it. This reaches the public game when the branch is merged.
+- **Walls stop light and their faces catch it; beams and sprays light along their whole length** in their own colour.

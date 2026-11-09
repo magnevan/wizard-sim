@@ -31,6 +31,13 @@ const EL = X.EL;
 /** What the view knows about a body this frame: its feet in field px, its anchors and rig. */
 export interface BodyView { on: boolean; x: number; y: number; a: Anchors | null; rig: RigKind; seat: number; f: Frame | null }
 export type LightFn = (x: number, y: number, r: number, col: string, a: number) => void;
+/** A little unsteadiness, so a held beam's light is alive. */
+const flick = (t: number, seed: number): number => 0.9 + 0.1 * Math.sin(t * 17 + seed);
+/** Light along a line on the ground, a row of overlapping lights, each dimmer to make up for the overlap. */
+function glowAlong(light: LightFn, ax: number, ay: number, bx: number, by: number, r: number, col: string, a: number): void {
+  const n = Math.max(1, Math.min(10, Math.ceil(Math.hypot(bx - ax, by - ay) / (r * 0.85))));
+  for (let q = 0; q <= n; q++) light(ax + ((bx - ax) * q) / n, ay + ((by - ay) * q) / n, r, col, a * 0.7);
+}
 
 /** A short-lived effect born from an event. */
 interface Fx {
@@ -605,8 +612,8 @@ export class Vfx {
           if (look === 'cold') for (const p of emit(t, 60, 0.6, (q, age) => { const kk = rand(q, 71, sd); return { x: lerp(tip[0], full[0], kk) + (rand(q, 72, sd) - 0.5) * 4, y: lerp(tip[1], full[1], kk) + age * 9 + Math.sin(age * 8 + q) * 1.2, age, q }; })) X.px(o, p.x, p.y, (p.q + Math.floor(t * 16)) % 5 === 0 ? '#ffffff' : p.age < 0.5 ? X.FROST[2] : X.FROST[4]);
         }
         const lc = spec.heal ? '#8ef07e' : look === 'fire' ? '#ff6a20' : ramp(spec.look)[2];
-        for (let q = 1; q <= 3; q++) light(lerp(tip[0], full[0], q / 4), lerp(v.y, ey, q / 4), 34, lc, 0.4);
-        light(ex, ey, 50, lc, 0.6);
+        glowAlong(light, tip[0], v.y, full[0], lerp(v.y, ey, on), 40, lc, 0.55 * flick(t, sd));
+        light(ex, ey, 62, lc, 0.85 * flick(t, sd + 3));
       } else if (spec.shape === 'spray') {
         const z: Pt = [ex, ey - 6];
         if (spec.heal) {
@@ -614,11 +621,11 @@ export class Vfx {
             K.cone(o, tip, z, t, 'water', t0, { spread: 0.22, power: 0.7, seed: sd });
             for (const p of emit(t, 40, 0.45, (q, age) => ({ x: lerp(tip[0], z[0], age * 1.05), y: lerp(tip[1], z[1], age * 1.05) + (rand(q, 3, sd) - 0.5) * 10 * age - Math.sin(age * Math.PI) * 4, age }), t0, t)) X.px(o, p.x, p.y, p.age < 0.5 ? X.LIFE[1] : X.LIFE[3]);
           } else K.warmCone(o, tip, z, t, t0, X.WARM, sd);
-          light(lerp(tip[0], ex, 0.5), lerp(v.y, ey, 0.5), 50, '#ffe68a', 0.5);
+          glowAlong(light, tip[0], v.y, ex, ey, 40, '#ffe68a', 0.4);
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
           K.cone(o, tip, z, t, kind, t0, { spread: 0.28, seed: sd });
-          light(lerp(tip[0], ex, 0.55), lerp(v.y, ey, 0.55), 50, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', kind === 'fire' ? 0.7 : 0.45);
+          glowAlong(light, lerp(tip[0], ex, 0.25), lerp(v.y, ey, 0.25), ex, ey, 40, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', (kind === 'fire' ? 0.6 : 0.4) * flick(t, sd));
           if (kind === 'cold') for (let q = 0; q < 40; q++) { const a = rand(q, 61, sd) * TAU, r = Math.pow(rand(q, 62, sd), 0.7) * 18 * seg(t, t0 + 0.3, t0 + 1.3); X.px(g, ex + Math.cos(a) * r, ey + Math.sin(a) * r * FY * 0.7, q % 4 === 0 ? '#ffffff' : q % 2 ? '#bfe8f6' : '#8ccce4'); }
         }
       } else if (spec.shape === 'arc') {
@@ -631,7 +638,8 @@ export class Vfx {
         if (spec.shape === 'beam') {
           const R = spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look);
           K.beam(o, dt, [dex, dey - LIFT], t, R, { on: easeOut(seg(t, t0, t0 + 0.12)), w: 0.5, hit: this.beamHits(w, s.dblEndX[i], s.dblEndY[i], d), seed: sd2 });
-          light(dex, dey, 34, spec.heal ? '#8ef07e' : R[2], 0.35);
+          glowAlong(light, dt[0], dv.y, dex, dey, 30, spec.heal ? '#8ef07e' : R[2], 0.3);
+          light(dex, dey, 44, spec.heal ? '#8ef07e' : R[2], 0.5);
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
           if (spec.heal && look !== 'water') K.warmCone(o, dt, [dex, dey - 6], t, t0, X.WARM, sd2);
@@ -647,7 +655,8 @@ export class Vfx {
         if (spec.shape === 'beam') {
           const R = spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look);
           K.beam(o, tip, [eex, eey - LIFT], t, R, { on: easeOut(seg(t, te, te + 0.12)), w: 0.5, hit: this.beamHits(w, r.echoEndX[i], r.echoEndY[i], i), seed: sd3 });
-          light(eex, eey, 34, spec.heal ? '#8ef07e' : R[2], 0.35);
+          glowAlong(light, tip[0], v.y, eex, eey, 30, spec.heal ? '#8ef07e' : R[2], 0.3);
+          light(eex, eey, 44, spec.heal ? '#8ef07e' : R[2], 0.5);
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
           if (spec.heal && look !== 'water') K.warmCone(o, tip, [eex, eey - 6], t, te, X.WARM, sd3);
@@ -669,7 +678,8 @@ export class Vfx {
       if (spec.shape === 'beam') {
         const R = spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look);
         K.beam(o, tip, [ex, ey - LIFT], t, R, { on: easeOut(seg(t, t0, t0 + 0.12)), w: 0.7, hit: this.beamHits(w, dv.x2[k], dv.y2[k], -1), seed: sd });
-        light(ex, ey, 40, spec.heal ? '#8ef07e' : R[2], 0.45);
+        glowAlong(light, tip[0], tip[1] + LIFT, ex, ey, 30, spec.heal ? '#8ef07e' : R[2], 0.3);
+        light(ex, ey, 48, spec.heal ? '#8ef07e' : R[2], 0.6);
       } else if (spec.shape === 'spray') {
         const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
         if (spec.heal && look !== 'water') K.warmCone(o, tip, [ex, ey - 6], t, t0, X.WARM, sd);

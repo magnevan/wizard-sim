@@ -1,0 +1,22 @@
+{
+  "id": "hay-bale",
+  "kind": "prop",
+  "name": "Hay bale",
+  "footprint": [
+    1.3,
+    0.8
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        18,
+        27
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/yard/07.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

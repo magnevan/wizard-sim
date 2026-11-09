@@ -1,0 +1,22 @@
+{
+  "id": "sword-rack",
+  "kind": "prop",
+  "name": "Practice sword rack",
+  "footprint": [
+    1.4,
+    0.4
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        17,
+        38
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/yard/05.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

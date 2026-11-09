@@ -1,0 +1,22 @@
+{
+  "id": "arch-ruined",
+  "kind": "prop",
+  "name": "Ruined arch",
+  "footprint": [
+    1.6,
+    0.5
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        19,
+        41
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/rural/13.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

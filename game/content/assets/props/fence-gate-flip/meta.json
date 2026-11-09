@@ -1,0 +1,26 @@
+{
+  "id": "fence-gate-flip",
+  "kind": "prop",
+  "name": "Farm gate, mirrored",
+  "base": "fence-gate",
+  "footprint": [
+    1.8,
+    0.3
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        18,
+        39
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/yard/02.png",
+      "tool": "tools/outdoor-kit/props.py",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "mirrored"
+      ]
+    }
+  }
+}

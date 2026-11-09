@@ -1,0 +1,26 @@
+{
+  "id": "bush-autumn",
+  "kind": "prop",
+  "name": "Autumn bush",
+  "base": "bush-round",
+  "footprint": [
+    1.3,
+    0.9
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        17,
+        28
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/yard/10.png",
+      "tool": "tools/outdoor-kit/props.py",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "greens to autumn"
+      ]
+    }
+  }
+}

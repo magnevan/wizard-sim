@@ -1,0 +1,25 @@
+{
+  "id": "blue-cornflower-clump",
+  "kind": "prop",
+  "name": "Blue cornflower clump",
+  "footprint": [
+    0.3,
+    0.2
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        7,
+        13
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/scatter/02.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "halved"
+      ]
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "stump-axe",
+  "kind": "prop",
+  "name": "Stump with axe",
+  "footprint": [
+    0.9,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        17,
+        35
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/yard/11.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

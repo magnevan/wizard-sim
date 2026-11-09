@@ -1,0 +1,22 @@
+{
+  "id": "campfire-ring",
+  "kind": "prop",
+  "name": "Campfire ring",
+  "footprint": [
+    1.4,
+    0.8
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        18,
+        18
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/rural/08.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

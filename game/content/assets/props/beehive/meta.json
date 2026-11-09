@@ -1,0 +1,22 @@
+{
+  "id": "beehive",
+  "kind": "prop",
+  "name": "Beehive",
+  "footprint": [
+    0.9,
+    0.7
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        12,
+        34
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/rural/01.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

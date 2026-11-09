@@ -1,0 +1,26 @@
+{
+  "id": "fence-rail-flip",
+  "kind": "prop",
+  "name": "Rail fence, mirrored",
+  "base": "fence-rail",
+  "footprint": [
+    1.8,
+    0.3
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        18,
+        36
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/yard/00.png",
+      "tool": "tools/outdoor-kit/props.py",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "mirrored"
+      ]
+    }
+  }
+}

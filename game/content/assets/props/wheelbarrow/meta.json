@@ -1,0 +1,22 @@
+{
+  "id": "wheelbarrow",
+  "kind": "prop",
+  "name": "Wheelbarrow",
+  "footprint": [
+    1.3,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        19,
+        26
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/rural/03.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

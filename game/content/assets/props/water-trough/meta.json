@@ -1,0 +1,22 @@
+{
+  "id": "water-trough",
+  "kind": "prop",
+  "name": "Water trough",
+  "footprint": [
+    1.6,
+    0.7
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        19,
+        25
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/rural/02.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

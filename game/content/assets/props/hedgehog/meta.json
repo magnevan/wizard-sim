@@ -1,0 +1,25 @@
+{
+  "id": "hedgehog",
+  "kind": "prop",
+  "name": "Hedgehog",
+  "footprint": [
+    0.3,
+    0.2
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        6,
+        8
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/scatter/63.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "halved"
+      ]
+    }
+  }
+}

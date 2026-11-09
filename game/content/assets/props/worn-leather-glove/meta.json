@@ -1,0 +1,25 @@
+{
+  "id": "worn-leather-glove",
+  "kind": "prop",
+  "name": "Worn leather glove",
+  "footprint": [
+    0.3,
+    0.2
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        6,
+        10
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/scatter/51.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "halved"
+      ]
+    }
+  }
+}

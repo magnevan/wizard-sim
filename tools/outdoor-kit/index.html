@@ -1,0 +1,224 @@
+<meta charset="utf-8">
+<title>Outdoor Art Kit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* One dark look on purpose, shared with the Academy Art Trial: pixel art is judged against the game's own colours.
+   Layout: one reading column; the mock first, then each purchase with its verdict directly under it. */
+:root {
+  color-scheme: dark;
+  --stone: #1b2421; --slab: #26322e; --line: #3e4a44;
+  --ink: #e8e4d8; --dim: #a9b0a4;
+  --gold: #ffd860; --keep: #7fd08a; --maybe: #e8c060; --cut: #e8836a;
+  --display: 'Silkscreen', ui-monospace, 'Courier New', monospace;
+  --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+body { background: var(--stone); color: var(--ink); font: 16px/1.55 var(--body); }
+main { max-width: 1120px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(28px, 5vw, 42px); color: var(--gold); }
+h2 { font-size: 22px; }
+h3 { font-size: 16px; }
+p { margin: 0; max-width: 68ch; }
+.lede, section, .job, .q, .fig { display: grid; gap: 12px; min-width: 0; }
+section { gap: 22px; }
+.dim { color: var(--dim); }
+.pick { color: var(--gold); }
+img { image-rendering: pixelated; display: block; width: 100%; height: auto; }
+figcaption { font-size: 14px; color: var(--dim); }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.budget { display: flex; flex-wrap: wrap; gap: 6px 24px; font-variant-numeric: tabular-nums; }
+.budget b { font: 400 18px var(--display); color: var(--gold); }
+.head { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; }
+.cost { font: 13px var(--display); color: var(--gold); }
+.tool { font-size: 14px; color: var(--dim); overflow-wrap: anywhere; }
+ul { margin: 0; padding-left: 20px; display: grid; gap: 2px; max-width: 72ch; }
+.group { font-size: 15px; max-width: 80ch; }
+.group b { font-weight: 700; }
+.rate { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.marks { display: flex; gap: 6px; flex: none; flex-wrap: wrap; }
+button { font: 13px var(--display); color: var(--ink); background: var(--slab); border: 1px solid var(--line); padding: 8px 12px; cursor: pointer; }
+button:hover { border-color: var(--dim); }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+button[aria-pressed="true"][data-tone="keep"] { background: var(--keep); border-color: var(--keep); color: var(--stone); }
+button[aria-pressed="true"][data-tone="maybe"] { background: var(--maybe); border-color: var(--maybe); color: var(--stone); }
+button[aria-pressed="true"][data-tone="cut"] { background: var(--cut); border-color: var(--cut); color: var(--stone); }
+textarea { flex: 1 1 280px; min-width: 0; min-height: 40px; font: 15px/1.4 var(--body); color: var(--ink); background: var(--slab); border: 1px solid var(--line); padding: 8px 10px; resize: vertical; box-sizing: border-box; }
+.q textarea { width: 100%; }
+.vars { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+#save { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); font-size: 13px; background: var(--slab); border: 1px solid var(--line); padding: 4px 10px; color: var(--dim); }
+#save.bad { color: var(--cut); }
+</style>
+
+<main>
+  <header class="lede">
+    <h1>Outdoor Art Kit</h1>
+    <p>Art for an outdoor sword lesson and the countryside around it, bought for 70 generations and placeable in LDtk now. These pictures are built from that art; the game can't draw this ground yet. First: what this place should be.</p>
+    <p class="dim">Marks and notes save as you go. An unmarked item stays as it is.</p>
+  </header>
+
+  <section aria-labelledby="place">
+    <h2 id="place">What is this place?</h2>
+    <p>The first yard was too tight, its terrain was all one thing, and its props had no reason to be there. Here are three answers to what the spot is, each laid out for what people do there, with about three times the room, water, cobbles and tall grass. The numbers in each picture match its list. The trees now have outlines and full contrast, so they match the other props.</p>
+    <div id="concepts" style="display:grid;gap:40px"></div>
+  </section>
+
+  <section aria-labelledby="yard">
+    <h2 id="yard">The first yard in bought art</h2>
+    <figure><img src="img/yard-bought-pro.png" alt="A fenced dirt training yard on grass in isometric view, with dummies, pells, a target, racks, a teacher and two wizards, surrounded by trees, hay, a well, a cart and flowers."><figcaption>True isometric, with the painted ground. The small things are the scatter sheet at half size.</figcaption></figure>
+  </section>
+
+  <section aria-labelledby="sheets">
+    <h2 id="sheets">What came back</h2>
+    <figure><img src="img/sheet-scatter.png" alt="64 small outdoor objects: flowers, weeds, stones, fungi, ground marks, dropped items and small animals."><figcaption>Small scatter sheet, 64 objects, at 4× before halving.</figcaption></figure>
+    <figure><img src="img/sheet-yard.png" alt="16 yard props including fences, a gate, a pell, a sword rack, a well and a handcart."><figcaption>Yard and countryside sheet, 16 objects.</figcaption></figure>
+    <figure><img src="img/sheet-rural.png" alt="16 rural props including a scarecrow, a tent, a footbridge, a ruined arch and a shrine."><figcaption>Rural life sheet, 16 objects.</figcaption></figure>
+  </section>
+
+  <section aria-labelledby="ground">
+    <h2 id="ground">The ground, compared</h2>
+    <p>The same idea in each set. Painted ground beat the isometric tiles: the corner tiles show their diamond grid, and the path pieces keep paths straight on a raised slab. Neither was given our palette, so their neon green is partly fixable, but the grid isn't.</p>
+    <div class="two">
+      <figure><img src="img/ground-pro.png" alt="Pro tileset: muted grass with tufts around pebbly dirt."><figcaption>Pro set: in our palette, richest. The tufts repeat.</figcaption></figure>
+      <figure><img src="img/ground-standard.png" alt="Standard tileset: plainer grass around dirt."><figcaption>Standard set: plainer, calmer.</figcaption></figure>
+      <figure><img src="img/ground-iso-corner.png" alt="Isometric corner tiles with a visible diamond grid."><figcaption>Isometric corner tiles.</figcaption></figure>
+      <figure><img src="img/ground-iso-path.png" alt="Isometric path pieces on a raised slab."><figcaption>Isometric path pieces.</figcaption></figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="mock">
+    <h2 id="mock">Before: the free mock</h2>
+    <p>The first version, for comparison. Its grass, dirt, fence, trees and flowers are developer art, and it shows the terrain map working under both cameras.</p>
+    <figure><img src="img/yard-iso.png" alt="A fenced dirt training yard on grass in true isometric view, with dummies, a target, weapon racks, a teacher and two wizards, and a path leading away between trees."><figcaption>True isometric, the camera you chose. It isn't built yet, so this is a picture, not the game.</figcaption></figure>
+    <figure><img src="img/yard-today.png" alt="The same yard from the game's current straight-on camera."><figcaption>The same terrain map under today's camera. The ground needed no new art to change view.</figcaption></figure>
+    <figure><img src="img/kit-sheet.png" alt="The developer art pieces: flowers, tufts, stones, a stump, hay, bushes, trees and fence sections."><figcaption>All the developer art at 3×. It's meant to be replaced.</figcaption></figure>
+  </section>
+
+  <section aria-labelledby="buy">
+    <h2 id="buy">What was bought</h2>
+    <div class="budget" id="budget"></div>
+    <p class="dim">The prompts as sent. Mark each: Keep it, Redo it, or Cut it. A note can name single items to redo.</p>
+    <div id="jobs" style="display:grid;gap:34px"></div>
+  </section>
+
+  <section aria-labelledby="free">
+    <h2 id="free">Free variants, already made</h2>
+    <p>Local edits of props we already own, so they cost nothing. They're in the asset registry, ready to place.</p>
+    <figure><img src="img/variants.png" alt="From left: training dummy, worn, scorched and mossy dummies, target, weathered target, weapon rack, mossy weapon rack."><figcaption>Left to right: dummy, worn, scorched, mossy; target, weathered; rack, mossy.</figcaption></figure>
+    <div class="vars" id="vars"></div>
+  </section>
+
+  <section aria-labelledby="qs">
+    <h2 id="qs">Questions</h2>
+    <p class="dim">An empty box means my pick stands.</p>
+    <div id="questions" style="display:grid;gap:26px"></div>
+  </section>
+</main>
+<div id="save" role="status">Loading…</div>
+
+<script>
+let db = null;
+const state = {}, timers = {};
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const setSave = (t, bad) => { $('save').textContent = t; $('save').classList.toggle('bad', !!bad); };
+
+async function write(coll, id, patch) {
+  const k = coll + '/' + id;
+  state[k] = { ...state[k], ...patch, updatedAt: new Date().toISOString() };
+  paint();
+  if (!db) { setSave('Saving isn\'t available in this view.', true); return; }
+  setSave('Saving…');
+  try { await db.doc(k).set(state[k]); setSave('All saved'); }
+  catch { setSave('Couldn\'t save. Check your connection and try again.', true); }
+}
+function marks(coll, id, options) {
+  const box = el('div', 'marks');
+  for (const [value, label, tone] of options) {
+    const b = el('button', '', label);
+    b.type = 'button'; b.dataset.key = coll + '/' + id; b.dataset.value = value; b.dataset.tone = tone; b.setAttribute('aria-pressed', 'false');
+    b.onclick = () => write(coll, id, { mark: state[coll + '/' + id]?.mark === value ? null : value });
+    box.append(b);
+  }
+  return box;
+}
+function note(coll, id, placeholder) {
+  const t = el('textarea');
+  t.id = 'note-' + id; t.rows = 1; t.placeholder = placeholder; t.setAttribute('aria-label', placeholder);
+  const save = () => { clearTimeout(timers[id]); if ((state[coll + '/' + id]?.note ?? '') !== t.value) write(coll, id, { note: t.value }); };
+  t.oninput = () => { clearTimeout(timers[id]); timers[id] = setTimeout(save, 700); };
+  t.onblur = save;
+  return t;
+}
+function paint() {
+  document.querySelectorAll('button[data-key]').forEach((b) => b.setAttribute('aria-pressed', String(state[b.dataset.key]?.mark === b.dataset.value)));
+}
+function render(b) {
+  const total = b.jobs.reduce((n, j) => n + j.cost, 0);
+  const bud = $('budget');
+  for (const [k, v] of [['Spent', total + ' generations'], ['Left this month', b.balance.generations.toLocaleString('en') + ' on ' + b.balance.plan], ['Resets', b.balance.resets]]) {
+    const s = el('span'); s.append(k + ': ', el('b', '', v)); bud.append(s);
+  }
+  for (const j of b.jobs) {
+    const box = el('article', 'job'), head = el('div', 'head');
+    head.append(el('h3', '', j.name), el('span', 'cost', j.cost + ' gen → ' + j.yields));
+    box.append(head, el('p', '', j.why), el('p', 'tool', j.tool));
+    if (j.description) box.append(el('p', 'tool', 'Style line: "' + j.description + '"'));
+    if (j.items) { const u = el('ul'); j.items.forEach((t) => u.append(el('li', '', t))); box.append(u); }
+    for (const g of j.groups ?? []) {
+      const p = el('p', 'group'); p.append(el('b', '', g.name + ' (' + g.items.length + '): '), g.items.join(', ') + '.'); box.append(p);
+    }
+    const r = el('div', 'rate');
+    r.append(marks('ratings', j.id, [['keep', 'Keep', 'keep'], ['redo', 'Redo', 'maybe'], ['cut', 'Cut', 'cut']]), note('ratings', j.id, 'What to redo or add'));
+    box.append(r); $('jobs').append(box);
+  }
+  for (const c of b.concepts ?? []) {
+    const box = el('article', 'job');
+    const img = el('img'); img.src = c.img; img.alt = c.name + ': the layout, with numbered zones.';
+    const ol = el('ol'); ol.style.cssText = 'margin:0;padding-left:22px;display:grid;gap:2px;max-width:72ch';
+    c.zones.forEach((z) => ol.append(el('li', '', z)));
+    const where = el('p'); where.append(el('b', '', 'Where it sits: '), c.where);
+    const cost = el('p'); cost.append(el('b', '', 'Trade-off: '), c.cost);
+    const r = el('div', 'rate');
+    r.append(marks('ratings', c.id, [['keep', 'Keep', 'keep'], ['maybe', 'Maybe', 'maybe'], ['cut', 'Cut', 'cut']]), note('ratings', c.id, 'What works, what doesn\'t'));
+    box.append(el('h3', '', c.name), img, where, ol, cost, r);
+    $('concepts').append(box);
+  }
+  for (const v of b.variants) {
+    const box = el('div', 'job');
+    box.append(el('h3', '', v.name));
+    const r = el('div', 'rate');
+    r.append(marks('ratings', v.id, [['keep', 'Keep', 'keep'], ['maybe', 'Maybe', 'maybe'], ['cut', 'Cut', 'cut']]), note('ratings', v.id, 'Note'));
+    box.append(r); $('vars').append(box);
+  }
+  for (const q of b.questions) {
+    const box = el('div', 'q');
+    box.append(el('h3', '', q.title), el('p', '', q.text), el('p', 'pick', 'My pick: ' + q.pick), note('answers', q.id, 'Your answer'));
+    $('questions').append(box);
+  }
+  paint();
+}
+function fill(coll, snap) {
+  for (const d of snap.docs) {
+    const data = d.data() ?? {}, k = coll + '/' + d.id;
+    state[k] = { ...state[k], ...data };
+    const t = $('note-' + d.id);
+    if (t && document.activeElement !== t) t.value = data.note ?? '';
+  }
+  paint();
+}
+(async () => {
+  try { render(await (await fetch('briefs.json')).json()); }
+  catch { $('jobs').append(el('p', 'dim', 'The list didn\'t load. Reload the page to try again.')); }
+  const stop = setTimeout(() => setSave('Couldn\'t load your marks. Reload to try again.', true), 10000);
+  try {
+    db = await window.claude?.use?.('db');
+    if (!db) { clearTimeout(stop); setSave('Saving isn\'t available in this view.', true); return; }
+    let first = 2;
+    const failed = () => { clearTimeout(stop); setSave('Couldn\'t load your marks. Reload to try again.', true); };
+    for (const coll of ['ratings', 'answers']) db.collection(coll).onSnapshot((snap) => { fill(coll, snap); if (--first === 0) { clearTimeout(stop); setSave('All saved'); } }, failed);
+  } catch { clearTimeout(stop); setSave('Couldn\'t load your marks. Reload to try again.', true); }
+})();
+</script>

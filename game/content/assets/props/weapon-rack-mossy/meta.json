@@ -1,0 +1,26 @@
+{
+  "id": "weapon-rack-mossy",
+  "kind": "prop",
+  "name": "Mossy weapon rack",
+  "base": "weapon-rack",
+  "footprint": [
+    2.0,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        17,
+        37
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/pl-obj-13.png",
+      "tool": "tools/outdoor-kit/variants.py",
+      "ops": [
+        "moss 0.35"
+      ],
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

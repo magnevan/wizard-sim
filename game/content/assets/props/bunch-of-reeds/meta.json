@@ -1,0 +1,25 @@
+{
+  "id": "bunch-of-reeds",
+  "kind": "prop",
+  "name": "Bunch of reeds",
+  "footprint": [
+    0.3,
+    0.2
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        6,
+        13
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/scatter/18.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "halved"
+      ]
+    }
+  }
+}

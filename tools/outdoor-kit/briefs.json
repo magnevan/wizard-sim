@@ -1,0 +1,355 @@
+{
+  "note": "The PixelLab purchases, word for word as approved on 2026-11-07. Bought except where a job says otherwise. The page reads this file.",
+  "balance": {
+    "generations": 1930,
+    "resets": "2026-12-07",
+    "checked": "2026-11-07",
+    "plan": "Tier 1"
+  },
+  "jobs": [
+    {
+      "id": "job-ground",
+      "name": "Ground textures",
+      "tool": "create_topdown_tileset, standard, 32 px",
+      "cost": 3,
+      "yields": "3 two-terrain sets, 16 tiles each",
+      "why": "Real pixel-art grass, dirt, cobble and water to replace the code textures in the mock. We'd use each set's full tiles as textures, and its edge tiles under today's camera. Buy the first and look at it before the other two.",
+      "items": [
+        "Lower: packed brown dirt footpath with small pebbles. Upper: short green meadow grass.",
+        "Lower: worn grey cobblestone path. Upper: the same grass, linked to set 1 by its base tile.",
+        "Lower: shallow clear pond water. Upper: the same grass, linked to set 1 by its base tile."
+      ]
+    },
+    {
+      "id": "job-small",
+      "name": "Small scatter sheet",
+      "tool": "create_1_direction_object, 32 px, top-down view, our palette, no style reference (inline references failed)",
+      "cost": 10,
+      "yields": "64 small objects",
+      "why": "The variety that makes ground feel lived in. This is the best value on the list: 64 objects for the price of 16 at 48 px. A map generator scatters these.",
+      "description": "small outdoor ground detail for a fantasy meadow, hi-bit pixel art, dark outline, seen from above at an angle",
+      "groups": [
+        {
+          "name": "Flowers",
+          "items": [
+            "white daisy clump",
+            "yellow buttercup clump",
+            "blue cornflower clump",
+            "red poppy clump",
+            "purple lavender sprig",
+            "pink clover blossom",
+            "bluebell stem cluster",
+            "orange marigold",
+            "yellow dandelion",
+            "dandelion seed puff",
+            "tall foxglove stem",
+            "small violet cluster"
+          ]
+        },
+        {
+          "name": "Grass and weeds",
+          "items": [
+            "short grass tuft",
+            "tall grass tuft",
+            "dry yellow grass tuft",
+            "clover patch",
+            "young fern",
+            "broad-leaf weed",
+            "bunch of reeds",
+            "purple thistle",
+            "nettle clump",
+            "wild wheat stalks"
+          ]
+        },
+        {
+          "name": "Stones",
+          "items": [
+            "single small pebble",
+            "three pebbles",
+            "flat stepping stone",
+            "cracked small rock",
+            "mossy small rock",
+            "round river stone",
+            "pointed rock",
+            "half-buried stone",
+            "rock with yellow lichen",
+            "patch of gravel"
+          ]
+        },
+        {
+          "name": "Fungi and wood",
+          "items": [
+            "red toadstool",
+            "brown mushroom cluster",
+            "tiny white mushrooms",
+            "twig with bracket fungus",
+            "broken branch",
+            "small pile of twigs",
+            "pine cone",
+            "fallen acorns"
+          ]
+        },
+        {
+          "name": "Ground marks",
+          "items": [
+            "orange fallen leaves",
+            "green fallen leaves",
+            "white bird feather",
+            "small muddy puddle",
+            "molehill",
+            "patch of bare dirt"
+          ]
+        },
+        {
+          "name": "Left behind by people",
+          "items": [
+            "wooden practice sword lying on the ground",
+            "dented tin bucket",
+            "broken wooden shield",
+            "coil of rope",
+            "loose pile of straw",
+            "worn leather glove",
+            "red apple",
+            "wooden mallet",
+            "iron horseshoe",
+            "small tied sack"
+          ]
+        },
+        {
+          "name": "Small animals",
+          "items": [
+            "resting butterfly",
+            "garden snail",
+            "green frog",
+            "black beetle",
+            "small brown bird",
+            "brown rabbit",
+            "red squirrel",
+            "hedgehog"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "job-large",
+      "name": "Yard and countryside sheet",
+      "tool": "create_1_direction_object, 48 px, top-down view, our palette, 3 of our props as style references",
+      "cost": 10,
+      "yields": "16 objects, more by mirroring and recolouring",
+      "why": "Fences, the sword lesson's own furniture, and the larger things a countryside needs. Mirroring gives the fence's other direction for free. We already own the dummy, the target and the weapon rack, so they aren't on this list.",
+      "description": "outdoor training yard and countryside prop, hi-bit pixel art, dark outline, seen from above at an isometric angle, like a medieval fantasy academy's grounds",
+      "groups": [
+        {
+          "name": "Fences and walls",
+          "items": [
+            "wooden post and rail fence section running diagonally from upper left to lower right",
+            "wooden fence corner post with rails leaving at a right angle",
+            "closed wooden farm gate running diagonally from upper left to lower right",
+            "low dry stone wall section running diagonally from upper left to lower right"
+          ]
+        },
+        {
+          "name": "Sword lesson",
+          "items": [
+            "pell: a thick upright wooden post for sword practice, scarred by cuts, on a wooden base",
+            "wooden rack holding practice swords",
+            "wooden bench",
+            "hay bale"
+          ]
+        },
+        {
+          "name": "Countryside",
+          "items": [
+            "fallen mossy log",
+            "cluster of mossy boulders",
+            "round green bush",
+            "tree stump with an axe in it",
+            "stone well with a small wooden roof",
+            "wooden handcart",
+            "stack of firewood",
+            "wooden signpost with two arrows"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "job-trees",
+      "name": "Two trees",
+      "tool": "create_map_object, high top-down, transparent background",
+      "cost": 2,
+      "yields": "2 trees, more by mirroring and recolouring leaves",
+      "why": "Trees need more pixels than a sheet's 48. Recolouring the leaves gives autumn and dead versions for free.",
+      "items": [
+        "Broad oak tree with a thick trunk and full green canopy, hi-bit pixel art, dark outline (96 x 128 px)",
+        "Tall dark green pine tree, hi-bit pixel art, dark outline (80 x 128 px)"
+      ]
+    },
+    {
+      "id": "job-ground-pro",
+      "name": "Painted ground, to compare",
+      "tool": "create_topdown_tileset, pro, 32 px, high top-down, our palette",
+      "cost": 15,
+      "yields": "1 two-terrain set, 16 tiles",
+      "why": "The plan's richer tileset, on the same grass and dirt as the first standard set. We'd put both in the mock and keep whichever looks better.",
+      "items": [
+        "Lower: packed brown dirt footpath with small pebbles. Upper: short green meadow grass."
+      ]
+    },
+    {
+      "id": "job-iso-ground",
+      "name": "True isometric ground, to compare",
+      "tool": "create_tiles_pro, tileset, isometric, 32 px, flat 2:1 (angle 30, depth 0), plus create_path_tiles, isometric, 48 px, angle 30",
+      "cost": 20,
+      "yields": "16 transition tiles and 18 path pieces",
+      "why": "Tests the painted-ground idea against real isometric tiles. If these look clearly better, we use tiles and skip the floor painter.",
+      "items": [
+        "Transition set: short green meadow grass to packed brown dirt",
+        "Path set: short green meadow grass with a packed brown dirt footpath"
+      ]
+    },
+    {
+      "id": "job-misc",
+      "name": "Rural life sheet",
+      "tool": "create_1_direction_object, 48 px, top-down view, our palette, 3 of our props as style references",
+      "cost": 10,
+      "yields": "16 objects",
+      "why": "More of the misc things you asked for, so one meadow doesn't look like the next.",
+      "description": "rural fantasy countryside prop, hi-bit pixel art, dark outline, seen from above at an isometric angle",
+      "groups": [
+        {
+          "name": "Farm",
+          "items": [
+            "straw scarecrow",
+            "wooden beehive",
+            "wooden water trough",
+            "wooden wheelbarrow",
+            "small vegetable patch with cabbages",
+            "white picket fence section running diagonally from upper left to lower right"
+          ]
+        },
+        {
+          "name": "Camp and storage",
+          "items": [
+            "wooden barrel",
+            "stack of wooden crates",
+            "stone campfire ring with logs",
+            "small canvas tent",
+            "washing line with cloths"
+          ]
+        },
+        {
+          "name": "Old stone",
+          "items": [
+            "short stone footbridge",
+            "broken stone pillar",
+            "ruined stone archway",
+            "small wayside shrine",
+            "standing stone with faint carved runes"
+          ]
+        }
+      ]
+    }
+  ],
+  "variants": [
+    {
+      "id": "var-dummy-worn",
+      "name": "Worn dummy"
+    },
+    {
+      "id": "var-dummy-scorched",
+      "name": "Scorched dummy"
+    },
+    {
+      "id": "var-dummy-mossy",
+      "name": "Mossy dummy"
+    },
+    {
+      "id": "var-target-weathered",
+      "name": "Weathered target"
+    },
+    {
+      "id": "var-weapon-rack-mossy",
+      "name": "Mossy weapon rack"
+    }
+  ],
+  "questions": [
+    {
+      "id": "q-5-place",
+      "title": "Which place is it?",
+      "text": "A, B or C, or a mix. For example, the first lesson on the practice field, the camp as a later stop, and the stones as a duel or encounter space.",
+      "pick": "A for the first lesson: it says plainly what the place is and links the academy to the world. Keep B and C for later places. The story is yours, so this is about layout and use, not lore."
+    },
+    {
+      "id": "q-1-ground",
+      "title": "Paint the ground from a terrain map?",
+      "text": "The yard has no ground tiles. A map says where grass and dirt are, and the game paints that through the camera. Paths can wander, there's no grid to see, and the same map worked under both cameras. The cost is a new floor painter and a Ground layer in LDtk.",
+      "pick": "Yes. The bought isometric tiles looked worse, so build the painter next."
+    },
+    {
+      "id": "q-2-camera",
+      "title": "Which ground set?",
+      "text": "The pro set is richest and in our palette, but its tufts repeat, even with each tile flipped at random. The standard set is plainer and calmer, and leaves more room for scatter and spells.",
+      "pick": "Pro, with the tufts thinned so spells stay easy to read."
+    },
+    {
+      "id": "q-3-scale",
+      "title": "Dummies against wizards",
+      "text": "The dummies and pells stand taller than the wizards, and the teacher is bigger still. In a sword lesson you stand right next to them. This is the prop scale question left open from the Art Trial.",
+      "pick": "Shrink props about a quarter when the isometric room is tried, and judge it there."
+    },
+    {
+      "id": "q-4-missing",
+      "title": "Anything missing, or not needed?",
+      "text": "Add or strike anything here, or in a job's note above. Lists can change until the job is bought.",
+      "pick": "Nothing more until the first outdoor room shows what it lacks."
+    }
+  ],
+  "concepts": [
+    {
+      "id": "place-a",
+      "name": "A. The practice field",
+      "img": "img/concept-a.png",
+      "where": "Just outside the academy's wall, between its gate and the wild. It's the first time the player steps outside, and the lesson's ground is the academy's own.",
+      "zones": [
+        "The gate and cobbled yard: the way out of the academy. Its wall needs art we don't have yet.",
+        "The dummy line: Strike and Heavy, with the teacher walking the line.",
+        "Racks by the gate: you take a weapon on the way out, so the lesson starts by arming up.",
+        "The sparring ring: partners spar inside a ring of stones. The hands test happens here.",
+        "The parry lane: an archer shoots from the butts at the far end, and you block with a buckler. The target has its own length of ground now.",
+        "The bridge over the stream: the edge of the academy's ground.",
+        "The wild beyond: the hands test's goblins come out of the trees and over the bridge, so the danger has a direction."
+      ],
+      "cost": "The most orderly, so it has the least wild variety. Its edge needs academy wall art. It ties the first lesson to the academy, and crossing the bridge is a natural first step into the world."
+    },
+    {
+      "id": "place-b",
+      "name": "B. The road camp",
+      "img": "img/concept-b.png",
+      "where": "On the road out from the academy: a drill camp at a crossroads, where people on the road keep their hands sharp. It could come back between chapters.",
+      "zones": [
+        "The camp: tents, a fire, firewood and stores. Here the hay and wood belong.",
+        "The crossroads and signpost: where the road splits towards later places.",
+        "The fenced drill square: dummies and pells, and the lesson.",
+        "The butts: hay stacked behind a target, with room for the parry lane in front.",
+        "A pond: the camp's water.",
+        "The forest edge: where trouble comes from."
+      ],
+      "cost": "Less like school, more like the world. It answers the vision's open question of where practice happens, as a place to return to. It needs no academy art. The first lesson would happen away from the academy, though, and that's a story choice."
+    },
+    {
+      "id": "place-c",
+      "name": "C. The old stones",
+      "img": "img/concept-c.png",
+      "where": "A ruin in the meadows near the academy, older than it: a broken paved floor inside a ring of standing stones, used as a duelling ground.",
+      "zones": [
+        "The ruined arch: the way in.",
+        "The floor among the stones: a duelling ground. Broken pillars are cover, for teaching Retreat and moving round things.",
+        "A shrine, where the teacher stands.",
+        "The lake.",
+        "Dummies at the edge, for warming up.",
+        "The forest."
+      ],
+      "cost": "The most atmospheric, and the cover adds play. It carries the most lore, because who built it is your call. It has the least room for rows of dummies."
+    }
+  ]
+}

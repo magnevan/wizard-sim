@@ -1,0 +1,26 @@
+{
+  "id": "pine",
+  "kind": "prop",
+  "name": "Pine",
+  "footprint": [
+    1.0,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        15,
+        61
+      ],
+      "source": "pixellab + local",
+      "raw": "game/content/generated/pixellab/outdoor/trees/pine.png",
+      "tool": "create_map_object + tools/outdoor-kit/props.py",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "ops": [
+        "halved",
+        "greens onto the game's leaf ramp"
+      ]
+    }
+  }
+}

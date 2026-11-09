@@ -1,0 +1,22 @@
+{
+  "id": "bench",
+  "kind": "prop",
+  "name": "Bench",
+  "footprint": [
+    1.4,
+    0.5
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        18,
+        35
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/yard/06.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread."
+    }
+  }
+}

@@ -1072,3 +1072,11 @@ The user: the Fire ring has little reason to exist next to the flamethrower, its
 - **The 1.5× burst above is reversed.** The user: the burst's benefit is that friendly fire is easier to control, even if its damage potential is lower. The audit's "no reason to pick it" ignored that. `shapes.imbuePower` is 1 and stays a slider.
 - **Cold's ring and burst, first pass, built on the user's ask for a balance pass on its initial damage:** the direct hit is 1.6× its table rate (`shapes.coldBlast`) and pays +70 % a rune, for 8, 14 and 19 against Fire's 12, 20 and 29, with no burn on top. Cold is meant to be the weaker damage; its essence is the slow. Frost spray, the frost sheet and Ice shards are unchanged. The golden hash didn't move (the scripted run has no Cold-led ring or burst).
 - **Open:** strong enemies should be harder to slow (the user), and today chill builds the same on everything.
+
+## 2026-11-09: Direction for Fire and Cold (`explorations/2026-11-09-fire-and-cold-status.md`)
+
+Direction from the user; not built yet.
+
+- **Fire must not end up as it did in Magicka,** where it had little besides raw damage while Wet powered Cold and Lightning.
+- **Chill builds more slowly on stronger enemies, and slows on a sliding scale up to a cap.**
+- **Water + Cold freezes, but needs a minimum chill, and freeze length may follow chill. Chill decays.**

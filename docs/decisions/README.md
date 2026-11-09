@@ -1075,3 +1075,8 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 ## 2026-11-09: Isometric is the only camera; walls and spells in the lighting (`explorations/2026-11-09-lighting.md`)
 - **The straight-on view and the old code-drawn floor are removed** (the user: "we can probably just kill the non isometric stuff. I dont want you to have to duplicate work"). The tutorial and help previews work under it. This reaches the public game when the branch is merged.
 - **Walls stop light and their faces catch it; beams and sprays light along their whole length** in their own colour.
+
+## 2026-11-09: Room walls from the building kits
+- **The Academy's walls are the bought school kit;** far walls stand tall, near walls are cut low so the room stays visible. Asked for by the user ("Let's do the wall kit thing").
+- **Survive keeps its drawn walls** (Claude's call): tall kit walls hid the action in the open arena, cutting them low looked like fences, and its angled walls have no kit pieces.
+- **The fortification kit waits for the battery,** where a tall defensive wall is the point.

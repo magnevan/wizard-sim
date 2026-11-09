@@ -33,4 +33,3 @@ Follows `2026-11-06-performance.md`. Measured with `npm run build`, then `node s
 
 About 1.5 MB of effect canvases are uploaded to the GPU every frame, and they're the largest single thing left on the main thread (`texSubImage2D`), as they were on 2026-11-06.
 
-Also noticed: the Academy's "tall back wall" rule in `view-structures.ts` tests a wall's real-world direction on the turned world, so it no longer fires, and that room's back walls are low. It's an art-test room; it needs a decision on which walls count as "back" in isometric.

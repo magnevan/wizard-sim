@@ -132,13 +132,13 @@ export function castRay(c: number, s: number, segs: readonly number[], max: numb
 
 /** Scratch for the rays of one light, so a frame's light cutting allocates next to nothing. */
 const ANGLES = new Float64Array(MAX_VERTS * 2);
-function putVert(pos: Float32Array, uv: Float32Array, lx: number, ly: number, R: number, v: number, X0: number, Y0: number, up: number): void {
+function putVert(pos: Float32Array, uv: Float32Array, lx: number, ly: number, R: number, v: number, X0: number, Y0: number, up: number, farX = 0, farY = 0): void {
   pos[v * 2] = lx + X0; pos[v * 2 + 1] = ly + Y0 * FY - up;
-  uv[v * 2] = (X0 / R + 1) / 2; uv[v * 2 + 1] = (Y0 / R + 1) / 2;
+  uv[v * 2] = ((X0 + farX) / R + 1) / 2; uv[v * 2 + 1] = ((Y0 + farY) / R + 1) / 2;
 }
 
 /** Fills a light's triangle fan, then a quad for each wall face turned toward it. Unused indices are left as empty triangles. */
-function fillShape(pos: Float32Array, uv: Float32Array, idx: Uint32Array, lx: number, ly: number, R: number, segs: readonly number[]): void {
+function fillShape(pos: Float32Array, uv: Float32Array, idx: Uint32Array, lx: number, ly: number, R: number, segs: readonly number[], wallH: number): void {
   let na = 0;
   for (let k = 0; k < RAYS; k++) ANGLES[na++] = (k / RAYS) * Math.PI * 2 - Math.PI;
   for (let i = 0; i < segs.length && na + 2 <= ANGLES.length; i += 2) if (Math.hypot(segs[i], segs[i + 1]) < R) { const a = Math.atan2(segs[i + 1], segs[i]); ANGLES[na++] = a - 0.002; ANGLES[na++] = a + 0.002; }
@@ -161,7 +161,9 @@ function fillShape(pos: Float32Array, uv: Float32Array, idx: Uint32Array, lx: nu
     const mx = (ax + bx) / 2, my = (ay + by) / 2, dist = Math.hypot(mx, my) || 1;
     if (castRay(mx / dist, my / dist, segs, dist + 1) < dist - 2) continue; // another wall is in the way
     putVert(pos, uv, lx, ly, R, v, ax, ay, 0); putVert(pos, uv, lx, ly, R, v + 1, bx, by, 0);
-    putVert(pos, uv, lx, ly, R, v + 2, bx, by, WALL_H); putVert(pos, uv, lx, ly, R, v + 3, ax, ay, WALL_H);
+    // higher up the wall is further from a light on the ground, so the glow fades as it climbs
+    const nl = Math.hypot(nx, ny) || 1, fx = (-nx / nl) * wallH * 1.4, fy = (-ny / nl) * wallH * 1.4;
+    putVert(pos, uv, lx, ly, R, v + 2, bx, by, wallH, fx, fy); putVert(pos, uv, lx, ly, R, v + 3, ax, ay, wallH, fx, fy);
     idx[n++] = v; idx[n++] = v + 1; idx[n++] = v + 2; idx[n++] = v; idx[n++] = v + 2; idx[n++] = v + 3;
     v += 4;
   }
@@ -198,6 +200,8 @@ export class SceneLighting {
   private wallMood: Mood | null = null;
   private fx = 0;
   private fy = 0;
+  /** How tall the room's walls are, for the light on their faces. */
+  wallHeight = WALL_H;
   private shadowTex: RenderTexture | null = null;
   private lightTex: RenderTexture | null = null;
   private w = 0;
@@ -345,7 +349,7 @@ export class SceneLighting {
       const near = used < MAX_BLOCKED ? nearWalls(this.occ, L.x, L.y, R, this.nearBuf) : null;
       if (!near || !near.length) { this.lights.add(L.x, L.y, L.r, L.col, L.a); this.glow.add(L.x, L.y, L.r, L.col, L.a); continue; }
       const s = this.shape(used++);
-      fillShape(s.pos, s.uv, s.idx, L.x, L.y, R, near);
+      fillShape(s.pos, s.uv, s.idx, L.x, L.y, R, near, this.wallHeight);
       s.geo.getBuffer('aPosition').update();
       s.geo.getBuffer('aUV').update();
       s.geo.getIndex().update();

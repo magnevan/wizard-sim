@@ -36,6 +36,8 @@ import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from 
 import type { BodyView, LightFn } from './art/vfx';
 import { glyph, perkOf } from './art/perks';
 import { drawTutorialWorld } from './tutorial-view';
+import { kitOf, kitRun, stampTexture } from './art/wall-kit';
+import { toX, toY } from './iso-world';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
 
 /** Seconds between one rune mote appearing and the next. */
@@ -611,7 +613,7 @@ export class StructureView {
 
   // ---- Shield walls ---------------------------------------------------------------------------------
   private walls(w: World, t: number, g: Ctx, o: Ctx, light: LightFn): void {
-    const wl = w.walls, s = w.seats, tick = w.clock[0], live = new Set<string>();
+    const wl = w.walls, s = w.seats, tick = w.clock[0], live = new Set<string>(), kitName = kitOf(w.def.id);
     const joins = (k: number, x: number, y: number) => {
       for (let j = 0; j < MAX_WALLS; j++) if (j !== k && wl.type[j] === WALL.rock && ((Math.abs(wl.x1[j] - x) < 0.05 && Math.abs(wl.y1[j] - y) < 0.05) || (Math.abs(wl.x2[j] - x) < 0.05 && Math.abs(wl.y2[j] - y) < 0.05))) return true;
       return false;
@@ -621,6 +623,20 @@ export class StructureView {
       const a: Pt = [gx(wl.x1[k]), gy(wl.y1[k])], bb: Pt = [gx(wl.x2[k]), gy(wl.y2[k])];
       const age = (tick - (w.walls.born[k] ?? 0)) / 60, hpf = clamp(wl.hp[k] / Math.max(1, wl.maxHp[k]), 0, 1), hitE = this.st - this.wHitT[k];
       if (ty === WALL.rock) {
+        // a room's own straight walls, where it has a kit: bought pieces instead of the drawn stone
+        if (wl.owner[k] === TERRAIN && kitName) {
+          const mu = (wl.x1[k] + wl.x2[k]) / 2, mv = (wl.y1[k] + wl.y2[k]) / 2;
+          const run = kitRun(a[0], a[1], bb[0], bb[1], toX(mu, mv), toY(mu, mv));
+          let drawn = !!run;
+          for (const st of run ?? []) {
+            const got = stampTexture(kitName, st);
+            if (!got) { drawn = false; break; }
+          }
+          if (run && drawn) {
+            for (const st of run) { const got = stampTexture(kitName, st)!; this.pieces.tex(got.tex, st.x + got.dx, st.y, st.z, 0xffffff); }
+            continue;
+          }
+        }
         const cold = has(wl.els, k, ELID.cold), coat = wallLead(wl.els, k, ELID.earth);
         const endA = !joins(k, wl.x1[k], wl.y1[k]), endB = !joins(k, wl.x2[k], wl.y2[k]);
         const pre = `${k}:${wl.born[k]}:${+endA}${+endB}:${+cold}`;
@@ -629,8 +645,7 @@ export class StructureView {
         if (!gm) {
           const lenPx = Math.hypot(bb[0] - a[0], (bb[1] - a[1]) / FY);
           const ruin = wl.owner[k] === TERRAIN; // the arena's own rock: taller, older stone
-          // a room with furniture: its far wall stands as high as a room's, for shelves and banners to stand against
-          const backWall = ruin && w.def.props.length > 0 && wl.y1[k] === wl.y2[k] && wl.y1[k] < 0;
+          const backWall = false;
           const spec: WallSpec = { a: [a[0], a[1]], b: [bb[0], bb[1]], n: Math.max(1, Math.round(lenPx / 12)), H: ruin ? (backWall ? 34 : 19) : 14, T: ruin ? 8 : 7, mat: ruin ? 'ruin' : cold ? 'frost' : 'stone', seed: (k * 7 + wl.born[k]) & 1023, endA, endB };
           gm = { spec, g: wallGeom(spec) };
           this.geoms.set(pre, gm);

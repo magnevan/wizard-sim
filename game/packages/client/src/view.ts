@@ -27,6 +27,7 @@ import { floorLayout, floorPlaceholder } from './art/floor';
 import { groundTexture } from './art/ground-room';
 import { toX, toY, turnedWorld } from './iso-world';
 import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
+import { kitWallHeight } from './art/wall-kit';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
@@ -323,6 +324,7 @@ export class WorldView {
     if (lit) {
       lit.fit(cam.w, cam.h);
       lit.begin(moodOf(w.def.id, this.mood), ct, fx0, fy0);
+      lit.wallHeight = kitWallHeight(w.def.id) ?? 22;
       this.props.standing((tex, fx, fy, x, y, asset, flat) => {
         if (!flat) lit.shadow(tex, fx, fy, x, y);
         const l = PROP_LIGHTS[asset];

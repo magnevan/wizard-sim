@@ -35,7 +35,7 @@ You walk north throughout, because the view reaches further up the screen than d
 
 On 2026-11-09 the user authorized buying the general art, so everything but the defence is bought (158 generations, with extra ground sets, alternates and a clutter sheet; 1,772 are left). Results are on the page. **The defence (20 generations) still waits for an Approve.**
 
-The ground painter and the isometric camera are built. What's left before the art is in is using the wall kits.
+The ground painter and the isometric camera are built. The Academy's walls use the school kit, and the fortification kit is ready for the battery.
 
 ## Open questions, on the page
 

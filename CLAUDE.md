@@ -18,7 +18,7 @@ The source of truth for what the game is trying to be is `docs/vision.md`. Read 
 - `docs/world/`: living pages about the setting, edited as it changes (unlike explorations). `elements.md` holds each element's essence, which informs both the world and the spells.
 - `docs/campaign/`: how campaign segments get made (`README.md`, stage by stage), one folder per segment, and `canon.md`, the one page saying which story facts the user has approved. Read `canon.md` before writing story; everything not in its Approved section is an option.
 - `tools/opening-blueprint/`: the Opening Blueprint, the space-diagram stage of the opening: five maps at true scale, a camera preview and the asset list. Ratings are in its db collection `ratings` (`map-*`, `job-*`; a job is bought only when marked `approve`), answers in `answers` (`q-*`, `general`).
-- `tools/art-import/`: free scripts that turn bought art into game assets: `ground.py` cuts the painter's textures, `props.py` registers the opening's props.
+- `tools/art-import/`: free scripts that turn bought art into game assets: `ground.py` cuts the painter's textures, `props.py` registers the opening's props, `kits.py` prepares the wall kits.
 - `docs/reference/`: notes on Magicka and other reference games. Facts recalled from memory are marked *(unverified)*.
 - `docs/explorations/`: dated, long-form thinking sessions (`YYYY-MM-DD-topic.md`). Once written, they're a record and aren't rewritten. Newer explorations supersede older ones.
 - `docs/ideas/`: one file per mechanic idea, written from `docs/ideas/_template.md`. Each has a status: `raw` → `developing` → `prototyping` → `adopted` / `parked` / `rejected`.

@@ -124,3 +124,7 @@ The **Ground** layer (IntGrid, one cell = 0.5 u) says what the floor looks like:
 Edit it in LDtk, or as text with `npm run content -- ground <level>` and `--write <file|->`. Textures are `content/assets/ground/<name>.png`, cut from the tilesets by `tools/art-import/ground.py`. The painter (`client/src/art/ground.ts`) works through any camera.
 
 **Transitions and variation.** Each material has a layer and an edge style (`MATERIAL_STYLES` in `art/ground.ts`). The higher layer decides the edge: grass and forest floor fray, loose ground breaks into clumps, paving loses whole irregular stones, and water gets a dark bank and a foam line. Variation stacks: alternate tiles (`<material>-2.png` and on, colour-matched to the first, picked by region), a random shift and mirror per block for loose materials, broad light and warm or cool drift, and a scatter of small props per material (`SCATTER` in `art/ground-room.ts`).
+
+## Walls from a building kit
+
+A room can build its straight walls from a kit in `content/assets/kits/<kit>/` (`tools/art-import/kits.py` cuts these from the bought kits): list it in `ROOM_KIT` in `client/src/art/wall-kit.ts`. Pieces repeat exactly along the two directions the map's axis-aligned Rock walls run on screen, and a wall that doesn't end on a whole tile (about 2.1 units) is cropped. Walls on the north and west of the room stand full height; those on the south and east are cut low so they don't hide the room. Walls at other angles, and walls a player raises, stay drawn by `art/walls.ts`.

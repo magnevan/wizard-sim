@@ -18,3 +18,8 @@ The user's steer: the Pokémon echo is only the feel of mastering one element at
 **Your Go** (`rival`) won with 122 of 150, first for the player and builder judges. **The Flitting Year** (`season`) had 107 and was the creator judge's first choice. **Before All the People** (`oath`) had 101, **What He Had on Him** (`case`) 84.
 
 Main caution on the winner: the wells barely matter in it, and attuning is what the user said they liked. Biggest risk: four rival casters have to be fun to lose to.
+
+## The user's reactions
+
+- **Your Go (2026-11-09):** likes the creativity. "I think the tone is too goofy and slapstick. I don't think the rival system works for me. It depends on strong character building to make them likable, and making pvp battles fun. Getting spells from losing seems at odds with the actual casting system." Rejected as the spine; see `decisions/README.md`. The judges had no way to see this, and two of the three ranked it first.
+- The page's prose was hard to get through and its names went unexplained, so plain summaries and a name guide were added.

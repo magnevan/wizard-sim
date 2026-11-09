@@ -1005,3 +1005,7 @@ The user's answers on the World and Progression page.
 ## 2026-11-09: ChatGPT paints the world map, in two passes (`explorations/2026-11-08-map-art-trial.md`)
 - **ChatGPT replaces Gemini for the painting, run by hand in its own app.** On the same sketch and prompt it gave better craft, scale and fidelity to the sketch. A second message in the same chat fixed the specific gaps (edges, fen, signature landmarks) without losing the world.
 - **Labels are placed on the painting in `tools/map-labels/`,** with generated names as starting points to reroll or replace.
+
+## 2026-11-09: The story's spine isn't a rival system (`explorations/2026-11-09-story/`)
+- **Rejected as the story's spine: "Your Go" and its rival system,** although the blind judges ranked it first. The user likes its creativity, but: the tone is too goofy and slapstick (the vision asks for a light touch); it depends on strong character building to make the rivals likable, and on making PvP battles fun; and getting spells from losing is at odds with the casting system, where spells are composed from runes the player already has.
+- **Which story to carry forward is still open.** The user is reading the others.

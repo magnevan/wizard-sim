@@ -19,7 +19,7 @@ Seven elements are **fields**: Water, Fire, Cold, Lightning, Earth, Life, Arcane
 
 - **A field** is broad and ambient, like rainfall or a climate. Its strength is what a zone's band measures (edge, heartland, well).
 - **A vein** is a narrow channel of strength inside or between fields, like a river. It exists in the world, not as a gameplay effect: no boost for standing on one (the user, 2026-11-08). Devices and towns sit on them (a forge on a fire vein).
-- **A well** is where veins surface and converge. A region's push peaks there.
+- **A well** is built by people where veins meet, to draw on them. A civilization can raise a great one, and there are smaller ones too. A region's push peaks at its great well. (Changed 2026-11-09: wells are constructed, not natural.)
 - **Opposites can meet, depending on how they appear.** The rules cancel Fire and Cold, Water and Lightning, Life and Arcane, and Earth and Lightning, but in the world that's case by case. The user: "fire and frost is a bit weird to overlap. Water and lightning is not so crazy, lightning is not a persistent thing in the world. Rain and lightning is a common thing to happen together." A **hush** (a dead zone where neither holds) is a possible feature where fire meets frost, not a law. *(2026-11-08.)*
 
 ## The field elements

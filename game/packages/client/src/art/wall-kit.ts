@@ -10,7 +10,7 @@ import { Rectangle, Texture } from 'pixi.js';
 import { loadTexture } from './assets';
 
 export type Side = 'n' | 'w' | 's' | 'e';
-export interface Stamp { side: Side; x: number; y: number; /** Art px of the piece's ground edge to show (24 is all of it). */ part: number; /** The ground y to sort by: a far wall stands behind whatever is against it. */ z: number }
+export interface Stamp { side: Side; x: number; y: number; /** Art px of the piece's ground edge to show (24 is all of it). */ part: number; /** The ground y to sort by: a far wall stands behind whatever is against it. */ z: number; /** Where it stands, for the lighting. */ foot: number }
 
 /** Where a run's start sits in each 76 x 86 piece: the upper end of the tile edge that piece stands on. */
 const ANCHOR: Readonly<Record<Side, readonly [number, number]>> = { n: [38, 55], w: [38, 55], s: [14, 67], e: [62, 67] };
@@ -32,7 +32,7 @@ export function kitRun(ax: number, ay: number, bx: number, by: number, realX: nu
   const [ox, oy] = ANCHOR[side], [mx, my] = SHIFT[side], n = Math.ceil(dx / STEP_X), out: Stamp[] = [];
   for (let i = 0; i < n; i++) {
     const px = Math.round(sx + (right ? i : -i) * STEP_X), py = Math.round(sy + i * STEP_Y);
-    out.push({ side, x: px - ox + mx, y: py - oy + my, part: i < n - 1 ? STEP_X : Math.max(1, Math.round(dx - STEP_X * (n - 1))), z: side === 'n' || side === 'w' ? py - FAR_MARGIN : py + STEP_Y });
+    out.push({ side, x: px - ox + mx, y: py - oy + my, part: i < n - 1 ? STEP_X : Math.max(1, Math.round(dx - STEP_X * (n - 1))), z: side === 'n' || side === 'w' ? py - FAR_MARGIN : py + STEP_Y, foot: py + STEP_Y / 2 });
   }
   return out;
 }
@@ -46,8 +46,6 @@ const urlOf = new Map(Object.entries(urls).map(([path, url]) => [path.split('/')
  */
 const ROOM_KIT: Readonly<Record<string, string>> = { academy: 'academy' };
 export const kitOf = (room: string): string | undefined => ROOM_KIT[room];
-/** How tall a room's far walls stand, for the light on their faces. */
-export const kitWallHeight = (room: string): number | undefined => (ROOM_KIT[room] ? 52 : undefined);
 
 const SIDES: readonly Side[] = ['n', 'w', 's', 'e'];
 const loaded = new Map<string, Partial<Record<Side, Texture>>>();

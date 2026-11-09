@@ -27,7 +27,6 @@ import { floorLayout, floorPlaceholder } from './art/floor';
 import { groundTexture } from './art/ground-room';
 import { toX, toY, turnedWorld } from './iso-world';
 import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
-import { kitWallHeight } from './art/wall-kit';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
@@ -160,16 +159,16 @@ export class WorldView {
   setRenderer(r: Renderer): void { this.renderer = r; }
 
   constructor(lighting = LIGHTING) {
-    if (lighting) this.lit = new SceneLighting();
+    if (lighting) this.lit = new SceneLighting(this.actors);
     const tint = this.lit ? 0xffffff : AMBIENT;
     this.actors.sortableChildren = true;
     this.structs = new StructureView(this.actors);
     this.props = new PropView(this.actors, tint, 'lean');
     this.deaths = new Deaths(this.actors);
     if (this.lit) {
-      this.litLayer.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.lit.shadowSprite, this.actors, this.lit.lightSprite);
+      this.litLayer.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.lit.shadowSprite, this.lit.lightSprite, this.lit.glowLayer, this.actors, this.lit.vig);
       this.litLayer.filters = [this.lit.grade];
-      this.scene.addChild(this.litLayer, this.lit.glowLayer, this.vfx.over, this.sOverlay);
+      this.scene.addChild(this.litLayer, this.vfx.over, this.sOverlay);
     } else {
       this.scene.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
     }
@@ -324,11 +323,10 @@ export class WorldView {
     if (lit) {
       lit.fit(cam.w, cam.h);
       lit.begin(moodOf(w.def.id, this.mood), ct, fx0, fy0);
-      lit.wallHeight = kitWallHeight(w.def.id) ?? 22;
       this.props.standing((tex, fx, fy, x, y, asset, flat) => {
         if (!flat) lit.shadow(tex, fx, fy, x, y);
         const l = PROP_LIGHTS[asset];
-        if (l) lit.light(x, y - l[3], l[1], l[0], l[2] * (0.92 + 0.08 * Math.sin(ct * 7 + x)));
+        if (l) lit.light(x, y + 2, l[1], l[0], l[2] * (0.92 + 0.08 * Math.sin(ct * 7 + x))); // at its foot, on the camera's side, so it lights itself
       });
       for (let i = 0; i < MAX_BODIES; i++) {
         const v = this.views[i];
@@ -340,8 +338,9 @@ export class WorldView {
       for (let k = 0; k < MAX_WALLS; k++) {
         if (wl.type[k] !== WALL.rock) continue;
         const x1 = fx0 + gx(wl.x1[k]), y1 = fy0 + gy(wl.y1[k]), x2 = fx0 + gx(wl.x2[k]), y2 = fy0 + gy(wl.y2[k]);
+        if (isPropWall(w, k)) continue; // furniture throws its own sprite shadow, and doesn't stop light
         lit.occluder(x1, y1, x2, y2);
-        if (!isPropWall(w, k)) lit.wall(x1, y1, x2, y2);
+        lit.wall(x1, y1, x2, y2);
       }
     }
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
@@ -351,7 +350,13 @@ export class WorldView {
     this.tut.draw(w, ct, cam.hudW, cam.hudH);
     this.edges.draw(w, cam, ct, (i) => this.drawnAt(i, w, alpha));
     this.frames.upload();
-    if (lit && this.renderer) lit.render(this.renderer);
+    if (lit && this.renderer) {
+      lit.finishLights();
+      for (let i = 0; i < MAX_BODIES; i++) if (this.views[i].on && this.sprites[i].visible) lit.relight(this.sprites[i], fx0 + this.views[i].x, fy0 + this.views[i].y);
+      this.props.sprites((s, x, y) => lit.relight(s, x, y));
+      this.structs.eachPiece((s, x, y) => lit.relight(s, x, y));
+      lit.render(this.renderer);
+    }
     const me = this.vfx.localSeat;
     this.sound?.frame(w, { cx: cam.cx, cy: cam.cy, halfW: cam.w / 2 / PPU, earX: b.x[me], earY: b.y[me] }, ct);
   }

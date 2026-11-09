@@ -88,6 +88,11 @@ export class PropView {
     for (const it of this.items) it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
   }
 
+  /** Every standing prop's sprite and where its foot is in the scene. */
+  sprites(fn: (s: Sprite, x: number, y: number) => void): void {
+    for (const it of this.items) if (it.spr.visible && !it.meta.flat) fn(it.spr, it.spr.position.x + it.ox, it.spr.position.y + it.oy);
+  }
+
   /** Every prop as it stands, for the lighting: its texture, foot, spot in the scene, and id. */
   standing(fn: (tex: Texture, footX: number, footY: number, x: number, y: number, asset: string, flat: boolean) => void): void {
     for (const it of this.items) if (it.spr.visible) fn(it.spr.texture, it.ox, it.oy, it.spr.position.x + it.ox, it.spr.position.y + it.oy, it.asset, !!it.meta.flat || !!it.meta.lift);

@@ -10,7 +10,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const stop = await startPreview();
 const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 try {
-  for (const [name, room, key, mood] of [['arcane-survive', 'survive', 's', ''], ['arcane-night', 'survive', 's', '&mood=night'], ['fire-night', 'survive', 'f', '&mood=night']]) {
+  // name, room, rune key, extra URL, aim offset on screen, and (optional) a prop to stand just behind
+  for (const [name, room, key, mood, ax, ay, behind] of [
+    ['arcane-survive', 'survive', 's', '', 380, -130], ['arcane-night', 'survive', 's', '&mood=night', 380, -130], ['fire-night', 'survive', 'f', '&mood=night', 380, -130],
+    ['beam-shelf', 'academy', 's', '', -40, -190], ['behind-desk', 'academy', '', '&mood=night', 0, 0, 'desk'], ['behind-shelf', 'academy', '', '', 0, 0, 'bookshelf'],
+  ]) {
     const p = await browser.newPage();
     p.on('pageerror', (e) => console.error('PAGE ERROR', e.message));
     await p.setViewport({ width: 1920, height: 1080 });
@@ -18,7 +22,14 @@ try {
     await p.waitForFunction(() => window.wizardSim?.view.groundReady, { timeout: 60000, polling: 100 });
     await sleep(600);
     const at = await p.evaluate(() => { const g = window.wizardSim, b = g.world.bodies, s = g.view.camera.worldToScreen(b.x[0], b.y[0]); return s; });
-    await p.mouse.move(at.x + 380, at.y - 130);
+    if (behind) {
+      await p.evaluate((id) => { const g = window.wizardSim, q = g.world.def.props.find((c) => c.asset.startsWith(id)), b = g.world.bodies; b.x[0] = q.x + (id === 'desk' ? -0.2 : 0.6); b.y[0] = q.y - (id === 'desk' ? 1.1 : -0.6); }, behind);
+      await sleep(900);
+      await p.screenshot({ path: OUT + name + '.png' });
+      await p.close();
+      continue;
+    }
+    await p.mouse.move(at.x + ax, at.y + ay);
     await sleep(200);
     await p.keyboard.press(key);
     await sleep(150);

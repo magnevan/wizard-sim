@@ -88,15 +88,20 @@ const has = (els: Uint8Array, at: number, id: number) => els[at * N_EL + id - 1]
 interface Dyn { c: HTMLCanvasElement; x: Ctx; tex: Texture; spr: Sprite; w: number; h: number; used: boolean }
 class Pieces {
   private stat: Sprite[] = [];
+  private footX: number[] = [];
+  private footY: number[] = [];
+  /** Every wall piece drawn this frame, and where it stands in the scene, for the lighting. */
+  each(fn: (s: Sprite, x: number, y: number) => void): void { for (let i = 0; i < this.nS; i++) fn(this.stat[i], this.footX[i], this.footY[i]); }
   private nS = 0;
   private dyn: Dyn[] = [];
   private fx0 = 0; private fy0 = 0;
   constructor(private parent: Container) {}
   begin(fx0: number, fy0: number): void { this.fx0 = fx0; this.fy0 = fy0; this.nS = 0; for (const d of this.dyn) d.used = false; }
   /** A cached texture at field (rx, ry), sorted at ground y z. */
-  tex(tex: Texture, rx: number, ry: number, z: number, tint = AMBIENT): void {
+  tex(tex: Texture, rx: number, ry: number, z: number, tint = AMBIENT, foot = z): void {
     let s = this.stat[this.nS];
     if (!s) { s = new Sprite(); this.parent.addChild(s); this.stat.push(s); }
+    this.footX[this.nS] = this.fx0 + rx + tex.width / 2; this.footY[this.nS] = this.fy0 + foot;
     this.nS++;
     s.texture = tex; s.position.set(this.fx0 + rx, this.fy0 + ry); s.zIndex = Math.round(z) * 128 + 100; s.tint = tint; s.visible = true;
   }
@@ -345,6 +350,8 @@ export class StructureView {
   private prevKind = new Uint8Array(MAX_BODIES); private bornT = new Float64Array(MAX_BODIES).fill(-9); private echoT = new Float64Array(MAX_BODIES).fill(-9);
 
   constructor(actors: Container) { this.pieces = new Pieces(actors); }
+  /** Every wall piece drawn this frame, and where it stands in the scene, for the lighting. */
+  eachPiece(fn: (s: Sprite, x: number, y: number) => void): void { this.pieces.each(fn); }
 
   private add(kind: string, t0: number, life: number, o: Partial<SFx>): void {
     if (this.fx.length > 300) this.fx.shift();
@@ -633,7 +640,7 @@ export class StructureView {
             if (!got) { drawn = false; break; }
           }
           if (run && drawn) {
-            for (const st of run) { const got = stampTexture(kitName, st)!; this.pieces.tex(got.tex, st.x + got.dx, st.y, st.z, 0xffffff); }
+            for (const st of run) { const got = stampTexture(kitName, st)!; this.pieces.tex(got.tex, st.x + got.dx, st.y, st.z, 0xffffff, st.foot); }
             continue;
           }
         }

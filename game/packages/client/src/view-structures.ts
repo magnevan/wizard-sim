@@ -1245,6 +1245,12 @@ export class StructureView {
     }
     // each element sheds its own bits behind the crescent
     ids.forEach((id, m) => { const a = aw + (m - (ids.length - 1) / 2) * (half / Math.max(1, ids.length)); this.blowSpray(elName(id), blowRamp(id), at(a, r * 0.8), a, e * 0.8, f.seed + m * 31, o, 4); });
+    if (f.look === ELID.fire) {
+      // the Fire burst: a flash at the hand, a fan of flame along the crescent, a scorched wedge left behind
+      if (q < 0.25) { const p = at(aw, 8), f0 = 1 - q / 0.25; X.glow(o, p[0], p[1], 16, EL.fire[1], 0.9 * f0); X.ellipse(o, p[0], p[1], 3 + 6 * f0, 2 + 4 * f0, '#ffffff', f0); }
+      for (let j = 0; j <= 14; j++) { const u = j / 14, a = aw - half + 2 * half * u, p = at(a, r * (0.8 + 0.2 * Math.sin(u * Math.PI))); if (rand(j, 6, f.seed) > fade + 0.1) continue; K.tongue(o, p[0], p[1] + 8, 2.8, (10 + 6 * rand(j, 7, f.seed)) * fade, Math.cos(a) * 3); }
+      for (let j = 0; j < 9; j++) { const a = aw + (rand(j, 8, f.seed) - 0.5) * 2 * half, p = at(a, 8 + rand(j, 9, f.seed) * (reach - 8)); K.scorch(g, p[0], p[1] + 8, 4 + rand(j, 10, f.seed) * 4, 0.4 * fade); }
+    }
     const mid = at(aw, r * 0.7), R0 = blowRamp(ids[0]);
     K.gring(g, gx(f.x), gy(f.y), 4 + k * 10, R0[2], 0.6 * fade, 1);
     light(mid[0], gy(f.y), 40 + reach * 0.3, R0[2], 0.7 * fade);

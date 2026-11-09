@@ -46,6 +46,8 @@ const HELP: Record<string, string> = {
   'status.wetShockMult': 'Lightning damage multiplier on wet targets.',
   'status.shatterMult': 'Earth damage multiplier on frozen targets (and the freeze ends).',
   'structures.idleDrain': 'Shield runes per second each energy wall drains while it stands (Model A).',
+  'shapes.fireBlast': 'Multiplies the direct hit of a Fire ring and a Fire burst (one rune: 6 x this). Burning is on top.',
+  'shapes.imbuePower': 'How much harder the burst (Shift+LMB, a short cone) hits than the ring (Area), in every element.',
   'structures.arcRadius': 'How far from you the quick Shield arc (Place, no drag) stands, in world units.',
   'structures.ringRadius': 'How far from you the closed Shield ring (Area) stands, in world units.',
   'structures.turretInterval': 'Seconds between turret shots.',

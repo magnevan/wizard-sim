@@ -1055,3 +1055,14 @@ The user's bug list from play.
 - **Shield with Water and Cold is drawn as ice.** Curtains (Area and Place) are a row of still, faceted crystals, the wave is a front of ice spears, the ward has crystals round the feet. Visual only: the sim already treated the mix as ice. The F2 panel still calls these spells by their Water names (Tidal wave, Tide shield).
 - **Bringing a drag back to its start undoes the line.** A wall goes back to the arc and a line glyph to a glyph, and it stays a Place rather than turning into a tap's Area.
 - **Shield radii are the user's to find.** `structures.arcRadius` (2.2) and `structures.ringRadius` (1.5) were already sliders in the tuning panel (F1); they now have help text, and the defaults wait for the value the user settles on.
+
+## 2026-11-09: Fire's one-shot casts hit up front; the burst beats the ring
+
+The user: the Fire ring has little reason to exist next to the flamethrower, its visuals are boring and its damage small. Built on Claude's recommendation; the user can veto or retune it (both numbers are F1 sliders).
+
+- **What the audit found.** Fire's direct table damage (6) is a spray's per-second rate, so a one-shot cast dealt 6 and the rest was a fixed 30 burn: totals of 36, 38 and 40 for 1, 2 and 3 runes (Earth: 22, 62, 114). Removing the ring's floor in the entry above took away part of what it had left. And the imbued burst (Shift+LMB) did the same single-target damage as the ring (Shift+RMB tap) over a smaller area, in every element but Lightning.
+- **Fire ring and Fire burst:** the direct hit is doubled (`shapes.fireBlast`, 2) and pays +70 % a rune as Arcane's nova does, not the spray's square root. Ring totals are now 42, 50, 59.
+- **The burst hits 1.5 times as hard as the ring** in every element (`shapes.imbuePower`), so the choice is a cone's punch against a circle's coverage, and it spares allies behind you.
+- **New visuals:** the ring has a white-hot flash, a tall double front of flame, thrown embers, smoke and drawn scorch marks (no floor); the Fire burst has a muzzle flash, a fan of flame and a scorched wedge.
+- **Golden hash** `e19c4685` → `b29ab7f1`: the scripted run taps a Fire ring.
+- **Open:** how burning itself should work; see `ideas/burn-by-damage.md`. Other elements' rings are not touched: Cold's is also weak (5, 7, 9) and Water's does no damage by design.

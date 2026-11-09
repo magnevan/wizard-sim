@@ -101,6 +101,10 @@ export const SHAPES = {
   swingRange: 1.6, swingHalfAngle: 0.15,
   /** The imbued burst (Weapon cast with elements, no Sigil or Shield): a cone in front of you, a little longer per extra rune. */
   imbueRange: 2.5, imbuePerRune: 0.25, imbueHalf: 0.17,
+  /** The burst is a short cone where the ring is a full circle, so it hits this many times as hard. */
+  imbuePower: 1.5,
+  /** A Fire ring's or burst's direct hit, times Fire's table damage (which is set for a spray's per-second rate). */
+  fireBlast: 2,
   push: 6, // u/s added per water rune (Push)
   burstRadius: 1.4,
 };

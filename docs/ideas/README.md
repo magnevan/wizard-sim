@@ -4,6 +4,7 @@ There's one file per mechanic, copied from `_template.md`. The status lives in t
 
 | Idea | Status | Pillars |
 |---|---|---|
+| [burn-by-damage](burn-by-damage.md) | raw (the user's idea: burn follows the damage dealt; waiting on which design) | 2, 4 |
 | [spell-wishlist](spell-wishlist.md) | developing | 2, 3 |
 | [art-direction](art-direction.md) | adopted (the Pixel Battlefield look drives the game) | 5 |
 | [spell-preparation](spell-preparation.md) | developing (glyphs, turrets, orbitals built as Sigil devices; the stored spell deferred) | 4, 6 |

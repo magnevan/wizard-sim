@@ -281,7 +281,7 @@ export class Vfx {
         const shape = spec()?.shape ?? 'nova';
         if (shape === 'swing' || shape === 'palm') this.add(shape, t, shape === 'palm' ? 0.9 : 0.4, { who, x: e.x, y: e.y, r, look, seed, x2: w.bodies.x[who], y2: w.bodies.y[who] });
         else if (shape === 'patch') { if (!spec()?.scald && !this.rainAt(w, e.x, e.y)) this.add('patch', t, 1.0, { x: e.x, y: e.y, r, look, seed }); } // rain draws as its zone, for its whole life
-        else this.add(shape === 'quake' ? 'quake' : 'nova', t, 1.3, { who, x: e.x, y: e.y, r, look, seed });
+        else this.add(shape === 'quake' ? 'quake' : 'nova', t, look === 8 ? 1.8 : 1.3, { who, x: e.x, y: e.y, r, look, seed }); // the fire ring's scorch and smoke outlast the blast
         return;
       }
       case 'blink': this.add('blink', t, 0.4, { who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, seed }); return;
@@ -865,10 +865,19 @@ export class Vfx {
       }
       case 'nova': {
         if (f.look === 8) {
-          // the fire ring: a front of flame tongues racing outward
-          const q = e / 0.55;
-          if (q < 1.3) { const rr = 4 + (r - 4) * easeOut(Math.min(1, q)), a = 1 - seg(q, 0.7, 1.3); for (let i = 0; i < 26; i++) { const th = (i / 26) * TAU; if (rand(i, Math.floor(t * 15), sd) > a + 0.15) continue; K.tongue(o, x + Math.cos(th) * rr, y + Math.sin(th) * rr * FY, 2.2, (6 + 3 * Math.sin(t * 14 + i)) * a, Math.sin(t * 7 + i) * 1.5); } K.gring(g, x, y, rr, EL.fire[2], a, 1); }
-          light(x, y, r + 30, '#ff7a2a', 0.9 * (1 - seg(e, 0, 0.7)));
+          // the fire ring: a white-hot flash, a tall wall of flame racing outward with a lower one behind it,
+          // then scorched ground, thrown embers and smoke. The scorch is only a drawing: nothing burns on the floor.
+          const q = e / 0.55, rr = 4 + (r - 4) * easeOut(Math.min(1, q)), a = 1 - seg(q, 0.7, 1.3), sc = 1 - seg(e, 1, 1.8);
+          for (let i = 0; i < 22 && sc > 0; i++) { const th = (i / 22) * TAU + rand(i, 7, sd) * 0.25, d = Math.min(1, q * 1.4) * r * (0.45 + rand(i, 8, sd) * 0.5); K.scorch(g, x + Math.cos(th) * d, y + Math.sin(th) * d * FY, 5 + rand(i, 9, sd) * 6, 0.42 * sc); }
+          if (e < 0.14) { const f0 = 1 - e / 0.14; X.glow(o, x, y - 6, 22 + r * 0.3, EL.fire[1], 0.95 * f0); X.ellipse(o, x, y - 5, 5 + 12 * f0, 3 + 8 * f0, '#ffffff', f0); }
+          if (q < 1.3) {
+            K.gring(g, x, y, rr, EL.fire[2], a, 2);
+            for (let i = 0; i < 44; i++) { const th = (i / 44) * TAU; if (rand(i, Math.floor(t * 15), sd) > a + 0.2) continue; K.tongue(o, x + Math.cos(th) * rr, y + Math.sin(th) * rr * FY, 3, (13 + 6 * rand(i, 2, sd) + 3 * Math.sin(t * 14 + i)) * a, Math.sin(t * 7 + i) * 2); }
+            for (let i = 0; i < 24; i++) { const th = ((i + 0.5) / 24) * TAU, r2 = rr * 0.72; if (rand(i, Math.floor(t * 15), sd + 3) > a) continue; K.tongue(o, x + Math.cos(th) * r2, y + Math.sin(th) * r2 * FY, 2.2, (6 + 3 * Math.sin(t * 12 + i)) * a, Math.sin(t * 6 + i)); }
+          }
+          for (let i = 0; i < 40 && e < 1.1; i++) { const th = rand(i, 10, sd) * TAU, sp = 26 + rand(i, 11, sd) * 44, age = clamp(e / (0.6 + rand(i, 12, sd) * 0.5), 0, 1); if (age >= 1) continue; const d = 4 + sp * e; X.px(o, x + Math.cos(th) * d, y + Math.sin(th) * d * FY - 4 - 22 * e + 26 * e * e, K.fireCol(0.15 + age * 0.8)); }
+          for (let i = 0; i < 14 && e > 0.25; i++) { const th = (i / 14) * TAU + rand(i, 13, sd), d = r * (0.5 + rand(i, 14, sd) * 0.45), u = seg(e, 0.25, 1.8); K.puff(o, x + Math.cos(th) * d, y + Math.sin(th) * d * FY - 6 - u * 20, 2.5 + u * 5, i % 2 ? '#4a4048' : '#2e282e', 0.55 * (1 - u)); }
+          light(x, y, r + 44, '#ff7a2a', 1.1 * (1 - seg(e, 0, 0.8)));
           return;
         }
         const Rp = f.look === 2 ? EL.life : R;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  BTN, EL, KIND, N_EL, NO_INPUT, PHASE, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step,
+  BTN, DAMAGE, EL, KIND, N_EL, NO_INPUT, PHASE, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step,
   type PlayerInput, type World,
 } from '../src';
 import { cellAt } from '../src/effects';
@@ -267,6 +267,20 @@ describe('Area and Place', () => {
       expect(w.bodies.wet[0]).toBe(0);
       expect(w.bodies.burn[0]).toBe(0);
     }
+  });
+
+  it('a Fire ring hits up front and more Fire pays; the burst hits harder than the ring', () => {
+    const first = (q: Element[], btn: number) => {
+      const { w, d, dummy } = range(1.6);
+      const hp = w.bodies.hp[dummy];
+      d.queue(...q).cast(btn, 1, 20); // before much of the burn has ticked
+      return hp - w.bodies.hp[dummy];
+    };
+    const burn = (STATUS.burnDps * 20) / 60;
+    expect(first(['fire'], BTN.area)).toBeGreaterThan(DAMAGE.fire * SHAPES.fireBlast * 0.9);
+    expect(first(['fire', 'fire', 'fire'], BTN.area)).toBeGreaterThan(first(['fire'], BTN.area) * 1.8);
+    expect(first(['fire'], BTN.weapon) - burn).toBeGreaterThan((first(['fire'], BTN.area) - burn) * 1.3);
+    expect(first(['arcane'], BTN.weapon)).toBeCloseTo(first(['arcane'], BTN.area) * SHAPES.imbuePower, 3);
   });
 
   it('a flood leaves water on the floor, and a lightning strike on it surges', () => {

@@ -21,6 +21,10 @@ SETS = {
     'opening/ground-mud-leaves': ('mud', 'leaves'),
     'opening/ground-gravel-ash': ('gravel', 'ash'),
     'opening/ground-planks-slabs': ('planks', 'slabs'),
+    # alternates: <material>-2.png and on are picked up by the painter and chosen region by region
+    'opening/ground-grass-alts': ('grass-2', 'grass-3'),
+    'opening/ground-dirt-sand-alts': ('dirt-2', 'sand-2'),
+    'opening/ground-stone-alts': ('cobble-2', 'flagstone-2'),
 }
 
 

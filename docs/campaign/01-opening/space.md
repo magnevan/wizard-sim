@@ -33,9 +33,9 @@ You walk north throughout, because the view reaches further up the screen than d
 
 ## Assets
 
-On 2026-11-09 the user authorized buying the general art, so everything but the defence is bought (113 generations, with extra ground sets and a clutter sheet; 1,817 are left). Results are on the page. **The defence (20 generations) still waits for an Approve.**
+On 2026-11-09 the user authorized buying the general art, so everything but the defence is bought (158 generations, with extra ground sets, alternates and a clutter sheet; 1,772 are left). Results are on the page. **The defence (20 generations) still waits for an Approve.**
 
-The ground painter is built. Walls and props can't go in properly until the isometric camera exists (question 1 on the page), which is now the largest hidden cost in this segment.
+The ground painter is built. The isometric camera is on trial behind `?camera=iso`. What's left before art goes in is switching it on, and using the wall kits.
 
 ## Open questions, on the page
 

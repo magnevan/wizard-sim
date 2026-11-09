@@ -1061,3 +1061,8 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **Bought (113 generations, 1,930 → 1,817):** four pro ground sets, two wall kits, the academy and field works sheets, three buildings, and a clutter sheet of 64, which Claude added. All listed on the Opening Blueprint.
 - **Held back: the defence itself,** as specific to this segment and unreviewed.
 - **Found:** the kits' floors show a diamond grid, so the painter should do floors; 32 px stone reads large against a wizard; the gatehouse came out straight-on.
+
+## 2026-11-09: The isometric camera, on trial; ground transitions and variation
+- **The true isometric camera exists behind `?camera=iso`,** off for everyone else. The user decided on isometric on 2026-11-06, with one room on a branch first. It's done by handing the view a copy of the world turned 45 degrees (`client/src/iso-world.ts`), with the ground squash at 2:1, so the sim, netcode and drawing code are unchanged. Stick input turns to match.
+- **Not handled yet:** the tutorial's overlays, which draw from fixed room positions, so `#tutorial` isn't right under it. The help panel's previews stay straight on, on purpose.
+- **Ground transitions (the user: "transitions between floor materials too, and many ways to give variation"):** per-material edge styles and layered variation, as in `game/content/README.md`. Three more ground sets bought for alternates (45 generations, 1,817 → 1,772).

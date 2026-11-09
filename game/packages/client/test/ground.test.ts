@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groundAt, isoCamera, paintGround, todayCamera, type GroundMap, type Material } from '../src/art/ground';
+import { groundAt, isoCamera, matchColour, paintGround, todayCamera, type GroundMap, type Material } from '../src/art/ground';
 import { FY, PPU } from '../src/camera';
 
 const flat = (r: number, g: number, b: number): Material => {
@@ -46,6 +46,26 @@ describe('painted ground', () => {
     expect(greenish(o, wide, 400 + 72, 250 + 36)).toBe(false);
     expect(cam.x(12, 6)).toBeCloseTo(1);
     expect(cam.y(12, 6)).toBeCloseTo(0);
+  });
+
+  it('colour-matches an alternate to its base', () => {
+    const avg = (m: Material) => { let s = 0; for (let i = 0; i < m.data.length; i += 4) s += m.data[i + 1]; return s / (m.data.length / 4); };
+    expect(avg(matchColour(flat(0, 100, 0), flat(0, 200, 0)))).toBeCloseTo(200, 0);
+  });
+
+  it('gives water a shore, and drops paving in whole pieces', () => {
+    const shore: GroundMap = { w: 24, h: 16, rows: Array.from({ length: 32 }, () => 'g'.repeat(24) + 'w'.repeat(24)) };
+    const o = new Uint8ClampedArray(W * H * 4);
+    paintGround(o, W, H, OX, OY, shore, { g: flat(0, 200, 0), w: flat(0, 0, 200) }, 'g', todayCamera);
+    const blues = new Set<number>();
+    for (let x = OX - 2 * PPU; x < OX + 2 * PPU; x++) blues.add(o[(OY * W + x) * 4 + 2]);
+    expect(blues.size).toBeGreaterThan(3); // land, wet bank, foam, open water
+    const paved: GroundMap = { w: 24, h: 16, rows: Array.from({ length: 32 }, () => 'f'.repeat(24) + 'd'.repeat(24)) };
+    const p = new Uint8ClampedArray(W * H * 4);
+    paintGround(p, W, H, OX, OY, paved, { f: flat(0, 200, 0), d: flat(200, 0, 0) }, 'f', todayCamera);
+    let runs = 0, last = greenish(p, W, OX - 2 * PPU, OY);
+    for (let x = OX - 2 * PPU; x < OX + 2 * PPU; x++) { const v = greenish(p, W, x, OY); if (v !== last) runs++; last = v; }
+    expect(runs).toBeLessThan(8); // whole stones, not a scatter of pixels
   });
 
   it('is the same every time', () => {

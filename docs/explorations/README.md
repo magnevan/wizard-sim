@@ -33,3 +33,4 @@ Dated, long-form thinking sessions. Once written, each is a record and isn't rew
 | 2026-11-07 | [rune-scaling](2026-11-07-rune-scaling.md) | What each extra rune buys: ladders for every form, four fixes, the F2 +1 rune line | |
 | 2026-11-09 | [opening-and-innate-casting](2026-11-09-opening-and-innate-casting.md) | Casting as something new: critique of the twist, teaching it, when the first cast comes | |
 | 2026-11-09 | [lighting](2026-11-09-lighting.md) | Scene lighting behind the isometric camera, and what the research on pixel-art lighting said | |
+| 2026-11-09 | [performance-isometric](2026-11-09-performance-isometric.md) | Frame rates on the real GPU after the isometric camera and lighting; what was fixed | |

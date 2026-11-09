@@ -47,7 +47,8 @@ interface Turned {
   faces: { src: Arr; dst: Arr }[];
   /** The view's floor grid, resampled from the real one. */
   surf: { kind: Uint8Array; life: Int32Array };
-  size: number; gw: number;
+  /** For each view floor cell, the real cell under it, or -1 off the map. Worked out once. */
+  under: Int32Array;
   events: WeakMap<SimEvent, SimEvent>;
   real: World;
 }
@@ -99,7 +100,16 @@ function build(w: World): Turned {
   }
   const size = turnedSize(w.dims.w, w.dims.h), gw = Math.round(size / CELL);
   const surf = { kind: new Uint8Array(gw * gw), life: new Int32Array(gw * gw) };
-  const t: Turned = { view, pairs, faces, surf, size, gw, events: new WeakMap(), real: w };
+  const under = new Int32Array(gw * gw), d = w.dims;
+  for (let cv = 0, c = 0; cv < gw; cv++) {
+    const v = -size / 2 + (cv + 0.5) * CELL;
+    for (let cu = 0; cu < gw; cu++, c++) {
+      const u = -size / 2 + (cu + 0.5) * CELL;
+      const rx = Math.floor((toX(u, v) + d.w / 2) / CELL), ry = Math.floor((toY(u, v) + d.h / 2) / CELL);
+      under[c] = rx < 0 || ry < 0 || rx >= d.gw || ry >= d.gh ? -1 : ry * d.gw + rx;
+    }
+  }
+  const t: Turned = { view, pairs, faces, surf, under, events: new WeakMap(), real: w };
   const assign = view as unknown as Record<string, unknown>;
   assign.surf = surf;
   assign.dims = { w: size, h: size, gw, gh: gw };
@@ -128,16 +138,10 @@ export function turnedWorld(w: World): World {
   }
   for (const { src, dst } of t.faces) for (let i = 0; i < src.length; i++) dst[i] = src[i] + FACE_TURN;
   // The floor is a grid, so it can't be rotated in place: each view cell looks up the real cell under it.
-  const { gw, size, surf } = t, d = w.dims, rk = w.surf.kind, rl = w.surf.life;
-  for (let cv = 0, c = 0; cv < gw; cv++) {
-    const v = -size / 2 + (cv + 0.5) * CELL;
-    for (let cu = 0; cu < gw; cu++, c++) {
-      const u = -size / 2 + (cu + 0.5) * CELL;
-      const rx = Math.floor((toX(u, v) + d.w / 2) / CELL), ry = Math.floor((toY(u, v) + d.h / 2) / CELL);
-      if (rx < 0 || ry < 0 || rx >= d.gw || ry >= d.gh) { surf.kind[c] = 0; surf.life[c] = 0; continue; }
-      const r = ry * d.gw + rx;
-      surf.kind[c] = rk[r]; surf.life[c] = rl[r];
-    }
+  const { under, surf } = t, rk = w.surf.kind, rl = w.surf.life;
+  for (let c = 0; c < under.length; c++) {
+    const r = under[c];
+    if (r < 0) { surf.kind[c] = 0; surf.life[c] = 0; } else { surf.kind[c] = rk[r]; surf.life[c] = rl[r]; }
   }
   return t.view;
 }

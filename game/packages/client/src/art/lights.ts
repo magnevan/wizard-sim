@@ -30,6 +30,7 @@ function discTexture(r: number): Texture {
 export class Lights {
   readonly layer = new Container();
   private tex = RADII.map(discTexture);
+  private discs = this.tex.map((tex, b) => ({ tex, R: RADII[b] }));
   private pool: Sprite[] = [];
   private n = 0;
 
@@ -42,7 +43,7 @@ export class Lights {
   disc(r: number): { tex: Texture; R: number } {
     let b = 0;
     while (b < RADII.length - 1 && RADII[b] < r) b++;
-    return { tex: this.tex[b], R: RADII[b] };
+    return this.discs[b];
   }
 
   /** A light at art (x, y) on the ground, radius r art px, colour '#rrggbb', intensity a (0..1+). */

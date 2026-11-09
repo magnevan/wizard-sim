@@ -69,6 +69,7 @@ const RAYS = 24;
 /** What's reused between frames for one blocked light: a shape drawn into the light map and again as the additive glow. */
 interface LitShape { geo: MeshGeometry; map: Mesh; glow: Mesh; pos: Float32Array; uv: Float32Array; idx: Uint32Array }
 interface QueuedLight { x: number; y: number; r: number; col: string; a: number }
+const strongest = (a: QueuedLight, b: QueuedLight): number => b.a * b.r - a.a * a.r;
 
 function cloudTexture(): Texture {
   const N = 256, cell = 32, P = N / cell, { c, x } = X.canvas(N, N), img = x.createImageData(N, N), d = img.data;
@@ -105,8 +106,8 @@ function vignetteTexture(w: number, h: number): Texture {
  * The walls within reach of a light, in light-relative ground space: x unchanged, y unsquashed, so a
  * light's reach is a true circle. Returns ax, ay, bx, by repeating. A light standing on a wall ignores that wall.
  */
-export function nearWalls(occ: readonly number[], lx: number, ly: number, R: number): number[] {
-  const out: number[] = [];
+export function nearWalls(occ: readonly number[], lx: number, ly: number, R: number, out: number[] = []): number[] {
+  out.length = 0;
   for (let i = 0; i < occ.length; i += 4) {
     const ax = occ[i] - lx, ay = (occ[i + 1] - ly) / FY, bx = occ[i + 2] - lx, by = (occ[i + 3] - ly) / FY;
     const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy || 1;
@@ -129,22 +130,25 @@ export function castRay(c: number, s: number, segs: readonly number[], max: numb
   return best;
 }
 
+/** Scratch for the rays of one light, so a frame's light cutting allocates next to nothing. */
+const ANGLES = new Float64Array(MAX_VERTS * 2);
+function putVert(pos: Float32Array, uv: Float32Array, lx: number, ly: number, R: number, v: number, X0: number, Y0: number, up: number): void {
+  pos[v * 2] = lx + X0; pos[v * 2 + 1] = ly + Y0 * FY - up;
+  uv[v * 2] = (X0 / R + 1) / 2; uv[v * 2 + 1] = (Y0 / R + 1) / 2;
+}
+
 /** Fills a light's triangle fan, then a quad for each wall face turned toward it. Unused indices are left as empty triangles. */
 function fillShape(pos: Float32Array, uv: Float32Array, idx: Uint32Array, lx: number, ly: number, R: number, segs: readonly number[]): void {
-  const put = (v: number, X0: number, Y0: number, up: number) => {
-    pos[v * 2] = lx + X0; pos[v * 2 + 1] = ly + Y0 * FY - up;
-    uv[v * 2] = (X0 / R + 1) / 2; uv[v * 2 + 1] = (Y0 / R + 1) / 2;
-  };
-  const angles: number[] = [];
-  for (let k = 0; k < RAYS; k++) angles.push((k / RAYS) * Math.PI * 2 - Math.PI);
-  for (let i = 0; i < segs.length; i += 2) if (Math.hypot(segs[i], segs[i + 1]) < R) { const a = Math.atan2(segs[i + 1], segs[i]); angles.push(a - 0.002, a + 0.002); }
-  angles.sort((a, b) => a - b);
-  const rim = Math.min(angles.length, MAX_VERTS - 24);
-  put(0, 0, 0, 0);
+  let na = 0;
+  for (let k = 0; k < RAYS; k++) ANGLES[na++] = (k / RAYS) * Math.PI * 2 - Math.PI;
+  for (let i = 0; i < segs.length && na + 2 <= ANGLES.length; i += 2) if (Math.hypot(segs[i], segs[i + 1]) < R) { const a = Math.atan2(segs[i + 1], segs[i]); ANGLES[na++] = a - 0.002; ANGLES[na++] = a + 0.002; }
+  ANGLES.subarray(0, na).sort();
+  const rim = Math.min(na, MAX_VERTS - 24);
+  putVert(pos, uv, lx, ly, R, 0, 0, 0, 0);
   let v = 1, n = 0;
   for (let k = 0; k < rim; k++) {
-    const a = angles[k], c = Math.cos(a), sn = Math.sin(a), t = castRay(c, sn, segs, R);
-    put(v, t * c, t * sn, 0);
+    const a = ANGLES[k], c = Math.cos(a), sn = Math.sin(a), t = castRay(c, sn, segs, R);
+    putVert(pos, uv, lx, ly, R, v, t * c, t * sn, 0);
     idx[n++] = 0; idx[n++] = v; idx[n++] = k + 1 < rim ? v + 1 : 1;
     v++;
   }
@@ -156,7 +160,8 @@ function fillShape(pos: Float32Array, uv: Float32Array, idx: Uint32Array, lx: nu
     if (nx * -ax + ny * -ay <= 0) continue; // the light is behind it
     const mx = (ax + bx) / 2, my = (ay + by) / 2, dist = Math.hypot(mx, my) || 1;
     if (castRay(mx / dist, my / dist, segs, dist + 1) < dist - 2) continue; // another wall is in the way
-    put(v, ax, ay, 0); put(v + 1, bx, by, 0); put(v + 2, bx, by, WALL_H); put(v + 3, ax, ay, WALL_H);
+    putVert(pos, uv, lx, ly, R, v, ax, ay, 0); putVert(pos, uv, lx, ly, R, v + 1, bx, by, 0);
+    putVert(pos, uv, lx, ly, R, v + 2, bx, by, WALL_H); putVert(pos, uv, lx, ly, R, v + 3, ax, ay, WALL_H);
     idx[n++] = v; idx[n++] = v + 1; idx[n++] = v + 2; idx[n++] = v; idx[n++] = v + 2; idx[n++] = v + 3;
     v += 4;
   }
@@ -185,6 +190,14 @@ export class SceneLighting {
   private queued = 0;
   /** Wall segments in scene px: x1, y1, x2, y2 repeating. */
   private occ: number[] = [];
+  private order: QueuedLight[] = [];
+  private nearBuf: number[] = [];
+  /** This frame's wall shadow lines, relative to the field's corner; rebuilt into the Graphics only when they change. */
+  private wallNext: number[] = [];
+  private wallDrawn: number[] = [];
+  private wallMood: Mood | null = null;
+  private fx = 0;
+  private fy = 0;
   private shadowTex: RenderTexture | null = null;
   private lightTex: RenderTexture | null = null;
   private w = 0;
@@ -228,7 +241,8 @@ export class SceneLighting {
     this.mood = mood;
     this.shadowCol = asNum(mood.shadow);
     this.used = 0;
-    this.walls.clear();
+    this.wallNext.length = 0;
+    this.fx = fx0; this.fy = fy0;
     this.bg.tint = asNum(mood.ambient);
     this.clouds.alpha = mood.clouds;
     this.clouds.visible = mood.clouds > 0;
@@ -274,16 +288,30 @@ export class SceneLighting {
 
   /** The shadow of a rock wall standing on a line in scene px. */
   wall(x1: number, y1: number, x2: number, y2: number): void {
+    this.wallNext.push(x1 - this.fx, y1 - this.fy, x2 - this.fx, y2 - this.fy);
+  }
+
+  /** Walls rarely change, and triangulating them is the expensive part: redraw only when they or the mood do. */
+  private drawWalls(): void {
+    this.walls.position.set(this.fx, this.fy);
+    const a = this.wallNext, b = this.wallDrawn;
+    let same = a.length === b.length && this.wallMood === this.mood;
+    for (let i = 0; same && i < a.length; i++) if (a[i] !== b[i]) same = false;
+    if (same) return;
+    this.wallDrawn = a.slice();
+    this.wallMood = this.mood;
+    this.walls.clear();
     const [sx, sy] = this.mood.sun;
     if (!sx && !sy) return;
     const dx = sx * WALL_H, dy = sy * WALL_H;
-    this.walls.poly([x1, y1, x2, y2, x2 + dx, y2 + dy, x1 + dx, y1 + dy]).fill(this.shadowCol);
+    for (let i = 0; i < a.length; i += 4) this.walls.poly([a[i], a[i + 1], a[i + 2], a[i + 3], a[i + 2] + dx, a[i + 3] + dy, a[i] + dx, a[i + 1] + dy]).fill(this.shadowCol);
   }
 
   /** Draws the maps. Call after every shadow and light is in, and after the actors' frames are uploaded. */
   render(renderer: Renderer): void {
     if (!this.shadowTex || !this.lightTex) return;
     for (let i = this.used; i < this.pool.length; i++) this.pool[i].visible = false;
+    this.drawWalls();
     this.flushLights();
     this.lights.end();
     this.glow.end();
@@ -307,11 +335,14 @@ export class SceneLighting {
 
   /** Lights near a wall become cut shapes, strongest first, up to the budget; the rest are plain discs. */
   private flushLights(): void {
-    const order: QueuedLight[] = this.queue.slice(0, this.queued).sort((a, b) => b.a * b.r - a.a * a.r);
+    const order = this.order;
+    order.length = 0;
+    for (let i = 0; i < this.queued; i++) order.push(this.queue[i]);
+    order.sort(strongest);
     let used = 0;
     for (const L of order) {
       const { tex, R } = this.lights.disc(L.r);
-      const near = used < MAX_BLOCKED ? nearWalls(this.occ, L.x, L.y, R) : null;
+      const near = used < MAX_BLOCKED ? nearWalls(this.occ, L.x, L.y, R, this.nearBuf) : null;
       if (!near || !near.length) { this.lights.add(L.x, L.y, L.r, L.col, L.a); this.glow.add(L.x, L.y, L.r, L.col, L.a); continue; }
       const s = this.shape(used++);
       fillShape(s.pos, s.uv, s.idx, L.x, L.y, R, near);

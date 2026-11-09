@@ -41,4 +41,4 @@ The ending depends on this.
 - **A great new well is pulling them.** Someone built the greatest well in history, for good reasons, and it's drawing the veins towards it. Gives the story a face and fits wells being built. It's the closest of these to a familiar trope, so it depends on who built it and why.
 - **Leave it open** until the first regions are built.
 
-Recommended: the great new well.
+**The user's answer: leave it open for now.** Get into the story before deciding too much. People in the world can speculate between different reasons: natural, a big wizarding group doing something nefarious, or a big bad doing something evil. The third is the most typical and could be fine, but it stays unanswered.

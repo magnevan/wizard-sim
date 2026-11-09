@@ -1022,4 +1022,4 @@ The user's answers on the World and Progression page.
 - **No explicit circuit.** This replaces the journeyman's circuit as the frame: "you get sent out into the field to solve an issue, this naturally gives you experience and mastery and brings you to new regions."
 - **Linear travel, region to region. No reputation system.**
 - **Wells are magical infrastructure, and the player isn't a wizard engineer.** Legendary builders can exist as colour, like a legendary swordsmith.
-- **Why the veins are shifting is open.**
+- **Why the veins are shifting stays unanswered for now,** and people in the world speculate: natural, a big wizarding group doing something nefarious, or a big bad doing something evil.

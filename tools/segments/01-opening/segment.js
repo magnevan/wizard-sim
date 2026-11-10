@@ -13,9 +13,8 @@ stages:[
  ['Brief','draft'],['Beat chart','draft'],['Space diagram','review'],['Blockout','started','The battery is walkable'],['Script','later'],['Dressing','started','General art bought'],['Finish','later'],
 ],
 needsYou:[
- ['#beat-4',`Try driving a defence: X at a pedestal. Tell me how the flamethrower and ring feel, before enemies exist.`],
 ],
-onMe:[`Waves and lanes at the battery, then the failing pool, the infusion and the repair.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
+onMe:[`Your playtest notes on driving: aim to the left, range, flame, camera, patch range and a turret bar. The list is in docs/explorations/2026-11-10-battery-playtest-todo.md.`,`Then waves and lanes at the battery, the failing pool, the infusion and the repair.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
 chapters:[
 {id:'hall',name:'Lecture hall and cloister',
  map:{W:50,H:34,base:'void',what:`You can walk about during the briefing, then leave along the cloister past the postings.`,

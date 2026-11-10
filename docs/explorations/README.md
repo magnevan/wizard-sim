@@ -35,3 +35,4 @@ Dated, long-form thinking sessions. Once written, each is a record and isn't rew
 | 2026-11-09 | [lighting](2026-11-09-lighting.md) | Scene lighting behind the isometric camera, and what the research on pixel-art lighting said | |
 | 2026-11-09 | [performance-isometric](2026-11-09-performance-isometric.md) | Frame rates on the real GPU after the isometric camera and lighting; what was fixed | |
 | 2026-11-09 | [continuous-world-todo](2026-11-09-continuous-world-todo.md) | Deferred TODO: removing the wall cap and walking through one world instead of rooms | |
+- [2026-11-10-battery-playtest-todo.md](2026-11-10-battery-playtest-todo.md): the user's 14 notes from driving a defence, split into object and rendering work and battery work.

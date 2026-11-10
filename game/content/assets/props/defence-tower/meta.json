@@ -3,15 +3,15 @@
   "kind": "prop",
   "name": "Defence tower",
   "footprint": [
-    6.0,
-    6.0
+    5.0,
+    5.0
   ],
   "sets": {
     "lean": {
       "file": "lean.png",
       "foot": [
         49,
-        97
+        75
       ],
       "source": "pixellab",
       "raw": "game/content/generated/pixellab/opening/defence/tower-clean.png",

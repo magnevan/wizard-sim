@@ -1123,3 +1123,8 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **The battery's well is proposed as an armillary on a plinth, in orange,** and isn't bought yet. Its colour is the user's call, since their images are blue.
 - **A well's colour follows the magic it extracts** (the user), so the battery's is orange. It still needs the Approve mark before it's bought.
 - **The burnt-out defence keeps a rigid barrel** (the user: a physical barrel wouldn't change shape), and the whole structure goes darker with no flames.
+
+## 2026-11-10: The battery is an outdoor area
+- **Not a room** (the user). It has no walls round it. Woods stand on every side and carry on past where you can walk, painted into the ground, since nobody can reach them. The fortified wall runs through the middle, so it stands full height and whatever is north of it draws behind it.
+- **The defences are 11 units apart, not 7.** A tower is 6 units wide on screen, so at 7 they overlapped and one stood in front of the gate. All four still fit one screen.
+- **The well is bought:** candidate 2 of 4 is in place as a stand-in, the rest are kept.

@@ -11,6 +11,7 @@ content/
     world/Survive.ldtkl
     world/Tutorial.ldtkl   the tutorial's chamber (its per-beat layouts are still code: sim/src/tutorial-data.ts)
     world/Academy.ldtkl    the mock room for judging art (#academy)
+    world/Battery.ldtkl    the opening's first job, an outdoor area (#battery); written by tools/segments/01-opening/battery-level.py
   assets/props/<id>/       the asset registry: meta.json and images, below
   generated/               every raw image bought from an AI tool (its README). Never edited; look here before any call
 packages/content/          the build, the check and the grid CLI (node, no runtime part)

@@ -378,9 +378,9 @@ export class WorldView {
     this.sound?.frame(w, { cx: cam.cx, cy: cam.cy, halfW: cam.w / 2 / PPU, earX: b.x[me], earY: b.y[me] }, ct);
   }
 
-  /** Which art is on show, top right: in a room with props, or wherever the detailed wizard is on. */
+  /** Which art is on show, top right: in the Academy, or wherever the detailed wizard is on. */
   private drawArtLabel(w: World): void {
-    const inRoom = w.def.props.length > 0, on = inRoom || this.wizardHd;
+    const inRoom = w.def.props.length > 0 && w.def.id === 'academy', on = inRoom || this.wizardHd; // the label is for judging art in the Academy
     this.artLabel.visible = on;
     if (!on) return;
     const lines = [...(inRoom ? [`PROPS: ${PROP_LABEL[this.props.set]} (O)`] : []), `WIZARD: ${this.wizardHd ? 'DETAILED' : 'TODAY'}${inRoom ? ' (I)' : ''}`];

@@ -223,6 +223,7 @@ function buildChapter(c){
  right.append(marks('ratings','map-'+c.id,[['small','Too small'],['right','About right'],['big','Too big']]),noteBox('ratings',`${ROUND}-map-${c.id}`,'Notes on this map'));
  below.append(left,right);sheet.append(wrap,below);sec.append(sheet);update();
 
+ if(c.shots){const s=el('div','sheet');c.shots.forEach(([src,alt,cap])=>{const f=el('figure');f.style.cssText='margin:0;display:grid;gap:6px';const i=el('img');i.src=src;i.alt=alt;i.style.cssText='width:100%;height:auto;image-rendering:pixelated';f.append(i,el('figcaption','cap',cap));s.append(f);});sec.append(s);}
  if((c.settled&&c.settled.length)||c.solve.length){
   const s=el('div','sheet');
   if(c.settled&&c.settled.length){const d=el('div','settled');d.append(el('h3','','Settled'));c.settled.forEach(x=>d.append(lead(x)));s.append(d);}

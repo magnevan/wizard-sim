@@ -1,0 +1,23 @@
+{
+  "id": "battery-gatehouse",
+  "kind": "prop",
+  "name": "Gatehouse (battery)",
+  "footprint": [
+    7.0,
+    1.0
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        86,
+        169
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/buildings/gatehouse.png",
+      "tool": "create_map_object",
+      "edits": "trimmed, foot moved 40 px below the art",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

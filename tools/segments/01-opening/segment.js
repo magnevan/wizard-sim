@@ -13,7 +13,7 @@ stages:[
  ['Brief','draft'],['Beat chart','draft'],['Space diagram','review'],['Blockout','started','The battery is walkable'],['Script','later'],['Dressing','started','General art bought'],['Finish','later'],
 ],
 needsYou:[
- ['#solve-battery-screen',`More air means all four towers no longer fit one 1080p screen, which only matters for four players on one couch.`],
+ ['#beat-4',`Walk the battery and tell me what still feels off.`],
 ],
 onMe:[`Driving a defence: take control, cast from the tower, and the pool that fails.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
 chapters:[
@@ -75,6 +75,7 @@ chapters:[
  [`It's an outdoor area, not a room.`,` No walls round it: woods on every side that carry on past where you can walk, with the road and the three gaps running off into them. The fortified wall runs through the middle.`],
  [`More air.`,` The area is now 84 × 72. The defences stand 13 apart, the rear yard is half as deep again, the well sits 19 back from the wall, and the stores keep to their own corner.`],
  [`Tower size is right,`,` at about three and a half wizards wide.`],
+ [`The towers don't all have to fit one screen.`,` A neighbouring pair fits at 1080p, and that's fine.`],
  [`The gate is the one we had, re-angled for free`,` to run along the wall, with its doors swung open.`],
  [`One lane per player.`,` Each wave sends the same number of enemies at each occupied defence, and they go for their own lane's defence first. Neighbouring reach overlaps so players can help. Solo is one lane at the centre.`],
  [`Each wave is built for one Fire attack.`,` Archers beyond spray reach call for Place, a swarm of small enemies for the burst, something heavy at the wall for the flamethrower. Wave sizes wait for the flamethrower and burst balance.`],
@@ -82,7 +83,6 @@ chapters:[
  [`The repair.`,` You take part, or do it yourselves, with a simple "press X to stabilize". The screen fades to black and back, and the well has changed: Unstable, then Drained, then Stable.`],
  ],
  solve:[
- {id:'battery-screen',title:'Four towers on one screen',body:`At 1080p you see about 42 units along the wall, minus a tower's width. With the towers spread out for air, a neighbouring pair fits whole, a third is cut off and the fourth is out of view. Online play doesn't care, since everyone has their own camera. It only matters for four players on one couch.`,proposal:`Keep the air, and solve it when I build driving: each local player's camera frames their own tower, and I'd try seating couch players on neighbouring towers first. If four people on one screen has to work without compromise, the towers have to come closer again.`},
  ]},
 ],
 rules:[

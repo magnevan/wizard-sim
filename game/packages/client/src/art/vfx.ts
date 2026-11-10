@@ -13,7 +13,7 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import {
-  CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
+  CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SHAPES, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
   compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
@@ -23,6 +23,7 @@ import * as A from './accent';
 import { depthOf, rowsHidden } from './depth';
 import * as K from './kit';
 import { drawNova } from './novas';
+import { AimTrail, sprayJet, type JetKind } from './spray-jet';
 import { SPLASH_LIGHT, beamImpact, wallSplash, type SplashKind } from './wall-splash';
 import * as X from './px';
 import type { Ctx, Pt, Ramp } from './px';
@@ -815,8 +816,21 @@ export class Vfx {
   }
 
   // ---- channels and charges: beams, sprays, the charging rock ------------------------------------
+  /** Each spray's recent aim (art/spray-jet.ts), by key: seat, 100 + seat for its Double, 200 + seat for its Echo, 300 + device. */
+  private trails = new Map<number, AimTrail>();
+  /**
+   * A spray as a stream (art/spray-jet.ts): from nozzle (x, y) over ground y `ground` to (ex, ey) on the ground. Its
+   * aim is recorded under `key`, so each particle keeps the aim it left with.
+   */
+  private jet(key: number, kind: JetKind, spec: SpellSpec, x: number, y: number, ground: number, ex: number, ey: number, t: number, t0: number, seed: number, thin = 1): void {
+    const tr = this.trails.get(key) ?? new AimTrail();
+    this.trails.set(key, tr);
+    tr.record(t, t0, { x, y, ground, ex, ey });
+    const n = clamp(spec.sizeN || 1, 1, 5), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (n - 1)) * TAU;
+    sprayJet(this.o.x, { kind, n, half, endH: 6, t0, seed, aim: tr.at, thin }, t);
+  }
   private channels(w: World, t: number, bodies: BodyView[], light: LightFn): void {
-    const s = w.seats, o = this.o.x, g = this.g.x;
+    const s = w.seats, o = this.o.x;
     for (let i = 0; i < MAX_SEATS; i++) {
       if (!s.active[i]) continue;
       const ph = s.phase[i], v = bodies[i];
@@ -868,9 +882,10 @@ export class Vfx {
             const L = Math.hypot(z[0] - tip[0], z[1] - tip[1]) || 1, nx = -(z[1] - tip[1]) / L, ny = (z[0] - tip[0]) / L;
             for (const j of [-1, 1]) K.cone(o, [tip[0] + nx * j * 2, tip[1] + ny * j], [z[0] + nx * j * 13, z[1] + ny * j * 6], t, kind, t0, { spread: 0.3, power: 1.5, seed: sd + 17 * j });
             K.cone(o, tip, z, t, kind, t0, { spread: 0.34, power: 2.2, seed: sd });
-          } else K.cone(o, tip, z, t, kind, t0, { spread: 0.28, seed: sd });
-          glowAlong(light, lerp(tip[0], ex, 0.25), lerp(v.y, ey, 0.25), ex, ey, 40, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', (kind === 'fire' ? 0.6 : 0.4) * flick(t, sd));
-          if (kind === 'cold') for (let q = 0; q < 40; q++) { const a = rand(q, 61, sd) * TAU, r = Math.pow(rand(q, 62, sd), 0.7) * 18 * seg(t, t0 + 0.3, t0 + 1.3); X.px(g, ex + Math.cos(a) * r, ey + Math.sin(a) * r * FY * 0.7, q % 4 === 0 ? '#ffffff' : q % 2 ? '#bfe8f6' : '#8ccce4'); }
+          } else this.jet(i, kind, spec, tip[0], tip[1], v.y, ex, ey, t, t0, sd);
+          // more runes, more light: the five-rune spray lights the room round it
+          const nl = clamp(spec.sizeN || 1, 1, 5);
+          glowAlong(light, lerp(tip[0], ex, 0.25), lerp(v.y, ey, 0.25), ex, ey, 36 + 6 * nl, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', (kind === 'fire' ? 0.5 : 0.32) * (0.85 + 0.15 * nl) * flick(t, sd));
         }
         this.strike(w, t, light, s.chanEndX[i], s.chanEndY[i], w.bodies.x[i], w.bodies.y[i], splashKind(spec, look), t0, sd);
       } else if (spec.shape === 'arc') {
@@ -889,7 +904,8 @@ export class Vfx {
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
           if (spec.heal && look !== 'water') K.warmCone(o, dt, [dex, dey - 6], t, t0, X.WARM, sd2);
-          else K.cone(o, dt, [dex, dey - 6], t, kind, t0, { spread: 0.2, power: 0.45, seed: sd2 });
+          else if (spec.heal) K.cone(o, dt, [dex, dey - 6], t, kind, t0, { spread: 0.2, power: 0.45, seed: sd2 });
+          else this.jet(100 + i, kind, spec, dt[0], dt[1], dv.y, dex, dey, t, t0, sd2, 0.5);
           light(lerp(dt[0], dex, 0.5), lerp(dv.y, dey, 0.5), 34, kind === 'fire' ? '#ff7a2a' : '#7fb0ff', 0.3);
           this.strike(w, t, light, s.dblEndX[i], s.dblEndY[i], w.bodies.x[d], w.bodies.y[d], splashKind(spec, look), t0, sd2, 0.6);
         }
@@ -908,7 +924,8 @@ export class Vfx {
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
           if (spec.heal && look !== 'water') K.warmCone(o, tip, [eex, eey - 6], t, te, X.WARM, sd3);
-          else K.cone(o, tip, [eex, eey - 6], t, kind, te, { spread: 0.2, power: 0.45, seed: sd3 });
+          else if (spec.heal) K.cone(o, tip, [eex, eey - 6], t, kind, te, { spread: 0.2, power: 0.45, seed: sd3 });
+          else this.jet(200 + i, kind, spec, tip[0], tip[1], v.y, eex, eey, t, te, sd3, 0.45);
           this.strike(w, t, light, r.echoEndX[i], r.echoEndY[i], w.bodies.x[i], w.bodies.y[i], splashKind(spec, look), te, sd3, 0.6);
         }
         X.glow(o, tip[0], tip[1], 3, EL.sigil[2], 0.5);
@@ -933,7 +950,8 @@ export class Vfx {
       } else if (spec.shape === 'spray') {
         const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
         if (spec.heal && look !== 'water') K.warmCone(o, tip, [ex, ey - 6], t, t0, X.WARM, sd);
-        else K.cone(o, tip, [ex, ey - 6], t, kind, t0, { spread: 0.24, power: 0.7, seed: sd });
+        else if (spec.heal) K.cone(o, tip, [ex, ey - 6], t, kind, t0, { spread: 0.24, power: 0.7, seed: sd });
+        else this.jet(300 + k, kind, spec, tip[0], tip[1], gy(dv.y[k]), ex, ey, t, t0, sd, 0.7);
         light(lerp(tip[0], ex, 0.55), lerp(tip[1], ey, 0.55), 44, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : '#2a8cff', 0.5);
         this.strike(w, t, light, dv.x2[k], dv.y2[k], dv.x[k], dv.y[k], splashKind(spec, look), t0, sd, 0.7);
       }

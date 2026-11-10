@@ -4,7 +4,7 @@ const R=(x,y,w,h,k,l,o)=>({t:'r',x,y,w,h,k,l,...o}), C=(x,y,r,k,l)=>({t:'c',x,y,
 const STYLE='hi-bit pixel art, dark outline, seen from above at an isometric angle';
 
 window.SEGMENT={
-round:2,
+round:3,
 number:1,
 title:'The Opening',
 lede:`From the briefing to your first spell of your own. This page holds what happens, where it happens, and what's still open.`,
@@ -13,10 +13,11 @@ stages:[
  ['Brief','draft'],['Beat chart','draft'],['Space diagram','review'],['Blockout','next','The battery first'],['Script','later'],['Dressing','started','General art bought'],['Finish','later'],
 ],
 needsYou:[
- ['#solve-battery-scale',`Four problems on the battery. Each has a proposal to react to.`],
- ['#buy',`Approve or change the defence, the one purchase left.`],
+ ['#buy',`Choose a defence design.`],
+ ['#solve-battery-well',`What a well looks like, in its three states. It needs your sign-off before I buy it.`],
+ ['#solve-yard-layout',`A new yard layout that keeps the lessons in order.`],
 ],
-onMe:[`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
+onMe:[`Build the battery as a plain playable room.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
 chapters:[
 {id:'hall',name:'Lecture hall and cloister',
  map:{W:50,H:34,base:'void',what:`You can walk about during the briefing, then leave along the cloister past the postings.`,
@@ -39,12 +40,12 @@ chapters:[
   R(34,30,10,8,'sand','Heavy'),R(42,16,11,10,'sand','Retreat'),C(47.5,20,2.1,'danger'),R(20,18,22,5.6,'sand','Parry lane'),R(20,19.6,1.6,2.4,'struct'),R(3,3,18,14,'sand','Hands test'),R(26,6,8,5,'sand'),R(28,7,4,1.5,'struct'),{t:'x',x:30,y:13,l:'Focus rack'}]},
  beats:[
  {n:2,min:3,minLabel:'3',p:2,label:'Low',src:'Yours',title:'Controls and fighting',does:`The existing hands lessons, shortened.`,teaches:'Move, Strike, Heavy, Retreat, Defend',magic:'None'},
- {n:3,min:1,minLabel:'1',p:2,label:'Low',src:'Proposal',title:'The charged focus',does:`The rack hands you a focus already charged from the academy's supply, and you conjure a blade from stored Fire. It's the old world's way. Cut first if the segment runs long.`,teaches:'The Conjure gesture',magic:'Stored charge'},
+ {n:3,min:1,minLabel:'1',p:2,label:'Low',src:'Proposal',title:'The charged focus',does:`The rack hands you a focus already charged from the academy's supply, and you conjure a blade from stored Fire. It's the old world's way, and it's good to learn before you go out. You can then revisit some of the stations with the blade.`,teaches:'The Conjure gesture',magic:'Stored charge'},
  ],
  solve:[
  {id:'yard-size',title:'Bigger',body:`You marked it too small.`,proposal:`About a quarter larger each way, roughly 70 × 52, taking the extra room as walking and open ground between the stations.`},
- {id:'yard-place',title:'A real place, not a field with objects',body:`Paths worn into the ground, construction materials and gear for other kinds of practice, and other students or hired guards training.`,proposal:`Draw the worn paths first, from the gates to wherever people actually go, then set the stations along them. The other trainees are the wizard rig recoloured, which costs nothing, and only need simple looping drills.`},
- {id:'yard-layout',title:'A layout with a reason',body:`It feels a little random.`,proposal:`One central square where you form up, facing the school, with the stations around its edges and the north gate straight ahead, so the way out is always in sight.`},
+ {id:'yard-place',title:'A real place, not a field with objects',body:`Paths worn into the ground, construction materials and gear for other kinds of practice, and other people training. Not everyone is a wizard: the school hires soldiers to escort wizards at times, and you don't get any because of budget cuts.`,proposal:`Draw the worn paths first, then set the stations along them. Students are the wizard rig recoloured, at no cost. A few hired soldiers drilling in the yard set up the budget joke, and they need a new character, which I'd bring to you as a purchase.`},
+ {id:'yard-layout',title:'A layout with a reason',body:`It feels a little random, and my central square made the order of the lessons feel odd.`,proposal:`Let the lessons set the layout: one worn path leads from station to station in teaching order, and the rack and north gate sit at its end. The other trainees and the clutter fill in around the path.`},
  ]},
 {id:'battery',name:'The battery',
  map:{W:72,H:64,base:'grass',what:`The first job. You drive a defence on the wall until it runs dry, then go out through the gate on your own power.`,
@@ -64,18 +65,19 @@ chapters:[
  beats:[
  {n:4,min:3,minLabel:'3',p:2,label:'Low',src:'Yours',title:'Driving the defence',does:`Take control of a defence, and the camera moves to it. Cast Fire from its position: Force, Area and Place.`,teaches:'Casting modes, the rune bar',magic:`One element, from the defence's deep pool`},
  {n:5,min:2,minLabel:'2',p:3,label:'Rising',src:'Yours',srcNote:'the visible drain is a proposal',title:'The pool fails',does:`Enemies arrive. The pool refills slower and slower, in plain sight on the bar.`,teaches:'The well is failing',magic:`The defence's`},
- {n:6,min:.75,minLabel:'<1',p:5,label:'Peak',src:'Yours',title:'It runs dry',does:`The bar goes dark, the camera returns to you, and you feel the infusion. One Fire pip lights up.`,teaches:'The moment',magic:'Your first rune',key:true},
- {n:7,min:2,minLabel:'2',p:4,label:'High',src:'Yours',srcNote:'the order is a test',title:'From your own hands',does:`The same keys now cast from your hands. One rune and you're empty, so the prompt is to conjure a fire blade and go out and defend yourself. We can also try the blade first.`,teaches:'You are the well, and why a weapon helps',magic:'Fire, Sigil only with Conjure'},
+ {n:6,min:.75,minLabel:'<1',p:5,label:'Peak',src:'Yours',title:'It runs dry',does:`The bar goes dark, the camera returns to you, and you feel the infusion. A special animation plays, and the Fire rune arrives very visibly on the bar. The bar looks different while you're operating a defence, so the change to your own runes is obvious.`,teaches:'The moment',magic:'Your first rune',key:true},
+ {n:7,min:2,minLabel:'2',p:4,label:'High',src:'Yours',srcNote:'the hint is a test',title:'From your own hands',does:`The same keys now cast from your hands. One rune and you're empty, so a fire blade is the natural answer, and you go out and defend yourself. Playtesting decides whether that needs a prompt, a subtler hint, or nothing. A prompt may feel overbearing, but without any hint players may struggle.`,teaches:'You are the well, and why a weapon helps',magic:'Fire, Sigil only with Conjure'},
  ],
  settled:[
  [`A defence reaches only a bit further than a person,`,` about 6 units against 4.5, to tune in the blockout. It has to feel like the same spell, and long range comes from the Place version.`],
  [`The battery gets built first,`,` as a plain playable room.`],
+ [`One lane per player.`,` Each wave sends the same number of enemies at each occupied defence, and they go for their own lane's defence first. Neighbouring reach overlaps so players can help. Solo is one lane at the centre.`],
+ [`Each wave is built for one Fire attack.`,` Archers beyond spray reach call for Place, a swarm of small enemies for the burst, something heavy at the wall for the flamethrower. Wave sizes wait for the flamethrower and burst balance.`],
+ [`The transition.`,` The last pip gutters and the nozzle coughs. The bar goes dark. The camera slides back to your body and everything goes quiet for a beat. A surge comes up from the ground, the screen brightens from your wizard outward, and one Fire pip lights. Then a single line, something like "You've learned to channel fire".`],
+ [`The repair.`,` You take part, or do it yourselves, with a simple "press X to stabilize". The screen fades to black and back, and the well has changed: Unstable, then Drained, then Stable.`],
  ],
  solve:[
- {id:'battery-scale',title:'Scaling from 1 to 4 players',body:`Everyone has to learn the defences. Players can help each other, but the enemies can't all go to a few of them.`,proposal:`One lane per player: each wave sends the same number of enemies at each occupied defence, and they go for their own lane's defence first. Neighbouring reach overlaps, so helping is possible. Solo is one lane at the centre.`},
- {id:'battery-fire',title:'Getting players to try every Fire attack',body:`The flamethrower is the most intuitive, so people need a reason to use the others.`,proposal:`Build each wave for one attack. Archers beyond spray reach call for Place. A swarm of small enemies calls for the burst. Something heavy at the wall calls for the flamethrower. The flamethrower and burst are being rebalanced, so wave sizes wait for that.`},
- {id:'battery-transition',title:'From operating the defence to your own rune',body:`What happens on screen, and how it's explained.`,proposal:`In order: the last pip gutters and the nozzle coughs. The bar goes fully dark. The camera slides back to your body and everything goes quiet for a beat. A low surge comes up from the ground, the screen brightens from your wizard outward, and one Fire pip lights. No text during it. A single prompt comes after, once you already have the pip. The words are yours.`},
- {id:'battery-wrapup',title:'The wrap-up',body:`Your suggestion: the well just got destabilized and needed repairs, with a chance for some worldbuilding. I've taken the moved vein off the map.`,proposal:`After the last wave a repair crew walks up and patches the feed lines, and the well steadies. The defence relights, your pip stays lit, and someone notices. What they say is yours.`},
+ {id:'battery-well',title:'What a well looks like',body:`Obviously not an actual well. There shouldn't be one design, just some things they have in common. In the world they differ in size by orders of magnitude, while the ones we play around stay roughly similar.`,proposal:`What they share: a ring of worked stone and brass around a sunken basin of light, with feed lines running out. The basin shows the state at a glance. Unstable: the light surges and arcs over cracked stone. Drained: a dark, empty basin. Stable: a calm, steady glow. Other wells can change the ring and materials and keep the basin. If this reads right, I'll write the exact purchase for your sign-off.`},
  ]},
 ],
 rules:[
@@ -85,7 +87,8 @@ rules:[
  ['Four wizards fit.',' A Fire ring is 3 units in radius, so a fight wants about 6 units per player, and a room at least 24 by 18.'],
  ['Walks vary, and some are long.',' Sometimes you walk a while before anything happens, because that makes the world feel real. You cross a screen in about 7 seconds.'],
 ],
-buy:{id:'job-defence',name:`The defence`,cost:20,tool:'create_1_direction_object, 128 px, 4 candidates to pick from; then create_object_state for the broken version',
+buy:{id:'job-defence',name:`The defence`,cost:35,costLabel:'35 generations so far',tool:'Bought: four candidates (10), and eight rotations of candidate 4 (25). The broken version waits for clean rotations.',
+ images:[['img/defence-candidates.png','Four candidate towers: squat round stone, tall crenellated, narrow with twin barrels, and a wide round tower with a caged crystal','The four candidates. I picked 4, the squattest, with the crystal and pipes easiest to read. Tell me if you prefer another.'],['img/defence-rotations.png','Eight rotations of the tower around the original, each with purple and blue drips the original does not have','The first rotations, around the original. The turning works, but purple and blue drips and a stray second cage appeared, so these need redoing.']],
  why:`The thing you spend three minutes inside, and watch die. Large enough to read as a building next to a wizard.`,
  lines:['A fixed fire defence on a squat stone tower: a heavy brass nozzle on a swivel mount, fed by brass pipes, with a glowing orange crystal in a cage at its base, medieval fantasy engineering, '+STYLE,'Broken state: the same defence burnt out, the crystal cracked and dark, the nozzle drooping, soot on the stone']},
 art:[

@@ -1104,3 +1104,12 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 ## 2026-11-10: Terrain is read-only room data, with no per-room limit (`explorations/2026-11-09-continuous-world-todo.md`)
 - **Merged 2026-11-10.** The user asked for the wall limit to be fixed now and streaming left for later. Terrain is out of rollback state, on a 2-unit grid, and the checker no longer caps it.
 - **Players always get all 160 cast-wall slots** (a side effect, Claude's call). Before, Survive left them 120 and the Academy 122. Only shows above those counts.
+
+## 2026-11-10: The battery's plan, from the Opening Segment page, round 2
+- **One lane per player, and each wave built for one Fire attack.** Claude's proposals; the user: "agreed".
+- **The transition** is the storyboard on the page, ending in a line like "You've learned to channel fire" (the user's words). The rune's arrival gets a special animation, and is very visible on the bar. The bar looks different while operating a defence.
+- **The charged focus stays** (the user: "Good to learn this before you go out. And you can revisit some stations with the blade").
+- **Whether the blade needs a prompt is a playtest question:** a prompt may be overbearing, and with no hint players may struggle. Subtler hints are an option.
+- **The repair:** you take part, or do it yourselves, with a simple "press X to stabilize". A fade to black and back, and the well has changed. Wells need three looks: Unstable, Drained, Stable.
+- **Wells have no single design,** only things in common. In the world they differ in size by orders of magnitude, and the ones we play around stay roughly similar.
+- **The defence is approved.** The user asked for rotations, so it's bought as candidates, then eight rotations from the best one, then a broken state.

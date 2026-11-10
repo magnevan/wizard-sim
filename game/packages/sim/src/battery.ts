@@ -10,7 +10,7 @@ import { len } from './geom';
 import { BTN, type PlayerInput } from './input';
 import { RUNES } from './config';
 import { EL, N_EL } from './elements';
-import { atan2Turns } from './trig';
+import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { MAX_SEATS, PHASE, alive, type World } from './world';
 
 export const BATTERY = {
@@ -120,6 +120,21 @@ export function driveFace(w: World, i: number): number {
   let a = atan2Turns(ax, -ay); // 0 is straight out, north; positive turns east
   if (a > 0.5) a -= 1;
   return STRAIGHT_OUT + Math.max(-BATTERY.swing, Math.min(BATTERY.swing, a));
+}
+
+/**
+ * A driven defence's flamethrower: the way it goes from the muzzle (your body) and how far.
+ *
+ * It's drawn from the head as a straight jet along the barrel, so it does its work along that line too: it lands at
+ * the barrel's line at its reach (measured from the tower, plus the muzzle's distance out along the barrel), and the
+ * spray runs from the muzzle to there. The muzzle is outside the wall, so a jet aimed far enough round that its line
+ * stays inside the wall runs from the muzzle back into the wall, and the wall stops it: the drawn jet stays inside too.
+ */
+export function driveSpray(w: World, i: number): { face: number; range: number } {
+  const b = w.bodies, tower = at(w, TOWER)[w.battery!.drive[i]], f = driveFace(w, i), dx = cosTurns(f), dy = sinTurns(f);
+  const out = (b.x[i] - tower.x) * dx + (b.y[i] - tower.y) * dy, d = out + sprayReach(dx, dy);
+  const lx = tower.x + dx * d - b.x[i], ly = tower.y + dy * d - b.y[i];
+  return { face: atan2Turns(ly, lx), range: len(lx, ly) };
 }
 
 /**

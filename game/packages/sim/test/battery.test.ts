@@ -1,7 +1,7 @@
 // The battery's gate: a standing wall of fire you can walk through, and it burns you.
 import { describe, expect, it } from 'vitest';
 import { BATTERY, BTN, EL, N_EL, NO_INPUT, WALL, createWorld, joinSeat, runeMax, step } from '../src';
-import { driveTarget, sprayReach } from '../src/battery';
+import { driveFace, driveTarget, sprayReach } from '../src/battery';
 
 const NO_INPUTS = [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT];
 
@@ -72,7 +72,7 @@ describe('driving a defence', () => {
     take(w);
     for (const aimX of [320, -320]) {
       step(w, [{ ...NO_INPUT, aimX, aimY: 320 }, NO_INPUT, NO_INPUT, NO_INPUT]); // down the map: behind the wall
-      const off = w.bodies.face[0] - 0.75;
+      const off = driveFace(w, 0) - 0.75; // the head; the body faces the spray's way from the muzzle (driveSpray)
       expect(Math.abs(off)).toBeCloseTo(BATTERY.swing, 3);
       expect(Math.sign(off)).toBe(Math.sign(aimX));
     }

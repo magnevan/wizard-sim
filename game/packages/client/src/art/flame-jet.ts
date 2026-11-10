@@ -160,7 +160,8 @@ export function flameJet(o: Ctx, j: Jet, t: number, behind: ((ax: number, ay: nu
     // behind draws inside a box round its anchor (R + 24 across and below, R + 70 above): big enough for the whole band
     let R = 0;
     for (const p of g) R = Math.max(R, Math.abs(p.x - ax) + p.r - 20, dy - p.y + p.r - 66, p.y - dy + p.r - 20);
-    behind(ax, dy, R, (c) => drawGroup(c, g), false, where === 'over');
+    // the wall stands on its line, so none of its pieces can be in front of the jet until it's well past it
+    behind(ax, dy, R, (c) => drawGroup(c, g), false, where !== 'far');
   }
   nozzle(o);
 }

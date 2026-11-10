@@ -5,7 +5,7 @@
  * A Payload is what a hit carries: element counts plus a few flags. Missiles and zones store it
  * in their typed arrays (els, flags, mod, look) and rebuild the view object when they hit.
  */
-import { BATTERY, driving, sprayReach } from './battery';
+import { BATTERY, driveSpray, driving } from './battery';
 import type { Mod, SpellSpec } from './compile';
 import { ARMS, BODY, CELL, COMBAT, PERKS, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
@@ -436,7 +436,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     return;
   }
   if (spec.shape === 'spray') {
-    const range = (driving(w, src) ? sprayReach(dx, dy) : SHAPES.sprayRange) + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
+    const range = (driving(w, src) ? driveSpray(w, src).range : SHAPES.sprayRange) + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
     // Rock and barriers stop a spray like a beam: it ends at the wall and wears it down (healing doesn't).
     const [wallD, wk] = clipRay(w, x, y, dx, dy, range);
     if (wk >= 0 && !spec.heal) damageWall(w, wk, payloadDamage(spec.counts, 0, rate));

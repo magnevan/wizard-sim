@@ -124,7 +124,7 @@ try {
     await p.evaluate(() => document.getElementById('aim-guide')?.remove());
   }
   // the flamethrower at a few aims, one past the gate's pillar; the last held a while to see it move
-  for (const [name, x, y, frames] of [['jet-left', 200, 160, 1], ['jet-out', 700, 110, 1], ['jet-gate', 900, 330, 1], ['jet-far', 1100, 140, 4]]) {
+  for (const [name, x, y, frames] of [['jet-left', 200, 160, 1], ['jet-out', 700, 110, 1], ['jet-gate', 900, 330, 1], ['jet-far', 1100, 140, 4], ['jet-right', 1200, 330, 1], ['jet-lower', 1230, 620, 3], ['jet-wide-left', 120, 330, 1]]) {
     await p.mouse.move(x, y);
     await sleep(500);
     await p.keyboard.press('KeyF');

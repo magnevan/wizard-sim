@@ -13,14 +13,14 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import {
-  BATTERY, CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
+  BATTERY, CELL, DEVICE, ECHO_LAG, sprayReach, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
   compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
 import { BARREL_RISE, headTip, liveHeads, towerTip } from './props';
 import { flameJet, pilotFlame } from './flame-jet';
-import { toY } from '../iso-world';
+import { toX, toY } from '../iso-world';
 import { PPU } from '../camera';
 import * as A from './accent';
 import { depthOf, rowsHidden } from './depth';
@@ -873,9 +873,20 @@ export class Vfx {
           const head = fromHead && kind === 'fire' ? towerTip(w, w.battery!.drive[i]) : null;
           if (head) {
             // a defence's flamethrower: one stream with depth, hidden by the wall and pillars it passes behind (art/flame-jet.ts)
-            // the sim's spray lands where it does (it fires from the muzzle, past the wall); the jet leaves along the barrel and bends there
+            // The sim's spray lands on the barrel's line (battery.ts, driveSpray), so the jet runs straight along it. Its end
+            // is taken onto the line as drawn, which can differ from the sim's by a few degrees; when the wall stopped the
+            // spray, that's where the jet stops too. Aimed so far round that the barrel's line stays inside the wall, the
+            // sim's spray runs from the muzzle into the wall and ends there; the jet is drawn its full length along the
+            // inside instead, where the barrel points (it hits nothing there either way).
+            const bx = head.tip[0] - head.swivel[0], by = head.tip[1] - head.swivel[1] + BARREL_RISE;
+            const tw = w.def.props.filter((p) => p.asset === 'defence-tower')[w.battery!.drive[i]];
+            const ul = Math.hypot(bx / PPU, by / (PPU * FY)) || 1, ux = bx / PPU / ul, uy = by / (PPU * FY) / ul;
+            const full = (w.bodies.x[i] - tw.x) * ux + (w.bodies.y[i] - tw.y) * uy + sprayReach(toX(ux, uy), toY(ux, uy));
+            const inside = toY(tw.x + ux * full, tw.y + uy * full) > BATTERY.wallY;
+            const along = inside ? full : Math.max(1, (s.chanEndX[i] - tw.x) * ux + (s.chanEndY[i] - tw.y) * uy);
+            const land: Pt = [gx(tw.x + ux * along), gy(tw.y + uy * along)];
             const side = (x: number, y: number) => { const u = (x - FIELD.OX) / PPU, vv = (y - FIELD.OY) / (PPU * FY), ry = toY(u, vv); return ry > BATTERY.wallY ? 'near' : ry > BATTERY.wallY - JET_OVER_WALL ? 'over' : 'far'; };
-            flameJet(o, { nozzle: head.tip, from: head.ground, to: [ex, ey], barrel: [head.tip[0] - head.swivel[0], head.tip[1] - head.swivel[1] + BARREL_RISE], endH: LIFT, side, frontY: head.ground[1] + 6, t0, seed: sd }, t, this.behind);
+            flameJet(o, { nozzle: head.tip, from: head.ground, to: land, barrel: [bx, by], endH: LIFT, side, frontY: head.ground[1] + 6, t0, seed: sd }, t, this.behind);
           } else K.cone(o, tip, z, t, kind, t0, fromHead ? { spread: 0.34, power: 2.2, seed: sd } : { spread: 0.28, seed: sd });
           glowAlong(light, lerp(tip[0], ex, 0.25), lerp(v.y, ey, 0.25), ex, ey, 40, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', (kind === 'fire' ? 0.6 : 0.4) * flick(t, sd));
           if (kind === 'cold') for (let q = 0; q < 40; q++) { const a = rand(q, 61, sd) * TAU, r = Math.pow(rand(q, 62, sd), 0.7) * 18 * seg(t, t0 + 0.3, t0 + 1.3); X.px(g, ex + Math.cos(a) * r, ey + Math.sin(a) * r * FY * 0.7, q % 4 === 0 ? '#ffffff' : q % 2 ? '#bfe8f6' : '#8ccce4'); }

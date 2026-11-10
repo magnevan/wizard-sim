@@ -36,7 +36,7 @@ import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from 
 import type { BodyView, LightFn } from './art/vfx';
 import { glyph, perkOf } from './art/perks';
 import { drawTutorialWorld } from './tutorial-view';
-import { kitOf, kitRun, stampTexture, wallsAllFar } from './art/wall-kit';
+import { kitOf, kitRun, sideZ, stampTexture, wallsAllFar } from './art/wall-kit';
 
 /** A wall of fire that belongs to the place (the battery's gate) stands this much taller than a cast one. */
 const GATE_FIRE = 3.4;
@@ -502,7 +502,7 @@ export class StructureView {
     this.slabs.begin(12);
     this.scorch.draw(w, st);
     const off = OFF;
-    if (!off.includes('walls')) this.walls(w, t, g, o, light);
+    if (!off.includes('walls')) this.walls(w, t, g, o, bodies, light);
     if (w.run) { this.altars(w, t, g, o, light); this.rallies(w, t, g, o, bodies, light); }
     if (w.tut) drawTutorialWorld(w, t, g, o, light, (rx, ry, cw, ch, z) => this.pieces.canvas(rx, ry, cw, ch, z));
     if (!off.includes('waves')) { this.waves(w, t, g, o, light); this.sparks(w, t, g, o, light); }
@@ -637,7 +637,7 @@ export class StructureView {
   }
 
   // ---- Shield walls ---------------------------------------------------------------------------------
-  private walls(w: World, t: number, g: Ctx, o: Ctx, light: LightFn): void {
+  private walls(w: World, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
     const wl = w.walls, tr = w.terrain, nt = tr.n, s = w.seats, tick = w.clock[0], live = new Set<string>(), kitName = kitOf(w.def.id);
     const near = (ax: number, ay: number, x: number, y: number) => Math.abs(ax - x) < 0.05 && Math.abs(ay - y) < 0.05;
     const joins = (id: number, x: number, y: number) => {
@@ -664,7 +664,8 @@ export class StructureView {
             if (!got) { drawn = false; break; }
           }
           if (run && drawn) {
-            for (const st of run) { const got = stampTexture(kitName, st)!; this.pieces.tex(got.tex, st.x + got.dx, st.y, st.z, 0xffffff, st.foot); }
+            const open = wallsAllFar(w.def.id);
+            for (const st of run) { const got = stampTexture(kitName, st)!; this.pieces.tex(got.tex, st.x + got.dx, st.y, open ? sideZ(st, a[0], a[1], bb[0], bb[1], bodies) : st.z, 0xffffff, st.foot); }
             continue;
           }
         }

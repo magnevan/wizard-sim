@@ -1,0 +1,23 @@
+{
+  "id": "defence-head-north-east",
+  "kind": "prop",
+  "name": "Defence head, north-east",
+  "footprint": [
+    1.0,
+    1.0
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        18,
+        109
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/defence/head-north-east-placed.png",
+      "tool": "create_1_direction_object",
+      "edits": "head masked out of flame-candidate-2",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

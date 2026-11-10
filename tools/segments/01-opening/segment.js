@@ -16,7 +16,7 @@ needsYou:[
  ['#solve-battery-well',`What a well looks like, in its three states. It needs your sign-off before I buy it.`],
  ['#solve-yard-layout',`A new yard layout that keeps the lessons in order.`],
 ],
-onMe:[`Build the battery as a plain playable room.`,`Finish the defence: one tower, a turning head, and a burnt-out version.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
+onMe:[`Build the battery as a plain playable room.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
 chapters:[
 {id:'hall',name:'Lecture hall and cloister',
  map:{W:50,H:34,base:'void',what:`You can walk about during the briefing, then leave along the cloister past the postings.`,
@@ -86,9 +86,9 @@ rules:[
  ['Four wizards fit.',' A Fire ring is 3 units in radius, so a fight wants about 6 units per player, and a room at least 24 by 18.'],
  ['Walks vary, and some are long.',' Sometimes you walk a while before anything happens, because that makes the world feel real. You cross a screen in about 7 seconds.'],
 ],
-buy:{id:'job-defence',name:`The defence`,cost:49,costLabel:'49 generations so far',tool:'Candidate 3 chosen. One tower, with only the head rotated through the Rotate endpoint, 1 generation per facing. Next: clean up the east facing, then a burnt-out version, as a free local edit first.',
+buy:{id:'job-defence',name:`The defence`,cost:49,costLabel:'49 generations so far',tool:'Candidate 3 chosen. One tower, with only the head rotated through the Rotate endpoint, 1 generation per facing. The burnt-out version is a free local edit, so nothing more to pay for. All of it is registered as game assets, tower and heads separate.',
  why:`A flamethrower on a tower. It faces north-east and swings about 45 degrees either way, so only the head turns, on its collar, and the tower stays one image.`,
- images:[['img/defence-flame-candidates.png','Four flamethrower towers with a brass head on a central collar and an orange crystal set into the stone','The four candidates. You chose 3.'],['img/defence-flame-facings.png','Candidate 3 facing north, north-east and east on one identical tower','The three facings, sharing one tower. The east facing still has a stray scrap of the old flame to clean up.']],
+ images:[['img/defence-flame-candidates.png','Four flamethrower towers with a brass head on a central collar and an orange crystal set into the stone','The four candidates. You chose 3.'],['img/defence-flame-facings.png','Candidate 3 facing north, north-east and east on one identical tower','The three facings, sharing one tower.'],['img/defence-burnt.png','The working defence beside the burnt-out one, with a black cracked crystal, soot up the wall, a sagging nozzle and no flame','Working, and burnt out. A free local edit with no generations spent. Say if it needs to be better than this.']],
  lines:['A fixed flamethrower defence on a squat round stone tower, facing up and to the right. A compact brass flame-projector head with a slim nozzle flaring to a burner tip and a small pilot flame, sitting on a round swivel collar at the centre of the tower top. Nothing connects the head to the tower except the collar. A glowing orange crystal in a cage is built into the side of the tower below the collar, with short brass pipes running into the stone, not up to the head. Medieval fantasy engineering, not a cannon, no barrel. Hi-bit pixel art, dark outline, seen from above at an isometric angle.']},
 art:[
  ['Hall','Academy furnishings and school wall kit (bought); lectern, benches, bookshelves, banners, clock (owned)','Other students: wizard rig recoloured'],

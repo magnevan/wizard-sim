@@ -38,12 +38,31 @@ def trim(im):
     return im.crop(box) if box else im
 
 
-def register(pid, name, footprint, im, raw, tool, edits='trimmed only', flat=False, foot=None, round_=False):
+# Where the picture's width misreads the ground: a post's lamp overhangs one side, and a cart's handle reaches past its wheels.
+FEET = {'lantern-post': [21, 42], 'supply-cart': [22, 30]}
+
+
+def ground_foot(pid, im):
+    """The pixel standing on the prop's spot: the middle of its base. These props are drawn from the corner, so the base is a 2:1
+    diamond or ellipse as wide as the widest row of the lower half, and its middle is a quarter of that width above the bottom edge."""
+    if pid in FEET:
+        return FEET[pid]
+    a = np.array(im)[:, :, 3] > 0
+    rows = np.where(a.any(axis=1))[0]
+    bottom = int(rows[-1])
+    def span(y):
+        xs = np.where(a[y])[0]
+        return int(xs[-1] - xs[0] + 1)
+    return [im.width // 2, bottom + 1 - max(span(int(y)) for y in rows[rows >= (rows[0] + bottom) / 2]) // 4]
+
+
+def register(pid, name, footprint, im, raw, tool, edits='trimmed only', flat=False, foot=None, round_=False, sort=None):
     d = os.path.join(ASSETS, pid)
     os.makedirs(d, exist_ok=True)
     im.save(os.path.join(d, 'lean.png'), optimize=True)
     meta = {'id': pid, 'kind': 'prop', 'name': name, 'footprint': footprint}
     if round_: meta['round'] = True
+    if sort is not None: meta['sort'] = sort
     if flat: meta['flat'] = True
     meta['sets'] = {'lean': {'file': 'lean.png', 'foot': foot or [im.width // 2, im.height - 2], 'source': 'pixellab', 'raw': raw, 'tool': tool, 'edits': edits, 'status': STATUS}}
     json.dump(meta, open(os.path.join(d, 'meta.json'), 'w'), indent=2)
@@ -55,9 +74,11 @@ def main():
     n = 0
     for folder, items in (('academy', ACADEMY), ('works', WORKS)):
         for i, (pid, name, fp) in enumerate(items):
-            register(pid, name, fp, trim(open_png(f'{folder}/{i:02d}.png')), f'{RAWREL}/{folder}/{i:02d}.png', 'create_1_direction_object'); n += 1
+            im = trim(open_png(f'{folder}/{i:02d}.png'))
+            register(pid, name, fp, im, f'{RAWREL}/{folder}/{i:02d}.png', 'create_1_direction_object', foot=ground_foot(pid, im)); n += 1
     for pid, name, fp in BUILDINGS:
-        register(pid, name, fp, trim(open_png(f'buildings/{pid}.png')), f'{RAWREL}/buildings/{pid}.png', 'create_map_object'); n += 1
+        im = trim(open_png(f'buildings/{pid}.png'))
+        register(pid, name, fp, im, f'{RAWREL}/buildings/{pid}.png', 'create_map_object', foot=ground_foot(pid, im)); n += 1
     for i, text in enumerate(CLUTTER):
         pid = re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
         im = trim(open_png(f'clutter/{i:02d}.png'))

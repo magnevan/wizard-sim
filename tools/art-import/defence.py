@@ -63,11 +63,6 @@ def main():
         box = im.getchannel('A').getbbox()
         foot = [anchor[0] - box[0], anchor[1] - box[1]]
         register(pid, name, footprint, im.crop(box), f'{DEFENCE}/{file}', '/v2/rotate' if 'rotated' in edits else 'create_1_direction_object', edits, foot=foot)
-    for pid, *_ in PIECES:     # a tower sorts a little in front of the first wall piece beside it, so the wall tucks behind its curve
-        meta = os.path.join(ASSETS, pid, 'meta.json')
-        m = json.load(open(meta))
-        m['sort'] = 26
-        json.dump(m, open(meta, 'w'), indent=2)
     im = Image.open(os.path.join(ROOT, WELL_RAW)).convert('RGBA')
     box = im.getchannel('A').getbbox()
     im = im.crop(box)

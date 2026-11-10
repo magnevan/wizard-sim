@@ -20,6 +20,8 @@ rng = random.Random(1207)
 CX = 42
 TOWERS = [16, 29, 55, 68]  # 13 apart, and 13 from the gate, which is 15 long on screen: a tower never touches it
 WALL_Y = 35
+TOWER_Y = WALL_Y + 3       # a tower stands against the wall's yard side, so the wall runs unbroken behind it
+CREW_Y = TOWER_Y + 6       # where the pedestals and feed lines end
 GATE = (39, 45)            # the opening you walk through
 PILLAR = 2.12              # a gate pillar is one kit tile wide
 WELL = (42, 54)            # well back from the gate, with the yard open round it
@@ -97,7 +99,7 @@ paint(path([(CX, WALL_Y - 4), (CX, 26), (64, 10), (64, 0)], 3.2, .6, 20), 'grave
 # the well on its flagged apron, and the trenches for the feed lines
 paint(disc(*WELL, 6.5), 'cobble')
 for x in TOWERS:
-    paint(path([WELL, (x, 41)], 1.0, .1, 21), 'gravel')
+    paint(path([WELL, (x, CREW_Y - .5)], 1.0, .1, 21), 'gravel')
 # the pump and the stores' hardstanding
 paint(disc(16, 52, 2.4), 'gravel')
 paint(rect(63, 47, 13, 12, .5, 22), 'gravel')
@@ -108,9 +110,9 @@ def prop(asset, x, y, blocks=False):
     props.append((asset, x, y, blocks))
 
 for x in TOWERS:
-    prop('defence-tower', x, WALL_Y, True)
-    prop('defence-head-north-east', x, WALL_Y)      # the same spot: the head lands on the tower's collar
-    prop('control-pedestal', x, 41.5, True)
+    prop('defence-tower', x, TOWER_Y, True)
+    prop('defence-head-north-east', x, TOWER_Y)     # the same spot: the head lands on the tower's collar
+    prop('control-pedestal', x, CREW_Y, True)
 prop('battery-well', *WELL, True)
 for x in (GATE[0] - PILLAR / 2, GATE[1] + PILLAR / 2):   # a little south of the wall's line, so each stands forward of its face
     prop('battery-pillar', x, WALL_Y + .64, True)
@@ -124,7 +126,7 @@ prop('hand-pump', 16, 52, True)
 for asset, x, y in [('barrel', 18.4, 53.2), ('crate-fittings', 21, 55)]:
     prop(asset, x, y, True)
 # sandbags at the wall's far ends
-for x in [9.5, 22.5, 61.5, 74.5]:
+for x in [9.5, 22.5, 61.5, 74.5]:   # between the towers
     prop('sandbags', x, WALL_Y + 2.2, True)
 # lines of stakes out on the killing ground, and the two boulders
 for x0, y, n in [(16.5, 24.3, 5), (60.5, 22.3, 5), (34.5, 18.3, 4)]:
@@ -177,15 +179,8 @@ for s, (x, y) in enumerate([(40.5, 63), (43.5, 63), (40.5, 65.5), (43.5, 65.5)])
     es.append(entity('PlayerStart', s, x, y, {'seat': s}))
 for i, (x, y) in enumerate(PORTALS):
     es.append(entity('Portal', i, x, y))
-# the wall: Rock either side of the gate, world units (the area's centre is the origin). It stops at each tower, which
-# blocks by itself, so it never cuts across one.
-runs, at = [], 0
-for x in TOWERS[:2]:
-    runs.append((at, x - 2.2)); at = x + 2.2
-runs.append((at, GATE[0] - PILLAR / 2)); at = GATE[1] + PILLAR - .1   # ends behind the far pillar, starts at the near pillar's side
-for x in TOWERS[2:]:
-    runs.append((at, x - 2.2)); at = x + 2.2
-runs.append((at, W))
+# the wall: Rock either side of the gate, world units (the area's centre is the origin), unbroken behind the towers
+runs = [(0, GATE[0] - PILLAR / 2), (GATE[1] + PILLAR - .1, W)]   # ends behind the far pillar, starts at the near pillar's side
 for i, (a, b) in enumerate(runs):
     wy = WALL_Y - H / 2
     es.append(entity('Rock', i, (a + b) / 2, WALL_Y, {'x1': a - W / 2, 'y1': wy, 'x2': b - W / 2, 'y2': wy}))

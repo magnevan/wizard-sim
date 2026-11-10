@@ -50,7 +50,7 @@ export class PropView {
       if (!meta) continue;
       const spr = new Sprite();
       spr.tint = this.tint; spr.visible = false;
-      spr.zIndex = (Math.round(gy(p.y)) + (meta.sort ?? 0)) * 128 + 100;
+      spr.zIndex = Math.round(gy(p.y)) * 128 + 100;
       (meta.flat ? this.under : this.actors).addChild(spr);
       this.items.push({ asset: p.asset, meta, spr, x: gx(p.x), y: gy(p.y) - (meta.lift ?? 0), ox: 0, oy: 0 });
       if (meta.flat || meta.lift) continue;

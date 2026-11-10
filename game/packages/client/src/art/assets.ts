@@ -21,7 +21,7 @@ export interface PropMeta {
   /** Lies on the floor (under everything), not stood in the depth sort. */
   flat?: boolean;
   /** Hangs this many art px above its spot (a banner on a wall). */
-  lift?: number; /** Sorts this many art px later than its spot, in front of what joins it. */ sort?: number;
+  lift?: number;
   sets: Record<string, PropImage>;
 }
 

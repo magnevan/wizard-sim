@@ -1113,3 +1113,7 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **The repair:** you take part, or do it yourselves, with a simple "press X to stabilize". A fade to black and back, and the well has changed. Wells need three looks: Unstable, Drained, Stable.
 - **Wells have no single design,** only things in common. In the world they differ in size by orders of magnitude, and the ones we play around stay roughly similar.
 - **The defence is approved.** The user asked for rotations, so it's bought as candidates, then eight rotations from the best one, then a broken state.
+
+## 2026-11-10: The defence is a flamethrower with a head that turns
+- **It faces north-east and swings about 45 degrees either way,** so it needs three facings, not eight (the user). Only the head turns, on a central collar, and the tower stays one image.
+- **Flamethrower, not cannon** (the user: "flamethrower is more the identity of the base fire spells"). The first four towers and their rotations are kept but unused.

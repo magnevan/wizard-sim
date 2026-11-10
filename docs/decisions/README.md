@@ -1131,3 +1131,4 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **More air** (the user: "very cramped"; tower size is fine). The area is 84 x 72, the defences 13 apart, the rear yard half as deep again. This replaces the 11 above. All four towers no longer fit one 1080p screen, which matters only for four players on one couch, and is open on the page.
 - **The gatehouse is re-angled, not rebought.** Sheared 2:1 to run along the wall, doors swung open, no generations spent.
 - **All four towers don't need to fit one screen** (the user), so the spacing stays.
+- **The gatehouse gets thickness** (the user: it looked flat). Its front is extruded back through the wall by hand, with lit tops and shaded brick sides, still with no generations spent.

@@ -28,27 +28,53 @@ PIECES = [
 
 
 def angled_gate(c):
-    """The bought gatehouse faces the camera. Shearing each column down 1 px per 2 across lays it on the line the wall runs on, and the doors swing open through the arch."""
+    """The bought gatehouse is a flat front facing the camera. Each column is sheared down 1 px per 2 across, which lays it on
+    the line the wall runs on. Then it's extruded back through the wall (up and to the right on screen) so the pylons and the
+    arch have lit tops and shaded brick sides. The doors swing open against the jambs."""
     a = np.array(c)
     h, w = a.shape[:2]
-    cx, pad = w // 2, w // 4 + 2
+    D = 24                                    # thickness, art px across the screen: about 2 units
+    cx, pad = w // 2, w // 4 + 2 + D // 2 + 2
     left = c.crop((43, 64, 85, 120)).resize((18, 56), Image.NEAREST)
     right = c.crop((88, 64, 130, 120)).resize((18, 56), Image.NEAREST)
     a[62:126, 42:131] = 0                     # the closed doors go
     fall = lambda x: pad + (x - cx) // 2
-    out = Image.new('RGBA', (w + 22, h + pad * 2 + 20))
-    for leaf, jamb in ((left, 41), (right, 118)):  # each leaf runs back through the arch, up and to the right
+    H, W = h + pad * 2 + 20, w + D + 4
+    body = np.zeros((H, W, 4), np.uint8)
+    for x in range(w):
+        body[fall(x):fall(x) + h, x] = a[:, x]
+    solid = body[..., 3] > 0
+    back = np.zeros((H, W, 4), np.uint8)
+    mask = np.zeros((H, W), bool)
+    TOP = np.array([186, 172, 150, 255]), np.array([160, 146, 128, 255])
+    ys, xs = np.where(solid)
+    def sweep(keep, paint):                   # far to near, so the nearest surface wins
+        for i in range(D, 0, -1):
+            for y, x in zip(ys, xs):
+                ty, tx = y - (i + 1) // 2, x + i
+                if keep(y, x) and 0 <= ty < H and 0 <= tx < W and not solid[ty, tx]:
+                    back[ty, tx] = paint(y, x, i)
+                    mask[ty, tx] = True
+    def brick(y, x, i):                       # a face turned to the right, in shade
+        row = min(34 + (y - fall(x)) % 90, h - 1)
+        rgb = a[row, 5 + i % 24, :3] if a[row, 5 + i % 24, 3] else np.array([70, 62, 76])
+        return (*(rgb * .62).astype(np.uint8), 255)
+    sweep(lambda y, x: not solid[y, x + 1], brick)
+    sweep(lambda y, x: not solid[y - 1, x], lambda y, x, i: TOP[1] if i % 9 == 0 else TOP[0])   # tops last, they catch the light
+    holes = ~(mask | solid) & np.roll(mask | solid, 1, 1) & np.roll(mask | solid, -1, 1)
+    back[holes] = np.roll(back, 1, 1)[holes]
+    mask |= holes
+    every = mask | solid
+    edge = mask & ~(np.roll(every, 1, 0) & np.roll(every, -1, 0) & np.roll(every, 1, 1) & np.roll(every, -1, 1))
+    back[edge] = (24, 18, 28, 255)
+    out = Image.fromarray(back)
+    for leaf, jamb in ((left, 41), (right, 118)):  # each leaf lies back along the passage, up and to the right
         s = np.array(leaf)
         for i in range(s.shape[1]):
-            col = Image.fromarray(s[:, i:i + 1])
-            out.alpha_composite(col, (jamb + i, 64 + fall(jamb) + 8 - i // 2))
-    body = np.zeros((h + pad * 2 + 20, w + 22, 4), np.uint8)
-    for x in range(w):
-        y0 = fall(x)
-        body[y0:y0 + h, x] = a[:, x]
+            out.alpha_composite(Image.fromarray(s[:, i:i + 1]), (jamb + i, 64 + fall(jamb) + 8 - i // 2))
     out.alpha_composite(Image.fromarray(body))
     box = out.getchannel('A').getbbox()
-    return out.crop((0, box[1], w, box[3])), h - 2 + pad - box[1]
+    return out.crop((box[0], box[1], box[2], box[3])), cx - box[0], h - 2 + pad - box[1]
 
 
 def main():
@@ -66,8 +92,8 @@ def main():
     register('battery-well', 'Battery well', [5.0, 5.0], im, WELL_RAW, 'create_1_direction_object', foot=[im.width // 2, im.height - im.width // 4])
     # The gatehouse stands across the wall. The level puts its spot 3.5 u down the screen and `lift` raises the art back
     # by the same 40 px, so it sorts in front of the wall pieces that join it.
-    im, foot_y = angled_gate(trim(Image.open(os.path.join(ROOT, GATE_RAW)).convert('RGBA')))
-    register('battery-gatehouse', 'Gatehouse (battery)', [7.0, 1.0], im, GATE_RAW, 'create_map_object', 'trimmed, sheared 2:1 to run along the wall, doors swung open', foot=[im.width // 2, foot_y])
+    im, foot_x, foot_y = angled_gate(trim(Image.open(os.path.join(ROOT, GATE_RAW)).convert('RGBA')))
+    register('battery-gatehouse', 'Gatehouse (battery)', [7.0, 1.0], im, GATE_RAW, 'create_map_object', 'trimmed, sheared 2:1 to run along the wall, extruded back through the wall for depth, doors swung open', foot=[foot_x, foot_y])
     meta = os.path.join(ASSETS, 'battery-gatehouse', 'meta.json')
     m = json.load(open(meta))
     m['lift'] = 40  # drawn 40 px above its spot: the art is on the wall line, and it sorts in front of the pieces that join it

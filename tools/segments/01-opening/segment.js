@@ -49,7 +49,7 @@ chapters:[
  solve:[
  ]},
 {id:'battery',name:'The battery',
- shots:[['img/battery-gate.png','The gate through the wall with the well in the rear yard and towers either side','The rear yard, from the gate. Built, and walkable.'],['img/battery-crews.png','A wizard in the rear yard between the wall towers and the well','Where the crews stand: a pedestal for each tower.'],['img/battery-north.png','The road leaving the killing ground into dense woods','The way out to the north, with woods past the edge of the area.']],
+ shots:[['img/battery-gate.png','The gate through the wall with the well in the rear yard and towers either side','The rear yard, from the gate. Built, and walkable.'],['img/battery-crews.png','A wizard in the rear yard between the wall towers and the well','Where the crews stand: a pedestal for each tower.'],['img/battery-north.png','The gatehouse and wall towers seen from the north side of the wall','The gate from the killing ground: thick enough to stand as a real structure.']],
  map:{W:84,H:72,base:'grass',what:`The first job. You drive a defence on the wall until it runs dry, then go out through the gate on your own power.`,
   route:[[42,72],[42,62],[29,43],[42,42],[42,26],[64,10],[64,0]],
   views:[['Driving a defence',29,26],['Your own body',29,44],['Out the gate',42,24]],
@@ -76,7 +76,7 @@ chapters:[
  [`More air.`,` The area is now 84 × 72. The defences stand 13 apart, the rear yard is half as deep again, the well sits 19 back from the wall, and the stores keep to their own corner.`],
  [`Tower size is right,`,` at about three and a half wizards wide.`],
  [`The towers don't all have to fit one screen.`,` A neighbouring pair fits at 1080p, and that's fine.`],
- [`The gate is the one we had, re-angled for free`,` to run along the wall, with its doors swung open.`],
+ [`The gate is the one we had, re-angled for free`,` to run along the wall and given real thickness, with its doors swung open.`],
  [`One lane per player.`,` Each wave sends the same number of enemies at each occupied defence, and they go for their own lane's defence first. Neighbouring reach overlaps so players can help. Solo is one lane at the centre.`],
  [`Each wave is built for one Fire attack.`,` Archers beyond spray reach call for Place, a swarm of small enemies for the burst, something heavy at the wall for the flamethrower. Wave sizes wait for the flamethrower and burst balance.`],
  [`The transition.`,` The last pip gutters and the nozzle coughs. The bar goes dark. The camera slides back to your body and everything goes quiet for a beat. A surge comes up from the ground, the screen brightens from your wizard outward, and one Fire pip lights. Then a single line, something like "You've learned to channel fire".`],

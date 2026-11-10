@@ -34,7 +34,7 @@ import { ARMS, STATUS, T } from './config';
 import { EL, N_EL, formOf } from './elements';
 import { cellAt, floorDisc, hit, hitOpts, spawnZone, touchFloor, zap, type Payload } from './effects';
 import { inCone, len } from './geom';
-import { addKnock, applyHit } from './hit';
+import { addChill, addKnock, applyHit, ignite } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { payloadDamage, wallAt } from './walls';
 import { WALL } from './compile';
@@ -408,8 +408,8 @@ export function guardMelee(w: World, t: number, src: number, dmg: number, dx: nu
   const foe = src >= 0 && alive(w, src);
   if (foe) biteBack(w, t, src, -dx, -dy); // the coat bites back
   if (g === GUARD.prism) store(w, t, dmg); // the blow still lands, and the Prism keeps its force
-  if (foe && g === GUARD.ember) { b.burn[src] = Math.max(b.burn[src], T(STATUS.burn)); b.burnSrc[src] = t; } // thorns
-  if (foe && g === GUARD.rime) { b.chill[src] = Math.min(STATUS.chillMax, b.chill[src] + ARMS.rimeChill); w.events.push({ tick: w.clock[0], kind: 'move', who: t, x: b.x[src], y: b.y[src], text: 'chill', look: EL.cold }); } // frost bites back
+  if (foe && g === GUARD.ember) ignite(w, src, STATUS.burnContact, t); // thorns
+  if (foe && g === GUARD.rime) { addChill(w, src, ARMS.rimeChill); w.events.push({ tick: w.clock[0], kind: 'move', who: t, x: b.x[src], y: b.y[src], text: 'chill', look: EL.cold }); } // frost bites back
   if (foe && g === GUARD.tide) { applyHit(w, src, one(EL.water).counts, 0, { scale: 1, heal: false, scald: false, freeze: false, source: t, dirX: -dx, dirY: -dy, push: 0 }); b.kx[src] -= dx * ARMS.tideShove; b.ky[src] -= dy * ARMS.tideShove; }
   if (g === GUARD.bulwark) { damageGuard(w, t, dmg); move(w, t, 'block'); return 0; }
   return land;

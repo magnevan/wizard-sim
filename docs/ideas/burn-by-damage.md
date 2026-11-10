@@ -1,5 +1,5 @@
 ---
-status: developing     # raw | developing | prototyping | adopted | parked | rejected
+status: adopted        # raw | developing | prototyping | adopted | parked | rejected
 pillars: [2, 4]
 related: [../explorations/2026-11-07-rune-scaling.md, ../explorations/2026-11-05-weapon-dps.md]
 ---
@@ -55,7 +55,7 @@ Burn damage added by one hit on a target that isn't burning. "Spray, 3 s" is 18 
 - **Interactions stay as they are:** Water or Cold on a burning body erases the whole pool, so a bigger pool makes a douse a bigger rescue. Fire on a wet or chilled body thaws or dries it and doesn't ignite on that hit, so it adds nothing to the pool. Water + Fire (steam) doesn't ignite at all.
 
 ## More than damage
-The user (2026-11-09) doesn't want Fire to end up as Magicka's, with little besides raw damage while Wet carries everyone else. The pool alone doesn't solve that. `explorations/2026-11-09-fire-and-cold-status.md` weighs four verbs and recommends adding Consume (Fire spends Wet and Chill for a burst) and Panic (a big enough burn breaks an enemy's attack).
+The user (2026-11-09) doesn't want Fire to end up as Magicka's, with little besides raw damage while Wet carries everyone else. `explorations/2026-11-09-fire-and-cold-status.md` weighed four verbs. **Rejected (2026-11-10): Consume** (Fire spending Wet or Chill for a burst), because the anti-synergy is intentional, and **Panic**, because the user wants Fire to be pure damage, not more like the other elements. Built: design D below, with Fire as the best overall damage that's harder to synergize and to get full value from.
 
 ## Costs & risks
 - **Fire on everything.** A share of the whole spell's damage makes Fire a multiplier on any big hit, so Earth + Fire could become the default rock. The cap and a share below 100 % are the guards; counting only Fire's own damage would avoid it but would gut the mixes.

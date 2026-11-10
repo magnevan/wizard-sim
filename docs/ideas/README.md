@@ -4,8 +4,8 @@ There's one file per mechanic, copied from `_template.md`. The status lives in t
 
 | Idea | Status | Pillars |
 |---|---|---|
-| [burn-by-damage](burn-by-damage.md) | developing (burn follows the damage dealt, and Fire gets verbs beyond damage; not built) | 2, 4 |
-| [chill-meter](chill-meter.md) | developing (chill as a scale, harder on strong enemies; Water needs chill to freeze; not built) | 2, 3, 4 |
+| [burn-by-damage](burn-by-damage.md) | adopted (burn is a pool that follows the damage dealt; Consume and Panic rejected) | 2, 4 |
+| [chill-meter](chill-meter.md) | adopted (a frost pool filled by Cold damage; only Water freezes) | 2, 3, 4 |
 | [spell-wishlist](spell-wishlist.md) | developing | 2, 3 |
 | [art-direction](art-direction.md) | adopted (the Pixel Battlefield look drives the game) | 5 |
 | [spell-preparation](spell-preparation.md) | developing (glyphs, turrets, orbitals built as Sigil devices; the stored spell deferred) | 4, 6 |

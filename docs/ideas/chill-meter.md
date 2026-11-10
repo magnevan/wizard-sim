@@ -1,25 +1,29 @@
 ---
-status: developing     # raw | developing | prototyping | adopted | parked | rejected
+status: adopted        # raw | developing | prototyping | adopted | parked | rejected
 pillars: [2, 3, 4]
 related: [../explorations/2026-11-09-fire-and-cold-status.md, burn-by-damage.md]
 ---
 
-# Chill as a meter
+# Chill as a frost pool
 
 ## One-liner
-Cold slows a target more the colder it gets, big enemies are harder to chill, and Water turns enough chill into a freeze.
+Cold fills a hidden frost pool; the fuller it is the slower you move, and Water turns enough of it into a freeze.
 
 ## In the hands
-Frost on a goblin slows it quickly; frost on a Brute takes commitment. A partner sees how cold something is from the rime on its body, and knows whether a Water hit will freeze it yet. Freezing is a two-step, usually two-player, move.
+Frost on a goblin fills its pool quickly; frost on a Brute takes commitment or a second caster. Under the health bar, a thin strip shows how cold something is and brightens once a Water hit would freeze it. Freezing is a two-step, usually two-player, move.
 
-## Why it's interesting
-Today one rune of Frost spray freezes anything in about 2 s, and on a wet target almost at once, so Wet decides everything. The meter makes the slow Cold's real effect, and makes a freeze something built up to. The rules and first numbers are in the exploration.
+## How it works (built 2026-11-10; every number is an F1 slider)
+- **Pool size** is 2.5 × √max HP: not linear with health, so a large creature is hard to freeze, not impossible. Goblin 14, Shieldbearer 29, Brute 46.
+- **Filling:** a hit's Cold damage goes in. A mixed spell only adds its Cold share, so Arcane + 2 Cold is twice as good at chilling as 2 Arcane + Cold.
+- **Decay** is 10 % of the whole pool a second, even under fire. A weak source stalls on a tough enemy, because decay outruns it; a tough enemy needs a rapid source or a second caster.
+- **Slow** rises with the pool, to 60 % at full.
+- **Freezing** needs Water: a Cold hit on a wet body with at least 30 % chill. It lasts 1.5 s at 30 % up to 4 s when full, and uses up the chill and the wet.
 
-## Costs & risks
-Cold loses its easy lock on big enemies, on purpose. The tutorial's freeze beat needs retuning. Chill needs a clearer reading on the body than today's three levels.
+## A design rule to keep
+If Arcane + 2 Cold is better at freezing than 2 Arcane + Cold, then 2 Arcane + Cold must be better at something else. Today it is: it deals more Arcane damage. Every mix change should keep this true: moving a rune should trade one thing for another, not simply lose.
+
+## Damage or runes
+The user weighed scaling chill by runes against scaling by damage. Damage won because it prorates mixes without a special rule. The cost: the Cold damage sliders also change how fast things freeze, and rings (full damage to everyone inside) stay strong but low-damage casts freeze less than a rune-based rule would allow. Revisit after play.
 
 ## Open questions
-See the exploration: whether pure Cold ever freezes, what a thaw leaves behind, and whether toughness shortens freezes.
-
-## Smallest test
-Rework chill behind F1 sliders (gain, toughness, slow cap, freeze threshold, duration, decay) and fight a Brute and goblins in the Sanctum.
+Does a thaw leave any chill? Should toughness shorten freezes? Is a huge boss (4,000 HP) right to be out of reach of one spray?

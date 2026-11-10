@@ -106,9 +106,71 @@ describe('Force casts', () => {
     expect(lostWet).toBeGreaterThan(lostDry * 1.8);
   });
 
-  it('a frost spray freezes, and a rock shatters the frozen for double', () => {
+  it('Cold alone never freezes, however much of it', () => {
     const { w, d, dummy } = range();
-    d.queue('cold', 'cold').cast(BTN.force, 150, 0);
+    w.bodies.maxHp[dummy] = 30; w.bodies.hp[dummy] = 30;
+    d.queue('cold', 'cold', 'cold').cast(BTN.force, 200, 0);
+    expect(w.bodies.chill[dummy]).toBeGreaterThan(0.9);
+    expect(w.bodies.frozen[dummy]).toBe(0);
+  });
+
+  it('chill fills on damage: a big body fills more slowly but can fill, and a weak source can stall', () => {
+    const fill = (maxHp: number, runes: Element[], ticks: number) => {
+      const { w, d, dummy } = range();
+      w.bodies.maxHp[dummy] = maxHp; w.bodies.hp[dummy] = maxHp;
+      d.queue(...runes).cast(BTN.force, ticks, 0);
+      return w.bodies.chill[dummy];
+    };
+    const one: Element[] = ['cold'], three: Element[] = ['cold', 'cold', 'cold'];
+    expect(fill(345, three, 60)).toBeLessThan(fill(30, three, 60));
+    expect(fill(345, one, 280)).toBeLessThan(STATUS.freezeMin); // a one-rune spray barely outruns a Brute's decay
+    expect(fill(345, three, 280)).toBeGreaterThan(STATUS.freezeMin);
+    expect(fill(4000, three, 280)).toBe(0); // one spray can't outrun the decay of something this big: it takes rings or a second caster
+  });
+
+  it('chill counts Cold\'s share of a mixed spell: more Cold chills more, and a freeze uses it up', () => {
+    const mix = (q: Element[]) => { const { w, d, dummy } = range(2); d.queue(...q).cast(BTN.area, 1, 25); return w.bodies.chill[dummy]; };
+    expect(mix(['arcane', 'cold', 'cold'])).toBeGreaterThan(mix(['arcane', 'arcane', 'cold']) * 1.5);
+    const { w, d, dummy } = range(2);
+    w.bodies.maxHp[dummy] = 30; w.bodies.wet[dummy] = 600;
+    d.queue('cold').cast(BTN.area, 1, 15);
+    expect(w.bodies.frozen[dummy]).toBeGreaterThan(0);
+    expect(w.bodies.chill[dummy]).toBe(0);
+  });
+
+  it('a freeze lasts longer the colder the body was, and too little chill does not freeze', () => {
+    const freeze = (chill: number) => {
+      const { w, d, dummy } = range(2);
+      w.bodies.wet[dummy] = 600; w.bodies.chill[dummy] = chill;
+      d.queue('cold').cast(BTN.area, 1, 20);
+      return w.bodies.frozen[dummy];
+    };
+    expect(freeze(0)).toBe(0);
+    expect(freeze(0.9)).toBeGreaterThan(freeze(0.35));
+  });
+
+  it('burn is a pool: lit by any touch, grown by Fire\'s own damage and a little of the rest', () => {
+    const pool = (q: Element[]) => {
+      const { w, d, dummy } = range(2);
+      d.queue(...q).tick({ buttons: BTN.area }, 1);
+      let peak = 0;
+      for (let k = 0; k < 40; k++) { d.tick({}, 1); peak = Math.max(peak, w.bodies.burnPool[dummy]); }
+      return peak;
+    };
+    expect(pool(['fire'])).toBeCloseTo(STATUS.burnBase + DAMAGE.fire * SHAPES.fireBlast, 0);
+    expect(pool(['fire', 'fire', 'fire'])).toBeGreaterThan(pool(['fire']) * 1.5);
+    expect(pool(['arcane', 'arcane', 'fire'])).toBeLessThan(pool(['fire', 'fire', 'fire']));
+    const { w, d, dummy } = range(2);
+    const hp = w.bodies.hp[dummy];
+    d.queue('fire').cast(BTN.area, 1, 300);
+    expect(hp - w.bodies.hp[dummy]).toBeCloseTo(DAMAGE.fire * SHAPES.fireBlast + pool(['fire']), 0); // the hit, then all of the pool
+    expect(w.bodies.burn[dummy]).toBe(0);
+  });
+
+  it('a frost spray freezes the wet, and a rock shatters the frozen for double', () => {
+    const { w, d, dummy } = range();
+    w.bodies.maxHp[dummy] = 30; w.bodies.wet[dummy] = 600;
+    d.queue('cold', 'cold').cast(BTN.force, 70, 0);
     expect(w.bodies.frozen[dummy]).toBeGreaterThan(0);
     const before = w.bodies.hp[dummy];
     w.bodies.frozen[dummy] = 200; // keep it frozen however long the spray took
@@ -118,7 +180,7 @@ describe('Force casts', () => {
 
   it('cold freezes the wet: a plain frost ring on a soaked target', () => {
     const { w, d, dummy } = range(2);
-    w.bodies.wet[dummy] = 600;
+    w.bodies.maxHp[dummy] = 30; w.bodies.wet[dummy] = 600;
     d.queue('cold').cast(BTN.area, 1, 30);
     expect(w.bodies.frozen[dummy]).toBeGreaterThan(0);
     expect(w.bodies.wet[dummy]).toBe(0);
@@ -131,7 +193,7 @@ describe('Force casts', () => {
     expect(dry.w.bodies.wet[dry.dummy]).toBe(0);
     expect(dry.w.bodies.frozen[dry.dummy]).toBe(0);
     const wet = range(2);
-    wet.w.bodies.wet[wet.dummy] = 600;
+    wet.w.bodies.maxHp[wet.dummy] = 30; wet.w.bodies.wet[wet.dummy] = 600;
     wet.d.queue('water', 'cold').cast(BTN.area, 1, 30);
     expect(wet.w.bodies.frozen[wet.dummy]).toBeGreaterThan(0);
   });

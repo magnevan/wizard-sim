@@ -13,7 +13,7 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import {
-  CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SURF, T, ZONE,
+  CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, STATUS, SURF, T, ZONE,
   compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
@@ -768,10 +768,10 @@ export class Vfx {
     for (let i = 0; i < bodies.length; i++) {
       const v = bodies[i]; if (!v.on || !v.a) continue;
       const ch: Pt = [v.x + v.a.chest[0], v.y + v.a.chest[1]], hd: Pt = [v.x + v.a.head[0], v.y + v.a.head[1]], big = v.rig === 'brute';
-      if (b.burn[i] > 0) { K.burningFx(o, ch, t, b.burn[i] < 20 ? 0.5 : 1, big, i * 7); light(v.x, v.y - 4, big ? 70 : 44, '#ff7020', 0.6 + 0.06 * Math.sin(t * 19 + i)); }
+      if (b.burn[i] > 0) { K.burningFx(o, ch, t, b.burnPool[i] < 10 ? 0.5 : 1, big, i * 7); light(v.x, v.y - 4, big ? 70 : 44, '#ff7020', 0.6 + 0.06 * Math.sin(t * 19 + i)); }
       if (b.wet[i] > 0 && !b.frozen[i]) K.drips(o, ch, v.y, t, i * 5);
       if (b.frozen[i]) { K.iceGlints(o, v.x, v.y, HEIGHT[v.rig] + 3, WIDTH[v.rig] + 1, t, i); light(v.x, v.y - 4, 30, '#bff4ff', 0.3); }
-      else if (b.chill[i] > 0.1) K.chilled(o, ch, hd, t, Math.min(1, b.chill[i] / 3), i, big ? 1.8 : 1);
+      else if (b.chill[i] > 0.04) K.chilled(o, ch, hd, t, b.chill[i], i, big ? 1.8 : 1);
       if (b.stun[i] > 0) K.shockSparks(o, ch, t, i * 3);
       if (b.expose[i] > 0) {
         // exposed: its guard is broken open, cracked amber marks flicker on the body and a broken ring at its feet
@@ -786,11 +786,17 @@ export class Vfx {
   private bars(w: World, bodies: BodyView[]): void {
     const b = w.bodies, o = this.o.x;
     for (let i = 0; i < bodies.length; i++) {
-      const v = bodies[i]; if (!v.on || !v.a || b.hp[i] >= b.maxHp[i] || b.downed[i]) continue;
-      const f = Math.max(0, b.hp[i] / b.maxHp[i]), wd = v.rig === 'brute' ? 18 : 12;
+      const v = bodies[i], chill = b.chill[i], burning = b.burn[i] > 0 ? b.burnPool[i] : 0;
+      if (!v.on || !v.a || b.downed[i] || (b.hp[i] >= b.maxHp[i] && chill <= 0.02 && burning <= 0)) continue;
+      const f = Math.max(0, b.hp[i] / b.maxHp[i]), wd = v.rig === 'brute' ? 18 : 12, cold = chill > 0.02;
       const x = Math.round(v.x - wd / 2), y = Math.round(v.y + v.a.head[1] - (v.rig === 'wizard' ? 18 : 9));
-      X.rect(o, x - 1, y - 1, wd + 2, 4, '#120e1a'); X.rect(o, x, y, wd, 2, '#3a1420');
-      X.rect(o, x, y, Math.max(1, Math.round(wd * f)), 2, b.team[i] === 1 ? (f > 0.5 ? '#5fe07a' : f > 0.25 ? '#e6c84a' : '#e05a5a') : '#e05a5a');
+      X.rect(o, x - 1, y - 1, wd + 2, cold ? 5 : 4, '#120e1a'); X.rect(o, x, y, wd, 2, '#3a1420');
+      const fill = Math.max(1, Math.round(wd * f));
+      X.rect(o, x, y, fill, 2, b.team[i] === 1 ? (f > 0.5 ? '#5fe07a' : f > 0.25 ? '#e6c84a' : '#e05a5a') : '#e05a5a');
+      // the health this burn will still take, if nothing puts it out
+      if (burning > 0) { const left = Math.round(wd * Math.max(0, b.hp[i] - burning) / b.maxHp[i]); if (left < fill) X.rect(o, x + left, y, fill - left, 2, '#ff9a2a'); }
+      // the frost pool, a 1 px strip that brightens once there's enough for Water to freeze
+      if (cold) { X.rect(o, x, y + 2, wd, 1, '#1c2c44'); X.rect(o, x, y + 2, Math.max(1, Math.round(wd * chill)), 1, chill >= STATUS.freezeMin ? X.FROST[1] : X.FROST[3]); }
     }
   }
 

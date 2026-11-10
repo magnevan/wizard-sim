@@ -465,7 +465,7 @@ describe('survive: power-ups', () => {
       if (pyre) grant(w, 0, PU.pyre);
       const a = foe(w, ARCH.swarmer, 6, 0), b = foe(w, ARCH.swarmer, 6, 1.2);
       d.tick({}, 1);
-      w.bodies.burn[a] = 120; w.bodies.burnSrc[a] = 0; w.bodies.hp[a] = 0.01;
+      w.bodies.burn[a] = 120; w.bodies.burnPool[a] = 30; w.bodies.burnSrc[a] = 0; w.bodies.hp[a] = 0.01;
       const hp = w.bodies.hp[b];
       d.tick({}, 2);
       return hp - w.bodies.hp[b];

@@ -93,7 +93,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
 
   // A ward resists the elements it was made with (stone armour: Earth, the physical, plus its coats); Expose ignores wards.
   const ward = tSeat >= 0 && !b.expose[t] && !arcane ? s.ward[tSeat] : WARD.none;
-  let dmg = 0, absorbed = 0;
+  let dmg = 0, absorbed = 0, fireD = 0, coldD = 0, allD = 0; // each element's share, for the burn and frost pools
   const form = formOf(els, at);
   for (let id = 1; id <= N_EL; id++) {
     const n = c(els, at, id);
@@ -103,6 +103,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     if (arch && id === EL.cold && arch.coldMult !== undefined) d *= arch.coldMult;
     if (arch?.onlyFire && id !== EL.fire) d = 0; // a bramble: only fire hurts it
     if (d) { const col = physical ? RES.physical : colOf(id); if (col >= 0) d *= taken(w, t, col); } // a guard's resistance, or a heal's lent one
+    allD += d; if (id === EL.fire) fireD = d; else if (id === EL.cold) coldD = d;
     const resisted = (ward === WARD.ward || ward === WARD.stone) && s.wardEls[tSeat * N_EL + id - 1] > 0;
     if (resisted) { dmg += d * (1 - STRUCT.wardResist); absorbed += d * STRUCT.wardResist; } else dmg += d;
   }
@@ -132,14 +133,17 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   if (fire) {
     if (b.frozen[t] || b.chill[t] > 0) { b.frozen[t] = 0; b.chill[t] = 0; }
     else if (b.wet[t] && !water) b.wet[t] = 0;
-    else if (!water && !arch?.burnImmune && !(guard && unburnable(w, tSeat))) { b.burn[t] = Math.max(b.burn[t], Math.round(T(STATUS.burn) * Math.min(1, ss * 4))); b.burnSrc[t] = o.source; }
+    else if (!water && !arch?.burnImmune && !(guard && unburnable(w, tSeat))) {
+      // Any touch lights it; all of Fire's own damage burns on, and a quarter of what it rode in on.
+      ignite(w, t, (b.burn[t] ? 0 : STATUS.burnBase) + (fireD * STATUS.burnShareFire + (allD - fireD) * STATUS.burnShareRest) * o.scale, o.source);
+    }
   }
   const noChill = guard > 0 && warm(w, tSeat);
   if (cold && !noChill) {
     b.burn[t] = 0;
-    // a guard weak to cold (the Tide shield) chills faster, a resistant one slower
-    b.chill[t] = Math.min(STATUS.chillMax, b.chill[t] + STATUS.chillPerRune * cold * ss * taken(w, t, RES.cold));
-    if ((b.chill[t] >= STATUS.chillMax || (wasWet && b.wet[t] > 0)) && !b.frozen[t]) freezeBody(w, t);
+    // Cold's share of the hit fills the frost pool (a guard's cold resistance is already in it). Only Water freezes.
+    addChill(w, t, coldD * o.scale * STATUS.chillPerDamage);
+    if (wasWet) tryFreeze(w, t);
   }
   if (o.scald) dmg += STATUS.scaldBonus * o.scale;
   if (lightning) {
@@ -162,9 +166,32 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   return dmg;
 }
 
-export function freezeBody(w: World, t: number): void {
+/** Adds to a body's burn: `amount` more damage to burn, over at least `ticks` from now. A body not burning starts from nothing. */
+export function ignite(w: World, t: number, amount: number, src: number, ticks = T(STATUS.burn)): void {
   const b = w.bodies;
-  b.frozen[t] = T(STATUS.freeze);
+  if (!b.burn[t]) b.burnPool[t] = 0; // a douse leaves the old pool behind
+  b.burnPool[t] = Math.min(STATUS.burnCap, b.burnPool[t] + amount);
+  b.burn[t] = Math.max(b.burn[t], ticks);
+  b.burnSrc[t] = src;
+}
+
+/** Fills a body's frost pool with `amount` frost damage. The pool grows with the square root of max HP: see STATUS.chillPool. */
+export function addChill(w: World, t: number, amount: number): void {
+  const b = w.bodies;
+  b.chill[t] = Math.min(1, b.chill[t] + amount / (STATUS.chillPool * Math.sqrt(Math.max(1, b.maxHp[t]))));
+}
+
+/** A wet body cold enough freezes. */
+export function tryFreeze(w: World, t: number): void {
+  const b = w.bodies;
+  if (b.wet[t] > 0 && !b.frozen[t] && b.chill[t] >= STATUS.freezeMin) freezeBody(w, t);
+}
+
+/** Frozen for longer the colder it was. The freeze uses up the chill and the wet, so another one starts from nothing. */
+export function freezeBody(w: World, t: number): void {
+  const b = w.bodies, k = Math.min(1, Math.max(0, (b.chill[t] - STATUS.freezeMin) / Math.max(0.01, 1 - STATUS.freezeMin)));
+  b.frozen[t] = T(STATUS.freezeShort + (STATUS.freeze - STATUS.freezeShort) * k);
+  b.chill[t] = 0;
   b.wet[t] = 0;
   w.events.push({ tick: w.clock[0], kind: 'freeze', who: t, x: b.x[t], y: b.y[t] });
 }
@@ -181,14 +208,16 @@ export function tickStatuses(w: World): void {
   for (let i = 0; i < b.kind.length; i++) {
     if (b.kind[i] === KIND.none) continue;
     if (b.burn[i] > 0) {
+      const burnt = b.burnPool[i] / b.burn[i]; // spent evenly over what's left, so a bigger pool burns hotter
+      b.burnPool[i] -= burnt;
       b.burn[i]--;
       // A ward made with Fire (or stone armour coated in it) resists the burning too.
       const fireWard = i < MAX_SEATS && (w.seats.ward[i] === WARD.ward || w.seats.ward[i] === WARD.stone) && w.seats.wardEls[i * N_EL + EL.fire - 1] > 0;
-      b.hp[i] -= (STATUS.burnDps / 60) * (fireWard ? 1 - STRUCT.wardResist : 1) * taken(w, i, RES.fire);
+      b.hp[i] -= burnt * (fireWard ? 1 - STRUCT.wardResist : 1) * taken(w, i, RES.fire);
       if (b.hp[i] <= 0) b.lastEl[i] = EL.fire; // burned to death
       b.lastHit[i] = w.clock[0];
       // Credit the fire to whoever lit it, twice a second (meters; the view's damage pops).
-      if (b.burn[i] % 30 === 0) w.events.push({ tick: w.clock[0], kind: 'hit', who: i, src: b.burnSrc[i], x: b.x[i], y: b.y[i], amount: STATUS.burnDps / 2, look: EL.fire });
+      if (b.burn[i] % 30 === 0) w.events.push({ tick: w.clock[0], kind: 'hit', who: i, src: b.burnSrc[i], x: b.x[i], y: b.y[i], amount: burnt * 30, look: EL.fire });
     } else b.burnSrc[i] = -1;
     if (b.wet[i] > 0) b.wet[i]--;
     if (b.frozen[i] > 0) b.frozen[i]--;

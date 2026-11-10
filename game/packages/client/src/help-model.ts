@@ -171,11 +171,11 @@ function payload(spec: SpellSpec, k: number, unit: string, out: Metric[], flat =
   }
 }
 
-/** The statuses one hit leaves: Burn is the same for any amount of Fire; Chill and Stun grow with each rune. */
+/** The statuses one hit leaves: Burn starts at its floor and grows with the hit; Chill and Stun grow with each rune. */
 function statuses(spec: SpellSpec, out: Metric[]): void {
   if (spec.heal) return;
-  if (count(spec, 'fire') && !spec.scald) out.push({ key: 'burn', label: `BURN ${STATUS.burnDps}/S FOR`, v: STATUS.burn, unit: 'S' });
-  if (count(spec, 'cold')) out.push({ key: 'chill', label: 'CHILL', v: STATUS.chillPerRune * count(spec, 'cold'), unit: `/${STATUS.chillMax}`, hidden: spec.channel });
+  if (count(spec, 'fire') && !spec.scald) out.push({ key: 'burn', label: 'BURN FROM', v: STATUS.burnBase, unit: '' });
+  if (count(spec, 'cold')) out.push({ key: 'chill', label: 'FROST', v: DAMAGE.cold * STATUS.chillPerDamage * count(spec, 'cold'), unit: '', hidden: spec.channel });
   if (count(spec, 'lightning')) out.push({ key: 'stun', label: 'STUN', v: STATUS.stunPerRune * count(spec, 'lightning'), unit: 'S', hidden: spec.channel });
 }
 
@@ -278,7 +278,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
       // every half second (structures.ts): Life regenerates the wearer, Cold chills, Earth shoves; Fire, Haste and Glass don't grow
       const life = count(spec, 'life'), cold = count(spec, 'cold'), earth = count(spec, 'earth');
       if (life) m.push({ key: 'regen', label: 'REGEN', v: 6 * life, unit: '/S' });
-      if (cold) m.push({ key: 'chill', label: 'CHILL', v: 1 * cold, unit: '/S' });
+      if (cold) m.push({ key: 'chill', label: 'FROST', v: 5 * cold, unit: '/S' });
       if (earth) m.push({ key: 'shove', label: 'SHOVE', v: 6 * earth, unit: 'U/S' });
       lasts(STRUCT.auraTime); reach('RADIUS', STRUCT.auraRadius);
       break;

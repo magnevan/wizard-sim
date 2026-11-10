@@ -1080,3 +1080,13 @@ Direction from the user; not built yet.
 - **Fire must not end up as it did in Magicka,** where it had little besides raw damage while Wet powered Cold and Lightning.
 - **Chill builds more slowly on stronger enemies, and slows on a sliding scale up to a cap.**
 - **Water + Cold freezes, but needs a minimum chill, and freeze length may follow chill. Chill decays.**
+
+## 2026-11-10: Burn and frost pools built; Fire stays pure damage
+
+- **Element roles (the user).** Water is primarily synergy, with some knockback. Frost has the biggest crowd control and less damage, except freeze and shatter. Lightning has good damage, a bit chaotic in where it lands, with some stagger. Fire is the best overall damage, harder to synergize, harder to get full value from over time, and you risk setting yourself on fire. Recorded in `world/elements.md`.
+- **Rejected for Fire:** Consume (Fire spending Wet or Chill for a burst). Fire's anti-synergy is intentional: it's how players get in each other's way in co-op and something to plan a kit around. Panic: the user prefers the pure damage, since control would make Fire more like the others.
+- **Burn pool built:** lit for 12, plus all of Fire's own damage and a quarter of the rest, capped at 60, spent over 4 s. Ring totals are 36, 53 and 70 for 1 to 3 runes.
+- **Frost pool built, on the user's design:** a hit's Cold damage fills a hidden pool of 2.5 × √max HP. Scaling by damage over runes because it prorates mixes without a special rule (Arcane + 2 Cold chills twice as hard as 2 Arcane + Cold). The pool drains 10 % of its size a second with no grace period, so a weak source stalls on a tough body and it takes a stronger one or a second caster. Cold never freezes without Water. A freeze needs 30 % chill, lasts 1.5 to 4 s by chill, and uses up the chill and the wet.
+- **Health bars:** a 1 px chill strip, and an orange section for what the burn will still take (a trial; may not stay).
+- **Bug fixed:** the last hit's kind lived in a module variable outside the snapshot, so a rollback could desync `lastKind`. It's reset each step.
+- **Golden hash** `b29ab7f1` → `ef369733`.

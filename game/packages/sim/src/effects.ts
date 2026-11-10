@@ -9,7 +9,7 @@ import type { Mod, SpellSpec } from './compile';
 import { ARMS, BODY, CELL, COMBAT, PERKS, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
 import { inCone, len, rayCircle } from './geom';
-import { HIT_KIND, addKnock, applyHit, setHitKind, type HitOpts } from './hit';
+import { HIT_KIND, addKnock, applyHit, ignite, setHitKind, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { clipRay, collideWalls, damageWall, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
 import { WALL, compile } from './compile';
@@ -93,7 +93,7 @@ export function tickSurfaces(w: World): void {
     if (!alive(w, i)) continue;
     const k = surfAt(w, b.x[i], b.y[i]);
     if (k === SURF.water) { b.wet[i] = Math.max(b.wet[i], T(1)); b.burn[i] = 0; }
-    if (k === SURF.fire && b.burn[i] < T(1) && !(b.kind[i] === KIND.enemy && ARCHETYPES[b.arch[i]].burnImmune)) { if (!b.burn[i]) b.burnSrc[i] = -1; b.burn[i] = T(STATUS.burn); }
+    if (k === SURF.fire && b.burn[i] < T(1) && !(b.kind[i] === KIND.enemy && ARCHETYPES[b.arch[i]].burnImmune)) ignite(w, i, STATUS.burnSurface, b.burn[i] ? b.burnSrc[i] : -1);
   }
 }
 

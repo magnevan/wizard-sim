@@ -44,6 +44,20 @@ describe('castMask', () => {
     expect(on(m, 4, 3)).toBe(true);
   });
 
+  it('a shadow stretched by a long sun, off a sloping base, has no holes', () => {
+    // a solid diamond-bottomed block, like a chest seen from the corner
+    const rows = Array.from({ length: 40 }, (_, y) => [...Array(40).keys()].map((x) => (y <= 39 - Math.abs(x - 20) / 2 ? '#' : '.')).join(''));
+    const { rgba, w, h } = picture(rows);
+    for (const [sx, sy] of [[0.55, 0.28], [0.95, 0.42], [0.3, 0.15]]) {
+      const m = castMask(rgba, w, h, sx, sy);
+      let holes = 0;
+      for (let y = 1; y < m.h - 1; y++) for (let x = 1; x < m.w - 1; x++) {
+        if (!on(m, x, y) && on(m, x - 1, y) && on(m, x + 1, y) && on(m, x, y - 1) && on(m, x, y + 1)) holes++;
+      }
+      expect(holes).toBe(0);
+    }
+  });
+
   it('see-through columns cast nothing', () => {
     const { rgba, w, h } = picture(['#.#', '#.#']);
     const m = castMask(rgba, w, h, 0, 0);

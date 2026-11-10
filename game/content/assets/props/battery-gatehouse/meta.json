@@ -11,13 +11,14 @@
       "file": "lean.png",
       "foot": [
         86,
-        169
+        170
       ],
       "source": "pixellab",
       "raw": "game/content/generated/pixellab/opening/buildings/gatehouse.png",
       "tool": "create_map_object",
-      "edits": "trimmed, foot moved 40 px below the art",
+      "edits": "trimmed, sheared 2:1 to run along the wall, doors swung open",
       "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
     }
-  }
+  },
+  "lift": 40
 }

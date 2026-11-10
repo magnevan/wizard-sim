@@ -12,7 +12,7 @@ mkdirSync(out, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fail = (msg) => { console.error('FAIL:', msg); process.exitCode = 1; };
 // plan coordinates on the Opening Segment page -> the sim's, whose origin is the area's centre
-const SPOTS = { start: [36, 57], yard: [31, 41], well: [36, 49], gate: [36, 36], crews: [25, 41], stores: [54, 53], cistern: [20, 46], field: [36, 22], north: [58, 8], westEdge: [7, 30], southEdge: [24, 58] };
+const SPOTS = { start: [42, 63], yard: [34, 46], well: [42, 60], gate: [42, 39], crews: [29, 44], stores: [62, 56], pump: [21, 50], field: [42, 25], north: [64, 8], westEdge: [8, 32], southEdge: [28, 66] };
 
 const stop = await startPreview();
 const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -37,14 +37,14 @@ try {
     await p.screenshot({ path: join(out, name + '.png') });
   }
   // the wall holds: a wizard put against it is pushed out; the gate lets one stand in the middle of the line
-  await put(20, 33.1);
+  await put(23, 35.1);
   await sleep(400);
   const [, wy] = await where();
-  if (Math.abs(wy - 33) < 0.4) fail(`a wizard stood ${Math.abs(wy - 33)} u from the wall line`);
-  await put(36, 33);
+  if (Math.abs(wy - 35) < 0.4) fail(`a wizard stood ${Math.abs(wy - 35)} u from the wall line`);
+  await put(42, 35);
   await sleep(400);
   const [gx, gy] = await where();
-  if (Math.hypot(gx - 36, gy - 33) > 0.3) fail(`the gate should be open, the wizard was moved to ${gx}, ${gy}`);
+  if (Math.hypot(gx - 42, gy - 35) > 0.3) fail(`the gate should be open, the wizard was moved to ${gx}, ${gy}`);
   console.log('wall', wy, 'gate', gx, gy);
 } finally {
   await browser.close();

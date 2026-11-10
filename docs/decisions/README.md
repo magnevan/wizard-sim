@@ -1128,3 +1128,5 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **Not a room** (the user). It has no walls round it. Woods stand on every side and carry on past where you can walk, painted into the ground, since nobody can reach them. The fortified wall runs through the middle, so it stands full height and whatever is north of it draws behind it.
 - **The defences are 11 units apart, not 7.** A tower is 6 units wide on screen, so at 7 they overlapped and one stood in front of the gate. All four still fit one screen.
 - **The well is bought:** candidate 2 of 4 is in place as a stand-in, the rest are kept.
+- **More air** (the user: "very cramped"; tower size is fine). The area is 84 x 72, the defences 13 apart, the rear yard half as deep again. This replaces the 11 above. All four towers no longer fit one 1080p screen, which matters only for four players on one couch, and is open on the page.
+- **The gatehouse is re-angled, not rebought.** Sheared 2:1 to run along the wall, doors swung open, no generations spent.

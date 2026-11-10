@@ -69,7 +69,7 @@ async function scatter(x: CanvasRenderingContext2D, g: GroundMap, W: number, H: 
  * x1, y1) left open, where a road or a gap in the trees runs off the map.
  */
 const WOODS: Readonly<Record<string, { items: readonly string[]; clear: readonly (readonly [number, number, number, number])[] }>> = {
-  battery: { items: ['pine', 'pine', 'oak', 'oak', 'oak-autumn', 'bush-round'], clear: [[-23, -99, -17, -32], [-3, -99, 3, -32], [19, -99, 25, -32], [-3, 32, 3, 99]] },
+  battery: { items: ['pine', 'pine', 'oak', 'oak', 'oak-autumn', 'bush-round'], clear: [[-23, -99, -17, -36], [-3, -99, 3, -36], [19, -99, 25, -36], [-3, 36, 3, 99]] },
 };
 const WOOD_SPOT = 30; // art px between trees
 

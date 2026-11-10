@@ -347,6 +347,13 @@ export const N_ALTARS = 3;
 /** Picks remembered per seat, in order, for the HUD and the results. */
 export const PICK_LOG = 32;
 
+/** The battery: which defence each seat is driving, and where it stood to step up (battery.ts). Only a battery world has one. */
+export interface Battery {
+  /** The defence each seat drives (its index among the room's towers), or -1. */
+  drive: Int8Array;
+  homeX: Float64Array; homeY: Float64Array;
+}
+
 /** Survive's run: the altar pick and every seat's power-ups. Only a survive world has one. */
 export interface Run {
   /** [0] ticks into the pick, [1] waves survived when the run ended, [2] restarts, [3] ticks since the run ended, [4] the wave the run ended on. */
@@ -413,6 +420,7 @@ export interface World {
   nav: Nav;
   /** Survive only (null elsewhere, so the other rooms' state, and the golden hash, are untouched). */
   run: Run | null;
+  battery: Battery | null;
   /** Tutorial only (null elsewhere, like run). */
   tut: Tutorial | null;
   events: SimEvent[];
@@ -506,7 +514,7 @@ export const ALTAR_SPOTS: readonly (readonly [number, number])[] = ROOMS.survive
 
 /** Max runes of element `id` for seat `i`: the config; in the tutorial, the beat's pools (0 = locked); in Survive, its weak start plus the seat's power-ups. */
 export const runeMax = (w: World, i: number, id: number): number =>
-  w.tut ? tutPool(w.tut.state[0], id) : w.run ? (id === EL.sigil ? RUNES.surviveSigil : RUNES.surviveStart) + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
+  w.tut ? tutPool(w.tut.state[0], id) : w.battery ? (w.battery.drive[i] >= 0 && id === EL.fire ? RUNES.max.fire : 0) : w.run ? (id === EL.sigil ? RUNES.surviveSigil : RUNES.surviveStart) + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
 /** A seat's power-up stacks (0 outside survive). */
 export const stackOf = (w: World, i: number, pu: number): number => (w.run && i >= 0 && i < MAX_SEATS ? w.run.stacks[i * N_PU + pu] : 0);
 /** True when device `k` binds no Sigil rune: a turret of a seat with Clockwork. Dismissing or recalling it gives none back. */
@@ -565,6 +573,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
       heal: u8(MAX_DEVICES), look: u8(MAX_DEVICES), born: i32(MAX_DEVICES), chan: i32(MAX_DEVICES),
     },
     run: opts.room === 'survive' ? run() : null,
+    battery: opts.room === 'battery' ? { drive: new Int8Array(MAX_SEATS).fill(-1), homeX: new Float64Array(MAX_SEATS), homeY: new Float64Array(MAX_SEATS) } : null,
     tut: opts.room === 'tutorial' ? tutorial(opts.tutorialBeat ?? TUT_ORDER[0]) : null,
     events: [],
   };
@@ -625,6 +634,7 @@ export function buffers(w: World): ArrayBufferView[] {
   const out: ArrayBufferView[] = [w.clock, w.rng];
   const pools: object[] = [w.bodies, w.seats, w.missiles, w.zones, w.surf, w.walls, w.waves, w.devices, w.enc, w.nav];
   if (w.run) pools.push(w.run); // survive only: the other rooms keep their layout (and hash) exactly
+  if (w.battery) pools.push(w.battery); // the battery only, likewise
   if (w.tut) pools.push(w.tut); // the tutorial only, likewise
   for (const pool of pools) {
     // Sorted by field name, so the order never depends on how a pool object was built.

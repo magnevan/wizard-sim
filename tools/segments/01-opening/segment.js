@@ -13,9 +13,9 @@ stages:[
  ['Brief','draft'],['Beat chart','draft'],['Space diagram','review'],['Blockout','started','The battery is walkable'],['Script','later'],['Dressing','started','General art bought'],['Finish','later'],
 ],
 needsYou:[
- ['#beat-4',`Walk the battery and tell me what still feels off.`],
+ ['#beat-4',`Try driving a defence: X at a pedestal. Tell me how the flamethrower and ring feel, before enemies exist.`],
 ],
-onMe:[`Driving a defence: take control, cast from the tower, and the pool that fails.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
+onMe:[`Waves and lanes at the battery, then the failing pool, the infusion and the repair.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
 chapters:[
 {id:'hall',name:'Lecture hall and cloister',
  map:{W:50,H:34,base:'void',what:`You can walk about during the briefing, then leave along the cloister past the postings.`,
@@ -49,7 +49,7 @@ chapters:[
  solve:[
  ]},
 {id:'battery',name:'The battery',
- shots:[['img/battery-gate.png','The sandstone wall and two pillars with fire between them, the well in the rear yard','The rear yard, from the gate. Built, and walkable.'],['img/battery-crews.png','A wizard in the rear yard between the wall towers and the well','Where the crews stand: a pedestal for each tower.'],['img/battery-north.png','The pillars, fire and wall towers seen from the north side of the wall','The gate from the killing ground: two pillars, with the wall of fire between them.']],
+ shots:[['img/battery-drive-spray.png','A wizard at a pedestal while the defence head above fires a jet of flame over the wall','Driving a defence: the flamethrower.'],['img/battery-drive-ring.png','A line of flames racing out across the killing ground beyond the wall','Driving a defence: the half-ring, reaching past the wall.'],['img/battery-gate.png','The sandstone wall and two pillars with fire between them, the well in the rear yard','The rear yard, from the gate. Built, and walkable.'],['img/battery-crews.png','A wizard in the rear yard between the wall towers and the well','Where the crews stand: a pedestal for each tower.'],['img/battery-north.png','The pillars, fire and wall towers seen from the north side of the wall','The gate from the killing ground: two pillars, with the wall of fire between them.']],
  map:{W:84,H:72,base:'grass',what:`The first job. You drive a defence on the wall until it runs dry, then go out through the gate on your own power.`,
   route:[[42,72],[42,62],[29,46],[42,42],[42,26],[64,10],[64,0]],
   views:[['Driving a defence',29,26],['Your own body',29,46],['Out the gate',42,24]],
@@ -82,6 +82,7 @@ chapters:[
  [`Stone paving follows the ground's angle,`,` so the cobbles at the gate, the road and the well no longer look top-down.`],
  [`One lane per player.`,` Each wave sends the same number of enemies at each occupied defence, and they go for their own lane's defence first. Neighbouring reach overlaps so players can help. Solo is one lane at the centre.`],
  [`A defence's spells are built for the wall.`,` A longer flamethrower, since the tower stands behind the wall. Burst and wave casts land outside the wall, and a full circle doesn't make sense here, so the area cast covers only the enemy side.`],
+ [`Driving is built.`,` X at a pedestal takes the defence and X steps away. Flamethrower reach 7.5, against a wizard's 4.5. The ring is a half-ring reaching 7. The head turns on three facings within 45 degrees of straight out. These numbers are first guesses.`],
  [`Each wave is built for one Fire attack.`,` Archers beyond spray reach call for Place, a swarm of small enemies for the burst, something heavy at the wall for the flamethrower. Wave sizes wait for the flamethrower and burst balance.`],
  [`The transition.`,` The last pip gutters and the nozzle coughs. The bar goes dark. The camera slides back to your body and everything goes quiet for a beat. A surge comes up from the ground, the screen brightens from your wizard outward, and one Fire pip lights. Then a single line, something like "You've learned to channel fire".`],
  [`The repair.`,` You take part, or do it yourselves, with a simple "press X to stabilize". The screen fades to black and back, and the well has changed: Unstable, then Drained, then Stable.`],

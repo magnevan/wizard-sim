@@ -6,6 +6,8 @@
  *
  * Props don't animate and the sim doesn't know them: a room is laid out once, and only moves with the camera.
  */
+import type { World } from '@wizard-sim/sim';
+import { toX, toY } from '../iso-world';
 import { Container, Sprite, Texture } from 'pixi.js';
 import type { RoomDef } from '@wizard-sim/sim';
 import { FY, PPU } from '../camera';
@@ -14,6 +16,25 @@ import { FIELD, gx, gy } from './field';
 import * as X from './px';
 
 interface Item { asset: string; meta: PropMeta; spr: Sprite; x: number; y: number; ox: number; oy: number }
+
+const HEAD = 'defence-head-north-east';
+
+/** Which of a defence's three heads shows its driver's aim. The view's aim is turned, so it's turned back; 0 is north. */
+function headName(w: World, seat: number): string {
+  const ax = w.seats.aimX[seat], ay = w.seats.aimY[seat], a = Math.atan2(toX(ax, ay), -toY(ax, ay));
+  return a < -Math.PI / 8 ? 'defence-head-north' : a > Math.PI / 8 ? 'defence-head-east' : HEAD;
+}
+
+/** Where each head's nozzle is, art px from the tower's spot. */
+const NOZZLE: Readonly<Record<string, readonly [number, number]>> = { 'defence-head-north': [13, -81], [HEAD]: [26, -81], 'defence-head-east': [33, -64] };
+
+/** The field point this seat's fire comes from if it's driving a defence, else null. */
+export function headTip(w: World, seat: number): [number, number] | null {
+  const k = w.battery ? w.battery.drive[seat] : -1;
+  if (k < 0) return null;
+  const tower = w.def.props.filter((p) => p.asset === 'defence-tower')[k], n = NOZZLE[headName(w, seat)];
+  return [gx(tower.x) + n[0], gy(tower.y) + n[1]];
+}
 
 export class PropView {
   /** Flat props and shadows. Add this just over the floor. */
@@ -28,6 +49,7 @@ export class PropView {
   /** True once the current set's images are all in place (tests and screenshots wait on it). */
   ready = true;
 
+  private heads = new Map<string, { tex: Texture; foot: readonly [number, number] }>();
   constructor(private actors: Container, private tint: number, private current: PropSet) { this.under.addChild(this.shadows); }
 
   get set(): PropSet { return this.current; }
@@ -76,8 +98,26 @@ export class PropView {
       if (!t || !a) return;
       it.spr.texture = t; it.ox = a.foot[0]; it.oy = a.foot[1];
     });
+    if (items.some((it) => it.asset === HEAD)) for (const name of [HEAD, 'defence-head-north', 'defence-head-east']) {
+      const a = propImage(name, this.current);
+      if (a) this.heads.set(name, { tex: await loadTexture(a.url), foot: a.foot });
+    }
     this.fx = NaN;
     this.ready = true;
+  }
+
+  /** A driven defence's head follows its driver's aim: three facings, the default straight out. */
+  turnHeads(w: World, fx0: number, fy0: number): void {
+    if (!w.battery || !this.heads.size) return;
+    let k = 0;
+    for (const it of this.items) {
+      if (it.asset !== HEAD) continue;
+      const seat = w.battery.drive.indexOf(k++);
+      const art = this.heads.get(seat >= 0 ? headName(w, seat) : HEAD);
+      if (!art || it.spr.texture === art.tex) continue;
+      it.spr.texture = art.tex; it.ox = art.foot[0]; it.oy = art.foot[1];
+      it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
+    }
   }
 
   /** Follows the camera: fx0, fy0 is where the field's corner is in the scene. */

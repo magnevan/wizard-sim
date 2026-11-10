@@ -5,6 +5,7 @@
  * A Payload is what a hit carries: element counts plus a few flags. Missiles and zones store it
  * in their typed arrays (els, flags, mod, look) and rebuild the view object when they hit.
  */
+import { BATTERY, driving } from './battery';
 import type { Mod, SpellSpec } from './compile';
 import { ARMS, BODY, CELL, COMBAT, PERKS, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
@@ -111,11 +112,11 @@ function surge(w: World, x: number, y: number, p: Payload, src: number): void {
 // ---- instant shapes -------------------------------------------------------------------------
 
 /** Every body within `r` of (x, y), except `skip`, gets the payload, pushed away from the centre. */
-export function disc(w: World, p: Payload, src: number, x: number, y: number, r: number, scale: number, skip: number): void {
+export function disc(w: World, p: Payload, src: number, x: number, y: number, r: number, scale: number, skip: number, northOf?: number): void {
   const b = w.bodies;
   setHitKind(HIT_KIND.burst);
   for (let i = 0; i < b.kind.length; i++) {
-    if (!alive(w, i) || i === skip) continue;
+    if (!alive(w, i) || i === skip || (northOf !== undefined && b.y[i] > northOf)) continue;
     const dx = b.x[i] - x, dy = b.y[i] - y, d = len(dx, dy);
     if (d > r + b.r[i]) continue;
     hit(w, i, p, hitOpts(p, src, scale, d > 1e-6 ? dx / d : 1, d > 1e-6 ? dy / d : 0));
@@ -164,9 +165,9 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       break;
     }
     case 'nova': case 'quake': {
-      const r = (spec.shape === 'quake' ? SHAPES.novaRadius + 1 : SHAPES.novaRadius) + SHAPES.novaPerRune * (n - 1);
+      const r = (driving(w, src) ? BATTERY.ringRadius : spec.shape === 'quake' ? SHAPES.novaRadius + 1 : SHAPES.novaRadius) + SHAPES.novaPerRune * (n - 1);
       // Leaves the floor alone: a floor laid round you soaks or burns you, the caster (Place is for floors).
-      disc(w, p, src, x, y, r, k * blast, spec.heal ? -1 : src); // the Healing ring heals you too
+      disc(w, p, src, x, y, r, k * blast, spec.heal ? -1 : src, driving(w, src) ? y : undefined); // the Healing ring heals you too; a defence's covers only the enemy's side
       burstEvent(w, src, x, y, r, spec.look);
       break;
     }
@@ -435,7 +436,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     return;
   }
   if (spec.shape === 'spray') {
-    const range = SHAPES.sprayRange + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
+    const range = (driving(w, src) ? BATTERY.sprayRange : SHAPES.sprayRange) + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
     // Rock and barriers stop a spray like a beam: it ends at the wall and wears it down (healing doesn't).
     const [wallD, wk] = clipRay(w, x, y, dx, dy, range);
     if (wk >= 0 && !spec.heal) damageWall(w, wk, payloadDamage(spec.counts, 0, rate));
@@ -609,7 +610,7 @@ export function tickZones(w: World): void {
 export const onIce = (w: World, i: number): boolean => surfAt(w, w.bodies.x[i], w.bodies.y[i]) === SURF.ice;
 
 /** Bodies nothing moves: the Sanctum's dummies, and rooted archetypes (the tutorial's brambles). */
-export const fixedBody = (w: World, i: number): boolean => w.bodies.kind[i] === KIND.dummy || (w.bodies.kind[i] === KIND.enemy && !!ARCHETYPES[w.bodies.arch[i]].rooted);
+export const fixedBody = (w: World, i: number): boolean => driving(w, i) || w.bodies.kind[i] === KIND.dummy || (w.bodies.kind[i] === KIND.enemy && !!ARCHETYPES[w.bodies.arch[i]].rooted);
 
 /** Bodies push apart, and everyone stays in the arena. Dummies are rooted. */
 export function collide(w: World): void {

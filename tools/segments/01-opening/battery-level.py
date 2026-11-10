@@ -21,7 +21,7 @@ CX = 42
 TOWERS = [16, 29, 55, 68]  # 13 apart, and 13 from the gate, which is 15 long on screen: a tower never touches it
 WALL_Y = 35
 GATE = (39, 45)            # the opening you walk through
-GATE_SHIFT = 3.5           # see tools/art-import/defence.py: the gatehouse's spot is this far down the screen from its art
+PILLAR = 2.12              # a gate pillar is one kit tile wide
 WELL = (42, 54)            # well back from the gate, with the yard open round it
 GAPS = [(19, 25), (39, 45), (61, 67)]
 PORTALS = [(22, 2.5), (42, 2.5), (64, 2.5)]
@@ -112,7 +112,8 @@ for x in TOWERS:
     prop('defence-head-north-east', x, WALL_Y)      # the same spot: the head lands on the tower's collar
     prop('control-pedestal', x, 41.5, True)
 prop('battery-well', *WELL, True)
-prop('battery-gatehouse', CX + GATE_SHIFT, WALL_Y + GATE_SHIFT)  # looks like it stands on the wall line, sorts in front of it
+for x in (GATE[0] - PILLAR / 2, GATE[1] + PILLAR / 2):   # a little south of the wall's line, so each stands forward of its face
+    prop('battery-pillar', x, WALL_Y + .64, True)
 prop('lantern-post', 36.5, 41, True)
 # stores, kept together in their own corner
 prop('storehouse', 70, 51, True)
@@ -181,7 +182,7 @@ for i, (x, y) in enumerate(PORTALS):
 runs, at = [], 0
 for x in TOWERS[:2]:
     runs.append((at, x - 2.2)); at = x + 2.2
-runs.append((at, GATE[0])); at = GATE[1]
+runs.append((at, GATE[0] - PILLAR / 2)); at = GATE[1] + PILLAR - .1   # ends behind the far pillar, starts at the near pillar's side
 for x in TOWERS[2:]:
     runs.append((at, x - 2.2)); at = x + 2.2
 runs.append((at, W))

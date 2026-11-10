@@ -28,36 +28,30 @@ PIECES = [
 ]
 
 
-def kit_gate():
-    """The gate: two tall pillars from the fortress kit either side of the opening, which the wall of fire fills. Each is a
-    solid block stacked up, standing across the wall's line, with four battlement stones on top (the kit's pillar, cut short).
-    A tile (i, j): +i runs along the wall, down and to the right on screen; +j runs north, up and to the right. Every piece's
-    top diamond vertex is at (38, 55) in its 76 x 86 canvas."""
+def kit_pillar():
+    """A gate pillar from the fortress kit: a solid block stacked up, with four battlement stones on top (the kit's pillar, cut
+    short). It's its own prop, one each side of the opening, so each sorts by where it stands: wall further from the camera goes
+    behind it, wall nearer the camera in front. Every kit piece's top diamond vertex is at (38, 55) in its 76 x 86 canvas, so the
+    middle of its ground tile is (38, 67)."""
     raw = os.path.join(ROOT, KIT_RAW)
-    piece = lambda n: Image.open(os.path.join(raw, f'tile_{n:02d}.png')).convert('RGBA')
-    BLOCK, PILLAR = Image.fromarray(tone(np.array(piece(53)))), tone(np.array(piece(31)))
+    piece = lambda n: np.array(Image.open(os.path.join(raw, f'tile_{n:02d}.png')).convert('RGBA'))
+    BLOCK, PILLAR = Image.fromarray(tone(piece(53))), tone(piece(31))
     STOREYS = [0, 30, 60]                       # art px each block rises
-    CENTRE, HALF_OPENING = 3.5, 3 / 2.12        # tiles: the opening is 6 units, a tile 2.12
-    PROUD = .2                                  # j: the pillar stands forward of the wall's face, so the two don't share a plane
-    O = (70, 190)
-    G = lambda i, j: (O[0] + 24 * i + 24 * j, O[1] + 12 * i - 12 * j)
     merlon = np.zeros_like(PILLAR)
     for x in range(PILLAR.shape[1]):
         ys = np.where(PILLAR[:, x, 3] > 0)[0]
         if len(ys):
             merlon[ys[0]:ys[0] + 20, x] = PILLAR[ys[0]:ys[0] + 20, x]
     merlon = Image.fromarray(merlon)
-    out = Image.new('RGBA', (380, 340))
-    for i in (CENTRE - HALF_OPENING - 1, CENTRE + HALF_OPENING):
-        x, y = (int(round(v)) for v in G(i, PROUD))
-        for rise in STOREYS:
-            out.alpha_composite(BLOCK, (x - 38, y - 55 - rise))
-        top = STOREYS[-1] + 8
-        for dx, dy in ((0, -7), (-15, 0), (15, 0), (0, 7)):   # back, left, right, front: far to near
-            out.alpha_composite(merlon, (x - 38 + dx, y - 55 - top + dy))
+    out = Image.new('RGBA', (120, 200))
+    ox, oy = 22, 90                             # where the piece canvas goes
+    for rise in STOREYS:
+        out.alpha_composite(BLOCK, (ox, oy - rise))
+    top = STOREYS[-1] + 8
+    for dx, dy in ((0, -7), (-15, 0), (15, 0), (0, 7)):   # back, left, right, front: far to near
+        out.alpha_composite(merlon, (ox + dx, oy - top + dy))
     box = out.getchannel('A').getbbox()
-    fx, fy = G(CENTRE, 0)
-    return out.crop(box), int(fx - box[0]), int(fy - box[1])
+    return out.crop(box), ox + 38 - box[0], oy + 67 - box[1]
 
 
 def main():
@@ -78,14 +72,8 @@ def main():
     box = im.getchannel('A').getbbox()
     im = im.crop(box)
     register('battery-well', 'Battery well', [5.0, 5.0], im, WELL_RAW, 'create_1_direction_object', foot=[im.width // 2, im.height - im.width // 4])
-    # The gatehouse stands across the wall. The level puts its spot 3.5 u down the screen and `lift` raises the art back
-    # by the same 40 px, so it sorts in front of the wall pieces that join it.
-    im, foot_x, foot_y = kit_gate()
-    register('battery-gatehouse', 'Gatehouse (battery)', [7.0, 1.0], im, f'{KIT_RAW}/tile_53.png', 'create_building_kit', 'assembled from the fortress kit: block 53 stacked for two pillars, its pillar piece cut short for battlements', foot=[foot_x, foot_y])
-    meta = os.path.join(ASSETS, 'battery-gatehouse', 'meta.json')
-    m = json.load(open(meta))
-    m['lift'] = 40  # drawn 40 px above its spot: the art is on the wall line, and it sorts in front of the pieces that join it
-    json.dump(m, open(meta, 'w'), indent=2)
+    im, foot_x, foot_y = kit_pillar()
+    register('battery-pillar', 'Gate pillar', [2.1, 2.1], im, f'{KIT_RAW}/tile_53.png', 'create_building_kit', 'assembled from the fortress kit: block 53 stacked, its pillar piece cut short for battlements', foot=[foot_x, foot_y])
     print('registered', len(PIECES) + 2)
 
 

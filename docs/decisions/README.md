@@ -1132,3 +1132,4 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **The gatehouse is re-angled, not rebought.** Sheared 2:1 to run along the wall, doors swung open, no generations spent.
 - **All four towers don't need to fit one screen** (the user), so the spacing stays.
 - **The gatehouse gets thickness** (the user: it looked flat). Its front is extruded back through the wall by hand, with lit tops and shaded brick sides, still with no generations spent.
+- **The gate is built from the wall's own kit** (the user: its colour and brickwork didn't match, and the doors looked flat). It replaces the re-angled gatehouse. Two block pylons and a stone span, with no doors for now. An arched version is written up on the page, optional. Cobble is now sampled along the ground's angle, as it looked top-down.

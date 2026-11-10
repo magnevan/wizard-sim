@@ -12,9 +12,9 @@ import type { FloorLayout } from './floor';
 import * as X from './px';
 
 /** Ground character -> its image and whether it can be mirrored at random (not if it has joints to line up). Alternates are <file>-2.png and on. */
-const MATERIALS: Readonly<Record<string, { file: string; flip: boolean; calm?: number }>> = {
+const MATERIALS: Readonly<Record<string, { file: string; flip: boolean; calm?: number; iso?: boolean }>> = {
   g: { file: 'grass', flip: true, calm: 0.45 }, d: { file: 'dirt', flip: true }, s: { file: 'sand', flip: true },
-  f: { file: 'flagstone', flip: false }, c: { file: 'cobble', flip: false }, m: { file: 'mud', flip: true },
+  f: { file: 'flagstone', flip: false }, c: { file: 'cobble', flip: false, iso: true }, m: { file: 'mud', flip: true },
   l: { file: 'leaves', flip: true }, r: { file: 'gravel', flip: true }, a: { file: 'ash', flip: true },
   p: { file: 'planks', flip: false }, h: { file: 'slabs', flip: false }, w: { file: 'water', flip: true },
 };
@@ -105,7 +105,7 @@ function material(ch: string): Promise<Material> {
       img.onload = () => {
         const { c, x } = X.canvas(img.width, img.height);
         x.drawImage(img, 0, 0);
-        done({ w: c.width, h: c.height, data: x.getImageData(0, 0, c.width, c.height).data, flip: def.flip });
+        done({ w: c.width, h: c.height, data: x.getImageData(0, 0, c.width, c.height).data, flip: def.flip, iso: def.iso });
       };
       img.onerror = () => fail(new Error('could not load ' + u));
       img.src = u;

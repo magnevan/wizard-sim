@@ -10,13 +10,13 @@
     "lean": {
       "file": "lean.png",
       "foot": [
-        86,
-        182
+        108,
+        132
       ],
       "source": "pixellab",
-      "raw": "game/content/generated/pixellab/opening/buildings/gatehouse.png",
-      "tool": "create_map_object",
-      "edits": "trimmed, sheared 2:1 to run along the wall, extruded back through the wall for depth, doors swung open",
+      "raw": "game/content/generated/pixellab/opening/kit-fortification/tile_52.png",
+      "tool": "create_building_kit",
+      "edits": "assembled from the fortification kit: block 52 for the pylons, and cut off at the foot for the span over the opening",
       "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
     }
   },

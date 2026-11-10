@@ -95,7 +95,7 @@ paint(lambda x, y: WALL_Y - 2.2 < y - (noise(x, y, 18) - .5) * 1.2 < WALL_Y + 2.
 paint(rect(GATE[0] - .5, WALL_Y - 4, 7, 9, .3, 19), 'cobble')
 paint(path([(CX, WALL_Y - 4), (CX, 26), (64, 10), (64, 0)], 3.2, .6, 20), 'gravel')
 # the well on its flagged apron, and the trenches for the feed lines
-paint(disc(*WELL, 6.5), 'flagstone')
+paint(disc(*WELL, 6.5), 'cobble')
 for x in TOWERS:
     paint(path([WELL, (x, 41)], 1.0, .1, 21), 'gravel')
 # the pump and the stores' hardstanding

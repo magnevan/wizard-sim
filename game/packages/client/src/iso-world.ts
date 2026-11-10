@@ -10,7 +10,7 @@
  *
  * Read-only and client-only: the real world is never written to. Called once per view entry point.
  */
-import { CELL, type RoomDef, type SimEvent, type World } from '@wizard-sim/sim';
+import { CELL, createTerrain, type RoomDef, type SimEvent, type World } from '@wizard-sim/sim';
 
 const S = Math.SQRT1_2;
 /** How much a facing (in turns) changes: world +x points 45 degrees below screen-right. */
@@ -114,6 +114,7 @@ function build(w: World): Turned {
   assign.surf = surf;
   assign.dims = { w: size, h: size, gw, gh: gw };
   assign.def = turnDef(w.def);
+  assign.terrain = createTerrain(assign.def as RoomDef);
   Object.defineProperty(view, 'events', { get: () => w.events.map((e) => turnEvent(t, e)) });
   return t;
 }

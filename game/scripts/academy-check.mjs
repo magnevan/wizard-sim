@@ -48,7 +48,7 @@ try {
   const walk = await p.evaluate(async () => {
     const g = window.wizardSim, w = g.world, b = w.bodies;
     // a body put next to a blocking prop's wall and pushed by the sim's own collision stays out of it
-    const k = w.def.rock.length, x = (w.walls.x1[k] + w.walls.x2[k]) / 2, y = w.walls.y1[k];
+    const k = w.def.rock.length, x = (w.terrain.x1[k] + w.terrain.x2[k]) / 2, y = w.terrain.y1[k];
     b.x[0] = x; b.y[0] = y + 0.2;
     await new Promise((r) => setTimeout(r, 300));
     return { x, y, by: b.y[0], need: b.r[0] + 0.25 };

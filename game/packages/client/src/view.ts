@@ -348,14 +348,15 @@ export class WorldView {
         lit.shadow(v.f.tex, FEET_X, FEET_Y, fx0 + v.x, fy0 + v.y);
         if (i < MAX_SEATS && lit.carry) lit.light(fx0 + v.x, fy0 + v.y, 110, '#ffd9a8', lit.carry * 0.8, true);
       }
-      const wl = w.walls;
-      for (let k = 0; k < MAX_WALLS; k++) {
-        if (wl.type[k] !== WALL.rock) continue;
-        const x1 = fx0 + gx(wl.x1[k]), y1 = fy0 + gy(wl.y1[k]), x2 = fx0 + gx(wl.x2[k]), y2 = fy0 + gy(wl.y2[k]);
-        if (isPropWall(w, k)) continue; // furniture throws its own sprite shadow, and doesn't stop light
+      const wl = w.walls, tr = w.terrain;
+      const wall = (ax: number, ay: number, bx: number, by: number): void => {
+        const x1 = fx0 + gx(ax), y1 = fy0 + gy(ay), x2 = fx0 + gx(bx), y2 = fy0 + gy(by);
         lit.occluder(x1, y1, x2, y2);
         lit.wall(x1, y1, x2, y2);
-      }
+      };
+      // the room's own rock, then what's been cast. Furniture throws its own sprite shadow, and doesn't stop light.
+      for (let k = 0; k < tr.n; k++) if (!isPropWall(w, k)) wall(tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k]);
+      for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.rock) wall(wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
     }
     this.vfx.occluders = this.occluderSource(w, fx0, fy0);
     this.structs.behind = this.vfx.behind;

@@ -10,6 +10,7 @@ import { ARENA, BODY, CELL, PERKS, RUNES } from './config';
 import { EL, N_EL, elementName } from './elements';
 import { createRng, type RngState } from './rng';
 import { roomHash, type RoomDef, type Seg } from './room';
+import { createTerrain, type Terrain } from './terrain';
 import { ROOM_DEFS } from './rooms.gen';
 import { TS_LEN, TUT_ORDER, tutPool } from './tutorial-data';
 
@@ -20,7 +21,7 @@ export const MAX_SEATS = 4;
 export const MAX_BODIES = 96;
 export const MAX_MISSILES = 256;
 export const MAX_ZONES = 64;
-export const MAX_WALLS = 160; // four players at structures.wallsPerOwner (40) each
+export const MAX_WALLS = 160; // the walls players cast: four at structures.wallsPerOwner (40) each. A room's terrain isn't here (world.terrain).
 export const MAX_WAVES = 8;
 export const MAX_DEVICES = 48;
 export const QUEUE_MAX = 5;
@@ -240,7 +241,10 @@ export interface SimEvent {
   els?: number;
 }
 
-/** Shield structures: rock walls (stuff), barriers and curtains (energy). Segments x1,y1 -> x2,y2. */
+/**
+ * The walls that come and go: what players cast (rock, barriers, curtains) and the tutorial's per-beat rock.
+ * Segments x1,y1 -> x2,y2. A room's own rock lives in world.terrain, read by the same rules (walls.ts).
+ */
 export interface Walls {
   type: Uint8Array; // WALL (compile.ts): 0 none, 1 rock, 2 barrier, 3 curtain
   x1: Float64Array; y1: Float64Array; x2: Float64Array; y2: Float64Array;
@@ -390,6 +394,8 @@ export interface World {
   dims: Dims;
   /** The room's layout (not state either: fixed by the room, from the maps; room.ts). */
   def: RoomDef;
+  /** The room's static rock and blocking props, with a spatial lookup (not state: read-only, derived from def; terrain.ts). */
+  terrain: Terrain;
   /** [0] = tick, [1] = seed. */
   clock: Uint32Array;
   rng: RngState;
@@ -471,7 +477,7 @@ function tutorial(beat: number): Tutorial {
   return t;
 }
 
-/** The owner of the arena's own rock (survive's cover and gates): it never times out or breaks. */
+/** The owner of rock in the wall pool that belongs to no one (the tutorial's chamber): it never times out or breaks. */
 export const TERRAIN = -2;
 
 /**
@@ -489,7 +495,7 @@ export const TERRAIN = -2;
  *   the field    the ring of open ground between the keep and the gates: screens in front of the
  *                north and south doors and an L of cover in each corner (archer cover, ricochet angles).
  *
- * 40 segments, so players keep 120 of the 160 wall slots (content:check holds every room to 40).
+ * It is the room's terrain (world.terrain), so however much of it there is, the players' walls have their own pool.
  */
 export const SURVIVE_ROCK: readonly Seg[] = ROOMS.survive.rock;
 /** Where survive's portals open: at the back of each gate funnel. */
@@ -533,7 +539,7 @@ export function regenRate(w: World, i: number, id: number, full: number): number
 export function createWorld(seed: number, players: number, opts: { dummies?: boolean; room?: Room; tutorialBeat?: number } = {}): World {
   const room = opts.room ?? 'sanctum', def = ROOMS[room], dims = ROOM_DIMS[room], cells = dims.gw * dims.gh;
   const w: World = {
-    dims, def,
+    dims, def, terrain: createTerrain(def),
     clock: new Uint32Array([0, seed >>> 0]), rng: createRng(seed),
     bodies: bodies(MAX_BODIES), seats: seats(MAX_SEATS), missiles: missiles(MAX_MISSILES), zones: zones(MAX_ZONES),
     surf: { kind: u8(cells), life: i32(cells) },
@@ -560,13 +566,6 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
     tut: opts.room === 'tutorial' ? tutorial(opts.tutorialBeat ?? TUT_ORDER[0]) : null,
     events: [],
   };
-  // The room's static rock takes the first wall slots, then its blocking props' walls (isPropWall).
-  [...def.rock, ...def.propRock].forEach(([x1, y1, x2, y2], k) => {
-    const wl = w.walls;
-    wl.type[k] = 1; // WALL.rock (compile.ts)
-    wl.owner[k] = TERRAIN; wl.x1[k] = x1; wl.y1[k] = y1; wl.x2[k] = x2; wl.y2[k] = y2;
-    wl.hp[k] = wl.maxHp[k] = 1e6;
-  });
   for (let i = 0; i < Math.min(players, MAX_SEATS); i++) joinSeat(w, i);
   const arena = opts.room === 'arena' || opts.room === 'survive';
   if (arena) { w.enc.state[0] = PHASE_ENC.lull; w.enc.state[1] = 1; w.enc.state[2] = 0; }
@@ -597,8 +596,8 @@ export function spawnBody(w: World, slot: number, kind: number, team: number, x:
   return i;
 }
 
-/** Is wall slot k a blocking prop's footprint? The client draws the prop there, not a wall. */
-export const isPropWall = (w: World, k: number): boolean => k >= w.def.rock.length && k < w.def.rock.length + w.def.propRock.length;
+/** Is terrain segment k a blocking prop's footprint? The client draws the prop there, not a wall. */
+export const isPropWall = (w: World, k: number): boolean => k >= w.def.rock.length && k < w.terrain.n;
 
 export const tickOf = (w: World): number => w.clock[0];
 /** Is body slot i in use (anything that can be hit: a wizard, a dummy, an enemy, a Double)? */

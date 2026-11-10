@@ -11,6 +11,7 @@
 import { WALL } from './compile';
 import { CELL, STRUCT, T } from './config';
 import { len } from './geom';
+import { terrainAlong } from './terrain';
 import { segLen } from './walls';
 import { KIND, MAX_CELLS, MAX_SEATS, MAX_WALLS, type World } from './world';
 
@@ -29,19 +30,22 @@ const cellOf = (w: World, x: number, y: number): number => {
 const centreX = (w: World, c: number) => -w.dims.w / 2 + ((c % w.dims.gw) + 0.5) * CELL;
 const centreY = (w: World, c: number) => -w.dims.h / 2 + (Math.floor(c / w.dims.gw) + 0.5) * CELL;
 
-function rebuildBlocked(w: World): void {
-  const nb = w.nav.blocked, wl = w.walls;
-  nb.fill(0);
-  for (let k = 0; k < MAX_WALLS; k++) {
-    if (wl.type[k] !== WALL.rock) continue;
-    const pad = STRUCT.wallThickness + INFLATE;
-    const minX = Math.min(wl.x1[k], wl.x2[k]) - pad, maxX = Math.max(wl.x1[k], wl.x2[k]) + pad;
-    const minY = Math.min(wl.y1[k], wl.y2[k]) - pad, maxY = Math.max(wl.y1[k], wl.y2[k]) + pad;
-    for (let y = minY; y <= maxY + CELL; y += CELL) for (let x = minX; x <= maxX + CELL; x += CELL) {
-      const c = cellOf(w, x, y);
-      if (segLen(centreX(w, c), centreY(w, c), wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]) < pad) nb[c] = 1;
-    }
+/** Marks the cells a rock segment blocks. */
+function markRock(w: World, nb: Uint8Array, x1: number, y1: number, x2: number, y2: number): void {
+  const pad = STRUCT.wallThickness + INFLATE;
+  const minX = Math.min(x1, x2) - pad, maxX = Math.max(x1, x2) + pad;
+  const minY = Math.min(y1, y2) - pad, maxY = Math.max(y1, y2) + pad;
+  for (let y = minY; y <= maxY + CELL; y += CELL) for (let x = minX; x <= maxX + CELL; x += CELL) {
+    const c = cellOf(w, x, y);
+    if (segLen(centreX(w, c), centreY(w, c), x1, y1, x2, y2) < pad) nb[c] = 1;
   }
+}
+
+function rebuildBlocked(w: World): void {
+  const nb = w.nav.blocked, wl = w.walls, tr = w.terrain;
+  nb.fill(0);
+  for (let k = 0; k < tr.n; k++) markRock(w, nb, tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k]);
+  for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.rock) markRock(w, nb, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
 }
 
 // A binary heap over (distance, cell); ties broken by cell index so the order never varies.
@@ -107,12 +111,20 @@ export function tickNav(w: World): void {
 
 /** Is the straight line from a to b free of rock? */
 function clearLine(w: World, ax: number, ay: number, bx: number, by: number): boolean {
-  const wl = w.walls, d = len(bx - ax, by - ay);
+  const wl = w.walls, tr = w.terrain, d = len(bx - ax, by - ay);
   if (d < 1e-6) return true;
   const steps = Math.ceil(d / 0.4), lim = STRUCT.wallThickness + 0.3;
   // Every sample lies in the line's box, so a wall whose box, grown by lim, misses it can't come within
   // lim of any of them: skip it (a hair of slack covers rounding, so the answer is exactly the same).
   const m = lim + 1e-6, lx = Math.min(ax, bx) - m, hx = Math.max(ax, bx) + m, ly = Math.min(ay, by) - m, hy = Math.max(ay, by) + m;
+  for (let q = 0, n = terrainAlong(tr, ax, ay, bx, by, m); q < n; q++) {
+    const k = tr.out[q];
+    if (Math.max(tr.x1[k], tr.x2[k]) < lx || Math.min(tr.x1[k], tr.x2[k]) > hx || Math.max(tr.y1[k], tr.y2[k]) < ly || Math.min(tr.y1[k], tr.y2[k]) > hy) continue;
+    for (let s = 1; s < steps; s++) {
+      const px = ax + ((bx - ax) * s) / steps, py = ay + ((by - ay) * s) / steps;
+      if (segLen(px, py, tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k]) < lim) return false;
+    }
+  }
   for (let k = 0; k < MAX_WALLS; k++) {
     if (wl.type[k] !== WALL.rock) continue;
     if (Math.max(wl.x1[k], wl.x2[k]) < lx || Math.min(wl.x1[k], wl.x2[k]) > hx || Math.max(wl.y1[k], wl.y2[k]) < ly || Math.min(wl.y1[k], wl.y2[k]) > hy) continue;

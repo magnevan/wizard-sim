@@ -36,8 +36,7 @@ import { cellAt, floorDisc, hit, hitOpts, spawnZone, touchFloor, zap, type Paylo
 import { inCone, len } from './geom';
 import { addKnock, applyHit } from './hit';
 import { cosTurns, sinTurns } from './trig';
-import { payloadDamage, wallAt } from './walls';
-import { WALL } from './compile';
+import { isRockHit, payloadDamage, wallAt } from './walls';
 import { GUARD, GUARD_NAME, KIND, MAX_SEATS, ZONE, alive, type World } from './world';
 
 /** Resistance columns. */
@@ -276,8 +275,7 @@ export function guardRelease(w: World, i: number): void {
   const f = b.face[i], ux = cosTurns(f), uy = sinTurns(f), x = b.x[i], y = b.y[i];
   let reach = ARMS.lanceRange;
   for (let d = 0.5; d < reach; d += 0.25) {
-    const k = wallAt(w, x + ux * d, y + uy * d, 0.1);
-    if (k >= 0 && w.walls.type[k] === WALL.rock) { reach = d; break; }
+    if (isRockHit(w, wallAt(w, x + ux * d, y + uy * d, 0.1))) { reach = d; break; }
   }
   const mixed = mixCoat(w, i, one(EL.arcane).counts, 0);
   if (mixed) {
@@ -457,8 +455,7 @@ function floorLine(w: World, x1: number, y1: number, x2: number, y2: number, el:
 function free(w: World, i: number, x: number, y: number): boolean {
   const b = w.bodies, r = b.r[i];
   if (Math.abs(x) > w.dims.w / 2 - r || Math.abs(y) > w.dims.h / 2 - r) return false;
-  const k = wallAt(w, x, y, r);
-  if (k >= 0 && w.walls.type[k] === WALL.rock) return false;
+  if (isRockHit(w, wallAt(w, x, y, r))) return false;
   for (let j = 0; j < b.kind.length; j++) if (j !== i && alive(w, j) && len(b.x[j] - x, b.y[j] - y) < b.r[j] + r) return false;
   return true;
 }

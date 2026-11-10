@@ -110,7 +110,7 @@ export interface WallSet { type: ArrayLike<number>; x1: ArrayLike<number>; y1: A
 /** WALL ids in the sim: rock blocks sound; a barrier or a curtain only dulls it. */
 const WALL_BLOCK = [0, 1, 0.4, 0.4];
 
-function crosses(ax: number, ay: number, bx: number, by: number, cx: number, cy: number, dx: number, dy: number): boolean {
+export function crosses(ax: number, ay: number, bx: number, by: number, cx: number, cy: number, dx: number, dy: number): boolean {
   const d1 = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax), d2 = (bx - ax) * (dy - ay) - (by - ay) * (dx - ax);
   if ((d1 > 0 && d2 > 0) || (d1 < 0 && d2 < 0)) return false;
   const d3 = (dx - cx) * (ay - cy) - (dy - cy) * (ax - cx), d4 = (dx - cx) * (by - cy) - (dy - cy) * (bx - cx);
@@ -150,10 +150,10 @@ export const CENTRE: Place = { pan: 0, gain: 1, lowpass: OPEN_HZ, wet: 1 };
 /** Full volume inside this many world units of the camera's centre (most of a screen), then falling. */
 const NEAR = 11;
 
-export function placeOf(x: number, y: number, l: Listener, walls: WallSet | null): Place {
+export function placeOf(x: number, y: number, l: Listener, walls: WallSet | null, extra = 0): Place {
   const dx = x - l.cx, dy = y - l.cy, d = Math.hypot(dx, dy);
   const fall = d <= NEAR ? 1 : NEAR / (NEAR + (d - NEAR) * 1.6);
-  const o = occlusion(wallsBetween(walls, l.earX, l.earY, x, y));
+  const o = occlusion(wallsBetween(walls, l.earX, l.earY, x, y) + extra);
   return { pan: clamp(dx / (Math.max(1, l.halfW) * 1.2), -1, 1) * 0.75, gain: fall * o.gain, lowpass: o.lowpass, wet: o.wet };
 }
 

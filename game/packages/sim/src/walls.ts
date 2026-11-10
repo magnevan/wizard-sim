@@ -12,7 +12,13 @@ import { WALL } from './compile';
 import { DAMAGE, STRUCT } from './config';
 import { EL, N_EL, elementName } from './elements';
 import { len } from './geom';
-import { DEVICE, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, TERRAIN, WARD, freeDevice, type World } from './world';
+import { terrainAlong, terrainNear } from './terrain';
+import { DEVICE, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, TERRAIN, WARD, freeDevice, type Bodies, type World } from './world';
+
+/** What clipRay and wallAt return for the room's terrain: never a slot in w.walls. (Which segment it was never matters.) */
+export const TERRAIN_HIT = MAX_WALLS;
+/** Is what clipRay or wallAt returned rock: the room's, or a cast stone wall? (Not -1, a barrier, or a curtain.) */
+export const isRockHit = (w: World, k: number): boolean => k === TERRAIN_HIT || w.walls.type[k] === WALL.rock;
 
 /** Closest point on segment (x1,y1)-(x2,y2) to (px,py): returns [distance, t in 0..1]. */
 export function segDist(px: number, py: number, x1: number, y1: number, x2: number, y2: number): [number, number] {
@@ -31,12 +37,12 @@ export function segLen(px: number, py: number, x1: number, y1: number, x2: numbe
   return len(px - (x1 + (x2 - x1) * t), py - (y1 + (y2 - y1) * t));
 }
 /**
- * Is (px, py) surely farther than `r` from segment k? A box test: points outside the segment's box grown
+ * Is (px, py) surely farther than `r` from the segment? A box test: points outside the segment's box grown
  * by r (plus a hair for rounding) can't be within r, so callers skip the exact distance for them.
  */
-const far = (wl: World['walls'], k: number, px: number, py: number, r: number): boolean => {
+const far = (x1: number, y1: number, x2: number, y2: number, px: number, py: number, r: number): boolean => {
   const m = r + 1e-6;
-  return px < Math.min(wl.x1[k], wl.x2[k]) - m || px > Math.max(wl.x1[k], wl.x2[k]) + m || py < Math.min(wl.y1[k], wl.y2[k]) - m || py > Math.max(wl.y1[k], wl.y2[k]) + m;
+  return px < Math.min(x1, x2) - m || px > Math.max(x1, x2) + m || py < Math.min(y1, y2) - m || py > Math.max(y1, y2) + m;
 };
 
 /** Distance along a ray (unit d) to a segment, or -1 if it misses (thick by `pad`). */
@@ -62,7 +68,7 @@ export function payloadDamage(els: Uint8Array, at: number, scale: number): numbe
 
 export function damageWall(w: World, k: number, dmg: number): void {
   const wl = w.walls;
-  if (wl.owner[k] === TERRAIN) return; // the arena's own rock doesn't break
+  if (k === TERRAIN_HIT || wl.owner[k] === TERRAIN) return; // the room's own rock doesn't break
   wl.hp[k] -= dmg;
   if (wl.type[k] !== WALL.rock) drainShield(w, wl.owner[k], STRUCT.absorbPerHp * dmg);
   if (wl.hp[k] <= 0) {
@@ -71,10 +77,16 @@ export function damageWall(w: World, k: number, dmg: number): void {
   }
 }
 
-/** The first wall a ray hits within `reach`: [distance, wall index] or [reach, -1]. */
+/** The first wall a ray hits within `reach`: [distance, wall slot or TERRAIN_HIT] or [reach, -1]. */
 export function clipRay(w: World, ox: number, oy: number, dx: number, dy: number, reach: number): [number, number] {
-  const wl = w.walls;
+  const wl = w.walls, tr = w.terrain, pad = STRUCT.wallThickness;
   let best = reach, hit = -1;
+  // Terrain first, as the room's segments always came first. A hit is within reach + pad along the ray, and within pad of it.
+  const n = terrainAlong(tr, ox, oy, ox + dx * (reach + pad), oy + dy * (reach + pad), pad);
+  for (let q = 0; q < n; q++) {
+    const k = tr.out[q], t = raySeg(ox, oy, dx, dy, tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k], pad);
+    if (t >= 0 && t < best) { best = t; hit = TERRAIN_HIT; }
+  }
   for (let k = 0; k < MAX_WALLS; k++) {
     if (!blocksShots(wl.type[k])) continue;
     const t = raySeg(ox, oy, dx, dy, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k], STRUCT.wallThickness);
@@ -83,9 +95,13 @@ export function clipRay(w: World, ox: number, oy: number, dx: number, dy: number
   return [best, hit];
 }
 
-/** The rock or barrier a missile at (x, y) with radius r touches, or -1. Your own walls stop your shots too. */
+/** The rock or barrier a missile at (x, y) with radius r touches (a wall slot or TERRAIN_HIT), or -1. Your own walls stop your shots too. */
 export function wallAt(w: World, x: number, y: number, r: number): number {
-  const wl = w.walls;
+  const wl = w.walls, tr = w.terrain, reach = r + STRUCT.wallThickness;
+  for (let q = 0, n = terrainNear(tr, x, y, reach); q < n; q++) {
+    const k = tr.out[q];
+    if (segLen(x, y, tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k]) <= reach) return TERRAIN_HIT;
+  }
   for (let k = 0; k < MAX_WALLS; k++) {
     if (!blocksShots(wl.type[k])) continue;
     if (segLen(x, y, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]) <= r + STRUCT.wallThickness) return k;
@@ -95,30 +111,47 @@ export function wallAt(w: World, x: number, y: number, r: number): number {
 
 /** Scratch for collideWalls: this step's rock walls, in slot order. */
 const rocks = new Int32Array(MAX_WALLS);
+
+/** Pushes body i out of the segment if it is within `min` of it. True if it moved. */
+function pushOut(b: Bodies, i: number, min: number, x1: number, y1: number, x2: number, y2: number): boolean {
+  if (far(x1, y1, x2, y2, b.x[i], b.y[i], min)) return false;
+  const t = segT(b.x[i], b.y[i], x1, y1, x2, y2);
+  const d = len(b.x[i] - (x1 + (x2 - x1) * t), b.y[i] - (y1 + (y2 - y1) * t));
+  if (d >= min) return false;
+  const cx = x1 + (x2 - x1) * t, cy = y1 + (y2 - y1) * t;
+  let nx = b.x[i] - cx, ny = b.y[i] - cy;
+  const nl = len(nx, ny);
+  if (nl < 1e-9) { nx = -(y2 - y1); ny = x2 - x1; } // dead centre: push to one side
+  const l = len(nx, ny) || 1;
+  b.x[i] += (nx / l) * (min - d); b.y[i] += (ny / l) * (min - d);
+  return true;
+}
+
 /**
- * Rock walls push bodies out. Body by body, each through the rock walls in slot order: a body's
- * push depends only on its own position, so this is the same as walls-then-bodies, with less looping.
+ * Rock walls push bodies out. Body by body, each through the rock walls in order (the room's own first,
+ * then the cast ones by slot): each push moves the body, so the order matters and is kept. When a body
+ * moves, what's nearby is asked again and the walk carries on after the wall that moved it.
  */
 export function collideWalls(w: World): void {
-  const b = w.bodies, wl = w.walls;
+  const b = w.bodies, wl = w.walls, tr = w.terrain;
   let nr = 0;
   for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.rock) rocks[nr++] = k;
-  if (!nr) return;
+  if (!nr && !tr.n) return;
+  const out = tr.out;
   for (let i = 0; i < b.kind.length; i++) {
     if (b.kind[i] === KIND.none || b.kind[i] === KIND.dummy) continue;
+    const min = b.r[i] + STRUCT.wallThickness;
+    let n = terrainNear(tr, b.x[i], b.y[i], min);
+    for (let q = 0; q < n; q++) {
+      const k = out[q];
+      if (!pushOut(b, i, min, tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k])) continue;
+      n = terrainNear(tr, b.x[i], b.y[i], min);
+      q = -1;
+      while (q + 1 < n && out[q + 1] <= k) q++;
+    }
     for (let q = 0; q < nr; q++) {
       const k = rocks[q];
-      const min = b.r[i] + STRUCT.wallThickness;
-      if (far(wl, k, b.x[i], b.y[i], min)) continue;
-      const t = segT(b.x[i], b.y[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
-      const d = len(b.x[i] - (wl.x1[k] + (wl.x2[k] - wl.x1[k]) * t), b.y[i] - (wl.y1[k] + (wl.y2[k] - wl.y1[k]) * t));
-      if (d >= min) continue;
-      const cx = wl.x1[k] + (wl.x2[k] - wl.x1[k]) * t, cy = wl.y1[k] + (wl.y2[k] - wl.y1[k]) * t;
-      let nx = b.x[i] - cx, ny = b.y[i] - cy;
-      const nl = len(nx, ny);
-      if (nl < 1e-9) { nx = -(wl.y2[k] - wl.y1[k]); ny = wl.x2[k] - wl.x1[k]; } // dead centre: push to one side
-      const l = len(nx, ny) || 1;
-      b.x[i] += (nx / l) * (min - d); b.y[i] += (ny / l) * (min - d);
+      pushOut(b, i, min, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
     }
   }
 }

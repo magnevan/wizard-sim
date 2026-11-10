@@ -65,7 +65,7 @@ Only values the game understands are defined. Pits, water and the like come when
 
 | **Prop** | `asset` (an id in `assets/props`), `blocks` | Furniture or decoration. It's drawn at the entity's spot: the middle of its footprint on the ground. If `blocks` is on, its footprint stops bodies and shots like rock (and draws no wall). It has no other gameplay. |
 
-Static rock shares the 160 wall slots with the players' walls, so **a room may have at most 40 rock wall segments** (Rock entities, traced outlines and blocking props). A blocking prop takes one wall if its footprint is up to 0.6 u deep, two if deeper. Survive uses exactly 40, the Academy 38.
+Static rock (Rock entities, traced outlines and blocking props) is the room's terrain: read-only data with a spatial lookup, not part of a rollback snapshot, and separate from the players' 160 wall slots. So a room **can have as many rock wall segments as it needs**. (A blocking prop takes one wall if its footprint is up to 0.6 u deep, two if deeper.)
 
 ## The asset registry
 
@@ -93,7 +93,7 @@ The room's id is the level's name with a lower-case first letter (`Survive` → 
 
 1. The project and every level file against LDtk's official JSON schema (1.5.3), and the pinned version.
 2. References: every layer, entity and field instance has its definition, IntGrid values are defined, level files exist and match the project's list, iids are unique, entity-reference fields (none yet) point at real entities.
-3. The rooms compile: known entities only, all four seats' starts, three altars or none, at least four portals in the Arena and Survive, at most 40 rock walls.
+3. The rooms compile: known entities only, all four seats' starts, three altars or none, at least four portals in the Arena and Survive.
 4. Placement: every start, dummy, portal and altar is inside the room, not on painted rock and at least 0.7 u from any rock wall or blocking prop, and **reachable on foot from seat 0's start** on the enemies' pathfinding grid (rock widened as `nav.ts` widens it). Every prop is inside the room.
 5. `packages/sim/src/rooms.gen.ts` is what the maps compile to.
 6. The asset registry: every Prop names an asset that exists; every `meta.json` is whole; its images exist and none are left out; a generated image names a raw file that exists.

@@ -25,8 +25,7 @@ const r3 = (v) => Math.round(v * 1000) / 1000;
 /**
  * A blocking prop's footprint (w x h, world units, centred on x, y) -> wall segments. A wall is a
  * capsule 0.5 u thick, so a footprint up to 0.6 deep is one segment down its long side, and a deeper
- * one two side by side: that fills the box with one or two of a room's 40 wall slots, where tracing
- * its outline would take four.
+ * one two side by side: that fills the box with one or two walls, where tracing its outline would take four.
  */
 export function footprintWalls(x, y, [fw, fh]) {
   const along = Math.max(0, Math.max(fw, fh) / 2 - WALL_HALF), short = Math.min(fw, fh);

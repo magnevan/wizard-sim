@@ -99,6 +99,12 @@ try {
   await p.mouse.move(380, 60);
   await sleep(400);
   await shot('drive-north');
+  // the head sweeps its whole swing, one facing at a time
+  for (const [name, x, y] of [['sweep-left', 120, 180], ['sweep-up', 380, 30], ['sweep-out', 800, 120], ['sweep-right', 1200, 330], ['sweep-lower', 1230, 760]]) {
+    await p.mouse.move(x, y);
+    await sleep(900);
+    await shot(name);
+  }
   await p.keyboard.press('KeyX');
   await sleep(900);
   if ((await drive()) !== -1) fail('X while driving should step away');

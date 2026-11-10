@@ -32,7 +32,9 @@ The battery exists only on the branch `worktree-opening-segments`, so start this
 
 ### Research: smooth turret rotation (#5)
 
-**Researched 2026-11-10 by an agent. The user hasn't chosen yet.**
+**Tried and working, 2026-11-10 (the user: "Yes try blender").** The head is now a low-poly Blender model, 25 facings, palette-locked, easing at 320 degrees a second (`tools/turret-3d/`). It took about four passes to sit with the tower. Whether the sweep feels smooth is the user's to judge; it's only been seen in stills.
+
+The research behind it:
 
 Recommendation: a low-poly 3D model of the head only, rendered to about 24 facings over the 160-degree swing and locked to our palette, keeping the tower as the existing sprite. If that can't be tuned to sit with the tower in about 2 hours, fall back to a rounder head with a nozzle drawn in code.
 

@@ -6,9 +6,9 @@
  *
  * Props don't animate and the sim doesn't know them: a room is laid out once, and only moves with the camera.
  */
-import type { World } from '@wizard-sim/sim';
+import { BATTERY, type World } from '@wizard-sim/sim';
 import { toX, toY } from '../iso-world';
-import { Container, Sprite, Texture } from 'pixi.js';
+import { Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { RoomDef } from '@wizard-sim/sim';
 import { FY, PPU } from '../camera';
 import { loadTexture, propImage, propMeta, type PropMeta, type PropSet } from './assets';
@@ -19,21 +19,27 @@ interface Item { asset: string; meta: PropMeta; spr: Sprite; x: number; y: numbe
 
 const HEAD = 'defence-head-north-east';
 
-/** Which of a defence's three heads shows its driver's aim. The view's aim is turned, so it's turned back; 0 is north. */
-function headName(w: World, seat: number): string {
-  const ax = w.seats.aimX[seat], ay = w.seats.aimY[seat], a = Math.atan2(toX(ax, ay), -toY(ax, ay));
-  return a < -Math.PI / 8 ? 'defence-head-north' : a > Math.PI / 8 ? 'defence-head-east' : HEAD;
-}
-
-/** Where each head's nozzle is, art px from the tower's spot. */
-const NOZZLE: Readonly<Record<string, readonly [number, number]>> = { 'defence-head-north': [13, -81], [HEAD]: [26, -81], 'defence-head-east': [33, -64] };
+/** The flame turret's head: pre-rendered facings across its swing, in one sheet (tools/turret-3d). */
+interface HeadSheet { cell: number; facings: number[]; collar: [number, number]; pivot: [number, number]; tips: [number, number][] }
+const sheets = import.meta.glob('../../../../content/assets/turrets/flame/sheet.json', { eager: true, import: 'default' });
+const sheetUrls = import.meta.glob<string>('../../../../content/assets/turrets/flame/sheet.png', { eager: true, query: '?url', import: 'default' });
+const SHEET = Object.values(sheets)[0] as HeadSheet;
+const SHEET_URL = Object.values(sheetUrls)[0];
+/** How fast a head turns, degrees a second. It eases toward the aim, so the facings pass one at a time. */
+const TURN_RATE = 320;
+/** Each tower's head, degrees from straight out. Client-only: the sim aims straight at the cursor. */
+const headDeg = new Float64Array(8);
+const facingOf = (deg: number): number => {
+  const f = SHEET.facings, step = (f[f.length - 1] - f[0]) / (f.length - 1);
+  return Math.max(0, Math.min(f.length - 1, Math.round((deg - f[0]) / step)));
+};
 
 /** The field point this seat's fire comes from if it's driving a defence, else null. */
 export function headTip(w: World, seat: number): [number, number] | null {
   const k = w.battery ? w.battery.drive[seat] : -1;
   if (k < 0) return null;
-  const tower = w.def.props.filter((p) => p.asset === 'defence-tower')[k], n = NOZZLE[headName(w, seat)];
-  return [gx(tower.x) + n[0], gy(tower.y) + n[1]];
+  const tower = w.def.props.filter((p) => p.asset === 'defence-tower')[k], t = SHEET.tips[facingOf(headDeg[k])];
+  return [gx(tower.x) + SHEET.collar[0] + t[0] - SHEET.pivot[0], gy(tower.y) + SHEET.collar[1] + t[1] - SHEET.pivot[1]];
 }
 
 export class PropView {
@@ -49,7 +55,8 @@ export class PropView {
   /** True once the current set's images are all in place (tests and screenshots wait on it). */
   ready = true;
 
-  private heads = new Map<string, { tex: Texture; foot: readonly [number, number] }>();
+  private headFrames: Texture[] = [];
+  private headClock = 0;
   constructor(private actors: Container, private tint: number, private current: PropSet) { this.under.addChild(this.shadows); }
 
   get set(): PropSet { return this.current; }
@@ -98,24 +105,33 @@ export class PropView {
       if (!t || !a) return;
       it.spr.texture = t; it.ox = a.foot[0]; it.oy = a.foot[1];
     });
-    if (items.some((it) => it.asset === HEAD)) for (const name of [HEAD, 'defence-head-north', 'defence-head-east']) {
-      const a = propImage(name, this.current);
-      if (a) this.heads.set(name, { tex: await loadTexture(a.url), foot: a.foot });
+    if (items.some((it) => it.asset === HEAD) && !this.headFrames.length) {
+      const base = await loadTexture(SHEET_URL);
+      this.headFrames = SHEET.facings.map((_, i) => new Texture({ source: base.source, frame: new Rectangle(i * SHEET.cell, 0, SHEET.cell, SHEET.cell) }));
     }
     this.fx = NaN;
     this.ready = true;
   }
 
-  /** A driven defence's head follows its driver's aim: three facings, the default straight out. */
+  /** Every defence's head: a driven one eases toward its driver's aim, an idle one back to straight out. */
   turnHeads(w: World, fx0: number, fy0: number): void {
-    if (!w.battery || !this.heads.size) return;
+    if (!w.battery || !this.headFrames.length) return;
+    const now = performance.now(), dt = Math.min(0.1, (now - this.headClock) / 1000), limit = BATTERY.swing * 360;
+    this.headClock = now;
     let k = 0;
     for (const it of this.items) {
       if (it.asset !== HEAD) continue;
-      const seat = w.battery.drive.indexOf(k++);
-      const art = this.heads.get(seat >= 0 ? headName(w, seat) : HEAD);
-      if (!art || it.spr.texture === art.tex) continue;
-      it.spr.texture = art.tex; it.ox = art.foot[0]; it.oy = art.foot[1];
+      const n = k++, seat = w.battery.drive.indexOf(n);
+      let want = 0;
+      if (seat >= 0) {
+        const ax = w.seats.aimX[seat], ay = w.seats.aimY[seat]; // the view's aim is turned, so it's turned back
+        want = Math.max(-limit, Math.min(limit, (Math.atan2(toX(ax, ay), -toY(ax, ay)) * 180) / Math.PI));
+      }
+      const gap = want - headDeg[n], most = TURN_RATE * dt;
+      headDeg[n] += Math.max(-most, Math.min(most, gap));
+      const tex = this.headFrames[facingOf(headDeg[n])];
+      if (it.spr.texture === tex) continue;
+      it.spr.texture = tex; it.ox = SHEET.pivot[0] - SHEET.collar[0]; it.oy = SHEET.pivot[1] - SHEET.collar[1];
       it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
     }
   }

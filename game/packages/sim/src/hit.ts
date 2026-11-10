@@ -127,8 +127,11 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     // water on someone burning only puts the fire out (they come out dry), as fire on someone wet only dries them
     // Water + Cold is ice: it douses but doesn't soak, so it can't set up its own freeze
     if (b.burn[t] > 0) b.burn[t] = 0;
-    else if (!o.freeze) b.wet[t] = Math.max(b.wet[t], Math.round(T(STATUS.wet) * Math.min(1, ss * 4)));
+    // (a spray soaks a little per tick, but never for less than wetMin, or there'd be no time to follow it with Cold)
+    else if (!o.freeze) b.wet[t] = Math.max(b.wet[t], T(STATUS.wetMin), Math.round(T(STATUS.wet) * Math.min(1, ss * 4)));
     if (o.push) addKnock(w, t, o.dirX, o.dirY, o.push * water * ss);
+    // Water can finish what Cold started, so the order doesn't matter. (Cold in the same spell goes through its own branch; Fire would only thaw it.)
+    if (!cold && !fire) tryFreeze(w, t);
   }
   if (fire) {
     if (b.frozen[t] || b.chill[t] > 0) { b.frozen[t] = 0; b.chill[t] = 0; }

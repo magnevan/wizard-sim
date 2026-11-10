@@ -42,6 +42,7 @@ const HELP: Record<string, string> = {
   'rhythm.upkeep': 'Runes per second of the form element a channel costs past its natural duration.',
   'combat.channelRate': 'Beam / spray damage per second = per-hit damage x this.',
   'combat.healPerLife': 'Healing per Life rune for one hit (channels: per second x channelRate).',
+  'status.wetMin': 'The least any soaking hit leaves a body wet for, in seconds: what a Water spray gives.',
   'status.freeze': 'Seconds frozen at full chill. Less chill freezes for less, down to freezeShort.',
   'status.freezeShort': 'Seconds frozen at the lowest chill that freezes (freezeMin).',
   'status.freezeMin': 'How full the frost pool must be (0 to 1) before Cold can freeze a wet body.',

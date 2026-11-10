@@ -70,6 +70,8 @@ export const SURFACE = { water: 20, ice: 16, fire: 10 };
 export const STATUS = {
   // Longer than our first pass, toward Magicka's (it burns 5 s per stack, chills 10 s, freezes 4 s).
   wet: 12, // seconds
+  /** The least any soaking hit leaves a body wet for (a spray's ticks are too weak to soak for long on their own). */
+  wetMin: 6,
   /** Burning is a pool of damage on the body, spent evenly over `burn` seconds (refreshed by each new hit), up to burnCap. */
   burn: 4, burnBase: 12, burnShareFire: 1, burnShareRest: 0.25, burnCap: 60,
   /** What a burning floor (each time it re-lights you) and a thorn or similar contact add to the pool. */

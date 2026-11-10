@@ -1091,6 +1091,13 @@ Direction from the user; not built yet.
 - **Bug fixed:** the last hit's kind lived in a module variable outside the snapshot, so a rollback could desync `lastKind`. It's reset each step.
 - **Golden hash** `b29ab7f1` → `ef369733`.
 
+## 2026-11-10: Freezing works in either order; a Water spray soaks for longer
+
+From the user's play-test: Cold and a Water spray wouldn't freeze a Brute, but a puddle did. A spray's Wet lasted 2.4 s, shorter than a tough body takes to chill, and only a Cold hit could trigger the freeze.
+
+- **Every soaking hit leaves a body wet for at least 6 s** (`status.wetMin`).
+- **A Water hit on a body at 30 % chill or more freezes it,** so Cold and Water work in either order. Stepping into a puddle doesn't count: only a hit does. Ice (Water + Cold in one spell) still can't set up its own freeze.
+
 ## 2026-11-09: Casting is new, and you fix infrastructure (`explorations/2026-11-09-opening-and-innate-casting.md`)
 - **Innate casting is a result of the shifting veins.** Before, wizards used structures that tap fields. The academy's Arcane vein is why these characters can do it.
 - **The academy is an analogue to an engineering school. Engineering is your job, not the gameplay.** This refines "the player isn't a wizard engineer", which was about the gameplay.

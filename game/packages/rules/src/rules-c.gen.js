@@ -62,7 +62,7 @@ const module = { exports: {} };
   // shape change: the leading shape element (most runes; ties in SHAPE order) bends it, the
   // others only add their status (S2, decided 2026-11-04). Fire and Life are status elements.
   const PAYLOAD = {
-    water: { trait: 'Soak', hit: 'is soaked, and put out if burning', why: 'Wet targets take more from lightning, and it jumps further through them. With fire in the spell it scalds; with cold it turns to ice.' },
+    water: { trait: 'Soak', hit: 'is soaked, put out if burning, and frozen if it was already cold enough', why: 'Wet targets take more from lightning, and it jumps further through them. With fire in the spell it scalds; with cold it turns to ice.' },
     fire: { trait: 'Burn', hit: 'is set alight, and dried or thawed', why: 'Burning spreads to grass and oil. Fire dries the wet and thaws the chilled and frozen.' },
     cold: { trait: 'Chill', hit: 'is chilled, moving and attacking slower the colder it gets, and frozen if it was already wet and cold enough; burning is put out', why: 'A frozen target shatters from a heavy hit.' },
     lightning: { trait: 'Shock', hit: 'is shocked and stunned for a moment (a stun breaks a cast or wind-up, but you can still walk)', why: 'More lightning, more jumps. Wet targets carry it further. Rock grounds it: chains don\'t jump through rock walls.' },

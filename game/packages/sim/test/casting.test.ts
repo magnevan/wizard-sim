@@ -167,6 +167,29 @@ describe('Force casts', () => {
     expect(w.bodies.burn[dummy]).toBe(0);
   });
 
+  it('a Water spray soaks long enough to follow with Cold', () => {
+    const { w, d, dummy } = range();
+    d.queue('water').cast(BTN.force, 60, 2);
+    expect(w.bodies.wet[dummy]).toBeGreaterThan(T(STATUS.wetMin) - 10);
+  });
+
+  it('Water finishes a freeze on a body already cold enough, and not on one that is not', () => {
+    const water = (chill: number) => {
+      const { w, d, dummy } = range(2);
+      w.bodies.chill[dummy] = chill;
+      d.queue('water').cast(BTN.area, 1, 20);
+      return w.bodies;
+    };
+    const dummy = 4;
+    const cold = water(0.6);
+    expect(cold.frozen[dummy]).toBeGreaterThan(0);
+    expect(cold.chill[dummy]).toBe(0);
+    expect(cold.wet[dummy]).toBe(0);
+    const cool = water(0.15);
+    expect(cool.frozen[dummy]).toBe(0);
+    expect(cool.wet[dummy]).toBeGreaterThan(0);
+  });
+
   it('a frost spray freezes the wet, and a rock shatters the frozen for double', () => {
     const { w, d, dummy } = range();
     w.bodies.maxHp[dummy] = 30; w.bodies.wet[dummy] = 600;

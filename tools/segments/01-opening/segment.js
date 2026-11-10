@@ -82,7 +82,7 @@ chapters:[
  [`The repair.`,` You take part, or do it yourselves, with a simple "press X to stabilize". The screen fades to black and back, and the well has changed: Unstable, then Drained, then Stable.`],
  ],
  solve:[
- {id:'battery-screen',title:'Four towers on one screen',body:`At 1080p you see about 42 units along the wall, minus a tower's width. With the towers spread out for air, three fit at once and the fourth doesn't. Online play doesn't care, since everyone has their own camera. It only matters for four players on one couch.`,proposal:`Keep the air, and solve it when I build driving: each local player's camera frames their own tower, and I'd try seating couch players on neighbouring towers first. If four people on one screen has to work without compromise, the towers have to come closer again.`},
+ {id:'battery-screen',title:'Four towers on one screen',body:`At 1080p you see about 42 units along the wall, minus a tower's width. With the towers spread out for air, a neighbouring pair fits whole, a third is cut off and the fourth is out of view. Online play doesn't care, since everyone has their own camera. It only matters for four players on one couch.`,proposal:`Keep the air, and solve it when I build driving: each local player's camera frames their own tower, and I'd try seating couch players on neighbouring towers first. If four people on one screen has to work without compromise, the towers have to come closer again.`},
  ]},
 ],
 rules:[

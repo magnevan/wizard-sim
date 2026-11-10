@@ -11,6 +11,7 @@
     "dev:lan": "npm run dev -w @wizard-sim/client -- --host",
     "build": "npm run build -w @wizard-sim/client",
     "preview": "npm run preview -w @wizard-sim/client",
+    "servers": "node ../tools/servers/servers.mjs",
     "test": "vitest run",
     "typecheck": "tsc -p packages/rules && tsc -p packages/sim && tsc -p packages/net && tsc -p packages/client",
     "check": "npm run typecheck && npm test",

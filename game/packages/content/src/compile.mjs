@@ -22,15 +22,35 @@ export const ENTITY_KINDS = ['PlayerStart', 'Dummy', 'Portal', 'Altar', 'Rock', 
 /** A wall's half-thickness (the sim's STRUCT.wallThickness; check.mjs's SIM copy is tested against it). */
 const WALL_HALF = 0.25;
 const r3 = (v) => Math.round(v * 1000) / 1000;
+/** Two side-by-side walls touch, leaving no way in, up to this deep. */
+const TWO_WALLS_DEEP = 1;
+/** Inside a closed outline no point may be further than half of this from a wall, so Blink finds nowhere to land. */
+const FILL_STEP = 1.3;
+/** Sides of a round footprint's outline. */
+const ROUND_SIDES = 12;
 /**
  * A blocking prop's footprint (w x h, world units, centred on x, y) -> wall segments. A wall is a
- * capsule 0.5 u thick, so a footprint up to 0.6 deep is one segment down its long side, and a deeper
- * one two side by side: that fills the box with one or two walls, where tracing its outline would take four.
+ * capsule 0.5 u thick, so a footprint up to 0.6 deep is one segment down its long side, and up to 1 deep
+ * two side by side, which touch. A deeper one gets a closed outline (a rectangle, or if `round` a
+ * 12-sided ring), so a body can't come in at any side, with rows across the inside so nothing can be
+ * placed in the hollow.
  */
-export function footprintWalls(x, y, [fw, fh]) {
-  const along = Math.max(0, Math.max(fw, fh) / 2 - WALL_HALF), short = Math.min(fw, fh);
-  const rows = short <= 0.6 ? [0] : [-(short / 2 - WALL_HALF), short / 2 - WALL_HALF];
-  return rows.map((o) => (fw >= fh ? [x - along, y + o, x + along, y + o] : [x + o, y - along, x + o, y + along]).map(r3));
+export function footprintWalls(x, y, [fw, fh], round = false) {
+  const wide = fw >= fh, short = Math.min(fw, fh);
+  const hLong = Math.max(0, Math.max(fw, fh) / 2 - WALL_HALF), hShort = short / 2 - WALL_HALF;
+  const row = (o, half) => (wide ? [x - half, y + o, x + half, y + o] : [x + o, y - half, x + o, y + half]).map(r3);
+  if (short <= 0.6) return [row(0, hLong)];
+  if (short <= TWO_WALLS_DEEP) return [row(-hShort, hLong), row(hShort, hLong)];
+  const hw = fw / 2 - WALL_HALF, hh = fh / 2 - WALL_HALF, corners = [];
+  if (round) for (let i = 0; i < ROUND_SIDES; i++) { const a = ((i + 0.5) / ROUND_SIDES) * 2 * Math.PI; corners.push([x + hw * Math.cos(a), y + hh * Math.sin(a)]); }
+  else corners.push([x - hw, y - hh], [x + hw, y - hh], [x + hw, y + hh], [x - hw, y + hh]);
+  const walls = corners.map((c, i) => [...c, ...corners[(i + 1) % corners.length]].map(r3));
+  const rows = Math.ceil((2 * hShort) / FILL_STEP);
+  for (let k = 1; k < rows; k++) {
+    const o = -hShort + (k * 2 * hShort) / rows;
+    walls.push(row(o, round ? hLong * Math.sqrt(1 - (o / hShort) ** 2) : hLong));
+  }
+  return walls;
 }
 
 /** Value -> char for a project's Terrain layer, from its definition (unknown identifiers -> null). */
@@ -137,7 +157,7 @@ export function compileLevel(project, level, assets = loadProps()) {
         const asset = fieldOf(e, 'asset'), blocks = fieldOf(e, 'blocks') === true, meta = assets.get(asset);
         if (!meta) { errors.push(`${where}: no prop asset "${asset}" (game/content/assets/props/${asset}/meta.json)`); break; }
         props.push({ asset, x, y, blocks });
-        if (blocks) propRock.push(...footprintWalls(x, y, meta.footprint));
+        if (blocks) propRock.push(...footprintWalls(x, y, meta.footprint, meta.round === true));
         break;
       }
       default: errors.push(`${where}: the game doesn't know this entity (known: ${ENTITY_KINDS.join(', ')})`);

@@ -62,11 +62,11 @@ def main():
         im = Image.open(os.path.join(raw, file)).convert('RGBA')
         box = im.getchannel('A').getbbox()
         foot = [anchor[0] - box[0], anchor[1] - box[1]]
-        register(pid, name, footprint, im.crop(box), f'{DEFENCE}/{file}', '/v2/rotate' if 'rotated' in edits else 'create_1_direction_object', edits, foot=foot)
+        register(pid, name, footprint, im.crop(box), f'{DEFENCE}/{file}', '/v2/rotate' if 'rotated' in edits else 'create_1_direction_object', edits, foot=foot, round_=footprint is FOOTPRINT)
     im = Image.open(os.path.join(ROOT, WELL_RAW)).convert('RGBA')
     box = im.getchannel('A').getbbox()
     im = im.crop(box)
-    register('battery-well', 'Battery well', [5.0, 5.0], im, WELL_RAW, 'create_1_direction_object', foot=[im.width // 2, im.height - im.width // 4])
+    register('battery-well', 'Battery well', [5.0, 5.0], im, WELL_RAW, 'create_1_direction_object', foot=[im.width // 2, im.height - im.width // 4], round_=True)
     im, foot_x, foot_y = kit_pillar()
     register('battery-pillar', 'Gate pillar', [2.1, 2.1], im, f'{KIT_RAW}/tile_53.png', 'create_building_kit', 'assembled from the fortress kit: block 53 stacked, its pillar piece cut short for battlements', foot=[foot_x, foot_y])
     print('registered', len(PIECES) + 2)

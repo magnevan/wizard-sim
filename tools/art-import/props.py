@@ -38,11 +38,12 @@ def trim(im):
     return im.crop(box) if box else im
 
 
-def register(pid, name, footprint, im, raw, tool, edits='trimmed only', flat=False, foot=None):
+def register(pid, name, footprint, im, raw, tool, edits='trimmed only', flat=False, foot=None, round_=False):
     d = os.path.join(ASSETS, pid)
     os.makedirs(d, exist_ok=True)
     im.save(os.path.join(d, 'lean.png'), optimize=True)
     meta = {'id': pid, 'kind': 'prop', 'name': name, 'footprint': footprint}
+    if round_: meta['round'] = True
     if flat: meta['flat'] = True
     meta['sets'] = {'lean': {'file': 'lean.png', 'foot': foot or [im.width // 2, im.height - 2], 'source': 'pixellab', 'raw': raw, 'tool': tool, 'edits': edits, 'status': STATUS}}
     json.dump(meta, open(os.path.join(d, 'meta.json'), 'w'), indent=2)

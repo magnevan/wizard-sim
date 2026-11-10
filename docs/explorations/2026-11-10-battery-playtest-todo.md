@@ -8,6 +8,8 @@ Issue numbers are the user's. Causes marked *confirmed* were read in the code. C
 
 These apply to every prop or effect, not only the battery. They touch the content compiler, prop drawing and the wall kit.
 
+**Status: built, awaiting the user's playtest** (#13, #11, #12, #6, #14, #10). The Academy's deep props turned out not to have the hole: up to 1 unit deep the two walls touch, and none of its props is deeper.
+
 The battery exists only on the branch `worktree-opening-segments`, so start this work from that branch, not from main.
 
 ### Collision

@@ -32,6 +32,11 @@ export const BATTERY = {
   ringRadius: 7,
   /** The head swings this far either way of straight out, in turns: 80 degrees, nearly along the wall. */
   swing: 0.222,
+  /**
+   * How high the barrel is over the tower's spot, as a distance down the screen in world units: about 60 art px at 8 px
+   * a unit up the screen (the head sheet's swivel at 50 px and the barrel 9.6 above it, tools/turret-3d, art/props.ts).
+   */
+  barrelLift: 7.45,
 } as const;
 
 /** Straight out from the wall, north, as a facing in turns. */
@@ -94,11 +99,25 @@ export function driveButtons(w: World, i: number, buttons: number): number {
   return s.queueLen[i] > 0 || s.phase[i] !== PHASE.idle ? buttons & (BTN.force | BTN.area | BTN.clear | BTN.use) : buttons & (BTN.clear | BTN.use);
 }
 
-/** The way the head points, in turns: at the aim, and no further round than the swing either side of straight out from the wall. */
+/**
+ * The way a driven defence's head points, as a ground direction from its tower (not normalized).
+ *
+ * The aim is measured from the body at the muzzle, about 4 units further out, so it's moved back onto the tower. And
+ * the barrel runs high over the tower, so for it to point at the cursor on the screen it aims at the ground under the
+ * cursor as if the cursor were at the barrel's height: that spot is `barrelLift` further down the screen. Down the
+ * screen is world (1, 1) under the camera's 45-degree turn (as in sprayReach). The client turns the drawn head by the
+ * art itself (art/props.ts), which this matches to within a few degrees; the drawn jet bends to cover the rest.
+ */
+export function aimFromTower(w: World, i: number): [number, number] {
+  const s = w.seats, b = w.bodies, tower = at(w, TOWER)[w.battery!.drive[i]], d = Math.SQRT1_2 * BATTERY.barrelLift;
+  return [b.x[i] + s.aimX[i] - tower.x + d, b.y[i] + s.aimY[i] - tower.y + d];
+}
+
+/** The way the head points, in turns: from the tower at the cursor, and no further round than the swing either side of straight out from the wall. */
 export function driveFace(w: World, i: number): number {
-  const s = w.seats;
-  if (len(s.aimX[i], s.aimY[i]) < 1e-6) return STRAIGHT_OUT;
-  let a = atan2Turns(s.aimX[i], -s.aimY[i]); // 0 is straight out, north; positive turns east
+  const [ax, ay] = aimFromTower(w, i);
+  if (len(ax, ay) < 1e-6) return STRAIGHT_OUT;
+  let a = atan2Turns(ax, -ay); // 0 is straight out, north; positive turns east
   if (a > 0.5) a -= 1;
   return STRAIGHT_OUT + Math.max(-BATTERY.swing, Math.min(BATTERY.swing, a));
 }

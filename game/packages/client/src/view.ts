@@ -162,7 +162,7 @@ export class WorldView {
   setRenderer(r: Renderer): void { this.renderer = r; }
   /** What stands in the scene, for effects to go behind (art/vfx.ts). Positions are field px; fx0, fy0 convert from the scene's. */
   private occluderSource(w: World, fx0: number, fy0: number) {
-    return (emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number) => void) => {
+    return (emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number, piece?: boolean) => void) => {
       for (let i = 0; i < MAX_BODIES; i++) {
         const spr = this.sprites[i], v = this.views[i];
         if (!v.on || !spr.visible || (i < MAX_SEATS && w.seats.active[i] && w.seats.phase[i] === PHASE.channel)) continue;
@@ -171,7 +171,7 @@ export class WorldView {
       this.props.sprites((s, _x, y) => emit(s.texture, s.position.x - fx0, s.position.y - fy0, y - fy0, true, s.zIndex));
       // pieces carry the origin they were laid out with: effects that draw before the walls see last frame's
       const [px, py] = this.structs.pieceOrigin;
-      this.structs.eachPiece((s, _x, y) => emit(s.texture, s.position.x - px, s.position.y - py, y - py, true, s.zIndex));
+      this.structs.eachPiece((s, _x, y) => emit(s.texture, s.position.x - px, s.position.y - py, y - py, true, s.zIndex, true));
     };
   }
 

@@ -53,6 +53,17 @@ Merged main for the new nova (#8). The swing is 80 degrees each way, on the plan
 
 After these: waves and lanes, the failing pool, the infusion and the repair (`docs/decisions/README.md`, 2026-11-10; the Opening Segment page).
 
+## Second look at the turret (2026-11-10, evening)
+
+The user drove a defence again and listed four more. **Status: built, awaiting the user's playtest.**
+
+- **The head didn't point at the cursor.** *Confirmed cause:* the aim is measured from your body, and while driving your body is at the muzzle, about 4 units out past the wall, so both the head and the sim's flame aimed from there. Second, smaller cause: the barrel stands about 60 art px over the tower's spot, so a barrel aimed along the ground looks aimed above the cursor. Now the head picks the facing whose drawn barrel lies on the line to the cursor, read off the sheet (`facingToward`, `art/props.ts`; the barrel's line was measured from the sheet's pixels, level and 9.6 px above the swivel). The sim aims from the tower the same way, with the barrel's height as `BATTERY.barrelLift` (`aimFromTower`, `sim/src/battery.ts`), which matches the head to within a few degrees. `check:battery` now writes `sweep-*-guide.png` with a line from the barrel's root to the cursor: the barrel lies on it at near, far and wide aims.
+- **The pilot flame was a still.** It was the bought head's painted flame pasted onto every facing (`tools/turret-3d/pixelize.py`). It's gone from the sheet; the game draws a small flickering one at each working nozzle while it isn't firing (`pilotFlame`).
+- **The flamethrower redesigned, not adapted** (the user's suggestion). `art/flame-jet.ts`: one particle stream where every particle has a spot on the ground and a height. It leaves the barrel level, arcs down to chest height, slows so it billows at the end, and cools from white through yellow, orange and red. Dithered smoke rises along the far two thirds, not only at the end. There's no core line and no separate impact sprite, which were what made the old one look like two things.
+- **The spray drew over the gate's pillar.** *Confirmed cause:* the driven flame skipped occlusion on purpose. The new jet is drawn in seven bands of depth, each through `behind`, so the pillars and the wall hide what's behind them. Up to 1.5 units past the wall's line the jet is over the wall's top, so only props (the pillars) hide it there, not the wall's pieces.
+
+Left as it is, and worth deciding: the sim's spray still comes from the muzzle point outside the wall, while the flame is drawn from the head on the inside, so at wide swings the drawn jet bends noticeably to reach where the damage is. A real flame from a tower 3 units inside the wall, aimed 80 degrees round, would run along the inside of the wall and never reach the outside. Either the swing narrows, the towers move up to the wall, or the bend stays.
+
 ## Enemies at the wall's foot
 
 Not on the user's list, but it comes from the same layout: a full-height wall hides about 4 units of ground behind it, and enemies reaching the wall will be out of sight. A one-storey kit would be about 10 generations, with sign-off first. Decide once waves exist.

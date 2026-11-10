@@ -43,18 +43,12 @@ def outline(a):
 
 
 info = json.load(open(os.path.join(SRC, 'info.json')))
-# the bought head's own pilot flame
-_HEAD = np.array(Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../game/content/generated/pixellab/opening/defence/head-north-east.png')).convert('RGBA'))[0:21, 47:58]
-_box = Image.fromarray(_HEAD).getchannel('A').getbbox()
-FLAME = Image.fromarray(_HEAD).crop(_box)
-FLAME_FOOT = (FLAME.width // 2, FLAME.height - 1)
 c, n = info['canvas'], len(info['facings'])
 sheet = np.zeros((c, c * n, 4), np.uint8)
 for i in range(n):
     im = np.array(Image.open(os.path.join(SRC, f'r{i:02d}.png')).convert('RGBA'))
     cell = Image.fromarray(outline(pixel_art(im)))
-    tip = info['tips'][i]
-    cell.alpha_composite(FLAME, (round(tip[0]) - FLAME_FOOT[0], max(0, round(tip[1]) - FLAME_FOOT[1])))  # the painted pilot flame, always upright
+    # no pilot flame baked in: the game draws a live one at the tip (art/flame-jet.ts)
     sheet[:, i * c:(i + 1) * c] = np.array(cell)
 os.makedirs(OUT, exist_ok=True)
 Image.fromarray(sheet).save(os.path.join(OUT, 'sheet.png'), optimize=True)

@@ -99,11 +99,44 @@ try {
   await p.mouse.move(380, 60);
   await sleep(400);
   await shot('drive-north');
+  // a marker where the cursor is, so the shots show whether the head points at it
+  await p.evaluate(() => {
+    const m = document.createElement('div');
+    m.id = 'cursor-mark';
+    m.style.cssText = 'position:fixed;width:9px;height:9px;margin:-5px 0 0 -5px;border:2px solid #0ff;border-radius:50%;pointer-events:none;z-index:99';
+    document.body.appendChild(m);
+    addEventListener('pointermove', (e) => { m.style.left = e.clientX + 'px'; m.style.top = e.clientY + 'px'; });
+  });
   // the head sweeps its whole swing, one facing at a time
-  for (const [name, x, y] of [['sweep-left', 120, 180], ['sweep-up', 380, 30], ['sweep-out', 800, 120], ['sweep-right', 1200, 330], ['sweep-lower', 1230, 760]]) {
+  for (const [name, x, y] of [['sweep-left', 120, 180], ['sweep-up', 380, 30], ['sweep-out', 800, 120], ['sweep-right', 1200, 330], ['sweep-lower', 1230, 760], ['sweep-near', 560, 300]]) {
     await p.mouse.move(x, y);
     await sleep(900);
     await shot(name);
+    // a guide from the barrel's root to the cursor: the drawn barrel should lie along it
+    await p.evaluate(([mx, my]) => {
+      const ws = window.wizardSim, w = ws.world, cam = ws.view.camera, t = w.def.props.filter((q) => q.asset === 'defence-tower')[w.battery.drive[0]];
+      const T = cam.worldToScreen(t.x, t.y), k = cam.scale, rx = T.x, ry = T.y + (-50 - 9.6) * k;
+      let g = document.getElementById('aim-guide');
+      if (!g) { g = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); g.id = 'aim-guide'; g.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:98'; document.body.appendChild(g); }
+      g.innerHTML = `<line x1="${rx}" y1="${ry}" x2="${mx}" y2="${my}" stroke="#0ff" stroke-width="1" stroke-dasharray="4 4"/>`;
+    }, [x, y]);
+    await shot(name + '-guide');
+    await p.evaluate(() => document.getElementById('aim-guide')?.remove());
+  }
+  // the flamethrower at a few aims, one past the gate's pillar; the last held a while to see it move
+  for (const [name, x, y, frames] of [['jet-left', 200, 160, 1], ['jet-out', 700, 110, 1], ['jet-gate', 900, 330, 1], ['jet-far', 1100, 140, 4]]) {
+    await p.mouse.move(x, y);
+    await sleep(500);
+    await p.keyboard.press('KeyF');
+    await p.keyboard.press('KeyF');
+    await sleep(150);
+    await p.mouse.down({ button: 'right' });
+    await sleep(120);
+    await shot(name + '-start');
+    await sleep(800);
+    for (let f = 0; f < frames; f++) { await shot(frames > 1 ? `${name}-${f}` : name); await sleep(90); }
+    await p.mouse.up({ button: 'right' });
+    await sleep(1500);
   }
   await p.keyboard.press('KeyX');
   await sleep(900);

@@ -15,8 +15,8 @@
  */
 import { rules, type Cast, type Element } from '@wizard-sim/rules';
 import { compile, type SpellSpec } from './compile';
-import { RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
-import { EL, N_EL, elementName } from './elements';
+import { COMBAT, RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
+import { EL, N_EL, beamCurve, elementName } from './elements';
 import { channelTick, fireSpell } from './effects';
 import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, fullMask, poolCap, recallOldest, spendMote, weaponSwing } from './structures';
 import { len } from './geom';
@@ -266,7 +266,7 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
       const spec = specOf(w, i);
       if (!act || !(held & BTN.force)) { toRecovery(w, i); break; }
       // Past the natural duration it costs upkeep from the form element; it ends when that runs dry.
-      const natural = RHYTHM.naturalChannel * (spec.shape === 'beam' ? Math.max(1, spec.formN) : 1); // a beam's extra runes buy time, not damage
+      const natural = RHYTHM.naturalChannel * (spec.shape === 'beam' ? beamCurve(Math.max(1, spec.formN), COMBAT.beamExp, 'time') : 1); // a beam's runes buy time and power
       if (s.chanTicks[i] >= T(natural) && spec.form) {
         const k = rune(w, i, spec.form);
         s.runes[k] -= RHYTHM.upkeep / 60;

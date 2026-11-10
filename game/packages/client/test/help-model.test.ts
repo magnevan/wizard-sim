@@ -68,17 +68,17 @@ describe('help panel model: queue -> rows', () => {
     expect(heal).toMatch(/HEALS 14/);
   });
 
-  it('the arc counts its zaps: 0.5 a rune every 0.2 s, and the beam its extra reach', () => {
+  it('the arc counts its zaps: 0.5 a rune every 0.2 s, and the beam its reach and free time', () => {
     expect(helpModel(['lightning'], bare).rows[0].stats.join(' ')).toMatch(/LIGHTNING 25\/S/);
-    expect(helpModel(['arcane', 'arcane'], bare).rows[0].stats.join(' ')).toMatch(/RANGE 14U.*FREE 5S/);
+    expect(helpModel(['arcane', 'arcane'], bare).rows[0].stats.join(' ')).toMatch(/RANGE 30U.*FREE 3.5S/);
   });
 
   it('+1 rune: what one more rune of the lead element changes', () => {
     const scale = (q: Element[], k: number) => helpModel(q, bare).rows[k].scale;
     expect(scale(['fire'], 0)).toBe('+1 FIRE: DMG ×1.41, RANGE +0.5U, CONE +25%, WIND-UP +0.04S');
     expect(scale(['arcane'], 1)).toBe('+1 ARCANE: DMG ×1.7, RADIUS +0.6U, WIND-UP +0.04S');
-    expect(scale(['arcane'], 0)).toBe('+1 ARCANE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S'); // a beam's runes buy time, not damage
-    expect(scale(['life'], 0)).toBe('+1 LIFE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S');
+    expect(scale(['arcane'], 0)).toBe('+1 ARCANE: DMG ×1.41, FREE FOR +1S, WIND-UP +0.04S'); // a beam's runes buy power and time, √n each
+    expect(scale(['life'], 0)).toBe('+1 LIFE: HEAL ×1.41, FREE FOR +1S, WIND-UP +0.04S');
     expect(helpModel(['water'], bare).rows[0].stats.join(' ')).toMatch(/PUSH 18U\/S A SECOND/);
     expect(scale(['earth'], 0)).toMatch(/^\+1 EARTH: DMG ×2.83/);
     expect(scale(['lightning'], 0)).toMatch(/JUMPS \+1/);

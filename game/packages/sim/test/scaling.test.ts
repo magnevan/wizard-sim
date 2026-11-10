@@ -28,18 +28,18 @@ describe('rune scaling', () => {
     expect(compile(['water', 'fire'], 'force').mod).toBeNull();
   });
 
-  it('an Arcane nova hits harder with more Arcane; an Arcane beam only lasts longer', () => {
+  it('an Arcane nova hits harder with more Arcane; an Arcane beam hits √n harder and lasts √n longer', () => {
     const dealt = (q: Element[], btn: number, hold: number) => {
       const { w, go, queue } = scene(1.6, true);
       queue(q); go({ buttons: btn }, hold); go({}, 40);
       return 1e5 - w.bodies.hp[4];
     };
     expect(dealt(['arcane', 'arcane'], BTN.area, 2) / dealt(['arcane'], BTN.area, 2)).toBeCloseTo(1.7, 1);
-    // over the same 2 s, one Arcane rune and two deal the same (less the second rune's 0.04 s of wind-up)
-    expect(dealt(['arcane', 'arcane'], BTN.force, 120) / dealt(['arcane'], BTN.force, 120)).toBeCloseTo(1, 1);
+    // over the same 2 s, two Arcane runes deal √2 times one's (less the second rune's 0.04 s of wind-up)
+    expect(dealt(['arcane', 'arcane'], BTN.force, 120) / dealt(['arcane'], BTN.force, 120)).toBeCloseTo(Math.SQRT2, 1);
   });
 
-  it("a Life beam heals as fast with one Life as with three: its Life buys time", () => {
+  it("a Life beam heals √n as fast with n Life: its Life buys power and time", () => {
     const healed = (q: Element[]) => {
       const { w, go, queue } = scene(3);
       w.bodies.hp[1] = 1; w.bodies.maxHp[1] = 1e5;
@@ -47,7 +47,8 @@ describe('rune scaling', () => {
       return w.bodies.hp[1] - 1;
     };
     expect(healed(['life'])).toBeGreaterThan(10);
-    expect(healed(['life', 'life', 'life']) / healed(['life'])).toBeCloseTo(1, 1);
+    // √3, less the two extra runes' 0.08 s of wind-up out of the 2 s
+    expect(healed(['life', 'life', 'life']) / healed(['life'])).toBeCloseTo(Math.sqrt(3) * (1 - 0.08 / 2), 1);
   });
 
   it('every ice shard flies at the same power', () => {

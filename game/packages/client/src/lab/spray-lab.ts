@@ -6,7 +6,7 @@
  *   ?sweep=1      the aim swings back and forth, as a player sweeping a crowd
  *   ?old=1        the old cone (kit.ts) beside each, for comparing
  *   ?hit=1        the sim's hit sector, dotted
- *   ?kinds=water,fire,cold,scald   which columns
+ *   ?kinds=water,fire,cold,scald   which columns (also arcane-beam, life-beam, fire-beam: the beams' rune tiers)
  *   ?scale=3      screen px per art px
  */
 import * as X from '../art/px';
@@ -70,7 +70,11 @@ function frame(): void {
         for (let k = 0; k <= 40; k++) { const a = a0 - half + (2 * half * k) / 40; X.px(c, A.x + Math.cos(a) * L, A.ground + Math.sin(a) * L * FY, '#5a6070'); }
         for (const s of [-1, 1]) for (let d = 0; d < L; d += 4) X.px(c, A.x + Math.cos(a0 + s * half) * d, A.ground + Math.sin(a0 + s * half) * d * FY, '#5a6070');
       }
-      if (col.old) {
+      if ((col.k as string).endsWith('beam')) {
+        const el = (col.k as string).split('-')[0], R = el === 'life' ? X.LIFE_L : X.EL[el], z: [number, number] = [A.ex + 70, A.ey - 9];
+        if (el === 'fire') K.fireBeam(c, [A.x, A.y], z, t, true); else K.beam(c, [A.x, A.y], z, t, R, { w: K.beamW(n), hit: true, seed: 977 });
+        K.beamSurge(c, [A.x, A.y], z, t, el === 'fire' ? X.EL.fire : R, n, 977, true);
+      } else if (col.old) {
         const kind: K.ConeKind = col.k === 'cold' ? 'cold' : col.k;
         K.cone(c, [A.x, A.y], [A.ex, A.ey - 6], t, kind, 0, { spread: 0.28, seed: 977 });
       } else sprayJet(c, { kind: col.k, n, half, endH: 6, t0: 0, seed: 977, aim: tr.at }, t);

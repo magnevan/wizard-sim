@@ -793,8 +793,26 @@ export class Vfx {
         } else {
           // a rock, an ice boulder, a mud ball...: the same heavy missile in the look's material
           const mat = el === 'cold' ? K.ROCK_MAT.cold : el === 'water' ? K.ROCK_MAT.water : el === 'arcane' ? K.ROCK_MAT.arcane : el === 'lightning' ? K.ROCK_MAT.lightning : K.ROCK_MAT.earth;
-          for (let k2 = 1; k2 <= 4; k2++) X.px(o, x - ux * k2 * 4, y - uy * k2 * 4 + k2 * 0.5, el === 'cold' ? EL.cold[k2] : el === 'water' ? EL.water[Math.min(4, k2)] : X.EARTH[k2]);
-          K.rock(o, x, y, r, sd, mat);
+          // in flight (the user, 2026-11-10: it moved but didn't feel like flying): air streaks off its sides, a wake
+          // of dust hanging where it passed, grit falling out of it, and the rock tumbling, faster the faster it goes
+          const spd = Math.hypot(m.vx[j], m.vy[j]), born = this.mT0[j], earth = mat === K.ROCK_MAT.earth;
+          const dustC = el === 'cold' ? ['#e8fbff', '#9fd4e8'] : el === 'water' ? ['#cfe8ff', '#6aa8e0'] : el === 'arcane' ? ['#ffd8ec', '#c06a9a'] : el === 'lightning' ? ['#e8dcff', '#8a6ad0'] : ['#cbb898', '#8a7458'];
+          for (const p of emit(t, 30 + r * 4, 0.55, (i, age, ts) => {
+            const back = (t - ts) * L * 16, side = (rand(i, 6, sd) - 0.5) * r * 1.2;
+            return { x: x - ux * back - uy * side + age * (rand(i, 7, sd) - 0.5) * 6, y: y - uy * back + ux * side * FY + age * 3, age, r: 1 + age * (1.5 + r * 0.3) };
+          }, born, t)) if (p.age > 0.05) K.puff(o, p.x, p.y, p.r, p.age < 0.35 ? dustC[0] : dustC[1], (1 - p.age) * 0.75);
+          if (earth) for (const p of emit(t, 22, 0.5, (i, age, ts) => {
+            const back = (t - ts) * L * 16, side = (rand(i, 8, sd) - 0.5) * r;
+            return { x: x - ux * back - uy * side, y: y - uy * back + side * 0.4 + age * age * (STAFF_Z + 4), age, i };
+          }, born, t)) if (p.y < yg + 2) X.px(o, p.x, p.y, p.i % 3 ? X.EARTH[3] : X.EARTH[1]);
+          // air streaks: three lines trailing back from the rock's edges, longer when it's fast
+          const sl = 6 + spd * 1.1;
+          for (const s2 of [-1, 0, 1]) {
+            const ox = -uy * s2 * r * 0.75, oy = ux * s2 * r * 0.75 * FY - (s2 === 0 ? r * 0.6 : 0), ph = (Math.floor(t * 30) + s2 + j) % 3;
+            const l = sl * (s2 === 0 ? 1 : 0.75) * (0.8 + 0.2 * ph);
+            X.line(o, x + ox - ux * (r + 1), y + oy - uy * (r + 1), x + ox - ux * (r + l), y + oy - uy * (r + l), s2 === 0 ? '#f4ecdc' : dustC[0]);
+          }
+          K.rock(o, x, y, r, sd, mat, Math.sign(ux || 1) * (t - born) * spd * 0.9); // rolling the way it flies
           if (el === 'cold') { if (Math.floor(t * 8 + j) % 3 === 0) X.px(o, x - r * 0.3, y - r * 0.5, '#ffffff'); light(x, yg, 30, '#9ff4ff', 0.4); }
           if (el === 'water') for (const p of emit(t, 14, 0.4, (i, age) => ({ x: x + (rand(i, 4, sd) - 0.5) * r, y: y + r * 0.5 + age * age * 10, age }))) X.px(o, p.x, p.y, '#8ad0ff');
           if (el === 'lightning' && Math.floor(t * 18) % 3 !== 2) { K.zap(o, [x - r, y], [x + r, y - 1], Math.floor(t * 18) + sd, EL.lightning, 1, 0); light(x, yg, 30, '#b08aff', 0.5); }
@@ -854,17 +872,20 @@ export class Vfx {
         const z: Pt = [ex, ey - LIFT], on = easeOut(seg(t, t0, t0 + 0.12));
         const full: Pt = [lerp(tip[0], z[0], on), lerp(tip[1], z[1], on)];
         const hitBody = this.beamHits(w, s.chanEndX[i], s.chanEndY[i], i);
-        if (spec.heal) { K.beam(o, tip, full, t, X.LIFE_L, { on: 1, hit: hitBody && on > 0.95, seed: sd }); }
+        // the spell's runes (all of them: Arcane + Fire + Fire is more than Arcane + Fire) set its tier
+        const nb = clamp(spec.power, 1, 5), bw = K.beamW(nb);
+        if (spec.heal) { K.beam(o, tip, full, t, X.LIFE_L, { on: 1, w: bw, hit: hitBody && on > 0.95, seed: sd }); }
         else if (look === 'fire') K.fireBeam(o, tip, full, t, hitBody && on > 0.95);
         else {
           const R = look === 'cold' ? X.FROST : ramp(spec.look);
           // a second element in the beam twists round it as a strand (arcane + fire's strand is the fire beam itself)
-          K.beam(o, tip, full, t, R, { on: 1, hit: hitBody && on > 0.95, seed: sd });
+          K.beam(o, tip, full, t, R, { on: 1, w: bw, hit: hitBody && on > 0.95, seed: sd });
           if (look === 'cold') for (const p of emit(t, 60, 0.6, (q, age) => { const kk = rand(q, 71, sd); return { x: lerp(tip[0], full[0], kk) + (rand(q, 72, sd) - 0.5) * 4, y: lerp(tip[1], full[1], kk) + age * 9 + Math.sin(age * 8 + q) * 1.2, age, q }; })) X.px(o, p.x, p.y, (p.q + Math.floor(t * 16)) % 5 === 0 ? '#ffffff' : p.age < 0.5 ? X.FROST[2] : X.FROST[4]);
         }
+        K.beamSurge(o, tip, full, t, spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look), nb, sd, hitBody && on > 0.95);
         const lc = spec.heal ? '#8ef07e' : look === 'fire' ? '#ff6a20' : ramp(spec.look)[2];
-        glowAlong(light, tip[0], v.y, full[0], lerp(v.y, ey, on), 40, lc, 0.55 * flick(t, sd));
-        light(ex, ey, 62, lc, 0.85 * flick(t, sd + 3));
+        glowAlong(light, tip[0], v.y, full[0], lerp(v.y, ey, on), 34 + 6 * nb, lc, (0.45 + 0.06 * nb) * flick(t, sd));
+        light(ex, ey, 50 + 10 * nb, lc, 0.85 * flick(t, sd + 3));
         if (!hitBody) this.strike(w, t, light, s.chanEndX[i], s.chanEndY[i], w.bodies.x[i], w.bodies.y[i], 'beam', t0 + 0.12, sd, 1, beamRamp(spec, look));
       } else if (spec.shape === 'spray') {
         const z: Pt = [ex, ey - 6];

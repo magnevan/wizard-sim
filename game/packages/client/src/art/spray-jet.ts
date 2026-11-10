@@ -10,8 +10,8 @@
  * - The fan is the sim's: half-angle `half` and reach both grow with the runes (effects.ts channelTick), so what you
  *   see wetting, burning or chilling is what's hit. Particles crowd the middle, so the edges read as thin spray.
  * - Runes show. `n` (the form's runes, 1..5) raises density, speed, size and heat, and the top tiers add features
- *   of their own: water gets pressure rings and, at five, blowback and a rainbow in its mist; fire burns blue-white
- *   at the root from four and rolls fireballs at five; frost throws ice shards from three and tumbling snowflakes
+ *   of their own: water gets pressure rings and, at five, blowback and prism glints in its droplets; fire burns
+ *   blue-white at the root from four and throws a heavier ember shower at five; frost throws ice shards from three and tumbling snowflakes
  *   and a frost ring at five.
  *
  * Pure in (time, aim history, seed), like the other effects.
@@ -88,7 +88,7 @@ function water(c: Ctx, j: Jet, t: number): void {
   const { n, half, t0, endH, aim } = j, sd = j.seed, thin = j.thin ?? 1, k = (n - 1) / 4;
   const W = j.kind === 'scald' ? SCALD : WATER;
   const T = 0.3 - 0.07 * k; // seconds to the far end: more Water, more pressure
-  const m = (0.8 + 0.3 * (n - 1)) * thin;
+  const m = (0.8 + 0.35 * (n - 1)) * thin;
   const live = (ts: number) => ts >= t0;
   const now = aim(t);
 
@@ -102,11 +102,6 @@ function water(c: Ctx, j: Jet, t: number): void {
     const A = aim(q.ts), f = 0.25 + rand(q.i, 43, sd) * 0.85, a = (rand(q.i, 44, sd) * 2 - 1) * half * 0.7;
     const [, , x, y] = place(A, f, a, 0, axisH(A, f, endH) + 3 + q.age * 18);
     puff(c, x + q.age * 4, y, 1.5 + f * 2 + q.age * 4, q.age < 0.25 ? X.EL.steam[1] : q.age < 0.6 ? X.EL.steam[2] : '#9aa2b8', (1 - q.age) * 0.85);
-  }
-  // a rainbow in the mist, for the full five
-  if (n >= 5 && t > t0 + 0.35) {
-    const [, , x, y] = place(now, 0.72, 0, 0, axisH(now, 0.72, endH) + 4), sh = 0.5 + 0.1 * Math.sin(t * 3.1 + sd);
-    for (let b = 0; b < RAINBOW.length; b++) X.ring(c, x, y, 20 - b, (20 - b) * 0.62, RAINBOW[b], sh, Math.PI * 1.08, Math.PI * 1.92);
   }
 
   // droplets: peel off the jet and drive outward, falling as they slow; the ones that land splash where they land
@@ -131,17 +126,22 @@ function water(c: Ctx, j: Jet, t: number): void {
       continue;
     }
     const [px0, py0] = drop(i, A, Math.max(0, q.age - 0.055));
-    const col = r > 0.82 ? W[0] : r > 0.45 ? W[1] : W[2];
+    let col = r > 0.82 ? W[0] : r > 0.45 ? W[1] : W[2];
+    // at five, droplets crossing a slowly drifting band of the fan catch the light in prism colours
+    if (n >= 5 && r > 0.7 && j.kind === 'water') {
+      const u = fan(rand(i, 13, sd) * 2 - 1, 1.6), band = (u - 0.55 * Math.sin(q.ts * 0.8 + sd)) / 0.32;
+      if (Math.abs(band) < 1) col = RAINBOW[clamp(Math.floor((band + 1) * 0.5 * RAINBOW.length), 0, RAINBOW.length - 1)];
+    }
     X.line(c, px0, py0, x, y, r > 0.6 ? W[2] : W[3]);
     if (r > 0.9 && n >= 3) sq(c, x, y, 2, col); else X.px(c, x, y, col);
   }
 
   // the jet: a rope of water from the staff, pulsing as it surges and fraying as it goes; thicker with more Water
-  const coreLife = T * 0.8, thick = n >= 4 ? 3 : n >= 2 ? 2 : 1;
+  const coreLife = T * 0.8, thick = n >= 3 ? 2 : 1;
   const core: { x: number; y: number; w: number; b: number; s: number }[] = [];
-  for (const q of emit(t, (700 + 220 * n) * thin, coreLife, (i, age, ts) => (live(ts) ? { i, age, ts } : null))) {
+  for (const q of emit(t, (560 + 90 * n) * thin, coreLife, (i, age, ts) => (live(ts) ? { i, age, ts } : null))) {
     const A = aim(q.ts), i = q.i, s = q.age * 0.78;
-    if (s > 0.32 && rand(i, 5, sd) < (s - 0.32) * (2.4 - 0.25 * n)) continue; // frays into the droplets
+    if (s > 0.3 && rand(i, 5, sd) < (s - 0.3) * 2.4) continue; // frays into the droplets
     const wob = Math.sin(q.ts * 29 + sd) * 0.022 + Math.sin(q.ts * 11.3 + sd * 2) * 0.03;
     const a = wob + (rand(i, 6, sd) - 0.5) * 0.04 * (1 + s * 4);
     const [, , x, y] = place(A, s, a, 0, axisH(A, s, endH) + Math.sin(q.ts * 41) * 0.5);
@@ -149,12 +149,12 @@ function water(c: Ctx, j: Jet, t: number): void {
     core.push({ x, y, w: Math.max(1, thick - Math.floor(s * 2.6)), b: surge, s });
   }
   for (const p of core) sq(c, p.x, p.y + 1, p.w + 1, W[3]); // the underside, so the rope has a body
-  for (const p of core) sq(c, p.x, p.y, p.w, p.b > 0.55 ? W[0] : p.s < 0.15 || p.b > -0.2 ? W[1] : W[2]);
+  for (const p of core) sq(c, p.x, p.y, p.w, p.b > 0.8 ? W[0] : p.s < 0.12 || p.b > 0.1 ? W[1] : W[2]);
 
   // pressure rings riding the jet out, from four runes
   if (n >= 4) for (const q of emit(t, 5 + 2 * n, T * 0.7, (i, age, ts) => (live(ts) ? { i, age, ts } : null))) {
     const A = aim(q.ts), s = q.age * 0.55, [, , x, y] = place(A, s, 0, 0, axisH(A, s, endH)), r = 2 + q.age * (n >= 5 ? 6 : 4);
-    X.ring(c, x, y, r * 0.6, r, q.age < 0.4 ? W[0] : W[1], 0.85 * (1 - q.age));
+    X.ring(c, x, y, r * 0.6, r, q.age < 0.4 ? W[1] : W[2], 0.6 * (1 - q.age));
   }
   // blowback round the staff at five: the jet is pushing the caster as hard as the target
   if (n >= 5) for (const q of emit(t, 70, 0.28, (i, age, ts) => (live(ts) ? { i, age } : null))) {
@@ -172,18 +172,17 @@ function fire(c: Ctx, j: Jet, t: number): void {
   const LIFE = 0.56 - 0.08 * k, m = (0.8 + 0.15 * n) * thin, rs = (0.9 + 0.08 * n) * (0.6 + 0.4 * thin), hot = 0.035 * (n - 1);
   const live = (ts: number) => ts >= t0;
   const now = aim(t);
-  type P = { x: number; y: number; r: number; col: string; heat: number; kind: 0 | 1 | 2 | 3 }; // flame, smoke, ember, ball
+  type P = { x: number; y: number; r: number; col: string; heat: number; kind: 0 | 1 | 2; bx?: number; by?: number }; // flame, smoke, ember; (bx, by): a little way back along its path
   const out: P[] = [];
   const heatCol = (h: number) => HEAT[clamp(Math.floor(h * HEAT.length), 0, HEAT.length - 1)];
 
-  // the core: a dense, hot stream over the first third; from four runes its root burns blue-white
+  // the core: a dense, hot stream over the first third
   for (const q of emit(t, (700 + 120 * n) * thin, 0.16, (i, age, ts) => (live(ts) ? { i, age, ts } : null))) {
     const A = aim(q.ts), i = q.i, a = q.age, s = a * 0.36;
     const off = (rand(i, 31, sd) * 2 - 1) * (0.6 + s * 6);
     const [, , x, y] = place(A, s, 0, off, axisH(A, s, endH) + Math.sin(i * 1.7 + t * 40) * 0.6);
     const heat = Math.max(0, a * 0.42 + rand(i, 32, sd) * 0.12 - hot * 0.5);
-    const blue = n >= 4 && a < 0.12 + 0.08 * (n - 4);
-    out.push({ x, y, r: (0.6 + s * 2.2) * rs, col: blue ? BLUE[Math.min(2, Math.floor(a * 18))] : heatCol(heat), heat: blue ? -1 : heat, kind: 0 });
+    out.push({ x, y, r: (0.6 + s * 2.2) * rs, col: heatCol(heat), heat, kind: 0, bx: x, by: y });
   }
   // flame: born at the nozzle, slowing as it goes, so it bunches and billows at the far end
   for (const q of emit(t, (520 + 40 * n) * m, LIFE, (i, age, ts) => (live(ts) ? { i, age, ts } : null))) {
@@ -194,17 +193,19 @@ function fire(c: Ctx, j: Jet, t: number): void {
     const l = Math.sin(a * 11 + i * 0.7) * 2.2 * s;
     const h = axisH(A, s, endH) + a * a * 14 + Math.sin(a * 9 + i * 1.3) * 1.6 * s;
     const [, , x, y] = place(A, s, ang, l, h);
+    const a0 = Math.max(0, a - 0.07), s0 = (1 - Math.pow(1 - a0, 1.8)) * reach;
+    const [, , bx, by] = place(A, s0, ang, Math.sin(a0 * 11 + i * 0.7) * 2.2 * s0, axisH(A, s0, endH) + a0 * a0 * 14 + Math.sin(a0 * 9 + i * 1.3) * 1.6 * s0);
     const heat = Math.max(0, a * (0.85 + 0.3 * rand(i, 4, sd)) + Math.abs(side) * 0.25 * s - hot);
     let r = (0.5 + s * 2.6 * (0.6 + 0.6 * rand(i, 5, sd))) * rs;
     if (a > 0.78) r *= 1 - (a - 0.78) * 2.2;
-    out.push({ x, y, r, col: heatCol(heat), heat, kind: 0 });
+    out.push({ x, y, r, col: heatCol(heat), heat, kind: 0, bx, by });
   }
-  // fireballs rolling up out of the far end, at five
-  if (n >= 5) for (const q of emit(t, 11 * thin, 0.7, (i, age, ts) => (live(ts) ? { i, age, ts } : null))) {
-    const A = aim(q.ts), i = q.i, sb = 0.78 + 0.3 * rand(i, 61, sd), ang = (rand(i, 62, sd) * 2 - 1) * half * 0.6;
-    const [, , x, y] = place(A, sb + q.age * 0.08, ang, 0, axisH(A, sb, endH) + 4 + q.age * 22);
-    const r = (3 + 3 * rand(i, 63, sd)) * (1 - q.age * 0.5);
-    out.push({ x, y, r, col: '', heat: q.age, kind: 3 });
+  // the root, from four runes: a blue-white inner flame at the staff, drawn over everything
+  const root: { x: number; y: number; r: number; col: string }[] = [];
+  if (n >= 4) for (const q of emit(t, 420 * thin, 0.1, (i, age, ts) => (live(ts) ? { i, age, ts } : null))) {
+    const A = aim(q.ts), i = q.i, a = q.age, s = a * (0.14 + 0.06 * (n - 4));
+    const [, , x, y] = place(A, s, 0, (rand(i, 33, sd) * 2 - 1) * (0.4 + a * 2.4), axisH(A, s, endH));
+    root.push({ x, y, r: 0.7 + a * (1.6 + 0.4 * (n - 4)), col: a < 0.3 ? '#ffffff' : a < 0.7 ? BLUE[1] : BLUE[2] });
   }
   // smoke: rises off the stream along its far two thirds, thickest at the end
   for (const q of emit(t, (34 + 14 * n) * thin, 1.4, (i, age, ts) => (ts < t0 + 0.12 ? null : { i, age, ts }))) {
@@ -214,7 +215,7 @@ function fire(c: Ctx, j: Jet, t: number): void {
     out.push({ x: x + a * 5, y, r: (1.4 + sb * 1.2 + a * 3.5) * (0.8 + 0.1 * n), col: SMOKE[a < 0.3 ? 0 : a < 0.65 ? 1 : 2], heat: 0.54 - 0.3 * a, kind: 1 });
   }
   // embers: sparks that carry past the flame and fall
-  for (const q of emit(t, (20 + 14 * n) * thin, 0.9, (i, age, ts) => (live(ts) ? { i, age, ts } : null))) {
+  for (const q of emit(t, (20 + 14 * n) * (n >= 5 ? 1.8 : 1) * thin, 0.9, (i, age, ts) => (live(ts) ? { i, age, ts } : null))) {
     const A = aim(q.ts), i = q.i, a = q.age, s = (1 - Math.pow(1 - a, 1.5)) * (0.95 + 0.35 * rand(i, 21, sd));
     const ang = (rand(i, 22, sd) * 2 - 1) * half;
     const h = axisH(A, s, endH) + Math.sin(a * Math.PI) * 10 - a * a * 18;
@@ -225,11 +226,17 @@ function fire(c: Ctx, j: Jet, t: number): void {
 
   for (const p of out) if (p.kind === 1) puff(c, p.x, p.y, p.r, p.col, p.heat);
   // cooler first, so the hot middle shows on top
-  const fl = out.filter((p) => p.kind === 0 || p.kind === 3).sort((a, b) => b.heat - a.heat);
+  // each flame is a soft smear, not a ball: a dithered body stretched back along its path, a solid heart
+  const fl = out.filter((p) => p.kind === 0).sort((a, b) => b.heat - a.heat);
   for (const p of fl) {
-    if (p.kind === 3) { disc(c, p.x, p.y, p.r, HEAT[5]); disc(c, p.x, p.y - p.r * 0.2, p.r * 0.7, HEAT[3]); if (p.heat < 0.55) disc(c, p.x, p.y - p.r * 0.3, p.r * 0.35, HEAT[1]); continue; }
-    disc(c, p.x, p.y, p.r, p.col);
+    if (p.r >= 1.6) {
+      const mx = (p.x + (p.bx ?? p.x)) / 2, my = (p.y + (p.by ?? p.y)) / 2;
+      X.ellipse(c, p.x, p.y, p.r, p.r * 0.85, p.col, 0.5);
+      X.ellipse(c, mx, my, p.r * 0.85, p.r * 0.75, p.col, 0.5);
+      disc(c, (p.x + mx) / 2, (p.y + my) / 2, p.r * 0.62, p.col);
+    } else disc(c, p.x, p.y, p.r, p.col);
   }
+  for (const p of root) disc(c, p.x, p.y, p.r, p.col);
   for (const p of out) if (p.kind === 2) X.px(c, p.x, p.y, p.col);
   // the nozzle's flare
   X.glow(c, now.x, now.y, 5 + n * 1.2, n >= 4 ? '#fff4c0' : '#ffd860', 0.75);

@@ -41,6 +41,7 @@ const HELP: Record<string, string> = {
   'rhythm.naturalChannel': 'Beams and sprays are free for this long, then cost upkeep.',
   'rhythm.upkeep': 'Runes per second of the form element a channel costs past its natural duration.',
   'combat.channelRate': 'Beam / spray damage per second = per-hit damage x this.',
+  'combat.beamExp': 'Beams: hits grow with n^this, free time with n^(1 - this), for n form runes.',
   'combat.healPerLife': 'Healing per Life rune for one hit (channels: per second x channelRate).',
   'status.wetMin': 'The least any soaking hit leaves a body wet for, in seconds: what a Water spray gives.',
   'status.freeze': 'Seconds frozen at full chill. Less chill freezes for less, down to freezeShort.',

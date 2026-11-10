@@ -10,7 +10,7 @@
 import { rules, type Cast, type Element, type SpellDescriptor } from '@wizard-sim/rules';
 import {
   ARMS, COMBAT, DAMAGE, GUARD_NAME, QUEUE_MAX, RHYTHM, RUNES, SHAPES, STATUS, STRUCT, SURFACE,
-  compile, elementName, formCurve, type SpellSpec,
+  compile, beamCurve, elementName, formCurve, type SpellSpec,
 } from '@wizard-sim/sim';
 import type { Demo } from './demo';
 
@@ -159,14 +159,14 @@ const count = (spec: SpellSpec, e: Element): number => spec.counts[EL_ID(e) - 1]
 
 /**
  * The payload's damage by element at scale k (hit.ts: the form element on its curve, the rest linear),
- * or its healing. `flat`: a beam, whose form element counts once (its extra runes buy time).
+ * or its healing. `flat`: a beam, whose form element is on the beam's curve (beamCurve: its runes buy power and time).
  */
 function payload(spec: SpellSpec, k: number, unit: string, out: Metric[], flat = false): void {
-  if (spec.heal) { out.push({ key: 'heal', label: 'HEALS', v: COMBAT.healPerLife * (flat ? Math.min(1, count(spec, 'life')) : count(spec, 'life')) * k, unit }); return; }
+  if (spec.heal) { out.push({ key: 'heal', label: 'HEALS', v: COMBAT.healPerLife * (flat ? beamCurve(count(spec, 'life'), COMBAT.beamExp, 'power') : count(spec, 'life')) * k, unit }); return; }
   for (const e of ELS) {
     const c = count(spec, e);
     if (!c || !DAMAGE[e]) continue;
-    const id = EL_ID(e), mult = id === spec.form && c > 1 ? (flat ? 1 : formCurve(spec.form, c, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling)) : c;
+    const id = EL_ID(e), mult = id === spec.form && c > 1 ? (flat ? beamCurve(c, COMBAT.beamExp, 'power') : formCurve(spec.form, c, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling)) : c;
     out.push({ key: 'dmg:' + e, label: name(e).toUpperCase(), v: DAMAGE[e] * mult * k, unit });
   }
 }
@@ -210,7 +210,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
   const lasts = (v: number, label = 'LASTS') => m.push({ key: 'lasts', label, v, unit: 'S' });
   const longer = 1 + SHAPES.lingerPerRune * (n - 1);
   switch (sh) {
-    case 'beam': reach('RANGE', SHAPES.beamRange + spec.formN); break;
+    case 'beam': reach('RANGE', SHAPES.beamRange); break;
     case 'spray':
       reach('RANGE', SHAPES.sprayRange + 0.5 * (spec.sizeN - 1));
       m.push({ key: 'cone', label: 'CONE', v: 100 * (1 + 0.25 * (spec.sizeN - 1)), unit: '%', hidden: true });
@@ -285,8 +285,8 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
     }
     default: break;
   }
-  // a beam's extra runes buy time, not damage (cast.ts); every channel is free this long
-  if (spec.channel) m.push({ key: 'free', label: 'FREE FOR', v: RHYTHM.naturalChannel * (sh === 'beam' ? Math.max(1, spec.formN) : 1), unit: 'S', hidden: true });
+  // a beam's runes buy time as well as power (cast.ts); every channel is free this long
+  if (spec.channel) m.push({ key: 'free', label: 'FREE FOR', v: RHYTHM.naturalChannel * (sh === 'beam' ? beamCurve(Math.max(1, spec.formN), COMBAT.beamExp, 'time') : 1), unit: 'S', hidden: true });
   if (sh !== 'blink') m.push({ key: 'windup', label: 'WIND-UP', v: RHYTHM.windup + RHYTHM.windupPerRune * queue.length, unit: 'S', hidden: true });
   return { metrics: m, note };
 }

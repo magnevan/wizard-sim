@@ -148,7 +148,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       if (spec.heal) { spawnMissile(w, src, p, dx, dy, 3, (0.7 + 0.3 * charge) * k, tx, ty, ex.ox, ex.oy); break; }
       const m = spawnMissile(w, src, p, dx, dy, 1, (0.5 + 0.5 * charge) * k, 0, 0, ex.ox, ex.oy);
       if (m >= 0) {
-        const sp = SHAPES.missileSpeed * (0.6 + 0.4 * charge);
+        const sp = SHAPES.rockSpeed * (0.6 + 0.4 * charge);
         w.missiles.vx[m] = dx * sp; w.missiles.vy[m] = dy * sp;
         w.missiles.r[m] = 0.22 + 0.08 * n;
         w.missiles.pierce[m] = charge >= 1 ? 1 : 0;
@@ -416,7 +416,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
   setHitKind(HIT_KIND.channel);
   const setEnd = (ex: number, ey: number) => { if (from) from.end(ex, ey); else if (follow) { s.dblEndX[seat] = ex; s.dblEndY[seat] = ey; } else { s.chanEndX[src] = ex; s.chanEndY[src] = ey; } };
   if (spec.shape === 'beam') {
-    let reach = SHAPES.beamRange + spec.formN, target = -1;
+    let reach = SHAPES.beamRange, target = -1;
     for (let i = 0; i < b.kind.length; i++) {
       if (!alive(w, i) || i === src) continue;
       const d = rayCircle(x, y, dx, dy, b.x[i], b.y[i], b.r[i] + SHAPES.beamWidth / 2);

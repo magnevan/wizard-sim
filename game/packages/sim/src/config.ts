@@ -57,11 +57,16 @@ export const COMBAT = {
   channelStatus: 3,
   /** Sprays: share of the damage each body behind the nearest one takes (1 = everyone takes it all). */
   sprayFalloff: 0.6,
-  /** Forms without their own curve (lightning, arcane, shield, sigil): each extra rune adds this share of the first rune's damage. A beam's form counts once (its runes buy time). */
+  /** Forms without their own curve (lightning, arcane, shield, sigil): each extra rune adds this share of the first rune's damage. A beam has its own curve (beamExp). */
   formScaling: 0.7,
   /** Sprays grow with n^sprayExp (0.5 = square root, as Magicka's); rocks with n^rockExp (1.5: going all-in pays). */
   sprayExp: 0.5,
   rockExp: 1.5,
+  /**
+   * A beam's form runes n: its hits (damage or healing) grow with n^beamExp and its free time with n^(1 - beamExp),
+   * so a whole beam is still n runes' worth (the 2026-11-07 audit) but a bigger one hits harder (the user, 2026-11-10).
+   */
+  beamExp: 0.5,
 };
 
 /** How long floor surfaces last, in seconds. */
@@ -95,10 +100,12 @@ export const STATUS = {
 };
 
 export const SHAPES = {
-  beamRange: 12, beamWidth: 0.35,
+  beamRange: 30, beamWidth: 0.35, // past the edge of the view: a beam runs until it hits something
   sprayRange: 4.5, sprayHalfAngle: 0.09, // turns (about 32 degrees)
   arcRange: 6, arcJump: 3.5, arcInterval: 0.2, arcJumps: 2, // jumps, plus one per extra lightning rune (Chain)
   missileSpeed: 12, missileLife: 1.4, missileRadius: 0.3,
+  /** A fully charged rock's speed, u/s (a quick one flies at 60 %). Faster than other missiles: the user found 12 sluggish (2026-11-10). */
+  rockSpeed: 16,
   shardCount: 5, shardSpread: 0.035, // turns between shards
   /** Each ice shard's share of the payload: 0.75, so a full 6-shard volley lands the 4.5x it did before every shard hit alike. */
   shardPower: 0.75,

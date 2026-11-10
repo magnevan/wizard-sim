@@ -38,6 +38,28 @@ export function kitRun(ax: number, ay: number, bx: number, by: number, realX: nu
   return out;
 }
 
+/** Which columns of its 76 px wide canvas a piece's art covers, and how far either side of its feet a body is drawn. */
+const ART_X: Readonly<Record<Side, readonly [number, number]>> = { n: [28, 62], w: [14, 48], s: [14, 38], e: [38, 62] };
+const BODY_HALF = 12;
+
+/**
+ * The ground y to sort a piece of an open area's wall by this frame. A piece's one y can't order a body
+ * walking beside the wall, because the wall's line slopes across the body's width: the next piece along
+ * would swallow it and let it go again. So what decides is which side of the line the body's feet are
+ * on. Any body whose picture reaches this piece goes behind it if it stands north of the line and in
+ * front if south.
+ */
+export function sideZ(st: Stamp, ax: number, ay: number, bx: number, by: number, bodies: readonly { on: boolean; x: number; y: number }[]): number {
+  const x0 = st.x + ART_X[st.side][0] - BODY_HALF, x1 = st.x + ART_X[st.side][1] + BODY_HALF, slope = (by - ay) / (bx - ax);
+  let z = st.z, front = Infinity;
+  for (const v of bodies) {
+    if (!v.on || v.x < x0 || v.x > x1) continue;
+    if (v.y > ay + (v.x - ax) * slope) front = Math.min(front, v.y - 1);
+    else z = Math.max(z, v.y + 1);
+  }
+  return Math.min(z, front);
+}
+
 const urls = import.meta.glob<string>('../../../../content/assets/kits/*/*.png', { eager: true, query: '?url', import: 'default' });
 const urlOf = new Map(Object.entries(urls).map(([path, url]) => [path.split('/').slice(-2).join('/'), url]));
 

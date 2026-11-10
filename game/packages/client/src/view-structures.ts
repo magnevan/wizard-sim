@@ -36,7 +36,7 @@ import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from 
 import type { BodyView, LightFn } from './art/vfx';
 import { glyph, perkOf } from './art/perks';
 import { drawTutorialWorld } from './tutorial-view';
-import { kitOf, kitRun, stampTexture, wallsAllFar } from './art/wall-kit';
+import { kitOf, kitRun, sideZ, stampTexture, wallsAllFar } from './art/wall-kit';
 
 /** A wall of fire that belongs to the place (the battery's gate) stands this much taller than a cast one. */
 const GATE_FIRE = 3.4;
@@ -502,7 +502,7 @@ export class StructureView {
     this.slabs.begin(12);
     this.scorch.draw(w, st);
     const off = OFF;
-    if (!off.includes('walls')) this.walls(w, t, g, o, light);
+    if (!off.includes('walls')) this.walls(w, t, g, o, bodies, light);
     if (w.run) { this.altars(w, t, g, o, light); this.rallies(w, t, g, o, bodies, light); }
     if (w.tut) drawTutorialWorld(w, t, g, o, light, (rx, ry, cw, ch, z) => this.pieces.canvas(rx, ry, cw, ch, z));
     if (!off.includes('waves')) { this.waves(w, t, g, o, light); this.sparks(w, t, g, o, light); }
@@ -637,7 +637,7 @@ export class StructureView {
   }
 
   // ---- Shield walls ---------------------------------------------------------------------------------
-  private walls(w: World, t: number, g: Ctx, o: Ctx, light: LightFn): void {
+  private walls(w: World, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
     const wl = w.walls, tr = w.terrain, nt = tr.n, s = w.seats, tick = w.clock[0], live = new Set<string>(), kitName = kitOf(w.def.id);
     const near = (ax: number, ay: number, x: number, y: number) => Math.abs(ax - x) < 0.05 && Math.abs(ay - y) < 0.05;
     const joins = (id: number, x: number, y: number) => {
@@ -664,7 +664,8 @@ export class StructureView {
             if (!got) { drawn = false; break; }
           }
           if (run && drawn) {
-            for (const st of run) { const got = stampTexture(kitName, st)!; this.pieces.tex(got.tex, st.x + got.dx, st.y, st.z, 0xffffff, st.foot); }
+            const open = wallsAllFar(w.def.id);
+            for (const st of run) { const got = stampTexture(kitName, st)!; this.pieces.tex(got.tex, st.x + got.dx, st.y, open ? sideZ(st, a[0], a[1], bb[0], bb[1], bodies) : st.z, 0xffffff, st.foot); }
             continue;
           }
         }
@@ -771,27 +772,43 @@ export class StructureView {
     const c = this.pieces.canvas(x0 - 6, y0 - h - head, x1 - x0 + 13, y1 - y0 + h + head + 6, mid[1]);
     const P = S.sample([a, bb], 4);
     if (el === 'fire') {
-      for (const p of cols) if ((Math.round(p[0]) + Math.round(p[1])) % 3 === 0) X.ellipse(g, p[0], p[1], 2.5, 1.2, 'rgba(26,16,14,0.5)');
-      // one continuous sheet of flame along the line (fire-place-v3's column fire): a low base and
-      // tongues where travelling waves peak, gold roots, orange body, red-orange tips
-      const FR = EL.fire, n = cols.length;
+      for (const p of cols) if (rand(Math.round(p[0]), Math.round(p[1]), 41) < 0.33) X.ellipse(g, p[0], p[1], 2.5, 1.2, 'rgba(26,16,14,0.5)');
+      // A sheet of flame along the line, three layers deep: dark red behind, orange through the body, gold
+      // at the roots. Heights come from noise along the wall, so a long wall never repeats. A bigger fire
+      // has bigger tongues that move slower: its size grows by s, its waver by only the root of s.
+      const FR = EL.fire, n = cols.length, s = wl.owner[k] === TERRAIN ? GATE_FIRE : 1, slow = 1 / Math.sqrt(s), big = Math.sqrt(s), lift = Math.round(s - 1);
       // one column per pixel along the wall: a north-south wall would stack them into a 1 px strip,
       // so columns widen as the wall turns vertical (1 px across the screen, 4 px up it)
       const adx = Math.abs(bb[0] - a[0]), ady = Math.abs(bb[1] - a[1]);
       const cw = 1 + Math.round((3 * ady) / (adx + ady + 1e-6)), co = Math.floor(cw / 2);
-      for (let j = 0; j < n; j++) {
-        const xx = Math.round(cols[j][0]), yy = Math.round(cols[j][1]), edge = Math.min(1, (j + 1) / 4, (n - j) / 4);
-        if (edge < 0.5 && rand(xx, yy, 3) > edge * 1.6) continue;
-        const wv = 0.5 + 0.5 * Math.sin(j * 0.55 - t * 6 + Math.sin(j * 0.21) * 3), w2 = 0.5 + 0.5 * Math.sin(j * 0.23 + t * 3.1);
-        const hh = Math.round(((3 + 2 * pulse) + (h - 3) * wv * wv * (0.55 + 0.45 * w2) * (0.85 + 0.15 * Math.sin(t * 13 + j))) * edge * rise);
-        if (hh < 1) continue;
-        const sw = Math.sin(t * 9 + j * 0.4), b1 = Math.round(hh * 0.35), b2 = Math.round(hh * 0.75);
-        if (b1 > 0) X.rect(c, xx - co, yy - b1 + 1, cw, b1, FR[1]);
-        if (b2 > b1) X.rect(c, xx - co + Math.round(sw * b2 * 0.06), yy - b2 + 1, cw, b2 - b1, FR[2]);
-        if (hh > b2) X.rect(c, xx - co + Math.round(sw * hh * 0.12), yy - hh + 1, Math.max(1, cw - 1), hh - b2, hh > 7 ? FR[3] : FR[2]);
-        if (hh > 9 && wv > 0.97) X.px(c, xx + Math.round(sw * hh * 0.14), yy - hh, FR[0]);
+      const noise = (x: number, y: number, seed: number): number => {
+        const ix = Math.floor(x), iy = Math.floor(y), fx = smooth(x - ix), fy = smooth(y - iy);
+        return lerp(lerp(rand(ix, iy, seed), rand(ix + 1, iy, seed), fx), lerp(rand(ix, iy + 1, seed), rand(ix + 1, iy + 1, seed), fx), fy);
+      };
+      // each layer is a sheet of its own tongues, nested from dark red outside to gold in the core; a bigger fire has more of them
+      const LAYERS: readonly (readonly [number, string, string])[] = s > 1
+        ? [[1, FR[3], FR[4]], [0.86, FR[2], FR[3]], [0.66, FR[2], FR[3]], [0.46, FR[1], FR[2]], [0.26, FR[1], FR[1]]]
+        : [[1, FR[3], FR[4]], [0.74, FR[2], FR[3]], [0.4, FR[1], FR[2]]];
+      for (let layer = 0; layer < LAYERS.length; layer++) {
+        const [tall, root, tip] = LAYERS[layer], up = layer === 0 ? lift : 0, seed = sd + 101 * layer, core = layer === LAYERS.length - 1;
+        const reach = h * tall;
+        for (let j = 0; j < n; j++) {
+          const xx = Math.round(cols[j][0]), yy = Math.round(cols[j][1]), edge = Math.min(1, (j + 1) / 4, (n - j) / 4);
+          if (edge < 0.5 && rand(xx, yy, 3) > edge * 1.6) continue;
+          const broad = noise(j / (15 * big), t * 1.5 * slow, seed + 1), fine = noise(j / (6 * big), t * 2.8 * slow, seed + 2), grain = noise(j / 2, t * 5 * slow, seed + 3);
+          const body = clamp((broad * 0.65 + fine * 0.35 - 0.2) / 0.6, 0, 1), base = (3 + 2 * pulse) * (layer === 0 ? 1 : 0.8);
+          // the outer sheet stays whole; the ones inside it rise and fall right down to the root, so tongues show within the fire
+          const floor = layer === 0 ? 0.3 : 0.04, hh = Math.round((base + (reach - base) * (floor + (1 - floor) * Math.pow(body, 1.3)) * (0.75 + 0.25 * grain)) * edge * rise);
+          if (hh < 1) continue;
+          const sw = (noise(j / (18 * big), t * 1.1 * slow, seed + 4) - 0.5) * 2, split = Math.round(hh * 0.62);
+          const y = yy - up + (core ? 1 : 0);
+          X.rect(c, xx - co, y - split + 1, cw, split, root);
+          if (hh > split) X.rect(c, xx - co + Math.round(sw * hh * 0.1), y - hh + 1, Math.max(1, cw - (layer ? 0 : 1)), hh - split, tip);
+          if (core && hh > 6 && grain > 0.72) X.px(c, xx, y - hh, FR[0]);
+        }
       }
-      for (const p of emit(t, 4 * P.length, 1, (i, age) => { const q = P[mod(i, P.length)]; return { x: q[0] + Math.sin(age * 5 + i) * 2, y: q[1] - h * 0.6 - age * 14, age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? EL.fire[1] : EL.fire[3]);
+      // embers leave from inside the sheet at a speed that barely grows with it
+      for (const p of emit(t, 2 * P.length * big, 1, (i, age) => { const q = P[mod(i, P.length)]; return { x: q[0] + Math.sin(age * 5 + i) * 2, y: q[1] - h * (0.45 + 0.5 * rand(i, 44, sd)) - age * 14 * big, age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? EL.fire[1] : EL.fire[3]);
       if (wl.owner[k] === TERRAIN) light(mid[0], mid[1] - 16, 36, '#ff7020', 0.6 * rise); // set back, or its glow reaches the gate's anchor and washes out the whole sprite
       else light(mid[0], mid[1], 40, '#ff7020', 0.6 * rise);
       return;

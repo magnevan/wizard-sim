@@ -6,6 +6,7 @@
     5.0,
     5.0
   ],
+  "round": true,
   "sets": {
     "lean": {
       "file": "lean.png",

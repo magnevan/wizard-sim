@@ -54,6 +54,22 @@ def kit_pillar():
     return out.crop(box), ox + 38 - box[0], oy + 67 - box[1]
 
 
+def split_well(im):
+    """The well as two pictures on one canvas: the low steps, and everything standing on them. The drum's outline is an ellipse on
+    the ground (centre DRUM_C, half-widths DRUM_R); above it is the drum's side, the rings and the crystal."""
+    a = np.array(im)
+    h, w = a.shape[:2]
+    DRUM_C, DRUM_R = (51, 74), (35, 19)
+    ys, xs = np.mgrid[0:h, 0:w]
+    dx = np.clip(np.abs(xs - DRUM_C[0]) / DRUM_R[0], 0, 1)
+    inside = np.abs(xs - DRUM_C[0]) <= DRUM_R[0]
+    upper = (ys < 58) | (inside & (ys <= DRUM_C[1] + DRUM_R[1] * np.sqrt(1 - dx * dx)))
+    top, steps = a.copy(), a.copy()
+    top[~upper] = 0
+    steps[upper] = 0
+    return Image.fromarray(steps), Image.fromarray(top)
+
+
 def main():
     raw = os.path.join(ROOT, DEFENCE)
     left, top, right, bottom = Image.open(os.path.join(raw, 'tower-clean.png')).getchannel('A').getbbox()
@@ -62,11 +78,15 @@ def main():
         im = Image.open(os.path.join(raw, file)).convert('RGBA')
         box = im.getchannel('A').getbbox()
         foot = [anchor[0] - box[0], anchor[1] - box[1]]
-        register(pid, name, footprint, im.crop(box), f'{DEFENCE}/{file}', '/v2/rotate' if 'rotated' in edits else 'create_1_direction_object', edits, foot=foot)
+        register(pid, name, footprint, im.crop(box), f'{DEFENCE}/{file}', '/v2/rotate' if 'rotated' in edits else 'create_1_direction_object', edits, foot=foot, round_=footprint is FOOTPRINT)
     im = Image.open(os.path.join(ROOT, WELL_RAW)).convert('RGBA')
     box = im.getchannel('A').getbbox()
     im = im.crop(box)
-    register('battery-well', 'Battery well', [5.0, 5.0], im, WELL_RAW, 'create_1_direction_object', foot=[im.width // 2, im.height - im.width // 4])
+    foot = [im.width // 2, im.height - im.width // 4]
+    steps, top = split_well(im)
+    # The steps sort at their back rim, so a body standing round them is in front and they show only under its feet; the drum, rings and crystal sort at the well's middle.
+    register('battery-well', 'Battery well, steps', [5.0, 5.0], steps, WELL_RAW, 'create_1_direction_object', 'trimmed; split: the low steps only', foot=foot, round_=True, sort=-(im.width // 4 + 1))
+    register('battery-well-top', 'Battery well, drum and rings', [1.0, 1.0], top, WELL_RAW, 'create_1_direction_object', 'trimmed; split: the drum, rings and crystal', foot=foot)
     im, foot_x, foot_y = kit_pillar()
     register('battery-pillar', 'Gate pillar', [2.1, 2.1], im, f'{KIT_RAW}/tile_53.png', 'create_building_kit', 'assembled from the fortress kit: block 53 stacked, its pillar piece cut short for battlements', foot=[foot_x, foot_y])
     print('registered', len(PIECES) + 2)

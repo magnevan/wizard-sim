@@ -4,7 +4,7 @@ const R=(x,y,w,h,k,l,o)=>({t:'r',x,y,w,h,k,l,...o}), C=(x,y,r,k,l)=>({t:'c',x,y,
 const STYLE='hi-bit pixel art, dark outline, seen from above at an isometric angle';
 
 window.SEGMENT={
-round:4,
+round:5,
 number:1,
 title:'The Opening',
 lede:`From the briefing to your first spell of your own. This page holds what happens, where it happens, and what's still open.`,
@@ -13,7 +13,7 @@ stages:[
  ['Brief','draft'],['Beat chart','draft'],['Space diagram','review'],['Blockout','next','The battery first'],['Script','later'],['Dressing','started','General art bought'],['Finish','later'],
 ],
 needsYou:[
- ['#buy-well',`The well, rewritten around your images. It needs your sign-off before I buy it, and there's one colour choice in it.`],
+ ['#buy-well',`The well's purchase, with the prompt reworded as you asked. Mark Approve and I'll buy it.`],
 ],
 onMe:[`Build the battery as a plain playable room.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
 chapters:[
@@ -25,7 +25,7 @@ chapters:[
   s:[R(2,2,38,28,'floor','Hall',{ly:26}),R(42,0,6,32,'floor'),R(40,23,2,5,'floor'),R(11,2,20,1,'struct'),R(12,3,18,4,'sand','Dais'),
   R(5,10,12,1.2,'furn'),R(5,13,12,1.2,'furn'),R(5,16,12,1.2,'furn'),R(25,10,12,1.2,'furn'),R(25,13,12,1.2,'furn'),R(25,16,12,1.2,'furn'),R(47,8,1,10,'struct'),{t:'x',x:45,y:30,l:'Cloister'},{t:'x',x:44.2,y:13,l:'Postings',a:'end'}]},
  beats:[
- {n:1,min:1.5,minLabel:'1–2',p:1,label:'Rest',src:'Yours',title:'The briefing',does:`Strange reports, too many jobs, and you'll need some fighting training (but don't worry, you won't need it). You can walk around while it runs.`,teaches:'The world, and the joke to pay off',magic:'None'},
+ {n:1,min:1.5,minLabel:'1–2',p:1,label:'Rest',src:'Yours',title:'The briefing',does:`Strange reports, too many jobs, and you'll need some fighting training (but don't worry, you won't need it). You are held in place while it runs, and a skip button ends it.`,teaches:'The world, and the joke to pay off',magic:'None'},
  ],
  solve:[]},
 {id:'yard',name:'Drill yard',
@@ -65,7 +65,7 @@ chapters:[
   C(16,3,1.6,'danger'),C(36,3,1.6,'danger'),C(58,3,1.6,'danger')]},
  beats:[
  {n:4,min:3,minLabel:'3',p:2,label:'Low',src:'Yours',title:'Driving the defence',does:`Take control of a defence, and the camera moves to it. Cast Fire from its position: Force, Area and Place.`,teaches:'Casting modes, the rune bar',magic:`One element, from the defence's deep pool`},
- {n:5,min:2,minLabel:'2',p:3,label:'Rising',src:'Yours',srcNote:'the visible drain is a proposal',title:'The pool fails',does:`Enemies arrive. The pool refills slower and slower, in plain sight on the bar.`,teaches:'The well is failing',magic:`The defence's`},
+ {n:5,min:2,minLabel:'2',p:3,label:'Rising',src:'Yours',title:'The pool fails',does:`Enemies arrive. The pool refills slower and slower, in plain sight on the bar.`,teaches:'The well is failing',magic:`The defence's`},
  {n:6,min:.75,minLabel:'<1',p:5,label:'Peak',src:'Yours',title:'It runs dry',does:`The bar goes dark, the camera returns to you, and you feel the infusion. A special animation plays, and the Fire rune arrives very visibly on the bar. The bar looks different while you're operating a defence, so the change to your own runes is obvious.`,teaches:'The moment',magic:'Your first rune',key:true},
  {n:7,min:2,minLabel:'2',p:4,label:'High',src:'Yours',srcNote:'the hint is a test',title:'From your own hands',does:`The same keys now cast from your hands. One rune and you're empty, so a fire blade is the natural answer, and you go out and defend yourself. Playtesting decides whether that needs a prompt, a subtler hint, or nothing. A prompt may feel overbearing, but without any hint players may struggle.`,teaches:'You are the well, and why a weapon helps',magic:'Fire, Sigil only with Conjure'},
  ],
@@ -87,20 +87,20 @@ rules:[
  ['Four wizards fit.',' A Fire ring is 3 units in radius, so a fight wants about 6 units per player, and a room at least 24 by 18.'],
  ['Walks vary, and some are long.',' Sometimes you walk a while before anything happens, because that makes the world feel real. You cross a screen in about 7 seconds.'],
 ],
-buy:[{id:'job-well',anchor:'buy-well',name:`The well`,cost:14,costLabel:'About 14 generations, not bought yet',tool:'One call at 128 px, which returns four candidates. Nothing is bought until you mark Approve.',
+buy:[{id:'job-well',anchor:'buy-well',name:`The well`,cost:14,costLabel:'About 14 generations, not bought yet',tool:'One call at 128 px, which returns four candidates. Nothing is bought until you mark Approve. It is still marked Change from your last pass.',
  why:`Not a hole in the ground. Your images are structures that hold up a column of light, so I've dropped the ring-around-a-basin idea.`,
  points:[
   [`What wells share.`,` Light stands up out of the ground as a column and rises past the top of the screen. The structure holds and frames it, with nothing sunk into the ground to look down into. Worked stone and brass, glowing seams, and a small ring of light where the column meets the floor.`],
   [`This one.`,` Your top-right image, built for a working site: a flared stone and brass plinth with tilted brass rings around a crystal. Rings show up well from our high camera, and they can show the well's state. The monolith and the standing blades stay available for other wells.`],
   [`The three states.`,` Unstable: the column whips and arcs, the rings are knocked askew, the seams flicker. Drained: no column, dark seams, the rings dropped onto the plinth. Stable: a straight, steady column and level rings.`],
   [`Bought and drawn.`,` The purchase is the structure only, lit and still. The column, arcs and floor ring are drawn in code so they can animate at any height. Unstable and Drained start as free local edits, as the burnt-out defence did.`],
-  [`The one choice in here is colour.`,` Your images are all blue, but this well feeds Fire defences, so I've written it orange, matching the defence's crystal and the Fire rune you get from it. A well's light would then take the colour of its field, and blue could be the Arcane well at the academy. If every well should be blue, say so and I'll change the words.`],
+  [`Colour follows the field.`,` A well's light takes the colour of the magic it draws, so this one is orange, matching the defence's crystal and the Fire rune you get from it. A well on the academy's Arcane vein would look different.`],
  ],
- lines:['A magical power source standing on its own: a flared octagonal plinth of worked stone and dark brass on a low round stone step, with thin glowing orange runes cut into the seams of the stone. Above the plinth, three interlocking tilted brass rings float around a glowing orange diamond-shaped crystal, touching neither it nor each other. Nothing above the rings and nothing around it on the ground. No basin, no pit, no bucket, no roof, no water, no beam of light. Medieval fantasy engineering. Hi-bit pixel art, dark outline, seen from above at an isometric angle.'],
+ lines:['A magical power source standing on its own: a flared octagonal plinth of worked stone and dark brass on a low round stone step, with thin glowing orange runes cut into the seams of the stone. Above the plinth, three interlocking tilted brass rings float freely around a glowing orange diamond-shaped crystal. Medieval fantasy engineering. Hi-bit pixel art, dark outline, seen from above at an isometric angle.'],
  images:[['img/well-references.jpg','Five painted wells: curved stone blades around a crystal, a brass armillary on a plinth, a monolith with a ring cut in it, and a stone basin under a hanging timber housing, each with a column of blue light','Your concept images, for direction. They are not going into the game.']]},
 {id:'job-defence',name:`The defence`,cost:49,costLabel:'49 generations so far',tool:'Candidate 3 chosen. One tower, with only the head rotated through the Rotate endpoint, 1 generation per facing. The burnt-out version is a free local edit, so nothing more to pay for. All of it is registered as game assets, tower and heads separate.',
  why:`A flamethrower on a tower. It faces north-east and swings about 45 degrees either way, so only the head turns, on its collar, and the tower stays one image.`,
- images:[['img/defence-flame-candidates.png','Four flamethrower towers with a brass head on a central collar and an orange crystal set into the stone','The four candidates. You chose 3.'],['img/defence-flame-facings.png','Candidate 3 facing north, north-east and east on one identical tower','The three facings, sharing one tower.'],['img/defence-burnt.png','The working defence beside the burnt-out one, with a black cracked crystal, soot up the wall, a sagging nozzle and no flame','Working, and burnt out. A free local edit with no generations spent. Say if it needs to be better than this.']],
+ images:[['img/defence-flame-candidates.png','Four flamethrower towers with a brass head on a central collar and an orange crystal set into the stone','The four candidates. You chose 3.'],['img/defence-flame-facings.png','Candidate 3 facing north, north-east and east on one identical tower','The three facings, sharing one tower.'],['img/defence-burnt.png','The working defence beside the burnt-out one, with a black cracked crystal, soot up the wall, the whole structure gone dark and no flame','Working, and burnt out. The barrel keeps its shape now, and the whole structure goes dark with the flames out.']],
  lines:['A fixed flamethrower defence on a squat round stone tower, facing up and to the right. A compact brass flame-projector head with a slim nozzle flaring to a burner tip and a small pilot flame, sitting on a round swivel collar at the centre of the tower top. Nothing connects the head to the tower except the collar. A glowing orange crystal in a cage is built into the side of the tower below the collar, with short brass pipes running into the stone, not up to the head. Medieval fantasy engineering, not a cannon, no barrel. Hi-bit pixel art, dark outline, seen from above at an isometric angle.']}],
 art:[
  ['Hall','Academy furnishings and school wall kit (bought); lectern, benches, bookshelves, banners, clock (owned)','Other students: wizard rig recoloured'],

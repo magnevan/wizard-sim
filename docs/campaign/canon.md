@@ -52,7 +52,7 @@ Proposed by the user and not yet settled. Critique and options are in `../explor
 
 - The school hires soldiers to escort wizards at times, and you don't get any because of budget cuts. Not everyone at the school is a wizard. (The user, Opening Segment page, 2026-11-10.)
 - Wells have no single design, only things in common, and differ in size by orders of magnitude. (The user, same page.)
-- A well is not a literal well. The user's concept images (`docs/reference/well concept art.png` in the main checkout) show structures of stone and brass holding up a column of light: rings around a crystal, an armillary on a plinth, a monolith with a ring cut in it. (The user, 2026-11-10.)
+- A well is not a literal well. The user's concept images (`docs/reference/well concept art.png` in the main checkout) show structures of stone and brass holding up a column of light: rings around a crystal, an armillary on a plinth, a monolith with a ring cut in it. A well's colour depends on the magic it extracts. (The user, 2026-11-10.)
 
 ## Open tensions
 

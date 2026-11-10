@@ -1121,3 +1121,5 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 ## 2026-11-10: A well holds up a column of light
 - **Not a literal well** (the user, with concept images). The basin proposal is dropped: wells are structures of stone and brass framing a column of light that rises out of the ground.
 - **The battery's well is proposed as an armillary on a plinth, in orange,** and isn't bought yet. Its colour is the user's call, since their images are blue.
+- **A well's colour follows the magic it extracts** (the user), so the battery's is orange. It still needs the Approve mark before it's bought.
+- **The burnt-out defence keeps a rigid barrel** (the user: a physical barrel wouldn't change shape), and the whole structure goes darker with no flames.

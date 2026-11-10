@@ -11,12 +11,12 @@
       "file": "lean.png",
       "foot": [
         18,
-        98
+        101
       ],
       "source": "pixellab",
       "raw": "game/content/generated/pixellab/opening/defence/head-burnt-placed.png",
       "tool": "create_1_direction_object",
-      "edits": "north-east head, flame removed, nozzle sheared down, darkened, snapped to the warm half of the palette",
+      "edits": "north-east head, flame removed, darkened, snapped to the warm half of the palette",
       "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
     }
   }

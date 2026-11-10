@@ -39,7 +39,7 @@ import { drawTutorialWorld } from './tutorial-view';
 import { kitOf, kitRun, stampTexture, wallsAllFar } from './art/wall-kit';
 
 /** A wall of fire that belongs to the place (the battery's gate) stands this much taller than a cast one. */
-const GATE_FIRE = 2.2;
+const GATE_FIRE = 3.4;
 import { toX, toY } from './iso-world';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
 

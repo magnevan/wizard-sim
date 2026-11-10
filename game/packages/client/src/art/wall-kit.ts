@@ -45,7 +45,7 @@ const urlOf = new Map(Object.entries(urls).map(([path, url]) => [path.split('/')
  * The kit a room's straight walls are built from. Rooms not listed keep the drawn walls: tall kit walls
  * hide the action in an open arena like Survive, and its angled walls have no kit pieces to match.
  */
-const ROOM_KIT: Readonly<Record<string, string>> = { academy: 'academy', battery: 'fortification' };
+const ROOM_KIT: Readonly<Record<string, string>> = { academy: 'academy', battery: 'fortress' };
 export const kitOf = (room: string): string | undefined => ROOM_KIT[room];
 
 /** Areas whose wall runs through the middle, not round the edge: it faces you and stands full height wherever it is. */

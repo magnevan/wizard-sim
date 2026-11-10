@@ -13,7 +13,7 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 RAW = os.path.join(HERE, '../../game/content/generated/pixellab/opening')
 OUT = os.path.join(HERE, '../../game/content/assets/kits')
-KITS = {'academy': 'kit-academy', 'fortification': 'kit-fortification'}
+KITS = {'academy': 'kit-academy', 'fortification': 'kit-fortification', 'fortress': 'kit-fortress'}
 # piece index in the kit: north, west, south, east side of a tile
 PIECES = {'n': 1, 'w': 4, 's': 3, 'e': 2}
 # how high the near walls stand, art px above their ground line

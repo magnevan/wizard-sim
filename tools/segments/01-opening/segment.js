@@ -13,8 +13,6 @@ stages:[
  ['Brief','draft'],['Beat chart','draft'],['Space diagram','review'],['Blockout','started','The battery is walkable'],['Script','later'],['Dressing','started','General art bought'],['Finish','later'],
 ],
 needsYou:[
- ['#buy-fort',`A full set of outdoor fortifications, in stone that matches the towers. It needs your Approve.`],
- ['#solve-battery-fire-gate',`The gate is now a wall of fire. Should it go out when the well runs dry?`],
  ['#beat-4',`Walk the battery and tell me what still feels off.`],
 ],
 onMe:[`Driving a defence: take control, cast from the tower, and the pool that fails.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
@@ -51,7 +49,7 @@ chapters:[
  solve:[
  ]},
 {id:'battery',name:'The battery',
- shots:[['img/battery-gate.png','The kit-built gate through the wall with the well in the rear yard and towers either side','The rear yard, from the gate. Built, and walkable.'],['img/battery-crews.png','A wizard in the rear yard between the wall towers and the well','Where the crews stand: a pedestal for each tower.'],['img/battery-north.png','The gate and wall towers seen from the north side of the wall','The gate from the killing ground, in the same stone as the wall.']],
+ shots:[['img/battery-gate.png','The sandstone wall and two pillars with fire between them, the well in the rear yard','The rear yard, from the gate. Built, and walkable.'],['img/battery-crews.png','A wizard in the rear yard between the wall towers and the well','Where the crews stand: a pedestal for each tower.'],['img/battery-north.png','The pillars, fire and wall towers seen from the north side of the wall','The gate from the killing ground: two pillars, with the wall of fire between them.']],
  map:{W:84,H:72,base:'grass',what:`The first job. You drive a defence on the wall until it runs dry, then go out through the gate on your own power.`,
   route:[[42,72],[42,62],[29,43],[42,42],[42,26],[64,10],[64,0]],
   views:[['Driving a defence',29,26],['Your own body',29,44],['Out the gate',42,24]],
@@ -78,7 +76,8 @@ chapters:[
  [`More air.`,` The area is now 84 × 72. The defences stand 13 apart, the rear yard is half as deep again, the well sits 19 back from the wall, and the stores keep to their own corner.`],
  [`Tower size is right,`,` at about three and a half wizards wide.`],
  [`The towers don't all have to fit one screen.`,` A neighbouring pair fits at 1080p, and that's fine.`],
- [`The gate is a wall of fire,`,` Shield + Fire + Fire, the same spell a wizard casts. You can walk through it and it burns you. The stonework around it is a stand-in from the wall kit.`],
+ [`The gate is a wall of fire,`,` Shield + Fire + Fire, the same spell a wizard casts. You can walk through it and it burns you. It burns between two pillars of the same sandstone as the wall.`],
+ [`The fire goes out with the well.`,` It's fed by the same well, so it gutters when the pool runs dry at beat 6, and that's how the enemies get through at beat 7. You never have to cross it while it's lit.`],
  [`Stone paving follows the ground's angle,`,` so the cobbles at the gate, the road and the well no longer look top-down.`],
  [`One lane per player.`,` Each wave sends the same number of enemies at each occupied defence, and they go for their own lane's defence first. Neighbouring reach overlaps so players can help. Solo is one lane at the centre.`],
  [`Each wave is built for one Fire attack.`,` Archers beyond spray reach call for Place, a swarm of small enemies for the burst, something heavy at the wall for the flamethrower. Wave sizes wait for the flamethrower and burst balance.`],
@@ -86,7 +85,6 @@ chapters:[
  [`The repair.`,` You take part, or do it yourselves, with a simple "press X to stabilize". The screen fades to black and back, and the well has changed: Unstable, then Drained, then Stable.`],
  ],
  solve:[
- {id:'battery-fire-gate',title:'What the wall of fire does in the story',body:`The gate is closed by a standing wall of flame. It fits the place: Fire defences, fed by a Fire well. Right now it burns forever, and it burns you too.`,proposal:`It's fed by the same well, so when the pool runs dry at beat 6 the fire gutters and goes out with it. That makes the failure visible along the wall, and it's how the enemies get through at beat 7. You never have to cross it while it's lit, so burning you is fine. It also shows the player Shield + Fire long before they own those runes.`},
  ]},
 ],
 rules:[
@@ -96,16 +94,14 @@ rules:[
  ['Four wizards fit.',' A Fire ring is 3 units in radius, so a fight wants about 6 units per player, and a room at least 24 by 18.'],
  ['Walks vary, and some are long.',' Sometimes you walk a while before anything happens, because that makes the world feel real. You cross a screen in about 7 seconds.'],
 ],
-buy:[{id:'job-fort',anchor:'buy-fort',name:`Outdoor fortifications`,cost:19,costLabel:'About 19 generations, not bought',tool:'Two steps: one building kit (15 generations) and up to four tries at the gate (1 each, using the new wall as a style reference). Nothing is bought until you mark Approve.',
- why:`The wall we have came from a tool that makes walls for buildings: square tiles and timber bracing, closer to a barn than a fortress. That's why the gate looks boxy. This buys a set made for the job.`,
+buy:[{id:'job-fort',anchor:'buy-fort',name:`Outdoor fortifications`,cost:10,costLabel:'10 generations',tool:'Bought. One building kit at 48 px, in the stone of the defence towers. The gate tries were not needed, so that part was not spent.',
+ why:`The wall, the gate and the towers now share one warm sandstone. The kit also has corners, wall ends, pillars and stairs for later.`,
  points:[
-  [`What you'd get.`,` Straight wall, corners, wall ends, pillars and stairs up to the wall, from the kit, and a proper arched gatehouse on top of that.`],
-  [`The stone.`,` Warm tan sandstone, to match the defence towers. Right now the grey wall and tan towers don't belong together.`],
-  [`No doors.`,` The opening is closed by the wall of fire, so the arch stands open.`],
-  [`The risk.`,` PixelLab's help says it can't guarantee one large object lines up with the isometric axis, so some gate tries may come back at the wrong angle. The kit pieces don't have that problem, and if every gate try fails I'd build the arch from the new kit's pieces.`],
+  [`The gate is two pillars`,` with the wall of fire between them, as you suggested. They're stacked from the kit's blocks.`],
+  [`Battlements.`,` The generator ignored the word, so the wall tops are flat. The stones on top of the pillars are added by hand. I can do the same along the wall if you want it.`],
  ],
- lines:['Kit, walls: A massive outdoor fortress curtain wall of large warm tan sandstone blocks, rough-dressed and weathered, with dark mortar lines and crenellated battlements along the top. Kit, floor: trampled packed earth. Kit, upper floor: worn tan flagstones. Isometric, 48 px tiles, walls 2 tiles high, our palette.','Gate: A fortified gatehouse in 2:1 isometric view, its wall running from the upper left down to the lower right. Two square towers of large warm tan sandstone blocks with crenellated tops, joined by a tall rounded stone arch over an open passage. Medieval fantasy fortification. Hi-bit pixel art, dark outline.'],
- images:[['img/battery-gate.png','The stand-in gate built from the wall kit, two square stone pylons and a stone span with flames burning in the opening','The stand-in in the game now, with the wall of fire in its opening.']]},
+ lines:['Kit, walls: A massive outdoor fortress curtain wall of large warm tan sandstone blocks, rough-dressed and weathered, with dark mortar lines and crenellated battlements along the top. Kit, floor: trampled packed earth. Kit, upper floor: worn tan flagstones. Isometric, 48 px tiles, walls 2 tiles high, our palette.'],
+ images:[['img/battery-gate.png','The sandstone wall, the gate of two battlemented pillars with fire between them, and a defence tower','In the game.'],['img/fortress-kit.png','Sandstone wall pieces, corners, a pillar, a doorway and stairs from the new kit','Some of the kit.']]},
 {id:'job-well',anchor:'buy-well',name:`The well`,cost:14,costLabel:'10 generations',tool:'Bought. Candidate 2 of the four is in the battery as a stand-in, so say if you would rather have another. The column of light and the states are still to come.',
  why:`Not a hole in the ground. Your images are structures that hold up a column of light, so I've dropped the ring-around-a-basin idea.`,
  points:[

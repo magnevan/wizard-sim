@@ -14,7 +14,7 @@ from props import ASSETS, RAWREL, ROOT, register, trim
 
 DEFENCE = f'{RAWREL}/defence'
 WELL_RAW = f'{RAWREL}/well/candidate-1.png'
-KIT_RAW = f'{RAWREL}/kit-fortification'
+KIT_RAW = f'{RAWREL}/kit-fortress'
 FOOTPRINT = [5.0, 5.0]
 HEAD_FOOTPRINT = [1.0, 1.0]
 PIECES = [
@@ -28,38 +28,33 @@ PIECES = [
 
 
 def kit_gate():
-    """The gate, assembled from the fortification kit the wall is built from, so it is true isometric in the wall's own stone.
-    Two pylons of solid blocks, two tiles square and a storey and a bit tall, either side of a three-tile opening with a
-    full-depth stone span over it. A tile (i, j): +i runs along the wall, down and to the right on screen; +j runs north, up and to the right.
-    The wall's line is the north edge of row j = 0. Every piece's top diamond vertex is at (38, 55) in its 76 x 86 canvas."""
+    """The gate: two tall pillars from the fortress kit either side of the opening, which the wall of fire fills. Each is a
+    solid block stacked up, standing across the wall's line, with four battlement stones on top (the kit's pillar, cut short).
+    A tile (i, j): +i runs along the wall, down and to the right on screen; +j runs north, up and to the right. Every piece's
+    top diamond vertex is at (38, 55) in its 76 x 86 canvas."""
     raw = os.path.join(ROOT, KIT_RAW)
     piece = lambda n: Image.open(os.path.join(raw, f'tile_{n:02d}.png')).convert('RGBA')
-    BLOCK = piece(52)
-    LEFT, RIGHT, OPEN = [0, 1], [5, 6], [2, 3, 4]
-    PYLON_STOREY, SPAN_LIFT, CUT = 30, 22, 28    # art px: the second block's rise, the span's, and how much of a block's foot is cut away for the opening
-    O = (70, 150)
+    BLOCK, PILLAR = piece(53), np.array(piece(31))
+    STOREYS = [0, 30, 60]                       # art px each block rises
+    CENTRE, HALF_OPENING = 3.5, 3 / 2.12        # tiles: the opening is 6 units, a tile 2.12
+    O = (70, 190)
     G = lambda i, j: (O[0] + 24 * i + 24 * j, O[1] + 12 * i - 12 * j)
-    a = np.array(BLOCK)
-    span = np.zeros_like(a)
-    for x in range(a.shape[1]):
-        ys = np.where(a[:, x, 3] > 0)[0]
+    merlon = np.zeros_like(PILLAR)
+    for x in range(PILLAR.shape[1]):
+        ys = np.where(PILLAR[:, x, 3] > 0)[0]
         if len(ys):
-            end = ys[-1] - CUT
-            span[ys[0]:end + 1, x] = a[ys[0]:end + 1, x]
-            span[max(ys[0], end - 2):end, x] = (118, 88, 60, 255)    # a timber under the stone, as on the wall's bracing
-            span[end, x] = (42, 30, 22, 255)
-    span = Image.fromarray(span)
-    out = Image.new('RGBA', (380, 300))
-    for j in (1, 0):
-        for i in LEFT + OPEN + RIGHT:
-            x, y = G(i, j)
-            if i in OPEN:
-                out.alpha_composite(span, (x - 38, y - 55 - SPAN_LIFT))
-            else:
-                out.alpha_composite(BLOCK, (x - 38, y - 55))
-                out.alpha_composite(BLOCK, (x - 38, y - 55 - PYLON_STOREY))
+            merlon[ys[0]:ys[0] + 20, x] = PILLAR[ys[0]:ys[0] + 20, x]
+    merlon = Image.fromarray(merlon)
+    out = Image.new('RGBA', (380, 340))
+    for i in (CENTRE - HALF_OPENING - 1, CENTRE + HALF_OPENING):
+        x, y = (int(round(v)) for v in G(i, .5))
+        for rise in STOREYS:
+            out.alpha_composite(BLOCK, (x - 38, y - 55 - rise))
+        top = STOREYS[-1] + 8
+        for dx, dy in ((0, -7), (-15, 0), (15, 0), (0, 7)):   # back, left, right, front: far to near
+            out.alpha_composite(merlon, (x - 38 + dx, y - 55 - top + dy))
     box = out.getchannel('A').getbbox()
-    fx, fy = G(3.5, 0)
+    fx, fy = G(CENTRE, 0)
     return out.crop(box), int(fx - box[0]), int(fy - box[1])
 
 
@@ -79,7 +74,7 @@ def main():
     # The gatehouse stands across the wall. The level puts its spot 3.5 u down the screen and `lift` raises the art back
     # by the same 40 px, so it sorts in front of the wall pieces that join it.
     im, foot_x, foot_y = kit_gate()
-    register('battery-gatehouse', 'Gatehouse (battery)', [7.0, 1.0], im, f'{KIT_RAW}/tile_52.png', 'create_building_kit', 'assembled from the fortification kit: block 52 for the pylons, and cut off at the foot for the span over the opening', foot=[foot_x, foot_y])
+    register('battery-gatehouse', 'Gatehouse (battery)', [7.0, 1.0], im, f'{KIT_RAW}/tile_53.png', 'create_building_kit', 'assembled from the fortress kit: block 53 stacked for two pillars, its pillar piece cut short for battlements', foot=[foot_x, foot_y])
     meta = os.path.join(ASSETS, 'battery-gatehouse', 'meta.json')
     m = json.load(open(meta))
     m['lift'] = 40  # drawn 40 px above its spot: the art is on the wall line, and it sorts in front of the pieces that join it

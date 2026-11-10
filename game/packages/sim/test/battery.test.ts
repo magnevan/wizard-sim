@@ -95,6 +95,23 @@ describe('driving a defence', () => {
     expect(driveTarget(w, 0)[1]).toBeLessThan(BATTERY.wallY);
   });
 
+  it('makes the same half-ring with the Weapon cast as with Area', () => {
+    const ringWith = (cast: number) => {
+      const { w } = atPedestal();
+      take(w);
+      step(w, [{ ...NO_INPUT, press0: EL.fire, press1: EL.fire }, NO_INPUT, NO_INPUT, NO_INPUT]);
+      step(w, press(cast));
+      let ring = null;
+      for (let i = 0; i < 40 && !ring; i++) { ring = w.events.find((e) => e.kind === 'burst' && e.who === 0) ?? null; step(w, NO_INPUTS); }
+      return ring;
+    };
+    const area = ringWith(BTN.area), weapon = ringWith(BTN.weapon);
+    expect(area).not.toBeNull();
+    expect(weapon).not.toBeNull();
+    expect(weapon!.amount).toBeCloseTo(area!.amount!, 5);
+    expect(weapon!.amount).toBeGreaterThanOrEqual(BATTERY.ringRadius);
+  });
+
   it('two players can\'t share a defence', () => {
     const { w, pad } = atPedestal();
     joinSeat(w, 1);

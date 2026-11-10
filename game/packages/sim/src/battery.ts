@@ -30,8 +30,8 @@ export const BATTERY = {
   placeClear: 1,
   /** A defence's ring: a half-ring on the enemy's side. The wall hides about 4 units of ground behind it, so it has to reach past that. */
   ringRadius: 7,
-  /** The head swings this far either way of straight out, in turns: 80 degrees, nearly along the wall. */
-  swing: 0.222,
+  /** The head swings this far either way of straight out, in turns: 70 degrees. Further round, the barrel's line stays inside the wall (the user, 2026-11-10). */
+  swing: 0.194,
   /**
    * How high the barrel is over the tower's spot, as a distance down the screen in world units: about 60 art px at 8 px
    * a unit up the screen (the head sheet's swivel at 50 px and the barrel 9.6 above it, tools/turret-3d, art/props.ts).
@@ -93,10 +93,13 @@ export function batteryPress(w: World, inputs: readonly PlayerInput[]): void {
   }
 }
 
-/** What a seat's buttons do while driving: spells only. With nothing queued and nothing going, your hands stay put away. */
+/**
+ * What a seat's buttons do while driving: spells only. With nothing queued and nothing going, your hands stay put away.
+ * The Weapon cast is let through for its imbued burst, which from a defence is the same half-ring as Area (effects.ts).
+ */
 export function driveButtons(w: World, i: number, buttons: number): number {
   const s = w.seats;
-  return s.queueLen[i] > 0 || s.phase[i] !== PHASE.idle ? buttons & (BTN.force | BTN.area | BTN.clear | BTN.use) : buttons & (BTN.clear | BTN.use);
+  return s.queueLen[i] > 0 || s.phase[i] !== PHASE.idle ? buttons & (BTN.force | BTN.area | BTN.weapon | BTN.clear | BTN.use) : buttons & (BTN.clear | BTN.use);
 }
 
 /**
@@ -149,6 +152,11 @@ export function sprayReach(dx: number, dy: number): number {
 
 /** Where a defence's placed spell lands: the aim point on the enemy's side of the wall, within its own range. */
 export function driveTarget(w: World, i: number): [number, number] {
-  const s = w.seats, b = w.bodies, d = len(s.aimX[i], s.aimY[i]), k = d > BATTERY.placeRange ? BATTERY.placeRange / d : 1;
-  return [b.x[i] + s.aimX[i] * k, Math.min(BATTERY.wallY - BATTERY.placeClear, b.y[i] + s.aimY[i] * k)];
+  return drivePlace(w.bodies.x[i], w.bodies.y[i], w.seats.aimX[i], w.seats.aimY[i]);
+}
+
+/** The same from a body at (x, y) aiming (ax, ay), in the real world's axes: the client's reticle uses it too. */
+export function drivePlace(x: number, y: number, ax: number, ay: number): [number, number] {
+  const d = len(ax, ay), k = d > BATTERY.placeRange ? BATTERY.placeRange / d : 1;
+  return [x + ax * k, Math.min(BATTERY.wallY - BATTERY.placeClear, y + ay * k)];
 }

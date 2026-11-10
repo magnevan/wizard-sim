@@ -138,6 +138,30 @@ try {
     await p.mouse.up({ button: 'right' });
     await sleep(1500);
   }
+  // Place held far out: the reticle should sit at the defence's own reach (18), not a wizard's
+  await p.mouse.move(1000, 60);
+  await sleep(300);
+  await p.keyboard.press('KeyF');
+  await sleep(150);
+  await p.keyboard.down('Shift');
+  await p.mouse.down({ button: 'right' });
+  await sleep(700);
+  await shot('place-far');
+  await p.mouse.up({ button: 'right' });
+  await p.keyboard.up('Shift');
+  await sleep(1500);
+  // the Weapon cast's burst: the same half-ring as Area
+  await p.keyboard.press('KeyF');
+  await p.keyboard.press('KeyF');
+  await sleep(150);
+  await p.keyboard.down('Shift');
+  await p.mouse.down({ button: 'left' });
+  await sleep(60);
+  await p.mouse.up({ button: 'left' });
+  await p.keyboard.up('Shift');
+  await sleep(450);
+  await shot('drive-burst');
+  await sleep(1200);
   await p.keyboard.press('KeyX');
   await sleep(900);
   if ((await drive()) !== -1) fail('X while driving should step away');

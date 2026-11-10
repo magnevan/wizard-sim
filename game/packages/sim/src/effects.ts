@@ -135,6 +135,19 @@ export interface FireExtra {
 }
 
 /** Fires a one-shot spell. `face` is the aim in turns, (tx, ty) the clamped target point, `charge` 0..1. */
+/** The imbued burst: every queued element at full power in a short cone in front of you, as Magicka's imbue-and-release. Nothing stays in hand. */
+function imbue(w: World, src: number, p: Payload, spec: SpellSpec, x: number, y: number, face: number, dx: number, dy: number, power: number): void {
+  const b = w.bodies, reach = SHAPES.imbueRange + SHAPES.imbuePerRune * Math.max(0, spec.power - 1);
+  setHitKind(HIT_KIND.burst);
+  for (let i = 0; i < b.kind.length; i++) {
+    if (!alive(w, i) || i === src || !inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
+    hit(w, i, p, hitOpts(p, src, power * SHAPES.imbuePower, dx, dy));
+  }
+  let mask = 0;
+  for (let e = 1; e <= N_EL; e++) if (spec.counts[e - 1]) mask |= 1 << e;
+  w.events.push({ tick: w.clock[0], kind: 'move', who: src, x, y, x2: x + dx * reach, y2: y + dy * reach, text: 'imbue', look: spec.look, amount: reach, els: mask });
+}
+
 export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, tx: number, ty: number, charge: number, ex: FireExtra = {}): void {
   const b = w.bodies, x = ex.ox ?? b.x[src], y = ex.oy ?? b.y[src];
   const dx = cosTurns(face), dy = sinTurns(face);
@@ -164,7 +177,9 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       }
       break;
     }
-    case 'nova': case 'quake': {
+    case 'imbue': case 'nova': case 'quake': {
+      // a defence has one close-range blast: the Weapon's burst and the Area ring both make its half-ring (the user, 2026-11-10)
+      if (spec.shape === 'imbue' && !driving(w, src)) { imbue(w, src, p, spec, x, y, face, dx, dy, k * blast); break; }
       const r = (driving(w, src) ? BATTERY.ringRadius : spec.shape === 'quake' ? SHAPES.novaRadius + 1 : SHAPES.novaRadius) + SHAPES.novaPerRune * (n - 1);
       // Leaves the floor alone: a floor laid round you soaks or burns you, the caster (Place is for floors).
       disc(w, p, src, x, y, r, k * blast, spec.heal ? -1 : src, driving(w, src) ? y : undefined); // the Healing ring heals you too; a defence's covers only the enemy's side
@@ -200,19 +215,6 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     case 'swing': // an empty Weapon cast: the bare staff's shove (your hands' moves go through heldBlow)
       weaponBlow(w, src, face, { ...blowOf('staff'), scale: k, look: 0, p: null, move: 'strike', ox: ex.ox, oy: ex.oy });
       break;
-    case 'imbue': {
-      // The imbued burst: every queued element at full power in a short cone in front of you, as Magicka's imbue-and-release. Nothing stays in hand.
-      const reach = SHAPES.imbueRange + SHAPES.imbuePerRune * Math.max(0, spec.power - 1);
-      setHitKind(HIT_KIND.burst);
-      for (let i = 0; i < b.kind.length; i++) {
-        if (!alive(w, i) || i === src || !inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
-        hit(w, i, p, hitOpts(p, src, k * blast * SHAPES.imbuePower, dx, dy));
-      }
-      let mask = 0;
-      for (let e = 1; e <= N_EL; e++) if (spec.counts[e - 1]) mask |= 1 << e;
-      w.events.push({ tick: w.clock[0], kind: 'move', who: src, x, y, x2: x + dx * reach, y2: y + dy * reach, text: 'imbue', look: spec.look, amount: reach, els: mask });
-      break;
-    }
     case 'palm':
       for (let i = 0; i < b.kind.length; i++) {
         if (alive(w, i) && i !== src && inCone(x, y, face, 0.08, 3, b.x[i], b.y[i], b.r[i])) hit(w, i, p, hitOpts(p, src, 1.2 * k, dx, dy));

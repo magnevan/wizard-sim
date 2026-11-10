@@ -19,7 +19,7 @@
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
-  AI, ARCH, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
+  AI, ARCH, drivePlace, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
   N_ALTARS, N_EL, PERKS, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
   isPropWall, terrainNear,
@@ -40,13 +40,27 @@ import { kitOf, kitRun, sideZ, stampTexture, wallsAllFar } from './art/wall-kit'
 
 /** A wall of fire that belongs to the place (the battery's gate) stands this much taller than a cast one. */
 const GATE_FIRE = 3.4;
-import { toX, toY } from './iso-world';
+import { toU, toV, toX, toY } from './iso-world';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
 
 /** Seconds between one rune mote appearing and the next. */
 const MOTE_GAP = 0.16;
 /** Seconds Force is held before a turret's preview shows, so a plain click doesn't flash it. */
 const AIM_SHOWS = 0.15;
+
+/**
+ * Where seat i's Place lands, in the view's turned world: the aim point within Place's reach, or, driving a defence,
+ * the defence's own reach and only on the enemy's side of the wall (the sim's drivePlace, worked in the real world's axes).
+ */
+function placeSpot(w: World, i: number): [number, number] {
+  const s = w.seats, b = w.bodies;
+  if (w.battery && i < MAX_SEATS && w.battery.drive[i] >= 0) {
+    const [x, y] = drivePlace(toX(b.x[i], b.y[i]), toY(b.x[i], b.y[i]), toX(s.aimX[i], s.aimY[i]), toY(s.aimX[i], s.aimY[i]));
+    return [toU(x, y), toV(x, y)];
+  }
+  const d = Math.hypot(s.aimX[i], s.aimY[i]), lim = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
+  return [b.x[i] + s.aimX[i] * lim, b.y[i] + s.aimY[i] * lim];
+}
 const EL = X.EL, SV = EL.sigil;
 const AMBIENT = 0xe4e8ff;
 /** ?structoff=walls,waves,... hides parts of this view (for isolating a slow or broken part). */
@@ -1548,8 +1562,7 @@ export class StructureView {
     if (spec.shape === 'todo') return;
     const TEAM = X.TEAMS[i % 4], col = TEAM.light;
     const k = drag ? 1 : clamp(s.areaHeld[i] / T(RHYTHM.placeHold), 0, 1), dim = k < 1;
-    const d = Math.hypot(s.aimX[i], s.aimY[i]), lim = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
-    const cxw = b.x[i] + s.aimX[i] * lim, cyw = b.y[i] + s.aimY[i] * lim, cx = gx(cxw), cy = gy(cyw);
+    const [cxw, cyw] = placeSpot(w, i), cx = gx(cxw), cy = gy(cyw);
     const look = spec.look || spec.form, R = look === ELID.life ? LIFE : ramp(look);
     const matCol = spec.wall === WALL.rock ? '#c8ab86' : spec.wall === WALL.barrier ? EL.shield[1] : R[1];
     if (spec.shape === 'arcwall') {
@@ -1602,10 +1615,10 @@ export class StructureView {
   // ---- short-lived effects -------------------------------------------------------------------------
   /** Where the local wizard's placement preview stands, while one can be showing. */
   private aimSpot(w: World): Pt | null {
-    const s = w.seats, b = w.bodies, i = this.localSeat;
+    const s = w.seats, i = this.localSeat;
     if (!s.active[i] || !(s.prevButtons[i] & (BTN.area | BTN.force))) return null;
-    const d = Math.hypot(s.aimX[i], s.aimY[i]), lim = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
-    return [gx(b.x[i] + s.aimX[i] * lim), gy(b.y[i] + s.aimY[i] * lim)];
+    const [x, y] = placeSpot(w, i);
+    return [gx(x), gy(y)];
   }
   private fxDepth(w: World, f: SFx, e: number, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
     const who = f.who >= 0 && f.who < bodies.length ? bodies[f.who] : null, placed = f.x !== 0 || f.y !== 0;

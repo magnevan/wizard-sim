@@ -12,11 +12,11 @@
  *     A hard shove on the held wizard, enough damage, a stun or a freeze breaks the hold.
  */
 import { ARCHETYPES, ATTACK, ARCH } from './archetypes';
-import { STRUCT, T } from './config';
+import { STATUS, STRUCT, T } from './config';
 import { EL, N_EL } from './elements';
 import { burstEvent, disc, spawnMissile, stored, type Payload } from './effects';
 import { angleDiff, len } from './geom';
-import { HIT_KIND, addKnock, applyHit, setHitKind } from './hit';
+import { HIT_KIND, addKnock, applyHit, ignite, setHitKind } from './hit';
 import { cutOff, steer } from './nav';
 import { guardMelee, unburnable } from './guards';
 import { WALL } from './compile';
@@ -36,7 +36,7 @@ BOLT_ELS[EL.arcane - 1] = 1;
 const BOLT: Payload = { counts: BOLT_ELS, at: 0, heal: false, scald: false, freeze: false, mod: null, look: EL.arcane, formN: 1 };
 
 /** How much of its normal pace a chilled body keeps, walking and attacking. */
-const chillPace = (chill: number) => Math.max(0.2, 1 - 0.22 * chill);
+const chillPace = (chill: number) => 1 - STATUS.chillSlow * chill;
 
 /** This tick, chill holds back a wind-up or a recovery. A brute's rolling shockwave is exempt: its age is aiT. */
 function chillHolds(w: World, i: number): boolean {
@@ -87,7 +87,7 @@ function strike(w: World, src: number, t: number, dmg: number, knock: number, dx
   b.hp[t] -= d;
   b.lastHit[t] = w.clock[0];
   addKnock(w, t, dx, dy, knock);
-  if (burn && !(t < MAX_SEATS && unburnable(w, t))) b.burn[t] = Math.max(b.burn[t], T(3));
+  if (burn && !(t < MAX_SEATS && unburnable(w, t))) ignite(w, t, 18, b.burnSrc[t], T(3));
   w.events.push({ tick: w.clock[0], kind: 'hit', who: t, x: b.x[t], y: b.y[t], amount: d, look: 0 });
 }
 
@@ -303,7 +303,7 @@ export function tickDeaths(w: World): void {
   for (let i = MAX_SEATS; i < b.kind.length; i++) {
     if (b.kind[i] !== KIND.enemy || b.hp[i] > 0) continue;
     if (b.holding[i] >= 0) release(w, i);
-    const status = (b.frozen[i] ? STATUS_BIT.frozen : 0) | (b.wet[i] ? STATUS_BIT.wet : 0) | (b.burn[i] ? STATUS_BIT.burning : 0) | (b.stun[i] ? STATUS_BIT.stunned : 0) | (b.chill[i] > 0.5 ? STATUS_BIT.chilled : 0);
+    const status = (b.frozen[i] ? STATUS_BIT.frozen : 0) | (b.wet[i] ? STATUS_BIT.wet : 0) | (b.burn[i] ? STATUS_BIT.burning : 0) | (b.stun[i] ? STATUS_BIT.stunned : 0) | (b.chill[i] > 0.17 ? STATUS_BIT.chilled : 0);
     // look = archetype; el, status and the blow's direction (x2, y2) let the view pick a death that fits.
     w.events.push({ tick: w.clock[0], kind: 'fizzle', who: i, x: b.x[i], y: b.y[i], text: 'dies', look: b.arch[i], el: b.lastEl[i], mix: b.lastMix[i], shape: b.lastKind[i], status, x2: b.lastDX[i], y2: b.lastDY[i], amount: -b.hp[i] });
     b.kind[i] = KIND.none;

@@ -30,28 +30,28 @@ Seven elements are **fields**: Water, Fire, Cold, Lightning, Earth, Life, Arcane
 - **In the world:** rivers, lakes, rain, tides. The most common field; nearly every town sits on some.
 - **People:** farming (with Life), mills, ports, baths. Water-veined towns are old and populous.
 - **Creatures:** amphibious, slow-wearing, hard to burn.
-- **In play:** soaks and douses; sets up freezes and conduction; Rain lingers and keeps puddles topped up. *(Its shove may move to Air, if Air comes in: `../ideas/air-element.md`.)*
+- **In play:** primarily a synergy element, with some knockback for crowd control. Soaks and douses; sets up freezes and conduction; Rain lingers and keeps puddles topped up. *(Its shove may move to Air, if Air comes in: `../ideas/air-element.md`.)*
 - **Opposite:** Lightning.
 
 ### Fire: what consumes and transforms
 - **In the world:** volcanic swells, hot springs, seams under old forges. Unstable: fire fields flare and fade.
 - **People:** smiths, glassmakers, kilns. Where Fire meets Water, steam and the first engines; where it meets Lightning, arc foundries, the most industrial place in the world.
 - **Creatures:** quick, aggressive, short-lived; drawn to burning.
-- **In play:** burning that keeps hurting; fire patches deny ground; strong but wasteful.
+- **In play:** the best overall damage, and that's its whole job. It's harder to synergize (it undoes Wet and Chill on purpose, so players can get in each other's way and must build their kit with care), its damage over time is harder to get full value from, and you risk setting yourself alight. Fire patches deny ground.
 - **Opposite:** Cold.
 
 ### Cold: what stills and preserves
 - **In the world:** mountains, the far north, deep caves. Cold fields are slow and patient; they hold what's in them.
 - **People:** ice roads in winter, storehouses, monasteries that keep records. Cold keeps things, including the past.
 - **Creatures:** large, slow, armoured; things that wait.
-- **In play:** chill slows walking and attacks; freezes the wet; ice sheets and shatter.
+- **In play:** the biggest crowd control, for less damage (except freeze and shatter). Chill slows walking and attacks on a sliding scale; with Water it freezes; ice sheets and shatter.
 - **Opposite:** Fire.
 
 ### Lightning: what leaps and connects
 - **In the world:** storm coasts, high peaks, open steppe. It isn't persistent: it arrives in bursts and strikes the same places again, so it can share ground with Water (storms over a marsh). Where it meets Cold, spark peaks; where it meets Fire, arc foundries and wildfire steppe; where it meets Water, the storm marsh.
 - **People:** the most "modern" towns: rods, coils, crude electric lamps and signals. Also the most dangerous to live in.
 - **Creatures:** fast, twitchy, in swarms that chain.
-- **In play:** jumps between bodies and through water; stuns; fast and hard to aim around allies.
+- **In play:** good damage, a little chaotic in where it lands, with some stagger. Jumps between bodies and through water; stuns; fast and hard to aim around allies.
 - **Opposite:** Water.
 
 ### Earth: what holds and endures

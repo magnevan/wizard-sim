@@ -481,6 +481,8 @@ export class WorldView {
     s.punch = -1; s.smash = -1; s.draw = 0; s.atk = -1; s.hold = 0; s.prep = 0; s.cast = 0; s.vx = 0; s.vy = 0;
     // a Double is its owner's wizard (drawn translucent and violet-tinted by the sprite)
     const owner = b.kind[i] === KIND.double ? this.ownerOf(w, i) : i;
+    // a conjured weapon or wand replaces the staff (a Double keeps the staff: only seats draw weapons)
+    s.bare = kind === 'wizard' && i < MAX_SEATS && (w.seats.weapon[i] || w.seats.wand[i]) ? 1 : 0;
     if (kind === 'wizard') s.pal = owner % 4;
     else if (b.kind[i] === KIND.enemy || b.kind[i] === KIND.none) { // none: an enemy that just died (onDeath)
       if (arch === ARCH.shieldbearer) { s.pal = 5; s.variant = 5; }
@@ -507,12 +509,12 @@ export class WorldView {
     s.sq = fa >= 0 && fa < 0.15 ? (kind === 'dummy' ? (fa < 0.07 ? 0.3 : -0.3) : 0.3) : 0;
     // statuses
     s.dead = b.downed[i] ? 1 : b.down[i] > 0 ? 0.7 : 0;
-    s.burn = b.burn[i] > 0 ? (b.burn[i] < 20 ? 0.5 : 1) : 0;
+    s.burn = b.burn[i] > 0 ? (b.burnPool[i] < 10 ? 0.5 : 1) : 0;
     s.burnF = s.burn ? Math.floor(ct * 16) % 4 : 0;
     s.wet = b.wet[i] > 0 ? (b.wet[i] < 30 ? 0.5 : 1) : 0;
     s.wetF = s.wet ? Math.floor(ct * 9) % 6 : 0;
     s.frozen = b.frozen[i] > 0 ? (b.frozen[i] < 12 ? 0.67 : Math.min(1, Math.ceil(Math.max(0, 150 - b.frozen[i]) / 6) / 3 || 0.34)) : 0;
-    s.chill = Math.round(Math.min(1, b.chill[i] / 3) * 3) / 3;
+    s.chill = Math.round(b.chill[i] * 4) / 4;
     s.shock = b.stun[i] > 0 ? Math.floor(ct * 26) % 2 : 0;
     if (b.heldBy[i] >= 0) s.sq = Math.floor(ct * 12) % 2 ? 0.2 : -0.2; // struggling in a grab
     // enemy attack poses, from the sim's attack state (art/enemy-attacks.ts)

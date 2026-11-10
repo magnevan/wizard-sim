@@ -70,8 +70,20 @@ export const SURFACE = { water: 20, ice: 16, fire: 10 };
 export const STATUS = {
   // Longer than our first pass, toward Magicka's (it burns 5 s per stack, chills 10 s, freezes 4 s).
   wet: 12, // seconds
-  burn: 5, burnDps: 6,
-  chillPerRune: 0.6, chillDecay: 0.25, chillMax: 3, freeze: 3.5,
+  /** The least any soaking hit leaves a body wet for (a spray's ticks are too weak to soak for long on their own). */
+  wetMin: 6,
+  /** Burning is a pool of damage on the body, spent evenly over `burn` seconds (refreshed by each new hit), up to burnCap. */
+  burn: 4, burnBase: 12, burnShareFire: 1, burnShareRest: 0.25, burnCap: 60,
+  /** What a burning floor (each time it re-lights you) and a thorn or similar contact add to the pool. */
+  burnSurface: 18, burnContact: 30,
+  /**
+   * Chill is how full a body's frost pool is, 0..1. The pool holds chillPool x sqrt(max HP) frost damage, so big
+   * bodies take more but never become unfreezable. It drains chillDecay of the whole pool a second, even under fire,
+   * so a weak source plateaus or fails on a tough body. Full chill slows by chillSlow.
+   */
+  chillPool: 2.5, chillPerDamage: 1, chillDecay: 0.1, chillSlow: 0.6,
+  /** Cold on a wet body freezes it from this much chill up: freezeShort s at that chill, up to `freeze` s when full. */
+  freezeMin: 0.3, freezeShort: 1.5, freeze: 4,
   stunPerRune: 0.35,
   expose: 2, exposeMult: 1.3,
   knockdown: 0.6,
@@ -101,6 +113,12 @@ export const SHAPES = {
   swingRange: 1.6, swingHalfAngle: 0.15,
   /** The imbued burst (Weapon cast with elements, no Sigil or Shield): a cone in front of you, a little longer per extra rune. */
   imbueRange: 2.5, imbuePerRune: 0.25, imbueHalf: 0.17,
+  /** The burst's power against the ring's. It's 1 because the cone already earns its place: it spares allies beside and behind you. */
+  imbuePower: 1,
+  /** A Fire ring's or burst's direct hit, times Fire's table damage (which is set for a spray's per-second rate). */
+  fireBlast: 2,
+  /** The same for Cold, kept below Fire's: Cold's job is the slow, and it has no burn on top. */
+  coldBlast: 1.6,
   push: 6, // u/s added per water rune (Push)
   burstRadius: 1.4,
 };
@@ -242,7 +260,7 @@ export const ARMS = {
   /** Heals: Leaf regrowth (hp/s), a Leaf block to allies around you (hp/s), a Leaf parry (you too), and how far "around" reaches. */
   regrowth: 1, leafBlockHeal: 8, leafParryHeal: 20, leafRange: 3.5,
   /** A Rime block chills a melee attacker by this much (chill stacks). */
-  rimeChill: 1,
+  rimeChill: 8,
   /** Guard damage multipliers: the Spark ring is the weakest block; Water douses the Ember targe. */
   sparkBlock: 1.5, emberWater: 2,
   /** A Water shot blocked by the Ember targe counts as at least this much damage (before emberWater). */

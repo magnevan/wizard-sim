@@ -6,7 +6,7 @@
  * -> missiles -> zones -> surfaces -> statuses -> collisions -> health.
  */
 import { canAct, tickSeat } from './cast';
-import { BODY } from './config';
+import { BODY, STATUS } from './config';
 import { TAP } from './hands';
 import { collide, fixedBody, onIce, tickDoubles, tickHealth, tickMissiles, tickSurfaces, tickZones } from './effects';
 import { beginTutorialTick, tickTutorial } from './tutorial';
@@ -15,7 +15,7 @@ import { tickNav } from './nav';
 import { hasteOf, tickStructures } from './structures';
 import { tickWaves } from './waves';
 import { survivePress, tickSurvive } from './survive';
-import { tickStatuses } from './hit';
+import { HIT_KIND, setHitKind, tickStatuses } from './hit';
 import { sureFooted, tickGuards, walkMult } from './guards';
 import { BTN, type PlayerInput } from './input';
 import { DT, KIND, MAX_SEATS, PHASE, joinSeat, type World } from './world';
@@ -24,6 +24,7 @@ export { elementId, elementName } from './elements';
 
 export function step(w: World, inputs: readonly PlayerInput[]): void {
   w.events.length = 0;
+  setHitKind(HIT_KIND.other); // module state isn't in the snapshot: a hit that names no kind must not see last tick's
   const b = w.bodies, s = w.seats;
   if (w.tut) beginTutorialTick(w);
   if (w.run) survivePress(w, inputs);
@@ -39,7 +40,7 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
     let mx = inp.moveX / 127, my = inp.moveY / 127;
     const m = Math.sqrt(mx * mx + my * my);
     if (m > 1) { mx /= m; my /= m; }
-    let speed = BODY.walkSpeed * Math.max(0.2, 1 - 0.22 * b.chill[i]) * hasteOf(w, i) * walkMult(w, i); // carrying a guard or weapon, blocking, the Bulwark, a held Special
+    let speed = BODY.walkSpeed * (1 - STATUS.chillSlow * b.chill[i]) * hasteOf(w, i) * walkMult(w, i); // carrying a guard or weapon, blocking, the Bulwark, a held Special
     const ph = s.phase[i];
     if (ph === PHASE.channel || ph === PHASE.charge || s.handT[i] > TAP) speed *= BODY.castWalk; // a Heavy charges like a spell
     if (!canAct(w, i) || b.heldBy[i] >= 0 || b.root[i] > 0) speed = 0; // held by a grabber or pinned: you can still cast, not walk

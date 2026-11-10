@@ -62,9 +62,9 @@ const module = { exports: {} };
   // shape change: the leading shape element (most runes; ties in SHAPE order) bends it, the
   // others only add their status (S2, decided 2026-11-04). Fire and Life are status elements.
   const PAYLOAD = {
-    water: { trait: 'Soak', hit: 'is soaked, and put out if burning', why: 'Wet targets take more from lightning, and it jumps further through them. With fire in the spell it scalds; with cold it turns to ice.' },
+    water: { trait: 'Soak', hit: 'is soaked, put out if burning, and frozen if it was already cold enough', why: 'Wet targets take more from lightning, and it jumps further through them. With fire in the spell it scalds; with cold it turns to ice.' },
     fire: { trait: 'Burn', hit: 'is set alight, and dried or thawed', why: 'Burning spreads to grass and oil. Fire dries the wet and thaws the chilled and frozen.' },
-    cold: { trait: 'Chill', hit: 'is chilled, moving and attacking slower, and frozen if it was already wet or when chill stacks; burning is put out', why: 'A frozen target shatters from a heavy hit.' },
+    cold: { trait: 'Chill', hit: 'is chilled, moving and attacking slower the colder it gets, and frozen if it was already wet and cold enough; burning is put out', why: 'A frozen target shatters from a heavy hit.' },
     lightning: { trait: 'Shock', hit: 'is shocked and stunned for a moment (a stun breaks a cast or wind-up, but you can still walk)', why: 'More lightning, more jumps. Wet targets carry it further. Rock grounds it: chains don\'t jump through rock walls.' },
     arcane: { trait: 'Expose', hit: 'is exposed: for a moment its wards and resistances don\'t count, and structures take extra damage', why: 'Raw damage. Arcane breaks barriers and wards.' },
     earth: { trait: 'Weight', hit: 'is hit harder and knocked down', why: 'Earth is really the body: it outranks every form but Shield, Sigil and Life, so with them it becomes the material.' },
@@ -83,7 +83,7 @@ const module = { exports: {} };
     { id: 'freeze', els: ['water', 'cold'], trait: 'Freeze', hit: 'turns the spell to ice: it chills without soaking, and freezes targets that were already wet; frozen targets are brittle and shatter from a heavy hit', aura: ['Freezing mist', 'enemies the mist soaks freeze solid in the cold around {w}'], coat: 'soaked enemies freeze solid as they are shoved', self: '{W} freeze solid for a moment (a heavy hit would shatter {w}).',
       titles: { force: 'Ice shards', area: 'Freezing splash', place: 'Ice sheet', conjure: 'Freezing burst' },
       // A freezing spray was too strong, so as Force the mix changes shape: shards, not a cone.
-      forceText: 'A volley of jagged ice shards along your aim. Each shard pierces and chills; enough of them freeze a target, and a frozen target shatters from a heavy hit.',
+      forceText: 'A volley of jagged ice shards along your aim. Each shard pierces and chills; enough of them freeze a wet target, and a frozen target shatters from a heavy hit.',
       texts: { area: 'A freezing splash bursts from you: soaked targets freeze solid.', place: 'Freezes the ground at the cursor into a sheet of ice for about 16 seconds: it chills whoever crosses it, and feet slip on it.' } },
   ];
   const mixesOf = (q) => MIX.filter((m) => m.els.every((e) => q.includes(e)));

@@ -194,6 +194,8 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   if (held & BTN.area) {
     s.areaHeld[i]++;
     if (len(b.x[i] + s.aimX[i] - s.holdX[i], b.y[i] + s.aimY[i] - s.holdY[i]) > RHYTHM.dragMin) s.dragged[i] = 1;
+    // Back at the start: no line after all. It's still a Place (the plain arc or glyph), never a tap's Area.
+    else if (s.dragged[i]) { s.dragged[i] = 0; s.areaHeld[i] = Math.max(s.areaHeld[i], T(RHYTHM.placeHold)); }
   } else if (released & BTN.area) {
     areaCast = s.areaHeld[i] < T(RHYTHM.placeHold) && !s.dragged[i] ? CAST_ID.area : CAST_ID.place;
   }

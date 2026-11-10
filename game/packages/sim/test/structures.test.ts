@@ -72,6 +72,29 @@ describe('Shield', () => {
     expect(healed[1]).toBeCloseTo(healed[0], 5);
   });
 
+  it('a drag that comes back to its start is no line: a wall goes back to the arc, not a ring', () => {
+    const { w, d } = arena();
+    d.aimAt(5, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
+    d.aimAt(5, 4).tick({ buttons: BTN.area }, 3);
+    expect(w.seats.dragged[0]).toBe(1);
+    d.aimAt(5, 0).tick({ buttons: BTN.area }, 3);
+    expect(w.seats.dragged[0]).toBe(0);
+    d.tick({}, 40);
+    expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
+  });
+
+  it('a glyph dragged out and back is a plain glyph; one released away is a line', () => {
+    for (const away of [false, true]) {
+      const { w, d } = arena();
+      d.aimAt(5, 0).queue('sigil', 'fire').tick({ buttons: BTN.area }, 3);
+      d.aimAt(5, 4).tick({ buttons: BTN.area }, 3);
+      if (!away) d.aimAt(5, 0).tick({ buttons: BTN.area }, 3);
+      d.tick({}, 40);
+      expect(devices(w, DEVICE.glyph)).toBe(away ? 0 : 1);
+      expect(devices(w, DEVICE.lineglyph)).toBe(away ? 1 : 0);
+    }
+  });
+
   it('rock times out: it crumbles over its last seconds, then falls', () => {
     const { w, d } = arena();
     d.aimAt(5, 0).queue('shield', 'earth').cast(BTN.area, 20, 20);

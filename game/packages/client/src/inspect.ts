@@ -111,7 +111,7 @@ export class Inspect {
     const st: string[] = [];
     if (b.wet[i] > 0) st.push('wet (lightning hurts more, cold freezes)');
     if (b.burn[i] > 0) st.push('burning');
-    if (b.chill[i] > 0.05) st.push(`chilled ${Math.round(b.chill[i] * 100) / 100} (slower)`);
+    if (b.chill[i] > 0.02) st.push(`chilled ${Math.round(b.chill[i] * 100)} % (slower)`);
     if (b.frozen[i] > 0) st.push('frozen (shatters from a hard hit)');
     if (b.stun[i] > 0) st.push('stunned');
     if (b.expose[i] > 0) st.push('exposed');

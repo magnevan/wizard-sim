@@ -14,7 +14,7 @@ function windingGoblin(chill: number): { w: World; e: number } {
 
 describe('statuses', () => {
   it('chill slows an attack, not only walking', () => {
-    const plain = windingGoblin(0), cold = windingGoblin(3);
+    const plain = windingGoblin(0), cold = windingGoblin(1);
     idle(plain.w, 30); idle(cold.w, 30);
     expect(plain.w.bodies.aiT[plain.e]).toBe(30);
     expect(cold.w.bodies.aiT[cold.e]).toBeLessThan(20);

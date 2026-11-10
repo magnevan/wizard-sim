@@ -1046,6 +1046,58 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **Painted ground, built on Claude's recommendation:** the plan is a terrain map painted through the camera, not ground tiles. The isometric tiles were tried and looked worse. Nothing of this is in the game yet, and `q-1` and `q-2` on the page can overturn it.
 - **Scatter is halved locally,** because the sheet fills its canvas whatever the subject.
 
+## 2026-11-09: Play-test bugs: Area floors, the staff hand, ice shields, a drag undone
+
+The user's bug list from play.
+
+- **An Area cast leaves no floor.** A nova or quake used to lay water, fire or frost round the caster, which then soaked or burned them. Place is what makes floors now; Place patches and Rain are unchanged, since they're aimed away from you and their lingering is [a decision of its own](#2026-11-05-lingering-effects-last-as-long-as-they-look). The golden hash moved, `2f804c92` → `e19c4685`, because the scripted run taps Area with Fire and Water + Cold.
+- **A conjured weapon replaces the staff, in the staff's hand.** It used to be drawn in the same hand the guard hangs from, with the staff still showing. The wand counts as a weapon. Spells cast while holding one gather at the hand.
+- **Shield with Water and Cold is drawn as ice.** Curtains (Area and Place) are a row of still, faceted crystals, the wave is a front of ice spears, the ward has crystals round the feet. Visual only: the sim already treated the mix as ice. The F2 panel still calls these spells by their Water names (Tidal wave, Tide shield).
+- **Bringing a drag back to its start undoes the line.** A wall goes back to the arc and a line glyph to a glyph, and it stays a Place rather than turning into a tap's Area.
+- **Shield radii are the user's to find.** `structures.arcRadius` (2.2) and `structures.ringRadius` (1.5) were already sliders in the tuning panel (F1); they now have help text, and the defaults wait for the value the user settles on.
+
+## 2026-11-09: Fire's one-shot casts hit up front; the burst beats the ring
+
+The user: the Fire ring has little reason to exist next to the flamethrower, its visuals are boring and its damage small. Built on Claude's recommendation; the user can veto or retune it (both numbers are F1 sliders).
+
+- **What the audit found.** Fire's direct table damage (6) is a spray's per-second rate, so a one-shot cast dealt 6 and the rest was a fixed 30 burn: totals of 36, 38 and 40 for 1, 2 and 3 runes (Earth: 22, 62, 114). Removing the ring's floor in the entry above took away part of what it had left. And the imbued burst (Shift+LMB) did the same single-target damage as the ring (Shift+RMB tap) over a smaller area, in every element but Lightning.
+- **Fire ring and Fire burst:** the direct hit is doubled (`shapes.fireBlast`, 2) and pays +70 % a rune as Arcane's nova does, not the spray's square root. Ring totals are now 42, 50, 59.
+- **The burst hits 1.5 times as hard as the ring** in every element (`shapes.imbuePower`), so the choice is a cone's punch against a circle's coverage, and it spares allies behind you.
+- **New visuals:** the ring has a white-hot flash, a tall double front of flame, thrown embers, smoke and drawn scorch marks (no floor); the Fire burst has a muzzle flash, a fan of flame and a scorched wedge.
+- **Golden hash** `e19c4685` → `b29ab7f1`: the scripted run taps a Fire ring.
+- **Open:** how burning itself should work; see `ideas/burn-by-damage.md`. Other elements' rings are not touched: Cold's is also weak (5, 7, 9) and Water's does no damage by design.
+
+## 2026-11-09: The burst keeps the ring's power; Cold's first pass
+
+- **The 1.5× burst above is reversed.** The user: the burst's benefit is that friendly fire is easier to control, even if its damage potential is lower. The audit's "no reason to pick it" ignored that. `shapes.imbuePower` is 1 and stays a slider.
+- **Cold's ring and burst, first pass, built on the user's ask for a balance pass on its initial damage:** the direct hit is 1.6× its table rate (`shapes.coldBlast`) and pays +70 % a rune, for 8, 14 and 19 against Fire's 12, 20 and 29, with no burn on top. Cold is meant to be the weaker damage; its essence is the slow. Frost spray, the frost sheet and Ice shards are unchanged. The golden hash didn't move (the scripted run has no Cold-led ring or burst).
+- **Open:** strong enemies should be harder to slow (the user), and today chill builds the same on everything.
+
+## 2026-11-09: Direction for Fire and Cold (`explorations/2026-11-09-fire-and-cold-status.md`)
+
+Direction from the user; not built yet.
+
+- **Fire must not end up as it did in Magicka,** where it had little besides raw damage while Wet powered Cold and Lightning.
+- **Chill builds more slowly on stronger enemies, and slows on a sliding scale up to a cap.**
+- **Water + Cold freezes, but needs a minimum chill, and freeze length may follow chill. Chill decays.**
+
+## 2026-11-10: Burn and frost pools built; Fire stays pure damage
+
+- **Element roles (the user).** Water is primarily synergy, with some knockback. Frost has the biggest crowd control and less damage, except freeze and shatter. Lightning has good damage, a bit chaotic in where it lands, with some stagger. Fire is the best overall damage, harder to synergize, harder to get full value from over time, and you risk setting yourself on fire. Recorded in `world/elements.md`.
+- **Rejected for Fire:** Consume (Fire spending Wet or Chill for a burst). Fire's anti-synergy is intentional: it's how players get in each other's way in co-op and something to plan a kit around. Panic: the user prefers the pure damage, since control would make Fire more like the others.
+- **Burn pool built:** lit for 12, plus all of Fire's own damage and a quarter of the rest, capped at 60, spent over 4 s. Ring totals are 36, 53 and 70 for 1 to 3 runes.
+- **Frost pool built, on the user's design:** a hit's Cold damage fills a hidden pool of 2.5 × √max HP. Scaling by damage over runes because it prorates mixes without a special rule (Arcane + 2 Cold chills twice as hard as 2 Arcane + Cold). The pool drains 10 % of its size a second with no grace period, so a weak source stalls on a tough body and it takes a stronger one or a second caster. Cold never freezes without Water. A freeze needs 30 % chill, lasts 1.5 to 4 s by chill, and uses up the chill and the wet.
+- **Health bars:** a 1 px chill strip, and an orange section for what the burn will still take (a trial; may not stay).
+- **Bug fixed:** the last hit's kind lived in a module variable outside the snapshot, so a rollback could desync `lastKind`. It's reset each step.
+- **Golden hash** `b29ab7f1` → `ef369733`.
+
+## 2026-11-10: Freezing works in either order; a Water spray soaks for longer
+
+From the user's play-test: Cold and a Water spray wouldn't freeze a Brute, but a puddle did. A spray's Wet lasted 2.4 s, shorter than a tough body takes to chill, and only a Cold hit could trigger the freeze.
+
+- **Every soaking hit leaves a body wet for at least 6 s** (`status.wetMin`).
+- **A Water hit on a body at 30 % chill or more freezes it,** so Cold and Water work in either order. Stepping into a puddle doesn't count: only a hit does. Ice (Water + Cold in one spell) still can't set up its own freeze.
+
 ## 2026-11-09: Casting is new, and you fix infrastructure (`explorations/2026-11-09-opening-and-innate-casting.md`)
 - **Innate casting is a result of the shifting veins.** Before, wizards used structures that tap fields. The academy's Arcane vein is why these characters can do it.
 - **The academy is an analogue to an engineering school. Engineering is your job, not the gameplay.** This refines "the player isn't a wizard engineer", which was about the gameplay.

@@ -1086,3 +1086,17 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **A spray spreads along the wall it hits:** fire licks sideways and up the face, water bursts and runs down, frost grows, steam billows. Drawn only on the face the camera sees; a spray on the far side is hidden by the wall.
 - **Healing sprays don't wear walls down** (Claude's call).
 - **Lightning arcs follow the same rule** (Claude's call, not asked for): neither the first strike nor a jump passes a wall, and a crackle into the air stops at one. Otherwise a bolt hidden behind a wall would still hurt what's on the other side.
+
+## 2026-11-09: A continuous world is the goal, and waits (`explorations/2026-11-09-continuous-world-todo.md`)
+- **The world won't stay a set of discrete rooms, and the 40-rock-wall cap has to go.** Not now: "I think we don't need to tackle this problem right now, but we should write down some sort of TODO for it." It gets its own session, away from the thread building the world.
+- **Players stay reasonably close,** and mechanics can help enforce it (the user). Which mechanics is open.
+
+## 2026-11-10: One working document per segment; the opening's first pass stops at the battery
+- **Beats 8 on are on hold** (the user: "There's a lot to build and refine up to the battery").
+- **Each segment gets one working artifact,** in `tools/segments/NN-name/`: `index.html` is the shared layout and `segment.js` the content. One chapter per place, holding its beats, its map and what's unsolved there. The user asked for this; the layout is Claude's. Artifacts stay, because answers sit next to what they ask about and Claude can read them back. The Opening Blueprint became the first one. Its lighting and bought-art sections came off: they had no notes, and art is judged in the scene (the images stay in `tools/segments/01-opening/img/`).
+- **Notes are per round.** Once folded in, a note moves into the page as settled or to solve, and the boxes start empty under the next round's ids. Earlier notes stay in the db.
+- **A defence reaches only a bit further than a person** (Claude's number, about 6 units against 4.5; the user: "not so long as to make it feel like it's not the same spells"). Range comes from Place.
+- **The battery is built first** (the user).
+- **Walks vary and some are long.** The user: "I think you should sometimes walk a bit before something happens, because it makes the world feel more real." This replaces the 5 to 15 second rule.
+- **What you can see depends on direction,** as the user pointed out: least straight down the screen, then straight up, and most into the corners. The old "14 ahead, 8 behind" only held for straight up and down.
+- **The first job's well was destabilized and needs repairs,** in place of the moved vein (the user's suggestion; in `canon.md` under review).

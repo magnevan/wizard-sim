@@ -1090,3 +1090,44 @@ Direction from the user; not built yet.
 - **Health bars:** a 1 px chill strip, and an orange section for what the burn will still take (a trial; may not stay).
 - **Bug fixed:** the last hit's kind lived in a module variable outside the snapshot, so a rollback could desync `lastKind`. It's reset each step.
 - **Golden hash** `b29ab7f1` → `ef369733`.
+
+## 2026-11-09: Casting is new, and you fix infrastructure (`explorations/2026-11-09-opening-and-innate-casting.md`)
+- **Innate casting is a result of the shifting veins.** Before, wizards used structures that tap fields. The academy's Arcane vein is why these characters can do it.
+- **The academy is an analogue to an engineering school. Engineering is your job, not the gameplay.** This refines "the player isn't a wizard engineer", which was about the gameplay.
+- **You fix infrastructure, not veins:** "An earthquake has broke a dam, and we need to build a new one where the river now goes."
+- **Instant devices are different from built structures:** you are the well that powers them, which is why turrets come later.
+- **Melee alone isn't enough to stay in for long.** The tutorial segment lasts until the base set of runes is unlocked.
+- **The approved story now lives in `campaign/canon.md`,** with a staged process for segments in `campaign/README.md`.
+- **Not decided:** the opening's exact outline, which the user wants to try in a few versions (`campaign/01-opening/brief.md`).
+
+## 2026-11-09: The ground painter, and the first general art for the opening (`campaign/01-opening/space.md`)
+- **The user asked for work that holds at any map scale, and authorized buying art that's very likely to be used** ("various ground, wall textures. General assets that will fit this vibe"), while unable to review in detail.
+- **Built: a ground painter.** A client-only Ground layer in LDtk, painted per pixel through the camera, as the Outdoor Art Kit's mock proposed. It keeps the golden hash and every room hash. No room uses it yet.
+- **Bought (113 generations, 1,930 → 1,817):** four pro ground sets, two wall kits, the academy and field works sheets, three buildings, and a clutter sheet of 64, which Claude added. All listed on the Opening Blueprint.
+- **Held back: the defence itself,** as specific to this segment and unreviewed.
+- **Found:** the kits' floors show a diamond grid, so the painter should do floors; 32 px stone reads large against a wizard; the gatehouse came out straight-on.
+
+## 2026-11-09: The isometric camera, on trial; ground transitions and variation
+- **The true isometric camera exists behind `?camera=iso`,** off for everyone else. The user decided on isometric on 2026-11-06, with one room on a branch first. It's done by handing the view a copy of the world turned 45 degrees (`client/src/iso-world.ts`), with the ground squash at 2:1, so the sim, netcode and drawing code are unchanged. Stick input turns to match.
+- **Not handled yet:** the tutorial's overlays, which draw from fixed room positions, so `#tutorial` isn't right under it. The help panel's previews stay straight on, on purpose.
+- **Ground transitions (the user: "transitions between floor materials too, and many ways to give variation"):** per-material edge styles and layered variation, as in `game/content/README.md`. Three more ground sets bought for alternates (45 generations, 1,817 → 1,772).
+
+## 2026-11-09: Scene lighting, on trial with the isometric camera (`explorations/2026-11-09-lighting.md`)
+- **Built while the user couldn't review,** after they found the look "a bit intense": moods per room, cast shadows, lamps on props, cloud shade, and a colour grade. On with `?camera=iso`, off with `?lighting=0`. The public game doesn't have it.
+- **The user's notes that led here:** the stone floor's scale is fine; the grass was too busy (quieted).
+- **Researched, as the user asked,** rather than from memory; sources are in the exploration.
+
+## 2026-11-09: Isometric is the only camera; walls and spells in the lighting (`explorations/2026-11-09-lighting.md`)
+- **The straight-on view and the old code-drawn floor are removed** (the user: "we can probably just kill the non isometric stuff. I dont want you to have to duplicate work"). The tutorial and help previews work under it. This reaches the public game when the branch is merged.
+- **Walls stop light and their faces catch it; beams and sprays light along their whole length** in their own colour.
+
+## 2026-11-09: Room walls from the building kits
+- **The Academy's walls are the bought school kit;** far walls stand tall, near walls are cut low so the room stays visible. Asked for by the user ("Let's do the wall kit thing").
+- **Survive keeps its drawn walls** (Claude's call): tall kit walls hid the action in the open arena, cutting them low looked like fences, and its angled walls have no kit pieces.
+- **The fortification kit waits for the battery,** where a tall defensive wall is the point.
+
+## 2026-11-09: Sprays and arcs stop at walls
+- **Sprays end at rock and barriers** like beams do, wear them down at the beam's rate, and don't hit anything with a wall between it and the caster. The user: "sprays should not ignore walls", and "ideally sprays would react with walls in some natural way".
+- **A spray spreads along the wall it hits:** fire licks sideways and up the face, water bursts and runs down, frost grows, steam billows. Drawn only on the face the camera sees; a spray on the far side is hidden by the wall.
+- **Healing sprays don't wear walls down** (Claude's call).
+- **Lightning arcs follow the same rule** (Claude's call, not asked for): neither the first strike nor a jump passes a wall, and a crackle into the air stops at one. Otherwise a bolt hidden behind a wall would still hurt what's on the other side.

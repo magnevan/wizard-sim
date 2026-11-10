@@ -22,7 +22,7 @@ import {
   AI, ARCH, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
   N_ALTARS, N_EL, PERKS, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
-  isPropWall,
+  isPropWall, terrainNear,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
 import { FIELD, gx, gy } from './art/field';
@@ -36,6 +36,8 @@ import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from 
 import type { BodyView, LightFn } from './art/vfx';
 import { glyph, perkOf } from './art/perks';
 import { drawTutorialWorld } from './tutorial-view';
+import { kitOf, kitRun, stampTexture } from './art/wall-kit';
+import { toX, toY } from './iso-world';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
 
 /** Seconds between one rune mote appearing and the next. */
@@ -90,15 +92,21 @@ const WEAPON_HAND = 1;
 interface Dyn { c: HTMLCanvasElement; x: Ctx; tex: Texture; spr: Sprite; w: number; h: number; used: boolean }
 class Pieces {
   private stat: Sprite[] = [];
+  private footX: number[] = [];
+  private footY: number[] = [];
+  /** Every wall piece drawn this frame, and where it stands in the scene, for the lighting. */
+  each(fn: (s: Sprite, x: number, y: number) => void): void { for (let i = 0; i < this.nS; i++) fn(this.stat[i], this.footX[i], this.footY[i]); }
   private nS = 0;
   private dyn: Dyn[] = [];
   private fx0 = 0; private fy0 = 0;
   constructor(private parent: Container) {}
+  get origin(): [number, number] { return [this.fx0, this.fy0]; }
   begin(fx0: number, fy0: number): void { this.fx0 = fx0; this.fy0 = fy0; this.nS = 0; for (const d of this.dyn) d.used = false; }
   /** A cached texture at field (rx, ry), sorted at ground y z. */
-  tex(tex: Texture, rx: number, ry: number, z: number, tint = AMBIENT): void {
+  tex(tex: Texture, rx: number, ry: number, z: number, tint = AMBIENT, foot = z): void {
     let s = this.stat[this.nS];
     if (!s) { s = new Sprite(); this.parent.addChild(s); this.stat.push(s); }
+    this.footX[this.nS] = this.fx0 + rx + tex.width / 2; this.footY[this.nS] = this.fy0 + foot;
     this.nS++;
     s.texture = tex; s.position.set(this.fx0 + rx, this.fy0 + ry); s.zIndex = Math.round(z) * 128 + 100; s.tint = tint; s.visible = true;
   }
@@ -347,6 +355,14 @@ export class StructureView {
   private prevKind = new Uint8Array(MAX_BODIES); private bornT = new Float64Array(MAX_BODIES).fill(-9); private echoT = new Float64Array(MAX_BODIES).fill(-9);
 
   constructor(actors: Container) { this.pieces = new Pieces(actors); }
+  /** Every wall piece drawn this frame, and where it stands in the scene, for the lighting. */
+  eachPiece(fn: (s: Sprite, x: number, y: number) => void): void { this.pieces.each(fn); }
+  get pieceOrigin(): [number, number] { return this.pieces.origin; }
+  /** Draws something anchored on the ground so what stands in front hides it (Vfx.behind). Set by the view. */
+  behind: ((ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread?: boolean) => void) | null = null;
+  private depth(o: Ctx, ax: number, ay: number, R: number, draw: (o: Ctx) => void): void {
+    if (this.behind) this.behind(ax, ay, R, draw); else draw(o);
+  }
 
   private add(kind: string, t0: number, life: number, o: Partial<SFx>): void {
     if (this.fx.length > 300) this.fx.shift();
@@ -489,8 +505,12 @@ export class StructureView {
     if (!off.includes('waves')) { this.waves(w, t, g, o, light); this.sparks(w, t, g, o, light); }
     if (!off.includes('devices')) this.devices(w, t, g, o, bodies, light);
     if (!off.includes('wizards')) this.onWizards(w, t, g, o, bodies, light);
-    if (!off.includes('preview')) { this.preview(w, t, g, o, bodies); this.allyCue(w, t, g, o); }
-    if (!off.includes('fx')) for (const f of this.fx) this.drawFx(w, f, st - f.t0, t, g, o, bodies, light);
+    if (!off.includes('preview')) {
+      const at = this.aimSpot(w);
+      if (at) this.depth(o, at[0], at[1], 220, (o) => this.preview(w, t, g, o, bodies)); else this.preview(w, t, g, o, bodies);
+      this.allyCue(w, t, g, o);
+    }
+    if (!off.includes('fx')) for (const f of this.fx) this.fxDepth(w, f, st - f.t0, t, g, o, bodies, light);
     this.pieces.end();
   }
 
@@ -615,27 +635,46 @@ export class StructureView {
 
   // ---- Shield walls ---------------------------------------------------------------------------------
   private walls(w: World, t: number, g: Ctx, o: Ctx, light: LightFn): void {
-    const wl = w.walls, s = w.seats, tick = w.clock[0], live = new Set<string>();
-    const joins = (k: number, x: number, y: number) => {
-      for (let j = 0; j < MAX_WALLS; j++) if (j !== k && wl.type[j] === WALL.rock && ((Math.abs(wl.x1[j] - x) < 0.05 && Math.abs(wl.y1[j] - y) < 0.05) || (Math.abs(wl.x2[j] - x) < 0.05 && Math.abs(wl.y2[j] - y) < 0.05))) return true;
+    const wl = w.walls, tr = w.terrain, nt = tr.n, s = w.seats, tick = w.clock[0], live = new Set<string>(), kitName = kitOf(w.def.id);
+    const near = (ax: number, ay: number, x: number, y: number) => Math.abs(ax - x) < 0.05 && Math.abs(ay - y) < 0.05;
+    const joins = (id: number, x: number, y: number) => {
+      for (let q = 0, n = terrainNear(tr, x, y, 0.1); q < n; q++) { const j = tr.out[q]; if (j !== id && (near(tr.x1[j], tr.y1[j], x, y) || near(tr.x2[j], tr.y2[j], x, y))) return true; }
+      for (let j = 0; j < MAX_WALLS; j++) if (nt + j !== id && wl.type[j] === WALL.rock && (near(wl.x1[j], wl.y1[j], x, y) || near(wl.x2[j], wl.y2[j], x, y))) return true;
       return false;
     };
-    for (let k = 0; k < MAX_WALLS; k++) {
-      const ty = wl.type[k]; if (!ty || isPropWall(w, k)) continue; // a blocking prop: the prop is what shows
-      const a: Pt = [gx(wl.x1[k]), gy(wl.y1[k])], bb: Pt = [gx(wl.x2[k]), gy(wl.y2[k])];
-      const age = (tick - (w.walls.born[k] ?? 0)) / 60, hpf = clamp(wl.hp[k] / Math.max(1, wl.maxHp[k]), 0, 1), hitE = this.st - this.wHitT[k];
+    // Terrain segments first, then the wall pool's slots: `id` keys what's cached per wall across both.
+    for (let id = 0; id < nt + MAX_WALLS; id++) {
+      const k = id - nt, isT = id < nt;
+      const ty = isT ? WALL.rock : wl.type[k]; if (!ty || (isT && isPropWall(w, id))) continue; // a blocking prop: the prop is what shows
+      const sx1 = isT ? tr.x1[id] : wl.x1[k], sy1 = isT ? tr.y1[id] : wl.y1[k], sx2 = isT ? tr.x2[id] : wl.x2[k], sy2 = isT ? tr.y2[id] : wl.y2[k];
+      const a: Pt = [gx(sx1), gy(sy1)], bb: Pt = [gx(sx2), gy(sy2)];
+      const born = isT ? 0 : wl.born[k], own = isT ? TERRAIN : wl.owner[k];
+      const age = (tick - (born ?? 0)) / 60, hpf = isT ? 1 : clamp(wl.hp[k] / Math.max(1, wl.maxHp[k]), 0, 1), hitE = isT ? 99 : this.st - this.wHitT[k];
       if (ty === WALL.rock) {
-        const cold = has(wl.els, k, ELID.cold), coat = wallLead(wl.els, k, ELID.earth);
-        const endA = !joins(k, wl.x1[k], wl.y1[k]), endB = !joins(k, wl.x2[k], wl.y2[k]);
-        const pre = `${k}:${wl.born[k]}:${+endA}${+endB}:${+cold}`;
+        // a room's own straight walls, where it has a kit: bought pieces instead of the drawn stone
+        if (own === TERRAIN && kitName) {
+          const mu = (sx1 + sx2) / 2, mv = (sy1 + sy2) / 2;
+          const run = kitRun(a[0], a[1], bb[0], bb[1], toX(mu, mv), toY(mu, mv));
+          let drawn = !!run;
+          for (const st of run ?? []) {
+            const got = stampTexture(kitName, st);
+            if (!got) { drawn = false; break; }
+          }
+          if (run && drawn) {
+            for (const st of run) { const got = stampTexture(kitName, st)!; this.pieces.tex(got.tex, st.x + got.dx, st.y, st.z, 0xffffff, st.foot); }
+            continue;
+          }
+        }
+        const cold = !isT && has(wl.els, k, ELID.cold), coat = isT ? 0 : wallLead(wl.els, k, ELID.earth);
+        const endA = !joins(id, sx1, sy1), endB = !joins(id, sx2, sy2);
+        const pre = `${id}:${born}:${+endA}${+endB}:${+cold}`;
         live.add(pre);
         let gm = this.geoms.get(pre);
         if (!gm) {
           const lenPx = Math.hypot(bb[0] - a[0], (bb[1] - a[1]) / FY);
-          const ruin = wl.owner[k] === TERRAIN; // the arena's own rock: taller, older stone
-          // a room with furniture: its far wall stands as high as a room's, for shelves and banners to stand against
-          const backWall = ruin && w.def.props.length > 0 && wl.y1[k] === wl.y2[k] && wl.y1[k] < 0;
-          const spec: WallSpec = { a: [a[0], a[1]], b: [bb[0], bb[1]], n: Math.max(1, Math.round(lenPx / 12)), H: ruin ? (backWall ? 34 : 19) : 14, T: ruin ? 8 : 7, mat: ruin ? 'ruin' : cold ? 'frost' : 'stone', seed: (k * 7 + wl.born[k]) & 1023, endA, endB };
+          const ruin = own === TERRAIN; // the arena's own rock: taller, older stone
+          const backWall = false;
+          const spec: WallSpec = { a: [a[0], a[1]], b: [bb[0], bb[1]], n: Math.max(1, Math.round(lenPx / 12)), H: ruin ? (backWall ? 34 : 19) : 14, T: ruin ? 8 : 7, mat: ruin ? 'ruin' : cold ? 'frost' : 'stone', seed: (id * 7 + born) & 1023, endA, endB };
           gm = { spec, g: wallGeom(spec) };
           this.geoms.set(pre, gm);
         }
@@ -643,7 +682,7 @@ export class StructureView {
         const rs = clamp(Math.ceil((age / 0.28) * RISE_STEPS), 1, RISE_STEPS);
         const jolt = hitE >= 0 && hitE < 0.12 ? (Math.floor(hitE * 60) % 2 ? 1 : -1) : 0;
         // the same wall, damage and rise as last frame, every slab painted: last frame's textures, no keys to build
-        const mk = `${pre}|${st}|${rs}`, memo = this.slabMemo[k];
+        const mk = `${pre}|${st}|${rs}`, memo = this.slabMemo[id];
         if (memo && memo.key === mk) {
           for (let i = 0; i < gm.spec.n; i++) {
             const tex = memo.tex[i], sl = gm.g.slabs[i];
@@ -661,10 +700,10 @@ export class StructureView {
             if (!tex) continue;
             this.pieces.tex(tex, Math.round(sl.cx) - SLAB_OX + jolt, Math.round(sl.cy) - SLAB_OY, sl.cy);
           }
-          this.slabMemo[k] = done ? { key: mk, tex: got } : undefined;
+          this.slabMemo[id] = done ? { key: mk, tex: got } : undefined;
         }
         // a fresh wall tears out of the ground in dust
-        if (age < 0.6) for (let i = 0; i < 4; i++) K.dust(o, lerp(a[0], bb[0], (i + 0.5) / 4), lerp(a[1], bb[1], (i + 0.5) / 4), age, k * 5 + i, 3, 8, '#8a7a68', 0.7);
+        if (age < 0.6) for (let i = 0; i < 4; i++) K.dust(o, lerp(a[0], bb[0], (i + 0.5) / 4), lerp(a[1], bb[1], (i + 0.5) / 4), age, id * 5 + i, 3, 8, '#8a7a68', 0.7);
         if (age < 0.3) light((a[0] + bb[0]) / 2, (a[1] + bb[1]) / 2, 40, '#e0c8a0', 0.4 * (1 - age / 0.3));
         if (coat && st < 4) this.wallCoat(o, gm.g, gm.spec, coat, t, k, light);
         continue;
@@ -932,9 +971,9 @@ export class StructureView {
         X.shadow(g, x, y - 1, 5, 3, 8, 'rgba(8,6,16,0.45)');
         const c = this.pieces.canvas(x - 22, y - 40, 44, 50, y);
         const orb = S.sigilDevice(c, x, y, t, { R: R.length >= 5 ? R : [...R, R[R.length - 1]], rise, recoil, charge, dry, orbZ: 16 });
-        if (age < S.TURRET_SUMMON) { S.turretSummon(g, o, x, y, age, R); light(x, y - 12, 52, R[2], 0.8 * (1 - age / S.TURRET_SUMMON)); }
+        if (age < S.TURRET_SUMMON) { this.depth(o, x, y, 60, (o) => S.turretSummon(g, o, x, y, age, R)); light(x, y - 12, 52, R[2], 0.8 * (1 - age / S.TURRET_SUMMON)); }
         if (orb) light(orb[0], y, 36, R[2], (recoil > 0 ? 0.8 : 0.4) * up * (dry ? 0.3 : 1));
-        if (dry && orb) for (const p of emit(t, 4, 1.2, (i, a2) => ({ x: orb[0] + a2 * 4, y: orb[1] - 2 - a2 * 14, age: a2 }))) K.puff(o, p.x, p.y, 1.5 + p.age * 2, '#4a4458', 1 - p.age);
+        if (dry && orb) this.depth(o, x, y, 40, (o) => { for (const p of emit(t, 4, 1.2, (i, a2) => ({ x: orb[0] + a2 * 4, y: orb[1] - 2 - a2 * 14, age: a2 }))) K.puff(o, p.x, p.y, 1.5 + p.age * 2, '#4a4458', 1 - p.age); });
       } else if (ty === DEVICE.glyph) {
         const draw = clamp(1 - dv.timer[k] / T(STRUCT.glyphArm), 0, 1), armed = dv.timer[k] <= 0;
         S.glyph(g, x, y, glyphRadiusOf(w, dv.owner[k]) * PPU, SV, t, draw, armed, elName(look), R[1]);
@@ -999,6 +1038,8 @@ export class StructureView {
       const P = (f: number, r: number, u: number): [number, number, number] => [v.x + f * cs - r * sn, v.y + (f * sn + r * cs) * FY - u * CU, f * sn + r * cs];
       const ch: Pt = [v.x + v.a.chest[0], v.y + v.a.chest[1]];
       if (b.downed[i]) continue;
+      // what a wizard wears and holds goes behind what stands in front of them, as they do
+      this.depth(o, v.x, v.y, 44, (o) => {
       // auras first (ground and around), then the ward, then what is held
       if (s.aura[i] > 0) this.aura(w, i, v, t, g, o, P, light);
       if (s.ward[i]) this.ward(w, i, v, t, g, o, P, ch, light);
@@ -1020,13 +1061,14 @@ export class StructureView {
       if (s.weapon[i]) this.weapon(w, i, v, t, g, o, P, conj, light);
       if (s.handT[i] > TAP && s.weapon[i] !== ELID.life) this.charging(w, i, v, t, g, o, light);
       if (s.guard[i]) this.guard(w, i, v, t, g, o, P, conj, light);
-      if (s.linkTo[i] >= 0) this.link(i, v, bodies[s.linkTo[i]], t, o, light);
       // Phase (Prism): a hex afterimage round you while you drift through bodies
       if (s.guard[i] === GUARD.prism && s.retreatT[i] > 0) {
         const k = s.retreatT[i] / T(ARMS.phaseTime), cy = v.y - 12;
         for (let q = 0; q < 2; q++) { const r = 9 + q * 4 + (1 - k) * 4, pts: Pt[] = []; for (let j = 0; j <= 6; j++) { const a = (j / 6) * TAU + Math.PI / 6 + t; pts.push([v.x + Math.cos(a) * r, cy + Math.sin(a) * r * 0.8]); } X.lines(o, pts, q ? EL.arcane[3] : EL.arcane[1]); }
         light(v.x, v.y, 30, '#ff4f9b', 0.4 * k);
       }
+      });
+      if (s.linkTo[i] >= 0) this.link(i, v, bodies[s.linkTo[i]], t, o, light); // runs between two wizards, so no one spot to go behind
     }
     // Doubles: a translucent violet copy (the sprite is tinted and faded) with a violet edge and a seal
     for (let i = MAX_SEATS; i < MAX_BODIES; i++) {
@@ -1537,6 +1579,18 @@ export class StructureView {
   }
 
   // ---- short-lived effects -------------------------------------------------------------------------
+  /** Where the local wizard's placement preview stands, while one can be showing. */
+  private aimSpot(w: World): Pt | null {
+    const s = w.seats, b = w.bodies, i = this.localSeat;
+    if (!s.active[i] || !(s.prevButtons[i] & (BTN.area | BTN.force))) return null;
+    const d = Math.hypot(s.aimX[i], s.aimY[i]), lim = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
+    return [gx(b.x[i] + s.aimX[i] * lim), gy(b.y[i] + s.aimY[i] * lim)];
+  }
+  private fxDepth(w: World, f: SFx, e: number, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
+    const who = f.who >= 0 && f.who < bodies.length ? bodies[f.who] : null, placed = f.x !== 0 || f.y !== 0;
+    if (f.kind === 'whit' || f.kind === 'trail' || (!placed && !who?.on)) { this.drawFx(w, f, e, t, g, o, bodies, light); return; } // a chip off a wall is on that wall
+    this.depth(o, placed ? gx(f.x) : who!.x, placed ? gy(f.y) : who!.y, 90, (o) => this.drawFx(w, f, e, t, g, o, bodies, light));
+  }
   private drawFx(w: World, f: SFx, e: number, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
     const sd = f.seed, x = gx(f.x), y = gy(f.y), R = f.look === ELID.life ? LIFE : ramp(f.look);
     // Every weapon and guard move shows the extras it carries (art/accent.ts), beside its own effect:

@@ -65,7 +65,7 @@ Only values the game understands are defined. Pits, water and the like come when
 
 | **Prop** | `asset` (an id in `assets/props`), `blocks` | Furniture or decoration. It's drawn at the entity's spot: the middle of its footprint on the ground. If `blocks` is on, its footprint stops bodies and shots like rock (and draws no wall). It has no other gameplay. |
 
-Static rock shares the 160 wall slots with the players' walls, so **a room may have at most 40 rock wall segments** (Rock entities, traced outlines and blocking props). A blocking prop takes one wall if its footprint is up to 0.6 u deep, two if deeper. Survive uses exactly 40, the Academy 38.
+Static rock (Rock entities, traced outlines and blocking props) is the room's terrain: read-only data with a spatial lookup, not part of a rollback snapshot, and separate from the players' 160 wall slots. So a room **can have as many rock wall segments as it needs**. (A blocking prop takes one wall if its footprint is up to 0.6 u deep, two if deeper.)
 
 ## The asset registry
 
@@ -93,7 +93,7 @@ The room's id is the level's name with a lower-case first letter (`Survive` → 
 
 1. The project and every level file against LDtk's official JSON schema (1.5.3), and the pinned version.
 2. References: every layer, entity and field instance has its definition, IntGrid values are defined, level files exist and match the project's list, iids are unique, entity-reference fields (none yet) point at real entities.
-3. The rooms compile: known entities only, all four seats' starts, three altars or none, at least four portals in the Arena and Survive, at most 40 rock walls.
+3. The rooms compile: known entities only, all four seats' starts, three altars or none, at least four portals in the Arena and Survive.
 4. Placement: every start, dummy, portal and altar is inside the room, not on painted rock and at least 0.7 u from any rock wall or blocking prop, and **reachable on foot from seat 0's start** on the enemies' pathfinding grid (rock widened as `nav.ts` widens it). Every prop is inside the room.
 5. `packages/sim/src/rooms.gen.ts` is what the maps compile to.
 6. The asset registry: every Prop names an asset that exists; every `meta.json` is whole; its images exist and none are left out; a generated image names a raw file that exists.
@@ -116,3 +116,15 @@ The sim hashes each compiled room (FNV-1a over its data: `ROOM_HASH`, `roomHash`
 ## Not yet
 
 No preview tileset: LDtk shows the Terrain as flat colours and the entities as shapes, not our art. The academy rooms, doors between maps, a map viewer page, autotiling art and the AI art trial are later stages (`docs/explorations/2026-11-06-map-pipeline-stage-1.md`).
+
+## Painting the ground
+
+The **Ground** layer (IntGrid, one cell = 0.5 u) says what the floor looks like: grass, dirt, sand, flagstone, cobble, mud, leaves, gravel, ash, planks, slabs or water. It's the client's alone, so it never reaches `rooms.gen.ts` or the room hash, and painting a room can't desync anyone. A level with no Ground cells keeps the code-drawn floor. `npm run content:build` writes the cells to `packages/client/src/art/grounds.gen.ts`.
+
+Edit it in LDtk, or as text with `npm run content -- ground <level>` and `--write <file|->`. Textures are `content/assets/ground/<name>.png`, cut from the tilesets by `tools/art-import/ground.py`. The painter (`client/src/art/ground.ts`) works through any camera.
+
+**Transitions and variation.** Each material has a layer and an edge style (`MATERIAL_STYLES` in `art/ground.ts`). The higher layer decides the edge: grass and forest floor fray, loose ground breaks into clumps, paving loses whole irregular stones, and water gets a dark bank and a foam line. Variation stacks: alternate tiles (`<material>-2.png` and on, colour-matched to the first, picked by region), a random shift and mirror per block for loose materials, broad light and warm or cool drift, and a scatter of small props per material (`SCATTER` in `art/ground-room.ts`).
+
+## Walls from a building kit
+
+A room can build its straight walls from a kit in `content/assets/kits/<kit>/` (`tools/art-import/kits.py` cuts these from the bought kits): list it in `ROOM_KIT` in `client/src/art/wall-kit.ts`. Pieces repeat exactly along the two directions the map's axis-aligned Rock walls run on screen, and a wall that doesn't end on a whole tile (about 2.1 units) is cropped. Walls on the north and west of the room stand full height; those on the south and east are cut low so they don't hide the room. Walls at other angles, and walls a player raises, stay drawn by `art/walls.ts`.

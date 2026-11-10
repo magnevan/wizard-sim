@@ -14,16 +14,19 @@
  * reached the presented frame (tested on SwiftShader and D3D11). Nothing here rotates or
  * scales a sprite, so it isn't needed: rotation lives inside the Canvas2D effect drawing.
  */
-import { Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
-  AI, ARCH, ARCHETYPES, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, PHASE, TUT_TAG,
+  AI, ARCH, ARCHETYPES, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
 import { ActorFrames, FEET_X, FEET_Y } from './art/actors';
 import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
-import { FLOOR, floorTexture, surviveRuin } from './art/floor';
+import { floorLayout, floorPlaceholder } from './art/floor';
+import { groundTexture } from './art/ground-room';
+import { toX, toY, turnedWorld } from './iso-world';
+import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
@@ -41,6 +44,8 @@ import type { SoundDirector } from './audio/director';
 const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10, bramble: 10, sack: 9 };
 /** Dusk on the lit layers (the floor has it baked in): a touch of blue. */
 const AMBIENT = 0xe4e8ff;
+/** ?lighting=0 turns the scene lighting off, to compare. */
+const LIGHTING = typeof location === 'undefined' || new URLSearchParams(location.search).get('lighting') !== '0';
 const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL', simple: 'SIMPLE, ANGLED, LOW DETAIL', code: 'CODE, STRAIGHT-ON' };
 
 export class WorldView {
@@ -60,9 +65,16 @@ export class WorldView {
   /** The seats played on this screen: a following camera frames their wizards. Offline, every seat (local co-op); online, just yours. */
   isLocal: (seat: number) => boolean = () => true;
   /** Painted for the Sanctum's and the Arena's play area; repainted at the first draw of a world with another (fitArena). */
-  private floor = new Sprite(floorTexture(ARENA.w, ARENA.h));
+  private floorAt = floorLayout(ARENA.w, ARENA.h);
+  private floor = new Sprite(floorPlaceholder(this.floorAt));
   /** The play area the floor and effect canvases are painted for. */
-  private arenaKey = `${ARENA.w}x${ARENA.h}x0`;
+  private arenaKey = '';
+  /** Whether the floor's current texture is this view's own placeholder (the painted ground is shared). */
+  private ownFloor = true;
+  /** False while a room's painted ground is still on its way (tests and screenshots wait on it). */
+  groundReady = true;
+  /** The real world behind what's being drawn (`w` is its turned copy). */
+  private real!: World;
   private vfx = new Vfx();
   private sGround = new Graphics(); // structures' floor layer (view-structures.ts)
   private sOverlay = new Graphics();
@@ -91,8 +103,12 @@ export class WorldView {
   private smoothY = new Float64Array(MAX_BODIES);
   private preX = new Float64Array(MAX_BODIES);
   private preY = new Float64Array(MAX_BODIES);
-  notePreRewind(w: World): void { this.preX.set(w.bodies.x); this.preY.set(w.bodies.y); }
-  notePostRewind(w: World, localSeat: number): void {
+  /** The world as this view draws it: a turned copy of the real one (iso-world.ts). */
+  private seen(w: World): World { this.real = w; return turnedWorld(w); }
+
+  notePreRewind(real: World): void { const w = this.seen(real); this.preX.set(w.bodies.x); this.preY.set(w.bodies.y); }
+  notePostRewind(real: World, localSeat: number): void {
+    const w = this.seen(real);
     const b = w.bodies;
     for (let i = 0; i < MAX_BODIES; i++) {
       if (i === localSeat || !b.kind[i]) continue;
@@ -106,7 +122,7 @@ export class WorldView {
     this.sound?.postRewind(w);
   }
   /** After each step the rollback replay runs (afterStep is skipped then): notes late remote spell starts. */
-  replayStep(w: World): void { this.vfx.replayStep(w); this.sound?.replayStep(w, this.vfx.localSeat); }
+  replayStep(real: World): void { const w = this.seen(real); this.vfx.replayStep(w); this.sound?.replayStep(w, this.vfx.localSeat); }
   /** The game's sound (audio/director.ts): null in the help panel's previews and with ?sound=0. */
   sound: SoundDirector | null = null;
   /** Late remote spells: fast-forwarded from their first frame (true), or popping in where they are (false). */
@@ -115,7 +131,7 @@ export class WorldView {
   /** How many late remote spells were caught up (Network test). */
   get caught(): Readonly<{ missiles: number; channels: number; casts: number }> { return this.vfx.caught; }
   /** Where missile j is drawn (world units) at real time ct, s: for tests. */
-  missileDrawnAt(w: World, j: number, ct: number): [number, number] { const p = this.vfx.missileAt(w, j, ct); return [p[0], p[1]]; }
+  missileDrawnAt(real: World, j: number, ct: number): [number, number] { const p = this.vfx.missileAt(this.seen(real), j, ct); return [toX(p[0], p[1]), toY(p[0], p[1])]; }
   private castPose(w: World, who: number, t: number): void {
     const id = w.seats.castId[who];
     if (id === CAST_ID.force || id === CAST_ID.conjure) this.holdUntil[who] = t + 0.35;
@@ -133,16 +149,47 @@ export class WorldView {
   private castS = new Float64Array(MAX_SEATS);
   private holdUntil = new Float64Array(MAX_SEATS);
 
-  constructor() {
+  /** Scene lighting (art/lighting.ts), unless ?lighting=0; the help panel's little previews go without. Needs the renderer. */
+  private lit: SceneLighting | null = null;
+  /** A mood to use instead of the room's own (?mood=day, dusk, night or interior). */
+  mood: string | null = null;
+  private renderer: Renderer | null = null;
+  /** The lit layers grouped, so the colour grade can cover them and not the effects over them. */
+  private litLayer = new Container();
+  setRenderer(r: Renderer): void { this.renderer = r; }
+  /** What stands in the scene, for effects to go behind (art/vfx.ts). Positions are field px; fx0, fy0 convert from the scene's. */
+  private occluderSource(w: World, fx0: number, fy0: number) {
+    return (emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number) => void) => {
+      for (let i = 0; i < MAX_BODIES; i++) {
+        const spr = this.sprites[i], v = this.views[i];
+        if (!v.on || !spr.visible || (i < MAX_SEATS && w.seats.active[i] && w.seats.phase[i] === PHASE.channel)) continue;
+        emit(spr.texture, spr.position.x - fx0, spr.position.y - fy0, v.y, false, spr.zIndex);
+      }
+      this.props.sprites((s, _x, y) => emit(s.texture, s.position.x - fx0, s.position.y - fy0, y - fy0, true, s.zIndex));
+      // pieces carry the origin they were laid out with: effects that draw before the walls see last frame's
+      const [px, py] = this.structs.pieceOrigin;
+      this.structs.eachPiece((s, _x, y) => emit(s.texture, s.position.x - px, s.position.y - py, y - py, true, s.zIndex));
+    };
+  }
+
+  constructor(lighting = LIGHTING) {
+    if (lighting) this.lit = new SceneLighting(this.actors);
+    const tint = this.lit ? 0xffffff : AMBIENT;
     this.actors.sortableChildren = true;
     this.structs = new StructureView(this.actors);
-    this.props = new PropView(this.actors, AMBIENT, 'lean');
+    this.props = new PropView(this.actors, tint, 'lean');
     this.deaths = new Deaths(this.actors);
-    this.scene.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
+    if (this.lit) {
+      this.litLayer.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.lit.shadowSprite, this.lit.lightSprite, this.lit.glowLayer, this.actors, this.lit.vig);
+      this.litLayer.filters = [this.lit.grade];
+      this.scene.addChild(this.litLayer, this.vfx.over, this.sOverlay);
+    } else {
+      this.scene.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
+    }
     this.hudLayer.addChild(this.tut.fade, this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over, this.tut.sprite, this.tut.banner, this.artLabel);
     this.root.addChild(this.scene, this.hudLayer);
     for (let i = 0; i < MAX_BODIES; i++) {
-      const s = new Sprite(); s.visible = false; s.tint = AMBIENT;
+      const s = new Sprite(); s.visible = false; s.tint = tint;
       this.actors.addChild(s); this.sprites.push(s);
       this.views.push({ on: false, x: 0, y: 0, a: null, rig: 'goblin', seat: i < MAX_SEATS ? i : -1, f: null });
     }
@@ -150,7 +197,7 @@ export class WorldView {
 
   /** Hide the additive lights (?lights=0), for checking what they add. */
   get lightsOn(): boolean { return this.lights.layer.visible; }
-  set lightsOn(on: boolean) { this.lights.layer.visible = on; }
+  set lightsOn(on: boolean) { this.lights.layer.visible = on; if (this.lit) this.lit.glowLayer.visible = on; }
 
   resize(screenW: number, screenH: number, forcedScale?: number): void {
     this.camera.fit(screenW, screenH, forcedScale);
@@ -159,13 +206,15 @@ export class WorldView {
   }
 
   /** Call right before each sim step, so the view can interpolate from here to the new state. */
-  beforeStep(w: World): void {
+  beforeStep(real: World): void {
+    const w = this.seen(real);
     this.prevBX.set(w.bodies.x); this.prevBY.set(w.bodies.y); this.prevKind.set(w.bodies.kind);
     this.vfx.noteBefore(w);
   }
 
   /** Call right after each sim step with its events. */
-  afterStep(w: World): void {
+  afterStep(real: World): void {
+    const w = this.seen(real);
     const b = w.bodies, s = w.seats, t = this.simTime(w);
     for (const e of w.events) {
       this.hud.onEvent(e.kind, e.who, e.look, e.text, t);
@@ -228,7 +277,8 @@ export class WorldView {
    * runs on it, so nothing freezes while the sim waits on the network or is paused. What stands for
    * sim state (positions, wind-ups, ages of sim events) stays on sim time and interpolation.
    */
-  draw(w: World, alpha: number, now = performance.now()): void {
+  draw(real: World, alpha: number, now = performance.now()): void {
+    const w = this.seen(real);
     this.frame++;
     const b = w.bodies, t = this.simTime(w, alpha), cam = this.camera, ct = now / 1000;
     const dt = this.lastCt ? ct - this.lastCt : 0;
@@ -244,7 +294,7 @@ export class WorldView {
     if (t !== this.lastSimT) { this.lastSimT = t; this.stillSince = ct; }
     const lead = Math.min(0.5, ct - this.stillSince);
     const ox = cam.originX(), oy = cam.originY(), fx0 = ox - FIELD.OX, fy0 = oy - FIELD.OY;
-    this.floor.position.set(ox - FLOOR.OX, oy - FLOOR.OY);
+    this.floor.position.set(ox - this.floorAt.OX, oy - this.floorAt.OY);
     // the effect canvases cover the field in view (a margin for shake and things at the edge): art/vfx.ts view()
     const M = 24;
     this.vfx.view(-fx0 - M, -fy0 - M, cam.w + 2 * M, cam.h + 2 * M);
@@ -270,7 +320,7 @@ export class WorldView {
       spr.visible = !!v.a;
       const dbl = b.kind[i] === KIND.double;
       spr.alpha = dbl ? 0.62 + 0.08 * Math.sin(ct * 5) : 1;
-      spr.tint = dbl ? 0xd8b4ff : AMBIENT;
+      spr.tint = dbl ? 0xd8b4ff : this.lit ? 0xffffff : AMBIENT;
       spr.position.set(fx0 + fx - FEET_X, fy0 + fy - FEET_Y);
       spr.zIndex = fy * 128 + i;
       v.on = true; v.x = fx; v.y = fy; v.rig = s.kind;
@@ -282,7 +332,34 @@ export class WorldView {
     this.lights.begin();
     stats.fills = 0;
     const t0 = performance.now();
-    const light = (x: number, y: number, r: number, col: string, a: number) => this.lights.add(fx0 + x, fy0 + y, r, col, a);
+    const lit = this.lit;
+    const light = lit ? (x: number, y: number, r: number, col: string, a: number, soft?: boolean) => lit.light(fx0 + x, fy0 + y, r, col, a, soft) : (x: number, y: number, r: number, col: string, a: number, soft?: boolean) => this.lights.add(fx0 + x, fy0 + y, r, col, a, soft);
+    if (lit) {
+      lit.fit(cam.w, cam.h);
+      lit.begin(moodOf(w.def.id, this.mood), ct, fx0, fy0);
+      this.props.standing((tex, fx, fy, x, y, asset, flat) => {
+        if (!flat) lit.castShadow(tex, fx, fy, x, y);
+        const l = PROP_LIGHTS[asset];
+        if (l) lit.light(x, y + 2, l[1], l[0], l[2] * (0.92 + 0.08 * Math.sin(ct * 7 + x))); // at its foot, on the camera's side, so it lights itself
+      });
+      for (let i = 0; i < MAX_BODIES; i++) {
+        const v = this.views[i];
+        if (!v.on || !v.f || b.kind[i] === KIND.double) continue;
+        lit.shadow(v.f.tex, FEET_X, FEET_Y, fx0 + v.x, fy0 + v.y);
+        if (i < MAX_SEATS && lit.carry) lit.light(fx0 + v.x, fy0 + v.y, 110, '#ffd9a8', lit.carry * 0.8, true);
+      }
+      const wl = w.walls, tr = w.terrain;
+      const wall = (ax: number, ay: number, bx: number, by: number): void => {
+        const x1 = fx0 + gx(ax), y1 = fy0 + gy(ay), x2 = fx0 + gx(bx), y2 = fy0 + gy(by);
+        lit.occluder(x1, y1, x2, y2);
+        lit.wall(x1, y1, x2, y2);
+      };
+      // the room's own rock, then what's been cast. Furniture throws its own sprite shadow, and doesn't stop light.
+      for (let k = 0; k < tr.n; k++) if (!isPropWall(w, k)) wall(tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k]);
+      for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.rock) wall(wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
+    }
+    this.vfx.occluders = this.occluderSource(w, fx0, fy0);
+    this.structs.behind = this.vfx.behind;
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
     this.lights.end();
     this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;
@@ -290,6 +367,13 @@ export class WorldView {
     this.tut.draw(w, ct, cam.hudW, cam.hudH);
     this.edges.draw(w, cam, ct, (i) => this.drawnAt(i, w, alpha));
     this.frames.upload();
+    if (lit && this.renderer) {
+      lit.finishLights();
+      for (let i = 0; i < MAX_BODIES; i++) if (this.views[i].on && this.sprites[i].visible) lit.relight(this.sprites[i], fx0 + this.views[i].x, fy0 + this.views[i].y);
+      this.props.sprites((s, x, y) => lit.relight(s, x, y));
+      this.structs.eachPiece((s, x, y) => lit.relight(s, x, y));
+      lit.render(this.renderer);
+    }
     const me = this.vfx.localSeat;
     this.sound?.frame(w, { cx: cam.cx, cy: cam.cy, halfW: cam.w / 2 / PPU, earX: b.x[me], earY: b.y[me] }, ct);
   }
@@ -333,14 +417,24 @@ export class WorldView {
 
   /** Repaints the floor and resizes the effect canvases when the world's play area changes (a survive world is bigger). */
   private fitArena(w: World): void {
-    const d = w.dims, key = `${d.w}x${d.h}x${w.run ? 1 : 0}`;
+    const d = w.dims, key = `${d.w}x${d.h}${w.def.id}`;
     if (key === this.arenaKey) return;
     this.arenaKey = key;
     if (fitField(d.w, d.h)) { this.vfx.resize(); this.structs.scorch.resize(); }
-    const old = this.floor.texture;
-    this.floor.texture = floorTexture(d.w, d.h, w.run ? surviveRuin : undefined);
-    old?.destroy(true);
+    this.floorAt = floorLayout(d.w, d.h);
+    if (this.ownFloor) this.floor.texture?.destroy(true);
+    this.floor.texture = floorPlaceholder(this.floorAt);
+    this.ownFloor = true;
     this.camera.reset();
+    this.groundReady = false;
+    // the plain colour stands in for the moment the images take to arrive. The painted ground is shared with other views, so it's never destroyed here.
+    void groundTexture(w.def.id, this.real.dims.w, this.real.dims.h, this.floorAt).then((t) => {
+      if (key !== this.arenaKey) return;
+      this.floor.texture?.destroy(true);
+      this.ownFloor = false;
+      this.floor.texture = t;
+      this.groundReady = true;
+    }).catch((e) => { console.warn('ground:', e); this.groundReady = true; });
   }
 
   /** Where body i is drawn this frame (interpolated), world units. */

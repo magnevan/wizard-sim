@@ -4,8 +4,8 @@
  * the sim state and the clock and screenshots don't flicker between runs.
  */
 export const TAU = Math.PI * 2;
-/** Ground squash of the 3/4 camera (Pixel Battlefield pass 4). */
-export const FY = 0.6;
+/** Ground squash of the isometric camera: 2:1. */
+export const FY = 0.5;
 /** Height is drawn at CU px per rig unit: squat under the steep camera, but still readable. */
 export const CU = 0.8;
 
@@ -43,4 +43,11 @@ export function emit<T>(t: number, rate: number, life: number, fn: (i: number, a
     if (p) out.push(p);
   }
   return out;
+}
+
+/** Smooth value noise, 0..1. */
+export function vnoise(x: number, y: number, s: number): number {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  return lerp(lerp(rand(xi, yi, s), rand(xi + 1, yi, s), u), lerp(rand(xi, yi + 1, s), rand(xi + 1, yi + 1, s), u), v);
 }

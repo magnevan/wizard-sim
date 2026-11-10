@@ -2,7 +2,7 @@
 //   1. the project and every level file against LDtk's official JSON schema (pinned, 1.5.3);
 //   2. references: layer and entity definitions, field definitions, IntGrid values, entity
 //      reference fields, level files, unique iids;
-//   3. the rooms compile, and the game's own rules for them (starts, altars, the wall budget);
+//   3. the rooms compile, and the game's own rules for them (starts, altars);
 //   4. placement: every spawn, portal, altar and dummy inside the room and clear of rock, and
 //      reachable on foot from seat 0's start;
 //   5. the generated module (packages/sim/src/rooms.gen.ts) is up to date;
@@ -10,8 +10,8 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
-import { compileProject, emitModule, ROCK } from './compile.mjs';
-import { CELL, GAME, GEN_OUT, LDTK_VERSION, SCHEMA, loadProject, loadProps } from './ldtk.mjs';
+import { compileProject, emitGrounds, emitModule, ROCK } from './compile.mjs';
+import { CELL, GAME, GEN_OUT, GROUND_OUT, LDTK_VERSION, SCHEMA, loadProject, loadProps } from './ldtk.mjs';
 
 const require = createRequire(import.meta.url);
 
@@ -25,9 +25,6 @@ export const SIM = {
   wizardRadius: 0.45,
   /** N_ALTARS */
   altars: 3,
-  /** Terrain rock shares the 160 wall slots (MAX_WALLS) with players' walls. Survive's 40 leave
-   * players 120; that is the ceiling for any room's terrain. */
-  terrainWalls: 40,
   /** The rooms the sim's code names (createWorld, the scenarios). */
   rooms: ['sanctum', 'arena', 'survive', 'tutorial', 'academy'],
 };
@@ -125,7 +122,6 @@ function checkRoom(room, errors) {
   if (room.id === 'survive' && room.altars.length !== SIM.altars) errors.push(`${R}: Survive needs ${SIM.altars} altars`);
   if ((room.id === 'survive' || room.id === 'arena') && room.portals.length < 4) errors.push(`${R}: needs at least 4 portal spots (a wave opens up to 4)`);
   const walls = [...room.rock, ...room.propRock];
-  if (walls.length > SIM.terrainWalls) errors.push(`${R}: ${room.rock.length} rock walls and ${room.propRock.length} blocking-prop walls; the budget is ${SIM.terrainWalls} (players need the other wall slots). Merge rock, or use fewer free Rock segments or blocking props.`);
   const gw = Math.round(room.w / CELL), gh = Math.round(room.h / CELL);
   const rockCell = (cx, cy) => room.terrain[cy]?.[cx] === ROCK;
   const cellX = (x) => Math.floor((x + hw) / CELL), cellY = (y) => Math.floor((y + hh) / CELL);
@@ -213,5 +209,9 @@ export function runCheck({ project = undefined, genOut = GEN_OUT } = {}) {
   const source = emitModule(rooms);
   const current = existsSync(genOut) ? readFileSync(genOut, 'utf8').replace(/\r\n/g, '\n') : '';
   if (current !== source) errors.push(`${genOut} is stale: run \`npm run content:build\``);
+  try {
+    const grounds = existsSync(GROUND_OUT) ? readFileSync(GROUND_OUT, 'utf8').replace(/\r\n/g, '\n') : '';
+    if (grounds !== emitGrounds(loaded)) errors.push(`${GROUND_OUT} is stale: run \`npm run content:build\``);
+  } catch (e) { errors.push(e.message); }
   return { errors, rooms, source };
 }

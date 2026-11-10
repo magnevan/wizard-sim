@@ -30,7 +30,7 @@ export class EdgeMarks {
     const mx = (X0 + X1) / 2, my = (Y0 + Y1) / 2;
     /** Where on the edge a world point off screen is marked, and the way to it; null when it is in view. */
     const place = (x: number, y: number): [number, number, number, number] | null => {
-      const p = cam.worldToScreen(x, y), hx = p.x / k, hy = p.y / k - 6; // aim at the body, not its feet
+      const p = cam.viewToScreen(x, y), hx = p.x / k, hy = p.y / k - 6; // aim at the body, not its feet
       if (hx >= X0 - INSET && hx <= X1 + INSET && hy >= Y0 - INSET && hy <= Y1 + INSET) return null;
       const dx = hx - mx, dy = hy - my;
       const t = Math.min(dx ? ((dx > 0 ? X1 : X0) - mx) / dx : Infinity, dy ? ((dy > 0 ? Y1 : Y0) - my) / dy : Infinity);

@@ -82,6 +82,7 @@ packages/
            while rules are reviewed there); index.ts types it. Pure data and string logic, so it is safe in the sim.
   sim/     @wizard-sim/sim: the game. No DOM, no clock, no async, no Math.sin. tsconfig has no DOM lib and a test bans the rest.
     world.ts   all state, in fixed-capacity typed arrays (struct of arrays); buffers() lists them
+    terrain.ts a room's static rock and blocking props, with a uniform grid for nearby queries: read-only, derived from the room, not in buffers()
     room.ts    RoomDef, a room's layout (size, terrain rows, rock, starts, dummies, portals, altars) and roomHash;
                rooms.gen.ts holds every room, generated from content/maps (npm run content:build; never edit it by hand)
     step.ts    step(world, inputs): one 60 Hz tick

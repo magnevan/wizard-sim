@@ -114,7 +114,7 @@ async function boot(): Promise<void> {
     roundPixels: true,
     background: '#0e1712', // the grass at the edge of the floor, in dusk
     // Headless screenshots read the canvas after the frame was presented.
-    preserveDrawingBuffer: headless,
+    preserveDrawingBuffer: headless && params.get('rafloop') !== '1',
     preference: params.get('renderer') === 'webgpu' ? 'webgpu' : 'webgl',
   });
   app.ticker.stop();
@@ -125,6 +125,8 @@ async function boot(): Promise<void> {
   addEventListener('keydown', (e) => { if (e.code === 'Backquote') { showDebug = !showDebug; hud.style.display = showDebug ? '' : 'none'; } });
   const view = new WorldView();
   view.lightsOn = params.get('lights') !== '0';
+  view.setRenderer(app.renderer);
+  view.mood = params.get('mood');
   // the art test (the Academy): which props and which wizard. Client only: each player picks their own.
   const askedSet = PROP_SETS.find((s) => s === params.get('props'));
   if (askedSet) view.props.set = askedSet;
@@ -361,7 +363,7 @@ ${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
     schedule(frame);
   };
   // ?timerloop=1: timers instead of animation frames, so a background tab keeps running (the co-op e2e test).
-  const schedule = headless || params.get('timerloop') === '1' ? (f: () => void) => setTimeout(f, 1000 / 60) : (f: () => void) => requestAnimationFrame(f);
+  const schedule = (headless || params.get('timerloop') === '1') && params.get('rafloop') !== '1' ? (f: () => void) => setTimeout(f, 1000 / 60) : (f: () => void) => requestAnimationFrame(f);
   schedule(frame);
 
   // Expose the recorder for debugging: copy a replay of this session from the console.

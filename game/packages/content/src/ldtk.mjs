@@ -19,6 +19,7 @@ export const PROJECT = join(CONTENT, 'maps/world.ldtk');
 export const ASSETS = join(CONTENT, 'assets');
 /** The generated module the sim imports. */
 export const GEN_OUT = join(GAME, 'packages/sim/src/rooms.gen.ts');
+export const GROUND_OUT = join(GAME, 'packages/client/src/art/grounds.gen.ts');
 /** LDtk's official JSON schema, fetched from https://ldtk.io/files/JSON_SCHEMA.json and pinned. */
 export const SCHEMA = join(here, '../schema/ldtk-1.5.3.schema.json');
 /** The LDtk version the files are written for. */

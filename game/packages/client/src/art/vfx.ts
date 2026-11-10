@@ -13,13 +13,15 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import {
-  CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, STATUS, SURF, T, ZONE,
+  CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
   compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
 import * as A from './accent';
+import { depthOf, rowsHidden } from './depth';
 import * as K from './kit';
+import { SPLASH_LIGHT, beamImpact, wallSplash, type SplashKind } from './wall-splash';
 import * as X from './px';
 import type { Ctx, Pt, Ramp } from './px';
 import type { Frame } from './actors';
@@ -30,9 +32,20 @@ const EL = X.EL;
 
 /** What the view knows about a body this frame: its feet in field px, its anchors and rig. */
 export interface BodyView { on: boolean; x: number; y: number; a: Anchors | null; rig: RigKind; seat: number; f: Frame | null }
-export type LightFn = (x: number, y: number, r: number, col: string, a: number) => void;
+export type LightFn = (x: number, y: number, r: number, col: string, a: number, soft?: boolean) => void;
+/** A little unsteadiness, so a held beam's light is alive. */
+const flick = (t: number, seed: number): number => 0.9 + 0.1 * Math.sin(t * 17 + seed);
+const beamRamp = (spec: SpellSpec, look: string): Ramp => spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look);
+const splashKind = (spec: SpellSpec, look: string): SplashKind => spec.heal && look !== 'water' ? 'warm' : spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
+/** Light along a line on the ground, a row of overlapping lights, each dimmer to make up for the overlap. */
+function glowAlong(light: LightFn, ax: number, ay: number, bx: number, by: number, r: number, col: string, a: number): void {
+  const n = Math.max(1, Math.min(10, Math.ceil(Math.hypot(bx - ax, by - ay) / (r * 0.85))));
+  for (let q = 0; q <= n; q++) light(ax + ((bx - ax) * q) / n, ay + ((by - ay) * q) / n, r, col, a * 0.7);
+}
 
 /** A short-lived effect born from an event. */
+/** A spray or beam meeting a wall, for the frame it's drawn. */
+interface Strike { x: number; y: number; ux: number; uy: number; kind: SplashKind | 'beam'; t0: number; seed: number; power: number; R?: Ramp }
 interface Fx {
   kind: string; t0: number; life: number; seed: number;
   x: number; y: number; x2: number; y2: number;
@@ -46,6 +59,14 @@ const ramp = (id: number): Ramp => EL[elName(id)] ?? EL.arcane;
 const SEAT_EL = [6, 4, 5, 9];
 const STAFF_Z = 10; // missiles fly about this high (art px)
 const LIFT = 9; // a beam or spray end is lifted to about chest height
+/** How far below a far-side hit (art px) the foot of the wall's near face is. */
+const FAR_FOOT = 6;
+/** Timed effects that read over everything: numbers, banners, and arcs, which join two points. */
+const DEPTHLESS: ReadonlySet<string> = new Set(['pop', 'banner', 'zap']);
+/** Timed effects that lie out over the ground from where they happen. */
+const SPREADS: ReadonlySet<string> = new Set(['patch', 'nova', 'quake', 'slam', 'blast', 'geyser', 'healburst']);
+/** How far above the ground a beam or spray is drawn, with a little to spare: above this a standing thing is taken to hide it. */
+const CHEST = LIFT + 3;
 /** A late remote spell (rollback) catches up with where it really is over this much real time, s. */
 const CATCH_S = 0.15;
 /** Floors fade out over their last second (ticks), in this many dither steps. */
@@ -62,6 +83,19 @@ export class Vfx {
   localSeat = 0;
   readonly ground: Sprite;
   readonly over: Sprite;
+  /** Reports what stands in the scene: texture, top-left and foot y, in field px. Set by the view. */
+  occluders: ((emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number) => void) => void) | null = null;
+  /** This frame's walls and furniture, for behind(). */
+  private solids: { tex: Texture; x: number; y: number; footY: number; z: number }[] = [];
+  private cover: { tex: Texture; x: number; y: number; rows: number }[] = [];
+  /** behind()'s scratch: small, and grown when something needs more. */
+  private d = X.canvas(360, 360);
+  /** This frame's sprays that struck the face of a wall we can see: drawn last, over the wall. */
+  private strikes: Strike[] = [];
+  /** Where this frame's beams and sprays struck the far side of something: what's there hides them whole. */
+  private farHits: Pt[] = [];
+  /** The beams and sprays, drawn apart so what's in front can hide them. */
+  private b = X.canvas(FIELD.W, FIELD.H);
   private g = X.canvas(FIELD.W, FIELD.H);
   private o = X.canvas(FIELD.W, FIELD.H);
   private surf = X.canvas(FIELD.W, FIELD.H);
@@ -173,7 +207,7 @@ export class Vfx {
     this.surfSeen = new Uint8Array(0);
   }
   private remake(W: number, H: number): void {
-    this.g = X.canvas(W, H); this.o = X.canvas(W, H);
+    this.g = X.canvas(W, H); this.o = X.canvas(W, H); this.b = X.canvas(W, H);
     const old = [this.gt, this.ot];
     this.gt = Texture.from(this.g.c); this.gt.source.scaleMode = 'nearest';
     this.ot = Texture.from(this.o.c); this.ot.source.scaleMode = 'nearest';
@@ -306,17 +340,217 @@ export class Vfx {
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
     o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, W, H); o.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
     g._fs = o._fs = null;
+    this.solids.length = 0;
+    this.occluders?.((tex, x, y, footY, solid, z) => { if (solid) this.solids.push({ tex, x, y, footY, z }); });
     this.surfaces(w, ct, light);
     this.zones(w, t, light, ct);
     this.groundMarks(w, bodies, t);
     if (structures) { structures(g, o); g._fs = o._fs = null; }
-    for (const f of this.fx) if (t >= f.t0) this.drawFx(f, t - f.t0, t, w, bodies, light);
+    const hidden: { f: Fx; ux: number; uy: number }[] = [];
+    for (const f of this.fx) {
+      if (t < f.t0) continue;
+      const far = f.kind === 'impact' && this.occluders ? this.farFace(w, f) : null;
+      if (far) hidden.push({ f, ux: far.ux, uy: far.uy });
+      else this.fxDepth(f, t, w, bodies, light);
+    }
+    if (hidden.length) this.impactsBehind(hidden, t, w, bodies, light);
     this.missiles(w, t, light, ct);
-    this.channels(w, ct, bodies, light);
+    this.occludedChannels(w, ct, bodies, light);
     this.casters(w, ct, bodies, light);
     this.statuses(w, t, bodies, light, ct);
     this.bars(w, bodies);
     this.gt.source.update(); this.ot.source.update();
+  }
+
+  /**
+   * Beams and sprays are drawn over the standing things, but they run at about chest height along the
+   * ground, so whatever stands in front of them should hide them. They go on a layer of their own, and
+   * each thing near them cuts its silhouette out of that layer, down to where the effect would be in front of it.
+   */
+  private occludedChannels(w: World, t: number, bodies: BodyView[], light: LightFn): void {
+    const s = w.seats, real = this.o;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (let i = 0; i < MAX_SEATS; i++) {
+      const v = bodies[i];
+      if (!s.active[i] || s.phase[i] !== PHASE.channel || !v?.on) continue;
+      const ex = gx(s.chanEndX[i]), ey = gy(s.chanEndY[i]);
+      x0 = Math.min(x0, v.x, ex); x1 = Math.max(x1, v.x, ex); y0 = Math.min(y0, v.y, ey); y1 = Math.max(y1, v.y, ey);
+    }
+    if (x1 < x0 || !this.occluders) { this.channels(w, t, bodies, light); this.drawStrikes(t, light); return; }
+    let lowest = -Infinity;
+    for (let i = 0; i < MAX_SEATS; i++) if (s.active[i] && s.phase[i] === PHASE.channel && bodies[i]?.on) lowest = Math.max(lowest, bodies[i].y);
+    const b = this.b.x, M = 44;
+    x0 -= M; y0 -= M + 30; x1 += M; y1 += M;
+    this.farHits.length = 0;
+    this.scratchStart();
+    this.channels(w, t, bodies, light);
+    this.o = real;
+    b.globalCompositeOperation = 'destination-out';
+    this.occluders((tex, x, y, footY, solid) => {
+      const f = tex.frame;
+      if (!f) return;
+      // every caster is behind this wall or desk: none of the effect can be in front of it, right down to its foot
+      const whole = solid && (lowest < footY || this.farHits.some(([hx, hy]) => footY > hy - 24 && x < hx + 44 && x + f.width > hx - 44));
+      const h = whole ? f.height : Math.min(f.height, Math.floor(footY - CHEST - y));
+      if (h <= 0 || x > x1 || x + f.width < x0 || y > y1 || y + h < y0) return;
+      const img = tex.source?.resource as CanvasImageSource | undefined;
+      if (img) b.drawImage(img, f.x, f.y, f.width, h, x, y, f.width, h);
+    });
+    this.scratchBlit(real);
+    this.drawStrikes(t, light);
+  }
+
+  /**
+   * Draws something anchored on the ground at (ax, ay), reaching no further than R from there (and
+   * up to 70 px above): whatever stands in front of that spot hides it, by the order the sprites sort
+   * in. With nothing in front (the usual case) it goes straight on the layer. `spread`: it lies over
+   * the ground out to R, so it can also pass behind things sorted behind its centre (art/depth.ts).
+   */
+  behind = (ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread = false): void => {
+    if (this.o === this.b || this.o === this.d) { draw(this.o.x); return; } // already inside a pass
+    const z = depthOf(ay), x0 = Math.floor(ax - R - 24), x1 = Math.ceil(ax + R + 24), y0 = Math.floor(ay - R - 70), y1 = Math.ceil(ay + R + 24), reach = ay - R * FY;
+    const cover = this.cover;
+    cover.length = 0;
+    for (const s of this.solids) {
+      const f = s.tex.frame;
+      if (!f || s.x > x1 || s.x + f.width < x0 || s.y > y1 || s.y + f.height < y0) continue;
+      const rows = rowsHidden(f.height, s.y, s.footY, s.z, z, reach, spread, CHEST);
+      if (rows > 0) cover.push({ tex: s.tex, x: s.x, y: s.y, rows });
+    }
+    if (!cover.length) { draw(this.o.x); return; }
+    const real = this.o, W = x1 - x0, H = y1 - y0;
+    // its own small canvas: copying from a canvas costs the whole of that canvas, however little is taken
+    if (this.d.c.width < W || this.d.c.height < H) this.d = X.canvas(Math.max(this.d.c.width, W), Math.max(this.d.c.height, H));
+    const b = this.d.x;
+    b.setTransform(1, 0, 0, 1, -x0, -y0);
+    b.clearRect(x0, y0, W, H);
+    b.save(); b.beginPath(); b.rect(x0, y0, W, H); b.clip(); b._fs = null;
+    this.o = this.d;
+    draw(b);
+    this.o = real;
+    b.restore(); b._fs = null;
+    b.globalCompositeOperation = 'destination-out';
+    for (const c of cover) {
+      const f = c.tex.frame, img = c.tex.source?.resource as CanvasImageSource | undefined;
+      // only the part of the picture inside the box: a wall has dozens of pieces, and each costs its area
+      const l = Math.max(c.x, x0), t = Math.max(c.y, y0), r = Math.min(c.x + f.width, x1), d = Math.min(c.y + c.rows, y1);
+      if (img && r > l && d > t) b.drawImage(img, f.x + l - c.x, f.y + t - c.y, r - l, d - t, l, t, r - l, d - t);
+    }
+    b.globalCompositeOperation = 'source-over';
+    const o = real.x;
+    o.save(); o.setTransform(1, 0, 0, 1, 0, 0); o.drawImage(this.d.c, 0, 0, W, H, x0 - this.wx, y0 - this.wy, W, H); o.restore();
+    o._fs = null;
+  };
+
+  /** A timed effect, behind what stands in front of where it happens. */
+  private fxDepth(f: Fx, t: number, w: World, bodies: BodyView[], light: LightFn): void {
+    const who = f.who >= 0 && f.who < bodies.length ? bodies[f.who] : null, placed = f.x !== 0 || f.y !== 0, e = t - f.t0;
+    if (!DEPTHLESS.has(f.kind) && (placed || who?.on)) {
+      const spread = SPREADS.has(f.kind), R = spread ? Math.max(f.r * 16, 64) * 1.2 + 40 : 60;
+      this.behind(placed ? gx(f.x) : who!.x, placed ? gy(f.y) : who!.y, R, () => this.drawFx(f, e, t, w, bodies, light), spread);
+    } else this.drawFx(f, e, t, w, bodies, light);
+  }
+
+  /** Point the drawing at the scratch layer, cleared. */
+  private scratchStart(): void {
+    const b = this.b.x;
+    b.setTransform(1, 0, 0, 1, 0, 0); b.clearRect(0, 0, this.b.c.width, this.b.c.height); b.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
+    this.o = this.b; b._fs = null;
+  }
+  /** Put the scratch layer down on `real` and point the drawing back at it. */
+  private scratchBlit(real: ReturnType<typeof X.canvas>): void {
+    this.b.x.globalCompositeOperation = 'source-over';
+    this.o = real;
+    const o = real.x;
+    o.save(); o.setTransform(1, 0, 0, 1, 0, 0); o.drawImage(this.b.c, 0, 0); o.restore();
+    o._fs = null;
+  }
+
+  /** The wall this missile burst against, if it was on the side the camera can't see. */
+  private farFace(w: World, f: Fx): { ux: number; uy: number } | null {
+    // its last recorded spot can be up to a step short of the wall
+    const face = this.wallAt(w, f.x, f.y, f.x - f.x2, f.y - f.y2, STRUCT.wallThickness + f.r + Math.hypot(f.x2, f.y2) / 60 + 0.12);
+    return face && !face.front ? face : null;
+  }
+  /** Keep what's drawn next on the far side of a wall running through (x, y): sparks and dust stop at its foot. */
+  private clipFar(c: Ctx, x: number, y: number, ux: number, uy: number): void {
+    const L = 240, H = 480, fy = y + FAR_FOOT;
+    c.save();
+    c.beginPath();
+    c.moveTo(x - ux * L, fy - uy * L); c.lineTo(x + ux * L, fy + uy * L); c.lineTo(x + ux * L, fy + uy * L - H); c.lineTo(x - ux * L, fy - uy * L - H);
+    c.closePath();
+    c.clip();
+  }
+  /** Impacts on the far side of a wall: the wall hides them, and whatever flies up over it still shows. */
+  private impactsBehind(fx: { f: Fx; ux: number; uy: number }[], t: number, w: World, bodies: BodyView[], light: LightFn): void {
+    const real = this.o, b = this.b.x, R = 70, SIDE = 24;
+    this.scratchStart();
+    for (const { f, ux, uy } of fx) {
+      this.clipFar(b, gx(f.x), gy(f.y), ux, uy);
+      this.drawFx(f, t - f.t0, t, w, bodies, light);
+      b.restore(); b._fs = null;
+    }
+    this.o = real;
+    b.globalCompositeOperation = 'destination-out';
+    this.occluders!((tex, x, y, footY, solid) => {
+      const fr = tex.frame, img = tex.source?.resource as CanvasImageSource | undefined;
+      if (!solid || !fr || !img) return;
+      for (const { f } of fx) {
+        const ix = gx(f.x), iy = gy(f.y);
+        if (footY <= iy - SIDE || x > ix + R || x + fr.width < ix - R || y > iy + R || y + fr.height < iy - R) continue;
+        b.drawImage(img, fr.x, fr.y, fr.width, fr.height, x, y, fr.width, fr.height);
+        return;
+      }
+    });
+    this.scratchBlit(real);
+  }
+
+  /**
+   * Did a spray ending at (ex, ey) strike a wall? If it struck the face the camera sees, keep it for
+   * drawStrikes. The far face is hidden by the wall itself, so that spray just ends.
+   */
+  private strike(w: World, t: number, light: LightFn, ex: number, ey: number, cx: number, cy: number, kind: SplashKind | 'beam', t0: number, seed: number, power = 1, R?: Ramp): void {
+    const face = this.wallAt(w, ex, ey, cx, cy, STRUCT.wallThickness + 0.05);
+    if (!face) return;
+    const s: Strike = { x: gx(ex), y: gy(ey), ux: face.ux, uy: face.uy, kind, t0, seed, power, R };
+    if (face.front) this.strikes.push(s);
+    else {
+      // on the layer the wall cuts: only what rises over its top still shows
+      this.farHits.push([s.x, s.y]);
+      const o = this.o.x, g = this.g.x;
+      this.clipFar(o, s.x, s.y, s.ux, s.uy); this.clipFar(g, s.x, s.y, s.ux, s.uy);
+      this.drawStrike(s, t, () => {}); // and no light of its own: this close to the wall it would come through it
+      o.restore(); g.restore(); o._fs = g._fs = null;
+    }
+  }
+  /** The wall a point is up against, its direction on screen, and whether (cx, cy) is on the side the camera sees. */
+  private wallAt(w: World, ex: number, ey: number, cx: number, cy: number, near: number): { ux: number; uy: number; front: boolean } | null {
+    const wl = w.walls, tr = w.terrain;
+    const face = (x1: number, y1: number, x2: number, y2: number): { ux: number; uy: number; front: boolean } | null => {
+      const ux = x2 - x1, uy = y2 - y1, l2 = ux * ux + uy * uy || 1;
+      const q = clamp(((ex - x1) * ux + (ey - y1) * uy) / l2, 0, 1);
+      if (Math.hypot(ex - x1 - ux * q, ey - y1 - uy * q) > near) return null;
+      const sy = uy * FY, l = Math.hypot(ux, sy) || 1;
+      // the wall's normal is (-uy, ux): the side (cx, cy) is on has to face down the screen, toward the camera
+      return { ux: ux / l, uy: sy / l, front: ux * (ux * (cy - ey) - uy * (cx - ex)) > 0 };
+    };
+    for (let q = 0, n = terrainNear(tr, ex, ey, near); q < n; q++) { const k = tr.out[q], f = face(tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k]); if (f) return f; }
+    for (let k = 0; k < MAX_WALLS; k++) {
+      if (wl.type[k] !== WALL.rock && wl.type[k] !== WALL.barrier) continue;
+      const f = face(wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
+      if (f) return f;
+    }
+    return null;
+  }
+  private drawStrikes(t: number, light: LightFn): void {
+    for (const s of this.strikes) this.drawStrike(s, t, light);
+    this.strikes.length = 0;
+  }
+  private drawStrike(s: Strike, t: number, light: LightFn): void {
+    const o = this.o.x, g = this.g.x;
+    if (s.kind === 'beam') { beamImpact(o, g, s.x, s.y, s.ux, s.uy, t, s.t0, s.R!, s.seed, s.power); return; }
+    wallSplash(o, g, s.x, s.y, s.ux, s.uy, t, s.t0, s.kind, s.seed, s.power);
+    light(s.x, s.y + 2, 46, SPLASH_LIGHT[s.kind], 0.6 * s.power * flick(t, s.seed));
   }
 
   // ---- the floor: water, ice and one continuous sheet of fire ----------------------------------
@@ -375,7 +609,7 @@ export class Vfx {
           }
         }
         // embers and sparks spiralling up out of the fire, a little smoke
-        for (const p of emit(t, 1.4, 1.1, (i, age) => ({ x: x + (rand(i, 3, c) - 0.5) * cw + Math.sin(age * 6 + i) * 2.5 + age * 4, y: y - 8 - age * 26, age }))) X.px(this.o.x, p.x, p.y, p.age < 0.35 ? FR[0] : p.age < 0.7 ? FR[1] : FR[3]);
+        this.behind(x, y, cw, (over) => { for (const p of emit(t, 1.4, 1.1, (i, age) => ({ x: x + (rand(i, 3, c) - 0.5) * cw + Math.sin(age * 6 + i) * 2.5 + age * 4, y: y - 8 - age * 26, age }))) X.px(over, p.x, p.y, p.age < 0.35 ? FR[0] : p.age < 0.7 ? FR[1] : FR[3]); });
         if (c % 9 === 0) light(x, y - 4, 34, '#ff8a30', 0.5 * life + 0.06 * Math.sin(t * 13 + c));
       }
     }
@@ -424,55 +658,59 @@ export class Vfx {
 
   // ---- zones: delayed blasts, geysers, healing springs, steam, rain -------------------------------
   private zones(w: World, simT: number, light: LightFn, t: number): void {
-    const z = w.zones, g = this.g.x, o = this.o.x;
+    const z = w.zones;
     for (let k = 0; k < MAX_ZONES; k++) {
       const ty = z.type[k]; if (!ty) continue;
-      const x = gx(z.x[k]), y = gy(z.y[k]), r = z.r[k] * 16, e = simT - this.zoneT0[k], R = ramp(z.look[k]), sd = k * 31 + 7;
-      if (ty === ZONE.blast) {
-        // arcane fuse: an outer ring and a ring tightening on the spot, the centre flickering faster
-        const kk = clamp(e / 0.6, 0, 1);
-        K.gring(g, x, y, r, R[3], 0.8, 1); K.gring(g, x, y, r * (1 - kk) + 2, R[1], 1, 1);
-        if (Math.floor(t * (6 + kk * 14)) % 2) X.ellipse(g, x, y, 3, 2, R[2]);
-        light(x, y, r + 10, R[2], 0.3 + 0.4 * kk);
-      } else if (ty === ZONE.geyser) {
-        // earth rumbles: cracks running out, a ring tightening, grit jumping
-        const kk = clamp(e / 0.6, 0, 1);
-        K.cracks(g, x, y, r, sd, kk, '#1a120c', 7);
-        K.gring(g, x, y, r - kk * 4, '#8a6a48', 0.5 + 0.5 * kk, 1);
-        for (let i = 0; i < 6; i++) if (rand(i, Math.floor(t * 20), sd) < 0.5) X.px(o, x + (rand(i, 3, sd) - 0.5) * r * 1.4, y + (rand(i, 4, sd) - 0.5) * r * FY - rand(i, Math.floor(t * 20), 5) * 3, EL.earth[1]);
-      } else if (ty === ZONE.spring) {
-        // a healing spring: soft green rings welling out, light rising, sparkles (it reads as help)
-        const fade = Math.min(seg(e, 0, 0.3), seg(z.life[k], 0, 30));
-        K.gring(g, x, y, r, EL.life[2], 0.9 * fade, 1); K.gring(g, x, y, r * 0.7, EL.life[3], 0.6 * fade, 1);
-        X.ellipse(g, x, y, r * 0.9, r * 0.9 * FY, '#1e7a34', 0.3 * fade);
-        for (let i = 0; i < 2; i++) { const pe = mod(t * 0.7 + i / 2, 1); K.gring(g, x, y, 4 + pe * (r - 4), EL.life[1], (1 - pe) * 0.7 * fade, 1); }
-        K.sparkle(o, x, y - 4, t, fade, r * 1.4, sd, X.LIFE, 18);
-        for (const p of emit(t, 10, 1.2, (i, age) => { const a = rand(i, 1, sd) * TAU, rr = Math.sqrt(rand(i, 2, sd)) * r; return { x: x + Math.cos(a) * rr, y: y + Math.sin(a) * rr * FY - age * 14, age }; })) if (fade > 0.3) X.px(o, p.x, p.y, p.age < 0.5 ? X.WARM[2] : EL.life[1]);
-        light(x, y, r + 14, '#8ef07e', 0.45 * fade);
-      } else if (ty === ZONE.steam) {
-        // a steam cloud: big soft billows drawn over the bodies inside it
-        const cl = easeOut(seg(e, 0, 0.6)) * seg(z.life[k], 0, 30);
-        for (let i = 0; i < 22; i++) {
-          const a = rand(i, 11, sd) * TAU, rr = Math.sqrt(rand(i, 12, sd)) * r * cl, px2 = x + Math.cos(a) * rr + Math.sin(t * 0.9 + i) * 2, py2 = y + Math.sin(a) * rr * 0.55 - 8 - rand(i, 13, sd) * 10 * cl + Math.sin(t * 1.3 + i) * 1.5;
-          K.puff(o, px2, py2 + 2, (5 + rand(i, 14, sd) * 4) * (0.5 + cl * 0.5), '#6a7088', cl);
-          K.puff(o, px2 - 1, py2, (4.5 + rand(i, 14, sd) * 4) * (0.5 + cl * 0.5), i % 4 === 0 ? EL.steam[1] : i % 2 ? '#a8b0c4' : EL.steam[2], cl);
-        }
-        for (const p of emit(t, 6, 1.5, (i, age) => ({ x: x + (rand(i, 21, sd) - 0.5) * r * 2, y: y - 14 - age * 16, age }))) K.puff(o, p.x, p.y, 3 + p.age * 4, EL.steam[2], (1 - p.age) * 0.7 * cl);
-        light(x, y - 6, r + 20, '#d8e0f0', 0.3 * cl);
-      } else if (ty === ZONE.rain) {
-        // rain: a dark cloud over the spot, streaks and splashes, for as long as the sim says it falls
-        const t0 = this.zoneT0[k], end = simT + z.life[k] / 60;
-        const cloud = Math.min(seg(e, 0, 0.3), seg(z.life[k], 0, 24)), CY = y - 46;
-        for (const p of emit(simT, 90, 0.42, (i, age) => { const a = rand(i, 81, sd) * TAU, q = Math.sqrt(rand(i, 82, sd)) * r; return { gx2: x + Math.cos(a) * q, gy2: y + Math.sin(a) * q * FY, age, top: CY + 6 + rand(i, 83, sd) * 6 }; }, t0 + 0.1, end - 0.4)) {
-          if (p.age <= 0.8) { const q = p.age / 0.8, px2 = lerp(p.gx2 + 9, p.gx2, q), py2 = lerp(p.top, p.gy2, q * q * 0.35 + q * 0.65); X.line(o, px2 + 1, py2 - 3, px2, py2, '#5aa8e8'); X.px(o, px2, py2, '#cfefff'); }
-          else { const q = (p.age - 0.8) / 0.2; X.ring(g, p.gx2, p.gy2, 1 + q * 2.5, (1 + q * 2.5) * 0.45, '#8ad0ff', 1 - q); }
-        }
-        if (cloud > 0.05) for (let i = 0; i < 14; i++) {
-          const cx = x + 6 + (rand(i, 91, sd) - 0.5) * r * 1.8 * (0.6 + 0.4 * cloud) + Math.sin(t * 0.8 + i) * 1.5, cy = CY + (rand(i, 92, sd) - 0.5) * 10, cr = (5 + rand(i, 93, sd) * 4) * (0.5 + 0.5 * cloud);
-          K.puff(o, cx, cy + 2, cr, '#2e3246', cloud); K.puff(o, cx - 1, cy, cr * 0.85, i % 3 ? '#4a5068' : '#5c6480', cloud);
-        }
-        light(x, y, r + 16, '#2a8cff', 0.3 * cloud);
+      const x = gx(z.x[k]), y = gy(z.y[k]), r = z.r[k] * 16;
+      this.behind(x, y, r + 30, () => this.zone(w, k, ty, x, y, r, simT, light, t), true);
+    }
+  }
+  private zone(w: World, k: number, ty: number, x: number, y: number, r: number, simT: number, light: LightFn, t: number): void {
+    const z = w.zones, g = this.g.x, o = this.o.x, e = simT - this.zoneT0[k], R = ramp(z.look[k]), sd = k * 31 + 7;
+    if (ty === ZONE.blast) {
+      // arcane fuse: an outer ring and a ring tightening on the spot, the centre flickering faster
+      const kk = clamp(e / 0.6, 0, 1);
+      K.gring(g, x, y, r, R[3], 0.8, 1); K.gring(g, x, y, r * (1 - kk) + 2, R[1], 1, 1);
+      if (Math.floor(t * (6 + kk * 14)) % 2) X.ellipse(g, x, y, 3, 2, R[2]);
+      light(x, y, r + 10, R[2], 0.3 + 0.4 * kk);
+    } else if (ty === ZONE.geyser) {
+      // earth rumbles: cracks running out, a ring tightening, grit jumping
+      const kk = clamp(e / 0.6, 0, 1);
+      K.cracks(g, x, y, r, sd, kk, '#1a120c', 7);
+      K.gring(g, x, y, r - kk * 4, '#8a6a48', 0.5 + 0.5 * kk, 1);
+      for (let i = 0; i < 6; i++) if (rand(i, Math.floor(t * 20), sd) < 0.5) X.px(o, x + (rand(i, 3, sd) - 0.5) * r * 1.4, y + (rand(i, 4, sd) - 0.5) * r * FY - rand(i, Math.floor(t * 20), 5) * 3, EL.earth[1]);
+    } else if (ty === ZONE.spring) {
+      // a healing spring: soft green rings welling out, light rising, sparkles (it reads as help)
+      const fade = Math.min(seg(e, 0, 0.3), seg(z.life[k], 0, 30));
+      K.gring(g, x, y, r, EL.life[2], 0.9 * fade, 1); K.gring(g, x, y, r * 0.7, EL.life[3], 0.6 * fade, 1);
+      X.ellipse(g, x, y, r * 0.9, r * 0.9 * FY, '#1e7a34', 0.3 * fade);
+      for (let i = 0; i < 2; i++) { const pe = mod(t * 0.7 + i / 2, 1); K.gring(g, x, y, 4 + pe * (r - 4), EL.life[1], (1 - pe) * 0.7 * fade, 1); }
+      K.sparkle(o, x, y - 4, t, fade, r * 1.4, sd, X.LIFE, 18);
+      for (const p of emit(t, 10, 1.2, (i, age) => { const a = rand(i, 1, sd) * TAU, rr = Math.sqrt(rand(i, 2, sd)) * r; return { x: x + Math.cos(a) * rr, y: y + Math.sin(a) * rr * FY - age * 14, age }; })) if (fade > 0.3) X.px(o, p.x, p.y, p.age < 0.5 ? X.WARM[2] : EL.life[1]);
+      light(x, y, r + 14, '#8ef07e', 0.45 * fade);
+    } else if (ty === ZONE.steam) {
+      // a steam cloud: big soft billows drawn over the bodies inside it
+      const cl = easeOut(seg(e, 0, 0.6)) * seg(z.life[k], 0, 30);
+      for (let i = 0; i < 22; i++) {
+        const a = rand(i, 11, sd) * TAU, rr = Math.sqrt(rand(i, 12, sd)) * r * cl, px2 = x + Math.cos(a) * rr + Math.sin(t * 0.9 + i) * 2, py2 = y + Math.sin(a) * rr * 0.55 - 8 - rand(i, 13, sd) * 10 * cl + Math.sin(t * 1.3 + i) * 1.5;
+        K.puff(o, px2, py2 + 2, (5 + rand(i, 14, sd) * 4) * (0.5 + cl * 0.5), '#6a7088', cl);
+        K.puff(o, px2 - 1, py2, (4.5 + rand(i, 14, sd) * 4) * (0.5 + cl * 0.5), i % 4 === 0 ? EL.steam[1] : i % 2 ? '#a8b0c4' : EL.steam[2], cl);
       }
+      for (const p of emit(t, 6, 1.5, (i, age) => ({ x: x + (rand(i, 21, sd) - 0.5) * r * 2, y: y - 14 - age * 16, age }))) K.puff(o, p.x, p.y, 3 + p.age * 4, EL.steam[2], (1 - p.age) * 0.7 * cl);
+      light(x, y - 6, r + 20, '#d8e0f0', 0.3 * cl);
+    } else if (ty === ZONE.rain) {
+      // rain: a dark cloud over the spot, streaks and splashes, for as long as the sim says it falls
+      const t0 = this.zoneT0[k], end = simT + z.life[k] / 60;
+      const cloud = Math.min(seg(e, 0, 0.3), seg(z.life[k], 0, 24)), CY = y - 46;
+      for (const p of emit(simT, 90, 0.42, (i, age) => { const a = rand(i, 81, sd) * TAU, q = Math.sqrt(rand(i, 82, sd)) * r; return { gx2: x + Math.cos(a) * q, gy2: y + Math.sin(a) * q * FY, age, top: CY + 6 + rand(i, 83, sd) * 6 }; }, t0 + 0.1, end - 0.4)) {
+        if (p.age <= 0.8) { const q = p.age / 0.8, px2 = lerp(p.gx2 + 9, p.gx2, q), py2 = lerp(p.top, p.gy2, q * q * 0.35 + q * 0.65); X.line(o, px2 + 1, py2 - 3, px2, py2, '#5aa8e8'); X.px(o, px2, py2, '#cfefff'); }
+        else { const q = (p.age - 0.8) / 0.2; X.ring(g, p.gx2, p.gy2, 1 + q * 2.5, (1 + q * 2.5) * 0.45, '#8ad0ff', 1 - q); }
+      }
+      if (cloud > 0.05) for (let i = 0; i < 14; i++) {
+        const cx = x + 6 + (rand(i, 91, sd) - 0.5) * r * 1.8 * (0.6 + 0.4 * cloud) + Math.sin(t * 0.8 + i) * 1.5, cy = CY + (rand(i, 92, sd) - 0.5) * 10, cr = (5 + rand(i, 93, sd) * 4) * (0.5 + 0.5 * cloud);
+        K.puff(o, cx, cy + 2, cr, '#2e3246', cloud); K.puff(o, cx - 1, cy, cr * 0.85, i % 3 ? '#4a5068' : '#5c6480', cloud);
+      }
+      light(x, y, r + 16, '#2a8cff', 0.3 * cloud);
     }
   }
 
@@ -605,8 +843,9 @@ export class Vfx {
           if (look === 'cold') for (const p of emit(t, 60, 0.6, (q, age) => { const kk = rand(q, 71, sd); return { x: lerp(tip[0], full[0], kk) + (rand(q, 72, sd) - 0.5) * 4, y: lerp(tip[1], full[1], kk) + age * 9 + Math.sin(age * 8 + q) * 1.2, age, q }; })) X.px(o, p.x, p.y, (p.q + Math.floor(t * 16)) % 5 === 0 ? '#ffffff' : p.age < 0.5 ? X.FROST[2] : X.FROST[4]);
         }
         const lc = spec.heal ? '#8ef07e' : look === 'fire' ? '#ff6a20' : ramp(spec.look)[2];
-        for (let q = 1; q <= 3; q++) light(lerp(tip[0], full[0], q / 4), lerp(v.y, ey, q / 4), 34, lc, 0.4);
-        light(ex, ey, 50, lc, 0.6);
+        glowAlong(light, tip[0], v.y, full[0], lerp(v.y, ey, on), 40, lc, 0.55 * flick(t, sd));
+        light(ex, ey, 62, lc, 0.85 * flick(t, sd + 3));
+        if (!hitBody) this.strike(w, t, light, s.chanEndX[i], s.chanEndY[i], w.bodies.x[i], w.bodies.y[i], 'beam', t0 + 0.12, sd, 1, beamRamp(spec, look));
       } else if (spec.shape === 'spray') {
         const z: Pt = [ex, ey - 6];
         if (spec.heal) {
@@ -614,13 +853,14 @@ export class Vfx {
             K.cone(o, tip, z, t, 'water', t0, { spread: 0.22, power: 0.7, seed: sd });
             for (const p of emit(t, 40, 0.45, (q, age) => ({ x: lerp(tip[0], z[0], age * 1.05), y: lerp(tip[1], z[1], age * 1.05) + (rand(q, 3, sd) - 0.5) * 10 * age - Math.sin(age * Math.PI) * 4, age }), t0, t)) X.px(o, p.x, p.y, p.age < 0.5 ? X.LIFE[1] : X.LIFE[3]);
           } else K.warmCone(o, tip, z, t, t0, X.WARM, sd);
-          light(lerp(tip[0], ex, 0.5), lerp(v.y, ey, 0.5), 50, '#ffe68a', 0.5);
+          glowAlong(light, tip[0], v.y, ex, ey, 40, '#ffe68a', 0.4);
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
           K.cone(o, tip, z, t, kind, t0, { spread: 0.28, seed: sd });
-          light(lerp(tip[0], ex, 0.55), lerp(v.y, ey, 0.55), 50, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', kind === 'fire' ? 0.7 : 0.45);
+          glowAlong(light, lerp(tip[0], ex, 0.25), lerp(v.y, ey, 0.25), ex, ey, 40, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', (kind === 'fire' ? 0.6 : 0.4) * flick(t, sd));
           if (kind === 'cold') for (let q = 0; q < 40; q++) { const a = rand(q, 61, sd) * TAU, r = Math.pow(rand(q, 62, sd), 0.7) * 18 * seg(t, t0 + 0.3, t0 + 1.3); X.px(g, ex + Math.cos(a) * r, ey + Math.sin(a) * r * FY * 0.7, q % 4 === 0 ? '#ffffff' : q % 2 ? '#bfe8f6' : '#8ccce4'); }
         }
+        this.strike(w, t, light, s.chanEndX[i], s.chanEndY[i], w.bodies.x[i], w.bodies.y[i], splashKind(spec, look), t0, sd);
       } else if (spec.shape === 'arc') {
         X.glow(o, tip[0], tip[1], 6, look === 'fire' ? X.PLASMA[2] : spec.heal ? X.LIFE[2] : EL.lightning[2], 0.8);
       }
@@ -631,12 +871,15 @@ export class Vfx {
         if (spec.shape === 'beam') {
           const R = spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look);
           K.beam(o, dt, [dex, dey - LIFT], t, R, { on: easeOut(seg(t, t0, t0 + 0.12)), w: 0.5, hit: this.beamHits(w, s.dblEndX[i], s.dblEndY[i], d), seed: sd2 });
-          light(dex, dey, 34, spec.heal ? '#8ef07e' : R[2], 0.35);
+          glowAlong(light, dt[0], dv.y, dex, dey, 30, spec.heal ? '#8ef07e' : R[2], 0.3);
+          light(dex, dey, 44, spec.heal ? '#8ef07e' : R[2], 0.5);
+          this.strike(w, t, light, s.dblEndX[i], s.dblEndY[i], w.bodies.x[d], w.bodies.y[d], 'beam', t0 + 0.12, sd2, 0.6, R);
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
           if (spec.heal && look !== 'water') K.warmCone(o, dt, [dex, dey - 6], t, t0, X.WARM, sd2);
           else K.cone(o, dt, [dex, dey - 6], t, kind, t0, { spread: 0.2, power: 0.45, seed: sd2 });
           light(lerp(dt[0], dex, 0.5), lerp(dv.y, dey, 0.5), 34, kind === 'fire' ? '#ff7a2a' : '#7fb0ff', 0.3);
+          this.strike(w, t, light, s.dblEndX[i], s.dblEndY[i], w.bodies.x[d], w.bodies.y[d], splashKind(spec, look), t0, sd2, 0.6);
         }
         X.glow(o, dt[0], dt[1], 4, EL.sigil[2], 0.6);
       }
@@ -647,11 +890,14 @@ export class Vfx {
         if (spec.shape === 'beam') {
           const R = spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look);
           K.beam(o, tip, [eex, eey - LIFT], t, R, { on: easeOut(seg(t, te, te + 0.12)), w: 0.5, hit: this.beamHits(w, r.echoEndX[i], r.echoEndY[i], i), seed: sd3 });
-          light(eex, eey, 34, spec.heal ? '#8ef07e' : R[2], 0.35);
+          glowAlong(light, tip[0], v.y, eex, eey, 30, spec.heal ? '#8ef07e' : R[2], 0.3);
+          light(eex, eey, 44, spec.heal ? '#8ef07e' : R[2], 0.5);
+          this.strike(w, t, light, r.echoEndX[i], r.echoEndY[i], w.bodies.x[i], w.bodies.y[i], 'beam', te + 0.12, sd3, 0.6, R);
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
           if (spec.heal && look !== 'water') K.warmCone(o, tip, [eex, eey - 6], t, te, X.WARM, sd3);
           else K.cone(o, tip, [eex, eey - 6], t, kind, te, { spread: 0.2, power: 0.45, seed: sd3 });
+          this.strike(w, t, light, r.echoEndX[i], r.echoEndY[i], w.bodies.x[i], w.bodies.y[i], splashKind(spec, look), te, sd3, 0.6);
         }
         X.glow(o, tip[0], tip[1], 3, EL.sigil[2], 0.5);
       }
@@ -669,12 +915,15 @@ export class Vfx {
       if (spec.shape === 'beam') {
         const R = spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look);
         K.beam(o, tip, [ex, ey - LIFT], t, R, { on: easeOut(seg(t, t0, t0 + 0.12)), w: 0.7, hit: this.beamHits(w, dv.x2[k], dv.y2[k], -1), seed: sd });
-        light(ex, ey, 40, spec.heal ? '#8ef07e' : R[2], 0.45);
+        glowAlong(light, tip[0], tip[1] + LIFT, ex, ey, 30, spec.heal ? '#8ef07e' : R[2], 0.3);
+        light(ex, ey, 48, spec.heal ? '#8ef07e' : R[2], 0.6);
+        this.strike(w, t, light, dv.x2[k], dv.y2[k], dv.x[k], dv.y[k], 'beam', t0 + 0.12, sd, 0.7, R);
       } else if (spec.shape === 'spray') {
         const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
         if (spec.heal && look !== 'water') K.warmCone(o, tip, [ex, ey - 6], t, t0, X.WARM, sd);
         else K.cone(o, tip, [ex, ey - 6], t, kind, t0, { spread: 0.24, power: 0.7, seed: sd });
         light(lerp(tip[0], ex, 0.55), lerp(tip[1], ey, 0.55), 44, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : '#2a8cff', 0.5);
+        this.strike(w, t, light, dv.x2[k], dv.y2[k], dv.x[k], dv.y[k], splashKind(spec, look), t0, sd, 0.7);
       }
     }
   }
@@ -688,53 +937,58 @@ export class Vfx {
 
   // ---- wizards: staff orbs, the readiness swirl, queued runes gathering at the staff ---------------
   private casters(w: World, t: number, bodies: BodyView[], light: LightFn): void {
-    const s = w.seats, o = this.o.x, g = this.g.x;
+    const s = w.seats;
     for (let i = 0; i < MAX_SEATS; i++) {
       if (!s.active[i]) { this.motes[i].length = 0; continue; }
       const v = bodies[i]; if (!v?.on || !v.a) continue;
-      const casting = s.phase[i] === PHASE.windup || s.phase[i] === PHASE.charge;
-      const q: number[] = [];
-      const src = casting ? s.castQueue : s.queue, len = casting ? s.castLen[i] : s.queueLen[i];
-      for (let k = 0; k < len; k++) q.push(src[i * QUEUE_MAX + k]);
-      // keep the arrival time of motes that are still queued; new ones start their flight now
-      const ms = this.motes[i];
-      let same = 0;
-      while (same < ms.length && same < q.length && ms[same].el === q[same]) same++;
-      ms.length = same;
-      for (let k = same; k < q.length; k++) ms.push({ el: q[k], tq: t });
-      const ch: Pt = [v.x + v.a.charge[0], v.y + v.a.charge[1]], tip: Pt = [v.x + v.a.tip[0], v.y + v.a.tip[1]];
-      // the staff orb: the colour of what is being built or cast, else the wizard's own
-      const orbEl = ms.length ? ms[ms.length - 1].el : s.phase[i] !== PHASE.idle ? specOf(w, i).look || SEAT_EL[i] : SEAT_EL[i], OR = ramp(orbEl);
-      X.rect(o, tip[0] - 1, tip[1] - 1, 3, 3, OR[2]); X.px(o, tip[0], tip[1] - 1, OR[0]); X.px(o, tip[0] - 1, tip[1], OR[1]);
-      X.glow(o, tip[0], tip[1], 5 + (s.phase[i] === PHASE.channel ? 2 : 0), OR[2], 0.55);
-      light(v.x, v.y - 2, 40, '#a8a0d0', 0.35); light(tip[0], v.y + 2, 24, OR[2], 0.35);
-      // the readiness swirl: one mote per ready rune, in runs of element colour, round the waist
-      this.swirl(g, o, w, i, v, t, ms.length > 0 || s.phase[i] !== PHASE.idle);
-      // queued runes fly from the swirl to the staff and orbit there as a charge
-      let arrived = 0, last = 0;
-      ms.forEach((mq, k) => {
-        const e = (t - mq.tq) / 0.24, R = ramp(mq.el);
-        if (e < 1) {
-          const a0 = 2.4 + k * 1.3, sx = v.x + Math.cos(a0) * 11, sy = v.y - 9 + Math.sin(a0) * 11 * FY, kk = smooth(Math.max(0, e));
-          const x = lerp(sx, ch[0], kk), y = lerp(sy, ch[1], kk) - Math.sin(e * Math.PI) * 5;
-          for (let tr = 1; tr <= 3; tr++) { const k2 = smooth(Math.max(0, e - tr * 0.09)); X.px(o, lerp(sx, ch[0], k2), lerp(sy, ch[1], k2) - Math.sin(Math.max(0, e - tr * 0.09) * Math.PI) * 5, R[tr < 2 ? 2 : 3]); }
-          X.rect(o, x - 1, y - 1, 2, 2, R[1]); X.px(o, x, y - 1, R[0]);
-          return;
-        }
-        arrived++; last = mq.el;
-        const n = ms.length, a2 = (k / n) * TAU + t * 7, r = 3.4 + n * 0.6, x = ch[0] + Math.cos(a2) * r, y = ch[1] + Math.sin(a2) * r * 0.75;
-        X.px(o, x - Math.cos(a2 - 0.5) * 1.6, y - Math.sin(a2 - 0.5) * 1.2, R[3]);
-        X.rect(o, x - 0.5, y - 0.5, 2, 2, R[0]); X.px(o, x + 1, y + 1, R[2]);
-        const pe = (t - mq.tq - 0.24) / 0.22;
-        if (pe >= 0 && pe < 1) { X.ring(o, ch[0], ch[1], 2 + pe * 7, (2 + pe * 7) * 0.8, R[pe < 0.4 ? 0 : 1], 1 - pe); if (pe < 0.25) X.rect(o, ch[0] - 1, ch[1] - 1, 3, 3, '#ffffff'); }
-      });
-      if (arrived) {
-        const R = ramp(last);
-        X.glow(o, ch[0], ch[1], 5 + arrived * 2.4, R[2], 0.75 + 0.15 * Math.sin(t * 30));
-        X.ring(o, ch[0], ch[1], 3.4 + ms.length * 0.6, (3.4 + ms.length * 0.6) * 0.75, R[3], 0.5);
-        X.rect(o, ch[0] - 1, ch[1] - 1, 2, 2, R[1]); X.px(o, ch[0], ch[1], arrived === ms.length ? '#ffffff' : R[0]);
-        light(ch[0], v.y, 30 + arrived * 6, R[2], 0.3 + 0.12 * arrived);
+      this.behind(v.x, v.y, 30, () => this.caster(w, t, i, v, light));
+    }
+  }
+  private caster(w: World, t: number, i: number, v: BodyView, light: LightFn): void {
+    const s = w.seats, o = this.o.x, g = this.g.x, a = v.a!;
+    const casting = s.phase[i] === PHASE.windup || s.phase[i] === PHASE.charge;
+    const q: number[] = [];
+    const src = casting ? s.castQueue : s.queue, len = casting ? s.castLen[i] : s.queueLen[i];
+    for (let k = 0; k < len; k++) q.push(src[i * QUEUE_MAX + k]);
+    // keep the arrival time of motes that are still queued; new ones start their flight now
+    const ms = this.motes[i];
+    let same = 0;
+    while (same < ms.length && same < q.length && ms[same].el === q[same]) same++;
+    ms.length = same;
+    for (let k = same; k < q.length; k++) ms.push({ el: q[k], tq: t });
+    const ch: Pt = [v.x + a.charge[0], v.y + a.charge[1]], tip: Pt = [v.x + a.tip[0], v.y + a.tip[1]];
+    // the staff orb: the colour of what is being built or cast, else the wizard's own
+    const orbEl = ms.length ? ms[ms.length - 1].el : s.phase[i] !== PHASE.idle ? specOf(w, i).look || SEAT_EL[i] : SEAT_EL[i], OR = ramp(orbEl);
+    X.rect(o, tip[0] - 1, tip[1] - 1, 3, 3, OR[2]); X.px(o, tip[0], tip[1] - 1, OR[0]); X.px(o, tip[0] - 1, tip[1], OR[1]);
+    X.glow(o, tip[0], tip[1], 5 + (s.phase[i] === PHASE.channel ? 2 : 0), OR[2], 0.55);
+    // one wide pool from the staff, smooth so nothing about it is seen to travel with the wizard
+    light(v.x, v.y, 80, '#a8a0d0', 0.24, true); light(tip[0], v.y + 2, 54, OR[2], 0.2, true);
+    // the readiness swirl: one mote per ready rune, in runs of element colour, round the waist
+    this.swirl(g, o, w, i, v, t, ms.length > 0 || s.phase[i] !== PHASE.idle);
+    // queued runes fly from the swirl to the staff and orbit there as a charge
+    let arrived = 0, last = 0;
+    ms.forEach((mq, k) => {
+      const e = (t - mq.tq) / 0.24, R = ramp(mq.el);
+      if (e < 1) {
+        const a0 = 2.4 + k * 1.3, sx = v.x + Math.cos(a0) * 11, sy = v.y - 9 + Math.sin(a0) * 11 * FY, kk = smooth(Math.max(0, e));
+        const x = lerp(sx, ch[0], kk), y = lerp(sy, ch[1], kk) - Math.sin(e * Math.PI) * 5;
+        for (let tr = 1; tr <= 3; tr++) { const k2 = smooth(Math.max(0, e - tr * 0.09)); X.px(o, lerp(sx, ch[0], k2), lerp(sy, ch[1], k2) - Math.sin(Math.max(0, e - tr * 0.09) * Math.PI) * 5, R[tr < 2 ? 2 : 3]); }
+        X.rect(o, x - 1, y - 1, 2, 2, R[1]); X.px(o, x, y - 1, R[0]);
+        return;
       }
+      arrived++; last = mq.el;
+      const n = ms.length, a2 = (k / n) * TAU + t * 7, r = 3.4 + n * 0.6, x = ch[0] + Math.cos(a2) * r, y = ch[1] + Math.sin(a2) * r * 0.75;
+      X.px(o, x - Math.cos(a2 - 0.5) * 1.6, y - Math.sin(a2 - 0.5) * 1.2, R[3]);
+      X.rect(o, x - 0.5, y - 0.5, 2, 2, R[0]); X.px(o, x + 1, y + 1, R[2]);
+      const pe = (t - mq.tq - 0.24) / 0.22;
+      if (pe >= 0 && pe < 1) { X.ring(o, ch[0], ch[1], 2 + pe * 7, (2 + pe * 7) * 0.8, R[pe < 0.4 ? 0 : 1], 1 - pe); if (pe < 0.25) X.rect(o, ch[0] - 1, ch[1] - 1, 3, 3, '#ffffff'); }
+    });
+    if (arrived) {
+      const R = ramp(last);
+      X.glow(o, ch[0], ch[1], 5 + arrived * 2.4, R[2], 0.75 + 0.15 * Math.sin(t * 30));
+      X.ring(o, ch[0], ch[1], 3.4 + ms.length * 0.6, (3.4 + ms.length * 0.6) * 0.75, R[3], 0.5);
+      X.rect(o, ch[0] - 1, ch[1] - 1, 2, 2, R[1]); X.px(o, ch[0], ch[1], arrived === ms.length ? '#ffffff' : R[0]);
+      light(ch[0], v.y, 30 + arrived * 6, R[2], 0.3 + 0.12 * arrived);
     }
   }
   private swirl(g: Ctx, o: Ctx, w: World, i: number, v: BodyView, t: number, busy: boolean): void {
@@ -764,10 +1018,12 @@ export class Vfx {
 
   // ---- statuses hanging off bodies (the rig draws what is on the body) --------------------------
   private statuses(w: World, simT: number, bodies: BodyView[], light: LightFn, t: number): void {
-    const b = w.bodies, o = this.o.x;
+    const b = w.bodies;
     for (let i = 0; i < bodies.length; i++) {
       const v = bodies[i]; if (!v.on || !v.a) continue;
-      const ch: Pt = [v.x + v.a.chest[0], v.y + v.a.chest[1]], hd: Pt = [v.x + v.a.head[0], v.y + v.a.head[1]], big = v.rig === 'brute';
+      if (!(b.burn[i] > 0 || b.wet[i] > 0 || b.frozen[i] || b.chill[i] > 0.04 || b.stun[i] > 0 || b.expose[i] > 0 || (b.down[i] > 0 && !b.downed[i]) || simT - this.healAt[i] < 1.2)) continue;
+      this.behind(v.x, v.y, 30, (o) => {
+      const ch: Pt = [v.x + v.a!.chest[0], v.y + v.a!.chest[1]], hd: Pt = [v.x + v.a!.head[0], v.y + v.a!.head[1]], big = v.rig === 'brute';
       if (b.burn[i] > 0) { K.burningFx(o, ch, t, b.burnPool[i] < 10 ? 0.5 : 1, big, i * 7); light(v.x, v.y - 4, big ? 70 : 44, '#ff7020', 0.6 + 0.06 * Math.sin(t * 19 + i)); }
       if (b.wet[i] > 0 && !b.frozen[i]) K.drips(o, ch, v.y, t, i * 5);
       if (b.frozen[i]) { K.iceGlints(o, v.x, v.y, HEIGHT[v.rig] + 3, WIDTH[v.rig] + 1, t, i); light(v.x, v.y - 4, 30, '#bff4ff', 0.3); }
@@ -781,6 +1037,7 @@ export class Vfx {
       }
       if (b.down[i] > 0 && !b.downed[i]) K.dazed(o, hd, t);
       if (simT - this.healAt[i] < 1.2) K.sparkle(o, v.x, v.y - 10, t, 1 - seg(simT - this.healAt[i], 0.8, 1.2), 10, i, X.LIFE);
+      });
     }
   }
   private bars(w: World, bodies: BodyView[]): void {

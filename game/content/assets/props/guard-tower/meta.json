@@ -1,0 +1,23 @@
+{
+  "id": "guard-tower",
+  "kind": "prop",
+  "name": "Guard tower",
+  "footprint": [
+    4.0,
+    3.0
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        41,
+        162
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/buildings/guard-tower.png",
+      "tool": "create_map_object",
+      "edits": "trimmed only",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

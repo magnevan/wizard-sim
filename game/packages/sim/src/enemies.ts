@@ -20,7 +20,8 @@ import { HIT_KIND, addKnock, applyHit, ignite, setHitKind } from './hit';
 import { cutOff, steer } from './nav';
 import { guardMelee, unburnable } from './guards';
 import { WALL } from './compile';
-import { damageWall, segDist } from './walls';
+import { terrainNear } from './terrain';
+import { TERRAIN_HIT, damageWall, segDist } from './walls';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { AI, KIND, MAX_SEATS, PU, STATUS_BIT, TEAM, WARD, stackOf, type World } from './world';
 import { noteSlam } from './tutorial-data';
@@ -169,10 +170,18 @@ function approachSpot(w: World, i: number, t: number): [number, number] {
   return [b.x[t] + (ax / al) * a.bolt!.keepAway, b.y[t] + (ay / al) * a.bolt!.keepAway];
 }
 
-/** The nearest rock wall within `reach` of the body's edge, or -1. */
+/**
+ * The nearest rock wall within `reach` of the body's edge (a wall slot or TERRAIN_HIT), or -1. The
+ * room's own rock counts (terrain first, as ever): an enemy cut off beside it winds up as at any wall,
+ * and the blow does nothing (damageWall).
+ */
 function wallInReach(w: World, i: number, reach: number): number {
-  const b = w.bodies, wl = w.walls;
+  const b = w.bodies, wl = w.walls, tr = w.terrain;
   let best = -1, bd = b.r[i] + STRUCT.wallThickness + reach;
+  for (let q = 0, n = terrainNear(tr, b.x[i], b.y[i], bd); q < n; q++) {
+    const k = tr.out[q], d = segDist(b.x[i], b.y[i], tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k])[0];
+    if (d < bd) { bd = d; best = TERRAIN_HIT; }
+  }
   for (let k = 0; k < wl.type.length; k++) {
     if (wl.type[k] !== WALL.rock) continue;
     const d = segDist(b.x[i], b.y[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0];
@@ -231,7 +240,7 @@ function slamWave(w: World, i: number): void {
     strike(w, i, s, dmg, a.knockback, od > 0.05 ? ox2 / od : cosTurns(b.face[i]), od > 0.05 ? oy2 / od : sinTurns(b.face[i]), false);
   }
   if (prev < dc && front >= dc) {
-    // it breaks the rock it rolls into, too
+    // it breaks the rock it rolls into, too (the room's own rock doesn't break, so it isn't asked about)
     const wl = w.walls;
     for (let k = 0; k < wl.type.length; k++) if (wl.type[k] === WALL.rock && segDist(lx, ly, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] <= r) damageWall(w, k, dmg);
     w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: lx, y: ly, amount: r, look: EL.earth });

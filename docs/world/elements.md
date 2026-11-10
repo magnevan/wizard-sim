@@ -10,6 +10,8 @@ Magic runs through the world as **fields** (broad, slow, like a climate) and **v
 
 Seven elements are **fields**: Water, Fire, Cold, Lightning, Earth, Life, Arcane. Two are **innate**: Shield and Sigil belong to the caster, not the land.
 
+**Casting is new (the user, 2026-11-09).** Until the veins began shifting, wizards worked magic only through structures that tap fields. The shift is why they can now draw on it themselves, and the academy's years over an Arcane vein are why these people can. "Innate" below still means "of the caster, not the land", but a better word is wanted now that all casting is new. See `../campaign/canon.md`.
+
 **What this means in play:**
 - Zones bend the *regen share* of field elements; they never touch Shield or Sigil, which work the same everywhere. Your innate magic is the baseline you carry into every region.
 - Field elements deepen through *attunement* at places in the world; Shield and Sigil grow through *training*.

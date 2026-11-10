@@ -54,8 +54,10 @@ describe('camera', () => {
       settle(c, [{ x: 0, y: 0 }]);
       const r = c.playRect();
       expect(c.following).toBe(true);
-      expect(c.w / PPU).toBeLessThan(S.w);
-      expect((r.y1 - r.y0) / c.scale / (PPU * FY)).toBeLessThan(S.h);
+      // turned 45 degrees, the arena is a diamond inside this square
+      const turned = Math.ceil((S.w + S.h) * Math.SQRT1_2);
+      expect(c.w / PPU).toBeLessThan(turned);
+      expect((r.y1 - r.y0) / c.scale / (PPU * FY)).toBeLessThan(turned);
     }
   });
 

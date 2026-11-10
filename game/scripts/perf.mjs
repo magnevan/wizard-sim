@@ -7,7 +7,10 @@
 //        [--shots dir]    a screenshot per scene at the end (for before/after comparisons)
 //        [--sound]        press a key first, so the sound runs too (it only starts on input)
 //        [--size 1920x1080] the page size (default 1280x800; the pixel scale follows it, so the view's size in art px does)
-// SwiftShader renders on the CPU in another process, so the GPU side isn't measured here: the numbers are
+//        [--query lighting=0] extra URL parameters, to compare with and without something
+//        [--gpu]          use this machine's real graphics card with the frame-rate cap off, so fps measures the whole frame
+//        [--no-heap]      skip the allocation profiler, which slows the page: use it when fps is what you're after
+// Without --gpu, SwiftShader renders on the CPU in another process, so the GPU side isn't measured: the numbers are
 // what the page's own JavaScript costs. Compare runs on one machine; absolute values vary.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -22,6 +25,10 @@ const only = arg('only', '');
 const profileDir = arg('profile', '');
 const shotsDir = arg('shots', '');
 const [vw, vh] = arg('size', '1280x800').split('x').map(Number);
+const query = arg('query', '');
+const GL = has('gpu')
+  ? ['--use-angle=d3d11', '--ignore-gpu-blocklist', '--enable-gpu-rasterization', '--disable-gpu-vsync', '--disable-frame-rate-limit']
+  : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Each scene: a URL, and what to do once the page is up (before the measured window). */
@@ -40,6 +47,20 @@ const SCENES = [
   { name: 'academy', url: '?room=academy&autoplay=1', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tune.godMode = true; window.wizardSim.startWave(6); }); } },
   { name: 'academy-hd', url: '?room=academy&autoplay=1&wizard=hd', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tune.godMode = true; window.wizardSim.startWave(6); }); } },
 ];
+
+// Worst case: a late Survive wave, plus 150 extra lights a frame scattered over the view, many of them near walls.
+SCENES.push({
+  name: 'stress', url: '?autoplay=1',
+  setup: async (p) => {
+    await p.keyboard.press('Digit3');
+    await sleep(300);
+    await p.evaluate(() => {
+      const g = window.wizardSim; g.tune.godMode = true; g.tune.infiniteRunes = true; g.startWave(40);
+      const L = g.view.lit, cam = g.view.camera, begin = L.begin.bind(L);
+      L.begin = (...a) => { begin(...a); for (let i = 0; i < 150; i++) L.light(Math.random() * cam.w, Math.random() * cam.h, 30 + Math.random() * 60, '#ff7a2a', 0.5); };
+    });
+  },
+});
 
 const stats = (a) => {
   if (!a.length) return { mean: 0, p50: 0, p95: 0, max: 0 };
@@ -72,7 +93,7 @@ async function measure(browser, sc) {
       }
     }
   });
-  await p.goto(`${BASE}${sc.url}&perf=1&debug=0`);
+  await p.goto(`${BASE}${sc.url}&perf=1&debug=0${has('gpu') ? '&rafloop=1' : ''}${query ? '&' + query : ''}`);
   if (has('sound')) await p.keyboard.press('KeyQ');
   await p.waitForFunction(() => !!window.wizardSim?.perf, { timeout: 30000, polling: 100 });
   await sc.setup?.(p);
@@ -81,14 +102,14 @@ async function measure(browser, sc) {
   await cdp.send('HeapProfiler.enable');
   await cdp.send('HeapProfiler.collectGarbage');
   await p.evaluate(() => { const f = window.wizardSim.perf; for (const k in f) f[k].length = 0; window.__draws = 0; window.__upload = 0; });
-  await cdp.send('HeapProfiler.startSampling', { samplingInterval: 4096, includeObjectsCollectedByMajorGC: true, includeObjectsCollectedByMinorGC: true });
+  if (!has('no-heap')) await cdp.send('HeapProfiler.startSampling', { samplingInterval: 4096, includeObjectsCollectedByMajorGC: true, includeObjectsCollectedByMinorGC: true });
   if (profileDir) { await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', { interval: 200 }); await cdp.send('Profiler.start'); }
   const bodies = [];
   for (let t = 0; t < secs; t++) {
     await sleep(1000);
     bodies.push(await p.evaluate(() => { const k = window.wizardSim.world.bodies.kind; let n = 0; for (let i = 0; i < k.length; i++) if (k[i]) n++; return n; }));
   }
-  const { profile: heap } = await cdp.send('HeapProfiler.stopSampling');
+  const heap = has('no-heap') ? { head: { selfSize: 0, children: [], callFrame: { functionName: '', url: '', lineNumber: 0, columnNumber: 0 } } } : (await cdp.send('HeapProfiler.stopSampling')).profile;
   let cpu = null;
   if (profileDir) cpu = (await cdp.send('Profiler.stop')).profile;
   const res = await p.evaluate(() => ({ perf: window.wizardSim.perf, draws: window.__draws, upload: window.__upload }));
@@ -110,7 +131,7 @@ async function measure(browser, sc) {
   const perStep = res.perf.sim.map((v, i) => (res.perf.steps[i] ? v / res.perf.steps[i] : NaN)).filter((v) => !Number.isNaN(v));
   return {
     name: sc.name, frames, fps: +(frames / secs).toFixed(1), bodies: Math.round(bodies.reduce((a, b) => a + b, 0) / bodies.length),
-    frame: stats(res.perf.frame), simPerStep: stats(perStep), help: stats(res.perf.help), draw: stats(res.perf.draw), render: stats(res.perf.render),
+    over16: res.perf.frame.filter((v) => v > 16.7).length, frame: stats(res.perf.frame), simPerStep: stats(perStep), help: stats(res.perf.help), draw: stats(res.perf.draw), render: stats(res.perf.render),
     drawCalls: +(res.draws / Math.max(1, frames)).toFixed(1),
     uploadKBPerFrame: +(res.upload / 1024 / Math.max(1, frames)).toFixed(0),
     allocKBPerFrame: +(bytes / 1024 / Math.max(1, frames)).toFixed(1),
@@ -127,14 +148,14 @@ if (!has('no-sim') && !only) {
 }
 if (shotsDir) mkdirSync(resolve(shotsDir), { recursive: true });
 const stop = await startPreview();
-const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', ...(has('sound') ? ['--autoplay-policy=no-user-gesture-required'] : [])] });
+const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, args: [...GL, ...(has('sound') ? ['--autoplay-policy=no-user-gesture-required'] : [])] });
 try {
   report.scenes = [];
   for (const sc of SCENES) {
     if (only && !only.split(',').includes(sc.name)) continue;
     const r = await measure(browser, sc);
     report.scenes.push(r);
-    console.log(`\n${r.name}: ${r.fps} fps, ${r.bodies} bodies, ${r.drawCalls} draw calls/frame, ${r.uploadKBPerFrame} KB uploaded/frame, ${r.allocKBPerFrame} KB allocated/frame${r.errors.length ? ', ERRORS: ' + r.errors.join(' | ') : ''}`);
+    console.log(`\n${r.name}: ${r.fps} fps, ${r.over16} of ${r.frames} frames over 16.7 ms, ${r.bodies} bodies, ${r.drawCalls} draw calls/frame, ${r.uploadKBPerFrame} KB uploaded/frame, ${r.allocKBPerFrame} KB allocated/frame${r.errors.length ? ', ERRORS: ' + r.errors.join(' | ') : ''}`);
     console.table({ frame: r.frame, 'sim per step': r.simPerStep, help: r.help, 'view.draw': r.draw, 'pixi render': r.render });
     console.log('  top allocations:\n   ' + r.topAlloc.join('\n   '));
   }

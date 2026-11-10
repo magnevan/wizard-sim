@@ -1,0 +1,23 @@
+{
+  "id": "chalkboard",
+  "kind": "prop",
+  "name": "Chalkboard",
+  "footprint": [
+    1.8,
+    0.4
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        23,
+        42
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/academy/12.png",
+      "tool": "create_1_direction_object",
+      "edits": "trimmed only",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

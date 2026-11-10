@@ -15,8 +15,8 @@
  *   the last shown step saw, so a change made inside a replay is heard at the next shown step.
  */
 import {
-  AI, ARCH, DEVICE, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PHASE, QUEUE_MAX, SURF, ZONE, compile, elementName, queueFromCounts, specOf,
-  type SimEvent, type SpellSpec, type World,
+  AI, ARCH, DEVICE, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PHASE, QUEUE_MAX, SURF, ZONE, compile, elementName, queueFromCounts, specOf, terrainAlong,
+  type SimEvent, type SpellSpec, type Terrain, type World,
 } from '@wizard-sim/sim';
 import {
   composeAuraLoop, composeBlink, composeBlocked, composeBurning, composeCharge, composeDeath, composeDismiss, composeDowned, composeDry, composeFlight, composeFloorFire,
@@ -24,7 +24,17 @@ import {
   composeSparkField, composeSpell, composeSpring, composeSteamCloud, composeStinger, composeStrike, composeStop, composeSustain, composeTelegraph, composeUi,
   shapeOf, type ElementName, type EnemyKind, type Plan, type ShapeName, type SpellSound, type UiSound, type WeaponMove,
 } from './recipes';
-import { LoopTable, Limiter, envOfRoom, jitter, placeOf, type EnvName, type GroupRule, type Listener, type Place, type Rand } from './variation';
+import { LoopTable, Limiter, crosses, envOfRoom, jitter, placeOf, type EnvName, type GroupRule, type Listener, type Place, type Rand } from './variation';
+
+/** How many of the room's own rock walls lie on the line from the ears to a source. */
+function terrainBetween(t: Terrain, ax: number, ay: number, bx: number, by: number): number {
+  let n = 0;
+  for (let q = 0, m = terrainAlong(t, ax, ay, bx, by, 0); q < m; q++) {
+    const k = t.out[q];
+    if (crosses(ax, ay, bx, by, t.x1[k], t.y1[k], t.x2[k], t.y2[k])) n++;
+  }
+  return n;
+}
 
 /** What the director needs from the engine. */
 export interface SoundSink {
@@ -407,13 +417,14 @@ export class SoundDirector {
     const env = envOfRoom(w.def.id);
     if (env !== this.env) { this.env = env; this.sink.setEnv(env); }
     this.limiter.frame();
-    const walls = w.walls;
+    // the room's own rock, as near the line as it is, counts as well as the walls that come and go
+    const placeAt = (x: number, y: number): Place => placeOf(x, y, l, w.walls, terrainBetween(w.terrain, l.earX, l.earY, x, y));
     if (this.pending.length) {
       const reqs = this.pending;
       this.pending = [];
       if (reqs.length > 1) reqs.sort((a, b) => RULES[b.group].prio - RULES[a.group].prio);
       for (const q of reqs) {
-        const place = q.centred ? { pan: 0, gain: 1, lowpass: 20000, wet: 0.4 } : placeOf(q.x, q.y, l, walls);
+        const place = q.centred ? { pan: 0, gain: 1, lowpass: 20000, wet: 0.4 } : placeAt(q.x, q.y);
         if (place.gain * q.gain < INAUDIBLE) continue;
         const rule = RULES[q.group], g = this.limiter.admit(q.key, rule, now, rule.len, rule.prio >= 9);
         if (!g) continue;
@@ -433,17 +444,17 @@ export class SoundDirector {
       this.sink.stop(id);
       const t = this.tails.get(id), plan = t && !still ? t.plan() : null;
       this.tails.delete(id);
-      if (t && plan) { this.sink.play(plan, placeOf(t.x, t.y, l, walls), 1); this.onPlan?.(plan.name, false); }
+      if (t && plan) { this.sink.play(plan, placeAt(t.x, t.y), 1); this.onPlan?.(plan.name, false); }
       this.onPlan?.('', true, id);
     }
     for (const { id, want: q } of d.start) {
       const plan = q.plan();
-      this.sink.loop(id, plan, placeOf(q.x, q.y, l, walls), q.gain);
+      this.sink.loop(id, plan, placeAt(q.x, q.y), q.gain);
       this.onPlan?.(plan.name, true, id);
       if (q.tail) this.tails.set(id, { plan: q.tail, x: q.x, y: q.y });
     }
     for (const { id, want: q } of d.update) { const t = this.tails.get(id); if (t) { t.x = q.x; t.y = q.y; } }
-    if (this.frames % 4 === 0) for (const { id, want: q } of d.update) this.sink.place(id, placeOf(q.x, q.y, l, walls), q.gain);
+    if (this.frames % 4 === 0) for (const { id, want: q } of d.update) this.sink.place(id, placeAt(q.x, q.y), q.gain);
   }
 
   get loopCount(): number { return this.loops.size; }

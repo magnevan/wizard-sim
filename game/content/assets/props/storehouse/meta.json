@@ -1,0 +1,23 @@
+{
+  "id": "storehouse",
+  "kind": "prop",
+  "name": "Storehouse",
+  "footprint": [
+    5.0,
+    3.5
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        52,
+        107
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/buildings/storehouse.png",
+      "tool": "create_map_object",
+      "edits": "trimmed only",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

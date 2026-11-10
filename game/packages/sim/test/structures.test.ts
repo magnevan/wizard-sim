@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  BTN, DEVICE, EL, KIND, NO_INPUT, RUNES, STRUCT, WALL, WARD, compile, createWorld, elementId, orbitAngle, quantize, step,
+  BTN, DEVICE, EL, KIND, NO_INPUT, RUNES, STRUCT, WALL, WARD, compile, createWorld, elementId, orbitAngle, quantize, specOf, step,
   type PlayerInput, type World,
 } from '../src';
 
@@ -504,5 +504,50 @@ describe('Sigil', () => {
       if (s.shape === 'todo') todo.push(`${q.join('+')}/${cast}`);
     }
     expect(todo).toEqual([]);
+  });
+});
+
+describe('walls stop sprays and arcs', () => {
+  function walled() {
+    const a = arena();
+    const wl = a.w.walls, k = Array.from(wl.type).indexOf(WALL.none);
+    wl.type[k] = WALL.rock; wl.owner[k] = 0; wl.hp[k] = 5000; wl.x1[k] = 2; wl.y1[k] = -3; wl.x2[k] = 2; wl.y2[k] = 3;
+    return { ...a, k };
+  }
+
+  it('a spray ends at the wall, wears it down and leaves what is behind it alone', () => {
+    const { w, d, dummy, k } = walled();
+    const behind = dummy(3.5, 0), hp = w.bodies.hp[behind];
+    d.aimAt(3.5, 0).queue('fire').cast(BTN.force, 40, 0);
+    expect(w.seats.chanEndX[0]).toBeLessThan(2);
+    expect(w.bodies.hp[behind]).toBe(hp);
+    expect(w.walls.hp[k]).toBeLessThan(5000);
+  });
+
+  it('a spray still burns what stands on the near side', () => {
+    const { w, d, dummy } = walled();
+    const near = dummy(1, 0), hp = w.bodies.hp[near];
+    d.aimAt(3.5, 0).queue('fire').cast(BTN.force, 40, 0);
+    expect(w.bodies.hp[near]).toBeLessThan(hp);
+  });
+
+  it('a healing spray does not wear the wall down', () => {
+    const { w, d, k } = walled();
+    d.aimAt(3.5, 0).queue('life', 'fire').cast(BTN.force, 40, 0);
+    expect(specOf(w, 0).shape).toBe('spray');
+    expect(w.walls.hp[k]).toBe(5000);
+  });
+
+  it('lightning does not arc through a wall, and neither does its jump', () => {
+    const { w, d, dummy } = walled();
+    const behind = dummy(3, 0), hp = w.bodies.hp[behind];
+    d.aimAt(3, 0).queue('lightning').cast(BTN.force, 40, 0);
+    expect(w.bodies.hp[behind]).toBe(hp);
+
+    const b = walled();
+    const first = b.dummy(1, 0, 8), over = b.dummy(3, 0, 9), hp1 = b.w.bodies.hp[first], hp2 = b.w.bodies.hp[over];
+    b.d.aimAt(1, 0).queue('lightning').cast(BTN.force, 40, 0);
+    expect(b.w.bodies.hp[first]).toBeLessThan(hp1);
+    expect(b.w.bodies.hp[over]).toBe(hp2);
   });
 });

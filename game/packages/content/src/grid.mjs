@@ -1,6 +1,6 @@
 // The Terrain IntGrid as text rows, for reading and diffs, and text rows written back into a level.
 import { readFileSync } from 'node:fs';
-import { FLOOR, ROCK, terrainLegend, terrainRows } from './compile.mjs';
+import { FLOOR, GROUND_CHARS, ROCK, terrainLegend, terrainRows } from './compile.mjs';
 import { CELL, GRID_PX, PX_PER_UNIT, layerOf, saveJson, toWorldX, toWorldY } from './ldtk.mjs';
 
 /** Overlay marks for --entities (read-only: write refuses them). */
@@ -77,3 +77,36 @@ export function writeGrid(loaded, entry, text) {
 }
 
 export const readText = (file) => readFileSync(file === '-' ? 0 : file, 'utf8');
+
+/** Ground layer: identifier -> value for a project. */
+const groundValues = (project) => new Map(project.defs.layers.find((l) => l.identifier === 'Ground').intGridValues.map((v) => [GROUND_CHARS[v.identifier], v.value]));
+
+/** A level's Ground layer as text: '.' unpainted, then one character per material. */
+export function printGround(project, level) {
+  const layer = layerOf(level, 'Ground');
+  if (!layer) throw new Error(`${level.identifier} has no Ground layer`);
+  const byValue = new Map([[0, '.'], ...[...groundValues(project)].map(([c, v]) => [v, c])]), lines = [`// ${level.identifier} ground: ${layer.__cWid} x ${layer.__cHei} cells. ${Object.entries(GROUND_CHARS).map(([n, c]) => `${c} ${n}`).join(', ')}, . unpainted`];
+  for (let y = 0; y < layer.__cHei; y++) lines.push(layer.intGridCsv.slice(y * layer.__cWid, (y + 1) * layer.__cWid).map((v) => byValue.get(v) ?? '?').join(''));
+  return lines.join('\n') + '\n';
+}
+
+/** Text rows -> a level's Ground layer. Returns how many cells changed. */
+export function writeGround(loaded, entry, text) {
+  const { level, path } = entry, layer = layerOf(level, 'Ground');
+  if (!layer) throw new Error(`${level.identifier} has no Ground layer`);
+  const rows = text.replace(/\r/g, '').split('\n').filter((l) => l.trim() && !l.startsWith('//'));
+  if (rows.length !== layer.__cHei) throw new Error(`${level.identifier} is ${layer.__cHei} rows tall; got ${rows.length}`);
+  const values = groundValues(loaded.project), csv = [];
+  rows.forEach((row, y) => {
+    if (row.length !== layer.__cWid) throw new Error(`row ${y} is ${row.length} wide; ${level.identifier} is ${layer.__cWid}`);
+    for (const ch of row) {
+      const v = ch === '.' ? 0 : values.get(ch);
+      if (v === undefined) throw new Error(`row ${y}: '${ch}' is not a ground character`);
+      csv.push(v);
+    }
+  });
+  const changed = csv.filter((v, i) => layer.intGridCsv[i] !== v).length;
+  layer.intGridCsv = csv;
+  saveJson(path ?? loaded.path, path ? level : loaded.project);
+  return changed;
+}

@@ -12,6 +12,7 @@
  *   - the sim's current hit kind (hit.ts), module state that a hit stamps on its target.
  * A Graphics mask clips each view to its box in the panel.
  */
+import { toU, toV } from './iso-world';
 import { Container, Graphics } from 'pixi.js';
 import {
   KIND, MAX_SEATS, NO_INPUT, createWorld, hitKindNow, restore, setHitKind, snapshot, step,
@@ -53,7 +54,7 @@ export class Preview {
   constructor(bw: number, bh: number, scale: number, frames?: unknown) {
     this.field = previewField(bw, bh);
     // the view's canvases are sized from FIELD when it is made: make it under the preview's field
-    this.view = withField(this.field, () => new WorldView());
+    this.view = withField(this.field, () => new WorldView(false));
     if (frames) (this.view as unknown as { frames: unknown }).frames = frames;
     this.world = createWorld(11, 1, { room: 'sanctum' });
     const b = this.world.bodies;
@@ -68,8 +69,9 @@ export class Preview {
     // the camera stays put on the scene: between the wizard and the dummy, the feet low in the box
     const cam = this.view.camera;
     cam.follow = () => {
-      cam.cx = (WIZ_X + DUMMY[0]) / 2 + (this.framing === 'retreat' ? -RETREAT_LOOK : 0);
-      cam.cy = WIZ_Y - 0.25 * this.bh / (PPU * FY); cam.following = false;
+      const mx = (WIZ_X + DUMMY[0]) / 2 + (this.framing === 'retreat' ? -RETREAT_LOOK : 0);
+      cam.cx = toU(mx, WIZ_Y);
+      cam.cy = toV(mx, WIZ_Y) - 0.25 * this.bh / (PPU * FY); cam.following = false;
     };
     this.root.addChild(this.view.root, this.mask);
     this.view.root.mask = this.mask;

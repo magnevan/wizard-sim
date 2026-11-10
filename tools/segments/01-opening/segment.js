@@ -4,7 +4,7 @@ const R=(x,y,w,h,k,l,o)=>({t:'r',x,y,w,h,k,l,...o}), C=(x,y,r,k,l)=>({t:'c',x,y,
 const STYLE='hi-bit pixel art, dark outline, seen from above at an isometric angle';
 
 window.SEGMENT={
-round:3,
+round:4,
 number:1,
 title:'The Opening',
 lede:`From the briefing to your first spell of your own. This page holds what happens, where it happens, and what's still open.`,
@@ -13,8 +13,7 @@ stages:[
  ['Brief','draft'],['Beat chart','draft'],['Space diagram','review'],['Blockout','next','The battery first'],['Script','later'],['Dressing','started','General art bought'],['Finish','later'],
 ],
 needsYou:[
- ['#solve-battery-well',`What a well looks like, in its three states. It needs your sign-off before I buy it.`],
- ['#solve-yard-layout',`A new yard layout that keeps the lessons in order.`],
+ ['#buy-well',`The well, rewritten around your images. It needs your sign-off before I buy it, and there's one colour choice in it.`],
 ],
 onMe:[`Build the battery as a plain playable room.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
 chapters:[
@@ -41,10 +40,13 @@ chapters:[
  {n:2,min:3,minLabel:'3',p:2,label:'Low',src:'Yours',title:'Controls and fighting',does:`The existing hands lessons, shortened.`,teaches:'Move, Strike, Heavy, Retreat, Defend',magic:'None'},
  {n:3,min:1,minLabel:'1',p:2,label:'Low',src:'Proposal',title:'The charged focus',does:`The rack hands you a focus already charged from the academy's supply, and you conjure a blade from stored Fire. It's the old world's way, and it's good to learn before you go out. You can then revisit some of the stations with the blade.`,teaches:'The Conjure gesture',magic:'Stored charge'},
  ],
+ settled:[
+ [`Bigger.`,` About a quarter larger each way, roughly 70 × 52, with the extra room as walking and open ground between the stations.`],
+ [`The path sets the layout.`,` One worn path leads from station to station in teaching order, and the rack and north gate sit at its end. Other trainees and clutter fill in around it.`],
+ [`A real place.`,` Worn paths drawn first, stations along them. Students are the wizard rig recoloured. A few hired soldiers drill here to set up the budget joke, and they need a new character, which I'll bring to you as a purchase.`],
+ [`Signs of how it got built.`,` Leftover material from putting the yard up in a hurry, and some of what used to be here, strewn to the side.`],
+ ],
  solve:[
- {id:'yard-size',title:'Bigger',body:`You marked it too small.`,proposal:`About a quarter larger each way, roughly 70 × 52, taking the extra room as walking and open ground between the stations.`},
- {id:'yard-place',title:'A real place, not a field with objects',body:`Paths worn into the ground, construction materials and gear for other kinds of practice, and other people training. Not everyone is a wizard: the school hires soldiers to escort wizards at times, and you don't get any because of budget cuts.`,proposal:`Draw the worn paths first, then set the stations along them. Students are the wizard rig recoloured, at no cost. A few hired soldiers drilling in the yard set up the budget joke, and they need a new character, which I'd bring to you as a purchase.`},
- {id:'yard-layout',title:'A layout with a reason',body:`It feels a little random, and my central square made the order of the lessons feel odd.`,proposal:`Let the lessons set the layout: one worn path leads from station to station in teaching order, and the rack and north gate sit at its end. The other trainees and the clutter fill in around the path.`},
  ]},
 {id:'battery',name:'The battery',
  map:{W:72,H:64,base:'grass',what:`The first job. You drive a defence on the wall until it runs dry, then go out through the gate on your own power.`,
@@ -76,7 +78,6 @@ chapters:[
  [`The repair.`,` You take part, or do it yourselves, with a simple "press X to stabilize". The screen fades to black and back, and the well has changed: Unstable, then Drained, then Stable.`],
  ],
  solve:[
- {id:'battery-well',title:'What a well looks like',body:`Obviously not an actual well. There shouldn't be one design, just some things they have in common. In the world they differ in size by orders of magnitude, while the ones we play around stay roughly similar.`,proposal:`What they share: a ring of worked stone and brass around a sunken basin of light, with feed lines running out. The basin shows the state at a glance. Unstable: the light surges and arcs over cracked stone. Drained: a dark, empty basin. Stable: a calm, steady glow. Other wells can change the ring and materials and keep the basin. If this reads right, I'll write the exact purchase for your sign-off.`},
  ]},
 ],
 rules:[
@@ -86,14 +87,25 @@ rules:[
  ['Four wizards fit.',' A Fire ring is 3 units in radius, so a fight wants about 6 units per player, and a room at least 24 by 18.'],
  ['Walks vary, and some are long.',' Sometimes you walk a while before anything happens, because that makes the world feel real. You cross a screen in about 7 seconds.'],
 ],
-buy:{id:'job-defence',name:`The defence`,cost:49,costLabel:'49 generations so far',tool:'Candidate 3 chosen. One tower, with only the head rotated through the Rotate endpoint, 1 generation per facing. The burnt-out version is a free local edit, so nothing more to pay for. All of it is registered as game assets, tower and heads separate.',
+buy:[{id:'job-well',anchor:'buy-well',name:`The well`,cost:14,costLabel:'About 14 generations, not bought yet',tool:'One call at 128 px, which returns four candidates. Nothing is bought until you mark Approve.',
+ why:`Not a hole in the ground. Your images are structures that hold up a column of light, so I've dropped the ring-around-a-basin idea.`,
+ points:[
+  [`What wells share.`,` Light stands up out of the ground as a column and rises past the top of the screen. The structure holds and frames it, with nothing sunk into the ground to look down into. Worked stone and brass, glowing seams, and a small ring of light where the column meets the floor.`],
+  [`This one.`,` Your top-right image, built for a working site: a flared stone and brass plinth with tilted brass rings around a crystal. Rings show up well from our high camera, and they can show the well's state. The monolith and the standing blades stay available for other wells.`],
+  [`The three states.`,` Unstable: the column whips and arcs, the rings are knocked askew, the seams flicker. Drained: no column, dark seams, the rings dropped onto the plinth. Stable: a straight, steady column and level rings.`],
+  [`Bought and drawn.`,` The purchase is the structure only, lit and still. The column, arcs and floor ring are drawn in code so they can animate at any height. Unstable and Drained start as free local edits, as the burnt-out defence did.`],
+  [`The one choice in here is colour.`,` Your images are all blue, but this well feeds Fire defences, so I've written it orange, matching the defence's crystal and the Fire rune you get from it. A well's light would then take the colour of its field, and blue could be the Arcane well at the academy. If every well should be blue, say so and I'll change the words.`],
+ ],
+ lines:['A magical power source standing on its own: a flared octagonal plinth of worked stone and dark brass on a low round stone step, with thin glowing orange runes cut into the seams of the stone. Above the plinth, three interlocking tilted brass rings float around a glowing orange diamond-shaped crystal, touching neither it nor each other. Nothing above the rings and nothing around it on the ground. No basin, no pit, no bucket, no roof, no water, no beam of light. Medieval fantasy engineering. Hi-bit pixel art, dark outline, seen from above at an isometric angle.'],
+ images:[['img/well-references.jpg','Five painted wells: curved stone blades around a crystal, a brass armillary on a plinth, a monolith with a ring cut in it, and a stone basin under a hanging timber housing, each with a column of blue light','Your concept images, for direction. They are not going into the game.']]},
+{id:'job-defence',name:`The defence`,cost:49,costLabel:'49 generations so far',tool:'Candidate 3 chosen. One tower, with only the head rotated through the Rotate endpoint, 1 generation per facing. The burnt-out version is a free local edit, so nothing more to pay for. All of it is registered as game assets, tower and heads separate.',
  why:`A flamethrower on a tower. It faces north-east and swings about 45 degrees either way, so only the head turns, on its collar, and the tower stays one image.`,
  images:[['img/defence-flame-candidates.png','Four flamethrower towers with a brass head on a central collar and an orange crystal set into the stone','The four candidates. You chose 3.'],['img/defence-flame-facings.png','Candidate 3 facing north, north-east and east on one identical tower','The three facings, sharing one tower.'],['img/defence-burnt.png','The working defence beside the burnt-out one, with a black cracked crystal, soot up the wall, a sagging nozzle and no flame','Working, and burnt out. A free local edit with no generations spent. Say if it needs to be better than this.']],
- lines:['A fixed flamethrower defence on a squat round stone tower, facing up and to the right. A compact brass flame-projector head with a slim nozzle flaring to a burner tip and a small pilot flame, sitting on a round swivel collar at the centre of the tower top. Nothing connects the head to the tower except the collar. A glowing orange crystal in a cage is built into the side of the tower below the collar, with short brass pipes running into the stone, not up to the head. Medieval fantasy engineering, not a cannon, no barrel. Hi-bit pixel art, dark outline, seen from above at an isometric angle.']},
+ lines:['A fixed flamethrower defence on a squat round stone tower, facing up and to the right. A compact brass flame-projector head with a slim nozzle flaring to a burner tip and a small pilot flame, sitting on a round swivel collar at the centre of the tower top. Nothing connects the head to the tower except the collar. A glowing orange crystal in a cage is built into the side of the tower below the collar, with short brass pipes running into the stone, not up to the head. Medieval fantasy engineering, not a cannon, no barrel. Hi-bit pixel art, dark outline, seen from above at an isometric angle.']}],
 art:[
  ['Hall','Academy furnishings and school wall kit (bought); lectern, benches, bookshelves, banners, clock (owned)','Other students: wizard rig recoloured'],
  ['Yard','Field works props (bought); dummies, targets, racks, fences, hay bales (owned)','Sack and marks on the sand: local variants. Other trainees: wizard rig'],
- ['Battery','Fortification wall kit, gatehouse, tower, field works (bought); crates, barrels, well, trees (owned)','The defence (above). Feed-line glow and infusion: drawn by code'],
+ ['Battery','Fortification wall kit, gatehouse, tower, field works (bought); crates, barrels, trees (owned)','The defence and the well (above). The light column of the well, feed-line glow and infusion: drawn by code'],
 ],
 build:[
  ['Controlling a defence',`Your casts come from the device, the camera follows it, the bar shows its pool, and a key steps away. Your body stands where you left it.`,'New'],

@@ -1117,3 +1117,7 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 ## 2026-11-10: The defence is a flamethrower with a head that turns
 - **It faces north-east and swings about 45 degrees either way,** so it needs three facings, not eight (the user). Only the head turns, on a central collar, and the tower stays one image.
 - **Flamethrower, not cannon** (the user: "flamethrower is more the identity of the base fire spells"). The first four towers and their rotations are kept but unused.
+
+## 2026-11-10: A well holds up a column of light
+- **Not a literal well** (the user, with concept images). The basin proposal is dropped: wells are structures of stone and brass framing a column of light that rises out of the ground.
+- **The battery's well is proposed as an armillary on a plinth, in orange,** and isn't bought yet. Its colour is the user's call, since their images are blue.

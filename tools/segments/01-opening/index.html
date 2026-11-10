@@ -240,11 +240,11 @@ function buildBottom(){
  const lg=el('div','legend');for(const [n,k] of [['Floor','floor'],['Sand','sand'],['Grass','grass'],['Fought-over ground','field'],['Dirt','dirt'],['Water','water'],['Trees','tree'],['Wall or rock','wall'],['Structure','struct'],['Furniture or cover','furn'],['Danger or enemy entry','danger']]){const s=el('span');const i=el('i');i.style.background=KC(k);s.append(i,n);lg.append(s);}lg.append(el('span','','Dots: your route.'));sc.append(lg);
 
  const n=$('needs');n.append(el('h2','','What it needs'));
- const j=SEG.buy,buy=el('div','sheet');buy.id='buy';buy.style.scrollMarginTop='44px';
+ for(const j of [].concat(SEG.buy)){const buy=el('div','sheet');buy.id=j.anchor||'buy';buy.style.scrollMarginTop='44px';
  const jh=el('div','head');jh.append(el('h3','',j.name),el('span','dim',j.costLabel||j.cost+' generations'));
- buy.append(jh,el('p','',j.why),el('p','cap',j.tool));j.lines.forEach(x=>buy.append(el('div','quote',x)));
- (j.images||[]).forEach(([src,alt,cap])=>{const f=el('figure');f.style.cssText='margin:0;display:grid;gap:6px';const i=el('img');i.src=src;i.alt=alt;i.style.cssText='width:100%;height:auto;image-rendering:pixelated';f.append(i,el('figcaption','cap',cap));buy.append(f);});
- buy.append(marks('ratings',j.id,[['approve','Approve'],['change','Change it'],['cut','Cut']]),noteBox('answers',`${ROUND}-job-defence`,'Which design, and what to change'));n.append(buy);
+ buy.append(jh,el('p','',j.why));(j.points||[]).forEach(x=>buy.append(lead(x)));buy.append(el('p','cap',j.tool));j.lines.forEach(x=>buy.append(el('div','quote',x)));
+ (j.images||[]).forEach(([src,alt,cap])=>{const f=el('figure');f.style.cssText='margin:0;display:grid;gap:6px';const i=el('img');i.src=src;i.alt=alt;i.style.cssText='width:100%;height:auto'+(src.endsWith('.png')?';image-rendering:pixelated':'');f.append(i,el('figcaption','cap',cap));buy.append(f);});
+ buy.append(marks('ratings',j.id,[['approve','Approve'],['change','Change it'],['cut','Cut']]),noteBox('answers',`${ROUND}-${j.id}`,'What to change'));n.append(buy);}
  const code=el('div','sheet');code.append(el('h3','','Game features for the battery'));
  const t=el('table');t.innerHTML='<thead><tr><th>Feature</th><th>What it does</th><th>State</th></tr></thead>';const tb=el('tbody');
  for(const [a,b,c] of SEG.build){const tr=el('tr');tr.append(el('td','',a),el('td','',b));const td=el('td');td.append(el('span','tag'+(c==='New'?'':' mine'),c));tr.append(td);tb.append(tr);}t.append(tb);const w=el('div','scroll');w.append(t);code.append(w);n.append(code);

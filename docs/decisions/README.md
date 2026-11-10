@@ -1138,3 +1138,9 @@ From the user's play-test: Cold and a Water spray wouldn't freeze a Brute, but a
 - **A spray spreads along the wall it hits:** fire licks sideways and up the face, water bursts and runs down, frost grows, steam billows. Drawn only on the face the camera sees; a spray on the far side is hidden by the wall.
 - **Healing sprays don't wear walls down** (Claude's call).
 - **Lightning arcs follow the same rule** (Claude's call, not asked for): neither the first strike nor a jump passes a wall, and a crackle into the air stops at one. Otherwise a bolt hidden behind a wall would still hurt what's on the other side.
+
+## 2026-11-10: Novas are one surface, not a row of pieces
+- **Each single-element Area cast is drawn as one connected surface travelling outward** (`art/novas.ts`). The user on the fire ring: "I don't like how it looks like a bunch of discrete candles being pushed out. It should be more like a wave of flames", then "in fact, all the single element novas look bad". The same complaint as the fire patch in the Spell VFX gallery ("very clearly N fire patches").
+- **Each element gets its own shape** (Claude's call): Fire a leaning wave with its body burning behind it, tearing apart in patches. Water a rolling swell with spray. Cold a serrated ice front over spreading frost, shattering where it stops. Life a see-through veil of upright threads with rising motes. Arcane a hard, fast hoop with knots running round it.
+- **Earth's quake and Lightning's discharge are unchanged:** they never used the ring of dots.
+- Only the drawing changed: radius, damage and timing of the casts are as they were.

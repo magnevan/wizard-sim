@@ -86,6 +86,7 @@ Static rock (Rock entities, traced outlines and blocking props) is the room's te
 | `base` | A variant's original. A set the variant lacks comes from its base. |
 | `flat` | Lies on the floor, under everything (a rune circle). |
 | `lift` | Hangs this many art px above its spot (a banner on a wall). |
+| `sort` | Sorts this many art px further down the screen than its spot; negative is further back. A low wide base can sort at its back rim, so a body standing round it is in front of it. |
 
 To add a prop: put a folder here (`tools/art-trial/props.py` and `variants.py` write these), place a Prop in LDtk, and build. Art direction, how sets are made and variants: `tools/art-trial/README.md`.
 

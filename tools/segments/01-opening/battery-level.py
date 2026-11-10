@@ -114,6 +114,7 @@ for x in TOWERS:
     prop('defence-head-north-east', x, TOWER_Y)     # the same spot: the head lands on the tower's collar
     prop('control-pedestal', x, CREW_Y, True)
 prop('battery-well', *WELL, True)
+prop('battery-well-top', *WELL)                     # the same spot: the drum and rings stand on the steps
 for x in (GATE[0] - PILLAR / 2, GATE[1] + PILLAR / 2):   # a little south of the wall's line, so each stands forward of its face
     prop('battery-pillar', x, WALL_Y + .64, True)
 prop('lantern-post', 36.5, 41, True)

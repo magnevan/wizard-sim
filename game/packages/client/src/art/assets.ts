@@ -22,6 +22,8 @@ export interface PropMeta {
   flat?: boolean;
   /** Hangs this many art px above its spot (a banner on a wall). */
   lift?: number;
+  /** Sorts this many art px further down the screen than its spot (negative: further back). */
+  sort?: number;
   sets: Record<string, PropImage>;
 }
 

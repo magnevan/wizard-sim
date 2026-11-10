@@ -336,7 +336,7 @@ export const ROOM_DEFS = {
   },
   battery: {
     id: 'battery', w: 84, h: 72,
-    // c9e47cb8: 168 x 144 cells, '.' floor, '#' rock
+    // 4ab30187: 168 x 144 cells, '.' floor, '#' rock
     terrain: [
       '........................................................................................................................................................................',
       '........................................................................................................................................................................',
@@ -502,6 +502,7 @@ export const ROOM_DEFS = {
       { asset: 'defence-head-north-east', x: 26, y: 2, blocks: false },
       { asset: 'control-pedestal', x: 26, y: 8, blocks: true },
       { asset: 'battery-well', x: 0, y: 18, blocks: true },
+      { asset: 'battery-well-top', x: 0, y: 18, blocks: false },
       { asset: 'battery-pillar', x: -4.05, y: -0.35, blocks: true },
       { asset: 'battery-pillar', x: 4.05, y: -0.35, blocks: true },
       { asset: 'lantern-post', x: -5.5, y: 5, blocks: true },

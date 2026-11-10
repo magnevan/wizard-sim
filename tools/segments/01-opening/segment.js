@@ -99,7 +99,7 @@ build:[
  ['Wave lanes per player',`From the scaling proposal above.`,'New'],
  ['Sigil only with Conjure',`The etched focus rule. Designed, not built.`,'New'],
  ['Early regen and pools',`The budget is shared among unlocked pools, so the early numbers need tuning per step.`,'New'],
- ['Room for bigger maps',`Removing the 40-rock-wall limit.`,'In progress'],
+ ['Room for bigger maps',`The 40-rock-wall limit is removed on a separate branch.`,'Built, not merged'],
 ],
 parked:`Beats 8 to 12 are on hold until this part works: the second element, the surge, the camp, the way through and the holding ground. They stay in docs/campaign/01-opening/brief.md.`,
 };

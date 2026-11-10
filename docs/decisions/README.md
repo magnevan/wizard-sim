@@ -1100,3 +1100,7 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **Walks vary and some are long.** The user: "I think you should sometimes walk a bit before something happens, because it makes the world feel more real." This replaces the 5 to 15 second rule.
 - **What you can see depends on direction,** as the user pointed out: least straight down the screen, then straight up, and most into the corners. The old "14 ahead, 8 behind" only held for straight up and down.
 - **The first job's well was destabilized and needs repairs,** in place of the moved vein (the user's suggestion; in `canon.md` under review).
+
+## 2026-11-10: Terrain is read-only room data, with no per-room limit (`explorations/2026-11-09-continuous-world-todo.md`)
+- **Built on the branch `worktree-agent-a47e8a370a065b82e`, not merged.** The user asked for the wall limit to be fixed now and streaming left for later. Terrain is out of rollback state, on a 2-unit grid, and the checker no longer caps it.
+- **Players always get all 160 cast-wall slots** (a side effect, Claude's call). Before, Survive left them 120 and the Academy 122. Only shows above those counts.

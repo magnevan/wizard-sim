@@ -15,7 +15,7 @@
 
 ## The work, in order
 
-1. **Terrain out of rollback state.** Read-only map data with a spatial lookup, so collision checks only nearby walls. Removes the cap and makes rollback cheaper. Self-contained. Expect the golden hash to need thought, since the buffers change.
+1. **Terrain out of rollback state. Built 2026-11-10 on the branch `worktree-agent-a47e8a370a065b82e`, not merged.** Read-only map data with a 2-unit grid (`packages/sim/src/terrain.ts`), and no per-room limit. Rollback snapshots stay the same size, because the pool stays at 160 slots, now all for cast walls. Cost in a room with several hundred segments isn't measured yet.
 2. **Nav as a moving window** around the party, with terrain cost cached rather than re-rasterized.
 3. **An active area.** Only what's near the party runs. Enemies sleep and wake by a deterministic rule, so all peers agree.
 4. **Keeping the party together.** The mechanics that enforce it. Today local co-op frames the seats' middle and online each screen follows its own wizard, so the rule has to suit both.
@@ -26,4 +26,4 @@ Terrain needs no streaming in the sim: every peer has the whole map as data, and
 
 ## Until then
 
-The cap still applies, and the map checker refuses a room over 40 rock walls. Long straight walls are cheap and ragged edges expensive, and non-blocking props cost nothing. If a map can't fit, step 1 is the one to pull forward.
+Until step 1's branch is merged, the map checker still refuses a room over 40 rock walls. The user pulled that step forward and left the rest for later: "at least the 40 wall limit thing for now".

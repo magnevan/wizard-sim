@@ -10,6 +10,7 @@ defence doesn't turn, so it has one head. The well's four candidates are kept ra
 import json, os
 import numpy as np
 from PIL import Image
+from kits import tone
 from props import ASSETS, RAWREL, ROOT, register, trim
 
 DEFENCE = f'{RAWREL}/defence'
@@ -34,9 +35,10 @@ def kit_gate():
     top diamond vertex is at (38, 55) in its 76 x 86 canvas."""
     raw = os.path.join(ROOT, KIT_RAW)
     piece = lambda n: Image.open(os.path.join(raw, f'tile_{n:02d}.png')).convert('RGBA')
-    BLOCK, PILLAR = piece(53), np.array(piece(31))
+    BLOCK, PILLAR = Image.fromarray(tone(np.array(piece(53)))), tone(np.array(piece(31)))
     STOREYS = [0, 30, 60]                       # art px each block rises
     CENTRE, HALF_OPENING = 3.5, 3 / 2.12        # tiles: the opening is 6 units, a tile 2.12
+    PROUD = .2                                  # j: the pillar stands forward of the wall's face, so the two don't share a plane
     O = (70, 190)
     G = lambda i, j: (O[0] + 24 * i + 24 * j, O[1] + 12 * i - 12 * j)
     merlon = np.zeros_like(PILLAR)
@@ -47,7 +49,7 @@ def kit_gate():
     merlon = Image.fromarray(merlon)
     out = Image.new('RGBA', (380, 340))
     for i in (CENTRE - HALF_OPENING - 1, CENTRE + HALF_OPENING):
-        x, y = (int(round(v)) for v in G(i, .5))
+        x, y = (int(round(v)) for v in G(i, PROUD))
         for rise in STOREYS:
             out.alpha_composite(BLOCK, (x - 38, y - 55 - rise))
         top = STOREYS[-1] + 8
@@ -67,6 +69,11 @@ def main():
         box = im.getchannel('A').getbbox()
         foot = [anchor[0] - box[0], anchor[1] - box[1]]
         register(pid, name, footprint, im.crop(box), f'{DEFENCE}/{file}', '/v2/rotate' if 'rotated' in edits else 'create_1_direction_object', edits, foot=foot)
+    for pid, *_ in PIECES:     # a tower sorts a little in front of the first wall piece beside it, so the wall tucks behind its curve
+        meta = os.path.join(ASSETS, pid, 'meta.json')
+        m = json.load(open(meta))
+        m['sort'] = 26
+        json.dump(m, open(meta, 'w'), indent=2)
     im = Image.open(os.path.join(ROOT, WELL_RAW)).convert('RGBA')
     box = im.getchannel('A').getbbox()
     im = im.crop(box)

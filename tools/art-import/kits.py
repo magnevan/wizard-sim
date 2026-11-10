@@ -20,6 +20,27 @@ PIECES = {'n': 1, 'w': 4, 's': 3, 'e': 2}
 LOW = 15
 
 
+def _stone(a):
+    """Every opaque pixel of an image array that isn't outline."""
+    p = a[a[..., 3] > 0][:, :3].astype(float)
+    return p[p.sum(1) > 150]
+
+
+def tone(a):
+    """A fortress kit piece, moved onto the defence towers' average colour and spread, measured piece by piece so a block
+    and a wall come out the same. Its outlines lose their green and go the towers' warm black."""
+    src = _stone(a)
+    dst = _stone(np.array(Image.open(os.path.join(RAW, 'defence', 'tower-clean.png')).convert('RGBA')))
+    out = a.copy()
+    op = a[..., 3] > 0
+    stone = op & (a[..., :3].astype(int).sum(2) > 150)
+    out[stone, :3] = np.clip((a[stone, :3].astype(float) - src.mean(0)) / src.std(0) * dst.std(0) + dst.mean(0), 0, 255).astype(np.uint8)
+    dark = op & ~stone
+    out[dark, 1] = np.minimum(a[dark, 1], (a[dark, 0] * .8).astype(np.uint8))
+    out[dark, 2] = np.minimum(a[dark, 2], (a[dark, 0] * .65).astype(np.uint8))
+    return out
+
+
 def base_y(side, x):
     """The near wall's ground line in the 76 x 86 piece: the tile diamond's lower edges."""
     return 67 + (x - 14) / 2 if side == 's' else 67 + (62 - x) / 2
@@ -53,6 +74,7 @@ def main():
         os.makedirs(d, exist_ok=True)
         for side, i in PIECES.items():
             a = np.array(Image.open(os.path.join(RAW, folder, f'tile_{i:02d}.png')).convert('RGBA'))
+            if kit == 'fortress': a = tone(a)
             if side in 'se': a = cut_low(a, side)
             Image.fromarray(a, 'RGBA').save(os.path.join(d, side + '.png'), optimize=True)
         print(kit, 'done')

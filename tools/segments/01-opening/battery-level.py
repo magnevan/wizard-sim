@@ -180,10 +180,10 @@ for i, (x, y) in enumerate(PORTALS):
 # blocks by itself, so it never cuts across one.
 runs, at = [], 0
 for x in TOWERS[:2]:
-    runs.append((at, x - 2.5)); at = x + 3
+    runs.append((at, x - 2.2)); at = x + 2.2
 runs.append((at, GATE[0])); at = GATE[1]
 for x in TOWERS[2:]:
-    runs.append((at, x - 2.5)); at = x + 3
+    runs.append((at, x - 2.2)); at = x + 2.2
 runs.append((at, W))
 for i, (a, b) in enumerate(runs):
     wy = WALL_Y - H / 2

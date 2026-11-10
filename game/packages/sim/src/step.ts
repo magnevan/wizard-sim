@@ -14,6 +14,7 @@ import { tickDeaths, tickEnemies } from './enemies';
 import { tickNav } from './nav';
 import { hasteOf, tickStructures } from './structures';
 import { tickWaves } from './waves';
+import { tickBatteryWaves } from './battery-waves';
 import { survivePress, tickSurvive } from './survive';
 import { HIT_KIND, setHitKind, tickStatuses } from './hit';
 import { sureFooted, tickGuards, walkMult } from './guards';
@@ -51,7 +52,7 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
     b.vy[i] += (my * speed - b.vy[i]) * grip;
   }
 
-  if (w.run) tickSurvive(w); else tickWaves(w);
+  if (w.run) tickSurvive(w); else if (w.battery) tickBatteryWaves(w); else tickWaves(w);
   tickNav(w);
   tickEnemies(w);
 

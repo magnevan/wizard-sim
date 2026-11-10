@@ -364,6 +364,7 @@ export class WorldView {
       for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.rock) wall(wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
     }
     this.vfx.occluders = this.occluderSource(w, fx0, fy0);
+    this.vfx.ghostSource = (emit) => { for (let i = MAX_SEATS; i < MAX_BODIES; i++) { const spr = this.sprites[i]; if (this.views[i].on && spr.visible && w.bodies.kind[i] === KIND.enemy) emit(spr.texture, spr.position.x - fx0, spr.position.y - fy0, spr.zIndex); } };
     this.structs.behind = this.vfx.behind;
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
     this.lights.end();

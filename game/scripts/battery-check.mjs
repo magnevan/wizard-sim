@@ -75,6 +75,15 @@ try {
   await p.mouse.move(860, 130);
   await sleep(500);
   await shot('drive-idle');
+  // wave 1 comes down this defence's lane and reaches the wall: hidden behind it, they show through as silhouettes
+  await sleep(9000);
+  await shot('wave-coming');
+  // headless frames run the sim slower than real time: wait on the sim, for the first enemy at the wall
+  const atWall = () => p.evaluate(() => { const w = window.wizardSim.world, b = w.bodies; let n = 0; for (let i = 4; i < b.kind.length; i++) if (b.kind[i] === 3 && Math.hypot(b.x[i] - b.x[0], b.y[i] - b.y[0]) < 2.5) n++; return n; });
+  for (let k = 0; k < 120 && (await atWall()) < 3; k++) await sleep(250);
+  await sleep(600);
+  await shot('wave-at-wall');
+  console.log('enemies at the wall', await atWall());
   await p.keyboard.press('KeyF');
   await p.keyboard.press('KeyF');
   await sleep(200);

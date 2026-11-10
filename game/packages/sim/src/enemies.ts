@@ -25,6 +25,8 @@ import { TERRAIN_HIT, damageWall, segDist } from './walls';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { AI, KIND, MAX_SEATS, PU, STATUS_BIT, TEAM, WARD, stackOf, type World } from './world';
 import { noteSlam } from './tutorial-data';
+import { driving } from './battery';
+import { BWAVES, batteryStandoff, laneTarget } from './battery-waves';
 
 const TRACK_SHARE = 0.55;
 const COVER_DIST = 2.2;
@@ -68,6 +70,7 @@ function setAi(w: World, i: number, state: number): void { w.bodies.ai[i] = stat
 /** Plain damage from an enemy to a body, plus knockback. Stone armour's coat bites back. */
 function strike(w: World, src: number, t: number, dmg: number, knock: number, dx: number, dy: number, burn: boolean): void {
   const b = w.bodies, s = w.seats;
+  if (driving(w, t)) return; // a blow at the wall, on the defence: a driver can't be hurt (battery.ts)
   let d = dmg;
   // A conjured guard (guards.ts): a parry or a Bulwark block stops the blow; resistance cuts it.
   if (t < MAX_SEATS && s.guard[t]) {
@@ -111,7 +114,8 @@ export function tickEnemies(w: World): void {
     let t = b.ai[i] === AI.windup ? b.target[i] : -1;
     if (t < 0 || !isPrey(w, t)) {
       if (b.ai[i] === AI.windup) setAi(w, i, AI.approach);
-      t = nearestWizard(w, i);
+      t = w.battery ? laneTarget(w, i) : -1; // the battery: your own lane's defence first
+      if (t < 0) t = nearestWizard(w, i);
     }
     b.target[i] = t;
     if (t < 0) continue;
@@ -123,7 +127,7 @@ export function tickEnemies(w: World): void {
       move(w, i, approachSpot(w, i, t), t, speed);
       const ranged = a.attack === ATTACK.bolt || a.attack === ATTACK.grab;
       // Walled off with no way round: a wall it's pressed against is what it attacks.
-      const ready = ranged ? d <= a.reach && b.aiT[i] > T(0.4) : gap <= a.reach || (cutOff(w, i, t) && wallInReach(w, i, a.reach + 0.45) >= 0);
+      const ready = ranged ? d <= (w.battery && a.attack === ATTACK.bolt ? BWAVES.archerStandoff + 1.5 : a.reach) && b.aiT[i] > T(0.4) : gap <= a.reach || (cutOff(w, i, t) && wallInReach(w, i, a.reach + 0.45) >= 0);
       if (ready) { setAi(w, i, AI.windup); b.lockX[i] = b.x[t]; b.lockY[i] = b.y[t]; }
     } else if (b.ai[i] === AI.windup) {
       if ((a.attack === ATTACK.bolt || a.attack === ATTACK.grab) && b.aiT[i] < T(a.windup * TRACK_SHARE)) { b.lockX[i] = b.x[t]; b.lockY[i] = b.y[t]; }
@@ -156,6 +160,7 @@ function move(w: World, i: number, [tx, ty]: [number, number], seat: number, spe
 function approachSpot(w: World, i: number, t: number): [number, number] {
   const b = w.bodies, a = ARCHETYPES[b.arch[i]];
   if (a.attack !== ATTACK.bolt) return [b.x[t], b.y[t]];
+  if (w.battery && driving(w, t)) return batteryStandoff(w, i, t); // past the defence's flamethrower: Place reaches them
   let front = -1, fd = Infinity;
   for (let j = MAX_SEATS; j < b.kind.length; j++) {
     if (b.kind[j] !== KIND.enemy || (b.arch[j] !== ARCH.brute && b.arch[j] !== ARCH.shieldbearer)) continue;

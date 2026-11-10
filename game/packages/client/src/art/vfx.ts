@@ -74,6 +74,8 @@ const DEPTHLESS: ReadonlySet<string> = new Set(['pop', 'banner', 'zap']);
 const SPREADS: ReadonlySet<string> = new Set(['patch', 'nova', 'quake', 'slam', 'blast', 'geyser', 'healburst']);
 /** How far above the ground a beam or spray is drawn, with a little to spare: above this a standing thing is taken to hide it. */
 const CHEST = LIFT + 3;
+/** The colour an enemy hidden behind a wall shows through it in. */
+const GHOST = '#ff6a4a';
 /** How far past the wall's line a defence's jet is still over the wall's top, units: there the wall's pieces don't hide it. */
 const JET_OVER_WALL = 1.5;
 /** A late remote spell (rollback) catches up with where it really is over this much real time, s. */
@@ -99,6 +101,9 @@ export class Vfx {
   private cover: { tex: Texture; x: number; y: number; rows: number }[] = [];
   /** behind()'s scratch: small, and grown when something needs more. */
   private d = X.canvas(360, 360);
+  private gh = X.canvas(96, 96);
+  /** Every enemy's sprite, its spot in the field and its sort key: those a wall stands in front of show through it (ghosts). */
+  ghostSource: ((emit: (tex: Texture, x: number, y: number, z: number) => void) => void) | null = null;
   /** This frame's sprays that struck the face of a wall we can see: drawn last, over the wall. */
   private strikes: Strike[] = [];
   /** Where this frame's beams and sprays struck the far side of something: what's there hides them whole. */
@@ -368,6 +373,7 @@ export class Vfx {
     this.pilots(w, ct, light);
     this.casters(w, ct, bodies, light);
     this.statuses(w, t, bodies, light, ct);
+    this.ghosts();
     this.bars(w, bodies);
     this.gt.source.update(); this.ot.source.update();
   }
@@ -465,6 +471,53 @@ export class Vfx {
   }
 
   /** Point the drawing at the scratch layer, cleared. */
+  /**
+   * An enemy behind a wall shows through it as a flat silhouette, only where a wall piece in front of it covers it,
+   * so what you can see of it is untouched. The battery's wall hides about 4 units of ground behind it, which is
+   * where the enemies attacking a defence stand.
+   */
+  private ghosts(): void {
+    if (!this.ghostSource) return;
+    const o = this.o.x;
+    this.ghostSource((tex, x, y, z) => {
+      const f = tex.frame, img = tex.source?.resource as CanvasImageSource | undefined;
+      if (!f || !img) return;
+      const W = f.width, H = f.height;
+      let any = false;
+      for (const s of this.solids) {
+        const sf = s.tex.frame;
+        if (s.piece && s.z > z && sf && s.x < x + W && s.x + sf.width > x && s.y < y + H && s.y + sf.height > y) { any = true; break; }
+      }
+      if (!any) return;
+      if (this.gh.c.width < W || this.gh.c.height < H) this.gh = X.canvas(Math.max(this.gh.c.width, W), Math.max(this.gh.c.height, H));
+      const g = this.gh.x;
+      g.setTransform(1, 0, 0, 1, -x, -y);
+      g.globalCompositeOperation = 'source-over';
+      g.clearRect(x, y, W, H);
+      // the wall in front of it, as a mask
+      for (const s of this.solids) {
+        const sf = s.tex.frame, si = s.tex.source?.resource as CanvasImageSource | undefined;
+        if (!s.piece || s.z <= z || !sf || !si || s.x >= x + W || s.x + sf.width <= x || s.y >= y + H || s.y + sf.height <= y) continue;
+        g.drawImage(si, sf.x, sf.y, sf.width, sf.height, s.x, s.y, sf.width, sf.height);
+      }
+      // less whatever stands in front of the wall there (a defence tower): the enemy isn't behind the wall in those pixels' view
+      g.globalCompositeOperation = 'destination-out';
+      for (const s of this.solids) {
+        const sf = s.tex.frame, si = s.tex.source?.resource as CanvasImageSource | undefined;
+        if (s.piece || s.z <= z || !sf || !si || s.x >= x + W || s.x + sf.width <= x || s.y >= y + H || s.y + sf.height <= y) continue;
+        g.drawImage(si, sf.x, sf.y, sf.width, sf.height, s.x, s.y, sf.width, sf.height);
+      }
+      g.globalCompositeOperation = 'source-in';
+      g.drawImage(img, f.x, f.y, W, H, x, y, W, H);
+      g.globalCompositeOperation = 'source-atop';
+      g.fillStyle = GHOST; g.fillRect(x, y, W, H);
+      g.globalCompositeOperation = 'source-over'; g._fs = null;
+      o.save(); o.setTransform(1, 0, 0, 1, 0, 0); o.globalAlpha = 0.6;
+      o.drawImage(this.gh.c, 0, 0, W, H, x - this.wx, y - this.wy, W, H);
+      o.restore(); o._fs = null;
+    });
+  }
+
   private scratchStart(): void {
     const b = this.b.x;
     b.setTransform(1, 0, 0, 1, 0, 0); b.clearRect(0, 0, this.b.c.width, this.b.c.height); b.setTransform(1, 0, 0, 1, -this.wx, -this.wy);

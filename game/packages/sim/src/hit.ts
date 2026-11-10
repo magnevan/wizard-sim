@@ -3,6 +3,7 @@
  * (the rules' PAYLOAD table). Friendly fire is on: harm lands on whoever is hit, ally or not
  * (pillar 3). A Life spell only heals, and its other elements only help.
  */
+import { driving } from './battery';
 import { ARMS, COMBAT, DAMAGE, PERKS, STATUS, STRUCT, T } from './config';
 import { EL, N_EL, elementName, formCurve, formOf } from './elements';
 import { ARCHETYPES } from './archetypes';
@@ -50,7 +51,7 @@ export const hitKindNow = (): number => hitKind;
  */
 export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: HitOpts): number {
   const b = w.bodies;
-  if (b.kind[t] === KIND.none) return 0;
+  if (b.kind[t] === KIND.none || driving(w, t)) return 0;
   const ss = o.statusScale ?? 1;
   const tick = w.clock[0];
   const water = c(els, at, EL.water), fire = c(els, at, EL.fire), cold = c(els, at, EL.cold);

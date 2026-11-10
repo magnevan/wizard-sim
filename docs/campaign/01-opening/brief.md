@@ -13,17 +13,12 @@
 7. **Pillars.** Leans on 2 (nobody can tell you what a mix does) and 5. Pillar 6 allows the defence, because its input is your spells.
 8. **Smallest test.** Beats 4 to 7 alone: drive a defence, it runs dry, the same keys work from your hands. Does the moment land?
 
-## Beats
+## Beats 8 to 12, on hold
+
+**Beats 1 to 7 are kept in the [Opening Segment](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) page (`tools/segments/01-opening/segment.js`).** The rows below wait until that part works (the user, 2026-11-10: "There's a lot to build and refine up to the battery"). Written while the vein was thought to have moved; the user's note since is that the battery's well "got destabilized and just needed repairs".
 
 | # | Where | What you do | Teaches | Magic | Pressure | Min | Source |
 |---|---|---|---|---|---|---|---|
-| 1 | Academy hall | The briefing: strange reports, too many jobs, you'll need some fighting training (but don't worry, you won't need it). You can walk around while it runs | The world, the joke to pay off | None | Rest | 1–2 | User |
-| 2 | Drill yard | Basic controls and fighting: the existing hands beats, shortened | Move, Strike, Heavy, Retreat, Defend | None | Low | 3 | User |
-| 3 | Drill yard | The rack hands you a focus already charged from the academy's supply: you conjure a blade from stored Fire. It's the old world's way | Conjure gesture | Stored charge | Low | 1 | Proposal |
-| 4 | A defence near the academy | First job. Take control of the defence, and the camera moves to it. Cast Fire from its position: Force, Area, Place | Casting modes, the rune bar | One element, from the defence's deep pool | Low | 3 | User |
-| 5 | Same | Enemies arrive. The pool refills slower and slower, in plain sight on the bar | The vein has moved | The defence's | Rising | 2 | User; the visible drain is a proposal |
-| 6 | Same | It runs dry. The bar goes dark, the camera returns to you, and you feel the infusion. One Fire pip lights up | **The moment** | Your first rune | Peak | <1 | User |
-| 7 | The gate | Press the same keys and it comes from your hands. One rune and you're empty, so the prompt is to conjure a fire blade and go out and defend yourself | You are the well; why a weapon helps | Fire, conjure-only Sigil | High | 2 | User; order is a test (below) |
 | 8 | Nearby | A shorter second element, with a problem Fire makes worse, then the two together | Elements meet | Fire, Water | Medium | 2 | Proposal |
 | 9 | Same job | The surge: the other core elements arrive at once. The "you can just press anything" moment | Width | Core set at pool 1 | Peak | 1 | Proposal |
 | 10 | Aftermath | Quiet. Try things. Meditate for the first time | Your practice space | Core set | Rest | 3 | Proposal |

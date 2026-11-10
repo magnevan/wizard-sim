@@ -6,6 +6,7 @@
  * name while you cast it. Drawn in art pixels into a small canvas, so it is crisp at the
  * integer scale like everything else.
  */
+import { pedestalNear } from '@wizard-sim/sim';
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
 import { ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, regenOf, regenRate, runeMax, specOf, type World } from '@wizard-sim/sim';
@@ -227,10 +228,16 @@ export class Hud {
     }
     const bar = unlocked > 0 || (!!w.tut && w.tut.state[TUT_STATE.beat] >= TUT_RUNES_FROM);
     // the backing plate follows the stagger: the top row is narrower than the bottom
+    const driven = !!w.battery && w.battery.drive[i] >= 0; // the bar is the defence's, and looks it (r2-beat-6 on the Opening Segment page)
     if (bar) {
+      const plate = driven ? '#7a3a12' : '#141220';
       X.rect(c, x0 - 1, y0 - 1, TOP.length * SLOT + 8, RH + 5, '#0a0810'); X.rect(c, x0 - 1, y0 + RH + 2, PW + 2, RH + 6, '#0a0810');
-      X.rect(c, x0, y0, TOP.length * SLOT + 6, RH + 5, '#141220'); X.rect(c, x0, y0 + RH + 3, PW, RH + 4, '#141220');
-      X.rect(c, x0, y0, TOP.length * SLOT + 6, 1, '#3a3450');
+      X.rect(c, x0, y0, TOP.length * SLOT + 6, RH + 5, plate); X.rect(c, x0, y0 + RH + 3, PW, RH + 4, plate);
+      X.rect(c, x0, y0, TOP.length * SLOT + 6, 1, driven ? '#ff9a30' : '#3a3450');
+    }
+    if (w.battery) {
+      const prompt = driven ? 'X: STEP AWAY' : pedestalNear(w, i) >= 0 ? 'X: TAKE CONTROL' : '';
+      if (prompt) X.text(c, prompt, Math.round(CW / 2 - prompt.length * 2), Math.max(0, y0 - 9), driven ? '#ffb060' : '#ffd860', '#0a0810');
     }
     // the player's colour tab
     const team = X.TEAMS[i % 4];

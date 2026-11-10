@@ -48,6 +48,11 @@ Proposed by the user and not yet settled. Critique and options are in `../explor
 - The hook: the wizard or group gets sent out to fix a reported issue.
 - An early crash course in fighting, because the world is more dangerous and/or the academy can't afford escorts. Room for humour.
 - **The opening, as an outline to try** (`01-opening/brief.md`): a briefing on the strange reports and the overload of jobs ("you won't need it", wink); a basic control and fighting tutorial; a first job at a misbehaving defence near the academy, which you control to cast one element (probably Fire) from its position, until it runs dry, you feel an infusion, and you get the rune and maybe a prompt to conjure a fire blade. Testing the first-cast moment is agreed as "maybe yes, we can try it out".
+- The first job's well "got destabilized and just needed repairs", rather than the vein having moved: "not important for gameplay, but gives us a bit of a worldbuilding opportunity" (the user, Opening Segment page, 2026-11-09).
+
+- The school hires soldiers to escort wizards at times, and you don't get any because of budget cuts. Not everyone at the school is a wizard. (The user, Opening Segment page, 2026-11-10.)
+- Wells have no single design, only things in common, and differ in size by orders of magnitude. (The user, same page.)
+- A well is not a literal well. The user's concept images (`docs/reference/well concept art.png` in the main checkout) show structures of stone and brass holding up a column of light: rings around a crystal, an armillary on a plinth, a monolith with a ring cut in it. A well's colour depends on the magic it extracts. (The user, 2026-11-10.)
 
 ## Open tensions
 

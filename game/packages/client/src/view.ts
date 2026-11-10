@@ -14,6 +14,7 @@
  * reached the presented frame (tested on SwiftShader and D3D11). Nothing here rotates or
  * scales a sprite, so it isn't needed: rotation lives inside the Canvas2D effect drawing.
  */
+import { toU, toV } from './iso-world';
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
   AI, ARCH, ARCHETYPES, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
@@ -301,6 +302,7 @@ export class WorldView {
     this.vfx.ground.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy); this.vfx.over.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy);
     this.structs.scorch.sprite.position.set(fx0, fy0);
     this.props.place(fx0, fy0);
+    this.props.turnHeads(w, fx0, fy0);
     this.drawArtLabel(w);
     // the wave banner: over the arena's north edge, or near the top of the view when that is off screen
     this.vfx.bannerX = Math.round(cam.w / 2 - fx0);
@@ -311,7 +313,8 @@ export class WorldView {
       const spr = this.sprites[i], v = this.views[i];
       if (!b.kind[i]) { spr.visible = false; v.on = false; continue; }
       this.smoothX[i] *= 0.82; this.smoothY[i] *= 0.82; // the eased rollback correction fades each frame
-      const x = this.prevBX[i] + (b.x[i] - this.prevBX[i]) * alpha + this.smoothX[i], y = this.prevBY[i] + (b.y[i] - this.prevBY[i]) * alpha + this.smoothY[i];
+      const home = i < MAX_SEATS && w.battery && w.battery.drive[i] >= 0; // driving a defence: your wizard stands where it stepped up
+      const x = home ? toU(w.battery!.homeX[i], w.battery!.homeY[i]) : this.prevBX[i] + (b.x[i] - this.prevBX[i]) * alpha + this.smoothX[i], y = home ? toV(w.battery!.homeX[i], w.battery!.homeY[i]) : this.prevBY[i] + (b.y[i] - this.prevBY[i]) * alpha + this.smoothY[i];
       const fx = Math.round(gx(x)), fy = Math.round(gy(y));
       const s = this.rigState(w, i, t, ct);
       // past the paint budget a body keeps its last frame; one that has none yet is painted anyway
@@ -378,9 +381,9 @@ export class WorldView {
     this.sound?.frame(w, { cx: cam.cx, cy: cam.cy, halfW: cam.w / 2 / PPU, earX: b.x[me], earY: b.y[me] }, ct);
   }
 
-  /** Which art is on show, top right: in a room with props, or wherever the detailed wizard is on. */
+  /** Which art is on show, top right: in the Academy, or wherever the detailed wizard is on. */
   private drawArtLabel(w: World): void {
-    const inRoom = w.def.props.length > 0, on = inRoom || this.wizardHd;
+    const inRoom = w.def.props.length > 0 && w.def.id === 'academy', on = inRoom || this.wizardHd; // the label is for judging art in the Academy
     this.artLabel.visible = on;
     if (!on) return;
     const lines = [...(inRoom ? [`PROPS: ${PROP_LABEL[this.props.set]} (O)`] : []), `WIZARD: ${this.wizardHd ? 'DETAILED' : 'TODAY'}${inRoom ? ' (I)' : ''}`];

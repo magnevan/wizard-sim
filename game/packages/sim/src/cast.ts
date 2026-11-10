@@ -25,6 +25,7 @@ import { AIM_UNIT, BTN, type PlayerInput } from './input';
 import { TAP, channelsSpecial, heavy, heavyCharge, holdTick, retreat, special, specialTick, strike, strikeRecovery } from './hands';
 import { atan2Turns } from './trig';
 import { chooseElement, echoChannel, echoLater } from './survive';
+import { clampDriveAim, driveButtons, driving } from './battery';
 import { CAST_ID, KIND, PHASE, QUEUE_MAX, regenRate, type World } from './world';
 
 const CASTS: Cast[] = ['force', 'force', 'area', 'place', 'self', 'conjure']; // index = CAST_ID
@@ -158,11 +159,12 @@ export const canAct = (w: World, i: number): boolean => !w.bodies.stun[i] && !w.
 /** One tick of seat i: runes, queue, buttons, the cast phases. Movement happens in step.ts. */
 export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   const s = w.seats, b = w.bodies;
-  const held = inp.buttons, released = s.prevButtons[i] & ~held;
+  const held = driving(w, i) ? driveButtons(w, i, inp.buttons) : inp.buttons, released = s.prevButtons[i] & ~held;
   let pressed = held & ~s.prevButtons[i];
   s.prevButtons[i] = held;
   s.aimX[i] = inp.aimX * AIM_UNIT;
   s.aimY[i] = inp.aimY * AIM_UNIT;
+  if (driving(w, i)) clampDriveAim(w, i);
   if (s.aimX[i] !== 0 || s.aimY[i] !== 0) b.face[i] = aimFace(w, i);
 
   // Regen: one shared budget R among the pools that aren't full (world.ts regenRate). Attune multiplies R.

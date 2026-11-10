@@ -37,6 +37,9 @@ import type { BodyView, LightFn } from './art/vfx';
 import { glyph, perkOf } from './art/perks';
 import { drawTutorialWorld } from './tutorial-view';
 import { kitOf, kitRun, stampTexture, wallsAllFar } from './art/wall-kit';
+
+/** A wall of fire that belongs to the place (the battery's gate) stands this much taller than a cast one. */
+const GATE_FIRE = 2.2;
 import { toX, toY } from './iso-world';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
 
@@ -760,7 +763,7 @@ export class StructureView {
     const wl = w.walls, coat = wallLead(wl.els, k) || ELID.arcane, el = elName(coat), R = ramp(coat), sd = k * 13;
     const pulse = 1 - clamp(((w.clock[0] - wl.born[k]) % 30) / 8, 0, 1);
     const x0 = Math.min(a[0], bb[0]), x1 = Math.max(a[0], bb[0]), y0 = Math.min(a[1], bb[1]), y1 = Math.max(a[1], bb[1]);
-    const h = (el === 'fire' ? 15 : 14) * rise, head = 18;
+    const h = (el === 'fire' ? 15 : 14) * (wl.owner[k] === TERRAIN ? GATE_FIRE : 1) * rise, head = 18;
     const c = this.pieces.canvas(x0 - 6, y0 - h - head, x1 - x0 + 13, y1 - y0 + h + head + 6, mid[1]);
     const P = S.sample([a, bb], 4);
     if (el === 'fire') {
@@ -785,7 +788,8 @@ export class StructureView {
         if (hh > 9 && wv > 0.97) X.px(c, xx + Math.round(sw * hh * 0.14), yy - hh, FR[0]);
       }
       for (const p of emit(t, 4 * P.length, 1, (i, age) => { const q = P[mod(i, P.length)]; return { x: q[0] + Math.sin(age * 5 + i) * 2, y: q[1] - h * 0.6 - age * 14, age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? EL.fire[1] : EL.fire[3]);
-      light(mid[0], mid[1], 40, '#ff7020', 0.6 * rise);
+      if (wl.owner[k] === TERRAIN) light(mid[0], mid[1] - 16, 36, '#ff7020', 0.6 * rise); // set back, or its glow reaches the gate's anchor and washes out the whole sprite
+      else light(mid[0], mid[1], 40, '#ff7020', 0.6 * rise);
       return;
     }
     if (el === 'life') {

@@ -42,10 +42,12 @@ try {
   const [, wy] = await where();
   if (Math.abs(wy - 35) < 0.4) fail(`a wizard stood ${Math.abs(wy - 35)} u from the wall line`);
   await put(42, 35);
-  await sleep(400);
+  await sleep(1200);
+  const burn = await p.evaluate(() => window.wizardSim.world.bodies.burn[0]);
+  if (!(burn > 0)) fail('the gate\'s wall of fire should burn a wizard standing in it');
   const [gx, gy] = await where();
   if (Math.hypot(gx - 42, gy - 35) > 0.3) fail(`the gate should be open, the wizard was moved to ${gx}, ${gy}`);
-  console.log('wall', wy, 'gate', gx, gy);
+  console.log('wall', wy, 'gate', gx, gy, 'burn', burn);
 } finally {
   await browser.close();
   stop();

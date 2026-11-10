@@ -1133,3 +1133,5 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **All four towers don't need to fit one screen** (the user), so the spacing stays.
 - **The gatehouse gets thickness** (the user: it looked flat). Its front is extruded back through the wall by hand, with lit tops and shaded brick sides, still with no generations spent.
 - **The gate is built from the wall's own kit** (the user: its colour and brickwork didn't match, and the doors looked flat). It replaces the re-angled gatehouse. Two block pylons and a stone span, with no doors for now. An arched version is written up on the page, optional. Cobble is now sampled along the ground's angle, as it looked top-down.
+- **The gate is a wall of fire** (the user: Shield + Fire + Fire, "it fits with the theme"). It's the game's own curtain, owned by the place, so it never drains anyone. That it goes out when the well runs dry is a proposal on the page.
+- **The kit-built gate is a stand-in.** The user found its square shapes clunky. A set of outdoor fortifications is written up on the page, not bought.

@@ -7,6 +7,7 @@
  * always runs in slot order, so every peer visits entities in the same order.
  */
 import { ARENA, BODY, CELL, PERKS, RUNES } from './config';
+import { WALL } from './compile';
 import { EL, N_EL, elementName } from './elements';
 import { createRng, type RngState } from './rng';
 import { roomHash, type RoomDef, type Seg } from './room';
@@ -570,7 +571,22 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
   const arena = opts.room === 'arena' || opts.room === 'survive';
   if (arena) { w.enc.state[0] = PHASE_ENC.lull; w.enc.state[1] = 1; w.enc.state[2] = 0; }
   else if (opts.dummies !== false && !w.tut) for (const [x, y] of def.dummies) spawnBody(w, -1, KIND.dummy, TEAM.enemies, x, y, BODY.dummyHp, BODY.dummyRadius);
+  if (opts.room === 'battery') raiseGateFire(w);
   return w;
+}
+
+/**
+ * The battery's gate is closed by a standing wall of fire: Shield + Fire + Fire, the same curtain a wizard casts, so it
+ * burns whoever crosses it and stops nothing. It belongs to the place, so it never drains anyone or breaks. The span is
+ * the gate's opening (tools/segments/01-opening/battery-level.py: GATE and WALL_Y).
+ */
+function raiseGateFire(w: World): void {
+  const wl = w.walls, k = 0;
+  wl.type[k] = WALL.curtain; wl.owner[k] = TERRAIN;
+  wl.x1[k] = -3; wl.y1[k] = -1; wl.x2[k] = 3; wl.y2[k] = -1;
+  wl.hp[k] = wl.maxHp[k] = 100;
+  wl.els[k * N_EL + EL.shield - 1] = 1;
+  wl.els[k * N_EL + EL.fire - 1] = 2;
 }
 
 /** A player takes seat `i`: its wizard appears at the seat's start spot with full rune pools. */

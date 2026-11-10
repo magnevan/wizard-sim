@@ -862,7 +862,13 @@ export class Vfx {
           glowAlong(light, tip[0], v.y, ex, ey, 40, '#ffe68a', 0.4);
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
-          K.cone(o, tip, z, t, kind, t0, { spread: 0.28, seed: sd });
+          const fromHead = !!w.battery && w.battery.drive[i] >= 0;
+          if (fromHead) {
+            // a defence's flame is a jet from a fixed nozzle: three cones side by side, so it holds its body over the longer reach
+            const L = Math.hypot(z[0] - tip[0], z[1] - tip[1]) || 1, nx = -(z[1] - tip[1]) / L, ny = (z[0] - tip[0]) / L;
+            for (const j of [-1, 1]) K.cone(o, [tip[0] + nx * j * 2, tip[1] + ny * j], [z[0] + nx * j * 13, z[1] + ny * j * 6], t, kind, t0, { spread: 0.3, power: 1.5, seed: sd + 17 * j });
+            K.cone(o, tip, z, t, kind, t0, { spread: 0.34, power: 2.2, seed: sd });
+          } else K.cone(o, tip, z, t, kind, t0, { spread: 0.28, seed: sd });
           glowAlong(light, lerp(tip[0], ex, 0.25), lerp(v.y, ey, 0.25), ex, ey, 40, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', (kind === 'fire' ? 0.6 : 0.4) * flick(t, sd));
           if (kind === 'cold') for (let q = 0; q < 40; q++) { const a = rand(q, 61, sd) * TAU, r = Math.pow(rand(q, 62, sd), 0.7) * 18 * seg(t, t0 + 0.3, t0 + 1.3); X.px(g, ex + Math.cos(a) * r, ey + Math.sin(a) * r * FY * 0.7, q % 4 === 0 ? '#ffffff' : q % 2 ? '#bfe8f6' : '#8ccce4'); }
         }

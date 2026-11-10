@@ -1199,3 +1199,4 @@ From the user's play-test: Cold and a Water spray wouldn't freeze a Brute, but a
 - **Each element gets its own shape** (Claude's call): Fire a leaning wave with its body burning behind it, tearing apart in patches. Water a rolling swell with spray. Cold a serrated ice front over spreading frost, shattering where it stops. Life a see-through veil of upright threads with rising motes. Arcane a hard, fast hoop with knots running round it.
 - **Earth's quake and Lightning's discharge are unchanged:** they never used the ring of dots.
 - Only the drawing changed: radius, damage and timing of the casts are as they were.
+- **Playtest of driving, first pass** (the user's notes, `explorations/2026-11-10-battery-playtest-todo.md`): the swing is 80 degrees each way, reach depends on screen direction, the view leans out over the field, placed spells have their own range, and a device has its own bar.

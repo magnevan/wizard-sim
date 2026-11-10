@@ -1,6 +1,7 @@
 // The battery's gate: a standing wall of fire you can walk through, and it burns you.
 import { describe, expect, it } from 'vitest';
 import { BATTERY, BTN, EL, N_EL, NO_INPUT, WALL, createWorld, joinSeat, runeMax, step } from '../src';
+import { driveTarget, sprayReach } from '../src/battery';
 
 const NO_INPUTS = [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT];
 
@@ -66,12 +67,32 @@ describe('driving a defence', () => {
     expect(w.bodies.y[0]).toBeCloseTo(hy, 0);
   });
 
-  it('keeps the aim within 45 degrees of straight out', () => {
+  it('turns the head no further than the swing, and never back over the wall', () => {
     const { w } = atPedestal();
     take(w);
-    step(w, [{ ...NO_INPUT, aimX: 320, aimY: 320 }, NO_INPUT, NO_INPUT, NO_INPUT]); // down and to the east: behind the wall
-    expect(w.seats.aimY[0]).toBeLessThan(0);
-    expect(Math.abs(Math.atan2(w.seats.aimX[0], -w.seats.aimY[0])) / (2 * Math.PI)).toBeCloseTo(BATTERY.swing, 3);
+    for (const aimX of [320, -320]) {
+      step(w, [{ ...NO_INPUT, aimX, aimY: 320 }, NO_INPUT, NO_INPUT, NO_INPUT]); // down the map: behind the wall
+      const off = w.bodies.face[0] - 0.75;
+      expect(Math.abs(off)).toBeCloseTo(BATTERY.swing, 3);
+      expect(Math.sign(off)).toBe(Math.sign(aimX));
+    }
+  });
+
+  it('reaches further where the screen squashes the distance, up to a limit', () => {
+    const right = sprayReach(Math.SQRT1_2, -Math.SQRT1_2), out = sprayReach(0, -1), up = sprayReach(-Math.SQRT1_2, -Math.SQRT1_2);
+    expect(right).toBeCloseTo(BATTERY.sprayRange, 3);
+    expect(out).toBeGreaterThan(right);
+    expect(up).toBeGreaterThan(out);
+    expect(up).toBeLessThanOrEqual(BATTERY.sprayMax);
+  });
+
+  it('places a spell well beyond the head\'s reach, but not behind the wall', () => {
+    const { w } = atPedestal();
+    take(w);
+    step(w, [{ ...NO_INPUT, aimX: 0, aimY: -32 * 14 }, NO_INPUT, NO_INPUT, NO_INPUT]);
+    expect(driveTarget(w, 0)[1]).toBeCloseTo(w.bodies.y[0] - 14, 3);
+    step(w, [{ ...NO_INPUT, aimX: 320, aimY: 32 * 6 }, NO_INPUT, NO_INPUT, NO_INPUT]);
+    expect(driveTarget(w, 0)[1]).toBeLessThan(BATTERY.wallY);
   });
 
   it('two players can\'t share a defence', () => {

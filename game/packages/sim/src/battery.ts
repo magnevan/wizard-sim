@@ -10,7 +10,7 @@ import { len } from './geom';
 import { BTN, type PlayerInput } from './input';
 import { RUNES } from './config';
 import { EL, N_EL } from './elements';
-import { atan2Turns, cosTurns, sinTurns } from './trig';
+import { atan2Turns } from './trig';
 import { MAX_SEATS, PHASE, alive, type World } from './world';
 
 export const BATTERY = {
@@ -20,14 +20,22 @@ export const BATTERY = {
   wallY: -1,
   /** How far outside the wall's line the muzzle is: a body's radius and the wall's half-thickness, and a little. */
   muzzleGap: 0.9,
-  /** The flamethrower's reach from there, against a wizard's 4.5. */
+  /** The flamethrower's reach from there where a unit is widest on screen, against a wizard's 4.5. */
   sprayRange: 7.5,
+  /** Its reach where the screen squashes it most. */
+  sprayMax: 12,
+  /** A placed spell's reach, from the same point. */
+  placeRange: 18,
+  /** How far outside the wall's line a placed spell has to land. */
+  placeClear: 1,
   /** A defence's ring: a half-ring on the enemy's side. The wall hides about 4 units of ground behind it, so it has to reach past that. */
   ringRadius: 7,
-  /** The head swings this far either way of straight out, in turns: 45 degrees. */
-  swing: 0.125,
+  /** The head swings this far either way of straight out, in turns: 80 degrees, nearly along the wall. */
+  swing: 0.222,
 } as const;
 
+/** Straight out from the wall, north, as a facing in turns. */
+const STRAIGHT_OUT = 0.75;
 const TOWER = 'defence-tower', PEDESTAL = 'control-pedestal';
 const at = (w: World, asset: string) => w.def.props.filter((p) => p.asset === asset);
 
@@ -86,13 +94,27 @@ export function driveButtons(w: World, i: number, buttons: number): number {
   return s.queueLen[i] > 0 || s.phase[i] !== PHASE.idle ? buttons & (BTN.force | BTN.area | BTN.clear | BTN.use) : buttons & (BTN.clear | BTN.use);
 }
 
-/** The head turns on its collar and no further: the aim is kept within the swing either side of straight out from the wall. */
-export function clampDriveAim(w: World, i: number): void {
-  const s = w.seats, d = len(s.aimX[i], s.aimY[i]);
-  if (d < 1e-6) { s.aimX[i] = 0; s.aimY[i] = -1; return; }
+/** The way the head points, in turns: at the aim, and no further round than the swing either side of straight out from the wall. */
+export function driveFace(w: World, i: number): number {
+  const s = w.seats;
+  if (len(s.aimX[i], s.aimY[i]) < 1e-6) return STRAIGHT_OUT;
   let a = atan2Turns(s.aimX[i], -s.aimY[i]); // 0 is straight out, north; positive turns east
   if (a > 0.5) a -= 1;
-  if (Math.abs(a) <= BATTERY.swing) return;
-  const c = a < 0 ? -BATTERY.swing : BATTERY.swing;
-  s.aimX[i] = sinTurns(c) * d; s.aimY[i] = -cosTurns(c) * d;
+  return STRAIGHT_OUT + Math.max(-BATTERY.swing, Math.min(BATTERY.swing, a));
+}
+
+/**
+ * How far a defence's flamethrower reaches along (dx, dy). The camera squashes the ground 2:1 and is turned 45 degrees, so a
+ * unit up the screen is half the pixels of one across it. Reach is set by how long the flame looks, up to a limit.
+ */
+export function sprayReach(dx: number, dy: number): number {
+  const across = dx - dy, along = dx + dy;
+  const onScreen = Math.sqrt(0.5 * across * across + 0.125 * along * along);
+  return Math.min(BATTERY.sprayMax, BATTERY.sprayRange / Math.max(0.1, onScreen));
+}
+
+/** Where a defence's placed spell lands: the aim point on the enemy's side of the wall, within its own range. */
+export function driveTarget(w: World, i: number): [number, number] {
+  const s = w.seats, b = w.bodies, d = len(s.aimX[i], s.aimY[i]), k = d > BATTERY.placeRange ? BATTERY.placeRange / d : 1;
+  return [b.x[i] + s.aimX[i] * k, Math.min(BATTERY.wallY - BATTERY.placeClear, b.y[i] + s.aimY[i] * k)];
 }

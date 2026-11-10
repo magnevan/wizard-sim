@@ -14,7 +14,7 @@ stages:[
 ],
 needsYou:[
 ],
-onMe:[`Your playtest notes on driving: aim to the left, range, flame, camera, patch range and a turret bar. The list is in docs/explorations/2026-11-10-battery-playtest-todo.md.`,`Then waves and lanes at the battery, the failing pool, the infusion and the repair.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
+onMe:[`Then waves and lanes at the battery, the failing pool, the infusion and the repair.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
 chapters:[
 {id:'hall',name:'Lecture hall and cloister',
  map:{W:50,H:34,base:'void',what:`You can walk about during the briefing, then leave along the cloister past the postings.`,
@@ -81,7 +81,7 @@ chapters:[
  [`Stone paving follows the ground's angle,`,` so the cobbles at the gate, the road and the well no longer look top-down.`],
  [`One lane per player.`,` Each wave sends the same number of enemies at each occupied defence, and they go for their own lane's defence first. Neighbouring reach overlaps so players can help. Solo is one lane at the centre.`],
  [`A defence's spells are built for the wall.`,` A longer flamethrower, since the tower stands behind the wall. Burst and wave casts land outside the wall, and a full circle doesn't make sense here, so the area cast covers only the enemy side.`],
- [`Driving is built.`,` X at a pedestal takes the defence and X steps away. Flamethrower reach 7.5, against a wizard's 4.5. The ring is a half-ring reaching 7. The head turns on three facings within 45 degrees of straight out. These numbers are first guesses.`],
+ [`Driving is built.`,` X at a pedestal takes the defence and X steps away. Flamethrower reach 7.5 to 12, longer where the screen squashes distance, against a wizard's 4.5. The ring is a half-ring reaching 7. Placed spells reach 18. The head swings 80 degrees each way. These numbers are first guesses.`],
  [`Each wave is built for one Fire attack.`,` Archers beyond spray reach call for Place, a swarm of small enemies for the burst, something heavy at the wall for the flamethrower. Wave sizes wait for the flamethrower and burst balance.`],
  [`The transition.`,` The last pip gutters and the nozzle coughs. The bar goes dark. The camera slides back to your body and everything goes quiet for a beat. A surge comes up from the ground, the screen brightens from your wizard outward, and one Fire pip lights. Then a single line, something like "You've learned to channel fire".`],
  [`The repair.`,` You take part, or do it yourselves, with a simple "press X to stabilize". The screen fades to black and back, and the well has changed: Unstable, then Drained, then Stable.`],

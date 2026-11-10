@@ -30,25 +30,22 @@ The battery exists only on the branch `worktree-opening-segments`, so start this
 
 ### Research: smooth turret rotation (#5)
 
-**Question for a research agent:** what's the best way to make a pixel-art turret head rotate without obvious snapping?
+**Researched 2026-11-10 by an agent. The user hasn't chosen yet.**
 
-The user's options: (a) generate more facings, (b) redesign the turret so it's easier to rotate, (c) a 3D-to-pixel-art pipeline. Also consider what shipped isometric and pixel-art games do, and whether a part of the head can rotate in code.
+Recommendation: a low-poly 3D model of the head only, rendered to about 24 facings over the 160-degree swing and locked to our palette, keeping the tower as the existing sprite. If that can't be tuned to sit with the tower in about 2 hours, fall back to a rounder head with a nozzle drawn in code.
 
-What we know:
-- `POST /v2/rotate` costs 1 generation per facing, run on the head alone at 64 px. Two facings came out usable, and the east one needed the old flame cleaned up by hand.
-- Affine rotation of the head in code mangled it.
-- #1 below widens the swing to nearly a half circle, so the facings needed go up. The answer should say how many facings hide the snap at this size (the head is about 50 px across).
-- Report cost, how well frames stay consistent, and how it extends to future turrets.
+- **How many facings:** at 24 over 160 degrees the nozzle moves about 3 px a step, which reads as a fine ratchet. 16 is acceptable if the head eases toward the aim at a capped turn rate and the muzzle flame hides the tip. This is arithmetic, not tested. The swing is mirror-symmetric only if the head is, and ours isn't quite.
+- **Evidence:** Factorio's rotating sprites use 64 directions (its prototype docs), and its community guide makes them in Blender. Classic RTS turrets at 16 to 32 facings is from memory, unverified.
+- **More Rotate facings:** 16 to 24 generations, cheap, but each is a fresh inference, so expect hand clean-up on perhaps a third. It doesn't extend well to other elements.
+- **Code-drawn nozzle on a round head:** cheap and perfectly consistent, but less hand-made.
+- **3D head:** about a day to model and tune, then any facing is free, and a new element is a palette swap. The risk is matching the painted brass.
+- **RotSprite from our 3 facings:** expected to mangle a head this detailed, as the affine rotation did.
 
-## Track B: the battery itself (this thread)
+Cheap first experiment, no paid calls: a rough head of about 100 faces in Blender, 9 facings at 10-degree steps at 64 px, orthographic at the game's angle, flat shading, no anti-aliasing, mapped to the palette with a script. Then sweep the mouse in the game next to the tower. It needs Blender on this machine.
 
-- **#8 Fire nova.** Main's rework (`15c0bae`, "Single-element novas are one surface going outward") landed after this branch's last merge, so the playtest showed the old nova. Merge main and look again before judging it. The half-ring clip in `drawFx` may need adjusting.
-- **#1 Can't aim left.** *Confirmed cause:* the clamp is 45 degrees either side of straight out on the plan, as first specified. On the 2:1 isometric screen that range runs from straight up to straight right, so "straight out" looks like one end of the swing and everything to the turret's upper left is out of reach. Widen it toward both tangents of the wall, about 80 degrees each way. It also needs art for those facings, which depends on #5.
-- **#2 Straight out looks tiny, to the right looks right.** *Confirmed cause:* foreshortening. A world unit straight up the screen is half the pixels of one to the right, and the wall hides the first 4 units or so. Same range, half the drawing. Fix: tune reach by screen direction, or a longer base range.
-- **#3 The spray is too thin for its range.** Scale the cone for a defence (`K.cone`, spread and power).
-- **#4 The camera should ease north-east while you drive,** so the battlefield fills the view.
-- **#7 The fire patch's range is too restrictive.** *Likely cause:* Place's aim point goes through the same swing clamp as the head. A placed spell should have its own range and shouldn't be limited to the head's wedge.
-- **#9 A dedicated turret bar.** Roughly the same size as the rune bar, but given over to one element, with more room for its runes and regen. Build it so other turrets can use it.
+## Track B: the battery itself (done 2026-11-10, first pass)
+
+Merged main for the new nova (#8). The swing is 80 degrees each way, on the plan (#1), though the art still has only 3 facings, so past about 22 degrees the head holds its last one until #5 is decided. Flamethrower reach is 7.5 where the screen is widest and up to 12 where it squashes most (#2). The flame is three cones with more particles (#3). The view leans 4.5 units out over the field and eases there (#4). Place has its own 18 range, limited only to the enemy's side of the wall (#7). A dedicated bar, one config entry per future device (#9). All numbers are first guesses for the user to judge.
 
 After these: waves and lanes, the failing pool, the infusion and the repair (`docs/decisions/README.md`, 2026-11-10; the Opening Segment page).
 

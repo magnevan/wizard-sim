@@ -25,6 +25,7 @@ import { AIM_UNIT, BTN, type PlayerInput } from './input';
 import { TAP, channelsSpecial, heavy, heavyCharge, holdTick, retreat, special, specialTick, strike, strikeRecovery } from './hands';
 import { atan2Turns } from './trig';
 import { chooseElement, echoChannel, echoLater } from './survive';
+import { driveButtons, driveFace, driveTarget, driving } from './battery';
 import { CAST_ID, KIND, PHASE, QUEUE_MAX, regenRate, type World } from './world';
 
 const CASTS: Cast[] = ['force', 'force', 'area', 'place', 'self', 'conjure']; // index = CAST_ID
@@ -94,13 +95,14 @@ export function specOf(w: World, i: number): SpellSpec {
   return compile(queueOf(w, i, true), CASTS[w.seats.castId[i]], { drag: w.seats.dragged[i] === 1 });
 }
 
-const aimFace = (w: World, i: number) => atan2Turns(w.seats.aimY[i], w.seats.aimX[i]);
+const aimFace = (w: World, i: number) => (driving(w, i) ? driveFace(w, i) : atan2Turns(w.seats.aimY[i], w.seats.aimX[i]));
 
 /** Would Force make a turret? Those are placed: held to aim, they go at the cursor on release. */
 const forcePlaces = (w: World, i: number) => w.seats.queueLen[i] > 0 && compile(queueOf(w, i), 'force').shape === 'turret';
 
 /** The target point for Place (and Blink): the aim point, at most `range` away. */
 function target(w: World, i: number, range = SHAPES.placeRange): [number, number] {
+  if (driving(w, i)) return driveTarget(w, i);
   const s = w.seats, b = w.bodies, d = len(s.aimX[i], s.aimY[i]);
   const k = d > range ? range / d : 1;
   return [b.x[i] + s.aimX[i] * k, b.y[i] + s.aimY[i] * k];
@@ -158,7 +160,7 @@ export const canAct = (w: World, i: number): boolean => !w.bodies.stun[i] && !w.
 /** One tick of seat i: runes, queue, buttons, the cast phases. Movement happens in step.ts. */
 export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   const s = w.seats, b = w.bodies;
-  const held = inp.buttons, released = s.prevButtons[i] & ~held;
+  const held = driving(w, i) ? driveButtons(w, i, inp.buttons) : inp.buttons, released = s.prevButtons[i] & ~held;
   let pressed = held & ~s.prevButtons[i];
   s.prevButtons[i] = held;
   s.aimX[i] = inp.aimX * AIM_UNIT;

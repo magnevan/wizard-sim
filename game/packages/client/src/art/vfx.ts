@@ -18,6 +18,7 @@ import {
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
+import { headTip } from './props';
 import * as A from './accent';
 import { depthOf, rowsHidden } from './depth';
 import * as K from './kit';
@@ -52,6 +53,8 @@ interface Fx {
   x: number; y: number; x2: number; y2: number;
   look: number; who: number; r: number; n: number;
   text?: string; els?: number[];
+  /** A defence's ring: only the half on the enemy's side of the wall is drawn. */
+  half?: boolean;
 }
 
 const elName = (id: number): string => (id >= 1 && id <= N_EL ? elementName(id) : 'arcane');
@@ -316,7 +319,7 @@ export class Vfx {
         const shape = spec()?.shape ?? 'nova';
         if (shape === 'swing' || shape === 'palm') this.add(shape, t, shape === 'palm' ? 0.9 : 0.4, { who, x: e.x, y: e.y, r, look, seed, x2: w.bodies.x[who], y2: w.bodies.y[who] });
         else if (shape === 'patch') { if (!spec()?.scald && !this.rainAt(w, e.x, e.y)) this.add('patch', t, 1.0, { x: e.x, y: e.y, r, look, seed }); } // rain draws as its zone, for its whole life
-        else this.add(shape === 'quake' ? 'quake' : 'nova', t, look === 8 ? 1.8 : 1.3, { who, x: e.x, y: e.y, r, look, seed }); // the fire ring's scorch and smoke outlast the blast
+        else this.add(shape === 'quake' ? 'quake' : 'nova', t, look === 8 ? 1.8 : 1.3, { who, x: e.x, y: e.y, r, look, seed, half: !!w.battery && who >= 0 && who < MAX_SEATS && w.battery.drive[who] >= 0 }); // the fire ring's scorch and smoke outlast the blast
         return;
       }
       case 'blink': this.add('blink', t, 0.4, { who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, seed }); return;
@@ -377,7 +380,9 @@ export class Vfx {
       const ex = gx(s.chanEndX[i]), ey = gy(s.chanEndY[i]);
       x0 = Math.min(x0, v.x, ex); x1 = Math.max(x1, v.x, ex); y0 = Math.min(y0, v.y, ey); y1 = Math.max(y1, v.y, ey);
     }
-    if (x1 < x0 || !this.occluders) { this.channels(w, t, bodies, light); this.drawStrikes(t, light); return; }
+    // a defence's fire comes from the head, above everything near it, so nothing standing hides it
+    const driven = !!w.battery && w.battery.drive.some((k) => k >= 0);
+    if (x1 < x0 || !this.occluders || driven) { this.channels(w, t, bodies, light); this.drawStrikes(t, light); return; }
     let lowest = -Infinity;
     for (let i = 0; i < MAX_SEATS; i++) if (s.active[i] && s.phase[i] === PHASE.channel && bodies[i]?.on) lowest = Math.max(lowest, bodies[i].y);
     const b = this.b.x, M = 44;
@@ -816,7 +821,7 @@ export class Vfx {
       if (!s.active[i]) continue;
       const ph = s.phase[i], v = bodies[i];
       if (!v?.on || !v.a) continue;
-      const tip: Pt = [v.x + v.a.tip[0], v.y + v.a.tip[1]];
+      const tip: Pt = headTip(w, i) ?? [v.x + v.a.tip[0], v.y + v.a.tip[1]];
       // a late remote channel (rollback) plays its opening at speed: its drawn age runs from 0 up to the true one
       const age = (s.chanTicks[i] / 60) * this.catchK(this.chCatch, i, t);
       if (ph === PHASE.charge) {
@@ -857,7 +862,13 @@ export class Vfx {
           glowAlong(light, tip[0], v.y, ex, ey, 40, '#ffe68a', 0.4);
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
-          K.cone(o, tip, z, t, kind, t0, { spread: 0.28, seed: sd });
+          const fromHead = !!w.battery && w.battery.drive[i] >= 0;
+          if (fromHead) {
+            // a defence's flame is a jet from a fixed nozzle: three cones side by side, so it holds its body over the longer reach
+            const L = Math.hypot(z[0] - tip[0], z[1] - tip[1]) || 1, nx = -(z[1] - tip[1]) / L, ny = (z[0] - tip[0]) / L;
+            for (const j of [-1, 1]) K.cone(o, [tip[0] + nx * j * 2, tip[1] + ny * j], [z[0] + nx * j * 13, z[1] + ny * j * 6], t, kind, t0, { spread: 0.3, power: 1.5, seed: sd + 17 * j });
+            K.cone(o, tip, z, t, kind, t0, { spread: 0.34, power: 2.2, seed: sd });
+          } else K.cone(o, tip, z, t, kind, t0, { spread: 0.28, seed: sd });
           glowAlong(light, lerp(tip[0], ex, 0.25), lerp(v.y, ey, 0.25), ex, ey, 40, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', (kind === 'fire' ? 0.6 : 0.4) * flick(t, sd));
           if (kind === 'cold') for (let q = 0; q < 40; q++) { const a = rand(q, 61, sd) * TAU, r = Math.pow(rand(q, 62, sd), 0.7) * 18 * seg(t, t0 + 0.3, t0 + 1.3); X.px(g, ex + Math.cos(a) * r, ey + Math.sin(a) * r * FY * 0.7, q % 4 === 0 ? '#ffffff' : q % 2 ? '#bfe8f6' : '#8ccce4'); }
         }
@@ -1060,6 +1071,19 @@ export class Vfx {
 
   // ---- event effects ---------------------------------------------------------------------------
   private drawFx(f: Fx, e: number, t: number, w: World, bodies: BodyView[], light: LightFn): void {
+    if (f.half) {
+      // north on the ground is up and to the right on screen; keep that side of the wall's line through the ring's centre
+      const cx = gx(f.x), cy = gy(f.y), A = 500, B = 700;
+      const cut = (c: Ctx) => { c.save(); c.beginPath(); c.moveTo(cx - A, cy - A / 2); c.lineTo(cx + A, cy + A / 2); c.lineTo(cx + A + B, cy + A / 2 - B / 2); c.lineTo(cx - A + B, cy - A / 2 - B / 2); c.closePath(); c.clip(); };
+      const g = this.g.x, o = this.o.x;
+      cut(g); cut(o);
+      f.half = false;
+      this.drawFx(f, e, t, w, bodies, light);
+      f.half = true;
+      g.restore(); o.restore();
+      g._fs = null; o._fs = null; // restore() put back a fill the colour cache doesn't know about
+      return;
+    }
     const o = this.o.x, g = this.g.x, sd = f.seed, R = ramp(f.look), el = elName(f.look);
     const x = gx(f.x), y = gy(f.y), r = f.r * 16;
     const body = f.who >= 0 && f.who < bodies.length ? bodies[f.who] : null;

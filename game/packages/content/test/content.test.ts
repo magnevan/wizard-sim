@@ -110,10 +110,24 @@ describe('props', () => {
     expect(s.check().some((e) => e.includes('start 0') && e.includes('from the rock wall'))).toBe(true);
   });
 
-  it('a footprint becomes one wall when shallow, two side by side when deep, along its long side', () => {
+  it('a footprint becomes one wall when shallow, two side by side up to 1 deep, along its long side', () => {
     expect(C.footprintWalls(0, 0, [2.4, 0.6])).toEqual([[-0.95, 0, 0.95, 0]]);
     expect(C.footprintWalls(1, 1, [2, 1])).toEqual([[0.25, 0.75, 1.75, 0.75], [0.25, 1.25, 1.75, 1.25]]);
     expect(C.footprintWalls(0, 0, [0.6, 2])).toEqual([[0, -0.75, 0, 0.75]]);
+  });
+
+  it.each([['a box', [5, 3.5], false, 4], ['a round footprint', [5, 5], true, 12]] as const)('%s deeper than that is closed, with no room left inside', (_n, fp, round, sides) => {
+    const walls = C.footprintWalls(0, 0, [...fp], round), ring = walls.slice(0, sides);
+    ring.forEach((s: number[], i: number) => {
+      const next = ring[(i + 1) % sides];
+      expect([s[2], s[3]]).toEqual([next[0], next[1]]);
+    });
+    const dist = (x: number, y: number, [a, b, c, d]: number[]) => {
+      const dx = c - a, dy = d - b, k = Math.max(0, Math.min(1, ((x - a) * dx + (y - b) * dy) / (dx * dx + dy * dy)));
+      return Math.hypot(x - a - k * dx, y - b - k * dy);
+    };
+    // every point inside is closer to a wall than a wizard can stand (0.25 + 0.45)
+    for (let x = -2.2; x <= 2.2; x += 0.1) for (let y = -1.4; y <= 1.4; y += 0.1) expect(Math.min(...walls.map((s: number[]) => dist(x, y, s)))).toBeLessThan(0.7);
   });
 
   it("every asset's meta.json is whole, and a generated image names its raw file", () => {

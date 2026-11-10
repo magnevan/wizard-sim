@@ -1139,8 +1139,67 @@ From the user's play-test: Cold and a Water spray wouldn't freeze a Brute, but a
 - **Healing sprays don't wear walls down** (Claude's call).
 - **Lightning arcs follow the same rule** (Claude's call, not asked for): neither the first strike nor a jump passes a wall, and a crackle into the air stops at one. Otherwise a bolt hidden behind a wall would still hurt what's on the other side.
 
+## 2026-11-09: A continuous world is the goal, and waits (`explorations/2026-11-09-continuous-world-todo.md`)
+- **The world won't stay a set of discrete rooms, and the 40-rock-wall cap has to go.** Not now: "I think we don't need to tackle this problem right now, but we should write down some sort of TODO for it." It gets its own session, away from the thread building the world.
+- **Players stay reasonably close,** and mechanics can help enforce it (the user). Which mechanics is open.
+
+## 2026-11-10: One working document per segment; the opening's first pass stops at the battery
+- **Beats 8 on are on hold** (the user: "There's a lot to build and refine up to the battery").
+- **Each segment gets one working artifact,** in `tools/segments/NN-name/`: `index.html` is the shared layout and `segment.js` the content. One chapter per place, holding its beats, its map and what's unsolved there. The user asked for this; the layout is Claude's. Artifacts stay, because answers sit next to what they ask about and Claude can read them back. The Opening Blueprint became the first one. Its lighting and bought-art sections came off: they had no notes, and art is judged in the scene (the images stay in `tools/segments/01-opening/img/`).
+- **Notes are per round.** Once folded in, a note moves into the page as settled or to solve, and the boxes start empty under the next round's ids. Earlier notes stay in the db.
+- **A defence reaches only a bit further than a person** (Claude's number, about 6 units against 4.5; the user: "not so long as to make it feel like it's not the same spells"). Range comes from Place.
+- **The battery is built first** (the user).
+- **Walks vary and some are long.** The user: "I think you should sometimes walk a bit before something happens, because it makes the world feel more real." This replaces the 5 to 15 second rule.
+- **What you can see depends on direction,** as the user pointed out: least straight down the screen, then straight up, and most into the corners. The old "14 ahead, 8 behind" only held for straight up and down.
+- **The first job's well was destabilized and needs repairs,** in place of the moved vein (the user's suggestion; in `canon.md` under review).
+
+## 2026-11-10: Terrain is read-only room data, with no per-room limit (`explorations/2026-11-09-continuous-world-todo.md`)
+- **Merged 2026-11-10.** The user asked for the wall limit to be fixed now and streaming left for later. Terrain is out of rollback state, on a 2-unit grid, and the checker no longer caps it.
+- **Players always get all 160 cast-wall slots** (a side effect, Claude's call). Before, Survive left them 120 and the Academy 122. Only shows above those counts.
+
+## 2026-11-10: The battery's plan, from the Opening Segment page, round 2
+- **One lane per player, and each wave built for one Fire attack.** Claude's proposals; the user: "agreed".
+- **The transition** is the storyboard on the page, ending in a line like "You've learned to channel fire" (the user's words). The rune's arrival gets a special animation, and is very visible on the bar. The bar looks different while operating a defence.
+- **The charged focus stays** (the user: "Good to learn this before you go out. And you can revisit some stations with the blade").
+- **Whether the blade needs a prompt is a playtest question:** a prompt may be overbearing, and with no hint players may struggle. Subtler hints are an option.
+- **The repair:** you take part, or do it yourselves, with a simple "press X to stabilize". A fade to black and back, and the well has changed. Wells need three looks: Unstable, Drained, Stable.
+- **Wells have no single design,** only things in common. In the world they differ in size by orders of magnitude, and the ones we play around stay roughly similar.
+- **The defence is approved.** The user asked for rotations, so it's bought as candidates, then eight rotations from the best one, then a broken state.
+
+## 2026-11-10: The defence is a flamethrower with a head that turns
+- **It faces north-east and swings about 45 degrees either way,** so it needs three facings, not eight (the user). Only the head turns, on a central collar, and the tower stays one image.
+- **Flamethrower, not cannon** (the user: "flamethrower is more the identity of the base fire spells"). The first four towers and their rotations are kept but unused.
+
+## 2026-11-10: A well holds up a column of light
+- **Not a literal well** (the user, with concept images). The basin proposal is dropped: wells are structures of stone and brass framing a column of light that rises out of the ground.
+- **The battery's well is proposed as an armillary on a plinth, in orange,** and isn't bought yet. Its colour is the user's call, since their images are blue.
+- **A well's colour follows the magic it extracts** (the user), so the battery's is orange. It still needs the Approve mark before it's bought.
+- **The burnt-out defence keeps a rigid barrel** (the user: a physical barrel wouldn't change shape), and the whole structure goes darker with no flames.
+
+## 2026-11-10: The battery is an outdoor area
+- **Not a room** (the user). It has no walls round it. Woods stand on every side and carry on past where you can walk, painted into the ground, since nobody can reach them. The fortified wall runs through the middle, so it stands full height and whatever is north of it draws behind it.
+- **The defences are 11 units apart, not 7.** A tower is 6 units wide on screen, so at 7 they overlapped and one stood in front of the gate. All four still fit one screen.
+- **The well is bought:** candidate 2 of 4 is in place as a stand-in, the rest are kept.
+- **More air** (the user: "very cramped"; tower size is fine). The area is 84 x 72, the defences 13 apart, the rear yard half as deep again. This replaces the 11 above. All four towers no longer fit one 1080p screen, which matters only for four players on one couch, and is open on the page.
+- **The gatehouse is re-angled, not rebought.** Sheared 2:1 to run along the wall, doors swung open, no generations spent.
+- **All four towers don't need to fit one screen** (the user), so the spacing stays.
+- **The gatehouse gets thickness** (the user: it looked flat). Its front is extruded back through the wall by hand, with lit tops and shaded brick sides, still with no generations spent.
+- **The gate is built from the wall's own kit** (the user: its colour and brickwork didn't match, and the doors looked flat). It replaces the re-angled gatehouse. Two block pylons and a stone span, with no doors for now. An arched version is written up on the page, optional. Cobble is now sampled along the ground's angle, as it looked top-down.
+- **The gate is a wall of fire** (the user: Shield + Fire + Fire, "it fits with the theme"). It's the game's own curtain, owned by the place, so it never drains anyone. That it goes out when the well runs dry is a proposal on the page.
+- **The kit-built gate is a stand-in.** The user found its square shapes clunky. A set of outdoor fortifications is written up on the page, not bought.
+- **The wall of fire goes out when the well runs dry** (agreed with the user), at beat 6, which is how the enemies get through at beat 7. The fortifications are approved; the gate can be two pillars or an arch.
+- **The battery has its own fortress kit,** in sandstone that matches the defence towers (10 generations). The gate is two pillars from it with the wall of fire between them (the user: it needn't be an arch), so the gate tries weren't bought.
+- **The fortress reads as one build** (the user: clipping at the pillars, an abrupt join at the towers, tones that didn't match). The kit is colour-matched to the towers piece by piece, the towers' orange glow is much weaker, the wall tucks behind each tower, and the pillars stand forward of the wall.
+- **The gate's pillars are two separate props** (the user caught one sprite drawing over wall that should be in front of it), each sorted by where it stands, and each blocking.
+- **The towers stand against the yard side of the wall** (the user: the wall-to-tower join looked bad either way). The wall runs unbroken behind them, with no forced draw order. Since sprays stop at walls, a defence's fire will have to clear the wall when driving is built.
+- **A defence's spells are adjusted for the wall** (the user): a longer flamethrower, burst and wave casts landing outside the wall, and no full circle, since it makes no sense on a defensive line.
+- **Driving a defence is built** (`game/packages/sim/src/battery.ts`). X at a pedestal. Your cast point moves just outside the wall, so spells clear it, and your wizard is drawn where it stood. Fire only, a 7.5 flamethrower and a half-ring reaching 7 (the wall hides about 4 units of ground behind it). Numbers are first guesses.
+
 ## 2026-11-10: Novas are one surface, not a row of pieces
 - **Each single-element Area cast is drawn as one connected surface travelling outward** (`art/novas.ts`). The user on the fire ring: "I don't like how it looks like a bunch of discrete candles being pushed out. It should be more like a wave of flames", then "in fact, all the single element novas look bad". The same complaint as the fire patch in the Spell VFX gallery ("very clearly N fire patches").
 - **Each element gets its own shape** (Claude's call): Fire a leaning wave with its body burning behind it, tearing apart in patches. Water a rolling swell with spray. Cold a serrated ice front over spreading frost, shattering where it stops. Life a see-through veil of upright threads with rising motes. Arcane a hard, fast hoop with knots running round it.
 - **Earth's quake and Lightning's discharge are unchanged:** they never used the ring of dots.
 - Only the drawing changed: radius, damage and timing of the casts are as they were.
+- **Playtest of driving, first pass** (the user's notes, `explorations/2026-11-10-battery-playtest-todo.md`): the swing is 80 degrees each way, reach depends on screen direction, the view leans out over the field, placed spells have their own range, and a device has its own bar.
+- **Object fixes from the playtest, merged** (`explorations/2026-11-10-battery-playtest-todo.md`, track A): deep blocking props are closed outlines, shadows have no pixel gaps, a prop's foot is the middle of its base, open-area walls sort by which side of their line a body is on, the well is two props, and flame walls have depth and calmer motion at size. `check:net` fails on its host-progress threshold on plain main too (15c0bae, 2026-11-10), so that's not from this work.
+- **The turret head comes from 3D** (the user agreed to try it, after research): a low-poly Blender model rendered to 25 palette-locked facings, on the bought tower (`tools/turret-3d/`). The three generated heads stay registered and unused.

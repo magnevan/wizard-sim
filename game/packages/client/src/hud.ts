@@ -6,6 +6,7 @@
  * name while you cast it. Drawn in art pixels into a small canvas, so it is crisp at the
  * integer scale like everything else.
  */
+import { pedestalNear } from '@wizard-sim/sim';
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
 import { ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, regenOf, regenRate, runeMax, specOf, type World } from '@wizard-sim/sim';
@@ -24,6 +25,10 @@ const CW = 240, CH = PH + 22;
 const TW = 320, TH = 22;
 /** Survive: the power-ups panel (top left) and the run-over card. */
 const PKW = 150, PKH = 4 * 13 + 2, OVW = 220, OVH = 132;
+
+/** What a device's bar shows. Each new kind of defence is one more of these. */
+interface DeviceBar { el: Element; name: string; plate: string; rim: string }
+const FLAME_TURRET: DeviceBar = { el: 'fire', name: 'FLAME TURRET', plate: '#3a1c0a', rim: '#6a3414' };
 
 export class Hud {
   readonly sprite: Sprite;
@@ -225,12 +230,17 @@ export class Hud {
       if (open && !this.unlocked[e] && w.tut) { const k = TUT_ORDER.indexOf(w.tut.state[TUT_STATE.beat]); if (k <= 0 || tutPool(TUT_ORDER[k - 1], e) <= 0) this.unlockAt[e] = t; }
       this.unlocked[e] = open ? 1 : 0;
     }
-    const bar = unlocked > 0 || (!!w.tut && w.tut.state[TUT_STATE.beat] >= TUT_RUNES_FROM);
+    const driven = !!w.battery && w.battery.drive[i] >= 0;
+    const bar = !driven && (unlocked > 0 || (!!w.tut && w.tut.state[TUT_STATE.beat] >= TUT_RUNES_FROM)); // a defence has its own bar, below
     // the backing plate follows the stagger: the top row is narrower than the bottom
     if (bar) {
+      const plate = '#141220';
       X.rect(c, x0 - 1, y0 - 1, TOP.length * SLOT + 8, RH + 5, '#0a0810'); X.rect(c, x0 - 1, y0 + RH + 2, PW + 2, RH + 6, '#0a0810');
-      X.rect(c, x0, y0, TOP.length * SLOT + 6, RH + 5, '#141220'); X.rect(c, x0, y0 + RH + 3, PW, RH + 4, '#141220');
+      X.rect(c, x0, y0, TOP.length * SLOT + 6, RH + 5, plate); X.rect(c, x0, y0 + RH + 3, PW, RH + 4, plate);
       X.rect(c, x0, y0, TOP.length * SLOT + 6, 1, '#3a3450');
+    }
+    if (w.battery) {
+      if (!driven && pedestalNear(w, i) >= 0) X.text(c, 'X: TAKE CONTROL', Math.round(CW / 2 - 30), Math.max(0, y0 - 9), '#ffd860', '#0a0810');
     }
     // the player's colour tab
     const team = X.TEAMS[i % 4];
@@ -254,6 +264,7 @@ export class Hud {
     const upkeep = channel && spec && s.chanTicks[i] >= T(RHYTHM.naturalChannel) ? spec.form : 0;
     // the shared regen budget: each refilling pool's share of R (0..1) sets how bright its flow shows
     const full = fullMask(w, i), R = regenOf(w, i);
+    if (driven) this.deviceBar(c, w, i, FLAME_TURRET, x0, y0, t, regenRate(w, i, elementId(FLAME_TURRET.el), full) / Math.max(R, 1e-6), upkeep === elementId(FLAME_TURRET.el));
     // queued runes are reserved: they show as spent pips until cast or refunded
     [...TOP, ...BOT].forEach((el, k) => {
       const row = k < TOP.length ? 0 : 1, col = row ? k - TOP.length : k, id = elementId(el), ramp = X.EL[el];
@@ -323,6 +334,35 @@ export class Hud {
   barRect(): { x: number; y: number; w: number; h: number } {
     const x0 = Math.round(CW / 2 - PW / 2 + 7), y0 = CH - PH - 1;
     return { x: this.sprite.x + x0 - 14, y: this.sprite.y + y0 - 15, w: PW + 16, h: PH + 16 };
+  }
+
+  /**
+   * The bar while you operate a device: the same footprint as the rune bar, all of it given to the device's one element. Each
+   * rune is a large cell that fills from the bottom, with the regen flowing along underneath.
+   */
+  private deviceBar(c: X.Ctx, w: World, i: number, dev: DeviceBar, x0: number, y0: number, t: number, share: number, drain: boolean): void {
+    const id = elementId(dev.el), ramp = X.EL[dev.el], v = w.seats.runes[i * N_EL + id - 1], max = Math.round(runeMax(w, i, id));
+    const dryK = t - this.dryAt[id] < 0.5, dry = dryK && Math.floor(t * 8) % 2 === 0;
+    X.rect(c, x0 - 1, y0 - 1, PW + 2, PH + 2, '#0a0810'); X.rect(c, x0, y0, PW, PH, dev.plate); X.rect(c, x0, y0, PW, 1, ramp[2]); X.rect(c, x0, y0 + PH - 1, PW, 1, dev.rim);
+    const pulse = t - this.spentAt[id] < 0.25 ? 1 : 0;
+    X.icon(c, dev.el, x0 + 4, y0 + 3 - pulse, ramp[1]);
+    X.text(c, dev.name, x0 + 16, y0 + 5, ramp[0]);
+    X.text(c, 'X: STEP AWAY', x0 + PW - 50, y0 + 5, '#c09070');
+    const gap = 3, cx0 = x0 + 4, cw = Math.floor((PW - 8 - gap * (max - 1)) / Math.max(1, max)), cy = y0 + 14, ch = 24;
+    for (let p = 0; p < max; p++) {
+      const x = cx0 + p * (cw + gap), fill = Math.max(0, Math.min(1, v - p));
+      X.rect(c, x - 1, cy - 1, cw + 2, ch + 2, dry ? '#a03040' : '#0a0810'); X.rect(c, x, cy, cw, ch, '#1a0e08');
+      if (fill <= 0.01) continue;
+      const h = Math.max(1, Math.round(fill * ch)), top = cy + ch - h, whole = fill >= 0.999;
+      X.rect(c, x, top, cw, h, whole ? ramp[2] : flowCol(ramp, share));
+      X.rect(c, x, top, 2, h, ramp[1]);
+      X.rect(c, x + cw - 2, top, 2, h, ramp[3]);
+      X.rect(c, x, top, cw, 1, whole ? ramp[0] : Math.floor(t * (4 + 14 * share)) % 2 ? ramp[0] : ramp[1]);
+    }
+    // the flow line: how fast the pool is refilling, and red while a long channel eats into it
+    const lw = PW - 8, fw = Math.round(lw * Math.min(1, share));
+    X.rect(c, x0 + 4, y0 + 41, lw, 3, '#1a0e08');
+    if (fw > 0) { X.rect(c, x0 + 4, y0 + 41, fw, 3, drain ? '#ff6a6a' : ramp[2]); X.px(c, x0 + 4 + Math.floor(mod(t * (2 + 10 * share), 1) * fw), y0 + 42, ramp[0]); }
   }
 
   /** A rune was spent from the pool (a cast): its icon hops. */

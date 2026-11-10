@@ -26,7 +26,7 @@ export const SIM = {
   /** N_ALTARS */
   altars: 3,
   /** The rooms the sim's code names (createWorld, the scenarios). */
-  rooms: ['sanctum', 'arena', 'survive', 'tutorial', 'academy'],
+  rooms: ['sanctum', 'arena', 'survive', 'tutorial', 'academy', 'battery'],
 };
 
 let validators = null;

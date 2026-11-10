@@ -22,6 +22,8 @@ export class KeyboardMouse {
   private mouse = 0;
   private sx = 0;
   private sy = 0;
+  /** Use was tapped since the last tick: a tap between two ticks still counts. */
+  private tapUse = false;
   private keyToElement = new Map<string, number>();
 
   constructor(target: HTMLElement, private camera: Camera) {
@@ -32,10 +34,12 @@ export class KeyboardMouse {
       if (id) this.presses.push(id);
       if (e.code === 'Escape') { this.held |= BTN.clear; this.tapClear = true; }
       if (e.code === 'Space') this.held |= BTN.self;
+      if (e.code === 'KeyX') { this.held |= BTN.use; this.tapUse = true; }
     });
     addEventListener('keyup', (e) => {
       if (e.code === 'Escape') this.held &= ~BTN.clear;
       if (e.code === 'Space') this.held &= ~BTN.self;
+      if (e.code === 'KeyX') this.held &= ~BTN.use;
     });
     target.addEventListener('contextmenu', (e) => e.preventDefault());
     target.addEventListener('pointermove', (e) => { this.sx = e.clientX; this.sy = e.clientY; });
@@ -48,7 +52,7 @@ export class KeyboardMouse {
   }
 
   /** Let go of everything (the menu opened over the game): no button stays held, no walk, no queued press. */
-  release(): void { this.walking = false; this.held = 0; this.mouse = 0; this.presses.length = 0; this.tapClear = false; }
+  release(): void { this.walking = false; this.held = 0; this.mouse = 0; this.presses.length = 0; this.tapClear = false; this.tapUse = false; }
 
   /** Mouse buttons that went down or up since the last event. */
   private sync(e: PointerEvent): void {
@@ -67,7 +71,7 @@ export class KeyboardMouse {
     const len = Math.hypot(dx, dy);
     const walk = this.walking && len > 0.3;
     const input = quantize({
-      buttons: this.held | (this.tapClear ? BTN.clear : 0),
+      buttons: this.held | (this.tapClear ? BTN.clear : 0) | (this.tapUse ? BTN.use : 0),
       press0: this.presses.shift() ?? 0,
       press1: this.presses.shift() ?? 0,
       moveX: walk ? (dx / len) * 127 : 0,
@@ -75,7 +79,7 @@ export class KeyboardMouse {
       aimX: dx / AIM_UNIT,
       aimY: dy / AIM_UNIT,
     });
-    this.tapClear = false;
+    this.tapClear = false; this.tapUse = false;
     return input;
   }
 }

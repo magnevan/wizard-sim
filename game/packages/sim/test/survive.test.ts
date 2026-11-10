@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  ARCH, ARCHETYPES, ARENA, BTN, CELL, DEVICE, EL, KIND, N_PU, PERKS, PHASE, ZONE, SURF, SURVIVE_ARENA, SURVIVE_GATES, T, scriptedInput, NO_INPUT, PHASE_ENC, PU, RUNES, STRUCT, SURVIVE_ROCK, SURVIVE_TIMES, TEAM, TERRAIN, WALL, WARD,
+  ARCH, ARCHETYPES, ARENA, BTN, CELL, DEVICE, EL, KIND, createTerrain, N_PU, PERKS, PHASE, ZONE, SURF, SURVIVE_ARENA, SURVIVE_GATES, T, scriptedInput, NO_INPUT, PHASE_ENC, PU, RUNES, STRUCT, SURVIVE_ROCK, SURVIVE_TIMES, TEAM, TERRAIN, WALL, WARD,
   botInput, buffers, createWorld, elementId, grant, hashWorld, raiseAltars, newBotMemory, quantize, replaceWorld, restore, runeMax, snapshot, spawnBody, step,
   type PlayerInput, type World,
 } from '../src';
@@ -40,7 +40,7 @@ const killAll = (w: World) => { for (let i = 4; i < w.bodies.kind.length; i++) i
 function quiet(players = 1) {
   const w = createWorld(1, players, { room: 'survive' });
   w.enc.state[0] = PHASE_ENC.off;
-  w.walls.type.fill(0);
+  w.terrain = createTerrain({ rock: [], propRock: [] });
   w.bodies.x[0] = 0; w.bodies.y[0] = 0;
   if (players > 1) { w.bodies.x[1] = 1.5; w.bodies.y[1] = 0; }
   return { w, d: new Driver(w) };
@@ -65,7 +65,7 @@ describe('survive: the arena', () => {
 
   it('has static rock that never times out or breaks, and steers enemies', () => {
     const w = createWorld(1, 1, { room: 'survive' });
-    const terrain = () => Array.from(w.walls.owner).filter((o, k) => o === TERRAIN && w.walls.type[k] === WALL.rock).length;
+    const terrain = () => w.terrain.n;
     expect(terrain()).toBe(SURVIVE_ROCK.length);
     w.enc.state[0] = PHASE_ENC.off;
     // a brute slams right on the keep's wall, for a minute
@@ -75,7 +75,7 @@ describe('survive: the arena', () => {
     new Driver(w).tick({}, 60 * 40);
     expect(w.bodies.kind[e]).toBe(KIND.enemy);
     expect(terrain()).toBe(SURVIVE_ROCK.length);
-    expect(w.walls.hp[0]).toBe(w.walls.maxHp[0]);
+    expect(Array.from(w.terrain.x1)).toEqual(Array.from(createTerrain(w.def).x1)); // terrain is read-only: nothing moves or breaks
     expect(w.nav.blocked.some((c) => c === 1)).toBe(true);
   });
 });

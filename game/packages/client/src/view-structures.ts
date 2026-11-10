@@ -22,7 +22,7 @@ import {
   AI, ARCH, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
   N_ALTARS, N_EL, PERKS, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
-  isPropWall,
+  isPropWall, terrainNear,
 } from '@wizard-sim/sim';
 import { FY as CFY, PPU } from './camera';
 import { FIELD, gx, gy } from './art/field';
@@ -631,19 +631,25 @@ export class StructureView {
 
   // ---- Shield walls ---------------------------------------------------------------------------------
   private walls(w: World, t: number, g: Ctx, o: Ctx, light: LightFn): void {
-    const wl = w.walls, s = w.seats, tick = w.clock[0], live = new Set<string>(), kitName = kitOf(w.def.id);
-    const joins = (k: number, x: number, y: number) => {
-      for (let j = 0; j < MAX_WALLS; j++) if (j !== k && wl.type[j] === WALL.rock && ((Math.abs(wl.x1[j] - x) < 0.05 && Math.abs(wl.y1[j] - y) < 0.05) || (Math.abs(wl.x2[j] - x) < 0.05 && Math.abs(wl.y2[j] - y) < 0.05))) return true;
+    const wl = w.walls, tr = w.terrain, nt = tr.n, s = w.seats, tick = w.clock[0], live = new Set<string>(), kitName = kitOf(w.def.id);
+    const near = (ax: number, ay: number, x: number, y: number) => Math.abs(ax - x) < 0.05 && Math.abs(ay - y) < 0.05;
+    const joins = (id: number, x: number, y: number) => {
+      for (let q = 0, n = terrainNear(tr, x, y, 0.1); q < n; q++) { const j = tr.out[q]; if (j !== id && (near(tr.x1[j], tr.y1[j], x, y) || near(tr.x2[j], tr.y2[j], x, y))) return true; }
+      for (let j = 0; j < MAX_WALLS; j++) if (nt + j !== id && wl.type[j] === WALL.rock && (near(wl.x1[j], wl.y1[j], x, y) || near(wl.x2[j], wl.y2[j], x, y))) return true;
       return false;
     };
-    for (let k = 0; k < MAX_WALLS; k++) {
-      const ty = wl.type[k]; if (!ty || isPropWall(w, k)) continue; // a blocking prop: the prop is what shows
-      const a: Pt = [gx(wl.x1[k]), gy(wl.y1[k])], bb: Pt = [gx(wl.x2[k]), gy(wl.y2[k])];
-      const age = (tick - (w.walls.born[k] ?? 0)) / 60, hpf = clamp(wl.hp[k] / Math.max(1, wl.maxHp[k]), 0, 1), hitE = this.st - this.wHitT[k];
+    // Terrain segments first, then the wall pool's slots: `id` keys what's cached per wall across both.
+    for (let id = 0; id < nt + MAX_WALLS; id++) {
+      const k = id - nt, isT = id < nt;
+      const ty = isT ? WALL.rock : wl.type[k]; if (!ty || (isT && isPropWall(w, id))) continue; // a blocking prop: the prop is what shows
+      const sx1 = isT ? tr.x1[id] : wl.x1[k], sy1 = isT ? tr.y1[id] : wl.y1[k], sx2 = isT ? tr.x2[id] : wl.x2[k], sy2 = isT ? tr.y2[id] : wl.y2[k];
+      const a: Pt = [gx(sx1), gy(sy1)], bb: Pt = [gx(sx2), gy(sy2)];
+      const born = isT ? 0 : wl.born[k], own = isT ? TERRAIN : wl.owner[k];
+      const age = (tick - (born ?? 0)) / 60, hpf = isT ? 1 : clamp(wl.hp[k] / Math.max(1, wl.maxHp[k]), 0, 1), hitE = isT ? 99 : this.st - this.wHitT[k];
       if (ty === WALL.rock) {
         // a room's own straight walls, where it has a kit: bought pieces instead of the drawn stone
-        if (wl.owner[k] === TERRAIN && kitName) {
-          const mu = (wl.x1[k] + wl.x2[k]) / 2, mv = (wl.y1[k] + wl.y2[k]) / 2;
+        if (own === TERRAIN && kitName) {
+          const mu = (sx1 + sx2) / 2, mv = (sy1 + sy2) / 2;
           const run = kitRun(a[0], a[1], bb[0], bb[1], toX(mu, mv), toY(mu, mv));
           let drawn = !!run;
           for (const st of run ?? []) {
@@ -655,16 +661,16 @@ export class StructureView {
             continue;
           }
         }
-        const cold = has(wl.els, k, ELID.cold), coat = wallLead(wl.els, k, ELID.earth);
-        const endA = !joins(k, wl.x1[k], wl.y1[k]), endB = !joins(k, wl.x2[k], wl.y2[k]);
-        const pre = `${k}:${wl.born[k]}:${+endA}${+endB}:${+cold}`;
+        const cold = !isT && has(wl.els, k, ELID.cold), coat = isT ? 0 : wallLead(wl.els, k, ELID.earth);
+        const endA = !joins(id, sx1, sy1), endB = !joins(id, sx2, sy2);
+        const pre = `${id}:${born}:${+endA}${+endB}:${+cold}`;
         live.add(pre);
         let gm = this.geoms.get(pre);
         if (!gm) {
           const lenPx = Math.hypot(bb[0] - a[0], (bb[1] - a[1]) / FY);
-          const ruin = wl.owner[k] === TERRAIN; // the arena's own rock: taller, older stone
+          const ruin = own === TERRAIN; // the arena's own rock: taller, older stone
           const backWall = false;
-          const spec: WallSpec = { a: [a[0], a[1]], b: [bb[0], bb[1]], n: Math.max(1, Math.round(lenPx / 12)), H: ruin ? (backWall ? 34 : 19) : 14, T: ruin ? 8 : 7, mat: ruin ? 'ruin' : cold ? 'frost' : 'stone', seed: (k * 7 + wl.born[k]) & 1023, endA, endB };
+          const spec: WallSpec = { a: [a[0], a[1]], b: [bb[0], bb[1]], n: Math.max(1, Math.round(lenPx / 12)), H: ruin ? (backWall ? 34 : 19) : 14, T: ruin ? 8 : 7, mat: ruin ? 'ruin' : cold ? 'frost' : 'stone', seed: (id * 7 + born) & 1023, endA, endB };
           gm = { spec, g: wallGeom(spec) };
           this.geoms.set(pre, gm);
         }
@@ -672,7 +678,7 @@ export class StructureView {
         const rs = clamp(Math.ceil((age / 0.28) * RISE_STEPS), 1, RISE_STEPS);
         const jolt = hitE >= 0 && hitE < 0.12 ? (Math.floor(hitE * 60) % 2 ? 1 : -1) : 0;
         // the same wall, damage and rise as last frame, every slab painted: last frame's textures, no keys to build
-        const mk = `${pre}|${st}|${rs}`, memo = this.slabMemo[k];
+        const mk = `${pre}|${st}|${rs}`, memo = this.slabMemo[id];
         if (memo && memo.key === mk) {
           for (let i = 0; i < gm.spec.n; i++) {
             const tex = memo.tex[i], sl = gm.g.slabs[i];
@@ -690,10 +696,10 @@ export class StructureView {
             if (!tex) continue;
             this.pieces.tex(tex, Math.round(sl.cx) - SLAB_OX + jolt, Math.round(sl.cy) - SLAB_OY, sl.cy);
           }
-          this.slabMemo[k] = done ? { key: mk, tex: got } : undefined;
+          this.slabMemo[id] = done ? { key: mk, tex: got } : undefined;
         }
         // a fresh wall tears out of the ground in dust
-        if (age < 0.6) for (let i = 0; i < 4; i++) K.dust(o, lerp(a[0], bb[0], (i + 0.5) / 4), lerp(a[1], bb[1], (i + 0.5) / 4), age, k * 5 + i, 3, 8, '#8a7a68', 0.7);
+        if (age < 0.6) for (let i = 0; i < 4; i++) K.dust(o, lerp(a[0], bb[0], (i + 0.5) / 4), lerp(a[1], bb[1], (i + 0.5) / 4), age, id * 5 + i, 3, 8, '#8a7a68', 0.7);
         if (age < 0.3) light((a[0] + bb[0]) / 2, (a[1] + bb[1]) / 2, 40, '#e0c8a0', 0.4 * (1 - age / 0.3));
         if (coat && st < 4) this.wallCoat(o, gm.g, gm.spec, coat, t, k, light);
         continue;

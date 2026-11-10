@@ -5,7 +5,7 @@
  * card is plain DOM text beside the cursor. A start, to grow as the game does.
  */
 import { rules, type Element } from '@wizard-sim/rules';
-import { ARCHETYPES, CELL, DEVICE, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, N_EL, SURF, WALL, WARD, elementName, isPropWall, type World } from '@wizard-sim/sim';
+import { ARCHETYPES, CELL, DEVICE, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, N_EL, SURF, TERRAIN, WALL, WARD, terrainNear, elementName, isPropWall, type World } from '@wizard-sim/sim';
 import type { Camera } from './camera';
 
 const HOVER = 0.9;
@@ -95,6 +95,8 @@ export class Inspect {
       const d = dv.type[k] === DEVICE.lineglyph ? segDist(x, y, dv.x[k], dv.y[k], dv.x2[k], dv.y2[k]) : Math.hypot(dv.x[k] - x, dv.y[k] - y);
       if (d < HOVER) return this.device(k);
     }
+    const tr = w.terrain;
+    for (let q = 0, n = terrainNear(tr, x, y, 0.6); q < n; q++) { const k = tr.out[q]; if (segDist(x, y, tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k]) < 0.6) return this.terrainWall(k); }
     const wl = w.walls;
     for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] && segDist(x, y, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]) < 0.6) return this.wall(k);
     return this.floor(x, y);
@@ -150,9 +152,14 @@ export class Inspect {
     return ['Device'];
   }
 
+  /** A segment of the room's own rock (or a blocking prop's footprint). */
+  private terrainWall(k: number): string[] {
+    if (isPropWall(this.world, k)) return ['Furniture', '· blocks bodies and shots'];
+    return [`${owner(TERRAIN)} stone wall`, 'Health 1000000 / 1000000', '· blocks bodies and shots', '· plain stone'];
+  }
+
   private wall(k: number): string[] {
     const wl = this.world.walls, ty = wl.type[k], who = owner(wl.owner[k]);
-    if (isPropWall(this.world, k)) return ['Furniture', '· blocks bodies and shots'];
     const coat = elements(wl.els, k, [ID('shield'), ID('earth')]);
     const hp = `Health ${Math.ceil(wl.hp[k])} / ${Math.round(wl.maxHp[k])}`;
     if (ty === WALL.rock) return [`${who} stone wall`, hp, '· blocks bodies and shots', coat ? `· coated with ${coat}: pulses on whoever touches it` : '· plain stone'];

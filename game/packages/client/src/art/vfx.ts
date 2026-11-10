@@ -13,7 +13,7 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import {
-  CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, STRUCT, SURF, T, WALL, ZONE,
+  CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, STRUCT, terrainNear, SURF, T, WALL, ZONE,
   compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
@@ -525,15 +525,20 @@ export class Vfx {
   }
   /** The wall a point is up against, its direction on screen, and whether (cx, cy) is on the side the camera sees. */
   private wallAt(w: World, ex: number, ey: number, cx: number, cy: number, near: number): { ux: number; uy: number; front: boolean } | null {
-    const wl = w.walls;
-    for (let k = 0; k < MAX_WALLS; k++) {
-      if (wl.type[k] !== WALL.rock && wl.type[k] !== WALL.barrier) continue;
-      const x1 = wl.x1[k], y1 = wl.y1[k], ux = wl.x2[k] - x1, uy = wl.y2[k] - y1, l2 = ux * ux + uy * uy || 1;
+    const wl = w.walls, tr = w.terrain;
+    const face = (x1: number, y1: number, x2: number, y2: number): { ux: number; uy: number; front: boolean } | null => {
+      const ux = x2 - x1, uy = y2 - y1, l2 = ux * ux + uy * uy || 1;
       const q = clamp(((ex - x1) * ux + (ey - y1) * uy) / l2, 0, 1);
-      if (Math.hypot(ex - x1 - ux * q, ey - y1 - uy * q) > near) continue;
+      if (Math.hypot(ex - x1 - ux * q, ey - y1 - uy * q) > near) return null;
       const sy = uy * FY, l = Math.hypot(ux, sy) || 1;
       // the wall's normal is (-uy, ux): the side (cx, cy) is on has to face down the screen, toward the camera
       return { ux: ux / l, uy: sy / l, front: ux * (ux * (cy - ey) - uy * (cx - ex)) > 0 };
+    };
+    for (let q = 0, n = terrainNear(tr, ex, ey, near); q < n; q++) { const k = tr.out[q], f = face(tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k]); if (f) return f; }
+    for (let k = 0; k < MAX_WALLS; k++) {
+      if (wl.type[k] !== WALL.rock && wl.type[k] !== WALL.barrier) continue;
+      const f = face(wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
+      if (f) return f;
     }
     return null;
   }

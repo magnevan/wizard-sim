@@ -5,7 +5,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { BODY, CELL, CONTENT_HASH, MAX_WALLS, NO_INPUT, N_ALTARS, ROOM_HASH, ROOMS, STRUCT, createWorld, isPropWall, roomHash as simRoomHash, step } from '@wizard-sim/sim';
+import { BODY, CELL, CONTENT_HASH, NO_INPUT, N_ALTARS, ROOM_HASH, ROOMS, STRUCT, createTerrain, createWorld, isPropWall, roomHash as simRoomHash, snapshot, step } from '@wizard-sim/sim';
 import * as C from '../src/index.mjs';
 
 /** A scratch copy of the maps and of the generated module, to break. */
@@ -87,7 +87,6 @@ describe('content:check', () => {
     expect(C.SIM.wallThickness).toBe(STRUCT.wallThickness);
     expect(C.SIM.wizardRadius).toBe(BODY.wizardRadius);
     expect(C.SIM.altars).toBe(N_ALTARS);
-    expect(C.SIM.terrainWalls).toBeLessThan(MAX_WALLS);
     expect(Object.keys(ROOMS).sort()).toEqual([...C.SIM.rooms].sort());
   });
 });
@@ -101,7 +100,7 @@ describe('props', () => {
     expect(s.check().some((e) => e.includes('no prop asset "no-such-thing"'))).toBe(true);
   });
 
-  it("a blocking prop counts as rock: a start can't stand in it, and it spends the wall budget", () => {
+  it("a blocking prop counts as rock: a start can't stand in it", () => {
     const s = scratch();
     s.edit('world/Academy.ldtkl', (l) => {
       const p = entitiesOf(l).find((e: any) => e.__identifier === 'PlayerStart');
@@ -109,9 +108,6 @@ describe('props', () => {
       p.px = [...desk.px];
     });
     expect(s.check().some((e) => e.includes('start 0') && e.includes('from the rock wall'))).toBe(true);
-    const t = scratch();
-    t.edit('world/Academy.ldtkl', (l) => { const es = entitiesOf(l), d = es.find((e: any) => e.fieldInstances[0]?.__value === 'desk'); for (let i = 0; i < 4; i++) es.push({ ...d, iid: 'copy-' + i }); });
-    expect(t.check().some((e) => e.includes('blocking-prop walls; the budget is 40'))).toBe(true);
   });
 
   it('a footprint becomes one wall when shallow, two side by side when deep, along its long side', () => {
@@ -131,17 +127,17 @@ describe('props', () => {
     expect(bad.some((e) => e.includes('must name its raw file'))).toBe(true);
   });
 
-  it('blocking props stop a body, take wall slots after the rock, and other rooms have none', () => {
+  it('blocking props stop a body, are terrain after the rock, and other rooms have none', () => {
     const w = createWorld(7, 1, { room: 'academy' });
     const n = ROOMS.academy.rock.length, m = ROOMS.academy.propRock.length;
     expect(m).toBeGreaterThan(0);
     expect(isPropWall(w, n - 1)).toBe(false);
     expect(isPropWall(w, n)).toBe(true);
     expect(isPropWall(w, n + m)).toBe(false);
-    expect(w.walls.type[n + m - 1]).toBe(1);
+    expect(w.terrain.n).toBe(n + m);
     expect(ROOMS.sanctum.props.length + ROOMS.arena.propRock.length + ROOMS.survive.propRock.length).toBe(0);
     const k = n, b = w.bodies;
-    b.x[0] = (w.walls.x1[k] + w.walls.x2[k]) / 2; b.y[0] = w.walls.y1[k] + 0.1;
+    b.x[0] = (w.terrain.x1[k] + w.terrain.x2[k]) / 2; b.y[0] = w.terrain.y1[k] + 0.1;
     const before = b.y[0];
     step(w, [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT]);
     expect(b.y[0] - before).toBeGreaterThan(0.3);
@@ -174,11 +170,42 @@ describe('the compiled rooms', () => {
     expect(C.traceRock(['##..', '##..'], 2, 1)).toEqual([[0, -0.5, 0, 0.5]]);
   });
 
-  it('build the walls into the world (Survive: 40 static rock walls in the first slots)', () => {
+  it("build the walls into the world (Survive's static rock is terrain, not wall slots)", () => {
     const w = createWorld(1, 1, { room: 'survive' });
     expect(w.def).toBe(ROOMS.survive);
-    expect(Array.from(w.walls.x1.slice(0, 3))).toEqual(ROOMS.survive.rock.slice(0, 3).map((s) => s[0]));
-    expect(w.walls.type[ROOMS.survive.rock.length]).toBe(0);
+    expect(Array.from(w.terrain.x1.slice(0, 3))).toEqual(ROOMS.survive.rock.slice(0, 3).map((s) => s[0]));
+    expect(w.terrain.n).toBe(ROOMS.survive.rock.length);
+    expect(Array.from(w.walls.type).every((t) => t === 0)).toBe(true);
+  });
+});
+
+describe('terrain has no budget', () => {
+  it('a room with several hundred rock walls compiles, passes the check, loads and collides, and its snapshot is no bigger', () => {
+    const s = scratch();
+    const N = 300;
+    // Free Rock segments, in rows along the room's top: nowhere near the starts or the dummies.
+    s.edit('world/Sanctum.ldtkl', (l) => {
+      const survive = JSON.parse(readFileSync(s.project.replace('world.ldtk', 'world/Survive.ldtkl'), 'utf8'));
+      const rock = entitiesOf(survive).find((e: any) => e.__identifier === 'Rock');
+      const es = entitiesOf(l);
+      for (let i = 0; i < N; i++) {
+        const x = -11.5 + (i % 100) * 0.23, y = -7.2 - Math.floor(i / 100) * 0.2;
+        es.push({ ...rock, iid: 'rock-' + i, fieldInstances: rock.fieldInstances.map((f: any) => ({ ...f, __value: { x1: x, y1: y, x2: x + 0.1, y2: y }[f.__identifier as 'x1'] })) });
+      }
+    });
+    expect(s.check().filter((e) => !e.includes('stale'))).toEqual([]);
+    const room = C.compileProject(C.loadProject(s.project)).rooms.find((r: any) => r.id === 'sanctum');
+    expect(room.rock.length).toBeGreaterThanOrEqual(N);
+
+    const plain = createWorld(1, 1), big = createWorld(1, 1);
+    big.def = room; big.terrain = createTerrain(room);
+    const bytes = (w: typeof plain) => snapshot(w).reduce((a, b) => a + b.byteLength, 0);
+    expect(bytes(big)).toBe(bytes(plain));
+
+    const [x1, y1, x2] = room.rock[50], b = big.bodies;
+    b.x[0] = (x1 + x2) / 2; b.y[0] = y1 + 0.05;
+    step(big, [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT]);
+    expect(Math.abs(b.y[0] - y1)).toBeGreaterThan(b.r[0] + STRUCT.wallThickness - 0.1); // pushed clear of the wall it stood on
   });
 });
 

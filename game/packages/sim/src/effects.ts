@@ -11,7 +11,7 @@ import { EL, N_EL, elementName, queueFromCounts } from './elements';
 import { inCone, len, rayCircle } from './geom';
 import { HIT_KIND, addKnock, applyHit, setHitKind, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
-import { clipRay, collideWalls, damageWall, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
+import { TERRAIN_HIT, clipRay, collideWalls, damageWall, isRockHit, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
 import { WALL, compile } from './compile';
 import { ARCHETYPES } from './archetypes';
 import { RES, grounded, guardMissile, phased, taken } from './guards';
@@ -305,7 +305,7 @@ function blowOf(key: string): { half: number; reach: number; dmg: number; knock:
 /** Can body `self` stand at (x, y): not inside rock, not overlapping another body? */
 function freeSpot(w: World, self: number, x: number, y: number): boolean {
   const b = w.bodies;
-  if (wallAt(w, x, y, b.r[self]) >= 0 && w.walls.type[wallAt(w, x, y, b.r[self])] === WALL.rock) return false;
+  if (isRockHit(w, wallAt(w, x, y, b.r[self]))) return false;
   for (let i = 0; i < b.kind.length; i++) {
     if (i === self || !alive(w, i)) continue;
     if (len(b.x[i] - x, b.y[i] - y) < b.r[i] + b.r[self]) return false;
@@ -503,8 +503,8 @@ export function tickMissiles(w: World): void {
     // Rock and barriers stop shots (a barrier of Shield alone turns them back).
     const wk = dead ? -1 : wallAt(w, m.x[j], m.y[j], m.r[j]);
     if (wk >= 0) {
-      const mirror = w.walls.type[wk] === WALL.barrier && m.owner[j] !== w.walls.owner[wk];
-      if (w.tut && w.walls.owner[wk] >= 0 && w.walls.owner[wk] < MAX_SEATS && b.kind[m.owner[j]] === KIND.enemy) noteBlocked(w.tut); // the tutorial's Shield beat
+      const mirror = wk !== TERRAIN_HIT && w.walls.type[wk] === WALL.barrier && m.owner[j] !== w.walls.owner[wk];
+      if (w.tut && wk !== TERRAIN_HIT && w.walls.owner[wk] >= 0 && w.walls.owner[wk] < MAX_SEATS && b.kind[m.owner[j]] === KIND.enemy) noteBlocked(w.tut); // the tutorial's Shield beat
       damageWall(w, wk, payloadDamage(m.els, j, m.scale[j]) * (mirror ? 0.5 : 1));
       if (mirror) { m.vx[j] = -m.vx[j]; m.vy[j] = -m.vy[j]; m.owner[j] = w.walls.owner[wk]; m.lastHit[j] = -1; continue; }
       dead = true;

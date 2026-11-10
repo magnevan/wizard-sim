@@ -28,7 +28,7 @@ The view figures come from the page's camera settings and weren't measured in th
 ## Engine limits to watch
 
 - There's no hard cap on map size, because the nav grid grows to the largest room. Big maps can cost path-finding time (`npm run perf`).
-- The limit of 40 rock walls per room is removed on the branch `worktree-agent-a47e8a370a065b82e`, not merged yet. Until it is, the limit still applies here. The rest of a continuous world is deferred (`../../explorations/2026-11-09-continuous-world-todo.md`).
+- Rooms no longer have a limit on rock walls (merged 2026-11-10). The rest of a continuous world is deferred (`../../explorations/2026-11-09-continuous-world-todo.md`).
 
 ## Assets
 

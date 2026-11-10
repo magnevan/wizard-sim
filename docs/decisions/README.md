@@ -1102,5 +1102,5 @@ The user asked for an audit of how spells scale with extra runes, and for it to 
 - **The first job's well was destabilized and needs repairs,** in place of the moved vein (the user's suggestion; in `canon.md` under review).
 
 ## 2026-11-10: Terrain is read-only room data, with no per-room limit (`explorations/2026-11-09-continuous-world-todo.md`)
-- **Built on the branch `worktree-agent-a47e8a370a065b82e`, not merged.** The user asked for the wall limit to be fixed now and streaming left for later. Terrain is out of rollback state, on a 2-unit grid, and the checker no longer caps it.
+- **Merged 2026-11-10.** The user asked for the wall limit to be fixed now and streaming left for later. Terrain is out of rollback state, on a 2-unit grid, and the checker no longer caps it.
 - **Players always get all 160 cast-wall slots** (a side effect, Claude's call). Before, Survive left them 120 and the Academy 122. Only shows above those counts.

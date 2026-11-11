@@ -22,7 +22,7 @@ import { headTip } from './props';
 import * as A from './accent';
 import { depthOf, rowsHidden } from './depth';
 import * as K from './kit';
-import { drawNova, hasNova } from './novas';
+import { drawNova, hasNova, novaStretch } from './novas';
 import { AimTrail, sprayJet, type JetKind } from './spray-jet';
 import * as RF from './rock-flight';
 import { SPLASH_LIGHT, beamImpact, wallSplash, type SplashKind } from './wall-splash';
@@ -329,7 +329,8 @@ export class Vfx {
         const shape = spec()?.shape ?? 'nova';
         if (shape === 'swing' || shape === 'palm') this.add(shape, t, shape === 'palm' ? 0.9 : 0.4, { who, x: e.x, y: e.y, r, look, seed, x2: w.bodies.x[who], y2: w.bodies.y[who] });
         else if (shape === 'patch') { if (!spec()?.scald && !this.rainAt(w, e.x, e.y)) this.add('patch', t, 1.0, { x: e.x, y: e.y, r, look, seed }); } // rain draws as its zone, for its whole life
-        else this.add(shape === 'quake' ? 'quake' : 'nova', t, look === 8 ? 1.8 : 1.3, { who, x: e.x, y: e.y, r, look, seed, half: !!w.battery && who >= 0 && who < MAX_SEATS && w.battery.drive[who] >= 0 }); // the fire ring's scorch and smoke outlast the blast
+        // a bigger ring plays slower, its wave travelling at the same speed (art/novas.ts novaStretch), so it lives longer
+        else this.add(shape === 'quake' ? 'quake' : 'nova', t, (look === 8 ? 1.8 : 1.3) * (shape === 'quake' ? 1 : Math.max(1, novaStretch(r * 16))), { who, x: e.x, y: e.y, r, look, seed, half: !!w.battery && who >= 0 && who < MAX_SEATS && w.battery.drive[who] >= 0 }); // the fire ring's scorch and smoke outlast the blast
         return;
       }
       case 'blink': this.add('blink', t, 0.4, { who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, seed }); return;

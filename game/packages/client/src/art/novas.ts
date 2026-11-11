@@ -314,6 +314,15 @@ function arcane(n: Nova): void {
 
 const NOVAS: Partial<Record<number, (n: Nova) => void>> = { 1: water, 2: life, 4: cold, 6: arcane, 8: fire };
 
+/**
+ * The nova radius every timing in this file is tuned for, px (SHAPES.novaRadius, 3 u). A bigger ring plays slower in
+ * proportion, so its wave travels at the same speed whatever its size (the user, 2026-11-11: a big nova raced out,
+ * because every nova took the same time to reach its edge). A smaller one plays faster, down to a floor.
+ */
+export const NOVA_REF = 3 * 16;
+/** How much slower than the tuned timings a nova of radius r px plays. */
+export const novaStretch = (r: number): number => clamp(r / NOVA_REF, 0.7, 3);
+
 /** Has element `look` a nova of its own here? */
 export const hasNova = (look: number): boolean => !!NOVAS[look];
 
@@ -324,6 +333,6 @@ export const hasNova = (look: number): boolean => !!NOVAS[look];
 export function drawNova(o: Ctx, g: Ctx, look: number, x: number, y: number, r: number, e: number, t: number, sd: number, light: NovaLight, part: NovaPart, mx = x, my = y): boolean {
   const draw = NOVAS[look];
   if (!draw) return false;
-  draw({ o, g, x, y, mx, my, r, e, t, sd, light, part });
+  draw({ o, g, x, y, mx, my, r, e: e / novaStretch(r), t, sd, light, part });
   return true;
 }

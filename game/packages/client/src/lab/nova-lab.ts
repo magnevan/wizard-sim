@@ -6,6 +6,7 @@
  *   ?times=0.04,0.12,0.25,0.45,0.8,1.3   the moments shown, s since the cast (one column each)
  *   ?t=1.0     the clock for the noise (headless screenshots)
  *   ?move=1    the caster walks right while the nova plays (the wave drags along after them)
+ *   ?r=3.2     the nova's radius, tiles (a bigger one plays slower: art/novas.ts novaStretch)
  *   ?scale=2   screen px per art px
  */
 import * as X from '../art/px';
@@ -15,7 +16,7 @@ const q = new URLSearchParams(location.search);
 const S = Number(q.get('scale') ?? 2), T0 = Number(q.get('t') ?? 1), move = q.get('move') === '1';
 const TIMES = (q.get('times') ?? '0.04,0.12,0.25,0.45,0.8,1.3').split(',').map(Number);
 const ROWS: [string, number][] = [['water', 1], ['life', 2], ['cold', 4], ['arcane', 6], ['fire', 8]];
-const R = 3.2 * 16, CW = 2 * R + 40, RH = R + 70, W = CW * TIMES.length, H = RH * ROWS.length;
+const R = Number(q.get('r') ?? 3.2) * 16, CW = 2 * R + 40, RH = R + 70, W = CW * TIMES.length, H = RH * ROWS.length;
 const cv = document.getElementById('c') as HTMLCanvasElement;
 cv.width = W * S; cv.height = H * S;
 const out = cv.getContext('2d')!; out.imageSmoothingEnabled = false;

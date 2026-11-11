@@ -141,7 +141,7 @@ describe('Force casts', () => {
   it('a freeze lasts longer the colder the body was, and too little chill does not freeze', () => {
     const freeze = (chill: number) => {
       const { w, d, dummy } = range(2);
-      w.bodies.wet[dummy] = 600; w.bodies.chill[dummy] = chill;
+      w.bodies.maxHp[dummy] = 2000; w.bodies.wet[dummy] = 600; w.bodies.chill[dummy] = chill; // too big for one ring to chill to a freeze
       d.queue('cold').cast(BTN.area, 1, 20);
       return w.bodies.frozen[dummy];
     };
@@ -191,6 +191,23 @@ describe('Force casts', () => {
       return peak;
     };
     expect(burnt(['fire', 'fire', 'fire'])).toBeGreaterThan(burnt(['fire']) * 1.5);
+  });
+
+  it('a fire floor: a brush lights you a little, standing in it keeps burning', () => {
+    const lost = (stay: number) => {
+      const { w, d, dummy } = range(4);
+      w.bodies.x[dummy] = 20; // off the floor while it's laid, so only the floor burns it
+      d.queue('fire').tick({ buttons: BTN.area }, 30);
+      d.tick({}, 20);
+      w.bodies.x[dummy] = 4;
+      for (let k = 0; k < stay; k++) { d.tick({}, 1); w.bodies.x[dummy] = 4; }
+      w.bodies.x[dummy] = 20;
+      d.tick({}, 400);
+      return 400 - w.bodies.hp[dummy];
+    };
+    const brush = lost(1), stand = lost(180);
+    expect(brush).toBeGreaterThan(STATUS.burnFloorTouch * 0.9);
+    expect(stand).toBeGreaterThan(brush * 2);
   });
 
   it('a Water spray soaks long enough to follow with Cold', () => {

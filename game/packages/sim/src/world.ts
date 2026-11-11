@@ -218,7 +218,7 @@ export const SURF = { none: 0, water: 1, ice: 2, fire: 3 } as const;
 export interface Surfaces {
   kind: Uint8Array;
   life: Int32Array;
-  /** A fire floor's heat: the Fire runes in what lit it (burns that many times STATUS.burnSurface). 0 elsewhere. */
+  /** A fire floor's heat: the Fire runes in what lit it (its touch and its burn while you stand in it scale by it). 0 elsewhere. */
   heat: Uint8Array;
 }
 

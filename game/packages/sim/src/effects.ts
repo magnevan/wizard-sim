@@ -97,7 +97,11 @@ export function tickSurfaces(w: World): void {
     if (k === SURF.water) { b.wet[i] = Math.max(b.wet[i], T(1)); b.burn[i] = 0; }
     // ice bites at the feet: it chills, and a wet body standing on it freezes (it used to make bodies slide instead)
     if (k === SURF.ice && !(i < MAX_SEATS && warm(w, i))) { b.burn[i] = 0; addChill(w, i, SURFACE.iceChill / 60); if (b.wet[i]) tryFreeze(w, i); }
-    if (k === SURF.fire && b.burn[i] < T(1) && !(b.kind[i] === KIND.enemy && ARCHETYPES[b.arch[i]].burnImmune)) ignite(w, i, STATUS.burnSurface * Math.max(1, w.surf.heat[cellAt(w, b.x[i], b.y[i])]), b.burn[i] ? b.burnSrc[i] : -1);
+    // a fire floor: a touch lights you, and standing in it keeps feeding the burn, both by the Fire that made it
+    if (k === SURF.fire && !(b.kind[i] === KIND.enemy && ARCHETYPES[b.arch[i]].burnImmune)) {
+      const heat = Math.max(1, w.surf.heat[cellAt(w, b.x[i], b.y[i])]);
+      ignite(w, i, heat * (b.burn[i] ? STATUS.burnFloorRate / 60 : STATUS.burnFloorTouch), b.burn[i] ? b.burnSrc[i] : -1);
+    }
   }
 }
 
@@ -115,14 +119,17 @@ function surge(w: World, x: number, y: number, p: Payload, src: number): void {
 // ---- instant shapes -------------------------------------------------------------------------
 
 /** Every body within `r` of (x, y), except `skip`, gets the payload, pushed away from the centre. */
-export function disc(w: World, p: Payload, src: number, x: number, y: number, r: number, scale: number, skip: number, northOf?: number): void {
+/** `axis` multiplies only the element's own axis (chill, push): the Frost and Splash rings' instant strength. */
+export function disc(w: World, p: Payload, src: number, x: number, y: number, r: number, scale: number, skip: number, northOf?: number, axis = 1): void {
   const b = w.bodies;
   setHitKind(HIT_KIND.burst);
   for (let i = 0; i < b.kind.length; i++) {
     if (!alive(w, i) || i === skip || (northOf !== undefined && b.y[i] > northOf)) continue;
     const dx = b.x[i] - x, dy = b.y[i] - y, d = len(dx, dy);
     if (d > r + b.r[i]) continue;
-    hit(w, i, p, hitOpts(p, src, scale, d > 1e-6 ? dx / d : 1, d > 1e-6 ? dy / d : 0));
+    const o = hitOpts(p, src, scale, d > 1e-6 ? dx / d : 1, d > 1e-6 ? dy / d : 0);
+    if (axis !== 1) o.axis = axis;
+    hit(w, i, p, o);
   }
 }
 
@@ -189,7 +196,11 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     case 'nova': case 'quake': {
       const r = (driving(w, src) ? BATTERY.ringRadius : spec.shape === 'quake' ? SHAPES.novaRadius + 1 : SHAPES.novaRadius) + SHAPES.novaPerRune * (n - 1);
       // Leaves the floor alone: a floor laid round you soaks or burns you, the caster (Place is for floors).
-      disc(w, p, src, x, y, r, k * blast, spec.heal ? -1 : src, driving(w, src) ? y : undefined); // the Healing ring heals you too; a defence's covers only the enemy's side
+      // Area is the close, risky cast, so a spray element's ring is its strongest instant hit on its own axis (spell audit,
+      // 2026-11-11): the Frost ring chills harder, the Splash ring pushes further. The Fire ring's burst is already that.
+      // (chill goes by rune, so the Frost ring's chill leaves out the blast factor that turns Cold's per-second damage into one hit)
+      const axis = spec.heal || spec.scald || spec.freeze ? 1 : spec.form === EL.cold ? SHAPES.ringChill / blast : spec.form === EL.water ? SHAPES.ringPush : 1;
+      disc(w, p, src, x, y, r, k * blast, spec.heal ? -1 : src, driving(w, src) ? y : undefined, axis); // the Healing ring heals you too; a defence's covers only the enemy's side
       burstEvent(w, src, x, y, r, spec.look);
       break;
     }

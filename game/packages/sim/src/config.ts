@@ -80,8 +80,12 @@ export const STATUS = {
    * longer worth a flat 12): a small base to light, most of a hit's Fire damage, a little of the rest.
    */
   burn: 4, burnBase: 4, burnShareFire: 1.5, burnShareRest: 0.15, burnCap: 80,
-  /** Burn-only sources, per Fire rune in them: a fire floor each time it re-lights you, a fire aura each half second. A thorn's contact is flat. */
-  burnSurface: 12, burnAura: 3, burnContact: 30,
+  /**
+   * Burn-only sources, per Fire rune in them. A fire floor lights you for burnFloorTouch on contact, then adds burnFloorRate
+   * a second while you stand in it (the user, 2026-11-11: a brush is forgivable, standing in fire isn't). A fire aura adds
+   * burnAura each half second. A thorn's contact is flat.
+   */
+  burnFloorTouch: 6, burnFloorRate: 4, burnAura: 3, burnContact: 30,
   /**
    * Chill is how full a body's frost pool is, 0..1. The pool holds chillPool x sqrt(max HP) frost damage, so big
    * bodies take more but never become unfreezable. It drains chillDecay of the whole pool a second, even under fire,
@@ -162,6 +166,8 @@ export const SHAPES = {
   /** The same for Cold, kept below Fire's: Cold's job is the slow, and it has no burn on top. */
   coldBlast: 1.6,
   push: 6, // u/s added per water rune (Push)
+  /** The rings are a spray element's strongest instant hit on its axis: the Frost ring chills this many times as hard, the Splash ring pushes this many times as far. */
+  ringChill: 2, ringPush: 2,
   burstRadius: 1.4,
 };
 

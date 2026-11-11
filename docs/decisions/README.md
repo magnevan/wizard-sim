@@ -1290,3 +1290,9 @@ The user: "in games resistance uses a scaling formula so that hits to kill scale
 The user also wants **chill to be strong**: "it's a good playstyle for players who get overwhelmed." To play-test for feel.
 
 Golden hash `cde3a6be` → `09029372` (Chrome and node agree).
+
+## 2026-11-11: Spell audit, step 2 (part): fire floors burn by the second; the rings are each element's strongest instant hit
+
+- **A fire floor burns continuously** (Claude's proposal, the user: "sounds fair"). Contact lights you for 6 per Fire rune that made the floor; standing in it adds 4 a second per Fire rune. A brush costs half what it did (12 a rune), a full stay the same (about 47 / 86 / 124 for 1 / 2 / 3 Fire). Before, it re-lit in 3-second steps, so a brush and 2.9 s cost alike.
+- **Area is the close, risky cast, so a spray element's ring is its strongest instant hit on its own axis** (the user agreed). The Frost ring chills twice as hard (16 frost a Cold rune; its chill leaves out the blast factor that turns Cold's per-second damage into one hit), now ahead of the Freezing fog as the instant option (mean chill 0.29 against 0.26). The Splash ring pushes twice as far (1.4 u a Water rune). The Fire ring's burst already was. One Frost ring on a wet Brute is just enough for a short freeze.
+- Golden hash `09029372` → `1cb8dc39` (Chrome and node agree).

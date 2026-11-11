@@ -28,6 +28,8 @@ export interface HitOpts {
   push: number;
   /** Status durations scale with this too (channels apply statuses per tick). */
   statusScale?: number;
+  /** Multiplies the element's own axis only (chill, push): the Frost and Splash rings (effects.ts disc). */
+  axis?: number;
   /** A shot, beam or spray arriving along (dirX, dirY): a shieldbearer's guard can block it from the front. */
   frontal?: boolean;
 }
@@ -131,7 +133,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     if (b.burn[t] > 0) b.burn[t] = 0;
     // (a spray soaks a little per tick, but never for less than wetMin, or there'd be no time to follow it with Cold)
     else if (!o.freeze) b.wet[t] = Math.max(b.wet[t], T(STATUS.wetMin), Math.round(T(STATUS.wet) * Math.min(1, ss * 4)));
-    if (o.push) addKnock(w, t, o.dirX, o.dirY, o.push * water * ss);
+    if (o.push) addKnock(w, t, o.dirX, o.dirY, o.push * water * ss * (o.axis ?? 1));
     // Water can finish what Cold started, so the order doesn't matter. (Cold in the same spell goes through its own branch; Fire would only thaw it.)
     if (!cold && !ice && !fire) tryFreeze(w, t);
   }
@@ -149,7 +151,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     // By rune, not by damage: each Cold rune fills the frost pool by chillPerRune, an Ice rune by a share of that, scaled
     // like the hit (a channel tick, a shard) and by the body's cold weakness or resistance. Only Water freezes.
     const coldK = (arch?.coldMult ?? 1) * taken(w, t, RES.cold);
-    addChill(w, t, (cold + ice * STATUS.iceChill) * STATUS.chillPerRune * o.scale * coldK);
+    addChill(w, t, (cold + ice * STATUS.iceChill) * STATUS.chillPerRune * o.scale * coldK * (o.axis ?? 1));
     if (wasWet) tryFreeze(w, t);
   }
   if (o.scald) dmg += STATUS.scaldBonus * o.scale;

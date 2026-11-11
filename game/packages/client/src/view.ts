@@ -377,6 +377,7 @@ export class WorldView {
       for (let i = 0; i < MAX_BODIES; i++) if (this.views[i].on && this.sprites[i].visible) lit.relight(this.sprites[i], fx0 + this.views[i].x, fy0 + this.views[i].y);
       this.props.sprites((s, x, y) => lit.relight(s, x, y));
       this.structs.eachPiece((s, x, y) => lit.relight(s, x, y));
+      this.structs.eachGlow((s, k) => lit.emit(s, k));
       lit.render(this.renderer);
     }
     const me = this.vfx.localSeat;

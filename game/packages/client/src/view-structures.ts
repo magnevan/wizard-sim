@@ -95,7 +95,7 @@ const WEAPON_HAND = 1;
 
 // =====================================================================================================
 // Depth-sorted pieces: sprites in the actors container, either cached textures or per-frame canvases.
-interface Dyn { c: HTMLCanvasElement; x: Ctx; tex: Texture; spr: Sprite; w: number; h: number; used: boolean }
+interface Dyn { c: HTMLCanvasElement; x: Ctx; tex: Texture; spr: Sprite; w: number; h: number; used: boolean; glow: number }
 class Pieces {
   private stat: Sprite[] = [];
   private footX: number[] = [];
@@ -116,8 +116,10 @@ class Pieces {
     this.nS++;
     s.texture = tex; s.position.set(this.fx0 + rx, this.fy0 + ry); s.zIndex = Math.round(z) * 128 + 100; s.tint = tint; s.visible = true;
   }
-  /** A fresh canvas covering field rect (rx, ry, w, h), translated so the caller draws in field px. */
-  canvas(rx: number, ry: number, w: number, h: number, z: number, tint = 0xffffff): Ctx {
+  /** The canvases drawn this frame that give off their own light (glow 0..1): the lighting adds them back over the night's tint. */
+  eachGlow(fn: (s: Sprite, k: number) => void): void { for (const d of this.dyn) if (d.used && d.glow > 0) fn(d.spr, d.glow); }
+  /** A fresh canvas covering field rect (rx, ry, w, h), translated so the caller draws in field px. glow: how much it emits (energy). */
+  canvas(rx: number, ry: number, w: number, h: number, z: number, tint = 0xffffff, glow = 0): Ctx {
     rx = Math.floor(rx); ry = Math.floor(ry);
     const W = Math.ceil(w / 16) * 16, H = Math.ceil(h / 16) * 16;
     let d = this.dyn.find((q) => !q.used && q.w === W && q.h === H);
@@ -125,10 +127,10 @@ class Pieces {
       const { c, x } = X.canvas(W, H);
       const tex = Texture.from(c); tex.source.scaleMode = 'nearest';
       const spr = new Sprite(tex); this.parent.addChild(spr);
-      d = { c, x, tex, spr, w: W, h: H, used: false };
+      d = { c, x, tex, spr, w: W, h: H, used: false, glow: 0 };
       this.dyn.push(d);
     }
-    d.used = true;
+    d.used = true; d.glow = glow;
     const x = d.x;
     x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, W, H); x.setTransform(1, 0, 0, 1, -rx, -ry); x._fs = null;
     d.spr.position.set(this.fx0 + rx, this.fy0 + ry); d.spr.zIndex = Math.round(z) * 128 + 100; d.spr.tint = tint; d.spr.visible = true;
@@ -311,6 +313,8 @@ export class StructureView {
   constructor(actors: Container) { this.pieces = new Pieces(actors); }
   /** Every wall piece drawn this frame, and where it stands in the scene, for the lighting. */
   eachPiece(fn: (s: Sprite, x: number, y: number) => void): void { this.pieces.each(fn); }
+  /** Energy pieces (barriers, coated fields, the gate's fire), which light themselves. */
+  eachGlow(fn: (s: Sprite, k: number) => void): void { this.pieces.eachGlow(fn); }
   get pieceOrigin(): [number, number] { return this.pieces.origin; }
   /** Draws something anchored on the ground so what stands in front hides it (Vfx.behind). Set by the view. */
   behind: ((ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread?: boolean, bodiesToo?: boolean) => void) | null = null;
@@ -682,7 +686,7 @@ export class StructureView {
       }
       if (ty === WALL.barrier) {
         const h = 16 * rise;
-        const c = this.pieces.canvas(x0 - 3, y0 - h - 6, x1 - x0 + 7, y1 - y0 + h + 10, mid[1]);
+        const c = this.pieces.canvas(x0 - 3, y0 - h - 6, x1 - x0 + 7, y1 - y0 + h + 10, mid[1], 0xffffff, 1);
         S.sheetCols(c, cols, h, t, kS, EL.shield, RGB.shield, k, hitE);
         if (k % 2 === 0) light(mid[0], mid[1], 30, '#ffc83a', 0.32 * kS * rise);
         continue;
@@ -735,7 +739,7 @@ export class StructureView {
     const R: Ramp = lid === ELID.life ? LIFE : frosty(lel) ? X.FROST : ramp(lid);
     const x0 = Math.min(a[0], bb[0]), x1 = Math.max(a[0], bb[0]), y0 = Math.min(a[1], bb[1]), y1 = Math.max(a[1], bb[1]);
     const h = 16 * rise, crest = h * (0.62 + 0.38 * kS), head = 16;
-    const c = this.pieces.canvas(x0 - 6, y0 - h - head, x1 - x0 + 13, y1 - y0 + h + head + 6, mid[1]);
+    const c = this.pieces.canvas(x0 - 6, y0 - h - head, x1 - x0 + 13, y1 - y0 + h + head + 6, mid[1], 0xffffff, 1);
     S.sheetCols(c, cols, h, t, kS, R, RGB[lel] ?? RGB.arcane, k, hitE);
     // the Shield underneath: gold seams climbing the foot every few pixels, and a gold base line where the coat is thin
     const GD = EL.shield, n = cols.length;
@@ -797,7 +801,7 @@ export class StructureView {
     const pulse = 1 - clamp(((w.clock[0] - wl.born[k]) % 30) / 8, 0, 1);
     const x0 = Math.min(a[0], bb[0]), x1 = Math.max(a[0], bb[0]), y0 = Math.min(a[1], bb[1]), y1 = Math.max(a[1], bb[1]);
     const h = (el === 'fire' ? 15 : 14) * (wl.owner[k] === TERRAIN ? GATE_FIRE : 1) * rise, head = 18;
-    const c = this.pieces.canvas(x0 - 6, y0 - h - head, x1 - x0 + 13, y1 - y0 + h + head + 6, mid[1]);
+    const c = this.pieces.canvas(x0 - 6, y0 - h - head, x1 - x0 + 13, y1 - y0 + h + head + 6, mid[1], 0xffffff, 1);
     const P = S.sample([a, bb], 4);
     if (el === 'fire') {
       for (const p of cols) if (rand(Math.round(p[0]), Math.round(p[1]), 41) < 0.33) X.ellipse(g, p[0], p[1], 2.5, 1.2, 'rgba(26,16,14,0.5)');

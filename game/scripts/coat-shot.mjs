@@ -1,5 +1,5 @@
 // The Shield art pass (2026-11-11): coated force fields side by side, the imbue's skin on a body, the stored spell armed
-// and held. Usage (after npm run build): node scripts/coat-shot.mjs [--out shots/coat.png]
+// and held. Usage (after npm run build): node scripts/coat-shot.mjs [--out shots/coat.png] [--mood night]
 // Writes <out> (the fields), <out>-imbue.png, <out>-armed.png and <out>-held.png.
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -7,6 +7,7 @@ import puppeteer from 'puppeteer-core';
 import { BASE, findChrome, startPreview } from './serve.mjs';
 const argOut = process.argv.indexOf('--out');
 const OUT = argOut > 0 ? process.argv[argOut + 1] : 'shots/coat.png';
+const argMood = process.argv.indexOf('--mood'), MOOD = argMood > 0 ? `&mood=${process.argv[argMood + 1]}` : '';
 mkdirSync(dirname(OUT), { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const stop = await startPreview();
@@ -15,7 +16,7 @@ try {
   const p = await browser.newPage();
   p.on('pageerror', (e) => console.error('PAGE ERROR', e.message));
   await p.setViewport({ width: 1280, height: 800 });
-  await p.goto(`${BASE}?timerloop=1&debug=0#arena`);
+  await p.goto(`${BASE}?timerloop=1&debug=0${MOOD}#arena`);
   await p.waitForFunction(() => window.wizardSim?.view.groundReady, { timeout: 60000, polling: 100 });
   await sleep(600);
   // ids: water 1, life 2, shield 3, cold 4, lightning 5, arcane 6, sigil 7, fire 8, earth 9, ice 10

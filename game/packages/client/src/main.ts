@@ -321,8 +321,10 @@ async function boot(): Promise<void> {
   // ?perf=1: per-frame timings (ms) for scripts/perf.mjs; steps = sim steps run that frame
   const perf = params.get('perf') === '1' ? { sim: [] as number[], steps: [] as number[], help: [] as number[], draw: [] as number[], render: [] as number[], frame: [] as number[] } : null;
   let stepsRun = 0;
+  let lastFrame = performance.now();
   const frame = () => {
     const now = performance.now();
+    lastFrame = now;
     stepsRun = 0;
     if (pauseAt && world.clock[0] >= pauseAt && !tools.paused) tools.paused = true;
     if (menuAsk && menuAt && world.clock[0] >= menuAt && !menu!.open) menu!.show(menuSection ?? 'Resume');
@@ -375,6 +377,20 @@ async function boot(): Promise<void> {
   });
   const schedule = (headless || params.get('timerloop') === '1') && params.get('rafloop') !== '1' ? (f: () => void) => setTimeout(f, 1000 / 60) : (f: () => void) => requestAnimationFrame(f);
   schedule(frame);
+  // A co-op match must go on in a page that gets no animation frames (a hidden tab, a window covered by another, a
+  // minimised one): otherwise it stops stepping and sending, and the others drop it the moment anyone acts. While frames
+  // have stopped, a worker's timer (not throttled the way a hidden page's own timers are) runs the net and the sim,
+  // without drawing; the next frame takes over again.
+  const pump = () => {
+    const now = performance.now();
+    if (now - lastFrame < 120 || net?.state !== 'playing' || atkScene) return;
+    netSteps(now);
+    last = now;
+  };
+  try {
+    const src = URL.createObjectURL(new Blob(['setInterval(() => postMessage(0), 16);'], { type: 'text/javascript' }));
+    new Worker(src).onmessage = pump;
+  } catch { window.setInterval(pump, 16); } // no workers here (a locked-down page): plain timers, throttled but better than none
 
   // Expose the recorder for debugging: copy a replay of this session from the console.
   (window as unknown as { wizardSim: unknown }).wizardSim = {

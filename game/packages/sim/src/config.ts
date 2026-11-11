@@ -126,7 +126,17 @@ export const SHAPES = {
   delayedBlast: 0.6, // geyser rumble / arcane blast fuse
   swingRange: 1.6, swingHalfAngle: 0.15,
   /** The imbued burst (Weapon cast with elements, no Sigil or Shield): a cone in front of you, a little longer per extra rune. */
-  imbueRange: 2.5, imbuePerRune: 0.25, imbueHalf: 0.17,
+  imbueRange: 2.5, imbuePerRune: 0.6, imbueHalf: 0.17, // per rune was 0.25: the user wanted it to grow like the nova (2026-11-11)
+  /**
+   * An Earth-led burst is a line, a tremor through the ground (the user, 2026-11-11: "very small radius, longer range"),
+   * whatever else is infused: whoever stands within lineHalf of it (u, plus their own radius) is hit.
+   */
+  imbueLineRange: 4.5, imbueLinePerRune: 0.9, imbueLineHalf: 0.45,
+  /**
+   * A Lightning-led burst forks: bolts from the staff to the nearest targets in the cone, each jumping on to one more.
+   * Against the channelled arc it is all up front (the user: more damage at once, a little less rune-efficient, no channel).
+   */
+  forkRange: 4, forkTargets: 3, forkPower: 1.6, forkJump: 0.6,
   /** The burst's power against the ring's. It's 1 because the cone already earns its place: it spares allies beside and behind you. */
   imbuePower: 1,
   /** A Fire ring's or burst's direct hit, times Fire's table damage (which is set for a spray's per-second rate). */

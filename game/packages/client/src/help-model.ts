@@ -10,7 +10,7 @@
 import { rules, type Cast, type Element, type SpellDescriptor } from '@wizard-sim/rules';
 import {
   ARMS, COMBAT, DAMAGE, GUARD_NAME, QUEUE_MAX, RHYTHM, RUNES, SHAPES, STATUS, STRUCT, SURFACE,
-  compile, elementName, formCurve, type SpellSpec,
+  compile, elementName, formCurve, imbueReach, type SpellSpec,
 } from '@wizard-sim/sim';
 import type { Demo } from './demo';
 
@@ -233,7 +233,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
     case 'geyser': reach('RADIUS', 0.9 + 0.4 * n); m.push({ key: 'fuse', label: 'FUSE', v: SHAPES.delayedBlast, unit: 'S' }); break;
     case 'spring': reach('RADIUS', 1.4 + 0.4 * n); lasts(4 + 2 * n); break;
     case 'strike': reach('RADIUS', 0.9); break;
-    case 'imbue': reach('REACH', SHAPES.imbueRange + SHAPES.imbuePerRune * Math.max(0, spec.power - 1)); break;
+    case 'imbue': reach('REACH', imbueReach(spec)); break;
     case 'blink': reach('UP TO', STRUCT.blinkRange); break;
     case 'wave': m.push({ key: 'width', label: 'WIDTH', v: 2 * (STRUCT.waveHalf + STRUCT.waveHalfPerRune * (spec.formN - 1)), unit: 'U' }); break;
     case 'arcwall': case 'drawnwall': case 'ring': {

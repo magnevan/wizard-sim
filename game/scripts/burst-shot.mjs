@@ -7,10 +7,13 @@ import puppeteer from 'puppeteer-core';
 import { BASE, findChrome, startPreview } from './serve.mjs';
 const arg = (name, dflt) => { const i = process.argv.indexOf('--' + name); return i > 0 ? process.argv[i + 1] : dflt; };
 const OUT = arg('out', 'shots/bursts.png');
-const KEYS = arg('keys', 'qrfsga').split('');
+// rows of rune keys, comma-separated; a row of several keys queues them all (gf: Earth then Fire)
+const KEYS = arg('keys', 'q,r,f,s,g,a').split(',');
 const AIMS = { down: [60, 140], up: [-40, -150], right: [170, 30] };
 const aims = arg('aims', 'down,up').split(',');
-const TIMES = [80, 200, 350, 600, 1000];
+// --foes: enemies set out in front, for the bursts that pick targets (Lightning's fork)
+const FOES = process.argv.includes('--foes');
+const TIMES = (arg('times', '80,200,350,600,1000')).split(',').map(Number);
 const NAME = { q: 'water', w: 'life', r: 'cold', a: 'lightning', s: 'arcane', f: 'fire', g: 'earth' };
 const CW = 420, CH = 300;
 mkdirSync(dirname(OUT), { recursive: true });
@@ -40,8 +43,26 @@ try {
       await new Promise((r) => setTimeout(r, 60));
       return g.world.events.some((e) => e.kind === 'move' && e.text === 'imbue');
     }, n);
+    if (FOES) {
+      // a wave's enemies, set out in front of the caster along the aim: three in the cone, one further on to jump to
+      await p.evaluate(() => window.wizardSim.startWave(1));
+      const foes = () => p.evaluate(() => { const b = window.wizardSim.world.bodies; let n = 0; for (let i = 1; i < b.hp.length; i++) if (b.hp[i] > 0 && b.team[i] !== b.team[0]) n++; return n; });
+      for (let k = 0; k < 40 && (await foes()) < 4; k++) await step(15);
+      console.log('foes', await foes());
+      await p.evaluate(() => {
+        const w = window.wizardSim.world, b = w.bodies, s = w.seats, L = Math.hypot(s.aimX[0], s.aimY[0]) || 1, ux = s.aimX[0] / L, uy = s.aimY[0] / L;
+        const spots = [[2, 0], [2.7, 0.9], [3.2, -0.9], [5.6, -0.6]];
+        let k = 0;
+        for (let i = 1; i < b.hp.length && k < spots.length; i++) {
+          if (!(b.hp[i] > 0) || b.team[i] === b.team[0]) continue;
+          const [a, sd] = spots[k++];
+          b.x[i] = b.x[0] + ux * a - uy * sd; b.y[i] = b.y[0] + uy * a + ux * sd;
+        }
+      });
+      await step(1);
+    }
     let fired = false;
-    await p.keyboard.down(key); await step(2); await p.keyboard.up(key); await step(2);
+    for (const k1 of key) { await p.keyboard.down(k1); await step(2); await p.keyboard.up(k1); await step(2); }
     await p.keyboard.down('Shift'); await p.mouse.down({ button: 'left' });
     for (let k = 0; k < 3 && !fired; k++) fired = await step(1);
     await p.mouse.up({ button: 'left' }); await p.keyboard.up('Shift');
@@ -54,7 +75,7 @@ try {
       if (want > tick) { await step(want - tick); tick = want; }
       frames.push((await p.screenshot({ clip: { x: at.x - CW / 2, y: at.y - CH / 2 - 20, width: CW, height: CH }, encoding: 'base64' })));
     }
-    rows.push({ label: `${NAME[key] ?? key} ${aim}`, frames });
+    rows.push({ label: `${[...key].map((k1) => NAME[k1] ?? k1).join('+')} ${aim}`, frames });
     await p.close();
   }
   // the contact sheet

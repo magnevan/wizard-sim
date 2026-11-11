@@ -22,8 +22,11 @@ type Noise = (th: number, t: number) => number;
 /** From tallest to shortest: each band is a height fraction of its column and a colour. */
 type Bands = readonly (readonly [number, string])[];
 interface Layer { rr: number; step: number; lean: number; bands: Bands; height: (th: number) => number; calm?: (th: number) => number; stripes?: boolean }
-/** half: 0 for a whole ring; otherwise a directed burst, only the cone `aim` ± `half` (radians, on the ground). */
-interface Nova { o: Ctx; g: Ctx; x: number; y: number; mx: number; my: number; r: number; e: number; t: number; sd: number; light: NovaLight; part: NovaPart; aim: number; half: number }
+/**
+ * half: 0 for a whole ring; otherwise a directed burst, only the cone `aim` ± `half` (radians, on the ground).
+ * rider: for an Earth line, the element infused into it (it rides along the crack).
+ */
+interface Nova { o: Ctx; g: Ctx; x: number; y: number; mx: number; my: number; r: number; e: number; t: number; sd: number; light: NovaLight; part: NovaPart; aim: number; half: number; rider?: number }
 
 const EL = X.EL;
 const DARK_SCORCH = '#160e10';
@@ -402,6 +405,36 @@ function fissure(c: Ctx, x: number, y: number, a: number, d0: number, d1: number
 }
 
 /**
+ * The element infused into an Earth line, riding along the crack (the user: the line's shape carries over as other
+ * elements are infused): it bursts out of the crack where the front passes and dies down behind it. Fire: tongues of
+ * flame and a scorch; cold: frost and crystals; water: splashes; arcane and lightning: sparks and a glow.
+ */
+function lineRider(n: Nova, front: number): void {
+  const { o, g, x, y, r, e, sd, light, part, aim } = n, ca = Math.cos(aim), sa = Math.sin(aim);
+  const el = n.rider!, R = el === 4 ? X.FROST : el === 2 ? X.LIFE : EL[['', 'water', 'life', 'shield', 'cold', 'lightning', 'arcane', 'sigil', 'fire', 'earth'][el]] ?? EL.arcane;
+  const at = (d: number, off: number): Pt => [x + ca * d - sa * off, y + (sa * d + ca * off) * FY];
+  const N = Math.max(8, Math.round(r / 5));
+  for (let i = 0; i < N; i++) {
+    const d = 6 + ((r - 6) * (i + rand(i, 91, sd) * 0.8)) / N, off = (rand(i, 92, sd) - 0.5) * 4;
+    const hit = (0.45 * (d - 4)) / Math.max(1, r - 4), age = (e - hit) / (el === 8 ? 0.9 : 0.6);
+    if (age < 0 || age >= 1 || d > front + 2) continue;
+    const [px, py] = at(d, off), k = 1 - age;
+    if (part === 'far') {
+      // what it leaves on the floor along the crack
+      if (el === 8) K.scorch(g, px, py, 3 + rand(i, 93, sd) * 2, 0.5 * k);
+      else if (el === 4) { X.px(g, px - 1, py, R[2]); X.px(g, px + 1, py, R[3]); }
+      else if (el === 1) X.ellipse(g, px, py, 3, 1.5, R[3], 0.5 * k);
+      continue;
+    }
+    if (el === 8) K.tongue(o, px, py, 2.2, (6 + 8 * rand(i, 94, sd)) * Math.sin(Math.PI * Math.min(1, age * 1.4)), ca * 2);
+    else if (el === 4) K.shard(o, px, py - 2, -Math.PI / 2 + (rand(i, 95, sd) - 0.5), (3 + 4 * rand(i, 96, sd)) * Math.min(1, age * 4), sd + i, k);
+    else if (el === 1) { const z = 10 * age - 14 * age * age; X.px(o, px + off, py - 2 - z * 2, i % 2 ? R[0] : R[1]); X.px(o, px - off, py - 1 - z, R[1]); }
+    else { X.px(o, px, py - 2 - age * 6, age < 0.4 ? '#ffffff' : R[1]); if (age < 0.3) X.glow(o, px, py - 3, 6, R[2], 0.6 * (1 - age / 0.3)); }
+  }
+  if (part === 'near' && front < r) { const [lx, ly] = at(front, 0); light(lx, ly, 34, R[2], 0.6 * (1 - seg(e, 0.3, 0.7))); }
+}
+
+/**
  * Earth burst (the user, 2026-11-11: "a small directed earthquake propagating through the ground"). A front of heaving
  * floor rolls out across the cone at an even pace; slabs of floor punch up as it reaches them and drop back; a fissure
  * tears open behind it along the aim, with branches; dust and grit are thrown up along the front.
@@ -442,6 +475,7 @@ function earthBurst(n: Nova): void {
     const q = clamp(e / T, 0, 1);
     K.puff(o, x + Math.cos(th) * front, y + Math.sin(th) * front * FY - 3 - q * 6, 2 + q * 4, i % 2 ? '#9a8a76' : '#6a5a4a', 0.6 * live * k);
   }
+  if (n.rider) lineRider(n, front);
   // grit and stones flung up where the front passes
   for (let i = 0; i < 22; i++) {
     const th = pick(n, rand(i, 81, sd)), born = rand(i, 82, sd) * T, age = (e - born) / (0.35 + rand(i, 83, sd) * 0.2);
@@ -451,18 +485,39 @@ function earthBurst(n: Nova): void {
   }
 }
 
+/**
+ * Lightning burst: the bolts themselves are the sim's zaps (it forks to its targets, drawn as arcs); here only the
+ * crack of it leaving the staff, a white flash and sparks spat forward along the cone.
+ */
+function lightningBurst(n: Nova): void {
+  const { o, x, y, e, sd, light, part, aim } = n, R = EL.lightning;
+  const hx = x + Math.cos(aim) * 7, hy = y - 9 + Math.sin(aim) * 7 * FY;
+  if (part !== 'near') return;
+  if (e < 0.1) { const f0 = 1 - e / 0.1; X.glow(o, hx, hy, 20, R[1], 0.9 * f0); X.ellipse(o, hx, hy, 2 + 5 * f0, 2 + 4 * f0, '#ffffff', f0); }
+  for (let i = 0; i < 14 && e < 0.3; i++) {
+    const th = pick(n, rand(i, 71, sd)), age = e / (0.15 + rand(i, 72, sd) * 0.15);
+    if (age >= 1) continue;
+    const d = 3 + age * (10 + rand(i, 73, sd) * 14);
+    X.px(o, hx + Math.cos(th) * d, hy + Math.sin(th) * d * FY - age * 3, i % 3 ? R[1] : '#ffffff');
+  }
+  light(hx, hy, 50, R[2], 0.9 * (1 - seg(e, 0, 0.3)));
+}
+
 const NOVAS: Partial<Record<number, (n: Nova) => void>> = { 1: water, 2: life, 4: cold, 6: arcane, 8: fire };
-/** The Weapon cast with elements (the imbued burst), directed: the novas cut to a cone, and arcane's and earth's own. */
-const BURSTS: Partial<Record<number, (n: Nova) => void>> = { 1: water, 4: cold, 6: arcaneBurst, 8: fire, 9: earthBurst };
+/** The Weapon cast with elements (the imbued burst), directed: the novas cut to a cone, and arcane's, earth's and lightning's own. */
+const BURSTS: Partial<Record<number, (n: Nova) => void>> = { 1: water, 4: cold, 5: lightningBurst, 6: arcaneBurst, 8: fire, 9: earthBurst };
 /** How long each burst plays, s. */
-export const BURST_LIFE: Partial<Record<number, number>> = { 1: 1.2, 4: 1.4, 6: 0.75, 8: 1.8, 9: 1.4 };
+export const BURST_LIFE: Partial<Record<number, number>> = { 1: 1.2, 4: 1.4, 5: 0.4, 6: 0.75, 8: 1.8, 9: 1.4 };
 /** Has element `look` a burst of its own here? */
 export const hasBurst = (look: number): boolean => !!BURSTS[look];
-/** Draws one pass of element `look`'s burst from (x, y) along the cone aim ± half (radians on the ground), out to r px. */
-export function drawBurst(o: Ctx, g: Ctx, look: number, x: number, y: number, r: number, e: number, t: number, sd: number, light: NovaLight, part: NovaPart, aim: number, half: number): boolean {
+/**
+ * Draws one pass of element `look`'s burst from (x, y) along the cone aim ± half (radians on the ground), out to r px.
+ * rider: for an Earth line, the element infused into it.
+ */
+export function drawBurst(o: Ctx, g: Ctx, look: number, x: number, y: number, r: number, e: number, t: number, sd: number, light: NovaLight, part: NovaPart, aim: number, half: number, rider = 0): boolean {
   const draw = BURSTS[look];
   if (!draw) return false;
-  draw({ o, g, x, y, mx: x, my: y, r, e, t, sd, light, part, aim, half });
+  draw({ o, g, x, y, mx: x, my: y, r, e, t, sd, light, part, aim, half, rider });
   return true;
 }
 

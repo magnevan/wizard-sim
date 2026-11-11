@@ -13,7 +13,7 @@ import { inCone, len, rayCircle } from './geom';
 import { HIT_KIND, addChill, addKnock, applyHit, ignite, setHitKind, tryFreeze, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { TERRAIN_HIT, clipRay, collideWalls, damageWall, isRockHit, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
-import { WALL, compile } from './compile';
+import { WALL, compile, imbueReach } from './compile';
 import { ARCHETYPES } from './archetypes';
 import { RES, grounded, guardMissile, phased, taken, warm } from './guards';
 import { noteBlocked } from './tutorial-data';
@@ -232,11 +232,20 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       break;
     case 'imbue': {
       // The imbued burst: every queued element at full power in a short cone in front of you, as Magicka's imbue-and-release. Nothing stays in hand.
-      const reach = SHAPES.imbueRange + SHAPES.imbuePerRune * Math.max(0, spec.power - 1);
-      setHitKind(HIT_KIND.burst);
-      for (let i = 0; i < b.kind.length; i++) {
-        if (!alive(w, i) || i === src || !inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
-        hit(w, i, p, hitOpts(p, src, k * blast * SHAPES.imbuePower, dx, dy));
+      const reach = imbueReach(spec);
+      if (spec.form === EL.lightning) fork(w, src, spec, face, reach, k);
+      else {
+        setHitKind(HIT_KIND.burst);
+        const line = spec.form === EL.earth;
+        for (let i = 0; i < b.kind.length; i++) {
+          if (!alive(w, i) || i === src) continue;
+          if (line) {
+            // along the line: how far out, and how far to the side
+            const rx = b.x[i] - x, ry = b.y[i] - y, along = rx * dx + ry * dy, side = Math.abs(rx * dy - ry * dx);
+            if (along < -b.r[i] || along > reach + b.r[i] || side > SHAPES.imbueLineHalf + b.r[i]) continue;
+          } else if (!inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
+          hit(w, i, p, hitOpts(p, src, k * blast * SHAPES.imbuePower, dx, dy));
+        }
       }
       let mask = 0;
       for (let e = 1; e <= N_EL; e++) if (spec.counts[e - 1]) mask |= 1 << e;
@@ -423,6 +432,40 @@ export function chain(w: World, src: number, spec: SpellSpec, face: number, scal
     zap(w, cur, next, p, scale * 0.8);
     visited.push(next);
     cur = next;
+  }
+}
+
+/**
+ * The Lightning-led burst: bolts from the staff to the nearest targets in the cone at once (one more per extra Lightning),
+ * each jumping on to one more body near it. With nothing in reach, a few bolts fork into the air.
+ */
+function fork(w: World, src: number, spec: SpellSpec, face: number, reach: number, k: number): void {
+  const b = w.bodies, x = b.x[src], y = b.y[src], p = payloadOf(spec);
+  const n = SHAPES.forkTargets + Math.max(0, spec.counts[EL.lightning - 1] - 1);
+  const hitList = [src];
+  for (let g = 0; g < MAX_SEATS; g++) if (grounded(w, g)) hitList.push(g);
+  const firsts: number[] = [];
+  for (let m = 0; m < n; m++) {
+    let best = -1, bd = Infinity;
+    for (let i = 0; i < b.kind.length; i++) {
+      if (!alive(w, i) || hitList.includes(i) || !inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
+      const d = len(b.x[i] - x, b.y[i] - y);
+      if (d < bd && clearLine(w, x, y, b.x[i], b.y[i])) { bd = d; best = i; }
+    }
+    if (best < 0) break;
+    hitList.push(best); firsts.push(best);
+  }
+  for (const t of firsts) zap(w, src, t, p, k * SHAPES.forkPower);
+  for (const t of firsts) {
+    const next = nearest(w, b.x[t], b.y[t], SHAPES.arcJump * (b.wet[t] ? 1.5 : 1), hitList, 0, true);
+    if (next < 0) continue;
+    zap(w, t, next, p, k * SHAPES.forkJump);
+    hitList.push(next);
+  }
+  // bolts into the air where there was no one to take them
+  for (let m = firsts.length; m < Math.min(n, 3); m++) {
+    const a = face + (m - 1) * SHAPES.imbueHalf * 0.6, d = clipRay(w, x, y, cosTurns(a), sinTurns(a), reach * 0.7)[0];
+    w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x, y, x2: x + cosTurns(a) * d, y2: y + sinTurns(a) * d, look: spec.look });
   }
 }
 

@@ -8,6 +8,14 @@
  */
 import { rules, type Cast, type Element } from '@wizard-sim/rules';
 import { EL, countsOf } from './elements';
+import { SHAPES } from './config';
+
+/** How far the imbued burst reaches, u: an Earth-led one is a long line, a Lightning-led one forks further than the cone. */
+export function imbueReach(spec: SpellSpec): number {
+  const extra = Math.max(0, spec.power - 1);
+  if (spec.form === EL.earth) return SHAPES.imbueLineRange + SHAPES.imbueLinePerRune * extra;
+  return (spec.form === EL.lightning ? SHAPES.forkRange : SHAPES.imbueRange) + SHAPES.imbuePerRune * extra;
+}
 
 export type Shape =
   | 'beam' | 'spray' | 'arc' | 'missile' | 'shards'      // Force

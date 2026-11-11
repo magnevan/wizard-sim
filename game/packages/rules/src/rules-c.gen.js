@@ -201,7 +201,12 @@ const module = { exports: {} };
   };
   const SWING = { earth: 'Stone burst', arcane: 'Arcane burst', life: 'Healing burst', lightning: 'Shock burst', water: 'Water burst', fire: 'Fire burst', cold: 'Frost burst' };
   // the imbued burst: the staff imbued with the queue and released, as in Magicka
-  const swing = (f) => () => [SWING[f], 'A burst of every queued element in a short cone in front of you, at full power. Nothing stays in your hand. The cone reaches about 2.5 units, a little more per extra rune; add Sigil for a conjured weapon, or Shield for a defensive one.'];
+  // Earth's is a line through the ground, and Lightning's forks (the user, 2026-11-11); the others are a cone
+  const SWING_TEXT = {
+    earth: 'A tremor runs through the ground in a straight line in front of you, carrying every queued element at full power to whoever stands on it, whatever else you infuse. Nothing stays in your hand. The line reaches about 4.5 units, almost one more per extra rune',
+    lightning: 'Bolts fork from your staff to the three nearest targets in front of you, one more per extra Lightning, each hitting hard at once and jumping on to one more. Unlike the arc, it all lands up front: no channel. Nothing stays in your hand. It reaches about 4 units, a little more per extra rune',
+  };
+  const swing = (f) => () => [SWING[f], (SWING_TEXT[f] ?? 'A burst of every queued element in a short cone in front of you, at full power. Nothing stays in your hand. The cone reaches about 2.5 units, and grows by about 0.6 per extra rune') + '; add Sigil for a conjured weapon, or Shield for a defensive one.'];
   const glyphName = (o) => o.sub ? ELEMENTS[o.sub].name + ' ' : '';
 
   const CELLS = {

@@ -183,3 +183,7 @@ By missing runes chokes the small and nearly full pools (the user's worry): Cold
 Attune was rune-positive by about 8 runes a cast; it now nets about 2 for 16 HP and 3 s of taking 25 % more damage. The Life self-heal is a burst (the channel its text promised was dropped). The mistake elements stay. **Open: a cooler spell than the Double for Sigil alone on yourself** (the user isn't a fan of the Double).
 
 Next: the cross-cut by cast (Force, Area, Place, Self, Weapon side by side), the last step of the audit.
+
+## Pass 2, step 9: the cross-cut (decided and built 2026-11-11)
+
+Earth's n^1.3 is Rock's alone; Arcane's one-shots x1.6; the Water burst pushes; delayed Place zones keep their cast's power. Open: Steam's niche (and the mist). This ends the audit's planned steps; what's left open across it: Steam's niche and mist, a cooler spell than the Double, the coated field's look (it still draws as a walk-through curtain), the imbue's motes (to re-use the elemental ward's look), the debt-free ghost runes in play, and the Rune Economy page, which still simulates the old regen.

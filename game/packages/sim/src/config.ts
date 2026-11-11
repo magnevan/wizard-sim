@@ -202,6 +202,8 @@ export const SHAPES = {
   fireBlast: 2,
   /** Ice's ring and burst, so the close cast beats the shards (spell audit, 2026-11-11: it was 16 for its two runes). */
   iceBlast: 2,
+  /** Arcane's one-shot casts (nova, blast, burst): a flat bonus, as its table damage is the beam's per-second rate (the cross-cut, 2026-11-11). */
+  arcaneBlast: 1.6,
   /** The same for Cold, kept below Fire's: Cold's job is the slow, and it has no burn on top. */
   coldBlast: 1.6,
   push: 6, // u/s added per water rune (Push)

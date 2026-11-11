@@ -102,7 +102,10 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   for (let id = 1; id <= N_EL; id++) {
     const n = c(els, at, id);
     // The form element grows on its curve (elements.ts formCurve); a beam's counts once. The rest add a rune's worth each.
-    let d = DAMAGE[elementName(id)] * (id === form && n > 1 ? formCurve(form, n, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling) : n);
+    // Earth's steep curve is Rock's alone, the hard-to-land single missile; its quake, geyser and burst hit a crowd, so they grow
+    // like the other forms (the cross-cut, 2026-11-11: two Earth in an Earthquake did 91 against a Fire ring's 55)
+    const curveForm = form === EL.earth && hitKind !== HIT_KIND.missile ? 0 : form;
+    let d = DAMAGE[elementName(id)] * (id === form && n > 1 ? formCurve(curveForm, n, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling) : n);
     if (arch && id === EL.fire && arch.fireMult !== undefined) d *= arch.fireMult;
     if (arch && (id === EL.cold || id === EL.ice) && arch.coldMult !== undefined) d *= arch.coldMult;
     if (arch?.onlyFire && id !== EL.fire) d = 0; // a bramble: only fire hurts it

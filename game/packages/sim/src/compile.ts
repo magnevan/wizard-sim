@@ -132,7 +132,7 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
         spec.channel = true;
       } else spec.shape = cast === 'area' ? 'nova' : cast === 'place' ? 'patch' : 'imbue';
       // Water's own spray and splash push, as the rules say (SHAPES.push a Water rune); steam doesn't
-      if (d.form === 'water' && !scald && (cast === 'force' || cast === 'area')) spec.mod = 'push';
+      if (d.form === 'water' && !scald && (cast === 'force' || cast === 'area' || cast === 'conjure')) spec.mod = 'push'; // the Water burst pushes too
       return spec;
     case 'sigil':
       if (cast === 'force') spec.shape = d.sub ? 'turret' : 'store'; // Sigil alone: the stored spell (Blink moved to Shield)

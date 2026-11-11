@@ -21,152 +21,65 @@
   DOMINANT (median 88) FEEE  force   Fireball               one  146  pack  146  denied 0.58  chill 0  moved 1.1
   DOMINANT (median 88) EEEE  force   Rock                   one  166  pack  166  denied 4.93  chill 0  moved 0
   DOMINANT (median 101) EEEI  force   Ice boulder            one  217  pack  217  denied 0.75  chill 0.05  moved 3.2
-  weak     (median 21) W     area    Splash ring            one    4  pack   20  denied 0  chill 0  moved 1.4
-  DOMINANT (median 21) F     area    Fire ring              one   34  pack  170  denied 0  chill 0  moved 0
-  DOMINANT (median 21) E     area    Earthquake             one   36  pack  182  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 34) FF    area    Fire ring              one   55  pack  275  denied 0  chill 0  moved 0
-  DOMINANT (median 34) FE    area    Fire quake             one   65  pack  327  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 34) AE    area    Arcane quake           one   57  pack  286  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 34) EE    area    Earthquake             one   91  pack  454  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 51) WFE   area    Steam quake            one  109  pack  545  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 51) WEE   area    Water quake            one   96  pack  480  denied 0.58  chill 0  moved 1.4
-  DOMINANT (median 51) FFE   area    Fire quake             one   85  pack  424  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 51) FAE   area    Fire quake             one   89  pack  446  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 51) FEE   area    Fire quake             one  128  pack  640  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 51) CEE   area    Frost quake            one   97  pack  487  denied 0.58  chill 0.13  moved 0.7
-  DOMINANT (median 51) AEE   area    Arcane quake           one  112  pack  558  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 51) EEE   area    Earthquake             one  157  pack  786  denied 4.75  chill 0  moved 0.1
-  DOMINANT (median 69) WWFE  area    Steam quake            one  118  pack  592  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 69) WFFA  area    Steam nova             one  111  pack  553  denied 0  chill 0  moved 0
-  DOMINANT (median 69) WFFE  area    Steam quake            one  139  pack  695  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 69) WFAA  area    Steam nova             one  128  pack  640  denied 0  chill 0  moved 0
-  DOMINANT (median 69) WFAE  area    Steam quake            one  147  pack  735  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 69) WFEE  area    Steam quake            one  200  pack 1000  denied 4.7  chill 0  moved 0.1
-  DOMINANT (median 69) WCEE  area    Ice quake              one  112  pack  558  denied 0.58  chill 0.04  moved 0.7
-  DOMINANT (median 69) WAEE  area    Water quake            one  117  pack  584  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 69) WEEE  area    Water quake            one  162  pack  812  denied 4.7  chill 0  moved 0.3
-  DOMINANT (median 69) FFEE  area    Fire quake             one  148  pack  738  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 69) FAAE  area    Arcane quake           one  113  pack  566  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 69) FAEE  area    Fire quake             one  152  pack  760  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 69) FEEE  area    Fire quake             one  165  pack  826  denied 4.7  chill 0  moved 0.1
-  DOMINANT (median 69) CAEE  area    Frost quake            one  118  pack  591  denied 0.58  chill 0.13  moved 0.7
-  DOMINANT (median 69) CEEE  area    Frost quake            one  164  pack  818  denied 4.7  chill 0.33  moved 0.1
-  DOMINANT (median 69) AAEE  area    Arcane quake           one  132  pack  662  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 69) AEEE  area    Arcane quake           one  178  pack  890  denied 4.7  chill 0  moved 0.1
-  DOMINANT (median 69) EEEE  area    Earthquake             one  233  pack 1165  denied 4.7  chill 0  moved 0.2
-  DOMINANT (median 69) EEI   area    Ice quake              one  112  pack  558  denied 0.58  chill 0.04  moved 0.7
-  DOMINANT (median 75) AEEI  area    Ice quake              one  132  pack  662  denied 0.58  chill 0.04  moved 0.7
-  DOMINANT (median 75) EEEI  area    Ice quake              one  178  pack  890  denied 4.7  chill 0.2  moved 0.1
-  weak     (median 23) W     place   Rain                   one    2  pack   10  denied 0  chill 0  moved 0
-  DOMINANT (median 23) F     place   Fire patch             one   47  pack  236  denied 0  chill 0  moved 0
-  weak     (median 37) WW    place   Rain                   one    3  pack   14  denied 0  chill 0  moved 0
-  DOMINANT (median 37) WF    place   Steam cloud            one   71  pack  357  denied 0  chill 0  moved 0
-  weak     (median 37) WC    place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 37) FF    place   Fire patch             one   86  pack  429  denied 0  chill 0  moved 0
-  DOMINANT (median 37) EE    place   Geyser                 one   80  pack  402  denied 0.58  chill 0  moved 0.7
-  weak     (median 37) I     place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  weak     (median 49) WWW   place   Rain                   one    3  pack   17  denied 0  chill 0  moved 0
-  DOMINANT (median 49) WWF   place   Steam cloud            one   89  pack  447  denied 0  chill 0  moved 0
-  weak     (median 49) WWC   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  weak     (median 49) WWA   place   Water blast            one   24  pack  120  denied 0  chill 0  moved 1.4
-  DOMINANT (median 49) WFF   place   Steam cloud            one  106  pack  531  denied 0  chill 0  moved 0
-  weak     (median 49) WCC   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  weak     (median 49) WCL   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 49) WEE   place   Water geyser           one   85  pack  425  denied 0.58  chill 0  moved 1.4
-  weak     (median 49) WI    place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 49) FFF   place   Fire patch             one  124  pack  618  denied 0  chill 0  moved 0
-  DOMINANT (median 49) FFL   place   Fire strike            one   83  pack  414  denied 0.38  chill 0  moved 0
-  DOMINANT (median 49) FAE   place   Fire geyser            one   79  pack  397  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 49) FEE   place   Fire geyser            one  114  pack  569  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 49) CEE   place   Frost geyser           one   86  pack  431  denied 0.58  chill 0.04  moved 0.7
-  weak     (median 49) CI    place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 49) AEE   place   Arcane geyser          one   99  pack  494  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 49) EEE   place   Geyser                 one  139  pack  695  denied 12.17  chill 0  moved 0
-  weak     (median 56) WWWW  place   Rain                   one    4  pack   20  denied 0  chill 0  moved 0
-  DOMINANT (median 56) WWWF  place   Steam cloud            one  103  pack  515  denied 0  chill 0  moved 0
-  weak     (median 56) WWWC  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 56) WWFF  place   Steam cloud            one  149  pack  743  denied 0  chill 0  moved 0
-  weak     (median 56) WWCC  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 56) WWEE  place   Water geyser           one   90  pack  448  denied 0.58  chill 0  moved 2.1
-  weak     (median 56) WWI   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 56) WFFF  place   Steam cloud            one  133  pack  666  denied 0  chill 0  moved 0
-  DOMINANT (median 56) WFEE  place   Steam geyser           one   94  pack  469  denied 0.58  chill 0  moved 0.7
-  weak     (median 56) WCCC  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  weak     (median 56) WCCL  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  weak     (median 56) WCLL  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 56) WCEE  place   Ice geyser             one   99  pack  494  denied 0.58  chill 0.01  moved 0.7
-  weak     (median 56) WCI   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 56) WAEE  place   Water geyser           one  103  pack  517  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 56) WEEE  place   Water geyser           one  144  pack  718  denied 12.12  chill 0  moved 0
-  DOMINANT (median 56) FFFF  place   Fire patch             one  161  pack  803  denied 0  chill 0  moved 0
-  DOMINANT (median 56) FFFL  place   Fire strike            one  111  pack  557  denied 0.38  chill 0  moved 0
-  DOMINANT (median 56) FFFE  place   Fire geyser            one   93  pack  464  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 56) FFLL  place   Fire strike            one   98  pack  491  denied 0.38  chill 0  moved 0
-  DOMINANT (median 56) FFAE  place   Fire geyser            one   97  pack  483  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 56) FFEE  place   Fire geyser            one  131  pack  655  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 56) FAAE  place   Arcane geyser          one  101  pack  503  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 56) FAEE  place   Fire geyser            one  135  pack  674  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 56) FEEE  place   Fire geyser            one  146  pack  730  denied 12.12  chill 0  moved 0
-  DOMINANT (median 56) CCEE  place   Frost geyser           one   92  pack  460  denied 0.58  chill 0.15  moved 0.7
-  weak     (median 56) CCI   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 56) CAEE  place   Frost geyser           one  105  pack  523  denied 0.58  chill 0.04  moved 0.7
-  DOMINANT (median 56) CEEE  place   Frost geyser           one  145  pack  724  denied 12.12  chill 0.28  moved 0
-  DOMINANT (median 56) AAEE  place   Arcane geyser          one  117  pack  586  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 56) AEEE  place   Arcane geyser          one  157  pack  787  denied 12.12  chill 0  moved 0
-  DOMINANT (median 56) EEEE  place   Geyser                 one  206  pack 1030  denied 12.12  chill 0  moved 0
-  DOMINANT (median 56) EEI   place   Ice geyser             one   99  pack  494  denied 0.58  chill 0.01  moved 0.7
-  weak     (median 56) II    place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  weak     (median 54) WWWI  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  weak     (median 54) WWCI  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  weak     (median 54) WCCI  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 54) WEEI  place   Ice geyser             one  103  pack  517  denied 0.58  chill 0.01  moved 0.7
-  weak     (median 54) WII   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  weak     (median 54) CCCI  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 54) CEEI  place   Ice geyser             one  105  pack  523  denied 0.58  chill 0.09  moved 0.7
-  weak     (median 54) CII   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
-  DOMINANT (median 54) AAEI  place   Arcane geyser          one   87  pack  437  denied 0.58  chill 0.01  moved 0.4
-  DOMINANT (median 54) AEEI  place   Ice geyser             one  117  pack  586  denied 0.58  chill 0.01  moved 0.7
-  DOMINANT (median 54) EEEI  place   Ice geyser             one  157  pack  787  denied 12.12  chill 0.17  moved 0
-  weak     (median 21) W     conjure Water burst            one    4  pack   20  denied 0  chill 0  moved 0
-  DOMINANT (median 21) F     conjure Fire burst             one   34  pack  170  denied 0  chill 0  moved 0
-  weak     (median 21) C     conjure Frost burst            one    8  pack   40  denied 0  chill 0.19  moved 0
-  DOMINANT (median 21) E     conjure Stone burst            one   36  pack  182  denied 0.58  chill 0  moved 0.4
-  weak     (median 34) WW    conjure Water burst            one    6  pack   28  denied 0  chill 0  moved 0
-  DOMINANT (median 34) FF    conjure Fire burst             one   55  pack  275  denied 0  chill 0  moved 0
-  DOMINANT (median 34) FE    conjure Stone burst            one   65  pack  327  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 34) AE    conjure Stone burst            one   57  pack  286  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 34) EE    conjure Stone burst            one   91  pack  454  denied 0.58  chill 0  moved 0.7
-  weak     (median 51) WWW   conjure Water burst            one    7  pack   35  denied 0  chill 0  moved 0
-  DOMINANT (median 51) WFE   conjure Stone burst            one  109  pack  545  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 51) WEE   conjure Stone burst            one   96  pack  480  denied 0.58  chill 0  moved 1.4
-  DOMINANT (median 51) FFE   conjure Stone burst            one   85  pack  424  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 51) FAE   conjure Stone burst            one   89  pack  446  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 51) FEE   conjure Stone burst            one  128  pack  640  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 51) CEE   conjure Stone burst            one   97  pack  487  denied 0.58  chill 0.13  moved 0.7
-  DOMINANT (median 51) AEE   conjure Stone burst            one  112  pack  558  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 51) EEE   conjure Stone burst            one  157  pack  786  denied 4.78  chill 0  moved 0.1
-  weak     (median 69) WWWW  conjure Water burst            one    8  pack   40  denied 0  chill 0  moved 0
-  DOMINANT (median 69) WWFE  conjure Stone burst            one  118  pack  592  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 69) WFFA  conjure Arcane burst           one  111  pack  553  denied 0  chill 0  moved 0
-  DOMINANT (median 69) WFFE  conjure Stone burst            one  139  pack  695  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 69) WFAA  conjure Arcane burst           one  128  pack  640  denied 0  chill 0  moved 0
-  DOMINANT (median 69) WFAE  conjure Stone burst            one  147  pack  735  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 69) WFEE  conjure Stone burst            one  200  pack 1000  denied 4.73  chill 0  moved 0.1
-  DOMINANT (median 69) WCEE  conjure Stone burst            one  112  pack  558  denied 0.58  chill 0.04  moved 0.7
-  DOMINANT (median 69) WAEE  conjure Stone burst            one  117  pack  584  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 69) WEEE  conjure Stone burst            one  162  pack  812  denied 4.73  chill 0  moved 0.2
-  DOMINANT (median 69) FFEE  conjure Stone burst            one  148  pack  738  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 69) FAAE  conjure Stone burst            one  113  pack  566  denied 0.58  chill 0  moved 0.4
-  DOMINANT (median 69) FAEE  conjure Stone burst            one  152  pack  760  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 69) FEEE  conjure Stone burst            one  165  pack  826  denied 4.73  chill 0  moved 0.1
-  DOMINANT (median 69) CAEE  conjure Stone burst            one  118  pack  591  denied 0.58  chill 0.13  moved 0.7
-  DOMINANT (median 69) CEEE  conjure Stone burst            one  164  pack  818  denied 4.73  chill 0.33  moved 0.1
-  DOMINANT (median 69) AAEE  conjure Stone burst            one  132  pack  662  denied 0.58  chill 0  moved 0.7
-  DOMINANT (median 69) AEEE  conjure Stone burst            one  178  pack  890  denied 4.73  chill 0  moved 0.1
-  DOMINANT (median 69) EEEE  conjure Stone burst            one  233  pack 1165  denied 4.73  chill 0  moved 0.2
-  DOMINANT (median 69) EEI   conjure Stone burst            one  112  pack  558  denied 0.58  chill 0.04  moved 0.7
-  DOMINANT (median 75) AEEI  conjure Stone burst            one  132  pack  662  denied 0.58  chill 0.04  moved 0.7
-  DOMINANT (median 75) EEEI  conjure Stone burst            one  178  pack  890  denied 4.73  chill 0.2  moved 0.1
+  weak     (median 33) W     area    Splash ring            one    4  pack   20  denied 0  chill 0  moved 1.4
+  weak     (median 33) L     area    Discharge              one   16  pack   80  denied 0.38  chill 0  moved 0
+  DOMINANT (median 43) FA    area    Fire nova              one   73  pack  367  denied 0  chill 0  moved 0
+  DOMINANT (median 65) WFE   area    Steam quake            one  109  pack  545  denied 0.58  chill 0  moved 0.4
+  DOMINANT (median 65) FFA   area    Fire nova              one  105  pack  523  denied 0  chill 0  moved 0
+  DOMINANT (median 83) WFFE  area    Steam quake            one  139  pack  695  denied 0.58  chill 0  moved 0.4
+  DOMINANT (median 83) WFAE  area    Steam quake            one  147  pack  735  denied 0.58  chill 0  moved 0.4
+  DOMINANT (median 83) WFEE  area    Steam quake            one  144  pack  721  denied 4.7  chill 0  moved 0.1
+  DOMINANT (median 83) FFFA  area    Fire nova              one  136  pack  679  denied 0  chill 0  moved 0
+  weak     (median 26) W     place   Rain                   one    2  pack   10  denied 0  chill 0  moved 0
+  DOMINANT (median 26) F     place   Fire patch             one   47  pack  236  denied 0  chill 0  moved 0
+  weak     (median 38) WW    place   Rain                   one    3  pack   14  denied 0  chill 0  moved 0
+  DOMINANT (median 38) WF    place   Steam cloud            one   71  pack  357  denied 0  chill 0  moved 0
+  weak     (median 38) WC    place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  DOMINANT (median 38) FF    place   Fire patch             one   86  pack  429  denied 0  chill 0  moved 0
+  weak     (median 38) I     place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 55) WWW   place   Rain                   one    3  pack   17  denied 0  chill 0  moved 0
+  DOMINANT (median 55) WWF   place   Steam cloud            one   89  pack  447  denied 0  chill 0  moved 0
+  weak     (median 55) WWC   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  DOMINANT (median 55) WFF   place   Steam cloud            one  106  pack  531  denied 0  chill 0  moved 0
+  DOMINANT (median 55) WFE   place   Steam geyser           one   97  pack  484  denied 0.58  chill 0  moved 0.4
+  weak     (median 55) WCC   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 55) WCL   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 55) WI    place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  DOMINANT (median 55) FFF   place   Fire patch             one  124  pack  618  denied 0  chill 0  moved 0
+  weak     (median 55) CI    place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 69) WWWW  place   Rain                   one    4  pack   20  denied 0  chill 0  moved 0
+  weak     (median 69) WWWC  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  DOMINANT (median 69) WWFF  place   Steam cloud            one  149  pack  743  denied 0  chill 0  moved 0
+  weak     (median 69) WWCC  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 69) WWI   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  DOMINANT (median 69) WFFF  place   Steam cloud            one  133  pack  666  denied 0  chill 0  moved 0
+  DOMINANT (median 69) WFFE  place   Steam geyser           one  123  pack  616  denied 0.58  chill 0  moved 0.4
+  DOMINANT (median 69) WFAE  place   Steam geyser           one  130  pack  652  denied 0.58  chill 0  moved 0.4
+  DOMINANT (median 69) WFEE  place   Steam geyser           one  165  pack  826  denied 0.58  chill 0  moved 0.7
+  weak     (median 69) WCCC  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 69) WCCL  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 69) WCLL  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 69) WCI   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  DOMINANT (median 69) FFFF  place   Fire patch             one  161  pack  803  denied 0  chill 0  moved 0
+  DOMINANT (median 69) FFFL  place   Fire strike            one  111  pack  557  denied 0.38  chill 0  moved 0
+  weak     (median 69) CCI   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 69) II    place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 74) WWWI  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 74) WWCI  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 74) WCCI  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 74) WII   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 74) CCCI  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 74) CII   place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
+  weak     (median 33) W     conjure Water burst            one    4  pack   20  denied 0  chill 0  moved 1.4
+  weak     (median 33) C     conjure Frost burst            one    8  pack   40  denied 0  chill 0.19  moved 0
+  weak     (median 33) L     conjure Shock burst            one   16  pack   60  denied 0.38  chill 0  moved 0
+  DOMINANT (median 43) FA    conjure Arcane burst           one   73  pack  367  denied 0  chill 0  moved 0
+  DOMINANT (median 65) WFE   conjure Stone burst            one  109  pack  545  denied 0.58  chill 0  moved 0.4
+  DOMINANT (median 65) FFA   conjure Arcane burst           one  105  pack  523  denied 0  chill 0  moved 0
+  DOMINANT (median 83) WFFE  conjure Stone burst            one  139  pack  695  denied 0.58  chill 0  moved 0.4
+  DOMINANT (median 83) WFAE  conjure Stone burst            one  147  pack  735  denied 0.58  chill 0  moved 0.4
+  DOMINANT (median 83) WFEE  conjure Stone burst            one  144  pack  721  denied 4.73  chill 0  moved 0.1
+  DOMINANT (median 83) FFFA  conjure Arcane burst           one  136  pack  679  denied 0  chill 0  moved 0
 
 == Additions that do not pay (the bigger spell is no better on damage, pack damage or status)
   +W to W    force   Water spray 4/17 -> Water spray 4/15
@@ -177,7 +90,7 @@
   +C to WWW  place   Rain 3/17 -> Caltrops 0/0
   +W to WWI  place   Caltrops 0/0 -> Caltrops 0/0
   +I to WWW  place   Rain 3/17 -> Caltrops 0/0
-  +A to WWF  place   Steam cloud 89/447 -> Steam blast 36/182
+  +A to WWF  place   Steam cloud 89/447 -> Steam blast 57/283
   +W to WFE  force   Steam boulder 42/42 -> Steam boulder 44/44
   +W to WC   place   Caltrops 0/0 -> Caltrops 0/0
   +C to WW   place   Rain 3/14 -> Caltrops 0/0
@@ -201,21 +114,23 @@
   +W to FFF  area    Fire ring 76/380 -> Steam burst 69/343
   +W to FFF  conjure Fire burst 76/380 -> Scalding burst 69/343
   +W to FFA  force   Fire beam 122/122 -> Steam beam 102/102
-  +W to FFA  place   Fire blast 52/262 -> Steam blast 44/222
-  +A to WFF  place   Steam cloud 106/531 -> Steam blast 44/222
+  +W to FFA  area    Fire nova 105/523 -> Steam nova 89/445
+  +W to FFA  place   Fire blast 81/407 -> Steam blast 69/346
+  +A to WFF  place   Steam cloud 106/531 -> Steam blast 69/346
+  +W to FFA  conjure Arcane burst 105/523 -> Arcane burst 89/445
   +W to FFE  force   Fireball 63/63 -> Steam boulder 51/51
-  +W to FFE  place   Fire geyser 76/378 -> Steam geyser 63/316
   +W to FA   force   Fire beam 86/86 -> Steam beam 76/76
-  +W to FA   place   Fire blast 37/187 -> Steam blast 33/164
-  +A to WF   place   Steam cloud 71/357 -> Steam blast 33/164
+  +W to FA   area    Fire nova 73/367 -> Steam nova 65/325
+  +W to FA   place   Fire blast 57/287 -> Steam blast 51/253
+  +A to WF   place   Steam cloud 71/357 -> Steam blast 51/253
+  +W to FA   conjure Arcane burst 73/367 -> Arcane burst 65/325
   +W to FAA  force   Fire beam 117/117 -> Steam beam 98/98
-  +W to FAA  place   Fire blast 50/251 -> Steam blast 43/215
+  +W to FAA  area    Fire nova 100/501 -> Steam nova 86/431
+  +W to FAA  place   Fire blast 78/390 -> Steam blast 67/335
+  +W to FAA  conjure Arcane burst 100/501 -> Arcane burst 86/431
   +W to FAE  force   Fireball 66/153 -> Steam boulder 54/125
-  +W to FAE  place   Fire geyser 79/397 -> Steam geyser 67/333
   +W to FE   force   Fireball 50/50 -> Steam boulder 42/42
-  +W to FE   place   Fire geyser 58/291 -> Steam geyser 50/249
   +W to FEE  force   Fireball 95/95 -> Steam boulder 76/76
-  +W to FEE  place   Fire geyser 114/569 -> Steam geyser 94/469
   +W to C    place   Freezing fog 23/113 -> Caltrops 0/0
   +C to W    place   Rain 2/10 -> Caltrops 0/0
   +W to CC   place   Freezing fog 37/186 -> Caltrops 0/0
@@ -235,8 +150,6 @@
   +W to CLL  force   Frost arc 92/314 -> Ice shards 54/151
   +W to CLL  place   Frost strike 42/209 -> Caltrops 0/0
   +L to WCL  place   Caltrops 0/0 -> Caltrops 0/0
-  +A to WCI  area    Ice ring 65/327 -> Ice nova 62/312
-  +A to WCI  conjure Ice burst 65/327 -> Arcane burst 62/312
   +W to CI   place   Caltrops 0/0 -> Caltrops 0/0
   +C to WI   place   Caltrops 0/0 -> Caltrops 0/0
   +I to WC   place   Caltrops 0/0 -> Caltrops 0/0
@@ -246,22 +159,11 @@
   +C to WII  place   Caltrops 0/0 -> Caltrops 0/0
   +I to WCI  place   Caltrops 0/0 -> Caltrops 0/0
   +W to AAE  force   Arcane boulder 57/125 -> Arcane boulder 59/130
-  +W to AEE  force   Arcane boulder 82/180 -> Mud ball 83/183
-  +W to AEE  area    Arcane quake 112/558 -> Water quake 117/584
-  +W to AEE  place   Arcane geyser 99/494 -> Water geyser 103/517
-  +W to AEE  conjure Stone burst 112/558 -> Stone burst 117/584
+  +W to AEE  force   Arcane boulder 82/154 -> Mud ball 83/158
   +W to AEI  force   Ice boulder 97/97 -> Ice boulder 101/101
-  +A to WII  area    Ice ring 75/375 -> Ice nova 68/338
-  +A to WII  conjure Ice burst 75/375 -> Arcane burst 68/338
   +W to EE   force   Rock 68/68 -> Mud ball 70/70
   +W to EEE  force   Rock 115/115 -> Mud ball 116/116
-  +W to EEE  area    Earthquake 157/786 -> Water quake 162/812
-  +W to EEE  place   Geyser 139/695 -> Water geyser 144/718
-  +W to EEE  conjure Stone burst 157/786 -> Stone burst 162/812
   +W to EEI  force   Ice boulder 140/140 -> Ice boulder 142/142
-  +W to EEI  area    Ice quake 112/558 -> Ice quake 117/584
-  +W to EEI  place   Ice geyser 99/494 -> Ice geyser 103/517
-  +W to EEI  conjure Stone burst 112/558 -> Stone burst 117/584
   +W to EII  force   Ice boulder 97/97 -> Ice boulder 101/101
   +W to I    place   Caltrops 0/0 -> Caltrops 0/0
   +I to W    place   Rain 2/10 -> Caltrops 0/0
@@ -269,40 +171,25 @@
   +I to WI   place   Caltrops 0/0 -> Caltrops 0/0
   +W to III  place   Caltrops 0/0 -> Caltrops 0/0
   +I to WII  place   Caltrops 0/0 -> Caltrops 0/0
-  +A to FFF  place   Fire patch 124/618 -> Fire blast 67/337
+  +A to FFF  place   Fire patch 124/618 -> Fire blast 105/527
   +A to FFL  force   Flame arc 178/465 -> Fire beam 147/147
-  +A to FFL  place   Fire strike 83/414 -> Fire blast 64/319
-  +A to FF   place   Fire patch 86/429 -> Fire blast 52/262
-  +A to FLL  place   Fire strike 70/348 -> Lightning blast 60/302
+  +A to FF   place   Fire patch 86/429 -> Fire blast 81/407
   +A to FL   force   Flame arc 115/301 -> Fire beam 113/113
-  +A to FL   place   Fire strike 54/272 -> Fire blast 49/244
-  +A to F    place   Fire patch 47/236 -> Fire blast 37/187
-  +A to CCC  place   Freezing fog 52/260 -> Frost blast 31/155
+  +A to CCC  place   Freezing fog 52/260 -> Frost blast 50/248
   +C to CCI  place   Caltrops 0/0 -> Caltrops 0/0
   +I to CCC  place   Freezing fog 52/260 -> Caltrops 0/0
   +A to CCL  force   Frost arc 84/218 -> Frost beam 86/86
-  +A to CCL  place   Frost strike 38/190 -> Frost blast 36/180
-  +A to CC   place   Freezing fog 37/186 -> Frost blast 26/130
   +C to CI   place   Caltrops 0/0 -> Caltrops 0/0
   +I to CC   place   Freezing fog 37/186 -> Caltrops 0/0
   +C to CII  place   Caltrops 0/0 -> Caltrops 0/0
   +I to CCI  place   Caltrops 0/0 -> Caltrops 0/0
-  +A to CLL  place   Frost strike 42/209 -> Lightning blast 41/205
-  +A to C    place   Freezing fog 23/113 -> Frost blast 21/105
-  +C to AEE  force   Arcane boulder 82/180 -> Frost boulder 84/185
-  +A to CII  area    Ice ring 77/387 -> Ice nova 69/345
-  +A to CII  conjure Ice burst 77/387 -> Arcane burst 69/345
+  +C to AEE  force   Arcane boulder 82/154 -> Frost boulder 84/160
   +C to I    place   Caltrops 0/0 -> Caltrops 0/0
   +I to C    place   Freezing fog 23/113 -> Caltrops 0/0
   +C to II   place   Caltrops 0/0 -> Caltrops 0/0
   +I to CI   place   Caltrops 0/0 -> Caltrops 0/0
   +C to III  place   Caltrops 0/0 -> Caltrops 0/0
   +I to CII  place   Caltrops 0/0 -> Caltrops 0/0
-  +A to LLL  place   Lightning strike 46/228 -> Lightning blast 46/230
-  +A to II   area    Ice ring 65/327 -> Ice nova 62/312
-  +A to II   conjure Ice burst 65/327 -> Arcane burst 62/312
-  +A to III  area    Ice ring 106/532 -> Ice nova 83/416
-  +A to III  conjure Ice burst 106/532 -> Arcane burst 83/416
   +I to I    place   Caltrops 0/0 -> Caltrops 0/0
   +I to II   place   Caltrops 0/0 -> Caltrops 0/0
   +I to III  place   Caltrops 0/0 -> Caltrops 0/0
@@ -314,6 +201,7 @@
   place > area: WF    Steam burst 33 | Steam cloud 71
   place > area: WFF   Steam burst 51 | Steam cloud 106
   place > area: WFFF  Steam burst 69 | Steam cloud 133
+  place > area: WFEE  Steam quake 144 | Steam geyser 165
   place > area: F     Fire ring 34 | Fire patch 47
   place > area: FF    Fire ring 55 | Fire patch 86
   place > area: FFF   Fire ring 76 | Fire patch 124
@@ -343,19 +231,19 @@
   W     force   Water spray            one    4  pack   17  denied 0  chill 0  moved 2.2
   W     area    Splash ring            one    4  pack   20  denied 0  chill 0  moved 1.4
   W     place   Rain                   one    2  pack   10  denied 0  chill 0  moved 0
-  W     conjure Water burst            one    4  pack   20  denied 0  chill 0  moved 0
+  W     conjure Water burst            one    4  pack   20  denied 0  chill 0  moved 1.4
   WW    force   Water spray            one    4  pack   15  denied 0  chill 0  moved 3
   WW    area    Splash ring            one    6  pack   28  denied 0  chill 0  moved 2.9
   WW    place   Rain                   one    3  pack   14  denied 0  chill 0  moved 0
-  WW    conjure Water burst            one    6  pack   28  denied 0  chill 0  moved 0
+  WW    conjure Water burst            one    6  pack   28  denied 0  chill 0  moved 2.9
   WWW   force   Water spray            one    4  pack   14  denied 0  chill 0  moved 3.7
   WWW   area    Splash ring            one    7  pack   35  denied 0  chill 0  moved 4.3
   WWW   place   Rain                   one    3  pack   17  denied 0  chill 0  moved 0
-  WWW   conjure Water burst            one    7  pack   35  denied 0  chill 0  moved 0
+  WWW   conjure Water burst            one    7  pack   35  denied 0  chill 0  moved 4.3
   WWWW  force   Water spray            one    4  pack   14  denied 0  chill 0  moved 4.4
   WWWW  area    Splash ring            one    8  pack   40  denied 0  chill 0  moved 5.7
   WWWW  place   Rain                   one    4  pack   20  denied 0  chill 0  moved 0
-  WWWW  conjure Water burst            one    8  pack   40  denied 0  chill 0  moved 0
+  WWWW  conjure Water burst            one    8  pack   40  denied 0  chill 0  moved 5.7
   WWWF  force   Scalding spray         one   46  pack  160  denied 0  chill 0  moved 0
   WWWF  area    Steam burst            one   53  pack  263  denied 0  chill 0  moved 0
   WWWF  place   Steam cloud            one  103  pack  515  denied 0  chill 0  moved 0
@@ -365,9 +253,9 @@
   WWWC  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
   WWWC  conjure Ice burst              one   48  pack  240  denied 0  chill 0.11  moved 1.4
   WWWA  force   Water beam             one   67  pack   67  denied 0  chill 0  moved 8.5
-  WWWA  area    Water nova             one   36  pack  182  denied 0  chill 0  moved 2.1
-  WWWA  place   Water blast            one   28  pack  140  denied 0  chill 0  moved 2.1
-  WWWA  conjure Arcane burst           one   36  pack  182  denied 0  chill 0  moved 2.1
+  WWWA  area    Water nova             one   58  pack  291  denied 0  chill 0  moved 2.1
+  WWWA  place   Water blast            one   45  pack  224  denied 0  chill 0  moved 2.1
+  WWWA  conjure Arcane burst           one   58  pack  291  denied 0  chill 0  moved 2.1
   WWWE  force   Mud ball               one   37  pack   37  denied 0.58  chill 0  moved 2.5
   WWWE  area    Water quake            one   52  pack  260  denied 0.58  chill 0  moved 2.5
   WWWE  place   Water geyser           one   46  pack  230  denied 0.58  chill 0  moved 2.5
@@ -385,12 +273,12 @@
   WWFF  place   Steam cloud            one  149  pack  743  denied 0  chill 0  moved 0
   WWFF  conjure Scalding burst         one   71  pack  355  denied 0  chill 0  moved 0
   WWFA  force   Steam beam             one   83  pack   83  denied 0  chill 0  moved 0
-  WWFA  area    Steam nova             one   90  pack  450  denied 0  chill 0  moved 0
-  WWFA  place   Steam blast            one   36  pack  182  denied 0  chill 0  moved 0
-  WWFA  conjure Arcane burst           one   90  pack  450  denied 0  chill 0  moved 0
+  WWFA  area    Steam nova             one   73  pack  363  denied 0  chill 0  moved 0
+  WWFA  place   Steam blast            one   57  pack  283  denied 0  chill 0  moved 0
+  WWFA  conjure Arcane burst           one   73  pack  363  denied 0  chill 0  moved 0
   WWFE  force   Steam boulder          one   44  pack   44  denied 0.58  chill 0  moved 0.4
   WWFE  area    Steam quake            one  118  pack  592  denied 0.58  chill 0  moved 0.4
-  WWFE  place   Steam geyser           one   54  pack  270  denied 0.58  chill 0  moved 0.4
+  WWFE  place   Steam geyser           one  105  pack  526  denied 0.58  chill 0  moved 0.4
   WWFE  conjure Stone burst            one  118  pack  592  denied 0.58  chill 0  moved 0.4
   WWC   force   Ice shards             one   30  pack   60  denied 0  chill 0.06  moved 1.4
   WWC   area    Ice ring               one   40  pack  200  denied 0  chill 0.11  moved 0.7
@@ -401,9 +289,9 @@
   WWCC  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
   WWCC  conjure Ice burst              one   65  pack  327  denied 0  chill 0.52  moved 0
   WWCA  force   Ice beam               one   88  pack   88  denied 0  chill 0.04  moved 0
-  WWCA  area    Ice nova               one   47  pack  234  denied 0  chill 0.04  moved 0
-  WWCA  place   Ice blast              one   36  pack  180  denied 0  chill 0.01  moved 0
-  WWCA  conjure Arcane burst           one   47  pack  234  denied 0  chill 0.04  moved 0
+  WWCA  area    Ice nova               one   75  pack  374  denied 0  chill 0.12  moved 0
+  WWCA  place   Ice blast              one   58  pack  288  denied 0  chill 0.03  moved 0
+  WWCA  conjure Arcane burst           one   75  pack  374  denied 0  chill 0.12  moved 0
   WWCE  force   Ice boulder            one   78  pack   78  denied 0.72  chill 0.05  moved 1.1
   WWCE  area    Ice quake              one   62  pack  312  denied 0.58  chill 0.04  moved 0.4
   WWCE  place   Ice geyser             one   55  pack  276  denied 0.58  chill 0.01  moved 0.4
@@ -413,29 +301,29 @@
   WWCI  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
   WWCI  conjure Ice burst              one   75  pack  375  denied 0  chill 0.52  moved 0.7
   WWA   force   Water beam             one   58  pack   58  denied 0  chill 0  moved 8.5
-  WWA   area    Water nova             one   31  pack  156  denied 0  chill 0  moved 1.4
-  WWA   place   Water blast            one   24  pack  120  denied 0  chill 0  moved 1.4
-  WWA   conjure Arcane burst           one   31  pack  156  denied 0  chill 0  moved 1.4
+  WWA   area    Water nova             one   50  pack  250  denied 0  chill 0  moved 1.4
+  WWA   place   Water blast            one   38  pack  192  denied 0  chill 0  moved 1.4
+  WWA   conjure Arcane burst           one   50  pack  250  denied 0  chill 0  moved 1.4
   WWAA  force   Water beam             one   84  pack   84  denied 0  chill 0  moved 8.5
-  WWAA  area    Water nova             one   46  pack  229  denied 0  chill 0  moved 1.4
-  WWAA  place   Water blast            one   35  pack  176  denied 0  chill 0  moved 1.4
-  WWAA  conjure Arcane burst           one   46  pack  229  denied 0  chill 0  moved 1.4
+  WWAA  area    Water nova             one   73  pack  366  denied 0  chill 0  moved 1.4
+  WWAA  place   Water blast            one   56  pack  282  denied 0  chill 0  moved 1.4
+  WWAA  conjure Arcane burst           one   73  pack  366  denied 0  chill 0  moved 1.4
   WWAE  force   Mud ball               one   48  pack   48  denied 0.58  chill 0  moved 1.8
   WWAE  area    Water quake            one   68  pack  338  denied 0.58  chill 0  moved 1.8
   WWAE  place   Water geyser           one   60  pack  299  denied 0.58  chill 0  moved 1.8
   WWAE  conjure Stone burst            one   68  pack  338  denied 0.58  chill 0  moved 1.8
   WWAI  force   Water beam             one   95  pack   95  denied 0  chill 0.04  moved 8.5
-  WWAI  area    Water nova             one   52  pack  260  denied 0  chill 0.04  moved 1.4
-  WWAI  place   Water blast            one   40  pack  200  denied 0  chill 0.01  moved 1.4
-  WWAI  conjure Arcane burst           one   52  pack  260  denied 0  chill 0.04  moved 1.4
+  WWAI  area    Water nova             one   83  pack  416  denied 0  chill 0.11  moved 1.4
+  WWAI  place   Water blast            one   64  pack  320  denied 0  chill 0.03  moved 1.4
+  WWAI  conjure Arcane burst           one   83  pack  416  denied 0  chill 0.11  moved 1.4
   WWE   force   Mud ball               one   34  pack   34  denied 0.58  chill 0  moved 1.8
   WWE   area    Water quake            one   47  pack  234  denied 0.58  chill 0  moved 1.8
   WWE   place   Water geyser           one   41  pack  207  denied 0.58  chill 0  moved 1.8
   WWE   conjure Stone burst            one   47  pack  234  denied 0.58  chill 0  moved 1.8
   WWEE  force   Mud ball               one   72  pack   72  denied 0.58  chill 0  moved 2.1
-  WWEE  area    Water quake            one  101  pack  506  denied 0.58  chill 0  moved 2.1
-  WWEE  place   Water geyser           one   90  pack  448  denied 0.58  chill 0  moved 2.1
-  WWEE  conjure Stone burst            one  101  pack  506  denied 0.58  chill 0  moved 2.1
+  WWEE  area    Water quake            one   72  pack  361  denied 0.58  chill 0  moved 2.1
+  WWEE  place   Water geyser           one   64  pack  320  denied 0.58  chill 0  moved 2.1
+  WWEE  conjure Stone burst            one   72  pack  361  denied 0.58  chill 0  moved 2.1
   WWEI  force   Mud ball               one   82  pack   82  denied 0.73  chill 0.05  moved 1.1
   WWEI  area    Water quake            one   68  pack  338  denied 0.58  chill 0.04  moved 1.8
   WWEI  place   Water geyser           one   60  pack  299  denied 0.58  chill 0.01  moved 1.8
@@ -461,33 +349,33 @@
   WFFF  place   Steam cloud            one  133  pack  666  denied 0  chill 0  moved 0
   WFFF  conjure Scalding burst         one   69  pack  343  denied 0  chill 0  moved 0
   WFFA  force   Steam beam             one  102  pack  102  denied 0  chill 0  moved 0
-  WFFA  area    Steam nova             one  111  pack  553  denied 0  chill 0  moved 0
-  WFFA  place   Steam blast            one   44  pack  222  denied 0  chill 0  moved 0
-  WFFA  conjure Arcane burst           one  111  pack  553  denied 0  chill 0  moved 0
+  WFFA  area    Steam nova             one   89  pack  445  denied 0  chill 0  moved 0
+  WFFA  place   Steam blast            one   69  pack  346  denied 0  chill 0  moved 0
+  WFFA  conjure Arcane burst           one   89  pack  445  denied 0  chill 0  moved 0
   WFFE  force   Steam boulder          one   51  pack   51  denied 0.58  chill 0  moved 0.4
   WFFE  area    Steam quake            one  139  pack  695  denied 0.58  chill 0  moved 0.4
-  WFFE  place   Steam geyser           one   63  pack  316  denied 0.58  chill 0  moved 0.4
+  WFFE  place   Steam geyser           one  123  pack  616  denied 0.58  chill 0  moved 0.4
   WFFE  conjure Stone burst            one  139  pack  695  denied 0.58  chill 0  moved 0.4
   WFA   force   Steam beam             one   76  pack   76  denied 0  chill 0  moved 0
-  WFA   area    Steam nova             one   80  pack  402  denied 0  chill 0  moved 0
-  WFA   place   Steam blast            one   33  pack  164  denied 0  chill 0  moved 0
-  WFA   conjure Arcane burst           one   80  pack  402  denied 0  chill 0  moved 0
+  WFA   area    Steam nova             one   65  pack  325  denied 0  chill 0  moved 0
+  WFA   place   Steam blast            one   51  pack  253  denied 0  chill 0  moved 0
+  WFA   conjure Arcane burst           one   65  pack  325  denied 0  chill 0  moved 0
   WFAA  force   Steam beam             one   98  pack   98  denied 0  chill 0  moved 0
-  WFAA  area    Steam nova             one  128  pack  640  denied 0  chill 0  moved 0
-  WFAA  place   Steam blast            one   43  pack  215  denied 0  chill 0  moved 0
-  WFAA  conjure Arcane burst           one  128  pack  640  denied 0  chill 0  moved 0
+  WFAA  area    Steam nova             one   86  pack  431  denied 0  chill 0  moved 0
+  WFAA  place   Steam blast            one   67  pack  335  denied 0  chill 0  moved 0
+  WFAA  conjure Arcane burst           one   86  pack  431  denied 0  chill 0  moved 0
   WFAE  force   Steam boulder          one   54  pack  125  denied 0.58  chill 0  moved 0.4
   WFAE  area    Steam quake            one  147  pack  735  denied 0.58  chill 0  moved 0.4
-  WFAE  place   Steam geyser           one   67  pack  333  denied 0.58  chill 0  moved 0.4
+  WFAE  place   Steam geyser           one  130  pack  652  denied 0.58  chill 0  moved 0.4
   WFAE  conjure Stone burst            one  147  pack  735  denied 0.58  chill 0  moved 0.4
   WFE   force   Steam boulder          one   42  pack   42  denied 0.58  chill 0  moved 0.4
   WFE   area    Steam quake            one  109  pack  545  denied 0.58  chill 0  moved 0.4
-  WFE   place   Steam geyser           one   50  pack  249  denied 0.58  chill 0  moved 0.4
+  WFE   place   Steam geyser           one   97  pack  484  denied 0.58  chill 0  moved 0.4
   WFE   conjure Stone burst            one  109  pack  545  denied 0.58  chill 0  moved 0.4
   WFEE  force   Steam boulder          one   76  pack   76  denied 0.58  chill 0  moved 0.7
-  WFEE  area    Steam quake            one  200  pack 1000  denied 4.7  chill 0  moved 0.1
-  WFEE  place   Steam geyser           one   94  pack  469  denied 0.58  chill 0  moved 0.7
-  WFEE  conjure Stone burst            one  200  pack 1000  denied 4.73  chill 0  moved 0.1
+  WFEE  area    Steam quake            one  144  pack  721  denied 4.7  chill 0  moved 0.1
+  WFEE  place   Steam geyser           one  165  pack  826  denied 0.58  chill 0  moved 0.7
+  WFEE  conjure Stone burst            one  144  pack  721  denied 4.73  chill 0  moved 0.1
   WC    force   Ice shards             one   24  pack   48  denied 0  chill 0.06  moved 0
   WC    area    Ice ring               one   32  pack  160  denied 0  chill 0.11  moved 0
   WC    place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
@@ -505,9 +393,9 @@
   WCCL  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
   WCCL  conjure Ice burst              one   62  pack  310  denied 0.38  chill 0.6  moved 0
   WCCA  force   Ice beam               one   90  pack   90  denied 0  chill 0.5  moved 0
-  WCCA  area    Ice nova               one   48  pack  240  denied 0  chill 0.31  moved 0
-  WCCA  place   Ice blast              one   37  pack  185  denied 0  chill 0.07  moved 0
-  WCCA  conjure Arcane burst           one   48  pack  240  denied 0  chill 0.31  moved 0
+  WCCA  area    Ice nova               one   77  pack  385  denied 0  chill 0.63  moved 0
+  WCCA  place   Ice blast              one   59  pack  296  denied 0  chill 0.18  moved 0
+  WCCA  conjure Arcane burst           one   77  pack  385  denied 0  chill 0.63  moved 0
   WCCE  force   Ice boulder            one   80  pack   80  denied 0.72  chill 0.36  moved 1.1
   WCCE  area    Ice quake              one   64  pack  319  denied 0.58  chill 0.31  moved 0.4
   WCCE  place   Ice geyser             one   56  pack  282  denied 0.58  chill 0.09  moved 0.4
@@ -525,33 +413,33 @@
   WCLL  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
   WCLL  conjure Ice burst              one   72  pack  360  denied 0.38  chill 0.11  moved 0
   WCLA  force   Ice beam               one  102  pack  102  denied 0.77  chill 0.04  moved 0
-  WCLA  area    Ice nova               one   55  pack  273  denied 0.38  chill 0.04  moved 0
-  WCLA  place   Ice blast              one   42  pack  210  denied 0  chill 0.01  moved 0
-  WCLA  conjure Arcane burst           one   55  pack  273  denied 0.38  chill 0.04  moved 0
+  WCLA  area    Ice nova               one   87  pack  437  denied 0.38  chill 0.12  moved 0
+  WCLA  place   Ice blast              one   67  pack  336  denied 0.38  chill 0.03  moved 0
+  WCLA  conjure Arcane burst           one   87  pack  437  denied 0.38  chill 0.12  moved 0
   WCA   force   Ice beam               one   79  pack   79  denied 0  chill 0.04  moved 0
-  WCA   area    Ice nova               one   42  pack  208  denied 0  chill 0.05  moved 0
-  WCA   place   Ice blast              one   32  pack  160  denied 0  chill 0.01  moved 0
-  WCA   conjure Arcane burst           one   42  pack  208  denied 0  chill 0.05  moved 0
+  WCA   area    Ice nova               one   67  pack  333  denied 0  chill 0.12  moved 0
+  WCA   place   Ice blast              one   51  pack  256  denied 0  chill 0.03  moved 0
+  WCA   conjure Arcane burst           one   67  pack  333  denied 0  chill 0.12  moved 0
   WCAA  force   Ice beam               one  105  pack  105  denied 0  chill 0.04  moved 0
-  WCAA  area    Ice nova               one   56  pack  281  denied 0  chill 0.04  moved 0
-  WCAA  place   Ice blast              one   43  pack  216  denied 0  chill 0.01  moved 0
-  WCAA  conjure Arcane burst           one   56  pack  281  denied 0  chill 0.04  moved 0
+  WCAA  area    Ice nova               one   90  pack  449  denied 0  chill 0.12  moved 0
+  WCAA  place   Ice blast              one   69  pack  346  denied 0  chill 0.03  moved 0
+  WCAA  conjure Arcane burst           one   90  pack  449  denied 0  chill 0.12  moved 0
   WCAE  force   Ice boulder            one   97  pack   97  denied 0.72  chill 0.05  moved 1.1
   WCAE  area    Ice quake              one   78  pack  390  denied 0.58  chill 0.04  moved 0.4
   WCAE  place   Ice geyser             one   69  pack  345  denied 0.58  chill 0.01  moved 0.4
   WCAE  conjure Stone burst            one   78  pack  390  denied 0.58  chill 0.04  moved 0.4
   WCAI  force   Ice beam               one  117  pack  117  denied 0  chill 0.29  moved 0
-  WCAI  area    Ice nova               one   62  pack  312  denied 0  chill 0.18  moved 0
-  WCAI  place   Ice blast              one   48  pack  240  denied 0  chill 0.04  moved 0
-  WCAI  conjure Arcane burst           one   62  pack  312  denied 0  chill 0.18  moved 0
+  WCAI  area    Ice nova               one  100  pack  499  denied 0  chill 0.42  moved 0
+  WCAI  place   Ice blast              one   77  pack  384  denied 0  chill 0.1  moved 0
+  WCAI  conjure Arcane burst           one  100  pack  499  denied 0  chill 0.42  moved 0
   WCE   force   Ice boulder            one   73  pack   73  denied 0.72  chill 0.06  moved 1.1
   WCE   area    Ice quake              one   57  pack  286  denied 0.58  chill 0.05  moved 0.4
   WCE   place   Ice geyser             one   51  pack  253  denied 0.58  chill 0.01  moved 0.4
   WCE   conjure Stone burst            one   57  pack  286  denied 0.58  chill 0.05  moved 0.4
   WCEE  force   Ice boulder            one  140  pack  140  denied 0.73  chill 0.05  moved 2.1
-  WCEE  area    Ice quake              one  112  pack  558  denied 0.58  chill 0.04  moved 0.7
-  WCEE  place   Ice geyser             one   99  pack  494  denied 0.58  chill 0.01  moved 0.7
-  WCEE  conjure Stone burst            one  112  pack  558  denied 0.58  chill 0.04  moved 0.7
+  WCEE  area    Ice quake              one   83  pack  413  denied 0.58  chill 0.04  moved 0.7
+  WCEE  place   Ice geyser             one   73  pack  366  denied 0.58  chill 0.01  moved 0.7
+  WCEE  conjure Stone burst            one   83  pack  413  denied 0.58  chill 0.04  moved 0.7
   WCEI  force   Ice boulder            one   97  pack   97  denied 0.72  chill 0.22  moved 1.1
   WCEI  area    Ice quake              one   78  pack  390  denied 0.58  chill 0.18  moved 0.4
   WCEI  place   Ice geyser             one   69  pack  345  denied 0.58  chill 0.05  moved 0.4
@@ -565,61 +453,61 @@
   WCII  place   Caltrops               one    0  pack    0  denied 0  chill 0  moved 0
   WCII  conjure Ice burst              one  106  pack  532  denied 0  chill 0.71  moved 0
   WA    force   Water beam             one   49  pack   49  denied 0  chill 0  moved 5.3
-  WA    area    Water nova             one   26  pack  130  denied 0  chill 0  moved 0.7
-  WA    place   Water blast            one   20  pack  100  denied 0  chill 0  moved 0.7
-  WA    conjure Arcane burst           one   26  pack  130  denied 0  chill 0  moved 0.7
+  WA    area    Water nova             one   42  pack  208  denied 0  chill 0  moved 0.7
+  WA    place   Water blast            one   32  pack  160  denied 0  chill 0  moved 0.7
+  WA    conjure Arcane burst           one   42  pack  208  denied 0  chill 0  moved 0.7
   WAA   force   Water beam             one   76  pack   76  denied 0  chill 0  moved 5.2
-  WAA   area    Water nova             one   41  pack  203  denied 0  chill 0  moved 0.7
-  WAA   place   Water blast            one   31  pack  156  denied 0  chill 0  moved 0.7
-  WAA   conjure Arcane burst           one   41  pack  203  denied 0  chill 0  moved 0.7
+  WAA   area    Water nova             one   65  pack  324  denied 0  chill 0  moved 0.7
+  WAA   place   Water blast            one   50  pack  250  denied 0  chill 0  moved 0.7
+  WAA   conjure Arcane burst           one   65  pack  324  denied 0  chill 0  moved 0.7
   WAAA  force   Water beam             one  101  pack  101  denied 0  chill 0  moved 5.1
-  WAAA  area    Water nova             one   55  pack  276  denied 0  chill 0  moved 0.7
-  WAAA  place   Water blast            one   42  pack  212  denied 0  chill 0  moved 0.7
-  WAAA  conjure Arcane burst           one   55  pack  276  denied 0  chill 0  moved 0.7
+  WAAA  area    Water nova             one   88  pack  441  denied 0  chill 0  moved 0.7
+  WAAA  place   Water blast            one   68  pack  339  denied 0  chill 0  moved 0.7
+  WAAA  conjure Arcane burst           one   88  pack  441  denied 0  chill 0  moved 0.7
   WAAE  force   Arcane boulder         one   59  pack  130  denied 0.58  chill 0  moved 0.4
   WAAE  area    Arcane quake           one   83  pack  416  denied 0.58  chill 0  moved 0.4
   WAAE  place   Arcane geyser          one   74  pack  368  denied 0.58  chill 0  moved 0.4
   WAAE  conjure Stone burst            one   83  pack  416  denied 0.58  chill 0  moved 0.4
   WAAI  force   Ice beam               one  112  pack  112  denied 0  chill 0.04  moved 0
-  WAAI  area    Ice nova               one   61  pack  307  denied 0  chill 0.04  moved 0
-  WAAI  place   Ice blast              one   47  pack  236  denied 0  chill 0.01  moved 0
-  WAAI  conjure Arcane burst           one   61  pack  307  denied 0  chill 0.04  moved 0
+  WAAI  area    Ice nova               one   98  pack  491  denied 0  chill 0.11  moved 0
+  WAAI  place   Ice blast              one   76  pack  378  denied 0  chill 0.03  moved 0
+  WAAI  conjure Arcane burst           one   98  pack  491  denied 0  chill 0.11  moved 0
   WAE   force   Mud ball               one   46  pack  100  denied 0.58  chill 0  moved 0.4
   WAE   area    Water quake            one   62  pack  312  denied 0.58  chill 0  moved 0.4
   WAE   place   Water geyser           one   55  pack  276  denied 0.58  chill 0  moved 0.4
   WAE   conjure Stone burst            one   62  pack  312  denied 0.58  chill 0  moved 0.4
-  WAEE  force   Mud ball               one   83  pack  183  denied 0.58  chill 0  moved 0.7
-  WAEE  area    Water quake            one  117  pack  584  denied 0.58  chill 0  moved 0.7
-  WAEE  place   Water geyser           one  103  pack  517  denied 0.58  chill 0  moved 0.7
-  WAEE  conjure Stone burst            one  117  pack  584  denied 0.58  chill 0  moved 0.7
+  WAEE  force   Mud ball               one   83  pack  158  denied 0.58  chill 0  moved 0.7
+  WAEE  area    Water quake            one   88  pack  439  denied 0.58  chill 0  moved 0.7
+  WAEE  place   Water geyser           one   78  pack  389  denied 0.58  chill 0  moved 0.7
+  WAEE  conjure Stone burst            one   88  pack  439  denied 0.58  chill 0  moved 0.7
   WAEI  force   Ice boulder            one  101  pack  101  denied 0.73  chill 0.05  moved 1.1
   WAEI  area    Ice quake              one   83  pack  416  denied 0.58  chill 0.04  moved 0.4
   WAEI  place   Ice geyser             one   74  pack  368  denied 0.58  chill 0.01  moved 0.4
   WAEI  conjure Stone burst            one   83  pack  416  denied 0.58  chill 0.04  moved 0.4
   WAI   force   Ice beam               one   88  pack   88  denied 0  chill 0.04  moved 0
-  WAI   area    Ice nova               one   47  pack  234  denied 0  chill 0.04  moved 0
-  WAI   place   Ice blast              one   36  pack  180  denied 0  chill 0.01  moved 0
-  WAI   conjure Arcane burst           one   47  pack  234  denied 0  chill 0.04  moved 0
+  WAI   area    Ice nova               one   75  pack  374  denied 0  chill 0.12  moved 0
+  WAI   place   Ice blast              one   58  pack  288  denied 0  chill 0.03  moved 0
+  WAI   conjure Arcane burst           one   75  pack  374  denied 0  chill 0.12  moved 0
   WAII  force   Ice beam               one  124  pack  124  denied 0  chill 0.28  moved 0
-  WAII  area    Ice nova               one   68  pack  338  denied 0  chill 0.18  moved 0
-  WAII  place   Ice blast              one   52  pack  260  denied 0  chill 0.04  moved 0
-  WAII  conjure Arcane burst           one   68  pack  338  denied 0  chill 0.18  moved 0
+  WAII  area    Ice nova               one  108  pack  541  denied 0  chill 0.41  moved 0
+  WAII  place   Ice blast              one   83  pack  416  denied 0  chill 0.1  moved 0
+  WAII  conjure Arcane burst           one  108  pack  541  denied 0  chill 0.41  moved 0
   WE    force   Mud ball               one   31  pack   31  denied 0.58  chill 0  moved 1.1
   WE    area    Water quake            one   42  pack  208  denied 0.58  chill 0  moved 1.1
   WE    place   Water geyser           one   37  pack  184  denied 0.58  chill 0  moved 1.1
   WE    conjure Stone burst            one   42  pack  208  denied 0.58  chill 0  moved 1.1
   WEE   force   Mud ball               one   70  pack   70  denied 0.58  chill 0  moved 1.4
-  WEE   area    Water quake            one   96  pack  480  denied 0.58  chill 0  moved 1.4
-  WEE   place   Water geyser           one   85  pack  425  denied 0.58  chill 0  moved 1.4
-  WEE   conjure Stone burst            one   96  pack  480  denied 0.58  chill 0  moved 1.4
+  WEE   area    Water quake            one   67  pack  335  denied 0.58  chill 0  moved 1.4
+  WEE   place   Water geyser           one   59  pack  297  denied 0.58  chill 0  moved 1.4
+  WEE   conjure Stone burst            one   67  pack  335  denied 0.58  chill 0  moved 1.4
   WEEE  force   Mud ball               one  116  pack  116  denied 0.58  chill 0  moved 1.8
-  WEEE  area    Water quake            one  162  pack  812  denied 4.7  chill 0  moved 0.3
-  WEEE  place   Water geyser           one  144  pack  718  denied 12.12  chill 0  moved 0
-  WEEE  conjure Stone burst            one  162  pack  812  denied 4.73  chill 0  moved 0.2
+  WEEE  area    Water quake            one   93  pack  463  denied 0.58  chill 0  moved 1.8
+  WEEE  place   Water geyser           one   82  pack  409  denied 0.58  chill 0  moved 1.8
+  WEEE  conjure Stone burst            one   93  pack  463  denied 0.58  chill 0  moved 1.8
   WEEI  force   Ice boulder            one  142  pack  142  denied 0.73  chill 0.05  moved 2.1
-  WEEI  area    Ice quake              one  117  pack  584  denied 0.58  chill 0.04  moved 0.7
-  WEEI  place   Ice geyser             one  103  pack  517  denied 0.58  chill 0.01  moved 0.7
-  WEEI  conjure Stone burst            one  117  pack  584  denied 0.58  chill 0.04  moved 0.7
+  WEEI  area    Ice quake              one   88  pack  439  denied 0.58  chill 0.04  moved 0.7
+  WEEI  place   Ice geyser             one   78  pack  389  denied 0.58  chill 0.01  moved 0.7
+  WEEI  conjure Stone burst            one   88  pack  439  denied 0.58  chill 0.04  moved 0.7
   WEI   force   Ice boulder            one   78  pack   78  denied 0.72  chill 0.05  moved 1.1
   WEI   area    Ice quake              one   62  pack  312  denied 0.58  chill 0.04  moved 0.4
   WEI   place   Ice geyser             one   55  pack  276  denied 0.58  chill 0.01  moved 0.4
@@ -661,9 +549,9 @@
   FFFL  place   Fire strike            one  111  pack  557  denied 0.38  chill 0  moved 0
   FFFL  conjure Shock burst            one   94  pack  359  denied 0.38  chill 0  moved 0
   FFFA  force   Fire beam              one  155  pack  155  denied 0  chill 0  moved 0
-  FFFA  area    Fire nova              one   86  pack  432  denied 0  chill 0  moved 0
-  FFFA  place   Fire blast             one   67  pack  337  denied 0  chill 0  moved 0
-  FFFA  conjure Arcane burst           one   86  pack  432  denied 0  chill 0  moved 0
+  FFFA  area    Fire nova              one  136  pack  679  denied 0  chill 0  moved 0
+  FFFA  place   Fire blast             one  105  pack  527  denied 0  chill 0  moved 0
+  FFFA  conjure Arcane burst           one  136  pack  679  denied 0  chill 0  moved 0
   FFFE  force   Fireball               one   75  pack   75  denied 0.58  chill 0  moved 0.4
   FFFE  area    Fire quake             one  104  pack  522  denied 0.58  chill 0  moved 0.4
   FFFE  place   Fire geyser            one   93  pack  464  denied 0.58  chill 0  moved 0.4
@@ -677,17 +565,17 @@
   FFLL  place   Fire strike            one   98  pack  491  denied 0.38  chill 0  moved 0
   FFLL  conjure Shock burst            one   83  pack  367  denied 0.38  chill 0  moved 0
   FFLA  force   Fire beam              one  147  pack  147  denied 0.77  chill 0  moved 0
-  FFLA  area    Fire nova              one   82  pack  409  denied 0.38  chill 0  moved 0
-  FFLA  place   Fire blast             one   64  pack  319  denied 0  chill 0  moved 0
-  FFLA  conjure Arcane burst           one   82  pack  409  denied 0.38  chill 0  moved 0
+  FFLA  area    Fire nova              one  129  pack  643  denied 0.38  chill 0  moved 0
+  FFLA  place   Fire blast             one  100  pack  499  denied 0.38  chill 0  moved 0
+  FFLA  conjure Arcane burst           one  129  pack  643  denied 0.38  chill 0  moved 0
   FFA   force   Fire beam              one  122  pack  122  denied 0  chill 0  moved 0
-  FFA   area    Fire nova              one   67  pack  335  denied 0  chill 0  moved 0
-  FFA   place   Fire blast             one   52  pack  262  denied 0  chill 0  moved 0
-  FFA   conjure Arcane burst           one   67  pack  335  denied 0  chill 0  moved 0
+  FFA   area    Fire nova              one  105  pack  523  denied 0  chill 0  moved 0
+  FFA   place   Fire blast             one   81  pack  407  denied 0  chill 0  moved 0
+  FFA   conjure Arcane burst           one  105  pack  523  denied 0  chill 0  moved 0
   FFAA  force   Fire beam              one  150  pack  150  denied 0  chill 0  moved 0
-  FFAA  area    Fire nova              one   84  pack  418  denied 0  chill 0  moved 0
-  FFAA  place   Fire blast             one   65  pack  326  denied 0  chill 0  moved 0
-  FFAA  conjure Arcane burst           one   84  pack  418  denied 0  chill 0  moved 0
+  FFAA  area    Fire nova              one  131  pack  657  denied 0  chill 0  moved 0
+  FFAA  place   Fire blast             one  102  pack  510  denied 0  chill 0  moved 0
+  FFAA  conjure Arcane burst           one  131  pack  657  denied 0  chill 0  moved 0
   FFAE  force   Fireball               one   79  pack  180  denied 0.58  chill 0  moved 0.4
   FFAE  area    Fire quake             one  109  pack  544  denied 0.58  chill 0  moved 0.4
   FFAE  place   Fire geyser            one   97  pack  483  denied 0.58  chill 0  moved 0.4
@@ -697,9 +585,9 @@
   FFE   place   Fire geyser            one   76  pack  378  denied 0.58  chill 0  moved 0.4
   FFE   conjure Stone burst            one   85  pack  424  denied 0.58  chill 0  moved 0.4
   FFEE  force   Fireball               one  106  pack  106  denied 0.58  chill 0  moved 0.7
-  FFEE  area    Fire quake             one  148  pack  738  denied 0.58  chill 0  moved 0.7
-  FFEE  place   Fire geyser            one  131  pack  655  denied 0.58  chill 0  moved 0.7
-  FFEE  conjure Stone burst            one  148  pack  738  denied 0.58  chill 0  moved 0.7
+  FFEE  area    Fire quake             one  114  pack  571  denied 0.58  chill 0  moved 0.7
+  FFEE  place   Fire geyser            one  101  pack  507  denied 0.58  chill 0  moved 0.7
+  FFEE  conjure Stone burst            one  114  pack  571  denied 0.58  chill 0  moved 0.7
   FL    force   Flame arc              one  115  pack  301  denied 0.77  chill 0  moved 0
   FL    area    Fire discharge         one   46  pack  232  denied 0.38  chill 0  moved 0
   FL    place   Fire strike            one   54  pack  272  denied 0.38  chill 0  moved 0
@@ -713,29 +601,29 @@
   FLLL  place   Fire strike            one   85  pack  425  denied 0.38  chill 0  moved 0
   FLLL  conjure Shock burst            one   72  pack  361  denied 0.38  chill 0  moved 0
   FLLA  force   Lightning beam         one  138  pack  138  denied 1.53  chill 0  moved 0
-  FLLA  area    Lightning nova         one   77  pack  387  denied 0.38  chill 0  moved 0
-  FLLA  place   Lightning blast        one   60  pack  302  denied 0.38  chill 0  moved 0
-  FLLA  conjure Arcane burst           one   77  pack  387  denied 0.38  chill 0  moved 0
+  FLLA  area    Lightning nova         one  121  pack  607  denied 0.38  chill 0  moved 0
+  FLLA  place   Lightning blast        one   94  pack  471  denied 0.38  chill 0  moved 0
+  FLLA  conjure Arcane burst           one  121  pack  607  denied 0.38  chill 0  moved 0
   FLA   force   Fire beam              one  113  pack  113  denied 0.77  chill 0  moved 0
-  FLA   area    Fire nova              one   62  pack  312  denied 0.38  chill 0  moved 0
-  FLA   place   Fire blast             one   49  pack  244  denied 0  chill 0  moved 0
-  FLA   conjure Arcane burst           one   62  pack  312  denied 0.38  chill 0  moved 0
+  FLA   area    Fire nova              one   97  pack  487  denied 0.38  chill 0  moved 0
+  FLA   place   Fire blast             one   76  pack  379  denied 0.38  chill 0  moved 0
+  FLA   conjure Arcane burst           one   97  pack  487  denied 0.38  chill 0  moved 0
   FLAA  force   Fire beam              one  142  pack  142  denied 0.77  chill 0  moved 0
-  FLAA  area    Fire nova              one   79  pack  396  denied 0.38  chill 0  moved 0
-  FLAA  place   Fire blast             one   62  pack  309  denied 0  chill 0  moved 0
-  FLAA  conjure Arcane burst           one   79  pack  396  denied 0.38  chill 0  moved 0
+  FLAA  area    Fire nova              one  124  pack  621  denied 0.38  chill 0  moved 0
+  FLAA  place   Fire blast             one   96  pack  482  denied 0.38  chill 0  moved 0
+  FLAA  conjure Arcane burst           one  124  pack  621  denied 0.38  chill 0  moved 0
   FA    force   Fire beam              one   86  pack   86  denied 0  chill 0  moved 0
-  FA    area    Fire nova              one   47  pack  237  denied 0  chill 0  moved 0
-  FA    place   Fire blast             one   37  pack  187  denied 0  chill 0  moved 0
-  FA    conjure Arcane burst           one   47  pack  237  denied 0  chill 0  moved 0
+  FA    area    Fire nova              one   73  pack  367  denied 0  chill 0  moved 0
+  FA    place   Fire blast             one   57  pack  287  denied 0  chill 0  moved 0
+  FA    conjure Arcane burst           one   73  pack  367  denied 0  chill 0  moved 0
   FAA   force   Fire beam              one  117  pack  117  denied 0  chill 0  moved 0
-  FAA   area    Fire nova              one   64  pack  321  denied 0  chill 0  moved 0
-  FAA   place   Fire blast             one   50  pack  251  denied 0  chill 0  moved 0
-  FAA   conjure Arcane burst           one   64  pack  321  denied 0  chill 0  moved 0
+  FAA   area    Fire nova              one  100  pack  501  denied 0  chill 0  moved 0
+  FAA   place   Fire blast             one   78  pack  390  denied 0  chill 0  moved 0
+  FAA   conjure Arcane burst           one  100  pack  501  denied 0  chill 0  moved 0
   FAAA  force   Fire beam              one  145  pack  145  denied 0  chill 0  moved 0
-  FAAA  area    Fire nova              one   81  pack  405  denied 0  chill 0  moved 0
-  FAAA  place   Fire blast             one   63  pack  316  denied 0  chill 0  moved 0
-  FAAA  conjure Arcane burst           one   81  pack  405  denied 0  chill 0  moved 0
+  FAAA  area    Fire nova              one  127  pack  635  denied 0  chill 0  moved 0
+  FAAA  place   Fire blast             one   99  pack  493  denied 0  chill 0  moved 0
+  FAAA  conjure Arcane burst           one  127  pack  635  denied 0  chill 0  moved 0
   FAAE  force   Arcane boulder         one   82  pack  187  denied 0.58  chill 0  moved 0.4
   FAAE  area    Arcane quake           one  113  pack  566  denied 0.58  chill 0  moved 0.4
   FAAE  place   Arcane geyser          one  101  pack  503  denied 0.58  chill 0  moved 0.4
@@ -744,22 +632,22 @@
   FAE   area    Fire quake             one   89  pack  446  denied 0.58  chill 0  moved 0.4
   FAE   place   Fire geyser            one   79  pack  397  denied 0.58  chill 0  moved 0.4
   FAE   conjure Stone burst            one   89  pack  446  denied 0.58  chill 0  moved 0.4
-  FAEE  force   Fireball               one  109  pack  248  denied 0.58  chill 0  moved 0.7
-  FAEE  area    Fire quake             one  152  pack  760  denied 0.58  chill 0  moved 0.7
-  FAEE  place   Fire geyser            one  135  pack  674  denied 0.58  chill 0  moved 0.7
-  FAEE  conjure Stone burst            one  152  pack  760  denied 0.58  chill 0  moved 0.7
+  FAEE  force   Fireball               one  109  pack  219  denied 0.58  chill 0  moved 0.7
+  FAEE  area    Fire quake             one  119  pack  593  denied 0.58  chill 0  moved 0.7
+  FAEE  place   Fire geyser            one  105  pack  527  denied 0.58  chill 0  moved 0.7
+  FAEE  conjure Stone burst            one  119  pack  593  denied 0.58  chill 0  moved 0.7
   FE    force   Fireball               one   50  pack   50  denied 0.58  chill 0  moved 0.4
   FE    area    Fire quake             one   65  pack  327  denied 0.58  chill 0  moved 0.4
   FE    place   Fire geyser            one   58  pack  291  denied 0.58  chill 0  moved 0.4
   FE    conjure Stone burst            one   65  pack  327  denied 0.58  chill 0  moved 0.4
   FEE   force   Fireball               one   95  pack   95  denied 0.58  chill 0  moved 0.7
-  FEE   area    Fire quake             one  128  pack  640  denied 0.58  chill 0  moved 0.7
-  FEE   place   Fire geyser            one  114  pack  569  denied 0.58  chill 0  moved 0.7
-  FEE   conjure Stone burst            one  128  pack  640  denied 0.58  chill 0  moved 0.7
+  FEE   area    Fire quake             one   95  pack  473  denied 0.58  chill 0  moved 0.7
+  FEE   place   Fire geyser            one   84  pack  421  denied 0.58  chill 0  moved 0.7
+  FEE   conjure Stone burst            one   95  pack  473  denied 0.58  chill 0  moved 0.7
   FEEE  force   Fireball               one  146  pack  146  denied 0.58  chill 0  moved 1.1
-  FEEE  area    Fire quake             one  165  pack  826  denied 4.7  chill 0  moved 0.1
-  FEEE  place   Fire geyser            one  146  pack  730  denied 12.12  chill 0  moved 0
-  FEEE  conjure Stone burst            one  165  pack  826  denied 4.73  chill 0  moved 0.1
+  FEEE  area    Fire quake             one  124  pack  620  denied 0.58  chill 0  moved 1.1
+  FEEE  place   Fire geyser            one  110  pack  551  denied 0.58  chill 0  moved 1.1
+  FEEE  conjure Stone burst            one  124  pack  620  denied 0.58  chill 0  moved 1.1
   C     force   Frost spray            one   13  pack   43  denied 0  chill 0.2  moved 0
   C     area    Frost ring             one    8  pack   40  denied 0  chill 0.29  moved 0
   C     place   Freezing fog           one   23  pack  113  denied 0  chill 0.26  moved 0
@@ -781,9 +669,9 @@
   CCCL  place   Frost strike           one   48  pack  238  denied 0.38  chill 0.37  moved 0
   CCCL  conjure Shock burst            one   40  pack  150  denied 0.38  chill 0.71  moved 0
   CCCA  force   Frost beam             one   74  pack   74  denied 0  chill 0.7  moved 0
-  CCCA  area    Frost nova             one   40  pack  202  denied 0  chill 0.7  moved 0
-  CCCA  place   Frost blast            one   31  pack  155  denied 0  chill 0.25  moved 0
-  CCCA  conjure Arcane burst           one   40  pack  202  denied 0  chill 0.71  moved 0
+  CCCA  area    Frost nova             one   64  pack  322  denied 0  chill 0.7  moved 0
+  CCCA  place   Frost blast            one   50  pack  248  denied 0  chill 0.37  moved 0
+  CCCA  conjure Arcane burst           one   64  pack  322  denied 0  chill 0.71  moved 0
   CCCE  force   Frost boulder          one   42  pack   53  denied 0.58  chill 0.6  moved 0.4
   CCCE  area    Frost quake            one   56  pack  280  denied 0.58  chill 0.7  moved 0.4
   CCCE  place   Frost geyser           one   49  pack  247  denied 0.58  chill 0.33  moved 0.4
@@ -801,33 +689,33 @@
   CCLL  place   Frost strike           one   51  pack  257  denied 0.38  chill 0.37  moved 0
   CCLL  conjure Shock burst            one   43  pack  189  denied 0.38  chill 0.6  moved 0
   CCLA  force   Frost beam             one   86  pack   86  denied 0.77  chill 0.65  moved 0
-  CCLA  area    Frost nova             one   47  pack  234  denied 0.38  chill 0.44  moved 0
-  CCLA  place   Frost blast            one   36  pack  180  denied 0  chill 0.11  moved 0
-  CCLA  conjure Arcane burst           one   47  pack  234  denied 0.38  chill 0.44  moved 0
+  CCLA  area    Frost nova             one   75  pack  374  denied 0.38  chill 0.7  moved 0
+  CCLA  place   Frost blast            one   58  pack  288  denied 0.38  chill 0.29  moved 0
+  CCLA  conjure Arcane burst           one   75  pack  374  denied 0.38  chill 0.71  moved 0
   CCA   force   Frost beam             one   63  pack   63  denied 0  chill 0.65  moved 0
-  CCA   area    Frost nova             one   34  pack  169  denied 0  chill 0.45  moved 0
-  CCA   place   Frost blast            one   26  pack  130  denied 0  chill 0.11  moved 0
-  CCA   conjure Arcane burst           one   34  pack  169  denied 0  chill 0.45  moved 0
+  CCA   area    Frost nova             one   54  pack  270  denied 0  chill 0.71  moved 0
+  CCA   place   Frost blast            one   42  pack  208  denied 0  chill 0.29  moved 0
+  CCA   conjure Arcane burst           one   54  pack  270  denied 0  chill 0.72  moved 0
   CCAA  force   Frost beam             one   89  pack   89  denied 0  chill 0.65  moved 0
-  CCAA  area    Frost nova             one   48  pack  242  denied 0  chill 0.44  moved 0
-  CCAA  place   Frost blast            one   37  pack  186  denied 0  chill 0.11  moved 0
-  CCAA  conjure Arcane burst           one   48  pack  242  denied 0  chill 0.44  moved 0
+  CCAA  area    Frost nova             one   77  pack  387  denied 0  chill 0.7  moved 0
+  CCAA  place   Frost blast            one   60  pack  298  denied 0  chill 0.29  moved 0
+  CCAA  conjure Arcane burst           one   77  pack  387  denied 0  chill 0.71  moved 0
   CCAE  force   Frost boulder          one   53  pack   62  denied 0.58  chill 0.34  moved 0.4
   CCAE  area    Frost quake            one   70  pack  351  denied 0.58  chill 0.44  moved 0.4
   CCAE  place   Frost geyser           one   62  pack  311  denied 0.58  chill 0.15  moved 0.4
   CCAE  conjure Stone burst            one   70  pack  351  denied 0.58  chill 0.44  moved 0.4
   CCAI  force   Frost beam             one  100  pack  100  denied 0  chill 0.68  moved 0
-  CCAI  area    Frost nova             one   55  pack  273  denied 0  chill 0.64  moved 0
-  CCAI  place   Frost blast            one   42  pack  210  denied 0  chill 0.19  moved 0
-  CCAI  conjure Arcane burst           one   55  pack  273  denied 0  chill 0.64  moved 0
+  CCAI  area    Frost nova             one   87  pack  437  denied 0  chill 0.7  moved 0
+  CCAI  place   Frost blast            one   67  pack  336  denied 0  chill 0.37  moved 0
+  CCAI  conjure Arcane burst           one   87  pack  437  denied 0  chill 0.71  moved 0
   CCE   force   Frost boulder          one   38  pack   47  denied 0.58  chill 0.36  moved 0.4
   CCE   area    Frost quake            one   49  pack  247  denied 0.58  chill 0.45  moved 0.4
   CCE   place   Frost geyser           one   44  pack  218  denied 0.58  chill 0.15  moved 0.4
   CCE   conjure Stone burst            one   49  pack  247  denied 0.58  chill 0.45  moved 0.4
   CCEE  force   Frost boulder          one   76  pack   85  denied 0.58  chill 0.34  moved 0.7
-  CCEE  area    Frost quake            one  104  pack  519  denied 0.58  chill 0.44  moved 0.7
-  CCEE  place   Frost geyser           one   92  pack  460  denied 0.58  chill 0.15  moved 0.7
-  CCEE  conjure Stone burst            one  104  pack  519  denied 0.58  chill 0.44  moved 0.7
+  CCEE  area    Frost quake            one   75  pack  374  denied 0.58  chill 0.44  moved 0.7
+  CCEE  place   Frost geyser           one   66  pack  331  denied 0.58  chill 0.15  moved 0.7
+  CCEE  conjure Stone burst            one   75  pack  374  denied 0.58  chill 0.44  moved 0.7
   CCEI  force   Frost boulder          one   85  pack   85  denied 0.73  chill 0.6  moved 1.1
   CCEI  area    Frost quake            one   70  pack  351  denied 0.58  chill 0.64  moved 0.4
   CCEI  place   Frost geyser           one   62  pack  311  denied 0.58  chill 0.25  moved 0.4
@@ -853,73 +741,73 @@
   CLLL  place   Frost strike           one   55  pack  276  denied 0.38  chill 0.1  moved 0
   CLLL  conjure Shock burst            one   46  pack  232  denied 0.38  chill 0.19  moved 0
   CLLA  force   Lightning beam         one   98  pack   98  denied 1.53  chill 0.18  moved 0
-  CLLA  area    Lightning nova         one   53  pack  267  denied 0.38  chill 0.13  moved 0
-  CLLA  place   Lightning blast        one   41  pack  205  denied 0.38  chill 0.03  moved 0
-  CLLA  conjure Arcane burst           one   53  pack  267  denied 0.38  chill 0.13  moved 0
+  CLLA  area    Lightning nova         one   85  pack  426  denied 0.38  chill 0.31  moved 0
+  CLLA  place   Lightning blast        one   66  pack  328  denied 0.38  chill 0.07  moved 0
+  CLLA  conjure Arcane burst           one   85  pack  426  denied 0.38  chill 0.31  moved 0
   CLA   force   Frost beam             one   75  pack   75  denied 0.77  chill 0.18  moved 0
-  CLA   area    Frost nova             one   40  pack  202  denied 0.38  chill 0.13  moved 0
-  CLA   place   Frost blast            one   31  pack  155  denied 0  chill 0.03  moved 0
-  CLA   conjure Arcane burst           one   40  pack  202  denied 0.38  chill 0.13  moved 0
+  CLA   area    Frost nova             one   64  pack  322  denied 0.38  chill 0.31  moved 0
+  CLA   place   Frost blast            one   50  pack  248  denied 0.38  chill 0.07  moved 0
+  CLA   conjure Arcane burst           one   64  pack  322  denied 0.38  chill 0.31  moved 0
   CLAA  force   Frost beam             one  101  pack  101  denied 0.77  chill 0.18  moved 0
-  CLAA  area    Frost nova             one   55  pack  274  denied 0.38  chill 0.13  moved 0
-  CLAA  place   Frost blast            one   42  pack  211  denied 0  chill 0.03  moved 0
-  CLAA  conjure Arcane burst           one   55  pack  274  denied 0.38  chill 0.13  moved 0
+  CLAA  area    Frost nova             one   88  pack  439  denied 0.38  chill 0.31  moved 0
+  CLAA  place   Frost blast            one   68  pack  338  denied 0.38  chill 0.07  moved 0
+  CLAA  conjure Arcane burst           one   88  pack  439  denied 0.38  chill 0.31  moved 0
   CA    force   Frost beam             one   52  pack   52  denied 0  chill 0.19  moved 0
-  CA    area    Frost nova             one   27  pack  137  denied 0  chill 0.13  moved 0
-  CA    place   Frost blast            one   21  pack  105  denied 0  chill 0.03  moved 0
-  CA    conjure Arcane burst           one   27  pack  137  denied 0  chill 0.13  moved 0
+  CA    area    Frost nova             one   44  pack  218  denied 0  chill 0.31  moved 0
+  CA    place   Frost blast            one   34  pack  168  denied 0  chill 0.07  moved 0
+  CA    conjure Arcane burst           one   44  pack  218  denied 0  chill 0.31  moved 0
   CAA   force   Frost beam             one   78  pack   78  denied 0  chill 0.18  moved 0
-  CAA   area    Frost nova             one   42  pack  209  denied 0  chill 0.13  moved 0
-  CAA   place   Frost blast            one   32  pack  161  denied 0  chill 0.03  moved 0
-  CAA   conjure Arcane burst           one   42  pack  209  denied 0  chill 0.13  moved 0
+  CAA   area    Frost nova             one   67  pack  335  denied 0  chill 0.31  moved 0
+  CAA   place   Frost blast            one   52  pack  258  denied 0  chill 0.07  moved 0
+  CAA   conjure Arcane burst           one   67  pack  335  denied 0  chill 0.31  moved 0
   CAAA  force   Frost beam             one  103  pack  103  denied 0  chill 0.18  moved 0
-  CAAA  area    Frost nova             one   56  pack  282  denied 0  chill 0.13  moved 0
-  CAAA  place   Frost blast            one   43  pack  217  denied 0  chill 0.03  moved 0
-  CAAA  conjure Arcane burst           one   56  pack  282  denied 0  chill 0.13  moved 0
+  CAAA  area    Frost nova             one   90  pack  451  denied 0  chill 0.31  moved 0
+  CAAA  place   Frost blast            one   69  pack  347  denied 0  chill 0.07  moved 0
+  CAAA  conjure Arcane burst           one   90  pack  451  denied 0  chill 0.31  moved 0
   CAAE  force   Arcane boulder         one   60  pack  132  denied 0.58  chill 0.05  moved 0.4
   CAAE  area    Arcane quake           one   85  pack  423  denied 0.58  chill 0.13  moved 0.4
   CAAE  place   Arcane geyser          one   75  pack  374  denied 0.58  chill 0.04  moved 0.4
   CAAE  conjure Stone burst            one   85  pack  423  denied 0.58  chill 0.13  moved 0.4
   CAAI  force   Ice beam               one  115  pack  115  denied 0  chill 0.49  moved 0
-  CAAI  area    Ice nova               one   63  pack  313  denied 0  chill 0.31  moved 0
-  CAAI  place   Ice blast              one   48  pack  241  denied 0  chill 0.07  moved 0
-  CAAI  conjure Arcane burst           one   63  pack  313  denied 0  chill 0.31  moved 0
+  CAAI  area    Ice nova               one  100  pack  501  denied 0  chill 0.63  moved 0
+  CAAI  place   Ice blast              one   77  pack  386  denied 0  chill 0.18  moved 0
+  CAAI  conjure Arcane burst           one  100  pack  501  denied 0  chill 0.63  moved 0
   CAE   force   Frost boulder          one   47  pack  102  denied 0.58  chill 0.05  moved 0.4
   CAE   area    Frost quake            one   64  pack  319  denied 0.58  chill 0.13  moved 0.4
   CAE   place   Frost geyser           one   56  pack  282  denied 0.58  chill 0.04  moved 0.4
   CAE   conjure Stone burst            one   64  pack  319  denied 0.58  chill 0.13  moved 0.4
-  CAEE  force   Frost boulder          one   84  pack  185  denied 0.58  chill 0.05  moved 0.7
-  CAEE  area    Frost quake            one  118  pack  591  denied 0.58  chill 0.13  moved 0.7
-  CAEE  place   Frost geyser           one  105  pack  523  denied 0.58  chill 0.04  moved 0.7
-  CAEE  conjure Stone burst            one  118  pack  591  denied 0.58  chill 0.13  moved 0.7
+  CAEE  force   Frost boulder          one   84  pack  160  denied 0.58  chill 0.05  moved 0.7
+  CAEE  area    Frost quake            one   89  pack  446  denied 0.58  chill 0.13  moved 0.7
+  CAEE  place   Frost geyser           one   79  pack  394  denied 0.58  chill 0.04  moved 0.7
+  CAEE  conjure Stone burst            one   89  pack  446  denied 0.58  chill 0.13  moved 0.7
   CAEI  force   Ice boulder            one  103  pack  103  denied 0.73  chill 0.35  moved 1.1
   CAEI  area    Ice quake              one   85  pack  423  denied 0.58  chill 0.31  moved 0.4
   CAEI  place   Ice geyser             one   75  pack  374  denied 0.58  chill 0.09  moved 0.4
   CAEI  conjure Stone burst            one   85  pack  423  denied 0.58  chill 0.31  moved 0.4
   CAI   force   Ice beam               one   90  pack   90  denied 0  chill 0.5  moved 0
-  CAI   area    Ice nova               one   48  pack  240  denied 0  chill 0.31  moved 0
-  CAI   place   Ice blast              one   37  pack  185  denied 0  chill 0.07  moved 0
-  CAI   conjure Arcane burst           one   48  pack  240  denied 0  chill 0.31  moved 0
+  CAI   area    Ice nova               one   77  pack  385  denied 0  chill 0.63  moved 0
+  CAI   place   Ice blast              one   59  pack  296  denied 0  chill 0.18  moved 0
+  CAI   conjure Arcane burst           one   77  pack  385  denied 0  chill 0.63  moved 0
   CAII  force   Ice beam               one  126  pack  126  denied 0  chill 0.66  moved 0
-  CAII  area    Ice nova               one   69  pack  345  denied 0  chill 0.51  moved 0
-  CAII  place   Ice blast              one   53  pack  265  denied 0  chill 0.13  moved 0
-  CAII  conjure Arcane burst           one   69  pack  345  denied 0  chill 0.51  moved 0
+  CAII  area    Ice nova               one  110  pack  551  denied 0  chill 0.7  moved 0
+  CAII  place   Ice blast              one   85  pack  424  denied 0  chill 0.34  moved 0
+  CAII  conjure Arcane burst           one  110  pack  551  denied 0  chill 0.7  moved 0
   CE    force   Frost boulder          one   34  pack   40  denied 0.58  chill 0.1  moved 0.4
   CE    area    Frost quake            one   43  pack  215  denied 0.58  chill 0.13  moved 0.4
   CE    place   Frost geyser           one   38  pack  190  denied 0.58  chill 0.04  moved 0.4
   CE    conjure Stone burst            one   43  pack  215  denied 0.58  chill 0.13  moved 0.4
   CEE   force   Frost boulder          one   73  pack   79  denied 0.58  chill 0.1  moved 0.7
-  CEE   area    Frost quake            one   97  pack  487  denied 0.58  chill 0.13  moved 0.7
-  CEE   place   Frost geyser           one   86  pack  431  denied 0.58  chill 0.04  moved 0.7
-  CEE   conjure Stone burst            one   97  pack  487  denied 0.58  chill 0.13  moved 0.7
+  CEE   area    Frost quake            one   68  pack  342  denied 0.58  chill 0.13  moved 0.7
+  CEE   place   Frost geyser           one   60  pack  302  denied 0.58  chill 0.04  moved 0.7
+  CEE   conjure Stone burst            one   68  pack  342  denied 0.58  chill 0.13  moved 0.7
   CEEE  force   Frost boulder          one  118  pack  124  denied 0.58  chill 0.09  moved 1.1
-  CEEE  area    Frost quake            one  164  pack  818  denied 4.7  chill 0.33  moved 0.1
-  CEEE  place   Frost geyser           one  145  pack  724  denied 12.12  chill 0.28  moved 0
-  CEEE  conjure Stone burst            one  164  pack  818  denied 4.73  chill 0.33  moved 0.1
+  CEEE  area    Frost quake            one   94  pack  469  denied 0.58  chill 0.13  moved 1.1
+  CEEE  place   Frost geyser           one   83  pack  415  denied 0.58  chill 0.04  moved 1.1
+  CEEE  conjure Stone burst            one   94  pack  469  denied 0.58  chill 0.13  moved 1.1
   CEEI  force   Ice boulder            one  144  pack  144  denied 0.73  chill 0.35  moved 2.1
-  CEEI  area    Ice quake              one  118  pack  591  denied 0.58  chill 0.31  moved 0.7
-  CEEI  place   Ice geyser             one  105  pack  523  denied 0.58  chill 0.09  moved 0.7
-  CEEI  conjure Stone burst            one  118  pack  591  denied 0.58  chill 0.31  moved 0.7
+  CEEI  area    Ice quake              one   89  pack  446  denied 0.58  chill 0.31  moved 0.7
+  CEEI  place   Ice geyser             one   79  pack  394  denied 0.58  chill 0.09  moved 0.7
+  CEEI  conjure Stone burst            one   89  pack  446  denied 0.58  chill 0.31  moved 0.7
   CEI   force   Ice boulder            one   80  pack   80  denied 0.72  chill 0.36  moved 1.1
   CEI   area    Ice quake              one   64  pack  319  denied 0.58  chill 0.31  moved 0.4
   CEI   place   Ice geyser             one   56  pack  282  denied 0.58  chill 0.09  moved 0.4
@@ -957,89 +845,89 @@
   LLLL  place   Lightning strike       one   59  pack  294  denied 0.38  chill 0  moved 0
   LLLL  conjure Shock burst            one   50  pack  248  denied 0.38  chill 0  moved 0
   LLLA  force   Lightning beam         one  110  pack  110  denied 1.53  chill 0  moved 0
-  LLLA  area    Lightning nova         one   60  pack  299  denied 0.38  chill 0  moved 0
-  LLLA  place   Lightning blast        one   46  pack  230  denied 0.38  chill 0  moved 0
-  LLLA  conjure Arcane burst           one   60  pack  299  denied 0.38  chill 0  moved 0
+  LLLA  area    Lightning nova         one   96  pack  478  denied 0.38  chill 0  moved 0
+  LLLA  place   Lightning blast        one   74  pack  368  denied 0.38  chill 0  moved 0
+  LLLA  conjure Arcane burst           one   96  pack  478  denied 0.38  chill 0  moved 0
   LLA   force   Lightning beam         one   88  pack   88  denied 1.53  chill 0  moved 0
-  LLA   area    Lightning nova         one   47  pack  234  denied 0.38  chill 0  moved 0
-  LLA   place   Lightning blast        one   36  pack  180  denied 0.38  chill 0  moved 0
-  LLA   conjure Arcane burst           one   47  pack  234  denied 0.38  chill 0  moved 0
+  LLA   area    Lightning nova         one   75  pack  374  denied 0.38  chill 0  moved 0
+  LLA   place   Lightning blast        one   58  pack  288  denied 0.38  chill 0  moved 0
+  LLA   conjure Arcane burst           one   75  pack  374  denied 0.38  chill 0  moved 0
   LLAA  force   Lightning beam         one  112  pack  112  denied 1.53  chill 0  moved 0
-  LLAA  area    Lightning nova         one   61  pack  307  denied 0.38  chill 0  moved 0
-  LLAA  place   Lightning blast        one   47  pack  236  denied 0.38  chill 0  moved 0
-  LLAA  conjure Arcane burst           one   61  pack  307  denied 0.38  chill 0  moved 0
+  LLAA  area    Lightning nova         one   98  pack  491  denied 0.38  chill 0  moved 0
+  LLAA  place   Lightning blast        one   76  pack  378  denied 0.38  chill 0  moved 0
+  LLAA  conjure Arcane burst           one   98  pack  491  denied 0.38  chill 0  moved 0
   LA    force   Lightning beam         one   64  pack   64  denied 0.77  chill 0  moved 0
-  LA    area    Lightning nova         one   34  pack  169  denied 0.38  chill 0  moved 0
-  LA    place   Lightning blast        one   26  pack  130  denied 0  chill 0  moved 0
-  LA    conjure Arcane burst           one   34  pack  169  denied 0.38  chill 0  moved 0
+  LA    area    Lightning nova         one   54  pack  270  denied 0.38  chill 0  moved 0
+  LA    place   Lightning blast        one   42  pack  208  denied 0.38  chill 0  moved 0
+  LA    conjure Arcane burst           one   54  pack  270  denied 0.38  chill 0  moved 0
   LAA   force   Lightning beam         one   91  pack   91  denied 0.77  chill 0  moved 0
-  LAA   area    Lightning nova         one   48  pack  242  denied 0.38  chill 0  moved 0
-  LAA   place   Lightning blast        one   37  pack  186  denied 0  chill 0  moved 0
-  LAA   conjure Arcane burst           one   48  pack  242  denied 0.38  chill 0  moved 0
+  LAA   area    Lightning nova         one   77  pack  387  denied 0.38  chill 0  moved 0
+  LAA   place   Lightning blast        one   60  pack  298  denied 0.38  chill 0  moved 0
+  LAA   conjure Arcane burst           one   77  pack  387  denied 0.38  chill 0  moved 0
   LAAA  force   Lightning beam         one  115  pack  115  denied 0.77  chill 0  moved 0
-  LAAA  area    Lightning nova         one   63  pack  315  denied 0.38  chill 0  moved 0
-  LAAA  place   Lightning blast        one   48  pack  242  denied 0  chill 0  moved 0
-  LAAA  conjure Arcane burst           one   63  pack  315  denied 0.38  chill 0  moved 0
+  LAAA  area    Lightning nova         one  101  pack  503  denied 0.38  chill 0  moved 0
+  LAAA  place   Lightning blast        one   77  pack  387  denied 0.38  chill 0  moved 0
+  LAAA  conjure Arcane burst           one  101  pack  503  denied 0.38  chill 0  moved 0
   A     force   Arcane beam            one   40  pack   40  denied 0  chill 0  moved 0
-  A     area    Arcane nova            one   21  pack  104  denied 0  chill 0  moved 0
-  A     place   Arcane blast           one   16  pack   80  denied 0  chill 0  moved 0
-  A     conjure Arcane burst           one   21  pack  104  denied 0  chill 0  moved 0
+  A     area    Arcane nova            one   33  pack  166  denied 0  chill 0  moved 0
+  A     place   Arcane blast           one   26  pack  128  denied 0  chill 0  moved 0
+  A     conjure Arcane burst           one   33  pack  166  denied 0  chill 0  moved 0
   AA    force   Arcane beam            one   67  pack   67  denied 0  chill 0  moved 0
-  AA    area    Arcane nova            one   35  pack  177  denied 0  chill 0  moved 0
-  AA    place   Arcane blast           one   27  pack  136  denied 0  chill 0  moved 0
-  AA    conjure Arcane burst           one   35  pack  177  denied 0  chill 0  moved 0
+  AA    area    Arcane nova            one   57  pack  283  denied 0  chill 0  moved 0
+  AA    place   Arcane blast           one   44  pack  218  denied 0  chill 0  moved 0
+  AA    conjure Arcane burst           one   57  pack  283  denied 0  chill 0  moved 0
   AAA   force   Arcane beam            one   93  pack   93  denied 0  chill 0  moved 0
-  AAA   area    Arcane nova            one   50  pack  250  denied 0  chill 0  moved 0
-  AAA   place   Arcane blast           one   38  pack  192  denied 0  chill 0  moved 0
-  AAA   conjure Arcane burst           one   50  pack  250  denied 0  chill 0  moved 0
+  AAA   area    Arcane nova            one   80  pack  399  denied 0  chill 0  moved 0
+  AAA   place   Arcane blast           one   61  pack  307  denied 0  chill 0  moved 0
+  AAA   conjure Arcane burst           one   80  pack  399  denied 0  chill 0  moved 0
   AAAA  force   Arcane beam            one  118  pack  118  denied 0  chill 0  moved 0
-  AAAA  area    Arcane nova            one   64  pack  322  denied 0  chill 0  moved 0
-  AAAA  place   Arcane blast           one   50  pack  248  denied 0  chill 0  moved 0
-  AAAA  conjure Arcane burst           one   64  pack  322  denied 0  chill 0  moved 0
+  AAAA  area    Arcane nova            one  103  pack  516  denied 0  chill 0  moved 0
+  AAAA  place   Arcane blast           one   79  pack  397  denied 0  chill 0  moved 0
+  AAAA  conjure Arcane burst           one  103  pack  516  denied 0  chill 0  moved 0
   AAAE  force   Arcane boulder         one   70  pack  155  denied 0.58  chill 0  moved 0.4
   AAAE  area    Arcane quake           one   99  pack  494  denied 0.58  chill 0  moved 0.4
   AAAE  place   Arcane geyser          one   87  pack  437  denied 0.58  chill 0  moved 0.4
   AAAE  conjure Stone burst            one   99  pack  494  denied 0.58  chill 0  moved 0.4
   AAAI  force   Ice beam               one  130  pack  130  denied 0  chill 0.04  moved 0
-  AAAI  area    Ice nova               one   71  pack  354  denied 0  chill 0.04  moved 0
-  AAAI  place   Ice blast              one   54  pack  272  denied 0  chill 0.01  moved 0
-  AAAI  conjure Arcane burst           one   71  pack  354  denied 0  chill 0.04  moved 0
+  AAAI  area    Ice nova               one  113  pack  566  denied 0  chill 0.11  moved 0
+  AAAI  place   Ice blast              one   87  pack  435  denied 0  chill 0.03  moved 0
+  AAAI  conjure Arcane burst           one  113  pack  566  denied 0  chill 0.11  moved 0
   AAE   force   Arcane boulder         one   57  pack  125  denied 0.58  chill 0  moved 0.4
   AAE   area    Arcane quake           one   78  pack  390  denied 0.58  chill 0  moved 0.4
   AAE   place   Arcane geyser          one   69  pack  345  denied 0.58  chill 0  moved 0.4
   AAE   conjure Stone burst            one   78  pack  390  denied 0.58  chill 0  moved 0.4
-  AAEE  force   Arcane boulder         one   94  pack  207  denied 0.58  chill 0  moved 0.7
-  AAEE  area    Arcane quake           one  132  pack  662  denied 0.58  chill 0  moved 0.7
-  AAEE  place   Arcane geyser          one  117  pack  586  denied 0.58  chill 0  moved 0.7
-  AAEE  conjure Stone burst            one  132  pack  662  denied 0.58  chill 0  moved 0.7
+  AAEE  force   Arcane boulder         one   94  pack  183  denied 0.58  chill 0  moved 0.7
+  AAEE  area    Arcane quake           one  103  pack  517  denied 0.58  chill 0  moved 0.7
+  AAEE  place   Arcane geyser          one   92  pack  458  denied 0.58  chill 0  moved 0.7
+  AAEE  conjure Stone burst            one  103  pack  517  denied 0.58  chill 0  moved 0.7
   AAEI  force   Arcane boulder         one  120  pack  120  denied 0.73  chill 0.05  moved 1.1
   AAEI  area    Arcane quake           one   99  pack  494  denied 0.58  chill 0.04  moved 0.4
   AAEI  place   Arcane geyser          one   87  pack  437  denied 0.58  chill 0.01  moved 0.4
   AAEI  conjure Stone burst            one   99  pack  494  denied 0.58  chill 0.04  moved 0.4
   AAI   force   Ice beam               one  105  pack  105  denied 0  chill 0.04  moved 0
-  AAI   area    Ice nova               one   56  pack  281  denied 0  chill 0.04  moved 0
-  AAI   place   Ice blast              one   43  pack  216  denied 0  chill 0.01  moved 0
-  AAI   conjure Arcane burst           one   56  pack  281  denied 0  chill 0.04  moved 0
+  AAI   area    Ice nova               one   90  pack  449  denied 0  chill 0.12  moved 0
+  AAI   place   Ice blast              one   69  pack  346  denied 0  chill 0.03  moved 0
+  AAI   conjure Arcane burst           one   90  pack  449  denied 0  chill 0.12  moved 0
   AAII  force   Ice beam               one  141  pack  141  denied 0  chill 0.28  moved 0
-  AAII  area    Ice nova               one   77  pack  385  denied 0  chill 0.18  moved 0
-  AAII  place   Ice blast              one   59  pack  296  denied 0  chill 0.04  moved 0
-  AAII  conjure Arcane burst           one   77  pack  385  denied 0  chill 0.18  moved 0
+  AAII  area    Ice nova               one  123  pack  616  denied 0  chill 0.41  moved 0
+  AAII  place   Ice blast              one   95  pack  474  denied 0  chill 0.1  moved 0
+  AAII  conjure Arcane burst           one  123  pack  616  denied 0  chill 0.41  moved 0
   AE    force   Arcane boulder         one   43  pack   94  denied 0.58  chill 0  moved 0.4
   AE    area    Arcane quake           one   57  pack  286  denied 0.58  chill 0  moved 0.4
   AE    place   Arcane geyser          one   51  pack  253  denied 0.58  chill 0  moved 0.4
   AE    conjure Stone burst            one   57  pack  286  denied 0.58  chill 0  moved 0.4
-  AEE   force   Arcane boulder         one   82  pack  180  denied 0.58  chill 0  moved 0.7
-  AEE   area    Arcane quake           one  112  pack  558  denied 0.58  chill 0  moved 0.7
-  AEE   place   Arcane geyser          one   99  pack  494  denied 0.58  chill 0  moved 0.7
-  AEE   conjure Stone burst            one  112  pack  558  denied 0.58  chill 0  moved 0.7
-  AEEE  force   Arcane boulder         one  127  pack  279  denied 0.58  chill 0  moved 1.1
-  AEEE  area    Arcane quake           one  178  pack  890  denied 4.7  chill 0  moved 0.1
-  AEEE  place   Arcane geyser          one  157  pack  787  denied 12.12  chill 0  moved 0
-  AEEE  conjure Stone burst            one  178  pack  890  denied 4.73  chill 0  moved 0.1
+  AEE   force   Arcane boulder         one   82  pack  154  denied 0.58  chill 0  moved 0.7
+  AEE   area    Arcane quake           one   83  pack  413  denied 0.58  chill 0  moved 0.7
+  AEE   place   Arcane geyser          one   73  pack  366  denied 0.58  chill 0  moved 0.7
+  AEE   conjure Stone burst            one   83  pack  413  denied 0.58  chill 0  moved 0.7
+  AEEE  force   Arcane boulder         one  127  pack  219  denied 0.58  chill 0  moved 1.1
+  AEEE  area    Arcane quake           one  108  pack  541  denied 0.58  chill 0  moved 1.1
+  AEEE  place   Arcane geyser          one   96  pack  478  denied 0.58  chill 0  moved 1.1
+  AEEE  conjure Stone burst            one  108  pack  541  denied 0.58  chill 0  moved 1.1
   AEEI  force   Ice boulder            one  161  pack  161  denied 0.73  chill 0.05  moved 2.1
-  AEEI  area    Ice quake              one  132  pack  662  denied 0.58  chill 0.04  moved 0.7
-  AEEI  place   Ice geyser             one  117  pack  586  denied 0.58  chill 0.01  moved 0.7
-  AEEI  conjure Stone burst            one  132  pack  662  denied 0.58  chill 0.04  moved 0.7
+  AEEI  area    Ice quake              one  103  pack  517  denied 0.58  chill 0.04  moved 0.7
+  AEEI  place   Ice geyser             one   92  pack  458  denied 0.58  chill 0.01  moved 0.7
+  AEEI  conjure Stone burst            one  103  pack  517  denied 0.58  chill 0.04  moved 0.7
   AEI   force   Ice boulder            one   97  pack   97  denied 0.72  chill 0.05  moved 1.1
   AEI   area    Ice quake              one   78  pack  390  denied 0.58  chill 0.04  moved 0.4
   AEI   place   Ice geyser             one   69  pack  345  denied 0.58  chill 0.01  moved 0.4
@@ -1049,45 +937,45 @@
   AEII  place   Ice geyser             one   87  pack  437  denied 0.58  chill 0.05  moved 0.4
   AEII  conjure Stone burst            one   99  pack  494  denied 0.58  chill 0.18  moved 0.4
   AI    force   Ice beam               one   79  pack   79  denied 0  chill 0.04  moved 0
-  AI    area    Ice nova               one   42  pack  208  denied 0  chill 0.05  moved 0
-  AI    place   Ice blast              one   32  pack  160  denied 0  chill 0.01  moved 0
-  AI    conjure Arcane burst           one   42  pack  208  denied 0  chill 0.05  moved 0
+  AI    area    Ice nova               one   67  pack  333  denied 0  chill 0.12  moved 0
+  AI    place   Ice blast              one   51  pack  256  denied 0  chill 0.03  moved 0
+  AI    conjure Arcane burst           one   67  pack  333  denied 0  chill 0.12  moved 0
   AII   force   Ice beam               one  117  pack  117  denied 0  chill 0.29  moved 0
-  AII   area    Ice nova               one   62  pack  312  denied 0  chill 0.18  moved 0
-  AII   place   Ice blast              one   48  pack  240  denied 0  chill 0.04  moved 0
-  AII   conjure Arcane burst           one   62  pack  312  denied 0  chill 0.18  moved 0
+  AII   area    Ice nova               one  100  pack  499  denied 0  chill 0.42  moved 0
+  AII   place   Ice blast              one   77  pack  384  denied 0  chill 0.1  moved 0
+  AII   conjure Arcane burst           one  100  pack  499  denied 0  chill 0.42  moved 0
   AIII  force   Ice beam               one  153  pack  153  denied 0  chill 0.59  moved 0
-  AIII  area    Ice nova               one   83  pack  416  denied 0  chill 0.37  moved 0
-  AIII  place   Ice blast              one   64  pack  320  denied 0  chill 0.09  moved 0
-  AIII  conjure Arcane burst           one   83  pack  416  denied 0  chill 0.37  moved 0
+  AIII  area    Ice nova               one  133  pack  666  denied 0  chill 0.7  moved 0
+  AIII  place   Ice blast              one  102  pack  512  denied 0  chill 0.23  moved 0
+  AIII  conjure Arcane burst           one  133  pack  666  denied 0  chill 0.7  moved 0
   E     force   Rock                   one   28  pack   28  denied 0.58  chill 0  moved 0.4
   E     area    Earthquake             one   36  pack  182  denied 0.58  chill 0  moved 0.4
   E     place   Geyser                 one   32  pack  161  denied 0.58  chill 0  moved 0.4
   E     conjure Stone burst            one   36  pack  182  denied 0.58  chill 0  moved 0.4
   EE    force   Rock                   one   68  pack   68  denied 0.58  chill 0  moved 0.7
-  EE    area    Earthquake             one   91  pack  454  denied 0.58  chill 0  moved 0.7
-  EE    place   Geyser                 one   80  pack  402  denied 0.58  chill 0  moved 0.7
-  EE    conjure Stone burst            one   91  pack  454  denied 0.58  chill 0  moved 0.7
+  EE    area    Earthquake             one   62  pack  309  denied 0.58  chill 0  moved 0.7
+  EE    place   Geyser                 one   55  pack  274  denied 0.58  chill 0  moved 0.7
+  EE    conjure Stone burst            one   62  pack  309  denied 0.58  chill 0  moved 0.7
   EEE   force   Rock                   one  115  pack  115  denied 0.58  chill 0  moved 1.1
-  EEE   area    Earthquake             one  157  pack  786  denied 4.75  chill 0  moved 0.1
-  EEE   place   Geyser                 one  139  pack  695  denied 12.17  chill 0  moved 0
-  EEE   conjure Stone burst            one  157  pack  786  denied 4.78  chill 0  moved 0.1
+  EEE   area    Earthquake             one   87  pack  437  denied 0.58  chill 0  moved 1.1
+  EEE   place   Geyser                 one   77  pack  386  denied 0.58  chill 0  moved 1.1
+  EEE   conjure Stone burst            one   87  pack  437  denied 0.58  chill 0  moved 1.1
   EEEE  force   Rock                   one  166  pack  166  denied 4.93  chill 0  moved 0
-  EEEE  area    Earthquake             one  233  pack 1165  denied 4.7  chill 0  moved 0.2
-  EEEE  place   Geyser                 one  206  pack 1030  denied 12.12  chill 0  moved 0
-  EEEE  conjure Stone burst            one  233  pack 1165  denied 4.73  chill 0  moved 0.2
+  EEEE  area    Earthquake             one  113  pack  564  denied 0.58  chill 0  moved 1.4
+  EEEE  place   Geyser                 one  100  pack  499  denied 0.58  chill 0  moved 1.4
+  EEEE  conjure Stone burst            one  113  pack  564  denied 0.58  chill 0  moved 1.4
   EEEI  force   Ice boulder            one  217  pack  217  denied 0.75  chill 0.05  moved 3.2
-  EEEI  area    Ice quake              one  178  pack  890  denied 4.7  chill 0.2  moved 0.1
-  EEEI  place   Ice geyser             one  157  pack  787  denied 12.12  chill 0.17  moved 0
-  EEEI  conjure Stone burst            one  178  pack  890  denied 4.73  chill 0.2  moved 0.1
+  EEEI  area    Ice quake              one  108  pack  541  denied 0.58  chill 0.04  moved 1.1
+  EEEI  place   Ice geyser             one   96  pack  478  denied 0.58  chill 0.01  moved 1.1
+  EEEI  conjure Stone burst            one  108  pack  541  denied 0.58  chill 0.04  moved 1.1
   EEI   force   Ice boulder            one  140  pack  140  denied 0.73  chill 0.05  moved 2.1
-  EEI   area    Ice quake              one  112  pack  558  denied 0.58  chill 0.04  moved 0.7
-  EEI   place   Ice geyser             one   99  pack  494  denied 0.58  chill 0.01  moved 0.7
-  EEI   conjure Stone burst            one  112  pack  558  denied 0.58  chill 0.04  moved 0.7
+  EEI   area    Ice quake              one   83  pack  413  denied 0.58  chill 0.04  moved 0.7
+  EEI   place   Ice geyser             one   73  pack  366  denied 0.58  chill 0.01  moved 0.7
+  EEI   conjure Stone burst            one   83  pack  413  denied 0.58  chill 0.04  moved 0.7
   EEII  force   Ice boulder            one  161  pack  161  denied 0.73  chill 0.21  moved 2.1
-  EEII  area    Ice quake              one  132  pack  662  denied 0.58  chill 0.18  moved 0.7
-  EEII  place   Ice geyser             one  117  pack  586  denied 0.58  chill 0.05  moved 0.7
-  EEII  conjure Stone burst            one  132  pack  662  denied 0.58  chill 0.18  moved 0.7
+  EEII  area    Ice quake              one  103  pack  517  denied 0.58  chill 0.18  moved 0.7
+  EEII  place   Ice geyser             one   92  pack  458  denied 0.58  chill 0.05  moved 0.7
+  EEII  conjure Stone burst            one  103  pack  517  denied 0.58  chill 0.18  moved 0.7
   EI    force   Ice boulder            one   73  pack   73  denied 0.72  chill 0.06  moved 1.1
   EI    area    Ice quake              one   57  pack  286  denied 0.58  chill 0.05  moved 0.4
   EI    place   Ice geyser             one   51  pack  253  denied 0.58  chill 0.01  moved 0.4

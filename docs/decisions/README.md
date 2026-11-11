@@ -1416,3 +1416,13 @@ The user agreed to both ("2 and 3 seems okay"):
 - **The mistake elements stay** (Earth, Lightning and Ice on yourself only hurt you; Water, Cold and Fire put out burning or thaw you).
 - **The Double stays for now, but the user wants something cooler in its slot** (Sigil alone on yourself): "I'm not a big fan of the double spell. I really want something cooler on this slot." Open, for a later session.
 - The golden hash is re-recorded (`47ecf451` to `1b8986c7`): the scripted run casts Arcane + Fire on itself.
+
+## 2026-11-11: Spell audit, step 9: the cross-cut
+
+Every damage queue up to 4 runes (Water, Fire, Cold, Lightning, Arcane, Earth, Ice; about 250) by Force, Area, Place and Weapon, on one target and a pack of five, with outliers flagged (`game/tools/probe-crosscut.txt`). The user also asked to look again for deeper combos: the 3- and 4-rune ones showed no new patterns. The user agreed to three fixes:
+1. **Earth's steep curve (n^1.3) is Rock's alone**, the hard-to-land single missile; the Earthquake, Geyser and Stone burst hit a crowd, so they grow like the other forms (+70 % a rune). Earthquake 36 / 62 / 87 / 113 for 1 to 4 Earth (was 36 / 91 / 157 / 233; the Fire ring is 34 / 55 / 76 / 97). Rock is unchanged.
+2. **Arcane's one-shot casts get a flat x1.6**, as its table damage is the beam's per-second rate: Arcane nova 33 (was 21), Arcane blast 26 (was 16). Adding Arcane to a Fire patch is now a real choice (an instant blast for a floor).
+4. **The Water burst (Weapon) pushes as hard as the Splash ring** (it pushed nothing).
+- Found while building: the delayed Place zones (the Arcane blast, the Geyser) ignored their cast's power, so a glyph's x1.25 never reached them; they carry it now.
+- **Not changed:** Fire as a mix-in stays the top raw damage (the Fire beam and Flame arc lead the 2-rune Force spells), as decided in step 4. **Still open: Steam's niche** (Water + Fire is 10 to 20 % below Fire alone and gains nothing back; the proposal, not taken up, was that steam scalds through fire immunity and fire resistance). Artefacts of the probe: Caltrops and floors read low or high on targets that stand still, and 3+ Earth "kills" its 135-HP dummy.
+- The golden hash is re-recorded (`1b8986c7` to `dd8360fb`): the scripted run casts Earth and Arcane.

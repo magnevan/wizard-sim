@@ -148,6 +148,8 @@ export interface FireExtra {
 /** A spray element's one-shot multiplier (Fire, Cold, Ice, Steam): its table damage is a per-second rate, so a single hit needs it; 1 for the rest. */
 export function oneShotBlast(spec: SpellSpec): number {
   const n = spec.formN;
+  // Arcane's table damage is its beam's per-second rate too, but it grows linearly already: a flat bonus (the cross-cut, 2026-11-11: its nova and blast were the weakest damage casts)
+  if (spec.form === EL.arcane && !spec.heal) return SHAPES.arcaneBlast;
   const blastBase = spec.form === EL.fire || spec.scald ? SHAPES.fireBlast : spec.form === EL.cold && !spec.freeze ? SHAPES.coldBlast : spec.form === EL.ice ? SHAPES.iceBlast : 0;
   return blastBase ? (blastBase * (1 + COMBAT.formScaling * (n - 1))) / Math.sqrt(n) : 1;
 }
@@ -250,8 +252,8 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       burstEvent(w, src, tx, ty, r, spec.look);
       break;
     }
-    case 'blast': spawnZone(w, ZONE.blast, src, p, tx, ty, 2 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); break;
-    case 'geyser': spawnZone(w, ZONE.geyser, src, p, tx, ty, 0.9 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); break;
+    case 'blast': { const z = spawnZone(w, ZONE.blast, src, p, tx, ty, 2 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); if (z >= 0) w.zones.scale[z] = k * blast; break; } // the delayed blast keeps its cast's scale (a glyph's power, the one-shot blast)
+    case 'geyser': { const z = spawnZone(w, ZONE.geyser, src, p, tx, ty, 0.9 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); if (z >= 0) w.zones.scale[z] = k * blast; break; }
     case 'spring': spawnZone(w, ZONE.spring, src, p, tx, ty, (1.8 + 0.4 * n) * lingerSize(w, src), Math.round(T(6 + 2 * n) * lingerLife(w, src)), 0); break; // were 1.4 and 4: bigger, longer (2026-11-11)
     case 'strike':
       w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x: tx, y: ty - 6, x2: tx, y2: ty, look: spec.look });
@@ -275,7 +277,9 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
             const rx = b.x[i] - x, ry = b.y[i] - y, along = rx * dx + ry * dy, side = Math.abs(rx * dy - ry * dx);
             if (along < -b.r[i] || along > reach + b.r[i] || side > SHAPES.imbueLineHalf + b.r[i]) continue;
           } else if (!inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
-          hit(w, i, p, hitOpts(p, src, k * blast * close * SHAPES.imbuePower, dx, dy));
+          const ho = hitOpts(p, src, k * blast * close * SHAPES.imbuePower, dx, dy);
+          if (spec.form === EL.water) ho.push *= SHAPES.ringPush; // the Water burst shoves as hard as the Splash ring (it pushed nothing: no Push mod on Weapon casts)
+          hit(w, i, p, ho);
         }
       }
       let mask = 0;
@@ -663,6 +667,7 @@ export function tickMissiles(w: World): void {
         }
         setHitKind(HIT_KIND.missile);
         hit(w, i, p, hitOpts(p, m.owner[j], m.scale[j], ux, uy, 1, true));
+        setHitKind(HIT_KIND.other); // Rock's steep curve is for this hit only (hit.ts)
         m.lastHit[j] = i;
         // The spear's javelin pins what it hits and frosts the ground there.
         if (m.flags[j] & PF.pin) { b.root[i] = Math.max(b.root[i], T(ARMS.pin)); floorDisc(w, m.x[j], m.y[j], ARMS.frostRadius, EL.cold); }
@@ -723,15 +728,16 @@ function frostPuff(w: World, j: number): void {
   disc(w, p, m.owner[j], m.x[j] + (m.vx[j] / sp) * ahead, m.y[j] + (m.vy[j] / sp) * ahead, R, m.scale[j] / 3, -1);
 }
 
-export function spawnZone(w: World, type: number, src: number, p: Payload, x: number, y: number, r: number, life: number, timer: number): void {
+export function spawnZone(w: World, type: number, src: number, p: Payload, x: number, y: number, r: number, life: number, timer: number): number {
   const z = w.zones;
   for (let k = 0; k < MAX_ZONES; k++) {
     if (z.type[k]) continue;
     z.type[k] = type; z.owner[k] = src; z.x[k] = x; z.y[k] = y; z.r[k] = r; z.life[k] = life; z.timer[k] = timer; z.scale[k] = 1;
     z.flags[k] = flagsOf(p); z.mod[k] = modId(p.mod); z.look[k] = p.look;
     z.els.set(p.counts.subarray(p.at * N_EL, p.at * N_EL + N_EL), k * N_EL);
-    return;
+    return k;
   }
+  return -1;
 }
 
 /** What rain carries after it lands: one Water, nothing else. Never written. */
@@ -743,7 +749,7 @@ export function tickZones(w: World): void {
     const p = stored(z.els, k, z.flags[k], z.mod[k], z.look[k]);
     if (z.type[k] === ZONE.blast || z.type[k] === ZONE.geyser) {
       if (--z.timer[k] <= 0) {
-        disc(w, p, z.owner[k], z.x[k], z.y[k], z.r[k], z.type[k] === ZONE.geyser ? SHAPES.geyserPower : 1, -1);
+        disc(w, p, z.owner[k], z.x[k], z.y[k], z.r[k], z.scale[k] * (z.type[k] === ZONE.geyser ? SHAPES.geyserPower : 1), -1);
         burstEvent(w, z.owner[k], z.x[k], z.y[k], z.r[k], p.look);
         z.type[k] = ZONE.none;
       }

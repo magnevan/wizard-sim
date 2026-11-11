@@ -67,12 +67,33 @@ describe('runes and the queue', () => {
     expect(rune(w, 'cold')).toBeCloseTo(RUNES.max.cold, 1);
   });
 
-  it('you cannot queue an element you are out of', () => {
+  it('an element you are out of queues as a ghost, and all your regen fills it', () => {
     const { w, d } = range();
     w.seats.runes[elementId('earth') - 1] = 0.5;
     d.queue('earth');
-    expect(w.seats.queueLen[0]).toBe(0);
-    expect(w.events.some((e) => e.kind === 'dry')).toBe(true);
+    expect(w.seats.queueLen[0]).toBe(1);
+    expect(w.seats.owe[0]).toBe(1);
+    d.tick({}, Math.ceil(60 * 0.5 / RUNES.regen) + 2); // half a rune, at all of R
+    expect(w.seats.owe[0]).toBe(0);
+    expect(rune(w, 'earth')).toBeLessThan(0.1);
+  });
+
+  it('casting with a ghost unpaid goes into debt (at most one rune), and regen pays it back first', () => {
+    const { w, d } = range();
+    w.seats.runes[elementId('earth') - 1] = 0;
+    d.queue('earth').tick({ buttons: BTN.force }, 1);
+    expect(rune(w, 'earth')).toBeLessThan(-0.9); // cast now, a rune in debt
+    // two ghosts at once would be two runes of debt: that cast doesn't go
+    const b = range();
+    b.w.seats.runes[elementId('earth') - 1] = 0; b.w.seats.runes[elementId('fire') - 1] = 0;
+    b.d.queue('earth', 'fire').tick({ buttons: BTN.force }, 1);
+    expect(b.w.seats.queueLen[0]).toBe(2);
+  });
+
+  it('ghosts never stretch a pool: the queue holds at most its max of an element', () => {
+    const { w, d } = range();
+    d.queue('earth', 'earth', 'earth', 'earth', 'earth');
+    expect(w.seats.queueLen[0]).toBe(RUNES.max.earth);
   });
 
   it('a cast spends the runes; regen brings them back slowly, faster when attuned', () => {

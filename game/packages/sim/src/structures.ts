@@ -643,8 +643,9 @@ export function queuedOf(w: World, seat: number, id: number): number {
   const s = w.seats;
   let n = 0;
   for (let k = 0; k < s.queueLen[seat]; k++) {
-    const q = s.queue[seat * QUEUE_MAX + k];
-    if (q === id || (q === EL.ice && (id === EL.water || id === EL.cold))) n++;
+    const q = s.queue[seat * QUEUE_MAX + k], o = s.owe[seat * QUEUE_MAX + k]; // a ghost's unpaid part isn't held
+    if (q === id && q !== EL.ice && !(o & 1)) n++;
+    if (q === EL.ice && ((id === EL.water && !(o & 1)) || (id === EL.cold && !(o & 2)))) n++;
   }
   return n;
 }

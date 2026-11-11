@@ -559,9 +559,10 @@ describe('survive: power-ups', () => {
     grant(w, 0, PU.clockwork);
     d.aimAt(6, 0).queue('sigil', 'fire').cast(BTN.force, 1, 20);
     w.seats.runes[EL.sigil - 1] = 0;
-    d.queue('sigil'); // no free rune and nothing bound: nothing to recall, so it's dry
+    d.queue('sigil'); // no free rune but nothing bound: a ghost Sigil, filling from regen; the turret stays
     expect(Array.from(w.devices.type).filter((x) => x === DEVICE.turret).length).toBe(1);
-    expect(w.seats.queueLen[0]).toBe(0);
+    expect(w.seats.queueLen[0]).toBe(1);
+    expect(w.seats.owe[0]).toBe(1);
   });
 
   it('Clockwork: two turrets fire no more often than the one did (the regen budget is shared)', () => {

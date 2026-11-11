@@ -9,7 +9,7 @@
 import { pedestalNear } from '@wizard-sim/sim';
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
-import { ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, regenOf, regenRate, runeMax, specOf, type World } from '@wizard-sim/sim';
+import { ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, regenOf, runeRate, runeMax, specOf, type World } from '@wizard-sim/sim';
 import { badge, perkOf } from './art/perks';
 import * as X from './art/px';
 import { mod } from './art/util';
@@ -264,7 +264,7 @@ export class Hud {
     const upkeep = channel && spec && s.chanTicks[i] >= T(RHYTHM.naturalChannel) ? spec.form : 0;
     // the shared regen budget: each refilling pool's share of R (0..1) sets how bright its flow shows
     const full = fullMask(w, i), R = regenOf(w, i);
-    if (driven) this.deviceBar(c, w, i, FLAME_TURRET, x0, y0, t, regenRate(w, i, elementId(FLAME_TURRET.el), full) / Math.max(R, 1e-6), upkeep === elementId(FLAME_TURRET.el));
+    if (driven) this.deviceBar(c, w, i, FLAME_TURRET, x0, y0, t, runeRate(w, i, elementId(FLAME_TURRET.el), full) / Math.max(R, 1e-6), upkeep === elementId(FLAME_TURRET.el));
     // queued runes are reserved: they show as spent pips until cast or refunded
     [...TOP, ...BOT].forEach((el, k) => {
       const row = k < TOP.length ? 0 : 1, col = row ? k - TOP.length : k, id = elementId(el), ramp = X.EL[el];
@@ -286,8 +286,9 @@ export class Hud {
       X.text(c, rules.ELEMENTS[el].key, sx + 13, sy + 3, dryK ? '#ff6a6a' : '#6a6484');
       if (drain) { X.rect(c, sx + 13, sy + 9, 3, 1, '#ff6a6a'); X.px(c, sx + 18, sy + 9 + mod(t * 2.2, 1) * 4, ramp[2]); }
       const v = s.runes[i * N_EL + id - 1], max = Math.round(runeMax(w, i, id));
-      const share = R > 0 ? regenRate(w, i, id, full) / R : 0;
+      const share = R > 0 ? runeRate(w, i, id, full) / R : 0; // ghosts and debt take all of it while owed
       this.pips(c, sx, sy + 11, v, max, ramp, t, share);
+      if (v < 0) X.rect(c, sx + 2, sy + 10, Math.max(1, Math.round(-v * 10)), 1, '#ff4a4a'); // in debt: a red line, as long as what's owed
       // the tutorial just gave you this element: its socket flashes in its colour
       const fresh = w.tut ? t - this.unlockAt[id] : 9;
       if (fresh >= 0 && fresh < 1.2 && Math.floor(fresh * 8) % 2 === 0) {
@@ -322,7 +323,8 @@ export class Hud {
     } else if (q.length) {
       const cw = 26 + q.length * 14, cx = Math.round(CW / 2 - cw / 2);
       X.rect(c, cx - 1, cy - 1, cw + 2, 12, '#0a0810'); X.rect(c, cx, cy, cw, 10, '#1a1726');
-      q.forEach((id, k) => { if (k) X.text(c, '+', cx + 2 + k * 14 - 5, cy + 3, '#ffffff'); X.icon(c, elementName(id), cx + 2 + k * 14, cy + 2, X.EL[elementName(id)][2]); });
+      // a ghost rune (queued without a whole rune: regen is filling it) shows dim and blinking until it's paid
+      q.forEach((id, k) => { if (k) X.text(c, '+', cx + 2 + k * 14 - 5, cy + 3, '#ffffff'); const ghost = s.owe[i * QUEUE_MAX + k] > 0; X.icon(c, elementName(id), cx + 2 + k * 14, cy + 2, X.EL[elementName(id)][ghost ? (Math.floor(t * 4) % 2 ? 3 : 1) : 2]); });
       if (Math.floor(t * 6) % 2 && q.length < QUEUE_MAX) X.rect(c, cx + 4 + q.length * 14, cy + 7, 3, 1, '#e8e4f0');
       X.text(c, 'QUEUE', cx + cw - 21, cy + 3, '#8a8498');
     }

@@ -33,7 +33,7 @@ export const RHYTHM = {
   windupPerRune: 0.04,
   recovery: 0.18,
   /** Area tap vs Place hold on the Area button. */
-  placeHold: 0.25,
+  placeHold: 0.18, // was 0.25: the user found the wait from Area to Place a little long (2026-11-11)
   /** A Place drag counts once the cursor moved this far while held. */
   dragMin: 1.0,
   /** Channels (beams, sprays, arcs) are free for this long, then cost upkeep as regen debt. */
@@ -65,7 +65,7 @@ export const COMBAT = {
 };
 
 /** How long floor surfaces last, in seconds. */
-export const SURFACE = { water: 20, ice: 16, fire: 10 };
+export const SURFACE = { water: 20, ice: 16, fire: 12, /** frost damage a second that ice does to whoever stands on it (chill only) */ iceChill: 8 };
 
 export const STATUS = {
   // Longer than our first pass, toward Magicka's (it burns 5 s per stack, chills 10 s, freezes 4 s).
@@ -118,11 +118,11 @@ export const SHAPES = {
   shardPower: 0.75,
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,
-  patchRadius: 1.6, patchLife: 6,
+  patchRadius: 2, patchLife: 8, // were 1.6 and 6: the user asked for bigger, longer Place effects (2026-11-11)
   /** Each extra rune of a Place patch's lead: steam and the floors it leaves last this share of their life longer. */
   lingerPerRune: 0.2,
   /** Rain (Water Place): it keeps falling this long, plus rainPerRune per extra Water, soaking and dousing whoever is under it. */
-  rainLife: 5, rainPerRune: 1,
+  rainLife: 7, rainPerRune: 1,
   delayedBlast: 0.6, // geyser rumble / arcane blast fuse
   swingRange: 1.6, swingHalfAngle: 0.15,
   /** The imbued burst (Weapon cast with elements, no Sigil or Shield): a cone in front of you, a little longer per extra rune. */

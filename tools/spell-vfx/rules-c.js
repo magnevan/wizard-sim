@@ -76,12 +76,12 @@
     { id: 'scald', els: ['water', 'fire'], trait: 'Scald', hit: 'scalds, and leaves a mist that blocks sight', aura: ['Steam veil', 'the mist and the flames make a scalding steam around {w} that hides {w} from enemies'], coat: 'whoever is shoved is scalded', self: 'The steam scalds {w}, but the mist hides {w}.',
       titles: { force: 'Scalding spray', area: 'Steam burst', place: 'Steam cloud', conjure: 'Scalding burst' },
       // the mix's own Area and Place, whichever of the two leads (the plain cells describe rain, a fire patch...)
-      texts: { area: 'A ring of scalding steam bursts from you.', place: 'A cloud of scalding steam at the cursor for about 6 seconds: it scalds whoever stands in it and hides them.' } },
+      texts: { area: 'A ring of scalding steam bursts from you.', place: 'A cloud of scalding steam at the cursor for about 8 seconds: it scalds whoever stands in it and hides them.' } },
     { id: 'freeze', els: ['water', 'cold'], trait: 'Freeze', hit: 'turns the spell to ice: it chills without soaking, and freezes targets that were already wet; frozen targets are brittle and shatter from a heavy hit', aura: ['Freezing mist', 'enemies the mist soaks freeze solid in the cold around {w}'], coat: 'soaked enemies freeze solid as they are shoved', self: '{W} freeze solid for a moment (a heavy hit would shatter {w}).',
       titles: { force: 'Ice shards', area: 'Freezing splash', place: 'Ice sheet', conjure: 'Freezing burst' },
       // A freezing spray was too strong, so as Force the mix changes shape: shards, not a cone.
       forceText: 'A volley of jagged ice shards along your aim. Each shard pierces and chills; enough of them freeze a wet target, and a frozen target shatters from a heavy hit.',
-      texts: { area: 'A freezing splash bursts from you: soaked targets freeze solid.', place: 'Freezes the ground at the cursor into a sheet of ice for about 16 seconds: it chills whoever crosses it, and feet slip on it.' } },
+      texts: { area: 'A freezing splash bursts from you: soaked targets freeze solid.', place: 'Freezes the ground at the cursor into a sheet of ice for about 16 seconds: it chills whoever stands on it, and freezes them solid if they are wet.' } },
   ];
   const mixesOf = (q) => MIX.filter((m) => m.els.every((e) => q.includes(e)));
 
@@ -295,13 +295,13 @@
     fire: {
       force: () => ['Flamethrower', 'A cone of fire.'],
       area: () => ['Fire ring', 'A ring of flame bursts from you.'],
-      place: () => ['Fire patch', 'Sets the ground at the cursor burning for about 10 seconds.'],
+      place: () => ['Fire patch', 'Sets the ground at the cursor burning for about 12 seconds.'],
       conjure: swing('fire'),
     },
     cold: {
       force: () => ['Frost spray', 'A cone of cold.'],
       area: () => ['Frost ring', 'A ring of cold around you.'],
-      place: () => ['Frost patch', 'Freezes the ground at the cursor for about 16 seconds. Freezes water into walkable ice.'],
+      place: () => ['Freezing fog', 'A low fog of bitter cold at the cursor for about 8 seconds: it chills whoever stands in it, and freezes puddles under it into ice. With Water, it freezes the ground into ice instead.'],
       conjure: swing('cold'),
     },
   };

@@ -60,7 +60,7 @@ describe('help panel model: queue -> rows', () => {
     expect(fire[0].stats[0]).toBe('2 RUNES');
     expect(fire[0].stats.join(' ')).toMatch(/FIRE \d+(\.\d)?\/S/);
     expect(fire[0].stats.join(' ')).toMatch(/HOLD: CHANNEL/);
-    expect(fire[2].stats.join(' ')).toMatch(/LASTS 12S/); // a fire patch: 10 s, +20 % for the second Fire
+    expect(fire[2].stats.join(' ')).toMatch(/LASTS 14.4S/); // a fire patch: 12 s, +20 % for the second Fire
     const rock = helpModel(['earth'], bare).rows[0].stats.join(' ');
     expect(rock).toMatch(/EARTH 22 CHARGED/);
     expect(rock).toMatch(/HOLD: CHARGE/);

@@ -20,7 +20,7 @@
  *   Mirror buckler (S)     narrow, glances shots / reflects one   Backstep 3u   Light: full speed blocking, widest parry
  *   Bulwark (S+E)          wide, stops melee / bashes down        Shove step    Anchored: no knockback (and 15 % slower)
  *   Ember targe (S+F)      thorns / a burst of flame              Flame step    Warm: no chill, freeze or burning; dry at once
- *   Rime kite (S+C)        chills melee attackers / freezes them  Ice slide     Sure-footed: no slipping on ice
+ *   Rime kite (S+C)        chills melee attackers / freezes them  Ice slide     Skater: glides on ice
  *   Spark ring (S+L)       weakest / chain discharge              Blink         Grounded: chain lightning skips you
  *   Tide shield (S+W)      shoves and soaks / a shoving wave      Surge         Quenched: can't burn
  *   Prism (S+A)            stores what it blocks as charge /      Phase         Clear: allies' beams and sprays don't hurt you
@@ -203,7 +203,7 @@ export const anchored = (w: World, i: number): boolean => hasPassive(w, i, GUARD
 export const warm = (w: World, i: number): boolean => hasPassive(w, i, GUARD.ember) || resist(w, i, RES.cold) >= ARMS.resStatus;
 /** Can't burn: an own-element fire resistance (Ember), or Quenched (Tide). */
 export const unburnable = (w: World, i: number): boolean => hasPassive(w, i, GUARD.tide) || resist(w, i, RES.fire) >= ARMS.resStatus;
-/** Never slips on ice (Rime). */
+/** Skates on ice: knockback carries on (Rime's Ice slide). Nobody else slides. */
 export const sureFooted = (w: World, i: number): boolean => hasPassive(w, i, GUARD.rime);
 /** Grounded (Spark): chain lightning skips this seat. */
 export const grounded = (w: World, i: number): boolean => hasPassive(w, i, GUARD.spark);

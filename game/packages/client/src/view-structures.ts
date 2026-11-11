@@ -1547,6 +1547,8 @@ export class StructureView {
     try { spec = compile(queueOf(w, i), 'place', { drag }); } catch { return; }
     if (spec.shape === 'todo') return;
     const TEAM = X.TEAMS[i % 4], col = TEAM.light;
+    // nothing until the hold counts as Place (the user, 2026-11-11: the reticle showed for what was still an Area tap)
+    if (!drag && s.areaHeld[i] < T(RHYTHM.placeHold)) return;
     const k = drag ? 1 : clamp(s.areaHeld[i] / T(RHYTHM.placeHold), 0, 1), dim = k < 1;
     const d = Math.hypot(s.aimX[i], s.aimY[i]), lim = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
     const cxw = b.x[i] + s.aimX[i] * lim, cyw = b.y[i] + s.aimY[i] * lim, cx = gx(cxw), cy = gy(cyw);

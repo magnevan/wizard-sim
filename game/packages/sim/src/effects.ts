@@ -10,12 +10,12 @@ import type { Mod, SpellSpec } from './compile';
 import { ARMS, BODY, CELL, COMBAT, PERKS, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
 import { inCone, len, rayCircle } from './geom';
-import { HIT_KIND, addKnock, applyHit, ignite, setHitKind, type HitOpts } from './hit';
+import { HIT_KIND, addChill, addKnock, applyHit, ignite, setHitKind, tryFreeze, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { TERRAIN_HIT, clipRay, collideWalls, damageWall, isRockHit, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
 import { WALL, compile } from './compile';
 import { ARCHETYPES } from './archetypes';
-import { RES, grounded, guardMissile, phased, taken } from './guards';
+import { RES, grounded, guardMissile, phased, taken, warm } from './guards';
 import { noteBlocked } from './tutorial-data';
 import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, PU, SURF, WARD, ZONE, alive, lingerLife, lingerSize, stackOf, type World } from './world';
 
@@ -94,6 +94,8 @@ export function tickSurfaces(w: World): void {
     if (!alive(w, i)) continue;
     const k = surfAt(w, b.x[i], b.y[i]);
     if (k === SURF.water) { b.wet[i] = Math.max(b.wet[i], T(1)); b.burn[i] = 0; }
+    // ice bites at the feet: it chills, and a wet body standing on it freezes (it used to make bodies slide instead)
+    if (k === SURF.ice && !(i < MAX_SEATS && warm(w, i))) { b.burn[i] = 0; addChill(w, i, SURFACE.iceChill / 60); if (b.wet[i]) tryFreeze(w, i); }
     if (k === SURF.fire && b.burn[i] < T(1) && !(b.kind[i] === KIND.enemy && ARCHETYPES[b.arch[i]].burnImmune)) ignite(w, i, STATUS.burnSurface, b.burn[i] ? b.burnSrc[i] : -1);
   }
 }
@@ -197,7 +199,18 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       // each extra rune of the lead: +0.4 u, and what lingers lasts SHAPES.lingerPerRune longer (steam, the floors it leaves)
       // Lingering (Survive) makes the whole patch wider and what it leaves last longer
       const r = (SHAPES.patchRadius + 0.4 * (n - 1)) * lingerSize(w, src), longer = (1 + SHAPES.lingerPerRune * (n - 1)) * lingerLife(w, src);
+      // Cold without Water is a freezing fog, not ice (the user, 2026-11-11: "like opening a deep freezer"): it chills
+      // whoever stands in it and leaves the floor alone. Water + Cold is still the ice sheet.
+      const fog = !spec.scald && !spec.freeze && spec.counts[EL.cold - 1] > 0;
       if (spec.scald) spawnZone(w, ZONE.steam, src, p, tx, ty, r, T(SHAPES.patchLife * longer), 0);
+      else if (fog) {
+        spawnZone(w, ZONE.frost, src, p, tx, ty, r, T(SHAPES.patchLife * longer), 0);
+        // the fog freezes standing water under it into ice; dry floor stays dry
+        for (let gy = -r; gy <= r; gy += CELL) for (let gx = -r; gx <= r; gx += CELL) {
+          const c = gx * gx + gy * gy <= r * r ? cellAt(w, tx + gx, ty + gy) : -1;
+          if (c >= 0 && w.surf.kind[c] === SURF.water) touchFloor(w, c, EL.cold, longer);
+        }
+      }
       else for (const el of [EL.water, EL.cold, EL.fire]) if (spec.counts[el - 1]) floorDisc(w, tx, ty, r, el, longer);
       // Rain: Water Place keeps falling for a while (the user: a rain that lasts 1 s felt far too short).
       if (spec.form === EL.water && !spec.scald && !spec.freeze) spawnZone(w, ZONE.rain, src, p, tx, ty, r, Math.round(T(SHAPES.rainLife + SHAPES.rainPerRune * (n - 1)) * lingerLife(w, src)), 0);
@@ -208,7 +221,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     }
     case 'blast': spawnZone(w, ZONE.blast, src, p, tx, ty, 2 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); break;
     case 'geyser': spawnZone(w, ZONE.geyser, src, p, tx, ty, 0.9 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); break;
-    case 'spring': spawnZone(w, ZONE.spring, src, p, tx, ty, (1.4 + 0.4 * n) * lingerSize(w, src), Math.round(T(4 + 2 * n) * lingerLife(w, src)), 0); break;
+    case 'spring': spawnZone(w, ZONE.spring, src, p, tx, ty, (1.8 + 0.4 * n) * lingerSize(w, src), Math.round(T(6 + 2 * n) * lingerLife(w, src)), 0); break; // were 1.4 and 4: bigger, longer (2026-11-11)
     case 'strike':
       w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x: tx, y: ty - 6, x2: tx, y2: ty, look: spec.look });
       disc(w, p, src, tx, ty, 0.9, 1.2 * k, -1);
@@ -625,7 +638,7 @@ export function tickZones(w: World): void {
       if (--z.life[k] <= 0) z.type[k] = ZONE.none;
       continue;
     }
-    // Lingering zones (springs, steam) work every half second.
+    // Lingering zones (springs, steam, frost fog) work every half second.
     if (z.life[k] % 30 === 0) {
       for (let i = 0; i < b.kind.length; i++) {
         if (!alive(w, i) || len(b.x[i] - z.x[k], b.y[i] - z.y[k]) > z.r[k] + b.r[i]) continue;
@@ -638,7 +651,7 @@ export function tickZones(w: World): void {
 
 // ---- bodies ------------------------------------------------------------------------------------
 
-/** Ice under foot: you slide (much lower grip). */
+/** Ice under foot: it chills you (tickSurfaces); the Rime kite skates on it. */
 export const onIce = (w: World, i: number): boolean => surfAt(w, w.bodies.x[i], w.bodies.y[i]) === SURF.ice;
 
 /** Bodies nothing moves: the Sanctum's dummies, and rooted archetypes (the tutorial's brambles). */

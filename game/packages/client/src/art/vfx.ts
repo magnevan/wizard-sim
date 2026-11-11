@@ -618,7 +618,14 @@ export class Vfx {
         // the flame body: a solid low base everywhere and tongues where travelling waves peak,
         // so neighbouring cells merge into one sheet with ragged tips (fire-place-v3)
         const nb = (kindAt(c, -1, 0) === k ? 1 : 0) + (kindAt(c, 1, 0) === k ? 1 : 0) + (kindAt(c, 0, -1) === k ? 1 : 0) + (kindAt(c, 0, 1) === k ? 1 : 0);
-        const inner = nb / 4, life = Math.min(1, s.life[c] / FLOOR_FADE);
+        // Every patch its own (the user: each fire patch looked the same): the cells laid together go out on the same
+        // tick, so that tick seeds this patch's look. Edge cells burn low or not at all at random, heights vary cell to
+        // cell, and the flames' travelling pattern starts somewhere else.
+        const pseed = (w.clock[0] + s.life[c]) & 0xffff, vr = rand(c, pseed, 77), ph = rand(pseed, 78) * TAU;
+        if ((nb <= 2 && vr < 0.5) || (nb === 3 && vr < 0.18)) continue;
+        // a few scorched gaps inside, where the fire has burned low
+        const hf = nb < 4 ? 0.45 + 0.9 * vr : vr < 0.12 ? 0.3 : 0.75 + 0.55 * vr;
+        const inner = nb / 4, life = Math.min(1, s.life[c] / FLOOR_FADE) * hf;
         // edges round off: columns near a side with no fire beyond it are shorter, and jittered
         const openL = kindAt(c, -1, 0) !== k, openR = kindAt(c, 1, 0) !== k, openF = kindAt(c, 0, 1) !== k, openB = kindAt(c, 0, -1) !== k;
         for (let row = 0; row < 2; row++) {
@@ -627,7 +634,7 @@ export class Vfx {
           for (let xx = x0; xx < x0 + cw; xx++) {
             const lx = xx - x0, side = Math.min(openL ? (lx + 1) / 4 : 1, openR ? (cw - lx) / 4 : 1) * ef;
             if (side < 0.5 && rand(xx, yy, 3) > side * 1.6) continue;
-            const wv = 0.5 + 0.5 * Math.sin(xx * 0.5 - t * 5 + yy * 1.7 + Math.sin(yy * 0.6) * 3), w2 = 0.5 + 0.5 * Math.sin(xx * 0.23 + t * 3.1 - yy * 0.8);
+            const wv = 0.5 + 0.5 * Math.sin(xx * 0.5 - t * 5 + yy * 1.7 + Math.sin(yy * 0.6) * 3 + ph), w2 = 0.5 + 0.5 * Math.sin(xx * 0.23 + t * 3.1 - yy * 0.8 + ph * 1.7);
             const base = (1 + 1.5 * inner) * life * side, tg = (3 + 9 * inner) * Math.pow(wv, 2) * (0.55 + 0.45 * w2) * (0.85 + 0.15 * Math.sin(t * 13 + xx));
             const hh = Math.round(base + tg * life * side);
             if (hh < 1) continue;
@@ -730,6 +737,33 @@ export class Vfx {
       }
       for (const p of emit(t, 6, 1.5, (i, age) => ({ x: x + (rand(i, 21, sd) - 0.5) * r * 2, y: y - 14 - age * 16, age }))) K.puff(o, p.x, p.y, 3 + p.age * 4, EL.steam[2], (1 - p.age) * 0.7 * cl);
       light(x, y - 6, r + 20, '#d8e0f0', 0.3 * cl);
+    } else if (ty === ZONE.frost) {
+      // Freezing fog (Cold Place, the user: "like opening a deep freezer"): a low, heavy fog of cold air that pours out
+      // over the floor and spills past its edge, curling slowly, with frost glinting on the ground under it
+      const cl = easeOut(seg(e, 0, 0.5)) * seg(z.life[k], 0, 40);
+      X.ellipse(g, x, y, r * 0.95 * cl, r * 0.95 * FY * cl, '#9fd4e8', 0.35 * cl);
+      for (let i = 0; i < 18; i++) {
+        if (rand(i, 31, sd) > cl) continue;
+        const a = rand(i, 32, sd) * TAU, d = Math.sqrt(rand(i, 33, sd)) * r * 0.9;
+        if ((Math.floor(t * 2 + rand(i, 34, sd) * 7)) % 5 === 0) X.px(g, x + Math.cos(a) * d, y + Math.sin(a) * d * FY, '#ffffff');
+        else X.px(g, x + Math.cos(a) * d, y + Math.sin(a) * d * FY, '#c4eefa');
+      }
+      // the body of the fog: flat, thin wisps hugging the floor, see-through, drifting slowly (not a cloud: it lies low)
+      for (let i = 0; i < 26; i++) {
+        const a = rand(i, 11, sd) * TAU + t * 0.08 * (i % 2 ? 1 : -1), rr = Math.sqrt(rand(i, 12, sd)) * r * 0.9 * cl;
+        const px2 = x + Math.cos(a) * rr + Math.sin(t * 0.5 + i * 1.3) * 3, py2 = y + Math.sin(a) * rr * FY - 1 - rand(i, 13, sd) * 3;
+        const wr = (6 + rand(i, 14, sd) * 7) * (0.5 + cl * 0.5), hr = wr * (0.28 + 0.12 * rand(i, 15, sd));
+        const den = (0.3 + 0.25 * Math.sin(t * 0.9 + i * 2.1) ** 2) * cl; // each wisp thickens and thins
+        X.ellipse(o, px2, py2, wr, hr, i % 3 === 0 ? '#f0fcff' : i % 2 ? '#d4f0fa' : '#b8e2f2', den);
+      }
+      // tendrils spilling over the rim and creeping out along the floor, thinning as they go
+      for (const p of emit(t, 10, 2.4, (i, age) => {
+        const a = rand(i, 21, sd) * TAU, d = r * (0.8 + age * 0.6);
+        return { x: x + Math.cos(a) * d, y: y + Math.sin(a) * d * FY, age, i };
+      })) X.ellipse(o, p.x, p.y, (4 + p.age * 6) * (0.6 + 0.4 * cl), (1.2 + p.age * 1.6) * (0.6 + 0.4 * cl), p.i % 2 ? '#d4f0fa' : '#b8e2f2', (1 - p.age) * 0.45 * cl);
+      // a breath of cold curling up off it now and then, thin
+      for (const p of emit(t, 3, 1.6, (i, age) => ({ x: x + (rand(i, 41, sd) - 0.5) * r * 1.4 + Math.sin(age * 4 + i) * 2, y: y - 3 - age * 10, age }))) X.ellipse(o, p.x, p.y, 2 + p.age * 3, 1 + p.age * 1.5, '#e8fbff', (1 - p.age) * 0.4 * cl);
+      light(x, y, r + 20, '#9ff4ff', 0.3 * cl);
     } else if (ty === ZONE.rain) {
       // rain: a dark cloud over the spot, streaks and splashes, for as long as the sim says it falls
       const t0 = this.zoneT0[k], end = simT + z.life[k] / 60;
@@ -913,13 +947,16 @@ export class Vfx {
           // Earth; the ball grows to exactly the size the thrown rock will be.
           const mat = el === 'cold' ? K.ROCK_MAT.cold : el === 'water' ? K.ROCK_MAT.water : K.ROCK_MAT.earth, n = Math.max(1, spec.formN);
           const R1 = clamp((0.22 + 0.08 * n) * 16, 3, 8), g = this.g.x, cy = ch[1] + 2;
-          for (const p of emit(t, 8 + 6 * n, 0.34, (q, a) => {
+          // a burst the moment it starts (a dozen and more stones at once), then a steady stream while it's held
+          const stone = (q: number, a: number) => {
             const ang = rand(q, 81, i) * TAU, d = 9 + rand(q, 82, i) * 9 + n * 1.5, sx = v.x + Math.cos(ang) * d, sy = v.y + Math.sin(ang) * d * FY, kk = smooth(a);
             return { x: lerp(sx, ch[0], kk), y: lerp(sy, cy, kk) - Math.sin(a * Math.PI) * 8, a, sx, sy, q };
-          }, t - age, t)) {
+          };
+          const t0c = t - age, stones = [...emit(t, 34 + 10 * n, 0.34, stone, t0c, t0c + 0.35), ...emit(t, 8 + 6 * n, 0.34, (q, a) => stone(q + 5000, a), t0c + 0.35, t)];
+          for (const p of stones) {
             if (p.a < 0.3) { X.px(g, p.sx, p.sy, '#2a2018'); K.puff(o, p.sx + (rand(p.q, 83, i) - 0.5) * 3, p.sy - 1 - p.a * 10, 1 + p.a * 5, '#8a7a68', 0.75 * (1 - p.a / 0.3)); }
-            const sz = p.q % 3 === 0 ? 3 : 2;
-            K.sq(o, p.x, p.y, sz + 1, mat.out); K.sq(o, p.x, p.y, sz, p.q % 2 ? mat.lit : mat.body);
+            const sz = p.q % 3 === 0 ? 4 : 3;
+            K.sq(o, p.x, p.y, sz + 1, mat.out); K.sq(o, p.x, p.y, sz, p.q % 2 ? mat.hi : mat.lit); X.px(o, p.x - 1, p.y - 1, mat.hi);
           }
           K.rock(o, ch[0], cy, R1 * (0.3 + 0.7 * k), 4, mat, t * 1.5);
           this.lastCharge[i] = [ch[0], cy, t];

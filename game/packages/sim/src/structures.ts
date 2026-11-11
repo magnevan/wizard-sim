@@ -21,7 +21,7 @@
 import { compile, WALL, solidWall, type SpellSpec } from './compile';
 import { BODY, PERKS, RHYTHM, SHAPES, STATUS, STRUCT, T } from './config';
 import { EL, KEYED_EL, N_EL, poolCost, queueFromCounts } from './elements';
-import { burstEvent, channelTick, fireSpell, heldBlow, hit, hitOpts, nearest, payloadOf, stored } from './effects';
+import { burstEvent, channelTick, fireSpell, heldBlow, hit, hitOpts, nearest, oneShotBlast, payloadOf, stored } from './effects';
 import { len } from './geom';
 import { HIT_KIND, addChill, addKnock, addSoak, ignite, setHitKind, tryFreeze } from './hit';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
@@ -187,9 +187,14 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
       break;
     }
     case 'orbitals': {
+      // feeding a ring you already have costs only its elements: the ring's one Sigil rune is already bound, so this cast's comes back
+      let had = false;
+      for (let j = 0; j < MAX_DEVICES; j++) if (w.devices.type[j] === DEVICE.orbital && w.devices.owner[j] === src) had = true;
       const k = spawnDevice(w, src, DEVICE.orbital, spec, x, y);
+      if (had && k >= 0) giveRune(w, src);
       if (k >= 0) {
         let n = 0; for (let e = 0; e < N_EL; e++) if (e !== EL.sigil - 1) n += spec.counts[e]; w.devices.charges[k] = Math.max(1, n);
+        trimOrbit(w, src, k);
         // stacked orbitals share one ring: the new one takes up the phase of the caster's others
         for (let j = 0; j < MAX_DEVICES; j++) if (j !== k && w.devices.type[j] === DEVICE.orbital && w.devices.owner[j] === src) { w.devices.phase[k] = w.devices.phase[j]; break; }
       }
@@ -215,6 +220,20 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
     default: break;
   }
   w.events.push({ tick: w.clock[0], kind: 'cast', who: src, x, y, text: spec.title, look: spec.look });
+}
+
+/**
+ * Your orbit is one device (spell audit, 2026-11-11, the user: stacked orbitals bound runes "in a weird way"): every orbital
+ * cast adds its orbs to your ring, and the whole ring binds one Sigil rune (boundSigil). Past orbitMax orbs, the oldest go.
+ */
+function trimOrbit(w: World, src: number, keep: number): void {
+  const dv = w.devices;
+  for (;;) {
+    let total = 0, oldest = -1;
+    for (let j = 0; j < MAX_DEVICES; j++) if (dv.type[j] === DEVICE.orbital && dv.owner[j] === src) { total += dv.charges[j]; if (j !== keep && (oldest < 0 || dv.born[j] < dv.born[oldest])) oldest = j; }
+    if (total <= STRUCT.orbitMax || oldest < 0) return;
+    if (--dv.charges[oldest] <= 0) dv.type[oldest] = DEVICE.none;
+  }
 }
 
 /** Seat `src`'s Double appears at its left hand (one at a time: an older one goes). Returns its body, or -1 if no slot was free. */
@@ -349,6 +368,7 @@ export function recallOldest(w: World, seat: number): boolean {
   if ((s.wand[seat] || s.weapon[seat]) && s.wandBorn[seat] < born) { born = s.wandBorn[seat]; what = Q.onYou; idx = seat; }
   if (!what) return false;
   if (what === Q.onYou) { s.wand[seat] = 0; s.weapon[seat] = 0; w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: b.x[seat], y: b.y[seat], amount: 1, look: EL.sigil, text: 'dismissed' }); }
+  else if (what === Q.device && w.devices.type[idx] === DEVICE.orbital) { for (let k = 0; k < MAX_DEVICES; k++) if (w.devices.type[k] === DEVICE.orbital && w.devices.owner[k] === seat) removeOne(w, seat, Q.device, k); } // the ring is one device
   else removeOne(w, seat, what, idx);
   giveRune(w, seat);
   return true;
@@ -521,8 +541,9 @@ export function tickStructures(w: World): void {
         const d = type === DEVICE.glyph ? len(b.x[i] - dv.x[k], b.y[i] - dv.y[k]) : segDist(b.x[i], b.y[i], dv.x[k], dv.y[k], dv.x2[k], dv.y2[k])[0];
         if (d > glyphRadiusOf(w, owner) + b.r[i]) continue;
         const spec = deviceSpell(w, k, 'place');
-        if (type === DEVICE.glyph) fireSpell(w, owner, spec, 0, dv.x[k], dv.y[k], 0, { ox: dv.x[k], oy: dv.y[k] });
-        else for (let f = 0; f <= 2; f++) { const px = dv.x[k] + (dv.x2[k] - dv.x[k]) * f / 2, py = dv.y[k] + (dv.y2[k] - dv.y[k]) * f / 2; fireSpell(w, owner, spec, 0, px, py, 0, { ox: px, oy: py }); }
+        // a glyph is the Place spell at glyphPower: the trap earns a little for its delay and its bound rune (spell audit, 2026-11-11)
+        if (type === DEVICE.glyph) fireSpell(w, owner, spec, 0, dv.x[k], dv.y[k], 0, { ox: dv.x[k], oy: dv.y[k], scale: STRUCT.glyphPower });
+        else for (let f = 0; f <= 2; f++) { const px = dv.x[k] + (dv.x2[k] - dv.x[k]) * f / 2, py = dv.y[k] + (dv.y2[k] - dv.y[k]) * f / 2; fireSpell(w, owner, spec, 0, px, py, 0, { ox: px, oy: py, scale: STRUCT.glyphPower }); }
         burstEvent(w, owner, dv.x[k], dv.y[k], glyphRadiusOf(w, owner) * 1.5, dv.look[k]);
         dv.type[k] = DEVICE.none;
         break;
@@ -538,7 +559,10 @@ export function tickStructures(w: World): void {
         const spec = deviceSpell(w, k, 'force');
         const p = payloadOf(spec);
         const dx = b.x[target] - ox, dy = b.y[target] - oy, d = len(dx, dy) || 1;
-        hit(w, target, p, hitOpts(p, owner, 1.2 / Math.max(1, n * 0.5), dx / d, dy / d));
+        // all the orbs one cast made strike orbitPower x its spell between them, a spray element's with its one-shot blast (spell
+        // audit, 2026-11-11: each orb used to carry the whole spell at up to 1.2, so extra runes counted twice)
+        let made = 0; for (let e = 0; e < N_EL; e++) if (e !== EL.sigil - 1) made += dv.els[k * N_EL + e];
+        hit(w, target, p, hitOpts(p, owner, (STRUCT.orbitPower * oneShotBlast(spec)) / Math.max(1, made), dx / d, dy / d));
         w.events.push({ tick, kind: 'zap', who: owner, x: ox, y: oy, x2: b.x[target], y2: b.y[target], look: dv.look[k] });
         dv.charges[k]--;
         break; // one strike per tick
@@ -562,7 +586,7 @@ export function tickStructures(w: World): void {
       if (d > STRUCT.auraRadius + b.r[t]) continue;
       const foe = b.team[t] !== b.team[i];
       if (life && t === i) { // regeneration is the wearer's alone
-        const h = Math.min(3 * life, b.maxHp[t] - b.hp[t]);
+        const h = Math.min(STRUCT.regenAura * life, b.maxHp[t] - b.hp[t]); // each half second
         if (h > 0) { b.hp[t] += h; w.events.push({ tick: w.clock[0], kind: 'heal', who: t, src: i, x: b.x[t], y: b.y[t], amount: h, look: EL.life }); }
       }
       if (t === i) continue;
@@ -633,6 +657,6 @@ function fireArc(w: World, owner: number, spec: SpellSpec, ox: number, oy: numbe
   const b = w.bodies, p = payloadOf(spec);
   const dx = b.x[target] - ox, dy = b.y[target] - oy, d = len(dx, dy) || 1;
   w.events.push({ tick: w.clock[0], kind: 'zap', who: owner, x: ox, y: oy, x2: b.x[target], y2: b.y[target], look: spec.look });
-  hit(w, target, p, hitOpts(p, owner, 0.7, dx / d, dy / d));
+  hit(w, target, p, hitOpts(p, owner, spec.heal ? SHAPES.chainHealPower : SHAPES.arcPower, dx / d, dy / d)); // your own arc's power (spell audit, 2026-11-11: it was 0.7, 3.6x yours a rune)
 }
 

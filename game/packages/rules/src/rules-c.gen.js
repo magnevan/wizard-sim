@@ -269,7 +269,7 @@ const module = { exports: {} };
         if (!o.sub) return ['Rune motes', 'Three motes circle you. Each time you cast, one mote is spent and gives back part of one rune of that spell (at most one mote per spell, never a whole rune). Rune-positive, but slow to set up, and it holds a Sigil rune while it lasts.'];
         const name = o.sub === 'earth' ? 'Stone orbitals' : o.sub === 'life' ? (o.subLend ? `Healing orbitals (${LIFE_LEND[o.subLend][0].toLowerCase()})` : 'Healing orbitals') : `${ELEMENTS[o.sub].name} orbitals`;
         const hit = o.sub === 'life' ? 'heals the first hurt ally that comes close' : 'strikes the first enemy that comes close';
-        return [name, `Orbs circle you, one per element rune you cast into it: they are its ammo. Each one ${hit} and is spent. Release flings what is left at the cursor at once.`];
+        return [name, `Orbs circle you, one per element rune you cast into it: they are its ammo. Each one ${hit} and is spent; together they strike harder than the spell would once. Your ring is one device: it binds one Sigil rune, and casting orbitals again adds orbs to it (up to 8) for their elements alone. Release flings what is left at the cursor at once.`];
       },
       place: (p, o) => {
         if (!o.sub) return ['Lens', 'A floating lens placed at the cursor. Any spell cast through it, yours or an ally\'s, comes out amplified: bigger and stronger. Shield alone is a mirror that turns their magic back; Sigil alone is a lens that sharpens yours. It stays until it breaks or you place another. Dragging changes nothing.'];

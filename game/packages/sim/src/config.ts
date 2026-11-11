@@ -249,7 +249,7 @@ export const STRUCT = {
    * (spikeScale of its payload each half second). Fire melts it: iceMelt times the damage. */
   iceHp: 70, iceHpPerRune: 25, iceLife: 15, iceLifePerRune: 3, iceMeltAway: 2, spikeScale: 0.6, iceMelt: 2.5,
   /** The Spike aura (Sigil + Ice on yourself): each half second, an Ice hit at this scale per Ice rune on enemies close by. */
-  spikeAura: 0.4,
+  spikeAura: 0.2, // was 0.4, twice the Fire aura's damage (spell audit, 2026-11-11)
   wallThickness: 0.25,
   /** Enemies path through a barrier as if it were this many units of extra walking a cell (nav.ts), so a pack breaks through when going round is longer. */
   barrierDetour: 4,
@@ -272,11 +272,17 @@ export const STRUCT = {
   /** Your turrets together spend at most this share of your total regen R from their main element: shots slow down to fit (and with more turrets). 0.13 keeps the pace they had under the flat 0.22/s regen (60% of it). */
   turretShare: 0.13,
   glyphArm: 0.8, glyphRadius: 0.8,
+  /** A glyph goes off as its Place spell at this power: the trap earns a little for its delay and the Sigil rune it binds until then. */
+  glyphPower: 1.25,
   /** Orbitals: ring radius, turns a second, and how far from an orb (to the enemy's edge) it strikes: 1.6 u, so a foe is struck as it closes to about 3 u of you, not when it walks into the orb. */
   orbitRadius: 1.3, orbitSpeed: 0.5, orbitStrike: 1.6,
+  /** All the orbs one orbital cast makes strike this many times its spell between them (Discharge's 1.6); your ring holds at most orbitMax orbs, and binds one Sigil rune. */
+  orbitPower: 1.6, orbitMax: 8,
   /** The lens: its radius; what passes through it is multiplied by lensMult, and a shot through it grows lensGrow times wider. */
   lensRadius: 0.9, lensMult: 1.5, lensGrow: 1.3,
-  auraTime: 12, auraRadius: 2.5, hasteMult: 1.4, glassMult: 1.3,
+  auraTime: 12, auraRadius: 2.5,
+  /** Regeneration (Sigil + Life on yourself): health each half second a Life rune (4 a second; was 6). */
+  regenAura: 2, hasteMult: 1.4, glassMult: 1.3,
   weaponUses: 30, motes: 3, moteRefund: 0.5,
   /** The Double: its health, its power and rune share per repeat, and how much more enemies want it. */
   doubleHp: 60, doubleShare: 0.5, doubleTaunt: 6,

@@ -156,3 +156,7 @@ Step 6d (built): the Life blink heals where you land; barriers are force fields 
 Step 6e (built): enemies path through barriers at a price (4 u of walking a cell) and batter them when that's shorter than going round. Not dealt with: a maze of barriers (the user: a degenerate case).
 
 Step 6f (built): elements coat the force field (resist, bite, lend) by rune; the walk-through curtain is gone. Still to check in play: whether a Fire ring that holds a goblin pack and kills it is too strong (the user: lean strong on defence).
+
+## Pass 2, step 7: Sigil (2026-11-11)
+
+Pass 1 map (`game/tools/probe-sigil.txt`): turrets track their spell a rune (Fire 38 against your 41, Rock 24 against 28) except Lightning (151 against 42), and Arcane and Life a bit high (65 and 86, kept); glyphs were exactly the Place spell; orbitals counted extra runes twice; the Spike aura was twice the Fire aura. Step 7a (built): fixes 1 to 5 and one orbit per wizard (decisions log). Open: what Sigil alone does on Force, now that Blink is Shield's (candidates: a stored spell, a brand that devices focus, a recall mark).

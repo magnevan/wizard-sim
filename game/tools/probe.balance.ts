@@ -193,6 +193,51 @@ it('measures how long a ward battery holds under steady fire', async () => {
   writeFileSync(join(__dirname, 'probe-ward.txt'), rows.join(String.fromCharCode(10)));
 });
 
+it('measures Sigil devices: turrets, orbitals, glyphs and auras against the plain spell', async () => {
+  const { EL } = await import('../packages/sim/src/elements');
+  const { runeMax } = await import('../packages/sim/src/world');
+  const rows: string[] = [];
+  const SECS = 20;
+  const presses = (code: string) => [...code].flatMap((c) => (c === 'I' ? ['water', 'cold'] : [L[c]]) as Element[]);
+  // one stationary enemy (or ally, for heals) at `dx`; the device is made, then left SECS seconds; pools held one below full
+  const device = (code: string, btn: number, hold: number, dx: number, cx = dx, cy = 0) => {
+    const w = createWorld(1, 2, { dummies: false }), b = w.bodies, s = w.seats;
+    b.x[0] = 0; b.y[0] = 0;
+    const heal = code.includes('H');
+    const t = heal ? 1 : 8;
+    if (!heal) { b.kind[8] = KIND.enemy; b.arch[8] = 0; b.team[8] = 2; b.r[8] = 0.5; b.maxHp[8] = 1e6; }
+    b.x[t] = dx; b.y[t] = 0; b.hp[t] = heal ? 40 : 1e6; if (heal) b.maxHp[1] = 1e6;
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: cx * 32, aimY: cy * 32, ...o }), NO_INPUT];
+    const fill = () => { for (let e = 1; e <= N_EL; e++) s.runes[e - 1] = Math.max(0, runeMax(w, 0, e) - 1); };
+    for (const e of presses(code)) { fill(); step(w, aim({ press0: elementId(e) })); }
+    for (let k = 0; k < hold; k++) { fill(); step(w, aim({ buttons: btn })); }
+    let dmg = 0, spent = 0, hp0 = b.hp[t], selfHeal = 0, chill = 0;
+    b.hp[0] = 40;
+    for (let k = 0; k < SECS * 60; k++) {
+      fill();
+      const before = s.runes.slice(0, N_EL).reduce((a, x, e) => a + (e === EL.sigil - 1 ? 0 : x), 0);
+      step(w, aim());
+      const after = s.runes.slice(0, N_EL).reduce((a, x, e) => a + (e === EL.sigil - 1 ? 0 : x), 0);
+      spent += Math.max(0, before - after);
+      if (heal) { dmg += b.hp[t] - hp0; b.hp[t] = hp0; } else { dmg += hp0 - b.hp[t]; b.hp[t] = hp0; }
+      selfHeal += b.hp[0] - 40; b.hp[0] = 40;
+      chill += b.chill[8];
+    }
+    return { dmg: Math.round(dmg), spent: +spent.toFixed(1), selfHeal: Math.round(selfHeal), chill: +(chill / (SECS * 60)).toFixed(2) };
+  };
+  const plain = (code: string, cast: Cast) => run(code.replace('G', ''), cast, 1);
+  for (const code of ['GF', 'GFF', 'GA', 'GAF', 'GE', 'GEE', 'GL', 'GI', 'GC', 'GW', 'GH']) {
+    const base = code.slice(1), n = presses(base).length - (code.includes('I') ? 1 : 0);
+    const tur = device(code, BTN.force, 30, 5, 1, 1.5), orb = device(code, BTN.area, 2, 2.6), gly = device(code, BTN.area, 30, 4), aura = device(code, BTN.self, 2, 1.8, code.includes('H') ? 0 : 1.8);
+    const pf = plain(code, 'force'), pp = plain(code, 'place');
+    rows.push(`${code.padEnd(4)} (${n} rune${n > 1 ? 's' : ''} + Sigil)`
+      + `  turret ${tur.dmg} in ${SECS} s for ${tur.spent} runes (${tur.spent ? Math.round(tur.dmg / tur.spent) : '-'} a rune; your own ${pf?.title ?? '?'} ${pf ? Math.round(pf.perTarget / n) : '?'} a rune)`
+      + `  | orbitals ${orb.dmg}  | glyph ${gly.dmg} (the plain ${pp?.title ?? '?'} ${pp?.perTarget ?? '?'})`
+      + `  | aura ${aura.dmg}${aura.selfHeal ? ` self-heal ${aura.selfHeal}` : ''}${aura.chill ? ` chill ${aura.chill}` : ''} in ${SECS} s`);
+  }
+  writeFileSync(join(__dirname, 'probe-sigil.txt'), rows.join(String.fromCharCode(10)));
+});
+
 it('measures how long a barrier holds a pack off', async () => {
   const { ARCHETYPES, ARCH } = await import('../packages/sim/src/archetypes');
   const { spawnBody } = await import('../packages/sim/src/world');

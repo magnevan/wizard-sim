@@ -145,6 +145,13 @@ export interface FireExtra {
 }
 
 /** Fires a one-shot spell. `face` is the aim in turns, (tx, ty) the clamped target point, `charge` 0..1. */
+/** A spray element's one-shot multiplier (Fire, Cold, Ice, Steam): its table damage is a per-second rate, so a single hit needs it; 1 for the rest. */
+export function oneShotBlast(spec: SpellSpec): number {
+  const n = spec.formN;
+  const blastBase = spec.form === EL.fire || spec.scald ? SHAPES.fireBlast : spec.form === EL.cold && !spec.freeze ? SHAPES.coldBlast : spec.form === EL.ice ? SHAPES.iceBlast : 0;
+  return blastBase ? (blastBase * (1 + COMBAT.formScaling * (n - 1))) / Math.sqrt(n) : 1;
+}
+
 export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, tx: number, ty: number, charge: number, ex: FireExtra = {}): void {
   const b = w.bodies, x = ex.ox ?? b.x[src], y = ex.oy ?? b.y[src];
   const dx = cosTurns(face), dy = sinTurns(face);
@@ -152,8 +159,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
   // Fire's and Cold's one-shot casts: their table damage is a spray's per-second rate on the sqrt curve, so a
   // single blast needs its own multiplier, and it pays +70 % a rune like Arcane's nova rather than sqrt(n).
   // (Steam, Water + Fire, takes Fire's blast whichever of the two leads: its hits are scaled down in hit.ts instead)
-  const blastBase = spec.form === EL.fire || spec.scald ? SHAPES.fireBlast : spec.form === EL.cold && !spec.freeze ? SHAPES.coldBlast : spec.form === EL.ice ? SHAPES.iceBlast : 0;
-  const blast = blastBase ? (blastBase * (1 + COMBAT.formScaling * (n - 1))) / Math.sqrt(n) : 1;
+  const blast = oneShotBlast(spec);
   // close beats placed (spell audit, 2026-11-11): Earth's and Arcane's close casts (the Earthquake, the Arcane nova, their
   // imbued bursts) hit harder than the Geyser and the Arcane blast
   const close = !spec.heal && (spec.form === EL.earth || spec.form === EL.arcane) ? SHAPES.closePower : 1;

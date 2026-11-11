@@ -282,6 +282,13 @@ describe('Shield', () => {
 });
 
 describe('Sigil', () => {
+  it('your orbit is one device: more orbital casts add orbs to the ring, which binds one Sigil rune', () => {
+    const { w, d } = arena();
+    for (let c = 0; c < 4; c++) d.queue('sigil', 'fire').cast(BTN.area, 2, 40);
+    expect(devices(w, DEVICE.orbital)).toBe(4);
+    expect(w.seats.runes[EL.sigil - 1]).toBeGreaterThan(RUNES.max.sigil - 1.05); // one rune bound, the rest given back
+  });
+
   it('a turret is held to aim, and stands at the cursor from when you let go, at most Place range away', () => {
     const { w, d } = arena();
     d.aimAt(6, 1).queue('sigil', 'fire').tick({ buttons: BTN.force }, 30);

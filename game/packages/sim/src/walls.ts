@@ -235,7 +235,9 @@ export function drainShield(w: World, owner: number, amount: number): void {
 export function boundSigil(w: World, seat: number): number {
   const dv = w.devices, s = w.seats;
   let n = 0;
-  for (let k = 0; k < MAX_DEVICES; k++) if (dv.type[k] && dv.owner[k] === seat && !freeDevice(w, k)) n++; // Clockwork's turrets are free
+  let orbit = 0;
+  for (let k = 0; k < MAX_DEVICES; k++) if (dv.type[k] && dv.owner[k] === seat && !freeDevice(w, k)) { if (dv.type[k] === DEVICE.orbital) orbit = 1; else n++; } // Clockwork's turrets are free
+  n += orbit; // your whole ring of orbitals is one device: it binds one rune
   if (s.aura[seat] > 0) n++;
   if (s.motes[seat] > 0) n++;
   if (s.weapon[seat] || s.wand[seat]) n++;

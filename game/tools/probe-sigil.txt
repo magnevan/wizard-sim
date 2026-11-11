@@ -1,0 +1,11 @@
+GF   (1 rune + Sigil)  turret 72 in 20 s for 1.9 runes (38 a rune; your own Flamethrower 41 a rune)  | orbitals 52  | glyph 61 (the plain Fire patch 47)  | aura 72 in 20 s
+GFF  (2 runes + Sigil)  turret 72 in 20 s for 2 runes (36 a rune; your own Flamethrower 28 a rune)  | orbitals 86  | glyph 132 (the plain Fire patch 86)  | aura 144 in 20 s
+GA   (1 rune + Sigil)  turret 124 in 20 s for 1.9 runes (65 a rune; your own Arcane beam 40 a rune)  | orbitals 26  | glyph 16 (the plain Arcane blast 16)  | aura 0 in 20 s
+GAF  (2 runes + Sigil)  turret 259 in 20 s for 3.9 runes (66 a rune; your own Fire beam 43 a rune)  | orbitals 57  | glyph 37 (the plain Fire blast 37)  | aura 72 in 20 s
+GE   (1 rune + Sigil)  turret 70 in 20 s for 2.9 runes (24 a rune; your own Rock 28 a rune)  | orbitals 45  | glyph 32 (the plain Geyser 32)  | aura 0 in 20 s
+GEE  (2 runes + Sigil)  turret 105 in 20 s for 3 runes (35 a rune; your own Rock 34 a rune)  | orbitals 112  | glyph 80 (the plain Geyser 80)  | aura 0 in 20 s
+GL   (1 rune + Sigil)  turret 144 in 20 s for 1.9 runes (76 a rune; your own Lightning arc 42 a rune)  | orbitals 16  | glyph 24 (the plain Lightning strike 19)  | aura 0 in 20 s
+GI   (1 rune + Sigil)  turret 120 in 20 s for 5.9 runes (20 a rune; your own Ice shards 24 a rune)  | orbitals 51  | glyph 0 (the plain Caltrops 0)  | aura 77 in 20 s
+GC   (1 rune + Sigil)  turret 23 in 20 s for 1.9 runes (12 a rune; your own Frost spray 13 a rune)  | orbitals 13  | glyph 23 (the plain Freezing fog 23)  | aura 0 in 20 s
+GW   (1 rune + Sigil)  turret 1 in 20 s for 1.9 runes (1 a rune; your own Water spray 4 a rune)  | orbitals 6  | glyph 3 (the plain Rain 2)  | aura 0 in 20 s
+GH   (1 rune + Sigil)  turret 163 in 20 s for 1.9 runes (86 a rune; your own Life beam 0 a rune)  | orbitals 22  | glyph 78 (the plain Healing spring 0)  | aura 0 self-heal 48 in 20 s

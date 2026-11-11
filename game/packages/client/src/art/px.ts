@@ -195,6 +195,8 @@ export const ICON: Record<string, string[]> = {
   earth: ['..###..', '.##.##.', '###.###', '#######', '##.####', '.#####.', '.......'],
   fire: ['...#...', '..##...', '..###.#', '.#####.', '###.###', '##...##', '.#####.'],
   sigil: ['..###..', '.#...#.', '#..#..#', '#.###.#', '#..#..#', '.#...#.', '..###..'],
+  // Ice (Water + Cold): a faceted crystal, a split down its middle
+  ice: ['...#...', '..###..', '.##.##.', '###.###', '.##.##.', '..###..', '...#...'],
 };
 export function icon(c: Ctx, el: string, x: number, y: number, col: string, k = 1): void {
   const g = ICON[el]; if (!g) return;
@@ -231,6 +233,8 @@ export const EL: Record<string, Ramp> = {
   life: ['#e8ffd8', '#9af07a', '#46c450', '#1e7a34', '#0e3a1e'],
   steam: ['#ffffff', '#e4e8f0', '#b8c0d0', '#8a90a8'],
   sigil: ['#fbe0ff', '#ec8cff', '#d400ff', '#9a00c4', '#5c0080', '#30004a'],
+  // Ice: glassier than Cold's frost, white to a deep glacial teal-blue (the rune's own look; its effects can key on it)
+  ice: ['#ffffff', '#eefcff', '#c2ecf6', '#80c8e4', '#4890c0', '#22507c'],
 };
 /** Lighter, warmer ramps the gallery settled on for some looks. */
 export const LIFE_L: Ramp = ['#ffffff', '#f2ffe8', '#c8fab0', '#8ef07e', '#58d268'];

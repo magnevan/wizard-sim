@@ -80,7 +80,7 @@ const STILL_S = 0.2;
 interface Req { group: string; key: string; x: number; y: number; make: () => Plan; centred: boolean; gain: number; }
 interface Want { plan: () => Plan; x: number; y: number; gain: number; centred?: boolean; /** What it sounds like as it ends, if not just a fade. */ tail?: () => Plan | null }
 
-const elOf = (id: number | undefined): ElementName | null => (id !== undefined && id >= 1 && id <= 9 ? elementName(id) as ElementName : null);
+const elOf = (id: number | undefined): ElementName | null => (id !== undefined && id >= 1 && id <= N_EL ? elementName(id) as ElementName : null);
 
 const ENEMY_NAME: Readonly<Record<number, EnemyKind>> = {
   [ARCH.swarmer]: 'swarmer', [ARCH.brute]: 'brute', [ARCH.shieldbearer]: 'shieldbearer', [ARCH.caster]: 'caster', [ARCH.grabber]: 'grabber', [ARCH.imp]: 'imp',
@@ -96,7 +96,7 @@ const MOVES: Readonly<Record<string, WeaponMove>> = {
 
 export function spellSoundOf(spec: SpellSpec): SpellSound {
   const els: SpellSound['els'] = {};
-  for (let i = 0; i < 9; i++) if (spec.counts[i]) els[elementName(i + 1) as ElementName] = spec.counts[i];
+  for (let i = 0; i < N_EL; i++) if (spec.counts[i]) els[elementName(i + 1) as ElementName] = spec.counts[i];
   return { els, shape: shapeOf(spec.shape), lead: elOf(spec.look) ?? undefined, form: spec.shape };
 }
 

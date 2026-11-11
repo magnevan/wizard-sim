@@ -73,7 +73,8 @@ function parseForce(s: string | null | undefined): Forced | null {
     const guard = Math.max(0, GUARD_NAME.indexOf(g));
     return { queue: [], hands: { weapon, uses: STRUCT.weaponUses, guard, wand: w === 'wand' } };
   }
-  const queue = t.split(/[+ ,]/).filter((e) => (rules.BASE as string[]).includes(e)) as Element[];
+  // added as the game adds them (water+cold makes Ice); 'ice' itself is accepted too
+  const queue = (t.split(/[+ ,]/).filter((e) => (rules.ALL as string[]).includes(e)) as Element[]).reduce<Element[]>((q, e) => (e === 'ice' ? [...q, e] : rules.addElement(q, e).queue), []);
   return { queue, hands: null };
 }
 

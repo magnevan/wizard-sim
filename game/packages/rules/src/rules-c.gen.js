@@ -8,7 +8,7 @@ const module = { exports: {} };
  * GEOMETRY, and every other element adds its PAYLOAD trait. So any element you add
  * changes the spell, and every spell is a cell in one grid.
  *
- *   addElement(queue, el) -> { queue, event }       (Magicka's cancels; nothing combines)
+ *   addElement(queue, el) -> { queue, event, kind }  (Magicka's cancels; Water + Cold combine into Ice)
  *   resolve(queue, cast, { drag, onAlly }) -> spell descriptor
  * cast: 'force' | 'area' | 'place' (hold Area) | 'self' | 'conjure' (the Weapon cast, Shift+LMB)
  * drag: Place was dragged before letting go (Shield draws a wall, Sigil a line glyph).
@@ -25,30 +25,46 @@ const module = { exports: {} };
     earth: { name: 'Earth', key: 'G', color: '#b5895a' },
     fire: { name: 'Fire', key: 'F', color: '#ff7b39' },
     sigil: { name: 'Sigil', key: 'D', color: '#d400ff' }, // working name: Shield's offensive opposite, under it on the keys like the other opposites
+    // A combined element (back on 2026-11-11): Water + Cold pressed into one rune. It has no key and no pool of its own.
+    ice: { name: 'Ice', key: 'Q+R', color: '#cdf3ff', combined: true, of: ['water', 'cold'] },
   };
   const BASE = ['water', 'life', 'shield', 'cold', 'lightning', 'arcane', 'sigil', 'fire', 'earth']; // key order: QWER / ASDFG
-  const ALL = BASE;
+  const ALL = BASE.concat('ice'); // every element a queue can hold (ids in the game: ALL order + 1)
   const MAX = 5;
   // Shield and Sigil cancel each other, so a barrier and a device never share a spell.
   // Neither stacks: Sigil + Sigil cancel like Shield + Shield (a Sigil caster's depth is its device count, see Bind).
-  const CANCEL = [['fire', 'cold'], ['water', 'lightning'], ['life', 'arcane'], ['earth', 'lightning'], ['shield', 'shield'], ['sigil', 'sigil'], ['shield', 'sigil']];
+  // Fire melts Ice as it cancels Cold. Ice keeps no wet, so it sits beside Lightning and Earth.
+  const CANCEL = [['fire', 'cold'], ['water', 'lightning'], ['life', 'arcane'], ['earth', 'lightning'], ['shield', 'shield'], ['sigil', 'sigil'], ['shield', 'sigil'], ['ice', 'fire']];
+  // Pairs that merge into one combined rune when the second is added (in either order). Steam stays a mix.
+  const COMBINE = [['water', 'cold', 'ice']];
   const pairIs = (p, a, b) => (p[0] === a && p[1] === b) || (p[0] === b && p[1] === a);
 
+  // Cancels are checked first, from the newest rune back; then combines; then the rune is added.
+  // So Fire, Water then Cold cancels the Fire, and a second Cold makes the Ice (as in Magicka).
+  // kind: 'cancel' | 'combine' | 'full' | null (added)
   function addElement(queue, el) {
     for (let i = queue.length - 1; i >= 0; i--) {
-      if (CANCEL.find((p) => pairIs(p, queue[i], el))) return { queue: queue.filter((_, j) => j !== i), event: `${ELEMENTS[el].name} cancels ${ELEMENTS[queue[i]].name}` };
+      if (CANCEL.find((p) => pairIs(p, queue[i], el))) return { queue: queue.filter((_, j) => j !== i), event: `${ELEMENTS[el].name} cancels ${ELEMENTS[queue[i]].name}`, kind: 'cancel' };
     }
-    if (queue.length >= MAX) return { queue, event: 'Queue is full (5)' };
-    return { queue: queue.concat(el), event: null };
+    for (let i = queue.length - 1; i >= 0; i--) {
+      const c = COMBINE.find((p) => pairIs(p, queue[i], el));
+      if (c) { const q = queue.slice(); q[i] = c[2]; return { queue: q, event: `${ELEMENTS[queue[i]].name} + ${ELEMENTS[el].name} make ${ELEMENTS[c[2]].name}`, kind: 'combine' }; }
+    }
+    if (queue.length >= MAX) return { queue, event: 'Queue is full (5)', kind: 'full' };
+    return { queue: queue.concat(el), event: null, kind: null };
   }
+  // The runes a queue element is made of: Ice is a Water and a Cold.
+  const runesOf = (e) => ELEMENTS[e].of || [e];
 
   // ---------------------------------------------------------------------------
   // 1. Which element is the form. Magicka's priority, made explicit.
-  // Shield / Sigil > Life > Earth > Arcane > Lightning > the spray elements.
+  // Shield / Sigil > Life > Earth > Arcane > Ice > Lightning > the spray elements.
   // Among the spray elements the most numerous wins; ties go Water, Fire, Cold.
   // Life leads (decided 2026-11-04, direction L3): a spell with Life in it is a support
   // spell, and the other elements lend it their shape, never their harm.
-  const PRIORITY = ['shield', 'sigil', 'life', 'earth', 'arcane', 'lightning'];
+  // Ice is a missile form like Earth (shards), so it outranks Lightning: Ice + Lightning are
+  // shards that chain. Earth and Arcane outrank it and take its look: an ice boulder, an ice beam.
+  const PRIORITY = ['shield', 'sigil', 'life', 'earth', 'arcane', 'ice', 'lightning'];
   const SPRAY = ['water', 'fire', 'cold'];
   function dominant(queue) {
     for (const e of PRIORITY) if (queue.includes(e)) return e;
@@ -62,7 +78,7 @@ const module = { exports: {} };
   // shape change: the leading shape element (most runes; ties in SHAPE order) bends it, the
   // others only add their status (S2, decided 2026-11-04). Fire and Life are status elements.
   const PAYLOAD = {
-    water: { trait: 'Soak', hit: 'is soaked, put out if burning, and frozen if it was already cold enough', why: 'Wet targets take more from lightning, and it jumps further through them. With fire in the spell it scalds; with cold it turns to ice.' },
+    water: { trait: 'Soak', hit: 'is soaked, put out if burning, and frozen if it was already cold enough', why: 'Wet targets take more from lightning, and it jumps further through them. With fire in the spell it scalds; with cold it becomes Ice.' },
     fire: { trait: 'Burn', hit: 'is set alight, and dried or thawed', why: 'Burning spreads to grass and oil. Fire dries the wet and thaws the chilled and frozen.' },
     cold: { trait: 'Chill', hit: 'is chilled, moving and attacking slower the colder it gets, and frozen if it was already wet and cold enough; burning is put out', why: 'A frozen target shatters from a heavy hit.' },
     lightning: { trait: 'Shock', hit: 'is shocked and stunned for a moment (a stun breaks a cast or wind-up, but you can still walk)', why: 'More lightning, more jumps. Wet targets carry it further. Rock grounds it: chains don\'t jump through rock walls.' },
@@ -71,20 +87,16 @@ const module = { exports: {} };
     life: { trait: 'Mend', hit: 'is healed', why: 'Life heals whatever it touches, friend or foe, as in Magicka. It leads every spell it is in except Shield and Sigil ones: in those it makes healing zones and healing devices.' },
     shield: { trait: 'Barrier', hit: '', why: 'Shield always takes the form, so it is never a payload.' },
     sigil: { trait: 'Device', hit: '', why: 'Sigil always takes the form, so it is never a payload.' },
+    ice: { trait: 'Frostbite', hit: 'is chilled hard and put out if burning, and frozen if it was already wet; the water is frozen into the spell, so it never soaks. A frozen target shatters from a heavy hit', why: 'Ice is a Water and a Cold pressed into one rune: two runes in one slot. Fire melts it. It carries no wet, so it sits beside Lightning, and one ice spell can\'t set up its own freeze: soak them first.' },
   };
-  // Steam and Ice are not elements. When water meets fire or cold in one spell, both
-  // stay in the queue and the spell gains a mixed effect on top of their two traits.
+  // Steam is not an element. When water meets fire in one spell, both stay in the queue
+  // and the spell gains a mixed effect on top of their two traits. (Ice is: Water + Cold combine.)
   // aura: the mix inside a Sigil + Self aura; coat: the same when Earth makes it a bulldoze.
   const MIX = [
     { id: 'scald', els: ['water', 'fire'], trait: 'Scald', hit: 'scalds, and leaves a mist that blocks sight', aura: ['Steam veil', 'the mist and the flames make a scalding steam around {w} that hides {w} from enemies'], coat: 'whoever is shoved is scalded', self: 'The steam scalds {w}, but the mist hides {w}.',
       titles: { force: 'Scalding spray', area: 'Steam burst', place: 'Steam cloud', conjure: 'Scalding burst' },
       // the mix's own Area and Place, whichever of the two leads (the plain cells describe rain, a fire patch...)
       texts: { area: 'A ring of scalding steam bursts from you.', place: 'A cloud of scalding steam at the cursor for about 6 seconds: it scalds whoever stands in it and hides them.' } },
-    { id: 'freeze', els: ['water', 'cold'], trait: 'Freeze', hit: 'turns the spell to ice: it chills without soaking, and freezes targets that were already wet; frozen targets are brittle and shatter from a heavy hit', aura: ['Freezing mist', 'enemies the mist soaks freeze solid in the cold around {w}'], coat: 'soaked enemies freeze solid as they are shoved', self: '{W} freeze solid for a moment (a heavy hit would shatter {w}).',
-      titles: { force: 'Ice shards', area: 'Freezing splash', place: 'Ice sheet', conjure: 'Freezing burst' },
-      // A freezing spray was too strong, so as Force the mix changes shape: shards, not a cone.
-      forceText: 'A volley of jagged ice shards along your aim. Each shard pierces and chills; enough of them freeze a wet target, and a frozen target shatters from a heavy hit.',
-      texts: { area: 'A freezing splash bursts from you: soaked targets freeze solid.', place: 'Freezes the ground at the cursor into a sheet of ice for about 16 seconds: it chills whoever crosses it, and feet slip on it.' } },
   ];
   const mixesOf = (q) => MIX.filter((m) => m.els.every((e) => q.includes(e)));
 
@@ -94,8 +106,9 @@ const module = { exports: {} };
     cold: ['Shatter', 'splits into ice shards on impact, and they fly on'],
     lightning: ['Chain', 'jumps on to a neighbour'],
     arcane: ['Burst', 'bursts in a small explosion where it lands'],
+    ice: ['Shatter', 'splits into ice shards on impact, and they fly on'],
   };
-  const SHAPE_ORDER = ['arcane', 'lightning', 'cold', 'water'];
+  const SHAPE_ORDER = ['arcane', 'lightning', 'ice', 'cold', 'water'];
   function leadShape(restQ) {
     let best = null, n = 0;
     for (const e of SHAPE_ORDER) { const c = count(restQ, e); if (c > n) { best = e; n = c; } }
@@ -106,13 +119,14 @@ const module = { exports: {} };
   const LIFE_LEND = {
     lightning: ['Chain heal', 'Lends its chain: the heal jumps on from ally to ally.'],
     cold: ['Healing shards', 'Lends its shatter: the heal splits into shards that each find a hurt ally.'],
+    ice: ['Healing shards', 'Lends its shards: the heal flies as a volley of bright ice shards that each find a hurt ally.'],
     water: ['Rescue spray', 'Lends its push: whoever it heals is nudged a little (out of danger), and put out if burning.'],
     earth: ['Heal-stone', 'Lends its body: the heal is a lobbed stone that bursts where it lands.'],
     fire: ['Healing spray', 'Lends its spray: the heal comes out as a cone, and dries and thaws whoever it heals.'],
   };
-  const LIFE_LEND_ORDER = ['earth', 'lightning', 'cold', 'fire', 'water'];
+  const LIFE_LEND_ORDER = ['earth', 'ice', 'lightning', 'cold', 'fire', 'water'];
   // What each element lends a heal's target to resist: its guard's strengths (the sim's guards.ts bless).
-  const LIFE_RESIST = { earth: 'blows, and a little fire and cold', fire: 'fire and cold', cold: 'cold, and a little of blows', lightning: 'lightning', water: 'fire' };
+  const LIFE_RESIST = { earth: 'blows, and a little fire and cold', fire: 'fire and cold', cold: 'cold, and a little of blows', ice: 'cold, and a little of blows', lightning: 'lightning', water: 'fire' };
   function lendOf(restQ) {
     let best = null, n = 0;
     for (const e of LIFE_LEND_ORDER) { const c = count(restQ, e); if (c > n) { best = e; n = c; } }
@@ -123,10 +137,10 @@ const module = { exports: {} };
   // what the spell is made of. Arcane + Fire is a fire beam, Earth + Fire a fireball.
   // Applies to the Earth, Arcane and Lightning forms (Shield and Sigil already take their
   // name from what they carry; Life keeps its healing look while the Life review is open).
-  // The most numerous carried element sets the look; ties go in LOOK_ORDER. A water mix is its own look.
+  // The most numerous carried element sets the look; ties go in LOOK_ORDER. Steam (a water mix) is its own look.
   const LOOK_FORMS = ['earth', 'arcane', 'lightning'];
-  const LOOK_ORDER = ['fire', 'cold', 'water', 'lightning', 'arcane', 'life', 'earth'];
-  const LOOK = { fire: 'Fire', cold: 'Frost', water: 'Water', lightning: 'Lightning', arcane: 'Arcane', life: 'Life', earth: 'Stone', scald: 'Steam', freeze: 'Ice' };
+  const LOOK_ORDER = ['ice', 'fire', 'cold', 'water', 'lightning', 'arcane', 'life', 'earth'];
+  const LOOK = { fire: 'Fire', cold: 'Frost', water: 'Water', lightning: 'Lightning', arcane: 'Arcane', life: 'Life', earth: 'Stone', ice: 'Ice', scald: 'Steam' };
   const LOOK_NOUN = { earth: { force: 'boulder', area: 'quake', place: 'geyser' }, arcane: { force: 'beam', area: 'nova', place: 'blast' }, lightning: { force: 'arc', area: 'discharge', place: 'strike' } };
   const LOOK_SPECIAL = { 'earth/force/fire': 'Fireball', 'earth/force/water': 'Mud ball', 'lightning/force/fire': 'Flame arc' };
   function lookOf(restQ) {
@@ -150,15 +164,17 @@ const module = { exports: {} };
     earth: ['Bulldoze', 'walking into enemies shoves them aside, and small ones fall over'],
     lightning: ['Haste', 'faster movement and casting for {w}'],
     arcane: ['Glass cannon', '{s} hits deal more damage, but anything knocks {w} down easily'],
+    ice: ['Rime aura', 'a hard frost around {w} chills enemies close by, and freezes the ones that are already wet (not by a Mist aura of its own: one aura does not both soak and freeze)'],
   };
   // With Earth, an aura element coats the bulldoze instead: [adjective, what the shove does]
   const AURA_COAT = {
     fire: ['Burning', 'whoever is shoved catches fire'], cold: ['Freezing', 'whoever is shoved is chilled and slowed'],
     water: ['Soaking', 'whoever is shoved is soaked'], arcane: ['Arcane', 'each shove bursts in a small explosion'],
     life: ['Mending', 'each shove heals {w} a little (the enemies you shove are not healed)'],
+    ice: ['Icy', 'whoever is shoved is chilled hard, and frozen if already wet'],
   };
   // With Earth, a ward element coats the stone armour: melee attackers get it.
-  const WARD_COAT = { fire: 'catch fire', cold: 'are chilled', water: 'are soaked', arcane: 'take a burst', life: 'are healed' };
+  const WARD_COAT = { fire: 'catch fire', cold: 'are chilled', water: 'are soaked', arcane: 'take a burst', life: 'are healed', ice: 'are chilled hard, and frozen if wet' };
   const DOUBLE = ['Double', 'A conjured copy of {w} appears beside {w}, and enemies target it. Each spell cast by {w} is repeated by the copy at half power from its own spot, a crossfire, but never for free: each repeat draws half that spell\'s rune cost from the pool, and if the pool can\'t cover it, the copy skips that spell. It lasts until it is destroyed or runs out.'];
   const SELF_HIT = { // no Shield or Sigil: Magicka's self casts
     water: ['Douse', 'puts out burning and leaves {w} wet'],
@@ -169,6 +185,7 @@ const module = { exports: {} };
     arcane: ['Attune', 'runs raw magic through {w}: it stings, and {s} runes regenerate faster for a moment (a breather between waves)'],
     earth: ['Bruise', 'hits {w} like a thrown rock'],
     fire: ['Burn', 'sets {w} alight and dries {w} off'],
+    ice: ['Frostbite', 'chills {w} hard and puts out burning; if {w} were already wet, it freezes {w} solid'],
   };
   const who = (s, ally) => s.replace(/\{W\}/g, ally ? 'The ally' : 'You').replace(/\{w\}/g, ally ? 'the ally' : 'you').replace(/\{s\}/g, ally ? 'their' : 'your');
   const cap = (s) => s[0].toUpperCase() + s.slice(1);
@@ -186,6 +203,8 @@ const module = { exports: {} };
     fire: ['Flame sword', 'A blade that sets alight. Its Heavy is a rolling crescent of flame; its Special a Sweep round you.'],
     cold: ['Frost spear', 'A long spear with a chilling thrust. Its Heavy is an impaling dash (frozen targets on the way shatter); its Special throws a javelin that pins and frosts.'],
   };
+  // Ice conjures the same spear and kite as Cold, made of ice (it is Cold's material). Its own weapon is open.
+  WEAPON.ice = ['Ice spear', WEAPON.cold[1].replace('A long spear', 'A long spear of ice')];
   // What Shield conjures, picked by its leading other element as a spell's form is (Life, Earth,
   // Arcane, Lightning, then the most of Water, Fire and Cold): the game's eight guards (its guards.ts),
   // used with nothing queued: hold Space to block, tap it as a hit lands to parry, Shift+LMB to Retreat.
@@ -199,7 +218,8 @@ const module = { exports: {} };
     arcane: ['Prism', 'A capacitor: the only block that stops beams and sprays, and it stores what it blocks as charge; lower it charged to fire the Lance. A parry returns the shot. Its Retreat phases you back through bodies, and allies\' beams and sprays don\'t hurt you.'],
     life: ['Leaf aegis', 'A living shield: blocking heals the allies around you, and a parry is a burst heal. Its Retreat is a seed step that leaves a healing bloom; you heal slowly while you carry it.'],
   };
-  const SWING = { earth: 'Stone burst', arcane: 'Arcane burst', life: 'Healing burst', lightning: 'Shock burst', water: 'Water burst', fire: 'Fire burst', cold: 'Frost burst' };
+  GUARD.ice = GUARD.cold;
+  const SWING = { earth: 'Stone burst', arcane: 'Arcane burst', life: 'Healing burst', lightning: 'Shock burst', water: 'Water burst', fire: 'Fire burst', cold: 'Frost burst', ice: 'Ice burst' };
   // the imbued burst: the staff imbued with the queue and released, as in Magicka
   const swing = (f) => () => [SWING[f], 'A burst of every queued element in a short cone in front of you, at full power. Nothing stays in your hand. The cone reaches about 2.5 units, a little more per extra rune; add Sigil for a conjured weapon, or Shield for a defensive one.'];
   const glyphName = (o) => o.sub ? ELEMENTS[o.sub].name + ' ' : '';
@@ -210,13 +230,16 @@ const module = { exports: {} };
       force: (p) => {
         const how = 'rises in front of you and sweeps forward along your aim, hitting everyone it passes, then breaks';
         if (p.has('earth')) return ['Fault line', `A wave of heaving ground ${how}. Everyone it passes is knocked down.`];
+        if (p.has('ice')) return ['Ice wave', `A front of ice spears ${how}. Everyone it passes is chilled hard, and the wet freeze.`];
         if (p.has('water')) return ['Tidal wave', `A wall of water ${how}. Everyone it passes is soaked and shoved.`];
         if (p.size) return ['Elemental wave', `A wave of its elements ${how}. Each body it passes gets every element.`];
         return ['Shove wave', `A wave of force ${how}. It pushes bodies back and sweeps shots away.`];
       },
-      area: (p) => p.has('earth') ? ['Ring of stone', 'A continuous rock wall rises in a closed ring around you, with no gaps.'] : p.size ? ['Ring of curtains', 'A continuous curtain rings you; anything crossing in gets hit.'] : ['Ring of barriers', 'A continuous reflecting ring around you.'],
+      area: (p) => p.has('earth') ? ['Ring of stone', 'A continuous rock wall rises in a closed ring around you, with no gaps.'] : p.has('ice') ? ['Ring of ice', 'A continuous ring of ice crystals around you; anything crossing in is chilled hard, and the wet freeze.'] : p.size ? ['Ring of curtains', 'A continuous curtain rings you; anything crossing in gets hit.'] : ['Ring of barriers', 'A continuous reflecting ring around you.'],
       place: (p, o) => {
-        const what = p.has('earth') ? ['rock wall', 'Blocks bodies and shots.', 'Stone arc'] : p.size ? ['curtain', 'You can walk through it, but whoever crosses it gets its elements (a Life curtain is a healing zone). Beams through it pick up its elements.', 'Curtain arc'] : ['barrier', 'Shots cannot pass. Beams through it pick up its elements.', 'Barrier arc'];
+        const what = p.has('earth') ? ['rock wall', 'Blocks bodies and shots.', 'Stone arc']
+          : p.has('ice') ? ['ice curtain', 'A row of still ice crystals. You can walk through it, but whoever crosses it is chilled hard, and the wet freeze. Beams through it pick up its elements.', 'Ice arc']
+          : p.size ? ['curtain', 'You can walk through it, but whoever crosses it gets its elements (a Life curtain is a healing zone). Beams through it pick up its elements.', 'Curtain arc'] : ['barrier', 'Shots cannot pass. Beams through it pick up its elements.', 'Barrier arc'];
         if (o.drag) return [`Drawn ${what[0]}`, `Hold at the cursor, drag, and let go: the ${what[0]} rises along the line you drew. Curve the drag and the wall bends with it${p.has('earth') ? ' (curl it round an enemy for a cage)' : ''}. ${what[1]}`];
         return [what[2], `Let go without dragging: an arc of ${what[0]} rises around you, centred on you and facing the cursor, at a default length. The quick wall. ${what[1]} Drag before letting go to draw the wall instead.`];
       },
@@ -272,7 +295,7 @@ const module = { exports: {} };
       force: (p, o = {}) => {
         const L = o.lend;
         if (L === 'lightning') return ['Chain heal', 'A heal that leaps from you to the nearest hurt ally, then on from ally to ally.'];
-        if (L === 'cold') return ['Healing shards', 'A volley of bright shards along your aim; each one seeks out a hurt ally and heals on impact.'];
+        if (L === 'cold' || L === 'ice') return ['Healing shards', 'A volley of bright shards along your aim; each one seeks out a hurt ally and heals on impact.'];
         if (L === 'water') return ['Rescue spray', 'A cone of healing water: it heals, pushes allies gently back out of danger, and puts out the burning.'];
         if (L === 'earth') return ['Heal-stone', 'Hold to charge, release to lob a stone that bursts where it lands and heals everyone around. Throw it over a wall to your front line.'];
         if (L === 'fire') return ['Healing spray', 'A cone of warm light, shaped like a flamethrower: it heals everyone in it, and dries and thaws them.'];
@@ -307,9 +330,16 @@ const module = { exports: {} };
       place: () => ['Frost patch', 'Freezes the ground at the cursor for about 16 seconds. Freezes water into walkable ice.'],
       conjure: swing('cold'),
     },
+    // Ice: a missile form. A freezing spray was too strong, so Ice throws shards, not a cone.
+    ice: {
+      force: () => ['Ice shards', 'A volley of jagged ice shards along your aim. Each shard pierces and chills hard; enough of them freeze a wet target, and a frozen target shatters from a heavy hit.'],
+      area: () => ['Ice ring', 'A ring of ice bursts from you: it chills hard, and freezes whoever was already wet.'],
+      place: () => ['Ice sheet', 'Freezes the ground at the cursor into a sheet of ice for about 16 seconds: it chills whoever crosses it, and feet slip on it.'],
+      conjure: swing('ice'),
+    },
   };
-  const FORMS = ['shield', 'sigil', 'life', 'earth', 'arcane', 'lightning', 'water', 'fire', 'cold'];
-  const FORM_NAME = { shield: 'Barrier', sigil: 'Device', earth: 'Heavy missile', arcane: 'Beam', life: 'Heal', lightning: 'Arc', water: 'Spray', fire: 'Spray', cold: 'Spray' };
+  const FORMS = ['shield', 'sigil', 'life', 'earth', 'arcane', 'ice', 'lightning', 'water', 'fire', 'cold'];
+  const FORM_NAME = { shield: 'Barrier', sigil: 'Device', earth: 'Heavy missile', arcane: 'Beam', life: 'Heal', ice: 'Shards', lightning: 'Arc', water: 'Spray', fire: 'Spray', cold: 'Spray' };
   const CASTS = [
     ['force', 'Force', 'RMB', 'from you, along your aim'],
     ['area', 'Area', 'Shift+RMB tap', 'around you'],
@@ -340,7 +370,7 @@ const module = { exports: {} };
       const restQ = queue.filter((e) => e !== form);
       const rest = [...new Set(restQ)];
       const p = new Set(rest);
-      const o = { drag: !!opts.drag && cast === 'place' && (form === 'shield' || (form === 'sigil' && rest.length > 0)) };
+      const o = { drag: !!opts.drag && cast === 'place' && (form === 'shield' || (form === 'sigil' && rest.length > 0)), iced: queue.includes('ice') };
       if (form === 'sigil' && rest.length) {
         o.sub = dominant(restQ);
         if (o.sub === 'life') o.subLend = lendOf(restQ);
@@ -353,7 +383,6 @@ const module = { exports: {} };
       let [title, text] = CELLS[form][cast](p, o);
       if (form !== 'shield' && form !== 'sigil' && form !== 'life') title = plainTitle(form, cast, queue);
       const fm = SPRAY.includes(form) ? mixesOf(queue)[0] : null;
-      if (fm && cast === 'force' && fm.forceText) text = fm.forceText;
       if (fm && fm.texts && fm.texts[cast]) text = fm.texts[cast];
       if (LOOK_FORMS.includes(form) && rest.length && cast !== 'conjure') {
         out.look = lookOf(restQ);
@@ -397,7 +426,8 @@ const module = { exports: {} };
   }
 
   function payloadLine(form, cast, e, o) {
-    const verb = PAYLOAD[e].hit;
+    // Water in an ice spell freezes into it: it still douses, but never soaks (one spell can't set up its own freeze).
+    const verb = e === 'water' && o.iced ? 'is put out if burning, but not soaked: the water freezes into the ice' : PAYLOAD[e].hit;
     // a support spell: the element lends its shape or a helpful interaction, never its harm
     if (form === 'life' || (form === 'sigil' && o.sub === 'life' && e !== 'life')) {
       // every element in a heal also lends its guard's strengths to whoever it heals, for a few seconds (Life preserves)
@@ -496,7 +526,7 @@ const module = { exports: {} };
     ['Bulwark Shield', '★', ['shield', 'earth'], 'conjure', {}],
     ['Healing Orbitals', '★', ['sigil', 'life', 'life'], 'area', {}],
     ['Puddle Glyph', '★', ['sigil', 'water', 'water'], 'place', {}],
-    ['Frost Bridge', '★', ['water', 'cold'], 'place', {}],
+    ['Frost Bridge', '★', ['ice'], 'place', {}],
     ['Alpha Strike', '★', ['sigil', 'earth', 'fire'], 'area', {}],
     ['Prism / Lens', '?', ['sigil'], 'place', {}],
     ['Attuned Blast', '★', ['sigil'], 'conjure', {}],
@@ -526,8 +556,8 @@ const module = { exports: {} };
   const DROPPED = [
     ['Stored Spell', '★', 'Seal is gone, and Sigil can\'t store a spell (would Fire + Sigil store "Fire + Sigil" or just "Fire"?). Preparing a spell becomes its own mechanism, deferred.'],
     ['Sentinel wall', '+', 'It was a sealed wall. Seal is gone, and Shield + Sigil cancel.'],
-    ['Ricochet Bolt', '★', 'Steam and Ice are no longer elements, so the bouncing-shard form is gone. Earth stays the heavy missile.'],
-    ['Ice Shrapnel', '★', 'Steam and Ice are no longer elements: there are no ice walls to shatter. Shatter Bulwark (a rock wall, then Release) keeps the idea.'],
+    ['Ricochet Bolt', '★', 'Dropped with Steam and Ice (2026-11-03). Ice came back on 2026-11-11 as piercing shards, not bouncing ones. Earth stays the heavy missile.'],
+    ['Ice Shrapnel', '★', 'There are no ice walls to shatter: Ice came back (2026-11-11) as curtains, not walls. Shatter Bulwark (a rock wall, then Release) keeps the idea.'],
     ['Contingency', '?', 'Auto-triggers removed ("too many meaning collisions"). Could come back as a Magick or a staff upgrade.'],
     ['Payload Effigy', '?', 'Same: it was an auto-trigger.'],
     ['Stay of Death', '?', 'Shield + Life is now a healing curtain or ward, not a "cannot die" lantern. Could be a Magick.'],
@@ -535,7 +565,7 @@ const module = { exports: {} };
     ['Ethereal Shift', '?', 'Moved to Magicks: Shield + Arcane on yourself is now just a ward against arcane.'],
   ];
 
-  const api = { ELEMENTS, BASE, ALL, MAX, CANCEL, MIX, SHAPE, LIFE_LEND, addElement, resolve, dominant, PAYLOAD, AURA, AURA_COAT, WARD_COAT, DOUBLE, SELF_HIT, WEAPON, CELLS, FORMS, FORM_NAME, CASTS, COST, LEAVES, DROPPED, STRUCTURES };
+  const api = { ELEMENTS, BASE, ALL, MAX, CANCEL, COMBINE, runesOf, MIX, SHAPE, LIFE_LEND, addElement, resolve, dominant, PAYLOAD, AURA, AURA_COAT, WARD_COAT, DOUBLE, SELF_HIT, WEAPON, CELLS, FORMS, FORM_NAME, CASTS, COST, LEAVES, DROPPED, STRUCTURES };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.SpellTreeC = api;
 })(typeof window !== 'undefined' ? window : globalThis);
 

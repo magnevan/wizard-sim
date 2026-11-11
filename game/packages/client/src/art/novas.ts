@@ -230,7 +230,7 @@ function arcane(o: Ctx, g: Ctx, x: number, y: number, r: number, e: number, t: n
   light(x, y, r + 30, R[2], 0.85 * (1 - seg(e, 0, 0.5)));
 }
 
-const NOVAS: Partial<Record<number, typeof fire>> = { 1: water, 2: life, 4: cold, 6: arcane, 8: fire };
+const NOVAS: Partial<Record<number, typeof fire>> = { 1: water, 2: life, 4: cold, 6: arcane, 8: fire, 10: cold }; // 10: Ice rings with Cold's nova for now (its own is open)
 
 /** Draws the Area cast of element `look` e seconds in. False if that element has no nova of its own. */
 export function drawNova(o: Ctx, g: Ctx, look: number, x: number, y: number, r: number, e: number, t: number, sd: number, light: NovaLight): boolean {

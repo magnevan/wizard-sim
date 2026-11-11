@@ -54,7 +54,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   if (b.kind[t] === KIND.none || driving(w, t)) return 0;
   const ss = o.statusScale ?? 1;
   const tick = w.clock[0];
-  const water = c(els, at, EL.water), fire = c(els, at, EL.fire), cold = c(els, at, EL.cold);
+  const water = c(els, at, EL.water), fire = c(els, at, EL.fire), cold = c(els, at, EL.cold), ice = c(els, at, EL.ice);
   const lightning = c(els, at, EL.lightning), arcane = c(els, at, EL.arcane), earth = c(els, at, EL.earth), life = c(els, at, EL.life);
   const s = w.seats, src = o.source;
   const arch = b.kind[t] === KIND.enemy ? ARCHETYPES[b.arch[t]] : null;
@@ -94,18 +94,20 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
 
   // A ward resists the elements it was made with (stone armour: Earth, the physical, plus its coats); Expose ignores wards.
   const ward = tSeat >= 0 && !b.expose[t] && !arcane ? s.ward[tSeat] : WARD.none;
-  let dmg = 0, absorbed = 0, fireD = 0, coldD = 0, allD = 0; // each element's share, for the burn and frost pools
+  let dmg = 0, absorbed = 0, fireD = 0, coldD = 0, iceD = 0, allD = 0; // each element's share, for the burn and frost pools
   const form = formOf(els, at);
   for (let id = 1; id <= N_EL; id++) {
     const n = c(els, at, id);
     // The form element grows on its curve (elements.ts formCurve); a beam's counts once. The rest add a rune's worth each.
     let d = DAMAGE[elementName(id)] * (id === form && n > 1 ? (o.flatForm ? 1 : formCurve(form, n, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling)) : n);
     if (arch && id === EL.fire && arch.fireMult !== undefined) d *= arch.fireMult;
-    if (arch && id === EL.cold && arch.coldMult !== undefined) d *= arch.coldMult;
+    if (arch && (id === EL.cold || id === EL.ice) && arch.coldMult !== undefined) d *= arch.coldMult;
     if (arch?.onlyFire && id !== EL.fire) d = 0; // a bramble: only fire hurts it
     if (d) { const col = physical ? RES.physical : colOf(id); if (col >= 0) d *= taken(w, t, col); } // a guard's resistance, or a heal's lent one
-    allD += d; if (id === EL.fire) fireD = d; else if (id === EL.cold) coldD = d;
-    const resisted = (ward === WARD.ward || ward === WARD.stone) && s.wardEls[tSeat * N_EL + id - 1] > 0;
+    allD += d; if (id === EL.fire) fireD = d; else if (id === EL.cold) coldD = d; else if (id === EL.ice) iceD = d;
+    // a ward made with Cold or Ice resists both: they are one family
+    const wardHas = (k: number) => s.wardEls[tSeat * N_EL + k - 1] > 0;
+    const resisted = (ward === WARD.ward || ward === WARD.stone) && (wardHas(id) || ((id === EL.cold || id === EL.ice) && (wardHas(EL.cold) || wardHas(EL.ice))));
     if (resisted) { dmg += d * (1 - STRUCT.wardResist); absorbed += d * STRUCT.wardResist; } else dmg += d;
   }
   dmg *= o.scale; absorbed *= o.scale;
@@ -126,13 +128,13 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   if (water) {
     if (arch?.soakDamage && !b.wet[t]) { dmg += arch.soakDamage; w.events.push({ tick, kind: 'hit', who: t, x: b.x[t], y: b.y[t], amount: arch.soakDamage, text: 'Doused' }); }
     // water on someone burning only puts the fire out (they come out dry), as fire on someone wet only dries them
-    // Water + Cold is ice: it douses but doesn't soak, so it can't set up its own freeze
+    // Water in an ice spell (o.freeze) freezes into it: it douses but doesn't soak, so it can't set up its own freeze
     if (b.burn[t] > 0) b.burn[t] = 0;
     // (a spray soaks a little per tick, but never for less than wetMin, or there'd be no time to follow it with Cold)
     else if (!o.freeze) b.wet[t] = Math.max(b.wet[t], T(STATUS.wetMin), Math.round(T(STATUS.wet) * Math.min(1, ss * 4)));
     if (o.push) addKnock(w, t, o.dirX, o.dirY, o.push * water * ss);
     // Water can finish what Cold started, so the order doesn't matter. (Cold in the same spell goes through its own branch; Fire would only thaw it.)
-    if (!cold && !fire) tryFreeze(w, t);
+    if (!cold && !ice && !fire) tryFreeze(w, t);
   }
   if (fire) {
     if (b.frozen[t] || b.chill[t] > 0) { b.frozen[t] = 0; b.chill[t] = 0; }
@@ -143,10 +145,10 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     }
   }
   const noChill = guard > 0 && warm(w, tSeat);
-  if (cold && !noChill) {
+  if ((cold || ice) && !noChill) {
     b.burn[t] = 0;
-    // Cold's share of the hit fills the frost pool (a guard's cold resistance is already in it). Only Water freezes.
-    addChill(w, t, coldD * o.scale * STATUS.chillPerDamage);
+    // Cold's share of the hit fills the frost pool (a guard's cold resistance is already in it), Ice's harder. Only Water freezes.
+    addChill(w, t, (coldD + iceD * STATUS.iceChill) * o.scale * STATUS.chillPerDamage);
     if (wasWet) tryFreeze(w, t);
   }
   if (o.scald) dmg += STATUS.scaldBonus * o.scale;

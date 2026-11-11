@@ -31,9 +31,9 @@ function ctx(w: number, h: number): any {
 
 const SPELLS = [
   'arcane,fire/force', 'arcane,cold/force', 'arcane/force', 'life/force', 'life,fire/force', 'life,water/force', 'life,cold/force', 'life,lightning/force', 'life,earth/force',
-  'fire/force', 'water/force', 'cold/force', 'water,fire/force', 'water,cold/force', 'lightning/force', 'lightning,fire/force', 'earth/force', 'earth,fire/force', 'earth,cold/force', 'earth,water/force',
+  'fire/force', 'water/force', 'cold/force', 'water,fire/force', 'ice/force', 'ice,lightning/force', 'earth,ice/force', 'arcane,ice/force', 'lightning/force', 'lightning,fire/force', 'earth/force', 'earth,fire/force', 'earth,cold/force', 'earth,water/force',
   'fire/area', 'cold/area', 'water/area', 'arcane/area', 'life/area', 'earth/area', 'lightning/area',
-  'fire,fire/place', 'water,water/place', 'cold/place', 'water,cold/place', 'water,fire/place', 'arcane/place', 'earth/place', 'lightning/place', 'life/place',
+  'fire,fire/place', 'water,water/place', 'cold/place', 'ice/place', 'shield,ice/place', 'ice/area', 'shield,ice/force', 'water,fire/place', 'arcane/place', 'earth/place', 'lightning/place', 'life/place',
   'sigil/force', 'life/weapon', 'fire/weapon', 'life/self', 'arcane/self',
 ];
 

@@ -71,11 +71,13 @@ export const CAST_ROWS: { cast: Cast; keys: KeyGlyph; demo: string }[] = [
   { cast: 'conjure', keys: K('L', true, '', 'LB+RT'), demo: 'weapon' },
 ];
 
-const ELS = rules.BASE as readonly Element[];
+const ELS = rules.ALL as readonly Element[]; // the nine keyed elements, then Ice
 const EL_ID = (e: Element): number => ELS.indexOf(e) + 1;
 const name = (e: Element): string => rules.ELEMENTS[e].name;
 const n1 = (v: number): string => (Math.round(v * 10) / 10).toString();
 const plural = (n: number, w: string): string => `${n} ${w}${n === 1 ? '' : 'S'}`;
+/** Runes a queue costs: an Ice is a Water and a Cold. */
+const runeCount = (q: readonly Element[]): number => q.reduce((n, e) => n + rules.runesOf(e).length, 0);
 
 // ---- text ---------------------------------------------------------------------------------
 
@@ -175,7 +177,8 @@ function payload(spec: SpellSpec, k: number, unit: string, out: Metric[], flat =
 function statuses(spec: SpellSpec, out: Metric[]): void {
   if (spec.heal) return;
   if (count(spec, 'fire') && !spec.scald) out.push({ key: 'burn', label: 'BURN FROM', v: STATUS.burnBase, unit: '' });
-  if (count(spec, 'cold')) out.push({ key: 'chill', label: 'FROST', v: DAMAGE.cold * STATUS.chillPerDamage * count(spec, 'cold'), unit: '', hidden: spec.channel });
+  const frost = DAMAGE.cold * count(spec, 'cold') + DAMAGE.ice * STATUS.iceChill * count(spec, 'ice'); // Ice chills harder (hit.ts)
+  if (frost) out.push({ key: 'chill', label: 'FROST', v: frost * STATUS.chillPerDamage, unit: '', hidden: spec.channel });
   if (count(spec, 'lightning')) out.push({ key: 'stun', label: 'STUN', v: STATUS.stunPerRune * count(spec, 'lightning'), unit: 'S', hidden: spec.channel });
 }
 
@@ -226,7 +229,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
     case 'patch': {
       reach('RADIUS', SHAPES.patchRadius + 0.4 * (n - 1));
       const water = spec.form === EL_ID('water');
-      lasts(spec.scald ? SHAPES.patchLife * longer : spec.freeze || count(spec, 'cold') ? SURFACE.ice * longer : water ? SHAPES.rainLife + SHAPES.rainPerRune * (n - 1) : SURFACE.fire * longer);
+      lasts(spec.scald ? SHAPES.patchLife * longer : spec.freeze || count(spec, 'cold') || count(spec, 'ice') ? SURFACE.ice * longer : water ? SHAPES.rainLife + SHAPES.rainPerRune * (n - 1) : SURFACE.fire * longer);
       break;
     }
     case 'blast': reach('RADIUS', 2 + 0.4 * n); m.push({ key: 'fuse', label: 'FUSE', v: SHAPES.delayedBlast, unit: 'S' }); break;
@@ -256,7 +259,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
       }
       if (sh === 'turret') {
         m.push({ key: 'range', label: 'TURRET RANGE', v: STRUCT.turretRange, unit: 'U' });
-        m.push({ key: 'shot', label: 'A SHOT COSTS', v: STRUCT.turretShotCost * inner.length, unit: ' RUNES' });
+        m.push({ key: 'shot', label: 'A SHOT COSTS', v: STRUCT.turretShotCost * runeCount(inner), unit: ' RUNES' });
       }
       break;
     }
@@ -276,7 +279,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
     }
     case 'aura': {
       // every half second (structures.ts): Life regenerates the wearer, Cold chills, Earth shoves; Fire, Haste and Glass don't grow
-      const life = count(spec, 'life'), cold = count(spec, 'cold'), earth = count(spec, 'earth');
+      const life = count(spec, 'life'), cold = count(spec, 'cold') + STATUS.iceChill * count(spec, 'ice'), earth = count(spec, 'earth'); // the Rime aura chills harder
       if (life) m.push({ key: 'regen', label: 'REGEN', v: 6 * life, unit: '/S' });
       if (cold) m.push({ key: 'chill', label: 'FROST', v: 5 * cold, unit: '/S' });
       if (earth) m.push({ key: 'shove', label: 'SHOVE', v: 6 * earth, unit: 'U/S' });
@@ -298,7 +301,7 @@ const fmt = (x: Metric) => `${x.label} ${n1(x.v)}${x.unit}`;
 export function spellStats(queue: readonly Element[], cast: Cast, d: SpellDescriptor, spec: SpellSpec): string[] {
   const out: string[] = [];
   const kind = d.cost?.kind;
-  out.push(plural(queue.length, 'RUNE') + (kind === 'bind' ? ', BINDS 1 SIGIL' : kind === 'stuff' ? ', STANDS' : ''));
+  out.push(plural(runeCount(queue), 'RUNE') + (kind === 'bind' ? ', BINDS 1 SIGIL' : kind === 'stuff' ? ', STANDS' : ''));
   const { metrics, note } = spellNumbers(queue, cast, spec);
   const dmg = metrics.filter(isDmg);
   if (dmg.length) out.push(dmg.map(fmt).join(' ') + (note ? ' ' + note : ''));

@@ -19,8 +19,8 @@
  *   Self   an aura around you (fire burns, cold chills, life regenerates, lightning hastes...).
  */
 import { compile, WALL, type SpellSpec } from './compile';
-import { BODY, PERKS, RHYTHM, SHAPES, STRUCT, T } from './config';
-import { EL, N_EL, queueFromCounts } from './elements';
+import { BODY, PERKS, RHYTHM, SHAPES, STATUS, STRUCT, T } from './config';
+import { EL, KEYED_EL, N_EL, poolCost, queueFromCounts } from './elements';
 import { burstEvent, channelTick, fireSpell, heldBlow, hit, hitOpts, nearest, payloadOf, stored } from './effects';
 import { len } from './geom';
 import { HIT_KIND, addChill, addKnock, ignite, setHitKind, tryFreeze } from './hit';
@@ -149,8 +149,8 @@ const deviceSpell = (w: World, k: number, cast: 'force' | 'place'): SpellSpec =>
 /** A seat pays a device's shot from its pool: `share` of every rune of the payload, or nothing (it stalls). */
 function payShot(w: World, owner: number, els: Uint8Array, at: number, share = 1): boolean {
   const s = w.seats;
-  for (let id = 1; id <= N_EL; id++) if (s.runes[owner * N_EL + id - 1] < els[at * N_EL + id - 1] * share) return false;
-  for (let id = 1; id <= N_EL; id++) s.runes[owner * N_EL + id - 1] -= els[at * N_EL + id - 1] * share;
+  for (let id = 1; id <= KEYED_EL; id++) if (s.runes[owner * N_EL + id - 1] < poolCost(els, at, id) * share) return false;
+  for (let id = 1; id <= KEYED_EL; id++) s.runes[owner * N_EL + id - 1] -= poolCost(els, at, id) * share;
   return true;
 }
 
@@ -206,7 +206,7 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
     }
     case 'wand': s.wand[src] = 1; s.weapon[src] = 0; s.wandBorn[src] = w.clock[0]; break;
     case 'weapon': {
-      s.wand[src] = 0; s.weapon[src] = spec.sub; s.wandBorn[src] = w.clock[0];
+      s.wand[src] = 0; s.weapon[src] = spec.sub === EL.ice ? EL.cold : spec.sub; s.wandBorn[src] = w.clock[0]; // Ice conjures Cold's spear, made of ice
       s.weaponEls.set(restCounts(spec), src * N_EL); s.weaponUses[src] = STRUCT.weaponUses;
       break;
     }
@@ -241,8 +241,8 @@ export function weaponSwing(w: World, src: number, face: number): boolean {
 export function payDouble(w: World, src: number, spec: SpellSpec): boolean {
   const s = w.seats, d = s.double[src];
   if (d < 0 || w.bodies.kind[d] !== KIND.double) return false;
-  for (let id = 1; id <= N_EL; id++) if (s.runes[src * N_EL + id - 1] < spec.counts[id - 1] * STRUCT.doubleShare) return false;
-  for (let id = 1; id <= N_EL; id++) s.runes[src * N_EL + id - 1] -= spec.counts[id - 1] * STRUCT.doubleShare;
+  for (let id = 1; id <= KEYED_EL; id++) if (s.runes[src * N_EL + id - 1] < poolCost(spec.counts, 0, id) * STRUCT.doubleShare) return false;
+  for (let id = 1; id <= KEYED_EL; id++) s.runes[src * N_EL + id - 1] -= poolCost(spec.counts, 0, id) * STRUCT.doubleShare;
   return true;
 }
 
@@ -372,6 +372,7 @@ export function spendMote(w: World, seat: number, form: number): void {
   const s = w.seats;
   if (!s.motes[seat] || !form) return;
   s.motes[seat]--;
+  if (form === EL.ice) form = EL.cold; // an Ice spell's mote gives back toward Cold (Ice has no pool)
   const k = seat * N_EL + form - 1;
   s.runes[k] = Math.min(runeMax(w, seat, form), s.runes[k] + STRUCT.moteRefund);
 }
@@ -535,7 +536,9 @@ export function tickStructures(w: World): void {
     s.aura[i]--;
     if (s.aura[i] % 30 !== 0) continue;
     const els = s.auraEls;
-    const fire = els[i * N_EL + EL.fire - 1], cold = els[i * N_EL + EL.cold - 1], water = els[i * N_EL + EL.water - 1];
+    const fire = els[i * N_EL + EL.fire - 1], water = els[i * N_EL + EL.water - 1];
+    // The Rime aura (Ice) chills like a Frost aura, harder (STATUS.iceChill).
+    const cold = els[i * N_EL + EL.cold - 1] + els[i * N_EL + EL.ice - 1] * STATUS.iceChill;
     const life = els[i * N_EL + EL.life - 1], earth = els[i * N_EL + EL.earth - 1];
     for (let t = 0; t < b.kind.length; t++) {
       if (!alive(w, t)) continue;

@@ -223,7 +223,7 @@ export function specialTick(w: World, i: number): void {
   let runes = 0;
   for (let e = 0; e < N_EL; e++) runes += els[e];
   const heal = (ARMS.auraHeal / 60) * (1 + ARMS.specialRune * Math.max(0, runes - 1));
-  const douse = els[EL.water - 1] > 0 || els[EL.cold - 1] > 0, warmth = els[EL.fire - 1] > 0;
+  const douse = els[EL.water - 1] > 0 || els[EL.cold - 1] > 0 || els[EL.ice - 1] > 0, warmth = els[EL.fire - 1] > 0;
   for (let j = 0; j < MAX_SEATS; j++) {
     if (j === i || !s.active[j] || b.kind[j] !== KIND.wizard || b.downed[j] || b.team[j] !== b.team[i]) continue;
     if (len(b.x[j] - b.x[i], b.y[j] - b.y[i]) > ARMS.auraRange) continue;

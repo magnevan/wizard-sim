@@ -37,7 +37,7 @@ export interface SpellSpec {
   mod: Mod;
   /** A Life spell: it heals and never harms (direction L3). */
   heal: boolean;
-  /** Water + fire (scald) / water + cold (freeze) in one spell. */
+  /** Water + fire in one spell (scald); Ice in the spell (freeze: it douses but never soaks, so it can't set up its own freeze). */
   scald: boolean;
   freeze: boolean;
   channel: boolean;
@@ -51,10 +51,10 @@ export interface SpellSpec {
 /** What a Shield structure is made of. */
 export const WALL = { none: 0, rock: 1, barrier: 2, curtain: 3 } as const;
 
-const MOD: Record<string, Mod> = { water: 'push', cold: 'shatter', lightning: 'chain', arcane: 'burst' };
+const MOD: Record<string, Mod> = { water: 'push', cold: 'shatter', ice: 'shatter', lightning: 'chain', arcane: 'burst' };
 
 /** The element lending its shape to a Life spell: most runes, ties in the rules' LIFE_LEND_ORDER. */
-const LEND_ORDER: Element[] = ['earth', 'lightning', 'cold', 'fire', 'water'];
+const LEND_ORDER: Element[] = ['earth', 'ice', 'lightning', 'cold', 'fire', 'water'];
 function lendOf(counts: Uint8Array): Element | null {
   let best: Element | null = null, n = 0;
   for (const e of LEND_ORDER) { const c = counts[EL[e] - 1]; if (c > n) { best = e; n = c; } }
@@ -69,7 +69,7 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
   const heal = d.form === 'life';
   // A support spell carries no harmful mixes.
   const scald = !heal && has('water') && has('fire');
-  const freeze = !heal && has('water') && has('cold');
+  const freeze = !heal && has('ice');
   const spec: SpellSpec = {
     title: d.title, cast, shape: 'todo', counts, form, formN: form ? counts[form - 1] : 0, sizeN: form ? counts[form - 1] : 0, power: queue.length,
     look: d.look ? (EL as Record<string, number>)[d.look] ?? form : form,
@@ -79,7 +79,6 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
   if (!queue.length) { if (cast === 'conjure') spec.shape = 'swing'; return spec; } // an empty Weapon cast: a plain staff swing
   const lookName = d.look as string | null;
   if (lookName === 'scald') spec.look = EL.water;
-  if (lookName === 'freeze') spec.look = EL.cold;
 
   if (has('shield')) spec.wall = has('earth') ? WALL.rock : queue.some((e) => e !== 'shield') ? WALL.curtain : WALL.barrier;
   if (cast === 'self') {
@@ -91,7 +90,7 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
       const L = lendOf(counts);
       if (L) spec.sizeN = counts[EL[L] - 1];
       if (cast === 'force') {
-        spec.shape = L === 'lightning' ? 'arc' : L === 'cold' ? 'shards' : L === 'water' || L === 'fire' ? 'spray' : L === 'earth' ? 'missile' : 'beam';
+        spec.shape = L === 'lightning' ? 'arc' : L === 'cold' || L === 'ice' ? 'shards' : L === 'water' || L === 'fire' ? 'spray' : L === 'earth' ? 'missile' : 'beam';
         spec.channel = spec.shape === 'beam' || spec.shape === 'spray' || spec.shape === 'arc';
         spec.charge = L === 'earth';
         spec.mod = L === 'water' ? 'push' : null;
@@ -110,13 +109,17 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
       spec.shape = cast === 'force' ? 'arc' : cast === 'area' ? 'discharge' : cast === 'place' ? 'strike' : 'imbue';
       spec.channel = cast === 'force';
       return spec;
+    case 'ice':
+      // Ice shards (a freezing spray was too strong), the Ice ring, the Ice sheet, the Ice burst.
+      spec.shape = cast === 'force' ? 'shards' : cast === 'area' ? 'nova' : cast === 'place' ? 'patch' : 'imbue';
+      return spec;
     case 'water': case 'fire': case 'cold':
       if (cast === 'force') {
-        spec.shape = freeze ? 'shards' : 'spray'; // Ice shards: the freezing spray was too strong
-        spec.channel = !freeze;
+        spec.shape = 'spray';
+        spec.channel = true;
       } else spec.shape = cast === 'area' ? 'nova' : cast === 'place' ? 'patch' : 'imbue';
-      // Water's own spray and splash push, as the rules say (SHAPES.push a Water rune); steam and ice don't
-      if (d.form === 'water' && !scald && !freeze && (cast === 'force' || cast === 'area')) spec.mod = 'push';
+      // Water's own spray and splash push, as the rules say (SHAPES.push a Water rune); steam doesn't
+      if (d.form === 'water' && !scald && (cast === 'force' || cast === 'area')) spec.mod = 'push';
       return spec;
     case 'sigil':
       if (cast === 'force') spec.shape = d.sub ? 'turret' : 'blink';

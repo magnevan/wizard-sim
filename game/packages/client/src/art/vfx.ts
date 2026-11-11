@@ -38,7 +38,7 @@ export type LightFn = (x: number, y: number, r: number, col: string, a: number, 
 /** A little unsteadiness, so a held beam's light is alive. */
 const flick = (t: number, seed: number): number => 0.9 + 0.1 * Math.sin(t * 17 + seed);
 const beamRamp = (spec: SpellSpec, look: string): Ramp => spec.heal ? X.LIFE_L : look === 'fire' ? EL.fire : look === 'cold' ? X.FROST : ramp(spec.look);
-const splashKind = (spec: SpellSpec, look: string): SplashKind => spec.heal && look !== 'water' ? 'warm' : spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
+const splashKind = (spec: SpellSpec, look: string): SplashKind => spec.heal && look !== 'water' ? 'warm' : spec.scald ? 'scald' : look === 'fire' ? 'fire' : frosty(look) ? 'cold' : 'water';
 /** Light along a line on the ground, a row of overlapping lights, each dimmer to make up for the overlap. */
 function glowAlong(light: LightFn, ax: number, ay: number, bx: number, by: number, r: number, col: string, a: number): void {
   const n = Math.max(1, Math.min(10, Math.ceil(Math.hypot(bx - ax, by - ay) / (r * 0.85))));
@@ -59,6 +59,8 @@ interface Fx {
 
 const elName = (id: number): string => (id >= 1 && id <= N_EL ? elementName(id) : 'arcane');
 const ramp = (id: number): Ramp => EL[elName(id)] ?? EL.arcane;
+/** Cold and Ice share the frosty branches; Ice draws them in its own ramp (EL.ice) where a ramp is picked by look. */
+const frosty = (el: string): boolean => el === 'cold' || el === 'ice';
 /** The seats' default staff orbs (the Battlefield's: Red arcane, Blue cold, Gold lightning, Violet earth). */
 const SEAT_EL = [6, 4, 5, 9];
 const STAFF_Z = 10; // missiles fly about this high (art px)
@@ -791,10 +793,10 @@ export class Vfx {
           light(x, yg, 44, '#ff7a2a', 0.9);
         } else {
           // a rock, an ice boulder, a mud ball...: the same heavy missile in the look's material
-          const mat = el === 'cold' ? K.ROCK_MAT.cold : el === 'water' ? K.ROCK_MAT.water : el === 'arcane' ? K.ROCK_MAT.arcane : el === 'lightning' ? K.ROCK_MAT.lightning : K.ROCK_MAT.earth;
-          for (let k2 = 1; k2 <= 4; k2++) X.px(o, x - ux * k2 * 4, y - uy * k2 * 4 + k2 * 0.5, el === 'cold' ? EL.cold[k2] : el === 'water' ? EL.water[Math.min(4, k2)] : X.EARTH[k2]);
+          const mat = frosty(el) ? K.ROCK_MAT.cold : el === 'water' ? K.ROCK_MAT.water : el === 'arcane' ? K.ROCK_MAT.arcane : el === 'lightning' ? K.ROCK_MAT.lightning : K.ROCK_MAT.earth;
+          for (let k2 = 1; k2 <= 4; k2++) X.px(o, x - ux * k2 * 4, y - uy * k2 * 4 + k2 * 0.5, frosty(el) ? EL[el][k2] : el === 'water' ? EL.water[Math.min(4, k2)] : X.EARTH[k2]);
           K.rock(o, x, y, r, sd, mat);
-          if (el === 'cold') { if (Math.floor(t * 8 + j) % 3 === 0) X.px(o, x - r * 0.3, y - r * 0.5, '#ffffff'); light(x, yg, 30, '#9ff4ff', 0.4); }
+          if (frosty(el)) { if (Math.floor(t * 8 + j) % 3 === 0) X.px(o, x - r * 0.3, y - r * 0.5, '#ffffff'); light(x, yg, 30, '#9ff4ff', 0.4); }
           if (el === 'water') for (const p of emit(t, 14, 0.4, (i, age) => ({ x: x + (rand(i, 4, sd) - 0.5) * r, y: y + r * 0.5 + age * age * 10, age }))) X.px(o, p.x, p.y, '#8ad0ff');
           if (el === 'lightning' && Math.floor(t * 18) % 3 !== 2) { K.zap(o, [x - r, y], [x + r, y - 1], Math.floor(t * 18) + sd, EL.lightning, 1, 0); light(x, yg, 30, '#b08aff', 0.5); }
           if (el === 'arcane') { X.glow(o, x, y, r + 3, R[2], 0.5); light(x, yg, 30, R[2], 0.4); }
@@ -829,7 +831,7 @@ export class Vfx {
         for (let q = 0; q < 7; q++) { const a = t * 8 + q * 0.9, r = 10 - k * 6; X.px(o, ch[0] + Math.cos(a) * r, ch[1] + Math.sin(a) * r * 0.7, ramp(spec.look)[q % 2 ? 1 : 2]); }
         if (spec.heal) { K.rock(o, ch[0], ch[1] + 2, 1.5 + k * 3.5, 6, K.ROCK_MAT.life); X.glow(o, ch[0], ch[1] + 2, 4 + k * 3, X.LIFE[3], 0.5); }
         else if (el === 'fire') { K.fireball(o, ch[0], ch[1], 1.2 + k * 3.2, t, 0.2, -1, 4); light(ch[0], v.y, 30, '#ff7a2a', 0.5 * k + 0.2); }
-        else K.rock(o, ch[0], ch[1] + 2, 1.5 + k * 4, 4, el === 'cold' ? K.ROCK_MAT.cold : el === 'water' ? K.ROCK_MAT.water : K.ROCK_MAT.earth);
+        else K.rock(o, ch[0], ch[1] + 2, 1.5 + k * 4, 4, frosty(el) ? K.ROCK_MAT.cold : el === 'water' ? K.ROCK_MAT.water : K.ROCK_MAT.earth);
         continue;
       }
       if (ph !== PHASE.channel) continue;
@@ -846,7 +848,7 @@ export class Vfx {
           const R = look === 'cold' ? X.FROST : ramp(spec.look);
           // a second element in the beam twists round it as a strand (arcane + fire's strand is the fire beam itself)
           K.beam(o, tip, full, t, R, { on: 1, hit: hitBody && on > 0.95, seed: sd });
-          if (look === 'cold') for (const p of emit(t, 60, 0.6, (q, age) => { const kk = rand(q, 71, sd); return { x: lerp(tip[0], full[0], kk) + (rand(q, 72, sd) - 0.5) * 4, y: lerp(tip[1], full[1], kk) + age * 9 + Math.sin(age * 8 + q) * 1.2, age, q }; })) X.px(o, p.x, p.y, (p.q + Math.floor(t * 16)) % 5 === 0 ? '#ffffff' : p.age < 0.5 ? X.FROST[2] : X.FROST[4]);
+          if (frosty(look)) for (const p of emit(t, 60, 0.6, (q, age) => { const kk = rand(q, 71, sd); return { x: lerp(tip[0], full[0], kk) + (rand(q, 72, sd) - 0.5) * 4, y: lerp(tip[1], full[1], kk) + age * 9 + Math.sin(age * 8 + q) * 1.2, age, q }; })) X.px(o, p.x, p.y, (p.q + Math.floor(t * 16)) % 5 === 0 ? '#ffffff' : p.age < 0.5 ? X.FROST[2] : X.FROST[4]);
         }
         const lc = spec.heal ? '#8ef07e' : look === 'fire' ? '#ff6a20' : ramp(spec.look)[2];
         glowAlong(light, tip[0], v.y, full[0], lerp(v.y, ey, on), 40, lc, 0.55 * flick(t, sd));
@@ -861,7 +863,7 @@ export class Vfx {
           } else K.warmCone(o, tip, z, t, t0, X.WARM, sd);
           glowAlong(light, tip[0], v.y, ex, ey, 40, '#ffe68a', 0.4);
         } else {
-          const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
+          const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : look === 'ice' ? 'freeze' : 'water';
           const fromHead = !!w.battery && w.battery.drive[i] >= 0;
           if (fromHead) {
             // a defence's flame is a jet from a fixed nozzle: three cones side by side, so it holds its body over the longer reach
@@ -869,8 +871,8 @@ export class Vfx {
             for (const j of [-1, 1]) K.cone(o, [tip[0] + nx * j * 2, tip[1] + ny * j], [z[0] + nx * j * 13, z[1] + ny * j * 6], t, kind, t0, { spread: 0.3, power: 1.5, seed: sd + 17 * j });
             K.cone(o, tip, z, t, kind, t0, { spread: 0.34, power: 2.2, seed: sd });
           } else K.cone(o, tip, z, t, kind, t0, { spread: 0.28, seed: sd });
-          glowAlong(light, lerp(tip[0], ex, 0.25), lerp(v.y, ey, 0.25), ex, ey, 40, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', (kind === 'fire' ? 0.6 : 0.4) * flick(t, sd));
-          if (kind === 'cold') for (let q = 0; q < 40; q++) { const a = rand(q, 61, sd) * TAU, r = Math.pow(rand(q, 62, sd), 0.7) * 18 * seg(t, t0 + 0.3, t0 + 1.3); X.px(g, ex + Math.cos(a) * r, ey + Math.sin(a) * r * FY * 0.7, q % 4 === 0 ? '#ffffff' : q % 2 ? '#bfe8f6' : '#8ccce4'); }
+          glowAlong(light, lerp(tip[0], ex, 0.25), lerp(v.y, ey, 0.25), ex, ey, 40, kind === 'fire' ? '#ff7a2a' : (kind === 'cold' || kind === 'freeze') ? '#7ff0ff' : kind === 'scald' ? '#ffd0b0' : '#2a8cff', (kind === 'fire' ? 0.6 : 0.4) * flick(t, sd));
+          if (kind === 'cold' || kind === 'freeze') for (let q = 0; q < 40; q++) { const a = rand(q, 61, sd) * TAU, r = Math.pow(rand(q, 62, sd), 0.7) * 18 * seg(t, t0 + 0.3, t0 + 1.3); X.px(g, ex + Math.cos(a) * r, ey + Math.sin(a) * r * FY * 0.7, q % 4 === 0 ? '#ffffff' : q % 2 ? '#bfe8f6' : '#8ccce4'); }
         }
         this.strike(w, t, light, s.chanEndX[i], s.chanEndY[i], w.bodies.x[i], w.bodies.y[i], splashKind(spec, look), t0, sd);
       } else if (spec.shape === 'arc') {
@@ -887,7 +889,7 @@ export class Vfx {
           light(dex, dey, 44, spec.heal ? '#8ef07e' : R[2], 0.5);
           this.strike(w, t, light, s.dblEndX[i], s.dblEndY[i], w.bodies.x[d], w.bodies.y[d], 'beam', t0 + 0.12, sd2, 0.6, R);
         } else {
-          const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
+          const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : look === 'ice' ? 'freeze' : 'water';
           if (spec.heal && look !== 'water') K.warmCone(o, dt, [dex, dey - 6], t, t0, X.WARM, sd2);
           else K.cone(o, dt, [dex, dey - 6], t, kind, t0, { spread: 0.2, power: 0.45, seed: sd2 });
           light(lerp(dt[0], dex, 0.5), lerp(dv.y, dey, 0.5), 34, kind === 'fire' ? '#ff7a2a' : '#7fb0ff', 0.3);
@@ -906,7 +908,7 @@ export class Vfx {
           light(eex, eey, 44, spec.heal ? '#8ef07e' : R[2], 0.5);
           this.strike(w, t, light, r.echoEndX[i], r.echoEndY[i], w.bodies.x[i], w.bodies.y[i], 'beam', te + 0.12, sd3, 0.6, R);
         } else {
-          const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
+          const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : look === 'ice' ? 'freeze' : 'water';
           if (spec.heal && look !== 'water') K.warmCone(o, tip, [eex, eey - 6], t, te, X.WARM, sd3);
           else K.cone(o, tip, [eex, eey - 6], t, kind, te, { spread: 0.2, power: 0.45, seed: sd3 });
           this.strike(w, t, light, r.echoEndX[i], r.echoEndY[i], w.bodies.x[i], w.bodies.y[i], splashKind(spec, look), te, sd3, 0.6);
@@ -931,10 +933,10 @@ export class Vfx {
         light(ex, ey, 48, spec.heal ? '#8ef07e' : R[2], 0.6);
         this.strike(w, t, light, dv.x2[k], dv.y2[k], dv.x[k], dv.y[k], 'beam', t0 + 0.12, sd, 0.7, R);
       } else if (spec.shape === 'spray') {
-        const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : 'water';
+        const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : look === 'ice' ? 'freeze' : 'water';
         if (spec.heal && look !== 'water') K.warmCone(o, tip, [ex, ey - 6], t, t0, X.WARM, sd);
         else K.cone(o, tip, [ex, ey - 6], t, kind, t0, { spread: 0.24, power: 0.7, seed: sd });
-        light(lerp(tip[0], ex, 0.55), lerp(tip[1], ey, 0.55), 44, kind === 'fire' ? '#ff7a2a' : kind === 'cold' ? '#7ff0ff' : '#2a8cff', 0.5);
+        light(lerp(tip[0], ex, 0.55), lerp(tip[1], ey, 0.55), 44, kind === 'fire' ? '#ff7a2a' : (kind === 'cold' || kind === 'freeze') ? '#7ff0ff' : '#2a8cff', 0.5);
         this.strike(w, t, light, dv.x2[k], dv.y2[k], dv.x[k], dv.y[k], splashKind(spec, look), t0, sd, 0.7);
       }
     }
@@ -1169,7 +1171,7 @@ export class Vfx {
       case 'patch': {
         if (f.look === 8) {
           if (e < 0.9) for (let i = 0; i < 48; i++) { const a = (i / 48) * TAU, rr = r * easeOut(e / 0.9) + (rand(i, Math.floor(t * 20), 62) - 0.5) * 2; X.px(o, x + Math.cos(a) * rr, y + Math.sin(a) * rr * FY - 1, i % 2 ? EL.fire[1] : EL.fire[0]); }
-        } else if (f.look === 4) {
+        } else if (f.look === 4 || f.look === 10) {
           if (e < 0.6) { const front = x - r - 8 + (e / 0.6) * (r * 2 + 16); for (let i = 0; i < 10; i++) X.px(o, front + (rand(i, Math.floor(t * 20), sd) - 0.5) * 4, y - r * FY + i * r * FY * 0.2, i % 2 ? '#ffffff' : EL.cold[1]); }
           light(x, y, r + 20, '#9ff4ff', 0.4 * (1 - e / f.life));
         }
@@ -1184,7 +1186,7 @@ export class Vfx {
         } else {
           // the geyser erupts: rock and earth thrown high, a column of dust, the ground broken
           K.scorch(g, x, y, r * 0.8, 0.6 * (1 - seg(e, f.life - 0.5, f.life))); K.cracks(g, x, y, r * 1.1, sd, 1, '#1a120c', 7);
-          const gcols: Ramp = f.look === 1 ? [EL.water[1], EL.water[2], '#ffffff'] : f.look === 8 ? [EL.fire[1], EL.fire[3], '#6a2a1a'] : f.look === 4 ? [EL.cold[1], EL.cold[3], '#ffffff'] : ['#977552', '#553e2a', '#b8946a'];
+          const gcols: Ramp = f.look === 1 ? [EL.water[1], EL.water[2], '#ffffff'] : f.look === 8 ? [EL.fire[1], EL.fire[3], '#6a2a1a'] : f.look === 4 || f.look === 10 ? [EL.cold[1], EL.cold[3], '#ffffff'] : ['#977552', '#553e2a', '#b8946a'];
           if (e < 0.45) K.gring(g, x, y, 8 + e * 80, '#e0c8a0', 1 - e / 0.45, 1);
           if (e < 0.08) X.ellipse(o, x, y - 6, 12, 9, '#ffffff');
           for (let i = 0; i < 6; i++) { const h = (14 + rand(i, 33, sd) * 10) * easeOut(seg(e, 0, 0.08 + i * 0.01)) * (1 - seg(e, 0.6, 1.1)); if (h < 1) continue; const a = (i / 6) * TAU + rand(i, 31, sd) * 0.5, rr = 3 + rand(i, 32, sd) * r * 0.5, sx = x + Math.cos(a) * rr, sy = y + Math.sin(a) * rr * FY, wd = 2.5 + rand(i, 34, sd); X.poly(o, [[sx - wd - 1, sy + 1], [sx + wd + 1, sy + 1], [sx + Math.cos(a) * 2 + 1, sy - h - 1], [sx + Math.cos(a) * 2 - 1, sy - h - 1]], '#1a120c'); X.poly(o, [[sx - wd, sy], [sx + wd, sy], [sx + Math.cos(a) * 2 + 0.5, sy - h]], gcols[1]); X.poly(o, [[sx - wd, sy], [sx - wd * 0.1, sy], [sx + Math.cos(a) * 2, sy - h + 1]], gcols[0]); }
@@ -1280,12 +1282,12 @@ export class Vfx {
         }
         if (ty === 1) {
           // a rock lands: dust and chips; an ice boulder bursts into ice; a mud ball splashes
-          const cols: Ramp = look === 'cold' ? [EL.cold[0], EL.cold[2], EL.cold[3]] : look === 'water' ? ['#4a3c2a', '#8ad0ff', '#6a5a40'] : ['#977552', '#553e2a', '#b8946a'];
+          const cols: Ramp = frosty(look) ? [EL.cold[0], EL.cold[2], EL.cold[3]] : look === 'water' ? ['#4a3c2a', '#8ad0ff', '#6a5a40'] : ['#977552', '#553e2a', '#b8946a'];
           K.scorch(g, x, y, 7 * s, 0.4 * (1 - seg(e, 0.8, 1.4)));
           if (e < 0.06) K.sq(o, x, iy, 4, '#ffffff');
           K.debris(o, x, iy, e, sd, 10, 45, cols);
-          K.dust(o, x, y, e, sd, 9, 18, look === 'cold' ? '#d8f4ff' : look === 'water' ? '#5a6a80' : '#8a7a68', 0.9);
-          if (look === 'cold') light(x, y, 50, '#9ff4ff', 0.6 * (1 - e));
+          K.dust(o, x, y, e, sd, 9, 18, frosty(look) ? '#d8f4ff' : look === 'water' ? '#5a6a80' : '#8a7a68', 0.9);
+          if (frosty(look)) light(x, y, 50, '#9ff4ff', 0.6 * (1 - e));
           return;
         }
         // a bolt pops

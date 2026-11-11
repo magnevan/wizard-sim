@@ -15,23 +15,25 @@ import * as X from './px';
 import type { Ctx, Pt, Ramp } from './px';
 import { TAU, emit, lerp, rand } from './util';
 
-// element ids, as the sim's EL (rules BASE order + 1)
-const ID = { water: 1, life: 2, shield: 3, cold: 4, lightning: 5, arcane: 6, sigil: 7, fire: 8, earth: 9 } as const;
-const NAME = ['', 'water', 'life', 'shield', 'cold', 'lightning', 'arcane', 'sigil', 'fire', 'earth'];
+// element ids, as the sim's EL (rules ALL order + 1: the nine keyed elements, then Ice)
+const ID = { water: 1, life: 2, shield: 3, cold: 4, lightning: 5, arcane: 6, sigil: 7, fire: 8, earth: 9, ice: 10 } as const;
+const N = 10; // the sim's N_EL
+const NAME = ['', 'water', 'life', 'shield', 'cold', 'lightning', 'arcane', 'sigil', 'fire', 'earth', 'ice'];
 
 /** The ramp an extra is drawn in (brightest first). */
 export function accentRamp(id: number): Ramp {
   if (id === ID.cold) return X.FROST;
+  if (id === ID.ice) return X.EL.ice;
   if (id === ID.life) return X.LIFE;
   if (id === ID.earth) return X.EARTH;
   return X.EL[NAME[id]] ?? X.EL.arcane;
 }
 
-/** The elements in a 9-count block at `at`, skipping `skip` (the lead, Shield, Sigil): the extras, in id order. */
+/** The elements in an N-count block at `at`, skipping `skip` (the lead, Shield, Sigil): the extras, in id order. */
 export function extrasOf(els: Uint8Array | undefined, at: number, ...skip: number[]): number[] {
   const out: number[] = [];
   if (!els) return out;
-  for (let id = 1; id <= 9; id++) if (els[at * 9 + id - 1] > 0 && !skip.includes(id) && id !== ID.sigil) out.push(id);
+  for (let id = 1; id <= N; id++) if (els[at * N + id - 1] > 0 && !skip.includes(id) && id !== ID.sigil) out.push(id);
   return out;
 }
 
@@ -44,6 +46,7 @@ export function bit(o: Ctx, id: number, x: number, y: number, k: number, j: numb
   switch (id) {
     case ID.fire: if (a > 0.3) K.tongue(o, x, y, 1.3 * a + 0.3, 2 + 3 * a, Math.sin(j * 1.7) * 0.8); else X.px(o, x, y, K.fireCol(0.5 + k * 0.5)); return;
     case ID.cold: if (j % 3 === 0 && a > 0.4) K.shard(o, x, y, dir, 3.5 * a + 1, j, a); else { X.px(o, x, y, j % 2 ? '#ffffff' : R[2]); if (a > 0.5) { X.px(o, x - 1, y, R[1]); X.px(o, x + 1, y, R[1]); } } return;
+    case ID.ice: if (a > 0.25) K.shard(o, x, y, dir, 4 * a + 1.5, j, a, X.EL.ice); else X.px(o, x, y, R[1]); return; // Ice: always a glassy splinter
     case ID.lightning: {
       if ((j + Math.floor(k * 12)) % 3 === 2) { X.px(o, x, y, R[2]); return; }
       const l = 2 + 3 * a, c = Math.cos(dir + (j % 2 ? 1.2 : -1.2)), s = Math.sin(dir + (j % 2 ? 1.2 : -1.2));
@@ -156,6 +159,7 @@ export function bolt(o: Ctx, x: number, y: number, ux: number, uy: number, ids: 
         for (const p of emit(t, 50, 0.35, (q, age, ts) => ({ x: x - ux * (t - ts) * 160 + (rand(q, 2, seed) - 0.5) * 3, y: y - uy * (t - ts) * 160 - age * 8, age }), t0, t)) K.tongue(o, p.x, p.y, 1.4 * (1 - p.age) + 0.3, 4 * (1 - p.age) + 1, -ux);
         break;
       case ID.cold: K.shard(o, x + ux * 3, y + uy * 3, dir, 6, seed, 1, X.EL.cold); break;
+      case ID.ice: K.shard(o, x + ux * 3, y + uy * 3, dir, 7, seed, 1, X.EL.ice); K.shard(o, x - ux, y - uy, dir, 4, seed + 1, 1, X.EL.ice); break;
       case ID.lightning:
         if (Math.floor(t * 18) % 3 !== 2) for (let k = 0; k < 2; k++) { const a = rand(Math.floor(t * 18), k, seed) * TAU; K.zap(o, [x, y], [x + Math.cos(a) * 7, y + Math.sin(a) * 5], Math.floor(t * 18) + k + seed, X.EL.lightning, 1, 0); }
         break;

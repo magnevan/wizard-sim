@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { Element } from '@wizard-sim/rules';
+import { rules, type Element } from '@wizard-sim/rules';
 import {
-  BTN, DAMAGE, EL, KIND, N_EL, NO_INPUT, PHASE, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step,
+  BTN, DAMAGE, EL, KEYED_EL, KIND, N_EL, NO_INPUT, PHASE, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step,
   type PlayerInput, type World,
 } from '../src';
 import { cellAt } from '../src/effects';
@@ -221,8 +221,8 @@ describe('Force casts', () => {
     expect(wet.w.bodies.frozen[wet.dummy]).toBeGreaterThan(0);
   });
 
-  it('water + cold as Force is Ice shards: a volley of missiles, not a spray', () => {
-    const spec = compile(['water', 'cold'], 'force');
+  it('water then cold make Ice, and Ice as Force is Ice shards: a volley of missiles, not a spray', () => {
+    const spec = compile(['ice'], 'force');
     expect(spec.title).toBe('Ice shards');
     expect(spec.shape).toBe('shards');
     const { w, d } = range();
@@ -440,5 +440,5 @@ describe('Area and Place', () => {
 });
 
 describe('counts layout', () => {
-  it('N_EL matches the rules', () => expect(N_EL).toBe(9));
+  it('N_EL matches the rules: the nine keyed elements, then Ice', () => { expect(N_EL).toBe(rules.ALL.length); expect(N_EL).toBe(10); expect(KEYED_EL).toBe(rules.BASE.length); });
 });

@@ -62,7 +62,7 @@ const blowRamp = (look: number): Ramp => (look === 0 ? STAFF : look === ELID.lif
 const THRUST = 0.22, SPIN = 0.3;
 /** Sheet colours (rgb for the translucent fill) per element. */
 const RGB: Record<string, string> = {
-  shield: '255,214,110', fire: '255,140,60', cold: '170,236,255', water: '90,160,255', lightning: '196,164,255', arcane: '255,106,176', life: '142,240,126', earth: '184,148,106', sigil: '236,140,255',
+  shield: '255,214,110', fire: '255,140,60', cold: '170,236,255', ice: '194,236,246', water: '90,160,255', lightning: '196,164,255', arcane: '255,106,176', life: '142,240,126', earth: '184,148,106', sigil: '236,140,255',
 };
 
 /** The most numerous element in a 9-count block, skipping `skip` ids (wards and waves: plain argmax). */
@@ -85,8 +85,10 @@ function wallLead(els: Uint8Array, at: number, ...skip: number[]): number {
   return formOf(LEAD);
 }
 const has = (els: Uint8Array, at: number, id: number) => els[at * N_EL + id - 1] > 0;
-/** Water + Cold together are ice: Shield spells carrying both are drawn as crystal, not as either element. */
-const isIce = (els: Uint8Array, at: number) => has(els, at, ELID.water) && has(els, at, ELID.cold);
+/** Ice (Water + Cold in one rune): Shield spells carrying it are drawn as crystal. */
+const isIce = (els: Uint8Array, at: number) => has(els, at, ELID.ice);
+/** Cold and Ice share their frosty drawing branches (Ice: its own ramp where it has one). */
+const frosty = (el: string): boolean => el === 'cold' || el === 'ice';
 /** The hand a conjured weapon or wand is held in (the staff's); a guard hangs on the other arm. */
 const WEAPON_HAND = 1;
 
@@ -669,7 +671,7 @@ export class StructureView {
             continue;
           }
         }
-        const cold = !isT && has(wl.els, k, ELID.cold), coat = isT ? 0 : wallLead(wl.els, k, ELID.earth);
+        const cold = !isT && (has(wl.els, k, ELID.cold) || isIce(wl.els, k)), coat = isT ? 0 : wallLead(wl.els, k, ELID.earth);
         const endA = !joins(id, sx1, sy1), endB = !joins(id, sx2, sy2);
         const pre = `${id}:${born}:${+endA}${+endB}:${+cold}`;
         live.add(pre);
@@ -825,10 +827,10 @@ export class StructureView {
       light(mid[0], mid[1], 40, '#8ef07e', (0.45 + 0.3 * pulse) * rise);
       return;
     }
-    if ((el === 'water' || el === 'cold') && isIce(wl.els, k)) { this.iceCurtain(c, g, cols, a, bb, mid, rise, Math.max(0.35, kS), pulse, hitE, sd, t, light); return; }
-    const Rr: Ramp = el === 'cold' ? X.FROST : R;
+    if (isIce(wl.els, k)) { this.iceCurtain(c, g, cols, a, bb, mid, rise, Math.max(0.35, kS), pulse, hitE, sd, t, light); return; }
+    const Rr: Ramp = frosty(el) ? X.FROST : R;
     S.sheetCols(c, cols, h, t, Math.max(0.35, kS) * (0.8 + 0.2 * pulse), Rr, RGB[el] ?? RGB.arcane, k, hitE);
-    if (el === 'cold') {
+    if (frosty(el)) {
       for (const p of emit(t, 3 * P.length, 1.4, (i, age) => { const q = P[mod(i, P.length)]; return { x: q[0] + (rand(i, 3, sd) - 0.5) * 6 + Math.sin(age * 6 + i) * 1.5, y: q[1] - h + age * h, age, i }; })) X.px(c, p.x, p.y, p.i % 3 ? '#ffffff' : X.FROST[2]);
       for (const p of cols) if (rand(Math.round(p[0]), 7, sd) < 0.3) X.px(g, p[0], p[1] + 1, '#c4eefa');
       light(mid[0], mid[1], 34, '#9ff4ff', 0.4 * rise);
@@ -879,7 +881,7 @@ export class StructureView {
     const v = w.waves;
     for (let k = 0; k < MAX_WAVES; k++) {
       if (!v.alive[k]) continue;
-      const els = v.els, earth = has(els, k, ELID.earth), water = has(els, k, ELID.water), coat = lead(els, k, ELID.shield);
+      const els = v.els, earth = has(els, k, ELID.earth), water = has(els, k, ELID.water) || isIce(els, k), coat = lead(els, k, ELID.shield);
       const range = v.range[k] || STRUCT.waveRange, fade = Math.min(seg(v.travelled[k], 0, 0.5), 1 - seg(v.travelled[k], range - 1.2, range));
       const fdx = v.dx[k], fdy = v.dy[k], px = -fdy, py = fdx, half = v.half[k], sd = k * 17 + 5;
       // the front, bowed forward in the middle; sorted back to front on screen
@@ -929,7 +931,7 @@ export class StructureView {
         light(gx(v.x[k]), gy(v.y[k]), 50, '#d8b88a', 0.4 * fade);
       } else {
         // Shove (and the elemental fronts): a front of light sweeping forward, in its element
-        const id = coat || ELID.shield, el = elName(id), R: Ramp = el === 'cold' ? X.FROST : id === ELID.life ? LIFE : ramp(id);
+        const id = coat || ELID.shield, el = elName(id), R: Ramp = frosty(el) ? X.FROST : id === ELID.life ? LIFE : ramp(id);
         const band = (p: { x: number; y: number; q: number; i: number }, f: number) => [p.x - ux * f, p.y - uy * f] as const;
         // a translucent sheet of force bowed forward, a bright crest and base
         const ord = pts.slice().sort((p, q) => p.i - q.i);
@@ -946,7 +948,7 @@ export class StructureView {
         for (let i = 0; i < 8; i++) { const p = pts[Math.floor(rand(i, Math.floor(t * 15), sd) * pts.length)]; const L = 6 + rand(i, 3, sd) * 8, z = 2 + rand(i, 4, sd) * 8 * p.q; X.line(o, p.x - ux * 3, p.y - uy * 3 - z, p.x - ux * (3 + L), p.y - uy * (3 + L) - z, R[2]); }
         if (el === 'fire') for (const p of pts) if (p.i % 2 === 0) K.tongue(o, p.x, p.y, 1.8, (6 + 3 * Math.sin(t * 13 + p.i)) * p.q * fade, -ux * 2);
         if (el === 'lightning' && Math.floor(t * 20) % 3 !== 2) for (let i = 1; i < pts.length; i += 2) X.lines(o, K.bolt([pts[i - 1].x, pts[i - 1].y - 6], [pts[i].x, pts[i].y - 6], Math.floor(t * 20) + i, 0.5, 2), R[1]);
-        if (el === 'cold') for (const p of pts) if (p.i % 3 === 0) K.shard(o, p.x, p.y - 3, -Math.PI / 2 + (rand(p.i, 1, sd) - 0.5), 5 * p.q * fade, p.i + sd, 1);
+        if (frosty(el)) for (const p of pts) if (p.i % 3 === 0) K.shard(o, p.x, p.y - 3, -Math.PI / 2 + (rand(p.i, 1, sd) - 0.5), 5 * p.q * fade, p.i + sd, 1);
         if (id === ELID.life) K.sparkle(o, gx(v.x[k]), gy(v.y[k]) - 6, t, fade, half * PPU, sd, LIFE, 20);
         light(gx(v.x[k]), gy(v.y[k]), 50, R[2], 0.5 * fade);
       }
@@ -954,7 +956,7 @@ export class StructureView {
   }
   /** What a wave leaves on the floor: soaked streaks (water), a jagged fault (earth). k fades it out. */
   private waveTrail(g: Ctx, sx: number, sy: number, ex: number, ey: number, els: Uint8Array, at: number, k: number, half: number): void {
-    const earth = has(els, at, ELID.earth), water = has(els, at, ELID.water), fire = has(els, at, ELID.fire);
+    const earth = has(els, at, ELID.earth), water = has(els, at, ELID.water) || isIce(els, at), fire = has(els, at, ELID.fire);
     if (!earth && !water && !fire) return;
     const L = Math.hypot(ex - sx, ey - sy); if (L < 0.2) return;
     const ux = (ex - sx) / L, uy = (ey - sy) / L, px = -uy, py = ux;
@@ -1041,7 +1043,7 @@ export class StructureView {
     const el = elName(look);
     if (el === 'fire') { K.fireball(c, x, y, 2.4, t, 0.3, -1, sd); return; }
     if (el === 'earth') { K.rock(c, x, y, 2.8, sd); X.px(c, x - 1, y - 1, '#ffffff'); return; }
-    if (el === 'cold') { K.rock(c, x, y, 2.6, sd, K.ROCK_MAT.cold); if (Math.floor(t * 6 + sd) % 4 === 0) X.px(c, x - 1, y - 2, '#ffffff'); return; }
+    if (frosty(el)) { K.rock(c, x, y, 2.6, sd, K.ROCK_MAT.cold); if (Math.floor(t * 6 + sd) % 4 === 0) X.px(c, x - 1, y - 2, '#ffffff'); return; }
     if (el === 'water') { X.ellipse(c, x, y, 2.6, 2.6, EL.water[3]); X.ellipse(c, x - 0.5, y - 0.5, 1.8, 1.8, EL.water[2]); X.px(c, x - 1, y - 1, '#e0f6ff'); return; }
     if (el === 'life') { K.rock(c, x, y, 2.6, sd, K.ROCK_MAT.life); X.glow(c, x, y, 4, LIFE[3], 0.6); X.px(c, x, y, LIFE[1]); return; }
     if (el === 'lightning') { X.glow(c, x, y, 4, EL.lightning[2], 0.9); X.rect(c, x - 1, y - 1, 3, 3, EL.lightning[1]); X.px(c, x, y, '#ffffff'); if (Math.floor(t * 18) % 2) X.lines(c, K.bolt([x, y], [x + 4, y + 2], Math.floor(t * 18) + sd, 0.6, 2), EL.lightning[1]); return; }
@@ -1131,7 +1133,7 @@ export class StructureView {
       return;
     }
     // the ward: a shimmering golden skin hugging the silhouette (an elemental ward takes its element's colour)
-    const ice = isIce(s.wardEls, i), R: Ramp = coat ? (ice || elName(coat) === 'cold' ? X.FROST : ramp(coat)) : EL.shield;
+    const ice = isIce(s.wardEls, i), R: Ramp = coat ? (ice || frosty(elName(coat)) ? X.FROST : ramp(coat)) : EL.shield;
     this.sil.halo(o, v, t, R[2], { col2: R[1], hi: R[0], level: Math.round(6 + 10 * k) });
     // an ice ward: crystals standing round the feet, where a water ward is only a skin
     if (ice) for (let q = 0; q < 6; q++) { const a = (q / 6) * TAU + 0.4, sn2 = Math.sin(a); K.shard(sn2 < 0 ? g : o, v.x + Math.cos(a) * 9, v.y - 2 + sn2 * 4, -Math.PI / 2 + Math.cos(a) * 0.5, (4 + (q % 3) * 1.5) * k, i * 7 + q, 1); }
@@ -1159,7 +1161,7 @@ export class StructureView {
       if (p.kind === 0) X.line(c, x - p.hw * 0.8, y + p.hh * 0.1, x + p.hw * 0.8, y + p.hh * 0.1, STN[3]);
       // the coat: fire glows in a seam, frost rimes the top, lightning sparks, water glistens, life greens
       if (el === 'fire') { const gl = 0.75 + 0.25 * Math.sin(t * 9 + p.q * 2); X.lines(c, [[x - p.hw * 0.45, y + p.hh * 0.05], [x, y + p.hh * 0.3], [x + p.hw * 0.4, y + p.hh * 0.05]], gl > 0.8 ? EL.fire[2] : EL.fire[3]); X.px(c, x, y + p.hh * 0.3, EL.fire[1]); if (p.kind === 0 && c === o) K.tongue(o, x, y - p.hh * 0.7, 1.1, 1.5 + 1.5 * (0.5 + 0.5 * Math.sin(t * 13 + p.q * 2)), Math.sin(t * 7 + p.q)); }
-      else if (el === 'cold') { X.line(c, x - p.hw * 0.7, y - p.hh * 0.75, x + p.hw * 0.5, y - p.hh * 0.85, '#e0ffff'); X.px(c, x - p.hw * 0.2, y - p.hh * 0.9, '#ffffff'); }
+      else if (frosty(el)) { X.line(c, x - p.hw * 0.7, y - p.hh * 0.75, x + p.hw * 0.5, y - p.hh * 0.85, '#e0ffff'); X.px(c, x - p.hw * 0.2, y - p.hh * 0.9, '#ffffff'); }
       else if (el === 'lightning') { if (Math.floor(t * 20 + p.q) % 4 === 0) X.lines(c, K.bolt([x - p.hw * 0.6, y], [x + p.hw * 0.6, y - 1], Math.floor(t * 20) + p.q, 0.6, 2), EL.lightning[1]); }
       else if (el === 'water') { X.px(c, x - p.hw * 0.4, y - p.hh * 0.4, '#8ad0ff'); }
       else if (el === 'life') { X.px(c, x + p.hw * 0.3, y - p.hh * 0.2, LIFE[2]); X.px(c, x - p.hw * 0.3, y + p.hh * 0.3, LIFE[3]); }
@@ -1190,7 +1192,7 @@ export class StructureView {
         for (const p of emit(t, 40, 0.9, (q, age) => { const ang = rand(q, 3, i) * TAU, d = 4 + easeOut(age) * (22 + rand(q, 4, i) * 14), z = 4 + rand(q, 5, i) * 14 + age * 6; return { x: v.x + Math.cos(ang) * d, y: v.y + Math.sin(ang) * d * FY - z, age, q }; })) if (rand(p.q, 6) < k) X.px(o, p.x, p.y, p.age < 0.3 ? EL.fire[1] : p.age < 0.65 ? EL.fire[2] : EL.fire[4]);
         S.seal(g, v.x, v.y, 12, t, 0.35 * k);
         light(v.x, v.y - 6, 64, '#ff7020', 0.7 * k + 0.06 * Math.sin(t * 9)); light(v.x, v.y, 30, '#ffc070', 0.5 * k);
-      } else if (el === 'cold') {
+      } else if (frosty(el)) {
         // frost: a clean ellipse of rime at the aura's reach, crystals on the ground, snow orbiting
         const rr = AR * k;
         X.ring(g, v.x, v.y, rr, rr * FY, '#bfeaf8', 0.8); X.ring(g, v.x, v.y, rr - 1, (rr - 1) * FY, '#ffffff', 0.35);
@@ -1288,7 +1290,7 @@ export class StructureView {
       const px2 = p[0] + dx * d, py2 = p[1] + dy * d + (el === 'water' ? e * e * 60 : 0) - (el === 'fire' ? e * 18 : 0);
       if (rand(j, 3, sd) < q) continue;
       if (el === 'fire') K.tongue(o, px2, py2, 1.4 * (1 - q), 4 * (1 - q), dx);
-      else if (el === 'cold') K.shard(o, px2, py2, Math.atan2(dy, dx), 4 * (1 - q), sd + j, 1 - q);
+      else if (frosty(el)) K.shard(o, px2, py2, Math.atan2(dy, dx), 4 * (1 - q), sd + j, 1 - q);
       else X.px(o, px2, py2, j % 2 ? '#ffffff' : el === 'water' ? '#8ad0ff' : Rb[1]);
     }
   }
@@ -1388,7 +1390,7 @@ export class StructureView {
       X.line(c, h[0], h[1] - 1, tp[0], tp[1], EL.fire[0], 1); X.px(c, tp[0], tp[1], '#ffffff');
       for (const p of emit(t, 10, 0.5, (q, age) => ({ x: lerp(h[0], tp[0], rand(q, 2, i)) + Math.sin(age * 7 + q), y: lerp(h[1], tp[1], rand(q, 2, i)) - age * 9, age }))) X.px(o, p.x, p.y, K.fireCol(0.3 + p.age * 0.7));
       light(tp[0], v.y, 30, '#ff7020', 0.5);
-    } else if (el === 'cold') {
+    } else if (frosty(el)) {
       const tp = dir(15 * k, 0.25);
       blade = [[h[0], h[1] + 4], tp];
       X.line(c, h[0], h[1] + 4, tp[0], tp[1], '#163e7a', 3); X.line(c, h[0], h[1] + 4, tp[0], tp[1], '#c4eefa', 1);

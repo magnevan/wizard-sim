@@ -14,7 +14,8 @@ export const T = (seconds: number): number => Math.round(seconds * 60);
  * full. Per pool: floor·R·max/Σmax_all + (1-floor)·R·max/Σmax_notfull (world.ts regenRate).
  */
 export const RUNES = {
-  max: { water: 4, life: 4, shield: 4, cold: 4, lightning: 4, arcane: 4, sigil: 3, fire: 5, earth: 4 } as Record<Element, number>,
+  // Ice (Water + Cold combined) has no pool of its own: its runes come from Water's and Cold's.
+  max: { water: 4, life: 4, shield: 4, cold: 4, lightning: 4, arcane: 4, sigil: 3, fire: 5, earth: 4, ice: 0 } as Record<Element, number>,
   /** R: runes per second in total, shared among the pools that aren't full. */
   regen: 1.0,
   /** α: the share of R that always reaches every pool that isn't full (weighted by max over all pools). */
@@ -48,6 +49,7 @@ export const RHYTHM = {
 /** Damage per rune of an element, for one hit. Channels deal this per second times `channelRate`. */
 export const DAMAGE: Record<Element, number> = {
   water: 0, life: 0, shield: 0, cold: 5, lightning: 10, arcane: 16, sigil: 0, fire: 6, earth: 22,
+  ice: 5, // a Water (0) and a Cold (5): the same hit as the pair was, in one slot
 };
 export const COMBAT = {
   healPerLife: 14,
@@ -82,6 +84,8 @@ export const STATUS = {
    * so a weak source plateaus or fails on a tough body. Full chill slows by chillSlow.
    */
   chillPool: 2.5, chillPerDamage: 1, chillDecay: 0.1, chillSlow: 0.6,
+  /** Ice chills harder than Cold for the same damage: it is two runes in one slot. */
+  iceChill: 1.5,
   /** Cold on a wet body freezes it from this much chill up: freezeShort s at that chill, up to `freeze` s when full. */
   freezeMin: 0.3, freezeShort: 1.5, freeze: 4,
   stunPerRune: 0.35,

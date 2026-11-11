@@ -154,6 +154,9 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
   // (Steam, Water + Fire, takes Fire's blast whichever of the two leads: its hits are scaled down in hit.ts instead)
   const blastBase = spec.form === EL.fire || spec.scald ? SHAPES.fireBlast : spec.form === EL.cold && !spec.freeze ? SHAPES.coldBlast : spec.form === EL.ice ? SHAPES.iceBlast : 0;
   const blast = blastBase ? (blastBase * (1 + COMBAT.formScaling * (n - 1))) / Math.sqrt(n) : 1;
+  // close beats placed (spell audit, 2026-11-11): Earth's and Arcane's close casts (the Earthquake, the Arcane nova, their
+  // imbued bursts) hit harder than the Geyser and the Arcane blast
+  const close = !spec.heal && (spec.form === EL.earth || spec.form === EL.arcane) ? SHAPES.closePower : 1;
   switch (spec.shape) {
     case 'missile': {
       if (spec.heal) { spawnMissile(w, src, p, dx, dy, 3, (0.7 + 0.3 * charge) * k, tx, ty, ex.ox, ex.oy); break; }
@@ -203,13 +206,13 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       // 2026-11-11): the Frost ring chills harder, the Splash ring pushes further. The Fire ring's burst is already that.
       // (chill goes by rune, so the Frost ring's chill leaves out the blast factor that turns Cold's per-second damage into one hit)
       const axis = spec.heal || spec.scald || spec.freeze ? 1 : spec.form === EL.cold ? SHAPES.ringChill / blast : spec.form === EL.water ? SHAPES.ringPush : 1;
-      disc(w, p, src, x, y, r, k * blast, spec.heal ? -1 : src, driving(w, src) ? y : undefined, axis); // the Healing ring heals you too; a defence's covers only the enemy's side
+      disc(w, p, src, x, y, r, k * blast * close, spec.heal ? -1 : src, driving(w, src) ? y : undefined, axis); // the Healing ring heals you too; a defence's covers only the enemy's side
       burstEvent(w, src, x, y, r, spec.look);
       break;
     }
     case 'discharge':
       for (let i = 0; i < b.kind.length; i++) {
-        if (alive(w, i) && i !== src && len(b.x[i] - x, b.y[i] - y) <= 4 + n) zap(w, src, i, p, 0.8 * k);
+        if (alive(w, i) && i !== src && len(b.x[i] - x, b.y[i] - y) <= 4 + n) zap(w, src, i, p, SHAPES.dischargePower * k);
       }
       break;
     case 'patch': {
@@ -246,7 +249,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     case 'spring': spawnZone(w, ZONE.spring, src, p, tx, ty, (1.8 + 0.4 * n) * lingerSize(w, src), Math.round(T(6 + 2 * n) * lingerLife(w, src)), 0); break; // were 1.4 and 4: bigger, longer (2026-11-11)
     case 'strike':
       w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x: tx, y: ty - 6, x2: tx, y2: ty, look: spec.look });
-      disc(w, p, src, tx, ty, 0.9, 1.2 * k, -1);
+      disc(w, p, src, tx, ty, 0.9, SHAPES.strikePower * k, -1);
       surge(w, tx, ty, p, src);
       break;
     case 'swing': // an empty Weapon cast: the bare staff's shove (your hands' moves go through heldBlow)
@@ -266,7 +269,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
             const rx = b.x[i] - x, ry = b.y[i] - y, along = rx * dx + ry * dy, side = Math.abs(rx * dy - ry * dx);
             if (along < -b.r[i] || along > reach + b.r[i] || side > SHAPES.imbueLineHalf + b.r[i]) continue;
           } else if (!inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
-          hit(w, i, p, hitOpts(p, src, k * blast * SHAPES.imbuePower, dx, dy));
+          hit(w, i, p, hitOpts(p, src, k * blast * close * SHAPES.imbuePower, dx, dy));
         }
       }
       let mask = 0;
@@ -552,10 +555,10 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     return;
   }
   if (spec.shape === 'arc') {
-    if (follow) { if (s.chanTimer[seat] === T(SHAPES.arcInterval)) chain(w, src, spec, face, 0.5 * follow.scale); return; } // the echo zaps when its owner does
+    if (follow) { if (s.chanTimer[seat] === T(SHAPES.arcInterval)) chain(w, src, spec, face, (spec.heal ? 0.5 : SHAPES.arcPower) * follow.scale); return; } // the echo zaps when its owner does
     if (s.chanTimer[src] > 0) { s.chanTimer[src]--; return; }
     s.chanTimer[src] = T(SHAPES.arcInterval);
-    chain(w, src, spec, face, 0.5);
+    chain(w, src, spec, face, spec.heal ? 0.5 : SHAPES.arcPower); // the arc aims itself and chains, so each zap is weaker than an aimed beam's tick
   }
 }
 

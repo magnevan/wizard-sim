@@ -63,7 +63,7 @@ describe('help panel model: queue -> rows', () => {
     expect(fire[0].stats.join(' ')).toMatch(/HOLD: CHANNEL/);
     expect(fire[2].stats.join(' ')).toMatch(/LASTS 14.4S/); // a fire patch: 12 s, +20 % for the second Fire
     const rock = helpModel(['earth'], bare).rows[0].stats.join(' ');
-    expect(rock).toMatch(/EARTH 22 CHARGED/);
+    expect(rock).toMatch(/EARTH 28 CHARGED/);
     expect(rock).toMatch(/HOLD: CHARGE/);
     const heal = helpModel(['life'], bare).rows[1].stats.join(' ');
     expect(heal).toMatch(/HEALS 14/);
@@ -81,7 +81,7 @@ describe('help panel model: queue -> rows', () => {
     expect(scale(['arcane'], 0)).toBe('+1 ARCANE: DMG ×1.7, WIND-UP +0.04S'); // a beam's runes buy power; upkeep pays for time
     expect(scale(['life'], 0)).toBe('+1 LIFE: HEAL ×2, WIND-UP +0.04S');
     expect(helpModel(['water'], bare).rows[0].stats.join(' ')).toMatch(/PUSH 18U\/S A SECOND/);
-    expect(scale(['earth'], 0)).toMatch(/^\+1 EARTH: DMG ×2.83/);
+    expect(scale(['earth'], 0)).toMatch(/^\+1 EARTH: DMG ×2.5/);
     expect(scale(['lightning'], 0)).toMatch(/JUMPS \+1/);
     expect(scale(['shield', 'earth'], 2)).toMatch(/HP \+40 A PIECE, STANDS \+5S/); // the lead of a Shield spell is its material
     expect(scale(['sigil', 'fire'], 3)).toBe('+1 FIRE: NOTHING MORE, WIND-UP +0.04S'); // a fire aura burns the same

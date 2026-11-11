@@ -48,7 +48,7 @@ export const RHYTHM = {
 
 /** Damage per rune of an element, for one hit. Channels deal this per second times `channelRate`. */
 export const DAMAGE: Record<Element, number> = {
-  water: 4, life: 0, shield: 0, cold: 5, lightning: 10, arcane: 16, sigil: 0, fire: 6, earth: 22,
+  water: 4, life: 0, shield: 0, cold: 5, lightning: 10, arcane: 16, sigil: 0, fire: 6, earth: 28,
   ice: 16, // Water and Cold shaped into a sharp one (its identity is damage, quick flight, spikiness): one Ice is two runes, so it hits like two (spell audit, 2026-11-11; was 9)
 };
 export const COMBAT = {
@@ -63,7 +63,7 @@ export const COMBAT = {
   formScaling: 0.7,
   /** Sprays grow with n^sprayExp (0.5 = square root, as Magicka's); rocks with n^rockExp (1.5: going all-in pays). */
   sprayExp: 0.5,
-  rockExp: 1.5,
+  rockExp: 1.3, // with earth 28 (spell audit, 2026-11-11: was 22 on n^1.5): a 1-rune rock is worth casting, the top end about the same
 };
 
 /** How long floor surfaces last, in seconds. */
@@ -123,6 +123,12 @@ export const STATUS = {
 export const SHAPES = {
   beamRange: 30, beamWidth: 0.35, // past the edge of the view: a beam runs until it hits something
   sprayRange: 4.5, sprayHalfAngle: 0.09, // turns (about 32 degrees)
+  /**
+   * Spell audit, 2026-11-11. Each zap of a held arc (it aims itself and chains, so it gives up damage to the aimed beam),
+   * a Discharge's zap and a Strike's hit, as shares of the payload; and the close casts' edge over the placed ones
+   * (Earthquake over Geyser, Arcane nova over blast).
+   */
+  arcPower: 0.35, dischargePower: 1.6, strikePower: 1.9, closePower: 1.3,
   arcRange: 6, arcJump: 3.5, arcInterval: 0.2, arcJumps: 2, // jumps, plus one per extra lightning rune (Chain)
   /**
    * Every missile flies at this speed (a quick rock at 60 % of it): the user, 2026-11-10, found 12 and then 16 sluggish
@@ -280,7 +286,7 @@ export const ARMS = {
    * half the DPS of the same element's committed spell (docs/explorations/2026-11-05-weapon-dps.md):
    * a weapon is the cheap, always-ready option, not the strongest. Light weapons recover fast, the maul slowly.
    */
-  strikeRecovery: { staff: 0.6, water: 0.65, life: 0.35, cold: 0.9, lightning: 0.68, fire: 0.8, earth: 1.4, arcane: 0.62, ice: 0.45 }, // the bow nocks fastest
+  strikeRecovery: { staff: 0.6, water: 0.65, life: 0.35, cold: 0.9, lightning: 0.9, fire: 0.8, earth: 1.4, arcane: 0.62, ice: 0.45 }, // the bow nocks fastest
   blowKnock: { staff: 3, water: 12, life: 0, cold: 4, lightning: 3, fire: 4, earth: 9 },
   blowHalf: { staff: 0.15, water: 0.11, life: 0.12, cold: 0.07, lightning: 0.1, fire: 0.15, earth: 0.15 },
   blowReach: { staff: 1, water: 1.2, life: 1.5, cold: 1, lightning: 1, fire: 1, earth: 1 },

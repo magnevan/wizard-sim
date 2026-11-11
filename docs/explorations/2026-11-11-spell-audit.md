@@ -109,3 +109,9 @@ Next: Ice (finding 4), then the body forms (Lightning, Arcane, Earth, and close 
 Ice 16 a rune; dense-shotgun shards (one Ice 24, two 61 at 3 u); the Ice ring with a ×2 blast (32 / 65); caltrops for its Place (stab by distance walked, a trap). Payload: Arcane + Ice 79 against Arcane + Fire 86. Still to check in play: whether one Ice's shards freeze a wet target (the probe's didn't: each shard's chill is small), and how caltrops feel against enemies that charge.
 
 Next: the body forms, Lightning, Arcane and Earth, with close against placed (Earthquake against Geyser, Arcane nova against blast, Discharge against Strike) and the arc's lead over the beam.
+
+## Pass 2, step 4: the body forms (decided and built 2026-11-11)
+
+Close ×1.3 (Earthquake, Arcane nova, their bursts); Discharge 16, Strike 19 a rune; the arc 42 (was 60), the Flame arc 115 (was 159); the whip's Strike slowed to stay under the arc; Earth 28 on n^1.3 (Rock 28 / 68 / 115). Open: the Earthquake only ties the Geyser on damage, and the Earth raise lifted both area casts (2 Earth: 91).
+
+Next: Life (heals and lending), then Shield, Sigil, Self casts, and the cross-cut by cast.

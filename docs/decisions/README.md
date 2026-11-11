@@ -1385,3 +1385,11 @@ With Blink moved to Shield, the user chose the stored spell for the empty slot (
 ## 2026-11-11: Spell audit, step 7c: a ring of orbitals holds at most 4 orbs
 
 The user wanted the same orbs always to cost the same Sigil (they do: the whole ring binds one rune), and asked whether a cap of 8 was too generous, leaving the call to Claude. It was: with feeding free of Sigil, the quiet before a wave could bank twice what a full cast makes (four Sigil + Earth + Earth casts: about 450 damage on one Sigil rune, against about 270 from one Sigil + four Earth). The ring now holds 4 orbs, what one full cast makes; feeding it refills spent orbs and never banks more.
+
+## 2026-11-11: Rune rework, part 1: queued runes don't regenerate; Sigil recall and the stored spell's trigger
+
+The user's rune rework list (regen priority, the ghost rune and debt are still being designed: next entry):
+- **Runes in the queue don't regenerate until they're cast** ("can't use it to cheat higher rune capacity"). A pool's cap is its max less the runes of it in your queue (Ice holds a Water and a Cold), so a queue never holds more than the pool.
+- **No recall on a dry Sigil press.** Pressing Sigil with no free rune no longer recalls your oldest creation. A double-tap of Sigil over a creation of yours dismisses it, as before. Out of Sigil runes (when a double-tap can't queue and cancel), two Sigil presses within 0.4 s count as the double-tap: over a creation it goes, over nothing your oldest is recalled ("double tap on nothing recalls the first thing? Maybe only if you're out of sigil").
+- **The stored spell is released with Sigil and Force**, not an empty Force (that's the Strike again): Sigil + Force arms the staff, and with a spell held, Sigil + Force releases it at once and the queued Sigil rune comes back. With nothing stored yet, it disarms. (The user would accept a "ghost" Sigil for this, an unfilled rune; until ghost runes exist, it needs a free Sigil rune to press.)
+- The golden hash is re-recorded (`f9dabcce` to `bb045096`): the scripted run queues runes all the time, and they no longer regenerate while queued; plus the dry-tap buffer.

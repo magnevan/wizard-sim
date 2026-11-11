@@ -48,6 +48,17 @@ describe('runes and the queue', () => {
     expect(rune(w, 'fire')).toBeCloseTo(RUNES.max.fire, 1);
   });
 
+  it('runes in the queue do not regenerate: the queue never holds more than the pool', () => {
+    const { w, d } = range();
+    d.queue('earth', 'earth', 'water', 'cold'); // Earth, Earth and an Ice (a Water and a Cold)
+    d.tick({}, 300);
+    expect(rune(w, 'earth')).toBeCloseTo(RUNES.max.earth - 2, 5);
+    expect(rune(w, 'water')).toBeCloseTo(RUNES.max.water - 1, 5);
+    expect(rune(w, 'cold')).toBeCloseTo(RUNES.max.cold - 1, 5);
+    d.tick({ buttons: BTN.clear });
+    expect(rune(w, 'earth')).toBeCloseTo(RUNES.max.earth, 5); // given back, never above the max
+  });
+
   it('a cancel refunds the cancelled rune and never spends the new one', () => {
     const { w, d } = range();
     d.queue('fire', 'cold');

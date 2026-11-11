@@ -62,8 +62,16 @@ function pressElement(w: World, i: number, id: number): void {
   const before = queueOf(w, i);
   const { queue, event, kind } = rules.addElement(before, elementName(id));
   const cancels = kind === 'cancel'; // a cancel costs nothing, so it needs no rune
-  // No free Sigil rune but creations standing: the oldest is recalled, and its rune comes to your hand.
-  if (!cancels && id === EL.sigil && s.runes[rune(w, i, id)] < 1) recallOldest(w, i);
+  // Sigil with no free rune can't be queued, so a double-tap can't cancel: two dry Sigil presses close together are the
+  // double-tap. Over a creation of yours it's dismissed; over nothing, your oldest is recalled (the user, 2026-11-11)
+  if (!cancels && id === EL.sigil && s.runes[rune(w, i, id)] < 1) {
+    if (s.drySigil[i] && tick + 1 - s.drySigil[i] <= T(RHYTHM.dryTap)) {
+      s.drySigil[i] = 0;
+      if (!dismissAt(w, i, b.x[i] + s.aimX[i], b.y[i] + s.aimY[i])) recallOldest(w, i);
+      return;
+    }
+    s.drySigil[i] = tick + 1;
+  }
   if (!cancels && s.runes[rune(w, i, id)] < 1) { w.events.push({ tick, kind: 'dry', who: i, x: b.x[i], y: b.y[i], look: id }); return; }
   if (cancels) {
     // A cancel: the cancelled element's rune comes back, and the new one is never spent.
@@ -92,7 +100,17 @@ function startCast(w: World, i: number, castId: number): void {
   s.castQueue.set(s.queue.subarray(i * QUEUE_MAX, (i + 1) * QUEUE_MAX), i * QUEUE_MAX);
   s.castLen[i] = s.queueLen[i];
   setQueue(w, i, []); // the reserved runes are now spent
-  const spec = specOf(w, i);
+  let spec = specOf(w, i);
+  // Sigil + Force with a spell held in the staff releases it, at once and free (the queued Sigil rune comes back); the user,
+  // 2026-11-11: the release is a Sigil and Force, not an empty Force (that's the Strike)
+  if (spec.shape === 'store' && s.storeLen[i]) {
+    s.runes[rune(w, i, EL.sigil)] += 1;
+    s.castQueue.set(s.storeQ.subarray(i * QUEUE_MAX, (i + 1) * QUEUE_MAX), i * QUEUE_MAX);
+    s.castLen[i] = s.storeLen[i]; s.castId[i] = s.storeCast[i]; s.storeLen[i] = 0; s.dragged[i] = 0;
+    s.phase[i] = PHASE.windup; s.timer[i] = 0; s.chanTicks[i] = 0; s.chanTimer[i] = 0;
+    return;
+  }
+  spec = specOf(w, i);
   spendMote(w, i, spec.form);
   s.phase[i] = PHASE.windup;
   // Blink is instant: it must feel snappy (the user's note on the VFX gallery). Haste speeds every wind-up.
@@ -231,15 +249,6 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
     // Gestures pressed during the last recovery wait in the cast buffer, as spells do.
     const face = aimFace(w, i), c = s.handT[i] === 0 && s.queueLen[i] === 0 ? s.bufCast[i] : 0;
     if (c) { s.bufCast[i] = 0; s.bufTicks[i] = 0; }
-    // A stored spell: an empty-queue Force releases it at once, with no wind-up, as the cast it was stored with (it
-    // takes the place of the Strike while the staff holds it)
-    if (c === CAST_ID.force && s.storeLen[i]) {
-      s.castQueue.set(s.storeQ.subarray(i * QUEUE_MAX, (i + 1) * QUEUE_MAX), i * QUEUE_MAX);
-      s.castLen[i] = s.storeLen[i]; s.castId[i] = s.storeCast[i]; s.storeLen[i] = 0; s.dragged[i] = 0;
-      s.phase[i] = PHASE.windup; s.timer[i] = 0; s.chanTicks[i] = 0; s.chanTimer[i] = 0;
-      windupTick(w, i, held, act);
-      return;
-    }
     if (c === CAST_ID.force) {
       if (held & BTN.force) s.handT[i] = 1;
       else { const r = strikeRecovery(w, i); strike(w, i, face); toRecovery(w, i, r); return; } // tapped while busy: a Strike

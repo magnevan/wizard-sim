@@ -261,7 +261,7 @@ const module = { exports: {} };
       force: (p, o) => {
         // (swapped with Place on the user's note: placing the lens is more intuitive, and a teleport needn't be a glyph)
         // Blink moved to Shield; Sigil alone stores a spell (the user chose it, 2026-11-11: the stored spell of ideas/spell-preparation)
-        if (!o.sub) return ['Stored spell', 'A sigil lights on your staff: the next spell you cast is not cast but stored in it, paid and woven, binding a Sigil rune. Press Force with nothing queued to release it at once, with no wind-up, as the cast you stored it with: prepare the big one before the fight. While the staff holds it, that press is the release, not a Strike.'];
+        if (!o.sub) return ['Stored spell', 'A sigil lights on your staff: the next spell you cast is not cast but stored in it, paid and woven, binding a Sigil rune. Sigil and Force again release it at once, with no wind-up, as the cast you stored it with (the Sigil rune comes back): prepare the big one before the fight. Sigil and Force with nothing stored yet disarms the staff.'];
         const shot = o.subTitle.force, target = o.sub === 'life' ? 'the nearest hurt ally' : 'the nearest enemy';
         return [`${shot} turret`, `Hold Force to aim it: a device planted at the cursor when you let go. It casts the ${shot.toLowerCase()} by itself at ${target}, carrying all its elements. It never runs out on its own: each shot draws its elements from your rune pool, so it only stalls when you run dry of them, and picks up again as you regenerate. Release fires one big shot, drawing a full queue from your pool.`];
       },

@@ -30,6 +30,8 @@ export const RUNES = {
 
 /** Cast rhythm: a property of the spell, not of the keys. */
 export const RHYTHM = {
+  /** Two Sigil presses with no free Sigil rune within this many seconds are a double-tap: dismiss what's under the cursor, or recall your oldest. */
+  dryTap: 0.4,
   windup: 0.12, // seconds, plus windupPerRune for each rune in the spell
   windupPerRune: 0.04,
   recovery: 0.18,

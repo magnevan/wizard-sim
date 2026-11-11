@@ -27,7 +27,7 @@ import { HIT_KIND, addChill, addKnock, addSoak, ignite, setHitKind, tryFreeze } 
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { boundSigil, drainShield, energyLoad, segDist } from './walls';
 import { conjureGuard } from './guards';
-import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, alive, freeDevice, lingerLife, lingerSize, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
+import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, QUEUE_MAX, TERRAIN, WARD, alive, freeDevice, lingerLife, lingerSize, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
 
 /** The spell minus its form element: what a Sigil device carries, or what a Shield structure is coated in. */
 function restCounts(spec: SpellSpec): Uint8Array {
@@ -201,7 +201,7 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
       break;
     }
     case 'motes': s.motes[src] = STRUCT.motes; break;
-    case 'store': if (!s.storeLen[src]) { s.storeArm[src] = 1; s.storeBorn[src] = w.clock[0]; } break; // the next spell goes into the staff (cast.ts); one held at a time
+    case 'store': if (!s.storeLen[src]) { s.storeArm[src] = s.storeArm[src] ? 0 : 1; s.storeBorn[src] = w.clock[0]; } break; // arm (or disarm): the next spell goes into the staff (cast.ts)
     case 'glyph': { const k = spawnDevice(w, src, DEVICE.glyph, spec, tx, ty); if (k >= 0) w.devices.timer[k] = T(STRUCT.glyphArm); break; }
     case 'lineglyph': { const k = spawnDevice(w, src, DEVICE.lineglyph, spec, hx, hy, tx, ty); if (k >= 0) w.devices.timer[k] = T(STRUCT.glyphArm); break; }
     case 'lens': {
@@ -633,7 +633,21 @@ export const glyphRadiusOf = (w: World, owner: number): number => STRUCT.glyphRa
 export const sigilCap = (w: World, seat: number): number => runeMax(w, seat, EL.sigil) - boundSigil(w, seat);
 
 /** The level element `id`'s pool refills to: its max (Sigil: less the runes bound in devices). Never below 0. */
-export const poolCap = (w: World, seat: number, id: number): number => Math.max(0, id === EL.sigil ? sigilCap(w, seat) : runeMax(w, seat, id));
+export const poolCap = (w: World, seat: number, id: number): number => Math.max(0, (id === EL.sigil ? sigilCap(w, seat) : runeMax(w, seat, id)) - queuedOf(w, seat, id));
+
+/**
+ * Runes of element `id` held in seat's queue: they don't regenerate until cast (the user, 2026-11-11: a queue can't be used
+ * to hold more runes than the pool). Ice holds a Water and a Cold.
+ */
+export function queuedOf(w: World, seat: number, id: number): number {
+  const s = w.seats;
+  let n = 0;
+  for (let k = 0; k < s.queueLen[seat]; k++) {
+    const q = s.queue[seat * QUEUE_MAX + k];
+    if (q === id || (q === EL.ice && (id === EL.water || id === EL.cold))) n++;
+  }
+  return n;
+}
 
 /** Which of seat's pools are full, as a bitmask (1 << element id), for the shared regen budget (world.ts regenRate). */
 export function fullMask(w: World, seat: number): number {

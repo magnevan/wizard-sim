@@ -291,7 +291,7 @@ describe('Sigil', () => {
     expect(w.seats.storeLen[0]).toBe(2);
     expect(w.bodies.hp[1]).toBe(100);
     expect(w.seats.runes[EL.sigil - 1]).toBeLessThan(RUNES.max.sigil - 0.9); // it binds a Sigil rune
-    d.tick({ buttons: BTN.force }); // released: the ring goes off this very tick
+    d.queue('sigil').tick({ buttons: BTN.force }); // Sigil + Force releases it: the ring goes off this very tick
     expect(w.bodies.hp[1]).toBeLessThan(100);
     expect(w.seats.storeLen[0]).toBe(0);
   });
@@ -613,16 +613,17 @@ describe('Sigil', () => {
     expect(devices(w, DEVICE.lens)).toBe(1);
   });
 
-  it('pressing Sigil with no free rune recalls your oldest creation', () => {
+  it('out of Sigil runes, one press recalls nothing; a double-tap over nothing recalls your oldest creation', () => {
     const { w, d, dummy } = arena();
     dummy(9, 5);
     d.queue('sigil').place(3, 0);            // 1: lens
     d.queue('sigil').cast(BTN.self, 1, 20);  // 2: Double
     d.queue('sigil', 'fire').aimAt(4, 4).cast(BTN.force, 1, 20); // 3: turret
     w.seats.runes[elementId('sigil') - 1] = 0.2; // all bound, none regenerated
-    d.queue('sigil');                         // the lens (oldest) goes, its rune into the queue
+    d.aimAt(-6, -6).queue('sigil');          // one dry press: nothing goes
+    expect(devices(w, DEVICE.lens)).toBe(1);
+    d.tick({}, 5).queue('sigil');            // a second, quickly, over nothing: the lens (oldest) goes
     expect(devices(w, DEVICE.lens)).toBe(0);
-    expect(w.seats.queueLen[0]).toBe(1);
     expect(w.seats.double[0]).toBeGreaterThanOrEqual(0);
   });
 

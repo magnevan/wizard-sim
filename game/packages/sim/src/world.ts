@@ -155,6 +155,8 @@ export interface Seats {
    * with no wind-up. It binds a Sigil rune from arming to release; storeBorn is when it was armed (for recalling the oldest).
    */
   storeArm: Uint8Array; storeQ: Uint8Array; storeLen: Uint8Array; storeCast: Uint8Array; storeBorn: Int32Array;
+  /** The tick (+1; 0 none) of your last Sigil press with no free Sigil rune: a second within RHYTHM.dryTap is a dry double-tap. */
+  drySigil: Int32Array;
   /** A conjured shield: GUARD kind, what it can still take, and ticks the Weapon button has been held (0 = not blocking). */
   guard: Uint8Array; guardHp: Float64Array; guardT: Int32Array; guardCharge: Float64Array;
   /** Ticks RMB has been held for a Strike or Heavy with no runes queued (0: not held). */
@@ -458,7 +460,7 @@ function seats(n: number): Seats {
     aimX: f64(n), aimY: f64(n), phase: u8(n), timer: i32(n), castId: u8(n), castQueue: u8(n * QUEUE_MAX), castLen: u8(n),
     areaHeld: i32(n), holdX: f64(n), holdY: f64(n), dragged: u8(n), chanTicks: i32(n), chanTimer: i32(n), chanEndX: f64(n), chanEndY: f64(n), attune: i32(n), bufCast: u8(n), bufTicks: i32(n),
     ward: u8(n), wardEls: u8(n * N_EL), wardHp: f64(n), wardBy: new Int16Array(n).fill(-1), auraEls: u8(n * N_EL), aura: i32(n), wand: u8(n),
-    weapon: u8(n), weaponEls: u8(n * N_EL), weaponUses: i32(n), motes: u8(n), storeArm: u8(n), storeQ: u8(n * QUEUE_MAX), storeLen: u8(n), storeCast: u8(n), storeBorn: i32(n),
+    weapon: u8(n), weaponEls: u8(n * N_EL), weaponUses: i32(n), motes: u8(n), storeArm: u8(n), storeQ: u8(n * QUEUE_MAX), storeLen: u8(n), storeCast: u8(n), storeBorn: i32(n), drySigil: i32(n),
     guard: u8(n), guardHp: f64(n), guardT: i32(n), guardCharge: f64(n), handT: i32(n), double: new Int16Array(n).fill(-1), dblOX: f64(n), dblOY: f64(n), dblPaid: u8(n), dblEndX: f64(n), dblEndY: f64(n), dblBorn: i32(n), wandBorn: i32(n),
     guardEls: u8(n * N_EL), guardCd: i32(n), retreatT: i32(n), dashT: i32(n), linkTo: new Int16Array(n).fill(-1), linkT: i32(n),
     specT: i32(n),

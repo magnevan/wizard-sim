@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCH, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PERKS, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
+  N_ALTARS, N_EL, PERKS, QUEUE_MAX, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
   isPropWall, terrainNear,
 } from '@wizard-sim/sim';
@@ -29,12 +29,12 @@ import { FIELD, gx, gy } from './art/field';
 import * as K from './art/kit';
 import * as X from './art/px';
 import type { Ctx, Pt, Ramp } from './art/px';
-import { CELL_H, CELL_W, FEET_X, FEET_Y } from './art/rigs';
 import * as S from './art/sigil';
 import * as A from './art/accent';
 import { BURST_LIFE, drawBurst, hasBurst } from './art/novas';
 import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './art/util';
 import type { BodyView, LightFn } from './art/vfx';
+import { Sil } from './art/sil';
 import { glyph, perkOf } from './art/perks';
 import { drawTutorialWorld } from './tutorial-view';
 import { kitOf, kitRun, sideZ, stampTexture, wallsAllFar } from './art/wall-kit';
@@ -137,58 +137,6 @@ class Pieces {
   end(): void {
     for (let i = this.nS; i < this.stat.length; i++) this.stat[i].visible = false;
     for (const d of this.dyn) { if (d.used) d.tex.source.update(); else d.spr.visible = false; }
-  }
-}
-
-// =====================================================================================================
-// Silhouette effects: a halo or sheen built from a body's cached frame (the ward skin, the Double).
-class Sil {
-  private A = X.canvas(CELL_W + 8, CELL_H + 8);
-  private B = X.canvas(CELL_W + 8, CELL_H + 8);
-  private cell(v: BodyView, c: Ctx, dx = 4, dy = 4): boolean {
-    const f = v.f; if (!f) return false;
-    c.drawImage(f.c, f.sx, f.sy, CELL_W, CELL_H, dx, dy, CELL_W, CELL_H);
-    return true;
-  }
-  /** A skin round the silhouette: `ring` px wide, in col, with a bright band climbing it, dithered to level (0..16). */
-  halo(o: Ctx, v: BodyView, t: number, col: string, opt: { hi?: string; col2?: string; level?: number; ring?: number; band?: boolean; lag?: [number, number] } = {}): void {
-    const A = this.A.x, B = this.B.x, W = CELL_W + 8, H = CELL_H + 8;
-    A.globalCompositeOperation = 'source-over'; A.clearRect(0, 0, W, H);
-    if (!this.cell(v, A)) return;
-    A.globalCompositeOperation = 'source-in'; A.fillStyle = col; A.fillRect(0, 0, W, H);
-    if (opt.band !== false && opt.hi) {
-      A.globalCompositeOperation = 'source-atop';
-      const band = H - ((t * 46) % (H + 12));
-      A.fillStyle = opt.hi; A.fillRect(0, Math.round(band), W, 3);
-      A.fillStyle = opt.col2 ?? col; A.fillRect(0, Math.round(band) + 3, W, 2);
-    }
-    const lvl = Math.round(opt.level ?? 16);
-    if (lvl < 16) {
-      A.globalCompositeOperation = 'destination-in';
-      const ox = Math.floor(t * 9) % 4, oy = Math.floor(t * 7) % 4;
-      A.drawImage(X.mask(lvl), ox, oy, W, H, 0, 0, W, H);
-    }
-    A.globalCompositeOperation = 'source-over'; A._fs = null;
-    B.globalCompositeOperation = 'source-over'; B.clearRect(0, 0, W, H);
-    const r = opt.ring ?? 2, lag = opt.lag;
-    if (lag) B.drawImage(this.A.c, lag[0], lag[1]);
-    else {
-      const offs = r >= 2 ? [[-2, 0], [2, 0], [0, -2], [0, 2], [-1, -1], [1, -1], [-1, 1], [1, 1], [-2, -1], [2, -1]] : [[-1, 0], [1, 0], [0, -1], [0, 1]];
-      for (const [dx, dy] of offs) B.drawImage(this.A.c, dx, dy);
-    }
-    B.globalCompositeOperation = 'destination-out'; this.cell(v, B); B.globalCompositeOperation = 'source-over';
-    o.drawImage(this.B.c, Math.round(v.x - FEET_X - 4), Math.round(v.y - FEET_Y - 4));
-  }
-  /** A sheen over the body itself: diagonal bands sweeping across it, dithered. */
-  sheen(o: Ctx, v: BodyView, t: number, cols: [string, string], level = 9): void {
-    const A = this.A.x, W = CELL_W + 8, H = CELL_H + 8;
-    A.globalCompositeOperation = 'source-over'; A.clearRect(0, 0, W, H); A._fs = null;
-    const sweep = mod(t * 40, W + 40) - 20;
-    for (let y = 0; y < H; y++) { const x0 = Math.round(sweep - y * 0.6); X.rect(A, x0, y, 3, 1, cols[0]); X.rect(A, x0 + 3, y, 2, 1, cols[1]); X.rect(A, x0 - 14, y, 1, 1, cols[1]); }
-    A.globalCompositeOperation = 'destination-in'; A.drawImage(X.mask(level), 0, 0, W, H, 0, 0, W, H);
-    this.cell(v, A); // destination-in with the body: only on the body
-    A.globalCompositeOperation = 'source-over';
-    o.drawImage(this.A.c, Math.round(v.x - FEET_X - 4), Math.round(v.y - FEET_Y - 4));
   }
 }
 
@@ -354,7 +302,7 @@ export class StructureView {
   private vX = new Float64Array(MAX_WAVES); private vY = new Float64Array(MAX_WAVES); private vEls = new Uint8Array(MAX_WAVES * N_EL);
   // per seat
   private aimT0 = -1;
-  private sMotesT0 = new Float64Array(MAX_SEATS); private sMotes = new Uint8Array(MAX_SEATS); private sWard = new Uint8Array(MAX_SEATS); private sWardT0 = new Float64Array(MAX_SEATS); private sWardEls = new Uint8Array(MAX_SEATS * N_EL);
+  private sMotesT0 = new Float64Array(MAX_SEATS); private sMotes = new Uint8Array(MAX_SEATS); private sWard = new Uint8Array(MAX_SEATS); private sStore = new Uint8Array(MAX_SEATS); private sStoreT0 = new Float64Array(MAX_SEATS).fill(-9); private sWardT0 = new Float64Array(MAX_SEATS); private sWardEls = new Uint8Array(MAX_SEATS * N_EL);
   private sAuraT0 = new Float64Array(MAX_SEATS); private sAura = new Int32Array(MAX_SEATS); private sConjT0 = new Float64Array(MAX_SEATS); private sConj = new Uint8Array(MAX_SEATS * 3);
   /** Each seat's last weapon blow: when (sim time), which (1 Strike, 2 Sweep) and its direction (radians, world). */
   private blowT0 = new Float64Array(MAX_SEATS).fill(-9); private blowKind = new Uint8Array(MAX_SEATS); private blowAng = new Float64Array(MAX_SEATS);
@@ -716,7 +664,7 @@ export class StructureView {
         if (coat && st < 4) this.wallCoat(o, gm.g, gm.spec, coat, t, k, light);
         continue;
       }
-      // energy: a barrier (Shield alone) or a curtain in its element
+      // energy: a barrier (Shield alone), a coated field (Shield + elements), or a curtain of the place
       const owner = wl.owner[k];
       const pool = owner >= 0 && owner < MAX_SEATS ? s.runes[owner * N_EL + ELID.shield - 1] : RUNES.max.shield;
       const kS = clamp((pool - STRUCT.reserve) / 2.2, 0.12, 1) * (0.75 + 0.25 * hpf);
@@ -739,7 +687,8 @@ export class StructureView {
         if (k % 2 === 0) light(mid[0], mid[1], 30, '#ffc83a', 0.32 * kS * rise);
         continue;
       }
-      this.curtain(w, k, t, g, a, bb, cols, mid, rise, kS, hitE, light);
+      if (wl.owner[k] === TERRAIN) this.curtain(w, k, t, g, a, bb, cols, mid, rise, kS, hitE, light);
+      else this.coatedField(w, k, t, g, a, bb, cols, mid, rise, kS, hitE, light);
     }
     // nothing to drop while the same walls stand (prune only ever removes walls that are gone)
     let sig = '';
@@ -774,7 +723,75 @@ export class StructureView {
     }
   }
 
-  /** A curtain: walk through it, but crossing it pulses its element. Life's is a healing zone. */
+  /**
+   * A coated force field (Shield + elements, raised by a wizard): it still stops the other side, so it is drawn as the
+   * barrier's sheet, in its coat's colour the way an elemental ward takes its element's, with the Shield's gold in seams at
+   * its foot. Each element on it shows on top (the lead fully, the others sparser): fire licks along the crest, water runs
+   * down the face, frost rimes the foot and snows, lightning crawls the crest, arcane motes rise, Life glows on the ground
+   * and sends up pluses (it heals the team). (Spell audit, 2026-11-11: the walk-through curtain is gone.)
+   */
+  private coatedField(w: World, k: number, t: number, g: Ctx, a: Pt, bb: Pt, cols: Pt[], mid: Pt, rise: number, kS: number, hitE: number, light: LightFn): void {
+    const wl = w.walls, lid = wallLead(wl.els, k) || ELID.arcane, lel = elName(lid), sd = k * 13;
+    const R: Ramp = lid === ELID.life ? LIFE : frosty(lel) ? X.FROST : ramp(lid);
+    const x0 = Math.min(a[0], bb[0]), x1 = Math.max(a[0], bb[0]), y0 = Math.min(a[1], bb[1]), y1 = Math.max(a[1], bb[1]);
+    const h = 16 * rise, crest = h * (0.62 + 0.38 * kS), head = 16;
+    const c = this.pieces.canvas(x0 - 6, y0 - h - head, x1 - x0 + 13, y1 - y0 + h + head + 6, mid[1]);
+    S.sheetCols(c, cols, h, t, kS, R, RGB[lel] ?? RGB.arcane, k, hitE);
+    // the Shield underneath: gold seams climbing the foot every few pixels, and a gold base line where the coat is thin
+    const GD = EL.shield, n = cols.length;
+    for (let j = 0; j < n; j++) {
+      const [x, y] = cols[j];
+      if (j % 5 === 0) { X.px(c, x, y - 1, GD[1]); X.px(c, x, y - 2, GD[2]); if (kS > 0.5) X.px(c, x, y - 3, GD[2]); }
+      else if (j % 2 === 0) X.px(c, x, y, GD[2]);
+    }
+    const P = S.sample([a, bb], 4), np = P.length;
+    for (let id = 1; id <= N_EL; id++) {
+      if (id === ELID.shield || id === ELID.sigil || !has(wl.els, k, id)) continue;
+      const el = elName(id), d = (id === lid ? 1 : 0.45) * rise, on = (q: number, s2: number) => rand(q, s2, sd + id) < d;
+      if (el === 'fire') {
+        for (let j = 1; j < n - 1; j += 3) {
+          if (!on(j, 1)) continue;
+          const [x, y] = cols[j], f = 0.5 + 0.5 * Math.sin(t * 12 + j * 1.7 + k);
+          K.tongue(c, x, y - crest + 2, 1.7, (4 + 5 * f) * (0.6 + 0.4 * kS), Math.sin(t * 7 + j));
+        }
+        for (const p of emit(t, 2 * np * d, 1, (q, age) => { const b2 = P[mod(q, np)]; return { x: b2[0] + Math.sin(age * 5 + q) * 2, y: b2[1] - crest - age * 12, age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? EL.fire[1] : EL.fire[3]);
+        light(mid[0], mid[1] - 6, 38, '#ff7020', (id === lid ? 0.5 : 0.25) * rise);
+      } else if (el === 'water') {
+        for (const p of emit(t, 4 * np * d, 0.7, (q, age) => { const b2 = P[mod(q, np)]; return { x: b2[0] + (rand(q, 3, sd) - 0.5) * 6, y: b2[1] - crest + age * age * crest, age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? '#e0f6ff' : EL.water[1]);
+        for (const p of P) if (on(Math.round(p[0]), 2)) X.ellipse(g, p[0], p[1] + 1, 3, 1.2, '#3a98ff', 0.3 * rise);
+        light(mid[0], mid[1], 32, '#3a98ff', (id === lid ? 0.4 : 0.2) * rise);
+      } else if (frosty(el)) {
+        for (const p of emit(t, 3 * np * d, 1.4, (q, age) => { const b2 = P[mod(q, np)]; return { x: b2[0] + (rand(q, 3, sd) - 0.5) * 6 + Math.sin(age * 6 + q) * 1.5, y: b2[1] - crest - 4 + age * (crest + 4), age, q }; })) X.px(c, p.x, p.y, p.q % 3 ? '#ffffff' : X.FROST[2]);
+        // icicles hang from the crest, rime frosts the ground on both sides
+        for (let j = 0; j < n; j++) {
+          const [x, y] = cols[j]; if (on(j, 3)) X.px(c, x, y - crest, '#ffffff');
+          if (j % 3 === 1 && on(j, 8)) { const L = 2 + Math.floor(rand(j, 9, sd) * 3); for (let z = 0; z < L; z++) X.px(c, x, y - crest + 1 + z, z === L - 1 ? '#ffffff' : X.FROST[2]); }
+          if (rand(Math.round(x), 7, sd) < 0.6 * d) { X.ellipse(g, x, y + 1, 2.5, 1.2, '#c4eefa', 0.55); X.px(g, x + 1, y + 2, '#ffffff'); }
+        }
+        if (id === ELID.ice) for (let j = 1; j < n; j += 6) if (on(j, 4)) K.shard(c, cols[j][0], cols[j][1], -Math.PI / 2 + (rand(j, 5, sd) - 0.5) * 0.8, 4 + 2 * rand(j, 6, sd), sd + j, 1, EL.ice ?? EL.cold);
+        light(mid[0], mid[1], 32, '#9ff4ff', (id === lid ? 0.4 : 0.2) * rise);
+      } else if (el === 'lightning') {
+        const fl = Math.floor(t * 20);
+        if (fl % 3 !== 2) for (let j = 0; j + 6 < n; j += 6) if (rand(j, fl, sd) < 0.55 * d) { const A2 = cols[j], B2 = cols[Math.min(n - 1, j + 6 + Math.floor(rand(j, 3, fl) * 6))]; const bl = K.bolt([A2[0], A2[1] - crest], [B2[0], B2[1] - crest * (0.3 + 0.7 * rand(j, 4, fl))], sd + j + fl, 0.5, 3); X.lines(c, bl.map(([x, y]) => [x, y + 1] as Pt), EL.lightning[3]); X.lines(c, bl, id === lid ? '#ffffff' : EL.lightning[1]); }
+        light(mid[0], mid[1] - 4, 36, '#b08aff', (id === lid ? 0.45 : 0.22) * rise);
+      } else if (el === 'arcane') {
+        for (const p of emit(t, 3 * np * d, 1, (q, age) => { const b2 = P[mod(q, np)]; return { x: b2[0] + Math.sin(age * 5 + q) * 2, y: b2[1] - age * (crest + 8), age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? EL.arcane[1] : EL.arcane[2]);
+        light(mid[0], mid[1], 32, '#ff4f9b', (id === lid ? 0.4 : 0.2) * rise);
+      } else if (el === 'life') {
+        // it heals the team: a green glow on the ground along it, sparkles and pluses rising out of the sheet
+        for (const p of P) { X.ellipse(g, p[0], p[1], 6, 3, '#1e7a34', 0.3 * d); X.ellipse(g, p[0], p[1], 3.5, 1.8, '#46c450', 0.25 * d); }
+        for (const p of emit(t, 2 * np * d, 1.1, (q, age) => { const b2 = P[mod(q, np)]; return { x: b2[0] + (rand(q, 3, sd) - 0.5) * 6, y: b2[1] - crest * 0.4 - age * (crest + 6), age, q }; })) {
+          const col = p.age < 0.4 ? '#ffffff' : p.age < 0.7 ? X.WARM[2] : LIFE[3];
+          if (p.q % 4 === 0 && p.age < 0.7) { X.px(c, p.x - 1, p.y, col); X.px(c, p.x + 1, p.y, col); X.px(c, p.x, p.y - 1, col); X.px(c, p.x, p.y + 1, col); }
+          X.px(c, p.x, p.y, col);
+        }
+        light(mid[0], mid[1], 40, '#8ef07e', (id === lid ? 0.45 : 0.25) * rise);
+      }
+    }
+    if (k % 2 === 0) light(mid[0], mid[1], 26, '#ffc83a', 0.2 * kS * rise);
+  }
+
+  /** A curtain of the place (the battery gate's fire): a wall of its element. Cast fields are drawn by coatedField. */
   private curtain(w: World, k: number, t: number, g: Ctx, a: Pt, bb: Pt, cols: Pt[], mid: Pt, rise: number, kS: number, hitE: number, light: LightFn): void {
     const wl = w.walls, coat = wallLead(wl.els, k) || ELID.arcane, el = elName(coat), R = ramp(coat), sd = k * 13;
     const pulse = 1 - clamp(((w.clock[0] - wl.born[k]) % 30) / 8, 0, 1);
@@ -1120,14 +1137,7 @@ export class StructureView {
         }
         light(v.x, v.y - 6, 30, '#d400ff', 0.3);
       }
-      // the stored spell (placeholder art): a sigil ring over your head, faint and pulsing while the staff waits for a spell,
-      // bright with a star in it while it holds one
-      if (s.storeArm[i] || s.storeLen[i]) {
-        const held = s.storeLen[i] > 0, CY = v.y - 34, R = 6;
-        for (let q = 0; q < 24; q++) if (held || (q + Math.floor(t * 8)) % 2 === 0) { const a = (q / 24) * TAU + t * (held ? 1.5 : 0.6); X.px(o, v.x + Math.cos(a) * R, CY + Math.sin(a) * R * 0.6, held ? SV[1] : SV[3]); }
-        if (held) { X.glow(o, v.x, CY, 9 + Math.sin(t * 6), SV[2], 0.8); X.rect(o, v.x - 2, CY, 5, 1, '#ffffff'); X.rect(o, v.x, CY - 2, 1, 5, '#ffffff'); }
-        light(v.x, CY, held ? 26 : 14, '#d400ff', held ? 0.35 : 0.15);
-      }
+      if (s.storeArm[i] || s.storeLen[i] || this.st - this.sStoreT0[i] < 0.5) this.stored(w, i, v, t, o, light);
       const conj = seg(this.st - this.sConjT0[i], 0, 0.3);
       if (s.wand[i]) this.wand(v, t, g, o, P, conj, light);
       if (s.weapon[i]) this.weapon(w, i, v, t, g, o, P, conj, light);
@@ -1153,6 +1163,52 @@ export class StructureView {
       if (Math.floor(t * 8 + i) % 5 === 0) X.px(o, v.x + (rand(i, Math.floor(t * 8)) - 0.5) * 10, v.y - rand(i, Math.floor(t * 8), 2) * 20, SV[0]);
       light(v.x, v.y - 8, 30, '#d400ff', 0.4 * born);
     }
+  }
+
+  /**
+   * The stored spell (Sigil + Force), floating over the head where the hat and staff don't hide it. Armed: a violet rune ring being etched round the tip, open and
+   * blinking, as the staff waits for a spell. Holding one: the ring closes and turns, and the held runes sit in it as gems in
+   * their elements' colours, so you and a partner can read what is in the staff; a bright core beats at the tip. Storing
+   * flashes the ring shut; releasing it bursts the gems outward.
+   */
+  private stored(w: World, i: number, v: BodyView, t: number, o: Ctx, light: LightFn): void {
+    if (!v.a) return;
+    const s = w.seats, held = s.storeLen[i], tip: Pt = [v.x + v.a.head[0], v.y + v.a.head[1] - 15];
+    if (held && !this.sStore[i]) this.sStoreT0[i] = this.st; // just stored
+    if (!held && this.sStore[i]) this.sStoreT0[i] = this.st; // just released (or dismissed)
+    this.sStore[i] = held;
+    const since = this.st - this.sStoreT0[i], R = 8;
+    const ring = (a: number, col: string, r = R) => { const x = tip[0] + Math.cos(a) * r, y = tip[1] + Math.sin(a) * r * 0.55; X.px(o, x, y + 1, '#1a0e24'); X.px(o, x, y, col); };
+    if (!held && !s.storeArm[i]) {
+      // released: the ring breaks into sparks flying out
+      const e = since / 0.5;
+      for (let q = 0; q < 10; q++) { const a = (q / 10) * TAU, r = R + e * 10; X.px(o, tip[0] + Math.cos(a) * r, tip[1] + Math.sin(a) * r * 0.55, e < 0.5 ? SV[1] : SV[3]); }
+      return;
+    }
+    if (!held) {
+      // armed and waiting: an open ring being etched, a third of it missing and moving round, runes blinking on it
+      const draw = clamp((this.st - this.sStoreT0[i]) / 0.4, 0, 1), rot = t * 1.2;
+      for (let q = 0; q < 28; q++) {
+        const u = q / 28; if (u > draw * 0.72) continue;
+        ring(rot + u * TAU, (q + Math.floor(t * 10)) % 7 === 0 ? SV[1] : SV[2]);
+      }
+      const pen = rot + draw * 0.72 * TAU; X.px(o, tip[0] + Math.cos(pen) * R, tip[1] + Math.sin(pen) * R * 0.55, '#ffffff');
+      X.glow(o, tip[0], tip[1], 4 + Math.sin(t * 5), SV[2], 0.4);
+      light(tip[0], tip[1], 16, '#d400ff', 0.15 + 0.05 * Math.sin(t * 5));
+      return;
+    }
+    // holding a spell: a closed turning ring, the runes as gems on it, a beating core
+    const flash = 1 - clamp(since / 0.3, 0, 1), rot = -t * 0.9;
+    for (let q = 0; q < 32; q++) ring((q / 32) * TAU + rot, flash > 0.3 ? '#ffffff' : q % 4 ? SV[2] : SV[1]);
+    for (let q = 0; q < held; q++) {
+      const id = s.storeQ[i * QUEUE_MAX + q], Rg: Ramp = id === ELID.life ? LIFE : ramp(id);
+      const a = rot * 1.5 + (q / held) * TAU, x = tip[0] + Math.cos(a) * R, y = tip[1] + Math.sin(a) * R * 0.55;
+      X.rect(o, x - 2, y - 2, 5, 5, '#1a0e24'); X.rect(o, x - 1, y - 1, 3, 3, Rg[2]); X.px(o, x, y - 1, Rg[0]); X.px(o, x, y, Rg[1]);
+    }
+    const beat = 0.5 + 0.5 * Math.sin(t * 6);
+    X.glow(o, tip[0], tip[1], 6 + 2 * beat + 6 * flash, SV[2], 0.75);
+    X.rect(o, tip[0] - 1, tip[1] - 1, 3, 3, SV[1]); X.px(o, tip[0], tip[1], '#ffffff');
+    light(tip[0], tip[1], 24 + 10 * flash, '#d400ff', 0.3 + 0.1 * beat + 0.3 * flash);
   }
 
   private ward(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], ch: Pt, light: LightFn): void {

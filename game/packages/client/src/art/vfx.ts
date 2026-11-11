@@ -31,6 +31,7 @@ import type { Ctx, Pt, Ramp } from './px';
 import type { Frame } from './actors';
 import { HEIGHT, WIDTH, type Anchors, type RigKind } from './rigs';
 import { FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './util';
+import { Sil } from './sil';
 
 const EL = X.EL;
 
@@ -65,6 +66,8 @@ const elName = (id: number): string => (id >= 1 && id <= N_EL ? elementName(id) 
 const ramp = (id: number): Ramp => EL[elName(id)] ?? EL.arcane;
 /** Cold and Ice share the frosty branches; Ice draws them in its own ramp (EL.ice) where a ramp is picked by look. */
 const frosty = (el: string): boolean => el === 'cold' || el === 'ice';
+/** The imbue's colours by resistance column (guards.ts RES: physical, fire, cold, lightning, arcane). */
+const IMBUE: readonly Ramp[] = [EL.earth, EL.fire, X.FROST, EL.lightning, EL.arcane];
 /** The seats' default staff orbs (the Battlefield's: Red arcane, Blue cold, Gold lightning, Violet earth). */
 const SEAT_EL = [6, 4, 5, 9];
 const STAFF_Z = 10; // missiles fly about this high (art px)
@@ -94,6 +97,8 @@ const HEARD = 0.06;
 export class Vfx {
   /** The local player's seat: their ring is solid and their rune swirl sparse (their HUD shows the detail). */
   localSeat = 0;
+  /** The imbue draws the ward's skin (art/sil.ts). */
+  private sil = new Sil();
   readonly ground: Sprite;
   readonly over: Sprite;
   /** Reports what stands in the scene: texture, top-left and foot y, in field px. Set by the view. */
@@ -1234,16 +1239,13 @@ export class Vfx {
       else if (b.chill[i] > 0.04) K.chilled(o, ch, hd, t, b.chill[i], i, big ? 1.8 : 1);
       if (b.stun[i] > 0) K.shockSparks(o, ch, t, i * 3);
       if (b.blessT[i] > 0 && Math.max(b.bless[i * 5], b.bless[i * 5 + 1], b.bless[i * 5 + 2], b.bless[i * 5 + 3], b.bless[i * 5 + 4]) >= 0.1) {
-        // the imbue (a heal's elements, building up and fading): motes in the colour of what it resists circle the body,
-        // more and brighter the stronger it is. Placeholder art (spell audit, 2026-11-11).
+        // the imbue (a heal's elements, building up and fading): the elemental ward's skin round the body, in the colour of
+        // what it resists most, thicker the stronger it is and thinning as it fades (the user, 2026-11-11: re-use the ward's look)
         let col = 0;
         for (let c2 = 1; c2 < 5; c2++) if (b.bless[i * 5 + c2] > b.bless[i * 5 + col]) col = c2;
-        const r0 = b.bless[i * 5 + col], C = ['#d8b878', '#ffa050', '#a8f0ff', '#d0b8ff', '#ff6aa8'][col];
-        const motes = Math.min(10, 2 + Math.round(r0 * 3)), rad = (big ? 14 : 9) + 1;
-        for (let m = 0; m < motes; m++) {
-          const a = t * 1.6 + (m / motes) * TAU, mx = v.x + Math.cos(a) * rad, my = ch[1] + Math.sin(a) * rad * FY * 1.4;
-          K.sq(o, mx, my, 2, (m + Math.floor(t * 6)) % 4 ? C : '#ffffff');
-        }
+        const r0 = b.bless[i * 5 + col], R = IMBUE[col];
+        this.sil.halo(o, v, t, R[2], { col2: R[1], hi: R[0], ring: r0 > 1.2 ? 2 : 1, level: Math.round(clamp(3 + r0 * 5, 3, 13)) });
+        light(v.x, v.y - 8, 24, R[2], clamp(0.12 + r0 * 0.12, 0.12, 0.35));
       }
       if (b.expose[i] > 0) {
         // exposed: its guard is broken open, cracked amber marks flicker on the body and a broken ring at its feet

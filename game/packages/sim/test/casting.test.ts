@@ -371,7 +371,7 @@ describe('Life (support)', () => {
     expect(w.bodies.hp[0]).toBeGreaterThan(50);
   });
 
-  it('every other element in a heal lends its resistance for a few seconds: Life + Lightning + Cold', () => {
+  it('every other element in a heal builds up its resistance, which fades: Life + Lightning + Cold', () => {
     const { w, d, dummy } = range(2);
     w.bodies.hp[dummy] = 100;
     d.queue('life', 'lightning', 'cold').cast(BTN.area, 2);
@@ -380,8 +380,11 @@ describe('Life (support)', () => {
     expect(taken(w, dummy, RES.cold)).toBeLessThan(1); // the Cold, not leading the shape, still counts
     expect(taken(w, dummy, RES.lightning)).toBeLessThan(1);
     expect(taken(w, dummy, RES.fire)).toBe(1); // strengths only: no Rime weakness to fire
-    d.tick({}, 300);
-    expect(taken(w, dummy, RES.cold)).toBe(1); // it lapses
+    const soon = taken(w, dummy, RES.cold);
+    d.tick({}, 180);
+    expect(taken(w, dummy, RES.cold)).toBeGreaterThan(soon); // it fades
+    d.tick({}, 3000);
+    expect(taken(w, dummy, RES.cold)).toBe(1); // and lapses (half-life ~7 s)
   });
 
   it('a Life spray: more Fire widens the cone, more Life heals harder', () => {
@@ -397,11 +400,23 @@ describe('Life (support)', () => {
     expect(healAt(['life', 'life', 'fire'], 2.5, 0)).toBeGreaterThan(healAt(['life', 'fire'], 2.5, 0));
   });
 
-  it('heal + element: more Cold lends more healing shards, more Lightning more chain-heal jumps', () => {
-    expect(compile(['life', 'cold', 'cold'], 'force').sizeN).toBe(2);
-    expect(compile(['life', 'cold'], 'force').sizeN).toBe(1);
+  it('heal + element: more Ice lends more healing shards; Cold lends a cooling spray', () => {
+    expect(compile(['life', 'ice', 'ice'], 'force').sizeN).toBe(2);
+    expect(compile(['life', 'ice'], 'force').shape).toBe('shards');
+    expect(compile(['life', 'cold'], 'force').shape).toBe('spray');
     const shards = (q: Element[]) => { const { w, d } = range(8, 2); d.queue(...q).cast(BTN.force, 1, 20); return Array.from(w.missiles.alive).filter((a) => a).length; };
-    expect(shards(['life', 'cold', 'cold'])).toBeGreaterThan(shards(['life', 'cold']));
+    expect(shards(['life', 'water', 'cold', 'water', 'cold'])).toBeGreaterThan(shards(['life', 'water', 'cold']));
+  });
+
+  it('a Rescue spray shoves back the enemies it touches, and only heals allies', () => {
+    const { w, d, dummy } = range(2.5, 2);
+    w.bodies.kind[dummy] = KIND.enemy; w.bodies.arch[dummy] = 0; w.bodies.hp[dummy] = 100;
+    w.bodies.x[1] = 2.5; w.bodies.y[1] = 0.6; w.bodies.hp[1] = 40;
+    const ex = w.bodies.x[dummy], ax = w.bodies.x[1];
+    d.queue('life', 'water').cast(BTN.force, 60, 2);
+    expect(w.bodies.x[dummy]).toBeGreaterThan(ex + 0.5);
+    expect(Math.abs(w.bodies.x[1] - ax)).toBeLessThan(0.3);
+    expect(w.bodies.hp[1]).toBeGreaterThan(40);
   });
 
   it('heal + element: more Earth gives the lobbed heal-stone a bigger splash', () => {

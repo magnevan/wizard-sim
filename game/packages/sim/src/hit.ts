@@ -87,9 +87,11 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     // Support: Life heals; the lending elements only help (Rescue spray, Healing spray).
     const amount = COMBAT.healPerLife * life * o.scale;
     b.hp[t] = Math.min(b.maxHp[t], b.hp[t] + amount);
-    if (water) { b.burn[t] = 0; addKnock(w, t, o.dirX, o.dirY, o.push * water * 0.4 * ss); }
+    // Water in a heal douses, and its push shoves back only enemies (the Rescue spray clears space); Cold cools the burning
+    if (water) { b.burn[t] = 0; if (o.source >= 0 && b.team[t] !== b.team[o.source]) addKnock(w, t, o.dirX, o.dirY, o.push * water * ss); }
+    if (cold) b.burn[t] = 0;
     if (fire) { b.wet[t] = 0; b.frozen[t] = 0; b.chill[t] = 0; }
-    bless(w, t, els, at); // and every other element lends its resistance for a few seconds
+    bless(w, t, els, at, o.scale); // and every other element builds up its resistance (the imbue)
     return -amount;
   }
 
@@ -267,7 +269,12 @@ export function tickStatuses(w: World): void {
     if (b.frozen[i] > 0) b.frozen[i]--;
     if (b.stun[i] > 0) b.stun[i]--;
     if (b.expose[i] > 0) b.expose[i]--;
-    if (b.blessT[i] > 0) b.blessT[i]--;
+    // the imbue decays by a share of itself, so a steady heal settles and it fades soon after (guards.ts bless)
+    if (b.blessT[i] > 0) {
+      let any = false;
+      for (let col = 0; col < 5; col++) { const v = b.bless[i * 5 + col] * (1 - ARMS.blessDecay / 60); b.bless[i * 5 + col] = v < 0.05 ? 0 : v; if (v >= 0.05) any = true; } // below 0.05 (5 % less damage) it's gone
+      if (!any) b.blessT[i] = 0;
+    }
     if (b.down[i] > 0) b.down[i]--;
     if (b.chill[i] > 0) b.chill[i] = Math.max(0, b.chill[i] - STATUS.chillDecay / 60);
   }

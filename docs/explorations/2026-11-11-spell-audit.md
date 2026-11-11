@@ -116,3 +116,11 @@ Next: the body forms, Lightning, Arcane and Earth, with close against placed (Ea
 Close ×1.3 (Earthquake, Arcane nova, their bursts); Discharge 16, Strike 19 a rune; the arc 42 (was 60), the Flame arc 115 (was 159); the whip's Strike slowed to stay under the arc; Earth 28 on n^1.3 (Rock 28 / 68 / 115). Open: the Earthquake only ties the Geyser on damage, and the Earth raise lifted both area casts (2 Earth: 91).
 
 Next: Life (heals and lending), then Shield, Sigil, Self casts, and the cross-cut by cast.
+
+## Pass 2, step 5: Life (decided and built 2026-11-11)
+
+The imbue builds and lingers (0.75 a rune, 10 % decay a second); measured crossover against more Life about 40 % of the damage at 10 a second. Water in heals pushes only enemies, Cold is a Cooling spray, Ice lends the shards. Beam ×1.5, ring 25 a Life, palm ~30, Chain heal halved. Health growth is left for progression.
+
+Idea, not built: make the Healing shards seek hurt allies (as their text used to promise), so a scattered team has a fire-and-forget multi-target heal.
+
+Next: Shield, Sigil, Self casts, then the cross-cut by cast.

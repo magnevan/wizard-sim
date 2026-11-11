@@ -131,6 +131,8 @@ export const SHAPES = {
   arcPower: 0.35, dischargePower: 1.6, strikePower: 1.9, closePower: 1.3,
   /** The Geyser's eruption: below the Earthquake's closePower, as it's at range, but its delay and small aimed circle earn some back (the user chose B, 2026-11-11). */
   geyserPower: 1.15,
+  /** Heals (spell audit, 2026-11-11, judged by effective healing): the Life beam (hard to aim at allies, blockable) 1.5x; the Healing ring 1.8x (about 25 a Life); the Healing palm 2.1x (about 30: strictly close, so above the self-heal's 21); each Chain heal zap 0.25 (the easy, auto-aimed version, halved). */
+  lifeBeamPower: 1.5, healRingPower: 1.8, palmPower: 2.1, chainHealPower: 0.25,
   arcRange: 6, arcJump: 3.5, arcInterval: 0.2, arcJumps: 2, // jumps, plus one per extra lightning rune (Chain)
   /**
    * Every missile flies at this speed (a quick rock at 60 % of it): the user, 2026-11-10, found 12 and then 16 sluggish
@@ -377,8 +379,13 @@ export const ARMS = {
   chargeMax: 60, chargeFade: 6, lanceMin: 10, lanceBase: 8, lanceRange: 7, lanceWidth: 0.45,
   /** Weapon Specials scale with every rune too: each weapon rune past the first adds this much Mend healing; each rune of an element in a Siphon wand refills that element siphonFocus times faster again. */
   specialRune: 0.25, siphonFocus: 1,
-  /** A heal lends each other element's guard strengths to whoever it heals: blessShare of the guard row per rune (2 runes: double), for blessTime s. */
-  blessShare: 0.25, blessTime: 4,
+  /**
+   * The imbue: each non-Life rune in a heal adds blessRate resistance (times the hit's scale: a second of a heal channel
+   * adds it once) to its guard's strengths, and it decays blessDecay of itself a second (half-life ~7 s: it lingers).
+   * Measured (tools/probe-imbue.txt): against 10 damage a second, one Fire in a ring beats a second Life from about 40 %
+   * fire damage up, and is worth ~2.7 Life runes against all-fire; under heavy pressure from ~25 %, light from ~65 %.
+   */
+  blessRate: 0.75, blessDecay: 0.1,
   /** What each guard takes before it breaks. */
   hp: { mirror: 90, bulwark: 160, ember: 90, rime: 90, spark: 45, tide: 90, prism: 90, leaf: 90 },
 };

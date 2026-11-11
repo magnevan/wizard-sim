@@ -1225,7 +1225,7 @@ export class Vfx {
     const b = w.bodies;
     for (let i = 0; i < bodies.length; i++) {
       const v = bodies[i]; if (!v.on || !v.a) continue;
-      if (!(b.burn[i] > 0 || b.wet[i] > 0 || b.frozen[i] || b.chill[i] > 0.04 || b.stun[i] > 0 || b.expose[i] > 0 || (b.down[i] > 0 && !b.downed[i]) || simT - this.healAt[i] < 1.2)) continue;
+      if (!(b.burn[i] > 0 || b.wet[i] > 0 || b.frozen[i] || b.chill[i] > 0.04 || b.stun[i] > 0 || b.expose[i] > 0 || (b.down[i] > 0 && !b.downed[i]) || b.blessT[i] > 0 || simT - this.healAt[i] < 1.2)) continue;
       this.behind(v.x, v.y, 30, (o) => {
       const ch: Pt = [v.x + v.a!.chest[0], v.y + v.a!.chest[1]], hd: Pt = [v.x + v.a!.head[0], v.y + v.a!.head[1]], big = v.rig === 'brute';
       if (b.burn[i] > 0) { K.burningFx(o, ch, t, b.burnPool[i] < 10 ? 0.5 : 1, big, i * 7); light(v.x, v.y - 4, big ? 70 : 44, '#ff7020', 0.6 + 0.06 * Math.sin(t * 19 + i)); }
@@ -1233,6 +1233,18 @@ export class Vfx {
       if (b.frozen[i]) { K.iceGlints(o, v.x, v.y, HEIGHT[v.rig] + 3, WIDTH[v.rig] + 1, t, i); light(v.x, v.y - 4, 30, '#bff4ff', 0.3); }
       else if (b.chill[i] > 0.04) K.chilled(o, ch, hd, t, b.chill[i], i, big ? 1.8 : 1);
       if (b.stun[i] > 0) K.shockSparks(o, ch, t, i * 3);
+      if (b.blessT[i] > 0 && Math.max(b.bless[i * 5], b.bless[i * 5 + 1], b.bless[i * 5 + 2], b.bless[i * 5 + 3], b.bless[i * 5 + 4]) >= 0.1) {
+        // the imbue (a heal's elements, building up and fading): motes in the colour of what it resists circle the body,
+        // more and brighter the stronger it is. Placeholder art (spell audit, 2026-11-11).
+        let col = 0;
+        for (let c2 = 1; c2 < 5; c2++) if (b.bless[i * 5 + c2] > b.bless[i * 5 + col]) col = c2;
+        const r0 = b.bless[i * 5 + col], C = ['#d8b878', '#ffa050', '#a8f0ff', '#d0b8ff', '#ff6aa8'][col];
+        const motes = Math.min(10, 2 + Math.round(r0 * 3)), rad = (big ? 14 : 9) + 1;
+        for (let m = 0; m < motes; m++) {
+          const a = t * 1.6 + (m / motes) * TAU, mx = v.x + Math.cos(a) * rad, my = ch[1] + Math.sin(a) * rad * FY * 1.4;
+          K.sq(o, mx, my, 2, (m + Math.floor(t * 6)) % 4 ? C : '#ffffff');
+        }
+      }
       if (b.expose[i] > 0) {
         // exposed: its guard is broken open, cracked amber marks flicker on the body and a broken ring at its feet
         const f = Math.floor(t * 8 + i);

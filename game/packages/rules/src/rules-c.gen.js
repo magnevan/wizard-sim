@@ -119,9 +119,9 @@ const module = { exports: {} };
   // or a helpful interaction, never their harm. lend: [title for Force, what it adds]
   const LIFE_LEND = {
     lightning: ['Chain heal', 'Lends its chain: the heal jumps on from ally to ally.'],
-    cold: ['Healing shards', 'Lends its shatter: the heal splits into shards that each find a hurt ally.'],
-    ice: ['Healing shards', 'Lends its shards: the heal flies as a volley of bright ice shards that each find a hurt ally.'],
-    water: ['Rescue spray', 'Lends its push: whoever it heals is nudged a little (out of danger), and put out if burning.'],
+    cold: ['Cooling spray', 'Lends its spray: the heal comes out as a cone of cool mist, and puts out whoever it heals if burning.'],
+    ice: ['Healing shards', 'Lends its shards: the heal flies as a volley of bright ice shards, each healing whoever it strikes.'],
+    water: ['Rescue spray', 'Lends its push: the spray shoves back the enemies it touches (allies it only heals), and puts out the burning.'],
     earth: ['Heal-stone', 'Lends its body: the heal is a lobbed stone that bursts where it lands.'],
     fire: ['Healing spray', 'Lends its spray: the heal comes out as a cone, and dries and thaws whoever it heals.'],
   };
@@ -301,8 +301,9 @@ const module = { exports: {} };
       force: (p, o = {}) => {
         const L = o.lend;
         if (L === 'lightning') return ['Chain heal', 'A heal that leaps from you to the nearest hurt ally, then on from ally to ally.'];
-        if (L === 'cold' || L === 'ice') return ['Healing shards', 'A volley of bright shards along your aim; each one seeks out a hurt ally and heals on impact.'];
-        if (L === 'water') return ['Rescue spray', 'A cone of healing water: it heals, pushes allies gently back out of danger, and puts out the burning.'];
+        if (L === 'ice') return ['Healing shards', 'A volley of bright ice shards along your aim; each heals whoever it strikes.'];
+        if (L === 'cold') return ['Cooling spray', 'A cone of cool mist: it heals everyone in it and puts out the burning.'];
+        if (L === 'water') return ['Rescue spray', 'A cone of healing water: it heals, shoves back the enemies it touches, and puts out the burning.'];
         if (L === 'earth') return ['Heal-stone', 'Hold to charge, release to lob a stone that bursts where it lands and heals everyone around. Throw it over a wall to your front line.'];
         if (L === 'fire') return ['Healing spray', 'A cone of warm light, shaped like a flamethrower: it heals everyone in it, and dries and thaws them.'];
         return ['Life beam', 'A sustained beam that heals whatever it touches.'];

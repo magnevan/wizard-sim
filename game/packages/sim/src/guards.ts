@@ -117,24 +117,22 @@ export function taken(w: World, t: number, col: number): number {
 }
 
 /**
- * A heal carrying elements besides Life lends whoever it heals each one's guard strengths (never its
- * weaknesses, as under the Leaf: Life preserves): blessShare of the row per rune, for blessTime s.
- * So every element in a heal does something, the ones not lending the shape included.
+ * The imbue (spell audit, 2026-11-11): a heal carrying elements besides Life builds up resistance in whoever it heals,
+ * like frost builds chill, and it decays (tickStatuses). Each other element's rune adds blessRate x the hit's scale to
+ * its guard's strengths, weighted by the row (its strongest column in full, the others by their share of it; never its
+ * weaknesses: Life preserves). Resistance is hyperbolic (taken), so there's no cap, but the decay is proportional, so a
+ * steady heal settles at blessRate x runes / blessDecay and fades soon after it stops. Every element in a heal does something.
  */
-export function bless(w: World, t: number, els: Uint8Array, at: number): void {
+export function bless(w: World, t: number, els: Uint8Array, at: number, scale = 1): void {
   const b = w.bodies;
-  let any = false;
   for (let id = 1; id <= N_EL; id++) {
     const n = els[at * N_EL + id - 1], g = GUARD_OF[id];
     if (!n || !g || id === EL.life) continue;
-    if (!any && b.blessT[t] <= 0) b.bless.fill(0, t * 5, t * 5 + 5); // a lapsed blessing starts afresh
-    any = true;
-    for (let col = 0; col < 5; col++) {
-      const v = RES_TABLE[g][col];
-      if (v > 0) b.bless[t * 5 + col] = Math.max(b.bless[t * 5 + col], ARMS.blessShare * n * v);
-    }
+    const row = RES_TABLE[g], top = Math.max(...row);
+    if (top <= 0) continue;
+    for (let col = 0; col < 5; col++) if (row[col] > 0) b.bless[t * 5 + col] += ARMS.blessRate * n * scale * (row[col] / top);
+    b.blessT[t] = 1;
   }
-  if (any) b.blessT[t] = T(ARMS.blessTime);
 }
 /** The resistance column of an element's damage (Earth is physical), or -1. */
 export const colOf = (id: number): number => OWN_COL[id] ?? -1;

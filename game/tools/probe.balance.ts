@@ -95,6 +95,37 @@ it('measures stun uptime by body size', () => {
   writeFileSync(join(__dirname, 'probe-stun.txt'), rows.join(String.fromCharCode(10)));
 });
 
+it('measures when an imbue beats more Life: Life + Fire against Life + Life, under part-fire damage', async () => {
+  const { RES, taken } = await import('../packages/sim/src/guards');
+  const { ARMS } = await import('../packages/sim/src/config');
+  const keep = ARMS.blessDecay, rows: string[] = [];
+  const endHp = (q: Element[], dps: number, f: number, secs: number) => {
+    const w = createWorld(1, 1, { dummies: false }), b = w.bodies;
+    b.maxHp[0] = 1000; b.hp[0] = 500; // no cap: every point of healing counts
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: 32, aimY: 0, ...o })];
+    for (const e of q) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; step(w, aim({ press0: elementId(e) })); }
+    for (let t = 0; t < secs * 60; t++) {
+      step(w, t < 2 ? aim({ buttons: BTN.area }) : aim());
+      b.hp[0] -= (dps / 60) * (f * taken(w, 0, RES.fire) + (1 - f));
+    }
+    return b.hp[0];
+  };
+  const keepRate = ARMS.blessRate;
+  for (const [rate, decay] of [[ARMS.blessRate, ARMS.blessDecay]]) { // the live numbers (a sweep: list other pairs here)
+    ARMS.blessDecay = decay; ARMS.blessRate = rate;
+    for (const dps of [6, 10, 15]) {
+      const cells: string[] = [];
+      for (const f of [0.25, 0.5, 0.75, 1]) {
+        const gain = endHp(['life', 'fire'], dps, f, 20) - endHp(['life', 'life'], dps, f, 20);
+        cells.push(`fire ${Math.round(f * 100)}%: ${gain >= 0 ? '+' : ''}${Math.round(gain)}`);
+      }
+      rows.push(`rate ${rate}, decay ${decay}/s (half-life ${(Math.log(2) / decay).toFixed(1)} s), ${dps} dps:  ${cells.join('   ')}`);
+    }
+  }
+  ARMS.blessDecay = keep; ARMS.blessRate = keepRate;
+  writeFileSync(join(__dirname, 'probe-imbue.txt'), rows.join(String.fromCharCode(10)));
+});
+
 it('measures effective healing on three hurt wizards', () => {
   const rows: string[] = [];
   for (const code of ['H', 'HH', 'HHH', 'HHHH', 'HL', 'HC', 'HE', 'HF', 'HW', 'HLL', 'HEE']) for (const cast of ['force', 'area', 'place'] as Cast[]) {

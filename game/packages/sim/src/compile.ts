@@ -103,7 +103,7 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
       const L = lendOf(counts);
       if (L) spec.sizeN = counts[EL[L] - 1];
       if (cast === 'force') {
-        spec.shape = L === 'lightning' ? 'arc' : L === 'cold' || L === 'ice' ? 'shards' : L === 'water' || L === 'fire' ? 'spray' : L === 'earth' ? 'missile' : 'beam';
+        spec.shape = L === 'lightning' ? 'arc' : L === 'ice' ? 'shards' : L === 'water' || L === 'fire' || L === 'cold' ? 'spray' : L === 'earth' ? 'missile' : 'beam';
         spec.channel = spec.shape === 'beam' || spec.shape === 'spray' || spec.shape === 'arc';
         spec.charge = L === 'earth';
         spec.mod = L === 'water' ? 'push' : null;

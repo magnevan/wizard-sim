@@ -206,7 +206,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       // 2026-11-11): the Frost ring chills harder, the Splash ring pushes further. The Fire ring's burst is already that.
       // (chill goes by rune, so the Frost ring's chill leaves out the blast factor that turns Cold's per-second damage into one hit)
       const axis = spec.heal || spec.scald || spec.freeze ? 1 : spec.form === EL.cold ? SHAPES.ringChill / blast : spec.form === EL.water ? SHAPES.ringPush : 1;
-      disc(w, p, src, x, y, r, k * blast * close, spec.heal ? -1 : src, driving(w, src) ? y : undefined, axis); // the Healing ring heals you too; a defence's covers only the enemy's side
+      disc(w, p, src, x, y, r, k * blast * close * (spec.heal ? SHAPES.healRingPower : 1), spec.heal ? -1 : src, driving(w, src) ? y : undefined, axis); // the Healing ring heals you too; a defence's covers only the enemy's side
       burstEvent(w, src, x, y, r, spec.look);
       break;
     }
@@ -279,7 +279,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     }
     case 'palm':
       for (let i = 0; i < b.kind.length; i++) {
-        if (alive(w, i) && i !== src && inCone(x, y, face, 0.08, 3, b.x[i], b.y[i], b.r[i])) hit(w, i, p, hitOpts(p, src, 1.2 * k, dx, dy));
+        if (alive(w, i) && i !== src && inCone(x, y, face, 0.08, 3, b.x[i], b.y[i], b.r[i])) hit(w, i, p, hitOpts(p, src, SHAPES.palmPower * k, dx, dy));
       }
       burstEvent(w, src, x + dx * 1.5, y + dy * 1.5, 1.5, EL.life);
       break;
@@ -526,7 +526,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     setEnd(x + dx * reach, y + dy * reach);
     const lensed = rayThroughLens(w, x, y, dx, dy, reach) ? STRUCT.lensMult : 1;
     if (target >= 0) {
-      const dealt = hit(w, target, p, hitOpts(p, src, rate * lensed, dx, dy, COMBAT.channelStatus * DT, true), false);
+      const dealt = hit(w, target, p, hitOpts(p, src, rate * lensed * (spec.heal ? SHAPES.lifeBeamPower : 1), dx, dy, COMBAT.channelStatus * DT, true), false);
       if (t % 12 === 0) hitEvent(w, target, dealt * 12, spec.look, src);
       if (spec.mod === 'burst' && t % 30 === 0) disc(w, p, src, b.x[target], b.y[target], SHAPES.burstRadius, 0.3, src);
     }
@@ -555,10 +555,10 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     return;
   }
   if (spec.shape === 'arc') {
-    if (follow) { if (s.chanTimer[seat] === T(SHAPES.arcInterval)) chain(w, src, spec, face, (spec.heal ? 0.5 : SHAPES.arcPower) * follow.scale); return; } // the echo zaps when its owner does
+    if (follow) { if (s.chanTimer[seat] === T(SHAPES.arcInterval)) chain(w, src, spec, face, (spec.heal ? SHAPES.chainHealPower : SHAPES.arcPower) * follow.scale); return; } // the echo zaps when its owner does
     if (s.chanTimer[src] > 0) { s.chanTimer[src]--; return; }
     s.chanTimer[src] = T(SHAPES.arcInterval);
-    chain(w, src, spec, face, spec.heal ? 0.5 : SHAPES.arcPower); // the arc aims itself and chains, so each zap is weaker than an aimed beam's tick
+    chain(w, src, spec, face, spec.heal ? SHAPES.chainHealPower : SHAPES.arcPower); // the arc aims itself and chains, so each zap is weaker than an aimed beam's tick
   }
 }
 

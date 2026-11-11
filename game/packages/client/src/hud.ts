@@ -327,6 +327,14 @@ export class Hud {
       if (Math.floor(t * 6) % 2 && q.length < QUEUE_MAX) X.rect(c, cx + 4 + q.length * 14, cy + 7, 3, 1, '#e8e4f0');
       X.text(c, 'QUEUE', cx + cw - 21, cy + 3, '#8a8498');
     }
+    // the stored spell (Sigil + Force), right of the bar: ARMED while the staff waits for a spell, then STORED and its runes
+    if (s.storeArm[i] || s.storeLen[i]) {
+      const held = s.storeLen[i], sx = x0 - 7 + PW + 3, sy = y0 + 6, sw = Math.max(30, 6 + held * 9);
+      X.rect(c, sx - 1, sy - 1, sw + 2, 23, '#0a0810'); X.rect(c, sx, sy, sw, 21, '#1a1726'); X.rect(c, sx, sy, sw, 1, X.EL.sigil[held ? 2 : 3]);
+      X.text(c, held ? 'STORED' : 'ARMED', sx + 3, sy + 4, held ? X.EL.sigil[1] : Math.floor(t * 2) % 2 ? X.EL.sigil[2] : X.EL.sigil[3]);
+      if (held) for (let k = 0; k < held; k++) { const id = s.storeQ[i * QUEUE_MAX + k]; X.icon(c, elementName(id), sx + 3 + k * 9, sy + 11, X.EL[elementName(id)][2]); }
+      else X.rect(c, sx + 3, sy + 13, 7, 1, X.EL.sigil[3]);
+    }
     this.tex.source.update();
     this.sprite.position.set(Math.round(viewW / 2 - CW / 2), Math.max(0, viewH - CH - 3));
   }

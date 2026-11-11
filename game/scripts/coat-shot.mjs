@@ -57,6 +57,7 @@ try {
     await sleep(900);
     const out = OUT.replace('.png', `-${tag}.png`);
     await p.screenshot({ path: out, clip: { x: 540, y: 300, width: 200, height: 160 } });
+    await p.screenshot({ path: out.replace('.png', '-hud.png'), clip: { x: 340, y: 600, width: 600, height: 200 } });
     console.log('screenshot:', out);
   }
 } finally { await browser.close(); stop(); }

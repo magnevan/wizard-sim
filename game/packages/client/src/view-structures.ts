@@ -304,7 +304,7 @@ export class StructureView {
   private vX = new Float64Array(MAX_WAVES); private vY = new Float64Array(MAX_WAVES); private vEls = new Uint8Array(MAX_WAVES * N_EL);
   // per seat
   private aimT0 = -1;
-  private sMotesT0 = new Float64Array(MAX_SEATS); private sMotes = new Uint8Array(MAX_SEATS); private sWard = new Uint8Array(MAX_SEATS); private sStore = new Uint8Array(MAX_SEATS); private sStoreT0 = new Float64Array(MAX_SEATS).fill(-9); private sWardT0 = new Float64Array(MAX_SEATS); private sWardEls = new Uint8Array(MAX_SEATS * N_EL);
+  private sMotesT0 = new Float64Array(MAX_SEATS); private sMotes = new Uint8Array(MAX_SEATS); private sWard = new Uint8Array(MAX_SEATS); private sWardT0 = new Float64Array(MAX_SEATS); private sWardEls = new Uint8Array(MAX_SEATS * N_EL);
   private sAuraT0 = new Float64Array(MAX_SEATS); private sAura = new Int32Array(MAX_SEATS); private sConjT0 = new Float64Array(MAX_SEATS); private sConj = new Uint8Array(MAX_SEATS * 3);
   /** Each seat's last weapon blow: when (sim time), which (1 Strike, 2 Sweep) and its direction (radians, world). */
   private blowT0 = new Float64Array(MAX_SEATS).fill(-9); private blowKind = new Uint8Array(MAX_SEATS); private blowAng = new Float64Array(MAX_SEATS);
@@ -1141,7 +1141,7 @@ export class StructureView {
         }
         light(v.x, v.y - 6, 30, '#d400ff', 0.3);
       }
-      if (s.storeArm[i] || s.storeLen[i] || this.st - this.sStoreT0[i] < 0.5) this.stored(w, i, v, t, o, light);
+      if (s.storeArm[i] || s.storeLen[i]) this.stored(w, i, v, t, g, o, light);
       const conj = seg(this.st - this.sConjT0[i], 0, 0.3);
       if (s.wand[i]) this.wand(v, t, g, o, P, conj, light);
       if (s.weapon[i]) this.weapon(w, i, v, t, g, o, P, conj, light);
@@ -1170,49 +1170,25 @@ export class StructureView {
   }
 
   /**
-   * The stored spell (Sigil + Force), floating over the head where the hat and staff don't hide it. Armed: a violet rune ring being etched round the tip, open and
-   * blinking, as the staff waits for a spell. Holding one: the ring closes and turns, and the held runes sit in it as gems in
-   * their elements' colours, so you and a partner can read what is in the staff; a bright core beats at the tip. Storing
-   * flashes the ring shut; releasing it bursts the gems outward.
+   * The stored spell (Sigil + Force), quiet on purpose (the user: "too dramatic"; the HUD chip says what is stored). Armed: a
+   * faint dotted violet ring on the ground at the feet. Holding one: the stored runes orbit slowly along that ring as small
+   * gems in their elements' colours, passing behind the wizard on the far side.
    */
-  private stored(w: World, i: number, v: BodyView, t: number, o: Ctx, light: LightFn): void {
-    if (!v.a) return;
-    const s = w.seats, held = s.storeLen[i], tip: Pt = [v.x + v.a.head[0], v.y + v.a.head[1] - 15];
-    if (held && !this.sStore[i]) this.sStoreT0[i] = this.st; // just stored
-    if (!held && this.sStore[i]) this.sStoreT0[i] = this.st; // just released (or dismissed)
-    this.sStore[i] = held;
-    const since = this.st - this.sStoreT0[i], R = 8;
-    const ring = (a: number, col: string, r = R) => { const x = tip[0] + Math.cos(a) * r, y = tip[1] + Math.sin(a) * r * 0.55; X.px(o, x, y + 1, '#1a0e24'); X.px(o, x, y, col); };
-    if (!held && !s.storeArm[i]) {
-      // released: the ring breaks into sparks flying out
-      const e = since / 0.5;
-      for (let q = 0; q < 10; q++) { const a = (q / 10) * TAU, r = R + e * 10; X.px(o, tip[0] + Math.cos(a) * r, tip[1] + Math.sin(a) * r * 0.55, e < 0.5 ? SV[1] : SV[3]); }
-      return;
+  private stored(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, light: LightFn): void {
+    const s = w.seats, held = s.storeLen[i], R = 11, cx = v.x, cy = v.y + 1;
+    if (!held && !s.storeArm[i]) return;
+    for (let q = 0; q < 36; q++) {
+      if ((q + Math.floor(t * 3)) % 3) continue;
+      const a = (q / 36) * TAU - t * 0.4;
+      X.px(g, cx + Math.cos(a) * R, cy + Math.sin(a) * R * FY, held ? SV[3] : SV[4]);
     }
-    if (!held) {
-      // armed and waiting: an open ring being etched, a third of it missing and moving round, runes blinking on it
-      const draw = clamp((this.st - this.sStoreT0[i]) / 0.4, 0, 1), rot = t * 1.2;
-      for (let q = 0; q < 28; q++) {
-        const u = q / 28; if (u > draw * 0.72) continue;
-        ring(rot + u * TAU, (q + Math.floor(t * 10)) % 7 === 0 ? SV[1] : SV[2]);
-      }
-      const pen = rot + draw * 0.72 * TAU; X.px(o, tip[0] + Math.cos(pen) * R, tip[1] + Math.sin(pen) * R * 0.55, '#ffffff');
-      X.glow(o, tip[0], tip[1], 4 + Math.sin(t * 5), SV[2], 0.4);
-      light(tip[0], tip[1], 16, '#d400ff', 0.15 + 0.05 * Math.sin(t * 5));
-      return;
-    }
-    // holding a spell: a closed turning ring, the runes as gems on it, a beating core
-    const flash = 1 - clamp(since / 0.3, 0, 1), rot = -t * 0.9;
-    for (let q = 0; q < 32; q++) ring((q / 32) * TAU + rot, flash > 0.3 ? '#ffffff' : q % 4 ? SV[2] : SV[1]);
+    if (!held) return;
     for (let q = 0; q < held; q++) {
       const id = s.storeQ[i * QUEUE_MAX + q], Rg: Ramp = id === ELID.life ? LIFE : ramp(id);
-      const a = rot * 1.5 + (q / held) * TAU, x = tip[0] + Math.cos(a) * R, y = tip[1] + Math.sin(a) * R * 0.55;
-      X.rect(o, x - 2, y - 2, 5, 5, '#1a0e24'); X.rect(o, x - 1, y - 1, 3, 3, Rg[2]); X.px(o, x, y - 1, Rg[0]); X.px(o, x, y, Rg[1]);
+      const a = t * 0.9 + (q / held) * TAU, sn = Math.sin(a), x = cx + Math.cos(a) * R, y = cy + sn * R * FY - 2, c = sn < 0 ? g : o;
+      X.rect(c, x - 1, y - 1, 2, 2, Rg[2]); X.px(c, x - 1, y - 1, Rg[1]);
     }
-    const beat = 0.5 + 0.5 * Math.sin(t * 6);
-    X.glow(o, tip[0], tip[1], 6 + 2 * beat + 6 * flash, SV[2], 0.75);
-    X.rect(o, tip[0] - 1, tip[1] - 1, 3, 3, SV[1]); X.px(o, tip[0], tip[1], '#ffffff');
-    light(tip[0], tip[1], 24 + 10 * flash, '#d400ff', 0.3 + 0.1 * beat + 0.3 * flash);
+    light(cx, cy, 18, '#d400ff', 0.12);
   }
 
   private ward(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], ch: Pt, light: LightFn): void {

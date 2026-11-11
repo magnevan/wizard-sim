@@ -621,7 +621,8 @@ export class Vfx {
         // Every patch its own (the user: each fire patch looked the same): the cells laid together go out on the same
         // tick, so that tick seeds this patch's look. Edge cells burn low or not at all at random, heights vary cell to
         // cell, and the flames' travelling pattern starts somewhere else.
-        const pseed = (w.clock[0] + s.life[c]) & 0xffff, vr = rand(c, pseed, 77), ph = rand(pseed, 78) * TAU;
+        const pseed = (w.clock[0] + s.life[c]) & 0xffff, vr = rand(c, pseed, 77), ph = rand(pseed, 78) * TAU + rand(c, 79) * 2;
+        const cdir = rand(c, pseed, 80) < 0.5 ? -1 : 1, cspd = 3.5 + 3 * rand(c, pseed, 81);
         if ((nb <= 2 && vr < 0.5) || (nb === 3 && vr < 0.18)) continue;
         // a few scorched gaps inside, where the fire has burned low
         const hf = nb < 4 ? 0.45 + 0.9 * vr : vr < 0.12 ? 0.3 : 0.75 + 0.55 * vr;
@@ -634,7 +635,8 @@ export class Vfx {
           for (let xx = x0; xx < x0 + cw; xx++) {
             const lx = xx - x0, side = Math.min(openL ? (lx + 1) / 4 : 1, openR ? (cw - lx) / 4 : 1) * ef;
             if (side < 0.5 && rand(xx, yy, 3) > side * 1.6) continue;
-            const wv = 0.5 + 0.5 * Math.sin(xx * 0.5 - t * 5 + yy * 1.7 + Math.sin(yy * 0.6) * 3 + ph), w2 = 0.5 + 0.5 * Math.sin(xx * 0.23 + t * 3.1 - yy * 0.8 + ph * 1.7);
+            // each cell's flames run their own way at their own pace (the user: everything drifted uniformly right)
+            const wv = 0.5 + 0.5 * Math.sin(xx * 0.5 - t * cdir * cspd + yy * 1.7 + Math.sin(yy * 0.6) * 3 + ph), w2 = 0.5 + 0.5 * Math.sin(xx * 0.23 + t * 3.1 * -cdir - yy * 0.8 + ph * 1.7 + t * 1.3 * Math.sin(t * 0.7 + c));
             const base = (1 + 1.5 * inner) * life * side, tg = (3 + 9 * inner) * Math.pow(wv, 2) * (0.55 + 0.45 * w2) * (0.85 + 0.15 * Math.sin(t * 13 + xx));
             const hh = Math.round(base + tg * life * side);
             if (hh < 1) continue;
@@ -701,7 +703,9 @@ export class Vfx {
     for (let k = 0; k < MAX_ZONES; k++) {
       const ty = z.type[k]; if (!ty) continue;
       const x = gx(z.x[k]), y = gy(z.y[k]), r = z.r[k] * 16;
-      this.behind(x, y, r + 30, () => this.zone(w, k, ty, x, y, r, simT, light, t), true);
+      // the freezing fog sorts billow by billow, so bodies stand up out of it (zone, ZONE.frost)
+      if (ty === ZONE.frost) this.zone(w, k, ty, x, y, r, simT, light, t);
+      else this.behind(x, y, r + 30, () => this.zone(w, k, ty, x, y, r, simT, light, t), true);
     }
   }
   private zone(w: World, k: number, ty: number, x: number, y: number, r: number, simT: number, light: LightFn, t: number): void {
@@ -748,13 +752,27 @@ export class Vfx {
         if ((Math.floor(t * 2 + rand(i, 34, sd) * 7)) % 5 === 0) X.px(g, x + Math.cos(a) * d, y + Math.sin(a) * d * FY, '#ffffff');
         else X.px(g, x + Math.cos(a) * d, y + Math.sin(a) * d * FY, '#c4eefa');
       }
-      // the body of the fog: flat, thin wisps hugging the floor, see-through, drifting slowly (not a cloud: it lies low)
-      for (let i = 0; i < 26; i++) {
-        const a = rand(i, 11, sd) * TAU + t * 0.08 * (i % 2 ? 1 : -1), rr = Math.sqrt(rand(i, 12, sd)) * r * 0.9 * cl;
-        const px2 = x + Math.cos(a) * rr + Math.sin(t * 0.5 + i * 1.3) * 3, py2 = y + Math.sin(a) * rr * FY - 1 - rand(i, 13, sd) * 3;
-        const wr = (6 + rand(i, 14, sd) * 7) * (0.5 + cl * 0.5), hr = wr * (0.28 + 0.12 * rand(i, 15, sd));
-        const den = (0.3 + 0.25 * Math.sin(t * 0.9 + i * 2.1) ** 2) * cl; // each wisp thickens and thins
-        X.ellipse(o, px2, py2, wr, hr, i % 3 === 0 ? '#f0fcff' : i % 2 ? '#d4f0fa' : '#b8e2f2', den);
+      // The body of the fog (the user: no volume to it): a bank of low, heavy billows, each lit on top and shaded
+      // underneath, the far ones first so the near ones roll over them. It lies low, but it has a body.
+      const bill: { x: number; y: number; w: number; h: number; den: number; i: number }[] = [];
+      for (let i = 0; i < 16; i++) {
+        const a = rand(i, 11, sd) * TAU + t * 0.06 * (i % 2 ? 1 : -1), rr = Math.sqrt(rand(i, 12, sd)) * r * 0.8 * cl;
+        const swell = 1 + 0.12 * Math.sin(t * 0.8 + i * 2.1);
+        const wr = (6 + rand(i, 14, sd) * 6) * (0.5 + cl * 0.5) * swell, hr = wr * (0.55 + 0.15 * rand(i, 15, sd));
+        bill.push({ x: x + Math.cos(a) * rr + Math.sin(t * 0.5 + i * 1.3) * 2.5, y: y + Math.sin(a) * rr * FY, w: wr, h: hr, den: cl, i });
+      }
+      bill.sort((p, q2) => p.y - q2.y);
+      for (const p of bill) {
+        // a billow sits on the floor and swells up over it: a shaded underside, a solid body with a thin dithered rim,
+        // a lit crown; each behind whatever stands in front of its foot
+        this.behind(p.x, p.y, p.w + 4, (c) => {
+          const top = p.y - p.h * 0.8, den = p.den;
+          if (den < 0.25) return;
+          X.ellipse(c, p.x, top + p.h * 0.35, p.w, p.h * 0.75, '#a8d4e6', 0.5); // the soft rim
+          X.ellipse(c, p.x, p.y - 1, p.w * 0.8, p.h * 0.4, '#5f8aa3'); // the shaded underside, on the floor
+          X.ellipse(c, p.x, top + p.h * 0.35, p.w * 0.72, p.h * 0.55, den > 0.6 ? '#a8d4e6' : '#8fc0d6'); // the body
+          X.ellipse(c, p.x - p.w * 0.15, top + p.h * 0.1, p.w * 0.45, p.h * 0.3, p.i % 3 ? '#e4f6fc' : '#f6fdff'); // the lit crown
+        }, false, true);
       }
       // tendrils spilling over the rim and creeping out along the floor, thinning as they go
       for (const p of emit(t, 10, 2.4, (i, age) => {
@@ -892,7 +910,22 @@ export class Vfx {
             const l = sl * (s2 === 0 ? 1 : 0.75) * (0.8 + 0.2 * ph);
             X.line(o, x + ox - ux * (r + 1), y + oy - uy * (r + 1), x + ox - ux * (r + l), y + oy - uy * (r + l), s2 === 0 ? '#f4ecdc' : dustC[0]);
           }
-          K.rock(o, x, y, r, sd, mat, Math.sign(ux || 1) * (t - born) * spd * 0.9); // rolling the way it flies
+          // A quick throw left no time to pack the ball at the hand (the user, 2026-11-11: an instant right click): the rock
+          // grows to full size over its first moments in the air while stones torn up round the caster home in on it.
+          // a tap may never have drawn a charge at all: then the caster's own spot stands in for it
+          const ow = m.owner[j], lc0 = ow < MAX_SEATS ? this.lastCharge[ow] : null, fresh = !!lc0 && ct - lc0[2] < 0.5;
+          const lq: [number, number, number, number, number, number] | null = ow < MAX_SEATS ? (fresh ? lc0 : [0, 0, ct, gx(w.bodies.x[ow]), gy(w.bodies.y[ow]), 0]) : null;
+          const quick = !!lq && lq[5] < 0.5;
+          const grow = quick ? 0.4 + 0.6 * smooth(clamp(e / 0.12, 0, 1)) : 1;
+          if (quick && e < 0.2 && lq) for (let q2 = 0; q2 < 8 + 3 * fl.n; q2++) {
+            const arrive = 0.05 + rand(q2, 85, sd) * 0.11, kk = smooth(clamp(e / arrive, 0, 1));
+            if (kk >= 1) continue;
+            const ang = rand(q2, 86, sd) * TAU, d = 8 + rand(q2, 87, sd) * 10, sx = lq[3] + Math.cos(ang) * d, sy = lq[4] + Math.sin(ang) * d * FY;
+            if (kk < 0.3) K.puff(o, sx, sy - 1 - kk * 8, 1 + kk * 6, '#8a7a68', 0.75 * (1 - kk / 0.3));
+            const px2 = lerp(sx, x, kk), py2 = lerp(sy, y, kk) - Math.sin(kk * Math.PI) * 6, sz = q2 % 3 === 0 ? 4 : 3;
+            K.sq(o, px2, py2, sz + 1, mat.out); K.sq(o, px2, py2, sz, q2 % 2 ? mat.hi : mat.lit);
+          }
+          K.rock(o, x, y, r * grow, sd, mat, Math.sign(ux || 1) * (t - born) * spd * 0.9); // rolling the way it flies
           if (el === 'water') for (const p of emit(t, 14, 0.4, (i, age) => ({ x: x + (rand(i, 4, sd) - 0.5) * r, y: y + r * 0.5 + age * age * 10, age }))) X.px(o, p.x, p.y, '#8ad0ff');
           if (el === 'lightning' && Math.floor(t * 18) % 3 !== 2) { K.zap(o, [x - r, y], [x + r, y - 1], Math.floor(t * 18) + sd, EL.lightning, 1, 0); light(x, yg, 30, '#b08aff', 0.5); }
         }
@@ -913,7 +946,7 @@ export class Vfx {
 
   // ---- channels and charges: beams, sprays, the charging rock ------------------------------------
   /** Per seat: where its charging rock was last drawn and when (cosmetic clock), so the thrown rock leaves from there. */
-  private lastCharge: ([number, number, number] | null)[] = [null, null, null, null];
+  private lastCharge: ([number, number, number, number, number, number] | null)[] = [null, null, null, null]; // x, y, when, feet x, feet y, charge 0..1
   /** Each spray's recent aim (art/spray-jet.ts), by key: seat, 100 + seat for its Double, 200 + seat for its Echo, 300 + device. */
   private trails = new Map<number, AimTrail>();
   /**
@@ -959,7 +992,7 @@ export class Vfx {
             K.sq(o, p.x, p.y, sz + 1, mat.out); K.sq(o, p.x, p.y, sz, p.q % 2 ? mat.hi : mat.lit); X.px(o, p.x - 1, p.y - 1, mat.hi);
           }
           K.rock(o, ch[0], cy, R1 * (0.3 + 0.7 * k), 4, mat, t * 1.5);
-          this.lastCharge[i] = [ch[0], cy, t];
+          this.lastCharge[i] = [ch[0], cy, t, v.x, v.y, k];
         }
         continue;
       }

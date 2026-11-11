@@ -123,7 +123,7 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
       spec.channel = cast === 'force';
       return spec;
     case 'ice':
-      // Ice shards (a freezing spray was too strong), the Ice ring, the Ice sheet, the Ice burst.
+      // Ice shards (a freezing spray was too strong), the Ice ring, Caltrops, the Ice burst.
       spec.shape = cast === 'force' ? 'shards' : cast === 'area' ? 'nova' : cast === 'place' ? 'patch' : 'imbue';
       return spec;
     case 'water': case 'fire': case 'cold':

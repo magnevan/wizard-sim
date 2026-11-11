@@ -49,7 +49,7 @@ export const RHYTHM = {
 /** Damage per rune of an element, for one hit. Channels deal this per second times `channelRate`. */
 export const DAMAGE: Record<Element, number> = {
   water: 4, life: 0, shield: 0, cold: 5, lightning: 10, arcane: 16, sigil: 0, fire: 6, earth: 22,
-  ice: 9, // Water and Cold, low-damage elements, shaped into a sharp one (the user: its identity is damage, quick flight, spikiness)
+  ice: 16, // Water and Cold shaped into a sharp one (its identity is damage, quick flight, spikiness): one Ice is two runes, so it hits like two (spell audit, 2026-11-11; was 9)
 };
 export const COMBAT = {
   healPerLife: 14,
@@ -140,6 +140,12 @@ export const SHAPES = {
   /** Radius of the frost puff a Cold-carrying missile leaves where it ends, u (+0.3 a Cold rune past the first). */
   frostPuff: 1.4,
   shardCount: 5, shardSpread: 0.035, // turns between shards
+  /**
+   * Caltrops (Ice Place, spell audit 2026-11-11): ice spikes on the ground for caltropLife s (+ lingerPerRune a rune), no hit
+   * when they land. Whoever walks through is stabbed by the distance walked: caltropPerU of the payload a unit, so crossing
+   * a 4 u field is about one Ice hit, and standing still is safe.
+   */
+  caltropLife: 10, caltropPerU: 0.25,
   /** Ice shards fly this much faster than other missiles (Ice: damage and quick flight). */
   iceFlight: 1.5,
   /** Each ice shard's share of the payload: 0.75, so a full 6-shard volley lands the 4.5x it did before every shard hit alike. */
@@ -169,6 +175,8 @@ export const SHAPES = {
   imbuePower: 1,
   /** A Fire ring's or burst's direct hit, times Fire's table damage (which is set for a spray's per-second rate). */
   fireBlast: 2,
+  /** Ice's ring and burst, so the close cast beats the shards (spell audit, 2026-11-11: it was 16 for its two runes). */
+  iceBlast: 2,
   /** The same for Cold, kept below Fire's: Cold's job is the slow, and it has no burn on top. */
   coldBlast: 1.6,
   push: 6, // u/s added per water rune (Push)

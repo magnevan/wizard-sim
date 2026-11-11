@@ -338,7 +338,7 @@
     ice: {
       force: () => ['Ice shards', 'A volley of jagged ice shards along your aim, faster than any other missile. Each shard pierces and hits hard, with a little chill; enough of them freeze a wet target, and a frozen target shatters from a heavy hit.'],
       area: () => ['Ice ring', 'A ring of ice spikes bursts from you: it hurts, chills a little, and freezes whoever was already wet.'],
-      place: () => ['Ice sheet', 'Freezes the ground at the cursor into a sheet of ice for about 16 seconds: it chills whoever stands on it, and freezes them solid if they are wet.'],
+      place: () => ['Caltrops', 'Scatters ice spikes on the ground at the cursor for about 10 seconds. They do no harm where they land: whoever walks through them is stabbed, the more the further they walk, and standing still is safe. A wet body walking through freezes.'],
       conjure: swing('ice'),
     },
   };

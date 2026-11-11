@@ -103,3 +103,9 @@ Still open from pass 1: Ice (finding 4), close against placed (5), Steam (6), th
 - **Open:** Steam's mist (enemies' line of sight), for a later session.
 
 Next: Ice (finding 4), then the body forms (Lightning, Arcane, Earth, and close against placed).
+
+## Pass 2, step 3: Ice (decided and built 2026-11-11)
+
+Ice 16 a rune; dense-shotgun shards (one Ice 24, two 61 at 3 u); the Ice ring with a ×2 blast (32 / 65); caltrops for its Place (stab by distance walked, a trap). Payload: Arcane + Ice 79 against Arcane + Fire 86. Still to check in play: whether one Ice's shards freeze a wet target (the probe's didn't: each shard's chill is small), and how caltrops feel against enemies that charge.
+
+Next: the body forms, Lightning, Arcane and Earth, with close against placed (Earthquake against Geyser, Arcane nova against blast, Discharge against Strike) and the arc's lead over the beam.

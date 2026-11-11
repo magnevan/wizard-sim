@@ -743,6 +743,20 @@ export class Vfx {
       }
       for (const p of emit(t, 6, 1.5, (i, age) => ({ x: x + (rand(i, 21, sd) - 0.5) * r * 2, y: y - 14 - age * 16, age }))) K.puff(o, p.x, p.y, 3 + p.age * 4, EL.steam[2], (1 - p.age) * 0.7 * cl);
       light(x, y - 6, r + 20, '#d8e0f0', 0.3 * cl);
+    } else if (ty === ZONE.caltrops) {
+      // Caltrops (Ice Place): little ice spikes scattered over the ground, popping up when cast and melting away at the end.
+      // Placeholder art: a dark base and a pale tip per spike, by area, so a trap reads as a trap from across the room.
+      const cl = easeOut(seg(e, 0, 0.25)) * seg(z.life[k], 0, 40), span = r / 32, n = Math.min(90, Math.max(10, Math.round(22 * span * span)));
+      X.ellipse(g, x, y, r * 0.95, r * 0.95 * FY, '#9fd4e8', 0.12 * cl);
+      for (let i = 0; i < n; i++) {
+        if (rand(i, 41, sd) > cl) continue;
+        const a = rand(i, 42, sd) * TAU, d = Math.sqrt(rand(i, 43, sd)) * r * 0.92, px2 = x + Math.cos(a) * d, py2 = y + Math.sin(a) * d * FY;
+        const hgt = 2 + Math.floor(rand(i, 44, sd) * 3);
+        X.px(g, px2, py2, '#3a6a80');
+        X.line(o, px2, py2 - 1, px2, py2 - hgt, i % 3 ? '#bfe8f6' : '#e8fbff');
+        if ((Math.floor(t * 3 + rand(i, 45, sd) * 9)) % 7 === 0) X.px(o, px2, py2 - hgt, '#ffffff');
+      }
+      light(x, y, r + 8, '#9ff4ff', 0.15 * cl);
     } else if (ty === ZONE.frost) {
       // Freezing fog (Cold Place, the user: "like opening a deep freezer"): a low, heavy fog of cold air that pours out
       // over the floor and spills past its edge, curling slowly, with frost glinting on the ground under it

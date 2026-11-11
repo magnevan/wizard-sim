@@ -152,7 +152,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
   // Fire's and Cold's one-shot casts: their table damage is a spray's per-second rate on the sqrt curve, so a
   // single blast needs its own multiplier, and it pays +70 % a rune like Arcane's nova rather than sqrt(n).
   // (Steam, Water + Fire, takes Fire's blast whichever of the two leads: its hits are scaled down in hit.ts instead)
-  const blastBase = spec.form === EL.fire || spec.scald ? SHAPES.fireBlast : spec.form === EL.cold && !spec.freeze ? SHAPES.coldBlast : 0;
+  const blastBase = spec.form === EL.fire || spec.scald ? SHAPES.fireBlast : spec.form === EL.cold && !spec.freeze ? SHAPES.coldBlast : spec.form === EL.ice ? SHAPES.iceBlast : 0;
   const blast = blastBase ? (blastBase * (1 + COMBAT.formScaling * (n - 1))) / Math.sqrt(n) : 1;
   switch (spec.shape) {
     case 'missile': {
@@ -185,9 +185,11 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     }
     case 'shards': {
       const count = SHAPES.shardCount + spec.sizeN; // for a Life spell, more Cold lends more shards
-      // every shard at the same power (each used to hit at 0.3 x its index, the loop's k shadowing the scale)
+      // every shard at the same power; extra shards pack the same fan denser rather than widening it (spell audit,
+      // 2026-11-11: a second Ice used to miss more at range), so it's a shotgun: up close every shard lands
+      const spread = (SHAPES.shardSpread * SHAPES.shardCount) / count;
       for (let j = 0; j < count; j++) {
-        const a = face + (j - (count - 1) / 2) * SHAPES.shardSpread;
+        const a = face + (j - (count - 1) / 2) * spread;
         const m = spawnMissile(w, src, p, cosTurns(a), sinTurns(a), 2, SHAPES.shardPower * k, 0, 0, ex.ox, ex.oy);
         // Ice's identity is quick flight: its shards fly faster than other missiles (Life's healing shards don't)
         if (m >= 0 && spec.form === EL.ice) { w.missiles.vx[m] *= SHAPES.iceFlight; w.missiles.vy[m] *= SHAPES.iceFlight; }
@@ -217,6 +219,12 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       // Cold without Water is a freezing fog, not ice (the user, 2026-11-11: "like opening a deep freezer"): it chills
       // whoever stands in it and leaves the floor alone. Water + Cold is still the ice sheet.
       const fog = !spec.scald && !spec.freeze && spec.counts[EL.cold - 1] > 0;
+      // Ice is caltrops: a trap of spikes, with no hit when it lands (the user, 2026-11-11)
+      if (spec.form === EL.ice) {
+        spawnZone(w, ZONE.caltrops, src, p, tx, ty, r, T(SHAPES.caltropLife * longer), 0);
+        burstEvent(w, src, tx, ty, r, spec.look);
+        break;
+      }
       if (spec.scald) spawnZone(w, ZONE.steam, src, p, tx, ty, r, T(SHAPES.patchLife * longer), 0);
       else if (fog) {
         spawnZone(w, ZONE.frost, src, p, tx, ty, r, T(SHAPES.patchLife * longer), 0);
@@ -229,7 +237,6 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       else for (const el of [EL.water, EL.cold, EL.fire]) if (spec.counts[el - 1]) floorDisc(w, tx, ty, r, el, longer, spec.counts[EL.fire - 1]); // a fire floor burns by its Fire
       // Rain: Water Place keeps falling for a while (the user: a rain that lasts 1 s felt far too short).
       if (spec.form === EL.water && !spec.scald && !spec.freeze) spawnZone(w, ZONE.rain, src, p, tx, ty, r, Math.round(T(SHAPES.rainLife + SHAPES.rainPerRune * (n - 1)) * lingerLife(w, src)), 0);
-      if (spec.freeze) floorDisc(w, tx, ty, r, EL.cold, longer); // Ice sheet: the water becomes walkable ice
       disc(w, p, src, tx, ty, r, 0.5 * k, -1);
       burstEvent(w, src, tx, ty, r, spec.look);
       break;
@@ -691,6 +698,16 @@ export function tickZones(w: World): void {
         b.burn[i] = 0; drench(w, i); tryFreeze(w, i);
       }
       if (z.life[k] % 30 === 0) floorDisc(w, z.x[k], z.y[k], z.r[k], EL.water);
+      if (--z.life[k] <= 0) z.type[k] = ZONE.none;
+      continue;
+    }
+    // Caltrops stab whoever walks through them, by how far they walked (every 0.1 s, from their walking speed).
+    if (z.type[k] === ZONE.caltrops) {
+      if (z.life[k] % 6 === 0) for (let i = 0; i < b.kind.length; i++) {
+        if (!alive(w, i) || len(b.x[i] - z.x[k], b.y[i] - z.y[k]) > z.r[k] + b.r[i]) continue;
+        const walked = len(b.vx[i], b.vy[i]) * 0.1;
+        if (walked > 0.02) hit(w, i, p, hitOpts(p, z.owner[k], SHAPES.caltropPerU * walked));
+      }
       if (--z.life[k] <= 0) z.type[k] = ZONE.none;
       continue;
     }

@@ -162,3 +162,18 @@ Step 6f (built): elements coat the force field (resist, bite, lend) by rune; the
 Pass 1 map (`game/tools/probe-sigil.txt`): turrets track their spell a rune (Fire 38 against your 41, Rock 24 against 28) except Lightning (151 against 42), and Arcane and Life a bit high (65 and 86, kept); glyphs were exactly the Place spell; orbitals counted extra runes twice; the Spike aura was twice the Fire aura. Step 7a (built): fixes 1 to 5 and one orbit per wizard (decisions log). Open: what Sigil alone does on Force, now that Blink is Shield's (candidates: a stored spell, a brand that devices focus, a recall mark).
 
 Step 7b (built): Sigil alone on Force is the stored spell (decisions log). Sigil's other casts stand as measured. Next: Self casts (the elements on yourself, wards and auras on allies), then the cross-cut by cast.
+
+## The rune rework (2026-11-11)
+
+The user's list: queued runes shouldn't regenerate; the regen floor could give way to other priorities (empty pools a higher share; pressing a rune you don't have directs regen to it, maybe with a little debt); Sigil shouldn't recall on a dry press; the stored spell's release should be Sigil and Force. Built: all but the regen split (decisions log, rune rework parts 1 and 2).
+
+The regen split, compared with R = 1 rune a second (seconds until each pool's next whole rune / until it's full):
+
+| Situation | Today (by max, a floor) | By missing runes | Equal per pool | Equal, empty pools x2 |
+|---|---|---|---|---|
+| Fire 0/5, Cold 3/4 | Fire 2.2 / 7.6, Cold 2.8 | Fire 1.2 / 6.0, Cold 6.0 | Fire 2.0 / 6.0, Cold 2.0 | Fire 1.5 / 6.0, Cold 2.5 |
+| Survive start: Fire 0/2, Water 1/2, Sigil 0/1 | 3.2 / 5.2, 3.2, 5.2 | 2.0 / 4.0, 4.0, 4.0 | 3.0 / 4.0, 3.0, 3.0 | 2.5 / 4.0, 3.5, 2.5 |
+| Life 0/1 beside Fire 0/5 | Life 7.6, Fire 1.5 / 7.6 | Life 6.0, Fire 1.2 / 6.0 | Life 2.0, Fire 2.0 / 6.0 | Life 2.0, Fire 2.0 / 6.0 |
+| After a big cast: Fire 0/5, Arcane 0/4, Cold 3.5/4, Water 2/4 | 3.6 / 13.8, 4.4 / 13.8, 2.5, 4.4 / 8.3 | 2.3 / 11.5, 2.9 / 11.5, 11.5, 5.8 / 11.5 | 3.5 / 11.5, 3.5 / 10.5, 2.0, 3.5 / 6.5 | 3.0 / 11.5, 3.0 / 10.5, 3.0, 4.5 / 7.5 |
+
+By missing runes chokes the small and nearly full pools (the user's worry): Cold at 3.5 of 4 waits 11.5 s. Today's split by max chokes small pools instead (a 1-rune Life pool waits 7.6 s), which will matter when the campaign starts pools at 1. An equal share per pool fixes both and uses the whole budget (today's floor loses the share of full pools); doubling empty pools' share is the user's "empty slots get a higher share".

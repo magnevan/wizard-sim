@@ -24,8 +24,15 @@ export const RUNES = {
   surviveStart: 2,
   surviveSigil: 1,
   /** Attune (plain Arcane on yourself): regen multiplier and how long it lasts. */
-  attuneMult: 2.5,
-  attuneTime: 6,
+  /**
+   * Attune (Arcane on yourself, spell audit 2026-11-11): regen x attuneMult for attuneTime s a rune of Arcane, a sting of
+   * attuneSting HP a rune, and while it lasts you take attuneVuln x the damage. One Arcane nets about 2 runes for 16 HP and
+   * 3 s of vulnerability; it was 2.5x for 6 s and 3 HP, about 9 runes for one: the best spell in the game.
+   */
+  attuneMult: 2,
+  attuneTime: 3,
+  attuneSting: 16,
+  attuneVuln: 1.25,
 };
 
 /** Cast rhythm: a property of the spell, not of the keys. */

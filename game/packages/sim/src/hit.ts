@@ -4,7 +4,7 @@
  * (pillar 3). A Life spell only heals, and its other elements only help.
  */
 import { driving } from './battery';
-import { ARMS, COMBAT, DAMAGE, PERKS, STATUS, STRUCT, T } from './config';
+import { ARMS, COMBAT, DAMAGE, PERKS, RUNES, STATUS, STRUCT, T } from './config';
 import { EL, N_EL, elementName, formCurve, formOf } from './elements';
 import { ARCHETYPES } from './archetypes';
 import { angleDiff } from './geom';
@@ -127,6 +127,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   // Glass cannon (Sigil + Arcane aura): you deal more and take more.
   if (srcSeat >= 0 && s.aura[srcSeat] > 0 && s.auraEls[srcSeat * N_EL + EL.arcane - 1]) dmg *= STRUCT.glassMult;
   if (tSeat >= 0 && s.aura[tSeat] > 0 && s.auraEls[tSeat * N_EL + EL.arcane - 1]) dmg *= STRUCT.glassMult;
+  if (tSeat >= 0 && s.attune[tSeat] > 0) dmg *= RUNES.attuneVuln; // Attune: raw magic through you leaves you open
   // Glass heart (survive): your spells and blows hit harder (your health is lower: survive.ts grant).
   const glass = stackOf(w, srcSeat, PU.glass);
   if (glass) dmg *= 1 + PERKS.glassDmg * glass;

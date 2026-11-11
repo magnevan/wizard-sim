@@ -5,6 +5,7 @@ import {
   type PlayerInput, type World,
 } from '../src';
 import { cellAt } from '../src/effects';
+import { applyHit } from '../src/hit';
 import { RES, taken } from '../src/guards';
 
 // A tiny driver: seat 0 acts, everyone else idles. Aim is a world point, kept between steps.
@@ -94,6 +95,20 @@ describe('runes and the queue', () => {
     const { w, d } = range();
     d.queue('earth', 'earth', 'earth', 'earth', 'earth');
     expect(w.seats.queueLen[0]).toBe(RUNES.max.earth);
+  });
+
+  it('Attune stings by the rune, lasts longer with more Arcane, and leaves you taking more damage while it lasts', () => {
+    const { w, d } = range();
+    d.queue('arcane', 'arcane').cast(BTN.self, 1, 20);
+    expect(w.bodies.hp[0]).toBeCloseTo(100 - 2 * RUNES.attuneSting, 5);
+    expect(w.seats.attune[0]).toBeGreaterThan(T(RUNES.attuneTime * 2) - 30); // 2 Arcane: twice as long
+    const rock = new Uint8Array(N_EL); rock[EL.earth - 1] = 1;
+    w.bodies.hp[0] = 100;
+    applyHit(w, 0, rock, 0, { scale: 1, heal: false, scald: false, freeze: false, source: -1, dirX: 0, dirY: 0, push: 0 });
+    const attuned = 100 - w.bodies.hp[0];
+    w.seats.attune[0] = 0; w.bodies.hp[0] = 100;
+    applyHit(w, 0, rock, 0, { scale: 1, heal: false, scald: false, freeze: false, source: -1, dirX: 0, dirY: 0, push: 0 });
+    expect(attuned / (100 - w.bodies.hp[0])).toBeCloseTo(RUNES.attuneVuln, 5);
   });
 
   it('a cast spends the runes; regen brings them back slowly, faster when attuned', () => {

@@ -177,3 +177,9 @@ The regen split, compared with R = 1 rune a second (seconds until each pool's ne
 | After a big cast: Fire 0/5, Arcane 0/4, Cold 3.5/4, Water 2/4 | 3.6 / 13.8, 4.4 / 13.8, 2.5, 4.4 / 8.3 | 2.3 / 11.5, 2.9 / 11.5, 11.5, 5.8 / 11.5 | 3.5 / 11.5, 3.5 / 10.5, 2.0, 3.5 / 6.5 | 3.0 / 11.5, 3.0 / 10.5, 3.0, 4.5 / 7.5 |
 
 By missing runes chokes the small and nearly full pools (the user's worry): Cold at 3.5 of 4 waits 11.5 s. Today's split by max chokes small pools instead (a 1-rune Life pool waits 7.6 s), which will matter when the campaign starts pools at 1. An equal share per pool fixes both and uses the whole budget (today's floor loses the share of full pools); doubling empty pools' share is the user's "empty slots get a higher share".
+
+## Pass 2, step 8: Self casts (decided and built 2026-11-11)
+
+Attune was rune-positive by about 8 runes a cast; it now nets about 2 for 16 HP and 3 s of taking 25 % more damage. The Life self-heal is a burst (the channel its text promised was dropped). The mistake elements stay. **Open: a cooler spell than the Double for Sigil alone on yourself** (the user isn't a fan of the Double).
+
+Next: the cross-cut by cast (Force, Area, Place, Self, Weapon side by side), the last step of the audit.

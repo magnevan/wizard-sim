@@ -1408,3 +1408,11 @@ The user agreed to both ("2 and 3 seems okay"):
 - **The regen split** (the user chose "empty 2x"): R is shared equally among the pools that aren't full, and an empty one (under a whole rune) takes two shares. The floor and the weighting by max are gone. A small pool refills as fast as a big one (a 1-rune pool beside an empty 5-rune one: 2 s, was 7.6 s), and none of R is lost to full pools.
 - **No debt** (the user wasn't sure it helped; Claude thought it confused more than it helped, since ghost runes already fill within about a second): a cast with ghost runes still unpaid waits for them, buffered, then winds up as usual; no pool ever goes below zero. A held spell's release is free, so a ghost Sigil never makes it wait.
 - The golden hash is re-recorded (`750902cd` to `47ecf451`): the new split.
+
+## 2026-11-11: Spell audit, step 8: Self casts: Attune costs more; the Life self-heal is a burst only
+
+- **Attune (Arcane on yourself) was the best spell in the game:** one Arcane and a 3 HP sting bought about 9 runes over its 6 s (regen x2.5) whenever pools were refilling, and more Arcane only stung more. Now each Arcane rune gives regen x2 for 3 s and stings 16 HP, and while it lasts you take 25 % more damage (the user: "the downside should be larger. Maybe it makes you vulnerable too?"). One Arcane nets about 2 runes; two Arcane last twice as long. A breather, best with a healer near.
+- **The Life self-heal is a burst only** (the user: drop the channel its text promised; it was never built): 21 a Life rune.
+- **The mistake elements stay** (Earth, Lightning and Ice on yourself only hurt you; Water, Cold and Fire put out burning or thaw you).
+- **The Double stays for now, but the user wants something cooler in its slot** (Sigil alone on yourself): "I'm not a big fan of the double spell. I really want something cooler on this slot." Open, for a later session.
+- The golden hash is re-recorded (`47ecf451` to `1b8986c7`): the scripted run casts Arcane + Fire on itself.

@@ -179,11 +179,11 @@ const module = { exports: {} };
   const DOUBLE = ['Double', 'A conjured copy of {w} appears beside {w}, and enemies target it. Each spell cast by {w} is repeated by the copy at half power from its own spot, a crossfire, but never for free: each repeat draws half that spell\'s rune cost from the pool, and if the pool can\'t cover it, the copy skips that spell. It lasts until it is destroyed or runs out.'];
   const SELF_HIT = { // no Shield or Sigil: Magicka's self casts
     water: ['Douse', 'puts out burning and leaves {w} wet'],
-    life: ['Heal', 'heals {w}: tap for a burst from one rune, or hold to channel (moving slowly) as sustain on your Life regen'],
+    life: ['Heal', 'heals {w} at once, in one burst'],
     cold: ['Chill', 'chills {w} and puts out burning'],
     lightning: ['Shock', 'shocks {w} (worse if wet)'],
     // the user's call (2026-11-04): raw magic run through yourself refills your runes
-    arcane: ['Attune', 'runs raw magic through {w}: it stings, and {s} runes regenerate faster for a moment (a breather between waves)'],
+    arcane: ['Attune', 'stings hard: {s} runes regenerate twice as fast for a moment, but {w} take more damage meanwhile'],
     earth: ['Bruise', 'hits {w} like a thrown rock'],
     fire: ['Burn', 'sets {w} alight and dries {w} off'],
     ice: ['Impale', 'stabs {w} with ice (it hurts) and puts out burning; if {w} were already wet, it freezes {w} solid'],

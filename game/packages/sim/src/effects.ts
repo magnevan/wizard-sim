@@ -405,8 +405,8 @@ export function selfHit(w: World, i: number, spec: SpellSpec): void {
   const life = c[EL.life - 1], arcane = c[EL.arcane - 1];
   if (life) { const h = COMBAT.healPerLife * life * 1.5; b.hp[i] = Math.min(b.maxHp[i], b.hp[i] + h); hitEvent(w, i, -h, EL.life); }
   if (arcane) { // Attune: it stings, and your runes regenerate faster for a while
-    if (i < w.seats.active.length) w.seats.attune[i] = T(RUNES.attuneTime);
-    b.hp[i] -= 3 * arcane;
+    if (i < w.seats.active.length) w.seats.attune[i] = T(RUNES.attuneTime * arcane); // longer with more Arcane
+    b.hp[i] -= RUNES.attuneSting * arcane;
   }
   SELF_TMP.set(c); SELF_TMP[EL.life - 1] = 0; SELF_TMP[EL.arcane - 1] = 0;
   let any = false;

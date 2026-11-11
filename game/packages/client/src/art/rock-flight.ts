@@ -59,7 +59,7 @@ export function meteor(c: Ctx, f: Flight, t: number): void {
   const fl: Fl[] = trail(f, t, 90 + 25 * n, 0.24 + 0.03 * n, (i, age, px, py) => {
     const side = (rand(i, 4, sd) - 0.5) * r * (1.1 + age * 1.6), drag = age * (10 + 8 * rand(i, 5, sd));
     const sw = Math.sin(age * 11 + i) * 0.8 * age;
-    return { x: px - ux * drag - uy * side, y: py - uy * drag + ux * side * FY + sw, r: (0.6 + r * 0.32) * big * (1 - age * 0.55), heat: age * (0.9 + 0.3 * rand(i, 6, sd)) - 0.04 * (n - 1) };
+    return { x: px - ux * drag - uy * side, y: py - uy * drag + ux * side * FY + sw, r: (0.8 + r * 0.5) * big * Math.pow(1 - age, 1.2), heat: age * (0.9 + 0.3 * rand(i, 6, sd)) - 0.04 * (n - 1) };
   });
   fl.sort((a, b) => b.heat - a.heat);
   for (const p of fl) {
@@ -184,23 +184,27 @@ export function lifeSeed(c: Ctx, f: Flight, t: number, at: (ts: number) => [numb
 }
 
 /** A Cold missile's end: a puff of frost bursting out and hanging, crystals settling on the floor. R = the sim's radius, px. */
-export function frostPuff(o: Ctx, g: Ctx, x: number, y: number, iy: number, e: number, R: number, sd: number): void {
-  if (e < 0.05) { X.ellipse(o, x, iy, 6, 5, '#ffffff'); }
+export function frostPuff(o: Ctx, g: Ctx, x0: number, y0: number, iy0: number, e: number, R: number, sd: number, ux = 0, uy = 0): void {
+  // the cloud carries on the way the missile flew, slowing as it spreads; it settles R / 2 ahead, where the sim's chill is
+  const wash = R * 0.5 + R * 0.35 * (1 - Math.exp(-e * 3)), dx = ux * wash, dy = uy * wash;
+  const x = x0 + dx, y = y0 + dy, iy = iy0 + dy, gx0 = x0 + ux * R * 0.5, gy0 = y0 + uy * R * 0.5;
+  if (e < 0.05) { X.ellipse(o, x0, iy0, 6, 5, '#ffffff'); }
   // the cloud: puffs thrown out fast that slow and hang, then thin away
   const out = 1 - Math.exp(-e * 7), fade = 1 - clamp((e - 0.25) / 0.95, 0, 1);
   if (fade > 0) for (let k = 0; k < 14; k++) {
-    const a = (k / 14) * TAU + rand(k, 71, sd) * 0.4, d = R * (0.35 + 0.65 * rand(k, 72, sd)) * out;
-    const px = x + Math.cos(a) * d, py = y + Math.sin(a) * d * FY - 6 - e * 4;
+    // puffs born at the impact, thrown forward and out: those thrown forward travel furthest
+    const a = (k / 14) * TAU + rand(k, 71, sd) * 0.4, d = R * (0.35 + 0.65 * rand(k, 72, sd)) * out, fwd = Math.max(0, Math.cos(a) * ux + Math.sin(a) * uy);
+    const px = x + Math.cos(a) * d * (1 + 0.4 * fwd), py = y + Math.sin(a) * d * FY * (1 + 0.4 * fwd) - 6 - e * 4;
     X.glow(o, px, py, (3 + R * 0.18) * (0.6 + out * 0.8), k % 3 ? '#e8fbff' : '#a8d8ec', 0.85 * fade);
   }
   if (fade > 0) X.glow(o, x, iy, R * 0.45 * (0.5 + out * 0.5), '#ffffff', 0.7 * fade);
   // the edge of the chill on the floor, then frost settling inside it
-  if (e < 0.5) X.ring(g, x, y, R * out, R * out * FY, COLD[1], 1 - e / 0.5);
+  if (e < 0.5) X.ring(g, gx0, gy0, R * out, R * out * FY, COLD[1], 1 - e / 0.5);
   const lay = clamp(e / 0.4, 0, 1) * (1 - clamp((e - 0.9) / 0.5, 0, 1));
   for (let k = 0; k < 26; k++) {
     if (rand(k, 73, sd) > lay) continue;
     const a = rand(k, 74, sd) * TAU, d = Math.sqrt(rand(k, 75, sd)) * R * 0.95;
-    X.px(g, x + Math.cos(a) * d, y + Math.sin(a) * d * FY, k % 4 === 0 ? '#ffffff' : k % 2 ? COLD[2] : COLD[1]);
+    X.px(g, gx0 + Math.cos(a) * d, gy0 + Math.sin(a) * d * FY, k % 4 === 0 ? '#ffffff' : k % 2 ? COLD[2] : COLD[1]);
   }
 }
 

@@ -147,15 +147,16 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     case 'missile': {
       if (spec.heal) { spawnMissile(w, src, p, dx, dy, 3, (0.7 + 0.3 * charge) * k, tx, ty, ex.ox, ex.oy); break; }
       if (p.freeze) {
-        // Earth + Water + Cold: three ice shards, a little staggered, each a third of the rock, flying much faster for
-        // their shape (the user, 2026-11-11); they don't split again where they hit
+        // Earth + Water + Cold: three ice shards launched one after another, fanned a little, much faster than other
+        // missiles for their shape (the user, 2026-11-11). Together they hit iceShardShare x 3 of the rock: the third
+        // rune pays like any other. They don't split again where they hit.
         const sp = SHAPES.iceShardSpeed * (0.6 + 0.4 * charge);
         for (let q = 0; q < 3; q++) {
-          const m = spawnMissile(w, src, p, dx, dy, 1, ((0.5 + 0.5 * charge) * k) / 3, 0, 0, ex.ox, ex.oy);
+          const a = face + (q === 0 ? 0 : q === 1 ? -SHAPES.iceShardFan : SHAPES.iceShardFan), ddx = cosTurns(a), ddy = sinTurns(a);
+          const m = spawnMissile(w, src, p, ddx, ddy, 1, (0.5 + 0.5 * charge) * k * SHAPES.iceShardShare, 0, 0, ex.ox, ex.oy);
           if (m < 0) break;
-          const back = q * 0.7, side = q === 0 ? 0 : q === 1 ? -0.3 : 0.3; // the lead in the middle, the others behind it either side
-          w.missiles.x[m] += -dx * back - dy * side; w.missiles.y[m] += -dy * back + dx * side;
-          w.missiles.vx[m] = dx * sp; w.missiles.vy[m] = dy * sp;
+          w.missiles.wait[m] = ex.ox === undefined ? q * SHAPES.iceShardGap : 0; // a device's volley leaves together: a wait holds a shard at its caster
+          w.missiles.vx[m] = ddx * sp; w.missiles.vy[m] = ddy * sp;
           w.missiles.r[m] = 0.16 + 0.04 * n;
           w.missiles.pierce[m] = charge >= 1 ? 1 : 0;
           w.missiles.mod[m] = 0;
@@ -486,7 +487,7 @@ export function spawnMissile(w: World, src: number, p: Payload, dx: number, dy: 
   const m = w.missiles, b = w.bodies;
   for (let j = 0; j < MAX_MISSILES; j++) {
     if (m.alive[j]) continue;
-    m.alive[j] = 1; m.type[j] = type; m.owner[j] = src; m.scale[j] = scale; m.pierce[j] = 0; m.lastHit[j] = -1;
+    m.alive[j] = 1; m.type[j] = type; m.owner[j] = src; m.scale[j] = scale; m.pierce[j] = 0; m.lastHit[j] = -1; m.wait[j] = 0;
     m.x[j] = (ox ?? b.x[src]) + dx * (b.r[src] + 0.25); m.y[j] = (oy ?? b.y[src]) + dy * (b.r[src] + 0.25);
     m.vx[j] = dx * SHAPES.missileSpeed; m.vy[j] = dy * SHAPES.missileSpeed;
     m.r[j] = type === 2 ? 0.15 : SHAPES.missileRadius;
@@ -507,6 +508,13 @@ export function tickMissiles(w: World): void {
   const m = w.missiles, b = w.bodies;
   for (let j = 0; j < MAX_MISSILES; j++) {
     if (!m.alive[j]) continue;
+    if (m.wait[j] > 0) {
+      // not launched yet: held at the staff, following its caster
+      m.wait[j]--;
+      const o = m.owner[j], sp = len(m.vx[j], m.vy[j]) || 1;
+      m.x[j] = b.x[o] + (m.vx[j] / sp) * (b.r[o] + 0.25); m.y[j] = b.y[o] + (m.vy[j] / sp) * (b.r[o] + 0.25);
+      continue;
+    }
     m.x[j] += m.vx[j] * DT; m.y[j] += m.vy[j] * DT;
     const out = Math.abs(m.x[j]) > w.dims.w / 2 || Math.abs(m.y[j]) > w.dims.h / 2;
     const p = stored(m.els, j, m.flags[j], m.mod[j], m.look[j]);
@@ -573,7 +581,9 @@ function frostPuff(w: World, j: number): void {
   const counts = new Uint8Array(N_EL);
   counts[EL.cold - 1] = cold;
   const p: Payload = { counts, at: 0, heal: false, scald: false, freeze: false, mod: null, look: EL.cold, formN: 1 };
-  disc(w, p, m.owner[j], m.x[j], m.y[j], SHAPES.frostPuff + 0.3 * (cold - 1), m.scale[j] / 3, -1);
+  // it carries on the way the missile was going (the user: a cloud sitting on the impact broke its momentum)
+  const sp = len(m.vx[j], m.vy[j]) || 1, R = SHAPES.frostPuff + 0.3 * (cold - 1), ahead = R * 0.5;
+  disc(w, p, m.owner[j], m.x[j] + (m.vx[j] / sp) * ahead, m.y[j] + (m.vy[j] / sp) * ahead, R, m.scale[j] / 3, -1);
 }
 
 export function spawnZone(w: World, type: number, src: number, p: Payload, x: number, y: number, r: number, life: number, timer: number): void {

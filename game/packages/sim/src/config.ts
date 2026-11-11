@@ -107,6 +107,10 @@ export const SHAPES = {
   shardRange: 7.2,
   /** Earth + Water + Cold's three ice shards fly this fast, u/s: faster than other missiles, for their shape. */
   iceShardSpeed: 32,
+  /** Each ice shard's share of the rock: three of them hit 1.7 rocks, the +70 % a third rune pays elsewhere. */
+  iceShardShare: 0.57,
+  /** Ticks between the ice shards leaving, and how far apart they fan, turns. */
+  iceShardGap: 4, iceShardFan: 0.006,
   /** Radius of the frost puff a Cold-carrying missile leaves where it ends, u (+0.3 a Cold rune past the first). */
   frostPuff: 1.4,
   shardCount: 5, shardSpread: 0.035, // turns between shards

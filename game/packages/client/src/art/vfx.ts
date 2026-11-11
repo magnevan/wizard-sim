@@ -261,14 +261,15 @@ export class Vfx {
     // missiles that ended this step: impacts (heal-stones burst through their 'burst' event)
     const healStones: Pt[] = [];
     for (let j = 0; j < MAX_MISSILES; j++) {
-      if (m.alive[j] && !this.mAlive[j]) { this.mT0[j] = t; this.mLife0[j] = m.life[j]; }
-      if (!m.alive[j] && this.mAlive[j]) {
+      const live = m.alive[j] && !m.wait[j] ? 1 : 0; // one waiting at its caster's staff (a staggered volley) isn't in the air yet
+      if (live && !this.mAlive[j]) { this.mT0[j] = t; this.mLife0[j] = m.life[j]; }
+      if (!live && this.mAlive[j] && !m.alive[j]) {
         if (this.mType[j] === 3) healStones.push([this.mX[j], this.mY[j]]);
         else this.add('impact', t, 1.4, { x: this.mX[j], y: this.mY[j], x2: this.mVX[j], y2: this.mVY[j], look: this.mLook[j], n: this.mType[j], seed: tick * 7 + j, r: m.r[j], flags: m.flags[j], tier: tierOf(m.els, j), els: Array.from(m.els.subarray(j * N_EL, j * N_EL + N_EL)) });
       }
-      this.mAlive[j] = m.alive[j];
-      if (!m.alive[j]) this.mCatch[j] = NaN;
-      if (m.alive[j]) { this.mType[j] = m.type[j]; this.mLook[j] = m.look[j]; this.mX[j] = m.x[j]; this.mY[j] = m.y[j]; this.mVX[j] = m.vx[j]; this.mVY[j] = m.vy[j]; }
+      this.mAlive[j] = live;
+      if (!live) this.mCatch[j] = NaN;
+      if (live) { this.mType[j] = m.type[j]; this.mLook[j] = m.look[j]; this.mX[j] = m.x[j]; this.mY[j] = m.y[j]; this.mVX[j] = m.vx[j]; this.mVY[j] = m.vy[j]; }
     }
     // zones: when each began, and which ended this step
     const ended: { type: number; x: number; y: number }[] = [];
@@ -764,7 +765,7 @@ export class Vfx {
   private missiles(w: World, t: number, light: LightFn, ct: number): void {
     const m = w.missiles, o = this.o.x, g = this.g.x;
     for (let j = 0; j < MAX_MISSILES; j++) {
-      if (!m.alive[j]) continue;
+      if (!m.alive[j] || m.wait[j]) continue;
       const ty = m.type[j], look = m.look[j], el = elName(look), R = ramp(look), sd = j * 17 + 3;
       const [mx, my] = this.missileAt(w, j, ct);
       const x = gx(mx), yg = gy(my), vx = m.vx[j], vy = m.vy[j] * FY, L = Math.hypot(vx, vy) || 1, ux = vx / L, uy = vy / L;
@@ -836,16 +837,19 @@ export class Vfx {
           const dustC = el === 'cold' ? ['#e8fbff', '#9fd4e8'] : el === 'water' ? ['#cfe8ff', '#6aa8e0'] : el === 'arcane' ? ['#ffd8ec', '#c06a9a'] : el === 'lightning' ? ['#e8dcff', '#8a6ad0'] : ['#cbb898', '#8a7458'];
           for (const p of emit(t, (20 + r * 3) * (0.6 + 0.2 * fl.n), 0.4 + 0.06 * fl.n, (i, age, ts) => {
             const back = (t - ts) * L * 16, side = (rand(i, 6, sd) - 0.5) * r * 1.2;
-            return { x: x - ux * back - uy * side + age * (rand(i, 7, sd) - 0.5) * 6, y: y - uy * back + ux * side * FY + age * 3, age, r: 1 + age * (1.5 + r * 0.3) };
+            // the wake is as wide as the rock: a big rock leaves a big wake (the user: big rocks' wakes looked small)
+            return { x: x - ux * back - uy * side + age * (rand(i, 7, sd) - 0.5) * 6, y: y - uy * back + ux * side * FY + age * 3, age, r: (1 + age * 2.2) * (0.5 + r * 0.16) };
           }, born, t)) if (p.age > 0.05) K.puff(o, p.x, p.y, p.r, p.age < 0.35 ? dustC[0] : dustC[1], (1 - p.age) * 0.75);
           if (earth) for (const p of emit(t, 22, 0.5, (i, age, ts) => {
             const back = (t - ts) * L * 16, side = (rand(i, 8, sd) - 0.5) * r;
             return { x: x - ux * back - uy * side, y: y - uy * back + side * 0.4 + age * age * (STAFF_Z + 4), age, i };
           }, born, t)) if (p.y < yg + 2) X.px(o, p.x, p.y, p.i % 3 ? X.EARTH[3] : X.EARTH[1]);
-          // air streaks: three lines trailing back from the rock's edges, longer when it's fast
-          const sl = 6 + spd * 1.1;
-          for (const s2 of [-1, 0, 1]) {
-            const ox = -uy * s2 * r * 0.75, oy = ux * s2 * r * 0.75 * FY - (s2 === 0 ? r * 0.6 : 0), ph = (Math.floor(t * 30) + s2 + j) % 3;
+          // a smear of the rock just behind it, so a big one reads as fast rather than heavy and slow
+          for (let k2 = 2; k2 >= 1; k2--) X.ellipse(o, x - ux * r * 0.7 * k2, y - uy * r * 0.7 * k2, r * (1 - 0.12 * k2), r * 0.85 * (1 - 0.12 * k2), k2 === 1 ? '#8a7458' : '#5a4a3a', k2 === 1 ? 0.5 : 0.3);
+          // air streaks trailing back from the rock's edges, longer when it's fast and when it's big; more of them on a big rock
+          const sl = (6 + spd * 1.1) * (0.6 + r / 12), lanes = r >= 6 ? [-1, -0.5, 0, 0.5, 1] : [-1, 0, 1];
+          for (const s2 of lanes) {
+            const ox = -uy * s2 * r * 0.8, oy = ux * s2 * r * 0.8 * FY - (s2 === 0 ? r * 0.6 : 0), ph = (Math.floor(t * 30) + Math.round(s2 * 2) + j) % 3;
             const l = sl * (s2 === 0 ? 1 : 0.75) * (0.8 + 0.2 * ph);
             X.line(o, x + ox - ux * (r + 1), y + oy - uy * (r + 1), x + ox - ux * (r + l), y + oy - uy * (r + l), s2 === 0 ? '#f4ecdc' : dustC[0]);
           }
@@ -1341,12 +1345,15 @@ export class Vfx {
           return;
         }
         if (ty === 1 && look === 'fire') {
-          // the fireball bursts: a white flash, a ball of flame, a ring of tongues, embers flung
+          // the fireball bursts: a white flash, a ball of flame, a ring of tongues, embers flung; all of it carrying on
+          // the way the ball flew (the user: a burst sitting still on the impact broke the ball's momentum)
+          const v = Math.hypot(f.x2, f.y2 * FY) || 1, fux = f.x2 / v, fuy = (f.y2 * FY) / v, wash = 18 * s * (1 - Math.exp(-e * 3.5));
+          const x = ix + fux * wash, y = gy(f.y) + fuy * wash * 0.5, iy0 = iy + fuy * wash;
           K.scorch(g, x, y, 14 * s, 0.75 * (1 - seg(e, 0.8, 1.4))); K.cracks(g, x, y, 12 * s, sd, 1, `rgba(20,10,8,${(0.8 * (1 - seg(e, 0.8, 1.4))).toFixed(2)})`, 7);
-          if (e < 0.07) X.ellipse(o, x, iy, 14 * s, 11 * s, '#fff4c0');
-          if (e < 0.45) { const q = e / 0.45; X.glow(o, x, iy, 18 * s * (1 - q * 0.6), EL.fire[2], 0.95 * (1 - q)); X.glow(o, x, iy, 10 * s * (1 - q), EL.fire[1], 0.9 * (1 - q)); }
+          if (e < 0.07) X.ellipse(o, x, iy0, 14 * s, 11 * s, '#fff4c0');
+          if (e < 0.45) { const q = e / 0.45; X.glow(o, x, iy0, 18 * s * (1 - q * 0.6), EL.fire[2], 0.95 * (1 - q)); X.glow(o, x, iy0, 10 * s * (1 - q), EL.fire[1], 0.9 * (1 - q)); }
           if (e < 0.6) { const q = e / 0.6, rr = 4 + easeOut(q) * 24 * s; for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU; K.tongue(o, x + Math.cos(a) * rr, y + Math.sin(a) * rr * FY, 1.8, (7 + 3 * Math.sin(i * 2.7)) * (1 - q), Math.cos(a) * 2); } K.gring(o, x, y, rr + 2, EL.fire[1], 1 - q, 1); }
-          if (e < 1) for (let k = 0; k < 20; k++) { const a = rand(k, 5, sd) * TAU, sp = 18 + rand(k, 6, sd) * 28, vz = 30 + rand(k, 7, sd) * 40, z = vz * e - 90 * e * e; if (z < -1) continue; X.px(o, x + Math.cos(a) * sp * e, y + Math.sin(a) * sp * e * FY - Math.max(0, z), K.fireCol(e * 0.9 + rand(k, 8, sd) * 0.2)); }
+          if (e < 1) for (let k = 0; k < 20; k++) { const a = rand(k, 5, sd) * TAU, sp = 18 + rand(k, 6, sd) * 28, vz = 30 + rand(k, 7, sd) * 40, z = vz * e - 90 * e * e; if (z < -1) continue; X.px(o, x + (Math.cos(a) + fux * 0.8) * sp * e, y + (Math.sin(a) * FY + fuy * 0.8) * sp * e - Math.max(0, z), K.fireCol(e * 0.9 + rand(k, 8, sd) * 0.2)); }
           if (e > 0.2) for (let i = 0; i < 6; i++) { const a = rand(i, 61, sd) * TAU, rr = Math.sqrt(rand(i, 62, sd)) * 8; K.tongue(o, x + Math.cos(a) * rr, y + Math.sin(a) * rr * FY * 0.7, 1.4, (3 + 2 * Math.sin(t * 12 + i * 2)) * (1 - seg(e, 0.8, 1.4)) * seg(e, 0.2, 0.5), Math.sin(t * 6 + i)); }
           K.dust(o, x, y, e, sd, 7, 16, '#5a4a48', 0.9);
           light(x, y, 110, '#ffb060', 1.2 * (1 - seg(e, 0, 0.5))); light(x, y, 34, '#ff7020', 0.5 * (1 - seg(e, 0.5, 1.4)));
@@ -1361,7 +1368,8 @@ export class Vfx {
         if (ty === 1 && look === 'cold' && !((f.flags ?? 0) & PF.freeze)) {
           // a snowball ends in a puff of frost over the sim's chill disc (effects.ts frostPuff)
           const cold = f.els ? f.els[EL_COLD - 1] : 1, R = (SHAPES.frostPuff + 0.3 * Math.max(0, cold - 1)) * 16;
-          RF.frostPuff(o, g, x, y, iy, e, R, sd);
+          const v = Math.hypot(f.x2, f.y2 * FY) || 1;
+          RF.frostPuff(o, g, x, y, iy, e, R, sd, f.x2 / v, (f.y2 * FY) / v);
           light(x, y, 40 + R * 0.5, '#9ff4ff', 0.7 * (1 - seg(e, 0, 1)));
           return;
         }

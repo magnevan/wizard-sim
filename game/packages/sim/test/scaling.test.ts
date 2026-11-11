@@ -92,6 +92,10 @@ describe('rune scaling', () => {
     }
     expect(ice.length).toBe(3);
     for (const j of ice) expect(Math.hypot(w.missiles.vx[j], w.missiles.vy[j])).toBeGreaterThan(SHAPES.missileSpeed);
+    // launched one after another, and together worth 1.7 rocks
+    expect(ice.map((j) => w.missiles.wait[j]).sort((a, c) => a - c)).toEqual([0, SHAPES.iceShardGap, 2 * SHAPES.iceShardGap].map((v) => Math.max(0, v - 1)));
+    expect(new Set(ice.map((j) => w.missiles.scale[j])).size).toBe(1);
+    expect(3 * SHAPES.iceShardShare).toBeCloseTo(1.7, 1);
   });
 
   it('an Earth + Cold rock ends in a frost puff that chills what stands near, and throws no shards', () => {

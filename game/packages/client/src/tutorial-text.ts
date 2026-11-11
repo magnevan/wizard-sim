@@ -31,7 +31,7 @@ export const BEAT_TEXT: Readonly<Record<number, BeatText>> = {
   [TUT_BEAT.defend]: { title: 'Defend: the training buckler', lines: ['Hold Space to block.', 'Tap it just as the arrow lands to send it back.'] },
   [TUT_BEAT.hands]: { title: 'Hands test', lines: ['Shift+RMB sweeps all the way round you.', 'Let them come close.'] },
   // chapter 2: one rune at a time
-  [TUT_BEAT.fire]: { title: 'Fire', lines: ['Press F to ready Fire, then RMB to cast it.', 'Thick brambles need F F. (F2 shows what your runes will do.)'] },
+  [TUT_BEAT.fire]: { title: 'Fire', lines: ['Press F to ready Fire, then RMB to cast it.', 'Thick brambles need F F. (F1 shows what your runes will do.)'] },
   [TUT_BEAT.douse]: { title: 'Water', lines: ['Cross the burning floor to the arch.'] },
   [TUT_BEAT.steam]: { title: 'Steam', lines: ['Wet things will not burn.', 'Q + F together: steam scalds them anyway.'] },
   [TUT_BEAT.cold]: { title: 'Cold', lines: ['R is Cold. R, then tap Shift+RMB: a frost ring round you.', 'Chill all five.'] },
@@ -48,7 +48,7 @@ export const BEAT_TEXT: Readonly<Record<number, BeatText>> = {
   [TUT_BEAT.sigil]: { title: 'Sigil', lines: ['D is Sigil: it makes things that last.', 'D + F, then Shift+LMB: a flame sword. D + F, then RMB: a turret.'] },
   // chapter 3
   [TUT_BEAT.test]: { title: 'The test', lines: ['Two waves, everything you have.', 'Build before they come: walls, turrets.'] },
-  [TUT_BEAT.end]: { title: 'That is the alphabet', lines: ['F2 shows what any runes you hold will do. The rest is yours to find.', 'Walk into an arch.'] },
+  [TUT_BEAT.end]: { title: 'That is the alphabet', lines: ['F1 shows what any runes you hold will do. The rest is yours to find.', 'Walk into an arch.'] },
 };
 
 /** Lines that replace a beat's prompt while something is true, and the HUD's own words. */

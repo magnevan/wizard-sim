@@ -1,5 +1,5 @@
 /**
- * The help panel (F2, the "?" button, or D-pad up on a gamepad): it slides out on the right edge and
+ * The help panel (F1, the "?" button, or D-pad up on a gamepad): it slides out on the right edge and
  * says what your queued runes will do, one row per cast gesture (RMB, Shift+RMB tap, Shift+RMB hold,
  * Space, Shift+LMB), each with its key, the spell's name, a line or two from the rules and a live
  * preview: the spell cast by a real wizard in a tiny world, drawn by the game's own view
@@ -8,7 +8,7 @@
  *
  * New-player touches: the element keys with their letters, an "opposites cancel" note when a cancel
  * happens (in the panel, and as a toast above the rune bar the first few times), and a one-line
- * "F2: what will my runes do?" hint the first time a browser plays.
+ * "F1: what will my runes do?" hint the first time a browser plays.
  *
  * Client only. It reads the game's world and never writes it; its previews step worlds of their own.
  * Drawn like the HUD: 3x5 pixel text in a small canvas at an integer scale (one step under the HUD's
@@ -27,6 +27,7 @@ import * as X from './art/px';
 import { clip, helpModel, wrap, type HandsState, type HelpModel, type HelpRow, type KeyGlyph } from './help-model';
 import { Preview, type Setup } from './help-preview';
 import { helpPadPresses } from './menu-nav';
+import { topBarAdd } from './debug-panel';
 import type { PadSeats } from './gamepad';
 import type { WorldView } from './view';
 
@@ -129,18 +130,18 @@ export class HelpPanel {
     this.btn = document.createElement('button');
     this.btn.className = 'help-btn';
     this.btn.textContent = '?';
-    this.btn.title = 'What will my runes do? (F2)';
+    this.btn.title = 'What will my runes do? (F1)';
     this.btn.addEventListener('click', () => { this.btn.blur(); this.padGlyphs = false; this.seat = -1; this.toggle(); });
-    document.body.appendChild(this.btn);
+    topBarAdd(this.btn, 0);
     this.statsBtn = document.createElement('button');
     this.statsBtn.className = 'help-stats';
-    this.statsBtn.title = 'Show or hide the numbers (Shift+F2)';
+    this.statsBtn.title = 'Show or hide the numbers (Shift+F1)';
     this.statsBtn.addEventListener('click', () => { this.statsBtn.blur(); this.toggleStats(); });
     this.statsBtn.addEventListener('contextmenu', (e) => e.preventDefault());
     document.body.appendChild(this.statsBtn);
     // capture, so it works while a field of the tuning panel has focus
     addEventListener('keydown', (e) => {
-      if (e.code !== 'F2') return;
+      if (e.code !== 'F1') return;
       e.preventDefault();
       if (e.repeat) return;
       if (e.shiftKey) { if (!this.isOpen) this.toggle(); this.toggleStats(); return; }
@@ -311,7 +312,7 @@ export class HelpPanel {
     X.rect(c, 0, 0, PW, H, COL.edge); X.rect(c, 1, 1, PW - 2, H - 2, COL.fill); X.rect(c, 1, 1, PW - 2, 1, COL.hi);
     // title and the key that closes it
     X.text(c, 'WHAT YOUR RUNES DO', 4, 4, COL.gold);
-    this.cap(c, PW - 16, 3, 'F2');
+    this.cap(c, PW - 16, 3, 'F1');
     // the queue (with its keys), or what your hands hold
     let y = 12;
     if (m.mode === 'spell') {
@@ -348,7 +349,7 @@ export class HelpPanel {
     X.rect(c, 4, fy, 58, 9, this.stats ? '#2c2614' : '#1f1c2e');
     X.text(c, `NUMBERS: ${this.stats ? 'ON' : 'OFF'}`, 7, fy + 2, this.stats ? COL.gold : COL.dim);
     if (note) X.text(c, clean(note).slice(0, 29), 66, fy + 2, COL.warn);
-    else X.text(c, 'SHIFT+F2', 66, fy + 2, COL.faint);
+    else X.text(c, 'SHIFT+F1', 66, fy + 2, COL.faint);
     this.tex.source.update();
   }
 
@@ -422,7 +423,7 @@ export class HelpPanel {
     const on = t < this.hintUntil && !this.isOpen;
     this.hint.visible = on;
     if (!on) return;
-    const c = this.hintCv.x, s = 'F2: WHAT WILL MY RUNES DO?', w = s.length * 4 + 5;
+    const c = this.hintCv.x, s = 'F1: WHAT WILL MY RUNES DO?', w = s.length * 4 + 5;
     c.clearRect(0, 0, 124, 13); c._fs = null;
     X.rect(c, 0, 0, w, 11, COL.edge); X.rect(c, 1, 1, w - 2, 9, COL.fill); X.rect(c, 1, 1, w - 2, 1, COL.hi);
     X.text(c, s, 3, 3, Math.floor(t * 2) % 2 ? COL.gold : COL.white);
@@ -470,7 +471,7 @@ function injectStyle(): void {
   styled = true;
   const st = document.createElement('style');
   st.textContent = `
-.help-btn { position: fixed; right: 62px; top: 8px; z-index: 20; font: 700 11px/1 ui-monospace, Consolas, monospace; color: #ffd860; background: rgba(20, 18, 32, 0.85); border: 1px solid #3a3450; border-radius: 4px; padding: 5px 8px; cursor: pointer; }
+.help-btn { font: 700 11px/1 ui-monospace, Consolas, monospace; color: #ffd860; background: rgba(20, 18, 32, 0.85); border: 1px solid #3a3450; border-radius: 4px; padding: 5px 8px; cursor: pointer; }
 .help-btn:hover, .help-btn.on { border-color: #ffd860; }
 .help-stats { position: fixed; z-index: 19; background: transparent; border: 0; padding: 0; cursor: pointer; }
 `;

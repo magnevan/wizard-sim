@@ -33,19 +33,19 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Each scene: a URL, and what to do once the page is up (before the measured window). */
 const SCENES = [
-  { name: 'arena', url: '?autoplay=1', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tune.godMode = true; window.wizardSim.startWave(6); }); } },
+  { name: 'arena', url: '?autoplay=1', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tools.godMode = true; window.wizardSim.startWave(6); }); } },
   {
     name: 'survive-w12', url: '?autoplay=1',
     setup: async (p) => {
       await p.keyboard.press('Digit3'); // Survive, in place (bots keep playing)
       await sleep(300);
-      await p.evaluate(() => { const g = window.wizardSim; g.tune.godMode = true; g.tune.infiniteRunes = true; g.startWave(12); });
+      await p.evaluate(() => { const g = window.wizardSim; g.tools.godMode = true; g.tools.infiniteRunes = true; g.startWave(12); });
     },
   },
-  { name: 'help-open', url: '?autoplay=1&help=1&helpq=fire,arcane', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tune.godMode = true; window.wizardSim.startWave(4); }); } },
+  { name: 'help-open', url: '?autoplay=1&help=1&helpq=fire,arcane', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tools.godMode = true; window.wizardSim.startWave(4); }); } },
   { name: 'tutorial', url: '?room=tutorial&autoplay=1' },
-  { name: 'academy', url: '?room=academy&autoplay=1', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tune.godMode = true; window.wizardSim.startWave(6); }); } },
-  { name: 'academy-hd', url: '?room=academy&autoplay=1&wizard=hd', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tune.godMode = true; window.wizardSim.startWave(6); }); } },
+  { name: 'academy', url: '?room=academy&autoplay=1', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tools.godMode = true; window.wizardSim.startWave(6); }); } },
+  { name: 'academy-hd', url: '?room=academy&autoplay=1&wizard=hd', setup: async (p) => { await p.evaluate(() => { window.wizardSim.tools.godMode = true; window.wizardSim.startWave(6); }); } },
 ];
 
 // Worst case: a late Survive wave, plus 150 extra lights a frame scattered over the view, many of them near walls.
@@ -55,7 +55,7 @@ SCENES.push({
     await p.keyboard.press('Digit3');
     await sleep(300);
     await p.evaluate(() => {
-      const g = window.wizardSim; g.tune.godMode = true; g.tune.infiniteRunes = true; g.startWave(40);
+      const g = window.wizardSim; g.tools.godMode = true; g.tools.infiniteRunes = true; g.startWave(40);
       const L = g.view.lit, cam = g.view.camera, begin = L.begin.bind(L);
       L.begin = (...a) => { begin(...a); for (let i = 0; i < 150; i++) L.light(Math.random() * cam.w, Math.random() * cam.h, 30 + Math.random() * 60, '#ff7a2a', 0.5); };
     });

@@ -14,16 +14,17 @@
  *   ?room=tutorial (or #tutorial)   the tutorial, 19 beats (sim tutorial.ts); &beat=N (or #tutorial-N) starts
  *                 at beat N; with ?autoplay=1 a bot plays it through (screenshots of each beat)
  *   ?scale=N      force the integer pixel scale
- *   ?debug=0      hide the debug line (tick, hash); the backquote key toggles it
  *   ?renderer=webgpu   try WebGPU instead of WebGL
  *   ?scene=rally  with ?room=survive and a headless loop: a Rally in progress, nobody pressing anything (demo.ts)
  *   ?scene=three  the same, but the pick with +1 to three half chosen and some pools refilling
  *   ?scene=enemyattacks  (any room, headless) every enemy frozen at one beat of its attack, the sim not stepping;
  *                 &phase=wind|strike|impact|recover|loop, &face=turns (demo.ts)
  *   ?local=N      the camera follows seat N only, as a networked player's screen would (others get edge arrows)
- *   ?pauseAt=N    pause the sim at tick N (like P in the tuning panel; cosmetic animation keeps running)
- *   ?tune=1       open the tuning panel at boot (F1 or the Tune button toggles it; tune-panel.ts)
- *   ?help=1       open the help panel at boot (F2, the ? button or D-pad up toggles it; help-panel.ts);
+ *   ?pauseAt=N    pause the sim at tick N (like P in the tools panel; cosmetic animation keeps running)
+ *   ?tune=1       open the tuning panel at boot (F2 or the Tune button toggles it; tune-panel.ts)
+ *   ?tools=1      open the tools panel at boot (F3 or the Tools button: cheats, time, spawning; tools-panel.ts)
+ *   ?stats=1      open the stats panel at boot (F4 or the Stats button: tick, hash, fps, meters; stats-panel.ts)
+ *   ?help=1       open the help panel at boot (F1, the ? button or D-pad up toggles it; help-panel.ts);
  *                 ?helpq=water,cold or ?helpq=hands:water shows that queue or those hands, ?helphint=1 the first-session hint,
  *                 ?helpstats=1 its numbers
  *   ?net=bc       online co-op between tabs of this page on one machine (BroadcastChannel), for testing
@@ -48,6 +49,8 @@ import { demoInput, enemyAttackScene, parseDemo, rallyScene, threeScene } from '
 import { PadSeats } from './gamepad';
 import { KeyboardMouse } from './input';
 import { TunePanel } from './tune-panel';
+import { ToolsPanel } from './tools-panel';
+import { StatsPanel } from './stats-panel';
 import { Inspect } from './inspect';
 import { HelpPanel } from './help-panel';
 import { loadSaved } from './tune-io';
@@ -120,9 +123,8 @@ async function boot(): Promise<void> {
   app.ticker.stop();
   host.appendChild(app.canvas);
 
-  let showDebug = params.get('debug') !== '0';
-  hud.style.display = showDebug ? '' : 'none';
-  addEventListener('keydown', (e) => { if (e.code === 'Backquote') { showDebug = !showDebug; hud.style.display = showDebug ? '' : 'none'; } });
+  // #hud only shows a draw error now; the game's numbers are in the Stats panel (F4)
+  hud.style.display = 'none';
   const view = new WorldView();
   view.lightsOn = params.get('lights') !== '0';
   view.setRenderer(app.renderer);
@@ -166,7 +168,9 @@ async function boot(): Promise<void> {
   const pads = new PadSeats();
   const keyboard = new KeyboardMouse(app.canvas, view.camera);
   let recorder = new ReplayRecorder(7, MAX_SEATS);
-  const tune = new TunePanel(world, view.camera, app.canvas, params.get('tune') === '1');
+  const tune = new TunePanel(params.get('tune') === '1');
+  const tools = new ToolsPanel(world, view.camera, app.canvas, params.get('tools') === '1');
+  const stats = new StatsPanel(world, params.get('stats') === '1');
   const inspect = new Inspect(world, view.camera);
   const help = new HelpPanel(world, view, headless ? null : pads, { headless, open: params.get('help') === '1', force: params.get('helpq'), hint: params.get('helphint') === '1', stats: params.get('helpstats') === '1' });
   app.stage.addChild(help.root);
@@ -202,14 +206,15 @@ async function boot(): Promise<void> {
       const s = net!.session!;
       view.setLocalSeat(net!.seat);
       s.hooks = {
-        before: (w) => { net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); tune.afterStep(); help.afterStep(w); } else view.replayStep(w); },
+        before: (w) => { net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); stats.afterStep(); tools.afterStep(); help.afterStep(w); } else view.replayStep(w); },
         preRewind: (w) => view.notePreRewind(w), postRewind: (w) => view.notePostRewind(w, net!.seat),
       };
     });
     if (net) {
-      tune.addSection('Network test', (body) => net!.attachDebug(body, view));
+      tools.addSection('Network test', (body) => net!.attachDebug(body, view));
       const n = net;
       tune.gate = { online: () => n.state === 'playing', canTune: () => n.canTune, propose: (map) => n.proposeTuning(map) };
+      tools.online = () => n.state === 'playing';
       n.onTuning = () => tune.refresh();
     }
   }
@@ -260,11 +265,6 @@ async function boot(): Promise<void> {
       value: () => (view.lightsOn ? 'ON' : 'OFF'),
       adjust: () => { view.lightsOn = !view.lightsOn; setParam('lights', view.lightsOn ? null : '0'); },
     },
-    {
-      label: 'Debug line', blurb: 'Tick, state hash and the key hints, top left (the backquote key too).',
-      value: () => (showDebug ? 'ON' : 'OFF'),
-      adjust: () => { showDebug = !showDebug; hud.style.display = showDebug ? '' : 'none'; setParam('debug', showDebug ? null : '0'); },
-    },
     ...volumeSettings(audio, setParam),
   ];
   menu = new EscMenu({
@@ -287,7 +287,8 @@ async function boot(): Promise<void> {
     view.beforeStep(world);
     step(world, inputs);
     view.afterStep(world);
-    tune.afterStep();
+    stats.afterStep();
+    tools.afterStep();
     help.afterStep(world);
     stepsRun++;
   };
@@ -323,19 +324,19 @@ async function boot(): Promise<void> {
   const frame = () => {
     const now = performance.now();
     stepsRun = 0;
-    if (pauseAt && world.clock[0] >= pauseAt && !tune.paused) tune.paused = true;
+    if (pauseAt && world.clock[0] >= pauseAt && !tools.paused) tools.paused = true;
     if (menuAsk && menuAt && world.clock[0] >= menuAt && !menu!.open) menu!.show(menuSection ?? 'Resume');
     menu!.frame(now);
     if (atkScene) { enemyAttackScene(world, atkPhase, atkFace, now); view.beforeStep(world); }
     else if (net?.state === 'playing') netSteps(now);
     else if (menu!.pausing) { /* the menu is open: the world stands still */ }
-    else if (tune.paused) for (let n = tune.takeSteps(); n > 0; n--) runStep();
+    else if (tools.paused) for (let n = tools.takeSteps(); n > 0; n--) runStep();
     else {
-      acc = Math.min(acc + ((now - last) / 1000) * tune.timeScale, 8 * DT);
+      acc = Math.min(acc + ((now - last) / 1000) * tools.timeScale, 8 * DT);
       while (acc >= DT) { runStep(); acc -= DT; }
     }
     last = now;
-    tune.frame(now);
+    stats.frame(now);
     inspect.frame();
     try {
       const t1 = performance.now();
@@ -355,20 +356,29 @@ async function boot(): Promise<void> {
       schedule(frame);
       return;
     }
-    // the debug line: small, and only hashed when shown (hashing walks every state byte)
-    if (showDebug && world.clock[0] % 6 === 0) hud.textContent = `tick ${world.clock[0]}  hash ${hex(hashWorld(world))}  ${view.camera.scale}×  ${app.renderer.name}
-${view.debug()}${tune.flags()}${net?.flags() ?? ''}` +
-      (autoplay ? '  autoplay' : demo[0] ? '  spell demo' : scripted ? '  scripted run' : '\nLMB walk · RMB Force (hold) · Shift+RMB Area, hold for Place · Space Self · Shift+LMB Weapon · Esc clear (empty: menu) · hold Alt: inspect' +
-        '\nNothing queued: RMB Strike, hold for the weapon’s Heavy · Shift+RMB Special · Shift+LMB your guard’s Retreat (or a hop) · Space Defend: hold to block, tap as a hit lands to parry · F2: what will my runes do?');
     schedule(frame);
   };
   // ?timerloop=1: timers instead of animation frames, so a background tab keeps running (the co-op e2e test).
+  // the Stats panel's Game section: what the old debug line in the corner said
+  const chunks = (str: string): [string, string][] => str.split(/\s{2,}/).filter(Boolean).map((x) => {
+    const k = x.indexOf(' ');
+    return k < 0 ? [x, ''] : [x.slice(0, k), x.slice(k + 1)];
+  });
+  const mode = autoplay ? 'autoplay' : demo[0] ? 'spell demo' : scripted ? 'scripted run' : '';
+  stats.info = () => ({
+    rows: [
+      ['tick', String(world.clock[0])], ['hash', hex(hashWorld(world))], ['scale', `${view.camera.scale}×`], ['renderer', app.renderer.name],
+      ['room', scenario.name], ...(mode ? [['mode', mode] as [string, string]] : []),
+      ...chunks(view.debug()), ...chunks(net?.flags() ?? ''),
+    ],
+    flags: tune.flags() + tools.flags(),
+  });
   const schedule = (headless || params.get('timerloop') === '1') && params.get('rafloop') !== '1' ? (f: () => void) => setTimeout(f, 1000 / 60) : (f: () => void) => requestAnimationFrame(f);
   schedule(frame);
 
   // Expose the recorder for debugging: copy a replay of this session from the console.
   (window as unknown as { wizardSim: unknown }).wizardSim = {
-    world, get recorder() { return recorder; }, tune, view, menu, help, audio, get net() { return net; },
+    world, get recorder() { return recorder; }, tune, tools, stats, view, menu, help, audio, get net() { return net; },
     app, perf, switchScenario, startWave: (n: number) => devStartWave(world, n, 1), art: { newRigState, paint },
   };
 }

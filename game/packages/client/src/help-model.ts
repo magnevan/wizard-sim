@@ -1,5 +1,5 @@
 /**
- * The help panel's data model (F2, help-panel.ts): what the queued runes will do, one row per cast
+ * The help panel's data model (F1, help-panel.ts): what the queued runes will do, one row per cast
  * gesture, or with nothing queued, what your hands do with the weapon and guard you hold.
  *
  * Pure: the rules, the sim's compile() and its config numbers in, plain rows out. No DOM and no

@@ -22,7 +22,7 @@ import { headTip } from './props';
 import * as A from './accent';
 import { depthOf, rowsHidden } from './depth';
 import * as K from './kit';
-import { drawNova } from './novas';
+import { drawNova, hasNova } from './novas';
 import { AimTrail, sprayJet, type JetKind } from './spray-jet';
 import * as RF from './rock-flight';
 import { SPLASH_LIGHT, beamImpact, wallSplash, type SplashKind } from './wall-splash';
@@ -98,6 +98,8 @@ export class Vfx {
   occluders: ((emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number) => void) => void) | null = null;
   /** This frame's walls and furniture, for behind(). */
   private solids: { tex: Texture; x: number; y: number; footY: number; z: number }[] = [];
+  /** The bodies, which only the novas' far pass goes behind (novaDepth). */
+  private softs: { tex: Texture; x: number; y: number; footY: number; z: number }[] = [];
   private cover: { tex: Texture; x: number; y: number; rows: number }[] = [];
   /** behind()'s scratch: small, and grown when something needs more. */
   private d = X.canvas(360, 360);
@@ -351,8 +353,8 @@ export class Vfx {
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
     o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, W, H); o.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
     g._fs = o._fs = null;
-    this.solids.length = 0;
-    this.occluders?.((tex, x, y, footY, solid, z) => { if (solid) this.solids.push({ tex, x, y, footY, z }); });
+    this.solids.length = 0; this.softs.length = 0;
+    this.occluders?.((tex, x, y, footY, solid, z) => { (solid ? this.solids : this.softs).push({ tex, x, y, footY, z }); });
     this.surfaces(w, ct, light);
     this.zones(w, t, light, ct);
     this.groundMarks(w, bodies, t);
@@ -419,12 +421,12 @@ export class Vfx {
    * in. With nothing in front (the usual case) it goes straight on the layer. `spread`: it lies over
    * the ground out to R, so it can also pass behind things sorted behind its centre (art/depth.ts).
    */
-  behind = (ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread = false): void => {
+  behind = (ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread = false, bodiesToo = false): void => {
     if (this.o === this.b || this.o === this.d) { draw(this.o.x); return; } // already inside a pass
     const z = depthOf(ay), x0 = Math.floor(ax - R - 24), x1 = Math.ceil(ax + R + 24), y0 = Math.floor(ay - R - 70), y1 = Math.ceil(ay + R + 24), reach = ay - R * FY;
     const cover = this.cover;
     cover.length = 0;
-    for (const s of this.solids) {
+    for (const s of bodiesToo ? [...this.solids, ...this.softs] : this.solids) {
       const f = s.tex.frame;
       if (!f || s.x > x1 || s.x + f.width < x0 || s.y > y1 || s.y + f.height < y0) continue;
       const rows = rowsHidden(f.height, s.y, s.footY, s.z, z, reach, spread, CHEST);
@@ -457,11 +459,26 @@ export class Vfx {
 
   /** A timed effect, behind what stands in front of where it happens. */
   private fxDepth(f: Fx, t: number, w: World, bodies: BodyView[], light: LightFn): void {
+    if (f.kind === 'nova' && !f.half && hasNova(f.look)) { this.novaDepth(f, t, bodies, light); return; }
     const who = f.who >= 0 && f.who < bodies.length ? bodies[f.who] : null, placed = f.x !== 0 || f.y !== 0, e = t - f.t0;
     if (!DEPTHLESS.has(f.kind) && (placed || who?.on)) {
       const spread = SPREADS.has(f.kind), R = spread ? Math.max(f.r * 16, 64) * 1.2 + 40 : 60;
       this.behind(placed ? gx(f.x) : who!.x, placed ? gy(f.y) : who!.y, R, () => this.drawFx(f, e, t, w, bodies, light), spread);
     } else this.drawFx(f, e, t, w, bodies, light);
+  }
+
+  /**
+   * A nova in two passes (art/novas.ts): the arc behind its centre goes behind every body and prop standing in front
+   * of the centre, the caster included (the user, 2026-11-11: the back of the ring covered the caster in its first
+   * frames); the arc in front goes over them. The wave drags along after a caster who moves, most of the way, while
+   * what it leaves on the floor stays where it was cast.
+   */
+  private novaDepth(f: Fx, t: number, bodies: BodyView[], light: LightFn): void {
+    const e = t - f.t0, mx = gx(f.x), my = gy(f.y), r = f.r * 16, sd = f.seed, g = this.g.x;
+    const b = f.who >= 0 && f.who < bodies.length ? bodies[f.who] : null, drag = b?.on ? 0.8 : 0;
+    const x = lerp(mx, b?.on ? b.x : mx, drag), y = lerp(my, b?.on ? b.y : my, drag), R = Math.max(r, 64) * 1.2 + 40;
+    this.behind(x, y - 1, R, (c) => { drawNova(c, g, f.look, x, y, r, e, t, sd, light, 'far', mx, my); }, true, true);
+    this.behind(x, y + 1, R, (c) => { drawNova(c, g, f.look, x, y, r, e, t, sd, light, 'near', mx, my); });
   }
 
   /** Point the drawing at the scratch layer, cleared. */
@@ -1209,7 +1226,7 @@ export class Vfx {
         return;
       }
       case 'nova': {
-        if (drawNova(o, g, f.look, x, y, r, e, t, sd, light)) return;
+        if (drawNova(o, g, f.look, x, y, r, e, t, sd, light, 'far')) { drawNova(o, g, f.look, x, y, r, e, t, sd, light, 'near'); return; }
         K.nova(o, x, y - 2, t, f.t0, 0.5, r, R, { n: 34, lift: 6, seed: sd });
         light(x, y, r + 30, R[2], 0.8 * (1 - seg(e, 0, 0.6)));
         return;

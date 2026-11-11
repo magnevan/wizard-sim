@@ -8,7 +8,7 @@ export * from './input';
 export * from './rng';
 export * from './trig';
 export * from './state';
-export { compile, WALL, type SpellSpec, type Shape, type Mod } from './compile';
+export { compile, imbueReach, WALL, type SpellSpec, type Shape, type Mod } from './compile';
 export { queueOf, selfTarget, specOf } from './cast';
 export { HIT_KIND, hitKindNow, setHitKind } from './hit';
 export { GUARD_EL, guardCoatLook, guardSize } from './guards';

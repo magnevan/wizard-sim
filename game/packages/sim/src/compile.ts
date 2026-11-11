@@ -8,13 +8,24 @@
  */
 import { rules, type Cast, type Element } from '@wizard-sim/rules';
 import { EL, countsOf } from './elements';
+import { SHAPES } from './config';
+
+/** Is this imbued burst a line? Earth makes it one, leading it or lending it its shape (a Life burst with Earth). */
+export const imbueLine = (spec: SpellSpec): boolean => spec.form === EL.earth || (spec.form === EL.life && spec.counts[EL.earth - 1] > 0);
+
+/** How far the imbued burst reaches, u: an Earth line is long, a Lightning-led one forks further than the cone. */
+export function imbueReach(spec: SpellSpec): number {
+  const extra = Math.max(0, spec.power - 1);
+  if (imbueLine(spec)) return SHAPES.imbueLineRange + SHAPES.imbueLinePerRune * extra;
+  return (spec.form === EL.lightning ? SHAPES.forkRange : SHAPES.imbueRange) + SHAPES.imbuePerRune * extra;
+}
 
 export type Shape =
   | 'beam' | 'spray' | 'arc' | 'missile' | 'shards'      // Force
   | 'nova' | 'quake' | 'discharge'                        // Area
   | 'patch' | 'blast' | 'geyser' | 'strike' | 'spring'    // Place
   | 'swing' | 'palm' | 'imbue'                            // Weapon (swing: the bare staff; imbue: the imbued burst)
-  | 'self' | 'blink'
+  | 'self' | 'blink' | 'store'
   | 'wave' | 'ring' | 'arcwall' | 'drawnwall' | 'ward' | 'guard' // Shield
   | 'turret' | 'orbitals' | 'motes' | 'glyph' | 'lineglyph' | 'lens' | 'wand' | 'weapon' | 'aura' | 'double' // Sigil
   | 'todo';                                               // in the rules, not in the engine yet
@@ -37,7 +48,7 @@ export interface SpellSpec {
   mod: Mod;
   /** A Life spell: it heals and never harms (direction L3). */
   heal: boolean;
-  /** Water + fire (scald) / water + cold (freeze) in one spell. */
+  /** Water + fire in one spell (scald); Ice in the spell (freeze: it douses but never soaks, so it can't set up its own freeze). */
   scald: boolean;
   freeze: boolean;
   channel: boolean;
@@ -49,12 +60,14 @@ export interface SpellSpec {
 }
 
 /** What a Shield structure is made of. */
-export const WALL = { none: 0, rock: 1, barrier: 2, curtain: 3 } as const;
+export const WALL = { none: 0, rock: 1, barrier: 2, curtain: 3, ice: 4 } as const;
+/** Rock and ice walls are solid: they stop bodies and shots, and are paid once (stuff), not drained. */
+export const solidWall = (type: number): boolean => type === WALL.rock || type === WALL.ice;
 
-const MOD: Record<string, Mod> = { water: 'push', cold: 'shatter', lightning: 'chain', arcane: 'burst' };
+const MOD: Record<string, Mod> = { water: 'push', cold: 'shatter', ice: 'shatter', lightning: 'chain', arcane: 'burst' };
 
 /** The element lending its shape to a Life spell: most runes, ties in the rules' LIFE_LEND_ORDER. */
-const LEND_ORDER: Element[] = ['earth', 'lightning', 'cold', 'fire', 'water'];
+const LEND_ORDER: Element[] = ['earth', 'ice', 'lightning', 'cold', 'fire', 'water'];
 function lendOf(counts: Uint8Array): Element | null {
   let best: Element | null = null, n = 0;
   for (const e of LEND_ORDER) { const c = counts[EL[e] - 1]; if (c > n) { best = e; n = c; } }
@@ -69,7 +82,7 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
   const heal = d.form === 'life';
   // A support spell carries no harmful mixes.
   const scald = !heal && has('water') && has('fire');
-  const freeze = !heal && has('water') && has('cold');
+  const freeze = !heal && has('ice');
   const spec: SpellSpec = {
     title: d.title, cast, shape: 'todo', counts, form, formN: form ? counts[form - 1] : 0, sizeN: form ? counts[form - 1] : 0, power: queue.length,
     look: d.look ? (EL as Record<string, number>)[d.look] ?? form : form,
@@ -79,9 +92,8 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
   if (!queue.length) { if (cast === 'conjure') spec.shape = 'swing'; return spec; } // an empty Weapon cast: a plain staff swing
   const lookName = d.look as string | null;
   if (lookName === 'scald') spec.look = EL.water;
-  if (lookName === 'freeze') spec.look = EL.cold;
 
-  if (has('shield')) spec.wall = has('earth') ? WALL.rock : queue.some((e) => e !== 'shield') ? WALL.curtain : WALL.barrier;
+  if (has('shield')) spec.wall = has('earth') ? WALL.rock : has('ice') ? WALL.ice : queue.some((e) => e !== 'shield') ? WALL.curtain : WALL.barrier;
   if (cast === 'self') {
     spec.shape = d.id === 'elements/self' ? 'self' : d.id === 'shield/self' ? 'ward' : queue.length > 1 ? 'aura' : 'double'; // Sigil alone on yourself: the Double
     return spec;
@@ -91,11 +103,11 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
       const L = lendOf(counts);
       if (L) spec.sizeN = counts[EL[L] - 1];
       if (cast === 'force') {
-        spec.shape = L === 'lightning' ? 'arc' : L === 'cold' ? 'shards' : L === 'water' || L === 'fire' ? 'spray' : L === 'earth' ? 'missile' : 'beam';
+        spec.shape = L === 'lightning' ? 'arc' : L === 'ice' ? 'shards' : L === 'water' || L === 'fire' || L === 'cold' ? 'spray' : L === 'earth' ? 'missile' : 'beam';
         spec.channel = spec.shape === 'beam' || spec.shape === 'spray' || spec.shape === 'arc';
         spec.charge = L === 'earth';
         spec.mod = L === 'water' ? 'push' : null;
-      } else spec.shape = cast === 'area' ? 'nova' : cast === 'place' ? 'spring' : 'palm';
+      } else spec.shape = cast === 'area' ? 'nova' : cast === 'place' ? 'spring' : L === 'earth' ? 'imbue' : 'palm'; // Earth lends the burst its line: a healing tremor
       return spec;
     }
     case 'earth':
@@ -110,22 +122,28 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
       spec.shape = cast === 'force' ? 'arc' : cast === 'area' ? 'discharge' : cast === 'place' ? 'strike' : 'imbue';
       spec.channel = cast === 'force';
       return spec;
+    case 'ice':
+      // Ice shards (a freezing spray was too strong), the Ice ring, Caltrops, the Ice burst.
+      spec.shape = cast === 'force' ? 'shards' : cast === 'area' ? 'nova' : cast === 'place' ? 'patch' : 'imbue';
+      return spec;
     case 'water': case 'fire': case 'cold':
       if (cast === 'force') {
-        spec.shape = freeze ? 'shards' : 'spray'; // Ice shards: the freezing spray was too strong
-        spec.channel = !freeze;
+        spec.shape = 'spray';
+        spec.channel = true;
       } else spec.shape = cast === 'area' ? 'nova' : cast === 'place' ? 'patch' : 'imbue';
-      // Water's own spray and splash push, as the rules say (SHAPES.push a Water rune); steam and ice don't
-      if (d.form === 'water' && !scald && !freeze && (cast === 'force' || cast === 'area')) spec.mod = 'push';
+      // Water's own spray and splash push, as the rules say (SHAPES.push a Water rune); steam doesn't
+      if (d.form === 'water' && !scald && (cast === 'force' || cast === 'area' || cast === 'conjure')) spec.mod = 'push'; // the Water burst pushes too
       return spec;
     case 'sigil':
-      if (cast === 'force') spec.shape = d.sub ? 'turret' : 'blink';
+      if (cast === 'force') spec.shape = d.sub ? 'turret' : 'store'; // Sigil alone: the stored spell (Blink moved to Shield)
       else if (cast === 'area') spec.shape = d.sub ? 'orbitals' : 'motes';
       else if (cast === 'place') spec.shape = d.sub ? (d.drag ? 'lineglyph' : 'glyph') : 'lens';
       else spec.shape = d.sub ? 'weapon' : 'wand';
       return spec;
     case 'shield':
-      if (cast === 'force') spec.shape = 'wave';
+      // Shield on Force is Blink (the user, 2026-11-11: it's defensive, and every other Sigil spell binds a rune); with elements
+      // it leaves their Area spell where you stood, a little weaker (effects.ts): the wave it replaced had no job of its own
+      if (cast === 'force') spec.shape = 'blink';
       else if (cast === 'area') spec.shape = 'ring';
       else if (cast === 'place') spec.shape = d.drag ? 'drawnwall' : 'arcwall';
       else if (cast === 'conjure') spec.shape = 'guard'; // Bulwark (with Earth) or Buckler

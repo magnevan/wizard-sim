@@ -20,7 +20,7 @@
  *   Mirror buckler (S)     narrow, glances shots / reflects one   Backstep 3u   Light: full speed blocking, widest parry
  *   Bulwark (S+E)          wide, stops melee / bashes down        Shove step    Anchored: no knockback (and 15 % slower)
  *   Ember targe (S+F)      thorns / a burst of flame              Flame step    Warm: no chill, freeze or burning; dry at once
- *   Rime kite (S+C)        chills melee attackers / freezes them  Ice slide     Sure-footed: no slipping on ice
+ *   Rime kite (S+C)        chills melee attackers / freezes them  Ice slide     Skater: glides on ice
  *   Spark ring (S+L)       weakest / chain discharge              Blink         Grounded: chain lightning skips you
  *   Tide shield (S+W)      shoves and soaks / a shoving wave      Surge         Quenched: can't burn
  *   Prism (S+A)            stores what it blocks as charge /      Phase         Clear: allies' beams and sprays don't hurt you
@@ -30,7 +30,7 @@
  */
 import { rules } from '@wizard-sim/rules';
 import { ARCHETYPES } from './archetypes';
-import { ARMS, STATUS, T } from './config';
+import { ARMS, STATUS, STRUCT, T } from './config';
 import { EL, N_EL, formOf } from './elements';
 import { cellAt, floorDisc, hit, hitOpts, spawnZone, touchFloor, zap, type Payload } from './effects';
 import { inCone, len } from './geom';
@@ -59,8 +59,8 @@ const RES_TABLE: readonly (readonly number[])[] = [
   /* leaf    */ [0, -0.25, 0, 0, 1],
 ];
 /** The guard an element leads to, and the resistance column that is "its own" (-1: Water and Life deal no damage). */
-const GUARD_OF: Record<number, number> = { [EL.earth]: GUARD.bulwark, [EL.fire]: GUARD.ember, [EL.cold]: GUARD.rime, [EL.lightning]: GUARD.spark, [EL.water]: GUARD.tide, [EL.arcane]: GUARD.prism, [EL.life]: GUARD.leaf };
-const OWN_COL: Record<number, number> = { [EL.earth]: RES.physical, [EL.fire]: RES.fire, [EL.cold]: RES.cold, [EL.lightning]: RES.lightning, [EL.arcane]: RES.arcane };
+const GUARD_OF: Record<number, number> = { [EL.earth]: GUARD.bulwark, [EL.fire]: GUARD.ember, [EL.cold]: GUARD.rime, [EL.ice]: GUARD.rime, [EL.lightning]: GUARD.spark, [EL.water]: GUARD.tide, [EL.arcane]: GUARD.prism, [EL.life]: GUARD.leaf };
+const OWN_COL: Record<number, number> = { [EL.earth]: RES.physical, [EL.fire]: RES.fire, [EL.cold]: RES.cold, [EL.ice]: RES.cold, [EL.lightning]: RES.lightning, [EL.arcane]: RES.arcane };
 /** A guard's colour element (the view, events). */
 export const GUARD_EL: readonly number[] = [0, EL.earth, EL.shield, EL.fire, EL.cold, EL.lightning, EL.water, EL.arcane, EL.life];
 
@@ -110,6 +110,19 @@ export function resist(w: World, t: number, col: number): number {
  * The share of `col` damage body t takes: 1 / (1 + r), or 1 - r for a weakness. r is its guard's
  * resistance (seats only) plus what a heal lent it (any body).
  */
+/** taken, with `x` more resistance points on top (a ward's): every point on the same scale, added. Column -1 has no other resistance. */
+export function takenPlus(w: World, t: number, col: number, x: number): number {
+  const b = w.bodies, r = (col >= 0 ? resist(w, t, col) + (b.blessT[t] > 0 ? b.bless[t * 5 + col] : 0) : 0) + x;
+  return r >= 0 ? 1 / (1 + r) : 1 - r;
+}
+
+/** The resistance points seat `seat`'s ward gives against element `id`: wardPerRune a rune of it (Cold and Ice are one family). */
+export function wardPoints(w: World, seat: number, id: number): number {
+  const e = w.seats.wardEls, at = seat * N_EL;
+  const n = id === EL.cold || id === EL.ice ? Math.max(e[at + EL.cold - 1], e[at + EL.ice - 1]) : e[at + id - 1];
+  return n * STRUCT.wardPerRune;
+}
+
 export function taken(w: World, t: number, col: number): number {
   if (col !== RES.fire && w.bodies.kind[t] === KIND.enemy && ARCHETYPES[w.bodies.arch[t]].onlyFire) return 0; // a bramble: blows bounce off
   const b = w.bodies, r = resist(w, t, col) + (b.blessT[t] > 0 ? b.bless[t * 5 + col] : 0);
@@ -117,24 +130,22 @@ export function taken(w: World, t: number, col: number): number {
 }
 
 /**
- * A heal carrying elements besides Life lends whoever it heals each one's guard strengths (never its
- * weaknesses, as under the Leaf: Life preserves): blessShare of the row per rune, for blessTime s.
- * So every element in a heal does something, the ones not lending the shape included.
+ * The imbue (spell audit, 2026-11-11): a heal carrying elements besides Life builds up resistance in whoever it heals,
+ * like frost builds chill, and it decays (tickStatuses). Each other element's rune adds blessRate x the hit's scale to
+ * its guard's strengths, weighted by the row (its strongest column in full, the others by their share of it; never its
+ * weaknesses: Life preserves). Resistance is hyperbolic (taken), so there's no cap, but the decay is proportional, so a
+ * steady heal settles at blessRate x runes / blessDecay and fades soon after it stops. Every element in a heal does something.
  */
-export function bless(w: World, t: number, els: Uint8Array, at: number): void {
+export function bless(w: World, t: number, els: Uint8Array, at: number, scale = 1): void {
   const b = w.bodies;
-  let any = false;
   for (let id = 1; id <= N_EL; id++) {
     const n = els[at * N_EL + id - 1], g = GUARD_OF[id];
     if (!n || !g || id === EL.life) continue;
-    if (!any && b.blessT[t] <= 0) b.bless.fill(0, t * 5, t * 5 + 5); // a lapsed blessing starts afresh
-    any = true;
-    for (let col = 0; col < 5; col++) {
-      const v = RES_TABLE[g][col];
-      if (v > 0) b.bless[t * 5 + col] = Math.max(b.bless[t * 5 + col], ARMS.blessShare * n * v);
-    }
+    const row = RES_TABLE[g], top = Math.max(...row);
+    if (top <= 0) continue;
+    for (let col = 0; col < 5; col++) if (row[col] > 0) b.bless[t * 5 + col] += ARMS.blessRate * n * scale * (row[col] / top);
+    b.blessT[t] = 1;
   }
-  if (any) b.blessT[t] = T(ARMS.blessTime);
 }
 /** The resistance column of an element's damage (Earth is physical), or -1. */
 export const colOf = (id: number): number => OWN_COL[id] ?? -1;
@@ -195,7 +206,7 @@ export function hasPassive(w: World, i: number, g: number): boolean {
   if (!lead) return false;
   if (lead === g) return true;
   const id = GUARD_EL[g];
-  return g !== GUARD.mirror && extra(w, i, id) > 0;
+  return g !== GUARD.mirror && (extra(w, i, id) > 0 || (g === GUARD.rime && extra(w, i, EL.ice) > 0)); // Ice mixed in is Rime's too
 }
 /** Anchored (Bulwark): no knockback while carried. */
 export const anchored = (w: World, i: number): boolean => hasPassive(w, i, GUARD.bulwark);
@@ -203,7 +214,7 @@ export const anchored = (w: World, i: number): boolean => hasPassive(w, i, GUARD
 export const warm = (w: World, i: number): boolean => hasPassive(w, i, GUARD.ember) || resist(w, i, RES.cold) >= ARMS.resStatus;
 /** Can't burn: an own-element fire resistance (Ember), or Quenched (Tide). */
 export const unburnable = (w: World, i: number): boolean => hasPassive(w, i, GUARD.tide) || resist(w, i, RES.fire) >= ARMS.resStatus;
-/** Never slips on ice (Rime). */
+/** Skates on ice: knockback carries on (Rime's Ice slide). Nobody else slides. */
 export const sureFooted = (w: World, i: number): boolean => hasPassive(w, i, GUARD.rime);
 /** Grounded (Spark): chain lightning skips this seat. */
 export const grounded = (w: World, i: number): boolean => hasPassive(w, i, GUARD.spark);

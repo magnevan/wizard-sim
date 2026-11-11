@@ -5,7 +5,7 @@
   const CAST_NAME = Object.fromEntries(C.CASTS.map((c) => [c[0], c[1]]));
   const ROW_HINT = {
     shield: 'Shield in the queue: barriers (alone: a mirror)', sigil: 'Sigil in the queue: devices that bind a Sigil rune (alone: blink, motes, lens, Double, wand)', earth: 'Earth, no Shield, Sigil or Ligil', arcane: 'Arcane, none of the above', life: 'Life, no Shield or Sigil: support spells; the others lend their shape',
-    lightning: 'Lightning, none of the above', water: 'only spray elements, mostly Water', fire: 'only spray elements, mostly Fire', cold: 'only spray elements, mostly Cold',
+    ice: 'Ice (Water + Cold make one rune), none of the above: shards', lightning: 'Lightning, none of the above', water: 'only spray elements, mostly Water', fire: 'only spray elements, mostly Fire', cold: 'only spray elements, mostly Cold',
   };
 
   // ---------- animated canvases ----------
@@ -135,6 +135,7 @@
     let q = seed(f), why = '';
     for (const e of state.overlay) {
       const r = C.addElement(q, e);
+      if (r.kind === 'combine') { q = r.queue; why = why || r.event; continue; } // Water + Cold make Ice
       if (r.queue.length <= q.length) { why = `${C.ELEMENTS[e].name}: ${r.event ? r.event.toLowerCase() : 'no room'}`; continue; }
       if (r.queue.length === q.length && r.event) { why = r.event; }
       q = r.queue;

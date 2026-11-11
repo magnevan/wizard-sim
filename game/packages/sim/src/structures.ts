@@ -2,7 +2,7 @@
  * Shield and Sigil: things that stay in the world or on you.
  *
  * Shield (protects, and turns magic back):
- *   Force  a wave that sweeps forward (Fault line with Earth, Tidal wave with Water, Shove wave alone).
+ *   Force  Blink (effects.ts); with elements it leaves their Area spell where you stood.
  *   Area   a closed ring around you.   Place  an arc around you facing the cursor, or a wall you drag.
  *   Self   a ward: resist its elements (Mending with Life), stone armour with Earth, a mirror alone.
  *   Rock is stuff (hit points, paid once); barriers, curtains and wards are energy: they drain the
@@ -18,16 +18,16 @@
  *   Weapon a conjured weapon (Stone maul, Arcane hook...). Alone: the sculpting wand.
  *   Self   an aura around you (fire burns, cold chills, life regenerates, lightning hastes...).
  */
-import { compile, WALL, type SpellSpec } from './compile';
-import { BODY, PERKS, RHYTHM, SHAPES, STRUCT, T } from './config';
-import { EL, N_EL, queueFromCounts } from './elements';
-import { burstEvent, channelTick, fireSpell, heldBlow, hit, hitOpts, nearest, payloadOf, stored } from './effects';
+import { compile, WALL, solidWall, type SpellSpec } from './compile';
+import { BODY, PERKS, RHYTHM, SHAPES, STATUS, STRUCT, T } from './config';
+import { EL, KEYED_EL, N_EL, poolCost, queueFromCounts } from './elements';
+import { burstEvent, channelTick, fireSpell, heldBlow, hit, hitOpts, nearest, oneShotBlast, payloadOf, stored } from './effects';
 import { len } from './geom';
-import { HIT_KIND, addChill, addKnock, ignite, setHitKind, tryFreeze } from './hit';
+import { HIT_KIND, addChill, addKnock, addSoak, ignite, setHitKind, tryFreeze } from './hit';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { boundSigil, drainShield, energyLoad, segDist } from './walls';
 import { conjureGuard } from './guards';
-import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, TERRAIN, WARD, alive, freeDevice, lingerLife, lingerSize, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
+import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, QUEUE_MAX, TERRAIN, WARD, alive, freeDevice, lingerLife, lingerSize, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
 
 /** The spell minus its form element: what a Sigil device carries, or what a Shield structure is coated in. */
 function restCounts(spec: SpellSpec): Uint8Array {
@@ -37,6 +37,9 @@ function restCounts(spec: SpellSpec): Uint8Array {
 }
 
 // ---- Shield ------------------------------------------------------------------------------------
+
+/** One Ice rune, as a hit: the Spike aura's stab. */
+const SPIKE = payloadOf(compile(['ice'], 'place'));
 
 function raiseWall(w: World, owner: number, type: number, els: Uint8Array, x1: number, y1: number, x2: number, y2: number, hp: number): boolean {
   const wl = w.walls, now = w.clock[0];
@@ -56,8 +59,10 @@ function raiseWall(w: World, owner: number, type: number, els: Uint8Array, x1: n
 }
 
 function wallHp(spec: SpellSpec): number {
-  const earth = spec.counts[EL.earth - 1];
-  return spec.wall === WALL.rock ? STRUCT.rockHp + STRUCT.rockHpPerRune * (earth - 1) : STRUCT.energyHp + STRUCT.energyHpPerRune * (spec.power - 1);
+  const earth = spec.counts[EL.earth - 1], ice = spec.counts[EL.ice - 1];
+  if (spec.wall === WALL.rock) return STRUCT.rockHp + STRUCT.rockHpPerRune * (earth - 1);
+  if (spec.wall === WALL.ice) return STRUCT.iceHp + STRUCT.iceHpPerRune * (ice - 1); // weaker than rock: a spike barrier
+  return STRUCT.energyHp + STRUCT.energyHpPerRune * (spec.power - 1);
 }
 
 /** Segments along an arc of `radius` around (cx, cy), centred on `face`, spanning +-half turns. */
@@ -74,10 +79,6 @@ function drawnWall(w: World, src: number, spec: SpellSpec, x1: number, y1: numbe
   for (let k = 0; k < n; k++) {
     if (!raiseWall(w, src, spec.wall, spec.counts, x1 + ((x2 - x1) * k) / n, y1 + ((y2 - y1) * k) / n, x1 + ((x2 - x1) * (k + 1)) / n, y1 + ((y2 - y1) * (k + 1)) / n, hp)) break;
   }
-}
-
-function spawnWave(w: World, src: number, spec: SpellSpec, face: number): void {
-  spawnFront(w, src, spec.counts, face, STRUCT.waveHalf + STRUCT.waveHalfPerRune * (spec.formN - 1), 1, STRUCT.waveRange);
 }
 
 /** A front sweeping forward from `src` (a Shield wave, or a weapon's wave: the trident slash, the fire wave, the fissure). */
@@ -149,8 +150,8 @@ const deviceSpell = (w: World, k: number, cast: 'force' | 'place'): SpellSpec =>
 /** A seat pays a device's shot from its pool: `share` of every rune of the payload, or nothing (it stalls). */
 function payShot(w: World, owner: number, els: Uint8Array, at: number, share = 1): boolean {
   const s = w.seats;
-  for (let id = 1; id <= N_EL; id++) if (s.runes[owner * N_EL + id - 1] < els[at * N_EL + id - 1] * share) return false;
-  for (let id = 1; id <= N_EL; id++) s.runes[owner * N_EL + id - 1] -= els[at * N_EL + id - 1] * share;
+  for (let id = 1; id <= KEYED_EL; id++) if (s.runes[owner * N_EL + id - 1] < poolCost(els, at, id) * share) return false;
+  for (let id = 1; id <= KEYED_EL; id++) s.runes[owner * N_EL + id - 1] -= poolCost(els, at, id) * share;
   return true;
 }
 
@@ -169,13 +170,12 @@ function turretGap(w: World, k: number): number {
 
 // ---- casting -----------------------------------------------------------------------------------
 
-export const STRUCTURE_SHAPES: readonly string[] = ['wave', 'ring', 'arcwall', 'drawnwall', 'ward', 'guard', 'turret', 'orbitals', 'motes', 'glyph', 'lineglyph', 'lens', 'wand', 'weapon', 'aura', 'double'];
+export const STRUCTURE_SHAPES: readonly string[] = ['store', 'wave', 'ring', 'arcwall', 'drawnwall', 'ward', 'guard', 'turret', 'orbitals', 'motes', 'glyph', 'lineglyph', 'lens', 'wand', 'weapon', 'aura', 'double'];
 
 /** Raises a structure. (tx, ty) is the clamped cursor; (hx, hy) where a Place drag started. */
 export function castStructure(w: World, src: number, spec: SpellSpec, face: number, tx: number, ty: number, hx: number, hy: number, on = src): void {
   const b = w.bodies, s = w.seats, x = b.x[src], y = b.y[src];
   switch (spec.shape) {
-    case 'wave': spawnWave(w, src, spec, face); break;
     case 'ring': arcWall(w, src, spec, x, y, STRUCT.ringRadius, 0, 0.5, STRUCT.ringSegs); break;
     case 'arcwall': arcWall(w, src, spec, x, y, STRUCT.arcRadius, face, STRUCT.arcHalf, STRUCT.arcSegs); break;
     case 'drawnwall': drawnWall(w, src, spec, hx, hy, tx, ty); break;
@@ -187,15 +187,21 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
       break;
     }
     case 'orbitals': {
+      // feeding a ring you already have costs only its elements: the ring's one Sigil rune is already bound, so this cast's comes back
+      let had = false;
+      for (let j = 0; j < MAX_DEVICES; j++) if (w.devices.type[j] === DEVICE.orbital && w.devices.owner[j] === src) had = true;
       const k = spawnDevice(w, src, DEVICE.orbital, spec, x, y);
+      if (had && k >= 0) giveRune(w, src);
       if (k >= 0) {
         let n = 0; for (let e = 0; e < N_EL; e++) if (e !== EL.sigil - 1) n += spec.counts[e]; w.devices.charges[k] = Math.max(1, n);
+        trimOrbit(w, src, k);
         // stacked orbitals share one ring: the new one takes up the phase of the caster's others
         for (let j = 0; j < MAX_DEVICES; j++) if (j !== k && w.devices.type[j] === DEVICE.orbital && w.devices.owner[j] === src) { w.devices.phase[k] = w.devices.phase[j]; break; }
       }
       break;
     }
     case 'motes': s.motes[src] = STRUCT.motes; break;
+    case 'store': if (!s.storeLen[src]) { s.storeArm[src] = s.storeArm[src] ? 0 : 1; s.storeBorn[src] = w.clock[0]; } break; // arm (or disarm): the next spell goes into the staff (cast.ts)
     case 'glyph': { const k = spawnDevice(w, src, DEVICE.glyph, spec, tx, ty); if (k >= 0) w.devices.timer[k] = T(STRUCT.glyphArm); break; }
     case 'lineglyph': { const k = spawnDevice(w, src, DEVICE.lineglyph, spec, hx, hy, tx, ty); if (k >= 0) w.devices.timer[k] = T(STRUCT.glyphArm); break; }
     case 'lens': {
@@ -206,7 +212,7 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
     }
     case 'wand': s.wand[src] = 1; s.weapon[src] = 0; s.wandBorn[src] = w.clock[0]; break;
     case 'weapon': {
-      s.wand[src] = 0; s.weapon[src] = spec.sub; s.wandBorn[src] = w.clock[0];
+      s.wand[src] = 0; s.weapon[src] = spec.sub; s.wandBorn[src] = w.clock[0]; // Ice conjures the Ice bow (hands.ts)
       s.weaponEls.set(restCounts(spec), src * N_EL); s.weaponUses[src] = STRUCT.weaponUses;
       break;
     }
@@ -215,6 +221,20 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
     default: break;
   }
   w.events.push({ tick: w.clock[0], kind: 'cast', who: src, x, y, text: spec.title, look: spec.look });
+}
+
+/**
+ * Your orbit is one device (spell audit, 2026-11-11, the user: stacked orbitals bound runes "in a weird way"): every orbital
+ * cast adds its orbs to your ring, and the whole ring binds one Sigil rune (boundSigil). Past orbitMax orbs, the oldest go.
+ */
+function trimOrbit(w: World, src: number, keep: number): void {
+  const dv = w.devices;
+  for (;;) {
+    let total = 0, oldest = -1;
+    for (let j = 0; j < MAX_DEVICES; j++) if (dv.type[j] === DEVICE.orbital && dv.owner[j] === src) { total += dv.charges[j]; if (j !== keep && (oldest < 0 || dv.born[j] < dv.born[oldest])) oldest = j; }
+    if (total <= STRUCT.orbitMax || oldest < 0) return;
+    if (--dv.charges[oldest] <= 0) dv.type[oldest] = DEVICE.none;
+  }
 }
 
 /** Seat `src`'s Double appears at its left hand (one at a time: an older one goes). Returns its body, or -1 if no slot was free. */
@@ -241,8 +261,8 @@ export function weaponSwing(w: World, src: number, face: number): boolean {
 export function payDouble(w: World, src: number, spec: SpellSpec): boolean {
   const s = w.seats, d = s.double[src];
   if (d < 0 || w.bodies.kind[d] !== KIND.double) return false;
-  for (let id = 1; id <= N_EL; id++) if (s.runes[src * N_EL + id - 1] < spec.counts[id - 1] * STRUCT.doubleShare) return false;
-  for (let id = 1; id <= N_EL; id++) s.runes[src * N_EL + id - 1] -= spec.counts[id - 1] * STRUCT.doubleShare;
+  for (let id = 1; id <= KEYED_EL; id++) if (s.runes[src * N_EL + id - 1] < poolCost(spec.counts, 0, id) * STRUCT.doubleShare) return false;
+  for (let id = 1; id <= KEYED_EL; id++) s.runes[src * N_EL + id - 1] -= poolCost(spec.counts, 0, id) * STRUCT.doubleShare;
   return true;
 }
 
@@ -267,7 +287,7 @@ export function doubleRepeat(w: World, src: number, spec: SpellSpec, tx: number,
  *   so a new device simply replaces the oldest.
  */
 const HOVER = 1.0;
-const Q = { device: 1, double: 2, onYou: 3 } as const;
+const Q = { device: 1, double: 2, onYou: 3, store: 4 } as const;
 
 function giveRune(w: World, seat: number): void {
   const k = seat * N_EL + EL.sigil - 1;
@@ -278,7 +298,8 @@ function removeOne(w: World, seat: number, what: number, k: number): void {
   const s = w.seats, b = w.bodies;
   if (what === Q.device) w.devices.type[k] = DEVICE.none;
   else if (what === Q.double) { const d = s.double[seat]; if (d >= 0 && b.kind[d] === KIND.double) b.kind[d] = KIND.none; s.double[seat] = -1; }
-  else { s.wand[seat] = 0; s.weapon[seat] = 0; s.aura[seat] = 0; s.motes[seat] = 0; }
+  else if (what === Q.store) { s.storeArm[seat] = 0; s.storeLen[seat] = 0; }
+  else { s.wand[seat] = 0; s.weapon[seat] = 0; s.aura[seat] = 0; s.motes[seat] = 0; s.storeArm[seat] = 0; s.storeLen[seat] = 0; }
   const x = what === Q.device ? w.devices.x[k] : what === Q.double ? b.x[k] : b.x[seat], y = what === Q.device ? w.devices.y[k] : what === Q.double ? b.y[k] : b.y[seat];
   w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x, y, amount: 1, look: EL.sigil, text: 'dismissed' });
 }
@@ -294,7 +315,7 @@ function hovered(w: World, seat: number, x: number, y: number): [number, number]
   }
   const d = s.double[seat];
   if (d >= 0 && b.kind[d] === KIND.double && len(x - b.x[d], y - b.y[d]) < bd) { bd = len(x - b.x[d], y - b.y[d]); best = [Q.double, d]; }
-  const onYou = s.wand[seat] || s.weapon[seat] || s.aura[seat] > 0 || s.motes[seat] || dv.type.some((t, k) => t === DEVICE.orbital && dv.owner[k] === seat);
+  const onYou = s.wand[seat] || s.weapon[seat] || s.aura[seat] > 0 || s.motes[seat] || s.storeArm[seat] || s.storeLen[seat] || dv.type.some((t, k) => t === DEVICE.orbital && dv.owner[k] === seat);
   if (onYou && len(x - b.x[seat], y - b.y[seat]) < bd) best = [Q.onYou, seat];
   return best;
 }
@@ -329,7 +350,7 @@ export function dismissShieldAt(w: World, seat: number, x: number, y: number): b
     return true;
   }
   if (best < 0) return false;
-  const born = wl.born[best], look = wl.type[best] === WALL.rock ? EL.earth : EL.shield;
+  const born = wl.born[best], look = wl.type[best] === WALL.rock ? EL.earth : wl.type[best] === WALL.ice ? EL.ice : EL.shield;
   for (let k = 0; k < MAX_WALLS; k++) {
     if (!wl.type[k] || wl.owner[k] !== seat || wl.born[k] !== born) continue;
     w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.6, look, text: 'dismissed' });
@@ -347,8 +368,10 @@ export function recallOldest(w: World, seat: number): boolean {
   const d = s.double[seat];
   if (d >= 0 && b.kind[d] === KIND.double && s.dblBorn[seat] < born) { born = s.dblBorn[seat]; what = Q.double; idx = d; }
   if ((s.wand[seat] || s.weapon[seat]) && s.wandBorn[seat] < born) { born = s.wandBorn[seat]; what = Q.onYou; idx = seat; }
+  if ((s.storeArm[seat] || s.storeLen[seat]) && s.storeBorn[seat] < born) { born = s.storeBorn[seat]; what = Q.store; idx = seat; }
   if (!what) return false;
   if (what === Q.onYou) { s.wand[seat] = 0; s.weapon[seat] = 0; w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: b.x[seat], y: b.y[seat], amount: 1, look: EL.sigil, text: 'dismissed' }); }
+  else if (what === Q.device && w.devices.type[idx] === DEVICE.orbital) { for (let k = 0; k < MAX_DEVICES; k++) if (w.devices.type[k] === DEVICE.orbital && w.devices.owner[k] === seat) removeOne(w, seat, Q.device, k); } // the ring is one device
   else removeOne(w, seat, what, idx);
   giveRune(w, seat);
   return true;
@@ -372,6 +395,7 @@ export function spendMote(w: World, seat: number, form: number): void {
   const s = w.seats;
   if (!s.motes[seat] || !form) return;
   s.motes[seat]--;
+  if (form === EL.ice) form = EL.cold; // an Ice spell's mote gives back toward Cold (Ice has no pool)
   const k = seat * N_EL + form - 1;
   s.runes[k] = Math.min(runeMax(w, seat, form), s.runes[k] + STRUCT.moteRefund);
 }
@@ -382,14 +406,18 @@ export function tickStructures(w: World): void {
   tickDoubleMoves(w);
   const b = w.bodies, s = w.seats, wl = w.walls, v = w.waves, dv = w.devices, tick = w.clock[0];
 
-  // Rock times out: it stands rockLife seconds (more with Earth) and crumbles over the last few.
+  // Rock times out: it stands rockLife seconds (more with Earth) and crumbles over the last few. Ice
+  // walls likewise, shorter (iceLife, more with Ice), melting over the last iceMeltAway s.
   for (let k = 0; k < MAX_WALLS; k++) {
-    if (wl.type[k] !== WALL.rock || wl.owner[k] === TERRAIN) continue; // the arena's own rock stays
-    const base = T(STRUCT.rockLife + STRUCT.rockLifePerEarth * Math.max(0, wl.els[k * N_EL + EL.earth - 1] - 1));
-    const life = Math.round((stackOf(w, wl.owner[k], PU.bedrock) ? base * 2 : base) * lingerLife(w, wl.owner[k]));
+    if (!solidWall(wl.type[k]) || wl.owner[k] === TERRAIN) continue; // the arena's own rock stays
+    const ice = wl.type[k] === WALL.ice;
+    const base = ice
+      ? T(STRUCT.iceLife + STRUCT.iceLifePerRune * Math.max(0, wl.els[k * N_EL + EL.ice - 1] - 1))
+      : T(STRUCT.rockLife + STRUCT.rockLifePerEarth * Math.max(0, wl.els[k * N_EL + EL.earth - 1] - 1));
+    const life = Math.round((!ice && stackOf(w, wl.owner[k], PU.bedrock) ? base * 2 : base) * lingerLife(w, wl.owner[k]));
     const left = life - (tick - wl.born[k]);
-    if (left <= 0) { w.events.push({ tick, kind: 'burst', who: wl.owner[k], x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.5, look: EL.earth }); wl.type[k] = WALL.none; continue; }
-    const crumble = T(STRUCT.rockCrumble);
+    if (left <= 0) { w.events.push({ tick, kind: 'burst', who: wl.owner[k], x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.5, look: ice ? EL.ice : EL.earth }); wl.type[k] = WALL.none; continue; }
+    const crumble = T(ice ? STRUCT.iceMeltAway : STRUCT.rockCrumble);
     if (left < crumble) wl.hp[k] = Math.min(wl.hp[k], (wl.maxHp[k] * left) / crumble);
   }
 
@@ -412,21 +440,34 @@ export function tickStructures(w: World): void {
   // Curtains pulse their elements on whoever stands in them (a Life curtain is a healing zone);
   // coated rock pulses its coat on whoever touches it (a Life wall heals those sheltering against
   // it, and the enemies bashing it too; a Fire wall burns them). The Earth is the wall itself.
+  // An ice wall is all spikes: whoever presses against it is stabbed by its Ice (and the rest), harder (spikeScale).
   for (let k = 0; k < MAX_WALLS; k++) {
     const ty = wl.type[k];
-    if ((ty !== WALL.curtain && ty !== WALL.rock) || (tick - wl.born[k]) % 30 !== 0) continue;
+    if ((ty !== WALL.curtain && !solidWall(ty)) || (tick - wl.born[k]) % 30 !== 0) continue;
     const els = wl.els.slice(k * N_EL, k * N_EL + N_EL);
     els[EL.shield - 1] = 0;
     if (ty === WALL.rock) { els[EL.earth - 1] = 0; if (!els.some((n) => n > 0)) continue; }
     const heal = els[EL.life - 1] > 0;
+    // A wizard's coated force field (spell audit, 2026-11-11): its harm bites only the other side pressing on it or battering
+    // it, and its Life heals only its own team, as they pass through or stand against it. (A curtain of the place, the
+    // battery's gate fire, still burns whoever crosses it.)
+    const field = ty === WALL.curtain && wl.owner[k] >= 0;
+    const harm = els.slice(); harm[EL.life - 1] = 0;
+    const harmful = harm.some((n) => n > 0);
     // A body touching several segments of the same wall is pulsed once.
-    const scale = 0.4;
+    const scale = ty === WALL.ice ? STRUCT.spikeScale : 0.4;
     const touches = (i: number, j: number) => segDist(b.x[i], b.y[i], wl.x1[j], wl.y1[j], wl.x2[j], wl.y2[j])[0] <= b.r[i] + 0.35;
     for (let i = 0; i < b.kind.length; i++) {
       if (!alive(w, i) || !touches(i, k)) continue;
       let first = true;
       for (let j = 0; j < k && first; j++) if (wl.type[j] === ty && wl.owner[j] === wl.owner[k] && wl.born[j] === wl.born[k] && touches(i, j)) first = false;
       if (!first) continue;
+      if (field) {
+        const ally = b.team[i] === b.team[wl.owner[k]];
+        if (ally) { if (heal) hit(w, i, stored(els, 0, PF.heal, 0, EL.life), hitOpts(payloadOf(compile(queueFromCounts(els), 'place')), wl.owner[k], scale)); }
+        else if (harmful) hit(w, i, stored(harm, 0, 0, 0, 0), hitOpts(payloadOf(compile(queueFromCounts(harm), 'place')), wl.owner[k], STRUCT.fieldBite));
+        continue;
+      }
       hit(w, i, stored(els, 0, heal ? PF.heal : 0, 0, heal ? EL.life : 0), hitOpts(payloadOf(compile(queueFromCounts(els), 'place')), wl.owner[k], scale));
     }
   }
@@ -503,8 +544,9 @@ export function tickStructures(w: World): void {
         const d = type === DEVICE.glyph ? len(b.x[i] - dv.x[k], b.y[i] - dv.y[k]) : segDist(b.x[i], b.y[i], dv.x[k], dv.y[k], dv.x2[k], dv.y2[k])[0];
         if (d > glyphRadiusOf(w, owner) + b.r[i]) continue;
         const spec = deviceSpell(w, k, 'place');
-        if (type === DEVICE.glyph) fireSpell(w, owner, spec, 0, dv.x[k], dv.y[k], 0, { ox: dv.x[k], oy: dv.y[k] });
-        else for (let f = 0; f <= 2; f++) { const px = dv.x[k] + (dv.x2[k] - dv.x[k]) * f / 2, py = dv.y[k] + (dv.y2[k] - dv.y[k]) * f / 2; fireSpell(w, owner, spec, 0, px, py, 0, { ox: px, oy: py }); }
+        // a glyph is the Place spell at glyphPower: the trap earns a little for its delay and its bound rune (spell audit, 2026-11-11)
+        if (type === DEVICE.glyph) fireSpell(w, owner, spec, 0, dv.x[k], dv.y[k], 0, { ox: dv.x[k], oy: dv.y[k], scale: STRUCT.glyphPower });
+        else for (let f = 0; f <= 2; f++) { const px = dv.x[k] + (dv.x2[k] - dv.x[k]) * f / 2, py = dv.y[k] + (dv.y2[k] - dv.y[k]) * f / 2; fireSpell(w, owner, spec, 0, px, py, 0, { ox: px, oy: py, scale: STRUCT.glyphPower }); }
         burstEvent(w, owner, dv.x[k], dv.y[k], glyphRadiusOf(w, owner) * 1.5, dv.look[k]);
         dv.type[k] = DEVICE.none;
         break;
@@ -520,7 +562,10 @@ export function tickStructures(w: World): void {
         const spec = deviceSpell(w, k, 'force');
         const p = payloadOf(spec);
         const dx = b.x[target] - ox, dy = b.y[target] - oy, d = len(dx, dy) || 1;
-        hit(w, target, p, hitOpts(p, owner, 1.2 / Math.max(1, n * 0.5), dx / d, dy / d));
+        // all the orbs one cast made strike orbitPower x its spell between them, a spray element's with its one-shot blast (spell
+        // audit, 2026-11-11: each orb used to carry the whole spell at up to 1.2, so extra runes counted twice)
+        let made = 0; for (let e = 0; e < N_EL; e++) if (e !== EL.sigil - 1) made += dv.els[k * N_EL + e];
+        hit(w, target, p, hitOpts(p, owner, (STRUCT.orbitPower * oneShotBlast(spec)) / Math.max(1, made), dx / d, dy / d));
         w.events.push({ tick, kind: 'zap', who: owner, x: ox, y: oy, x2: b.x[target], y2: b.y[target], look: dv.look[k] });
         dv.charges[k]--;
         break; // one strike per tick
@@ -535,7 +580,8 @@ export function tickStructures(w: World): void {
     s.aura[i]--;
     if (s.aura[i] % 30 !== 0) continue;
     const els = s.auraEls;
-    const fire = els[i * N_EL + EL.fire - 1], cold = els[i * N_EL + EL.cold - 1], water = els[i * N_EL + EL.water - 1];
+    const fire = els[i * N_EL + EL.fire - 1], water = els[i * N_EL + EL.water - 1];
+    const cold = els[i * N_EL + EL.cold - 1], ice = els[i * N_EL + EL.ice - 1];
     const life = els[i * N_EL + EL.life - 1], earth = els[i * N_EL + EL.earth - 1];
     for (let t = 0; t < b.kind.length; t++) {
       if (!alive(w, t)) continue;
@@ -543,17 +589,25 @@ export function tickStructures(w: World): void {
       if (d > STRUCT.auraRadius + b.r[t]) continue;
       const foe = b.team[t] !== b.team[i];
       if (life && t === i) { // regeneration is the wearer's alone
-        const h = Math.min(3 * life, b.maxHp[t] - b.hp[t]);
+        const h = Math.min(STRUCT.regenAura * life, b.maxHp[t] - b.hp[t]); // each half second
         if (h > 0) { b.hp[t] += h; w.events.push({ tick: w.clock[0], kind: 'heal', who: t, src: i, x: b.x[t], y: b.y[t], amount: h, look: EL.life }); }
       }
       if (t === i) continue;
       if (foe) {
-        if (fire) ignite(w, t, 3, b.burnSrc[t], T(1.5)); // each half second: burning at 6 a second while you stay close
+        if (fire) ignite(w, t, STATUS.burnAura * fire, b.burnSrc[t], T(1.5)); // each half second: burning at 6 a second a Fire rune while you stay close
         if (cold) {
           addChill(w, t, 2.5 * cold);
           if (!water) tryFreeze(w, t); // Cold on the wet, as in hit.ts; a Mist + Frost aura can't do both
         }
-        if (water) b.wet[t] = Math.max(b.wet[t], T(3));
+        if (ice) {
+          // The Spike aura: ice spikes stab enemies close by, an Ice hit (its damage, a little chill, and a freeze if
+          // they were already wet). With a Mist aura too, the wet it leaves is hidden from the stab: one aura can't do both.
+          const wet = b.wet[t], soak = b.soak[t];
+          if (water) b.wet[t] = 0;
+          hit(w, t, SPIKE, hitOpts(SPIKE, i, STRUCT.spikeAura * ice));
+          if (water && b.wet[t] === 0) { b.wet[t] = wet; b.soak[t] = soak; }
+        }
+        if (water) addSoak(w, t, STATUS.soakPerRune * 0.5 * water); // the mist soaks by its Water, each half second
         if (earth && d < b.r[t] + b.r[i] + 0.3) { const ux = (b.x[t] - b.x[i]) / (d || 1), uy = (b.y[t] - b.y[i]) / (d || 1); addKnock(w, t, ux, uy, 6 * earth); }
       } else if (water) b.burn[t] = 0; // the mist douses burning allies
     }
@@ -579,7 +633,22 @@ export const glyphRadiusOf = (w: World, owner: number): number => STRUCT.glyphRa
 export const sigilCap = (w: World, seat: number): number => runeMax(w, seat, EL.sigil) - boundSigil(w, seat);
 
 /** The level element `id`'s pool refills to: its max (Sigil: less the runes bound in devices). Never below 0. */
-export const poolCap = (w: World, seat: number, id: number): number => Math.max(0, id === EL.sigil ? sigilCap(w, seat) : runeMax(w, seat, id));
+export const poolCap = (w: World, seat: number, id: number): number => Math.max(0, (id === EL.sigil ? sigilCap(w, seat) : runeMax(w, seat, id)) - queuedOf(w, seat, id));
+
+/**
+ * Runes of element `id` held in seat's queue: they don't regenerate until cast (the user, 2026-11-11: a queue can't be used
+ * to hold more runes than the pool). Ice holds a Water and a Cold.
+ */
+export function queuedOf(w: World, seat: number, id: number): number {
+  const s = w.seats;
+  let n = 0;
+  for (let k = 0; k < s.queueLen[seat]; k++) {
+    const q = s.queue[seat * QUEUE_MAX + k], o = s.owe[seat * QUEUE_MAX + k]; // a ghost's unpaid part isn't held
+    if (q === id && q !== EL.ice && !(o & 1)) n++;
+    if (q === EL.ice && ((id === EL.water && !(o & 1)) || (id === EL.cold && !(o & 2)))) n++;
+  }
+  return n;
+}
 
 /** Which of seat's pools are full, as a bitmask (1 << element id), for the shared regen budget (world.ts regenRate). */
 export function fullMask(w: World, seat: number): number {
@@ -606,6 +675,6 @@ function fireArc(w: World, owner: number, spec: SpellSpec, ox: number, oy: numbe
   const b = w.bodies, p = payloadOf(spec);
   const dx = b.x[target] - ox, dy = b.y[target] - oy, d = len(dx, dy) || 1;
   w.events.push({ tick: w.clock[0], kind: 'zap', who: owner, x: ox, y: oy, x2: b.x[target], y2: b.y[target], look: spec.look });
-  hit(w, target, p, hitOpts(p, owner, 0.7, dx / d, dy / d));
+  hit(w, target, p, hitOpts(p, owner, spec.heal ? SHAPES.chainHealPower : SHAPES.arcPower, dx / d, dy / d)); // your own arc's power (spell audit, 2026-11-11: it was 0.7, 3.6x yours a rune)
 }
 

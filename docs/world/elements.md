@@ -30,7 +30,7 @@ Seven elements are **fields**: Water, Fire, Cold, Lightning, Earth, Life, Arcane
 - **In the world:** rivers, lakes, rain, tides. The most common field; nearly every town sits on some.
 - **People:** farming (with Life), mills, ports, baths. Water-veined towns are old and populous.
 - **Creatures:** amphibious, slow-wearing, hard to burn.
-- **In play:** primarily a synergy element, with some knockback for crowd control. Soaks and douses; sets up freezes and conduction; Rain lingers and keeps puddles topped up. *(Its shove may move to Air, if Air comes in: `../ideas/air-element.md`.)*
+- **In play:** primarily a synergy element, with some knockback for crowd control and a little damage. Its intensity axis is soak: more Water soaks harder, and the wetter a body, the more Lightning and a freeze pay. Douses; Rain lingers and keeps puddles topped up. With Fire it becomes steam, which never soaks: steam is cover, not a setup. *(2026-11-11, the spell audit.)* *(Its shove may move to Air, if Air comes in: `../ideas/air-element.md`.)*
 - **Opposite:** Lightning.
 
 ### Fire: what consumes and transforms

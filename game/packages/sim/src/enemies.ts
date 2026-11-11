@@ -17,9 +17,9 @@ import { EL, N_EL } from './elements';
 import { burstEvent, disc, spawnMissile, stored, type Payload } from './effects';
 import { angleDiff, len } from './geom';
 import { HIT_KIND, addKnock, applyHit, ignite, setHitKind } from './hit';
-import { cutOff, steer } from './nav';
+import { atBarrier, cutOff, enemyWall, steer } from './nav';
 import { guardMelee, unburnable } from './guards';
-import { WALL } from './compile';
+import { solidWall } from './compile';
 import { terrainNear } from './terrain';
 import { TERRAIN_HIT, damageWall, segDist } from './walls';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
@@ -123,7 +123,7 @@ export function tickEnemies(w: World): void {
       move(w, i, approachSpot(w, i, t), t, speed);
       const ranged = a.attack === ATTACK.bolt || a.attack === ATTACK.grab;
       // Walled off with no way round: a wall it's pressed against is what it attacks.
-      const ready = ranged ? d <= a.reach && b.aiT[i] > T(0.4) : gap <= a.reach || (cutOff(w, i, t) && wallInReach(w, i, a.reach + 0.45) >= 0);
+      const ready = ranged ? d <= a.reach && b.aiT[i] > T(0.4) : gap <= a.reach || ((cutOff(w, i, t) || atBarrier(w, i, t)) && wallInReach(w, i, a.reach + 0.45) >= 0); // walled off, or its way is through a barrier
       if (ready) { setAi(w, i, AI.windup); b.lockX[i] = b.x[t]; b.lockY[i] = b.y[t]; }
     } else if (b.ai[i] === AI.windup) {
       if ((a.attack === ATTACK.bolt || a.attack === ATTACK.grab) && b.aiT[i] < T(a.windup * TRACK_SHARE)) { b.lockX[i] = b.x[t]; b.lockY[i] = b.y[t]; }
@@ -183,7 +183,7 @@ function wallInReach(w: World, i: number, reach: number): number {
     if (d < bd) { bd = d; best = TERRAIN_HIT; }
   }
   for (let k = 0; k < wl.type.length; k++) {
-    if (wl.type[k] !== WALL.rock) continue;
+    if (!enemyWall(w, k)) continue; // a barrier in the way is battered like rock (its blows drain its caster's Shield pool)
     const d = segDist(b.x[i], b.y[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0];
     if (d < bd) { bd = d; best = k; }
   }
@@ -197,7 +197,7 @@ function attack(w: World, i: number, t: number, gap: number): void {
     const dx = b.x[t] - b.x[i], dy = b.y[t] - b.y[i], d = len(dx, dy) || 1;
     const inFront = Math.abs(angleDiff(atan2Turns(dy, dx), b.face[i])) < 0.19;
     if (gap <= a.reach + 0.45 && inFront) strike(w, i, t, dmg, a.knockback, dx / d, dy / d, !!a.hitBurn);
-    else if (cutOff(w, i, t)) { const k = wallInReach(w, i, a.reach + 0.45); if (k >= 0) damageWall(w, k, dmg); }
+    else if (cutOff(w, i, t) || atBarrier(w, i, t)) { const k = wallInReach(w, i, a.reach + 0.45); if (k >= 0) damageWall(w, k, dmg); }
   } else if (a.attack === ATTACK.slam) {
     // the fists hit the ground just ahead; the shockwave rolls out from there (slamWave, during the cooldown)
     b.slamX[i] = b.x[i] + cosTurns(b.face[i]) * b.r[i] * 0.6; b.slamY[i] = b.y[i] + sinTurns(b.face[i]) * b.r[i] * 0.6;
@@ -242,7 +242,7 @@ function slamWave(w: World, i: number): void {
   if (prev < dc && front >= dc) {
     // it breaks the rock it rolls into, too (the room's own rock doesn't break, so it isn't asked about)
     const wl = w.walls;
-    for (let k = 0; k < wl.type.length; k++) if (wl.type[k] === WALL.rock && segDist(lx, ly, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] <= r) damageWall(w, k, dmg);
+    for (let k = 0; k < wl.type.length; k++) if (solidWall(wl.type[k]) && segDist(lx, ly, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] <= r) damageWall(w, k, dmg);
     w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: lx, y: ly, amount: r, look: EL.earth });
   }
   if (front >= dc + r && w.tut) {

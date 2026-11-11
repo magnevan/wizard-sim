@@ -1,0 +1,52 @@
+H     force   Life beam        3s 52  10s 52  self 0  enemy +0
+H     force*  Life beam        3s 0  10s 0  self 0  enemy +0
+H     area    Healing ring     3s 76  10s 76  self 25  enemy +25
+H     place   Healing spring   3s 49  10s 120  self 0  enemy +60
+HH    force   Life beam        3s 60  10s 60  self 0  enemy +0
+HH    force*  Life beam        3s 0  10s 0  self 0  enemy +0
+HH    area    Healing ring     3s 151  10s 151  self 50  enemy +50
+HH    place   Healing spring   3s 98  10s 120  self 0  enemy +60
+HHH   force   Life beam        3s 60  10s 60  self 0  enemy +0
+HHH   force*  Life beam        3s 0  10s 0  self 0  enemy +0
+HHH   area    Healing ring     3s 180  10s 180  self 60  enemy +60
+HHH   place   Healing spring   3s 120  10s 120  self 0  enemy +60
+HHHH  force   Life beam        3s 60  10s 60  self 0  enemy +0
+HHHH  force*  Life beam        3s 0  10s 0  self 0  enemy +0
+HHHH  area    Healing ring     3s 180  10s 180  self 60  enemy +60
+HHHH  place   Healing spring   3s 120  10s 120  self 0  enemy +60
+HL    force   Chain heal       3s 76  10s 76  self 0  enemy +0
+HL    force*  Chain heal       3s 42  10s 42  self 0  enemy +0
+HL    area    Healing ring     3s 76  10s 76  self 25  enemy +25
+HL    place   Healing spring   3s 49  10s 120  self 0  enemy +60
+HC    force   Cooling spray    3s 55  10s 55  self 0  enemy +21
+HC    force*  Cooling spray    3s 0  10s 0  self 0  enemy +0
+HC    area    Healing ring     3s 76  10s 76  self 25  enemy +25
+HC    place   Healing spring   3s 49  10s 120  self 0  enemy +60
+HI    force   Healing shards   3s 63  10s 63  self 0  enemy +0
+HI    force*  Healing shards   3s 63  10s 63  self 0  enemy +0
+HI    area    Healing ring     3s 76  10s 76  self 25  enemy +25
+HI    place   Healing spring   3s 49  10s 120  self 0  enemy +60
+HIC   force   Healing shards   3s 63  10s 63  self 0  enemy +0
+HIC   force*  Healing shards   3s 63  10s 63  self 0  enemy +0
+HIC   area    Healing ring     3s 76  10s 76  self 25  enemy +25
+HIC   place   Healing spring   3s 49  10s 120  self 0  enemy +60
+HE    force   Heal-stone       3s 27  10s 27  self 0  enemy +14
+HE    force*  Heal-stone       3s 14  10s 14  self 0  enemy +0
+HE    area    Healing ring     3s 76  10s 76  self 25  enemy +25
+HE    place   Healing spring   3s 49  10s 120  self 0  enemy +60
+HF    force   Healing spray    3s 55  10s 55  self 0  enemy +21
+HF    force*  Healing spray    3s 0  10s 0  self 0  enemy +0
+HF    area    Healing ring     3s 76  10s 76  self 25  enemy +25
+HF    place   Healing spring   3s 49  10s 120  self 0  enemy +60
+HW    force   Rescue spray     3s 55  10s 55  self 0  enemy +6
+HW    force*  Rescue spray     3s 0  10s 0  self 0  enemy +0
+HW    area    Healing ring     3s 76  10s 76  self 25  enemy +25
+HW    place   Healing spring   3s 49  10s 120  self 0  enemy +60
+HLL   force   Chain heal       3s 76  10s 76  self 0  enemy +0
+HLL   force*  Chain heal       3s 42  10s 42  self 0  enemy +0
+HLL   area    Healing ring     3s 76  10s 76  self 25  enemy +25
+HLL   place   Healing spring   3s 49  10s 120  self 0  enemy +60
+HEE   force   Heal-stone       3s 41  10s 41  self 14  enemy +14
+HEE   force*  Heal-stone       3s 27  10s 27  self 0  enemy +0
+HEE   area    Healing ring     3s 76  10s 76  self 25  enemy +25
+HEE   place   Healing spring   3s 49  10s 120  self 0  enemy +60

@@ -34,16 +34,17 @@ describe('help panel model: queue -> rows', () => {
     expect(m.rows[4].text).toMatch(/^A burst of every queued element/);
   });
 
-  it('Water + Cold: the freeze mix names, the mix as a tag, and Ice sheet described as ice (not rain)', () => {
-    expect(titles(['water', 'cold'])).toEqual(['Ice shards', 'Freezing splash', 'Ice sheet', 'Douse + Chill', 'Freezing burst']);
-    const m = helpModel(['water', 'cold'], bare);
-    expect(m.rows[0].tags.map((t) => t.text)).toEqual(['Chill', 'Freeze']);
-    expect(m.rows[2].text).toMatch(/ice/i);
+  it('Water + Cold make Ice, one rune with its own row: the names, and Caltrops described as spikes (not rain)', () => {
+    expect(rules.addElement(rules.addElement([], 'water').queue, 'cold').queue).toEqual(['ice']);
+    expect(titles(['ice'])).toEqual(['Ice shards', 'Ice ring', 'Caltrops', 'Impale', 'Ice burst']);
+    const m = helpModel(['ice'], bare);
+    expect(m.rows[0].stats[0]).toBe('2 RUNES'); // an Ice is a Water and a Cold
+    expect(m.rows[2].text).toMatch(/spikes/i);
     expect(m.rows[2].text).not.toMatch(/rain/i);
   });
 
   it('Shield + Earth: walls and the Bulwark, whose preview conjures it and then blocks', () => {
-    expect(titles(['shield', 'earth'])).toEqual(['Fault line', 'Ring of stone', 'Stone arc', 'Stone armour', 'Bulwark']);
+    expect(titles(['shield', 'earth'])).toEqual(['Earth blink', 'Ring of stone', 'Stone arc', 'Stone armour', 'Bulwark']);
     const bulwark = helpModel(['shield', 'earth'], bare).rows[4];
     expect(bulwark.demo.seq?.map((d) => d.cast)).toEqual(['weapon', 'block']);
   });
@@ -60,27 +61,27 @@ describe('help panel model: queue -> rows', () => {
     expect(fire[0].stats[0]).toBe('2 RUNES');
     expect(fire[0].stats.join(' ')).toMatch(/FIRE \d+(\.\d)?\/S/);
     expect(fire[0].stats.join(' ')).toMatch(/HOLD: CHANNEL/);
-    expect(fire[2].stats.join(' ')).toMatch(/LASTS 12S/); // a fire patch: 10 s, +20 % for the second Fire
+    expect(fire[2].stats.join(' ')).toMatch(/LASTS 14.4S/); // a fire patch: 12 s, +20 % for the second Fire
     const rock = helpModel(['earth'], bare).rows[0].stats.join(' ');
-    expect(rock).toMatch(/EARTH 22 CHARGED/);
+    expect(rock).toMatch(/EARTH 28 CHARGED/);
     expect(rock).toMatch(/HOLD: CHARGE/);
     const heal = helpModel(['life'], bare).rows[1].stats.join(' ');
     expect(heal).toMatch(/HEALS 14/);
   });
 
-  it('the arc counts its zaps: 0.5 a rune every 0.2 s, and the beam its extra reach', () => {
+  it('the arc counts its zaps: 0.5 a rune every 0.2 s, and the beam its reach', () => {
     expect(helpModel(['lightning'], bare).rows[0].stats.join(' ')).toMatch(/LIGHTNING 25\/S/);
-    expect(helpModel(['arcane', 'arcane'], bare).rows[0].stats.join(' ')).toMatch(/RANGE 14U.*FREE 5S/);
+    expect(helpModel(['arcane', 'arcane'], bare).rows[0].stats.join(' ')).toMatch(/RANGE 30U/);
   });
 
   it('+1 rune: what one more rune of the lead element changes', () => {
     const scale = (q: Element[], k: number) => helpModel(q, bare).rows[k].scale;
     expect(scale(['fire'], 0)).toBe('+1 FIRE: DMG ×1.41, RANGE +0.5U, CONE +25%, WIND-UP +0.04S');
     expect(scale(['arcane'], 1)).toBe('+1 ARCANE: DMG ×1.7, RADIUS +0.6U, WIND-UP +0.04S');
-    expect(scale(['arcane'], 0)).toBe('+1 ARCANE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S'); // a beam's runes buy time, not damage
-    expect(scale(['life'], 0)).toBe('+1 LIFE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S');
+    expect(scale(['arcane'], 0)).toBe('+1 ARCANE: DMG ×1.7, WIND-UP +0.04S'); // a beam's runes buy power; upkeep pays for time
+    expect(scale(['life'], 0)).toBe('+1 LIFE: HEAL ×2, WIND-UP +0.04S');
     expect(helpModel(['water'], bare).rows[0].stats.join(' ')).toMatch(/PUSH 18U\/S A SECOND/);
-    expect(scale(['earth'], 0)).toMatch(/^\+1 EARTH: DMG ×2.83/);
+    expect(scale(['earth'], 0)).toMatch(/^\+1 EARTH: DMG ×2.5/);
     expect(scale(['lightning'], 0)).toMatch(/JUMPS \+1/);
     expect(scale(['shield', 'earth'], 2)).toMatch(/HP \+40 A PIECE, STANDS \+5S/); // the lead of a Shield spell is its material
     expect(scale(['sigil', 'fire'], 3)).toBe('+1 FIRE: NOTHING MORE, WIND-UP +0.04S'); // a fire aura burns the same
@@ -137,14 +138,14 @@ describe('help panel model: queue -> rows', () => {
 // needn't patch it (the final-pass review, 2026-11-06).
 describe('the rules describe what the game builds', () => {
   const r = (q: Element[], cast: Parameters<typeof rules.resolve>[1]) => rules.resolve(q, cast);
-  it('the water mixes have their own Area and Place text (the Ice sheet is not Rain)', () => {
-    expect(r(['water', 'cold'], 'place').text).not.toMatch(/rain/i);
-    expect(r(['water', 'cold'], 'place').text).toMatch(/ice/i);
-    expect(r(['water', 'cold', 'cold'], 'place').text).toMatch(/ice/i); // Cold leading: still the sheet
+  it('steam and ice have their own Area and Place text (the Ice sheet is not Rain)', () => {
+    expect(r(['ice'], 'place').text).not.toMatch(/rain/i);
+    expect(r(['ice'], 'place').text).toMatch(/ice/i);
+    expect(r(['ice', 'water'], 'place').text).toMatch(/ice/i); // Ice leads Water: still the sheet
     expect(r(['water', 'fire'], 'place').text).toMatch(/steam/i);
     expect(r(['fire', 'fire', 'water'], 'place').text).toMatch(/steam/i);
     expect(r(['water', 'fire'], 'area').text).toMatch(/steam/i);
-    expect(r(['water', 'cold'], 'area').text).toMatch(/freez/i);
+    expect(r(['ice'], 'area').text).toMatch(/freez/i);
   });
   it('Sigil conjures the weapons hands.ts builds', () => {
     expect(r(['sigil', 'arcane'], 'conjure').title).toBe('Arcane wand');

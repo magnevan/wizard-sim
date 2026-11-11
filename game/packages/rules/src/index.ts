@@ -10,7 +10,8 @@
  */
 import SpellTreeC from './rules-c.gen.js';
 
-export type Element = 'water' | 'life' | 'shield' | 'cold' | 'lightning' | 'arcane' | 'earth' | 'fire' | 'sigil';
+/** The nine keyed elements, plus Ice: Water + Cold combined into one rune (no key, no pool). */
+export type Element = 'water' | 'life' | 'shield' | 'cold' | 'lightning' | 'arcane' | 'earth' | 'fire' | 'sigil' | 'ice';
 /** The five casts. 'place' is hold Area; 'conjure' is the Weapon cast. */
 export type Cast = 'force' | 'area' | 'place' | 'self' | 'conjure';
 
@@ -40,12 +41,19 @@ export interface SpellDescriptor {
 }
 
 export interface SpellRules {
-  ELEMENTS: Record<Element, { name: string; key: string; color: string }>;
+  ELEMENTS: Record<Element, { name: string; key: string; color: string; combined?: boolean; of?: Element[] }>;
+  /** The nine keyed elements (each has a key and a rune pool). */
   BASE: Element[];
+  /** Every element a queue can hold: BASE, then Ice. Game ids are ALL order + 1. */
+  ALL: Element[];
   MAX: number;
-  /** Pairs that cancel rune for rune in the queue (the elements' opposites, then Shield and Sigil's own). */
+  /** Pairs that cancel rune for rune in the queue (the elements' opposites, then Shield and Sigil's own, and Fire melting Ice). */
   CANCEL: readonly (readonly [Element, Element])[];
-  addElement(queue: readonly Element[], el: Element): { queue: Element[]; event: string | null };
+  /** Pairs that merge into one combined rune: [a, b, result]. */
+  COMBINE: readonly (readonly [Element, Element, Element])[];
+  /** The keyed runes a queue element is made of (Ice: Water and Cold). */
+  runesOf(el: Element): Element[];
+  addElement(queue: readonly Element[], el: Element): { queue: Element[]; event: string | null; kind: 'cancel' | 'combine' | 'full' | null };
   resolve(queue: readonly Element[], cast: Cast, opts?: { drag?: boolean; onAlly?: boolean }): SpellDescriptor;
   [table: string]: unknown;
 }

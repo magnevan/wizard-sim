@@ -1,5 +1,5 @@
 /**
- * The help panel's data model (F2, help-panel.ts): what the queued runes will do, one row per cast
+ * The help panel's data model (F1, help-panel.ts): what the queued runes will do, one row per cast
  * gesture, or with nothing queued, what your hands do with the weapon and guard you hold.
  *
  * Pure: the rules, the sim's compile() and its config numbers in, plain rows out. No DOM and no
@@ -10,7 +10,7 @@
 import { rules, type Cast, type Element, type SpellDescriptor } from '@wizard-sim/rules';
 import {
   ARMS, COMBAT, DAMAGE, GUARD_NAME, QUEUE_MAX, RHYTHM, RUNES, SHAPES, STATUS, STRUCT, SURFACE,
-  compile, elementName, formCurve, type SpellSpec,
+  compile, elementName, formCurve, imbueReach, type SpellSpec,
 } from '@wizard-sim/sim';
 import type { Demo } from './demo';
 
@@ -71,11 +71,13 @@ export const CAST_ROWS: { cast: Cast; keys: KeyGlyph; demo: string }[] = [
   { cast: 'conjure', keys: K('L', true, '', 'LB+RT'), demo: 'weapon' },
 ];
 
-const ELS = rules.BASE as readonly Element[];
+const ELS = rules.ALL as readonly Element[]; // the nine keyed elements, then Ice
 const EL_ID = (e: Element): number => ELS.indexOf(e) + 1;
 const name = (e: Element): string => rules.ELEMENTS[e].name;
 const n1 = (v: number): string => (Math.round(v * 10) / 10).toString();
 const plural = (n: number, w: string): string => `${n} ${w}${n === 1 ? '' : 'S'}`;
+/** Runes a queue costs: an Ice is a Water and a Cold. */
+const runeCount = (q: readonly Element[]): number => q.reduce((n, e) => n + rules.runesOf(e).length, 0);
 
 // ---- text ---------------------------------------------------------------------------------
 
@@ -159,24 +161,27 @@ const count = (spec: SpellSpec, e: Element): number => spec.counts[EL_ID(e) - 1]
 
 /**
  * The payload's damage by element at scale k (hit.ts: the form element on its curve, the rest linear),
- * or its healing. `flat`: a beam, whose form element counts once (its extra runes buy time).
+ * or its healing.
  */
-function payload(spec: SpellSpec, k: number, unit: string, out: Metric[], flat = false): void {
-  if (spec.heal) { out.push({ key: 'heal', label: 'HEALS', v: COMBAT.healPerLife * (flat ? Math.min(1, count(spec, 'life')) : count(spec, 'life')) * k, unit }); return; }
+function payload(spec: SpellSpec, k: number, unit: string, out: Metric[]): void {
+  if (spec.heal) { out.push({ key: 'heal', label: 'HEALS', v: COMBAT.healPerLife * count(spec, 'life') * k, unit }); return; }
   for (const e of ELS) {
     const c = count(spec, e);
     if (!c || !DAMAGE[e]) continue;
-    const id = EL_ID(e), mult = id === spec.form && c > 1 ? (flat ? 1 : formCurve(spec.form, c, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling)) : c;
+    const id = EL_ID(e), mult = id === spec.form && c > 1 ? (formCurve(spec.form, c, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling)) : c;
     out.push({ key: 'dmg:' + e, label: name(e).toUpperCase(), v: DAMAGE[e] * mult * k, unit });
   }
 }
 
-/** The statuses one hit leaves: Burn starts at its floor and grows with the hit; Chill and Stun grow with each rune. */
+/** The statuses one hit leaves: Burn starts small and grows with the Fire in the hit; Chill grows with each Cold rune; Stun is a chance. */
 function statuses(spec: SpellSpec, out: Metric[]): void {
   if (spec.heal) return;
   if (count(spec, 'fire') && !spec.scald) out.push({ key: 'burn', label: 'BURN FROM', v: STATUS.burnBase, unit: '' });
-  if (count(spec, 'cold')) out.push({ key: 'chill', label: 'FROST', v: DAMAGE.cold * STATUS.chillPerDamage * count(spec, 'cold'), unit: '', hidden: spec.channel });
-  if (count(spec, 'lightning')) out.push({ key: 'stun', label: 'STUN', v: STATUS.stunPerRune * count(spec, 'lightning'), unit: 'S', hidden: spec.channel });
+  const frost = STATUS.chillPerRune * (count(spec, 'cold') + STATUS.iceChill * count(spec, 'ice')); // by rune (hit.ts)
+  if (frost) out.push({ key: 'chill', label: 'FROST', v: frost, unit: '', hidden: spec.channel });
+  // the chance one hit stuns a wizard-sized body (shockRef): x / (1 + x)
+  const x = STATUS.shockRate * count(spec, 'lightning');
+  if (x) out.push({ key: 'stun', label: 'STUN CHANCE', v: Math.round((100 * x) / (1 + x)), unit: '%', hidden: spec.channel });
 }
 
 /** The queue without its Sigil runes (what a device or a conjured weapon carries). */
@@ -202,7 +207,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
       m.push({ key: 'shards', label: 'SHARDS', v: shards, unit: '', hidden: true });
     }
     if (sh === 'missile') note = 'CHARGED';
-    payload(spec, k, unit, m, sh === 'beam');
+    payload(spec, k, unit, m);
     statuses(spec, m);
     if (spec.mod === 'push') m.push({ key: 'push', label: 'PUSH', v: SHAPES.push * count(spec, 'water') * (spec.channel ? COMBAT.channelStatus : 1), unit: spec.channel ? 'U/S A SECOND' : 'U/S' });
   }
@@ -210,7 +215,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
   const lasts = (v: number, label = 'LASTS') => m.push({ key: 'lasts', label, v, unit: 'S' });
   const longer = 1 + SHAPES.lingerPerRune * (n - 1);
   switch (sh) {
-    case 'beam': reach('RANGE', SHAPES.beamRange + spec.formN); break;
+    case 'beam': reach('RANGE', SHAPES.beamRange); break;
     case 'spray':
       reach('RANGE', SHAPES.sprayRange + 0.5 * (spec.sizeN - 1));
       m.push({ key: 'cone', label: 'CONE', v: 100 * (1 + 0.25 * (spec.sizeN - 1)), unit: '%', hidden: true });
@@ -226,14 +231,14 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
     case 'patch': {
       reach('RADIUS', SHAPES.patchRadius + 0.4 * (n - 1));
       const water = spec.form === EL_ID('water');
-      lasts(spec.scald ? SHAPES.patchLife * longer : spec.freeze || count(spec, 'cold') ? SURFACE.ice * longer : water ? SHAPES.rainLife + SHAPES.rainPerRune * (n - 1) : SURFACE.fire * longer);
+      lasts(spec.scald ? SHAPES.patchLife * longer : spec.freeze || count(spec, 'cold') || count(spec, 'ice') ? SURFACE.ice * longer : water ? SHAPES.rainLife + SHAPES.rainPerRune * (n - 1) : SURFACE.fire * longer);
       break;
     }
     case 'blast': reach('RADIUS', 2 + 0.4 * n); m.push({ key: 'fuse', label: 'FUSE', v: SHAPES.delayedBlast, unit: 'S' }); break;
     case 'geyser': reach('RADIUS', 0.9 + 0.4 * n); m.push({ key: 'fuse', label: 'FUSE', v: SHAPES.delayedBlast, unit: 'S' }); break;
     case 'spring': reach('RADIUS', 1.4 + 0.4 * n); lasts(4 + 2 * n); break;
     case 'strike': reach('RADIUS', 0.9); break;
-    case 'imbue': reach('REACH', SHAPES.imbueRange + SHAPES.imbuePerRune * Math.max(0, spec.power - 1)); break;
+    case 'imbue': reach('REACH', imbueReach(spec)); break;
     case 'blink': reach('UP TO', STRUCT.blinkRange); break;
     case 'wave': m.push({ key: 'width', label: 'WIDTH', v: 2 * (STRUCT.waveHalf + STRUCT.waveHalfPerRune * (spec.formN - 1)), unit: 'U' }); break;
     case 'arcwall': case 'drawnwall': case 'ring': {
@@ -242,7 +247,12 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
       if (spec.wall === 1) lasts(STRUCT.rockLife + STRUCT.rockLifePerEarth * (earth - 1), 'STANDS');
       break;
     }
-    case 'ward': if (spec.power > 1 || count(spec, 'shield') !== 1) m.push({ key: 'hp', label: 'WARD HP', v: STRUCT.wardHp + STRUCT.wardHpPerRune * (spec.power - 1), unit: '' }); break;
+    case 'ward': {
+      if (count(spec, 'earth')) { m.push({ key: 'hp', label: 'ARMOUR HP', v: STRUCT.wardHp + STRUCT.wardHpPerRune * (spec.power - 1), unit: '' }); break; }
+      const most = Math.max(0, ...rest(queue).filter((e) => e !== 'life' && e !== 'shield').map((e) => count(spec, e)));
+      if (most) m.push({ key: 'resist', label: 'RESIST', v: Math.round(100 * (1 - 1 / (1 + STRUCT.wardPerRune * most))), unit: '%' });
+      break;
+    }
     case 'guard': m.push({ key: 'size', label: 'GUARD HP AND RETREAT', v: 100 * (1 + ARMS.runeSize * (Math.max(1, spec.power - 1) - 1)), unit: '%' }); break;
     case 'turret': case 'glyph': case 'lineglyph': {
       // the device casts its elements' own spell: a turret their Force (a tap: uncharged), a glyph their Place
@@ -256,7 +266,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
       }
       if (sh === 'turret') {
         m.push({ key: 'range', label: 'TURRET RANGE', v: STRUCT.turretRange, unit: 'U' });
-        m.push({ key: 'shot', label: 'A SHOT COSTS', v: STRUCT.turretShotCost * inner.length, unit: ' RUNES' });
+        m.push({ key: 'shot', label: 'A SHOT COSTS', v: STRUCT.turretShotCost * runeCount(inner), unit: ' RUNES' });
       }
       break;
     }
@@ -276,7 +286,8 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
     }
     case 'aura': {
       // every half second (structures.ts): Life regenerates the wearer, Cold chills, Earth shoves; Fire, Haste and Glass don't grow
-      const life = count(spec, 'life'), cold = count(spec, 'cold'), earth = count(spec, 'earth');
+      const life = count(spec, 'life'), cold = count(spec, 'cold'), earth = count(spec, 'earth'), ice = count(spec, 'ice');
+      if (ice) m.push({ key: 'spike', label: 'SPIKES', v: 2 * DAMAGE.ice * STRUCT.spikeAura * ice, unit: '/S' }); // the Spike aura stabs twice a second
       if (life) m.push({ key: 'regen', label: 'REGEN', v: 6 * life, unit: '/S' });
       if (cold) m.push({ key: 'chill', label: 'FROST', v: 5 * cold, unit: '/S' });
       if (earth) m.push({ key: 'shove', label: 'SHOVE', v: 6 * earth, unit: 'U/S' });
@@ -285,8 +296,8 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
     }
     default: break;
   }
-  // a beam's extra runes buy time, not damage (cast.ts); every channel is free this long
-  if (spec.channel) m.push({ key: 'free', label: 'FREE FOR', v: RHYTHM.naturalChannel * (sh === 'beam' ? Math.max(1, spec.formN) : 1), unit: 'S', hidden: true });
+  // every channel is free this long, then each of its runes costs upkeep (cast.ts)
+  if (spec.channel) m.push({ key: 'free', label: 'FREE FOR', v: RHYTHM.naturalChannel, unit: 'S', hidden: true });
   if (sh !== 'blink') m.push({ key: 'windup', label: 'WIND-UP', v: RHYTHM.windup + RHYTHM.windupPerRune * queue.length, unit: 'S', hidden: true });
   return { metrics: m, note };
 }
@@ -298,7 +309,7 @@ const fmt = (x: Metric) => `${x.label} ${n1(x.v)}${x.unit}`;
 export function spellStats(queue: readonly Element[], cast: Cast, d: SpellDescriptor, spec: SpellSpec): string[] {
   const out: string[] = [];
   const kind = d.cost?.kind;
-  out.push(plural(queue.length, 'RUNE') + (kind === 'bind' ? ', BINDS 1 SIGIL' : kind === 'stuff' ? ', STANDS' : ''));
+  out.push(plural(runeCount(queue), 'RUNE') + (kind === 'bind' ? ', BINDS 1 SIGIL' : kind === 'stuff' ? ', STANDS' : ''));
   const { metrics, note } = spellNumbers(queue, cast, spec);
   const dmg = metrics.filter(isDmg);
   if (dmg.length) out.push(dmg.map(fmt).join(' ') + (note ? ' ' + note : ''));
@@ -395,6 +406,7 @@ export const WEAPONS: Record<string, WeaponInfo> = {
   arcane: { name: 'Arcane wand', strike: 'A light arcane bolt.', heavy: 'Hold to charge a bolt that pierces.', specialName: 'Siphon', special: 'Hold: rooted, your runes regenerate fast.', held: true },
   fire: { name: 'Flame sword', strike: 'A slash that sets alight.', heavy: 'A rolling crescent of flame that ignites.', specialName: 'Sweep', special: 'A full circle around you.' },
   earth: { name: 'Stone maul', strike: 'A slow, heavy blow that knocks back.', heavy: 'A fissure down one lane, knocking down all in it.', specialName: 'Sweep', special: 'A full circle around you.' },
+  ice: { name: 'Ice bow', strike: 'One quick icicle, the fastest shot in hand.', heavy: 'Hold to draw: a fan of three icicles; a full draw pierces.', specialName: 'Splinter shot', special: 'An icicle at the cursor that bursts into flying shards.' },
 };
 
 interface GuardInfo { name: string; el: Element; defend: string; retreatName: string; retreat: string; dist: number }

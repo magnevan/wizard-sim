@@ -57,7 +57,7 @@ try {
   console.log('collision', walk);
 
   // Enemies round the furniture, for the depth sort.
-  await p.evaluate(() => { window.wizardSim.tune.godMode = true; window.wizardSim.startWave(3); });
+  await p.evaluate(() => { window.wizardSim.tools.godMode = true; window.wizardSim.startWave(3); });
   await sleep(4500);
   await shot('wave');
 

@@ -517,7 +517,7 @@ export class WorldView {
     s.dead = b.downed[i] ? 1 : b.down[i] > 0 ? 0.7 : 0;
     s.burn = b.burn[i] > 0 ? (b.burnPool[i] < 10 ? 0.5 : 1) : 0;
     s.burnF = s.burn ? Math.floor(ct * 16) % 4 : 0;
-    s.wet = b.wet[i] > 0 ? (b.wet[i] < 30 ? 0.5 : 1) : 0;
+    s.wet = b.wet[i] > 0 ? Math.max(0.3, b.soak[i] > 0 ? b.soak[i] : 1) : 0; // damp drips lightly, soaked heavily (hit.ts soak)
     s.wetF = s.wet ? Math.floor(ct * 9) % 6 : 0;
     s.frozen = b.frozen[i] > 0 ? (b.frozen[i] < 12 ? 0.67 : Math.min(1, Math.ceil(Math.max(0, 150 - b.frozen[i]) / 6) / 3 || 0.34)) : 0;
     s.chill = Math.round(b.chill[i] * 4) / 4;

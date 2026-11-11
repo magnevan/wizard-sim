@@ -102,7 +102,7 @@ try {
     if (before) fail('a headless run started audio before any input');
     await p.keyboard.press('KeyQ');
     await p.waitForFunction(() => window.wizardSim.audio.loaded > 0 && window.wizardSim.audio.ready, { timeout: 15000 });
-    await p.evaluate(() => { const g2 = window.wizardSim; g2.tune.godMode = true; g2.tune.infiniteRunes = true; g2.startWave(5); }); // the lull is quiet: start a real fight
+    await p.evaluate(() => { const g2 = window.wizardSim; g2.tools.godMode = true; g2.tools.infiniteRunes = true; g2.startWave(5); }); // the lull is quiet: start a real fight
     await sleep(9000);
     const a1 = await p.evaluate(() => { const a = window.wizardSim.audio, e = a.engine; return { state: e.ctx.state, loaded: a.loaded, voices: e.stats.voices, missing: e.stats.missing, stolen: e.stats.stolen, active: e.active, loops: e.looping, dropped: a.director.limiter.dropped, tick: window.wizardSim.world.clock[0] }; });
     console.log('game audio', a1);

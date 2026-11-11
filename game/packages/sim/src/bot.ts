@@ -10,7 +10,7 @@
  */
 import type { Element } from '@wizard-sim/rules';
 import { ARCH } from './archetypes';
-import { EL } from './elements';
+import { EL, N_EL } from './elements';
 import { len } from './geom';
 import { AIM_UNIT, BTN, NO_INPUT, quantize, type PlayerInput } from './input';
 import { KIND, MAX_SEATS, PHASE, PHASE_ENC, type World } from './world';
@@ -29,7 +29,7 @@ export const newBotMemory = (): BotMemory => ({ plan: [], button: 0, hold: 0, re
 /** What the bot takes from +1 to three, in order: the elements its spells use most. */
 const CHOICE = [EL.earth, EL.water, EL.fire, EL.life, EL.lightning, EL.arcane, EL.cold];
 
-const runes = (w: World, seat: number, el: Element) => w.seats.runes[seat * 9 + EL[el] - 1];
+const runes = (w: World, seat: number, el: Element) => w.seats.runes[seat * N_EL + EL[el] - 1];
 
 function choose(w: World, seat: number, foe: number, crowd: number, d: number): [Element[], number, number] {
   const b = w.bodies;

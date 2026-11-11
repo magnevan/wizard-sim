@@ -8,7 +8,7 @@
  */
 import { ARENA, BODY, CELL, PERKS, RUNES } from './config';
 import { WALL } from './compile';
-import { EL, N_EL, elementName } from './elements';
+import { EL, KEYED_EL, N_EL, elementName } from './elements';
 import { createRng, type RngState } from './rng';
 import { roomHash, type RoomDef, type Seg } from './room';
 import { createTerrain, type Terrain } from './terrain';
@@ -78,6 +78,8 @@ export interface Bodies {
   /** A heal's lent resistance (guards.ts bless): r per resistance column (5 a body), and ticks left. */
   bless: Float64Array; blessT: Int32Array;
   chill: Float64Array;
+  /** How soaked a wet body is, 0..1 (hit.ts addSoak). Wet's synergies scale with it; it counts only while wet > 0. */
+  soak: Float64Array;
   /** Tick of the last hit taken (dummies reset after a quiet spell). */
   lastHit: Int32Array;
   // ---- enemies ----
@@ -147,6 +149,16 @@ export interface Seats {
   weapon: Uint8Array; weaponEls: Uint8Array; weaponUses: Int32Array;
   /** Rune motes circling you. */
   motes: Uint8Array;
+  /**
+   * The stored spell (Sigil alone on Force, spell audit 2026-11-11): storeArm 1 while the staff waits for the next spell; then
+   * that spell's queue (storeQ, storeLen) and cast (storeCast, a CAST_ID) are held until an empty-queue Force releases them
+   * with no wind-up. It binds a Sigil rune from arming to release; storeBorn is when it was armed (for recalling the oldest).
+   */
+  storeArm: Uint8Array; storeQ: Uint8Array; storeLen: Uint8Array; storeCast: Uint8Array; storeBorn: Int32Array;
+  /** The tick (+1; 0 none) of your last Sigil press with no free Sigil rune: a second within RHYTHM.dryTap is a dry double-tap. */
+  drySigil: Int32Array;
+  /** Ghost runes: per queue slot, what it still owes (bit 1 its element, or Ice's Water; bit 2 Ice's Cold). cast.ts. */
+  owe: Uint8Array;
   /** A conjured shield: GUARD kind, what it can still take, and ticks the Weapon button has been held (0 = not blocking). */
   guard: Uint8Array; guardHp: Float64Array; guardT: Int32Array; guardCharge: Float64Array;
   /** Ticks RMB has been held for a Strike or Heavy with no runes queued (0: not held). */
@@ -194,6 +206,8 @@ export interface Missiles {
   lastHit: Int16Array;
   /** Payload flags (PF) and shape modifier (MOD_ID). */
   flags: Uint8Array; mod: Uint8Array;
+  /** Ticks before it leaves (a staggered volley): till then it waits at its caster's staff, harmless and unseen. */
+  wait: Uint8Array;
 }
 
 /** Things that sit in the world for a while: delayed blasts, geysers, healing springs, steam clouds, rain. */
@@ -207,15 +221,17 @@ export interface Zones {
   flags: Uint8Array; mod: Uint8Array; look: Uint8Array;
 }
 /** Payload flags. */
-export const PF = { heal: 1, scald: 2, freeze: 4, lensed: 8, pin: 16 } as const;
+export const PF = { heal: 1, scald: 2, freeze: 4, lensed: 8, pin: 16, coated: 32 } as const;
 export const MOD_ID = { none: 0, push: 1, shatter: 2, chain: 3, burst: 4 } as const;
-export const ZONE = { none: 0, blast: 1, geyser: 2, spring: 3, steam: 4, spark: 5, rain: 6 } as const;
+export const ZONE = { none: 0, blast: 1, geyser: 2, spring: 3, steam: 4, spark: 5, rain: 6, frost: 7, caltrops: 8 } as const;
 
 /** The floor: one byte of surface per cell, plus ticks left. */
 export const SURF = { none: 0, water: 1, ice: 2, fire: 3 } as const;
 export interface Surfaces {
   kind: Uint8Array;
   life: Int32Array;
+  /** A fire floor's heat: the Fire runes in what lit it (its touch and its burn while you stand in it scale by it). 0 elsewhere. */
+  heat: Uint8Array;
 }
 
 /** What happened this tick, for the view (VFX, sound). Not state: cleared every step. */
@@ -432,7 +448,7 @@ function bodies(n: number): Bodies {
   return {
     kind: u8(n), team: u8(n), x: f64(n), y: f64(n), vx: f64(n), vy: f64(n), kx: f64(n), ky: f64(n), r: f64(n),
     hp: f64(n), maxHp: f64(n), face: f64(n),
-    burnPool: f64(n), wet: i32(n), burn: i32(n), frozen: i32(n), stun: i32(n), expose: i32(n), down: i32(n), bless: f64(n * 5), blessT: i32(n), chill: f64(n), lastHit: i32(n),
+    burnPool: f64(n), wet: i32(n), burn: i32(n), frozen: i32(n), stun: i32(n), expose: i32(n), down: i32(n), bless: f64(n * 5), blessT: i32(n), chill: f64(n), soak: f64(n), lastHit: i32(n),
     arch: u8(n), ai: u8(n), aiT: i32(n), target: new Int16Array(n), lockX: f64(n), lockY: f64(n),
     holding: new Int16Array(n).fill(-1), grabHp: f64(n), heldBy: new Int16Array(n).fill(-1),
     slamX: f64(n), slamY: f64(n), slamBy: new Int16Array(n).fill(-1), slamAt: i32(n),
@@ -446,7 +462,7 @@ function seats(n: number): Seats {
     aimX: f64(n), aimY: f64(n), phase: u8(n), timer: i32(n), castId: u8(n), castQueue: u8(n * QUEUE_MAX), castLen: u8(n),
     areaHeld: i32(n), holdX: f64(n), holdY: f64(n), dragged: u8(n), chanTicks: i32(n), chanTimer: i32(n), chanEndX: f64(n), chanEndY: f64(n), attune: i32(n), bufCast: u8(n), bufTicks: i32(n),
     ward: u8(n), wardEls: u8(n * N_EL), wardHp: f64(n), wardBy: new Int16Array(n).fill(-1), auraEls: u8(n * N_EL), aura: i32(n), wand: u8(n),
-    weapon: u8(n), weaponEls: u8(n * N_EL), weaponUses: i32(n), motes: u8(n),
+    weapon: u8(n), weaponEls: u8(n * N_EL), weaponUses: i32(n), motes: u8(n), storeArm: u8(n), storeQ: u8(n * QUEUE_MAX), storeLen: u8(n), storeCast: u8(n), storeBorn: i32(n), drySigil: i32(n), owe: u8(n * QUEUE_MAX),
     guard: u8(n), guardHp: f64(n), guardT: i32(n), guardCharge: f64(n), handT: i32(n), double: new Int16Array(n).fill(-1), dblOX: f64(n), dblOY: f64(n), dblPaid: u8(n), dblEndX: f64(n), dblEndY: f64(n), dblBorn: i32(n), wandBorn: i32(n),
     guardEls: u8(n * N_EL), guardCd: i32(n), retreatT: i32(n), dashT: i32(n), linkTo: new Int16Array(n).fill(-1), linkT: i32(n),
     specT: i32(n),
@@ -456,7 +472,7 @@ function missiles(n: number): Missiles {
   return {
     alive: u8(n), x: f64(n), y: f64(n), vx: f64(n), vy: f64(n), life: i32(n), owner: new Int16Array(n), els: u8(n * N_EL),
     scale: f64(n), r: f64(n), type: u8(n), pierce: u8(n), look: u8(n), lastHit: new Int16Array(n),
-    flags: u8(n), mod: u8(n),
+    flags: u8(n), mod: u8(n), wait: u8(n),
   };
 }
 function zones(n: number): Zones {
@@ -514,6 +530,7 @@ export const ALTAR_SPOTS: readonly (readonly [number, number])[] = ROOMS.survive
 
 /** Max runes of element `id` for seat `i`: the config; in the tutorial, the beat's pools (0 = locked); in Survive, its weak start plus the seat's power-ups. */
 export const runeMax = (w: World, i: number, id: number): number =>
+  id > KEYED_EL ? 0 : // Ice has no pool: it is made from Water's and Cold's
   w.tut ? tutPool(w.tut.state[0], id) : w.battery ? (w.battery.drive[i] >= 0 && id === EL.fire ? RUNES.max.fire : 0) : w.run ? (id === EL.sigil ? RUNES.surviveSigil : RUNES.surviveStart) + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
 /** A seat's power-up stacks (0 outside survive). */
 export const stackOf = (w: World, i: number, pu: number): number => (w.run && i >= 0 && i < MAX_SEATS ? w.run.stacks[i * N_PU + pu] : 0);
@@ -531,18 +548,39 @@ export const regenOf = (w: World, i: number): number => {
 };
 
 /**
- * The shared regen budget (docs/decisions 2026-11-05, "The rune economy"): seat `i`'s runes per
- * second into element `id`, given `full`, a bitmask (1 << id) of the pools that are full. A full pool
- * gets nothing; the others get α·R·max/Σmax_all (the floor) plus (1-α)·R·max/Σmax_notfull (the
- * shared part), α = RUNES.floor. Attune and Siphon multiply the result.
+ * The shared regen budget: seat `i`'s runes per second into element `id`, given `full`, a bitmask (1 << id) of the pools
+ * that are full. The rune rework (2026-11-11, the user chose it): R is shared equally among the pools that aren't full, and
+ * an empty one (under a whole rune: nothing to cast with) takes RUNES.emptyShare shares. A small pool refills as fast as a
+ * big one (the old split by max made a 1-rune pool wait on an empty 5-rune one), and none of R is lost to full pools (the
+ * old floor's share was). Attune and Siphon multiply the result.
  */
 export function regenRate(w: World, i: number, id: number, full: number): number {
-  if (full & (1 << id)) return 0;
-  let all = 0, open = 0;
-  for (let e = 1; e <= N_EL; e++) { const m = runeMax(w, i, e); all += m; if (!(full & (1 << e))) open += m; }
-  if (all <= 0 || open <= 0) return 0;
-  const m = runeMax(w, i, id), a = RUNES.floor;
-  return regenOf(w, i) * m * (a / all + (1 - a) / open);
+  if (full & (1 << id) || runeMax(w, i, id) <= 0) return 0;
+  const wt = (e: number): number => (full & (1 << e) || runeMax(w, i, e) <= 0 ? 0 : w.seats.runes[i * N_EL + e - 1] < 1 ? RUNES.emptyShare : 1);
+  let total = 0;
+  for (let e = 1; e <= KEYED_EL; e++) total += wt(e);
+  return total > 0 ? (regenOf(w, i) * wt(id)) / total : 0;
+}
+
+/**
+ * Seat i's regen into element `id` this tick (runes a second, before Attune): while a queued ghost rune is owed, all of R
+ * goes to what's owed, shared by what each owes; otherwise the shared budget (regenRate).
+ */
+export function runeRate(w: World, i: number, id: number, full: number): number {
+  const s = w.seats, need = (e: number): number => {
+    let n = 0;
+    for (let k = 0; k < s.queueLen[i]; k++) {
+      const q = s.queue[i * QUEUE_MAX + k], o = s.owe[i * QUEUE_MAX + k];
+      if (!o) continue;
+      if (q === e && o & 1 && q !== EL.ice) n++;
+      if (q === EL.ice && ((e === EL.water && o & 1) || (e === EL.cold && o & 2))) n++;
+    }
+    return n;
+  };
+  let total = 0;
+  for (let e = 1; e <= KEYED_EL; e++) total += need(e);
+  if (!total) return regenRate(w, i, id, full);
+  return id <= KEYED_EL ? (regenOf(w, i) * need(id)) / total : 0;
 }
 
 /** `tutorialBeat` starts a tutorial world at that beat (design numbering; the first if it isn't one the build has). */
@@ -552,7 +590,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
     dims, def, terrain: createTerrain(def),
     clock: new Uint32Array([0, seed >>> 0]), rng: createRng(seed),
     bodies: bodies(MAX_BODIES), seats: seats(MAX_SEATS), missiles: missiles(MAX_MISSILES), zones: zones(MAX_ZONES),
-    surf: { kind: u8(cells), life: i32(cells) },
+    surf: { kind: u8(cells), life: i32(cells), heat: u8(cells) },
     walls: {
       type: u8(MAX_WALLS), x1: f64(MAX_WALLS), y1: f64(MAX_WALLS), x2: f64(MAX_WALLS), y2: f64(MAX_WALLS), hp: f64(MAX_WALLS), maxHp: f64(MAX_WALLS),
       owner: new Int16Array(MAX_WALLS), els: u8(MAX_WALLS * N_EL), born: i32(MAX_WALLS),

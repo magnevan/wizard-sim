@@ -8,7 +8,7 @@ There's one file per mechanic, copied from `_template.md`. The status lives in t
 | [chill-meter](chill-meter.md) | adopted (a frost pool filled by Cold damage; only Water freezes) | 2, 3, 4 |
 | [spell-wishlist](spell-wishlist.md) | developing | 2, 3 |
 | [art-direction](art-direction.md) | adopted (the Pixel Battlefield look drives the game) | 5 |
-| [spell-preparation](spell-preparation.md) | developing (glyphs, turrets, orbitals built as Sigil devices; the stored spell deferred) | 4, 6 |
+| [spell-preparation](spell-preparation.md) | prototyping (glyphs, turrets, orbitals built as Sigil devices; the stored spell built as Sigil alone on Force) | 4, 6 |
 | [support-verbs](support-verbs.md) | developing (lens, wards on allies, auras, heals, Healing link, Mend, Rally built) | 3 |
 | [enchantments](enchantments.md) | prototyping (Sigil + Self auras and wards on allies in the game) | 3, 6 |
 | [conjured-weapons](conjured-weapons.md) | prototyping (seven conjured weapons, the staff and eight guards in the game, rated through round 4; Prism = Capacitor and Lance) | 2, 6 |
@@ -17,6 +17,8 @@ There's one file per mechanic, copied from `_template.md`. The status lives in t
 | [casting-rhythm](casting-rhythm.md) | prototyping (in the engine: wind-up by spell size, cast buffer, channels with upkeep) | 1, 4 |
 | [progression](progression.md) | developing (unlock pacing U2, fixed queue, pools and regen grow, pool choice: `explorations/2026-11-07-world-and-progression.md`) | 1, 5 |
 | [spell-grammar](spell-grammar.md) | prototyping (proposal C drives the engine; A and A.1 superseded) | 2, 6 |
+| [slip](slip.md) | raw (bodies no longer slide on ice; a slip with its own animations, maybe later) | 2, 3 |
+| [shield-force-alternatives](shield-force-alternatives.md) | parked (Bubble, Repulsor/Counterspell, Shield chain, Guardian link: not picked for Shield + elements on Force; Blink with a parting gift was) | 2, 3 |
 | [sanctum](sanctum.md) | developing (the meditation sandbox, reachable from anywhere; the user, 2026-11-08) | 4, 5 |
 | [element-economy](element-economy.md) (element runes) | prototyping (rune pools, reserve on queue, regen, Attune, Bind, Model A drain in the engine) | 1, 4, 6 |
 | [battlefield-building](battlefield-building.md) | prototyping (walls, curtains, turrets, glyphs in the engine) | 6, 7, 3 |

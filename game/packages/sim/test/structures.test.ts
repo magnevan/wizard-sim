@@ -301,6 +301,10 @@ describe('Sigil', () => {
     for (let c = 0; c < 4; c++) d.queue('sigil', 'fire').cast(BTN.area, 2, 40);
     expect(devices(w, DEVICE.orbital)).toBe(4);
     expect(w.seats.runes[EL.sigil - 1]).toBeGreaterThan(RUNES.max.sigil - 1.05); // one rune bound, the rest given back
+    // the ring holds what one full cast makes: a fifth orb pushes out the oldest
+    d.queue('sigil', 'fire').cast(BTN.area, 2, 40);
+    let orbs = 0; for (let k = 0; k < w.devices.type.length; k++) if (w.devices.type[k] === DEVICE.orbital) orbs += w.devices.charges[k];
+    expect(orbs).toBe(STRUCT.orbitMax);
   });
 
   it('a turret is held to aim, and stands at the cursor from when you let go, at most Place range away', () => {

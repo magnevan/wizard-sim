@@ -277,7 +277,7 @@ export const STRUCT = {
   /** Orbitals: ring radius, turns a second, and how far from an orb (to the enemy's edge) it strikes: 1.6 u, so a foe is struck as it closes to about 3 u of you, not when it walks into the orb. */
   orbitRadius: 1.3, orbitSpeed: 0.5, orbitStrike: 1.6,
   /** All the orbs one orbital cast makes strike this many times its spell between them (Discharge's 1.6); your ring holds at most orbitMax orbs, and binds one Sigil rune. */
-  orbitPower: 1.6, orbitMax: 8,
+  orbitPower: 1.6, orbitMax: 4, // what one full cast (Sigil + 4) makes: feeding the ring refills it, it never banks more than a cast could (8 let the quiet before a wave bank twice a full cast)
   /** The lens: its radius; what passes through it is multiplied by lensMult, and a shot through it grows lensGrow times wider. */
   lensRadius: 0.9, lensMult: 1.5, lensGrow: 1.3,
   auraTime: 12, auraRadius: 2.5,

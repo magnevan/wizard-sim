@@ -745,8 +745,12 @@ export class Vfx {
       // Freezing fog (Cold Place, the user: "like opening a deep freezer"): a low, heavy fog of cold air that pours out
       // over the floor and spills past its edge, curling slowly, with frost glinting on the ground under it
       const cl = easeOut(seg(e, 0, 0.5)) * seg(z.life[k], 0, 40);
+      // everything scales with the size of the fog (the user: a big one looked thin): billows and glints by area, the
+      // tendrils by the rim's length; a big bank's billows also grow a little, so it reads as heavier, not just busier
+      const span = r / 32, area = span * span, bs = clamp(Math.sqrt(span), 1, 1.4);
+      const nBill = Math.min(120, Math.max(8, Math.round(16 * area / (bs * bs)))), nGlint = Math.min(160, Math.max(10, Math.round(18 * area)));
       X.ellipse(g, x, y, r * 0.95 * cl, r * 0.95 * FY * cl, '#9fd4e8', 0.35 * cl);
-      for (let i = 0; i < 18; i++) {
+      for (let i = 0; i < nGlint; i++) {
         if (rand(i, 31, sd) > cl) continue;
         const a = rand(i, 32, sd) * TAU, d = Math.sqrt(rand(i, 33, sd)) * r * 0.9;
         if ((Math.floor(t * 2 + rand(i, 34, sd) * 7)) % 5 === 0) X.px(g, x + Math.cos(a) * d, y + Math.sin(a) * d * FY, '#ffffff');
@@ -755,10 +759,10 @@ export class Vfx {
       // The body of the fog (the user: no volume to it): a bank of low, heavy billows, each lit on top and shaded
       // underneath, the far ones first so the near ones roll over them. It lies low, but it has a body.
       const bill: { x: number; y: number; w: number; h: number; den: number; i: number }[] = [];
-      for (let i = 0; i < 16; i++) {
+      for (let i = 0; i < nBill; i++) {
         const a = rand(i, 11, sd) * TAU + t * 0.06 * (i % 2 ? 1 : -1), rr = Math.sqrt(rand(i, 12, sd)) * r * 0.8 * cl;
         const swell = 1 + 0.12 * Math.sin(t * 0.8 + i * 2.1);
-        const wr = (6 + rand(i, 14, sd) * 6) * (0.5 + cl * 0.5) * swell, hr = wr * (0.55 + 0.15 * rand(i, 15, sd));
+        const wr = (6 + rand(i, 14, sd) * 6) * bs * (0.5 + cl * 0.5) * swell, hr = wr * (0.55 + 0.15 * rand(i, 15, sd));
         bill.push({ x: x + Math.cos(a) * rr + Math.sin(t * 0.5 + i * 1.3) * 2.5, y: y + Math.sin(a) * rr * FY, w: wr, h: hr, den: cl, i });
       }
       bill.sort((p, q2) => p.y - q2.y);
@@ -775,12 +779,12 @@ export class Vfx {
         }, false, true);
       }
       // tendrils spilling over the rim and creeping out along the floor, thinning as they go
-      for (const p of emit(t, 10, 2.4, (i, age) => {
+      for (const p of emit(t, 10 * Math.max(1, span), 2.4, (i, age) => {
         const a = rand(i, 21, sd) * TAU, d = r * (0.8 + age * 0.6);
         return { x: x + Math.cos(a) * d, y: y + Math.sin(a) * d * FY, age, i };
       })) X.ellipse(o, p.x, p.y, (4 + p.age * 6) * (0.6 + 0.4 * cl), (1.2 + p.age * 1.6) * (0.6 + 0.4 * cl), p.i % 2 ? '#d4f0fa' : '#b8e2f2', (1 - p.age) * 0.45 * cl);
       // a breath of cold curling up off it now and then, thin
-      for (const p of emit(t, 3, 1.6, (i, age) => ({ x: x + (rand(i, 41, sd) - 0.5) * r * 1.4 + Math.sin(age * 4 + i) * 2, y: y - 3 - age * 10, age }))) X.ellipse(o, p.x, p.y, 2 + p.age * 3, 1 + p.age * 1.5, '#e8fbff', (1 - p.age) * 0.4 * cl);
+      for (const p of emit(t, 3 * Math.max(1, span), 1.6, (i, age) => ({ x: x + (rand(i, 41, sd) - 0.5) * r * 1.4 + Math.sin(age * 4 + i) * 2, y: y - 3 - age * 10, age }))) X.ellipse(o, p.x, p.y, 2 + p.age * 3, 1 + p.age * 1.5, '#e8fbff', (1 - p.age) * 0.4 * cl);
       light(x, y, r + 20, '#9ff4ff', 0.3 * cl);
     } else if (ty === ZONE.rain) {
       // rain: a dark cloud over the spot, streaks and splashes, for as long as the sim says it falls

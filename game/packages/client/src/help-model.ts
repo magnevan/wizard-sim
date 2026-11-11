@@ -177,7 +177,7 @@ function payload(spec: SpellSpec, k: number, unit: string, out: Metric[], flat =
 function statuses(spec: SpellSpec, out: Metric[]): void {
   if (spec.heal) return;
   if (count(spec, 'fire') && !spec.scald) out.push({ key: 'burn', label: 'BURN FROM', v: STATUS.burnBase, unit: '' });
-  const frost = DAMAGE.cold * count(spec, 'cold') + DAMAGE.ice * STATUS.iceChill * count(spec, 'ice'); // Ice chills harder (hit.ts)
+  const frost = DAMAGE.cold * count(spec, 'cold') + DAMAGE.ice * STATUS.iceChill * count(spec, 'ice'); // Ice chills less than Cold per damage (hit.ts)
   if (frost) out.push({ key: 'chill', label: 'FROST', v: frost * STATUS.chillPerDamage, unit: '', hidden: spec.channel });
   if (count(spec, 'lightning')) out.push({ key: 'stun', label: 'STUN', v: STATUS.stunPerRune * count(spec, 'lightning'), unit: 'S', hidden: spec.channel });
 }
@@ -279,7 +279,8 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
     }
     case 'aura': {
       // every half second (structures.ts): Life regenerates the wearer, Cold chills, Earth shoves; Fire, Haste and Glass don't grow
-      const life = count(spec, 'life'), cold = count(spec, 'cold') + STATUS.iceChill * count(spec, 'ice'), earth = count(spec, 'earth'); // the Rime aura chills harder
+      const life = count(spec, 'life'), cold = count(spec, 'cold'), earth = count(spec, 'earth'), ice = count(spec, 'ice');
+      if (ice) m.push({ key: 'spike', label: 'SPIKES', v: 2 * DAMAGE.ice * STRUCT.spikeAura * ice, unit: '/S' }); // the Spike aura stabs twice a second
       if (life) m.push({ key: 'regen', label: 'REGEN', v: 6 * life, unit: '/S' });
       if (cold) m.push({ key: 'chill', label: 'FROST', v: 5 * cold, unit: '/S' });
       if (earth) m.push({ key: 'shove', label: 'SHOVE', v: 6 * earth, unit: 'U/S' });
@@ -398,6 +399,7 @@ export const WEAPONS: Record<string, WeaponInfo> = {
   arcane: { name: 'Arcane wand', strike: 'A light arcane bolt.', heavy: 'Hold to charge a bolt that pierces.', specialName: 'Siphon', special: 'Hold: rooted, your runes regenerate fast.', held: true },
   fire: { name: 'Flame sword', strike: 'A slash that sets alight.', heavy: 'A rolling crescent of flame that ignites.', specialName: 'Sweep', special: 'A full circle around you.' },
   earth: { name: 'Stone maul', strike: 'A slow, heavy blow that knocks back.', heavy: 'A fissure down one lane, knocking down all in it.', specialName: 'Sweep', special: 'A full circle around you.' },
+  ice: { name: 'Ice bow', strike: 'One quick icicle, the fastest shot in hand.', heavy: 'Hold to draw: a fan of three icicles; a full draw pierces.', specialName: 'Splinter shot', special: 'An icicle at the cursor that bursts into flying shards.' },
 };
 
 interface GuardInfo { name: string; el: Element; defend: string; retreatName: string; retreat: string; dist: number }

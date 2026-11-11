@@ -4,6 +4,7 @@ import {
   BTN, DEVICE, EL, KIND, NO_INPUT, RUNES, STRUCT, WALL, WARD, compile, createWorld, elementId, orbitAngle, quantize, specOf, step,
   type PlayerInput, type World,
 } from '../src';
+import { damageWall } from '../src/walls';
 
 class Driver {
   aim = { x: 1, y: 0 };
@@ -47,6 +48,36 @@ describe('Shield', () => {
     expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
     d.queue('earth').cast(BTN.force, 70, 40);
     expect(w.bodies.hp[t]).toBe(400);
+  });
+
+  it('Shield + Ice as Place raises an ice wall: a spike barrier that stops a rock, weaker than stone', () => {
+    const { w, d, dummy } = arena();
+    const t = dummy(5, 0);
+    d.aimAt(5, 0).queue('shield', 'water', 'cold').cast(BTN.area, 20, 20);
+    expect(walls(w, WALL.ice)).toBe(STRUCT.arcSegs);
+    const k = Array.from(w.walls.type).indexOf(WALL.ice);
+    expect(w.walls.maxHp[k]).toBeLessThan(STRUCT.rockHp);
+    d.queue('earth').cast(BTN.force, 70, 40);
+    expect(w.bodies.hp[t]).toBe(400);
+  });
+
+  it('an ice wall stabs whoever presses against it, and stands shorter than rock', () => {
+    const { w, d } = arena(2);
+    w.bodies.x[1] = STRUCT.arcRadius + 0.55; w.bodies.y[1] = 0;
+    const hp0 = w.bodies.hp[1];
+    d.aimAt(5, 0).queue('shield', 'water', 'cold').cast(BTN.area, 20, 90);
+    expect(w.bodies.hp[1]).toBeLessThan(hp0);
+    d.tick({}, 60 * (STRUCT.iceLife + 1));
+    expect(walls(w, WALL.ice)).toBe(0);
+  });
+
+  it('fire melts an ice wall: a hit carrying Fire does STRUCT.iceMelt times the damage (not to stone)', () => {
+    const { w, d } = arena();
+    d.aimAt(5, 0).queue('shield', 'water', 'cold').cast(BTN.area, 20, 20);
+    const [k1, k2] = Array.from(w.walls.type).flatMap((t, k) => (t === WALL.ice ? [k] : [])), h1 = w.walls.hp[k1], h2 = w.walls.hp[k2];
+    damageWall(w, k1, 10, 0); damageWall(w, k2, 10, 1);
+    expect(h1 - w.walls.hp[k1]).toBeCloseTo(10, 6);
+    expect(h2 - w.walls.hp[k2]).toBeCloseTo(10 * STRUCT.iceMelt, 6);
   });
 
   it('coated rock acts on whoever touches it: a Life stone arc heals, a plain one does not', () => {

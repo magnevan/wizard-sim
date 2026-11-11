@@ -723,6 +723,13 @@ export class StructureView {
       const n = Math.max(2, Math.ceil(Math.max(x1 - x0, y1 - y0)) + 1), cols: Pt[] = [];
       for (let j = 0; j < n; j++) cols.push([lerp(a[0], bb[0], j / (n - 1)), lerp(a[1], bb[1], j / (n - 1))]);
       const mid: Pt = [(a[0] + bb[0]) / 2, (a[1] + bb[1]) / 2];
+      if (ty === WALL.ice) {
+        // a spike barrier: solid like rock, so its look doesn't dim with the Shield pool; it sinks as it melts (hpf)
+        const h = 24 * rise;
+        const c = this.pieces.canvas(x0 - 10, y0 - h - 6, x1 - x0 + 21, y1 - y0 + h + 10, mid[1]);
+        this.iceWall(c, g, cols, a, bb, mid, rise * (0.45 + 0.55 * hpf), hitE, k * 31 + 7, t, light);
+        continue;
+      }
       if (ty === WALL.barrier) {
         const h = 16 * rise;
         const c = this.pieces.canvas(x0 - 3, y0 - h - 6, x1 - x0 + 7, y1 - y0 + h + 10, mid[1]);
@@ -844,6 +851,38 @@ export class StructureView {
       for (const p of emit(t, 3 * P.length, 1, (i, age) => { const q = P[mod(i, P.length)]; return { x: q[0] + Math.sin(age * 5 + i) * 2, y: q[1] - age * (h + 8), age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? R[1] : R[2]);
       light(mid[0], mid[1], 34, R[2], 0.4 * rise);
     }
+  }
+
+  /**
+   * An ice wall (Shield + Ice): a spike barrier, like an abatis. A low ridge of faceted crystal along the line,
+   * and long icicles jutting out of it on both sides, leaning outward, in Ice's own ramp. `rise` also sinks it as it melts.
+   */
+  private iceWall(c: Ctx, g: Ctx, cols: Pt[], a: Pt, bb: Pt, mid: Pt, rise: number, hitE: number, sd: number, t: number, light: LightFn): void {
+    const I = EL.ice, n = cols.length, flash = hitE >= 0 && hitE < 0.1 ? 1 : 0;
+    // the wall's direction on screen, and its normal (the way the spikes lean)
+    const dx = bb[0] - a[0], dy = bb[1] - a[1], dl = Math.hypot(dx, dy) || 1, nx = -dy / dl, ny = dx / dl;
+    const col = (q: number) => cols[bb[1] >= a[1] ? q : n - 1 - q]; // far first
+    // the ridge: a low row of crystal, lit on its top
+    for (let q = 0; q < n; q++) {
+      const [px, py] = col(q), xx = Math.round(px), yy = Math.round(py), hh = Math.round((5 + 3 * rand(q, 1, sd)) * rise);
+      if (hh < 1) continue;
+      X.rect(c, xx - 1, yy - hh + 1, 3, hh, flash ? I[1] : I[4]);
+      X.rect(c, xx - 1, yy - hh + 1, 3, Math.max(1, Math.round(hh * 0.4)), flash ? I[0] : I[2]);
+      X.px(c, xx, yy - hh, I[1]);
+    }
+    // the spikes: every couple of pixels an icicle, alternating sides, long and thin, sharpening to a white tip
+    for (let q = 0; q < n; q += 2) {
+      const [px, py] = col(q), side = (q / 2) % 2 ? 1 : -1, len = (9 + 7 * rand(q, 2, sd)) * rise;
+      if (len < 2) continue;
+      const lean = 0.55 + 0.25 * rand(q, 3, sd), bx = px, by = py - 3 * rise;
+      const tx = bx + nx * side * len * lean, ty = by + ny * side * len * lean * FY - len * (1 - lean * 0.6);
+      X.line(c, bx, by, tx, ty, flash ? I[0] : I[3]);
+      X.line(c, bx + 1, by, (bx + tx) / 2 + 1, (by + ty) / 2, I[4]); // its shaded underside, near the root
+      X.px(c, tx, ty, '#ffffff');
+      if (Math.floor(t * 2 + q * 0.7) % 9 === 0) { X.px(c, tx, ty - 1, I[1]); X.px(c, tx - 1, ty, I[1]); X.px(c, tx + 1, ty, I[1]); } // a tip glints
+    }
+    for (const p of cols) if (rand(Math.round(p[0]), 7, sd) < 0.5) X.ellipse(g, p[0], p[1] + 1, 3, 1.4, '#c2ecf6', 0.35 * rise);
+    light(mid[0], mid[1], 34, I[3], 0.4 * rise);
   }
 
   /** An ice curtain (Shield + Water + Cold): a row of still, faceted crystals with frost at their feet, where water's sheet flows. */
@@ -1390,6 +1429,22 @@ export class StructureView {
       X.line(c, h[0], h[1] - 1, tp[0], tp[1], EL.fire[0], 1); X.px(c, tp[0], tp[1], '#ffffff');
       for (const p of emit(t, 10, 0.5, (q, age) => ({ x: lerp(h[0], tp[0], rand(q, 2, i)) + Math.sin(age * 7 + q), y: lerp(h[1], tp[1], rand(q, 2, i)) - age * 9, age }))) X.px(o, p.x, p.y, K.fireCol(0.3 + p.age * 0.7));
       light(tp[0], v.y, 30, '#ff7020', 0.5);
+    } else if (el === 'ice') {
+      // the Ice bow: an upright bow of ice, bulging toward your aim, a pale string; held Heavy draws it back with an icicle nocked
+      const I = EL.ice, draw = w.seats.handT[i] > TAP ? heavyCharge(w.seats.handT[i]) : 0;
+      const top: Pt = [h[0] + fwd * 1, h[1] - 10 * k], bot: Pt = [h[0] + fwd * 1, h[1] + 5 * k], limbs: Pt[] = [];
+      for (let q = 0; q <= 8; q++) { const f = q / 8, s = f * 2 - 1; limbs.push([lerp(top[0], bot[0], f) + fwd * 4 * k * (1 - s * s), lerp(top[1], bot[1], f)]); }
+      X.lines(c, limbs, I[5], 3); X.lines(c, limbs, I[2], 1);
+      X.px(c, top[0], top[1], '#ffffff'); X.px(c, bot[0], bot[1], I[1]);
+      const nock: Pt = [h[0] - fwd * 4 * draw, h[1] - 2]; // the string's middle, pulled back as it draws
+      X.line(c, top[0], top[1], nock[0], nock[1], '#e8fbff', 1); X.line(c, nock[0], nock[1], bot[0], bot[1], '#e8fbff', 1);
+      if (draw > 0) {
+        const tip: Pt = [h[0] + fwd * (7 + 2 * draw), h[1] - 2];
+        X.line(c, nock[0], nock[1], tip[0], tip[1], I[3], 1); X.px(c, tip[0], tip[1], '#ffffff'); X.px(c, tip[0] - fwd, tip[1] - 1, I[1]);
+        if (draw >= ARMS.fanPierceAt) X.glow(o, tip[0], tip[1], 5, I[2], 0.6); // full draw: it will pierce
+      }
+      blade = limbs;
+      light(h[0], v.y, 24, I[3], 0.35 + 0.3 * draw);
     } else if (frosty(el)) {
       const tp = dir(15 * k, 0.25);
       blade = [[h[0], h[1] + 4], tp];
@@ -1553,7 +1608,7 @@ export class StructureView {
     const d = Math.hypot(s.aimX[i], s.aimY[i]), lim = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
     const cxw = b.x[i] + s.aimX[i] * lim, cyw = b.y[i] + s.aimY[i] * lim, cx = gx(cxw), cy = gy(cyw);
     const look = spec.look || spec.form, R = look === ELID.life ? LIFE : ramp(look);
-    const matCol = spec.wall === WALL.rock ? '#c8ab86' : spec.wall === WALL.barrier ? EL.shield[1] : R[1];
+    const matCol = spec.wall === WALL.rock ? '#c8ab86' : spec.wall === WALL.ice ? EL.ice[1] : spec.wall === WALL.barrier ? EL.shield[1] : R[1];
     if (spec.shape === 'arcwall') {
       const face = Math.atan2(s.aimY[i], s.aimX[i]), half = STRUCT.arcHalf * TAU, r = STRUCT.arcRadius;
       const pts: Pt[] = [];

@@ -88,7 +88,7 @@ const ENEMY_NAME: Readonly<Record<number, EnemyKind>> = {
 
 /** The sim's move names, as the moves the ear knows. */
 const MOVES: Readonly<Record<string, WeaponMove>> = {
-  strike: 'strike', staff: 'strike', lash: 'strike', javelin: 'strike', chargedbolt: 'heavy', sweep: 'sweep', tideslash: 'heavy', firewave: 'heavy', fissure: 'heavy', lance: 'heavy', imbue: 'strike',
+  strike: 'strike', staff: 'strike', lash: 'strike', javelin: 'strike', arrow: 'strike', volley: 'heavy', splinter: 'heavy', chargedbolt: 'heavy', sweep: 'sweep', tideslash: 'heavy', firewave: 'heavy', fissure: 'heavy', lance: 'heavy', imbue: 'strike',
   block: 'block', glance: 'block', guardbreak: 'block', parry: 'parry',
   backstep: 'retreat', shovestep: 'retreat', iceslide: 'retreat', flamestep: 'retreat', seedstep: 'retreat', phase: 'retreat', surge: 'retreat', tidewave: 'retreat', flameburst: 'retreat', spark: 'retreat',
   dash: 'dash',

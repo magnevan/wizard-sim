@@ -544,7 +544,7 @@ export class Vfx {
     };
     for (let q = 0, n = terrainNear(tr, ex, ey, near); q < n; q++) { const k = tr.out[q], f = face(tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k]); if (f) return f; }
     for (let k = 0; k < MAX_WALLS; k++) {
-      if (wl.type[k] !== WALL.rock && wl.type[k] !== WALL.barrier) continue;
+      if (wl.type[k] !== WALL.rock && wl.type[k] !== WALL.ice && wl.type[k] !== WALL.barrier) continue;
       const f = face(wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
       if (f) return f;
     }

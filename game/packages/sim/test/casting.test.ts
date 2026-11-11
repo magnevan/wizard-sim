@@ -226,10 +226,16 @@ describe('Force casts', () => {
     expect(spec.title).toBe('Ice shards');
     expect(spec.shape).toBe('shards');
     const { w, d } = range();
-    d.queue('water', 'cold').tick({ buttons: BTN.force }, 1).tick({}, 16);
-    let n = 0;
-    for (let j = 0; j < w.missiles.alive.length; j++) n += w.missiles.alive[j];
-    expect(n).toBeGreaterThanOrEqual(5);
+    d.queue('water', 'cold').tick({ buttons: BTN.force }, 1);
+    // Ice shards fly fast (SHAPES.iceFlight): the most in flight at once, over the cast
+    let most = 0;
+    for (let t = 0; t < 30; t++) {
+      d.tick({}, 1);
+      let n = 0;
+      for (let j = 0; j < w.missiles.alive.length; j++) n += w.missiles.alive[j];
+      most = Math.max(most, n);
+    }
+    expect(most).toBeGreaterThanOrEqual(5);
   });
 
   it('the arcane beam hits the first body only, ally or not (friendly fire)', () => {

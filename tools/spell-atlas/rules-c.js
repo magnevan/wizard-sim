@@ -84,7 +84,7 @@
     life: { trait: 'Mend', hit: 'is healed', why: 'Life heals whatever it touches, friend or foe, as in Magicka. It leads every spell it is in except Shield and Sigil ones: in those it makes healing zones and healing devices.' },
     shield: { trait: 'Barrier', hit: '', why: 'Shield always takes the form, so it is never a payload.' },
     sigil: { trait: 'Device', hit: '', why: 'Sigil always takes the form, so it is never a payload.' },
-    ice: { trait: 'Frostbite', hit: 'is chilled hard and put out if burning, and frozen if it was already wet; the water is frozen into the spell, so it never soaks. A frozen target shatters from a heavy hit', why: 'Ice is a Water and a Cold pressed into one rune: two runes in one slot. Fire melts it. It carries no wet, so it sits beside Lightning, and one ice spell can\'t set up its own freeze: soak them first.' },
+    ice: { trait: 'Spike', hit: 'is struck hard by ice and chilled a little, and put out if burning; it is frozen if it was already wet. The water is frozen into the spell, so it never soaks. A frozen target shatters from a heavy hit', why: 'Ice is a Water and a Cold, two low-damage elements, pressed into one sharp rune: two runes in one slot for real damage, quick flight and spikes. Some chill comes with it, less than Cold\'s. Fire melts it. It carries no wet, so it sits beside Lightning, and one ice spell can\'t set up its own freeze: soak them first.' },
   };
   // Steam is not an element. When water meets fire in one spell, both stay in the queue
   // and the spell gains a mixed effect on top of their two traits. (Ice is: Water + Cold combine.)
@@ -161,17 +161,17 @@
     earth: ['Bulldoze', 'walking into enemies shoves them aside, and small ones fall over'],
     lightning: ['Haste', 'faster movement and casting for {w}'],
     arcane: ['Glass cannon', '{s} hits deal more damage, but anything knocks {w} down easily'],
-    ice: ['Rime aura', 'a hard frost around {w} chills enemies close by, and freezes the ones that are already wet (not by a Mist aura of its own: one aura does not both soak and freeze)'],
+    ice: ['Spike aura', 'ice spikes jut around {w} and stab enemies close by: a little chill, and a freeze if they are already wet (not by a Mist aura of its own: one aura does not both soak and freeze)'],
   };
   // With Earth, an aura element coats the bulldoze instead: [adjective, what the shove does]
   const AURA_COAT = {
     fire: ['Burning', 'whoever is shoved catches fire'], cold: ['Freezing', 'whoever is shoved is chilled and slowed'],
     water: ['Soaking', 'whoever is shoved is soaked'], arcane: ['Arcane', 'each shove bursts in a small explosion'],
     life: ['Mending', 'each shove heals {w} a little (the enemies you shove are not healed)'],
-    ice: ['Icy', 'whoever is shoved is chilled hard, and frozen if already wet'],
+    ice: ['Spiked', 'whoever is shoved is stabbed by ice'],
   };
   // With Earth, a ward element coats the stone armour: melee attackers get it.
-  const WARD_COAT = { fire: 'catch fire', cold: 'are chilled', water: 'are soaked', arcane: 'take a burst', life: 'are healed', ice: 'are chilled hard, and frozen if wet' };
+  const WARD_COAT = { fire: 'catch fire', cold: 'are chilled', water: 'are soaked', arcane: 'take a burst', life: 'are healed', ice: 'are stabbed by ice spikes' };
   const DOUBLE = ['Double', 'A conjured copy of {w} appears beside {w}, and enemies target it. Each spell cast by {w} is repeated by the copy at half power from its own spot, a crossfire, but never for free: each repeat draws half that spell\'s rune cost from the pool, and if the pool can\'t cover it, the copy skips that spell. It lasts until it is destroyed or runs out.'];
   const SELF_HIT = { // no Shield or Sigil: Magicka's self casts
     water: ['Douse', 'puts out burning and leaves {w} wet'],
@@ -182,7 +182,7 @@
     arcane: ['Attune', 'runs raw magic through {w}: it stings, and {s} runes regenerate faster for a moment (a breather between waves)'],
     earth: ['Bruise', 'hits {w} like a thrown rock'],
     fire: ['Burn', 'sets {w} alight and dries {w} off'],
-    ice: ['Frostbite', 'chills {w} hard and puts out burning; if {w} were already wet, it freezes {w} solid'],
+    ice: ['Impale', 'stabs {w} with ice (it hurts) and puts out burning; if {w} were already wet, it freezes {w} solid'],
   };
   const who = (s, ally) => s.replace(/\{W\}/g, ally ? 'The ally' : 'You').replace(/\{w\}/g, ally ? 'the ally' : 'you').replace(/\{s\}/g, ally ? 'their' : 'your');
   const cap = (s) => s[0].toUpperCase() + s.slice(1);
@@ -200,8 +200,8 @@
     fire: ['Flame sword', 'A blade that sets alight. Its Heavy is a rolling crescent of flame; its Special a Sweep round you.'],
     cold: ['Frost spear', 'A long spear with a chilling thrust. Its Heavy is an impaling dash (frozen targets on the way shatter); its Special throws a javelin that pins and frosts.'],
   };
-  // Ice conjures the same spear and kite as Cold, made of ice (it is Cold's material). Its own weapon is open.
-  WEAPON.ice = ['Ice spear', WEAPON.cold[1].replace('A long spear', 'A long spear of ice')];
+  // Ice conjures a bow: the second ranged weapon after the Arcane wand (the user: "another ranged design"). Ice's guard is Cold's Rime kite.
+  WEAPON.ice = ['Ice bow', 'A bow of ice that looses quick icicles, the fastest shot in hand. Hold to draw a fan of three icicles; a full draw pierces. Its Special is a splinter shot at the cursor that bursts into flying shards.'];
   // What Shield conjures, picked by its leading other element as a spell's form is (Life, Earth,
   // Arcane, Lightning, then the most of Water, Fire and Cold): the game's eight guards (its guards.ts),
   // used with nothing queued: hold Space to block, tap it as a hit lands to parry, Shift+LMB to Retreat.
@@ -227,15 +227,15 @@
       force: (p) => {
         const how = 'rises in front of you and sweeps forward along your aim, hitting everyone it passes, then breaks';
         if (p.has('earth')) return ['Fault line', `A wave of heaving ground ${how}. Everyone it passes is knocked down.`];
-        if (p.has('ice')) return ['Ice wave', `A front of ice spears ${how}. Everyone it passes is chilled hard, and the wet freeze.`];
+        if (p.has('ice')) return ['Ice wave', `A front of ice spears ${how}. Everyone it passes is stabbed, and the wet freeze.`];
         if (p.has('water')) return ['Tidal wave', `A wall of water ${how}. Everyone it passes is soaked and shoved.`];
         if (p.size) return ['Elemental wave', `A wave of its elements ${how}. Each body it passes gets every element.`];
         return ['Shove wave', `A wave of force ${how}. It pushes bodies back and sweeps shots away.`];
       },
-      area: (p) => p.has('earth') ? ['Ring of stone', 'A continuous rock wall rises in a closed ring around you, with no gaps.'] : p.has('ice') ? ['Ring of ice', 'A continuous ring of ice crystals around you; anything crossing in is chilled hard, and the wet freeze.'] : p.size ? ['Ring of curtains', 'A continuous curtain rings you; anything crossing in gets hit.'] : ['Ring of barriers', 'A continuous reflecting ring around you.'],
+      area: (p) => p.has('earth') ? ['Ring of stone', 'A continuous rock wall rises in a closed ring around you, with no gaps.'] : p.has('ice') ? ['Ring of ice', 'A closed ring of ice spikes rises around you: it blocks bodies and shots, and stabs whoever presses against it. Weaker than stone, and fire melts it.'] : p.size ? ['Ring of curtains', 'A continuous curtain rings you; anything crossing in gets hit.'] : ['Ring of barriers', 'A continuous reflecting ring around you.'],
       place: (p, o) => {
         const what = p.has('earth') ? ['rock wall', 'Blocks bodies and shots.', 'Stone arc']
-          : p.has('ice') ? ['ice curtain', 'A row of still ice crystals. You can walk through it, but whoever crosses it is chilled hard, and the wet freeze. Beams through it pick up its elements.', 'Ice arc']
+          : p.has('ice') ? ['ice wall', 'A spike barrier: it blocks bodies and shots like stone, but is weaker and stands about 15 seconds; fire melts it fast. Whoever presses against it is stabbed by its spikes.', 'Ice arc']
           : p.size ? ['curtain', 'You can walk through it, but whoever crosses it gets its elements (a Life curtain is a healing zone). Beams through it pick up its elements.', 'Curtain arc'] : ['barrier', 'Shots cannot pass. Beams through it pick up its elements.', 'Barrier arc'];
         if (o.drag) return [`Drawn ${what[0]}`, `Hold at the cursor, drag, and let go: the ${what[0]} rises along the line you drew. Curve the drag and the wall bends with it${p.has('earth') ? ' (curl it round an enemy for a cage)' : ''}. ${what[1]}`];
         return [what[2], `Let go without dragging: an arc of ${what[0]} rises around you, centred on you and facing the cursor, at a default length. The quick wall. ${what[1]} Drag before letting go to draw the wall instead.`];
@@ -327,10 +327,10 @@
       place: () => ['Frost patch', 'Freezes the ground at the cursor for about 16 seconds. Freezes water into walkable ice.'],
       conjure: swing('cold'),
     },
-    // Ice: a missile form. A freezing spray was too strong, so Ice throws shards, not a cone.
+    // Ice: a missile form, fast and spiky. A freezing spray was too strong, so Ice throws shards, not a cone.
     ice: {
-      force: () => ['Ice shards', 'A volley of jagged ice shards along your aim. Each shard pierces and chills hard; enough of them freeze a wet target, and a frozen target shatters from a heavy hit.'],
-      area: () => ['Ice ring', 'A ring of ice bursts from you: it chills hard, and freezes whoever was already wet.'],
+      force: () => ['Ice shards', 'A volley of jagged ice shards along your aim, faster than any other missile. Each shard pierces and hits hard, with a little chill; enough of them freeze a wet target, and a frozen target shatters from a heavy hit.'],
+      area: () => ['Ice ring', 'A ring of ice spikes bursts from you: it hurts, chills a little, and freezes whoever was already wet.'],
       place: () => ['Ice sheet', 'Freezes the ground at the cursor into a sheet of ice for about 16 seconds: it chills whoever crosses it, and feet slip on it.'],
       conjure: swing('ice'),
     },
@@ -405,7 +405,7 @@
   // until it goes off, breaks or runs out: the Sigil pool is the device count (Shield is
   // endurance, Sigil is count). Glyphs and orbitals are paid once; a turret draws each shot from the pool.
   const COST = {
-    stuff: ['Stuff', 'Paid once from your queue. It lasts until it breaks, and you can only keep so much standing.'],
+    stuff: ['Stuff', 'Paid once from your queue. It lasts until it breaks or times out (rock, ice), and you can only keep so much standing.'],
     // Model A (decided 2026-11-04), with a low idle drain (the user's note)
     energy: ['Energy', 'Drains your Shield pool while it stands: a low trickle when idle, more for every hit it absorbs. The elements in it are paid once at cast. All your shields fade as the pool runs down; drain stops at a reserve floor, and there your oldest shield breaks first. A ward drains twice a wall\'s idle rate, and you keep one ward at a time.'],
     bind: ['Bind', 'Binds one Sigil rune until it goes off, breaks or is dismissed. Your Sigil pool is how many devices you can keep. One-shot devices (glyphs, orbitals) are paid once at cast. A turret draws each shot\'s elements from your pool, so it only stalls when you run dry.'],
@@ -417,7 +417,7 @@
     let k = 'cast';
     if (s.form === 'sigil') k = 'bind';
     else if (s.form === 'shield' && s.cast === 'conjure') k = 'stuff';
-    else if (s.form === 'shield' && ['area', 'place', 'self'].includes(s.cast)) k = queue.includes('earth') ? 'stuff' : 'energy';
+    else if (s.form === 'shield' && ['area', 'place', 'self'].includes(s.cast)) k = queue.includes('earth') || (queue.includes('ice') && s.cast !== 'self') ? 'stuff' : 'energy'; // rock and ice walls are stuff
     else if (s.cast === 'force' && (s.form === 'arcane' || (s.form === 'life' && s.title === 'Life beam'))) k = 'sustain';
     return { kind: k, title: COST[k][0], text: COST[k][1] };
   }
@@ -554,7 +554,7 @@
     ['Stored Spell', '★', 'Seal is gone, and Sigil can\'t store a spell (would Fire + Sigil store "Fire + Sigil" or just "Fire"?). Preparing a spell becomes its own mechanism, deferred.'],
     ['Sentinel wall', '+', 'It was a sealed wall. Seal is gone, and Shield + Sigil cancel.'],
     ['Ricochet Bolt', '★', 'Dropped with Steam and Ice (2026-11-03). Ice came back on 2026-11-11 as piercing shards, not bouncing ones. Earth stays the heavy missile.'],
-    ['Ice Shrapnel', '★', 'There are no ice walls to shatter: Ice came back (2026-11-11) as curtains, not walls. Shatter Bulwark (a rock wall, then Release) keeps the idea.'],
+    ['Ice Shrapnel', '★', 'Ice walls came back on 2026-11-11 as spike barriers. Bursting one into shrapnel on Release, as Shatter Bulwark does with rock, is open.'],
     ['Contingency', '?', 'Auto-triggers removed ("too many meaning collisions"). Could come back as a Magick or a staff upgrade.'],
     ['Payload Effigy', '?', 'Same: it was an auto-trigger.'],
     ['Stay of Death', '?', 'Shield + Life is now a healing curtain or ward, not a "cannot die" lantern. Could be a Magick.'],

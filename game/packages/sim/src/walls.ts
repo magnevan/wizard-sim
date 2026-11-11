@@ -8,7 +8,7 @@
  * (Model A). Rock and barriers stop shots and beams; only rock stops bodies; curtains let
  * everything through and pulse their elements on whoever is in them.
  */
-import { WALL } from './compile';
+import { WALL, solidWall } from './compile';
 import { DAMAGE, STRUCT } from './config';
 import { EL, N_EL, elementName } from './elements';
 import { len } from './geom';
@@ -18,7 +18,7 @@ import { DEVICE, KIND, MAX_DEVICES, MAX_SEATS, MAX_WALLS, TERRAIN, WARD, freeDev
 /** What clipRay and wallAt return for the room's terrain: never a slot in w.walls. (Which segment it was never matters.) */
 export const TERRAIN_HIT = MAX_WALLS;
 /** Is what clipRay or wallAt returned rock: the room's, or a cast stone wall? (Not -1, a barrier, or a curtain.) */
-export const isRockHit = (w: World, k: number): boolean => k === TERRAIN_HIT || w.walls.type[k] === WALL.rock;
+export const isRockHit = (w: World, k: number): boolean => k === TERRAIN_HIT || solidWall(w.walls.type[k]); // an ice wall counts: it is solid too
 
 /** Closest point on segment (x1,y1)-(x2,y2) to (px,py): returns [distance, t in 0..1]. */
 export function segDist(px: number, py: number, x1: number, y1: number, x2: number, y2: number): [number, number] {
@@ -57,7 +57,7 @@ function raySeg(ox: number, oy: number, dx: number, dy: number, x1: number, y1: 
   return Math.max(0, t - pad);
 }
 
-const blocksShots = (type: number) => type === WALL.rock || type === WALL.barrier;
+const blocksShots = (type: number) => solidWall(type) || type === WALL.barrier;
 
 /** Damage a shot or beam does to a wall: the plain element damage of its payload. */
 export function payloadDamage(els: Uint8Array, at: number, scale: number): number {
@@ -66,13 +66,14 @@ export function payloadDamage(els: Uint8Array, at: number, scale: number): numbe
   return Math.max(4, d) * scale;
 }
 
-export function damageWall(w: World, k: number, dmg: number): void {
+/** Damages wall k. `fire`: Fire runes in what hit it; Fire melts an ice wall (STRUCT.iceMelt). */
+export function damageWall(w: World, k: number, dmg: number, fire = 0): void {
   const wl = w.walls;
   if (k === TERRAIN_HIT || wl.owner[k] === TERRAIN) return; // the room's own rock doesn't break
-  wl.hp[k] -= dmg;
-  if (wl.type[k] !== WALL.rock) drainShield(w, wl.owner[k], STRUCT.absorbPerHp * dmg);
+  wl.hp[k] -= wl.type[k] === WALL.ice && fire > 0 ? dmg * STRUCT.iceMelt : dmg;
+  if (!solidWall(wl.type[k])) drainShield(w, wl.owner[k], STRUCT.absorbPerHp * dmg);
   if (wl.hp[k] <= 0) {
-    w.events.push({ tick: w.clock[0], kind: 'burst', who: wl.owner[k], x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.8, look: wl.type[k] === WALL.rock ? EL.earth : EL.shield });
+    w.events.push({ tick: w.clock[0], kind: 'burst', who: wl.owner[k], x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.8, look: wl.type[k] === WALL.rock ? EL.earth : wl.type[k] === WALL.ice ? EL.ice : EL.shield });
     wl.type[k] = WALL.none;
   }
 }
@@ -135,7 +136,7 @@ function pushOut(b: Bodies, i: number, min: number, x1: number, y1: number, x2: 
 export function collideWalls(w: World): void {
   const b = w.bodies, wl = w.walls, tr = w.terrain;
   let nr = 0;
-  for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.rock) rocks[nr++] = k;
+  for (let k = 0; k < MAX_WALLS; k++) if (solidWall(wl.type[k])) rocks[nr++] = k; // ice walls stop bodies too
   if (!nr && !tr.n) return;
   const out = tr.out;
   for (let i = 0; i < b.kind.length; i++) {

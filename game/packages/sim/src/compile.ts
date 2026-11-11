@@ -49,7 +49,9 @@ export interface SpellSpec {
 }
 
 /** What a Shield structure is made of. */
-export const WALL = { none: 0, rock: 1, barrier: 2, curtain: 3 } as const;
+export const WALL = { none: 0, rock: 1, barrier: 2, curtain: 3, ice: 4 } as const;
+/** Rock and ice walls are solid: they stop bodies and shots, and are paid once (stuff), not drained. */
+export const solidWall = (type: number): boolean => type === WALL.rock || type === WALL.ice;
 
 const MOD: Record<string, Mod> = { water: 'push', cold: 'shatter', ice: 'shatter', lightning: 'chain', arcane: 'burst' };
 
@@ -80,7 +82,7 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
   const lookName = d.look as string | null;
   if (lookName === 'scald') spec.look = EL.water;
 
-  if (has('shield')) spec.wall = has('earth') ? WALL.rock : queue.some((e) => e !== 'shield') ? WALL.curtain : WALL.barrier;
+  if (has('shield')) spec.wall = has('earth') ? WALL.rock : has('ice') ? WALL.ice : queue.some((e) => e !== 'shield') ? WALL.curtain : WALL.barrier;
   if (cast === 'self') {
     spec.shape = d.id === 'elements/self' ? 'self' : d.id === 'shield/self' ? 'ward' : queue.length > 1 ? 'aura' : 'double'; // Sigil alone on yourself: the Double
     return spec;

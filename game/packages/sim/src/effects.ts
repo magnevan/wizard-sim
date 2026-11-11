@@ -160,7 +160,9 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       // every shard at the same power (each used to hit at 0.3 x its index, the loop's k shadowing the scale)
       for (let j = 0; j < count; j++) {
         const a = face + (j - (count - 1) / 2) * SHAPES.shardSpread;
-        spawnMissile(w, src, p, cosTurns(a), sinTurns(a), 2, SHAPES.shardPower * k, 0, 0, ex.ox, ex.oy);
+        const m = spawnMissile(w, src, p, cosTurns(a), sinTurns(a), 2, SHAPES.shardPower * k, 0, 0, ex.ox, ex.oy);
+        // Ice's identity is quick flight: its shards fly faster than other missiles (Life's healing shards don't)
+        if (m >= 0 && spec.form === EL.ice) { w.missiles.vx[m] *= SHAPES.iceFlight; w.missiles.vy[m] *= SHAPES.iceFlight; }
       }
       break;
     }
@@ -424,7 +426,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     }
     // Rock and barriers stop the beam first if they're closer.
     const [wallD, wk] = clipRay(w, x, y, dx, dy, reach);
-    if (wk >= 0) { reach = wallD; target = -1; damageWall(w, wk, payloadDamage(spec.counts, 0, rate)); }
+    if (wk >= 0) { reach = wallD; target = -1; damageWall(w, wk, payloadDamage(spec.counts, 0, rate), spec.counts[EL.fire - 1]); }
     setEnd(x + dx * reach, y + dy * reach);
     const lensed = rayThroughLens(w, x, y, dx, dy, reach) ? STRUCT.lensMult : 1;
     if (target >= 0) {
@@ -439,7 +441,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     const range = (driving(w, src) ? sprayReach(dx, dy) : SHAPES.sprayRange) + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
     // Rock and barriers stop a spray like a beam: it ends at the wall and wears it down (healing doesn't).
     const [wallD, wk] = clipRay(w, x, y, dx, dy, range);
-    if (wk >= 0 && !spec.heal) damageWall(w, wk, payloadDamage(spec.counts, 0, rate));
+    if (wk >= 0 && !spec.heal) damageWall(w, wk, payloadDamage(spec.counts, 0, rate), spec.counts[EL.fire - 1]);
     setEnd(x + dx * wallD, y + dy * wallD);
     // Falloff (combat.sprayFalloff): the nearest body takes it all, each one behind takes a share less.
     const inside: number[] = [];
@@ -509,7 +511,7 @@ export function tickMissiles(w: World): void {
     if (wk >= 0) {
       const mirror = wk !== TERRAIN_HIT && w.walls.type[wk] === WALL.barrier && m.owner[j] !== w.walls.owner[wk];
       if (w.tut && wk !== TERRAIN_HIT && w.walls.owner[wk] >= 0 && w.walls.owner[wk] < MAX_SEATS && b.kind[m.owner[j]] === KIND.enemy) noteBlocked(w.tut); // the tutorial's Shield beat
-      damageWall(w, wk, payloadDamage(m.els, j, m.scale[j]) * (mirror ? 0.5 : 1));
+      damageWall(w, wk, payloadDamage(m.els, j, m.scale[j]) * (mirror ? 0.5 : 1), m.els[j * N_EL + EL.fire - 1]);
       if (mirror) { m.vx[j] = -m.vx[j]; m.vy[j] = -m.vy[j]; m.owner[j] = w.walls.owner[wk]; m.lastHit[j] = -1; continue; }
       dead = true;
     }

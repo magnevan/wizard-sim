@@ -18,8 +18,8 @@
  *   Weapon a conjured weapon (Stone maul, Arcane hook...). Alone: the sculpting wand.
  *   Self   an aura around you (fire burns, cold chills, life regenerates, lightning hastes...).
  */
-import { compile, WALL, type SpellSpec } from './compile';
-import { BODY, PERKS, RHYTHM, SHAPES, STATUS, STRUCT, T } from './config';
+import { compile, WALL, solidWall, type SpellSpec } from './compile';
+import { BODY, PERKS, RHYTHM, SHAPES, STRUCT, T } from './config';
 import { EL, KEYED_EL, N_EL, poolCost, queueFromCounts } from './elements';
 import { burstEvent, channelTick, fireSpell, heldBlow, hit, hitOpts, nearest, payloadOf, stored } from './effects';
 import { len } from './geom';
@@ -37,6 +37,9 @@ function restCounts(spec: SpellSpec): Uint8Array {
 }
 
 // ---- Shield ------------------------------------------------------------------------------------
+
+/** One Ice rune, as a hit: the Spike aura's stab. */
+const SPIKE = payloadOf(compile(['ice'], 'place'));
 
 function raiseWall(w: World, owner: number, type: number, els: Uint8Array, x1: number, y1: number, x2: number, y2: number, hp: number): boolean {
   const wl = w.walls, now = w.clock[0];
@@ -56,8 +59,10 @@ function raiseWall(w: World, owner: number, type: number, els: Uint8Array, x1: n
 }
 
 function wallHp(spec: SpellSpec): number {
-  const earth = spec.counts[EL.earth - 1];
-  return spec.wall === WALL.rock ? STRUCT.rockHp + STRUCT.rockHpPerRune * (earth - 1) : STRUCT.energyHp + STRUCT.energyHpPerRune * (spec.power - 1);
+  const earth = spec.counts[EL.earth - 1], ice = spec.counts[EL.ice - 1];
+  if (spec.wall === WALL.rock) return STRUCT.rockHp + STRUCT.rockHpPerRune * (earth - 1);
+  if (spec.wall === WALL.ice) return STRUCT.iceHp + STRUCT.iceHpPerRune * (ice - 1); // weaker than rock: a spike barrier
+  return STRUCT.energyHp + STRUCT.energyHpPerRune * (spec.power - 1);
 }
 
 /** Segments along an arc of `radius` around (cx, cy), centred on `face`, spanning +-half turns. */
@@ -206,7 +211,7 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
     }
     case 'wand': s.wand[src] = 1; s.weapon[src] = 0; s.wandBorn[src] = w.clock[0]; break;
     case 'weapon': {
-      s.wand[src] = 0; s.weapon[src] = spec.sub === EL.ice ? EL.cold : spec.sub; s.wandBorn[src] = w.clock[0]; // Ice conjures Cold's spear, made of ice
+      s.wand[src] = 0; s.weapon[src] = spec.sub; s.wandBorn[src] = w.clock[0]; // Ice conjures the Ice bow (hands.ts)
       s.weaponEls.set(restCounts(spec), src * N_EL); s.weaponUses[src] = STRUCT.weaponUses;
       break;
     }
@@ -329,7 +334,7 @@ export function dismissShieldAt(w: World, seat: number, x: number, y: number): b
     return true;
   }
   if (best < 0) return false;
-  const born = wl.born[best], look = wl.type[best] === WALL.rock ? EL.earth : EL.shield;
+  const born = wl.born[best], look = wl.type[best] === WALL.rock ? EL.earth : wl.type[best] === WALL.ice ? EL.ice : EL.shield;
   for (let k = 0; k < MAX_WALLS; k++) {
     if (!wl.type[k] || wl.owner[k] !== seat || wl.born[k] !== born) continue;
     w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.6, look, text: 'dismissed' });
@@ -383,14 +388,18 @@ export function tickStructures(w: World): void {
   tickDoubleMoves(w);
   const b = w.bodies, s = w.seats, wl = w.walls, v = w.waves, dv = w.devices, tick = w.clock[0];
 
-  // Rock times out: it stands rockLife seconds (more with Earth) and crumbles over the last few.
+  // Rock times out: it stands rockLife seconds (more with Earth) and crumbles over the last few. Ice
+  // walls likewise, shorter (iceLife, more with Ice), melting over the last iceMeltAway s.
   for (let k = 0; k < MAX_WALLS; k++) {
-    if (wl.type[k] !== WALL.rock || wl.owner[k] === TERRAIN) continue; // the arena's own rock stays
-    const base = T(STRUCT.rockLife + STRUCT.rockLifePerEarth * Math.max(0, wl.els[k * N_EL + EL.earth - 1] - 1));
-    const life = Math.round((stackOf(w, wl.owner[k], PU.bedrock) ? base * 2 : base) * lingerLife(w, wl.owner[k]));
+    if (!solidWall(wl.type[k]) || wl.owner[k] === TERRAIN) continue; // the arena's own rock stays
+    const ice = wl.type[k] === WALL.ice;
+    const base = ice
+      ? T(STRUCT.iceLife + STRUCT.iceLifePerRune * Math.max(0, wl.els[k * N_EL + EL.ice - 1] - 1))
+      : T(STRUCT.rockLife + STRUCT.rockLifePerEarth * Math.max(0, wl.els[k * N_EL + EL.earth - 1] - 1));
+    const life = Math.round((!ice && stackOf(w, wl.owner[k], PU.bedrock) ? base * 2 : base) * lingerLife(w, wl.owner[k]));
     const left = life - (tick - wl.born[k]);
-    if (left <= 0) { w.events.push({ tick, kind: 'burst', who: wl.owner[k], x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.5, look: EL.earth }); wl.type[k] = WALL.none; continue; }
-    const crumble = T(STRUCT.rockCrumble);
+    if (left <= 0) { w.events.push({ tick, kind: 'burst', who: wl.owner[k], x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.5, look: ice ? EL.ice : EL.earth }); wl.type[k] = WALL.none; continue; }
+    const crumble = T(ice ? STRUCT.iceMeltAway : STRUCT.rockCrumble);
     if (left < crumble) wl.hp[k] = Math.min(wl.hp[k], (wl.maxHp[k] * left) / crumble);
   }
 
@@ -413,15 +422,16 @@ export function tickStructures(w: World): void {
   // Curtains pulse their elements on whoever stands in them (a Life curtain is a healing zone);
   // coated rock pulses its coat on whoever touches it (a Life wall heals those sheltering against
   // it, and the enemies bashing it too; a Fire wall burns them). The Earth is the wall itself.
+  // An ice wall is all spikes: whoever presses against it is stabbed by its Ice (and the rest), harder (spikeScale).
   for (let k = 0; k < MAX_WALLS; k++) {
     const ty = wl.type[k];
-    if ((ty !== WALL.curtain && ty !== WALL.rock) || (tick - wl.born[k]) % 30 !== 0) continue;
+    if ((ty !== WALL.curtain && !solidWall(ty)) || (tick - wl.born[k]) % 30 !== 0) continue;
     const els = wl.els.slice(k * N_EL, k * N_EL + N_EL);
     els[EL.shield - 1] = 0;
     if (ty === WALL.rock) { els[EL.earth - 1] = 0; if (!els.some((n) => n > 0)) continue; }
     const heal = els[EL.life - 1] > 0;
     // A body touching several segments of the same wall is pulsed once.
-    const scale = 0.4;
+    const scale = ty === WALL.ice ? STRUCT.spikeScale : 0.4;
     const touches = (i: number, j: number) => segDist(b.x[i], b.y[i], wl.x1[j], wl.y1[j], wl.x2[j], wl.y2[j])[0] <= b.r[i] + 0.35;
     for (let i = 0; i < b.kind.length; i++) {
       if (!alive(w, i) || !touches(i, k)) continue;
@@ -537,8 +547,7 @@ export function tickStructures(w: World): void {
     if (s.aura[i] % 30 !== 0) continue;
     const els = s.auraEls;
     const fire = els[i * N_EL + EL.fire - 1], water = els[i * N_EL + EL.water - 1];
-    // The Rime aura (Ice) chills like a Frost aura, harder (STATUS.iceChill).
-    const cold = els[i * N_EL + EL.cold - 1] + els[i * N_EL + EL.ice - 1] * STATUS.iceChill;
+    const cold = els[i * N_EL + EL.cold - 1], ice = els[i * N_EL + EL.ice - 1];
     const life = els[i * N_EL + EL.life - 1], earth = els[i * N_EL + EL.earth - 1];
     for (let t = 0; t < b.kind.length; t++) {
       if (!alive(w, t)) continue;
@@ -555,6 +564,14 @@ export function tickStructures(w: World): void {
         if (cold) {
           addChill(w, t, 2.5 * cold);
           if (!water) tryFreeze(w, t); // Cold on the wet, as in hit.ts; a Mist + Frost aura can't do both
+        }
+        if (ice) {
+          // The Spike aura: ice spikes stab enemies close by, an Ice hit (its damage, a little chill, and a freeze if
+          // they were already wet). With a Mist aura too, the wet it leaves is hidden from the stab: one aura can't do both.
+          const wet = b.wet[t];
+          if (water) b.wet[t] = 0;
+          hit(w, t, SPIKE, hitOpts(SPIKE, i, STRUCT.spikeAura * ice));
+          if (water && b.wet[t] === 0) b.wet[t] = wet;
         }
         if (water) b.wet[t] = Math.max(b.wet[t], T(3));
         if (earth && d < b.r[t] + b.r[i] + 0.3) { const ux = (b.x[t] - b.x[i]) / (d || 1), uy = (b.y[t] - b.y[i]) / (d || 1); addKnock(w, t, ux, uy, 6 * earth); }

@@ -274,9 +274,8 @@ describe('survive: power-ups', () => {
     expect(runeMax(createWorld(1, 1), 0, EL.fire)).toBe(RUNES.max.fire); // the Sanctum keeps its pools
     w.seats.runes[EL.fire - 1] = 0;
     d.tick({}, 30);
-    // Fire is the only pool refilling: the floor's share plus all of the shared part
-    const all = 8 * RUNES.surviveStart + RUNES.surviveSigil, m = RUNES.surviveStart;
-    expect(rune(w, 'fire')).toBeCloseTo(0.5 * RUNES.regen * m * (RUNES.floor / all + (1 - RUNES.floor) / m), 6);
+    // Fire is the only pool refilling: all of R goes to it
+    expect(rune(w, 'fire')).toBeCloseTo(0.5 * RUNES.regen, 6);
   });
 
   it('+1 to three: the wizard taps three different element keys (not Shield or Sigil), which queue nothing', () => {

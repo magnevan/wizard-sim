@@ -18,10 +18,8 @@ export const RUNES = {
   max: { water: 4, life: 4, shield: 4, cold: 4, lightning: 4, arcane: 4, sigil: 3, fire: 5, earth: 4, ice: 0 } as Record<Element, number>,
   /** R: runes per second in total, shared among the pools that aren't full. */
   regen: 1.0,
-  /** Casting with ghost runes still unpaid goes into debt: pools below zero, at most this many runes in all; regen pays it back first. */
-  debtMax: 1,
-  /** α: the share of R that always reaches every pool that isn't full (weighted by max over all pools). */
-  floor: 0.25,
+  /** An empty pool (under a whole rune) takes this many shares of R; every other pool that isn't full takes one (world.ts regenRate). */
+  emptyShare: 2,
   /** Survive starts weak: this many runes per element, Sigil surviveSigil. */
   surviveStart: 2,
   surviveSigil: 1,

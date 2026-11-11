@@ -548,27 +548,27 @@ export const regenOf = (w: World, i: number): number => {
 };
 
 /**
- * The shared regen budget (docs/decisions 2026-11-05, "The rune economy"): seat `i`'s runes per
- * second into element `id`, given `full`, a bitmask (1 << id) of the pools that are full. A full pool
- * gets nothing; the others get α·R·max/Σmax_all (the floor) plus (1-α)·R·max/Σmax_notfull (the
- * shared part), α = RUNES.floor. Attune and Siphon multiply the result.
+ * The shared regen budget: seat `i`'s runes per second into element `id`, given `full`, a bitmask (1 << id) of the pools
+ * that are full. The rune rework (2026-11-11, the user chose it): R is shared equally among the pools that aren't full, and
+ * an empty one (under a whole rune: nothing to cast with) takes RUNES.emptyShare shares. A small pool refills as fast as a
+ * big one (the old split by max made a 1-rune pool wait on an empty 5-rune one), and none of R is lost to full pools (the
+ * old floor's share was). Attune and Siphon multiply the result.
  */
 export function regenRate(w: World, i: number, id: number, full: number): number {
-  if (full & (1 << id)) return 0;
-  let all = 0, open = 0;
-  for (let e = 1; e <= N_EL; e++) { const m = runeMax(w, i, e); all += m; if (!(full & (1 << e))) open += m; }
-  if (all <= 0 || open <= 0) return 0;
-  const m = runeMax(w, i, id), a = RUNES.floor;
-  return regenOf(w, i) * m * (a / all + (1 - a) / open);
+  if (full & (1 << id) || runeMax(w, i, id) <= 0) return 0;
+  const wt = (e: number): number => (full & (1 << e) || runeMax(w, i, e) <= 0 ? 0 : w.seats.runes[i * N_EL + e - 1] < 1 ? RUNES.emptyShare : 1);
+  let total = 0;
+  for (let e = 1; e <= KEYED_EL; e++) total += wt(e);
+  return total > 0 ? (regenOf(w, i) * wt(id)) / total : 0;
 }
 
 /**
- * Seat i's regen into element `id` this tick (runes a second, before Attune): while anything is owed (a queued ghost rune, or a
- * pool in debt, below zero), all of R goes there, shared by what each owes; otherwise the shared budget (regenRate).
+ * Seat i's regen into element `id` this tick (runes a second, before Attune): while a queued ghost rune is owed, all of R
+ * goes to what's owed, shared by what each owes; otherwise the shared budget (regenRate).
  */
 export function runeRate(w: World, i: number, id: number, full: number): number {
   const s = w.seats, need = (e: number): number => {
-    let n = s.runes[i * N_EL + e - 1] < 0 ? 1 : 0;
+    let n = 0;
     for (let k = 0; k < s.queueLen[i]; k++) {
       const q = s.queue[i * QUEUE_MAX + k], o = s.owe[i * QUEUE_MAX + k];
       if (!o) continue;

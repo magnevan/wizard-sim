@@ -78,16 +78,16 @@ describe('runes and the queue', () => {
     expect(rune(w, 'earth')).toBeLessThan(0.1);
   });
 
-  it('casting with a ghost unpaid goes into debt (at most one rune), and regen pays it back first', () => {
-    const { w, d } = range();
-    w.seats.runes[elementId('earth') - 1] = 0;
-    d.queue('earth').tick({ buttons: BTN.force }, 1);
-    expect(rune(w, 'earth')).toBeLessThan(-0.9); // cast now, a rune in debt
-    // two ghosts at once would be two runes of debt: that cast doesn't go
-    const b = range();
-    b.w.seats.runes[elementId('earth') - 1] = 0; b.w.seats.runes[elementId('fire') - 1] = 0;
-    b.d.queue('earth', 'fire').tick({ buttons: BTN.force }, 1);
-    expect(b.w.seats.queueLen[0]).toBe(2);
+  it('a cast with a ghost unpaid waits for it, then goes: no pool ever goes below zero', () => {
+    const { w, d, dummy } = range();
+    w.seats.runes[elementId('arcane') - 1] = 0;
+    d.queue('arcane').tick({ buttons: BTN.force }, 10); // pressed at once, held: it waits on the ghost
+    expect(w.seats.queueLen[0]).toBe(1);
+    expect(w.bodies.hp[dummy]).toBe(400);
+    d.tick({ buttons: BTN.force }, Math.ceil(60 / RUNES.regen) + 30); // the ghost fills in about a second, then the beam goes
+    expect(w.seats.queueLen[0]).toBe(0);
+    expect(w.bodies.hp[dummy]).toBeLessThan(400);
+    expect(rune(w, 'arcane')).toBeGreaterThanOrEqual(0);
   });
 
   it('ghosts never stretch a pool: the queue holds at most its max of an element', () => {
@@ -105,20 +105,23 @@ describe('runes and the queue', () => {
     expect(rune(w, 'arcane')).toBeCloseTo((rate * RUNES.attuneMult) / 2, 6);
   });
 
-  it('regen is one shared budget R, weighted by max, with a floor for every pool that is not full', () => {
+  it('regen is one shared budget R: equal shares for the pools that are not full, two for an empty one', () => {
     const { w, d } = range();
-    const max = RUNES.max as Record<string, number>, all = Object.values(max).reduce((a, b) => a + b, 0);
-    // only Fire is empty: it gets the floor's share plus all of the shared part
+    // only Fire is refilling: it gets all of R
     w.seats.runes[elementId('fire') - 1] = 0;
     d.tick({}, 30);
-    expect(rune(w, 'fire')).toBeCloseTo(0.5 * RUNES.regen * max.fire * (RUNES.floor / all + (1 - RUNES.floor) / max.fire), 6);
-    // every pool empty: the whole of R is shared out by max, so the total is R
+    expect(rune(w, 'fire')).toBeCloseTo(0.5 * RUNES.regen, 6);
+    // Fire empty, Cold part-full: Fire takes two shares, Cold one
+    w.seats.runes[elementId('fire') - 1] = 0; w.seats.runes[elementId('cold') - 1] = 2;
+    d.tick({}, 6);
+    expect(rune(w, 'fire') / (rune(w, 'cold') - 2)).toBeCloseTo(RUNES.emptyShare, 6);
+    // every pool empty: equal shares whatever their size, and the whole of R is used
     for (let e = 0; e < 9; e++) w.seats.runes[e] = 0;
     d.tick({}, 30);
     let total = 0;
     for (let e = 0; e < 9; e++) total += w.seats.runes[e];
     expect(total).toBeCloseTo(0.5 * RUNES.regen, 6);
-    expect(rune(w, 'fire') / rune(w, 'cold')).toBeCloseTo(max.fire / max.cold, 6);
+    expect(rune(w, 'fire')).toBeCloseTo(rune(w, 'sigil'), 6);
   });
 });
 

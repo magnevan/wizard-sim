@@ -496,7 +496,7 @@ describe('the Arcane wand (Sigil + Arcane) and Mend', () => {
     for (const siphon of [false, true]) {
       const { w, d } = arena();
       d.aimAt(5, 0).conjure('sigil', 'arcane');
-      w.seats.runes[EL.fire - 1] = 0;
+      for (let e = 0; e < 9; e++) if (e !== EL.sigil - 1) w.seats.runes[e] = 0; // every pool refilling, so Fire's share stays below its max either way
       const uses = w.seats.weaponUses[0];
       const hold = siphon ? { buttons: BTN.area, moveX: 127 } : {};
       d.tick(hold, 20);

@@ -50,7 +50,7 @@ const rune = (w: World, i: number, id: number) => i * N_EL + id - 1;
  * Ghost runes (the rune rework, 2026-11-11): pressing an element you have less than a whole rune of queues it unpaid, a
  * ghost. s.owe holds, per queue slot, what it still owes: bit 1 its element (Ice: its Water), bit 2 Ice's Cold. While anything
  * is owed, all your regen goes to it (world.ts runeRate), and a part is paid the moment its pool has a whole rune. A cast
- * with parts still owed pays them as debt: the pool goes below zero, up to RUNES.debtMax in all, and regen pays it back first.
+ * with parts still owed waits for them (the user, 2026-11-11, doubted debt: no pool ever goes below zero), then winds up.
  */
 const OWE_A = 1, OWE_B = 2;
 /** The rune ids a queue slot is made of, with the owe bit for each: Ice is a Water (bit 1) and a Cold (bit 2). */
@@ -145,25 +145,17 @@ function payGhosts(w: World, i: number): void {
   }
 }
 
-/** Would casting the queue now stay within the debt allowed? Owed Sigil is never debt (a held spell's release makes it free). */
-function affordable(w: World, i: number, release: boolean): boolean {
-  const s = w.seats, need = new Float64Array(N_EL + 1);
-  for (let k = 0; k < s.queueLen[i]; k++) for (const [id, bit] of parts(elementName(s.queue[i * QUEUE_MAX + k]))) if (oweAt(w, i, k) & bit) need[id]++;
-  if (need[EL.sigil] && !release) return false;
-  let debt = 0;
-  for (let id = 1; id <= KEYED_EL; id++) if (id !== EL.sigil) debt += Math.max(0, -(s.runes[rune(w, i, id)] - need[id]));
-  return debt <= RUNES.debtMax + 1e-9;
+/** Does seat i's queue still owe anything (a ghost not yet paid)? */
+function owing(w: World, i: number): boolean {
+  for (let k = 0; k < w.seats.queueLen[i]; k++) if (oweAt(w, i, k)) return true;
+  return false;
 }
 
 function startCast(w: World, i: number, castId: number): void {
   const s = w.seats;
-  // what's still owed is paid now, as debt (the pool goes below zero); a held spell's release owes nothing for its Sigil
+  // only a held spell's release starts with a ghost (its Sigil), and it owes nothing: the staff already binds that rune
   const release = s.storeLen[i] > 0 && compile(queueOf(w, i), CASTS[castId]).shape === 'store';
-  let sigilPaid = true;
-  for (let k = 0; k < s.queueLen[i]; k++) for (const [id, bit] of parts(elementName(s.queue[i * QUEUE_MAX + k]))) {
-    if (!(oweAt(w, i, k) & bit)) continue;
-    if (id === EL.sigil) sigilPaid = false; else s.runes[rune(w, i, id)] -= 1;
-  }
+  const sigilPaid = !owing(w, i);
   s.owe.fill(0, i * QUEUE_MAX, (i + 1) * QUEUE_MAX);
   s.castId[i] = castId;
   s.castQueue.set(s.queue.subarray(i * QUEUE_MAX, (i + 1) * QUEUE_MAX), i * QUEUE_MAX);
@@ -310,7 +302,7 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   const forceCast = (pressed | released) & BTN.force && forcePlaces(w, i) ? released & BTN.force : pressed & BTN.force;
   const want = forceCast ? CAST_ID.force : areaCast || (pressed & BTN.self ? CAST_ID.self : pressed & BTN.weapon ? CAST_ID.conjure : 0);
   if (want) { s.bufCast[i] = want; s.bufTicks[i] = T(RHYTHM.castBuffer); }
-  else if (s.bufTicks[i] > 0 && --s.bufTicks[i] === 0) s.bufCast[i] = 0;
+  else if (s.bufTicks[i] > 0 && !owing(w, i) && --s.bufTicks[i] === 0) s.bufCast[i] = 0; // a cast waiting on ghost runes stays buffered
 
   const act = canAct(w, i);
   // Your hands (hands.ts): with no runes queued, the gestures are weapon moves.
@@ -349,9 +341,9 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
     case PHASE.idle: {
       const c = s.bufCast[i];
       if (!act || !c || (s.queueLen[i] === 0 && c !== CAST_ID.conjure)) break;
+      // ghost runes not yet paid: the cast waits for them (it stays buffered), unless it's a held spell's free release
+      if (owing(w, i) && !(s.storeLen[i] > 0 && compile(queueOf(w, i), CASTS[c]).shape === 'store')) break;
       s.bufCast[i] = 0; s.bufTicks[i] = 0;
-      // ghosts past the debt allowed: the cast doesn't go (the pool flashes dry); they keep filling
-      if (!affordable(w, i, s.storeLen[i] > 0 && compile(queueOf(w, i), CASTS[c]).shape === 'store')) { w.events.push({ tick: w.clock[0], kind: 'dry', who: i, x: b.x[i], y: b.y[i], look: 0 }); break; }
       startCast(w, i, c);
       // Instant spells (Blink) go off this very tick.
       if ((s.phase[i] as number) === PHASE.windup && s.timer[i] === 0) windupTick(w, i, held, act);

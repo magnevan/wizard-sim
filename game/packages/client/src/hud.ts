@@ -288,7 +288,6 @@ export class Hud {
       const v = s.runes[i * N_EL + id - 1], max = Math.round(runeMax(w, i, id));
       const share = R > 0 ? runeRate(w, i, id, full) / R : 0; // ghosts and debt take all of it while owed
       this.pips(c, sx, sy + 11, v, max, ramp, t, share);
-      if (v < 0) X.rect(c, sx + 2, sy + 10, Math.max(1, Math.round(-v * 10)), 1, '#ff4a4a'); // in debt: a red line, as long as what's owed
       // the tutorial just gave you this element: its socket flashes in its colour
       const fresh = w.tut ? t - this.unlockAt[id] : 9;
       if (fresh >= 0 && fresh < 1.2 && Math.floor(fresh * 8) % 2 === 0) {

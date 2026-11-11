@@ -1402,3 +1402,9 @@ The user agreed to both ("2 and 3 seems okay"):
 - With these, a Sigil press with no free rune is a ghost whenever a Sigil rune could come back; the dry double-tap (recall your oldest) is for when every Sigil rune is bound.
 - **Still open: the regen split itself.** Weighting by the runes missing was rejected (the user: "it'll choke out the resources you have little of"; it fills every pool at the same moment, so a nearly full or small pool waits on the big empty one). Compared (the table is in `explorations/2026-11-11-spell-audit.md`, "The rune rework"): today's split by max makes a 1-rune pool beside an empty 5-rune pool wait 7.6 s; an equal share per pool, or an equal share with a double share for empty pools, gives it back in 2 s and uses the whole budget.
 - The golden hash is re-recorded (`bb045096` to `750902cd`): the new owe buffer, and presses in the scripted run that now queue as ghosts.
+
+## 2026-11-11: Rune rework, part 3: equal regen shares, two for an empty pool; no debt
+
+- **The regen split** (the user chose "empty 2x"): R is shared equally among the pools that aren't full, and an empty one (under a whole rune) takes two shares. The floor and the weighting by max are gone. A small pool refills as fast as a big one (a 1-rune pool beside an empty 5-rune one: 2 s, was 7.6 s), and none of R is lost to full pools.
+- **No debt** (the user wasn't sure it helped; Claude thought it confused more than it helped, since ghost runes already fill within about a second): a cast with ghost runes still unpaid waits for them, buffered, then winds up as usual; no pool ever goes below zero. A held spell's release is free, so a ghost Sigil never makes it wait.
+- The golden hash is re-recorded (`750902cd` to `47ecf451`): the new split.

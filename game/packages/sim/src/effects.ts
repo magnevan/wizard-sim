@@ -5,7 +5,7 @@
  * A Payload is what a hit carries: element counts plus a few flags. Missiles and zones store it
  * in their typed arrays (els, flags, mod, look) and rebuild the view object when they hit.
  */
-import { BATTERY, driving, sprayReach } from './battery';
+import { BATTERY, driveSpray, driving } from './battery';
 import type { Mod, SpellSpec } from './compile';
 import { ARMS, BODY, CELL, COMBAT, PERKS, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
@@ -154,6 +154,30 @@ export function oneShotBlast(spec: SpellSpec): number {
   return blastBase ? (blastBase * (1 + COMBAT.formScaling * (n - 1))) / Math.sqrt(n) : 1;
 }
 
+/** The imbued burst: every queued element at full power in a short cone in front of you, as Magicka's imbue-and-release. Nothing stays in hand. `k` is the caster's scale, `power` the hit's (k x blast x close). */
+function imbue(w: World, src: number, p: Payload, spec: SpellSpec, x: number, y: number, face: number, dx: number, dy: number, k: number, power: number): void {
+  const b = w.bodies, reach = imbueReach(spec);
+  if (spec.form === EL.lightning) fork(w, src, spec, face, reach, k);
+  else {
+    setHitKind(HIT_KIND.burst);
+    const line = imbueLine(spec);
+    for (let i = 0; i < b.kind.length; i++) {
+      if (!alive(w, i) || i === src) continue;
+      if (line) {
+        // along the line: how far out, and how far to the side
+        const rx = b.x[i] - x, ry = b.y[i] - y, along = rx * dx + ry * dy, side = Math.abs(rx * dy - ry * dx);
+        if (along < -b.r[i] || along > reach + b.r[i] || side > SHAPES.imbueLineHalf + b.r[i]) continue;
+      } else if (!inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
+      const ho = hitOpts(p, src, power * SHAPES.imbuePower, dx, dy);
+      if (spec.form === EL.water) ho.push *= SHAPES.ringPush; // the Water burst shoves as hard as the Splash ring (it pushed nothing: no Push mod on Weapon casts)
+      hit(w, i, p, ho);
+    }
+  }
+  let mask = 0;
+  for (let e = 1; e <= N_EL; e++) if (spec.counts[e - 1]) mask |= 1 << e;
+  w.events.push({ tick: w.clock[0], kind: 'move', who: src, x, y, x2: x + dx * reach, y2: y + dy * reach, text: 'imbue', look: spec.look, amount: reach, els: mask });
+}
+
 export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, tx: number, ty: number, charge: number, ex: FireExtra = {}): void {
   const b = w.bodies, x = ex.ox ?? b.x[src], y = ex.oy ?? b.y[src];
   const dx = cosTurns(face), dy = sinTurns(face);
@@ -207,7 +231,9 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       }
       break;
     }
-    case 'nova': case 'quake': {
+    case 'imbue': case 'nova': case 'quake': {
+      // a defence has one close-range blast: the Weapon's burst and the Area ring both make its half-ring (the user, 2026-11-10)
+      if (spec.shape === 'imbue' && !driving(w, src)) { imbue(w, src, p, spec, x, y, face, dx, dy, k, k * blast * close); break; }
       const r = (driving(w, src) ? BATTERY.ringRadius : spec.shape === 'quake' ? SHAPES.novaRadius + 1 : SHAPES.novaRadius) + SHAPES.novaPerRune * (n - 1);
       // Leaves the floor alone: a floor laid round you soaks or burns you, the caster (Place is for floors).
       // Area is the close, risky cast, so a spray element's ring is its strongest instant hit on its own axis (spell audit,
@@ -263,30 +289,6 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     case 'swing': // an empty Weapon cast: the bare staff's shove (your hands' moves go through heldBlow)
       weaponBlow(w, src, face, { ...blowOf('staff'), scale: k, look: 0, p: null, move: 'strike', ox: ex.ox, oy: ex.oy });
       break;
-    case 'imbue': {
-      // The imbued burst: every queued element at full power in a short cone in front of you, as Magicka's imbue-and-release. Nothing stays in hand.
-      const reach = imbueReach(spec);
-      if (spec.form === EL.lightning) fork(w, src, spec, face, reach, k);
-      else {
-        setHitKind(HIT_KIND.burst);
-        const line = imbueLine(spec);
-        for (let i = 0; i < b.kind.length; i++) {
-          if (!alive(w, i) || i === src) continue;
-          if (line) {
-            // along the line: how far out, and how far to the side
-            const rx = b.x[i] - x, ry = b.y[i] - y, along = rx * dx + ry * dy, side = Math.abs(rx * dy - ry * dx);
-            if (along < -b.r[i] || along > reach + b.r[i] || side > SHAPES.imbueLineHalf + b.r[i]) continue;
-          } else if (!inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
-          const ho = hitOpts(p, src, k * blast * close * SHAPES.imbuePower, dx, dy);
-          if (spec.form === EL.water) ho.push *= SHAPES.ringPush; // the Water burst shoves as hard as the Splash ring (it pushed nothing: no Push mod on Weapon casts)
-          hit(w, i, p, ho);
-        }
-      }
-      let mask = 0;
-      for (let e = 1; e <= N_EL; e++) if (spec.counts[e - 1]) mask |= 1 << e;
-      w.events.push({ tick: w.clock[0], kind: 'move', who: src, x, y, x2: x + dx * reach, y2: y + dy * reach, text: 'imbue', look: spec.look, amount: reach, els: mask });
-      break;
-    }
     case 'palm':
       for (let i = 0; i < b.kind.length; i++) {
         if (alive(w, i) && i !== src && inCone(x, y, face, 0.08, 3, b.x[i], b.y[i], b.r[i])) hit(w, i, p, hitOpts(p, src, SHAPES.palmPower * k, dx, dy));
@@ -554,7 +556,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     return;
   }
   if (spec.shape === 'spray') {
-    const range = (driving(w, src) ? sprayReach(dx, dy) : SHAPES.sprayRange) + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
+    const range = (driving(w, src) ? driveSpray(w, src).range : SHAPES.sprayRange) + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
     // Rock and barriers stop a spray like a beam: it ends at the wall and wears it down (healing doesn't).
     const [wallD, wk] = clipRay(w, x, y, dx, dy, range, b.team[src]);
     if (wk >= 0 && !spec.heal) damageWall(w, wk, wallDamage(w, wk, spec.counts, 0, rate), spec.counts[EL.fire - 1]);
@@ -562,9 +564,12 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     const [fd, fk] = spec.heal ? [0, -1] : fieldAlong(w, x, y, dx, dy, wallD, b.team[src]), pc = withCoat(w, p, fk); // beyond your coated field, the spray carries its elements
     // Falloff (combat.sprayFalloff): the nearest body takes it all, each one behind takes a share less.
     const inside: number[] = [];
+    // a defence's stream also splashes round where it lands, so what's at the foot of the wall burns (battery.ts)
+    const drv = driving(w, src), lx = x + dx * wallD, ly = y + dy * wallD;
     for (let i = 0; i < b.kind.length; i++) {
       if (!alive(w, i) || i === src) continue;
-      if (inCone(x, y, face, half, range, b.x[i], b.y[i], b.r[i]) && clearLine(w, x, y, b.x[i], b.y[i])) inside.push(i);
+      const near = drv && len(b.x[i] - lx, b.y[i] - ly) <= BATTERY.splash + b.r[i];
+      if ((near || inCone(x, y, face, half, range, b.x[i], b.y[i], b.r[i])) && clearLine(w, x, y, b.x[i], b.y[i])) inside.push(i);
     }
     if (COMBAT.sprayFalloff < 1) inside.sort((a, c) => len(b.x[a] - x, b.y[a] - y) - len(b.x[c] - x, b.y[c] - y) || a - c);
     inside.forEach((i, k) => {

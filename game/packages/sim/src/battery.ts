@@ -10,7 +10,7 @@ import { len } from './geom';
 import { BTN, type PlayerInput } from './input';
 import { RUNES } from './config';
 import { EL, N_EL } from './elements';
-import { atan2Turns } from './trig';
+import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { MAX_SEATS, PHASE, alive, type World } from './world';
 
 export const BATTERY = {
@@ -30,8 +30,12 @@ export const BATTERY = {
   placeClear: 1,
   /** A defence's ring: a half-ring on the enemy's side. The wall hides about 4 units of ground behind it, so it has to reach past that. */
   ringRadius: 7,
-  /** The head swings this far either way of straight out, in turns: 80 degrees, nearly along the wall. */
-  swing: 0.222,
+  /** The head swings this far either way of straight out, in turns: 70 degrees. Further round, the barrel's line stays inside the wall (the user, 2026-11-10). */
+  swing: 0.194,
+  /** The flamethrower lands at least this far outside the wall's line, where enemies batter it. */
+  landClear: 1.2,
+  /** And burns whatever is this near where it lands, as well as along its cone. */
+  splash: 1.7,
 } as const;
 
 /** Straight out from the wall, north, as a facing in turns. */
@@ -88,19 +92,54 @@ export function batteryPress(w: World, inputs: readonly PlayerInput[]): void {
   }
 }
 
-/** What a seat's buttons do while driving: spells only. With nothing queued and nothing going, your hands stay put away. */
+/**
+ * What a seat's buttons do while driving: spells only. With nothing queued and nothing going, your hands stay put away.
+ * The Weapon cast is let through for its imbued burst, which from a defence is the same half-ring as Area (effects.ts).
+ */
 export function driveButtons(w: World, i: number, buttons: number): number {
   const s = w.seats;
-  return s.queueLen[i] > 0 || s.phase[i] !== PHASE.idle ? buttons & (BTN.force | BTN.area | BTN.clear | BTN.use) : buttons & (BTN.clear | BTN.use);
+  return s.queueLen[i] > 0 || s.phase[i] !== PHASE.idle ? buttons & (BTN.force | BTN.area | BTN.weapon | BTN.clear | BTN.use) : buttons & (BTN.clear | BTN.use);
 }
 
-/** The way the head points, in turns: at the aim, and no further round than the swing either side of straight out from the wall. */
+/**
+ * The way a driven defence's head points, as a ground direction from its tower (not normalized): at the ground under
+ * the cursor. The aim is measured from the body at the muzzle, about 4 units further out, so it's moved back onto the
+ * tower. The stream lands where you aim (driveSpray), so what you point at is what burns; the barrel, high over the
+ * ground, points down at it rather than through the cursor on the screen (the user, 2026-11-11: aiming through the
+ * cursor left a dead zone at the wall's foot, where the head swung away instead of down).
+ */
+export function aimFromTower(w: World, i: number): [number, number] {
+  const s = w.seats, b = w.bodies, tower = at(w, TOWER)[w.battery!.drive[i]];
+  return [b.x[i] + s.aimX[i] - tower.x, b.y[i] + s.aimY[i] - tower.y];
+}
+
+/** The way the head points, in turns: from the tower at the cursor, and no further round than the swing either side of straight out from the wall. */
 export function driveFace(w: World, i: number): number {
-  const s = w.seats;
-  if (len(s.aimX[i], s.aimY[i]) < 1e-6) return STRAIGHT_OUT;
-  let a = atan2Turns(s.aimX[i], -s.aimY[i]); // 0 is straight out, north; positive turns east
+  const [ax, ay] = aimFromTower(w, i);
+  if (len(ax, ay) < 1e-6) return STRAIGHT_OUT;
+  let a = atan2Turns(ax, -ay); // 0 is straight out, north; positive turns east
   if (a > 0.5) a -= 1;
   return STRAIGHT_OUT + Math.max(-BATTERY.swing, Math.min(BATTERY.swing, a));
+}
+
+/**
+ * A driven defence's flamethrower: the way it goes from the muzzle (your body) and how far.
+ *
+ * It's drawn from the head as a jet along the barrel, so it does its work along that line too. It lands where you aim
+ * along it (the user, 2026-11-11: the flame couldn't reach what was close to the wall), never short of the ground
+ * just outside the wall and never past its reach (measured from the tower, plus the muzzle's distance out along the
+ * barrel); the spray runs from the muzzle to there, and splashes round where it lands (effects.ts). The muzzle is
+ * outside the wall, so a jet aimed far enough round that its line stays inside the wall runs from the muzzle back
+ * into the wall, and the wall stops it: the drawn jet stays inside too.
+ */
+export function driveSpray(w: World, i: number): { face: number; range: number } {
+  const b = w.bodies, s = w.seats, tower = at(w, TOWER)[w.battery!.drive[i]], f = driveFace(w, i), dx = cosTurns(f), dy = sinTurns(f);
+  const out = (b.x[i] - tower.x) * dx + (b.y[i] - tower.y) * dy, most = out + sprayReach(dx, dy);
+  const aimed = (b.x[i] + s.aimX[i] - tower.x) * dx + (b.y[i] + s.aimY[i] - tower.y) * dy;
+  const least = Math.min(most, -dy > 0.05 ? (tower.y - (BATTERY.wallY - BATTERY.landClear)) / -dy : most);
+  const d = Math.max(least, Math.min(most, aimed));
+  const lx = tower.x + dx * d - b.x[i], ly = tower.y + dy * d - b.y[i];
+  return { face: atan2Turns(ly, lx), range: len(lx, ly) };
 }
 
 /**
@@ -115,6 +154,11 @@ export function sprayReach(dx: number, dy: number): number {
 
 /** Where a defence's placed spell lands: the aim point on the enemy's side of the wall, within its own range. */
 export function driveTarget(w: World, i: number): [number, number] {
-  const s = w.seats, b = w.bodies, d = len(s.aimX[i], s.aimY[i]), k = d > BATTERY.placeRange ? BATTERY.placeRange / d : 1;
-  return [b.x[i] + s.aimX[i] * k, Math.min(BATTERY.wallY - BATTERY.placeClear, b.y[i] + s.aimY[i] * k)];
+  return drivePlace(w.bodies.x[i], w.bodies.y[i], w.seats.aimX[i], w.seats.aimY[i]);
+}
+
+/** The same from a body at (x, y) aiming (ax, ay), in the real world's axes: the client's reticle uses it too. */
+export function drivePlace(x: number, y: number, ax: number, ay: number): [number, number] {
+  const d = len(ax, ay), k = d > BATTERY.placeRange ? BATTERY.placeRange / d : 1;
+  return [x + ax * k, Math.min(BATTERY.wallY - BATTERY.placeClear, y + ay * k)];
 }

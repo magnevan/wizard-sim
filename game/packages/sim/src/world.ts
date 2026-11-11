@@ -368,6 +368,8 @@ export interface Battery {
   /** The defence each seat drives (its index among the room's towers), or -1. */
   drive: Int8Array;
   homeX: Float64Array; homeY: Float64Array;
+  /** Each body's lane: the defence it was sent at (battery-waves.ts), or -1. */
+  lane: Int8Array;
 }
 
 /** Survive's run: the altar pick and every seat's power-ups. Only a survive world has one. */
@@ -611,7 +613,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
       heal: u8(MAX_DEVICES), look: u8(MAX_DEVICES), born: i32(MAX_DEVICES), chan: i32(MAX_DEVICES),
     },
     run: opts.room === 'survive' ? run() : null,
-    battery: opts.room === 'battery' ? { drive: new Int8Array(MAX_SEATS).fill(-1), homeX: new Float64Array(MAX_SEATS), homeY: new Float64Array(MAX_SEATS) } : null,
+    battery: opts.room === 'battery' ? { drive: new Int8Array(MAX_SEATS).fill(-1), homeX: new Float64Array(MAX_SEATS), homeY: new Float64Array(MAX_SEATS), lane: new Int8Array(MAX_BODIES).fill(-1) } : null,
     tut: opts.room === 'tutorial' ? tutorial(opts.tutorialBeat ?? TUT_ORDER[0]) : null,
     events: [],
   };

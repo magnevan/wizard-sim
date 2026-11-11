@@ -9,8 +9,9 @@
 import { pedestalNear } from '@wizard-sim/sim';
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
-import { ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, regenOf, runeRate, runeMax, specOf, type World } from '@wizard-sim/sim';
+import { BSTEP, ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, regenOf, runeRate, runeMax, specOf, type World } from '@wizard-sim/sim';
 import { badge, perkOf } from './art/perks';
+import { DRIVING, STEP_UP } from './battery-text';
 import * as X from './art/px';
 import { mod } from './art/util';
 
@@ -22,7 +23,7 @@ const flowCol = (ramp: readonly string[], share: number): string => (share >= 0.
 const PW = Math.max(TOP.length * SLOT, STAG + BOT.length * SLOT) + 6, PH = RH * 2 + 7;
 const CW = 240, CH = PH + 22;
 
-const TW = 320, TH = 22;
+const TW = 320, TH = 26;
 /** Survive: the power-ups panel (top left) and the run-over card. */
 const PKW = 150, PKH = 4 * 13 + 2, OVW = 220, OVH = 132;
 
@@ -148,10 +149,32 @@ export class Hud {
     this.over.position.set(Math.round(viewW / 2 - OVW / 2), Math.round(viewH / 2 - h / 2 - 20));
   }
 
+  /**
+   * The battery's lesson (battery-text.ts): what to do now and the keys for it, in place of any wave count or timer
+   * (the user: the waves felt too arcade-like). Away from the defences it asks you to step up to one; driving, it
+   * teaches the step's cast; after the lesson it shows nothing.
+   */
+  private drawLesson(w: World, viewW: number): void {
+    const c = this.tc.x, step = w.enc.state[1], driving = w.battery!.drive[this.seat] >= 0;
+    c.clearRect(0, 0, TW, TH); c._fs = null;
+    const p = driving ? DRIVING[step] : step <= BSTEP.brute ? STEP_UP : undefined;
+    this.top.visible = !!p && w.enc.state[0] !== 0;
+    if (!p || !this.top.visible) return;
+    const head = X.fontText(p.head.toUpperCase()), line = X.fontText(p.line.toUpperCase()), keys = X.fontText(p.keys.toUpperCase());
+    const wd = Math.min(TW - 2, Math.max(head.length, line.length, keys.length) * 4 + 12), x = Math.round(TW / 2 - wd / 2);
+    X.rect(c, x - 1, 0, wd + 2, 25, '#0a0810'); X.rect(c, x, 1, wd, 23, '#1a1726'); X.rect(c, x, 1, wd, 1, '#3a3450');
+    X.text(c, head, Math.round(TW / 2 - head.length * 2), 3, '#ffd860');
+    X.text(c, line, Math.round(TW / 2 - line.length * 2), 10, '#e8e4f0');
+    X.text(c, keys, Math.round(TW / 2 - keys.length * 2), 17, '#ff9a5a');
+    this.ttex.source.update();
+    this.top.position.set(Math.round(viewW / 2 - TW / 2), 3);
+  }
+
   /** The wave director's state: the lull's countdown and the incoming mix, the wave's foes left. */
   private drawWave(w: World, t: number, viewW: number): void {
     const c = this.tc.x, st = w.enc.state, e = w.enc;
     c.clearRect(0, 0, TW, TH); c._fs = null;
+    if (w.battery) { this.drawLesson(w, viewW); return; }
     this.top.visible = st[0] !== PHASE_ENC.off;
     if (!this.top.visible) return;
     const secs = Math.ceil(st[2] / 60);

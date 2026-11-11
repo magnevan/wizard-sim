@@ -1,7 +1,7 @@
 // The battery's gate: a standing wall of fire you can walk through, and it burns you.
 import { describe, expect, it } from 'vitest';
 import { BATTERY, BTN, EL, N_EL, NO_INPUT, WALL, createWorld, joinSeat, runeMax, step } from '../src';
-import { driveTarget, sprayReach } from '../src/battery';
+import { driveFace, driveTarget, sprayReach } from '../src/battery';
 
 const NO_INPUTS = [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT];
 
@@ -72,7 +72,7 @@ describe('driving a defence', () => {
     take(w);
     for (const aimX of [320, -320]) {
       step(w, [{ ...NO_INPUT, aimX, aimY: 320 }, NO_INPUT, NO_INPUT, NO_INPUT]); // down the map: behind the wall
-      const off = w.bodies.face[0] - 0.75;
+      const off = driveFace(w, 0) - 0.75; // the head; the body faces the spray's way from the muzzle (driveSpray)
       expect(Math.abs(off)).toBeCloseTo(BATTERY.swing, 3);
       expect(Math.sign(off)).toBe(Math.sign(aimX));
     }
@@ -93,6 +93,23 @@ describe('driving a defence', () => {
     expect(driveTarget(w, 0)[1]).toBeCloseTo(w.bodies.y[0] - 14, 3);
     step(w, [{ ...NO_INPUT, aimX: 320, aimY: 32 * 6 }, NO_INPUT, NO_INPUT, NO_INPUT]);
     expect(driveTarget(w, 0)[1]).toBeLessThan(BATTERY.wallY);
+  });
+
+  it('makes the same half-ring with the Weapon cast as with Area', () => {
+    const ringWith = (cast: number) => {
+      const { w } = atPedestal();
+      take(w);
+      step(w, [{ ...NO_INPUT, press0: EL.fire, press1: EL.fire }, NO_INPUT, NO_INPUT, NO_INPUT]);
+      step(w, press(cast));
+      let ring = null;
+      for (let i = 0; i < 40 && !ring; i++) { ring = w.events.find((e) => e.kind === 'burst' && e.who === 0) ?? null; step(w, NO_INPUTS); }
+      return ring;
+    };
+    const area = ringWith(BTN.area), weapon = ringWith(BTN.weapon);
+    expect(area).not.toBeNull();
+    expect(weapon).not.toBeNull();
+    expect(weapon!.amount).toBeCloseTo(area!.amount!, 5);
+    expect(weapon!.amount).toBeGreaterThanOrEqual(BATTERY.ringRadius);
   });
 
   it('two players can\'t share a defence', () => {

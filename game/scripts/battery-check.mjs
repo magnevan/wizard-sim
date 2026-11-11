@@ -70,11 +70,32 @@ try {
   await sleep(900);
   await shot('drive-prompt');
   await p.keyboard.press('KeyX');
-  await sleep(1400);
+  await sleep(350);
+  await shot('stakes-break');
+  await sleep(1050);
   if ((await drive()) !== 1) fail('X at a pedestal should take that defence');
   await p.mouse.move(860, 130);
   await sleep(500);
   await shot('drive-idle');
+  // the lesson: goblins were battering every wall; with a defence taken, the others come along the wall to it
+  // headless frames run the sim slower than real time: wait on the sim, for goblins at this defence's wall
+  const atWall = () => p.evaluate(() => { const w = window.wizardSim.world, b = w.bodies; let n = 0; for (let i = 4; i < b.kind.length; i++) if (b.kind[i] === 3 && Math.hypot(b.x[i] - b.x[0], b.y[i] - b.y[0]) < 3) n++; return n; });
+  for (let k = 0; k < 120 && (await atWall()) < 4; k++) await sleep(250);
+  await shot('lesson-ring');
+  console.log('goblins at the wall', await atWall());
+  // the flame aimed at the wall's foot, where they stand: it pours down onto them
+  const foot = await p.evaluate(() => { const ws = window.wizardSim, b = ws.world.bodies; return ws.view.camera.worldToScreen(b.x[0], b.y[0] - 0.6); });
+  await p.mouse.move(foot.x, foot.y);
+  await sleep(400);
+  await p.keyboard.press('KeyF');
+  await sleep(150);
+  await p.mouse.down({ button: 'right' });
+  await sleep(700);
+  await shot('jet-foot');
+  await p.mouse.up({ button: 'right' });
+  await sleep(1200);
+  await p.mouse.move(860, 130);
+  await sleep(300);
   await p.keyboard.press('KeyF');
   await p.keyboard.press('KeyF');
   await sleep(200);
@@ -99,12 +120,69 @@ try {
   await p.mouse.move(380, 60);
   await sleep(400);
   await shot('drive-north');
+  // a marker where the cursor is, so the shots show whether the head points at it
+  await p.evaluate(() => {
+    const m = document.createElement('div');
+    m.id = 'cursor-mark';
+    m.style.cssText = 'position:fixed;width:9px;height:9px;margin:-5px 0 0 -5px;border:2px solid #0ff;border-radius:50%;pointer-events:none;z-index:99';
+    document.body.appendChild(m);
+    addEventListener('pointermove', (e) => { m.style.left = e.clientX + 'px'; m.style.top = e.clientY + 'px'; });
+  });
   // the head sweeps its whole swing, one facing at a time
-  for (const [name, x, y] of [['sweep-left', 120, 180], ['sweep-up', 380, 30], ['sweep-out', 800, 120], ['sweep-right', 1200, 330], ['sweep-lower', 1230, 760]]) {
+  for (const [name, x, y] of [['sweep-left', 120, 180], ['sweep-up', 380, 30], ['sweep-out', 800, 120], ['sweep-right', 1200, 330], ['sweep-lower', 1230, 760], ['sweep-near', 560, 300]]) {
     await p.mouse.move(x, y);
     await sleep(900);
     await shot(name);
+    // a guide along the ground from the tower to the cursor: the drawn barrel should run parallel to it
+    await p.evaluate(([mx, my]) => {
+      const ws = window.wizardSim, w = ws.world, cam = ws.view.camera, t = w.def.props.filter((q) => q.asset === 'defence-tower')[w.battery.drive[0]];
+      const T = cam.worldToScreen(t.x, t.y), rx = T.x, ry = T.y;
+      let g = document.getElementById('aim-guide');
+      if (!g) { g = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); g.id = 'aim-guide'; g.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:98'; document.body.appendChild(g); }
+      g.innerHTML = `<line x1="${rx}" y1="${ry}" x2="${mx}" y2="${my}" stroke="#0ff" stroke-width="1" stroke-dasharray="4 4"/>`;
+    }, [x, y]);
+    await shot(name + '-guide');
+    await p.evaluate(() => document.getElementById('aim-guide')?.remove());
   }
+  // the flamethrower at a few aims, one past the gate's pillar; the last held a while to see it move
+  for (const [name, x, y, frames] of [['jet-left', 200, 160, 1], ['jet-out', 700, 110, 1], ['jet-gate', 900, 330, 1], ['jet-far', 1100, 140, 4], ['jet-right', 1200, 330, 1], ['jet-lower', 1230, 620, 3], ['jet-wide-left', 120, 330, 1]]) {
+    await p.mouse.move(x, y);
+    await sleep(500);
+    await p.keyboard.press('KeyF');
+    await p.keyboard.press('KeyF');
+    await sleep(150);
+    await p.mouse.down({ button: 'right' });
+    await sleep(120);
+    await shot(name + '-start');
+    await sleep(800);
+    for (let f = 0; f < frames; f++) { await shot(frames > 1 ? `${name}-${f}` : name); await sleep(90); }
+    await p.mouse.up({ button: 'right' });
+    await sleep(1500);
+  }
+  // Place held far out: the reticle should sit at the defence's own reach (18), not a wizard's
+  await p.mouse.move(1000, 60);
+  await sleep(300);
+  await p.keyboard.press('KeyF');
+  await sleep(150);
+  await p.keyboard.down('Shift');
+  await p.mouse.down({ button: 'right' });
+  await sleep(700);
+  await shot('place-far');
+  await p.mouse.up({ button: 'right' });
+  await p.keyboard.up('Shift');
+  await sleep(1500);
+  // the Weapon cast's burst: the same half-ring as Area
+  await p.keyboard.press('KeyF');
+  await p.keyboard.press('KeyF');
+  await sleep(150);
+  await p.keyboard.down('Shift');
+  await p.mouse.down({ button: 'left' });
+  await sleep(60);
+  await p.mouse.up({ button: 'left' });
+  await p.keyboard.up('Shift');
+  await sleep(450);
+  await shot('drive-burst');
+  await sleep(1200);
   await p.keyboard.press('KeyX');
   await sleep(900);
   if ((await drive()) !== -1) fail('X while driving should step away');

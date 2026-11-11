@@ -17,7 +17,7 @@
 import { toU, toV } from './iso-world';
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
-  AI, ARCH, ARCHETYPES, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
+  AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
@@ -162,7 +162,7 @@ export class WorldView {
   setRenderer(r: Renderer): void { this.renderer = r; }
   /** What stands in the scene, for effects to go behind (art/vfx.ts). Positions are field px; fx0, fy0 convert from the scene's. */
   private occluderSource(w: World, fx0: number, fy0: number) {
-    return (emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number) => void) => {
+    return (emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number, piece?: boolean) => void) => {
       for (let i = 0; i < MAX_BODIES; i++) {
         const spr = this.sprites[i], v = this.views[i];
         if (!v.on || !spr.visible || (i < MAX_SEATS && w.seats.active[i] && w.seats.phase[i] === PHASE.channel)) continue;
@@ -171,7 +171,7 @@ export class WorldView {
       this.props.sprites((s, _x, y) => emit(s.texture, s.position.x - fx0, s.position.y - fy0, y - fy0, true, s.zIndex));
       // pieces carry the origin they were laid out with: effects that draw before the walls see last frame's
       const [px, py] = this.structs.pieceOrigin;
-      this.structs.eachPiece((s, _x, y) => emit(s.texture, s.position.x - px, s.position.y - py, y - py, true, s.zIndex));
+      this.structs.eachPiece((s, _x, y) => emit(s.texture, s.position.x - px, s.position.y - py, y - py, true, s.zIndex, true));
     };
   }
 
@@ -305,6 +305,10 @@ export class WorldView {
     this.structs.scorch.sprite.position.set(fx0, fy0);
     this.props.place(fx0, fy0);
     this.props.turnHeads(w, fx0, fy0);
+    // the battery's stakes give way as a defence is taken
+    if (this.props.breakStakes(!!w.battery && w.enc.state[0] > 0 && w.enc.state[1] >= BSTEP.ring, fx0, fy0)) {
+      w.def.props.forEach((p, k) => { if (p.asset === 'stakes') this.vfx.splinters(p.x, p.y, t, k); });
+    }
     this.drawArtLabel(w);
     // the wave banner: over the arena's north edge, or near the top of the view when that is off screen
     this.vfx.bannerX = Math.round(cam.w / 2 - fx0);
@@ -364,6 +368,7 @@ export class WorldView {
       for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.rock) wall(wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
     }
     this.vfx.occluders = this.occluderSource(w, fx0, fy0);
+    this.vfx.ghostSource = (emit) => { for (let i = MAX_SEATS; i < MAX_BODIES; i++) { const spr = this.sprites[i]; if (this.views[i].on && spr.visible && w.bodies.kind[i] === KIND.enemy) emit(spr.texture, spr.position.x - fx0, spr.position.y - fy0, spr.zIndex); } };
     this.structs.behind = this.vfx.behind;
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
     this.lights.end();

@@ -13,12 +13,15 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import {
-  CELL, DEVICE, ECHO_LAG, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SHAPES, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
+  BATTERY, CELL, DEVICE, ECHO_LAG, sprayReach, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SHAPES, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
   compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
-import { headTip } from './props';
+import { BARREL_RISE, headTip, liveHeads, towerTip } from './props';
+import { flameJet, pilotFlame } from './flame-jet';
+import { toX, toY } from '../iso-world';
+import { PPU } from '../camera';
 import * as A from './accent';
 import { depthOf, rowsHidden } from './depth';
 import * as K from './kit';
@@ -80,6 +83,10 @@ const DEPTHLESS: ReadonlySet<string> = new Set(['pop', 'banner', 'zap']);
 const SPREADS: ReadonlySet<string> = new Set(['patch', 'nova', 'quake', 'slam', 'blast', 'geyser', 'healburst']);
 /** How far above the ground a beam or spray is drawn, with a little to spare: above this a standing thing is taken to hide it. */
 const CHEST = LIFT + 3;
+/** The colour an enemy hidden behind a wall shows through it in. */
+const GHOST = '#ff6a4a';
+/** How far past the wall's line a defence's jet is still over the wall's top, units: there the wall's pieces don't hide it. */
+const JET_OVER_WALL = 1.5;
 /** A late remote spell (rollback) catches up with where it really is over this much real time, s. */
 const CATCH_S = 0.15;
 /** Floors fade out over their last second (ticks), in this many dither steps. */
@@ -97,14 +104,17 @@ export class Vfx {
   readonly ground: Sprite;
   readonly over: Sprite;
   /** Reports what stands in the scene: texture, top-left and foot y, in field px. Set by the view. */
-  occluders: ((emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number) => void) => void) | null = null;
+  occluders: ((emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number, piece?: boolean) => void) => void) | null = null;
   /** This frame's walls and furniture, for behind(). */
-  private solids: { tex: Texture; x: number; y: number; footY: number; z: number }[] = [];
+  private solids: { tex: Texture; x: number; y: number; footY: number; z: number; piece: boolean }[] = [];
   /** The bodies, which only the novas' far pass goes behind (novaDepth). */
-  private softs: { tex: Texture; x: number; y: number; footY: number; z: number }[] = [];
+  private softs: { tex: Texture; x: number; y: number; footY: number; z: number; piece: boolean }[] = [];
   private cover: { tex: Texture; x: number; y: number; rows: number }[] = [];
   /** behind()'s scratch: small, and grown when something needs more. */
   private d = X.canvas(360, 360);
+  private gh = X.canvas(96, 96);
+  /** Every enemy's sprite, its spot in the field and its sort key: those a wall stands in front of show through it (ghosts). */
+  ghostSource: ((emit: (tex: Texture, x: number, y: number, z: number) => void) => void) | null = null;
   /** This frame's sprays that struck the face of a wall we can see: drawn last, over the wall. */
   private strikes: Strike[] = [];
   /** Where this frame's beams and sprays struck the far side of something: what's there hides them whole. */
@@ -252,6 +262,9 @@ export class Vfx {
   bannerX = 0;
   bannerY = 0;
 
+  /** The battery's stakes break here (world point, the view's turned world): splinters and dust. */
+  splinters(x: number, y: number, t: number, seed: number): void { this.add('splinters', t, 0.9, { x, y, seed }); }
+
   private add(kind: string, t0: number, life: number, o: Partial<Fx>): void {
     if (this.fx.length > 500) this.fx.shift();
     this.fx.push({ kind, t0, life, seed: 0, x: 0, y: 0, x2: 0, y2: 0, look: 0, who: -1, r: 0, n: 0, ...o });
@@ -358,7 +371,7 @@ export class Vfx {
     o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, W, H); o.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
     g._fs = o._fs = null;
     this.solids.length = 0; this.softs.length = 0;
-    this.occluders?.((tex, x, y, footY, solid, z) => { (solid ? this.solids : this.softs).push({ tex, x, y, footY, z }); });
+    this.occluders?.((tex, x, y, footY, solid, z, piece) => { (solid ? this.solids : this.softs).push({ tex, x, y, footY, z, piece: !!piece }); });
     this.surfaces(w, ct, light);
     this.zones(w, t, light, ct);
     this.groundMarks(w, bodies, t);
@@ -373,8 +386,10 @@ export class Vfx {
     if (hidden.length) this.impactsBehind(hidden, t, w, bodies, light);
     this.missiles(w, t, light, ct);
     this.occludedChannels(w, ct, bodies, light);
+    this.pilots(w, ct, light);
     this.casters(w, ct, bodies, light);
     this.statuses(w, t, bodies, light, ct);
+    this.ghosts();
     this.bars(w, bodies);
     this.gt.source.update(); this.ot.source.update();
   }
@@ -424,15 +439,16 @@ export class Vfx {
    * up to 70 px above): whatever stands in front of that spot hides it, by the order the sprites sort
    * in. With nothing in front (the usual case) it goes straight on the layer. `spread`: it lies over
    * the ground out to R, so it can also pass behind things sorted behind its centre (art/depth.ts).
+   * `overWalls`: it's high enough to pass over the wall pieces (not the props), so only props hide it.
    */
-  behind = (ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread = false, bodiesToo = false): void => {
+  behind = (ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread = false, bodiesToo = false, overWalls = false): void => {
     if (this.o === this.b || this.o === this.d) { draw(this.o.x); return; } // already inside a pass
     const z = depthOf(ay), x0 = Math.floor(ax - R - 24), x1 = Math.ceil(ax + R + 24), y0 = Math.floor(ay - R - 70), y1 = Math.ceil(ay + R + 24), reach = ay - R * FY;
     const cover = this.cover;
     cover.length = 0;
     for (const s of bodiesToo ? [...this.solids, ...this.softs] : this.solids) {
       const f = s.tex.frame;
-      if (!f || s.x > x1 || s.x + f.width < x0 || s.y > y1 || s.y + f.height < y0) continue;
+      if (!f || (overWalls && s.piece) || s.x > x1 || s.x + f.width < x0 || s.y > y1 || s.y + f.height < y0) continue;
       const rows = rowsHidden(f.height, s.y, s.footY, s.z, z, reach, spread, CHEST);
       if (rows > 0) cover.push({ tex: s.tex, x: s.x, y: s.y, rows });
     }
@@ -486,6 +502,53 @@ export class Vfx {
   }
 
   /** Point the drawing at the scratch layer, cleared. */
+  /**
+   * An enemy behind a wall shows through it as a flat silhouette, only where a wall piece in front of it covers it,
+   * so what you can see of it is untouched. The battery's wall hides about 4 units of ground behind it, which is
+   * where the enemies attacking a defence stand.
+   */
+  private ghosts(): void {
+    if (!this.ghostSource) return;
+    const o = this.o.x;
+    this.ghostSource((tex, x, y, z) => {
+      const f = tex.frame, img = tex.source?.resource as CanvasImageSource | undefined;
+      if (!f || !img) return;
+      const W = f.width, H = f.height;
+      let any = false;
+      for (const s of this.solids) {
+        const sf = s.tex.frame;
+        if (s.piece && s.z > z && sf && s.x < x + W && s.x + sf.width > x && s.y < y + H && s.y + sf.height > y) { any = true; break; }
+      }
+      if (!any) return;
+      if (this.gh.c.width < W || this.gh.c.height < H) this.gh = X.canvas(Math.max(this.gh.c.width, W), Math.max(this.gh.c.height, H));
+      const g = this.gh.x;
+      g.setTransform(1, 0, 0, 1, -x, -y);
+      g.globalCompositeOperation = 'source-over';
+      g.clearRect(x, y, W, H);
+      // the wall in front of it, as a mask
+      for (const s of this.solids) {
+        const sf = s.tex.frame, si = s.tex.source?.resource as CanvasImageSource | undefined;
+        if (!s.piece || s.z <= z || !sf || !si || s.x >= x + W || s.x + sf.width <= x || s.y >= y + H || s.y + sf.height <= y) continue;
+        g.drawImage(si, sf.x, sf.y, sf.width, sf.height, s.x, s.y, sf.width, sf.height);
+      }
+      // less whatever stands in front of the wall there (a defence tower): the enemy isn't behind the wall in those pixels' view
+      g.globalCompositeOperation = 'destination-out';
+      for (const s of this.solids) {
+        const sf = s.tex.frame, si = s.tex.source?.resource as CanvasImageSource | undefined;
+        if (s.piece || s.z <= z || !sf || !si || s.x >= x + W || s.x + sf.width <= x || s.y >= y + H || s.y + sf.height <= y) continue;
+        g.drawImage(si, sf.x, sf.y, sf.width, sf.height, s.x, s.y, sf.width, sf.height);
+      }
+      g.globalCompositeOperation = 'source-in';
+      g.drawImage(img, f.x, f.y, W, H, x, y, W, H);
+      g.globalCompositeOperation = 'source-atop';
+      g.fillStyle = GHOST; g.fillRect(x, y, W, H);
+      g.globalCompositeOperation = 'source-over'; g._fs = null;
+      o.save(); o.setTransform(1, 0, 0, 1, 0, 0); o.globalAlpha = 0.6;
+      o.drawImage(this.gh.c, 0, 0, W, H, x - this.wx, y - this.wy, W, H);
+      o.restore(); o._fs = null;
+    });
+  }
+
   private scratchStart(): void {
     const b = this.b.x;
     b.setTransform(1, 0, 0, 1, 0, 0); b.clearRect(0, 0, this.b.c.width, this.b.c.height); b.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
@@ -1051,8 +1114,26 @@ export class Vfx {
         } else {
           const kind: K.ConeKind = spec.scald ? 'scald' : look === 'fire' ? 'fire' : look === 'cold' ? 'cold' : look === 'ice' ? 'freeze' : 'water';
           const fromHead = !!w.battery && w.battery.drive[i] >= 0;
-          if (fromHead) {
-            // a defence's flame is a jet from a fixed nozzle: three cones side by side, so it holds its body over the longer reach
+          const head = fromHead && kind === 'fire' ? towerTip(w, w.battery!.drive[i]) : null;
+          if (head) {
+            // a defence's flamethrower: one stream with depth, hidden by the wall and pillars it passes behind (art/flame-jet.ts)
+            // The sim's spray lands on the barrel's line (battery.ts, driveSpray), so the jet runs straight along it. Its end
+            // is taken onto the line as drawn, which can differ from the sim's by a few degrees; when the wall stopped the
+            // spray, that's where the jet stops too. Aimed so far round that the barrel's line stays inside the wall, the
+            // sim's spray runs from the muzzle into the wall and ends there; the jet is drawn its full length along the
+            // inside instead, where the barrel points (it hits nothing there either way).
+            const bx = head.tip[0] - head.swivel[0], by = head.tip[1] - head.swivel[1] + BARREL_RISE;
+            const tw = w.def.props.filter((p) => p.asset === 'defence-tower')[w.battery!.drive[i]];
+            const ul = Math.hypot(bx / PPU, by / (PPU * FY)) || 1, ux = bx / PPU / ul, uy = by / (PPU * FY) / ul;
+            const aimed = (w.bodies.x[i] + s.aimX[i] - tw.x) * ux + (w.bodies.y[i] + s.aimY[i] - tw.y) * uy;
+            const full = Math.max(2, Math.min(aimed, (w.bodies.x[i] - tw.x) * ux + (w.bodies.y[i] - tw.y) * uy + sprayReach(toX(ux, uy), toY(ux, uy))));
+            const inside = toY(tw.x + ux * full, tw.y + uy * full) > BATTERY.wallY;
+            const along = inside ? full : Math.max(1, (s.chanEndX[i] - tw.x) * ux + (s.chanEndY[i] - tw.y) * uy);
+            const land: Pt = [gx(tw.x + ux * along), gy(tw.y + uy * along)];
+            const side = (x: number, y: number) => { const u = (x - FIELD.OX) / PPU, vv = (y - FIELD.OY) / (PPU * FY), ry = toY(u, vv); return ry > BATTERY.wallY ? 'near' : ry > BATTERY.wallY - JET_OVER_WALL ? 'over' : 'far'; };
+            flameJet(o, { nozzle: head.tip, from: head.ground, to: land, barrel: [bx, by], endH: LIFT, side, frontY: head.ground[1] + 6, t0, seed: sd }, t, this.behind);
+          } else if (fromHead) {
+            // a defence's other sprays: a jet from a fixed nozzle, three cones side by side, so it holds its body over the longer reach
             const L = Math.hypot(z[0] - tip[0], z[1] - tip[1]) || 1, nx = -(z[1] - tip[1]) / L, ny = (z[0] - tip[0]) / L;
             for (const j of [-1, 1]) K.cone(o, [tip[0] + nx * j * 2, tip[1] + ny * j], [z[0] + nx * j * 13, z[1] + ny * j * 6], t, kind, t0, { spread: 0.3, power: 1.5, seed: sd + 17 * j });
             K.cone(o, tip, z, t, kind, t0, { spread: 0.34, power: 2.2, seed: sd });
@@ -1106,6 +1187,18 @@ export class Vfx {
       }
     }
     this.turretChannels(w, t, light);
+  }
+  /** Every working defence keeps a small live flame at its nozzle, except while it's firing. */
+  private pilots(w: World, t: number, light: LightFn): void {
+    const n = liveHeads(w), s = w.seats;
+    for (let k = 0; k < n; k++) {
+      const seat = w.battery!.drive.indexOf(k);
+      if (seat >= 0 && s.phase[seat] === PHASE.channel) continue;
+      const h = towerTip(w, k);
+      if (!h) continue;
+      pilotFlame(this.o.x, h.tip[0], h.tip[1], t, k * 3.7);
+      light(h.tip[0], h.ground[1], 26, '#ff8a30', 0.35);
+    }
   }
   /** Turrets channel the spray or beam they were made with, from their orb (structures.ts). */
   private turretChannels(w: World, t: number, light: LightFn): void {
@@ -1359,6 +1452,16 @@ export class Vfx {
         if (drawNova(o, g, f.look, x, y, r, e, t, sd, light, 'far')) { drawNova(o, g, f.look, x, y, r, e, t, sd, light, 'near'); return; }
         K.nova(o, x, y - 2, t, f.t0, 0.5, r, R, { n: 34, lift: 6, seed: sd });
         light(x, y, r + 30, R[2], 0.8 * (1 - seg(e, 0, 0.6)));
+        return;
+      }
+      case 'splinters': {
+        // a line of stakes giving way (the battery, as a defence is taken): chips of wood fly and fall, and some dust
+        if (e < 0.5) K.puff(o, x, y - 4 - e * 8, 3 + e * 8, '#8a7a68', 0.7 * (1 - e / 0.5));
+        for (let k = 0; k < 16; k++) {
+          const a = rand(k, 81, sd) * TAU, sp = 10 + rand(k, 82, sd) * 22, vz = 22 + rand(k, 83, sd) * 30, z = vz * e - 90 * e * e;
+          if (z < 0) continue;
+          K.sq(o, x + Math.cos(a) * sp * e, y + Math.sin(a) * sp * e * FY - z - 3, k % 4 ? 1 : 2, k % 3 ? '#977552' : '#553e2a');
+        }
         return;
       }
       case 'quake': case 'slam': {

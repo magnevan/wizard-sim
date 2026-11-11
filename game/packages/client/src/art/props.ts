@@ -34,13 +34,28 @@ const facingOf = (deg: number): number => {
   return Math.max(0, Math.min(f.length - 1, Math.round((deg - f[0]) / step)));
 };
 
+/**
+ * How far the barrel's root is above the swivel, art px. The barrel is level, so what the eye reads as its line runs
+ * from there to the nozzle: fitted from sheet.json, where every tip is 40 px out along the ground from a point this high.
+ */
+export const BARREL_RISE = 9.6;
+
+/** Defence k's nozzle tip as it's drawn now, and the tower's spot on the ground under it, field px. */
+export function towerTip(w: World, k: number): { tip: [number, number]; swivel: [number, number]; ground: [number, number] } | null {
+  const tower = w.def.props.filter((p) => p.asset === 'defence-tower')[k];
+  if (!tower || !SHEET) return null;
+  const t = SHEET.tips[facingOf(headDeg[k])], x = gx(tower.x), y = gy(tower.y);
+  return { tip: [x + SHEET.collar[0] + t[0] - SHEET.pivot[0], y + SHEET.collar[1] + t[1] - SHEET.pivot[1]], swivel: [x + SHEET.collar[0], y + SHEET.collar[1]], ground: [x, y] };
+}
+
 /** The field point this seat's fire comes from if it's driving a defence, else null. */
 export function headTip(w: World, seat: number): [number, number] | null {
   const k = w.battery ? w.battery.drive[seat] : -1;
-  if (k < 0) return null;
-  const tower = w.def.props.filter((p) => p.asset === 'defence-tower')[k], t = SHEET.tips[facingOf(headDeg[k])];
-  return [gx(tower.x) + SHEET.collar[0] + t[0] - SHEET.pivot[0], gy(tower.y) + SHEET.collar[1] + t[1] - SHEET.pivot[1]];
+  return k < 0 ? null : towerTip(w, k)?.tip ?? null;
 }
+
+/** How many defences have a working head (not burnt out). */
+export const liveHeads = (w: World): number => (w.battery ? w.def.props.filter((p) => p.asset === HEAD).length : 0);
 
 export class PropView {
   /** Flat props and shadows. Add this just over the floor. */
@@ -124,7 +139,9 @@ export class PropView {
       const n = k++, seat = w.battery.drive.indexOf(n);
       let want = 0;
       if (seat >= 0) {
-        const ax = w.seats.aimX[seat], ay = w.seats.aimY[seat]; // the view's aim is turned, so it's turned back
+        // at the ground under the cursor, as the sim aims (aimFromTower): the view's world is turned, so it's turned back
+        const tw = w.def.props.filter((p) => p.asset === 'defence-tower')[n];
+        const ax = w.bodies.x[seat] + w.seats.aimX[seat] - tw.x, ay = w.bodies.y[seat] + w.seats.aimY[seat] - tw.y;
         want = Math.max(-limit, Math.min(limit, (Math.atan2(toX(ax, ay), -toY(ax, ay)) * 180) / Math.PI));
       }
       const gap = want - headDeg[n], most = TURN_RATE * dt;
@@ -134,6 +151,27 @@ export class PropView {
       it.spr.texture = tex; it.ox = SHEET.pivot[0] - SHEET.collar[0]; it.oy = SHEET.pivot[1] - SHEET.collar[1];
       it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
     }
+  }
+
+  private broken = false;
+  private brokenTex: { tex: Texture; foot: readonly [number, number] } | null = null;
+  /**
+   * The battery's stakes, whole or knocked over (stakes-broken, a local edit: tools/art-import/stakes_broken.py). They
+   * break as a defence is taken (sim/src/battery-waves.ts). Returns true on the frame they break.
+   */
+  breakStakes(broken: boolean, fx0: number, fy0: number): boolean {
+    if (broken === this.broken) return false;
+    const img = propImage(broken ? 'stakes-broken' : 'stakes', this.current);
+    if (!img) return false;
+    if (broken && !this.brokenTex) { void loadTexture(img.url).then((tex) => { this.brokenTex = { tex, foot: img.foot }; }); return false; }
+    this.broken = broken;
+    for (const it of this.items) {
+      if (it.asset !== 'stakes') continue;
+      if (broken) { it.spr.texture = this.brokenTex!.tex; it.ox = this.brokenTex!.foot[0]; it.oy = this.brokenTex!.foot[1]; }
+      else { const a = propImage('stakes', this.current); if (a) void loadTexture(a.url).then((t) => { it.spr.texture = t; it.ox = a.foot[0]; it.oy = a.foot[1]; it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy); }); }
+      it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
+    }
+    return broken;
   }
 
   /** Follows the camera: fx0, fy0 is where the field's corner is in the scene. */

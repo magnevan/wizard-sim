@@ -141,7 +141,8 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
       else spec.shape = d.sub ? 'weapon' : 'wand';
       return spec;
     case 'shield':
-      if (cast === 'force') spec.shape = 'wave';
+      // Shield alone on Force is Blink (the user, 2026-11-11: it's defensive, and every other Sigil spell binds a rune); with elements, still the wave (open)
+      if (cast === 'force') spec.shape = queue.some((e) => e !== 'shield') ? 'wave' : 'blink';
       else if (cast === 'area') spec.shape = 'ring';
       else if (cast === 'place') spec.shape = d.drag ? 'drawnwall' : 'arcwall';
       else if (cast === 'conjure') spec.shape = 'guard'; // Bulwark (with Earth) or Buckler

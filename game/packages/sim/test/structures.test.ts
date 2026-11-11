@@ -198,10 +198,16 @@ describe('Shield', () => {
     expect(w.bodies.hp[0]).toBe(100);
   });
 
-  it('the Shove wave pushes everyone in front back', () => {
+  it('Shield alone on Force blinks you to the cursor, paid with the Shield rune', () => {
+    const { w, d } = arena();
+    d.aimAt(6, 0).queue('shield').tick({ buttons: BTN.force });
+    expect(w.bodies.x[0]).toBeGreaterThan(5);
+  });
+
+  it('a Tidal wave (Shield + Water) still sweeps forward and shoves', () => {
     const { w, d } = arena(2);
     w.bodies.x[1] = 2.5;
-    d.aimAt(5, 0).queue('shield').cast(BTN.force, 1, 40);
+    d.aimAt(5, 0).queue('shield', 'water').cast(BTN.force, 1, 40);
     expect(w.bodies.x[1]).toBeGreaterThan(3.2);
   });
 });

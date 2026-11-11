@@ -239,7 +239,7 @@ const module = { exports: {} };
         if (p.has('ice')) return ['Ice wave', `A front of ice spears ${how}. Everyone it passes is stabbed, and the wet freeze.`];
         if (p.has('water')) return ['Tidal wave', `A wall of water ${how}. Everyone it passes is soaked and shoved.`];
         if (p.size) return ['Elemental wave', `A wave of its elements ${how}. Each body it passes gets every element.`];
-        return ['Shove wave', `A wave of force ${how}. It pushes bodies back and sweeps shots away.`];
+        return ['Blink', 'You blink to the cursor, instantly: an escape or a gap-closer. It costs the Shield rune you cast it with, so your Shield pool is how many blinks you can chain, and every blink spends what keeps your walls and wards up.'];
       },
       area: (p) => p.has('earth') ? ['Ring of stone', 'A continuous rock wall rises in a closed ring around you, with no gaps.'] : p.has('ice') ? ['Ring of ice', 'A closed ring of ice spikes rises around you: it blocks bodies and shots, and stabs whoever presses against it. Weaker than stone, and fire melts it.'] : p.size ? ['Ring of curtains', 'A continuous curtain rings you; anything crossing in gets hit.'] : ['Ring of barriers', 'A continuous reflecting ring around you.'],
       place: (p, o) => {
@@ -260,7 +260,8 @@ const module = { exports: {} };
       // Alone, it shapes your own magic (Shield alone turns theirs around): a lens, rune motes, a waypoint, a wand.
       force: (p, o) => {
         // (swapped with Place on the user's note: placing the lens is more intuitive, and a teleport needn't be a glyph)
-        if (!o.sub) return ['Blink', 'You blink a short way along your aim, instantly: an escape or a gap-closer. It binds your Sigil rune for a moment after, so you can\'t chain blinks.'];
+        // Blink moved to Shield (the user, 2026-11-11); until the Sigil step picks a new spell, Sigil alone still blinks
+        if (!o.sub) return ['Blink', 'You blink to the cursor, instantly. Blink now belongs to Shield alone on Force; this one stays until Sigil gets a spell of its own here.'];
         const shot = o.subTitle.force, target = o.sub === 'life' ? 'the nearest hurt ally' : 'the nearest enemy';
         return [`${shot} turret`, `Hold Force to aim it: a device planted at the cursor when you let go. It casts the ${shot.toLowerCase()} by itself at ${target}, carrying all its elements. It never runs out on its own: each shot draws its elements from your rune pool, so it only stalls when you run dry of them, and picks up again as you regenerate. Release fires one big shot, drawing a full queue from your pool.`];
       },

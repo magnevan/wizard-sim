@@ -446,6 +446,34 @@ describe('weapons: Heavies and Specials', () => {
   });
 });
 
+describe('the Ice bow (Sigil + Water + Cold)', () => {
+  it('Sigil + Ice conjures the bow, and its Strike is one quick icicle, faster than the wand\'s bolt', () => {
+    const { w, d, dummy } = arena();
+    const t = dummy(6, 0);
+    d.aimAt(6, 0).conjure('sigil', 'water', 'cold');
+    expect(w.seats.weapon[0]).toBe(EL.ice);
+    d.tick({ buttons: BTN.force }, 1).tick({}, 6);
+    const m = Array.from(w.missiles.alive).indexOf(1);
+    expect(m).toBeGreaterThanOrEqual(0);
+    expect(Math.hypot(w.missiles.vx[m], w.missiles.vy[m])).toBeGreaterThan(ARMS.boltSpeed);
+    d.tick({}, 40);
+    expect(w.bodies.hp[t]).toBeLessThan(400);
+  });
+
+  it('a full draw (Heavy) looses a fan of icicles that pierce', () => {
+    const { w, d, dummy } = arena();
+    const a = dummy(3, 0, 8), b = dummy(6, 0, 9);
+    d.aimAt(6, 0).conjure('sigil', 'water', 'cold');
+    let most = 0;
+    d.tick({ buttons: BTN.force }, 100); // a full draw
+    for (let k = 0; k < 20; k++) { d.tick({}, 1); most = Math.max(most, Array.from(w.missiles.alive).filter((x) => x).length); }
+    d.tick({}, 30);
+    expect(most).toBe(ARMS.fanCount);
+    expect(w.bodies.hp[b]).toBeLessThan(400); // through the first dummy
+    expect(w.bodies.hp[a]).toBeLessThan(400);
+  });
+});
+
 describe('the Arcane wand (Sigil + Arcane) and Mend', () => {
   it('Strike is a light bolt', () => {
     const { w, d, dummy } = arena();

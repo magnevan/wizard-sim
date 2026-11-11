@@ -541,7 +541,7 @@ function lightningBurst(n: Nova): void {
   light(hx, hy, 50, R[2], 0.9 * (1 - seg(e, 0, 0.3)));
 }
 
-const NOVAS: Partial<Record<number, (n: Nova) => void>> = { 1: water, 2: life, 4: cold, 6: arcane, 8: fire };
+const NOVAS: Partial<Record<number, (n: Nova) => void>> = { 1: water, 2: life, 4: cold, 6: arcane, 8: fire, 10: cold }; // 10: Ice rings with Cold's nova for now (its own is open)
 /** The Weapon cast with elements (the imbued burst), directed: the novas cut to a cone, and arcane's, earth's and lightning's own. */
 const BURSTS: Partial<Record<number, (n: Nova) => void>> = { 1: water, 4: cold, 5: lightningBurst, 6: arcaneBurst, 8: fire, 9: earthBurst };
 /** How long each burst plays, s. */

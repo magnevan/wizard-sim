@@ -34,10 +34,11 @@ describe('help panel model: queue -> rows', () => {
     expect(m.rows[4].text).toMatch(/^A burst of every queued element/);
   });
 
-  it('Water + Cold: the freeze mix names, the mix as a tag, and Ice sheet described as ice (not rain)', () => {
-    expect(titles(['water', 'cold'])).toEqual(['Ice shards', 'Freezing splash', 'Ice sheet', 'Douse + Chill', 'Freezing burst']);
-    const m = helpModel(['water', 'cold'], bare);
-    expect(m.rows[0].tags.map((t) => t.text)).toEqual(['Chill', 'Freeze']);
+  it('Water + Cold make Ice, one rune with its own row: the names, and the Ice sheet described as ice (not rain)', () => {
+    expect(rules.addElement(rules.addElement([], 'water').queue, 'cold').queue).toEqual(['ice']);
+    expect(titles(['ice'])).toEqual(['Ice shards', 'Ice ring', 'Ice sheet', 'Impale', 'Ice burst']);
+    const m = helpModel(['ice'], bare);
+    expect(m.rows[0].stats[0]).toBe('2 RUNES'); // an Ice is a Water and a Cold
     expect(m.rows[2].text).toMatch(/ice/i);
     expect(m.rows[2].text).not.toMatch(/rain/i);
   });
@@ -137,14 +138,14 @@ describe('help panel model: queue -> rows', () => {
 // needn't patch it (the final-pass review, 2026-11-06).
 describe('the rules describe what the game builds', () => {
   const r = (q: Element[], cast: Parameters<typeof rules.resolve>[1]) => rules.resolve(q, cast);
-  it('the water mixes have their own Area and Place text (the Ice sheet is not Rain)', () => {
-    expect(r(['water', 'cold'], 'place').text).not.toMatch(/rain/i);
-    expect(r(['water', 'cold'], 'place').text).toMatch(/ice/i);
-    expect(r(['water', 'cold', 'cold'], 'place').text).toMatch(/ice/i); // Cold leading: still the sheet
+  it('steam and ice have their own Area and Place text (the Ice sheet is not Rain)', () => {
+    expect(r(['ice'], 'place').text).not.toMatch(/rain/i);
+    expect(r(['ice'], 'place').text).toMatch(/ice/i);
+    expect(r(['ice', 'water'], 'place').text).toMatch(/ice/i); // Ice leads Water: still the sheet
     expect(r(['water', 'fire'], 'place').text).toMatch(/steam/i);
     expect(r(['fire', 'fire', 'water'], 'place').text).toMatch(/steam/i);
     expect(r(['water', 'fire'], 'area').text).toMatch(/steam/i);
-    expect(r(['water', 'cold'], 'area').text).toMatch(/freez/i);
+    expect(r(['ice'], 'area').text).toMatch(/freez/i);
   });
   it('Sigil conjures the weapons hands.ts builds', () => {
     expect(r(['sigil', 'arcane'], 'conjure').title).toBe('Arcane wand');

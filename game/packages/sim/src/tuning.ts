@@ -46,6 +46,7 @@ const HELP: Record<string, string> = {
   'status.freeze': 'Seconds frozen at full chill. Less chill freezes for less, down to freezeShort.',
   'status.freezeShort': 'Seconds frozen at the lowest chill that freezes (freezeMin).',
   'status.freezeMin': 'How full the frost pool must be (0 to 1) before Cold can freeze a wet body.',
+  'status.iceChill': 'How much Ice chills per damage, against Cold (1): some chill comes with it, but its identity is damage.',
   'status.chillPool': 'Frost pool size = this x the square root of max HP. Larger: everything is harder to chill.',
   'status.chillPerDamage': 'How much of a hit\'s Cold damage goes into the frost pool.',
   'status.chillDecay': 'Share of the whole frost pool that drains each second, even under fire. Higher: tough enemies need a stronger Cold source.',

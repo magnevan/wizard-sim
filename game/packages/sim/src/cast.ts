@@ -16,7 +16,7 @@
 import { rules, type Cast, type Element } from '@wizard-sim/rules';
 import { compile, type SpellSpec } from './compile';
 import { RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
-import { EL, N_EL, elementName } from './elements';
+import { EL, KEYED_EL, N_EL, elementName } from './elements';
 import { channelTick, fireSpell } from './effects';
 import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, fullMask, poolCap, recallOldest, spendMote, weaponSwing } from './structures';
 import { len } from './geom';
@@ -40,36 +40,45 @@ export function queueOf(w: World, i: number, cast = false): Element[] {
 function setQueue(w: World, i: number, q: readonly Element[]): void {
   const s = w.seats;
   s.queue.fill(0, i * QUEUE_MAX, (i + 1) * QUEUE_MAX);
-  for (let k = 0; k < q.length; k++) s.queue[i * QUEUE_MAX + k] = rules.BASE.indexOf(q[k]) + 1;
+  for (let k = 0; k < q.length; k++) s.queue[i * QUEUE_MAX + k] = rules.ALL.indexOf(q[k]) + 1;
   s.queueLen[i] = q.length;
 }
 
 const rune = (w: World, i: number, id: number) => i * N_EL + id - 1;
 
+/** Gives back the runes a queue element was made of: Ice returns a Water and a Cold. */
+function refund(w: World, i: number, el: Element): void {
+  for (const r of rules.runesOf(el)) w.seats.runes[rune(w, i, EL[r])] += 1;
+}
+
 function refundQueue(w: World, i: number): void {
-  for (let k = 0; k < w.seats.queueLen[i]; k++) w.seats.runes[rune(w, i, w.seats.queue[i * QUEUE_MAX + k])] += 1;
+  for (let k = 0; k < w.seats.queueLen[i]; k++) refund(w, i, elementName(w.seats.queue[i * QUEUE_MAX + k]));
   setQueue(w, i, []);
 }
 
 function pressElement(w: World, i: number, id: number): void {
-  if (id < 1 || id > N_EL) return;
+  if (id < 1 || id > KEYED_EL) return; // only keyed elements are pressed (Ice is made in the queue)
   const s = w.seats, b = w.bodies, tick = w.clock[0];
   const before = queueOf(w, i);
-  const { queue, event } = rules.addElement(before, elementName(id));
-  const cancels = !!event && queue.length < before.length; // a cancel costs nothing, so it needs no rune
+  const { queue, event, kind } = rules.addElement(before, elementName(id));
+  const cancels = kind === 'cancel'; // a cancel costs nothing, so it needs no rune
   // No free Sigil rune but creations standing: the oldest is recalled, and its rune comes to your hand.
   if (!cancels && id === EL.sigil && s.runes[rune(w, i, id)] < 1) recallOldest(w, i);
   if (!cancels && s.runes[rune(w, i, id)] < 1) { w.events.push({ tick, kind: 'dry', who: i, x: b.x[i], y: b.y[i], look: id }); return; }
   if (cancels) {
     // A cancel: the cancelled element's rune comes back, and the new one is never spent.
     const gone = before.find((e, k) => queue[k] !== e) ?? before[before.length - 1];
-    s.runes[rune(w, i, rules.BASE.indexOf(gone) + 1)] += 1;
+    refund(w, i, gone); // Fire melting Ice gives back its Water and Cold
     // Double-tap Sigil over one of your creations, or Shield over one of your walls (or yourself, for a ward): it's dismissed.
     if (gone === 'sigil' && id === EL.sigil) dismissAt(w, i, b.x[i] + s.aimX[i], b.y[i] + s.aimY[i]);
     if (gone === 'shield' && id === EL.shield) dismissShieldAt(w, i, b.x[i] + s.aimX[i], b.y[i] + s.aimY[i]);
-    w.events.push({ tick, kind: 'cancel', who: i, x: b.x[i], y: b.y[i], text: event, look: id });
-  } else if (event) {
+    w.events.push({ tick, kind: 'cancel', who: i, x: b.x[i], y: b.y[i], text: event ?? undefined, look: id });
+  } else if (kind === 'full') {
     return; // queue full
+  } else if (kind === 'combine') {
+    // Water + Cold make Ice: the new rune is spent, and the two share one slot.
+    s.runes[rune(w, i, id)] -= 1;
+    w.events.push({ tick, kind: 'queue', who: i, x: b.x[i], y: b.y[i], look: EL.ice, text: event ?? undefined });
   } else {
     s.runes[rune(w, i, id)] -= 1;
     w.events.push({ tick, kind: 'queue', who: i, x: b.x[i], y: b.y[i], look: id });

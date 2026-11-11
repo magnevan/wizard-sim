@@ -8,7 +8,7 @@
  */
 import { ARENA, BODY, CELL, PERKS, RUNES } from './config';
 import { WALL } from './compile';
-import { EL, N_EL, elementName } from './elements';
+import { EL, KEYED_EL, N_EL, elementName } from './elements';
 import { createRng, type RngState } from './rng';
 import { roomHash, type RoomDef, type Seg } from './room';
 import { createTerrain, type Terrain } from './terrain';
@@ -516,6 +516,7 @@ export const ALTAR_SPOTS: readonly (readonly [number, number])[] = ROOMS.survive
 
 /** Max runes of element `id` for seat `i`: the config; in the tutorial, the beat's pools (0 = locked); in Survive, its weak start plus the seat's power-ups. */
 export const runeMax = (w: World, i: number, id: number): number =>
+  id > KEYED_EL ? 0 : // Ice has no pool: it is made from Water's and Cold's
   w.tut ? tutPool(w.tut.state[0], id) : w.battery ? (w.battery.drive[i] >= 0 && id === EL.fire ? RUNES.max.fire : 0) : w.run ? (id === EL.sigil ? RUNES.surviveSigil : RUNES.surviveStart) + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
 /** A seat's power-up stacks (0 outside survive). */
 export const stackOf = (w: World, i: number, pu: number): number => (w.run && i >= 0 && i < MAX_SEATS ? w.run.stacks[i * N_PU + pu] : 0);

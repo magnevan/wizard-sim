@@ -14,7 +14,8 @@ export const T = (seconds: number): number => Math.round(seconds * 60);
  * full. Per pool: floor·R·max/Σmax_all + (1-floor)·R·max/Σmax_notfull (world.ts regenRate).
  */
 export const RUNES = {
-  max: { water: 4, life: 4, shield: 4, cold: 4, lightning: 4, arcane: 4, sigil: 3, fire: 5, earth: 4 } as Record<Element, number>,
+  // Ice (Water + Cold combined) has no pool of its own: its runes come from Water's and Cold's.
+  max: { water: 4, life: 4, shield: 4, cold: 4, lightning: 4, arcane: 4, sigil: 3, fire: 5, earth: 4, ice: 0 } as Record<Element, number>,
   /** R: runes per second in total, shared among the pools that aren't full. */
   regen: 1.0,
   /** α: the share of R that always reaches every pool that isn't full (weighted by max over all pools). */
@@ -48,6 +49,7 @@ export const RHYTHM = {
 /** Damage per rune of an element, for one hit. Channels deal this per second times `channelRate`. */
 export const DAMAGE: Record<Element, number> = {
   water: 0, life: 0, shield: 0, cold: 5, lightning: 10, arcane: 16, sigil: 0, fire: 6, earth: 22,
+  ice: 9, // Water and Cold, low-damage elements, shaped into a sharp one (the user: its identity is damage, quick flight, spikiness)
 };
 export const COMBAT = {
   healPerLife: 14,
@@ -82,6 +84,8 @@ export const STATUS = {
    * so a weak source plateaus or fails on a tough body. Full chill slows by chillSlow.
    */
   chillPool: 2.5, chillPerDamage: 1, chillDecay: 0.1, chillSlow: 0.6,
+  /** Ice chills less than Cold for the same damage: some chill comes with it, but its identity is damage. */
+  iceChill: 0.5,
   /** Cold on a wet body freezes it from this much chill up: freezeShort s at that chill, up to `freeze` s when full. */
   freezeMin: 0.3, freezeShort: 1.5, freeze: 4,
   stunPerRune: 0.35,
@@ -114,6 +118,8 @@ export const SHAPES = {
   /** Radius of the frost puff a Cold-carrying missile leaves where it ends, u (+0.3 a Cold rune past the first). */
   frostPuff: 1.4,
   shardCount: 5, shardSpread: 0.035, // turns between shards
+  /** Ice shards fly this much faster than other missiles (Ice: damage and quick flight). */
+  iceFlight: 1.5,
   /** Each ice shard's share of the payload: 0.75, so a full 6-shard volley lands the 4.5x it did before every shard hit alike. */
   shardPower: 0.75,
   novaRadius: 3, novaPerRune: 0.6,
@@ -191,6 +197,11 @@ export const STRUCT = {
   arcRadius: 2.2, arcHalf: 0.14, arcSegs: 5, ringRadius: 1.5, ringSegs: 8, drawnSeg: 1.2,
   /** Rock walls stand this long (s), plus rockLifePerEarth per extra Earth, crumbling over the last rockCrumble s. */
   rockLife: 25, rockLifePerEarth: 5, rockCrumble: 3,
+  /** Ice walls (Shield + Ice): a spike barrier, weaker and shorter-lived than rock, that stabs whoever presses against it
+   * (spikeScale of its payload each half second). Fire melts it: iceMelt times the damage. */
+  iceHp: 70, iceHpPerRune: 25, iceLife: 15, iceLifePerRune: 3, iceMeltAway: 2, spikeScale: 0.6, iceMelt: 2.5,
+  /** The Spike aura (Sigil + Ice on yourself): each half second, an Ice hit at this scale per Ice rune on enemies close by. */
+  spikeAura: 0.4,
   wallThickness: 0.25,
   waveSpeed: 7, waveRange: 6, waveHalf: 1.6, waveHalfPerRune: 0.4, shove: 8,
   /** Model A: energy structures drain the Shield pool; at the reserve floor the oldest breaks. */
@@ -237,7 +248,7 @@ export const ARMS = {
    * half the DPS of the same element's committed spell (docs/explorations/2026-11-05-weapon-dps.md):
    * a weapon is the cheap, always-ready option, not the strongest. Light weapons recover fast, the maul slowly.
    */
-  strikeRecovery: { staff: 0.6, water: 0.65, life: 0.35, cold: 0.9, lightning: 0.68, fire: 0.8, earth: 1.4, arcane: 0.62 },
+  strikeRecovery: { staff: 0.6, water: 0.65, life: 0.35, cold: 0.9, lightning: 0.68, fire: 0.8, earth: 1.4, arcane: 0.62, ice: 0.45 }, // the bow nocks fastest
   blowKnock: { staff: 3, water: 12, life: 0, cold: 4, lightning: 3, fire: 4, earth: 9 },
   blowHalf: { staff: 0.15, water: 0.11, life: 0.12, cold: 0.07, lightning: 0.1, fire: 0.15, earth: 0.15 },
   blowReach: { staff: 1, water: 1.2, life: 1.5, cold: 1, lightning: 1, fire: 1, earth: 1 },
@@ -262,6 +273,9 @@ export const ARMS = {
   javelinUses: 2, javelinSpeed: 16, pin: 1.5, frostRadius: 1.0,
   /** Arcane wand: the Strike bolt's power; Siphon (held Special, rooted) multiplies your rune regen, for siphonUses a second. */
   boltScale: 0.3, siphonMult: 4, siphonUses: 1,
+  /** Ice bow: the Strike icicle's power, speed (u/s, the wand's bolt flies 14) and life (s); the Heavy's fan of icicles
+   * (each at fanScale, fanSpread turns apart, piercing from fanPierceAt of a full draw); the Special's splinter shot. */
+  arrowScale: 0.45, arrowSpeed: 22, arrowLife: 0.8, fanCount: 3, fanScale: 0.6, fanSpread: 0.035, fanPierceAt: 0.8, splinterScale: 0.8,
   /** Mend (Healing hands' held Special): heals allies within auraRange (not you) auraHeal hp/s, auraUses a second; you walk at auraWalk. */
   auraRange: 3.5, auraHeal: 7, auraUses: 1, auraWalk: 0.5,
   /** Carrying a guard, or a weapon, costs this much walking speed each (the user: carrying should slow you a little). */

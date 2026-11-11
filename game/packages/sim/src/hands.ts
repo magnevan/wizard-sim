@@ -16,6 +16,8 @@
  *   Frost spear       an impaling dash 2.5x its reach; frozen targets on the way shatter   Javelin (pins, frosts; 2 uses)
  *   Lightning whip    a chain lash: the first target, then up to 3 more   Sweep
  *   Arcane wand       a charged bolt that pierces                                           Siphon: hold, rooted, runes regenerate fast
+ *   Ice bow           a drawn fan of three icicles; a full draw pierces                     Splinter shot: bursts into flying shards (2 uses)
+ *                     (its Strike: one quick icicle, the fastest shot in hand)
  *   Flame sword       a rolling crescent of flame that ignites, no lingering fire           Sweep
  *   Stone maul        a fissure down one lane, knocking down all in it    Sweep
  */
@@ -27,7 +29,7 @@ import { inCone, len } from './geom';
 import { addKnock } from './hit';
 import { grounded, guardRetreat } from './guards';
 import { fullMask, spawnFront } from './structures';
-import { cosTurns, sinTurns } from './trig';
+import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { clipRay } from './walls';
 import { KIND, MAX_SEATS, PF, regenRate, runeMax, type World } from './world';
 
@@ -58,7 +60,28 @@ function blow(w: World, i: number, face: number, move: string, o: { half?: numbe
 
 export function strike(w: World, i: number, face: number): void {
   if (held(w, i) === EL.arcane) { bolt(w, i, face, ARMS.boltScale, false); spend(w, i, 1); return; } // the wand: a light bolt
+  if (held(w, i) === EL.ice) { arrow(w, i, face, ARMS.arrowScale, false); move(w, i, 'arrow', EL.ice); spend(w, i, 1); return; } // the bow: one quick icicle
   blow(w, i, face, 'strike', {}, 1);
+}
+
+/**
+ * The Ice bow's icicle: a thin shard that flies fast (ARMS.arrowSpeed, quicker than the wand's bolt) and carries
+ * the bow's elements. `pierce`: a full draw goes through the first body. `mod`: the Special's splinter shot bursts.
+ */
+function arrow(w: World, i: number, face: number, scale: number, pierce: boolean, splinter = false): void {
+  const dx = cosTurns(face), dy = sinTurns(face), p = payloadOf(weaponSpec(w, i));
+  const m = spawnMissile(w, i, splinter ? { ...p, mod: 'shatter' } : p, dx, dy, splinter ? 0 : 2, scale, 0, 0);
+  if (m < 0) return;
+  const mm = w.missiles;
+  mm.vx[m] = dx * ARMS.arrowSpeed; mm.vy[m] = dy * ARMS.arrowSpeed; mm.life[m] = T(ARMS.arrowLife);
+  mm.r[m] = splinter ? 0.25 : 0.15; mm.pierce[m] = pierce ? 1 : 0;
+}
+
+/** The bow's drawn shot (Heavy): a fan of ARMS.fanCount icicles, harder the longer it was drawn; a full draw pierces. */
+function fan(w: World, i: number, face: number, charge: number): void {
+  const n = ARMS.fanCount, k = ARMS.fanScale * (0.6 + 0.4 * charge);
+  for (let j = 0; j < n; j++) arrow(w, i, face + (j - (n - 1) / 2) * ARMS.fanSpread, k, charge >= ARMS.fanPierceAt);
+  move(w, i, 'volley', EL.ice);
 }
 
 /** The Arcane wand's bolt: a light one (Strike) or a charged one that pierces (Heavy). */
@@ -86,6 +109,7 @@ export function heavy(w: World, i: number, face: number, charge: number): void {
       return;
     }
     case EL.cold: dash(w, i, face, k); spend(w, i, 2); return;
+    case EL.ice: fan(w, i, face, charge); spend(w, i, 2); return;
     case EL.lightning: lash(w, i, face, k); spend(w, i, 2); return;
     case EL.arcane: bolt(w, i, face, ARMS.chargedBolt * (0.5 + 0.5 * charge), charge >= 0.5); move(w, i, 'chargedbolt', EL.arcane); spend(w, i, 2); return;
     default: blow(w, i, face, 'strike', { scale: k, reach: ARMS.heavyReach }, 2); return;
@@ -190,6 +214,13 @@ export function special(w: World, i: number, face: number, tx: number, ty: numbe
     spend(w, i, ARMS.javelinUses);
     return;
   }
+  if (el === EL.ice) { // the bow's splinter shot: a heavier icicle at the cursor that bursts into shards that fly on
+    const dx = tx - b.x[i], dy = ty - b.y[i];
+    arrow(w, i, len(dx, dy) > 1e-6 ? atan2Turns(dy, dx) : face, ARMS.splinterScale, false, true);
+    move(w, i, 'splinter', EL.ice, tx, ty);
+    spend(w, i, 2);
+    return;
+  }
   if (el === EL.arcane || el === EL.life) return; // Siphon and Mend are held (specialTick); a tap does nothing
   blow(w, i, face, 'sweep', { half: 0.5, scale: ARMS.sweepScale }, 2); // a full circle round you, your partner too
 }
@@ -223,7 +254,7 @@ export function specialTick(w: World, i: number): void {
   let runes = 0;
   for (let e = 0; e < N_EL; e++) runes += els[e];
   const heal = (ARMS.auraHeal / 60) * (1 + ARMS.specialRune * Math.max(0, runes - 1));
-  const douse = els[EL.water - 1] > 0 || els[EL.cold - 1] > 0, warmth = els[EL.fire - 1] > 0;
+  const douse = els[EL.water - 1] > 0 || els[EL.cold - 1] > 0 || els[EL.ice - 1] > 0, warmth = els[EL.fire - 1] > 0;
   for (let j = 0; j < MAX_SEATS; j++) {
     if (j === i || !s.active[j] || b.kind[j] !== KIND.wizard || b.downed[j] || b.team[j] !== b.team[i]) continue;
     if (len(b.x[j] - b.x[i], b.y[j] - b.y[i]) > ARMS.auraRange) continue;

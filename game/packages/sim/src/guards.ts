@@ -59,8 +59,8 @@ const RES_TABLE: readonly (readonly number[])[] = [
   /* leaf    */ [0, -0.25, 0, 0, 1],
 ];
 /** The guard an element leads to, and the resistance column that is "its own" (-1: Water and Life deal no damage). */
-const GUARD_OF: Record<number, number> = { [EL.earth]: GUARD.bulwark, [EL.fire]: GUARD.ember, [EL.cold]: GUARD.rime, [EL.lightning]: GUARD.spark, [EL.water]: GUARD.tide, [EL.arcane]: GUARD.prism, [EL.life]: GUARD.leaf };
-const OWN_COL: Record<number, number> = { [EL.earth]: RES.physical, [EL.fire]: RES.fire, [EL.cold]: RES.cold, [EL.lightning]: RES.lightning, [EL.arcane]: RES.arcane };
+const GUARD_OF: Record<number, number> = { [EL.earth]: GUARD.bulwark, [EL.fire]: GUARD.ember, [EL.cold]: GUARD.rime, [EL.ice]: GUARD.rime, [EL.lightning]: GUARD.spark, [EL.water]: GUARD.tide, [EL.arcane]: GUARD.prism, [EL.life]: GUARD.leaf };
+const OWN_COL: Record<number, number> = { [EL.earth]: RES.physical, [EL.fire]: RES.fire, [EL.cold]: RES.cold, [EL.ice]: RES.cold, [EL.lightning]: RES.lightning, [EL.arcane]: RES.arcane };
 /** A guard's colour element (the view, events). */
 export const GUARD_EL: readonly number[] = [0, EL.earth, EL.shield, EL.fire, EL.cold, EL.lightning, EL.water, EL.arcane, EL.life];
 
@@ -195,7 +195,7 @@ export function hasPassive(w: World, i: number, g: number): boolean {
   if (!lead) return false;
   if (lead === g) return true;
   const id = GUARD_EL[g];
-  return g !== GUARD.mirror && extra(w, i, id) > 0;
+  return g !== GUARD.mirror && (extra(w, i, id) > 0 || (g === GUARD.rime && extra(w, i, EL.ice) > 0)); // Ice mixed in is Rime's too
 }
 /** Anchored (Bulwark): no knockback while carried. */
 export const anchored = (w: World, i: number): boolean => hasPassive(w, i, GUARD.bulwark);

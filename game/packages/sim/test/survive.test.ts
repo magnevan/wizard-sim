@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  ARCH, ARCHETYPES, ARENA, BTN, CELL, DEVICE, EL, KIND, createTerrain, N_PU, PERKS, PHASE, ZONE, SURF, SURVIVE_ARENA, SURVIVE_GATES, T, scriptedInput, NO_INPUT, PHASE_ENC, PU, RUNES, STRUCT, SURVIVE_ROCK, SURVIVE_TIMES, TEAM, TERRAIN, WALL, WARD,
+  ARCH, ARCHETYPES, ARENA, BTN, CELL, DEVICE, EL, KIND, N_EL, createTerrain, N_PU, PERKS, PHASE, ZONE, SURF, SURVIVE_ARENA, SURVIVE_GATES, T, scriptedInput, NO_INPUT, PHASE_ENC, PU, RUNES, STRUCT, SURVIVE_ROCK, SURVIVE_TIMES, TEAM, TERRAIN, WALL, WARD,
   botInput, buffers, createWorld, elementId, grant, hashWorld, raiseAltars, newBotMemory, quantize, replaceWorld, restore, runeMax, snapshot, spawnBody, step,
   type PlayerInput, type World,
 } from '../src';
@@ -11,7 +11,7 @@ import { keyWave } from '../src/survive';
 import { applyHit } from '../src/hit';
 
 /** One Fire and one Earth rune, as a payload (9 counts). */
-const fireEarth = new Uint8Array(9);
+const fireEarth = new Uint8Array(N_EL);
 fireEarth[EL.fire - 1] = 1; fireEarth[EL.earth - 1] = 1;
 
 /** Drives seat `seat`; the other seats stand still. */

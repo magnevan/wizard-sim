@@ -1,20 +1,36 @@
 /**
- * Element ids and element-count vectors. In state an element is a byte (rules BASE order + 1,
- * 0 = none), and a spell's elements are 9 counts in a Uint8Array slice, so effects can carry
+ * Element ids and element-count vectors. In state an element is a byte (rules ALL order + 1,
+ * 0 = none), and a spell's elements are N_EL counts in a Uint8Array slice, so effects can carry
  * their payload in typed arrays.
+ *
+ * Ids 1..9 are the keyed elements (rules.BASE), each with a rune pool. Id 10 is Ice, Water + Cold
+ * combined into one queue rune: it has no key and its pool's max is always 0 (KEYED_EL).
  */
 import { rules, type Element } from '@wizard-sim/rules';
 
-export const N_EL = 9;
+export const N_EL = 10;
+/** The keyed elements: ids 1..KEYED_EL have keys and pools. */
+export const KEYED_EL = 9;
 export const EL = {
-  water: 1, life: 2, shield: 3, cold: 4, lightning: 5, arcane: 6, sigil: 7, fire: 8, earth: 9,
+  water: 1, life: 2, shield: 3, cold: 4, lightning: 5, arcane: 6, sigil: 7, fire: 8, earth: 9, ice: 10,
 } as const satisfies Record<Element, number>;
 
-export const elementName = (id: number): Element => rules.BASE[id - 1];
+export const elementName = (id: number): Element => rules.ALL[id - 1];
 export const elementId = (el: Element): number => EL[el];
 
-// The ids must match the rules' BASE order (they index rune pools and replays).
-for (const el of rules.BASE) if (rules.BASE.indexOf(el) + 1 !== EL[el]) throw new Error('EL ids out of step with rules.BASE');
+// The ids must match the rules' ALL order (they index rune pools and replays).
+for (const el of rules.ALL) if (rules.ALL.indexOf(el) + 1 !== EL[el]) throw new Error('EL ids out of step with rules.ALL');
+if (rules.ALL.length !== N_EL || rules.BASE.length !== KEYED_EL) throw new Error('N_EL out of step with rules.ALL');
+
+/** How many runes of keyed pool `id` the counts at slot `at` cost: each Ice costs a Water and a Cold. 0 for Ice itself. */
+export function poolCost(flat: Uint8Array, at: number, id: number): number {
+  if (id > KEYED_EL) return 0;
+  const n = flat[at * N_EL + id - 1];
+  return id === EL.water || id === EL.cold ? n + flat[at * N_EL + EL.ice - 1] : n;
+}
+
+/** Cold's frost and Ice's both chill, guard against and count as cold: the cold-family count at slot `at`. */
+export const frostOf = (flat: Uint8Array, at = 0): number => flat[at * N_EL + EL.cold - 1] + flat[at * N_EL + EL.ice - 1];
 
 /** Counts of each element (index = id - 1) in a queue of names. */
 export function countsOf(queue: readonly Element[], out = new Uint8Array(N_EL)): Uint8Array {
@@ -58,7 +74,7 @@ function powSmall(n: number, e: number): number {
 }
 
 /** The form element of a payload: the rules' dominant() on counts (order never matters). 0 for none. */
-const PRIORITY = [EL.shield, EL.sigil, EL.life, EL.earth, EL.arcane, EL.lightning];
+const PRIORITY = [EL.shield, EL.sigil, EL.life, EL.earth, EL.arcane, EL.ice, EL.lightning];
 const SPRAY = [EL.water, EL.fire, EL.cold];
 export function formOf(flat: Uint8Array, at = 0): number {
   for (const id of PRIORITY) if (flat[at * N_EL + id - 1]) return id;

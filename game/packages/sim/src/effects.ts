@@ -687,7 +687,7 @@ export function tickZones(w: World): void {
     const p = stored(z.els, k, z.flags[k], z.mod[k], z.look[k]);
     if (z.type[k] === ZONE.blast || z.type[k] === ZONE.geyser) {
       if (--z.timer[k] <= 0) {
-        disc(w, p, z.owner[k], z.x[k], z.y[k], z.r[k], z.type[k] === ZONE.geyser ? 1.3 : 1, -1);
+        disc(w, p, z.owner[k], z.x[k], z.y[k], z.r[k], z.type[k] === ZONE.geyser ? SHAPES.geyserPower : 1, -1);
         burstEvent(w, z.owner[k], z.x[k], z.y[k], z.r[k], p.look);
         z.type[k] = ZONE.none;
       }

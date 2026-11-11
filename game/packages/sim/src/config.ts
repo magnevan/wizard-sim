@@ -129,6 +129,8 @@ export const SHAPES = {
    * (Earthquake over Geyser, Arcane nova over blast).
    */
   arcPower: 0.35, dischargePower: 1.6, strikePower: 1.9, closePower: 1.3,
+  /** The Geyser's eruption: below the Earthquake's closePower, as it's at range, but its delay and small aimed circle earn some back (the user chose B, 2026-11-11). */
+  geyserPower: 1.15,
   arcRange: 6, arcJump: 3.5, arcInterval: 0.2, arcJumps: 2, // jumps, plus one per extra lightning rune (Chain)
   /**
    * Every missile flies at this speed (a quick rock at 60 % of it): the user, 2026-11-10, found 12 and then 16 sluggish

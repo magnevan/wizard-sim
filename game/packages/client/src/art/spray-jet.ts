@@ -11,7 +11,7 @@
  *   see wetting, burning or chilling is what's hit. Particles crowd the middle, so the edges read as thin spray.
  * - Runes show. `n` (the form's runes, 1..5) raises density, speed, size and heat, and the top tiers add features
  *   of their own: water gets pressure rings and, at five, blowback and prism glints in its droplets; fire burns
- *   blue-white at the root from four and throws a heavier ember shower at five; frost throws ice shards from three and tumbling snowflakes
+ *   blue-white as it leaves the staff from four and throws a heavier ember shower at five; frost throws ice shards from three and tumbling snowflakes
  *   and a frost ring at five.
  *
  * Pure in (time, aim history, seed), like the other effects.
@@ -175,6 +175,10 @@ function fire(c: Ctx, j: Jet, t: number): void {
   type P = { x: number; y: number; r: number; col: string; heat: number; kind: 0 | 1 | 2; bx?: number; by?: number }; // flame, smoke, ember; (bx, by): a little way back along its path
   const out: P[] = [];
   const heatCol = (h: number) => HEAT[clamp(Math.floor(h * HEAT.length), 0, HEAT.length - 1)];
+  // From four runes a flame is born blue-white (hotter than white) and cools into the ramp as it ages, so the blue is
+  // part of each flame's life and travels out with it. `born` is how much of its life it spends blue.
+  const born = n >= 4 ? 0.3 + 0.12 * (n - 4) : 0;
+  const lifeCol = (a: number, heat: number): string => a < born ? BLUE[Math.min(2, Math.floor((a / born) * 3))] : heatCol(heat);
 
   // the core: a dense, hot stream over the first third
   for (const q of emit(t, (700 + 120 * n) * thin, 0.16, (i, age, ts) => (live(ts) ? { i, age, ts } : null))) {
@@ -182,7 +186,7 @@ function fire(c: Ctx, j: Jet, t: number): void {
     const off = (rand(i, 31, sd) * 2 - 1) * (0.6 + s * 6);
     const [, , x, y] = place(A, s, 0, off, axisH(A, s, endH) + Math.sin(i * 1.7 + t * 40) * 0.6);
     const heat = Math.max(0, a * 0.42 + rand(i, 32, sd) * 0.12 - hot * 0.5);
-    out.push({ x, y, r: (0.6 + s * 2.2) * rs, col: heatCol(heat), heat, kind: 0, bx: x, by: y });
+    out.push({ x, y, r: (0.6 + s * 2.2) * rs, col: lifeCol(a, heat), heat: a < born ? -1 + a : heat, kind: 0, bx: x, by: y });
   }
   // flame: born at the nozzle, slowing as it goes, so it bunches and billows at the far end
   for (const q of emit(t, (520 + 40 * n) * m, LIFE, (i, age, ts) => (live(ts) ? { i, age, ts } : null))) {
@@ -198,14 +202,7 @@ function fire(c: Ctx, j: Jet, t: number): void {
     const heat = Math.max(0, a * (0.85 + 0.3 * rand(i, 4, sd)) + Math.abs(side) * 0.25 * s - hot);
     let r = (0.5 + s * 2.6 * (0.6 + 0.6 * rand(i, 5, sd))) * rs;
     if (a > 0.78) r *= 1 - (a - 0.78) * 2.2;
-    out.push({ x, y, r, col: heatCol(heat), heat, kind: 0, bx, by });
-  }
-  // the root, from four runes: a blue-white inner flame at the staff, drawn over everything
-  const root: { x: number; y: number; r: number; col: string }[] = [];
-  if (n >= 4) for (const q of emit(t, 420 * thin, 0.1, (i, age, ts) => (live(ts) ? { i, age, ts } : null))) {
-    const A = aim(q.ts), i = q.i, a = q.age, s = a * (0.14 + 0.06 * (n - 4));
-    const [, , x, y] = place(A, s, 0, (rand(i, 33, sd) * 2 - 1) * (0.4 + a * 2.4), axisH(A, s, endH));
-    root.push({ x, y, r: 0.7 + a * (1.6 + 0.4 * (n - 4)), col: a < 0.3 ? '#ffffff' : a < 0.7 ? BLUE[1] : BLUE[2] });
+    out.push({ x, y, r, col: lifeCol(a * 3, heat), heat: a * 3 < born ? -1 + a : heat, kind: 0, bx, by });
   }
   // smoke: rises off the stream along its far two thirds, thickest at the end
   for (const q of emit(t, (34 + 14 * n) * thin, 1.4, (i, age, ts) => (ts < t0 + 0.12 ? null : { i, age, ts }))) {
@@ -236,7 +233,6 @@ function fire(c: Ctx, j: Jet, t: number): void {
       disc(c, (p.x + mx) / 2, (p.y + my) / 2, p.r * 0.62, p.col);
     } else disc(c, p.x, p.y, p.r, p.col);
   }
-  for (const p of root) disc(c, p.x, p.y, p.r, p.col);
   for (const p of out) if (p.kind === 2) X.px(c, p.x, p.y, p.col);
   // the nozzle's flare
   X.glow(c, now.x, now.y, 5 + n * 1.2, n >= 4 ? '#fff4c0' : '#ffd860', 0.75);

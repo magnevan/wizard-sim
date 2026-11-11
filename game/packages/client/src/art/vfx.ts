@@ -24,6 +24,7 @@ import { depthOf, rowsHidden } from './depth';
 import * as K from './kit';
 import { drawNova } from './novas';
 import { AimTrail, sprayJet, type JetKind } from './spray-jet';
+import * as RF from './rock-flight';
 import { SPLASH_LIGHT, beamImpact, wallSplash, type SplashKind } from './wall-splash';
 import * as X from './px';
 import type { Ctx, Pt, Ramp } from './px';
@@ -748,12 +749,17 @@ export class Vfx {
       const e = t - this.mT0[j];
       if (ty === 3) {
         // a heal-stone lobbed over everything: a stone with green light seeping from its cracks
-        const k = clamp(1 - m.life[j] / Math.max(1, this.mLife0[j]), 0, 1), z = STAFF_Z + Math.sin(k * Math.PI) * 34, y = yg - z;
+        const life0 = Math.max(1, this.mLife0[j]), k = clamp(1 - m.life[j] / life0, 0, 1), z = STAFF_Z + Math.sin(k * Math.PI) * 34, y = yg - z;
         X.ellipse(g, x, yg, 3, 1.5, 'rgba(8,6,16,0.45)');
-        for (let i = 1; i <= 5; i++) X.px(o, x - ux * i * 3, y + i * (k < 0.5 ? 2 : -2) * 0.6, i < 3 ? X.LIFE[2] : X.LIFE[4]);
-        X.glow(o, x, y, 7, X.LIFE[3], 0.7); K.rock(o, x, y, 4, sd, K.ROCK_MAT.life);
-        X.line(o, x - 2, y - 1, x + 1, y + 1, X.LIFE[2]); X.px(o, x + 1, y - 2, X.LIFE[1]);
-        light(x, yg, 30, '#8ef07e', 0.4);
+        // where it was at ts: back along its line, at the height its arc had then
+        const at = (ts: number): [number, number] | null => {
+          const kt = 1 - (m.life[j] + (t - ts) * 60) / life0;
+          if (kt < 0) return null;
+          const back = (t - ts) * L * 16;
+          return [x - ux * back, yg - uy * back - STAFF_Z - Math.sin(kt * Math.PI) * 34];
+        };
+        RF.lifeSeed(o, { x, y, yg, ux, uy, v: L * 16, r: 4, born: this.mT0[j], seed: sd }, t, at);
+        light(x, yg, 36, '#8ef07e', 0.55);
         continue;
       }
       const y = yg - STAFF_Z;
@@ -786,12 +792,21 @@ export class Vfx {
         X.ellipse(g, x, yg, r * 0.8, r * 0.4, 'rgba(8,6,16,0.45)');
         if (el === 'fire') {
           // a fireball: burning flecks and dark smoke peeling off behind it
-          for (const p of emit(t, 70, 0.4, (i, age, ts) => { const back = (t - ts) * L * 16; return { x: x - ux * back + (rand(i, 2, sd) - 0.5) * 3, y: y - uy * back + (rand(i, 3, sd) - 0.5) * 3 - age * 8, age }; }, this.mT0[j], t)) X.px(o, p.x, p.y, K.fireCol(p.age));
-          for (const p of emit(t, 18, 0.7, (i, age, ts) => { const back = (t - ts) * L * 16 + 3; return { x: x - ux * back, y: y - uy * back - age * 10, age }; }, this.mT0[j], t)) if (p.age > 0.2) K.puff(o, p.x, p.y, 1.5 + p.age * 3, '#4a4250', (1 - p.age) * 0.7);
-          K.fireball(o, x, y, r, t, ux, uy, sd);
+          RF.meteor(o, { x, y, yg, ux, uy, v: L * 16, r, born: this.mT0[j], seed: sd }, t);
           light(x, yg, 44, '#ff7a2a', 0.9);
         } else {
-          // a rock, an ice boulder, a mud ball...: the same heavy missile in the look's material
+          const fl: RF.Flight = { x, y, yg, ux, uy, v: L * 16, r, born: this.mT0[j], seed: sd };
+          if (el === 'cold') {
+            if (m.flags[j] & PF.freeze) RF.iceCluster(o, fl, t); else RF.snowball(o, fl, t);
+            light(x, yg, 34, '#9ff4ff', 0.45);
+            continue;
+          }
+          if (el === 'arcane') {
+            RF.arcaneOrb(o, fl, t, Math.sign(ux || 1) * (t - this.mT0[j]) * Math.hypot(m.vx[j], m.vy[j]) * 0.9);
+            light(x, yg, 40, R[2], 0.6);
+            continue;
+          }
+          // a rock, a mud ball, a charged stone...: the same heavy missile in the look's material
           const mat = el === 'cold' ? K.ROCK_MAT.cold : el === 'water' ? K.ROCK_MAT.water : el === 'arcane' ? K.ROCK_MAT.arcane : el === 'lightning' ? K.ROCK_MAT.lightning : K.ROCK_MAT.earth;
           // in flight (the user, 2026-11-10: it moved but didn't feel like flying): air streaks off its sides, a wake
           // of dust hanging where it passed, grit falling out of it, and the rock tumbling, faster the faster it goes
@@ -813,10 +828,8 @@ export class Vfx {
             X.line(o, x + ox - ux * (r + 1), y + oy - uy * (r + 1), x + ox - ux * (r + l), y + oy - uy * (r + l), s2 === 0 ? '#f4ecdc' : dustC[0]);
           }
           K.rock(o, x, y, r, sd, mat, Math.sign(ux || 1) * (t - born) * spd * 0.9); // rolling the way it flies
-          if (el === 'cold') { if (Math.floor(t * 8 + j) % 3 === 0) X.px(o, x - r * 0.3, y - r * 0.5, '#ffffff'); light(x, yg, 30, '#9ff4ff', 0.4); }
           if (el === 'water') for (const p of emit(t, 14, 0.4, (i, age) => ({ x: x + (rand(i, 4, sd) - 0.5) * r, y: y + r * 0.5 + age * age * 10, age }))) X.px(o, p.x, p.y, '#8ad0ff');
           if (el === 'lightning' && Math.floor(t * 18) % 3 !== 2) { K.zap(o, [x - r, y], [x + r, y - 1], Math.floor(t * 18) + sd, EL.lightning, 1, 0); light(x, yg, 30, '#b08aff', 0.5); }
-          if (el === 'arcane') { X.glow(o, x, y, r + 3, R[2], 0.5); light(x, yg, 30, R[2], 0.4); }
         }
         void e;
         continue;
@@ -1317,8 +1330,14 @@ export class Vfx {
           light(x, y, 110, '#ffb060', 1.2 * (1 - seg(e, 0, 0.5))); light(x, y, 34, '#ff7020', 0.5 * (1 - seg(e, 0.5, 1.4)));
           return;
         }
+        if (ty === 1 && look === 'arcane') {
+          RF.arcaneBurst(o, g, x, y, iy, e, s, sd);
+          K.debris(o, x, iy, e, sd, 6, 40, ['#9a6a84', '#5a3c4a', '#ffc0e0']);
+          light(x, y, 90, '#ff6ab0', 1.1 * (1 - seg(e, 0, 0.5)));
+          return;
+        }
         if (ty === 1) {
-          // a rock lands: dust and chips; an ice boulder bursts into ice; a mud ball splashes
+          // a rock lands: dust and chips; snow or ice bursts; a mud ball splashes
           const cols: Ramp = look === 'cold' ? [EL.cold[0], EL.cold[2], EL.cold[3]] : look === 'water' ? ['#4a3c2a', '#8ad0ff', '#6a5a40'] : ['#977552', '#553e2a', '#b8946a'];
           K.scorch(g, x, y, 7 * s, 0.4 * (1 - seg(e, 0.8, 1.4)));
           if (e < 0.06) K.sq(o, x, iy, 4, '#ffffff');

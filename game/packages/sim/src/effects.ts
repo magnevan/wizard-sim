@@ -40,8 +40,8 @@ export function stored(els: Uint8Array, at: number, flags: number, mod: number, 
   return { counts: els, at, heal: !!(flags & PF.heal), scald: !!(flags & PF.scald), freeze: !!(flags & PF.freeze), mod: MODS[mod], look, formN: 1 };
 }
 
-export function hitOpts(p: Payload, source: number, scale: number, dirX = 0, dirY = 0, statusScale = 1, frontal = false, flatForm = false): HitOpts {
-  return { scale, heal: p.heal, scald: p.scald, freeze: p.freeze, source, dirX, dirY, push: p.mod === 'push' ? SHAPES.push : 0, statusScale, frontal, flatForm };
+export function hitOpts(p: Payload, source: number, scale: number, dirX = 0, dirY = 0, statusScale = 1, frontal = false): HitOpts {
+  return { scale, heal: p.heal, scald: p.scald, freeze: p.freeze, source, dirX, dirY, push: p.mod === 'push' ? SHAPES.push : 0, statusScale, frontal };
 }
 
 export function hitEvent(w: World, i: number, dealt: number, look: number, src = -1): void {
@@ -148,7 +148,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       if (spec.heal) { spawnMissile(w, src, p, dx, dy, 3, (0.7 + 0.3 * charge) * k, tx, ty, ex.ox, ex.oy); break; }
       const m = spawnMissile(w, src, p, dx, dy, 1, (0.5 + 0.5 * charge) * k, 0, 0, ex.ox, ex.oy);
       if (m >= 0) {
-        const sp = SHAPES.rockSpeed * (0.6 + 0.4 * charge);
+        const sp = SHAPES.missileSpeed * (0.6 + 0.4 * charge);
         w.missiles.vx[m] = dx * sp; w.missiles.vy[m] = dy * sp;
         w.missiles.r[m] = 0.22 + 0.08 * n;
         w.missiles.pierce[m] = charge >= 1 ? 1 : 0;
@@ -428,8 +428,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     setEnd(x + dx * reach, y + dy * reach);
     const lensed = rayThroughLens(w, x, y, dx, dy, reach) ? STRUCT.lensMult : 1;
     if (target >= 0) {
-      // a beam's extra runes of its form buy time, not power (cast.ts): the form counts once, healing too
-      const dealt = hit(w, target, p, hitOpts(p, src, rate * lensed, dx, dy, COMBAT.channelStatus * DT, true, true), false);
+      const dealt = hit(w, target, p, hitOpts(p, src, rate * lensed, dx, dy, COMBAT.channelStatus * DT, true), false);
       if (t % 12 === 0) hitEvent(w, target, dealt * 12, spec.look, src);
       if (spec.mod === 'burst' && t % 30 === 0) disc(w, p, src, b.x[target], b.y[target], SHAPES.burstRadius, 0.3, src);
     }
@@ -475,7 +474,7 @@ export function spawnMissile(w: World, src: number, p: Payload, dx: number, dy: 
     m.x[j] = (ox ?? b.x[src]) + dx * (b.r[src] + 0.25); m.y[j] = (oy ?? b.y[src]) + dy * (b.r[src] + 0.25);
     m.vx[j] = dx * SHAPES.missileSpeed; m.vy[j] = dy * SHAPES.missileSpeed;
     m.r[j] = type === 2 ? 0.15 : SHAPES.missileRadius;
-    m.life[j] = T(type === 2 ? 0.6 : SHAPES.missileLife);
+    m.life[j] = T(type === 2 ? SHAPES.shardRange / SHAPES.missileSpeed : SHAPES.missileLife);
     m.look[j] = p.look; m.flags[j] = flagsOf(p); m.mod[j] = modId(p.mod);
     m.els.set(p.counts.subarray(p.at * N_EL, p.at * N_EL + N_EL), j * N_EL);
     if (type === 3) { // a lobbed heal-stone: flies to its target point over everything

@@ -38,7 +38,7 @@ export const RHYTHM = {
   dragMin: 1.0,
   /** Channels (beams, sprays, arcs) are free for this long, then cost upkeep as regen debt. */
   naturalChannel: 2.5,
-  upkeep: 0.4, // runes per second of the form element, past the natural duration
+  upkeep: 0.4, // runes per second for each rune in the spell, from that rune's element, past the natural duration
   /** A cast pressed while busy waits this long for the current one to finish. */
   castBuffer: 0.3,
   /** Earth Force: hold to charge, up to this long. */
@@ -57,16 +57,11 @@ export const COMBAT = {
   channelStatus: 3,
   /** Sprays: share of the damage each body behind the nearest one takes (1 = everyone takes it all). */
   sprayFalloff: 0.6,
-  /** Forms without their own curve (lightning, arcane, shield, sigil): each extra rune adds this share of the first rune's damage. A beam has its own curve (beamExp). */
+  /** Forms without their own curve (lightning, arcane, shield, sigil): each extra rune adds this share of the first rune's damage. Beams too: a channel's runes are paid for every second (rhythm.upkeep), so they buy power, not time. */
   formScaling: 0.7,
   /** Sprays grow with n^sprayExp (0.5 = square root, as Magicka's); rocks with n^rockExp (1.5: going all-in pays). */
   sprayExp: 0.5,
   rockExp: 1.5,
-  /**
-   * A beam's form runes n: its hits (damage or healing) grow with n^beamExp and its free time with n^(1 - beamExp),
-   * so a whole beam is still n runes' worth (the 2026-11-07 audit) but a bigger one hits harder (the user, 2026-11-10).
-   */
-  beamExp: 0.5,
 };
 
 /** How long floor surfaces last, in seconds. */
@@ -103,9 +98,13 @@ export const SHAPES = {
   beamRange: 30, beamWidth: 0.35, // past the edge of the view: a beam runs until it hits something
   sprayRange: 4.5, sprayHalfAngle: 0.09, // turns (about 32 degrees)
   arcRange: 6, arcJump: 3.5, arcInterval: 0.2, arcJumps: 2, // jumps, plus one per extra lightning rune (Chain)
-  missileSpeed: 12, missileLife: 1.4, missileRadius: 0.3,
-  /** A fully charged rock's speed, u/s (a quick one flies at 60 %). Faster than other missiles: the user found 12 sluggish (2026-11-10). */
-  rockSpeed: 16,
+  /**
+   * Every missile flies at this speed (a quick rock at 60 % of it): the user, 2026-11-10, found 12 and then 16 sluggish
+   * and asked for one speed for all projectiles unless one has a reason to differ. Ice shards keep their short reach.
+   */
+  missileSpeed: 20, missileLife: 1.4, missileRadius: 0.3,
+  /** How far an ice shard flies before it melts, u: the shotgun's reach. */
+  shardRange: 7.2,
   shardCount: 5, shardSpread: 0.035, // turns between shards
   /** Each ice shard's share of the payload: 0.75, so a full 6-shard volley lands the 4.5x it did before every shard hit alike. */
   shardPower: 0.75,

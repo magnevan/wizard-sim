@@ -1,7 +1,7 @@
 // What extra runes do, after the rune-scaling audit (docs/explorations/2026-11-07-rune-scaling.md).
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
-import { BTN, KIND, NO_INPUT, SHAPES, compile, createWorld, elementId, quantize, step, type PlayerInput, type World } from '../src';
+import { BTN, KIND, NO_INPUT, RHYTHM, RUNES, SHAPES, compile, createWorld, elementId, quantize, step, type PlayerInput, type World } from '../src';
 
 /** Seat 0 at the origin aiming along +x; seat 1 (another wizard, idle) at (dx, 0); a dummy behind it when asked. */
 function scene(dx: number, dummy = false) {
@@ -28,18 +28,18 @@ describe('rune scaling', () => {
     expect(compile(['water', 'fire'], 'force').mod).toBeNull();
   });
 
-  it('an Arcane nova hits harder with more Arcane; an Arcane beam hits √n harder and lasts √n longer', () => {
+  it('an Arcane nova and an Arcane beam both hit +70 % harder a rune', () => {
     const dealt = (q: Element[], btn: number, hold: number) => {
       const { w, go, queue } = scene(1.6, true);
       queue(q); go({ buttons: btn }, hold); go({}, 40);
       return 1e5 - w.bodies.hp[4];
     };
     expect(dealt(['arcane', 'arcane'], BTN.area, 2) / dealt(['arcane'], BTN.area, 2)).toBeCloseTo(1.7, 1);
-    // over the same 2 s, two Arcane runes deal √2 times one's (less the second rune's 0.04 s of wind-up)
-    expect(dealt(['arcane', 'arcane'], BTN.force, 120) / dealt(['arcane'], BTN.force, 120)).toBeCloseTo(Math.SQRT2, 1);
+    // over the same 2 s (less the second rune's 0.04 s of wind-up): a channel's runes buy power, its upkeep pays for time
+    expect(dealt(['arcane', 'arcane'], BTN.force, 120) / dealt(['arcane'], BTN.force, 120)).toBeCloseTo(1.7 * (1 - 0.04 / 2), 1);
   });
 
-  it("a Life beam heals √n as fast with n Life: its Life buys power and time", () => {
+  it("a Life beam heals as fast as it has Life runes", () => {
     const healed = (q: Element[]) => {
       const { w, go, queue } = scene(3);
       w.bodies.hp[1] = 1; w.bodies.maxHp[1] = 1e5;
@@ -47,8 +47,25 @@ describe('rune scaling', () => {
       return w.bodies.hp[1] - 1;
     };
     expect(healed(['life'])).toBeGreaterThan(10);
-    // √3, less the two extra runes' 0.08 s of wind-up out of the 2 s
-    expect(healed(['life', 'life', 'life']) / healed(['life'])).toBeCloseTo(Math.sqrt(3) * (1 - 0.08 / 2), 1);
+    // 3x, less the two extra runes' 0.08 s of wind-up out of the 2 s
+    expect(healed(['life', 'life', 'life']) / healed(['life'])).toBeCloseTo(3 * (1 - 0.08 / 2), 1);
+  });
+
+  it('past its free time a channel costs upkeep for every rune in it, each from its own element', () => {
+    // with regen off, so the drain over one second is the upkeep alone
+    const drain = (q: Element[], el: Element) => {
+      const { w, go, queue } = scene(3);
+      const k = elementId(el) - 1; // seat 0's pool of el
+      queue(q); go({ buttons: BTN.force }, 175);
+      const before = w.seats.runes[k], regen = RUNES.regen;
+      RUNES.regen = 0;
+      try { go({ buttons: BTN.force }, 60); } finally { RUNES.regen = regen; }
+      return before - w.seats.runes[k];
+    };
+    expect(drain(['arcane'], 'arcane')).toBeCloseTo(RHYTHM.upkeep, 1);
+    expect(drain(['arcane', 'arcane'], 'arcane')).toBeCloseTo(2 * RHYTHM.upkeep, 1);
+    // a Fire rune in the beam is paid from Fire
+    expect(drain(['arcane', 'fire'], 'fire')).toBeCloseTo(RHYTHM.upkeep, 1);
   });
 
   it('every ice shard flies at the same power', () => {

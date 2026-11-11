@@ -15,8 +15,8 @@
  */
 import { rules, type Cast, type Element } from '@wizard-sim/rules';
 import { compile, type SpellSpec } from './compile';
-import { COMBAT, RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
-import { EL, N_EL, beamCurve, elementName } from './elements';
+import { RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
+import { EL, N_EL, elementName } from './elements';
 import { channelTick, fireSpell } from './effects';
 import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, fullMask, poolCap, recallOldest, spendMote, weaponSwing } from './structures';
 import { len } from './geom';
@@ -265,12 +265,18 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
     case PHASE.channel: {
       const spec = specOf(w, i);
       if (!act || !(held & BTN.force)) { toRecovery(w, i); break; }
-      // Past the natural duration it costs upkeep from the form element; it ends when that runs dry.
-      const natural = RHYTHM.naturalChannel * (spec.shape === 'beam' ? beamCurve(Math.max(1, spec.formN), COMBAT.beamExp, 'time') : 1); // a beam's runes buy time and power
-      if (s.chanTicks[i] >= T(natural) && spec.form) {
-        const k = rune(w, i, spec.form);
-        s.runes[k] -= RHYTHM.upkeep / 60;
-        if (s.runes[k] <= 0) { s.runes[k] = 0; toRecovery(w, i); break; }
+      // Past the natural duration every rune in the spell costs upkeep from its own element (the user, 2026-11-10: in
+      // proportion to the runes used); it ends when any of them runs dry.
+      if (s.chanTicks[i] >= T(RHYTHM.naturalChannel) && spec.form) {
+        let dry = false;
+        for (let e = 1; e <= N_EL; e++) {
+          const c = spec.counts[e - 1];
+          if (!c) continue;
+          const k = rune(w, i, e);
+          s.runes[k] -= (RHYTHM.upkeep * c) / 60;
+          if (s.runes[k] <= 0) { s.runes[k] = 0; dry = true; }
+        }
+        if (dry) { toRecovery(w, i); break; }
       }
       channelTick(w, i, spec, aimFace(w, i));
       echoChannel(w, i, spec, aimFace(w, i)); // Survive's Echo: a free copy trailing your aim

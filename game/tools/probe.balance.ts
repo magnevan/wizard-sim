@@ -9,7 +9,7 @@ import { expect, it } from 'vitest';
 import { rules, type Element } from '@wizard-sim/rules';
 import { BTN, KIND, N_EL, NO_INPUT, RHYTHM, compile, createWorld, elementId, quantize, step, type PlayerInput, type World } from '../packages/sim/src';
 
-type Cast = 'force' | 'area' | 'place';
+type Cast = 'force' | 'area' | 'place' | 'conjure';
 const HP = 135;
 const L: Record<string, Element> = { W: 'water', F: 'fire', C: 'cold', L: 'lightning', A: 'arcane', E: 'earth', H: 'life', S: 'shield', G: 'sigil' };
 
@@ -30,7 +30,7 @@ function run(code: string, cast: Cast, pack: number, wet = false) {
   const presses = [...code].flatMap((c) => (c === 'I' ? ['water', 'cold'] : [L[c]]) as Element[]);
   let q: Element[] = [];
   for (const e of presses) { const r = rules.addElement(q, e) as { queue: Element[]; kind: string | null }; if (r.kind === 'cancel' || r.kind === 'full') return null; q = r.queue; }
-  const dx = cast === 'force' ? 3 : cast === 'area' ? 1.6 : 4;
+  const dx = cast === 'force' ? 3 : cast === 'area' || cast === 'conjure' ? 1.6 : 4;
   const w = scene(dx, pack);
   const spec = compile(q, cast);
   const b = w.bodies;
@@ -50,8 +50,8 @@ function run(code: string, cast: Cast, pack: number, wet = false) {
   };
   let moved = 0;
   for (const e of presses) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; go(aim({ press0: elementId(e) })); }
-  const btn = cast === 'force' ? BTN.force : BTN.area;
-  const hold = cast === 'place' ? 30 : spec.channel ? Math.round(RHYTHM.naturalChannel * 60) + 12 : spec.charge ? 70 : 2;
+  const btn = cast === 'force' ? BTN.force : cast === 'conjure' ? BTN.weapon : BTN.area;
+  const hold = cast === 'place' ? 30 : cast === 'conjure' ? 2 : spec.channel ? Math.round(RHYTHM.naturalChannel * 60) + 12 : spec.charge ? 70 : 2;
   const start = ticks;
   for (let t = 0; t < hold; t++) go(aim({ buttons: btn }));
   for (let t = 0; t < (cast === 'place' ? 780 : 300); t++) go(aim()); // floors and fog last 8-12 s
@@ -277,4 +277,60 @@ it('measures how long a barrier holds a pack off', async () => {
     rows.push(`${cast} (${n0} pieces) vs ${name}: first piece breaks ${sec(broke)} s, wizard first hurt ${sec(firstHurt)} s, Shield pool low ${minPool.toFixed(2)}, the pack took ${Math.round(bitten)} (${Math.round(bitten / Math.max(1, (broke < 0 ? t : broke) / 60))} a second while it held)`);
   }
   writeFileSync(join(__dirname, 'probe-barrier.txt'), rows.join(String.fromCharCode(10)));
+});
+
+it('cross-cut: every damage queue up to 4 runes, by cast, with outliers flagged', () => {
+  const LET = ['W', 'F', 'C', 'L', 'A', 'E', 'I'];
+  const codes: string[] = [];
+  const rec = (start: number, cur: string) => { if (cur) codes.push(cur); if (cur.length === 4) return; for (let k = start; k < LET.length; k++) rec(k, cur + LET[k]); };
+  rec(0, '');
+  const CASTS: Cast[] = ['force', 'area', 'place', 'conjure'];
+  type R = NonNullable<ReturnType<typeof run>> & { pack: number };
+  const res = new Map<string, R>();
+  for (const code of codes) for (const cast of CASTS) {
+    const one = run(code, cast, 1);
+    if (!one) continue;
+    const pk = run(code, cast, 5);
+    res.set(`${code}|${cast}`, { ...one, pack: pk ? pk.dmg : 0 });
+  }
+  const runes = (code: string) => [...code].length + [...code].filter((c) => c === 'I').length; // Ice is two presses
+  const status = (r: R) => r.deniedS > 0.4 || r.chill > 0.25 || r.moved > 2;
+  const lines: string[] = [];
+  const fmt = (code: string, cast: Cast, r: R) => `${code.padEnd(5)} ${cast.padEnd(7)} ${r.title.padEnd(22)} one ${String(r.dmg).padStart(4)}  pack ${String(r.pack).padStart(4)}  denied ${r.deniedS}  chill ${r.chill}  moved ${r.moved}`;
+  // 1. dominant and weak, by cast and rune count (against the median one-target damage)
+  lines.push('== Dominant (> 1.6x the median of the same cast and rune count) and weak (< 0.5x, no status to show for it)');
+  for (const cast of CASTS) for (let n = 1; n <= 5; n++) {
+    const group = [...res].filter(([k]) => k.endsWith('|' + cast) && runes(k.split('|')[0]) === n);
+    if (group.length < 4) continue;
+    const ds = group.map(([, r]) => r.dmg).sort((a, b) => a - b), med = ds[Math.floor(ds.length / 2)] || 1;
+    for (const [k, r] of group) {
+      const code = k.split('|')[0];
+      if (r.dmg > 1.6 * med) lines.push(`  DOMINANT (median ${med}) ${fmt(code, cast, r)}`);
+      else if (r.dmg < 0.5 * med && !status(r)) lines.push(`  weak     (median ${med}) ${fmt(code, cast, r)}`);
+    }
+  }
+  // 2. additions that don't pay: one more rune, and nothing gets better
+  lines.push('', '== Additions that do not pay (the bigger spell is no better on damage, pack damage or status)');
+  for (const [k, r] of res) {
+    const [code, cast] = k.split('|') as [string, Cast];
+    for (const c of new Set(code)) {
+      const smaller = code.replace(c, '');
+      if (!smaller) continue;
+      const q = res.get(`${smaller}|${cast}`);
+      if (!q) continue;
+      const better = r.dmg > q.dmg * 1.05 || r.pack > q.pack * 1.05 || r.deniedS > q.deniedS + 0.2 || r.chill > q.chill + 0.08 || r.moved > q.moved + 1 || (r.froze && !q.froze);
+      if (!better) lines.push(`  +${c} to ${smaller.padEnd(4)} ${cast.padEnd(7)} ${q.title} ${q.dmg}/${q.pack} -> ${r.title} ${r.dmg}/${r.pack}`);
+    }
+  }
+  // 3. the casts against each other: close beats placed; the imbued burst should be about the ring
+  lines.push('', '== Casts out of order (Place beating Area on one target by 10 %; the Weapon burst outside 0.7 to 1.3 of the Area ring)');
+  for (const code of codes) {
+    const a = res.get(`${code}|area`), p = res.get(`${code}|place`), c = res.get(`${code}|conjure`);
+    if (a && p && p.dmg > a.dmg * 1.1) lines.push(`  place > area: ${code.padEnd(5)} ${a.title} ${a.dmg} | ${p.title} ${p.dmg}`);
+    if (a && c && a.dmg > 0 && (c.dmg > a.dmg * 1.3 || c.dmg < a.dmg * 0.7)) lines.push(`  burst vs ring: ${code.padEnd(5)} ${a.title} ${a.dmg} | ${c.title} ${c.dmg}`);
+  }
+  // 4. the whole table
+  lines.push('', '== All');
+  for (const [k, r] of res) { const [code, cast] = k.split('|') as [string, Cast]; lines.push('  ' + fmt(code, cast, r)); }
+  writeFileSync(join(__dirname, 'probe-crosscut.txt'), lines.join(String.fromCharCode(10)));
 });

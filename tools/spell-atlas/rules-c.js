@@ -514,10 +514,14 @@
       return;
     }
     out.id = 'elements/self'; out.form = null; out.formName = 'On yourself';
-    out.payload = uniq.map((e) => ({ el: e, n: count(queue, e), trait: SELF_HIT[e][0], text: `${cap(who(SELF_HIT[e][1], ally))}.` }));
+    // With Life it's a heal: the other elements lend their resistance (the imbue) instead of hitting (2026-11-11)
+    const healing = uniq.includes('life');
+    out.payload = uniq.map((e) => ({ el: e, n: count(queue, e), trait: SELF_HIT[e][0], text: healing && e !== 'life' ? 'Resist it for a while (the imbue), as any heal lends.' : `${cap(who(SELF_HIT[e][1], ally))}.` }));
     out.mix = mixes.map((m) => ({ els: m.els, trait: m.trait, text: who(m.self, ally) }));
     out.title = uniq.map((e) => SELF_HIT[e][0]).join(' + ') + (ally ? ' (on ally)' : '');
-    out.text = `Without Shield or Sigil the elements simply hit ${w}, as in Magicka. Life heals, Water douses, Fire dries you off and Arcane attunes you (your runes refill faster); the rest are mostly mistakes.`;
+    out.text = healing
+      ? `A heal: Life heals ${w}, and every other element in it builds up resistance to itself, fading after (the imbue), as any heal's elements do.`
+      : `Without Shield or Sigil the elements simply hit ${w}, as in Magicka. Water douses, Fire dries you off and Arcane attunes you (your runes refill faster); the rest are mostly mistakes. With Life in it, it's a heal instead.`;
   }
 
   // Liked leaves (gallery ★ / ?) and where they live in C. [name, mark, queue, cast, opts]

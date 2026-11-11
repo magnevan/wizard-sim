@@ -21,7 +21,8 @@
  * The coordinator is the lowest seat still playing, so it changes by itself when the host leaves.
  *
  * Everyone must run the same build, or the worlds drift apart, so a join is refused on a mismatch:
- * of NET_VERSION, or of `maps` (the sim's CONTENT_HASH over every room's layout, from game/content).
+ * of NET_VERSION, of `build` (SIM_BUILD: a hash of the sim, rules and net code, vite.config.ts), or of `maps` (the
+ * sim's CONTENT_HASH over every room's layout, from game/content).
  * Tuning is the host's: the start (and a rejoin's welcome) carries the host's overrides, and during a
  * match only the host may change it. A change is scheduled a moment ahead,
  *   tune    {n, at, map}                  every peer swaps to `map` (the whole tuning) at tick `at`
@@ -29,6 +30,7 @@
  * (beforeTick). A change heard after its tick rewinds to it.
  */
 import { RollbackSession, type AimPrediction, type Gone, type Handover, type Transport } from '@wizard-sim/net';
+import { SIM_BUILD } from '../build-id';
 import { CONTENT_HASH, createWorld, overrides, replaceWorld, tuningHash, type Snapshot, type World } from '@wizard-sim/sim';
 import { loadSaved, replaceTuning } from '../tune-io';
 import { roomOf, scenarioOfRoom } from '../scenarios';
@@ -59,8 +61,8 @@ const DECIDE_MS = 1000;
 /** A newcomer's seat starts this many ticks after the coordinator's present, so the news reaches everyone first. */
 const RESUME_AHEAD = 45;
 
-interface HostMsg { t: 'host'; match: string; name: string; version: number; maps: number; tuning: number; room: string; players: string[]; rejoin?: boolean }
-interface JoinMsg { t: 'join'; match: string; version: number; maps: number; tuning: number }
+interface HostMsg { t: 'host'; match: string; name: string; version: number; build?: string; maps: number; tuning: number; room: string; players: string[]; rejoin?: boolean }
+interface JoinMsg { t: 'join'; match: string; version: number; build?: string; maps: number; tuning: number }
 /** prev: the match this one replaces (the host moved everyone to another scenario); its players follow without joining. */
 interface StartMsg { t: 'start'; match: string; seed: number; room: string; delay: number; players: string[]; tuning: Record<string, number>; prev?: string }
 /** A tuning in force from tick `at` (the whole map of overrides, so applying one never depends on the last). */
@@ -72,7 +74,7 @@ type Control =
   | { t: 'bye'; m: string; f: number }
   | { t: 'lost'; m: string; f: number; seat: number; have: number; tail: string }
   | { t: 'drop'; m: string; seat: number; end: number; tail: string }
-  | { t: 'rejoin'; m: string; peer: string; version: number; maps: number; tuning: number }
+  | { t: 'rejoin'; m: string; peer: string; version: number; build?: string; maps: number; tuning: number }
   | { t: 'resume'; m: string; seat: number; at: number; since: number; peer: string }
   | ({ t: 'tune'; m: string } & TuneAt)
   | Welcome;
@@ -209,7 +211,7 @@ export class NetPlay {
     this.joinedPlayers = [this.bus.self];
     const announce = () => {
       if (this.state !== 'hosting') return;
-      this.bus.emit('lobby', { t: 'host', match: this.match, name: `Wizard ${this.bus.self.slice(0, 4)}`, version: NET_VERSION, maps: CONTENT_HASH, tuning: tuningHash(), room: this.room, players: this.joinedPlayers } satisfies HostMsg);
+      this.bus.emit('lobby', { t: 'host', match: this.match, name: `Wizard ${this.bus.self.slice(0, 4)}`, version: NET_VERSION, build: SIM_BUILD, maps: CONTENT_HASH, tuning: tuningHash(), room: this.room, players: this.joinedPlayers } satisfies HostMsg);
     };
     announce();
     this.hostTimer = window.setInterval(announce, 1500);
@@ -219,11 +221,11 @@ export class NetPlay {
   join(match: string): void {
     const h = this.open.get(match);
     if (!h || this.state !== 'off') return;
-    if (h.version !== NET_VERSION) { this.message = 'That host runs a different build.'; this.render(); return; }
+    if (h.version !== NET_VERSION || h.build !== SIM_BUILD) { this.message = `That host runs a different version of the game (build ${h.build ?? 'older'}, yours ${SIM_BUILD}): you would drift apart at the first step. Both players need the same build.`; this.render(); return; }
     if (h.maps !== CONTENT_HASH) { this.message = 'That host has different maps (another version of the game).'; this.render(); return; }
     if (h.rejoin) { this.askRejoin(match); return; }
     this.match = match; this.state = 'joining';
-    this.bus.emit('lobby', { t: 'join', match, version: NET_VERSION, maps: CONTENT_HASH, tuning: tuningHash() } satisfies JoinMsg);
+    this.bus.emit('lobby', { t: 'join', match, version: NET_VERSION, build: SIM_BUILD, maps: CONTENT_HASH, tuning: tuningHash() } satisfies JoinMsg);
     this.render();
   }
 
@@ -332,7 +334,7 @@ export class NetPlay {
       if (this.autoJoin && this.state === 'off') { this.autoJoin = false; this.join(m.match); }
       this.render();
     } else if (m.t === 'join' && this.state === 'hosting' && m.match === this.match) {
-      if (m.version !== NET_VERSION || m.maps !== CONTENT_HASH || this.joinedPlayers.length >= 4 || this.joinedPlayers.includes(from)) return;
+      if (m.version !== NET_VERSION || m.build !== SIM_BUILD || m.maps !== CONTENT_HASH || this.joinedPlayers.length >= 4 || this.joinedPlayers.includes(from)) return;
       this.joinedPlayers.push(from);
       this.render();
     } else if (m.t === 'start' && this.state === 'joining' && m.match === this.match && Array.isArray(m.players) && m.players.includes(this.bus.self)) {
@@ -428,7 +430,7 @@ export class NetPlay {
     } else if (m.t === 'tune') {
       this.addTune({ n: m.n, at: m.at, map: m.map });
     } else if (m.t === 'rejoin') {
-      if (this.coordinator() !== this.seat || m.version !== NET_VERSION || m.maps !== CONTENT_HASH) return;
+      if (this.coordinator() !== this.seat || m.version !== NET_VERSION || m.build !== SIM_BUILD || m.maps !== CONTENT_HASH) return;
       await this.admit(m.peer);
     }
   }
@@ -472,7 +474,7 @@ export class NetPlay {
   private sendRejoin(): void {
     if (!this.rejoin) return;
     this.rejoin.asked = performance.now();
-    this.bus.emit('nc', { t: 'rejoin', m: this.rejoin.match, peer: this.bus.self, version: NET_VERSION, maps: CONTENT_HASH, tuning: tuningHash() } satisfies Control);
+    this.bus.emit('nc', { t: 'rejoin', m: this.rejoin.match, peer: this.bus.self, version: NET_VERSION, build: SIM_BUILD, maps: CONTENT_HASH, tuning: tuningHash() } satisfies Control);
   }
 
   /** Coordinator: give a newcomer the first empty seat, from a little ahead of now. */
@@ -538,7 +540,7 @@ export class NetPlay {
     // An empty seat: say so in the lobby, so a dropped player (or anyone) can take it.
     if (this.coordinator() === this.seat && s.goneSeats().some((g) => g?.until === Infinity) && now - this.lastAnnounce > 1500) {
       this.lastAnnounce = now;
-      this.bus.emit('lobby', { t: 'host', match: this.match, name: `Wizard ${this.bus.self.slice(0, 4)}`, version: NET_VERSION, maps: CONTENT_HASH, tuning: tuningHash(), room: this.room, players: this.joinedPlayers, rejoin: true } satisfies HostMsg);
+      this.bus.emit('lobby', { t: 'host', match: this.match, name: `Wizard ${this.bus.self.slice(0, 4)}`, version: NET_VERSION, build: SIM_BUILD, maps: CONTENT_HASH, tuning: tuningHash(), room: this.room, players: this.joinedPlayers, rejoin: true } satisfies HostMsg);
     }
     if (now - this.stat.at >= 1000) {
       this.stat.rewindsPerS = (s.replayed - this.stat.replayed) / ((now - this.stat.at) / 1000 || 1);
@@ -708,7 +710,7 @@ export class NetPlay {
         ? `<div style="color:#a8a3bb">Play over a direct connection (WebRTC).</div>${btn('rtc-create', 'Create room')}<div><input id="rtc-code" maxlength="4" placeholder="CODE" style="font:inherit;width:5em;text-transform:uppercase;background:#0d0b14;color:inherit;border:1px solid #3c3552;border-radius:4px;padding:2px 5px" /> ${btn('rtc-join', 'Join')}</div>${idle && rtc.status !== 'idle' ? `<div style="color:#e69191">${esc(rtc.status)}</div>` : ''}`
         : `<div>${esc(rtc.status)}${rtc.code ? ` · room <b style="color:#f2c44a;letter-spacing:.1em">${esc(rtc.code)}</b>` : ''}</div>${list() || `<div style="color:#a8a3bb">Connected to ${rtc.peerCount()} · waiting for the host</div>`}`;
     } else if (this.state === 'off') {
-      body = `<div style="color:#a8a3bb">Play with ${via}.</div>${btn('host', 'Host a match')}${list() || '<div style="color:#6f6a85">No open matches yet.</div>'}`;
+      body = `<div style="color:#a8a3bb">Play with ${via}.</div>${btn('host', 'Host a match')}${list() || '<div style="color:#6f6a85">No open matches yet.</div>'}<div style="color:#6f6a85">Build ${SIM_BUILD}</div>`;
     } else if (this.state === 'hosting') {
       const code = this.bus.kind === 'webrtc' ? (this.bus as RtcBus).code : '';
       body = `${code ? `<div>Room <b style="color:#f2c44a;font-size:15px;letter-spacing:.15em">${esc(code)}</b> · tell your friend the code</div>` : ''}<div>Hosting · ${this.joinedPlayers.length}/4 joined</div>${btn('start', 'Start')}${btn('leave', 'Cancel')}`;
@@ -720,7 +722,7 @@ export class NetPlay {
         const st = p === this.seat ? 'you' : s.isGone(s.tick, p) ? '<span style="color:#e69191">disconnected</span>' : s.isOut(p) ? '<span style="color:#e6c36a">not responding</span>' : 'here';
         return `P${p + 1} ${st}`;
       }).join(' · ');
-      body = `<div>${seats}</div><div>Round trip ${this.rtt ? Math.round(this.rtt) + ' ms' : '…'}${this.link.active ? ` <span style="color:#e6c36a">(+${this.link.lag} ms simulated)</span>` : ''} · waited ${(s.waitedTicks / 60).toFixed(1)} s · rewound ${s.replayed} ticks</div>${s.desyncs.length ? `<div style="color:#e69191">Desync at tick ${s.desyncs[0].tick}</div>` : ''}<div style="color:#6f6a85">Simulate a slow link: F1 → Network test</div>${btn('leave', 'Leave')}`;
+      body = `<div>${seats}</div><div>Round trip ${this.rtt ? Math.round(this.rtt) + ' ms' : '…'}${this.link.active ? ` <span style="color:#e6c36a">(+${this.link.lag} ms simulated)</span>` : ''} · waited ${(s.waitedTicks / 60).toFixed(1)} s · rewound ${s.replayed} ticks</div>${s.desyncs.length ? `<div style="color:#e69191">Desync at tick ${s.desyncs[0].tick}</div>` : ''}<div style="color:#6f6a85">Simulate a slow link: F1 → Network test · build ${SIM_BUILD}</div>${btn('leave', 'Leave')}`;
     }
     this.el.innerHTML = `${btn('toggle', 'Co-op ▾')}${body}${this.message ? `<div style="color:#e6c36a">${esc(this.message)}</div>` : ''}`;
   }

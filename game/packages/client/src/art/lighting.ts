@@ -395,6 +395,24 @@ export class SceneLighting {
     return s;
   }
 
+  /**
+   * A standing thing that gives off its own light (an energy field): an added copy that undoes the mood's tint on it, so it
+   * is as bright at night as by day, and a touch brighter (k 0..1). Call after finishLights.
+   */
+  emit(spr: Sprite, k: number): void {
+    const a = Math.min(1, k * (1.15 / this.ambLum - 1));
+    if (a < 0.04) return;
+    let s = this.overlays[this.overN];
+    if (!s) { s = new Sprite(); s.blendMode = 'add'; this.parent.addChild(s); this.overlays.push(s); }
+    this.overN++;
+    s.texture = spr.texture;
+    s.position.set(spr.position.x, spr.position.y);
+    s.zIndex = spr.zIndex + 1;
+    s.tint = 0xffffff;
+    s.alpha = a;
+    s.visible = true;
+  }
+
   /** Lights a standing thing whose foot is at scene x, y. Call after finishLights. */
   relight(spr: Sprite, footX: number, footY: number): void {
     lightOnObject(this.queue, this.queued, footX, footY, OUT);

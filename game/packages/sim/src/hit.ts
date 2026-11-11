@@ -283,7 +283,7 @@ export function tickStatuses(w: World): void {
     // the imbue decays by a share of itself, so a steady heal settles and it fades soon after (guards.ts bless)
     if (b.blessT[i] > 0) {
       let any = false;
-      for (let col = 0; col < 5; col++) { const v = b.bless[i * 5 + col] * (1 - ARMS.blessDecay / 60); b.bless[i * 5 + col] = v < 0.05 ? 0 : v; if (v >= 0.05) any = true; } // below 0.05 (5 % less damage) it's gone
+      for (let col = 0; col < 5; col++) { const v = b.bless[i * 5 + col] * (1 - ARMS.blessDecay / 60) - ARMS.blessFade / 60; b.bless[i * 5 + col] = v > 0 ? v : 0; if (v > 0) any = true; } // a share of itself and a little flat, so it ends (a floor that cut it at 0.05 wiped a spray's small per-tick build-up every tick)
       if (!any) b.blessT[i] = 0;
     }
     if (b.down[i] > 0) b.down[i]--;

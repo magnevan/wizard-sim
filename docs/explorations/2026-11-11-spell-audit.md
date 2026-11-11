@@ -187,3 +187,7 @@ Next: the cross-cut by cast (Force, Area, Place, Self, Weapon side by side), the
 ## Pass 2, step 9: the cross-cut (decided and built 2026-11-11)
 
 Earth's n^1.3 is Rock's alone; Arcane's one-shots x1.6; the Water burst pushes; delayed Place zones keep their cast's power. Open: Steam's niche (and the mist). This ends the audit's planned steps; what's left open across it: Steam's niche and mist, a cooler spell than the Double, the coated field's look (it still draws as a walk-through curtain), the imbue's motes (to re-use the elemental ward's look), the debt-free ghost runes in play, and the Rune Economy page, which still simulates the old regen.
+
+## After the audit: the Shield art pass (built 2026-11-11)
+
+The coated field now draws as a force field in its coat's colour with gold seams and each element's dressing; the imbue wears the elemental ward's skin; the stored spell is a rune ring over the head with its runes as gems. Still open from the audit: Steam's niche and mist, a cooler spell than the Double, the debt-free ghost runes in play, and the Rune Economy page.

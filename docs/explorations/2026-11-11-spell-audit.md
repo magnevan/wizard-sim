@@ -16,6 +16,7 @@ The user: "I want to make a pass over all the spells in the game and see if the 
 10. **Setting up a partner counts:** a solo floor plus a co-op ceiling.
 11. **Niche answers are judged in their niche** (reference situations, not a dummy chart).
 12. **Every cast shape has a job.**
+13. **Today's enemies are early drafts** (the user: many more will come). Balance against reference situations (one tough target, a pack, a fast flanker, an ally nearby), not the current roster. Systemic problems (a status that locks anything) are fixed in the rules, not left for enemy design to patch. Body-scaled pools and resistances are the tools future enemies use to differ, and a spell with a clear identity but no use yet can be given its situation by a future enemy.
 
 ## What was audited
 

@@ -28,7 +28,10 @@ const browser = await puppeteer.launch({
   ],
 });
 try {
-  const url = `${base}?lights=0&debug=0&timerloop=1${webrtc ? '' : '&net=bc'}`; // small and light: two software-rendered pages share one CPU
+  // --raf: the game's own loop on animation frames, which a page in the background doesn't get (a hidden tab, a covered
+  // window): the match must keep running there too (main.ts's worker pump)
+  const raf = process.argv.includes('--raf');
+  const url = `${base}?lights=0&debug=0&timerloop=1${raf ? '&rafloop=1' : ''}${webrtc ? '' : '&net=bc'}`; // small and light: two software-rendered pages share one CPU
   const [a, b] = await Promise.all([browser.newPage(), browser.newPage()]);
   for (const p of [a, b]) {
     await p.setViewport({ width: 640, height: 400 }); p.on('pageerror', (e) => console.error('page error:', e.message));

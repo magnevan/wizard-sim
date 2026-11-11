@@ -25,6 +25,8 @@ export const BTN = {
   clear: 1 << 4,
   /** A new player joins this seat (local co-op: any gamepad button). Part of the input so every peer joins on the same tick. */
   join: 1 << 5,
+  /** Use what's in front of you: step up to a defence, or step away from it. */
+  use: 1 << 6,
 } as const;
 
 export const INPUT_BYTES = 9;

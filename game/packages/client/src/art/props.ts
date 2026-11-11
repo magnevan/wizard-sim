@@ -6,7 +6,9 @@
  *
  * Props don't animate and the sim doesn't know them: a room is laid out once, and only moves with the camera.
  */
-import { Container, Sprite, Texture } from 'pixi.js';
+import { BATTERY, type World } from '@wizard-sim/sim';
+import { toX, toY } from '../iso-world';
+import { Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { RoomDef } from '@wizard-sim/sim';
 import { FY, PPU } from '../camera';
 import { loadTexture, propImage, propMeta, type PropMeta, type PropSet } from './assets';
@@ -14,6 +16,46 @@ import { FIELD, gx, gy } from './field';
 import * as X from './px';
 
 interface Item { asset: string; meta: PropMeta; spr: Sprite; x: number; y: number; ox: number; oy: number }
+
+const HEAD = 'defence-head-north-east';
+
+/** The flame turret's head: pre-rendered facings across its swing, in one sheet (tools/turret-3d). */
+interface HeadSheet { cell: number; facings: number[]; collar: [number, number]; pivot: [number, number]; tips: [number, number][] }
+const sheets = import.meta.glob('../../../../content/assets/turrets/flame/sheet.json', { eager: true, import: 'default' });
+const sheetUrls = import.meta.glob<string>('../../../../content/assets/turrets/flame/sheet.png', { eager: true, query: '?url', import: 'default' });
+const SHEET = Object.values(sheets)[0] as HeadSheet;
+const SHEET_URL = Object.values(sheetUrls)[0];
+/** How fast a head turns, degrees a second. It eases toward the aim, so the facings pass one at a time. */
+const TURN_RATE = 320;
+/** Each tower's head, degrees from straight out. Client-only: the sim aims straight at the cursor. */
+const headDeg = new Float64Array(8);
+const facingOf = (deg: number): number => {
+  const f = SHEET.facings, step = (f[f.length - 1] - f[0]) / (f.length - 1);
+  return Math.max(0, Math.min(f.length - 1, Math.round((deg - f[0]) / step)));
+};
+
+/**
+ * How far the barrel's root is above the swivel, art px. The barrel is level, so what the eye reads as its line runs
+ * from there to the nozzle: fitted from sheet.json, where every tip is 40 px out along the ground from a point this high.
+ */
+export const BARREL_RISE = 9.6;
+
+/** Defence k's nozzle tip as it's drawn now, and the tower's spot on the ground under it, field px. */
+export function towerTip(w: World, k: number): { tip: [number, number]; swivel: [number, number]; ground: [number, number] } | null {
+  const tower = w.def.props.filter((p) => p.asset === 'defence-tower')[k];
+  if (!tower || !SHEET) return null;
+  const t = SHEET.tips[facingOf(headDeg[k])], x = gx(tower.x), y = gy(tower.y);
+  return { tip: [x + SHEET.collar[0] + t[0] - SHEET.pivot[0], y + SHEET.collar[1] + t[1] - SHEET.pivot[1]], swivel: [x + SHEET.collar[0], y + SHEET.collar[1]], ground: [x, y] };
+}
+
+/** The field point this seat's fire comes from if it's driving a defence, else null. */
+export function headTip(w: World, seat: number): [number, number] | null {
+  const k = w.battery ? w.battery.drive[seat] : -1;
+  return k < 0 ? null : towerTip(w, k)?.tip ?? null;
+}
+
+/** How many defences have a working head (not burnt out). */
+export const liveHeads = (w: World): number => (w.battery ? w.def.props.filter((p) => p.asset === HEAD).length : 0);
 
 export class PropView {
   /** Flat props and shadows. Add this just over the floor. */
@@ -28,6 +70,8 @@ export class PropView {
   /** True once the current set's images are all in place (tests and screenshots wait on it). */
   ready = true;
 
+  private headFrames: Texture[] = [];
+  private headClock = 0;
   constructor(private actors: Container, private tint: number, private current: PropSet) { this.under.addChild(this.shadows); }
 
   get set(): PropSet { return this.current; }
@@ -50,7 +94,7 @@ export class PropView {
       if (!meta) continue;
       const spr = new Sprite();
       spr.tint = this.tint; spr.visible = false;
-      spr.zIndex = Math.round(gy(p.y)) * 128 + 100;
+      spr.zIndex = Math.round(gy(p.y) + (meta.sort ?? 0)) * 128 + 100;
       (meta.flat ? this.under : this.actors).addChild(spr);
       this.items.push({ asset: p.asset, meta, spr, x: gx(p.x), y: gy(p.y) - (meta.lift ?? 0), ox: 0, oy: 0 });
       if (meta.flat || meta.lift) continue;
@@ -76,8 +120,58 @@ export class PropView {
       if (!t || !a) return;
       it.spr.texture = t; it.ox = a.foot[0]; it.oy = a.foot[1];
     });
+    if (items.some((it) => it.asset === HEAD) && !this.headFrames.length) {
+      const base = await loadTexture(SHEET_URL);
+      this.headFrames = SHEET.facings.map((_, i) => new Texture({ source: base.source, frame: new Rectangle(i * SHEET.cell, 0, SHEET.cell, SHEET.cell) }));
+    }
     this.fx = NaN;
     this.ready = true;
+  }
+
+  /** Every defence's head: a driven one eases toward its driver's aim, an idle one back to straight out. */
+  turnHeads(w: World, fx0: number, fy0: number): void {
+    if (!w.battery || !this.headFrames.length) return;
+    const now = performance.now(), dt = Math.min(0.1, (now - this.headClock) / 1000), limit = BATTERY.swing * 360;
+    this.headClock = now;
+    let k = 0;
+    for (const it of this.items) {
+      if (it.asset !== HEAD) continue;
+      const n = k++, seat = w.battery.drive.indexOf(n);
+      let want = 0;
+      if (seat >= 0) {
+        // at the ground under the cursor, as the sim aims (aimFromTower): the view's world is turned, so it's turned back
+        const tw = w.def.props.filter((p) => p.asset === 'defence-tower')[n];
+        const ax = w.bodies.x[seat] + w.seats.aimX[seat] - tw.x, ay = w.bodies.y[seat] + w.seats.aimY[seat] - tw.y;
+        want = Math.max(-limit, Math.min(limit, (Math.atan2(toX(ax, ay), -toY(ax, ay)) * 180) / Math.PI));
+      }
+      const gap = want - headDeg[n], most = TURN_RATE * dt;
+      headDeg[n] += Math.max(-most, Math.min(most, gap));
+      const tex = this.headFrames[facingOf(headDeg[n])];
+      if (it.spr.texture === tex) continue;
+      it.spr.texture = tex; it.ox = SHEET.pivot[0] - SHEET.collar[0]; it.oy = SHEET.pivot[1] - SHEET.collar[1];
+      it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
+    }
+  }
+
+  private broken = false;
+  private brokenTex: { tex: Texture; foot: readonly [number, number] } | null = null;
+  /**
+   * The battery's stakes, whole or knocked over (stakes-broken, a local edit: tools/art-import/stakes_broken.py). They
+   * break as a defence is taken (sim/src/battery-waves.ts). Returns true on the frame they break.
+   */
+  breakStakes(broken: boolean, fx0: number, fy0: number): boolean {
+    if (broken === this.broken) return false;
+    const img = propImage(broken ? 'stakes-broken' : 'stakes', this.current);
+    if (!img) return false;
+    if (broken && !this.brokenTex) { void loadTexture(img.url).then((tex) => { this.brokenTex = { tex, foot: img.foot }; }); return false; }
+    this.broken = broken;
+    for (const it of this.items) {
+      if (it.asset !== 'stakes') continue;
+      if (broken) { it.spr.texture = this.brokenTex!.tex; it.ox = this.brokenTex!.foot[0]; it.oy = this.brokenTex!.foot[1]; }
+      else { const a = propImage('stakes', this.current); if (a) void loadTexture(a.url).then((t) => { it.spr.texture = t; it.ox = a.foot[0]; it.oy = a.foot[1]; it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy); }); }
+      it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
+    }
+    return broken;
   }
 
   /** Follows the camera: fx0, fy0 is where the field's corner is in the scene. */

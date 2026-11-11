@@ -17,14 +17,16 @@ import { EL, N_EL } from './elements';
 import { burstEvent, disc, spawnMissile, stored, type Payload } from './effects';
 import { angleDiff, len } from './geom';
 import { HIT_KIND, addKnock, applyHit, ignite, setHitKind } from './hit';
-import { cutOff, steer } from './nav';
+import { atBarrier, cutOff, enemyWall, steer } from './nav';
 import { guardMelee, unburnable } from './guards';
-import { WALL } from './compile';
+import { solidWall } from './compile';
 import { terrainNear } from './terrain';
 import { TERRAIN_HIT, damageWall, segDist } from './walls';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { AI, KIND, MAX_SEATS, PU, STATUS_BIT, TEAM, WARD, stackOf, type World } from './world';
 import { noteSlam } from './tutorial-data';
+import { driving } from './battery';
+import { BWAVES, batteryStandoff, holdSpot, laneTarget } from './battery-waves';
 
 const TRACK_SHARE = 0.55;
 const COVER_DIST = 2.2;
@@ -68,6 +70,7 @@ function setAi(w: World, i: number, state: number): void { w.bodies.ai[i] = stat
 /** Plain damage from an enemy to a body, plus knockback. Stone armour's coat bites back. */
 function strike(w: World, src: number, t: number, dmg: number, knock: number, dx: number, dy: number, burn: boolean): void {
   const b = w.bodies, s = w.seats;
+  if (driving(w, t)) return; // a blow at the wall, on the defence: a driver can't be hurt (battery.ts)
   let d = dmg;
   // A conjured guard (guards.ts): a parry or a Bulwark block stops the blow; resistance cuts it.
   if (t < MAX_SEATS && s.guard[t]) {
@@ -108,10 +111,17 @@ export function tickEnemies(w: World): void {
     if (b.ai[i] === AI.dash) { dash(w, i); continue; }
     if (b.ai[i] === AI.grab) { grab(w, i); continue; }
 
+    // the battery with nobody at any defence: it batters its own defence's wall
+    if (w.battery && w.battery.lane[i] >= 0) {
+      // the battery: harmless, they batter something. Archers with a defence to shoot at stand off and shoot (below)
+      const lt = laneTarget(w, i);
+      if (lt < 0 || a.attack !== ATTACK.bolt) { holdWall(w, i, a, lt >= 0 ? holdSpot(w, i, lt) : holdSpot(w, i, -1)); continue; }
+    }
     let t = b.ai[i] === AI.windup ? b.target[i] : -1;
     if (t < 0 || !isPrey(w, t)) {
       if (b.ai[i] === AI.windup) setAi(w, i, AI.approach);
-      t = nearestWizard(w, i);
+      t = w.battery ? laneTarget(w, i) : -1; // the battery: your own lane's defence first
+      if (t < 0) t = nearestWizard(w, i);
     }
     b.target[i] = t;
     if (t < 0) continue;
@@ -123,7 +133,7 @@ export function tickEnemies(w: World): void {
       move(w, i, approachSpot(w, i, t), t, speed);
       const ranged = a.attack === ATTACK.bolt || a.attack === ATTACK.grab;
       // Walled off with no way round: a wall it's pressed against is what it attacks.
-      const ready = ranged ? d <= a.reach && b.aiT[i] > T(0.4) : gap <= a.reach || (cutOff(w, i, t) && wallInReach(w, i, a.reach + 0.45) >= 0);
+      const ready = ranged ? d <= (w.battery && a.attack === ATTACK.bolt ? BWAVES.archerStandoff + 1.5 : a.reach) && b.aiT[i] > T(0.4) : gap <= a.reach || ((cutOff(w, i, t) || atBarrier(w, i, t)) && wallInReach(w, i, a.reach + 0.45) >= 0); // walled off, or its way is through a barrier
       if (ready) { setAi(w, i, AI.windup); b.lockX[i] = b.x[t]; b.lockY[i] = b.y[t]; }
     } else if (b.ai[i] === AI.windup) {
       if ((a.attack === ATTACK.bolt || a.attack === ATTACK.grab) && b.aiT[i] < T(a.windup * TRACK_SHARE)) { b.lockX[i] = b.x[t]; b.lockY[i] = b.y[t]; }
@@ -134,6 +144,25 @@ export function tickEnemies(w: World): void {
       if (b.aiT[i] >= T(a.cooldown)) setAi(w, i, AI.approach);
     }
   }
+}
+
+/**
+ * The battery: an enemy goes to a spot and batters what's south of it, harmlessly, wind-up and blow over and over (the
+ * view draws them as it would any attack): the stakes as you arrive, else the wall in front of a defence (holdSpot).
+ */
+function holdWall(w: World, i: number, a: (typeof ARCHETYPES)[number], [sx, sy]: [number, number]): void {
+  const b = w.bodies;
+  if (len(sx - b.x[i], sy - b.y[i]) > 0.5) {
+    if (b.ai[i] !== AI.approach) setAi(w, i, AI.approach);
+    turnToward(w, i, atan2Turns(sy - b.y[i], sx - b.x[i]));
+    move(w, i, [sx, sy], -1, a.speed * b.speedMult[i] * chillPace(b.chill[i]));
+    return;
+  }
+  turnToward(w, i, 0.25); // facing south: the wall, or the stakes
+  b.target[i] = -1; b.lockX[i] = b.x[i]; b.lockY[i] = b.y[i] + 1.5;
+  if (b.ai[i] === AI.approach && b.aiT[i] > T(0.3)) setAi(w, i, AI.windup);
+  else if (b.ai[i] === AI.windup && b.aiT[i] >= T(a.windup)) setAi(w, i, AI.cooldown);
+  else if (b.ai[i] === AI.cooldown && b.aiT[i] >= T(a.cooldown)) setAi(w, i, AI.approach);
 }
 
 /** Shieldbearers turn slowly (flank them); everything else faces its target at once. */
@@ -156,6 +185,7 @@ function move(w: World, i: number, [tx, ty]: [number, number], seat: number, spe
 function approachSpot(w: World, i: number, t: number): [number, number] {
   const b = w.bodies, a = ARCHETYPES[b.arch[i]];
   if (a.attack !== ATTACK.bolt) return [b.x[t], b.y[t]];
+  if (w.battery && driving(w, t)) return batteryStandoff(w, i, t); // past the defence's flamethrower: Place reaches them
   let front = -1, fd = Infinity;
   for (let j = MAX_SEATS; j < b.kind.length; j++) {
     if (b.kind[j] !== KIND.enemy || (b.arch[j] !== ARCH.brute && b.arch[j] !== ARCH.shieldbearer)) continue;
@@ -183,7 +213,7 @@ function wallInReach(w: World, i: number, reach: number): number {
     if (d < bd) { bd = d; best = TERRAIN_HIT; }
   }
   for (let k = 0; k < wl.type.length; k++) {
-    if (wl.type[k] !== WALL.rock) continue;
+    if (!enemyWall(w, k)) continue; // a barrier in the way is battered like rock (its blows drain its caster's Shield pool)
     const d = segDist(b.x[i], b.y[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0];
     if (d < bd) { bd = d; best = k; }
   }
@@ -197,7 +227,7 @@ function attack(w: World, i: number, t: number, gap: number): void {
     const dx = b.x[t] - b.x[i], dy = b.y[t] - b.y[i], d = len(dx, dy) || 1;
     const inFront = Math.abs(angleDiff(atan2Turns(dy, dx), b.face[i])) < 0.19;
     if (gap <= a.reach + 0.45 && inFront) strike(w, i, t, dmg, a.knockback, dx / d, dy / d, !!a.hitBurn);
-    else if (cutOff(w, i, t)) { const k = wallInReach(w, i, a.reach + 0.45); if (k >= 0) damageWall(w, k, dmg); }
+    else if (cutOff(w, i, t) || atBarrier(w, i, t)) { const k = wallInReach(w, i, a.reach + 0.45); if (k >= 0) damageWall(w, k, dmg); }
   } else if (a.attack === ATTACK.slam) {
     // the fists hit the ground just ahead; the shockwave rolls out from there (slamWave, during the cooldown)
     b.slamX[i] = b.x[i] + cosTurns(b.face[i]) * b.r[i] * 0.6; b.slamY[i] = b.y[i] + sinTurns(b.face[i]) * b.r[i] * 0.6;
@@ -242,7 +272,7 @@ function slamWave(w: World, i: number): void {
   if (prev < dc && front >= dc) {
     // it breaks the rock it rolls into, too (the room's own rock doesn't break, so it isn't asked about)
     const wl = w.walls;
-    for (let k = 0; k < wl.type.length; k++) if (wl.type[k] === WALL.rock && segDist(lx, ly, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] <= r) damageWall(w, k, dmg);
+    for (let k = 0; k < wl.type.length; k++) if (solidWall(wl.type[k]) && segDist(lx, ly, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] <= r) damageWall(w, k, dmg);
     w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: lx, y: ly, amount: r, look: EL.earth });
   }
   if (front >= dc + r && w.tut) {

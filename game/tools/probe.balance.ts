@@ -1,0 +1,336 @@
+/**
+ * Spell-audit probe (temporary, 2026-11-11): measures any queue x cast on 135-HP bodies, restoring their
+ * health every tick so they never die, and records damage, seconds denied action (stunned, frozen or
+ * knocked down) per target, the mean chill, and how far they were moved. Writes tools/probe-report.json.
+ */
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { expect, it } from 'vitest';
+import { rules, type Element } from '@wizard-sim/rules';
+import { BTN, KIND, N_EL, NO_INPUT, RHYTHM, compile, createWorld, elementId, quantize, step, type PlayerInput, type World } from '../packages/sim/src';
+
+type Cast = 'force' | 'area' | 'place' | 'conjure';
+const HP = 135;
+const L: Record<string, Element> = { W: 'water', F: 'fire', C: 'cold', L: 'lightning', A: 'arcane', E: 'earth', H: 'life', S: 'shield', G: 'sigil' };
+
+function scene(dx: number, n: number): World {
+  const w = createWorld(1, 1, { dummies: false });
+  const b = w.bodies;
+  b.x[0] = 0; b.y[0] = 0;
+  for (let k = 0; k < n; k++) {
+    const i = 8 + k;
+    b.kind[i] = KIND.enemy; b.arch[i] = 0; b.team[i] = 2;
+    b.x[i] = dx + (k % 3) * 0.7 - (n > 1 ? 0.7 : 0); b.y[i] = Math.floor(k / 3) * 0.7 - (n > 3 ? 0.35 : 0);
+    b.r[i] = n > 1 ? 0.3 : 0.5; b.hp[i] = b.maxHp[i] = HP;
+  }
+  return w;
+}
+
+function run(code: string, cast: Cast, pack: number, wet = false) {
+  const presses = [...code].flatMap((c) => (c === 'I' ? ['water', 'cold'] : [L[c]]) as Element[]);
+  let q: Element[] = [];
+  for (const e of presses) { const r = rules.addElement(q, e) as { queue: Element[]; kind: string | null }; if (r.kind === 'cancel' || r.kind === 'full') return null; q = r.queue; }
+  const dx = cast === 'force' ? 3 : cast === 'area' || cast === 'conjure' ? 1.6 : 4;
+  const w = scene(dx, pack);
+  const spec = compile(q, cast);
+  const b = w.bodies;
+  if (wet) for (let i = 8; i < 8 + pack; i++) b.wet[i] = 600;
+  const x0 = Array.from({ length: pack }, (_, k) => [b.x[8 + k], b.y[8 + k]]);
+  const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: dx * 32, aimY: 0, ...o })];
+  let dmg = 0, denied = 0, chill = 0, ticks = 0, frozeAny = 0;
+  const go = (inp: PlayerInput[]) => {
+    step(w, inp); ticks++;
+    for (let i = 8; i < 8 + pack; i++) {
+      dmg += HP - b.hp[i]; b.hp[i] = HP;
+      if (b.stun[i] || b.frozen[i] || b.down[i]) denied++;
+      if (b.frozen[i]) frozeAny = 1;
+      chill += b.chill[i];
+      // hold them in place so knockback doesn't carry them out of a channel (moved distance is read from kx/ky below)
+    }
+  };
+  let moved = 0;
+  for (const e of presses) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; go(aim({ press0: elementId(e) })); }
+  const btn = cast === 'force' ? BTN.force : cast === 'conjure' ? BTN.weapon : BTN.area;
+  const hold = cast === 'place' ? 30 : cast === 'conjure' ? 2 : spec.channel ? Math.round(RHYTHM.naturalChannel * 60) + 12 : spec.charge ? 70 : 2;
+  const start = ticks;
+  for (let t = 0; t < hold; t++) go(aim({ buttons: btn }));
+  for (let t = 0; t < (cast === 'place' ? 780 : 300); t++) go(aim()); // floors and fog last 8-12 s
+  for (let k = 0; k < pack; k++) moved += Math.hypot(b.x[8 + k] - x0[k][0], b.y[8 + k] - x0[k][1]);
+  const secs = (ticks - start) / 60;
+  return { title: spec.title, shape: spec.shape, dmg: Math.round(dmg), perTarget: Math.round(dmg / pack), deniedS: +(denied / 60 / pack).toFixed(2), chill: +(chill / ticks / pack).toFixed(2), moved: +(moved / pack).toFixed(1), froze: frozeAny, window: +secs.toFixed(1) };
+}
+
+const SETS: Record<string, string[]> = {
+  sprays: ['F', 'FF', 'FFF', 'C', 'CC', 'CCC', 'W', 'WW', 'WF', 'WFF', 'WWF', 'WC', 'WCC', 'WWC'],
+  lightning: ['L', 'LL', 'LLL', 'LF', 'LFF', 'LLF', 'LC', 'LCC', 'LFC'.replace('C', ''), 'LA'.replace('A', 'F')],
+  arcane: ['A', 'AA', 'AAA', 'AF', 'AAF', 'AFF', 'AL', 'AAL', 'ALL', 'AC', 'AW', 'AE'.replace('E', 'L'), 'AFL', 'AFW', 'ALC', 'ACW'],
+  ice: ['I', 'II', 'IW', 'IC', 'IIW', 'IL', 'ILL', 'IA'.replace('A', 'E'), 'EI', 'EEI', 'EII', 'AI', 'AAI', 'AII', 'LI'],
+  coldmix: ['EC', 'ECC', 'AC', 'LC', 'CCC'],
+  earth: ['E', 'EE', 'EEE', 'EF', 'EEF', 'EFF', 'EA', 'EEA', 'EAA', 'EC', 'ECC', 'EW', 'EWC', 'EFA', 'ECA', 'EWF'],
+};
+
+it('probes the spells', () => {
+  const out: Record<string, unknown> = {};
+  for (const [set, codes] of Object.entries(SETS)) for (const code of [...new Set(codes)]) for (const cast of ['force', 'area', 'place'] as Cast[]) {
+    const one = run(code, cast, 1), pack = run(code, cast, 5), wet = run(code, cast, 1, true);
+    if (!one) continue;
+    out[`${set}|${code}|${cast}`] = { one, pack, wetOne: wet };
+  }
+  writeFileSync(join(__dirname, 'probe-report.json'), JSON.stringify(out, null, 1));
+  expect(Object.keys(out).length).toBeGreaterThan(10);
+});
+
+it('measures stun uptime by body size', () => {
+  const rows: string[] = [];
+  for (const code of ['L', 'LL', 'LLL', 'LLLL', 'AL', 'AAL']) for (const hp of [30, 135, 345, 2000]) {
+    const w = scene(3, 1), b = w.bodies;
+    b.hp[8] = b.maxHp[8] = hp;
+    const presses = [...code].map((c) => L[c]);
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: 96, aimY: 0, ...o })];
+    for (const e of presses) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; step(w, aim({ press0: elementId(e) })); }
+    let st = 0, n = 0;
+    for (let t = 0; t < 1200; t++) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; step(w, aim({ buttons: BTN.force })); b.hp[8] = hp; if (t > 30) { if (b.stun[8]) st++; n++; } }
+    rows.push(`${code} ${hp} ${Math.round((100 * st) / n)}%`);
+  }
+  writeFileSync(join(__dirname, 'probe-stun.txt'), rows.join(String.fromCharCode(10)));
+});
+
+it('measures when an imbue beats more Life: Life + Fire against Life + Life, under part-fire damage', async () => {
+  const { RES, taken } = await import('../packages/sim/src/guards');
+  const { ARMS } = await import('../packages/sim/src/config');
+  const keep = ARMS.blessDecay, rows: string[] = [];
+  const endHp = (q: Element[], dps: number, f: number, secs: number) => {
+    const w = createWorld(1, 1, { dummies: false }), b = w.bodies;
+    b.maxHp[0] = 1000; b.hp[0] = 500; // no cap: every point of healing counts
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: 32, aimY: 0, ...o })];
+    for (const e of q) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; step(w, aim({ press0: elementId(e) })); }
+    for (let t = 0; t < secs * 60; t++) {
+      step(w, t < 2 ? aim({ buttons: BTN.area }) : aim());
+      b.hp[0] -= (dps / 60) * (f * taken(w, 0, RES.fire) + (1 - f));
+    }
+    return b.hp[0];
+  };
+  const keepRate = ARMS.blessRate;
+  for (const [rate, decay] of [[ARMS.blessRate, ARMS.blessDecay]]) { // the live numbers (a sweep: list other pairs here)
+    ARMS.blessDecay = decay; ARMS.blessRate = rate;
+    for (const dps of [6, 10, 15]) {
+      const cells: string[] = [];
+      for (const f of [0.25, 0.5, 0.75, 1]) {
+        const gain = endHp(['life', 'fire'], dps, f, 20) - endHp(['life', 'life'], dps, f, 20);
+        cells.push(`fire ${Math.round(f * 100)}%: ${gain >= 0 ? '+' : ''}${Math.round(gain)}`);
+      }
+      rows.push(`rate ${rate}, decay ${decay}/s (half-life ${(Math.log(2) / decay).toFixed(1)} s), ${dps} dps:  ${cells.join('   ')}`);
+    }
+  }
+  ARMS.blessDecay = keep; ARMS.blessRate = keepRate;
+  writeFileSync(join(__dirname, 'probe-imbue.txt'), rows.join(String.fromCharCode(10)));
+});
+
+it('measures effective healing on three hurt wizards', () => {
+  const rows: string[] = [];
+  for (const code of ['H', 'HH', 'HHH', 'HHHH', 'HL', 'HC', 'HI', 'HIC', 'HE', 'HF', 'HW', 'HLL', 'HEE']) for (const cast of ['force', 'area', 'place'] as Cast[]) for (const spread of [false, true]) {
+    if (spread && cast !== 'force') continue;
+    const dx = cast === 'force' ? 3 : cast === 'area' ? 1.2 : 4;
+    const w = createWorld(1, 3, { dummies: false }), b = w.bodies;
+    b.x[0] = 0; b.y[0] = 0; b.x[1] = dx; b.y[1] = 0; b.x[2] = dx + 0.5; b.y[2] = 0.9;
+    if (spread) { b.x[1] = 5; b.y[1] = 1.6; b.x[2] = 7; b.y[2] = -2.2; } // a scattered team: allies off to either side of the aim
+    b.kind[8] = KIND.enemy; b.arch[8] = 0; b.team[8] = 2; b.x[8] = dx + 0.5; b.y[8] = -0.9; b.r[8] = 0.4; b.maxHp[8] = 100;
+    if (spread) { b.x[8] = 2.5; b.y[8] = -4; } // the enemy off to the side, out of the shots
+    for (const i of [0, 1, 2, 8]) b.hp[i] = 40;
+    const presses = [...code].flatMap((c) => (c === 'I' ? ['water', 'cold'] : [L[c]]) as Element[]);
+    const spec = compile([...code].map((c) => (c === 'I' ? 'ice' : L[c])) as Element[], cast);
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: (spread ? 5.5 : dx) * 32, aimY: 0, ...o }), NO_INPUT, NO_INPUT];
+    for (const e of presses) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; step(w, aim({ press0: elementId(e) })); }
+    const btn = cast === 'force' ? BTN.force : BTN.area;
+    const hold = cast === 'place' ? 30 : spec.channel ? Math.round(RHYTHM.naturalChannel * 60) + 12 : spec.charge ? 70 : 2;
+    const sum = () => b.hp[0] + b.hp[1] + b.hp[2];
+    const hp0 = sum();
+    let at3 = 0;
+    for (let t = 0; t < 600; t++) {
+      step(w, t < hold ? aim({ buttons: btn }) : aim());
+      if (t === 180) at3 = sum() - hp0;
+    }
+    rows.push(`${code.padEnd(5)} ${(cast + (spread ? '*' : '')).padEnd(7)} ${spec.title.padEnd(16)} 3s ${Math.round(at3)}  10s ${Math.round(sum() - hp0)}  self ${Math.round(b.hp[0] - 40)}  enemy +${Math.round(b.hp[8] - 40)}`);
+  }
+  writeFileSync(join(__dirname, 'probe-heal.txt'), rows.join(String.fromCharCode(10)));
+});
+
+it('measures how long a ward battery holds under steady fire', async () => {
+  const { applyHit } = await import('../packages/sim/src/hit');
+  const { DAMAGE, STRUCT } = await import('../packages/sim/src/config');
+  const { EL } = await import('../packages/sim/src/elements');
+  const keep = STRUCT.wardAbsorb, rows: string[] = [];
+  const MAX = 120 * 60;
+  // n Fire runes in the ward (0: no ward), hit by `dps` of direct fire a second (each hit lights a burn on top) for at most `cap` ticks
+  const sim = (n: number, dps: number, cap: number) => {
+    const w = createWorld(1, 1, { dummies: false }), b = w.bodies, s = w.seats;
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: 32, aimY: 0, ...o })];
+    if (n) {
+      for (const e of ['shield', ...Array(n).fill('fire')] as Element[]) { for (let k = 0; k < N_EL; k++) s.runes[k] = 9; step(w, aim({ press0: elementId(e) })); }
+      for (let k = 0; k < N_EL; k++) s.runes[k] = 4;
+      for (let k = 0; k < 2; k++) step(w, aim({ buttons: BTN.self }));
+      for (let k = 0; k < 40 && !s.ward[0]; k++) step(w, aim());
+    }
+    const fire = new Uint8Array(N_EL); fire[EL.fire - 1] = 1;
+    let t = 0, took = 0;
+    for (; t < cap && (!n || s.ward[0]); t++) {
+      for (let k = 0; k < N_EL; k++) if (k !== EL.shield - 1) s.runes[k] = 1; // the other pools busy, as in a fight: Shield gets its share of regen
+      const before = b.hp[0];
+      applyHit(w, 0, fire, 0, { scale: dps / 60 / DAMAGE.fire, heal: false, scald: false, freeze: false, source: -1, dirX: 0, dirY: 0, push: 0 });
+      step(w, aim());
+      took += before - b.hp[0]; b.hp[0] = 100;
+    }
+    return { t, took };
+  };
+  for (const absorb of [STRUCT.wardAbsorb]) {
+    STRUCT.wardAbsorb = absorb;
+    for (const n of [1, 2, 3]) for (const dps of [10, 15, 25]) {
+      const on = sim(n, dps, MAX), off = sim(0, dps, on.t);
+      rows.push(`absorb ${absorb}: ward ${n} Fire (${Math.round(100 * (1 - 1 / (1 + STRUCT.wardPerRune * n)))} %), ${dps} direct fire a second: holds ${on.t >= MAX ? '120+' : (on.t / 60).toFixed(0)} s, saved ${Math.round(off.took - on.took)} of ${Math.round(off.took)}`);
+    }
+  }
+  STRUCT.wardAbsorb = keep;
+  writeFileSync(join(__dirname, 'probe-ward.txt'), rows.join(String.fromCharCode(10)));
+});
+
+it('measures Sigil devices: turrets, orbitals, glyphs and auras against the plain spell', async () => {
+  const { EL } = await import('../packages/sim/src/elements');
+  const { runeMax } = await import('../packages/sim/src/world');
+  const rows: string[] = [];
+  const SECS = 20;
+  const presses = (code: string) => [...code].flatMap((c) => (c === 'I' ? ['water', 'cold'] : [L[c]]) as Element[]);
+  // one stationary enemy (or ally, for heals) at `dx`; the device is made, then left SECS seconds; pools held one below full
+  const device = (code: string, btn: number, hold: number, dx: number, cx = dx, cy = 0) => {
+    const w = createWorld(1, 2, { dummies: false }), b = w.bodies, s = w.seats;
+    b.x[0] = 0; b.y[0] = 0;
+    const heal = code.includes('H');
+    const t = heal ? 1 : 8;
+    if (!heal) { b.kind[8] = KIND.enemy; b.arch[8] = 0; b.team[8] = 2; b.r[8] = 0.5; b.maxHp[8] = 1e6; }
+    b.x[t] = dx; b.y[t] = 0; b.hp[t] = heal ? 40 : 1e6; if (heal) b.maxHp[1] = 1e6;
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: cx * 32, aimY: cy * 32, ...o }), NO_INPUT];
+    const fill = () => { for (let e = 1; e <= N_EL; e++) s.runes[e - 1] = Math.max(0, runeMax(w, 0, e) - 1); };
+    for (const e of presses(code)) { fill(); step(w, aim({ press0: elementId(e) })); }
+    for (let k = 0; k < hold; k++) { fill(); step(w, aim({ buttons: btn })); }
+    let dmg = 0, spent = 0, hp0 = b.hp[t], selfHeal = 0, chill = 0;
+    b.hp[0] = 40;
+    for (let k = 0; k < SECS * 60; k++) {
+      fill();
+      const before = s.runes.slice(0, N_EL).reduce((a, x, e) => a + (e === EL.sigil - 1 ? 0 : x), 0);
+      step(w, aim());
+      const after = s.runes.slice(0, N_EL).reduce((a, x, e) => a + (e === EL.sigil - 1 ? 0 : x), 0);
+      spent += Math.max(0, before - after);
+      if (heal) { dmg += b.hp[t] - hp0; b.hp[t] = hp0; } else { dmg += hp0 - b.hp[t]; b.hp[t] = hp0; }
+      selfHeal += b.hp[0] - 40; b.hp[0] = 40;
+      chill += b.chill[8];
+    }
+    return { dmg: Math.round(dmg), spent: +spent.toFixed(1), selfHeal: Math.round(selfHeal), chill: +(chill / (SECS * 60)).toFixed(2) };
+  };
+  const plain = (code: string, cast: Cast) => run(code.replace('G', ''), cast, 1);
+  for (const code of ['GF', 'GFF', 'GA', 'GAF', 'GE', 'GEE', 'GL', 'GI', 'GC', 'GW', 'GH']) {
+    const base = code.slice(1), n = presses(base).length - (code.includes('I') ? 1 : 0);
+    const tur = device(code, BTN.force, 30, 5, 1, 1.5), orb = device(code, BTN.area, 2, 2.6), gly = device(code, BTN.area, 30, 4), aura = device(code, BTN.self, 2, 1.8, code.includes('H') ? 0 : 1.8);
+    const pf = plain(code, 'force'), pp = plain(code, 'place');
+    rows.push(`${code.padEnd(4)} (${n} rune${n > 1 ? 's' : ''} + Sigil)`
+      + `  turret ${tur.dmg} in ${SECS} s for ${tur.spent} runes (${tur.spent ? Math.round(tur.dmg / tur.spent) : '-'} a rune; your own ${pf?.title ?? '?'} ${pf ? Math.round(pf.perTarget / n) : '?'} a rune)`
+      + `  | orbitals ${orb.dmg}  | glyph ${gly.dmg} (the plain ${pp?.title ?? '?'} ${pp?.perTarget ?? '?'})`
+      + `  | aura ${aura.dmg}${aura.selfHeal ? ` self-heal ${aura.selfHeal}` : ''}${aura.chill ? ` chill ${aura.chill}` : ''} in ${SECS} s`);
+  }
+  writeFileSync(join(__dirname, 'probe-sigil.txt'), rows.join(String.fromCharCode(10)));
+});
+
+it('measures how long a barrier holds a pack off', async () => {
+  const { ARCHETYPES, ARCH } = await import('../packages/sim/src/archetypes');
+  const { spawnBody } = await import('../packages/sim/src/world');
+  const { EL } = await import('../packages/sim/src/elements');
+  const { WALL } = await import('../packages/sim/src/compile');
+  const rows: string[] = [];
+  const PACKS: Record<string, number[]> = {
+    '6 goblins': Array(6).fill(ARCH.swarmer),
+    '2 shieldbearers + 4 goblins': [ARCH.shieldbearer, ARCH.shieldbearer, ...Array(4).fill(ARCH.swarmer)],
+    'a brute': [ARCH.brute],
+    '3 archers': Array(3).fill(ARCH.caster),
+  };
+  const FIELDS: [string, number, Element[]][] = [['Ring', 2, ['shield']], ['Arc', 30, ['shield']], ['Cold ring', 2, ['shield', 'cold']], ['Fire ring', 2, ['shield', 'fire']], ['Fire Fire ring', 2, ['shield', 'fire', 'fire']]];
+  for (const [cast, hold, q] of FIELDS) for (const [name, pack] of Object.entries(PACKS)) {
+    const w = createWorld(1, 1, { dummies: false }), b = w.bodies, s = w.seats;
+    b.x[0] = 0; b.y[0] = 0;
+    pack.forEach((a, q) => { const ang = (q / pack.length - 0.5) * 0.25; const i = spawnBody(w, -1, KIND.enemy, 2, Math.cos(ang * 6.283) * 7, Math.sin(ang * 6.283) * 7, ARCHETYPES[a].hp, ARCHETYPES[a].radius); b.arch[i] = a; });
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: 4 * 32, aimY: 0, ...o })];
+    for (let k = 0; k < N_EL; k++) s.runes[k] = 9;
+    for (const e of q) step(w, aim({ press0: elementId(e) }));
+    for (let k = 0; k < N_EL; k++) s.runes[k] = 4;
+    for (let t = 0; t < hold; t++) step(w, aim({ buttons: BTN.area }));
+    let t = 0, firstHurt = -1, broke = -1, minPool = 9, bitten = 0;
+    const walls = () => Array.from(w.walls.type).filter((x) => x === WALL.barrier || x === WALL.curtain).length;
+    for (let k = 0; k < 40 && !walls(); k++) step(w, aim());
+    const n0 = walls();
+    for (; t < 60 * 60; t++) {
+      for (let k = 0; k < N_EL; k++) if (k !== EL.shield - 1) s.runes[k] = 1; // the other pools busy, as in a fight
+      step(w, aim()); // the wizard stands still and doesn't fight back
+      if (firstHurt < 0 && b.hp[0] < 100) firstHurt = t;
+      if (broke < 0 && walls() < n0) broke = t;
+      minPool = Math.min(minPool, s.runes[EL.shield - 1]);
+      b.hp[0] = 100;
+      for (let i = 8; i < b.kind.length; i++) if (b.kind[i] === KIND.enemy) { bitten += b.maxHp[i] - b.hp[i]; b.hp[i] = b.maxHp[i]; } // nothing dies: it's the field's endurance
+    }
+    const sec = (x: number) => (x < 0 ? '60+' : (x / 60).toFixed(1));
+    rows.push(`${cast} (${n0} pieces) vs ${name}: first piece breaks ${sec(broke)} s, wizard first hurt ${sec(firstHurt)} s, Shield pool low ${minPool.toFixed(2)}, the pack took ${Math.round(bitten)} (${Math.round(bitten / Math.max(1, (broke < 0 ? t : broke) / 60))} a second while it held)`);
+  }
+  writeFileSync(join(__dirname, 'probe-barrier.txt'), rows.join(String.fromCharCode(10)));
+});
+
+it('cross-cut: every damage queue up to 4 runes, by cast, with outliers flagged', () => {
+  const LET = ['W', 'F', 'C', 'L', 'A', 'E', 'I'];
+  const codes: string[] = [];
+  const rec = (start: number, cur: string) => { if (cur) codes.push(cur); if (cur.length === 4) return; for (let k = start; k < LET.length; k++) rec(k, cur + LET[k]); };
+  rec(0, '');
+  const CASTS: Cast[] = ['force', 'area', 'place', 'conjure'];
+  type R = NonNullable<ReturnType<typeof run>> & { pack: number };
+  const res = new Map<string, R>();
+  for (const code of codes) for (const cast of CASTS) {
+    const one = run(code, cast, 1);
+    if (!one) continue;
+    const pk = run(code, cast, 5);
+    res.set(`${code}|${cast}`, { ...one, pack: pk ? pk.dmg : 0 });
+  }
+  const runes = (code: string) => [...code].length + [...code].filter((c) => c === 'I').length; // Ice is two presses
+  const status = (r: R) => r.deniedS > 0.4 || r.chill > 0.25 || r.moved > 2;
+  const lines: string[] = [];
+  const fmt = (code: string, cast: Cast, r: R) => `${code.padEnd(5)} ${cast.padEnd(7)} ${r.title.padEnd(22)} one ${String(r.dmg).padStart(4)}  pack ${String(r.pack).padStart(4)}  denied ${r.deniedS}  chill ${r.chill}  moved ${r.moved}`;
+  // 1. dominant and weak, by cast and rune count (against the median one-target damage)
+  lines.push('== Dominant (> 1.6x the median of the same cast and rune count) and weak (< 0.5x, no status to show for it)');
+  for (const cast of CASTS) for (let n = 1; n <= 5; n++) {
+    const group = [...res].filter(([k]) => k.endsWith('|' + cast) && runes(k.split('|')[0]) === n);
+    if (group.length < 4) continue;
+    const ds = group.map(([, r]) => r.dmg).sort((a, b) => a - b), med = ds[Math.floor(ds.length / 2)] || 1;
+    for (const [k, r] of group) {
+      const code = k.split('|')[0];
+      if (r.dmg > 1.6 * med) lines.push(`  DOMINANT (median ${med}) ${fmt(code, cast, r)}`);
+      else if (r.dmg < 0.5 * med && !status(r)) lines.push(`  weak     (median ${med}) ${fmt(code, cast, r)}`);
+    }
+  }
+  // 2. additions that don't pay: one more rune, and nothing gets better
+  lines.push('', '== Additions that do not pay (the bigger spell is no better on damage, pack damage or status)');
+  for (const [k, r] of res) {
+    const [code, cast] = k.split('|') as [string, Cast];
+    for (const c of new Set(code)) {
+      const smaller = code.replace(c, '');
+      if (!smaller) continue;
+      const q = res.get(`${smaller}|${cast}`);
+      if (!q) continue;
+      const better = r.dmg > q.dmg * 1.05 || r.pack > q.pack * 1.05 || r.deniedS > q.deniedS + 0.2 || r.chill > q.chill + 0.08 || r.moved > q.moved + 1 || (r.froze && !q.froze);
+      if (!better) lines.push(`  +${c} to ${smaller.padEnd(4)} ${cast.padEnd(7)} ${q.title} ${q.dmg}/${q.pack} -> ${r.title} ${r.dmg}/${r.pack}`);
+    }
+  }
+  // 3. the casts against each other: close beats placed; the imbued burst should be about the ring
+  lines.push('', '== Casts out of order (Place beating Area on one target by 10 %; the Weapon burst outside 0.7 to 1.3 of the Area ring)');
+  for (const code of codes) {
+    const a = res.get(`${code}|area`), p = res.get(`${code}|place`), c = res.get(`${code}|conjure`);
+    if (a && p && p.dmg > a.dmg * 1.1) lines.push(`  place > area: ${code.padEnd(5)} ${a.title} ${a.dmg} | ${p.title} ${p.dmg}`);
+    if (a && c && a.dmg > 0 && (c.dmg > a.dmg * 1.3 || c.dmg < a.dmg * 0.7)) lines.push(`  burst vs ring: ${code.padEnd(5)} ${a.title} ${a.dmg} | ${c.title} ${c.dmg}`);
+  }
+  // 4. the whole table
+  lines.push('', '== All');
+  for (const [k, r] of res) { const [code, cast] = k.split('|') as [string, Cast]; lines.push('  ' + fmt(code, cast, r)); }
+  writeFileSync(join(__dirname, 'probe-crosscut.txt'), lines.join(String.fromCharCode(10)));
+});

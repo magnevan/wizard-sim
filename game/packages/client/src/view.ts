@@ -14,9 +14,10 @@
  * reached the presented frame (tested on SwiftShader and D3D11). Nothing here rotates or
  * scales a sprite, so it isn't needed: rotation lives inside the Canvas2D effect drawing.
  */
+import { toU, toV } from './iso-world';
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
-  AI, ARCH, ARCHETYPES, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
+  AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
@@ -46,6 +47,8 @@ const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brut
 const AMBIENT = 0xe4e8ff;
 /** ?lighting=0 turns the scene lighting off, to compare. */
 const LIGHTING = typeof location === 'undefined' || new URLSearchParams(location.search).get('lighting') !== '0';
+/** How far the view leans out over the battlefield while you drive a defence: view units, across and up. */
+const DRIVE_LOOK = 4.5;
 const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL', simple: 'SIMPLE, ANGLED, LOW DETAIL', code: 'CODE, STRAIGHT-ON' };
 
 export class WorldView {
@@ -159,7 +162,7 @@ export class WorldView {
   setRenderer(r: Renderer): void { this.renderer = r; }
   /** What stands in the scene, for effects to go behind (art/vfx.ts). Positions are field px; fx0, fy0 convert from the scene's. */
   private occluderSource(w: World, fx0: number, fy0: number) {
-    return (emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number) => void) => {
+    return (emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number, piece?: boolean) => void) => {
       for (let i = 0; i < MAX_BODIES; i++) {
         const spr = this.sprites[i], v = this.views[i];
         if (!v.on || !spr.visible || (i < MAX_SEATS && w.seats.active[i] && w.seats.phase[i] === PHASE.channel)) continue;
@@ -168,7 +171,7 @@ export class WorldView {
       this.props.sprites((s, _x, y) => emit(s.texture, s.position.x - fx0, s.position.y - fy0, y - fy0, true, s.zIndex));
       // pieces carry the origin they were laid out with: effects that draw before the walls see last frame's
       const [px, py] = this.structs.pieceOrigin;
-      this.structs.eachPiece((s, _x, y) => emit(s.texture, s.position.x - px, s.position.y - py, y - py, true, s.zIndex));
+      this.structs.eachPiece((s, _x, y) => emit(s.texture, s.position.x - px, s.position.y - py, y - py, true, s.zIndex, true));
     };
   }
 
@@ -301,6 +304,11 @@ export class WorldView {
     this.vfx.ground.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy); this.vfx.over.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy);
     this.structs.scorch.sprite.position.set(fx0, fy0);
     this.props.place(fx0, fy0);
+    this.props.turnHeads(w, fx0, fy0);
+    // the battery's stakes give way as a defence is taken
+    if (this.props.breakStakes(!!w.battery && w.enc.state[0] > 0 && w.enc.state[1] >= BSTEP.ring, fx0, fy0)) {
+      w.def.props.forEach((p, k) => { if (p.asset === 'stakes') this.vfx.splinters(p.x, p.y, t, k); });
+    }
     this.drawArtLabel(w);
     // the wave banner: over the arena's north edge, or near the top of the view when that is off screen
     this.vfx.bannerX = Math.round(cam.w / 2 - fx0);
@@ -311,7 +319,8 @@ export class WorldView {
       const spr = this.sprites[i], v = this.views[i];
       if (!b.kind[i]) { spr.visible = false; v.on = false; continue; }
       this.smoothX[i] *= 0.82; this.smoothY[i] *= 0.82; // the eased rollback correction fades each frame
-      const x = this.prevBX[i] + (b.x[i] - this.prevBX[i]) * alpha + this.smoothX[i], y = this.prevBY[i] + (b.y[i] - this.prevBY[i]) * alpha + this.smoothY[i];
+      const home = i < MAX_SEATS && w.battery && w.battery.drive[i] >= 0; // driving a defence: your wizard stands where it stepped up
+      const x = home ? toU(w.battery!.homeX[i], w.battery!.homeY[i]) : this.prevBX[i] + (b.x[i] - this.prevBX[i]) * alpha + this.smoothX[i], y = home ? toV(w.battery!.homeX[i], w.battery!.homeY[i]) : this.prevBY[i] + (b.y[i] - this.prevBY[i]) * alpha + this.smoothY[i];
       const fx = Math.round(gx(x)), fy = Math.round(gy(y));
       const s = this.rigState(w, i, t, ct);
       // past the paint budget a body keeps its last frame; one that has none yet is painted anyway
@@ -359,6 +368,7 @@ export class WorldView {
       for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.rock) wall(wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
     }
     this.vfx.occluders = this.occluderSource(w, fx0, fy0);
+    this.vfx.ghostSource = (emit) => { for (let i = MAX_SEATS; i < MAX_BODIES; i++) { const spr = this.sprites[i]; if (this.views[i].on && spr.visible && w.bodies.kind[i] === KIND.enemy) emit(spr.texture, spr.position.x - fx0, spr.position.y - fy0, spr.zIndex); } };
     this.structs.behind = this.vfx.behind;
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
     this.lights.end();
@@ -372,15 +382,16 @@ export class WorldView {
       for (let i = 0; i < MAX_BODIES; i++) if (this.views[i].on && this.sprites[i].visible) lit.relight(this.sprites[i], fx0 + this.views[i].x, fy0 + this.views[i].y);
       this.props.sprites((s, x, y) => lit.relight(s, x, y));
       this.structs.eachPiece((s, x, y) => lit.relight(s, x, y));
+      this.structs.eachGlow((s, k) => lit.emit(s, k));
       lit.render(this.renderer);
     }
     const me = this.vfx.localSeat;
     this.sound?.frame(w, { cx: cam.cx, cy: cam.cy, halfW: cam.w / 2 / PPU, earX: b.x[me], earY: b.y[me] }, ct);
   }
 
-  /** Which art is on show, top right: in a room with props, or wherever the detailed wizard is on. */
+  /** Which art is on show, top right: in the Academy, or wherever the detailed wizard is on. */
   private drawArtLabel(w: World): void {
-    const inRoom = w.def.props.length > 0, on = inRoom || this.wizardHd;
+    const inRoom = w.def.props.length > 0 && w.def.id === 'academy', on = inRoom || this.wizardHd; // the label is for judging art in the Academy
     this.artLabel.visible = on;
     if (!on) return;
     const lines = [...(inRoom ? [`PROPS: ${PROP_LABEL[this.props.set]} (O)`] : []), `WIZARD: ${this.wizardHd ? 'DETAILED' : 'TODAY'}${inRoom ? ' (I)' : ''}`];
@@ -453,7 +464,8 @@ export class WorldView {
     const b = w.bodies, up: { x: number; y: number }[] = [], down: { x: number; y: number }[] = [], all: { x: number; y: number }[] = [];
     for (let s = 0; s < MAX_SEATS; s++) {
       if (b.kind[s] !== KIND.wizard) continue;
-      const [x, y] = this.drawnAt(s, w, alpha), p = { x, y };
+      const [x0, y0] = this.drawnAt(s, w, alpha), far = s < MAX_SEATS && w.battery && w.battery.drive[s] >= 0 ? DRIVE_LOOK : 0;
+      const p = { x: x0 + far, y: y0 - far }; // driving a defence, you look out over the battlefield: north is up and to the right
       all.push(p);
       if (this.isLocal(s)) (b.downed[s] ? down : up).push(p);
     }
@@ -511,7 +523,7 @@ export class WorldView {
     s.dead = b.downed[i] ? 1 : b.down[i] > 0 ? 0.7 : 0;
     s.burn = b.burn[i] > 0 ? (b.burnPool[i] < 10 ? 0.5 : 1) : 0;
     s.burnF = s.burn ? Math.floor(ct * 16) % 4 : 0;
-    s.wet = b.wet[i] > 0 ? (b.wet[i] < 30 ? 0.5 : 1) : 0;
+    s.wet = b.wet[i] > 0 ? Math.max(0.3, b.soak[i] > 0 ? b.soak[i] : 1) : 0; // damp drips lightly, soaked heavily (hit.ts soak)
     s.wetF = s.wet ? Math.floor(ct * 9) % 6 : 0;
     s.frozen = b.frozen[i] > 0 ? (b.frozen[i] < 12 ? 0.67 : Math.min(1, Math.ceil(Math.max(0, 150 - b.frozen[i]) / 6) / 3 || 0.34)) : 0;
     s.chill = Math.round(b.chill[i] * 4) / 4;

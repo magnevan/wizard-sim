@@ -75,7 +75,7 @@ export const ENVS: Readonly<Record<EnvName, EnvProfile>> = {
 };
 
 /** Which profile each room uses. A room that isn't listed gets DEFAULT_ENV. */
-export const ROOM_ENV: Readonly<Record<string, EnvName>> = { sanctum: 'hall', arena: 'outdoor', survive: 'outdoor', tutorial: 'cave' };
+export const ROOM_ENV: Readonly<Record<string, EnvName>> = { sanctum: 'hall', arena: 'outdoor', survive: 'outdoor', tutorial: 'cave', battery: 'outdoor' };
 export const DEFAULT_ENV: EnvName = 'hall';
 export const envOfRoom = (id: string): EnvName => ROOM_ENV[id.toLowerCase()] ?? DEFAULT_ENV;
 

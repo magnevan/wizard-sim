@@ -23,10 +23,11 @@ export interface Scenario {
 
 export const SCENARIOS: readonly Scenario[] = [
   { id: 'tutorial', name: 'Tutorial', blurb: 'Learn the runes, the casts and your hands, one step at a time.', room: 'tutorial', key: '4' },
-  { id: 'sanctum', name: 'Sanctum', blurb: 'The sandbox: three practice dummies and the tuning panel (F1).', room: 'sanctum', key: '1' },
+  { id: 'sanctum', name: 'Sanctum', blurb: 'The sandbox: three practice dummies and the tuning panel (F2).', room: 'sanctum', key: '1' },
   { id: 'arena', name: 'Arena', blurb: 'Waves of enemies from portals, with lulls and breathers.', room: 'arena', key: '2' },
   { id: 'survive', name: 'Survive', blurb: 'Endless waves in a walled arena; pick a power-up between them.', room: 'survive', key: '3' },
   { id: 'academy', name: 'Academy (art test)', blurb: 'A mock room for judging art: O swaps the props, I the wizard.', room: 'academy', key: '5' },
+  { id: 'battery', name: 'The battery (blockout)', blurb: 'The opening\'s first job: the wall, its four defences and the well. Walk it; nothing happens yet.', room: 'battery', key: '6' },
 ];
 
 /** Where you start when the URL names nothing (or something that isn't playable yet). */

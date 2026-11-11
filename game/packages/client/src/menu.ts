@@ -73,9 +73,9 @@ const CONTROLS: [string, string][] = [
   ['D-up', 'Help panel'],
   ['', 'Other'],
   ['1 2 3 4', 'Sanctum, Arena, Survive, Tutorial'],
-  ['F1 / F2', 'Tuning panel / help'],
+  ['F1', 'Help panel (Shift+F1: numbers)'],
+  ['F2 F3 F4', 'Tuning, tools, stats panels'],
   ['Hold Alt', 'Inspect what is under the cursor'],
-  ['`', 'Debug line'],
 ];
 
 interface Item extends NavItem {

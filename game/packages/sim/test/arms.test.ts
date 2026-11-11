@@ -446,6 +446,34 @@ describe('weapons: Heavies and Specials', () => {
   });
 });
 
+describe('the Ice bow (Sigil + Water + Cold)', () => {
+  it('Sigil + Ice conjures the bow, and its Strike is one quick icicle, faster than the wand\'s bolt', () => {
+    const { w, d, dummy } = arena();
+    const t = dummy(6, 0);
+    d.aimAt(6, 0).conjure('sigil', 'water', 'cold');
+    expect(w.seats.weapon[0]).toBe(EL.ice);
+    d.tick({ buttons: BTN.force }, 1).tick({}, 6);
+    const m = Array.from(w.missiles.alive).indexOf(1);
+    expect(m).toBeGreaterThanOrEqual(0);
+    expect(Math.hypot(w.missiles.vx[m], w.missiles.vy[m])).toBeGreaterThan(ARMS.boltSpeed);
+    d.tick({}, 40);
+    expect(w.bodies.hp[t]).toBeLessThan(400);
+  });
+
+  it('a full draw (Heavy) looses a fan of icicles that pierce', () => {
+    const { w, d, dummy } = arena();
+    const a = dummy(3, 0, 8), b = dummy(6, 0, 9);
+    d.aimAt(6, 0).conjure('sigil', 'water', 'cold');
+    let most = 0;
+    d.tick({ buttons: BTN.force }, 100); // a full draw
+    for (let k = 0; k < 20; k++) { d.tick({}, 1); most = Math.max(most, Array.from(w.missiles.alive).filter((x) => x).length); }
+    d.tick({}, 30);
+    expect(most).toBe(ARMS.fanCount);
+    expect(w.bodies.hp[b]).toBeLessThan(400); // through the first dummy
+    expect(w.bodies.hp[a]).toBeLessThan(400);
+  });
+});
+
 describe('the Arcane wand (Sigil + Arcane) and Mend', () => {
   it('Strike is a light bolt', () => {
     const { w, d, dummy } = arena();
@@ -468,7 +496,7 @@ describe('the Arcane wand (Sigil + Arcane) and Mend', () => {
     for (const siphon of [false, true]) {
       const { w, d } = arena();
       d.aimAt(5, 0).conjure('sigil', 'arcane');
-      w.seats.runes[EL.fire - 1] = 0;
+      for (let e = 0; e < 9; e++) if (e !== EL.sigil - 1) w.seats.runes[e] = 0; // every pool refilling, so Fire's share stays below its max either way
       const uses = w.seats.weaponUses[0];
       const hold = siphon ? { buttons: BTN.area, moveX: 127 } : {};
       d.tick(hold, 20);
@@ -576,11 +604,11 @@ describe('the imbued burst (Weapon cast with elements, no Sigil or Shield)', () 
   it('bursts every queued element at full power in a short cone in front; nothing stays in hand', () => {
     const { w, d, dummy } = arena();
     const front = dummy(2.2, 0.3, 8), behind = dummy(-1.5, 0, 9), far = dummy(5, 0, 10);
-    d.aimAt(5, 0).queue('fire', 'lightning');
+    d.aimAt(5, 0).queue('fire', 'arcane'); // Arcane leads: a cone (Lightning's forks, Earth's is a line: below)
     const events: string[] = [];
     d.tick({ buttons: BTN.weapon });
     for (let k = 0; k < 30; k++) { d.tick(); for (const ev of w.events) if (ev.kind === 'move' || ev.kind === 'burst') events.push(`${ev.kind}:${ev.text ?? ''}`); }
-    expect(400 - w.bodies.hp[front]).toBeGreaterThan(10); // fire 6 + lightning 10, at full power
+    expect(400 - w.bodies.hp[front]).toBeGreaterThan(10); // fire + arcane, at full power
     expect(w.bodies.burn[front]).toBeGreaterThan(0);
     expect(w.bodies.hp[behind]).toBe(400);
     expect(w.bodies.hp[far]).toBe(400);
@@ -593,6 +621,36 @@ describe('the imbued burst (Weapon cast with elements, no Sigil or Shield)', () 
     const run = (q: Element[]) => { const { w, d, dummy } = arena(); const t = dummy(3.3, 0); d.aimAt(5, 0).queue(...q).cast(BTN.weapon, 1, 40); return 400 - w.bodies.hp[t]; };
     expect(run(['fire'])).toBe(0);
     expect(run(['fire', 'fire', 'fire'])).toBeGreaterThan(0);
+  });
+
+  it('an Earth-led burst is a long narrow line, and stays one with other elements infused', () => {
+    const { w, d, dummy } = arena();
+    const far = dummy(4.2, 0, 8), beside = dummy(2, 1.6, 9);
+    d.aimAt(5, 0).queue('earth', 'fire').cast(BTN.weapon, 1, 30);
+    expect(400 - w.bodies.hp[far]).toBeGreaterThan(0); // past the cone's reach, on the line
+    expect(w.bodies.burn[far]).toBeGreaterThan(0); // the fire rides along it
+    expect(w.bodies.hp[beside]).toBe(400); // inside the cone's width, off the line
+  });
+
+  it('Life + Earth is a healing tremor: the line heals whoever stands on it', () => {
+    const { w, d, dummy } = arena();
+    const on = dummy(4, 0, 8), off = dummy(2, 1.6, 9);
+    w.bodies.hp[on] = 100; w.bodies.hp[off] = 100;
+    d.aimAt(5, 0).queue('life', 'earth').cast(BTN.weapon, 1, 30);
+    expect(w.bodies.hp[on]).toBeGreaterThan(100);
+    expect(w.bodies.hp[off]).toBe(100);
+  });
+
+  it('a Lightning-led burst forks to the nearest targets in front, each jumping on once, all at once', () => {
+    const { w, d, dummy } = arena();
+    const a = dummy(2, 0, 8), b = dummy(2.6, 1, 9), c = dummy(3, -1, 10), next = dummy(5.8, -1, 11), out = dummy(12, 0, 12);
+    d.aimAt(5, 0).queue('lightning');
+    const zaps: number[] = [];
+    d.tick({ buttons: BTN.weapon });
+    for (let k = 0; k < 20; k++) { d.tick(); for (const ev of w.events) if (ev.kind === 'zap') zaps.push(w.clock[0]); }
+    for (const t of [a, b, c, next]) expect(400 - w.bodies.hp[t]).toBeGreaterThan(0);
+    expect(w.bodies.hp[out]).toBe(400);
+    expect(new Set(zaps).size).toBe(1); // one tick: no channel
   });
 });
 

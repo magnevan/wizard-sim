@@ -19,8 +19,8 @@
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
-  AI, ARCH, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PERKS, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
+  AI, ARCH, drivePlace, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
+  N_ALTARS, N_EL, PERKS, QUEUE_MAX, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
   isPropWall, terrainNear,
 } from '@wizard-sim/sim';
@@ -29,21 +29,39 @@ import { FIELD, gx, gy } from './art/field';
 import * as K from './art/kit';
 import * as X from './art/px';
 import type { Ctx, Pt, Ramp } from './art/px';
-import { CELL_H, CELL_W, FEET_X, FEET_Y } from './art/rigs';
 import * as S from './art/sigil';
 import * as A from './art/accent';
+import { BURST_LIFE, drawBurst, hasBurst } from './art/novas';
 import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './art/util';
 import type { BodyView, LightFn } from './art/vfx';
+import { Sil } from './art/sil';
 import { glyph, perkOf } from './art/perks';
 import { drawTutorialWorld } from './tutorial-view';
-import { kitOf, kitRun, stampTexture } from './art/wall-kit';
-import { toX, toY } from './iso-world';
+import { kitOf, kitRun, sideZ, stampTexture, wallsAllFar } from './art/wall-kit';
+
+/** A wall of fire that belongs to the place (the battery's gate) stands this much taller than a cast one. */
+const GATE_FIRE = 3.4;
+import { toU, toV, toX, toY } from './iso-world';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
 
 /** Seconds between one rune mote appearing and the next. */
 const MOTE_GAP = 0.16;
 /** Seconds Force is held before a turret's preview shows, so a plain click doesn't flash it. */
 const AIM_SHOWS = 0.15;
+
+/**
+ * Where seat i's Place lands, in the view's turned world: the aim point within Place's reach, or, driving a defence,
+ * the defence's own reach and only on the enemy's side of the wall (the sim's drivePlace, worked in the real world's axes).
+ */
+function placeSpot(w: World, i: number): [number, number] {
+  const s = w.seats, b = w.bodies;
+  if (w.battery && i < MAX_SEATS && w.battery.drive[i] >= 0) {
+    const [x, y] = drivePlace(toX(b.x[i], b.y[i]), toY(b.x[i], b.y[i]), toX(s.aimX[i], s.aimY[i]), toY(s.aimX[i], s.aimY[i]));
+    return [toU(x, y), toV(x, y)];
+  }
+  const d = Math.hypot(s.aimX[i], s.aimY[i]), lim = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
+  return [b.x[i] + s.aimX[i] * lim, b.y[i] + s.aimY[i] * lim];
+}
 const EL = X.EL, SV = EL.sigil;
 const AMBIENT = 0xe4e8ff;
 /** ?structoff=walls,waves,... hides parts of this view (for isolating a slow or broken part). */
@@ -59,7 +77,7 @@ const blowRamp = (look: number): Ramp => (look === 0 ? STAFF : look === ELID.lif
 const THRUST = 0.22, SPIN = 0.3;
 /** Sheet colours (rgb for the translucent fill) per element. */
 const RGB: Record<string, string> = {
-  shield: '255,214,110', fire: '255,140,60', cold: '170,236,255', water: '90,160,255', lightning: '196,164,255', arcane: '255,106,176', life: '142,240,126', earth: '184,148,106', sigil: '236,140,255',
+  shield: '255,214,110', fire: '255,140,60', cold: '170,236,255', ice: '194,236,246', water: '90,160,255', lightning: '196,164,255', arcane: '255,106,176', life: '142,240,126', earth: '184,148,106', sigil: '236,140,255',
 };
 
 /** The most numerous element in a 9-count block, skipping `skip` ids (wards and waves: plain argmax). */
@@ -82,14 +100,16 @@ function wallLead(els: Uint8Array, at: number, ...skip: number[]): number {
   return formOf(LEAD);
 }
 const has = (els: Uint8Array, at: number, id: number) => els[at * N_EL + id - 1] > 0;
-/** Water + Cold together are ice: Shield spells carrying both are drawn as crystal, not as either element. */
-const isIce = (els: Uint8Array, at: number) => has(els, at, ELID.water) && has(els, at, ELID.cold);
+/** Ice (Water + Cold in one rune): Shield spells carrying it are drawn as crystal. */
+const isIce = (els: Uint8Array, at: number) => has(els, at, ELID.ice);
+/** Cold and Ice share their frosty drawing branches (Ice: its own ramp where it has one). */
+const frosty = (el: string): boolean => el === 'cold' || el === 'ice';
 /** The hand a conjured weapon or wand is held in (the staff's); a guard hangs on the other arm. */
 const WEAPON_HAND = 1;
 
 // =====================================================================================================
 // Depth-sorted pieces: sprites in the actors container, either cached textures or per-frame canvases.
-interface Dyn { c: HTMLCanvasElement; x: Ctx; tex: Texture; spr: Sprite; w: number; h: number; used: boolean }
+interface Dyn { c: HTMLCanvasElement; x: Ctx; tex: Texture; spr: Sprite; w: number; h: number; used: boolean; glow: number }
 class Pieces {
   private stat: Sprite[] = [];
   private footX: number[] = [];
@@ -110,8 +130,10 @@ class Pieces {
     this.nS++;
     s.texture = tex; s.position.set(this.fx0 + rx, this.fy0 + ry); s.zIndex = Math.round(z) * 128 + 100; s.tint = tint; s.visible = true;
   }
-  /** A fresh canvas covering field rect (rx, ry, w, h), translated so the caller draws in field px. */
-  canvas(rx: number, ry: number, w: number, h: number, z: number, tint = 0xffffff): Ctx {
+  /** The canvases drawn this frame that give off their own light (glow 0..1): the lighting adds them back over the night's tint. */
+  eachGlow(fn: (s: Sprite, k: number) => void): void { for (const d of this.dyn) if (d.used && d.glow > 0) fn(d.spr, d.glow); }
+  /** A fresh canvas covering field rect (rx, ry, w, h), translated so the caller draws in field px. glow: how much it emits (energy). */
+  canvas(rx: number, ry: number, w: number, h: number, z: number, tint = 0xffffff, glow = 0): Ctx {
     rx = Math.floor(rx); ry = Math.floor(ry);
     const W = Math.ceil(w / 16) * 16, H = Math.ceil(h / 16) * 16;
     let d = this.dyn.find((q) => !q.used && q.w === W && q.h === H);
@@ -119,10 +141,10 @@ class Pieces {
       const { c, x } = X.canvas(W, H);
       const tex = Texture.from(c); tex.source.scaleMode = 'nearest';
       const spr = new Sprite(tex); this.parent.addChild(spr);
-      d = { c, x, tex, spr, w: W, h: H, used: false };
+      d = { c, x, tex, spr, w: W, h: H, used: false, glow: 0 };
       this.dyn.push(d);
     }
-    d.used = true;
+    d.used = true; d.glow = glow;
     const x = d.x;
     x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, W, H); x.setTransform(1, 0, 0, 1, -rx, -ry); x._fs = null;
     d.spr.position.set(this.fx0 + rx, this.fy0 + ry); d.spr.zIndex = Math.round(z) * 128 + 100; d.spr.tint = tint; d.spr.visible = true;
@@ -131,58 +153,6 @@ class Pieces {
   end(): void {
     for (let i = this.nS; i < this.stat.length; i++) this.stat[i].visible = false;
     for (const d of this.dyn) { if (d.used) d.tex.source.update(); else d.spr.visible = false; }
-  }
-}
-
-// =====================================================================================================
-// Silhouette effects: a halo or sheen built from a body's cached frame (the ward skin, the Double).
-class Sil {
-  private A = X.canvas(CELL_W + 8, CELL_H + 8);
-  private B = X.canvas(CELL_W + 8, CELL_H + 8);
-  private cell(v: BodyView, c: Ctx, dx = 4, dy = 4): boolean {
-    const f = v.f; if (!f) return false;
-    c.drawImage(f.c, f.sx, f.sy, CELL_W, CELL_H, dx, dy, CELL_W, CELL_H);
-    return true;
-  }
-  /** A skin round the silhouette: `ring` px wide, in col, with a bright band climbing it, dithered to level (0..16). */
-  halo(o: Ctx, v: BodyView, t: number, col: string, opt: { hi?: string; col2?: string; level?: number; ring?: number; band?: boolean; lag?: [number, number] } = {}): void {
-    const A = this.A.x, B = this.B.x, W = CELL_W + 8, H = CELL_H + 8;
-    A.globalCompositeOperation = 'source-over'; A.clearRect(0, 0, W, H);
-    if (!this.cell(v, A)) return;
-    A.globalCompositeOperation = 'source-in'; A.fillStyle = col; A.fillRect(0, 0, W, H);
-    if (opt.band !== false && opt.hi) {
-      A.globalCompositeOperation = 'source-atop';
-      const band = H - ((t * 46) % (H + 12));
-      A.fillStyle = opt.hi; A.fillRect(0, Math.round(band), W, 3);
-      A.fillStyle = opt.col2 ?? col; A.fillRect(0, Math.round(band) + 3, W, 2);
-    }
-    const lvl = Math.round(opt.level ?? 16);
-    if (lvl < 16) {
-      A.globalCompositeOperation = 'destination-in';
-      const ox = Math.floor(t * 9) % 4, oy = Math.floor(t * 7) % 4;
-      A.drawImage(X.mask(lvl), ox, oy, W, H, 0, 0, W, H);
-    }
-    A.globalCompositeOperation = 'source-over'; A._fs = null;
-    B.globalCompositeOperation = 'source-over'; B.clearRect(0, 0, W, H);
-    const r = opt.ring ?? 2, lag = opt.lag;
-    if (lag) B.drawImage(this.A.c, lag[0], lag[1]);
-    else {
-      const offs = r >= 2 ? [[-2, 0], [2, 0], [0, -2], [0, 2], [-1, -1], [1, -1], [-1, 1], [1, 1], [-2, -1], [2, -1]] : [[-1, 0], [1, 0], [0, -1], [0, 1]];
-      for (const [dx, dy] of offs) B.drawImage(this.A.c, dx, dy);
-    }
-    B.globalCompositeOperation = 'destination-out'; this.cell(v, B); B.globalCompositeOperation = 'source-over';
-    o.drawImage(this.B.c, Math.round(v.x - FEET_X - 4), Math.round(v.y - FEET_Y - 4));
-  }
-  /** A sheen over the body itself: diagonal bands sweeping across it, dithered. */
-  sheen(o: Ctx, v: BodyView, t: number, cols: [string, string], level = 9): void {
-    const A = this.A.x, W = CELL_W + 8, H = CELL_H + 8;
-    A.globalCompositeOperation = 'source-over'; A.clearRect(0, 0, W, H); A._fs = null;
-    const sweep = mod(t * 40, W + 40) - 20;
-    for (let y = 0; y < H; y++) { const x0 = Math.round(sweep - y * 0.6); X.rect(A, x0, y, 3, 1, cols[0]); X.rect(A, x0 + 3, y, 2, 1, cols[1]); X.rect(A, x0 - 14, y, 1, 1, cols[1]); }
-    A.globalCompositeOperation = 'destination-in'; A.drawImage(X.mask(level), 0, 0, W, H, 0, 0, W, H);
-    this.cell(v, A); // destination-in with the body: only on the body
-    A.globalCompositeOperation = 'source-over';
-    o.drawImage(this.A.c, Math.round(v.x - FEET_X - 4), Math.round(v.y - FEET_Y - 4));
   }
 }
 
@@ -357,9 +327,11 @@ export class StructureView {
   constructor(actors: Container) { this.pieces = new Pieces(actors); }
   /** Every wall piece drawn this frame, and where it stands in the scene, for the lighting. */
   eachPiece(fn: (s: Sprite, x: number, y: number) => void): void { this.pieces.each(fn); }
+  /** Energy pieces (barriers, coated fields, the gate's fire), which light themselves. */
+  eachGlow(fn: (s: Sprite, k: number) => void): void { this.pieces.eachGlow(fn); }
   get pieceOrigin(): [number, number] { return this.pieces.origin; }
   /** Draws something anchored on the ground so what stands in front hides it (Vfx.behind). Set by the view. */
-  behind: ((ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread?: boolean) => void) | null = null;
+  behind: ((ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread?: boolean, bodiesToo?: boolean, overWalls?: boolean) => void) | null = null;
   private depth(o: Ctx, ax: number, ay: number, R: number, draw: (o: Ctx) => void): void {
     if (this.behind) this.behind(ax, ay, R, draw); else draw(o);
   }
@@ -384,7 +356,8 @@ export class StructureView {
     // weapon and guard moves (hands.ts, guards.ts): each its own short readable effect
     for (const e of w.events) {
       if (e.kind !== 'move' || !e.text) continue;
-      const life = MOVE_LIFE[e.text] ?? 0.5;
+      // a burst plays as long as its slowest part (an Earth line carrying fire keeps the scorch)
+      const life = (e.text === 'imbue' ? Math.max(BURST_LIFE[e.look ?? 0] ?? 0, (e.els ?? 0) & (1 << ELID.earth) ? BURST_LIFE[ELID.earth]! : 0) || undefined : undefined) ?? MOVE_LIFE[e.text] ?? 0.5;
       if ((e.text === 'strike' || e.text === 'sweep') && e.who >= 0 && e.who < MAX_SEATS) {
         this.blowT0[e.who] = t; this.blowKind[e.who] = e.text === 'strike' ? 1 : 2; this.blowAng[e.who] = Math.atan2((e.y2 ?? e.y) - e.y, (e.x2 ?? e.x) - e.x);
       }
@@ -499,7 +472,7 @@ export class StructureView {
     this.slabs.begin(12);
     this.scorch.draw(w, st);
     const off = OFF;
-    if (!off.includes('walls')) this.walls(w, t, g, o, light);
+    if (!off.includes('walls')) this.walls(w, t, g, o, bodies, light);
     if (w.run) { this.altars(w, t, g, o, light); this.rallies(w, t, g, o, bodies, light); }
     if (w.tut) drawTutorialWorld(w, t, g, o, light, (rx, ry, cw, ch, z) => this.pieces.canvas(rx, ry, cw, ch, z));
     if (!off.includes('waves')) { this.waves(w, t, g, o, light); this.sparks(w, t, g, o, light); }
@@ -634,7 +607,7 @@ export class StructureView {
   }
 
   // ---- Shield walls ---------------------------------------------------------------------------------
-  private walls(w: World, t: number, g: Ctx, o: Ctx, light: LightFn): void {
+  private walls(w: World, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
     const wl = w.walls, tr = w.terrain, nt = tr.n, s = w.seats, tick = w.clock[0], live = new Set<string>(), kitName = kitOf(w.def.id);
     const near = (ax: number, ay: number, x: number, y: number) => Math.abs(ax - x) < 0.05 && Math.abs(ay - y) < 0.05;
     const joins = (id: number, x: number, y: number) => {
@@ -654,18 +627,19 @@ export class StructureView {
         // a room's own straight walls, where it has a kit: bought pieces instead of the drawn stone
         if (own === TERRAIN && kitName) {
           const mu = (sx1 + sx2) / 2, mv = (sy1 + sy2) / 2;
-          const run = kitRun(a[0], a[1], bb[0], bb[1], toX(mu, mv), toY(mu, mv));
+          const run = kitRun(a[0], a[1], bb[0], bb[1], toX(mu, mv), toY(mu, mv), wallsAllFar(w.def.id));
           let drawn = !!run;
           for (const st of run ?? []) {
             const got = stampTexture(kitName, st);
             if (!got) { drawn = false; break; }
           }
           if (run && drawn) {
-            for (const st of run) { const got = stampTexture(kitName, st)!; this.pieces.tex(got.tex, st.x + got.dx, st.y, st.z, 0xffffff, st.foot); }
+            const open = wallsAllFar(w.def.id);
+            for (const st of run) { const got = stampTexture(kitName, st)!; this.pieces.tex(got.tex, st.x + got.dx, st.y, open ? sideZ(st, a[0], a[1], bb[0], bb[1], bodies) : st.z, 0xffffff, st.foot); }
             continue;
           }
         }
-        const cold = !isT && has(wl.els, k, ELID.cold), coat = isT ? 0 : wallLead(wl.els, k, ELID.earth);
+        const cold = !isT && (has(wl.els, k, ELID.cold) || isIce(wl.els, k)), coat = isT ? 0 : wallLead(wl.els, k, ELID.earth);
         const endA = !joins(id, sx1, sy1), endB = !joins(id, sx2, sy2);
         const pre = `${id}:${born}:${+endA}${+endB}:${+cold}`;
         live.add(pre);
@@ -708,7 +682,7 @@ export class StructureView {
         if (coat && st < 4) this.wallCoat(o, gm.g, gm.spec, coat, t, k, light);
         continue;
       }
-      // energy: a barrier (Shield alone) or a curtain in its element
+      // energy: a barrier (Shield alone), a coated field (Shield + elements), or a curtain of the place
       const owner = wl.owner[k];
       const pool = owner >= 0 && owner < MAX_SEATS ? s.runes[owner * N_EL + ELID.shield - 1] : RUNES.max.shield;
       const kS = clamp((pool - STRUCT.reserve) / 2.2, 0.12, 1) * (0.75 + 0.25 * hpf);
@@ -717,14 +691,22 @@ export class StructureView {
       const n = Math.max(2, Math.ceil(Math.max(x1 - x0, y1 - y0)) + 1), cols: Pt[] = [];
       for (let j = 0; j < n; j++) cols.push([lerp(a[0], bb[0], j / (n - 1)), lerp(a[1], bb[1], j / (n - 1))]);
       const mid: Pt = [(a[0] + bb[0]) / 2, (a[1] + bb[1]) / 2];
+      if (ty === WALL.ice) {
+        // a spike barrier: solid like rock, so its look doesn't dim with the Shield pool; it sinks as it melts (hpf)
+        const h = 24 * rise;
+        const c = this.pieces.canvas(x0 - 10, y0 - h - 6, x1 - x0 + 21, y1 - y0 + h + 10, mid[1]);
+        this.iceWall(c, g, cols, a, bb, mid, rise * (0.45 + 0.55 * hpf), hitE, k * 31 + 7, t, light);
+        continue;
+      }
       if (ty === WALL.barrier) {
         const h = 16 * rise;
-        const c = this.pieces.canvas(x0 - 3, y0 - h - 6, x1 - x0 + 7, y1 - y0 + h + 10, mid[1]);
+        const c = this.pieces.canvas(x0 - 3, y0 - h - 6, x1 - x0 + 7, y1 - y0 + h + 10, mid[1], 0xffffff, 1);
         S.sheetCols(c, cols, h, t, kS, EL.shield, RGB.shield, k, hitE);
         if (k % 2 === 0) light(mid[0], mid[1], 30, '#ffc83a', 0.32 * kS * rise);
         continue;
       }
-      this.curtain(w, k, t, g, a, bb, cols, mid, rise, kS, hitE, light);
+      if (wl.owner[k] === TERRAIN) this.curtain(w, k, t, g, a, bb, cols, mid, rise, kS, hitE, light);
+      else this.coatedField(w, k, t, g, a, bb, cols, mid, rise, kS, hitE, light);
     }
     // nothing to drop while the same walls stand (prune only ever removes walls that are gone)
     let sig = '';
@@ -759,37 +741,122 @@ export class StructureView {
     }
   }
 
-  /** A curtain: walk through it, but crossing it pulses its element. Life's is a healing zone. */
+  /**
+   * A coated force field (Shield + elements, raised by a wizard): it still stops the other side, so it is drawn as the
+   * barrier's sheet, in its coat's colour the way an elemental ward takes its element's, with the Shield's gold in seams at
+   * its foot. Each element on it shows on top (the lead fully, the others sparser): fire licks along the crest, water runs
+   * down the face, frost rimes the foot and snows, lightning crawls the crest, arcane motes rise, Life glows on the ground
+   * and sends up pluses (it heals the team). (Spell audit, 2026-11-11: the walk-through curtain is gone.)
+   */
+  private coatedField(w: World, k: number, t: number, g: Ctx, a: Pt, bb: Pt, cols: Pt[], mid: Pt, rise: number, kS: number, hitE: number, light: LightFn): void {
+    const wl = w.walls, lid = wallLead(wl.els, k) || ELID.arcane, lel = elName(lid), sd = k * 13;
+    const R: Ramp = lid === ELID.life ? LIFE : frosty(lel) ? X.FROST : ramp(lid);
+    const x0 = Math.min(a[0], bb[0]), x1 = Math.max(a[0], bb[0]), y0 = Math.min(a[1], bb[1]), y1 = Math.max(a[1], bb[1]);
+    const h = 16 * rise, crest = h * (0.62 + 0.38 * kS), head = 16;
+    const c = this.pieces.canvas(x0 - 6, y0 - h - head, x1 - x0 + 13, y1 - y0 + h + head + 6, mid[1], 0xffffff, 1);
+    S.sheetCols(c, cols, h, t, kS, R, RGB[lel] ?? RGB.arcane, k, hitE);
+    // the Shield underneath: gold seams climbing the foot every few pixels, and a gold base line where the coat is thin
+    const GD = EL.shield, n = cols.length;
+    for (let j = 0; j < n; j++) {
+      const [x, y] = cols[j];
+      if (j % 5 === 0) { X.px(c, x, y - 1, GD[1]); X.px(c, x, y - 2, GD[2]); if (kS > 0.5) X.px(c, x, y - 3, GD[2]); }
+      else if (j % 2 === 0) X.px(c, x, y, GD[2]);
+    }
+    const P = S.sample([a, bb], 4), np = P.length;
+    for (let id = 1; id <= N_EL; id++) {
+      if (id === ELID.shield || id === ELID.sigil || !has(wl.els, k, id)) continue;
+      const el = elName(id), d = (id === lid ? 1 : 0.45) * rise, on = (q: number, s2: number) => rand(q, s2, sd + id) < d;
+      if (el === 'fire') {
+        for (let j = 1; j < n - 1; j += 3) {
+          if (!on(j, 1)) continue;
+          const [x, y] = cols[j], f = 0.5 + 0.5 * Math.sin(t * 12 + j * 1.7 + k);
+          K.tongue(c, x, y - crest + 2, 1.7, (4 + 5 * f) * (0.6 + 0.4 * kS), Math.sin(t * 7 + j));
+        }
+        for (const p of emit(t, 2 * np * d, 1, (q, age) => { const b2 = P[mod(q, np)]; return { x: b2[0] + Math.sin(age * 5 + q) * 2, y: b2[1] - crest - age * 12, age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? EL.fire[1] : EL.fire[3]);
+        light(mid[0], mid[1] - 6, 38, '#ff7020', (id === lid ? 0.5 : 0.25) * rise);
+      } else if (el === 'water') {
+        for (const p of emit(t, 4 * np * d, 0.7, (q, age) => { const b2 = P[mod(q, np)]; return { x: b2[0] + (rand(q, 3, sd) - 0.5) * 6, y: b2[1] - crest + age * age * crest, age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? '#e0f6ff' : EL.water[1]);
+        for (const p of P) if (on(Math.round(p[0]), 2)) X.ellipse(g, p[0], p[1] + 1, 3, 1.2, '#3a98ff', 0.3 * rise);
+        light(mid[0], mid[1], 32, '#3a98ff', (id === lid ? 0.4 : 0.2) * rise);
+      } else if (frosty(el)) {
+        for (const p of emit(t, 3 * np * d, 1.4, (q, age) => { const b2 = P[mod(q, np)]; return { x: b2[0] + (rand(q, 3, sd) - 0.5) * 6 + Math.sin(age * 6 + q) * 1.5, y: b2[1] - crest - 4 + age * (crest + 4), age, q }; })) X.px(c, p.x, p.y, p.q % 3 ? '#ffffff' : X.FROST[2]);
+        // icicles hang from the crest, rime frosts the ground on both sides
+        for (let j = 0; j < n; j++) {
+          const [x, y] = cols[j]; if (on(j, 3)) X.px(c, x, y - crest, '#ffffff');
+          if (j % 3 === 1 && on(j, 8)) { const L = 2 + Math.floor(rand(j, 9, sd) * 3); for (let z = 0; z < L; z++) X.px(c, x, y - crest + 1 + z, z === L - 1 ? '#ffffff' : X.FROST[2]); }
+          if (rand(Math.round(x), 7, sd) < 0.6 * d) { X.ellipse(g, x, y + 1, 2.5, 1.2, '#c4eefa', 0.55); X.px(g, x + 1, y + 2, '#ffffff'); }
+        }
+        if (id === ELID.ice) for (let j = 1; j < n; j += 6) if (on(j, 4)) K.shard(c, cols[j][0], cols[j][1], -Math.PI / 2 + (rand(j, 5, sd) - 0.5) * 0.8, 4 + 2 * rand(j, 6, sd), sd + j, 1, EL.ice ?? EL.cold);
+        light(mid[0], mid[1], 32, '#9ff4ff', (id === lid ? 0.4 : 0.2) * rise);
+      } else if (el === 'lightning') {
+        const fl = Math.floor(t * 20);
+        if (fl % 3 !== 2) for (let j = 0; j + 6 < n; j += 6) if (rand(j, fl, sd) < 0.55 * d) { const A2 = cols[j], B2 = cols[Math.min(n - 1, j + 6 + Math.floor(rand(j, 3, fl) * 6))]; const bl = K.bolt([A2[0], A2[1] - crest], [B2[0], B2[1] - crest * (0.3 + 0.7 * rand(j, 4, fl))], sd + j + fl, 0.5, 3); X.lines(c, bl.map(([x, y]) => [x, y + 1] as Pt), EL.lightning[3]); X.lines(c, bl, id === lid ? '#ffffff' : EL.lightning[1]); }
+        light(mid[0], mid[1] - 4, 36, '#b08aff', (id === lid ? 0.45 : 0.22) * rise);
+      } else if (el === 'arcane') {
+        for (const p of emit(t, 3 * np * d, 1, (q, age) => { const b2 = P[mod(q, np)]; return { x: b2[0] + Math.sin(age * 5 + q) * 2, y: b2[1] - age * (crest + 8), age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? EL.arcane[1] : EL.arcane[2]);
+        light(mid[0], mid[1], 32, '#ff4f9b', (id === lid ? 0.4 : 0.2) * rise);
+      } else if (el === 'life') {
+        // it heals the team: a green glow on the ground along it, sparkles and pluses rising out of the sheet
+        for (const p of P) { X.ellipse(g, p[0], p[1], 6, 3, '#1e7a34', 0.3 * d); X.ellipse(g, p[0], p[1], 3.5, 1.8, '#46c450', 0.25 * d); }
+        for (const p of emit(t, 2 * np * d, 1.1, (q, age) => { const b2 = P[mod(q, np)]; return { x: b2[0] + (rand(q, 3, sd) - 0.5) * 6, y: b2[1] - crest * 0.4 - age * (crest + 6), age, q }; })) {
+          const col = p.age < 0.4 ? '#ffffff' : p.age < 0.7 ? X.WARM[2] : LIFE[3];
+          if (p.q % 4 === 0 && p.age < 0.7) { X.px(c, p.x - 1, p.y, col); X.px(c, p.x + 1, p.y, col); X.px(c, p.x, p.y - 1, col); X.px(c, p.x, p.y + 1, col); }
+          X.px(c, p.x, p.y, col);
+        }
+        light(mid[0], mid[1], 40, '#8ef07e', (id === lid ? 0.45 : 0.25) * rise);
+      }
+    }
+    if (k % 2 === 0) light(mid[0], mid[1], 26, '#ffc83a', 0.2 * kS * rise);
+  }
+
+  /** A curtain of the place (the battery gate's fire): a wall of its element. Cast fields are drawn by coatedField. */
   private curtain(w: World, k: number, t: number, g: Ctx, a: Pt, bb: Pt, cols: Pt[], mid: Pt, rise: number, kS: number, hitE: number, light: LightFn): void {
     const wl = w.walls, coat = wallLead(wl.els, k) || ELID.arcane, el = elName(coat), R = ramp(coat), sd = k * 13;
     const pulse = 1 - clamp(((w.clock[0] - wl.born[k]) % 30) / 8, 0, 1);
     const x0 = Math.min(a[0], bb[0]), x1 = Math.max(a[0], bb[0]), y0 = Math.min(a[1], bb[1]), y1 = Math.max(a[1], bb[1]);
-    const h = (el === 'fire' ? 15 : 14) * rise, head = 18;
-    const c = this.pieces.canvas(x0 - 6, y0 - h - head, x1 - x0 + 13, y1 - y0 + h + head + 6, mid[1]);
+    const h = (el === 'fire' ? 15 : 14) * (wl.owner[k] === TERRAIN ? GATE_FIRE : 1) * rise, head = 18;
+    const c = this.pieces.canvas(x0 - 6, y0 - h - head, x1 - x0 + 13, y1 - y0 + h + head + 6, mid[1], 0xffffff, 1);
     const P = S.sample([a, bb], 4);
     if (el === 'fire') {
-      for (const p of cols) if ((Math.round(p[0]) + Math.round(p[1])) % 3 === 0) X.ellipse(g, p[0], p[1], 2.5, 1.2, 'rgba(26,16,14,0.5)');
-      // one continuous sheet of flame along the line (fire-place-v3's column fire): a low base and
-      // tongues where travelling waves peak, gold roots, orange body, red-orange tips
-      const FR = EL.fire, n = cols.length;
+      for (const p of cols) if (rand(Math.round(p[0]), Math.round(p[1]), 41) < 0.33) X.ellipse(g, p[0], p[1], 2.5, 1.2, 'rgba(26,16,14,0.5)');
+      // A sheet of flame along the line, three layers deep: dark red behind, orange through the body, gold
+      // at the roots. Heights come from noise along the wall, so a long wall never repeats. A bigger fire
+      // has bigger tongues that move slower: its size grows by s, its waver by only the root of s.
+      const FR = EL.fire, n = cols.length, s = wl.owner[k] === TERRAIN ? GATE_FIRE : 1, slow = 1 / Math.sqrt(s), big = Math.sqrt(s), lift = Math.round(s - 1);
       // one column per pixel along the wall: a north-south wall would stack them into a 1 px strip,
       // so columns widen as the wall turns vertical (1 px across the screen, 4 px up it)
       const adx = Math.abs(bb[0] - a[0]), ady = Math.abs(bb[1] - a[1]);
       const cw = 1 + Math.round((3 * ady) / (adx + ady + 1e-6)), co = Math.floor(cw / 2);
-      for (let j = 0; j < n; j++) {
-        const xx = Math.round(cols[j][0]), yy = Math.round(cols[j][1]), edge = Math.min(1, (j + 1) / 4, (n - j) / 4);
-        if (edge < 0.5 && rand(xx, yy, 3) > edge * 1.6) continue;
-        const wv = 0.5 + 0.5 * Math.sin(j * 0.55 - t * 6 + Math.sin(j * 0.21) * 3), w2 = 0.5 + 0.5 * Math.sin(j * 0.23 + t * 3.1);
-        const hh = Math.round(((3 + 2 * pulse) + (h - 3) * wv * wv * (0.55 + 0.45 * w2) * (0.85 + 0.15 * Math.sin(t * 13 + j))) * edge * rise);
-        if (hh < 1) continue;
-        const sw = Math.sin(t * 9 + j * 0.4), b1 = Math.round(hh * 0.35), b2 = Math.round(hh * 0.75);
-        if (b1 > 0) X.rect(c, xx - co, yy - b1 + 1, cw, b1, FR[1]);
-        if (b2 > b1) X.rect(c, xx - co + Math.round(sw * b2 * 0.06), yy - b2 + 1, cw, b2 - b1, FR[2]);
-        if (hh > b2) X.rect(c, xx - co + Math.round(sw * hh * 0.12), yy - hh + 1, Math.max(1, cw - 1), hh - b2, hh > 7 ? FR[3] : FR[2]);
-        if (hh > 9 && wv > 0.97) X.px(c, xx + Math.round(sw * hh * 0.14), yy - hh, FR[0]);
+      const noise = (x: number, y: number, seed: number): number => {
+        const ix = Math.floor(x), iy = Math.floor(y), fx = smooth(x - ix), fy = smooth(y - iy);
+        return lerp(lerp(rand(ix, iy, seed), rand(ix + 1, iy, seed), fx), lerp(rand(ix, iy + 1, seed), rand(ix + 1, iy + 1, seed), fx), fy);
+      };
+      // each layer is a sheet of its own tongues, nested from dark red outside to gold in the core; a bigger fire has more of them
+      const LAYERS: readonly (readonly [number, string, string])[] = s > 1
+        ? [[1, FR[3], FR[4]], [0.86, FR[2], FR[3]], [0.66, FR[2], FR[3]], [0.46, FR[1], FR[2]], [0.26, FR[1], FR[1]]]
+        : [[1, FR[3], FR[4]], [0.74, FR[2], FR[3]], [0.4, FR[1], FR[2]]];
+      for (let layer = 0; layer < LAYERS.length; layer++) {
+        const [tall, root, tip] = LAYERS[layer], up = layer === 0 ? lift : 0, seed = sd + 101 * layer, core = layer === LAYERS.length - 1;
+        const reach = h * tall;
+        for (let j = 0; j < n; j++) {
+          const xx = Math.round(cols[j][0]), yy = Math.round(cols[j][1]), edge = Math.min(1, (j + 1) / 4, (n - j) / 4);
+          if (edge < 0.5 && rand(xx, yy, 3) > edge * 1.6) continue;
+          const broad = noise(j / (15 * big), t * 1.5 * slow, seed + 1), fine = noise(j / (6 * big), t * 2.8 * slow, seed + 2), grain = noise(j / 2, t * 5 * slow, seed + 3);
+          const body = clamp((broad * 0.65 + fine * 0.35 - 0.2) / 0.6, 0, 1), base = (3 + 2 * pulse) * (layer === 0 ? 1 : 0.8);
+          // the outer sheet stays whole; the ones inside it rise and fall right down to the root, so tongues show within the fire
+          const floor = layer === 0 ? 0.3 : 0.04, hh = Math.round((base + (reach - base) * (floor + (1 - floor) * Math.pow(body, 1.3)) * (0.75 + 0.25 * grain)) * edge * rise);
+          if (hh < 1) continue;
+          const sw = (noise(j / (18 * big), t * 1.1 * slow, seed + 4) - 0.5) * 2, split = Math.round(hh * 0.62);
+          const y = yy - up + (core ? 1 : 0);
+          X.rect(c, xx - co, y - split + 1, cw, split, root);
+          if (hh > split) X.rect(c, xx - co + Math.round(sw * hh * 0.1), y - hh + 1, Math.max(1, cw - (layer ? 0 : 1)), hh - split, tip);
+          if (core && hh > 6 && grain > 0.72) X.px(c, xx, y - hh, FR[0]);
+        }
       }
-      for (const p of emit(t, 4 * P.length, 1, (i, age) => { const q = P[mod(i, P.length)]; return { x: q[0] + Math.sin(age * 5 + i) * 2, y: q[1] - h * 0.6 - age * 14, age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? EL.fire[1] : EL.fire[3]);
-      light(mid[0], mid[1], 40, '#ff7020', 0.6 * rise);
+      // embers leave from inside the sheet at a speed that barely grows with it
+      for (const p of emit(t, 2 * P.length * big, 1, (i, age) => { const q = P[mod(i, P.length)]; return { x: q[0] + Math.sin(age * 5 + i) * 2, y: q[1] - h * (0.45 + 0.5 * rand(i, 44, sd)) - age * 14 * big, age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? EL.fire[1] : EL.fire[3]);
+      if (wl.owner[k] === TERRAIN) light(mid[0], mid[1] - 16, 36, '#ff7020', 0.6 * rise); // set back, or its glow reaches the gate's anchor and washes out the whole sprite
+      else light(mid[0], mid[1], 40, '#ff7020', 0.6 * rise);
       return;
     }
     if (el === 'life') {
@@ -804,10 +871,10 @@ export class StructureView {
       light(mid[0], mid[1], 40, '#8ef07e', (0.45 + 0.3 * pulse) * rise);
       return;
     }
-    if ((el === 'water' || el === 'cold') && isIce(wl.els, k)) { this.iceCurtain(c, g, cols, a, bb, mid, rise, Math.max(0.35, kS), pulse, hitE, sd, t, light); return; }
-    const Rr: Ramp = el === 'cold' ? X.FROST : R;
+    if (isIce(wl.els, k)) { this.iceCurtain(c, g, cols, a, bb, mid, rise, Math.max(0.35, kS), pulse, hitE, sd, t, light); return; }
+    const Rr: Ramp = frosty(el) ? X.FROST : R;
     S.sheetCols(c, cols, h, t, Math.max(0.35, kS) * (0.8 + 0.2 * pulse), Rr, RGB[el] ?? RGB.arcane, k, hitE);
-    if (el === 'cold') {
+    if (frosty(el)) {
       for (const p of emit(t, 3 * P.length, 1.4, (i, age) => { const q = P[mod(i, P.length)]; return { x: q[0] + (rand(i, 3, sd) - 0.5) * 6 + Math.sin(age * 6 + i) * 1.5, y: q[1] - h + age * h, age, i }; })) X.px(c, p.x, p.y, p.i % 3 ? '#ffffff' : X.FROST[2]);
       for (const p of cols) if (rand(Math.round(p[0]), 7, sd) < 0.3) X.px(g, p[0], p[1] + 1, '#c4eefa');
       light(mid[0], mid[1], 34, '#9ff4ff', 0.4 * rise);
@@ -821,6 +888,38 @@ export class StructureView {
       for (const p of emit(t, 3 * P.length, 1, (i, age) => { const q = P[mod(i, P.length)]; return { x: q[0] + Math.sin(age * 5 + i) * 2, y: q[1] - age * (h + 8), age }; })) X.px(c, p.x, p.y, p.age < 0.5 ? R[1] : R[2]);
       light(mid[0], mid[1], 34, R[2], 0.4 * rise);
     }
+  }
+
+  /**
+   * An ice wall (Shield + Ice): a spike barrier, like an abatis. A low ridge of faceted crystal along the line,
+   * and long icicles jutting out of it on both sides, leaning outward, in Ice's own ramp. `rise` also sinks it as it melts.
+   */
+  private iceWall(c: Ctx, g: Ctx, cols: Pt[], a: Pt, bb: Pt, mid: Pt, rise: number, hitE: number, sd: number, t: number, light: LightFn): void {
+    const I = EL.ice, n = cols.length, flash = hitE >= 0 && hitE < 0.1 ? 1 : 0;
+    // the wall's direction on screen, and its normal (the way the spikes lean)
+    const dx = bb[0] - a[0], dy = bb[1] - a[1], dl = Math.hypot(dx, dy) || 1, nx = -dy / dl, ny = dx / dl;
+    const col = (q: number) => cols[bb[1] >= a[1] ? q : n - 1 - q]; // far first
+    // the ridge: a low row of crystal, lit on its top
+    for (let q = 0; q < n; q++) {
+      const [px, py] = col(q), xx = Math.round(px), yy = Math.round(py), hh = Math.round((5 + 3 * rand(q, 1, sd)) * rise);
+      if (hh < 1) continue;
+      X.rect(c, xx - 1, yy - hh + 1, 3, hh, flash ? I[1] : I[4]);
+      X.rect(c, xx - 1, yy - hh + 1, 3, Math.max(1, Math.round(hh * 0.4)), flash ? I[0] : I[2]);
+      X.px(c, xx, yy - hh, I[1]);
+    }
+    // the spikes: every couple of pixels an icicle, alternating sides, long and thin, sharpening to a white tip
+    for (let q = 0; q < n; q += 2) {
+      const [px, py] = col(q), side = (q / 2) % 2 ? 1 : -1, len = (9 + 7 * rand(q, 2, sd)) * rise;
+      if (len < 2) continue;
+      const lean = 0.55 + 0.25 * rand(q, 3, sd), bx = px, by = py - 3 * rise;
+      const tx = bx + nx * side * len * lean, ty = by + ny * side * len * lean * FY - len * (1 - lean * 0.6);
+      X.line(c, bx, by, tx, ty, flash ? I[0] : I[3]);
+      X.line(c, bx + 1, by, (bx + tx) / 2 + 1, (by + ty) / 2, I[4]); // its shaded underside, near the root
+      X.px(c, tx, ty, '#ffffff');
+      if (Math.floor(t * 2 + q * 0.7) % 9 === 0) { X.px(c, tx, ty - 1, I[1]); X.px(c, tx - 1, ty, I[1]); X.px(c, tx + 1, ty, I[1]); } // a tip glints
+    }
+    for (const p of cols) if (rand(Math.round(p[0]), 7, sd) < 0.5) X.ellipse(g, p[0], p[1] + 1, 3, 1.4, '#c2ecf6', 0.35 * rise);
+    light(mid[0], mid[1], 34, I[3], 0.4 * rise);
   }
 
   /** An ice curtain (Shield + Water + Cold): a row of still, faceted crystals with frost at their feet, where water's sheet flows. */
@@ -858,7 +957,7 @@ export class StructureView {
     const v = w.waves;
     for (let k = 0; k < MAX_WAVES; k++) {
       if (!v.alive[k]) continue;
-      const els = v.els, earth = has(els, k, ELID.earth), water = has(els, k, ELID.water), coat = lead(els, k, ELID.shield);
+      const els = v.els, earth = has(els, k, ELID.earth), water = has(els, k, ELID.water) || isIce(els, k), coat = lead(els, k, ELID.shield);
       const range = v.range[k] || STRUCT.waveRange, fade = Math.min(seg(v.travelled[k], 0, 0.5), 1 - seg(v.travelled[k], range - 1.2, range));
       const fdx = v.dx[k], fdy = v.dy[k], px = -fdy, py = fdx, half = v.half[k], sd = k * 17 + 5;
       // the front, bowed forward in the middle; sorted back to front on screen
@@ -908,7 +1007,7 @@ export class StructureView {
         light(gx(v.x[k]), gy(v.y[k]), 50, '#d8b88a', 0.4 * fade);
       } else {
         // Shove (and the elemental fronts): a front of light sweeping forward, in its element
-        const id = coat || ELID.shield, el = elName(id), R: Ramp = el === 'cold' ? X.FROST : id === ELID.life ? LIFE : ramp(id);
+        const id = coat || ELID.shield, el = elName(id), R: Ramp = frosty(el) ? X.FROST : id === ELID.life ? LIFE : ramp(id);
         const band = (p: { x: number; y: number; q: number; i: number }, f: number) => [p.x - ux * f, p.y - uy * f] as const;
         // a translucent sheet of force bowed forward, a bright crest and base
         const ord = pts.slice().sort((p, q) => p.i - q.i);
@@ -925,7 +1024,7 @@ export class StructureView {
         for (let i = 0; i < 8; i++) { const p = pts[Math.floor(rand(i, Math.floor(t * 15), sd) * pts.length)]; const L = 6 + rand(i, 3, sd) * 8, z = 2 + rand(i, 4, sd) * 8 * p.q; X.line(o, p.x - ux * 3, p.y - uy * 3 - z, p.x - ux * (3 + L), p.y - uy * (3 + L) - z, R[2]); }
         if (el === 'fire') for (const p of pts) if (p.i % 2 === 0) K.tongue(o, p.x, p.y, 1.8, (6 + 3 * Math.sin(t * 13 + p.i)) * p.q * fade, -ux * 2);
         if (el === 'lightning' && Math.floor(t * 20) % 3 !== 2) for (let i = 1; i < pts.length; i += 2) X.lines(o, K.bolt([pts[i - 1].x, pts[i - 1].y - 6], [pts[i].x, pts[i].y - 6], Math.floor(t * 20) + i, 0.5, 2), R[1]);
-        if (el === 'cold') for (const p of pts) if (p.i % 3 === 0) K.shard(o, p.x, p.y - 3, -Math.PI / 2 + (rand(p.i, 1, sd) - 0.5), 5 * p.q * fade, p.i + sd, 1);
+        if (frosty(el)) for (const p of pts) if (p.i % 3 === 0) K.shard(o, p.x, p.y - 3, -Math.PI / 2 + (rand(p.i, 1, sd) - 0.5), 5 * p.q * fade, p.i + sd, 1);
         if (id === ELID.life) K.sparkle(o, gx(v.x[k]), gy(v.y[k]) - 6, t, fade, half * PPU, sd, LIFE, 20);
         light(gx(v.x[k]), gy(v.y[k]), 50, R[2], 0.5 * fade);
       }
@@ -933,7 +1032,7 @@ export class StructureView {
   }
   /** What a wave leaves on the floor: soaked streaks (water), a jagged fault (earth). k fades it out. */
   private waveTrail(g: Ctx, sx: number, sy: number, ex: number, ey: number, els: Uint8Array, at: number, k: number, half: number): void {
-    const earth = has(els, at, ELID.earth), water = has(els, at, ELID.water), fire = has(els, at, ELID.fire);
+    const earth = has(els, at, ELID.earth), water = has(els, at, ELID.water) || isIce(els, at), fire = has(els, at, ELID.fire);
     if (!earth && !water && !fire) return;
     const L = Math.hypot(ex - sx, ey - sy); if (L < 0.2) return;
     const ux = (ex - sx) / L, uy = (ey - sy) / L, px = -uy, py = ux;
@@ -1020,7 +1119,7 @@ export class StructureView {
     const el = elName(look);
     if (el === 'fire') { K.fireball(c, x, y, 2.4, t, 0.3, -1, sd); return; }
     if (el === 'earth') { K.rock(c, x, y, 2.8, sd); X.px(c, x - 1, y - 1, '#ffffff'); return; }
-    if (el === 'cold') { K.rock(c, x, y, 2.6, sd, K.ROCK_MAT.cold); if (Math.floor(t * 6 + sd) % 4 === 0) X.px(c, x - 1, y - 2, '#ffffff'); return; }
+    if (frosty(el)) { K.rock(c, x, y, 2.6, sd, K.ROCK_MAT.cold); if (Math.floor(t * 6 + sd) % 4 === 0) X.px(c, x - 1, y - 2, '#ffffff'); return; }
     if (el === 'water') { X.ellipse(c, x, y, 2.6, 2.6, EL.water[3]); X.ellipse(c, x - 0.5, y - 0.5, 1.8, 1.8, EL.water[2]); X.px(c, x - 1, y - 1, '#e0f6ff'); return; }
     if (el === 'life') { K.rock(c, x, y, 2.6, sd, K.ROCK_MAT.life); X.glow(c, x, y, 4, LIFE[3], 0.6); X.px(c, x, y, LIFE[1]); return; }
     if (el === 'lightning') { X.glow(c, x, y, 4, EL.lightning[2], 0.9); X.rect(c, x - 1, y - 1, 3, 3, EL.lightning[1]); X.px(c, x, y, '#ffffff'); if (Math.floor(t * 18) % 2) X.lines(c, K.bolt([x, y], [x + 4, y + 2], Math.floor(t * 18) + sd, 0.6, 2), EL.lightning[1]); return; }
@@ -1056,6 +1155,7 @@ export class StructureView {
         }
         light(v.x, v.y - 6, 30, '#d400ff', 0.3);
       }
+      if (s.storeArm[i] || s.storeLen[i]) this.stored(w, i, v, t, g, o, light);
       const conj = seg(this.st - this.sConjT0[i], 0, 0.3);
       if (s.wand[i]) this.wand(v, t, g, o, P, conj, light);
       if (s.weapon[i]) this.weapon(w, i, v, t, g, o, P, conj, light);
@@ -1083,6 +1183,28 @@ export class StructureView {
     }
   }
 
+  /**
+   * The stored spell (Sigil + Force), quiet on purpose (the user: "too dramatic"; the HUD chip says what is stored). Armed: a
+   * faint dotted violet ring on the ground at the feet. Holding one: the stored runes orbit slowly along that ring as small
+   * gems in their elements' colours, passing behind the wizard on the far side.
+   */
+  private stored(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, light: LightFn): void {
+    const s = w.seats, held = s.storeLen[i], R = 11, cx = v.x, cy = v.y + 1;
+    if (!held && !s.storeArm[i]) return;
+    for (let q = 0; q < 36; q++) {
+      if ((q + Math.floor(t * 3)) % 3) continue;
+      const a = (q / 36) * TAU - t * 0.4;
+      X.px(g, cx + Math.cos(a) * R, cy + Math.sin(a) * R * FY, held ? SV[3] : SV[4]);
+    }
+    if (!held) return;
+    for (let q = 0; q < held; q++) {
+      const id = s.storeQ[i * QUEUE_MAX + q], Rg: Ramp = id === ELID.life ? LIFE : ramp(id);
+      const a = t * 0.9 + (q / held) * TAU, sn = Math.sin(a), x = cx + Math.cos(a) * R, y = cy + sn * R * FY - 2, c = sn < 0 ? g : o;
+      X.rect(c, x - 1, y - 1, 2, 2, Rg[2]); X.px(c, x - 1, y - 1, Rg[1]);
+    }
+    light(cx, cy, 18, '#d400ff', 0.12);
+  }
+
   private ward(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], ch: Pt, light: LightFn): void {
     const s = w.seats, kind = s.ward[i], up = easeOut(seg(this.st - this.sWardT0[i], 0, 0.25));
     const life = has(s.wardEls, i, ELID.life), coat = lead(s.wardEls, i, ELID.shield, ELID.earth), hit = 0;
@@ -1100,7 +1222,7 @@ export class StructureView {
       light(v.x, v.y - 8, 28, '#e0f0ff', 0.3 * k);
       return;
     }
-    const k = clamp(s.wardHp[i] / STRUCT.wardHp, 0.35, 1) * up;
+    const by = s.wardBy[i] >= 0 ? s.wardBy[i] : i, k = clamp(s.runes[by * N_EL + ELID.shield - 1] / 4, 0.35, 1) * up; // dims as its caster's Shield battery runs down
     if (life) {
       // the Mending ward: a green skin with gold light, slow motes drawn into the body, rising pluses
       this.sil.halo(o, v, t, '#4ec45a', { col2: '#9af07a', hi: '#ffe68a', level: Math.round(6 + 10 * k * 0.85) });
@@ -1110,7 +1232,7 @@ export class StructureView {
       return;
     }
     // the ward: a shimmering golden skin hugging the silhouette (an elemental ward takes its element's colour)
-    const ice = isIce(s.wardEls, i), R: Ramp = coat ? (ice || elName(coat) === 'cold' ? X.FROST : ramp(coat)) : EL.shield;
+    const ice = isIce(s.wardEls, i), R: Ramp = coat ? (ice || frosty(elName(coat)) ? X.FROST : ramp(coat)) : EL.shield;
     this.sil.halo(o, v, t, R[2], { col2: R[1], hi: R[0], level: Math.round(6 + 10 * k) });
     // an ice ward: crystals standing round the feet, where a water ward is only a skin
     if (ice) for (let q = 0; q < 6; q++) { const a = (q / 6) * TAU + 0.4, sn2 = Math.sin(a); K.shard(sn2 < 0 ? g : o, v.x + Math.cos(a) * 9, v.y - 2 + sn2 * 4, -Math.PI / 2 + Math.cos(a) * 0.5, (4 + (q % 3) * 1.5) * k, i * 7 + q, 1); }
@@ -1138,7 +1260,7 @@ export class StructureView {
       if (p.kind === 0) X.line(c, x - p.hw * 0.8, y + p.hh * 0.1, x + p.hw * 0.8, y + p.hh * 0.1, STN[3]);
       // the coat: fire glows in a seam, frost rimes the top, lightning sparks, water glistens, life greens
       if (el === 'fire') { const gl = 0.75 + 0.25 * Math.sin(t * 9 + p.q * 2); X.lines(c, [[x - p.hw * 0.45, y + p.hh * 0.05], [x, y + p.hh * 0.3], [x + p.hw * 0.4, y + p.hh * 0.05]], gl > 0.8 ? EL.fire[2] : EL.fire[3]); X.px(c, x, y + p.hh * 0.3, EL.fire[1]); if (p.kind === 0 && c === o) K.tongue(o, x, y - p.hh * 0.7, 1.1, 1.5 + 1.5 * (0.5 + 0.5 * Math.sin(t * 13 + p.q * 2)), Math.sin(t * 7 + p.q)); }
-      else if (el === 'cold') { X.line(c, x - p.hw * 0.7, y - p.hh * 0.75, x + p.hw * 0.5, y - p.hh * 0.85, '#e0ffff'); X.px(c, x - p.hw * 0.2, y - p.hh * 0.9, '#ffffff'); }
+      else if (frosty(el)) { X.line(c, x - p.hw * 0.7, y - p.hh * 0.75, x + p.hw * 0.5, y - p.hh * 0.85, '#e0ffff'); X.px(c, x - p.hw * 0.2, y - p.hh * 0.9, '#ffffff'); }
       else if (el === 'lightning') { if (Math.floor(t * 20 + p.q) % 4 === 0) X.lines(c, K.bolt([x - p.hw * 0.6, y], [x + p.hw * 0.6, y - 1], Math.floor(t * 20) + p.q, 0.6, 2), EL.lightning[1]); }
       else if (el === 'water') { X.px(c, x - p.hw * 0.4, y - p.hh * 0.4, '#8ad0ff'); }
       else if (el === 'life') { X.px(c, x + p.hw * 0.3, y - p.hh * 0.2, LIFE[2]); X.px(c, x - p.hw * 0.3, y + p.hh * 0.3, LIFE[3]); }
@@ -1169,7 +1291,7 @@ export class StructureView {
         for (const p of emit(t, 40, 0.9, (q, age) => { const ang = rand(q, 3, i) * TAU, d = 4 + easeOut(age) * (22 + rand(q, 4, i) * 14), z = 4 + rand(q, 5, i) * 14 + age * 6; return { x: v.x + Math.cos(ang) * d, y: v.y + Math.sin(ang) * d * FY - z, age, q }; })) if (rand(p.q, 6) < k) X.px(o, p.x, p.y, p.age < 0.3 ? EL.fire[1] : p.age < 0.65 ? EL.fire[2] : EL.fire[4]);
         S.seal(g, v.x, v.y, 12, t, 0.35 * k);
         light(v.x, v.y - 6, 64, '#ff7020', 0.7 * k + 0.06 * Math.sin(t * 9)); light(v.x, v.y, 30, '#ffc070', 0.5 * k);
-      } else if (el === 'cold') {
+      } else if (frosty(el)) {
         // frost: a clean ellipse of rime at the aura's reach, crystals on the ground, snow orbiting
         const rr = AR * k;
         X.ring(g, v.x, v.y, rr, rr * FY, '#bfeaf8', 0.8); X.ring(g, v.x, v.y, rr - 1, (rr - 1) * FY, '#ffffff', 0.35);
@@ -1267,9 +1389,35 @@ export class StructureView {
       const px2 = p[0] + dx * d, py2 = p[1] + dy * d + (el === 'water' ? e * e * 60 : 0) - (el === 'fire' ? e * 18 : 0);
       if (rand(j, 3, sd) < q) continue;
       if (el === 'fire') K.tongue(o, px2, py2, 1.4 * (1 - q), 4 * (1 - q), dx);
-      else if (el === 'cold') K.shard(o, px2, py2, Math.atan2(dy, dx), 4 * (1 - q), sd + j, 1 - q);
+      else if (frosty(el)) K.shard(o, px2, py2, Math.atan2(dy, dx), 4 * (1 - q), sd + j, 1 - q);
       else X.px(o, px2, py2, j % 2 ? '#ffffff' : el === 'water' ? '#8ad0ff' : Rb[1]);
     }
+  }
+
+  /**
+   * The imbued burst of water, cold, fire, arcane or earth (art/novas.ts drawBurst; the user, 2026-11-11: the nova, but
+   * directed). Two passes like a nova: the part of the cone behind the caster goes behind them and whatever stands in
+   * front, the rest over them. The other queued elements shed their own bits along the cone.
+   */
+  private burstDepth(f: SFx, e: number, t: number, g: Ctx, o: Ctx, light: LightFn): void {
+    const x = gx(f.x), y = gy(f.y), aim = Math.atan2(f.y2 - f.y, f.x2 - f.x), r = Math.hypot(f.x2 - f.x, f.y2 - f.y) * PPU;
+    // The lead (the rules' priority: Earth, then Arcane, then Lightning) sets the shape: Earth a line, whatever else is
+    // infused, its other element riding along it; Lightning a fork, whose bolts are the sim's zaps.
+    const has = (id: number): boolean => !!(f.n & (1 << id)), line = has(ELID.earth), fork = !line && !has(ELID.arcane) && has(ELID.lightning);
+    const half = line ? Math.atan2(SHAPES.imbueLineHalf * 1.4, Math.max(1, r / PPU)) : SHAPES.imbueHalf * TAU, R = r * 1.2 + 40;
+    // an Earth line's infused element rides along its crack: the visual lead, else the first other element queued
+    let rider = 0;
+    if (line) { rider = f.look !== ELID.earth ? f.look : 0; for (let id = 1; id <= N_EL && !rider; id++) if (has(id) && id !== ELID.earth) rider = id; }
+    const looks = line ? [ELID.earth, ...(rider ? [rider] : [])] : fork ? [ELID.lightning] : [f.look];
+    const pass = (part: 'far' | 'near') => (c: Ctx): void => { drawBurst(c, g, looks[0], x, y, r, e, t, f.seed, light, part, aim, half, rider); };
+    if (this.behind) { this.behind(x, y - 1, R, pass('far'), true, true); this.behind(x, y + 1, R, pass('near')); }
+    else { pass('far')(o); pass('near')(o); }
+    if (fork) return;
+    const ids: number[] = [];
+    for (let id = 1; id <= N_EL; id++) if (has(id) && !looks.includes(id)) ids.push(id);
+    if (!ids.length || e > 0.6) return;
+    const at = (a: number, rr: number): Pt => [x + Math.cos(a) * rr, y - 8 + Math.sin(a) * rr * FY], k = easeOut(clamp(e / 0.35, 0, 1));
+    this.depth(o, x, y, R, (c) => ids.forEach((id, m) => { const a = aim + (m - (ids.length - 1) / 2) * (half / Math.max(1, ids.length)); this.blowSpray(elName(id), blowRamp(id), at(a, (6 + (r - 6) * k) * 0.8), a, e * 0.8, f.seed + m * 31, c, 4); }));
   }
 
   /** The imbued burst: a crescent of the queued elements leaving the staff and rolling out over the cone. */
@@ -1367,7 +1515,23 @@ export class StructureView {
       X.line(c, h[0], h[1] - 1, tp[0], tp[1], EL.fire[0], 1); X.px(c, tp[0], tp[1], '#ffffff');
       for (const p of emit(t, 10, 0.5, (q, age) => ({ x: lerp(h[0], tp[0], rand(q, 2, i)) + Math.sin(age * 7 + q), y: lerp(h[1], tp[1], rand(q, 2, i)) - age * 9, age }))) X.px(o, p.x, p.y, K.fireCol(0.3 + p.age * 0.7));
       light(tp[0], v.y, 30, '#ff7020', 0.5);
-    } else if (el === 'cold') {
+    } else if (el === 'ice') {
+      // the Ice bow: an upright bow of ice, bulging toward your aim, a pale string; held Heavy draws it back with an icicle nocked
+      const I = EL.ice, draw = w.seats.handT[i] > TAP ? heavyCharge(w.seats.handT[i]) : 0;
+      const top: Pt = [h[0] + fwd * 1, h[1] - 10 * k], bot: Pt = [h[0] + fwd * 1, h[1] + 5 * k], limbs: Pt[] = [];
+      for (let q = 0; q <= 8; q++) { const f = q / 8, s = f * 2 - 1; limbs.push([lerp(top[0], bot[0], f) + fwd * 4 * k * (1 - s * s), lerp(top[1], bot[1], f)]); }
+      X.lines(c, limbs, I[5], 3); X.lines(c, limbs, I[2], 1);
+      X.px(c, top[0], top[1], '#ffffff'); X.px(c, bot[0], bot[1], I[1]);
+      const nock: Pt = [h[0] - fwd * 4 * draw, h[1] - 2]; // the string's middle, pulled back as it draws
+      X.line(c, top[0], top[1], nock[0], nock[1], '#e8fbff', 1); X.line(c, nock[0], nock[1], bot[0], bot[1], '#e8fbff', 1);
+      if (draw > 0) {
+        const tip: Pt = [h[0] + fwd * (7 + 2 * draw), h[1] - 2];
+        X.line(c, nock[0], nock[1], tip[0], tip[1], I[3], 1); X.px(c, tip[0], tip[1], '#ffffff'); X.px(c, tip[0] - fwd, tip[1] - 1, I[1]);
+        if (draw >= ARMS.fanPierceAt) X.glow(o, tip[0], tip[1], 5, I[2], 0.6); // full draw: it will pierce
+      }
+      blade = limbs;
+      light(h[0], v.y, 24, I[3], 0.35 + 0.3 * draw);
+    } else if (frosty(el)) {
       const tp = dir(15 * k, 0.25);
       blade = [[h[0], h[1] + 4], tp];
       X.line(c, h[0], h[1] + 4, tp[0], tp[1], '#163e7a', 3); X.line(c, h[0], h[1] + 4, tp[0], tp[1], '#c4eefa', 1);
@@ -1526,11 +1690,12 @@ export class StructureView {
     try { spec = compile(queueOf(w, i), 'place', { drag }); } catch { return; }
     if (spec.shape === 'todo') return;
     const TEAM = X.TEAMS[i % 4], col = TEAM.light;
+    // nothing until the hold counts as Place (the user, 2026-11-11: the reticle showed for what was still an Area tap)
+    if (!drag && s.areaHeld[i] < T(RHYTHM.placeHold)) return;
     const k = drag ? 1 : clamp(s.areaHeld[i] / T(RHYTHM.placeHold), 0, 1), dim = k < 1;
-    const d = Math.hypot(s.aimX[i], s.aimY[i]), lim = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
-    const cxw = b.x[i] + s.aimX[i] * lim, cyw = b.y[i] + s.aimY[i] * lim, cx = gx(cxw), cy = gy(cyw);
+    const [cxw, cyw] = placeSpot(w, i), cx = gx(cxw), cy = gy(cyw);
     const look = spec.look || spec.form, R = look === ELID.life ? LIFE : ramp(look);
-    const matCol = spec.wall === WALL.rock ? '#c8ab86' : spec.wall === WALL.barrier ? EL.shield[1] : R[1];
+    const matCol = spec.wall === WALL.rock ? '#c8ab86' : spec.wall === WALL.ice ? EL.ice[1] : spec.wall === WALL.barrier ? EL.shield[1] : R[1];
     if (spec.shape === 'arcwall') {
       const face = Math.atan2(s.aimY[i], s.aimX[i]), half = STRUCT.arcHalf * TAU, r = STRUCT.arcRadius;
       const pts: Pt[] = [];
@@ -1581,14 +1746,15 @@ export class StructureView {
   // ---- short-lived effects -------------------------------------------------------------------------
   /** Where the local wizard's placement preview stands, while one can be showing. */
   private aimSpot(w: World): Pt | null {
-    const s = w.seats, b = w.bodies, i = this.localSeat;
+    const s = w.seats, i = this.localSeat;
     if (!s.active[i] || !(s.prevButtons[i] & (BTN.area | BTN.force))) return null;
-    const d = Math.hypot(s.aimX[i], s.aimY[i]), lim = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
-    return [gx(b.x[i] + s.aimX[i] * lim), gy(b.y[i] + s.aimY[i] * lim)];
+    const [x, y] = placeSpot(w, i);
+    return [gx(x), gy(y)];
   }
   private fxDepth(w: World, f: SFx, e: number, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
     const who = f.who >= 0 && f.who < bodies.length ? bodies[f.who] : null, placed = f.x !== 0 || f.y !== 0;
     if (f.kind === 'whit' || f.kind === 'trail' || (!placed && !who?.on)) { this.drawFx(w, f, e, t, g, o, bodies, light); return; } // a chip off a wall is on that wall
+    if (f.kind === 'mv-imbue' && (hasBurst(f.look) || f.n & ((1 << ELID.earth) | (1 << ELID.lightning)))) { this.burstDepth(f, e, t, g, o, light); return; }
     this.depth(o, placed ? gx(f.x) : who!.x, placed ? gy(f.y) : who!.y, 90, (o) => this.drawFx(w, f, e, t, g, o, bodies, light));
   }
   private drawFx(w: World, f: SFx, e: number, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {

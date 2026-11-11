@@ -22,19 +22,42 @@ const FAR_MARGIN = 28;
 
 /**
  * The pieces for a wall from (ax, ay) to (bx, by) in field px, or null if it doesn't run along a tile
- * edge. realX, realY: its middle in world units, which tells a far wall from a near one.
+ * edge. realX, realY: its middle in world units, which tells a far wall from a near one. open: an open area's wall,
+ * which has ground on both sides, so it stands full height and whatever is north of it goes behind it.
  */
-export function kitRun(ax: number, ay: number, bx: number, by: number, realX: number, realY: number): Stamp[] | null {
+export function kitRun(ax: number, ay: number, bx: number, by: number, realX: number, realY: number, open = false): Stamp[] | null {
   const dx = Math.abs(bx - ax), dy = Math.abs(by - ay);
   if (dx < 4 || Math.abs(dy * 2 - dx) > 2) return null;
   const [sx, sy, ex] = ay <= by ? [ax, ay, bx] : [bx, by, ax];
-  const right = ex > sx, side: Side = right ? (realY < 0 ? 'n' : 's') : (realX < 0 ? 'w' : 'e');
+  const right = ex > sx, side: Side = right ? (open || realY < 0 ? 'n' : 's') : (open || realX < 0 ? 'w' : 'e');
   const [ox, oy] = ANCHOR[side], [mx, my] = SHIFT[side], n = Math.ceil(dx / STEP_X), out: Stamp[] = [];
   for (let i = 0; i < n; i++) {
     const px = Math.round(sx + (right ? i : -i) * STEP_X), py = Math.round(sy + i * STEP_Y);
-    out.push({ side, x: px - ox + mx, y: py - oy + my, part: i < n - 1 ? STEP_X : Math.max(1, Math.round(dx - STEP_X * (n - 1))), z: side === 'n' || side === 'w' ? py - FAR_MARGIN : py + STEP_Y, foot: py + STEP_Y / 2 });
+    out.push({ side, x: px - ox + mx, y: py - oy + my, part: i < n - 1 ? STEP_X : Math.max(1, Math.round(dx - STEP_X * (n - 1))), z: open ? py + STEP_Y / 2 : side === 'n' || side === 'w' ? py - FAR_MARGIN : py + STEP_Y, foot: py + STEP_Y / 2 });
   }
   return out;
+}
+
+/** Which columns of its 76 px wide canvas a piece's art covers, and how far either side of its feet a body is drawn. */
+const ART_X: Readonly<Record<Side, readonly [number, number]>> = { n: [28, 62], w: [14, 48], s: [14, 38], e: [38, 62] };
+const BODY_HALF = 12;
+
+/**
+ * The ground y to sort a piece of an open area's wall by this frame. A piece's one y can't order a body
+ * walking beside the wall, because the wall's line slopes across the body's width: the next piece along
+ * would swallow it and let it go again. So what decides is which side of the line the body's feet are
+ * on. Any body whose picture reaches this piece goes behind it if it stands north of the line and in
+ * front if south.
+ */
+export function sideZ(st: Stamp, ax: number, ay: number, bx: number, by: number, bodies: readonly { on: boolean; x: number; y: number }[]): number {
+  const x0 = st.x + ART_X[st.side][0] - BODY_HALF, x1 = st.x + ART_X[st.side][1] + BODY_HALF, slope = (by - ay) / (bx - ax);
+  let z = st.z, front = Infinity;
+  for (const v of bodies) {
+    if (!v.on || v.x < x0 || v.x > x1) continue;
+    if (v.y > ay + (v.x - ax) * slope) front = Math.min(front, v.y - 1);
+    else z = Math.max(z, v.y + 1);
+  }
+  return Math.min(z, front);
 }
 
 const urls = import.meta.glob<string>('../../../../content/assets/kits/*/*.png', { eager: true, query: '?url', import: 'default' });
@@ -44,8 +67,12 @@ const urlOf = new Map(Object.entries(urls).map(([path, url]) => [path.split('/')
  * The kit a room's straight walls are built from. Rooms not listed keep the drawn walls: tall kit walls
  * hide the action in an open arena like Survive, and its angled walls have no kit pieces to match.
  */
-const ROOM_KIT: Readonly<Record<string, string>> = { academy: 'academy' };
+const ROOM_KIT: Readonly<Record<string, string>> = { academy: 'academy', battery: 'fortress' };
 export const kitOf = (room: string): string | undefined => ROOM_KIT[room];
+
+/** Areas whose wall runs through the middle, not round the edge: it faces you and stands full height wherever it is. */
+const OPEN_AREAS: ReadonlySet<string> = new Set(['battery']);
+export const wallsAllFar = (room: string): boolean => OPEN_AREAS.has(room);
 
 const SIDES: readonly Side[] = ['n', 'w', 's', 'e'];
 const loaded = new Map<string, Partial<Record<Side, Texture>>>();

@@ -82,6 +82,34 @@ export function beam(c: Ctx, o: Pt, z: Pt, t: number, R: Ramp, opt: { on?: numbe
   if (on > 0.95 && opt.hit !== false) splash(c, z, t, R, P ?? R, Math.atan2(-uy, -ux), 30, 2.6, opt.seed ?? 0);
 }
 /**
+ * What a beam's runes add over it (the user, 2026-11-10: more runes should look like more), tier n = the spell's runes,
+ * 1..5. Drawn over K.beam or K.fireBeam. Always: surges of light racing from the staff to the far end, more and
+ * faster with more runes. From three: sparks shed off its sides. From four: a halo round the whole length and a
+ * white-hot core. At five: rings pulsing off the staff and a bigger splash.
+ */
+/** A beam's width for its tier n (1..5), as K.beam's w. */
+export const beamW = (n: number): number => 0.7 + 0.3 * n;
+export function beamSurge(c: Ctx, o: Pt, z: Pt, t: number, R: Ramp, n: number, seed = 0, hit = false): void {
+  const dx = z[0] - o[0], dy = z[1] - o[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+  if (L < 4) return;
+  if (n >= 3) for (let d = 6; d < L; d += 8) X.glow(c, o[0] + ux * d, o[1] + uy * d, 3 + 2 * n, R[2], 0.38 + 0.05 * n + 0.06 * Math.sin(d * 0.2 - t * 12));
+  if (n >= 4) X.line(c, o[0], o[1], z[0], z[1], '#ffffff', n >= 5 ? 3 : 2);
+  // surges: short bright packets, born at the staff, travelling the length (speed in px/s)
+  const speed = 360 + 60 * n;
+  for (const p of emit(t, 3 + 3 * n, L / speed, (i, age) => ({ d: age * L, i }))) {
+    const x = o[0] + ux * p.d, y = o[1] + uy * p.d, len = 4 + n * 2;
+    X.line(c, x - ux * len, y - uy * len, x, y, R[1], 2 + Math.floor(n / 2));
+    X.line(c, x - ux * len * 0.6, y - uy * len * 0.6, x, y, '#ffffff', 1 + Math.floor(n / 3));
+  }
+  if (n >= 3) for (const p of emit(t, 14 * (n - 2), 0.4, (i, age) => {
+    const d = rand(i, 81, seed) * L, s = rand(i, 82, seed) < 0.5 ? -1 : 1, v = 10 + rand(i, 83, seed) * 14;
+    return { x: o[0] + ux * d + nx * s * (3 + v * age), y: o[1] + uy * d + ny * s * (3 + v * age) + age * age * 6, age };
+  })) X.px(c, p.x, p.y, p.age < 0.4 ? R[0] : R[2]);
+  if (n >= 5) for (const p of emit(t, 4, 0.45, (i, age) => ({ age }))) { const r = 3 + p.age * 11; X.ring(c, o[0], o[1], r, r * 0.8, p.age < 0.4 ? '#ffffff' : R[2], 0.9 * (1 - p.age)); }
+  X.glow(c, o[0], o[1], 4 + 2 * n, R[1], 0.6);
+  if (hit && n >= 3) { X.glow(c, z[0], z[1], 6 + 3 * n, R[2], 0.6); splash(c, z, t, R, R, Math.atan2(-uy, -ux), 12 * n, 3, seed + 5); }
+}
+/**
  * The fire beam (Battlefield pass 4: arcane carrying fire reads as a FIRE beam): a white-hot
  * core, orange body, ragged red rim, flame licks peeling off its top edge, embers falling.
  */
@@ -343,14 +371,17 @@ export const ROCK_MAT: Record<string, RockMat> = {
   arcane: { out: '#1a0a14', body: '#5a3c4a', lit: '#9a6a84', hi: '#ffc0e0', crack: '#ff2d8a' },
   lightning: { out: '#120c1a', body: '#5a4a6a', lit: '#8a7aa6', hi: '#efe4ff', crack: '#c4a4ff' },
 };
-export function rock(c: Ctx, x: number, y: number, r: number, seed: number, m: RockMat = ROCK_MAT.earth): void {
+export function rock(c: Ctx, x: number, y: number, r: number, seed: number, m: RockMat = ROCK_MAT.earth, spin = 0): void {
   const pts: Pt[] = [];
-  for (let i = 0; i < 7; i++) { const a = (i / 7) * TAU, rr = r * (0.8 + rand(i, seed) * 0.35); pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.85]); }
+  // spin turns the outline and the crack, never the light (it stays on the upper left), so a tumbling rock reads as turning
+  for (let i = 0; i < 7; i++) { const a = (i / 7) * TAU + spin, rr = r * (0.8 + rand(i, seed) * 0.35); pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.85]); }
   X.poly(c, pts.map(([a, b]) => [a + (a - x) * 0.25 + 0.5, b + (b - y) * 0.25 + 0.5] as Pt), m.out);
   X.poly(c, pts, m.body);
   X.ellipse(c, x - r * 0.25, y - r * 0.3, r * 0.55, r * 0.4, m.lit);
   X.px(c, x - r * 0.4, y - r * 0.45, m.hi);
-  X.line(c, x + r * 0.1, y + r * 0.6, x + r * 0.6, y + r * 0.1, m.crack);
+  const cs = Math.cos(spin), sn = Math.sin(spin), rot = (u: number, v: number): Pt => [x + (u * cs - v * sn) * r, y + (u * sn + v * cs) * r * 0.85];
+  const c0 = rot(0.1, 0.6), c1 = rot(0.6, 0.1);
+  X.line(c, c0[0], c0[1], c1[0], c1[1], m.crack);
 }
 /** An ice shard: a long jagged sliver pointing along ang, len px long. R recolours it (healing shards). */
 export function shard(c: Ctx, x: number, y: number, ang: number, len: number, seed: number, a = 1, R: Ramp = EL.cold): void {

@@ -1,0 +1,23 @@
+{
+  "id": "battery-pillar",
+  "kind": "prop",
+  "name": "Gate pillar",
+  "footprint": [
+    2.1,
+    2.1
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        25,
+        128
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/kit-fortress/tile_53.png",
+      "tool": "create_building_kit",
+      "edits": "assembled from the fortress kit: block 53 stacked, its pillar piece cut short for battlements",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

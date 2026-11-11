@@ -19,7 +19,7 @@ import { clamp, lerp, rand, vnoise } from './util';
 
 /** A tiling texture: width, height and RGBA bytes. `flip` shifts and mirrors it at random per block, for things with no grid in them. */
 export interface Material {
-  w: number; h: number; data: Uint8ClampedArray; flip: boolean;
+  w: number; h: number; data: Uint8ClampedArray; flip: boolean; /** Has a grid in it: sampled along the ground, not the screen. */ iso?: boolean;
   /** Other tiles of the same material, chosen region by region. */
   alts?: readonly Material[];
 }
@@ -153,6 +153,10 @@ function texel(base: Material, x: number, y: number, px: number, py: number): vo
     const k = clamp(Math.floor(((r - 0.2) / 0.6) * n), 0, n - 1);
     if (k > 0) m = base.alts[k - 1];
   }
+  if (m.iso) { // laid on the ground: stones run along the two isometric axes
+    const sx = x, sy = y;
+    x = Math.floor((sx + 2 * sy) * Math.SQRT1_2); y = Math.floor((2 * sy - sx) * Math.SQRT1_2);
+  }
   const bx = Math.floor(x / m.w), by = Math.floor(y / m.h);
   let u = x - bx * m.w, v = y - by * m.h;
   if (m.flip) {
@@ -169,7 +173,7 @@ function texel(base: Material, x: number, y: number, px: number, py: number): vo
 /**
  * Paints into `out` (W x H RGBA). OX, OY: where the room's centre is in the image. `base` is the
  * material for unpainted cells. Colours come from screen position, so textures don't shear with the
- * camera; a material with a grid in it (flagstones) is the one thing that would need its own version.
+ * camera. A material with a grid in it is marked `iso` and sampled along the ground instead.
  */
 export function paintGround(out: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, g: GroundMap, mats: Readonly<Record<string, Material>>, base: string, cam: GroundCamera): void {
   const f = buildField(g, base);

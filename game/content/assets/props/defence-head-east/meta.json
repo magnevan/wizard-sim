@@ -1,0 +1,23 @@
+{
+  "id": "defence-head-east",
+  "kind": "prop",
+  "name": "Defence head, east",
+  "footprint": [
+    1.0,
+    1.0
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        9,
+        79
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/defence/head-east-placed.png",
+      "tool": "/v2/rotate",
+      "edits": "head masked out, rotated at 64 px through /v2/rotate, old flame removed, the original flame pasted on",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

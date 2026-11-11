@@ -38,11 +38,11 @@ export function mix(queue: readonly ElementName[], cast: Cast, r: Rand = seeded(
   return { title: spec.title, shape: s.shape, steps };
 }
 
-/** Adds a rune as the game does: opposites cancel. */
+/** Adds a rune as the game does: opposites cancel, Water and Cold make Ice. */
 export function addRune(queue: readonly ElementName[], el: ElementName): { queue: ElementName[]; cancelled: string | null; full: boolean } {
-  const { queue: q, event } = rules.addElement(queue as Element[], el);
+  const { queue: q, event, kind } = rules.addElement(queue as Element[], el);
   const out = q as ElementName[];
-  return { queue: out, cancelled: event && out.length < queue.length ? event : null, full: !!event && out.length >= queue.length };
+  return { queue: out, cancelled: kind === 'cancel' ? event : null, full: kind === 'full' };
 }
 
 const EL_BLURB: Record<ElementName, string> = {
@@ -55,6 +55,7 @@ const EL_BLURB: Record<ElementName, string> = {
   sigil: 'A glassy rune tone and gong over thin shimmer.',
   fire: 'A jet roar and crackling flame.',
   earth: 'Tumbling gravel; a pick striking rock for the attack.',
+  ice: 'Water and Cold in one rune: heavier creaking ice, lower than Cold; shattering glass and debris for the attack.',
 };
 const SHAPE_BLURB: Record<typeof SHAPE_NAMES[number], string> = {
   force: 'One quick shove: a short whoosh, gone at once.',
@@ -95,7 +96,7 @@ export const ITEMS: readonly Item[] = [
 
   { id: 'spell-fireball', group: 'spells', title: 'Fireball', blurb: 'Earth, Fire, Force: a missile that lands in Fire.', steps: demo(['earth', 'fire'], 'force') },
   { id: 'spell-flame', group: 'spells', title: 'Flame spray', blurb: 'Fire, Fire, Force.', steps: demo(['fire', 'fire'], 'force') },
-  { id: 'spell-frost', group: 'spells', title: 'Ice shards', blurb: 'Water, Cold, Force.', steps: demo(['water', 'cold'], 'force') },
+  { id: 'spell-frost', group: 'spells', title: 'Ice shards', blurb: 'Water, Cold (they make Ice), Force.', steps: demo(['ice'], 'force') },
   { id: 'spell-beam', group: 'spells', title: 'Arcane beam', blurb: 'Arcane, Arcane, Force.', steps: demo(['arcane', 'arcane'], 'force') },
   { id: 'spell-arc', group: 'spells', title: 'Lightning arc', blurb: 'Lightning, Force. It shares the beam\'s structure.', steps: demo(['lightning'], 'force') },
   { id: 'spell-quake', group: 'spells', title: 'Quake', blurb: 'Earth, Earth, Earth, Area.', steps: demo(['earth', 'earth', 'earth']) },

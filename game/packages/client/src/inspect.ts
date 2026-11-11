@@ -30,6 +30,7 @@ const WEAPON_TEXT: Record<string, [string, string, string]> = {
   arcane: ['Arcane wand', 'a charged bolt that pierces', 'hold: Siphon (rooted, runes regenerate 4x; the wand’s elements faster)'],
   fire: ['Flame sword', 'fire wave (ignites, no lingering fire)', 'Sweep'],
   earth: ['Stone maul', 'fissure down one lane (knocks down)', 'Sweep'],
+  ice: ['Ice bow', 'a drawn fan of three icicles (a full draw pierces)', 'splinter shot: bursts into flying shards (2 uses)'],
 };
 
 /** The elements in a 9-per-slot counts array, as "Fire ×2, Life". */
@@ -163,7 +164,8 @@ export class Inspect {
     const coat = elements(wl.els, k, [ID('shield'), ID('earth')]);
     const hp = `Health ${Math.ceil(wl.hp[k])} / ${Math.round(wl.maxHp[k])}`;
     if (ty === WALL.rock) return [`${who} stone wall`, hp, '· blocks bodies and shots', coat ? `· coated with ${coat}: pulses on whoever touches it` : '· plain stone'];
-    if (ty === WALL.curtain) return [`${who} curtain`, `${coat || 'no elements'}`, hp, '· walk through it: crossing or standing in it pulses its elements', '· beams through it pick them up', '· double-tap Shield over it to dismiss (your own)'];
+    if (ty === WALL.ice) return [`${who} ice wall`, hp, '· a spike barrier: blocks bodies and shots', `· stabs whoever presses against it${coat ? ` (${coat})` : ''}`, '· fire melts it fast'];
+    if (ty === WALL.curtain) return [`${who} curtain`, `${coat || 'no elements'}`, hp, '· a coated force field: stops the other side and bites them with its elements', '· your team walks through; their shots and beams pick its elements up', '· double-tap Shield over it to dismiss (your own)'];
     if (ty === WALL.barrier) return [`${who} barrier`, hp, '· blocks shots, drains its owner\'s Shield pool while it stands'];
     return ['Wall'];
   }

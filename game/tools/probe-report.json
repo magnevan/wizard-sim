@@ -1,0 +1,7562 @@
+{
+ "sprays|F|force": {
+  "one": {
+   "title": "Flamethrower",
+   "shape": "spray",
+   "dmg": 41,
+   "perTarget": 41,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Flamethrower",
+   "shape": "spray",
+   "dmg": 148,
+   "perTarget": 30,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Flamethrower",
+   "shape": "spray",
+   "dmg": 22,
+   "perTarget": 22,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "sprays|F|area": {
+  "one": {
+   "title": "Fire ring",
+   "shape": "nova",
+   "dmg": 34,
+   "perTarget": 34,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire ring",
+   "shape": "nova",
+   "dmg": 170,
+   "perTarget": 34,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire ring",
+   "shape": "nova",
+   "dmg": 12,
+   "perTarget": 12,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "sprays|F|place": {
+  "one": {
+   "title": "Fire patch",
+   "shape": "patch",
+   "dmg": 47,
+   "perTarget": 47,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire patch",
+   "shape": "patch",
+   "dmg": 236,
+   "perTarget": 47,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire patch",
+   "shape": "patch",
+   "dmg": 45,
+   "perTarget": 45,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "sprays|FF|force": {
+  "one": {
+   "title": "Flamethrower",
+   "shape": "spray",
+   "dmg": 56,
+   "perTarget": 56,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Flamethrower",
+   "shape": "spray",
+   "dmg": 198,
+   "perTarget": 40,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Flamethrower",
+   "shape": "spray",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "sprays|FF|area": {
+  "one": {
+   "title": "Fire ring",
+   "shape": "nova",
+   "dmg": 55,
+   "perTarget": 55,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire ring",
+   "shape": "nova",
+   "dmg": 275,
+   "perTarget": 55,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire ring",
+   "shape": "nova",
+   "dmg": 20,
+   "perTarget": 20,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "sprays|FF|place": {
+  "one": {
+   "title": "Fire patch",
+   "shape": "patch",
+   "dmg": 86,
+   "perTarget": 86,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire patch",
+   "shape": "patch",
+   "dmg": 429,
+   "perTarget": 86,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire patch",
+   "shape": "patch",
+   "dmg": 87,
+   "perTarget": 87,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "sprays|FFF|force": {
+  "one": {
+   "title": "Flamethrower",
+   "shape": "spray",
+   "dmg": 67,
+   "perTarget": 67,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Flamethrower",
+   "shape": "spray",
+   "dmg": 235,
+   "perTarget": 47,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Flamethrower",
+   "shape": "spray",
+   "dmg": 55,
+   "perTarget": 55,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "sprays|FFF|area": {
+  "one": {
+   "title": "Fire ring",
+   "shape": "nova",
+   "dmg": 76,
+   "perTarget": 76,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire ring",
+   "shape": "nova",
+   "dmg": 380,
+   "perTarget": 76,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire ring",
+   "shape": "nova",
+   "dmg": 29,
+   "perTarget": 29,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "sprays|FFF|place": {
+  "one": {
+   "title": "Fire patch",
+   "shape": "patch",
+   "dmg": 124,
+   "perTarget": 124,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire patch",
+   "shape": "patch",
+   "dmg": 618,
+   "perTarget": 124,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire patch",
+   "shape": "patch",
+   "dmg": 129,
+   "perTarget": 129,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "sprays|C|force": {
+  "one": {
+   "title": "Frost spray",
+   "shape": "spray",
+   "dmg": 13,
+   "perTarget": 13,
+   "deniedS": 0,
+   "chill": 0.2,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Frost spray",
+   "shape": "spray",
+   "dmg": 43,
+   "perTarget": 9,
+   "deniedS": 0,
+   "chill": 0.07,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Frost spray",
+   "shape": "spray",
+   "dmg": 13,
+   "perTarget": 13,
+   "deniedS": 1.43,
+   "chill": 0.05,
+   "moved": 0,
+   "froze": 1,
+   "window": 7.7
+  }
+ },
+ "sprays|C|area": {
+  "one": {
+   "title": "Frost ring",
+   "shape": "nova",
+   "dmg": 8,
+   "perTarget": 8,
+   "deniedS": 0,
+   "chill": 0.29,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost ring",
+   "shape": "nova",
+   "dmg": 40,
+   "perTarget": 8,
+   "deniedS": 0,
+   "chill": 0.29,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost ring",
+   "shape": "nova",
+   "dmg": 8,
+   "perTarget": 8,
+   "deniedS": 2.37,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "sprays|C|place": {
+  "one": {
+   "title": "Freezing fog",
+   "shape": "patch",
+   "dmg": 23,
+   "perTarget": 23,
+   "deniedS": 0,
+   "chill": 0.26,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Freezing fog",
+   "shape": "patch",
+   "dmg": 113,
+   "perTarget": 23,
+   "deniedS": 0,
+   "chill": 0.26,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Freezing fog",
+   "shape": "patch",
+   "dmg": 23,
+   "perTarget": 23,
+   "deniedS": 1.38,
+   "chill": 0.1,
+   "moved": 0,
+   "froze": 1,
+   "window": 13.5
+  }
+ },
+ "sprays|CC|force": {
+  "one": {
+   "title": "Frost spray",
+   "shape": "spray",
+   "dmg": 17,
+   "perTarget": 17,
+   "deniedS": 0,
+   "chill": 0.66,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Frost spray",
+   "shape": "spray",
+   "dmg": 59,
+   "perTarget": 12,
+   "deniedS": 0,
+   "chill": 0.37,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Frost spray",
+   "shape": "spray",
+   "dmg": 17,
+   "perTarget": 17,
+   "deniedS": 1.47,
+   "chill": 0.47,
+   "moved": 0,
+   "froze": 1,
+   "window": 7.7
+  }
+ },
+ "sprays|CC|area": {
+  "one": {
+   "title": "Frost ring",
+   "shape": "nova",
+   "dmg": 14,
+   "perTarget": 14,
+   "deniedS": 0,
+   "chill": 0.72,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost ring",
+   "shape": "nova",
+   "dmg": 68,
+   "perTarget": 14,
+   "deniedS": 0,
+   "chill": 0.72,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost ring",
+   "shape": "nova",
+   "dmg": 14,
+   "perTarget": 14,
+   "deniedS": 3.97,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "sprays|CC|place": {
+  "one": {
+   "title": "Freezing fog",
+   "shape": "patch",
+   "dmg": 37,
+   "perTarget": 37,
+   "deniedS": 0,
+   "chill": 0.79,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Freezing fog",
+   "shape": "patch",
+   "dmg": 186,
+   "perTarget": 37,
+   "deniedS": 0,
+   "chill": 0.79,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Freezing fog",
+   "shape": "patch",
+   "dmg": 37,
+   "perTarget": 37,
+   "deniedS": 1.82,
+   "chill": 0.66,
+   "moved": 0,
+   "froze": 1,
+   "window": 13.5
+  }
+ },
+ "sprays|CCC|force": {
+  "one": {
+   "title": "Frost spray",
+   "shape": "spray",
+   "dmg": 21,
+   "perTarget": 21,
+   "deniedS": 0,
+   "chill": 0.71,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Frost spray",
+   "shape": "spray",
+   "dmg": 72,
+   "perTarget": 14,
+   "deniedS": 0,
+   "chill": 0.63,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Frost spray",
+   "shape": "spray",
+   "dmg": 21,
+   "perTarget": 21,
+   "deniedS": 1.48,
+   "chill": 0.66,
+   "moved": 0,
+   "froze": 1,
+   "window": 7.7
+  }
+ },
+ "sprays|CCC|area": {
+  "one": {
+   "title": "Frost ring",
+   "shape": "nova",
+   "dmg": 19,
+   "perTarget": 19,
+   "deniedS": 0,
+   "chill": 0.71,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost ring",
+   "shape": "nova",
+   "dmg": 96,
+   "perTarget": 19,
+   "deniedS": 0,
+   "chill": 0.71,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost ring",
+   "shape": "nova",
+   "dmg": 19,
+   "perTarget": 19,
+   "deniedS": 3.95,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "sprays|CCC|place": {
+  "one": {
+   "title": "Freezing fog",
+   "shape": "patch",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 0,
+   "chill": 0.87,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Freezing fog",
+   "shape": "patch",
+   "dmg": 260,
+   "perTarget": 52,
+   "deniedS": 0,
+   "chill": 0.87,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Freezing fog",
+   "shape": "patch",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 1.85,
+   "chill": 0.8,
+   "moved": 0,
+   "froze": 1,
+   "window": 13.5
+  }
+ },
+ "sprays|W|force": {
+  "one": {
+   "title": "Water spray",
+   "shape": "spray",
+   "dmg": 4,
+   "perTarget": 4,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 2.2,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Water spray",
+   "shape": "spray",
+   "dmg": 17,
+   "perTarget": 3,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 2.5,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Water spray",
+   "shape": "spray",
+   "dmg": 4,
+   "perTarget": 4,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 2.2,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "sprays|W|area": {
+  "one": {
+   "title": "Splash ring",
+   "shape": "nova",
+   "dmg": 4,
+   "perTarget": 4,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 1.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Splash ring",
+   "shape": "nova",
+   "dmg": 20,
+   "perTarget": 4,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 1.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Splash ring",
+   "shape": "nova",
+   "dmg": 4,
+   "perTarget": 4,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 1.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "sprays|W|place": {
+  "one": {
+   "title": "Rain",
+   "shape": "patch",
+   "dmg": 2,
+   "perTarget": 2,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Rain",
+   "shape": "patch",
+   "dmg": 10,
+   "perTarget": 2,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Rain",
+   "shape": "patch",
+   "dmg": 2,
+   "perTarget": 2,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "sprays|WW|force": {
+  "one": {
+   "title": "Water spray",
+   "shape": "spray",
+   "dmg": 4,
+   "perTarget": 4,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 3,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Water spray",
+   "shape": "spray",
+   "dmg": 15,
+   "perTarget": 3,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 3.1,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Water spray",
+   "shape": "spray",
+   "dmg": 4,
+   "perTarget": 4,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 3,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "sprays|WW|area": {
+  "one": {
+   "title": "Splash ring",
+   "shape": "nova",
+   "dmg": 6,
+   "perTarget": 6,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 2.9,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Splash ring",
+   "shape": "nova",
+   "dmg": 28,
+   "perTarget": 6,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 2.9,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Splash ring",
+   "shape": "nova",
+   "dmg": 6,
+   "perTarget": 6,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 2.9,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "sprays|WW|place": {
+  "one": {
+   "title": "Rain",
+   "shape": "patch",
+   "dmg": 3,
+   "perTarget": 3,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Rain",
+   "shape": "patch",
+   "dmg": 14,
+   "perTarget": 3,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Rain",
+   "shape": "patch",
+   "dmg": 3,
+   "perTarget": 3,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "sprays|WF|force": {
+  "one": {
+   "title": "Scalding spray",
+   "shape": "spray",
+   "dmg": 40,
+   "perTarget": 40,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Scalding spray",
+   "shape": "spray",
+   "dmg": 142,
+   "perTarget": 28,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Scalding spray",
+   "shape": "spray",
+   "dmg": 40,
+   "perTarget": 40,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "sprays|WF|area": {
+  "one": {
+   "title": "Steam burst",
+   "shape": "nova",
+   "dmg": 33,
+   "perTarget": 33,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Steam burst",
+   "shape": "nova",
+   "dmg": 167,
+   "perTarget": 33,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Steam burst",
+   "shape": "nova",
+   "dmg": 33,
+   "perTarget": 33,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "sprays|WF|place": {
+  "one": {
+   "title": "Steam cloud",
+   "shape": "patch",
+   "dmg": 71,
+   "perTarget": 71,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Steam cloud",
+   "shape": "patch",
+   "dmg": 357,
+   "perTarget": 71,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Steam cloud",
+   "shape": "patch",
+   "dmg": 71,
+   "perTarget": 71,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "sprays|WFF|force": {
+  "one": {
+   "title": "Scalding spray",
+   "shape": "spray",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Scalding spray",
+   "shape": "spray",
+   "dmg": 180,
+   "perTarget": 36,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Scalding spray",
+   "shape": "spray",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "sprays|WFF|area": {
+  "one": {
+   "title": "Steam burst",
+   "shape": "nova",
+   "dmg": 51,
+   "perTarget": 51,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Steam burst",
+   "shape": "nova",
+   "dmg": 255,
+   "perTarget": 51,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Steam burst",
+   "shape": "nova",
+   "dmg": 51,
+   "perTarget": 51,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "sprays|WFF|place": {
+  "one": {
+   "title": "Steam cloud",
+   "shape": "patch",
+   "dmg": 106,
+   "perTarget": 106,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Steam cloud",
+   "shape": "patch",
+   "dmg": 531,
+   "perTarget": 106,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Steam cloud",
+   "shape": "patch",
+   "dmg": 106,
+   "perTarget": 106,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "sprays|WWF|force": {
+  "one": {
+   "title": "Scalding spray",
+   "shape": "spray",
+   "dmg": 44,
+   "perTarget": 44,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Scalding spray",
+   "shape": "spray",
+   "dmg": 153,
+   "perTarget": 31,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Scalding spray",
+   "shape": "spray",
+   "dmg": 44,
+   "perTarget": 44,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "sprays|WWF|area": {
+  "one": {
+   "title": "Steam burst",
+   "shape": "nova",
+   "dmg": 43,
+   "perTarget": 43,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Steam burst",
+   "shape": "nova",
+   "dmg": 216,
+   "perTarget": 43,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Steam burst",
+   "shape": "nova",
+   "dmg": 43,
+   "perTarget": 43,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "sprays|WWF|place": {
+  "one": {
+   "title": "Steam cloud",
+   "shape": "patch",
+   "dmg": 89,
+   "perTarget": 89,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Steam cloud",
+   "shape": "patch",
+   "dmg": 447,
+   "perTarget": 89,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Steam cloud",
+   "shape": "patch",
+   "dmg": 89,
+   "perTarget": 89,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "sprays|WC|force": {
+  "one": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 24,
+   "perTarget": 24,
+   "deniedS": 0,
+   "chill": 0.06,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 48,
+   "perTarget": 10,
+   "deniedS": 0,
+   "chill": 0.02,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 24,
+   "perTarget": 24,
+   "deniedS": 0,
+   "chill": 0.06,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "sprays|WC|area": {
+  "one": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 0,
+   "chill": 0.11,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 160,
+   "perTarget": 32,
+   "deniedS": 0,
+   "chill": 0.11,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 1.58,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "sprays|WC|place": {
+  "one": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "sprays|WCC|force": {
+  "one": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 0,
+   "chill": 0.4,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 63,
+   "perTarget": 13,
+   "deniedS": 0,
+   "chill": 0.16,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 1.58,
+   "chill": 0.11,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "sprays|WCC|area": {
+  "one": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0,
+   "chill": 0.6,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 210,
+   "perTarget": 42,
+   "deniedS": 0,
+   "chill": 0.6,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 3.53,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "sprays|WCC|place": {
+  "one": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "sprays|WWC|force": {
+  "one": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 30,
+   "perTarget": 30,
+   "deniedS": 0,
+   "chill": 0.06,
+   "moved": 1.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 60,
+   "perTarget": 12,
+   "deniedS": 0,
+   "chill": 0.02,
+   "moved": 0.6,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 30,
+   "perTarget": 30,
+   "deniedS": 0,
+   "chill": 0.06,
+   "moved": 1.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "sprays|WWC|area": {
+  "one": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 40,
+   "perTarget": 40,
+   "deniedS": 0,
+   "chill": 0.11,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 200,
+   "perTarget": 40,
+   "deniedS": 0,
+   "chill": 0.11,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 40,
+   "perTarget": 40,
+   "deniedS": 1.58,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "sprays|WWC|place": {
+  "one": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "lightning|L|force": {
+  "one": {
+   "title": "Lightning arc",
+   "shape": "arc",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Lightning arc",
+   "shape": "arc",
+   "dmg": 109,
+   "perTarget": 22,
+   "deniedS": 0.46,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Lightning arc",
+   "shape": "arc",
+   "dmg": 82,
+   "perTarget": 82,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "lightning|L|area": {
+  "one": {
+   "title": "Discharge",
+   "shape": "discharge",
+   "dmg": 16,
+   "perTarget": 16,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Discharge",
+   "shape": "discharge",
+   "dmg": 80,
+   "perTarget": 16,
+   "deniedS": 0.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Discharge",
+   "shape": "discharge",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "lightning|L|place": {
+  "one": {
+   "title": "Lightning strike",
+   "shape": "strike",
+   "dmg": 16,
+   "perTarget": 16,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Lightning strike",
+   "shape": "strike",
+   "dmg": 80,
+   "perTarget": 16,
+   "deniedS": 0.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Lightning strike",
+   "shape": "strike",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "lightning|LL|force": {
+  "one": {
+   "title": "Lightning arc",
+   "shape": "arc",
+   "dmg": 71,
+   "perTarget": 71,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Lightning arc",
+   "shape": "arc",
+   "dmg": 243,
+   "perTarget": 49,
+   "deniedS": 1,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Lightning arc",
+   "shape": "arc",
+   "dmg": 150,
+   "perTarget": 150,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "lightning|LL|area": {
+  "one": {
+   "title": "Discharge",
+   "shape": "discharge",
+   "dmg": 27,
+   "perTarget": 27,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Discharge",
+   "shape": "discharge",
+   "dmg": 136,
+   "perTarget": 27,
+   "deniedS": 0.23,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Discharge",
+   "shape": "discharge",
+   "dmg": 59,
+   "perTarget": 59,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "lightning|LL|place": {
+  "one": {
+   "title": "Lightning strike",
+   "shape": "strike",
+   "dmg": 27,
+   "perTarget": 27,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Lightning strike",
+   "shape": "strike",
+   "dmg": 136,
+   "perTarget": 27,
+   "deniedS": 0.23,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Lightning strike",
+   "shape": "strike",
+   "dmg": 58,
+   "perTarget": 58,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "lightning|LLL|force": {
+  "one": {
+   "title": "Lightning arc",
+   "shape": "arc",
+   "dmg": 101,
+   "perTarget": 101,
+   "deniedS": 1.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Lightning arc",
+   "shape": "arc",
+   "dmg": 423,
+   "perTarget": 85,
+   "deniedS": 1.46,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Lightning arc",
+   "shape": "arc",
+   "dmg": 219,
+   "perTarget": 219,
+   "deniedS": 1.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "lightning|LLL|area": {
+  "one": {
+   "title": "Discharge",
+   "shape": "discharge",
+   "dmg": 38,
+   "perTarget": 38,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Discharge",
+   "shape": "discharge",
+   "dmg": 192,
+   "perTarget": 38,
+   "deniedS": 0.23,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Discharge",
+   "shape": "discharge",
+   "dmg": 86,
+   "perTarget": 86,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "lightning|LLL|place": {
+  "one": {
+   "title": "Lightning strike",
+   "shape": "strike",
+   "dmg": 38,
+   "perTarget": 38,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Lightning strike",
+   "shape": "strike",
+   "dmg": 192,
+   "perTarget": 38,
+   "deniedS": 0.23,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Lightning strike",
+   "shape": "strike",
+   "dmg": 85,
+   "perTarget": 85,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "lightning|LF|force": {
+  "one": {
+   "title": "Flame arc",
+   "shape": "arc",
+   "dmg": 115,
+   "perTarget": 115,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Flame arc",
+   "shape": "arc",
+   "dmg": 301,
+   "perTarget": 60,
+   "deniedS": 0.46,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Flame arc",
+   "shape": "arc",
+   "dmg": 99,
+   "perTarget": 99,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "lightning|LF|area": {
+  "one": {
+   "title": "Fire discharge",
+   "shape": "discharge",
+   "dmg": 46,
+   "perTarget": 46,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire discharge",
+   "shape": "discharge",
+   "dmg": 232,
+   "perTarget": 46,
+   "deniedS": 0.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire discharge",
+   "shape": "discharge",
+   "dmg": 31,
+   "perTarget": 31,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "lightning|LF|place": {
+  "one": {
+   "title": "Fire strike",
+   "shape": "strike",
+   "dmg": 46,
+   "perTarget": 46,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire strike",
+   "shape": "strike",
+   "dmg": 232,
+   "perTarget": 46,
+   "deniedS": 0.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire strike",
+   "shape": "strike",
+   "dmg": 31,
+   "perTarget": 31,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "lightning|LFF|force": {
+  "one": {
+   "title": "Flame arc",
+   "shape": "arc",
+   "dmg": 178,
+   "perTarget": 178,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Flame arc",
+   "shape": "arc",
+   "dmg": 465,
+   "perTarget": 93,
+   "deniedS": 0.46,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Flame arc",
+   "shape": "arc",
+   "dmg": 155,
+   "perTarget": 155,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "lightning|LFF|area": {
+  "one": {
+   "title": "Fire discharge",
+   "shape": "discharge",
+   "dmg": 70,
+   "perTarget": 70,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire discharge",
+   "shape": "discharge",
+   "dmg": 352,
+   "perTarget": 70,
+   "deniedS": 0.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire discharge",
+   "shape": "discharge",
+   "dmg": 35,
+   "perTarget": 35,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "lightning|LFF|place": {
+  "one": {
+   "title": "Fire strike",
+   "shape": "strike",
+   "dmg": 70,
+   "perTarget": 70,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire strike",
+   "shape": "strike",
+   "dmg": 352,
+   "perTarget": 70,
+   "deniedS": 0.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire strike",
+   "shape": "strike",
+   "dmg": 35,
+   "perTarget": 35,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "lightning|LLF|force": {
+  "one": {
+   "title": "Flame arc",
+   "shape": "arc",
+   "dmg": 149,
+   "perTarget": 149,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Flame arc",
+   "shape": "arc",
+   "dmg": 509,
+   "perTarget": 102,
+   "deniedS": 1,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Flame arc",
+   "shape": "arc",
+   "dmg": 140,
+   "perTarget": 140,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "lightning|LLF|area": {
+  "one": {
+   "title": "Fire discharge",
+   "shape": "discharge",
+   "dmg": 59,
+   "perTarget": 59,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire discharge",
+   "shape": "discharge",
+   "dmg": 296,
+   "perTarget": 59,
+   "deniedS": 0.23,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire discharge",
+   "shape": "discharge",
+   "dmg": 47,
+   "perTarget": 47,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "lightning|LLF|place": {
+  "one": {
+   "title": "Fire strike",
+   "shape": "strike",
+   "dmg": 59,
+   "perTarget": 59,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire strike",
+   "shape": "strike",
+   "dmg": 296,
+   "perTarget": 59,
+   "deniedS": 0.23,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire strike",
+   "shape": "strike",
+   "dmg": 47,
+   "perTarget": 47,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "lightning|LC|force": {
+  "one": {
+   "title": "Frost arc",
+   "shape": "arc",
+   "dmg": 63,
+   "perTarget": 63,
+   "deniedS": 0.77,
+   "chill": 0.58,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Frost arc",
+   "shape": "arc",
+   "dmg": 164,
+   "perTarget": 33,
+   "deniedS": 0.46,
+   "chill": 0.27,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Frost arc",
+   "shape": "arc",
+   "dmg": 73,
+   "perTarget": 73,
+   "deniedS": 2.07,
+   "chill": 0.31,
+   "moved": 0,
+   "froze": 1,
+   "window": 7.7
+  }
+ },
+ "lightning|LC|area": {
+  "one": {
+   "title": "Frost discharge",
+   "shape": "discharge",
+   "dmg": 24,
+   "perTarget": 24,
+   "deniedS": 0.38,
+   "chill": 0.19,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost discharge",
+   "shape": "discharge",
+   "dmg": 120,
+   "perTarget": 24,
+   "deniedS": 0.15,
+   "chill": 0.19,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost discharge",
+   "shape": "discharge",
+   "dmg": 24,
+   "perTarget": 24,
+   "deniedS": 1.97,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "lightning|LC|place": {
+  "one": {
+   "title": "Frost strike",
+   "shape": "strike",
+   "dmg": 24,
+   "perTarget": 24,
+   "deniedS": 0.38,
+   "chill": 0.07,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Frost strike",
+   "shape": "strike",
+   "dmg": 120,
+   "perTarget": 24,
+   "deniedS": 0.15,
+   "chill": 0.07,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Frost strike",
+   "shape": "strike",
+   "dmg": 24,
+   "perTarget": 24,
+   "deniedS": 1.95,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 13.5
+  }
+ },
+ "lightning|LCC|force": {
+  "one": {
+   "title": "Frost arc",
+   "shape": "arc",
+   "dmg": 84,
+   "perTarget": 84,
+   "deniedS": 0.77,
+   "chill": 0.73,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Frost arc",
+   "shape": "arc",
+   "dmg": 218,
+   "perTarget": 44,
+   "deniedS": 0.46,
+   "chill": 0.43,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Frost arc",
+   "shape": "arc",
+   "dmg": 87,
+   "perTarget": 87,
+   "deniedS": 2.47,
+   "chill": 0.68,
+   "moved": 0,
+   "froze": 1,
+   "window": 7.7
+  }
+ },
+ "lightning|LCC|area": {
+  "one": {
+   "title": "Frost discharge",
+   "shape": "discharge",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 0.38,
+   "chill": 0.6,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost discharge",
+   "shape": "discharge",
+   "dmg": 160,
+   "perTarget": 32,
+   "deniedS": 0.15,
+   "chill": 0.6,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost discharge",
+   "shape": "discharge",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 3.53,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "lightning|LCC|place": {
+  "one": {
+   "title": "Frost strike",
+   "shape": "strike",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 0.38,
+   "chill": 0.29,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Frost strike",
+   "shape": "strike",
+   "dmg": 160,
+   "perTarget": 32,
+   "deniedS": 0.15,
+   "chill": 0.29,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Frost strike",
+   "shape": "strike",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 3.5,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 13.5
+  }
+ },
+ "arcane|A|force": {
+  "one": {
+   "title": "Arcane beam",
+   "shape": "beam",
+   "dmg": 40,
+   "perTarget": 40,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Arcane beam",
+   "shape": "beam",
+   "dmg": 40,
+   "perTarget": 8,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Arcane beam",
+   "shape": "beam",
+   "dmg": 40,
+   "perTarget": 40,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|A|area": {
+  "one": {
+   "title": "Arcane nova",
+   "shape": "nova",
+   "dmg": 21,
+   "perTarget": 21,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Arcane nova",
+   "shape": "nova",
+   "dmg": 104,
+   "perTarget": 21,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Arcane nova",
+   "shape": "nova",
+   "dmg": 21,
+   "perTarget": 21,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|A|place": {
+  "one": {
+   "title": "Arcane blast",
+   "shape": "blast",
+   "dmg": 16,
+   "perTarget": 16,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Arcane blast",
+   "shape": "blast",
+   "dmg": 80,
+   "perTarget": 16,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Arcane blast",
+   "shape": "blast",
+   "dmg": 16,
+   "perTarget": 16,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|AA|force": {
+  "one": {
+   "title": "Arcane beam",
+   "shape": "beam",
+   "dmg": 67,
+   "perTarget": 67,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Arcane beam",
+   "shape": "beam",
+   "dmg": 67,
+   "perTarget": 13,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Arcane beam",
+   "shape": "beam",
+   "dmg": 67,
+   "perTarget": 67,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|AA|area": {
+  "one": {
+   "title": "Arcane nova",
+   "shape": "nova",
+   "dmg": 35,
+   "perTarget": 35,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Arcane nova",
+   "shape": "nova",
+   "dmg": 177,
+   "perTarget": 35,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Arcane nova",
+   "shape": "nova",
+   "dmg": 35,
+   "perTarget": 35,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|AA|place": {
+  "one": {
+   "title": "Arcane blast",
+   "shape": "blast",
+   "dmg": 27,
+   "perTarget": 27,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Arcane blast",
+   "shape": "blast",
+   "dmg": 136,
+   "perTarget": 27,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Arcane blast",
+   "shape": "blast",
+   "dmg": 27,
+   "perTarget": 27,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|AAA|force": {
+  "one": {
+   "title": "Arcane beam",
+   "shape": "beam",
+   "dmg": 93,
+   "perTarget": 93,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Arcane beam",
+   "shape": "beam",
+   "dmg": 93,
+   "perTarget": 19,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Arcane beam",
+   "shape": "beam",
+   "dmg": 93,
+   "perTarget": 93,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|AAA|area": {
+  "one": {
+   "title": "Arcane nova",
+   "shape": "nova",
+   "dmg": 50,
+   "perTarget": 50,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Arcane nova",
+   "shape": "nova",
+   "dmg": 250,
+   "perTarget": 50,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Arcane nova",
+   "shape": "nova",
+   "dmg": 50,
+   "perTarget": 50,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|AAA|place": {
+  "one": {
+   "title": "Arcane blast",
+   "shape": "blast",
+   "dmg": 38,
+   "perTarget": 38,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Arcane blast",
+   "shape": "blast",
+   "dmg": 192,
+   "perTarget": 38,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Arcane blast",
+   "shape": "blast",
+   "dmg": 38,
+   "perTarget": 38,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|AF|force": {
+  "one": {
+   "title": "Fire beam",
+   "shape": "beam",
+   "dmg": 86,
+   "perTarget": 86,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Fire beam",
+   "shape": "beam",
+   "dmg": 86,
+   "perTarget": 17,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Fire beam",
+   "shape": "beam",
+   "dmg": 61,
+   "perTarget": 61,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|AF|area": {
+  "one": {
+   "title": "Fire nova",
+   "shape": "nova",
+   "dmg": 47,
+   "perTarget": 47,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire nova",
+   "shape": "nova",
+   "dmg": 237,
+   "perTarget": 47,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire nova",
+   "shape": "nova",
+   "dmg": 29,
+   "perTarget": 29,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|AF|place": {
+  "one": {
+   "title": "Fire blast",
+   "shape": "blast",
+   "dmg": 37,
+   "perTarget": 37,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire blast",
+   "shape": "blast",
+   "dmg": 187,
+   "perTarget": 37,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire blast",
+   "shape": "blast",
+   "dmg": 22,
+   "perTarget": 22,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|AAF|force": {
+  "one": {
+   "title": "Fire beam",
+   "shape": "beam",
+   "dmg": 117,
+   "perTarget": 117,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Fire beam",
+   "shape": "beam",
+   "dmg": 117,
+   "perTarget": 23,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Fire beam",
+   "shape": "beam",
+   "dmg": 88,
+   "perTarget": 88,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|AAF|area": {
+  "one": {
+   "title": "Fire nova",
+   "shape": "nova",
+   "dmg": 64,
+   "perTarget": 64,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire nova",
+   "shape": "nova",
+   "dmg": 321,
+   "perTarget": 64,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire nova",
+   "shape": "nova",
+   "dmg": 43,
+   "perTarget": 43,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|AAF|place": {
+  "one": {
+   "title": "Fire blast",
+   "shape": "blast",
+   "dmg": 50,
+   "perTarget": 50,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire blast",
+   "shape": "blast",
+   "dmg": 251,
+   "perTarget": 50,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire blast",
+   "shape": "blast",
+   "dmg": 33,
+   "perTarget": 33,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|AFF|force": {
+  "one": {
+   "title": "Fire beam",
+   "shape": "beam",
+   "dmg": 122,
+   "perTarget": 122,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Fire beam",
+   "shape": "beam",
+   "dmg": 122,
+   "perTarget": 24,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Fire beam",
+   "shape": "beam",
+   "dmg": 98,
+   "perTarget": 98,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|AFF|area": {
+  "one": {
+   "title": "Fire nova",
+   "shape": "nova",
+   "dmg": 67,
+   "perTarget": 67,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire nova",
+   "shape": "nova",
+   "dmg": 335,
+   "perTarget": 67,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire nova",
+   "shape": "nova",
+   "dmg": 36,
+   "perTarget": 36,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|AFF|place": {
+  "one": {
+   "title": "Fire blast",
+   "shape": "blast",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire blast",
+   "shape": "blast",
+   "dmg": 262,
+   "perTarget": 52,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire blast",
+   "shape": "blast",
+   "dmg": 28,
+   "perTarget": 28,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|AL|force": {
+  "one": {
+   "title": "Lightning beam",
+   "shape": "beam",
+   "dmg": 64,
+   "perTarget": 64,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Lightning beam",
+   "shape": "beam",
+   "dmg": 64,
+   "perTarget": 13,
+   "deniedS": 0.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Lightning beam",
+   "shape": "beam",
+   "dmg": 87,
+   "perTarget": 87,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|AL|area": {
+  "one": {
+   "title": "Lightning nova",
+   "shape": "nova",
+   "dmg": 34,
+   "perTarget": 34,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Lightning nova",
+   "shape": "nova",
+   "dmg": 169,
+   "perTarget": 34,
+   "deniedS": 0.08,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Lightning nova",
+   "shape": "nova",
+   "dmg": 47,
+   "perTarget": 47,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|AL|place": {
+  "one": {
+   "title": "Lightning blast",
+   "shape": "blast",
+   "dmg": 26,
+   "perTarget": 26,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Lightning blast",
+   "shape": "blast",
+   "dmg": 130,
+   "perTarget": 26,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Lightning blast",
+   "shape": "blast",
+   "dmg": 35,
+   "perTarget": 35,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|AAL|force": {
+  "one": {
+   "title": "Lightning beam",
+   "shape": "beam",
+   "dmg": 91,
+   "perTarget": 91,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Lightning beam",
+   "shape": "beam",
+   "dmg": 91,
+   "perTarget": 18,
+   "deniedS": 0.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Lightning beam",
+   "shape": "beam",
+   "dmg": 113,
+   "perTarget": 113,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|AAL|area": {
+  "one": {
+   "title": "Lightning nova",
+   "shape": "nova",
+   "dmg": 48,
+   "perTarget": 48,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Lightning nova",
+   "shape": "nova",
+   "dmg": 242,
+   "perTarget": 48,
+   "deniedS": 0.08,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Lightning nova",
+   "shape": "nova",
+   "dmg": 61,
+   "perTarget": 61,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|AAL|place": {
+  "one": {
+   "title": "Lightning blast",
+   "shape": "blast",
+   "dmg": 37,
+   "perTarget": 37,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Lightning blast",
+   "shape": "blast",
+   "dmg": 186,
+   "perTarget": 37,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Lightning blast",
+   "shape": "blast",
+   "dmg": 47,
+   "perTarget": 47,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|ALL|force": {
+  "one": {
+   "title": "Lightning beam",
+   "shape": "beam",
+   "dmg": 88,
+   "perTarget": 88,
+   "deniedS": 1.53,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Lightning beam",
+   "shape": "beam",
+   "dmg": 88,
+   "perTarget": 18,
+   "deniedS": 0.31,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Lightning beam",
+   "shape": "beam",
+   "dmg": 133,
+   "perTarget": 133,
+   "deniedS": 1.53,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|ALL|area": {
+  "one": {
+   "title": "Lightning nova",
+   "shape": "nova",
+   "dmg": 47,
+   "perTarget": 47,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Lightning nova",
+   "shape": "nova",
+   "dmg": 234,
+   "perTarget": 47,
+   "deniedS": 0.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Lightning nova",
+   "shape": "nova",
+   "dmg": 72,
+   "perTarget": 72,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|ALL|place": {
+  "one": {
+   "title": "Lightning blast",
+   "shape": "blast",
+   "dmg": 36,
+   "perTarget": 36,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Lightning blast",
+   "shape": "blast",
+   "dmg": 180,
+   "perTarget": 36,
+   "deniedS": 0.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Lightning blast",
+   "shape": "blast",
+   "dmg": 55,
+   "perTarget": 55,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|AC|force": {
+  "one": {
+   "title": "Frost beam",
+   "shape": "beam",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 0,
+   "chill": 0.19,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Frost beam",
+   "shape": "beam",
+   "dmg": 52,
+   "perTarget": 10,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Frost beam",
+   "shape": "beam",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 1.43,
+   "chill": 0.05,
+   "moved": 0,
+   "froze": 1,
+   "window": 7.7
+  }
+ },
+ "arcane|AC|area": {
+  "one": {
+   "title": "Frost nova",
+   "shape": "nova",
+   "dmg": 27,
+   "perTarget": 27,
+   "deniedS": 0,
+   "chill": 0.13,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost nova",
+   "shape": "nova",
+   "dmg": 137,
+   "perTarget": 27,
+   "deniedS": 0,
+   "chill": 0.13,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost nova",
+   "shape": "nova",
+   "dmg": 27,
+   "perTarget": 27,
+   "deniedS": 1.68,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "arcane|AC|place": {
+  "one": {
+   "title": "Frost blast",
+   "shape": "blast",
+   "dmg": 21,
+   "perTarget": 21,
+   "deniedS": 0,
+   "chill": 0.03,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Frost blast",
+   "shape": "blast",
+   "dmg": 105,
+   "perTarget": 21,
+   "deniedS": 0,
+   "chill": 0.03,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Frost blast",
+   "shape": "blast",
+   "dmg": 21,
+   "perTarget": 21,
+   "deniedS": 0,
+   "chill": 0.03,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|AW|force": {
+  "one": {
+   "title": "Water beam",
+   "shape": "beam",
+   "dmg": 49,
+   "perTarget": 49,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 5.3,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Water beam",
+   "shape": "beam",
+   "dmg": 49,
+   "perTarget": 10,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Water beam",
+   "shape": "beam",
+   "dmg": 49,
+   "perTarget": 49,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 5.3,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|AW|area": {
+  "one": {
+   "title": "Water nova",
+   "shape": "nova",
+   "dmg": 26,
+   "perTarget": 26,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Water nova",
+   "shape": "nova",
+   "dmg": 130,
+   "perTarget": 26,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Water nova",
+   "shape": "nova",
+   "dmg": 26,
+   "perTarget": 26,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|AW|place": {
+  "one": {
+   "title": "Water blast",
+   "shape": "blast",
+   "dmg": 20,
+   "perTarget": 20,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Water blast",
+   "shape": "blast",
+   "dmg": 100,
+   "perTarget": 20,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Water blast",
+   "shape": "blast",
+   "dmg": 20,
+   "perTarget": 20,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|AFL|force": {
+  "one": {
+   "title": "Fire beam",
+   "shape": "beam",
+   "dmg": 113,
+   "perTarget": 113,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Fire beam",
+   "shape": "beam",
+   "dmg": 113,
+   "perTarget": 23,
+   "deniedS": 0.15,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Fire beam",
+   "shape": "beam",
+   "dmg": 96,
+   "perTarget": 96,
+   "deniedS": 0.77,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|AFL|area": {
+  "one": {
+   "title": "Fire nova",
+   "shape": "nova",
+   "dmg": 62,
+   "perTarget": 62,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire nova",
+   "shape": "nova",
+   "dmg": 312,
+   "perTarget": 62,
+   "deniedS": 0.08,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire nova",
+   "shape": "nova",
+   "dmg": 47,
+   "perTarget": 47,
+   "deniedS": 0.38,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|AFL|place": {
+  "one": {
+   "title": "Fire blast",
+   "shape": "blast",
+   "dmg": 49,
+   "perTarget": 49,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire blast",
+   "shape": "blast",
+   "dmg": 244,
+   "perTarget": 49,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire blast",
+   "shape": "blast",
+   "dmg": 37,
+   "perTarget": 37,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|AFW|force": {
+  "one": {
+   "title": "Steam beam",
+   "shape": "beam",
+   "dmg": 76,
+   "perTarget": 76,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Steam beam",
+   "shape": "beam",
+   "dmg": 76,
+   "perTarget": 15,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Steam beam",
+   "shape": "beam",
+   "dmg": 76,
+   "perTarget": 76,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|AFW|area": {
+  "one": {
+   "title": "Steam nova",
+   "shape": "nova",
+   "dmg": 80,
+   "perTarget": 80,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Steam nova",
+   "shape": "nova",
+   "dmg": 402,
+   "perTarget": 80,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Steam nova",
+   "shape": "nova",
+   "dmg": 80,
+   "perTarget": 80,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|AFW|place": {
+  "one": {
+   "title": "Steam blast",
+   "shape": "blast",
+   "dmg": 33,
+   "perTarget": 33,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Steam blast",
+   "shape": "blast",
+   "dmg": 164,
+   "perTarget": 33,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Steam blast",
+   "shape": "blast",
+   "dmg": 33,
+   "perTarget": 33,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|ALC|force": {
+  "one": {
+   "title": "Frost beam",
+   "shape": "beam",
+   "dmg": 75,
+   "perTarget": 75,
+   "deniedS": 0.77,
+   "chill": 0.18,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Frost beam",
+   "shape": "beam",
+   "dmg": 75,
+   "perTarget": 15,
+   "deniedS": 0.15,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Frost beam",
+   "shape": "beam",
+   "dmg": 92,
+   "perTarget": 92,
+   "deniedS": 2,
+   "chill": 0.05,
+   "moved": 0,
+   "froze": 1,
+   "window": 7.7
+  }
+ },
+ "arcane|ALC|area": {
+  "one": {
+   "title": "Frost nova",
+   "shape": "nova",
+   "dmg": 40,
+   "perTarget": 40,
+   "deniedS": 0.38,
+   "chill": 0.13,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost nova",
+   "shape": "nova",
+   "dmg": 202,
+   "perTarget": 40,
+   "deniedS": 0.08,
+   "chill": 0.13,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost nova",
+   "shape": "nova",
+   "dmg": 40,
+   "perTarget": 40,
+   "deniedS": 1.68,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "arcane|ALC|place": {
+  "one": {
+   "title": "Frost blast",
+   "shape": "blast",
+   "dmg": 31,
+   "perTarget": 31,
+   "deniedS": 0,
+   "chill": 0.03,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Frost blast",
+   "shape": "blast",
+   "dmg": 155,
+   "perTarget": 31,
+   "deniedS": 0,
+   "chill": 0.03,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Frost blast",
+   "shape": "blast",
+   "dmg": 40,
+   "perTarget": 40,
+   "deniedS": 0,
+   "chill": 0.03,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "arcane|ACW|force": {
+  "one": {
+   "title": "Ice beam",
+   "shape": "beam",
+   "dmg": 79,
+   "perTarget": 79,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Ice beam",
+   "shape": "beam",
+   "dmg": 79,
+   "perTarget": 16,
+   "deniedS": 0,
+   "chill": 0.01,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Ice beam",
+   "shape": "beam",
+   "dmg": 79,
+   "perTarget": 79,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "arcane|ACW|area": {
+  "one": {
+   "title": "Ice nova",
+   "shape": "nova",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0,
+   "chill": 0.05,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice nova",
+   "shape": "nova",
+   "dmg": 208,
+   "perTarget": 42,
+   "deniedS": 0,
+   "chill": 0.05,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice nova",
+   "shape": "nova",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0,
+   "chill": 0.05,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "arcane|ACW|place": {
+  "one": {
+   "title": "Ice blast",
+   "shape": "blast",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 0,
+   "chill": 0.01,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Ice blast",
+   "shape": "blast",
+   "dmg": 160,
+   "perTarget": 32,
+   "deniedS": 0,
+   "chill": 0.01,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Ice blast",
+   "shape": "blast",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 0,
+   "chill": 0.01,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|I|force": {
+  "one": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 24,
+   "perTarget": 24,
+   "deniedS": 0,
+   "chill": 0.06,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 48,
+   "perTarget": 10,
+   "deniedS": 0,
+   "chill": 0.02,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 24,
+   "perTarget": 24,
+   "deniedS": 0,
+   "chill": 0.06,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "ice|I|area": {
+  "one": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 0,
+   "chill": 0.11,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 160,
+   "perTarget": 32,
+   "deniedS": 0,
+   "chill": 0.11,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 1.58,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "ice|I|place": {
+  "one": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|II|force": {
+  "one": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 61,
+   "perTarget": 61,
+   "deniedS": 0,
+   "chill": 0.47,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 102,
+   "perTarget": 20,
+   "deniedS": 0,
+   "chill": 0.14,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 61,
+   "perTarget": 61,
+   "deniedS": 2.17,
+   "chill": 0.06,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "ice|II|area": {
+  "one": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 65,
+   "perTarget": 65,
+   "deniedS": 0,
+   "chill": 0.52,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 327,
+   "perTarget": 65,
+   "deniedS": 0,
+   "chill": 0.52,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 65,
+   "perTarget": 65,
+   "deniedS": 3.23,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "ice|II|place": {
+  "one": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|IW|force": {
+  "one": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 30,
+   "perTarget": 30,
+   "deniedS": 0,
+   "chill": 0.06,
+   "moved": 1.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 60,
+   "perTarget": 12,
+   "deniedS": 0,
+   "chill": 0.02,
+   "moved": 0.6,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 30,
+   "perTarget": 30,
+   "deniedS": 0,
+   "chill": 0.06,
+   "moved": 1.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "ice|IW|area": {
+  "one": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 40,
+   "perTarget": 40,
+   "deniedS": 0,
+   "chill": 0.11,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 200,
+   "perTarget": 40,
+   "deniedS": 0,
+   "chill": 0.11,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 40,
+   "perTarget": 40,
+   "deniedS": 1.58,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "ice|IW|place": {
+  "one": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|IC|force": {
+  "one": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 0,
+   "chill": 0.4,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 63,
+   "perTarget": 13,
+   "deniedS": 0,
+   "chill": 0.16,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 1.58,
+   "chill": 0.11,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "ice|IC|area": {
+  "one": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0,
+   "chill": 0.6,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 210,
+   "perTarget": 42,
+   "deniedS": 0,
+   "chill": 0.6,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 3.53,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "ice|IC|place": {
+  "one": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|IIW|force": {
+  "one": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 70,
+   "perTarget": 70,
+   "deniedS": 0,
+   "chill": 0.47,
+   "moved": 2.1,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 117,
+   "perTarget": 23,
+   "deniedS": 0,
+   "chill": 0.14,
+   "moved": 0.8,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 70,
+   "perTarget": 70,
+   "deniedS": 2.17,
+   "chill": 0.06,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "ice|IIW|area": {
+  "one": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 75,
+   "perTarget": 75,
+   "deniedS": 0,
+   "chill": 0.52,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 375,
+   "perTarget": 75,
+   "deniedS": 0,
+   "chill": 0.52,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 75,
+   "perTarget": 75,
+   "deniedS": 3.23,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "ice|IIW|place": {
+  "one": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|IL|force": {
+  "one": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 39,
+   "perTarget": 39,
+   "deniedS": 0,
+   "chill": 0.06,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 109,
+   "perTarget": 22,
+   "deniedS": 0,
+   "chill": 0.05,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 54,
+   "perTarget": 54,
+   "deniedS": 0,
+   "chill": 0.06,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "ice|IL|area": {
+  "one": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 0.38,
+   "chill": 0.11,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 260,
+   "perTarget": 52,
+   "deniedS": 0.15,
+   "chill": 0.11,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 1.58,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "ice|IL|place": {
+  "one": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|ILL|force": {
+  "one": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 54,
+   "perTarget": 54,
+   "deniedS": 0.38,
+   "chill": 0.06,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 151,
+   "perTarget": 30,
+   "deniedS": 0.08,
+   "chill": 0.05,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice shards",
+   "shape": "shards",
+   "dmg": 84,
+   "perTarget": 84,
+   "deniedS": 0.38,
+   "chill": 0.06,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "ice|ILL|area": {
+  "one": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 72,
+   "perTarget": 72,
+   "deniedS": 0.38,
+   "chill": 0.11,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 360,
+   "perTarget": 72,
+   "deniedS": 0.23,
+   "chill": 0.11,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice ring",
+   "shape": "nova",
+   "dmg": 72,
+   "perTarget": 72,
+   "deniedS": 1.58,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "ice|ILL|place": {
+  "one": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Caltrops",
+   "shape": "patch",
+   "dmg": 0,
+   "perTarget": 0,
+   "deniedS": 0,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|IE|force": {
+  "one": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 73,
+   "perTarget": 73,
+   "deniedS": 0.72,
+   "chill": 0.06,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 73,
+   "perTarget": 15,
+   "deniedS": 0.25,
+   "chill": 0.01,
+   "moved": 0.2,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 73,
+   "perTarget": 73,
+   "deniedS": 0.72,
+   "chill": 0.06,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "ice|IE|area": {
+  "one": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 286,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "ice|IE|place": {
+  "one": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 286,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|EI|force": {
+  "one": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 73,
+   "perTarget": 73,
+   "deniedS": 0.72,
+   "chill": 0.06,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 73,
+   "perTarget": 15,
+   "deniedS": 0.25,
+   "chill": 0.01,
+   "moved": 0.2,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 73,
+   "perTarget": 73,
+   "deniedS": 0.72,
+   "chill": 0.06,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "ice|EI|area": {
+  "one": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 286,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "ice|EI|place": {
+  "one": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 286,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|EEI|force": {
+  "one": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 140,
+   "perTarget": 140,
+   "deniedS": 0.73,
+   "chill": 0.05,
+   "moved": 2.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 140,
+   "perTarget": 28,
+   "deniedS": 0.25,
+   "chill": 0.01,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 140,
+   "perTarget": 140,
+   "deniedS": 0.73,
+   "chill": 0.05,
+   "moved": 2.1,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "ice|EEI|area": {
+  "one": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 112,
+   "perTarget": 112,
+   "deniedS": 0.58,
+   "chill": 0.04,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 558,
+   "perTarget": 112,
+   "deniedS": 0.58,
+   "chill": 0.04,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 112,
+   "perTarget": 112,
+   "deniedS": 0.58,
+   "chill": 0.04,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "ice|EEI|place": {
+  "one": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 112,
+   "perTarget": 112,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 558,
+   "perTarget": 112,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 112,
+   "perTarget": 112,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|EII|force": {
+  "one": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 97,
+   "perTarget": 97,
+   "deniedS": 0.72,
+   "chill": 0.22,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 97,
+   "perTarget": 19,
+   "deniedS": 0.25,
+   "chill": 0.03,
+   "moved": 0.2,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 130,
+   "perTarget": 130,
+   "deniedS": 0.72,
+   "chill": 0.03,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "ice|EII|area": {
+  "one": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 78,
+   "perTarget": 78,
+   "deniedS": 0.58,
+   "chill": 0.18,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 390,
+   "perTarget": 78,
+   "deniedS": 0.58,
+   "chill": 0.18,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 156,
+   "perTarget": 156,
+   "deniedS": 4.75,
+   "chill": 0,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "ice|EII|place": {
+  "one": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 78,
+   "perTarget": 78,
+   "deniedS": 0.58,
+   "chill": 0.07,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 390,
+   "perTarget": 78,
+   "deniedS": 0.58,
+   "chill": 0.07,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 156,
+   "perTarget": 156,
+   "deniedS": 12.17,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|AI|force": {
+  "one": {
+   "title": "Ice beam",
+   "shape": "beam",
+   "dmg": 79,
+   "perTarget": 79,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Ice beam",
+   "shape": "beam",
+   "dmg": 79,
+   "perTarget": 16,
+   "deniedS": 0,
+   "chill": 0.01,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Ice beam",
+   "shape": "beam",
+   "dmg": 79,
+   "perTarget": 79,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "ice|AI|area": {
+  "one": {
+   "title": "Ice nova",
+   "shape": "nova",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0,
+   "chill": 0.05,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice nova",
+   "shape": "nova",
+   "dmg": 208,
+   "perTarget": 42,
+   "deniedS": 0,
+   "chill": 0.05,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice nova",
+   "shape": "nova",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0,
+   "chill": 0.05,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "ice|AI|place": {
+  "one": {
+   "title": "Ice blast",
+   "shape": "blast",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 0,
+   "chill": 0.01,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Ice blast",
+   "shape": "blast",
+   "dmg": 160,
+   "perTarget": 32,
+   "deniedS": 0,
+   "chill": 0.01,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Ice blast",
+   "shape": "blast",
+   "dmg": 32,
+   "perTarget": 32,
+   "deniedS": 0,
+   "chill": 0.01,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|AAI|force": {
+  "one": {
+   "title": "Ice beam",
+   "shape": "beam",
+   "dmg": 105,
+   "perTarget": 105,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Ice beam",
+   "shape": "beam",
+   "dmg": 105,
+   "perTarget": 21,
+   "deniedS": 0,
+   "chill": 0.01,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Ice beam",
+   "shape": "beam",
+   "dmg": 105,
+   "perTarget": 105,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  }
+ },
+ "ice|AAI|area": {
+  "one": {
+   "title": "Ice nova",
+   "shape": "nova",
+   "dmg": 56,
+   "perTarget": 56,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice nova",
+   "shape": "nova",
+   "dmg": 281,
+   "perTarget": 56,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice nova",
+   "shape": "nova",
+   "dmg": 56,
+   "perTarget": 56,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "ice|AAI|place": {
+  "one": {
+   "title": "Ice blast",
+   "shape": "blast",
+   "dmg": 43,
+   "perTarget": 43,
+   "deniedS": 0,
+   "chill": 0.01,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Ice blast",
+   "shape": "blast",
+   "dmg": 216,
+   "perTarget": 43,
+   "deniedS": 0,
+   "chill": 0.01,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Ice blast",
+   "shape": "blast",
+   "dmg": 43,
+   "perTarget": 43,
+   "deniedS": 0,
+   "chill": 0.01,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "ice|AII|force": {
+  "one": {
+   "title": "Ice beam",
+   "shape": "beam",
+   "dmg": 117,
+   "perTarget": 117,
+   "deniedS": 0,
+   "chill": 0.29,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Ice beam",
+   "shape": "beam",
+   "dmg": 117,
+   "perTarget": 23,
+   "deniedS": 0,
+   "chill": 0.06,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Ice beam",
+   "shape": "beam",
+   "dmg": 117,
+   "perTarget": 117,
+   "deniedS": 1.43,
+   "chill": 0.09,
+   "moved": 0,
+   "froze": 1,
+   "window": 7.7
+  }
+ },
+ "ice|AII|area": {
+  "one": {
+   "title": "Ice nova",
+   "shape": "nova",
+   "dmg": 62,
+   "perTarget": 62,
+   "deniedS": 0,
+   "chill": 0.18,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice nova",
+   "shape": "nova",
+   "dmg": 312,
+   "perTarget": 62,
+   "deniedS": 0,
+   "chill": 0.18,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice nova",
+   "shape": "nova",
+   "dmg": 62,
+   "perTarget": 62,
+   "deniedS": 1.93,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "ice|AII|place": {
+  "one": {
+   "title": "Ice blast",
+   "shape": "blast",
+   "dmg": 48,
+   "perTarget": 48,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Ice blast",
+   "shape": "blast",
+   "dmg": 240,
+   "perTarget": 48,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Ice blast",
+   "shape": "blast",
+   "dmg": 48,
+   "perTarget": 48,
+   "deniedS": 1.55,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 13.5
+  }
+ },
+ "coldmix|EC|force": {
+  "one": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 34,
+   "perTarget": 34,
+   "deniedS": 0.58,
+   "chill": 0.1,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 40,
+   "perTarget": 8,
+   "deniedS": 0.12,
+   "chill": 0.03,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 34,
+   "perTarget": 34,
+   "deniedS": 1.63,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 6.2
+  }
+ },
+ "coldmix|EC|area": {
+  "one": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 43,
+   "perTarget": 43,
+   "deniedS": 0.58,
+   "chill": 0.13,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 215,
+   "perTarget": 43,
+   "deniedS": 0.58,
+   "chill": 0.13,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 86,
+   "perTarget": 86,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "coldmix|EC|place": {
+  "one": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 43,
+   "perTarget": 43,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 215,
+   "perTarget": 43,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 86,
+   "perTarget": 86,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "coldmix|ECC|force": {
+  "one": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 38,
+   "perTarget": 38,
+   "deniedS": 0.58,
+   "chill": 0.36,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 47,
+   "perTarget": 9,
+   "deniedS": 0.12,
+   "chill": 0.09,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 74,
+   "perTarget": 74,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "coldmix|ECC|area": {
+  "one": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 49,
+   "perTarget": 49,
+   "deniedS": 0.58,
+   "chill": 0.45,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 247,
+   "perTarget": 49,
+   "deniedS": 0.58,
+   "chill": 0.45,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 99,
+   "perTarget": 99,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "coldmix|ECC|place": {
+  "one": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 49,
+   "perTarget": 49,
+   "deniedS": 0.58,
+   "chill": 0.19,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 247,
+   "perTarget": 49,
+   "deniedS": 0.58,
+   "chill": 0.19,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 99,
+   "perTarget": 99,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "coldmix|AC|force": {
+  "one": {
+   "title": "Frost beam",
+   "shape": "beam",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 0,
+   "chill": 0.19,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Frost beam",
+   "shape": "beam",
+   "dmg": 52,
+   "perTarget": 10,
+   "deniedS": 0,
+   "chill": 0.04,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Frost beam",
+   "shape": "beam",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 1.43,
+   "chill": 0.05,
+   "moved": 0,
+   "froze": 1,
+   "window": 7.7
+  }
+ },
+ "coldmix|AC|area": {
+  "one": {
+   "title": "Frost nova",
+   "shape": "nova",
+   "dmg": 27,
+   "perTarget": 27,
+   "deniedS": 0,
+   "chill": 0.13,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost nova",
+   "shape": "nova",
+   "dmg": 137,
+   "perTarget": 27,
+   "deniedS": 0,
+   "chill": 0.13,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost nova",
+   "shape": "nova",
+   "dmg": 27,
+   "perTarget": 27,
+   "deniedS": 1.68,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "coldmix|AC|place": {
+  "one": {
+   "title": "Frost blast",
+   "shape": "blast",
+   "dmg": 21,
+   "perTarget": 21,
+   "deniedS": 0,
+   "chill": 0.03,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Frost blast",
+   "shape": "blast",
+   "dmg": 105,
+   "perTarget": 21,
+   "deniedS": 0,
+   "chill": 0.03,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Frost blast",
+   "shape": "blast",
+   "dmg": 21,
+   "perTarget": 21,
+   "deniedS": 0,
+   "chill": 0.03,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "coldmix|LC|force": {
+  "one": {
+   "title": "Frost arc",
+   "shape": "arc",
+   "dmg": 63,
+   "perTarget": 63,
+   "deniedS": 0.77,
+   "chill": 0.58,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Frost arc",
+   "shape": "arc",
+   "dmg": 164,
+   "perTarget": 33,
+   "deniedS": 0.46,
+   "chill": 0.27,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Frost arc",
+   "shape": "arc",
+   "dmg": 73,
+   "perTarget": 73,
+   "deniedS": 2.07,
+   "chill": 0.31,
+   "moved": 0,
+   "froze": 1,
+   "window": 7.7
+  }
+ },
+ "coldmix|LC|area": {
+  "one": {
+   "title": "Frost discharge",
+   "shape": "discharge",
+   "dmg": 24,
+   "perTarget": 24,
+   "deniedS": 0.38,
+   "chill": 0.19,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost discharge",
+   "shape": "discharge",
+   "dmg": 120,
+   "perTarget": 24,
+   "deniedS": 0.15,
+   "chill": 0.19,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost discharge",
+   "shape": "discharge",
+   "dmg": 24,
+   "perTarget": 24,
+   "deniedS": 1.97,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "coldmix|LC|place": {
+  "one": {
+   "title": "Frost strike",
+   "shape": "strike",
+   "dmg": 24,
+   "perTarget": 24,
+   "deniedS": 0.38,
+   "chill": 0.07,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Frost strike",
+   "shape": "strike",
+   "dmg": 120,
+   "perTarget": 24,
+   "deniedS": 0.15,
+   "chill": 0.07,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Frost strike",
+   "shape": "strike",
+   "dmg": 24,
+   "perTarget": 24,
+   "deniedS": 1.95,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 13.5
+  }
+ },
+ "coldmix|CCC|force": {
+  "one": {
+   "title": "Frost spray",
+   "shape": "spray",
+   "dmg": 21,
+   "perTarget": 21,
+   "deniedS": 0,
+   "chill": 0.71,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "pack": {
+   "title": "Frost spray",
+   "shape": "spray",
+   "dmg": 72,
+   "perTarget": 14,
+   "deniedS": 0,
+   "chill": 0.63,
+   "moved": 0,
+   "froze": 0,
+   "window": 7.7
+  },
+  "wetOne": {
+   "title": "Frost spray",
+   "shape": "spray",
+   "dmg": 21,
+   "perTarget": 21,
+   "deniedS": 1.48,
+   "chill": 0.66,
+   "moved": 0,
+   "froze": 1,
+   "window": 7.7
+  }
+ },
+ "coldmix|CCC|area": {
+  "one": {
+   "title": "Frost ring",
+   "shape": "nova",
+   "dmg": 19,
+   "perTarget": 19,
+   "deniedS": 0,
+   "chill": 0.71,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost ring",
+   "shape": "nova",
+   "dmg": 96,
+   "perTarget": 19,
+   "deniedS": 0,
+   "chill": 0.71,
+   "moved": 0,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost ring",
+   "shape": "nova",
+   "dmg": 19,
+   "perTarget": 19,
+   "deniedS": 3.95,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 5
+  }
+ },
+ "coldmix|CCC|place": {
+  "one": {
+   "title": "Freezing fog",
+   "shape": "patch",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 0,
+   "chill": 0.87,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Freezing fog",
+   "shape": "patch",
+   "dmg": 260,
+   "perTarget": 52,
+   "deniedS": 0,
+   "chill": 0.87,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Freezing fog",
+   "shape": "patch",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 1.85,
+   "chill": 0.8,
+   "moved": 0,
+   "froze": 1,
+   "window": 13.5
+  }
+ },
+ "earth|E|force": {
+  "one": {
+   "title": "Rock",
+   "shape": "missile",
+   "dmg": 28,
+   "perTarget": 28,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Rock",
+   "shape": "missile",
+   "dmg": 28,
+   "perTarget": 6,
+   "deniedS": 0.12,
+   "chill": 0,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Rock",
+   "shape": "missile",
+   "dmg": 28,
+   "perTarget": 28,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|E|area": {
+  "one": {
+   "title": "Earthquake",
+   "shape": "quake",
+   "dmg": 36,
+   "perTarget": 36,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Earthquake",
+   "shape": "quake",
+   "dmg": 182,
+   "perTarget": 36,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Earthquake",
+   "shape": "quake",
+   "dmg": 36,
+   "perTarget": 36,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|E|place": {
+  "one": {
+   "title": "Geyser",
+   "shape": "geyser",
+   "dmg": 36,
+   "perTarget": 36,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Geyser",
+   "shape": "geyser",
+   "dmg": 182,
+   "perTarget": 36,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Geyser",
+   "shape": "geyser",
+   "dmg": 36,
+   "perTarget": 36,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EE|force": {
+  "one": {
+   "title": "Rock",
+   "shape": "missile",
+   "dmg": 68,
+   "perTarget": 68,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Rock",
+   "shape": "missile",
+   "dmg": 68,
+   "perTarget": 14,
+   "deniedS": 0.12,
+   "chill": 0,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Rock",
+   "shape": "missile",
+   "dmg": 68,
+   "perTarget": 68,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|EE|area": {
+  "one": {
+   "title": "Earthquake",
+   "shape": "quake",
+   "dmg": 91,
+   "perTarget": 91,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Earthquake",
+   "shape": "quake",
+   "dmg": 454,
+   "perTarget": 91,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Earthquake",
+   "shape": "quake",
+   "dmg": 91,
+   "perTarget": 91,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EE|place": {
+  "one": {
+   "title": "Geyser",
+   "shape": "geyser",
+   "dmg": 91,
+   "perTarget": 91,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Geyser",
+   "shape": "geyser",
+   "dmg": 454,
+   "perTarget": 91,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Geyser",
+   "shape": "geyser",
+   "dmg": 91,
+   "perTarget": 91,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EEE|force": {
+  "one": {
+   "title": "Rock",
+   "shape": "missile",
+   "dmg": 115,
+   "perTarget": 115,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Rock",
+   "shape": "missile",
+   "dmg": 115,
+   "perTarget": 23,
+   "deniedS": 0.12,
+   "chill": 0,
+   "moved": 0.2,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Rock",
+   "shape": "missile",
+   "dmg": 115,
+   "perTarget": 115,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|EEE|area": {
+  "one": {
+   "title": "Earthquake",
+   "shape": "quake",
+   "dmg": 157,
+   "perTarget": 157,
+   "deniedS": 4.75,
+   "chill": 0,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Earthquake",
+   "shape": "quake",
+   "dmg": 786,
+   "perTarget": 157,
+   "deniedS": 4.75,
+   "chill": 0,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Earthquake",
+   "shape": "quake",
+   "dmg": 157,
+   "perTarget": 157,
+   "deniedS": 4.75,
+   "chill": 0,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EEE|place": {
+  "one": {
+   "title": "Geyser",
+   "shape": "geyser",
+   "dmg": 157,
+   "perTarget": 157,
+   "deniedS": 12.17,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Geyser",
+   "shape": "geyser",
+   "dmg": 786,
+   "perTarget": 157,
+   "deniedS": 12.17,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Geyser",
+   "shape": "geyser",
+   "dmg": 157,
+   "perTarget": 157,
+   "deniedS": 12.17,
+   "chill": 0,
+   "moved": 0,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EF|force": {
+  "one": {
+   "title": "Fireball",
+   "shape": "missile",
+   "dmg": 50,
+   "perTarget": 50,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Fireball",
+   "shape": "missile",
+   "dmg": 50,
+   "perTarget": 10,
+   "deniedS": 0.12,
+   "chill": 0,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Fireball",
+   "shape": "missile",
+   "dmg": 33,
+   "perTarget": 33,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|EF|area": {
+  "one": {
+   "title": "Fire quake",
+   "shape": "quake",
+   "dmg": 65,
+   "perTarget": 65,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire quake",
+   "shape": "quake",
+   "dmg": 327,
+   "perTarget": 65,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire quake",
+   "shape": "quake",
+   "dmg": 44,
+   "perTarget": 44,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EF|place": {
+  "one": {
+   "title": "Fire geyser",
+   "shape": "geyser",
+   "dmg": 65,
+   "perTarget": 65,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire geyser",
+   "shape": "geyser",
+   "dmg": 327,
+   "perTarget": 65,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire geyser",
+   "shape": "geyser",
+   "dmg": 44,
+   "perTarget": 44,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EEF|force": {
+  "one": {
+   "title": "Fireball",
+   "shape": "missile",
+   "dmg": 95,
+   "perTarget": 95,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Fireball",
+   "shape": "missile",
+   "dmg": 95,
+   "perTarget": 19,
+   "deniedS": 0.12,
+   "chill": 0,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Fireball",
+   "shape": "missile",
+   "dmg": 72,
+   "perTarget": 72,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|EEF|area": {
+  "one": {
+   "title": "Fire quake",
+   "shape": "quake",
+   "dmg": 128,
+   "perTarget": 128,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire quake",
+   "shape": "quake",
+   "dmg": 640,
+   "perTarget": 128,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire quake",
+   "shape": "quake",
+   "dmg": 99,
+   "perTarget": 99,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EEF|place": {
+  "one": {
+   "title": "Fire geyser",
+   "shape": "geyser",
+   "dmg": 128,
+   "perTarget": 128,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire geyser",
+   "shape": "geyser",
+   "dmg": 640,
+   "perTarget": 128,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire geyser",
+   "shape": "geyser",
+   "dmg": 99,
+   "perTarget": 99,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EFF|force": {
+  "one": {
+   "title": "Fireball",
+   "shape": "missile",
+   "dmg": 63,
+   "perTarget": 63,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Fireball",
+   "shape": "missile",
+   "dmg": 63,
+   "perTarget": 13,
+   "deniedS": 0.12,
+   "chill": 0,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Fireball",
+   "shape": "missile",
+   "dmg": 38,
+   "perTarget": 38,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|EFF|area": {
+  "one": {
+   "title": "Fire quake",
+   "shape": "quake",
+   "dmg": 85,
+   "perTarget": 85,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire quake",
+   "shape": "quake",
+   "dmg": 424,
+   "perTarget": 85,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire quake",
+   "shape": "quake",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EFF|place": {
+  "one": {
+   "title": "Fire geyser",
+   "shape": "geyser",
+   "dmg": 85,
+   "perTarget": 85,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire geyser",
+   "shape": "geyser",
+   "dmg": 424,
+   "perTarget": 85,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire geyser",
+   "shape": "geyser",
+   "dmg": 52,
+   "perTarget": 52,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EA|force": {
+  "one": {
+   "title": "Arcane boulder",
+   "shape": "missile",
+   "dmg": 43,
+   "perTarget": 43,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Arcane boulder",
+   "shape": "missile",
+   "dmg": 94,
+   "perTarget": 19,
+   "deniedS": 0.47,
+   "chill": 0,
+   "moved": 0.3,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Arcane boulder",
+   "shape": "missile",
+   "dmg": 43,
+   "perTarget": 43,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|EA|area": {
+  "one": {
+   "title": "Arcane quake",
+   "shape": "quake",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Arcane quake",
+   "shape": "quake",
+   "dmg": 286,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Arcane quake",
+   "shape": "quake",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EA|place": {
+  "one": {
+   "title": "Arcane geyser",
+   "shape": "geyser",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Arcane geyser",
+   "shape": "geyser",
+   "dmg": 286,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Arcane geyser",
+   "shape": "geyser",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EEA|force": {
+  "one": {
+   "title": "Arcane boulder",
+   "shape": "missile",
+   "dmg": 82,
+   "perTarget": 82,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Arcane boulder",
+   "shape": "missile",
+   "dmg": 180,
+   "perTarget": 36,
+   "deniedS": 0.47,
+   "chill": 0,
+   "moved": 0.6,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Arcane boulder",
+   "shape": "missile",
+   "dmg": 82,
+   "perTarget": 82,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|EEA|area": {
+  "one": {
+   "title": "Arcane quake",
+   "shape": "quake",
+   "dmg": 112,
+   "perTarget": 112,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Arcane quake",
+   "shape": "quake",
+   "dmg": 558,
+   "perTarget": 112,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Arcane quake",
+   "shape": "quake",
+   "dmg": 112,
+   "perTarget": 112,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EEA|place": {
+  "one": {
+   "title": "Arcane geyser",
+   "shape": "geyser",
+   "dmg": 112,
+   "perTarget": 112,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Arcane geyser",
+   "shape": "geyser",
+   "dmg": 558,
+   "perTarget": 112,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Arcane geyser",
+   "shape": "geyser",
+   "dmg": 112,
+   "perTarget": 112,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.7,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EAA|force": {
+  "one": {
+   "title": "Arcane boulder",
+   "shape": "missile",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Arcane boulder",
+   "shape": "missile",
+   "dmg": 125,
+   "perTarget": 25,
+   "deniedS": 0.47,
+   "chill": 0,
+   "moved": 0.3,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Arcane boulder",
+   "shape": "missile",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|EAA|area": {
+  "one": {
+   "title": "Arcane quake",
+   "shape": "quake",
+   "dmg": 78,
+   "perTarget": 78,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Arcane quake",
+   "shape": "quake",
+   "dmg": 390,
+   "perTarget": 78,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Arcane quake",
+   "shape": "quake",
+   "dmg": 78,
+   "perTarget": 78,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EAA|place": {
+  "one": {
+   "title": "Arcane geyser",
+   "shape": "geyser",
+   "dmg": 78,
+   "perTarget": 78,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Arcane geyser",
+   "shape": "geyser",
+   "dmg": 390,
+   "perTarget": 78,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Arcane geyser",
+   "shape": "geyser",
+   "dmg": 78,
+   "perTarget": 78,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EC|force": {
+  "one": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 34,
+   "perTarget": 34,
+   "deniedS": 0.58,
+   "chill": 0.1,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 40,
+   "perTarget": 8,
+   "deniedS": 0.12,
+   "chill": 0.03,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 34,
+   "perTarget": 34,
+   "deniedS": 1.63,
+   "chill": 0,
+   "moved": 0,
+   "froze": 1,
+   "window": 6.2
+  }
+ },
+ "earth|EC|area": {
+  "one": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 43,
+   "perTarget": 43,
+   "deniedS": 0.58,
+   "chill": 0.13,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 215,
+   "perTarget": 43,
+   "deniedS": 0.58,
+   "chill": 0.13,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 86,
+   "perTarget": 86,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EC|place": {
+  "one": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 43,
+   "perTarget": 43,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 215,
+   "perTarget": 43,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 86,
+   "perTarget": 86,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|ECC|force": {
+  "one": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 38,
+   "perTarget": 38,
+   "deniedS": 0.58,
+   "chill": 0.36,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 47,
+   "perTarget": 9,
+   "deniedS": 0.12,
+   "chill": 0.09,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 74,
+   "perTarget": 74,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|ECC|area": {
+  "one": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 49,
+   "perTarget": 49,
+   "deniedS": 0.58,
+   "chill": 0.45,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 247,
+   "perTarget": 49,
+   "deniedS": 0.58,
+   "chill": 0.45,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 99,
+   "perTarget": 99,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|ECC|place": {
+  "one": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 49,
+   "perTarget": 49,
+   "deniedS": 0.58,
+   "chill": 0.19,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 247,
+   "perTarget": 49,
+   "deniedS": 0.58,
+   "chill": 0.19,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 99,
+   "perTarget": 99,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EW|force": {
+  "one": {
+   "title": "Mud ball",
+   "shape": "missile",
+   "dmg": 31,
+   "perTarget": 31,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Mud ball",
+   "shape": "missile",
+   "dmg": 31,
+   "perTarget": 6,
+   "deniedS": 0.12,
+   "chill": 0,
+   "moved": 0.2,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Mud ball",
+   "shape": "missile",
+   "dmg": 31,
+   "perTarget": 31,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|EW|area": {
+  "one": {
+   "title": "Water quake",
+   "shape": "quake",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Water quake",
+   "shape": "quake",
+   "dmg": 208,
+   "perTarget": 42,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Water quake",
+   "shape": "quake",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EW|place": {
+  "one": {
+   "title": "Water geyser",
+   "shape": "geyser",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Water geyser",
+   "shape": "geyser",
+   "dmg": 208,
+   "perTarget": 42,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Water geyser",
+   "shape": "geyser",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EWC|force": {
+  "one": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 73,
+   "perTarget": 73,
+   "deniedS": 0.72,
+   "chill": 0.06,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 73,
+   "perTarget": 15,
+   "deniedS": 0.25,
+   "chill": 0.01,
+   "moved": 0.2,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Ice boulder",
+   "shape": "missile",
+   "dmg": 73,
+   "perTarget": 73,
+   "deniedS": 0.72,
+   "chill": 0.06,
+   "moved": 1.1,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|EWC|area": {
+  "one": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 286,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Ice quake",
+   "shape": "quake",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EWC|place": {
+  "one": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 286,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Ice geyser",
+   "shape": "geyser",
+   "dmg": 57,
+   "perTarget": 57,
+   "deniedS": 0.58,
+   "chill": 0.02,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EFA|force": {
+  "one": {
+   "title": "Fireball",
+   "shape": "missile",
+   "dmg": 66,
+   "perTarget": 66,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Fireball",
+   "shape": "missile",
+   "dmg": 153,
+   "perTarget": 31,
+   "deniedS": 0.47,
+   "chill": 0,
+   "moved": 0.3,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Fireball",
+   "shape": "missile",
+   "dmg": 48,
+   "perTarget": 48,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|EFA|area": {
+  "one": {
+   "title": "Fire quake",
+   "shape": "quake",
+   "dmg": 89,
+   "perTarget": 89,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Fire quake",
+   "shape": "quake",
+   "dmg": 446,
+   "perTarget": 89,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Fire quake",
+   "shape": "quake",
+   "dmg": 65,
+   "perTarget": 65,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EFA|place": {
+  "one": {
+   "title": "Fire geyser",
+   "shape": "geyser",
+   "dmg": 89,
+   "perTarget": 89,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Fire geyser",
+   "shape": "geyser",
+   "dmg": 446,
+   "perTarget": 89,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Fire geyser",
+   "shape": "geyser",
+   "dmg": 65,
+   "perTarget": 65,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|ECA|force": {
+  "one": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 47,
+   "perTarget": 47,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 102,
+   "perTarget": 20,
+   "deniedS": 0.47,
+   "chill": 0.02,
+   "moved": 0.3,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Frost boulder",
+   "shape": "missile",
+   "dmg": 47,
+   "perTarget": 47,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|ECA|area": {
+  "one": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 64,
+   "perTarget": 64,
+   "deniedS": 0.58,
+   "chill": 0.13,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 319,
+   "perTarget": 64,
+   "deniedS": 0.58,
+   "chill": 0.13,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Frost quake",
+   "shape": "quake",
+   "dmg": 127,
+   "perTarget": 127,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|ECA|place": {
+  "one": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 64,
+   "perTarget": 64,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 319,
+   "perTarget": 64,
+   "deniedS": 0.58,
+   "chill": 0.05,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Frost geyser",
+   "shape": "geyser",
+   "dmg": 127,
+   "perTarget": 127,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ },
+ "earth|EWF|force": {
+  "one": {
+   "title": "Steam boulder",
+   "shape": "missile",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  },
+  "pack": {
+   "title": "Steam boulder",
+   "shape": "missile",
+   "dmg": 42,
+   "perTarget": 8,
+   "deniedS": 0.12,
+   "chill": 0,
+   "moved": 0.1,
+   "froze": 0,
+   "window": 6.2
+  },
+  "wetOne": {
+   "title": "Steam boulder",
+   "shape": "missile",
+   "dmg": 42,
+   "perTarget": 42,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 6.2
+  }
+ },
+ "earth|EWF|area": {
+  "one": {
+   "title": "Steam quake",
+   "shape": "quake",
+   "dmg": 109,
+   "perTarget": 109,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "pack": {
+   "title": "Steam quake",
+   "shape": "quake",
+   "dmg": 545,
+   "perTarget": 109,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  },
+  "wetOne": {
+   "title": "Steam quake",
+   "shape": "quake",
+   "dmg": 109,
+   "perTarget": 109,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 5
+  }
+ },
+ "earth|EWF|place": {
+  "one": {
+   "title": "Steam geyser",
+   "shape": "geyser",
+   "dmg": 56,
+   "perTarget": 56,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "pack": {
+   "title": "Steam geyser",
+   "shape": "geyser",
+   "dmg": 280,
+   "perTarget": 56,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  },
+  "wetOne": {
+   "title": "Steam geyser",
+   "shape": "geyser",
+   "dmg": 56,
+   "perTarget": 56,
+   "deniedS": 0.58,
+   "chill": 0,
+   "moved": 0.4,
+   "froze": 0,
+   "window": 13.5
+  }
+ }
+}

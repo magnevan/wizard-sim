@@ -116,7 +116,8 @@ function parseOne(s: string): Demo | null {
   const [q, c0 = HANDS.includes(s.split('@')[0]) ? s : 'force'] = s.split('/');
   const [cast, at] = c0.split('@');
   const xy = at ? at.split(',').map(Number) : null;
-  const els = q.split(/[+ ,]/).filter((e) => (rules.BASE as readonly string[]).includes(e)).map((e) => elementId(e as Element));
+  // the keys pressed: 'ice' is pressed as Water then Cold (they combine in the queue)
+  const els = q.split(/[+ ,]/).filter((e) => (rules.ALL as readonly string[]).includes(e)).flatMap((e) => rules.runesOf(e as Element).map((r) => elementId(r)));
   return els.length || HANDS.includes(cast) ? { els, cast, at: xy && xy.length === 2 && xy.every(Number.isFinite) ? [xy[0], xy[1]] : undefined } : null;
 }
 

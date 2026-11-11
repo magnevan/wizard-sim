@@ -14,10 +14,12 @@ import { tickDeaths, tickEnemies } from './enemies';
 import { tickNav } from './nav';
 import { hasteOf, tickStructures } from './structures';
 import { tickWaves } from './waves';
+import { tickBatteryWaves } from './battery-waves';
 import { survivePress, tickSurvive } from './survive';
 import { HIT_KIND, setHitKind, tickStatuses } from './hit';
 import { sureFooted, tickGuards, walkMult } from './guards';
 import { BTN, type PlayerInput } from './input';
+import { batteryPress, driving } from './battery';
 import { DT, KIND, MAX_SEATS, PHASE, joinSeat, type World } from './world';
 
 export { elementId, elementName } from './elements';
@@ -28,6 +30,7 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
   const b = w.bodies, s = w.seats;
   if (w.tut) beginTutorialTick(w);
   if (w.run) survivePress(w, inputs);
+  if (w.battery) batteryPress(w, inputs);
 
   for (let i = 0; i < MAX_SEATS; i++) {
     const inp = inputs[i];
@@ -43,13 +46,13 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
     let speed = BODY.walkSpeed * (1 - STATUS.chillSlow * b.chill[i]) * hasteOf(w, i) * walkMult(w, i); // carrying a guard or weapon, blocking, the Bulwark, a held Special
     const ph = s.phase[i];
     if (ph === PHASE.channel || ph === PHASE.charge || s.handT[i] > TAP) speed *= BODY.castWalk; // a Heavy charges like a spell
-    if (!canAct(w, i) || b.heldBy[i] >= 0 || b.root[i] > 0) speed = 0; // held by a grabber or pinned: you can still cast, not walk
-    const grip = onIce(w, i) && !sureFooted(w, i) ? 0.03 : BODY.friction; // the Rime kite never slips
+    if (!canAct(w, i) || b.heldBy[i] >= 0 || b.root[i] > 0 || driving(w, i)) speed = 0; // held by a grabber or pinned: you can still cast, not walk
+    const grip = BODY.friction; // nobody slips on ice any more (the user, 2026-11-11: sliding wasn't a helpful mechanic)
     b.vx[i] += (mx * speed - b.vx[i]) * grip;
     b.vy[i] += (my * speed - b.vy[i]) * grip;
   }
 
-  if (w.run) tickSurvive(w); else tickWaves(w);
+  if (w.run) tickSurvive(w); else if (w.battery) tickBatteryWaves(w); else tickWaves(w);
   tickNav(w);
   tickEnemies(w);
 
@@ -60,7 +63,7 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
     const rooted = fixedBody(w, i); // dummies, and the tutorial's brambles
     const pinned = b.root[i] > 0; // pinned by the spear's javelin: no walking, but blows still move it
     if (!rooted) { b.x[i] += ((pinned ? 0 : b.vx[i]) + b.kx[i]) * DT; b.y[i] += ((pinned ? 0 : b.vy[i]) + b.ky[i]) * DT; }
-    const decay = onIce(w, i) ? 0.985 : 0.86;
+    const decay = onIce(w, i) && sureFooted(w, i) ? 0.985 : 0.86; // only the Rime kite skates on ice (its Ice slide)
     b.kx[i] *= decay; b.ky[i] *= decay;
     if (Math.abs(b.kx[i]) < 1e-3) b.kx[i] = 0;
     if (Math.abs(b.ky[i]) < 1e-3) b.ky[i] = 0;

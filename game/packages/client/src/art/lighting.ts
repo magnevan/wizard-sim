@@ -57,7 +57,7 @@ export const moodOf = (room: string, override?: string | null): Mood => MOODS[ov
 export const PROP_LIGHTS: Readonly<Record<string, readonly [string, number, number]>> = {
   'crystal-ball': ['#b08aff', 46, 0.6], 'rune-circle': ['#b08aff', 54, 0.5], cauldron: ['#8ef07e', 36, 0.35], armillary: ['#ffd860', 30, 0.25],
   'lantern-post': ['#ffb060', 62, 0.8], 'ward-lamp': ['#9fd8ff', 58, 0.7], 'wax-candle-on-a-brass-holder': ['#ffb060', 26, 0.5], 'campfire-ring': ['#ff8a30', 72, 0.85],
-  'test-rig': ['#b08aff', 34, 0.45], 'control-pedestal': ['#ffb060', 26, 0.35], 'small-glowing-blue-crystal': ['#6ab8ff', 22, 0.4],
+  'battery-well': ['#ff9a30', 84, 0.8], 'defence-tower': ['#ff9a30', 22, 0.22], 'test-rig': ['#b08aff', 34, 0.45], 'control-pedestal': ['#ffb060', 26, 0.35], 'small-glowing-blue-crystal': ['#6ab8ff', 22, 0.4],
 };
 
 const asNum = (c: RGB): number => (Math.round(c[0] * 255) << 16) | (Math.round(c[1] * 255) << 8) | Math.round(c[2] * 255);
@@ -393,6 +393,24 @@ export class SceneLighting {
       s = this.meshes[i] = { geo, map, glow, pos, uv, idx };
     }
     return s;
+  }
+
+  /**
+   * A standing thing that gives off its own light (an energy field): an added copy that undoes the mood's tint on it, so it
+   * is as bright at night as by day, and a touch brighter (k 0..1). Call after finishLights.
+   */
+  emit(spr: Sprite, k: number): void {
+    const a = Math.min(1, k * (1.15 / this.ambLum - 1));
+    if (a < 0.04) return;
+    let s = this.overlays[this.overN];
+    if (!s) { s = new Sprite(); s.blendMode = 'add'; this.parent.addChild(s); this.overlays.push(s); }
+    this.overN++;
+    s.texture = spr.texture;
+    s.position.set(spr.position.x, spr.position.y);
+    s.zIndex = spr.zIndex + 1;
+    s.tint = 0xffffff;
+    s.alpha = a;
+    s.visible = true;
   }
 
   /** Lights a standing thing whose foot is at scene x, y. Call after finishLights. */

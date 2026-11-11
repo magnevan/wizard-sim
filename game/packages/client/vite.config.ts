@@ -1,4 +1,5 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
@@ -36,10 +37,31 @@ function soundLab(): Plugin {
   };
 }
 
+/**
+ * The game's lockstep fingerprint: a hash over the sim, the rules and the net code, as text with LF line ends (so a
+ * Windows checkout and the Linux deploy agree). Two pages may play one match only if theirs match (net/netplay.ts):
+ * any change to how the world steps makes builds drift apart at the first input, which looks like a dropped link.
+ */
+function simBuild(): string {
+  const h = createHash('sha1');
+  const walk = (dir: string, rel: string): void => {
+    for (const name of readdirSync(dir).sort()) {
+      const full = join(dir, name), r = `${rel}/${name}`;
+      if (name === 'node_modules' || name === 'test') continue;
+      if (!/\.[a-z]+$/.test(name)) { walk(full, r); continue; }
+      if (!/\.(ts|js|json)$/.test(name)) continue;
+      h.update(r); h.update(readFileSync(full, 'utf8').replace(/\r\n/g, '\n'));
+    }
+  };
+  for (const pkg of ['sim', 'rules', 'net']) walk(join(here, '..', pkg, 'src'), pkg);
+  return h.digest('hex').slice(0, 8);
+}
+
 // base './' so the built dist/ works from any path (the artifact, itch.io, a file server).
 export default defineConfig({
   base: './',
   plugins: [soundLab()],
+  define: { __SIM_BUILD__: JSON.stringify(simBuild()) },
   server: { port: 5187 },
   preview: { port: 4187 },
   build: {

@@ -4,6 +4,7 @@ import {
   BTN, DEVICE, EL, KIND, NO_INPUT, RUNES, STRUCT, WALL, WARD, compile, createWorld, elementId, orbitAngle, quantize, specOf, step,
   type PlayerInput, type World,
 } from '../src';
+import { damageWall } from '../src/walls';
 
 class Driver {
   aim = { x: 1, y: 0 };
@@ -47,6 +48,36 @@ describe('Shield', () => {
     expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
     d.queue('earth').cast(BTN.force, 70, 40);
     expect(w.bodies.hp[t]).toBe(400);
+  });
+
+  it('Shield + Ice as Place raises an ice wall: a spike barrier that stops a rock, weaker than stone', () => {
+    const { w, d, dummy } = arena();
+    const t = dummy(5, 0);
+    d.aimAt(5, 0).queue('shield', 'water', 'cold').cast(BTN.area, 20, 20);
+    expect(walls(w, WALL.ice)).toBe(STRUCT.arcSegs);
+    const k = Array.from(w.walls.type).indexOf(WALL.ice);
+    expect(w.walls.maxHp[k]).toBeLessThan(STRUCT.rockHp);
+    d.queue('earth').cast(BTN.force, 70, 40);
+    expect(w.bodies.hp[t]).toBe(400);
+  });
+
+  it('an ice wall stabs whoever presses against it, and stands shorter than rock', () => {
+    const { w, d } = arena(2);
+    w.bodies.x[1] = STRUCT.arcRadius + 0.55; w.bodies.y[1] = 0;
+    const hp0 = w.bodies.hp[1];
+    d.aimAt(5, 0).queue('shield', 'water', 'cold').cast(BTN.area, 20, 90);
+    expect(w.bodies.hp[1]).toBeLessThan(hp0);
+    d.tick({}, 60 * (STRUCT.iceLife + 1));
+    expect(walls(w, WALL.ice)).toBe(0);
+  });
+
+  it('fire melts an ice wall: a hit carrying Fire does STRUCT.iceMelt times the damage (not to stone)', () => {
+    const { w, d } = arena();
+    d.aimAt(5, 0).queue('shield', 'water', 'cold').cast(BTN.area, 20, 20);
+    const [k1, k2] = Array.from(w.walls.type).flatMap((t, k) => (t === WALL.ice ? [k] : [])), h1 = w.walls.hp[k1], h2 = w.walls.hp[k2];
+    damageWall(w, k1, 10, 0); damageWall(w, k2, 10, 1);
+    expect(h1 - w.walls.hp[k1]).toBeCloseTo(10, 6);
+    expect(h2 - w.walls.hp[k2]).toBeCloseTo(10 * STRUCT.iceMelt, 6);
   });
 
   it('coated rock acts on whoever touches it: a Life stone arc heals, a plain one does not', () => {
@@ -137,13 +168,79 @@ describe('Shield', () => {
     d.aimAt(4, 0).queue('shield').cast(BTN.area, 20, 20);
     expect(walls(w, WALL.barrier)).toBe(STRUCT.arcSegs);
     const before = rune(w, 'shield');
-    // The ally throws a rock at the barrier from outside: it comes back at them.
-    const ally = new Driver(w, 1).aimAt(-5, 0);
-    ally.queue('earth').cast(BTN.force, 30, 40);
+    // A wizard of the other team throws a rock at the barrier from outside: it comes back at them.
+    w.bodies.team[1] = 9;
+    const foe = new Driver(w, 1).aimAt(-5, 0);
+    foe.queue('earth').cast(BTN.force, 30, 40);
     expect(w.bodies.hp[1]).toBeLessThan(100);
     expect(w.bodies.hp[0]).toBe(100);
     d.tick({}, 120);
     expect(rune(w, 'shield')).toBeLessThan(before + 2.5 * RUNES.regen);
+  });
+
+  it('enemies break through a barrier when the way round is long, and walk round when it is short', async () => {
+    const { ARCH, ARCHETYPES } = await import('../src/archetypes');
+    const { TERRAIN, spawnBody } = await import('../src/world');
+    const run = (half: number) => {
+      const w = createWorld(1, 1, { dummies: false }), b = w.bodies, wl = w.walls;
+      b.x[0] = 0; b.y[0] = 0;
+      // a rock wall at x = 2.5 from -half to +half, with a gap at the middle closed by the wizard's barrier
+      const seg = (k: number, type: number, owner: number, y1: number, y2: number) => { wl.type[k] = type; wl.owner[k] = owner; wl.x1[k] = 2.5; wl.x2[k] = 2.5; wl.y1[k] = y1; wl.y2[k] = y2; wl.hp[k] = wl.maxHp[k] = type === WALL.rock ? 1e9 : 80; wl.born[k] = 0; };
+      seg(0, WALL.rock, TERRAIN, -half, -1); seg(1, WALL.rock, TERRAIN, 1, half); seg(2, WALL.barrier, 0, -1, 1);
+      const i = spawnBody(w, -1, KIND.enemy, 2, 6, 0, 1e6, ARCHETYPES[ARCH.swarmer].radius); b.arch[i] = ARCH.swarmer;
+      for (let t = 0; t < 60 * 8; t++) step(w, [NO_INPUT]);
+      return { battered: wl.type[2] !== WALL.barrier || wl.hp[2] < 80 || w.seats.runes[EL.shield - 1] < RUNES.max.shield - 0.3, x: b.x[i] };
+    };
+    const long = run(12), short = run(2.5);
+    expect(long.battered).toBe(true);
+    expect(long.x).toBeGreaterThan(2.5); // still on its side, at the barrier
+    expect(short.x).toBeLessThan(2.5); // went round
+  });
+
+  it('a coated force field (Shield + Fire) holds foes and burns them, lets allies through unharmed, and lends ally shots its Fire', async () => {
+    const { wallDamage } = await import('../src/walls');
+    const { N_EL } = await import('../src/elements');
+    const m = arena(3);
+    m.d.aimAt(4, 0).queue('shield', 'fire').cast(BTN.area, 20, 20);
+    expect(walls(m.w, WALL.curtain)).toBe(STRUCT.arcSegs);
+    m.w.bodies.team[2] = 9;
+    for (const i of [1, 2]) { m.w.bodies.x[i] = 4 + i; m.w.bodies.y[i] = 0; }
+    for (let t = 0; t < 120; t++) { for (const i of [1, 2]) { m.w.bodies.vx[i] = -4; m.w.bodies.vy[i] = 0; } m.d.tick({}); }
+    expect(m.w.bodies.x[1]).toBeLessThan(1); // the ally walked through
+    expect(m.w.bodies.hp[1]).toBe(100); // unharmed
+    expect(m.w.bodies.x[2]).toBeGreaterThan(1.8); // the foe is held
+    expect(m.w.bodies.hp[2]).toBeLessThan(100); // and burnt
+    // Fire hits the Fire field softly; an Earth hit doesn't
+    const k = Array.from(m.w.walls.type).indexOf(WALL.curtain);
+    const fire = new Uint8Array(N_EL), earth = new Uint8Array(N_EL); fire[EL.fire - 1] = 2; earth[EL.earth - 1] = 1;
+    expect(wallDamage(m.w, k, fire, 0, 1)).toBeLessThan(wallDamage(m.w, -1, fire, 0, 1));
+    expect(wallDamage(m.w, k, earth, 0, 1)).toBe(wallDamage(m.w, -1, earth, 0, 1));
+    // an ally's rock thrown out through it picks up its Fire
+    const a = arena(2);
+    a.d.aimAt(4, 0).queue('shield', 'fire').cast(BTN.area, 20, 20);
+    a.w.bodies.x[1] = 0.5; a.w.bodies.y[1] = 0;
+    const ally = new Driver(a.w, 1).aimAt(8, 0);
+    ally.queue('earth').tick({ buttons: BTN.force }, 30);
+    let coated = false;
+    for (let t = 0; t < 30; t++) { ally.tick({}); for (let j = 0; j < a.w.missiles.alive.length; j++) if (a.w.missiles.alive[j] && a.w.missiles.els[j * N_EL + EL.fire - 1] > 0) coated = true; }
+    expect(coated).toBe(true);
+  });
+
+  it('a barrier is a force field: your team walks and shoots through it, the other team is stopped', () => {
+    const { w, d } = arena(2);
+    d.aimAt(4, 0).queue('shield').cast(BTN.area, 20, 20);
+    // the ally outside throws a rock through it, at you: it lands
+    const ally = new Driver(w, 1).aimAt(-5, 0);
+    ally.queue('earth').cast(BTN.force, 30, 40);
+    expect(w.bodies.hp[0]).toBeLessThan(100);
+    // a foe walking at you is held at the barrier, an ally walks through
+    const m = arena(3);
+    m.d.aimAt(4, 0).queue('shield').cast(BTN.area, 20, 20);
+    m.w.bodies.team[2] = 9;
+    for (const i of [1, 2]) { m.w.bodies.x[i] = 4 + i; m.w.bodies.y[i] = 0; }
+    for (let t = 0; t < 120; t++) { for (const i of [1, 2]) { m.w.bodies.vx[i] = -4; m.w.bodies.vy[i] = 0; } m.d.tick({}); }
+    expect(m.w.bodies.x[1]).toBeLessThan(1);
+    expect(m.w.bodies.x[2]).toBeGreaterThan(1.8);
   });
 
   it('Shield + Fire on yourself is a ward that resists fire', () => {
@@ -167,15 +264,49 @@ describe('Shield', () => {
     expect(w.bodies.hp[0]).toBe(100);
   });
 
-  it('the Shove wave pushes everyone in front back', () => {
+  it('Shield alone on Force blinks you to the cursor, paid with the Shield rune', () => {
+    const { w, d } = arena();
+    d.aimAt(6, 0).queue('shield').tick({ buttons: BTN.force });
+    expect(w.bodies.x[0]).toBeGreaterThan(5);
+  });
+
+  it('a Fire blink leaves a fire ring where you stood, and it never catches you', () => {
     const { w, d } = arena(2);
-    w.bodies.x[1] = 2.5;
-    d.aimAt(5, 0).queue('shield').cast(BTN.force, 1, 40);
-    expect(w.bodies.x[1]).toBeGreaterThan(3.2);
+    w.bodies.x[1] = 1.2; w.bodies.y[1] = 0; w.bodies.team[1] = 9; // a chaser at your heels
+    const hp1 = w.bodies.hp[1];
+    d.aimAt(-8, 0).queue('shield', 'fire').tick({ buttons: BTN.force }).tick({}, 20);
+    expect(w.bodies.x[0]).toBeLessThan(-6);
+    expect(w.bodies.hp[1]).toBeLessThan(hp1);
+    expect(w.bodies.hp[0]).toBe(w.bodies.maxHp[0]);
   });
 });
 
 describe('Sigil', () => {
+  it('the stored spell: Sigil alone on Force arms the staff, the next spell is held, and an empty Force releases it with no wind-up', () => {
+    const { w, d } = arena(2);
+    w.bodies.x[1] = 1.4; w.bodies.y[1] = 0; w.bodies.team[1] = 9; // a foe beside you
+    d.aimAt(4, 0).queue('sigil').cast(BTN.force, 1, 20);
+    expect(w.seats.storeArm[0]).toBe(1);
+    d.queue('fire', 'fire').cast(BTN.area, 2, 40); // a Fire ring: stored, not cast
+    expect(w.seats.storeLen[0]).toBe(2);
+    expect(w.bodies.hp[1]).toBe(100);
+    expect(w.seats.runes[EL.sigil - 1]).toBeLessThan(RUNES.max.sigil - 0.9); // it binds a Sigil rune
+    d.queue('sigil').tick({ buttons: BTN.force }); // Sigil + Force releases it: the ring goes off this very tick
+    expect(w.bodies.hp[1]).toBeLessThan(100);
+    expect(w.seats.storeLen[0]).toBe(0);
+  });
+
+  it('your orbit is one device: more orbital casts add orbs to the ring, which binds one Sigil rune', () => {
+    const { w, d } = arena();
+    for (let c = 0; c < 4; c++) d.queue('sigil', 'fire').cast(BTN.area, 2, 40);
+    expect(devices(w, DEVICE.orbital)).toBe(4);
+    expect(w.seats.runes[EL.sigil - 1]).toBeGreaterThan(RUNES.max.sigil - 1.05); // one rune bound, the rest given back
+    // the ring holds what one full cast makes: a fifth orb pushes out the oldest
+    d.queue('sigil', 'fire').cast(BTN.area, 2, 40);
+    let orbs = 0; for (let k = 0; k < w.devices.type.length; k++) if (w.devices.type[k] === DEVICE.orbital) orbs += w.devices.charges[k];
+    expect(orbs).toBe(STRUCT.orbitMax);
+  });
+
   it('a turret is held to aim, and stands at the cursor from when you let go, at most Place range away', () => {
     const { w, d } = arena();
     d.aimAt(6, 1).queue('sigil', 'fire').tick({ buttons: BTN.force }, 30);
@@ -391,7 +522,7 @@ describe('Sigil', () => {
 
   it('Blink goes all the way to the cursor', () => {
     const { w, d } = arena();
-    d.aimAt(9, 3).queue('sigil').tick({ buttons: BTN.force });
+    d.aimAt(9, 3).queue('shield').tick({ buttons: BTN.force });
     expect(w.bodies.x[0]).toBeCloseTo(9, 0);
     expect(w.bodies.y[0]).toBeCloseTo(3, 0);
   });
@@ -399,7 +530,7 @@ describe('Sigil', () => {
   it('Blink stops short of a body standing on the cursor', () => {
     const { w, d, dummy } = arena();
     dummy(8, 0);
-    d.aimAt(8, 0).queue('sigil').tick({ buttons: BTN.force });
+    d.aimAt(8, 0).queue('shield').tick({ buttons: BTN.force });
     expect(w.bodies.x[0]).toBeLessThan(8 - 0.9);
     expect(w.bodies.x[0]).toBeGreaterThan(6);
   });
@@ -482,16 +613,17 @@ describe('Sigil', () => {
     expect(devices(w, DEVICE.lens)).toBe(1);
   });
 
-  it('pressing Sigil with no free rune recalls your oldest creation', () => {
+  it('out of Sigil runes, one press recalls nothing; a double-tap over nothing recalls your oldest creation', () => {
     const { w, d, dummy } = arena();
     dummy(9, 5);
     d.queue('sigil').place(3, 0);            // 1: lens
     d.queue('sigil').cast(BTN.self, 1, 20);  // 2: Double
     d.queue('sigil', 'fire').aimAt(4, 4).cast(BTN.force, 1, 20); // 3: turret
     w.seats.runes[elementId('sigil') - 1] = 0.2; // all bound, none regenerated
-    d.queue('sigil');                         // the lens (oldest) goes, its rune into the queue
+    d.aimAt(-6, -6).queue('sigil');          // one dry press: nothing goes
+    expect(devices(w, DEVICE.lens)).toBe(1);
+    d.tick({}, 5).queue('sigil');            // a second, quickly, over nothing: the lens (oldest) goes
     expect(devices(w, DEVICE.lens)).toBe(0);
-    expect(w.seats.queueLen[0]).toBe(1);
     expect(w.seats.double[0]).toBeGreaterThanOrEqual(0);
   });
 

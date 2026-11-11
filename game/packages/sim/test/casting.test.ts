@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { Element } from '@wizard-sim/rules';
+import { rules, type Element } from '@wizard-sim/rules';
 import {
-  BTN, DAMAGE, EL, KIND, N_EL, NO_INPUT, PHASE, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step,
+  BTN, DAMAGE, EL, KEYED_EL, KIND, N_EL, NO_INPUT, PHASE, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step,
   type PlayerInput, type World,
 } from '../src';
 import { cellAt } from '../src/effects';
+import { applyHit } from '../src/hit';
 import { RES, taken } from '../src/guards';
 
 // A tiny driver: seat 0 acts, everyone else idles. Aim is a world point, kept between steps.
@@ -48,6 +49,17 @@ describe('runes and the queue', () => {
     expect(rune(w, 'fire')).toBeCloseTo(RUNES.max.fire, 1);
   });
 
+  it('runes in the queue do not regenerate: the queue never holds more than the pool', () => {
+    const { w, d } = range();
+    d.queue('earth', 'earth', 'water', 'cold'); // Earth, Earth and an Ice (a Water and a Cold)
+    d.tick({}, 300);
+    expect(rune(w, 'earth')).toBeCloseTo(RUNES.max.earth - 2, 5);
+    expect(rune(w, 'water')).toBeCloseTo(RUNES.max.water - 1, 5);
+    expect(rune(w, 'cold')).toBeCloseTo(RUNES.max.cold - 1, 5);
+    d.tick({ buttons: BTN.clear });
+    expect(rune(w, 'earth')).toBeCloseTo(RUNES.max.earth, 5); // given back, never above the max
+  });
+
   it('a cancel refunds the cancelled rune and never spends the new one', () => {
     const { w, d } = range();
     d.queue('fire', 'cold');
@@ -56,12 +68,47 @@ describe('runes and the queue', () => {
     expect(rune(w, 'cold')).toBeCloseTo(RUNES.max.cold, 1);
   });
 
-  it('you cannot queue an element you are out of', () => {
+  it('an element you are out of queues as a ghost, and all your regen fills it', () => {
     const { w, d } = range();
     w.seats.runes[elementId('earth') - 1] = 0.5;
     d.queue('earth');
+    expect(w.seats.queueLen[0]).toBe(1);
+    expect(w.seats.owe[0]).toBe(1);
+    d.tick({}, Math.ceil(60 * 0.5 / RUNES.regen) + 2); // half a rune, at all of R
+    expect(w.seats.owe[0]).toBe(0);
+    expect(rune(w, 'earth')).toBeLessThan(0.1);
+  });
+
+  it('a cast with a ghost unpaid waits for it, then goes: no pool ever goes below zero', () => {
+    const { w, d, dummy } = range();
+    w.seats.runes[elementId('arcane') - 1] = 0;
+    d.queue('arcane').tick({ buttons: BTN.force }, 10); // pressed at once, held: it waits on the ghost
+    expect(w.seats.queueLen[0]).toBe(1);
+    expect(w.bodies.hp[dummy]).toBe(400);
+    d.tick({ buttons: BTN.force }, Math.ceil(60 / RUNES.regen) + 30); // the ghost fills in about a second, then the beam goes
     expect(w.seats.queueLen[0]).toBe(0);
-    expect(w.events.some((e) => e.kind === 'dry')).toBe(true);
+    expect(w.bodies.hp[dummy]).toBeLessThan(400);
+    expect(rune(w, 'arcane')).toBeGreaterThanOrEqual(0);
+  });
+
+  it('ghosts never stretch a pool: the queue holds at most its max of an element', () => {
+    const { w, d } = range();
+    d.queue('earth', 'earth', 'earth', 'earth', 'earth');
+    expect(w.seats.queueLen[0]).toBe(RUNES.max.earth);
+  });
+
+  it('Attune stings by the rune, lasts longer with more Arcane, and leaves you taking more damage while it lasts', () => {
+    const { w, d } = range();
+    d.queue('arcane', 'arcane').cast(BTN.self, 1, 20);
+    expect(w.bodies.hp[0]).toBeCloseTo(100 - 2 * RUNES.attuneSting, 5);
+    expect(w.seats.attune[0]).toBeGreaterThan(T(RUNES.attuneTime * 2) - 30); // 2 Arcane: twice as long
+    const rock = new Uint8Array(N_EL); rock[EL.earth - 1] = 1;
+    w.bodies.hp[0] = 100;
+    applyHit(w, 0, rock, 0, { scale: 1, heal: false, scald: false, freeze: false, source: -1, dirX: 0, dirY: 0, push: 0 });
+    const attuned = 100 - w.bodies.hp[0];
+    w.seats.attune[0] = 0; w.bodies.hp[0] = 100;
+    applyHit(w, 0, rock, 0, { scale: 1, heal: false, scald: false, freeze: false, source: -1, dirX: 0, dirY: 0, push: 0 });
+    expect(attuned / (100 - w.bodies.hp[0])).toBeCloseTo(RUNES.attuneVuln, 5);
   });
 
   it('a cast spends the runes; regen brings them back slowly, faster when attuned', () => {
@@ -73,20 +120,23 @@ describe('runes and the queue', () => {
     expect(rune(w, 'arcane')).toBeCloseTo((rate * RUNES.attuneMult) / 2, 6);
   });
 
-  it('regen is one shared budget R, weighted by max, with a floor for every pool that is not full', () => {
+  it('regen is one shared budget R: equal shares for the pools that are not full, two for an empty one', () => {
     const { w, d } = range();
-    const max = RUNES.max as Record<string, number>, all = Object.values(max).reduce((a, b) => a + b, 0);
-    // only Fire is empty: it gets the floor's share plus all of the shared part
+    // only Fire is refilling: it gets all of R
     w.seats.runes[elementId('fire') - 1] = 0;
     d.tick({}, 30);
-    expect(rune(w, 'fire')).toBeCloseTo(0.5 * RUNES.regen * max.fire * (RUNES.floor / all + (1 - RUNES.floor) / max.fire), 6);
-    // every pool empty: the whole of R is shared out by max, so the total is R
+    expect(rune(w, 'fire')).toBeCloseTo(0.5 * RUNES.regen, 6);
+    // Fire empty, Cold part-full: Fire takes two shares, Cold one
+    w.seats.runes[elementId('fire') - 1] = 0; w.seats.runes[elementId('cold') - 1] = 2;
+    d.tick({}, 6);
+    expect(rune(w, 'fire') / (rune(w, 'cold') - 2)).toBeCloseTo(RUNES.emptyShare, 6);
+    // every pool empty: equal shares whatever their size, and the whole of R is used
     for (let e = 0; e < 9; e++) w.seats.runes[e] = 0;
     d.tick({}, 30);
     let total = 0;
     for (let e = 0; e < 9; e++) total += w.seats.runes[e];
     expect(total).toBeCloseTo(0.5 * RUNES.regen, 6);
-    expect(rune(w, 'fire') / rune(w, 'cold')).toBeCloseTo(max.fire / max.cold, 6);
+    expect(rune(w, 'fire')).toBeCloseTo(rune(w, 'sigil'), 6);
   });
 });
 
@@ -114,7 +164,7 @@ describe('Force casts', () => {
     expect(w.bodies.frozen[dummy]).toBe(0);
   });
 
-  it('chill fills on damage: a big body fills more slowly but can fill, and a weak source can stall', () => {
+  it('chill fills by Cold rune: a big body fills more slowly but can fill, and a weak source can stall', () => {
     const fill = (maxHp: number, runes: Element[], ticks: number) => {
       const { w, d, dummy } = range();
       w.bodies.maxHp[dummy] = maxHp; w.bodies.hp[dummy] = maxHp;
@@ -123,9 +173,9 @@ describe('Force casts', () => {
     };
     const one: Element[] = ['cold'], three: Element[] = ['cold', 'cold', 'cold'];
     expect(fill(345, three, 60)).toBeLessThan(fill(30, three, 60));
-    expect(fill(345, one, 280)).toBeLessThan(STATUS.freezeMin); // a one-rune spray barely outruns a Brute's decay
-    expect(fill(345, three, 280)).toBeGreaterThan(STATUS.freezeMin);
-    expect(fill(4000, three, 280)).toBe(0); // one spray can't outrun the decay of something this big: it takes rings or a second caster
+    expect(fill(345, one, 150)).toBeLessThan(STATUS.freezeMin); // over a channel's free 2.5 s, one Cold rune can't make a Brute freezable
+    expect(fill(345, three, 150)).toBeGreaterThan(STATUS.freezeMin); // three can: a frost-heavy spell is a slow-heavy spell
+    expect(fill(4000, one, 280)).toBe(0); // one Cold can't outrun the decay of something this big: it takes more Cold or a second caster
   });
 
   it('chill counts Cold\'s share of a mixed spell: more Cold chills more, and a freeze uses it up', () => {
@@ -141,7 +191,7 @@ describe('Force casts', () => {
   it('a freeze lasts longer the colder the body was, and too little chill does not freeze', () => {
     const freeze = (chill: number) => {
       const { w, d, dummy } = range(2);
-      w.bodies.wet[dummy] = 600; w.bodies.chill[dummy] = chill;
+      w.bodies.maxHp[dummy] = 2000; w.bodies.wet[dummy] = 600; w.bodies.chill[dummy] = chill; // too big for one ring to chill to a freeze
       d.queue('cold').cast(BTN.area, 1, 20);
       return w.bodies.frozen[dummy];
     };
@@ -157,7 +207,7 @@ describe('Force casts', () => {
       for (let k = 0; k < 40; k++) { d.tick({}, 1); peak = Math.max(peak, w.bodies.burnPool[dummy]); }
       return peak;
     };
-    expect(pool(['fire'])).toBeCloseTo(STATUS.burnBase + DAMAGE.fire * SHAPES.fireBlast, 0);
+    expect(pool(['fire'])).toBeCloseTo(STATUS.burnBase + DAMAGE.fire * SHAPES.fireBlast * STATUS.burnShareFire, 0);
     expect(pool(['fire', 'fire', 'fire'])).toBeGreaterThan(pool(['fire']) * 1.5);
     expect(pool(['arcane', 'arcane', 'fire'])).toBeLessThan(pool(['fire', 'fire', 'fire']));
     const { w, d, dummy } = range(2);
@@ -167,10 +217,83 @@ describe('Force casts', () => {
     expect(w.bodies.burn[dummy]).toBe(0);
   });
 
+  it('shock is a chance: a Lightning channel stuns now and then but never locks, and a big body less often', () => {
+    const stunned = (maxHp: number) => {
+      const { w, d, dummy } = range();
+      w.bodies.maxHp[dummy] = maxHp; w.bodies.hp[dummy] = maxHp;
+      d.queue('lightning');
+      let n = 0;
+      for (let t = 0; t < 150; t++) { d.tick({ buttons: BTN.force }, 1); if (w.bodies.stun[dummy]) n++; w.bodies.hp[dummy] = maxHp; }
+      return n / 150;
+    };
+    const small = stunned(30), big = stunned(345);
+    expect(small).toBeGreaterThan(0);
+    expect(small).toBeLessThan(0.95); // the old rule refreshed the stun every zap: a lock
+    expect(big).toBeLessThan(small);
+  });
+
+  it('a fire floor burns by the Fire that made it', () => {
+    const burnt = (q: Element[]) => {
+      const { w, d, dummy } = range(4);
+      d.queue(...q).tick({ buttons: BTN.area }, 30);
+      let peak = 0;
+      for (let k = 0; k < 360; k++) { d.tick({}, 1); peak = Math.max(peak, w.bodies.burnPool[dummy]); } // past the first burn, when the floor re-lights
+      return peak;
+    };
+    expect(burnt(['fire', 'fire', 'fire'])).toBeGreaterThan(burnt(['fire']) * 1.5);
+  });
+
+  it('a fire floor: a brush lights you a little, standing in it keeps burning', () => {
+    const lost = (stay: number) => {
+      const { w, d, dummy } = range(4);
+      w.bodies.x[dummy] = 20; // off the floor while it's laid, so only the floor burns it
+      d.queue('fire').tick({ buttons: BTN.area }, 30);
+      d.tick({}, 20);
+      w.bodies.x[dummy] = 4;
+      for (let k = 0; k < stay; k++) { d.tick({}, 1); w.bodies.x[dummy] = 4; }
+      w.bodies.x[dummy] = 20;
+      d.tick({}, 400);
+      return 400 - w.bodies.hp[dummy];
+    };
+    const brush = lost(1), stand = lost(180);
+    expect(brush).toBeGreaterThan(STATUS.burnFloorTouch * 0.9);
+    expect(stand).toBeGreaterThan(brush * 2);
+  });
+
+  it('soak: more Water soaks more, and Lightning pays by how soaked', () => {
+    const zap = (soak: number) => {
+      const { w, d, dummy } = range();
+      if (soak) { w.bodies.wet[dummy] = 1; w.bodies.soak[dummy] = soak; }
+      d.queue('lightning').cast(BTN.force, 30);
+      return 400 - w.bodies.hp[dummy];
+    };
+    expect(zap(0.3)).toBeGreaterThan(zap(0));
+    expect(zap(1)).toBeGreaterThan(zap(0.3));
+    const ring = (q: Element[]) => { const { w, d, dummy } = range(2); d.queue(...q).cast(BTN.area, 1, 30); return w.bodies.soak[dummy]; };
+    expect(ring(['water', 'water'])).toBeGreaterThan(ring(['water']) * 1.5);
+  });
+
+  it('steam never soaks, and a soaked body takes more Fire to dry', () => {
+    const steam = range(2);
+    steam.d.queue('water', 'fire').cast(BTN.area, 1, 30);
+    expect(steam.w.bodies.wet[steam.dummy]).toBe(0);
+    const dried = (fire: number) => {
+      const { w, d, dummy } = range(2);
+      w.bodies.maxHp[dummy] = 135; w.bodies.wet[dummy] = 1; w.bodies.soak[dummy] = 1;
+      d.queue(...Array<Element>(fire).fill('fire')).cast(BTN.area, 1, 30);
+      return w.bodies.soak[dummy];
+    };
+    expect(dried(1)).toBeGreaterThan(0); // one Fire leaves a soaked body damp
+    expect(dried(3)).toBeLessThan(dried(1));
+  });
+
   it('a Water spray soaks long enough to follow with Cold', () => {
     const { w, d, dummy } = range();
+    w.bodies.maxHp[dummy] = w.bodies.hp[dummy] = 135;
     d.queue('water').cast(BTN.force, 60, 2);
-    expect(w.bodies.wet[dummy]).toBeGreaterThan(T(STATUS.wetMin) - 10);
+    expect(w.bodies.soak[dummy]).toBeGreaterThan(0.25); // a second of one Water rune soaks a 135-HP body a good way
+    d.tick({}, T(3));
+    expect(w.bodies.wet[dummy]).toBeGreaterThan(0); // still wet 3 s on: time to follow with Cold
   });
 
   it('Water finishes a freeze on a body already cold enough, and not on one that is not', () => {
@@ -221,15 +344,21 @@ describe('Force casts', () => {
     expect(wet.w.bodies.frozen[wet.dummy]).toBeGreaterThan(0);
   });
 
-  it('water + cold as Force is Ice shards: a volley of missiles, not a spray', () => {
-    const spec = compile(['water', 'cold'], 'force');
+  it('water then cold make Ice, and Ice as Force is Ice shards: a volley of missiles, not a spray', () => {
+    const spec = compile(['ice'], 'force');
     expect(spec.title).toBe('Ice shards');
     expect(spec.shape).toBe('shards');
     const { w, d } = range();
-    d.queue('water', 'cold').tick({ buttons: BTN.force }, 1).tick({}, 16);
-    let n = 0;
-    for (let j = 0; j < w.missiles.alive.length; j++) n += w.missiles.alive[j];
-    expect(n).toBeGreaterThanOrEqual(5);
+    d.queue('water', 'cold').tick({ buttons: BTN.force }, 1);
+    // Ice shards fly fast (SHAPES.iceFlight): the most in flight at once, over the cast
+    let most = 0;
+    for (let t = 0; t < 30; t++) {
+      d.tick({}, 1);
+      let n = 0;
+      for (let j = 0; j < w.missiles.alive.length; j++) n += w.missiles.alive[j];
+      most = Math.max(most, n);
+    }
+    expect(most).toBeGreaterThanOrEqual(5);
   });
 
   it('the arcane beam hits the first body only, ally or not (friendly fire)', () => {
@@ -270,7 +399,7 @@ describe('Force casts', () => {
 
   it('Blink is instant and moves you along your aim', () => {
     const { w, d } = range();
-    d.aimAt(10, 0).queue('sigil').tick({ buttons: BTN.force });
+    d.aimAt(10, 0).queue('shield').tick({ buttons: BTN.force });
     expect(w.bodies.x[0]).toBeGreaterThan(3.5);
   });
 });
@@ -292,7 +421,26 @@ describe('Life (support)', () => {
     expect(w.bodies.hp[0]).toBeGreaterThan(50);
   });
 
-  it('every other element in a heal lends its resistance for a few seconds: Life + Lightning + Cold', () => {
+  it('Life + an element on yourself heals and imbues you; the element hurts only without Life', () => {
+    const { w, d } = range(6);
+    w.bodies.hp[0] = 40;
+    d.queue('life', 'fire').cast(BTN.self, 1, 20);
+    expect(w.bodies.hp[0]).toBeGreaterThan(40);
+    expect(w.bodies.burn[0]).toBe(0);
+    expect(taken(w, 0, RES.fire)).toBeLessThan(0.8);
+  });
+
+  it('a heal spray builds the imbue up tick by tick: Life + Fire on an ally', () => {
+    // its per-tick share is small (a second of channel is one hit's worth): it must add up, not be cleared each tick
+    const { w, d } = range(6, 2);
+    w.bodies.x[1] = 2.5; w.bodies.y[1] = 0; w.bodies.hp[1] = 40;
+    d.aimAt(2.5, 0).queue('life', 'fire').cast(BTN.force, 60, 2);
+    expect(w.bodies.hp[1]).toBeGreaterThan(40);
+    expect(w.bodies.blessT[1]).toBeGreaterThan(0);
+    expect(taken(w, 1, RES.fire)).toBeLessThan(0.8);
+  });
+
+  it('every other element in a heal builds up its resistance, which fades: Life + Lightning + Cold', () => {
     const { w, d, dummy } = range(2);
     w.bodies.hp[dummy] = 100;
     d.queue('life', 'lightning', 'cold').cast(BTN.area, 2);
@@ -301,8 +449,11 @@ describe('Life (support)', () => {
     expect(taken(w, dummy, RES.cold)).toBeLessThan(1); // the Cold, not leading the shape, still counts
     expect(taken(w, dummy, RES.lightning)).toBeLessThan(1);
     expect(taken(w, dummy, RES.fire)).toBe(1); // strengths only: no Rime weakness to fire
-    d.tick({}, 300);
-    expect(taken(w, dummy, RES.cold)).toBe(1); // it lapses
+    const soon = taken(w, dummy, RES.cold);
+    d.tick({}, 180);
+    expect(taken(w, dummy, RES.cold)).toBeGreaterThan(soon); // it fades
+    d.tick({}, 3000);
+    expect(taken(w, dummy, RES.cold)).toBe(1); // and lapses (half-life ~7 s)
   });
 
   it('a Life spray: more Fire widens the cone, more Life heals harder', () => {
@@ -318,11 +469,23 @@ describe('Life (support)', () => {
     expect(healAt(['life', 'life', 'fire'], 2.5, 0)).toBeGreaterThan(healAt(['life', 'fire'], 2.5, 0));
   });
 
-  it('heal + element: more Cold lends more healing shards, more Lightning more chain-heal jumps', () => {
-    expect(compile(['life', 'cold', 'cold'], 'force').sizeN).toBe(2);
-    expect(compile(['life', 'cold'], 'force').sizeN).toBe(1);
+  it('heal + element: more Ice lends more healing shards; Cold lends a cooling spray', () => {
+    expect(compile(['life', 'ice', 'ice'], 'force').sizeN).toBe(2);
+    expect(compile(['life', 'ice'], 'force').shape).toBe('shards');
+    expect(compile(['life', 'cold'], 'force').shape).toBe('spray');
     const shards = (q: Element[]) => { const { w, d } = range(8, 2); d.queue(...q).cast(BTN.force, 1, 20); return Array.from(w.missiles.alive).filter((a) => a).length; };
-    expect(shards(['life', 'cold', 'cold'])).toBeGreaterThan(shards(['life', 'cold']));
+    expect(shards(['life', 'water', 'cold', 'water', 'cold'])).toBeGreaterThan(shards(['life', 'water', 'cold']));
+  });
+
+  it('a Rescue spray shoves back the enemies it touches, and only heals allies', () => {
+    const { w, d, dummy } = range(2.5, 2);
+    w.bodies.kind[dummy] = KIND.enemy; w.bodies.arch[dummy] = 0; w.bodies.hp[dummy] = 100;
+    w.bodies.x[1] = 2.5; w.bodies.y[1] = 0.6; w.bodies.hp[1] = 40;
+    const ex = w.bodies.x[dummy], ax = w.bodies.x[1];
+    d.queue('life', 'water').cast(BTN.force, 60, 2);
+    expect(w.bodies.x[dummy]).toBeGreaterThan(ex + 0.5);
+    expect(Math.abs(w.bodies.x[1] - ax)).toBeLessThan(0.3);
+    expect(w.bodies.hp[1]).toBeGreaterThan(40);
   });
 
   it('heal + element: more Earth gives the lobbed heal-stone a bigger splash', () => {
@@ -405,11 +568,9 @@ describe('Area and Place', () => {
     b.burn[dummy] = T(STATUS.burn); b.x[dummy] = 4; b.y[dummy] = 0.5;
     d.tick({}, 1);
     expect(b.burn[dummy]).toBe(0);
-    // the water that puts a fire out doesn't soak you; the rain keeps falling, so it soaks you after
-    // for the full wet time (a puddle alone only keeps you wet for a second)
-    expect(b.wet[dummy]).toBeLessThan(T(STATUS.wet) - 5);
     d.tick({}, T(1));
-    expect(b.wet[dummy]).toBeGreaterThan(T(STATUS.wet) - 5); // still raining on it
+    expect(b.wet[dummy]).toBeGreaterThan(0);
+    expect(b.soak[dummy]).toBeGreaterThan(0.9); // still raining on it: soaked through
     expect(w.surf.kind[cellAt(w, 4, 0)]).toBe(SURF.water);
   });
 
@@ -419,6 +580,28 @@ describe('Area and Place', () => {
     expect(w.surf.kind[cellAt(w, 3, 3)]).toBe(SURF.ice);
     d.queue('fire').place(3, 3);
     expect(w.surf.kind[cellAt(w, 3, 3)]).toBe(SURF.water);
+  });
+
+  it('Cold Place is a freezing fog that chills without laying ice; Ice Place is caltrops, which stab only who walks', () => {
+    const { w, d } = range(8, 2);
+    const b = w.bodies;
+    b.x[1] = 3; b.y[1] = 3;
+    d.queue('cold').place(3, 3);
+    d.tick({}, 60);
+    expect(w.surf.kind[cellAt(w, 3, 3)]).toBe(SURF.none);
+    expect(b.chill[1]).toBeGreaterThan(0);
+    // Water + Cold is Ice, whose Place is caltrops: no ice on the floor, no harm where they land, a stab for walking
+    const walk = (moving: boolean) => {
+      const ice = range(8, 2), bb = ice.w.bodies;
+      bb.x[1] = 3; bb.y[1] = 3;
+      const hp = bb.hp[1];
+      ice.d.queue('water').queue('cold').place(3, 3);
+      expect(ice.w.surf.kind[cellAt(ice.w, 3, 3)]).toBe(SURF.none);
+      for (let t = 0; t < 60; t++) { if (moving) bb.vx[1] = 3; bb.x[1] = 3; bb.y[1] = 3; ice.d.tick({}, 1); }
+      return hp - bb.hp[1];
+    };
+    expect(walk(false)).toBe(0);
+    expect(walk(true)).toBeGreaterThan(5);
   });
 
   it('an earthquake knocks down everyone around you', () => {
@@ -440,5 +623,5 @@ describe('Area and Place', () => {
 });
 
 describe('counts layout', () => {
-  it('N_EL matches the rules', () => expect(N_EL).toBe(9));
+  it('N_EL matches the rules: the nine keyed elements, then Ice', () => { expect(N_EL).toBe(rules.ALL.length); expect(N_EL).toBe(10); expect(KEYED_EL).toBe(rules.BASE.length); });
 });

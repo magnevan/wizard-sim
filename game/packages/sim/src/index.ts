@@ -1,4 +1,6 @@
 export * from './world';
+export { BATTERY, drivePlace, driving, pedestalNear, sprayReach } from './battery';
+export { BSTEP } from './battery-waves';
 export { createTerrain, terrainNear, terrainAlong, type Terrain } from './terrain';
 export { roomHash, type RoomDef, type Pt as RoomPt, type Seg as RoomSeg } from './room';
 export * from './config';
@@ -7,7 +9,7 @@ export * from './input';
 export * from './rng';
 export * from './trig';
 export * from './state';
-export { compile, WALL, type SpellSpec, type Shape, type Mod } from './compile';
+export { compile, imbueReach, WALL, type SpellSpec, type Shape, type Mod } from './compile';
 export { queueOf, selfTarget, specOf } from './cast';
 export { HIT_KIND, hitKindNow, setHitKind } from './hit';
 export { GUARD_EL, guardCoatLook, guardSize } from './guards';

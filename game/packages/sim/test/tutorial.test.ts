@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BTN, EL, KIND, NO_INPUT, N_EL, TUT_ARRIVALS, TUT_BEAT, TUT_END, TUT_ORDER, TUT_PLACES, TUT_STATE as TS, TUT_TAG, TUT_TIMES, T, calmOf,
+  BTN, EL, KIND, NO_INPUT, N_EL, KEYED_EL, TUT_ARRIVALS, TUT_BEAT, TUT_END, TUT_ORDER, TUT_PLACES, TUT_STATE as TS, TUT_TAG, TUT_TIMES, T, calmOf,
   buffers, createWorld, skipOpen, hashWorld, newTutorialBot, quantize, restore, runeMax, scriptedReplay, runReplay, hex, snapshot, spawnBody, step, tutorialBotInput,
   type PlayerInput, type World,
 } from '../src';
@@ -174,12 +174,12 @@ describe('tutorial', () => {
   });
   it('covers all nine elements, each unlocked for good once given', () => {
     const seen = new Set<number>();
-    for (const beat of TUT_ORDER) for (let e = 1; e <= N_EL; e++) {
+    for (const beat of TUT_ORDER) for (let e = 1; e <= KEYED_EL; e++) {
       const w = createWorld(1, 1, { room: 'tutorial', tutorialBeat: beat });
       if (runeMax(w, 0, e) > 0) seen.add(e);
       else expect(seen.has(e), `element ${e} locked again in beat ${beat}`).toBe(false);
     }
-    expect(seen.size).toBe(N_EL);
+    expect(seen.size).toBe(KEYED_EL); // Ice (combined) never has a pool
   });
 
   it('a calm start: nothing hostile in the chamber until the calm ends, then they walk in from the far gates', () => {

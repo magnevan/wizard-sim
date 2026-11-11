@@ -21,7 +21,7 @@ const open = async (query, size = [1280, 800]) => {
   await p.waitForFunction(() => window.wizardSim?.view.props.count > 0 && window.wizardSim.view.props.ready, { timeout: 20000, polling: 100 });
   // past the first seconds, or the room's walls still show the dust of rising; then the sim stands still
   await p.waitForFunction(() => window.wizardSim.world.clock[0] > 150, { timeout: 30000, polling: 100 });
-  await p.evaluate(() => { window.wizardSim.tune.paused = true; });
+  await p.evaluate(() => { window.wizardSim.tools.paused = true; });
   await sleep(300);
   return p;
 };

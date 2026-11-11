@@ -11,6 +11,7 @@ content/
     world/Survive.ldtkl
     world/Tutorial.ldtkl   the tutorial's chamber (its per-beat layouts are still code: sim/src/tutorial-data.ts)
     world/Academy.ldtkl    the mock room for judging art (#academy)
+    world/Battery.ldtkl    the opening's first job, an outdoor area (#battery); written by tools/segments/01-opening/battery-level.py
   assets/props/<id>/       the asset registry: meta.json and images, below
   generated/               every raw image bought from an AI tool (its README). Never edited; look here before any call
 packages/content/          the build, the check and the grid CLI (node, no runtime part)
@@ -65,7 +66,7 @@ Only values the game understands are defined. Pits, water and the like come when
 
 | **Prop** | `asset` (an id in `assets/props`), `blocks` | Furniture or decoration. It's drawn at the entity's spot: the middle of its footprint on the ground. If `blocks` is on, its footprint stops bodies and shots like rock (and draws no wall). It has no other gameplay. |
 
-Static rock (Rock entities, traced outlines and blocking props) is the room's terrain: read-only data with a spatial lookup, not part of a rollback snapshot, and separate from the players' 160 wall slots. So a room **can have as many rock wall segments as it needs**. (A blocking prop takes one wall if its footprint is up to 0.6 u deep, two if deeper.)
+Static rock (Rock entities, traced outlines and blocking props) is the room's terrain: read-only data with a spatial lookup, not part of a rollback snapshot, and separate from the players' 160 wall slots. So a room **can have as many rock wall segments as it needs**. (A blocking prop takes one wall if its footprint is up to 0.6 u deep, two side by side up to 1 u, and past that a closed outline with rows across the inside.)
 
 ## The asset registry
 
@@ -81,9 +82,11 @@ Static rock (Rock entities, traced outlines and blocking props) is the room's te
 |---|---|
 | `footprint` | `[w, h]` in world units: what blocks. Every set shares it, so the room plays the same in each. |
 | `sets` | The art treatments: `lean`, `simple`, `code`. A set needs `file`, `foot` (the image pixel standing on the prop's spot) and `source`; a generated one needs `raw`. |
+| `round` | The footprint is a round thing's: a deep one blocks as a 12-sided ring instead of a box. |
 | `base` | A variant's original. A set the variant lacks comes from its base. |
 | `flat` | Lies on the floor, under everything (a rune circle). |
 | `lift` | Hangs this many art px above its spot (a banner on a wall). |
+| `sort` | Sorts this many art px further down the screen than its spot; negative is further back. A low wide base can sort at its back rim, so a body standing round it is in front of it. |
 
 To add a prop: put a folder here (`tools/art-trial/props.py` and `variants.py` write these), place a Prop in LDtk, and build. Art direction, how sets are made and variants: `tools/art-trial/README.md`.
 

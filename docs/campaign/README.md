@@ -4,6 +4,7 @@ How a piece of the campaign goes from an idea to something in the game. Proposed
 
 - `canon.md`: what the user has approved. Read it first.
 - `NN-name/`: one folder per segment. Each stage adds a file.
+- `../../tools/segments/NN-name/`: the segment's working document, an artifact with one chapter per place. Anything still being worked on lives there.
 
 A **segment** is one continuous stretch of play with one job to do: the opening, a region's first half. It's about 30 to 60 minutes.
 

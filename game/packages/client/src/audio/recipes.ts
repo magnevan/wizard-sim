@@ -40,7 +40,7 @@ export interface Plan {
   wet: number;
 }
 
-export const ELEMENT_NAMES = ['water', 'life', 'shield', 'cold', 'lightning', 'arcane', 'sigil', 'fire', 'earth'] as const;
+export const ELEMENT_NAMES = ['water', 'life', 'shield', 'cold', 'lightning', 'arcane', 'sigil', 'fire', 'earth', 'ice'] as const;
 export type ElementName = typeof ELEMENT_NAMES[number];
 
 /** The sound of one element. */
@@ -69,6 +69,8 @@ export const ELEMENTS: Readonly<Record<ElementName, ElementVoice>> = {
   sigil: { body: [['y-shimmer', 0.32], ['y-arcane', 0.22]], hit: ['y-sigil', 'sigil-gong'], impact: ['y-sigil'], rate: 1.1, gain: 0.85, blip: 1.125 },
   lightning: { body: [['y-buzz', 0.95]], hit: ['y-zap-1', 'y-zap-2', 'y-zap-3'], impact: ['y-zap-2', 'thunder-crack'], rate: 1, gain: 1, blip: 1.3333 },
   cold: { body: [['y-shimmer', 0.42], ['ice-creak', 0.65]], hit: ['ice-hit-1', 'ice-hit-2', 'ice-hit-3'], impact: ['ice-hit-1', 'ice-hit-2', 'ice-hit-4'], rate: 1.05, gain: 1, blip: 1.5 },
+  // Ice (Water + Cold in one rune): Cold's clips, heavier and glassier (more creak, a lower rate, debris on impact). A first pass: its own sound is open.
+  ice: { body: [['ice-creak', 0.85], ['y-shimmer', 0.25]], hit: ['ice-hit-2', 'ice-hit-3', 'ice-hit-4'], impact: ['ice-hit-3', 'ice-hit-4', 'debris'], rate: 0.9, gain: 1, blip: 1.6667 },
 };
 
 /** The nine cast shapes the ear tells apart. Every sim Shape falls into one. */

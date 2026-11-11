@@ -54,6 +54,7 @@ export function padStep(mem: PadMemory, cur: PadState): PlayerInput {
   if (down(PAD.LT)) buttons |= BTN.area;
   if (down(PAD.RB) && !layer) buttons |= BTN.self;
   if (down(PAD.BACK)) buttons |= BTN.clear;
+  if (down(10)) buttons |= BTN.use; // pressing the left stick
 
   const [rx, ry] = screenStick(stick(cur.axes, 2, AIM_DEADZONE));
   const tilt = Math.hypot(rx, ry);

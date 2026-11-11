@@ -19,7 +19,7 @@
  *   Self   an aura around you (fire burns, cold chills, life regenerates, lightning hastes...).
  */
 import { compile, WALL, solidWall, type SpellSpec } from './compile';
-import { BODY, PERKS, RHYTHM, SHAPES, STRUCT, T } from './config';
+import { BODY, PERKS, RHYTHM, SHAPES, STATUS, STRUCT, T } from './config';
 import { EL, KEYED_EL, N_EL, poolCost, queueFromCounts } from './elements';
 import { burstEvent, channelTick, fireSpell, heldBlow, hit, hitOpts, nearest, payloadOf, stored } from './effects';
 import { len } from './geom';
@@ -560,7 +560,7 @@ export function tickStructures(w: World): void {
       }
       if (t === i) continue;
       if (foe) {
-        if (fire) ignite(w, t, 3, b.burnSrc[t], T(1.5)); // each half second: burning at 6 a second while you stay close
+        if (fire) ignite(w, t, STATUS.burnAura * fire, b.burnSrc[t], T(1.5)); // each half second: burning at 6 a second a Fire rune while you stay close
         if (cold) {
           addChill(w, t, 2.5 * cold);
           if (!water) tryFreeze(w, t); // Cold on the wet, as in hit.ts; a Mist + Frost aura can't do both

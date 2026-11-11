@@ -218,6 +218,8 @@ export const SURF = { none: 0, water: 1, ice: 2, fire: 3 } as const;
 export interface Surfaces {
   kind: Uint8Array;
   life: Int32Array;
+  /** A fire floor's heat: the Fire runes in what lit it (burns that many times STATUS.burnSurface). 0 elsewhere. */
+  heat: Uint8Array;
 }
 
 /** What happened this tick, for the view (VFX, sound). Not state: cleared every step. */
@@ -555,7 +557,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
     dims, def, terrain: createTerrain(def),
     clock: new Uint32Array([0, seed >>> 0]), rng: createRng(seed),
     bodies: bodies(MAX_BODIES), seats: seats(MAX_SEATS), missiles: missiles(MAX_MISSILES), zones: zones(MAX_ZONES),
-    surf: { kind: u8(cells), life: i32(cells) },
+    surf: { kind: u8(cells), life: i32(cells), heat: u8(cells) },
     walls: {
       type: u8(MAX_WALLS), x1: f64(MAX_WALLS), y1: f64(MAX_WALLS), x2: f64(MAX_WALLS), y2: f64(MAX_WALLS), hp: f64(MAX_WALLS), maxHp: f64(MAX_WALLS),
       owner: new Int16Array(MAX_WALLS), els: u8(MAX_WALLS * N_EL), born: i32(MAX_WALLS),

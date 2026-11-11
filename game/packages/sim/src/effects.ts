@@ -67,7 +67,7 @@ const surfLife = (k: number): number => T(k === SURF.water ? SURFACE.water : k =
 
 /** An element reaching the floor. Water floods, cold freezes water (or frosts the ground), fire burns or melts. */
 /** `mult` stretches the floor's life (a Place patch with more of its lead element lasts longer). */
-export function touchFloor(w: World, cell: number, el: number, mult = 1): void {
+export function touchFloor(w: World, cell: number, el: number, mult = 1, heat = 1): void {
   if (cell < 0) return;
   const s = w.surf, k = s.kind[cell];
   let next: number = k;
@@ -77,11 +77,12 @@ export function touchFloor(w: World, cell: number, el: number, mult = 1): void {
   else return;
   s.kind[cell] = next;
   s.life[cell] = next ? Math.round(surfLife(next) * mult) : 0;
+  s.heat[cell] = next === SURF.fire ? Math.max(1, Math.min(255, heat)) : 0;
 }
 
-export function floorDisc(w: World, x: number, y: number, r: number, el: number, mult = 1): void {
+export function floorDisc(w: World, x: number, y: number, r: number, el: number, mult = 1, heat = 1): void {
   for (let gy = -r; gy <= r; gy += CELL) for (let gx = -r; gx <= r; gx += CELL) {
-    if (gx * gx + gy * gy <= r * r) touchFloor(w, cellAt(w, x + gx, y + gy), el, mult);
+    if (gx * gx + gy * gy <= r * r) touchFloor(w, cellAt(w, x + gx, y + gy), el, mult, heat);
   }
 }
 
@@ -96,7 +97,7 @@ export function tickSurfaces(w: World): void {
     if (k === SURF.water) { b.wet[i] = Math.max(b.wet[i], T(1)); b.burn[i] = 0; }
     // ice bites at the feet: it chills, and a wet body standing on it freezes (it used to make bodies slide instead)
     if (k === SURF.ice && !(i < MAX_SEATS && warm(w, i))) { b.burn[i] = 0; addChill(w, i, SURFACE.iceChill / 60); if (b.wet[i]) tryFreeze(w, i); }
-    if (k === SURF.fire && b.burn[i] < T(1) && !(b.kind[i] === KIND.enemy && ARCHETYPES[b.arch[i]].burnImmune)) ignite(w, i, STATUS.burnSurface, b.burn[i] ? b.burnSrc[i] : -1);
+    if (k === SURF.fire && b.burn[i] < T(1) && !(b.kind[i] === KIND.enemy && ARCHETYPES[b.arch[i]].burnImmune)) ignite(w, i, STATUS.burnSurface * Math.max(1, w.surf.heat[cellAt(w, b.x[i], b.y[i])]), b.burn[i] ? b.burnSrc[i] : -1);
   }
 }
 
@@ -213,7 +214,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
           if (c >= 0 && w.surf.kind[c] === SURF.water) touchFloor(w, c, EL.cold, longer);
         }
       }
-      else for (const el of [EL.water, EL.cold, EL.fire]) if (spec.counts[el - 1]) floorDisc(w, tx, ty, r, el, longer);
+      else for (const el of [EL.water, EL.cold, EL.fire]) if (spec.counts[el - 1]) floorDisc(w, tx, ty, r, el, longer, spec.counts[EL.fire - 1]); // a fire floor burns by its Fire
       // Rain: Water Place keeps falling for a while (the user: a rain that lasts 1 s felt far too short).
       if (spec.form === EL.water && !spec.scald && !spec.freeze) spawnZone(w, ZONE.rain, src, p, tx, ty, r, Math.round(T(SHAPES.rainLife + SHAPES.rainPerRune * (n - 1)) * lingerLife(w, src)), 0);
       if (spec.freeze) floorDisc(w, tx, ty, r, EL.cold, longer); // Ice sheet: the water becomes walkable ice

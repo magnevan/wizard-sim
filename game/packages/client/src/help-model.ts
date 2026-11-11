@@ -173,13 +173,15 @@ function payload(spec: SpellSpec, k: number, unit: string, out: Metric[]): void 
   }
 }
 
-/** The statuses one hit leaves: Burn starts at its floor and grows with the hit; Chill and Stun grow with each rune. */
+/** The statuses one hit leaves: Burn starts small and grows with the Fire in the hit; Chill grows with each Cold rune; Stun is a chance. */
 function statuses(spec: SpellSpec, out: Metric[]): void {
   if (spec.heal) return;
   if (count(spec, 'fire') && !spec.scald) out.push({ key: 'burn', label: 'BURN FROM', v: STATUS.burnBase, unit: '' });
-  const frost = DAMAGE.cold * count(spec, 'cold') + DAMAGE.ice * STATUS.iceChill * count(spec, 'ice'); // Ice chills less than Cold per damage (hit.ts)
-  if (frost) out.push({ key: 'chill', label: 'FROST', v: frost * STATUS.chillPerDamage, unit: '', hidden: spec.channel });
-  if (count(spec, 'lightning')) out.push({ key: 'stun', label: 'STUN', v: STATUS.stunPerRune * count(spec, 'lightning'), unit: 'S', hidden: spec.channel });
+  const frost = STATUS.chillPerRune * (count(spec, 'cold') + STATUS.iceChill * count(spec, 'ice')); // by rune (hit.ts)
+  if (frost) out.push({ key: 'chill', label: 'FROST', v: frost, unit: '', hidden: spec.channel });
+  // the chance one hit stuns a wizard-sized body (shockRef): x / (1 + x)
+  const x = STATUS.shockRate * count(spec, 'lightning');
+  if (x) out.push({ key: 'stun', label: 'STUN CHANCE', v: Math.round((100 * x) / (1 + x)), unit: '%', hidden: spec.channel });
 }
 
 /** The queue without its Sigil runes (what a device or a conjured weapon carries). */

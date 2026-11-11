@@ -11,6 +11,7 @@ import { angleDiff } from './geom';
 import { atan2Turns } from './trig';
 import { drainShield } from './walls';
 import { RES, anchored, bless, colOf, guardBeam, resist, taken, unburnable, warm } from './guards';
+import { nextFloat } from './rng';
 import { KIND, MAX_SEATS, PU, WARD, stackOf, type World } from './world';
 
 export interface HitOpts {
@@ -92,7 +93,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
 
   // A ward resists the elements it was made with (stone armour: Earth, the physical, plus its coats); Expose ignores wards.
   const ward = tSeat >= 0 && !b.expose[t] && !arcane ? s.ward[tSeat] : WARD.none;
-  let dmg = 0, absorbed = 0, fireD = 0, coldD = 0, iceD = 0, allD = 0; // each element's share, for the burn and frost pools
+  let dmg = 0, absorbed = 0, fireD = 0, allD = 0; // Fire's share and the whole, for the burn pool
   const form = formOf(els, at);
   for (let id = 1; id <= N_EL; id++) {
     const n = c(els, at, id);
@@ -102,7 +103,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     if (arch && (id === EL.cold || id === EL.ice) && arch.coldMult !== undefined) d *= arch.coldMult;
     if (arch?.onlyFire && id !== EL.fire) d = 0; // a bramble: only fire hurts it
     if (d) { const col = physical ? RES.physical : colOf(id); if (col >= 0) d *= taken(w, t, col); } // a guard's resistance, or a heal's lent one
-    allD += d; if (id === EL.fire) fireD = d; else if (id === EL.cold) coldD = d; else if (id === EL.ice) iceD = d;
+    allD += d; if (id === EL.fire) fireD = d;
     // a ward made with Cold or Ice resists both: they are one family
     const wardHas = (k: number) => s.wardEls[tSeat * N_EL + k - 1] > 0;
     const resisted = (ward === WARD.ward || ward === WARD.stone) && (wardHas(id) || ((id === EL.cold || id === EL.ice) && (wardHas(EL.cold) || wardHas(EL.ice))));
@@ -138,22 +139,29 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     if (b.frozen[t] || b.chill[t] > 0) { b.frozen[t] = 0; b.chill[t] = 0; }
     else if (b.wet[t] && !water) b.wet[t] = 0;
     else if (!water && !arch?.burnImmune && !(guard && unburnable(w, tSeat))) {
-      // Any touch lights it; all of Fire's own damage burns on, and a quarter of what it rode in on.
+      // Any touch lights it (a small base); most of Fire's own damage burns on, so more Fire burns hotter, and a little of what it rode in on.
       ignite(w, t, (b.burn[t] ? 0 : STATUS.burnBase) + (fireD * STATUS.burnShareFire + (allD - fireD) * STATUS.burnShareRest) * o.scale, o.source);
     }
   }
   const noChill = guard > 0 && warm(w, tSeat);
   if ((cold || ice) && !noChill) {
     b.burn[t] = 0;
-    // Cold's share of the hit fills the frost pool (a guard's cold resistance is already in it), Ice's harder. Only Water freezes.
-    addChill(w, t, (coldD + iceD * STATUS.iceChill) * o.scale * STATUS.chillPerDamage);
+    // By rune, not by damage: each Cold rune fills the frost pool by chillPerRune, an Ice rune by a share of that, scaled
+    // like the hit (a channel tick, a shard) and by the body's cold weakness or resistance. Only Water freezes.
+    const coldK = (arch?.coldMult ?? 1) * taken(w, t, RES.cold);
+    addChill(w, t, (cold + ice * STATUS.iceChill) * STATUS.chillPerRune * o.scale * coldK);
     if (wasWet) tryFreeze(w, t);
   }
   if (o.scald) dmg += STATUS.scaldBonus * o.scale;
   if (lightning) {
     const col = physical ? RES.physical : RES.lightning, lr = guard ? resist(w, tSeat, col) : 0;
     if (b.wet[t]) dmg += DAMAGE.lightning * lightning * o.scale * (STATUS.wetShockMult - 1) * (guard ? taken(w, tSeat, col) : 1);
-    if (lr < ARMS.resStatus) b.stun[t] = Math.max(b.stun[t], Math.round(T(STATUS.stunPerRune) * lightning * Math.min(1, ss * 4)));
+    // Shock is a chance (STATUS.shockRate): more Lightning, a bigger hit and a smaller body all make a stun likelier.
+    // x / (1 + x) rather than 1 - e^-x: the same shape without Math.exp, which engines may round differently.
+    if (lr < ARMS.resStatus) {
+      const x = STATUS.shockRate * lightning * o.scale * Math.sqrt(STATUS.shockRef / Math.max(1, b.maxHp[t])) * (guard ? taken(w, tSeat, col) : 1);
+      if (nextFloat(w.rng) < x / (1 + x)) b.stun[t] = Math.max(b.stun[t], T(STATUS.stunTime));
+    }
   }
   if (arcane) b.expose[t] = Math.max(b.expose[t], Math.round(T(STATUS.expose) * Math.min(1, ss * 4)));
   if (earth) {

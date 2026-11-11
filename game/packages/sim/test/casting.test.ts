@@ -114,7 +114,7 @@ describe('Force casts', () => {
     expect(w.bodies.frozen[dummy]).toBe(0);
   });
 
-  it('chill fills on damage: a big body fills more slowly but can fill, and a weak source can stall', () => {
+  it('chill fills by Cold rune: a big body fills more slowly but can fill, and a weak source can stall', () => {
     const fill = (maxHp: number, runes: Element[], ticks: number) => {
       const { w, d, dummy } = range();
       w.bodies.maxHp[dummy] = maxHp; w.bodies.hp[dummy] = maxHp;
@@ -123,9 +123,9 @@ describe('Force casts', () => {
     };
     const one: Element[] = ['cold'], three: Element[] = ['cold', 'cold', 'cold'];
     expect(fill(345, three, 60)).toBeLessThan(fill(30, three, 60));
-    expect(fill(345, one, 280)).toBeLessThan(STATUS.freezeMin); // a one-rune spray barely outruns a Brute's decay
-    expect(fill(345, three, 280)).toBeGreaterThan(STATUS.freezeMin);
-    expect(fill(4000, three, 280)).toBe(0); // one spray can't outrun the decay of something this big: it takes rings or a second caster
+    expect(fill(345, one, 150)).toBeLessThan(STATUS.freezeMin); // over a channel's free 2.5 s, one Cold rune can't make a Brute freezable
+    expect(fill(345, three, 150)).toBeGreaterThan(STATUS.freezeMin); // three can: a frost-heavy spell is a slow-heavy spell
+    expect(fill(4000, one, 280)).toBe(0); // one Cold can't outrun the decay of something this big: it takes more Cold or a second caster
   });
 
   it('chill counts Cold\'s share of a mixed spell: more Cold chills more, and a freeze uses it up', () => {
@@ -157,7 +157,7 @@ describe('Force casts', () => {
       for (let k = 0; k < 40; k++) { d.tick({}, 1); peak = Math.max(peak, w.bodies.burnPool[dummy]); }
       return peak;
     };
-    expect(pool(['fire'])).toBeCloseTo(STATUS.burnBase + DAMAGE.fire * SHAPES.fireBlast, 0);
+    expect(pool(['fire'])).toBeCloseTo(STATUS.burnBase + DAMAGE.fire * SHAPES.fireBlast * STATUS.burnShareFire, 0);
     expect(pool(['fire', 'fire', 'fire'])).toBeGreaterThan(pool(['fire']) * 1.5);
     expect(pool(['arcane', 'arcane', 'fire'])).toBeLessThan(pool(['fire', 'fire', 'fire']));
     const { w, d, dummy } = range(2);
@@ -165,6 +165,32 @@ describe('Force casts', () => {
     d.queue('fire').cast(BTN.area, 1, 300);
     expect(hp - w.bodies.hp[dummy]).toBeCloseTo(DAMAGE.fire * SHAPES.fireBlast + pool(['fire']), 0); // the hit, then all of the pool
     expect(w.bodies.burn[dummy]).toBe(0);
+  });
+
+  it('shock is a chance: a Lightning channel stuns now and then but never locks, and a big body less often', () => {
+    const stunned = (maxHp: number) => {
+      const { w, d, dummy } = range();
+      w.bodies.maxHp[dummy] = maxHp; w.bodies.hp[dummy] = maxHp;
+      d.queue('lightning');
+      let n = 0;
+      for (let t = 0; t < 150; t++) { d.tick({ buttons: BTN.force }, 1); if (w.bodies.stun[dummy]) n++; w.bodies.hp[dummy] = maxHp; }
+      return n / 150;
+    };
+    const small = stunned(30), big = stunned(345);
+    expect(small).toBeGreaterThan(0);
+    expect(small).toBeLessThan(0.95); // the old rule refreshed the stun every zap: a lock
+    expect(big).toBeLessThan(small);
+  });
+
+  it('a fire floor burns by the Fire that made it', () => {
+    const burnt = (q: Element[]) => {
+      const { w, d, dummy } = range(4);
+      d.queue(...q).tick({ buttons: BTN.area }, 30);
+      let peak = 0;
+      for (let k = 0; k < 360; k++) { d.tick({}, 1); peak = Math.max(peak, w.bodies.burnPool[dummy]); } // past the first burn, when the floor re-lights
+      return peak;
+    };
+    expect(burnt(['fire', 'fire', 'fire'])).toBeGreaterThan(burnt(['fire']) * 1.5);
   });
 
   it('a Water spray soaks long enough to follow with Cold', () => {

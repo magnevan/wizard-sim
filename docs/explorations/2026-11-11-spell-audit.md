@@ -74,3 +74,22 @@ Not yet measured: Life (heals and their lending), Shield, Sigil, Self casts, wea
 3. Ice, against Cold and Water.
 4. The body forms: Lightning, Arcane, Earth (and Area against Place).
 5. Life. 6. Shield. 7. Sigil. 8. Cross-cut by cast.
+
+## Pass 2, step 1: the status model (decided and built 2026-11-11)
+
+The user's calls, logged in `decisions/README.md` ("Spell audit, step 1"): shock is a chance (A, the user's own variant: instant, like electricity); burn grows with the Fire in it, for burst-plus-burn and burn-only spells alike (B); chill fills by rune (C); Cold owns slowing and Ice owns damage, flight and spikes; the close, risky shape beats the placed one, a delay earns back a little, and aim only costs when the effect is small.
+
+Measured after (probe, one 135-HP target unless noted):
+
+| Queue | Before → after | |
+|---|---|---|
+| Lightning arc (L / LL) | denied 2.7 / 3.1 s → 1.0 / 1.8 s | of a ~2.9 s cast: rhythm, not a lock |
+| Arcane + Lightning beam | denied 2.5 → 1.3 s | |
+| Frost spray (C / CC) | mean chill 0.05 / 0.14 → 0.20 / 0.66 | |
+| Arcane + Cold beam | mean chill 0.05 → 0.19 | |
+| Rock + Cold + Cold | mean chill 0.13 → 0.36 | |
+| Fire ring (FFF) | 70 → 76 | |
+| Fire patch (F / FFF) | 24 / 28 → 16 / 31 | the 5 s window undercounts a 12 s floor |
+| One Fire mixed in (AF, EF, LF area) | down 5–20 % | Fire stays the top raw-damage mix-in, its job |
+
+Still open from pass 1: Ice (finding 4), close against placed (5), Steam (6), the weak shapes (7, 8), and everything not yet measured (Life, Shield, Sigil, Self, weapons).

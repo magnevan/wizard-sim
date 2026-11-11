@@ -74,21 +74,33 @@ export const STATUS = {
   wet: 12, // seconds
   /** The least any soaking hit leaves a body wet for (a spray's ticks are too weak to soak for long on their own). */
   wetMin: 6,
-  /** Burning is a pool of damage on the body, spent evenly over `burn` seconds (refreshed by each new hit), up to burnCap. */
-  burn: 4, burnBase: 12, burnShareFire: 1, burnShareRest: 0.25, burnCap: 60,
-  /** What a burning floor (each time it re-lights you) and a thorn or similar contact add to the pool. */
-  burnSurface: 18, burnContact: 30,
+  /**
+   * Burning is a pool of damage on the body, spent evenly over `burn` seconds (refreshed by each new hit), up to burnCap.
+   * It grows with the Fire in what lit it (spell audit, 2026-11-11: more Fire burns hotter; any touch of Fire is no
+   * longer worth a flat 12): a small base to light, most of a hit's Fire damage, a little of the rest.
+   */
+  burn: 4, burnBase: 4, burnShareFire: 1.5, burnShareRest: 0.15, burnCap: 80,
+  /** Burn-only sources, per Fire rune in them: a fire floor each time it re-lights you, a fire aura each half second. A thorn's contact is flat. */
+  burnSurface: 12, burnAura: 3, burnContact: 30,
   /**
    * Chill is how full a body's frost pool is, 0..1. The pool holds chillPool x sqrt(max HP) frost damage, so big
    * bodies take more but never become unfreezable. It drains chillDecay of the whole pool a second, even under fire,
    * so a weak source plateaus or fails on a tough body. Full chill slows by chillSlow.
+   * It fills by rune, not by damage (spell audit, 2026-11-11: a frost-heavy spell is a slow-heavy spell): each Cold rune
+   * in a hit adds chillPerRune frost, times the hit's scale (a channel's per-tick share, a shard's 0.75).
    */
-  chillPool: 2.5, chillPerDamage: 1, chillDecay: 0.1, chillSlow: 0.6,
-  /** Ice chills less than Cold for the same damage: some chill comes with it, but its identity is damage. */
-  iceChill: 0.5,
+  chillPool: 2.5, chillPerRune: 8, chillDecay: 0.1, chillSlow: 0.6,
+  /** An Ice rune chills this share of a Cold rune: some chill comes with it, but its identity is damage. */
+  iceChill: 0.6, // enough that one Ice on a wet goblin still freezes it (the special case of frost)
   /** Cold on a wet body freezes it from this much chill up: freezeShort s at that chill, up to `freeze` s when full. */
   freezeMin: 0.3, freezeShort: 1.5, freeze: 4,
-  stunPerRune: 0.35,
+  /**
+   * Shock is a chance, not a meter (the user, 2026-11-11: electricity is instant). Each hit with Lightning stuns for
+   * stunTime with chance x / (1 + x), x = shockRate x Lightning runes x the hit's scale x sqrt(shockRef / max HP). So one
+   * Lightning stuns a goblin most times and a brute less than half; a channel's ticks add up to about shockRate
+   * stuns a second per rune on a wizard-sized body, rather than a lock.
+   */
+  shockRate: 1.5, shockRef: 100, stunTime: 0.4,
   expose: 2, exposeMult: 1.3,
   knockdown: 0.6,
   /** Lightning on a wet target. */

@@ -132,7 +132,7 @@ for x in [9.5, 22.5, 61.5, 74.5]:   # between the towers
 # lines of stakes out on the killing ground, and the two boulders
 for x0, y, n in [(16.5, 24.3, 5), (60.5, 22.3, 5), (34.5, 18.3, 4)]:
     for i in range(n):
-        prop('stakes', x0 + i * 1.75, y, True)
+        prop('stakes', x0 + i * 1.75, y)   # not blocking: they break when you take a defence, and the goblins come through (battery-waves.ts)
 for cx, cy in [(24, 15), (53, 12)]:
     for dx, dy in [(0, 0), (1.5, .8), (-1.3, .9)]:
         prop('boulders-mossy', cx + dx, cy + dy, True)

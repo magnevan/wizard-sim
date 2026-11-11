@@ -251,6 +251,9 @@ export class Vfx {
   bannerX = 0;
   bannerY = 0;
 
+  /** The battery's stakes break here (world point, the view's turned world): splinters and dust. */
+  splinters(x: number, y: number, t: number, seed: number): void { this.add('splinters', t, 0.9, { x, y, seed }); }
+
   private add(kind: string, t0: number, life: number, o: Partial<Fx>): void {
     if (this.fx.length > 500) this.fx.shift();
     this.fx.push({ kind, t0, life, seed: 0, x: 0, y: 0, x2: 0, y2: 0, look: 0, who: -1, r: 0, n: 0, ...o });
@@ -1240,6 +1243,16 @@ export class Vfx {
         if (drawNova(o, g, f.look, x, y, r, e, t, sd, light)) return;
         K.nova(o, x, y - 2, t, f.t0, 0.5, r, R, { n: 34, lift: 6, seed: sd });
         light(x, y, r + 30, R[2], 0.8 * (1 - seg(e, 0, 0.6)));
+        return;
+      }
+      case 'splinters': {
+        // a line of stakes giving way (the battery, as a defence is taken): chips of wood fly and fall, and some dust
+        if (e < 0.5) K.puff(o, x, y - 4 - e * 8, 3 + e * 8, '#8a7a68', 0.7 * (1 - e / 0.5));
+        for (let k = 0; k < 16; k++) {
+          const a = rand(k, 81, sd) * TAU, sp = 10 + rand(k, 82, sd) * 22, vz = 22 + rand(k, 83, sd) * 30, z = vz * e - 90 * e * e;
+          if (z < 0) continue;
+          K.sq(o, x + Math.cos(a) * sp * e, y + Math.sin(a) * sp * e * FY - z - 3, k % 4 ? 1 : 2, k % 3 ? '#977552' : '#553e2a');
+        }
         return;
       }
       case 'quake': case 'slam': {

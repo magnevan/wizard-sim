@@ -47,6 +47,8 @@ export const BWAVES = {
   spawnEvery: 0.5,
   /** Archers here keep this far off their defence's muzzle: past the flamethrower, inside Place's 18. */
   archerStandoff: 13,
+  /** How far out from the wall's line enemies stand to batter it, and north of the stakes they hack at. */
+  wallStand: 4, stakeStand: 0.9,
   /** How far apart a group comes out of its gap, across it. */
   spread: 2.4,
 } as const;
@@ -57,6 +59,22 @@ const towersOf = (w: World) => w.def.props.filter((p) => p.asset === TOWER);
 export const muzzleOf = (w: World, k: number): [number, number] => [towersOf(w)[k].x, BATTERY.wallY - BATTERY.muzzleGap];
 
 export const driverOf = (w: World, k: number): number => (w.battery ? w.battery.drive.indexOf(k) : -1);
+
+/**
+ * Where a lane enemy stands to batter something, spread out by its slot. With a driver to go for (`t`), the wall in
+ * front of that driver's defence, `wallStand` out from it (the user: they hugged the wall). With nobody driving: as you
+ * arrive, the line of stakes nearest its own defence, on the far side; after that, its own defence's wall.
+ */
+export function holdSpot(w: World, i: number, t: number): [number, number] {
+  const d = w.battery!, k = t >= 0 ? d.drive[t] : d.lane[i], across = ((i % 5) - 2) * 0.8;
+  if (t < 0 && w.enc.state[1] === BSTEP.arrive) {
+    const tx = towersOf(w)[k].x, stakes = w.def.props.filter((p) => p.asset === 'stakes');
+    let s = stakes[0];
+    for (const p of stakes) if (Math.abs(p.x - tx) < Math.abs(s.x - tx)) s = p;
+    if (s) return [s.x + across * 1.2, s.y - BWAVES.stakeStand];
+  }
+  return [towersOf(w)[k].x + across, BATTERY.wallY - BWAVES.wallStand];
+}
 
 /**
  * Who a lane enemy goes for: its own defence's driver, else the nearest driver, else nobody (-1: it batters its own
@@ -115,11 +133,13 @@ function remaining(w: World): number {
 export function tickBatteryWaves(w: World): void {
   const e = w.enc, st = e.state, d = w.battery!;
   if (!st[0]) {
-    // as you arrive: goblins already at every defence's wall
-    const towers = towersOf(w);
-    for (let k = 0; k < towers.length; k++) for (let j = 0; j < BWAVES.arrivals; j++) {
-      const [mx, my] = muzzleOf(w, k);
-      spawnAt(w, k, ARCH.swarmer, mx + (j - (BWAVES.arrivals - 1) / 2) * 1.4, my - 0.6 - (j % 2) * 0.5, 0);
+    // as you arrive: goblins hacking at the stakes out in front of every defence (they take their spots: holdSpot)
+    const towers = towersOf(w), stakes = w.def.props.filter((p) => p.asset === 'stakes');
+    for (let k = 0; k < towers.length; k++) {
+      let s = stakes[0];
+      for (const p of stakes) if (Math.abs(p.x - towers[k].x) < Math.abs(s.x - towers[k].x)) s = p;
+      const [x, y] = s ? [s.x, s.y - 2] : muzzleOf(w, k);
+      for (let j = 0; j < BWAVES.arrivals; j++) spawnAt(w, k, ARCH.swarmer, x + (j - (BWAVES.arrivals - 1) / 2) * 1.4, y - (j % 2) * 0.5, 0);
     }
     st[0] = 1; st[1] = BSTEP.arrive; st[2] = 0; st[3] = 0;
     return;

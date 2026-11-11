@@ -1195,6 +1195,11 @@ From the user's play-test: Cold and a Water spray wouldn't freeze a Brute, but a
 - **A defence's spells are adjusted for the wall** (the user): a longer flamethrower, burst and wave casts landing outside the wall, and no full circle, since it makes no sense on a defensive line.
 - **Driving a defence is built** (`game/packages/sim/src/battery.ts`). X at a pedestal. Your cast point moves just outside the wall, so spells clear it, and your wizard is drawn where it stood. Fire only, a 7.5 flamethrower and a half-ring reaching 7 (the wall hides about 4 units of ground behind it). Numbers are first guesses.
 
+## 2026-11-11: The goblins break the stakes, not the wall
+- **As you arrive, the goblins hack at the lines of stakes out in the killing ground, where you can see them** (the user: behind the tall wall "you can't see them", and a short wall "begs the question why they don't just climb it"). When you take a defence the stakes break, and the goblins come at the wall (the user's idea). The broken stakes are a free local edit (`tools/art-import/stakes_broken.py`), and the stakes no longer block, so the goblins come through them.
+- **At the wall they stop 4 units out,** mostly in view over it, and batter it from there, harmlessly (the user: "stop a little further away from the wall").
+- **The brute's step teaches stacking runes:** "Press F more times: each Fire rune adds damage" (the user).
+
 ## 2026-11-11: The battery is a lesson, not waves
 - **No wave announcements, counts or timers** (the user: "Vibe feels too arcady... The idea here is that you are coming over to a faltering defence and helping shore it up"). The HUD shows only what to do now and its keys (`game/packages/client/src/battery-text.ts`).
 - **It teaches, one cast per encounter, controls on screen** (the user). As you arrive, two goblins are battering the wall in front of every defence. Take one and they come along the wall to you: the ring. Then goblins across the field: the flamethrower. Archers standing off: Place. A brute: keep the flame on it. Then quiet groups, one after another, each when the last is gone (`sim/src/battery-waves.ts`). The order and the wording are Claude's.

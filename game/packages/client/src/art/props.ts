@@ -153,6 +153,27 @@ export class PropView {
     }
   }
 
+  private broken = false;
+  private brokenTex: { tex: Texture; foot: readonly [number, number] } | null = null;
+  /**
+   * The battery's stakes, whole or knocked over (stakes-broken, a local edit: tools/art-import/stakes_broken.py). They
+   * break as a defence is taken (sim/src/battery-waves.ts). Returns true on the frame they break.
+   */
+  breakStakes(broken: boolean, fx0: number, fy0: number): boolean {
+    if (broken === this.broken) return false;
+    const img = propImage(broken ? 'stakes-broken' : 'stakes', this.current);
+    if (!img) return false;
+    if (broken && !this.brokenTex) { void loadTexture(img.url).then((tex) => { this.brokenTex = { tex, foot: img.foot }; }); return false; }
+    this.broken = broken;
+    for (const it of this.items) {
+      if (it.asset !== 'stakes') continue;
+      if (broken) { it.spr.texture = this.brokenTex!.tex; it.ox = this.brokenTex!.foot[0]; it.oy = this.brokenTex!.foot[1]; }
+      else { const a = propImage('stakes', this.current); if (a) void loadTexture(a.url).then((t) => { it.spr.texture = t; it.ox = a.foot[0]; it.oy = a.foot[1]; it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy); }); }
+      it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
+    }
+    return broken;
+  }
+
   /** Follows the camera: fx0, fy0 is where the field's corner is in the scene. */
   place(fx0: number, fy0: number): void {
     if (fx0 === this.fx && fy0 === this.fy) return;

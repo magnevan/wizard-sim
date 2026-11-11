@@ -22,17 +22,26 @@ function take(w: W) {
 }
 
 describe('the battery\'s lesson', () => {
-  it('has goblins battering every defence\'s wall as you arrive, harmlessly, and they stay there', () => {
-    const w = createWorld(1, 1, { room: 'battery' }), hp = w.bodies.hp[0];
+  it('has goblins hacking at the stakes in front of every defence as you arrive, harmlessly, and they stay there', () => {
+    const w = createWorld(1, 1, { room: 'battery' }), hp = w.bodies.hp[0], stakes = w.def.props.filter((p) => p.asset === 'stakes');
     idle(w, 12);
     const es = enemies(w);
     expect(es).toHaveLength(towers(w).length * BWAVES.arrivals);
     for (const i of es) {
-      const [mx, my] = muzzleOf(w, w.battery!.lane[i]);
-      expect(Math.hypot(w.bodies.x[i] - mx, w.bodies.y[i] - my)).toBeLessThan(2.5);
+      const near = Math.min(...stakes.map((p) => Math.hypot(w.bodies.x[i] - p.x, w.bodies.y[i] - p.y)));
+      expect(near).toBeLessThan(3);
+      expect(w.bodies.y[i]).toBeLessThan(BATTERY.wallY - 8); // out in the open, where you see them over the wall
     }
     expect(w.bodies.hp[0]).toBe(hp);
     expect(w.enc.state[1]).toBe(BSTEP.arrive);
+  });
+
+  it('stops them a little way off the wall, not pressed against it', () => {
+    const w = createWorld(1, 1, { room: 'battery' });
+    idle(w, 1);
+    take(w);
+    idle(w, 16);
+    for (const i of enemies(w)) expect(BATTERY.wallY - w.bodies.y[i]).toBeGreaterThan(BWAVES.wallStand - 0.8);
   });
 
   it('once a defence is taken, teaches the ring: the other walls\' goblins come along to it', () => {

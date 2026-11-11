@@ -70,7 +70,9 @@ try {
   await sleep(900);
   await shot('drive-prompt');
   await p.keyboard.press('KeyX');
-  await sleep(1400);
+  await sleep(350);
+  await shot('stakes-break');
+  await sleep(1050);
   if ((await drive()) !== 1) fail('X at a pedestal should take that defence');
   await p.mouse.move(860, 130);
   await sleep(500);

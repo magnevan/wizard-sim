@@ -25,8 +25,8 @@ import { TERRAIN_HIT, damageWall, segDist } from './walls';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { AI, KIND, MAX_SEATS, PU, STATUS_BIT, TEAM, WARD, stackOf, type World } from './world';
 import { noteSlam } from './tutorial-data';
-import { BATTERY, driving } from './battery';
-import { BWAVES, batteryStandoff, laneTarget, muzzleOf } from './battery-waves';
+import { driving } from './battery';
+import { BWAVES, batteryStandoff, holdSpot, laneTarget } from './battery-waves';
 
 const TRACK_SHARE = 0.55;
 const COVER_DIST = 2.2;
@@ -112,7 +112,11 @@ export function tickEnemies(w: World): void {
     if (b.ai[i] === AI.grab) { grab(w, i); continue; }
 
     // the battery with nobody at any defence: it batters its own defence's wall
-    if (w.battery && w.battery.lane[i] >= 0 && laneTarget(w, i) < 0) { holdWall(w, i, a); continue; }
+    if (w.battery && w.battery.lane[i] >= 0) {
+      // the battery: harmless, they batter something. Archers with a defence to shoot at stand off and shoot (below)
+      const lt = laneTarget(w, i);
+      if (lt < 0 || a.attack !== ATTACK.bolt) { holdWall(w, i, a, lt >= 0 ? holdSpot(w, i, lt) : holdSpot(w, i, -1)); continue; }
+    }
     let t = b.ai[i] === AI.windup ? b.target[i] : -1;
     if (t < 0 || !isPrey(w, t)) {
       if (b.ai[i] === AI.windup) setAi(w, i, AI.approach);
@@ -143,19 +147,19 @@ export function tickEnemies(w: World): void {
 }
 
 /**
- * The battery, with nobody at any defence: an enemy goes to its own defence's wall and batters it, harmlessly, wind-up
- * and blow over and over (the view draws them as it would any attack). Spread along the wall by slot.
+ * The battery: an enemy goes to a spot and batters what's south of it, harmlessly, wind-up and blow over and over (the
+ * view draws them as it would any attack): the stakes as you arrive, else the wall in front of a defence (holdSpot).
  */
-function holdWall(w: World, i: number, a: (typeof ARCHETYPES)[number]): void {
-  const b = w.bodies, [mx, my] = muzzleOf(w, w.battery!.lane[i]), sx = mx + ((i % 5) - 2) * 0.7, sy = my - 0.2;
+function holdWall(w: World, i: number, a: (typeof ARCHETYPES)[number], [sx, sy]: [number, number]): void {
+  const b = w.bodies;
   if (len(sx - b.x[i], sy - b.y[i]) > 0.5) {
     if (b.ai[i] !== AI.approach) setAi(w, i, AI.approach);
     turnToward(w, i, atan2Turns(sy - b.y[i], sx - b.x[i]));
     move(w, i, [sx, sy], -1, a.speed * b.speedMult[i] * chillPace(b.chill[i]));
     return;
   }
-  turnToward(w, i, 0.25); // facing the wall, south
-  b.target[i] = -1; b.lockX[i] = b.x[i]; b.lockY[i] = BATTERY.wallY;
+  turnToward(w, i, 0.25); // facing south: the wall, or the stakes
+  b.target[i] = -1; b.lockX[i] = b.x[i]; b.lockY[i] = b.y[i] + 1.5;
   if (b.ai[i] === AI.approach && b.aiT[i] > T(0.3)) setAi(w, i, AI.windup);
   else if (b.ai[i] === AI.windup && b.aiT[i] >= T(a.windup)) setAi(w, i, AI.cooldown);
   else if (b.ai[i] === AI.cooldown && b.aiT[i] >= T(a.cooldown)) setAi(w, i, AI.approach);

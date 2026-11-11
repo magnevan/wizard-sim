@@ -297,6 +297,12 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       }
       w.events.push({ tick: w.clock[0], kind: 'blink', who: src, x, y, x2: nx, y2: ny });
       b.x[src] = nx; b.y[src] = ny;
+      // Shield + elements: the parting gift, the elements' own Area spell on the spot you left, for whoever chased you there
+      // (a Healing ring heals the partner you left behind). Cast after you've gone, so it never catches you.
+      if (spec.form === EL.shield) {
+        const rest = spec.counts.slice(); rest[EL.shield - 1] = 0;
+        if (rest.some((c) => c > 0)) fireSpell(w, src, compile(queueFromCounts(rest), 'area'), face, x, y, 0, { ox: x, oy: y, scale: k * STRUCT.partingPower });
+      }
       break;
     }
     case 'todo': w.events.push({ tick: w.clock[0], kind: 'todo', who: src, x, y, text: spec.title }); break;

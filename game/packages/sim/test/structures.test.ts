@@ -204,11 +204,14 @@ describe('Shield', () => {
     expect(w.bodies.x[0]).toBeGreaterThan(5);
   });
 
-  it('a Tidal wave (Shield + Water) still sweeps forward and shoves', () => {
+  it('a Fire blink leaves a fire ring where you stood, and it never catches you', () => {
     const { w, d } = arena(2);
-    w.bodies.x[1] = 2.5;
-    d.aimAt(5, 0).queue('shield', 'water').cast(BTN.force, 1, 40);
-    expect(w.bodies.x[1]).toBeGreaterThan(3.2);
+    w.bodies.x[1] = 1.2; w.bodies.y[1] = 0; w.bodies.team[1] = 9; // a chaser at your heels
+    const hp1 = w.bodies.hp[1];
+    d.aimAt(-8, 0).queue('shield', 'fire').tick({ buttons: BTN.force }).tick({}, 20);
+    expect(w.bodies.x[0]).toBeLessThan(-6);
+    expect(w.bodies.hp[1]).toBeLessThan(hp1);
+    expect(w.bodies.hp[0]).toBe(w.bodies.maxHp[0]);
   });
 });
 

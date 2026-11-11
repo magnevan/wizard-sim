@@ -2,7 +2,7 @@
  * Shield and Sigil: things that stay in the world or on you.
  *
  * Shield (protects, and turns magic back):
- *   Force  a wave that sweeps forward (Fault line with Earth, Tidal wave with Water, Shove wave alone).
+ *   Force  Blink (effects.ts); with elements it leaves their Area spell where you stood.
  *   Area   a closed ring around you.   Place  an arc around you facing the cursor, or a wall you drag.
  *   Self   a ward: resist its elements (Mending with Life), stone armour with Earth, a mirror alone.
  *   Rock is stuff (hit points, paid once); barriers, curtains and wards are energy: they drain the
@@ -79,10 +79,6 @@ function drawnWall(w: World, src: number, spec: SpellSpec, x1: number, y1: numbe
   for (let k = 0; k < n; k++) {
     if (!raiseWall(w, src, spec.wall, spec.counts, x1 + ((x2 - x1) * k) / n, y1 + ((y2 - y1) * k) / n, x1 + ((x2 - x1) * (k + 1)) / n, y1 + ((y2 - y1) * (k + 1)) / n, hp)) break;
   }
-}
-
-function spawnWave(w: World, src: number, spec: SpellSpec, face: number): void {
-  spawnFront(w, src, spec.counts, face, STRUCT.waveHalf + STRUCT.waveHalfPerRune * (spec.formN - 1), 1, STRUCT.waveRange);
 }
 
 /** A front sweeping forward from `src` (a Shield wave, or a weapon's wave: the trident slash, the fire wave, the fissure). */
@@ -180,7 +176,6 @@ export const STRUCTURE_SHAPES: readonly string[] = ['wave', 'ring', 'arcwall', '
 export function castStructure(w: World, src: number, spec: SpellSpec, face: number, tx: number, ty: number, hx: number, hy: number, on = src): void {
   const b = w.bodies, s = w.seats, x = b.x[src], y = b.y[src];
   switch (spec.shape) {
-    case 'wave': spawnWave(w, src, spec, face); break;
     case 'ring': arcWall(w, src, spec, x, y, STRUCT.ringRadius, 0, 0.5, STRUCT.ringSegs); break;
     case 'arcwall': arcWall(w, src, spec, x, y, STRUCT.arcRadius, face, STRUCT.arcHalf, STRUCT.arcSegs); break;
     case 'drawnwall': drawnWall(w, src, spec, hx, hy, tx, ty); break;

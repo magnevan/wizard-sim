@@ -44,7 +44,7 @@ describe('help panel model: queue -> rows', () => {
   });
 
   it('Shield + Earth: walls and the Bulwark, whose preview conjures it and then blocks', () => {
-    expect(titles(['shield', 'earth'])).toEqual(['Fault line', 'Ring of stone', 'Stone arc', 'Stone armour', 'Bulwark']);
+    expect(titles(['shield', 'earth'])).toEqual(['Earth blink', 'Ring of stone', 'Stone arc', 'Stone armour', 'Bulwark']);
     const bulwark = helpModel(['shield', 'earth'], bare).rows[4];
     expect(bulwark.demo.seq?.map((d) => d.cast)).toEqual(['weapon', 'block']);
   });

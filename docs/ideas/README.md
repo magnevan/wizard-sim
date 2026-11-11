@@ -18,6 +18,7 @@ There's one file per mechanic, copied from `_template.md`. The status lives in t
 | [progression](progression.md) | developing (unlock pacing U2, fixed queue, pools and regen grow, pool choice: `explorations/2026-11-07-world-and-progression.md`) | 1, 5 |
 | [spell-grammar](spell-grammar.md) | prototyping (proposal C drives the engine; A and A.1 superseded) | 2, 6 |
 | [slip](slip.md) | raw (bodies no longer slide on ice; a slip with its own animations, maybe later) | 2, 3 |
+| [shield-force-alternatives](shield-force-alternatives.md) | parked (Bubble, Repulsor/Counterspell, Shield chain, Guardian link: not picked for Shield + elements on Force; Blink with a parting gift was) | 2, 3 |
 | [sanctum](sanctum.md) | developing (the meditation sandbox, reachable from anywhere; the user, 2026-11-08) | 4, 5 |
 | [element-economy](element-economy.md) (element runes) | prototyping (rune pools, reserve on queue, regen, Attune, Bind, Model A drain in the engine) | 1, 4, 6 |
 | [battlefield-building](battlefield-building.md) | prototyping (walls, curtains, turrets, glyphs in the engine) | 6, 7, 3 |

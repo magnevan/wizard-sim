@@ -230,13 +230,13 @@
   const CELLS = {
     shield: {
       // Force: a wave that sweeps forward. Area: a closed ring. Place: an arc around you, or a wall you draw.
-      force: (p) => {
-        const how = 'rises in front of you and sweeps forward along your aim, hitting everyone it passes, then breaks';
-        if (p.has('earth')) return ['Fault line', `A wave of heaving ground ${how}. Everyone it passes is knocked down.`];
-        if (p.has('ice')) return ['Ice wave', `A front of ice spears ${how}. Everyone it passes is stabbed, and the wet freeze.`];
-        if (p.has('water')) return ['Tidal wave', `A wall of water ${how}. Everyone it passes is soaked and shoved.`];
-        if (p.size) return ['Elemental wave', `A wave of its elements ${how}. Each body it passes gets every element.`];
-        return ['Blink', 'You blink to the cursor, instantly: an escape or a gap-closer. It costs the Shield rune you cast it with, so your Shield pool is how many blinks you can chain, and every blink spends what keeps your walls and wards up.'];
+      // Force: Blink (the user, 2026-11-11, moved from Sigil). With elements it leaves their Area spell where you stood.
+      force: (p, o) => {
+        const how = 'You blink to the cursor, instantly: an escape or a gap-closer. It costs the Shield rune you cast it with, so your Shield pool is how many blinks you can chain, and every blink spends what keeps your walls and wards up.';
+        if (!p.size) return ['Blink', how];
+        const ring = plainTitle(o.lead, 'area', o.restQ);
+        const steam = o.restQ.includes('water') && o.restQ.includes('fire');
+        return [`${steam ? 'Steam' : ELEMENTS[o.lead].name} blink`, `${how} The other elements stay behind: ${/^[aeiou]/i.test(ring) ? 'an' : 'a'} ${ring.toLowerCase()} goes off where you stood, a little weaker than casting it, for whoever chased you there${o.lead === 'life' ? ' (it heals the partners you left behind, and the enemies there too)' : ''}.`];
       },
       area: (p) => p.has('earth') ? ['Ring of stone', 'A continuous rock wall rises in a closed ring around you, with no gaps.'] : p.has('ice') ? ['Ring of ice', 'A closed ring of ice spikes rises around you: it blocks bodies and shots, and stabs whoever presses against it. Weaker than stone, and fire melts it.'] : p.size ? ['Ring of curtains', 'A continuous curtain rings you; anything crossing in gets hit.'] : ['Ring of barriers', 'A continuous reflecting ring around you.'],
       place: (p, o) => {
@@ -382,6 +382,7 @@
         if (o.sub === 'life') o.subLend = lendOf(restQ);
         o.subTitle = { force: plainTitle(o.sub, 'force', restQ), place: plainTitle(o.sub, 'place', restQ) };
       }
+      if (form === 'shield') { o.restQ = restQ.filter((e) => e !== 'sigil'); o.lead = o.restQ.length ? dominant(o.restQ) : null; }
       if (form === 'shield' && cast === 'conjure') { const g = restQ.filter((e) => e !== 'sigil'); o.guard = g.length ? dominant(g) : null; }
       if (form === 'life') o.lend = lendOf(restQ);
       else if (form !== 'shield' && form !== 'sigil') o.shape = leadShape(restQ, queue.includes('fire') && queue.includes('water'));

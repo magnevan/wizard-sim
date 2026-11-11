@@ -278,6 +278,8 @@ export const STRUCT = {
   doubleHp: 60, doubleShare: 0.5, doubleTaunt: 6,
   /** Blink goes to the cursor, up to this far (the user: start generous, nerf from there). */
   blinkRange: 30,
+  /** A Shield + elements Blink leaves the elements' Area spell where you stood, at this share of its power (the blink is the rest of its worth). */
+  partingPower: 0.8,
   /** Reach of each conjured weapon, by its leading element. */
   reach: { earth: 1.6, arcane: 3.2, life: 1.2, lightning: 3.4, water: 2.2, fire: 1.8, cold: 2.8 } as Partial<Record<Element, number>>,
 };

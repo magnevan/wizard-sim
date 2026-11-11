@@ -148,3 +148,5 @@ Findings:
 4. **The ward and the Life imbue both give resistance.** They can stay distinct: the ward is chosen before a fight, strong, and costs upkeep; the imbue is a by-product of healing and fades.
 
 Step 6a and 6b (built): Blink moved to Shield alone on Force; the ward runs on the Shield pool as a battery, by rune, on the imbue's scale (decisions log). Open: the barrier as a force field (finding 3, the user will come back to it), and a new family for Shield + elements on Force, as if Blink didn't exist.
+
+Step 6c (built): Shield + elements on Force blink and leave the elements' Area spell where you stood, at 0.8 power. The other candidates (Bubble, Repulsor/Counterspell, Shield chain, Guardian link) are in `ideas/shield-force-alternatives.md`. Still open in Shield: the barrier as a force field (finding 3, the user will come back to it).

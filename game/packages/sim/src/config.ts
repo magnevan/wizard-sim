@@ -48,7 +48,7 @@ export const RHYTHM = {
 
 /** Damage per rune of an element, for one hit. Channels deal this per second times `channelRate`. */
 export const DAMAGE: Record<Element, number> = {
-  water: 0, life: 0, shield: 0, cold: 5, lightning: 10, arcane: 16, sigil: 0, fire: 6, earth: 22,
+  water: 4, life: 0, shield: 0, cold: 5, lightning: 10, arcane: 16, sigil: 0, fire: 6, earth: 22,
   ice: 9, // Water and Cold, low-damage elements, shaped into a sharp one (the user: its identity is damage, quick flight, spikiness)
 };
 export const COMBAT = {
@@ -71,9 +71,14 @@ export const SURFACE = { water: 20, ice: 16, fire: 12, /** frost damage a second
 
 export const STATUS = {
   // Longer than our first pass, toward Magicka's (it burns 5 s per stack, chills 10 s, freezes 4 s).
-  wet: 12, // seconds
   /** The least any soaking hit leaves a body wet for (a spray's ticks are too weak to soak for long on their own). */
-  wetMin: 6,
+  /**
+   * Soak (spell audit, 2026-11-11): how wet a body is, 0..1, filled by Water runes like chill by Cold. The pool holds
+   * soakPool x sqrt(max HP); each Water rune in a hit adds soakPerRune times the hit's scale; it drains soakDecay of the
+   * pool a second. Lightning's bonus, its chains' reach and a freeze's length scale with it; each Fire rune dries
+   * dryPerRune of it. A puddle or rain soaks you through.
+   */
+  soakPool: 2.5, soakPerRune: 12, soakDecay: 0.04, dryPerRune: 12,
   /**
    * Burning is a pool of damage on the body, spent evenly over `burn` seconds (refreshed by each new hit), up to burnCap.
    * It grows with the Fire in what lit it (spell audit, 2026-11-11: more Fire burns hotter; any touch of Fire is no
@@ -111,7 +116,8 @@ export const STATUS = {
   wetShockMult: 2,
   /** A heavy (earth) hit on a frozen target. */
   shatterMult: 2,
-  scaldBonus: 8,
+  /** Steam (Water + Fire in one spell): it never soaks and its water doesn't douse its own fire; its hits deal steamDamage of what they would, and the burn it lights steamBurn. Fire stays the damage element. */
+  steamDamage: 0.8, steamBurn: 0.75,
 };
 
 export const SHAPES = {

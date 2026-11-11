@@ -10,7 +10,7 @@ import type { Mod, SpellSpec } from './compile';
 import { ARMS, BODY, CELL, COMBAT, PERKS, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
 import { inCone, len, rayCircle } from './geom';
-import { HIT_KIND, addChill, addKnock, applyHit, ignite, setHitKind, tryFreeze, type HitOpts } from './hit';
+import { HIT_KIND, addChill, addKnock, applyHit, drench, ignite, setHitKind, soakOf, tryFreeze, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { TERRAIN_HIT, clipRay, collideWalls, damageWall, isRockHit, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
 import { WALL, compile, imbueLine, imbueReach } from './compile';
@@ -94,7 +94,7 @@ export function tickSurfaces(w: World): void {
   for (let i = 0; i < b.kind.length; i++) {
     if (!alive(w, i)) continue;
     const k = surfAt(w, b.x[i], b.y[i]);
-    if (k === SURF.water) { b.wet[i] = Math.max(b.wet[i], T(1)); b.burn[i] = 0; }
+    if (k === SURF.water) { drench(w, i); b.burn[i] = 0; } // standing in water soaks you through
     // ice bites at the feet: it chills, and a wet body standing on it freezes (it used to make bodies slide instead)
     if (k === SURF.ice && !(i < MAX_SEATS && warm(w, i))) { b.burn[i] = 0; addChill(w, i, SURFACE.iceChill / 60); if (b.wet[i]) tryFreeze(w, i); }
     // a fire floor: a touch lights you, and standing in it keeps feeding the burn, both by the Fire that made it
@@ -151,7 +151,8 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
   const n = spec.formN, p = payloadOf(spec), k = ex.scale ?? 1;
   // Fire's and Cold's one-shot casts: their table damage is a spray's per-second rate on the sqrt curve, so a
   // single blast needs its own multiplier, and it pays +70 % a rune like Arcane's nova rather than sqrt(n).
-  const blastBase = spec.form === EL.fire && !spec.scald ? SHAPES.fireBlast : spec.form === EL.cold && !spec.freeze ? SHAPES.coldBlast : 0;
+  // (Steam, Water + Fire, takes Fire's blast whichever of the two leads: its hits are scaled down in hit.ts instead)
+  const blastBase = spec.form === EL.fire || spec.scald ? SHAPES.fireBlast : spec.form === EL.cold && !spec.freeze ? SHAPES.coldBlast : 0;
   const blast = blastBase ? (blastBase * (1 + COMBAT.formScaling * (n - 1))) / Math.sqrt(n) : 1;
   switch (spec.shape) {
     case 'missile': {
@@ -441,7 +442,7 @@ export function chain(w: World, src: number, spec: SpellSpec, face: number, scal
   zap(w, src, first, p, scale);
   let cur = first;
   for (let j = 0; j < jumps; j++) {
-    const next = nearest(w, b.x[cur], b.y[cur], SHAPES.arcJump * (b.wet[cur] ? 1.5 : 1), visited, team, true);
+    const next = nearest(w, b.x[cur], b.y[cur], SHAPES.arcJump * (1 + 0.5 * soakOf(w, cur)), visited, team, true); // further through the soaked
     if (next < 0) break;
     zap(w, cur, next, p, scale * 0.8);
     visited.push(next);
@@ -471,7 +472,7 @@ function fork(w: World, src: number, spec: SpellSpec, face: number, reach: numbe
   }
   for (const t of firsts) zap(w, src, t, p, k * SHAPES.forkPower);
   for (const t of firsts) {
-    const next = nearest(w, b.x[t], b.y[t], SHAPES.arcJump * (b.wet[t] ? 1.5 : 1), hitList, 0, true);
+    const next = nearest(w, b.x[t], b.y[t], SHAPES.arcJump * (1 + 0.5 * soakOf(w, t)), hitList, 0, true);
     if (next < 0) continue;
     zap(w, t, next, p, k * SHAPES.forkJump);
     hitList.push(next);
@@ -668,7 +669,6 @@ export function spawnZone(w: World, type: number, src: number, p: Payload, x: nu
 }
 
 /** What rain carries after it lands: one Water, nothing else. Never written. */
-const RAIN = (() => { const a = new Uint8Array(N_EL); a[EL.water - 1] = 1; return a; })();
 
 export function tickZones(w: World): void {
   const z = w.zones, b = w.bodies;
@@ -684,12 +684,11 @@ export function tickZones(w: World): void {
       continue;
     }
     if (z.type[k] === ZONE.rain) {
-      // Rain soaks and douses whoever is under it every tick (water deals no damage, so nothing
-      // piles up: the spell's other elements hit once, when it lands), and keeps the puddle topped up.
-      setHitKind(HIT_KIND.burst);
+      // Rain soaks through and douses whoever is under it every tick, without damage (the spell's other elements and
+      // Water's own hit land once, when it falls), finishes a freeze on the chilled, and keeps the puddle topped up.
       for (let i = 0; i < b.kind.length; i++) {
         if (!alive(w, i) || len(b.x[i] - z.x[k], b.y[i] - z.y[k]) > z.r[k] + b.r[i]) continue;
-        hitEvent(w, i, applyHit(w, i, RAIN, 0, { scale: 1, heal: false, scald: false, freeze: false, source: z.owner[k], dirX: 0, dirY: 0, push: 0 }), EL.water, z.owner[k]);
+        b.burn[i] = 0; drench(w, i); tryFreeze(w, i);
       }
       if (z.life[k] % 30 === 0) floorDisc(w, z.x[k], z.y[k], z.r[k], EL.water);
       if (--z.life[k] <= 0) z.type[k] = ZONE.none;

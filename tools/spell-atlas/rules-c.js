@@ -106,9 +106,10 @@
     ice: ['Shatter', 'splits into ice shards on impact, and they fly on'],
   };
   const SHAPE_ORDER = ['arcane', 'lightning', 'ice', 'cold', 'water'];
-  function leadShape(restQ) {
+  // Steam is vapour (spell audit, 2026-11-11): with Fire in the spell, Water lends no Push, as it lends no soak.
+  function leadShape(restQ, steam = false) {
     let best = null, n = 0;
-    for (const e of SHAPE_ORDER) { const c = count(restQ, e); if (c > n) { best = e; n = c; } }
+    for (const e of SHAPE_ORDER) { if (steam && e === 'water') continue; const c = count(restQ, e); if (c > n) { best = e; n = c; } }
     return best;
   }
   // Inside a Life spell (or a Sigil device led by Life) the other elements lend their shape
@@ -381,8 +382,8 @@
       }
       if (form === 'shield' && cast === 'conjure') { const g = restQ.filter((e) => e !== 'sigil'); o.guard = g.length ? dominant(g) : null; }
       if (form === 'life') o.lend = lendOf(restQ);
-      else if (form !== 'shield' && form !== 'sigil') o.shape = leadShape(restQ);
-      else if (form === 'sigil' && o.sub && o.sub !== 'life') o.shape = leadShape(restQ.filter((e) => e !== o.sub));
+      else if (form !== 'shield' && form !== 'sigil') o.shape = leadShape(restQ, queue.includes('fire') && queue.includes('water'));
+      else if (form === 'sigil' && o.sub && o.sub !== 'life') o.shape = leadShape(restQ.filter((e) => e !== o.sub), queue.includes('fire') && queue.includes('water'));
       let [title, text] = CELLS[form][cast](p, o);
       if (form !== 'shield' && form !== 'sigil' && form !== 'life') title = plainTitle(form, cast, queue);
       const fm = SPRAY.includes(form) ? mixesOf(queue)[0] : null;
@@ -438,7 +439,7 @@
       return LIFE_LEND[e] ? `${LIFE_LEND[e][1]}${e === (o.lend || o.subLend) ? '' : ' (Another element leads the shape, so this one only adds its help.)'}${keeps} It never harms.` : 'It never harms.';
     }
     // S2: the leading shape element bends the spell; the others only add their status
-    const shape = SHAPE[e] && form !== 'shield' && e !== o.sub ? (e === o.shape ? ` The spell ${SHAPE[e][1]} (${SHAPE[e][0]}).` : ` No ${SHAPE[e][0].toLowerCase()}: ${ELEMENTS[o.shape].name} leads the shape.`) : '';
+    const shape = SHAPE[e] && form !== 'shield' && e !== o.sub ? (e === o.shape ? ` The spell ${SHAPE[e][1]} (${SHAPE[e][0]}).` : o.shape ? ` No ${SHAPE[e][0].toLowerCase()}: ${ELEMENTS[o.shape].name} leads the shape.` : e === 'water' ? ' No push: with Fire, the water is steam.' : '') : '';
     if (form === 'shield') {
       if (e === 'life') return cast === 'force' ? 'A healing wave: everyone it passes is healed.' : 'A healing zone: whoever crosses or stands in it is healed (hold the sculpting wand to spare enemies).';
       if (cast === 'conjure') return `Whatever it blocks or bashes ${verb}.`;

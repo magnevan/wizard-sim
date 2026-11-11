@@ -78,6 +78,8 @@ export interface Bodies {
   /** A heal's lent resistance (guards.ts bless): r per resistance column (5 a body), and ticks left. */
   bless: Float64Array; blessT: Int32Array;
   chill: Float64Array;
+  /** How soaked a wet body is, 0..1 (hit.ts addSoak). Wet's synergies scale with it; it counts only while wet > 0. */
+  soak: Float64Array;
   /** Tick of the last hit taken (dummies reset after a quiet spell). */
   lastHit: Int32Array;
   // ---- enemies ----
@@ -436,7 +438,7 @@ function bodies(n: number): Bodies {
   return {
     kind: u8(n), team: u8(n), x: f64(n), y: f64(n), vx: f64(n), vy: f64(n), kx: f64(n), ky: f64(n), r: f64(n),
     hp: f64(n), maxHp: f64(n), face: f64(n),
-    burnPool: f64(n), wet: i32(n), burn: i32(n), frozen: i32(n), stun: i32(n), expose: i32(n), down: i32(n), bless: f64(n * 5), blessT: i32(n), chill: f64(n), lastHit: i32(n),
+    burnPool: f64(n), wet: i32(n), burn: i32(n), frozen: i32(n), stun: i32(n), expose: i32(n), down: i32(n), bless: f64(n * 5), blessT: i32(n), chill: f64(n), soak: f64(n), lastHit: i32(n),
     arch: u8(n), ai: u8(n), aiT: i32(n), target: new Int16Array(n), lockX: f64(n), lockY: f64(n),
     holding: new Int16Array(n).fill(-1), grabHp: f64(n), heldBy: new Int16Array(n).fill(-1),
     slamX: f64(n), slamY: f64(n), slamBy: new Int16Array(n).fill(-1), slamAt: i32(n),

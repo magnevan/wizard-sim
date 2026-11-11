@@ -93,3 +93,13 @@ Measured after (probe, one 135-HP target unless noted):
 | One Fire mixed in (AF, EF, LF area) | down 5–20 % | Fire stays the top raw-damage mix-in, its job |
 
 Still open from pass 1: Ice (finding 4), close against placed (5), Steam (6), the weak shapes (7, 8), and everything not yet measured (Life, Shield, Sigil, Self, weapons).
+
+## Pass 2, step 1b and step 2: stun like resistance; the spray elements (decided and built 2026-11-11)
+
+- **Stun scales like resistance** (the user's idea): a stunned body can't be shocked again, so the share of time stunned is a / (1 + a), linear in Lightning. Held 20 s, a one-Lightning arc stuns a 30 / 135 / 345 / 2000-HP body 60 / 39 / 30 / 22 %; four Lightning 78 / 66 / 61 / 41 % (`tools/probe-stun.txt`). The arc's lead over a beam is for the Lightning step. Per-enemy shock and other resistances come with future enemies.
+- **Fire floors burn by the second:** 6 a Fire rune on contact, 4 a second a Fire rune while you stand in it.
+- **The rings are each spray element's strongest instant hit:** Frost ring chill ×2, Splash ring push ×2.
+- **Wet is a soak pool; Water hits for 4; Steam is vapour** (no soak, no Push, 0.8 damage and 0.75 burn): steam spray 40 against Fire's 56, ring 33 against 55, cloud 71 against 86 (2 runes).
+- **Open:** Steam's mist (enemies' line of sight), for a later session.
+
+Next: Ice (finding 4), then the body forms (Lightning, Arcane, Earth, and close against placed).

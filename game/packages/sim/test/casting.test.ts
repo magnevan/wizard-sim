@@ -210,10 +210,40 @@ describe('Force casts', () => {
     expect(stand).toBeGreaterThan(brush * 2);
   });
 
+  it('soak: more Water soaks more, and Lightning pays by how soaked', () => {
+    const zap = (soak: number) => {
+      const { w, d, dummy } = range();
+      if (soak) { w.bodies.wet[dummy] = 1; w.bodies.soak[dummy] = soak; }
+      d.queue('lightning').cast(BTN.force, 30);
+      return 400 - w.bodies.hp[dummy];
+    };
+    expect(zap(0.3)).toBeGreaterThan(zap(0));
+    expect(zap(1)).toBeGreaterThan(zap(0.3));
+    const ring = (q: Element[]) => { const { w, d, dummy } = range(2); d.queue(...q).cast(BTN.area, 1, 30); return w.bodies.soak[dummy]; };
+    expect(ring(['water', 'water'])).toBeGreaterThan(ring(['water']) * 1.5);
+  });
+
+  it('steam never soaks, and a soaked body takes more Fire to dry', () => {
+    const steam = range(2);
+    steam.d.queue('water', 'fire').cast(BTN.area, 1, 30);
+    expect(steam.w.bodies.wet[steam.dummy]).toBe(0);
+    const dried = (fire: number) => {
+      const { w, d, dummy } = range(2);
+      w.bodies.maxHp[dummy] = 135; w.bodies.wet[dummy] = 1; w.bodies.soak[dummy] = 1;
+      d.queue(...Array<Element>(fire).fill('fire')).cast(BTN.area, 1, 30);
+      return w.bodies.soak[dummy];
+    };
+    expect(dried(1)).toBeGreaterThan(0); // one Fire leaves a soaked body damp
+    expect(dried(3)).toBeLessThan(dried(1));
+  });
+
   it('a Water spray soaks long enough to follow with Cold', () => {
     const { w, d, dummy } = range();
+    w.bodies.maxHp[dummy] = w.bodies.hp[dummy] = 135;
     d.queue('water').cast(BTN.force, 60, 2);
-    expect(w.bodies.wet[dummy]).toBeGreaterThan(T(STATUS.wetMin) - 10);
+    expect(w.bodies.soak[dummy]).toBeGreaterThan(0.25); // a second of one Water rune soaks a 135-HP body a good way
+    d.tick({}, T(3));
+    expect(w.bodies.wet[dummy]).toBeGreaterThan(0); // still wet 3 s on: time to follow with Cold
   });
 
   it('Water finishes a freeze on a body already cold enough, and not on one that is not', () => {
@@ -454,11 +484,9 @@ describe('Area and Place', () => {
     b.burn[dummy] = T(STATUS.burn); b.x[dummy] = 4; b.y[dummy] = 0.5;
     d.tick({}, 1);
     expect(b.burn[dummy]).toBe(0);
-    // the water that puts a fire out doesn't soak you; the rain keeps falling, so it soaks you after
-    // for the full wet time (a puddle alone only keeps you wet for a second)
-    expect(b.wet[dummy]).toBeLessThan(T(STATUS.wet) - 5);
     d.tick({}, T(1));
-    expect(b.wet[dummy]).toBeGreaterThan(T(STATUS.wet) - 5); // still raining on it
+    expect(b.wet[dummy]).toBeGreaterThan(0);
+    expect(b.soak[dummy]).toBeGreaterThan(0.9); // still raining on it: soaked through
     expect(w.surf.kind[cellAt(w, 4, 0)]).toBe(SURF.water);
   });
 

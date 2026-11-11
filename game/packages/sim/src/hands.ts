@@ -26,7 +26,7 @@ import { ARMS, RHYTHM, STATUS, STRUCT, T } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
 import { heldBlow, hit, hitOpts, nearest, payloadOf, spawnMissile, zap } from './effects';
 import { inCone, len } from './geom';
-import { addKnock } from './hit';
+import { addKnock, soakOf } from './hit';
 import { grounded, guardRetreat } from './guards';
 import { fullMask, spawnFront } from './structures';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
@@ -165,7 +165,7 @@ function lash(w: World, i: number, face: number, k: number): void {
   for (let g = 0; g < MAX_SEATS; g++) if (grounded(w, g)) visited.push(g);
   let cur = first;
   for (let n = 0; n < ARMS.lashJumps; n++) {
-    const next = nearest(w, b.x[cur], b.y[cur], ARMS.lashJump * (b.wet[cur] ? 1.5 : 1), visited, 0);
+    const next = nearest(w, b.x[cur], b.y[cur], ARMS.lashJump * (1 + 0.5 * soakOf(w, cur)), visited, 0);
     if (next < 0) break;
     zap(w, cur, next, p, k * 0.6);
     visited.push(next);

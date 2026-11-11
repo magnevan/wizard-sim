@@ -23,7 +23,7 @@ import { BODY, PERKS, RHYTHM, SHAPES, STATUS, STRUCT, T } from './config';
 import { EL, KEYED_EL, N_EL, poolCost, queueFromCounts } from './elements';
 import { burstEvent, channelTick, fireSpell, heldBlow, hit, hitOpts, nearest, payloadOf, stored } from './effects';
 import { len } from './geom';
-import { HIT_KIND, addChill, addKnock, ignite, setHitKind, tryFreeze } from './hit';
+import { HIT_KIND, addChill, addKnock, addSoak, ignite, setHitKind, tryFreeze } from './hit';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { boundSigil, drainShield, energyLoad, segDist } from './walls';
 import { conjureGuard } from './guards';
@@ -568,12 +568,12 @@ export function tickStructures(w: World): void {
         if (ice) {
           // The Spike aura: ice spikes stab enemies close by, an Ice hit (its damage, a little chill, and a freeze if
           // they were already wet). With a Mist aura too, the wet it leaves is hidden from the stab: one aura can't do both.
-          const wet = b.wet[t];
+          const wet = b.wet[t], soak = b.soak[t];
           if (water) b.wet[t] = 0;
           hit(w, t, SPIKE, hitOpts(SPIKE, i, STRUCT.spikeAura * ice));
-          if (water && b.wet[t] === 0) b.wet[t] = wet;
+          if (water && b.wet[t] === 0) { b.wet[t] = wet; b.soak[t] = soak; }
         }
-        if (water) b.wet[t] = Math.max(b.wet[t], T(3));
+        if (water) addSoak(w, t, STATUS.soakPerRune * 0.5 * water); // the mist soaks by its Water, each half second
         if (earth && d < b.r[t] + b.r[i] + 0.3) { const ux = (b.x[t] - b.x[i]) / (d || 1), uy = (b.y[t] - b.y[i]) / (d || 1); addKnock(w, t, ux, uy, 6 * earth); }
       } else if (water) b.burn[t] = 0; // the mist douses burning allies
     }

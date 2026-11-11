@@ -154,3 +154,41 @@ it('measures effective healing on three hurt wizards', () => {
   }
   writeFileSync(join(__dirname, 'probe-heal.txt'), rows.join(String.fromCharCode(10)));
 });
+
+it('measures how long a ward battery holds under steady fire', async () => {
+  const { applyHit } = await import('../packages/sim/src/hit');
+  const { DAMAGE, STRUCT } = await import('../packages/sim/src/config');
+  const { EL } = await import('../packages/sim/src/elements');
+  const keep = STRUCT.wardAbsorb, rows: string[] = [];
+  const MAX = 120 * 60;
+  // n Fire runes in the ward (0: no ward), hit by `dps` of direct fire a second (each hit lights a burn on top) for at most `cap` ticks
+  const sim = (n: number, dps: number, cap: number) => {
+    const w = createWorld(1, 1, { dummies: false }), b = w.bodies, s = w.seats;
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: 32, aimY: 0, ...o })];
+    if (n) {
+      for (const e of ['shield', ...Array(n).fill('fire')] as Element[]) { for (let k = 0; k < N_EL; k++) s.runes[k] = 9; step(w, aim({ press0: elementId(e) })); }
+      for (let k = 0; k < N_EL; k++) s.runes[k] = 4;
+      for (let k = 0; k < 2; k++) step(w, aim({ buttons: BTN.self }));
+      for (let k = 0; k < 40 && !s.ward[0]; k++) step(w, aim());
+    }
+    const fire = new Uint8Array(N_EL); fire[EL.fire - 1] = 1;
+    let t = 0, took = 0;
+    for (; t < cap && (!n || s.ward[0]); t++) {
+      for (let k = 0; k < N_EL; k++) if (k !== EL.shield - 1) s.runes[k] = 1; // the other pools busy, as in a fight: Shield gets its share of regen
+      const before = b.hp[0];
+      applyHit(w, 0, fire, 0, { scale: dps / 60 / DAMAGE.fire, heal: false, scald: false, freeze: false, source: -1, dirX: 0, dirY: 0, push: 0 });
+      step(w, aim());
+      took += before - b.hp[0]; b.hp[0] = 100;
+    }
+    return { t, took };
+  };
+  for (const absorb of [STRUCT.wardAbsorb]) {
+    STRUCT.wardAbsorb = absorb;
+    for (const n of [1, 2, 3]) for (const dps of [10, 15, 25]) {
+      const on = sim(n, dps, MAX), off = sim(0, dps, on.t);
+      rows.push(`absorb ${absorb}: ward ${n} Fire (${Math.round(100 * (1 - 1 / (1 + STRUCT.wardPerRune * n)))} %), ${dps} direct fire a second: holds ${on.t >= MAX ? '120+' : (on.t / 60).toFixed(0)} s, saved ${Math.round(off.took - on.took)} of ${Math.round(off.took)}`);
+    }
+  }
+  STRUCT.wardAbsorb = keep;
+  writeFileSync(join(__dirname, 'probe-ward.txt'), rows.join(String.fromCharCode(10)));
+});

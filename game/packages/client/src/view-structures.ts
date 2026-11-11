@@ -1164,7 +1164,7 @@ export class StructureView {
       light(v.x, v.y - 8, 28, '#e0f0ff', 0.3 * k);
       return;
     }
-    const k = clamp(s.wardHp[i] / STRUCT.wardHp, 0.35, 1) * up;
+    const by = s.wardBy[i] >= 0 ? s.wardBy[i] : i, k = clamp(s.runes[by * N_EL + ELID.shield - 1] / 4, 0.35, 1) * up; // dims as its caster's Shield battery runs down
     if (life) {
       // the Mending ward: a green skin with gold light, slow motes drawn into the body, rising pluses
       this.sil.halo(o, v, t, '#4ec45a', { col2: '#9af07a', hi: '#ffe68a', level: Math.round(6 + 10 * k * 0.85) });

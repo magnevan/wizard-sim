@@ -1,0 +1,9 @@
+absorb 0.015: ward 1 Fire (40 %), 10 direct fire a second: holds 58 s, saved 761 of 1406
+absorb 0.015: ward 1 Fire (40 %), 15 direct fire a second: holds 32 s, saved 543 of 1052
+absorb 0.015: ward 1 Fire (40 %), 25 direct fire a second: holds 17 s, saved 323 of 760
+absorb 0.015: ward 2 Fire (57 %), 10 direct fire a second: holds 41 s, saved 691 of 970
+absorb 0.015: ward 2 Fire (57 %), 15 direct fire a second: holds 24 s, saved 540 of 774
+absorb 0.015: ward 2 Fire (57 %), 25 direct fire a second: holds 13 s, saved 365 of 573
+absorb 0.015: ward 3 Fire (67 %), 10 direct fire a second: holds 37 s, saved 690 of 868
+absorb 0.015: ward 3 Fire (67 %), 15 direct fire a second: holds 22 s, saved 549 of 702
+absorb 0.015: ward 3 Fire (67 %), 25 direct fire a second: holds 12 s, saved 386 of 522

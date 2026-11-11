@@ -254,7 +254,14 @@ export const STRUCT = {
   waveSpeed: 7, waveRange: 6, waveHalf: 1.6, waveHalfPerRune: 0.4, shove: 8,
   /** Model A: energy structures drain the Shield pool; at the reserve floor the oldest breaks. */
   idleDrain: 0.03, wardDrainMult: 2, absorbPerHp: 0.01, reserve: 0.5,
-  wardHp: 60, wardHpPerRune: 20, wardResist: 0.4, mirrorShots: 3, mendPerSec: 2,
+  /**
+   * Wards (spell audit, 2026-11-11, the user: "the shield rune should be a battery that can wear out if overloaded"). An
+   * elemental ward gives wardPerRune resistance points a rune of each element, on the guards' and the imbue's hyperbolic
+   * scale and added to them (1 / 2 / 3 runes: 40 / 57 / 67 % less), and never decays. It has no HP of its own: what it
+   * absorbs drains its caster's Shield pool, wardAbsorb a point, on top of the idle drain, and at the reserve floor it
+   * breaks. Stone armour (with Earth) is stuff, paid once: what it absorbs comes off its own wardHp.
+   */
+  wardHp: 60, wardHpPerRune: 20, wardPerRune: 0.67, wardAbsorb: 0.015, mirrorShots: 3, mendPerSec: 2,
   turretInterval: 1.0, turretRange: 8,
   /** A turret shot costs this share of its payload's runes, and fires uncharged, as your tap cast does. */
   turretShotCost: 0.5,

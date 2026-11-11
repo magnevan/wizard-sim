@@ -416,7 +416,7 @@
   const COST = {
     stuff: ['Stuff', 'Paid once from your queue. It lasts until it breaks or times out (rock, ice), and you can only keep so much standing.'],
     // Model A (decided 2026-11-04), with a low idle drain (the user's note)
-    energy: ['Energy', 'Drains your Shield pool while it stands: a low trickle when idle, more for every hit it absorbs. The elements in it are paid once at cast. All your shields fade as the pool runs down; drain stops at a reserve floor, and there your oldest shield breaks first. A ward drains twice a wall\'s idle rate, and you keep one ward at a time.'],
+    energy: ['Energy', 'Drains your Shield pool while it stands: a low trickle when idle, more for every hit it absorbs. The elements in it are paid once at cast. All your shields fade as the pool runs down; drain stops at a reserve floor, and there your oldest shield breaks first. A ward drains twice a wall\'s idle rate, plus what it holds off, and each wizard wears one ward at a time.'],
     bind: ['Bind', 'Binds one Sigil rune until it goes off, breaks or is dismissed. Your Sigil pool is how many devices you can keep. One-shot devices (glyphs, orbitals) are paid once at cast. A turret draws each shot\'s elements from your pool, so it only stalls when you run dry.'],
     sustain: ['Sustain', 'Free for its natural duration (about 5 s). Keep holding and it costs upkeep from that element\'s regen.'],
     cast: ['One-off', 'Paid once from your queue, when cast.'],
@@ -481,7 +481,7 @@
       }
       out.title = (rest.includes('life') ? 'Mending ward' : 'Ward') + (ally ? ' (tossed)' : '');
       const res = rest.filter((e) => e !== 'life');
-      out.text = rest.length ? `A shimmering skin around ${w}${res.length ? ` that resists ${list(res.map(lo))}` : ''}${rest.includes('life') ? `${res.length ? ', and' : ' that'} heals ${w} slowly while it holds` : ''}. Without Earth, each element is its own resistance.` : `A shimmering skin around ${w} that turns back the next few shots: Shield alone is a mirror.`;
+      out.text = rest.length ? `A shimmering skin around ${w}${res.length ? ` that resists ${list(res.map(lo))}` : ''}${rest.includes('life') ? `${res.length ? ', and' : ' that'} heals ${w} slowly while it holds` : ''}. Without Earth, each element is its own resistance, and each rune of it resists more (one 40 %, two 57 %, three 67 %). It never wears off by itself: it runs on the caster\u2019s Shield pool like a battery, everything it holds off drains the pool, and if the pool runs dry it breaks.` : `A shimmering skin around ${w} that turns back the next few shots: Shield alone is a mirror.`;
       out.payload = rest.map((e) => e === 'life' ? { el: e, n: count(queue, e), trait: 'Mend', text: `Heals ${w} slowly while it holds.` } : { el: e, n: count(queue, e), trait: 'Resist', text: `Resist ${lo(e)}.` });
       return;
     }

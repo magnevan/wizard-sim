@@ -146,3 +146,5 @@ Findings:
 2. **A ward resists 40 % whatever its rune count**: a second Fire adds only 20 ward HP (principle 9).
 3. **A pure barrier stops everyone's shots, its owner's too**: a Ring of barriers seals you in. (It turns enemy shots back at half damage.)
 4. **The ward and the Life imbue both give resistance.** They can stay distinct: the ward is chosen before a fight, strong, and costs upkeep; the imbue is a by-product of healing and fades.
+
+Step 6a and 6b (built): Blink moved to Shield alone on Force; the ward runs on the Shield pool as a battery, by rune, on the imbue's scale (decisions log). Open: the barrier as a force field (finding 3, the user will come back to it), and a new family for Shield + elements on Force, as if Blink didn't exist.

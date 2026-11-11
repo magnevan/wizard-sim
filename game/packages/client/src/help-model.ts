@@ -247,7 +247,12 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
       if (spec.wall === 1) lasts(STRUCT.rockLife + STRUCT.rockLifePerEarth * (earth - 1), 'STANDS');
       break;
     }
-    case 'ward': if (spec.power > 1 || count(spec, 'shield') !== 1) m.push({ key: 'hp', label: 'WARD HP', v: STRUCT.wardHp + STRUCT.wardHpPerRune * (spec.power - 1), unit: '' }); break;
+    case 'ward': {
+      if (count(spec, 'earth')) { m.push({ key: 'hp', label: 'ARMOUR HP', v: STRUCT.wardHp + STRUCT.wardHpPerRune * (spec.power - 1), unit: '' }); break; }
+      const most = Math.max(0, ...rest(queue).filter((e) => e !== 'life' && e !== 'shield').map((e) => count(spec, e)));
+      if (most) m.push({ key: 'resist', label: 'RESIST', v: Math.round(100 * (1 - 1 / (1 + STRUCT.wardPerRune * most))), unit: '%' });
+      break;
+    }
     case 'guard': m.push({ key: 'size', label: 'GUARD HP AND RETREAT', v: 100 * (1 + ARMS.runeSize * (Math.max(1, spec.power - 1) - 1)), unit: '%' }); break;
     case 'turret': case 'glyph': case 'lineglyph': {
       // the device casts its elements' own spell: a turret their Force (a tap: uncharged), a glyph their Place

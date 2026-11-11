@@ -30,7 +30,7 @@
  */
 import { rules } from '@wizard-sim/rules';
 import { ARCHETYPES } from './archetypes';
-import { ARMS, STATUS, T } from './config';
+import { ARMS, STATUS, STRUCT, T } from './config';
 import { EL, N_EL, formOf } from './elements';
 import { cellAt, floorDisc, hit, hitOpts, spawnZone, touchFloor, zap, type Payload } from './effects';
 import { inCone, len } from './geom';
@@ -110,6 +110,19 @@ export function resist(w: World, t: number, col: number): number {
  * The share of `col` damage body t takes: 1 / (1 + r), or 1 - r for a weakness. r is its guard's
  * resistance (seats only) plus what a heal lent it (any body).
  */
+/** taken, with `x` more resistance points on top (a ward's): every point on the same scale, added. Column -1 has no other resistance. */
+export function takenPlus(w: World, t: number, col: number, x: number): number {
+  const b = w.bodies, r = (col >= 0 ? resist(w, t, col) + (b.blessT[t] > 0 ? b.bless[t * 5 + col] : 0) : 0) + x;
+  return r >= 0 ? 1 / (1 + r) : 1 - r;
+}
+
+/** The resistance points seat `seat`'s ward gives against element `id`: wardPerRune a rune of it (Cold and Ice are one family). */
+export function wardPoints(w: World, seat: number, id: number): number {
+  const e = w.seats.wardEls, at = seat * N_EL;
+  const n = id === EL.cold || id === EL.ice ? Math.max(e[at + EL.cold - 1], e[at + EL.ice - 1]) : e[at + id - 1];
+  return n * STRUCT.wardPerRune;
+}
+
 export function taken(w: World, t: number, col: number): number {
   if (col !== RES.fire && w.bodies.kind[t] === KIND.enemy && ARCHETYPES[w.bodies.arch[t]].onlyFire) return 0; // a bramble: blows bounce off
   const b = w.bodies, r = resist(w, t, col) + (b.blessT[t] > 0 ? b.bless[t * 5 + col] : 0);

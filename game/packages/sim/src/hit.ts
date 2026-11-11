@@ -10,7 +10,7 @@ import { ARCHETYPES } from './archetypes';
 import { angleDiff } from './geom';
 import { atan2Turns } from './trig';
 import { drainShield } from './walls';
-import { RES, anchored, bless, colOf, guardBeam, resist, taken, unburnable, warm } from './guards';
+import { RES, anchored, bless, colOf, guardBeam, resist, taken, takenPlus, unburnable, wardPoints, warm } from './guards';
 import { nextFloat } from './rng';
 import { KIND, MAX_SEATS, PU, WARD, stackOf, type World } from './world';
 
@@ -106,18 +106,23 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     if (arch && id === EL.fire && arch.fireMult !== undefined) d *= arch.fireMult;
     if (arch && (id === EL.cold || id === EL.ice) && arch.coldMult !== undefined) d *= arch.coldMult;
     if (arch?.onlyFire && id !== EL.fire) d = 0; // a bramble: only fire hurts it
-    if (d) { const col = physical ? RES.physical : colOf(id); if (col >= 0) d *= taken(w, t, col); } // a guard's resistance, or a heal's lent one
+    // a guard's resistance, a heal's lent one, and a ward's (its points added on the same scale: wardPoints)
+    const xw = ward === WARD.ward || ward === WARD.stone ? wardPoints(w, tSeat, id) : 0;
+    if (d) {
+      const col = physical ? RES.physical : colOf(id), plain = col >= 0 ? d * taken(w, t, col) : d;
+      d = xw ? d * takenPlus(w, t, col, xw) : plain;
+      absorbed += plain - d;
+    }
     allD += d; if (id === EL.fire) fireD = d;
-    // a ward made with Cold or Ice resists both: they are one family
-    const wardHas = (k: number) => s.wardEls[tSeat * N_EL + k - 1] > 0;
-    const resisted = (ward === WARD.ward || ward === WARD.stone) && (wardHas(id) || ((id === EL.cold || id === EL.ice) && (wardHas(EL.cold) || wardHas(EL.ice))));
-    if (resisted) { dmg += d * (1 - STRUCT.wardResist); absorbed += d * STRUCT.wardResist; } else dmg += d;
+    dmg += d;
   }
   dmg *= o.scale; absorbed *= o.scale;
   if (absorbed > 0 && tSeat >= 0) {
-    s.wardHp[tSeat] -= absorbed;
-    if (ward !== WARD.stone) drainShield(w, tSeat, STRUCT.absorbPerHp * absorbed);
-    if (s.wardHp[tSeat] <= 0) { s.ward[tSeat] = WARD.none; w.events.push({ tick, kind: 'burst', who: t, x: b.x[t], y: b.y[t], amount: 0.7, look: EL.shield }); }
+    // an elemental ward is a battery: what it absorbs drains its caster's Shield pool (structures.ts breaks it at the floor);
+    // stone armour was paid once, so it wears its own HP down
+    if (ward === WARD.stone) s.wardHp[tSeat] -= absorbed;
+    else drainShield(w, s.wardBy[tSeat], STRUCT.wardAbsorb * absorbed);
+    if (ward === WARD.stone && s.wardHp[tSeat] <= 0) { s.ward[tSeat] = WARD.none; w.events.push({ tick, kind: 'burst', who: t, x: b.x[t], y: b.y[t], amount: 0.7, look: EL.shield }); }
   }
   // Glass cannon (Sigil + Arcane aura): you deal more and take more.
   if (srcSeat >= 0 && s.aura[srcSeat] > 0 && s.auraEls[srcSeat * N_EL + EL.arcane - 1]) dmg *= STRUCT.glassMult;
@@ -255,8 +260,10 @@ export function tickStatuses(w: World): void {
       b.burnPool[i] -= burnt;
       b.burn[i]--;
       // A ward made with Fire (or stone armour coated in it) resists the burning too.
-      const fireWard = i < MAX_SEATS && (w.seats.ward[i] === WARD.ward || w.seats.ward[i] === WARD.stone) && w.seats.wardEls[i * N_EL + EL.fire - 1] > 0;
-      b.hp[i] -= burnt * (fireWard ? 1 - STRUCT.wardResist : 1) * taken(w, i, RES.fire);
+      const wk = i < MAX_SEATS ? w.seats.ward[i] : WARD.none, xw = wk === WARD.ward || wk === WARD.stone ? wardPoints(w, i, EL.fire) : 0;
+      const plain = burnt * taken(w, i, RES.fire), got = xw ? burnt * takenPlus(w, i, RES.fire, xw) : plain;
+      b.hp[i] -= got;
+      if (xw && wk === WARD.ward) drainShield(w, w.seats.wardBy[i], STRUCT.wardAbsorb * (plain - got)); // the battery pays for the burn it holds off
       if (b.hp[i] <= 0) b.lastEl[i] = EL.fire; // burned to death
       b.lastHit[i] = w.clock[0];
       // Credit the fire to whoever lit it, twice a second (meters; the view's damage pops).

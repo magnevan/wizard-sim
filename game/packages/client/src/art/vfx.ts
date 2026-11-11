@@ -934,7 +934,8 @@ export class Vfx {
             const bx = head.tip[0] - head.swivel[0], by = head.tip[1] - head.swivel[1] + BARREL_RISE;
             const tw = w.def.props.filter((p) => p.asset === 'defence-tower')[w.battery!.drive[i]];
             const ul = Math.hypot(bx / PPU, by / (PPU * FY)) || 1, ux = bx / PPU / ul, uy = by / (PPU * FY) / ul;
-            const full = (w.bodies.x[i] - tw.x) * ux + (w.bodies.y[i] - tw.y) * uy + sprayReach(toX(ux, uy), toY(ux, uy));
+            const aimed = (w.bodies.x[i] + s.aimX[i] - tw.x) * ux + (w.bodies.y[i] + s.aimY[i] - tw.y) * uy;
+            const full = Math.max(2, Math.min(aimed, (w.bodies.x[i] - tw.x) * ux + (w.bodies.y[i] - tw.y) * uy + sprayReach(toX(ux, uy), toY(ux, uy))));
             const inside = toY(tw.x + ux * full, tw.y + uy * full) > BATTERY.wallY;
             const along = inside ? full : Math.max(1, (s.chanEndX[i] - tw.x) * ux + (s.chanEndY[i] - tw.y) * uy);
             const land: Pt = [gx(tw.x + ux * along), gy(tw.y + uy * along)];

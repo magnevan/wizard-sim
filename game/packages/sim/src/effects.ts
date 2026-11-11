@@ -445,9 +445,12 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     setEnd(x + dx * wallD, y + dy * wallD);
     // Falloff (combat.sprayFalloff): the nearest body takes it all, each one behind takes a share less.
     const inside: number[] = [];
+    // a defence's stream also splashes round where it lands, so what's at the foot of the wall burns (battery.ts)
+    const drv = driving(w, src), lx = x + dx * wallD, ly = y + dy * wallD;
     for (let i = 0; i < b.kind.length; i++) {
       if (!alive(w, i) || i === src) continue;
-      if (inCone(x, y, face, half, range, b.x[i], b.y[i], b.r[i]) && clearLine(w, x, y, b.x[i], b.y[i])) inside.push(i);
+      const near = drv && len(b.x[i] - lx, b.y[i] - ly) <= BATTERY.splash + b.r[i];
+      if ((near || inCone(x, y, face, half, range, b.x[i], b.y[i], b.r[i])) && clearLine(w, x, y, b.x[i], b.y[i])) inside.push(i);
     }
     if (COMBAT.sprayFalloff < 1) inside.sort((a, c) => len(b.x[a] - x, b.y[a] - y) - len(b.x[c] - x, b.y[c] - y) || a - c);
     inside.forEach((i, k) => {

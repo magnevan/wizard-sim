@@ -75,15 +75,25 @@ try {
   await p.mouse.move(860, 130);
   await sleep(500);
   await shot('drive-idle');
-  // wave 1 comes down this defence's lane and reaches the wall: hidden behind it, they show through as silhouettes
-  await sleep(9000);
-  await shot('wave-coming');
-  // headless frames run the sim slower than real time: wait on the sim, for the first enemy at the wall
-  const atWall = () => p.evaluate(() => { const w = window.wizardSim.world, b = w.bodies; let n = 0; for (let i = 4; i < b.kind.length; i++) if (b.kind[i] === 3 && Math.hypot(b.x[i] - b.x[0], b.y[i] - b.y[0]) < 2.5) n++; return n; });
-  for (let k = 0; k < 120 && (await atWall()) < 3; k++) await sleep(250);
-  await sleep(600);
-  await shot('wave-at-wall');
-  console.log('enemies at the wall', await atWall());
+  // the lesson: goblins were battering every wall; with a defence taken, the others come along the wall to it
+  // headless frames run the sim slower than real time: wait on the sim, for goblins at this defence's wall
+  const atWall = () => p.evaluate(() => { const w = window.wizardSim.world, b = w.bodies; let n = 0; for (let i = 4; i < b.kind.length; i++) if (b.kind[i] === 3 && Math.hypot(b.x[i] - b.x[0], b.y[i] - b.y[0]) < 3) n++; return n; });
+  for (let k = 0; k < 120 && (await atWall()) < 4; k++) await sleep(250);
+  await shot('lesson-ring');
+  console.log('goblins at the wall', await atWall());
+  // the flame aimed at the wall's foot, where they stand: it pours down onto them
+  const foot = await p.evaluate(() => { const ws = window.wizardSim, b = ws.world.bodies; return ws.view.camera.worldToScreen(b.x[0], b.y[0] - 0.6); });
+  await p.mouse.move(foot.x, foot.y);
+  await sleep(400);
+  await p.keyboard.press('KeyF');
+  await sleep(150);
+  await p.mouse.down({ button: 'right' });
+  await sleep(700);
+  await shot('jet-foot');
+  await p.mouse.up({ button: 'right' });
+  await sleep(1200);
+  await p.mouse.move(860, 130);
+  await sleep(300);
   await p.keyboard.press('KeyF');
   await p.keyboard.press('KeyF');
   await sleep(200);
@@ -121,10 +131,10 @@ try {
     await p.mouse.move(x, y);
     await sleep(900);
     await shot(name);
-    // a guide from the barrel's root to the cursor: the drawn barrel should lie along it
+    // a guide along the ground from the tower to the cursor: the drawn barrel should run parallel to it
     await p.evaluate(([mx, my]) => {
       const ws = window.wizardSim, w = ws.world, cam = ws.view.camera, t = w.def.props.filter((q) => q.asset === 'defence-tower')[w.battery.drive[0]];
-      const T = cam.worldToScreen(t.x, t.y), k = cam.scale, rx = T.x, ry = T.y + (-50 - 9.6) * k;
+      const T = cam.worldToScreen(t.x, t.y), rx = T.x, ry = T.y;
       let g = document.getElementById('aim-guide');
       if (!g) { g = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); g.id = 'aim-guide'; g.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:98'; document.body.appendChild(g); }
       g.innerHTML = `<line x1="${rx}" y1="${ry}" x2="${mx}" y2="${my}" stroke="#0ff" stroke-width="1" stroke-dasharray="4 4"/>`;

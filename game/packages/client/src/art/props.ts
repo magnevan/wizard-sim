@@ -7,6 +7,7 @@
  * Props don't animate and the sim doesn't know them: a room is laid out once, and only moves with the camera.
  */
 import { BATTERY, type World } from '@wizard-sim/sim';
+import { toX, toY } from '../iso-world';
 import { Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { RoomDef } from '@wizard-sim/sim';
 import { FY, PPU } from '../camera';
@@ -38,21 +39,6 @@ const facingOf = (deg: number): number => {
  * from there to the nozzle: fitted from sheet.json, where every tip is 40 px out along the ground from a point this high.
  */
 export const BARREL_RISE = 9.6;
-
-/**
- * The facing (degrees) whose drawn barrel, root to nozzle, points along (dx, dy) on the screen, from the root. Read off
- * the sheet itself rather than worked out from the ground: between two facings it's interpolated, and a way the swing
- * can't reach gets the nearer end.
- */
-function facingToward(dx: number, dy: number): number {
-  const f = SHEET.facings, ang = SHEET.tips.map(([x, y]) => Math.atan2(y - SHEET.pivot[1] + BARREL_RISE, x - SHEET.pivot[0]));
-  const lo = ang[0], hi = ang[ang.length - 1]; // the screen angle grows with the facing
-  let a = Math.atan2(dy, dx);
-  if (a < lo) a += 2 * Math.PI;
-  if (a > hi) return a - hi < lo + 2 * Math.PI - a ? f[f.length - 1] : f[0];
-  for (let i = 1; i < f.length; i++) if (a <= ang[i]) return f[i - 1] + ((a - ang[i - 1]) / (ang[i] - ang[i - 1] || 1)) * (f[i] - f[i - 1]);
-  return f[f.length - 1];
-}
 
 /** Defence k's nozzle tip as it's drawn now, and the tower's spot on the ground under it, field px. */
 export function towerTip(w: World, k: number): { tip: [number, number]; swivel: [number, number]; ground: [number, number] } | null {
@@ -153,10 +139,10 @@ export class PropView {
       const n = k++, seat = w.battery.drive.indexOf(n);
       let want = 0;
       if (seat >= 0) {
-        // the facing whose drawn barrel points at the cursor on the screen, from the barrel's root
+        // at the ground under the cursor, as the sim aims (aimFromTower): the view's world is turned, so it's turned back
         const tw = w.def.props.filter((p) => p.asset === 'defence-tower')[n];
-        const sx = gx(tw.x) + SHEET.collar[0], sy = gy(tw.y) + SHEET.collar[1] - BARREL_RISE;
-        want = Math.max(-limit, Math.min(limit, facingToward(gx(w.bodies.x[seat] + w.seats.aimX[seat]) - sx, gy(w.bodies.y[seat] + w.seats.aimY[seat]) - sy)));
+        const ax = w.bodies.x[seat] + w.seats.aimX[seat] - tw.x, ay = w.bodies.y[seat] + w.seats.aimY[seat] - tw.y;
+        want = Math.max(-limit, Math.min(limit, (Math.atan2(toX(ax, ay), -toY(ax, ay)) * 180) / Math.PI));
       }
       const gap = want - headDeg[n], most = TURN_RATE * dt;
       headDeg[n] += Math.max(-most, Math.min(most, gap));

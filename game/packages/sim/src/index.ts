@@ -1,5 +1,6 @@
 export * from './world';
 export { BATTERY, drivePlace, driving, pedestalNear, sprayReach } from './battery';
+export { BSTEP } from './battery-waves';
 export { createTerrain, terrainNear, terrainAlong, type Terrain } from './terrain';
 export { roomHash, type RoomDef, type Pt as RoomPt, type Seg as RoomSeg } from './room';
 export * from './config';

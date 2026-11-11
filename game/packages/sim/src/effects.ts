@@ -403,11 +403,13 @@ function freeSpot(w: World, self: number, x: number, y: number): boolean {
 
 const SELF_TMP = new Uint8Array(N_EL); // scratch, never kept
 
-/** Self casts without Shield or Sigil: the elements hit you, as in Magicka (Heal, Douse, Attune...). */
+/** Self casts without Shield or Sigil: a heal (Life, imbued by the rest), or the elements hit you, as in Magicka (Douse, Attune...). */
 export function selfHit(w: World, i: number, spec: SpellSpec): void {
   const b = w.bodies, c = spec.counts;
   const life = c[EL.life - 1], arcane = c[EL.arcane - 1];
-  if (life) { const h = COMBAT.healPerLife * life * 1.5; b.hp[i] = Math.min(b.maxHp[i], b.hp[i] + h); hitEvent(w, i, -h, EL.life); }
+  // With Life in it, it's a heal: the other elements imbue you (resist), as any heal's do, rather than hurt you. The
+  // mistake elements hurt only in a cast without Life (the user, 2026-11-11: "the mistake is pure element").
+  if (life) { hitEvent(w, i, applyHit(w, i, c, 0, { scale: 1.5, heal: true, scald: false, freeze: false, source: i, dirX: 0, dirY: 0, push: 0 }), EL.life); return; }
   if (arcane) { // Attune: it stings, and your runes regenerate faster for a while
     if (i < w.seats.active.length) w.seats.attune[i] = T(RUNES.attuneTime * arcane); // longer with more Arcane
     b.hp[i] -= RUNES.attuneSting * arcane;

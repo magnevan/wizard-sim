@@ -421,6 +421,15 @@ describe('Life (support)', () => {
     expect(w.bodies.hp[0]).toBeGreaterThan(50);
   });
 
+  it('Life + an element on yourself heals and imbues you; the element hurts only without Life', () => {
+    const { w, d } = range(6);
+    w.bodies.hp[0] = 40;
+    d.queue('life', 'fire').cast(BTN.self, 1, 20);
+    expect(w.bodies.hp[0]).toBeGreaterThan(40);
+    expect(w.bodies.burn[0]).toBe(0);
+    expect(taken(w, 0, RES.fire)).toBeLessThan(0.8);
+  });
+
   it('a heal spray builds the imbue up tick by tick: Life + Fire on an ally', () => {
     // its per-tick share is small (a second of channel is one hit's worth): it must add up, not be cleared each tick
     const { w, d } = range(6, 2);

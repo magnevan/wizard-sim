@@ -178,6 +178,25 @@ describe('Shield', () => {
     expect(rune(w, 'shield')).toBeLessThan(before + 2.5 * RUNES.regen);
   });
 
+  it('enemies break through a barrier when the way round is long, and walk round when it is short', async () => {
+    const { ARCH, ARCHETYPES } = await import('../src/archetypes');
+    const { TERRAIN, spawnBody } = await import('../src/world');
+    const run = (half: number) => {
+      const w = createWorld(1, 1, { dummies: false }), b = w.bodies, wl = w.walls;
+      b.x[0] = 0; b.y[0] = 0;
+      // a rock wall at x = 2.5 from -half to +half, with a gap at the middle closed by the wizard's barrier
+      const seg = (k: number, type: number, owner: number, y1: number, y2: number) => { wl.type[k] = type; wl.owner[k] = owner; wl.x1[k] = 2.5; wl.x2[k] = 2.5; wl.y1[k] = y1; wl.y2[k] = y2; wl.hp[k] = wl.maxHp[k] = type === WALL.rock ? 1e9 : 80; wl.born[k] = 0; };
+      seg(0, WALL.rock, TERRAIN, -half, -1); seg(1, WALL.rock, TERRAIN, 1, half); seg(2, WALL.barrier, 0, -1, 1);
+      const i = spawnBody(w, -1, KIND.enemy, 2, 6, 0, 1e6, ARCHETYPES[ARCH.swarmer].radius); b.arch[i] = ARCH.swarmer;
+      for (let t = 0; t < 60 * 8; t++) step(w, [NO_INPUT]);
+      return { battered: wl.type[2] !== WALL.barrier || wl.hp[2] < 80 || w.seats.runes[EL.shield - 1] < RUNES.max.shield - 0.3, x: b.x[i] };
+    };
+    const long = run(12), short = run(2.5);
+    expect(long.battered).toBe(true);
+    expect(long.x).toBeGreaterThan(2.5); // still on its side, at the barrier
+    expect(short.x).toBeLessThan(2.5); // went round
+  });
+
   it('a barrier is a force field: your team walks and shoots through it, the other team is stopped', () => {
     const { w, d } = arena(2);
     d.aimAt(4, 0).queue('shield').cast(BTN.area, 20, 20);

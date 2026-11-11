@@ -1,8 +1,8 @@
-Ring (8 pieces) vs 6 goblins: first piece breaks 9.3 s, wizard first hurt 10.9 s, Shield pool low 0.50
-Ring (8 pieces) vs 2 shieldbearers + 4 goblins: first piece breaks 6.5 s, wizard first hurt 7.9 s, Shield pool low 0.44
-Ring (8 pieces) vs a brute: first piece breaks 27.1 s, wizard first hurt 1.9 s, Shield pool low 0.50
+Ring (8 pieces) vs 6 goblins: first piece breaks 12.0 s, wizard first hurt 12.9 s, Shield pool low 0.50
+Ring (8 pieces) vs 2 shieldbearers + 4 goblins: first piece breaks 10.6 s, wizard first hurt 11.6 s, Shield pool low 0.45
+Ring (8 pieces) vs a brute: first piece breaks 27.1 s, wizard first hurt 3.2 s, Shield pool low 0.50
 Ring (8 pieces) vs 3 archers: first piece breaks 19.1 s, wizard first hurt 60+ s, Shield pool low 0.50
-Arc (5 pieces) vs 6 goblins: first piece breaks 60+ s, wizard first hurt 2.0 s, Shield pool low 1.66
-Arc (5 pieces) vs 2 shieldbearers + 4 goblins: first piece breaks 60+ s, wizard first hurt 2.3 s, Shield pool low 1.20
+Arc (5 pieces) vs 6 goblins: first piece breaks 60+ s, wizard first hurt 4.4 s, Shield pool low 0.81
+Arc (5 pieces) vs 2 shieldbearers + 4 goblins: first piece breaks 60+ s, wizard first hurt 4.5 s, Shield pool low 0.96
 Arc (5 pieces) vs a brute: first piece breaks 60+ s, wizard first hurt 2.6 s, Shield pool low 1.66
 Arc (5 pieces) vs 3 archers: first piece breaks 60+ s, wizard first hurt 60+ s, Shield pool low 0.64

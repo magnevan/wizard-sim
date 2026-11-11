@@ -152,3 +152,5 @@ Step 6a and 6b (built): Blink moved to Shield alone on Force; the ward runs on t
 Step 6c (built): Shield + elements on Force blink and leave the elements' Area spell where you stood, at 0.8 power. The other candidates (Bubble, Repulsor/Counterspell, Shield chain, Guardian link) are in `ideas/shield-force-alternatives.md`. Still open in Shield: the barrier as a force field (finding 3, the user will come back to it).
 
 Step 6d (built): the Life blink heals where you land; barriers are force fields (decisions log). Open: what added runes do to a force field (today they make it a curtain you can walk through).
+
+Step 6e (built): enemies path through barriers at a price (4 u of walking a cell) and batter them when that's shorter than going round. Not dealt with: a maze of barriers (the user: a degenerate case).

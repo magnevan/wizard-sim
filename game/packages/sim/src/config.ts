@@ -251,6 +251,8 @@ export const STRUCT = {
   /** The Spike aura (Sigil + Ice on yourself): each half second, an Ice hit at this scale per Ice rune on enemies close by. */
   spikeAura: 0.4,
   wallThickness: 0.25,
+  /** Enemies path through a barrier as if it were this many units of extra walking a cell (nav.ts), so a pack breaks through when going round is longer. */
+  barrierDetour: 4,
   waveSpeed: 7, waveRange: 6, waveHalf: 1.6, waveHalfPerRune: 0.4, shove: 8,
   /** Model A: energy structures drain the Shield pool; at the reserve floor the oldest breaks. */
   idleDrain: 0.03, wardDrainMult: 2, absorbPerHp: 0.01, reserve: 0.5,

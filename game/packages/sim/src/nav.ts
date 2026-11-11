@@ -33,14 +33,19 @@ const cellOf = (w: World, x: number, y: number): number => {
 const centreX = (w: World, c: number) => -w.dims.w / 2 + ((c % w.dims.gw) + 0.5) * CELL;
 const centreY = (w: World, c: number) => -w.dims.h / 2 + (Math.floor(c / w.dims.gw) + 0.5) * CELL;
 
-/** Marks the cells a rock segment blocks. */
-function markRock(w: World, nb: Uint8Array, x1: number, y1: number, x2: number, y2: number): void {
+/** Grid marks: 1 rock (no way through), 2 a players' barrier (a way through, at a price: breaking it). */
+const ROCK = 1, BARRIER = 2;
+/** A barrier cell costs this much more to cross, in field units (20 a unit walked): about STRUCT.barrierDetour u of walking. */
+const barrierCost = (): number => Math.round(20 * STRUCT.barrierDetour);
+
+/** Marks the cells a rock segment blocks (or, with mark = BARRIER, the cells a barrier slows); rock is never overwritten. */
+function markRock(w: World, nb: Uint8Array, x1: number, y1: number, x2: number, y2: number, mark = ROCK): void {
   const pad = STRUCT.wallThickness + INFLATE;
   const minX = Math.min(x1, x2) - pad, maxX = Math.max(x1, x2) + pad;
   const minY = Math.min(y1, y2) - pad, maxY = Math.max(y1, y2) + pad;
   for (let y = minY; y <= maxY + CELL; y += CELL) for (let x = minX; x <= maxX + CELL; x += CELL) {
     const c = cellOf(w, x, y);
-    if (segLen(centreX(w, c), centreY(w, c), x1, y1, x2, y2) < pad) nb[c] = 1;
+    if (segLen(centreX(w, c), centreY(w, c), x1, y1, x2, y2) < pad && nb[c] !== ROCK) nb[c] = mark;
   }
 }
 
@@ -48,7 +53,10 @@ function rebuildBlocked(w: World): void {
   const nb = w.nav.blocked, wl = w.walls, tr = w.terrain;
   nb.fill(0);
   for (let k = 0; k < tr.n; k++) markRock(w, nb, tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k]);
-  for (let k = 0; k < MAX_WALLS; k++) if (enemyWall(wl.type[k])) markRock(w, nb, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]); // barriers too: they stop enemies
+  for (let k = 0; k < MAX_WALLS; k++) if (solidWall(wl.type[k])) markRock(w, nb, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
+  // Barriers stop enemies too, but they can be broken: the field goes through them at a price, so a pack takes
+  // a long way round only when it is shorter than breaking through (the user, 2026-11-11), and a maze of barriers can't stall it for long
+  for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.barrier) markRock(w, nb, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k], BARRIER);
 }
 
 // A binary heap over (distance, cell); ties broken by cell index so the order never varies.
@@ -92,9 +100,9 @@ function dijkstra(w: World, seat: number, goal: number): void {
       const nx = cx + dx, ny = cy + dy;
       if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
       const nc = ny * GW + nx;
-      if (nb[nc]) continue;
-      if (dx && dy && (nb[cy * GW + nx] || nb[ny * GW + cx])) continue; // no corner cutting
-      const nd = d0 + cost;
+      if (nb[nc] === ROCK) continue;
+      if (dx && dy && (nb[cy * GW + nx] === ROCK || nb[ny * GW + cx] === ROCK)) continue; // no corner cutting
+      const nd = d0 + cost + (nb[nc] === BARRIER ? barrierCost() : 0);
       if (nd < f[base + nc]) { f[base + nc] = nd; push(nd, nc); }
     }
   }
@@ -156,6 +164,25 @@ export function cutOff(w: World, i: number, seat: number): boolean {
     if (nx >= 0 && ny >= 0 && nx < GW && ny < GH && f[base + ny * GW + nx] < INF) return false;
   }
   return true;
+}
+
+/**
+ * Is enemy `i`'s way to that seat's wizard through a barrier it's standing at? Its cell, or a cell next to it that
+ * leads closer, is a barrier cell: the field chose breaking through over going round (enemies.ts then batters it).
+ */
+export function atBarrier(w: World, i: number, seat: number): boolean {
+  if (seat < 0 || seat >= MAX_SEATS) return false;
+  const c = cellOf(w, w.bodies.x[i], w.bodies.y[i]);
+  const GW = w.dims.gw, GH = w.dims.gh, f = w.nav.field, nb = w.nav.blocked, base = seat * GW * GH;
+  if (nb[c] === BARRIER) return true;
+  const cx = c % GW, cy = (c - cx) / GW;
+  for (let q = 0; q < 8; q++) {
+    const nx = cx + NBX[q], ny = cy + NBY[q];
+    if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
+    const nc = ny * GW + nx;
+    if (nb[nc] === BARRIER && f[base + nc] < f[base + c]) return true;
+  }
+  return false;
 }
 
 export function steer(w: World, i: number, tx: number, ty: number, seat: number): [number, number, boolean] {

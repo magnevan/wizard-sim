@@ -55,6 +55,8 @@ interface Fx {
   x: number; y: number; x2: number; y2: number;
   look: number; who: number; r: number; n: number;
   text?: string; els?: number[];
+  /** A missile's flags (PF) and its tier (the spell's runes), for its impact. */
+  flags?: number; tier?: number;
   /** A defence's ring: only the half on the enemy's side of the wall is drawn. */
   half?: boolean;
 }
@@ -64,6 +66,9 @@ const ramp = (id: number): Ramp => EL[elName(id)] ?? EL.arcane;
 /** The seats' default staff orbs (the Battlefield's: Red arcane, Blue cold, Gold lightning, Violet earth). */
 const SEAT_EL = [6, 4, 5, 9];
 const STAFF_Z = 10; // missiles fly about this high (art px)
+const EL_COLD = 4; // Cold's element id (sim elements.ts)
+/** A missile's tier for its look: the runes it carries, 1..5. */
+const tierOf = (els: Uint8Array, j: number): number => { let s = 0; for (let k = 0; k < N_EL; k++) s += els[j * N_EL + k]; return clamp(s, 1, 5); };
 const LIFT = 9; // a beam or spray end is lifted to about chest height
 /** How far below a far-side hit (art px) the foot of the wall's near face is. */
 const FAR_FOOT = 6;
@@ -257,7 +262,7 @@ export class Vfx {
       if (m.alive[j] && !this.mAlive[j]) { this.mT0[j] = t; this.mLife0[j] = m.life[j]; }
       if (!m.alive[j] && this.mAlive[j]) {
         if (this.mType[j] === 3) healStones.push([this.mX[j], this.mY[j]]);
-        else this.add('impact', t, 1.4, { x: this.mX[j], y: this.mY[j], x2: this.mVX[j], y2: this.mVY[j], look: this.mLook[j], n: this.mType[j], seed: tick * 7 + j, r: m.r[j] });
+        else this.add('impact', t, 1.4, { x: this.mX[j], y: this.mY[j], x2: this.mVX[j], y2: this.mVY[j], look: this.mLook[j], n: this.mType[j], seed: tick * 7 + j, r: m.r[j], flags: m.flags[j], tier: tierOf(m.els, j), els: Array.from(m.els.subarray(j * N_EL, j * N_EL + N_EL)) });
       }
       this.mAlive[j] = m.alive[j];
       if (!m.alive[j]) this.mCatch[j] = NaN;
@@ -758,7 +763,7 @@ export class Vfx {
           const back = (t - ts) * L * 16;
           return [x - ux * back, yg - uy * back - STAFF_Z - Math.sin(kt * Math.PI) * 34];
         };
-        RF.lifeSeed(o, { x, y, yg, ux, uy, v: L * 16, r: 4, born: this.mT0[j], seed: sd }, t, at);
+        RF.lifeSeed(o, { x, y, yg, ux, uy, v: L * 16, r: 4, born: this.mT0[j], seed: sd, n: tierOf(m.els, j) }, t, at);
         light(x, yg, 36, '#8ef07e', 0.55);
         continue;
       }
@@ -792,12 +797,12 @@ export class Vfx {
         X.ellipse(g, x, yg, r * 0.8, r * 0.4, 'rgba(8,6,16,0.45)');
         if (el === 'fire') {
           // a fireball: burning flecks and dark smoke peeling off behind it
-          RF.meteor(o, { x, y, yg, ux, uy, v: L * 16, r, born: this.mT0[j], seed: sd }, t);
+          RF.meteor(o, { x, y, yg, ux, uy, v: L * 16, r, born: this.mT0[j], seed: sd, n: tierOf(m.els, j) }, t);
           light(x, yg, 44, '#ff7a2a', 0.9);
         } else {
-          const fl: RF.Flight = { x, y, yg, ux, uy, v: L * 16, r, born: this.mT0[j], seed: sd };
+          const fl: RF.Flight = { x, y, yg, ux, uy, v: L * 16, r, born: this.mT0[j], seed: sd, n: tierOf(m.els, j) };
           if (el === 'cold') {
-            if (m.flags[j] & PF.freeze) RF.iceCluster(o, fl, t); else RF.snowball(o, fl, t);
+            if (m.flags[j] & PF.freeze) RF.iceShard(o, fl, t); else RF.snowball(o, fl, t);
             light(x, yg, 34, '#9ff4ff', 0.45);
             continue;
           }
@@ -812,7 +817,7 @@ export class Vfx {
           // of dust hanging where it passed, grit falling out of it, and the rock tumbling, faster the faster it goes
           const spd = Math.hypot(m.vx[j], m.vy[j]), born = this.mT0[j], earth = mat === K.ROCK_MAT.earth;
           const dustC = el === 'cold' ? ['#e8fbff', '#9fd4e8'] : el === 'water' ? ['#cfe8ff', '#6aa8e0'] : el === 'arcane' ? ['#ffd8ec', '#c06a9a'] : el === 'lightning' ? ['#e8dcff', '#8a6ad0'] : ['#cbb898', '#8a7458'];
-          for (const p of emit(t, 30 + r * 4, 0.55, (i, age, ts) => {
+          for (const p of emit(t, (20 + r * 3) * (0.6 + 0.2 * fl.n), 0.4 + 0.06 * fl.n, (i, age, ts) => {
             const back = (t - ts) * L * 16, side = (rand(i, 6, sd) - 0.5) * r * 1.2;
             return { x: x - ux * back - uy * side + age * (rand(i, 7, sd) - 0.5) * 6, y: y - uy * back + ux * side * FY + age * 3, age, r: 1 + age * (1.5 + r * 0.3) };
           }, born, t)) if (p.age > 0.05) K.puff(o, p.x, p.y, p.r, p.age < 0.35 ? dustC[0] : dustC[1], (1 - p.age) * 0.75);
@@ -1336,14 +1341,27 @@ export class Vfx {
           light(x, y, 90, '#ff6ab0', 1.1 * (1 - seg(e, 0, 0.5)));
           return;
         }
+        if (ty === 1 && look === 'cold' && !((f.flags ?? 0) & PF.freeze)) {
+          // a snowball ends in a puff of frost over the sim's chill disc (effects.ts frostPuff)
+          const cold = f.els ? f.els[EL_COLD - 1] : 1, R = (SHAPES.frostPuff + 0.3 * Math.max(0, cold - 1)) * 16;
+          RF.frostPuff(o, g, x, y, iy, e, R, sd);
+          light(x, y, 40 + R * 0.5, '#9ff4ff', 0.7 * (1 - seg(e, 0, 1)));
+          return;
+        }
+        if (ty === 1 && look === 'cold') {
+          // an ice shard splinters
+          if (e < 0.05) K.sq(o, x, iy, 3, '#ffffff');
+          K.debris(o, x, iy, e, sd, 5, 35, [EL.cold[0], EL.cold[2], EL.cold[3]]);
+          light(x, y, 30, '#9ff4ff', 0.5 * (1 - e));
+          return;
+        }
         if (ty === 1) {
-          // a rock lands: dust and chips; snow or ice bursts; a mud ball splashes
-          const cols: Ramp = look === 'cold' ? [EL.cold[0], EL.cold[2], EL.cold[3]] : look === 'water' ? ['#4a3c2a', '#8ad0ff', '#6a5a40'] : ['#977552', '#553e2a', '#b8946a'];
+          // a rock lands: dust and chips; a mud ball splashes
+          const cols: Ramp = look === 'water' ? ['#4a3c2a', '#8ad0ff', '#6a5a40'] : ['#977552', '#553e2a', '#b8946a'];
           K.scorch(g, x, y, 7 * s, 0.4 * (1 - seg(e, 0.8, 1.4)));
           if (e < 0.06) K.sq(o, x, iy, 4, '#ffffff');
           K.debris(o, x, iy, e, sd, 10, 45, cols);
-          K.dust(o, x, y, e, sd, 9, 18, look === 'cold' ? '#d8f4ff' : look === 'water' ? '#5a6a80' : '#8a7a68', 0.9);
-          if (look === 'cold') light(x, y, 50, '#9ff4ff', 0.6 * (1 - e));
+          K.dust(o, x, y, e, sd, 9, 18, look === 'water' ? '#5a6a80' : '#8a7a68', 0.9);
           return;
         }
         // a bolt pops

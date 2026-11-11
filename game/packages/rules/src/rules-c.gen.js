@@ -91,7 +91,7 @@ const module = { exports: {} };
   // The shape changes (S2: only the leading one applies). [name, what the spell does]
   const SHAPE = {
     water: ['Push', 'shoves whatever it hits'],
-    cold: ['Shatter', 'splits into ice shards on impact, and they fly on'],
+    cold: ['Frost puff', 'bursts into a puff of frost where it ends, chilling everything near it; with Water as well, a rock flies as three ice shards that each hit'],
     lightning: ['Chain', 'jumps on to a neighbour'],
     arcane: ['Burst', 'bursts in a small explosion where it lands'],
   };

@@ -146,6 +146,22 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
   switch (spec.shape) {
     case 'missile': {
       if (spec.heal) { spawnMissile(w, src, p, dx, dy, 3, (0.7 + 0.3 * charge) * k, tx, ty, ex.ox, ex.oy); break; }
+      if (p.freeze) {
+        // Earth + Water + Cold: three ice shards, a little staggered, each a third of the rock, flying much faster for
+        // their shape (the user, 2026-11-11); they don't split again where they hit
+        const sp = SHAPES.iceShardSpeed * (0.6 + 0.4 * charge);
+        for (let q = 0; q < 3; q++) {
+          const m = spawnMissile(w, src, p, dx, dy, 1, ((0.5 + 0.5 * charge) * k) / 3, 0, 0, ex.ox, ex.oy);
+          if (m < 0) break;
+          const back = q * 0.7, side = q === 0 ? 0 : q === 1 ? -0.3 : 0.3; // the lead in the middle, the others behind it either side
+          w.missiles.x[m] += -dx * back - dy * side; w.missiles.y[m] += -dy * back + dx * side;
+          w.missiles.vx[m] = dx * sp; w.missiles.vy[m] = dy * sp;
+          w.missiles.r[m] = 0.16 + 0.04 * n;
+          w.missiles.pierce[m] = charge >= 1 ? 1 : 0;
+          w.missiles.mod[m] = 0;
+        }
+        break;
+      }
       const m = spawnMissile(w, src, p, dx, dy, 1, (0.5 + 0.5 * charge) * k, 0, 0, ex.ox, ex.oy);
       if (m >= 0) {
         const sp = SHAPES.missileSpeed * (0.6 + 0.4 * charge);
@@ -538,19 +554,26 @@ export function tickMissiles(w: World): void {
         if (m.flags[j] & PF.pin) { b.root[i] = Math.max(b.root[i], T(ARMS.pin)); floorDisc(w, m.x[j], m.y[j], ARMS.frostRadius, EL.cold); }
         if (p.mod === 'burst') disc(w, p, m.owner[j], m.x[j], m.y[j], SHAPES.burstRadius, 0.4 * m.scale[j], i);
         if (p.mod === 'chain') { const n2 = nearest(w, b.x[i], b.y[i], SHAPES.arcJump, [i, m.owner[j]], 0); if (n2 >= 0) zap(w, i, n2, p, 0.4 * m.scale[j]); }
-        if (p.mod === 'shatter' && m.type[j] !== 2) {
-          // Shatter: three shards fly on, about 20 degrees apart (cos 0.94, sin 0.34).
-          for (let k = -1; k <= 1; k++) {
-            const sx = ux * (k ? 0.94 : 1) - uy * k * 0.34, sy = uy * (k ? 0.94 : 1) + ux * k * 0.34;
-            const s2 = spawnMissile(w, m.owner[j], p, sx, sy, 2, 0.25 * m.scale[j], 0, 0);
-            if (s2 >= 0) { m.x[s2] = m.x[j] + sx * (b.r[i] + 0.3); m.y[s2] = m.y[j] + sy * (b.r[i] + 0.3); m.lastHit[s2] = i; m.mod[s2] = 0; }
-          }
-        }
         if (!m.pierce[j]) dead = true;
       }
     }
-    if (dead) { m.alive[j] = 0; w.events.push({ tick: w.clock[0], kind: 'fizzle', who: m.owner[j], x: m.x[j], y: m.y[j], look: m.look[j] }); }
+    if (dead) {
+      m.alive[j] = 0;
+      // Cold's shape change: a puff of frost wherever it ends, chilling what's near (ice shards need Water: fireSpell)
+      if (p.mod === 'shatter' && m.type[j] !== 2) frostPuff(w, j);
+      w.events.push({ tick: w.clock[0], kind: 'fizzle', who: m.owner[j], x: m.x[j], y: m.y[j], look: m.look[j] });
+    }
   }
+}
+
+/** A missile's frost puff: its Cold alone, over a small disc, at a third of its strength (more Cold, a wider puff). */
+function frostPuff(w: World, j: number): void {
+  const m = w.missiles, cold = m.els[j * N_EL + EL.cold - 1];
+  if (!cold) return;
+  const counts = new Uint8Array(N_EL);
+  counts[EL.cold - 1] = cold;
+  const p: Payload = { counts, at: 0, heal: false, scald: false, freeze: false, mod: null, look: EL.cold, formN: 1 };
+  disc(w, p, m.owner[j], m.x[j], m.y[j], SHAPES.frostPuff + 0.3 * (cold - 1), m.scale[j] / 3, -1);
 }
 
 export function spawnZone(w: World, type: number, src: number, p: Payload, x: number, y: number, r: number, life: number, timer: number): void {

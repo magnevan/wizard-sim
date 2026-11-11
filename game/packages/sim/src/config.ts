@@ -105,6 +105,10 @@ export const SHAPES = {
   missileSpeed: 20, missileLife: 1.4, missileRadius: 0.3,
   /** How far an ice shard flies before it melts, u: the shotgun's reach. */
   shardRange: 7.2,
+  /** Earth + Water + Cold's three ice shards fly this fast, u/s: faster than other missiles, for their shape. */
+  iceShardSpeed: 32,
+  /** Radius of the frost puff a Cold-carrying missile leaves where it ends, u (+0.3 a Cold rune past the first). */
+  frostPuff: 1.4,
   shardCount: 5, shardSpread: 0.035, // turns between shards
   /** Each ice shard's share of the payload: 0.75, so a full 6-shard volley lands the 4.5x it did before every shard hit alike. */
   shardPower: 0.75,

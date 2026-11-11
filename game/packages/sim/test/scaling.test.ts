@@ -81,4 +81,33 @@ describe('rune scaling', () => {
     expect(new Set(shards).size).toBe(1);
     expect(shards[0]).toBeCloseTo(SHAPES.shardPower, 5);
   });
+
+  it('Earth + Water + Cold flies as three fast ice shards, each a third of the rock', () => {
+    const { w, go, queue } = scene(8);
+    queue(['earth', 'water', 'cold']);
+    let ice: number[] = [];
+    for (let t = 0; t < 200 && !ice.length; t++) {
+      go({ buttons: t < 100 ? BTN.force : 0 });
+      ice = [...w.missiles.alive.keys()].filter((j) => w.missiles.alive[j] && w.missiles.type[j] === 1);
+    }
+    expect(ice.length).toBe(3);
+    for (const j of ice) expect(Math.hypot(w.missiles.vx[j], w.missiles.vy[j])).toBeGreaterThan(SHAPES.missileSpeed);
+  });
+
+  it('an Earth + Cold rock ends in a frost puff that chills what stands near, and throws no shards', () => {
+    const { w, go, queue } = scene(3);
+    const b = w.bodies;
+    // a dummy on the rock's line takes it; the other wizard stands beside the dummy, off the line: only the puff reaches them
+    b.kind[4] = KIND.dummy; b.team[4] = 2; b.x[4] = 3; b.y[4] = 0; b.r[4] = 0.5; b.hp[4] = b.maxHp[4] = 1e5;
+    b.x[1] = 3.4; b.y[1] = 1.1;
+    queue(['earth', 'cold']);
+    let shards = 0, chill = 0;
+    for (let t = 0; t < 200; t++) {
+      go({ buttons: t < 30 ? BTN.force : 0 }); // a quick throw: a full charge would pierce and fly on past
+      shards += [...w.missiles.alive.keys()].filter((j) => w.missiles.alive[j] && w.missiles.type[j] === 2).length;
+      chill = Math.max(chill, b.chill[1]);
+    }
+    expect(shards).toBe(0);
+    expect(chill).toBeGreaterThan(0);
+  });
 });

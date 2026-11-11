@@ -421,6 +421,25 @@ describe('Area and Place', () => {
     expect(w.surf.kind[cellAt(w, 3, 3)]).toBe(SURF.water);
   });
 
+  it('Cold Place is a freezing fog that chills without laying ice; an ice sheet chills and nobody slides on it', () => {
+    const { w, d } = range(8, 2);
+    const b = w.bodies;
+    b.x[1] = 3; b.y[1] = 3;
+    d.queue('cold').place(3, 3);
+    d.tick({}, 60);
+    expect(w.surf.kind[cellAt(w, 3, 3)]).toBe(SURF.none);
+    expect(b.chill[1]).toBeGreaterThan(0);
+    // Water + Cold lays ice; standing on it chills, and a shove dies away as on any floor
+    const ice = range(8, 2);
+    ice.w.bodies.x[1] = 3; ice.w.bodies.y[1] = 3;
+    ice.d.queue('water').queue('cold').place(3, 3);
+    expect(ice.w.surf.kind[cellAt(ice.w, 3, 3)]).toBe(SURF.ice);
+    ice.w.bodies.chill[1] = 0; ice.w.bodies.kx[1] = 5;
+    ice.d.tick({}, 30);
+    expect(ice.w.bodies.chill[1]).toBeGreaterThan(0);
+    expect(Math.abs(ice.w.bodies.kx[1])).toBeLessThan(0.1); // it would still be 3.2 if bodies slid
+  });
+
   it('an earthquake knocks down everyone around you', () => {
     const { w, d, dummy } = range(2);
     d.queue('earth').tick({ buttons: BTN.area }, 2).tick({}, 15);

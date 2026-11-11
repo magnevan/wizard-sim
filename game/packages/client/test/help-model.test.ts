@@ -60,7 +60,7 @@ describe('help panel model: queue -> rows', () => {
     expect(fire[0].stats[0]).toBe('2 RUNES');
     expect(fire[0].stats.join(' ')).toMatch(/FIRE \d+(\.\d)?\/S/);
     expect(fire[0].stats.join(' ')).toMatch(/HOLD: CHANNEL/);
-    expect(fire[2].stats.join(' ')).toMatch(/LASTS 12S/); // a fire patch: 10 s, +20 % for the second Fire
+    expect(fire[2].stats.join(' ')).toMatch(/LASTS 14.4S/); // a fire patch: 12 s, +20 % for the second Fire
     const rock = helpModel(['earth'], bare).rows[0].stats.join(' ');
     expect(rock).toMatch(/EARTH 22 CHARGED/);
     expect(rock).toMatch(/HOLD: CHARGE/);
@@ -68,17 +68,17 @@ describe('help panel model: queue -> rows', () => {
     expect(heal).toMatch(/HEALS 14/);
   });
 
-  it('the arc counts its zaps: 0.5 a rune every 0.2 s, and the beam its extra reach', () => {
+  it('the arc counts its zaps: 0.5 a rune every 0.2 s, and the beam its reach', () => {
     expect(helpModel(['lightning'], bare).rows[0].stats.join(' ')).toMatch(/LIGHTNING 25\/S/);
-    expect(helpModel(['arcane', 'arcane'], bare).rows[0].stats.join(' ')).toMatch(/RANGE 14U.*FREE 5S/);
+    expect(helpModel(['arcane', 'arcane'], bare).rows[0].stats.join(' ')).toMatch(/RANGE 30U/);
   });
 
   it('+1 rune: what one more rune of the lead element changes', () => {
     const scale = (q: Element[], k: number) => helpModel(q, bare).rows[k].scale;
     expect(scale(['fire'], 0)).toBe('+1 FIRE: DMG ×1.41, RANGE +0.5U, CONE +25%, WIND-UP +0.04S');
     expect(scale(['arcane'], 1)).toBe('+1 ARCANE: DMG ×1.7, RADIUS +0.6U, WIND-UP +0.04S');
-    expect(scale(['arcane'], 0)).toBe('+1 ARCANE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S'); // a beam's runes buy time, not damage
-    expect(scale(['life'], 0)).toBe('+1 LIFE: RANGE +1U, FREE FOR +2.5S, WIND-UP +0.04S');
+    expect(scale(['arcane'], 0)).toBe('+1 ARCANE: DMG ×1.7, WIND-UP +0.04S'); // a beam's runes buy power; upkeep pays for time
+    expect(scale(['life'], 0)).toBe('+1 LIFE: HEAL ×2, WIND-UP +0.04S');
     expect(helpModel(['water'], bare).rows[0].stats.join(' ')).toMatch(/PUSH 18U\/S A SECOND/);
     expect(scale(['earth'], 0)).toMatch(/^\+1 EARTH: DMG ×2.83/);
     expect(scale(['lightning'], 0)).toMatch(/JUMPS \+1/);

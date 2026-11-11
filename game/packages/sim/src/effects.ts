@@ -10,12 +10,12 @@ import type { Mod, SpellSpec } from './compile';
 import { ARMS, BODY, CELL, COMBAT, PERKS, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
 import { inCone, len, rayCircle } from './geom';
-import { HIT_KIND, addKnock, applyHit, ignite, setHitKind, type HitOpts } from './hit';
+import { HIT_KIND, addChill, addKnock, applyHit, ignite, setHitKind, tryFreeze, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { TERRAIN_HIT, clipRay, collideWalls, damageWall, isRockHit, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
-import { WALL, compile } from './compile';
+import { WALL, compile, imbueLine, imbueReach } from './compile';
 import { ARCHETYPES } from './archetypes';
-import { RES, grounded, guardMissile, phased, taken } from './guards';
+import { RES, grounded, guardMissile, phased, taken, warm } from './guards';
 import { noteBlocked } from './tutorial-data';
 import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, PU, SURF, WARD, ZONE, alive, lingerLife, lingerSize, stackOf, type World } from './world';
 
@@ -40,8 +40,8 @@ export function stored(els: Uint8Array, at: number, flags: number, mod: number, 
   return { counts: els, at, heal: !!(flags & PF.heal), scald: !!(flags & PF.scald), freeze: !!(flags & PF.freeze), mod: MODS[mod], look, formN: 1 };
 }
 
-export function hitOpts(p: Payload, source: number, scale: number, dirX = 0, dirY = 0, statusScale = 1, frontal = false, flatForm = false): HitOpts {
-  return { scale, heal: p.heal, scald: p.scald, freeze: p.freeze, source, dirX, dirY, push: p.mod === 'push' ? SHAPES.push : 0, statusScale, frontal, flatForm };
+export function hitOpts(p: Payload, source: number, scale: number, dirX = 0, dirY = 0, statusScale = 1, frontal = false): HitOpts {
+  return { scale, heal: p.heal, scald: p.scald, freeze: p.freeze, source, dirX, dirY, push: p.mod === 'push' ? SHAPES.push : 0, statusScale, frontal };
 }
 
 export function hitEvent(w: World, i: number, dealt: number, look: number, src = -1): void {
@@ -94,6 +94,8 @@ export function tickSurfaces(w: World): void {
     if (!alive(w, i)) continue;
     const k = surfAt(w, b.x[i], b.y[i]);
     if (k === SURF.water) { b.wet[i] = Math.max(b.wet[i], T(1)); b.burn[i] = 0; }
+    // ice bites at the feet: it chills, and a wet body standing on it freezes (it used to make bodies slide instead)
+    if (k === SURF.ice && !(i < MAX_SEATS && warm(w, i))) { b.burn[i] = 0; addChill(w, i, SURFACE.iceChill / 60); if (b.wet[i]) tryFreeze(w, i); }
     if (k === SURF.fire && b.burn[i] < T(1) && !(b.kind[i] === KIND.enemy && ARCHETYPES[b.arch[i]].burnImmune)) ignite(w, i, STATUS.burnSurface, b.burn[i] ? b.burnSrc[i] : -1);
   }
 }
@@ -146,6 +148,23 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
   switch (spec.shape) {
     case 'missile': {
       if (spec.heal) { spawnMissile(w, src, p, dx, dy, 3, (0.7 + 0.3 * charge) * k, tx, ty, ex.ox, ex.oy); break; }
+      if (p.freeze) {
+        // Earth + Water + Cold: three ice shards launched one after another, fanned a little, much faster than other
+        // missiles for their shape (the user, 2026-11-11). Together they hit iceShardShare x 3 of the rock: the third
+        // rune pays like any other. They don't split again where they hit.
+        const sp = SHAPES.iceShardSpeed * (0.6 + 0.4 * charge);
+        for (let q = 0; q < 3; q++) {
+          const a = face + (q === 0 ? 0 : q === 1 ? -SHAPES.iceShardFan : SHAPES.iceShardFan), ddx = cosTurns(a), ddy = sinTurns(a);
+          const m = spawnMissile(w, src, p, ddx, ddy, 1, (0.5 + 0.5 * charge) * k * SHAPES.iceShardShare, 0, 0, ex.ox, ex.oy);
+          if (m < 0) break;
+          w.missiles.wait[m] = ex.ox === undefined ? q * SHAPES.iceShardGap : 0; // a device's volley leaves together: a wait holds a shard at its caster
+          w.missiles.vx[m] = ddx * sp; w.missiles.vy[m] = ddy * sp;
+          w.missiles.r[m] = 0.16 + 0.04 * n;
+          w.missiles.pierce[m] = charge >= 1 ? 1 : 0;
+          w.missiles.mod[m] = 0;
+        }
+        break;
+      }
       const m = spawnMissile(w, src, p, dx, dy, 1, (0.5 + 0.5 * charge) * k, 0, 0, ex.ox, ex.oy);
       if (m >= 0) {
         const sp = SHAPES.missileSpeed * (0.6 + 0.4 * charge);
@@ -180,7 +199,18 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       // each extra rune of the lead: +0.4 u, and what lingers lasts SHAPES.lingerPerRune longer (steam, the floors it leaves)
       // Lingering (Survive) makes the whole patch wider and what it leaves last longer
       const r = (SHAPES.patchRadius + 0.4 * (n - 1)) * lingerSize(w, src), longer = (1 + SHAPES.lingerPerRune * (n - 1)) * lingerLife(w, src);
+      // Cold without Water is a freezing fog, not ice (the user, 2026-11-11: "like opening a deep freezer"): it chills
+      // whoever stands in it and leaves the floor alone. Water + Cold is still the ice sheet.
+      const fog = !spec.scald && !spec.freeze && spec.counts[EL.cold - 1] > 0;
       if (spec.scald) spawnZone(w, ZONE.steam, src, p, tx, ty, r, T(SHAPES.patchLife * longer), 0);
+      else if (fog) {
+        spawnZone(w, ZONE.frost, src, p, tx, ty, r, T(SHAPES.patchLife * longer), 0);
+        // the fog freezes standing water under it into ice; dry floor stays dry
+        for (let gy = -r; gy <= r; gy += CELL) for (let gx = -r; gx <= r; gx += CELL) {
+          const c = gx * gx + gy * gy <= r * r ? cellAt(w, tx + gx, ty + gy) : -1;
+          if (c >= 0 && w.surf.kind[c] === SURF.water) touchFloor(w, c, EL.cold, longer);
+        }
+      }
       else for (const el of [EL.water, EL.cold, EL.fire]) if (spec.counts[el - 1]) floorDisc(w, tx, ty, r, el, longer);
       // Rain: Water Place keeps falling for a while (the user: a rain that lasts 1 s felt far too short).
       if (spec.form === EL.water && !spec.scald && !spec.freeze) spawnZone(w, ZONE.rain, src, p, tx, ty, r, Math.round(T(SHAPES.rainLife + SHAPES.rainPerRune * (n - 1)) * lingerLife(w, src)), 0);
@@ -191,7 +221,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     }
     case 'blast': spawnZone(w, ZONE.blast, src, p, tx, ty, 2 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); break;
     case 'geyser': spawnZone(w, ZONE.geyser, src, p, tx, ty, 0.9 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); break;
-    case 'spring': spawnZone(w, ZONE.spring, src, p, tx, ty, (1.4 + 0.4 * n) * lingerSize(w, src), Math.round(T(4 + 2 * n) * lingerLife(w, src)), 0); break;
+    case 'spring': spawnZone(w, ZONE.spring, src, p, tx, ty, (1.8 + 0.4 * n) * lingerSize(w, src), Math.round(T(6 + 2 * n) * lingerLife(w, src)), 0); break; // were 1.4 and 4: bigger, longer (2026-11-11)
     case 'strike':
       w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x: tx, y: ty - 6, x2: tx, y2: ty, look: spec.look });
       disc(w, p, src, tx, ty, 0.9, 1.2 * k, -1);
@@ -202,11 +232,20 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       break;
     case 'imbue': {
       // The imbued burst: every queued element at full power in a short cone in front of you, as Magicka's imbue-and-release. Nothing stays in hand.
-      const reach = SHAPES.imbueRange + SHAPES.imbuePerRune * Math.max(0, spec.power - 1);
-      setHitKind(HIT_KIND.burst);
-      for (let i = 0; i < b.kind.length; i++) {
-        if (!alive(w, i) || i === src || !inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
-        hit(w, i, p, hitOpts(p, src, k * blast * SHAPES.imbuePower, dx, dy));
+      const reach = imbueReach(spec);
+      if (spec.form === EL.lightning) fork(w, src, spec, face, reach, k);
+      else {
+        setHitKind(HIT_KIND.burst);
+        const line = imbueLine(spec);
+        for (let i = 0; i < b.kind.length; i++) {
+          if (!alive(w, i) || i === src) continue;
+          if (line) {
+            // along the line: how far out, and how far to the side
+            const rx = b.x[i] - x, ry = b.y[i] - y, along = rx * dx + ry * dy, side = Math.abs(rx * dy - ry * dx);
+            if (along < -b.r[i] || along > reach + b.r[i] || side > SHAPES.imbueLineHalf + b.r[i]) continue;
+          } else if (!inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
+          hit(w, i, p, hitOpts(p, src, k * blast * SHAPES.imbuePower, dx, dy));
+        }
       }
       let mask = 0;
       for (let e = 1; e <= N_EL; e++) if (spec.counts[e - 1]) mask |= 1 << e;
@@ -396,6 +435,40 @@ export function chain(w: World, src: number, spec: SpellSpec, face: number, scal
   }
 }
 
+/**
+ * The Lightning-led burst: bolts from the staff to the nearest targets in the cone at once (one more per extra Lightning),
+ * each jumping on to one more body near it. With nothing in reach, a few bolts fork into the air.
+ */
+function fork(w: World, src: number, spec: SpellSpec, face: number, reach: number, k: number): void {
+  const b = w.bodies, x = b.x[src], y = b.y[src], p = payloadOf(spec);
+  const n = SHAPES.forkTargets + Math.max(0, spec.counts[EL.lightning - 1] - 1);
+  const hitList = [src];
+  for (let g = 0; g < MAX_SEATS; g++) if (grounded(w, g)) hitList.push(g);
+  const firsts: number[] = [];
+  for (let m = 0; m < n; m++) {
+    let best = -1, bd = Infinity;
+    for (let i = 0; i < b.kind.length; i++) {
+      if (!alive(w, i) || hitList.includes(i) || !inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
+      const d = len(b.x[i] - x, b.y[i] - y);
+      if (d < bd && clearLine(w, x, y, b.x[i], b.y[i])) { bd = d; best = i; }
+    }
+    if (best < 0) break;
+    hitList.push(best); firsts.push(best);
+  }
+  for (const t of firsts) zap(w, src, t, p, k * SHAPES.forkPower);
+  for (const t of firsts) {
+    const next = nearest(w, b.x[t], b.y[t], SHAPES.arcJump * (b.wet[t] ? 1.5 : 1), hitList, 0, true);
+    if (next < 0) continue;
+    zap(w, t, next, p, k * SHAPES.forkJump);
+    hitList.push(next);
+  }
+  // bolts into the air where there was no one to take them
+  for (let m = firsts.length; m < Math.min(n, 3); m++) {
+    const a = face + (m - 1) * SHAPES.imbueHalf * 0.6, d = clipRay(w, x, y, cosTurns(a), sinTurns(a), reach * 0.7)[0];
+    w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x, y, x2: x + cosTurns(a) * d, y2: y + sinTurns(a) * d, look: spec.look });
+  }
+}
+
 // ---- channels (beams, sprays, arcs) -------------------------------------------------------------
 
 /**
@@ -416,7 +489,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
   setHitKind(HIT_KIND.channel);
   const setEnd = (ex: number, ey: number) => { if (from) from.end(ex, ey); else if (follow) { s.dblEndX[seat] = ex; s.dblEndY[seat] = ey; } else { s.chanEndX[src] = ex; s.chanEndY[src] = ey; } };
   if (spec.shape === 'beam') {
-    let reach = SHAPES.beamRange + spec.formN, target = -1;
+    let reach = SHAPES.beamRange, target = -1;
     for (let i = 0; i < b.kind.length; i++) {
       if (!alive(w, i) || i === src) continue;
       const d = rayCircle(x, y, dx, dy, b.x[i], b.y[i], b.r[i] + SHAPES.beamWidth / 2);
@@ -428,8 +501,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     setEnd(x + dx * reach, y + dy * reach);
     const lensed = rayThroughLens(w, x, y, dx, dy, reach) ? STRUCT.lensMult : 1;
     if (target >= 0) {
-      // a beam's extra runes of its form buy time, not power (cast.ts): the form counts once, healing too
-      const dealt = hit(w, target, p, hitOpts(p, src, rate * lensed, dx, dy, COMBAT.channelStatus * DT, true, true), false);
+      const dealt = hit(w, target, p, hitOpts(p, src, rate * lensed, dx, dy, COMBAT.channelStatus * DT, true), false);
       if (t % 12 === 0) hitEvent(w, target, dealt * 12, spec.look, src);
       if (spec.mod === 'burst' && t % 30 === 0) disc(w, p, src, b.x[target], b.y[target], SHAPES.burstRadius, 0.3, src);
     }
@@ -471,11 +543,11 @@ export function spawnMissile(w: World, src: number, p: Payload, dx: number, dy: 
   const m = w.missiles, b = w.bodies;
   for (let j = 0; j < MAX_MISSILES; j++) {
     if (m.alive[j]) continue;
-    m.alive[j] = 1; m.type[j] = type; m.owner[j] = src; m.scale[j] = scale; m.pierce[j] = 0; m.lastHit[j] = -1;
+    m.alive[j] = 1; m.type[j] = type; m.owner[j] = src; m.scale[j] = scale; m.pierce[j] = 0; m.lastHit[j] = -1; m.wait[j] = 0;
     m.x[j] = (ox ?? b.x[src]) + dx * (b.r[src] + 0.25); m.y[j] = (oy ?? b.y[src]) + dy * (b.r[src] + 0.25);
     m.vx[j] = dx * SHAPES.missileSpeed; m.vy[j] = dy * SHAPES.missileSpeed;
     m.r[j] = type === 2 ? 0.15 : SHAPES.missileRadius;
-    m.life[j] = T(type === 2 ? 0.6 : SHAPES.missileLife);
+    m.life[j] = T(type === 2 ? SHAPES.shardRange / SHAPES.missileSpeed : SHAPES.missileLife);
     m.look[j] = p.look; m.flags[j] = flagsOf(p); m.mod[j] = modId(p.mod);
     m.els.set(p.counts.subarray(p.at * N_EL, p.at * N_EL + N_EL), j * N_EL);
     if (type === 3) { // a lobbed heal-stone: flies to its target point over everything
@@ -492,6 +564,13 @@ export function tickMissiles(w: World): void {
   const m = w.missiles, b = w.bodies;
   for (let j = 0; j < MAX_MISSILES; j++) {
     if (!m.alive[j]) continue;
+    if (m.wait[j] > 0) {
+      // not launched yet: held at the staff, following its caster
+      m.wait[j]--;
+      const o = m.owner[j], sp = len(m.vx[j], m.vy[j]) || 1;
+      m.x[j] = b.x[o] + (m.vx[j] / sp) * (b.r[o] + 0.25); m.y[j] = b.y[o] + (m.vy[j] / sp) * (b.r[o] + 0.25);
+      continue;
+    }
     m.x[j] += m.vx[j] * DT; m.y[j] += m.vy[j] * DT;
     const out = Math.abs(m.x[j]) > w.dims.w / 2 || Math.abs(m.y[j]) > w.dims.h / 2;
     const p = stored(m.els, j, m.flags[j], m.mod[j], m.look[j]);
@@ -539,19 +618,28 @@ export function tickMissiles(w: World): void {
         if (m.flags[j] & PF.pin) { b.root[i] = Math.max(b.root[i], T(ARMS.pin)); floorDisc(w, m.x[j], m.y[j], ARMS.frostRadius, EL.cold); }
         if (p.mod === 'burst') disc(w, p, m.owner[j], m.x[j], m.y[j], SHAPES.burstRadius, 0.4 * m.scale[j], i);
         if (p.mod === 'chain') { const n2 = nearest(w, b.x[i], b.y[i], SHAPES.arcJump, [i, m.owner[j]], 0); if (n2 >= 0) zap(w, i, n2, p, 0.4 * m.scale[j]); }
-        if (p.mod === 'shatter' && m.type[j] !== 2) {
-          // Shatter: three shards fly on, about 20 degrees apart (cos 0.94, sin 0.34).
-          for (let k = -1; k <= 1; k++) {
-            const sx = ux * (k ? 0.94 : 1) - uy * k * 0.34, sy = uy * (k ? 0.94 : 1) + ux * k * 0.34;
-            const s2 = spawnMissile(w, m.owner[j], p, sx, sy, 2, 0.25 * m.scale[j], 0, 0);
-            if (s2 >= 0) { m.x[s2] = m.x[j] + sx * (b.r[i] + 0.3); m.y[s2] = m.y[j] + sy * (b.r[i] + 0.3); m.lastHit[s2] = i; m.mod[s2] = 0; }
-          }
-        }
         if (!m.pierce[j]) dead = true;
       }
     }
-    if (dead) { m.alive[j] = 0; w.events.push({ tick: w.clock[0], kind: 'fizzle', who: m.owner[j], x: m.x[j], y: m.y[j], look: m.look[j] }); }
+    if (dead) {
+      m.alive[j] = 0;
+      // Cold's shape change: a puff of frost wherever it ends, chilling what's near (ice shards need Water: fireSpell)
+      if (p.mod === 'shatter' && m.type[j] !== 2) frostPuff(w, j);
+      w.events.push({ tick: w.clock[0], kind: 'fizzle', who: m.owner[j], x: m.x[j], y: m.y[j], look: m.look[j] });
+    }
   }
+}
+
+/** A missile's frost puff: its Cold alone, over a small disc, at a third of its strength (more Cold, a wider puff). */
+function frostPuff(w: World, j: number): void {
+  const m = w.missiles, cold = m.els[j * N_EL + EL.cold - 1];
+  if (!cold) return;
+  const counts = new Uint8Array(N_EL);
+  counts[EL.cold - 1] = cold;
+  const p: Payload = { counts, at: 0, heal: false, scald: false, freeze: false, mod: null, look: EL.cold, formN: 1 };
+  // it carries on the way the missile was going (the user: a cloud sitting on the impact broke its momentum)
+  const sp = len(m.vx[j], m.vy[j]) || 1, R = SHAPES.frostPuff + 0.3 * (cold - 1), ahead = R * 0.5;
+  disc(w, p, m.owner[j], m.x[j] + (m.vx[j] / sp) * ahead, m.y[j] + (m.vy[j] / sp) * ahead, R, m.scale[j] / 3, -1);
 }
 
 export function spawnZone(w: World, type: number, src: number, p: Payload, x: number, y: number, r: number, life: number, timer: number): void {
@@ -593,7 +681,7 @@ export function tickZones(w: World): void {
       if (--z.life[k] <= 0) z.type[k] = ZONE.none;
       continue;
     }
-    // Lingering zones (springs, steam) work every half second.
+    // Lingering zones (springs, steam, frost fog) work every half second.
     if (z.life[k] % 30 === 0) {
       for (let i = 0; i < b.kind.length; i++) {
         if (!alive(w, i) || len(b.x[i] - z.x[k], b.y[i] - z.y[k]) > z.r[k] + b.r[i]) continue;
@@ -606,7 +694,7 @@ export function tickZones(w: World): void {
 
 // ---- bodies ------------------------------------------------------------------------------------
 
-/** Ice under foot: you slide (much lower grip). */
+/** Ice under foot: it chills you (tickSurfaces); the Rime kite skates on it. */
 export const onIce = (w: World, i: number): boolean => surfAt(w, w.bodies.x[i], w.bodies.y[i]) === SURF.ice;
 
 /** Bodies nothing moves: the Sanctum's dummies, and rooted archetypes (the tutorial's brambles). */

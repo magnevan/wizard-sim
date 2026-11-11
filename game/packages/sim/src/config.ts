@@ -33,12 +33,12 @@ export const RHYTHM = {
   windupPerRune: 0.04,
   recovery: 0.18,
   /** Area tap vs Place hold on the Area button. */
-  placeHold: 0.25,
+  placeHold: 0.18, // was 0.25: the user found the wait from Area to Place a little long (2026-11-11)
   /** A Place drag counts once the cursor moved this far while held. */
   dragMin: 1.0,
   /** Channels (beams, sprays, arcs) are free for this long, then cost upkeep as regen debt. */
   naturalChannel: 2.5,
-  upkeep: 0.4, // runes per second of the form element, past the natural duration
+  upkeep: 0.4, // runes per second for each rune in the spell, from that rune's element, past the natural duration
   /** A cast pressed while busy waits this long for the current one to finish. */
   castBuffer: 0.3,
   /** Earth Force: hold to charge, up to this long. */
@@ -57,7 +57,7 @@ export const COMBAT = {
   channelStatus: 3,
   /** Sprays: share of the damage each body behind the nearest one takes (1 = everyone takes it all). */
   sprayFalloff: 0.6,
-  /** Forms without their own curve (lightning, arcane, shield, sigil): each extra rune adds this share of the first rune's damage. A beam's form counts once (its runes buy time). */
+  /** Forms without their own curve (lightning, arcane, shield, sigil): each extra rune adds this share of the first rune's damage. Beams too: a channel's runes are paid for every second (rhythm.upkeep), so they buy power, not time. */
   formScaling: 0.7,
   /** Sprays grow with n^sprayExp (0.5 = square root, as Magicka's); rocks with n^rockExp (1.5: going all-in pays). */
   sprayExp: 0.5,
@@ -65,7 +65,7 @@ export const COMBAT = {
 };
 
 /** How long floor surfaces last, in seconds. */
-export const SURFACE = { water: 20, ice: 16, fire: 10 };
+export const SURFACE = { water: 20, ice: 16, fire: 12, /** frost damage a second that ice does to whoever stands on it (chill only) */ iceChill: 8 };
 
 export const STATUS = {
   // Longer than our first pass, toward Magicka's (it burns 5 s per stack, chills 10 s, freezes 4 s).
@@ -95,24 +95,48 @@ export const STATUS = {
 };
 
 export const SHAPES = {
-  beamRange: 12, beamWidth: 0.35,
+  beamRange: 30, beamWidth: 0.35, // past the edge of the view: a beam runs until it hits something
   sprayRange: 4.5, sprayHalfAngle: 0.09, // turns (about 32 degrees)
   arcRange: 6, arcJump: 3.5, arcInterval: 0.2, arcJumps: 2, // jumps, plus one per extra lightning rune (Chain)
-  missileSpeed: 12, missileLife: 1.4, missileRadius: 0.3,
+  /**
+   * Every missile flies at this speed (a quick rock at 60 % of it): the user, 2026-11-10, found 12 and then 16 sluggish
+   * and asked for one speed for all projectiles unless one has a reason to differ. Ice shards keep their short reach.
+   */
+  missileSpeed: 20, missileLife: 1.4, missileRadius: 0.3,
+  /** How far an ice shard flies before it melts, u: the shotgun's reach. */
+  shardRange: 7.2,
+  /** Earth + Water + Cold's three ice shards fly this fast, u/s: faster than other missiles, for their shape. */
+  iceShardSpeed: 32,
+  /** Each ice shard's share of the rock: three of them hit 1.7 rocks, the +70 % a third rune pays elsewhere. */
+  iceShardShare: 0.57,
+  /** Ticks between the ice shards leaving, and how far apart they fan, turns. */
+  iceShardGap: 4, iceShardFan: 0.006,
+  /** Radius of the frost puff a Cold-carrying missile leaves where it ends, u (+0.3 a Cold rune past the first). */
+  frostPuff: 1.4,
   shardCount: 5, shardSpread: 0.035, // turns between shards
   /** Each ice shard's share of the payload: 0.75, so a full 6-shard volley lands the 4.5x it did before every shard hit alike. */
   shardPower: 0.75,
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,
-  patchRadius: 1.6, patchLife: 6,
+  patchRadius: 2, patchLife: 8, // were 1.6 and 6: the user asked for bigger, longer Place effects (2026-11-11)
   /** Each extra rune of a Place patch's lead: steam and the floors it leaves last this share of their life longer. */
   lingerPerRune: 0.2,
   /** Rain (Water Place): it keeps falling this long, plus rainPerRune per extra Water, soaking and dousing whoever is under it. */
-  rainLife: 5, rainPerRune: 1,
+  rainLife: 7, rainPerRune: 1,
   delayedBlast: 0.6, // geyser rumble / arcane blast fuse
   swingRange: 1.6, swingHalfAngle: 0.15,
   /** The imbued burst (Weapon cast with elements, no Sigil or Shield): a cone in front of you, a little longer per extra rune. */
-  imbueRange: 2.5, imbuePerRune: 0.25, imbueHalf: 0.17,
+  imbueRange: 2.5, imbuePerRune: 0.6, imbueHalf: 0.17, // per rune was 0.25: the user wanted it to grow like the nova (2026-11-11)
+  /**
+   * An Earth-led burst is a line, a tremor through the ground (the user, 2026-11-11: "very small radius, longer range"),
+   * whatever else is infused: whoever stands within lineHalf of it (u, plus their own radius) is hit.
+   */
+  imbueLineRange: 4.5, imbueLinePerRune: 0.9, imbueLineHalf: 0.45,
+  /**
+   * A Lightning-led burst forks: bolts from the staff to the nearest targets in the cone, each jumping on to one more.
+   * Against the channelled arc it is all up front (the user: more damage at once, a little less rune-efficient, no channel).
+   */
+  forkRange: 4, forkTargets: 3, forkPower: 1.6, forkJump: 0.6,
   /** The burst's power against the ring's. It's 1 because the cone already earns its place: it spares allies beside and behind you. */
   imbuePower: 1,
   /** A Fire ring's or burst's direct hit, times Fire's table damage (which is set for a spray's per-second rate). */

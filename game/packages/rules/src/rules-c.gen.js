@@ -79,19 +79,19 @@ const module = { exports: {} };
     { id: 'scald', els: ['water', 'fire'], trait: 'Scald', hit: 'scalds, and leaves a mist that blocks sight', aura: ['Steam veil', 'the mist and the flames make a scalding steam around {w} that hides {w} from enemies'], coat: 'whoever is shoved is scalded', self: 'The steam scalds {w}, but the mist hides {w}.',
       titles: { force: 'Scalding spray', area: 'Steam burst', place: 'Steam cloud', conjure: 'Scalding burst' },
       // the mix's own Area and Place, whichever of the two leads (the plain cells describe rain, a fire patch...)
-      texts: { area: 'A ring of scalding steam bursts from you.', place: 'A cloud of scalding steam at the cursor for about 6 seconds: it scalds whoever stands in it and hides them.' } },
+      texts: { area: 'A ring of scalding steam bursts from you.', place: 'A cloud of scalding steam at the cursor for about 8 seconds: it scalds whoever stands in it and hides them.' } },
     { id: 'freeze', els: ['water', 'cold'], trait: 'Freeze', hit: 'turns the spell to ice: it chills without soaking, and freezes targets that were already wet; frozen targets are brittle and shatter from a heavy hit', aura: ['Freezing mist', 'enemies the mist soaks freeze solid in the cold around {w}'], coat: 'soaked enemies freeze solid as they are shoved', self: '{W} freeze solid for a moment (a heavy hit would shatter {w}).',
       titles: { force: 'Ice shards', area: 'Freezing splash', place: 'Ice sheet', conjure: 'Freezing burst' },
       // A freezing spray was too strong, so as Force the mix changes shape: shards, not a cone.
       forceText: 'A volley of jagged ice shards along your aim. Each shard pierces and chills; enough of them freeze a wet target, and a frozen target shatters from a heavy hit.',
-      texts: { area: 'A freezing splash bursts from you: soaked targets freeze solid.', place: 'Freezes the ground at the cursor into a sheet of ice for about 16 seconds: it chills whoever crosses it, and feet slip on it.' } },
+      texts: { area: 'A freezing splash bursts from you: soaked targets freeze solid.', place: 'Freezes the ground at the cursor into a sheet of ice for about 16 seconds: it chills whoever stands on it, and freezes them solid if they are wet.' } },
   ];
   const mixesOf = (q) => MIX.filter((m) => m.els.every((e) => q.includes(e)));
 
   // The shape changes (S2: only the leading one applies). [name, what the spell does]
   const SHAPE = {
     water: ['Push', 'shoves whatever it hits'],
-    cold: ['Shatter', 'splits into ice shards on impact, and they fly on'],
+    cold: ['Frost puff', 'bursts into a puff of frost where it ends, chilling everything near it; with Water as well, a rock flies as three ice shards that each hit'],
     lightning: ['Chain', 'jumps on to a neighbour'],
     arcane: ['Burst', 'bursts in a small explosion where it lands'],
   };
@@ -201,7 +201,12 @@ const module = { exports: {} };
   };
   const SWING = { earth: 'Stone burst', arcane: 'Arcane burst', life: 'Healing burst', lightning: 'Shock burst', water: 'Water burst', fire: 'Fire burst', cold: 'Frost burst' };
   // the imbued burst: the staff imbued with the queue and released, as in Magicka
-  const swing = (f) => () => [SWING[f], 'A burst of every queued element in a short cone in front of you, at full power. Nothing stays in your hand. The cone reaches about 2.5 units, a little more per extra rune; add Sigil for a conjured weapon, or Shield for a defensive one.'];
+  // Earth's is a line through the ground, and Lightning's forks (the user, 2026-11-11); the others are a cone
+  const SWING_TEXT = {
+    earth: 'A tremor runs through the ground in a straight line in front of you, carrying every queued element at full power to whoever stands on it, whatever else you infuse. Nothing stays in your hand. The line reaches about 4.5 units, almost one more per extra rune',
+    lightning: 'Bolts fork from your staff to the three nearest targets in front of you, one more per extra Lightning, each hitting hard at once and jumping on to one more. Unlike the arc, it all lands up front: no channel. Nothing stays in your hand. It reaches about 4 units, a little more per extra rune',
+  };
+  const swing = (f) => () => [SWING[f], (SWING_TEXT[f] ?? 'A burst of every queued element in a short cone in front of you, at full power. Nothing stays in your hand. The cone reaches about 2.5 units, and grows by about 0.6 per extra rune') + '; add Sigil for a conjured weapon, or Shield for a defensive one.'];
   const glyphName = (o) => o.sub ? ELEMENTS[o.sub].name + ' ' : '';
 
   const CELLS = {
@@ -281,7 +286,8 @@ const module = { exports: {} };
       area: () => ['Healing ring', 'Heals everyone around you, enemies included (hold the sculpting wand to spare them).'],
       place: () => ['Healing spring', 'A lingering patch at the cursor that heals whoever stands in it (if you hold the sculpting wand when you place it, it spares enemies). Hold longer to make it last.'],
       // A one-off with some reach (the conjured Healing hands are the long-lasting, short-reach one).
-      conjure: () => ['Healing palm', 'Push your open hand forward: a pulse of healing reaches the ally a few steps in front of you. One cast, no weapon stays in your hand. For a long-lasting healer\'s touch, add Sigil (Healing hands).'],
+      // Earth lends its line (the user, 2026-11-11: "some sort of healing thunder wave")
+      conjure: (p, o = {}) => o.lend === 'earth' ? ['Healing tremor', 'A wave of healing runs through the ground in a line in front of you, 4.5 units and more per extra rune: green light breaks from the crack and heals whoever stands on it, enemies too (the sculpting wand spares them).'] : ['Healing palm', 'Push your open hand forward: a pulse of healing reaches the ally a few steps in front of you. One cast, no weapon stays in your hand. For a long-lasting healer\'s touch, add Sigil (Healing hands).'],
     },
     lightning: {
       force: () => ['Lightning arc', 'Chains between nearby targets.'],
@@ -298,13 +304,13 @@ const module = { exports: {} };
     fire: {
       force: () => ['Flamethrower', 'A cone of fire.'],
       area: () => ['Fire ring', 'A ring of flame bursts from you.'],
-      place: () => ['Fire patch', 'Sets the ground at the cursor burning for about 10 seconds.'],
+      place: () => ['Fire patch', 'Sets the ground at the cursor burning for about 12 seconds.'],
       conjure: swing('fire'),
     },
     cold: {
       force: () => ['Frost spray', 'A cone of cold.'],
       area: () => ['Frost ring', 'A ring of cold around you.'],
-      place: () => ['Frost patch', 'Freezes the ground at the cursor for about 16 seconds. Freezes water into walkable ice.'],
+      place: () => ['Freezing fog', 'A low fog of bitter cold at the cursor for about 8 seconds: it chills whoever stands in it, and freezes puddles under it into ice. With Water, it freezes the ground into ice instead.'],
       conjure: swing('cold'),
     },
   };

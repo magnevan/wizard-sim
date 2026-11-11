@@ -194,6 +194,8 @@ export interface Missiles {
   lastHit: Int16Array;
   /** Payload flags (PF) and shape modifier (MOD_ID). */
   flags: Uint8Array; mod: Uint8Array;
+  /** Ticks before it leaves (a staggered volley): till then it waits at its caster's staff, harmless and unseen. */
+  wait: Uint8Array;
 }
 
 /** Things that sit in the world for a while: delayed blasts, geysers, healing springs, steam clouds, rain. */
@@ -209,7 +211,7 @@ export interface Zones {
 /** Payload flags. */
 export const PF = { heal: 1, scald: 2, freeze: 4, lensed: 8, pin: 16 } as const;
 export const MOD_ID = { none: 0, push: 1, shatter: 2, chain: 3, burst: 4 } as const;
-export const ZONE = { none: 0, blast: 1, geyser: 2, spring: 3, steam: 4, spark: 5, rain: 6 } as const;
+export const ZONE = { none: 0, blast: 1, geyser: 2, spring: 3, steam: 4, spark: 5, rain: 6, frost: 7 } as const;
 
 /** The floor: one byte of surface per cell, plus ticks left. */
 export const SURF = { none: 0, water: 1, ice: 2, fire: 3 } as const;
@@ -456,7 +458,7 @@ function missiles(n: number): Missiles {
   return {
     alive: u8(n), x: f64(n), y: f64(n), vx: f64(n), vy: f64(n), life: i32(n), owner: new Int16Array(n), els: u8(n * N_EL),
     scale: f64(n), r: f64(n), type: u8(n), pierce: u8(n), look: u8(n), lastHit: new Int16Array(n),
-    flags: u8(n), mod: u8(n),
+    flags: u8(n), mod: u8(n), wait: u8(n),
   };
 }
 function zones(n: number): Zones {

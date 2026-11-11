@@ -10,7 +10,7 @@
 import { rules, type Cast, type Element, type SpellDescriptor } from '@wizard-sim/rules';
 import {
   ARMS, COMBAT, DAMAGE, GUARD_NAME, QUEUE_MAX, RHYTHM, RUNES, SHAPES, STATUS, STRUCT, SURFACE,
-  compile, elementName, formCurve, type SpellSpec,
+  compile, elementName, formCurve, imbueReach, type SpellSpec,
 } from '@wizard-sim/sim';
 import type { Demo } from './demo';
 
@@ -159,14 +159,14 @@ const count = (spec: SpellSpec, e: Element): number => spec.counts[EL_ID(e) - 1]
 
 /**
  * The payload's damage by element at scale k (hit.ts: the form element on its curve, the rest linear),
- * or its healing. `flat`: a beam, whose form element counts once (its extra runes buy time).
+ * or its healing.
  */
-function payload(spec: SpellSpec, k: number, unit: string, out: Metric[], flat = false): void {
-  if (spec.heal) { out.push({ key: 'heal', label: 'HEALS', v: COMBAT.healPerLife * (flat ? Math.min(1, count(spec, 'life')) : count(spec, 'life')) * k, unit }); return; }
+function payload(spec: SpellSpec, k: number, unit: string, out: Metric[]): void {
+  if (spec.heal) { out.push({ key: 'heal', label: 'HEALS', v: COMBAT.healPerLife * count(spec, 'life') * k, unit }); return; }
   for (const e of ELS) {
     const c = count(spec, e);
     if (!c || !DAMAGE[e]) continue;
-    const id = EL_ID(e), mult = id === spec.form && c > 1 ? (flat ? 1 : formCurve(spec.form, c, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling)) : c;
+    const id = EL_ID(e), mult = id === spec.form && c > 1 ? (formCurve(spec.form, c, COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling)) : c;
     out.push({ key: 'dmg:' + e, label: name(e).toUpperCase(), v: DAMAGE[e] * mult * k, unit });
   }
 }
@@ -202,7 +202,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
       m.push({ key: 'shards', label: 'SHARDS', v: shards, unit: '', hidden: true });
     }
     if (sh === 'missile') note = 'CHARGED';
-    payload(spec, k, unit, m, sh === 'beam');
+    payload(spec, k, unit, m);
     statuses(spec, m);
     if (spec.mod === 'push') m.push({ key: 'push', label: 'PUSH', v: SHAPES.push * count(spec, 'water') * (spec.channel ? COMBAT.channelStatus : 1), unit: spec.channel ? 'U/S A SECOND' : 'U/S' });
   }
@@ -210,7 +210,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
   const lasts = (v: number, label = 'LASTS') => m.push({ key: 'lasts', label, v, unit: 'S' });
   const longer = 1 + SHAPES.lingerPerRune * (n - 1);
   switch (sh) {
-    case 'beam': reach('RANGE', SHAPES.beamRange + spec.formN); break;
+    case 'beam': reach('RANGE', SHAPES.beamRange); break;
     case 'spray':
       reach('RANGE', SHAPES.sprayRange + 0.5 * (spec.sizeN - 1));
       m.push({ key: 'cone', label: 'CONE', v: 100 * (1 + 0.25 * (spec.sizeN - 1)), unit: '%', hidden: true });
@@ -233,7 +233,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
     case 'geyser': reach('RADIUS', 0.9 + 0.4 * n); m.push({ key: 'fuse', label: 'FUSE', v: SHAPES.delayedBlast, unit: 'S' }); break;
     case 'spring': reach('RADIUS', 1.4 + 0.4 * n); lasts(4 + 2 * n); break;
     case 'strike': reach('RADIUS', 0.9); break;
-    case 'imbue': reach('REACH', SHAPES.imbueRange + SHAPES.imbuePerRune * Math.max(0, spec.power - 1)); break;
+    case 'imbue': reach('REACH', imbueReach(spec)); break;
     case 'blink': reach('UP TO', STRUCT.blinkRange); break;
     case 'wave': m.push({ key: 'width', label: 'WIDTH', v: 2 * (STRUCT.waveHalf + STRUCT.waveHalfPerRune * (spec.formN - 1)), unit: 'U' }); break;
     case 'arcwall': case 'drawnwall': case 'ring': {
@@ -285,8 +285,8 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
     }
     default: break;
   }
-  // a beam's extra runes buy time, not damage (cast.ts); every channel is free this long
-  if (spec.channel) m.push({ key: 'free', label: 'FREE FOR', v: RHYTHM.naturalChannel * (sh === 'beam' ? Math.max(1, spec.formN) : 1), unit: 'S', hidden: true });
+  // every channel is free this long, then each of its runes costs upkeep (cast.ts)
+  if (spec.channel) m.push({ key: 'free', label: 'FREE FOR', v: RHYTHM.naturalChannel, unit: 'S', hidden: true });
   if (sh !== 'blink') m.push({ key: 'windup', label: 'WIND-UP', v: RHYTHM.windup + RHYTHM.windupPerRune * queue.length, unit: 'S', hidden: true });
   return { metrics: m, note };
 }

@@ -286,7 +286,8 @@ const module = { exports: {} };
       area: () => ['Healing ring', 'Heals everyone around you, enemies included (hold the sculpting wand to spare them).'],
       place: () => ['Healing spring', 'A lingering patch at the cursor that heals whoever stands in it (if you hold the sculpting wand when you place it, it spares enemies). Hold longer to make it last.'],
       // A one-off with some reach (the conjured Healing hands are the long-lasting, short-reach one).
-      conjure: () => ['Healing palm', 'Push your open hand forward: a pulse of healing reaches the ally a few steps in front of you. One cast, no weapon stays in your hand. For a long-lasting healer\'s touch, add Sigil (Healing hands).'],
+      // Earth lends its line (the user, 2026-11-11: "some sort of healing thunder wave")
+      conjure: (p, o = {}) => o.lend === 'earth' ? ['Healing tremor', 'A wave of healing runs through the ground in a line in front of you, 4.5 units and more per extra rune: green light breaks from the crack and heals whoever stands on it, enemies too (the sculpting wand spares them).'] : ['Healing palm', 'Push your open hand forward: a pulse of healing reaches the ally a few steps in front of you. One cast, no weapon stays in your hand. For a long-lasting healer\'s touch, add Sigil (Healing hands).'],
     },
     lightning: {
       force: () => ['Lightning arc', 'Chains between nearby targets.'],

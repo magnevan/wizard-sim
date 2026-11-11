@@ -604,6 +604,15 @@ describe('the imbued burst (Weapon cast with elements, no Sigil or Shield)', () 
     expect(w.bodies.hp[beside]).toBe(400); // inside the cone's width, off the line
   });
 
+  it('Life + Earth is a healing tremor: the line heals whoever stands on it', () => {
+    const { w, d, dummy } = arena();
+    const on = dummy(4, 0, 8), off = dummy(2, 1.6, 9);
+    w.bodies.hp[on] = 100; w.bodies.hp[off] = 100;
+    d.aimAt(5, 0).queue('life', 'earth').cast(BTN.weapon, 1, 30);
+    expect(w.bodies.hp[on]).toBeGreaterThan(100);
+    expect(w.bodies.hp[off]).toBe(100);
+  });
+
   it('a Lightning-led burst forks to the nearest targets in front, each jumping on once, all at once', () => {
     const { w, d, dummy } = arena();
     const a = dummy(2, 0, 8), b = dummy(2.6, 1, 9), c = dummy(3, -1, 10), next = dummy(5.8, -1, 11), out = dummy(12, 0, 12);

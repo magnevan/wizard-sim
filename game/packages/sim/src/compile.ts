@@ -10,10 +10,13 @@ import { rules, type Cast, type Element } from '@wizard-sim/rules';
 import { EL, countsOf } from './elements';
 import { SHAPES } from './config';
 
-/** How far the imbued burst reaches, u: an Earth-led one is a long line, a Lightning-led one forks further than the cone. */
+/** Is this imbued burst a line? Earth makes it one, leading it or lending it its shape (a Life burst with Earth). */
+export const imbueLine = (spec: SpellSpec): boolean => spec.form === EL.earth || (spec.form === EL.life && spec.counts[EL.earth - 1] > 0);
+
+/** How far the imbued burst reaches, u: an Earth line is long, a Lightning-led one forks further than the cone. */
 export function imbueReach(spec: SpellSpec): number {
   const extra = Math.max(0, spec.power - 1);
-  if (spec.form === EL.earth) return SHAPES.imbueLineRange + SHAPES.imbueLinePerRune * extra;
+  if (imbueLine(spec)) return SHAPES.imbueLineRange + SHAPES.imbueLinePerRune * extra;
   return (spec.form === EL.lightning ? SHAPES.forkRange : SHAPES.imbueRange) + SHAPES.imbuePerRune * extra;
 }
 
@@ -103,7 +106,7 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
         spec.channel = spec.shape === 'beam' || spec.shape === 'spray' || spec.shape === 'arc';
         spec.charge = L === 'earth';
         spec.mod = L === 'water' ? 'push' : null;
-      } else spec.shape = cast === 'area' ? 'nova' : cast === 'place' ? 'spring' : 'palm';
+      } else spec.shape = cast === 'area' ? 'nova' : cast === 'place' ? 'spring' : L === 'earth' ? 'imbue' : 'palm'; // Earth lends the burst its line: a healing tremor
       return spec;
     }
     case 'earth':

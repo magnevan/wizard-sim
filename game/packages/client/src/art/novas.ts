@@ -388,8 +388,8 @@ function arcaneBurst(n: Nova): void {
   if (part === 'near') light(x + ax * lead * 0.8, y + ay * lead * 0.8, 46, R[2], 0.85 * (1 - seg(e, 0, 0.45)));
 }
 
-/** A crack torn through the floor along direction a, from d0 to d1 out from the centre: a dark zigzag, a lit lip. */
-function fissure(c: Ctx, x: number, y: number, a: number, d0: number, d1: number, sd: number, alpha: number): void {
+/** A crack torn through the floor along direction a, from d0 to d1 out from the centre: a zigzag with a lit lip. */
+function fissure(c: Ctx, x: number, y: number, a: number, d0: number, d1: number, sd: number, alpha: number, dark = '#120c08', lip = X.EARTH[0]): void {
   if (alpha <= 0.05 || d1 <= d0 + 1) return;
   const ca = Math.cos(a), sa = Math.sin(a), at = (d: number, off: number): Pt => [x + ca * d - sa * off, y + (sa * d + ca * off) * FY];
   let prev = at(d0, 0);
@@ -397,92 +397,130 @@ function fissure(c: Ctx, x: number, y: number, a: number, d0: number, d1: number
     const off = (rand(i, 5, sd) - 0.5) * 3.2, cur = at(d, off);
     if (rand(i, 6, sd) < alpha) {
       const wide = d < d0 + (d1 - d0) * 0.6 ? 3 : 2;
-      X.line(c, prev[0], prev[1] - 1, cur[0], cur[1] - 1, X.EARTH[0], 1); // the lit lip on the far side
-      X.line(c, prev[0], prev[1], cur[0], cur[1], '#120c08', wide);
+      X.line(c, prev[0], prev[1] - 1, cur[0], cur[1] - 1, lip, 1); // the lit lip on the far side
+      X.line(c, prev[0], prev[1], cur[0], cur[1], dark, wide);
     }
     prev = cur;
   }
 }
 
-/**
- * The element infused into an Earth line, riding along the crack (the user: the line's shape carries over as other
- * elements are infused): it bursts out of the crack where the front passes and dies down behind it. Fire: tongues of
- * flame and a scorch; cold: frost and crystals; water: splashes; arcane and lightning: sparks and a glow.
- */
-function lineRider(n: Nova, front: number): void {
-  const { o, g, x, y, r, e, sd, light, part, aim } = n, ca = Math.cos(aim), sa = Math.sin(aim);
-  const el = n.rider!, R = el === 4 ? X.FROST : el === 2 ? X.LIFE : EL[['', 'water', 'life', 'shield', 'cold', 'lightning', 'arcane', 'sigil', 'fire', 'earth'][el]] ?? EL.arcane;
-  const at = (d: number, off: number): Pt => [x + ca * d - sa * off, y + (sa * d + ca * off) * FY];
-  const N = Math.max(8, Math.round(r / 5));
-  for (let i = 0; i < N; i++) {
-    const d = 6 + ((r - 6) * (i + rand(i, 91, sd) * 0.8)) / N, off = (rand(i, 92, sd) - 0.5) * 4;
-    const hit = (0.45 * (d - 4)) / Math.max(1, r - 4), age = (e - hit) / (el === 8 ? 0.9 : 0.6);
-    if (age < 0 || age >= 1 || d > front + 2) continue;
-    const [px, py] = at(d, off), k = 1 - age;
-    if (part === 'far') {
-      // what it leaves on the floor along the crack
-      if (el === 8) K.scorch(g, px, py, 3 + rand(i, 93, sd) * 2, 0.5 * k);
-      else if (el === 4) { X.px(g, px - 1, py, R[2]); X.px(g, px + 1, py, R[3]); }
-      else if (el === 1) X.ellipse(g, px, py, 3, 1.5, R[3], 0.5 * k);
-      continue;
-    }
-    if (el === 8) K.tongue(o, px, py, 2.2, (6 + 8 * rand(i, 94, sd)) * Math.sin(Math.PI * Math.min(1, age * 1.4)), ca * 2);
-    else if (el === 4) K.shard(o, px, py - 2, -Math.PI / 2 + (rand(i, 95, sd) - 0.5), (3 + 4 * rand(i, 96, sd)) * Math.min(1, age * 4), sd + i, k);
-    else if (el === 1) { const z = 10 * age - 14 * age * age; X.px(o, px + off, py - 2 - z * 2, i % 2 ? R[0] : R[1]); X.px(o, px - off, py - 1 - z, R[1]); }
-    else { X.px(o, px, py - 2 - age * 6, age < 0.4 ? '#ffffff' : R[1]); if (age < 0.3) X.glow(o, px, py - 3, 6, R[2], 0.6 * (1 - age / 0.3)); }
-  }
-  if (part === 'near' && front < r) { const [lx, ly] = at(front, 0); light(lx, ly, 34, R[2], 0.6 * (1 - seg(e, 0.3, 0.7))); }
+/** A pointed spike standing on (x, y), h tall: a lit face, a shaded face, a bright ridge up the middle to the tip. */
+function spike(c: Ctx, x: number, y: number, w: number, h: number, lean: number, lit: string, dark: string, ridge: string): void {
+  if (h < 1.5) return;
+  const tip: Pt = [x + lean, y - h], l: Pt = [x - w / 2, y], r: Pt = [x + w / 2, y + 0.5], m: Pt = [x + w * 0.12 + lean * 0.3, y + 1];
+  X.poly(c, [l, tip, m], lit);
+  X.poly(c, [m, tip, r], dark);
+  X.line(c, tip[0], tip[1], m[0], m[1] - 1, ridge);
 }
 
+/** Each element's colours for an Earth line: the crack's dark and its lip, and the element's own ramp. */
+const LINE_COLS: Record<number, { dark: string; lip: string; R: readonly string[] }> = {
+  0: { dark: '#120c08', lip: X.EARTH[0], R: X.EARTH },
+  1: { dark: '#0e2244', lip: EL.water[1], R: EL.water },
+  2: { dark: '#14401c', lip: X.LIFE[2], R: X.LIFE },
+  4: { dark: '#1c3c5a', lip: X.FROST[1], R: X.FROST },
+  5: { dark: '#2a1858', lip: EL.lightning[1], R: EL.lightning },
+  6: { dark: '#3a0c30', lip: EL.arcane[1], R: EL.arcane },
+  8: { dark: '#4a1008', lip: EL.fire[1], R: EL.fire },
+};
+
 /**
- * Earth burst (the user, 2026-11-11: "a small directed earthquake propagating through the ground"). A front of heaving
- * floor rolls out across the cone at an even pace; slabs of floor punch up as it reaches them and drop back; a fissure
- * tears open behind it along the aim, with branches; dust and grit are thrown up along the front.
+ * Earth line, "the thunder wave" (the user, 2026-11-11: a small directed earthquake through the ground, read as a line;
+ * not square blocks; infused, the element should dominate and Earth mostly contribute the movement). A front runs out
+ * along the line at an even pace, tearing a crack behind it, and where it passes the floor erupts and dies down:
+ * Earth alone, jagged rock spikes; Fire, jets of flame from a glowing crack; Cold, ice spikes that shatter; Water,
+ * spouts; Arcane, pink crystals; Lightning, bolts up out of the ground; Life, shafts of green light and sprouts (a
+ * healing tremor). Earth's own part when infused is the crack, the front and a little grit.
  */
 function earthBurst(n: Nova): void {
-  const { o, g, x, y, r, e, sd, part, aim, half } = n, R = X.EARTH, T = 0.45;
-  const reachAt = (s: number) => 4 + (r - 4) * clamp(s / T, 0, 1), front = reachAt(e), live = 1 - seg(e, T, T + 0.25), stay = 1 - seg(e, 0.9, 1.4);
-  const flat = () => 0;
+  const { o, g, x, y, r, e, t, sd, light, part, aim, half } = n, T = 0.45, el = n.rider && LINE_COLS[n.rider] ? n.rider : 0;
+  const C = LINE_COLS[el], R = C.R, ER = X.EARTH;
+  const reachAt = (s: number) => 4 + (r - 4) * clamp(s / T, 0, 1), front = reachAt(e), live = 1 - seg(e, T, T + 0.25);
+  const stay = 1 - seg(e, el ? 1.1 : 0.9, el ? 1.6 : 1.4), flat = () => 0;
+  const ca = Math.cos(aim), sa = Math.sin(aim), at = (d: number, off: number): Pt => [x + ca * d - sa * off, y + (sa * d + ca * off) * FY];
+  const spread = Math.tan(Math.max(0.05, half)) * 0.8;
   if (part === 'far') {
-    // the bulge under the front: a shadowed trough behind a lit crest (under the cracks)
-    if (live > 0) { band(g, x, y, Math.max(0, front - 8), front - 2, R[5], 0.45 * live, flat, n); band(g, x, y, front - 2, front + 1, R[2], 0.6 * live, flat, n); }
-    fissure(g, x, y, aim, 4, front, sd, stay);
-    for (let b = 0; b < 3; b++) {
-      const from = r * (0.25 + 0.22 * b), side = b % 2 ? 1 : -1, a = aim + side * half * (0.35 + 0.25 * rand(b, 7, sd));
-      if (front > from) fissure(g, x + Math.cos(aim) * from, y + Math.sin(aim) * from * FY, a, 0, Math.min(front - from, r * 0.45), sd + 11 * (b + 1), stay);
+    // the bulge under the front, faint when an element carries the wave
+    if (live > 0) { band(g, x, y, Math.max(0, front - 8), front - 2, ER[5], (el ? 0.25 : 0.45) * live, flat, n); band(g, x, y, front - 2, front + 1, el ? R[2] : ER[2], (el ? 0.4 : 0.6) * live, flat, n); }
+    fissure(g, x, y, aim, 4, front, sd, stay, C.dark, C.lip);
+    // a glowing crack: the element showing through it
+    if (el && stay > 0) fissure(g, x, y, aim, 4, front, sd, stay * 0.9, R[el === 2 || el === 4 ? 3 : 2], R[1]);
+  }
+  const N = Math.max(9, Math.round(r / 4));
+  for (let i = 0; i < N; i++) {
+    const d = 6 + ((r - 6) * (i + rand(i, 61, sd) * 0.9)) / N, off = (rand(i, 62, sd) - 0.5) * 2 * Math.min(7, d * spread);
+    if (!mine(part, aim + Math.atan2(off, d))) continue;
+    const hit = (T * (d - 4)) / Math.max(1, r - 4), dur = el === 2 ? 1.0 : el === 8 ? 0.8 : el === 1 ? 0.7 : el === 5 ? 0.35 : 0.6;
+    const age = (e - hit) / (dur * (0.85 + 0.3 * rand(i, 63, sd)));
+    const [px, py] = at(d, off), big = rand(i, 64, sd), lean = (rand(i, 65, sd) - 0.5) * 4 + ca * 2;
+    // what it leaves on the floor stays a while after it has died down
+    if (part === 'far' && age > 0) {
+      const k = 1 - seg(e, 1, 1.6);
+      if (el === 8) K.scorch(g, px, py, 3 + big * 3, 0.55 * k);
+      else if (el === 4) { X.px(g, px - 1, py, R[2]); X.px(g, px + 1, py + 1, R[3]); X.px(g, px, py - 1, R[1]); }
+      else if (el === 1) X.ellipse(g, px, py, 4, 2, R[3], 0.5 * k);
+      else if (el === 2 && age > 0.3) {
+        // a sprout left behind: a stem and two leaves, growing in
+        const gr = clamp((age - 0.3) * 3, 0, 1) * k, hgt = (2 + big * 3) * gr;
+        if (hgt > 0.5) { X.line(g, px, py, px, py - hgt, X.LIFE[4]); X.px(g, px - 1, py - hgt, X.LIFE[3]); X.px(g, px + 1, py - hgt + 1, X.LIFE[2]); }
+      } else if (!el) X.ellipse(g, px, py + 1, 2.5, 1.2, '#120c08', 0.7 * k);
+    }
+    if (age < 0 || age >= 1) continue;
+    const rise = easeOut(clamp(age * 5, 0, 1)), fall = 1 - seg(age, 0.5, 1), up = rise * fall;
+    if (el === 0) {
+      // rock spikes thrust up, then sink back crumbling
+      spike(o, px, py, 4 + big * 4, (7 + big * 9) * up, lean, i % 2 ? ER[1] : ER[2], ER[4], ER[0]);
+      if (age > 0.5) for (let j = 0; j < 2; j++) X.px(o, px + (rand(i, 70 + j, sd) - 0.5) * 6, py - (1 - age) * 6 * rand(i, 72 + j, sd), ER[3]);
+    } else if (el === 8) {
+      // jets of flame from the crack, a hot glow at their foot, embers above
+      const h = (12 + big * 14) * up;
+      K.tongue(o, px, py, 3, h, lean + Math.sin(t * 17 + i) * 1.2);
+      K.tongue(o, px + 1, py, 1.6, h * 0.6, lean * 0.5);
+      if (up > 0.3) X.glow(o, px, py - 3, 7, R[2], 0.5 * up);
+      if (age > 0.25) X.px(o, px + Math.sin(i + t * 9) * 3, py - h - 2 - age * 8, K.fireCol(age));
+    } else if (el === 4) {
+      // ice spikes, clear and sharp, that shatter into glints as they go
+      if (age < 0.6) spike(o, px, py, 3 + big * 4, (9 + big * 11) * rise, lean * 0.5, R[1], R[3], '#ffffff');
+      else for (let j = 0; j < 4; j++) { const q = (age - 0.6) / 0.4; X.px(o, px + (rand(i, 80 + j, sd) - 0.5) * 10 * q, py - 4 - rand(i, 84 + j, sd) * 10 + q * 6, j % 2 ? '#ffffff' : R[1]); }
+    } else if (el === 1) {
+      // a spout of water: a column that rises and falls back, spray off its head
+      const h = (10 + big * 12) * Math.sin(Math.PI * clamp(age * 1.2, 0, 1));
+      for (let k = 0; k < h; k += 2) X.ellipse(o, px + Math.sin(k * 0.6 + t * 12) * 0.8, py - k, 2.4 - (k / Math.max(1, h)) * 1.2, 1.4, k > h - 4 ? R[0] : k % 4 ? R[1] : R[2]);
+      for (let j = 0; j < 4 && h > 3; j++) { const s = (rand(i, 90 + j, sd) - 0.5) * 2, q = age; X.px(o, px + s * 6 * q, py - h + 10 * q * q - 2, j % 2 ? R[0] : R[1]); }
+    } else if (el === 6) {
+      // arcane crystals breaking up through the floor, a glow at their tips
+      spike(o, px, py, 3 + big * 3, (9 + big * 10) * up, lean * 0.4, R[2], R[4], '#ffffff');
+      if (up > 0.2) X.glow(o, px + lean * 0.4, py - (9 + big * 10) * up, 6, R[1], 0.6 * up);
+    } else if (el === 5) {
+      // bolts leaping up out of the crack, flickering
+      if ((Math.floor(t * 30) + i) % 3 === 0) continue;
+      const h = (10 + big * 14) * up;
+      let qx = px, qy = py;
+      for (let k = 3; k <= h; k += 3) { const nx = px + (rand(i * 7 + k, 97, sd) - 0.5) * 5, ny = py - k; X.line(o, qx, qy, nx, ny, R[2], 2); X.line(o, qx, qy, nx, ny, '#ffffff'); qx = nx; qy = ny; }
+      if (up > 0.3) X.glow(o, px, py - 2, 6, R[1], 0.6 * up);
+    } else if (el === 2) {
+      // a shaft of green light breaking from the crack, motes lifting off it: the ground heals
+      // a soft beam, wide and see-through at the floor, narrowing upward, a thin bright core in its lower half
+      const h = (10 + big * 12) * up;
+      if (h > 2) {
+        X.poly(o, [[px - 2.5, py], [px + 2.5, py], [px + 0.5, py - h], [px - 0.5, py - h]], R[3], 0.45);
+        X.poly(o, [[px - 1, py], [px + 1, py], [px, py - h * 0.7]], R[2], 0.6);
+        X.line(o, px, py, px, py - h * 0.45, R[1]);
+        X.glow(o, px, py - 2, 6, R[2], 0.4 * up);
+      }
+      for (let j = 0; j < 3; j++) X.px(o, px + Math.sin(t * 5 + i + j * 2) * 3, py - 3 - (h + 6) * ((age * 1.5 + j / 3) % 1), j ? R[1] : '#ffffff');
     }
   }
-  // slabs of floor across the cone, each punched up as the front reaches it, then dropping back
-  for (let i = 0; i < 24; i++) {
-    const th = pick(n, rand(i, 61, sd)), d = (0.18 + 0.82 * Math.sqrt(rand(i, 62, sd))) * r;
-    if (!mine(part, th) || inCone(n, th) < 0.3) continue;
-    const hit = (T * (d - 4)) / (r - 4), age = (e - hit) / (0.35 + rand(i, 63, sd) * 0.2);
-    if (age < 0 || age >= 1) continue;
-    const bx = x + Math.cos(th) * d, by = y + Math.sin(th) * d * FY, lift = Math.sin(Math.PI * Math.min(1, age * 1.3)) * (5 + rand(i, 64, sd) * 6) * (1 - age * 0.4);
-    const w = 4 + Math.round(rand(i, 65, sd) * 4), wy = Math.max(1, Math.round(w * FY)), sk = Math.cos(aim) * 1.5 * lift * 0.3;
-    if (lift < 0.6) continue;
-    X.ellipse(g, bx, by + 1, w * 0.6, wy * 0.6, '#120c08'); // the hole it came out of
-    const top: Pt[] = [[bx - w / 2, by - lift], [bx + w / 2, by - lift], [bx + w / 2 + sk, by - lift - wy], [bx - w / 2 + sk, by - lift - wy]];
-    X.rect(o, bx - w / 2 - 1, by - lift - wy - 1, w + 2 + Math.abs(sk), lift + wy + 3, '#1a120c'); // a dark outline, so the chunk reads against the floor
-    X.rect(o, bx - w / 2, by - lift, w, lift + 1, i % 2 ? R[3] : R[4]); // its broken face
-    X.poly(o, top, i % 3 ? R[1] : R[2]); // its top, the floor's own surface
-    X.line(o, top[3][0], top[3][1], top[2][0], top[2][1], R[0]); // the lit far edge
+  // grit flung up where the front passes: Earth's own, a little of it even when an element carries the wave
+  for (let i = 0; i < (el ? 8 : 18); i++) {
+    const born = rand(i, 82, sd) * T, age = (e - born) / (0.35 + rand(i, 83, sd) * 0.2), d = reachAt(born) + 6 * age, off = (rand(i, 81, sd) - 0.5) * 2 * Math.min(6, d * spread);
+    if (age < 0 || age >= 1 || !mine(part, aim + Math.atan2(off, d))) continue;
+    const z = (8 + rand(i, 84, sd) * 12) * age - 22 * age * age + 1, [px, py] = at(d, off);
+    if (z > 0) K.sq(o, px, py - z, i % 4 ? 1 : 2, ER[i % 3 + 1]);
   }
-  // dust thrown up along the front
-  if (live > 0) for (let i = 0; i < 14; i++) {
-    const th = aim - half + (2 * half * (i + 0.5 + (rand(i, 71, sd) - 0.5) * 0.6)) / 14, k = inCone(n, th);
-    if (k <= 0 || !mine(part, th)) continue;
-    const q = clamp(e / T, 0, 1);
-    K.puff(o, x + Math.cos(th) * front, y + Math.sin(th) * front * FY - 3 - q * 6, 2 + q * 4, i % 2 ? '#9a8a76' : '#6a5a4a', 0.6 * live * k);
-  }
-  if (n.rider) lineRider(n, front);
-  // grit and stones flung up where the front passes
-  for (let i = 0; i < 22; i++) {
-    const th = pick(n, rand(i, 81, sd)), born = rand(i, 82, sd) * T, age = (e - born) / (0.35 + rand(i, 83, sd) * 0.2);
-    if (age < 0 || age >= 1 || !mine(part, th) || inCone(n, th) < 0.3) continue;
-    const d = reachAt(born) + 6 * age, z = (10 + rand(i, 84, sd) * 14) * age - 26 * age * age + 1;
-    if (z > 0) K.sq(o, x + Math.cos(th) * d, y + Math.sin(th) * d * FY - z, i % 4 ? 1 : 2, R[i % 3]);
-  }
+  // dust rolling at the front
+  if (live > 0 && part === 'near') { const q = clamp(e / T, 0, 1), [fx, fy] = at(front, 0); K.puff(o, fx, fy - 3 - q * 5, 3 + q * 3, '#8a7a68', (el ? 0.35 : 0.65) * live); }
+  if (part === 'near' && el && front < r + 1) { const [lx, ly] = at(front, 0); light(lx, ly, 40, R[2], 0.7 * (1 - seg(e, 0.4, 0.9))); }
 }
 
 /**
@@ -507,7 +545,7 @@ const NOVAS: Partial<Record<number, (n: Nova) => void>> = { 1: water, 2: life, 4
 /** The Weapon cast with elements (the imbued burst), directed: the novas cut to a cone, and arcane's, earth's and lightning's own. */
 const BURSTS: Partial<Record<number, (n: Nova) => void>> = { 1: water, 4: cold, 5: lightningBurst, 6: arcaneBurst, 8: fire, 9: earthBurst };
 /** How long each burst plays, s. */
-export const BURST_LIFE: Partial<Record<number, number>> = { 1: 1.2, 4: 1.4, 5: 0.4, 6: 0.75, 8: 1.8, 9: 1.4 };
+export const BURST_LIFE: Partial<Record<number, number>> = { 1: 1.2, 4: 1.4, 5: 0.4, 6: 0.75, 8: 1.8, 9: 1.7 };
 /** Has element `look` a burst of its own here? */
 export const hasBurst = (look: number): boolean => !!BURSTS[look];
 /**

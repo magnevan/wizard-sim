@@ -13,7 +13,7 @@ import { inCone, len, rayCircle } from './geom';
 import { HIT_KIND, addChill, addKnock, applyHit, ignite, setHitKind, tryFreeze, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { TERRAIN_HIT, clipRay, collideWalls, damageWall, isRockHit, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
-import { WALL, compile, imbueReach } from './compile';
+import { WALL, compile, imbueLine, imbueReach } from './compile';
 import { ARCHETYPES } from './archetypes';
 import { RES, grounded, guardMissile, phased, taken, warm } from './guards';
 import { noteBlocked } from './tutorial-data';
@@ -236,7 +236,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       if (spec.form === EL.lightning) fork(w, src, spec, face, reach, k);
       else {
         setHitKind(HIT_KIND.burst);
-        const line = spec.form === EL.earth;
+        const line = imbueLine(spec);
         for (let i = 0; i < b.kind.length; i++) {
           if (!alive(w, i) || i === src) continue;
           if (line) {

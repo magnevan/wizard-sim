@@ -769,8 +769,9 @@ export class Vfx {
       if (!m.alive[j] || m.wait[j]) continue;
       const ty = m.type[j], look = m.look[j], el = elName(look), R = ramp(look), sd = j * 17 + 3;
       const [mx, my] = this.missileAt(w, j, ct);
-      const x = gx(mx), yg = gy(my), vx = m.vx[j], vy = m.vy[j] * FY, L = Math.hypot(vx, vy) || 1, ux = vx / L, uy = vy / L;
+      const yg = gy(my), vx = m.vx[j], vy = m.vy[j] * FY, L = Math.hypot(vx, vy) || 1, ux = vx / L, uy = vy / L;
       const e = t - this.mT0[j];
+      let x = gx(mx);
       if (ty === 3) {
         // a heal-stone lobbed over everything: a stone with green light seeping from its cracks
         const life0 = Math.max(1, this.mLife0[j]), k = clamp(1 - m.life[j] / life0, 0, 1), z = STAFF_Z + Math.sin(k * Math.PI) * 34, y = yg - z;
@@ -786,7 +787,10 @@ export class Vfx {
         light(x, yg, 36, '#8ef07e', 0.55);
         continue;
       }
-      const y = yg - STAFF_Z;
+      let y = yg - STAFF_Z;
+      // a rock just thrown leaves from where it was charged (its ball at the hand), easing onto its real path
+      const lc = m.owner[j] < MAX_SEATS ? this.lastCharge[m.owner[j]] : null;
+      if (ty === 1 && lc && e < 0.08 && ct - lc[2] < 0.3) { const b = smooth(clamp(e / 0.08, 0, 1)); x = lerp(lc[0], x, b); y = lerp(lc[1], y, b); }
       if (ty === 2 && m.flags[j] & PF.pin) {
         // the spear's javelin: a long ice shaft along its flight, a bright head, frost shedding off the tail
         X.ellipse(g, x, yg, 6, 1.2, 'rgba(8,6,16,0.35)');
@@ -874,6 +878,8 @@ export class Vfx {
   }
 
   // ---- channels and charges: beams, sprays, the charging rock ------------------------------------
+  /** Per seat: where its charging rock was last drawn and when (cosmetic clock), so the thrown rock leaves from there. */
+  private lastCharge: ([number, number, number] | null)[] = [null, null, null, null];
   /** Each spray's recent aim (art/spray-jet.ts), by key: seat, 100 + seat for its Double, 200 + seat for its Echo, 300 + device. */
   private trails = new Map<number, AimTrail>();
   /**
@@ -901,7 +907,23 @@ export class Vfx {
         for (let q = 0; q < 7; q++) { const a = t * 8 + q * 0.9, r = 10 - k * 6; X.px(o, ch[0] + Math.cos(a) * r, ch[1] + Math.sin(a) * r * 0.7, ramp(spec.look)[q % 2 ? 1 : 2]); }
         if (spec.heal) { K.rock(o, ch[0], ch[1] + 2, 1.5 + k * 3.5, 6, K.ROCK_MAT.life); X.glow(o, ch[0], ch[1] + 2, 4 + k * 3, X.LIFE[3], 0.5); }
         else if (el === 'fire') { K.fireball(o, ch[0], ch[1], 1.2 + k * 3.2, t, 0.2, -1, 4); light(ch[0], v.y, 30, '#ff7a2a', 0.5 * k + 0.2); }
-        else K.rock(o, ch[0], ch[1] + 2, 1.5 + k * 4, 4, el === 'cold' ? K.ROCK_MAT.cold : el === 'water' ? K.ROCK_MAT.water : K.ROCK_MAT.earth);
+        else {
+          // Stones prised up from the floor round the caster fly in and pack into the ball (the user, 2026-11-11: the
+          // rock blinked into being in front of you). Dust puffs where each leaves the floor; more stones with more
+          // Earth; the ball grows to exactly the size the thrown rock will be.
+          const mat = el === 'cold' ? K.ROCK_MAT.cold : el === 'water' ? K.ROCK_MAT.water : K.ROCK_MAT.earth, n = Math.max(1, spec.formN);
+          const R1 = clamp((0.22 + 0.08 * n) * 16, 3, 8), g = this.g.x, cy = ch[1] + 2;
+          for (const p of emit(t, 8 + 6 * n, 0.34, (q, a) => {
+            const ang = rand(q, 81, i) * TAU, d = 9 + rand(q, 82, i) * 9 + n * 1.5, sx = v.x + Math.cos(ang) * d, sy = v.y + Math.sin(ang) * d * FY, kk = smooth(a);
+            return { x: lerp(sx, ch[0], kk), y: lerp(sy, cy, kk) - Math.sin(a * Math.PI) * 8, a, sx, sy, q };
+          }, t - age, t)) {
+            if (p.a < 0.3) { X.px(g, p.sx, p.sy, '#2a2018'); K.puff(o, p.sx + (rand(p.q, 83, i) - 0.5) * 3, p.sy - 1 - p.a * 10, 1 + p.a * 5, '#8a7a68', 0.75 * (1 - p.a / 0.3)); }
+            const sz = p.q % 3 === 0 ? 3 : 2;
+            K.sq(o, p.x, p.y, sz + 1, mat.out); K.sq(o, p.x, p.y, sz, p.q % 2 ? mat.lit : mat.body);
+          }
+          K.rock(o, ch[0], cy, R1 * (0.3 + 0.7 * k), 4, mat, t * 1.5);
+          this.lastCharge[i] = [ch[0], cy, t];
+        }
         continue;
       }
       if (ph !== PHASE.channel) continue;
@@ -1051,7 +1073,7 @@ export class Vfx {
     // the staff orb: the colour of what is being built or cast, else the wizard's own
     const orbEl = ms.length ? ms[ms.length - 1].el : s.phase[i] !== PHASE.idle ? specOf(w, i).look || SEAT_EL[i] : SEAT_EL[i], OR = ramp(orbEl);
     X.rect(o, tip[0] - 1, tip[1] - 1, 3, 3, OR[2]); X.px(o, tip[0], tip[1] - 1, OR[0]); X.px(o, tip[0] - 1, tip[1], OR[1]);
-    X.glow(o, tip[0], tip[1], 5 + (s.phase[i] === PHASE.channel ? 2 : 0), OR[2], 0.55);
+    if (s.phase[i] !== PHASE.charge) X.glow(o, tip[0], tip[1], 5 + (s.phase[i] === PHASE.channel ? 2 : 0), OR[2], 0.55); // not over a charging ball, which sits at the staff
     // one wide pool from the staff, smooth so nothing about it is seen to travel with the wizard
     light(v.x, v.y, 80, '#a8a0d0', 0.24, true); light(tip[0], v.y + 2, 54, OR[2], 0.2, true);
     // the readiness swirl: one mote per ready rune, in runs of element colour, round the waist

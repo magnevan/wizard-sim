@@ -1342,3 +1342,7 @@ The user went over the Life spells (where each would be used: the beam is long-r
 ## 2026-11-11: Spell audit, step 5b: the Healing shards seek hurt allies
 
 The user agreed to the idea from step 5: the shards become a fire-and-forget heal for a scattered team, "more similar to lightning heal, maybe a bit longer range & not channeled", and not too strong for their flexibility, as they're 3 runes. Each shard curves toward the hurt ally nearest its heading and flies 10 u (Ice's shards 7.2). Measured: 63 to two scattered allies, where the Chain heal gives 42 and the sprays nothing; clustered, the Chain heal still leads (76 against 63). The imbue's placeholder motes should later re-use the elemental ward's look (the user), once Shield is done.
+
+## 2026-11-11: Spell audit, step 6a: Blink moves to Shield
+
+The user: "lets move it to shield". Every other Sigil spell binds a rune, Blink is defensive, and the Shield Force wave felt "more like a water effect". Shield alone on Force is now Blink, to the cursor (30 u) and instant, paid with the Shield rune it's cast with, so the Shield pool is how many blinks you can chain. The user kept the range and added no recovery ("even if it is a little OP I just really like the spell"). Shield + elements on Force keep the wave until the next decision (step 6 of the audit); Sigil alone on Force still blinks until the Sigil step gives it a spell of its own.

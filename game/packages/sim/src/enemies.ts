@@ -183,7 +183,7 @@ function wallInReach(w: World, i: number, reach: number): number {
     if (d < bd) { bd = d; best = TERRAIN_HIT; }
   }
   for (let k = 0; k < wl.type.length; k++) {
-    if (!enemyWall(wl.type[k])) continue; // a barrier in the way is battered like rock (its blows drain its caster's Shield pool)
+    if (!enemyWall(w, k)) continue; // a barrier in the way is battered like rock (its blows drain its caster's Shield pool)
     const d = segDist(b.x[i], b.y[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0];
     if (d < bd) { bd = d; best = k; }
   }

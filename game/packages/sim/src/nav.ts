@@ -8,14 +8,14 @@
  * The grid and fields live in world state (nav), so a restored snapshot steers the same way.
  * Integer costs (10 straight, 14 diagonal) and a fixed neighbour order keep it deterministic.
  */
-import { WALL, solidWall } from './compile';
+import { solidWall } from './compile';
 
 /** What stops an enemy's feet: rock and ice, and the players' barriers (force fields). Only enemies steer by this grid. */
-export const enemyWall = (type: number): boolean => solidWall(type) || type === WALL.barrier;
+export const enemyWall = (w: World, k: number): boolean => solidWall(w.walls.type[k]) || isField(w, k);
 import { CELL, STRUCT, T } from './config';
 import { len } from './geom';
 import { terrainAlong } from './terrain';
-import { segLen } from './walls';
+import { isField, segLen } from './walls';
 import { KIND, MAX_CELLS, MAX_SEATS, MAX_WALLS, type World } from './world';
 
 const INF = 0x3fffffff;
@@ -56,7 +56,7 @@ function rebuildBlocked(w: World): void {
   for (let k = 0; k < MAX_WALLS; k++) if (solidWall(wl.type[k])) markRock(w, nb, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
   // Barriers stop enemies too, but they can be broken: the field goes through them at a price, so a pack takes
   // a long way round only when it is shorter than breaking through (the user, 2026-11-11), and a maze of barriers can't stall it for long
-  for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.barrier) markRock(w, nb, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k], BARRIER);
+  for (let k = 0; k < MAX_WALLS; k++) if (isField(w, k)) markRock(w, nb, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k], BARRIER);
 }
 
 // A binary heap over (distance, cell); ties broken by cell index so the order never varies.
@@ -137,7 +137,7 @@ function clearLine(w: World, ax: number, ay: number, bx: number, by: number): bo
     }
   }
   for (let k = 0; k < MAX_WALLS; k++) {
-    if (!enemyWall(wl.type[k])) continue;
+    if (!enemyWall(w, k)) continue;
     if (Math.max(wl.x1[k], wl.x2[k]) < lx || Math.min(wl.x1[k], wl.x2[k]) > hx || Math.max(wl.y1[k], wl.y2[k]) < ly || Math.min(wl.y1[k], wl.y2[k]) > hy) continue;
     for (let s = 1; s < steps; s++) {
       const px = ax + ((bx - ax) * s) / steps, py = ay + ((by - ay) * s) / steps;

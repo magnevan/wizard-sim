@@ -205,17 +205,18 @@ it('measures how long a barrier holds a pack off', async () => {
     'a brute': [ARCH.brute],
     '3 archers': Array(3).fill(ARCH.caster),
   };
-  for (const [cast, hold] of [['Ring', 2], ['Arc', 30]] as const) for (const [name, pack] of Object.entries(PACKS)) {
+  const FIELDS: [string, number, Element[]][] = [['Ring', 2, ['shield']], ['Arc', 30, ['shield']], ['Cold ring', 2, ['shield', 'cold']], ['Fire ring', 2, ['shield', 'fire']], ['Fire Fire ring', 2, ['shield', 'fire', 'fire']]];
+  for (const [cast, hold, q] of FIELDS) for (const [name, pack] of Object.entries(PACKS)) {
     const w = createWorld(1, 1, { dummies: false }), b = w.bodies, s = w.seats;
     b.x[0] = 0; b.y[0] = 0;
     pack.forEach((a, q) => { const ang = (q / pack.length - 0.5) * 0.25; const i = spawnBody(w, -1, KIND.enemy, 2, Math.cos(ang * 6.283) * 7, Math.sin(ang * 6.283) * 7, ARCHETYPES[a].hp, ARCHETYPES[a].radius); b.arch[i] = a; });
     const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: 4 * 32, aimY: 0, ...o })];
     for (let k = 0; k < N_EL; k++) s.runes[k] = 9;
-    step(w, aim({ press0: elementId('shield') }));
+    for (const e of q) step(w, aim({ press0: elementId(e) }));
     for (let k = 0; k < N_EL; k++) s.runes[k] = 4;
     for (let t = 0; t < hold; t++) step(w, aim({ buttons: BTN.area }));
-    let t = 0, firstHurt = -1, broke = -1, minPool = 9;
-    const walls = () => Array.from(w.walls.type).filter((x) => x === WALL.barrier).length;
+    let t = 0, firstHurt = -1, broke = -1, minPool = 9, bitten = 0;
+    const walls = () => Array.from(w.walls.type).filter((x) => x === WALL.barrier || x === WALL.curtain).length;
     for (let k = 0; k < 40 && !walls(); k++) step(w, aim());
     const n0 = walls();
     for (; t < 60 * 60; t++) {
@@ -225,10 +226,10 @@ it('measures how long a barrier holds a pack off', async () => {
       if (broke < 0 && walls() < n0) broke = t;
       minPool = Math.min(minPool, s.runes[EL.shield - 1]);
       b.hp[0] = 100;
-      for (let i = 8; i < b.kind.length; i++) if (b.kind[i] === KIND.enemy) b.hp[i] = b.maxHp[i]; // nothing dies: it's the field's endurance
+      for (let i = 8; i < b.kind.length; i++) if (b.kind[i] === KIND.enemy) { bitten += b.maxHp[i] - b.hp[i]; b.hp[i] = b.maxHp[i]; } // nothing dies: it's the field's endurance
     }
     const sec = (x: number) => (x < 0 ? '60+' : (x / 60).toFixed(1));
-    rows.push(`${cast} (${n0} pieces) vs ${name}: first piece breaks ${sec(broke)} s, wizard first hurt ${sec(firstHurt)} s, Shield pool low ${minPool.toFixed(2)}`);
+    rows.push(`${cast} (${n0} pieces) vs ${name}: first piece breaks ${sec(broke)} s, wizard first hurt ${sec(firstHurt)} s, Shield pool low ${minPool.toFixed(2)}, the pack took ${Math.round(bitten)} (${Math.round(bitten / Math.max(1, (broke < 0 ? t : broke) / 60))} a second while it held)`);
   }
   writeFileSync(join(__dirname, 'probe-barrier.txt'), rows.join(String.fromCharCode(10)));
 });

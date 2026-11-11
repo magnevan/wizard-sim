@@ -425,6 +425,12 @@ export function tickStructures(w: World): void {
     els[EL.shield - 1] = 0;
     if (ty === WALL.rock) { els[EL.earth - 1] = 0; if (!els.some((n) => n > 0)) continue; }
     const heal = els[EL.life - 1] > 0;
+    // A wizard's coated force field (spell audit, 2026-11-11): its harm bites only the other side pressing on it or battering
+    // it, and its Life heals only its own team, as they pass through or stand against it. (A curtain of the place, the
+    // battery's gate fire, still burns whoever crosses it.)
+    const field = ty === WALL.curtain && wl.owner[k] >= 0;
+    const harm = els.slice(); harm[EL.life - 1] = 0;
+    const harmful = harm.some((n) => n > 0);
     // A body touching several segments of the same wall is pulsed once.
     const scale = ty === WALL.ice ? STRUCT.spikeScale : 0.4;
     const touches = (i: number, j: number) => segDist(b.x[i], b.y[i], wl.x1[j], wl.y1[j], wl.x2[j], wl.y2[j])[0] <= b.r[i] + 0.35;
@@ -433,6 +439,12 @@ export function tickStructures(w: World): void {
       let first = true;
       for (let j = 0; j < k && first; j++) if (wl.type[j] === ty && wl.owner[j] === wl.owner[k] && wl.born[j] === wl.born[k] && touches(i, j)) first = false;
       if (!first) continue;
+      if (field) {
+        const ally = b.team[i] === b.team[wl.owner[k]];
+        if (ally) { if (heal) hit(w, i, stored(els, 0, PF.heal, 0, EL.life), hitOpts(payloadOf(compile(queueFromCounts(els), 'place')), wl.owner[k], scale)); }
+        else if (harmful) hit(w, i, stored(harm, 0, 0, 0, 0), hitOpts(payloadOf(compile(queueFromCounts(harm), 'place')), wl.owner[k], STRUCT.fieldBite));
+        continue;
+      }
       hit(w, i, stored(els, 0, heal ? PF.heal : 0, 0, heal ? EL.life : 0), hitOpts(payloadOf(compile(queueFromCounts(els), 'place')), wl.owner[k], scale));
     }
   }

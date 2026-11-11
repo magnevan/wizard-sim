@@ -154,3 +154,5 @@ Step 6c (built): Shield + elements on Force blink and leave the elements' Area s
 Step 6d (built): the Life blink heals where you land; barriers are force fields (decisions log). Open: what added runes do to a force field (today they make it a curtain you can walk through).
 
 Step 6e (built): enemies path through barriers at a price (4 u of walking a cell) and batter them when that's shorter than going round. Not dealt with: a maze of barriers (the user: a degenerate case).
+
+Step 6f (built): elements coat the force field (resist, bite, lend) by rune; the walk-through curtain is gone. Still to check in play: whether a Fire ring that holds a goblin pack and kills it is too strong (the user: lean strong on defence).

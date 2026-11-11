@@ -12,7 +12,7 @@ import { EL, N_EL, elementName, queueFromCounts } from './elements';
 import { inCone, len, rayCircle } from './geom';
 import { HIT_KIND, addChill, addKnock, applyHit, drench, ignite, setHitKind, soakOf, tryFreeze, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
-import { TERRAIN_HIT, clipRay, collideWalls, damageWall, isRockHit, lensAt, payloadDamage, rayThroughLens, wallAt } from './walls';
+import { TERRAIN_HIT, clipRay, collideWalls, damageWall, fieldAlong, fieldAt, isRockHit, lensAt, rayThroughLens, wallAt, wallDamage } from './walls';
 import { WALL, compile, imbueLine, imbueReach } from './compile';
 import { ARCHETYPES } from './archetypes';
 import { RES, grounded, guardMissile, phased, taken, warm } from './guards';
@@ -532,11 +532,12 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     }
     // Rock and the other team's barriers stop the beam first if they're closer.
     const [wallD, wk] = clipRay(w, x, y, dx, dy, reach, b.team[src]);
-    if (wk >= 0) { reach = wallD; target = -1; damageWall(w, wk, payloadDamage(spec.counts, 0, rate), spec.counts[EL.fire - 1]); }
+    if (wk >= 0) { reach = wallD; target = -1; damageWall(w, wk, wallDamage(w, wk, spec.counts, 0, rate), spec.counts[EL.fire - 1]); }
     setEnd(x + dx * reach, y + dy * reach);
+    const pc = spec.heal ? p : withCoat(w, p, fieldAlong(w, x, y, dx, dy, reach, b.team[src])[1]); // your coated field lends the beam its elements
     const lensed = rayThroughLens(w, x, y, dx, dy, reach) ? STRUCT.lensMult : 1;
     if (target >= 0) {
-      const dealt = hit(w, target, p, hitOpts(p, src, rate * lensed * (spec.heal ? SHAPES.lifeBeamPower : 1), dx, dy, COMBAT.channelStatus * DT, true), false);
+      const dealt = hit(w, target, pc, hitOpts(pc, src, rate * lensed * (spec.heal ? SHAPES.lifeBeamPower : 1), dx, dy, COMBAT.channelStatus * DT, true), false);
       if (t % 12 === 0) hitEvent(w, target, dealt * 12, spec.look, src);
       if (spec.mod === 'burst' && t % 30 === 0) disc(w, p, src, b.x[target], b.y[target], SHAPES.burstRadius, 0.3, src);
     }
@@ -546,8 +547,9 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     const range = (driving(w, src) ? sprayReach(dx, dy) : SHAPES.sprayRange) + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
     // Rock and barriers stop a spray like a beam: it ends at the wall and wears it down (healing doesn't).
     const [wallD, wk] = clipRay(w, x, y, dx, dy, range, b.team[src]);
-    if (wk >= 0 && !spec.heal) damageWall(w, wk, payloadDamage(spec.counts, 0, rate), spec.counts[EL.fire - 1]);
+    if (wk >= 0 && !spec.heal) damageWall(w, wk, wallDamage(w, wk, spec.counts, 0, rate), spec.counts[EL.fire - 1]);
     setEnd(x + dx * wallD, y + dy * wallD);
+    const [fd, fk] = spec.heal ? [0, -1] : fieldAlong(w, x, y, dx, dy, wallD, b.team[src]), pc = withCoat(w, p, fk); // beyond your coated field, the spray carries its elements
     // Falloff (combat.sprayFalloff): the nearest body takes it all, each one behind takes a share less.
     const inside: number[] = [];
     for (let i = 0; i < b.kind.length; i++) {
@@ -557,7 +559,8 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     if (COMBAT.sprayFalloff < 1) inside.sort((a, c) => len(b.x[a] - x, b.y[a] - y) - len(b.x[c] - x, b.y[c] - y) || a - c);
     inside.forEach((i, k) => {
       const share = k === 0 ? 1 : COMBAT.sprayFalloff;
-      const dealt = hit(w, i, p, hitOpts(p, src, rate * share, dx, dy, COMBAT.channelStatus * DT, true), false);
+      const q = fk >= 0 && len(b.x[i] - x, b.y[i] - y) > fd ? pc : p;
+      const dealt = hit(w, i, q, hitOpts(q, src, rate * share, dx, dy, COMBAT.channelStatus * DT, true), false);
       if (t % 12 === 0) hitEvent(w, i, dealt * 12, spec.look, src);
     });
     // Sprays leave the floor alone (the user: walking forward into your own spray's puddle or fire
@@ -624,9 +627,14 @@ export function tickMissiles(w: World): void {
     if (wk >= 0) {
       const mirror = wk !== TERRAIN_HIT && w.walls.type[wk] === WALL.barrier && m.owner[j] !== w.walls.owner[wk];
       if (w.tut && wk !== TERRAIN_HIT && w.walls.owner[wk] >= 0 && w.walls.owner[wk] < MAX_SEATS && b.kind[m.owner[j]] === KIND.enemy) noteBlocked(w.tut); // the tutorial's Shield beat
-      damageWall(w, wk, payloadDamage(m.els, j, m.scale[j]) * (mirror ? 0.5 : 1), m.els[j * N_EL + EL.fire - 1]);
+      damageWall(w, wk, wallDamage(w, wk, m.els, j, m.scale[j]) * (mirror ? 0.5 : 1), m.els[j * N_EL + EL.fire - 1]);
       if (mirror) { m.vx[j] = -m.vx[j]; m.vy[j] = -m.vy[j]; m.owner[j] = w.walls.owner[wk]; m.lastHit[j] = -1; continue; }
       dead = true;
+    }
+    // Passing out through your team's coated force field, a shot picks up its elements, once (not a heal's, and never Life or Shield)
+    if (!dead && !(m.flags[j] & (PF.coated | PF.heal)) && m.owner[j] >= 0) {
+      const fk = fieldAt(w, m.x[j], m.y[j], m.r[j], b.team[m.owner[j]]);
+      if (fk >= 0) { m.flags[j] |= PF.coated; for (let e = 0; e < N_EL; e++) if (e !== EL.shield - 1 && e !== EL.life - 1) m.els[j * N_EL + e] = Math.min(9, m.els[j * N_EL + e] + w.walls.els[fk * N_EL + e]); }
     }
     if (!dead) {
       const sp = len(m.vx[j], m.vy[j]) || 1, ux = m.vx[j] / sp, uy = m.vy[j] / sp;
@@ -687,6 +695,14 @@ function seekHurt(w: World, j: number): void {
     nx = ux * TURN_COS - uy * s; ny = ux * s + uy * TURN_COS;
   }
   m.vx[j] = nx * sp; m.vy[j] = ny * sp;
+}
+
+/** A payload with coated field k's elements added (not Shield or Life), or the same payload without one. */
+function withCoat(w: World, p: Payload, k: number): Payload {
+  if (k < 0) return p;
+  const c = p.counts.slice(p.at * N_EL, p.at * N_EL + N_EL);
+  for (let e = 0; e < N_EL; e++) if (e !== EL.shield - 1 && e !== EL.life - 1) c[e] = Math.min(9, c[e] + w.walls.els[k * N_EL + e]);
+  return { ...p, counts: c, at: 0 };
 }
 
 /** A missile's frost puff: its Cold alone, over a small disc, at a third of its strength (more Cold, a wider puff). */

@@ -58,9 +58,53 @@ function raySeg(ox: number, oy: number, dx: number, dy: number, x1: number, y1: 
   return Math.max(0, t - pad);
 }
 
-const blocksShots = (type: number) => solidWall(type) || type === WALL.barrier;
-/** Does wall k stop something of `team` (-1: anyone's)? A barrier lets its own team through. */
-const stops = (w: World, k: number, team: number): boolean => blocksShots(w.walls.type[k]) && !(team >= 0 && w.walls.type[k] === WALL.barrier && w.bodies.team[w.walls.owner[k]] === team);
+/**
+ * Is wall k a force field: a barrier (Shield alone) or a coated one (Shield + elements, the curtain type), raised by a
+ * wizard? It stops the other side's bodies, shots and beams and lets its own team through. A curtain that belongs to
+ * the place (the battery's gate fire) is not one: it stops nothing and burns whoever crosses.
+ */
+export const isField = (w: World, k: number): boolean => k < MAX_WALLS && (w.walls.type[k] === WALL.barrier || w.walls.type[k] === WALL.curtain) && w.walls.owner[k] >= 0;
+const blocksShots = (w: World, k: number) => solidWall(w.walls.type[k]) || isField(w, k);
+/** Does wall k stop something of `team` (-1: anyone's)? A force field lets its own team through. */
+const stops = (w: World, k: number, team: number): boolean => blocksShots(w, k) && !(team >= 0 && isField(w, k) && w.bodies.team[w.walls.owner[k]] === team);
+
+/** Resistance points a coated force field has against element id: STRUCT.wardPerRune a rune of it, as a ward (Cold and Ice one family). */
+function fieldPoints(w: World, k: number, id: number): number {
+  if (w.walls.type[k] !== WALL.curtain) return 0;
+  const e = w.walls.els, at = k * N_EL;
+  const n = id === EL.cold || id === EL.ice ? Math.max(e[at + EL.cold - 1], e[at + EL.ice - 1]) : e[at + id - 1];
+  return n * STRUCT.wardPerRune;
+}
+
+/** What a shot or beam does to wall k: payloadDamage, less what a coated force field resists of each element. */
+export function wallDamage(w: World, k: number, els: Uint8Array, at: number, scale: number): number {
+  if (k < 0 || k >= MAX_WALLS || w.walls.type[k] !== WALL.curtain) return payloadDamage(els, at, scale);
+  let d = 0;
+  for (let id = 1; id <= N_EL; id++) d += (DAMAGE[elementName(id)] * els[at * N_EL + id - 1]) / (1 + fieldPoints(w, k, id));
+  return Math.max(4, d) * scale;
+}
+
+/** Your team's coated force field a shot at (x, y), radius r, is passing through, or -1 (it lends the shot its coat). */
+export function fieldAt(w: World, x: number, y: number, r: number, team: number): number {
+  const wl = w.walls;
+  for (let k = 0; k < MAX_WALLS; k++) {
+    if (wl.type[k] !== WALL.curtain || !isField(w, k) || w.bodies.team[wl.owner[k]] !== team) continue;
+    if (segLen(x, y, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]) <= r + STRUCT.wallThickness) return k;
+  }
+  return -1;
+}
+
+/** The nearest of your team's coated force fields a ray crosses within `reach`: [distance, slot] or [reach, -1]. */
+export function fieldAlong(w: World, ox: number, oy: number, dx: number, dy: number, reach: number, team: number): [number, number] {
+  const wl = w.walls;
+  let best = reach, hit = -1;
+  for (let k = 0; k < MAX_WALLS; k++) {
+    if (wl.type[k] !== WALL.curtain || !isField(w, k) || w.bodies.team[wl.owner[k]] !== team) continue;
+    const t = raySeg(ox, oy, dx, dy, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k], STRUCT.wallThickness);
+    if (t >= 0 && t < best) { best = t; hit = k; }
+  }
+  return [best, hit];
+}
 
 /** Damage a shot or beam does to a wall: the plain element damage of its payload. */
 export function payloadDamage(els: Uint8Array, at: number, scale: number): number {
@@ -139,7 +183,7 @@ function pushOut(b: Bodies, i: number, min: number, x1: number, y1: number, x2: 
 export function collideWalls(w: World): void {
   const b = w.bodies, wl = w.walls, tr = w.terrain;
   let nr = 0;
-  for (let k = 0; k < MAX_WALLS; k++) if (solidWall(wl.type[k]) || wl.type[k] === WALL.barrier) rocks[nr++] = k; // ice walls stop bodies too, and barriers the other team's
+  for (let k = 0; k < MAX_WALLS; k++) if (solidWall(wl.type[k]) || isField(w, k)) rocks[nr++] = k; // ice walls stop bodies too, and force fields the other team's
   if (!nr && !tr.n) return;
   const out = tr.out;
   for (let i = 0; i < b.kind.length; i++) {
@@ -155,7 +199,7 @@ export function collideWalls(w: World): void {
     }
     for (let q = 0; q < nr; q++) {
       const k = rocks[q];
-      if (wl.type[k] === WALL.barrier && b.team[i] === b.team[wl.owner[k]]) continue; // your team walks through your barrier
+      if (!solidWall(wl.type[k]) && b.team[i] === b.team[wl.owner[k]]) continue; // your team walks through your force field
       pushOut(b, i, min, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
     }
   }

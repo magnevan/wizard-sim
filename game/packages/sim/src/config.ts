@@ -253,6 +253,8 @@ export const STRUCT = {
   wallThickness: 0.25,
   /** Enemies path through a barrier as if it were this many units of extra walking a cell (nav.ts), so a pack breaks through when going round is longer. */
   barrierDetour: 4,
+  /** A coated force field bites the enemies pressing on it or battering it with its elements, each half second, at this scale (the old curtain's 0.4: on the strong side, the user likes defence strong). */
+  fieldBite: 0.5,
   waveSpeed: 7, waveRange: 6, waveHalf: 1.6, waveHalfPerRune: 0.4, shove: 8,
   /** Model A: energy structures drain the Shield pool; at the reserve floor the oldest breaks. */
   idleDrain: 0.03, wardDrainMult: 2, absorbPerHp: 0.01, reserve: 0.5,

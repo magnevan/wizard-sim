@@ -197,6 +197,35 @@ describe('Shield', () => {
     expect(short.x).toBeLessThan(2.5); // went round
   });
 
+  it('a coated force field (Shield + Fire) holds foes and burns them, lets allies through unharmed, and lends ally shots its Fire', async () => {
+    const { wallDamage } = await import('../src/walls');
+    const { N_EL } = await import('../src/elements');
+    const m = arena(3);
+    m.d.aimAt(4, 0).queue('shield', 'fire').cast(BTN.area, 20, 20);
+    expect(walls(m.w, WALL.curtain)).toBe(STRUCT.arcSegs);
+    m.w.bodies.team[2] = 9;
+    for (const i of [1, 2]) { m.w.bodies.x[i] = 4 + i; m.w.bodies.y[i] = 0; }
+    for (let t = 0; t < 120; t++) { for (const i of [1, 2]) { m.w.bodies.vx[i] = -4; m.w.bodies.vy[i] = 0; } m.d.tick({}); }
+    expect(m.w.bodies.x[1]).toBeLessThan(1); // the ally walked through
+    expect(m.w.bodies.hp[1]).toBe(100); // unharmed
+    expect(m.w.bodies.x[2]).toBeGreaterThan(1.8); // the foe is held
+    expect(m.w.bodies.hp[2]).toBeLessThan(100); // and burnt
+    // Fire hits the Fire field softly; an Earth hit doesn't
+    const k = Array.from(m.w.walls.type).indexOf(WALL.curtain);
+    const fire = new Uint8Array(N_EL), earth = new Uint8Array(N_EL); fire[EL.fire - 1] = 2; earth[EL.earth - 1] = 1;
+    expect(wallDamage(m.w, k, fire, 0, 1)).toBeLessThan(wallDamage(m.w, -1, fire, 0, 1));
+    expect(wallDamage(m.w, k, earth, 0, 1)).toBe(wallDamage(m.w, -1, earth, 0, 1));
+    // an ally's rock thrown out through it picks up its Fire
+    const a = arena(2);
+    a.d.aimAt(4, 0).queue('shield', 'fire').cast(BTN.area, 20, 20);
+    a.w.bodies.x[1] = 0.5; a.w.bodies.y[1] = 0;
+    const ally = new Driver(a.w, 1).aimAt(8, 0);
+    ally.queue('earth').tick({ buttons: BTN.force }, 30);
+    let coated = false;
+    for (let t = 0; t < 30; t++) { ally.tick({}); for (let j = 0; j < a.w.missiles.alive.length; j++) if (a.w.missiles.alive[j] && a.w.missiles.els[j * N_EL + EL.fire - 1] > 0) coated = true; }
+    expect(coated).toBe(true);
+  });
+
   it('a barrier is a force field: your team walks and shoots through it, the other team is stopped', () => {
     const { w, d } = arena(2);
     d.aimAt(4, 0).queue('shield').cast(BTN.area, 20, 20);

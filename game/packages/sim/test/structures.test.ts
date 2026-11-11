@@ -168,13 +168,31 @@ describe('Shield', () => {
     d.aimAt(4, 0).queue('shield').cast(BTN.area, 20, 20);
     expect(walls(w, WALL.barrier)).toBe(STRUCT.arcSegs);
     const before = rune(w, 'shield');
-    // The ally throws a rock at the barrier from outside: it comes back at them.
-    const ally = new Driver(w, 1).aimAt(-5, 0);
-    ally.queue('earth').cast(BTN.force, 30, 40);
+    // A wizard of the other team throws a rock at the barrier from outside: it comes back at them.
+    w.bodies.team[1] = 9;
+    const foe = new Driver(w, 1).aimAt(-5, 0);
+    foe.queue('earth').cast(BTN.force, 30, 40);
     expect(w.bodies.hp[1]).toBeLessThan(100);
     expect(w.bodies.hp[0]).toBe(100);
     d.tick({}, 120);
     expect(rune(w, 'shield')).toBeLessThan(before + 2.5 * RUNES.regen);
+  });
+
+  it('a barrier is a force field: your team walks and shoots through it, the other team is stopped', () => {
+    const { w, d } = arena(2);
+    d.aimAt(4, 0).queue('shield').cast(BTN.area, 20, 20);
+    // the ally outside throws a rock through it, at you: it lands
+    const ally = new Driver(w, 1).aimAt(-5, 0);
+    ally.queue('earth').cast(BTN.force, 30, 40);
+    expect(w.bodies.hp[0]).toBeLessThan(100);
+    // a foe walking at you is held at the barrier, an ally walks through
+    const m = arena(3);
+    m.d.aimAt(4, 0).queue('shield').cast(BTN.area, 20, 20);
+    m.w.bodies.team[2] = 9;
+    for (const i of [1, 2]) { m.w.bodies.x[i] = 4 + i; m.w.bodies.y[i] = 0; }
+    for (let t = 0; t < 120; t++) { for (const i of [1, 2]) { m.w.bodies.vx[i] = -4; m.w.bodies.vy[i] = 0; } m.d.tick({}); }
+    expect(m.w.bodies.x[1]).toBeLessThan(1);
+    expect(m.w.bodies.x[2]).toBeGreaterThan(1.8);
   });
 
   it('Shield + Fire on yourself is a ward that resists fire', () => {

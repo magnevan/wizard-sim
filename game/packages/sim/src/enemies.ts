@@ -17,7 +17,7 @@ import { EL, N_EL } from './elements';
 import { burstEvent, disc, spawnMissile, stored, type Payload } from './effects';
 import { angleDiff, len } from './geom';
 import { HIT_KIND, addKnock, applyHit, ignite, setHitKind } from './hit';
-import { cutOff, steer } from './nav';
+import { cutOff, enemyWall, steer } from './nav';
 import { guardMelee, unburnable } from './guards';
 import { solidWall } from './compile';
 import { terrainNear } from './terrain';
@@ -183,7 +183,7 @@ function wallInReach(w: World, i: number, reach: number): number {
     if (d < bd) { bd = d; best = TERRAIN_HIT; }
   }
   for (let k = 0; k < wl.type.length; k++) {
-    if (!solidWall(wl.type[k])) continue;
+    if (!enemyWall(wl.type[k])) continue; // a barrier in the way is battered like rock (its blows drain its caster's Shield pool)
     const d = segDist(b.x[i], b.y[i], wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0];
     if (d < bd) { bd = d; best = k; }
   }

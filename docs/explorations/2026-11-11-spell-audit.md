@@ -150,3 +150,5 @@ Findings:
 Step 6a and 6b (built): Blink moved to Shield alone on Force; the ward runs on the Shield pool as a battery, by rune, on the imbue's scale (decisions log). Open: the barrier as a force field (finding 3, the user will come back to it), and a new family for Shield + elements on Force, as if Blink didn't exist.
 
 Step 6c (built): Shield + elements on Force blink and leave the elements' Area spell where you stood, at 0.8 power. The other candidates (Bubble, Repulsor/Counterspell, Shield chain, Guardian link) are in `ideas/shield-force-alternatives.md`. Still open in Shield: the barrier as a force field (finding 3, the user will come back to it).
+
+Step 6d (built): the Life blink heals where you land; barriers are force fields (decisions log). Open: what added runes do to a force field (today they make it a curtain you can walk through).

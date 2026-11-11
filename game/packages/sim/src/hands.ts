@@ -120,7 +120,7 @@ export function heavy(w: World, i: number, face: number, charge: number): void {
 function dash(w: World, i: number, face: number, k: number): void {
   const b = w.bodies, x = b.x[i], y = b.y[i], dx = cosTurns(face), dy = sinTurns(face);
   let reach = (STRUCT.reach.cold ?? 2.8) * ARMS.dashMult;
-  const [wd, wk] = clipRay(w, x, y, dx, dy, reach);
+  const [wd, wk] = clipRay(w, x, y, dx, dy, reach, b.team[i]);
   if (wk >= 0) reach = Math.max(0, wd - b.r[i]);
   const p = payloadOf(weaponSpec(w, i));
   // bodies along the lane, nearest first
@@ -193,7 +193,7 @@ export function holdTick(w: World, i: number): void {
   }
   const j = s.linkTo[i], dx = b.x[j] - x, dy = b.y[j] - y, d = len(dx, dy);
   // It holds while they move, up to the link's range or until a wall comes between you.
-  const walled = d > 1e-6 && clipRay(w, x, y, dx / d, dy / d, d)[1] >= 0;
+  const walled = d > 1e-6 && clipRay(w, x, y, dx / d, dy / d, d, b.team[i])[1] >= 0;
   if (b.kind[j] !== KIND.wizard || b.downed[j] || d > ARMS.linkRange || walled) { s.linkTo[i] = -1; move(w, i, 'linkbreak', EL.life, b.x[j], b.y[j]); return; }
   b.hp[j] = Math.min(b.maxHp[j], b.hp[j] + ARMS.linkHeal / 60);
   if (s.linkT[i] % 30 === 0) w.events.push({ tick: w.clock[0], kind: 'heal', who: j, src: i, x: b.x[j], y: b.y[j], amount: ARMS.linkHeal / 2, look: EL.life });

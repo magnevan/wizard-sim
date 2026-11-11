@@ -8,7 +8,10 @@
  * The grid and fields live in world state (nav), so a restored snapshot steers the same way.
  * Integer costs (10 straight, 14 diagonal) and a fixed neighbour order keep it deterministic.
  */
-import { solidWall } from './compile';
+import { WALL, solidWall } from './compile';
+
+/** What stops an enemy's feet: rock and ice, and the players' barriers (force fields). Only enemies steer by this grid. */
+export const enemyWall = (type: number): boolean => solidWall(type) || type === WALL.barrier;
 import { CELL, STRUCT, T } from './config';
 import { len } from './geom';
 import { terrainAlong } from './terrain';
@@ -45,7 +48,7 @@ function rebuildBlocked(w: World): void {
   const nb = w.nav.blocked, wl = w.walls, tr = w.terrain;
   nb.fill(0);
   for (let k = 0; k < tr.n; k++) markRock(w, nb, tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k]);
-  for (let k = 0; k < MAX_WALLS; k++) if (solidWall(wl.type[k])) markRock(w, nb, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
+  for (let k = 0; k < MAX_WALLS; k++) if (enemyWall(wl.type[k])) markRock(w, nb, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]); // barriers too: they stop enemies
 }
 
 // A binary heap over (distance, cell); ties broken by cell index so the order never varies.
@@ -126,7 +129,7 @@ function clearLine(w: World, ax: number, ay: number, bx: number, by: number): bo
     }
   }
   for (let k = 0; k < MAX_WALLS; k++) {
-    if (!solidWall(wl.type[k])) continue;
+    if (!enemyWall(wl.type[k])) continue;
     if (Math.max(wl.x1[k], wl.x2[k]) < lx || Math.min(wl.x1[k], wl.x2[k]) > hx || Math.max(wl.y1[k], wl.y2[k]) < ly || Math.min(wl.y1[k], wl.y2[k]) > hy) continue;
     for (let s = 1; s < steps; s++) {
       const px = ax + ((bx - ax) * s) / steps, py = ay + ((by - ay) * s) / steps;

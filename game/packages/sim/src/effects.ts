@@ -297,11 +297,15 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       }
       w.events.push({ tick: w.clock[0], kind: 'blink', who: src, x, y, x2: nx, y2: ny });
       b.x[src] = nx; b.y[src] = ny;
-      // Shield + elements: the parting gift, the elements' own Area spell on the spot you left, for whoever chased you there
-      // (a Healing ring heals the partner you left behind). Cast after you've gone, so it never catches you.
+      // Shield + elements: the parting gift, the elements' own Area spell on the spot you left, for whoever chased you there.
+      // Cast after you've gone, so it never catches you. Life lands with you instead (the user, 2026-11-11): a rescue blink,
+      // its Healing ring heals the partners you blink to, and you.
       if (spec.form === EL.shield) {
         const rest = spec.counts.slice(); rest[EL.shield - 1] = 0;
-        if (rest.some((c) => c > 0)) fireSpell(w, src, compile(queueFromCounts(rest), 'area'), face, x, y, 0, { ox: x, oy: y, scale: k * STRUCT.partingPower });
+        if (rest.some((c) => c > 0)) {
+          const at = rest[EL.life - 1] ? [nx, ny] : [x, y];
+          fireSpell(w, src, compile(queueFromCounts(rest), 'area'), face, at[0], at[1], 0, { ox: at[0], oy: at[1], scale: k * STRUCT.partingPower });
+        }
       }
       break;
     }
@@ -448,7 +452,7 @@ export function chain(w: World, src: number, spec: SpellSpec, face: number, scal
     if (d < bd && clearLine(w, x, y, b.x[i], b.y[i])) { bd = d; first = i; }
   }
   if (first < 0) { // a short crackle into the air, or against the wall in the way
-    const air = clipRay(w, x, y, cosTurns(face), sinTurns(face), 2.5)[0];
+    const air = clipRay(w, x, y, cosTurns(face), sinTurns(face), 2.5, b.team[src])[0];
     w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x, y, x2: x + cosTurns(face) * air, y2: y + sinTurns(face) * air, look: spec.look });
     return;
   }
@@ -495,7 +499,7 @@ function fork(w: World, src: number, spec: SpellSpec, face: number, reach: numbe
   }
   // bolts into the air where there was no one to take them
   for (let m = firsts.length; m < Math.min(n, 3); m++) {
-    const a = face + (m - 1) * SHAPES.imbueHalf * 0.6, d = clipRay(w, x, y, cosTurns(a), sinTurns(a), reach * 0.7)[0];
+    const a = face + (m - 1) * SHAPES.imbueHalf * 0.6, d = clipRay(w, x, y, cosTurns(a), sinTurns(a), reach * 0.7, w.bodies.team[src])[0];
     w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x, y, x2: x + cosTurns(a) * d, y2: y + sinTurns(a) * d, look: spec.look });
   }
 }
@@ -526,8 +530,8 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
       const d = rayCircle(x, y, dx, dy, b.x[i], b.y[i], b.r[i] + SHAPES.beamWidth / 2);
       if (d >= 0 && d < reach) { reach = d; target = i; }
     }
-    // Rock and barriers stop the beam first if they're closer.
-    const [wallD, wk] = clipRay(w, x, y, dx, dy, reach);
+    // Rock and the other team's barriers stop the beam first if they're closer.
+    const [wallD, wk] = clipRay(w, x, y, dx, dy, reach, b.team[src]);
     if (wk >= 0) { reach = wallD; target = -1; damageWall(w, wk, payloadDamage(spec.counts, 0, rate), spec.counts[EL.fire - 1]); }
     setEnd(x + dx * reach, y + dy * reach);
     const lensed = rayThroughLens(w, x, y, dx, dy, reach) ? STRUCT.lensMult : 1;
@@ -541,7 +545,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
   if (spec.shape === 'spray') {
     const range = (driving(w, src) ? sprayReach(dx, dy) : SHAPES.sprayRange) + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
     // Rock and barriers stop a spray like a beam: it ends at the wall and wears it down (healing doesn't).
-    const [wallD, wk] = clipRay(w, x, y, dx, dy, range);
+    const [wallD, wk] = clipRay(w, x, y, dx, dy, range, b.team[src]);
     if (wk >= 0 && !spec.heal) damageWall(w, wk, payloadDamage(spec.counts, 0, rate), spec.counts[EL.fire - 1]);
     setEnd(x + dx * wallD, y + dy * wallD);
     // Falloff (combat.sprayFalloff): the nearest body takes it all, each one behind takes a share less.
@@ -616,7 +620,7 @@ export function tickMissiles(w: World): void {
     // A lens amplifies whatever passes through it, once.
     if (!(m.flags[j] & PF.lensed) && lensAt(w, m.x[j], m.y[j]) >= 0) { m.flags[j] |= PF.lensed; m.scale[j] *= STRUCT.lensMult; m.r[j] *= STRUCT.lensGrow; }
     // Rock and barriers stop shots (a barrier of Shield alone turns them back).
-    const wk = dead ? -1 : wallAt(w, m.x[j], m.y[j], m.r[j]);
+    const wk = dead ? -1 : wallAt(w, m.x[j], m.y[j], m.r[j], b.team[m.owner[j]]);
     if (wk >= 0) {
       const mirror = wk !== TERRAIN_HIT && w.walls.type[wk] === WALL.barrier && m.owner[j] !== w.walls.owner[wk];
       if (w.tut && wk !== TERRAIN_HIT && w.walls.owner[wk] >= 0 && w.walls.owner[wk] < MAX_SEATS && b.kind[m.owner[j]] === KIND.enemy) noteBlocked(w.tut); // the tutorial's Shield beat

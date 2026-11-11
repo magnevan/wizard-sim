@@ -192,3 +192,43 @@ it('measures how long a ward battery holds under steady fire', async () => {
   STRUCT.wardAbsorb = keep;
   writeFileSync(join(__dirname, 'probe-ward.txt'), rows.join(String.fromCharCode(10)));
 });
+
+it('measures how long a barrier holds a pack off', async () => {
+  const { ARCHETYPES, ARCH } = await import('../packages/sim/src/archetypes');
+  const { spawnBody } = await import('../packages/sim/src/world');
+  const { EL } = await import('../packages/sim/src/elements');
+  const { WALL } = await import('../packages/sim/src/compile');
+  const rows: string[] = [];
+  const PACKS: Record<string, number[]> = {
+    '6 goblins': Array(6).fill(ARCH.swarmer),
+    '2 shieldbearers + 4 goblins': [ARCH.shieldbearer, ARCH.shieldbearer, ...Array(4).fill(ARCH.swarmer)],
+    'a brute': [ARCH.brute],
+    '3 archers': Array(3).fill(ARCH.caster),
+  };
+  for (const [cast, hold] of [['Ring', 2], ['Arc', 30]] as const) for (const [name, pack] of Object.entries(PACKS)) {
+    const w = createWorld(1, 1, { dummies: false }), b = w.bodies, s = w.seats;
+    b.x[0] = 0; b.y[0] = 0;
+    pack.forEach((a, q) => { const ang = (q / pack.length - 0.5) * 0.25; const i = spawnBody(w, -1, KIND.enemy, 2, Math.cos(ang * 6.283) * 7, Math.sin(ang * 6.283) * 7, ARCHETYPES[a].hp, ARCHETYPES[a].radius); b.arch[i] = a; });
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: 4 * 32, aimY: 0, ...o })];
+    for (let k = 0; k < N_EL; k++) s.runes[k] = 9;
+    step(w, aim({ press0: elementId('shield') }));
+    for (let k = 0; k < N_EL; k++) s.runes[k] = 4;
+    for (let t = 0; t < hold; t++) step(w, aim({ buttons: BTN.area }));
+    let t = 0, firstHurt = -1, broke = -1, minPool = 9;
+    const walls = () => Array.from(w.walls.type).filter((x) => x === WALL.barrier).length;
+    for (let k = 0; k < 40 && !walls(); k++) step(w, aim());
+    const n0 = walls();
+    for (; t < 60 * 60; t++) {
+      for (let k = 0; k < N_EL; k++) if (k !== EL.shield - 1) s.runes[k] = 1; // the other pools busy, as in a fight
+      step(w, aim()); // the wizard stands still and doesn't fight back
+      if (firstHurt < 0 && b.hp[0] < 100) firstHurt = t;
+      if (broke < 0 && walls() < n0) broke = t;
+      minPool = Math.min(minPool, s.runes[EL.shield - 1]);
+      b.hp[0] = 100;
+      for (let i = 8; i < b.kind.length; i++) if (b.kind[i] === KIND.enemy) b.hp[i] = b.maxHp[i]; // nothing dies: it's the field's endurance
+    }
+    const sec = (x: number) => (x < 0 ? '60+' : (x / 60).toFixed(1));
+    rows.push(`${cast} (${n0} pieces) vs ${name}: first piece breaks ${sec(broke)} s, wizard first hurt ${sec(firstHurt)} s, Shield pool low ${minPool.toFixed(2)}`);
+  }
+  writeFileSync(join(__dirname, 'probe-barrier.txt'), rows.join(String.fromCharCode(10)));
+});

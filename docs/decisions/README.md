@@ -1282,3 +1282,11 @@ The audit's first pass found the status model behind three problems: any channel
 - **Close beats placed** (the user): the close, risky shape should be stronger; a delay earns back a little; aiming is only a cost when the effect is small and easy to miss. To apply in the Area against Place step.
 - **Today's enemies are early drafts** (the user): balance against reference situations, not the roster.
 - Golden hash `bd89da22` → `cde3a6be` (Chrome and node agree). New tests: a Lightning channel stuns now and then but never locks, and less on a big body; a fire floor burns by its Fire.
+
+## 2026-11-11: Stun scales like resistance: a stunned body can't be shocked again
+
+The user: "in games resistance uses a scaling formula so that hits to kill scales linearly with resistance rather than a % reduction… Should stun be similar? Stunned for 0-10% of the time is very different than 50-60%." Yes: a shock no longer renews a running stun, so the share of time stunned is a / (1 + a) with a linear in Lightning runes, the same shape as resistance (damage × 1 / (1 + r)). Each Lightning rune stretches the time a body needs to act by the same amount, and nothing locks. `shockRate` 1.5 → 0.85, so one Lightning on a mid-sized body is about a third. Held 20 s, the arc stuns a 30 / 135 / 345 / 2000-HP body 60 / 39 / 30 / 22 % of the time with one Lightning and 78 / 66 / 61 / 41 % with four; an Arcane + Lightning beam 37 / 24 / 16 / 4 %. The arc's lead over the beam (it rolls five times a second and aims itself) is for the Lightning family. Bigger bodies resist through √(100 / max HP), as the frost pool does; future enemies may also carry their own shock multiplier (principle 13).
+
+The user also wants **chill to be strong**: "it's a good playstyle for players who get overwhelmed." To play-test for feel.
+
+Golden hash `cde3a6be` → `09029372` (Chrome and node agree).

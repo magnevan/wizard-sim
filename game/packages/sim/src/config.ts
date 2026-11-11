@@ -100,7 +100,7 @@ export const STATUS = {
    * Lightning stuns a goblin most times and a brute less than half; a channel's ticks add up to about shockRate
    * stuns a second per rune on a wizard-sized body, rather than a lock.
    */
-  shockRate: 1.5, shockRef: 100, stunTime: 0.4,
+  shockRate: 0.85, shockRef: 100, stunTime: 0.4,
   expose: 2, exposeMult: 1.3,
   knockdown: 0.6,
   /** Lightning on a wet target. */

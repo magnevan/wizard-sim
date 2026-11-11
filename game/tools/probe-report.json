@@ -73,35 +73,35 @@
   "one": {
    "title": "Fire patch",
    "shape": "patch",
-   "dmg": 16,
-   "perTarget": 16,
+   "dmg": 47,
+   "perTarget": 47,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire patch",
    "shape": "patch",
-   "dmg": 79,
-   "perTarget": 16,
+   "dmg": 233,
+   "perTarget": 47,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire patch",
    "shape": "patch",
-   "dmg": 19,
-   "perTarget": 19,
+   "dmg": 50,
+   "perTarget": 50,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|FF|force": {
@@ -178,35 +178,35 @@
   "one": {
    "title": "Fire patch",
    "shape": "patch",
-   "dmg": 24,
-   "perTarget": 24,
+   "dmg": 85,
+   "perTarget": 85,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire patch",
    "shape": "patch",
-   "dmg": 119,
-   "perTarget": 24,
+   "dmg": 423,
+   "perTarget": 85,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire patch",
    "shape": "patch",
-   "dmg": 36,
-   "perTarget": 36,
+   "dmg": 98,
+   "perTarget": 98,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|FFF|force": {
@@ -283,35 +283,35 @@
   "one": {
    "title": "Fire patch",
    "shape": "patch",
-   "dmg": 31,
-   "perTarget": 31,
+   "dmg": 122,
+   "perTarget": 122,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire patch",
    "shape": "patch",
-   "dmg": 155,
-   "perTarget": 31,
+   "dmg": 608,
+   "perTarget": 122,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire patch",
    "shape": "patch",
-   "dmg": 52,
-   "perTarget": 52,
+   "dmg": 146,
+   "perTarget": 146,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|C|force": {
@@ -388,35 +388,35 @@
   "one": {
    "title": "Freezing fog",
    "shape": "patch",
-   "dmg": 15,
-   "perTarget": 15,
+   "dmg": 23,
+   "perTarget": 23,
    "deniedS": 0,
-   "chill": 0.23,
+   "chill": 0.26,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Freezing fog",
    "shape": "patch",
-   "dmg": 75,
-   "perTarget": 15,
+   "dmg": 113,
+   "perTarget": 23,
    "deniedS": 0,
-   "chill": 0.23,
+   "chill": 0.26,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Freezing fog",
    "shape": "patch",
-   "dmg": 15,
-   "perTarget": 15,
+   "dmg": 23,
+   "perTarget": 23,
    "deniedS": 1.48,
-   "chill": 0.12,
+   "chill": 0.1,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|CC|force": {
@@ -493,35 +493,35 @@
   "one": {
    "title": "Freezing fog",
    "shape": "patch",
-   "dmg": 21,
-   "perTarget": 21,
+   "dmg": 37,
+   "perTarget": 37,
    "deniedS": 0,
-   "chill": 0.62,
+   "chill": 0.79,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Freezing fog",
    "shape": "patch",
-   "dmg": 106,
-   "perTarget": 21,
+   "dmg": 186,
+   "perTarget": 37,
    "deniedS": 0,
-   "chill": 0.62,
+   "chill": 0.79,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Freezing fog",
    "shape": "patch",
-   "dmg": 21,
-   "perTarget": 21,
+   "dmg": 37,
+   "perTarget": 37,
    "deniedS": 1.85,
-   "chill": 0.34,
+   "chill": 0.66,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|CCC|force": {
@@ -598,35 +598,35 @@
   "one": {
    "title": "Freezing fog",
    "shape": "patch",
-   "dmg": 26,
-   "perTarget": 26,
+   "dmg": 52,
+   "perTarget": 52,
    "deniedS": 0,
-   "chill": 0.75,
+   "chill": 0.87,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Freezing fog",
    "shape": "patch",
-   "dmg": 130,
-   "perTarget": 26,
+   "dmg": 260,
+   "perTarget": 52,
    "deniedS": 0,
-   "chill": 0.75,
+   "chill": 0.87,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Freezing fog",
    "shape": "patch",
-   "dmg": 26,
-   "perTarget": 26,
+   "dmg": 52,
+   "perTarget": 52,
    "deniedS": 1.88,
-   "chill": 0.58,
+   "chill": 0.8,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|W|force": {
@@ -709,7 +709,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Rain",
@@ -720,7 +720,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Rain",
@@ -731,7 +731,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|WW|force": {
@@ -814,7 +814,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Rain",
@@ -825,7 +825,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Rain",
@@ -836,7 +836,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|WF|force": {
@@ -913,35 +913,35 @@
   "one": {
    "title": "Steam cloud",
    "shape": "patch",
-   "dmg": 42,
-   "perTarget": 42,
+   "dmg": 63,
+   "perTarget": 63,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Steam cloud",
    "shape": "patch",
-   "dmg": 210,
-   "perTarget": 42,
+   "dmg": 315,
+   "perTarget": 63,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Steam cloud",
    "shape": "patch",
-   "dmg": 42,
-   "perTarget": 42,
+   "dmg": 63,
+   "perTarget": 63,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|WFF|force": {
@@ -1018,35 +1018,35 @@
   "one": {
    "title": "Steam cloud",
    "shape": "patch",
-   "dmg": 49,
-   "perTarget": 49,
+   "dmg": 87,
+   "perTarget": 87,
    "deniedS": 0,
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Steam cloud",
    "shape": "patch",
-   "dmg": 247,
-   "perTarget": 49,
+   "dmg": 433,
+   "perTarget": 87,
    "deniedS": 0,
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Steam cloud",
    "shape": "patch",
-   "dmg": 49,
-   "perTarget": 49,
+   "dmg": 87,
+   "perTarget": 87,
    "deniedS": 0,
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|WWF|force": {
@@ -1123,35 +1123,35 @@
   "one": {
    "title": "Steam cloud",
    "shape": "patch",
-   "dmg": 42,
-   "perTarget": 42,
+   "dmg": 74,
+   "perTarget": 74,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Steam cloud",
    "shape": "patch",
-   "dmg": 210,
-   "perTarget": 42,
+   "dmg": 368,
+   "perTarget": 74,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Steam cloud",
    "shape": "patch",
-   "dmg": 42,
-   "perTarget": 42,
+   "dmg": 74,
+   "perTarget": 74,
    "deniedS": 0,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|WC|force": {
@@ -1231,10 +1231,10 @@
    "dmg": 5,
    "perTarget": 5,
    "deniedS": 0,
-   "chill": 0.44,
+   "chill": 0.77,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice sheet",
@@ -1242,10 +1242,10 @@
    "dmg": 23,
    "perTarget": 5,
    "deniedS": 0,
-   "chill": 0.44,
+   "chill": 0.77,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice sheet",
@@ -1253,10 +1253,10 @@
    "dmg": 5,
    "perTarget": 5,
    "deniedS": 1.48,
-   "chill": 0.25,
+   "chill": 0.66,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|WCC|force": {
@@ -1336,10 +1336,10 @@
    "dmg": 7,
    "perTarget": 7,
    "deniedS": 0,
-   "chill": 0.55,
+   "chill": 0.81,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice sheet",
@@ -1347,10 +1347,10 @@
    "dmg": 35,
    "perTarget": 7,
    "deniedS": 0,
-   "chill": 0.55,
+   "chill": 0.81,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice sheet",
@@ -1358,10 +1358,10 @@
    "dmg": 7,
    "perTarget": 7,
    "deniedS": 1.48,
-   "chill": 0.32,
+   "chill": 0.71,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "sprays|WWC|force": {
@@ -1441,10 +1441,10 @@
    "dmg": 5,
    "perTarget": 5,
    "deniedS": 0,
-   "chill": 0.43,
+   "chill": 0.77,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice sheet",
@@ -1452,10 +1452,10 @@
    "dmg": 23,
    "perTarget": 5,
    "deniedS": 0,
-   "chill": 0.43,
+   "chill": 0.77,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice sheet",
@@ -1463,10 +1463,10 @@
    "dmg": 5,
    "perTarget": 5,
    "deniedS": 1.48,
-   "chill": 0.24,
+   "chill": 0.66,
    "moved": 0.7,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "lightning|L|force": {
@@ -1549,7 +1549,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Lightning strike",
@@ -1560,7 +1560,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Lightning strike",
@@ -1571,7 +1571,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "lightning|LL|force": {
@@ -1654,7 +1654,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Lightning strike",
@@ -1665,7 +1665,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Lightning strike",
@@ -1676,7 +1676,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "lightning|LLL|force": {
@@ -1759,7 +1759,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Lightning strike",
@@ -1770,7 +1770,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Lightning strike",
@@ -1781,7 +1781,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "lightning|LF|force": {
@@ -1864,7 +1864,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire strike",
@@ -1875,7 +1875,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire strike",
@@ -1886,7 +1886,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "lightning|LFF|force": {
@@ -1969,7 +1969,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire strike",
@@ -1980,7 +1980,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire strike",
@@ -1991,7 +1991,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "lightning|LLF|force": {
@@ -2074,7 +2074,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire strike",
@@ -2085,7 +2085,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire strike",
@@ -2096,7 +2096,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "lightning|LC|force": {
@@ -2176,10 +2176,10 @@
    "dmg": 18,
    "perTarget": 18,
    "deniedS": 0.38,
-   "chill": 0.1,
+   "chill": 0.04,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Frost strike",
@@ -2187,10 +2187,10 @@
    "dmg": 90,
    "perTarget": 18,
    "deniedS": 0.15,
-   "chill": 0.1,
+   "chill": 0.04,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Frost strike",
@@ -2201,7 +2201,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "lightning|LCC|force": {
@@ -2281,10 +2281,10 @@
    "dmg": 24,
    "perTarget": 24,
    "deniedS": 0.38,
-   "chill": 0.36,
+   "chill": 0.16,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Frost strike",
@@ -2292,10 +2292,10 @@
    "dmg": 120,
    "perTarget": 24,
    "deniedS": 0.15,
-   "chill": 0.36,
+   "chill": 0.16,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Frost strike",
@@ -2306,7 +2306,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|A|force": {
@@ -2389,7 +2389,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Arcane blast",
@@ -2400,7 +2400,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Arcane blast",
@@ -2411,7 +2411,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|AA|force": {
@@ -2494,7 +2494,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Arcane blast",
@@ -2505,7 +2505,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Arcane blast",
@@ -2516,7 +2516,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|AAA|force": {
@@ -2599,7 +2599,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Arcane blast",
@@ -2610,7 +2610,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Arcane blast",
@@ -2621,7 +2621,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|AF|force": {
@@ -2704,7 +2704,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire blast",
@@ -2715,7 +2715,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire blast",
@@ -2726,7 +2726,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|AAF|force": {
@@ -2809,7 +2809,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire blast",
@@ -2820,7 +2820,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire blast",
@@ -2831,7 +2831,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|AFF|force": {
@@ -2914,7 +2914,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire blast",
@@ -2925,7 +2925,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire blast",
@@ -2936,7 +2936,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|AL|force": {
@@ -3019,7 +3019,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Lightning blast",
@@ -3030,7 +3030,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Lightning blast",
@@ -3041,7 +3041,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|AAL|force": {
@@ -3124,7 +3124,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Lightning blast",
@@ -3135,7 +3135,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Lightning blast",
@@ -3146,7 +3146,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|ALL|force": {
@@ -3229,7 +3229,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Lightning blast",
@@ -3240,7 +3240,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Lightning blast",
@@ -3251,7 +3251,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|AC|force": {
@@ -3331,10 +3331,10 @@
    "dmg": 21,
    "perTarget": 21,
    "deniedS": 0,
-   "chill": 0.07,
+   "chill": 0.03,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Frost blast",
@@ -3342,10 +3342,10 @@
    "dmg": 105,
    "perTarget": 21,
    "deniedS": 0,
-   "chill": 0.07,
+   "chill": 0.03,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Frost blast",
@@ -3353,10 +3353,10 @@
    "dmg": 21,
    "perTarget": 21,
    "deniedS": 0,
-   "chill": 0.07,
+   "chill": 0.03,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|AW|force": {
@@ -3439,7 +3439,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Water blast",
@@ -3450,7 +3450,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Water blast",
@@ -3461,7 +3461,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|AFL|force": {
@@ -3544,7 +3544,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire blast",
@@ -3555,7 +3555,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire blast",
@@ -3566,7 +3566,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|AFW|force": {
@@ -3649,7 +3649,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Steam blast",
@@ -3660,7 +3660,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Steam blast",
@@ -3671,7 +3671,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|ALC|force": {
@@ -3751,10 +3751,10 @@
    "dmg": 31,
    "perTarget": 31,
    "deniedS": 0.38,
-   "chill": 0.07,
+   "chill": 0.03,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Frost blast",
@@ -3762,10 +3762,10 @@
    "dmg": 155,
    "perTarget": 31,
    "deniedS": 0.15,
-   "chill": 0.07,
+   "chill": 0.03,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Frost blast",
@@ -3773,10 +3773,10 @@
    "dmg": 41,
    "perTarget": 41,
    "deniedS": 0.38,
-   "chill": 0.07,
+   "chill": 0.03,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "arcane|ACW|force": {
@@ -3856,10 +3856,10 @@
    "dmg": 25,
    "perTarget": 25,
    "deniedS": 0,
-   "chill": 0.02,
+   "chill": 0.01,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice blast",
@@ -3867,10 +3867,10 @@
    "dmg": 125,
    "perTarget": 25,
    "deniedS": 0,
-   "chill": 0.02,
+   "chill": 0.01,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice blast",
@@ -3878,10 +3878,10 @@
    "dmg": 25,
    "perTarget": 25,
    "deniedS": 0,
-   "chill": 0.02,
+   "chill": 0.01,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|I|force": {
@@ -3961,10 +3961,10 @@
    "dmg": 5,
    "perTarget": 5,
    "deniedS": 0,
-   "chill": 0.44,
+   "chill": 0.77,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice sheet",
@@ -3972,10 +3972,10 @@
    "dmg": 23,
    "perTarget": 5,
    "deniedS": 0,
-   "chill": 0.44,
+   "chill": 0.77,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice sheet",
@@ -3983,10 +3983,10 @@
    "dmg": 5,
    "perTarget": 5,
    "deniedS": 1.48,
-   "chill": 0.25,
+   "chill": 0.66,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|II|force": {
@@ -4066,10 +4066,10 @@
    "dmg": 8,
    "perTarget": 8,
    "deniedS": 0,
-   "chill": 0.5,
+   "chill": 0.8,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice sheet",
@@ -4077,10 +4077,10 @@
    "dmg": 38,
    "perTarget": 8,
    "deniedS": 0,
-   "chill": 0.5,
+   "chill": 0.8,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice sheet",
@@ -4088,10 +4088,10 @@
    "dmg": 8,
    "perTarget": 8,
    "deniedS": 1.48,
-   "chill": 0.29,
+   "chill": 0.69,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|IW|force": {
@@ -4171,10 +4171,10 @@
    "dmg": 5,
    "perTarget": 5,
    "deniedS": 0,
-   "chill": 0.43,
+   "chill": 0.77,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice sheet",
@@ -4182,10 +4182,10 @@
    "dmg": 23,
    "perTarget": 5,
    "deniedS": 0,
-   "chill": 0.43,
+   "chill": 0.77,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice sheet",
@@ -4193,10 +4193,10 @@
    "dmg": 5,
    "perTarget": 5,
    "deniedS": 1.48,
-   "chill": 0.24,
+   "chill": 0.66,
    "moved": 0.7,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|IC|force": {
@@ -4276,10 +4276,10 @@
    "dmg": 7,
    "perTarget": 7,
    "deniedS": 0,
-   "chill": 0.55,
+   "chill": 0.81,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice sheet",
@@ -4287,10 +4287,10 @@
    "dmg": 35,
    "perTarget": 7,
    "deniedS": 0,
-   "chill": 0.55,
+   "chill": 0.81,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice sheet",
@@ -4298,10 +4298,10 @@
    "dmg": 7,
    "perTarget": 7,
    "deniedS": 1.48,
-   "chill": 0.32,
+   "chill": 0.71,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|IIW|force": {
@@ -4381,10 +4381,10 @@
    "dmg": 8,
    "perTarget": 8,
    "deniedS": 0,
-   "chill": 0.5,
+   "chill": 0.79,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice sheet",
@@ -4392,10 +4392,10 @@
    "dmg": 38,
    "perTarget": 8,
    "deniedS": 0,
-   "chill": 0.5,
+   "chill": 0.79,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice sheet",
@@ -4403,10 +4403,10 @@
    "dmg": 8,
    "perTarget": 8,
    "deniedS": 1.48,
-   "chill": 0.28,
+   "chill": 0.69,
    "moved": 0.7,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|IL|force": {
@@ -4486,10 +4486,10 @@
    "dmg": 10,
    "perTarget": 10,
    "deniedS": 0,
-   "chill": 0.43,
+   "chill": 0.77,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice sheet",
@@ -4497,10 +4497,10 @@
    "dmg": 48,
    "perTarget": 10,
    "deniedS": 0,
-   "chill": 0.43,
+   "chill": 0.77,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice sheet",
@@ -4508,10 +4508,10 @@
    "dmg": 15,
    "perTarget": 15,
    "deniedS": 1.48,
-   "chill": 0.24,
+   "chill": 0.66,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|ILL|force": {
@@ -4591,10 +4591,10 @@
    "dmg": 15,
    "perTarget": 15,
    "deniedS": 0.38,
-   "chill": 0.43,
+   "chill": 0.76,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice sheet",
@@ -4602,10 +4602,10 @@
    "dmg": 73,
    "perTarget": 15,
    "deniedS": 0.15,
-   "chill": 0.43,
+   "chill": 0.76,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice sheet",
@@ -4613,10 +4613,10 @@
    "dmg": 25,
    "perTarget": 25,
    "deniedS": 1.87,
-   "chill": 0.24,
+   "chill": 0.66,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|IE|force": {
@@ -4696,10 +4696,10 @@
    "dmg": 40,
    "perTarget": 40,
    "deniedS": 0.58,
-   "chill": 0.04,
+   "chill": 0.02,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice geyser",
@@ -4707,10 +4707,10 @@
    "dmg": 202,
    "perTarget": 40,
    "deniedS": 0.58,
-   "chill": 0.04,
+   "chill": 0.02,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice geyser",
@@ -4718,10 +4718,10 @@
    "dmg": 40,
    "perTarget": 40,
    "deniedS": 0.58,
-   "chill": 0.04,
+   "chill": 0.02,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|EI|force": {
@@ -4801,10 +4801,10 @@
    "dmg": 40,
    "perTarget": 40,
    "deniedS": 0.58,
-   "chill": 0.04,
+   "chill": 0.02,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice geyser",
@@ -4812,10 +4812,10 @@
    "dmg": 202,
    "perTarget": 40,
    "deniedS": 0.58,
-   "chill": 0.04,
+   "chill": 0.02,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice geyser",
@@ -4823,10 +4823,10 @@
    "dmg": 40,
    "perTarget": 40,
    "deniedS": 0.58,
-   "chill": 0.04,
+   "chill": 0.02,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|EEI|force": {
@@ -4906,10 +4906,10 @@
    "dmg": 93,
    "perTarget": 93,
    "deniedS": 0.58,
-   "chill": 0.04,
+   "chill": 0.02,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice geyser",
@@ -4917,10 +4917,10 @@
    "dmg": 463,
    "perTarget": 93,
    "deniedS": 0.58,
-   "chill": 0.04,
+   "chill": 0.02,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice geyser",
@@ -4928,10 +4928,10 @@
    "dmg": 93,
    "perTarget": 93,
    "deniedS": 0.58,
-   "chill": 0.04,
+   "chill": 0.02,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|EII|force": {
@@ -5011,10 +5011,10 @@
    "dmg": 52,
    "perTarget": 52,
    "deniedS": 0.58,
-   "chill": 0.16,
+   "chill": 0.07,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice geyser",
@@ -5022,10 +5022,10 @@
    "dmg": 260,
    "perTarget": 52,
    "deniedS": 0.58,
-   "chill": 0.16,
+   "chill": 0.07,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice geyser",
@@ -5036,7 +5036,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|AI|force": {
@@ -5116,10 +5116,10 @@
    "dmg": 25,
    "perTarget": 25,
    "deniedS": 0,
-   "chill": 0.02,
+   "chill": 0.01,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice blast",
@@ -5127,10 +5127,10 @@
    "dmg": 125,
    "perTarget": 25,
    "deniedS": 0,
-   "chill": 0.02,
+   "chill": 0.01,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice blast",
@@ -5138,10 +5138,10 @@
    "dmg": 25,
    "perTarget": 25,
    "deniedS": 0,
-   "chill": 0.02,
+   "chill": 0.01,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|AAI|force": {
@@ -5221,10 +5221,10 @@
    "dmg": 36,
    "perTarget": 36,
    "deniedS": 0,
-   "chill": 0.02,
+   "chill": 0.01,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice blast",
@@ -5232,10 +5232,10 @@
    "dmg": 181,
    "perTarget": 36,
    "deniedS": 0,
-   "chill": 0.02,
+   "chill": 0.01,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice blast",
@@ -5243,10 +5243,10 @@
    "dmg": 36,
    "perTarget": 36,
    "deniedS": 0,
-   "chill": 0.02,
+   "chill": 0.01,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "ice|AII|force": {
@@ -5326,10 +5326,10 @@
    "dmg": 34,
    "perTarget": 34,
    "deniedS": 0,
-   "chill": 0.1,
+   "chill": 0.04,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice blast",
@@ -5337,10 +5337,10 @@
    "dmg": 170,
    "perTarget": 34,
    "deniedS": 0,
-   "chill": 0.1,
+   "chill": 0.04,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice blast",
@@ -5351,7 +5351,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "coldmix|EC|force": {
@@ -5431,10 +5431,10 @@
    "dmg": 35,
    "perTarget": 35,
    "deniedS": 0.58,
-   "chill": 0.12,
+   "chill": 0.05,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Frost geyser",
@@ -5442,10 +5442,10 @@
    "dmg": 175,
    "perTarget": 35,
    "deniedS": 0.58,
-   "chill": 0.12,
+   "chill": 0.05,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Frost geyser",
@@ -5456,7 +5456,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "coldmix|ECC|force": {
@@ -5536,10 +5536,10 @@
    "dmg": 42,
    "perTarget": 42,
    "deniedS": 0.58,
-   "chill": 0.38,
+   "chill": 0.19,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Frost geyser",
@@ -5547,10 +5547,10 @@
    "dmg": 208,
    "perTarget": 42,
    "deniedS": 0.58,
-   "chill": 0.38,
+   "chill": 0.19,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Frost geyser",
@@ -5561,7 +5561,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "coldmix|AC|force": {
@@ -5641,10 +5641,10 @@
    "dmg": 21,
    "perTarget": 21,
    "deniedS": 0,
-   "chill": 0.07,
+   "chill": 0.03,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Frost blast",
@@ -5652,10 +5652,10 @@
    "dmg": 105,
    "perTarget": 21,
    "deniedS": 0,
-   "chill": 0.07,
+   "chill": 0.03,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Frost blast",
@@ -5663,10 +5663,10 @@
    "dmg": 21,
    "perTarget": 21,
    "deniedS": 0,
-   "chill": 0.07,
+   "chill": 0.03,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "coldmix|LC|force": {
@@ -5746,10 +5746,10 @@
    "dmg": 18,
    "perTarget": 18,
    "deniedS": 0.38,
-   "chill": 0.1,
+   "chill": 0.04,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Frost strike",
@@ -5757,10 +5757,10 @@
    "dmg": 90,
    "perTarget": 18,
    "deniedS": 0.15,
-   "chill": 0.1,
+   "chill": 0.04,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Frost strike",
@@ -5771,7 +5771,7 @@
    "chill": 0,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "coldmix|CCC|force": {
@@ -5848,35 +5848,35 @@
   "one": {
    "title": "Freezing fog",
    "shape": "patch",
-   "dmg": 26,
-   "perTarget": 26,
+   "dmg": 52,
+   "perTarget": 52,
    "deniedS": 0,
-   "chill": 0.75,
+   "chill": 0.87,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Freezing fog",
    "shape": "patch",
-   "dmg": 130,
-   "perTarget": 26,
+   "dmg": 260,
+   "perTarget": 52,
    "deniedS": 0,
-   "chill": 0.75,
+   "chill": 0.87,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Freezing fog",
    "shape": "patch",
-   "dmg": 26,
-   "perTarget": 26,
+   "dmg": 52,
+   "perTarget": 52,
    "deniedS": 1.88,
-   "chill": 0.58,
+   "chill": 0.8,
    "moved": 0,
    "froze": 1,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|E|force": {
@@ -5959,7 +5959,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Geyser",
@@ -5970,7 +5970,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Geyser",
@@ -5981,7 +5981,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EE|force": {
@@ -6064,7 +6064,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Geyser",
@@ -6075,7 +6075,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Geyser",
@@ -6086,7 +6086,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EEE|force": {
@@ -6165,33 +6165,33 @@
    "shape": "geyser",
    "dmg": 149,
    "perTarget": 149,
-   "deniedS": 4.17,
+   "deniedS": 12.17,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Geyser",
    "shape": "geyser",
    "dmg": 743,
    "perTarget": 149,
-   "deniedS": 4.17,
+   "deniedS": 12.17,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Geyser",
    "shape": "geyser",
    "dmg": 149,
    "perTarget": 149,
-   "deniedS": 4.17,
+   "deniedS": 12.17,
    "chill": 0,
    "moved": 0,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EF|force": {
@@ -6274,7 +6274,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire geyser",
@@ -6285,7 +6285,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire geyser",
@@ -6296,7 +6296,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EEF|force": {
@@ -6379,7 +6379,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire geyser",
@@ -6390,7 +6390,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire geyser",
@@ -6401,7 +6401,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EFF|force": {
@@ -6484,7 +6484,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire geyser",
@@ -6495,7 +6495,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire geyser",
@@ -6506,7 +6506,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EA|force": {
@@ -6589,7 +6589,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Arcane geyser",
@@ -6600,7 +6600,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Arcane geyser",
@@ -6611,7 +6611,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EEA|force": {
@@ -6694,7 +6694,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Arcane geyser",
@@ -6705,7 +6705,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Arcane geyser",
@@ -6716,7 +6716,7 @@
    "chill": 0,
    "moved": 0.7,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EAA|force": {
@@ -6799,7 +6799,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Arcane geyser",
@@ -6810,7 +6810,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Arcane geyser",
@@ -6821,7 +6821,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EC|force": {
@@ -6901,10 +6901,10 @@
    "dmg": 35,
    "perTarget": 35,
    "deniedS": 0.58,
-   "chill": 0.12,
+   "chill": 0.05,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Frost geyser",
@@ -6912,10 +6912,10 @@
    "dmg": 175,
    "perTarget": 35,
    "deniedS": 0.58,
-   "chill": 0.12,
+   "chill": 0.05,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Frost geyser",
@@ -6926,7 +6926,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|ECC|force": {
@@ -7006,10 +7006,10 @@
    "dmg": 42,
    "perTarget": 42,
    "deniedS": 0.58,
-   "chill": 0.38,
+   "chill": 0.19,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Frost geyser",
@@ -7017,10 +7017,10 @@
    "dmg": 208,
    "perTarget": 42,
    "deniedS": 0.58,
-   "chill": 0.38,
+   "chill": 0.19,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Frost geyser",
@@ -7031,7 +7031,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EW|force": {
@@ -7114,7 +7114,7 @@
    "chill": 0,
    "moved": 1.1,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Water geyser",
@@ -7125,7 +7125,7 @@
    "chill": 0,
    "moved": 1.1,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Water geyser",
@@ -7136,7 +7136,7 @@
    "chill": 0,
    "moved": 1.1,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EWC|force": {
@@ -7216,10 +7216,10 @@
    "dmg": 40,
    "perTarget": 40,
    "deniedS": 0.58,
-   "chill": 0.04,
+   "chill": 0.02,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Ice geyser",
@@ -7227,10 +7227,10 @@
    "dmg": 202,
    "perTarget": 40,
    "deniedS": 0.58,
-   "chill": 0.04,
+   "chill": 0.02,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Ice geyser",
@@ -7238,10 +7238,10 @@
    "dmg": 40,
    "perTarget": 40,
    "deniedS": 0.58,
-   "chill": 0.04,
+   "chill": 0.02,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EFA|force": {
@@ -7324,7 +7324,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Fire geyser",
@@ -7335,7 +7335,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Fire geyser",
@@ -7346,7 +7346,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|ECA|force": {
@@ -7426,10 +7426,10 @@
    "dmg": 56,
    "perTarget": 56,
    "deniedS": 0.58,
-   "chill": 0.11,
+   "chill": 0.05,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Frost geyser",
@@ -7437,10 +7437,10 @@
    "dmg": 280,
    "perTarget": 56,
    "deniedS": 0.58,
-   "chill": 0.11,
+   "chill": 0.05,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Frost geyser",
@@ -7451,7 +7451,7 @@
    "chill": 0,
    "moved": 0.4,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  },
  "earth|EWF|force": {
@@ -7534,7 +7534,7 @@
    "chill": 0,
    "moved": 1.1,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "pack": {
    "title": "Steam geyser",
@@ -7545,7 +7545,7 @@
    "chill": 0,
    "moved": 1.1,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   },
   "wetOne": {
    "title": "Steam geyser",
@@ -7556,7 +7556,7 @@
    "chill": 0,
    "moved": 1.1,
    "froze": 0,
-   "window": 5.5
+   "window": 13.5
   }
  }
 }

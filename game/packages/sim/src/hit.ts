@@ -157,8 +157,11 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
     const col = physical ? RES.physical : RES.lightning, lr = guard ? resist(w, tSeat, col) : 0;
     if (b.wet[t]) dmg += DAMAGE.lightning * lightning * o.scale * (STATUS.wetShockMult - 1) * (guard ? taken(w, tSeat, col) : 1);
     // Shock is a chance (STATUS.shockRate): more Lightning, a bigger hit and a smaller body all make a stun likelier.
-    // x / (1 + x) rather than 1 - e^-x: the same shape without Math.exp, which engines may round differently.
-    if (lr < ARMS.resStatus) {
+    // x / (1 + x) rather than 1 - e^-x: the same shape with exact ops only (an exponential may round differently across engines).
+    // A stunned body can't be shocked again until it recovers: the stun never renews, so the share of time stunned is
+    // a / (1 + a) with a linear in Lightning, like resistance (the user, 2026-11-11): each rune stretches the time a body
+    // needs to act by the same amount, and nothing locks.
+    if (lr < ARMS.resStatus && !b.stun[t]) {
       const x = STATUS.shockRate * lightning * o.scale * Math.sqrt(STATUS.shockRef / Math.max(1, b.maxHp[t])) * (guard ? taken(w, tSeat, col) : 1);
       if (nextFloat(w.rng) < x / (1 + x)) b.stun[t] = Math.max(b.stun[t], T(STATUS.stunTime));
     }

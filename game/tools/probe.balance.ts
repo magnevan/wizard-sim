@@ -54,7 +54,7 @@ function run(code: string, cast: Cast, pack: number, wet = false) {
   const hold = cast === 'place' ? 30 : spec.channel ? Math.round(RHYTHM.naturalChannel * 60) + 12 : spec.charge ? 70 : 2;
   const start = ticks;
   for (let t = 0; t < hold; t++) go(aim({ buttons: btn }));
-  for (let t = 0; t < 300; t++) go(aim());
+  for (let t = 0; t < (cast === 'place' ? 780 : 300); t++) go(aim()); // floors and fog last 8-12 s
   for (let k = 0; k < pack; k++) moved += Math.hypot(b.x[8 + k] - x0[k][0], b.y[8 + k] - x0[k][1]);
   const secs = (ticks - start) / 60;
   return { title: spec.title, shape: spec.shape, dmg: Math.round(dmg), perTarget: Math.round(dmg / pack), deniedS: +(denied / 60 / pack).toFixed(2), chill: +(chill / ticks / pack).toFixed(2), moved: +(moved / pack).toFixed(1), froze: frozeAny, window: +secs.toFixed(1) };
@@ -78,4 +78,19 @@ it('probes the spells', () => {
   }
   writeFileSync(join(__dirname, 'probe-report.json'), JSON.stringify(out, null, 1));
   expect(Object.keys(out).length).toBeGreaterThan(10);
+});
+
+it('measures stun uptime by body size', () => {
+  const rows: string[] = [];
+  for (const code of ['L', 'LL', 'LLL', 'LLLL', 'AL', 'AAL']) for (const hp of [30, 135, 345, 2000]) {
+    const w = scene(3, 1), b = w.bodies;
+    b.hp[8] = b.maxHp[8] = hp;
+    const presses = [...code].map((c) => L[c]);
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: 96, aimY: 0, ...o })];
+    for (const e of presses) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; step(w, aim({ press0: elementId(e) })); }
+    let st = 0, n = 0;
+    for (let t = 0; t < 1200; t++) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; step(w, aim({ buttons: BTN.force })); b.hp[8] = hp; if (t > 30) { if (b.stun[8]) st++; n++; } }
+    rows.push(`${code} ${hp} ${Math.round((100 * st) / n)}%`);
+  }
+  writeFileSync(join(__dirname, 'probe-stun.txt'), rows.join(String.fromCharCode(10)));
 });

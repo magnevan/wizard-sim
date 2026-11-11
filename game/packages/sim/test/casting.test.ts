@@ -421,6 +421,16 @@ describe('Life (support)', () => {
     expect(w.bodies.hp[0]).toBeGreaterThan(50);
   });
 
+  it('a heal spray builds the imbue up tick by tick: Life + Fire on an ally', () => {
+    // its per-tick share is small (a second of channel is one hit's worth): it must add up, not be cleared each tick
+    const { w, d } = range(6, 2);
+    w.bodies.x[1] = 2.5; w.bodies.y[1] = 0; w.bodies.hp[1] = 40;
+    d.aimAt(2.5, 0).queue('life', 'fire').cast(BTN.force, 60, 2);
+    expect(w.bodies.hp[1]).toBeGreaterThan(40);
+    expect(w.bodies.blessT[1]).toBeGreaterThan(0);
+    expect(taken(w, 1, RES.fire)).toBeLessThan(0.8);
+  });
+
   it('every other element in a heal builds up its resistance, which fades: Life + Lightning + Cold', () => {
     const { w, d, dummy } = range(2);
     w.bodies.hp[dummy] = 100;

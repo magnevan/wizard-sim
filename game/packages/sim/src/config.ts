@@ -422,6 +422,8 @@ export const ARMS = {
    * fire damage up, and is worth ~2.7 Life runes against all-fire; under heavy pressure from ~25 %, light from ~65 %.
    */
   blessRate: 0.75, blessDecay: 0.1,
+  /** ...and fades by this much flat a second as well, so it ends (about 20 s after a strong heal) without a floor. */
+  blessFade: 0.02,
   /** What each guard takes before it breaks. */
   hp: { mirror: 90, bulwark: 160, ember: 90, rime: 90, spark: 45, tide: 90, prism: 90, leaf: 90 },
 };

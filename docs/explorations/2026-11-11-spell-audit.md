@@ -17,6 +17,7 @@ The user: "I want to make a pass over all the spells in the game and see if the 
 11. **Niche answers are judged in their niche** (reference situations, not a dummy chart).
 12. **Every cast shape has a job.**
 13. **Today's enemies are early drafts** (the user: many more will come). Balance against reference situations (one tough target, a pack, a fast flanker, an ally nearby), not the current roster. Systemic problems (a status that locks anything) are fixed in the rules, not left for enemy design to patch. Body-scaled pools and resistances are the tools future enemies use to differ, and a spell with a clear identity but no use yet can be given its situation by a future enemy.
+14. **Heals are judged differently** (the user: "there's way fewer targets to heal than harm"). An area heal reaches 1–3 allies, not a pack of 5, so it isn't inflated the way area damage is. Healing is capped by missing health (wizards have 100 HP), so judge effective healing and healing per second when someone is hurt, not totals. An area heal's real cost is healing the enemies beside your allies; aimed heals waste nothing. Healing yourself counts.
 
 ## What was audited
 

@@ -94,3 +94,29 @@ it('measures stun uptime by body size', () => {
   }
   writeFileSync(join(__dirname, 'probe-stun.txt'), rows.join(String.fromCharCode(10)));
 });
+
+it('measures effective healing on three hurt wizards', () => {
+  const rows: string[] = [];
+  for (const code of ['H', 'HH', 'HHH', 'HHHH', 'HL', 'HC', 'HE', 'HF', 'HW', 'HLL', 'HEE']) for (const cast of ['force', 'area', 'place'] as Cast[]) {
+    const dx = cast === 'force' ? 3 : cast === 'area' ? 1.2 : 4;
+    const w = createWorld(1, 3, { dummies: false }), b = w.bodies;
+    b.x[0] = 0; b.y[0] = 0; b.x[1] = dx; b.y[1] = 0; b.x[2] = dx + 0.5; b.y[2] = 0.9;
+    b.kind[8] = KIND.enemy; b.arch[8] = 0; b.team[8] = 2; b.x[8] = dx + 0.5; b.y[8] = -0.9; b.r[8] = 0.4; b.maxHp[8] = 100;
+    for (const i of [0, 1, 2, 8]) b.hp[i] = 40;
+    const presses = [...code].map((c) => L[c]);
+    const spec = compile(presses, cast);
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: dx * 32, aimY: 0, ...o }), NO_INPUT, NO_INPUT];
+    for (const e of presses) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; step(w, aim({ press0: elementId(e) })); }
+    const btn = cast === 'force' ? BTN.force : BTN.area;
+    const hold = cast === 'place' ? 30 : spec.channel ? Math.round(RHYTHM.naturalChannel * 60) + 12 : spec.charge ? 70 : 2;
+    const sum = () => b.hp[0] + b.hp[1] + b.hp[2];
+    const hp0 = sum();
+    let at3 = 0;
+    for (let t = 0; t < 600; t++) {
+      step(w, t < hold ? aim({ buttons: btn }) : aim());
+      if (t === 180) at3 = sum() - hp0;
+    }
+    rows.push(`${code.padEnd(5)} ${cast.padEnd(6)} ${spec.title.padEnd(16)} 3s ${Math.round(at3)}  10s ${Math.round(sum() - hp0)}  self ${Math.round(b.hp[0] - 40)}  enemy +${Math.round(b.hp[8] - 40)}`);
+  }
+  writeFileSync(join(__dirname, 'probe-heal.txt'), rows.join(String.fromCharCode(10)));
+});

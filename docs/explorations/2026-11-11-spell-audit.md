@@ -124,3 +124,25 @@ The imbue builds and lingers (0.75 a rune, 10 % decay a second); measured crosso
 Idea, not built: make the Healing shards seek hurt allies (as their text used to promise), so a scattered team has a fire-and-forget multi-target heal.
 
 Next: Shield, Sigil, Self casts, then the cross-cut by cast.
+
+## Pass 2, step 5b: the Healing shards seek (built 2026-11-11)
+
+The user agreed to the idea: the shards are now a fire-and-forget heal, like the Chain heal but not channelled, with more reach, and not too strong for their flexibility ("but of course it's at least 3 runes so it won't be that weak either"). Each shard turns toward the hurt ally nearest its heading (within 0.16 turns of it and 10 u, at up to 1.2 turns a second) and flies 10 u, against Ice's 7.2. Healing shards give 63 to clustered or scattered allies alike; the Chain heal gives 76 clustered and 42 scattered, and the sprays and beam give nothing to a scattered team (`game/tools/probe-heal.txt`, rows marked `*`). A second Cold adds nothing to the shards yet (only its imbue).
+
+**To remember:** the imbue's motes are placeholder art. The elemental ward (Shield + element on yourself) already has a look that fits it; re-use it once Shield is done.
+
+## Pass 2, step 6: Shield (pass 1 map, 2026-11-11)
+
+| Cast | Today | Cost |
+|---|---|---|
+| Force | A wave sweeping 6 u: Shove wave (pushes, sweeps shots away), Tidal wave (soaks, shoves), Fault line (knocks down), Ice wave, Elemental wave | one-off |
+| Area | A closed ring (1.5 u): stone, ice, curtain or barrier | rock and ice are stuff, the rest energy |
+| Place | An arc around you facing the cursor, or a drawn wall | the same |
+| Self | A ward: resists each element 40 %, mending with Life, stone armour with Earth, a mirror alone (3 shots) | energy, twice a wall's idle drain |
+| Weapon | The eight guards | stuff |
+
+Findings:
+1. **The wave has no job of its own.** The Tidal wave overlaps the Water spray, the Splash ring and the Tide trident's Heavy; the Fault line the Earthquake and the Stone burst's line; the Elemental wave is a slow, wide spray. Only the Shove wave's sweeping of shots is Shield's own. The user doesn't like it either ("more like a water effect"), and proposes moving Blink here from Sigil: every other Sigil spell binds a rune, and Blink is defensive.
+2. **A ward resists 40 % whatever its rune count**: a second Fire adds only 20 ward HP (principle 9).
+3. **A pure barrier stops everyone's shots, its owner's too**: a Ring of barriers seals you in. (It turns enemy shots back at half damage.)
+4. **The ward and the Life imbue both give resistance.** They can stay distinct: the ward is chosen before a fight, strong, and costs upkeep; the imbue is a by-product of healing and fades.

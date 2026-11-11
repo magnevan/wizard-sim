@@ -1338,3 +1338,7 @@ The user went over the Life spells (where each would be used: the beam is long-r
 - **Numbers, by effective healing** (`game/tools/probe-heal.txt`): Life beam ×1.5 (1 Life: 52 on one ally in 2.5 s); Healing ring 1.8× (25 a Life to everyone in reach, you included); Healing palm 2.1× (about 30, above the self-heal's 21); Chain heal halved (2 runes: 76 over two allies in 3 s, was 120). The spring and the lent shapes stay.
 - **Left for progression** (the user): wizard health against overheal.
 - **Noted:** the Healing shards' text promised that each shard seeks a hurt ally, but they fly straight, which is why they felt like the worst heal (the user: "it's maybe fine that some versions are a little silly"). The text now says what they do.
+
+## 2026-11-11: Spell audit, step 5b: the Healing shards seek hurt allies
+
+The user agreed to the idea from step 5: the shards become a fire-and-forget heal for a scattered team, "more similar to lightning heal, maybe a bit longer range & not channeled", and not too strong for their flexibility, as they're 3 runes. Each shard curves toward the hurt ally nearest its heading and flies 10 u (Ice's shards 7.2). Measured: 63 to two scattered allies, where the Chain heal gives 42 and the sprays nothing; clustered, the Chain heal still leads (76 against 63). The imbue's placeholder motes should later re-use the elemental ward's look (the user), once Shield is done.

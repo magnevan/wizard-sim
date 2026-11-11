@@ -298,7 +298,7 @@
       force: (p, o = {}) => {
         const L = o.lend;
         if (L === 'lightning') return ['Chain heal', 'A heal that leaps from you to the nearest hurt ally, then on from ally to ally.'];
-        if (L === 'ice') return ['Healing shards', 'A volley of bright ice shards along your aim; each heals whoever it strikes.'];
+        if (L === 'ice') return ['Healing shards', 'A volley of bright ice shards along your aim, reaching farther than plain Ice shards. Each shard curves toward the hurt ally nearest its path and heals whoever it strikes: fire and forget, for a scattered team.'];
         if (L === 'cold') return ['Cooling spray', 'A cone of cool mist: it heals everyone in it and puts out the burning.'];
         if (L === 'water') return ['Rescue spray', 'A cone of healing water: it heals, shoves back the enemies it touches, and puts out the burning.'];
         if (L === 'earth') return ['Heal-stone', 'Hold to charge, release to lob a stone that bursts where it lands and heals everyone around. Throw it over a wall to your front line.'];

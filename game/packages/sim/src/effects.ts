@@ -193,7 +193,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       const spread = (SHAPES.shardSpread * SHAPES.shardCount) / count;
       for (let j = 0; j < count; j++) {
         const a = face + (j - (count - 1) / 2) * spread;
-        const m = spawnMissile(w, src, p, cosTurns(a), sinTurns(a), 2, SHAPES.shardPower * k, 0, 0, ex.ox, ex.oy);
+        const m = spawnMissile(w, src, p, cosTurns(a), sinTurns(a), 2, (spec.heal ? SHAPES.healShardPower : SHAPES.shardPower) * k, 0, 0, ex.ox, ex.oy);
         // Ice's identity is quick flight: its shards fly faster than other missiles (Life's healing shards don't)
         if (m >= 0 && spec.form === EL.ice) { w.missiles.vx[m] *= SHAPES.iceFlight; w.missiles.vy[m] *= SHAPES.iceFlight; }
       }
@@ -572,7 +572,7 @@ export function spawnMissile(w: World, src: number, p: Payload, dx: number, dy: 
     m.x[j] = (ox ?? b.x[src]) + dx * (b.r[src] + 0.25); m.y[j] = (oy ?? b.y[src]) + dy * (b.r[src] + 0.25);
     m.vx[j] = dx * SHAPES.missileSpeed; m.vy[j] = dy * SHAPES.missileSpeed;
     m.r[j] = type === 2 ? 0.15 : SHAPES.missileRadius;
-    m.life[j] = T(type === 2 ? SHAPES.shardRange / SHAPES.missileSpeed : SHAPES.missileLife);
+    m.life[j] = T(type === 2 ? (p.heal ? SHAPES.healShardRange : SHAPES.shardRange) / SHAPES.missileSpeed : SHAPES.missileLife);
     m.look[j] = p.look; m.flags[j] = flagsOf(p); m.mod[j] = modId(p.mod);
     m.els.set(p.counts.subarray(p.at * N_EL, p.at * N_EL + N_EL), j * N_EL);
     if (type === 3) { // a lobbed heal-stone: flies to its target point over everything
@@ -596,6 +596,7 @@ export function tickMissiles(w: World): void {
       m.x[j] = b.x[o] + (m.vx[j] / sp) * (b.r[o] + 0.25); m.y[j] = b.y[o] + (m.vy[j] / sp) * (b.r[o] + 0.25);
       continue;
     }
+    if (m.type[j] === 2 && m.flags[j] & PF.heal) seekHurt(w, j);
     m.x[j] += m.vx[j] * DT; m.y[j] += m.vy[j] * DT;
     const out = Math.abs(m.x[j]) > w.dims.w / 2 || Math.abs(m.y[j]) > w.dims.h / 2;
     const p = stored(m.els, j, m.flags[j], m.mod[j], m.look[j]);
@@ -653,6 +654,29 @@ export function tickMissiles(w: World): void {
       w.events.push({ tick: w.clock[0], kind: 'fizzle', who: m.owner[j], x: m.x[j], y: m.y[j], look: m.look[j] });
     }
   }
+}
+
+const SEEK_COS = cosTurns(SHAPES.healSeekCone), TURN_COS = cosTurns(SHAPES.healTurn / 60), TURN_SIN = sinTurns(SHAPES.healTurn / 60);
+
+/** A healing shard turns toward the hurt ally (not its caster) nearest its heading, a limited angle a tick. */
+function seekHurt(w: World, j: number): void {
+  const m = w.missiles, b = w.bodies, o = m.owner[j];
+  const sp = len(m.vx[j], m.vy[j]) || 1, ux = m.vx[j] / sp, uy = m.vy[j] / sp;
+  let best = -1, bc = SEEK_COS, bx = 0, by = 0;
+  for (let i = 0; i < b.kind.length; i++) {
+    if (!alive(w, i) || i === o || b.team[i] !== b.team[o] || b.hp[i] >= b.maxHp[i]) continue;
+    const dx = b.x[i] - m.x[j], dy = b.y[i] - m.y[j], d = len(dx, dy);
+    if (d > SHAPES.healSeekRange || d < 1e-6) continue;
+    const c = (dx * ux + dy * uy) / d;
+    if (c > bc) { bc = c; best = i; bx = dx / d; by = dy / d; }
+  }
+  if (best < 0) return;
+  let nx = bx, ny = by;
+  if (bc < TURN_COS) { // too far round to reach this tick: turn the most it can, toward the ally
+    const s = ux * by - uy * bx >= 0 ? TURN_SIN : -TURN_SIN;
+    nx = ux * TURN_COS - uy * s; ny = ux * s + uy * TURN_COS;
+  }
+  m.vx[j] = nx * sp; m.vy[j] = ny * sp;
 }
 
 /** A missile's frost puff: its Cold alone, over a small disc, at a third of its strength (more Cold, a wider puff). */

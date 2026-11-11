@@ -151,6 +151,12 @@ export const SHAPES = {
   frostPuff: 1.4,
   shardCount: 5, shardSpread: 0.035, // turns between shards
   /**
+   * Healing shards (Life + Ice) seek hurt allies (spell audit, 2026-11-11: their text promised it; the user agreed). Each
+   * shard turns toward the hurt ally nearest its heading, within healSeekCone turns of it and healSeekRange u, at up to
+   * healTurn turns a second. They reach farther than Ice's shards (healShardRange u), and heal at healShardPower each.
+   */
+  healShardRange: 10, healSeekCone: 0.16, healSeekRange: 10, healTurn: 1.2, healShardPower: 0.75,
+  /**
    * Caltrops (Ice Place, spell audit 2026-11-11): ice spikes on the ground for caltropLife s (+ lingerPerRune a rune), no hit
    * when they land. Whoever walks through is stabbed by the distance walked: caltropPerU of the payload a unit, so crossing
    * a 4 u field is about one Ice hit, and standing still is safe.

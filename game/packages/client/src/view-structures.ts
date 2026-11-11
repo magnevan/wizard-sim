@@ -32,6 +32,7 @@ import type { Ctx, Pt, Ramp } from './art/px';
 import { CELL_H, CELL_W, FEET_X, FEET_Y } from './art/rigs';
 import * as S from './art/sigil';
 import * as A from './art/accent';
+import { BURST_LIFE, drawBurst, hasBurst } from './art/novas';
 import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './art/util';
 import type { BodyView, LightFn } from './art/vfx';
 import { glyph, perkOf } from './art/perks';
@@ -362,7 +363,7 @@ export class StructureView {
   eachPiece(fn: (s: Sprite, x: number, y: number) => void): void { this.pieces.each(fn); }
   get pieceOrigin(): [number, number] { return this.pieces.origin; }
   /** Draws something anchored on the ground so what stands in front hides it (Vfx.behind). Set by the view. */
-  behind: ((ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread?: boolean) => void) | null = null;
+  behind: ((ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread?: boolean, bodiesToo?: boolean) => void) | null = null;
   private depth(o: Ctx, ax: number, ay: number, R: number, draw: (o: Ctx) => void): void {
     if (this.behind) this.behind(ax, ay, R, draw); else draw(o);
   }
@@ -387,7 +388,7 @@ export class StructureView {
     // weapon and guard moves (hands.ts, guards.ts): each its own short readable effect
     for (const e of w.events) {
       if (e.kind !== 'move' || !e.text) continue;
-      const life = MOVE_LIFE[e.text] ?? 0.5;
+      const life = (e.text === 'imbue' ? BURST_LIFE[e.look ?? 0] : undefined) ?? MOVE_LIFE[e.text] ?? 0.5;
       if ((e.text === 'strike' || e.text === 'sweep') && e.who >= 0 && e.who < MAX_SEATS) {
         this.blowT0[e.who] = t; this.blowKind[e.who] = e.text === 'strike' ? 1 : 2; this.blowAng[e.who] = Math.atan2((e.y2 ?? e.y) - e.y, (e.x2 ?? e.x) - e.x);
       }
@@ -1293,6 +1294,24 @@ export class StructureView {
     }
   }
 
+  /**
+   * The imbued burst of water, cold, fire, arcane or earth (art/novas.ts drawBurst; the user, 2026-11-11: the nova, but
+   * directed). Two passes like a nova: the part of the cone behind the caster goes behind them and whatever stands in
+   * front, the rest over them. The other queued elements shed their own bits along the cone.
+   */
+  private burstDepth(f: SFx, e: number, t: number, g: Ctx, o: Ctx, light: LightFn): void {
+    const x = gx(f.x), y = gy(f.y), aim = Math.atan2(f.y2 - f.y, f.x2 - f.x), r = Math.hypot(f.x2 - f.x, f.y2 - f.y) * PPU;
+    const half = SHAPES.imbueHalf * TAU, R = r * 1.2 + 40;
+    const pass = (part: 'far' | 'near') => (c: Ctx): void => { drawBurst(c, g, f.look, x, y, r, e, t, f.seed, light, part, aim, half); };
+    if (this.behind) { this.behind(x, y - 1, R, pass('far'), true, true); this.behind(x, y + 1, R, pass('near')); }
+    else { pass('far')(o); pass('near')(o); }
+    const ids: number[] = [];
+    for (let id = 1; id <= N_EL; id++) if (f.n & (1 << id) && id !== f.look) ids.push(id);
+    if (!ids.length || e > 0.6) return;
+    const at = (a: number, rr: number): Pt => [x + Math.cos(a) * rr, y - 8 + Math.sin(a) * rr * FY], k = easeOut(clamp(e / 0.35, 0, 1));
+    this.depth(o, x, y, R, (c) => ids.forEach((id, m) => { const a = aim + (m - (ids.length - 1) / 2) * (half / Math.max(1, ids.length)); this.blowSpray(elName(id), blowRamp(id), at(a, (6 + (r - 6) * k) * 0.8), a, e * 0.8, f.seed + m * 31, c, 4); }));
+  }
+
   /** The imbued burst: a crescent of the queued elements leaving the staff and rolling out over the cone. */
   private imbueFx(f: SFx, e: number, q: number, aw: number, reach: number, at: (a: number, r: number) => Pt, o: Ctx, g: Ctx, light: LightFn): void {
     const ids: number[] = [];
@@ -1612,6 +1631,7 @@ export class StructureView {
   private fxDepth(w: World, f: SFx, e: number, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {
     const who = f.who >= 0 && f.who < bodies.length ? bodies[f.who] : null, placed = f.x !== 0 || f.y !== 0;
     if (f.kind === 'whit' || f.kind === 'trail' || (!placed && !who?.on)) { this.drawFx(w, f, e, t, g, o, bodies, light); return; } // a chip off a wall is on that wall
+    if (f.kind === 'mv-imbue' && hasBurst(f.look)) { this.burstDepth(f, e, t, g, o, light); return; }
     this.depth(o, placed ? gx(f.x) : who!.x, placed ? gy(f.y) : who!.y, 90, (o) => this.drawFx(w, f, e, t, g, o, bodies, light));
   }
   private drawFx(w: World, f: SFx, e: number, t: number, g: Ctx, o: Ctx, bodies: BodyView[], light: LightFn): void {

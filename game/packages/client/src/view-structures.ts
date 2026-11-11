@@ -1120,6 +1120,14 @@ export class StructureView {
         }
         light(v.x, v.y - 6, 30, '#d400ff', 0.3);
       }
+      // the stored spell (placeholder art): a sigil ring over your head, faint and pulsing while the staff waits for a spell,
+      // bright with a star in it while it holds one
+      if (s.storeArm[i] || s.storeLen[i]) {
+        const held = s.storeLen[i] > 0, CY = v.y - 34, R = 6;
+        for (let q = 0; q < 24; q++) if (held || (q + Math.floor(t * 8)) % 2 === 0) { const a = (q / 24) * TAU + t * (held ? 1.5 : 0.6); X.px(o, v.x + Math.cos(a) * R, CY + Math.sin(a) * R * 0.6, held ? SV[1] : SV[3]); }
+        if (held) { X.glow(o, v.x, CY, 9 + Math.sin(t * 6), SV[2], 0.8); X.rect(o, v.x - 2, CY, 5, 1, '#ffffff'); X.rect(o, v.x, CY - 2, 1, 5, '#ffffff'); }
+        light(v.x, CY, held ? 26 : 14, '#d400ff', held ? 0.35 : 0.15);
+      }
       const conj = seg(this.st - this.sConjT0[i], 0, 0.3);
       if (s.wand[i]) this.wand(v, t, g, o, P, conj, light);
       if (s.weapon[i]) this.weapon(w, i, v, t, g, o, P, conj, light);

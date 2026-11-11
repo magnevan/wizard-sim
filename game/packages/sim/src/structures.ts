@@ -170,7 +170,7 @@ function turretGap(w: World, k: number): number {
 
 // ---- casting -----------------------------------------------------------------------------------
 
-export const STRUCTURE_SHAPES: readonly string[] = ['wave', 'ring', 'arcwall', 'drawnwall', 'ward', 'guard', 'turret', 'orbitals', 'motes', 'glyph', 'lineglyph', 'lens', 'wand', 'weapon', 'aura', 'double'];
+export const STRUCTURE_SHAPES: readonly string[] = ['store', 'wave', 'ring', 'arcwall', 'drawnwall', 'ward', 'guard', 'turret', 'orbitals', 'motes', 'glyph', 'lineglyph', 'lens', 'wand', 'weapon', 'aura', 'double'];
 
 /** Raises a structure. (tx, ty) is the clamped cursor; (hx, hy) where a Place drag started. */
 export function castStructure(w: World, src: number, spec: SpellSpec, face: number, tx: number, ty: number, hx: number, hy: number, on = src): void {
@@ -201,6 +201,7 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
       break;
     }
     case 'motes': s.motes[src] = STRUCT.motes; break;
+    case 'store': if (!s.storeLen[src]) { s.storeArm[src] = 1; s.storeBorn[src] = w.clock[0]; } break; // the next spell goes into the staff (cast.ts); one held at a time
     case 'glyph': { const k = spawnDevice(w, src, DEVICE.glyph, spec, tx, ty); if (k >= 0) w.devices.timer[k] = T(STRUCT.glyphArm); break; }
     case 'lineglyph': { const k = spawnDevice(w, src, DEVICE.lineglyph, spec, hx, hy, tx, ty); if (k >= 0) w.devices.timer[k] = T(STRUCT.glyphArm); break; }
     case 'lens': {
@@ -286,7 +287,7 @@ export function doubleRepeat(w: World, src: number, spec: SpellSpec, tx: number,
  *   so a new device simply replaces the oldest.
  */
 const HOVER = 1.0;
-const Q = { device: 1, double: 2, onYou: 3 } as const;
+const Q = { device: 1, double: 2, onYou: 3, store: 4 } as const;
 
 function giveRune(w: World, seat: number): void {
   const k = seat * N_EL + EL.sigil - 1;
@@ -297,7 +298,8 @@ function removeOne(w: World, seat: number, what: number, k: number): void {
   const s = w.seats, b = w.bodies;
   if (what === Q.device) w.devices.type[k] = DEVICE.none;
   else if (what === Q.double) { const d = s.double[seat]; if (d >= 0 && b.kind[d] === KIND.double) b.kind[d] = KIND.none; s.double[seat] = -1; }
-  else { s.wand[seat] = 0; s.weapon[seat] = 0; s.aura[seat] = 0; s.motes[seat] = 0; }
+  else if (what === Q.store) { s.storeArm[seat] = 0; s.storeLen[seat] = 0; }
+  else { s.wand[seat] = 0; s.weapon[seat] = 0; s.aura[seat] = 0; s.motes[seat] = 0; s.storeArm[seat] = 0; s.storeLen[seat] = 0; }
   const x = what === Q.device ? w.devices.x[k] : what === Q.double ? b.x[k] : b.x[seat], y = what === Q.device ? w.devices.y[k] : what === Q.double ? b.y[k] : b.y[seat];
   w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x, y, amount: 1, look: EL.sigil, text: 'dismissed' });
 }
@@ -313,7 +315,7 @@ function hovered(w: World, seat: number, x: number, y: number): [number, number]
   }
   const d = s.double[seat];
   if (d >= 0 && b.kind[d] === KIND.double && len(x - b.x[d], y - b.y[d]) < bd) { bd = len(x - b.x[d], y - b.y[d]); best = [Q.double, d]; }
-  const onYou = s.wand[seat] || s.weapon[seat] || s.aura[seat] > 0 || s.motes[seat] || dv.type.some((t, k) => t === DEVICE.orbital && dv.owner[k] === seat);
+  const onYou = s.wand[seat] || s.weapon[seat] || s.aura[seat] > 0 || s.motes[seat] || s.storeArm[seat] || s.storeLen[seat] || dv.type.some((t, k) => t === DEVICE.orbital && dv.owner[k] === seat);
   if (onYou && len(x - b.x[seat], y - b.y[seat]) < bd) best = [Q.onYou, seat];
   return best;
 }
@@ -366,6 +368,7 @@ export function recallOldest(w: World, seat: number): boolean {
   const d = s.double[seat];
   if (d >= 0 && b.kind[d] === KIND.double && s.dblBorn[seat] < born) { born = s.dblBorn[seat]; what = Q.double; idx = d; }
   if ((s.wand[seat] || s.weapon[seat]) && s.wandBorn[seat] < born) { born = s.wandBorn[seat]; what = Q.onYou; idx = seat; }
+  if ((s.storeArm[seat] || s.storeLen[seat]) && s.storeBorn[seat] < born) { born = s.storeBorn[seat]; what = Q.store; idx = seat; }
   if (!what) return false;
   if (what === Q.onYou) { s.wand[seat] = 0; s.weapon[seat] = 0; w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: b.x[seat], y: b.y[seat], amount: 1, look: EL.sigil, text: 'dismissed' }); }
   else if (what === Q.device && w.devices.type[idx] === DEVICE.orbital) { for (let k = 0; k < MAX_DEVICES; k++) if (w.devices.type[k] === DEVICE.orbital && w.devices.owner[k] === seat) removeOne(w, seat, Q.device, k); } // the ring is one device

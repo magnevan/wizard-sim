@@ -240,6 +240,7 @@ export function boundSigil(w: World, seat: number): number {
   n += orbit; // your whole ring of orbitals is one device: it binds one rune
   if (s.aura[seat] > 0) n++;
   if (s.motes[seat] > 0) n++;
+  if (s.storeArm[seat] || s.storeLen[seat]) n++; // the stored spell, armed or held
   if (s.weapon[seat] || s.wand[seat]) n++;
   if (s.double[seat] >= 0 && w.bodies.kind[s.double[seat]] === KIND.double) n++;
   return n;

@@ -282,6 +282,20 @@ describe('Shield', () => {
 });
 
 describe('Sigil', () => {
+  it('the stored spell: Sigil alone on Force arms the staff, the next spell is held, and an empty Force releases it with no wind-up', () => {
+    const { w, d } = arena(2);
+    w.bodies.x[1] = 1.4; w.bodies.y[1] = 0; w.bodies.team[1] = 9; // a foe beside you
+    d.aimAt(4, 0).queue('sigil').cast(BTN.force, 1, 20);
+    expect(w.seats.storeArm[0]).toBe(1);
+    d.queue('fire', 'fire').cast(BTN.area, 2, 40); // a Fire ring: stored, not cast
+    expect(w.seats.storeLen[0]).toBe(2);
+    expect(w.bodies.hp[1]).toBe(100);
+    expect(w.seats.runes[EL.sigil - 1]).toBeLessThan(RUNES.max.sigil - 0.9); // it binds a Sigil rune
+    d.tick({ buttons: BTN.force }); // released: the ring goes off this very tick
+    expect(w.bodies.hp[1]).toBeLessThan(100);
+    expect(w.seats.storeLen[0]).toBe(0);
+  });
+
   it('your orbit is one device: more orbital casts add orbs to the ring, which binds one Sigil rune', () => {
     const { w, d } = arena();
     for (let c = 0; c < 4; c++) d.queue('sigil', 'fire').cast(BTN.area, 2, 40);
@@ -504,7 +518,7 @@ describe('Sigil', () => {
 
   it('Blink goes all the way to the cursor', () => {
     const { w, d } = arena();
-    d.aimAt(9, 3).queue('sigil').tick({ buttons: BTN.force });
+    d.aimAt(9, 3).queue('shield').tick({ buttons: BTN.force });
     expect(w.bodies.x[0]).toBeCloseTo(9, 0);
     expect(w.bodies.y[0]).toBeCloseTo(3, 0);
   });
@@ -512,7 +526,7 @@ describe('Sigil', () => {
   it('Blink stops short of a body standing on the cursor', () => {
     const { w, d, dummy } = arena();
     dummy(8, 0);
-    d.aimAt(8, 0).queue('sigil').tick({ buttons: BTN.force });
+    d.aimAt(8, 0).queue('shield').tick({ buttons: BTN.force });
     expect(w.bodies.x[0]).toBeLessThan(8 - 0.9);
     expect(w.bodies.x[0]).toBeGreaterThan(6);
   });

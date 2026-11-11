@@ -1,5 +1,5 @@
 {
   "ticks": 1800,
-  "hash": "e68b810e",
+  "hash": "f9dabcce",
   "note": "Hash of scriptedReplay(1800) after the last tick. A gameplay change changes it on purpose: re-record it (and say so in the commit). An unexplained change, or node and the browser disagreeing, is a determinism bug."
 }

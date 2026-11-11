@@ -155,6 +155,14 @@ function windupTick(w: World, i: number, held: number, act: boolean): void {
   if (!act) { toRecovery(w, i); return; } // a stun breaks the cast; its runes are spent
   if (s.timer[i] > 0) { s.timer[i]--; return; }
   const spec = specOf(w, i);
+  // An armed staff (Sigil alone on Force) takes this spell instead of casting it: held, paid, until an empty-queue Force
+  if (s.storeArm[i] && spec.shape !== 'store') {
+    s.storeArm[i] = 0;
+    s.storeQ.set(s.castQueue.subarray(i * QUEUE_MAX, (i + 1) * QUEUE_MAX), i * QUEUE_MAX);
+    s.storeLen[i] = s.castLen[i]; s.storeCast[i] = s.castId[i];
+    w.events.push({ tick: w.clock[0], kind: 'cast', who: i, x: b.x[i], y: b.y[i], text: `Stored: ${spec.title}`, look: EL.sigil });
+    toRecovery(w, i); return;
+  }
   if (spec.charge && held & BTN.force) { s.phase[i] = PHASE.charge; s.chanTicks[i] = 0; return; }
   if (spec.channel) {
     s.phase[i] = PHASE.channel; s.chanTicks[i] = 0;
@@ -223,6 +231,15 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
     // Gestures pressed during the last recovery wait in the cast buffer, as spells do.
     const face = aimFace(w, i), c = s.handT[i] === 0 && s.queueLen[i] === 0 ? s.bufCast[i] : 0;
     if (c) { s.bufCast[i] = 0; s.bufTicks[i] = 0; }
+    // A stored spell: an empty-queue Force releases it at once, with no wind-up, as the cast it was stored with (it
+    // takes the place of the Strike while the staff holds it)
+    if (c === CAST_ID.force && s.storeLen[i]) {
+      s.castQueue.set(s.storeQ.subarray(i * QUEUE_MAX, (i + 1) * QUEUE_MAX), i * QUEUE_MAX);
+      s.castLen[i] = s.storeLen[i]; s.castId[i] = s.storeCast[i]; s.storeLen[i] = 0; s.dragged[i] = 0;
+      s.phase[i] = PHASE.windup; s.timer[i] = 0; s.chanTicks[i] = 0; s.chanTimer[i] = 0;
+      windupTick(w, i, held, act);
+      return;
+    }
     if (c === CAST_ID.force) {
       if (held & BTN.force) s.handT[i] = 1;
       else { const r = strikeRecovery(w, i); strike(w, i, face); toRecovery(w, i, r); return; } // tapped while busy: a Strike

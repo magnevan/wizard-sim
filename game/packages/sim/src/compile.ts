@@ -25,7 +25,7 @@ export type Shape =
   | 'nova' | 'quake' | 'discharge'                        // Area
   | 'patch' | 'blast' | 'geyser' | 'strike' | 'spring'    // Place
   | 'swing' | 'palm' | 'imbue'                            // Weapon (swing: the bare staff; imbue: the imbued burst)
-  | 'self' | 'blink'
+  | 'self' | 'blink' | 'store'
   | 'wave' | 'ring' | 'arcwall' | 'drawnwall' | 'ward' | 'guard' // Shield
   | 'turret' | 'orbitals' | 'motes' | 'glyph' | 'lineglyph' | 'lens' | 'wand' | 'weapon' | 'aura' | 'double' // Sigil
   | 'todo';                                               // in the rules, not in the engine yet
@@ -135,7 +135,7 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
       if (d.form === 'water' && !scald && (cast === 'force' || cast === 'area')) spec.mod = 'push';
       return spec;
     case 'sigil':
-      if (cast === 'force') spec.shape = d.sub ? 'turret' : 'blink';
+      if (cast === 'force') spec.shape = d.sub ? 'turret' : 'store'; // Sigil alone: the stored spell (Blink moved to Shield)
       else if (cast === 'area') spec.shape = d.sub ? 'orbitals' : 'motes';
       else if (cast === 'place') spec.shape = d.sub ? (d.drag ? 'lineglyph' : 'glyph') : 'lens';
       else spec.shape = d.sub ? 'weapon' : 'wand';

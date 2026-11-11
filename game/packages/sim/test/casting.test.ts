@@ -349,7 +349,7 @@ describe('Force casts', () => {
 
   it('Blink is instant and moves you along your aim', () => {
     const { w, d } = range();
-    d.aimAt(10, 0).queue('sigil').tick({ buttons: BTN.force });
+    d.aimAt(10, 0).queue('shield').tick({ buttons: BTN.force });
     expect(w.bodies.x[0]).toBeGreaterThan(3.5);
   });
 });

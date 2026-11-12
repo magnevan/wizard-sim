@@ -26,12 +26,12 @@ export interface Tunable {
 }
 
 /** One-line explanations for the numbers that matter most to feel. */
-const HELP: Record<string, string> = {
+export const TUNING_HELP: Readonly<Record<string, string>> = {
   'structures.turretShotCost': 'A turret shot costs this share of its runes (0.5 = half). Shots fire uncharged, like your tap cast.',
   'structures.turretShare': 'All your turrets together spend at most this share of your total regen R from their main element; shots slow down to fit (and slow further with more turrets).',
   'body.castWalk': 'How fast you walk while holding a channel or charge, as a fraction of walk speed (1 = no slow-down, 0 = rooted). Hold LMB and RMB together to walk and cast.',
-  'runes.regen': 'R: runes per second in total, shared among the pools that are not full (weighted by max). The main pace knob: lower means fewer, more deliberate casts.',
-  'runes.floor': 'The share of R that always reaches every pool that is not full (0 = one fully shared budget, 1 = each pool refills at its own rate in proportion to its max).',
+  'runes.regen': 'R: runes per second in total, shared equally among the pools that are not full (an empty one takes emptyShare shares). The main pace knob: lower means fewer, more deliberate casts.',
+  'runes.emptyShare': 'How many shares of R a pool under a whole rune takes; every other pool that is not full takes one.',
   'runes.surviveStart': 'Survive: runes per element at the start of a run (Sigil: surviveSigil).',
   'perks.wellspring': 'Wellspring: the share more total regen R per stack.',
   'runes.max.fire': 'How many Fire runes fit in your pool (also caps how many you can put in one spell).',
@@ -39,7 +39,7 @@ const HELP: Record<string, string> = {
   'rhythm.windupPerRune': 'Extra wind-up per rune: what makes big spells feel heavy.',
   'rhythm.recovery': 'Seconds after a cast before the next can start.',
   'rhythm.naturalChannel': 'Beams and sprays are free for this long, then cost upkeep.',
-  'rhythm.upkeep': 'Runes per second of the form element a channel costs past its natural duration.',
+  'rhythm.upkeep': 'Runes per second a channel costs past its natural duration, for each rune in it, from the pool of that rune (Ice: Water and Cold).',
   'combat.channelRate': 'Beam / spray damage per second = per-hit damage x this.',
   'combat.healPerLife': 'Healing per Life rune for one hit (channels: per second x channelRate).',
   'status.soakPerRune': 'Soak each Water rune in a hit adds, against a pool of soakPool x sqrt(max HP).',
@@ -92,7 +92,7 @@ function add(id: string, group: string, obj: Record<string, unknown>, key: strin
   const def = obj[key] as number;
   const [min, max, step] = range(def);
   list.push({
-    id, group, label: id.split('.').slice(1).join(' '), def, min, max, step, help: HELP[id],
+    id, group, label: id.split('.').slice(1).join(' '), def, min, max, step, help: TUNING_HELP[id],
     get: () => obj[key] as number,
     set: (v: number) => { obj[key] = v; },
   });

@@ -117,8 +117,7 @@ export function aimFromTower(w: World, i: number): [number, number] {
 export function driveFace(w: World, i: number): number {
   const [ax, ay] = aimFromTower(w, i);
   if (len(ax, ay) < 1e-6) return STRAIGHT_OUT;
-  let a = atan2Turns(ax, -ay); // 0 is straight out, north; positive turns east
-  if (a > 0.5) a -= 1;
+  const a = atan2Turns(ax, -ay); // 0 is straight out, north; positive turns east; in (-0.5, 0.5]
   return STRAIGHT_OUT + Math.max(-BATTERY.swing, Math.min(BATTERY.swing, a));
 }
 

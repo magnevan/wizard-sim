@@ -18,7 +18,7 @@
  */
 import * as X from './px';
 import type { Ctx } from './px';
-import { puff, sq } from './kit';
+import { disc, puff, sq } from './kit';
 import { FY, TAU, clamp, easeOut, emit, lerp, rand } from './util';
 
 export type JetKind = 'water' | 'fire' | 'cold' | 'scald';
@@ -54,15 +54,6 @@ const RAINBOW = ['#ff7a7a', '#ffc860', '#fff07a', '#8af07a', '#6ab0ff', '#b08aff
 /** -1..1 -> -1..1, crowding toward 0 as p grows. */
 const fan = (u: number, p: number): number => Math.sign(u) * Math.pow(Math.abs(u), p);
 
-/** A filled pixel disc (no anti-aliasing). */
-function disc(c: Ctx, x: number, y: number, r: number, col: string): void {
-  if (r < 0.9) { X.px(c, x, y, col); return; }
-  const cx = Math.round(x), cy = Math.round(y), R = Math.round(r);
-  for (let dy = -R; dy <= R; dy++) {
-    const hw = Math.floor(Math.sqrt(Math.max(0, r * r - dy * dy)) + 0.35);
-    X.rect(c, cx - hw, cy + dy, hw * 2 + 1, 1, col);
-  }
-}
 
 /**
  * A point of the spray as aimed at A: `s` of the way out (1 = the far end), `a` radians off the middle, `l` px

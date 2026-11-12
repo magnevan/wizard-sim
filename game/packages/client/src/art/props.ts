@@ -87,7 +87,7 @@ export class PropView {
     this.shadowTex?.destroy(true);
     this.shadowTex = null;
     this.fx = NaN;
-    if (!def.props.length) { this.ready = true; return; }
+    if (!def.props.length) { this.wanted++; this.ready = true; return; } // a dress still on its way is for the old room
     const { c, x } = X.canvas(FIELD.W, FIELD.H);
     for (const p of def.props) {
       const meta = propMeta(p.asset);

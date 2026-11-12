@@ -1,6 +1,6 @@
 # A map with a fantasy feel (2026-11-08)
 
-The user wanted to pull on the overnight map generator: "I was hoping to have maps that are a bit more of a fantasy feel", with a reference image of a hand-inked fantasy map (kept locally as `docs/reference/fantasy_map.webp`, deliberately not committed: it's someone else's art and this repo is public). They had just answered the Field Atlas's scale question with **one continent, several regions**. This is round 2 of the Field Atlas (`../../tools/world-map/`); round 1 is in `../overnight-2026-11-08.md`.
+The user wanted to pull on the overnight map generator: "I was hoping to have maps that are a bit more of a fantasy feel", with a reference image of a hand-inked fantasy map (kept locally as `docs/reference/fantasy_map.webp`, deliberately not committed: it's someone else's art and this repo is public). They had just answered the Field Atlas's scale question with **one continent, several regions**. This is round 2 of the Field Atlas (`../../tools/world-map/`); round 1 is in `../archive/overnight-2026-11-08.md`.
 
 ## What makes a map read as fantasy
 

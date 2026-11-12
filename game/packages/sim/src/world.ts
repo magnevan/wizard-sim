@@ -661,6 +661,7 @@ export function spawnBody(w: World, slot: number, kind: number, team: number, x:
   b.arch[i] = 0; b.ai[i] = 0; b.aiT[i] = 0; b.target[i] = -1; b.holding[i] = -1; b.heldBy[i] = -1; b.grabHp[i] = 0; b.slamBy[i] = -1;
   b.dmgMult[i] = 1; b.speedMult[i] = 1; b.downed[i] = 0; b.root[i] = 0;
   if (w.tut) w.tut.tag[i] = 0; // a reused slot is nobody's target until the tutorial tags it again
+  if (w.battery) w.battery.lane[i] = -1; // likewise, no lane until the battery sends it at a defence
   return i;
 }
 

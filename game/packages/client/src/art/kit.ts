@@ -12,6 +12,12 @@ import { FY, TAU, easeOut, emit, lerp, mod, rand, seg, smooth } from './util';
 const EL = X.EL;
 export const fireCol = (age: number): string => EL.fire[age < 0.18 ? 0 : age < 0.38 ? 1 : age < 0.6 ? 2 : age < 0.8 ? 3 : 4];
 export function sq(c: Ctx, x: number, y: number, s: number, col: string): void { const k = Math.max(1, Math.round(s)); X.rect(c, Math.round(x) - (k >> 1), Math.round(y) - (k >> 1), k, k, col); }
+/** A filled pixel disc (no anti-aliasing): the jets' and missiles' particle. */
+export function disc(c: Ctx, x: number, y: number, r: number, col: string): void {
+  if (r < 0.9) { X.px(c, x, y, col); return; }
+  const cx = Math.round(x), cy = Math.round(y), R = Math.round(r);
+  for (let dy = -R; dy <= R; dy++) { const hw = Math.floor(Math.sqrt(Math.max(0, r * r - dy * dy)) + 0.35); X.rect(c, cx - hw, cy + dy, hw * 2 + 1, 1, col); }
+}
 
 /** A pixel flame tongue: stacked rows, outer red -> core yellow. */
 export function tongue(c: Ctx, x: number, y: number, w: number, h: number, sway: number, R: Ramp = EL.fire): void {

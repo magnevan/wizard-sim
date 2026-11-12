@@ -12,7 +12,7 @@
  */
 import * as X from './px';
 import type { Ctx, Pt } from './px';
-import { puff } from './kit';
+import { disc, puff } from './kit';
 import { FY, emit, rand, seg } from './util';
 
 /** Hottest to coolest. The last two are the flame going out. */
@@ -50,15 +50,6 @@ const LIFE = 0.62;
 /** Bands of depth the jet is cut into for hiding. */
 const BANDS = 7;
 
-/** A filled pixel disc (no anti-aliasing). */
-function disc(c: Ctx, x: number, y: number, r: number, col: string): void {
-  if (r < 0.9) { X.px(c, x, y, col); return; }
-  const cx = Math.round(x), cy = Math.round(y), R = Math.round(r);
-  for (let dy = -R; dy <= R; dy++) {
-    const hw = Math.floor(Math.sqrt(Math.max(0, r * r - dy * dy)) + 0.35);
-    if (hw >= 0) X.rect(c, cx - hw, cy + dy, hw * 2 + 1, 1, col);
-  }
-}
 
 /** The jet's particles this frame, back to front within each band. */
 function particles(j: Jet, t: number): P[] {

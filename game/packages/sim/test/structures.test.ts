@@ -465,6 +465,7 @@ describe('Sigil', () => {
     const t = dummy(1.5, 0);
     d.queue('sigil', 'fire').cast(BTN.self, 1, 60);
     expect(w.bodies.burn[t]).toBeGreaterThan(0);
+    expect(w.bodies.burnSrc[t]).toBe(0); // the wearer lit it (credit, and Pyre in Survive), not nobody
   });
 
   it('your hands: with nothing queued, RMB tap strikes with the conjured sword (1 use) and it burns', () => {

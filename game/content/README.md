@@ -23,13 +23,13 @@ The pipeline is built and tested against **LDtk 1.5.3** (the current release; `j
 ## Opening and editing the maps
 
 1. Install LDtk 1.5.3 from [ldtk.io](https://ldtk.io/download/) (or the [GitHub release](https://github.com/deepnight/ldtk/releases/tag/v1.5.3)).
-2. **File → Open** `game/content/maps/world.ldtk`. The four rooms sit side by side in the world view; double-click one to edit it.
+2. **File → Open** `game/content/maps/world.ldtk`. The rooms sit side by side in the world view; double-click one to edit it.
 3. Paint, place and move things (below). **Save** (Ctrl+S). Keep the project setting **"Save levels to separate files"** on, so each room stays its own file and diffs stay small.
 4. In a terminal, from `game/`:
    ```sh
    npm run content:build    # compile the maps into packages/sim/src/rooms.gen.ts
    npm run content:check    # every check; fix what it lists
-   npm run dev              # play it (keys 1-4 switch rooms)
+   npm run dev              # play it (keys 1-6 switch rooms)
    ```
    Commit the `.ldtk`, the changed `.ldtkl` files and `rooms.gen.ts` together. `npm run check` (and so CI) fails while `rooms.gen.ts` is stale.
 

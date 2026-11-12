@@ -7,8 +7,9 @@
  *
  * Rhythm: idle -> windup -> (charge | channel) -> recovery -> idle. Wind-up grows with the
  * spell's size, not with how hard its keys are to type. A stun breaks wind-up, charge and
- * channel. Channels are free for their natural duration, then cost upkeep from the form
- * element's pool (regen debt); they end when you let go or that pool runs dry.
+ * channel. Channels are free for their natural duration, then every rune in the spell costs
+ * upkeep from its own pool (Ice from Water's and Cold's); they end when you let go or any of
+ * those pools runs dry.
  *
  * Buttons: Force (press; hold to charge or channel), Area (tap = Area, hold = Place at the
  * cursor, drag while holding = drawn Place), Self, Weapon.
@@ -16,7 +17,7 @@
 import { rules, type Cast, type Element } from '@wizard-sim/rules';
 import { compile, type SpellSpec } from './compile';
 import { RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
-import { EL, KEYED_EL, N_EL, elementName } from './elements';
+import { EL, KEYED_EL, N_EL, elementName, poolCost } from './elements';
 import { channelTick, fireSpell } from './effects';
 import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, fullMask, poolCap, recallOldest, sigilCap, spendMote, weaponSwing } from './structures';
 import { len } from './geom';
@@ -28,7 +29,8 @@ import { chooseElement, echoChannel, echoLater } from './survive';
 import { driveButtons, driveSpray, driveTarget, driving } from './battery';
 import { CAST_ID, KIND, PHASE, QUEUE_MAX, runeMax, runeRate, type World } from './world';
 
-const CASTS: Cast[] = ['force', 'force', 'area', 'place', 'self', 'conjure']; // index = CAST_ID
+/** The rules' cast for each CAST_ID (index 0, no cast, reads as Force). */
+export const CASTS: readonly Cast[] = ['force', 'force', 'area', 'place', 'self', 'conjure'];
 
 export function queueOf(w: World, i: number, cast = false): Element[] {
   const s = w.seats, q = cast ? s.castQueue : s.queue, n = cast ? s.castLen[i] : s.queueLen[i];
@@ -367,8 +369,8 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
       // proportion to the runes used); it ends when any of them runs dry.
       if (s.chanTicks[i] >= T(RHYTHM.naturalChannel) && spec.form) {
         let dry = false;
-        for (let e = 1; e <= N_EL; e++) {
-          const c = spec.counts[e - 1];
+        for (let e = 1; e <= KEYED_EL; e++) {
+          const c = poolCost(spec.counts, 0, e); // an Ice rune has no pool: it is paid from Water and from Cold
           if (!c) continue;
           const k = rune(w, i, e);
           s.runes[k] -= (RHYTHM.upkeep * c) / 60;

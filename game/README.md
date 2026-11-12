@@ -20,6 +20,11 @@ npm run check:tutorial # build, then in headless Chrome: key 4 into the tutorial
                        # bot plays the hands test through to the next beat; no page errors
 npm run check:academy  # build, then the Academy in headless Chrome: every prop set's images load, O / I and the URL params
                        # switch the art, a wizard can't enter a prop; screenshots in shots/academy (--out dir)
+npm run check:iso      # build, then the isometric camera in headless Chrome: each room loads, its painted ground arrives, a
+                       # wizard stands where the camera says, nothing errors; a screenshot of each (--out dir)
+npm run check:battery  # build, then the battery: it loads from #battery, every prop arrives, the wall stops a wizard and the
+                       # gate doesn't, nothing errors; screenshots from around the area (--out dir)
+npm run servers        # the local game servers across all worktrees: port, worktree, clients; kill and start (tools/servers/)
 npm run check:sound    # build, then in headless Chrome: every sound of the Sound Gallery rendered offline through the game's audio graph (none
                        # silent or clipping, the variations really differ), then the game: sound starts on input, clips load, voices play,
                        # volumes persist, it runs with ?sound=0 and with no Web Audio; levels and screenshots in shots/
@@ -48,16 +53,21 @@ npm run perf           # build, then step() timed in node (Arena, Survive wave 1
                        # the GPU and KB allocated per frame. -- --only survive-w12 --size 1920x1080 --profile dir --shots dir --out f.json
 ```
 
+One-off scripts with no npm entry (run after `npm run build`; each prints its usage in its first lines):
+- **Shots for judging one effect:** `burst-shot` (the imbued bursts, a contact sheet), `caltrops-shot` (Ice Place), `coat-shot` (coated force fields, the imbue's skin, the stored spell), `fog-shot` (Cold Place), `ghost-shot` (a ghost rune and a pool in debt in the HUD), `light-shot` (spell light against a wall), `store-shot` (the stored spell's sigil).
+- **Audits:** `occlusion-audit` (casts around walls and furniture, a cropped shot each, to check draw order by eye).
+- **Performance:** `perf-sim` (sim timing in node; `perf.mjs` imports it), `gpu-info` (which GPU a `--gpu` perf run used).
+
 **Performance** (`docs/explorations/2026-11-06-performance.md`): in headless Chrome, compare the p50 frame time and the bytes uploaded and allocated per frame. The mean and p95 are mostly SwiftShader stalls. The usual costs: the two effect canvases are redrawn and re-uploaded every frame (they cover the view, not the whole field: `art/vfx.ts` `view()`), a new actor frame re-uploads its 256 px atlas page, and in the sim, enemy steering and wall collision. `?perf=1` records per-frame timings on `wizardSim.perf`.
 
 URL params (`packages/client/src/main.ts` lists them too):
-- **Rooms:** `?room=arena` (the waves; the default is the Sanctum with dummies), `?room=survive` (Survive: endless waves in a walled arena, a power-up pick between waves), `?room=tutorial` (the tutorial; `&beat=N` starts at beat N). Artifact links carry no query string, so the `#anchor` works as well: `#arena`, `#survive`, `#tutorial`, `#tutorial-7`, `#ally`, `#arena-ally`. In the game the 1 / 2 / 3 / 4 keys switch between the Sanctum, the Arena, Survive and the tutorial (in place, not online).
+- **Rooms:** `?room=arena` (the waves; the default is the Sanctum with dummies), `?room=survive` (Survive: endless waves in a walled arena, a power-up pick between waves), `?room=tutorial` (the tutorial; `&beat=N` starts at beat N). Artifact links carry no query string, so the `#anchor` works as well: `#arena`, `#survive`, `#tutorial`, `#tutorial-7`, `#ally`, `#arena-ally`, and `#battery` (the opening's first job, a blockout). In the game the 1 / 2 / 3 / 4 / 5 / 6 keys switch between the Sanctum, the Arena, Survive, the tutorial, the Academy and the battery (in place, not online); the list is `packages/client/src/scenarios.ts`.
 - **The art test:** `#academy` (or key 5), then `?props=lean|simple|code` (O cycles it there) and `?wizard=hd` (I toggles it there; the URL works in any room). `node scripts/academy-shots.mjs` and `scripts/wizard-sheet.mjs` make the art trial page's shots.
 - **Players:** `?ally=1` (a bot wizard on seat 1), `?local=N` (the camera follows seat N only, as a networked player's screen would), `?net=bc` (online co-op between tabs on one machine, BroadcastChannel), `?timerloop=1` (timers instead of animation frames, so a background tab keeps running; the co-op e2e test).
 - **Headless runs and screenshots:** `?autoplay=1` (bots fight the Arena, or play the tutorial through with `room=tutorial`), `?script=1` (the scripted two-wizard run), `?spell=arcane,fire/force` (both seats cast one spell at the dummies, `&spell2=` for seat 1; casts force, area, place, self, weapon, drag, hold, holddrag, guard, wait, and with nothing queued strike, heavy, special, retreat, block (`?spell=sigil+cold/weapon;/heavy`); `@x,y` sets the target and `;` chains spells one per cycle, see `demo.ts`), `?scene=rally` and `?scene=three` (Survive: a Rally in progress, or +1 to three half chosen), `?scene=enemyattacks` (every enemy frozen at one beat of its attack, `&phase=wind|strike|impact|recover|loop`, `&face=` turns; `art/enemy-attacks.ts`), `?selftest=1` (no rendering; runs the golden replay, `&ticks=N`, and writes its hash to `<html data-hash>`).
 - **Panels:** `?tune=1` (the tuning panel at boot), `?help=1` (the help panel at boot; `?helpq=water,cold` or `?helpq=hands:water:tide` shows a queue or hands, `?helphint=1` the first-session hint), `?menu=scenarios` (the Esc menu at boot on a section; `&menuAt=N` at tick N).
 - **Sound:** `?sound=0` (none at all), `&vol-master=0.5` (also `vol-effects`, `vol-music`).
-- **Debugging and display:** `?perf=1` (record per-frame timings for `npm run perf`), `?pauseAt=N` (pause the sim at tick N; cosmetic animation keeps running on real time), `?structoff=walls,waves,devices,wizards,preview,fx` (hide parts of the structure view), `?scale=N`, `?lights=0`, `?renderer=webgpu`.
+- **Debugging and display:** `?perf=1` (record per-frame timings for `npm run perf`), `?pauseAt=N` (pause the sim at tick N; cosmetic animation keeps running on real time), `?structoff=walls,waves,devices,wizards,preview,fx` (hide parts of the structure view), `?scale=N`, `?lights=0`, `?mood=day|dusk|night|interior` (the room's lighting mood), `?lighting=0` (scene lighting off), `?renderer=webgpu`, `?lab=<element>` (the Sound Lab, dev server).
 
 **Sound** (`packages/client/src/audio/`; `docs/explorations/2026-11-06-sound.md`): built the way spells are, each element a layer and each cast shape a structure (`recipes.ts`), with the variations in `variation.ts`. It's prepared in idle time after boot and starts on your first input, as browsers ask (making an AudioContext blocks the page for hundreds of ms, so it must not happen on that input); headless runs stay silent. `director.ts` turns sim events and state into sounds and holds the rollback rules: one-shots from shown steps only, late remote events after the replay, sustained sounds following the state. To add a sound, add a recipe, and a clip in `content/audio/bank.json` if it needs a recording; `content/audio/README.md` lists every source and licence. Rate them on the Sound Gallery (`tools/sound-gallery/`). A new room gets the hall reverb until it's listed in `ROOM_ENV`.
 
@@ -107,7 +117,8 @@ packages/
            (view-structures.ts), and the Battlefield / VFX gallery art ported into art/ (rigs, frame cache, floor, effects, lights).
            The Esc menu (menu.ts, menu-nav.ts) and the scenario registry (scenarios.ts); the help panel (help-panel.ts,
            help-model.ts, help-preview.ts); the tuning panel (tune-panel.ts); the tutorial's look and text (tutorial-view.ts, tutorial-text.ts).
-scripts/   sync-rules, browser-check, screenshot, make-artifact (serve.mjs is shared: vite preview + headless Chrome)
+scripts/   sync-rules, make-artifact, and the headless checks and shots behind the npm scripts above, plus one-off *-shot.mjs
+           scripts for single effects (serve.mjs is shared: vite preview + headless Chrome)
 ```
 
 ## The rules that keep it deterministic
@@ -126,13 +137,13 @@ These matter from day one, because rollback (like lockstep) only works if every 
 ## Status
 
 Milestone 1 (deterministic core) is done, and the game has grown past it (online co-op, weapons and guards, Survive). Built in the sim, with tests for each:
-- **Runes and the queue:** reserved on queue, spent on cast, refunded on clear or cancel; regen is one shared budget (R runes/s split among the pools that aren't full, by max, with a floor: `regenRate` in `world.ts`); Attune.
+- **Runes and the queue:** reserved on queue, spent on cast, refunded on clear or cancel; a queued rune doesn't regenerate, and an element you lack queues as a ghost that regen pays first; regen is one shared budget (R runes/s shared equally among the pools that aren't full, two shares for an empty one: `regenRate` and `runeRate` in `world.ts`); Attune.
 - **Cast rhythm:**
   - wind-up grows with the spell's size
   - Earth Force charges
-  - channels are free for 5 s, then cost upkeep
+  - channels are free for 2.5 s, then every rune in them costs upkeep
   - recovery, with a short buffer so no press is lost
-  - Blink is instant
+  - Blink (Shield on Force) is instant
 - **Every plain form × cast:**
   - beams, sprays, arcs, rocks (pierce at full charge), ice shards
   - novas, quakes, discharges
@@ -147,16 +158,18 @@ Milestone 1 (deterministic core) is done, and the game has grown past it (online
 - **Surfaces:** water, ice and fire on a floor grid. Lightning surges through water.
 - **Shield:**
   - waves, rings, quick arcs and drawn walls
-  - rock (hit points), barriers (turn shots back) and curtains (pulse their elements; Life heals)
+  - rock and spike ice (hit points), barriers (force fields: they stop the other side and let your team through) and coated force fields (Shield + elements: each rune resists its element and bites whoever presses on it; Life heals)
+  - Blink, and with elements a parting gift: their Area spell where you stood
   - wards, the mirror ward, stone armour (its coat bites melee attackers), the Mending ward
   - Model A energy drain
 - **Sigil** (each binds a Sigil rune):
   - turrets that pay each shot from your pool
   - glyphs and line glyphs, orbitals, rune motes
   - the lens
+  - the stored spell (pure Sigil on Force: the next spell is held, then released with no wind-up)
   - the sculpting wand, conjured weapons with reach
   - the Double (pure Sigil on yourself): a copy that follows you and repeats your spells at half power
-  - auras: fire, frost, mist, regeneration, bulldoze, haste, glass cannon
+  - auras: fire, frost, mist, regeneration, bulldoze, haste, glass cannon, spikes (Ice)
 - **Enemies:**
   - six archetypes with telegraphs: goblin, brute, shieldbearer, archer, grabber, fire imp
   - steering around rock on flow fields
@@ -168,12 +181,12 @@ Milestone 1 (deterministic core) is done, and the game has grown past it (online
 
 **Weapons and guards** (grammar v2; designed in `docs/explorations/2026-11-05-guards.md`, revised by the user's ratings through round 4 in `docs/explorations/2026-11-05-guards-round-2.md`). With nothing queued, your hands act:
 - RMB tap = Strike, RMB hold = the weapon's Heavy, Shift+RMB = its Special (some are held), Space = your guard's Defend (hold to block, tap as a hit lands to parry), Shift+LMB = its Retreat.
-- **Weapons** (`packages/sim/src/hands.ts`), Heavy / Special: bare staff (big shove / Sweep), Tide trident (wave slash / Sweep), Healing hands (Healing link / **Mend**, held), Frost spear (impaling dash / javelin), Lightning whip (chain lash / Sweep), **Arcane wand** (Strike a light bolt, Heavy a charged piercing bolt / **Siphon**, held: rooted, runes regenerate fast), Flame sword (fire wave / Sweep), Stone maul (fissure / Sweep).
+- **Weapons** (`packages/sim/src/hands.ts`), Heavy / Special: bare staff (big shove / Sweep), Tide trident (wave slash / Sweep), Healing hands (Healing link / **Mend**, held), Frost spear (impaling dash / javelin), Lightning whip (chain lash / Sweep), **Arcane wand** (Strike a light bolt, Heavy a charged piercing bolt / **Siphon**, held: rooted, runes regenerate fast), Flame sword (fire wave / Sweep), Stone maul (fissure / Sweep), **Ice bow** (quick icicles; a drawn fan of three that pierces at full draw / **Splinter shot**).
 - **Eight guards** (`packages/sim/src/guards.ts`), one per lead element: Mirror buckler, Bulwark, Ember targe, Rime kite, Spark ring, Tide shield, **Prism** (a Capacitor: it stores what its raised block takes, and lowering it fires the **Lance**), Leaf aegis. Each has its Defend, Retreat, passive and resistances while carried.
 - **Mixing:** the strongest element leads (Life > Earth > Arcane > Lightning; else the most runes of Water, Fire or Cold). Every other element brings its passive and resistance row (half per rune, all at 2). The Leaf takes only the extras' strengths; the other guards' extras are a coat that bites whoever hits the block. Resistance is hyperbolic (damage taken 1 / (1 + r)). Each guard rune past the first adds 15 % guard HP and Retreat distance. Source: `docs/explorations/2026-11-05-guards-round-2.md` ("Merged" and after).
 - Numbers: `ARMS` in `config.ts`.
 
-Not yet: audio, campaign rooms. The rooms themselves are LDtk maps since 2026-11-06 (`content/README.md`; stage 1 of the map pipeline, `docs/explorations/2026-11-06-map-pipeline-stage-1.md`).
+Not yet: campaign rooms (the battery, `#battery`, is the opening's first blockout). Sound is built (above). The rooms themselves are LDtk maps since 2026-11-06 (`content/README.md`; stage 1 of the map pipeline, `docs/explorations/2026-11-06-map-pipeline-stage-1.md`).
 
 `?room=arena` runs the waves. The default is the Sanctum, with three practice dummies.
 

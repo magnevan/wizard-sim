@@ -595,7 +595,7 @@ export function tickStructures(w: World): void {
       }
       if (t === i) continue;
       if (foe) {
-        if (fire) ignite(w, t, STATUS.burnAura * fire, b.burnSrc[t], T(1.5)); // each half second: burning at 6 a second a Fire rune while you stay close
+        if (fire) ignite(w, t, STATUS.burnAura * fire, i, T(1.5)); // each half second: burning at 6 a second a Fire rune while you stay close
         if (cold) {
           addChill(w, t, 2.5 * cold);
           if (!water) tryFreeze(w, t); // Cold on the wet, as in hit.ts; a Mist + Frost aura can't do both

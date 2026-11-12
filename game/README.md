@@ -53,6 +53,11 @@ npm run perf           # build, then step() timed in node (Arena, Survive wave 1
                        # the GPU and KB allocated per frame. -- --only survive-w12 --size 1920x1080 --profile dir --shots dir --out f.json
 ```
 
+One-off scripts with no npm entry (run after `npm run build`; each prints its usage in its first lines):
+- **Shots for judging one effect:** `burst-shot` (the imbued bursts, a contact sheet), `caltrops-shot` (Ice Place), `coat-shot` (coated force fields, the imbue's skin, the stored spell), `fog-shot` (Cold Place), `ghost-shot` (a ghost rune and a pool in debt in the HUD), `light-shot` (spell light against a wall), `store-shot` (the stored spell's sigil).
+- **Audits:** `occlusion-audit` (casts around walls and furniture, a cropped shot each, to check draw order by eye).
+- **Performance:** `perf-sim` (sim timing in node; `perf.mjs` imports it), `gpu-info` (which GPU a `--gpu` perf run used).
+
 **Performance** (`docs/explorations/2026-11-06-performance.md`): in headless Chrome, compare the p50 frame time and the bytes uploaded and allocated per frame. The mean and p95 are mostly SwiftShader stalls. The usual costs: the two effect canvases are redrawn and re-uploaded every frame (they cover the view, not the whole field: `art/vfx.ts` `view()`), a new actor frame re-uploads its 256 px atlas page, and in the sim, enemy steering and wall collision. `?perf=1` records per-frame timings on `wizardSim.perf`.
 
 URL params (`packages/client/src/main.ts` lists them too):

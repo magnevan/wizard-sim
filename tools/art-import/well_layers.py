@@ -3,8 +3,8 @@
   python tools/art-import/well_layers.py
 
 Writes game/content/assets/well/ (art/well-anim.ts reads it):
-  drum.png, drum-drained.png   the drum alone: the rings and crystal above it cleared (the rings are drawn in code, and
-                               they cover where the drum's back rim was under them)
+  drum.png, drum-drained.png   the drum alone: the rings and crystal above it cleared
+  rings.png, rings-dark.png    the rings alone, as bought (and darkened, for the drained well)
   crystal.png, crystal-dark.png the crystal alone, where the rings hid it filled from its mirror image, with an outline
   layers.json                  canvas size, where the crystal sits, and the seams' glowing pixels (the runes on the
                                drum's panels and its lit top), for the shimmer
@@ -82,6 +82,13 @@ edge[-1, :] = edge[:, -1] = edge[:, 0] = False  # np.roll wraps round: nothing f
 edge[0, :] &= filled[1, :]
 crystal[edge] = [42, 22, 14, 255]
 
+# ---- the rings, exactly as bought: what's above the drum that isn't the crystal (the user, 2026-11-12: keep the rings
+# as the original art had them). Ring pixels in front of the crystal are in it, so drawn over the crystal they cover it
+# just as they did.
+rings = a.copy()
+rim = (r - g > 70) & (xs > 34) & (xs < 70) & (ys < 44)  # the crystal's red-orange rim: far redder than any brass
+rings[(ys >= DRUM_TOP) | cryst | ~solid | rim] = 0
+
 # ---- the seams: glowing drum pixels, with their colours
 seam_mask = solid & (ys >= SEAM_FROM) & warm(r, g, b) & (drum[:, :, 3] > 0)
 seams = [[int(x), int(y), *[int(v) for v in a[y, x, :3]], 1 if y < 62 else 0] for y, x in zip(*np.where(seam_mask))]
@@ -89,6 +96,8 @@ seams = [[int(x), int(y), *[int(v) for v in a[y, x, :3]], 1 if y < 62 else 0] fo
 os.makedirs(OUT, exist_ok=True)
 Image.fromarray(drum).save(os.path.join(OUT, 'drum.png'), optimize=True)
 Image.fromarray(drain(drum, 0)[0]).save(os.path.join(OUT, 'drum-drained.png'), optimize=True)
+Image.fromarray(rings).save(os.path.join(OUT, 'rings.png'), optimize=True)
+Image.fromarray(drain(rings, 0)[0]).save(os.path.join(OUT, 'rings-dark.png'), optimize=True)
 Image.fromarray(crystal).save(os.path.join(OUT, 'crystal.png'), optimize=True)
 Image.fromarray(drain(crystal, H)[0]).save(os.path.join(OUT, 'crystal-dark.png'), optimize=True)
 cy_box = np.where(filled.any(axis=1))[0]

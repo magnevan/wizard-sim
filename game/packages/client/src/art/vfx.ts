@@ -18,7 +18,7 @@ import {
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
-import { BARREL_RISE, WELL_BEAM, headTip, liveHeads, towerTip } from './props';
+import { BARREL_RISE, headTip, liveHeads, towerTip } from './props';
 import { flameJet, pilotFlame } from './flame-jet';
 import { feedLines } from './feed-lines';
 import { towersLit } from './power-down';
@@ -402,7 +402,6 @@ export class Vfx {
     this.occludedChannels(w, ct, bodies, light);
     this.pilots(w, ct, light);
     if (w.battery) {
-      this.column(ct, light);
       // standing in a free possession circle: the X key over your head
       for (let i = 0; i < MAX_SEATS; i++) {
         const v = bodies[i];
@@ -1214,29 +1213,6 @@ export class Vfx {
     }
     this.turretChannels(w, t, light);
   }
-  /**
-   * The battery well's column of light (the design: what wells share, light standing up out of the ground and rising
-   * past the top of the screen). Steady while it's well; overloaded, it whips from side to side and breaks up; as the
-   * well dies it gutters and draws down into the crystal. From art/props.ts WELL_BEAM, which the well's art sets.
-   */
-  private column(t: number, light: LightFn): void {
-    const b = WELL_BEAM, o = this.o.x;
-    if (!b.on || b.power <= 0.02) return;
-    const x0 = Math.round(b.x), y0 = Math.round(b.y), u = b.unstable, H = 640 * clamp(b.power * 1.25 - 0.25, 0, 1);
-    const k = b.power * (0.85 + 0.15 * b.pulse), f = Math.floor(t * 12);
-    for (let y = 0; y < H; y += 2) {
-      if (u > 0.15 && rand(Math.floor((y + t * 90) / 18), f, 71) < u * 0.3) continue; // overloaded: it breaks up
-      const whip = u * (Math.sin(y * 0.045 - t * 9) * 5 + Math.sin(y * 0.12 + t * 6) * 2), x = x0 + Math.round(whip);
-      const fade = 1 - y / Math.max(1, H) * 0.6, a = k * fade;
-      o.globalAlpha = 0.22 * a; X.rect(o, x - 5, y0 - y - 2, 11, 2, '#ff9a30');
-      o.globalAlpha = 0.5 * a; X.rect(o, x - 3, y0 - y - 2, 7, 2, '#ffb040');
-      o.globalAlpha = 0.85 * a; X.rect(o, x - 1, y0 - y - 2, 3, 2, y % 6 === 0 && u > 0.3 ? '#ffffff' : '#fff2c0');
-    }
-    o.globalAlpha = 1;
-    X.glow(o, x0, y0, 7, '#fff2c0', 0.6 * k);
-    light(x0, y0 + 30, 70, '#ff9a30', 0.35 * k);
-  }
-
   /** Every working defence keeps a small live flame at its nozzle, except while it's firing. */
   private pilots(w: World, t: number, light: LightFn): void {
     const k = towersLit(w), n = k > 0.5 ? liveHeads(w) : 0, s = w.seats; // as the well dies, the flames choke and sputter out (art/power-down.ts)

@@ -62,9 +62,6 @@ export function headTip(w: World, seat: number): [number, number] | null {
   return k < 0 ? null : towerTip(w, k)?.tip ?? null;
 }
 
-/** The battery well's crystal top in field px and its column's power, steadiness and pulse, as last drawn (vfx.ts draws the column). */
-export const WELL_BEAM = { on: false, x: 0, y: 0, power: 0, unstable: 0, pulse: 0 };
-
 /** How many defences have a working head (not burnt out). */
 export const liveHeads = (w: World): number => (w.battery ? w.def.props.filter((p) => p.asset === HEAD).length : 0);
 
@@ -209,9 +206,6 @@ export class PropView {
     if (!w.battery) return;
     const towers = towersLit(w), power = wellPower(w);
     const glow = this.wellOn ? this.well.draw(t, power, unstable(w)) : power; // the well's light pulses with its crystal
-    const top = this.wellOn ? this.items.find((it) => it.asset === 'battery-well-top') : undefined;
-    WELL_BEAM.on = !!top;
-    if (top) { const tp = this.well.tip(); Object.assign(WELL_BEAM, tp, { x: top.x - top.ox + tp.x, y: top.y - top.oy + tp.y }); }
     for (const it of this.items) {
       if (it.asset === 'battery-well-top') { it.lit = glow; continue; }
       const fade = it.asset === 'defence-tower' || it.asset === HEAD ? 1 - towers : it.asset === 'battery-well' ? 1 - power : -1;

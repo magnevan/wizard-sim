@@ -81,6 +81,17 @@ describe('enemies', () => {
     expect(w.bodies.heldBy[0]).toBe(-1);
   });
 
+  it('a grabber dragging you to the north or south edge throws you straight at it, not off to the side', () => {
+    const { w, d, e } = pit(ARCH.grabber, 0, 5); // nearer the south edge (y = 8) than the east one
+    const b = w.bodies, g = ARCHETYPES[ARCH.grabber].grab!;
+    b.ai[e] = AI.grab; b.holding[e] = 0; b.heldBy[0] = e; b.grabHp[e] = b.hp[e];
+    b.aiT[e] = Math.round(g.hold * 60) - 1; // the throw lands this tick
+    d.tick();
+    expect(b.heldBy[0]).toBe(-1);
+    expect(b.ky[0]).toBeGreaterThan(0);
+    expect(b.kx[0]).toBe(0);
+  });
+
   it('enemies walk around a rock wall to reach you', () => {
     const { w, d, e } = pit(ARCH.swarmer, 6);
     d.aimAt(6, 0).queue('shield', 'earth').cast(BTN.area, 20, 20); // a stone arc between us

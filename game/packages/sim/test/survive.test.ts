@@ -282,6 +282,8 @@ describe('survive: power-ups', () => {
     const { w, d } = quiet();
     grant(w, 0, PU.three);
     expect(w.run!.choose[0]).toBe(3);
+    d.tick({ press0: EL.ice }); // Ice has no key or pool: a press of its id (no client sends one) picks nothing
+    expect(w.run!.choose[0]).toBe(3);
     d.queue('fire', 'fire', 'shield', 'sigil', 'cold');
     expect(w.run!.choose[0]).toBe(1);
     expect(w.seats.queueLen[0]).toBe(0);

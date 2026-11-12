@@ -22,7 +22,7 @@ import { canAct } from './cast';
 import { compile, type SpellSpec } from './compile';
 import { PERKS, SHAPES, STRUCT, T } from './config';
 import { chain, channelTick, fireSpell } from './effects';
-import { EL, N_EL, elementName } from './elements';
+import { EL, KEYED_EL, N_EL, elementName } from './elements';
 import { len } from './geom';
 import { BTN, type PlayerInput } from './input';
 import { nextInt } from './rng';
@@ -129,7 +129,7 @@ export function grant(w: World, s: number, pu: number, el = 0): void {
   r.stacks[s * N_PU + pu]++;
   const add = (id: number, n: number) => { r.maxBonus[s * N_EL + id - 1] += n; w.seats.runes[s * N_EL + id - 1] += n; };
   if (pu === PU.three) { r.choose[s] = 3; r.chosen.fill(0, s * 3, s * 3 + 3); } // the wizard taps three element keys (chooseElement)
-  if (pu === PU.deepEl && el >= 1 && el <= N_EL) add(el, 2);
+  if (pu === PU.deepEl && el >= 1 && el <= KEYED_EL) add(el, 2); // a keyed element: Ice has no pool to deepen
   if (pu === PU.shieldSigil) { add(EL.shield, 1); add(EL.sigil, 1); }
   if (pu === PU.charm) r.charm[s] = T(1); // the first mirror comes almost at once
   if (pu === PU.echo) r.echoOn[s] = 1; // until the next wave is cleared
@@ -150,7 +150,7 @@ export function grant(w: World, s: number, pu: number, el = 0): void {
 export function chooseElement(w: World, s: number, id: number): boolean {
   const r = w.run;
   if (!r || !r.choose[s]) return false;
-  if (id < 1 || id > N_EL) return true;
+  if (id < 1 || id > KEYED_EL) return true; // only keyed elements, as pressElement takes
   const b = w.bodies, tick = w.clock[0], at = s * 3;
   const taken = r.chosen[at] === id || r.chosen[at + 1] === id || r.chosen[at + 2] === id;
   if (id === EL.shield || id === EL.sigil || taken) { w.events.push({ tick, kind: 'dry', who: s, x: b.x[s], y: b.y[s], look: id }); return true; }

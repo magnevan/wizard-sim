@@ -1,158 +1,69 @@
 {
   "when": "npm run audit",
-  "pairs": 1610,
-  "inert": 210,
+  "pairs": 1505,
+  "inert": 170,
   "summary": [
     {
-      "addition": "water on weapon",
-      "count": 20,
-      "queues": [
-        "water",
-        "water+water",
-        "water+life",
-        "water+shield",
-        "water+arcane",
-        "water+sigil",
-        "water+fire",
-        "water+earth",
-        "life",
-        "life+life",
-        "life+shield",
-        "life+cold",
-        "life+sigil",
-        "life+fire",
-        "life+earth",
-        "shield",
-        "shield+cold",
-        "shield+arcane",
-        "shield+fire",
-        "shield+earth"
-      ]
-    },
-    {
-      "addition": "water on self",
-      "count": 16,
-      "queues": [
-        "water",
-        "water+water",
-        "water+life",
-        "water+cold",
-        "water+arcane",
-        "water+sigil",
-        "water+fire",
-        "water+earth",
-        "life",
-        "life+life",
-        "life+earth",
-        "arcane",
-        "arcane+arcane",
-        "arcane+earth",
-        "earth",
-        "earth+earth"
-      ]
-    },
-    {
-      "addition": "cold on weapon",
-      "count": 14,
-      "queues": [
-        "water+life",
-        "water+shield",
-        "life",
-        "life+life",
-        "life+shield",
-        "life+cold",
-        "life+lightning",
-        "life+sigil",
-        "life+earth",
-        "shield",
-        "shield+cold",
-        "shield+lightning",
-        "shield+arcane",
-        "shield+earth"
-      ]
-    },
-    {
       "addition": "fire on weapon",
-      "count": 14,
-      "queues": [
-        "water+life",
-        "water+shield",
-        "life",
-        "life+life",
-        "life+shield",
-        "life+lightning",
-        "life+sigil",
-        "life+fire",
-        "life+earth",
-        "shield",
-        "shield+lightning",
-        "shield+arcane",
-        "shield+fire",
-        "shield+earth"
-      ]
-    },
-    {
-      "addition": "lightning on weapon",
       "count": 12,
       "queues": [
+        "water+life",
+        "water+sigil",
         "life",
         "life+life",
-        "life+shield",
-        "life+cold",
         "life+lightning",
         "life+sigil",
         "life+fire",
-        "shield",
-        "shield+cold",
-        "shield+lightning",
-        "shield+arcane",
-        "shield+fire"
+        "life+earth",
+        "lightning+sigil",
+        "arcane+sigil",
+        "sigil+fire",
+        "sigil+earth"
       ]
     },
     {
-      "addition": "water on place",
+      "addition": "earth on self",
       "count": 11,
       "queues": [
         "water+life",
-        "water+fire",
-        "water+earth",
+        "water+sigil",
         "life",
         "life+life",
         "life+cold",
         "life+sigil",
         "life+fire",
         "life+earth",
+        "cold+sigil",
         "arcane+sigil",
         "sigil+earth"
       ]
     },
     {
-      "addition": "arcane on weapon",
-      "count": 11,
+      "addition": "cold on weapon",
+      "count": 10,
       "queues": [
-        "water+shield",
-        "water+arcane",
-        "shield",
-        "shield+cold",
-        "shield+lightning",
-        "shield+arcane",
-        "shield+fire",
-        "shield+earth",
-        "lightning+arcane",
-        "arcane+arcane",
-        "arcane+sigil"
-      ]
-    },
-    {
-      "addition": "cold on place",
-      "count": 9,
-      "queues": [
-        "water+life",
         "life",
         "life+life",
         "life+cold",
         "life+lightning",
         "life+sigil",
+        "life+earth",
+        "cold+sigil",
+        "lightning+sigil",
+        "arcane+sigil",
+        "sigil+earth"
+      ]
+    },
+    {
+      "addition": "water on weapon",
+      "count": 9,
+      "queues": [
+        "water+life",
+        "water+sigil",
+        "life",
+        "life+life",
+        "life+sigil",
+        "life+fire",
         "life+earth",
         "arcane+sigil",
         "sigil+earth"
@@ -166,6 +77,50 @@
         "life",
         "life+life",
         "life+cold",
+        "life+sigil",
+        "life+fire",
+        "life+earth",
+        "arcane+sigil",
+        "sigil+earth"
+      ]
+    },
+    {
+      "addition": "cold on self",
+      "count": 9,
+      "queues": [
+        "life",
+        "life+life",
+        "life+cold",
+        "life+lightning",
+        "life+sigil",
+        "life+earth",
+        "lightning+sigil",
+        "arcane+sigil",
+        "sigil+earth"
+      ]
+    },
+    {
+      "addition": "lightning on self",
+      "count": 9,
+      "queues": [
+        "life",
+        "life+life",
+        "life+cold",
+        "life+lightning",
+        "life+sigil",
+        "life+fire",
+        "cold+sigil",
+        "lightning+sigil",
+        "arcane+sigil"
+      ]
+    },
+    {
+      "addition": "water on place",
+      "count": 8,
+      "queues": [
+        "water+life",
+        "life",
+        "life+life",
         "life+sigil",
         "life+fire",
         "life+earth",
@@ -188,8 +143,36 @@
       ]
     },
     {
-      "addition": "earth on weapon",
+      "addition": "cold on place",
       "count": 8,
+      "queues": [
+        "life",
+        "life+life",
+        "life+cold",
+        "life+lightning",
+        "life+sigil",
+        "life+earth",
+        "arcane+sigil",
+        "sigil+earth"
+      ]
+    },
+    {
+      "addition": "lightning on weapon",
+      "count": 8,
+      "queues": [
+        "life",
+        "life+life",
+        "life+cold",
+        "life+lightning",
+        "life+sigil",
+        "life+fire",
+        "lightning+sigil",
+        "arcane+sigil"
+      ]
+    },
+    {
+      "addition": "earth on area",
+      "count": 7,
       "queues": [
         "water+life",
         "life",
@@ -197,47 +180,7 @@
         "life+cold",
         "life+sigil",
         "life+fire",
-        "life+earth",
-        "shield+earth"
-      ]
-    },
-    {
-      "addition": "water on area",
-      "count": 7,
-      "queues": [
-        "water+life",
-        "water+sigil",
-        "life",
-        "life+life",
-        "life+cold",
-        "life+fire",
         "life+earth"
-      ]
-    },
-    {
-      "addition": "life on weapon",
-      "count": 7,
-      "queues": [
-        "water+shield",
-        "life+shield",
-        "shield",
-        "shield+cold",
-        "shield+lightning",
-        "shield+fire",
-        "shield+earth"
-      ]
-    },
-    {
-      "addition": "arcane on place",
-      "count": 7,
-      "queues": [
-        "water+arcane",
-        "cold+arcane",
-        "lightning+arcane",
-        "arcane",
-        "arcane+arcane",
-        "arcane+sigil",
-        "sigil+earth"
       ]
     },
     {
@@ -254,27 +197,51 @@
       ]
     },
     {
-      "addition": "cold on area",
+      "addition": "water on area",
       "count": 6,
       "queues": [
         "water+life",
         "life",
         "life+life",
-        "life+cold",
-        "life+lightning",
+        "life+sigil",
+        "life+fire",
         "life+earth"
       ]
     },
     {
-      "addition": "earth on area",
+      "addition": "water on self",
       "count": 6,
       "queues": [
         "water+life",
+        "water+sigil",
+        "life",
+        "life+life",
+        "life+fire",
+        "life+earth"
+      ]
+    },
+    {
+      "addition": "cold on area",
+      "count": 6,
+      "queues": [
         "life",
         "life+life",
         "life+cold",
-        "life+fire",
+        "life+lightning",
+        "life+sigil",
         "life+earth"
+      ]
+    },
+    {
+      "addition": "lightning on area",
+      "count": 6,
+      "queues": [
+        "life",
+        "life+life",
+        "life+cold",
+        "life+lightning",
+        "life+sigil",
+        "life+fire"
       ]
     },
     {
@@ -289,62 +256,29 @@
       ]
     },
     {
-      "addition": "earth on self",
-      "count": 5,
-      "queues": [
-        "water+sigil",
-        "life+sigil",
-        "cold+sigil",
-        "arcane+sigil",
-        "sigil+earth"
-      ]
-    },
-    {
-      "addition": "lightning on area",
-      "count": 5,
-      "queues": [
-        "life",
-        "life+life",
-        "life+cold",
-        "life+lightning",
-        "life+fire"
-      ]
-    },
-    {
-      "addition": "lightning on self",
-      "count": 4,
-      "queues": [
-        "life+sigil",
-        "cold+sigil",
-        "lightning+sigil",
-        "arcane+sigil"
-      ]
-    },
-    {
-      "addition": "sigil on place",
-      "count": 3,
-      "queues": [
-        "water",
-        "water+water",
-        "lightning"
-      ]
-    },
-    {
-      "addition": "water on force",
-      "count": 3,
-      "queues": [
-        "water+shield",
-        "life+shield",
-        "life+cold"
-      ]
-    },
-    {
       "addition": "cold on force",
       "count": 3,
       "queues": [
         "life+shield",
-        "life+cold",
-        "life+lightning"
+        "life+lightning",
+        "sigil+earth"
+      ]
+    },
+    {
+      "addition": "earth on weapon",
+      "count": 3,
+      "queues": [
+        "life+sigil",
+        "life+earth",
+        "sigil+earth"
+      ]
+    },
+    {
+      "addition": "water on force",
+      "count": 2,
+      "queues": [
+        "life+shield",
+        "sigil+earth"
       ]
     },
     {
@@ -356,11 +290,43 @@
       ]
     },
     {
-      "addition": "fire on force",
+      "addition": "earth on force",
       "count": 2,
       "queues": [
         "life+shield",
-        "life+lightning"
+        "sigil+earth"
+      ]
+    },
+    {
+      "addition": "fire on force",
+      "count": 2,
+      "queues": [
+        "life+lightning",
+        "sigil+earth"
+      ]
+    },
+    {
+      "addition": "fire on area",
+      "count": 2,
+      "queues": [
+        "life+sigil",
+        "life+fire"
+      ]
+    },
+    {
+      "addition": "arcane on place",
+      "count": 2,
+      "queues": [
+        "arcane+sigil",
+        "sigil+earth"
+      ]
+    },
+    {
+      "addition": "arcane on weapon",
+      "count": 2,
+      "queues": [
+        "arcane+sigil",
+        "sigil+earth"
       ]
     },
     {
@@ -368,13 +334,6 @@
       "count": 1,
       "queues": [
         "life+life"
-      ]
-    },
-    {
-      "addition": "earth on force",
-      "count": 1,
-      "queues": [
-        "life+shield"
       ]
     },
     {
@@ -392,17 +351,24 @@
       ]
     },
     {
-      "addition": "fire on area",
+      "addition": "life on weapon",
+      "count": 1,
+      "queues": [
+        "life+sigil"
+      ]
+    },
+    {
+      "addition": "fire on self",
       "count": 1,
       "queues": [
         "life+fire"
       ]
     },
     {
-      "addition": "arcane on area",
+      "addition": "arcane on force",
       "count": 1,
       "queues": [
-        "arcane+arcane"
+        "sigil+earth"
       ]
     }
   ]

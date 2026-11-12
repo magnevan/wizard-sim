@@ -90,7 +90,7 @@ function strike(w: World, src: number, t: number, dmg: number, knock: number, dx
   b.hp[t] -= d;
   b.lastHit[t] = w.clock[0];
   addKnock(w, t, dx, dy, knock);
-  if (burn && !(t < MAX_SEATS && unburnable(w, t))) ignite(w, t, 18, b.burnSrc[t], T(3));
+  if (burn && !(t < MAX_SEATS && unburnable(w, t))) ignite(w, t, 18, src, T(3));
   w.events.push({ tick: w.clock[0], kind: 'hit', who: t, x: b.x[t], y: b.y[t], amount: d, look: 0 });
 }
 

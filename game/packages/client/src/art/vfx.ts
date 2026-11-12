@@ -20,6 +20,7 @@ import {
 import { FIELD, gx, gy } from './field';
 import { BARREL_RISE, headTip, liveHeads, towerTip } from './props';
 import { flameJet, pilotFlame } from './flame-jet';
+import { feedLines } from './feed-lines';
 import { toX, toY } from '../iso-world';
 import { PPU } from '../camera';
 import * as A from './accent';
@@ -382,6 +383,7 @@ export class Vfx {
     g._fs = o._fs = null;
     this.solids.length = 0; this.softs.length = 0;
     this.occluders?.((tex, x, y, footY, solid, z, piece) => { (solid ? this.solids : this.softs).push({ tex, x, y, footY, z, piece: !!piece }); });
+    if (w.battery) feedLines(g, w, ct, light); // the well's glyph paths to the defences and the gate, under everything
     this.surfaces(w, ct, light);
     this.zones(w, t, light, ct);
     this.groundMarks(w, bodies, t);

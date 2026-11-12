@@ -1,0 +1,23 @@
+{
+  "id": "battery-well-top-drained",
+  "kind": "prop",
+  "name": "Battery well, drum and rings, drained",
+  "footprint": [
+    1.0,
+    1.0
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        52,
+        87
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/well/candidate-1.png",
+      "tool": "create_1_direction_object",
+      "edits": "tools/art-import/well_drained.py: crystal darkened and cracked, seams dark, brass dulled",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

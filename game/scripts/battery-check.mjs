@@ -203,7 +203,9 @@ try {
   await sleep(1500);
   await shot('well-failing');
   await p.evaluate(() => { const w = window.wizardSim.world; w.battery.flow[0] = 1e-9; w.seats.runes.fill(0, 0, 10); }); // seat 0's pools spent, the flow out
-  await sleep(700);
+  await sleep(450);
+  await shot('well-glide'); // the view on its way back, the light draining down the feed lines
+  await sleep(250);
   const dry = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], drive: w.battery.drive[0], gate: w.walls.type[0], dryT: w.battery.wellT[1] }; });
   if (dry.step !== 6 || dry.drive !== -1 || dry.gate !== 0) fail(`the well should run dry: step ${dry.step}, drive ${dry.drive}, gate wall ${dry.gate}`);
   await shot('well-dry');

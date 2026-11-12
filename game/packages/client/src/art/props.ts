@@ -179,12 +179,13 @@ export class PropView {
   private dead = false;
   /**
    * The battery's well has run dry (sim/src/battery-waves.ts): every defence goes dark, tower and head swapped for their
-   * burnt-out versions (tools/art-import/defence.py), the head left at its default facing. Their glow and the well's go
+   * burnt-out versions (tools/art-import/defence.py), the head left at its default facing, and the well for its drained
+   * one (tools/art-import/well_drained.py). Their glow and the well's go
    * out with them (standing() reports them by these names, which the lighting has no light for).
    */
   burnOut(dead: boolean, fx0: number, fy0: number): void {
     if (dead === this.dead) return;
-    const swap: Record<string, string> = { 'defence-tower': 'defence-tower-burnt', [HEAD]: 'defence-head-burnt' };
+    const swap: Record<string, string> = { 'defence-tower': 'defence-tower-burnt', [HEAD]: 'defence-head-burnt', 'battery-well': 'battery-well-drained', 'battery-well-top': 'battery-well-top-drained' };
     const pending = this.items.filter((it) => swap[it.asset]);
     const art = pending.map((it) => propImage(dead ? swap[it.asset] : it.asset, this.current));
     if (art.some((a) => !a)) return;

@@ -46,6 +46,8 @@ const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brut
 const LIGHTING = typeof location === 'undefined' || new URLSearchParams(location.search).get('lighting') !== '0';
 /** How far the view leans out over the battlefield while you drive a defence: view units, across and up. */
 const DRIVE_LOOK = 4.5;
+/** When the battery's well runs dry, the view glides back to your wizard over this many seconds, at this rate (1/s). */
+const DRY_GLIDE = 3.5, DRY_GLIDE_RATE = 1.5;
 const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL', simple: 'SIMPLE, ANGLED, LOW DETAIL', code: 'CODE, STRAIGHT-ON' };
 
 export class WorldView {
@@ -458,12 +460,21 @@ export class WorldView {
    * it: they get an arrow at the edge of the view (edge-marks.ts). With no local wizard at all, it
    * frames everyone. Several local seats share the screen (camera.ts `shared`).
    */
+  /** Each seat's camera spot while the view glides back after the battery's well runs dry, x and y. */
+  private glide = new Float64Array(MAX_SEATS * 2);
   private aim(w: World, alpha: number, dt: number): void {
     const b = w.bodies, up: { x: number; y: number }[] = [], down: { x: number; y: number }[] = [], all: { x: number; y: number }[] = [];
     for (let s = 0; s < MAX_SEATS; s++) {
       if (b.kind[s] !== KIND.wizard) continue;
       const [x0, y0] = this.drawnAt(s, w, alpha), far = s < MAX_SEATS && w.battery && w.battery.drive[s] >= 0 ? DRIVE_LOOK : 0;
-      const p = { x: x0 + far, y: y0 - far }; // driving a defence, you look out over the battlefield: north is up and to the right
+      let p = { x: x0 + far, y: y0 - far }; // driving a defence, you look out over the battlefield: north is up and to the right
+      // the battery's well has just run dry: the view glides back from the battlefield to your wizard, slowly
+      const dryT = w.battery ? w.battery.wellT[1] / 60 : 0;
+      if (dryT > 0 && dryT < DRY_GLIDE) {
+        const k = 1 - Math.exp(-Math.min(0.1, Math.max(0, dt)) * DRY_GLIDE_RATE);
+        this.glide[s * 2] += (p.x - this.glide[s * 2]) * k; this.glide[s * 2 + 1] += (p.y - this.glide[s * 2 + 1]) * k;
+        p = { x: this.glide[s * 2], y: this.glide[s * 2 + 1] };
+      } else { this.glide[s * 2] = p.x; this.glide[s * 2 + 1] = p.y; }
       all.push(p);
       if (this.isLocal(s)) (b.downed[s] ? down : up).push(p);
     }

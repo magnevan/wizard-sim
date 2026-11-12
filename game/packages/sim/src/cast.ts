@@ -29,7 +29,8 @@ import { chooseElement, echoChannel, echoLater } from './survive';
 import { driveButtons, driveSpray, driveTarget, driving } from './battery';
 import { CAST_ID, KIND, PHASE, QUEUE_MAX, runeMax, runeRate, type World } from './world';
 
-const CASTS: Cast[] = ['force', 'force', 'area', 'place', 'self', 'conjure']; // index = CAST_ID
+/** The rules' cast for each CAST_ID (index 0, no cast, reads as Force). */
+export const CASTS: readonly Cast[] = ['force', 'force', 'area', 'place', 'self', 'conjure'];
 
 export function queueOf(w: World, i: number, cast = false): Element[] {
   const s = w.seats, q = cast ? s.castQueue : s.queue, n = cast ? s.castLen[i] : s.queueLen[i];

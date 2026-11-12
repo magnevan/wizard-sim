@@ -18,7 +18,7 @@
  */
 import type { Element } from '@wizard-sim/rules';
 import { ARCH, ARCHETYPES } from './archetypes';
-import { canAct } from './cast';
+import { CASTS, canAct } from './cast';
 import { compile, type SpellSpec } from './compile';
 import { PERKS, SHAPES, STRUCT, T } from './config';
 import { chain, channelTick, fireSpell } from './effects';
@@ -211,8 +211,6 @@ export function echoLater(w: World, i: number, charge: number): void {
   }
 }
 
-const ECHO_CASTS = ['force', 'force', 'area', 'place', 'self', 'conjure'] as const; // index = CAST_ID, as cast.ts
-
 /** Echo's queued repeats go off when due: from the wizard's spot, along their aim now. */
 function tickEchoes(w: World): void {
   const r = w.run!, b = w.bodies, s = w.seats, tick = w.clock[0];
@@ -223,7 +221,7 @@ function tickEchoes(w: World): void {
     if (b.kind[i] !== KIND.wizard || b.downed[i]) continue;
     const els: Element[] = [];
     for (let n = 0; n < r.echoLen[k]; n++) els.push(elementName(r.echoQ[k * QUEUE_MAX + n]));
-    const spec = compile(els, ECHO_CASTS[r.echoCast[k]], { drag: r.echoDrag[k] === 1 });
+    const spec = compile(els, CASTS[r.echoCast[k]], { drag: r.echoDrag[k] === 1 });
     const ax = s.aimX[i], ay = s.aimY[i], d = len(ax, ay), c = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
     const face = ax || ay ? atan2Turns(ay, ax) : b.face[i];
     w.events.push({ tick, kind: 'burst', who: i, x: b.x[i], y: b.y[i], amount: 0.5, look: EL.sigil });

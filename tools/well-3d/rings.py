@@ -22,8 +22,13 @@ FIT = json.load(open(os.path.join(HERE, 'rings-fit.json')))
 BUILD = os.path.join(HERE, 'build')
 CANVAS_W, CANVAS_H, SUPER = 104, 56, 4
 REPEAT = 4
-R, W = FIT['R'], FIT['W']
-RO, RI, LIPH = R + 0.9, R - 1.5, 0.55     # the band's outer and inner radius, how far the lips stand proud
+W = FIT['W']
+# the bought rings aren't one size (the user): one passes just inside the other, a band's thickness apart, so they never
+# meet. BIG says which: 'B' (the mirrored one) or 'A'.
+GAP, BIG = 3.2, (ARGS[2] if len(ARGS) > 2 else 'B')
+RMID = (FIT['R'] + FIT.get('RB', FIT['R'])) / 2
+RADII = {'A': RMID + (GAP if BIG == 'A' else -GAP) / 2, 'B': RMID + (GAP if BIG == 'B' else -GAP) / 2}
+RO, LIPH = RMID + 0.9, 0.55                 # the outer radius at the middle size (for the loop's length), how far the lips stand proud
 SEG = 256
 
 scene = bpy.context.scene
@@ -47,10 +52,10 @@ def band_material():
     nt.links.new(uv.outputs['UV'], pat.inputs['Vector'])
     # brass, darker down in the carvings, green-grey where the patina sits
     ramp = nt.nodes.new('ShaderNodeValToRGB')
-    ramp.color_ramp.elements[0].position = 0.25
-    ramp.color_ramp.elements[0].color = (0.05, 0.03, 0.016, 1)
-    ramp.color_ramp.elements[1].position = 0.85
-    ramp.color_ramp.elements[1].color = (0.62, 0.42, 0.22, 1)
+    ramp.color_ramp.elements[0].position = 0.3
+    ramp.color_ramp.elements[0].color = (0.04, 0.025, 0.012, 1)
+    ramp.color_ramp.elements[1].position = 0.95
+    ramp.color_ramp.elements[1].color = (0.85, 0.62, 0.36, 1)
     nt.links.new(tex.outputs['Color'], ramp.inputs['Fac'])
     mix = nt.nodes.new('ShaderNodeMix')
     mix.data_type = 'RGBA'
@@ -68,19 +73,54 @@ def band_material():
     return m
 
 
+def plain(name, rgb, rough=0.5, metal=0.5):
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    b = m.node_tree.nodes['Principled BSDF']
+    b.inputs['Base Color'].default_value = (*rgb, 1)
+    b.inputs['Roughness'].default_value = rough
+    b.inputs['Metallic'].default_value = metal
+    return m
+
+
+def inner_material():
+    """The inside face: flat darker brown seen face-on (the back arcs, as bought), but where it's seen edge-on it glows
+    the crystal's yellow, the thin bright line along each band's crystal-side edge in the bought art."""
+    m = plain('inner', (0.16, 0.09, 0.045), rough=0.7, metal=0.3)
+    nt = m.node_tree
+    b = nt.nodes['Principled BSDF']
+    lw = nt.nodes.new('ShaderNodeLayerWeight')
+    lw.inputs['Blend'].default_value = 0.5
+    pw = nt.nodes.new('ShaderNodeMath')
+    pw.operation = 'POWER'
+    pw.inputs[1].default_value = 4.0
+    nt.links.new(lw.outputs['Facing'], pw.inputs[0])
+    b.inputs['Emission Color'].default_value = (1.0, 0.8, 0.3, 1)
+    nt.links.new(pw.outputs['Value'], b.inputs['Emission Strength'])
+    return m
+
+
 BAND = band_material()
+INNER = inner_material()
+RIM = plain('rim', (0.7, 0.52, 0.3), rough=0.35, metal=0.6)          # the band's ends: the light rim
 
-# the band's cross-section, (radius, height along the axis, v across the band): a channel between two proud lips, the
-# inner face plain. Walked round as a closed loop.
 H2 = W / 2
-PROFILE = [
-    (RI, -H2, 0.0), (RO + LIPH, -H2, 0.0), (RO + LIPH, -H2 + 0.9, 0.12), (RO, -H2 + 1.2, 0.17),
-    (RO, H2 - 1.2, 0.83), (RO + LIPH, H2 - 0.9, 0.88), (RO + LIPH, H2, 1.0), (RI, H2, 1.0),
-]
 
 
-def ring(name):
+def profile(rc):
+    """The band's cross-section for a ring of mid radius rc, (radius, height along the axis, v across, material): the
+    end faces the light rim, the outer face engraved with its lips proud, the inner face plain. A closed loop."""
+    ro, ri = rc + 0.9, rc - 1.5
+    lip = 1.0 / W
+    return [
+        (ri, -H2, 0.0, 2), (ro + LIPH, -H2, 0.0, 0), (ro + LIPH, -H2 + 1.0, lip, 0), (ro, -H2 + 1.2, lip + 0.03, 0),
+        (ro, H2 - 1.2, 1 - lip - 0.03, 0), (ro + LIPH, H2 - 1.0, 1 - lip, 0), (ro + LIPH, H2, 1.0, 2), (ri, H2, 1.0, 1),
+    ]
+
+
+def ring(name, rc):
     """A solid ring about local +Z, centred on the origin, u round it and v across its outer face."""
+    PROFILE = profile(rc)
     me = bpy.data.meshes.new(name)
     bm = bmesh.new()
     uvl = bm.loops.layers.uv.new()
@@ -88,12 +128,13 @@ def ring(name):
     verts = []
     for s in range(SEG):
         a = 2 * math.pi * s / SEG
-        verts.append([bm.verts.new((r * math.cos(a), r * math.sin(a), z)) for r, z, _ in PROFILE])
+        verts.append([bm.verts.new((r * math.cos(a), r * math.sin(a), z)) for r, z, _, _ in PROFILE])
     for s in range(SEG):
         t = (s + 1) % SEG
         for k in range(n):
             j = (k + 1) % n
             f = bm.faces.new((verts[s][k], verts[t][k], verts[t][j], verts[s][j]))
+            f.material_index = PROFILE[k][3]
             u0, u1 = s / SEG, (s + 1) / SEG
             v0, v1 = PROFILE[k][2], PROFILE[j][2]
             for loop, uv in zip(f.loops, ((u0, v0), (u1, v0), (u1, v1), (u0, v1))):
@@ -103,7 +144,7 @@ def ring(name):
     bm.free()
     for p in me.polygons: p.use_smooth = False
     o = bpy.data.objects.new(name, me)
-    o.data.materials.append(BAND)
+    for m in (BAND, INNER, RIM): o.data.materials.append(m)
     scene.collection.objects.link(o)
     return o
 
@@ -119,7 +160,7 @@ def axis(tilt, az, mirror):
 
 rings = []
 for k, mirror in enumerate((False, True)):
-    o = ring('ring-' + 'AB'[k])
+    o = ring('ring-' + 'AB'[k], RADII['AB'[k]])
     n = axis(FIT['tilt'], FIT['az'], mirror)
     base = n.to_track_quat('Z', 'Y').to_matrix().to_4x4()
     rings.append((o, base, -1 if mirror else 1))
@@ -144,13 +185,13 @@ scene.camera = cam_o
 # the crystal's light, warm, at the rings' centre; a sun from the upper left as the bought art is lit
 glow = bpy.data.lights.new('crystal', 'POINT')
 glow.color = (1.0, 0.62, 0.22)
-glow.energy = 8e4
+glow.energy = 4e4
 glow.shadow_soft_size = 3
 glow_o = bpy.data.objects.new('crystal', glow)
 glow_o.location = (0, 0, 2)
 scene.collection.objects.link(glow_o)
 sun = bpy.data.lights.new('sun', 'SUN')
-sun.energy = 3.6
+sun.energy = 4.5
 sun.angle = math.radians(10)
 sun_o = bpy.data.objects.new('sun', sun)
 scene.collection.objects.link(sun_o)
@@ -184,7 +225,8 @@ layer.use_freestyle = True
 fs = layer.freestyle_settings
 fs.crease_angle = math.radians(150)
 ls = fs.linesets[0] if fs.linesets else fs.linesets.new('lines')
-ls.select_silhouette = ls.select_border = ls.select_crease = True
+ls.select_silhouette = ls.select_border = True
+ls.select_crease = False   # the lips are shading, not lines (the user: edges far too strong)
 ls.select_edge_mark = False
 ls.linestyle.color = (0.006, 0.004, 0.01)
 ls.linestyle.thickness = 1.0

@@ -31,4 +31,19 @@ b.alpha_composite(cell('front.png'), (0, 0))
 pair = Image.new('RGBA', (W * 2 + 6, H), (0, 0, 0, 255))
 pair.paste(a, (0, 0)); pair.paste(b, (W + 6, 0))
 pair.resize((pair.width * k, pair.height * k), Image.NEAREST).save(out)
-print('compare', out)
+
+
+def variety(im):
+    """How often a ring pixel's right-hand neighbour (also ring, neither the dark line) is another colour: the bought
+    rings change colour almost pixel to pixel."""
+    import numpy as np
+    a = np.array(im)
+    op = (a[..., 3] > 0) & (a[..., :3].sum(2) > 80)
+    both = op[:, :-1] & op[:, 1:]
+    diff = (a[:, :-1, :3] != a[:, 1:, :3]).any(2)
+    return round(float((diff & both).sum() / max(1, both.sum())), 3)
+
+
+mine = Image.new('RGBA', (cw, ch))
+mine.alpha_composite(cell('back.png')); mine.alpha_composite(cell('front.png'))
+print('compare', out, 'variety bought', variety(rings), 'mine', variety(mine))

@@ -49,8 +49,9 @@ def raster(pts, cy):
     return m
 
 
-def score(R, W, tilt, az, cy):
-    m = raster(ring_points(R, W, tilt, az), cy) | raster(ring_points(R, W, tilt, az, True), cy)
+def score(R, W, tilt, az, cy, dR=0.0):
+    """dR: ring B (the mirror) is that much bigger than ring A; the bought rings aren't the same size, so they never meet."""
+    m = raster(ring_points(R, W, tilt, az), cy) | raster(ring_points(R + dR, W, tilt, az, True), cy)
     return (m & a).sum() / (m | a).sum()
 
 
@@ -74,8 +75,19 @@ for R in np.arange(R0 - 2, R0 + 2.1, 0.5):
                         best = (s, (float(R), W, float(tilt), float(az), float(cy)))
 print('fine', best)
 R, W, tilt, az, cy = best[1]
-json.dump({'iou': round(best[0], 3), 'elev': 33, 'cx': CX, 'cy': cy, 'R': R, 'W': W, 'tilt': tilt, 'az': az}, open(os.path.join(HERE, 'rings-fit.json'), 'w'), indent=1)
-m = raster(ring_points(R, W, tilt, az), cy) | raster(ring_points(R, W, tilt, az, True), cy)
+# then the two sizes apart, keeping their mean
+best2 = (0, None)
+for dR in np.arange(-6, 6.1, 0.5):
+    for t2 in np.arange(tilt - 4, tilt + 4.1, 1):
+        for z2 in np.arange(az - 6, az + 6.1, 2):
+            for c2 in np.arange(cy - 1.5, cy + 1.6, 0.5):
+                s = score(R - dR / 2, W, t2, z2, c2, dR)
+                if s > best2[0]:
+                    best2 = (s, (float(dR), float(t2), float(z2), float(c2)))
+print('two sizes', best2)
+dR, tilt, az, cy = best2[1]
+json.dump({'iou': round(best2[0], 3), 'elev': 33, 'cx': CX, 'cy': cy, 'R': R - dR / 2, 'RB': R + dR / 2, 'W': W, 'tilt': tilt, 'az': az}, open(os.path.join(HERE, 'rings-fit.json'), 'w'), indent=1)
+m = raster(ring_points(R - dR / 2, W, tilt, az), cy) | raster(ring_points(R + dR / 2, W, tilt, az, True), cy)
 viz = np.zeros((H, Wd, 3), np.uint8)
 viz[a] = (120, 90, 50)
 viz[m & ~a] = (40, 120, 255)

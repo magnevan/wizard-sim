@@ -6,7 +6,7 @@ Every render pixel snaps to the nearest colour of the bought rings (content/asse
 its block's commonest colour, and a one-pixel dark outline goes round each part. Writes back.png and front.png strips
 (one cell per frame) and rings.json.
 """
-import collections, json, os, sys
+import collections, json, math, os, sys
 import numpy as np
 from PIL import Image
 
@@ -56,6 +56,33 @@ def outline(a):
     return a
 
 
+CRYSTAL = (51.5, 20.0)    # the crystal's centre in the rings' canvas (content/assets/well/layers.json)
+GLINT = [(255, 244, 192), (255, 216, 96), (216, 168, 104), (184, 148, 106)]
+
+
+def crystal_edge(a, reach=40.0):
+    """The bought rings' yellow line: a band's edge that faces the crystal catches its light. A ring pixel whose next
+    pixel toward the crystal is the dark line becomes a glint, brighter the nearer the crystal. (A render can't make this:
+    with the crystal at the rings' centre its light runs along every band's edge.)"""
+    h, w = a.shape[:2]
+    line = (a[..., 3] > 0) & (a[..., :3] == LINE).all(2)
+    ring = (a[..., 3] > 0) & ~line
+    out = a.copy()
+    for y, x in zip(*np.nonzero(ring)):
+        dx, dy = CRYSTAL[0] - (x + 0.5), CRYSTAL[1] - (y + 0.5)
+        d = math.hypot(dx, dy)
+        if d < 1:
+            continue
+        # the steps toward the crystal along each axis (where it mostly lies), so the glint runs unbroken along an edge
+        steps = [(x + (1 if dx > 0 else -1), y)] if abs(dx) > 0.4 * d else []
+        steps += [(x, y + (1 if dy > 0 else -1))] if abs(dy) > 0.4 * d else []
+        if not any(0 <= nx < w and 0 <= ny < h and line[ny, nx] for nx, ny in steps):
+            continue
+        k = min(len(GLINT) - 1, int(d / reach * len(GLINT)))
+        out[y, x, :3] = GLINT[k]
+    return out
+
+
 def run(src, out):
     info = json.load(open(os.path.join(src, 'info.json')))
     n, (cw, chh), sup = info['frames'], info['canvas'], info['super']
@@ -64,7 +91,7 @@ def run(src, out):
         strip = np.zeros((chh, cw * n, 4), np.uint8)
         for f in range(n):
             im = np.array(Image.open(os.path.join(src, f'f{f:03d}-{part}.png')).convert('RGBA'))
-            strip[:, f * cw:(f + 1) * cw] = outline(pixel_art(im, sup))
+            strip[:, f * cw:(f + 1) * cw] = crystal_edge(outline(pixel_art(im, sup)))
         Image.fromarray(strip).save(os.path.join(out, f'{part}.png'), optimize=True)
     json.dump({'frames': n, 'cell': [cw, chh]}, open(os.path.join(out, 'rings.json'), 'w'))
     print('rings', n, 'frames')

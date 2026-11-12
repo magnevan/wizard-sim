@@ -31,6 +31,6 @@ Preparing your environment while waiting for enemies becomes a skill. It suits t
 
 ## Where it stands (2026-11-05)
 - **The trap and primed-object half is built** as Sigil devices in the game: glyphs and line glyphs, turrets, orbitals and rune motes, each binding a Sigil rune ([Sigil's identity](../decisions/README.md#2026-11-04-sigils-identity-see-explorations2026-11-04-sigil-identity-and-buffsmd); tracked in `battlefield-building.md`). Survive's lulls are where they get placed.
-- **The stored spell is deferred:** "preparing a spell becomes its own mechanism, deferred" ([Seal becomes an element](../decisions/README.md#2026-11-03-seal-becomes-an-element-steam-and-ice-dropped-see-explorations2026-11-03-structures-review-and-elementsmd)). Its open questions above (how many slots, what releasing costs) are still open, which is why this stays `developing`.
+- **The stored spell is deferred:** "preparing a spell becomes its own mechanism, deferred" ([Seal becomes an element](../decisions/README.md#2026-11-03-seal-becomes-an-element-steam-and-ice-dropped-see-explorations2026-11-03-structures-review-and-elementsmd)). Its open questions above (how many slots, what releasing costs) are still open, which kept this `developing` until it was built (next line).
 
 - **The stored spell is built (2026-11-11)** as Sigil alone on Force: one slot, released by an empty-queue Force with no wind-up, binding a Sigil rune while armed or held (`decisions/README.md`, spell audit step 7b). Still open: more slots with progression.

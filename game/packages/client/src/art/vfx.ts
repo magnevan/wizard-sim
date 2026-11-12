@@ -14,14 +14,15 @@
 import { Sprite, Texture } from 'pixi.js';
 import {
   BATTERY, CELL, DEVICE, ECHO_LAG, sprayReach, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SHAPES, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
-  compile, elementName, queueFromCounts, specOf,
+  compile, elementName, pedestalNear, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
-import { BARREL_RISE, headTip, liveHeads, towerTip } from './props';
+import { BARREL_RISE, WELL_BEAM, headTip, liveHeads, towerTip } from './props';
 import { flameJet, pilotFlame } from './flame-jet';
 import { feedLines } from './feed-lines';
 import { towersLit } from './power-down';
+import { drawKeys } from '../key-caps';
 import { toX, toY } from '../iso-world';
 import { PPU } from '../camera';
 import * as A from './accent';
@@ -400,6 +401,14 @@ export class Vfx {
     this.missiles(w, t, light, ct);
     this.occludedChannels(w, ct, bodies, light);
     this.pilots(w, ct, light);
+    if (w.battery) {
+      this.column(ct, light);
+      // standing in a free possession circle: the X key over your head
+      for (let i = 0; i < MAX_SEATS; i++) {
+        const v = bodies[i];
+        if (v?.on && w.seats.active[i] && w.battery.drive[i] < 0 && pedestalNear(w, i) >= 0) drawKeys(this.o.x, [{ key: 'x' }], Math.round(v.x - 7), Math.round(v.y - 50), ct);
+      }
+    }
     this.casters(w, ct, bodies, light);
     this.statuses(w, t, bodies, light, ct);
     this.ghosts();
@@ -1033,9 +1042,13 @@ export class Vfx {
       // shard head, crackle, a droplet trail, a stone pebble, life motes), so wand + Fire reads apart from wand + Cold.
       const wandBolt = m.owner[j] >= 0 && m.owner[j] < MAX_SEATS && m.els[j * N_EL + 5] > 0; // Arcane is element 6
       const RB = wandBolt ? X.EL.arcane : R, xs = wandBolt ? A.extrasOf(m.els, j, 6, 3) : [];
-      for (let k2 = 6; k2 >= 1; k2--) K.sq(o, x - ux * k2 * 2.5, y - uy * k2 * 2.5, k2 < 3 ? 2 : 1, RB[Math.min(RB.length - 1, 1 + (k2 >> 1))]);
-      X.glow(o, x, y, 6, RB[2], 0.7); K.sq(o, x, y, 3, RB[2]); K.sq(o, x, y, 2, RB[1]); X.px(o, x, y - 1, '#ffffff');
-      if (xs.length) A.bolt(o, x, y, ux, uy, xs, t, this.mT0[j], sd, light);
+      const bolt = (c: Ctx): void => {
+        for (let k2 = 6; k2 >= 1; k2--) K.sq(c, x - ux * k2 * 2.5, y - uy * k2 * 2.5, k2 < 3 ? 2 : 1, RB[Math.min(RB.length - 1, 1 + (k2 >> 1))]);
+        X.glow(c, x, y, 6, RB[2], 0.7); K.sq(c, x, y, 3, RB[2]); K.sq(c, x, y, 2, RB[1]); X.px(c, x, y - 1, '#ffffff');
+        if (xs.length) A.bolt(c, x, y, ux, uy, xs, t, this.mT0[j], sd, light);
+      };
+      // the battery's archers shoot at the wall from out in the field: what stands in front (the wall) hides their arrows
+      if (w.battery && m.owner[j] >= MAX_SEATS) this.behind(x, yg, 16, bolt); else bolt(o);
       light(x, yg, 30, RB[2], 0.5);
     }
   }
@@ -1201,6 +1214,29 @@ export class Vfx {
     }
     this.turretChannels(w, t, light);
   }
+  /**
+   * The battery well's column of light (the design: what wells share, light standing up out of the ground and rising
+   * past the top of the screen). Steady while it's well; overloaded, it whips from side to side and breaks up; as the
+   * well dies it gutters and draws down into the crystal. From art/props.ts WELL_BEAM, which the well's art sets.
+   */
+  private column(t: number, light: LightFn): void {
+    const b = WELL_BEAM, o = this.o.x;
+    if (!b.on || b.power <= 0.02) return;
+    const x0 = Math.round(b.x), y0 = Math.round(b.y), u = b.unstable, H = 640 * clamp(b.power * 1.25 - 0.25, 0, 1);
+    const k = b.power * (0.85 + 0.15 * b.pulse), f = Math.floor(t * 12);
+    for (let y = 0; y < H; y += 2) {
+      if (u > 0.15 && rand(Math.floor((y + t * 90) / 18), f, 71) < u * 0.3) continue; // overloaded: it breaks up
+      const whip = u * (Math.sin(y * 0.045 - t * 9) * 5 + Math.sin(y * 0.12 + t * 6) * 2), x = x0 + Math.round(whip);
+      const fade = 1 - y / Math.max(1, H) * 0.6, a = k * fade;
+      o.globalAlpha = 0.22 * a; X.rect(o, x - 5, y0 - y - 2, 11, 2, '#ff9a30');
+      o.globalAlpha = 0.5 * a; X.rect(o, x - 3, y0 - y - 2, 7, 2, '#ffb040');
+      o.globalAlpha = 0.85 * a; X.rect(o, x - 1, y0 - y - 2, 3, 2, y % 6 === 0 && u > 0.3 ? '#ffffff' : '#fff2c0');
+    }
+    o.globalAlpha = 1;
+    X.glow(o, x0, y0, 7, '#fff2c0', 0.6 * k);
+    light(x0, y0 + 30, 70, '#ff9a30', 0.35 * k);
+  }
+
   /** Every working defence keeps a small live flame at its nozzle, except while it's firing. */
   private pilots(w: World, t: number, light: LightFn): void {
     const k = towersLit(w), n = k > 0.5 ? liveHeads(w) : 0, s = w.seats; // as the well dies, the flames choke and sputter out (art/power-down.ts)

@@ -307,7 +307,7 @@ export class WorldView {
     this.props.turnHeads(w, fx0, fy0);
     // the battery's stakes give way as a defence is taken
     if (this.props.breakStakes(!!w.battery && w.enc.state[0] > 0 && w.enc.state[1] >= BSTEP.ring, fx0, fy0)) {
-      w.def.props.forEach((p, k) => { if (p.asset === 'stakes') this.vfx.splinters(p.x, p.y, t, k); });
+      w.def.props.forEach((p, k) => { if (p.asset === 'stakes' || p.asset === 'palisade') this.vfx.splinters(p.x, p.y, t, k); });
     }
     this.drawArtLabel(w);
     // the wave banner: over the arena's north edge, or near the top of the view when that is off screen

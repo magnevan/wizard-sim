@@ -20,8 +20,8 @@ try {
   await p.setViewport({ width: 1280, height: 800 });
   await p.goto(`${BASE}?timerloop=1&debug=0#battery`);
   await p.waitForFunction(() => window.wizardSim?.view.props.count > 0 && window.wizardSim.view.props.ready, { timeout: 60000, polling: 200 });
-  // by the pedestal west of the gate, where several lines run past the well (plan coordinates, as battery-check.mjs)
-  await p.evaluate(() => { const g = window.wizardSim, b = g.world.bodies, d = g.world.dims; b.x[0] = 30.4 - d.w / 2; b.y[0] = 44 - d.h / 2; });
+  // by the possession circle west of the gate, where several lines run past the well (plan coordinates, as battery-check.mjs)
+  await p.evaluate(() => { const g = window.wizardSim, b = g.world.bodies, d = g.world.dims; b.x[0] = 29.6 - d.w / 2; b.y[0] = 42 - d.h / 2; });
   await sleep(2500);
   for (const s of styles) {
     await p.evaluate((id) => { globalThis.__pathStyle = id; }, s);

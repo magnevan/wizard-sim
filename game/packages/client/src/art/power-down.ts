@@ -19,8 +19,8 @@ export const POWER = { towers: 0.8, drain: 1.1, wellFrom: 0.9, wellTo: 3.0 } as 
 /** Seconds since the well ran dry, or 0 if it hasn't. */
 export const dryTime = (w: World): number => (w.battery ? w.battery.wellT[1] / 60 : 0);
 
-/** How unsteady the well is before it's dry: 0 at a full flow, 1 as it runs out. */
-export const unstable = (w: World): number => (!w.battery || dryTime(w) > 0 ? 0 : clamp(1 - w.battery.flow[0], 0, 1));
+/** How overloaded the well is before it's dry: 0 while it holds; from the moment it starts failing 0.3, rising to 1 as it runs out. */
+export const unstable = (w: World): number => (!w.battery || dryTime(w) > 0 || w.battery.flow[0] >= 1 ? 0 : clamp(0.3 + 0.7 * (1 - w.battery.flow[0]), 0, 1));
 
 /** A sputter: flips on and off at `rate` a second, more often off as k falls; deterministic in t. */
 function sputter(t: number, k: number, rate: number, seed: number): number {

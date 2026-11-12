@@ -30,7 +30,7 @@ describe('the battery gate', () => {
 describe('driving a defence', () => {
   const press = (b: number) => [{ ...NO_INPUT, buttons: b }, NO_INPUT, NO_INPUT, NO_INPUT];
   const atPedestal = () => {
-    const w = createWorld(1, 1, { room: 'battery' }), pad = w.def.props.filter((p) => p.asset === 'control-pedestal')[1];
+    const w = createWorld(1, 1, { room: 'battery' }), pad = w.def.props.filter((p) => p.asset === 'possession-circle')[1];
     w.bodies.x[0] = pad.x + 1.2; w.bodies.y[0] = pad.y;
     return { w, pad, tower: w.def.props.filter((p) => p.asset === 'defence-tower')[1] };
   };

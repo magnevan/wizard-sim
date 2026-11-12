@@ -237,6 +237,36 @@ export function pathLength(p: GlyphPath): number {
   return L;
 }
 
+/**
+ * A glyph circle on the ground (sim world centre and radius): two thin rings with runes between them, turned `spin`
+ * radians, a pad at its middle. The same tileset and the same mask as a path; `rune(k)` says how its k-th rune shows.
+ */
+export function drawGlyphCircle(g: Ctx, cx: number, cy: number, r: number, seed: number, line: string, dark: string, rune: (k: number) => RuneLook,
+  opts: { spin?: number; mask?: { g: Ctx; line: number }; lineAlpha?: number } = {}): void {
+  if (!TILES) return;
+  const darkSheet = tint(dark), lineSheet = tint(line), white = opts.mask ? tint('#ffffff') : null;
+  if (!darkSheet || !lineSheet) return;
+  const { spin = 0, mask, lineAlpha = 1 } = opts, gap = PATH.half * 2;
+  for (const rr of [r, r - gap]) {
+    const pts: [number, number][] = [];
+    for (let i = 0; i <= 48; i++) { const a = (i / 48) * Math.PI * 2; pts.push(F(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr)); }
+    g.globalAlpha = lineAlpha; X.lines(g, pts, line, 1); g.globalAlpha = 1;
+    if (mask && mask.line > 0) { mask.g.globalAlpha = mask.line; X.lines(mask.g, pts, '#ffffff', 1); mask.g.globalAlpha = 1; }
+  }
+  const rr = r - gap / 2, n = Math.max(6, Math.floor((Math.PI * 2 * rr) / (PATH.gap * 0.85)));
+  for (let k = 0; k < n; k++) {
+    const a = (k / n) * Math.PI * 2 + spin, [x, y] = F(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr);
+    const look = rune(k), tile = Math.floor(rand(k, seed, 7) * TILES.glyphs);
+    if (!look) { stamp(g, darkSheet, tile, x, y); continue; }
+    if (look.glow > 0.02) X.glow(g, x, y, 4, look.col, 0.28 * look.glow, 0.5);
+    const sheet = tint(look.col);
+    if (sheet) stamp(g, sheet, tile, x, y);
+    if (mask && white) { mask.g.globalAlpha = Math.min(1, look.glow); stamp(mask.g, white, tile, x, y); mask.g.globalAlpha = 1; }
+  }
+  const [mx, my] = F(cx, cy);
+  stamp(g, lineSheet, TILES.pad, mx, my);
+}
+
 function stamp(g: Ctx, sheet: HTMLCanvasElement, tile: number, x: number, y: number): void {
   const [w, h] = TILES.cell;
   g.drawImage(sheet, tile * TILES.pitch, 0, w, h, Math.round(x - (w - 1) / 2), Math.round(y - (h - 1) / 2), w, h);

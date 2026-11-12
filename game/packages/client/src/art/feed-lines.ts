@@ -13,19 +13,23 @@
  * As the well fails (beat 5) runes start to gutter; when it runs dry (beat 6) the light drains back down every line into
  * the well (art/power-down.ts), and they stay dark.
  */
-import type { World } from '@wizard-sim/sim';
-import { toX, toY } from '../iso-world';
-import { PATH_STYLES, PathLayer, Shimmer, drawGlyphPath, pathLength, snap, type GlyphPath, type PathStyle, type RuneLook } from './glyph-path';
+import { BSTEP, MAX_SEATS, pedestalNear, type World } from '@wizard-sim/sim';
+import { toU, toV, toX, toY } from '../iso-world';
+import { gx, gy } from './field';
+import { PATH_STYLES, PathLayer, Shimmer, drawGlyphCircle, drawGlyphPath, pathLength, snap, type GlyphPath, type PathStyle, type RuneLook } from './glyph-path';
 import { POWER, dryTime } from './power-down';
 import { clamp, rand } from './util';
 
 type LightFn = (x: number, y: number, r: number, col: string, a: number) => void;
-interface Feed { path: GlyphPath; tower: number; from: number; len: number }
+/** A line, and for a defence's, the possession circle it ends in (sim world). */
+interface Feed { path: GlyphPath; tower: number; from: number; len: number; circle?: { x: number; y: number } }
+/** A possession circle's radius, world units (sim battery.ts reach is a little more). */
+const CIRCLE_R = 1.6;
 
 /** Fire's tones, hottest to darkest: only these, so the tileset is tinted a few times, once each. */
 const TONE = { hot: '#ffe0a0', lit: '#ffb040', warm: '#e0701c', dim: '#8a3c14', cold: '#3a2418' } as const;
 /** The lanes leaving the well: how far apart, how far out round the well they start, and the fan's shape. World units. */
-const LANE = 1.5, RIM = 3.3, BEND = 1.6, RUN_OFF = 1.4, TOWER_R = 2.3;
+const LANE = 1.5, RIM = 3.3, BEND = 1.6, RUN_OFF = 1.4;
 /** The swell of light running out along the lines: its speed at a full well (units/s) and its spacing. */
 const SWELL_SPEED = 2.2, SWELL_GAP = 7;
 
@@ -37,7 +41,7 @@ function feedsOf(w: World): Feed[] {
   if (cache && cache.def === w.def) return cache.feeds;
   // the view's props are turned (iso-world.ts): back to the sim's world
   const at = (asset: string) => w.def.props.filter((p) => p.asset === asset).map((p) => ({ x: toX(p.x, p.y), y: toY(p.x, p.y) }));
-  const well = at('battery-well')[0], towers = at('defence-tower'), pads = at('control-pedestal'), pillars = at('battery-pillar');
+  const well = at('battery-well')[0], towers = at('defence-tower'), pads = at('possession-circle'), pillars = at('battery-pillar');
   const feeds: Feed[] = [];
   if (well) {
     const rimY = (x: number) => well.y - Math.sqrt(Math.max(0, RIM * RIM - (x - well.x) ** 2));
@@ -45,10 +49,11 @@ function feedsOf(w: World): Feed[] {
       // this side's defences, nearest first: lane 1 is the nearest's, and the outer lanes turn off first
       const side = towers.map((t, k) => ({ t, k })).filter(({ t }) => Math.sign(t.x - well.x) === s).sort((a, b) => Math.abs(a.t.x - well.x) - Math.abs(b.t.x - well.x));
       side.forEach(({ t, k }, r) => {
-        const pad = pads[k] ?? t, lx = well.x + s * LANE * (r + 1), yh = pad.y + RUN_OFF + LANE * r;
-        const pts = snap([[lx, rimY(lx)], [lx, yh + BEND], [lx + s * BEND, yh], [pad.x - s * (yh - pad.y), yh], [pad.x, pad.y], [pad.x, t.y + TOWER_R]]);
-        const path: GlyphPath = { pts, start: 'pad', end: 'pad', seed: 11 + k * 7 };
-        feeds.push({ path, tower: k, from: 0, len: pathLength(path) });
+        // out along its lane, across, and in on a diagonal to its possession circle's rim (the circle touches the tower)
+        const pad = pads[k] ?? t, lx = well.x + s * LANE * (r + 1), yh = pad.y + RUN_OFF + LANE * r, d = (yh - pad.y) - CIRCLE_R * Math.SQRT1_2;
+        const pts = snap([[lx, rimY(lx)], [lx, yh + BEND], [lx + s * BEND, yh], [pad.x - s * (yh - pad.y), yh], [pad.x - s * (yh - pad.y) + s * d, yh - d]]);
+        const path: GlyphPath = { pts, start: 'pad', end: 'none', seed: 11 + k * 7 };
+        feeds.push({ path, tower: k, from: 0, len: pathLength(path), circle: pad });
       });
     }
     if (pillars.length === 2) {
@@ -91,9 +96,29 @@ export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: n
     };
     const lit = f.from < reach;
     drawGlyphPath(g, f.path, lit ? (k > 0.55 ? TONE.warm : TONE.dim) : TONE.cold, TONE.cold, rune, { from: f.from, light, mask: { g: mask, line: lit ? 0.35 * k : 0 }, lineAlpha: style.line / style.rune });
+    if (f.circle) {
+      // its possession circle: lit while the light reaches it; possessed, it burns and turns; someone in it, it brightens;
+      // free while the lesson is on, it pulses to draw you over
+      const on = f.from + f.len < reach, near = !driven && occupied(w, f.tower), lesson = w.enc.state[1] <= BSTEP.brute;
+      const ck = !on ? 0 : driven ? 1 : near ? 0.95 : (0.6 + (lesson ? 0.35 * (0.5 + 0.5 * Math.sin(t * 3.2)) : 0)) * (0.3 + 0.7 * flow);
+      const cRune = (n: number): RuneLook => {
+        if (!on || rand(n, frame + fi * 5, 917) < 0.55 * (1 - flow) * (1 - flow)) return null;
+        const b = clamp(ck * (0.8 + 0.2 * Math.sin(t * 2.4 + n * 0.9)), 0, 1.2);
+        return { col: b > 0.9 ? TONE.hot : b > 0.6 ? TONE.lit : b > 0.34 ? TONE.warm : TONE.dim, glow: b };
+      };
+      drawGlyphCircle(g, f.circle.x, f.circle.y, CIRCLE_R, 31 + f.tower * 3, on ? (ck > 0.55 ? TONE.lit : TONE.warm) : TONE.cold, TONE.cold, cRune,
+        { spin: driven ? t * 0.6 : 0, mask: { g: mask, line: on ? 0.5 * ck : 0 }, lineAlpha: style.line / style.rune });
+      if (on && ck > 0.5) { const [lx, ly] = [gx(toU(f.circle.x, f.circle.y)), gy(toV(f.circle.x, f.circle.y))]; light(lx, ly, 34, '#ff9a30', 0.3 * ck); }
+    }
   }
   layer.end(ground, style);
   shimmer.end(ground, t, 0.85 * (0.25 + 0.75 * flow) * style.rune, (m) => layer.wearOut(m, ground, style));
+}
+
+/** Is a wizard standing in defence k's circle (and could step up)? */
+function occupied(w: World, k: number): boolean {
+  for (let i = 0; i < MAX_SEATS; i++) if (w.seats.active[i] && pedestalNear(w, i) === k) return true;
+  return false;
 }
 
 /**

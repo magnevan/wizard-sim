@@ -6,12 +6,12 @@
  * name while you cast it. Drawn in art pixels into a small canvas, so it is crisp at the
  * integer scale like everything else.
  */
-import { pedestalNear } from '@wizard-sim/sim';
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
 import { BSTEP, RUNES, infused, ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, regenOf, runeRate, runeMax, specOf, type World } from '@wizard-sim/sim';
 import { badge, perkOf } from './art/perks';
 import { DRIVING, OWN_FIRE, STEP_UP } from './battery-text';
+import { drawKeys, rowWidth } from './key-caps';
 import * as X from './art/px';
 import { mod } from './art/util';
 
@@ -23,7 +23,7 @@ const flowCol = (ramp: readonly string[], share: number): string => (share >= 0.
 const PW = Math.max(TOP.length * SLOT, STAG + BOT.length * SLOT) + 6, PH = RH * 2 + 7;
 const CW = 240, CH = PH + 22;
 
-const TW = 320, TH = 26;
+const TW = 320, TH = 32;
 /** Survive: the power-ups panel (top left) and the run-over card. */
 const PKW = 150, PKH = 4 * 13 + 2, OVW = 220, OVH = 132;
 
@@ -154,17 +154,18 @@ export class Hud {
    * (the user: the waves felt too arcade-like). Away from the defences it asks you to step up to one; driving, it
    * teaches the step's cast; after the lesson it shows nothing.
    */
-  private drawLesson(w: World, viewW: number): void {
+  private drawLesson(w: World, t: number, viewW: number): void {
     const c = this.tc.x, step = w.enc.state[1], driving = w.battery!.drive[this.seat] >= 0;
     c.clearRect(0, 0, TW, TH); c._fs = null;
     const p = step >= BSTEP.dry ? OWN_FIRE[step] : driving ? DRIVING[step] : step <= BSTEP.brute ? STEP_UP : undefined;
     this.top.visible = !!p && w.enc.state[0] !== 0;
     if (!p || !this.top.visible) return;
-    const head = X.fontText(p.head.toUpperCase()), line = X.fontText(p.line.toUpperCase()), keys = X.fontText(p.keys.toUpperCase());
-    const wd = Math.min(TW - 2, Math.max(head.length, line.length, keys.length) * 4 + 12), x = Math.round(TW / 2 - wd / 2);
-    const rows = [[head, '#ffd860'], [line, '#e8e4f0'], [keys, '#ff9a5a']].filter(([s]) => s), hh = rows.length * 7 + 4; // only the lines it has
+    // the keys, as pictures, pressing themselves in order (key-caps.ts); the user's one line over them, if any
+    const head = p.head ? X.fontText(p.head.toUpperCase()) : '', kw = rowWidth(p.keys), top = head ? 8 : 0, hh = top + 22;
+    const wd = Math.min(TW - 2, Math.max(kw, head.length * 4) + 12), x = Math.round(TW / 2 - wd / 2);
     X.rect(c, x - 1, 0, wd + 2, hh, '#0a0810'); X.rect(c, x, 1, wd, hh - 2, '#1a1726'); X.rect(c, x, 1, wd, 1, '#3a3450');
-    rows.forEach(([s, col], k) => X.text(c, s, Math.round(TW / 2 - s.length * 2), 3 + k * 7, col));
+    if (head) X.text(c, head, Math.round(TW / 2 - head.length * 2), 2, '#ffd860');
+    drawKeys(c, p.keys, Math.round(TW / 2 - kw / 2), top + 2, t);
     this.ttex.source.update();
     this.top.position.set(Math.round(viewW / 2 - TW / 2), 3);
   }
@@ -173,7 +174,7 @@ export class Hud {
   private drawWave(w: World, t: number, viewW: number): void {
     const c = this.tc.x, st = w.enc.state, e = w.enc;
     c.clearRect(0, 0, TW, TH); c._fs = null;
-    if (w.battery) { this.drawLesson(w, viewW); return; }
+    if (w.battery) { this.drawLesson(w, t, viewW); return; }
     this.top.visible = st[0] !== PHASE_ENC.off;
     if (!this.top.visible) return;
     const secs = Math.ceil(st[2] / 60);
@@ -262,9 +263,7 @@ export class Hud {
       X.rect(c, x0, y0, TOP.length * SLOT + 6, RH + 5, plate); X.rect(c, x0, y0 + RH + 3, PW, RH + 4, plate);
       X.rect(c, x0, y0, TOP.length * SLOT + 6, 1, '#3a3450');
     }
-    if (w.battery) {
-      if (!driven && pedestalNear(w, i) >= 0) X.text(c, 'X: TAKE CONTROL', Math.round(CW / 2 - 30), Math.max(0, y0 - 9), '#ffd860', '#0a0810');
-    }
+    // (the battery: in a possession circle, the X key shows over your head, art/vfx.ts)
     // the player's colour tab
     const team = X.TEAMS[i % 4];
     if (bar || s.guard[i] || s.weapon[i]) { X.rect(c, x0 - 14, y0 + RH - 4, 13, 15, '#0a0810'); X.rect(c, x0 - 13, y0 + RH - 3, 12, 13, team.dark); X.text(c, 'P' + (i + 1), x0 - 11, y0 + RH + 1, team.light); }

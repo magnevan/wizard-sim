@@ -15,7 +15,7 @@ const clear = (w: W) => { for (const i of enemies(w)) w.bodies.kind[i] = KIND.no
 const towers = (w: W) => w.def.props.filter((p) => p.asset === 'defence-tower');
 /** Seat 0 takes defence 1 (the second tower from the west). */
 function take(w: W) {
-  const pad = w.def.props.filter((p) => p.asset === 'control-pedestal')[1];
+  const pad = w.def.props.filter((p) => p.asset === 'possession-circle')[1];
   w.bodies.x[0] = pad.x + 1.2; w.bodies.y[0] = pad.y;
   step(w, [{ ...NO_INPUT, buttons: BTN.use }, NO_INPUT, NO_INPUT, NO_INPUT]);
   step(w, NO_INPUTS);

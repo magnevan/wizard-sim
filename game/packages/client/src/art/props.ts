@@ -22,6 +22,8 @@ import { WELL_MARGIN, WellAnim } from './well-anim';
 interface Item { asset: string; meta: PropMeta; spr: Sprite; x: number; y: number; ox: number; oy: number; lit: number; over?: { spr: Sprite; ox: number; oy: number; ready: boolean } }
 
 const HEAD = 'defence-head-north-east';
+/** The battery's barricades, and what each is when smashed. */
+const BREAKS: Readonly<Record<string, string>> = { stakes: 'stakes-broken', palisade: 'palisade-broken' };
 /** What the battery's pieces fade into as the power goes down. */
 const BURNT: Readonly<Record<string, string>> = { 'defence-tower': 'defence-tower-burnt', [HEAD]: 'defence-head-burnt', 'battery-well': 'battery-well-drained' };
 
@@ -59,6 +61,9 @@ export function headTip(w: World, seat: number): [number, number] | null {
   const k = w.battery ? w.battery.drive[seat] : -1;
   return k < 0 ? null : towerTip(w, k)?.tip ?? null;
 }
+
+/** The battery well's crystal top in field px and its column's power, steadiness and pulse, as last drawn (vfx.ts draws the column). */
+export const WELL_BEAM = { on: false, x: 0, y: 0, power: 0, unstable: 0, pulse: 0 };
 
 /** How many defences have a working head (not burnt out). */
 export const liveHeads = (w: World): number => (w.battery ? w.def.props.filter((p) => p.asset === HEAD).length : 0);
@@ -167,21 +172,26 @@ export class PropView {
   }
 
   private broken = false;
-  private brokenTex: { tex: Texture; foot: readonly [number, number] } | null = null;
+  private brokenTex = new Map<string, { tex: Texture; foot: readonly [number, number] }>();
   /**
-   * The battery's stakes, whole or knocked over (stakes-broken, a local edit: tools/art-import/stakes_broken.py). They
-   * break as a defence is taken (sim/src/battery-waves.ts). Returns true on the frame they break.
+   * The battery's barricades out in the field, whole or smashed (local edits: tools/art-import/stakes_broken.py and
+   * broken_props.py): the stakes and the palisade either side of them. They break as a defence is taken
+   * (sim/src/battery-waves.ts). Returns true on the frame they break.
    */
   breakStakes(broken: boolean, fx0: number, fy0: number): boolean {
     if (broken === this.broken) return false;
-    const img = propImage(broken ? 'stakes-broken' : 'stakes', this.current);
-    if (!img) return false;
-    if (broken && !this.brokenTex) { void loadTexture(img.url).then((tex) => { this.brokenTex = { tex, foot: img.foot }; }); return false; }
+    if (broken) {
+      // both smashed pictures loaded first, so they go at once
+      const want = Object.keys(BREAKS).filter((a) => !this.brokenTex.has(a));
+      for (const a of want) { const img = propImage(BREAKS[a], this.current); if (img) void loadTexture(img.url).then((tex) => { this.brokenTex.set(a, { tex, foot: img.foot }); }); }
+      if (want.length) return false;
+    }
     this.broken = broken;
     for (const it of this.items) {
-      if (it.asset !== 'stakes') continue;
-      if (broken) { it.spr.texture = this.brokenTex!.tex; it.ox = this.brokenTex!.foot[0]; it.oy = this.brokenTex!.foot[1]; }
-      else { const a = propImage('stakes', this.current); if (a) void loadTexture(a.url).then((t) => { it.spr.texture = t; it.ox = a.foot[0]; it.oy = a.foot[1]; it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy); }); }
+      if (!BREAKS[it.asset]) continue;
+      const b = this.brokenTex.get(it.asset);
+      if (broken && b) { it.spr.texture = b.tex; it.ox = b.foot[0]; it.oy = b.foot[1]; }
+      else if (!broken) { const a = propImage(it.asset, this.current); if (a) void loadTexture(a.url).then((t) => { it.spr.texture = t; it.ox = a.foot[0]; it.oy = a.foot[1]; it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy); }); }
       it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
     }
     return broken;
@@ -199,8 +209,11 @@ export class PropView {
     if (!w.battery) return;
     const towers = towersLit(w), power = wellPower(w);
     const glow = this.wellOn ? this.well.draw(t, power, unstable(w)) : power; // the well's light pulses with its crystal
+    const top = this.wellOn ? this.items.find((it) => it.asset === 'battery-well-top') : undefined;
+    WELL_BEAM.on = !!top;
+    if (top) { const tp = this.well.tip(); Object.assign(WELL_BEAM, tp, { x: top.x - top.ox + tp.x, y: top.y - top.oy + tp.y }); }
     for (const it of this.items) {
-      if (it.asset === 'battery-well-top' || it.asset === 'control-pedestal') { it.lit = it.asset === 'control-pedestal' ? towers : glow; continue; }
+      if (it.asset === 'battery-well-top') { it.lit = glow; continue; }
       const fade = it.asset === 'defence-tower' || it.asset === HEAD ? 1 - towers : it.asset === 'battery-well' ? 1 - power : -1;
       if (fade < 0) continue;
       it.lit = it.asset === 'battery-well' ? glow : 1 - fade; // the well's light is at its steps' foot

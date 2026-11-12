@@ -1,0 +1,74 @@
+[
+ {
+  "id": "gen-fire-hit-1",
+  "secs": 0.8,
+  "influence": 0.6,
+  "text": "A small fireball bursting against a body: a short, soft whump of flame with a quick low puff."
+ },
+ {
+  "id": "gen-fire-hit-2",
+  "secs": 0.8,
+  "influence": 0.6,
+  "text": "A small fireball bursting against a body: a short, soft whump of flame with a quick low puff."
+ },
+ {
+  "id": "gen-fire-hit-3",
+  "secs": 0.8,
+  "influence": 0.6,
+  "text": "A small fireball bursting against a body: a short, soft whump of flame with a quick low puff."
+ },
+ {
+  "id": "gen-fire-cone-1",
+  "secs": 1.0,
+  "influence": 0.6,
+  "text": "A short cone of flame thrust from an open hand: a quick, deep whoosh of fire that bursts forward and fades."
+ },
+ {
+  "id": "gen-fire-cone-2",
+  "secs": 1.0,
+  "influence": 0.6,
+  "text": "A short cone of flame thrust from an open hand: a quick, deep whoosh of fire that bursts forward and fades."
+ },
+ {
+  "id": "gen-fire-cone-3",
+  "secs": 1.0,
+  "influence": 0.6,
+  "text": "A short cone of flame thrust from an open hand: a quick, deep whoosh of fire that bursts forward and fades."
+ },
+ {
+  "id": "gen-fire-erupt-1",
+  "secs": 2.0,
+  "influence": 0.6,
+  "text": "Fire erupting from the ground a few steps away: a deep thump, then a rolling surge of flame that settles."
+ },
+ {
+  "id": "gen-fire-erupt-2",
+  "secs": 2.0,
+  "influence": 0.6,
+  "text": "Fire erupting from the ground a few steps away: a deep thump, then a rolling surge of flame that settles."
+ },
+ {
+  "id": "gen-fire-erupt-3",
+  "secs": 2.0,
+  "influence": 0.6,
+  "text": "Fire erupting from the ground a few steps away: a deep thump, then a rolling surge of flame that settles."
+ },
+ {
+  "id": "gen-fire-wall-1",
+  "secs": 1.6,
+  "influence": 0.6,
+  "text": "A wall of fire rising from the ground in a line: a low rushing sweep of flame building up, then fading."
+ },
+ {
+  "id": "gen-fire-wall-2",
+  "secs": 1.6,
+  "influence": 0.6,
+  "text": "A wall of fire rising from the ground in a line: a low rushing sweep of flame building up, then fading."
+ },
+ {
+  "id": "gen-fire-wall-3",
+  "secs": 1.6,
+  "influence": 0.6,
+  "text": "A wall of fire rising from the ground in a line: a low rushing sweep of flame building up, then fading."
+ }
+]

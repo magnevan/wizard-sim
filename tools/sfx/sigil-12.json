@@ -1,0 +1,11 @@
+[
+  { "id": "sigil-orb-raise-1", "secs": 1, "influence": 0.6, "text": "Three small glowing orbs spark into being around a wizard, a soft bright shimmer over a low hum, quick and light." },
+  { "id": "sigil-orb-raise-2", "secs": 1, "influence": 0.6, "text": "Three small glowing orbs spark into being around a wizard, a soft bright shimmer over a low hum, quick and light." },
+  { "id": "sigil-orb-raise-3", "secs": 1, "influence": 0.6, "text": "Three small glowing orbs spark into being around a wizard, a soft bright shimmer over a low hum, quick and light." },
+  { "id": "sigil-orb-loop-1", "secs": 4, "loop": true, "influence": 0.6, "text": "A soft, steady low hum of small magic orbs slowly circling a person, quiet and even." },
+  { "id": "sigil-orb-loop-2", "secs": 4, "loop": true, "influence": 0.6, "text": "A soft, steady low hum of small magic orbs slowly circling a person, quiet and even." },
+  { "id": "sigil-orb-loop-3", "secs": 4, "loop": true, "influence": 0.6, "text": "A soft, steady low hum of small magic orbs slowly circling a person, quiet and even." },
+  { "id": "sigil-orb-strike-1", "secs": 0.6, "influence": 0.7, "text": "A small glowing orb whips through the air into a target, a short swish then a soft bright pop." },
+  { "id": "sigil-orb-strike-2", "secs": 0.6, "influence": 0.7, "text": "A small glowing orb whips through the air into a target, a short swish then a soft bright pop." },
+  { "id": "sigil-orb-strike-3", "secs": 0.6, "influence": 0.7, "text": "A small glowing orb whips through the air into a target, a short swish then a soft bright pop." }
+]

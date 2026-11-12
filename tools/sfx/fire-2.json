@@ -1,0 +1,8 @@
+[
+  {"id": "gen-fire-burnA-1", "secs": 4, "influence": 0.6, "loop": true, "text": "A torch burning in still air close by: a low, soft, continuous whoosh of fire with a gentle, even flutter."},
+  {"id": "gen-fire-burnA-2", "secs": 4, "influence": 0.6, "loop": true, "text": "A torch burning in still air close by: a low, soft, continuous whoosh of fire with a gentle, even flutter."},
+  {"id": "gen-fire-burnA-3", "secs": 4, "influence": 0.6, "loop": true, "text": "A torch burning in still air close by: a low, soft, continuous whoosh of fire with a gentle, even flutter."},
+  {"id": "gen-fire-burnB-1", "secs": 4, "influence": 0.6, "loop": true, "text": "A steady gas flame burning low: a deep, smooth, breathy roar at a quiet level, even from start to end."},
+  {"id": "gen-fire-burnB-2", "secs": 4, "influence": 0.6, "loop": true, "text": "A steady gas flame burning low: a deep, smooth, breathy roar at a quiet level, even from start to end."},
+  {"id": "gen-fire-burnB-3", "secs": 4, "influence": 0.6, "loop": true, "text": "A steady gas flame burning low: a deep, smooth, breathy roar at a quiet level, even from start to end."}
+]

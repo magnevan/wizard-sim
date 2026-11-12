@@ -6,7 +6,7 @@
 import { describe, expect, test } from 'vitest';
 import { ELEMENT_NAMES, ENEMY_KINDS, INTERACTIONS, SHAPE_NAMES, UI_SOUNDS, WEAPON_MOVES, clipsOf, composeCharge, composeAuraLoop, composeDeath, composeDismiss, composeDowned, composeDry, composeElement, composeFlight, composeFootstep, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak, composeShape, composeSpell, composeStop, composeSpring, composeSteamCloud, composeStrike, composeSustain, composeTelegraph, composeUi, composeBurning, composeFloorFire, composeSparkField, composeBlink, composeBlocked, composeHeal, composeStinger, runesOf, shapeOf, type ElementName, type Plan, type SpellSound } from '../src/audio/recipes';
 import { BANK } from '../src/audio/bank.gen';
-import { FIRE_KIT, useKit } from '../src/audio/kits';
+import { FIRE_KIT, useKit, SIGIL_KIT, layersOf } from '../src/audio/kits';
 import { SYNTH_IDS, SYNTH_LOOPS, renderSynth } from '../src/audio/synth';
 import { ENVS, LOOP_GRACE, Limiter, LoopTable, OPEN_HZ, envOfRoom, impulse, jitter, occlusion, pick, placeOf, runeMod, seeded, wallsBetween, type EnvName, type Listener, type WallSet } from '../src/audio/variation';
 import { SoundDirector, type SoundSink } from '../src/audio/director';
@@ -195,7 +195,7 @@ function everyPlan(): Plan[] {
 
 describe('recipes', () => {
   test('every clip a recipe names exists, and every bank clip is used', () => {
-    const kitClips = Object.values(FIRE_KIT).flat().flatMap((l) => l.clips);
+    const kitClips = [...Object.values(FIRE_KIT).flat(), ...layersOf(SIGIL_KIT)].flatMap((l) => l.clips);
     const known = new Set([...BANK.map((c) => c.id), ...SYNTH_IDS]), used = new Set([...everyPlan().flatMap(clipsOf), ...kitClips]);
     expect([...used].filter((c) => !known.has(c))).toEqual([]);
     expect(BANK.map((c) => c.id).filter((c) => !used.has(c))).toEqual([]);

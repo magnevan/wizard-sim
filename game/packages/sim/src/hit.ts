@@ -271,7 +271,7 @@ export function tickStatuses(w: World): void {
       if (b.hp[i] <= 0) b.lastEl[i] = EL.fire; // burned to death
       b.lastHit[i] = w.clock[0];
       // Credit the fire to whoever lit it, twice a second (meters; the view's damage pops).
-      if (b.burn[i] % 30 === 0) w.events.push({ tick: w.clock[0], kind: 'hit', who: i, src: b.burnSrc[i], x: b.x[i], y: b.y[i], amount: burnt * 30, look: EL.fire });
+      if (b.burn[i] % 30 === 0) w.events.push({ tick: w.clock[0], kind: 'hit', who: i, src: b.burnSrc[i], x: b.x[i], y: b.y[i], amount: burnt * 30, look: EL.fire, dot: 1 });
     } else b.burnSrc[i] = -1;
     // Soak drains; wet is on while any is left. Code that dries a body sets wet to 0, and the soak goes with it.
     // (wet set directly, with no soak, counts as soaked through)

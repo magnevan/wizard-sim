@@ -19,8 +19,8 @@ import {
   type SimEvent, type SpellSpec, type Terrain, type World,
 } from '@wizard-sim/sim';
 import {
-  composeAuraLoop, composeBlink, composeBlocked, composeBurning, composeCharge, composeDeath, composeDismiss, composeDowned, composeDry, composeFlight, composeFloorFire,
-  composeFootstep, composeHeal, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak,
+  composeAuraLoop, composeBlink, composeOrbStrike, composeBlocked, composeBurning, composeCharge, composeDeath, composeDismiss, composeDowned, composeDry, composeFlight, composeFloorFire,
+  composeFootstep, composeHeal, composeMissileLand, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak,
   composeSparkField, composeSpell, composeSpring, composeSteamCloud, composeStinger, composeStrike, composeStop, composeSustain, composeTelegraph, composeUi,
   shapeOf, type ElementName, type EnemyKind, type Plan, type ShapeName, type SpellSound, type UiSound, type WeaponMove,
 } from './recipes';
@@ -59,6 +59,8 @@ const RULES: Readonly<Record<string, GroupRule & { len: number; prio: number }>>
   impact: { gap: 0.04, max: 5, len: 0.4, prio: 5 },
   attack: { gap: 0.06, max: 5, len: 0.4, prio: 5 },
   zap: { gap: 0.07, max: 3, len: 0.2, prio: 4 },
+  // a lap's orbs can strike a tick apart (their ring re-spaces as one is spent): each is heard
+  orbstrike: { gap: 0.01, max: 4, len: 0.5, prio: 5 },
   hit: { gap: 0.05, max: 5, len: 0.2, prio: 4 },
   heal: { gap: 0.12, max: 2, len: 0.5, prio: 3 },
   foot: { gap: 0.09, max: 3, len: 0.15, prio: 1 },
@@ -68,6 +70,8 @@ const RULES: Readonly<Record<string, GroupRule & { len: number; prio: number }>>
 const INAUDIBLE = 0.025;
 /** How many ticks apart a replayed event and a shown one can be and still be the same event. */
 const SAME_EVENT_TICKS = 6;
+/** The shortest a charge-up sounds, s, however quickly the button is let go. */
+const CHARGE_MIN_S = 0.3;
 /** How long a late event stays worth hearing (a rollback's 1 s window, and a little). */
 const LATE_MAX_TICKS = 75;
 /** World units walked per footfall. */
@@ -130,6 +134,20 @@ export class SoundDirector {
   hear: ((kind: string) => boolean) | null = null;
   punches = true;
   onPlan: ((name: string, looped: boolean, id?: string) => void) | null = null;
+  /** The Sound Lab's "just this part": a plan it returns false for isn't played (a loop it turns away stays silent until it restarts). */
+  hearPlan: ((plan: Plan) => boolean) | null = null;
+  private frameNow = 0;
+  /** When each sustained sound started, real time: a charge let go at once still gets heard. */
+  private started = new Map<string, number>();
+
+  /** A charge let go within CHARGE_MIN_S still sounds that long, as a one-shot of its start (the user: "on fast clicks, can we still play a fraction of the charge up?"). */
+  private chargeTail(id: string, lead: ElementName): Plan | null {
+    const age = this.frameNow - (this.started.get(id) ?? -1e9);
+    this.started.delete(id);
+    if (age >= CHARGE_MIN_S) return null;
+    const p = composeCharge(lead);
+    return { ...p, layers: p.layers.map((l) => ({ ...l, loop: false, at: 0, hold: CHARGE_MIN_S - age, release: 0.08, rateTo: l.rateTo ? l.rate + (l.rateTo - l.rate) * (CHARGE_MIN_S / 2.5) : undefined })) };
+  }
 
   constructor(private sink: SoundSink, private rand: Rand = Math.random) {}
 
@@ -213,6 +231,8 @@ export class SoundDirector {
         if (e.text === 'Doused') { this.ask('interaction', x, y, () => composeInteraction('douse', r), 1, false, 'douse'); return; }
         if (e.text === 'Parry!') { this.ask('move', x, y, () => composeMove('parry', null, r)); return; }
         if (e.text === 'Grabbed!') { this.ask('attack', x, y, () => composeHit(null, 20, r)); return; }
+        // a burn's tick is silent: the burning loop already says so (the user, 2026-11-12: "too many pops, not needed")
+        if (e.dot) return;
         const amount = e.amount ?? 0;
         if (amount > 0) this.ask(`hit`, x, y, () => composeHit(el, amount, r, this.punches));
         return;
@@ -227,7 +247,16 @@ export class SoundDirector {
         this.ask('burst', x, y, () => composeImpact(el ?? 'arcane', size * 1.4, r));
         return;
       }
-      case 'zap': this.ask('zap', x, y, () => composeImpact('lightning', 0.4, r), 0.7); return;
+      case 'zap': {
+        // an orb's strike has its own sound once one is chosen; until then only its element's hit is heard (not a Lightning zap)
+        if (e.text === 'orbital') {
+          const orb = composeOrbStrike(r);
+          if (orb) this.ask('orbstrike', x, y, () => orb);
+          return;
+        }
+        this.ask('zap', x, y, () => composeImpact('lightning', 0.4, r), 0.7);
+        return;
+      }
       case 'surge': this.ask('zap', x, y, () => composeImpact('lightning', 0.6, r)); return;
       case 'blink': this.ask('move', x, y, composeBlink); return;
       case 'shatter': this.ask('interaction', x, y, () => composeInteraction('shatter', r), 1, false, 'shatter'); return;
@@ -260,7 +289,8 @@ export class SoundDirector {
     for (let j = 0; j < MAX_MISSILES; j++) {
       if (!m.alive[j] && this.mAlive[j]) {
         const el = elOf(this.mLook[j]) ?? 'arcane', size = this.mType[j] === 1 ? 1.6 : 0.5 + Math.min(0.8, this.mR[j]), x = this.mX[j], y = this.mY[j];
-        this.ask('impact', x, y, () => composeImpact(el, size, this.rand));
+        const thrown = this.mType[j] === 1; // read now: the slot may be reused before the plan is made
+        this.ask('impact', x, y, () => (thrown ? composeMissileLand(el, size, this.rand) : composeImpact(el, size, this.rand)));
       }
       this.mAlive[j] = m.alive[j];
       if (m.alive[j]) { this.mLook[j] = m.look[j]; this.mX[j] = m.x[j]; this.mY[j] = m.y[j]; this.mR[j] = m.r[j]; this.mType[j] = m.type[j]; }
@@ -352,7 +382,8 @@ export class SoundDirector {
         add(`chan:${i}|${sig}`, { plan: () => composeSustain(sustainOf(snd), this.rand), tail: () => composeStop(sustainOf(snd), this.rand), x: b.x[i], y: b.y[i], gain: 1 });
       } else if (ph === PHASE.charge) {
         const lead = this.heldSpell(w, i).snd.lead ?? 'earth';
-        add(`charge:${i}|${lead}`, { plan: () => composeCharge(lead), x: b.x[i], y: b.y[i], gain: 1 });
+        const id = `charge:${i}|${lead}`;
+        add(id, { plan: () => composeCharge(lead), tail: () => this.chargeTail(id, lead), x: b.x[i], y: b.y[i], gain: 1 });
       }
     }
     // an aura sounds for as long as it lasts, each element in it its own
@@ -364,8 +395,9 @@ export class SoundDirector {
         if (plan) add(`aura:${i}|${el}`, { plan: () => plan, x: b.x[i], y: b.y[i], gain: 1 });
       }
     }
-    // a turret's spray or beam is held, as a wizard's is (structures.ts)
     const dv = w.devices;
+    // circling orbitals are silent: they can sit on you for a long time (the user, 2026-11-11)
+    // a turret's spray or beam is held, as a wizard's is (structures.ts)
     for (let k = 0; k < MAX_DEVICES; k++) {
       if (dv.type[k] !== DEVICE.turret || dv.chan[k] <= 0) continue;
       const snd = spellSoundOf(compile(queueFromCounts(dv.els, k), 'force'));
@@ -412,6 +444,7 @@ export class SoundDirector {
    * sounds in line with the state. `now` is real time in seconds.
    */
   frame(w: World, l: Listener, now: number): void {
+    this.frameNow = now;
     if (!this.ok()) { this.pending = []; return; }
     this.frames++;
     const env = envOfRoom(w.def.id);
@@ -430,6 +463,7 @@ export class SoundDirector {
         if (!g) continue;
         const j = q.group === 'ui' ? { rate: 1, gain: 1 } : jitter(this.rand);
         const plan = q.make();
+        if (this.hearPlan && !this.hearPlan(plan)) continue;
         for (const layer of plan.layers) { layer.rate *= j.rate; if (layer.rateTo) layer.rateTo *= j.rate; }
         this.sink.play(plan, place, q.gain * g * j.gain);
         this.onPlan?.(plan.name, false);
@@ -444,14 +478,14 @@ export class SoundDirector {
       this.sink.stop(id);
       const t = this.tails.get(id), plan = t && !still ? t.plan() : null;
       this.tails.delete(id);
-      if (t && plan) { this.sink.play(plan, placeAt(t.x, t.y), 1); this.onPlan?.(plan.name, false); }
+      if (t && plan && (!this.hearPlan || this.hearPlan(plan))) { this.sink.play(plan, placeAt(t.x, t.y), 1); this.onPlan?.(plan.name, false); }
       this.onPlan?.('', true, id);
     }
     for (const { id, want: q } of d.start) {
       const plan = q.plan();
-      this.sink.loop(id, plan, placeAt(q.x, q.y), q.gain);
-      this.onPlan?.(plan.name, true, id);
+      if (!this.hearPlan || this.hearPlan(plan)) { this.sink.loop(id, plan, placeAt(q.x, q.y), q.gain); this.onPlan?.(plan.name, true, id); }
       if (q.tail) this.tails.set(id, { plan: q.tail, x: q.x, y: q.y });
+      this.started.set(id, this.frameNow);
     }
     for (const { id, want: q } of d.update) { const t = this.tails.get(id); if (t) { t.x = q.x; t.y = q.y; } }
     if (this.frames % 4 === 0) for (const { id, want: q } of d.update) this.sink.place(id, placeAt(q.x, q.y), q.gain);

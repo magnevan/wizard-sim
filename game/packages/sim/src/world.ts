@@ -243,6 +243,8 @@ export interface SimEvent {
   who: number;
   /** hit / heal: the body that dealt it (-1 for the world: burning, surfaces). */
   src?: number;
+  /** hit: damage over time (a burn's tick), not a blow. The sound leaves it to the burning loop. */
+  dot?: 1;
   /** Deaths: the killing element, and the body's statuses then (STATUS_BIT). Direction of the blow in x2/y2. */
   el?: number;
   status?: number;

@@ -28,6 +28,8 @@ export interface Layer {
   release: number;
   /** Loop the clip (a sustained layer: it plays until the sound is stopped). */
   loop?: boolean;
+  /** A looped layer starts this far into its clip, as a fraction of it: a status loop doesn't open the same way every time. */
+  offset?: number;
   /** A lowpass on this layer, Hz, and where it goes over the sound's length. */
   lowpass?: number;
   lowpassTo?: number;
@@ -336,6 +338,18 @@ export function composeMove(move: WeaponMove, el: ElementName | null, rand: Rand
 export function composeAuraLoop(el: ElementName, rand: Rand = Math.random): Plan | null {
   const l = kitOf('sigil')?.spells?.[`hold:aura+${el}`];
   return l?.length ? kitPlan(`kit:aura:${el}`, l, rand) : null;
+}
+
+/** A thrown missile (a boulder, or with Fire leading, a fireball) landing: its kit's own if it has one, else an impact. */
+export function composeMissileLand(el: ElementName, size: number, rand: Rand = Math.random): Plan {
+  const l = kitOf(el)?.spells?.['land:missile'];
+  return l?.length ? kitPlan('kit:land', l, rand) : composeImpact(el, size, rand);
+}
+
+/** Orbitals circling their caster, and one of them striking: Sigil's kit, where it has them. */
+export function composeOrbStrike(rand: Rand = Math.random): Plan | null {
+  const l = kitOf('sigil')?.spells?.['strike:orbitals'];
+  return l?.length ? kitPlan('kit:orbstrike', l, rand) : null;
 }
 
 /** A device taken back, if its element's kit has a sound for that. */

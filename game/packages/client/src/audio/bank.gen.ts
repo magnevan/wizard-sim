@@ -14,6 +14,8 @@ export const BANK: readonly BankClip[] = [
   {"id":"fire-burst-3","loop":false,"secs":0.4,"src":"kenney"},
   {"id":"fire-jet","loop":true,"secs":4.6,"src":"made"},
   {"id":"fire-jet-sub","loop":true,"secs":4.2,"src":"made"},
+  {"id":"rune-blop","loop":false,"secs":0.102,"src":"made"},
+  {"id":"haste-hum","loop":true,"secs":4,"src":"made"},
   {"id":"fire-lick","loop":true,"secs":4.4,"src":"made"},
   {"id":"fire-catch","loop":false,"secs":0.342,"src":"made"},
   {"id":"fire-die-1","loop":false,"secs":2.1,"src":"made"},

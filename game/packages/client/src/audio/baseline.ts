@@ -6,7 +6,7 @@
  * ?baseline=0 turns it off.
  */
 import type { GameAudio } from './game-audio';
-import { layersOf, useKit, type Kit } from './kits';
+import { layersOf, settled, useKit, type Kit } from './kits';
 import type { ElementName } from './recipes';
 
 /** Clips decoded at once: they're large, and there's no hurry. */
@@ -29,7 +29,7 @@ async function load(audio: GameAudio): Promise<Partial<Record<ElementName, Kit>>
       if (f.ok) e.addClip(id, await e.ctx.decodeAudioData(await f.arrayBuffer()), looped.has(id));
     }));
   }
-  for (const [el, kit] of Object.entries(kits)) if (kit && Object.keys(kit).length) useKit(el as ElementName, kit);
+  for (const [el, kit] of Object.entries(kits)) if (kit && Object.keys(kit).length) useKit(el as ElementName, settled(kit));
   audio.director.restartLoops(); // anything that started before its clips were here
   return kits;
 }

@@ -4,7 +4,7 @@
  * flame are not the same noise at two lengths: they need their own starts, bodies and ends, and a kit
  * says so. The clips are shared, so a kit is about a dozen files, not one recording per spell.
  *
- * A kit takes over for spells its element leads. Nothing uses one until useKit says so: on the dev server
+ * A kit takes over for spells its element leads. The public game has SIGIL_KIT below; the rest wait for useKit: on the dev server
  * that's the local baseline (baseline.ts) and the Sound Lab (lab.ts). An element's kit joins the public
  * game once its own clips are approved.
  */
@@ -25,6 +25,13 @@ export interface KitLayer {
   glide?: number;
   attack?: number;
   release?: number;
+  /** A loop that starts at a random point in its clip each time, so it never opens the same way. */
+  scatter?: boolean;
+  /**
+   * Local kits only, for the Sound Lab: `takes`, a layer under review (its clips end -1, -2, -3, one per take), or `ref`, the
+   * reference's own layer it's compared with. The Lab plays one side or the other; the game plays only `ref` until a take is chosen.
+   */
+  set?: 'takes' | 'ref';
 }
 
 /** What a kit can cover. Anything it leaves out falls through to the element's stage 1 sound. */
@@ -64,7 +71,8 @@ export interface Kit {
    * one with Lightning in it. A spell is its own thing on screen, so it wants a sound cut to what you see.
    * Empty means silent, for a spell with no sound of its own yet that shouldn't borrow a wrong one.
    * `hold:aura+fire` is what plays for as long as that aura lasts, after its cast. `queue`, in Sigil's
-   * kit, is the tick of any rune being queued, pitched by its element.
+   * kit, is the tick of any rune being queued, pitched by its element. `land:missile` is a thrown missile's landing (a fireball's,
+   * in Fire's kit), `strike:orbitals` (Sigil's) an orb striking (circling orbs are silent).
    */
   spells?: Readonly<Record<string, readonly KitLayer[]>>;
 }
@@ -92,7 +100,26 @@ export const layersOf = (kit: Kit): readonly KitLayer[] => {
   return [...Object.values(roles), ...Object.values(spells ?? {})].flat();
 };
 
-const live: Partial<Record<ElementName, Kit>> = {};
+/**
+ * Sigil's sounds that are approved for the public game (bank clips, content/audio/README.md): the rune blop
+ * (every element's, at its own pitch: composeQueue) and Haste's hum. The dev server's local kit replaces it.
+ */
+export const SIGIL_KIT: Kit = {
+  spells: {
+    queue: [{ clips: ['rune-blop'], gain: 0.063 }],
+    // temporary: the user plans to replace the whole Haste sound (2026-11-11)
+    'hold:aura+lightning': [{ clips: ['haste-hum'], gain: 0.13, loop: true, at: 0.5, attack: 0.8, release: 0.8 }],
+  },
+};
+
+const live: Partial<Record<ElementName, Kit>> = { sigil: SIGIL_KIT };
+
+/** A kit without its layers under review: what the game plays while they're judged. */
+export function settled(kit: Kit): Kit {
+  const keep = (ls: readonly KitLayer[]) => ls.filter((l) => l.set !== 'takes');
+  const { spells, ...roles } = kit;
+  return { ...Object.fromEntries(Object.entries(roles).map(([k, v]) => [k, keep(v)])), spells: Object.fromEntries(Object.entries(spells ?? {}).map(([k, v]) => [k, keep(v)])) };
+}
 
 /** Gives an element a kit, or takes it away again. */
 export function useKit(el: ElementName, kit: Kit | null): void {
@@ -112,6 +139,7 @@ export function kitPlan(name: string, ls: readonly KitLayer[], rand: Rand, rate 
     hold: 0,
     release: l.release ?? 0.1,
     loop: l.loop,
+    offset: l.scatter ? rand() : undefined,
   }));
   return { name, layers, wet };
 }

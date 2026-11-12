@@ -1,0 +1,728 @@
+{
+  "fire/flamethrower": {
+    "note": "New is terrible. I'm hearing almost like crowd noises. Before is... ok, just not great. Reference sounds nice and powerful.\n\nRune sounds are meh, I think they could be a little subtler and more distinctly fire. But I think we should focus on the spell effect for now.",
+    "mark": "Wrong",
+    "at": "2026-11-06T15:57:12.438Z"
+  },
+  "fire/fireball": {
+    "mark": "Close",
+    "at": "2026-11-06T16:02:15.787Z"
+  },
+  "sigil/lens": {
+    "note": "",
+    "at": "2026-11-06T22:08:00.593Z"
+  },
+  "sigil/motes": {
+    "note": "",
+    "mark": "Close",
+    "at": "2026-11-06T22:53:49.364Z"
+  },
+  "sigil/glyph": {
+    "note": "Both ",
+    "at": "2026-11-06T23:58:34.711Z"
+  },
+  "sigil/turret": {
+    "note": "Take 1: It's better than take 2 in that it's not actively offensive, but not a very good sound for this effect. Sounds very similar to the lens being summoned. Part of the problem is the turret doesn't have much of a summon animation, and this sound does not look like something the turret would make.\n\nTake 2: Same as glyph. Sounds even worse in this context. Actually frost shooting effect is bad too, the sounds are too discrete not like a continous spray.",
+    "mark": "Wrong",
+    "at": "2026-11-06T21:51:54.073Z"
+  },
+  "sigil/aura": {
+    "note": "",
+    "mark": "Wrong",
+    "at": "2026-11-06T23:03:11.545Z"
+  },
+  "sigil/lens/before": {
+    "mark": "Wrong",
+    "note": "Sound seem to alternate between different sounds. Either a deep gong, or a thin pling. Neither sounds good to me. It just sounds like an instrument, not magic.",
+    "at": "2026-11-06T22:07:56.054Z"
+  },
+  "sigil/lens/take1": {
+    "note": "Sounds about right",
+    "mark": "Right",
+    "at": "2026-11-06T22:08:02.936Z"
+  },
+  "sigil/lens/take2": {
+    "note": "same as take 2?",
+    "mark": "Right",
+    "at": "2026-11-06T22:08:02.283Z"
+  },
+  "sigil/motes/take1": {
+    "note": "not quite the right type of sound I think.",
+    "mark": "Close",
+    "at": "2026-11-06T23:26:54.551Z"
+  },
+  "sigil/motes/take2": {
+    "note": "sounds pretty good now, not perfect, but maybe good enough.",
+    "mark": "Right",
+    "at": "2026-11-06T23:26:42.030Z"
+  },
+  "sigil/glyph/take1": {
+    "note": "sounds like a little too much is happening",
+    "mark": "Close",
+    "at": "2026-11-06T23:59:02.419Z"
+  },
+  "sigil/glyph/take2": {
+    "note": "this one is good.",
+    "at": "2026-11-06T23:59:05.576Z",
+    "mark": "Right"
+  },
+  "sigil/turret/take1": {
+    "mark": "Wrong",
+    "note": "doesn't sound good. Sounds kinda sped up? There's like a wishishish sound. sounds weird",
+    "at": "2026-11-07T00:00:41.569Z"
+  },
+  "sigil/turret/take2": {
+    "note": "This one is pretty good, there's a low hum and a sharp swoop as the light summons it",
+    "mark": "Right",
+    "at": "2026-11-07T00:01:37.955Z"
+  },
+  "sigil/haste/take1": {
+    "note": "I don't like it. It's too loud and just kinda sounds like steam hissing. ",
+    "at": "2026-11-07T00:26:17.501Z",
+    "mark": "Wrong"
+  },
+  "sigil/haste/take2": {
+    "note": "sounds like a rattlesnake maybe, not the right vibe",
+    "at": "2026-11-07T00:26:45.517Z",
+    "mark": "Wrong"
+  },
+  "sigil/aura/take1": {
+    "mark": "Wrong",
+    "note": "its a sparkly sound, very different than what I'd expect mist to sound like",
+    "at": "2026-11-06T23:02:57.687Z"
+  },
+  "sigil/aura-fire/take2": {
+    "mark": "Close",
+    "at": "2026-11-07T00:39:11.435Z",
+    "note": "Also a very good sound, except intro timing. Maybe a little worse on the loop, sounds a bit more like a campfire"
+  },
+  "sigil/aura-fire/take1": {
+    "mark": "Close",
+    "at": "2026-11-07T00:38:37.869Z",
+    "note": "Loop is quite good. Intro doesn't match animation (there's a burst from the wand, but it doesn't sync with the sound)"
+  },
+  "sigil/aura-fire": {
+    "note": "",
+    "at": "2026-11-07T00:39:53.375Z"
+  },
+  "sigil/aura-frost/take1": {
+    "mark": "Right",
+    "note": "quite good intro and loop. animation could sync a bit better with sound.",
+    "at": "2026-11-07T00:40:34.037Z"
+  },
+  "sigil/aura-frost/take2": {
+    "note": "also quite good, but maybe I prefer 1 a bit because it's not as intense",
+    "mark": "Close",
+    "at": "2026-11-07T00:41:08.243Z"
+  },
+  "sigil/aura-mist/take1": {
+    "mark": "Wrong",
+    "note": "It's hard to understand what mist would sound like, but this one has a very obvious 4s loop that isn't great. I think the site has an option to help make better looping sounds btw, you should look into that.",
+    "at": "2026-11-07T00:42:22.378Z"
+  },
+  "sigil/aura-mist/take2": {
+    "note": "doesn't seem right, some sort of cave-ish sounding thing with distinct \"pecks\"",
+    "at": "2026-11-07T00:42:56.509Z",
+    "mark": "Wrong"
+  },
+  "sigil/aura-earth/take1": {
+    "note": "sounds mostly like cabin noise",
+    "at": "2026-11-07T00:29:42.154Z",
+    "mark": "Wrong"
+  },
+  "sigil/aura-earth/take2": {
+    "note": "maybe... its just way too loud and dramatic. maybe it would work with a more quiet sound, I wouldn't expect auras to be so loud.",
+    "at": "2026-11-07T00:29:16.732Z",
+    "mark": "Close"
+  },
+  "sigil/aura-life": {
+    "note": "",
+    "at": "2026-11-07T00:33:27.735Z"
+  },
+  "sigil/aura-arcane/take1": {
+    "note": "Intro pretty good, just not very well timed against the animation. (There's a big burst in the sound and animation, but they're not synced)\n\nContinous effect is not very good here",
+    "at": "2026-11-07T00:37:30.040Z",
+    "mark": "Wrong"
+  },
+  "sigil/haste/take3": {
+    "note": "best of the 3, with the humming, but still doesn't feel like the right vibe for haste.",
+    "at": "2026-11-07T00:27:24.286Z",
+    "mark": "Wrong"
+  },
+  "sigil/haste": {
+    "note": "I think universally they were too loud and dramatic, haste is not such a big effect on the world, I'd expect a subtle effect.",
+    "at": "2026-11-07T00:27:59.378Z"
+  },
+  "sigil/aura-earth/take3": {
+    "note": "probably the best of the 3, its more subtle (probably still a little loud) and I do kinda get a pushing things out of the way vibe from it. The loop is causing it to pulse in and out a bit.\n\nDon't like the snare kick at the intro.\n\n",
+    "at": "2026-11-07T00:31:23.110Z"
+  },
+  "sigil/aura-life/take1": {
+    "note": "Don't like the intro so much (big breath of air), but the looping sound is good (just a little loud)",
+    "mark": "Close",
+    "at": "2026-11-07T00:32:19.967Z"
+  },
+  "sigil/aura-life/take2": {
+    "note": "Intro on this one is much better, except there is a bit of a jarring thing where a sound seems like it suddenly gets cut off. The loop is a little intense, and the volume varies wildly, as well as being too loud overall. _maybe_ the loop could work if it was more continous and not so loud.",
+    "at": "2026-11-07T00:34:11.476Z"
+  },
+  "sigil/aura-life/take3": {
+    "mark": "Wrong",
+    "note": "none of this sounds right",
+    "at": "2026-11-07T00:33:38.213Z"
+  },
+  "sigil/aura-arcane/take2": {
+    "note": "I think same intro as in #1. I like the continous effect here much better, but it's a bit too loud.",
+    "mark": "Close",
+    "at": "2026-11-07T00:37:31.118Z"
+  },
+  "sigil/aura-arcane/take3": {
+    "mark": "Wrong",
+    "note": "too intense, sounds like maybe someone etching glass.",
+    "at": "2026-11-07T00:37:27.916Z"
+  },
+  "sigil/aura-fire/take3": {
+    "note": "also very good. Probably it goes 1>3>2, but they're all quite good.",
+    "at": "2026-11-07T00:39:47.496Z"
+  },
+  "sigil/aura-frost/take3": {
+    "mark": "Wrong",
+    "note": "loop sounds too mechanical",
+    "at": "2026-11-07T00:41:27.925Z"
+  },
+  "sigil/aura-mist/take3": {
+    "mark": "Wrong",
+    "note": "also not great, maybe the best out of the 3 except that it's significantly too loud, and too much variation in the loop sound across the 4s",
+    "at": "2026-11-07T00:43:51.324Z"
+  },
+  "sigil/aura-fire-r2/take1": {
+    "mark": "Close",
+    "note": "it's good, timing feels a little bit off still, like the sound comes in a little late now.",
+    "at": "2026-11-07T00:53:02.669Z"
+  },
+  "sigil/aura-frost-r2/take1": {
+    "mark": "Close",
+    "note": "much better, timing feels a little off, a little late.",
+    "at": "2026-11-07T00:53:22.622Z"
+  },
+  "sigil/aura-earth-r2/take1": {
+    "mark": "Close",
+    "note": "the loop is pretty good, except it has this quiet part that really makes it obvious that it's a 4s loop.\n\nIt feels like there's no intro sound, and doesn't match the animation.",
+    "at": "2026-11-07T00:54:37.917Z"
+  },
+  "sigil/aura-life-r2/take1": {
+    "note": "intro doesn't match animation. It's a slow hum/tune that changes pitch(i think?) over like 750ms (guessing), while the animation is a clear burst. We should either change intro sound or the animation.\n\nLoop sounds good.",
+    "at": "2026-11-07T00:56:21.730Z"
+  },
+  "sigil/aura-arcane-r2/take1": {
+    "note": "loop is still a little loud. burst intro matches animation, but timing is off.",
+    "at": "2026-11-07T00:56:47.882Z"
+  },
+  "sigil/haste-r2/take1": {
+    "at": "2026-11-07T00:57:24.251Z"
+  },
+  "sigil/haste-r2": {
+    "note": "What's there to rate? it's the magicka sound (which doesn't really match the animation) and no loop",
+    "at": "2026-11-07T00:57:39.829Z"
+  },
+  "sigil/earth-intro/take3": {
+    "mark": "Wrong",
+    "at": "2026-11-07T01:08:46.244Z"
+  },
+  "sigil/earth-intro/take1": {
+    "mark": "Right",
+    "at": "2026-11-07T01:09:37.631Z"
+  },
+  "sigil/earth-intro/take2": {
+    "mark": "Close",
+    "at": "2026-11-07T01:09:09.368Z"
+  },
+  "sigil/earth-loop/take1": {
+    "note": "too quiet now",
+    "at": "2026-11-07T01:09:56.378Z"
+  },
+  "sigil/earth-loop/take2": {
+    "mark": "Wrong",
+    "at": "2026-11-07T01:10:06.582Z"
+  },
+  "sigil/earth-loop/take3": {
+    "mark": "Right",
+    "at": "2026-11-07T01:10:12.267Z"
+  },
+  "sigil/life-intro/take1": {
+    "mark": "Right",
+    "at": "2026-11-07T01:10:38.413Z"
+  },
+  "sigil/life-intro/take2": {
+    "mark": "Wrong",
+    "at": "2026-11-07T01:10:44.551Z"
+  },
+  "sigil/life-intro/take3": {
+    "mark": "Wrong",
+    "at": "2026-11-07T01:10:49.701Z"
+  },
+  "sigil/haste-intro": {
+    "note": "they're all super subtle, nothing like magickas",
+    "mark": "Wrong",
+    "at": "2026-11-07T01:11:54.599Z"
+  },
+  "sigil/haste-loop/take2": {
+    "note": "too slow, sounds like slow shuffling, not haste",
+    "mark": "Wrong",
+    "at": "2026-11-07T01:13:08.586Z"
+  },
+  "sigil/haste-loop/take1": {
+    "note": "sounds like,, birds flapping? Doesn't give a sense of haste",
+    "mark": "Wrong",
+    "at": "2026-11-07T01:13:07.720Z"
+  },
+  "sigil/haste-loop/take3": {
+    "note": "sounds like someone taking a shower, not haste",
+    "mark": "Wrong",
+    "at": "2026-11-07T01:13:24.203Z"
+  },
+  "sigil/mist-loop/take1": {
+    "note": "sounds like some dripping, not continous enough",
+    "mark": "Wrong",
+    "at": "2026-11-07T01:13:55.302Z"
+  },
+  "sigil/mist-loop/take3": {
+    "note": "there's a repetative hiss that ruins it, but I think it's not good otherwise either. Sounds like the inside of a datacenter",
+    "at": "2026-11-07T01:14:48.528Z"
+  },
+  "sigil/mist-loop/take2": {
+    "mark": "Close",
+    "note": "the best of the 3, but it's sounding a bit too... \"fast\"? Like air blowing kinda fast maybe.",
+    "at": "2026-11-07T01:15:20.355Z"
+  },
+  "sigil/fire-r3/take1": {
+    "note": "it's better, I guess it trips me up though that there's no sound before the burst, but the animation has a little lead up, if there was some sound matching the lead up, it would be perfect.",
+    "at": "2026-11-07T01:16:44.841Z"
+  },
+  "sigil/frost-r3/take1": {
+    "note": "same as fire, the burst timing is good, but it's missing some sound while the staff is flashing.",
+    "at": "2026-11-07T01:17:12.156Z"
+  },
+  "sigil/arcane-r3/take1": {
+    "note": "same as the others",
+    "at": "2026-11-07T01:17:27.609Z"
+  },
+  "sigil/fire-r4/take1": {
+    "note": "I don't hear a lead-up",
+    "at": "2026-11-07T01:22:24.926Z"
+  },
+  "sigil/frost-r4/take1": {
+    "note": "maybe there's a little lead up, but it's not timed with the wand pulsing",
+    "at": "2026-11-07T01:22:49.748Z"
+  },
+  "sigil/arcane-r4/take1": {
+    "note": "not timed with the actual staff animation",
+    "at": "2026-11-07T01:23:07.086Z"
+  },
+  "sigil/earth-r4/take1": {
+    "note": "no lead up?",
+    "at": "2026-11-07T01:23:27.914Z"
+  },
+  "sigil/life-r4/take1": {
+    "note": "no lead up?",
+    "at": "2026-11-07T01:23:34.786Z"
+  },
+  "sigil/mist-r4/take1": {
+    "note": "loop sounds about right. Intro feels off compared to animation.",
+    "at": "2026-11-07T01:24:05.700Z"
+  },
+  "sigil/fire-r5/take1": {
+    "note": "there's still flashing from the wand before any sound is played.",
+    "at": "2026-11-07T01:30:45.110Z"
+  },
+  "sigil/frost-r5/take1": {
+    "note": "flashing starts before sound",
+    "at": "2026-11-07T01:30:55.849Z"
+  },
+  "sigil/arcane-r5/take1": {
+    "note": "flashing starts before sound",
+    "at": "2026-11-07T01:31:06.444Z"
+  },
+  "sigil/earth-r5/take1": {
+    "note": "flashing starts before sound",
+    "at": "2026-11-07T01:31:16.487Z"
+  },
+  "sigil/life-r5/take1": {
+    "note": "flashing starts before sound",
+    "at": "2026-11-07T01:31:23.531Z"
+  },
+  "sigil/mist-r5/take1": {
+    "note": "flashing starts before sound",
+    "at": "2026-11-07T01:31:33.686Z"
+  },
+  "sigil/haste-intro-r5": {
+    "note": "they're all a little meh. I think they're too short, much shorter than the casting animation",
+    "at": "2026-11-07T01:32:46.979Z"
+  },
+  "sigil/haste-loop-r5/take3": {
+    "note": "best of the options, but sounds too \"slow\"",
+    "at": "2026-11-07T01:33:25.892Z"
+  },
+  "sigil/haste-loop-r5": {
+    "note": "all the loops don't give a sense of speed, magicka had a fast more intense vibration, these are more like a slow static aura",
+    "at": "2026-11-07T01:34:04.749Z"
+  },
+  "sigil/haste-r6/take1": {
+    "mark": "Close",
+    "note": "repetition is a bit too obvious, but sound is otherwise ok-ish. Not great",
+    "at": "2026-11-07T01:47:46.835Z"
+  },
+  "sigil/rune-tick/take1": {
+    "mark": "Wrong",
+    "at": "2026-11-07T01:53:21.281Z"
+  },
+  "sigil/rune-tick/take2": {
+    "mark": "Right",
+    "at": "2026-11-07T01:53:22.767Z"
+  },
+  "sigil/rune-tick/take3": {
+    "mark": "Close",
+    "at": "2026-11-07T01:53:41.817Z"
+  },
+  "sigil/haste-loop-r7/take1": {
+    "mark": "Close",
+    "note": "sound feels right, except it's very unstable pulsing in and out",
+    "at": "2026-11-07T01:54:13.310Z"
+  },
+  "sigil/haste-loop-r7/take2": {
+    "mark": "Wrong",
+    "at": "2026-11-07T01:54:25.035Z"
+  },
+  "sigil/haste-loop-r7/take3": {
+    "mark": "Wrong",
+    "at": "2026-11-07T01:54:33.051Z"
+  },
+  "sigil/haste-loop-r8/take1": {
+    "mark": "Close",
+    "note": "slightly too loud, and the loop is too obvious. I can't really tell the difference from take 2. What part of this should I be paying attention to? The aura sound sounds the same. Huh I guess this text box is for all takes?",
+    "at": "2026-11-11T23:09:39.930Z"
+  },
+  "sigil/orbitals/take1": {
+    "mark": "Wrong",
+    "at": "2026-11-11T23:12:31.468Z",
+    "note": "too tinny. Way too strong of a continous effect for something that may hang around you for a long time. We may even want to make orbit silent, or extremely quiet."
+  },
+  "sigil/orbitals": {
+    "note": "There's so many different sound effects happening its really hard to pick out the delta",
+    "at": "2026-11-11T23:10:53.610Z"
+  },
+  "sigil/orbitals/take2": {
+    "note": "Sounds too much like screaming, doesn't feel like a fiew orb at all.",
+    "mark": "Wrong",
+    "at": "2026-11-11T23:11:53.108Z"
+  },
+  "sigil/orbitals/take3": {
+    "mark": "Wrong",
+    "note": "sounds like nails on a chalkboard, completely wrong for this effect.dd",
+    "at": "2026-11-11T23:12:54.749Z"
+  },
+  "sigil/runes-r1/queue/take1": {
+    "mark": "Close",
+    "at": "2026-11-11T23:33:35.520Z"
+  },
+  "sigil/runes-r1/queue/take2": {
+    "mark": "Close",
+    "at": "2026-11-11T23:33:42.493Z"
+  },
+  "sigil/runes-r1/queue/take3": {
+    "mark": "Close",
+    "at": "2026-11-11T23:33:56.450Z"
+  },
+  "sigil/runes-r1": {
+    "mark": "Close",
+    "note": "They're all about the right vibe except that they all have 3 beats, and they should probably just have 1. Players will spam multiple of these in close proximity, so the overall sound landscape of these will have multiple beats naturally. We should have slightly different tones for different elements, but these all sound about right.",
+    "at": "2026-11-11T23:35:21.408Z"
+  },
+  "sigil/haste-loop-r9/hold:aura+lightning/take1": {
+    "mark": "Close",
+    "note": "its better, but its just a little inconsistent, sound changes so much during the loop in a sort of weird way. Maybe just be vibrating kind of sound would work.",
+    "at": "2026-11-11T23:37:20.967Z"
+  },
+  "fire/flamethrower-r1/start/take3": {
+    "mark": "Wrong",
+    "at": "2026-11-11T23:39:26.142Z"
+  },
+  "fire/flamethrower-r1/start/take2": {
+    "mark": "Right",
+    "at": "2026-11-11T23:39:32.938Z"
+  },
+  "fire/flamethrower-r1/hold/take2": {
+    "mark": "Right",
+    "at": "2026-11-11T23:39:43.835Z"
+  },
+  "fire/flamethrower-r1/hold/take1": {
+    "mark": "Close",
+    "at": "2026-11-11T23:39:45.559Z"
+  },
+  "fire/flamethrower-r1/hold/take3": {
+    "mark": "Right",
+    "at": "2026-11-11T23:39:54.233Z"
+  },
+  "fire/flamethrower-r1/stop/take2": {
+    "mark": "Wrong",
+    "at": "2026-11-11T23:40:48.611Z"
+  },
+  "fire/flamethrower-r1/stop/take3": {
+    "mark": "Right",
+    "at": "2026-11-11T23:41:31.736Z"
+  },
+  "fire/flamethrower-r1/stop/take1": {
+    "mark": "Wrong",
+    "at": "2026-11-11T23:41:38.794Z"
+  },
+  "fire/flamethrower-r1": {
+    "mark": "Close",
+    "note": "The individual parts sound pretty good, but when played all together it's very noticable that it's 3 sounds.",
+    "at": "2026-11-11T23:42:09.879Z"
+  },
+  "sigil/runes-r2/queue/take3": {
+    "mark": "Close",
+    "note": "its not bad, maybe a bit too like a xylophone",
+    "at": "2026-11-11T23:44:19.920Z"
+  },
+  "sigil/runes-r2/queue/take2": {
+    "mark": "Close",
+    "note": "I like it, but I think maybe take 1 is a bit better",
+    "at": "2026-11-11T23:44:33.882Z"
+  },
+  "sigil/runes-r2/queue/take1": {
+    "mark": "Right",
+    "note": "The cute blop feels like it hits the spirit of the game, we may want to keep take 2 around too just in case I change how I feel",
+    "at": "2026-11-11T23:45:20.561Z"
+  },
+  "sigil/haste-loop-r10/hold:aura+lightning/take3": {
+    "mark": "Right",
+    "note": "its the one that fits with the initial spell cast",
+    "at": "2026-11-11T23:47:47.529Z"
+  },
+  "sigil/haste-loop-r10/hold:aura+lightning/take2": {
+    "mark": "Wrong",
+    "at": "2026-11-11T23:47:56.596Z"
+  },
+  "sigil/haste-loop-r10/hold:aura+lightning/take1": {
+    "note": "this one is pretty good too, but a mismatch for the initial effect.",
+    "mark": "Close",
+    "at": "2026-11-11T23:48:19.693Z"
+  },
+  "fire/flamethrower-r2/hold/take2": {
+    "mark": "Close",
+    "at": "2026-11-11T23:50:27.700Z"
+  },
+  "fire/flamethrower-r2/hold/take1": {
+    "mark": "Right",
+    "note": "slightly prefer this one",
+    "at": "2026-11-11T23:50:33.024Z"
+  },
+  "fire/flamethrower-r2/start/take1": {
+    "mark": "Right",
+    "at": "2026-11-11T23:50:35.019Z"
+  },
+  "fire/flamethrower-r2/stop/take1": {
+    "mark": "Close",
+    "note": "it plays for too long. I'm not sure we even need a cut-off sound. Maybe just turning down the road over like .5 seconds or something",
+    "at": "2026-11-11T23:51:19.074Z"
+  },
+  "fire/flamethrower-r2": {
+    "mark": "Close",
+    "at": "2026-11-11T23:51:21.486Z"
+  },
+  "fire/ring-r1/burst/take2": {
+    "mark": "Close",
+    "at": "2026-11-11T23:55:30.922Z",
+    "note": "it has a very cool bass at the start that kinda fits nova, but I just feel like take 3 fits a bit better here."
+  },
+  "fire/ring-r1/burst/take3": {
+    "mark": "Right",
+    "at": "2026-11-11T23:55:06.026Z",
+    "note": "it just sounds like a fire wave. feels right"
+  },
+  "fire/ring-r1/burst/take1": {
+    "mark": "Close",
+    "at": "2026-11-11T23:56:03.535Z",
+    "note": "not bad but worst of the 3, doesn't quite sound like fire"
+  },
+  "fire/fireball-r1/land:missile/take1": {
+    "mark": "Close",
+    "at": "2026-11-11T23:56:35.230Z"
+  },
+  "fire/fireball-r1/launch/take1": {
+    "mark": "Wrong",
+    "note": "Pretty good length and flow, sound feels a little off",
+    "at": "2026-11-12T00:02:03.510Z"
+  },
+  "fire/fireball-r1/launch/take2": {
+    "mark": "Close",
+    "note": "A little too short maybe",
+    "at": "2026-11-11T23:58:24.984Z"
+  },
+  "fire/fireball-r1/launch/take3": {
+    "mark": "Close",
+    "note": "sounds pretty good overall, I think its my favorite but the audio sounds a little cut off, like it ends abruptly.",
+    "at": "2026-11-12T00:02:25.008Z"
+  },
+  "fire/fireball-r1/land:missile/take3": {
+    "mark": "Right",
+    "at": "2026-11-11T23:59:50.711Z"
+  },
+  "fire/fireball-r1": {
+    "note": "sounds pretty good now, the \"charge up\" sound isn't listed here, but that one feels a little off",
+    "at": "2026-11-12T00:00:13.284Z"
+  },
+  "fire/beam-r1/beam/take3": {
+    "mark": "Right",
+    "note": "beautiful. I can feel the intense beam of fire.",
+    "at": "2026-11-12T00:04:53.373Z"
+  },
+  "fire/beam-r1/beam/take1": {
+    "mark": "Wrong",
+    "note": "its not a bad sound, but feels a bit too high pitched for the fire effect",
+    "at": "2026-11-12T00:04:13.064Z"
+  },
+  "fire/beam-r1/beam/take2": {
+    "mark": "Close",
+    "at": "2026-11-12T00:04:42.692Z"
+  },
+  "fire/burning-r1/status/take1": {
+    "mark": "Wrong",
+    "at": "2026-11-12T00:05:44.321Z"
+  },
+  "fire/burning-r1/status/take2": {
+    "note": "its a good fire sound, except for this odd effect that happens right at the start, and its a little too intense compared to reference",
+    "mark": "Close",
+    "at": "2026-11-12T00:07:41.116Z"
+  },
+  "fire/burning-r1/status/other": {
+    "mark": "Right",
+    "at": "2026-11-12T00:06:25.687Z"
+  },
+  "fire/burning-r1/status/take3": {
+    "note": "It's a bit too intense, it almost sounds like there was a microphone that had trouble recording parts of the sound so its glitching slightly",
+    "mark": "Close",
+    "at": "2026-11-12T00:07:15.641Z"
+  },
+  "fire/fireball-r2/charge/take1": {
+    "mark": "Right",
+    "note": "Its very good, but it feels like it takes a little bit of time to start playing, can we make it play faster?",
+    "at": "2026-11-12T00:14:29.301Z"
+  },
+  "fire/fireball-r2/charge/take2": {
+    "mark": "Close",
+    "at": "2026-11-12T00:12:21.477Z"
+  },
+  "fire/fireball-r2/charge/take3": {
+    "mark": "Wrong",
+    "at": "2026-11-12T00:12:25.468Z"
+  },
+  "fire/fireball-r2/charge/other": {
+    "mark": "Wrong",
+    "at": "2026-11-12T00:12:48.353Z"
+  },
+  "fire/fireball-r2/launch/other": {
+    "mark": "Wrong",
+    "at": "2026-11-12T00:12:50.445Z"
+  },
+  "fire/fireball-r2/launch/take1": {
+    "mark": "Right",
+    "note": "just a nice smooth sound",
+    "at": "2026-11-12T00:13:28.251Z"
+  },
+  "fire/fireball-r2/launch/take2": {
+    "mark": "Wrong",
+    "at": "2026-11-12T00:13:17.479Z"
+  },
+  "fire/fireball-r2": {
+    "note": "Very good overall now, but it sounds better when the charge up plays. On fast clicks, can we still play a fraction of the charge up?",
+    "at": "2026-11-12T00:13:55.999Z"
+  },
+  "fire/burning-r2/status/take1": {
+    "mark": "Close",
+    "at": "2026-11-12T00:15:31.954Z"
+  },
+  "fire/burning-r3/status/take1": {
+    "mark": "Close",
+    "note": "there is still a repeating non-fireish sound I can hear right at the start of the loop and again a little before the end of the loop (when I say loop I mean what plans when I press \"once\")",
+    "at": "2026-11-12T00:22:48.683Z"
+  },
+  "fire/burning-r8/status/take1": {
+    "note": "good sound, similar to reference except its too loud",
+    "mark": "Close",
+    "at": "2026-11-12T00:59:35.023Z"
+  },
+  "fire/burning-r8/status/take2": {
+    "note": "very good, just a little loud",
+    "mark": "Right",
+    "at": "2026-11-12T00:59:45.091Z"
+  },
+  "fire/burning-r8/status/take3": {
+    "mark": "Wrong",
+    "note": "sounds more like a thunderstorm",
+    "at": "2026-11-12T00:59:15.685Z"
+  },
+  "fire/hit-r9/land/take3": {
+    "mark": "Right",
+    "note": "sounds like fire hitting something soft",
+    "at": "2026-11-12T01:14:11.930Z"
+  },
+  "fire/burst-r9/force/take1": {
+    "mark": "Right",
+    "at": "2026-11-12T01:14:32.014Z"
+  },
+  "fire/patch-r9/place/take3": {
+    "mark": "Wrong",
+    "note": "rattlesnake?",
+    "at": "2026-11-12T01:15:02.937Z"
+  },
+  "fire/patch-r9/place/take2": {
+    "note": "very tiny soft thud, not exactly an eruption",
+    "at": "2026-11-12T01:15:26.262Z"
+  },
+  "fire/patch-r9/place/take1": {
+    "note": "sounds like a small fire starting, closest of the 3",
+    "at": "2026-11-12T01:17:30.201Z"
+  },
+  "fire/patch-r9/place/other": {
+    "mark": "Wrong",
+    "note": "shotgun",
+    "at": "2026-11-12T01:17:41.353Z"
+  },
+  "fire/patch-r9/ground/other": {
+    "note": "rain, bubbling?",
+    "mark": "Wrong",
+    "at": "2026-11-12T01:18:19.650Z"
+  },
+  "fire/patch-r9/ground/take3": {
+    "note": "thunderstorm",
+    "mark": "Wrong",
+    "at": "2026-11-12T01:18:17.424Z"
+  },
+  "fire/patch-r9/ground/take4": {
+    "mark": "Right",
+    "note": "seems reasonable, just a regular fire sound",
+    "at": "2026-11-12T01:19:03.608Z"
+  },
+  "fire/patch-r9/ground/take1": {
+    "mark": "Wrong",
+    "note": "too much like gas burning",
+    "at": "2026-11-12T01:18:39.086Z"
+  },
+  "fire/patch-r9/ground/take2": {
+    "mark": "Wrong",
+    "note": "too much like gas torch",
+    "at": "2026-11-12T01:18:51.217Z"
+  },
+  "fire/wall-r9/wall/take1": {
+    "note": "no sound?",
+    "mark": "Wrong",
+    "at": "2026-11-12T01:19:15.484Z"
+  },
+  "fire/wall-r9/wall/take2": {
+    "mark": "Wrong",
+    "note": "no sound",
+    "at": "2026-11-12T01:19:24.129Z"
+  }
+}

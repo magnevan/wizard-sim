@@ -12,7 +12,7 @@ The rules, from the user (2026-11-06): prefer free libraries and packs, tuned wi
 - `npm run audio:bank -- --originals <dir>` re-cuts the Commons excerpts from full downloads. Only needed for a new or moved cut.
 - `npm run sound-gallery` then rebuilds the Sound Gallery's files.
 
-Sounds not listed here are made in code (`packages/client/src/audio/synth.ts`): whooshes, the sub thump, electric buzz and zaps, shimmer, the rune blip, stingers.
+Sounds not listed here are made in code (`packages/client/src/audio/synth.ts`): whooshes, the sub thump, electric buzz and zaps, shimmer, stingers, and the old rune blip (used only where no kit has a rune sound).
 
 ## Sources
 
@@ -59,6 +59,15 @@ Licence read from the Commons API on 2026-11-06. Kept whole in `sources/commons-
 |---|---|---|---|---|
 | WWS Bonfireburning | CC BY 4.0 | Work With Sounds / Werstas | https://commons.wikimedia.org/wiki/File:WWS_Bonfireburning.ogg | Fire's roar, its dying breath, a burning body |
 | WWS Bonfireignition | CC BY 4.0 | Work With Sounds / Werstas | https://commons.wikimedia.org/wiki/File:WWS_Bonfireignition.ogg | Fire catching, bursts, blooms |
+
+### Made for the game (2026-11-11)
+
+Synthesized locally with numpy. The scripts live in the gitignored `.reference/tools/` folder, as they sit beside the Sound Lab's working files.
+
+| File | Made by | Used for |
+|---|---|---|
+| `sources/made/rune-blop.ogg` | `rune-blops.py`, take 1: a sine gliding up, like a drop of water | A rune going into the queue, at each element's own pitch |
+| `sources/made/haste-hum.ogg` | `haste-hums.py`, take 3: noise shaped to the average spectrum of a reference thrum, under a 24 Hz vibration | Haste's loop. **Temporary:** it's derived from a reference recording that isn't ours. The user chose to ship it as is and to replace the whole Haste sound later (2026-11-11). |
 
 ## Looked at and not used
 

@@ -15,6 +15,8 @@
     { "id": "fire-burst-3", "src": "kenney-sci-fi-sounds/thrusterFire_003.ogg", "start": 0, "dur": 0.4 },
     {"id": "fire-jet", "src": "made/fire-jet.ogg", "dur": 5.4, "loop": 4.6, "rms": 0.42},
     {"id": "fire-jet-sub", "src": "made/fire-jet-sub.ogg", "dur": 5.0, "loop": 4.2, "rms": 0.27},
+    {"id": "rune-blop", "src": "made/rune-blop.ogg"},
+    {"id": "haste-hum", "src": "made/haste-hum.ogg", "loop": 4.0},
     {"id": "fire-lick", "src": "made/fire-lick.ogg", "dur": 5.2, "loop": 4.4, "rms": 0.34},
     {"id": "fire-catch", "src": "made/fire-catch.ogg"},
     {"id": "fire-die-1", "src": "made/fire-die-1.ogg"},

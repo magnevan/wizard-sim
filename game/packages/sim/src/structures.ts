@@ -566,7 +566,8 @@ export function tickStructures(w: World): void {
         // audit, 2026-11-11: each orb used to carry the whole spell at up to 1.2, so extra runes counted twice)
         let made = 0; for (let e = 0; e < N_EL; e++) if (e !== EL.sigil - 1) made += dv.els[k * N_EL + e];
         hit(w, target, p, hitOpts(p, owner, (STRUCT.orbitPower * oneShotBlast(spec)) / Math.max(1, made), dx / d, dy / d));
-        w.events.push({ tick, kind: 'zap', who: owner, x: ox, y: oy, x2: b.x[target], y2: b.y[target], look: dv.look[k] });
+        // text: tells the sound an orb's strike from a turret's arc (events aren't in the state hash)
+        w.events.push({ tick, kind: 'zap', who: owner, x: ox, y: oy, x2: b.x[target], y2: b.y[target], look: dv.look[k], text: 'orbital' });
         dv.charges[k]--;
         break; // one strike per tick
       }

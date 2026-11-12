@@ -1,0 +1,155 @@
+[
+ {
+  "id": "gen-fire-catch-1",
+  "secs": 0.5,
+  "influence": 0.6,
+  "text": "A burner igniting with a deep whoomp, a low heavy rush of flame catching all at once."
+ },
+ {
+  "id": "gen-fire-catch-2",
+  "secs": 0.5,
+  "influence": 0.6,
+  "text": "A burner igniting with a deep whoomp, a low heavy rush of flame catching all at once."
+ },
+ {
+  "id": "gen-fire-catch-3",
+  "secs": 0.5,
+  "influence": 0.6,
+  "text": "A burner igniting with a deep whoomp, a low heavy rush of flame catching all at once."
+ },
+ {
+  "id": "gen-fire-jet-1",
+  "secs": 4,
+  "influence": 0.6,
+  "text": "A steady, deep roar of a powerful jet of flame, a heavy low rumble with a soft rushing breath on top, even and continuous.",
+  "loop": true
+ },
+ {
+  "id": "gen-fire-jet-2",
+  "secs": 4,
+  "influence": 0.6,
+  "text": "A steady, deep roar of a powerful jet of flame, a heavy low rumble with a soft rushing breath on top, even and continuous.",
+  "loop": true
+ },
+ {
+  "id": "gen-fire-jet-3",
+  "secs": 4,
+  "influence": 0.6,
+  "text": "A steady, deep roar of a powerful jet of flame, a heavy low rumble with a soft rushing breath on top, even and continuous.",
+  "loop": true
+ },
+ {
+  "id": "gen-fire-cut-1",
+  "secs": 1,
+  "influence": 0.6,
+  "text": "A powerful jet of flame cutting off, a low rush of fire dying away in a soft breath."
+ },
+ {
+  "id": "gen-fire-cut-2",
+  "secs": 1,
+  "influence": 0.6,
+  "text": "A powerful jet of flame cutting off, a low rush of fire dying away in a soft breath."
+ },
+ {
+  "id": "gen-fire-cut-3",
+  "secs": 1,
+  "influence": 0.6,
+  "text": "A powerful jet of flame cutting off, a low rush of fire dying away in a soft breath."
+ },
+ {
+  "id": "gen-fire-ring-1",
+  "secs": 1,
+  "influence": 0.6,
+  "text": "A ring of fire bursting out all around in one deep whoomp, a heavy low bloom of flame that rolls out and fades."
+ },
+ {
+  "id": "gen-fire-ring-2",
+  "secs": 1,
+  "influence": 0.6,
+  "text": "A ring of fire bursting out all around in one deep whoomp, a heavy low bloom of flame that rolls out and fades."
+ },
+ {
+  "id": "gen-fire-ring-3",
+  "secs": 1,
+  "influence": 0.6,
+  "text": "A ring of fire bursting out all around in one deep whoomp, a heavy low bloom of flame that rolls out and fades."
+ },
+ {
+  "id": "gen-fire-throw-1",
+  "secs": 0.6,
+  "influence": 0.7,
+  "text": "A heavy ball of fire hurled from the hand, a deep whoosh of flame rushing away."
+ },
+ {
+  "id": "gen-fire-throw-2",
+  "secs": 0.6,
+  "influence": 0.7,
+  "text": "A heavy ball of fire hurled from the hand, a deep whoosh of flame rushing away."
+ },
+ {
+  "id": "gen-fire-throw-3",
+  "secs": 0.6,
+  "influence": 0.7,
+  "text": "A heavy ball of fire hurled from the hand, a deep whoosh of flame rushing away."
+ },
+ {
+  "id": "gen-fire-landing-1",
+  "secs": 0.8,
+  "influence": 0.7,
+  "text": "A ball of fire slamming into the ground, a deep thud and a burst of flame."
+ },
+ {
+  "id": "gen-fire-landing-2",
+  "secs": 0.8,
+  "influence": 0.7,
+  "text": "A ball of fire slamming into the ground, a deep thud and a burst of flame."
+ },
+ {
+  "id": "gen-fire-landing-3",
+  "secs": 0.8,
+  "influence": 0.7,
+  "text": "A ball of fire slamming into the ground, a deep thud and a burst of flame."
+ },
+ {
+  "id": "gen-fire-beam-1",
+  "secs": 4,
+  "influence": 0.6,
+  "text": "A thin, focused, steady beam of flame, a tight low hum of burning energy with a narrow hiss, even and continuous.",
+  "loop": true
+ },
+ {
+  "id": "gen-fire-beam-2",
+  "secs": 4,
+  "influence": 0.6,
+  "text": "A thin, focused, steady beam of flame, a tight low hum of burning energy with a narrow hiss, even and continuous.",
+  "loop": true
+ },
+ {
+  "id": "gen-fire-beam-3",
+  "secs": 4,
+  "influence": 0.6,
+  "text": "A thin, focused, steady beam of flame, a tight low hum of burning energy with a narrow hiss, even and continuous.",
+  "loop": true
+ },
+ {
+  "id": "gen-fire-onfire-1",
+  "secs": 4,
+  "influence": 0.6,
+  "text": "Flames licking over a burning person close by, a low soft flutter of fire, quiet and steady.",
+  "loop": true
+ },
+ {
+  "id": "gen-fire-onfire-2",
+  "secs": 4,
+  "influence": 0.6,
+  "text": "Flames licking over a burning person close by, a low soft flutter of fire, quiet and steady.",
+  "loop": true
+ },
+ {
+  "id": "gen-fire-onfire-3",
+  "secs": 4,
+  "influence": 0.6,
+  "text": "Flames licking over a burning person close by, a low soft flutter of fire, quiet and steady.",
+  "loop": true
+ }
+]

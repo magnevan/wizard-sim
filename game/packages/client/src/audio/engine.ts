@@ -30,6 +30,8 @@ export interface Volumes { master: number; effects: number; music: number }
 interface Voice {
   out: GainNode; pan: StereoPannerNode | null; lp: BiquadFilterNode; send: GainNode;
   sources: AudioScheduledSourceNode[]; ends: number; gain: number; loop: boolean; wet: number;
+  /** A sustained sound's fade when stopped: its layers' longest release, at least FADE_S. */
+  tail?: number;
 }
 
 const ramp = (p: AudioParam, ctx: BaseAudioContext, to: number, secs: number) => {
@@ -151,7 +153,7 @@ export class AudioEngine {
       if (l.lowpassTo && body < 1e5) f.frequency.exponentialRampToValueAtTime(l.lowpassTo, stop);
       g.connect(f).connect(v.lp);
     } else g.connect(v.lp);
-    src.start(start);
+    src.start(start, sustained && l.offset ? l.offset * b.duration : 0);
     if (body < 1e5) { src.stop(stop + 0.01); v.ends = Math.max(v.ends, stop + 0.01); }
     v.sources.push(src);
   }
@@ -205,6 +207,7 @@ export class AudioEngine {
     const v = this.voice(place, gain, plan.wet, true), t0 = this.ctx.currentTime;
     for (const l of plan.layers) this.layer(v, l, t0);
     if (!v.sources.length) { this.close(v); return; }
+    v.tail = Math.min(1, Math.max(FADE_S, ...plan.layers.filter((l) => l.loop).map((l) => l.release)));
     this.loops.set(key, v);
     this.voices.add(v);
     this.stats.voices++;
@@ -223,11 +226,12 @@ export class AudioEngine {
   }
 
   /** Fades a sustained sound out. Never instant: a corrected prediction must not click. */
-  stop(key: string, secs = FADE_S): void {
+  stop(key: string, secs?: number): void {
     const v = this.loops.get(key);
     if (!v) return;
     this.loops.delete(key);
-    this.fadeOut(v, Math.max(0.02, secs));
+    // a loop's own release (a flamethrower dying away over half a second), unless the caller sets the fade
+    this.fadeOut(v, Math.max(0.02, secs ?? v.tail ?? FADE_S));
   }
 
   stopAll(secs = FADE_S): void { for (const k of [...this.loops.keys()]) this.stop(k, secs); }

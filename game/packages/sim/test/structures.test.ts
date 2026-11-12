@@ -411,6 +411,32 @@ describe('Sigil', () => {
     expect(w.bodies.hp[t]).toBeLessThan(400);
   });
 
+  it("an orbital's strike is marked as one, for its sound", () => {
+    const { w, d, dummy } = arena();
+    dummy(3.2, 0); // the Sound Lab's distance
+    d.queue('sigil', 'fire', 'fire').cast(BTN.area, 2, 0);
+    const at: number[] = [];
+    for (let t = 0; t < 400 && at.length < 2; t++) {
+      d.tick({}, 1);
+      for (const e of w.events) if (e.kind === 'zap') { expect(e.text).toBe('orbital'); at.push(w.clock[0]); }
+    }
+    expect(at.length).toBe(2);
+    // today the ring re-spaces as an orb is spent, so the second jumps into reach and strikes right after
+    expect(at[1] - at[0]).toBeLessThan(5);
+  });
+
+  it('one orb circles a while before reaching a dummy straight north or south of you (the Sound Lab Orbitals row)', () => {
+    for (const dy of [-3.2, 3.2]) {
+      const { w, d, dummy } = arena();
+      dummy(0, dy);
+      d.queue('sigil', 'fire').cast(BTN.area, 2, 0);
+      const cast = w.clock[0];
+      let at = -1;
+      for (let t = 0; t < 300 && at < 0; t++) { d.tick({}, 1); if (w.events.some((e) => e.kind === 'zap')) at = w.clock[0]; }
+      expect(at - cast).toBeGreaterThan(20);
+    }
+  });
+
   it('the lens amplifies a beam through it', () => {
     const a = arena(), b = arena();
     const ta = a.dummy(7, 0), tb = b.dummy(7, 0);

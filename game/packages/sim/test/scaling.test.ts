@@ -66,6 +66,10 @@ describe('rune scaling', () => {
     expect(drain(['arcane', 'arcane'], 'arcane')).toBeCloseTo(2 * RHYTHM.upkeep, 1);
     // a Fire rune in the beam is paid from Fire
     expect(drain(['arcane', 'fire'], 'fire')).toBeCloseTo(RHYTHM.upkeep, 1);
+    // an Ice rune (Water + Cold in one slot) has no pool of its own: it is paid from Water and from Cold, and the beam goes on
+    expect(compile(['arcane', 'ice'], 'force').channel).toBe(true);
+    expect(drain(['arcane', 'water', 'cold'], 'water')).toBeCloseTo(RHYTHM.upkeep, 1);
+    expect(drain(['arcane', 'water', 'cold'], 'cold')).toBeCloseTo(RHYTHM.upkeep, 1);
   });
 
   it('every ice shard flies at the same power', () => {

@@ -69,6 +69,7 @@ try {
   await put(30.4, 44);
   await sleep(900);
   await shot('drive-prompt');
+  for (let f = 0; f < 4; f++) { await sleep(200); await shot(`paths-shimmer-${f}`); } // the shimmer drifting behind the feed lines' runes
   await p.keyboard.press('KeyX');
   await sleep(350);
   await shot('stakes-break');

@@ -7,14 +7,15 @@
  * control), meets it on a diagonal, and turns north into the tower. The middle lane runs north to the gate and forks to
  * its two pillars, for the wall of fire.
  *
- * Their runes glow softly, and a slow swell of light runs out along them from the well; how bright they are and how
+ * Their runes glow softly, a shimmer drifts behind them and shows only through them (glyph-path.ts Shimmer), and a slow
+ * swell of light runs out along them from the well; how bright they are and how
  * fast it runs follow the well's flow (sim battery.flow), and the line to a defence someone is driving burns brighter.
  * As the well fails (beat 5) runes start to gutter; when it runs dry (beat 6) the light drains back down every line into
  * the well (art/power-down.ts), and they stay dark.
  */
 import type { World } from '@wizard-sim/sim';
 import { toX, toY } from '../iso-world';
-import { drawGlyphPath, pathLength, snap, type GlyphPath, type RuneLook } from './glyph-path';
+import { Shimmer, drawGlyphPath, pathLength, snap, type GlyphPath, type RuneLook } from './glyph-path';
 import { POWER, dryTime } from './power-down';
 import { clamp, rand } from './util';
 
@@ -29,6 +30,7 @@ const LANE = 1.5, RIM = 3.3, BEND = 1.6, RUN_OFF = 1.4, TOWER_R = 2.3;
 const SWELL_SPEED = 2.2, SWELL_GAP = 7;
 
 let cache: { def: unknown; feeds: Feed[] } | null = null;
+const shimmer = new Shimmer(TONE.hot);
 
 /** The routes, in the sim's world, worked out once per room from where the well, towers, pedestals and pillars stand. */
 function feedsOf(w: World): Feed[] {
@@ -73,6 +75,7 @@ export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: n
   // how far out from the well the light still reaches, as a share of the longest line: all of it, or draining back
   const longest = Math.max(1, ...feeds.map((f) => f.from + f.len));
   const reach = dt > 0 ? longest * Math.max(0, 1 - dt / POWER.drain) : Infinity;
+  const mask = shimmer.begin(g); // the runes' shimmer: stamped in as they're drawn, shown through them at the end
   for (let fi = 0; fi < feeds.length; fi++) {
     const f = feeds[fi], driven = f.tower >= 0 && d.drive.includes(f.tower);
     const k = (driven ? 1 : 0.7) * (0.3 + 0.7 * flow); // how bright this line burns
@@ -85,6 +88,7 @@ export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: n
       return { col, glow: b };
     };
     const lit = f.from < reach;
-    drawGlyphPath(g, f.path, lit ? (k > 0.55 ? TONE.warm : TONE.dim) : TONE.cold, TONE.cold, rune, f.from, light);
+    drawGlyphPath(g, f.path, lit ? (k > 0.55 ? TONE.warm : TONE.dim) : TONE.cold, TONE.cold, rune, f.from, light, { g: mask, line: lit ? 0.35 * k : 0 });
   }
+  shimmer.end(g, t, 0.85 * (0.25 + 0.75 * flow));
 }

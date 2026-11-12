@@ -76,6 +76,63 @@ export function snap(pts: readonly P[]): P[] {
   return out;
 }
 
+/**
+ * A shimmer behind the paths, seen only through them (the user's idea, 2026-11-12): two streaky textures drift across
+ * the ground in different directions, pinned to the ground so the camera doesn't drag them; where their bright streaks
+ * pass under a lit rune, that part of it flares. Paths are stamped into `mask` (drawGlyphPath's `mask`) between begin()
+ * and end(); end() fills the textures through it and adds the result onto the ground canvas.
+ */
+export class Shimmer {
+  private m = X.canvas(4, 4);
+  private s = X.canvas(4, 4);
+  private pats: CanvasPattern[] = [];
+  /** `col`: the shimmer's colour (a hot tone of the paths' own). */
+  constructor(private col: string) {}
+
+  /** Clears the mask to the ground canvas's size and turn; returns it to stamp into. */
+  begin(g: Ctx): Ctx {
+    for (const cv of [this.m, this.s]) if (cv.c.width !== g.canvas.width || cv.c.height !== g.canvas.height) { cv.c.width = g.canvas.width; cv.c.height = g.canvas.height; cv.x.imageSmoothingEnabled = false; }
+    const x = this.m.x;
+    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, this.m.c.width, this.m.c.height); x._fs = null;
+    x.setTransform(g.getTransform());
+    return x;
+  }
+
+  /** Fills the drifting shimmer through the mask and adds it onto `g`, at `k` (0..1) strength. `t`: seconds. */
+  end(g: Ctx, t: number, k: number): void {
+    if (k <= 0.01) return;
+    if (!this.pats.length) this.pats = [streaks(96, 48, [[2, 1, 0], [-1, 2, 1.7], [3, -1, 3.1]], this.col, this.m.x), streaks(64, 40, [[1, -2, 0.4], [3, 1, 2.2]], this.col, this.m.x)];
+    const s = this.s.x, W = this.s.c.width, H = this.s.c.height, at = g.getTransform();
+    s.setTransform(1, 0, 0, 1, 0, 0); s.globalCompositeOperation = 'source-over'; s.globalAlpha = 1; s.clearRect(0, 0, W, H);
+    // the two layers, drifting, in the ground's own coordinates
+    const drift: [number, number][] = [[t * 9, -t * 4], [-t * 6, -t * 7]];
+    this.pats.forEach((p, i) => {
+      p.setTransform(new DOMMatrix().translate(at.e + drift[i][0], at.f + drift[i][1]));
+      s.globalCompositeOperation = i ? 'lighter' : 'source-over';
+      s.fillStyle = p; s.fillRect(0, 0, W, H);
+    });
+    s.globalCompositeOperation = 'destination-in'; s.drawImage(this.m.c, 0, 0);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'lighter'; g.globalAlpha = k;
+    g.drawImage(this.s.c, 0, 0);
+    g.restore(); g._fs = null;
+  }
+}
+
+/** A tileable texture of soft bright streaks: sums of whole-number sine waves across a w x h tile, only their crests kept. */
+function streaks(w: number, h: number, waves: readonly (readonly [number, number, number])[], col: string, ctx: Ctx): CanvasPattern {
+  const cv = X.canvas(w, h), img = cv.x.createImageData(w, h);
+  const m = /^#(..)(..)(..)$/.exec(col), [r, gg, b] = m ? [1, 2, 3].map((i) => parseInt(m[i], 16)) : [255, 230, 160];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    let v = 0;
+    for (const [fx, fy, ph] of waves) v += Math.sin(2 * Math.PI * ((fx * x) / w + (fy * y) / h) + ph);
+    const n = (v / waves.length + 1) / 2, a = Math.max(0, (n - 0.62) / 0.38) ** 1.6; // only the crests
+    const o = (y * w + x) * 4;
+    img.data[o] = r; img.data[o + 1] = gg; img.data[o + 2] = b; img.data[o + 3] = Math.round(255 * Math.min(1, a));
+  }
+  cv.x.putImageData(img, 0, 0);
+  return ctx.createPattern(cv.c, 'repeat')!;
+}
+
 /** A point of the sim's world on the field canvas (through the view's turn). */
 const F = (x: number, y: number): [number, number] => [gx(toU(x, y)), gy(toV(x, y))];
 
@@ -110,16 +167,19 @@ function stamp(g: Ctx, sheet: HTMLCanvasElement, tile: number, x: number, y: num
 /**
  * Draws one path on `g`. `line`: the colour of the lines either side and of the pads and nodes; `rune(s, k)` how each
  * rune shows (null: dark, in `dark`); `from` is how far along a longer run this path starts (for the runes' look).
- * `light`, if given, gets a small light at every third rune glowing near full.
+ * `light`, if given, gets a small light at every third rune glowing near full. `mask`, if given, gets every lit rune
+ * stamped in white at its glow, and the lines at `mask.line`, for a Shimmer to show through.
  */
-export function drawGlyphPath(g: Ctx, p: GlyphPath, line: string, dark: string, rune: (s: number, k: number) => RuneLook, from = 0, light?: (x: number, y: number, r: number, col: string, a: number) => void): void {
+export function drawGlyphPath(g: Ctx, p: GlyphPath, line: string, dark: string, rune: (s: number, k: number) => RuneLook, from = 0, light?: (x: number, y: number, r: number, col: string, a: number) => void, mask?: { g: Ctx; line: number }): void {
   if (!TILES) return;
   const darkSheet = tint(dark), lineSheet = tint(line);
   if (!darkSheet || !lineSheet) return;
+  const white = mask ? tint('#ffffff') : null;
   // the two lines
   for (const side of [PATH.half, -PATH.half]) {
     const o = offset(p.pts, side).map(([x, y]) => F(x, y));
     X.lines(g, o, line, 1);
+    if (mask && mask.line > 0) { mask.g.globalAlpha = mask.line; X.lines(mask.g, o, '#ffffff', 1); mask.g.globalAlpha = 1; }
   }
   // the runes along each leg, clear of the bends
   let s0 = 0, k = 0;
@@ -136,6 +196,8 @@ export function drawGlyphPath(g: Ctx, p: GlyphPath, line: string, dark: string, 
       if (light && look.glow > 0.8 && k % 3 === 0) light(x, y, 16, look.col, 0.16 * look.glow);
       const sheet = tint(look.col);
       if (sheet) stamp(g, sheet, tile, x, y);
+      // the shimmer shows through the lit runes, as strongly as they glow
+      if (mask && white) { mask.g.globalAlpha = Math.min(1, look.glow); stamp(mask.g, white, tile, x, y); mask.g.globalAlpha = 1; }
     }
     // a bend: a node
     if (i < p.pts.length - 1) { const [x, y] = F(bx, by); stamp(g, lineSheet, TILES.node, x, y); }

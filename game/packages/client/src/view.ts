@@ -14,7 +14,6 @@
  * reached the presented frame (tested on SwiftShader and D3D11). Nothing here rotates or
  * scales a sprite, so it isn't needed: rotation lives inside the Canvas2D effect drawing.
  */
-import { toU, toV } from './iso-world';
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
   AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
@@ -26,13 +25,13 @@ import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
 import { floorLayout, floorPlaceholder } from './art/floor';
 import { groundTexture } from './art/ground-room';
-import { toX, toY, turnedWorld } from './iso-world';
+import { toU, toV, toX, toY, turnedWorld } from './iso-world';
 import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
 import type { PropSet } from './art/assets';
-import { canvas as pxCanvas, stats, text as pxText } from './art/px';
+import { AMBIENT, canvas as pxCanvas, stats, text as pxText } from './art/px';
 import { newRigState, type RigKind, type RigState } from './art/rigs';
 import { TAU, mod } from './art/util';
 import { Vfx, type BodyView } from './art/vfx';
@@ -43,8 +42,6 @@ import { TutorialHud } from './tutorial-view';
 import type { SoundDirector } from './audio/director';
 
 const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10, bramble: 10, sack: 9 };
-/** Dusk on the lit layers (the floor has it baked in): a touch of blue. */
-const AMBIENT = 0xe4e8ff;
 /** ?lighting=0 turns the scene lighting off, to compare. */
 const LIGHTING = typeof location === 'undefined' || new URLSearchParams(location.search).get('lighting') !== '0';
 /** How far the view leans out over the battlefield while you drive a defence: view units, across and up. */

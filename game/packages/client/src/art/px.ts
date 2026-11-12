@@ -221,6 +221,9 @@ export function mix(a: string, b: string, k: number): string {
 }
 export const hexNum = (h: string): number => parseInt(h.slice(1, 7), 16);
 
+/** Dusk on the lit layers when the scene lighting is off (the floor has it baked in): a touch of blue, as a sprite tint. */
+export const AMBIENT = 0xe4e8ff;
+
 /** Element ramps, brightest first (the Battlefield's). */
 export const EL: Record<string, Ramp> = {
   fire: ['#fff4c0', '#ffd860', '#ff9a30', '#ff5a20', '#c8302a', '#6a1a20'],

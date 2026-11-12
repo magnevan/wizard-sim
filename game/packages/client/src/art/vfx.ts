@@ -65,10 +65,11 @@ interface Fx {
   half?: boolean;
 }
 
-const elName = (id: number): string => (id >= 1 && id <= N_EL ? elementName(id) : 'arcane');
-const ramp = (id: number): Ramp => EL[elName(id)] ?? EL.arcane;
+/** An element id's name ('arcane' for none): the key of its ramp in X.EL. */
+export const elName = (id: number): string => (id >= 1 && id <= N_EL ? elementName(id) : 'arcane');
+export const ramp = (id: number): Ramp => EL[elName(id)] ?? EL.arcane;
 /** Cold and Ice share the frosty branches; Ice draws them in its own ramp (EL.ice) where a ramp is picked by look. */
-const frosty = (el: string): boolean => el === 'cold' || el === 'ice';
+export const frosty = (el: string): boolean => el === 'cold' || el === 'ice';
 /** The imbue's colours by resistance column (guards.ts RES: physical, fire, cold, lightning, arcane). */
 const IMBUE: readonly Ramp[] = [EL.earth, EL.fire, X.FROST, EL.lightning, EL.arcane];
 /** The seats' default staff orbs (the Battlefield's: Red arcane, Blue cold, Gold lightning, Violet earth). */

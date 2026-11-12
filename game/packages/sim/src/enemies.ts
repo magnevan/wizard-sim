@@ -312,7 +312,7 @@ function grab(w: World, i: number): void {
   b.x[t] = b.x[i] - dx * (b.r[i] + b.r[t] + 0.05); b.y[t] = b.y[i] - dy * (b.r[i] + b.r[t] + 0.05);
   b.vx[t] = b.vy[t] = 0;
   if (b.aiT[i] >= T(g.hold)) {
-    strike(w, i, t, a.damage * b.dmgMult[i], a.knockback, dx || 1, dy, false);
+    strike(w, i, t, a.damage * b.dmgMult[i], a.knockback, dx || dy ? dx : 1, dy, false); // thrown toward the edge (east if exactly on it)
     release(w, i);
   }
 }

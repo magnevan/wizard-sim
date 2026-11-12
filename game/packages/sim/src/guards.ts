@@ -106,10 +106,6 @@ export function resist(w: World, t: number, col: number): number {
   }
   return r;
 }
-/**
- * The share of `col` damage body t takes: 1 / (1 + r), or 1 - r for a weakness. r is its guard's
- * resistance (seats only) plus what a heal lent it (any body).
- */
 /** taken, with `x` more resistance points on top (a ward's): every point on the same scale, added. Column -1 has no other resistance. */
 export function takenPlus(w: World, t: number, col: number, x: number): number {
   const b = w.bodies, r = (col >= 0 ? resist(w, t, col) + (b.blessT[t] > 0 ? b.bless[t * 5 + col] : 0) : 0) + x;
@@ -123,10 +119,13 @@ export function wardPoints(w: World, seat: number, id: number): number {
   return n * STRUCT.wardPerRune;
 }
 
+/**
+ * The share of `col` damage body t takes: 1 / (1 + r), or 1 - r for a weakness. r is its guard's
+ * resistance (seats only) plus what a heal lent it (any body).
+ */
 export function taken(w: World, t: number, col: number): number {
   if (col !== RES.fire && w.bodies.kind[t] === KIND.enemy && ARCHETYPES[w.bodies.arch[t]].onlyFire) return 0; // a bramble: blows bounce off
-  const b = w.bodies, r = resist(w, t, col) + (b.blessT[t] > 0 ? b.bless[t * 5 + col] : 0);
-  return r >= 0 ? 1 / (1 + r) : 1 - r;
+  return takenPlus(w, t, col, 0);
 }
 
 /**

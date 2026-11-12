@@ -9,14 +9,14 @@
  * Integer costs (10 straight, 14 diagonal) and a fixed neighbour order keep it deterministic.
  */
 import { solidWall } from './compile';
-
-/** What stops an enemy's feet: rock and ice, and the players' barriers (force fields). Only enemies steer by this grid. */
-export const enemyWall = (w: World, k: number): boolean => solidWall(w.walls.type[k]) || isField(w, k);
 import { CELL, STRUCT, T } from './config';
 import { len } from './geom';
 import { terrainAlong } from './terrain';
 import { isField, segLen } from './walls';
 import { KIND, MAX_CELLS, MAX_SEATS, MAX_WALLS, type World } from './world';
+
+/** What stops an enemy's feet: rock and ice, and the players' barriers (force fields). Only enemies steer by this grid. */
+export const enemyWall = (w: World, k: number): boolean => solidWall(w.walls.type[k]) || isField(w, k);
 
 const INF = 0x3fffffff;
 const INFLATE = 0.45;
@@ -147,15 +147,10 @@ function clearLine(w: World, ax: number, ay: number, bx: number, by: number): bo
   return true;
 }
 
-/**
- * Unit direction for enemy `i` to walk toward (tx, ty), chasing wizard `seat` (its field), and
- * whether it is detouring (detours are walked at 80%).
- */
 /** No way round to that seat's wizard: walls close it off (enemies then break through, enemies.ts). */
 export function cutOff(w: World, i: number, seat: number): boolean {
   if (seat < 0 || seat >= MAX_SEATS) return false;
-  const c = cellOf(w, w.bodies.x[i], w.bodies.y[i]);
-  if (c < 0) return false;
+  const c = cellOf(w, w.bodies.x[i], w.bodies.y[i]); // clamped to the grid, so always a cell
   const GW = w.dims.gw, GH = w.dims.gh, CELLS = GW * GH;
   // Its own cell can be blocked just from standing against a wall: cut off only if no neighbour has a way either.
   const f = w.nav.field, base = seat * CELLS, cx = c % GW, cy = (c - cx) / GW;
@@ -185,6 +180,10 @@ export function atBarrier(w: World, i: number, seat: number): boolean {
   return false;
 }
 
+/**
+ * Unit direction for enemy `i` to walk toward (tx, ty), chasing wizard `seat` (its field), and
+ * whether it is detouring (detours are walked at 80%).
+ */
 export function steer(w: World, i: number, tx: number, ty: number, seat: number): [number, number, boolean] {
   const b = w.bodies, x = b.x[i], y = b.y[i];
   const dx = tx - x, dy = ty - y, d = len(dx, dy);

@@ -9,9 +9,9 @@ export const T = (seconds: number): number => Math.round(seconds * 60);
 
 /**
  * Rune pools, from the Pixel Battlefield mock-up: about 4 per element. Regen is one shared budget
- * (docs/decisions 2026-11-05, "The rune economy"): `regen` runes a second in total, split among the
- * pools that aren't full, weighted by their max; `floor` of it always reaches every pool that isn't
- * full. Per pool: floor·R·max/Σmax_all + (1-floor)·R·max/Σmax_notfull (world.ts regenRate).
+ * (docs/decisions 2026-11-05, "The rune economy"; reworked 2026-11-11): `regen` runes a second in
+ * total, shared equally among the pools that aren't full, an empty one taking emptyShare shares
+ * (world.ts regenRate).
  */
 export const RUNES = {
   // Ice (Water + Cold combined) has no pool of its own: its runes come from Water's and Cold's.
@@ -23,7 +23,6 @@ export const RUNES = {
   /** Survive starts weak: this many runes per element, Sigil surviveSigil. */
   surviveStart: 2,
   surviveSigil: 1,
-  /** Attune (plain Arcane on yourself): regen multiplier and how long it lasts. */
   /**
    * Attune (Arcane on yourself, spell audit 2026-11-11): regen x attuneMult for attuneTime s a rune of Arcane, a sting of
    * attuneSting HP a rune, and while it lasts you take attuneVuln x the damage. One Arcane nets about 2 runes for 16 HP and
@@ -46,7 +45,7 @@ export const RHYTHM = {
   placeHold: 0.18, // was 0.25: the user found the wait from Area to Place a little long (2026-11-11)
   /** A Place drag counts once the cursor moved this far while held. */
   dragMin: 1.0,
-  /** Channels (beams, sprays, arcs) are free for this long, then cost upkeep as regen debt. */
+  /** Channels (beams, sprays, arcs) are free for this long, then cost upkeep (no pool goes below zero: a dry one ends the channel). */
   naturalChannel: 2.5,
   upkeep: 0.4, // runes per second for each rune in the spell, from that rune's element, past the natural duration
   /** A cast pressed while busy waits this long for the current one to finish. */
@@ -70,7 +69,7 @@ export const COMBAT = {
   sprayFalloff: 0.6,
   /** Forms without their own curve (lightning, arcane, shield, sigil): each extra rune adds this share of the first rune's damage. Beams too: a channel's runes are paid for every second (rhythm.upkeep), so they buy power, not time. */
   formScaling: 0.7,
-  /** Sprays grow with n^sprayExp (0.5 = square root, as Magicka's); rocks with n^rockExp (1.5: going all-in pays). */
+  /** Sprays grow with n^sprayExp (0.5 = square root, as Magicka's); rocks with n^rockExp (above 1: going all-in pays). */
   sprayExp: 0.5,
   rockExp: 1.3, // with earth 28 (spell audit, 2026-11-11: was 22 on n^1.5): a 1-rune rock is worth casting, the top end about the same
 };
@@ -80,7 +79,6 @@ export const SURFACE = { water: 20, ice: 16, fire: 12, /** frost damage a second
 
 export const STATUS = {
   // Longer than our first pass, toward Magicka's (it burns 5 s per stack, chills 10 s, freezes 4 s).
-  /** The least any soaking hit leaves a body wet for (a spray's ticks are too weak to soak for long on their own). */
   /**
    * Soak (spell audit, 2026-11-11): how wet a body is, 0..1, filled by Water runes like chill by Cold. The pool holds
    * soakPool x sqrt(max HP); each Water rune in a hit adds soakPerRune times the hit's scale; it drains soakDecay of the

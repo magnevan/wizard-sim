@@ -65,8 +65,9 @@ export const cellAt = (w: World, x: number, y: number): number => {
 
 const surfLife = (k: number): number => T(k === SURF.water ? SURFACE.water : k === SURF.ice ? SURFACE.ice : SURFACE.fire);
 
-/** An element reaching the floor. Water floods, cold freezes water (or frosts the ground), fire burns or melts. */
-/** `mult` stretches the floor's life (a Place patch with more of its lead element lasts longer). */
+/**
+ * An element reaching the floor. Water floods, cold freezes water (or frosts the ground), fire burns or melts.
+ * `mult` stretches the floor's life (a Place patch with more of its lead element lasts longer). */
 export function touchFloor(w: World, cell: number, el: number, mult = 1, heat = 1): void {
   if (cell < 0) return;
   const s = w.surf, k = s.kind[cell];
@@ -118,8 +119,9 @@ function surge(w: World, x: number, y: number, p: Payload, src: number): void {
 
 // ---- instant shapes -------------------------------------------------------------------------
 
-/** Every body within `r` of (x, y), except `skip`, gets the payload, pushed away from the centre. */
-/** `axis` multiplies only the element's own axis (chill, push): the Frost and Splash rings' instant strength. */
+/**
+ * Every body within `r` of (x, y), except `skip`, gets the payload, pushed away from the centre.
+ * `axis` multiplies only the element's own axis (chill, push): the Frost and Splash rings' instant strength. */
 export function disc(w: World, p: Payload, src: number, x: number, y: number, r: number, scale: number, skip: number, northOf?: number, axis = 1): void {
   const b = w.bodies;
   setHitKind(HIT_KIND.burst);
@@ -144,7 +146,6 @@ export interface FireExtra {
   scale?: number;
 }
 
-/** Fires a one-shot spell. `face` is the aim in turns, (tx, ty) the clamped target point, `charge` 0..1. */
 /** A spray element's one-shot multiplier (Fire, Cold, Ice, Steam): its table damage is a per-second rate, so a single hit needs it; 1 for the rest. */
 export function oneShotBlast(spec: SpellSpec): number {
   const n = spec.formN;
@@ -178,6 +179,7 @@ function imbue(w: World, src: number, p: Payload, spec: SpellSpec, x: number, y:
   w.events.push({ tick: w.clock[0], kind: 'move', who: src, x, y, x2: x + dx * reach, y2: y + dy * reach, text: 'imbue', look: spec.look, amount: reach, els: mask });
 }
 
+/** Fires a one-shot spell. `face` is the aim in turns, (tx, ty) the clamped target point, `charge` 0..1. */
 export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, tx: number, ty: number, charge: number, ex: FireExtra = {}): void {
   const b = w.bodies, x = ex.ox ?? b.x[src], y = ex.oy ?? b.y[src];
   const dx = cosTurns(face), dy = sinTurns(face);
@@ -521,13 +523,10 @@ function fork(w: World, src: number, spec: SpellSpec, face: number, reach: numbe
 // ---- channels (beams, sprays, arcs) -------------------------------------------------------------
 
 /**
- * One tick of a channelled spell from body `src`, aimed at `face`. With `follow`, the channel is a
- * Double's echo of seat `follow.seat`'s: it keeps that seat's timing, draws its end to dblEnd, and
- * deals `follow.scale` of the damage.
- */
-/**
- * One tick of a channel (beam, spray, arc) from `src`, or, with `from`, from a turret's spot: the
- * hits are still `src`'s, but the channel runs from there, keeps its own clock and its own far end.
+ * One tick of a channel (beam, spray, arc) from body `src`, aimed at `face`. With `follow`, the channel is a
+ * Double's echo of seat `follow.seat`'s: it keeps that seat's timing, draws its end to dblEnd, and deals
+ * `follow.scale` of the damage. With `from`, it runs from a turret's spot: the hits are still `src`'s, but
+ * the channel keeps its own clock and its own far end.
  */
 export function channelTick(w: World, src: number, spec: SpellSpec, face: number, follow?: { seat: number; scale: number }, from?: { x: number; y: number; t: number; end: (ex: number, ey: number) => void }): void {
   const b = w.bodies, s = w.seats, x = from ? from.x : b.x[src], y = from ? from.y : b.y[src], p = payloadOf(spec);
@@ -746,8 +745,6 @@ export function spawnZone(w: World, type: number, src: number, p: Payload, x: nu
   }
   return -1;
 }
-
-/** What rain carries after it lands: one Water, nothing else. Never written. */
 
 export function tickZones(w: World): void {
   const z = w.zones, b = w.bodies;

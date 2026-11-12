@@ -78,7 +78,7 @@ export function holdSpot(w: World, i: number, t: number): [number, number] {
 
 /**
  * Who a lane enemy goes for: its own defence's driver, else the nearest driver, else nobody (-1: it batters its own
- * wall, battery-waves holdWall).
+ * wall, enemies.ts holdWall).
  */
 export function laneTarget(w: World, i: number): number {
   const d = w.battery, k = d ? d.lane[i] : -1;

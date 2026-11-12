@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { RUNES, applyOverrides, findTunable, overrides, resetTuning, tunables, tuningHash } from '../src';
+import { TUNING_HELP } from '../src/tuning';
 
 afterEach(() => resetTuning());
 
@@ -22,6 +23,10 @@ describe('tuning registry', () => {
     expect(RUNES.regen).toBe(1);
     expect(applyOverrides({ 'runes.regen': 0.5, 'nope.x': 1 })).toEqual(['nope.x']);
     expect(tuningHash()).toBe(h);
+  });
+
+  it('every help line names a tunable that exists (a renamed or removed number takes its help with it)', () => {
+    expect(Object.keys(TUNING_HELP).filter((id) => !findTunable(id))).toEqual([]);
   });
 
   it('covers enemies', () => expect(findTunable('enemy.brute.hp')?.def).toBeGreaterThan(100));

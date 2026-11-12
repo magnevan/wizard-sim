@@ -29,9 +29,6 @@ export function poolCost(flat: Uint8Array, at: number, id: number): number {
   return id === EL.water || id === EL.cold ? n + flat[at * N_EL + EL.ice - 1] : n;
 }
 
-/** Cold's frost and Ice's both chill, guard against and count as cold: the cold-family count at slot `at`. */
-export const frostOf = (flat: Uint8Array, at = 0): number => flat[at * N_EL + EL.cold - 1] + flat[at * N_EL + EL.ice - 1];
-
 /** Counts of each element (index = id - 1) in a queue of names. */
 export function countsOf(queue: readonly Element[], out = new Uint8Array(N_EL)): Uint8Array {
   out.fill(0);

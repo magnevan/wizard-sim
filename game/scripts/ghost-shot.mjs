@@ -1,5 +1,5 @@
 // A ghost rune in the queue chip and a pool in debt, in the HUD.
-// Usage (after npm run build): node scripts/store-shot.mjs [--out shots/ghost.png]
+// Usage (after npm run build): node scripts/ghost-shot.mjs [--out shots/ghost.png]
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import puppeteer from 'puppeteer-core';

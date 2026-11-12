@@ -2,8 +2,9 @@
  * One fixed step: step(world, inputs) advances the world by DT. It is the whole game as far as
  * netcode is concerned: same world + same inputs => same world, on every machine.
  *
- * Order: seats (runes, queue, casts) -> movement -> channels' effects already ran in the seats
- * -> missiles -> zones -> surfaces -> statuses -> collisions -> health.
+ * Order: mode presses (tutorial, Survive, battery) -> seats (runes, queue, casts and channels; walking
+ * intent) -> the wave director -> nav -> enemies -> movement -> missiles -> zones -> structures ->
+ * surfaces -> guards -> statuses -> collisions -> health -> deaths -> Doubles -> the tutorial's checks.
  */
 import { canAct, tickSeat } from './cast';
 import { BODY, STATUS } from './config';

@@ -233,7 +233,7 @@ async function boot(): Promise<void> {
     acc = 0;
     try { history.replaceState(null, '', location.pathname + location.search + hashFor(s, ally)); } catch { /* sandboxed */ }
   };
-  // 1 / 2 / 3 switch between the Sanctum (dummies), the Arena (waves) and Survive (scenarios.ts keys).
+  // The number keys switch scenarios (each scenario's `key` in scenarios.ts: 1 Sanctum, 2 Arena, 3 Survive, ...).
   // Not in an online match: one stray key would move everyone; the host uses the menu there.
   addEventListener('keydown', (e) => {
     const s = scenarioForKey(e.code);
@@ -360,7 +360,6 @@ async function boot(): Promise<void> {
     }
     schedule(frame);
   };
-  // ?timerloop=1: timers instead of animation frames, so a background tab keeps running (the co-op e2e test).
   // the Stats panel's Game section: what the old debug line in the corner said
   const chunks = (str: string): [string, string][] => str.split(/\s{2,}/).filter(Boolean).map((x) => {
     const k = x.indexOf(' ');
@@ -375,6 +374,7 @@ async function boot(): Promise<void> {
     ],
     flags: tune.flags() + tools.flags(),
   });
+  // ?timerloop=1: timers instead of animation frames, so a background tab keeps running (the co-op e2e test).
   const schedule = (headless || params.get('timerloop') === '1') && params.get('rafloop') !== '1' ? (f: () => void) => setTimeout(f, 1000 / 60) : (f: () => void) => requestAnimationFrame(f);
   schedule(frame);
   // A co-op match must go on in a page that gets no animation frames (a hidden tab, a window covered by another, a

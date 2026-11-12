@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   AI, ARCH, drivePlace, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PERKS, QUEUE_MAX, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, elementName, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
+  N_ALTARS, N_EL, PERKS, QUEUE_MAX, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
   isPropWall, terrainNear,
 } from '@wizard-sim/sim';
@@ -33,16 +33,16 @@ import * as S from './art/sigil';
 import * as A from './art/accent';
 import { BURST_LIFE, drawBurst, hasBurst } from './art/novas';
 import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './art/util';
-import type { BodyView, LightFn } from './art/vfx';
+import { elName, frosty, ramp, type BodyView, type LightFn } from './art/vfx';
 import { Sil } from './art/sil';
 import { glyph, perkOf } from './art/perks';
 import { drawTutorialWorld } from './tutorial-view';
 import { kitOf, kitRun, sideZ, stampTexture, wallsAllFar } from './art/wall-kit';
+import { toU, toV, toX, toY } from './iso-world';
+import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
 
 /** A wall of fire that belongs to the place (the battery's gate) stands this much taller than a cast one. */
 const GATE_FIRE = 3.4;
-import { toU, toV, toX, toY } from './iso-world';
-import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
 
 /** Seconds between one rune mote appearing and the next. */
 const MOTE_GAP = 0.16;
@@ -62,12 +62,9 @@ function placeSpot(w: World, i: number): [number, number] {
   const d = Math.hypot(s.aimX[i], s.aimY[i]), lim = d > SHAPES.placeRange ? SHAPES.placeRange / d : 1;
   return [b.x[i] + s.aimX[i] * lim, b.y[i] + s.aimY[i] * lim];
 }
-const EL = X.EL, SV = EL.sigil;
-const AMBIENT = 0xe4e8ff;
+const EL = X.EL, SV = EL.sigil, AMBIENT = X.AMBIENT;
 /** ?structoff=walls,waves,... hides parts of this view (for isolating a slow or broken part). */
 const OFF = (typeof location !== 'undefined' ? new URLSearchParams(location.search).get('structoff') ?? '' : '').split(',');
-const elName = (id: number): string => (id >= 1 && id <= N_EL ? elementName(id) : 'arcane');
-const ramp = (id: number): Ramp => EL[elName(id)] ?? EL.arcane;
 const LIFE = X.LIFE;
 /** The bare staff's blows: plain greys. */
 const STAFF: Ramp = ['#ffffff', '#e8e4f0', '#b8b4c8', '#8a8498', '#5a5468'];
@@ -102,8 +99,6 @@ function wallLead(els: Uint8Array, at: number, ...skip: number[]): number {
 const has = (els: Uint8Array, at: number, id: number) => els[at * N_EL + id - 1] > 0;
 /** Ice (Water + Cold in one rune): Shield spells carrying it are drawn as crystal. */
 const isIce = (els: Uint8Array, at: number) => has(els, at, ELID.ice);
-/** Cold and Ice share their frosty drawing branches (Ice: its own ramp where it has one). */
-const frosty = (el: string): boolean => el === 'cold' || el === 'ice';
 /** The hand a conjured weapon or wand is held in (the staff's); a guard hangs on the other arm. */
 const WEAPON_HAND = 1;
 

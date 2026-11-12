@@ -204,4 +204,58 @@ describe('online co-op over the bus', () => {
     expect(a.session!.desyncs.length + b.session!.desyncs.length).toBe(0);
     vi.useRealTimers();
   });
+
+  it('a page that left stops queuing its old match\'s packets, and Leave during a rejoin stays left', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
+    const { NetPlay } = await import('../src/net/netplay');
+    type Page = InstanceType<typeof NetPlay>;
+    const bus = hub();
+    const worlds = [createWorld(1, 1), createWorld(2, 1), createWorld(3, 1)];
+    const [a, b, c] = ['ka', 'kb', 'kc'].map((id, i) => new NetPlay(bus(id), worlds[i], 'arena', () => {}));
+    a.host();
+    vi.advanceTimersByTime(1600);
+    const match = [...(b as unknown as { open: Map<string, unknown> }).open.keys()][0];
+    b.join(match); c.join(match);
+    a.start();
+    vi.advanceTimersByTime(1500);
+    let now = 0;
+    const play = (pages: [Page, ReturnType<typeof createWorld>][], until: number) => {
+      for (let n = 0; n < until * 3 && pages.some(([, w]) => w.clock[0] < until); n++) {
+        now += 17;
+        for (const [p, w] of pages) {
+          p.pump(now);
+          const s = p.session;
+          if (!s || w.clock[0] >= until) continue;
+          while (s.nextScheduled <= w.clock[0] + s.delay) s.pushLocal(quantize({ ...NO_INPUT, moveX: p.seat ? -60 : 60, aimX: 64, aimY: 0 }));
+          s.advance(1);
+        }
+        vi.advanceTimersByTime(17);
+      }
+    };
+    const ab: [Page, ReturnType<typeof createWorld>][] = [[a, worlds[0]], [b, worlds[1]]];
+    play([...ab, [c, worlds[2]]], 100);
+    const old = (c as unknown as { transport: { receive(): unknown[] } }).transport;
+    c.leave();
+    old.receive();
+    play(ab, 300);
+    expect(old.receive()).toEqual([]); // nobody reads that inbox any more: it must not fill
+
+    // A page asks for the empty seat, then cancels while the welcome is being unpacked: it stays out.
+    const db = bus('kd');
+    let d: Page | null = null;
+    const on = db.on.bind(db);
+    db.on = (topic, fn) => on(topic, (data, from) => {
+      fn(data, from);
+      if (topic === 'nc' && (data as { t?: string }).t === 'welcome') d!.leave();
+    });
+    d = new NetPlay(db, createWorld(9, 1), 'arena', () => {});
+    play(ab, 400);
+    d.join(match);
+    await vi.waitFor(() => expect(d!.message).toBe('Left the match.'), { timeout: 5000 });
+    // let the unpacking finish (real time: only the timers are faked)
+    await new Promise<void>((r) => { const t0 = Date.now(); const k = () => (Date.now() - t0 > 300 ? r() : setImmediate(k)); k(); });
+    expect(d.state).toBe('off');
+    expect(d.session).toBe(null);
+    vi.useRealTimers();
+  });
 });

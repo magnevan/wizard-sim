@@ -9,7 +9,7 @@
  */
 import * as X from './px';
 import type { Ctx, Pt } from './px';
-import { puff, rock, ROCK_MAT, shard, sq } from './kit';
+import { disc, puff, rock, ROCK_MAT, shard, sq } from './kit';
 import { FY, TAU, clamp, emit, rand } from './util';
 
 export interface Flight {
@@ -32,12 +32,6 @@ const COLD = ['#ffffff', '#e0ffff', '#9ff4ff', '#4ad0f4', '#2080c8', '#163e7a'];
 const ARC = ['#ffffff', '#ffc0e0', '#ff6ab0', '#ff2d8a', '#a01e6a', '#4a1450'];
 const LIFE = ['#ffffff', '#f2ffe8', '#c8fab0', '#8ef07e', '#46c450', '#1e7a34'];
 
-/** A filled pixel disc. */
-function disc(c: Ctx, x: number, y: number, r: number, col: string): void {
-  if (r < 0.9) { X.px(c, x, y, col); return; }
-  const cx = Math.round(x), cy = Math.round(y), R = Math.round(r);
-  for (let dy = -R; dy <= R; dy++) { const hw = Math.floor(Math.sqrt(Math.max(0, r * r - dy * dy)) + 0.35); X.rect(c, cx - hw, cy + dy, hw * 2 + 1, 1, col); }
-}
 
 /** Particles left along the flight: `rate` a second, each living `life` s, handed where the missile was when it left them. */
 function trail<T>(f: Flight, t: number, rate: number, life: number, fn: (i: number, age: number, px: number, py: number, pyg: number) => T | null): T[] {

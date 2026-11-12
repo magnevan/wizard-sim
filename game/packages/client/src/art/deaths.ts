@@ -37,8 +37,7 @@ import { CELL_H, CELL_W, FEET_X, FEET_Y, HEIGHT, WIDTH, paint, type Anchors, typ
 import { FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './util';
 import type { LightFn } from './vfx';
 
-const EL = X.EL;
-const AMBIENT = 0xe4e8ff;
+const EL = X.EL, AMBIENT = X.AMBIENT;
 /** How long a death lasts (s), and the fade of what it leaves on the ground at the end. */
 const LIFE = 3.2, FADE = 0.6;
 /** At most this many deaths at once; past it the oldest gives way. */

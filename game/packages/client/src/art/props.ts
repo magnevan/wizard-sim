@@ -208,7 +208,8 @@ export class PropView {
     const glow = this.wellOn ? this.well.draw(t, power, unstable(w)) : power; // the well's light pulses with its crystal
     for (const it of this.items) {
       if (it.asset === 'battery-well-top') { it.lit = glow; continue; }
-      const fade = it.asset === 'defence-tower' || it.asset === HEAD ? 1 - towers : it.asset === 'battery-well' ? 1 - power : -1;
+      // the well's steps darken late, with the bought power-down's last frames (its first ones are the overload's flare)
+      const fade = it.asset === 'defence-tower' || it.asset === HEAD ? 1 - towers : it.asset === 'battery-well' ? (1 - power) ** 2 : -1;
       if (fade < 0) continue;
       it.lit = it.asset === 'battery-well' ? glow : 1 - fade; // the well's light is at its steps' foot
       this.overlay(it, BURNT[it.asset], fade, fx0, fy0);

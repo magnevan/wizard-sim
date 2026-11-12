@@ -26,19 +26,22 @@ describe('the terrain lookup', () => {
   it('lists every segment within reach, ascending and once each, for points and lines', () => {
     let s = 77;
     const r = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; };
+    // Problems are collected and checked once: an expect() per segment made this test take 15-30 s.
+    const bad: string[] = [];
     for (let q = 0; q < 5000; q++) {
       const x = (r() - 0.5) * 44, y = (r() - 0.5) * 34, rad = r() * 3;
-      const n = terrainNear(t, x, y, rad), got = Array.from(t.out.subarray(0, n));
-      for (let i = 1; i < n; i++) expect(got[i - 1]).toBeLessThan(got[i]); // ascending, so no repeats
-      for (const k of near(segs, x, y, rad)) expect(got).toContain(k);
+      const n = terrainNear(t, x, y, rad), got = Array.from(t.out.subarray(0, n)), listed = new Set(got);
+      for (let i = 1; i < n; i++) if (!(got[i - 1] < got[i])) bad.push(`near #${q}: not ascending at ${i}`); // ascending, so no repeats
+      for (const k of near(segs, x, y, rad)) if (!listed.has(k)) bad.push(`near #${q}: missed segment ${k}`);
       // a line, sampled densely: every segment near a sample must be listed
       const bx = x + (r() - 0.5) * 30, by = y + (r() - 0.5) * 30, pad = 0.5, m = terrainAlong(t, x, y, bx, by, pad);
       const along = new Set(Array.from(t.out.subarray(0, m)));
       for (let i = 0; i <= 40; i++) {
         const px = x + ((bx - x) * i) / 40, py = y + ((by - y) * i) / 40;
-        for (const k of near(segs, px, py, pad)) expect(along.has(k)).toBe(true);
+        for (const k of near(segs, px, py, pad)) if (!along.has(k)) bad.push(`along #${q}: missed segment ${k}`);
       }
     }
+    expect(bad.slice(0, 10)).toEqual([]);
   });
 
   it('answers the same however it was built', () => {

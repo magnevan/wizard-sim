@@ -189,6 +189,31 @@ try {
   const [hx, hy] = await where();
   if (Math.hypot(hx - 30.4, hy - 44) > 0.5) fail(`stepping away should put you back, you are at ${hx}, ${hy}`);
   console.log('driving ok, back at', hx, hy);
+
+  // the well failing (beats 5 to 7): step up again, jump to the free fights with the well half gone, then run it dry
+  await p.keyboard.press('KeyX');
+  await sleep(600);
+  if ((await drive()) < 0) fail('X at the pedestal again should take the defence');
+  await p.evaluate(() => {
+    const w = window.wizardSim.world, b = w.bodies;
+    for (let i = 4; i < b.kind.length; i++) if (b.kind[i] === 3) b.kind[i] = 0;
+    w.enc.state[1] = 5; w.enc.state[2] = 0; w.battery.flow[0] = 0.4; // BSTEP.free
+  });
+  await p.mouse.move(700, 250);
+  await sleep(1500);
+  await shot('well-failing');
+  await p.evaluate(() => { const w = window.wizardSim.world; w.battery.flow[0] = 1e-9; w.seats.runes.fill(0, 0, 10); }); // seat 0's pools spent, the flow out
+  await sleep(700);
+  const dry = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], drive: w.battery.drive[0], gate: w.walls.type[0], dryT: w.battery.wellT[1] }; });
+  if (dry.step !== 6 || dry.drive !== -1 || dry.gate !== 0) fail(`the well should run dry: step ${dry.step}, drive ${dry.drive}, gate wall ${dry.gate}`);
+  await shot('well-dry');
+  await sleep(2300);
+  await shot('well-infusion');
+  const own = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], fire: w.seats.runes.reduce((m, v, k) => (k < 10 ? Math.max(m, v) : m), 0) }; });
+  if (own.step !== 7 || own.fire < 1) fail(`the infusion should give you a rune of your own: step ${own.step}, best pool ${own.fire}`);
+  await sleep(6000);
+  await shot('well-through');
+  console.log('the well ok: dry, the gate open, a rune of your own');
 } finally {
   await browser.close();
   stop();

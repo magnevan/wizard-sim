@@ -14,7 +14,7 @@
 import { Sprite, Texture } from 'pixi.js';
 import {
   BATTERY, CELL, DEVICE, ECHO_LAG, sprayReach, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SHAPES, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
-  compile, elementName, queueFromCounts, specOf,
+  compile, elementName, queueFromCounts, specOf, wellDry,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
@@ -343,6 +343,10 @@ export class Vfx {
       case 'burst': {
         if (e.text === 'dismissed') return;
         const r = e.amount ?? 1;
+        // the battery's well failing (sim/src/battery-waves.ts): the gate's fire gutters, and your own fire wells up in you
+        if (e.text === 'dry') return; // the well's light just goes out (art/lighting.ts)
+        if (e.text === 'gutter') { this.add('surge', t, 0.45, { x: e.x, y: e.y, seed }); return; }
+        if (e.text === 'infuse') { this.add('kindle', t, 1.8, { x: e.x, y: e.y, r, look, seed }); return; }
         const zone = ended.find((q) => near(q.x, q.y, e.x, e.y));
         if (zone) { this.add(zone.type === ZONE.geyser ? 'geyser' : 'blast', t, 2.6, { x: e.x, y: e.y, r, look, seed }); return; }
         if (healStones.some((p) => near(p[0], p[1], e.x, e.y))) { this.add('healburst', t, 1.8, { x: e.x, y: e.y, r, look, seed }); return; }
@@ -1196,7 +1200,7 @@ export class Vfx {
   }
   /** Every working defence keeps a small live flame at its nozzle, except while it's firing. */
   private pilots(w: World, t: number, light: LightFn): void {
-    const n = liveHeads(w), s = w.seats;
+    const n = wellDry(w) ? 0 : liveHeads(w), s = w.seats; // the well's dry: every defence is out
     for (let k = 0; k < n; k++) {
       const seat = w.battery!.drive.indexOf(k);
       if (seat >= 0 && s.phase[seat] === PHASE.channel) continue;
@@ -1512,6 +1516,16 @@ export class Vfx {
         const k = easeOut(seg(e, 0, 0.3)) * (1 - seg(e, 1.2, 1.8));
         if (k > 0.02) { K.gring(g, x, y, r * k, EL.life[2], 0.8 * k, 1); X.ellipse(g, x, y, r * 0.75 * k, r * 0.75 * k * FY, '#1e7a34', 0.35 * k); }
         light(x, y, r + 30, '#8ef07e', 0.9 * (1 - seg(e, 0, 1.5)));
+        return;
+      }
+      case 'kindle': {
+        // the battery's infusion (beat 6): fire wells up out of the ground round you and rises, and the light spreads out
+        if (e < 0.07) X.ellipse(o, x, y - 4, 10, 8, '#fff2c8');
+        K.sparkle(o, x, y - 6, t, 1 - seg(e, 1.1, 1.8), 18, sd, EL.fire, 30);
+        K.debris(o, x, y - 4, e, sd, 7, 26, [EL.fire[0], EL.fire[1], EL.fire[2]], 30);
+        const k = easeOut(seg(e, 0, 0.5)) * (1 - seg(e, 1.2, 1.8));
+        if (k > 0.02) { K.gring(g, x, y, (r + 14) * k, EL.fire[2], 0.8 * k, 1); X.ellipse(g, x, y, (r + 10) * 0.75 * k, (r + 10) * 0.75 * k * FY, EL.fire[3], 0.3 * k); }
+        light(x, y, 30 + 90 * easeOut(seg(e, 0, 1.2)), '#ff9a30', 0.9 * (1 - seg(e, 0.3, 1.8)));
         return;
       }
       case 'swing': {

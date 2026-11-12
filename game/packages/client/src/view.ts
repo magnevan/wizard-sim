@@ -16,7 +16,7 @@
  */
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
-  AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
+  AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall, wellDry,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
@@ -301,6 +301,7 @@ export class WorldView {
     this.vfx.ground.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy); this.vfx.over.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy);
     this.structs.scorch.sprite.position.set(fx0, fy0);
     this.props.place(fx0, fy0);
+    this.props.burnOut(wellDry(w), fx0, fy0); // the battery's well has run dry: the defences go dark
     this.props.turnHeads(w, fx0, fy0);
     // the battery's stakes give way as a defence is taken
     if (this.props.breakStakes(!!w.battery && w.enc.state[0] > 0 && w.enc.state[1] >= BSTEP.ring, fx0, fy0)) {

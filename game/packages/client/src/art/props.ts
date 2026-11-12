@@ -18,6 +18,8 @@ import * as X from './px';
 interface Item { asset: string; meta: PropMeta; spr: Sprite; x: number; y: number; ox: number; oy: number }
 
 const HEAD = 'defence-head-north-east';
+/** What goes dark when the battery's well runs dry: standing() reports these as `<asset>-dark`, which has no light. */
+const DARK: ReadonlySet<string> = new Set(['defence-tower', HEAD, 'battery-well', 'battery-well-top', 'control-pedestal']);
 
 /** The flame turret's head: pre-rendered facings across its swing, in one sheet (tools/turret-3d). */
 interface HeadSheet { cell: number; facings: number[]; collar: [number, number]; pivot: [number, number]; tips: [number, number][] }
@@ -130,7 +132,7 @@ export class PropView {
 
   /** Every defence's head: a driven one eases toward its driver's aim, an idle one back to straight out. */
   turnHeads(w: World, fx0: number, fy0: number): void {
-    if (!w.battery || !this.headFrames.length) return;
+    if (!w.battery || !this.headFrames.length || this.dead) return;
     const now = performance.now(), dt = Math.min(0.1, (now - this.headClock) / 1000), limit = BATTERY.swing * 360;
     this.headClock = now;
     let k = 0;
@@ -174,6 +176,29 @@ export class PropView {
     return broken;
   }
 
+  private dead = false;
+  /**
+   * The battery's well has run dry (sim/src/battery-waves.ts): every defence goes dark, tower and head swapped for their
+   * burnt-out versions (tools/art-import/defence.py), the head left at its default facing. Their glow and the well's go
+   * out with them (standing() reports them by these names, which the lighting has no light for).
+   */
+  burnOut(dead: boolean, fx0: number, fy0: number): void {
+    if (dead === this.dead) return;
+    const swap: Record<string, string> = { 'defence-tower': 'defence-tower-burnt', [HEAD]: 'defence-head-burnt' };
+    const pending = this.items.filter((it) => swap[it.asset]);
+    const art = pending.map((it) => propImage(dead ? swap[it.asset] : it.asset, this.current));
+    if (art.some((a) => !a)) return;
+    this.dead = dead;
+    const ticket = this.wanted;
+    void Promise.all(art.map((a) => loadTexture(a!.url))).then((tex) => {
+      if (ticket !== this.wanted || this.dead !== dead) return; // a new room or set, or it changed back, meanwhile
+      pending.forEach((it, k) => {
+        it.spr.texture = tex[k]; it.ox = art[k]!.foot[0]; it.oy = art[k]!.foot[1];
+        it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
+      });
+    });
+  }
+
   /** Follows the camera: fx0, fy0 is where the field's corner is in the scene. */
   place(fx0: number, fy0: number): void {
     if (fx0 === this.fx && fy0 === this.fy) return;
@@ -189,7 +214,7 @@ export class PropView {
 
   /** Every prop as it stands, for the lighting: its texture, foot, spot in the scene, and id. */
   standing(fn: (tex: Texture, footX: number, footY: number, x: number, y: number, asset: string, flat: boolean) => void): void {
-    for (const it of this.items) if (it.spr.visible) fn(it.spr.texture, it.ox, it.oy, it.spr.position.x + it.ox, it.spr.position.y + it.oy, it.asset, !!it.meta.flat || !!it.meta.lift);
+    for (const it of this.items) if (it.spr.visible) fn(it.spr.texture, it.ox, it.oy, it.spr.position.x + it.ox, it.spr.position.y + it.oy, this.dead && DARK.has(it.asset) ? `${it.asset}-dark` : it.asset, !!it.meta.flat || !!it.meta.lift);
   }
 
   get count(): number { return this.items.length; }

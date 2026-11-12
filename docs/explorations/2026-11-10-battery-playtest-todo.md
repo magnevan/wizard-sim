@@ -70,6 +70,16 @@ The user drove a defence again and listed four more. **Status: built, awaiting t
 
 **Last round (same evening), all built.** The user: "lets trim the swing a little bit", so it's 70 degrees. Place's reticle stopped short of where the spell landed: it used a wizard's Place reach, not the defence's 18 and its outside-the-wall limit, and now shares the sim's rule (`drivePlace`). The fire burst (the Weapon cast) did nothing while driving, because only Force and Area got through. The user: "allow both actions, but basically have the same spell effect", so from a defence the burst makes the same half-ring as Area. The user is done with bug reports for now.
 
+## The well fails, beats 5 to 7 (2026-11-12)
+
+Built, waiting on the user's playtest. All of it is in `sim/src/battery-waves.ts`, with the numbers in `config.ts` `WELL`.
+
+- **Beat 5, the pool fails.** Once the lesson is over (the free fights), the well's flow (`battery.flow`) falls from full to nothing over 75 s, and a defence's pool refills at that share of R (`regenOf`). On the bar the flow line is measured against a full well, so it gets shorter; the part the well no longer gives is dark red with a flickering edge. The prompt reads "The well is failing".
+- **Beat 6, it runs dry.** That happens once the flow is out and nobody at a defence has a whole rune, or 6 s later, so a rune held back can't stall it. Everyone is put back at their pedestal, the gate's fire goes out, the towers switch to their burnt-out art, and the pilot flames and the well's light go out. The pedestals can't be used again. 2.5 s later comes the infusion: a Fire pool of your own, 1 rune deep, lit at once, with its socket flashing and fire welling up round you (`kindle` in `art/vfx.ts`). The prompt uses the user's line, "You've learned to channel fire".
+- **Beat 7, from your own hands.** The goblins still out there stop battering the walls and come through the open gate for you, and 3 s after the infusion two small groups follow, one per wizard (3 goblins, then 3 and an archer). There's no prompt about the blade: that's left to playtesting, as agreed. After the last of them the battery goes quiet (`BSTEP.after`); the repair comes next.
+- **Not built yet:** the camera sliding back (it cuts back), the quiet beat's sound, the Drained well art (a free local edit, like the burnt-out defence; the crystal still looks lit), and the well's column, which isn't drawn at all yet.
+- **To tune in play:** how long the well takes to fail (75 s), the grace (6 s), how deep your own pool is (1 rune), and the beat 7 groups.
+
 ## Enemies at the wall's foot
 
 Not on the user's list, but it comes from the same layout: a full-height wall hides about 4 units of ground behind it, and enemies reaching the wall will be out of sight. A one-storey kit would be about 10 generations, with sign-off first. Decide once waves exist.

@@ -11,7 +11,7 @@ import { BTN, type PlayerInput } from './input';
 import { RUNES } from './config';
 import { EL, N_EL } from './elements';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
-import { MAX_SEATS, PHASE, alive, type World } from './world';
+import { MAX_SEATS, PHASE, alive, wellDry, type World } from './world';
 
 export const BATTERY = {
   /** How near a pedestal you have to stand. */
@@ -47,7 +47,7 @@ export const driving = (w: World, i: number): boolean => !!w.battery && i >= 0 &
 
 /** The pedestal within reach of this seat that nobody is using, or -1. */
 export function pedestalNear(w: World, i: number): number {
-  if (!w.battery) return -1;
+  if (!w.battery || wellDry(w)) return -1; // the well's dry: the defences are dead
   const b = w.bodies, pads = at(w, PEDESTAL);
   let best = -1, bd: number = BATTERY.reach;
   for (let k = 0; k < pads.length; k++) {
@@ -72,7 +72,8 @@ function takeDefence(w: World, i: number, k: number): void {
   w.seats.runes[i * N_EL + EL.fire - 1] = RUNES.max.fire; // the defence's pool, full
 }
 
-function stepAway(w: World, i: number): void {
+/** Back to where you stepped up from, with your own pools (none until the infusion). */
+export function stepAway(w: World, i: number): void {
   const b = w.bodies, d = w.battery!;
   b.x[i] = d.homeX[i]; b.y[i] = d.homeY[i]; b.vx[i] = b.vy[i] = 0;
   d.drive[i] = -1;

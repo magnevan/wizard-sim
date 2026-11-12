@@ -96,9 +96,12 @@ export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: n
   shimmer.end(ground, t, 0.85 * (0.25 + 0.75 * flow) * style.rune, (m) => layer.wearOut(m, ground, style));
 }
 
-/** The paths' style: PATH_STYLES by ?paths= in the URL, or window.__pathStyle (screenshots set it live). Clean by default. */
+/**
+ * The paths' style: PATH_STYLES by ?paths= in the URL, or window.__pathStyle (screenshots set it live). By default e,
+ * see-through, worn and carved (the user's pick, 2026-11-12, from scripts/path-styles.mjs).
+ */
 const URL_STYLE = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('paths');
 function pathStyle(): PathStyle {
-  const id = (globalThis as { __pathStyle?: string }).__pathStyle ?? URL_STYLE ?? 'a';
-  return PATH_STYLES[id] ?? PATH_STYLES.a;
+  const id = (globalThis as { __pathStyle?: string }).__pathStyle ?? URL_STYLE ?? 'e';
+  return PATH_STYLES[id] ?? PATH_STYLES.e;
 }

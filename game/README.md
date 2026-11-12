@@ -206,3 +206,4 @@ Two wizards on one machine, the Atlas rules driving real casts, the Pixel Battle
 Open:
 - **Rendering through a low-res target.** The scene draws straight to the stage at an integer scale, which is pixel-exact for unrotated sprites. Drawing into a low-res RenderTexture first would also snap rotated or scaled effects to the art grid. In headless Chrome (SwiftShader and D3D11), the target held the pixels but its sprite never reached the presented frame. Revisit with a real browser when the effects need rotation.
 - **Balance** is placeholder everywhere (`packages/sim/src/config.ts`).
+- `node scripts/path-styles.mjs` (after a build): the battery's glyph paths in each style of `PATH_STYLES` (art/glyph-path.ts), from one spot, in shots/path-styles.

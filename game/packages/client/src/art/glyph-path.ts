@@ -15,7 +15,7 @@ import { gx, gy } from './field';
 import { toU, toV } from '../iso-world';
 import * as X from './px';
 import type { Ctx } from './px';
-import { rand } from './util';
+import { clamp, lerp, rand, smooth } from './util';
 
 interface Tiles { cell: [number, number]; pitch: number; glyphs: number; pad: number; node: number }
 const metas = import.meta.glob<Tiles>('../../../../content/assets/tiles/glyph-path/tiles.json', { eager: true, import: 'default' });
@@ -98,9 +98,10 @@ export class Shimmer {
     return x;
   }
 
-  /** Fills the drifting shimmer through the mask and adds it onto `g`, at `k` (0..1) strength. `t`: seconds. */
-  end(g: Ctx, t: number, k: number): void {
+  /** Fills the drifting shimmer through the mask and adds it onto `g`, at `k` (0..1) strength. `t`: seconds. `erase` wears the mask first. */
+  end(g: Ctx, t: number, k: number, erase?: (mask: Ctx) => void): void {
     if (k <= 0.01) return;
+    erase?.(this.m.x);
     if (!this.pats.length) this.pats = [streaks(96, 48, [[2, 1, 0], [-1, 2, 1.7], [3, -1, 3.1]], this.col, this.m.x), streaks(64, 40, [[1, -2, 0.4], [3, 1, 2.2]], this.col, this.m.x)];
     const s = this.s.x, W = this.s.c.width, H = this.s.c.height, at = g.getTransform();
     s.setTransform(1, 0, 0, 1, 0, 0); s.globalCompositeOperation = 'source-over'; s.globalAlpha = 1; s.clearRect(0, 0, W, H);
@@ -114,6 +115,83 @@ export class Shimmer {
     s.globalCompositeOperation = 'destination-in'; s.drawImage(this.m.c, 0, 0);
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'lighter'; g.globalAlpha = k;
     g.drawImage(this.s.c, 0, 0);
+    g.restore(); g._fs = null;
+  }
+}
+
+/**
+ * How a path sits in the ground (the user, 2026-11-12: too clean and uniform, "not part of the world"). `rune` and
+ * `line`: their opacity; `wear`: pixels chipped out of them; `patch`: larger stretches faded, as if worn by feet and
+ * weather; `carve`: a dark groove a pixel under every stroke, as if cut into the earth.
+ */
+export interface PathStyle { rune: number; line: number; wear: number; patch: number; carve: boolean }
+export const PATH_STYLES: Readonly<Record<string, PathStyle>> = {
+  a: { rune: 1, line: 1, wear: 0, patch: 0, carve: false },          // clean, as first built
+  b: { rune: 0.65, line: 0.45, wear: 0, patch: 0, carve: false },    // see-through
+  c: { rune: 1, line: 1, wear: 0.35, patch: 0.6, carve: false },     // worn
+  d: { rune: 0.72, line: 0.5, wear: 0.35, patch: 0.6, carve: false },// see-through and worn
+  e: { rune: 0.78, line: 0.55, wear: 0.35, patch: 0.6, carve: true },// see-through, worn and carved
+};
+
+/** The wear, as a texture to erase with: specks and blotches, tileable, so it can be pinned to the ground. */
+function wearTexture(style: PathStyle, ctx: Ctx): CanvasPattern {
+  const S = 128, CELL = 16, cv = X.canvas(S, S), img = cv.x.createImageData(S, S), n = S / CELL;
+  const corner = (i: number, j: number) => rand(((i % n) + n) % n, ((j % n) + n) % n, 211);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const fx = x / CELL, fy = y / CELL, i = Math.floor(fx), j = Math.floor(fy), u = smooth(fx - i), v = smooth(fy - j);
+    const blot = lerp(lerp(corner(i, j), corner(i + 1, j), u), lerp(corner(i, j + 1), corner(i + 1, j + 1), u), v);
+    const r = rand(x, y, 97);
+    const speck = r > 0.62 ? style.wear : r > 0.45 ? style.wear * 0.4 : 0;
+    const patch = style.patch * clamp((blot - 0.42) / 0.33, 0, 1);
+    const o = (y * S + x) * 4;
+    img.data[o + 3] = Math.round(255 * clamp(1 - (1 - speck) * (1 - patch), 0, 1));
+  }
+  cv.x.putImageData(img, 0, 0);
+  return ctx.createPattern(cv.c, 'repeat')!;
+}
+
+/** A canvas the size and turn of the ground canvas `g`, cleared. */
+function layerLike(cv: { c: HTMLCanvasElement; x: Ctx }, g: Ctx): Ctx {
+  if (cv.c.width !== g.canvas.width || cv.c.height !== g.canvas.height) { cv.c.width = g.canvas.width; cv.c.height = g.canvas.height; cv.x.imageSmoothingEnabled = false; }
+  const x = cv.x;
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, cv.c.width, cv.c.height); x._fs = null;
+  x.setTransform(g.getTransform());
+  return x;
+}
+
+/**
+ * Paths drawn on a layer of their own, then laid into the ground in a style: worn (erased with a wear texture pinned to
+ * the ground), carved (a dark copy a pixel lower first), at their opacity. begin() returns the layer to draw paths on.
+ */
+export class PathLayer {
+  private l = X.canvas(4, 4);
+  private dark = X.canvas(4, 4);
+  private wear = new Map<PathStyle, CanvasPattern>();
+
+  begin(g: Ctx): Ctx { return layerLike(this.l, g); }
+
+  /** Erases the style's wear out of `x` (a canvas laid out like the ground canvas `g`). */
+  wearOut(x: Ctx, g: Ctx, style: PathStyle): void {
+    if (style.wear <= 0 && style.patch <= 0) return;
+    let p = this.wear.get(style);
+    if (!p) { p = wearTexture(style, x); this.wear.set(style, p); }
+    const at = g.getTransform();
+    p.setTransform(new DOMMatrix().translate(at.e, at.f));
+    x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'destination-out'; x.fillStyle = p;
+    x.fillRect(0, 0, x.canvas.width, x.canvas.height); x.restore(); x._fs = null;
+  }
+
+  end(g: Ctx, style: PathStyle): void {
+    const l = this.l;
+    this.wearOut(l.x, g, style);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
+    if (style.carve) {
+      const d = layerLike(this.dark, g);
+      d.setTransform(1, 0, 0, 1, 0, 0); d.drawImage(l.c, 0, 0);
+      d.globalCompositeOperation = 'source-in'; d.fillStyle = '#1a0e08'; d.fillRect(0, 0, this.dark.c.width, this.dark.c.height); d._fs = null;
+      g.globalAlpha = 0.7 * style.rune; g.drawImage(this.dark.c, 0, 1);
+    }
+    g.globalAlpha = style.rune; g.drawImage(l.c, 0, 0);
     g.restore(); g._fs = null;
   }
 }
@@ -168,17 +246,20 @@ function stamp(g: Ctx, sheet: HTMLCanvasElement, tile: number, x: number, y: num
  * Draws one path on `g`. `line`: the colour of the lines either side and of the pads and nodes; `rune(s, k)` how each
  * rune shows (null: dark, in `dark`); `from` is how far along a longer run this path starts (for the runes' look).
  * `light`, if given, gets a small light at every third rune glowing near full. `mask`, if given, gets every lit rune
- * stamped in white at its glow, and the lines at `mask.line`, for a Shimmer to show through.
+ * stamped in white at its glow, and the lines at `mask.line`, for a Shimmer to show through. `lineAlpha`: the lines'
+ * opacity against the runes'.
  */
-export function drawGlyphPath(g: Ctx, p: GlyphPath, line: string, dark: string, rune: (s: number, k: number) => RuneLook, from = 0, light?: (x: number, y: number, r: number, col: string, a: number) => void, mask?: { g: Ctx; line: number }): void {
+export function drawGlyphPath(g: Ctx, p: GlyphPath, line: string, dark: string, rune: (s: number, k: number) => RuneLook,
+  opts: { from?: number; light?: (x: number, y: number, r: number, col: string, a: number) => void; mask?: { g: Ctx; line: number }; lineAlpha?: number } = {}): void {
   if (!TILES) return;
+  const { from = 0, light, mask, lineAlpha = 1 } = opts;
   const darkSheet = tint(dark), lineSheet = tint(line);
   if (!darkSheet || !lineSheet) return;
   const white = mask ? tint('#ffffff') : null;
   // the two lines
   for (const side of [PATH.half, -PATH.half]) {
     const o = offset(p.pts, side).map(([x, y]) => F(x, y));
-    X.lines(g, o, line, 1);
+    g.globalAlpha = lineAlpha; X.lines(g, o, line, 1); g.globalAlpha = 1;
     if (mask && mask.line > 0) { mask.g.globalAlpha = mask.line; X.lines(mask.g, o, '#ffffff', 1); mask.g.globalAlpha = 1; }
   }
   // the runes along each leg, clear of the bends

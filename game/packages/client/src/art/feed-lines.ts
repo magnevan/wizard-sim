@@ -15,7 +15,7 @@
  */
 import type { World } from '@wizard-sim/sim';
 import { toX, toY } from '../iso-world';
-import { Shimmer, drawGlyphPath, pathLength, snap, type GlyphPath, type RuneLook } from './glyph-path';
+import { PATH_STYLES, PathLayer, Shimmer, drawGlyphPath, pathLength, snap, type GlyphPath, type PathStyle, type RuneLook } from './glyph-path';
 import { POWER, dryTime } from './power-down';
 import { clamp, rand } from './util';
 
@@ -30,7 +30,7 @@ const LANE = 1.5, RIM = 3.3, BEND = 1.6, RUN_OFF = 1.4, TOWER_R = 2.3;
 const SWELL_SPEED = 2.2, SWELL_GAP = 7;
 
 let cache: { def: unknown; feeds: Feed[] } | null = null;
-const shimmer = new Shimmer(TONE.hot);
+const shimmer = new Shimmer(TONE.hot), layer = new PathLayer();
 
 /** The routes, in the sim's world, worked out once per room from where the well, towers, pedestals and pillars stand. */
 function feedsOf(w: World): Feed[] {
@@ -75,7 +75,9 @@ export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: n
   // how far out from the well the light still reaches, as a share of the longest line: all of it, or draining back
   const longest = Math.max(1, ...feeds.map((f) => f.from + f.len));
   const reach = dt > 0 ? longest * Math.max(0, 1 - dt / POWER.drain) : Infinity;
-  const mask = shimmer.begin(g); // the runes' shimmer: stamped in as they're drawn, shown through them at the end
+  const style = pathStyle(), ground = g;
+  const mask = shimmer.begin(ground); // the runes' shimmer: stamped in as they're drawn, shown through them at the end
+  g = layer.begin(ground); // the paths on a layer of their own, then laid into the ground in the style
   for (let fi = 0; fi < feeds.length; fi++) {
     const f = feeds[fi], driven = f.tower >= 0 && d.drive.includes(f.tower);
     const k = (driven ? 1 : 0.7) * (0.3 + 0.7 * flow); // how bright this line burns
@@ -88,7 +90,15 @@ export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: n
       return { col, glow: b };
     };
     const lit = f.from < reach;
-    drawGlyphPath(g, f.path, lit ? (k > 0.55 ? TONE.warm : TONE.dim) : TONE.cold, TONE.cold, rune, f.from, light, { g: mask, line: lit ? 0.35 * k : 0 });
+    drawGlyphPath(g, f.path, lit ? (k > 0.55 ? TONE.warm : TONE.dim) : TONE.cold, TONE.cold, rune, { from: f.from, light, mask: { g: mask, line: lit ? 0.35 * k : 0 }, lineAlpha: style.line / style.rune });
   }
-  shimmer.end(g, t, 0.85 * (0.25 + 0.75 * flow));
+  layer.end(ground, style);
+  shimmer.end(ground, t, 0.85 * (0.25 + 0.75 * flow) * style.rune, (m) => layer.wearOut(m, ground, style));
+}
+
+/** The paths' style: PATH_STYLES by ?paths= in the URL, or window.__pathStyle (screenshots set it live). Clean by default. */
+const URL_STYLE = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('paths');
+function pathStyle(): PathStyle {
+  const id = (globalThis as { __pathStyle?: string }).__pathStyle ?? URL_STYLE ?? 'a';
+  return PATH_STYLES[id] ?? PATH_STYLES.a;
 }

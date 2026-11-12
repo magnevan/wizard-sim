@@ -42,6 +42,8 @@ The live game is public. The rest are private claude.ai pages where the design w
 - `docs/decisions/README.md`: what was decided and why (append-only, with a topic index at the top)
 - `docs/ideas/`: one file per mechanic (index and statuses in `docs/ideas/README.md`)
 - `docs/explorations/`: dated thinking sessions (index in `docs/explorations/README.md`)
+- `docs/world/`: living pages about the setting (`elements.md`: each element's essence)
+- `docs/campaign/`: how campaign segments are made, one folder per segment, and `canon.md`, the story facts the user has approved
 - `docs/reference/`: Magicka notes and research on other games
 - `docs/archive/`: old worklogs
 

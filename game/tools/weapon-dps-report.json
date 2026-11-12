@@ -43,51 +43,51 @@
   },
   {
    "row": "Flame sword strike",
-   "dps10": 12,
-   "dps30": 12,
+   "dps10": 10.2,
+   "dps30": 10.9,
    "runes30": 4,
-   "perRune30": 90,
-   "dmg30": 360
+   "perRune30": 81.8,
+   "dmg30": 327
   },
   {
    "row": "Flame sword heavy",
-   "dps10": 8.5,
-   "dps30": 8.9,
+   "dps10": 6.7,
+   "dps30": 7.5,
    "runes30": 4,
-   "perRune30": 66.9,
-   "dmg30": 268
+   "perRune30": 56.2,
+   "dmg30": 225
   },
   {
    "row": "Flame sword sweep",
-   "dps10": 10.8,
-   "dps30": 10.5,
+   "dps10": 8.2,
+   "dps30": 8.3,
    "runes30": 6,
-   "perRune30": 52.7,
-   "dmg30": 316
+   "perRune30": 41.7,
+   "dmg30": 250
   },
   {
    "row": "Stone maul strike",
-   "dps10": 9.1,
-   "dps30": 9.1,
+   "dps10": 11.2,
+   "dps30": 11.2,
    "runes30": 2,
-   "perRune30": 136.5,
-   "dmg30": 273
+   "perRune30": 168,
+   "dmg30": 336
   },
   {
    "row": "Stone maul heavy",
-   "dps10": 11.9,
-   "dps30": 11.6,
+   "dps10": 15.1,
+   "dps30": 14.8,
    "runes30": 4,
-   "perRune30": 87.3,
-   "dmg30": 349
+   "perRune30": 111.1,
+   "dmg30": 444
   },
   {
    "row": "Stone maul sweep",
-   "dps10": 7.3,
-   "dps30": 7.3,
+   "dps10": 9,
+   "dps30": 9,
    "runes30": 4,
-   "perRune30": 54.6,
-   "dmg30": 218
+   "perRune30": 67.2,
+   "dmg30": 269
   },
   {
    "row": "Frost spear strike",
@@ -100,18 +100,18 @@
   {
    "row": "Frost spear heavy",
    "dps10": 6.1,
-   "dps30": 4.2,
+   "dps30": 6,
    "runes30": 4,
-   "perRune30": 31.5,
-   "dmg30": 126
+   "perRune30": 44.6,
+   "dmg30": 179
   },
   {
    "row": "Lightning whip strike",
-   "dps10": 11.2,
-   "dps30": 10.9,
+   "dps10": 8.8,
+   "dps30": 8.5,
    "runes30": 4,
-   "perRune30": 82,
-   "dmg30": 328
+   "perRune30": 64,
+   "dmg30": 256
   },
   {
    "row": "Lightning whip heavy",
@@ -123,35 +123,35 @@
   },
   {
    "row": "Lightning whip sweep",
-   "dps10": 8.3,
-   "dps30": 8.3,
+   "dps10": 7,
+   "dps30": 6.6,
    "runes30": 6,
-   "perRune30": 41.6,
-   "dmg30": 250
+   "perRune30": 33.1,
+   "dmg30": 198
   },
   {
    "row": "Tide trident strike",
-   "dps10": 7.5,
-   "dps30": 7.2,
+   "dps10": 10.5,
+   "dps30": 10,
    "runes30": 4,
-   "perRune30": 53.8,
-   "dmg30": 215
+   "perRune30": 75.3,
+   "dmg30": 301
   },
   {
    "row": "Tide trident heavy",
-   "dps10": 0,
-   "dps30": 0,
+   "dps10": 2.2,
+   "dps30": 2.1,
    "runes30": 4,
-   "perRune30": 0,
-   "dmg30": 0
+   "perRune30": 15.9,
+   "dmg30": 63
   },
   {
    "row": "Tide trident sweep",
-   "dps10": 5.6,
-   "dps30": 5.5,
+   "dps10": 7.8,
+   "dps30": 7.7,
    "runes30": 6,
-   "perRune30": 27.3,
-   "dmg30": 164
+   "perRune30": 38.3,
+   "dmg30": 230
   },
   {
    "row": "Arcane beam",
@@ -163,43 +163,43 @@
   },
   {
    "row": "Arcane beam x2",
-   "dps10": 14.7,
-   "dps30": 14.5,
+   "dps10": 25.1,
+   "dps30": 24.7,
    "runes30": 12,
-   "perRune30": 36.3,
-   "dmg30": 435
+   "perRune30": 61.7,
+   "dmg30": 740
   },
   {
    "row": "Fire spray",
-   "dps10": 11.2,
-   "dps30": 11.1,
+   "dps10": 10.6,
+   "dps30": 11.9,
    "runes30": 11,
-   "perRune30": 30.3,
-   "dmg30": 333
+   "perRune30": 32.5,
+   "dmg30": 358
   },
   {
    "row": "Fire spray x2",
-   "dps10": 13.1,
-   "dps30": 13,
+   "dps10": 14.5,
+   "dps30": 16.5,
    "runes30": 22,
-   "perRune30": 17.8,
-   "dmg30": 391
+   "perRune30": 22.5,
+   "dmg30": 494
   },
   {
    "row": "Earth rock",
-   "dps10": 15.4,
-   "dps30": 15.3,
+   "dps10": 19.6,
+   "dps30": 19.5,
    "runes30": 21,
-   "perRune30": 21.9,
-   "dmg30": 459
+   "perRune30": 27.8,
+   "dmg30": 585
   },
   {
    "row": "Earth rock x2",
-   "dps10": 31.1,
-   "dps30": 27,
-   "runes30": 26,
-   "perRune30": 31.1,
-   "dmg30": 809
+   "dps10": 42,
+   "dps30": 37.3,
+   "runes30": 32,
+   "perRune30": 35,
+   "dmg30": 1119
   },
   {
    "row": "Ice shards",
@@ -211,11 +211,11 @@
   },
   {
    "row": "Lightning arc",
-   "dps10": 20.5,
-   "dps30": 20.5,
+   "dps10": 14.4,
+   "dps30": 14.4,
    "runes30": 11,
-   "perRune30": 55.9,
-   "dmg30": 615
+   "perRune30": 39.1,
+   "dmg30": 431
   }
  ]
 }

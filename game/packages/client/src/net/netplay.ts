@@ -102,8 +102,12 @@ async function unpackSnap(b64: string): Promise<Snapshot> {
   return out;
 }
 
-/** The transport the session sees: seats instead of peers, base64 over the bus, through the link simulator. */
-function busTransport(bus: Bus, match: string, link: LinkSim, heard: (seat: number) => void): SeatTransport {
+/**
+ * The transport the session sees: seats instead of peers, base64 over the bus, through the link simulator.
+ * The bus can't unsubscribe, so a transport that is no longer `live` (its match was left, dropped or
+ * replaced) ignores what it hears; otherwise its inbox, which nobody drains any more, grows for as long as the others play.
+ */
+function busTransport(bus: Bus, match: string, link: LinkSim, heard: (seat: number) => void, live: (t: SeatTransport) => boolean): SeatTransport {
   const inbox: { from: number; data: Uint8Array }[] = [];
   const t = {
     self: -1,
@@ -113,9 +117,9 @@ function busTransport(bus: Bus, match: string, link: LinkSim, heard: (seat: numb
   };
   bus.on('ls', (raw) => {
     const m = raw as { m?: string; f?: number; d?: string };
-    if (m?.m !== match || typeof m.f !== 'number' || m.f === t.self || typeof m.d !== 'string') return;
+    if (m?.m !== match || typeof m.f !== 'number' || m.f === t.self || typeof m.d !== 'string' || !live(t)) return;
     const f = m.f, d = m.d;
-    link.pass(() => { try { inbox.push({ from: f, data: fromB64(d) }); heard(f); } catch { /* malformed: ignore */ } });
+    link.pass(() => { if (!live(t)) return; try { inbox.push({ from: f, data: fromB64(d) }); heard(f); } catch { /* malformed: ignore */ } });
   });
   const out = (data: Uint8Array) => { const d = toB64(data); link.pass(() => bus.emit('ls', { m: match, f: t.self, d })); };
   return t;
@@ -348,7 +352,8 @@ export class NetPlay {
   }
 
   private newTransport(match: string): SeatTransport {
-    return busTransport(this.bus, match, this.link, (f) => { if (this.heard[f] !== undefined) this.heard[f] = Math.max(this.heard[f], this.now); });
+    return busTransport(this.bus, match, this.link, (f) => { if (this.heard[f] !== undefined) this.heard[f] = Math.max(this.heard[f], this.now); },
+      (t) => t === this.transport || t === this.rejoin?.transport);
   }
 
   private begin(m: StartMsg): void {
@@ -492,9 +497,11 @@ export class NetPlay {
     this.heard[seat] = this.now + 3000;
     const resume = { t: 'resume', m: this.match, seat, at, since: h.tick, peer } satisfies Control;
     for (const ms of [0, 300, 800]) setTimeout(() => this.bus.emit('nc', resume), ms);
+    const snap = await packSnap(h.snap);
+    if (this.session !== s) return; // left (or moved the match) while the snapshot packed: that match isn't ours to hand out
     const welcome: Welcome = {
       t: 'welcome', m: this.match, to: peer, seat, at, players: this.joinedPlayers.slice(), room: this.room, delay: NET_DELAY,
-      tick: h.tick, snap: await packSnap(h.snap), inputs: toB64(h.inputs), gone: h.gone, tunes: this.tunes,
+      tick: h.tick, snap, inputs: toB64(h.inputs), gone: h.gone, tunes: this.tunes,
     };
     this.bus.emit('nc', welcome);
     this.message = `Player ${seat + 1} is rejoining.`;
@@ -511,6 +518,8 @@ export class NetPlay {
     this.transport = r.transport;
     this.tunes = (m.tunes ?? []).slice(); this.tuneOn = -1;
     const snap = await unpackSnap(m.snap);
+    // Cancelled (Leave) while the snapshot unpacked: stay out of the match.
+    if (this.state !== 'joining' || this.match !== m.m || this.transport !== r.transport) return;
     replaceWorld(this.world, createWorld(0, this.players, { room: roomOf(m.room) })); // the snapshot's layout
     this.session = new RollbackSession(this.world, r.transport, seats, m.delay, false, ROLLBACK_WINDOW);
     this.session.startMidway({ tick: m.tick, snap, inputs: fromB64(m.inputs), gone: m.gone }, m.at);

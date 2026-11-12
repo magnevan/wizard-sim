@@ -14,13 +14,14 @@
 import { Sprite, Texture } from 'pixi.js';
 import {
   BATTERY, CELL, DEVICE, ECHO_LAG, sprayReach, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SHAPES, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
-  compile, elementName, queueFromCounts, specOf, wellDry,
+  compile, elementName, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
 import { BARREL_RISE, headTip, liveHeads, towerTip } from './props';
 import { flameJet, pilotFlame } from './flame-jet';
 import { feedLines } from './feed-lines';
+import { towersLit } from './power-down';
 import { toX, toY } from '../iso-world';
 import { PPU } from '../camera';
 import * as A from './accent';
@@ -1202,7 +1203,7 @@ export class Vfx {
   }
   /** Every working defence keeps a small live flame at its nozzle, except while it's firing. */
   private pilots(w: World, t: number, light: LightFn): void {
-    const n = wellDry(w) ? 0 : liveHeads(w), s = w.seats; // the well's dry: every defence is out
+    const k = towersLit(w), n = k > 0.5 ? liveHeads(w) : 0, s = w.seats; // as the well dies, the flames choke and sputter out (art/power-down.ts)
     for (let k = 0; k < n; k++) {
       const seat = w.battery!.drive.indexOf(k);
       if (seat >= 0 && s.phase[seat] === PHASE.channel) continue;

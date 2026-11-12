@@ -113,7 +113,7 @@ describe('the well failing (beats 5 to 7)', () => {
     expect(wellDry(w)).toBe(false);
   });
 
-  it('runs dry once the flow is out and the pool is spent: you\'re put back, the gate\'s fire goes out, no stepping up again', () => {
+  it('runs dry once the flow is out and the pool is spent: you\'re put back, no stepping up again, the gate\'s fire gutters out', () => {
     const w = failing(), home = [w.battery!.homeX[0], w.battery!.homeY[0]];
     expect(gateFire(w)).toBe(true);
     w.battery!.flow[0] = 1e-9; // the next tick's drain takes the last of it
@@ -123,9 +123,11 @@ describe('the well failing (beats 5 to 7)', () => {
     expect(w.enc.state[1]).toBe(BSTEP.dry);
     expect(w.battery!.drive[0]).toBe(-1);
     expect([w.bodies.x[0], w.bodies.y[0]]).toEqual(home);
-    expect(gateFire(w)).toBe(false);
     expect(runeMax(w, 0, EL.fire)).toBe(0); // dark, until the infusion
     expect(pedestalNear(w, 0)).toBe(-1);
+    expect(gateFire(w)).toBe(true); // guttering, for the view
+    idle(w, WELL.gutter);
+    expect(gateFire(w)).toBe(false);
   });
 
   it('doesn\'t stall on a rune held back: dry WELL.grace after the flow is out', () => {

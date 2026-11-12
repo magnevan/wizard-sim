@@ -35,6 +35,7 @@ import { BURST_LIFE, drawBurst, hasBurst } from './art/novas';
 import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './art/util';
 import { elName, frosty, ramp, type BodyView, type LightFn } from './art/vfx';
 import { Sil } from './art/sil';
+import { gateLit } from './art/power-down';
 import { glyph, perkOf } from './art/perks';
 import { drawTutorialWorld } from './tutorial-view';
 import { kitOf, kitRun, sideZ, stampTexture, wallsAllFar } from './art/wall-kit';
@@ -700,7 +701,8 @@ export class StructureView {
         if (k % 2 === 0) light(mid[0], mid[1], 30, '#ffc83a', 0.32 * kS * rise);
         continue;
       }
-      if (wl.owner[k] === TERRAIN) this.curtain(w, k, t, g, a, bb, cols, mid, rise, kS, hitE, light);
+      if (wl.owner[k] === TERRAIN) this.curtain(w, k, t, g, a, bb, cols, mid, rise * (w.battery ? Math.max(0.04, gateLit(w)) : 1), kS, hitE, light); // the battery's gate fire gutters down as the well dies
+
       else this.coatedField(w, k, t, g, a, bb, cols, mid, rise, kS, hitE, light);
     }
     // nothing to drop while the same walls stand (prune only ever removes walls that are gone)

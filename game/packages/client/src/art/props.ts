@@ -13,13 +13,17 @@ import type { RoomDef } from '@wizard-sim/sim';
 import { FY, PPU } from '../camera';
 import { loadTexture, propImage, propMeta, type PropMeta, type PropSet } from './assets';
 import { FIELD, gx, gy } from './field';
+import { towersLit, unstable, wellPower } from './power-down';
 import * as X from './px';
+import { clamp } from './util';
+import { WELL_MARGIN, WellAnim } from './well-anim';
 
-interface Item { asset: string; meta: PropMeta; spr: Sprite; x: number; y: number; ox: number; oy: number }
+/** `lit`: how much of its own light it gives now (the battery's power going down); `over`: its burnt-out art, laid over it. */
+interface Item { asset: string; meta: PropMeta; spr: Sprite; x: number; y: number; ox: number; oy: number; lit: number; over?: { spr: Sprite; ox: number; oy: number; ready: boolean } }
 
 const HEAD = 'defence-head-north-east';
-/** What goes dark when the battery's well runs dry: standing() reports these as `<asset>-dark`, which has no light. */
-const DARK: ReadonlySet<string> = new Set(['defence-tower', HEAD, 'battery-well', 'battery-well-top', 'control-pedestal']);
+/** What the battery's pieces fade into as the power goes down. */
+const BURNT: Readonly<Record<string, string>> = { 'defence-tower': 'defence-tower-burnt', [HEAD]: 'defence-head-burnt', 'battery-well': 'battery-well-drained' };
 
 /** The flame turret's head: pre-rendered facings across its swing, in one sheet (tools/turret-3d). */
 interface HeadSheet { cell: number; facings: number[]; collar: [number, number]; pivot: [number, number]; tips: [number, number][] }
@@ -83,8 +87,9 @@ export class PropView {
   room(def: RoomDef): void {
     if (def === this.def) return;
     this.def = def;
-    for (const it of this.items) it.spr.destroy();
+    for (const it of this.items) { it.spr.destroy(); it.over?.spr.destroy(); }
     this.items = [];
+    this.wellOn = false;
     this.shadows.visible = false;
     this.shadowTex?.destroy(true);
     this.shadowTex = null;
@@ -98,7 +103,7 @@ export class PropView {
       spr.tint = this.tint; spr.visible = false;
       spr.zIndex = Math.round(gy(p.y) + (meta.sort ?? 0)) * 128 + 100;
       (meta.flat ? this.under : this.actors).addChild(spr);
-      this.items.push({ asset: p.asset, meta, spr, x: gx(p.x), y: gy(p.y) - (meta.lift ?? 0), ox: 0, oy: 0 });
+      this.items.push({ asset: p.asset, meta, spr, x: gx(p.x), y: gy(p.y) - (meta.lift ?? 0), ox: 0, oy: 0, lit: 1 });
       if (meta.flat || meta.lift) continue;
       const [fw, fh] = meta.footprint;
       X.shadow(x, gx(p.x), gy(p.y), (fw / 2) * PPU * 0.9, Math.max(2, (fh / 2) * PPU * FY), 10);
@@ -126,13 +131,19 @@ export class PropView {
       const base = await loadTexture(SHEET_URL);
       this.headFrames = SHEET.facings.map((_, i) => new Texture({ source: base.source, frame: new Rectangle(i * SHEET.cell, 0, SHEET.cell, SHEET.cell) }));
     }
+    // the well's top is painted each frame (art/well-anim.ts), on the same foot with room round it for the rings
+    const top = items.find((it) => it.asset === 'battery-well-top'), topArt = top ? propImage(top.asset, this.current) : null;
+    if (top && topArt && (this.well.ready || (await this.well.load())) && ticket === this.wanted) {
+      top.spr.texture = this.well.tex; top.ox = topArt.foot[0] + WELL_MARGIN; top.oy = topArt.foot[1] + WELL_MARGIN; top.spr.visible = true;
+      this.wellOn = true;
+    }
     this.fx = NaN;
     this.ready = true;
   }
 
   /** Every defence's head: a driven one eases toward its driver's aim, an idle one back to straight out. */
   turnHeads(w: World, fx0: number, fy0: number): void {
-    if (!w.battery || !this.headFrames.length || this.dead) return;
+    if (!w.battery || !this.headFrames.length) return;
     const now = performance.now(), dt = Math.min(0.1, (now - this.headClock) / 1000), limit = BATTERY.swing * 360;
     this.headClock = now;
     let k = 0;
@@ -176,28 +187,43 @@ export class PropView {
     return broken;
   }
 
-  private dead = false;
+  private well = new WellAnim();
+  private wellOn = false;
   /**
-   * The battery's well has run dry (sim/src/battery-waves.ts): every defence goes dark, tower and head swapped for their
-   * burnt-out versions (tools/art-import/defence.py), the head left at its default facing, and the well for its drained
-   * one (tools/art-import/well_drained.py). Their glow and the well's go
-   * out with them (standing() reports them by these names, which the lighting has no light for).
+   * The battery, each frame: the well alive (art/well-anim.ts), and its power going down as an animation once it runs
+   * dry (art/power-down.ts). Towers and heads fade, sputtering, into their burnt-out art laid over them
+   * (tools/art-import/defence.py), the well's steps into their drained version (tools/art-import/well_drained.py), and
+   * every one's light with them (standing()'s `lit`).
    */
-  burnOut(dead: boolean, fx0: number, fy0: number): void {
-    if (dead === this.dead) return;
-    const swap: Record<string, string> = { 'defence-tower': 'defence-tower-burnt', [HEAD]: 'defence-head-burnt', 'battery-well': 'battery-well-drained', 'battery-well-top': 'battery-well-top-drained' };
-    const pending = this.items.filter((it) => swap[it.asset]);
-    const art = pending.map((it) => propImage(dead ? swap[it.asset] : it.asset, this.current));
-    if (art.some((a) => !a)) return;
-    this.dead = dead;
-    const ticket = this.wanted;
-    void Promise.all(art.map((a) => loadTexture(a!.url))).then((tex) => {
-      if (ticket !== this.wanted || this.dead !== dead) return; // a new room or set, or it changed back, meanwhile
-      pending.forEach((it, k) => {
-        it.spr.texture = tex[k]; it.ox = art[k]!.foot[0]; it.oy = art[k]!.foot[1];
-        it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
-      });
-    });
+  powerDown(w: World, t: number, fx0: number, fy0: number): void {
+    if (!w.battery) return;
+    const towers = towersLit(w), power = wellPower(w);
+    const glow = this.wellOn ? this.well.draw(t, power, unstable(w)) : power; // the well's light pulses with its crystal
+    for (const it of this.items) {
+      if (it.asset === 'battery-well-top' || it.asset === 'control-pedestal') { it.lit = it.asset === 'control-pedestal' ? towers : glow; continue; }
+      const fade = it.asset === 'defence-tower' || it.asset === HEAD ? 1 - towers : it.asset === 'battery-well' ? 1 - power : -1;
+      if (fade < 0) continue;
+      it.lit = it.asset === 'battery-well' ? glow : 1 - fade; // the well's light is at its steps' foot
+      this.overlay(it, BURNT[it.asset], fade, fx0, fy0);
+    }
+  }
+
+  /** Lays `asset` over item `it` at opacity `a` (loaded the first time it's wanted). */
+  private overlay(it: Item, asset: string, a: number, fx0: number, fy0: number): void {
+    if (!it.over) {
+      if (a <= 0.001) return;
+      const img = propImage(asset, this.current);
+      if (!img) return;
+      const spr = new Sprite(), ticket = this.wanted;
+      spr.tint = this.tint; spr.visible = false; spr.zIndex = it.spr.zIndex + 1;
+      it.over = { spr, ox: img.foot[0], oy: img.foot[1], ready: false };
+      it.spr.parent?.addChild(spr);
+      void loadTexture(img.url).then((tex) => { if (ticket !== this.wanted || !it.over) return; spr.texture = tex; it.over.ready = true; });
+    }
+    const o = it.over;
+    o.spr.visible = o.ready && a > 0.001;
+    o.spr.alpha = clamp(a, 0, 1);
+    o.spr.position.set(fx0 + Math.round(it.x) - o.ox, fy0 + Math.round(it.y) - o.oy);
   }
 
   /** Follows the camera: fx0, fy0 is where the field's corner is in the scene. */
@@ -205,7 +231,10 @@ export class PropView {
     if (fx0 === this.fx && fy0 === this.fy) return;
     this.fx = fx0; this.fy = fy0;
     this.shadows.position.set(fx0, fy0);
-    for (const it of this.items) it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
+    for (const it of this.items) {
+      it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
+      it.over?.spr.position.set(fx0 + Math.round(it.x) - it.over.ox, fy0 + Math.round(it.y) - it.over.oy);
+    }
   }
 
   /** Every standing prop's sprite and where its foot is in the scene. */
@@ -213,9 +242,9 @@ export class PropView {
     for (const it of this.items) if (it.spr.visible && !it.meta.flat) fn(it.spr, it.spr.position.x + it.ox, it.spr.position.y + it.oy);
   }
 
-  /** Every prop as it stands, for the lighting: its texture, foot, spot in the scene, and id. */
-  standing(fn: (tex: Texture, footX: number, footY: number, x: number, y: number, asset: string, flat: boolean) => void): void {
-    for (const it of this.items) if (it.spr.visible) fn(it.spr.texture, it.ox, it.oy, it.spr.position.x + it.ox, it.spr.position.y + it.oy, this.dead && DARK.has(it.asset) ? `${it.asset}-dark` : it.asset, !!it.meta.flat || !!it.meta.lift);
+  /** Every prop as it stands, for the lighting: its texture, foot, spot in the scene, id, and how lit it is (its own light, 0..1). */
+  standing(fn: (tex: Texture, footX: number, footY: number, x: number, y: number, asset: string, flat: boolean, lit: number) => void): void {
+    for (const it of this.items) if (it.spr.visible) fn(it.spr.texture, it.ox, it.oy, it.spr.position.x + it.ox, it.spr.position.y + it.oy, it.asset, !!it.meta.flat || !!it.meta.lift, it.lit);
   }
 
   get count(): number { return this.items.length; }

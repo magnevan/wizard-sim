@@ -161,19 +161,24 @@ function failWell(w: World): void {
   runDry(w);
 }
 
-/** Beat 6: everyone at a defence is put back where they stepped up, the gate's fire gutters out, and the well goes dark. */
+/** Beat 6: everyone at a defence is put back where they stepped up, and the well goes dark (the gate's fire gutters: below). */
 function runDry(w: World): void {
-  const d = w.battery!, st = w.enc.state, wl = w.walls, tick = w.clock[0];
+  const d = w.battery!, st = w.enc.state, tick = w.clock[0];
   st[1] = BSTEP.dry; st[2] = 0; d.wellT[1] = 1;
   w.enc.left.fill(0); // what was still to come out of the trees stays there
   for (let i = 0; i < MAX_SEATS; i++) if (d.drive[i] >= 0) stepAway(w, i);
-  for (let k = 0; k < wl.type.length; k++) {
-    if (wl.type[k] !== WALL.curtain || wl.owner[k] !== TERRAIN) continue;
-    w.events.push({ tick, kind: 'burst', who: -1, x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.6, look: EL.fire, text: 'gutter' });
-    wl.type[k] = WALL.none;
-  }
   const well = w.def.props.find((p) => p.asset === 'battery-well');
   if (well) w.events.push({ tick, kind: 'burst', who: -1, x: well.x, y: well.y, amount: 1, look: EL.fire, text: 'dry' });
+}
+
+/** WELL.gutter after the well runs dry, the gate's fire is out (the view lowers it till then: view-structures.ts curtain). */
+function gutterGate(w: World): void {
+  const wl = w.walls;
+  for (let k = 0; k < wl.type.length; k++) {
+    if (wl.type[k] !== WALL.curtain || wl.owner[k] !== TERRAIN) continue;
+    w.events.push({ tick: w.clock[0], kind: 'burst', who: -1, x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.6, look: EL.fire, text: 'gutter' });
+    wl.type[k] = WALL.none;
+  }
 }
 
 /** The infusion: a Fire pool of your own lights, full (world.ts infused), and the enemies left stop battering walls and come for you. */
@@ -204,7 +209,7 @@ export function tickBatteryWaves(w: World): void {
   }
   const driven = d.drive.some((k) => k >= 0);
   if (st[1] === BSTEP.arrive) { if (driven) st[1] = BSTEP.ring; return; }
-  if (d.wellT[1] > 0) d.wellT[1]++;
+  if (d.wellT[1] > 0) { d.wellT[1]++; if (d.wellT[1] === T(WELL.gutter)) gutterGate(w); }
   if (st[1] === BSTEP.free) failWell(w);
   if (st[1] === BSTEP.dry) { if (d.wellT[1] > T(WELL.surge)) infuse(w); return; }
   if (st[1] === BSTEP.after) return;

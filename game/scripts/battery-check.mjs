@@ -203,13 +203,13 @@ try {
   await sleep(1500);
   await shot('well-failing');
   await p.evaluate(() => { const w = window.wizardSim.world; w.battery.flow[0] = 1e-9; w.seats.runes.fill(0, 0, 10); }); // seat 0's pools spent, the flow out
-  await sleep(450);
-  await shot('well-glide'); // the view on its way back, the light draining down the feed lines
-  await sleep(250);
-  const dry = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], drive: w.battery.drive[0], gate: w.walls.type[0], dryT: w.battery.wellT[1] }; });
-  if (dry.step !== 6 || dry.drive !== -1 || dry.gate !== 0) fail(`the well should run dry: step ${dry.step}, drive ${dry.drive}, gate wall ${dry.gate}`);
-  await shot('well-dry');
-  await sleep(2300);
+  // the power going down (art/power-down.ts), a frame at a time, by the sim's clock since it ran dry
+  const dryS = () => p.evaluate(() => window.wizardSim.world.battery.wellT[1] / 60);
+  const until = async (s) => { for (let k = 0; k < 200 && (await dryS()) < s; k++) await sleep(30); };
+  for (const s of [0.4, 1.2, 2.0, 2.8]) { await until(s); await shot(`power-down-${s.toFixed(1)}`); }
+  const dry = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], drive: w.battery.drive[0], gate: w.walls.type[0] }; });
+  if (dry.step < 6 || dry.drive !== -1 || dry.gate !== 0) fail(`the well should be dry with the gate's fire out: step ${dry.step}, drive ${dry.drive}, gate wall ${dry.gate}`);
+  await until(3.9);
   await shot('well-infusion');
   const own = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], fire: w.seats.runes.reduce((m, v, k) => (k < 10 ? Math.max(m, v) : m), 0) }; });
   if (own.step !== 7 || own.fire < 1) fail(`the infusion should give you a rune of your own: step ${own.step}, best pool ${own.fire}`);

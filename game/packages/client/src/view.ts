@@ -16,7 +16,7 @@
  */
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
-  AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall, wellDry,
+  AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
@@ -303,7 +303,7 @@ export class WorldView {
     this.vfx.ground.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy); this.vfx.over.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy);
     this.structs.scorch.sprite.position.set(fx0, fy0);
     this.props.place(fx0, fy0);
-    this.props.burnOut(wellDry(w), fx0, fy0); // the battery's well has run dry: the defences go dark
+    this.props.powerDown(w, ct, fx0, fy0); // the battery's well alive, and its power going down once it runs dry
     this.props.turnHeads(w, fx0, fy0);
     // the battery's stakes give way as a defence is taken
     if (this.props.breakStakes(!!w.battery && w.enc.state[0] > 0 && w.enc.state[1] >= BSTEP.ring, fx0, fy0)) {
@@ -346,10 +346,10 @@ export class WorldView {
     if (lit) {
       lit.fit(cam.w, cam.h);
       lit.begin(moodOf(w.def.id, this.mood), ct, fx0, fy0);
-      this.props.standing((tex, fx, fy, x, y, asset, flat) => {
+      this.props.standing((tex, fx, fy, x, y, asset, flat, on) => {
         if (!flat) lit.castShadow(tex, fx, fy, x, y);
         const l = PROP_LIGHTS[asset];
-        if (l) lit.light(x, y + 2, l[1], l[0], l[2] * (0.92 + 0.08 * Math.sin(ct * 7 + x))); // at its foot, on the camera's side, so it lights itself
+        if (l && on > 0.02) lit.light(x, y + 2, l[1], l[0], l[2] * on * (0.92 + 0.08 * Math.sin(ct * 7 + x))); // at its foot, on the camera's side, so it lights itself
       });
       for (let i = 0; i < MAX_BODIES; i++) {
         const v = this.views[i];

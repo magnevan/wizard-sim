@@ -1,0 +1,11 @@
+{
+  "cell": [
+    7,
+    5
+  ],
+  "pitch": 8,
+  "glyphs": 12,
+  "pad": 12,
+  "node": 13,
+  "source": "tools/art-import/glyph_tiles.py, drawn by hand"
+}

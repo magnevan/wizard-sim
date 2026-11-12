@@ -47,7 +47,8 @@ def drain(a, crystal_rows):
     return res, int(crystal.sum()), int(seams.sum())
 
 
-for pid, crystal_rows in (('battery-well-top', 40), ('battery-well', 0)):
+def main():
+  for pid, crystal_rows in (('battery-well-top', 40), ('battery-well', 0)):
     src = os.path.join(PROPS, pid)
     a = np.array(Image.open(os.path.join(src, 'lean.png')).convert('RGBA'))
     res, nc, ns = drain(a, crystal_rows)
@@ -60,3 +61,7 @@ for pid, crystal_rows in (('battery-well-top', 40), ('battery-well', 0)):
     meta['sets']['lean']['edits'] = 'tools/art-import/well_drained.py: crystal darkened and cracked, seams dark, brass dulled'
     json.dump(meta, open(os.path.join(dst, 'meta.json'), 'w', encoding='utf-8'), indent=2)
     print(pid + '-drained', a.shape[1], 'x', a.shape[0], 'crystal px', nc, 'seam px', ns)
+
+
+if __name__ == '__main__':
+    main()

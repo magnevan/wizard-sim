@@ -8,6 +8,9 @@ Sources (game/content/generated/pixellab/opening/well/, PixelLab, the user's app
   anim-fail/        animate_image, 12 frames, overloaded to failed: the light dying, the rings dropping onto the drum
   anim-repair/      animate_image, 12 frames, failed to base: light returning, the rings rising back into place
   (frame-00 of each is the input frame, as animate_image returns it)
+  candidate-1.png   the well as bought: the steady state in the game (the loop's rings morph into a hoop rather than turn)
+
+The animations reach up to 7 px higher than the bought well, so every cell has `rise` rows on top (frames.json).
 
 Every picture is cut as the bought well is (tools/art-import/defence.py): the same crop as candidate-1, and only the part
 standing on the steps (split_well's top), since the steps are their own prop and don't move. Writes
@@ -25,20 +28,30 @@ base = Image.open(os.path.join(RAW, 'candidate-1.png')).convert('RGBA')
 box = base.getchannel('A').getbbox()
 
 
-def top_of(path):
-    im = Image.open(path).convert('RGBA').crop(box)
-    return split_well(im)[1]
-
-
 SETS = {
+    'still': [os.path.join(RAW, 'candidate-1.png')],   # the well as bought: steady, in the game (the loop's rings morph rather than turn)
     'overloaded': [os.path.join(RAW, 'state-overloaded.png')],
     'failed': [os.path.join(RAW, 'state-failed.png')],
     'steady': sorted(glob.glob(os.path.join(RAW, 'anim-steady', 'frame-*.png')))[:-1],   # its last frame is its first again: a loop
     'fail': sorted(glob.glob(os.path.join(RAW, 'anim-fail', 'frame-*.png'))),
     'repair': sorted(glob.glob(os.path.join(RAW, 'anim-repair', 'frame-*.png'))),
 }
+# The animations reach higher than the bought well (the flare, the rings lifting): the cell gets `rise` rows on top, which
+# all belong to the top; the rest is split as the well is.
+RISE = max(0, max(box[1] - Image.open(p).getchannel('A').getbbox()[1] for ps in SETS.values() for p in ps))
+
+
+def top_of(path):
+    im = Image.open(path).convert('RGBA').crop((box[0], box[1] - RISE, box[2], box[3]))
+    W, H = im.size
+    out = Image.new('RGBA', (W, H))
+    out.paste(im.crop((0, 0, W, RISE)), (0, 0))
+    out.paste(split_well(im.crop((0, RISE, W, H)))[1], (0, RISE))
+    return out
+
+
 os.makedirs(OUT, exist_ok=True)
-meta = {'cell': [box[2] - box[0], box[3] - box[1]], 'sets': {}}
+meta = {'cell': [box[2] - box[0], box[3] - box[1] + RISE], 'rise': RISE, 'sets': {}}
 for name, paths in SETS.items():
     tops = [top_of(p) for p in paths]
     W, H = tops[0].size

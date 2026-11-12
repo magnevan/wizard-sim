@@ -247,6 +247,24 @@ async function boot(): Promise<void> {
     if (e.code === 'KeyI') { view.wizardHd = !view.wizardHd; setParam('wizard', view.wizardHd ? 'hd' : null); }
   });
 
+  // The battery: clicking the well steps through its versions (art/well-anim.ts PREVIEWS), named in a tag at the top.
+  // Caught before the input sees it, so that click casts nothing.
+  const wellTag = document.createElement('div');
+  wellTag.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:20;pointer-events:none;display:none;font:13px/1.4 ui-monospace,Consolas,monospace;color:#ffe0b0;background:rgba(13,11,20,.85);border:1px solid #6a5030;border-radius:6px;padding:4px 10px';
+  document.body.appendChild(wellTag);
+  addEventListener('pointerdown', (e) => {
+    if (scenario.id !== 'battery' || menu?.open || e.button !== 0) return;
+    const r = app.canvas.getBoundingClientRect();
+    const label = view.props.clickWell(e.clientX - r.left, e.clientY - r.top);
+    if (label === null) return;
+    e.stopPropagation(); e.preventDefault();
+    wellTag.textContent = label ? `Well: ${label}. Click it for the next.` : '';
+    wellTag.style.display = label ? 'block' : 'none';
+  }, true);
+  // ?well=n: the battery's well opens on version n of PREVIEWS (0 the still well, 1 the bought loop, 2 overloaded, ...)
+  const wellAsk = params.get('well');
+  if (wellAsk !== null && wellAsk !== '') view.props.previewWell(Number(wellAsk));
+
   const scaleSteps = [0, 1, 2, 3, 4];
   const settings: Setting[] = [
     {

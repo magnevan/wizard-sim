@@ -16,7 +16,7 @@ import { FIELD, gx, gy } from './field';
 import { towersLit, unstable, wellPower } from './power-down';
 import * as X from './px';
 import { clamp } from './util';
-import { WELL_MARGIN, WellAnim } from './well-anim';
+import { WELL_MARGIN, WELL_RISE, WellAnim } from './well-anim';
 
 /** `lit`: how much of its own light it gives now (the battery's power going down); `over`: its burnt-out art, laid over it. */
 interface Item { asset: string; meta: PropMeta; spr: Sprite; x: number; y: number; ox: number; oy: number; lit: number; over?: { spr: Sprite; ox: number; oy: number; ready: boolean } }
@@ -136,7 +136,7 @@ export class PropView {
     // the well's top is painted each frame (art/well-anim.ts), on the same foot with room round it for the rings
     const top = items.find((it) => it.asset === 'battery-well-top'), topArt = top ? propImage(top.asset, this.current) : null;
     if (top && topArt && (this.well.ready || (await this.well.load())) && ticket === this.wanted) {
-      top.spr.texture = this.well.tex; top.ox = topArt.foot[0] + WELL_MARGIN; top.oy = topArt.foot[1] + WELL_MARGIN; top.spr.visible = true;
+      top.spr.texture = this.well.tex; top.ox = topArt.foot[0] + WELL_MARGIN; top.oy = topArt.foot[1] + WELL_MARGIN + WELL_RISE; top.spr.visible = true;
       this.wellOn = true;
     }
     this.fx = NaN;
@@ -196,6 +196,19 @@ export class PropView {
 
   private well = new WellAnim();
   private wellOn = false;
+  /**
+   * The well's preview (art/well-anim.ts PREVIEWS): when canvas point (x, y) is on the well, steps to its next version
+   * and returns that version's label, or '' when back to the game's own state. Returns null when (x, y) misses it.
+   */
+  clickWell(x: number, y: number): string | null {
+    const top = this.items.find((it) => it.asset === 'battery-well-top');
+    if (!this.wellOn || !top?.spr.visible) return null;
+    const b = top.spr.getBounds();
+    if (x < b.minX || x > b.maxX || y < b.minY || y > b.maxY) return null;
+    return this.well.nextPreview() ?? '';
+  }
+  /** Shows the well's version n (PREVIEWS) from the start (?well=n, for screenshots). */
+  previewWell(n: number): void { this.well.preview = n - 1; this.well.nextPreview(); }
   /**
    * The battery, each frame: the well alive (art/well-anim.ts), and its power going down as an animation once it runs
    * dry (art/power-down.ts). Towers and heads fade, sputtering, into their burnt-out art laid over them

@@ -88,6 +88,26 @@ Built, waiting on the user's playtest. All of it is in `sim/src/battery-waves.ts
 - **Not built yet:** the quiet beat's sound, and the well's column, which isn't drawn at all yet.
 - **To tune in play:** how long the well takes to fail (75 s), the grace (6 s), how deep your own pool is (1 rune), and the beat 7 groups.
 
+## The user's notes, 2026-11-12 (commit 7454e7e)
+
+1. **The rings** looked bland, and should stay as the bought art had them, only spinning. Now two rings are tilted into an X and one is nearly level, as in the art. Each is a flat brass band spinning about its own axis, with engraved notches and studs carried round (`art/well-anim.ts`).
+2. **The floor glyphs:** the user said they look great.
+3. **The pedestals** read as knobs and levers; the user wants magic. They're replaced by possession circles: a glyph circle touching each tower's foot, where the feed line ends. While free it pulses, with someone in it it brightens, and while possessed it burns and turns. The X key cap floats over your head while you stand in one. The prop is `possession-circle` (flat, drawn in code), and the sim's reach is 2.0.
+4. **Archers' arrows** drew over the wall. In the battery they now go through `behind()`, so the wall hides them. A check frame with an arrow in flight showed none over the wall.
+5. **The lesson's text** didn't work mid-fight. There are no sentences now: each step's keys are pictures that press themselves in order (`key-caps.ts`). They are the Fire key with a big F, Shift, a mouse with its right button lit, and bars for keys you hold. The only text left is the user's own line at the infusion.
+6. **The battlefield.** Smashed field works are scattered over the killing ground, clear of the goblins' lanes: palisades, sandbags and crates (`tools/art-import/broken_props.py`), plus stakes, shields, a cold campfire and burnt banners. There are also burn craters and churned mud. Each line of stakes has a palisade either side that gives way with it.
+7. **Three states for the well.** Overloaded/failing is built: the crystal overcharges, flaring and shaking, arcs jump to the rings, the rings are knocked askew, the runes stutter, and the column of light whips and breaks up. Failed is the power-down. Repaired comes with the repair beat. The column of light is now drawn (`vfx.ts column`): steady while the well holds, drawing down into the crystal as it dies.
+
+**Sound: its own session, at the user's choice.** The notes: no music for tension on arrival, no sound of the battle going on, and the archer and goblin fighting sounds are bad. My proposal is CC0 libraries first, then ElevenLabs for the rest (up to about 620 credits), each with its prompt for sign-off before any paid call:
+- **Tension music** on arrival, calmer once the well is dry: free CC0 library. PixelLab music needs a higher plan tier.
+- **Battle bed**, looped, 2 takes of 20 s: "Distant battle outside a fortress wall: a crowd of small creatures shrieking and jeering, wood being hacked, scattered clangs of metal on stone, a war horn far off."
+- **Archer's shot**: "A short wooden bow loosing an arrow: a quick creak of the drawn string, a sharp twang on release, and the arrow's brief hiss as it flies away."
+- **Arrow on the wall**: "An arrow striking a sandstone wall and snapping: a hard wooden clack and a small splintering crack."
+- **Goblin hacking stakes**: "A small goblin hacking at wooden stakes with a crude iron blade: a dull chop into wood with a short splintering crunch."
+- **Goblin battering the wall**: "A crude iron cleaver clanging against a stone wall: a hard metallic clank with grit scraping off the stone."
+- **Goblin effort grunts**: "A small, wiry goblin grunting with effort as it swings: a short raspy snarl."
+- **Barricades giving way**: "A wooden palisade and stakes giving way: timber splintering and cracking, posts falling and thudding into the dirt."
+
 ## Enemies at the wall's foot
 
 Not on the user's list, but it comes from the same layout: a full-height wall hides about 4 units of ground behind it, and enemies reaching the wall will be out of sight. A one-storey kit would be about 10 generations, with sign-off first. Decide once waves exist.

@@ -41,10 +41,6 @@ export class LockstepSession {
   hooks: { before?: (w: World) => void; after?: (w: World) => void; preRewind?: (w: World) => void; postRewind?: (w: World) => void } = {};
 
   /**
-   * `autoFlush`: send after every local input (fine for per-peer datagrams). Turn it off on
-   * rate-limited transports and call flush() a few times a second instead.
-   */
-  /**
    * How many ticks ahead this peer schedules its input. Each peer may choose its own and change it
    * at any time (the sim only needs every seat's input for a tick, however early it was sent):
    * raise it on a slow link, lower it when the link is quick. Raising it means the next inputs fill
@@ -54,6 +50,10 @@ export class LockstepSession {
   /** Ticks this peer could not run because someone's input wasn't in yet (one per stalled advance()). */
   waitedTicks = 0;
 
+  /**
+   * `autoFlush`: send after every local input (fine for per-peer datagrams). Turn it off on
+   * rate-limited transports and call flush() a few times a second instead.
+   */
   constructor(readonly world: World, readonly net: Transport, readonly seats: readonly number[], delay = 4, readonly autoFlush = true) {
     this.delay = delay;
     this.scheduled = delay;

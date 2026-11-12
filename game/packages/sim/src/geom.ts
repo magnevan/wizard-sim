@@ -3,7 +3,7 @@ import { atan2Turns } from './trig';
 
 export const len = (x: number, y: number): number => Math.sqrt(x * x + y * y);
 
-/** Signed difference between two angles in turns, in (-0.5, 0.5]. */
+/** Signed difference between two angles in turns, in [-0.5, 0.5). */
 export function angleDiff(a: number, b: number): number {
   let d = a - b;
   d -= Math.floor(d + 0.5);

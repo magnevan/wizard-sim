@@ -64,6 +64,16 @@ The user wants Claude to actively maintain the docs and keep the process on trac
 - When the conversation drifts, point back to the current open questions in `vision.md` and the active `developing` ideas. Suggest the next step.
 - Don't jump to prototyping before the design question is clear; the user prefers to explore first.
 
+## Keeping it tidy (checkable rules)
+
+These came out of the 2026-11-12 repo audit; each one is a mess that audit had to clean up.
+- **Indexes in the same commit.** A new exploration gets its row in `docs/explorations/README.md` (one table, date order, no blank lines or bullets inside it). A new decision gets its link on the matching topic line at the top of `docs/decisions/README.md`.
+- **One fact, every page that states it.** Changing rooms, scenario keys, npm scripts or URL params updates, in the same commit: `game/README.md`, the `game/` line above, `game/content/README.md` (rooms and keys) and `docs/current-state.md`. A decision that reverses a claim also fixes `current-state.md` (the golden hash line included) and adds a superseded pointer in the idea file it changes.
+- **Check before you write a key or number in a doc.** Panels: F1 help, F2 Tune, F3 Tools, F4 Stats. Numbers come from `game/packages/sim/src/config.ts`, not from memory or an older doc.
+- **Links:** `node tools/docs-check/check-links.mjs` must report 0 broken links before a docs commit.
+- **Snapshots:** after changing a source, re-sync its copies or record the drift in the copy's README: `tools/spell-vfx/rules-c.js` (from the Atlas), `tools/spell-vfx/vfx-attacks.js` (from `enemy-attacks.ts`), `tools/survive-review/copy.js` (Survive's numbers), `tools/sound-gallery/engine.js` and `bank.js` (`npm run sound-gallery`). The review pages also copy small helpers between them (`core.js`, `fx.js`, `pixel.js`, `stage.js`): before editing one, find its other copies and change them together.
+- **Finished lists move out.** An overnight list whose items are all done is `git mv`ed to `docs/archive/`.
+
 ## Conventions
 
 - Lead with the player experience: what does it feel like in the hands, and what does a co-op partner see or do? Engine or implementation detail comes later.

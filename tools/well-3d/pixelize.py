@@ -23,27 +23,97 @@ def palette():
 
 
 PAL = palette()
+lum = lambda c: c[..., 0] * 0.3 + c[..., 1] * 0.59 + c[..., 2] * 0.11
 
 
-def pixel_art(rgba, sup):
-    h, w = rgba.shape[0] // sup, rgba.shape[1] // sup
-    d = ((rgba[..., :3][:, :, None, :].astype(float) - PAL[None, None]) ** 2).sum(3)
-    idx = d.argmin(2)
-    opaque = rgba[..., 3] >= 128
-    out = np.zeros((h, w, 4), np.uint8)
+def ladder():
+    """The bought rings' browns from dark to light, each with the share of the rings it covers (the glint yellows and the
+    green left out: the glint is drawn on its own, the green is grime)."""
+    im = Image.open(RINGS).convert('RGBA')
+    c = collections.Counter(p[:3] for p in im.getdata() if p[3] > 0)
+    keep = [(k, n) for k, n in c.items() if k != LINE and not (k[1] > k[0]) and not (k[0] == 255) and n > 1]
+    keep.sort(key=lambda kn: lum(np.array(kn[0], float)))
+    cols = np.array([k for k, _ in keep], float)
+    share = np.cumsum([n for _, n in keep], dtype=float)
+    return cols, share / share[-1]
+
+
+LADDER, CUM = ladder()
+
+
+# The engraving, drawn per art pixel on the band's outer face (any pattern carved in 3D fell below a pixel and read as
+# noise, the user). Seven rows across the face: a raised border, a cut line, three rows of pattern, a cut line, a raised
+# border. The pattern is tiles of 8 columns x 3 rows ('X' raised, '.' cut), in a rotation of five so it isn't machine
+# even; columns are fractions of a turn (COLS round the ring), so a sixth of a turn (the spin's loop) is 8 whole tiles
+# ... and lands on the same rotation.
+COLS, TILE_W = 240, 8
+TILES = [
+    ('X..XX..X', '.XX..XX.', 'X..XX..X'),   # a chain of diamonds
+    ('XX..XX..', '.XX..XX.', '..XX..XX'),   # a slanted rope
+    ('X..XX..X', '.XX..XX.', 'X..XX..X'),
+    ('X.XX.XX.', '.X..X..X', 'X.XX.XX.'),   # a tighter lattice
+    ('..XX..XX', '.XX..XX.', 'XX..XX..'),   # the rope slanting back
+]
+ROWS = ('X' * TILE_W, '.' * TILE_W, None, None, None, '.' * TILE_W, 'X' * TILE_W)
+CUT_STEPS, CUT_FLOOR = 3, 2   # a cut pixel goes this many browns down the ladder, but not below this one
+
+
+def engraved(u, v):
+    """True where the face is raised at band position u (0..1 round the ring), v (0..1 across its face)."""
+    col = int(u * COLS) % COLS
+    row = min(6, max(0, int(v * 7)))
+    if ROWS[row] is not None:
+        return ROWS[row][col % TILE_W] == 'X'
+    tile = TILES[(col // TILE_W) % len(TILES)]
+    return tile[row - 2][col % TILE_W] == 'X'
+
+
+def read_where(path, sup, h, w):
+    """pixelize's view of rings.py's 'where' render: (u, v, on the outer face) at each art pixel's middle, or None."""
+    a = np.array(Image.open(path).convert('RGBA')).astype(float)
+    out = {}
     for y in range(h):
         for x in range(w):
-            k = opaque[y * sup:(y + 1) * sup, x * sup:(x + 1) * sup]
-            if k.sum() * 2 < sup * sup:
+            p = a[y * sup + sup // 2, x * sup + sup // 2]
+            if p[3] < 128:
                 continue
-            block = rgba[y * sup:(y + 1) * sup, x * sup:(x + 1) * sup, :3][k].astype(int)
-            out[y, x, 3] = 255
-            # the rendered lines are thin: a quarter of the block dark enough makes the pixel a line
-            if (block.sum(1) < 60).sum() * 4 >= sup * sup:
-                out[y, x, :3] = LINE
+            u = round(p[0] / 255 * 64) / 64 + (p[1] / 255) / 64
+            b = p[2] / 255
+            face = b >= 0.5
+            out[(y, x)] = (u % 1.0, min(1.0, max(0.0, (b - 0.55 * face) / 0.4)), face)
+    return out
+
+
+def pixel_art(rgba, sup, where=None):
+    """Each art pixel is its block's mean; then the ring's pixels, ranked by brightness, take the bought rings' browns in
+    the bought rings' own proportions (nearest-colour snapping folded the render's browns into a few shades, the user).
+    So the shade spread is the bought one by construction, and each pixel keeps its place, lighter or darker. Where the
+    pixel is on the engraved face (`where`), a cut pixel then goes CUT_STEPS browns darker."""
+    h, w = rgba.shape[0] // sup, rgba.shape[1] // sup
+    blocks = rgba.reshape(h, sup, w, sup, 4).transpose(0, 2, 1, 3, 4).reshape(h, w, sup * sup, 4).astype(float)
+    opaque = blocks[..., 3] >= 128
+    out = np.zeros((h, w, 4), np.uint8)
+    on = opaque.sum(2) * 2 >= sup * sup
+    dark = ((blocks[..., :3].sum(3) < 60) & opaque).sum(2) * 4 >= sup * sup   # the thin rendered lines
+    mean = (blocks[..., :3] * opaque[..., None]).sum(2) / np.maximum(1, opaque.sum(2))[..., None]
+    metal = on & ~dark
+    L = lum(mean)[metal]
+    q = (np.argsort(np.argsort(L)) + 0.5) / max(1, len(L))
+    idx = np.full((h, w), -1)
+    idx[metal] = np.searchsorted(CUM, q).clip(0, len(LADDER) - 1)
+    if where:
+        for (y, x), (u, v, face) in where.items():
+            if not face or idx[y, x] < 0:
                 continue
-            vals, n = np.unique(idx[y * sup:(y + 1) * sup, x * sup:(x + 1) * sup][k], return_counts=True)
-            out[y, x, :3] = PAL[vals[n.argmax()]].astype(np.uint8)
+            row = min(6, max(0, int(v * 7)))
+            if not engraved(u, v):
+                # cut: darker, but never into the very darkest browns (the dark bottom sank to black)
+                idx[y, x] = max(min(idx[y, x], CUT_FLOOR), idx[y, x] - CUT_STEPS)
+            elif row in (0, 6):
+                idx[y, x] = min(len(LADDER) - 1, idx[y, x] + 1)   # the smooth raised borders catch the light
+    out[metal, :3] = LADDER[idx[metal]].astype(np.uint8)
+    out[on & dark, :3] = LINE
+    out[on, 3] = 255
     return out
 
 
@@ -92,7 +162,9 @@ def run(src, out):
     strips = {p: np.zeros((chh, cw * n, 4), np.uint8) for p in ('back', 'front')}
     for f in range(n):
         im = np.array(Image.open(os.path.join(src, f'f{f:03d}-full.png')).convert('RGBA'))
-        art = crystal_edge(outline(pixel_art(im, sup)))
+        wp = os.path.join(src, f'f{f:03d}-where.png')
+        where = read_where(wp, sup, chh, cw) if os.path.exists(wp) else None
+        art = crystal_edge(outline(pixel_art(im, sup, where)))
         m = np.array(Image.open(os.path.join(src, f'f{f:03d}-mask.png')).convert('RGBA'))[..., 3] >= 128
         near = m.reshape(chh, sup, cw, sup).mean((1, 3)) >= 0.5
         strips['front'][:, f * cw:(f + 1) * cw] = np.where(near[..., None], art, 0)

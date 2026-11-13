@@ -18,10 +18,10 @@ CIRC_PX, BAND_PX = 236, 7       # art pixels round the ring and across its face
 TPX = 8                         # texels per art pixel
 U, V = CIRC_PX * TPX, BAND_PX * TPX
 BORDER, GROOVE = 1.0, 0.55      # art px of raised border each side, and of the cut line inside it
-BRAIDS, CYCLE = 24, 4           # braid repeats round the ring; the wobble repeats every CYCLE of them
+BRAIDS, CYCLE = 12, 2           # braid repeats round the ring (coarse: finer read as noise, the user); the wobble repeats every CYCLE
 REPEAT = BRAIDS // CYCLE        # the whole pattern this many times round: the spin's loop is 1/REPEAT of a turn
 SURFACE, CUT = 1.0, 0.3
-STRAND = 0.3                  # a strand's half-width, art px
+STRAND = 0.55                # a strand's half-width, art px
 
 rng = np.random.default_rng(5)
 u = (np.arange(U) + 0.5) / TPX

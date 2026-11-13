@@ -92,7 +92,49 @@ def inner_material():
     return m
 
 
-BAND = band_material()
+# the outer face is plain metal here: its engraving is drawn pixel by pixel after the render (pixelize.py), since any
+# pattern carved in 3D falls below a pixel at this size and reads as noise (the user, 2026-11-13)
+BAND = plain('band', (0.6, 0.43, 0.25), rough=0.3, metal=0.85)
+
+
+def where_material():
+    """For the 'where' render: each pixel's place on the band, flat colour, no light. R and G are u round the ring (R
+    coarse in 64ths, G the fine part), B is v across the face times 0.4, plus 0.55 on the outer face (so the two never
+    meet at the threshold, 0.5)."""
+    m = bpy.data.materials.new('where')
+    m.use_nodes = True
+    nt = m.node_tree
+    for nd in list(nt.nodes):
+        if nd.type != 'OUTPUT_MATERIAL': nt.nodes.remove(nd)
+    out = next(nd for nd in nt.nodes if nd.type == 'OUTPUT_MATERIAL')
+    tc = nt.nodes.new('ShaderNodeTexCoord')
+    sep = nt.nodes.new('ShaderNodeSeparateXYZ')
+    nt.links.new(tc.outputs['UV'], sep.inputs['Vector'])
+    att = nt.nodes.new('ShaderNodeAttribute')
+    att.attribute_type = 'GEOMETRY'
+    att.attribute_name = 'kind'
+
+    def op(kind, a, b=None):
+        n = nt.nodes.new('ShaderNodeMath')
+        n.operation = kind
+        for i, x in enumerate((a, b)):
+            if x is None: continue
+            if isinstance(x, (int, float)): n.inputs[i].default_value = x
+            else: nt.links.new(x, n.inputs[i])
+        return n.outputs['Value']
+    u64 = op('MULTIPLY', sep.outputs['X'], 64.0)
+    coarse = op('DIVIDE', op('FLOOR', u64), 64.0)
+    fine = op('FRACT', u64)
+    b = op('ADD', op('MULTIPLY', sep.outputs['Y'], 0.4), op('MULTIPLY', att.outputs['Fac'], 0.55))
+    comb = nt.nodes.new('ShaderNodeCombineXYZ')
+    nt.links.new(coarse, comb.inputs['X']); nt.links.new(fine, comb.inputs['Y']); nt.links.new(b, comb.inputs['Z'])
+    em = nt.nodes.new('ShaderNodeEmission')
+    nt.links.new(comb.outputs['Vector'], em.inputs['Color'])
+    nt.links.new(em.outputs['Emission'], out.inputs['Surface'])
+    return m
+
+
+WHERE = where_material()
 # the inside face: a plain middling brown, lit by the crystal so it's lightest near the middle and darker further out
 INNER = plain('inner', (0.2, 0.12, 0.06), rough=0.35, metal=0.8)
 # the band's top and bottom: plain and lighter than the inside, so the far arcs read as top vs inside (the user)
@@ -116,6 +158,7 @@ def ring(name, rc):
     me = bpy.data.meshes.new(name)
     bm = bmesh.new()
     uvl = bm.loops.layers.uv.new()
+    kind = bm.faces.layers.float.new('kind')   # 1 on the outer face, which pixelize.py engraves
     n = len(PROFILE)
     verts = []
     for s in range(SEG):
@@ -127,6 +170,7 @@ def ring(name, rc):
             j = (k + 1) % n
             f = bm.faces.new((verts[s][k], verts[t][k], verts[t][j], verts[s][j]))
             f.material_index = PROFILE[k][3]
+            f[kind] = 1.0 if PROFILE[k][3] == 0 else 0.0
             u0, u1 = s / SEG, (s + 1) / SEG
             v0, v1 = PROFILE[k][2], PROFILE[j][2]
             for loop, uv in zip(f.loops, ((u0, v0), (u1, v0), (u1, v1), (u0, v1))):
@@ -255,14 +299,23 @@ def shoot(path):
     cam.clip_start, cam.clip_end = 0.1, 400
     r.use_freestyle = True
     scene.cycles.samples = 128
+    scene.cycles.use_denoising = True
     r.filepath = path + '-full.png'
     bpy.ops.render.render(write_still=True)
     cam.clip_end = DIST
     r.use_freestyle = False
     scene.cycles.samples = 1
+    scene.cycles.use_denoising = False   # the mask and the 'where' values must not be blended
     r.filepath = path + '-mask.png'
     bpy.ops.render.render(write_still=True)
     cam.clip_end = 400
+    # where each pixel is on the band (where_material), raw colour, no filtering, for pixelize.py's engraving
+    layer.material_override = WHERE
+    scene.view_settings.view_transform = 'Raw'
+    r.filepath = path + '-where.png'
+    bpy.ops.render.render(write_still=True)
+    layer.material_override = None
+    scene.view_settings.view_transform = 'Standard'
 
 
 os.makedirs(OUT, exist_ok=True)

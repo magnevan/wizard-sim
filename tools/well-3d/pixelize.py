@@ -78,7 +78,7 @@ STROKES = (
     'HHHdDMHHdDHHHHdMHHdD',
     'dMMdDdMMMdDDdMMdDdMd',
 )
-TONE = {'H': 2, 'M': 0, 'd': -2, 'D': -3}
+TONE = {'H': 1, 'M': 0, 'd': -2, 'D': -3}
 LOOP = 40   # columns in the spin's loop (a sixth of a turn): the streak rows repeat after it
 
 
@@ -97,8 +97,9 @@ def streak_row(seed, light, length=(2, 6), gap=(1, 3)):
 # By the borders, mostly dark with a short mid stroke now and then; in the middle, bright and mid streaks.
 EDGE_ROWS = [streak_row(11, 'M', (1, 2), (3, 5)), streak_row(12, 'M', (1, 2), (3, 5))]
 # fewer, longer bright streaks with more dark round them (the user, round 13): a streak row, then a mostly dark one
-MID_ROWS = [streak_row(21, 'HHHM', (3, 8), (3, 6)), streak_row(22, 'M', (1, 3), (2, 5)),
-            streak_row(23, 'HHM', (3, 8), (3, 6)), streak_row(24, 'M', (1, 3), (2, 5))]
+# then less bright (the user, round 14: too much bright): streaks mostly mid with some bright, bright only a shade up
+MID_ROWS = [streak_row(21, 'HMM', (3, 7), (3, 6)), streak_row(22, 'M', (1, 3), (2, 5)),
+            streak_row(23, 'MHM', (3, 7), (3, 6)), streak_row(24, 'M', (1, 3), (2, 5))]
 
 
 def streak_tone(u, r, n):

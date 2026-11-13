@@ -21,11 +21,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FIT = json.load(open(os.path.join(HERE, 'rings-fit.json')))
 BUILD = os.path.join(HERE, 'build')
 CANVAS_W, CANVAS_H, SUPER = 104, 56, 4
-REPEAT = 4
+REPEAT = 24   # the braid's repeats round the ring (band_texture.py): the spin loops after one
 W = FIT['W']
 # the bought rings aren't one size (the user): one passes just inside the other, a band's thickness apart, so they never
 # meet. BIG says which: 'B' (the mirrored one) or 'A'.
-GAP, BIG = 3.2, (ARGS[2] if len(ARGS) > 2 else 'B')
+GAP, BIG = 2.6,(ARGS[2] if len(ARGS) > 2 else 'B')
 RMID = (FIT['R'] + FIT.get('RB', FIT['R'])) / 2
 RADII = {'A': RMID + (GAP if BIG == 'A' else -GAP) / 2, 'B': RMID + (GAP if BIG == 'B' else -GAP) / 2}
 RO, LIPH = RMID + 0.9, 0.55                 # the outer radius at the middle size (for the loop's length), how far the lips stand proud
@@ -55,7 +55,7 @@ def band_material():
     ramp.color_ramp.elements[0].position = 0.3
     ramp.color_ramp.elements[0].color = (0.04, 0.025, 0.012, 1)
     ramp.color_ramp.elements[1].position = 0.95
-    ramp.color_ramp.elements[1].color = (0.85, 0.62, 0.36, 1)
+    ramp.color_ramp.elements[1].color = (0.62, 0.44, 0.25, 1)
     nt.links.new(tex.outputs['Color'], ramp.inputs['Fac'])
     mix = nt.nodes.new('ShaderNodeMix')
     mix.data_type = 'RGBA'
@@ -101,20 +101,23 @@ def inner_material():
 
 
 BAND = band_material()
-INNER = inner_material()
-RIM = plain('rim', (0.7, 0.52, 0.3), rough=0.35, metal=0.6)          # the band's ends: the light rim
+# the inside face: a plain middling brown, lit by the crystal so it's lightest near the middle and darker further out
+INNER = plain('inner', (0.22, 0.14, 0.075), rough=0.6, metal=0.4)
+# the band's top and bottom: plain and lighter than the inside, so the far arcs read as top vs inside (the user)
+RIM = plain('rim', (0.5, 0.36, 0.2), rough=0.45, metal=0.5)
 
 H2 = W / 2
+CHAMFER = 0.45
 
 
 def profile(rc):
-    """The band's cross-section for a ring of mid radius rc, (radius, height along the axis, v across, material): the
-    end faces the light rim, the outer face engraved with its lips proud, the inner face plain. A closed loop."""
-    ro, ri = rc + 0.9, rc - 1.5
-    lip = 1.0 / W
+    """The band's cross-section for a ring of mid radius rc, (radius, height along the axis, v across, material): a
+    plain chamfered rectangle, so the top meets the face in a change of shade, not a line. The outer face (v 0 to 1)
+    carries the engraving. Each entry's material is for the face from it to the next. A closed loop."""
+    ro, ri, c = rc + 0.9, rc - 1.5, CHAMFER
     return [
-        (ri, -H2, 0.0, 2), (ro + LIPH, -H2, 0.0, 0), (ro + LIPH, -H2 + 1.0, lip, 0), (ro, -H2 + 1.2, lip + 0.03, 0),
-        (ro, H2 - 1.2, 1 - lip - 0.03, 0), (ro + LIPH, H2 - 1.0, 1 - lip, 0), (ro + LIPH, H2, 1.0, 2), (ri, H2, 1.0, 1),
+        (ri + c, -H2, 0.0, 2), (ro - c, -H2, 0.0, 2), (ro, -H2 + c, 0.0, 0), (ro, H2 - c, 1.0, 2),
+        (ro - c, H2, 1.0, 2), (ri + c, H2, 1.0, 1), (ri, H2 - c, 1.0, 1), (ri, -H2 + c, 0.0, 1),
     ]
 
 
@@ -185,17 +188,21 @@ scene.camera = cam_o
 # the crystal's light, warm, at the rings' centre; a sun from the upper left as the bought art is lit
 glow = bpy.data.lights.new('crystal', 'POINT')
 glow.color = (1.0, 0.62, 0.22)
-glow.energy = 4e4
-glow.shadow_soft_size = 3
+glow.energy = 3e4
+glow.shadow_soft_size = 1
 glow_o = bpy.data.objects.new('crystal', glow)
-glow_o.location = (0, 0, 2)
+# toward the camera from the centre: a light at the centre is the same distance from every point of a ring round it, so
+# the inside faces would be one flat shade; from here they're lightest near the middle, darker further out (the user)
+glow_o.location = (0, -18, 8)
 scene.collection.objects.link(glow_o)
 sun = bpy.data.lights.new('sun', 'SUN')
-sun.energy = 4.5
+sun.energy = 2.6
 sun.angle = math.radians(10)
 sun_o = bpy.data.objects.new('sun', sun)
 scene.collection.objects.link(sun_o)
-sun_o.rotation_euler = (Vector((0, 0, 0)) - Vector((-60, -80, 120))).to_track_quat('-Z', 'Y').to_euler()
+# the bought rings read as lit from about the camera (the user, 2026-11-13): the key light comes from just above and
+# left of the view, so faces turned to the viewer are brightest
+sun_o.rotation_euler = (-(VIEW + Vector((-0.3, 0, 0.35)))).to_track_quat('-Z', 'Y').to_euler()
 world = bpy.data.worlds.new('world')
 world.use_nodes = True
 world.node_tree.nodes['Background'].inputs['Color'].default_value = (1, 0.9, 0.8, 1)
@@ -219,14 +226,16 @@ scene.view_settings.look = 'None'
 # the dark lines the bought rings have: round each band's silhouette and along its lips, so a band reads as a thick ribbon
 r.use_freestyle = True
 r.line_thickness_mode = 'ABSOLUTE'
-r.line_thickness = SUPER * 0.6
+r.line_thickness = SUPER * 0.9
 layer = scene.view_layers[0]
 layer.use_freestyle = True
 fs = layer.freestyle_settings
 fs.crease_angle = math.radians(150)
 ls = fs.linesets[0] if fs.linesets else fs.linesets.new('lines')
-ls.select_silhouette = ls.select_border = True
-ls.select_crease = False   # the lips are shading, not lines (the user: edges far too strong)
+# only where a band meets the background, another band or itself (the user): its silhouette. No crease lines (the top
+# and the face meet in shade), no border lines (the meshes are closed).
+ls.select_silhouette = True
+ls.select_border = ls.select_crease = False
 ls.select_edge_mark = False
 ls.linestyle.color = (0.006, 0.004, 0.01)
 ls.linestyle.thickness = 1.0
@@ -239,13 +248,20 @@ def pose(phase):
 
 
 def shoot(path):
-    # behind the crystal, then in front of it: the camera's clipping split at the centre's depth
-    cam.clip_start, cam.clip_end = DIST, 400
-    r.filepath = os.path.join(path, 'back.png') if False else path + '-back.png'
+    """The rings whole (full.png), then a mask of what's nearer than the crystal (mask.png: the camera clipped at the
+    centre's depth, no lines, few samples). The split is made after the lines are drawn, so it leaves no seam (the
+    user saw black lines where two separately rendered halves met)."""
+    cam.clip_start, cam.clip_end = 0.1, 400
+    r.use_freestyle = True
+    scene.cycles.samples = 32
+    r.filepath = path + '-full.png'
     bpy.ops.render.render(write_still=True)
-    cam.clip_start, cam.clip_end = 0.1, DIST
-    r.filepath = path + '-front.png'
+    cam.clip_end = DIST
+    r.use_freestyle = False
+    scene.cycles.samples = 1
+    r.filepath = path + '-mask.png'
     bpy.ops.render.render(write_still=True)
+    cam.clip_end = 400
 
 
 os.makedirs(OUT, exist_ok=True)

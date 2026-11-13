@@ -87,12 +87,17 @@ def run(src, out):
     info = json.load(open(os.path.join(src, 'info.json')))
     n, (cw, chh), sup = info['frames'], info['canvas'], info['super']
     os.makedirs(out, exist_ok=True)
-    for part in ('back', 'front'):
-        strip = np.zeros((chh, cw * n, 4), np.uint8)
-        for f in range(n):
-            im = np.array(Image.open(os.path.join(src, f'f{f:03d}-{part}.png')).convert('RGBA'))
-            strip[:, f * cw:(f + 1) * cw] = crystal_edge(outline(pixel_art(im, sup)))
-        Image.fromarray(strip).save(os.path.join(out, f'{part}.png'), optimize=True)
+    # the whole rings snapped, lined and glinted first, then split by the mask, so the split leaves no seam
+    strips = {p: np.zeros((chh, cw * n, 4), np.uint8) for p in ('back', 'front')}
+    for f in range(n):
+        im = np.array(Image.open(os.path.join(src, f'f{f:03d}-full.png')).convert('RGBA'))
+        art = crystal_edge(outline(pixel_art(im, sup)))
+        m = np.array(Image.open(os.path.join(src, f'f{f:03d}-mask.png')).convert('RGBA'))[..., 3] >= 128
+        near = m.reshape(chh, sup, cw, sup).mean((1, 3)) >= 0.5
+        strips['front'][:, f * cw:(f + 1) * cw] = np.where(near[..., None], art, 0)
+        strips['back'][:, f * cw:(f + 1) * cw] = np.where(near[..., None], 0, art)
+    for p, strip in strips.items():
+        Image.fromarray(strip).save(os.path.join(out, f'{p}.png'), optimize=True)
     json.dump({'frames': n, 'cell': [cw, chh]}, open(os.path.join(out, 'rings.json'), 'w'))
     print('rings', n, 'frames')
 

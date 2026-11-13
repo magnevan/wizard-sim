@@ -103,6 +103,9 @@ packages/
                (sandbox, arena, survive, battery, tutorial) and which room runs which; create.ts createWorld. step.ts and
                world.ts call the hooks and never ask which mode they're in: a new mode is a new Mode, not a branch
     spawn.ts   spawnEnemy, the one way every director puts an enemy in the world
+    possess.ts possession, a core mechanic: a wizard inside a fixture can't walk or be hurt and casts the way the
+               fixture aims (mode.ts Possession: buttons, face, target, spray, splash, ring). The battery's defences are
+               the first fixtures (modes.ts); a mode's EnemyRules (holdAt, target, standoff, shotRange) shape its enemies
     encounter.ts  encounters as data: a Script of steps (groups once / in a list / in a loop, hold, until, wait, tick,
                after, enter, next, end) that runScript walks, with the room's own hooks; partyIn (a Region) and
                openAtMarkers (Markers by tag). Scripts: the battery's lesson (battery-waves.ts LESSON) and Survive's run

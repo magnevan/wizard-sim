@@ -10,8 +10,9 @@ import { WALL } from './compile';
 import { EL, N_EL } from './elements';
 import { tickWaves } from './waves';
 import { survivePress, tickSurvive } from './survive';
-import { batteryPress } from './battery';
-import { BATTERY_CHECKPOINTS, batteryReached, repairPress, tickBatteryWaves } from './battery-waves';
+import { BATTERY, batteryPress, driveButtons, driveSpray, driveTarget, driving } from './battery';
+import { BATTERY_CHECKPOINTS, BWAVES, batteryReached, batteryStandoff, holdSpot, laneTarget, repairPress, tickBatteryWaves } from './battery-waves';
+import { ARCHETYPES, ATTACK } from './archetypes';
 import { beginTutorialTick, tickTutorial } from './tutorial';
 import { tutPool, TUT_ORDER } from './tutorial-data';
 import type { Mode, ModeId, WorldOpts } from './mode';
@@ -58,6 +59,27 @@ const SURVIVE: Mode = {
 const BATTERY_MODE: Mode = {
   id: 'battery',
   campaign: true,
+  // a defence: possessed from its circle, Fire only, a flamethrower that lands where you aim, a half-ring (battery.ts)
+  possession: {
+    of: (w, i) => w.battery!.drive[i],
+    buttons: driveButtons,
+    face: (w, i) => driveSpray(w, i).face,
+    target: driveTarget,
+    spray: driveSpray,
+    splash: BATTERY.splash,
+    ring: BATTERY.ringRadius,
+  },
+  // one lane per defence: harmless, they batter its wall until someone's there; archers stand off past the flamethrower
+  enemies: {
+    holdAt: (w, i) => {
+      if (w.battery!.lane[i] < 0) return undefined;
+      const lt = laneTarget(w, i);
+      return lt < 0 || ARCHETYPES[w.bodies.arch[i]].attack !== ATTACK.bolt ? holdSpot(w, i, lt) : undefined;
+    },
+    target: laneTarget,
+    standoff: (w, i, t) => (driving(w, t) ? batteryStandoff(w, i, t) : undefined),
+    shotRange: () => BWAVES.archerStandoff + 1.5,
+  },
   state: (w) => {
     w.battery = {
       drive: new Int8Array(MAX_SEATS).fill(-1), homeX: new Float64Array(MAX_SEATS), homeY: new Float64Array(MAX_SEATS),

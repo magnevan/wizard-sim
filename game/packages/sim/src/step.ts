@@ -16,7 +16,7 @@ import { hasteOf, tickStructures } from './structures';
 import { HIT_KIND, setHitKind, tickStatuses } from './hit';
 import { sureFooted, tickGuards, walkMult } from './guards';
 import { BTN, type PlayerInput } from './input';
-import { driving } from './battery';
+import { possessed } from './possess';
 import { DT, KIND, MAX_SEATS, PHASE, joinSeat, type World } from './world';
 
 export { elementId, elementName } from './elements';
@@ -41,7 +41,7 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
     let speed = BODY.walkSpeed * (1 - STATUS.chillSlow * b.chill[i]) * hasteOf(w, i) * walkMult(w, i); // carrying a guard or weapon, blocking, the Bulwark, a held Special
     const ph = s.phase[i];
     if (ph === PHASE.channel || ph === PHASE.charge || s.handT[i] > TAP) speed *= BODY.castWalk; // a Heavy charges like a spell
-    if (!canAct(w, i) || b.heldBy[i] >= 0 || b.root[i] > 0 || driving(w, i)) speed = 0; // held by a grabber or pinned: you can still cast, not walk
+    if (!canAct(w, i) || b.heldBy[i] >= 0 || b.root[i] > 0 || possessed(w, i)) speed = 0; // held by a grabber or pinned: you can still cast, not walk
     const grip = BODY.friction; // nobody slips on ice any more (the user, 2026-11-11: sliding wasn't a helpful mechanic)
     b.vx[i] += (mx * speed - b.vx[i]) * grip;
     b.vy[i] += (my * speed - b.vy[i]) * grip;

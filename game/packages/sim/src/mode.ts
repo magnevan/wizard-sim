@@ -32,8 +32,46 @@ export interface Checkpoint {
   readonly apply: (w: World) => void;
 }
 
+/**
+ * Possessing a fixture (possess.ts): a wizard steps into something built (the battery's defences; later others) and
+ * casts from it. While possessing, the core holds them still, nothing can hurt them, and their hands are put away;
+ * this says how the fixture they're in aims and what its casts do.
+ */
+export interface Possession {
+  /** The fixture seat i possesses (an index the mode knows), or -1. */
+  of(w: World, i: number): number;
+  /** What the seat's buttons do in it (the battery: spells only). */
+  buttons(w: World, i: number, held: number): number;
+  /** The way its casts face, in turns. */
+  face(w: World, i: number): number;
+  /** Where its placed spells land. */
+  target(w: World, i: number): [number, number];
+  /** Its spray: the way it goes and how far. */
+  spray(w: World, i: number): { face: number; range: number };
+  /** The spray also catches what's this near where it lands (0: nothing more). */
+  readonly splash: number;
+  /** Its one close blast: Area, and the Weapon's imbued burst too, make a ring this wide on the side it faces. */
+  readonly ring: number;
+}
+
+/** A mode's say in what enemies do (enemies.ts); each is asked first, and undefined leaves it to the core. */
+export interface EnemyRules {
+  /** Enemy i holds a spot instead of fighting, battering what's there (the battery's lanes). */
+  holdAt?(w: World, i: number): [number, number] | undefined;
+  /** Who enemy i goes for, before the nearest wizard (-1: nobody in particular). */
+  target?(w: World, i: number): number;
+  /** Where an archer stands against target t. */
+  standoff?(w: World, i: number, t: number): [number, number] | undefined;
+  /** How near an archer comes before it shoots. */
+  shotRange?(w: World, i: number): number | undefined;
+}
+
 export interface Mode {
   readonly id: ModeId;
+  /** A wizard can possess fixtures here (possess.ts). */
+  readonly possession?: Possession;
+  /** The mode's rules for enemies. */
+  readonly enemies?: EnemyRules;
   /** A campaign area: its world has a party (world.ts Party), carried in from the last area and out to the next. */
   readonly campaign?: boolean;
   /** Makes the mode's state pools on a new world, before any seat joins (a joining seat reads runeMax). */

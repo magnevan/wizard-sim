@@ -24,8 +24,7 @@ import { terrainNear } from './terrain';
 import { TERRAIN_HIT, damageWall, segDist } from './walls';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { EV, AI, KIND, MAX_SEATS, PU, STATUS_BIT, TEAM, WARD, stackOf, type World } from './world';
-import { driving } from './battery';
-import { BWAVES, batteryStandoff, holdSpot, laneTarget } from './battery-waves';
+import { possessed } from './possess';
 
 const TRACK_SHARE = 0.55;
 const COVER_DIST = 2.2;
@@ -69,7 +68,7 @@ function setAi(w: World, i: number, state: number): void { w.bodies.ai[i] = stat
 /** Plain damage from an enemy to a body, plus knockback. Stone armour's coat bites back. */
 function strike(w: World, src: number, t: number, dmg: number, knock: number, dx: number, dy: number, burn: boolean): void {
   const b = w.bodies, s = w.seats;
-  if (driving(w, t)) return; // a blow at the wall, on the defence: a driver can't be hurt (battery.ts)
+  if (possessed(w, t)) return; // a blow at a fixture: whoever possesses it can't be hurt (possess.ts)
   let d = dmg;
   // A conjured guard (guards.ts): a parry or a Bulwark block stops the blow; resistance cuts it.
   if (t < MAX_SEATS && s.guard[t]) {
@@ -94,7 +93,7 @@ function strike(w: World, src: number, t: number, dmg: number, knock: number, dx
 }
 
 export function tickEnemies(w: World): void {
-  const b = w.bodies;
+  const b = w.bodies, rules = w.mode.enemies; // the mode's say in what they do (mode.ts EnemyRules)
   for (let i = MAX_SEATS; i < b.kind.length; i++) {
     if (b.kind[i] !== KIND.enemy) continue;
     const a = ARCHETYPES[b.arch[i]];
@@ -110,16 +109,13 @@ export function tickEnemies(w: World): void {
     if (b.ai[i] === AI.dash) { dash(w, i); continue; }
     if (b.ai[i] === AI.grab) { grab(w, i); continue; }
 
-    // the battery with nobody at any defence: it batters its own defence's wall
-    if (w.battery && w.battery.lane[i] >= 0) {
-      // the battery: harmless, they batter something. Archers with a defence to shoot at stand off and shoot (below)
-      const lt = laneTarget(w, i);
-      if (lt < 0 || a.attack !== ATTACK.bolt) { holdWall(w, i, a, lt >= 0 ? holdSpot(w, i, lt) : holdSpot(w, i, -1)); continue; }
-    }
+    // the mode may have it hold a spot instead (the battery's lanes: harmless, they batter a wall)
+    const hold = rules?.holdAt?.(w, i);
+    if (hold) { holdWall(w, i, a, hold); continue; }
     let t = b.ai[i] === AI.windup ? b.target[i] : -1;
     if (t < 0 || !isPrey(w, t)) {
       if (b.ai[i] === AI.windup) setAi(w, i, AI.approach);
-      t = w.battery ? laneTarget(w, i) : -1; // the battery: your own lane's defence first
+      t = rules?.target?.(w, i) ?? -1; // the mode's pick first (the battery: your own lane's defence)
       if (t < 0) t = nearestWizard(w, i);
     }
     b.target[i] = t;
@@ -132,7 +128,7 @@ export function tickEnemies(w: World): void {
       move(w, i, approachSpot(w, i, t), t, speed);
       const ranged = a.attack === ATTACK.bolt || a.attack === ATTACK.grab;
       // Walled off with no way round: a wall it's pressed against is what it attacks.
-      const ready = ranged ? d <= (w.battery && a.attack === ATTACK.bolt ? BWAVES.archerStandoff + 1.5 : a.reach) && b.aiT[i] > T(0.4) : gap <= a.reach || ((cutOff(w, i, t) || atBarrier(w, i, t)) && wallInReach(w, i, a.reach + 0.45) >= 0); // walled off, or its way is through a barrier
+      const ready = ranged ? d <= (a.attack === ATTACK.bolt ? rules?.shotRange?.(w, i) ?? a.reach : a.reach) && b.aiT[i] > T(0.4) : gap <= a.reach || ((cutOff(w, i, t) || atBarrier(w, i, t)) && wallInReach(w, i, a.reach + 0.45) >= 0); // walled off, or its way is through a barrier
       if (ready) { setAi(w, i, AI.windup); b.lockX[i] = b.x[t]; b.lockY[i] = b.y[t]; }
     } else if (b.ai[i] === AI.windup) {
       if ((a.attack === ATTACK.bolt || a.attack === ATTACK.grab) && b.aiT[i] < T(a.windup * TRACK_SHARE)) { b.lockX[i] = b.x[t]; b.lockY[i] = b.y[t]; }
@@ -184,7 +180,8 @@ function move(w: World, i: number, [tx, ty]: [number, number], seat: number, spe
 function approachSpot(w: World, i: number, t: number): [number, number] {
   const b = w.bodies, a = ARCHETYPES[b.arch[i]];
   if (a.attack !== ATTACK.bolt) return [b.x[t], b.y[t]];
-  if (w.battery && driving(w, t)) return batteryStandoff(w, i, t); // past the defence's flamethrower: Place reaches them
+  const off = w.mode.enemies?.standoff?.(w, i, t); // the mode's (the battery: past a defence's flamethrower, where Place reaches them)
+  if (off) return off;
   let front = -1, fd = Infinity;
   for (let j = MAX_SEATS; j < b.kind.length; j++) {
     if (b.kind[j] !== KIND.enemy || (b.arch[j] !== ARCH.brute && b.arch[j] !== ARCH.shieldbearer)) continue;

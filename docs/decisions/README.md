@@ -1573,3 +1573,10 @@ The user, on "a fresh match per area": fine, but moving between campaign areas n
 - **The save keeps the party,** and Continue starts with it. The other half, a chapter jump that gives you the party you'd have by then, waits for a second chapter.
 - **Drop-in:** for now the plan is the cheap form. The host's next area move takes in whoever has joined the lobby since; joining mid-fight waits.
 - **Next, in this order:** possession as a core mechanic (the battery's "driving a defence" generalised to any fixture you can possess), then the client-side room view.
+- **Possession, built** (`possess.ts`):
+  - The core asks `possessed(w, i)`: you can't walk, can't be hurt or moved, and your hands are put away.
+  - A mode's `Possession` says how its fixture aims, where its placed spells land, its spray and splash, and its one ring.
+  - A mode's `EnemyRules` (`holdAt`, `target`, `standoff`, `shotRange`) carry the battery's lane AI.
+  - cast, effects, hit, enemies and step no longer import the battery.
+  - Every trail (both battery runs included), the golden hash `dd8360fb` and the reports are unchanged.
+  - The client still asks the sim's `driving`; that moves with the room view.

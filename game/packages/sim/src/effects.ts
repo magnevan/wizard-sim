@@ -5,7 +5,7 @@
  * A Payload is what a hit carries: element counts plus a few flags. Missiles and zones store it
  * in their typed arrays (els, flags, mod, look) and rebuild the view object when they hit.
  */
-import { BATTERY, driveSpray, driving } from './battery';
+import { possessed, possession } from './possess';
 import type { Mod, SpellSpec } from './compile';
 import { ARMS, BODY, CELL, COMBAT, PERKS, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
 import { EL, N_EL, elementName, queueFromCounts } from './elements';
@@ -233,15 +233,16 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       break;
     }
     case 'imbue': case 'nova': case 'quake': {
-      // a defence has one close-range blast: the Weapon's burst and the Area ring both make its half-ring (the user, 2026-11-10)
-      if (spec.shape === 'imbue' && !driving(w, src)) { imbue(w, src, p, spec, x, y, face, dx, dy, k, k * blast * close); break; }
-      const r = (driving(w, src) ? BATTERY.ringRadius : spec.shape === 'quake' ? SHAPES.novaRadius + 1 : SHAPES.novaRadius) + SHAPES.novaPerRune * (n - 1);
+      // a fixture has one close-range blast: the Weapon's burst and the Area ring both make its half-ring (the battery's defences, the user, 2026-11-10)
+      const fixed = possessed(w, src);
+      if (spec.shape === 'imbue' && !fixed) { imbue(w, src, p, spec, x, y, face, dx, dy, k, k * blast * close); break; }
+      const r = (fixed ? possession(w).ring : spec.shape === 'quake' ? SHAPES.novaRadius + 1 : SHAPES.novaRadius) + SHAPES.novaPerRune * (n - 1);
       // Leaves the floor alone: a floor laid round you soaks or burns you, the caster (Place is for floors).
       // Area is the close, risky cast, so a spray element's ring is its strongest instant hit on its own axis (spell audit,
       // 2026-11-11): the Frost ring chills harder, the Splash ring pushes further. The Fire ring's burst is already that.
       // (chill goes by rune, so the Frost ring's chill leaves out the blast factor that turns Cold's per-second damage into one hit)
       const axis = spec.heal || spec.scald || spec.freeze ? 1 : spec.form === EL.cold ? SHAPES.ringChill / blast : spec.form === EL.water ? SHAPES.ringPush : 1;
-      disc(w, p, src, x, y, r, k * blast * close * (spec.heal ? SHAPES.healRingPower : 1), spec.heal ? -1 : src, driving(w, src) ? y : undefined, axis); // the Healing ring heals you too; a defence's covers only the enemy's side
+      disc(w, p, src, x, y, r, k * blast * close * (spec.heal ? SHAPES.healRingPower : 1), spec.heal ? -1 : src, fixed ? y : undefined, axis); // the Healing ring heals you too; a fixture's covers only the side it faces
       burstEvent(w, src, x, y, r, spec.look);
       break;
     }
@@ -556,7 +557,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     return;
   }
   if (spec.shape === 'spray') {
-    const range = (driving(w, src) ? driveSpray(w, src).range : SHAPES.sprayRange) + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
+    const range = (possessed(w, src) ? possession(w).spray(w, src).range : SHAPES.sprayRange) + 0.5 * (spec.sizeN - 1), half = SHAPES.sprayHalfAngle * (1 + 0.25 * (spec.sizeN - 1));
     // Rock and barriers stop a spray like a beam: it ends at the wall and wears it down (healing doesn't).
     const [wallD, wk] = clipRay(w, x, y, dx, dy, range, b.team[src]);
     if (wk >= 0 && !spec.heal) damageWall(w, wk, wallDamage(w, wk, spec.counts, 0, rate), spec.counts[EL.fire - 1]);
@@ -564,11 +565,11 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     const [fd, fk] = spec.heal ? [0, -1] : fieldAlong(w, x, y, dx, dy, wallD, b.team[src]), pc = withCoat(w, p, fk); // beyond your coated field, the spray carries its elements
     // Falloff (combat.sprayFalloff): the nearest body takes it all, each one behind takes a share less.
     const inside: number[] = [];
-    // a defence's stream also splashes round where it lands, so what's at the foot of the wall burns (battery.ts)
-    const drv = driving(w, src), lx = x + dx * wallD, ly = y + dy * wallD;
+    // a fixture's stream may also splash round where it lands (a defence's: what's at the foot of the wall burns, battery.ts)
+    const splash = possessed(w, src) ? possession(w).splash : 0, lx = x + dx * wallD, ly = y + dy * wallD;
     for (let i = 0; i < b.kind.length; i++) {
       if (!alive(w, i) || i === src) continue;
-      const near = drv && len(b.x[i] - lx, b.y[i] - ly) <= BATTERY.splash + b.r[i];
+      const near = splash > 0 && len(b.x[i] - lx, b.y[i] - ly) <= splash + b.r[i];
       if ((near || inCone(x, y, face, half, range, b.x[i], b.y[i], b.r[i])) && clearLine(w, x, y, b.x[i], b.y[i])) inside.push(i);
     }
     if (COMBAT.sprayFalloff < 1) inside.sort((a, c) => len(b.x[a] - x, b.y[a] - y) - len(b.x[c] - x, b.y[c] - y) || a - c);
@@ -798,7 +799,7 @@ export function tickZones(w: World): void {
 export const onIce = (w: World, i: number): boolean => surfAt(w, w.bodies.x[i], w.bodies.y[i]) === SURF.ice;
 
 /** Bodies nothing moves: the Sanctum's dummies, and rooted archetypes (the tutorial's brambles). */
-export const fixedBody = (w: World, i: number): boolean => driving(w, i) || w.bodies.kind[i] === KIND.dummy || (w.bodies.kind[i] === KIND.enemy && !!ARCHETYPES[w.bodies.arch[i]].rooted);
+export const fixedBody = (w: World, i: number): boolean => possessed(w, i) || w.bodies.kind[i] === KIND.dummy || (w.bodies.kind[i] === KIND.enemy && !!ARCHETYPES[w.bodies.arch[i]].rooted);
 
 /** Bodies push apart, and everyone stays in the arena. Dummies are rooted. */
 export function collide(w: World): void {

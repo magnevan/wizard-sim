@@ -60,11 +60,17 @@ const LEGS = Array.from({ length: 8 }, (_, i) => {
   const a = Math.PI / 2 + (i * Math.PI) / 4;
   return { a, x: DRUM.cx + DRUM.rx * Math.cos(a), top: DRUM.cy + DRUM.ry * Math.sin(a), back: Math.sin(a) < -0.1 };
 });
+/** The visible legs' rune columns on the layer, x from to (the left, front and right legs). */
+const FIRE_COLS: readonly [number, number][] = [[29, 33], [48, 55], [71, 74]];
 /** Lightning's colour from root to tip: white-hot at the crystal, orange where it strikes (the bought flare's). */
 const BOLT_CORE = ['#ffffff', '#fff2b8', '#ffc860', '#ff8a28'];
 const BOLT_EDGE = ['#ffe8a0', '#ffb848', '#ff8a28', '#d04a18'];
 
 interface Spark { x: number; y: number; vx: number; vy: number; life: number; max: number; back: boolean }
+/** One piece of a bolt: k 0 at its root .. 1 at its tips (its colour), w 2 for the main path, 1 for forks. */
+interface BoltSeg { x0: number; y0: number; x1: number; y1: number; k: number; w: number }
+/** A bolt, shaped once when it's born and held for its short life; `strike`: it ends on a ring at (ex, ey). */
+interface Bolt { born: number; life: number; back: boolean; strike: boolean; ex: number; ey: number; segs: BoltSeg[] }
 
 /** The versions clicking the well steps through (the preview). A change plays and then holds its end for a moment. */
 export const PREVIEWS: readonly { name: string; label: string }[] = [
@@ -108,6 +114,9 @@ export class WellAnim {
   private runes: number[][] = [];
   /** The visible runes by the leg they're on (LEGS' index). */
   private legRunes: number[][][] = LEGS.map(() => []);
+  /** Each visible leg's runes' bounds, where its fire burns (null: no runes show on it). */
+  private legBox: ({ x0: number; x1: number; y0: number; y1: number } | null)[] = [];
+  private bolts: Bolt[] = [];
 
   constructor() {
     const [W, H] = LAYERS ? LAYERS.size : [104, 113];
@@ -132,6 +141,12 @@ export class WellAnim {
       LEGS.forEach((l, i) => { if (!l.back && Math.abs(l.x - r[0]) < Math.abs(LEGS[best].x - r[0])) best = i; });
       this.legRunes[best].push(r);
     }
+    // the fire stands on the three rune columns that show, on the front legs (where the rune pixels crowd, read off the
+    // bought drum; the panels between carry stray ones), each as tall as its runes
+    this.legBox = FIRE_COLS.map(([x0, x1]) => {
+      const ys = this.runes.filter((r) => r[0] >= x0 && r[0] <= x1).map((r) => r[1]);
+      return ys.length ? { x0, x1, y0: Math.min(...ys), y1: Math.max(...ys) } : null;
+    });
     this.ready = true;
     return true;
   }
@@ -204,7 +219,7 @@ export class WellAnim {
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); g._fs = null;
     g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
     const dead = 1 - power, pulse = 0.5 + 0.5 * Math.sin(t * 2.1);
-    const flick = unstable > 0 ? 0.75 + 0.25 * rand(Math.floor(t * 18), 1, 77) : 1;
+    const flick = unstable > 0 ? 0.8 + 0.2 * rand(Math.floor(t * 9), 1, 77) : 1;
     const falling = dead > FLARE || repair > 0;
     if (!falling) this.phase += dt * (SPIN_FPS + OVERLOAD_FPS * unstable);
     if (dead <= 0) this.burst = false;
@@ -245,6 +260,7 @@ export class WellAnim {
     this.layer(g, 'drum-clear.png', 1);
     this.layer(g, 'drum-drained-clear.png', 1 - glow);
     this.runeLight(g, t, runeK);
+    this.runeFire(g, t, runeK);
     // a soft halo round the crystal
     // (kept small: at full size the flare's halo showed as a dithered square round the crystal)
     const cx = M + LAYERS.crystal.cx, cy = M + LAYERS.crystal.cy;
@@ -261,12 +277,18 @@ export class WellAnim {
       this.strip(g, 'fall-dark.png', F, f, 1);
       this.strip(g, 'fall.png', F, f, ringsLit);
     } else {
+      // the lightning lives between the layers, so the rings in front of it cover it (drawn last, it cut across the
+      // front bands, the user): behind the crystal to the back rings, then over the crystal to the front rings, then the
+      // front rings, then only the flashes where bolts strike
+      if (overloaded) this.spawnBolts(dt, unstable, flare, bob, rx, ry);
       this.strip(g, 'spin-back.png', S, this.phase, 1, rx, ry);
-      if (overloaded) this.lightning(g, t, unstable, flare, 'back', bob, rx, ry);
+      this.drawBolts(g, t, true);
       this.crystal(g, crystalLit, flare, unstable, flick, pulse, bob);
+      this.drawBolts(g, t, false);
       this.strip(g, 'spin-front.png', S, this.phase, 1, rx, ry);
-      if (overloaded) this.lightning(g, t, unstable, flare, 'front', bob, rx, ry);
+      this.drawStrikes(g, t);
     }
+    if (falling) this.bolts = [];
     if (overloaded) this.spit(dt, Math.max(unstable, flare));
     this.drawSparks(g, false);
     this.tex.source.update();
@@ -311,56 +333,151 @@ export class WellAnim {
     }
   }
 
-  /** Overloaded: lightning from points all over the crystal to the rings, a few at a time, each for a moment. `back`:
-   * the bolts behind the crystal, to the back rings (drawn before it, so they leap out from behind it); `front`: over it,
-   * to the front rings. The flare throws many at once. */
-  private lightning(g: Ctx, t: number, unstable: number, flare: number, part: 'back' | 'front', bob: number, rx: number, ry: number): void {
-    const f = Math.floor(t * 16), frame = ((Math.floor(this.phase) % RINGS.spin.frames) + RINGS.spin.frames) % RINGS.spin.frames;
-    const ends = this.ringPx[part][frame], starts = this.crystalPx;
-    if (!ends || !ends.length || !starts.length) return;
-    const M = WELL_MARGIN, salt = part === 'back' ? 0 : 50;
+  /**
+   * The runes' fire, overloaded and at the flare (the bought overload: each leg's runes a column of flame, white-yellow
+   * in the middle, orange tongues licking out past both sides of the leg and above it). Per row, how far the flame
+   * reaches each side drifts with slow waves, so it licks rather than flickers.
+   */
+  private runeFire(g: Ctx, t: number, k: number): void {
+    const f = clamp((k - 0.9) / 0.7, 0, 1.6);   // about 1 overloaded, more at the flare
+    if (f <= 0.02) return;
+    const M = WELL_MARGIN, cols = ['#ffe890', '#ffb040', '#ff7a28', '#c8441c'];
+    this.legBox.forEach((b, i) => {
+      if (!b) return;
+      // flame inside the column, rising: white at its hottest, then gold and orange, gaps where the leg shows (a flat
+      // wash over the column read as a pale bar)
+      for (let y = b.y0; y <= b.y1; y++) {
+        for (let x = b.x0; x <= b.x1; x++) {
+          const v = f * (0.5 + 0.5 * Math.sin(x * 1.7 + y * 0.9 + t * 5 + i) * Math.sin(y * 0.45 + t * 3.3 - x * 0.6 + i * 2));
+          if (v > 0.3) X.px(g, M + x, M + y, v > 0.85 ? '#fff4c8' : v > 0.6 ? '#ffd060' : '#ff9a30');
+        }
+      }
+      for (let y = b.y0; y <= b.y1; y++) {
+        for (const side of [-1, 1]) {
+          const w = 0.5 + 0.5 * Math.sin(y * 0.7 + t * 4.2 * side + i * 1.9) * Math.cos(y * 0.23 - t * 2.6 + i + side);
+          const reach = Math.round(f * (0.6 + 3.6 * w * w));
+          for (let d = 1; d <= reach; d++) {
+            const x = side < 0 ? b.x0 - d : b.x1 + d;
+            X.px(g, M + x, M + y, cols[Math.min(cols.length - 1, d - 1 + (d === reach && reach > 1 ? 1 : 0))]);
+          }
+        }
+      }
+      // tongues above the leg's runes
+      for (let x = b.x0; x <= b.x1; x++) {
+        const w = 0.5 + 0.5 * Math.sin(x * 1.3 + t * 3.1 + i * 2.7) * Math.sin(x * 0.6 - t * 1.7 + i);
+        const h = Math.round(f * (0.5 + 4 * w * w));
+        for (let d = 1; d <= h; d++) X.px(g, M + x, M + b.y0 - d, cols[Math.min(cols.length - 1, Math.floor((d - 1) * 4 / Math.max(1, h)))]);
+      }
+    });
+  }
+
+  /** A jagged line from (x0, y0) to (x1, y1): its midpoints pushed sideways by up to `rough` of each piece's length, again
+   * and again, till the pieces are about 3 px. */
+  private static jag(x0: number, y0: number, x1: number, y1: number, rough: number): [number, number][] {
+    let pts: [number, number][] = [[x0, y0], [x1, y1]];
+    for (let pass = 0; pass < 6; pass++) {
+      const next: [number, number][] = [pts[0]];
+      let split = false;
+      for (let i = 1; i < pts.length; i++) {
+        const [ax, ay] = pts[i - 1], [bx, by] = pts[i], len = Math.hypot(bx - ax, by - ay);
+        if (len > 3) {
+          const j = (Math.random() - 0.5) * len * rough;
+          next.push([(ax + bx) / 2 - ((by - ay) / len) * j, (ay + by) / 2 + ((bx - ax) / len) * j]);
+          split = true;
+        }
+        next.push(pts[i]);
+      }
+      pts = next;
+      if (!split) break;
+    }
+    return pts;
+  }
+
+  /**
+   * A bolt: a jagged main path with forks off it, and forks off those, each fork thinner and redder further out (the
+   * bought overload's lightning branches; a single line from the core read as a laser). `k` along each piece is how far
+   * from the root it is, for its colour.
+   */
+  private makeBolt(x0: number, y0: number, x1: number, y1: number, back: boolean, strike: boolean, life: number): Bolt {
+    const segs: BoltSeg[] = [], main = WellAnim.jag(x0, y0, x1, y1, 0.55);
+    const add = (pts: [number, number][], k0: number, k1: number, w: number): void => {
+      for (let i = 1; i < pts.length; i++) segs.push({ x0: pts[i - 1][0], y0: pts[i - 1][1], x1: pts[i][0], y1: pts[i][1], k: k0 + (k1 - k0) * (i / pts.length), w });
+    };
+    add(main, 0, 1, 2);
+    let forks = 0;
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    for (let i = 2; i < main.length - 2 && forks < 4; i++) {
+      if (Math.random() > 0.22) continue;
+      forks++;
+      const k = i / main.length, [bx, by] = main[i];
+      const a = Math.atan2(y1 - y0, x1 - x0) + (Math.random() < 0.5 ? -1 : 1) * (0.45 + Math.random() * 0.6);
+      const fl = (0.2 + Math.random() * 0.25) * len * (1 - 0.4 * k) + 3;
+      const fork = WellAnim.jag(bx, by, bx + Math.cos(a) * fl, by + Math.sin(a) * fl, 0.6);
+      add(fork, k + 0.15, Math.min(1, k + 0.6), 1);
+      if (Math.random() < 0.4 && fork.length > 3) {
+        const [sx, sy] = fork[Math.floor(fork.length / 2)], b = a + (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.5);
+        add(WellAnim.jag(sx, sy, sx + Math.cos(b) * fl * 0.45, sy + Math.sin(b) * fl * 0.45, 0.6), k + 0.4, 1, 1);
+      }
+    }
+    return { born: this.last, life, back, strike, ex: x1, ey: y1, segs };
+  }
+
+  /** Overloaded: new bolts now and then (each lives a fraction of a second with one shape; re-drawn every frame they
+   * read as a sped-up film, the user): long ones from the crystal to the rings, behind it to the back rings or over it
+   * to the front ones, and short crackles off the crystal. The flare throws many at once. */
+  private spawnBolts(dt: number, unstable: number, flare: number, bob: number, rx: number, ry: number): void {
+    const frame = ((Math.floor(this.phase) % RINGS.spin.frames) + RINGS.spin.frames) % RINGS.spin.frames;
+    const starts = this.crystalPx, M = WELL_MARGIN;
+    if (!starts.length) return;
     const ccx = M + LAYERS.crystal.cx, ccy = M + LAYERS.crystal.cy + bob;
-    const n = flare > 0 ? 3 + Math.round(flare * 5) : 1 + Math.floor(unstable * (part === 'back' ? 1.5 : 2.5));
-    for (let a = 0; a < n; a++) {
-      if (flare <= 0 && rand(f, a + salt, 61) > 0.3 + unstable * 0.5) continue;
-      // from a point on the crystal, to a ring pixel well away from it
-      const si = Math.floor(rand(f, a + salt, 66) * (starts.length / 2)) * 2;
-      const sx = M + starts[si] + 0.5, sy = M + starts[si + 1] + bob + 0.5;
+    const from = (): [number, number] => {
+      const i = Math.floor(Math.random() * (starts.length / 2)) * 2;
+      return [M + starts[i] + 0.5, M + starts[i + 1] + bob + 0.5];
+    };
+    const count = (rate: number): number => { const n = rate * dt; return Math.floor(n) + (Math.random() < n % 1 ? 1 : 0); };
+    // bolts to the rings
+    for (let n = count(unstable * 6 + flare * 26); n > 0; n--) {
+      const back = Math.random() < 0.4, ends = this.ringPx[back ? 'back' : 'front'][frame];
+      if (!ends || !ends.length) continue;
       let ex = 0, ey = 0;
       for (let tries = 0; tries < 10; tries++) {
-        const i = Math.floor(rand(f, a * 13 + tries + salt, 62) * (ends.length / 2)) * 2;
-        ex = M + ends[i] + rx; ey = M + ends[i + 1] + ry;
-        if (Math.hypot(ex - ccx, ey - ccy) > 16) break;
+        const i = Math.floor(Math.random() * (ends.length / 2)) * 2;
+        ex = M + ends[i] + rx + 0.5; ey = M + ends[i + 1] + ry + 0.5;
+        if (Math.hypot(ex - ccx, ey - ccy) > 15) break;
       }
-      this.bolt(g, sx, sy, ex, ey, f * 97 + a + salt, flare);
+      const [sx, sy] = from();
+      this.bolts.push(this.makeBolt(sx, sy, ex, ey, back, true, 0.22 + Math.random() * 0.22 + flare * 0.15));
+    }
+    // crackles: short forked sparks off the crystal into the air round it
+    for (let n = count(unstable * 6 + flare * 30); n > 0; n--) {
+      const [sx, sy] = from(), a = Math.atan2(sy - ccy, sx - ccx) + (Math.random() - 0.5) * 1.4, l = 5 + Math.random() * 8 + flare * 6;
+      this.bolts.push(this.makeBolt(sx, sy, sx + Math.cos(a) * l, sy + Math.sin(a) * l, Math.random() < 0.35, false, 0.12 + Math.random() * 0.14));
     }
   }
 
-  /** One bolt, jagged, white-hot at its root, orange at its tip, with now and then a short fork. */
-  private bolt(g: Ctx, x0: number, y0: number, x1: number, y1: number, seed: number, flare: number): void {
-    const len = Math.hypot(x1 - x0, y1 - y0), steps = Math.max(3, Math.round(len / 5));
-    const nx = -(y1 - y0) / (len || 1), ny = (x1 - x0) / (len || 1);
-    const pts: [number, number][] = [[x0, y0]];
-    for (let s = 1; s < steps; s++) {
-      const k = s / steps, j = (rand(seed, s, 64) - 0.5) * 6 * Math.sin(k * Math.PI);
-      pts.push([x0 + (x1 - x0) * k + nx * j, y0 + (y1 - y0) * k + ny * j]);
+  /** The live bolts behind the crystal (`back`) or over it; each holds its shape, bright, then fades out. */
+  private drawBolts(g: Ctx, t: number, back: boolean): void {
+    this.bolts = this.bolts.filter((b) => t - b.born < b.life && t >= b.born);
+    for (const b of this.bolts) {
+      if (b.back !== back) continue;
+      const age = (t - b.born) / b.life;
+      g.globalAlpha = age < 0.55 ? 1 : 1 - (age - 0.55) / 0.45;
+      const hot = age < 0.15 ? 0.3 : 0;   // the first moment of a strike runs whiter
+      for (const s of b.segs) if (s.w > 1) X.line(g, s.x0, s.y0, s.x1, s.y1, ramp(BOLT_EDGE, s.k - hot), 2);
+      for (const s of b.segs) X.line(g, s.x0, s.y0, s.x1, s.y1, ramp(BOLT_CORE, s.k - hot + (s.w > 1 ? 0 : 0.2)), 1);
+      if (back && b.strike) X.glow(g, b.ex, b.ey, 3, '#ff9a30', 0.6);
+      g.globalAlpha = 1;
     }
-    pts.push([x1, y1]);
-    const hot = Math.min(0.6, flare * 0.6);   // at the flare the whole bolt runs whiter
-    for (let i = 1; i < pts.length; i++) {
-      const k = Math.max(0, (i - 0.5) / (pts.length - 1) - hot);
-      X.line(g, pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1], ramp(BOLT_EDGE, k), 2);
+  }
+
+  /** Where the bolts over the crystal strike the front rings: a flash on the band, over it. */
+  private drawStrikes(g: Ctx, t: number): void {
+    for (const b of this.bolts) {
+      if (b.back || !b.strike) continue;
+      const age = (t - b.born) / b.life, a = age < 0.55 ? 1 : 1 - (age - 0.55) / 0.45;
+      X.glow(g, b.ex, b.ey, 3.5, '#ffb040', 0.7 * a);
+      if (age < 0.5) X.px(g, Math.floor(b.ex), Math.floor(b.ey), '#fff2b0');
     }
-    for (let i = 1; i < pts.length; i++) {
-      const k = Math.max(0, (i - 0.5) / (pts.length - 1) - hot);
-      X.line(g, pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1], ramp(BOLT_CORE, k), 1);
-    }
-    if (rand(seed, 99, 67) < 0.45 && pts.length > 3) {
-      const m = Math.floor(pts.length / 2), [bx, by] = pts[m];
-      const fx = bx + (x1 - x0) * 0.25 + nx * (rand(seed, 98, 68) - 0.5) * 14, fy = by + (y1 - y0) * 0.25 + ny * (rand(seed, 97, 69) - 0.5) * 14;
-      X.line(g, bx, by, fx, fy, ramp(BOLT_EDGE, 0.8), 1);
-    }
-    X.glow(g, x1, y1, 4, '#ff9a30', 0.7);
   }
 
   /** A spark from leg i's runes, out from the drum and up: from its rune pixels if it shows, else from where it stands

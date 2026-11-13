@@ -137,6 +137,15 @@ The user approved the fall ("rings falling look good"). What they changed, and w
 | The rings' outline showed through the crystal in the fall | Blender's line pass ignored the holdout; `unhide` clears those lines. |
 | Failing should end in one large flare of lightning and runes | The flare is longer (a fifth of the power-down), throws many white-hot bolts at once, and every leg erupts. Then the rings fall. |
 
+Third round, same day:
+
+| Note | Done |
+|---|---|
+| The overloaded lightning is too fast, like a sped-up video | Each bolt is shaped once and held for 0.2 to 0.45 s, then fades (it was re-rolled 16 times a second); the flicker of the glow slowed to 9 a second. |
+| Single lines from core to rings; the original's lightning branches | Bolts are jagged by midpoint displacement, with forks and forks off forks, thinner and redder outward, plus short crackles off the crystal. |
+| Lightning drawn over the front of a ring that is in front of it | All lightning is drawn between the layers, so the front rings cover it; only the flash where a bolt strikes sits on top. |
+| Still no flaring from the runes, as in the bought picture | The three visible rune columns burn: rising flame inside them (white, gold, orange, gaps where the leg shows) and tongues licking out past both sides and above (`runeFire`). |
+
 ## Enemies at the wall's foot
 
 Not on the user's list, but it comes from the same layout: a full-height wall hides about 4 units of ground behind it, and enemies reaching the wall will be out of sight. A one-storey kit would be about 10 generations, with sign-off first. Decide once waves exist.

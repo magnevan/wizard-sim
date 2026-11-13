@@ -16,6 +16,7 @@ info = json.load(open(os.path.join(src, 'rings.json')))
 n, (cw, ch) = info['frames'], info['cell']
 lay = lambda name: Image.open(os.path.join(WELL, name)).convert('RGBA')
 drum, crystal, rings = lay('drum.png'), lay('crystal.png'), lay('rings.png')
+clear = lay('drum-clear.png')   # under the 3D rings: the drum without the bought rings' last rows (drum_fill.py)
 back, front = Image.open(os.path.join(src, 'back.png')).convert('RGBA'), Image.open(os.path.join(src, 'front.png')).convert('RGBA')
 W, H = drum.width, 96
 BG = (40, 40, 48, 255)
@@ -23,7 +24,7 @@ BG = (40, 40, 48, 255)
 
 def well3d(f):
     im = Image.new('RGBA', (W, H), BG)
-    im.alpha_composite(drum.crop((0, 0, W, H)))
+    im.alpha_composite(clear.crop((0, 0, W, H)))
     im.alpha_composite(back.crop((f * cw, 0, (f + 1) * cw, ch)))
     im.alpha_composite(crystal.crop((0, 0, W, H)))
     im.alpha_composite(front.crop((f * cw, 0, (f + 1) * cw, ch)))

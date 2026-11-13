@@ -337,7 +337,8 @@ if MODE == 'unwrap':
         bpy.ops.render.render(write_still=True)
     print('rendered unwrap')
     sys.exit(0)
-frames = 1 if MODE == 'test' else int(round(2 * math.pi * RO / REPEAT))
+# one frame per column of the engraving (pixelize.py COLS = 240 a turn), so the pattern steps a column a frame
+frames = 1 if MODE == 'test' else 240 // REPEAT
 for f in range(frames):
     pose(f / frames)
     bpy.context.view_layer.update()

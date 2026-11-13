@@ -144,7 +144,7 @@ Third round, same day:
 | The overloaded lightning is too fast, like a sped-up video | Each bolt is shaped once and held for 0.2 to 0.45 s, then fades (it was re-rolled 16 times a second); the flicker of the glow slowed to 9 a second. |
 | Single lines from core to rings; the original's lightning branches | Bolts are jagged by midpoint displacement, with forks and forks off forks, thinner and redder outward, plus short crackles off the crystal. |
 | Lightning drawn over the front of a ring that is in front of it | All lightning is drawn between the layers, so the front rings cover it; only the flash where a bolt strikes sits on top. |
-| Still no flaring from the runes, as in the bought picture | The three visible rune columns burn: rising flame inside them (white, gold, orange, gaps where the leg shows) and tongues licking out past both sides and above (`runeFire`). |
+| Still no flaring from the runes, as in the bought picture | The rune glyphs on the three visible legs burn: their strokes blaze and flame licks off them, up and to the sides (`runeFire`). A first try filled the whole rune column and made a bar of fire (the user: the rune shapes should burn, not the column). |
 
 ## Enemies at the wall's foot
 

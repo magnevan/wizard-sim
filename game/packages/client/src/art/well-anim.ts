@@ -62,6 +62,8 @@ const LEGS = Array.from({ length: 8 }, (_, i) => {
 });
 /** The visible legs' rune columns on the layer, x from to (the left, front and right legs). */
 const FIRE_COLS: readonly [number, number][] = [[29, 33], [48, 55], [71, 74]];
+/** Which ways flame licks off a rune's stroke, and how far at full heat: up the most, a little to either side. */
+const FLAME_DIRS: readonly (readonly [number, number, number])[] = [[0, -1, 2.8], [-1, 0, 1.6], [1, 0, 1.6]];
 /** Lightning's colour from root to tip: white-hot at the crystal, orange where it strikes (the bought flare's). */
 const BOLT_CORE = ['#ffffff', '#fff2b8', '#ffc860', '#ff8a28'];
 const BOLT_EDGE = ['#ffe8a0', '#ffb848', '#ff8a28', '#d04a18'];
@@ -114,8 +116,9 @@ export class WellAnim {
   private runes: number[][] = [];
   /** The visible runes by the leg they're on (LEGS' index). */
   private legRunes: number[][][] = LEGS.map(() => []);
-  /** Each visible leg's runes' bounds, where its fire burns (null: no runes show on it). */
-  private legBox: ({ x0: number; x1: number; y0: number; y1: number } | null)[] = [];
+  /** Every rune pixel, as x * 256 + y; and the rune pixels on the legs' rune columns, which burn when overloaded. */
+  private runeSet = new Set<number>();
+  private legGlyphs: number[][] = [];
   private bolts: Bolt[] = [];
 
   constructor() {
@@ -141,12 +144,10 @@ export class WellAnim {
       LEGS.forEach((l, i) => { if (!l.back && Math.abs(l.x - r[0]) < Math.abs(LEGS[best].x - r[0])) best = i; });
       this.legRunes[best].push(r);
     }
-    // the fire stands on the three rune columns that show, on the front legs (where the rune pixels crowd, read off the
-    // bought drum; the panels between carry stray ones), each as tall as its runes
-    this.legBox = FIRE_COLS.map(([x0, x1]) => {
-      const ys = this.runes.filter((r) => r[0] >= x0 && r[0] <= x1).map((r) => r[1]);
-      return ys.length ? { x0, x1, y0: Math.min(...ys), y1: Math.max(...ys) } : null;
-    });
+    // the glyphs that burn: those on the three rune columns that show, on the front legs (where the rune pixels crowd,
+    // read off the bought drum; the panels between carry stray ones)
+    this.runeSet = new Set(this.runes.map((r) => r[0] * 256 + r[1]));
+    this.legGlyphs = this.runes.filter((r) => FIRE_COLS.some(([x0, x1]) => r[0] >= x0 && r[0] <= x1));
     this.ready = true;
     return true;
   }
@@ -334,41 +335,30 @@ export class WellAnim {
   }
 
   /**
-   * The runes' fire, overloaded and at the flare (the bought overload: each leg's runes a column of flame, white-yellow
-   * in the middle, orange tongues licking out past both sides of the leg and above it). Per row, how far the flame
-   * reaches each side drifts with slow waves, so it licks rather than flickers.
+   * The runes' fire, overloaded and at the flare (the bought overload's runes burn and flare out): the rune glyphs on
+   * the legs blaze, and flame licks off their own strokes, up and out to the sides, a few pixels at most. The glyphs
+   * burn, not the leg (filling the rune column made a bar of fire, the user). The flame's reach drifts with slow waves
+   * over each stroke, so it licks rather than flickers.
    */
   private runeFire(g: Ctx, t: number, k: number): void {
     const f = clamp((k - 0.9) / 0.7, 0, 1.6);   // about 1 overloaded, more at the flare
     if (f <= 0.02) return;
-    const M = WELL_MARGIN, cols = ['#ffe890', '#ffb040', '#ff7a28', '#c8441c'];
-    this.legBox.forEach((b, i) => {
-      if (!b) return;
-      // flame inside the column, rising: white at its hottest, then gold and orange, gaps where the leg shows (a flat
-      // wash over the column read as a pale bar)
-      for (let y = b.y0; y <= b.y1; y++) {
-        for (let x = b.x0; x <= b.x1; x++) {
-          const v = f * (0.5 + 0.5 * Math.sin(x * 1.7 + y * 0.9 + t * 5 + i) * Math.sin(y * 0.45 + t * 3.3 - x * 0.6 + i * 2));
-          if (v > 0.3) X.px(g, M + x, M + y, v > 0.85 ? '#fff4c8' : v > 0.6 ? '#ffd060' : '#ff9a30');
+    const M = WELL_MARGIN, cols = ['#ffd060', '#ff9a30', '#e0602a'], on = this.runeSet;
+    for (const [x, y] of this.legGlyphs) {
+      const v = 0.5 + 0.5 * Math.sin(x * 2.1 + y * 1.3 + t * 4.5) * Math.sin(x * 0.7 - y * 0.9 - t * 2.9);
+      // the stroke itself, hottest where the flame swells
+      if (v * f > 0.55) X.px(g, M + x, M + y, '#fff0b8');
+      // flame off its open edges: up the most, a little to either side
+      for (const [dx, dy, reach] of FLAME_DIRS) {
+        if (on.has((x + dx) * 256 + y + dy)) continue;
+        const n = Math.round(f * v * reach);
+        for (let d = 1; d <= n; d++) {
+          const px = x + dx * d, py = y + dy * d;
+          if (on.has(px * 256 + py)) break;
+          X.px(g, M + px, M + py, cols[Math.min(cols.length - 1, d - 1)]);
         }
       }
-      for (let y = b.y0; y <= b.y1; y++) {
-        for (const side of [-1, 1]) {
-          const w = 0.5 + 0.5 * Math.sin(y * 0.7 + t * 4.2 * side + i * 1.9) * Math.cos(y * 0.23 - t * 2.6 + i + side);
-          const reach = Math.round(f * (0.6 + 3.6 * w * w));
-          for (let d = 1; d <= reach; d++) {
-            const x = side < 0 ? b.x0 - d : b.x1 + d;
-            X.px(g, M + x, M + y, cols[Math.min(cols.length - 1, d - 1 + (d === reach && reach > 1 ? 1 : 0))]);
-          }
-        }
-      }
-      // tongues above the leg's runes
-      for (let x = b.x0; x <= b.x1; x++) {
-        const w = 0.5 + 0.5 * Math.sin(x * 1.3 + t * 3.1 + i * 2.7) * Math.sin(x * 0.6 - t * 1.7 + i);
-        const h = Math.round(f * (0.5 + 4 * w * w));
-        for (let d = 1; d <= h; d++) X.px(g, M + x, M + b.y0 - d, cols[Math.min(cols.length - 1, Math.floor((d - 1) * 4 / Math.max(1, h)))]);
-      }
-    });
+    }
   }
 
   /** A jagged line from (x0, y0) to (x1, y1): its midpoints pushed sideways by up to `rough` of each piece's length, again

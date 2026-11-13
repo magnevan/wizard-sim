@@ -68,6 +68,26 @@ PATINA_ON = False   # the user: the patina hurt the look; round 8, without it, w
 CUT_STEPS, CUT_FLOOR = 3, 1   # the cut-away ground goes this many browns down the ladder, but not below this one
 
 
+# What the bought engraving taught, laid flat (straighten.py, 2026-11-13): short strokes running along the band, 2 to 4
+# px long and 1 tall, staggered row to row like brickwork, in four interleaved tones, a light border each side. So the
+# channel between the borders is three rows of tones per column, 20 columns that repeat (two repeats to the spin's loop):
+# 'H' a bright stroke (+1), 'M' a mid stroke (0), 'd' dark (-2), 'D' darkest (-3). The bright strokes keep to the middle
+# row; the rows by the borders are mostly dark with mid strokes, so nothing bright touches a border (the user).
+STROKES = (
+    'dDMMdDDdMMMdDdMMdDDd',
+    'HHHdDMHHdDHHHHdMHHdD',
+    'dMMdDdMMMdDDdMMdDdMd',
+)
+TONE = {'H': 2, 'M': 0, 'd': -2, 'D': -3}
+
+
+def tone_at(u, v):
+    """The engraving's shade step at band position u (0..1 round the ring), v (0..1 across its face)."""
+    col = int(np.floor(u * COLS)) % len(STROKES[0])
+    row = min(2, max(0, int((v - 0.15) / 0.7 * 3)))
+    return TONE[STROKES[row][col]]
+
+
 def mark_at(u, v):
     """At band position u (0..1 round the ring), v (0..1 across its face): 'raised' on a drawing, else 'cut' (the ground
     between). The borders are found on screen instead (pixel_art), as the face pixel just inside each edge."""
@@ -174,17 +194,12 @@ def pixel_art(rgba, sup, where=None):
                 continue
             u, v, _ = next(s for s in samples if s[2] == 'outer')
             if not inside[y, x] or by_rim[y, x]:
-                m = 'border'
-            else:
-                ms = [mark_at(su, sv) for su, sv, sk in samples if sk == 'outer']
-                m = 'raised' if ms.count('raised') * 2 >= len(ms) else 'cut'
-            if m == 'cut':
-                # the cut-away ground: darker, but never into the very darkest browns (the dark bottom sank to black)
-                idx[y, x] = max(min(idx[y, x], CUT_FLOOR), idx[y, x] - CUT_STEPS)
-                if PATINA_ON and patina_at(u, v, kind) > 0.7:
-                    green[y, x] = True
-            else:
-                idx[y, x] = min(top, idx[y, x] + 1)   # the borders and the drawings stand up and catch the light
+                idx[y, x] = min(top, idx[y, x] + 1)   # the smooth raised border catches the light
+                continue
+            # the strokes: the commonest shade step among the pixel's samples (a mean blurred them to mid-tones)
+            ts = [tone_at(su, sv) for su, sv, sk in samples if sk == 'outer']
+            step = max(set(ts), key=ts.count)
+            idx[y, x] = int(np.clip(idx[y, x] + step, min(idx[y, x], CUT_FLOOR), top))
     out[metal, :3] = LADDER[idx[metal]].astype(np.uint8)
     out[metal & green, :3] = PATINA
     out[on & dark, :3] = LINE

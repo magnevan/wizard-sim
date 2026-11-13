@@ -17,7 +17,7 @@
  * Rally (reviving a downed ally mid-wave) is not a power-up: every wizard can do it.
  */
 import type { Element } from '@wizard-sim/rules';
-import { ARCH, ARCHETYPES } from './archetypes';
+import { ARCH } from './archetypes';
 import { CASTS, canAct } from './cast';
 import { compile, type SpellSpec } from './compile';
 import { PERKS, SHAPES, STRUCT, T } from './config';
@@ -30,9 +30,10 @@ import { snapshot } from './state';
 import { poolCap } from './structures';
 import { atan2Turns } from './trig';
 import {
-  ALTAR_SPOTS, ECHO_LAG, ECHO_Q, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_PU, PHASE, PHASE_ENC, PICK_LOG, PU, PU_CAP, QUEUE_MAX, SURVIVE_GATES, TEAM, WARD,
-  buffers, createWorld, joinSeat, spawnBody, stackOf, type World,
+  ALTAR_SPOTS, ECHO_LAG, ECHO_Q, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_PU, PHASE, PHASE_ENC, PICK_LOG, PU, PU_CAP, QUEUE_MAX, SURVIVE_GATES, WARD,
+  buffers, createWorld, joinSeat, stackOf, type World,
 } from './world';
+import { spawnEnemy } from './spawn';
 
 export const SURVIVE_TIMES = { firstLull: 10, lull: 6, breather: 3, stand: 0.75, spawnEvery: 0.45, portalStagger: 1, restartAfter: 1.5, charm: 12 };
 
@@ -375,9 +376,7 @@ export function tickSurvive(w: World): void {
     const plan = survivePlan(st[1], seatsIn(w));
     for (let p = 0; p < MAX_PORTALS; p++) {
       if (!e.left[p] || --e.next[p] > 0) continue;
-      const a = ARCHETYPES[e.arch[p]];
-      const i = spawnBody(w, -1, KIND.enemy, TEAM.enemies, e.px[p], e.py[p], a.hp * plan.hp, a.radius);
-      if (i >= 0) { b.arch[i] = e.arch[p]; b.dmgMult[i] = plan.dmg; b.speedMult[i] = plan.speed; b.face[i] = 0; }
+      spawnEnemy(w, e.arch[p], e.px[p], e.py[p], { hpMult: plan.hp, dmg: plan.dmg, speed: plan.speed });
       e.left[p]--; e.next[p] = T(SURVIVE_TIMES.spawnEvery);
     }
     if (!wizardsUp(w)) { // everyone is down: the run ends here

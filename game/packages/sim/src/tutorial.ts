@@ -43,7 +43,7 @@
  * Everything here is state in w.tut and the world's pools, and runs inside step(), so it rolls back
  * and replays like the rest. The checks read this tick's events: tickTutorial runs last in the step.
  */
-import { ARCH, ARCHETYPES } from './archetypes';
+import { ARCH } from './archetypes';
 import { ARMS, SHAPES, T } from './config';
 import { EL, N_EL } from './elements';
 import { WALL } from './compile';
@@ -53,6 +53,7 @@ import { atan2Turns } from './trig';
 import {
   CAST_ID, KIND, MAX_SEATS, PHASE, QUEUE_MAX, SURF, TEAM, TERRAIN, WARD, ZONE, runeMax, spawnBody, type World,
 } from './world';
+import { spawnEnemy } from './spawn';
 import {
   TAG, TS, TUT_BEAT, TUT_BUCKLER_HP, TUT_END, TUT_PLACES as P, TUT_TIMES, arrivalsOf, calmOf, nextBeat, wavesOf, type Arrival,
 } from './tutorial-data';
@@ -82,12 +83,8 @@ function anyHostile(w: World): boolean {
 
 /** Spawns an enemy of archetype `arch` tagged for the tutorial. hp / radius default to the archetype's. */
 function spawn(w: World, arch: number, tag: number, x: number, y: number, o: { hp?: number; r?: number; dmg?: number; speed?: number } = {}): number {
-  const a = ARCHETYPES[arch], i = spawnBody(w, -1, KIND.enemy, TEAM.enemies, x, y, o.hp ?? a.hp, o.r ?? a.radius);
+  const i = spawnEnemy(w, arch, x, y, { ...o, face: 0.5 }); // facing west, toward the entry
   if (i < 0) return -1;
-  const b = w.bodies;
-  b.arch[i] = arch; b.face[i] = 0.5; // facing west, toward the entry
-  if (o.dmg !== undefined) b.dmgMult[i] = o.dmg;
-  if (o.speed !== undefined) b.speedMult[i] = o.speed;
   w.tut!.tag[i] = tag;
   return i;
 }

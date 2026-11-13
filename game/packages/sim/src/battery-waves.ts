@@ -26,13 +26,14 @@
  * The step and its timer live in the encounter's state (enc.state: [0] on, [1] step, [2] ticks to the next group,
  * [3] which group of FREE or HANDS); the lanes' portal slots are the encounter's, one per defence (MAX_PORTALS is 4).
  */
-import { ARCH, ARCHETYPES } from './archetypes';
+import { ARCH } from './archetypes';
 import { T, WELL } from './config';
 import { EL, N_EL } from './elements';
 import { len } from './geom';
 import { BATTERY, stepAway } from './battery';
 import { BTN, type PlayerInput } from './input';
-import { KIND, MAX_PORTALS, MAX_SEATS, TEAM, TERRAIN, alive, spawnBody, type World } from './world';
+import { KIND, MAX_PORTALS, MAX_SEATS, TERRAIN, alive, type World } from './world';
+import { spawnEnemy } from './spawn';
 import { WALL } from './compile';
 
 export const BSTEP = { arrive: 0, ring: 1, spray: 2, place: 3, brute: 4, free: 5, dry: 6, hands: 7, after: 8, repair: 9 } as const;
@@ -113,9 +114,8 @@ export function laneTarget(w: World, i: number): number {
 
 /** An enemy out of the trees, sent at defence `k`'s lane (-1: none, it hunts wizards as anywhere else). */
 function spawnAt(w: World, k: number, arch: number, x: number, y: number, loop: number): void {
-  const a = ARCHETYPES[arch], b = w.bodies;
-  const i = spawnBody(w, -1, KIND.enemy, TEAM.enemies, x, y, a.hp * (1 + 0.3 * loop), a.radius);
-  if (i >= 0) { b.arch[i] = arch; b.dmgMult[i] = 1; b.speedMult[i] = 1; b.face[i] = 0.25; w.battery!.lane[i] = k; }
+  const i = spawnEnemy(w, arch, x, y, { hpMult: 1 + 0.3 * loop, face: 0.25 });
+  if (i >= 0) w.battery!.lane[i] = k;
 }
 
 /**

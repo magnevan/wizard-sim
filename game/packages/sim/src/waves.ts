@@ -9,11 +9,12 @@
  *   BREATHER  3 s: downed wizards get back up, at half health.
  * Six authored waves of two or three archetypes, then they loop with more and tougher enemies.
  */
-import { ARCH, ARCHETYPES } from './archetypes';
+import { ARCH } from './archetypes';
 import { T } from './config';
 import { len } from './geom';
 import type { RoomDef } from './room';
-import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, ROOMS, TEAM, spawnBody, type World } from './world';
+import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, ROOMS, type World } from './world';
+import { spawnEnemy } from './spawn';
 
 const WAVES: readonly (readonly [number, number])[][] = [
   [[ARCH.swarmer, 6]],
@@ -75,9 +76,7 @@ export function tickWaves(w: World): void {
     const { loop } = wavePlan(st[1]);
     for (let p = 0; p < MAX_PORTALS; p++) {
       if (!e.left[p] || --e.next[p] > 0) continue;
-      const a = ARCHETYPES[e.arch[p]];
-      const i = spawnBody(w, -1, KIND.enemy, TEAM.enemies, e.px[p], e.py[p], a.hp * (1 + 0.3 * loop), a.radius);
-      if (i >= 0) { b.arch[i] = e.arch[p]; b.dmgMult[i] = 1 + 0.2 * loop; b.speedMult[i] = 1 + 0.06 * loop; b.face[i] = 0; }
+      spawnEnemy(w, e.arch[p], e.px[p], e.py[p], { hpMult: 1 + 0.3 * loop, dmg: 1 + 0.2 * loop, speed: 1 + 0.06 * loop });
       e.left[p]--; e.next[p] = T(WAVE_TIMES.spawnEvery);
     }
     if (!wizardsUp(w)) { // wiped: clear the field and try again after a lull

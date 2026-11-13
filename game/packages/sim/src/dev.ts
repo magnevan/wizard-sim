@@ -3,19 +3,15 @@
  * clear the field. They change world state from outside step(), so a run that used them no
  * longer replays from its inputs alone (the panel marks such runs).
  */
-import { ARCHETYPES } from './archetypes';
 import { T } from './config';
 import { N_EL } from './elements';
 import { openPortals } from './waves';
 import { openGates, restartRun } from './survive';
-import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, TEAM, runeMax, spawnBody, type World } from './world';
+import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, runeMax, type World } from './world';
+import { spawnEnemy } from './spawn';
 
 export function devSpawnEnemy(w: World, arch: number, x: number, y: number): number {
-  const a = ARCHETYPES[arch];
-  if (!a || arch === 0) return -1;
-  const i = spawnBody(w, -1, KIND.enemy, TEAM.enemies, x, y, a.hp, a.radius);
-  if (i >= 0) w.bodies.arch[i] = arch;
-  return i;
+  return spawnEnemy(w, arch, x, y);
 }
 
 export function devRefillRunes(w: World, seat: number): void {

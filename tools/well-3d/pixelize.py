@@ -78,7 +78,10 @@ STROKES = (
     'HHHdDMHHdDHHHHdMHHdD',
     'dMMdDdMMMdDDdMMdDdMd',
 )
-TONE = {'H': 1, 'M': 0, 'd': -2, 'D': -3}
+# the channel sits a shade under the face's own brown, so a bright streak has room to stand out (the front faces rank
+# near the top of the ladder, and a streak 'two up' was clipped there, so streaks vanished, round 15)
+TONE = {'H': 2, 'M': -1, 'd': -3, 'D': -4}
+TONE_LOG = None   # a dict to fill with each channel pixel's (step, row, rows), for checking where the streaks land
 LOOP = 40   # columns in the spin's loop (a sixth of a turn): the streak rows repeat after it
 
 
@@ -89,7 +92,8 @@ def streak_row(seed, light, length=(2, 6), gap=(1, 3)):
     rng = np.random.default_rng(seed)
     s = ''
     while len(s) < LOOP:
-        s += ''.join(rng.choice(list(light)) for _ in range(rng.integers(length[0], length[1] + 1)))
+        # one tone for the whole streak (a tone per pixel scattered the bright ones into dots)
+        s += str(rng.choice(list(light))) * int(rng.integers(length[0], length[1] + 1))
         s += ''.join(rng.choice(['d', 'D'], p=[0.6, 0.4]) for _ in range(rng.integers(gap[0], gap[1] + 1)))
     return s[:LOOP]
 
@@ -97,9 +101,10 @@ def streak_row(seed, light, length=(2, 6), gap=(1, 3)):
 # By the borders, mostly dark with a short mid stroke now and then; in the middle, bright and mid streaks.
 EDGE_ROWS = [streak_row(11, 'M', (1, 2), (3, 5)), streak_row(12, 'M', (1, 2), (3, 5))]
 # fewer, longer bright streaks with more dark round them (the user, round 13): a streak row, then a mostly dark one
-# then less bright (the user, round 14: too much bright): streaks mostly mid with some bright, bright only a shade up
-MID_ROWS = [streak_row(21, 'HMM', (3, 7), (3, 6)), streak_row(22, 'M', (1, 3), (2, 5)),
-            streak_row(23, 'MHM', (3, 7), (3, 6)), streak_row(24, 'M', (1, 3), (2, 5))]
+# then less of it (the user, round 14: too much bright), but keeping the streaks' contrast (dimming them too lost them,
+# round 15): bright streaks only in one row of four, further apart; the others mostly dark with mid strokes
+MID_ROWS = [streak_row(21, 'HHM', (3, 7), (4, 8)), streak_row(22, 'M', (1, 3), (2, 5)),
+            streak_row(23, 'HMH', (3, 6), (4, 8)), streak_row(24, 'M', (1, 3), (2, 5))]
 
 
 def streak_tone(u, r, n):
@@ -225,6 +230,18 @@ def pixel_art(rgba, sup, where=None):
         chan = np.zeros((h, w), bool)
         for (y, x) in face_samples:
             chan[y, x] = not rim[y, x] and inside[y, x] and not by_rim[y, x]
+        # which way the band runs at each pixel, from how u changes on screen: along x, count rows down the column; along
+        # y, along the row (taking the shorter crossing let neighbours on a 45-degree band disagree, scattering the
+        # streaks into dots)
+        umid = {k: sorted(s[0] for s in v if s[2] == 'outer') for k, v in face_samples.items()}
+        umid = {k: v[len(v) // 2] for k, v in umid.items() if v}
+
+        def du(a, b):
+            if a not in umid or b not in umid:
+                return 0.0
+            d = umid[b] - umid[a]
+            return abs(d - round(d))
+        runs_x = {k: du((k[0], k[1] - 1), (k[0], k[1] + 1)) >= du((k[0] - 1, k[1]), (k[0] + 1, k[1])) for k in umid}
         across = {}
         for axis in (0, 1):
             m = chan if axis == 0 else chan.T
@@ -240,7 +257,7 @@ def pixel_art(rgba, sup, where=None):
                         e += 1
                     for t in range(j, e):
                         key = (t, i) if axis == 0 else (i, t)
-                        if key not in across or e - j < across[key][1]:
+                        if runs_x.get(key, True) == (axis == 0):
                             across[key] = (t - j, e - j)
                     j = e
         for (y, x), samples in face_samples.items():
@@ -253,6 +270,8 @@ def pixel_art(rgba, sup, where=None):
             us = sorted(s[0] for s in samples if s[2] == 'outer')
             r, n = across[(y, x)]
             step = streak_tone(us[len(us) // 2], r, n)
+            if TONE_LOG is not None:
+                TONE_LOG[(y, x)] = (step, r, n)
             idx[y, x] = int(np.clip(idx[y, x] + step, min(idx[y, x], CUT_FLOOR), top))
     out[metal, :3] = LADDER[idx[metal]].astype(np.uint8)
     out[metal & green, :3] = PATINA

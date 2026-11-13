@@ -21,7 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FIT = json.load(open(os.path.join(HERE, 'rings-fit.json')))
 BUILD = os.path.join(HERE, 'build')
 CANVAS_W, CANVAS_H, SUPER = 104, 56, 4
-REPEAT = 24   # the braid's repeats round the ring (band_texture.py): the spin loops after one
+REPEAT = 6    # the engraving's whole pattern repeats this often round the ring (band_texture.py): the spin loops after one
 W = FIT['W']
 # the bought rings aren't one size (the user): one passes just inside the other, a band's thickness apart, so they never
 # meet. BIG says which: 'B' (the mirrored one) or 'A'.
@@ -50,9 +50,9 @@ def band_material():
     ramp = nt.nodes.new('ShaderNodeValToRGB')
     ramp.color_ramp.interpolation = 'CONSTANT'
     ramp.color_ramp.elements[0].position = 0.0
-    ramp.color_ramp.elements[0].color = (0.1, 0.065, 0.035, 1)
+    ramp.color_ramp.elements[0].color = (0.24, 0.16, 0.085, 1)
     ramp.color_ramp.elements[1].position = 0.6
-    ramp.color_ramp.elements[1].color = (0.55, 0.39, 0.22, 1)
+    ramp.color_ramp.elements[1].color = (0.72, 0.53, 0.31, 1)
     nt.links.new(tex.outputs['Color'], ramp.inputs['Fac'])
     nt.links.new(ramp.outputs['Color'], b.inputs['Base Color'])
     bump = nt.nodes.new('ShaderNodeBump')
@@ -60,8 +60,8 @@ def band_material():
     bump.inputs['Distance'].default_value = 0.5
     nt.links.new(tex.outputs['Color'], bump.inputs['Height'])
     nt.links.new(bump.outputs['Normal'], b.inputs['Normal'])
-    b.inputs['Roughness'].default_value = 0.38
-    b.inputs['Metallic'].default_value = 0.65
+    b.inputs['Roughness'].default_value = 0.3
+    b.inputs['Metallic'].default_value = 0.85
     return m
 
 
@@ -94,9 +94,9 @@ def inner_material():
 
 BAND = band_material()
 # the inside face: a plain middling brown, lit by the crystal so it's lightest near the middle and darker further out
-INNER = plain('inner', (0.13, 0.08, 0.042), rough=0.6, metal=0.4)
+INNER = plain('inner', (0.2, 0.12, 0.06), rough=0.35, metal=0.8)
 # the band's top and bottom: plain and lighter than the inside, so the far arcs read as top vs inside (the user)
-RIM = plain('rim', (0.78, 0.6, 0.38), rough=0.5, metal=0.4)
+RIM = plain('rim', (0.8, 0.62, 0.4), rough=0.3, metal=0.8)
 
 H2 = W / 2
 THICK = 3.2     # the band's radial thickness; its corners are sharp right angles, as the bought bands read (the user)
@@ -192,17 +192,29 @@ scene.collection.objects.link(sun_o)
 # the bought rings read as lit from about the camera (the user, 2026-11-13): the key light comes from just above and
 # left of the view, so faces turned to the viewer are brightest
 sun_o.rotation_euler = (-(VIEW + Vector((-0.3, 0, 0.35)))).to_track_quat('-Z', 'Y').to_euler()
+# what the metal reflects: bright warm above, near black below, so a band's shade keeps changing as it curves (the
+# user: the first light read flat next to the bought rings' many shade changes)
 world = bpy.data.worlds.new('world')
 world.use_nodes = True
-world.node_tree.nodes['Background'].inputs['Color'].default_value = (1, 0.9, 0.8, 1)
-world.node_tree.nodes['Background'].inputs['Strength'].default_value = 0.25
+wt = world.node_tree
+coord = wt.nodes.new('ShaderNodeTexCoord')
+sep = wt.nodes.new('ShaderNodeSeparateXYZ')
+wt.links.new(coord.outputs['Generated'], sep.inputs['Vector'])
+sky = wt.nodes.new('ShaderNodeValToRGB')
+sky.color_ramp.elements[0].position = 0.3
+sky.color_ramp.elements[0].color = (0.12, 0.09, 0.06, 1)
+sky.color_ramp.elements[1].position = 0.85
+sky.color_ramp.elements[1].color = (1.0, 0.86, 0.66, 1)
+wt.links.new(sep.outputs['Z'], sky.inputs['Fac'])
+wt.links.new(sky.outputs['Color'], wt.nodes['Background'].inputs['Color'])
+wt.nodes['Background'].inputs['Strength'].default_value = 1.2
 scene.world = world
 
 r = scene.render
 r.engine = 'CYCLES'
 scene.cycles.device = 'CPU'
-scene.cycles.samples = 32
-scene.cycles.use_denoising = False
+scene.cycles.samples = 128
+scene.cycles.use_denoising = True   # shiny metal is noisy, and noise snaps to speckle
 r.film_transparent = True
 r.resolution_x, r.resolution_y = CANVAS_W * SUPER, CANVAS_H * SUPER
 r.resolution_percentage = 100
@@ -242,7 +254,7 @@ def shoot(path):
     user saw black lines where two separately rendered halves met)."""
     cam.clip_start, cam.clip_end = 0.1, 400
     r.use_freestyle = True
-    scene.cycles.samples = 32
+    scene.cycles.samples = 128
     r.filepath = path + '-full.png'
     bpy.ops.render.render(write_still=True)
     cam.clip_end = DIST

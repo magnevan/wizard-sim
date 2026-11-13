@@ -18,7 +18,8 @@ LINE = (18, 14, 26)
 def palette():
     im = Image.open(RINGS).convert('RGBA')
     c = collections.Counter(p[:3] for p in im.getdata() if p[3] > 0)
-    return np.array([k for k, n in c.items() if k != LINE and n > 1], float)
+    # not the patina green: shaded metal snapped to it reads as grime (the 3D rings carry no patina)
+    return np.array([k for k, n in c.items() if k != LINE and n > 1 and not (k[1] > k[0])], float)
 
 
 PAL = palette()

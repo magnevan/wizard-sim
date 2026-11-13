@@ -46,33 +46,50 @@ LADDER, CUM = ladder()
 # border. The pattern is tiles of 8 columns x 3 rows ('X' raised, '.' cut), in a rotation of five so it isn't machine
 # even; columns are fractions of a turn (COLS round the ring), so a sixth of a turn (the spin's loop) is 8 whole tiles
 # ... and lands on the same rotation.
-COLS, SPACING = 240, 4   # dense (the user: they read as engravings, but far too sparse at 8)
-# Discrete small drawings cut into plain metal (the user: the bought engraving may be separate drawings, not one running
-# pattern), centred on the band's middle row so they survive where the face narrows toward a band's sides. Each is the
-# cut pixels as (columns along, rows across) from its centre. Five in rotation, SPACING columns apart: 40 columns, a
-# sixth of a turn, the spin's loop.
-MARKS = [
-    {(0, 0), (-1, 0), (1, 0), (0, -1), (0, 1)},            # a cross
-    {(-1, -1), (0, 0), (1, -1)},                             # a chevron
-    {(-1, 0), (1, 0), (0, -1), (0, 1)},                      # a small diamond
-    {(-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0)},              # a bar
-    {(-1, 1), (0, 0), (1, -1), (0, 1)},                      # a hook
+COLS, SPACING = 240, 4
+# The bought engraving read by the user (2026-11-13): many distinct light drawings, raised, with the dark filling the
+# negative space between them, and a raised border top and bottom. So the channel between the borders is cut away, and
+# small drawings stand up from it, 3 x 3 pixels, a column of dark between each. Five in rotation, SPACING columns apart:
+# 20 columns a round, two rounds a sixth of a turn (the spin's loop). Each drawing's rows are top, middle, bottom.
+GLYPHS = [
+    ('.X.', 'XXX', '.X.'),   # a plus
+    ('X.X', 'XXX', 'X.X'),   # an H
+    ('XXX', '.X.', '.X.'),   # a T
+    ('.XX', '.X.', 'XX.'),   # an S
+    ('X..', 'XX.', 'X.X'),   # a hook
 ]
-CUT_STEPS, CUT_FLOOR = 4, 1   # a cut pixel goes this many browns down the ladder, but not below this one
+CUT_STEPS, CUT_FLOOR = 3, 1   # the cut-away ground goes this many browns down the ladder, but not below this one
 
 
 def mark_at(u, v):
-    """'cut' where a drawing is cut at band position u (0..1 round the ring), v (0..1 across its face), 'border' on the
-    smooth raised edges, else None."""
-    # the face is about 5 px tall on screen: a border a fifth of it wide is a pixel, the cut line inside it another
+    """At band position u (0..1 round the ring), v (0..1 across its face): 'border' on the smooth raised edges, 'raised'
+    on a drawing, else 'cut' (the ground between)."""
+    # the face is about 5 px tall on screen: a border a fifth of it wide is a pixel
     if v < 0.2 or v > 0.8:
         return 'border'
-    if v < 0.3 or v > 0.7:
-        return 'groove'
     col = u * COLS
-    k = int(round(col / SPACING))
-    du, dv = int(round(col - k * SPACING)), int(round((v - 0.5) * 7))
-    return 'cut' if (du, dv) in MARKS[k % len(MARKS)] else None
+    k = int(np.floor(col / SPACING))
+    du = int(np.floor(col - k * SPACING))          # 0..3: three columns of drawing, then one of ground
+    dv = min(2, max(0, int((v - 0.2) / 0.6 * 3)))  # the three rows between the borders
+    if du > 2:
+        return 'cut'
+    return 'raised' if GLYPHS[k % len(GLYPHS)][dv][du] == 'X' else 'cut'
+
+
+PATINA = (42, 52, 46)   # the bought rings' green-grey
+
+
+def patina_at(u, v, kind):
+    """Sparse weathering blotches, fixed to the band so they turn with it: smooth noise over cells 4 columns by 2 rows,
+    repeating every 40 columns (the loop). Mostly in the cut ground and on the insides."""
+    col, row = (u * COLS) % 40, v * 7
+
+    def cell(i, j):
+        return ((int(i) % 10) * 73856093 ^ int(j) * 19349663 ^ (0 if kind == 'outer' else 83492791)) % 1000 / 1000.0
+    gx, gy = col / 4, row / 2
+    i, j, fx, fy = np.floor(gx), np.floor(gy), gx - np.floor(gx), gy - np.floor(gy)
+    a, b, c, d = cell(i, j), cell(i + 1, j), cell(i, j + 1), cell(i + 1, j + 1)
+    return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy
 
 
 def read_where(path, sup, h, w):
@@ -110,6 +127,7 @@ def pixel_art(rgba, sup, where=None):
     idx = np.full((h, w), -1)
     idx[metal] = np.searchsorted(CUM, q).clip(0, len(LADDER) - 1)
     kinds = np.full((h, w), -1)
+    green = np.zeros((h, w), bool)
     if where:
         top = len(LADDER) - 1
         for (y, x), (u, v, kind) in where.items():
@@ -121,16 +139,21 @@ def pixel_art(rgba, sup, where=None):
                 # render's own shade there is one flat brown, so it's set here, not nudged)
                 d = math.hypot(x + 0.5 - CRYSTAL[0], (y + 0.5 - CRYSTAL[1]) * 1.6)
                 idx[y, x] = INNER_STEPS[0] if d < 20 else INNER_STEPS[1] if d < 31 else INNER_STEPS[2]
+                if patina_at(u, v, kind) > 0.78:
+                    green[y, x] = True
                 continue
             if kind != 'outer':
                 continue
             m = mark_at(u, v)
-            if m in ('cut', 'groove'):
-                # cut: darker, but never into the very darkest browns (the dark bottom sank to black)
-                idx[y, x] = max(min(idx[y, x], CUT_FLOOR), idx[y, x] - (CUT_STEPS if m == 'cut' else 2))
+            if m == 'cut':
+                # the cut-away ground: darker, but never into the very darkest browns (the dark bottom sank to black)
+                idx[y, x] = max(min(idx[y, x], CUT_FLOOR), idx[y, x] - CUT_STEPS)
+                if patina_at(u, v, kind) > 0.7:
+                    green[y, x] = True
             elif m == 'border':
-                idx[y, x] = min(top, idx[y, x] + 2)   # the smooth raised borders catch the light
+                idx[y, x] = min(top, idx[y, x] + 1)   # the smooth raised borders catch the light
     out[metal, :3] = LADDER[idx[metal]].astype(np.uint8)
+    out[metal & green, :3] = PATINA
     out[on & dark, :3] = LINE
     out[on, 3] = 255
     return out, kinds

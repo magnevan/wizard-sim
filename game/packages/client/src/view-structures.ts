@@ -19,7 +19,7 @@
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
-  AI, ARCH, drivePlace, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
+  EV, AI, ARCH, drivePlace, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
   N_ALTARS, N_EL, PERKS, QUEUE_MAX, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
   isPropWall, terrainNear,
@@ -343,11 +343,11 @@ export class StructureView {
     this.scorch.afterStep(w, t);
     const near = (ax: number, ay: number, bx: number, by: number, r = 0.7) => Math.abs(ax - bx) < r && Math.abs(ay - by) < r;
     const dismissed = new Set<number>();
-    for (const e of w.events) if (e.kind === 'burst' && e.text === 'dismissed') { dismissed.add(e.who); skip.add(e); this.add('dismiss', t, 0.6, { who: e.who, x: e.x, y: e.y, seed: tick }); }
+    for (const e of w.events) if (e.kind === 'burst' && e.ev === EV.dismiss) { dismissed.add(e.who); skip.add(e); this.add('dismiss', t, 0.6, { who: e.who, x: e.x, y: e.y, seed: tick }); }
     // Survive's Rally: the revive moment, and a ring that breaks
     for (const e of w.events) {
-      if (e.kind === 'burst' && e.text === 'Rally') { skip.add(e); this.add('rally', t, 1.4, { who: e.who, n: e.src ?? -1, x: e.x, y: e.y, seed: tick }); }
-      if (e.kind === 'fizzle' && e.text === 'rally broken') this.add('rallybreak', t, 0.6, { who: e.who, n: e.src ?? -1, x: e.x, y: e.y, seed: tick });
+      if (e.kind === 'burst' && e.ev === EV.rally) { skip.add(e); this.add('rally', t, 1.4, { who: e.who, n: e.src ?? -1, x: e.x, y: e.y, seed: tick }); }
+      if (e.kind === 'fizzle' && e.ev === EV.rallyBroken) this.add('rallybreak', t, 0.6, { who: e.who, n: e.src ?? -1, x: e.x, y: e.y, seed: tick });
     }
     // weapon and guard moves (hands.ts, guards.ts): each its own short readable effect
     for (const e of w.events) {

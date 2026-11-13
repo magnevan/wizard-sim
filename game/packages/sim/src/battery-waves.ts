@@ -32,7 +32,7 @@ import { EL, N_EL } from './elements';
 import { len } from './geom';
 import { BATTERY, stepAway } from './battery';
 import { BTN, type PlayerInput } from './input';
-import { KIND, MAX_PORTALS, MAX_SEATS, TERRAIN, alive, type World } from './world';
+import { EV, KIND, MAX_PORTALS, MAX_SEATS, TERRAIN, alive, type World } from './world';
 import { spawnEnemy } from './spawn';
 import { WALL } from './compile';
 
@@ -172,7 +172,7 @@ function runDry(w: World): void {
   w.enc.left.fill(0); // what was still to come out of the trees stays there
   for (let i = 0; i < MAX_SEATS; i++) if (d.drive[i] >= 0) stepAway(w, i);
   const well = w.def.props.find((p) => p.asset === 'battery-well');
-  if (well) w.events.push({ tick, kind: 'burst', who: -1, x: well.x, y: well.y, amount: 1, look: EL.fire, text: 'dry' });
+  if (well) w.events.push({ tick, kind: 'burst', who: -1, x: well.x, y: well.y, amount: 1, look: EL.fire, ev: EV.wellDry, text: 'dry' });
 }
 
 /** WELL.gutter after the well runs dry, the gate's fire is out (the view lowers it till then: view-structures.ts curtain). */
@@ -180,7 +180,7 @@ function gutterGate(w: World): void {
   const wl = w.walls;
   for (let k = 0; k < wl.type.length; k++) {
     if (wl.type[k] !== WALL.curtain || wl.owner[k] !== TERRAIN) continue;
-    w.events.push({ tick: w.clock[0], kind: 'burst', who: -1, x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.6, look: EL.fire, text: 'gutter' });
+    w.events.push({ tick: w.clock[0], kind: 'burst', who: -1, x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.6, look: EL.fire, ev: EV.gutter, text: 'gutter' });
     wl.type[k] = WALL.none;
   }
 }
@@ -191,7 +191,7 @@ function infuse(w: World): void {
   for (let i = 0; i < MAX_SEATS; i++) {
     if (!s.active[i]) continue;
     s.runes[i * N_EL + EL.fire - 1] = WELL.own;
-    w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: b.x[i], y: b.y[i], amount: 1, look: EL.fire, text: 'infuse' });
+    w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: b.x[i], y: b.y[i], amount: 1, look: EL.fire, ev: EV.infuse, text: 'infuse' });
   }
   d.lane.fill(-1);
   st[1] = BSTEP.hands; st[2] = T(WELL.through); st[3] = -1; // the first HANDS group opens once the pause is out (below)

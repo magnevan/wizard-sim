@@ -30,7 +30,7 @@ import { snapshot } from './state';
 import { poolCap } from './structures';
 import { atan2Turns } from './trig';
 import {
-  ALTAR_SPOTS, ECHO_LAG, ECHO_Q, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_PU, PHASE, PHASE_ENC, PICK_LOG, PU, PU_CAP, QUEUE_MAX, SURVIVE_GATES, WARD,
+  EV, ALTAR_SPOTS, ECHO_LAG, ECHO_Q, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_PU, PHASE, PHASE_ENC, PICK_LOG, PU, PU_CAP, QUEUE_MAX, SURVIVE_GATES, WARD,
   buffers, joinSeat, stackOf, type World,
 } from './world';
 import { createWorld } from './create';
@@ -295,7 +295,7 @@ function tickRally(w: World): void {
     if (keep >= 0 && canRally(w, keep) && inRange(keep)) by = keep;
     else for (let s = 0; s < MAX_SEATS && by < 0; s++) if (s !== d && b.team[s] === b.team[d] && canRally(w, s) && inRange(s)) by = s;
     if (by < 0 || by !== keep) {
-      if (r.rally[d] > T(0.25) && keep >= 0) w.events.push({ tick, kind: 'fizzle', who: d, src: keep, x: b.x[d], y: b.y[d], text: 'rally broken' });
+      if (r.rally[d] > T(0.25) && keep >= 0) w.events.push({ tick, kind: 'fizzle', who: d, src: keep, x: b.x[d], y: b.y[d], ev: EV.rallyBroken, text: 'rally broken' });
       r.rally[d] = 0;
     }
     r.rallyBy[d] = by;
@@ -308,7 +308,7 @@ function tickRally(w: World): void {
     b.downed[d] = 0; b.hp[d] = b.maxHp[d] * PERKS.rallyHp;
     b.burn[d] = b.frozen[d] = b.stun[d] = b.down[d] = 0; b.chill[d] = 0;
     r.rally[d] = 0; r.rallyBy[d] = -1;
-    w.events.push({ tick, kind: 'burst', who: d, src: by, x: b.x[d], y: b.y[d], amount: 1.2, look: EL.life, text: 'Rally' });
+    w.events.push({ tick, kind: 'burst', who: d, src: by, x: b.x[d], y: b.y[d], amount: 1.2, look: EL.life, ev: EV.rally, text: 'Rally' });
     w.events.push({ tick, kind: 'heal', who: d, src: by, x: b.x[d], y: b.y[d], amount: 0, look: EL.life, text: 'RALLIED' });
   }
 }
@@ -342,7 +342,7 @@ export function restartRun(w: World): void {
   fresh.run!.state[2] = w.run!.state[2] + 1;
   const src = snapshot(fresh), dst = buffers(w);
   for (let k = 0; k < dst.length; k++) new Uint8Array(dst[k].buffer, dst[k].byteOffset, dst[k].byteLength).set(src[k]);
-  w.events.push({ tick: w.clock[0], kind: 'cast', who: -1, x: 0, y: 0, text: 'New run' });
+  w.events.push({ tick: w.clock[0], kind: 'cast', who: -1, x: 0, y: 0, ev: EV.newRun, text: 'New run' });
 }
 
 /**
@@ -369,7 +369,7 @@ export function tickSurvive(w: World): void {
     if (st[2] <= 0) st[2] = T(st[1] === 1 ? SURVIVE_TIMES.firstLull : SURVIVE_TIMES.lull);
     if (--st[2] > 0) return;
     st[0] = PHASE_ENC.wave; st[2] = 0;
-    w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: `Wave ${st[1]}` });
+    w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, ev: EV.waveStart, text: `Wave ${st[1]}` });
     return;
   }
   if (st[0] === PHASE_ENC.wave) {
@@ -382,7 +382,7 @@ export function tickSurvive(w: World): void {
     }
     if (!wizardsUp(w)) { // everyone is down: the run ends here
       st[0] = PHASE_ENC.over; r.state[1] = st[3]; r.state[3] = 0; r.state[4] = st[1];
-      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: 'Run over' });
+      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, ev: EV.runOver, text: 'Run over' });
       return;
     }
     let pending = 0;
@@ -392,7 +392,7 @@ export function tickSurvive(w: World): void {
       for (let p = 0; p < MAX_PORTALS; p++) e.total[p] = 0;
       endEchoes(w);
       refillPools(w);
-      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: 'Cleared' });
+      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, ev: EV.waveClear, text: 'Cleared' });
     }
     return;
   }

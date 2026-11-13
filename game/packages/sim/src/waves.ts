@@ -13,7 +13,7 @@ import { ARCH } from './archetypes';
 import { T } from './config';
 import { len } from './geom';
 import type { RoomDef } from './room';
-import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, ROOMS, type World } from './world';
+import { EV, KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, ROOMS, type World } from './world';
 import { spawnEnemy } from './spawn';
 
 const WAVES: readonly (readonly [number, number])[][] = [
@@ -68,7 +68,7 @@ export function tickWaves(w: World): void {
     if (!e.total[0]) { openPortals(w); st[2] = T(st[1] === 1 && !st[3] ? WAVE_TIMES.firstLull : WAVE_TIMES.lull); }
     if (--st[2] > 0) return;
     st[0] = PHASE_ENC.wave; st[2] = 0;
-    w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: `Wave ${st[1]}` });
+    w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, ev: EV.waveStart, text: `Wave ${st[1]}` });
     return;
   }
   if (st[0] === PHASE_ENC.wave) {
@@ -82,7 +82,7 @@ export function tickWaves(w: World): void {
     if (!wizardsUp(w)) { // wiped: clear the field and try again after a lull
       for (let i = MAX_SEATS; i < b.kind.length; i++) if (b.kind[i] === KIND.enemy) b.kind[i] = KIND.none;
       st[0] = PHASE_ENC.breather; st[2] = T(WAVE_TIMES.breather);
-      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: 'Wiped' });
+      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, ev: EV.wiped, text: 'Wiped' });
       return;
     }
     let pending = 0;
@@ -90,7 +90,7 @@ export function tickWaves(w: World): void {
     if (!pending && !enemiesAlive(w)) {
       st[0] = PHASE_ENC.breather; st[2] = T(WAVE_TIMES.breather); st[3]++;
       st[1]++;
-      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: 'Cleared' });
+      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, ev: EV.waveClear, text: 'Cleared' });
     }
     return;
   }

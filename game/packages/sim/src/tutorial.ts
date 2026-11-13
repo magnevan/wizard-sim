@@ -51,11 +51,11 @@ import { cellAt, spawnZone, stored, touchFloor } from './effects';
 import { conjureGuard } from './guards';
 import { atan2Turns } from './trig';
 import {
-  CAST_ID, KIND, MAX_SEATS, PHASE, QUEUE_MAX, SURF, TEAM, TERRAIN, WARD, ZONE, runeMax, spawnBody, type World,
+  CAST_ID, EV, KIND, MAX_SEATS, PHASE, QUEUE_MAX, SURF, TEAM, TERRAIN, WARD, ZONE, runeMax, spawnBody, type World,
 } from './world';
 import { spawnEnemy } from './spawn';
 import {
-  TAG, TS, TUT_BEAT, TUT_BUCKLER_HP, TUT_END, TUT_PLACES as P, TUT_TIMES, arrivalsOf, calmOf, nextBeat, wavesOf, type Arrival,
+  TAG, TS, TUT_BEAT, TUT_BUCKLER_HP, TUT_END, TUT_PLACES as P, TUT_TIMES, arrivalsOf, calmOf, nextBeat, noteBlocked, noteSlam, wavesOf, type Arrival,
 } from './tutorial-data';
 
 const dist = (ax: number, ay: number, bx: number, by: number): number => Math.sqrt((ax - bx) * (ax - bx) + (ay - by) * (ay - by));
@@ -373,11 +373,17 @@ function keepUp(w: World): void {
 /** One tick of the tutorial, last in the step. */
 export function tickTutorial(w: World): void {
   const t = w.tut!, st = t.state, b = w.bodies, ws = wizards(w);
+  // First, as when they were noted mid-step: shots that met a wizard's wall (the Shield beat), slams (the Retreat beat).
+  for (const e of w.events) {
+    if (e.kind !== 'note') continue;
+    if (e.ev === EV.shotWalled) noteBlocked(t);
+    else if (e.ev === EV.slamDone) noteSlam(t, e.amount === 1);
+  }
   st[TS.ticks]++;
 
   // Fainting: tickHealth just stood a wizard at 0 hp back up at full (no waves run here); they lie still a moment.
   let fresh = false;
-  for (const e of w.events) if (e.kind === 'fizzle' && e.text === 'downed' && e.who >= 0 && e.who < MAX_SEATS) { t.faint[e.who] = T(TUT_TIMES.faint); fresh = true; }
+  for (const e of w.events) if (e.kind === 'fizzle' && e.ev === EV.downed && e.who >= 0 && e.who < MAX_SEATS) { t.faint[e.who] = T(TUT_TIMES.faint); fresh = true; }
   let fainted = 0;
   for (const i of ws) if (t.faint[i] > 0) { fainted++; t.faint[i]--; b.down[i] = Math.max(b.down[i], t.faint[i]); }
   if (fresh && ws.length && fainted === ws.length && st[TS.beat] !== TUT_END) {

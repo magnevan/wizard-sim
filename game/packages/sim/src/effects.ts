@@ -16,8 +16,7 @@ import { TERRAIN_HIT, clipRay, collideWalls, damageWall, fieldAlong, fieldAt, is
 import { WALL, compile, imbueLine, imbueReach } from './compile';
 import { ARCHETYPES } from './archetypes';
 import { RES, grounded, guardMissile, phased, taken, warm } from './guards';
-import { noteBlocked } from './tutorial-data';
-import { DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, PU, SURF, WARD, ZONE, alive, lingerLife, lingerSize, stackOf, type World } from './world';
+import { EV, DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, PU, SURF, WARD, ZONE, alive, lingerLife, lingerSize, stackOf, type World } from './world';
 
 export interface Payload {
   counts: Uint8Array;
@@ -642,7 +641,9 @@ export function tickMissiles(w: World): void {
     const wk = dead ? -1 : wallAt(w, m.x[j], m.y[j], m.r[j], b.team[m.owner[j]]);
     if (wk >= 0) {
       const mirror = wk !== TERRAIN_HIT && w.walls.type[wk] === WALL.barrier && m.owner[j] !== w.walls.owner[wk];
-      if (w.tut && wk !== TERRAIN_HIT && w.walls.owner[wk] >= 0 && w.walls.owner[wk] < MAX_SEATS && b.kind[m.owner[j]] === KIND.enemy) noteBlocked(w.tut); // the tutorial's Shield beat
+      if (wk !== TERRAIN_HIT && w.walls.owner[wk] >= 0 && w.walls.owner[wk] < MAX_SEATS && b.kind[m.owner[j]] === KIND.enemy) {
+        w.events.push({ tick: w.clock[0], kind: 'note', ev: EV.shotWalled, who: w.walls.owner[wk], x: m.x[j], y: m.y[j] }); // the tutorial's Shield beat counts these
+      }
       damageWall(w, wk, wallDamage(w, wk, m.els, j, m.scale[j]) * (mirror ? 0.5 : 1), m.els[j * N_EL + EL.fire - 1]);
       if (mirror) { m.vx[j] = -m.vx[j]; m.vy[j] = -m.vy[j]; m.owner[j] = w.walls.owner[wk]; m.lastHit[j] = -1; continue; }
       dead = true;
@@ -843,11 +844,11 @@ export function tickHealth(w: World): void {
       // In the Arena a downed wizard is out until the wave ends.
       b.downed[i] = 1; b.hp[i] = 0; b.burn[i] = 0;
       if (b.heldBy[i] >= 0) b.heldBy[i] = -1;
-      w.events.push({ tick: w.clock[0], kind: 'fizzle', who: i, x: b.x[i], y: b.y[i], text: 'downed' });
+      w.events.push({ tick: w.clock[0], kind: 'fizzle', who: i, x: b.x[i], y: b.y[i], ev: EV.downed, text: 'downed' });
     } else if (b.kind[i] === KIND.wizard && b.hp[i] <= 0 && !w.enc.state[0]) {
       b.hp[i] = b.maxHp[i];
       b.burn[i] = b.frozen[i] = b.stun[i] = 0; b.chill[i] = 0;
-      w.events.push({ tick: w.clock[0], kind: 'fizzle', who: i, x: b.x[i], y: b.y[i], text: 'downed' });
+      w.events.push({ tick: w.clock[0], kind: 'fizzle', who: i, x: b.x[i], y: b.y[i], ev: EV.downed, text: 'downed' });
     }
   }
 }

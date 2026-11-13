@@ -235,11 +235,39 @@ export interface Surfaces {
 }
 
 /** What happened this tick, for the view (VFX, sound). Not state: cleared every step. */
+/**
+ * What an event means, apart from how it looks: the view, the sound and the modes read this, never `text`, which is a
+ * label for the screen and can be reworded freely. Most events need none (their kind says it all).
+ */
+export const EV = {
+  none: 0,
+  /** A body died (fizzle); a wizard went down (fizzle). */
+  death: 1, downed: 2,
+  /** Banners (who -1): a wave starts, is cleared, everyone fell (the Arena), a Survive run ends or starts again. */
+  waveStart: 3, waveClear: 4, wiped: 5, runOver: 6, newRun: 7,
+  /** A Sigil device, ward or weapon was let go (burst). */
+  dismiss: 8,
+  /** Survive: a downed wizard is rallied (burst, src = the rallier), or the rally is broken (fizzle). */
+  rally: 9, rallyBroken: 10,
+  /** A soaking enemy is doused (hit); a guard parries (hit); a grabber takes someone (hit); a blow or status is blocked (fizzle). */
+  doused: 11, parry: 12, grabbed: 13, blocked: 14,
+  /** A turret's orbital strike (zap). */
+  orbital: 15,
+  /** The battery: the well runs dry (burst, who -1), a defence gutters out (burst), a wizard is infused (burst). */
+  wellDry: 16, gutter: 17, infuse: 18,
+  /** Notes (kind 'note', never drawn): an enemy's shot met a wall a wizard made; an enemy's slam finished (amount 1: it hit someone). */
+  shotWalled: 19, slamDone: 20,
+} as const;
+
 export interface SimEvent {
   tick: number;
   kind: 'queue' | 'cancel' | 'dry' | 'cast' | 'hit' | 'heal' | 'fizzle' | 'burst' | 'zap' | 'surge' | 'blink' | 'shatter' | 'freeze' | 'todo'
     /** A weapon or guard move (hands.ts, guards.ts): `text` names it (dash, link, retreat kinds, block, parry...). */
-    | 'move';
+    | 'move'
+    /** Facts for the modes (EV.shotWalled, EV.slamDone): no picture, no sound. */
+    | 'note';
+  /** What it means (EV), when the kind alone doesn't say. */
+  ev?: number;
   who: number;
   /** hit / heal: the body that dealt it (-1 for the world: burning, surfaces). */
   src?: number;

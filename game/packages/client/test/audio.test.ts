@@ -10,7 +10,7 @@ import { FIRE_KIT, useKit, SIGIL_KIT, layersOf } from '../src/audio/kits';
 import { SYNTH_IDS, SYNTH_LOOPS, renderSynth } from '../src/audio/synth';
 import { ENVS, LOOP_GRACE, Limiter, LoopTable, OPEN_HZ, envOfRoom, impulse, jitter, occlusion, pick, placeOf, runeMod, seeded, wallsBetween, type EnvName, type Listener, type WallSet } from '../src/audio/variation';
 import { SoundDirector, type SoundSink } from '../src/audio/director';
-import { NO_INPUT, createWorld, step, type SimEvent, type World } from '@wizard-sim/sim';
+import { EV, NO_INPUT, createWorld, step, type SimEvent, type World } from '@wizard-sim/sim';
 import { LoopbackHub, RollbackSession } from '@wizard-sim/net';
 import { demoInput, parseDemo } from '../src/demo';
 
@@ -373,13 +373,13 @@ describe('the director', () => {
   });
   test('only your own queue blips; a banner is a stinger', () => {
     const s = new FakeSink(), d = new SoundDirector(s), w = world();
-    fire(d, w, [ev({ kind: 'queue', who: 0, look: 8 }), ev({ kind: 'queue', who: 1, look: 8 }), ev({ kind: 'cast', who: -1, x: 0, y: 0, text: 'Wave 3' })]);
+    fire(d, w, [ev({ kind: 'queue', who: 0, look: 8 }), ev({ kind: 'queue', who: 1, look: 8 }), ev({ kind: 'cast', who: -1, x: 0, y: 0, ev: EV.waveStart, text: 'Wave 3' })]);
     expect(s.count('queue:fire')).toBe(1);
     expect(s.count('stinger:wave')).toBe(1);
   });
   test('interactions: a douse hisses, a shatter shatters, a death is a death', () => {
     const s = new FakeSink(), d = new SoundDirector(s), w = world();
-    fire(d, w, [ev({ text: 'Doused', amount: 3 }), ev({ kind: 'shatter' }), ev({ kind: 'fizzle', text: 'dies', look: 2, el: 8 }), ev({ kind: 'cancel', who: 0, text: 'Fire cancels Water', look: 8 })], 1);
+    fire(d, w, [ev({ ev: EV.doused, text: 'Doused', amount: 3 }), ev({ kind: 'shatter' }), ev({ kind: 'fizzle', ev: EV.death, text: 'dies', look: 2, el: 8 }), ev({ kind: 'cancel', who: 0, text: 'Fire cancels Water', look: 8 })], 1);
     expect(s.count('shatter')).toBe(1);
     expect(s.count('death:')).toBe(1);
     expect(s.count('douse')).toBe(1);

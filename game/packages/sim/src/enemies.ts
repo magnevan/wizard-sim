@@ -23,8 +23,7 @@ import { solidWall } from './compile';
 import { terrainNear } from './terrain';
 import { TERRAIN_HIT, damageWall, segDist } from './walls';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
-import { AI, KIND, MAX_SEATS, PU, STATUS_BIT, TEAM, WARD, stackOf, type World } from './world';
-import { noteSlam } from './tutorial-data';
+import { EV, AI, KIND, MAX_SEATS, PU, STATUS_BIT, TEAM, WARD, stackOf, type World } from './world';
 import { driving } from './battery';
 import { BWAVES, batteryStandoff, holdSpot, laneTarget } from './battery-waves';
 
@@ -75,7 +74,7 @@ function strike(w: World, src: number, t: number, dmg: number, knock: number, dx
   // A conjured guard (guards.ts): a parry or a Bulwark block stops the blow; resistance cuts it.
   if (t < MAX_SEATS && s.guard[t]) {
     const land = guardMelee(w, t, src, dmg, dx, dy);
-    if (land <= 0) { w.events.push({ tick: w.clock[0], kind: 'fizzle', who: t, x: b.x[t], y: b.y[t], text: 'Blocked' }); return; }
+    if (land <= 0) { w.events.push({ tick: w.clock[0], kind: 'fizzle', who: t, x: b.x[t], y: b.y[t], ev: EV.blocked, text: 'Blocked' }); return; }
     d *= land;
   }
   if (t < MAX_SEATS && s.ward[t] === WARD.stone) {
@@ -275,10 +274,10 @@ function slamWave(w: World, i: number): void {
     for (let k = 0; k < wl.type.length; k++) if (solidWall(wl.type[k]) && segDist(lx, ly, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] <= r) damageWall(w, k, dmg);
     w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: lx, y: ly, amount: r, look: EL.earth });
   }
-  if (front >= dc + r && w.tut) {
-    let hit = false;
-    for (let s = 0; s < b.kind.length; s++) if (b.slamBy[s] === i && b.slamAt[s] === at) hit = true;
-    noteSlam(w.tut, hit); // the tutorial's Retreat beat counts slams that hit nobody
+  if (front >= dc + r) {
+    let hit = 0;
+    for (let s = 0; s < b.kind.length; s++) if (b.slamBy[s] === i && b.slamAt[s] === at) hit = 1;
+    w.events.push({ tick: w.clock[0], kind: 'note', ev: EV.slamDone, who: i, x: lx, y: ly, amount: hit }); // the tutorial's Retreat beat counts slams that hit nobody
   }
 }
 
@@ -291,7 +290,7 @@ function dash(w: World, i: number): void {
     if (b.kind[s] !== KIND.wizard || b.downed[s] || b.heldBy[s] >= 0) continue;
     if (len(b.x[s] - b.x[i], b.y[s] - b.y[i]) > b.r[s] + b.r[i] + 0.2) continue;
     b.holding[i] = s; b.heldBy[s] = i; b.grabHp[i] = b.hp[i];
-    w.events.push({ tick: w.clock[0], kind: 'hit', who: s, x: b.x[s], y: b.y[s], amount: 0, text: 'Grabbed!' });
+    w.events.push({ tick: w.clock[0], kind: 'hit', who: s, x: b.x[s], y: b.y[s], amount: 0, ev: EV.grabbed, text: 'Grabbed!' });
     setAi(w, i, AI.grab);
     return;
   }
@@ -335,7 +334,7 @@ export function tickDeaths(w: World): void {
     if (b.holding[i] >= 0) release(w, i);
     const status = (b.frozen[i] ? STATUS_BIT.frozen : 0) | (b.wet[i] ? STATUS_BIT.wet : 0) | (b.burn[i] ? STATUS_BIT.burning : 0) | (b.stun[i] ? STATUS_BIT.stunned : 0) | (b.chill[i] > 0.17 ? STATUS_BIT.chilled : 0);
     // look = archetype; el, status and the blow's direction (x2, y2) let the view pick a death that fits.
-    w.events.push({ tick: w.clock[0], kind: 'fizzle', who: i, x: b.x[i], y: b.y[i], text: 'dies', look: b.arch[i], el: b.lastEl[i], mix: b.lastMix[i], shape: b.lastKind[i], status, x2: b.lastDX[i], y2: b.lastDY[i], amount: -b.hp[i] });
+    w.events.push({ tick: w.clock[0], kind: 'fizzle', who: i, x: b.x[i], y: b.y[i], ev: EV.death, text: 'dies', look: b.arch[i], el: b.lastEl[i], mix: b.lastMix[i], shape: b.lastKind[i], status, x2: b.lastDX[i], y2: b.lastDY[i], amount: -b.hp[i] });
     b.kind[i] = KIND.none;
     // Pyre (survive): an enemy you set burning goes up in a fire burst when it dies. It burns allies too.
     const src = b.burnSrc[i];

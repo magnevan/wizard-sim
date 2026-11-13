@@ -13,7 +13,7 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import {
-  BATTERY, CELL, DEVICE, ECHO_LAG, sprayReach, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SHAPES, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
+  EV, BATTERY, CELL, DEVICE, ECHO_LAG, sprayReach, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SHAPES, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
   compile, elementName, pedestalNear, queueFromCounts, specOf, wellNear,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
@@ -344,12 +344,12 @@ export class Vfx {
         return;
       }
       case 'burst': {
-        if (e.text === 'dismissed') return;
+        if (e.ev === EV.dismiss) return;
         const r = e.amount ?? 1;
         // the battery's well failing (sim/src/battery-waves.ts): the gate's fire gutters, and your own fire wells up in you
-        if (e.text === 'dry') return; // the well's light just goes out (art/lighting.ts)
-        if (e.text === 'gutter') { this.add('surge', t, 0.45, { x: e.x, y: e.y, seed }); return; }
-        if (e.text === 'infuse') { this.add('kindle', t, 1.8, { x: e.x, y: e.y, r, look, seed }); return; }
+        if (e.ev === EV.wellDry) return; // the well's light just goes out (art/lighting.ts)
+        if (e.ev === EV.gutter) { this.add('surge', t, 0.45, { x: e.x, y: e.y, seed }); return; }
+        if (e.ev === EV.infuse) { this.add('kindle', t, 1.8, { x: e.x, y: e.y, r, look, seed }); return; }
         const zone = ended.find((q) => near(q.x, q.y, e.x, e.y));
         if (zone) { this.add(zone.type === ZONE.geyser ? 'geyser' : 'blast', t, 2.6, { x: e.x, y: e.y, r, look, seed }); return; }
         if (healStones.some((p) => near(p[0], p[1], e.x, e.y))) { this.add('healburst', t, 1.8, { x: e.x, y: e.y, r, look, seed }); return; }

@@ -198,7 +198,7 @@ def entity(kind, n, x, y, fields=None):
         v = (fields or {}).get(f['__identifier'])
         f['__value'] = v
         tag = {'Int': 'V_Int', 'Float': 'V_Float', 'String': 'V_String', 'Bool': 'V_Bool'}[f['__type']]
-        f['realEditorValues'] = [{'id': tag, 'params': [v]}]
+        f['realEditorValues'] = [] if v is None else [{'id': tag, 'params': [v]}]
     return e
 
 es = []
@@ -211,8 +211,10 @@ runs = [(0, GATE[0] - PILLAR / 2), (GATE[1] + PILLAR - .1, W)]   # ends behind t
 for i, (a, b) in enumerate(runs):
     wy = WALL_Y - H / 2
     es.append(entity('Rock', i, (a + b) / 2, WALL_Y, {'x1': a - W / 2, 'y1': wy, 'x2': b - W / 2, 'y2': wy}))
+# what the game finds them by (game/packages/sim/src/battery.ts, battery-waves.ts): never the art's name
+ROLE = {'defence-tower': 'tower', 'possession-circle': 'circle', 'stakes': 'stakes', 'battery-well': 'well'}
 for i, (asset, x, y, blocks) in enumerate(props):
-    es.append(entity('Prop', i, x, y, {'asset': asset, 'blocks': blocks}))
+    es.append(entity('Prop', i, x, y, {'asset': asset, 'blocks': blocks, 'tag': ROLE.get(asset)}))
 
 level_uid = 109
 level = copy.deepcopy(source)

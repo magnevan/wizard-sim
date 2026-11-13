@@ -54,7 +54,35 @@ function batteryDriver() {
   };
 }
 
+/**
+ * The battery's whole lesson, fast: seat 0 takes a defence, the field is cleared every 90 ticks (so each step's group
+ * comes and goes), the well fails and runs dry, the infusion and the HANDS groups come, and at the end seat 0 presses
+ * Use at the well. It reaches every step, the repair included.
+ */
+function batteryLesson() {
+  return (w: World, t: number): PlayerInput[] => {
+    const b = w.bodies, ins: PlayerInput[] = [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT];
+    if (t === 30) {
+      const pad = w.def.props.filter((p) => p.asset === 'possession-circle')[1];
+      b.x[0] = pad.x + 1.2; b.y[0] = pad.y;
+      ins[0] = { ...NO_INPUT, buttons: BTN.use };
+    }
+    if (t % 90 === 0) for (let i = MAX_SEATS; i < b.kind.length; i++) if (b.kind[i] === KIND.enemy) b.kind[i] = KIND.none;
+    if (w.enc.state[1] === 8 && t % 20 === 0) { // after the fight: at the well, Use
+      const well = w.def.props.find((p) => p.asset === 'battery-well')!;
+      b.x[0] = well.x + 1; b.y[0] = well.y + 1;
+      ins[0] = { ...NO_INPUT, buttons: BTN.use };
+    }
+    return ins;
+  };
+}
+
 const RUNS: Record<string, () => Trail> = {
+  'battery-lesson': () => {
+    const w = createWorld(1, 1, { room: 'battery' }), out = trail(w, 9000, batteryLesson());
+    expect(w.enc.state[1], 'the run should reach the repair').toBe(9);
+    return out;
+  },
   arena: () => trail(createWorld(5, 2, { room: 'arena' }), 2400, bots(2)),
   survive: () => trail(createWorld(7, 2, { room: 'survive' }), 2400, bots(2)),
   battery: () => trail(createWorld(1, 1, { room: 'battery' }), 2400, batteryDriver()),

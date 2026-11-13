@@ -30,10 +30,12 @@ import { ARCH } from './archetypes';
 import { T, WELL } from './config';
 import { EL, N_EL } from './elements';
 import { len } from './geom';
+import { propsTagged } from './room';
 import { BATTERY, stepAway } from './battery';
 import { BTN, type PlayerInput } from './input';
-import { EV, KIND, MAX_PORTALS, MAX_SEATS, TERRAIN, alive, type World } from './world';
+import { EV, MAX_PORTALS, MAX_SEATS, TERRAIN, alive, type World } from './world';
 import { spawnEnemy } from './spawn';
+import { goStep, runScript, type Script } from './encounter';
 import { WALL } from './compile';
 
 export const BSTEP = { arrive: 0, ring: 1, spray: 2, place: 3, brute: 4, free: 5, dry: 6, hands: 7, after: 8, repair: 9 } as const;
@@ -70,8 +72,8 @@ export const BWAVES = {
   spread: 2.4,
 } as const;
 
-const TOWER = 'defence-tower';
-const towersOf = (w: World) => w.def.props.filter((p) => p.asset === TOWER);
+const TOWER = 'tower';
+const towersOf = (w: World) => propsTagged(w.def, TOWER);
 /** The spot in front of defence k's tower, just outside the wall: its muzzle, where a driver's body stands. */
 export const muzzleOf = (w: World, k: number): [number, number] => [towersOf(w)[k].x, BATTERY.wallY - BATTERY.muzzleGap];
 
@@ -85,7 +87,7 @@ export const driverOf = (w: World, k: number): number => (w.battery ? w.battery.
 export function holdSpot(w: World, i: number, t: number): [number, number] {
   const d = w.battery!, k = t >= 0 ? d.drive[t] : d.lane[i], across = ((i % 5) - 2) * 0.8;
   if (t < 0 && w.enc.state[1] === BSTEP.arrive) {
-    const tx = towersOf(w)[k].x, stakes = w.def.props.filter((p) => p.asset === 'stakes');
+    const tx = towersOf(w)[k].x, stakes = propsTagged(w.def, 'stakes');
     let s = stakes[0];
     for (const p of stakes) if (Math.abs(p.x - tx) < Math.abs(s.x - tx)) s = p;
     if (s) return [s.x + across * 1.2, s.y - BWAVES.stakeStand];
@@ -118,6 +120,12 @@ function spawnAt(w: World, k: number, arch: number, x: number, y: number, loop: 
   if (i >= 0) w.battery!.lane[i] = k;
 }
 
+/** The j-th of slot k's group, out of its gap in a loose knot; once the well is dry they come for the wizards, not a lane. */
+function spawnFromGap(w: World, k: number, arch: number, j: number, lap: number): void {
+  const e = w.enc;
+  spawnAt(w, w.enc.state[1] === BSTEP.hands ? -1 : k, arch, e.px[k] + ((j % 3) - 1) * BWAVES.spread, e.py[k] - (j % 2) * 0.8, lap);
+}
+
 /**
  * Open a group from the treeline gap nearest each defence that has someone: down every driven lane, or, once the well
  * is dry, one group for each wizard (from the gap nearest the defence of the same number).
@@ -135,20 +143,6 @@ function openGroup(w: World, groups: readonly (readonly [number, number])[]): vo
   }
 }
 
-function archAt(groups: readonly (readonly [number, number])[], j: number): number {
-  for (const [a, c] of groups) { if (j < c) return a; j -= c; }
-  return groups[groups.length - 1][0];
-}
-
-const groupOf = (step: number, n: number) => (step === BSTEP.free ? FREE[n % FREE.length] : step === BSTEP.hands ? HANDS[n] : GROUPS[step]);
-
-/** Enemies still standing, and still to come out. */
-function remaining(w: World): number {
-  let n = 0;
-  for (let i = MAX_SEATS; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy) n++;
-  for (let k = 0; k < MAX_PORTALS; k++) n += w.enc.left[k];
-  return n;
-}
 
 /**
  * Beat 5: the well's flow falls, and once it's out the well runs dry when no defence has a whole rune left (or after
@@ -167,11 +161,11 @@ function failWell(w: World): void {
 
 /** Beat 6: everyone at a defence is put back where they stepped up, and the well goes dark (the gate's fire gutters: below). */
 function runDry(w: World): void {
-  const d = w.battery!, st = w.enc.state, tick = w.clock[0];
-  st[1] = BSTEP.dry; st[2] = 0; d.wellT[1] = 1;
+  const d = w.battery!, tick = w.clock[0];
+  goStep(w, LESSON, BSTEP.dry); d.wellT[1] = 1;
   w.enc.left.fill(0); // what was still to come out of the trees stays there
   for (let i = 0; i < MAX_SEATS; i++) if (d.drive[i] >= 0) stepAway(w, i);
-  const well = w.def.props.find((p) => p.asset === 'battery-well');
+  const well = propsTagged(w.def, 'well')[0];
   if (well) w.events.push({ tick, kind: 'burst', who: -1, x: well.x, y: well.y, amount: 1, look: EL.fire, ev: EV.wellDry, text: 'dry' });
 }
 
@@ -194,13 +188,13 @@ function infuse(w: World): void {
     w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: b.x[i], y: b.y[i], amount: 1, look: EL.fire, ev: EV.infuse, text: 'infuse' });
   }
   d.lane.fill(-1);
-  st[1] = BSTEP.hands; st[2] = T(WELL.through); st[3] = -1; // the first HANDS group opens once the pause is out (below)
+  goStep(w, LESSON, BSTEP.hands, false); st[2] = T(WELL.through); st[3] = -1; // the first HANDS group opens once the pause is out (the runner)
 }
 
 /** Can seat i stabilize the well now: the fight over, standing within WELL.repairReach of its middle? */
 export function wellNear(w: World, i: number): boolean {
   if (!w.battery || w.enc.state[1] !== BSTEP.after || !alive(w, i)) return false;
-  const well = w.def.props.find((p) => p.asset === 'battery-well');
+  const well = propsTagged(w.def, 'well')[0];
   return !!well && len(well.x - w.bodies.x[i], well.y - w.bodies.y[i]) < WELL.repairReach;
 }
 
@@ -215,46 +209,60 @@ export function repairPress(w: World, inputs: readonly PlayerInput[]): void {
   }
 }
 
-export function tickBatteryWaves(w: World): void {
-  const e = w.enc, st = e.state, d = w.battery!;
-  if (d.wellT[2] > 0) { if (++d.wellT[2] === T(WELL.relit)) d.flow[0] = 1; return; }
-  if (!st[0]) {
-    // as you arrive: goblins hacking at the stakes out in front of every defence (they take their spots: holdSpot)
-    const towers = towersOf(w), stakes = w.def.props.filter((p) => p.asset === 'stakes');
-    for (let k = 0; k < towers.length; k++) {
-      let s = stakes[0];
-      for (const p of stakes) if (Math.abs(p.x - towers[k].x) < Math.abs(s.x - towers[k].x)) s = p;
-      const [x, y] = s ? [s.x, s.y - 2] : muzzleOf(w, k);
-      for (let j = 0; j < BWAVES.arrivals; j++) spawnAt(w, k, ARCH.swarmer, x + (j - (BWAVES.arrivals - 1) / 2) * 1.4, y - (j % 2) * 0.5, 0);
-    }
-    st[0] = 1; st[1] = BSTEP.arrive; st[2] = 0; st[3] = 0;
-    return;
+/** Is anyone at a defence? */
+const driven = (w: World): boolean => w.battery!.drive.some((k) => k >= 0);
+/** Before the well is dry nothing comes while nobody is at a defence. */
+const nobodyAtADefence = (w: World): boolean => !driven(w);
+
+/** As you arrive: goblins hacking at the stakes out in front of every defence (they take their spots: holdSpot). */
+function arrivals(w: World): void {
+  const towers = towersOf(w), stakes = propsTagged(w.def, 'stakes');
+  for (let k = 0; k < towers.length; k++) {
+    let s = stakes[0];
+    for (const p of stakes) if (Math.abs(p.x - towers[k].x) < Math.abs(s.x - towers[k].x)) s = p;
+    const [x, y] = s ? [s.x, s.y - 2] : muzzleOf(w, k);
+    for (let j = 0; j < BWAVES.arrivals; j++) spawnAt(w, k, ARCH.swarmer, x + (j - (BWAVES.arrivals - 1) / 2) * 1.4, y - (j % 2) * 0.5, 0);
   }
-  const driven = d.drive.some((k) => k >= 0);
-  if (st[1] === BSTEP.arrive) { if (driven) st[1] = BSTEP.ring; return; }
+}
+
+/** The well's clockwork, ahead of the runner each tick: the repair's fade, the gate guttering, the well failing, the infusion. */
+function wellClock(w: World): boolean {
+  const d = w.battery!, st = w.enc.state;
+  if (d.wellT[2] > 0) { if (++d.wellT[2] === T(WELL.relit)) d.flow[0] = 1; return true; }
   if (d.wellT[1] > 0) { d.wellT[1]++; if (d.wellT[1] === T(WELL.gutter)) gutterGate(w); }
   if (st[1] === BSTEP.free) failWell(w);
-  if (st[1] === BSTEP.dry) { if (d.wellT[1] > T(WELL.surge)) infuse(w); return; }
-  if (st[1] === BSTEP.after) return;
-  // a group still coming out of the trees
-  const groups = groupOf(st[1], st[3]);
-  if (groups) {
-    for (let k = 0; k < MAX_PORTALS; k++) {
-      if (!e.left[k] || --e.next[k] > 0) continue;
-      const j = e.total[k] - e.left[k];
-      spawnAt(w, st[1] === BSTEP.hands ? -1 : k, archAt(groups, j), e.px[k] + ((j % 3) - 1) * BWAVES.spread, e.py[k] - (j % 2) * 0.8, st[1] === BSTEP.free ? Math.floor(st[3] / FREE.length) : 0);
-      e.left[k]--; e.next[k] = T(BWAVES.spawnEvery);
-    }
-  }
-  // before the well is dry nothing comes while nobody is at a defence
-  if (remaining(w) || (!driven && st[1] < BSTEP.dry)) return;
-  // this step's enemies are all gone: a short quiet, then the next step's group
-  if (st[2] === 0) { st[2] = T(BWAVES.pause); return; }
-  if (--st[2] > 0) return;
-  if (st[1] === BSTEP.free) st[3]++;
-  else if (st[1] === BSTEP.hands) { if (!HANDS[++st[3]]) { st[1] = BSTEP.after; return; } }
-  else st[1]++;
-  openGroup(w, groupOf(st[1], st[3])!);
+  if (st[1] === BSTEP.dry) { if (d.wellT[1] > T(WELL.surge)) infuse(w); return true; }
+  return false;
+}
+
+/**
+ * The lesson as a script (encounter.ts), its steps in BSTEP's order (the client's battery-text.ts shows each step's
+ * prompt by number). FREE leaves through the well failing (failWell), DRY through the infusion (infuse); AFTER waits
+ * for the press at the well (repairPress).
+ */
+export const LESSON: Script = {
+  every: BWAVES.spawnEvery,
+  pause: BWAVES.pause,
+  start: arrivals,
+  before: wellClock,
+  open: openGroup,
+  spawn: spawnFromGap,
+  steps: [
+    { id: 'arrive', until: driven },
+    { id: 'ring', hold: nobodyAtADefence },
+    { id: 'spray', groups: [GROUPS[BSTEP.spray]], hold: nobodyAtADefence },
+    { id: 'place', groups: [GROUPS[BSTEP.place]], hold: nobodyAtADefence },
+    { id: 'brute', groups: [GROUPS[BSTEP.brute]], hold: nobodyAtADefence },
+    { id: 'free', groups: FREE, cycle: 'loop', hold: nobodyAtADefence },
+    { id: 'dry', end: true },
+    { id: 'hands', groups: HANDS, cycle: 'list' },
+    { id: 'after', end: true },
+    { id: 'repair', end: true },
+  ],
+};
+
+export function tickBatteryWaves(w: World): void {
+  runScript(w, LESSON);
 }
 
 /** Where a battery archer stands: off its target, on the line it came in on, past the flamethrower's reach. */

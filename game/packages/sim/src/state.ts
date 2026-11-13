@@ -34,7 +34,7 @@ export function hashWorld(w: World): number {
  * of its state. A different layout (a survive world and another room): its pools are swapped in.
  */
 export function replaceWorld(w: World, fresh: World): void {
-  if (sameLayout(w, fresh)) { restore(w, snapshot(fresh)); w.dims = fresh.dims; w.def = fresh.def; w.terrain = fresh.terrain; return; }
+  if (sameLayout(w, fresh)) { restore(w, snapshot(fresh)); w.dims = fresh.dims; w.def = fresh.def; w.terrain = fresh.terrain; w.mode = fresh.mode; return; }
   Object.assign(w, fresh);
 }
 

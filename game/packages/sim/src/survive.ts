@@ -31,8 +31,9 @@ import { poolCap } from './structures';
 import { atan2Turns } from './trig';
 import {
   ALTAR_SPOTS, ECHO_LAG, ECHO_Q, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_PU, PHASE, PHASE_ENC, PICK_LOG, PU, PU_CAP, QUEUE_MAX, SURVIVE_GATES, WARD,
-  buffers, createWorld, joinSeat, stackOf, type World,
+  buffers, joinSeat, stackOf, type World,
 } from './world';
+import { createWorld } from './create';
 import { spawnEnemy } from './spawn';
 
 export const SURVIVE_TIMES = { firstLull: 10, lull: 6, breather: 3, stand: 0.75, spawnEvery: 0.45, portalStagger: 1, restartAfter: 1.5, charm: 12 };

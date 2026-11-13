@@ -1,13 +1,14 @@
 // The battery's gate: a standing wall of fire you can walk through, and it burns you.
 import { describe, expect, it } from 'vitest';
-import { BATTERY, BTN, EL, N_EL, NO_INPUT, WALL, createWorld, joinSeat, runeMax, step } from '../src';
+import { BATTERY, BTN, EL, MODES, N_EL, NO_INPUT, WALL, createWorld, createWorldWith, joinSeat, runeMax, step } from '../src';
 import { driveFace, driveTarget, sprayReach } from '../src/battery';
 import { replaceWorld, sameLayout } from '../src/state';
 
 describe('replaceWorld and the battery', () => {
   it('swaps pools when only one world has a battery, even at the same grid size', () => {
-    const w = createWorld(1, 1, { room: 'battery' });
-    w.battery = null; // a world of the battery's size without its pool, as a campaign room of the same size would be
+    // a world of the battery's size under another mode, without its pool, as a campaign room of the same size would be
+    const w = createWorldWith(MODES.sandbox, 1, 1, { room: 'battery' });
+    expect(w.dims).toEqual(createWorld(1, 1, { room: 'battery' }).dims);
     const fresh = createWorld(1, 1, { room: 'battery' });
     expect(sameLayout(w, fresh)).toBe(false);
     expect(() => replaceWorld(w, fresh)).not.toThrow();

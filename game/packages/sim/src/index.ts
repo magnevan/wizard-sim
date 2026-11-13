@@ -1,4 +1,8 @@
 export * from './world';
+export { createWorld } from './create';
+export { MODES, modeOf } from './modes';
+export type { Mode, ModeId, WorldOpts } from './mode';
+export { spawnEnemy, type EnemyOpts } from './spawn';
 export { BATTERY, drivePlace, driving, pedestalNear, sprayReach } from './battery';
 export { BSTEP, wellNear } from './battery-waves';
 export { createTerrain, terrainNear, terrainAlong, type Terrain } from './terrain';

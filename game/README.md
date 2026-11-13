@@ -99,6 +99,10 @@ packages/
     room.ts    RoomDef, a room's layout (size, terrain rows, rock, starts, dummies, portals, altars) and roomHash;
                rooms.gen.ts holds every room, generated from content/maps (npm run content:build; never edit it by hand)
     step.ts    step(world, inputs): one 60 Hz tick
+    mode.ts    a mode's hooks (state, setup, press, director, late, runeMax, regen, pools, onSpawn); modes.ts the five modes
+               (sandbox, arena, survive, battery, tutorial) and which room runs which; create.ts createWorld. step.ts and
+               world.ts call the hooks and never ask which mode they're in: a new mode is a new Mode, not a branch
+    spawn.ts   spawnEnemy, the one way every director puts an enemy in the world
     input.ts   PlayerInput: the 9-byte per-player, per-tick record (all that netcode will ever send)
     state.ts   snapshot / restore / hashWorld (FNV-1a over every state byte)
     replay.ts  record and run replays; script.ts is the scripted two-player golden run
@@ -132,7 +136,7 @@ These matter from day one, because rollback (like lockstep) only works if every 
 - **Iterate entity pools by slot index.** No `Map`, `Set` or `for…in` for gameplay state, and every `sort` gets a comparator.
 - **Events are output, not state.** `world.events` is rebuilt every step for the view (VFX, sound). With rollback, the view keys them by (tick, entity, kind).
 
-`test/purity.test.ts` enforces the source rules. The golden replay (`test/golden.json`) catches unintended behaviour changes. `check:browser` catches divergence between engines. **When a gameplay change moves the golden hash on purpose, re-record it and say so.**
+`test/purity.test.ts` enforces the source rules (the generated spell rules included). The golden replay (`test/golden.json`) catches unintended behaviour changes in the Sanctum; `test/mode-hashes.json` pins a hash every 300 ticks of one scripted run in the Arena, Survive, the battery and the tutorial, and a mismatch names the mode and the tick. `check:browser` catches divergence between engines (it also runs in CI, `.github/workflows/browser-check.yml`, not yet gating the deploy). **When a gameplay change moves the golden hash or a mode's trail on purpose, re-record it (`UPDATE_MODE_HASHES=1 npx vitest run packages/sim/test/mode-hashes.test.ts`) and say so.**
 
 ## Status
 

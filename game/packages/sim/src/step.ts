@@ -2,25 +2,21 @@
  * One fixed step: step(world, inputs) advances the world by DT. It is the whole game as far as
  * netcode is concerned: same world + same inputs => same world, on every machine.
  *
- * Order: mode presses (tutorial, Survive, battery) -> seats (runes, queue, casts and channels; walking
- * intent) -> the wave director -> nav -> enemies -> movement -> missiles -> zones -> structures ->
- * surfaces -> guards -> statuses -> collisions -> health -> deaths -> Doubles -> the tutorial's checks.
+ * Order: the mode's presses -> seats (runes, queue, casts and channels; walking intent) -> the mode's
+ * director (its encounter) -> nav -> enemies -> movement -> missiles -> zones -> structures -> surfaces ->
+ * guards -> statuses -> collisions -> health -> deaths -> Doubles -> the mode's late checks (mode.ts).
  */
 import { canAct, tickSeat } from './cast';
 import { BODY, STATUS } from './config';
 import { TAP } from './hands';
 import { collide, fixedBody, onIce, tickDoubles, tickHealth, tickMissiles, tickSurfaces, tickZones } from './effects';
-import { beginTutorialTick, tickTutorial } from './tutorial';
 import { tickDeaths, tickEnemies } from './enemies';
 import { tickNav } from './nav';
 import { hasteOf, tickStructures } from './structures';
-import { tickWaves } from './waves';
-import { repairPress, tickBatteryWaves } from './battery-waves';
-import { survivePress, tickSurvive } from './survive';
 import { HIT_KIND, setHitKind, tickStatuses } from './hit';
 import { sureFooted, tickGuards, walkMult } from './guards';
 import { BTN, type PlayerInput } from './input';
-import { batteryPress, driving } from './battery';
+import { driving } from './battery';
 import { DT, KIND, MAX_SEATS, PHASE, joinSeat, type World } from './world';
 
 export { elementId, elementName } from './elements';
@@ -28,10 +24,8 @@ export { elementId, elementName } from './elements';
 export function step(w: World, inputs: readonly PlayerInput[]): void {
   w.events.length = 0;
   setHitKind(HIT_KIND.other); // module state isn't in the snapshot: a hit that names no kind must not see last tick's
-  const b = w.bodies, s = w.seats;
-  if (w.tut) beginTutorialTick(w);
-  if (w.run) survivePress(w, inputs);
-  if (w.battery) { batteryPress(w, inputs); repairPress(w, inputs); }
+  const b = w.bodies, s = w.seats, mode = w.mode;
+  mode.press?.(w, inputs);
 
   for (let i = 0; i < MAX_SEATS; i++) {
     const inp = inputs[i];
@@ -53,7 +47,7 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
     b.vy[i] += (my * speed - b.vy[i]) * grip;
   }
 
-  if (w.run) tickSurvive(w); else if (w.battery) tickBatteryWaves(w); else tickWaves(w);
+  mode.director(w);
   tickNav(w);
   tickEnemies(w);
 
@@ -80,7 +74,6 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
   tickHealth(w);
   tickDeaths(w);
   tickDoubles(w);
-  // The tutorial goes last, so its checks see every event of the tick (casts, parries, faints, deaths).
-  if (w.tut) tickTutorial(w);
+  mode.late?.(w); // last, so a mode's checks see every event of the tick
   w.clock[0]++;
 }

@@ -126,6 +126,8 @@ packages/
   client/  @wizard-sim/client: Vite + PixiJS v8. The loop (main.ts), keyboard and gamepads -> PlayerInput (input.ts, gamepad.ts),
            the view (view.ts, reads the sim and never writes it), the HUD (hud.ts), structures and telegraphs
            (view-structures.ts), and the Battlefield / VFX gallery art ported into art/ (rigs, frame cache, floor, effects, lights).
+           A mode's own drawing is its RoomView (room-views.ts: the HUD banner, its things in the world, ground marks,
+           prompts over the wizards), so those files don't ask which mode they're in.
            The Esc menu (menu.ts, menu-nav.ts) and the scenario registry (scenarios.ts); the help panel (help-panel.ts,
            help-model.ts, help-preview.ts); the tuning panel (tune-panel.ts); the tutorial's look and text (tutorial-view.ts, tutorial-text.ts).
 scripts/   sync-rules, make-artifact, and the headless checks and shots behind the npm scripts above, plus one-off *-shot.mjs

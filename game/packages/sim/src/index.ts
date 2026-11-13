@@ -1,8 +1,9 @@
 export * from './world';
 export { createWorld } from './create';
 export { MODES, modeOf } from './modes';
-export type { Checkpoint, Mode, ModeId, WorldOpts } from './mode';
+export type { Checkpoint, EnemyRules, Mode, ModeId, Possession, WorldOpts } from './mode';
 export { spawnEnemy, type EnemyOpts } from './spawn';
+export { possessed } from './possess';
 export { archAt, goStep, groupNow, openAtMarkers, partyIn, remaining, runScript, type Group, type Script, type Step } from './encounter';
 export { BATTERY, drivePlace, driving, pedestalNear, sprayReach } from './battery';
 export { BATTERY_CHECKPOINTS, BSTEP, wellNear } from './battery-waves';

@@ -14,15 +14,14 @@
 import { Sprite, Texture } from 'pixi.js';
 import {
   EV, BATTERY, CELL, DEVICE, ECHO_LAG, sprayReach, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SHAPES, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
-  compile, elementName, pedestalNear, queueFromCounts, specOf, wellNear,
+  compile, elementName, possessed, queueFromCounts, specOf,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
 import { BARREL_RISE, headTip, liveHeads, towerTip } from './props';
 import { flameJet, pilotFlame } from './flame-jet';
-import { feedLines } from './feed-lines';
 import { towersLit } from './power-down';
-import { drawKeys } from '../key-caps';
+import { roomView } from '../room-views';
 import { toX, toY } from '../iso-world';
 import { PPU } from '../camera';
 import * as A from './accent';
@@ -385,7 +384,8 @@ export class Vfx {
     g._fs = o._fs = null;
     this.solids.length = 0; this.softs.length = 0;
     this.occluders?.((tex, x, y, footY, solid, z, piece) => { (solid ? this.solids : this.softs).push({ tex, x, y, footY, z, piece: !!piece }); });
-    if (w.battery) feedLines(g, w, ct, light); // the well's glyph paths to the defences and the gate, under everything
+    const room = roomView(w);
+    room.ground?.(g, w, ct, light); // the mode's ground marks, under everything (the battery's glyph paths)
     this.surfaces(w, ct, light);
     this.zones(w, t, light, ct);
     this.groundMarks(w, bodies, t);
@@ -401,13 +401,7 @@ export class Vfx {
     this.missiles(w, t, light, ct);
     this.occludedChannels(w, ct, bodies, light);
     this.pilots(w, ct, light);
-    if (w.battery) {
-      // standing in a free possession circle, or by the well once it can be stabilized: the X key over your head
-      for (let i = 0; i < MAX_SEATS; i++) {
-        const v = bodies[i];
-        if (v?.on && w.seats.active[i] && w.battery.drive[i] < 0 && (pedestalNear(w, i) >= 0 || wellNear(w, i))) drawKeys(this.o.x, [{ key: 'x' }], Math.round(v.x - 7), Math.round(v.y - 50), ct);
-      }
-    }
+    room.overBodies?.(this.o.x, w, bodies, ct); // the mode's prompts over the wizards (the battery's X key)
     this.casters(w, ct, bodies, light);
     this.statuses(w, t, bodies, light, ct);
     this.ghosts();
@@ -429,8 +423,9 @@ export class Vfx {
       const ex = gx(s.chanEndX[i]), ey = gy(s.chanEndY[i]);
       x0 = Math.min(x0, v.x, ex); x1 = Math.max(x1, v.x, ex); y0 = Math.min(y0, v.y, ey); y1 = Math.max(y1, v.y, ey);
     }
-    // a defence's fire comes from the head, above everything near it, so nothing standing hides it
-    const driven = !!w.battery && w.battery.drive.some((k) => k >= 0);
+    // a fixture's fire comes from its head, above everything near it, so nothing standing hides it
+    let driven = false;
+    for (let i = 0; i < MAX_SEATS; i++) if (possessed(w, i)) driven = true;
     if (x1 < x0 || !this.occluders || driven) { this.channels(w, t, bodies, light); this.drawStrikes(t, light); return; }
     let lowest = -Infinity;
     for (let i = 0; i < MAX_SEATS; i++) if (s.active[i] && s.phase[i] === PHASE.channel && bodies[i]?.on) lowest = Math.max(lowest, bodies[i].y);

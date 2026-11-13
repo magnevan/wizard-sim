@@ -8,12 +8,13 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
-import { BSTEP, RUNES, infused, ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, regenOf, runeRate, runeMax, specOf, type World } from '@wizard-sim/sim';
+import { BSTEP, RUNES, infused, ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, possessed, regenOf, runeRate, runeMax, specOf, type World } from '@wizard-sim/sim';
 import { badge, perkOf } from './art/perks';
 import { DRIVING, OWN_FIRE, STEP_UP } from './battery-text';
 import { drawKeys, rowWidth } from './key-caps';
 import * as X from './art/px';
 import { mod } from './art/util';
+import { roomView, type BannerKit } from './room-views';
 
 const TOP: Element[] = ['water', 'life', 'shield', 'cold'];
 const BOT: Element[] = ['lightning', 'arcane', 'sigil', 'fire', 'earth'];
@@ -149,13 +150,16 @@ export class Hud {
     this.over.position.set(Math.round(viewW / 2 - OVW / 2), Math.round(viewH / 2 - h / 2 - 20));
   }
 
+  /** What a mode's banner may draw with (room-views.ts). */
+  private readonly bannerKit: BannerKit = { lesson: (w, t, viewW) => this.drawLesson(w, t, viewW) };
+
   /**
    * The battery's lesson (battery-text.ts): what to do now and the keys for it, in place of any wave count or timer
    * (the user: the waves felt too arcade-like). Away from the defences it asks you to step up to one; driving, it
    * teaches the step's cast; after the lesson it shows nothing.
    */
   private drawLesson(w: World, t: number, viewW: number): void {
-    const c = this.tc.x, step = w.enc.state[1], driving = w.battery!.drive[this.seat] >= 0;
+    const c = this.tc.x, step = w.enc.state[1], driving = possessed(w, this.seat);
     c.clearRect(0, 0, TW, TH); c._fs = null;
     const p = step >= BSTEP.dry ? OWN_FIRE[step] : driving ? DRIVING[step] : step <= BSTEP.brute ? STEP_UP : undefined;
     this.top.visible = !!p && w.enc.state[0] !== 0;
@@ -174,7 +178,8 @@ export class Hud {
   private drawWave(w: World, t: number, viewW: number): void {
     const c = this.tc.x, st = w.enc.state, e = w.enc;
     c.clearRect(0, 0, TW, TH); c._fs = null;
-    if (w.battery) { this.drawLesson(w, t, viewW); return; }
+    const room = roomView(w);
+    if (room.banner) { room.banner(this.bannerKit, w, t, viewW); return; } // the mode draws its own (the battery's lesson)
     this.top.visible = st[0] !== PHASE_ENC.off;
     if (!this.top.visible) return;
     const secs = Math.ceil(st[2] / 60);
@@ -250,11 +255,11 @@ export class Hud {
       const open = runeMax(w, i, e) > 0;
       if (open) unlocked++;
       // an element this beat gives (the last one didn't): its socket fills with a flash
-      if (open && !this.unlocked[e] && infused(w) && !(w.battery!.drive[i] >= 0)) this.unlockAt[e] = t; // the battery's infusion: your own first rune
+      if (open && !this.unlocked[e] && infused(w) && !possessed(w, i)) this.unlockAt[e] = t; // the battery's infusion: your own first rune
       else if (open && !this.unlocked[e] && w.tut) { const k = TUT_ORDER.indexOf(w.tut.state[TUT_STATE.beat]); if (k <= 0 || tutPool(TUT_ORDER[k - 1], e) <= 0) this.unlockAt[e] = t; }
       this.unlocked[e] = open ? 1 : 0;
     }
-    const driven = !!w.battery && w.battery.drive[i] >= 0;
+    const driven = possessed(w, i);
     const bar = !driven && (unlocked > 0 || (!!w.tut && w.tut.state[TUT_STATE.beat] >= TUT_RUNES_FROM)); // a defence has its own bar, below
     // the backing plate follows the stagger: the top row is narrower than the bottom
     if (bar) {

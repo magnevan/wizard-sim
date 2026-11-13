@@ -37,7 +37,7 @@ import { elName, frosty, ramp, type BodyView, type LightFn } from './art/vfx';
 import { Sil } from './art/sil';
 import { gateLit } from './art/power-down';
 import { glyph, perkOf } from './art/perks';
-import { drawTutorialWorld } from './tutorial-view';
+import { roomView, type StructureKit } from './room-views';
 import { kitOf, kitRun, sideZ, stampTexture, wallsAllFar } from './art/wall-kit';
 import { toU, toV, toX, toY } from './iso-world';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
@@ -469,8 +469,7 @@ export class StructureView {
     this.scorch.draw(w, st);
     const off = OFF;
     if (!off.includes('walls')) this.walls(w, t, g, o, bodies, light);
-    if (w.run) { this.altars(w, t, g, o, light); this.rallies(w, t, g, o, bodies, light); }
-    if (w.tut) drawTutorialWorld(w, t, g, o, light, (rx, ry, cw, ch, z) => this.pieces.canvas(rx, ry, cw, ch, z));
+    roomView(w).structures?.(this.kit, w, t, g, o, bodies, light); // the mode's own things (Survive's altars and rallies, the tutorial's chamber)
     if (!off.includes('waves')) { this.waves(w, t, g, o, light); this.sparks(w, t, g, o, light); }
     if (!off.includes('devices')) this.devices(w, t, g, o, bodies, light);
     if (!off.includes('wizards')) this.onWizards(w, t, g, o, bodies, light);
@@ -507,6 +506,13 @@ export class StructureView {
   /** When each altar last rose (view time), and what it offered then. */
   private altarT0 = new Float64Array(N_ALTARS).fill(-9);
   private altarPU = new Uint8Array(N_ALTARS);
+
+  /** What a mode's own things in the world may draw with (room-views.ts). */
+  private readonly kit: StructureKit = {
+    altars: (w, t, g, o, light) => this.altars(w, t, g, o, light),
+    rallies: (w, t, g, o, bodies, light) => this.rallies(w, t, g, o, bodies, light),
+    piece: (rx, ry, cw, ch, z) => this.pieces.canvas(rx, ry, cw, ch, z),
+  };
 
   /**
    * The pick's three altars: a stone plinth on a rune ring in the power-up's colour, its glyph

@@ -1580,3 +1580,16 @@ The user, on "a fresh match per area": fine, but moving between campaign areas n
   - cast, effects, hit, enemies and step no longer import the battery.
   - Every trail (both battery runs included), the golden hash `dd8360fb` and the reports are unchanged.
   - The client still asks the sim's `driving`; that moves with the room view.
+- **The client's room view, first pass** (`client/src/room-views.ts`):
+  - A mode's own drawing is its `RoomView`, with four hooks:
+    - the HUD's top banner (the battery's lesson);
+    - its things in the world (Survive's altars and rallies, the tutorial's chamber);
+    - ground marks under the effects (the battery's glyph paths);
+    - prompts over the wizards (the battery's X key).
+  - The HUD, the effects layer and the structures call these instead of checking `w.battery` / `w.run` / `w.tut`, and "is this seat driving" checks are `possessed`.
+  - Screenshots of the battery and of Survive's altar pick look as before.
+  - Left for pass B, as each is next touched:
+    - in `view.ts`: where a driver's wizard is drawn, the stakes breaking, the blackout;
+    - the flame from a tower's head in `vfx.ts`;
+    - the battery's placement reticle in `view-structures.ts`;
+    - Survive's banner lines in `hud.ts`.

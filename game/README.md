@@ -206,5 +206,6 @@ Two wizards on one machine, the Atlas rules driving real casts, the Pixel Battle
 Open:
 - **Rendering through a low-res target.** The scene draws straight to the stage at an integer scale, which is pixel-exact for unrotated sprites. Drawing into a low-res RenderTexture first would also snap rotated or scaled effects to the art grid. In headless Chrome (SwiftShader and D3D11), the target held the pixels but its sprite never reached the presented frame. Revisit with a real browser when the effects need rotation.
 - **Balance** is placeholder everywhere (`packages/sim/src/config.ts`).
-- `node scripts/well-states.mjs` (after a build): the battery's well in each version (art/well-anim.ts PREVIEWS), cropped, in shots/well-states. In the game, clicking the well steps through the same versions, and `?well=n` opens on version n.
+- `node scripts/well-states.mjs` (after a build): the battery's well in each version (art/well-anim.ts PREVIEWS), cropped, in shots/well-states (`--burst n` shoots one version as fast as it can). In the game, clicking the well steps through the same versions, and `?well=n` opens on version n.
+- `node scripts/well-frames.mjs` (after a build): the well painter driven frame by frame through steady, overloaded, the power-down and the repair, its own canvas saved at chosen moments, in shots/well-frames. Exact where screenshots are too slow to catch the flare.
 - `node scripts/path-styles.mjs` (after a build): the battery's glyph paths in each style of `PATH_STYLES` (art/glyph-path.ts), from one spot, in shots/path-styles.

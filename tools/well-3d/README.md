@@ -1,14 +1,43 @@
 # The battery well's rings, from 3D
 
-The bought rings can't move well: PixelLab's animations morphed them (2026-11-12). These scripts rebuild them in Blender so they spin (and later fall and rise) as solid things, then snap them back to the bought rings' colours. No generation calls.
+The bought rings couldn't move: PixelLab's animations morphed them (2026-11-12). These scripts rebuild them in Blender, so they spin, fall and rise as solid things, then snap them back to the bought rings' colours. No generation calls. The game paints the well from these and the bought drum and crystal (`game/packages/client/src/art/well-anim.ts`).
+
+## Making the game's assets
 
 ```
-python tools/well-3d/fit_rings.py                 # fits radius, band width and tilt to the bought silhouette -> rings-fit.json
-python tools/well-3d/band_texture.py              # the engraved band (the game's bought runes, carved) -> build/
-blender --background --python tools/well-3d/rings.py -- <renders_dir> spin|test
-python tools/well-3d/pixelize.py <renders_dir> <out_dir>      # back.png, front.png strips, rings.json
-python tools/well-3d/compare.py <out_dir> <out.png> [frame]    # bought vs 3D, side by side
-python tools/well-3d/preview_gif.py <out_dir> <out.gif>        # bought | steady spin | fast spin
+python tools/well-3d/fit_rings.py                                     # radius, band width, tilt fitted to the bought silhouette -> rings-fit.json
+python tools/well-3d/drum_fill.py                                     # the drum (lit and drained) without the bought rings' last rows
+blender --background --python tools/well-3d/rings.py -- <spin> spin A # the steady spin: 40 frames, a column apart
+blender --background --python tools/well-3d/rings.py -- <fall> fall A # the power-down: a rigid-body fall, 60 frames
+python tools/well-3d/export.py <spin> <fall>                          # -> game/content/assets/well/rings3d/
 ```
 
-Each frame is rendered twice, split at the crystal's depth, so the game draws back rings, crystal, front rings. The spin turns each ring about its own axis (A one way, B the other); the band's pattern repeats four times round, so one loop is a quarter turn, one frame per art pixel of travel at the rim.
+About two minutes each for the renders.
+
+- **The rings:** two solid bands with sharp corners, ring A (bottom left to top right) a band's thickness bigger, so they never meet. Each turns about its own axis, A one way, B the other.
+- **The light:** a key light from about the camera, a warm crystal light toward the camera, and a world that is warm above and dark below for the metal to reflect.
+- **The 'where' render:** each frame has one, recording for each pixel which face of which band it is and where on that face (u round the ring, v across). `pixelize.py` uses it to draw the band's face pixel by pixel.
+- **The spin:** split at the crystal (back rings, crystal, front rings).
+- **The fall:** stand-ins for the drum, the crystal and the steps, fitted to the art, are both what the rings land on and holdouts, so a ring behind the drum is cut where the art covers it. The rings ignore each other, since they sit closer than the collision margin.
+
+## Snapping to pixel art (`pixelize.py`)
+
+- **Shades:** the ring's pixels are ranked by brightness and take the bought rings' browns in the bought rings' own proportions.
+- **The band face**, drawn per art pixel:
+  - a raised border just inside each edge, found on screen so every face keeps one;
+  - a dark channel in the bought rings' deepest brown;
+  - raised strips across it every 4 columns, stopping a pixel short of the borders.
+
+  This is the user's design after rune patterns didn't read (2026-11-13). The rune and streak versions are still in the file, unused.
+- **Inside faces:** stepped by distance from the crystal.
+- **Glint:** the yellow line on the crystal-facing edges, two deep (tan inside the yellow), drawn after snapping, since no render can make it.
+- **Dark copies:** each ladder brown three steps down, for the dead well.
+
+## Looking at it
+
+- `compare.py`: bought and 3D side by side.
+- `preview_gif.py`: bought, the steady spin, the fast spin.
+- `swatch.py`: the band's pattern laid flat.
+- `straighten.py`: the bought front bands sheared level, pixel for pixel.
+- `unwrap.py`: a rough map of the bought engraving through the fit.
+- In the game, clicking the well steps through its versions; `game/scripts/well-frames.mjs` paints each state directly and `well-states.mjs` shoots them in the running game.

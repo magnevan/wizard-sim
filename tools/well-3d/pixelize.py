@@ -464,5 +464,42 @@ def run(src, out):
     print('rings', n, 'frames')
 
 
+DARK_STEPS = 3   # the dead well's rings: every brown this many steps down the ladder, no glints
+
+
+def darken(a):
+    """The rings with the crystal's light gone: each ladder brown taken DARK_STEPS down, the glint yellows to plain metal."""
+    out = a.copy()
+    cols = [tuple(int(v) for v in c) for c in LADDER]
+    for i, c in enumerate(cols):
+        m = (a[..., 3] > 0) & (a[..., :3] == c).all(2)
+        out[m, :3] = cols[max(0, i - DARK_STEPS)]
+    for c in GLINT + [(184, 148, 106)]:
+        m = (a[..., 3] > 0) & (a[..., :3] == c).all(2)
+        out[m, :3] = cols[max(0, cols.index((184, 148, 106)) - DARK_STEPS) if (184, 148, 106) in cols else 2]
+    return out
+
+
+def run_whole(src, out, name):
+    """A run with no front/back split (rings.py fall: the stand-ins cut the rings where the well covers them): one strip
+    `name`.png, lit, and `name`-dark.png, the same with the light gone."""
+    info = json.load(open(os.path.join(src, 'info.json')))
+    n, (cw, chh), sup = info['frames'], info['canvas'], info['super']
+    os.makedirs(out, exist_ok=True)
+    lit = np.zeros((chh, cw * n, 4), np.uint8)
+    for f in range(n):
+        im = np.array(Image.open(os.path.join(src, f'f{f:03d}-full.png')).convert('RGBA'))
+        where = read_where(os.path.join(src, f'f{f:03d}-where.png'), sup, chh, cw)
+        art, kinds = pixel_art(im, sup, where)
+        lit[:, f * cw:(f + 1) * cw] = crystal_edge(outline(art), kinds)
+    Image.fromarray(lit).save(os.path.join(out, f'{name}.png'), optimize=True)
+    Image.fromarray(darken(lit)).save(os.path.join(out, f'{name}-dark.png'), optimize=True)
+    print(name, n, 'frames')
+    return {'frames': n, 'cell': [cw, chh], 'fps': info.get('fps')}
+
+
 if __name__ == '__main__':
-    run(sys.argv[1], sys.argv[2])
+    if len(sys.argv) > 3:
+        run_whole(sys.argv[1], sys.argv[2], sys.argv[3])
+    else:
+        run(sys.argv[1], sys.argv[2])

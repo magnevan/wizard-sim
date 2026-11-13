@@ -20,7 +20,8 @@ OUT, MODE = ARGS[0], (ARGS[1] if len(ARGS) > 1 else 'test')
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIT = json.load(open(os.path.join(HERE, 'rings-fit.json')))
 BUILD = os.path.join(HERE, 'build')
-CANVAS_W, CANVAS_H, SUPER = 104, 56, 4
+# the fall needs the well's whole height: the rings end on the drum and the steps
+CANVAS_W, CANVAS_H, SUPER = 104, (113 if MODE == 'fall' else 56), 4
 REPEAT = 6    # the engraving's whole pattern repeats this often round the ring (band_texture.py): the spin loops after one
 W = FIT['W']
 # the bought rings aren't one size (the user): one passes just inside the other, a band's thickness apart, so they never
@@ -319,6 +320,115 @@ def shoot(path):
 
 
 os.makedirs(OUT, exist_ok=True)
+if MODE == 'fall':
+    # The power-down: the rings, overloaded and spinning fast, lose the crystal's hold and fall, landing on the drum and
+    # the steps as solid things (the user: "fall down and lay on the base in a natural looking physical way, considering
+    # that they were spinning"). Rigid bodies in art-pixel units. The drum, the crystal and the steps are stand-ins
+    # fitted to the art (the drum's top is squashed as drawn, its foot a true ellipse on the ground): they are what the
+    # rings hit, and holdouts, so a ring behind one is cut away where the art covers it.
+    FALL_FRAMES, RELEASE, FPS = 60, 4, 30
+    scene.render.fps = FPS
+    holdouts = bpy.data.collections.new('holdouts')
+    scene.collection.children.link(holdouts)
+
+    def solid(name, verts, faces):
+        me = bpy.data.meshes.new(name)
+        me.from_pydata(verts, [], faces)
+        me.update()
+        o = bpy.data.objects.new(name, me)
+        holdouts.objects.link(o)
+        o.is_holdout = True
+        return o
+
+    def loft(name, rings_):
+        """A closed solid through ellipses (z, rx, ry), bottom to top."""
+        n = 48
+        verts, faces = [], []
+        for z, rx, ry in rings_:
+            verts += [(rx * math.cos(2 * math.pi * i / n), ry * math.sin(2 * math.pi * i / n), z) for i in range(n)]
+        for k in range(len(rings_) - 1):
+            for i in range(n):
+                a, b = k * n + i, k * n + (i + 1) % n
+                faces.append((a, b, b + n, a + n))
+        faces.append(tuple(range(n))[::-1])
+        faces.append(tuple(range((len(rings_) - 1) * n, len(rings_) * n)))
+        return solid(name, verts, faces)
+
+    to_z = lambda sy: (FIT['cy'] - sy) / math.cos(ELEV)   # a point at depth 0 drawn at screen row sy
+    drum = loft('drum', [(to_z(74), 35, 35), (to_z(55.5), 34, 8 / math.sin(ELEV))])
+    steps = loft('steps', [(to_z(74) - 8, 52, 52), (to_z(74), 52, 52)])
+    cz = to_z(20)
+    crystal = solid('crystal', [(0, 0, to_z(0))] + [(13 * math.cos(2 * math.pi * i / 8), 13 * math.sin(2 * math.pi * i / 8), cz) for i in range(8)] + [(0, 0, to_z(40))],
+                    [(0, 1 + (i + 1) % 8, 1 + i) for i in range(8)] + [(9, 1 + i, 1 + (i + 1) % 8) for i in range(8)])
+    # the lines are the rings' only: not round the stand-ins
+    ls.select_by_collection = True
+    ls.collection = holdouts
+    ls.collection_negation = 'EXCLUSIVE'
+
+    bpy.ops.rigidbody.world_add()
+    rbw = scene.rigidbody_world
+    rbw.substeps_per_frame = 30
+    rbw.solver_iterations = 30
+    rbw.point_cache.frame_start, rbw.point_cache.frame_end = 1, FALL_FRAMES
+    scene.gravity = (0, 0, -600)   # art px a second squared: rings about 35 px across fall as a metre-sized thing would
+
+    def body(o, kind, shape):
+        bpy.context.view_layer.objects.active = o
+        o.select_set(True)
+        bpy.ops.rigidbody.object_add()
+        o.select_set(False)
+        o.rigid_body.type = kind
+        o.rigid_body.collision_shape = shape
+        o.rigid_body.collision_margin = 0.2
+        o.rigid_body.friction = 1.0     # heavy metal on stone: they settle where they land, not slide off the drum
+        o.rigid_body.restitution = 0.05
+    # the drum and steps are convex: a hull is exact and steady (a triangle mesh under a resting ring threw it back up);
+    # the crystal is only a holdout, as narrow as it is the rings' fall never needs it
+    for o in (drum, steps):
+        body(o, 'PASSIVE', 'CONVEX_HULL')
+        o.rigid_body.collision_collections = [i in (0, 1, 2) for i in range(20)]
+    # spinning when they let go: keyframed (animated) for the first frames, turning as the overloaded spin does, then
+    # handed to the physics
+    SPIN_PER_FRAME = 2 * math.pi / 240 * 4   # four engraving columns a physics frame: the overloaded spin's pace
+    for k, (o, base, sgn) in enumerate(rings):
+        body(o, 'ACTIVE', 'MESH')
+        o.rigid_body.mass = 2.0
+        # the rings sit closer than the collision margin, so they'd burst apart: each meets the well, not the other
+        o.rigid_body.collision_collections = [i == k + 1 for i in range(20)]
+        o.rotation_mode = 'QUATERNION'
+        for f in range(1, RELEASE + 1):
+            scene.frame_set(f)
+            o.matrix_world = base @ Matrix.Rotation(sgn * (f - 1) * SPIN_PER_FRAME, 4, 'Z')
+            o.keyframe_insert('location', frame=f)
+            o.keyframe_insert('rotation_quaternion', frame=f)
+            o.rigid_body.kinematic = True
+            o.rigid_body.keyframe_insert('kinematic', frame=f)
+        o.rigid_body.kinematic = False
+        o.rigid_body.keyframe_insert('kinematic', frame=RELEASE + 1)
+    shot = []
+    for f in range(1, FALL_FRAMES + 1):
+        scene.frame_set(f)
+        bpy.context.view_layer.update()
+        path = os.path.join(OUT, f'f{len(shot):03d}')
+        cam.clip_start, cam.clip_end = 0.1, 400
+        r.use_freestyle = True
+        scene.cycles.samples = 64
+        scene.cycles.use_denoising = True
+        r.filepath = path + '-full.png'
+        bpy.ops.render.render(write_still=True)
+        r.use_freestyle = False
+        scene.cycles.samples = 1
+        scene.cycles.use_denoising = False
+        layer.material_override = WHERE
+        scene.view_settings.view_transform = 'Raw'
+        r.filepath = path + '-where.png'
+        bpy.ops.render.render(write_still=True)
+        layer.material_override = None
+        scene.view_settings.view_transform = 'Standard'
+        shot.append(f)
+    json.dump({'frames': len(shot), 'canvas': [CANVAS_W, CANVAS_H], 'super': SUPER, 'fps': FPS, 'release': RELEASE}, open(os.path.join(OUT, 'info.json'), 'w'))
+    print('rendered fall', len(shot))
+    sys.exit(0)
 if MODE == 'unwrap':
     # for unwrap.py: frame 0's 'where' with both rings, then with each alone, so each pixel of the bought rings can be
     # traced to a ring and a spot on its face

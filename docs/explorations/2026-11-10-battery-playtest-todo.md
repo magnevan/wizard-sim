@@ -108,6 +108,21 @@ Built, waiting on the user's playtest. All of it is in `sim/src/battery-waves.ts
 - **Goblin effort grunts**: "A small, wiry goblin grunting with effort as it swings: a short raspy snarl."
 - **Barricades giving way**: "A wooden palisade and stakes giving way: timber splintering and cracking, posts falling and thudding into the dirt."
 
+## The well rebuilt from layers and 3D rings (2026-11-12 to 13)
+
+The bought well animations (commit a9a2228) morphed the rings into a hoop rather than turning them, sank them top-first, invented ring pieces, and ran at a low frame rate. The user liked their crystal and rune flare-out. Lesson kept in memory: generated animation is for light, fire and sparks; anything solid that moves goes to Blender or code; check frame by frame before buying or wiring in.
+
+- **The rings** are now 3D (`tools/well-3d/`, its README has the pipeline): two solid bands with sharp corners, fitted to the bought silhouette, with ring A a band's thickness bigger so they never meet. They're snapped to the bought palette in the bought rings' own shade proportions. The band's face went through about twenty rounds with the user: engraved runes and braids carved in 3D read as noise below a pixel; per-pixel drawings, streaks and shapes never matched the bought art. The user settled on a dark band with raised borders and raised strips across it that stop short of the borders.
+- **The drum** kept the bought rings' last rows under them, which doubled the 3D rings. Its back rim is rebuilt from the front, mirrored (`drum_fill.py`), lit and drained.
+- **The states** (`art/well-anim.ts`; clicking the well steps through them, `?well=n`):
+  - Steady: the spin at 8 frames a second, a light pulse on the runes and the crystal, a 1 px bob.
+  - Overloaded: the spin up to about four times faster, runes and crystal blazing and flickering, lightning from the crystal ending on the rings' own pixels, molten sparks spitting from the runes under gravity.
+  - Overloaded to failed: a white flare and a burst of sparks, then a rigid-body fall rendered in Blender. The rings tip, drop round the drum and settle leaning against it on the steps, as the light goes out of the rings, the crystal and the drum.
+  - Failed: the fall's last frame, dark.
+  - Failed to repaired: the fall played back, the rings lifting as the light returns, then the spin. Not used in the game until the repair beat.
+- **Not yet judged by the user:** the spin GIF, the fall, the overloaded effects. `scripts/well-frames.mjs` paints each state directly for a look.
+- **Still to do:** the repair beat itself ("press X to stabilize"). The bought frames (`content/assets/well/frames`, `tools/art-import/well_frames.py`) are no longer used and are kept as a record.
+
 ## Enemies at the wall's foot
 
 Not on the user's list, but it comes from the same layout: a full-height wall hides about 4 units of ground behind it, and enemies reaching the wall will be out of sight. A one-storey kit would be about 10 generations, with sign-off first. Decide once waves exist.

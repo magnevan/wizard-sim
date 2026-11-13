@@ -338,7 +338,7 @@ export function tickDeaths(w: World): void {
     b.kind[i] = KIND.none;
     // Pyre (survive): an enemy you set burning goes up in a fire burst when it dies. It burns allies too.
     const src = b.burnSrc[i];
-    if (w.run && b.burn[i] > 0 && src >= 0 && src < MAX_SEATS && stackOf(w, src, PU.pyre)) {
+    if (b.burn[i] > 0 && src >= 0 && src < MAX_SEATS && stackOf(w, src, PU.pyre)) {
       setHitKind(HIT_KIND.burst);
       disc(w, stored(PYRE_ELS, 0, 0, 0, EL.fire), src, b.x[i], b.y[i], PYRE_RADIUS, 1, i);
       burstEvent(w, src, b.x[i], b.y[i], PYRE_RADIUS, EL.fire);

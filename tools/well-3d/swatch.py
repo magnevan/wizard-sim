@@ -18,7 +18,7 @@ a = np.zeros((n + 2, cols, 3), np.uint8)
 for r in range(n + 2):
     for c in range(cols):
         u = (c + 0.5) / P.COLS
-        i = mid + 1 if r in (0, n + 1) else P.CHANNEL[P.shape_tone(u, r - 1, n)]
+        i = P.BORDER_STEP if r in (0, n + 1) else P.CHANNEL[P.rib_tone(u, r - 1, n)]
         a[r, c] = P.LADDER[min(len(P.LADDER) - 1, i)]
 line = np.full((1, cols, 3), P.LINE, np.uint8)
 a = np.vstack([line, a, line])

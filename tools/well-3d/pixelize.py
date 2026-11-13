@@ -151,6 +151,19 @@ def shape_tone(u, r, n):
     return TONE['D'] if (col + r) % 5 else TONE['d']
 
 
+# The runes dropped (the user, 2026-11-13: that approach isn't working): a dark band between the raised edges, with many
+# raised strips across it, one column wide every RIB_STEP columns, stopping a row short of each edge.
+RIB_STEP = 4
+
+
+def rib_tone(u, r, n):
+    """The shade step for screen row r (0..n-1) of the channel at u round the ring."""
+    col = int(np.floor(u * COLS)) % LOOP
+    if col % RIB_STEP == 0 and 1 <= r <= n - 2:
+        return TONE['H']
+    return TONE['D']
+
+
 def streak_tone(u, r, n):
     """The shade step for screen row r (0..n-1) across the face's channel, at u round the ring."""
     col = int(np.floor(u * COLS)) % LOOP
@@ -360,7 +373,8 @@ def pixel_art(rgba, sup, where=None):
                 idx[y, x] = int(np.clip(BORDER_STEP + np.clip(round((idx[y, x] - 5) / 2), -1, 1), 1, top))
                 continue
             r, n = across[(y, x)]
-            step = TONE['H'] if (y, x) in lit else TONE['D'] if (x + y) % 5 else TONE['d']
+            us = sorted(s[0] for s in samples if s[2] == 'outer')
+            step = rib_tone(us[len(us) // 2], r, n)
             if TONE_LOG is not None:
                 TONE_LOG[(y, x)] = (step, r, n)
             # absolute browns, as the bought band has them (studied pixel by pixel, 2026-11-13): a deep ground in its

@@ -1,0 +1,12 @@
+{
+  "note": "Every tag a Prop or Marker may carry, with what the game does with it. A tag is a role, shared by every room (the room is already the scope); content:check fails on a tag not listed here, so a typo can't silently find nothing. Add a line when a new role appears.",
+  "props": {
+    "tower": "A battery defence's tower: its muzzle is in front of it, and its lane is the enemies sent at it (battery.ts, battery-waves.ts).",
+    "circle": "A battery defence's possession circle: stand in it and press Use to drive the defence, in the same order as the towers (battery.ts).",
+    "stakes": "A line of stakes that enemies hack at as the party arrives (battery-waves.ts holdSpot).",
+    "well": "The battery's well: its light, where it runs dry, and where Use starts the repair (battery-waves.ts)."
+  },
+  "markers": {
+    "gap": "Where a group of enemies comes out: openAtMarkers('gap') sends one from every gap (encounter.ts)."
+  }
+}

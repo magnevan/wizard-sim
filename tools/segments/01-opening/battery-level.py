@@ -215,6 +215,14 @@ for i, (a, b) in enumerate(runs):
 ROLE = {'defence-tower': 'tower', 'possession-circle': 'circle', 'stakes': 'stakes', 'battery-well': 'well'}
 for i, (asset, x, y, blocks) in enumerate(props):
     es.append(entity('Prop', i, x, y, {'asset': asset, 'blocks': blocks, 'tag': ROLE.get(asset)}))
+# Markers and Regions are placed in LDtk (by hand or by Claude), not planned here: keep whatever the level has, as it is
+KEEP = ('Marker', 'Region')
+old_path = os.path.join(MAPS, 'world/Battery.ldtkl')
+if os.path.exists(old_path):
+    old = json.load(open(old_path, encoding='utf-8'))
+    for li in old['layerInstances']:
+        if li['__identifier'] == 'Entities':
+            es.extend(e for e in li['entityInstances'] if e['__identifier'] in KEEP)
 
 level_uid = 109
 level = copy.deepcopy(source)

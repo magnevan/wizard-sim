@@ -1,7 +1,7 @@
 // LDtk levels -> room definitions (plain data), and room definitions -> the generated module
 // packages/sim/src/rooms.gen.ts. The build reads only the data layers: the Terrain IntGrid and
 // the Entities layer. Auto-tiles LDtk may bake are ignored (the client draws with our art).
-import { GRID_PX, PX_PER_UNIT, layerOf, fieldOf, loadProps, roomId, toWorldX, toWorldY } from './ldtk.mjs';
+import { GRID_PX, PX_PER_UNIT, layerOf, fieldOf, loadProps, loadTags, roomId, toWorldX, toWorldY } from './ldtk.mjs';
 
 /** Terrain: IntGrid value identifier -> the character in a room's terrain rows. 0 (unpainted) is floor. */
 export const TERRAIN_CHARS = { floor: '.', rock: '#' };
@@ -112,7 +112,7 @@ export function terrainRows(project, level) {
  * One level -> a room definition. Returns { room, errors }. The room's key order is fixed: it is
  * what the room hash is taken over.
  */
-export function compileLevel(project, level, assets = loadProps()) {
+export function compileLevel(project, level, assets = loadProps(), tags = loadTags()) {
   const errors = [];
   const id = roomId(level.identifier);
   const { pxWid, pxHei } = level;
@@ -164,12 +164,14 @@ export function compileLevel(project, level, assets = loadProps()) {
         const asset = fieldOf(e, 'asset'), blocks = fieldOf(e, 'blocks') === true, meta = assets.get(asset);
         if (!meta) { errors.push(`${where}: no prop asset "${asset}" (game/content/assets/props/${asset}/meta.json)`); break; }
         const tag = fieldOf(e, 'tag');
+        if (tag && !(tag in tags.props)) errors.push(`${where}: no prop tag "${tag}" in game/content/tags.json (known: ${Object.keys(tags.props).join(', ')})`);
         props.push(tag ? { asset, x, y, blocks, tag } : { asset, x, y, blocks });
         if (blocks) propRock.push(...footprintWalls(x, y, meta.footprint, meta.round === true));
         break;
       }
       case 'Marker': {
         const id = fieldOf(e, 'id'), tag = fieldOf(e, 'tag');
+        if (tag && !(tag in tags.markers)) errors.push(`${where}: no marker tag "${tag}" in game/content/tags.json (known: ${Object.keys(tags.markers).join(', ')})`);
         if (named(where, id)) markers.push(tag ? { id, x, y, tag } : { id, x, y });
         break;
       }
@@ -220,9 +222,9 @@ export function emitGrounds(loaded) {
 
 /** Every level -> rooms. Returns { rooms, errors }. */
 export function compileProject(loaded) {
-  const rooms = [], errors = [], assets = loadProps();
+  const rooms = [], errors = [], assets = loadProps(), tags = loadTags();
   for (const { level } of loaded.levels) {
-    const r = compileLevel(loaded.project, level, assets);
+    const r = compileLevel(loaded.project, level, assets, tags);
     rooms.push(r.room);
     errors.push(...r.errors);
   }

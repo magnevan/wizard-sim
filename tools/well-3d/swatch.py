@@ -19,9 +19,9 @@ for r, v in enumerate(rows_v):
     for c in range(cols):
         u = (c + 0.5) / P.COLS
         m = P.mark_at(u, v)
-        i = mid + 1 if m == 'border' else mid if m == 'raised' else max(P.CUT_FLOOR, mid - P.CUT_STEPS)
+        i = mid + 1 if m in ('border', 'raised') else max(P.CUT_FLOOR, mid - P.CUT_STEPS)
         col = P.LADDER[i]
-        if m == 'cut' and P.patina_at(u, v, 'outer') > 0.7:
+        if P.PATINA_ON and m == 'cut' and P.patina_at(u, v, 'outer') > 0.7:
             col = P.PATINA
         a[r, c] = col
 line = np.full((1, cols, 3), P.LINE, np.uint8)

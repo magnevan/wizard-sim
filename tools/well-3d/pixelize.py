@@ -46,18 +46,23 @@ LADDER, CUM = ladder()
 # border. The pattern is tiles of 8 columns x 3 rows ('X' raised, '.' cut), in a rotation of five so it isn't machine
 # even; columns are fractions of a turn (COLS round the ring), so a sixth of a turn (the spin's loop) is 8 whole tiles
 # ... and lands on the same rotation.
-COLS, SPACING = 240, 4
+COLS, SPACING = 240, 5
 # The bought engraving read by the user (2026-11-13): many distinct light drawings, raised, with the dark filling the
 # negative space between them, and a raised border top and bottom. So the channel between the borders is cut away, and
-# small drawings stand up from it, 3 x 3 pixels, a column of dark between each. Five in rotation, SPACING columns apart:
-# 20 columns a round, two rounds a sixth of a turn (the spin's loop). Each drawing's rows are top, middle, bottom.
+# small drawings stand up from it: thin strokes in 3 x 3 pixels, two columns of dark between each, about a quarter of
+# the channel raised (heavier ones merged into a lattice). Eight in rotation, SPACING columns apart: 40 columns, a sixth
+# of a turn (the spin's loop). Each drawing's rows are top, middle, bottom.
 GLYPHS = [
-    ('.X.', 'XXX', '.X.'),   # a plus
-    ('X.X', 'XXX', 'X.X'),   # an H
-    ('XXX', '.X.', '.X.'),   # a T
-    ('.XX', '.X.', 'XX.'),   # an S
-    ('X..', 'XX.', 'X.X'),   # a hook
+    ('.X.', 'X.X', '.X.'),   # a ring
+    ('X..', '.X.', '..X'),   # a stroke down
+    ('XX.', 'X..', 'X..'),   # a hook
+    ('.X.', '.X.', 'X.X'),   # a fork
+    ('..X', '.X.', 'X..'),   # a stroke up
+    ('X.X', '.X.', '.X.'),   # a Y
+    ('X..', 'XX.', 'X..'),   # a flag
+    ('.X.', '..X', '.X.'),   # a chevron
 ]
+PATINA_ON = False   # the user: the patina hurt the look; round 8, without it, was the best
 CUT_STEPS, CUT_FLOOR = 3, 1   # the cut-away ground goes this many browns down the ladder, but not below this one
 
 
@@ -69,7 +74,7 @@ def mark_at(u, v):
         return 'border'
     col = u * COLS
     k = int(np.floor(col / SPACING))
-    du = int(np.floor(col - k * SPACING))          # 0..3: three columns of drawing, then one of ground
+    du = int(np.floor(col - k * SPACING))          # 0..4: three columns of drawing, then two of ground
     dv = min(2, max(0, int((v - 0.2) / 0.6 * 3)))  # the three rows between the borders
     if du > 2:
         return 'cut'
@@ -93,19 +98,25 @@ def patina_at(u, v, kind):
 
 
 def read_where(path, sup, h, w):
-    """pixelize's view of rings.py's 'where' render: (u, v, on the outer face) at each art pixel's middle, or None."""
+    """pixelize's view of rings.py's 'where' render: for each art pixel, every render sample in its block as (u, v,
+    kind), so a pixel can be decided by a vote of its samples rather than the one at its middle (single samples made
+    the drawings splotchy where the band is squeezed)."""
     a = np.array(Image.open(path).convert('RGBA')).astype(float)
     out = {}
     for y in range(h):
         for x in range(w):
-            p = a[y * sup + sup // 2, x * sup + sup // 2]
-            if p[3] < 128:
-                continue
-            u = round(p[0] / 255 * 64) / 64 + (p[1] / 255) / 64
-            b = p[2] / 255
-            kind = 'outer' if b >= 0.58 else 'inner' if b >= 0.28 else 'top'
-            base = {'outer': 0.6, 'inner': 0.3, 'top': 0.0}[kind]
-            out[(y, x)] = (u % 1.0, min(1.0, max(0.0, (b - base) / 0.25)), kind)
+            blk = a[y * sup:(y + 1) * sup, x * sup:(x + 1) * sup].reshape(-1, 4)
+            s = []
+            for p in blk:
+                if p[3] < 128:
+                    continue
+                u = round(p[0] / 255 * 64) / 64 + (p[1] / 255) / 64
+                b = p[2] / 255
+                kind = 'outer' if b >= 0.58 else 'inner' if b >= 0.28 else 'top'
+                base = {'outer': 0.6, 'inner': 0.3, 'top': 0.0}[kind]
+                s.append((u % 1.0, min(1.0, max(0.0, (b - base) / 0.25)), kind))
+            if s:
+                out[(y, x)] = s
     return out
 
 
@@ -130,28 +141,33 @@ def pixel_art(rgba, sup, where=None):
     green = np.zeros((h, w), bool)
     if where:
         top = len(LADDER) - 1
-        for (y, x), (u, v, kind) in where.items():
+        for (y, x), samples in where.items():
             if idx[y, x] < 0:
                 continue
+            names = [s[2] for s in samples]
+            kind = max(KINDS, key=names.count)
+            u, v, _ = next(s for s in samples if s[2] == kind)
             kinds[y, x] = KINDS.index(kind)
             if kind == 'inner':
                 # the inside faces in three clear steps by distance from the crystal, lightest near it (the user: the
                 # render's own shade there is one flat brown, so it's set here, not nudged)
                 d = math.hypot(x + 0.5 - CRYSTAL[0], (y + 0.5 - CRYSTAL[1]) * 1.6)
                 idx[y, x] = INNER_STEPS[0] if d < 20 else INNER_STEPS[1] if d < 31 else INNER_STEPS[2]
-                if patina_at(u, v, kind) > 0.78:
+                if PATINA_ON and patina_at(u, v, kind) > 0.78:
                     green[y, x] = True
                 continue
             if kind != 'outer':
                 continue
-            m = mark_at(u, v)
+            # the vote: a border if most of the face samples are, raised if a third of them fall on a drawing's stroke
+            ms = [mark_at(su, sv) for su, sv, sk in samples if sk == 'outer']
+            m = 'border' if ms.count('border') * 2 > len(ms) else 'raised' if ms.count('raised') * 3 >= len(ms) else 'cut'
             if m == 'cut':
                 # the cut-away ground: darker, but never into the very darkest browns (the dark bottom sank to black)
                 idx[y, x] = max(min(idx[y, x], CUT_FLOOR), idx[y, x] - CUT_STEPS)
-                if patina_at(u, v, kind) > 0.7:
+                if PATINA_ON and patina_at(u, v, kind) > 0.7:
                     green[y, x] = True
-            elif m == 'border':
-                idx[y, x] = min(top, idx[y, x] + 1)   # the smooth raised borders catch the light
+            else:
+                idx[y, x] = min(top, idx[y, x] + 1)   # the borders and the drawings stand up and catch the light
     out[metal, :3] = LADDER[idx[metal]].astype(np.uint8)
     out[metal & green, :3] = PATINA
     out[on & dark, :3] = LINE

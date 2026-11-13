@@ -31,7 +31,7 @@
  */
 import { RollbackSession, type AimPrediction, type Gone, type Handover, type Transport } from '@wizard-sim/net';
 import { SIM_BUILD } from '../build-id';
-import { CONTENT_HASH, createWorld, overrides, replaceWorld, tuningHash, type Snapshot, type World } from '@wizard-sim/sim';
+import { CONTENT_HASH, createWorld, overrides, replaceWorld, tuningHash, type PartyState, type Snapshot, type World } from '@wizard-sim/sim';
 import { loadSaved, replaceTuning } from '../tune-io';
 import { roomOf, scenarioOfRoom } from '../scenarios';
 import { fromB64, toB64, type Bus } from './bus';
@@ -64,7 +64,8 @@ const RESUME_AHEAD = 45;
 interface HostMsg { t: 'host'; match: string; name: string; version: number; build?: string; maps: number; tuning: number; room: string; players: string[]; rejoin?: boolean }
 interface JoinMsg { t: 'join'; match: string; version: number; build?: string; maps: number; tuning: number }
 /** prev: the match this one replaces (the host moved everyone to another scenario); its players follow without joining. */
-interface StartMsg { t: 'start'; match: string; seed: number; room: string; delay: number; players: string[]; tuning: Record<string, number>; prev?: string }
+/** A match begins: in `room`, from its mode's `checkpoint` when one is named (the host's chapter jump, or a save). */
+interface StartMsg { t: 'start'; match: string; seed: number; room: string; checkpoint?: string; party?: PartyState; delay: number; players: string[]; tuning: Record<string, number>; prev?: string }
 /** A tuning in force from tick `at` (the whole map of overrides, so applying one never depends on the last). */
 interface TuneAt { n: number; at: number; map: Record<string, number> }
 type LobbyMsg = HostMsg | JoinMsg | StartMsg;
@@ -104,8 +105,9 @@ async function unpackSnap(b64: string): Promise<Snapshot> {
 
 /**
  * The transport the session sees: seats instead of peers, base64 over the bus, through the link simulator.
- * The bus can't unsubscribe, so a transport that is no longer `live` (its match was left, dropped or
- * replaced) ignores what it hears; otherwise its inbox, which nobody drains any more, grows for as long as the others play.
+ * A transport that is no longer `live` (its match was left, dropped or replaced) unsubscribes the first time it hears
+ * anything, so dead matches' handlers don't pile up across room switches; until then it ignores what it hears, or its
+ * inbox, which nobody drains any more, would grow for as long as the others play.
  */
 function busTransport(bus: Bus, match: string, link: LinkSim, heard: (seat: number) => void, live: (t: SeatTransport) => boolean): SeatTransport {
   const inbox: { from: number; data: Uint8Array }[] = [];
@@ -115,9 +117,10 @@ function busTransport(bus: Bus, match: string, link: LinkSim, heard: (seat: numb
     broadcast: (data: Uint8Array) => out(data),
     receive: () => inbox.splice(0),
   };
-  bus.on('ls', (raw) => {
+  const off = bus.on('ls', (raw) => {
+    if (!live(t)) { off(); return; }
     const m = raw as { m?: string; f?: number; d?: string };
-    if (m?.m !== match || typeof m.f !== 'number' || m.f === t.self || typeof m.d !== 'string' || !live(t)) return;
+    if (m?.m !== match || typeof m.f !== 'number' || m.f === t.self || typeof m.d !== 'string') return;
     const f = m.f, d = m.d;
     link.pass(() => { if (!live(t)) return; try { inbox.push({ from: f, data: fromB64(d) }); heard(f); } catch { /* malformed: ignore */ } });
   });
@@ -145,6 +148,11 @@ export class NetPlay {
   /** Matches others are hosting, by match id, with when we last heard of them. */
   private open = new Map<string, HostMsg & { seen: number }>();
   private hostTimer = 0;
+  /** Where in the room the next match starts (setRoom, switchRoom), or the current match started. */
+  private checkpoint: string | undefined = undefined;
+  /** What the party brings into that campaign area (sim PartyState). */
+  private party: PartyState | undefined = undefined;
+  private debugTimer = 0;
   private lastFlush = 0;
   private joinedPlayers: string[] = [];
   message = '';
@@ -237,7 +245,7 @@ export class NetPlay {
   start(): void {
     if (this.state !== 'hosting') return;
     clearInterval(this.hostTimer);
-    const msg: StartMsg = { t: 'start', match: this.match, seed: (Date.now() & 0x7fffffff) >>> 0, room: this.room, delay: NET_DELAY, players: this.joinedPlayers, tuning: overrides() };
+    const msg: StartMsg = { t: 'start', match: this.match, seed: (Date.now() & 0x7fffffff) >>> 0, room: this.room, checkpoint: this.checkpoint, party: this.party, delay: NET_DELAY, players: this.joinedPlayers, tuning: overrides() };
     // The room can drop a moment; say it a few times.
     for (const ms of [0, 250, 600, 1200]) setTimeout(() => this.bus.emit('lobby', msg), ms);
     this.startMsg = msg;
@@ -257,6 +265,8 @@ export class NetPlay {
 
   /** The scenario's room this page plays (or would host). */
   get roomName(): string { return this.room; }
+  /** The checkpoint the match started from (none: the room's beginning). */
+  get checkpointName(): string | undefined { return this.checkpoint; }
 
   /** Is this page the one that decides for the match: the lobby's host, or the coordinator (lowest live seat) in a match? */
   get isHost(): boolean {
@@ -265,9 +275,9 @@ export class NetPlay {
   }
 
   /** Out of a match (alone, or hosting a lobby that hasn't started): the room this page announces and will start. */
-  setRoom(room: string): void {
+  setRoom(room: string, checkpoint?: string, party?: PartyState): void {
     if (this.state === 'playing') return;
-    this.room = room;
+    this.room = room; this.checkpoint = checkpoint; this.party = party;
     this.render();
   }
 
@@ -276,14 +286,14 @@ export class NetPlay {
    * (in their seat order), which their pages follow by themselves (the start names this match as
    * `prev`). Returns false when this page can't (not in a match, or not the host).
    */
-  switchRoom(room: string): boolean {
+  switchRoom(room: string, checkpoint?: string, party?: PartyState): boolean {
     const s = this.session;
     if (this.state !== 'playing' || !s || !this.isHost) return false;
     const players = this.joinedPlayers.filter((_, p) => p === this.seat || !s.isOut(p));
     const prev = this.match;
-    this.room = room;
+    this.room = room; this.checkpoint = checkpoint; this.party = party;
     this.match = `${this.bus.self.slice(0, 6)}${Date.now().toString(36).slice(-4)}`;
-    const msg: StartMsg = { t: 'start', match: this.match, seed: (Date.now() & 0x7fffffff) >>> 0, room, delay: NET_DELAY, players, tuning: overrides(), prev };
+    const msg: StartMsg = { t: 'start', match: this.match, seed: (Date.now() & 0x7fffffff) >>> 0, room, checkpoint, party, delay: NET_DELAY, players, tuning: overrides(), prev };
     for (const ms of [0, 250, 600, 1200]) setTimeout(() => this.bus.emit('lobby', msg), ms);
     this.startMsg = msg; this.startSent = 0;
     this.reports.clear(); this.rejoin = null;
@@ -363,10 +373,10 @@ export class NetPlay {
     this.seat = m.players.indexOf(this.bus.self);
     this.players = m.players.length;
     // The match plays the host's room (a joiner's own page may have been elsewhere): a rejoin's welcome must name it.
-    this.room = m.room;
+    this.room = m.room; this.checkpoint = m.checkpoint; this.party = m.party;
     this.joinedPlayers = m.players.slice();
     // A fresh world, put into the one everything already holds (a copy; or, from or to Survive, its pools swapped in).
-    replaceWorld(this.world, createWorld(m.seed, this.players, { room: roomOf(m.room) }));
+    replaceWorld(this.world, createWorld(m.seed, this.players, { room: roomOf(m.room), checkpoint: m.checkpoint, party: m.party }));
     const seats = m.players.map((_, i) => i);
     this.transport = this.newTransport(m.match);
     this.transport.self = this.seat;
@@ -665,7 +675,8 @@ export class NetPlay {
     });
     sync();
     const stats = body.querySelector<HTMLElement>('[data-stats]')!;
-    setInterval(() => {
+    clearInterval(this.debugTimer); // the section was filled before: one ticker, on the newest body
+    this.debugTimer = window.setInterval(() => {
       const s = this.session;
       stats.textContent = !s ? 'Not in a match: start one from the Co-op panel to see the numbers.'
         : `Round trip ${Math.round(this.rtt)} ms · rewinds ${this.stat.rewindsPerS.toFixed(0)} ticks/s · wrong guesses ${this.stat.wrongPct.toFixed(0)} % · waited ${(s.waitedTicks / 60).toFixed(1)} s · behind ${Math.max(0, s.lag)} ticks` +

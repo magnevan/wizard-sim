@@ -4,7 +4,7 @@ import { FLOOR, GROUND_CHARS, ROCK, terrainLegend, terrainRows } from './compile
 import { CELL, GRID_PX, PX_PER_UNIT, layerOf, saveJson, toWorldX, toWorldY } from './ldtk.mjs';
 
 /** Overlay marks for --entities (read-only: write refuses them). */
-export const MARKS = { PlayerStart: 'S', Dummy: 'D', Portal: 'P', Altar: 'A', Rock: '+', Prop: 'O' };
+export const MARKS = { PlayerStart: 'S', Dummy: 'D', Portal: 'P', Altar: 'A', Rock: '+', Prop: 'O', Marker: 'M', Region: 'R' };
 
 const header = (level, layer, legend) => [
   `// ${level.identifier}: ${layer.__cWid} x ${layer.__cHei} cells of ${CELL} u (${level.pxWid / PX_PER_UNIT} x ${level.pxHei / PX_PER_UNIT} u). Row 0 is the top.`,

@@ -1,0 +1,27 @@
+# Cross-engine determinism: the built client in headless Chrome must reach the same state hash as node.
+# Its own workflow so a runner quirk can't hold up the deploy; once it has run green for a while, it can gate pages.yml.
+name: Browser check
+
+on:
+  push:
+    branches: [main, engine-rework]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: game/package-lock.json
+      - run: npm ci
+      - run: npm run check:browser
+        env:
+          CHROME: /usr/bin/google-chrome

@@ -23,10 +23,8 @@ import { solidWall } from './compile';
 import { terrainNear } from './terrain';
 import { TERRAIN_HIT, damageWall, segDist } from './walls';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
-import { AI, KIND, MAX_SEATS, PU, STATUS_BIT, TEAM, WARD, stackOf, type World } from './world';
-import { noteSlam } from './tutorial-data';
-import { driving } from './battery';
-import { BWAVES, batteryStandoff, holdSpot, laneTarget } from './battery-waves';
+import { EV, AI, KIND, MAX_SEATS, PU, STATUS_BIT, TEAM, WARD, stackOf, type World } from './world';
+import { possessed } from './possess';
 
 const TRACK_SHARE = 0.55;
 const COVER_DIST = 2.2;
@@ -70,12 +68,12 @@ function setAi(w: World, i: number, state: number): void { w.bodies.ai[i] = stat
 /** Plain damage from an enemy to a body, plus knockback. Stone armour's coat bites back. */
 function strike(w: World, src: number, t: number, dmg: number, knock: number, dx: number, dy: number, burn: boolean): void {
   const b = w.bodies, s = w.seats;
-  if (driving(w, t)) return; // a blow at the wall, on the defence: a driver can't be hurt (battery.ts)
+  if (possessed(w, t)) return; // a blow at a fixture: whoever possesses it can't be hurt (possess.ts)
   let d = dmg;
   // A conjured guard (guards.ts): a parry or a Bulwark block stops the blow; resistance cuts it.
   if (t < MAX_SEATS && s.guard[t]) {
     const land = guardMelee(w, t, src, dmg, dx, dy);
-    if (land <= 0) { w.events.push({ tick: w.clock[0], kind: 'fizzle', who: t, x: b.x[t], y: b.y[t], text: 'Blocked' }); return; }
+    if (land <= 0) { w.events.push({ tick: w.clock[0], kind: 'fizzle', who: t, x: b.x[t], y: b.y[t], ev: EV.blocked, text: 'Blocked' }); return; }
     d *= land;
   }
   if (t < MAX_SEATS && s.ward[t] === WARD.stone) {
@@ -95,7 +93,7 @@ function strike(w: World, src: number, t: number, dmg: number, knock: number, dx
 }
 
 export function tickEnemies(w: World): void {
-  const b = w.bodies;
+  const b = w.bodies, rules = w.mode.enemies; // the mode's say in what they do (mode.ts EnemyRules)
   for (let i = MAX_SEATS; i < b.kind.length; i++) {
     if (b.kind[i] !== KIND.enemy) continue;
     const a = ARCHETYPES[b.arch[i]];
@@ -111,16 +109,13 @@ export function tickEnemies(w: World): void {
     if (b.ai[i] === AI.dash) { dash(w, i); continue; }
     if (b.ai[i] === AI.grab) { grab(w, i); continue; }
 
-    // the battery with nobody at any defence: it batters its own defence's wall
-    if (w.battery && w.battery.lane[i] >= 0) {
-      // the battery: harmless, they batter something. Archers with a defence to shoot at stand off and shoot (below)
-      const lt = laneTarget(w, i);
-      if (lt < 0 || a.attack !== ATTACK.bolt) { holdWall(w, i, a, lt >= 0 ? holdSpot(w, i, lt) : holdSpot(w, i, -1)); continue; }
-    }
+    // the mode may have it hold a spot instead (the battery's lanes: harmless, they batter a wall)
+    const hold = rules?.holdAt?.(w, i);
+    if (hold) { holdWall(w, i, a, hold); continue; }
     let t = b.ai[i] === AI.windup ? b.target[i] : -1;
     if (t < 0 || !isPrey(w, t)) {
       if (b.ai[i] === AI.windup) setAi(w, i, AI.approach);
-      t = w.battery ? laneTarget(w, i) : -1; // the battery: your own lane's defence first
+      t = rules?.target?.(w, i) ?? -1; // the mode's pick first (the battery: your own lane's defence)
       if (t < 0) t = nearestWizard(w, i);
     }
     b.target[i] = t;
@@ -133,7 +128,7 @@ export function tickEnemies(w: World): void {
       move(w, i, approachSpot(w, i, t), t, speed);
       const ranged = a.attack === ATTACK.bolt || a.attack === ATTACK.grab;
       // Walled off with no way round: a wall it's pressed against is what it attacks.
-      const ready = ranged ? d <= (w.battery && a.attack === ATTACK.bolt ? BWAVES.archerStandoff + 1.5 : a.reach) && b.aiT[i] > T(0.4) : gap <= a.reach || ((cutOff(w, i, t) || atBarrier(w, i, t)) && wallInReach(w, i, a.reach + 0.45) >= 0); // walled off, or its way is through a barrier
+      const ready = ranged ? d <= (a.attack === ATTACK.bolt ? rules?.shotRange?.(w, i) ?? a.reach : a.reach) && b.aiT[i] > T(0.4) : gap <= a.reach || ((cutOff(w, i, t) || atBarrier(w, i, t)) && wallInReach(w, i, a.reach + 0.45) >= 0); // walled off, or its way is through a barrier
       if (ready) { setAi(w, i, AI.windup); b.lockX[i] = b.x[t]; b.lockY[i] = b.y[t]; }
     } else if (b.ai[i] === AI.windup) {
       if ((a.attack === ATTACK.bolt || a.attack === ATTACK.grab) && b.aiT[i] < T(a.windup * TRACK_SHARE)) { b.lockX[i] = b.x[t]; b.lockY[i] = b.y[t]; }
@@ -185,7 +180,8 @@ function move(w: World, i: number, [tx, ty]: [number, number], seat: number, spe
 function approachSpot(w: World, i: number, t: number): [number, number] {
   const b = w.bodies, a = ARCHETYPES[b.arch[i]];
   if (a.attack !== ATTACK.bolt) return [b.x[t], b.y[t]];
-  if (w.battery && driving(w, t)) return batteryStandoff(w, i, t); // past the defence's flamethrower: Place reaches them
+  const off = w.mode.enemies?.standoff?.(w, i, t); // the mode's (the battery: past a defence's flamethrower, where Place reaches them)
+  if (off) return off;
   let front = -1, fd = Infinity;
   for (let j = MAX_SEATS; j < b.kind.length; j++) {
     if (b.kind[j] !== KIND.enemy || (b.arch[j] !== ARCH.brute && b.arch[j] !== ARCH.shieldbearer)) continue;
@@ -275,10 +271,10 @@ function slamWave(w: World, i: number): void {
     for (let k = 0; k < wl.type.length; k++) if (solidWall(wl.type[k]) && segDist(lx, ly, wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k])[0] <= r) damageWall(w, k, dmg);
     w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: lx, y: ly, amount: r, look: EL.earth });
   }
-  if (front >= dc + r && w.tut) {
-    let hit = false;
-    for (let s = 0; s < b.kind.length; s++) if (b.slamBy[s] === i && b.slamAt[s] === at) hit = true;
-    noteSlam(w.tut, hit); // the tutorial's Retreat beat counts slams that hit nobody
+  if (front >= dc + r) {
+    let hit = 0;
+    for (let s = 0; s < b.kind.length; s++) if (b.slamBy[s] === i && b.slamAt[s] === at) hit = 1;
+    w.events.push({ tick: w.clock[0], kind: 'note', ev: EV.slamDone, who: i, x: lx, y: ly, amount: hit }); // the tutorial's Retreat beat counts slams that hit nobody
   }
 }
 
@@ -291,7 +287,7 @@ function dash(w: World, i: number): void {
     if (b.kind[s] !== KIND.wizard || b.downed[s] || b.heldBy[s] >= 0) continue;
     if (len(b.x[s] - b.x[i], b.y[s] - b.y[i]) > b.r[s] + b.r[i] + 0.2) continue;
     b.holding[i] = s; b.heldBy[s] = i; b.grabHp[i] = b.hp[i];
-    w.events.push({ tick: w.clock[0], kind: 'hit', who: s, x: b.x[s], y: b.y[s], amount: 0, text: 'Grabbed!' });
+    w.events.push({ tick: w.clock[0], kind: 'hit', who: s, x: b.x[s], y: b.y[s], amount: 0, ev: EV.grabbed, text: 'Grabbed!' });
     setAi(w, i, AI.grab);
     return;
   }
@@ -335,11 +331,11 @@ export function tickDeaths(w: World): void {
     if (b.holding[i] >= 0) release(w, i);
     const status = (b.frozen[i] ? STATUS_BIT.frozen : 0) | (b.wet[i] ? STATUS_BIT.wet : 0) | (b.burn[i] ? STATUS_BIT.burning : 0) | (b.stun[i] ? STATUS_BIT.stunned : 0) | (b.chill[i] > 0.17 ? STATUS_BIT.chilled : 0);
     // look = archetype; el, status and the blow's direction (x2, y2) let the view pick a death that fits.
-    w.events.push({ tick: w.clock[0], kind: 'fizzle', who: i, x: b.x[i], y: b.y[i], text: 'dies', look: b.arch[i], el: b.lastEl[i], mix: b.lastMix[i], shape: b.lastKind[i], status, x2: b.lastDX[i], y2: b.lastDY[i], amount: -b.hp[i] });
+    w.events.push({ tick: w.clock[0], kind: 'fizzle', who: i, x: b.x[i], y: b.y[i], ev: EV.death, text: 'dies', look: b.arch[i], el: b.lastEl[i], mix: b.lastMix[i], shape: b.lastKind[i], status, x2: b.lastDX[i], y2: b.lastDY[i], amount: -b.hp[i] });
     b.kind[i] = KIND.none;
     // Pyre (survive): an enemy you set burning goes up in a fire burst when it dies. It burns allies too.
     const src = b.burnSrc[i];
-    if (w.run && b.burn[i] > 0 && src >= 0 && src < MAX_SEATS && stackOf(w, src, PU.pyre)) {
+    if (b.burn[i] > 0 && src >= 0 && src < MAX_SEATS && stackOf(w, src, PU.pyre)) {
       setHitKind(HIT_KIND.burst);
       disc(w, stored(PYRE_ELS, 0, 0, 0, EL.fire), src, b.x[i], b.y[i], PYRE_RADIUS, 1, i);
       burstEvent(w, src, b.x[i], b.y[i], PYRE_RADIUS, EL.fire);

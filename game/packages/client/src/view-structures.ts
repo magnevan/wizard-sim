@@ -19,7 +19,7 @@
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
-  AI, ARCH, drivePlace, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
+  EV, AI, ARCH, drivePlace, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
   N_ALTARS, N_EL, PERKS, QUEUE_MAX, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
   isPropWall, terrainNear,
@@ -37,7 +37,7 @@ import { elName, frosty, ramp, type BodyView, type LightFn } from './art/vfx';
 import { Sil } from './art/sil';
 import { gateLit } from './art/power-down';
 import { glyph, perkOf } from './art/perks';
-import { drawTutorialWorld } from './tutorial-view';
+import { roomView, type StructureKit } from './room-views';
 import { kitOf, kitRun, sideZ, stampTexture, wallsAllFar } from './art/wall-kit';
 import { toU, toV, toX, toY } from './iso-world';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
@@ -343,11 +343,11 @@ export class StructureView {
     this.scorch.afterStep(w, t);
     const near = (ax: number, ay: number, bx: number, by: number, r = 0.7) => Math.abs(ax - bx) < r && Math.abs(ay - by) < r;
     const dismissed = new Set<number>();
-    for (const e of w.events) if (e.kind === 'burst' && e.text === 'dismissed') { dismissed.add(e.who); skip.add(e); this.add('dismiss', t, 0.6, { who: e.who, x: e.x, y: e.y, seed: tick }); }
+    for (const e of w.events) if (e.kind === 'burst' && e.ev === EV.dismiss) { dismissed.add(e.who); skip.add(e); this.add('dismiss', t, 0.6, { who: e.who, x: e.x, y: e.y, seed: tick }); }
     // Survive's Rally: the revive moment, and a ring that breaks
     for (const e of w.events) {
-      if (e.kind === 'burst' && e.text === 'Rally') { skip.add(e); this.add('rally', t, 1.4, { who: e.who, n: e.src ?? -1, x: e.x, y: e.y, seed: tick }); }
-      if (e.kind === 'fizzle' && e.text === 'rally broken') this.add('rallybreak', t, 0.6, { who: e.who, n: e.src ?? -1, x: e.x, y: e.y, seed: tick });
+      if (e.kind === 'burst' && e.ev === EV.rally) { skip.add(e); this.add('rally', t, 1.4, { who: e.who, n: e.src ?? -1, x: e.x, y: e.y, seed: tick }); }
+      if (e.kind === 'fizzle' && e.ev === EV.rallyBroken) this.add('rallybreak', t, 0.6, { who: e.who, n: e.src ?? -1, x: e.x, y: e.y, seed: tick });
     }
     // weapon and guard moves (hands.ts, guards.ts): each its own short readable effect
     for (const e of w.events) {
@@ -469,8 +469,7 @@ export class StructureView {
     this.scorch.draw(w, st);
     const off = OFF;
     if (!off.includes('walls')) this.walls(w, t, g, o, bodies, light);
-    if (w.run) { this.altars(w, t, g, o, light); this.rallies(w, t, g, o, bodies, light); }
-    if (w.tut) drawTutorialWorld(w, t, g, o, light, (rx, ry, cw, ch, z) => this.pieces.canvas(rx, ry, cw, ch, z));
+    roomView(w).structures?.(this.kit, w, t, g, o, bodies, light); // the mode's own things (Survive's altars and rallies, the tutorial's chamber)
     if (!off.includes('waves')) { this.waves(w, t, g, o, light); this.sparks(w, t, g, o, light); }
     if (!off.includes('devices')) this.devices(w, t, g, o, bodies, light);
     if (!off.includes('wizards')) this.onWizards(w, t, g, o, bodies, light);
@@ -507,6 +506,13 @@ export class StructureView {
   /** When each altar last rose (view time), and what it offered then. */
   private altarT0 = new Float64Array(N_ALTARS).fill(-9);
   private altarPU = new Uint8Array(N_ALTARS);
+
+  /** What a mode's own things in the world may draw with (room-views.ts). */
+  private readonly kit: StructureKit = {
+    altars: (w, t, g, o, light) => this.altars(w, t, g, o, light),
+    rallies: (w, t, g, o, bodies, light) => this.rallies(w, t, g, o, bodies, light),
+    piece: (rx, ry, cw, ch, z) => this.pieces.canvas(rx, ry, cw, ch, z),
+  };
 
   /**
    * The pick's three altars: a stone plinth on a rune ring in the power-up's colour, its glyph

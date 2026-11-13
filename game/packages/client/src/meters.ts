@@ -13,7 +13,7 @@
  *   natural duration, and Sigil runes paid per turret shot, are not counted.
  * - Time to kill runs from an enemy's first damaging hit (by anyone) to its 'dies' event.
  */
-import { MAX_BODIES, PHASE_ENC, SIM_HZ, type SimEvent } from '@wizard-sim/sim';
+import { EV, MAX_BODIES, PHASE_ENC, SIM_HZ, type SimEvent } from '@wizard-sim/sim';
 
 export interface SpellRow { title: string; casts: number; damage: number; heal: number; runes: number }
 export interface KillRow { arch: number; kills: number; seconds: number }
@@ -77,7 +77,7 @@ export class Meters {
         row.casts++; row.runes += n; this.current = row;
         this.totalCasts++; this.totalRunes += n;
         this.bump(this.runeRing, this.runeStamp, Math.floor(tick / SIM_HZ), n);
-      } else if (e.kind === 'cast' && e.who === -1 && e.text === 'Wiped') wiped = true;
+      } else if (e.kind === 'cast' && e.who === -1 && e.ev === EV.wiped) wiped = true;
       else if (e.kind === 'hit' && amt > 0) {
         if (e.who >= 0 && e.who < MAX_BODIES && this.firstHit[e.who] < 0 && probe.isEnemy(e.who)) this.firstHit[e.who] = tick;
         if (e.src === this.seat && e.who !== this.seat) {
@@ -88,7 +88,7 @@ export class Meters {
       } else if (e.kind === 'heal' && amt > 0 && e.src === this.seat) {
         this.totalHeal += amt;
         this.spellRow().heal += amt;
-      } else if (e.kind === 'fizzle' && e.text === 'dies' && e.who >= 0 && e.who < MAX_BODIES) {
+      } else if (e.kind === 'fizzle' && e.ev === EV.death && e.who >= 0 && e.who < MAX_BODIES) {
         const t0 = this.firstHit[e.who];
         this.firstHit[e.who] = -1;
         if (t0 < 0) continue;

@@ -13,7 +13,16 @@ export interface Bus {
   /** This page's id on the bus (the room's peer label, or a random one for BroadcastChannel). */
   readonly self: string;
   emit(topic: string, data: unknown): void;
-  on(topic: string, fn: (data: unknown, from: string) => void): void;
+  /** Hear a topic; the returned function stops hearing it. */
+  on(topic: string, fn: (data: unknown, from: string) => void): () => void;
+}
+
+export type Handlers = Map<string, ((data: unknown, from: string) => void)[]>;
+
+/** Adds `fn` to a bus's handler map and returns its unsubscribe (shared by the map-backed buses). */
+export function subscribe(handlers: Handlers, topic: string, fn: (data: unknown, from: string) => void): () => void {
+  handlers.set(topic, [...(handlers.get(topic) ?? []), fn]);
+  return () => { const l = handlers.get(topic); if (l) handlers.set(topic, l.filter((g) => g !== fn)); };
 }
 
 interface RoomApi {
@@ -41,7 +50,7 @@ export async function roomBus(): Promise<Bus | null> {
     kind: 'room',
     self,
     emit: (topic, data) => { void r.emit(topic, data).catch(() => { /* dropped: the session resends */ }); },
-    on: (topic, fn) => { r.on(topic, (m) => { if (!m.sameTab) fn(m.data, m.peer); }); },
+    on: (topic, fn) => r.on(topic, (m) => { if (!m.sameTab) fn(m.data, m.peer); }),
   };
 }
 
@@ -49,7 +58,7 @@ export async function roomBus(): Promise<Bus | null> {
 export function broadcastBus(name = 'wizard-sim-net'): Bus {
   const ch = new BroadcastChannel(name);
   const self = Math.random().toString(36).slice(2, 10); // a label for this tab, not game state
-  const handlers = new Map<string, ((data: unknown, from: string) => void)[]>();
+  const handlers: Handlers = new Map();
   ch.onmessage = (e: MessageEvent<{ topic: string; from: string; data: unknown }>) => {
     for (const fn of handlers.get(e.data.topic) ?? []) fn(e.data.data, e.data.from);
   };
@@ -57,7 +66,7 @@ export function broadcastBus(name = 'wizard-sim-net'): Bus {
     kind: 'broadcast',
     self,
     emit: (topic, data) => ch.postMessage({ topic, from: self, data }),
-    on: (topic, fn) => { handlers.set(topic, [...(handlers.get(topic) ?? []), fn]); },
+    on: (topic, fn) => subscribe(handlers, topic, fn),
   };
 }
 

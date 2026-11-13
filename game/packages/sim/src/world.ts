@@ -7,13 +7,13 @@
  * always runs in slot order, so every peer visits entities in the same order.
  */
 import { ARENA, BODY, CELL, PERKS, RUNES, T, WELL } from './config';
-import { WALL } from './compile';
 import { EL, KEYED_EL, N_EL, elementName } from './elements';
 import { createRng, type RngState } from './rng';
 import { roomHash, type RoomDef, type Seg } from './room';
 import { createTerrain, type Terrain } from './terrain';
 import { ROOM_DEFS } from './rooms.gen';
-import { TS_LEN, TUT_ORDER, tutPool } from './tutorial-data';
+import { TS_LEN, TUT_ORDER } from './tutorial-data';
+import type { Mode, WorldOpts } from './mode';
 
 export const SIM_HZ = 60;
 export const DT = 1 / SIM_HZ;
@@ -235,11 +235,39 @@ export interface Surfaces {
 }
 
 /** What happened this tick, for the view (VFX, sound). Not state: cleared every step. */
+/**
+ * What an event means, apart from how it looks: the view, the sound and the modes read this, never `text`, which is a
+ * label for the screen and can be reworded freely. Most events need none (their kind says it all).
+ */
+export const EV = {
+  none: 0,
+  /** A body died (fizzle); a wizard went down (fizzle). */
+  death: 1, downed: 2,
+  /** Banners (who -1): a wave starts, is cleared, everyone fell (the Arena), a Survive run ends or starts again. */
+  waveStart: 3, waveClear: 4, wiped: 5, runOver: 6, newRun: 7,
+  /** A Sigil device, ward or weapon was let go (burst). */
+  dismiss: 8,
+  /** Survive: a downed wizard is rallied (burst, src = the rallier), or the rally is broken (fizzle). */
+  rally: 9, rallyBroken: 10,
+  /** A soaking enemy is doused (hit); a guard parries (hit); a grabber takes someone (hit); a blow or status is blocked (fizzle). */
+  doused: 11, parry: 12, grabbed: 13, blocked: 14,
+  /** A turret's orbital strike (zap). */
+  orbital: 15,
+  /** The battery: the well runs dry (burst, who -1), a defence gutters out (burst), a wizard is infused (burst). */
+  wellDry: 16, gutter: 17, infuse: 18,
+  /** Notes (kind 'note', never drawn): an enemy's shot met a wall a wizard made; an enemy's slam finished (amount 1: it hit someone). */
+  shotWalled: 19, slamDone: 20,
+} as const;
+
 export interface SimEvent {
   tick: number;
   kind: 'queue' | 'cancel' | 'dry' | 'cast' | 'hit' | 'heal' | 'fizzle' | 'burst' | 'zap' | 'surge' | 'blink' | 'shatter' | 'freeze' | 'todo'
     /** A weapon or guard move (hands.ts, guards.ts): `text` names it (dash, link, retreat kinds, block, parry...). */
-    | 'move';
+    | 'move'
+    /** Facts for the modes (EV.shotWalled, EV.slamDone): no picture, no sound. */
+    | 'note';
+  /** What it means (EV), when the kind alone doesn't say. */
+  ev?: number;
   who: number;
   /** hit / heal: the body that dealt it (-1 for the world: burning, surfaces). */
   src?: number;
@@ -420,6 +448,44 @@ export interface Run {
  * The tutorial's state (tutorial.ts; docs/explorations/2026-11-06-tutorial.md). Only a tutorial world
  * has one. `state` slots are TS in tutorial-data.ts.
  */
+/**
+ * What the party carries from one campaign area to the next (and what a save keeps): for now, the elements unlocked
+ * and how many runes each holds, the same for every wizard (the battery's infusion gives everyone Fire). Only a
+ * campaign world has one (null elsewhere, so the other rooms' layout and hashes are untouched). Outside the world it
+ * is a PartyState (partyOf, WorldOpts.party): plain data for the next area's start message and for the save.
+ */
+export interface Party {
+  /** Max runes per keyed element (index id - 1): 0 is locked. */
+  pools: Uint8Array;
+}
+
+/** A party as plain data: what crosses between areas, over the network and into a save. */
+export interface PartyState {
+  v: 1;
+  /** Max runes per keyed element, by element name (fire: 1); a missing element is locked. */
+  pools: Partial<Record<string, number>>;
+}
+
+/** The party, as data (undefined for a world that isn't a campaign area). */
+export function partyOf(w: World): PartyState | undefined {
+  if (!w.party) return undefined;
+  const pools: Partial<Record<string, number>> = {};
+  for (let id = 1; id <= KEYED_EL; id++) if (w.party.pools[id - 1]) pools[elementName(id)] = w.party.pools[id - 1];
+  return { v: 1, pools };
+}
+
+/** A campaign world's party, from what the last area handed over (or nothing: the campaign's start, all locked). */
+export function newParty(from?: PartyState): Party {
+  const p: Party = { pools: u8(N_EL) };
+  if (from?.v === 1) for (let id = 1; id <= KEYED_EL; id++) p.pools[id - 1] = Math.max(0, Math.min(255, Math.floor(from.pools[elementName(id)] ?? 0)));
+  return p;
+}
+
+/** The party learns element `id` with at least `max` runes (the battery's infusion: Fire, WELL.own). */
+export function unlock(w: World, id: number, max: number): void {
+  if (w.party && id >= 1 && id <= KEYED_EL) w.party.pools[id - 1] = Math.max(w.party.pools[id - 1], max);
+}
+
 export interface Tutorial {
   state: Int32Array;
   /** Personal done-bits, per seat (the prototype completes a personal beat when any one player does it). */
@@ -437,6 +503,8 @@ export interface World {
   def: RoomDef;
   /** The room's static rock and blocking props, with a spatial lookup (not state: read-only, derived from def; terrain.ts). */
   terrain: Terrain;
+  /** The rules this world runs under besides the core game (not state: fixed by the room; mode.ts, modes.ts). */
+  mode: Mode;
   /** [0] = tick, [1] = seed. */
   clock: Uint32Array;
   rng: RngState;
@@ -455,6 +523,8 @@ export interface World {
   battery: Battery | null;
   /** Tutorial only (null elsewhere, like run). */
   tut: Tutorial | null;
+  /** A campaign area only: what the party has unlocked, carried between areas (Party). */
+  party: Party | null;
   events: SimEvent[];
 }
 
@@ -498,7 +568,8 @@ function zones(n: number): Zones {
   };
 }
 
-function run(): Run {
+/** Survive's state for a new world (modes.ts). */
+export function newRun(): Run {
   const n = MAX_SEATS;
   return {
     state: i32(6), stacks: u8(n * N_PU), maxBonus: f64(n * N_EL), choose: u8(n), chosen: u8(n * 3),
@@ -512,7 +583,8 @@ function run(): Run {
   };
 }
 
-function tutorial(beat: number): Tutorial {
+/** The tutorial's state for a new world, starting at `beat` (modes.ts). */
+export function newTutorial(beat: number): Tutorial {
   const t: Tutorial = { state: i32(TS_LEN), done: u8(MAX_SEATS), faint: i32(MAX_SEATS), tag: u8(MAX_BODIES) };
   t.state[0] = TUT_ORDER.includes(beat) ? beat : TUT_ORDER[0];
   t.state[4] = -1; // the beat is laid out on the first step (tutorial.ts; world.ts can't import it)
@@ -544,10 +616,10 @@ export const SURVIVE_ROCK: readonly Seg[] = ROOMS.survive.rock;
 export const SURVIVE_GATES: readonly (readonly [number, number])[] = ROOMS.survive.portals;
 export const ALTAR_SPOTS: readonly (readonly [number, number])[] = ROOMS.survive.altars;
 
-/** Max runes of element `id` for seat `i`: the config; in the tutorial, the beat's pools (0 = locked); in Survive, its weak start plus the seat's power-ups. */
+/** Max runes of element `id` for seat `i`: the mode's (the tutorial's beat, Survive's weak start and power-ups, a defence's Fire), else the config's. */
 export const runeMax = (w: World, i: number, id: number): number =>
   id > KEYED_EL ? 0 : // Ice has no pool: it is made from Water's and Cold's
-  w.tut ? tutPool(w.tut.state[0], id) : w.battery ? (id !== EL.fire ? 0 : w.battery.drive[i] >= 0 ? RUNES.max.fire : infused(w) ? WELL.own : 0) : w.run ? (id === EL.sigil ? RUNES.surviveSigil : RUNES.surviveStart) + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
+  w.mode.runeMax ? w.mode.runeMax(w, i, id) : w.party ? w.party.pools[id - 1] : RUNES.max[elementName(id)];
 /** A seat's power-up stacks (0 outside survive). */
 export const stackOf = (w: World, i: number, pu: number): number => (w.run && i >= 0 && i < MAX_SEATS ? w.run.stacks[i * N_PU + pu] : 0);
 /** True when device `k` binds no Sigil rune: a turret of a seat with Clockwork. Dismissing or recalling it gives none back. */
@@ -557,12 +629,8 @@ export const freeDevice = (w: World, k: number): boolean =>
 export const lingerLife = (w: World, src: number): number => (stackOf(w, src, PU.lingering) ? PERKS.lingerLife : 1);
 /** Lingering: how many times as wide what `src` places or leaves lingering is. */
 export const lingerSize = (w: World, src: number): number => (stackOf(w, src, PU.lingering) ? PERKS.lingerSize : 1);
-/** Seat `i`'s total regen R, runes per second shared among its pools (Wellspring adds PERKS.wellspring a stack). */
-export const regenOf = (w: World, i: number): number => {
-  if (w.battery && i >= 0 && i < MAX_SEATS && w.battery.drive[i] >= 0) return RUNES.regen * w.battery.flow[0]; // a defence's pool: as much as the well still gives
-  const k = stackOf(w, i, PU.wellspring);
-  return k ? RUNES.regen * (1 + PERKS.wellspring * k) : RUNES.regen;
-};
+/** Seat `i`'s total regen R, runes per second shared among its pools: the mode's (Survive's Wellspring, a defence's well), else the config's. */
+export const regenOf = (w: World, i: number): number => w.mode.regen?.(w, i) ?? RUNES.regen;
 
 /**
  * The shared regen budget: seat `i`'s runes per second into element `id`, given `full`, a bitmask (1 << id) of the pools
@@ -600,11 +668,14 @@ export function runeRate(w: World, i: number, id: number, full: number): number 
   return id <= KEYED_EL ? (regenOf(w, i) * need(id)) / total : 0;
 }
 
-/** `tutorialBeat` starts a tutorial world at that beat (design numbering; the first if it isn't one the build has). */
-export function createWorld(seed: number, players: number, opts: { dummies?: boolean; room?: Room; tutorialBeat?: number } = {}): World {
+/**
+ * A new world of `opts.room` under `mode`: the core pools, then the mode's own, the seats, then the mode's layout.
+ * Callers use createWorld (create.ts), which picks the room's mode; this half lives here because the pools do.
+ */
+export function createWorldWith(mode: Mode, seed: number, players: number, opts: WorldOpts = {}): World {
   const room = opts.room ?? 'sanctum', def = ROOMS[room], dims = ROOM_DIMS[room], cells = dims.gw * dims.gh;
   const w: World = {
-    dims, def, terrain: createTerrain(def),
+    dims, def, terrain: createTerrain(def), mode,
     clock: new Uint32Array([0, seed >>> 0]), rng: createRng(seed),
     bodies: bodies(MAX_BODIES), seats: seats(MAX_SEATS), missiles: missiles(MAX_MISSILES), zones: zones(MAX_ZONES),
     surf: { kind: u8(cells), life: i32(cells), heat: u8(cells) },
@@ -627,31 +698,14 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
       els: u8(MAX_DEVICES * N_EL), timer: i32(MAX_DEVICES), life: i32(MAX_DEVICES), charges: u8(MAX_DEVICES), phase: f64(MAX_DEVICES),
       heal: u8(MAX_DEVICES), look: u8(MAX_DEVICES), born: i32(MAX_DEVICES), chan: i32(MAX_DEVICES),
     },
-    run: opts.room === 'survive' ? run() : null,
-    battery: opts.room === 'battery' ? { drive: new Int8Array(MAX_SEATS).fill(-1), homeX: new Float64Array(MAX_SEATS), homeY: new Float64Array(MAX_SEATS), lane: new Int8Array(MAX_BODIES).fill(-1), flow: new Float64Array([1]), wellT: i32(3) } : null,
-    tut: opts.room === 'tutorial' ? tutorial(opts.tutorialBeat ?? TUT_ORDER[0]) : null,
+    run: null, battery: null, tut: null, party: mode.campaign ? newParty(opts.party) : null,
     events: [],
   };
+  mode.state?.(w, opts);
   for (let i = 0; i < Math.min(players, MAX_SEATS); i++) joinSeat(w, i);
-  const arena = opts.room === 'arena' || opts.room === 'survive';
-  if (arena) { w.enc.state[0] = PHASE_ENC.lull; w.enc.state[1] = 1; w.enc.state[2] = 0; }
-  else if (opts.dummies !== false && !w.tut) for (const [x, y] of def.dummies) spawnBody(w, -1, KIND.dummy, TEAM.enemies, x, y, BODY.dummyHp, BODY.dummyRadius);
-  if (opts.room === 'battery') raiseGateFire(w);
+  mode.setup(w, opts);
+  if (opts.checkpoint) mode.checkpoints?.find((c) => c.id === opts.checkpoint)?.apply(w);
   return w;
-}
-
-/**
- * The battery's gate is closed by a standing wall of fire: Shield + Fire + Fire, the same curtain a wizard casts, so it
- * burns whoever crosses it and stops nothing. It belongs to the place, so it never drains anyone or breaks. The span is
- * the gate's opening (tools/segments/01-opening/battery-level.py: GATE and WALL_Y).
- */
-function raiseGateFire(w: World): void {
-  const wl = w.walls, k = 0;
-  wl.type[k] = WALL.curtain; wl.owner[k] = TERRAIN;
-  wl.x1[k] = -3; wl.y1[k] = -1; wl.x2[k] = 3; wl.y2[k] = -1;
-  wl.hp[k] = wl.maxHp[k] = 100;
-  wl.els[k * N_EL + EL.shield - 1] = 1;
-  wl.els[k * N_EL + EL.fire - 1] = 2;
 }
 
 /** A player takes seat `i`: its wizard appears at the seat's start spot with full rune pools. */
@@ -673,8 +727,7 @@ export function spawnBody(w: World, slot: number, kind: number, team: number, x:
   b.wet[i] = b.burn[i] = b.frozen[i] = b.stun[i] = b.expose[i] = b.down[i] = b.blessT[i] = 0; b.bless.fill(0, i * 5, i * 5 + 5); b.chill[i] = 0; b.lastHit[i] = 0;
   b.arch[i] = 0; b.ai[i] = 0; b.aiT[i] = 0; b.target[i] = -1; b.holding[i] = -1; b.heldBy[i] = -1; b.grabHp[i] = 0; b.slamBy[i] = -1;
   b.dmgMult[i] = 1; b.speedMult[i] = 1; b.downed[i] = 0; b.root[i] = 0;
-  if (w.tut) w.tut.tag[i] = 0; // a reused slot is nobody's target until the tutorial tags it again
-  if (w.battery) w.battery.lane[i] = -1; // likewise, no lane until the battery sends it at a defence
+  w.mode.onSpawn?.(w, i); // a reused slot drops what the mode knew of its last body (a tutorial tag, a battery lane)
   return i;
 }
 
@@ -689,9 +742,9 @@ export const alive = (w: World, i: number): boolean => w.bodies.kind[i] !== KIND
 export function buffers(w: World): ArrayBufferView[] {
   const out: ArrayBufferView[] = [w.clock, w.rng];
   const pools: object[] = [w.bodies, w.seats, w.missiles, w.zones, w.surf, w.walls, w.waves, w.devices, w.enc, w.nav];
-  if (w.run) pools.push(w.run); // survive only: the other rooms keep their layout (and hash) exactly
-  if (w.battery) pools.push(w.battery); // the battery only, likewise
-  if (w.tut) pools.push(w.tut); // the tutorial only, likewise
+  const own = w.mode.pools?.(w); // only a world of that mode has them, so the other rooms keep their layout (and hash) exactly
+  if (own) pools.push(...own);
+  if (w.party) pools.push(w.party); // a campaign area only, likewise
   for (const pool of pools) {
     // Sorted by field name, so the order never depends on how a pool object was built.
     for (const k of Object.keys(pool).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) out.push((pool as Record<string, ArrayBufferView>)[k]);

@@ -5,7 +5,8 @@
 import { INPUT_BYTES, decodeInput, encodeInput, quantize, type PlayerInput } from './input';
 import { hashWorld } from './state';
 import { step } from './step';
-import { createWorld, type World } from './world';
+import { createWorld } from './create';
+import type { World } from './world';
 
 export interface Replay {
   format: 1;

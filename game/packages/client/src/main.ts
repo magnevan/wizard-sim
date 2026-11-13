@@ -42,11 +42,12 @@
 import { Application } from 'pixi.js';
 import { TextureSource } from 'pixi.js';
 import {
-  BSTEP, DT, EL, MAX_SEATS, N_EL, NO_INPUT, ReplayRecorder, T, WELL, botInput, createWorld, devStartWave, hashWorld, hex, newBotMemory, newTutorialBot, replaceWorld, runReplay, scriptedInput, scriptedReplay, step, tutorialBotInput,
-  type PlayerInput, type Room, type World,
+  DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devStartWave, hashWorld, hex, newBotMemory, newTutorialBot, replaceWorld, runReplay, scriptedInput, scriptedReplay, step, tutorialBotInput,
+  type PartyState, type PlayerInput, type Room, type World,
 } from '@wizard-sim/sim';
 import { demoInput, enemyAttackScene, parseDemo, rallyScene, threeScene } from './demo';
 import { PadSeats } from './gamepad';
+import { SaveWatch } from './saves';
 import { KeyboardMouse } from './input';
 import { TunePanel } from './tune-panel';
 import { ToolsPanel } from './tools-panel';
@@ -152,7 +153,12 @@ async function boot(): Promise<void> {
 
   // the saved tuning goes in before the world exists, so spawn-time numbers (hp, radii) use it too
   loadSaved();
-  const world = createWorld(7, players, { room, tutorialBeat: Number(params.get('beat')) || undefined });
+  // ?at=<checkpoint> starts a chapter part-way (the battery: well-failing, repair); ?fail=1 and ?fail=2 are the old names
+  const failAlias: Record<string, string> = { 1: 'well-failing', 2: 'repair' };
+  const startAt = params.get('at') ?? failAlias[params.get('fail') ?? ''] ?? undefined;
+  const world = createWorld(7, players, { room, tutorialBeat: Number(params.get('beat')) || undefined, checkpoint: startAt });
+  // the campaign save: the last checkpoint passed in a chapter, written as you pass it (saves.ts)
+  const saves = new SaveWatch(() => scenario);
   // the tutorial's end card: walking into an arch switches rooms, as the 1 / 2 / 3 keys do
   if (!headless) view.tut.onExit = (to) => { const s = scenarioById(to); if (s) switchScenario(s); };
   // ?scene=rally / ?scene=three (Survive, headless): a rally in progress, or +1 to three being chosen, for screenshots (demo.ts)
@@ -160,16 +166,6 @@ async function boot(): Promise<void> {
   const scene = sceneName === 'rally' || sceneName === 'three';
   if (sceneName === 'rally') rallyScene(world);
   if (sceneName === 'three') threeScene(world);
-  // ?fail=1 (the battery): skip the lesson to the free fights with the well nearly out, so beats 5 to 7 (the well
-  // failing, running dry, the infusion, the goblins coming for you) start in about 11 s instead of after the lesson and 75 s.
-  // ?fail=2: the well just run dry and the fight already over, a Fire rune of your own: the repair (X at the well) is next
-  const failAsk = world.battery ? params.get('fail') : null;
-  if (failAsk === '1') { const st = world.enc.state; st[0] = 1; st[1] = BSTEP.free; st[2] = 0; st[3] = 0; world.battery!.flow[0] = 0.15; }
-  if (failAsk === '2') {
-    const st = world.enc.state; st[0] = 1; st[1] = BSTEP.after; st[2] = 0; st[3] = 0;
-    world.battery!.flow[0] = 0; world.battery!.wellT[1] = T(WELL.gutter) - 1; // the gate's fire goes out on the next tick
-    for (let i = 0; i < MAX_SEATS; i++) world.seats.runes[i * N_EL + EL.fire - 1] = WELL.own;
-  }
   // ?scene=enemyattacks (headless, any room): the sim never steps; each frame poses every enemy at one beat of its attack
   const atkScene = headless && params.get('scene') === 'enemyattacks';
   const atkPhase = params.get('phase') ?? 'wind', atkFace = Number(params.get('face') ?? 0.06);
@@ -210,13 +206,14 @@ async function boot(): Promise<void> {
       acc = 0;
       menu?.hide(); // the match begins (or moved): back to the game
       scenario = scenarioOfRoom(net!.roomName);
+      saves.reset();
       view.tut.restart();
       // While rollback replays ticks it already showed, skip effects and meters (they'd play twice);
       // the view only notes remote spells the replay started, to show them from their first frame.
       const s = net!.session!;
       view.setLocalSeat(net!.seat);
       s.hooks = {
-        before: (w) => { net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); stats.afterStep(); tools.afterStep(); help.afterStep(w); } else view.replayStep(w); },
+        before: (w) => { net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); stats.afterStep(); tools.afterStep(); help.afterStep(w); saves.update(w.mode.reached?.(w), partyOf(w)); } else view.replayStep(w); },
         preRewind: (w) => view.notePreRewind(w), postRewind: (w) => view.notePostRewind(w, net!.seat),
       };
     });
@@ -233,12 +230,15 @@ async function boot(): Promise<void> {
    * Go to another scenario. Alone (or in a lobby that hasn't started) the world is rebuilt in place,
    * keeping everyone who is seated; in a match only the host can, and everyone follows (netplay.ts).
    */
-  const switchScenario = (s: Scenario) => {
-    if (net?.state === 'playing') { net.switchRoom(s.room); return; }
-    replaceWorld(world, worldFor(world, players, s.room as Room));
+  const switchScenario = (s: Scenario, checkpoint?: string, from?: PartyState) => {
+    // a campaign area starts with what the party has: handed over (Continue: the save's), or from the area it leaves
+    const party = s.kind === 'campaign' ? from ?? partyOf(world) : undefined;
+    if (net?.state === 'playing') { net.switchRoom(s.room, checkpoint, party); return; }
+    replaceWorld(world, worldFor(world, players, s.room as Room, checkpoint, party));
     view.tut.restart(); // the same tutorial again greets its first beat again
     scenario = s;
-    net?.setRoom(s.room);
+    saves.reset();
+    net?.setRoom(s.room, checkpoint, party);
     recorder = new ReplayRecorder(7, MAX_SEATS);
     acc = 0;
     try { history.replaceState(null, '', location.pathname + location.search + hashFor(s, ally)); } catch { /* sandboxed */ }
@@ -300,6 +300,7 @@ async function boot(): Promise<void> {
     stats.afterStep();
     tools.afterStep();
     help.afterStep(world);
+    if (!headless) saves.update(world.mode.reached?.(world), partyOf(world));
     stepsRun++;
   };
 

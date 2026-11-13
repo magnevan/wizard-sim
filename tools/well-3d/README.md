@@ -44,4 +44,4 @@ About 16 minutes for the spin, two for the fall. The spin is exported as a grid,
 - `swatch.py`: the band's pattern laid flat.
 - `straighten.py`: the bought front bands sheared level, pixel for pixel.
 - `unwrap.py`: a rough map of the bought engraving through the fit.
-- `game/scripts/well-frames.mjs` paints each state directly. In the game, `?fail=1#battery` reaches the overload's end and the fall in seconds, and `?fail=2#battery` the repair (game/README.md).
+- `game/scripts/well-frames.mjs` paints each state directly. In the game, `?at=well-failing#battery` (or `?fail=1#battery`) reaches the overload's end and the fall in seconds, and `?fail=2#battery` the repair (game/README.md).

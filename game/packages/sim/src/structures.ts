@@ -27,7 +27,7 @@ import { HIT_KIND, addChill, addKnock, addSoak, ignite, setHitKind, tryFreeze } 
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { boundSigil, drainShield, energyLoad, segDist } from './walls';
 import { conjureGuard } from './guards';
-import { DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, QUEUE_MAX, TERRAIN, WARD, alive, freeDevice, lingerLife, lingerSize, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
+import { EV, DEVICE, KIND, MAX_BODIES, MAX_DEVICES, MAX_SEATS, MAX_WALLS, MAX_WAVES, PF, PU, QUEUE_MAX, TERRAIN, WARD, alive, freeDevice, lingerLife, lingerSize, regenOf, runeMax, spawnBody, stackOf, type World } from './world';
 
 /** The spell minus its form element: what a Sigil device carries, or what a Shield structure is coated in. */
 function restCounts(spec: SpellSpec): Uint8Array {
@@ -301,7 +301,7 @@ function removeOne(w: World, seat: number, what: number, k: number): void {
   else if (what === Q.store) { s.storeArm[seat] = 0; s.storeLen[seat] = 0; }
   else { s.wand[seat] = 0; s.weapon[seat] = 0; s.aura[seat] = 0; s.motes[seat] = 0; s.storeArm[seat] = 0; s.storeLen[seat] = 0; }
   const x = what === Q.device ? w.devices.x[k] : what === Q.double ? b.x[k] : b.x[seat], y = what === Q.device ? w.devices.y[k] : what === Q.double ? b.y[k] : b.y[seat];
-  w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x, y, amount: 1, look: EL.sigil, text: 'dismissed' });
+  w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x, y, amount: 1, look: EL.sigil, ev: EV.dismiss, text: 'dismissed' });
 }
 
 /** The creation of yours under (x, y), if any: [kind, index]. */
@@ -346,14 +346,14 @@ export function dismissShieldAt(w: World, seat: number, x: number, y: number): b
   }
   if ((s.ward[seat] || s.guard[seat]) && len(x - b.x[seat], y - b.y[seat]) < bd) {
     s.ward[seat] = WARD.none; s.guard[seat] = 0;
-    w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: b.x[seat], y: b.y[seat], amount: 1, look: EL.shield, text: 'dismissed' });
+    w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: b.x[seat], y: b.y[seat], amount: 1, look: EL.shield, ev: EV.dismiss, text: 'dismissed' });
     return true;
   }
   if (best < 0) return false;
   const born = wl.born[best], look = wl.type[best] === WALL.rock ? EL.earth : wl.type[best] === WALL.ice ? EL.ice : EL.shield;
   for (let k = 0; k < MAX_WALLS; k++) {
     if (!wl.type[k] || wl.owner[k] !== seat || wl.born[k] !== born) continue;
-    w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.6, look, text: 'dismissed' });
+    w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.6, look, ev: EV.dismiss, text: 'dismissed' });
     wl.type[k] = WALL.none;
   }
   return true;
@@ -370,7 +370,7 @@ export function recallOldest(w: World, seat: number): boolean {
   if ((s.wand[seat] || s.weapon[seat]) && s.wandBorn[seat] < born) { born = s.wandBorn[seat]; what = Q.onYou; idx = seat; }
   if ((s.storeArm[seat] || s.storeLen[seat]) && s.storeBorn[seat] < born) { born = s.storeBorn[seat]; what = Q.store; idx = seat; }
   if (!what) return false;
-  if (what === Q.onYou) { s.wand[seat] = 0; s.weapon[seat] = 0; w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: b.x[seat], y: b.y[seat], amount: 1, look: EL.sigil, text: 'dismissed' }); }
+  if (what === Q.onYou) { s.wand[seat] = 0; s.weapon[seat] = 0; w.events.push({ tick: w.clock[0], kind: 'burst', who: seat, x: b.x[seat], y: b.y[seat], amount: 1, look: EL.sigil, ev: EV.dismiss, text: 'dismissed' }); }
   else if (what === Q.device && w.devices.type[idx] === DEVICE.orbital) { for (let k = 0; k < MAX_DEVICES; k++) if (w.devices.type[k] === DEVICE.orbital && w.devices.owner[k] === seat) removeOne(w, seat, Q.device, k); } // the ring is one device
   else removeOne(w, seat, what, idx);
   giveRune(w, seat);
@@ -567,7 +567,7 @@ export function tickStructures(w: World): void {
         let made = 0; for (let e = 0; e < N_EL; e++) if (e !== EL.sigil - 1) made += dv.els[k * N_EL + e];
         hit(w, target, p, hitOpts(p, owner, (STRUCT.orbitPower * oneShotBlast(spec)) / Math.max(1, made), dx / d, dy / d));
         // text: tells the sound an orb's strike from a turret's arc (events aren't in the state hash)
-        w.events.push({ tick, kind: 'zap', who: owner, x: ox, y: oy, x2: b.x[target], y2: b.y[target], look: dv.look[k], text: 'orbital' });
+        w.events.push({ tick, kind: 'zap', who: owner, x: ox, y: oy, x2: b.x[target], y2: b.y[target], look: dv.look[k], ev: EV.orbital, text: 'orbital' });
         dv.charges[k]--;
         break; // one strike per tick
       }

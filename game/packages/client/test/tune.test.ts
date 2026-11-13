@@ -3,7 +3,7 @@
  * half is checked by the screenshots.
  */
 import { afterEach, describe, expect, it } from 'vitest';
-import { ARCH, PHASE_ENC, findTunable, overrides, resetTuning, tuningHash, type SimEvent } from '@wizard-sim/sim';
+import { ARCH, EV, PHASE_ENC, findTunable, overrides, resetTuning, tuningHash, type SimEvent } from '@wizard-sim/sim';
 import { Meters, type MeterProbe } from '../src/meters';
 import { STORE_KEY, exportText, loadSaved, parseOverrides, replaceTuning, saveTuning } from '../src/tune-io';
 
@@ -48,7 +48,7 @@ describe('Meters', () => {
     const m = new Meters(0), p = probe();
     m.step(10, [ev(10, 'hit', 10, { src: 1, amount: 5 })], p);
     m.step(40, [ev(40, 'hit', 10, { src: 0, amount: 5 })], p);
-    m.step(100, [ev(100, 'fizzle', 10, { text: 'dies', look: ARCH.brute })], p);
+    m.step(100, [ev(100, 'fizzle', 10, { ev: EV.death, text: 'dies', look: ARCH.brute })], p);
     expect(m.kills.get(ARCH.brute)).toEqual({ arch: ARCH.brute, kills: 1, seconds: 1.5 });
   });
 
@@ -58,7 +58,7 @@ describe('Meters', () => {
     p.phase = PHASE_ENC.wave; m.step(60, [], p);
     p.phase = PHASE_ENC.breather; m.step(660, [], p);
     p.phase = PHASE_ENC.wave; m.step(700, [], p);
-    p.phase = PHASE_ENC.breather; m.step(800, [ev(800, 'cast', -1, { text: 'Wiped' })], p);
+    p.phase = PHASE_ENC.breather; m.step(800, [ev(800, 'cast', -1, { ev: EV.wiped, text: 'Wiped' })], p);
     expect(m.waves).toEqual([{ wave: 2, seconds: 10 }]);
   });
 

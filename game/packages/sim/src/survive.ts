@@ -17,7 +17,7 @@
  * Rally (reviving a downed ally mid-wave) is not a power-up: every wizard can do it.
  */
 import type { Element } from '@wizard-sim/rules';
-import { ARCH, ARCHETYPES } from './archetypes';
+import { ARCH } from './archetypes';
 import { CASTS, canAct } from './cast';
 import { compile, type SpellSpec } from './compile';
 import { PERKS, SHAPES, STRUCT, T } from './config';
@@ -30,9 +30,12 @@ import { snapshot } from './state';
 import { poolCap } from './structures';
 import { atan2Turns } from './trig';
 import {
-  ALTAR_SPOTS, ECHO_LAG, ECHO_Q, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_PU, PHASE, PHASE_ENC, PICK_LOG, PU, PU_CAP, QUEUE_MAX, SURVIVE_GATES, TEAM, WARD,
-  buffers, createWorld, joinSeat, spawnBody, stackOf, type World,
+  EV, ALTAR_SPOTS, ECHO_LAG, ECHO_Q, KIND, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_PU, PHASE, PHASE_ENC, PICK_LOG, PU, PU_CAP, QUEUE_MAX, SURVIVE_GATES, WARD,
+  buffers, joinSeat, stackOf, type World,
 } from './world';
+import { createWorld } from './create';
+import { spawnEnemy } from './spawn';
+import { runScript, type Script } from './encounter';
 
 export const SURVIVE_TIMES = { firstLull: 10, lull: 6, breather: 3, stand: 0.75, spawnEvery: 0.45, portalStagger: 1, restartAfter: 1.5, charm: 12 };
 
@@ -69,7 +72,6 @@ export function survivePlan(n: number, players = 1): SurvivePlan {
 
 const seatsIn = (w: World): number => { let n = 0; for (let s = 0; s < MAX_SEATS; s++) if (w.seats.active[s] && w.bodies.kind[s] === KIND.wizard) n++; return n; };
 const wizardsUp = (w: World): number => { let n = 0; for (let s = 0; s < MAX_SEATS; s++) if (w.bodies.kind[s] === KIND.wizard && !w.bodies.downed[s]) n++; return n; };
-const enemiesAlive = (w: World): number => { let n = 0; for (let i = MAX_SEATS; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy) n++; return n; };
 
 /**
  * Opens the next wave's portals at the back of the gates farthest from the wizards and from each
@@ -293,7 +295,7 @@ function tickRally(w: World): void {
     if (keep >= 0 && canRally(w, keep) && inRange(keep)) by = keep;
     else for (let s = 0; s < MAX_SEATS && by < 0; s++) if (s !== d && b.team[s] === b.team[d] && canRally(w, s) && inRange(s)) by = s;
     if (by < 0 || by !== keep) {
-      if (r.rally[d] > T(0.25) && keep >= 0) w.events.push({ tick, kind: 'fizzle', who: d, src: keep, x: b.x[d], y: b.y[d], text: 'rally broken' });
+      if (r.rally[d] > T(0.25) && keep >= 0) w.events.push({ tick, kind: 'fizzle', who: d, src: keep, x: b.x[d], y: b.y[d], ev: EV.rallyBroken, text: 'rally broken' });
       r.rally[d] = 0;
     }
     r.rallyBy[d] = by;
@@ -306,7 +308,7 @@ function tickRally(w: World): void {
     b.downed[d] = 0; b.hp[d] = b.maxHp[d] * PERKS.rallyHp;
     b.burn[d] = b.frozen[d] = b.stun[d] = b.down[d] = 0; b.chill[d] = 0;
     r.rally[d] = 0; r.rallyBy[d] = -1;
-    w.events.push({ tick, kind: 'burst', who: d, src: by, x: b.x[d], y: b.y[d], amount: 1.2, look: EL.life, text: 'Rally' });
+    w.events.push({ tick, kind: 'burst', who: d, src: by, x: b.x[d], y: b.y[d], amount: 1.2, look: EL.life, ev: EV.rally, text: 'Rally' });
     w.events.push({ tick, kind: 'heal', who: d, src: by, x: b.x[d], y: b.y[d], amount: 0, look: EL.life, text: 'RALLIED' });
   }
 }
@@ -340,7 +342,7 @@ export function restartRun(w: World): void {
   fresh.run!.state[2] = w.run!.state[2] + 1;
   const src = snapshot(fresh), dst = buffers(w);
   for (let k = 0; k < dst.length; k++) new Uint8Array(dst[k].buffer, dst[k].byteOffset, dst[k].byteLength).set(src[k]);
-  w.events.push({ tick: w.clock[0], kind: 'cast', who: -1, x: 0, y: 0, text: 'New run' });
+  w.events.push({ tick: w.clock[0], kind: 'cast', who: -1, x: 0, y: 0, ev: EV.newRun, text: 'New run' });
 }
 
 /**
@@ -357,57 +359,76 @@ export function survivePress(w: World, inputs: readonly PlayerInput[]): boolean 
   return false;
 }
 
-/** The survive director, called by step() where the Arena's wave director runs. */
+/** A banner for everyone (who -1): the HUD shows its text, the sound reads its ev. */
+const banner = (w: World, ev: number, text: string) => w.events.push({ tick: w.clock[0], kind: 'cast', who: -1, x: 0, y: 0, ev, text });
+
+/**
+ * Survive's run as an encounter script (encounter.ts): lull, wave, breather, pick, and round again, until everyone is
+ * down. Its steps are in PHASE_ENC's order, so the step in enc.state[0] is the phase the HUD, the bots and the dev
+ * tools read; [1] is the wave, [2] the phase's timer (a wave counts up its ticks), [3] the waves cleared.
+ */
+export const SURVIVE_RUN: Script = {
+  every: SURVIVE_TIMES.spawnEvery,
+  pause: 0,
+  slots: { started: -1, step: 0 },
+  before: (w) => {
+    if (w.enc.state[0] === PHASE_ENC.over) { w.run!.state[3]++; return true; } // the run is over: time since, for the restart prompt
+    tickPerks(w);
+    return false;
+  },
+  open: () => {}, // the gates open themselves (openGates), one archetype each
+  spawn: (w, k, arch) => {
+    const e = w.enc, plan = survivePlan(e.state[1], seatsIn(w));
+    spawnEnemy(w, arch, e.px[k], e.py[k], { hpMult: plan.hp, dmg: plan.dmg, speed: plan.speed });
+  },
+  steps: [
+    { id: 'off', end: true }, // the dev panel's stop
+    {
+      id: 'lull',
+      tick: (w) => { if (!w.enc.total[0]) openGates(w); },
+      wait: (w) => (w.enc.state[1] === 1 ? SURVIVE_TIMES.firstLull : SURVIVE_TIMES.lull),
+    },
+    {
+      id: 'wave', sends: true, pause: 0,
+      enter: (w) => banner(w, EV.waveStart, `Wave ${w.enc.state[1]}`),
+      tick: (w) => { w.enc.state[2]++; },
+      after: (w) => { // everyone is down: the run ends here
+        if (wizardsUp(w)) return false;
+        const st = w.enc.state, r = w.run!;
+        st[0] = PHASE_ENC.over; r.state[1] = st[3]; r.state[3] = 0; r.state[4] = st[1];
+        banner(w, EV.runOver, 'Run over');
+        return true;
+      },
+    },
+    {
+      id: 'breather',
+      enter: (w) => {
+        const e = w.enc, st = e.state;
+        st[2] = T(SURVIVE_TIMES.breather); st[3]++; st[1]++;
+        for (let p = 0; p < MAX_PORTALS; p++) e.total[p] = 0;
+        endEchoes(w);
+        refillPools(w);
+        banner(w, EV.waveClear, 'Cleared');
+      },
+      tick: (w) => { const b = w.bodies; for (let s = 0; s < MAX_SEATS; s++) if (b.downed[s]) { b.downed[s] = 0; b.hp[s] = b.maxHp[s] / 2; } },
+      wait: () => SURVIVE_TIMES.breather,
+    },
+    {
+      id: 'pick', next: 'lull',
+      enter: (w) => { openGates(w); raiseAltars(w); }, // the next wave shows itself now, so the pick can answer it
+      until: (w) => {
+        if (!tickPick(w)) return false;
+        const r = w.run!;
+        for (let a = 0; a < N_ALTARS; a++) r.offer[a] = 0;
+        r.choose.fill(0);
+        return true;
+      },
+    },
+    { id: 'over', end: true },
+  ],
+};
+
+/** The survive director, called by step() where the other modes' directors run. */
 export function tickSurvive(w: World): void {
-  const e = w.enc, st = e.state, b = w.bodies, r = w.run!, tick = w.clock[0];
-  if (st[0] === PHASE_ENC.over) { r.state[3]++; return; }
-  tickPerks(w);
-  if (st[0] === PHASE_ENC.lull) {
-    if (!e.total[0]) openGates(w);
-    if (st[2] <= 0) st[2] = T(st[1] === 1 ? SURVIVE_TIMES.firstLull : SURVIVE_TIMES.lull);
-    if (--st[2] > 0) return;
-    st[0] = PHASE_ENC.wave; st[2] = 0;
-    w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: `Wave ${st[1]}` });
-    return;
-  }
-  if (st[0] === PHASE_ENC.wave) {
-    st[2]++;
-    const plan = survivePlan(st[1], seatsIn(w));
-    for (let p = 0; p < MAX_PORTALS; p++) {
-      if (!e.left[p] || --e.next[p] > 0) continue;
-      const a = ARCHETYPES[e.arch[p]];
-      const i = spawnBody(w, -1, KIND.enemy, TEAM.enemies, e.px[p], e.py[p], a.hp * plan.hp, a.radius);
-      if (i >= 0) { b.arch[i] = e.arch[p]; b.dmgMult[i] = plan.dmg; b.speedMult[i] = plan.speed; b.face[i] = 0; }
-      e.left[p]--; e.next[p] = T(SURVIVE_TIMES.spawnEvery);
-    }
-    if (!wizardsUp(w)) { // everyone is down: the run ends here
-      st[0] = PHASE_ENC.over; r.state[1] = st[3]; r.state[3] = 0; r.state[4] = st[1];
-      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: 'Run over' });
-      return;
-    }
-    let pending = 0;
-    for (let p = 0; p < MAX_PORTALS; p++) pending += e.left[p];
-    if (!pending && !enemiesAlive(w)) {
-      st[0] = PHASE_ENC.breather; st[2] = T(SURVIVE_TIMES.breather); st[3]++; st[1]++;
-      for (let p = 0; p < MAX_PORTALS; p++) e.total[p] = 0;
-      endEchoes(w);
-      refillPools(w);
-      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: 'Cleared' });
-    }
-    return;
-  }
-  if (st[0] === PHASE_ENC.breather) {
-    for (let s = 0; s < MAX_SEATS; s++) if (b.downed[s]) { b.downed[s] = 0; b.hp[s] = b.maxHp[s] / 2; }
-    if (--st[2] > 0) return;
-    st[0] = PHASE_ENC.pick; st[2] = 0;
-    openGates(w); // the next wave shows itself now, so the pick can answer it
-    raiseAltars(w);
-    return;
-  }
-  if (st[0] === PHASE_ENC.pick) {
-    if (!tickPick(w)) return;
-    for (let a = 0; a < N_ALTARS; a++) r.offer[a] = 0;
-    r.choose.fill(0);
-    st[0] = PHASE_ENC.lull; st[2] = 0;
-  }
+  runScript(w, SURVIVE_RUN);
 }

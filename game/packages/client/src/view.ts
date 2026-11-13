@@ -16,7 +16,7 @@
  */
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
-  AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
+  EV, AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
@@ -227,7 +227,7 @@ export class WorldView {
       }
       // Blink is instant: no sliding between the two spots
       if (e.kind === 'blink' && e.who >= 0) { this.prevBX[e.who] = b.x[e.who]; this.prevBY[e.who] = b.y[e.who]; }
-      if (e.kind === 'fizzle' && e.text === 'dies' && e.who >= 0) this.onDeath(w, e, t);
+      if (e.kind === 'fizzle' && e.ev === EV.death && e.who >= 0) this.onDeath(w, e, t);
       if (e.kind === 'cast' && e.who >= 0 && e.who < MAX_SEATS) {
         this.castPose(w, e.who, t);
         for (let k = 0; k < s.castLen[e.who]; k++) if (e.who === this.hud.seat) this.hud.spent(s.castQueue[e.who * 5 + k], t);

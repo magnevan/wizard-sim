@@ -13,7 +13,9 @@
  * The Multiplayer section drives the same lobby as the Co-op panel (net/netplay.ts), through its
  * lobbyView() and its host / join / start / leave calls; nothing about the netcode lives here.
  */
-import { SCENARIOS, isPlayable, type Scenario } from './scenarios';
+import { KINDS, SCENARIOS, checkpointsOf, isPlayable, scenarioById, type Scenario } from './scenarios';
+import { loadSave } from './saves';
+import type { PartyState } from '@wizard-sim/sim';
 import { escAction, keyToNav, menuScenarioKey, navigate, padMenuKeys, type NavItem, type NavKey, type NavState } from './menu-nav';
 import { readPad, type PadState } from './gamepad';
 import type { LobbyView, NetPlay } from './net/netplay';
@@ -25,7 +27,8 @@ export interface MenuHost {
   queued(): number;
   net: NetPlay | null;
   scenario(): Scenario;
-  switchScenario(s: Scenario): void;
+  /** Go to scenario `s`, from its checkpoint `checkpoint` when named. */
+  switchScenario(s: Scenario, checkpoint?: string, party?: PartyState): void;
   settings: Setting[];
   /** The menu opened or closed (let go of the keyboard; pads forget the presses made in it). */
   onToggle(open: boolean): void;
@@ -252,17 +255,42 @@ export class EscMenu {
       const out: Block[] = [];
       if (v?.state === 'playing') out.push({ text: v.isHost ? 'Online: everyone follows you to the scenario you pick.' : 'Online: only the host picks the scenario.', col: COL.warn });
       if (v?.state === 'joining') out.push({ text: 'The host picks the scenario.', col: COL.warn });
-      for (const s of SCENARIOS) {
-        const ready = isPlayable(s), current = ready && s.id === here.id;
-        const blocked = v?.state === 'joining' || (v?.state === 'playing' && !v.isHost);
+      const blocked = v?.state === 'joining' || (v?.state === 'playing' && !v.isHost);
+      // Continue: the campaign save, where you last were (saves.ts)
+      const save = loadSave(), saved = save ? scenarioById(save.scenario) : undefined;
+      if (save && saved && isPlayable(saved)) {
+        const cp = checkpointsOf(saved).find((c) => c.id === save.checkpoint);
         out.push({
           item: {
-            label: s.name + (s.key && ready ? `  (${s.key})` : ''), blurb: s.blurb, enabled: ready && !blocked,
-            tag: !ready ? 'COMING SOON' : current ? 'HERE - RESTART' : blocked ? 'HOST ONLY' : '',
-            tagCol: !ready ? COL.off : current ? COL.good : COL.dim,
-            act: () => { this.host.switchScenario(s); this.hide(); },
+            label: 'Continue', blurb: `${saved.name}: ${cp?.name ?? 'from the start'}.`, enabled: !blocked, tag: blocked ? 'HOST ONLY' : '', tagCol: COL.dim,
+            act: () => { this.host.switchScenario(saved, save.checkpoint, save.party ?? undefined); this.hide(); },
           },
         });
+      }
+      for (const { kind, title } of KINDS) {
+        const group = SCENARIOS.filter((s) => s.kind === kind);
+        if (!group.length) continue;
+        out.push({ text: title.toUpperCase(), col: COL.gold });
+        for (const s of group) {
+          const ready = isPlayable(s), current = ready && s.id === here.id;
+          out.push({
+            item: {
+              label: s.name + (s.key && ready ? `  (${s.key})` : ''), blurb: s.blurb, enabled: ready && !blocked,
+              tag: !ready ? 'COMING SOON' : current ? 'HERE - RESTART' : blocked ? 'HOST ONLY' : '',
+              tagCol: !ready ? COL.off : current ? COL.good : COL.dim,
+              act: () => { this.host.switchScenario(s); this.hide(); },
+            },
+          });
+          // the chapter jump: start a chapter part-way (its first checkpoint is its beginning, the entry above)
+          for (const c of checkpointsOf(s).slice(1)) {
+            out.push({
+              item: {
+                label: `   > ${c.name}`, blurb: `Start ${s.name} here.`, enabled: ready && !blocked, tag: blocked ? 'HOST ONLY' : '', tagCol: COL.dim,
+                act: () => { this.host.switchScenario(s, c.id); this.hide(); },
+              },
+            });
+          }
+        }
       }
       return out;
     }

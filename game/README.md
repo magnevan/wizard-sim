@@ -99,6 +99,17 @@ packages/
     room.ts    RoomDef, a room's layout (size, terrain rows, rock, starts, dummies, portals, altars) and roomHash;
                rooms.gen.ts holds every room, generated from content/maps (npm run content:build; never edit it by hand)
     step.ts    step(world, inputs): one 60 Hz tick
+    mode.ts    a mode's hooks (state, setup, press, director, late, runeMax, regen, pools, onSpawn); modes.ts the five modes
+               (sandbox, arena, survive, battery, tutorial) and which room runs which; create.ts createWorld. step.ts and
+               world.ts call the hooks and never ask which mode they're in: a new mode is a new Mode, not a branch
+    spawn.ts   spawnEnemy, the one way every director puts an enemy in the world
+    possess.ts possession, a core mechanic: a wizard inside a fixture can't walk or be hurt and casts the way the
+               fixture aims (mode.ts Possession: buttons, face, target, spray, splash, ring). The battery's defences are
+               the first fixtures (modes.ts); a mode's EnemyRules (holdAt, target, standoff, shotRange) shape its enemies
+    encounter.ts  encounters as data: a Script of steps (groups once / in a list / in a loop, hold, until, wait, tick,
+               after, enter, next, end) that runScript walks, with the room's own hooks; partyIn (a Region) and
+               openAtMarkers (Markers by tag). Scripts: the battery's lesson (battery-waves.ts LESSON) and Survive's run
+               (survive.ts SURVIVE_RUN: lull, wave, breather, pick, round again). The Arena's waves.ts is legacy and stays as it is
     input.ts   PlayerInput: the 9-byte per-player, per-tick record (all that netcode will ever send)
     state.ts   snapshot / restore / hashWorld (FNV-1a over every state byte)
     replay.ts  record and run replays; script.ts is the scripted two-player golden run
@@ -115,6 +126,8 @@ packages/
   client/  @wizard-sim/client: Vite + PixiJS v8. The loop (main.ts), keyboard and gamepads -> PlayerInput (input.ts, gamepad.ts),
            the view (view.ts, reads the sim and never writes it), the HUD (hud.ts), structures and telegraphs
            (view-structures.ts), and the Battlefield / VFX gallery art ported into art/ (rigs, frame cache, floor, effects, lights).
+           A mode's own drawing is its RoomView (room-views.ts: the HUD banner, its things in the world, ground marks,
+           prompts over the wizards), so those files don't ask which mode they're in.
            The Esc menu (menu.ts, menu-nav.ts) and the scenario registry (scenarios.ts); the help panel (help-panel.ts,
            help-model.ts, help-preview.ts); the tuning panel (tune-panel.ts); the tutorial's look and text (tutorial-view.ts, tutorial-text.ts).
 scripts/   sync-rules, make-artifact, and the headless checks and shots behind the npm scripts above, plus one-off *-shot.mjs
@@ -130,9 +143,9 @@ These matter from day one, because rollback (like lockstep) only works if every 
 - **Randomness comes from the world's RNG.** Cosmetic randomness (particles, shake) uses its own generator in the client.
 - **State lives in typed arrays listed in `buffers()`.** That is what snapshot, restore and the hash walk. A new state array that isn't added there is a desync waiting to happen.
 - **Iterate entity pools by slot index.** No `Map`, `Set` or `for…in` for gameplay state, and every `sort` gets a comparator.
-- **Events are output, not state.** `world.events` is rebuilt every step for the view (VFX, sound). With rollback, the view keys them by (tick, entity, kind).
+- **Events are output, not state.** `world.events` is rebuilt every step for the view (VFX, sound) and the modes' late checks. With rollback, the view keys them by (tick, entity, kind). What an event means is its `kind` plus, where that isn't enough, an `ev` id (`EV` in `world.ts`: a death, a banner, a parry, a rally...); `text` is only a label for the screen, so the view, the sound and the modes never compare it. `note` events (EV.shotWalled, EV.slamDone) are facts for the modes, never drawn.
 
-`test/purity.test.ts` enforces the source rules. The golden replay (`test/golden.json`) catches unintended behaviour changes. `check:browser` catches divergence between engines. **When a gameplay change moves the golden hash on purpose, re-record it and say so.**
+`test/purity.test.ts` enforces the source rules (the generated spell rules included). The golden replay (`test/golden.json`) catches unintended behaviour changes in the Sanctum; `test/mode-hashes.json` pins a hash every 300 ticks of one scripted run in the Arena, Survive, the battery and the tutorial, and a mismatch names the mode and the tick. `check:browser` catches divergence between engines (it also runs in CI, `.github/workflows/browser-check.yml`, not yet gating the deploy). **When a gameplay change moves the golden hash or a mode's trail on purpose, re-record it (`UPDATE_MODE_HASHES=1 npx vitest run packages/sim/test/mode-hashes.test.ts`) and say so.**
 
 ## Status
 
@@ -206,6 +219,8 @@ Two wizards on one machine, the Atlas rules driving real casts, the Pixel Battle
 Open:
 - **Rendering through a low-res target.** The scene draws straight to the stage at an integer scale, which is pixel-exact for unrotated sprites. Drawing into a low-res RenderTexture first would also snap rotated or scaled effects to the art grid. In headless Chrome (SwiftShader and D3D11), the target held the pixels but its sprite never reached the presented frame. Revisit with a real browser when the effects need rotation.
 - **Balance** is placeholder everywhere (`packages/sim/src/config.ts`).
-- `?fail=1#battery` skips the lesson to the free fights with the well nearly out, so it runs dry in about 11 s: the power-down, the infusion and beat 7 without the 75 s wait. `?fail=2#battery` starts with the well just run dry and the fight over: walk to the well and press X for the repair.
+- **Checkpoints:** `?at=<checkpoint>` starts a chapter part-way, the same on every peer (a mode's `checkpoints`, mode.ts; the Esc menu lists them under each chapter, and an online host's pick moves everyone there). The battery's: `?at=well-failing#battery` skips the lesson to the free fights with the well nearly out, so it runs dry in about 11 s (the power-down, the infusion and beat 7 without the 75 s wait); `?at=repair#battery` starts with the well just run dry and the fight over: walk to the well and press X for the repair. `?fail=1` and `?fail=2` still work as the old names.
+- **The party** (`sim/src/world.ts` Party, PartyState): what a campaign area's world carries from the last one and hands to the next: each element's rune pool, 0 locked, shared by the party. A host's move, the lobby start and the save carry it; `partyOf(world)` reads it out; a campaign area with no pools of its own gives you exactly those. Only campaign modes (`Mode.campaign`: the battery) have one. The battery's infusion unlocks Fire at 1 rune.
+- **The campaign save** (`client/src/saves.ts`): the furthest checkpoint passed in a campaign chapter, and the party then, in this browser's storage, as you pass it; the Esc menu's Continue goes back there. A save names a checkpoint, never a snapshot, so it survives new builds. The menu groups scenarios as Campaign (the battery), Arcade (Survive) and Sandbox and tests (the tutorial prototype, the Sanctum, the Academy, the legacy Arena).
 - `node scripts/well-frames.mjs` (after a build): the well painter driven frame by frame through steady, overloaded, the power-down and the repair, its own canvas saved at chosen moments, in shots/well-frames. Exact where screenshots are too slow to catch the flare.
 - `node scripts/path-styles.mjs` (after a build): the battery's glyph paths in each style of `PATH_STYLES` (art/glyph-path.ts), from one spot, in shots/path-styles.

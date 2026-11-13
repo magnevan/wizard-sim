@@ -51,6 +51,12 @@ export function loadProject(path = PROJECT) {
   return { project, levels, path };
 }
 
+/** The known tags (content/tags.json): { props: { tag: meaning }, markers: { tag: meaning } }. */
+export function loadTags(file = join(CONTENT, 'tags.json')) {
+  const t = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {};
+  return { props: t.props ?? {}, markers: t.markers ?? {} };
+}
+
 /** The prop assets: id -> meta.json, with `dir`, the asset's folder. */
 export function loadProps(root = ASSETS) {
   const dir = join(root, 'props'), props = new Map();

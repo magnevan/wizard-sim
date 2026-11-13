@@ -241,3 +241,29 @@ describe('the grid CLI', () => {
     expect(view.join('')).toContain('+');
   });
 });
+
+describe('tags', () => {
+  it('every tag the sim asks for is in content/tags.json, and the maps use only listed ones', () => {
+    const tags = C.loadTags();
+    const src = join(C.GAME, 'packages/sim/src');
+    const asked: string[] = [], missing: string[] = [];
+    for (const f of ['battery.ts', 'battery-waves.ts', 'encounter.ts', 'modes.ts']) {
+      const text = readFileSync(join(src, f), 'utf8');
+      for (const m of text.matchAll(/propsTagged\(w\.def, '([a-z-]+)'\)|const TOWER = '([a-z-]+)', PEDESTAL = '([a-z-]+)'|^const TOWER = '([a-z-]+)'/gm)) {
+        for (const t of m.slice(1)) if (t) { asked.push(t); if (!(t in tags.props)) missing.push(`${f}: prop tag ${t}`); }
+      }
+      for (const m of text.matchAll(/openAtMarkers\('([a-z-]+)'\)|markersTagged\(w\.def, '([a-z-]+)'\)/g)) {
+        for (const t of m.slice(1)) if (t) { asked.push(t); if (!(t in tags.markers)) missing.push(`${f}: marker tag ${t}`); }
+      }
+    }
+    expect(asked).toEqual(expect.arrayContaining(['tower', 'circle', 'stakes', 'well']));
+    expect(missing).toEqual([]);
+    for (const r of Object.values(ROOMS)) for (const p of r.props) if (p.tag) expect(tags.props, `${r.id}: ${p.asset}`).toHaveProperty(p.tag);
+  });
+
+  it('a tag that isn\'t listed fails the build (a typo can\'t silently find nothing)', () => {
+    const loaded = C.loadProject(), { level } = C.findLevel(loaded, 'battery');
+    const { errors } = C.compileLevel(loaded.project, level, C.loadProps(), { props: { tower: '' }, markers: {} });
+    expect(errors.some((e: string) => e.includes('no prop tag "circle"'))).toBe(true);
+  });
+});

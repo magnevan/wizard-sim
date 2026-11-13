@@ -7,7 +7,7 @@ import type { RoomDef } from './room';
 export const ROOM_DEFS = {
   sanctum: {
     id: 'sanctum', w: 24, h: 16,
-    // 83cd49a7: 48 x 32 cells, '.' floor, '#' rock
+    // 35bd368b: 48 x 32 cells, '.' floor, '#' rock
     terrain: [
       '................................................',
       '................................................',
@@ -49,10 +49,12 @@ export const ROOM_DEFS = {
     altars: [],
     props: [],
     propRock: [],
+    markers: [],
+    regions: [],
   },
   arena: {
     id: 'arena', w: 24, h: 16,
-    // 12407526: 48 x 32 cells, '.' floor, '#' rock
+    // d45386fa: 48 x 32 cells, '.' floor, '#' rock
     terrain: [
       '................................................',
       '................................................',
@@ -101,10 +103,12 @@ export const ROOM_DEFS = {
     altars: [],
     props: [],
     propRock: [],
+    markers: [],
+    regions: [],
   },
   survive: {
     id: 'survive', w: 48, h: 34,
-    // d00cc9c4: 96 x 68 cells, '.' floor, '#' rock
+    // 36400ccc: 96 x 68 cells, '.' floor, '#' rock
     terrain: [
       '................................................................................................',
       '................................................................................................',
@@ -197,10 +201,12 @@ export const ROOM_DEFS = {
     altars: [[-2.6, -0.4], [0, 2.1], [2.6, -0.4]],
     props: [],
     propRock: [],
+    markers: [],
+    regions: [],
   },
   tutorial: {
     id: 'tutorial', w: 24, h: 16,
-    // 36ab9839: 48 x 32 cells, '.' floor, '#' rock
+    // 373ecbd9: 48 x 32 cells, '.' floor, '#' rock
     terrain: [
       '................................................',
       '................................................',
@@ -242,10 +248,12 @@ export const ROOM_DEFS = {
     altars: [],
     props: [],
     propRock: [],
+    markers: [],
+    regions: [],
   },
   academy: {
     id: 'academy', w: 24, h: 16,
-    // af13be2b: 48 x 32 cells, '.' floor, '#' rock
+    // 0d6fca6f: 48 x 32 cells, '.' floor, '#' rock
     terrain: [
       '################################################',
       '################################################',
@@ -333,10 +341,12 @@ export const ROOM_DEFS = {
       [4.95, 2.45, 7.05, 2.45], [8.45, 1.95, 10.55, 1.95], [8.45, 2.45, 10.55, 2.45],
       [5.45, 5.2, 6.55, 5.2], [9.45, 5.2, 10.55, 5.2],
     ],
+    markers: [],
+    regions: [],
   },
   battery: {
     id: 'battery', w: 84, h: 72,
-    // c67b99ca: 168 x 144 cells, '.' floor, '#' rock
+    // 6db66374: 168 x 144 cells, '.' floor, '#' rock
     terrain: [
       '........................................................................................................................................................................',
       '........................................................................................................................................................................',
@@ -489,19 +499,19 @@ export const ROOM_DEFS = {
     portals: [[-20, -33.5], [0, -33.5], [22, -33.5]],
     altars: [],
     props: [
-      { asset: 'defence-tower', x: -26, y: 2, blocks: true },
+      { asset: 'defence-tower', x: -26, y: 2, blocks: true, tag: 'tower' },
       { asset: 'defence-head-north-east', x: -26, y: 2, blocks: false },
-      { asset: 'possession-circle', x: -26, y: 5.9, blocks: false },
-      { asset: 'defence-tower', x: -13, y: 2, blocks: true },
+      { asset: 'possession-circle', x: -26, y: 5.9, blocks: false, tag: 'circle' },
+      { asset: 'defence-tower', x: -13, y: 2, blocks: true, tag: 'tower' },
       { asset: 'defence-head-north-east', x: -13, y: 2, blocks: false },
-      { asset: 'possession-circle', x: -13, y: 5.9, blocks: false },
-      { asset: 'defence-tower', x: 13, y: 2, blocks: true },
+      { asset: 'possession-circle', x: -13, y: 5.9, blocks: false, tag: 'circle' },
+      { asset: 'defence-tower', x: 13, y: 2, blocks: true, tag: 'tower' },
       { asset: 'defence-head-north-east', x: 13, y: 2, blocks: false },
-      { asset: 'possession-circle', x: 13, y: 5.9, blocks: false },
-      { asset: 'defence-tower', x: 26, y: 2, blocks: true },
+      { asset: 'possession-circle', x: 13, y: 5.9, blocks: false, tag: 'circle' },
+      { asset: 'defence-tower', x: 26, y: 2, blocks: true, tag: 'tower' },
       { asset: 'defence-head-north-east', x: 26, y: 2, blocks: false },
-      { asset: 'possession-circle', x: 26, y: 5.9, blocks: false },
-      { asset: 'battery-well', x: 0, y: 18, blocks: true },
+      { asset: 'possession-circle', x: 26, y: 5.9, blocks: false, tag: 'circle' },
+      { asset: 'battery-well', x: 0, y: 18, blocks: true, tag: 'well' },
       { asset: 'battery-well-top', x: 0, y: 18, blocks: false },
       { asset: 'battery-pillar', x: -4.05, y: -0.35, blocks: true },
       { asset: 'battery-pillar', x: 4.05, y: -0.35, blocks: true },
@@ -520,24 +530,24 @@ export const ROOM_DEFS = {
       { asset: 'sandbags', x: -19.5, y: 1.2, blocks: true },
       { asset: 'sandbags', x: 19.5, y: 1.2, blocks: true },
       { asset: 'sandbags', x: 32.5, y: 1.2, blocks: true },
-      { asset: 'stakes', x: -25.5, y: -11.7, blocks: false },
-      { asset: 'stakes', x: -23.75, y: -11.7, blocks: false },
-      { asset: 'stakes', x: -22, y: -11.7, blocks: false },
-      { asset: 'stakes', x: -20.25, y: -11.7, blocks: false },
-      { asset: 'stakes', x: -18.5, y: -11.7, blocks: false },
+      { asset: 'stakes', x: -25.5, y: -11.7, blocks: false, tag: 'stakes' },
+      { asset: 'stakes', x: -23.75, y: -11.7, blocks: false, tag: 'stakes' },
+      { asset: 'stakes', x: -22, y: -11.7, blocks: false, tag: 'stakes' },
+      { asset: 'stakes', x: -20.25, y: -11.7, blocks: false, tag: 'stakes' },
+      { asset: 'stakes', x: -18.5, y: -11.7, blocks: false, tag: 'stakes' },
       { asset: 'palisade', x: -27.7, y: -12, blocks: false },
       { asset: 'palisade', x: -16.25, y: -12, blocks: false },
-      { asset: 'stakes', x: 18.5, y: -13.7, blocks: false },
-      { asset: 'stakes', x: 20.25, y: -13.7, blocks: false },
-      { asset: 'stakes', x: 22, y: -13.7, blocks: false },
-      { asset: 'stakes', x: 23.75, y: -13.7, blocks: false },
-      { asset: 'stakes', x: 25.5, y: -13.7, blocks: false },
+      { asset: 'stakes', x: 18.5, y: -13.7, blocks: false, tag: 'stakes' },
+      { asset: 'stakes', x: 20.25, y: -13.7, blocks: false, tag: 'stakes' },
+      { asset: 'stakes', x: 22, y: -13.7, blocks: false, tag: 'stakes' },
+      { asset: 'stakes', x: 23.75, y: -13.7, blocks: false, tag: 'stakes' },
+      { asset: 'stakes', x: 25.5, y: -13.7, blocks: false, tag: 'stakes' },
       { asset: 'palisade', x: 16.3, y: -14, blocks: false },
       { asset: 'palisade', x: 27.75, y: -14, blocks: false },
-      { asset: 'stakes', x: -7.5, y: -17.7, blocks: false },
-      { asset: 'stakes', x: -5.75, y: -17.7, blocks: false },
-      { asset: 'stakes', x: -4, y: -17.7, blocks: false },
-      { asset: 'stakes', x: -2.25, y: -17.7, blocks: false },
+      { asset: 'stakes', x: -7.5, y: -17.7, blocks: false, tag: 'stakes' },
+      { asset: 'stakes', x: -5.75, y: -17.7, blocks: false, tag: 'stakes' },
+      { asset: 'stakes', x: -4, y: -17.7, blocks: false, tag: 'stakes' },
+      { asset: 'stakes', x: -2.25, y: -17.7, blocks: false, tag: 'stakes' },
       { asset: 'palisade', x: -9.7, y: -18, blocks: false },
       { asset: 'palisade', x: 0, y: -18, blocks: false },
       { asset: 'palisade-broken', x: -17.75, y: -8, blocks: false },
@@ -803,5 +813,7 @@ export const ROOM_DEFS = {
       [26.75, 33.5, 27.25, 33.5], [29.75, 33, 30.25, 33], [32.25, 33, 32.75, 33],
       [34.75, 33, 35.25, 33],
     ],
+    markers: [],
+    regions: [],
   },
 } as const satisfies Readonly<Record<string, RoomDef>>;

@@ -3,7 +3,7 @@
  * (the rules' PAYLOAD table). Friendly fire is on: harm lands on whoever is hit, ally or not
  * (pillar 3). A Life spell only heals, and its other elements only help.
  */
-import { driving } from './battery';
+import { possessed } from './possess';
 import { ARMS, COMBAT, DAMAGE, PERKS, RUNES, STATUS, STRUCT, T } from './config';
 import { EL, N_EL, elementName, formCurve, formOf } from './elements';
 import { ARCHETYPES } from './archetypes';
@@ -12,7 +12,7 @@ import { atan2Turns } from './trig';
 import { drainShield } from './walls';
 import { RES, anchored, bless, colOf, guardBeam, resist, taken, takenPlus, unburnable, wardPoints, warm } from './guards';
 import { nextFloat } from './rng';
-import { KIND, MAX_SEATS, PU, WARD, stackOf, type World } from './world';
+import { EV, KIND, MAX_SEATS, PU, WARD, stackOf, type World } from './world';
 
 export interface HitOpts {
   /** Multiplier on everything (channels pass DT x rate, charge and spread pass their share). */
@@ -52,7 +52,7 @@ export const hitKindNow = (): number => hitKind;
  */
 export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: HitOpts): number {
   const b = w.bodies;
-  if (b.kind[t] === KIND.none || driving(w, t)) return 0;
+  if (b.kind[t] === KIND.none || possessed(w, t)) return 0;
   const ss = o.statusScale ?? 1;
   const tick = w.clock[0];
   const water = c(els, at, EL.water), fire = c(els, at, EL.fire), cold = c(els, at, EL.cold), ice = c(els, at, EL.ice);
@@ -62,7 +62,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   // The shieldbearer's guard blocks shots, beams and sprays that come from in front of it.
   if (arch?.guard && o.frontal && (o.dirX || o.dirY) && !b.frozen[t] && !b.stun[t]) {
     if (Math.abs(angleDiff(atan2Turns(-o.dirY, -o.dirX), b.face[t])) <= arch.guard.half) {
-      if (w.clock[0] % 20 === 0 || (o.statusScale ?? 1) >= 1) w.events.push({ tick, kind: 'fizzle', who: t, x: b.x[t], y: b.y[t], text: 'Blocked' });
+      if (w.clock[0] % 20 === 0 || (o.statusScale ?? 1) >= 1) w.events.push({ tick, kind: 'fizzle', who: t, x: b.x[t], y: b.y[t], ev: EV.blocked, text: 'Blocked' });
       return 0;
     }
   }
@@ -138,7 +138,7 @@ export function applyHit(w: World, t: number, els: Uint8Array, at: number, o: Hi
   // Statuses, in the order that lets them interact: water first (it douses), then fire (it dries).
   const wasWet = b.wet[t] > 0; // Cold freezes what was wet before this hit: one spell can't soak and freeze
   if (water) {
-    if (arch?.soakDamage && !b.wet[t]) { dmg += arch.soakDamage; w.events.push({ tick, kind: 'hit', who: t, x: b.x[t], y: b.y[t], amount: arch.soakDamage, text: 'Doused' }); }
+    if (arch?.soakDamage && !b.wet[t]) { dmg += arch.soakDamage; w.events.push({ tick, kind: 'hit', who: t, x: b.x[t], y: b.y[t], amount: arch.soakDamage, ev: EV.doused, text: 'Doused' }); }
     // water on someone burning only puts the fire out (they come out dry), as fire on someone wet only dries them
     // Water in an ice spell (o.freeze) freezes into it: it douses but doesn't soak, so it can't set up its own freeze
     // Steam's water is vapour (o.scald): it neither douses its own fire nor soaks, so steam can't set up Lightning or a freeze.

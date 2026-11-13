@@ -9,11 +9,12 @@
  *   BREATHER  3 s: downed wizards get back up, at half health.
  * Six authored waves of two or three archetypes, then they loop with more and tougher enemies.
  */
-import { ARCH, ARCHETYPES } from './archetypes';
+import { ARCH } from './archetypes';
 import { T } from './config';
 import { len } from './geom';
 import type { RoomDef } from './room';
-import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, ROOMS, TEAM, spawnBody, type World } from './world';
+import { EV, KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, ROOMS, type World } from './world';
+import { spawnEnemy } from './spawn';
 
 const WAVES: readonly (readonly [number, number])[][] = [
   [[ARCH.swarmer, 6]],
@@ -67,7 +68,7 @@ export function tickWaves(w: World): void {
     if (!e.total[0]) { openPortals(w); st[2] = T(st[1] === 1 && !st[3] ? WAVE_TIMES.firstLull : WAVE_TIMES.lull); }
     if (--st[2] > 0) return;
     st[0] = PHASE_ENC.wave; st[2] = 0;
-    w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: `Wave ${st[1]}` });
+    w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, ev: EV.waveStart, text: `Wave ${st[1]}` });
     return;
   }
   if (st[0] === PHASE_ENC.wave) {
@@ -75,15 +76,13 @@ export function tickWaves(w: World): void {
     const { loop } = wavePlan(st[1]);
     for (let p = 0; p < MAX_PORTALS; p++) {
       if (!e.left[p] || --e.next[p] > 0) continue;
-      const a = ARCHETYPES[e.arch[p]];
-      const i = spawnBody(w, -1, KIND.enemy, TEAM.enemies, e.px[p], e.py[p], a.hp * (1 + 0.3 * loop), a.radius);
-      if (i >= 0) { b.arch[i] = e.arch[p]; b.dmgMult[i] = 1 + 0.2 * loop; b.speedMult[i] = 1 + 0.06 * loop; b.face[i] = 0; }
+      spawnEnemy(w, e.arch[p], e.px[p], e.py[p], { hpMult: 1 + 0.3 * loop, dmg: 1 + 0.2 * loop, speed: 1 + 0.06 * loop });
       e.left[p]--; e.next[p] = T(WAVE_TIMES.spawnEvery);
     }
     if (!wizardsUp(w)) { // wiped: clear the field and try again after a lull
       for (let i = MAX_SEATS; i < b.kind.length; i++) if (b.kind[i] === KIND.enemy) b.kind[i] = KIND.none;
       st[0] = PHASE_ENC.breather; st[2] = T(WAVE_TIMES.breather);
-      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: 'Wiped' });
+      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, ev: EV.wiped, text: 'Wiped' });
       return;
     }
     let pending = 0;
@@ -91,7 +90,7 @@ export function tickWaves(w: World): void {
     if (!pending && !enemiesAlive(w)) {
       st[0] = PHASE_ENC.breather; st[2] = T(WAVE_TIMES.breather); st[3]++;
       st[1]++;
-      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, text: 'Cleared' });
+      w.events.push({ tick, kind: 'cast', who: -1, x: 0, y: 0, ev: EV.waveClear, text: 'Cleared' });
     }
     return;
   }

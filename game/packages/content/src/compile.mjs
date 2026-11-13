@@ -1,7 +1,7 @@
 // LDtk levels -> room definitions (plain data), and room definitions -> the generated module
 // packages/sim/src/rooms.gen.ts. The build reads only the data layers: the Terrain IntGrid and
 // the Entities layer. Auto-tiles LDtk may bake are ignored (the client draws with our art).
-import { GRID_PX, PX_PER_UNIT, layerOf, fieldOf, loadProps, roomId, toWorldX, toWorldY } from './ldtk.mjs';
+import { GRID_PX, PX_PER_UNIT, layerOf, fieldOf, loadProps, loadTags, roomId, toWorldX, toWorldY } from './ldtk.mjs';
 
 /** Terrain: IntGrid value identifier -> the character in a room's terrain rows. 0 (unpainted) is floor. */
 export const TERRAIN_CHARS = { floor: '.', rock: '#' };
@@ -17,7 +17,7 @@ export const GROUND_CHARS = {
 };
 
 /** The entities the game understands, and what each becomes in a room. */
-export const ENTITY_KINDS = ['PlayerStart', 'Dummy', 'Portal', 'Altar', 'Rock', 'Prop'];
+export const ENTITY_KINDS = ['PlayerStart', 'Dummy', 'Portal', 'Altar', 'Rock', 'Prop', 'Marker', 'Region'];
 
 /** A wall's half-thickness (the sim's STRUCT.wallThickness; check.mjs's SIM copy is tested against it). */
 const WALL_HALF = 0.25;
@@ -112,7 +112,7 @@ export function terrainRows(project, level) {
  * One level -> a room definition. Returns { room, errors }. The room's key order is fixed: it is
  * what the room hash is taken over.
  */
-export function compileLevel(project, level, assets = loadProps()) {
+export function compileLevel(project, level, assets = loadProps(), tags = loadTags()) {
   const errors = [];
   const id = roomId(level.identifier);
   const { pxWid, pxHei } = level;
@@ -123,7 +123,14 @@ export function compileLevel(project, level, assets = loadProps()) {
   const layer = layerOf(level, 'Entities');
   if (!layer) errors.push(`${level.identifier}: no Entities layer`);
   const ox = layer?.__pxTotalOffsetX ?? 0, oy = layer?.__pxTotalOffsetY ?? 0;
-  const starts = [], dummies = [], portals = [], altars = [], rock = [], props = [], propRock = [];
+  const starts = [], dummies = [], portals = [], altars = [], rock = [], props = [], propRock = [], markers = [], regions = [];
+  const ids = new Set();
+  const named = (where, id) => {
+    if (typeof id !== 'string' || !/^[a-z][a-z0-9-]*$/.test(id)) { errors.push(`${where}: id must be set, lower-case letters, digits and dashes (is ${JSON.stringify(id)})`); return false; }
+    if (ids.has(id)) { errors.push(`${where}: another marker or region is also called "${id}"`); return false; }
+    ids.add(id);
+    return true;
+  };
   for (const e of layer?.entityInstances ?? []) {
     const where = `${level.identifier}: ${e.__identifier} at px ${e.px[0]},${e.px[1]}`;
     const x = toWorldX(e.px[0] + ox, pxWid), y = toWorldY(e.px[1] + oy, pxHei);
@@ -156,8 +163,21 @@ export function compileLevel(project, level, assets = loadProps()) {
       case 'Prop': {
         const asset = fieldOf(e, 'asset'), blocks = fieldOf(e, 'blocks') === true, meta = assets.get(asset);
         if (!meta) { errors.push(`${where}: no prop asset "${asset}" (game/content/assets/props/${asset}/meta.json)`); break; }
-        props.push({ asset, x, y, blocks });
+        const tag = fieldOf(e, 'tag');
+        if (tag && !(tag in tags.props)) errors.push(`${where}: no prop tag "${tag}" in game/content/tags.json (known: ${Object.keys(tags.props).join(', ')})`);
+        props.push(tag ? { asset, x, y, blocks, tag } : { asset, x, y, blocks });
         if (blocks) propRock.push(...footprintWalls(x, y, meta.footprint, meta.round === true));
+        break;
+      }
+      case 'Marker': {
+        const id = fieldOf(e, 'id'), tag = fieldOf(e, 'tag');
+        if (tag && !(tag in tags.markers)) errors.push(`${where}: no marker tag "${tag}" in game/content/tags.json (known: ${Object.keys(tags.markers).join(', ')})`);
+        if (named(where, id)) markers.push(tag ? { id, x, y, tag } : { id, x, y });
+        break;
+      }
+      case 'Region': {
+        const id = fieldOf(e, 'id');
+        if (named(where, id)) regions.push({ id, x, y, w: e.width / PX_PER_UNIT, h: e.height / PX_PER_UNIT });
         break;
       }
       default: errors.push(`${where}: the game doesn't know this entity (known: ${ENTITY_KINDS.join(', ')})`);
@@ -165,7 +185,7 @@ export function compileLevel(project, level, assets = loadProps()) {
   }
   for (let s = 0; s < 4; s++) if (!starts[s]) errors.push(`${level.identifier}: no PlayerStart for seat ${s}`);
   if (rows) rock.push(...traceRock(rows, w, h));
-  const room = { id, w, h, terrain: rows ?? [], rock, starts: [...starts], dummies, portals, altars, props, propRock };
+  const room = { id, w, h, terrain: rows ?? [], rock, starts: [...starts], dummies, portals, altars, props, propRock, markers, regions };
   return { room, errors };
 }
 
@@ -202,9 +222,9 @@ export function emitGrounds(loaded) {
 
 /** Every level -> rooms. Returns { rooms, errors }. */
 export function compileProject(loaded) {
-  const rooms = [], errors = [], assets = loadProps();
+  const rooms = [], errors = [], assets = loadProps(), tags = loadTags();
   for (const { level } of loaded.levels) {
-    const r = compileLevel(loaded.project, level, assets);
+    const r = compileLevel(loaded.project, level, assets, tags);
     rooms.push(r.room);
     errors.push(...r.errors);
   }
@@ -253,8 +273,10 @@ export function emitModule(rooms) {
     out.push(`    dummies: ${pts(r.dummies)},`);
     out.push(`    portals: ${pts(r.portals)},`);
     out.push(`    altars: ${pts(r.altars)},`);
-    out.push(r.props.length ? `    props: [\n${r.props.map((p) => `      { asset: '${p.asset}', x: ${num(p.x)}, y: ${num(p.y)}, blocks: ${p.blocks} },`).join('\n')}\n    ],` : '    props: [],');
+    out.push(r.props.length ? `    props: [\n${r.props.map((p) => `      { asset: '${p.asset}', x: ${num(p.x)}, y: ${num(p.y)}, blocks: ${p.blocks}${p.tag ? `, tag: '${p.tag}'` : ''} },`).join('\n')}\n    ],` : '    props: [],');
     out.push(`    propRock: ${pts(r.propRock, 3)},`);
+    out.push(r.markers.length ? `    markers: [\n${r.markers.map((m) => `      { id: '${m.id}', x: ${num(m.x)}, y: ${num(m.y)}${m.tag ? `, tag: '${m.tag}'` : ''} },`).join('\n')}\n    ],` : '    markers: [],');
+    out.push(r.regions.length ? `    regions: [\n${r.regions.map((g) => `      { id: '${g.id}', x: ${num(g.x)}, y: ${num(g.y)}, w: ${num(g.w)}, h: ${num(g.h)} },`).join('\n')}\n    ],` : '    regions: [],');
     out.push('  },');
   }
   out.push('} as const satisfies Readonly<Record<string, RoomDef>>;', '');

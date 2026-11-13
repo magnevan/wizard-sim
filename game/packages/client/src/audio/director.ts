@@ -15,7 +15,7 @@
  *   the last shown step saw, so a change made inside a replay is heard at the next shown step.
  */
 import {
-  AI, ARCH, DEVICE, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PHASE, QUEUE_MAX, SURF, ZONE, compile, elementName, queueFromCounts, specOf, terrainAlong,
+  AI, ARCH, DEVICE, EV, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_ZONES, N_EL, PHASE, QUEUE_MAX, SURF, ZONE, compile, elementName, queueFromCounts, specOf, terrainAlong,
   type SimEvent, type SpellSpec, type Terrain, type World,
 } from '@wizard-sim/sim';
 import {
@@ -219,7 +219,7 @@ export class SoundDirector {
         this.ask('interaction', x, y, () => composeInteraction('cancel', r), isLocal(e.who) ? 1 : 0.6, false, 'cancel');
         return;
       case 'cast':
-        if (e.who < 0) { this.onBanner(e.text ?? ''); return; }
+        if (e.who < 0) { this.onBanner(e.ev ?? EV.none); return; }
         if (spell) {
           this.lastCastTick[e.who] = e.tick;
           // what's placed sounds from where it lands, not from the hand
@@ -228,9 +228,9 @@ export class SoundDirector {
         }
         return;
       case 'hit': {
-        if (e.text === 'Doused') { this.ask('interaction', x, y, () => composeInteraction('douse', r), 1, false, 'douse'); return; }
-        if (e.text === 'Parry!') { this.ask('move', x, y, () => composeMove('parry', null, r)); return; }
-        if (e.text === 'Grabbed!') { this.ask('attack', x, y, () => composeHit(null, 20, r)); return; }
+        if (e.ev === EV.doused) { this.ask('interaction', x, y, () => composeInteraction('douse', r), 1, false, 'douse'); return; }
+        if (e.ev === EV.parry) { this.ask('move', x, y, () => composeMove('parry', null, r)); return; }
+        if (e.ev === EV.grabbed) { this.ask('attack', x, y, () => composeHit(null, 20, r)); return; }
         // a burn's tick is silent: the burning loop already says so (the user, 2026-11-12: "too many pops, not needed")
         if (e.dot) return;
         const amount = e.amount ?? 0;
@@ -241,7 +241,7 @@ export class SoundDirector {
       case 'burst': {
         // a nova's own burst: the cast this same tick already is that sound
         if (e.who >= 0 && e.who < MAX_SEATS && e.tick - this.lastCastTick[e.who] <= 2) return;
-        const gone = e.text === 'dismissed' && el ? composeDismiss(el, r) : null;
+        const gone = e.ev === EV.dismiss && el ? composeDismiss(el, r) : null;
         if (gone) { this.ask('burst', x, y, () => gone); return; }
         const size = Math.max(0.4, (e.amount ?? 1) / 2);
         this.ask('burst', x, y, () => composeImpact(el ?? 'arcane', size * 1.4, r));
@@ -249,7 +249,7 @@ export class SoundDirector {
       }
       case 'zap': {
         // an orb's strike has its own sound once one is chosen; until then only its element's hit is heard (not a Lightning zap)
-        if (e.text === 'orbital') {
+        if (e.ev === EV.orbital) {
           const orb = composeOrbStrike(r);
           if (orb) this.ask('orbstrike', x, y, () => orb);
           return;
@@ -262,12 +262,12 @@ export class SoundDirector {
       case 'shatter': this.ask('interaction', x, y, () => composeInteraction('shatter', r), 1, false, 'shatter'); return;
       case 'freeze': this.ask('interaction', x, y, () => composeInteraction('freeze', r), 1, false, 'freeze'); return;
       case 'fizzle':
-        if (e.text === 'dies') {
+        if (e.ev === EV.death) {
           const kind = e.look === ARCH.brute ? 'big' : 'small', killer = elOf(e.el);
           this.ask('death', x, y, () => composeDeath(kind, killer, r));
-        } else if (e.text === 'downed') this.ask('death', x, y, composeDowned);
-        else if (e.text === 'Blocked') this.ask('impact', x, y, () => composeBlocked(r));
-        else if (e.text === 'rally broken') this.ask('ui', x, y, () => composeUi('error'));
+        } else if (e.ev === EV.downed) this.ask('death', x, y, composeDowned);
+        else if (e.ev === EV.blocked) this.ask('impact', x, y, () => composeBlocked(r));
+        else if (e.ev === EV.rallyBroken) this.ask('ui', x, y, () => composeUi('error'));
         return;
       case 'move': {
         const m = MOVES[e.text ?? ''];
@@ -278,8 +278,8 @@ export class SoundDirector {
     }
   }
 
-  private onBanner(text: string): void {
-    const k = /^Wave|^New run/.test(text) ? 'wave' : /Cleared/.test(text) ? 'clear' : /over|Wiped/.test(text) ? 'lose' : null;
+  private onBanner(ev: number): void {
+    const k = ev === EV.waveStart || ev === EV.newRun ? 'wave' : ev === EV.waveClear ? 'clear' : ev === EV.runOver || ev === EV.wiped ? 'lose' : null;
     if (k) this.ask('stinger', 0, 0, () => composeStinger(k), 1, true);
   }
 

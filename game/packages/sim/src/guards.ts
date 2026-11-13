@@ -37,7 +37,7 @@ import { inCone, len } from './geom';
 import { addChill, addKnock, applyHit, ignite } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { isRockHit, payloadDamage, wallAt } from './walls';
-import { GUARD, GUARD_NAME, KIND, MAX_SEATS, ZONE, alive, type World } from './world';
+import { EV, GUARD, GUARD_NAME, KIND, MAX_SEATS, ZONE, alive, type World } from './world';
 
 /** Resistance columns. */
 export const RES = { physical: 0, fire: 1, cold: 2, lightning: 3, arcane: 4 } as const;
@@ -323,7 +323,7 @@ function cone(w: World, i: number, range: number, half: number, fn: (j: number, 
 function parryEffect(w: World, i: number, src: number, melee: boolean): void {
   const b = w.bodies, g = guardOf(w, i);
   move(w, i, 'parry');
-  w.events.push({ tick: w.clock[0], kind: 'hit', who: i, x: b.x[i], y: b.y[i], amount: 0, text: 'Parry!' });
+  w.events.push({ tick: w.clock[0], kind: 'hit', who: i, x: b.x[i], y: b.y[i], amount: 0, ev: EV.parry, text: 'Parry!' });
   const foe = src >= 0 && alive(w, src) && src !== i;
   const away = (j: number): [number, number] => { const dx = b.x[j] - b.x[i], dy = b.y[j] - b.y[i], d = len(dx, dy) || 1; return [dx / d, dy / d]; };
   switch (g) {

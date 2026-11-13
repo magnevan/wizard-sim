@@ -7,6 +7,7 @@
  * the pool on your bar is the defence's: Fire only. Your hands are put away.
  */
 import { len } from './geom';
+import { propsTagged } from './room';
 import { BTN, type PlayerInput } from './input';
 import { RUNES, T, WELL } from './config';
 import { EL, N_EL } from './elements';
@@ -41,8 +42,8 @@ export const BATTERY = {
 /** Straight out from the wall, north, as a facing in turns. */
 const STRAIGHT_OUT = 0.75;
 /** You possess a defence from the glyph circle at its foot (the user, 2026-11-12: magic, not knobs and levers). */
-const TOWER = 'defence-tower', PEDESTAL = 'possession-circle';
-const at = (w: World, asset: string) => w.def.props.filter((p) => p.asset === asset);
+const TOWER = 'tower', PEDESTAL = 'circle';
+const at = (w: World, tag: string) => propsTagged(w.def, tag);
 
 export const driving = (w: World, i: number): boolean => !!w.battery && i >= 0 && i < MAX_SEATS && w.battery.drive[i] >= 0;
 

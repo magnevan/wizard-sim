@@ -9,8 +9,17 @@
 export type Pt = readonly [number, number];
 export type Seg = readonly [number, number, number, number];
 
-/** A placed prop: art only, drawn by the client from the asset registry. A blocking one also has walls in propRock. */
-export interface PropDef { readonly asset: string; readonly x: number; readonly y: number; readonly blocks: boolean }
+/**
+ * A placed prop, drawn by the client from the asset registry. A blocking one also has walls in propRock. A `tag` gives
+ * it a part in the game: code finds it by tag (the battery's tower, circle, stakes, well), never by its art.
+ */
+export interface PropDef { readonly asset: string; readonly x: number; readonly y: number; readonly blocks: boolean; readonly tag?: string }
+
+/** A named spot (LDtk Marker) for a room's encounter script and code; `tag` groups several. */
+export interface MarkerDef { readonly id: string; readonly x: number; readonly y: number; readonly tag?: string }
+
+/** A named rectangle (LDtk Region): x, y its top-left (smallest) corner, w and h its size, in world units. */
+export interface RegionDef { readonly id: string; readonly x: number; readonly y: number; readonly w: number; readonly h: number }
 
 export interface RoomDef {
   readonly id: string;
@@ -33,7 +42,21 @@ export interface RoomDef {
   readonly props: readonly PropDef[];
   /** The blocking props' footprints as static rock: they stop bodies and shots like rock, and aren't drawn as walls. */
   readonly propRock: readonly Seg[];
+  /** Named spots and areas for the encounter script (encounter.ts) and code. Ids are unique across both. */
+  readonly markers: readonly MarkerDef[];
+  readonly regions: readonly RegionDef[];
 }
+
+/** The props with this tag, in map order. */
+export const propsTagged = (def: RoomDef, tag: string): readonly PropDef[] => def.props.filter((p) => p.tag === tag);
+/** The marker called `id`, or undefined. */
+export const markerOf = (def: RoomDef, id: string): MarkerDef | undefined => def.markers.find((m) => m.id === id);
+/** The markers with this tag, in map order. */
+export const markersTagged = (def: RoomDef, tag: string): readonly MarkerDef[] => def.markers.filter((m) => m.tag === tag);
+/** The region called `id`, or undefined. */
+export const regionOf = (def: RoomDef, id: string): RegionDef | undefined => def.regions.find((g) => g.id === id);
+/** Is (x, y) inside region g? */
+export const inRegion = (g: RegionDef, x: number, y: number): boolean => x >= g.x && x <= g.x + g.w && y >= g.y && y <= g.y + g.h;
 
 /**
  * The room's hash: FNV-1a over its JSON (numbers print the same in every engine). Peers compare

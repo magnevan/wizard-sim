@@ -154,13 +154,45 @@ def shape_tone(u, r, n):
 # The runes dropped (the user, 2026-11-13: that approach isn't working): a dark band between the raised edges, with many
 # raised strips across it, one column wide every RIB_STEP columns, stopping a row short of each edge.
 RIB_STEP = 4
+TONE['S'] = 3          # a fresh scratch, bright metal
+CHANNEL[TONE['S']] = 7
+
+
+def _wear():
+    """Wear fixed to the band, so it rides round with it (the user, 2026-11-13: the even ribs alone read as text scrolling
+    on a display, not a ring turning). Placed once round the whole turn from a fixed seed: ribs missing or snapped short,
+    a few scratches slanting across the channel, chips out of the borders, sparse patina in the ground, dents inside."""
+    rng = np.random.default_rng(7)
+    ribs = [c for c in range(COLS) if c % RIB_STEP == 0]
+    pick = lambda pool, k: {int(c) for c in rng.choice(pool, k, replace=False)}
+    missing = pick(ribs, 8)
+    short = pick([c for c in ribs if c not in missing], 7)
+    scratches = pick(range(COLS), 6)
+    chips = [set(), set()]                       # top border, bottom border
+    for c in pick(range(COLS), 10):
+        chips[int(rng.integers(2))] |= {c, (c + 1) % COLS} if rng.random() < 0.5 else {c}
+    patina = set()
+    for c in pick([c for c in range(COLS) if c % RIB_STEP == 2], 4):
+        patina |= {c - 1, c, c + 1}
+    dents = set()
+    for c in pick(range(COLS), 12):
+        dents |= {(c + i) % COLS for i in range(int(rng.integers(1, 4)))}
+    return {'missing': missing, 'short': short, 'scratches': scratches, 'chips': chips, 'patina': patina, 'dents': dents}
+
+
+WEAR = _wear()
 
 
 def rib_tone(u, r, n):
-    """The shade step for screen row r (0..n-1) of the channel at u round the ring."""
-    col = int(np.floor(u * COLS)) % LOOP
-    if col % RIB_STEP == 0 and 1 <= r <= n - 2:
-        return TONE['H']
+    """The shade step for screen row r (0..n-1) of the channel at u round the ring ('P' for a patina spot)."""
+    col = int(np.floor(u * COLS)) % COLS
+    if any((col - s) % COLS == r for s in WEAR['scratches']):
+        return TONE['S']
+    if col % RIB_STEP == 0 and col not in WEAR['missing'] and 1 <= r <= n - 2:
+        if col not in WEAR['short'] or r <= (n - 1) // 2:
+            return TONE['H']
+    if col in WEAR['patina'] and 1 <= r <= n - 2:
+        return 'P'
     return TONE['D']
 
 
@@ -266,6 +298,8 @@ def pixel_art(rgba, sup, where=None):
                 # render's own shade there is one flat brown, so it's set here, not nudged)
                 d = math.hypot(x + 0.5 - CRYSTAL[0], (y + 0.5 - CRYSTAL[1]) * 1.6)
                 idx[y, x] = INNER_STEPS[0] if d < 20 else INNER_STEPS[1] if d < 31 else INNER_STEPS[2]
+                if int(np.floor(u * COLS)) % COLS in WEAR['dents']:
+                    idx[y, x] = max(0, idx[y, x] - 2)   # a dent, riding round with the ring
                 if PATINA_ON and patina_at(u, v, kind) > 0.78:
                     green[y, x] = True
                 continue
@@ -371,12 +405,18 @@ def pixel_art(rgba, sup, where=None):
                 # the smooth raised border: one even brown, a step lighter or darker with the light at most (shaded
                 # from the render's ranking it was a mottle over a third of the face, burying the drawings)
                 idx[y, x] = int(np.clip(BORDER_STEP + np.clip(round((idx[y, x] - 5) / 2), -1, 1), 1, top))
+                if int(np.floor(u * COLS)) % COLS in WEAR['chips'][0 if v < 0.5 else 1]:
+                    idx[y, x] = 1   # a chip out of the border
                 continue
             r, n = across[(y, x)]
             us = sorted(s[0] for s in samples if s[2] == 'outer')
             step = rib_tone(us[len(us) // 2], r, n)
             if TONE_LOG is not None:
                 TONE_LOG[(y, x)] = (step, r, n)
+            if step == 'P':
+                idx[y, x] = 1
+                green[y, x] = True
+                continue
             # absolute browns, as the bought band has them (studied pixel by pixel, 2026-11-13): a deep ground in its
             # darkest browns, a third of the band, with mid and light streaks on it; the light where it falls moves
             # them a step at most (relative steps squeezed everything into the middle and the deep brown never showed)
@@ -480,6 +520,28 @@ def darken(a):
     return out
 
 
+CRYSTAL_PNG = os.path.join(HERE, '../../game/content/assets/well/crystal.png')
+
+
+def unhide(a):
+    """Clears the lines Blender draws round a ring's edge where the crystal stand-in hides it (the holdout cuts the ring
+    but not its line; the user saw the outline through the crystal): over the crystal's picture, a line pixel with no
+    ring metal next to it is a hidden edge."""
+    cr = np.array(Image.open(CRYSTAL_PNG).convert('RGBA'))[..., 3] > 0
+    h, w = a.shape[:2]
+    cr = np.pad(cr, ((0, max(0, h - cr.shape[0])), (0, max(0, w - cr.shape[1]))))[:h, :w]
+    line = (a[..., 3] > 0) & (a[..., :3] == LINE).all(2)
+    metal = (a[..., 3] > 0) & ~line
+    p = np.pad(metal, 1)
+    near = np.zeros_like(metal)
+    for dy in (0, 1, 2):
+        for dx in (0, 1, 2):
+            near |= p[dy:dy + h, dx:dx + w]
+    out = a.copy()
+    out[line & cr & ~near] = 0
+    return out
+
+
 def run_whole(src, out, name):
     """A run with no front/back split (rings.py fall: the stand-ins cut the rings where the well covers them): one strip
     `name`.png, lit, and `name`-dark.png, the same with the light gone."""
@@ -491,7 +553,7 @@ def run_whole(src, out, name):
         im = np.array(Image.open(os.path.join(src, f'f{f:03d}-full.png')).convert('RGBA'))
         where = read_where(os.path.join(src, f'f{f:03d}-where.png'), sup, chh, cw)
         art, kinds = pixel_art(im, sup, where)
-        lit[:, f * cw:(f + 1) * cw] = crystal_edge(outline(art), kinds)
+        lit[:, f * cw:(f + 1) * cw] = crystal_edge(unhide(outline(art)), kinds)
     Image.fromarray(lit).save(os.path.join(out, f'{name}.png'), optimize=True)
     Image.fromarray(darken(lit)).save(os.path.join(out, f'{name}-dark.png'), optimize=True)
     print(name, n, 'frames')

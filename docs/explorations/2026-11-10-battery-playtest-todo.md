@@ -123,6 +123,20 @@ The bought well animations (commit a9a2228) morphed the rings into a hoop rather
 - **Not yet judged by the user:** the spin GIF, the fall, the overloaded effects. `scripts/well-frames.mjs` paints each state directly for a look.
 - **Still to do:** the repair beat itself ("press X to stabilize"). The bought frames (`content/assets/well/frames`, `tools/art-import/well_frames.py`) are no longer used and are kept as a record.
 
+### The user's verdict and the second pass (2026-11-13)
+
+The user approved the fall ("rings falling look good"). What they changed, and what was done:
+
+| Note | Done |
+|---|---|
+| Steady: the turning reads as text scrolling on a display; marks on the metal would show it moving | Wear fixed to the band: missing and snapped ribs, slanting scratches, chips out of the borders, a few patina spots, dents inside (`pixelize.py WEAR`). The loop is now a whole turn, 240 frames, since the wear doesn't repeat. |
+| A very slight wobble, to feel real | Each ring's axis leans 1.6° (`rings.py WOBBLE`), swinging round 5 or 7 times a turn; overloaded, the faster spin makes it faster, and the rings shake a pixel now and then. |
+| Lightning from all over the crystal, some out of its back; white at the root, orange at the tips | Bolts leave from random crystal pixels; some are drawn behind the crystal to the back rings; colour runs white to orange along each bolt, with an occasional fork. |
+| The crystal's bounce faster and erratic when overloaded | A fast jitter replaces the slow bob as `unstable` rises. |
+| Sparks from all eight legs; the runes glow very strongly and flare out | Sparks from all eight legs, outward and up; the three behind are drawn behind the drum and appear over its rim. The runes blaze with a glow on each rune and each leg. |
+| The rings' outline showed through the crystal in the fall | Blender's line pass ignored the holdout; `unhide` clears those lines. |
+| Failing should end in one large flare of lightning and runes | The flare is longer (a fifth of the power-down), throws many white-hot bolts at once, and every leg erupts. Then the rings fall. |
+
 ## Enemies at the wall's foot
 
 Not on the user's list, but it comes from the same layout: a full-height wall hides about 4 units of ground behind it, and enemies reaching the wall will be out of sight. A one-storey kit would be about 10 generations, with sign-off first. Decide once waves exist.

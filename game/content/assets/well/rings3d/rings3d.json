@@ -1,10 +1,11 @@
 {
  "spin": {
-  "frames": 40,
+  "frames": 240,
   "cell": [
    104,
    56
   ],
+  "cols": 16,
   "columnsPerFrame": 1,
   "columnsPerTurn": 240
  },

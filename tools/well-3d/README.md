@@ -7,14 +7,14 @@ The bought rings couldn't move: PixelLab's animations morphed them (2026-11-12).
 ```
 python tools/well-3d/fit_rings.py                                     # radius, band width, tilt fitted to the bought silhouette -> rings-fit.json
 python tools/well-3d/drum_fill.py                                     # the drum (lit and drained) without the bought rings' last rows
-blender --background --python tools/well-3d/rings.py -- <spin> spin A # the steady spin: 40 frames, a column apart
+blender --background --python tools/well-3d/rings.py -- <spin> spin A # the steady spin: a whole turn, 240 frames, a column apart
 blender --background --python tools/well-3d/rings.py -- <fall> fall A # the power-down: a rigid-body fall, 60 frames
 python tools/well-3d/export.py <spin> <fall>                          # -> game/content/assets/well/rings3d/
 ```
 
-About two minutes each for the renders.
+About 16 minutes for the spin, two for the fall. The spin is exported as a grid, 16 cells to a row.
 
-- **The rings:** two solid bands with sharp corners, ring A (bottom left to top right) a band's thickness bigger, so they never meet. Each turns about its own axis, A one way, B the other.
+- **The rings:** two solid bands with sharp corners, ring A (bottom left to top right) a band's thickness bigger, so they never meet. Each turns about its own axis, A one way, B the other, with a slight wobble (`WOBBLE`, a whole number of swings a turn so the loop is seamless; the user, 2026-11-13).
 - **The light:** a key light from about the camera, a warm crystal light toward the camera, and a world that is warm above and dark below for the metal to reflect.
 - **The 'where' render:** each frame has one, recording for each pixel which face of which band it is and where on that face (u round the ring, v across). `pixelize.py` uses it to draw the band's face pixel by pixel.
 - **The spin:** split at the crystal (back rings, crystal, front rings).
@@ -29,6 +29,8 @@ About two minutes each for the renders.
   - raised strips across it every 4 columns, stopping a pixel short of the borders.
 
   This is the user's design after rune patterns didn't read (2026-11-13). The rune and streak versions are still in the file, unused.
+- **Wear** (`WEAR`): ribs missing or snapped short, slanting scratches, chips out of the borders, a few patina spots, dents on the insides. Placed once round the whole turn, so they ride with the ring: with even ribs alone the spin read as text scrolling on a display (the user).
+- **Hidden lines** (`unhide`, the fall only): Blender draws a ring's outline even where the crystal stand-in hides the ring, so over the crystal's picture a line pixel with no ring metal beside it is cleared.
 - **Inside faces:** stepped by distance from the crystal.
 - **Glint:** the yellow line on the crystal-facing edges, two deep (tan inside the yellow), drawn after snapping, since no render can make it.
 - **Dark copies:** each ladder brown three steps down, for the dead well.

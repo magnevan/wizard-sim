@@ -7,8 +7,9 @@ a solid band with thickness: a channel between two raised lips, the engraving (b
 warm light sits in the crystal, so the edges facing it catch its glow as the bought art's do; a sun from the upper left.
 
 Each frame is rendered twice, split at the crystal's depth: back.png (behind the crystal) and front.png (in front), so
-the game can put the crystal between them. `spin`: one loop of the steady spin, ring A one way about its own axis and
-ring B the other, a frame per art pixel of travel at the rim. `test`: frame 0 only.
+the game can put the crystal between them. `spin`: one loop of the steady spin, a whole turn (the bands' wear doesn't
+repeat), ring A one way about its own axis and ring B the other, each with a slight wobble, a frame per column of the
+ribs. `test`: frame 0 only.
 """
 import json, math, os, sys
 import bpy
@@ -287,10 +288,21 @@ ls.linestyle.color = (0.006, 0.004, 0.01)
 ls.linestyle.thickness = 1.0
 
 
+# A very slight wobble, so the rings read as real hoops held in the crystal's grip, not perfect machines (the user,
+# 2026-11-13): each ring's axis leans WOBBLE degrees, the lean swinging round a whole number of times a turn (so the loop
+# stays seamless), A and B at different rates, the lean itself breathing a little.
+WOBBLE, WOBBLE_CYCLES = 1.6, (5, 7)
+
+
 def pose(phase):
-    """Phase 0..1 is one loop: each ring turned 1/REPEAT of a revolution about its own axis, A and B opposite ways."""
-    for o, base, sgn in rings:
-        o.matrix_world = base @ Matrix.Rotation(sgn * phase * 2 * math.pi / REPEAT, 4, 'Z')
+    """Phase 0..1 is one loop: each ring turned a whole revolution about its own axis, A and B opposite ways (the
+    band's wear marks don't repeat, so the loop is a full turn: TURN_FRAMES frames, a column of the ribs apart)."""
+    for k, (o, base, sgn) in enumerate(rings):
+        c = WOBBLE_CYCLES[k]
+        lean_dir = 2 * math.pi * c * phase + k * 1.3
+        lean = math.radians(WOBBLE) * (0.75 + 0.25 * math.sin(2 * math.pi * (c - 2) * phase + k))
+        tilt = Matrix.Rotation(lean, 4, Vector((math.cos(lean_dir), math.sin(lean_dir), 0)))
+        o.matrix_world = base @ tilt @ Matrix.Rotation(sgn * phase * 2 * math.pi, 4, 'Z')
 
 
 def shoot(path):
@@ -447,8 +459,10 @@ if MODE == 'unwrap':
         bpy.ops.render.render(write_still=True)
     print('rendered unwrap')
     sys.exit(0)
-# one frame per column of the engraving (pixelize.py COLS = 240 a turn), so the pattern steps a column a frame
-frames = 1 if MODE == 'test' else 240 // REPEAT
+# one frame per column of the engraving (pixelize.py COLS = 240 a turn), so the pattern steps a column a frame; a whole
+# turn, since the wear marks (pixelize.py WEAR) make every part of the band its own
+TURN_FRAMES = 240
+frames = 1 if MODE == 'test' else int(ARGS[3]) if len(ARGS) > 3 else TURN_FRAMES
 for f in range(frames):
     pose(f / frames)
     bpy.context.view_layer.update()

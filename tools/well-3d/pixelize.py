@@ -83,6 +83,7 @@ STROKES = (
 TONE = {'H': 2, 'M': -1, 'd': -3, 'D': -4}
 # the channel's brown (ladder step) for each tone: H a light streak, M a mid one, d and D the deep ground
 CHANNEL = {TONE['H']: 6, TONE['M']: 4, TONE['d']: 2, TONE['D']: 1}
+BORDER_STEP = 6   # the border's brown (151,117,82)
 TONE_LOG = None   # a dict to fill with each channel pixel's (step, row, rows), for checking where the streaks land
 LOOP = 40   # columns in the spin's loop (a sixth of a turn): the streak rows repeat after it
 
@@ -107,6 +108,47 @@ EDGE_ROWS = [streak_row(11, 'M', (1, 2), (3, 5)), streak_row(12, 'M', (1, 2), (3
 # round 15): bright streaks only in one row of four, further apart; the others mostly dark with mid strokes
 MID_ROWS = [streak_row(21, 'HHM', (3, 7), (4, 8)), streak_row(22, 'M', (1, 3), (2, 5)),
             streak_row(23, 'HMH', (3, 6), (4, 8)), streak_row(24, 'M', (1, 3), (2, 5))]
+
+
+# Distinct light drawings on the deep ground, as the user pointed out on the bought front band: an upside-down V, a few
+# streaks, a C... each clear and alone. Three rows tall, 'H' light, '.' ground; set along the band with dark between, in
+# a run that fills the spin's 40-column loop exactly.
+SHAPES = [
+    ('..H..', '.H.H.', 'H...H'),    # an upside-down V
+    ('.....', 'HHHH.', '.....'),    # a streak
+    ('.HH', 'H..', '.HH'),          # a C
+    ('H...H', '.H.H.', '..H..'),    # a V
+    ('HHH..', '.....', '..HHH'),    # a broken double streak
+    ('HH.', '..H', 'HH.'),          # a C the other way
+]
+GAPS = [2, 3, 2, 3, 2, 2]
+# Drawn upright on screen, as a pixel artist draws them (laid out along the band's rows they were sheared by its slope
+# into smears): one every ANCHOR_STEP columns round the ring, five in turn so a loop of 40 columns holds whole drawings.
+STAMPS = [SHAPES[0], SHAPES[2], SHAPES[1], SHAPES[3], SHAPES[5]]
+ANCHOR_STEP = 8
+
+
+def _shape_strip():
+    rows = ['', '', '']
+    for s, g in zip(SHAPES, GAPS):
+        for i in range(3):
+            rows[i] += s[i] + '.' * g
+    width = len(rows[0])
+    assert width <= LOOP, width
+    return [r + '.' * (LOOP - width) for r in rows]
+
+
+SHAPE_STRIP = _shape_strip()
+
+
+def shape_tone(u, r, n):
+    """The shade step for screen row r (0..n-1) of the channel at u round the ring: the drawings' three rows sit in the
+    middle of the channel; outside them, and between the drawings, the deep ground."""
+    col = int(np.floor(u * COLS)) % LOOP
+    g = r - int(round((n - 1) / 2)) + 1
+    if 0 <= g <= 2 and SHAPE_STRIP[g][col] == 'H':
+        return TONE['H']
+    return TONE['D'] if (col + r) % 5 else TONE['d']
 
 
 def streak_tone(u, r, n):
@@ -264,16 +306,61 @@ def pixel_art(rgba, sup, where=None):
                         if runs_x.get(key, True) == (axis == 0):
                             across[key] = (t - j, e - j)
                     j = e
+        # the drawings, stamped upright on screen: each anchor is the channel pixel nearest its spot round the ring, in
+        # the channel's middle row; the drawing lands on channel pixels near it on the band, and skips if it would
+        # touch one already drawn (where the band is squeezed)
+        lit = set()
+        # the channel's connected stretches: both rings run u 0..1, so anchors are looked for per stretch, not overall
+        part = np.full((h, w), -1)
+        for sy, sx in zip(*np.nonzero(chan)):
+            if part[sy, sx] >= 0:
+                continue
+            lab, todo = part.max() + 1, [(sy, sx)]
+            part[sy, sx] = lab
+            while todo:
+                cy, cx = todo.pop()
+                for ny, nx in ((cy + 1, cx), (cy - 1, cx), (cy, cx + 1), (cy, cx - 1)):
+                    if 0 <= ny < h and 0 <= nx < w and chan[ny, nx] and part[ny, nx] < 0:
+                        part[ny, nx] = lab
+                        todo.append((ny, nx))
+        best = {}
+        for (y, x), (r, n) in across.items():
+            if not chan[y, x] or (y, x) not in umid:
+                continue
+            col = umid[(y, x)] * COLS
+            k = int(round(col / ANCHOR_STEP))
+            off = abs(col - k * ANCHOR_STEP) + abs(r - (n - 1) / 2)
+            key = (part[y, x], k % (COLS // ANCHOR_STEP))
+            if key not in best or off < best[key][0]:
+                best[key] = (off, y, x)
+        placed = 0
+        for (_, k), (off, ay, ax) in sorted(best.items()):
+            if off > 2.5:
+                continue
+            shape = STAMPS[k % len(STAMPS)]
+            sh, sw = len(shape), len(shape[0])
+            cells = [(ay - sh // 2 + i, ax - sw // 2 + j) for i in range(sh) for j in range(sw) if shape[i][j] == 'H']
+            ua = umid[(ay, ax)]
+            ok = all((p in umid and chan[p] and abs(((umid[p] - ua + 0.5) % 1) - 0.5) * COLS < 6) or p not in umid
+                     for p in cells)
+            near = {(cy + dy, cx + dx) for cy, cx in cells for dy in (-1, 0, 1) for dx in (-1, 0, 1)}
+            if not ok or near & lit:
+                continue
+            lit |= {p for p in cells if p in umid and chan[p]}
+            placed += 1
+        if TONE_LOG is not None:
+            TONE_LOG['placed'] = (placed, len(best))
         for (y, x), samples in face_samples.items():
             if rim[y, x]:
                 continue
             u, v, _ = next(s for s in samples if s[2] == 'outer')
             if not chan[y, x]:
-                idx[y, x] = min(top, idx[y, x] + 1)   # the smooth raised border catches the light
+                # the smooth raised border: one even brown, a step lighter or darker with the light at most (shaded
+                # from the render's ranking it was a mottle over a third of the face, burying the drawings)
+                idx[y, x] = int(np.clip(BORDER_STEP + np.clip(round((idx[y, x] - 5) / 2), -1, 1), 1, top))
                 continue
-            us = sorted(s[0] for s in samples if s[2] == 'outer')
             r, n = across[(y, x)]
-            step = streak_tone(us[len(us) // 2], r, n)
+            step = TONE['H'] if (y, x) in lit else TONE['D'] if (x + y) % 5 else TONE['d']
             if TONE_LOG is not None:
                 TONE_LOG[(y, x)] = (step, r, n)
             # absolute browns, as the bought band has them (studied pixel by pixel, 2026-11-13): a deep ground in its

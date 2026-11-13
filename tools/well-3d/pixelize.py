@@ -46,26 +46,30 @@ LADDER, CUM = ladder()
 # border. The pattern is tiles of 8 columns x 3 rows ('X' raised, '.' cut), in a rotation of five so it isn't machine
 # even; columns are fractions of a turn (COLS round the ring), so a sixth of a turn (the spin's loop) is 8 whole tiles
 # ... and lands on the same rotation.
-COLS, TILE_W = 240, 8
-TILES = [
-    ('X..XX..X', '.XX..XX.', 'X..XX..X'),   # a chain of diamonds
-    ('XX..XX..', '.XX..XX.', '..XX..XX'),   # a slanted rope
-    ('X..XX..X', '.XX..XX.', 'X..XX..X'),
-    ('X.XX.XX.', '.X..X..X', 'X.XX.XX.'),   # a tighter lattice
-    ('..XX..XX', '.XX..XX.', 'XX..XX..'),   # the rope slanting back
+COLS, SPACING = 240, 8
+# Discrete small drawings cut into plain metal (the user: the bought engraving may be separate drawings, not one running
+# pattern), centred on the band's middle row so they survive where the face narrows toward a band's sides. Each is the
+# cut pixels as (columns along, rows across) from its centre. Five in rotation, SPACING columns apart: 40 columns, a
+# sixth of a turn, the spin's loop.
+MARKS = [
+    {(0, 0), (-1, 0), (1, 0), (0, -1), (0, 1)},            # a cross
+    {(-1, -1), (0, 0), (1, -1)},                             # a chevron
+    {(-1, 0), (1, 0), (0, -1), (0, 1)},                      # a small diamond
+    {(-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0)},              # a bar
+    {(-1, 1), (0, 0), (1, -1), (0, 1)},                      # a hook
 ]
-ROWS = ('X' * TILE_W, '.' * TILE_W, None, None, None, '.' * TILE_W, 'X' * TILE_W)
-CUT_STEPS, CUT_FLOOR = 3, 2   # a cut pixel goes this many browns down the ladder, but not below this one
+CUT_STEPS, CUT_FLOOR = 4, 1   # a cut pixel goes this many browns down the ladder, but not below this one
 
 
-def engraved(u, v):
-    """True where the face is raised at band position u (0..1 round the ring), v (0..1 across its face)."""
-    col = int(u * COLS) % COLS
-    row = min(6, max(0, int(v * 7)))
-    if ROWS[row] is not None:
-        return ROWS[row][col % TILE_W] == 'X'
-    tile = TILES[(col // TILE_W) % len(TILES)]
-    return tile[row - 2][col % TILE_W] == 'X'
+def mark_at(u, v):
+    """'cut' where a drawing is cut at band position u (0..1 round the ring), v (0..1 across its face), 'border' on the
+    smooth raised edges, else None."""
+    if v < 0.13 or v > 0.87:
+        return 'border'
+    col = u * COLS
+    k = int(round(col / SPACING))
+    du, dv = int(round(col - k * SPACING)), int(round((v - 0.5) * 7))
+    return 'cut' if (du, dv) in MARKS[k % len(MARKS)] else None
 
 
 def read_where(path, sup, h, w):
@@ -79,8 +83,9 @@ def read_where(path, sup, h, w):
                 continue
             u = round(p[0] / 255 * 64) / 64 + (p[1] / 255) / 64
             b = p[2] / 255
-            face = b >= 0.5
-            out[(y, x)] = (u % 1.0, min(1.0, max(0.0, (b - 0.55 * face) / 0.4)), face)
+            kind = 'outer' if b >= 0.58 else 'inner' if b >= 0.28 else 'top'
+            base = {'outer': 0.6, 'inner': 0.3, 'top': 0.0}[kind]
+            out[(y, x)] = (u % 1.0, min(1.0, max(0.0, (b - base) / 0.25)), kind)
     return out
 
 
@@ -102,15 +107,23 @@ def pixel_art(rgba, sup, where=None):
     idx = np.full((h, w), -1)
     idx[metal] = np.searchsorted(CUM, q).clip(0, len(LADDER) - 1)
     if where:
-        for (y, x), (u, v, face) in where.items():
-            if not face or idx[y, x] < 0:
+        top = len(LADDER) - 1
+        for (y, x), (u, v, kind) in where.items():
+            if idx[y, x] < 0:
                 continue
-            row = min(6, max(0, int(v * 7)))
-            if not engraved(u, v):
+            if kind == 'inner':
+                # the inside faces: lightest near the crystal, darker further out, about three shades (the user)
+                d = math.hypot(x + 0.5 - CRYSTAL[0], (y + 0.5 - CRYSTAL[1]) * 1.6)
+                idx[y, x] = int(np.clip(idx[y, x] + max(-1, round(1.5 - d / 14)), 2, top))   # never near-black
+                continue
+            if kind != 'outer':
+                continue
+            m = mark_at(u, v)
+            if m == 'cut':
                 # cut: darker, but never into the very darkest browns (the dark bottom sank to black)
                 idx[y, x] = max(min(idx[y, x], CUT_FLOOR), idx[y, x] - CUT_STEPS)
-            elif row in (0, 6):
-                idx[y, x] = min(len(LADDER) - 1, idx[y, x] + 1)   # the smooth raised borders catch the light
+            elif m == 'border':
+                idx[y, x] = min(top, idx[y, x] + 1)   # the smooth raised borders catch the light
     out[metal, :3] = LADDER[idx[metal]].astype(np.uint8)
     out[on & dark, :3] = LINE
     out[on, 3] = 255

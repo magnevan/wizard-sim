@@ -99,8 +99,8 @@ BAND = plain('band', (0.6, 0.43, 0.25), rough=0.3, metal=0.85)
 
 def where_material():
     """For the 'where' render: each pixel's place on the band, flat colour, no light. R and G are u round the ring (R
-    coarse in 64ths, G the fine part), B is v across the face times 0.4, plus 0.55 on the outer face (so the two never
-    meet at the threshold, 0.5)."""
+    coarse in 64ths, G the fine part), B is v across the face times 0.25 plus 0.6 times the face's kind (outer 1,
+    inside 0.5, top and bottom 0), so the three never overlap: 0-0.25 top, 0.3-0.55 inside, 0.6-0.85 outer."""
     m = bpy.data.materials.new('where')
     m.use_nodes = True
     nt = m.node_tree
@@ -125,7 +125,7 @@ def where_material():
     u64 = op('MULTIPLY', sep.outputs['X'], 64.0)
     coarse = op('DIVIDE', op('FLOOR', u64), 64.0)
     fine = op('FRACT', u64)
-    b = op('ADD', op('MULTIPLY', sep.outputs['Y'], 0.4), op('MULTIPLY', att.outputs['Fac'], 0.55))
+    b = op('ADD', op('MULTIPLY', sep.outputs['Y'], 0.25), op('MULTIPLY', att.outputs['Fac'], 0.6))
     comb = nt.nodes.new('ShaderNodeCombineXYZ')
     nt.links.new(coarse, comb.inputs['X']); nt.links.new(fine, comb.inputs['Y']); nt.links.new(b, comb.inputs['Z'])
     em = nt.nodes.new('ShaderNodeEmission')
@@ -170,7 +170,7 @@ def ring(name, rc):
             j = (k + 1) % n
             f = bm.faces.new((verts[s][k], verts[t][k], verts[t][j], verts[s][j]))
             f.material_index = PROFILE[k][3]
-            f[kind] = 1.0 if PROFILE[k][3] == 0 else 0.0
+            f[kind] = {0: 1.0, 1: 0.5, 2: 0.0}[PROFILE[k][3]]   # outer face 1, inside 0.5, top and bottom 0
             u0, u1 = s / SEG, (s + 1) / SEG
             v0, v1 = PROFILE[k][2], PROFILE[j][2]
             for loop, uv in zip(f.loops, ((u0, v0), (u1, v0), (u1, v1), (u0, v1))):

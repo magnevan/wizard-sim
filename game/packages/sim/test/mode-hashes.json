@@ -1,0 +1,47 @@
+{
+  "note": "Hash every 300 ticks of one scripted run per mode (mode-hashes.test.ts). A gameplay change in a mode moves its trail on purpose: re-record and say why in the commit.",
+  "trails": {
+    "arena": [
+      "ab1a9f65",
+      "979890b6",
+      "bc0cb8f4",
+      "cafdca6f",
+      "5be85159",
+      "16f7c4ba",
+      "5a4d1964",
+      "e051c717"
+    ],
+    "survive": [
+      "726ddcf9",
+      "eb755f52",
+      "375f6503",
+      "094f7a9b",
+      "6c26f868",
+      "01cfbfd8",
+      "c650fdb1",
+      "91e82292"
+    ],
+    "battery": [
+      "2a1f6c37",
+      "d3d64044",
+      "3cc304a8",
+      "13f46c09",
+      "89724237",
+      "780abcfc",
+      "8f960450",
+      "0b9b3877"
+    ],
+    "tutorial": [
+      "e8e7cd09",
+      "26bfdd8e",
+      "3c2deb98",
+      "d1454479",
+      "5c436876",
+      "3d8a32e3",
+      "63d728a6",
+      "5b17f164",
+      "82566e80",
+      "e1f97ee0"
+    ]
+  }
+}

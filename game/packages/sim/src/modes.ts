@@ -11,7 +11,7 @@ import { EL, N_EL } from './elements';
 import { tickWaves } from './waves';
 import { survivePress, tickSurvive } from './survive';
 import { batteryPress } from './battery';
-import { repairPress, tickBatteryWaves } from './battery-waves';
+import { BATTERY_CHECKPOINTS, batteryReached, repairPress, tickBatteryWaves } from './battery-waves';
 import { beginTutorialTick, tickTutorial } from './tutorial';
 import { tutPool, TUT_ORDER } from './tutorial-data';
 import type { Mode, ModeId, WorldOpts } from './mode';
@@ -72,6 +72,8 @@ const BATTERY_MODE: Mode = {
   regen: (w, i) => (i >= 0 && i < MAX_SEATS && w.battery!.drive[i] >= 0 ? RUNES.regen * w.battery!.flow[0] : undefined),
   pools: (w) => [w.battery!],
   onSpawn: (w, i) => { w.battery!.lane[i] = -1; }, // no lane until the battery sends it at a defence
+  checkpoints: BATTERY_CHECKPOINTS,
+  reached: batteryReached,
 };
 
 /** The tutorial prototype: beats, each with its own pools and checks (tutorial.ts). */

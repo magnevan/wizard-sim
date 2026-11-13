@@ -45,7 +45,7 @@ describe('the scenario registry', () => {
     expect(roomOf('arena')).toBe('arena');
     expect(roomOf('garbage')).toBe('sanctum');
     expect(roomOf(undefined)).toBe('sanctum');
-    expect(scenarioOfRoom('arena').name).toBe('Arena');
+    expect(scenarioOfRoom('arena').name).toBe('Arena (legacy)');
   });
 
   it('a switch keeps exactly the seats that were taken: a pad on seat 2 does not conjure a wizard on seat 1', () => {

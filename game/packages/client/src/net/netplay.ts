@@ -64,7 +64,8 @@ const RESUME_AHEAD = 45;
 interface HostMsg { t: 'host'; match: string; name: string; version: number; build?: string; maps: number; tuning: number; room: string; players: string[]; rejoin?: boolean }
 interface JoinMsg { t: 'join'; match: string; version: number; build?: string; maps: number; tuning: number }
 /** prev: the match this one replaces (the host moved everyone to another scenario); its players follow without joining. */
-interface StartMsg { t: 'start'; match: string; seed: number; room: string; delay: number; players: string[]; tuning: Record<string, number>; prev?: string }
+/** A match begins: in `room`, from its mode's `checkpoint` when one is named (the host's chapter jump, or a save). */
+interface StartMsg { t: 'start'; match: string; seed: number; room: string; checkpoint?: string; delay: number; players: string[]; tuning: Record<string, number>; prev?: string }
 /** A tuning in force from tick `at` (the whole map of overrides, so applying one never depends on the last). */
 interface TuneAt { n: number; at: number; map: Record<string, number> }
 type LobbyMsg = HostMsg | JoinMsg | StartMsg;
@@ -147,6 +148,8 @@ export class NetPlay {
   /** Matches others are hosting, by match id, with when we last heard of them. */
   private open = new Map<string, HostMsg & { seen: number }>();
   private hostTimer = 0;
+  /** Where in the room the next match starts (setRoom, switchRoom), or the current match started. */
+  private checkpoint: string | undefined = undefined;
   private debugTimer = 0;
   private lastFlush = 0;
   private joinedPlayers: string[] = [];
@@ -240,7 +243,7 @@ export class NetPlay {
   start(): void {
     if (this.state !== 'hosting') return;
     clearInterval(this.hostTimer);
-    const msg: StartMsg = { t: 'start', match: this.match, seed: (Date.now() & 0x7fffffff) >>> 0, room: this.room, delay: NET_DELAY, players: this.joinedPlayers, tuning: overrides() };
+    const msg: StartMsg = { t: 'start', match: this.match, seed: (Date.now() & 0x7fffffff) >>> 0, room: this.room, checkpoint: this.checkpoint, delay: NET_DELAY, players: this.joinedPlayers, tuning: overrides() };
     // The room can drop a moment; say it a few times.
     for (const ms of [0, 250, 600, 1200]) setTimeout(() => this.bus.emit('lobby', msg), ms);
     this.startMsg = msg;
@@ -260,6 +263,8 @@ export class NetPlay {
 
   /** The scenario's room this page plays (or would host). */
   get roomName(): string { return this.room; }
+  /** The checkpoint the match started from (none: the room's beginning). */
+  get checkpointName(): string | undefined { return this.checkpoint; }
 
   /** Is this page the one that decides for the match: the lobby's host, or the coordinator (lowest live seat) in a match? */
   get isHost(): boolean {
@@ -268,9 +273,9 @@ export class NetPlay {
   }
 
   /** Out of a match (alone, or hosting a lobby that hasn't started): the room this page announces and will start. */
-  setRoom(room: string): void {
+  setRoom(room: string, checkpoint?: string): void {
     if (this.state === 'playing') return;
-    this.room = room;
+    this.room = room; this.checkpoint = checkpoint;
     this.render();
   }
 
@@ -279,14 +284,14 @@ export class NetPlay {
    * (in their seat order), which their pages follow by themselves (the start names this match as
    * `prev`). Returns false when this page can't (not in a match, or not the host).
    */
-  switchRoom(room: string): boolean {
+  switchRoom(room: string, checkpoint?: string): boolean {
     const s = this.session;
     if (this.state !== 'playing' || !s || !this.isHost) return false;
     const players = this.joinedPlayers.filter((_, p) => p === this.seat || !s.isOut(p));
     const prev = this.match;
-    this.room = room;
+    this.room = room; this.checkpoint = checkpoint;
     this.match = `${this.bus.self.slice(0, 6)}${Date.now().toString(36).slice(-4)}`;
-    const msg: StartMsg = { t: 'start', match: this.match, seed: (Date.now() & 0x7fffffff) >>> 0, room, delay: NET_DELAY, players, tuning: overrides(), prev };
+    const msg: StartMsg = { t: 'start', match: this.match, seed: (Date.now() & 0x7fffffff) >>> 0, room, checkpoint, delay: NET_DELAY, players, tuning: overrides(), prev };
     for (const ms of [0, 250, 600, 1200]) setTimeout(() => this.bus.emit('lobby', msg), ms);
     this.startMsg = msg; this.startSent = 0;
     this.reports.clear(); this.rejoin = null;
@@ -366,10 +371,10 @@ export class NetPlay {
     this.seat = m.players.indexOf(this.bus.self);
     this.players = m.players.length;
     // The match plays the host's room (a joiner's own page may have been elsewhere): a rejoin's welcome must name it.
-    this.room = m.room;
+    this.room = m.room; this.checkpoint = m.checkpoint;
     this.joinedPlayers = m.players.slice();
     // A fresh world, put into the one everything already holds (a copy; or, from or to Survive, its pools swapped in).
-    replaceWorld(this.world, createWorld(m.seed, this.players, { room: roomOf(m.room) }));
+    replaceWorld(this.world, createWorld(m.seed, this.players, { room: roomOf(m.room), checkpoint: m.checkpoint }));
     const seats = m.players.map((_, i) => i);
     this.transport = this.newTransport(m.match);
     this.transport.self = this.seat;

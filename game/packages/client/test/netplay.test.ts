@@ -202,6 +202,15 @@ describe('online co-op over the bus', () => {
     expect([wa.clock[0], wb.clock[0]]).toEqual([300, 300]);
     expect(hashWorld(wa)).toBe(hashWorld(wb));
     expect(a.session!.desyncs.length + b.session!.desyncs.length).toBe(0);
+    // the chapter jump: the host puts everyone into the battery at its repair, and both pages build that place
+    expect(a.switchRoom('battery', 'repair')).toBe(true);
+    vi.advanceTimersByTime(50);
+    expect(b.roomName).toBe('battery');
+    expect(b.checkpointName).toBe('repair');
+    expect([wa.mode.reached?.(wa), wb.mode.reached?.(wb)]).toEqual(['repair', 'repair']);
+    play([[a, wa], [b, wb]], 120);
+    expect(hashWorld(wa)).toBe(hashWorld(wb));
+    expect(a.session!.desyncs.length + b.session!.desyncs.length).toBe(0);
     vi.useRealTimers();
   });
 

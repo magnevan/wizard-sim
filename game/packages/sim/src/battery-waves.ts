@@ -36,6 +36,7 @@ import { BTN, type PlayerInput } from './input';
 import { EV, MAX_PORTALS, MAX_SEATS, TERRAIN, alive, type World } from './world';
 import { spawnEnemy } from './spawn';
 import { goStep, runScript, type Script } from './encounter';
+import type { Checkpoint } from './mode';
 import { WALL } from './compile';
 
 export const BSTEP = { arrive: 0, ring: 1, spray: 2, place: 3, brute: 4, free: 5, dry: 6, hands: 7, after: 8, repair: 9 } as const;
@@ -260,6 +261,33 @@ export const LESSON: Script = {
     { id: 'repair', end: true },
   ],
 };
+
+/**
+ * Where the battery can be started from (the chapter jump, saves). The well failing: past the lesson, into the free
+ * fights with the well nearly out, so beats 5 to 7 come in about 11 s. The repair: the well just dry and the fight
+ * over, with a Fire rune of your own; Use at the well is next.
+ */
+export const BATTERY_CHECKPOINTS: readonly Checkpoint[] = [
+  { id: 'start', name: 'Arriving at the wall', apply: () => {} },
+  {
+    id: 'well-failing', name: 'The well failing',
+    apply: (w) => { const st = w.enc.state; st[0] = 1; st[1] = BSTEP.free; st[2] = 0; st[3] = 0; w.battery!.flow[0] = 0.15; },
+  },
+  {
+    id: 'repair', name: 'The repair',
+    apply: (w) => {
+      const st = w.enc.state; st[0] = 1; st[1] = BSTEP.after; st[2] = 0; st[3] = 0;
+      w.battery!.flow[0] = 0; w.battery!.wellT[1] = T(WELL.gutter) - 1; // the gate's fire goes out on the next tick
+      for (let i = 0; i < MAX_SEATS; i++) w.seats.runes[i * N_EL + EL.fire - 1] = WELL.own;
+    },
+  },
+];
+
+/** The last checkpoint the battery has passed. */
+export function batteryReached(w: World): string {
+  const s = w.enc.state[1];
+  return s >= BSTEP.after ? 'repair' : s >= BSTEP.free ? 'well-failing' : 'start';
+}
 
 export function tickBatteryWaves(w: World): void {
   runScript(w, LESSON);

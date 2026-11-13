@@ -664,6 +664,7 @@ export function createWorldWith(mode: Mode, seed: number, players: number, opts:
   mode.state?.(w, opts);
   for (let i = 0; i < Math.min(players, MAX_SEATS); i++) joinSeat(w, i);
   mode.setup(w, opts);
+  if (opts.checkpoint) mode.checkpoints?.find((c) => c.id === opts.checkpoint)?.apply(w);
   return w;
 }
 

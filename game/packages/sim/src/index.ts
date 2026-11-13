@@ -1,11 +1,11 @@
 export * from './world';
 export { createWorld } from './create';
 export { MODES, modeOf } from './modes';
-export type { Mode, ModeId, WorldOpts } from './mode';
+export type { Checkpoint, Mode, ModeId, WorldOpts } from './mode';
 export { spawnEnemy, type EnemyOpts } from './spawn';
 export { archAt, goStep, groupNow, openAtMarkers, partyIn, remaining, runScript, type Group, type Script, type Step } from './encounter';
 export { BATTERY, drivePlace, driving, pedestalNear, sprayReach } from './battery';
-export { BSTEP, wellNear } from './battery-waves';
+export { BATTERY_CHECKPOINTS, BSTEP, wellNear } from './battery-waves';
 export { createTerrain, terrainNear, terrainAlong, type Terrain } from './terrain';
 export { inRegion, markerOf, markersTagged, propsTagged, regionOf, roomHash, type MarkerDef, type RegionDef, type RoomDef, type Pt as RoomPt, type Seg as RoomSeg } from './room';
 export * from './config';

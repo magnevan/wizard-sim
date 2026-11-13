@@ -16,6 +16,18 @@ export interface WorldOpts {
   room?: Room;
   /** The tutorial starts at this beat (design numbering; the first if it isn't one the build has). */
   tutorialBeat?: number;
+  /** Start at this checkpoint of the mode (Mode.checkpoints); unknown ids start at the beginning. */
+  checkpoint?: string;
+}
+
+/**
+ * A named place to start a chapter from part-way: for the chapter jump while testing, and for saves. Applied by
+ * createWorld after the mode's setup, so every peer of a match builds the same world from the same id.
+ */
+export interface Checkpoint {
+  readonly id: string;
+  readonly name: string;
+  readonly apply: (w: World) => void;
 }
 
 export interface Mode {
@@ -38,4 +50,8 @@ export interface Mode {
   pools?(w: World): readonly object[];
   /** A body slot was (re)used: clear the mode's per-body columns. */
   onSpawn?(w: World, i: number): void;
+  /** Where a chapter can be started from, in order (the first is its beginning). */
+  readonly checkpoints?: readonly Checkpoint[];
+  /** The last checkpoint this world has passed (what a save records), or undefined for none. */
+  reached?(w: World): string | undefined;
 }

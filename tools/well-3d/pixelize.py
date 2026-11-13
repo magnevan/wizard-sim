@@ -79,6 +79,32 @@ STROKES = (
     'dMMdDdMMMdDDdMMdDdMd',
 )
 TONE = {'H': 2, 'M': 0, 'd': -2, 'D': -3}
+LOOP = 40   # columns in the spin's loop (a sixth of a turn): the streak rows repeat after it
+
+
+def streak_row(seed, light, length=(2, 6), gap=(1, 3)):
+    """One row of streaks over LOOP columns: runs of light tones (from `light`) 2 to 6 long, dark gaps 1 to 3, both
+    picked from a fixed seed, so it is irregular but not noise (the user: the bought engraving has streaky light spots
+    and many irregularities without reading as noise)."""
+    rng = np.random.default_rng(seed)
+    s = ''
+    while len(s) < LOOP:
+        s += ''.join(rng.choice(list(light)) for _ in range(rng.integers(length[0], length[1] + 1)))
+        s += ''.join(rng.choice(['d', 'D'], p=[0.6, 0.4]) for _ in range(rng.integers(gap[0], gap[1] + 1)))
+    return s[:LOOP]
+
+
+# By the borders, mostly dark with a short mid stroke now and then; in the middle, bright and mid streaks.
+EDGE_ROWS = [streak_row(11, 'M', (1, 2), (3, 5)), streak_row(12, 'M', (1, 2), (3, 5))]
+MID_ROWS = [streak_row(21, 'HHM'), streak_row(22, 'HMM'), streak_row(23, 'HHM'), streak_row(24, 'MHM')]
+
+
+def streak_tone(u, r, n):
+    """The shade step for screen row r (0..n-1) across the face's channel, at u round the ring."""
+    col = int(np.floor(u * COLS)) % LOOP
+    if r == 0 or r == n - 1:
+        return TONE[EDGE_ROWS[0 if r == 0 else 1][col]]
+    return TONE[MID_ROWS[(r - 1) % len(MID_ROWS)][col]]
 
 
 def tone_at(u, v):
@@ -189,16 +215,41 @@ def pixel_art(rgba, sup, where=None):
         rim = on & ~(opad[:-2, 1:-1] & opad[2:, 1:-1] & opad[1:-1, :-2] & opad[1:-1, 2:])
         rpad = np.pad(rim, 1)
         by_rim = rpad[:-2, 1:-1] | rpad[2:, 1:-1] | rpad[1:-1, :-2] | rpad[1:-1, 2:]
+        # the channel between the borders, and where each pixel sits across it in whole screen pixels: down its column or
+        # along its row, whichever crossing is shorter (so a flat or diagonal stretch counts down, a steep one across).
+        # Then a pattern row is exactly a screen row and a stroke follows the band as a streak (rows taken from the
+        # band's v made 2x2 splotches where they fell between pixels, the user).
+        chan = np.zeros((h, w), bool)
+        for (y, x) in face_samples:
+            chan[y, x] = not rim[y, x] and inside[y, x] and not by_rim[y, x]
+        across = {}
+        for axis in (0, 1):
+            m = chan if axis == 0 else chan.T
+            for i in range(m.shape[1]):
+                col = m[:, i]
+                j = 0
+                while j < len(col):
+                    if not col[j]:
+                        j += 1
+                        continue
+                    e = j
+                    while e < len(col) and col[e]:
+                        e += 1
+                    for t in range(j, e):
+                        key = (t, i) if axis == 0 else (i, t)
+                        if key not in across or e - j < across[key][1]:
+                            across[key] = (t - j, e - j)
+                    j = e
         for (y, x), samples in face_samples.items():
             if rim[y, x]:
                 continue
             u, v, _ = next(s for s in samples if s[2] == 'outer')
-            if not inside[y, x] or by_rim[y, x]:
+            if not chan[y, x]:
                 idx[y, x] = min(top, idx[y, x] + 1)   # the smooth raised border catches the light
                 continue
-            # the strokes: the commonest shade step among the pixel's samples (a mean blurred them to mid-tones)
-            ts = [tone_at(su, sv) for su, sv, sk in samples if sk == 'outer']
-            step = max(set(ts), key=ts.count)
+            us = sorted(s[0] for s in samples if s[2] == 'outer')
+            r, n = across[(y, x)]
+            step = streak_tone(us[len(us) // 2], r, n)
             idx[y, x] = int(np.clip(idx[y, x] + step, min(idx[y, x], CUT_FLOOR), top))
     out[metal, :3] = LADDER[idx[metal]].astype(np.uint8)
     out[metal & green, :3] = PATINA

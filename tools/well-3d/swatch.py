@@ -13,12 +13,12 @@ out = sys.argv[1]
 cols = int(sys.argv[2]) if len(sys.argv) > 2 else 80
 k = int(sys.argv[3]) if len(sys.argv) > 3 else 12
 mid = 5
-rows_v = [None, 0.27, 0.5, 0.73, None]   # on screen: a border, the strokes' three rows, a border
-a = np.zeros((len(rows_v), cols, 3), np.uint8)
-for r, v in enumerate(rows_v):
+n = int(sys.argv[4]) if len(sys.argv) > 4 else 4   # the channel's rows on screen (between a border each side)
+a = np.zeros((n + 2, cols, 3), np.uint8)
+for r in range(n + 2):
     for c in range(cols):
         u = (c + 0.5) / P.COLS
-        i = mid + 1 if v is None else max(P.CUT_FLOOR, mid + P.tone_at(u, v))
+        i = mid + 1 if r in (0, n + 1) else max(P.CUT_FLOOR, mid + P.streak_tone(u, r - 1, n))
         a[r, c] = P.LADDER[min(len(P.LADDER) - 1, i)]
 line = np.full((1, cols, 3), P.LINE, np.uint8)
 a = np.vstack([line, a, line])

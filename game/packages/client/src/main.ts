@@ -160,6 +160,9 @@ async function boot(): Promise<void> {
   const scene = sceneName === 'rally' || sceneName === 'three';
   if (sceneName === 'rally') rallyScene(world);
   if (sceneName === 'three') threeScene(world);
+  // ?fail=1 (the battery): skip the lesson to the free fights with the well nearly out, so beats 5 to 7 (the well
+  // failing, running dry, the infusion, the goblins coming for you) start in about 11 s instead of after the lesson and 75 s
+  if (world.battery && params.get('fail') === '1') { const st = world.enc.state; st[0] = 1; st[1] = 5; st[2] = 0; st[3] = 0; world.battery.flow[0] = 0.15; }
   // ?scene=enemyattacks (headless, any room): the sim never steps; each frame poses every enemy at one beat of its attack
   const atkScene = headless && params.get('scene') === 'enemyattacks';
   const atkPhase = params.get('phase') ?? 'wind', atkFace = Number(params.get('face') ?? 0.06);

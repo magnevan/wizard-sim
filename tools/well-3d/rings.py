@@ -22,7 +22,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FIT = json.load(open(os.path.join(HERE, 'rings-fit.json')))
 BUILD = os.path.join(HERE, 'build')
 # the fall needs the well's whole height: the rings end on the drum and the steps
-CANVAS_W, CANVAS_H, SUPER = 104, (113 if MODE == 'fall' else 56), 4
+# TOP spare rows over the layers' crop: the 3D rings reach a little above the bought ones (their tops were cut flat in
+# the spin's back rings and the fall's first frames, the user saw it in the repair). The game draws the strips TOP rows up.
+TOP = 8
+CANVAS_W, CANVAS_H, SUPER = 104, (113 if MODE == 'fall' else 56) + TOP, 4
 REPEAT = 6    # the engraving's whole pattern repeats this often round the ring (band_texture.py): the spin loops after one
 W = FIT['W']
 # the bought rings aren't one size (the user): one passes just inside the other, a band's thickness apart, so they never
@@ -217,7 +220,7 @@ cam_o.location = VIEW * DIST
 cam_o.rotation_euler = (-VIEW).to_track_quat('-Z', 'Y').to_euler()
 # the ring centre lands on the art's (cx, cy) in a CANVAS_W x CANVAS_H frame
 cam.shift_x = (CANVAS_W / 2 - FIT['cx']) / CANVAS_W
-cam.shift_y = (FIT['cy'] - CANVAS_H / 2) / CANVAS_W
+cam.shift_y = (FIT['cy'] + TOP - CANVAS_H / 2) / CANVAS_W
 scene.camera = cam_o
 
 # the crystal's light, warm, at the rings' centre; a sun from the upper left as the bought art is lit
@@ -438,7 +441,7 @@ if MODE == 'fall':
         layer.material_override = None
         scene.view_settings.view_transform = 'Standard'
         shot.append(f)
-    json.dump({'frames': len(shot), 'canvas': [CANVAS_W, CANVAS_H], 'super': SUPER, 'fps': FPS, 'release': RELEASE}, open(os.path.join(OUT, 'info.json'), 'w'))
+    json.dump({'frames': len(shot), 'canvas': [CANVAS_W, CANVAS_H], 'super': SUPER, 'top': TOP, 'fps': FPS, 'release': RELEASE}, open(os.path.join(OUT, 'info.json'), 'w'))
     print('rendered fall', len(shot))
     sys.exit(0)
 if MODE == 'unwrap':
@@ -467,5 +470,5 @@ for f in range(frames):
     pose(f / frames)
     bpy.context.view_layer.update()
     shoot(os.path.join(OUT, f'f{f:03d}'))
-json.dump({'frames': frames, 'canvas': [CANVAS_W, CANVAS_H], 'super': SUPER}, open(os.path.join(OUT, 'info.json'), 'w'))
+json.dump({'frames': frames, 'canvas': [CANVAS_W, CANVAS_H], 'super': SUPER, 'top': TOP}, open(os.path.join(OUT, 'info.json'), 'w'))
 print('rendered', frames)

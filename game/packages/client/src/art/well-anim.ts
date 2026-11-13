@@ -28,8 +28,9 @@ import type { Ctx } from './px';
 import { clamp, rand } from './util';
 
 interface Layers { size: [number, number]; crystal: { cx: number; cy: number; bottom: number }; seams: number[][] }
-/** A strip of frames: `cols` cells to a row (all of them in one row when absent). */
-interface Strip { frames: number; cell: [number, number]; cols?: number; fps?: number; release?: number }
+/** A strip of frames: `cols` cells to a row (all of them in one row when absent); each cell `top` rows taller than the
+ * layers' crop, above it (the 3D rings reach a little higher than the bought ones). */
+interface Strip { frames: number; cell: [number, number]; cols?: number; top?: number; fps?: number; release?: number }
 interface Rings3d { spin: Strip; fall: Strip }
 const layerMeta = import.meta.glob<Layers>('../../../../content/assets/well/layers.json', { eager: true, import: 'default' });
 const ringMeta = import.meta.glob<Rings3d>('../../../../content/assets/well/rings3d/rings3d.json', { eager: true, import: 'default' });
@@ -182,7 +183,7 @@ export class WellAnim {
     if (a <= 0.001) return;
     const [W, H] = s.cell, [sx, sy] = cellAt(s, k);
     g.globalAlpha = a;
-    g.drawImage(this.img[name], sx, sy, W, H, WELL_MARGIN + dx, WELL_MARGIN + dy, W, H);
+    g.drawImage(this.img[name], sx, sy, W, H, WELL_MARGIN + dx, WELL_MARGIN + dy - (s.top ?? 0), W, H);
     g.globalAlpha = 1;
   }
 
@@ -432,7 +433,7 @@ export class WellAnim {
       let ex = 0, ey = 0;
       for (let tries = 0; tries < 10; tries++) {
         const i = Math.floor(Math.random() * (ends.length / 2)) * 2;
-        ex = M + ends[i] + rx + 0.5; ey = M + ends[i + 1] + ry + 0.5;
+        ex = M + ends[i] + rx + 0.5; ey = M + ends[i + 1] - (RINGS.spin.top ?? 0) + ry + 0.5;
         if (Math.hypot(ex - ccx, ey - ccy) > 15) break;
       }
       const [sx, sy] = from();

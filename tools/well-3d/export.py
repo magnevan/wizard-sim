@@ -30,6 +30,7 @@ for part in ('back', 'front'):
     grid.save(os.path.join(OUT, f'spin-{part}.png'), optimize=True)
 fall = P.run_whole(fall_src, OUT, 'fall')
 fall['release'] = json.load(open(os.path.join(fall_src, 'info.json'))).get('release', 0)
-json.dump({'spin': {'frames': n, 'cell': spin['cell'], 'cols': GRID, 'columnsPerFrame': 1, 'columnsPerTurn': P.COLS},
-           'fall': fall, 'crystal': list(P.CRYSTAL)}, open(os.path.join(OUT, 'rings3d.json'), 'w'), indent=1)
+spin_top = json.load(open(os.path.join(spin_src, 'info.json'))).get('top', 0)
+json.dump({'spin': {'frames': n, 'cell': spin['cell'], 'cols': GRID, 'top': spin_top, 'columnsPerFrame': 1, 'columnsPerTurn': P.COLS},
+           'fall': fall, 'crystal': list(P.CRYSTAL_AT)}, open(os.path.join(OUT, 'rings3d.json'), 'w'), indent=1)
 print('exported to', OUT)

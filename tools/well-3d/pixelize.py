@@ -443,7 +443,8 @@ def outline(a):
     return a
 
 
-CRYSTAL = (51.5, 20.0)    # the crystal's centre in the rings' canvas (content/assets/well/layers.json)
+CRYSTAL_AT = (51.5, 20.0)    # the crystal's centre on the layers (content/assets/well/layers.json)
+CRYSTAL = CRYSTAL_AT         # ... and in the render being snapped (set_top)
 GLINT = [(255, 216, 96), (255, 216, 96), (216, 168, 104)]   # no near-white: the user found the glints too intense
 
 
@@ -485,6 +486,7 @@ def crystal_edge(a, kinds=None, reach=38.0):
 def run(src, out):
     info = json.load(open(os.path.join(src, 'info.json')))
     n, (cw, chh), sup = info['frames'], info['canvas'], info['super']
+    set_top(info.get('top', 0))
     os.makedirs(out, exist_ok=True)
     # the whole rings snapped, lined and glinted first, then split by the mask, so the split leaves no seam
     strips = {p: np.zeros((chh, cw * n, 4), np.uint8) for p in ('back', 'front')}
@@ -520,16 +522,26 @@ def darken(a):
     return out
 
 
-CRYSTAL_PNG = os.path.join(HERE, '../../game/content/assets/well/crystal.png')
+COVERS = [os.path.join(HERE, '../../game/content/assets/well', n) for n in ('crystal.png', 'drum-clear.png')]
 
 
-def unhide(a):
-    """Clears the lines Blender draws round a ring's edge where the crystal stand-in hides it (the holdout cuts the ring
-    but not its line; the user saw the outline through the crystal): over the crystal's picture, a line pixel with no
-    ring metal next to it is a hidden edge."""
-    cr = np.array(Image.open(CRYSTAL_PNG).convert('RGBA'))[..., 3] > 0
+def set_top(top):
+    """The renders carry `top` spare rows over the layers' crop (rings.py TOP): the crystal sits that much lower in them."""
+    global CRYSTAL
+    CRYSTAL = (CRYSTAL_AT[0], CRYSTAL_AT[1] + top)
+
+
+def unhide(a, top=0):
+    """Clears the lines Blender draws round a ring's edge where a stand-in hides it (the holdout cuts the ring but not
+    its line; the user saw the outline through the crystal, then through the drum): over the crystal's and the drum's
+    pictures, a line pixel with no ring metal next to it is a hidden edge."""
     h, w = a.shape[:2]
-    cr = np.pad(cr, ((0, max(0, h - cr.shape[0])), (0, max(0, w - cr.shape[1]))))[:h, :w]
+    cr = np.zeros((h, w), bool)
+    for path in COVERS:
+        m = np.array(Image.open(path).convert('RGBA'))[..., 3] > 0
+        m = np.pad(m, ((top, 0), (0, 0)))
+        m = np.pad(m, ((0, max(0, h - m.shape[0])), (0, max(0, w - m.shape[1]))))[:h, :w]
+        cr |= m
     line = (a[..., 3] > 0) & (a[..., :3] == LINE).all(2)
     metal = (a[..., 3] > 0) & ~line
     p = np.pad(metal, 1)
@@ -538,7 +550,9 @@ def unhide(a):
         for dx in (0, 1, 2):
             near |= p[dy:dy + h, dx:dx + w]
     out = a.copy()
-    out[line & cr & ~near] = 0
+    # anywhere, not only over the pictures: the steps hide the fallen rings' feet too, and the base prop drawing them is
+    # under this canvas
+    out[line & ~near] = 0
     return out
 
 
@@ -547,17 +561,19 @@ def run_whole(src, out, name):
     `name`.png, lit, and `name`-dark.png, the same with the light gone."""
     info = json.load(open(os.path.join(src, 'info.json')))
     n, (cw, chh), sup = info['frames'], info['canvas'], info['super']
+    top = info.get('top', 0)
+    set_top(top)
     os.makedirs(out, exist_ok=True)
     lit = np.zeros((chh, cw * n, 4), np.uint8)
     for f in range(n):
         im = np.array(Image.open(os.path.join(src, f'f{f:03d}-full.png')).convert('RGBA'))
         where = read_where(os.path.join(src, f'f{f:03d}-where.png'), sup, chh, cw)
         art, kinds = pixel_art(im, sup, where)
-        lit[:, f * cw:(f + 1) * cw] = crystal_edge(unhide(outline(art)), kinds)
+        lit[:, f * cw:(f + 1) * cw] = crystal_edge(unhide(outline(art), top), kinds)
     Image.fromarray(lit).save(os.path.join(out, f'{name}.png'), optimize=True)
     Image.fromarray(darken(lit)).save(os.path.join(out, f'{name}-dark.png'), optimize=True)
     print(name, n, 'frames')
-    return {'frames': n, 'cell': [cw, chh], 'fps': info.get('fps')}
+    return {'frames': n, 'cell': [cw, chh], 'top': top, 'fps': info.get('fps')}
 
 
 if __name__ == '__main__':

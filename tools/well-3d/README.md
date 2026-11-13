@@ -30,7 +30,8 @@ About 16 minutes for the spin, two for the fall. The spin is exported as a grid,
 
   This is the user's design after rune patterns didn't read (2026-11-13). The rune and streak versions are still in the file, unused.
 - **Wear** (`WEAR`): ribs missing or snapped short, slanting scratches, chips out of the borders, a few patina spots, dents on the insides. Placed once round the whole turn, so they ride with the ring: with even ribs alone the spin read as text scrolling on a display (the user).
-- **Hidden lines** (`unhide`, the fall only): Blender draws a ring's outline even where the crystal stand-in hides the ring, so over the crystal's picture a line pixel with no ring metal beside it is cleared.
+- **Hidden lines** (`unhide`, the fall only): Blender draws a ring's outline even where a stand-in (crystal, drum, steps) hides the ring, so a line pixel with no ring metal beside it is cleared.
+- **Headroom:** the renders have `TOP` (8) spare rows above the layers' crop, since the 3D rings reach a little higher than the bought ones; rings3d.json records it and the game draws the strips that much higher.
 - **Inside faces:** stepped by distance from the crystal.
 - **Glint:** the yellow line on the crystal-facing edges, two deep (tan inside the yellow), drawn after snapping, since no render can make it.
 - **Dark copies:** each ladder brown three steps down, for the dead well.

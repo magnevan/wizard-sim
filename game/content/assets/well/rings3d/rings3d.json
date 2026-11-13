@@ -3,9 +3,10 @@
   "frames": 240,
   "cell": [
    104,
-   56
+   64
   ],
   "cols": 16,
+  "top": 8,
   "columnsPerFrame": 1,
   "columnsPerTurn": 240
  },
@@ -13,8 +14,9 @@
   "frames": 60,
   "cell": [
    104,
-   113
+   121
   ],
+  "top": 8,
   "fps": 30,
   "release": 4
  },

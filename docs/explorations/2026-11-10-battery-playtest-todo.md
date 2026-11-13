@@ -146,6 +146,13 @@ Third round, same day:
 | Lightning drawn over the front of a ring that is in front of it | All lightning is drawn between the layers, so the front rings cover it; only the flash where a bolt strikes sits on top. |
 | Still no flaring from the runes, as in the bought picture | The rune glyphs on the three visible legs burn: their strokes blaze and flame licks off them, up and to the sides (`runeFire`). A first try filled the whole rune column and made a bar of fire (the user: the rune shapes should burn, not the column). |
 
+The user then approved the overloaded-to-failed animation and the failed state ("exactly like I wanted"). The rune flare works, though it isn't as striking as the bought picture's. Two bugs, fixed:
+
+| Bug | Fix |
+|---|---|
+| The fallen rings' outline showed through the base | `unhide` now clears every line pixel with no ring metal beside it, anywhere (the drum and the steps hide the rings too, not only the crystal). |
+| The rings' tops were cut off in the repair | The 3D rings reach a little above the bought ones, so the renders were cut flat at row 0 (the fall's first frames, the spin's back rings). Both now carry 8 spare rows (`rings.py TOP`), and the game draws the strips that much higher (`top` in rings3d.json). |
+
 ## Enemies at the wall's foot
 
 Not on the user's list, but it comes from the same layout: a full-height wall hides about 4 units of ground behind it, and enemies reaching the wall will be out of sight. A one-storey kit would be about 10 generations, with sign-off first. Decide once waves exist.

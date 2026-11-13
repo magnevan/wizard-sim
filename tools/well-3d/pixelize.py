@@ -96,7 +96,9 @@ def streak_row(seed, light, length=(2, 6), gap=(1, 3)):
 
 # By the borders, mostly dark with a short mid stroke now and then; in the middle, bright and mid streaks.
 EDGE_ROWS = [streak_row(11, 'M', (1, 2), (3, 5)), streak_row(12, 'M', (1, 2), (3, 5))]
-MID_ROWS = [streak_row(21, 'HHM'), streak_row(22, 'HMM'), streak_row(23, 'HHM'), streak_row(24, 'MHM')]
+# fewer, longer bright streaks with more dark round them (the user, round 13): a streak row, then a mostly dark one
+MID_ROWS = [streak_row(21, 'HHHM', (3, 8), (3, 6)), streak_row(22, 'M', (1, 3), (2, 5)),
+            streak_row(23, 'HHM', (3, 8), (3, 6)), streak_row(24, 'M', (1, 3), (2, 5))]
 
 
 def streak_tone(u, r, n):

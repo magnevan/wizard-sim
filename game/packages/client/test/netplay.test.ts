@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { BTN, NO_INPUT, createWorld, hashWorld, quantize } from '@wizard-sim/sim';
-import type { Bus } from '../src/net/bus';
+import { subscribe, type Bus } from '../src/net/bus';
 
 // A minimal DOM for the Co-op panel (it only needs elements to write into).
 const el = () => ({ style: {} as Record<string, string>, dataset: {} as Record<string, string>, innerHTML: '', addEventListener: () => {}, id: '' });
@@ -16,7 +16,7 @@ function hub() {
     return {
       kind: 'broadcast', self,
       emit: (topic, data) => { for (const p of pages) if (p !== me) for (const fn of p.handlers.get(topic) ?? []) fn(JSON.parse(JSON.stringify(data)), self); },
-      on: (topic, fn) => { me.handlers.set(topic, [...(me.handlers.get(topic) ?? []), fn]); },
+      on: (topic, fn) => subscribe(me.handlers, topic, fn),
     };
   };
 }

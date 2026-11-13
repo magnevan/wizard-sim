@@ -104,8 +104,9 @@ async function unpackSnap(b64: string): Promise<Snapshot> {
 
 /**
  * The transport the session sees: seats instead of peers, base64 over the bus, through the link simulator.
- * The bus can't unsubscribe, so a transport that is no longer `live` (its match was left, dropped or
- * replaced) ignores what it hears; otherwise its inbox, which nobody drains any more, grows for as long as the others play.
+ * A transport that is no longer `live` (its match was left, dropped or replaced) unsubscribes the first time it hears
+ * anything, so dead matches' handlers don't pile up across room switches; until then it ignores what it hears, or its
+ * inbox, which nobody drains any more, would grow for as long as the others play.
  */
 function busTransport(bus: Bus, match: string, link: LinkSim, heard: (seat: number) => void, live: (t: SeatTransport) => boolean): SeatTransport {
   const inbox: { from: number; data: Uint8Array }[] = [];
@@ -115,9 +116,10 @@ function busTransport(bus: Bus, match: string, link: LinkSim, heard: (seat: numb
     broadcast: (data: Uint8Array) => out(data),
     receive: () => inbox.splice(0),
   };
-  bus.on('ls', (raw) => {
+  const off = bus.on('ls', (raw) => {
+    if (!live(t)) { off(); return; }
     const m = raw as { m?: string; f?: number; d?: string };
-    if (m?.m !== match || typeof m.f !== 'number' || m.f === t.self || typeof m.d !== 'string' || !live(t)) return;
+    if (m?.m !== match || typeof m.f !== 'number' || m.f === t.self || typeof m.d !== 'string') return;
     const f = m.f, d = m.d;
     link.pass(() => { if (!live(t)) return; try { inbox.push({ from: f, data: fromB64(d) }); heard(f); } catch { /* malformed: ignore */ } });
   });
@@ -145,6 +147,7 @@ export class NetPlay {
   /** Matches others are hosting, by match id, with when we last heard of them. */
   private open = new Map<string, HostMsg & { seen: number }>();
   private hostTimer = 0;
+  private debugTimer = 0;
   private lastFlush = 0;
   private joinedPlayers: string[] = [];
   message = '';
@@ -665,7 +668,8 @@ export class NetPlay {
     });
     sync();
     const stats = body.querySelector<HTMLElement>('[data-stats]')!;
-    setInterval(() => {
+    clearInterval(this.debugTimer); // the section was filled before: one ticker, on the newest body
+    this.debugTimer = window.setInterval(() => {
       const s = this.session;
       stats.textContent = !s ? 'Not in a match: start one from the Co-op panel to see the numbers.'
         : `Round trip ${Math.round(this.rtt)} ms · rewinds ${this.stat.rewindsPerS.toFixed(0)} ticks/s · wrong guesses ${this.stat.wrongPct.toFixed(0)} % · waited ${(s.waitedTicks / 60).toFixed(1)} s · behind ${Math.max(0, s.lag)} ticks` +

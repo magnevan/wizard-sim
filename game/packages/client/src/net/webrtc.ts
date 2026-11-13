@@ -12,7 +12,7 @@
  */
 import type Peer from 'peerjs';
 import type { DataConnection } from 'peerjs';
-import type { Bus } from './bus';
+import { subscribe, type Bus, type Handlers } from './bus';
 
 /** PeerJS (and its WebRTC shims, about 60 kB gzipped) loads on the first Create room or Join, not at boot. */
 let peerjs: Promise<typeof import('peerjs')> | null = null;
@@ -35,7 +35,7 @@ export interface RtcBus extends Bus {
 export function webrtcBus(): RtcBus {
   let peer: Peer | null = null;
   const conns = new Map<string, DataConnection>();
-  const handlers = new Map<string, ((data: unknown, from: string) => void)[]>();
+  const handlers: Handlers = new Map();
 
   const deliver = (raw: unknown, from: string) => {
     const m = raw as { t?: string; d?: unknown; sys?: string; ids?: string[] };
@@ -73,7 +73,7 @@ export function webrtcBus(): RtcBus {
     status: 'idle',
     code: '',
     emit: (topic, data) => { for (const c of conns.values()) if (c.open) { try { c.send({ t: topic, d: data }); } catch { /* dropped: rollback resends */ } } },
-    on: (topic, fn) => { handlers.set(topic, [...(handlers.get(topic) ?? []), fn]); },
+    on: (topic, fn) => subscribe(handlers, topic, fn),
     peerCount: () => conns.size,
     async createRoom() {
       bus.status = 'connecting';

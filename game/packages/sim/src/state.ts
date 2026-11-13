@@ -34,8 +34,16 @@ export function hashWorld(w: World): number {
  * of its state. A different layout (a survive world and another room): its pools are swapped in.
  */
 export function replaceWorld(w: World, fresh: World): void {
-  if ((w.run === null) === (fresh.run === null) && (w.tut === null) === (fresh.tut === null) && w.dims.gw === fresh.dims.gw && w.dims.gh === fresh.dims.gh) { restore(w, snapshot(fresh)); w.dims = fresh.dims; w.def = fresh.def; w.terrain = fresh.terrain; return; }
+  if (sameLayout(w, fresh)) { restore(w, snapshot(fresh)); w.dims = fresh.dims; w.def = fresh.def; w.terrain = fresh.terrain; return; }
   Object.assign(w, fresh);
+}
+
+/** True when two worlds' `buffers()` match one for one in size, so one's snapshot restores into the other. */
+export function sameLayout(a: World, b: World): boolean {
+  const x = buffers(a), y = buffers(b);
+  if (x.length !== y.length) return false;
+  for (let i = 0; i < x.length; i++) if (x[i].byteLength !== y[i].byteLength || x[i].constructor !== y[i].constructor) return false;
+  return true;
 }
 
 export const hex = (h: number): string => h.toString(16).padStart(8, '0');

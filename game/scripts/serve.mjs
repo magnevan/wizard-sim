@@ -48,7 +48,9 @@ export function chrome(args) {
   const profile = mkdtempSync(join(tmpdir(), 'wizard-sim-chrome-'));
   const r = spawnSync(findChrome(), [
     '--headless=new', `--user-data-dir=${profile}`, '--hide-scrollbars', '--no-first-run',
-    '--use-angle=swiftshader', '--enable-unsafe-swiftshader', ...args,
+    '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+    // CI's Ubuntu blocks the user namespaces Chrome's sandbox needs; the runner is throwaway anyway
+    ...(process.env.CI ? ['--no-sandbox'] : []), ...args,
   ], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   return r.stdout;
 }

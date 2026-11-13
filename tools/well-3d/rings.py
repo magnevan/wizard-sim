@@ -319,6 +319,24 @@ def shoot(path):
 
 
 os.makedirs(OUT, exist_ok=True)
+if MODE == 'unwrap':
+    # for unwrap.py: frame 0's 'where' with both rings, then with each alone, so each pixel of the bought rings can be
+    # traced to a ring and a spot on its face
+    pose(0)
+    bpy.context.view_layer.update()
+    shoot(os.path.join(OUT, 'f000'))
+    for k, (o, _, _) in enumerate(rings):
+        for j, (p, _, _) in enumerate(rings):
+            p.hide_render = j != k
+        layer.material_override = WHERE
+        scene.view_settings.view_transform = 'Raw'
+        r.use_freestyle = False
+        scene.cycles.samples = 1
+        scene.cycles.use_denoising = False
+        r.filepath = os.path.join(OUT, f'f000-where-{"AB"[k]}.png')
+        bpy.ops.render.render(write_still=True)
+    print('rendered unwrap')
+    sys.exit(0)
 frames = 1 if MODE == 'test' else int(round(2 * math.pi * RO / REPEAT))
 for f in range(frames):
     pose(f / frames)

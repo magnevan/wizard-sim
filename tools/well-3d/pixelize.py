@@ -81,6 +81,8 @@ STROKES = (
 # the channel sits a shade under the face's own brown, so a bright streak has room to stand out (the front faces rank
 # near the top of the ladder, and a streak 'two up' was clipped there, so streaks vanished, round 15)
 TONE = {'H': 2, 'M': -1, 'd': -3, 'D': -4}
+# the channel's brown (ladder step) for each tone: H a light streak, M a mid one, d and D the deep ground
+CHANNEL = {TONE['H']: 6, TONE['M']: 4, TONE['d']: 2, TONE['D']: 1}
 TONE_LOG = None   # a dict to fill with each channel pixel's (step, row, rows), for checking where the streaks land
 LOOP = 40   # columns in the spin's loop (a sixth of a turn): the streak rows repeat after it
 
@@ -94,7 +96,7 @@ def streak_row(seed, light, length=(2, 6), gap=(1, 3)):
     while len(s) < LOOP:
         # one tone for the whole streak (a tone per pixel scattered the bright ones into dots)
         s += str(rng.choice(list(light))) * int(rng.integers(length[0], length[1] + 1))
-        s += ''.join(rng.choice(['d', 'D'], p=[0.6, 0.4]) for _ in range(rng.integers(gap[0], gap[1] + 1)))
+        s += ''.join(rng.choice(['d', 'D'], p=[0.3, 0.7]) for _ in range(rng.integers(gap[0], gap[1] + 1)))
     return s[:LOOP]
 
 
@@ -183,7 +185,9 @@ def pixel_art(rgba, sup, where=None):
     opaque = blocks[..., 3] >= 128
     out = np.zeros((h, w, 4), np.uint8)
     on = opaque.sum(2) * 2 >= sup * sup
-    dark = ((blocks[..., :3].sum(3) < 60) & opaque).sum(2) * 4 >= sup * sup   # the thin rendered lines
+    # the thin rendered lines: a quarter of the samples (6 of 16 thinned them, but lost the line where the front bands
+    # cross, so the two ran together)
+    dark = ((blocks[..., :3].sum(3) < 60) & opaque).sum(2) * 4 >= sup * sup
     mean = (blocks[..., :3] * opaque[..., None]).sum(2) / np.maximum(1, opaque.sum(2))[..., None]
     metal = on & ~dark
     L = lum(mean)[metal]
@@ -272,7 +276,11 @@ def pixel_art(rgba, sup, where=None):
             step = streak_tone(us[len(us) // 2], r, n)
             if TONE_LOG is not None:
                 TONE_LOG[(y, x)] = (step, r, n)
-            idx[y, x] = int(np.clip(idx[y, x] + step, min(idx[y, x], CUT_FLOOR), top))
+            # absolute browns, as the bought band has them (studied pixel by pixel, 2026-11-13): a deep ground in its
+            # darkest browns, a third of the band, with mid and light streaks on it; the light where it falls moves
+            # them a step at most (relative steps squeezed everything into the middle and the deep brown never showed)
+            light = int(np.clip(round((idx[y, x] - 5) / 2), -1, 1)) if step >= TONE['M'] else 0   # the ground stays deep
+            idx[y, x] = int(np.clip(CHANNEL[step] + light, 1, top))
     out[metal, :3] = LADDER[idx[metal]].astype(np.uint8)
     out[metal & green, :3] = PATINA
     out[on & dark, :3] = LINE
@@ -309,6 +317,7 @@ def crystal_edge(a, kinds=None, reach=38.0):
     if kinds is not None:
         ring &= kinds != KINDS.index('inner')
     out = a.copy()
+    inner = []
     for y, x in zip(*np.nonzero(ring)):
         dx, dy = CRYSTAL[0] - (x + 0.5), CRYSTAL[1] - (y + 0.5)
         d = math.hypot(dx, dy)
@@ -322,6 +331,13 @@ def crystal_edge(a, kinds=None, reach=38.0):
         k = int(d / reach * len(GLINT))
         if k < len(GLINT):
             out[y, x, :3] = GLINT[k]
+            # the bought rim is two deep: tan just inside the glint, away from the crystal
+            ix, iy = int(round(x - dx / d)), int(round(y - dy / d))
+            if 0 <= ix < w and 0 <= iy < h and ring[iy, ix] and k < len(GLINT) - 1:
+                inner.append((iy, ix))
+    for iy, ix in inner:
+        if tuple(out[iy, ix, :3]) not in GLINT:
+            out[iy, ix, :3] = (184, 148, 106)
     return out
 
 

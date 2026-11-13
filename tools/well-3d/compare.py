@@ -16,6 +16,7 @@ info = json.load(open(os.path.join(src, 'rings.json')))
 cw, ch = info['cell']
 lay = lambda n: Image.open(os.path.join(WELL, n)).convert('RGBA')
 drum, crystal, rings = lay('drum.png'), lay('crystal.png'), lay('rings.png')
+clear = lay('drum-clear.png')   # the drum without the bought rings' last rows (drum_fill.py), under the 3D rings
 cell = lambda p: Image.open(os.path.join(src, p)).convert('RGBA').crop((f * cw, 0, (f + 1) * cw, ch))
 W, H = drum.size
 H = 96
@@ -24,7 +25,7 @@ a = Image.new('RGBA', (W, H), bg)
 for im in (drum, rings, crystal):
     a.alpha_composite(im.crop((0, 0, W, H)))
 b = Image.new('RGBA', (W, H), bg)
-b.alpha_composite(drum.crop((0, 0, W, H)))
+b.alpha_composite(clear.crop((0, 0, W, H)))
 b.alpha_composite(cell('back.png'), (0, 0))
 b.alpha_composite(crystal.crop((0, 0, W, H)))
 b.alpha_composite(cell('front.png'), (0, 0))

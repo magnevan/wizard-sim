@@ -25,7 +25,7 @@ REPEAT = 24   # the braid's repeats round the ring (band_texture.py): the spin l
 W = FIT['W']
 # the bought rings aren't one size (the user): one passes just inside the other, a band's thickness apart, so they never
 # meet. BIG says which: 'B' (the mirrored one) or 'A'.
-GAP, BIG = 2.6,(ARGS[2] if len(ARGS) > 2 else 'B')
+GAP, BIG = 3.4, (ARGS[2] if len(ARGS) > 2 else 'A')   # a band's thickness and a little: they never meet
 RMID = (FIT['R'] + FIT.get('RB', FIT['R'])) / 2
 RADII = {'A': RMID + (GAP if BIG == 'A' else -GAP) / 2, 'B': RMID + (GAP if BIG == 'B' else -GAP) / 2}
 RO, LIPH = RMID + 0.9, 0.55                 # the outer radius at the middle size (for the loop's length), how far the lips stand proud
@@ -44,28 +44,20 @@ def band_material():
     tex.image = bpy.data.images.load(os.path.join(BUILD, 'band-height.png'))
     tex.image.colorspace_settings.name = 'Non-Color'
     tex.interpolation = 'Closest'
-    pat = nt.nodes.new('ShaderNodeTexImage')
-    pat.image = bpy.data.images.load(os.path.join(BUILD, 'band-patina.png'))
-    pat.image.colorspace_settings.name = 'Non-Color'
     uv = nt.nodes.new('ShaderNodeTexCoord')
     nt.links.new(uv.outputs['UV'], tex.inputs['Vector'])
-    nt.links.new(uv.outputs['UV'], pat.inputs['Vector'])
-    # brass, darker down in the carvings, green-grey where the patina sits
+    # two depths, two shades with a hard step (the user: the bought engraving reads as cut at two fixed depths)
     ramp = nt.nodes.new('ShaderNodeValToRGB')
-    ramp.color_ramp.elements[0].position = 0.3
-    ramp.color_ramp.elements[0].color = (0.04, 0.025, 0.012, 1)
-    ramp.color_ramp.elements[1].position = 0.95
-    ramp.color_ramp.elements[1].color = (0.62, 0.44, 0.25, 1)
+    ramp.color_ramp.interpolation = 'CONSTANT'
+    ramp.color_ramp.elements[0].position = 0.0
+    ramp.color_ramp.elements[0].color = (0.1, 0.065, 0.035, 1)
+    ramp.color_ramp.elements[1].position = 0.6
+    ramp.color_ramp.elements[1].color = (0.55, 0.39, 0.22, 1)
     nt.links.new(tex.outputs['Color'], ramp.inputs['Fac'])
-    mix = nt.nodes.new('ShaderNodeMix')
-    mix.data_type = 'RGBA'
-    mix.inputs['B'].default_value = (0.03, 0.045, 0.035, 1)
-    nt.links.new(pat.outputs['Color'], mix.inputs['Factor'])
-    nt.links.new(ramp.outputs['Color'], mix.inputs['A'])
-    nt.links.new(mix.outputs['Result'], b.inputs['Base Color'])
+    nt.links.new(ramp.outputs['Color'], b.inputs['Base Color'])
     bump = nt.nodes.new('ShaderNodeBump')
-    bump.inputs['Strength'].default_value = 0.8
-    bump.inputs['Distance'].default_value = 0.4
+    bump.inputs['Strength'].default_value = 1.0
+    bump.inputs['Distance'].default_value = 0.5
     nt.links.new(tex.outputs['Color'], bump.inputs['Height'])
     nt.links.new(bump.outputs['Normal'], b.inputs['Normal'])
     b.inputs['Roughness'].default_value = 0.38
@@ -102,23 +94,20 @@ def inner_material():
 
 BAND = band_material()
 # the inside face: a plain middling brown, lit by the crystal so it's lightest near the middle and darker further out
-INNER = plain('inner', (0.22, 0.14, 0.075), rough=0.6, metal=0.4)
+INNER = plain('inner', (0.13, 0.08, 0.042), rough=0.6, metal=0.4)
 # the band's top and bottom: plain and lighter than the inside, so the far arcs read as top vs inside (the user)
-RIM = plain('rim', (0.5, 0.36, 0.2), rough=0.45, metal=0.5)
+RIM = plain('rim', (0.78, 0.6, 0.38), rough=0.5, metal=0.4)
 
 H2 = W / 2
-CHAMFER = 0.45
+THICK = 3.2     # the band's radial thickness; its corners are sharp right angles, as the bought bands read (the user)
 
 
 def profile(rc):
     """The band's cross-section for a ring of mid radius rc, (radius, height along the axis, v across, material): a
     plain chamfered rectangle, so the top meets the face in a change of shade, not a line. The outer face (v 0 to 1)
     carries the engraving. Each entry's material is for the face from it to the next. A closed loop."""
-    ro, ri, c = rc + 0.9, rc - 1.5, CHAMFER
-    return [
-        (ri + c, -H2, 0.0, 2), (ro - c, -H2, 0.0, 2), (ro, -H2 + c, 0.0, 0), (ro, H2 - c, 1.0, 2),
-        (ro - c, H2, 1.0, 2), (ri + c, H2, 1.0, 1), (ri, H2 - c, 1.0, 1), (ri, -H2 + c, 0.0, 1),
-    ]
+    ro, ri = rc + THICK / 2, rc - THICK / 2
+    return [(ri, -H2, 0.0, 2), (ro, -H2, 0.0, 0), (ro, H2, 1.0, 2), (ri, H2, 1.0, 1)]
 
 
 def ring(name, rc):

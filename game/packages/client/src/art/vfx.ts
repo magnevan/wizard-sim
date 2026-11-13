@@ -14,12 +14,15 @@
 import { Sprite, Texture } from 'pixi.js';
 import {
   BATTERY, CELL, DEVICE, ECHO_LAG, sprayReach, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SHAPES, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
-  compile, elementName, queueFromCounts, specOf,
+  compile, elementName, pedestalNear, queueFromCounts, specOf, wellNear,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
 import { BARREL_RISE, headTip, liveHeads, towerTip } from './props';
 import { flameJet, pilotFlame } from './flame-jet';
+import { feedLines } from './feed-lines';
+import { towersLit } from './power-down';
+import { drawKeys } from '../key-caps';
 import { toX, toY } from '../iso-world';
 import { PPU } from '../camera';
 import * as A from './accent';
@@ -343,6 +346,10 @@ export class Vfx {
       case 'burst': {
         if (e.text === 'dismissed') return;
         const r = e.amount ?? 1;
+        // the battery's well failing (sim/src/battery-waves.ts): the gate's fire gutters, and your own fire wells up in you
+        if (e.text === 'dry') return; // the well's light just goes out (art/lighting.ts)
+        if (e.text === 'gutter') { this.add('surge', t, 0.45, { x: e.x, y: e.y, seed }); return; }
+        if (e.text === 'infuse') { this.add('kindle', t, 1.8, { x: e.x, y: e.y, r, look, seed }); return; }
         const zone = ended.find((q) => near(q.x, q.y, e.x, e.y));
         if (zone) { this.add(zone.type === ZONE.geyser ? 'geyser' : 'blast', t, 2.6, { x: e.x, y: e.y, r, look, seed }); return; }
         if (healStones.some((p) => near(p[0], p[1], e.x, e.y))) { this.add('healburst', t, 1.8, { x: e.x, y: e.y, r, look, seed }); return; }
@@ -378,6 +385,7 @@ export class Vfx {
     g._fs = o._fs = null;
     this.solids.length = 0; this.softs.length = 0;
     this.occluders?.((tex, x, y, footY, solid, z, piece) => { (solid ? this.solids : this.softs).push({ tex, x, y, footY, z, piece: !!piece }); });
+    if (w.battery) feedLines(g, w, ct, light); // the well's glyph paths to the defences and the gate, under everything
     this.surfaces(w, ct, light);
     this.zones(w, t, light, ct);
     this.groundMarks(w, bodies, t);
@@ -393,6 +401,13 @@ export class Vfx {
     this.missiles(w, t, light, ct);
     this.occludedChannels(w, ct, bodies, light);
     this.pilots(w, ct, light);
+    if (w.battery) {
+      // standing in a free possession circle, or by the well once it can be stabilized: the X key over your head
+      for (let i = 0; i < MAX_SEATS; i++) {
+        const v = bodies[i];
+        if (v?.on && w.seats.active[i] && w.battery.drive[i] < 0 && (pedestalNear(w, i) >= 0 || wellNear(w, i))) drawKeys(this.o.x, [{ key: 'x' }], Math.round(v.x - 7), Math.round(v.y - 50), ct);
+      }
+    }
     this.casters(w, ct, bodies, light);
     this.statuses(w, t, bodies, light, ct);
     this.ghosts();
@@ -1026,9 +1041,13 @@ export class Vfx {
       // shard head, crackle, a droplet trail, a stone pebble, life motes), so wand + Fire reads apart from wand + Cold.
       const wandBolt = m.owner[j] >= 0 && m.owner[j] < MAX_SEATS && m.els[j * N_EL + 5] > 0; // Arcane is element 6
       const RB = wandBolt ? X.EL.arcane : R, xs = wandBolt ? A.extrasOf(m.els, j, 6, 3) : [];
-      for (let k2 = 6; k2 >= 1; k2--) K.sq(o, x - ux * k2 * 2.5, y - uy * k2 * 2.5, k2 < 3 ? 2 : 1, RB[Math.min(RB.length - 1, 1 + (k2 >> 1))]);
-      X.glow(o, x, y, 6, RB[2], 0.7); K.sq(o, x, y, 3, RB[2]); K.sq(o, x, y, 2, RB[1]); X.px(o, x, y - 1, '#ffffff');
-      if (xs.length) A.bolt(o, x, y, ux, uy, xs, t, this.mT0[j], sd, light);
+      const bolt = (c: Ctx): void => {
+        for (let k2 = 6; k2 >= 1; k2--) K.sq(c, x - ux * k2 * 2.5, y - uy * k2 * 2.5, k2 < 3 ? 2 : 1, RB[Math.min(RB.length - 1, 1 + (k2 >> 1))]);
+        X.glow(c, x, y, 6, RB[2], 0.7); K.sq(c, x, y, 3, RB[2]); K.sq(c, x, y, 2, RB[1]); X.px(c, x, y - 1, '#ffffff');
+        if (xs.length) A.bolt(c, x, y, ux, uy, xs, t, this.mT0[j], sd, light);
+      };
+      // the battery's archers shoot at the wall from out in the field: what stands in front (the wall) hides their arrows
+      if (w.battery && m.owner[j] >= MAX_SEATS) this.behind(x, yg, 16, bolt); else bolt(o);
       light(x, yg, 30, RB[2], 0.5);
     }
   }
@@ -1196,7 +1215,7 @@ export class Vfx {
   }
   /** Every working defence keeps a small live flame at its nozzle, except while it's firing. */
   private pilots(w: World, t: number, light: LightFn): void {
-    const n = liveHeads(w), s = w.seats;
+    const k = towersLit(w), n = k > 0.5 ? liveHeads(w) : 0, s = w.seats; // as the well dies, the flames choke and sputter out (art/power-down.ts)
     for (let k = 0; k < n; k++) {
       const seat = w.battery!.drive.indexOf(k);
       if (seat >= 0 && s.phase[seat] === PHASE.channel) continue;
@@ -1512,6 +1531,16 @@ export class Vfx {
         const k = easeOut(seg(e, 0, 0.3)) * (1 - seg(e, 1.2, 1.8));
         if (k > 0.02) { K.gring(g, x, y, r * k, EL.life[2], 0.8 * k, 1); X.ellipse(g, x, y, r * 0.75 * k, r * 0.75 * k * FY, '#1e7a34', 0.35 * k); }
         light(x, y, r + 30, '#8ef07e', 0.9 * (1 - seg(e, 0, 1.5)));
+        return;
+      }
+      case 'kindle': {
+        // the battery's infusion (beat 6): fire wells up out of the ground round you and rises, and the light spreads out
+        if (e < 0.07) X.ellipse(o, x, y - 4, 10, 8, '#fff2c8');
+        K.sparkle(o, x, y - 6, t, 1 - seg(e, 1.1, 1.8), 18, sd, EL.fire, 30);
+        K.debris(o, x, y - 4, e, sd, 7, 26, [EL.fire[0], EL.fire[1], EL.fire[2]], 30);
+        const k = easeOut(seg(e, 0, 0.5)) * (1 - seg(e, 1.2, 1.8));
+        if (k > 0.02) { K.gring(g, x, y, (r + 14) * k, EL.fire[2], 0.8 * k, 1); X.ellipse(g, x, y, (r + 10) * 0.75 * k, (r + 10) * 0.75 * k * FY, EL.fire[3], 0.3 * k); }
+        light(x, y, 30 + 90 * easeOut(seg(e, 0, 1.2)), '#ff9a30', 0.9 * (1 - seg(e, 0.3, 1.8)));
         return;
       }
       case 'swing': {

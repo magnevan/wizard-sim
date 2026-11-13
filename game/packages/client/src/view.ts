@@ -30,6 +30,7 @@ import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
+import { blackout } from './art/power-down';
 import type { PropSet } from './art/assets';
 import { AMBIENT, canvas as pxCanvas, stats, text as pxText } from './art/px';
 import { newRigState, type RigKind, type RigState } from './art/rigs';
@@ -46,6 +47,8 @@ const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brut
 const LIGHTING = typeof location === 'undefined' || new URLSearchParams(location.search).get('lighting') !== '0';
 /** How far the view leans out over the battlefield while you drive a defence: view units, across and up. */
 const DRIVE_LOOK = 4.5;
+/** When the battery's well runs dry, the view glides back to your wizard over this many seconds, at this rate (1/s). */
+const DRY_GLIDE = 3.5, DRY_GLIDE_RATE = 1.5;
 const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL', simple: 'SIMPLE, ANGLED, LOW DETAIL', code: 'CODE, STRAIGHT-ON' };
 
 export class WorldView {
@@ -186,7 +189,7 @@ export class WorldView {
     } else {
       this.scene.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
     }
-    this.hudLayer.addChild(this.tut.fade, this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over, this.tut.sprite, this.tut.banner, this.artLabel);
+    this.hudLayer.addChild(this.tut.fade, this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over, this.tut.sprite, this.tut.banner, this.repairFade, this.artLabel);
     this.root.addChild(this.scene, this.hudLayer);
     for (let i = 0; i < MAX_BODIES; i++) {
       const s = new Sprite(); s.visible = false; s.tint = tint;
@@ -301,10 +304,11 @@ export class WorldView {
     this.vfx.ground.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy); this.vfx.over.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy);
     this.structs.scorch.sprite.position.set(fx0, fy0);
     this.props.place(fx0, fy0);
+    this.props.powerDown(w, ct, fx0, fy0); // the battery's well alive, and its power going down once it runs dry
     this.props.turnHeads(w, fx0, fy0);
     // the battery's stakes give way as a defence is taken
     if (this.props.breakStakes(!!w.battery && w.enc.state[0] > 0 && w.enc.state[1] >= BSTEP.ring, fx0, fy0)) {
-      w.def.props.forEach((p, k) => { if (p.asset === 'stakes') this.vfx.splinters(p.x, p.y, t, k); });
+      w.def.props.forEach((p, k) => { if (p.asset === 'stakes' || p.asset === 'palisade') this.vfx.splinters(p.x, p.y, t, k); });
     }
     this.drawArtLabel(w);
     // the wave banner: over the arena's north edge, or near the top of the view when that is off screen
@@ -343,10 +347,10 @@ export class WorldView {
     if (lit) {
       lit.fit(cam.w, cam.h);
       lit.begin(moodOf(w.def.id, this.mood), ct, fx0, fy0);
-      this.props.standing((tex, fx, fy, x, y, asset, flat) => {
+      this.props.standing((tex, fx, fy, x, y, asset, flat, on) => {
         if (!flat) lit.castShadow(tex, fx, fy, x, y);
         const l = PROP_LIGHTS[asset];
-        if (l) lit.light(x, y + 2, l[1], l[0], l[2] * (0.92 + 0.08 * Math.sin(ct * 7 + x))); // at its foot, on the camera's side, so it lights itself
+        if (l && on > 0.02) lit.light(x, y + 2, l[1], l[0], l[2] * on * (0.92 + 0.08 * Math.sin(ct * 7 + x))); // at its foot, on the camera's side, so it lights itself
       });
       for (let i = 0; i < MAX_BODIES; i++) {
         const v = this.views[i];
@@ -372,6 +376,10 @@ export class WorldView {
     this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;
     this.hud.draw(w, t, cam.hudW, cam.hudH);
     this.tut.draw(w, ct, cam.hudW, cam.hudH);
+    // the battery's repair: the screen fades to black and back while the well is mended (art/power-down.ts)
+    const black = w.battery ? blackout(w) : 0;
+    this.repairFade.clear();
+    if (black > 0.005) this.repairFade.rect(0, 0, cam.hudW, cam.hudH).fill({ color: 0x0a0810, alpha: black });
     this.edges.draw(w, cam, ct, (i) => this.drawnAt(i, w, alpha));
     this.frames.upload();
     if (lit && this.renderer) {
@@ -457,12 +465,23 @@ export class WorldView {
    * it: they get an arrow at the edge of the view (edge-marks.ts). With no local wizard at all, it
    * frames everyone. Several local seats share the screen (camera.ts `shared`).
    */
+  /** The battery's fade to black and back for the repair, over everything. */
+  private repairFade = new Graphics();
+  /** Each seat's camera spot while the view glides back after the battery's well runs dry, x and y. */
+  private glide = new Float64Array(MAX_SEATS * 2);
   private aim(w: World, alpha: number, dt: number): void {
     const b = w.bodies, up: { x: number; y: number }[] = [], down: { x: number; y: number }[] = [], all: { x: number; y: number }[] = [];
     for (let s = 0; s < MAX_SEATS; s++) {
       if (b.kind[s] !== KIND.wizard) continue;
       const [x0, y0] = this.drawnAt(s, w, alpha), far = s < MAX_SEATS && w.battery && w.battery.drive[s] >= 0 ? DRIVE_LOOK : 0;
-      const p = { x: x0 + far, y: y0 - far }; // driving a defence, you look out over the battlefield: north is up and to the right
+      let p = { x: x0 + far, y: y0 - far }; // driving a defence, you look out over the battlefield: north is up and to the right
+      // the battery's well has just run dry: the view glides back from the battlefield to your wizard, slowly
+      const dryT = w.battery ? w.battery.wellT[1] / 60 : 0;
+      if (dryT > 0 && dryT < DRY_GLIDE) {
+        const k = 1 - Math.exp(-Math.min(0.1, Math.max(0, dt)) * DRY_GLIDE_RATE);
+        this.glide[s * 2] += (p.x - this.glide[s * 2]) * k; this.glide[s * 2 + 1] += (p.y - this.glide[s * 2 + 1]) * k;
+        p = { x: this.glide[s * 2], y: this.glide[s * 2 + 1] };
+      } else { this.glide[s * 2] = p.x; this.glide[s * 2 + 1] = p.y; }
       all.push(p);
       if (this.isLocal(s)) (b.downed[s] ? down : up).push(p);
     }

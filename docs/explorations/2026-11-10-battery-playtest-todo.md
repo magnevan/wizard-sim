@@ -70,6 +70,100 @@ The user drove a defence again and listed four more. **Status: built, awaiting t
 
 **Last round (same evening), all built.** The user: "lets trim the swing a little bit", so it's 70 degrees. Place's reticle stopped short of where the spell landed: it used a wizard's Place reach, not the defence's 18 and its outside-the-wall limit, and now shares the sim's rule (`drivePlace`). The fire burst (the Weapon cast) did nothing while driving, because only Force and Area got through. The user: "allow both actions, but basically have the same spell effect", so from a defence the burst makes the same half-ring as Area. The user is done with bug reports for now.
 
+## The well fails, beats 5 to 7 (2026-11-12)
+
+Built, waiting on the user's playtest. All of it is in `sim/src/battery-waves.ts`, with the numbers in `config.ts` `WELL`.
+
+- **Beat 5, the pool fails.** Once the lesson is over (the free fights), the well's flow (`battery.flow`) falls from full to nothing over 75 s, and a defence's pool refills at that share of R (`regenOf`). On the bar the flow line is measured against a full well, so it gets shorter; the part the well no longer gives is dark red with a flickering edge. The prompt reads "The well is failing".
+- **Beat 6, it runs dry.** That happens once the flow is out and nobody at a defence has a whole rune, or 6 s later, so a rune held back can't stall it. Everyone is put back at their pedestal, the gate's fire goes out, the towers switch to their burnt-out art, and the pilot flames and the well's light go out. The pedestals can't be used again. 2.5 s later comes the infusion: a Fire pool of your own, 1 rune deep, lit at once, with its socket flashing and fire welling up round you (`kindle` in `art/vfx.ts`). The prompt uses the user's line, "You've learned to channel fire".
+- **Beat 7, from your own hands.** The goblins still out there stop battering the walls and come through the open gate for you, and 3 s after the infusion two small groups follow, one per wizard (3 goblins, then 3 and an archer). There's no prompt about the blade: that's left to playtesting, as agreed. After the last of them the battery goes quiet (`BSTEP.after`); the repair comes next.
+- **Added the same day, at the user's request:**
+  - **The camera glides back.** For 3.5 s after the well runs dry, the view eases slowly from the battlefield back to your wizard (`DRY_GLIDE` in `view.ts`).
+  - **The drained well.** A free local edit, `tools/art-import/well_drained.py`: black crystal with a pale crack, dead seams, dulled brass. It's swapped in with the burnt-out towers. The rings haven't dropped onto the plinth.
+  - **Feed lines** (`art/feed-lines.ts`): glowing glyph paths in the ground from the well to each defence, by way of its pedestal, and up a trunk to the gate that splits to both pillars. Pulses run out from the well. Brightness and pulse speed follow the well's flow, and the line to a defence someone is driving burns brighter. As the well fails the runes start blinking out; when it runs dry the light drains back down every line into the well.
+- **Second pass, the same day.** The user: make the well dynamic, don't make the power-down binary, and rebuild the paths as a tileset of small glowing glyphs between two thin lines, routed like circuit traces at 45 degrees.
+  - **The well is alive** (`art/well-anim.ts`). Its drum and crystal are layers cut from the bought art (`tools/art-import/well_layers.py`). The three brass rings are drawn in code as real circles, so they can turn, each about its own tilted axis, with rivets showing their spin. The crystal pulses and bobs, the runes on the drum shimmer in a slow wave, and the drum's top breathes with the crystal. As the well fails it gets unsteady: the rings wobble, and the pulse and runes falter. All of it is painted into the well-top prop's own texture, so it still sorts among the actors.
+  - **The power-down is a timeline** (`art/power-down.ts`). Over 0 to 0.8 s the towers sputter into their burnt-out art and the pilot flames choke. Over 0 to 1.4 s the gate's fire gutters down; the sim now keeps it until `WELL.gutter`. Over 0 to 1.1 s the light drains back down the paths. Over 0.9 to 3 s the well dies: the crystal stutters, darkens and sinks, and the rings slow, tip flat and drop onto the drum's rim with a small bounce. The infusion moved to 3.6 s (`WELL.surge`), after a quiet beat. Every light fades with its prop.
+  - **Glyph paths** (`art/glyph-path.ts`). The tileset is `game/content/assets/tiles/glyph-path`, drawn by hand in `tools/art-import/glyph_tiles.py`: 12 runes, an end pad and a bend node, all white so they can be tinted any colour. A path is a set of waypoints in the sim's world with legs along an axis or at 45 degrees (`snap()` fixes the others). It's drawn as runes between two thin lines, with pads at its ends and nodes at its bends. The battery's routes (`art/feed-lines.ts`) leave the well's north side as a bus, one lane each; the outer lanes turn off first so none cross, each meets its pedestal on a diagonal, then turns into the tower. The middle lane runs to the gate and forks to its pillars. A slow swell of light runs out along them.
+- **Not built yet:** the quiet beat's sound, and the well's column, which isn't drawn at all yet.
+- **To tune in play:** how long the well takes to fail (75 s), the grace (6 s), how deep your own pool is (1 rune), and the beat 7 groups.
+
+## The user's notes, 2026-11-12 (commit 7454e7e)
+
+1. **The rings** looked bland, and should stay as the bought art had them, only spinning. Now two rings are tilted into an X and one is nearly level, as in the art. Each is a flat brass band spinning about its own axis, with engraved notches and studs carried round (`art/well-anim.ts`).
+2. **The floor glyphs:** the user said they look great.
+3. **The pedestals** read as knobs and levers; the user wants magic. They're replaced by possession circles: a glyph circle touching each tower's foot, where the feed line ends. While free it pulses, with someone in it it brightens, and while possessed it burns and turns. The X key cap floats over your head while you stand in one. The prop is `possession-circle` (flat, drawn in code), and the sim's reach is 2.0.
+4. **Archers' arrows** drew over the wall. In the battery they now go through `behind()`, so the wall hides them. A check frame with an arrow in flight showed none over the wall.
+5. **The lesson's text** didn't work mid-fight. There are no sentences now: each step's keys are pictures that press themselves in order (`key-caps.ts`). They are the Fire key with a big F, Shift, a mouse with its right button lit, and bars for keys you hold. The only text left is the user's own line at the infusion.
+6. **The battlefield.** Smashed field works are scattered over the killing ground, clear of the goblins' lanes: palisades, sandbags and crates (`tools/art-import/broken_props.py`), plus stakes, shields, a cold campfire and burnt banners. There are also burn craters and churned mud. Each line of stakes has a palisade either side that gives way with it.
+7. **Three states for the well.** Overloaded/failing is built: the crystal overcharges, flaring and shaking, arcs jump to the rings, the rings are knocked askew, the runes stutter, and the column of light whips and breaks up. Failed is the power-down. Repaired comes with the repair beat. The column of light is now drawn (`vfx.ts column`): steady while the well holds, drawing down into the crystal as it dies.
+
+**Sound: its own session, at the user's choice.** The notes: no music for tension on arrival, no sound of the battle going on, and the archer and goblin fighting sounds are bad. My proposal is CC0 libraries first, then ElevenLabs for the rest (up to about 620 credits), each with its prompt for sign-off before any paid call:
+- **Tension music** on arrival, calmer once the well is dry: free CC0 library. PixelLab music needs a higher plan tier.
+- **Battle bed**, looped, 2 takes of 20 s: "Distant battle outside a fortress wall: a crowd of small creatures shrieking and jeering, wood being hacked, scattered clangs of metal on stone, a war horn far off."
+- **Archer's shot**: "A short wooden bow loosing an arrow: a quick creak of the drawn string, a sharp twang on release, and the arrow's brief hiss as it flies away."
+- **Arrow on the wall**: "An arrow striking a sandstone wall and snapping: a hard wooden clack and a small splintering crack."
+- **Goblin hacking stakes**: "A small goblin hacking at wooden stakes with a crude iron blade: a dull chop into wood with a short splintering crunch."
+- **Goblin battering the wall**: "A crude iron cleaver clanging against a stone wall: a hard metallic clank with grit scraping off the stone."
+- **Goblin effort grunts**: "A small, wiry goblin grunting with effort as it swings: a short raspy snarl."
+- **Barricades giving way**: "A wooden palisade and stakes giving way: timber splintering and cracking, posts falling and thudding into the dirt."
+
+## The well rebuilt from layers and 3D rings (2026-11-12 to 13)
+
+The bought well animations (commit a9a2228) morphed the rings into a hoop rather than turning them, sank them top-first, invented ring pieces, and ran at a low frame rate. The user liked their crystal and rune flare-out. Lesson kept in memory: generated animation is for light, fire and sparks; anything solid that moves goes to Blender or code; check frame by frame before buying or wiring in.
+
+- **The rings** are now 3D (`tools/well-3d/`, its README has the pipeline): two solid bands with sharp corners, fitted to the bought silhouette, with ring A a band's thickness bigger so they never meet. They're snapped to the bought palette in the bought rings' own shade proportions. The band's face went through about twenty rounds with the user: engraved runes and braids carved in 3D read as noise below a pixel; per-pixel drawings, streaks and shapes never matched the bought art. The user settled on a dark band with raised borders and raised strips across it that stop short of the borders.
+- **The drum** kept the bought rings' last rows under them, which doubled the 3D rings. Its back rim is rebuilt from the front, mirrored (`drum_fill.py`), lit and drained.
+- **The states** (`art/well-anim.ts`; clicking the well steps through them, `?well=n`):
+  - Steady: the spin at 8 frames a second, a light pulse on the runes and the crystal, a 1 px bob.
+  - Overloaded: the spin up to about four times faster, runes and crystal blazing and flickering, lightning from the crystal ending on the rings' own pixels, molten sparks spitting from the runes under gravity.
+  - Overloaded to failed: a white flare and a burst of sparks, then a rigid-body fall rendered in Blender. The rings tip, drop round the drum and settle leaning against it on the steps, as the light goes out of the rings, the crystal and the drum.
+  - Failed: the fall's last frame, dark.
+  - Failed to repaired: the fall played back, the rings lifting as the light returns, then the spin. Not used in the game until the repair beat.
+- **Not yet judged by the user:** the spin GIF, the fall, the overloaded effects. `scripts/well-frames.mjs` paints each state directly for a look.
+- **Still to do:** the repair beat itself ("press X to stabilize"). The bought frames (`content/assets/well/frames`, `tools/art-import/well_frames.py`) are no longer used and are kept as a record.
+
+### The user's verdict and the second pass (2026-11-13)
+
+The user approved the fall ("rings falling look good"). What they changed, and what was done:
+
+| Note | Done |
+|---|---|
+| Steady: the turning reads as text scrolling on a display; marks on the metal would show it moving | Wear fixed to the band: missing and snapped ribs, slanting scratches, chips out of the borders, a few patina spots, dents inside (`pixelize.py WEAR`). The loop is now a whole turn, 240 frames, since the wear doesn't repeat. |
+| A very slight wobble, to feel real | Each ring's axis leans 1.6° (`rings.py WOBBLE`), swinging round 5 or 7 times a turn; overloaded, the faster spin makes it faster, and the rings shake a pixel now and then. |
+| Lightning from all over the crystal, some out of its back; white at the root, orange at the tips | Bolts leave from random crystal pixels; some are drawn behind the crystal to the back rings; colour runs white to orange along each bolt, with an occasional fork. |
+| The crystal's bounce faster and erratic when overloaded | A fast jitter replaces the slow bob as `unstable` rises. |
+| Sparks from all eight legs; the runes glow very strongly and flare out | Sparks from all eight legs, outward and up; the three behind are drawn behind the drum and appear over its rim. The runes blaze with a glow on each rune and each leg. |
+| The rings' outline showed through the crystal in the fall | Blender's line pass ignored the holdout; `unhide` clears those lines. |
+| Failing should end in one large flare of lightning and runes | The flare is longer (a fifth of the power-down), throws many white-hot bolts at once, and every leg erupts. Then the rings fall. |
+
+Third round, same day:
+
+| Note | Done |
+|---|---|
+| The overloaded lightning is too fast, like a sped-up video | Each bolt is shaped once and held for 0.2 to 0.45 s, then fades (it was re-rolled 16 times a second); the flicker of the glow slowed to 9 a second. |
+| Single lines from core to rings; the original's lightning branches | Bolts are jagged by midpoint displacement, with forks and forks off forks, thinner and redder outward, plus short crackles off the crystal. |
+| Lightning drawn over the front of a ring that is in front of it | All lightning is drawn between the layers, so the front rings cover it; only the flash where a bolt strikes sits on top. |
+| Still no flaring from the runes, as in the bought picture | The rune glyphs on the three visible legs burn: their strokes blaze and flame licks off them, up and to the sides (`runeFire`). A first try filled the whole rune column and made a bar of fire (the user: the rune shapes should burn, not the column). |
+
+The user then approved the overloaded-to-failed animation and the failed state ("exactly like I wanted"). The rune flare works, though it isn't as striking as the bought picture's. Two bugs, fixed:
+
+| Bug | Fix |
+|---|---|
+| The fallen rings' outline showed through the base | `unhide` now clears every line pixel with no ring metal beside it, anywhere (the drum and the steps hide the rings too, not only the crystal). |
+| The rings' tops were cut off in the repair | The 3D rings reach a little above the bought ones, so the renders were cut flat at row 0 (the fall's first frames, the spin's back rings). Both now carry 8 spare rows (`rings.py TOP`), and the game draws the strips that much higher (`top` in rings3d.json). |
+
+Fourth round, same day. The user: in the repair the rings sat a little high, with a gap over the crystal, and the spin snapped in after it. Also: take out the click-through of the states, start the well in its overloaded state, then build the repair beat.
+
+| Note | Done |
+|---|---|
+| The repaired rings sat too high, a gap over the crystal | *Confirmed cause:* Blender fits an orthographic camera's scale to the longer side, and the fall's canvas (104 × 121, with the headroom) is taller than wide, so the fall's rings came out 121/104 too big and 8 px too high. The camera now fits the width (`sensor_fit`); the fall's first frame measures the same as the spin's. Re-rendered; the fall lands as before. |
+| The spin snapped in after the repair | The fall's frames before the release are now the spin's own poses, wobble included (fall frame f is spin frame 4f). The repair plays the fall back to frame 3 and the spin picks up at frame 12, the same pose. |
+| Remove the click-through | Gone, with `?well=n` and `scripts/well-states.mjs`; `scripts/well-frames.mjs` still paints each state. |
+| Start overloaded | The well is overloaded from the start (it holds four defences under siege) until it runs dry: the opening's "Unstable, then Drained, then Stable". |
+
+**The repair beat, built** (`sim/src/battery-waves.ts` REPAIR, `client/src/art/power-down.ts` REPAIR). Once beat 7's last goblin is down, the prompt reads "Stabilize the well" with the X key, and the X shows over your head within 4 of the well's middle (`WELL.repairReach`). Any wizard's press does it for everyone. The screen fades to black (0.6 s), holds (0.8 s) and comes back on the drained well; then the rings rise as the fall played back, the light returns, and the spin goes on, steady. Light runs back out along the paths, and the towers sputter back on as it reaches them. From 4.6 s (`WELL.relit`) the well's flow is full and the defences can be possessed again; stepping away gives you back your own Fire rune. `?fail=2#battery` starts there. **Left as is, for the user:** the gate's fire stays out after the repair, nothing more comes, and the cursor's aim ring shows over the black.
+
 ## Enemies at the wall's foot
 
 Not on the user's list, but it comes from the same layout: a full-height wall hides about 4 units of ground behind it, and enemies reaching the wall will be out of sight. A one-storey kit would be about 10 generations, with sign-off first. Decide once waves exist.

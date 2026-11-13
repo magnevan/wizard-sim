@@ -1,0 +1,28 @@
+{
+ "spin": {
+  "frames": 240,
+  "cell": [
+   104,
+   64
+  ],
+  "cols": 16,
+  "top": 8,
+  "columnsPerFrame": 1,
+  "columnsPerTurn": 240
+ },
+ "fall": {
+  "frames": 60,
+  "cell": [
+   104,
+   121
+  ],
+  "top": 8,
+  "fps": 30,
+  "release": 4,
+  "spinStep": 4
+ },
+ "crystal": [
+  51.5,
+  20.0
+ ]
+}

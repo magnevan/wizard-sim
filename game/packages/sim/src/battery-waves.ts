@@ -13,18 +13,29 @@
  *   SPRAY   goblins across the field down each driven lane. Teaches the flamethrower.
  *   PLACE   archers that stand off past the flamethrower. Teaches Place.
  *   BRUTE   one heavy one at the wall. Keep the flame on it.
- *   FREE    mixed groups, quietly, one after another (until the pool fails: beat 5, to come).
+ *   FREE    mixed groups, quietly, one after another, while the well fails (beat 5): its flow falls to nothing over
+ *           WELL.fail, and the defences' pools refill slower and slower.
+ *   DRY     the well has run dry (beat 6): everyone is stepped off their defence, the defences and the gate's fire go
+ *           out, and WELL.surge later the infusion gives every wizard a Fire pool of its own (world.ts infused).
+ *   HANDS   the enemies left come through the gate for you, then a group or two more (beat 7): your own fire now.
+ *   AFTER   the last of them is down. X at the well stabilizes it (repairPress).
+ *   REPAIR  the repair under way and done: wellT[2] counts its ticks (the client's fade to black and back, the well
+ *           rising and lighting again, the defences with it: art/power-down.ts). WELL.relit after the press the flow is
+ *           full again and the defences can be possessed again.
  *
- * The step and its timer live in the encounter's state (enc.state: [0] on, [1] step, [2] ticks to the next group);
- * the lanes' portal slots are the encounter's, one per defence (MAX_PORTALS is 4).
+ * The step and its timer live in the encounter's state (enc.state: [0] on, [1] step, [2] ticks to the next group,
+ * [3] which group of FREE or HANDS); the lanes' portal slots are the encounter's, one per defence (MAX_PORTALS is 4).
  */
 import { ARCH, ARCHETYPES } from './archetypes';
-import { T } from './config';
+import { T, WELL } from './config';
+import { EL, N_EL } from './elements';
 import { len } from './geom';
-import { BATTERY } from './battery';
-import { KIND, MAX_PORTALS, MAX_SEATS, TEAM, spawnBody, type World } from './world';
+import { BATTERY, stepAway } from './battery';
+import { BTN, type PlayerInput } from './input';
+import { KIND, MAX_PORTALS, MAX_SEATS, TEAM, TERRAIN, alive, spawnBody, type World } from './world';
+import { WALL } from './compile';
 
-export const BSTEP = { arrive: 0, ring: 1, spray: 2, place: 3, brute: 4, free: 5 } as const;
+export const BSTEP = { arrive: 0, ring: 1, spray: 2, place: 3, brute: 4, free: 5, dry: 6, hands: 7, after: 8, repair: 9 } as const;
 
 /** Each step's group, per driven lane, as [archetype, count]. */
 const GROUPS: Record<number, readonly (readonly [number, number])[]> = {
@@ -37,6 +48,11 @@ const FREE: readonly (readonly (readonly [number, number])[])[] = [
   [[ARCH.swarmer, 4], [ARCH.caster, 1]],
   [[ARCH.brute, 1], [ARCH.swarmer, 3]],
   [[ARCH.caster, 2], [ARCH.swarmer, 3]],
+];
+/** Through the gate once the well is dry, per wizard, in turn: small, since you have one rune (beat 7). */
+const HANDS: readonly (readonly (readonly [number, number])[])[] = [
+  [[ARCH.swarmer, 3]],
+  [[ARCH.swarmer, 3], [ARCH.caster, 1]],
 ];
 
 export const BWAVES = {
@@ -95,19 +111,23 @@ export function laneTarget(w: World, i: number): number {
   return best;
 }
 
+/** An enemy out of the trees, sent at defence `k`'s lane (-1: none, it hunts wizards as anywhere else). */
 function spawnAt(w: World, k: number, arch: number, x: number, y: number, loop: number): void {
   const a = ARCHETYPES[arch], b = w.bodies;
   const i = spawnBody(w, -1, KIND.enemy, TEAM.enemies, x, y, a.hp * (1 + 0.3 * loop), a.radius);
   if (i >= 0) { b.arch[i] = arch; b.dmgMult[i] = 1; b.speedMult[i] = 1; b.face[i] = 0.25; w.battery!.lane[i] = k; }
 }
 
-/** Open a group down every driven lane, from the treeline gap nearest each driven defence. */
+/**
+ * Open a group from the treeline gap nearest each defence that has someone: down every driven lane, or, once the well
+ * is dry, one group for each wizard (from the gap nearest the defence of the same number).
+ */
 function openGroup(w: World, groups: readonly (readonly [number, number])[]): void {
-  const e = w.enc, d = w.battery!, towers = towersOf(w), gaps = w.def.portals;
+  const e = w.enc, d = w.battery!, towers = towersOf(w), gaps = w.def.portals, dry = w.enc.state[1] >= BSTEP.dry;
   const n = groups.reduce((s, [, c]) => s + c, 0);
   for (let k = 0; k < MAX_PORTALS; k++) {
     e.left[k] = e.total[k] = 0;
-    if (k >= towers.length || !d.drive.includes(k) || !gaps.length) continue;
+    if (k >= towers.length || !gaps.length || !(dry ? k < MAX_SEATS && w.seats.active[k] : d.drive.includes(k))) continue;
     let best = 0;
     for (let g = 1; g < gaps.length; g++) if (Math.abs(gaps[g][0] - towers[k].x) < Math.abs(gaps[best][0] - towers[k].x)) best = g;
     e.px[k] = gaps[best][0]; e.py[k] = gaps[best][1];
@@ -120,18 +140,84 @@ function archAt(groups: readonly (readonly [number, number])[], j: number): numb
   return groups[groups.length - 1][0];
 }
 
-const groupOf = (step: number, free: number) => (step === BSTEP.free ? FREE[free % FREE.length] : GROUPS[step]);
+const groupOf = (step: number, n: number) => (step === BSTEP.free ? FREE[n % FREE.length] : step === BSTEP.hands ? HANDS[n] : GROUPS[step]);
 
-/** Enemies of the lanes still standing, and still to come out. */
+/** Enemies still standing, and still to come out. */
 function remaining(w: World): number {
   let n = 0;
-  for (let i = MAX_SEATS; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy && w.battery!.lane[i] >= 0) n++;
+  for (let i = MAX_SEATS; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.enemy) n++;
   for (let k = 0; k < MAX_PORTALS; k++) n += w.enc.left[k];
   return n;
 }
 
+/**
+ * Beat 5: the well's flow falls, and once it's out the well runs dry when no defence has a whole rune left (or after
+ * WELL.grace, so holding a rune back doesn't stall it).
+ */
+function failWell(w: World): void {
+  const d = w.battery!, s = w.seats;
+  d.flow[0] = Math.max(0, d.flow[0] - 1 / T(WELL.fail));
+  if (d.flow[0] > 0) return;
+  d.wellT[0]++;
+  let held = false;
+  for (let i = 0; i < MAX_SEATS; i++) if (d.drive[i] >= 0 && s.runes[i * N_EL + EL.fire - 1] >= 1) held = true;
+  if (held && d.wellT[0] < T(WELL.grace)) return;
+  runDry(w);
+}
+
+/** Beat 6: everyone at a defence is put back where they stepped up, and the well goes dark (the gate's fire gutters: below). */
+function runDry(w: World): void {
+  const d = w.battery!, st = w.enc.state, tick = w.clock[0];
+  st[1] = BSTEP.dry; st[2] = 0; d.wellT[1] = 1;
+  w.enc.left.fill(0); // what was still to come out of the trees stays there
+  for (let i = 0; i < MAX_SEATS; i++) if (d.drive[i] >= 0) stepAway(w, i);
+  const well = w.def.props.find((p) => p.asset === 'battery-well');
+  if (well) w.events.push({ tick, kind: 'burst', who: -1, x: well.x, y: well.y, amount: 1, look: EL.fire, text: 'dry' });
+}
+
+/** WELL.gutter after the well runs dry, the gate's fire is out (the view lowers it till then: view-structures.ts curtain). */
+function gutterGate(w: World): void {
+  const wl = w.walls;
+  for (let k = 0; k < wl.type.length; k++) {
+    if (wl.type[k] !== WALL.curtain || wl.owner[k] !== TERRAIN) continue;
+    w.events.push({ tick: w.clock[0], kind: 'burst', who: -1, x: (wl.x1[k] + wl.x2[k]) / 2, y: (wl.y1[k] + wl.y2[k]) / 2, amount: 0.6, look: EL.fire, text: 'gutter' });
+    wl.type[k] = WALL.none;
+  }
+}
+
+/** The infusion: a Fire pool of your own lights, full (world.ts infused), and the enemies left stop battering walls and come for you. */
+function infuse(w: World): void {
+  const d = w.battery!, s = w.seats, b = w.bodies, st = w.enc.state;
+  for (let i = 0; i < MAX_SEATS; i++) {
+    if (!s.active[i]) continue;
+    s.runes[i * N_EL + EL.fire - 1] = WELL.own;
+    w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: b.x[i], y: b.y[i], amount: 1, look: EL.fire, text: 'infuse' });
+  }
+  d.lane.fill(-1);
+  st[1] = BSTEP.hands; st[2] = T(WELL.through); st[3] = -1; // the first HANDS group opens once the pause is out (below)
+}
+
+/** Can seat i stabilize the well now: the fight over, standing within WELL.repairReach of its middle? */
+export function wellNear(w: World, i: number): boolean {
+  if (!w.battery || w.enc.state[1] !== BSTEP.after || !alive(w, i)) return false;
+  const well = w.def.props.find((p) => p.asset === 'battery-well');
+  return !!well && len(well.x - w.bodies.x[i], well.y - w.bodies.y[i]) < WELL.repairReach;
+}
+
+/** The Use button, on the press edge, at the well once the fight is over: the repair begins (any one wizard's press does it for all). */
+export function repairPress(w: World, inputs: readonly PlayerInput[]): void {
+  const s = w.seats;
+  for (let i = 0; i < MAX_SEATS; i++) {
+    const inp = inputs[i];
+    if (!inp || !s.active[i] || !(inp.buttons & ~s.prevButtons[i] & BTN.use) || !wellNear(w, i)) continue;
+    w.enc.state[1] = BSTEP.repair; w.battery!.wellT[2] = 1;
+    return;
+  }
+}
+
 export function tickBatteryWaves(w: World): void {
   const e = w.enc, st = e.state, d = w.battery!;
+  if (d.wellT[2] > 0) { if (++d.wellT[2] === T(WELL.relit)) d.flow[0] = 1; return; }
   if (!st[0]) {
     // as you arrive: goblins hacking at the stakes out in front of every defence (they take their spots: holdSpot)
     const towers = towersOf(w), stakes = w.def.props.filter((p) => p.asset === 'stakes');
@@ -146,21 +232,28 @@ export function tickBatteryWaves(w: World): void {
   }
   const driven = d.drive.some((k) => k >= 0);
   if (st[1] === BSTEP.arrive) { if (driven) st[1] = BSTEP.ring; return; }
+  if (d.wellT[1] > 0) { d.wellT[1]++; if (d.wellT[1] === T(WELL.gutter)) gutterGate(w); }
+  if (st[1] === BSTEP.free) failWell(w);
+  if (st[1] === BSTEP.dry) { if (d.wellT[1] > T(WELL.surge)) infuse(w); return; }
+  if (st[1] === BSTEP.after) return;
   // a group still coming out of the trees
   const groups = groupOf(st[1], st[3]);
   if (groups) {
     for (let k = 0; k < MAX_PORTALS; k++) {
       if (!e.left[k] || --e.next[k] > 0) continue;
       const j = e.total[k] - e.left[k];
-      spawnAt(w, k, archAt(groups, j), e.px[k] + ((j % 3) - 1) * BWAVES.spread, e.py[k] - (j % 2) * 0.8, st[1] === BSTEP.free ? Math.floor(st[3] / FREE.length) : 0);
+      spawnAt(w, st[1] === BSTEP.hands ? -1 : k, archAt(groups, j), e.px[k] + ((j % 3) - 1) * BWAVES.spread, e.py[k] - (j % 2) * 0.8, st[1] === BSTEP.free ? Math.floor(st[3] / FREE.length) : 0);
       e.left[k]--; e.next[k] = T(BWAVES.spawnEvery);
     }
   }
-  if (remaining(w) || !driven) return;
+  // before the well is dry nothing comes while nobody is at a defence
+  if (remaining(w) || (!driven && st[1] < BSTEP.dry)) return;
   // this step's enemies are all gone: a short quiet, then the next step's group
   if (st[2] === 0) { st[2] = T(BWAVES.pause); return; }
   if (--st[2] > 0) return;
-  if (st[1] === BSTEP.free) st[3]++; else st[1]++;
+  if (st[1] === BSTEP.free) st[3]++;
+  else if (st[1] === BSTEP.hands) { if (!HANDS[++st[3]]) { st[1] = BSTEP.after; return; } }
+  else st[1]++;
   openGroup(w, groupOf(st[1], st[3])!);
 }
 

@@ -1,0 +1,12 @@
+{
+  "cell": [
+    9,
+    7
+  ],
+  "pitch": 10,
+  "glyphs": 30,
+  "pad": 30,
+  "node": 31,
+  "source": "PixelLab create_image_pixen, 64 x 64, no background, seeds 1201-1203; cut, cleaned and flattened by tools/art-import/glyph_tiles.py",
+  "prompt": "A sheet of sixteen small magical rune glyphs arranged in an even 4 by 4 grid, one rune centred in each cell with clear space around it. Each rune is a simple angular sigil of thin strokes, like ancient carved runes: lines, hooks, small circles and chevrons, every one different. Pure white strokes with soft light grey edges on a transparent background, flat, crisp pixel art."
+}

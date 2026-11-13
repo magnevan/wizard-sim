@@ -13,11 +13,20 @@ import type { RoomDef } from '@wizard-sim/sim';
 import { FY, PPU } from '../camera';
 import { loadTexture, propImage, propMeta, type PropMeta, type PropSet } from './assets';
 import { FIELD, gx, gy } from './field';
+import { towersLit, unstable, wellPower, wellRepair } from './power-down';
+import { wellLit } from './well-anim';
 import * as X from './px';
+import { clamp } from './util';
+import { WELL_MARGIN, WELL_RISE, WellAnim } from './well-anim';
 
-interface Item { asset: string; meta: PropMeta; spr: Sprite; x: number; y: number; ox: number; oy: number }
+/** `lit`: how much of its own light it gives now (the battery's power going down); `over`: its burnt-out art, laid over it. */
+interface Item { asset: string; meta: PropMeta; spr: Sprite; x: number; y: number; ox: number; oy: number; lit: number; over?: { spr: Sprite; ox: number; oy: number; ready: boolean } }
 
 const HEAD = 'defence-head-north-east';
+/** The battery's barricades, and what each is when smashed. */
+const BREAKS: Readonly<Record<string, string>> = { stakes: 'stakes-broken', palisade: 'palisade-broken' };
+/** What the battery's pieces fade into as the power goes down. */
+const BURNT: Readonly<Record<string, string>> = { 'defence-tower': 'defence-tower-burnt', [HEAD]: 'defence-head-burnt', 'battery-well': 'battery-well-drained' };
 
 /** The flame turret's head: pre-rendered facings across its swing, in one sheet (tools/turret-3d). */
 interface HeadSheet { cell: number; facings: number[]; collar: [number, number]; pivot: [number, number]; tips: [number, number][] }
@@ -81,8 +90,9 @@ export class PropView {
   room(def: RoomDef): void {
     if (def === this.def) return;
     this.def = def;
-    for (const it of this.items) it.spr.destroy();
+    for (const it of this.items) { it.spr.destroy(); it.over?.spr.destroy(); }
     this.items = [];
+    this.wellOn = false;
     this.shadows.visible = false;
     this.shadowTex?.destroy(true);
     this.shadowTex = null;
@@ -96,7 +106,7 @@ export class PropView {
       spr.tint = this.tint; spr.visible = false;
       spr.zIndex = Math.round(gy(p.y) + (meta.sort ?? 0)) * 128 + 100;
       (meta.flat ? this.under : this.actors).addChild(spr);
-      this.items.push({ asset: p.asset, meta, spr, x: gx(p.x), y: gy(p.y) - (meta.lift ?? 0), ox: 0, oy: 0 });
+      this.items.push({ asset: p.asset, meta, spr, x: gx(p.x), y: gy(p.y) - (meta.lift ?? 0), ox: 0, oy: 0, lit: 1 });
       if (meta.flat || meta.lift) continue;
       const [fw, fh] = meta.footprint;
       X.shadow(x, gx(p.x), gy(p.y), (fw / 2) * PPU * 0.9, Math.max(2, (fh / 2) * PPU * FY), 10);
@@ -123,6 +133,12 @@ export class PropView {
     if (items.some((it) => it.asset === HEAD) && !this.headFrames.length) {
       const base = await loadTexture(SHEET_URL);
       this.headFrames = SHEET.facings.map((_, i) => new Texture({ source: base.source, frame: new Rectangle(i * SHEET.cell, 0, SHEET.cell, SHEET.cell) }));
+    }
+    // the well's top is painted each frame (art/well-anim.ts), on the same foot with room round it for the rings
+    const top = items.find((it) => it.asset === 'battery-well-top'), topArt = top ? propImage(top.asset, this.current) : null;
+    if (top && topArt && (this.well.ready || (await this.well.load())) && ticket === this.wanted) {
+      top.spr.texture = this.well.tex; top.ox = topArt.foot[0] + WELL_MARGIN; top.oy = topArt.foot[1] + WELL_MARGIN + WELL_RISE; top.spr.visible = true;
+      this.wellOn = true;
     }
     this.fx = NaN;
     this.ready = true;
@@ -154,24 +170,69 @@ export class PropView {
   }
 
   private broken = false;
-  private brokenTex: { tex: Texture; foot: readonly [number, number] } | null = null;
+  private brokenTex = new Map<string, { tex: Texture; foot: readonly [number, number] }>();
   /**
-   * The battery's stakes, whole or knocked over (stakes-broken, a local edit: tools/art-import/stakes_broken.py). They
-   * break as a defence is taken (sim/src/battery-waves.ts). Returns true on the frame they break.
+   * The battery's barricades out in the field, whole or smashed (local edits: tools/art-import/stakes_broken.py and
+   * broken_props.py): the stakes and the palisade either side of them. They break as a defence is taken
+   * (sim/src/battery-waves.ts). Returns true on the frame they break.
    */
   breakStakes(broken: boolean, fx0: number, fy0: number): boolean {
     if (broken === this.broken) return false;
-    const img = propImage(broken ? 'stakes-broken' : 'stakes', this.current);
-    if (!img) return false;
-    if (broken && !this.brokenTex) { void loadTexture(img.url).then((tex) => { this.brokenTex = { tex, foot: img.foot }; }); return false; }
+    if (broken) {
+      // both smashed pictures loaded first, so they go at once
+      const want = Object.keys(BREAKS).filter((a) => !this.brokenTex.has(a));
+      for (const a of want) { const img = propImage(BREAKS[a], this.current); if (img) void loadTexture(img.url).then((tex) => { this.brokenTex.set(a, { tex, foot: img.foot }); }); }
+      if (want.length) return false;
+    }
     this.broken = broken;
     for (const it of this.items) {
-      if (it.asset !== 'stakes') continue;
-      if (broken) { it.spr.texture = this.brokenTex!.tex; it.ox = this.brokenTex!.foot[0]; it.oy = this.brokenTex!.foot[1]; }
-      else { const a = propImage('stakes', this.current); if (a) void loadTexture(a.url).then((t) => { it.spr.texture = t; it.ox = a.foot[0]; it.oy = a.foot[1]; it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy); }); }
+      if (!BREAKS[it.asset]) continue;
+      const b = this.brokenTex.get(it.asset);
+      if (broken && b) { it.spr.texture = b.tex; it.ox = b.foot[0]; it.oy = b.foot[1]; }
+      else if (!broken) { const a = propImage(it.asset, this.current); if (a) void loadTexture(a.url).then((t) => { it.spr.texture = t; it.ox = a.foot[0]; it.oy = a.foot[1]; it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy); }); }
       it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
     }
     return broken;
+  }
+
+  private well = new WellAnim();
+  private wellOn = false;
+  /**
+   * The battery, each frame: the well alive (art/well-anim.ts), and its power going down as an animation once it runs
+   * dry, and coming back with the repair (art/power-down.ts). Towers and heads fade, sputtering, into their burnt-out
+   * art laid over them (tools/art-import/defence.py), the well's steps into their drained version
+   * (tools/art-import/well_drained.py), and every one's light with them (standing()'s `lit`).
+   */
+  powerDown(w: World, t: number, fx0: number, fy0: number): void {
+    if (!w.battery) return;
+    const towers = towersLit(w), repair = wellRepair(w), power = repair > 0 ? wellLit(repair) : wellPower(w);
+    const glow = this.wellOn ? this.well.draw(t, wellPower(w), unstable(w), repair) : power; // the well's light pulses with its crystal
+    for (const it of this.items) {
+      if (it.asset === 'battery-well-top') { it.lit = glow; continue; }
+      // the well's steps darken late, with the bought power-down's last frames (its first ones are the overload's flare)
+      const fade = it.asset === 'defence-tower' || it.asset === HEAD ? 1 - towers : it.asset === 'battery-well' ? (1 - power) ** 2 : -1;
+      if (fade < 0) continue;
+      it.lit = it.asset === 'battery-well' ? glow : 1 - fade; // the well's light is at its steps' foot
+      this.overlay(it, BURNT[it.asset], fade, fx0, fy0);
+    }
+  }
+
+  /** Lays `asset` over item `it` at opacity `a` (loaded the first time it's wanted). */
+  private overlay(it: Item, asset: string, a: number, fx0: number, fy0: number): void {
+    if (!it.over) {
+      if (a <= 0.001) return;
+      const img = propImage(asset, this.current);
+      if (!img) return;
+      const spr = new Sprite(), ticket = this.wanted;
+      spr.tint = this.tint; spr.visible = false; spr.zIndex = it.spr.zIndex + 1;
+      it.over = { spr, ox: img.foot[0], oy: img.foot[1], ready: false };
+      it.spr.parent?.addChild(spr);
+      void loadTexture(img.url).then((tex) => { if (ticket !== this.wanted || !it.over) return; spr.texture = tex; it.over.ready = true; });
+    }
+    const o = it.over;
+    o.spr.visible = o.ready && a > 0.001;
+    o.spr.alpha = clamp(a, 0, 1);
+    o.spr.position.set(fx0 + Math.round(it.x) - o.ox, fy0 + Math.round(it.y) - o.oy);
   }
 
   /** Follows the camera: fx0, fy0 is where the field's corner is in the scene. */
@@ -179,7 +240,10 @@ export class PropView {
     if (fx0 === this.fx && fy0 === this.fy) return;
     this.fx = fx0; this.fy = fy0;
     this.shadows.position.set(fx0, fy0);
-    for (const it of this.items) it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
+    for (const it of this.items) {
+      it.spr.position.set(fx0 + Math.round(it.x) - it.ox, fy0 + Math.round(it.y) - it.oy);
+      it.over?.spr.position.set(fx0 + Math.round(it.x) - it.over.ox, fy0 + Math.round(it.y) - it.over.oy);
+    }
   }
 
   /** Every standing prop's sprite and where its foot is in the scene. */
@@ -187,9 +251,9 @@ export class PropView {
     for (const it of this.items) if (it.spr.visible && !it.meta.flat) fn(it.spr, it.spr.position.x + it.ox, it.spr.position.y + it.oy);
   }
 
-  /** Every prop as it stands, for the lighting: its texture, foot, spot in the scene, and id. */
-  standing(fn: (tex: Texture, footX: number, footY: number, x: number, y: number, asset: string, flat: boolean) => void): void {
-    for (const it of this.items) if (it.spr.visible) fn(it.spr.texture, it.ox, it.oy, it.spr.position.x + it.ox, it.spr.position.y + it.oy, it.asset, !!it.meta.flat || !!it.meta.lift);
+  /** Every prop as it stands, for the lighting: its texture, foot, spot in the scene, id, and how lit it is (its own light, 0..1). */
+  standing(fn: (tex: Texture, footX: number, footY: number, x: number, y: number, asset: string, flat: boolean, lit: number) => void): void {
+    for (const it of this.items) if (it.spr.visible) fn(it.spr.texture, it.ox, it.oy, it.spr.position.x + it.ox, it.spr.position.y + it.oy, it.asset, !!it.meta.flat || !!it.meta.lift, it.lit);
   }
 
   get count(): number { return this.items.length; }

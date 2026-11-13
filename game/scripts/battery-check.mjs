@@ -13,8 +13,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fail = (msg) => { console.error('FAIL:', msg); process.exitCode = 1; };
 // plan coordinates on the Opening Segment page -> the sim's, whose origin is the area's centre
 const SPOTS = { start: [42, 63], yard: [34, 46], well: [42, 60], gate: [42, 39], crews: [31, 47], stores: [62, 56], pump: [21, 50], field: [42, 25], north: [64, 8], westEdge: [8, 32], southEdge: [28, 66],
-  // standing right against things, for the depth order: both sides of the wall, round the well's steps, a pedestal, a tower
-  wallSouth: [35.5, 35.8], wallSouth2: [36.2, 35.8], wallNorth: [35.5, 34.2], wellBackEast: [43.6, 51.6], wellBackWest: [39.6, 55.6], wellEast: [44.9, 53.2], wellNorth: [42, 51], wellSouth: [42, 57], pedestal: [29, 45.2], towerSide: [32.2, 37.5] };
+  // standing right against things, for the depth order: both sides of the wall, round the well's steps, a possession circle, a tower
+  wallSouth: [35.5, 35.8], wallSouth2: [36.2, 35.8], wallNorth: [35.5, 34.2], wellBackEast: [43.6, 51.6], wellBackWest: [39.6, 55.6], wellEast: [44.9, 53.2], wellNorth: [42, 51], wellSouth: [42, 57], circle: [29.8, 42.4], towerSide: [32.2, 37.5] };
 
 const stop = await startPreview();
 const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -66,14 +66,15 @@ try {
   // Driving a defence: step up, cast from it, swing the head, step away.
   const drive = () => p.evaluate(() => window.wizardSim.world.battery.drive[0]);
   const shot = (name) => p.screenshot({ path: join(out, name + '.png') });
-  await put(30.4, 44);
+  await put(29.6, 42);
   await sleep(900);
   await shot('drive-prompt');
+  for (let f = 0; f < 4; f++) { await sleep(200); await shot(`paths-shimmer-${f}`); } // the shimmer drifting behind the feed lines' runes
   await p.keyboard.press('KeyX');
   await sleep(350);
   await shot('stakes-break');
   await sleep(1050);
-  if ((await drive()) !== 1) fail('X at a pedestal should take that defence');
+  if ((await drive()) !== 1) fail('X in a possession circle should take that defence');
   await p.mouse.move(860, 130);
   await sleep(500);
   await shot('drive-idle');
@@ -183,12 +184,62 @@ try {
   await sleep(450);
   await shot('drive-burst');
   await sleep(1200);
+  // archers shooting at the wall: their arrows fly behind it, not over it
+  await p.evaluate(() => { const w = window.wizardSim.world, b = w.bodies; for (let i = 4; i < b.kind.length; i++) if (b.kind[i] === 3) b.kind[i] = 0; w.enc.state[1] = 2; w.enc.state[2] = 0; }); // the next group is the archers'
+  await p.mouse.move(640, 700);
+  // wait for them to stand off and loose (until an enemy arrow is in the air), then catch a few frames of it
+  for (let k = 0; k < 150 && !(await p.evaluate(() => { const m = window.wizardSim.world.missiles; for (let j = 0; j < m.alive.length; j++) if (m.alive[j] && m.owner[j] >= 4) return true; return false; })); k++) await sleep(200);
+  for (let f = 0; f < 3; f++) { await shot(`archers-wall-${f}`); await sleep(60); }
   await p.keyboard.press('KeyX');
   await sleep(900);
   if ((await drive()) !== -1) fail('X while driving should step away');
   const [hx, hy] = await where();
-  if (Math.hypot(hx - 30.4, hy - 44) > 0.5) fail(`stepping away should put you back, you are at ${hx}, ${hy}`);
+  if (Math.hypot(hx - 29.6, hy - 42) > 0.5) fail(`stepping away should put you back, you are at ${hx}, ${hy}`);
   console.log('driving ok, back at', hx, hy);
+
+  // the well failing (beats 5 to 7): step up again, jump to the free fights with the well half gone, then run it dry
+  await p.keyboard.press('KeyX');
+  await sleep(600);
+  if ((await drive()) < 0) fail('X in the circle again should take the defence');
+  await p.evaluate(() => {
+    const w = window.wizardSim.world, b = w.bodies;
+    for (let i = 4; i < b.kind.length; i++) if (b.kind[i] === 3) b.kind[i] = 0;
+    w.enc.state[1] = 5; w.enc.state[2] = 0; w.battery.flow[0] = 0.4; // BSTEP.free
+  });
+  await p.mouse.move(700, 250);
+  await sleep(1500);
+  await shot('well-failing');
+  await p.evaluate(() => { const w = window.wizardSim.world; w.battery.flow[0] = 1e-9; w.seats.runes.fill(0, 0, 10); }); // seat 0's pools spent, the flow out
+  // the power going down (art/power-down.ts), a frame at a time, by the sim's clock since it ran dry
+  const dryS = () => p.evaluate(() => window.wizardSim.world.battery.wellT[1] / 60);
+  const until = async (s) => { for (let k = 0; k < 200 && (await dryS()) < s; k++) await sleep(30); };
+  for (const s of [0.4, 1.2, 2.0, 2.8]) { await until(s); await shot(`power-down-${s.toFixed(1)}`); }
+  const dry = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], drive: w.battery.drive[0], gate: w.walls.type[0] }; });
+  if (dry.step < 6 || dry.drive !== -1 || dry.gate !== 0) fail(`the well should be dry with the gate's fire out: step ${dry.step}, drive ${dry.drive}, gate wall ${dry.gate}`);
+  await until(3.9);
+  await shot('well-infusion');
+  const own = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], fire: w.seats.runes.reduce((m, v, k) => (k < 10 ? Math.max(m, v) : m), 0) }; });
+  if (own.step !== 7 || own.fire < 1) fail(`the infusion should give you a rune of your own: step ${own.step}, best pool ${own.fire}`);
+  await sleep(6000);
+  await shot('well-through');
+  console.log('the well ok: dry, the gate open, a rune of your own');
+
+  // the repair: the fight over, X by the well; the screen fades to black and back, the well rises, the defences relight
+  await p.evaluate(() => {
+    const w = window.wizardSim.world, b = w.bodies, well = w.def.props.find((q) => q.asset === 'battery-well');
+    for (let i = 4; i < b.kind.length; i++) if (b.kind[i] === 3) b.kind[i] = 0;
+    w.enc.left.fill(0); w.enc.state[1] = 8; // BSTEP.after
+    b.x[0] = well.x; b.y[0] = well.y + 3.4;
+  });
+  await sleep(800);
+  await shot('repair-prompt');
+  await p.keyboard.press('KeyX');
+  const repS = () => p.evaluate(() => window.wizardSim.world.battery.wellT[2] / 60);
+  const untilR = async (s) => { for (let k = 0; k < 300 && (await repS()) < s; k++) await sleep(30); };
+  for (const s of [1.0, 2.6, 3.6, 4.4, 5.5]) { await untilR(s); await shot(`repair-${s.toFixed(1)}`); }
+  const rep = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], flow: w.battery.flow[0] }; });
+  if (rep.step !== 9 || rep.flow !== 1) fail(`the repair should have begun and relit the well: step ${rep.step}, flow ${rep.flow}`);
+  console.log('the repair ok: the well whole, its flow full');
 } finally {
   await browser.close();
   stop();

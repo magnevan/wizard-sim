@@ -1,0 +1,24 @@
+{
+  "id": "possession-circle",
+  "kind": "prop",
+  "name": "Possession circle",
+  "footprint": [
+    2.6,
+    2.6
+  ],
+  "flat": true,
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        0,
+        0
+      ],
+      "source": "code",
+      "raw": "",
+      "tool": "",
+      "edits": "an empty 1 px picture: the circle is drawn in code (client/src/art/feed-lines.ts, glyph-path.ts drawGlyphCircle)",
+      "status": "Ours."
+    }
+  }
+}

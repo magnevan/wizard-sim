@@ -21,7 +21,7 @@ CX = 42
 TOWERS = [16, 29, 55, 68]  # 13 apart, and 13 from the gate, which is 15 long on screen: a tower never touches it
 WALL_Y = 35
 TOWER_Y = WALL_Y + 3       # a tower stands against the wall's yard side, so the wall runs unbroken behind it
-CREW_Y = TOWER_Y + 6       # where the pedestals and feed lines end
+CIRCLE_Y = TOWER_Y + 3.9   # a possession circle touches its tower's foot; the feed lines end in it
 GATE = (39, 45)            # the opening you walk through
 PILLAR = 2.12              # a gate pillar is one kit tile wide
 WELL = (42, 54)            # well back from the gate, with the yard open round it
@@ -83,6 +83,10 @@ paint(lambda x, y: x < 4 + noise(x, y, 40) * 2 or x > W - 4 - noise(x, y, 41) * 
 paint(rect(6, 6, W - 12, 28, 2.2, 11), 'dirt')
 paint(lambda x, y: 22 < y < 34 and 6 < x < W - 6 and noise(x, y, 12) > .56, 'mud')
 paint(lambda x, y: 13 < y < 33 and 7 < x < W - 7 and noise(x, y, 13) > .67, 'ash')
+# the last fights' marks: burnt-out craters, and churned mud where the field works stood
+for i, (cx, cy, r) in enumerate([(12, 27, 2.2), (27, 30, 1.8), (36, 22, 2.4), (49, 28, 2.0), (57, 17, 1.7), (71, 29, 2.3), (76, 18, 1.6), (19, 14, 1.8)]):
+    paint(lambda x, y, cx=cx, cy=cy, r=r, i=i: math.hypot(x - cx, (y - cy) * 1.2) < r + (noise(x, y, 50 + i) - .5) * 1.2, 'ash')
+paint(lambda x, y: 26 < y < 33 and 6 < x < W - 6 and noise(x, y, 51) > .62, 'mud')
 for a, b in GAPS:
     paint(rect(a + .5, 0, b - a - 1, 8, .8, 14), 'dirt')
 # the rear yard: open, trodden by the crews along the wall and to the stores
@@ -96,10 +100,8 @@ paint(rect(ROAD[0], 58, ROAD[1] - ROAD[0], H - 58, .6, 17), 'cobble')
 paint(lambda x, y: WALL_Y - 2.2 < y - (noise(x, y, 18) - .5) * 1.2 < WALL_Y + 2.2, 'gravel')
 paint(rect(GATE[0] - .5, WALL_Y - 4, 7, 9, .3, 19), 'cobble')
 paint(path([(CX, WALL_Y - 4), (CX, 26), (64, 10), (64, 0)], 3.2, .6, 20), 'gravel')
-# the well on its flagged apron, and the trenches for the feed lines
+# the well on its flagged apron (the feed lines are glyph paths the client draws: art/feed-lines.ts)
 paint(disc(*WELL, 6.5), 'cobble')
-for x in TOWERS:
-    paint(path([WELL, (x, CREW_Y - .5)], 1.0, .1, 21), 'gravel')
 # the pump and the stores' hardstanding
 paint(disc(16, 52, 2.4), 'gravel')
 paint(rect(63, 47, 13, 12, .5, 22), 'gravel')
@@ -112,7 +114,7 @@ def prop(asset, x, y, blocks=False):
 for x in TOWERS:
     prop('defence-tower', x, TOWER_Y, True)
     prop('defence-head-north-east', x, TOWER_Y)     # the same spot: the head lands on the tower's collar
-    prop('control-pedestal', x, CREW_Y, True)
+    prop('possession-circle', x, CIRCLE_Y)           # stand in it to possess the defence (sim battery.ts); drawn in code
 prop('battery-well', *WELL, True)
 prop('battery-well-top', *WELL)                     # the same spot: the drum and rings stand on the steps
 for x in (GATE[0] - PILLAR / 2, GATE[1] + PILLAR / 2):   # a little south of the wall's line, so each stands forward of its face
@@ -133,6 +135,30 @@ for x in [9.5, 22.5, 61.5, 74.5]:   # between the towers
 for x0, y, n in [(16.5, 24.3, 5), (60.5, 22.3, 5), (34.5, 18.3, 4)]:
     for i in range(n):
         prop('stakes', x0 + i * 1.75, y)   # not blocking: they break when you take a defence, and the goblins come through (battery-waves.ts)
+    # a timber palisade carries the line on either side; it gives way with the stakes (client art/props.ts breakStakes)
+    prop('palisade', x0 - 2.2, y - .3)
+    prop('palisade', x0 + n * 1.75 + .5, y - .3)
+# what's left of the field works the last fights smashed: scattered over the killing ground, clear of the goblins' three
+# ways in from the gaps, none of it blocking
+LANES = [(22, 2.5, 22, 24), (42, 2.5, 42, 31), (64, 2.5, 64, 22)]
+def in_lane(x, y):
+    return any(seg_dist(x, y, (a, b), (c, d)) < 3.2 for a, b, c, d in LANES)
+WRECK = ['palisade-broken'] * 4 + ['sandbags-broken'] * 3 + ['stakes-broken'] * 3 + ['crates-broken'] * 2 + ['broken-wooden-shield'] * 3 + ['scorch-mark-on-the-floor'] * 5 + ['patch-of-bare-dirt'] * 2 + ['broken-branch', 'log-fallen', 'banner-frayed', 'banner-ash', 'campfire-ring', 'dented-tin-bucket', 'pair-of-worn-boots', 'coil-of-rope']
+wrng = random.Random(77)
+placed = []
+for asset in WRECK:
+    for _ in range(60):
+        x, y = wrng.uniform(8, W - 8), wrng.uniform(9, WALL_Y - 3)
+        if in_lane(x, y) or any(math.hypot(x - a, y - b) < 2.2 for a, b in placed) or any(math.hypot(x - a, y - b) < 3 for a, b in [(24, 15), (53, 12)]):
+            continue
+        placed.append((x, y))
+        prop(asset, round(x * 4) / 4, round(y * 4) / 4)
+        break
+# by the wall's foot outside: sandbags blown apart, and burn marks where fire was poured down
+for x in [11, 25, 33, 51, 59, 73]:
+    prop('sandbags-broken', x + wrng.uniform(-1, 1), WALL_Y - 3.2 + wrng.uniform(-.4, .4))
+for x in [14, 30, 47, 57, 70]:
+    prop('scorch-mark-on-the-floor', x + wrng.uniform(-1.5, 1.5), WALL_Y - 4.5 + wrng.uniform(-.8, .8))
 for cx, cy in [(24, 15), (53, 12)]:
     for dx, dy in [(0, 0), (1.5, .8), (-1.3, .9)]:
         prop('boulders-mossy', cx + dx, cy + dy, True)

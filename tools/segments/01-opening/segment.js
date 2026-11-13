@@ -14,7 +14,7 @@ stages:[
 ],
 needsYou:[
 ],
-onMe:[`Then waves and lanes at the battery, the failing pool, the infusion and the repair.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
+onMe:[`The failing pool, running dry and the infusion are built and ready for you to play. Next comes the repair.`,`Redraw the yard from your notes.`,`Revisit the pacing of the walks now that they can be long.`],
 chapters:[
 {id:'hall',name:'Lecture hall and cloister',
  map:{W:50,H:34,base:'void',what:`You can walk about during the briefing, then leave along the cloister past the postings.`,
@@ -126,8 +126,8 @@ art:[
 ],
 build:[
  ['Controlling a defence',`Your casts come from the device, the camera follows it, the bar shows its pool, and a key steps away. Your body stands where you left it.`,'New'],
- ['A draining pool',`On the defence, visible on the bar.`,'New'],
- ['Wave lanes per player',`From the scaling proposal above.`,'New'],
+ ['A draining pool',`On the defence, visible on the bar. It runs dry, and you get your own Fire rune.`,'Done'],
+ ['Wave lanes per player',`From the scaling proposal above.`,'Done'],
  ['Sigil only with Conjure',`The etched focus rule. Designed, not built.`,'New'],
  ['Early regen and pools',`The budget is shared among unlocked pools, so the early numbers need tuning per step.`,'New'],
  ['Room for bigger maps',`The 40-rock-wall limit is gone.`,'Done'],

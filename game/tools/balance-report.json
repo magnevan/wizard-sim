@@ -1175,20 +1175,19 @@
  "waves": [
   {
    "name": "current",
-   "cleared": 4.8,
-   "clearedMin": 4,
-   "clearedMax": 6,
-   "downs": 7,
-   "wipes": 3,
-   "kills": 39,
-   "damageTaken": 1514.5,
+   "cleared": 4.5,
+   "clearedMin": 3,
+   "clearedMax": 5,
+   "downs": 8.3,
+   "wipes": 3.8,
+   "kills": 35,
+   "damageTaken": 1703.3,
    "clearSeconds": [
     10.5,
     24.5,
     4.2,
-    78.4,
-    19.4,
-    47.6
+    63.6,
+    16.4
    ]
   },
   {
@@ -1196,16 +1195,16 @@
    "cleared": 5,
    "clearedMin": 5,
    "clearedMax": 5,
-   "downs": 10.3,
-   "wipes": 4.3,
-   "kills": 33.3,
-   "damageTaken": 1831,
+   "downs": 9.5,
+   "wipes": 4,
+   "kills": 33,
+   "damageTaken": 1723.3,
    "clearSeconds": [
     10.5,
     27.4,
     8.1,
-    23.8,
-    24
+    17.7,
+    46.9
    ]
   },
   {
@@ -1213,68 +1212,69 @@
    "cleared": 6,
    "clearedMin": 5,
    "clearedMax": 7,
-   "downs": 5,
-   "wipes": 1.8,
-   "kills": 39.3,
-   "damageTaken": 1484.3,
+   "downs": 4.3,
+   "wipes": 1.5,
+   "kills": 40,
+   "damageTaken": 1577.5,
    "clearSeconds": [
     10.5,
     15.3,
     8.5,
-    25.7,
-    11.9,
-    30.5
+    30.5,
+    17.2,
+    33.3,
+    47.6
    ]
   },
   {
    "name": "enemies hit 1.5x harder",
-   "cleared": 4.3,
+   "cleared": 4.5,
    "clearedMin": 4,
    "clearedMax": 5,
-   "downs": 12,
+   "downs": 11.5,
    "wipes": 5.5,
-   "kills": 41.8,
-   "damageTaken": 1450.5,
+   "kills": 41.3,
+   "damageTaken": 1530.3,
    "clearSeconds": [
     10.5,
     16.6,
     7.8,
-    14.1,
-    15
+    14.3,
+    18.9
    ]
   },
   {
    "name": "enemies 1.5x tougher",
-   "cleared": 4.3,
+   "cleared": 4.5,
    "clearedMin": 4,
    "clearedMax": 5,
-   "downs": 6.5,
-   "wipes": 2.5,
-   "kills": 31,
-   "damageTaken": 1709,
+   "downs": 6,
+   "wipes": 2,
+   "kills": 31.5,
+   "damageTaken": 1741.5,
    "clearSeconds": [
     40.7,
     25.2,
     10.7,
-    60.3
+    42.4,
+    29.5
    ]
   },
   {
    "name": "heavier casts (windup x2)",
-   "cleared": 4.3,
+   "cleared": 4.5,
    "clearedMin": 3,
-   "clearedMax": 6,
-   "downs": 5.5,
-   "wipes": 2.3,
-   "kills": 35.5,
-   "damageTaken": 1550,
+   "clearedMax": 5,
+   "downs": 7.3,
+   "wipes": 3,
+   "kills": 33.3,
+   "damageTaken": 1546.3,
    "clearSeconds": [
     41.1,
     25.4,
     4.6,
     30.7,
-    21.7,
-    34.6
+    21.7
    ]
   }
  ],

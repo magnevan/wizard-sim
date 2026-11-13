@@ -1,0 +1,23 @@
+{
+  "id": "crates-broken",
+  "kind": "prop",
+  "name": "Crates, smashed",
+  "footprint": [
+    1.2,
+    0.8
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        22,
+        21
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/outdoor/rural/07.png",
+      "tool": "create_1_direction_object",
+      "status": "Trial asset: not cleared to ship. PixelLab terms unread.",
+      "edits": "tools/art-import/broken_props.py: cut into pieces, knocked over and pushed apart, splinters scattered"
+    }
+  }
+}

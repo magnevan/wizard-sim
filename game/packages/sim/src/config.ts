@@ -13,6 +13,18 @@ export const T = (seconds: number): number => Math.round(seconds * 60);
  * total, shared equally among the pools that aren't full, an empty one taking emptyShare shares
  * (world.ts regenRate).
  */
+/**
+ * The battery's well failing (docs/campaign/01-opening, beats 5 to 7; sim/src/battery-waves.ts). After the lesson its flow
+ * falls from full to nothing over `fail` seconds, and a defence's pool refills at that share of R, in plain sight on
+ * the bar. Once it's out, the well runs dry when nobody at a defence has a whole rune left, or `grace` seconds on. Then
+ * the defences go dark, the gate's fire gutters out over `gutter` seconds, and `surge` seconds later (once the well has
+ * died, art/power-down.ts, and a quiet beat) you feel the infusion: a Fire pool of your own, `own` runes deep. `through`
+ * seconds after that, they come through the gate. Once they're all down, X within `repairReach` of the well's middle
+ * stabilizes it (the repair: the client fades to black and back and the well rises, art/power-down.ts); `relit`
+ * seconds after the press its flow is full again and the defences can be possessed again.
+ */
+export const WELL = { fail: 75, grace: 6, gutter: 1.4, surge: 3.6, own: 1, through: 3, repairReach: 4, relit: 4.6 } as const;
+
 export const RUNES = {
   // Ice (Water + Cold combined) has no pool of its own: its runes come from Water's and Cold's.
   max: { water: 4, life: 4, shield: 4, cold: 4, lightning: 4, arcane: 4, sigil: 3, fire: 5, earth: 4, ice: 0 } as Record<Element, number>,

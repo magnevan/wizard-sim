@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ARCH, BATTERY, BSTEP, BTN, KIND, MAX_SEATS, NO_INPUT, createWorld, step } from '../src';
-import { BWAVES, muzzleOf } from '../src/battery-waves';
+import { ARCH, BATTERY, BSTEP, BTN, EL, KIND, MAX_SEATS, NO_INPUT, WALL, WELL, createWorld, infused, pedestalNear, runeMax, step, wellDry } from '../src';
+import { BWAVES } from '../src/battery-waves';
 import { driveSpray } from '../src/battery';
 
 const NO_INPUTS = [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT];
@@ -15,7 +15,7 @@ const clear = (w: W) => { for (const i of enemies(w)) w.bodies.kind[i] = KIND.no
 const towers = (w: W) => w.def.props.filter((p) => p.asset === 'defence-tower');
 /** Seat 0 takes defence 1 (the second tower from the west). */
 function take(w: W) {
-  const pad = w.def.props.filter((p) => p.asset === 'control-pedestal')[1];
+  const pad = w.def.props.filter((p) => p.asset === 'possession-circle')[1];
   w.bodies.x[0] = pad.x + 1.2; w.bodies.y[0] = pad.y;
   step(w, [{ ...NO_INPUT, buttons: BTN.use }, NO_INPUT, NO_INPUT, NO_INPUT]);
   step(w, NO_INPUTS);
@@ -85,6 +85,99 @@ describe('the battery\'s lesson', () => {
       expect(d).toBeGreaterThan(BATTERY.sprayMax - 1.5);
       expect(d).toBeLessThan(BATTERY.placeRange);
     }
+  });
+});
+
+describe('the well failing (beats 5 to 7)', () => {
+  /** Seat 0 at defence 1, with the lesson done and the free fights begun. */
+  function failing(): W {
+    const w = createWorld(1, 1, { room: 'battery' });
+    idle(w, 1);
+    take(w);
+    clear(w);
+    w.enc.state[1] = BSTEP.free; w.enc.state[2] = 0;
+    return w;
+  }
+  const fire = (w: W) => w.seats.runes[EL.fire - 1];
+  const gateFire = (w: W) => w.walls.type[0] === WALL.curtain;
+
+  it('drains the well while the free fights go on, and the defence\'s pool refills slower and slower', () => {
+    const w = failing();
+    const refill = (): number => { w.seats.runes[EL.fire - 1] = 0; const a = fire(w); idle(w, 1); return fire(w) - a; };
+    const early = refill();
+    idle(w, WELL.fail / 2);
+    const late = refill();
+    expect(w.battery!.flow[0]).toBeLessThan(0.55);
+    expect(w.battery!.flow[0]).toBeGreaterThan(0.4);
+    expect(late).toBeLessThan(early * 0.6);
+    expect(wellDry(w)).toBe(false);
+  });
+
+  it('runs dry once the flow is out and the pool is spent: you\'re put back, no stepping up again, the gate\'s fire gutters out', () => {
+    const w = failing(), home = [w.battery!.homeX[0], w.battery!.homeY[0]];
+    expect(gateFire(w)).toBe(true);
+    w.battery!.flow[0] = 1e-9; // the next tick's drain takes the last of it
+    w.seats.runes[EL.fire - 1] = 0.5;
+    idle(w, 0.1);
+    expect(wellDry(w)).toBe(true);
+    expect(w.enc.state[1]).toBe(BSTEP.dry);
+    expect(w.battery!.drive[0]).toBe(-1);
+    expect([w.bodies.x[0], w.bodies.y[0]]).toEqual(home);
+    expect(runeMax(w, 0, EL.fire)).toBe(0); // dark, until the infusion
+    expect(pedestalNear(w, 0)).toBe(-1);
+    expect(gateFire(w)).toBe(true); // guttering, for the view
+    idle(w, WELL.gutter);
+    expect(gateFire(w)).toBe(false);
+  });
+
+  it('doesn\'t stall on a rune held back: dry WELL.grace after the flow is out', () => {
+    const w = failing();
+    w.battery!.flow[0] = 1e-9;
+    w.seats.runes[EL.fire - 1] = 3;
+    idle(w, WELL.grace - 0.5);
+    expect(wellDry(w)).toBe(false);
+    idle(w, 1);
+    expect(wellDry(w)).toBe(true);
+  });
+
+  it('then the infusion: a Fire pool of your own, one rune, and they come through the gate for you', () => {
+    const w = failing();
+    w.battery!.flow[0] = 1e-9; w.seats.runes[EL.fire - 1] = 0;
+    idle(w, 0.1);
+    clear(w);
+    idle(w, WELL.surge + 0.1);
+    expect(infused(w)).toBe(true);
+    expect(w.enc.state[1]).toBe(BSTEP.hands);
+    expect(runeMax(w, 0, EL.fire)).toBe(WELL.own);
+    expect(fire(w)).toBe(WELL.own);
+    idle(w, WELL.through + 3);
+    const es = enemies(w);
+    expect(es.length).toBeGreaterThan(0);
+    for (const i of es) expect(w.battery!.lane[i]).toBe(-1); // nobody's lane: they hunt wizards
+    // the groups in turn, then it's over
+    for (let g = 0; g < 2; g++) { clear(w); idle(w, BWAVES.pause + 4); }
+    clear(w);
+    idle(w, BWAVES.pause + 1);
+    expect(w.enc.state[1]).toBe(BSTEP.after);
+
+    // the repair: X out of the well's reach does nothing; at it, it begins
+    const well = w.def.props.find((p) => p.asset === 'battery-well')!, x = [{ ...NO_INPUT, buttons: BTN.use }, NO_INPUT, NO_INPUT, NO_INPUT];
+    w.bodies.x[0] = well.x + WELL.repairReach + 2; w.bodies.y[0] = well.y;
+    step(w, x); step(w, NO_INPUTS);
+    expect(w.enc.state[1]).toBe(BSTEP.after);
+    w.bodies.x[0] = well.x + WELL.repairReach - 0.6; w.bodies.y[0] = well.y;
+    step(w, x); step(w, NO_INPUTS);
+    expect(w.enc.state[1]).toBe(BSTEP.repair);
+    // the defences stay dead till it has relit them; then one can be possessed again, and stepping away leaves your own rune
+    expect(w.battery!.flow[0]).toBe(0);
+    idle(w, WELL.relit);
+    expect(w.battery!.flow[0]).toBe(1);
+    expect(enemies(w)).toHaveLength(0);
+    take(w);
+    expect(w.battery!.drive[0]).toBe(1);
+    step(w, x); step(w, NO_INPUTS);
+    expect(w.battery!.drive[0]).toBe(-1);
+    expect(fire(w)).toBe(WELL.own);
   });
 });
 

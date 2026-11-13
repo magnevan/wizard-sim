@@ -6,7 +6,7 @@
  * Entities are slots in a pool: `alive[i]` (or `kind[i]`) marks a used slot, and iteration
  * always runs in slot order, so every peer visits entities in the same order.
  */
-import { ARENA, BODY, CELL, PERKS, RUNES } from './config';
+import { ARENA, BODY, CELL, PERKS, RUNES, T, WELL } from './config';
 import { WALL } from './compile';
 import { EL, KEYED_EL, N_EL, elementName } from './elements';
 import { createRng, type RngState } from './rng';
@@ -372,7 +372,19 @@ export interface Battery {
   homeX: Float64Array; homeY: Float64Array;
   /** Each body's lane: the defence it was sent at (battery-waves.ts), or -1. */
   lane: Int8Array;
+  /** How much the well still gives, 1 to 0: a defence's pool refills at this share of R (beat 5, battery-waves.ts). */
+  flow: Float64Array;
+  /** [0] ticks since the flow ran out, [1] ticks since the well ran dry, [2] ticks since its repair began (0: not yet). */
+  wellT: Int32Array;
 }
+
+/** Has the repair begun (X at the well once the fight is over, battery-waves.ts)? */
+export const wellRepaired = (w: World): boolean => !!w.battery && w.battery.wellT[2] > 0;
+
+/** Has the battery's well run dry (beat 6)? From then on the defences are dead and your runes are your own. */
+export const wellDry = (w: World): boolean => !!w.battery && w.battery.wellT[1] > 0;
+/** Has the infusion come (WELL.surge after the well ran dry)? Then every wizard has a Fire pool of its own. */
+export const infused = (w: World): boolean => !!w.battery && w.battery.wellT[1] > T(WELL.surge);
 
 /** Survive's run: the altar pick and every seat's power-ups. Only a survive world has one. */
 export interface Run {
@@ -535,7 +547,7 @@ export const ALTAR_SPOTS: readonly (readonly [number, number])[] = ROOMS.survive
 /** Max runes of element `id` for seat `i`: the config; in the tutorial, the beat's pools (0 = locked); in Survive, its weak start plus the seat's power-ups. */
 export const runeMax = (w: World, i: number, id: number): number =>
   id > KEYED_EL ? 0 : // Ice has no pool: it is made from Water's and Cold's
-  w.tut ? tutPool(w.tut.state[0], id) : w.battery ? (w.battery.drive[i] >= 0 && id === EL.fire ? RUNES.max.fire : 0) : w.run ? (id === EL.sigil ? RUNES.surviveSigil : RUNES.surviveStart) + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
+  w.tut ? tutPool(w.tut.state[0], id) : w.battery ? (id !== EL.fire ? 0 : w.battery.drive[i] >= 0 ? RUNES.max.fire : infused(w) ? WELL.own : 0) : w.run ? (id === EL.sigil ? RUNES.surviveSigil : RUNES.surviveStart) + w.run.maxBonus[i * N_EL + id - 1] : RUNES.max[elementName(id)];
 /** A seat's power-up stacks (0 outside survive). */
 export const stackOf = (w: World, i: number, pu: number): number => (w.run && i >= 0 && i < MAX_SEATS ? w.run.stacks[i * N_PU + pu] : 0);
 /** True when device `k` binds no Sigil rune: a turret of a seat with Clockwork. Dismissing or recalling it gives none back. */
@@ -547,6 +559,7 @@ export const lingerLife = (w: World, src: number): number => (stackOf(w, src, PU
 export const lingerSize = (w: World, src: number): number => (stackOf(w, src, PU.lingering) ? PERKS.lingerSize : 1);
 /** Seat `i`'s total regen R, runes per second shared among its pools (Wellspring adds PERKS.wellspring a stack). */
 export const regenOf = (w: World, i: number): number => {
+  if (w.battery && i >= 0 && i < MAX_SEATS && w.battery.drive[i] >= 0) return RUNES.regen * w.battery.flow[0]; // a defence's pool: as much as the well still gives
   const k = stackOf(w, i, PU.wellspring);
   return k ? RUNES.regen * (1 + PERKS.wellspring * k) : RUNES.regen;
 };
@@ -615,7 +628,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
       heal: u8(MAX_DEVICES), look: u8(MAX_DEVICES), born: i32(MAX_DEVICES), chan: i32(MAX_DEVICES),
     },
     run: opts.room === 'survive' ? run() : null,
-    battery: opts.room === 'battery' ? { drive: new Int8Array(MAX_SEATS).fill(-1), homeX: new Float64Array(MAX_SEATS), homeY: new Float64Array(MAX_SEATS), lane: new Int8Array(MAX_BODIES).fill(-1) } : null,
+    battery: opts.room === 'battery' ? { drive: new Int8Array(MAX_SEATS).fill(-1), homeX: new Float64Array(MAX_SEATS), homeY: new Float64Array(MAX_SEATS), lane: new Int8Array(MAX_BODIES).fill(-1), flow: new Float64Array([1]), wellT: i32(3) } : null,
     tut: opts.room === 'tutorial' ? tutorial(opts.tutorialBeat ?? TUT_ORDER[0]) : null,
     events: [],
   };

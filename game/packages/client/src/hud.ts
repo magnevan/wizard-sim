@@ -6,12 +6,12 @@
  * name while you cast it. Drawn in art pixels into a small canvas, so it is crisp at the
  * integer scale like everything else.
  */
-import { pedestalNear } from '@wizard-sim/sim';
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
-import { BSTEP, ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, regenOf, runeRate, runeMax, specOf, type World } from '@wizard-sim/sim';
+import { BSTEP, RUNES, infused, ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, regenOf, runeRate, runeMax, specOf, type World } from '@wizard-sim/sim';
 import { badge, perkOf } from './art/perks';
-import { DRIVING, STEP_UP } from './battery-text';
+import { DRIVING, OWN_FIRE, STEP_UP } from './battery-text';
+import { drawKeys, rowWidth } from './key-caps';
 import * as X from './art/px';
 import { mod } from './art/util';
 
@@ -23,7 +23,7 @@ const flowCol = (ramp: readonly string[], share: number): string => (share >= 0.
 const PW = Math.max(TOP.length * SLOT, STAG + BOT.length * SLOT) + 6, PH = RH * 2 + 7;
 const CW = 240, CH = PH + 22;
 
-const TW = 320, TH = 26;
+const TW = 320, TH = 32;
 /** Survive: the power-ups panel (top left) and the run-over card. */
 const PKW = 150, PKH = 4 * 13 + 2, OVW = 220, OVH = 132;
 
@@ -154,18 +154,18 @@ export class Hud {
    * (the user: the waves felt too arcade-like). Away from the defences it asks you to step up to one; driving, it
    * teaches the step's cast; after the lesson it shows nothing.
    */
-  private drawLesson(w: World, viewW: number): void {
+  private drawLesson(w: World, t: number, viewW: number): void {
     const c = this.tc.x, step = w.enc.state[1], driving = w.battery!.drive[this.seat] >= 0;
     c.clearRect(0, 0, TW, TH); c._fs = null;
-    const p = driving ? DRIVING[step] : step <= BSTEP.brute ? STEP_UP : undefined;
+    const p = step >= BSTEP.dry ? OWN_FIRE[step] : driving ? DRIVING[step] : step <= BSTEP.brute ? STEP_UP : undefined;
     this.top.visible = !!p && w.enc.state[0] !== 0;
     if (!p || !this.top.visible) return;
-    const head = X.fontText(p.head.toUpperCase()), line = X.fontText(p.line.toUpperCase()), keys = X.fontText(p.keys.toUpperCase());
-    const wd = Math.min(TW - 2, Math.max(head.length, line.length, keys.length) * 4 + 12), x = Math.round(TW / 2 - wd / 2);
-    X.rect(c, x - 1, 0, wd + 2, 25, '#0a0810'); X.rect(c, x, 1, wd, 23, '#1a1726'); X.rect(c, x, 1, wd, 1, '#3a3450');
-    X.text(c, head, Math.round(TW / 2 - head.length * 2), 3, '#ffd860');
-    X.text(c, line, Math.round(TW / 2 - line.length * 2), 10, '#e8e4f0');
-    X.text(c, keys, Math.round(TW / 2 - keys.length * 2), 17, '#ff9a5a');
+    // the keys, as pictures, pressing themselves in order (key-caps.ts); the user's one line over them, if any
+    const head = p.head ? X.fontText(p.head.toUpperCase()) : '', kw = rowWidth(p.keys), top = head ? 8 : 0, hh = top + 22;
+    const wd = Math.min(TW - 2, Math.max(kw, head.length * 4) + 12), x = Math.round(TW / 2 - wd / 2);
+    X.rect(c, x - 1, 0, wd + 2, hh, '#0a0810'); X.rect(c, x, 1, wd, hh - 2, '#1a1726'); X.rect(c, x, 1, wd, 1, '#3a3450');
+    if (head) X.text(c, head, Math.round(TW / 2 - head.length * 2), 2, '#ffd860');
+    drawKeys(c, p.keys, Math.round(TW / 2 - kw / 2), top + 2, t);
     this.ttex.source.update();
     this.top.position.set(Math.round(viewW / 2 - TW / 2), 3);
   }
@@ -174,7 +174,7 @@ export class Hud {
   private drawWave(w: World, t: number, viewW: number): void {
     const c = this.tc.x, st = w.enc.state, e = w.enc;
     c.clearRect(0, 0, TW, TH); c._fs = null;
-    if (w.battery) { this.drawLesson(w, viewW); return; }
+    if (w.battery) { this.drawLesson(w, t, viewW); return; }
     this.top.visible = st[0] !== PHASE_ENC.off;
     if (!this.top.visible) return;
     const secs = Math.ceil(st[2] / 60);
@@ -250,7 +250,8 @@ export class Hud {
       const open = runeMax(w, i, e) > 0;
       if (open) unlocked++;
       // an element this beat gives (the last one didn't): its socket fills with a flash
-      if (open && !this.unlocked[e] && w.tut) { const k = TUT_ORDER.indexOf(w.tut.state[TUT_STATE.beat]); if (k <= 0 || tutPool(TUT_ORDER[k - 1], e) <= 0) this.unlockAt[e] = t; }
+      if (open && !this.unlocked[e] && infused(w) && !(w.battery!.drive[i] >= 0)) this.unlockAt[e] = t; // the battery's infusion: your own first rune
+      else if (open && !this.unlocked[e] && w.tut) { const k = TUT_ORDER.indexOf(w.tut.state[TUT_STATE.beat]); if (k <= 0 || tutPool(TUT_ORDER[k - 1], e) <= 0) this.unlockAt[e] = t; }
       this.unlocked[e] = open ? 1 : 0;
     }
     const driven = !!w.battery && w.battery.drive[i] >= 0;
@@ -262,9 +263,7 @@ export class Hud {
       X.rect(c, x0, y0, TOP.length * SLOT + 6, RH + 5, plate); X.rect(c, x0, y0 + RH + 3, PW, RH + 4, plate);
       X.rect(c, x0, y0, TOP.length * SLOT + 6, 1, '#3a3450');
     }
-    if (w.battery) {
-      if (!driven && pedestalNear(w, i) >= 0) X.text(c, 'X: TAKE CONTROL', Math.round(CW / 2 - 30), Math.max(0, y0 - 9), '#ffd860', '#0a0810');
-    }
+    // (the battery: in a possession circle, the X key shows over your head, art/vfx.ts)
     // the player's colour tab
     const team = X.TEAMS[i % 4];
     if (bar || s.guard[i] || s.weapon[i]) { X.rect(c, x0 - 14, y0 + RH - 4, 13, 15, '#0a0810'); X.rect(c, x0 - 13, y0 + RH - 3, 12, 13, team.dark); X.text(c, 'P' + (i + 1), x0 - 11, y0 + RH + 1, team.light); }
@@ -287,7 +286,8 @@ export class Hud {
     const upkeep = channel && spec && s.chanTicks[i] >= T(RHYTHM.naturalChannel) ? spec.form : 0;
     // the shared regen budget: each refilling pool's share of R (0..1) sets how bright its flow shows
     const full = fullMask(w, i), R = regenOf(w, i);
-    if (driven) this.deviceBar(c, w, i, FLAME_TURRET, x0, y0, t, runeRate(w, i, elementId(FLAME_TURRET.el), full) / Math.max(R, 1e-6), upkeep === elementId(FLAME_TURRET.el));
+    // a defence's share is of a full well's R, so the line shortens as the well fails (beat 5)
+    if (driven) this.deviceBar(c, w, i, FLAME_TURRET, x0, y0, t, runeRate(w, i, elementId(FLAME_TURRET.el), full) / RUNES.regen, upkeep === elementId(FLAME_TURRET.el), w.battery!.flow[0]);
     // queued runes are reserved: they show as spent pips until cast or refunded
     [...TOP, ...BOT].forEach((el, k) => {
       const row = k < TOP.length ? 0 : 1, col = row ? k - TOP.length : k, id = elementId(el), ramp = X.EL[el];
@@ -312,7 +312,7 @@ export class Hud {
       const share = R > 0 ? runeRate(w, i, id, full) / R : 0; // ghosts and debt take all of it while owed
       this.pips(c, sx, sy + 11, v, max, ramp, t, share);
       // the tutorial just gave you this element: its socket flashes in its colour
-      const fresh = w.tut ? t - this.unlockAt[id] : 9;
+      const fresh = w.tut || w.battery ? t - this.unlockAt[id] : 9;
       if (fresh >= 0 && fresh < 1.2 && Math.floor(fresh * 8) % 2 === 0) {
         X.rect(c, sx - 1, sy - 1, SLOT, 1, ramp[1]); X.rect(c, sx - 1, sy + RH - 1, SLOT, 1, ramp[1]);
         X.rect(c, sx - 1, sy - 1, 1, RH, ramp[1]); X.rect(c, sx + SLOT - 2, sy - 1, 1, RH, ramp[1]);
@@ -372,7 +372,8 @@ export class Hud {
    * The bar while you operate a device: the same footprint as the rune bar, all of it given to the device's one element. Each
    * rune is a large cell that fills from the bottom, with the regen flowing along underneath.
    */
-  private deviceBar(c: X.Ctx, w: World, i: number, dev: DeviceBar, x0: number, y0: number, t: number, share: number, drain: boolean): void {
+  /** `flow`: how much its source still gives, 0..1 (the battery's well): the flow line's track is cut to it, the rest dark red. */
+  private deviceBar(c: X.Ctx, w: World, i: number, dev: DeviceBar, x0: number, y0: number, t: number, share: number, drain: boolean, flow = 1): void {
     const id = elementId(dev.el), ramp = X.EL[dev.el], v = w.seats.runes[i * N_EL + id - 1], max = Math.round(runeMax(w, i, id));
     const dryK = t - this.dryAt[id] < 0.5, dry = dryK && Math.floor(t * 8) % 2 === 0;
     X.rect(c, x0 - 1, y0 - 1, PW + 2, PH + 2, '#0a0810'); X.rect(c, x0, y0, PW, PH, dev.plate); X.rect(c, x0, y0, PW, 1, ramp[2]); X.rect(c, x0, y0 + PH - 1, PW, 1, dev.rim);
@@ -392,8 +393,13 @@ export class Hud {
       X.rect(c, x, top, cw, 1, whole ? ramp[0] : Math.floor(t * (4 + 14 * share)) % 2 ? ramp[0] : ramp[1]);
     }
     // the flow line: how fast the pool is refilling, and red while a long channel eats into it
-    const lw = PW - 8, fw = Math.round(lw * Math.min(1, share));
+    const lw = PW - 8, fw = Math.round(lw * Math.min(1, share)), cap = Math.round(lw * Math.max(0, Math.min(1, flow)));
     X.rect(c, x0 + 4, y0 + 41, lw, 3, '#1a0e08');
+    if (cap < lw) {
+      // the well failing: what it no longer gives, dark red, its edge flickering
+      X.rect(c, x0 + 4 + cap, y0 + 41, lw - cap, 3, '#3a1418');
+      X.rect(c, x0 + 4 + cap, y0 + 40, 1, 5, Math.floor(t * 6) % 2 ? '#a03040' : '#ff6a6a');
+    }
     if (fw > 0) { X.rect(c, x0 + 4, y0 + 41, fw, 3, drain ? '#ff6a6a' : ramp[2]); X.px(c, x0 + 4 + Math.floor(mod(t * (2 + 10 * share), 1) * fw), y0 + 42, ramp[0]); }
   }
 

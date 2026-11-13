@@ -1,0 +1,15 @@
+{
+  "cell": [
+    104,
+    120
+  ],
+  "rise": 7,
+  "sets": {
+    "still": 1,
+    "overloaded": 1,
+    "failed": 1,
+    "steady": 16,
+    "fail": 13,
+    "repair": 13
+  }
+}

@@ -65,3 +65,4 @@ Dated, long-form thinking sessions. Once written, each is a record and isn't rew
 | 2026-11-10 | [battery-playtest-todo](2026-11-10-battery-playtest-todo.md) | The user's 14 notes from driving a defence, split into object and rendering work and battery work | |
 | 2026-11-10 | [spray-vfx](2026-11-10-spray-vfx.md) | Spray effects, redone: Water, Fire and Cold as streams | |
 | 2026-11-11 | [spell-audit](2026-11-11-spell-audit.md) | Spell audit: every spell inventoried, then decided step by step | |
+| 2026-11-13 | [engine-architecture-audit](2026-11-13-engine-architecture-audit.md) | Five-agent audit of `game/`: solid core, but modes, enemies, spells and effects are hard-coded branches; a phased plan (room modules, encounters as data, carry state) | |

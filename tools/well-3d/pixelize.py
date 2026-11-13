@@ -52,30 +52,29 @@ COLS, SPACING = 240, 5
 # small drawings stand up from it: thin strokes in 3 x 3 pixels, two columns of dark between each, about a quarter of
 # the channel raised (heavier ones merged into a lattice). Eight in rotation, SPACING columns apart: 40 columns, a sixth
 # of a turn (the spin's loop). Each drawing's rows are top, middle, bottom.
+# Two rows tall: between the outline and a border pixel each side, the face has about two rows left on screen (three-row
+# drawings squeezed into it came out as splotches, the user).
 GLYPHS = [
-    ('.X.', 'X.X', '.X.'),   # a ring
-    ('X..', '.X.', '..X'),   # a stroke down
-    ('XX.', 'X..', 'X..'),   # a hook
-    ('.X.', '.X.', 'X.X'),   # a fork
-    ('..X', '.X.', 'X..'),   # a stroke up
-    ('X.X', '.X.', '.X.'),   # a Y
-    ('X..', 'XX.', 'X..'),   # a flag
-    ('.X.', '..X', '.X.'),   # a chevron
+    ('X.X', '.X.'),   # a V
+    ('.X.', 'X.X'),   # a caret
+    ('XX.', '..X'),   # a step down
+    ('X..', '.XX'),   # a hook
+    ('.XX', 'X..'),   # a step up
+    ('..X', 'XX.'),   # a hook back
+    ('X.X', 'X.X'),   # a pair
+    ('.X.', '.X.'),   # a bar
 ]
 PATINA_ON = False   # the user: the patina hurt the look; round 8, without it, was the best
 CUT_STEPS, CUT_FLOOR = 3, 1   # the cut-away ground goes this many browns down the ladder, but not below this one
 
 
 def mark_at(u, v):
-    """At band position u (0..1 round the ring), v (0..1 across its face): 'border' on the smooth raised edges, 'raised'
-    on a drawing, else 'cut' (the ground between)."""
-    # the face is about 5 px tall on screen: a border a fifth of it wide is a pixel
-    if v < 0.2 or v > 0.8:
-        return 'border'
+    """At band position u (0..1 round the ring), v (0..1 across its face): 'raised' on a drawing, else 'cut' (the ground
+    between). The borders are found on screen instead (pixel_art), as the face pixel just inside each edge."""
     col = u * COLS
     k = int(np.floor(col / SPACING))
     du = int(np.floor(col - k * SPACING))          # 0..4: three columns of drawing, then two of ground
-    dv = min(2, max(0, int((v - 0.2) / 0.6 * 3)))  # the three rows between the borders
+    dv = 0 if v < 0.5 else 1                       # the two rows between the borders
     if du > 2:
         return 'cut'
     return 'raised' if GLYPHS[k % len(GLYPHS)][dv][du] == 'X' else 'cut'
@@ -139,6 +138,7 @@ def pixel_art(rgba, sup, where=None):
     idx[metal] = np.searchsorted(CUM, q).clip(0, len(LADDER) - 1)
     kinds = np.full((h, w), -1)
     green = np.zeros((h, w), bool)
+    face_samples = {}
     if where:
         top = len(LADDER) - 1
         for (y, x), samples in where.items():
@@ -158,9 +158,26 @@ def pixel_art(rgba, sup, where=None):
                 continue
             if kind != 'outer':
                 continue
-            # the vote: a border if most of the face samples are, raised if a third of them fall on a drawing's stroke
-            ms = [mark_at(su, sv) for su, sv, sk in samples if sk == 'outer']
-            m = 'border' if ms.count('border') * 2 > len(ms) else 'raised' if ms.count('raised') * 3 >= len(ms) else 'cut'
+            face_samples[(y, x)] = samples
+        # the outer face's pixels: the one just inside each edge is the smooth raised border (found on screen, so every
+        # face keeps one however it's squeezed: the user saw none), the rest is ground with the drawings standing on it
+        outer = (kinds == KINDS.index('outer')) & metal
+        pad = np.pad(outer, 1)
+        inside = pad[:-2, 1:-1] & pad[2:, 1:-1] & pad[1:-1, :-2] & pad[1:-1, 2:]
+        # pixels the outline will take don't count as face: the border goes one in from them
+        opad = np.pad(on, 1)
+        rim = on & ~(opad[:-2, 1:-1] & opad[2:, 1:-1] & opad[1:-1, :-2] & opad[1:-1, 2:])
+        rpad = np.pad(rim, 1)
+        by_rim = rpad[:-2, 1:-1] | rpad[2:, 1:-1] | rpad[1:-1, :-2] | rpad[1:-1, 2:]
+        for (y, x), samples in face_samples.items():
+            if rim[y, x]:
+                continue
+            u, v, _ = next(s for s in samples if s[2] == 'outer')
+            if not inside[y, x] or by_rim[y, x]:
+                m = 'border'
+            else:
+                ms = [mark_at(su, sv) for su, sv, sk in samples if sk == 'outer']
+                m = 'raised' if ms.count('raised') * 2 >= len(ms) else 'cut'
             if m == 'cut':
                 # the cut-away ground: darker, but never into the very darkest browns (the dark bottom sank to black)
                 idx[y, x] = max(min(idx[y, x], CUT_FLOOR), idx[y, x] - CUT_STEPS)

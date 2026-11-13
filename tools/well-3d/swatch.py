@@ -13,12 +13,12 @@ out = sys.argv[1]
 cols = int(sys.argv[2]) if len(sys.argv) > 2 else 80
 k = int(sys.argv[3]) if len(sys.argv) > 3 else 12
 mid = 5
-rows_v = [0.1, 0.3, 0.5, 0.7, 0.9]   # v at the middle of each on-screen row
+rows_v = [None, 0.25, 0.75, None]   # on screen: a border, the drawings' two rows, a border
 a = np.zeros((len(rows_v), cols, 3), np.uint8)
 for r, v in enumerate(rows_v):
     for c in range(cols):
         u = (c + 0.5) / P.COLS
-        m = P.mark_at(u, v)
+        m = 'border' if v is None else P.mark_at(u, v)
         i = mid + 1 if m in ('border', 'raised') else max(P.CUT_FLOOR, mid - P.CUT_STEPS)
         col = P.LADDER[i]
         if P.PATINA_ON and m == 'cut' and P.patina_at(u, v, 'outer') > 0.7:

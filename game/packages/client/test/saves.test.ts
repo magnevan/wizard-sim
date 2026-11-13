@@ -1,6 +1,6 @@
 // The campaign save: forward only, only for campaign chapters, and a checkpoint (never a snapshot).
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createWorld } from '@wizard-sim/sim';
+import { createWorld, partyOf } from '@wizard-sim/sim';
 import { SaveWatch, loadSave, progressOf, writeSave } from '../src/saves';
 import { scenarioById } from '../src/scenarios';
 
@@ -33,8 +33,9 @@ describe('the campaign save', () => {
   it('a watch writes what the world says it has passed, once per change', () => {
     const watch = new SaveWatch(() => battery);
     const w = createWorld(1, 1, { room: 'battery', checkpoint: 'repair' });
-    watch.update(w.mode.reached?.(w));
+    watch.update(w.mode.reached?.(w), partyOf(w));
     expect(loadSave()?.checkpoint).toBe('repair');
+    expect(loadSave()?.party).toEqual({ v: 1, pools: { fire: 1 } }); // Continue starts with Fire
     store.clear();
     watch.update(w.mode.reached?.(w)); // no change: no write
     expect(loadSave()).toBeNull();

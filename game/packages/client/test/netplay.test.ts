@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { BTN, NO_INPUT, createWorld, hashWorld, quantize } from '@wizard-sim/sim';
+import { BTN, NO_INPUT, createWorld, hashWorld, partyOf, quantize } from '@wizard-sim/sim';
 import { subscribe, type Bus } from '../src/net/bus';
 
 // A minimal DOM for the Co-op panel (it only needs elements to write into).
@@ -203,11 +203,12 @@ describe('online co-op over the bus', () => {
     expect(hashWorld(wa)).toBe(hashWorld(wb));
     expect(a.session!.desyncs.length + b.session!.desyncs.length).toBe(0);
     // the chapter jump: the host puts everyone into the battery at its repair, and both pages build that place
-    expect(a.switchRoom('battery', 'repair')).toBe(true);
+    expect(a.switchRoom('battery', 'repair', { v: 1, pools: { fire: 1, water: 2 } })).toBe(true); // Water: only the party handed over has it
     vi.advanceTimersByTime(50);
     expect(b.roomName).toBe('battery');
     expect(b.checkpointName).toBe('repair');
     expect([wa.mode.reached?.(wa), wb.mode.reached?.(wb)]).toEqual(['repair', 'repair']);
+    expect([partyOf(wa), partyOf(wb)]).toEqual([{ v: 1, pools: { water: 2, fire: 1 } }, { v: 1, pools: { water: 2, fire: 1 } }]);
     play([[a, wa], [b, wb]], 120);
     expect(hashWorld(wa)).toBe(hashWorld(wb));
     expect(a.session!.desyncs.length + b.session!.desyncs.length).toBe(0);

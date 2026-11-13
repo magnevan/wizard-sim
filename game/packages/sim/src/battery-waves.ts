@@ -33,7 +33,7 @@ import { len } from './geom';
 import { propsTagged } from './room';
 import { BATTERY, stepAway } from './battery';
 import { BTN, type PlayerInput } from './input';
-import { EV, MAX_PORTALS, MAX_SEATS, TERRAIN, alive, type World } from './world';
+import { EV, MAX_PORTALS, MAX_SEATS, TERRAIN, alive, unlock, type World } from './world';
 import { spawnEnemy } from './spawn';
 import { goStep, runScript, type Script } from './encounter';
 import type { Checkpoint } from './mode';
@@ -189,6 +189,7 @@ function infuse(w: World): void {
     w.events.push({ tick: w.clock[0], kind: 'burst', who: i, x: b.x[i], y: b.y[i], amount: 1, look: EL.fire, ev: EV.infuse, text: 'infuse' });
   }
   d.lane.fill(-1);
+  unlock(w, EL.fire, WELL.own); // the party keeps it: Fire is yours from here on, in every area after this one
   goStep(w, LESSON, BSTEP.hands, false); st[2] = T(WELL.through); st[3] = -1; // the first HANDS group opens once the pause is out (the runner)
 }
 
@@ -279,6 +280,7 @@ export const BATTERY_CHECKPOINTS: readonly Checkpoint[] = [
       const st = w.enc.state; st[0] = 1; st[1] = BSTEP.after; st[2] = 0; st[3] = 0;
       w.battery!.flow[0] = 0; w.battery!.wellT[1] = T(WELL.gutter) - 1; // the gate's fire goes out on the next tick
       for (let i = 0; i < MAX_SEATS; i++) w.seats.runes[i * N_EL + EL.fire - 1] = WELL.own;
+      unlock(w, EL.fire, WELL.own); // past the infusion
     },
   },
 ];

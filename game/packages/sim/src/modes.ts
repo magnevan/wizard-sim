@@ -57,6 +57,7 @@ const SURVIVE: Mode = {
 /** The battery: drive a defence from its possession circle, the well that feeds them (battery.ts, battery-waves.ts). */
 const BATTERY_MODE: Mode = {
   id: 'battery',
+  campaign: true,
   state: (w) => {
     w.battery = {
       drive: new Int8Array(MAX_SEATS).fill(-1), homeX: new Float64Array(MAX_SEATS), homeY: new Float64Array(MAX_SEATS),

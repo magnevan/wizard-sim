@@ -6,7 +6,7 @@
  * by the room, like `def`, and never in buffers()).
  */
 import type { PlayerInput } from './input';
-import type { Room, World } from './world';
+import type { PartyState, Room, World } from './world';
 
 export type ModeId = 'sandbox' | 'arena' | 'survive' | 'battery' | 'tutorial';
 
@@ -18,6 +18,8 @@ export interface WorldOpts {
   tutorialBeat?: number;
   /** Start at this checkpoint of the mode (Mode.checkpoints); unknown ids start at the beginning. */
   checkpoint?: string;
+  /** A campaign area: what the party brings from the last one (world.ts PartyState); none, the campaign's start. */
+  party?: PartyState;
 }
 
 /**
@@ -32,6 +34,8 @@ export interface Checkpoint {
 
 export interface Mode {
   readonly id: ModeId;
+  /** A campaign area: its world has a party (world.ts Party), carried in from the last area and out to the next. */
+  readonly campaign?: boolean;
   /** Makes the mode's state pools on a new world, before any seat joins (a joining seat reads runeMax). */
   state?(w: World, opts: WorldOpts): void;
   /** Lays the room out once the seats are in: the encounter's first phase, dummies, fixtures. */

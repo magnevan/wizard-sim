@@ -1,6 +1,6 @@
 // The encounter runner with nothing of its own: markers, a region, a list of groups, as a campaign room would use it.
 import { describe, expect, it } from 'vitest';
-import { ARCH, KIND, MAX_SEATS, createWorld, hashWorld, spawnEnemy, type RoomDef, type World } from '../src';
+import { ARCH, EL, KIND, MAX_SEATS, createWorld, createWorldWith, hashWorld, partyOf, runeMax, spawnEnemy, type Mode, type RoomDef, type World } from '../src';
 import { openAtMarkers, partyIn, remaining, runScript, type Script } from '../src/encounter';
 import { BSTEP, LESSON } from '../src/battery-waves';
 
@@ -50,6 +50,26 @@ describe('checkpoints', () => {
     const end = createWorld(1, 1, { room: 'battery', checkpoint: 'repair' });
     expect(end.mode.reached!(end)).toBe('repair');
     expect(hashWorld(createWorld(1, 2, { room: 'battery', checkpoint: 'nowhere' }))).toBe(hashWorld(plain)); // unknown: the beginning
+  });
+});
+
+describe('the party, carried between campaign areas', () => {
+  it('the battery starts with nothing unlocked and ends with Fire, which the next area starts with', () => {
+    const start = createWorld(1, 1, { room: 'battery' });
+    expect(partyOf(start)).toEqual({ v: 1, pools: {} });
+    const end = createWorld(1, 1, { room: 'battery', checkpoint: 'repair' });
+    expect(partyOf(end)).toEqual({ v: 1, pools: { fire: 1 } });
+    // the next campaign area (a stand-in: a campaign mode with no pools of its own) gives you exactly that
+    const next: Mode = { id: 'sandbox', campaign: true, setup: () => {}, director: () => {} };
+    const w = createWorldWith(next, 1, 1, { party: partyOf(end) });
+    expect([runeMax(w, 0, EL.fire), runeMax(w, 0, EL.water), runeMax(w, 0, EL.arcane)]).toEqual([1, 0, 0]);
+    expect(w.seats.runes[EL.fire - 1]).toBe(1); // it joins full
+    expect(partyOf(w)).toEqual(partyOf(end));
+  });
+
+  it('only campaign areas have one (the other rooms keep their layout)', () => {
+    expect(createWorld(1, 1).party).toBeNull();
+    expect(createWorld(1, 1, { room: 'survive', party: { v: 1, pools: { fire: 3 } } }).party).toBeNull();
   });
 });
 

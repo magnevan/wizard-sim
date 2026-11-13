@@ -42,8 +42,8 @@
 import { Application } from 'pixi.js';
 import { TextureSource } from 'pixi.js';
 import {
-  DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, devStartWave, hashWorld, hex, newBotMemory, newTutorialBot, replaceWorld, runReplay, scriptedInput, scriptedReplay, step, tutorialBotInput,
-  type PlayerInput, type Room, type World,
+  DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devStartWave, hashWorld, hex, newBotMemory, newTutorialBot, replaceWorld, runReplay, scriptedInput, scriptedReplay, step, tutorialBotInput,
+  type PartyState, type PlayerInput, type Room, type World,
 } from '@wizard-sim/sim';
 import { demoInput, enemyAttackScene, parseDemo, rallyScene, threeScene } from './demo';
 import { PadSeats } from './gamepad';
@@ -213,7 +213,7 @@ async function boot(): Promise<void> {
       const s = net!.session!;
       view.setLocalSeat(net!.seat);
       s.hooks = {
-        before: (w) => { net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); stats.afterStep(); tools.afterStep(); help.afterStep(w); saves.update(w.mode.reached?.(w)); } else view.replayStep(w); },
+        before: (w) => { net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); stats.afterStep(); tools.afterStep(); help.afterStep(w); saves.update(w.mode.reached?.(w), partyOf(w)); } else view.replayStep(w); },
         preRewind: (w) => view.notePreRewind(w), postRewind: (w) => view.notePostRewind(w, net!.seat),
       };
     });
@@ -230,13 +230,15 @@ async function boot(): Promise<void> {
    * Go to another scenario. Alone (or in a lobby that hasn't started) the world is rebuilt in place,
    * keeping everyone who is seated; in a match only the host can, and everyone follows (netplay.ts).
    */
-  const switchScenario = (s: Scenario, checkpoint?: string) => {
-    if (net?.state === 'playing') { net.switchRoom(s.room, checkpoint); return; }
-    replaceWorld(world, worldFor(world, players, s.room as Room, checkpoint));
+  const switchScenario = (s: Scenario, checkpoint?: string, from?: PartyState) => {
+    // a campaign area starts with what the party has: handed over (Continue: the save's), or from the area it leaves
+    const party = s.kind === 'campaign' ? from ?? partyOf(world) : undefined;
+    if (net?.state === 'playing') { net.switchRoom(s.room, checkpoint, party); return; }
+    replaceWorld(world, worldFor(world, players, s.room as Room, checkpoint, party));
     view.tut.restart(); // the same tutorial again greets its first beat again
     scenario = s;
     saves.reset();
-    net?.setRoom(s.room, checkpoint);
+    net?.setRoom(s.room, checkpoint, party);
     recorder = new ReplayRecorder(7, MAX_SEATS);
     acc = 0;
     try { history.replaceState(null, '', location.pathname + location.search + hashFor(s, ally)); } catch { /* sandboxed */ }
@@ -298,7 +300,7 @@ async function boot(): Promise<void> {
     stats.afterStep();
     tools.afterStep();
     help.afterStep(world);
-    if (!headless) saves.update(world.mode.reached?.(world));
+    if (!headless) saves.update(world.mode.reached?.(world), partyOf(world));
     stepsRun++;
   };
 

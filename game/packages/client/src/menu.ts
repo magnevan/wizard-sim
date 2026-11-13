@@ -15,6 +15,7 @@
  */
 import { KINDS, SCENARIOS, checkpointsOf, isPlayable, scenarioById, type Scenario } from './scenarios';
 import { loadSave } from './saves';
+import type { PartyState } from '@wizard-sim/sim';
 import { escAction, keyToNav, menuScenarioKey, navigate, padMenuKeys, type NavItem, type NavKey, type NavState } from './menu-nav';
 import { readPad, type PadState } from './gamepad';
 import type { LobbyView, NetPlay } from './net/netplay';
@@ -27,7 +28,7 @@ export interface MenuHost {
   net: NetPlay | null;
   scenario(): Scenario;
   /** Go to scenario `s`, from its checkpoint `checkpoint` when named. */
-  switchScenario(s: Scenario, checkpoint?: string): void;
+  switchScenario(s: Scenario, checkpoint?: string, party?: PartyState): void;
   settings: Setting[];
   /** The menu opened or closed (let go of the keyboard; pads forget the presses made in it). */
   onToggle(open: boolean): void;
@@ -262,7 +263,7 @@ export class EscMenu {
         out.push({
           item: {
             label: 'Continue', blurb: `${saved.name}: ${cp?.name ?? 'from the start'}.`, enabled: !blocked, tag: blocked ? 'HOST ONLY' : '', tagCol: COL.dim,
-            act: () => { this.host.switchScenario(saved, save.checkpoint); this.hide(); },
+            act: () => { this.host.switchScenario(saved, save.checkpoint, save.party ?? undefined); this.hide(); },
           },
         });
       }

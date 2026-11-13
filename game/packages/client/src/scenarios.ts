@@ -10,7 +10,7 @@
  * This will be redesigned closer to a beta (a campaign map, not a list); for now it is how you move
  * between the tutorial, the sandbox and the modes.
  */
-import { MAX_SEATS, ROOM_DIMS, createWorld, joinSeat, modeOf, type Checkpoint, type Room, type World } from '@wizard-sim/sim';
+import { MAX_SEATS, ROOM_DIMS, createWorld, joinSeat, modeOf, type Checkpoint, type PartyState, type Room, type World } from '@wizard-sim/sim';
 
 export interface Scenario {
   id: string;
@@ -82,8 +82,8 @@ export function fromLocation(search: string, hash: string): { scenario: Scenario
  * A fresh world for an in-place switch to `room`: the first `players` seats (you, and the dev ally),
  * plus every seat that was taken in `old` (a pad that joined), and no others.
  */
-export function worldFor(old: World, players: number, room: Room, checkpoint?: string): World {
-  const w = createWorld(7, players, { room, checkpoint });
+export function worldFor(old: World, players: number, room: Room, checkpoint?: string, party?: PartyState): World {
+  const w = createWorld(7, players, { room, checkpoint, party });
   for (let p = 0; p < MAX_SEATS; p++) if (old.seats.active[p]) joinSeat(w, p);
   return w;
 }

@@ -448,6 +448,44 @@ export interface Run {
  * The tutorial's state (tutorial.ts; docs/explorations/2026-11-06-tutorial.md). Only a tutorial world
  * has one. `state` slots are TS in tutorial-data.ts.
  */
+/**
+ * What the party carries from one campaign area to the next (and what a save keeps): for now, the elements unlocked
+ * and how many runes each holds, the same for every wizard (the battery's infusion gives everyone Fire). Only a
+ * campaign world has one (null elsewhere, so the other rooms' layout and hashes are untouched). Outside the world it
+ * is a PartyState (partyOf, WorldOpts.party): plain data for the next area's start message and for the save.
+ */
+export interface Party {
+  /** Max runes per keyed element (index id - 1): 0 is locked. */
+  pools: Uint8Array;
+}
+
+/** A party as plain data: what crosses between areas, over the network and into a save. */
+export interface PartyState {
+  v: 1;
+  /** Max runes per keyed element, by element name (fire: 1); a missing element is locked. */
+  pools: Partial<Record<string, number>>;
+}
+
+/** The party, as data (undefined for a world that isn't a campaign area). */
+export function partyOf(w: World): PartyState | undefined {
+  if (!w.party) return undefined;
+  const pools: Partial<Record<string, number>> = {};
+  for (let id = 1; id <= KEYED_EL; id++) if (w.party.pools[id - 1]) pools[elementName(id)] = w.party.pools[id - 1];
+  return { v: 1, pools };
+}
+
+/** A campaign world's party, from what the last area handed over (or nothing: the campaign's start, all locked). */
+export function newParty(from?: PartyState): Party {
+  const p: Party = { pools: u8(N_EL) };
+  if (from?.v === 1) for (let id = 1; id <= KEYED_EL; id++) p.pools[id - 1] = Math.max(0, Math.min(255, Math.floor(from.pools[elementName(id)] ?? 0)));
+  return p;
+}
+
+/** The party learns element `id` with at least `max` runes (the battery's infusion: Fire, WELL.own). */
+export function unlock(w: World, id: number, max: number): void {
+  if (w.party && id >= 1 && id <= KEYED_EL) w.party.pools[id - 1] = Math.max(w.party.pools[id - 1], max);
+}
+
 export interface Tutorial {
   state: Int32Array;
   /** Personal done-bits, per seat (the prototype completes a personal beat when any one player does it). */
@@ -485,6 +523,8 @@ export interface World {
   battery: Battery | null;
   /** Tutorial only (null elsewhere, like run). */
   tut: Tutorial | null;
+  /** A campaign area only: what the party has unlocked, carried between areas (Party). */
+  party: Party | null;
   events: SimEvent[];
 }
 
@@ -579,7 +619,7 @@ export const ALTAR_SPOTS: readonly (readonly [number, number])[] = ROOMS.survive
 /** Max runes of element `id` for seat `i`: the mode's (the tutorial's beat, Survive's weak start and power-ups, a defence's Fire), else the config's. */
 export const runeMax = (w: World, i: number, id: number): number =>
   id > KEYED_EL ? 0 : // Ice has no pool: it is made from Water's and Cold's
-  w.mode.runeMax ? w.mode.runeMax(w, i, id) : RUNES.max[elementName(id)];
+  w.mode.runeMax ? w.mode.runeMax(w, i, id) : w.party ? w.party.pools[id - 1] : RUNES.max[elementName(id)];
 /** A seat's power-up stacks (0 outside survive). */
 export const stackOf = (w: World, i: number, pu: number): number => (w.run && i >= 0 && i < MAX_SEATS ? w.run.stacks[i * N_PU + pu] : 0);
 /** True when device `k` binds no Sigil rune: a turret of a seat with Clockwork. Dismissing or recalling it gives none back. */
@@ -658,7 +698,7 @@ export function createWorldWith(mode: Mode, seed: number, players: number, opts:
       els: u8(MAX_DEVICES * N_EL), timer: i32(MAX_DEVICES), life: i32(MAX_DEVICES), charges: u8(MAX_DEVICES), phase: f64(MAX_DEVICES),
       heal: u8(MAX_DEVICES), look: u8(MAX_DEVICES), born: i32(MAX_DEVICES), chan: i32(MAX_DEVICES),
     },
-    run: null, battery: null, tut: null,
+    run: null, battery: null, tut: null, party: mode.campaign ? newParty(opts.party) : null,
     events: [],
   };
   mode.state?.(w, opts);
@@ -704,6 +744,7 @@ export function buffers(w: World): ArrayBufferView[] {
   const pools: object[] = [w.bodies, w.seats, w.missiles, w.zones, w.surf, w.walls, w.waves, w.devices, w.enc, w.nav];
   const own = w.mode.pools?.(w); // only a world of that mode has them, so the other rooms keep their layout (and hash) exactly
   if (own) pools.push(...own);
+  if (w.party) pools.push(w.party); // a campaign area only, likewise
   for (const pool of pools) {
     // Sorted by field name, so the order never depends on how a pool object was built.
     for (const k of Object.keys(pool).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) out.push((pool as Record<string, ArrayBufferView>)[k]);

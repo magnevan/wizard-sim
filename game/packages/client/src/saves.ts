@@ -4,8 +4,9 @@
  *
  * A save names a checkpoint, never a snapshot: snapshots are tied to one build's layout and are large, while a
  * checkpoint id rebuilds the same place in any build that still has it (an unknown one starts the chapter over).
- * `party` is where state that carries between chapters goes (unlocked elements, flags) once the campaign has some.
+ * `party` is what carries between areas (the elements unlocked: the battery gives Fire), so Continue starts with it.
  */
+import type { PartyState } from '@wizard-sim/sim';
 import { SCENARIOS, checkpointsOf, scenarioById, type Scenario } from './scenarios';
 
 export interface Save {
@@ -14,7 +15,8 @@ export interface Save {
   checkpoint: string;
   /** When it was written (ISO). */
   at: string;
-  party: Record<string, never>;
+  /** What the party had there (sim PartyState); null for none. */
+  party: PartyState | null;
 }
 
 const KEY = 'wizard-sim-save-v1';
@@ -42,11 +44,11 @@ export function progressOf(scenario: string, checkpoint: string): number {
  * Records that `checkpoint` of chapter `s` was reached, if it is further along than the save (replaying an earlier
  * chapter, or a chapter from its start, never loses your place). Only campaign chapters are saved; storage errors are ignored.
  */
-export function writeSave(s: Scenario, checkpoint: string): boolean {
+export function writeSave(s: Scenario, checkpoint: string, party?: PartyState): boolean {
   if (s.kind !== 'campaign') return false;
   const old = loadSave();
   if (old && progressOf(old.scenario, old.checkpoint) >= progressOf(s.id, checkpoint)) return false;
-  try { localStorage.setItem(KEY, JSON.stringify({ v: 1, scenario: s.id, checkpoint, at: new Date().toISOString(), party: {} } satisfies Save)); return true; } catch { return false; }
+  try { localStorage.setItem(KEY, JSON.stringify({ v: 1, scenario: s.id, checkpoint, at: new Date().toISOString(), party: party ?? null } satisfies Save)); return true; } catch { return false; }
 }
 
 /**
@@ -58,9 +60,9 @@ export class SaveWatch {
   constructor(private scenario: () => Scenario) {}
   /** A new chapter (or the same one again) began: the next shown step writes where it stands (if that's further along). */
   reset(): void { this.last = undefined; }
-  update(reached: string | undefined): void {
+  update(reached: string | undefined, party?: PartyState): void {
     if (!reached || reached === this.last) return;
     this.last = reached;
-    writeSave(this.scenario(), reached);
+    writeSave(this.scenario(), reached, party);
   }
 }

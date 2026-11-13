@@ -29,7 +29,10 @@ for part in ('back', 'front'):
         grid.paste(row.crop((f * cw, 0, (f + 1) * cw, ch)), ((f % GRID) * cw, (f // GRID) * ch))
     grid.save(os.path.join(OUT, f'spin-{part}.png'), optimize=True)
 fall = P.run_whole(fall_src, OUT, 'fall')
-fall['release'] = json.load(open(os.path.join(fall_src, 'info.json'))).get('release', 0)
+fall_info = json.load(open(os.path.join(fall_src, 'info.json')))
+fall['release'] = fall_info.get('release', 0)
+# the fall's frames before the release are the spin's, spinStep apart (rings.py): the repair hands back to the spin there
+fall['spinStep'] = fall_info.get('spinStep', 0)
 spin_top = json.load(open(os.path.join(spin_src, 'info.json'))).get('top', 0)
 json.dump({'spin': {'frames': n, 'cell': spin['cell'], 'cols': GRID, 'top': spin_top, 'columnsPerFrame': 1, 'columnsPerTurn': P.COLS},
            'fall': fall, 'crystal': list(P.CRYSTAL_AT)}, open(os.path.join(OUT, 'rings3d.json'), 'w'), indent=1)

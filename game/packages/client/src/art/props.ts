@@ -13,7 +13,8 @@ import type { RoomDef } from '@wizard-sim/sim';
 import { FY, PPU } from '../camera';
 import { loadTexture, propImage, propMeta, type PropMeta, type PropSet } from './assets';
 import { FIELD, gx, gy } from './field';
-import { towersLit, unstable, wellPower } from './power-down';
+import { towersLit, unstable, wellPower, wellRepair } from './power-down';
+import { wellLit } from './well-anim';
 import * as X from './px';
 import { clamp } from './util';
 import { WELL_MARGIN, WELL_RISE, WellAnim } from './well-anim';
@@ -197,28 +198,15 @@ export class PropView {
   private well = new WellAnim();
   private wellOn = false;
   /**
-   * The well's preview (art/well-anim.ts PREVIEWS): when canvas point (x, y) is on the well, steps to its next version
-   * and returns that version's label, or '' when back to the game's own state. Returns null when (x, y) misses it.
-   */
-  clickWell(x: number, y: number): string | null {
-    const top = this.items.find((it) => it.asset === 'battery-well-top');
-    if (!this.wellOn || !top?.spr.visible) return null;
-    const b = top.spr.getBounds();
-    if (x < b.minX || x > b.maxX || y < b.minY || y > b.maxY) return null;
-    return this.well.nextPreview() ?? '';
-  }
-  /** Shows the well's version n (PREVIEWS) from the start (?well=n, for screenshots). */
-  previewWell(n: number): void { this.well.preview = n - 1; this.well.nextPreview(); }
-  /**
    * The battery, each frame: the well alive (art/well-anim.ts), and its power going down as an animation once it runs
-   * dry (art/power-down.ts). Towers and heads fade, sputtering, into their burnt-out art laid over them
-   * (tools/art-import/defence.py), the well's steps into their drained version (tools/art-import/well_drained.py), and
-   * every one's light with them (standing()'s `lit`).
+   * dry, and coming back with the repair (art/power-down.ts). Towers and heads fade, sputtering, into their burnt-out
+   * art laid over them (tools/art-import/defence.py), the well's steps into their drained version
+   * (tools/art-import/well_drained.py), and every one's light with them (standing()'s `lit`).
    */
   powerDown(w: World, t: number, fx0: number, fy0: number): void {
     if (!w.battery) return;
-    const towers = towersLit(w), power = wellPower(w);
-    const glow = this.wellOn ? this.well.draw(t, power, unstable(w)) : power; // the well's light pulses with its crystal
+    const towers = towersLit(w), repair = wellRepair(w), power = repair > 0 ? wellLit(repair) : wellPower(w);
+    const glow = this.wellOn ? this.well.draw(t, wellPower(w), unstable(w), repair) : power; // the well's light pulses with its crystal
     for (const it of this.items) {
       if (it.asset === 'battery-well-top') { it.lit = glow; continue; }
       // the well's steps darken late, with the bought power-down's last frames (its first ones are the overload's flare)

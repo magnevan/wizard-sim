@@ -8,10 +8,10 @@
  */
 import { len } from './geom';
 import { BTN, type PlayerInput } from './input';
-import { RUNES } from './config';
+import { RUNES, T, WELL } from './config';
 import { EL, N_EL } from './elements';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
-import { MAX_SEATS, PHASE, alive, wellDry, type World } from './world';
+import { MAX_SEATS, PHASE, alive, infused, wellDry, type World } from './world';
 
 export const BATTERY = {
   /** How near a possession circle's middle you have to stand: inside it (its radius is 1.6, client art/feed-lines.ts), and a little. */
@@ -48,7 +48,8 @@ export const driving = (w: World, i: number): boolean => !!w.battery && i >= 0 &
 
 /** The possession circle (the old pedestal's place) within reach of this seat that nobody is using, or -1. */
 export function pedestalNear(w: World, i: number): number {
-  if (!w.battery || wellDry(w)) return -1; // the well's dry: the defences are dead
+  // the well's dry: the defences are dead, till the repair has relit them
+  if (!w.battery || (wellDry(w) && w.battery.wellT[2] < T(WELL.relit))) return -1;
   const b = w.bodies, pads = at(w, PEDESTAL);
   let best = -1, bd: number = BATTERY.reach;
   for (let k = 0; k < pads.length; k++) {
@@ -73,13 +74,14 @@ function takeDefence(w: World, i: number, k: number): void {
   w.seats.runes[i * N_EL + EL.fire - 1] = RUNES.max.fire; // the defence's pool, full
 }
 
-/** Back to where you stepped up from, with your own pools (none until the infusion). */
+/** Back to where you stepped up from, with your own pools: none until the infusion, its Fire pool after (a defence relit by the repair). */
 export function stepAway(w: World, i: number): void {
   const b = w.bodies, d = w.battery!;
   b.x[i] = d.homeX[i]; b.y[i] = d.homeY[i]; b.vx[i] = b.vy[i] = 0;
   d.drive[i] = -1;
   clearHands(w, i);
   w.seats.runes.fill(0, i * N_EL, i * N_EL + N_EL);
+  if (infused(w)) w.seats.runes[i * N_EL + EL.fire - 1] = WELL.own;
 }
 
 /** The Use button, on the press edge: step up to the nearest free defence, or step away from yours. Runs before the seats. */

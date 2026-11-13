@@ -223,6 +223,23 @@ try {
   await sleep(6000);
   await shot('well-through');
   console.log('the well ok: dry, the gate open, a rune of your own');
+
+  // the repair: the fight over, X by the well; the screen fades to black and back, the well rises, the defences relight
+  await p.evaluate(() => {
+    const w = window.wizardSim.world, b = w.bodies, well = w.def.props.find((q) => q.asset === 'battery-well');
+    for (let i = 4; i < b.kind.length; i++) if (b.kind[i] === 3) b.kind[i] = 0;
+    w.enc.left.fill(0); w.enc.state[1] = 8; // BSTEP.after
+    b.x[0] = well.x; b.y[0] = well.y + 3.4;
+  });
+  await sleep(800);
+  await shot('repair-prompt');
+  await p.keyboard.press('KeyX');
+  const repS = () => p.evaluate(() => window.wizardSim.world.battery.wellT[2] / 60);
+  const untilR = async (s) => { for (let k = 0; k < 300 && (await repS()) < s; k++) await sleep(30); };
+  for (const s of [1.0, 2.6, 3.6, 4.4, 5.5]) { await untilR(s); await shot(`repair-${s.toFixed(1)}`); }
+  const rep = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], flow: w.battery.flow[0] }; });
+  if (rep.step !== 9 || rep.flow !== 1) fail(`the repair should have begun and relit the well: step ${rep.step}, flow ${rep.flow}`);
+  console.log('the repair ok: the well whole, its flow full');
 } finally {
   await browser.close();
   stop();

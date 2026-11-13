@@ -153,6 +153,17 @@ The user then approved the overloaded-to-failed animation and the failed state (
 | The fallen rings' outline showed through the base | `unhide` now clears every line pixel with no ring metal beside it, anywhere (the drum and the steps hide the rings too, not only the crystal). |
 | The rings' tops were cut off in the repair | The 3D rings reach a little above the bought ones, so the renders were cut flat at row 0 (the fall's first frames, the spin's back rings). Both now carry 8 spare rows (`rings.py TOP`), and the game draws the strips that much higher (`top` in rings3d.json). |
 
+Fourth round, same day. The user: in the repair the rings sat a little high, with a gap over the crystal, and the spin snapped in after it. Also: take out the click-through of the states, start the well in its overloaded state, then build the repair beat.
+
+| Note | Done |
+|---|---|
+| The repaired rings sat too high, a gap over the crystal | *Confirmed cause:* Blender fits an orthographic camera's scale to the longer side, and the fall's canvas (104 × 121, with the headroom) is taller than wide, so the fall's rings came out 121/104 too big and 8 px too high. The camera now fits the width (`sensor_fit`); the fall's first frame measures the same as the spin's. Re-rendered; the fall lands as before. |
+| The spin snapped in after the repair | The fall's frames before the release are now the spin's own poses, wobble included (fall frame f is spin frame 4f). The repair plays the fall back to frame 3 and the spin picks up at frame 12, the same pose. |
+| Remove the click-through | Gone, with `?well=n` and `scripts/well-states.mjs`; `scripts/well-frames.mjs` still paints each state. |
+| Start overloaded | The well is overloaded from the start (it holds four defences under siege) until it runs dry: the opening's "Unstable, then Drained, then Stable". |
+
+**The repair beat, built** (`sim/src/battery-waves.ts` REPAIR, `client/src/art/power-down.ts` REPAIR). Once beat 7's last goblin is down, the prompt reads "Stabilize the well" with the X key, and the X shows over your head within 4 of the well's middle (`WELL.repairReach`). Any wizard's press does it for everyone. The screen fades to black (0.6 s), holds (0.8 s) and comes back on the drained well; then the rings rise as the fall played back, the light returns, and the spin goes on, steady. Light runs back out along the paths, and the towers sputter back on as it reaches them. From 4.6 s (`WELL.relit`) the well's flow is full and the defences can be possessed again; stepping away gives you back your own Fire rune. `?fail=2#battery` starts there. **Left as is, for the user:** the gate's fire stays out after the repair, nothing more comes, and the cursor's aim ring shows over the black.
+
 ## Enemies at the wall's foot
 
 Not on the user's list, but it comes from the same layout: a full-height wall hides about 4 units of ground behind it, and enemies reaching the wall will be out of sight. A one-storey kit would be about 10 generations, with sign-off first. Decide once waves exist.

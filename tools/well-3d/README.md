@@ -18,7 +18,8 @@ About 16 minutes for the spin, two for the fall. The spin is exported as a grid,
 - **The light:** a key light from about the camera, a warm crystal light toward the camera, and a world that is warm above and dark below for the metal to reflect.
 - **The 'where' render:** each frame has one, recording for each pixel which face of which band it is and where on that face (u round the ring, v across). `pixelize.py` uses it to draw the band's face pixel by pixel.
 - **The spin:** split at the crystal (back rings, crystal, front rings).
-- **The fall:** stand-ins for the drum, the crystal and the steps, fitted to the art, are both what the rings land on and holdouts, so a ring behind the drum is cut where the art covers it. The rings ignore each other, since they sit closer than the collision margin.
+- **The camera** fits its scale to the width (`sensor_fit`): left to Blender, the fall's canvas, taller than wide, came out 121/104 too big, and the repair showed a gap over the crystal (the user, 2026-11-13).
+- **The fall:** its first frames, before the rings let go, are the spin's own poses four frames apart (`SPIN_STEP`, wobble and all), so the repair, playing the fall back, hands over to the spin with no snap. Stand-ins for the drum, the crystal and the steps, fitted to the art, are both what the rings land on and holdouts, so a ring behind the drum is cut where the art covers it. The rings ignore each other, since they sit closer than the collision margin.
 
 ## Snapping to pixel art (`pixelize.py`)
 
@@ -43,4 +44,4 @@ About 16 minutes for the spin, two for the fall. The spin is exported as a grid,
 - `swatch.py`: the band's pattern laid flat.
 - `straighten.py`: the bought front bands sheared level, pixel for pixel.
 - `unwrap.py`: a rough map of the bought engraving through the fit.
-- In the game, clicking the well steps through its versions; `game/scripts/well-frames.mjs` paints each state directly and `well-states.mjs` shoots them in the running game.
+- `game/scripts/well-frames.mjs` paints each state directly. In the game, `?fail=1#battery` reaches the overload's end and the fall in seconds, and `?fail=2#battery` the repair (game/README.md).

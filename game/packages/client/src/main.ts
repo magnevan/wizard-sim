@@ -42,7 +42,7 @@
 import { Application } from 'pixi.js';
 import { TextureSource } from 'pixi.js';
 import {
-  DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, createWorld, devStartWave, hashWorld, hex, newBotMemory, newTutorialBot, replaceWorld, runReplay, scriptedInput, scriptedReplay, step, tutorialBotInput,
+  BSTEP, DT, EL, MAX_SEATS, N_EL, NO_INPUT, ReplayRecorder, T, WELL, botInput, createWorld, devStartWave, hashWorld, hex, newBotMemory, newTutorialBot, replaceWorld, runReplay, scriptedInput, scriptedReplay, step, tutorialBotInput,
   type PlayerInput, type Room, type World,
 } from '@wizard-sim/sim';
 import { demoInput, enemyAttackScene, parseDemo, rallyScene, threeScene } from './demo';
@@ -161,8 +161,15 @@ async function boot(): Promise<void> {
   if (sceneName === 'rally') rallyScene(world);
   if (sceneName === 'three') threeScene(world);
   // ?fail=1 (the battery): skip the lesson to the free fights with the well nearly out, so beats 5 to 7 (the well
-  // failing, running dry, the infusion, the goblins coming for you) start in about 11 s instead of after the lesson and 75 s
-  if (world.battery && params.get('fail') === '1') { const st = world.enc.state; st[0] = 1; st[1] = 5; st[2] = 0; st[3] = 0; world.battery.flow[0] = 0.15; }
+  // failing, running dry, the infusion, the goblins coming for you) start in about 11 s instead of after the lesson and 75 s.
+  // ?fail=2: the well just run dry and the fight already over, a Fire rune of your own: the repair (X at the well) is next
+  const failAsk = world.battery ? params.get('fail') : null;
+  if (failAsk === '1') { const st = world.enc.state; st[0] = 1; st[1] = BSTEP.free; st[2] = 0; st[3] = 0; world.battery!.flow[0] = 0.15; }
+  if (failAsk === '2') {
+    const st = world.enc.state; st[0] = 1; st[1] = BSTEP.after; st[2] = 0; st[3] = 0;
+    world.battery!.flow[0] = 0; world.battery!.wellT[1] = T(WELL.gutter) - 1; // the gate's fire goes out on the next tick
+    for (let i = 0; i < MAX_SEATS; i++) world.seats.runes[i * N_EL + EL.fire - 1] = WELL.own;
+  }
   // ?scene=enemyattacks (headless, any room): the sim never steps; each frame poses every enemy at one beat of its attack
   const atkScene = headless && params.get('scene') === 'enemyattacks';
   const atkPhase = params.get('phase') ?? 'wind', atkFace = Number(params.get('face') ?? 0.06);
@@ -249,24 +256,6 @@ async function boot(): Promise<void> {
     if (e.code === 'KeyO') { const s = PROP_SETS[(PROP_SETS.indexOf(view.props.set) + 1) % PROP_SETS.length]; view.props.set = s; setParam('props', s === 'lean' ? null : s); }
     if (e.code === 'KeyI') { view.wizardHd = !view.wizardHd; setParam('wizard', view.wizardHd ? 'hd' : null); }
   });
-
-  // The battery: clicking the well steps through its versions (art/well-anim.ts PREVIEWS), named in a tag at the top.
-  // Caught before the input sees it, so that click casts nothing.
-  const wellTag = document.createElement('div');
-  wellTag.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:20;pointer-events:none;display:none;font:13px/1.4 ui-monospace,Consolas,monospace;color:#ffe0b0;background:rgba(13,11,20,.85);border:1px solid #6a5030;border-radius:6px;padding:4px 10px';
-  document.body.appendChild(wellTag);
-  addEventListener('pointerdown', (e) => {
-    if (scenario.id !== 'battery' || menu?.open || e.button !== 0) return;
-    const r = app.canvas.getBoundingClientRect();
-    const label = view.props.clickWell(e.clientX - r.left, e.clientY - r.top);
-    if (label === null) return;
-    e.stopPropagation(); e.preventDefault();
-    wellTag.textContent = label ? `Well: ${label}. Click it for the next.` : '';
-    wellTag.style.display = label ? 'block' : 'none';
-  }, true);
-  // ?well=n: the battery's well opens on version n of PREVIEWS (0 the still well, 1 the bought loop, 2 overloaded, ...)
-  const wellAsk = params.get('well');
-  if (wellAsk !== null && wellAsk !== '') view.props.previewWell(Number(wellAsk));
 
   const scaleSteps = [0, 1, 2, 3, 4];
   const settings: Setting[] = [

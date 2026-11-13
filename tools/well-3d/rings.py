@@ -210,6 +210,9 @@ for k, mirror in enumerate((False, True)):
 cam = bpy.data.cameras.new('cam')
 cam.type = 'ORTHO'
 cam.ortho_scale = CANVAS_W
+# the scale (and the shift below) across the width: left on AUTO, Blender fits the larger side, so the fall's canvas,
+# taller than wide, drew its rings 121/104 too big and too high (the user saw a gap over the crystal in the repair)
+cam.sensor_fit = 'HORIZONTAL'
 DIST = 200.0
 cam.clip_start, cam.clip_end = 0.1, 400
 cam_o = bpy.data.objects.new('cam', cam)
@@ -297,15 +300,21 @@ ls.linestyle.thickness = 1.0
 WOBBLE, WOBBLE_CYCLES = 1.6, (5, 7)
 
 
+def ring_matrix(k, phase):
+    """Ring k at phase 0..1 of the loop: turned about its own axis, leaning in its wobble."""
+    _, base, sgn = rings[k]
+    c = WOBBLE_CYCLES[k]
+    lean_dir = 2 * math.pi * c * phase + k * 1.3
+    lean = math.radians(WOBBLE) * (0.75 + 0.25 * math.sin(2 * math.pi * (c - 2) * phase + k))
+    tilt = Matrix.Rotation(lean, 4, Vector((math.cos(lean_dir), math.sin(lean_dir), 0)))
+    return base @ tilt @ Matrix.Rotation(sgn * phase * 2 * math.pi, 4, 'Z')
+
+
 def pose(phase):
     """Phase 0..1 is one loop: each ring turned a whole revolution about its own axis, A and B opposite ways (the
     band's wear marks don't repeat, so the loop is a full turn: TURN_FRAMES frames, a column of the ribs apart)."""
-    for k, (o, base, sgn) in enumerate(rings):
-        c = WOBBLE_CYCLES[k]
-        lean_dir = 2 * math.pi * c * phase + k * 1.3
-        lean = math.radians(WOBBLE) * (0.75 + 0.25 * math.sin(2 * math.pi * (c - 2) * phase + k))
-        tilt = Matrix.Rotation(lean, 4, Vector((math.cos(lean_dir), math.sin(lean_dir), 0)))
-        o.matrix_world = base @ tilt @ Matrix.Rotation(sgn * phase * 2 * math.pi, 4, 'Z')
+    for k, (o, _, _) in enumerate(rings):
+        o.matrix_world = ring_matrix(k, phase)
 
 
 def shoot(path):
@@ -404,7 +413,9 @@ if MODE == 'fall':
         o.rigid_body.collision_collections = [i in (0, 1, 2) for i in range(20)]
     # spinning when they let go: keyframed (animated) for the first frames, turning as the overloaded spin does, then
     # handed to the physics
-    SPIN_PER_FRAME = 2 * math.pi / 240 * 4   # four engraving columns a physics frame: the overloaded spin's pace
+    # four engraving columns a physics frame (the overloaded spin's pace), on the spin's own poses, wobble and all: the
+    # fall's frame f (before the release) is the spin's frame 4f, so the repair hands back to the spin without a snap
+    SPIN_STEP = 4
     for k, (o, base, sgn) in enumerate(rings):
         body(o, 'ACTIVE', 'MESH')
         o.rigid_body.mass = 2.0
@@ -413,7 +424,7 @@ if MODE == 'fall':
         o.rotation_mode = 'QUATERNION'
         for f in range(1, RELEASE + 1):
             scene.frame_set(f)
-            o.matrix_world = base @ Matrix.Rotation(sgn * (f - 1) * SPIN_PER_FRAME, 4, 'Z')
+            o.matrix_world = ring_matrix(k, (f - 1) * SPIN_STEP / 240)
             o.keyframe_insert('location', frame=f)
             o.keyframe_insert('rotation_quaternion', frame=f)
             o.rigid_body.kinematic = True
@@ -441,7 +452,7 @@ if MODE == 'fall':
         layer.material_override = None
         scene.view_settings.view_transform = 'Standard'
         shot.append(f)
-    json.dump({'frames': len(shot), 'canvas': [CANVAS_W, CANVAS_H], 'super': SUPER, 'top': TOP, 'fps': FPS, 'release': RELEASE}, open(os.path.join(OUT, 'info.json'), 'w'))
+    json.dump({'frames': len(shot), 'canvas': [CANVAS_W, CANVAS_H], 'super': SUPER, 'top': TOP, 'fps': FPS, 'release': RELEASE, 'spinStep': SPIN_STEP}, open(os.path.join(OUT, 'info.json'), 'w'))
     print('rendered fall', len(shot))
     sys.exit(0)
 if MODE == 'unwrap':

@@ -15,7 +15,7 @@ import { tickDeaths, tickEnemies } from './enemies';
 import { tickNav } from './nav';
 import { hasteOf, tickStructures } from './structures';
 import { tickWaves } from './waves';
-import { tickBatteryWaves } from './battery-waves';
+import { repairPress, tickBatteryWaves } from './battery-waves';
 import { survivePress, tickSurvive } from './survive';
 import { HIT_KIND, setHitKind, tickStatuses } from './hit';
 import { sureFooted, tickGuards, walkMult } from './guards';
@@ -31,7 +31,7 @@ export function step(w: World, inputs: readonly PlayerInput[]): void {
   const b = w.bodies, s = w.seats;
   if (w.tut) beginTutorialTick(w);
   if (w.run) survivePress(w, inputs);
-  if (w.battery) batteryPress(w, inputs);
+  if (w.battery) { batteryPress(w, inputs); repairPress(w, inputs); }
 
   for (let i = 0; i < MAX_SEATS; i++) {
     const inp = inputs[i];

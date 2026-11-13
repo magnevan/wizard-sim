@@ -17,10 +17,11 @@
  *   failing     (`power` falling, art/power-down.ts) it ends in one great flare, lightning everywhere and the runes
  *               erupting; then the rings fall and settle on the drum and the steps as the light goes out of everything
  *   failed      the fall's last frame, dark
- *   repaired    (`repair` 0 to 1) the fall played back, the rings lifting, the light returning, then the spin again
+ *   repaired    (`repair` 0 to 1) the fall played back, the rings lifting, the light returning, then the spin again,
+ *               steady, from the very pose the fall began in (no snap)
  *
- * Clicking the well steps through every version (`preview`, main.ts). All of it is one canvas, the well-top prop's
- * texture, so it sorts among the actors as the prop did (art/props.ts).
+ * All of it is one canvas, the well-top prop's texture, so it sorts among the actors as the prop did (art/props.ts).
+ * `game/scripts/well-frames.mjs` paints each state directly.
  */
 import { Texture } from 'pixi.js';
 import * as X from './px';
@@ -30,7 +31,7 @@ import { clamp, rand } from './util';
 interface Layers { size: [number, number]; crystal: { cx: number; cy: number; bottom: number }; seams: number[][] }
 /** A strip of frames: `cols` cells to a row (all of them in one row when absent); each cell `top` rows taller than the
  * layers' crop, above it (the 3D rings reach a little higher than the bought ones). */
-interface Strip { frames: number; cell: [number, number]; cols?: number; top?: number; fps?: number; release?: number }
+interface Strip { frames: number; cell: [number, number]; cols?: number; top?: number; fps?: number; release?: number; spinStep?: number }
 interface Rings3d { spin: Strip; fall: Strip }
 const layerMeta = import.meta.glob<Layers>('../../../../content/assets/well/layers.json', { eager: true, import: 'default' });
 const ringMeta = import.meta.glob<Rings3d>('../../../../content/assets/well/rings3d/rings3d.json', { eager: true, import: 'default' });
@@ -75,15 +76,10 @@ interface BoltSeg { x0: number; y0: number; x1: number; y1: number; k: number; w
 /** A bolt, shaped once when it's born and held for its short life; `strike`: it ends on a ring at (ex, ey). */
 interface Bolt { born: number; life: number; back: boolean; strike: boolean; ex: number; ey: number; segs: BoltSeg[] }
 
-/** The versions clicking the well steps through (the preview). A change plays and then holds its end for a moment. */
-export const PREVIEWS: readonly { name: string; label: string }[] = [
-  { name: 'steady', label: 'steady' },
-  { name: 'overloaded', label: 'overloaded (failing)' },
-  { name: 'fail', label: 'overloaded → failed' },
-  { name: 'failed', label: 'failed' },
-  { name: 'repair', label: 'failed → repaired' },
-];
-const CHANGE = 2.6, HOLD = 1.4;
+/** The repair: the fall plays back till LIFT, then the spin; the light comes back from LIGHT_FROM over LIGHT_SPAN. */
+const LIFT = 0.85, LIGHT_FROM = 0.35, LIGHT_SPAN = 0.55;
+/** How lit the well is at `repair` 0..1 (its runes, crystal and rings; the steps' light follows it, art/props.ts). */
+export const wellLit = (repair: number): number => clamp((repair - LIGHT_FROM) / LIGHT_SPAN, 0, 1);
 
 const loadImage = (src: string): Promise<HTMLImageElement> => new Promise((done, fail) => { const im = new Image(); im.onload = () => done(im); im.onerror = () => fail(new Error('could not load ' + src)); im.src = src; });
 /** Where frame k of a strip sits in its image. */
@@ -102,11 +98,10 @@ export class WellAnim {
   readonly tex: Texture;
   private img: Record<string, HTMLImageElement> = {};
   ready = false;
-  /** The preview: which of PREVIEWS is shown in place of the game's state (-1: the game's), and since when. */
-  preview = -1;
-  private previewAt = -1;
   /** The spin's place, in frames (it speeds up and slows, so it's integrated, not taken from the clock). */
   private phase = 0;
+  /** Were the rings down (fallen, or still rising) last frame? Leaving that, the spin starts from the fall's first pose. */
+  private down = false;
   private last = -1;
   private sparks: Spark[] = [];
   private burst = false;
@@ -170,14 +165,6 @@ export class WellAnim {
     return out;
   }
 
-  /** The next version in the preview, then back to the game's own state. Returns its label, or null when back. */
-  nextPreview(): string | null {
-    this.preview = this.preview + 1 >= PREVIEWS.length ? -1 : this.preview + 1;
-    this.previewAt = -1;
-    this.sparks = [];
-    return this.preview < 0 ? null : PREVIEWS[this.preview].label;
-  }
-
   /** Draws frame k of a strip at the canvas's layer origin (moved dx, dy), at opacity a. */
   private strip(g: Ctx, name: string, s: Strip, k: number, a = 1, dx = 0, dy = 0): void {
     if (a <= 0.001) return;
@@ -200,36 +187,27 @@ export class WellAnim {
    */
   draw(t: number, power: number, unstable: number, repair = 0): number {
     if (!this.ready) return power;
-    if (this.preview >= 0) {
-      const p = PREVIEWS[this.preview].name;
-      if (this.previewAt < 0) this.previewAt = t;
-      const e = (t - this.previewAt) % (CHANGE + HOLD), k = clamp(e / CHANGE, 0, 1);
-      if (p === 'steady') return this.paint(t, 1, 0, 0);
-      if (p === 'overloaded') return this.paint(t, 1, 1, 0);
-      if (p === 'fail') { if (e < 0.05) { this.sparks = []; this.burst = false; } return this.paint(t, 1 - k, 1, 0); }
-      if (p === 'failed') return this.paint(t, 0, 0, 0);
-      if (e < 0.05) this.sparks = [];
-      return this.paint(t, 0, 0, k);
-    }
-    return this.paint(t, power, unstable, repair);
-  }
-
-  private paint(t: number, power: number, unstable: number, repair: number): number {
     const { c, x: g } = this.cv, M = WELL_MARGIN;
     const dt = this.last < 0 ? 0 : clamp(t - this.last, 0, 0.1);
     this.last = t;
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); g._fs = null;
     g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    // once the repair has begun it decides everything; the power-down is over by then
+    if (repair > 0) power = 0;
     const dead = 1 - power, pulse = 0.5 + 0.5 * Math.sin(t * 2.1);
     const flick = unstable > 0 ? 0.8 + 0.2 * rand(Math.floor(t * 9), 1, 77) : 1;
-    const falling = dead > FLARE || repair > 0;
+    const falling = repair > 0 ? repair < LIFT : dead > FLARE;
+    const S = RINGS.spin, F = RINGS.fall, rel = F.release ?? 0;
+    // the rings back up: the spin picks up from the last pose the fall played back to, the one it left the spin from
+    if (this.down && !falling && repair > 0) this.phase = Math.max(0, rel - 1) * (F.spinStep ?? 0);
+    this.down = falling;
     if (!falling) this.phase += dt * (SPIN_FPS + OVERLOAD_FPS * unstable);
     if (dead <= 0) this.burst = false;
 
     // how lit each part is: the runes and the crystal glow (0 dark .. 1 full, more when overloaded), the rings' light
     let glow: number, ringsLit: number, crystalLit: number, flare = 0;
     if (repair > 0) {
-      const k = clamp((repair - 0.35) / 0.55, 0, 1);
+      const k = wellLit(repair);
       glow = k; ringsLit = k; crystalLit = k;
     } else if (dead > 0) {
       flare = dead < FLARE ? Math.sin((dead / FLARE) * Math.PI) : 0;
@@ -269,13 +247,13 @@ export class WellAnim {
     const halo = (0.08 + 0.06 * pulse + 0.22 * unstable * flick + 0.35 * flare) * Math.max(glow, flare);
     if (halo > 0.01) X.glow(g, cx, cy, 14 + 6 * unstable + 8 * flare, flare > 0.3 ? '#fff4d0' : '#ff9a30', halo);
 
-    const S = RINGS.spin, F = RINGS.fall;
     if (falling) {
-      // the crystal, then the fallen rings over it (the fall's stand-ins already cut them where the well covers them)
+      // the crystal, then the fallen rings over it (the fall's stand-ins already cut them where the well covers them).
+      // Falling, from the release on; rising, back to the frame before it, which is a pose of the spin's (rings.py)
       this.crystal(g, crystalLit, flare, unstable, flick, pulse, 0);
-      const rel = F.release ?? 0;
-      const k = repair > 0 ? (1 - clamp(repair / 0.85, 0, 1)) : clamp((dead - FLARE) / (1 - FLARE), 0, 1);
-      const f = rel + k * (F.frames - 1 - rel);
+      const from = repair > 0 ? Math.max(0, rel - 1) : rel;
+      const k = repair > 0 ? 1 - clamp(repair / LIFT, 0, 1) : clamp((dead - FLARE) / (1 - FLARE), 0, 1);
+      const f = Math.round(from + k * (F.frames - 1 - from));
       this.strip(g, 'fall-dark.png', F, f, 1);
       this.strip(g, 'fall.png', F, f, ringsLit);
     } else {

@@ -159,6 +159,25 @@ describe('the well failing (beats 5 to 7)', () => {
     clear(w);
     idle(w, BWAVES.pause + 1);
     expect(w.enc.state[1]).toBe(BSTEP.after);
+
+    // the repair: X out of the well's reach does nothing; at it, it begins
+    const well = w.def.props.find((p) => p.asset === 'battery-well')!, x = [{ ...NO_INPUT, buttons: BTN.use }, NO_INPUT, NO_INPUT, NO_INPUT];
+    w.bodies.x[0] = well.x + WELL.repairReach + 2; w.bodies.y[0] = well.y;
+    step(w, x); step(w, NO_INPUTS);
+    expect(w.enc.state[1]).toBe(BSTEP.after);
+    w.bodies.x[0] = well.x + WELL.repairReach - 0.6; w.bodies.y[0] = well.y;
+    step(w, x); step(w, NO_INPUTS);
+    expect(w.enc.state[1]).toBe(BSTEP.repair);
+    // the defences stay dead till it has relit them; then one can be possessed again, and stepping away leaves your own rune
+    expect(w.battery!.flow[0]).toBe(0);
+    idle(w, WELL.relit);
+    expect(w.battery!.flow[0]).toBe(1);
+    expect(enemies(w)).toHaveLength(0);
+    take(w);
+    expect(w.battery!.drive[0]).toBe(1);
+    step(w, x); step(w, NO_INPUTS);
+    expect(w.battery!.drive[0]).toBe(-1);
+    expect(fire(w)).toBe(WELL.own);
   });
 });
 

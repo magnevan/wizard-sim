@@ -30,6 +30,7 @@ import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
+import { blackout } from './art/power-down';
 import type { PropSet } from './art/assets';
 import { AMBIENT, canvas as pxCanvas, stats, text as pxText } from './art/px';
 import { newRigState, type RigKind, type RigState } from './art/rigs';
@@ -188,7 +189,7 @@ export class WorldView {
     } else {
       this.scene.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
     }
-    this.hudLayer.addChild(this.tut.fade, this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over, this.tut.sprite, this.tut.banner, this.artLabel);
+    this.hudLayer.addChild(this.tut.fade, this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over, this.tut.sprite, this.tut.banner, this.repairFade, this.artLabel);
     this.root.addChild(this.scene, this.hudLayer);
     for (let i = 0; i < MAX_BODIES; i++) {
       const s = new Sprite(); s.visible = false; s.tint = tint;
@@ -375,6 +376,10 @@ export class WorldView {
     this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;
     this.hud.draw(w, t, cam.hudW, cam.hudH);
     this.tut.draw(w, ct, cam.hudW, cam.hudH);
+    // the battery's repair: the screen fades to black and back while the well is mended (art/power-down.ts)
+    const black = w.battery ? blackout(w) : 0;
+    this.repairFade.clear();
+    if (black > 0.005) this.repairFade.rect(0, 0, cam.hudW, cam.hudH).fill({ color: 0x0a0810, alpha: black });
     this.edges.draw(w, cam, ct, (i) => this.drawnAt(i, w, alpha));
     this.frames.upload();
     if (lit && this.renderer) {
@@ -460,6 +465,8 @@ export class WorldView {
    * it: they get an arrow at the edge of the view (edge-marks.ts). With no local wizard at all, it
    * frames everyone. Several local seats share the screen (camera.ts `shared`).
    */
+  /** The battery's fade to black and back for the repair, over everything. */
+  private repairFade = new Graphics();
   /** Each seat's camera spot while the view glides back after the battery's well runs dry, x and y. */
   private glide = new Float64Array(MAX_SEATS * 2);
   private aim(w: World, alpha: number, dt: number): void {

@@ -21,7 +21,6 @@ try {
   // each sequence: [name, seconds, (s) => [power, unstable, repair], moments to keep (s)]
   const sheets = await p.evaluate(() => {
     const w = window.wizardSim.view.props.well;
-    w.preview = -1;
     const run = (secs, state, keep) => {
       const shots = [];
       const step = 1 / 60;
@@ -38,7 +37,8 @@ try {
       steady: run(2, () => [1, 0, 0], [0, 0.5, 1, 1.5, 2]),
       overloaded: run(1.2, () => [1, 1, 0], [0.2, 0.4, 0.6, 0.8, 1.0, 1.2]),
       fail: run(2.4, fail, [0.05, 0.12, 0.2, 0.3, 0.45, 0.6, 0.9, 1.2, 1.6, 2.1, 2.4]),
-      repair: run(2.4, (s) => [0, 0, Math.min(1, s / 2.2)], [0.2, 0.6, 1.0, 1.4, 1.8, 2.2, 2.4]),
+      // the rings back up at 0.85 of the repair (1.87 s here): the frames either side should match, with no jump
+      repair: run(2.6, (s) => [0, 0, Math.min(1, s / 2.2)], [0.2, 0.6, 1.0, 1.4, 1.8, 1.85, 1.9, 1.95, 2.2, 2.6]),
     };
   });
   for (const [name, shots] of Object.entries(sheets)) {

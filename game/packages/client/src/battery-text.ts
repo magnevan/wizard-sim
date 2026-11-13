@@ -24,7 +24,11 @@ export const DRIVING: Partial<Record<number, BatteryPrompt>> = {
   [BSTEP.brute]: { head: 'More runes, more fire', keys: [F, F, F, 'then', { key: 'rmb', hold: true }] },
 };
 
-/** For every seat once the well has run dry, by step (beats 6 and 7). The head is the user's line (r2-battery-transition). */
+/**
+ * For every seat once the well has run dry, by step (beats 6 and 7, and the repair). The infusion's head is the user's
+ * line (r2-battery-transition); the repair's is theirs too ("press X to stabilize", the opening's settled notes).
+ */
 export const OWN_FIRE: Partial<Record<number, BatteryPrompt>> = {
   [BSTEP.hands]: { head: 'You\'ve learned to channel fire', keys: [F, 'then', { key: 'rmb' }] },
+  [BSTEP.after]: { head: 'Stabilize the well', keys: [{ key: 'x' }] },
 };

@@ -17,7 +17,7 @@ import { BSTEP, MAX_SEATS, pedestalNear, type World } from '@wizard-sim/sim';
 import { toU, toV, toX, toY } from '../iso-world';
 import { gx, gy } from './field';
 import { PATH_STYLES, PathLayer, Shimmer, drawGlyphCircle, drawGlyphPath, pathLength, snap, type GlyphPath, type PathStyle, type RuneLook } from './glyph-path';
-import { POWER, dryTime } from './power-down';
+import { lineLight } from './power-down';
 import { clamp, rand } from './util';
 
 type LightFn = (x: number, y: number, r: number, col: string, a: number) => void;
@@ -76,10 +76,11 @@ function feedsOf(w: World): Feed[] {
 export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: number, light: LightFn): void {
   const d = w.battery;
   if (!d) return;
-  const feeds = feedsOf(w), flow = d.flow[0], dt = dryTime(w), frame = Math.floor(t * 9);
-  // how far out from the well the light still reaches, as a share of the longest line: all of it, or draining back
+  const feeds = feedsOf(w), ll = lineLight(w), flow = ll.flow, frame = Math.floor(t * 9);
+  // how far out from the well the light reaches, as a share of the longest line: all of it, draining back, or running
+  // out again with the repair
   const longest = Math.max(1, ...feeds.map((f) => f.from + f.len));
-  const reach = dt > 0 ? longest * Math.max(0, 1 - dt / POWER.drain) : Infinity;
+  const reach = ll.reach >= 1 ? Infinity : longest * ll.reach;
   const style = pathStyle(), ground = g;
   const mask = shimmer.begin(ground); // the runes' shimmer: stamped in as they're drawn, shown through them at the end
   g = layer.begin(ground); // the paths on a layer of their own, then laid into the ground in the style

@@ -14,7 +14,7 @@
 import { Sprite, Texture } from 'pixi.js';
 import {
   BATTERY, CELL, DEVICE, ECHO_LAG, sprayReach, KIND, MAX_DEVICES, MAX_MISSILES, MAX_SEATS, MAX_WALLS, MAX_ZONES, N_EL, PF, PHASE, QUEUE_MAX, RHYTHM, SHAPES, STATUS, STRUCT, terrainNear, SURF, T, WALL, ZONE,
-  compile, elementName, pedestalNear, queueFromCounts, specOf,
+  compile, elementName, pedestalNear, queueFromCounts, specOf, wellNear,
   type SimEvent, type SpellSpec, type World,
 } from '@wizard-sim/sim';
 import { FIELD, gx, gy } from './field';
@@ -402,10 +402,10 @@ export class Vfx {
     this.occludedChannels(w, ct, bodies, light);
     this.pilots(w, ct, light);
     if (w.battery) {
-      // standing in a free possession circle: the X key over your head
+      // standing in a free possession circle, or by the well once it can be stabilized: the X key over your head
       for (let i = 0; i < MAX_SEATS; i++) {
         const v = bodies[i];
-        if (v?.on && w.seats.active[i] && w.battery.drive[i] < 0 && pedestalNear(w, i) >= 0) drawKeys(this.o.x, [{ key: 'x' }], Math.round(v.x - 7), Math.round(v.y - 50), ct);
+        if (v?.on && w.seats.active[i] && w.battery.drive[i] < 0 && (pedestalNear(w, i) >= 0 || wellNear(w, i))) drawKeys(this.o.x, [{ key: 'x' }], Math.round(v.x - 7), Math.round(v.y - 50), ct);
       }
     }
     this.casters(w, ct, bodies, light);

@@ -374,9 +374,12 @@ export interface Battery {
   lane: Int8Array;
   /** How much the well still gives, 1 to 0: a defence's pool refills at this share of R (beat 5, battery-waves.ts). */
   flow: Float64Array;
-  /** [0] ticks since the flow ran out, [1] ticks since the well ran dry (0: not yet). */
+  /** [0] ticks since the flow ran out, [1] ticks since the well ran dry, [2] ticks since its repair began (0: not yet). */
   wellT: Int32Array;
 }
+
+/** Has the repair begun (X at the well once the fight is over, battery-waves.ts)? */
+export const wellRepaired = (w: World): boolean => !!w.battery && w.battery.wellT[2] > 0;
 
 /** Has the battery's well run dry (beat 6)? From then on the defences are dead and your runes are your own. */
 export const wellDry = (w: World): boolean => !!w.battery && w.battery.wellT[1] > 0;
@@ -625,7 +628,7 @@ export function createWorld(seed: number, players: number, opts: { dummies?: boo
       heal: u8(MAX_DEVICES), look: u8(MAX_DEVICES), born: i32(MAX_DEVICES), chan: i32(MAX_DEVICES),
     },
     run: opts.room === 'survive' ? run() : null,
-    battery: opts.room === 'battery' ? { drive: new Int8Array(MAX_SEATS).fill(-1), homeX: new Float64Array(MAX_SEATS), homeY: new Float64Array(MAX_SEATS), lane: new Int8Array(MAX_BODIES).fill(-1), flow: new Float64Array([1]), wellT: i32(2) } : null,
+    battery: opts.room === 'battery' ? { drive: new Int8Array(MAX_SEATS).fill(-1), homeX: new Float64Array(MAX_SEATS), homeY: new Float64Array(MAX_SEATS), lane: new Int8Array(MAX_BODIES).fill(-1), flow: new Float64Array([1]), wellT: i32(3) } : null,
     tut: opts.room === 'tutorial' ? tutorial(opts.tutorialBeat ?? TUT_ORDER[0]) : null,
     events: [],
   };

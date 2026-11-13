@@ -18,7 +18,10 @@
  *   DRY     the well has run dry (beat 6): everyone is stepped off their defence, the defences and the gate's fire go
  *           out, and WELL.surge later the infusion gives every wizard a Fire pool of its own (world.ts infused).
  *   HANDS   the enemies left come through the gate for you, then a group or two more (beat 7): your own fire now.
- *   AFTER   the last of them is down. The repair is to come.
+ *   AFTER   the last of them is down. X at the well stabilizes it (repairPress).
+ *   REPAIR  the repair under way and done: wellT[2] counts its ticks (the client's fade to black and back, the well
+ *           rising and lighting again, the defences with it: art/power-down.ts). WELL.relit after the press the flow is
+ *           full again and the defences can be possessed again.
  *
  * The step and its timer live in the encounter's state (enc.state: [0] on, [1] step, [2] ticks to the next group,
  * [3] which group of FREE or HANDS); the lanes' portal slots are the encounter's, one per defence (MAX_PORTALS is 4).
@@ -28,10 +31,11 @@ import { T, WELL } from './config';
 import { EL, N_EL } from './elements';
 import { len } from './geom';
 import { BATTERY, stepAway } from './battery';
-import { KIND, MAX_PORTALS, MAX_SEATS, TEAM, TERRAIN, spawnBody, type World } from './world';
+import { BTN, type PlayerInput } from './input';
+import { KIND, MAX_PORTALS, MAX_SEATS, TEAM, TERRAIN, alive, spawnBody, type World } from './world';
 import { WALL } from './compile';
 
-export const BSTEP = { arrive: 0, ring: 1, spray: 2, place: 3, brute: 4, free: 5, dry: 6, hands: 7, after: 8 } as const;
+export const BSTEP = { arrive: 0, ring: 1, spray: 2, place: 3, brute: 4, free: 5, dry: 6, hands: 7, after: 8, repair: 9 } as const;
 
 /** Each step's group, per driven lane, as [archetype, count]. */
 const GROUPS: Record<number, readonly (readonly [number, number])[]> = {
@@ -193,8 +197,27 @@ function infuse(w: World): void {
   st[1] = BSTEP.hands; st[2] = T(WELL.through); st[3] = -1; // the first HANDS group opens once the pause is out (below)
 }
 
+/** Can seat i stabilize the well now: the fight over, standing within WELL.repairReach of its middle? */
+export function wellNear(w: World, i: number): boolean {
+  if (!w.battery || w.enc.state[1] !== BSTEP.after || !alive(w, i)) return false;
+  const well = w.def.props.find((p) => p.asset === 'battery-well');
+  return !!well && len(well.x - w.bodies.x[i], well.y - w.bodies.y[i]) < WELL.repairReach;
+}
+
+/** The Use button, on the press edge, at the well once the fight is over: the repair begins (any one wizard's press does it for all). */
+export function repairPress(w: World, inputs: readonly PlayerInput[]): void {
+  const s = w.seats;
+  for (let i = 0; i < MAX_SEATS; i++) {
+    const inp = inputs[i];
+    if (!inp || !s.active[i] || !(inp.buttons & ~s.prevButtons[i] & BTN.use) || !wellNear(w, i)) continue;
+    w.enc.state[1] = BSTEP.repair; w.battery!.wellT[2] = 1;
+    return;
+  }
+}
+
 export function tickBatteryWaves(w: World): void {
   const e = w.enc, st = e.state, d = w.battery!;
+  if (d.wellT[2] > 0) { if (++d.wellT[2] === T(WELL.relit)) d.flow[0] = 1; return; }
   if (!st[0]) {
     // as you arrive: goblins hacking at the stakes out in front of every defence (they take their spots: holdSpot)
     const towers = towersOf(w), stakes = w.def.props.filter((p) => p.asset === 'stakes');

@@ -18,7 +18,8 @@
   ],
   "top": 8,
   "fps": 30,
-  "release": 4
+  "release": 4,
+  "spinStep": 4
  },
  "crystal": [
   51.5,

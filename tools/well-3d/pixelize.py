@@ -46,7 +46,7 @@ LADDER, CUM = ladder()
 # border. The pattern is tiles of 8 columns x 3 rows ('X' raised, '.' cut), in a rotation of five so it isn't machine
 # even; columns are fractions of a turn (COLS round the ring), so a sixth of a turn (the spin's loop) is 8 whole tiles
 # ... and lands on the same rotation.
-COLS, SPACING = 240, 8
+COLS, SPACING = 240, 4   # dense (the user: they read as engravings, but far too sparse at 8)
 # Discrete small drawings cut into plain metal (the user: the bought engraving may be separate drawings, not one running
 # pattern), centred on the band's middle row so they survive where the face narrows toward a band's sides. Each is the
 # cut pixels as (columns along, rows across) from its centre. Five in rotation, SPACING columns apart: 40 columns, a
@@ -64,8 +64,11 @@ CUT_STEPS, CUT_FLOOR = 4, 1   # a cut pixel goes this many browns down the ladde
 def mark_at(u, v):
     """'cut' where a drawing is cut at band position u (0..1 round the ring), v (0..1 across its face), 'border' on the
     smooth raised edges, else None."""
-    if v < 0.13 or v > 0.87:
+    # the face is about 5 px tall on screen: a border a fifth of it wide is a pixel, the cut line inside it another
+    if v < 0.2 or v > 0.8:
         return 'border'
+    if v < 0.3 or v > 0.7:
+        return 'groove'
     col = u * COLS
     k = int(round(col / SPACING))
     du, dv = int(round(col - k * SPACING)), int(round((v - 0.5) * 7))
@@ -106,28 +109,35 @@ def pixel_art(rgba, sup, where=None):
     q = (np.argsort(np.argsort(L)) + 0.5) / max(1, len(L))
     idx = np.full((h, w), -1)
     idx[metal] = np.searchsorted(CUM, q).clip(0, len(LADDER) - 1)
+    kinds = np.full((h, w), -1)
     if where:
         top = len(LADDER) - 1
         for (y, x), (u, v, kind) in where.items():
             if idx[y, x] < 0:
                 continue
+            kinds[y, x] = KINDS.index(kind)
             if kind == 'inner':
-                # the inside faces: lightest near the crystal, darker further out, about three shades (the user)
+                # the inside faces in three clear steps by distance from the crystal, lightest near it (the user: the
+                # render's own shade there is one flat brown, so it's set here, not nudged)
                 d = math.hypot(x + 0.5 - CRYSTAL[0], (y + 0.5 - CRYSTAL[1]) * 1.6)
-                idx[y, x] = int(np.clip(idx[y, x] + max(-1, round(1.5 - d / 14)), 2, top))   # never near-black
+                idx[y, x] = INNER_STEPS[0] if d < 20 else INNER_STEPS[1] if d < 31 else INNER_STEPS[2]
                 continue
             if kind != 'outer':
                 continue
             m = mark_at(u, v)
-            if m == 'cut':
+            if m in ('cut', 'groove'):
                 # cut: darker, but never into the very darkest browns (the dark bottom sank to black)
-                idx[y, x] = max(min(idx[y, x], CUT_FLOOR), idx[y, x] - CUT_STEPS)
+                idx[y, x] = max(min(idx[y, x], CUT_FLOOR), idx[y, x] - (CUT_STEPS if m == 'cut' else 2))
             elif m == 'border':
-                idx[y, x] = min(top, idx[y, x] + 1)   # the smooth raised borders catch the light
+                idx[y, x] = min(top, idx[y, x] + 2)   # the smooth raised borders catch the light
     out[metal, :3] = LADDER[idx[metal]].astype(np.uint8)
     out[on & dark, :3] = LINE
     out[on, 3] = 255
-    return out
+    return out, kinds
+
+
+KINDS = ('outer', 'inner', 'top')
+INNER_STEPS = (4, 3, 1)  # the inside faces' browns (ladder steps), near the crystal to far
 
 
 def outline(a):
@@ -141,16 +151,19 @@ def outline(a):
 
 
 CRYSTAL = (51.5, 20.0)    # the crystal's centre in the rings' canvas (content/assets/well/layers.json)
-GLINT = [(255, 244, 192), (255, 216, 96), (216, 168, 104), (184, 148, 106)]
+GLINT = [(255, 216, 96), (255, 216, 96), (216, 168, 104)]   # no near-white: the user found the glints too intense
 
 
-def crystal_edge(a, reach=40.0):
+def crystal_edge(a, kinds=None, reach=38.0):
     """The bought rings' yellow line: a band's edge that faces the crystal catches its light. A ring pixel whose next
-    pixel toward the crystal is the dark line becomes a glint, brighter the nearer the crystal. (A render can't make this:
-    with the crystal at the rings' centre its light runs along every band's edge.)"""
+    pixel toward the crystal is the dark line becomes a glint, brighter the nearer the crystal; not on the inside faces
+    (the back arcs' long yellow lines read as neon). (A render can't make this: with the crystal at the rings' centre its
+    light runs along every band's edge.)"""
     h, w = a.shape[:2]
     line = (a[..., 3] > 0) & (a[..., :3] == LINE).all(2)
     ring = (a[..., 3] > 0) & ~line
+    if kinds is not None:
+        ring &= kinds != KINDS.index('inner')
     out = a.copy()
     for y, x in zip(*np.nonzero(ring)):
         dx, dy = CRYSTAL[0] - (x + 0.5), CRYSTAL[1] - (y + 0.5)
@@ -162,8 +175,9 @@ def crystal_edge(a, reach=40.0):
         steps += [(x, y + (1 if dy > 0 else -1))] if abs(dy) > 0.4 * d else []
         if not any(0 <= nx < w and 0 <= ny < h and line[ny, nx] for nx, ny in steps):
             continue
-        k = min(len(GLINT) - 1, int(d / reach * len(GLINT)))
-        out[y, x, :3] = GLINT[k]
+        k = int(d / reach * len(GLINT))
+        if k < len(GLINT):
+            out[y, x, :3] = GLINT[k]
     return out
 
 
@@ -177,7 +191,8 @@ def run(src, out):
         im = np.array(Image.open(os.path.join(src, f'f{f:03d}-full.png')).convert('RGBA'))
         wp = os.path.join(src, f'f{f:03d}-where.png')
         where = read_where(wp, sup, chh, cw) if os.path.exists(wp) else None
-        art = crystal_edge(outline(pixel_art(im, sup, where)))
+        art, kinds = pixel_art(im, sup, where)
+        art = crystal_edge(outline(art), kinds)
         m = np.array(Image.open(os.path.join(src, f'f{f:03d}-mask.png')).convert('RGBA'))[..., 3] >= 128
         near = m.reshape(chh, sup, cw, sup).mean((1, 3)) >= 0.5
         strips['front'][:, f * cw:(f + 1) * cw] = np.where(near[..., None], art, 0)

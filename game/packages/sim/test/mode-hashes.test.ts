@@ -77,7 +77,26 @@ function batteryLesson() {
   };
 }
 
+/**
+ * Survive, long: two bots play waves, breathers and altar picks; at 6000 both fall (the run is over), and at 6600
+ * seat 0 starts a new run (Self). It passes every phase of the director.
+ */
+function surviveLong() {
+  const play = bots(2);
+  return (w: World, t: number): PlayerInput[] => {
+    if (t === 6000) for (let s = 0; s < 2; s++) w.bodies.hp[s] = 0;
+    const ins = play(w);
+    if (t >= 6000 && t < 6600) { ins[0] = NO_INPUT; ins[1] = NO_INPUT; }
+    if (t === 6600) ins[0] = { ...NO_INPUT, buttons: BTN.self };
+    return ins;
+  };
+}
+
 const RUNS: Record<string, () => Trail> = {
+  'survive-long': () => {
+    const w = createWorld(7, 2, { room: 'survive' }), out = trail(w, 7800, surviveLong());
+    return out;
+  },
   'battery-lesson': () => {
     const w = createWorld(1, 1, { room: 'battery' }), out = trail(w, 9000, batteryLesson());
     expect(w.enc.state[1], 'the run should reach the repair').toBe(9);

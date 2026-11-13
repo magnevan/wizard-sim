@@ -103,9 +103,10 @@ packages/
                (sandbox, arena, survive, battery, tutorial) and which room runs which; create.ts createWorld. step.ts and
                world.ts call the hooks and never ask which mode they're in: a new mode is a new Mode, not a branch
     spawn.ts   spawnEnemy, the one way every director puts an enemy in the world
-    encounter.ts  encounters as data: a Script of steps (groups once / in a list / in a loop, hold, until, enter, end)
-               that runScript walks, with the room's own hooks; partyIn (a Region) and openAtMarkers (Markers by tag).
-               The battery's lesson is the first script (battery-waves.ts LESSON)
+    encounter.ts  encounters as data: a Script of steps (groups once / in a list / in a loop, hold, until, wait, tick,
+               after, enter, next, end) that runScript walks, with the room's own hooks; partyIn (a Region) and
+               openAtMarkers (Markers by tag). Scripts: the battery's lesson (battery-waves.ts LESSON) and Survive's run
+               (survive.ts SURVIVE_RUN: lull, wave, breather, pick, round again). The Arena's waves.ts is legacy and stays as it is
     input.ts   PlayerInput: the 9-byte per-player, per-tick record (all that netcode will ever send)
     state.ts   snapshot / restore / hashWorld (FNV-1a over every state byte)
     replay.ts  record and run replays; script.ts is the scripted two-player golden run

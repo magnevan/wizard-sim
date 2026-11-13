@@ -21,14 +21,24 @@ export interface Step {
   readonly groups?: readonly Group[];
   /** once (default): its group, then the next step. list: each group in turn, then the next step. loop: round and round, each lap harder; it leaves only when a hook moves it on. */
   readonly cycle?: 'once' | 'list' | 'loop';
-  /** s of quiet once its enemies are gone, before what comes next (default: the script's). */
+  /** It sends what its hooks put in the slots (Survive's wave: one archetype per gate, enc.arch), not `groups`. */
+  readonly sends?: boolean;
+  /** s of quiet once its enemies are gone, before what comes next (default: the script's). 0: move on the same tick. */
   readonly pause?: number;
   /** While this is true the step doesn't move on, even with its enemies gone (the battery: nobody at a defence). */
   readonly hold?: (w: World) => boolean;
   /** When this is true the step moves on at once: no clearing, no pause (the battery: someone takes a defence). */
   readonly until?: (w: World) => boolean;
+  /** Each tick in the step, first (after `until`). */
+  readonly tick?: (w: World) => void;
+  /** A timed step: it lasts this many s (a preset timer, state[2] > 0, counts down instead), then moves on. */
+  readonly wait?: (w: World) => number;
+  /** After the tick's enemies have come out: true ends the tick here (Survive: everyone is down, the run is over). */
+  readonly after?: (w: World) => boolean;
   /** Runs as the step begins, before its first group opens. */
   readonly enter?: (w: World) => void;
+  /** The step after this one, by id (default: the next in the list). Lets a script go round (Survive: pick, then lull). */
+  readonly next?: string;
   /** Never moves on by itself (the end of a fight, or a step a hook leaves). */
   readonly end?: boolean;
 }
@@ -39,15 +49,22 @@ export interface Script {
   readonly every: number;
   /** The default pause, s. */
   readonly pause: number;
+  /**
+   * Where in enc.state the runner keeps the step, and the "started" flag (-1: none; the mode's setup starts it).
+   * Default: started in [0], the step in [1]. Survive keeps its phase in [0] (the HUD, bots and dev tools read it).
+   */
+  readonly slots?: { readonly started: number; readonly step: number };
   /** The first tick: lay out what's there as the party arrives. */
   readonly start?: (w: World) => void;
   /** Each tick, before the runner: the room's own clockwork. True: the runner sits this tick out. */
   readonly before?: (w: World) => boolean;
   /** Opens a group: sets the slots it comes out of (px, py, left, next, total). */
   readonly open: (w: World, g: Group) => void;
-  /** The j-th enemy of slot k's group, on lap `lap` of a loop (0 otherwise). */
+  /** The j-th enemy out of slot k, archetype `arch`, on lap `lap` of a loop (0 otherwise). */
   readonly spawn: (w: World, k: number, arch: number, j: number, lap: number) => void;
 }
+
+const DEFAULT_SLOTS = { started: 0, step: 1 } as const;
 
 /** The group a step sends now, or undefined (state[3] is the list's or loop's place). */
 export function groupNow(step: Step, n: number): Group | undefined {
@@ -72,13 +89,25 @@ export function remaining(w: World): number {
   return n;
 }
 
+/** The index of the step after step `s`. */
+function nextOf(script: Script, s: number): number {
+  const id = script.steps[s]?.next;
+  if (id === undefined) return s + 1;
+  const k = script.steps.findIndex((t) => t.id === id);
+  if (k < 0) throw new Error(`encounter: no step "${id}"`);
+  return k;
+}
+
+/** The step the script is on (its index). */
+export const stepOf = (w: World, script: Script): number => w.enc.state[(script.slots ?? DEFAULT_SLOTS).step];
+
 /**
  * Move to step `s` (by index): its list starts at the top, its enter hook runs, and its first group opens (unless
  * `open` is false: the hook will open it itself, or wants a pause first). Hooks use this to leave a step early.
  */
 export function goStep(w: World, script: Script, s: number, open = true): void {
   const st = w.enc.state, step = script.steps[s];
-  st[1] = s; st[2] = 0;
+  st[(script.slots ?? DEFAULT_SLOTS).step] = s; st[2] = 0;
   if (step?.groups?.length) st[3] = 0; // (a step without groups has no list, and leaves the place alone)
   step?.enter?.(w);
   const g = step && open ? groupNow(step, 0) : undefined;
@@ -87,30 +116,42 @@ export function goStep(w: World, script: Script, s: number, open = true): void {
 
 /** One tick of the script. */
 export function runScript(w: World, script: Script): void {
-  const e = w.enc, st = e.state;
+  const e = w.enc, st = e.state, slots = script.slots ?? DEFAULT_SLOTS;
   if (script.before?.(w)) return;
-  if (!st[0]) { script.start?.(w); st[0] = 1; st[1] = 0; st[2] = 0; st[3] = 0; return; }
-  const step = script.steps[st[1]];
+  if (slots.started >= 0 && !st[slots.started]) { script.start?.(w); st[slots.started] = 1; st[slots.step] = 0; st[2] = 0; st[3] = 0; return; }
+  const s = st[slots.step], step = script.steps[s];
   if (!step) return;
-  if (step.until) { if (step.until(w)) goStep(w, script, st[1] + 1); return; }
-  // the group still coming out
+  if (step.until) { if (step.until(w)) goStep(w, script, nextOf(script, s)); return; }
+  step.tick?.(w);
+  if (step.wait) {
+    if (st[2] <= 0) st[2] = T(step.wait(w));
+    if (--st[2] > 0) return;
+    goStep(w, script, nextOf(script, s));
+    return;
+  }
+  // what is still coming out of the slots
   const g = groupNow(step, st[3]);
-  if (g) {
-    const lap = step.cycle === 'loop' ? Math.floor(st[3] / step.groups!.length) : 0;
+  if (g || step.sends) {
+    const lap = g && step.cycle === 'loop' ? Math.floor(st[3] / step.groups!.length) : 0;
     for (let k = 0; k < MAX_PORTALS; k++) {
       if (!e.left[k] || --e.next[k] > 0) continue;
-      script.spawn(w, k, archAt(g, e.total[k] - e.left[k]), e.total[k] - e.left[k], lap);
+      const j = e.total[k] - e.left[k];
+      script.spawn(w, k, g ? archAt(g, j) : e.arch[k], j, lap);
       e.left[k]--; e.next[k] = T(script.every);
     }
   }
+  if (step.after?.(w)) return;
   if (step.end || remaining(w) || step.hold?.(w)) return;
   // its enemies are all gone: a quiet pause, then what comes next
-  if (st[2] === 0) { st[2] = T(step.pause ?? script.pause); return; }
-  if (--st[2] > 0) return;
-  if (step.cycle === 'once' || !step.cycle) { goStep(w, script, st[1] + 1); return; }
+  const pause = step.pause ?? script.pause;
+  if (pause > 0) {
+    if (st[2] === 0) { st[2] = T(pause); return; }
+    if (--st[2] > 0) return;
+  }
+  if (step.cycle === 'once' || !step.cycle) { goStep(w, script, nextOf(script, s)); return; }
   const next = groupNow(step, ++st[3]);
   if (next) script.open(w, next);
-  else goStep(w, script, st[1] + 1); // a list that's done
+  else goStep(w, script, nextOf(script, s)); // a list that's done
 }
 
 // ---- the common vocabulary, for scripts that need no code of their own

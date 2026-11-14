@@ -115,8 +115,8 @@ def prop(asset, x, y, blocks=False):
     props.append((asset, round(x * 4) / 4, round(y * 4) / 4, blocks))
 
 # the academy along the south: the hall you come out of, the cloister, the garden
-prop('academy-hall', 24, 63.2, True)
-prop('cloister-walk', 42, 62.2, True)
+prop('bldg-academy-hall', 24, 63.4, True)      # kit-built (tools/art-import/buildings.py), so it's a person's scale
+prop('bldg-academy-wing', 42.5, 62.6, True)
 prop('notice-board', 30.5, 56.2, True)
 for x in (17, 33, 47):
     prop('lantern-post', x, 55.2, True)
@@ -130,11 +130,11 @@ for asset, x, y in [('white-daisy-clump', 61, 56), ('red-poppy-clump', 65.5, 60.
 for x in (54, 56, 70, 72):
     prop('stone-wall-low', x, 51.3, True)                 # the garden's low wall, open where the paths come through
 # the barracks and their drill ground, the shed with the building stock round it
-prop('barracks', 80, 43, True)
+prop('bldg-barracks', 80.5, 43, True)
 for asset, x, y in [('water-trough', 74.5, 47.5), ('jerkin-rack', 76.5, 36.5), ('practice-shields', 78.5, 36.2), ('washing-line', 84, 50), ('weapon-rack', 72.5, 34.8),
                     ('banner-red', 70, 34.5), ('barrel', 84.5, 37.5), ('crates', 85, 39.5)]:
     prop(asset, x, y, asset not in ('washing-line',))
-prop('equipment-shed', 61, 45.5, True)
+prop('bldg-shed', 61, 45.5, True)
 for asset, x, y in [('planks-stacked', 57, 49), ('logs-pile', 66, 49.5), ('stone-blocks', 55, 46.5), ('sawhorse', 58.6, 50.2), ('ladder-lying', 64.5, 51),
                     ('fence-posts-bundle', 67.5, 47), ('tarp-heap', 54.5, 43.5), ('nail-barrel', 60, 50.4), ('gravel-heap', 52.5, 48.5), ('wheelbarrow', 54.6, 50.6),
                     ('pile-of-sawdust', 57.6, 51.4), ('coil-of-rope', 63, 49.8)]:
@@ -225,7 +225,7 @@ def person(kind, act, pal, variant, face, x, y):
 for r in range(2):                                 # soldiers at spear drill before the barracks, facing west
     for c in range(3):
         person('soldier', 'drill', 0, 3, 180, 70.5 + c * 2.2, 39 + r * 2.4)
-person('soldier', 'idle', 0, 0, 180, 76.6, 43)     # their sergeant, watching them
+person('soldier', 'idle', 0, 0, 180, 74.6, 46.6)     # their sergeant, watching them
 person('soldier', 'spar', 1, 0, 0, 64.6, 37.6)     # two at it with practice swords
 person('soldier', 'spar', 2, 0, 180, 66.4, 37.6)
 person('student', 'cast', 4, 0, 270, 38, 42.4)     # the casting line, at the targets

@@ -1,0 +1,23 @@
+{
+  "id": "bldg-academy-hall",
+  "kind": "prop",
+  "name": "The academy hall, two storeys",
+  "footprint": [
+    12.728,
+    6.364
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        108,
+        139
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/kit-academy-ext",
+      "tool": "create_building_kit (assembled)",
+      "edits": "assembled from the kit: 6 x 3 tiles, doors [('S', 2), ('E', 1)]",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

@@ -56,8 +56,31 @@
           "A short covered cloister walkway of pale cream sandstone arches under a blue slate roof, open on both sides. Hi-bit pixel art, dark outline, seen from above at an isometric angle."
         ]
       ]
+    },
+    {
+      "id": "job-yard-kits",
+      "tool": "create_building_kit, isometric, 48 px tiles, layout materials, gable roof (10 generations each)",
+      "why": "The user, 2026-11-14: one-picture buildings come out the wrong scale. Kits put doors and storeys on the world's tile grid. Descriptions approved by the user ('Approved').",
+      "items": [
+        {
+          "name": "kit-academy-ext",
+          "wall_description": "pale cream sandstone walls with tall arched windows",
+          "floor_description": "worn grey flagstone floor",
+          "floor2_description": "blue-grey slate roof tiles",
+          "wall_tiles": 3
+        },
+        {
+          "name": "kit-timber",
+          "wall_description": "timber-framed walls over a grey fieldstone base",
+          "floor_description": "packed earth floor",
+          "floor2_description": "wooden shingle roof",
+          "wall_tiles": 2
+        }
+      ],
+      "assembled_by": "tools/art-import/buildings.py (bldg-academy-hall, bldg-academy-wing, bldg-barracks, bldg-shed)"
     }
   ],
   "balance_after": 1656,
-  "spent": "14 generations: 10 for the props job, 1 for each building"
+  "spent": "14 generations: 10 for the props job, 1 for each building",
+  "balance_after_kits": 1636
 }

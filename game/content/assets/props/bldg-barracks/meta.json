@@ -1,0 +1,23 @@
+{
+  "id": "bldg-barracks",
+  "kind": "prop",
+  "name": "The hired soldiers' barracks",
+  "footprint": [
+    8.485,
+    4.243
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        72,
+        97
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/kit-timber",
+      "tool": "create_building_kit (assembled)",
+      "edits": "assembled from the kit: 4 x 2 tiles, doors [('S', 1)]",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

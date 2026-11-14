@@ -42,6 +42,15 @@ Play it: `#yard`, key 7, or the Esc menu's Campaign list. `npm run check:yard` d
   - The page had planned to buy a soldier as a character. A code rig matches the wizard beside him and can fight with the same poses.
 - **Everything else was already owned:** dummies, the sack's gallows, pells, targets, racks, the focus rack, fences, hay, the gatehouse, trees and flowers.
 
+## The buildings, rebuilt from kits (same day)
+
+The user: "Be careful with building that are just a single sprite. I feel like they're going to look like they're the wrong scale for the world." A wizard against each bought building confirmed it: the barracks and shed came up to his head, the cloister's arches just cleared his hat, while the gatehouse's arch stood four wizards tall. A one-picture building gets its door and storey size from the generator.
+
+- Two building kits bought, 20 generations (1,656 → 1,636), descriptions approved by the user: academy sandstone and slate (walls 3 tiles, two storeys), and timber over fieldstone with shingles (2 tiles, one storey).
+- `tools/art-import/buildings.py` assembles a rectangle of whole kit tiles (floor, walls with doorways, hip roof) into one prop whose footprint is its tiles: `bldg-academy-hall` (6 x 3 tiles, 12.7 x 6.4 u), `bldg-academy-wing` (3 x 4), `bldg-barracks` (4 x 2), `bldg-shed` (2 x 2).
+- In the game the hall's doors are a little taller than a wizard and its two storeys about 2.3 wizards, and the barracks' and shed's doors fit a person.
+- Trade-offs: the kit facades are plain (window slits, no ornament), and the gatehouse now looks oversized. The old one-picture buildings stay registered as spares.
+
 ## How it's built
 
 - `sim/src/yard.ts`: the stations as `w.yard` state. Markers in the level give the spots (`straw-0..3`, `heavy`, `heavy-ring`, `retreat`, `parry`, `parry-home`, `hands`, `hands-in-0..3`, `focus`, `gate`). Its two checkpoints are `?at=start` and `?at=focus`.

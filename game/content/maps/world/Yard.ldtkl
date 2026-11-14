@@ -212,7 +212,7 @@
           "__identifier": "Prop",
           "__grid": [
             48,
-            126
+            127
           ],
           "__pivot": [
             0.5,
@@ -227,20 +227,20 @@
           "defUid": 105,
           "px": [
             480,
-            1265
+            1270
           ],
           "fieldInstances": [
             {
               "__identifier": "asset",
               "__type": "String",
-              "__value": "academy-hall",
+              "__value": "bldg-academy-hall",
               "__tile": null,
               "defUid": 106,
               "realEditorValues": [
                 {
                   "id": "V_String",
                   "params": [
-                    "academy-hall"
+                    "bldg-academy-hall"
                   ]
                 }
               ]
@@ -273,8 +273,8 @@
         {
           "__identifier": "Prop",
           "__grid": [
-            84,
-            124
+            85,
+            125
           ],
           "__pivot": [
             0.5,
@@ -288,21 +288,21 @@
           "height": 10,
           "defUid": 105,
           "px": [
-            840,
-            1245
+            850,
+            1250
           ],
           "fieldInstances": [
             {
               "__identifier": "asset",
               "__type": "String",
-              "__value": "cloister-walk",
+              "__value": "bldg-academy-wing",
               "__tile": null,
               "defUid": 106,
               "realEditorValues": [
                 {
                   "id": "V_String",
                   "params": [
-                    "cloister-walk"
+                    "bldg-academy-wing"
                   ]
                 }
               ]
@@ -2071,7 +2071,7 @@
         {
           "__identifier": "Prop",
           "__grid": [
-            160,
+            161,
             86
           ],
           "__pivot": [
@@ -2086,21 +2086,21 @@
           "height": 10,
           "defUid": 105,
           "px": [
-            1600,
+            1610,
             860
           ],
           "fieldInstances": [
             {
               "__identifier": "asset",
               "__type": "String",
-              "__value": "barracks",
+              "__value": "bldg-barracks",
               "__tile": null,
               "defUid": 106,
               "realEditorValues": [
                 {
                   "id": "V_String",
                   "params": [
-                    "barracks"
+                    "bldg-barracks"
                   ]
                 }
               ]
@@ -2651,14 +2651,14 @@
             {
               "__identifier": "asset",
               "__type": "String",
-              "__value": "equipment-shed",
+              "__value": "bldg-shed",
               "__tile": null,
               "defUid": 106,
               "realEditorValues": [
                 {
                   "id": "V_String",
                   "params": [
-                    "equipment-shed"
+                    "bldg-shed"
                   ]
                 }
               ]
@@ -18900,8 +18900,8 @@
         {
           "__identifier": "Marker",
           "__grid": [
-            153,
-            86
+            149,
+            93
           ],
           "__pivot": [
             0.5,
@@ -18915,8 +18915,8 @@
           "height": 10,
           "defUid": 111,
           "px": [
-            1532,
-            860
+            1492,
+            932
           ],
           "fieldInstances": [
             {

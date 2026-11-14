@@ -1,0 +1,23 @@
+{
+  "id": "bldg-academy-wing",
+  "kind": "prop",
+  "name": "A wing of the academy",
+  "footprint": [
+    6.364,
+    8.485
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        84,
+        127
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/kit-academy-ext",
+      "tool": "create_building_kit (assembled)",
+      "edits": "assembled from the kit: 3 x 4 tiles, doors [('E', 1)]",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

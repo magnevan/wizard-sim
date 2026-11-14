@@ -15,7 +15,8 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = join(ROOT, '.reference', 'audio', 'generated');
 const LOG = join(OUT, 'calls.jsonl');
-const MAX_PER_DAY = 60;
+// SFX_MAX_PER_DAY raises it for one run, when the user says so (2026-11-14: "You can reset the limit")
+const MAX_PER_DAY = Number(process.env.SFX_MAX_PER_DAY) || 60;
 const MODEL = 'eleven_text_to_sound_v3';
 const FORMAT = 'wav_48000';
 

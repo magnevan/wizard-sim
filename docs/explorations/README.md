@@ -68,3 +68,4 @@ Dated, long-form thinking sessions. Once written, each is a record and isn't rew
 | 2026-11-13 | [engine-architecture-audit](2026-11-13-engine-architecture-audit.md) | Five-agent audit of `game/`: solid core, but modes, enemies, spells and effects are hard-coded branches; a phased plan (room modules, encounters as data, carry state) | |
 | 2026-11-13 | [encounters-as-data](2026-11-13-encounters-as-data.md) | Phase 2, part 1: Prop tags, Marker and Region entities, the encounter runner; the battery lesson ported unchanged | |
 | 2026-11-14 | [enemies-and-ai](2026-11-14-enemies-and-ai.md) | Magicka 1 and 2's enemies researched; thirteen candidate enemies; attack tokens, pacing, and companions as input bots with utility scoring | |
+| 2026-11-14 | [enemy-wizards](2026-11-14-enemy-wizards.md) | Enemy wizards: the queue as the tell, plays, honesty rules, three tiers, AI seats | Fills in enemies-and-ai's rival and hedge wizards |

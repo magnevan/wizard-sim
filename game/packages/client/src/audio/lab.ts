@@ -77,12 +77,10 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[] }>> = {
   cold: {
     el: 'cold',
     moments: [
-      { id: 'spray-r1', name: 'Frost spray', spell: 'cold,cold/force', listen: 'A stream of frost and cold mist held on the dummies. The catch is the start of each spray loop, swelling in.',
-        sections: [{ name: 'Catch', key: 'start', takes: 3, other: 'Reference' }, { name: 'Spray', key: 'hold', takes: 3, other: 'Reference' }] },
-      { id: 'ring-r1', name: 'Frost ring', spell: 'cold,cold/area', near: 2, listen: 'A serrated ice front racing out from you and shattering. The nearest dummy is in reach, so you hear the hit on it too: use Just the hit for that.',
-        sections: [{ name: 'Ring', key: 'burst', takes: 3, other: 'Reference' }, { name: 'Hit', key: 'land', takes: 3, other: 'Reference' }] },
-      { id: 'fog-r1', name: 'Freezing fog', spell: 'cold,cold/place', listen: 'Cold Place: a low heavy fog pouring out where you aim ("like opening a deep freezer"), lying for 16 s. The fog was silent; its loop is new, made from the spray loops darkened and slowed (take n from spray n).',
-        sections: [{ name: 'Cast', key: 'place', takes: 3, other: 'Reference' }, { name: 'Lying fog', key: 'ground', takes: 3 }] },
+      // settled 2026-11-14 and out of the Lab: the spray and its catch (take 2, "even better" than 1), the ring (take 3, "a more
+      // forceful burst") and the frost hit (take 1): "3/1 is the best combo"
+      { id: 'fog-r2', name: 'Freezing fog', spell: 'cold,cold/place', listen: 'Cold Place: a low heavy fog pouring out where you aim, lying for 16 s. Round 1\'s lying fog was the spray slowed down ("there is no cone being blown here"); you asked for "more of a crackling sound of freezing". The new loop (one take, made here) is the frost hits\' own crackles scattered thinly over a quiet cold hush. Judge the cast with it: take 3 was "maybe ok".',
+        sections: [{ name: 'Cast', key: 'place', takes: 3, other: 'Reference' }, { name: 'Lying fog', key: 'ground', takes: 1 }] },
     ],
   },
   arcane: {

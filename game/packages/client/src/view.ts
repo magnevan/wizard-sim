@@ -183,11 +183,11 @@ export class WorldView {
     this.props = new PropView(this.actors, tint, 'lean');
     this.deaths = new Deaths(this.actors);
     if (this.lit) {
-      this.litLayer.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.lit.shadowSprite, this.lit.lightSprite, this.lit.glowLayer, this.actors, this.lit.vig);
+      this.litLayer.addChild(this.floor, this.props.under, this.vfx.ground, this.sGround, this.lit.shadowSprite, this.lit.lightSprite, this.lit.glowLayer, this.actors, this.lit.vig);
       this.litLayer.filters = [this.lit.grade];
       this.scene.addChild(this.litLayer, this.vfx.over, this.sOverlay);
     } else {
-      this.scene.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
+      this.scene.addChild(this.floor, this.props.under, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
     }
     this.hudLayer.addChild(this.tut.fade, this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over, this.tut.sprite, this.tut.banner, this.repairFade, this.artLabel);
     this.root.addChild(this.scene, this.hudLayer);
@@ -302,7 +302,9 @@ export class WorldView {
     const M = 24;
     this.vfx.view(-fx0 - M, -fy0 - M, cam.w + 2 * M, cam.h + 2 * M);
     this.vfx.ground.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy); this.vfx.over.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy);
-    this.structs.scorch.sprite.position.set(fx0, fy0);
+    // the scorch marks: brought up to date, then laid in under everything on the effects' ground canvas
+    this.structs.scorch.draw(w, t);
+    this.vfx.underlay = (g, wx, wy, W, H) => this.structs.scorch.layInto(g, wx, wy, W, H);
     this.props.place(fx0, fy0);
     this.props.powerDown(w, ct, fx0, fy0); // the battery's well alive, and its power going down once it runs dry
     this.props.turnHeads(w, fx0, fy0);

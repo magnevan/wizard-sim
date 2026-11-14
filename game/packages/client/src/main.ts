@@ -58,6 +58,7 @@ import { loadSaved } from './tune-io';
 import { WorldView } from './view';
 import { PROP_SETS } from './art/assets';
 import { newRigState, paint } from './art/rigs';
+import * as px from './art/px';
 import { broadcastBus, roomBus } from './net/bus';
 import { webrtcBus } from './net/webrtc';
 import { NetPlay } from './net/netplay';
@@ -406,6 +407,6 @@ async function boot(): Promise<void> {
   // Expose the recorder for debugging: copy a replay of this session from the console.
   (window as unknown as { wizardSim: unknown }).wizardSim = {
     world, get recorder() { return recorder; }, tune, tools, stats, view, menu, help, audio, get net() { return net; },
-    app, perf, switchScenario, startWave: (n: number) => devStartWave(world, n, 1), art: { newRigState, paint },
+    app, perf, switchScenario, startWave: (n: number) => devStartWave(world, n, 1), art: { newRigState, paint, px },
   };
 }

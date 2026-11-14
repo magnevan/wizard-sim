@@ -153,26 +153,28 @@ class Pieces {
 }
 
 // =====================================================================================================
-// Scorch marks, damp patches and melt, painted into their own floor-level canvas.
+// Scorch marks, damp patches and melt, painted into their own floor-level canvas (field px). It isn't a texture of its
+// own: the part in view is laid into the effects' ground canvas first thing each frame (vfx.ts draw, `underlay`), which
+// sits right over it and goes to the GPU every frame anyway. As a texture, the whole field's canvas went up again each
+// time a mark faded a step: with the many marks a fire patch leaves, most frames, and megabytes in the battery.
 interface Mark { x: number; y: number; t0: number; life: number; kind: number; seed: number }
 class Scorch {
-  readonly sprite: Sprite;
   private cv = X.canvas(FIELD.W, FIELD.H);
-  private tex: Texture;
   private prev = new Uint8Array(0);
   private marks: Mark[] = [];
   private key = '';
-  constructor() {
-    this.tex = Texture.from(this.cv.c); this.tex.source.scaleMode = 'nearest';
-    this.sprite = new Sprite(this.tex);
-  }
+  /** Where the marks lie (field px), so laying them in copies only that much. */
+  private box = { x0: 0, y0: 0, x1: 0, y1: 0 };
   /** FIELD changed size: a new canvas to match (the marks belong to the old floor). */
   resize(): void {
-    const old = this.tex;
     this.cv = X.canvas(FIELD.W, FIELD.H);
-    this.tex = Texture.from(this.cv.c); this.tex.source.scaleMode = 'nearest';
-    this.sprite.texture = this.tex; old.destroy(true);
     this.marks = []; this.key = ''; this.prev = new Uint8Array(0);
+  }
+  /** Lays the marks under (wx, wy, W, H) (field px) into `g`, a canvas in field px translated by the window: nothing if there are none. */
+  layInto(g: Ctx, wx: number, wy: number, W: number, H: number): void {
+    if (!this.marks.length) return;
+    const b = this.box, x0 = Math.max(0, wx, b.x0), y0 = Math.max(0, wy, b.y0), x1 = Math.min(this.cv.c.width, wx + W, b.x1), y1 = Math.min(this.cv.c.height, wy + H, b.y1);
+    if (x1 > x0 && y1 > y0) g.drawImage(this.cv.c, x0, y0, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
   }
   afterStep(w: World, t: number): void {
     const s = w.surf.kind;
@@ -201,7 +203,12 @@ class Scorch {
     this.key = key;
     const c = this.cv.x;
     c.clearRect(0, 0, FIELD.W, FIELD.H); c._fs = null;
+    const box = this.box;
+    box.x0 = box.y0 = Infinity; box.x1 = box.y1 = -Infinity;
     for (const m of this.marks) {
+      // every mark reaches at most 8 px across and 6 down from its spot (the blots, the specks): a margin on that
+      box.x0 = Math.min(box.x0, Math.floor(m.x - 10)); box.x1 = Math.max(box.x1, Math.ceil(m.x + 10));
+      box.y0 = Math.min(box.y0, Math.floor(m.y - 8)); box.y1 = Math.max(box.y1, Math.ceil(m.y + 8));
       const a = lv(m) / 16, j = (rand(m.seed, 1) - 0.5) * 1.5;
       if (m.kind === 0) {
         // one soft dark blot per cell (overlapping cells merge), darker at the heart
@@ -213,7 +220,6 @@ class Scorch {
       } else if (m.kind === 1) X.ellipse(c, m.x + j, m.y, 6, 3.4, `rgba(16,24,34,${(0.4 * a).toFixed(2)})`);
       else { X.ellipse(c, m.x + j, m.y, 6, 3.4, `rgba(60,110,150,${(0.35 * a).toFixed(2)})`); if (rand(m.seed, 2) < 0.2) X.px(c, m.x, m.y - 1, '#8ad0ff'); }
     }
-    this.tex.source.update();
   }
 }
 
@@ -466,7 +472,6 @@ export class StructureView {
     this.st = st; this.lead = lead;
     this.pieces.begin(fx0, fy0);
     this.slabs.begin(12);
-    this.scorch.draw(w, st);
     const off = OFF;
     if (!off.includes('walls')) this.walls(w, t, g, o, bodies, light);
     roomView(w).structures?.(this.kit, w, t, g, o, bodies, light); // the mode's own things (Survive's altars and rallies, the tutorial's chamber)

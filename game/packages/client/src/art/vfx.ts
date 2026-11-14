@@ -101,6 +101,9 @@ const FADE_STEPS = 6;
 /** How much of a floor cell is still drawn, given its sim life in ticks: 1, then down in steps to 1/FADE_STEPS. */
 export const floorFade = (life: number): number => (life >= FLOOR_FADE ? 1 : Math.max(1, Math.floor((FADE_STEPS * life) / FLOOR_FADE)) / FADE_STEPS);
 
+/** The fire ramp as pixel values (ImageData's byte order, opaque), for the flames' buffer. */
+const F32 = EL.fire.map((h) => { const [r, g, b] = X.hex(h); return (0xff << 24 | b << 16 | g << 8 | r) >>> 0; });
+
 /** Seconds a cast's sound takes to reach the ear (measured: about 0.06). It can't start sooner, so the burst waits for it. */
 const HEARD = 0.06;
 
@@ -266,6 +269,9 @@ export class Vfx {
     this.wy = Math.max(0, Math.min(FIELD.H - H, Math.floor(y0)));
   }
 
+  /** Draws what lies under every effect (the scorch marks) into the ground canvas, given the window (field px). Set by the view. */
+  underlay: ((g: Ctx, wx: number, wy: number, W: number, H: number) => void) | null = null;
+
   /** Where the wave banner goes, in field px: the top middle of the view (set by the view each frame). */
   bannerX = 0;
   bannerY = 0;
@@ -382,6 +388,7 @@ export class Vfx {
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
     o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, W, H); o.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
     g._fs = o._fs = null;
+    this.underlay?.(g, this.wx, this.wy, W, H); // the scorch marks (view-structures.ts Scorch)
     this.solids.length = 0; this.softs.length = 0;
     this.occluders?.((tex, x, y, footY, solid, z, piece) => { (solid ? this.solids : this.softs).push({ tex, x, y, footY, z, piece: !!piece }); });
     const room = roomView(w);
@@ -692,9 +699,13 @@ export class Vfx {
       if (seen[c * 2] !== k || seen[c * 2 + 1] !== f) { seen[c * 2] = k; seen[c * 2 + 1] = f; changed = true; }
     }
     if (changed) this.paintSurfaces(w);
-    if (any) g.drawImage(this.surf.c, 0, 0);
-    const cw = CELL * 16, FR = EL.fire;
+    if (any) { const W = this.g.c.width, H = this.g.c.height; g.drawImage(this.surf.c, this.wx, this.wy, W, H, this.wx, this.wy, W, H); } // only the part in view
+    const cw = CELL * 16;
     const GW = w.dims.gw, AW = w.dims.w, AH = w.dims.h;
+    // the flames' columns go into a pixel buffer, put down in one go (flameFlush): thousands of 1 px wide fills a frame
+    // were the floor's whole cost. The same pixels as X.rect(g, x, y, 1, h) in the same order (they're opaque).
+    this.flameBegin();
+    const col = (x: number, y: number, h: number, c32: number): void => this.flameCol(x, y, h, c32);
     const at = (c: number): Pt => [gx(-AW / 2 + ((c % GW) + 0.5) * CELL), gy(-AH / 2 + (Math.floor(c / GW) + 0.5) * CELL)];
     const kindAt = (c: number, dx: number, dy: number) => { const x = (c % GW) + dx, y = Math.floor(c / GW) + dy; return x < 0 || y < 0 || x >= GW || y * GW + x >= n ? 0 : s.kind[y * GW + x]; };
     // the run of burning cells along a row whose embers are drawn together (embers())
@@ -708,6 +719,7 @@ export class Vfx {
     for (let c = 0; c < n; c++) {
       const k = s.kind[c]; if (!k) continue;
       const [x, y] = at(c), af = floorFade(s.life[c]);
+      if (k !== SURF.fire && k !== 0) this.flameFlush(g); // keep the drawing order: the flames so far go down first
       if (k === SURF.water) {
         // ripples on a few cells
         if (rand(c, 5) < 0.08) { const e = mod(t * 0.7 + rand(c, 6), 1); X.ring(g, x, y, 1 + e * 5, (1 + e * 5) * 0.4, '#5aa8e8', (1 - e) * 0.8 * af); }
@@ -743,10 +755,10 @@ export class Vfx {
             const sw = Math.sin(t * 9 + xx * 0.4 + yy);
             // the column in bands: gold roots in the middle, orange, then a red-orange tip
             const b1 = Math.round(hh * (inner > 0.7 ? 0.4 : 0.2)), b2 = Math.round(hh * 0.75);
-            if (b1 > 0) X.rect(g, xx, yy - b1 + 1, 1, b1, FR[1]);
-            if (b2 > b1) X.rect(g, xx + Math.round(sw * b2 * 0.06), yy - b2 + 1, 1, b2 - b1, FR[2]);
-            if (hh > b2) X.rect(g, xx + Math.round(sw * hh * 0.12), yy - hh + 1, 1, hh - b2, hh > 6 ? FR[3] : FR[2]);
-            if (hh > 8 && wv > 0.97) X.px(g, xx + Math.round(sw * hh * 0.14), yy - hh, FR[0]);
+            if (b1 > 0) col(xx, yy - b1 + 1, b1, F32[1]);
+            if (b2 > b1) col(xx + Math.round(sw * b2 * 0.06), yy - b2 + 1, b2 - b1, F32[2]);
+            if (hh > b2) col(xx + Math.round(sw * hh * 0.12), yy - hh + 1, hh - b2, hh > 6 ? F32[3] : F32[2]);
+            if (hh > 8 && wv > 0.97) col(xx + Math.round(sw * hh * 0.14), yy - hh, 1, F32[0]);
           }
         }
         // embers and sparks spiralling up out of the fire, a little smoke: gathered per run of cells along a row (one
@@ -759,6 +771,44 @@ export class Vfx {
       }
     }
     flush();
+    this.flameFlush(g);
+  }
+
+  // ---- the flames' pixel buffer: the effect canvas's size, in its own pixels -------------------------------------
+  private fl = { cv: X.canvas(4, 4), img: null as ImageData | null, px: new Uint32Array(0), x0: 0, y0: 0, x1: -1, y1: -1 };
+  private flameBegin(): void {
+    const W = this.g.c.width, H = this.g.c.height, f = this.fl;
+    if (f.cv.c.width !== W || f.cv.c.height !== H) {
+      f.cv = X.canvas(W, H);
+      f.img = f.cv.x.createImageData(W, H);
+      f.px = new Uint32Array(f.img.data.buffer);
+    }
+    f.x0 = f.y0 = Infinity; f.x1 = f.y1 = -1;
+  }
+  /** A 1 px wide column, as X.rect(g, x, y, 1, h) would fill it (field px, rounded the same way). */
+  private flameCol(x: number, y: number, h: number, c32: number): void {
+    const f = this.fl, W = f.cv.c.width, H = f.cv.c.height, cx = Math.round(x) - this.wx, top = Math.round(y) - this.wy, n = Math.round(h);
+    X.stats.fills++;
+    if (cx < 0 || cx >= W || n <= 0) return;
+    const a = Math.max(0, top), b = Math.min(H, top + n);
+    if (b <= a) return;
+    for (let yy = a; yy < b; yy++) f.px[yy * W + cx] = c32;
+    if (cx < f.x0) f.x0 = cx; if (cx > f.x1) f.x1 = cx;
+    if (a < f.y0) f.y0 = a; if (b - 1 > f.y1) f.y1 = b - 1;
+  }
+  /** Puts the buffered flames down on `g` over what's there (they're opaque), and empties the buffer. */
+  private flameFlush(g: Ctx): void {
+    const f = this.fl;
+    if (f.x1 < f.x0 || !f.img) return;
+    const x0 = f.x0, y0 = f.y0, w = f.x1 - x0 + 1, h = f.y1 - y0 + 1, W = f.cv.c.width, b = f.cv.x;
+    // cleared whole first: a canvas that's been drawn from is copied whole by a write that keeps any of it (see behind())
+    b.clearRect(0, 0, W, f.cv.c.height);
+    b.putImageData(f.img, 0, 0, x0, y0, w, h);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    g.drawImage(f.cv.c, x0, y0, w, h, x0, y0, w, h);
+    g.restore(); g._fs = null;
+    for (let yy = y0; yy < y0 + h; yy++) f.px.fill(0, yy * W + x0, yy * W + x0 + w);
+    f.x0 = f.y0 = Infinity; f.x1 = f.y1 = -1;
   }
   /** The fire floor's embers in a run of cells: the same particles util.emit(t, 1.4, 1.1) gives each cell. */
   private embers(over: Ctx, cells: readonly number[], w: World, t: number): void {

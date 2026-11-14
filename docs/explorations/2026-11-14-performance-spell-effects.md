@@ -62,11 +62,39 @@ This machine's GPU (`--gpu`, frame-rate cap off), median fps of 2 interleaved ru
 | battery-ring | 64 | 78 |
 | spell-frost-fog | 66 | 142 |
 
+## Round 2: Fire Place
+
+The user asked how Fire Place could go further. Its cost was nearly all the flame sheet: two rows of 1 px columns a
+burning cell, up to three colour bands each, thousands of tiny fills a frame, half of it issuing them and half Chrome
+rasterizing them at upload.
+
+5. **The flames go into a pixel buffer.** The same loop and maths write each band into a `Uint32Array` the effect
+   canvas's size; the written area goes down in one `putImageData` and one `drawImage`. Later writes win as later fills
+   covered earlier ones (the colours are opaque), and the buffer is put down before any water or ice glint so the order
+   holds on mixed floors: pixel-identical to the fills (checked on two rooms at three times, with fading cells and water
+   against the fire: 0 differing bytes).
+6. **The spikes were the scorch marks.** Every fire cell that goes out leaves a mark fading over 40 to 55 s, painted on
+   a canvas the size of the whole field and uploaded as its own texture whenever any mark faded a step, which with the
+   marks a patch leaves is most frames. In the battery that canvas is megabytes: 70 to 100 ms frames, and for up to a
+   minute after the fire was out. Now the part of it in view is laid into the effects' ground canvas first thing each
+   frame (it sat right under it, and that one is uploaded anyway), only over where the marks are. Screenshots of the
+   same marks before and after match. The cost: a small copy every frame while any marks exist, about 1 ms with Rain's
+   wide damp patches in the Sanctum (+16 %), where the old upload of a small field was cheap.
+
+| Scene | HEAD | Now | |
+|---|---|---|---|
+| spell-fire-place, draw ms (4 interleaved runs) | 26.1 | 8.0 | -69 % |
+| battery-patch, draw ms (3 runs) | 89.3 | 20.7 | -77 % (-68 % after round 1) |
+| battery-idle, draw ms (3 runs) | 16.7 | 12.1 | -28 % |
+| battery-patch, GPU fps | 23 | 100 | p95 frame 74 -> 15 ms |
+| spell-fire-place, GPU fps | 147 | 343 | |
+| battery-idle, GPU fps | 93 | 112 | |
+
 ## What's left
 
 - No single thing dominates the battery's frame now. The biggest pieces are the feed lines' passes, re-uploading the two
   effect canvases every frame, and `turnedWorld` (the isometric copy of the world, rebuilt at each view entry point;
   caching it is unsafe as it stands, since a rollback can restore different state at the same tick).
-- The fire floor's flame columns are still drawn as small rects, three colours a column; batching them by colour would
-  change which colour wins where columns overlap, so it was left alone.
-- Fire Place in the Sanctum (~15 ms) and the Fire and Cold novas (~8 to 10 ms) are the costliest spells left.
+- The Fire and Cold novas (~8 to 10 ms in the Sanctum) are the costliest spells left.
+- Fire Place could still animate at a lower rate (30 Hz, reusing the last frame) if it ever needs to be cheaper, at the
+  cost of steppier flames: the user's call.

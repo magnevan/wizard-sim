@@ -62,6 +62,43 @@ SCENES.push({
   },
 });
 
+// Spells, cast for real (keys and mouse) over and over through the measured window: the spell effects' cost.
+// Runes: Q Water, W Life, R Cold, A Lightning, S Arcane, F Fire, G Earth, E Shield. Gestures with runes queued:
+// RMB Force (held: a spray or beam), Shift+RMB tap Area, Shift+RMB hold Place.
+const GESTURE = {
+  spray: async (p) => { await p.mouse.down({ button: 'right' }); await sleep(1600); await p.mouse.up({ button: 'right' }); await sleep(250); },
+  force: async (p) => { await p.mouse.down({ button: 'right' }); await sleep(60); await p.mouse.up({ button: 'right' }); await sleep(450); },
+  area: async (p) => { await p.keyboard.down('Shift'); await p.mouse.down({ button: 'right' }); await sleep(50); await p.mouse.up({ button: 'right' }); await p.keyboard.up('Shift'); await sleep(700); },
+  place: async (p) => { await p.keyboard.down('Shift'); await p.mouse.down({ button: 'right' }); await sleep(350); await p.mouse.up({ button: 'right' }); await p.keyboard.up('Shift'); await sleep(900); },
+};
+/** Aims at a spot around seat 0's wizard, (dx, dy) world units away, a different one each cast. */
+const aimNear = async (p, k, r = 3) => {
+  const a = (k * 2.4) % (Math.PI * 2), dx = Math.cos(a) * r, dy = Math.sin(a) * r * 0.8;
+  const at = await p.evaluate((dx, dy) => { const g = window.wizardSim, b = g.world.bodies; return g.view.camera.worldToScreen(b.x[0] + dx, b.y[0] + dy); }, dx, dy);
+  await p.mouse.move(at.x, at.y);
+};
+/** A loop that casts `keys` with `gesture` until stopped. */
+const caster = (keys, gesture, r) => async (p, running) => {
+  for (let k = 0; running(); k++) {
+    await aimNear(p, k, r);
+    for (const c of keys) await p.keyboard.press('Key' + c.toUpperCase());
+    await sleep(60);
+    await GESTURE[gesture](p);
+  }
+};
+const sanctumSetup = async (p) => { await p.evaluate(() => { const g = window.wizardSim; g.tools.godMode = true; g.tools.infiniteRunes = true; }); };
+// the battery past the repair: Fire is yours, the fight over; the walls, props and lights stand all about
+SCENES.push({ name: 'battery-idle', url: '?at=repair#battery', setup: sanctumSetup });
+SCENES.push({ name: 'battery-patch', url: '?at=repair#battery', setup: sanctumSetup, during: caster('fff', 'place', 2.5) });
+SCENES.push({ name: 'battery-spray', url: '?at=repair#battery', setup: sanctumSetup, during: caster('ff', 'spray', 3) });
+SCENES.push({ name: 'battery-ring', url: '?at=repair#battery', setup: sanctumSetup, during: caster('fff', 'area', 3) });
+for (const [name, keys, gesture] of [
+  ['steam-spray', 'qf', 'spray'], ['cold-spray', 'rr', 'spray'], ['water-spray', 'qq', 'spray'], ['lightning', 'aa', 'spray'], ['arcane-beam', 'ss', 'spray'], ['life-beam', 'sw', 'spray'],
+  ['fire-nova', 'fff', 'area'], ['cold-nova', 'rrr', 'area'], ['arcane-nova', 'sss', 'area'], ['lightning-nova', 'aaa', 'area'], ['earth-quake', 'ggg', 'area'],
+  ['rain', 'qqq', 'place'], ['frost-fog', 'rrr', 'place'], ['ice-sheet', 'qr', 'place'], ['steam-place', 'qf', 'place'], ['fire-place', 'fff', 'place'],
+  ['rocks', 'gg', 'force'], ['fireballs', 'gff', 'force'], ['ice-shards', 'qrqr', 'force'],
+]) SCENES.push({ name: 'spell-' + name, url: '?room=sanctum', setup: sanctumSetup, during: caster(keys, gesture) });
+
 const stats = (a) => {
   if (!a.length) return { mean: 0, p50: 0, p95: 0, max: 0 };
   const s = [...a].sort((x, y) => x - y), m = s.reduce((x, y) => x + y, 0) / s.length;
@@ -93,10 +130,13 @@ async function measure(browser, sc) {
       }
     }
   });
-  await p.goto(`${BASE}${sc.url}&perf=1&debug=0${has('gpu') ? '&rafloop=1' : ''}${query ? '&' + query : ''}`);
+  const [path, hash] = sc.url.split('#');
+  await p.goto(`${BASE}${path}&perf=1&debug=0${has('gpu') ? '&rafloop=1' : ''}${query ? '&' + query : ''}${hash ? '#' + hash : ''}`);
   if (has('sound')) await p.keyboard.press('KeyQ');
   await p.waitForFunction(() => !!window.wizardSim?.perf, { timeout: 30000, polling: 100 });
   await sc.setup?.(p);
+  let on = true;
+  const busy = sc.during?.(p, () => on).catch((e) => errors.push('during: ' + e.message)); // casting from the warm-up on, so lingering effects pile up
   await sleep(3000); // warm up: JIT, the actor frame cache, the help previews
   const cdp = await p.createCDPSession();
   await cdp.send('HeapProfiler.enable');
@@ -109,6 +149,8 @@ async function measure(browser, sc) {
     await sleep(1000);
     bodies.push(await p.evaluate(() => { const k = window.wizardSim.world.bodies.kind; let n = 0; for (let i = 0; i < k.length; i++) if (k[i]) n++; return n; }));
   }
+  on = false;
+  await busy;
   const heap = has('no-heap') ? { head: { selfSize: 0, children: [], callFrame: { functionName: '', url: '', lineNumber: 0, columnNumber: 0 } } } : (await cdp.send('HeapProfiler.stopSampling')).profile;
   let cpu = null;
   if (profileDir) cpu = (await cdp.send('Profiler.stop')).profile;

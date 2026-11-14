@@ -118,8 +118,6 @@ export class Vfx {
   /** The bodies, which only the novas' far pass goes behind (novaDepth). */
   private softs: { tex: Texture; x: number; y: number; footY: number; z: number; piece: boolean }[] = [];
   private cover: { tex: Texture; x: number; y: number; rows: number }[] = [];
-  /** behind()'s scratch: small, and grown when something needs more. */
-  private d = X.canvas(360, 360);
   private gh = X.canvas(96, 96);
   /** Every enemy's sprite, its spot in the field and its sort key: those a wall stands in front of show through it (ghosts). */
   ghostSource: ((emit: (tex: Texture, x: number, y: number, z: number) => void) => void) | null = null;
@@ -136,6 +134,8 @@ export class Vfx {
   private fx: Fx[] = [];
   /** What the floor canvas was painted for: each cell's kind and fade step (repainted when any changes). */
   private surfSeen = new Uint8Array(0);
+  /** surfaces()' scratch: the burning cells along a row whose embers draw together. */
+  private runCells: number[] = [];
   // per slot: when a zone or a lobbed stone appeared, and the stone's flight time
   private zoneT0 = new Float64Array(MAX_ZONES);
   private zoneType = new Uint8Array(MAX_ZONES);
@@ -458,7 +458,7 @@ export class Vfx {
    * `overWalls`: it's high enough to pass over the wall pieces (not the props), so only props hide it.
    */
   behind = (ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread = false, bodiesToo = false, overWalls = false): void => {
-    if (this.o === this.b || this.o === this.d) { draw(this.o.x); return; } // already inside a pass
+    if (this.o === this.b || this.inBehind) { draw(this.o.x); return; } // already inside a pass
     const z = depthOf(ay), x0 = Math.floor(ax - R - 24), x1 = Math.ceil(ax + R + 24), y0 = Math.floor(ay - R - 70), y1 = Math.ceil(ay + R + 24), reach = ay - R * FY;
     const cover = this.cover;
     cover.length = 0;
@@ -470,15 +470,16 @@ export class Vfx {
     }
     if (!cover.length) { draw(this.o.x); return; }
     const real = this.o, W = x1 - x0, H = y1 - y0;
-    // its own small canvas: copying from a canvas costs the whole of that canvas, however little is taken
-    if (this.d.c.width < W || this.d.c.height < H) this.d = X.canvas(Math.max(this.d.c.width, W), Math.max(this.d.c.height, H));
-    const b = this.d.x;
-    b.setTransform(1, 0, 0, 1, -x0, -y0);
-    b.clearRect(x0, y0, W, H);
-    b.save(); b.beginPath(); b.rect(x0, y0, W, H); b.clip(); b._fs = null;
-    this.o = this.d;
+    // A small canvas of its own, cleared whole. Copying from a canvas snapshots it, and the next write that leaves
+    // any of it standing copies all of it first; a clear of the whole canvas lets the browser drop the old pixels
+    // instead. So no clip either: what's drawn past the box lands outside the part copied, and goes at the next clear.
+    const d = this.scratch(W, H), b = d.x;
+    b.setTransform(1, 0, 0, 1, 0, 0); b.globalCompositeOperation = 'source-over';
+    b.clearRect(0, 0, d.c.width, d.c.height);
+    b.setTransform(1, 0, 0, 1, -x0, -y0); b.save(); b._fs = null;
+    this.o = d; this.inBehind = true;
     draw(b);
-    this.o = real;
+    this.o = real; this.inBehind = false;
     b.restore(); b._fs = null;
     b.globalCompositeOperation = 'destination-out';
     for (const c of cover) {
@@ -489,9 +490,19 @@ export class Vfx {
     }
     b.globalCompositeOperation = 'source-over';
     const o = real.x;
-    o.save(); o.setTransform(1, 0, 0, 1, 0, 0); o.drawImage(this.d.c, 0, 0, W, H, x0 - this.wx, y0 - this.wy, W, H); o.restore();
+    o.save(); o.setTransform(1, 0, 0, 1, 0, 0); o.drawImage(d.c, 0, 0, W, H, x0 - this.wx, y0 - this.wy, W, H); o.restore();
     o._fs = null;
   };
+  /** behind()'s scratch canvases, by size class (powers of two): a small box never pays for a big canvas. */
+  private scratches = new Map<number, ReturnType<typeof X.canvas>>();
+  private inBehind = false;
+  private scratch(W: number, H: number): ReturnType<typeof X.canvas> {
+    const cls = (n: number) => Math.max(64, 2 ** Math.ceil(Math.log2(Math.max(1, n))));
+    const cw = cls(W), ch = cls(H), key = cw * 65536 + ch;
+    let d = this.scratches.get(key);
+    if (!d) { d = X.canvas(cw, ch); this.scratches.set(key, d); }
+    return d;
+  }
 
   /** A timed effect, behind what stands in front of where it happens. */
   private fxDepth(f: Fx, t: number, w: World, bodies: BodyView[], light: LightFn): void {
@@ -686,6 +697,14 @@ export class Vfx {
     const GW = w.dims.gw, AW = w.dims.w, AH = w.dims.h;
     const at = (c: number): Pt => [gx(-AW / 2 + ((c % GW) + 0.5) * CELL), gy(-AH / 2 + (Math.floor(c / GW) + 0.5) * CELL)];
     const kindAt = (c: number, dx: number, dy: number) => { const x = (c % GW) + dx, y = Math.floor(c / GW) + dy; return x < 0 || y < 0 || x >= GW || y * GW + x >= n ? 0 : s.kind[y * GW + x]; };
+    // the run of burning cells along a row whose embers are drawn together (embers())
+    const runCells = this.runCells;
+    let runRow = -1, runEnd = -9, runX0 = 0, runX1 = 0, runY = 0;
+    const flush = (): void => {
+      if (!runCells.length) return;
+      this.behind((runX0 + runX1) / 2, runY, (runX1 - runX0) / 2 + cw, (over) => this.embers(over, runCells, w, t));
+      runCells.length = 0;
+    };
     for (let c = 0; c < n; c++) {
       const k = s.kind[c]; if (!k) continue;
       const [x, y] = at(c), af = floorFade(s.life[c]);
@@ -730,9 +749,30 @@ export class Vfx {
             if (hh > 8 && wv > 0.97) X.px(g, xx + Math.round(sw * hh * 0.14), yy - hh, FR[0]);
           }
         }
-        // embers and sparks spiralling up out of the fire, a little smoke
-        this.behind(x, y, cw, (over) => { for (const p of emit(t, 1.4, 1.1, (i, age) => ({ x: x + (rand(i, 3, c) - 0.5) * cw + Math.sin(age * 6 + i) * 2.5 + age * 4, y: y - 8 - age * 26, age }))) X.px(over, p.x, p.y, p.age < 0.35 ? FR[0] : p.age < 0.7 ? FR[1] : FR[3]); });
+        // embers and sparks spiralling up out of the fire, a little smoke: gathered per run of cells along a row (one
+        // depth), so what stands in front hides them in one pass, not one per cell
+        const row = Math.floor(c / GW);
+        if (row !== runRow || c - runEnd > 2) flush();
+        if (runCells.length === 0) { runRow = row; runX0 = x; runY = y; }
+        runCells.push(c); runEnd = c; runX1 = x;
         if (c % 9 === 0) light(x, y - 4, 34, '#ff8a30', 0.5 * life + 0.06 * Math.sin(t * 13 + c));
+      }
+    }
+    flush();
+  }
+  /** The fire floor's embers in a run of cells: the same particles util.emit(t, 1.4, 1.1) gives each cell. */
+  private embers(over: Ctx, cells: readonly number[], w: World, t: number): void {
+    const FR = EL.fire, cw = CELL * 16, GW = w.dims.gw, AW = w.dims.w, AH = w.dims.h;
+    const dt = 1 / 1.4, life = 1.1;
+    let k0 = Math.ceil((t - life) / dt);
+    const k1 = Math.floor(t / dt);
+    if (k1 - k0 > 4000) k0 = k1 - 4000;
+    for (const c of cells) {
+      const x = gx(-AW / 2 + ((c % GW) + 0.5) * CELL), y = gy(-AH / 2 + (Math.floor(c / GW) + 0.5) * CELL);
+      for (let i = k0; i <= k1; i++) {
+        const age = (t - i * dt) / life;
+        if (age < 0 || age >= 1) continue;
+        X.px(over, x + (rand(i, 3, c) - 0.5) * cw + Math.sin(age * 6 + i) * 2.5 + age * 4, y - 8 - age * 26, age < 0.35 ? FR[0] : age < 0.7 ? FR[1] : FR[3]);
       }
     }
   }

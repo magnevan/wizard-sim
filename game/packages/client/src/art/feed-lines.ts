@@ -16,7 +16,7 @@
 import { BSTEP, MAX_SEATS, pedestalNear, type World } from '@wizard-sim/sim';
 import { toU, toV, toX, toY } from '../iso-world';
 import { gx, gy } from './field';
-import { PATH_STYLES, PathLayer, Shimmer, drawGlyphCircle, drawGlyphPath, pathLength, snap, type GlyphPath, type PathStyle, type RuneLook } from './glyph-path';
+import { PATH_STYLES, PathLayer, Shimmer, drawGlyphCircle, drawGlyphPath, pathLength, snap, type Box, type GlyphPath, type PathStyle, type RuneLook } from './glyph-path';
 import { lineLight } from './power-down';
 import { clamp, rand } from './util';
 
@@ -33,7 +33,9 @@ const LANE = 1.5, RIM = 3.3, BEND = 1.6, RUN_OFF = 1.4;
 /** The swell of light running out along the lines: its speed at a full well (units/s) and its spacing. */
 const SWELL_SPEED = 2.2, SWELL_GAP = 7;
 
-let cache: { def: unknown; feeds: Feed[] } | null = null;
+/** How far a path's lines, runes, glow and carving reach past its middle, field px (generous), and the tile size the layers' passes keep to. */
+const BOX_PAD = 28, TILE = 32;
+let cache: { def: unknown; feeds: Feed[]; boxes: Box[] } | null = null;
 const shimmer = new Shimmer(TONE.hot), layer = new PathLayer();
 
 /** The routes, in the sim's world, worked out once per room from where the well, towers, pedestals and pillars stand. */
@@ -68,8 +70,46 @@ function feedsOf(w: World): Feed[] {
       }
     }
   }
-  cache = { def: w.def, feeds };
+  cache = { def: w.def, feeds, boxes: tilesOf(feeds) };
   return feeds;
+}
+
+/**
+ * The field's tiles (TILE px, field px) within BOX_PAD of a line or a circle, merged into runs along each row of tiles:
+ * the layers' passes keep to them (glyph-path.ts Box), as the lines are thin and cross most of the view.
+ */
+function tilesOf(feeds: readonly Feed[]): Box[] {
+  const on = new Map<number, Set<number>>(); // tile row -> tile columns
+  const mark = (fx: number, fy: number): void => {
+    for (let ty = Math.floor((fy - BOX_PAD) / TILE); ty <= Math.floor((fy + BOX_PAD) / TILE); ty++) {
+      let row = on.get(ty);
+      if (!row) { row = new Set(); on.set(ty, row); }
+      for (let tx = Math.floor((fx - BOX_PAD) / TILE); tx <= Math.floor((fx + BOX_PAD) / TILE); tx++) row.add(tx);
+    }
+  };
+  const F = (x: number, y: number): [number, number] => [gx(toU(x, y)), gy(toV(x, y))];
+  for (const f of feeds) {
+    const pts = f.path.pts;
+    for (let i = 1; i < pts.length; i++) {
+      const [ax, ay] = F(pts[i - 1][0], pts[i - 1][1]), [bx, by] = F(pts[i][0], pts[i][1]), n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / 4));
+      for (let k = 0; k <= n; k++) mark(ax + ((bx - ax) * k) / n, ay + ((by - ay) * k) / n);
+    }
+    if (f.circle) {
+      // the whole disc: its rings, runes and the pad in its middle
+      for (let r = 0; r <= CIRCLE_R; r += 0.25) for (let i = 0; i < 48; i++) { const a = (i / 48) * Math.PI * 2; mark(...F(f.circle.x + Math.cos(a) * r, f.circle.y + Math.sin(a) * r)); }
+    }
+  }
+  const boxes: Box[] = [];
+  for (const [ty, row] of on) {
+    const cols = [...row].sort((a, b) => a - b);
+    for (let i = 0; i < cols.length;) {
+      let j = i;
+      while (j + 1 < cols.length && cols[j + 1] === cols[j] + 1) j++;
+      boxes.push({ x: cols[i] * TILE, y: ty * TILE, w: (cols[j] - cols[i] + 1) * TILE, h: TILE });
+      i = j + 1;
+    }
+  }
+  return boxes;
 }
 
 /** Draws every feed line on the ground canvas `g`. `t`: seconds of the view's clock. */
@@ -81,9 +121,10 @@ export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: n
   // out again with the repair
   const longest = Math.max(1, ...feeds.map((f) => f.from + f.len));
   const reach = ll.reach >= 1 ? Infinity : longest * ll.reach;
-  const style = pathStyle(), ground = g;
-  const mask = shimmer.begin(ground); // the runes' shimmer: stamped in as they're drawn, shown through them at the end
-  g = layer.begin(ground); // the paths on a layer of their own, then laid into the ground in the style
+  const style = pathStyle(), ground = g, at = g.getTransform();
+  const boxes = cache!.boxes.map((b) => ({ x: b.x + at.e, y: b.y + at.f, w: b.w, h: b.h })); // field px to the canvas's own
+  const mask = shimmer.begin(ground, boxes); // the runes' shimmer: stamped in as they're drawn, shown through them at the end
+  g = layer.begin(ground, boxes); // the paths on a layer of their own, then laid into the ground in the style
   for (let fi = 0; fi < feeds.length; fi++) {
     const f = feeds[fi], driven = f.tower >= 0 && d.drive.includes(f.tower);
     const k = (driven ? 1 : 0.7) * (0.3 + 0.7 * flow); // how bright this line burns

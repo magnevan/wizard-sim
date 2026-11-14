@@ -48,17 +48,21 @@ npm run audit          # inert additions in play: every queue of up to 3 runes c
 npm run scaling        # rune scaling: every form x cast at 1-5 runes, and every second rune -> tools/scaling-report.json
 npm run balance        # the balance harness: measures every common spell and bot wave runs -> tools/balance-report.json
 npm run balance:weapons # every weapon's Strike, Heavy and Sweep spammed vs the same element's spell, 10 s and 30 s -> tools/weapon-dps-report.json
-npm run perf           # build, then step() timed in node (Arena, Survive wave 12, the golden replay; prints the hashes) and four
-                       # busy scenes in headless Chrome: ms per frame (sim / help / draw / render), draw calls, KB uploaded to
-                       # the GPU and KB allocated per frame. -- --only survive-w12 --size 1920x1080 --profile dir --shots dir --out f.json
+npm run perf           # build, then step() timed in node (Arena, Survive wave 12, the golden replay; prints the hashes) and busy
+                       # scenes in headless Chrome: waves, the help panel, the Academy, a stress case, and spells cast for real
+                       # over and over (battery-idle/-patch/-spray/-ring in the battery, spell-<name> in the Sanctum): ms per
+                       # frame (sim / help / draw / render), draw calls, KB uploaded to the GPU and KB allocated per frame.
+                       # -- --only battery-patch,spell-frost-fog --size 1920x1080 --profile dir --shots dir --out f.json
 ```
 
 One-off scripts with no npm entry (run after `npm run build`; each prints its usage in its first lines):
 - **Shots for judging one effect:** `burst-shot` (the imbued bursts, a contact sheet), `caltrops-shot` (Ice Place), `coat-shot` (coated force fields, the imbue's skin, the stored spell), `fog-shot` (Cold Place), `ghost-shot` (a ghost rune and a pool in debt in the HUD), `light-shot` (spell light against a wall), `store-shot` (the stored spell's sigil).
-- **Audits:** `occlusion-audit` (casts around walls and furniture, a cropped shot each, to check draw order by eye).
+- **Audits:** `occlusion-audit` (casts around walls and furniture, a cropped shot each, to check draw order by eye), `dither-check` (`art/px.ts`'s pattern-filled dithering gives exactly the per-pixel loops' pixels).
 - **Performance:** `perf-sim` (sim timing in node; `perf.mjs` imports it), `gpu-info` (which GPU a `--gpu` perf run used).
 
 **Performance** (`docs/explorations/2026-11-06-performance.md`): in headless Chrome, compare the p50 frame time and the bytes uploaded and allocated per frame. The mean and p95 are mostly SwiftShader stalls. The usual costs: the two effect canvases are redrawn and re-uploaded every frame (they cover the view, not the whole field: `art/vfx.ts` `view()`), a new actor frame re-uploads its 256 px atlas page, and in the sim, enemy steering and wall collision. `?perf=1` records per-frame timings on `wizardSim.perf`.
+
+Chrome records 2D canvas calls and rasterizes them later, so in a profile the cost of many small fills shows up in `drawImage` or `texSubImage2D`, not `fillRect`: count the calls. Three traps the spell-effects pass found (`docs/explorations/2026-11-14-performance-spell-effects.md`): a canvas that has been drawn from is copied whole by the next write that leaves any of it standing, so a reused scratch canvas is cleared whole (`clearRect` over all of it), not just the part used; a pattern or image drawn into these CPU canvases must itself be a CPU canvas (`X.canvas`), or each use reads it back from the GPU; and a pattern fill pays off only on long spans, so small shapes keep 1x1 fills.
 
 URL params (`packages/client/src/main.ts` lists them too):
 - **Rooms:** `?room=arena` (the waves; the default is the Sanctum with dummies), `?room=survive` (Survive: endless waves in a walled arena, a power-up pick between waves), `?room=tutorial` (the tutorial; `&beat=N` starts at beat N). Artifact links carry no query string, so the `#anchor` works as well: `#arena`, `#survive`, `#tutorial`, `#tutorial-7`, `#ally`, `#arena-ally`, and `#battery` (the opening's first job, a blockout). In the game the 1 / 2 / 3 / 4 / 5 / 6 keys switch between the Sanctum, the Arena, Survive, the tutorial, the Academy and the battery (in place, not online); the list is `packages/client/src/scenarios.ts`.

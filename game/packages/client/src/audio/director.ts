@@ -20,7 +20,7 @@ import {
 } from '@wizard-sim/sim';
 import {
   composeAuraLoop, composeBlink, composeOrbStrike, composeBlocked, composeBurning, composeCharge, composeDeath, composeDismiss, composeDowned, composeDry, composeFlight, composeFloorFire,
-  composeFootstep, composeHeal, composeMissileLand, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak,
+  composeFootstep, composeFrostFog, composeHeal, composeMissileLand, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak,
   composeSparkField, composeSpell, composeSpring, composeSteamCloud, composeStinger, composeStrike, composeStop, composeSustain, composeTelegraph, composeUi,
   shapeOf, type ElementName, type EnemyKind, type Plan, type ShapeName, type SpellSound, type UiSound, type WeaponMove,
 } from './recipes';
@@ -258,7 +258,7 @@ export class SoundDirector {
         return;
       }
       case 'surge': this.ask('zap', x, y, () => composeImpact('lightning', 0.6, r)); return;
-      case 'blink': this.ask('move', x, y, composeBlink); return;
+      case 'blink': this.ask('move', x, y, () => composeBlink(r)); return;
       case 'shatter': this.ask('interaction', x, y, () => composeInteraction('shatter', r), 1, false, 'shatter'); return;
       case 'freeze': this.ask('interaction', x, y, () => composeInteraction('freeze', r), 1, false, 'freeze'); return;
       case 'fizzle':
@@ -403,9 +403,12 @@ export class SoundDirector {
       const snd = spellSoundOf(compile(queueFromCounts(dv.els, k), 'force'));
       add(`chan:device${k}|${snd.shape}`, { plan: () => composeSustain(sustainOf(snd), this.rand), tail: () => composeStop(sustainOf(snd), this.rand), x: dv.x[k], y: dv.y[k], gain: 0.8 });
     }
+    // the freezing fog is silent until Cold's kit has a sound for it
+    const fog = composeFrostFog();
     for (let k = 0; k < MAX_ZONES; k++) {
       const t = z.type[k];
-      const plan = t === ZONE.rain ? composeRain : t === ZONE.steam ? composeSteamCloud : t === ZONE.spring ? composeSpring : t === ZONE.spark ? composeSparkField : null;
+      const plan = t === ZONE.rain ? composeRain : t === ZONE.steam ? composeSteamCloud : t === ZONE.spring ? composeSpring : t === ZONE.spark ? composeSparkField
+        : t === ZONE.frost && fog ? () => fog : null;
       if (plan) add(`zone:${k}|${t}`, { plan, x: z.x[k], y: z.y[k], gain: 1 });
     }
     // missiles in flight, a thin trail of their element; a few are enough

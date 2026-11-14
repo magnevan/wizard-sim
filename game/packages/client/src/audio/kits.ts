@@ -43,7 +43,7 @@ export interface Kit {
   /** A beam catching, and held. */
   beamStart?: readonly KitLayer[];
   beam?: readonly KitLayer[];
-  /** A quick shove of it, at arm's length. */
+  /** A quick shove of it, at arm's length. Shield's is the Blink (played by the blink itself, so its cast is `spells.blink`, silent). */
   force?: readonly KitLayer[];
   /** Something thrown leaving the hand. */
   launch?: readonly KitLayer[];
@@ -55,12 +55,14 @@ export interface Kit {
   wall?: readonly KitLayer[];
   /** Cast on yourself. */
   self?: readonly KitLayer[];
-  /** Landing on something. */
+  /** Landing on something. Shield's is a blow turned aside by a barrier or ward. */
   land?: readonly KitLayer[];
   /** A body with this on it. */
   status?: readonly KitLayer[];
-  /** The floor, burning or otherwise covered in it. */
+  /** The floor, burning or otherwise covered in it: Fire's burning floor, Life's healing spring, Cold's freezing fog. */
   ground?: readonly KitLayer[];
+  /** A small touch of it on a body, heard again and again: each tick of a heal (Life). */
+  tick?: readonly KitLayer[];
   /** Building up in the hand, and in the air on its way. Empty means silent. */
   charge?: readonly KitLayer[];
   flight?: readonly KitLayer[];

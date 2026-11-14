@@ -51,8 +51,9 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[] }>> = {
   life: {
     el: 'life',
     moments: [
-      { id: 'beam-r1', name: 'Life beam', spell: 'life,life/force', hurt: true, listen: 'A green-gold beam of healing held on the dummy, which is kept hurt so it heals. Three parts: the beam catching (the self-heal takes, cut short), the held beam, and the small tick on the body each time it heals. The tick replaces the old chime and is heard all the time, so it should be gentle: takes 1 and 2 are soft breaths, take 3 is self-heal 2\'s swell cut short (the third tick that came back was a tone and a boom). Beam takes 1 and 2 are a soft steady tone, take 3 airier.',
-        sections: [{ name: 'Catch', key: 'beamStart', takes: 3, other: 'Reference' }, { name: 'Beam', key: 'beam', takes: 3, other: 'Reference' }, { name: 'Heal tick', key: 'tick', takes: 3 }] },
+      // r1 settled 2026-11-14: beam take 1 ("friendly"), tick take 1 (8 dB quieter). The catch: Magicka's was Right; ours were too smooth or too sharp
+      { id: 'beam-r2', name: 'Life beam', spell: 'life,life/force', hurt: true, listen: 'Your beam (take 1) and heal tick (take 1, now about 8 dB quieter: check it sits under the beam). The catch is still open: you marked Magicka\'s Right, and asked for one that goes with our beam, or none at all. To hear the beam with no catch, turn the catch\'s level all the way down. Each part has a level slider: use it to mix the whole spell yourself.',
+        sections: [{ name: 'Catch', key: 'beamStart', takes: 3, other: 'Reference' }, { name: 'Heal tick', key: 'tick', takes: 1 }] },
       { id: 'spray-r1', name: 'Healing spray', spell: 'life,life,fire/force', hurt: true, listen: 'Life + Fire: a cone of warm light (Water and Cold make the Rescue and Cooling sprays, the same sound). No clips of its own yet: take 1 is the beam\'s take 3 (the airy one), takes 2 and 3 are the spring\'s takes 1 and 2. Say if it needs its own.',
         sections: [{ name: 'Spray', key: 'hold', takes: 3, other: 'Reference' }] },
       { id: 'ring-r1', name: 'Healing ring', spell: 'life,life/area', hurt: true, listen: 'A veil of light rising in a widening circle round you.',
@@ -136,11 +137,15 @@ function pickTake(clips: readonly string[], n: number): readonly string[] {
   return these.length ? these : clips.slice(0, 1);
 }
 
-/** The kit with each entry at its chosen take: 0 is the other set (KitLayer.set 'ref'), else take n of ours. Entries nobody chose play take 1. */
-function kitAt(kit: Kit, take: (key: string) => number): Kit {
+/**
+ * The kit with each entry at its chosen take: 0 is the other set (KitLayer.set 'ref'), else take n of ours. Entries nobody chose play
+ * take 1. `level` scales an entry, for mixing in the Lab: 0 keeps its layers at no gain (an empty entry would fall back to the old
+ * placeholder sound, not silence).
+ */
+function kitAt(kit: Kit, take: (key: string) => number, level: (key: string) => number = () => 1): Kit {
   const one = (key: string, ls: readonly KitLayer[]) => {
-    const n = take(key);
-    return ls.filter((l) => !l.set || (l.set === 'ref') === (n === 0)).map((l) => (l.set === 'ref' ? l : { ...l, clips: pickTake(l.clips, n || 1) }));
+    const n = take(key), g = level(key);
+    return ls.filter((l) => !l.set || (l.set === 'ref') === (n === 0)).map((l) => ({ ...(l.set === 'ref' ? l : { ...l, clips: pickTake(l.clips, n || 1) }), gain: l.gain * g }));
   };
   const all = (ls: Readonly<Record<string, readonly KitLayer[]>>) => Object.fromEntries(Object.entries(ls).map(([k, v]) => [k, one(k, v)]));
   const { spells, ...roles } = kit;
@@ -202,7 +207,7 @@ export class SoundLab {
   /** The kit as it plays now, at the chosen takes. */
   private live: Kit | null = null;
   private lab: typeof LABS[string];
-  private notes: Record<string, { mark?: string; note?: string }> = {};
+  private notes: Record<string, { mark?: string; note?: string; level?: number }> = {};
   /** Each kit entry's chosen take: 0 is the other set (reference or today). */
   private takes = new Map<string, number>();
   /** The kit entry being heard on its own, or null for the whole spell. */
@@ -292,16 +297,23 @@ export class SoundLab {
     this.apply();
   }
 
+  /**
+   * A part's level in the Lab's mix (1 as it is, 0 off), kept in the notes as `<el>/level/<kit key>` so it lasts and Claude can read
+   * how loud the user wants it.
+   */
+  private levelOf(key: string): number { return this.notes[`${this.lab.el}/level/${key}`]?.level ?? 1; }
+  private notesLevels(): number[] { return this.lab.moments.flatMap((m) => m.sections.map((s) => this.levelOf(s.key))); }
+
   /** The element's kit at the chosen takes, and what "just this part" lets through. */
   private apply(): void {
     if (!this.ref) return;
-    const kit = kitAt(this.ref, (k) => this.takes.get(k) ?? 1);
+    const kit = kitAt(this.ref, (k) => this.takes.get(k) ?? 1, (k) => this.levelOf(k));
     useKit(this.lab.el, kit);
     this.live = kit;
     this.soloClips = this.solo === null ? new Set() : clipsOf(kit, this.solo);
     // a loop already going would carry on as the old take; but restarting one that hasn't changed is heard as a new start
     const was = this.heard;
-    this.heard = `${JSON.stringify([...this.takes])}|${this.solo}`;
+    this.heard = `${JSON.stringify([...this.takes])}|${this.solo}|${JSON.stringify(this.notesLevels())}`;
     if (was !== this.heard) this.audio.director.restartLoops();
     this.redraw?.();
   }
@@ -396,6 +408,15 @@ export class SoundLab {
         const pick = el('div', '', sec, 'row');
         const picks = choices.length > 1 ? choices.map(([n, label]) => { const b = button(label, pick); b.onclick = () => { this.takes.set(s.key, n); this.apply(); }; return [n, b] as const; }) : [];
         if (!picks.length) pick.remove();
+        // its level in the whole spell, to mix it yourself: all the way down turns this part off
+        const mix = el('div', '', sec, 'row'), lk = `${this.lab.el}/level/${s.key}`;
+        const lvl = el('span', '', mix, 'lbl');
+        const say = (v: number) => { lvl.textContent = v === 0 ? 'Level: off' : `Level: ${Math.round(v * 100)}%`; };
+        const slider = el('input', '', mix) as HTMLInputElement;
+        slider.type = 'range'; slider.min = '0'; slider.max = '1.5'; slider.step = '0.05'; slider.value = String(this.levelOf(s.key)); slider.style.flex = '1';
+        say(this.levelOf(s.key));
+        slider.oninput = () => say(Number(slider.value));
+        slider.onchange = () => { (this.notes[lk] ??= {}).level = Number(slider.value); this.save(lk, el('span')); this.apply(); };
         // one note per take, the chosen one shown, so a note is plainly about what you're hearing
         const boxes = choices.map(([n, label]) => {
           const b = this.rating(sec, `${key}/${s.key}/${n ? `take${n}` : 'other'}`, choices.length > 1 ? `${s.name}, ${label}` : s.name, `${label}: what is off, in your own words`);

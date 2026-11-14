@@ -69,3 +69,4 @@ Dated, long-form thinking sessions. Once written, each is a record and isn't rew
 | 2026-11-13 | [encounters-as-data](2026-11-13-encounters-as-data.md) | Phase 2, part 1: Prop tags, Marker and Region entities, the encounter runner; the battery lesson ported unchanged | |
 | 2026-11-14 | [enemies-and-ai](2026-11-14-enemies-and-ai.md) | Magicka 1 and 2's enemies researched; thirteen candidate enemies; attack tokens, pacing, and companions as input bots with utility scoring | |
 | 2026-11-14 | [enemy-wizards](2026-11-14-enemy-wizards.md) | Enemy wizards: the queue as the tell, plays, honesty rules, three tiers, AI seats | Fills in enemies-and-ai's rival and hedge wizards |
+| 2026-11-14 | [encounter-level-ai](2026-11-14-encounter-level-ai.md) | The user's notes: AI at the encounter level (the demand budget, volleys), compositions and the layering ladder, defensive encounters, the Sigil economy (turrets can't be hurt) | |

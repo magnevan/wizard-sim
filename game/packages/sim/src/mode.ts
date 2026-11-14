@@ -8,7 +8,7 @@
 import type { PlayerInput } from './input';
 import type { PartyState, Room, World } from './world';
 
-export type ModeId = 'sandbox' | 'arena' | 'survive' | 'battery' | 'tutorial';
+export type ModeId = 'sandbox' | 'arena' | 'survive' | 'battery' | 'tutorial' | 'yard';
 
 export interface WorldOpts {
   /** False: no practice dummies in a room that would have them. */
@@ -58,6 +58,8 @@ export interface Possession {
 export interface EnemyRules {
   /** Enemy i holds a spot instead of fighting, battering what's there (the battery's lanes). */
   holdAt?(w: World, i: number): [number, number] | undefined;
+  /** Enemy i walks to a spot and stands there, doing nothing (the yard's sparring soldiers, waiting their turn). */
+  restAt?(w: World, i: number): [number, number] | undefined;
   /** Who enemy i goes for, before the nearest wizard (-1: nobody in particular). */
   target?(w: World, i: number): number;
   /** Where an archer stands against target t. */
@@ -94,6 +96,8 @@ export interface Mode {
   pools?(w: World): readonly object[];
   /** A body slot was (re)used: clear the mode's per-body columns. */
   onSpawn?(w: World, i: number): void;
+  /** The room the party is leaving for now (the yard's gate: the battery), or undefined. The client switches to it. */
+  leaveTo?(w: World): string | undefined;
   /** Where a chapter can be started from, in order (the first is its beginning). */
   readonly checkpoints?: readonly Checkpoint[];
   /** The last checkpoint this world has passed (what a save records), or undefined for none. */

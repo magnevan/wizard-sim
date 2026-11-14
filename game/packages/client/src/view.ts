@@ -16,11 +16,12 @@
  */
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
-  EV, AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
+  EV, AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, YTAG, isPropWall,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
 import { ActorFrames, FEET_X, FEET_Y } from './art/actors';
+import { Extras } from './art/extras';
 import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
 import { floorLayout, floorPlaceholder } from './art/floor';
@@ -42,7 +43,7 @@ import { Hud } from './hud';
 import { TutorialHud } from './tutorial-view';
 import type { SoundDirector } from './audio/director';
 
-const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10, bramble: 10, sack: 9 };
+const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10, bramble: 10, sack: 9, soldier: 9 };
 /** ?lighting=0 turns the scene lighting off, to compare. */
 const LIGHTING = typeof location === 'undefined' || new URLSearchParams(location.search).get('lighting') !== '0';
 /** How far the view leans out over the battlefield while you drive a defence: view units, across and up. */
@@ -84,6 +85,8 @@ export class WorldView {
   private actors = new Container();
   private lights = new Lights();
   private frames = new ActorFrames();
+  /** The people who live in the room (art/extras.ts): the drill yard's students and soldiers. */
+  private extras: Extras;
   /** The room's props (art/props.ts). The art test's prop set is `props.set`. */
   readonly props: PropView;
   /** The art test: the detailed wizard (art/rigs.ts), client side only. */
@@ -182,6 +185,7 @@ export class WorldView {
     this.structs = new StructureView(this.actors);
     this.props = new PropView(this.actors, tint, 'lean');
     this.deaths = new Deaths(this.actors);
+    this.extras = new Extras(this.actors, this.frames);
     if (this.lit) {
       this.litLayer.addChild(this.floor, this.props.under, this.vfx.ground, this.sGround, this.lit.shadowSprite, this.lit.lightSprite, this.lit.glowLayer, this.actors, this.lit.vig);
       this.litLayer.filters = [this.lit.grade];
@@ -270,7 +274,9 @@ export class WorldView {
     if (k === KIND.dummy) return 'dummy';
     const a = w.bodies.arch[i];
     if (a === ARCH.bramble) return 'bramble';
-    if (a === ARCH.straw && w.tut?.tag[i] === TUT_TAG.sack) return 'sack';
+    if (a === ARCH.straw && (w.tut?.tag[i] === TUT_TAG.sack || w.yard?.tag[i] === YTAG.sack)) return 'sack';
+    const yt = w.yard?.tag[i];
+    if (yt === YTAG.mallet || yt === YTAG.bow) return 'soldier'; // the drill yard's sparring partners
     return a === ARCH.brute ? 'brute' : a === ARCH.caster ? 'archer' : 'goblin';
   }
 
@@ -338,6 +344,7 @@ export class WorldView {
       v.on = true; v.x = fx; v.y = fy; v.rig = s.kind;
     }
 
+    this.extras.draw(w.def, ct, fx0, fy0, this.lit ? 0xffffff : AMBIENT); // the people who live here (the drill yard's)
     const ax = (x: number) => ox + Math.round(x * PPU), ay = (y: number) => cam.toArtY(y);
     drawTelegraphs(w, { ground: this.sGround.clear(), overlay: this.sOverlay.clear(), ax, ay }, Math.round(ct * 60));
 
@@ -360,6 +367,7 @@ export class WorldView {
         lit.shadow(v.f.tex, FEET_X, FEET_Y, fx0 + v.x, fy0 + v.y);
         if (i < MAX_SEATS && lit.carry) lit.light(fx0 + v.x, fy0 + v.y, 110, '#ffd9a8', lit.carry * 0.8, true);
       }
+      this.extras.each((f, x, y) => lit.shadow(f.tex, FEET_X, FEET_Y, fx0 + x, fy0 + y), fx0, fy0);
       const wl = w.walls, tr = w.terrain;
       const wall = (ax: number, ay: number, bx: number, by: number): void => {
         const x1 = fx0 + gx(ax), y1 = fy0 + gy(ay), x2 = fx0 + gx(bx), y2 = fy0 + gy(by);
@@ -518,7 +526,7 @@ export class WorldView {
       if (arch === ARCH.shieldbearer) { s.pal = 5; s.variant = 5; }
       else if (arch === ARCH.grabber) { s.pal = 4; s.variant = 4; }
       else if (arch === ARCH.imp) { s.pal = 3; s.variant = 3; }
-      else if (arch === ARCH.straw) { s.pal = 6; s.variant = 0; } // the tutorial's straw goblin
+      else if (arch === ARCH.straw || w.yard?.tag[i] === YTAG.goblin) { s.pal = 6; s.variant = 0; } // the tutorial's straw goblin; the yard's, animated
       else if (arch === ARCH.bramble) { s.variant = b.r[i] >= 0.65 ? 1 : 0; s.seed = i & 3; }
       else { s.pal = i % 3; s.variant = kind === 'goblin' ? i % 3 : 0; }
     }
@@ -550,7 +558,11 @@ export class WorldView {
     // enemy attack poses, from the sim's attack state (art/enemy-attacks.ts)
     if (b.kind[i] === KIND.enemy) {
       const k = attackK(w, i);
-      if (kind === 'brute') s.smash = k;
+      if (kind === 'soldier') {
+        s.variant = w.yard?.tag[i] === YTAG.mallet ? 1 : 2; s.pal = s.variant === 1 ? 0 : 1;
+        if (s.variant === 1) s.smash = k;
+        else { s.atk = k; if (b.ai[i] === AI.windup) s.draw = 1; }
+      } else if (kind === 'brute') s.smash = k;
       else if (kind === 'archer') {
         const A = ARCHETYPES[arch];
         if (b.ai[i] === AI.windup) s.draw = Math.round(Math.min(1, b.aiT[i] / Math.max(1, A.windup * 60)) * 4) / 4;

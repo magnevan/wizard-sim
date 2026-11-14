@@ -29,6 +29,7 @@ export { ARCHETYPES, ARCH, ATTACK, type Archetype } from './archetypes';
 export { wavePlan, WAVE_TIMES } from './waves';
 export { TUT_BEAT, TUT_ORDER, TUT_END, TUT_POOLS, TUT_PLACES, TUT_TIMES, TUT_ARRIVALS, TUT_RUNES_FROM, TS as TUT_STATE, TAG as TUT_TAG, arrivalsOf, calmOf, nextBeat, tutPool, wavesOf, type Arrival } from './tutorial-data';
 export { allArrived, setupBeat, skipOpen } from './tutorial';
+export { YARD, YARD_CHECKPOINTS, YS, YST, YTAG, N_YST, yardDone } from './yard';
 export { newTutorialBot, tutorialBotInput, type TutorialBotMemory } from './tutorial-bot';
 export { survivePlan, SURVIVE_TIMES, grant, restartRun, raiseAltars, chooseElement, keyWave } from './survive';
 export { botInput, newBotMemory, type BotMemory } from './bot';

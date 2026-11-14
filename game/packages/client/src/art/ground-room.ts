@@ -70,6 +70,8 @@ async function scatter(x: CanvasRenderingContext2D, g: GroundMap, W: number, H: 
  */
 const WOODS: Readonly<Record<string, { items: readonly string[]; clear: readonly (readonly [number, number, number, number])[] }>> = {
   battery: { items: ['pine', 'pine', 'oak', 'oak', 'oak-autumn', 'bush-round'], clear: [[-23, -99, -17, -36], [-3, -99, 3, -36], [19, -99, 25, -36], [-3, 36, 3, 99]] },
+  // the drill yard: the road north out of the gatehouse runs off between the fields
+  yard: { items: ['oak', 'oak', 'oak-autumn', 'pine', 'bush-round', 'bush-autumn'], clear: [[-2.5, -99, 4.5, -33]] },
 };
 const WOOD_SPOT = 30; // art px between trees
 

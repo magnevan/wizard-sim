@@ -1,0 +1,23 @@
+{
+  "id": "jerkin-rack",
+  "kind": "prop",
+  "name": "Rack of training jerkins",
+  "footprint": [
+    1.2,
+    0.5
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        21,
+        34
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/yard/14.png",
+      "tool": "create_1_direction_object",
+      "edits": "trimmed only",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

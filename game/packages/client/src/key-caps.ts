@@ -8,11 +8,11 @@
 import * as X from './art/px';
 import type { Ctx } from './art/px';
 
-export type Key = 'fire' | 'life' | 'shift' | 'space' | 'rmb' | 'x' | 'circle' | 'lifecircle';
+export type Key = 'fire' | 'life' | 'sigil' | 'shift' | 'space' | 'rmb' | 'lmb' | 'x' | 'circle' | 'lifecircle';
 export type Token = { key: Key; hold?: boolean } | 'then' | 'plus';
 
 const CAP_H = 16, GAP = 3;
-const CAP_W: Record<Key, number> = { fire: 17, life: 17, shift: 30, space: 34, rmb: 14, x: 15, circle: 22, lifecircle: 22 };
+const CAP_W: Record<Key, number> = { fire: 17, life: 17, sigil: 17, shift: 30, space: 34, rmb: 14, lmb: 14, x: 15, circle: 22, lifecircle: 22 };
 const SEP_W = 9;
 /** Seconds each press is shown for: a tap, and a hold. And a rest before it starts over. */
 const TAP = 0.42, HOLD = 1.1, REST = 0.7;
@@ -63,7 +63,7 @@ const OUT = '#0a0810', FACE = '#2a2638', FACE_DOWN = '#4a3020', TOP = '#4a4460',
 
 function cap(c: Ctx, tok: { key: Key; hold?: boolean }, x: number, y: number, down: boolean, fill: number, t: number): void {
   const w = CAP_W[tok.key], dy = down ? 1 : 0;
-  if (tok.key === 'rmb') { mouse(c, x, y, down, fill, !!tok.hold); return; }
+  if (tok.key === 'rmb' || tok.key === 'lmb') { mouse(c, x, y, down, fill, !!tok.hold, tok.key === 'lmb'); return; }
   if (tok.key === 'circle' || tok.key === 'lifecircle') { circle(c, x, y, t, tok.key === 'lifecircle'); return; }
   // the cap: an outline, its side showing under it (less when pressed), a bevelled face
   X.rect(c, x, y + dy, w, CAP_H - dy, OUT);
@@ -74,6 +74,9 @@ function cap(c: Ctx, tok: { key: Key; hold?: boolean }, x: number, y: number, do
   if (tok.key === 'fire') {
     X.icon(c, 'fire', x + Math.round(w / 2) - 5, fy + 1, down ? X.EL.fire[1] : X.EL.fire[2]);
     X.text(c, 'F', x + Math.round(w / 2) - 3, fy + 2, '#ffffff', OUT, 2); // a big F over the symbol
+  } else if (tok.key === 'sigil') {
+    X.icon(c, 'sigil', x + Math.round(w / 2) - 4, fy + 2, down ? X.EL.sigil[1] : X.EL.sigil[2]);
+    X.text(c, 'D', x + Math.round(w / 2) - 3, fy + 2, '#ffffff', OUT, 2); // a big D over the symbol
   } else if (tok.key === 'life') {
     X.icon(c, 'life', x + Math.round(w / 2) - 4, fy + 2, down ? X.EL.life[1] : X.EL.life[2]);
     X.text(c, 'W', x + Math.round(w / 2) - 3, fy + 2, '#ffffff', OUT, 2); // a big W over the symbol
@@ -90,8 +93,8 @@ function cap(c: Ctx, tok: { key: Key; hold?: boolean }, x: number, y: number, do
   if (tok.hold) holdBar(c, x, y + CAP_H + 1, w, fill);
 }
 
-/** A mouse seen from above: a rounded body, its cord, the left button dull and the right one lit (brighter while pressed). */
-function mouse(c: Ctx, x: number, y: number, down: boolean, fill: number, hold: boolean): void {
+/** A mouse seen from above: a rounded body, its cord, one button dull and the one to press lit (brighter while pressed). */
+function mouse(c: Ctx, x: number, y: number, down: boolean, fill: number, hold: boolean, left = false): void {
   const w = CAP_W.rmb, mid = x + Math.floor(w / 2), body = '#cfc9e6', shade = '#9a94b2';
   X.rect(c, mid, y - 2, 1, 3, '#8a8498'); // the cord
   // a rounded body, wider at the bottom
@@ -100,9 +103,10 @@ function mouse(c: Ctx, x: number, y: number, down: boolean, fill: number, hold: 
   X.rect(c, x + 2, y + 2, w - 4, 1, body); X.rect(c, x + 1, y + 3, w - 2, CAP_H - 5, body); X.rect(c, x + 2, y + CAP_H - 2, w - 4, 1, shade);
   X.rect(c, x + 1, y + 9, w - 2, CAP_H - 11, shade);
   X.rect(c, mid, y + 2, 1, 7, OUT); X.rect(c, x + 1, y + 9, w - 2, 1, OUT); // the buttons' seams
-  // the right button: always orange, so it reads as the one to press; brighter and dipped while pressed
-  X.rect(c, mid + 1, y + 3 + (down ? 1 : 0), Math.ceil(w / 2) - 2, 5 - (down ? 1 : 0), down ? LIT : '#c06a24');
-  X.px(c, mid + 1, y + 2, down ? '#fff2c0' : '#e0903a');
+  // the button to press: always orange, so it reads as the one; brighter and dipped while pressed
+  const bx = left ? x + 1 : mid + 1, bw = left ? mid - x - 1 : Math.ceil(w / 2) - 2;
+  X.rect(c, bx, y + 3 + (down ? 1 : 0), bw, 5 - (down ? 1 : 0), down ? LIT : '#c06a24');
+  X.px(c, left ? mid - 1 : mid + 1, y + 2, down ? '#fff2c0' : '#e0903a');
   if (hold) holdBar(c, x, y + CAP_H + 1, w, fill);
 }
 

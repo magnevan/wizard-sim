@@ -112,6 +112,8 @@ export function tickEnemies(w: World): void {
     // the mode may have it hold a spot instead (the battery's lanes: harmless, they batter a wall)
     const hold = rules?.holdAt?.(w, i);
     if (hold) { holdWall(w, i, a, hold); continue; }
+    const rest = rules?.restAt?.(w, i);
+    if (rest) { standAt(w, i, a, rest); continue; }
     let t = b.ai[i] === AI.windup ? b.target[i] : -1;
     if (t < 0 || !isPrey(w, t)) {
       if (b.ai[i] === AI.windup) setAi(w, i, AI.approach);
@@ -158,6 +160,16 @@ function holdWall(w: World, i: number, a: (typeof ARCHETYPES)[number], [sx, sy]:
   if (b.ai[i] === AI.approach && b.aiT[i] > T(0.3)) setAi(w, i, AI.windup);
   else if (b.ai[i] === AI.windup && b.aiT[i] >= T(a.windup)) setAi(w, i, AI.cooldown);
   else if (b.ai[i] === AI.cooldown && b.aiT[i] >= T(a.cooldown)) setAi(w, i, AI.approach);
+}
+
+/** The mode has it wait at a spot (mode.ts restAt): it walks back there and stands, out of any attack. */
+function standAt(w: World, i: number, a: (typeof ARCHETYPES)[number], [sx, sy]: [number, number]): void {
+  const b = w.bodies;
+  if (b.ai[i] !== AI.approach) setAi(w, i, AI.approach);
+  b.target[i] = -1;
+  if (len(sx - b.x[i], sy - b.y[i]) <= 0.4) return;
+  turnToward(w, i, atan2Turns(sy - b.y[i], sx - b.x[i]));
+  move(w, i, [sx, sy], -1, a.speed * b.speedMult[i] * chillPace(b.chill[i]));
 }
 
 /** Shieldbearers turn slowly (flank them); everything else faces its target at once. */

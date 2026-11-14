@@ -1,0 +1,24 @@
+{
+  "id": "ladder-lying",
+  "kind": "prop",
+  "name": "Ladder on the ground",
+  "footprint": [
+    1.4,
+    0.5
+  ],
+  "flat": true,
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        22,
+        35
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/yard/04.png",
+      "tool": "create_1_direction_object",
+      "edits": "trimmed only",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

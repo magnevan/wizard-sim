@@ -7,7 +7,7 @@
 | Map | Size (u) | Beats | The user's mark |
 |---|---|---|---|
 | 1. Lecture hall and cloister | 50 × 34 | 1 | About right |
-| 2. Drill yard | 56 × 42 | 2, 3 | Too small; to redraw as a real place |
+| 2. Drill yard | 90 × 68 | 2, 3 | Too small, redrawn as a corner of the academy and built (2026-11-14, `#yard`) |
 | 3. The battery | 72 × 64 | 4–7 | About right; four problems to solve |
 
 Maps 4 and 5 (vein trail 86 × 40, way through 76 × 62) are on hold with their beats. Their drawings are in git history, in `tools/opening-blueprint/index.html` before 2026-11-10.

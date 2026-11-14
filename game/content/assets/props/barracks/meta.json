@@ -1,0 +1,23 @@
+{
+  "id": "barracks",
+  "kind": "prop",
+  "name": "Barracks",
+  "footprint": [
+    7.0,
+    3.5
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        67,
+        77
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/yard/barracks.png",
+      "tool": "create_map_object",
+      "edits": "trimmed only",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

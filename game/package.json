@@ -23,6 +23,7 @@
     "check:academy": "npm run build && node scripts/academy-check.mjs",
     "check:iso": "npm run build && node scripts/iso-check.mjs",
     "check:battery": "npm run build && node scripts/battery-check.mjs",
+    "check:yard": "npm run build && node scripts/yard-check.mjs",
     "shots:tutorial": "npm run build && node scripts/tutorial-shots.mjs",
     "check:webrtc": "npm run build && node scripts/net-e2e.mjs --webrtc",
     "sync-rules": "node scripts/sync-rules.mjs",

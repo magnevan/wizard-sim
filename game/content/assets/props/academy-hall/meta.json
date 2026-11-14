@@ -1,0 +1,23 @@
+{
+  "id": "academy-hall",
+  "kind": "prop",
+  "name": "Academy hall",
+  "footprint": [
+    9.0,
+    5.0
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        93,
+        121
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/yard/academy-hall.png",
+      "tool": "create_map_object",
+      "edits": "trimmed only",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

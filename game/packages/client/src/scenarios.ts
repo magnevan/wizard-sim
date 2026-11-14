@@ -24,6 +24,7 @@ export interface Scenario {
 }
 
 export const SCENARIOS: readonly Scenario[] = [
+  { id: 'yard', name: 'The opening: the drill yard', blurb: 'The crash course in fighting, through a corner of the academy (beats 2 and 3).', room: 'yard', kind: 'campaign', key: '7' },
   { id: 'battery', name: 'The opening: the battery', blurb: 'The wall, its four defences and the failing well (beats 4 to 7).', room: 'battery', kind: 'campaign', key: '6' },
   { id: 'survive', name: 'Survive', blurb: 'Endless waves in a walled arena; pick a power-up between them.', room: 'survive', kind: 'arcade', key: '3' },
   { id: 'tutorial', name: 'Tutorial (prototype)', blurb: 'Learn the runes, the casts and your hands, one step at a time.', room: 'tutorial', kind: 'sandbox', key: '4' },

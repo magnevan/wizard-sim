@@ -51,17 +51,14 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[] }>> = {
   life: {
     el: 'life',
     moments: [
-      // r1 settled 2026-11-14: beam take 1 ("friendly"), tick take 1 (8 dB quieter). The catch: Magicka's was Right; ours were too smooth or too sharp
-      { id: 'beam-r2', name: 'Life beam', spell: 'life,life/force', hurt: true, listen: 'Your beam (take 1) and heal tick (take 1, now about 8 dB quieter: check it sits under the beam). The catch has three new takes from your wording (a soft impact, a glassy clash, a gentle strum; the Prompt line shows it). Take 1 may lean toward chimes, take 2 has the strongest clash, take 3 is mostly a low thump. You marked Magicka\'s Right, and asked for one that goes with our beam, or none at all. To hear the beam with no catch, turn the catch\'s level all the way down. Each part has a level slider: use it to mix the whole spell yourself.',
-        sections: [{ name: 'Catch', key: 'beamStart', takes: 3, other: 'Reference' }, { name: 'Heal tick', key: 'tick', takes: 1 }] },
-      { id: 'spray-r1', name: 'Healing spray', spell: 'life,life,fire/force', hurt: true, listen: 'Life + Fire: a cone of warm light (Water and Cold make the Rescue and Cooling sprays, the same sound). No clips of its own yet: take 1 is the beam\'s take 3 (the airy one), takes 2 and 3 are the spring\'s takes 1 and 2. Say if it needs its own.',
-        sections: [{ name: 'Spray', key: 'hold', takes: 3, other: 'Reference' }] },
-      { id: 'ring-r1', name: 'Healing ring', spell: 'life,life/area', hurt: true, listen: 'A veil of light rising in a widening circle round you.',
+      // settled 2026-11-14 and out of the Lab: the beam (take 1, "friendly"), its catch (round 2 take 3, "a nice soft tap with a slight
+      // echo"), the heal tick (take 1, quieter, then the user's 80 %), healing yourself and the palm (take 1), the spring's cast (take 1, for now)
+      { id: 'ring-r2', name: 'Healing ring', spell: 'life,life/area', hurt: true, listen: 'A veil of light rising in a widening circle round you. You liked Magicka\'s for its thud at the start, and asked for "a thud or something at the start" on ours. Round 2 puts the soft tap you chose for the beam\'s catch under the start of each: take 1 is round 1\'s take 1 with it, take 2 the same made a touch deeper and darker (you heard Magicka\'s shimmer as "slightly deeper"), take 3 is round 1\'s take 3 cut to 1 s (its strum lingered), with the tap. The tap is a soft one: use the level slider if it should hit harder.',
         sections: [{ name: 'Ring', key: 'burst', takes: 3, other: 'Reference' }] },
-      { id: 'spring-r1', name: 'Healing spring', spell: 'life,life/place', hurt: true, listen: 'A spring of light welling up where you aim, lasting several seconds. The cast is the self-heal clips (take n is self-heal n); the spring is its own loop for as long as it lasts (it had the old placeholder). Spring take 3 came back very quiet and is raised to match, so listen for hiss.',
-        sections: [{ name: 'Cast', key: 'place', takes: 3, other: 'Reference' }, { name: 'Spring', key: 'ground', takes: 3 }] },
-      { id: 'self-r1', name: 'Heal (self) and palm', spell: 'life,life/self;life,life/conjure', hurt: true, listen: 'Healing yourself, then the Healing palm (Weapon cast), in turn. Both play the same three takes for now.',
-        sections: [{ name: 'Heal', key: 'self', takes: 3, other: 'Reference' }, { name: 'Palm', key: 'force', takes: 3 }] },
+      { id: 'spring-r1', name: 'Healing spring', spell: 'life,life/place', hurt: true, listen: 'A spring of light welling up where you aim, lasting several seconds. Its cast is settled (self-heal take 1); this is the loop while it lasts, still at your 55 %. New takes from a plainer prompt are proposed, waiting for your OK.',
+        sections: [{ name: 'Spring', key: 'ground', takes: 3 }] },
+      { id: 'spray-r1', name: 'Healing spray', spell: 'life,life,fire/force', hurt: true, listen: 'Life + Fire: a cone of warm light (Water and Cold make the Rescue and Cooling sprays, the same sound). All three borrowed takes were rejected (rain, a mist with a drop, watery); its own prompts are proposed, waiting for your OK.',
+        sections: [{ name: 'Spray', key: 'hold', takes: 3, other: 'Reference' }] },
     ],
   },
   shield: {

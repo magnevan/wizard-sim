@@ -5,7 +5,7 @@ export type { Checkpoint, EnemyRules, Mode, ModeId, Possession, WorldOpts } from
 export { spawnEnemy, type EnemyOpts } from './spawn';
 export { possessed } from './possess';
 export { archAt, goStep, groupNow, openAtMarkers, partyIn, remaining, runScript, type Group, type Script, type Step } from './encounter';
-export { BATTERY, drivePlace, driving, pedestalNear, sprayReach } from './battery';
+export { BATTERY, LIFE_CIRCLE, drivePlace, driving, inLifeCircle, lifeCircle, pedestalNear, sprayReach } from './battery';
 export { BATTERY_CHECKPOINTS, BSTEP, wellNear } from './battery-waves';
 export { createTerrain, terrainNear, terrainAlong, type Terrain } from './terrain';
 export { inRegion, markerOf, markersTagged, propsTagged, regionOf, roomHash, type MarkerDef, type RegionDef, type RoomDef, type Pt as RoomPt, type Seg as RoomSeg } from './room';

@@ -404,6 +404,8 @@ export interface Battery {
   flow: Float64Array;
   /** [0] ticks since the flow ran out, [1] ticks since the well ran dry, [2] ticks since its repair began (0: not yet). */
   wellT: Int32Array;
+  /** The element each seat channels from a channel circle it stands in, or 0 (battery.ts channelTick). */
+  channel: Int8Array;
 }
 
 /** Has the repair begun (X at the well once the fight is over, battery-waves.ts)? */
@@ -712,7 +714,7 @@ export function createWorldWith(mode: Mode, seed: number, players: number, opts:
 export function joinSeat(w: World, i: number): void {
   if (w.seats.active[i]) return;
   w.seats.active[i] = 1;
-  spawnBody(w, i, KIND.wizard, TEAM.players, w.def.starts[i][0], w.def.starts[i][1], BODY.wizardHp, BODY.wizardRadius);
+  spawnBody(w, i, KIND.wizard, TEAM.players, w.def.starts[i][0], w.def.starts[i][1], w.mode.wizardHp?.(w, i) ?? BODY.wizardHp, BODY.wizardRadius);
   for (let e = 1; e <= N_EL; e++) w.seats.runes[i * N_EL + e - 1] = runeMax(w, i, e);
 }
 

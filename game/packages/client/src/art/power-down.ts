@@ -25,7 +25,8 @@
 import { WELL, type World } from '@wizard-sim/sim';
 import { clamp, rand, smooth } from './util';
 
-export const POWER = { towers: 0.8, drain: 1.1, wellFrom: 0.9, wellTo: 3.0 } as const;
+/** `burst`: how long the burst's jolt and the paths' white flash last, s. */
+export const POWER = { towers: 0.8, drain: 1.1, wellFrom: 0.9, wellTo: 3.0, burst: 0.6 } as const;
 export const REPAIR = { out: 0.6, black: 1.4, back: 2.2, riseFrom: 2.0, riseTo: 5.0, linesFrom: 3.0, lines: 1.2, towersFrom: WELL.relit - 0.8 } as const;
 
 /** Seconds since the well ran dry, or 0 if it hasn't. */
@@ -63,6 +64,21 @@ export function wellPower(w: World): number {
   const t = dryTime(w);
   if (t <= 0) return 1;
   return 1 - smooth(clamp((t - POWER.wellFrom) / (POWER.wellTo - POWER.wellFrom), 0, 1));
+}
+
+/**
+ * How much the well's overload shows, 0 to 1, before it bursts: how far its flow has fallen. It's what the glyph paths
+ * crackle with and the overload's sound climbs with (the user, 2026-11-14: from most defences the crystal is out of
+ * sight, so the overload has to show and sound where you are).
+ */
+export const overload = (w: World): number => (!w.battery || dryTime(w) > 0 || repairTime(w) > 0 ? 0 : clamp(1 - w.battery.flow[0], 0, 1));
+
+/** The screen's shake for the well, in art px: a tremor as the overload nears bursting, and a hard jolt when it bursts. */
+export function wellShake(w: World): number {
+  const t = dryTime(w);
+  if (t > 0) return t < POWER.burst ? 3.5 * (1 - t / POWER.burst) : 0;
+  const o = overload(w);
+  return o > 0.85 ? 1.2 * (o - 0.85) / 0.15 : 0;
 }
 
 /** The well's repair, 0 till it starts rising, to 1 once it spins steady again (and 1 from then on). */

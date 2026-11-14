@@ -30,7 +30,7 @@ import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
-import { blackout } from './art/power-down';
+import { blackout, wellShake } from './art/power-down';
 import type { PropSet } from './art/assets';
 import { AMBIENT, canvas as pxCanvas, stats, text as pxText } from './art/px';
 import { newRigState, type RigKind, type RigState } from './art/rigs';
@@ -290,7 +290,7 @@ export class WorldView {
     this.props.room(w.def);
     this.aim(w, alpha, dt);
     // a death's or a brute slam's screen shake (last frame's, in whole art px): cosmetic only
-    const sh = Math.max(this.deaths.shake, this.atkShake), sx = sh > 0.3 ? Math.round(Math.sin(ct * 83) * sh) : 0, sy = sh > 0.3 ? Math.round(Math.cos(ct * 71) * sh * 0.6) : 0;
+    const sh = Math.max(this.deaths.shake, this.atkShake, w.battery ? wellShake(w) : 0), sx = sh > 0.3 ? Math.round(Math.sin(ct * 83) * sh) : 0, sy = sh > 0.3 ? Math.round(Math.cos(ct * 71) * sh * 0.6) : 0;
     this.scene.scale.set(cam.scale);
     this.scene.position.set(sx * cam.scale + cam.subX(), sy * cam.scale + cam.subY());
     // how long the sim has stood still (capped): lets sim-driven loops (orbitals) carry on smoothly

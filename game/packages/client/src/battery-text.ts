@@ -28,6 +28,13 @@ export const DRIVING: Partial<Record<number, BatteryPrompt>> = {
  * For every seat once the well has run dry, by step (beats 6 and 7, and the repair). The infusion's head is the user's
  * line (r2-battery-transition); the repair's is theirs too ("press X to stabilize", the opening's settled notes).
  */
+/** In the Life circle (a channel circle), hurt: Life on yourself. */
+export const HEAL_HERE: BatteryPrompt = { head: 'Heal yourself', keys: [{ key: 'life' }, 'then', { key: 'space' }] };
+/** Hurt in the fight from your own hands, away from the circle: where to go. */
+export const GO_HEAL: BatteryPrompt = { head: 'Hurt? Stand in the green circle', keys: [{ key: 'lifecircle' }] };
+/** How hurt you are (a share of your hp) before GO_HEAL shows. */
+export const HURT = 0.6;
+
 export const OWN_FIRE: Partial<Record<number, BatteryPrompt>> = {
   [BSTEP.hands]: { head: 'You\'ve learned to channel fire', keys: [F, 'then', { key: 'rmb' }] },
   [BSTEP.after]: { head: 'Stabilize the well', keys: [{ key: 'x' }] },

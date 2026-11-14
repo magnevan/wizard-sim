@@ -62,8 +62,10 @@ const HANDS: readonly (readonly (readonly [number, number])[])[] = [
 export const BWAVES = {
   /** Goblins battering each defence's wall as you arrive. */
   arrivals: 2,
-  /** s of quiet before each group comes out of the trees. */
-  pause: 3,
+  /** s of quiet before each group comes out of the trees (it was 3: "too much waiting", the user, 2026-11-14). */
+  pause: 1.5,
+  /** After the lesson the next group comes once this many of the last are left standing, after `freePause`: no lulls. */
+  overlap: 1, freePause: 0.5,
   spawnEvery: 0.5,
   /** Archers here keep this far off their defence's muzzle: past the flamethrower, inside Place's 18. */
   archerStandoff: 13,
@@ -255,9 +257,9 @@ export const LESSON: Script = {
     { id: 'spray', groups: [GROUPS[BSTEP.spray]], hold: nobodyAtADefence },
     { id: 'place', groups: [GROUPS[BSTEP.place]], hold: nobodyAtADefence },
     { id: 'brute', groups: [GROUPS[BSTEP.brute]], hold: nobodyAtADefence },
-    { id: 'free', groups: FREE, cycle: 'loop', hold: nobodyAtADefence },
+    { id: 'free', groups: FREE, cycle: 'loop', hold: nobodyAtADefence, overlap: BWAVES.overlap, pause: BWAVES.freePause },
     { id: 'dry', end: true },
-    { id: 'hands', groups: HANDS, cycle: 'list' },
+    { id: 'hands', groups: HANDS, cycle: 'list', overlap: BWAVES.overlap, pause: BWAVES.freePause },
     { id: 'after', end: true },
     { id: 'repair', end: true },
   ],

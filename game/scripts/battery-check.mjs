@@ -213,14 +213,24 @@ try {
   // the power going down (art/power-down.ts), a frame at a time, by the sim's clock since it ran dry
   const dryS = () => p.evaluate(() => window.wizardSim.world.battery.wellT[1] / 60);
   const until = async (s) => { for (let k = 0; k < 200 && (await dryS()) < s; k++) await sleep(30); };
-  for (const s of [0.4, 1.2, 2.0, 2.8]) { await until(s); await shot(`power-down-${s.toFixed(1)}`); }
+  for (const s of [0.1, 0.4, 1.2, 2.0, 2.8]) { await until(s); await shot(`power-down-${s.toFixed(1)}`); }
   const dry = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], drive: w.battery.drive[0], gate: w.walls.type[0] }; });
   if (dry.step < 6 || dry.drive !== -1 || dry.gate !== 0) fail(`the well should be dry with the gate's fire out: step ${dry.step}, drive ${dry.drive}, gate wall ${dry.gate}`);
   await until(3.9);
   await shot('well-infusion');
   const own = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], fire: w.seats.runes.reduce((m, v, k) => (k < 10 ? Math.max(m, v) : m), 0) }; });
   if (own.step !== 7 || own.fire < 1) fail(`the infusion should give you a rune of your own: step ${own.step}, best pool ${own.fire}`);
-  await sleep(6000);
+  // the Life circle by the well (a channel circle): hurt, step into it and it gives you Life to heal with
+  await p.evaluate(() => {
+    const w = window.wizardSim.world, b = w.bodies, well = w.def.props.find((q) => q.asset === 'battery-well');
+    b.x[0] = well.x; b.y[0] = well.y + 5.5; b.hp[0] = b.maxHp[0] * 0.4;
+  });
+  await sleep(1500);
+  await shot('life-circle');
+  const life = await p.evaluate(() => { const w = window.wizardSim.world; return { channel: w.battery.channel[0], runes: w.seats.runes[1] }; });
+  if (life.channel !== 2 || life.runes < 1) fail(`standing in the Life circle should give Life runes: channel ${life.channel}, Life ${life.runes}`);
+  console.log('the Life circle ok:', life.runes.toFixed(2), 'Life');
+  await sleep(4500);
   await shot('well-through');
   console.log('the well ok: dry, the gate open, a rune of your own');
 

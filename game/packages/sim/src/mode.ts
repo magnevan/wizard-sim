@@ -88,6 +88,8 @@ export interface Mode {
   runeMax?(w: World, i: number, id: number): number;
   /** Seat i's regen R in runes per second, or undefined for the config's. */
   regen?(w: World, i: number): number | undefined;
+  /** A wizard's hp as it joins, or undefined for the config's (a campaign area's are hardier: CAMPAIGN.hardy). */
+  wizardHp?(w: World, i: number): number | undefined;
   /** The mode's own state pools, appended to buffers() in this order. */
   pools?(w: World): readonly object[];
   /** A body slot was (re)used: clear the mode's per-body columns. */

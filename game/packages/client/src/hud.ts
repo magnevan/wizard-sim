@@ -8,9 +8,9 @@
  */
 import { Sprite, Texture } from 'pixi.js';
 import { rules, type Element } from '@wizard-sim/rules';
-import { BSTEP, RUNES, infused, ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, possessed, regenOf, runeRate, runeMax, specOf, type World } from '@wizard-sim/sim';
+import { BSTEP, RUNES, infused, ARCHETYPES, ARMS, GUARD_NAME, KIND, guardSize, MAX_PORTALS, MAX_SEATS, N_ALTARS, N_EL, PERKS, PHASE, PHASE_ENC, PICK_LOG, QUEUE_MAX, RHYTHM, SURVIVE_TIMES, T, TUT_ORDER, TUT_RUNES_FROM, TUT_STATE, elementId, tutPool, elementName, fullMask, inLifeCircle, lifeCircle, possessed, regenOf, runeRate, runeMax, specOf, type World } from '@wizard-sim/sim';
 import { badge, perkOf } from './art/perks';
-import { DRIVING, OWN_FIRE, STEP_UP } from './battery-text';
+import { DRIVING, GO_HEAL, HEAL_HERE, HURT, OWN_FIRE, STEP_UP } from './battery-text';
 import { drawKeys, rowWidth } from './key-caps';
 import * as X from './art/px';
 import { mod } from './art/util';
@@ -161,7 +161,10 @@ export class Hud {
   private drawLesson(w: World, t: number, viewW: number): void {
     const c = this.tc.x, step = w.enc.state[1], driving = possessed(w, this.seat);
     c.clearRect(0, 0, TW, TH); c._fs = null;
-    const p = step >= BSTEP.dry ? OWN_FIRE[step] : driving ? DRIVING[step] : step <= BSTEP.brute ? STEP_UP : undefined;
+    // once it's your own fire, the Life circle comes first when you're hurt (sim battery.ts LIFE_CIRCLE)
+    const b = w.bodies, hurt = b.hp[this.seat] < b.maxHp[this.seat], low = b.hp[this.seat] < HURT * b.maxHp[this.seat];
+    const healing = step >= BSTEP.dry && !driving ? (inLifeCircle(w, this.seat) && hurt ? HEAL_HERE : step === BSTEP.hands && low && lifeCircle(w) ? GO_HEAL : undefined) : undefined;
+    const p = healing ?? (step >= BSTEP.dry ? OWN_FIRE[step] : driving ? DRIVING[step] : step <= BSTEP.brute ? STEP_UP : undefined);
     this.top.visible = !!p && w.enc.state[0] !== 0;
     if (!p || !this.top.visible) return;
     // the keys, as pictures, pressing themselves in order (key-caps.ts); the user's one line over them, if any

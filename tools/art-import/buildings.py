@@ -1,4 +1,7 @@
-"""Buildings assembled from the bought building kits, on the world's own tile grid, so doors and storeys are a person's
+"""REJECTED, kept as a record (the user, 2026-11-14: "absolutely horrifying... 2/10... orders of magnitude too small... you're
+trying to place buildings like it's an asset instead of an environment"). Its props are deleted and nothing uses it.
+
+Buildings assembled from the bought building kits, on the world's own tile grid, so doors and storeys are a person's
 size by construction (the user, 2026-11-14: buildings bought as one picture come out the wrong scale). No generation calls.
 
   python tools/art-import/buildings.py [--sheet out.png]

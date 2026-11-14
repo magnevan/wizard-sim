@@ -51,6 +51,12 @@ The user: "Be careful with building that are just a single sprite. I feel like t
 - In the game the hall's doors are a little taller than a wizard and its two storeys about 2.3 wizards, and the barracks' and shed's doors fit a person.
 - Trade-offs: the kit facades are plain (window slits, no ornament), and the gatehouse now looks oversized. The old one-picture buildings stay registered as spares.
 
+## Both kinds of building rejected (same day)
+
+The user, on the kit-built ones: "the buildings look absolutely horrifying just a 2/10 if I'm generous. We can absolutely not add those to the game. The scale is still nonsense, it's orders of magnitude too small, you couldn't even lay down sideways in these buildings. I think fundamentally the problem is that you're trying to place buildings like its an asset instead of an environment".
+
+Buildings are out of the yard. The numbers behind the verdict: 1 u is about 0.6 m (a wizard is 0.9 u across), so the kit hall was about 8 x 4 m. A real academy wing is 60 to 90 u long and three storeys fill most of a screen. The academy has to be designed as the place itself, with its facades as the map's edges and its rooms as rooms, starting from an art-free plan.
+
 ## How it's built
 
 - `sim/src/yard.ts`: the stations as `w.yard` state. Markers in the level give the spots (`straw-0..3`, `heavy`, `heavy-ring`, `retreat`, `parry`, `parry-home`, `hands`, `hands-in-0..3`, `focus`, `gate`). Its two checkpoints are `?at=start` and `?at=focus`.

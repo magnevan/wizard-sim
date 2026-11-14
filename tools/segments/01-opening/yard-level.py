@@ -115,8 +115,8 @@ def prop(asset, x, y, blocks=False):
     props.append((asset, round(x * 4) / 4, round(y * 4) / 4, blocks))
 
 # the academy along the south: the hall you come out of, the cloister, the garden
-prop('bldg-academy-hall', 24, 63.4, True)      # kit-built (tools/art-import/buildings.py), so it's a person's scale
-prop('bldg-academy-wing', 42.5, 62.6, True)
+# No buildings as props: at a real scale a building is the environment, not an object in it (the user, 2026-11-14,
+# rejecting both the bought one-picture buildings and the kit-assembled ones). The academy waits for its own design.
 prop('notice-board', 30.5, 56.2, True)
 for x in (17, 33, 47):
     prop('lantern-post', x, 55.2, True)
@@ -130,11 +130,9 @@ for asset, x, y in [('white-daisy-clump', 61, 56), ('red-poppy-clump', 65.5, 60.
 for x in (54, 56, 70, 72):
     prop('stone-wall-low', x, 51.3, True)                 # the garden's low wall, open where the paths come through
 # the barracks and their drill ground, the shed with the building stock round it
-prop('bldg-barracks', 80.5, 43, True)
 for asset, x, y in [('water-trough', 74.5, 47.5), ('jerkin-rack', 76.5, 36.5), ('practice-shields', 78.5, 36.2), ('washing-line', 84, 50), ('weapon-rack', 72.5, 34.8),
                     ('banner-red', 70, 34.5), ('barrel', 84.5, 37.5), ('crates', 85, 39.5)]:
     prop(asset, x, y, asset not in ('washing-line',))
-prop('bldg-shed', 61, 45.5, True)
 for asset, x, y in [('planks-stacked', 57, 49), ('logs-pile', 66, 49.5), ('stone-blocks', 55, 46.5), ('sawhorse', 58.6, 50.2), ('ladder-lying', 64.5, 51),
                     ('fence-posts-bundle', 67.5, 47), ('tarp-heap', 54.5, 43.5), ('nail-barrel', 60, 50.4), ('gravel-heap', 52.5, 48.5), ('wheelbarrow', 54.6, 50.6),
                     ('pile-of-sawdust', 57.6, 51.4), ('coil-of-rope', 63, 49.8)]:

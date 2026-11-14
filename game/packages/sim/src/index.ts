@@ -17,6 +17,7 @@ export * from './trig';
 export * from './state';
 export { compile, imbueReach, WALL, type SpellSpec, type Shape, type Mod } from './compile';
 export { queueOf, selfTarget, specOf } from './cast';
+export { placeRadius } from './effects';
 export { HIT_KIND, hitKindNow, setHitKind } from './hit';
 export { GUARD_EL, guardCoatLook, guardSize } from './guards';
 export { fullMask, poolCap, glyphRadiusOf, hasteOf, orbitAngle } from './structures';

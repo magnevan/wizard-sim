@@ -19,7 +19,7 @@
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
-  EV, AI, ARCH, drivePlace, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
+  EV, AI, ARCH, drivePlace, placeRadius, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
   N_ALTARS, N_EL, PERKS, QUEUE_MAX, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
   isPropWall, terrainNear,
@@ -1723,8 +1723,8 @@ export class StructureView {
       X.ring(o, cx, ly, rx + 1, ry + 1, SV[2], 0.6); X.ring(o, cx, ly, rx, ry, SV[1], 0.45);
       S.reticle(g, cx, cy, t, col, k);
     } else {
-      // other Place spells: a target ring in the spell's colour at the cursor
-      const r = (spec.shape === 'strike' ? 1 : spec.shape === 'spring' ? 1.6 : 1.4) * PPU;
+      // other Place spells: a target ring in the spell's colour at the cursor, as wide as what lands (the sim's placeRadius)
+      const r = placeRadius(w, i, spec) * PPU;
       X.ring(g, cx, cy, r, r * FY, R[1], 0.5 + 0.4 * k);
       X.ring(g, cx, cy, r * (1.4 - 0.4 * k), r * (1.4 - 0.4 * k) * FY, R[2], 0.4);
       S.reticle(g, cx, cy, t, col, k);

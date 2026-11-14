@@ -77,7 +77,7 @@ function feedsOf(w: World): Feed[] {
 export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: number, light: LightFn): void {
   const d = w.battery;
   if (!d) return;
-  const feeds = feedsOf(w), ll = lineLight(w), flow = ll.flow, frame = Math.floor(t * 9);
+  const feeds = feedsOf(w), ll = lineLight(w), flow = ll.flow;
   // how far out from the well the light reaches, as a share of the longest line: all of it, draining back, or running
   // out again with the repair
   const longest = Math.max(1, ...feeds.map((f) => f.from + f.len));
@@ -85,17 +85,25 @@ export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: n
   const style = pathStyle(), ground = g, o = overload(w);
   // the burst: every rune white-hot for a moment as the well gives out
   const dry = dryTime(w), flash = dry > 0 && dry < POWER.burst ? 1 - dry / POWER.burst : 0;
+  // Overloaded, the runes never go dim (the user, 2026-11-14: the paths blinked on and off too erratically): each steps
+  // between bright, very bright and a white spark, a few times a second, sparking more as it nears bursting. The lines
+  // burn as bright as a full well's while it does.
+  const power = Math.max(flow, o), spark = Math.floor(t * 6);
+  const overRune = (n: number, fi: number): RuneLook => {
+    if (o <= 0.05) return null;
+    const r = rand(n, spark + fi * 3, 919);
+    return r < 0.08 + 0.22 * o ? { col: '#ffffff', glow: 1.25 } : r < 0.6 ? { col: TONE.hot, glow: 1.1 } : { col: TONE.lit, glow: 0.95 };
+  };
   const mask = shimmer.begin(ground); // the runes' shimmer: stamped in as they're drawn, shown through them at the end
   g = layer.begin(ground); // the paths on a layer of their own, then laid into the ground in the style
   for (let fi = 0; fi < feeds.length; fi++) {
     const f = feeds[fi], driven = f.tower >= 0 && d.drive.includes(f.tower);
-    const k = (driven ? 1 : 0.7) * (0.3 + 0.7 * flow); // how bright this line burns
+    const k = (driven ? 1 : 0.7) * (0.3 + 0.7 * power); // how bright this line burns
     const rune = (s: number, n: number): RuneLook => {
       if (flash > 0.25) return { col: flash > 0.6 ? '#ffffff' : TONE.hot, glow: 1.2 };
-      if (s > reach) return null;
-      if (rand(n, frame + fi * 7, 913) < 0.55 * (1 - flow) * (1 - flow)) return null; // a failing well: runes gutter
-      // overloaded, the runes that still burn surge white-hot now and then, more as it nears bursting
-      if (o > 0.1 && rand(n, frame + fi * 3, 919) < 0.35 * o) return { col: TONE.hot, glow: 1.1 };
+      if (s > reach) return overRune(n, fi); // overloaded, every rune burns, past the swell's reach too
+      const sparked = overRune(n, fi);
+      if (sparked) return sparked;
       const swell = Math.max(0, Math.cos(((s - t * SWELL_SPEED * (0.3 + 0.7 * flow) * (driven ? 1.5 : 1)) / SWELL_GAP) * Math.PI * 2)) ** 6;
       const b = clamp(k * (0.75 + 0.1 * Math.sin(t * 1.7 + n * 1.3)) + 0.35 * swell * k, 0, 1.2);
       const col = b > 0.95 ? TONE.hot : b > 0.62 ? TONE.lit : b > 0.36 ? TONE.warm : TONE.dim;
@@ -107,9 +115,11 @@ export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: n
       // its possession circle: lit while the light reaches it; possessed, it burns and turns; someone in it, it brightens;
       // free while the lesson is on, it pulses to draw you over
       const on = f.from + f.len < reach, near = !driven && occupied(w, f.tower), lesson = w.enc.state[1] <= BSTEP.brute;
-      const ck = !on ? 0 : driven ? 1 : near ? 0.95 : (0.6 + (lesson ? 0.35 * (0.5 + 0.5 * Math.sin(t * 3.2)) : 0)) * (0.3 + 0.7 * flow);
+      const ck = !on ? 0 : driven ? 1 : near ? 0.95 : (0.6 + (lesson ? 0.35 * (0.5 + 0.5 * Math.sin(t * 3.2)) : 0)) * (0.3 + 0.7 * power);
       const cRune = (n: number): RuneLook => {
-        if (!on || rand(n, frame + fi * 5, 917) < 0.55 * (1 - flow) * (1 - flow)) return null;
+        if (!on) return null;
+        const sparked = overRune(n + 500, fi);
+        if (sparked) return sparked;
         const b = clamp(ck * (0.8 + 0.2 * Math.sin(t * 2.4 + n * 0.9)), 0, 1.2);
         return { col: b > 0.9 ? TONE.hot : b > 0.6 ? TONE.lit : b > 0.34 ? TONE.warm : TONE.dim, glow: b };
       };
@@ -119,7 +129,7 @@ export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: n
     }
   }
   layer.end(ground, style);
-  shimmer.end(ground, t, 0.85 * (0.25 + 0.75 * flow) * style.rune, (m) => layer.wearOut(m, ground, style));
+  shimmer.end(ground, t, 0.85 * (0.25 + 0.75 * power) * style.rune, (m) => layer.wearOut(m, ground, style));
   pathSparks(ground, w, t, feeds, light);
   lifeCircleArt(ground, w, t, light);
 }

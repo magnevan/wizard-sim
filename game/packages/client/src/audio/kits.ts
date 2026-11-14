@@ -32,6 +32,8 @@ export interface KitLayer {
    * reference's own layer it's compared with. The Lab plays one side or the other; the game plays only `ref` until a take is chosen.
    */
   set?: 'takes' | 'ref';
+  /** Lab only: each clip in words, in the same order (the prompt it was generated from, and what was done to it since). */
+  about?: readonly string[];
 }
 
 /** What a kit can cover. Anything it leaves out falls through to the element's stage 1 sound. */

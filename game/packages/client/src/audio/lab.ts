@@ -422,8 +422,14 @@ export class SoundLab {
           const b = this.rating(sec, `${key}/${s.key}/${n ? `take${n}` : 'other'}`, choices.length > 1 ? `${s.name}, ${label}` : s.name, `${label}: what is off, in your own words`);
           return [n, b] as const;
         });
+        // what the chosen take was asked for, so a sound that went wrong can be traced to its words
+        const said = el('small', '', sec);
+        said.style.margin = '4px 0';
         draws.push(() => {
           const n = this.takes.get(s.key) ?? 1;
+          const ls = (this.ref as unknown as Record<string, readonly KitLayer[] | undefined>)?.[s.key] ?? this.ref?.spells?.[s.key] ?? [];
+          const ours = ls.find((l) => l.about?.length);
+          said.textContent = n === 0 ? (s.other === 'Reference' ? 'Reference: Magicka\'s own sound (the dev baseline).' : `${s.other}: the sound it would replace, to compare.`) : ours?.about ? `Prompt: ${ours.about[Math.min(n, ours.about.length) - 1]}` : '';
           for (const [k, b] of picks) b.classList.toggle('on', k === n);
           for (const [k, b] of boxes) b.style.display = k === n || boxes.length === 1 ? '' : 'none';
           sec.classList.toggle('solo', this.solo === s.key && !!this.demo);

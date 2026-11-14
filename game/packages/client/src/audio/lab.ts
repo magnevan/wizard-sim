@@ -120,6 +120,45 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[] }>> = {
   },
 };
 
+type Notes = Record<string, { mark?: string; note?: string; level?: number }>;
+/** A take counts as reviewed once it has a mark or a note. */
+const reviewed = (n: Notes, key: string): boolean => !!(n[key]?.mark || n[key]?.note?.trim());
+/** Each of our takes in a lab (not the reference): its notes key. */
+const takeKeys = (el: string): string[] => (LABS[el]?.moments ?? []).flatMap((m) => m.sections.flatMap((s) => Array.from({ length: s.takes }, (_, i) => `${el}/${m.id}/${s.key}/take${i + 1}`)));
+/** How many of a lab's takes are still waiting for a mark or a note. */
+export const toReview = (el: string, n: Notes): number => takeKeys(el).filter((k) => !reviewed(n, k)).length;
+
+/** The page's tabs, in order: every lab, then music and ambience (atmos.ts). */
+const TABS: readonly [string, string][] = [['life', 'Life'], ['shield', 'Shield'], ['cold', 'Frost'], ['arcane', 'Arcane'], ['lightning', 'Lightning'], ['sigil', 'Sigil'], ['fire', 'Fire'], ['atmos', 'Music and ambience']];
+export const TABS_CSS = `.labtabs{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 10px}.labtabs a{flex:0 0 auto;padding:3px 7px;border:1px solid #4a4257;border-radius:5px;
+  color:#ece6d8;text-decoration:none;font-size:12px;background:#2a2535}.labtabs a.on{background:#d9772b;border-color:#f0a35e;color:#1b1209;font-weight:600}
+.labtabs a i{font-style:normal;margin-left:4px;padding:0 5px;border-radius:8px;background:#e0a23a;color:#1b1209;font-size:11px;font-weight:700}
+.labtabs a b{font-weight:400;margin-left:4px;color:#8fc98f}.labtabs a.on b{color:#1b1209}`;
+
+/**
+ * One page for every lab: a tab each, with how many takes are still to review (amber) or a check when none are. A tab reloads the
+ * page on that lab, keeping the room in the hash. `atmosLeft` is the Atmosphere Lab's own count, when known.
+ */
+export function labTabs(parent: HTMLElement, current: string, n: Notes, atmosLeft?: number): HTMLElement {
+  const row = document.createElement('div'); row.className = 'labtabs';
+  for (const [id, label] of TABS) {
+    const a = document.createElement('a'); a.textContent = label; a.href = `?lab=${id}${location.hash}`;
+    a.classList.toggle('on', id === current);
+    const left = id === 'atmos' ? atmosLeft : toReview(id, n);
+    if (left !== undefined) {
+      const badge = document.createElement(left ? 'i' : 'b'); badge.textContent = left ? String(left) : '✓';
+      badge.title = left ? `${left} takes to review` : 'Nothing left to review';
+      a.appendChild(badge);
+    }
+    row.appendChild(a);
+  }
+  parent.prepend(row);
+  return row;
+}
+
+/** With no lab named, the first one with takes still to review (else Life). */
+export const firstToReview = (n: Notes): string => TABS.map(([id]) => id).find((id) => id !== 'atmos' && toReview(id, n) > 0) ?? 'life';
+
 /** Your wizard with no statuses: not burning, wet, frozen, stunned or chilled. */
 function calm(w: World): void {
   const b = w.bodies;
@@ -169,7 +208,9 @@ const CSS = `
 #lab .r b{display:block;font-size:12px;margin-bottom:3px}
 #lab .marks{display:flex;gap:4px}#lab .marks button{font-size:12px;padding:3px}
 #lab textarea{box-sizing:border-box;width:100%;height:40px;margin-top:4px;background:#0f0d14;color:inherit;border:1px solid #4a4257;border-radius:5px;padding:5px;font:inherit;resize:vertical}
-#lab .saved{color:#8fc98f;font-size:11px;height:14px}`;
+#lab .saved{color:#8fc98f;font-size:11px;height:14px}
+#lab .st{font-size:11px;font-weight:600}#lab .st.todo{color:#e0a23a}#lab .st.done{color:#8fc98f}#lab button.on .st{color:#1b1209}
+#lab button:has(.st.todo){border-color:#e0a23a;box-shadow:inset 0 0 0 1px #e0a23a}#lab .m>button:has(.st.done){opacity:.75}`;
 
 /** The switchable kinds of sound around the spell, by the director's group: rune blips and steps start off, so what you hear is the spell. */
 type Extra = 'runes' | 'other';
@@ -201,8 +242,11 @@ export class SoundLab {
   private ref: Kit | null = null;
   /** The kit as it plays now, at the chosen takes. */
   private live: Kit | null = null;
-  private lab: typeof LABS[string];
-  private notes: Record<string, { mark?: string; note?: string; level?: number }> = {};
+  private lab: typeof LABS[string] = LABS.life;
+  private notes: Notes = {};
+  /** Every badge that says whether something is reviewed, redrawn when a mark or note changes; and the tabs. */
+  private badges: (() => void)[] = [];
+  private tabs: HTMLElement | null = null;
   /** Each kit entry's chosen take: 0 is the other set (reference or today). */
   private takes = new Map<string, number>();
   /** The kit entry being heard on its own, or null for the whole spell. */
@@ -218,8 +262,7 @@ export class SoundLab {
   /** Redraws the open moment's buttons after a change. */
   private redraw: (() => void) | null = null;
 
-  constructor(private audio: GameAudio, name: string) {
-    this.lab = LABS[name] ?? LABS.fire;
+  constructor(private audio: GameAudio, private name: string) {
     const d = audio.director;
     d.hear = (k) => { const x = extraOf(k); return this.solo !== null || !x || this.extras[x]; };
     d.hearPlan = (p: Plan) => this.solo === null || p.layers.some((l) => this.soloClips.has(l.clip));
@@ -285,6 +328,9 @@ export class SoundLab {
 
   private async boot(): Promise<void> {
     try { this.notes = await (await fetch('/__lab/notes')).json(); } catch { /* none yet */ }
+    // ?lab on its own (or a name that isn't a lab): the first lab with takes still to review
+    if (!LABS[this.name]) this.name = firstToReview(this.notes);
+    this.lab = LABS[this.name];
     this.build();
     const kits = await loadBaseline(this.audio);
     this.ref = kits?.[this.lab.el] ?? null;
@@ -319,6 +365,23 @@ export class SoundLab {
       .catch(() => { saved.textContent = 'Not saved: is the dev server running?'; });
   }
 
+  /** Redraws everything that says what's reviewed: badges and tabs. */
+  private refresh(): void {
+    for (const b of this.badges) b();
+    const root = this.tabs?.parentElement;
+    this.tabs?.remove();
+    if (root) this.tabs = labTabs(root, this.name, this.notes);
+  }
+
+  /** A small status beside a label: amber while something's waiting for review, green once it's done. */
+  private badge(parent: HTMLElement, left: () => number, words: (left: number) => string): void {
+    const st = document.createElement('span'); st.className = 'st';
+    parent.appendChild(st);
+    const draw = () => { const k = left(); st.textContent = words(k); st.classList.toggle('todo', k > 0); st.classList.toggle('done', k === 0); };
+    draw();
+    this.badges.push(draw);
+  }
+
   /** A mark and a note, kept under `key`. Saves as you type. */
   private rating(parent: HTMLElement, key: string, label: string, hint: string): HTMLElement {
     const n = (this.notes[key] ??= {});
@@ -330,12 +393,12 @@ export class SoundLab {
     const mb = MARKS.map((m) => {
       const b = document.createElement('button'); b.textContent = m;
       b.classList.toggle('on', n.mark === m);
-      b.onclick = () => { n.mark = n.mark === m ? undefined : m; for (const x of mb) x.classList.toggle('on', x.textContent === n.mark); this.save(key, saved); };
+      b.onclick = () => { n.mark = n.mark === m ? undefined : m; for (const x of mb) x.classList.toggle('on', x.textContent === n.mark); this.save(key, saved); this.refresh(); };
       marks.appendChild(b);
       return b;
     });
     let wait = 0;
-    const write = () => { window.clearTimeout(wait); if ((n.note ?? '') !== t.value) { n.note = t.value; this.save(key, saved); } };
+    const write = () => { window.clearTimeout(wait); if ((n.note ?? '') !== t.value) { n.note = t.value; this.save(key, saved); this.refresh(); } };
     t.oninput = () => { saved.textContent = ''; window.clearTimeout(wait); wait = window.setTimeout(write, 700); };
     t.onblur = write;
     box.append(name, marks, t, saved);
@@ -345,7 +408,7 @@ export class SoundLab {
 
   private build(): void {
     const style = document.createElement('style');
-    style.textContent = CSS;
+    style.textContent = CSS + TABS_CSS;
     const root = document.createElement('div');
     root.id = 'lab';
     // typing a note mustn't cast runes, and a click here mustn't cast a spell
@@ -356,7 +419,8 @@ export class SoundLab {
     const el = (tag: string, text = '', parent: HTMLElement = root, cls = '') => { const n = document.createElement(tag); n.textContent = text; if (cls) n.className = cls; parent.appendChild(n); return n; };
     const button = (text: string, parent: HTMLElement) => el('button', text, parent) as HTMLButtonElement;
     el('h2', `Sound Lab: ${this.lab.el}`);
-    el('p', 'Open a moment. Play the whole spell, or just the part you are judging, and switch that part\'s takes while it plays. With nothing playing, your keys cast as usual.');
+    this.tabs = labTabs(root, this.name, this.notes);
+    el('p', 'Amber: takes you haven\'t marked or written on yet; green: done. Open a moment. Play the whole spell, or just the part you are judging, and switch that part\'s takes while it plays. With nothing playing, your keys cast as usual.');
     this.status = el('p');
     const extras = el('div', '', root, 'row');
     el('span', 'Also hear:', extras, 'lbl');
@@ -370,6 +434,9 @@ export class SoundLab {
       const key = `${this.lab.el}/${m.id}`;
       const row = el('div', '', root, 'm'); rows.push(row);
       const open = button(m.name, row);
+      const keysOf = (s: Section) => Array.from({ length: s.takes }, (_, i) => `${key}/${s.key}/take${i + 1}`);
+      const momentKeys = m.sections.flatMap(keysOf);
+      this.badge(open, () => momentKeys.filter((k) => !reviewed(this.notes, k)).length, (k) => (k ? ` · ${k} to review` : ' · reviewed ✓'));
       const more = el('div', '', row, 'more');
       el('small', m.listen, more);
       // every play button, to light the one playing
@@ -389,7 +456,8 @@ export class SoundLab {
       const draws: (() => void)[] = [];
       for (const s of m.sections) {
         const sec = el('div', '', more, 'sec');
-        el('h3', m.sections.length > 1 || s.takes > 1 ? s.name : `${s.name} (one take)`, sec);
+        const h = el('h3', m.sections.length > 1 || s.takes > 1 ? s.name : `${s.name} (one take)`, sec);
+        this.badge(h, () => keysOf(s).filter((k) => !reviewed(this.notes, k)).length, (k) => (k ? ` · ${k} of ${s.takes} to review` : ' · reviewed ✓'));
         if (s.direct) {
           // a part the Lab can't stage: played on its own, at the take chosen
           const line = el('div', '', sec, 'row');
@@ -401,7 +469,12 @@ export class SoundLab {
         } else player(sec, `Just the ${s.name.toLowerCase()}`, s.key);
         const choices: [number, string][] = [...Array.from({ length: s.takes }, (_, i): [number, string] => [i + 1, `Take ${i + 1}`]), ...(s.other ? [[0, s.other] as [number, string]] : [])];
         const pick = el('div', '', sec, 'row');
-        const picks = choices.length > 1 ? choices.map(([n, label]) => { const b = button(label, pick); b.onclick = () => { this.takes.set(s.key, n); this.apply(); }; return [n, b] as const; }) : [];
+        const picks = choices.length > 1 ? choices.map(([n, label]) => {
+          const b = button(label, pick); b.onclick = () => { this.takes.set(s.key, n); this.apply(); };
+          // each take of ours says if it's reviewed, and how; the reference needs no review
+          if (n) { const tk = `${key}/${s.key}/take${n}`; this.badge(b, () => (reviewed(this.notes, tk) ? 0 : 1), (k) => (k ? ' · new' : ` · ${this.notes[tk]?.mark ?? 'noted'}`)); }
+          return [n, b] as const;
+        }) : [];
         if (!picks.length) pick.remove();
         // its level in the whole spell, to mix it yourself: all the way down turns this part off
         const mix = el('div', '', sec, 'row'), lk = `${this.lab.el}/level/${s.key}`;

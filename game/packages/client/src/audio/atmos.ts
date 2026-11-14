@@ -12,6 +12,7 @@ import type { World } from '@wizard-sim/sim';
 import type { BedSlot } from './engine';
 import type { GameAudio } from './game-audio';
 import { loadBaseline } from './baseline';
+import { labTabs, TABS_CSS } from './lab';
 
 interface Track { kind: BedSlot; file: string; title: string; author: string; licence: string; page: string; note: string; secs: number }
 interface Catalogue { tracks: Record<string, Track>; rooms: Record<string, Record<BedSlot, string[]>> }
@@ -27,6 +28,12 @@ async function catalogue(): Promise<Catalogue | null> {
 }
 async function notes(): Promise<Notes> {
   try { return await (await fetch('/__lab/notes')).json() as Notes; } catch { return {}; }
+}
+const heardIt = (n: Notes, key: string): boolean => !!(n[key]?.mark || n[key]?.note?.trim());
+/** Tracks still to mark or write on: in one room, or (no room) in all of them. */
+function atmosLeft(cat: Catalogue, n: Notes, room?: string): number {
+  return Object.entries(cat.rooms).filter(([r]) => !room || r === room)
+    .flatMap(([r, kinds]) => SLOTS.flatMap((slot) => kinds[slot].map((t) => `atmos/${r}/${slot}/${t}`))).filter((k) => !heardIt(n, k)).length;
 }
 const levelOf = (n: Notes, room: string, slot: BedSlot): number => n[`atmos/${room}/${slot}`]?.level ?? LEVEL[slot];
 
@@ -66,11 +73,12 @@ export class AtmosLab {
   private cat: Catalogue | null = null;
   private notes: Notes = {};
   private room = '';
+  private loaded = false;
   private root: HTMLElement | null = null;
 
   constructor(private audio: GameAudio) {
     void loadBaseline(audio); // the game's own sounds, as on the dev server, so the beds are heard under them
-    void Promise.all([catalogue(), notes()]).then(([c, n]) => { this.cat = c; this.notes = n; this.draw(); });
+    void Promise.all([catalogue(), notes()]).then(([c, n]) => { this.cat = c; this.notes = n; this.loaded = true; this.draw(); });
   }
 
   input(w: World): null {
@@ -85,7 +93,7 @@ export class AtmosLab {
 
   private draw(): void {
     if (!this.root) {
-      const style = document.createElement('style'); style.textContent = CSS;
+      const style = document.createElement('style'); style.textContent = CSS + TABS_CSS;
       this.root = document.createElement('div'); this.root.id = 'atmos';
       // typing a note mustn't cast runes, and a click here mustn't cast a spell
       for (const ev of ['keydown', 'keyup']) this.root.addEventListener(ev, (e) => { if ((e.target as HTMLElement).tagName === 'TEXTAREA') e.stopPropagation(); });
@@ -96,9 +104,13 @@ export class AtmosLab {
     const root = this.root, room = this.room, cat = this.cat;
     root.innerHTML = '';
     const el = (tag: string, text = '', parent: HTMLElement = root, cls = '') => { const n = document.createElement(tag); n.textContent = text; if (cls) n.className = cls; parent.appendChild(n); return n; };
-    el('h2', `Atmosphere Lab: ${room || '…'}`);
+    el('h2', `Music and ambience: ${room || '…'}`);
     el('p', 'Music and ambience for the room you are in. Change rooms with the number keys or the Esc menu. Play one ambience and one music together to hear them as a pair, under the game; your keys still cast. Mark Right on the one you want: the dev game then plays it in this room. All are free CC0 tracks (not ours), loudness-matched; "made here" ones are mixed or tinted locally.');
-    if (!cat) { el('p', 'The candidates are not on this machine (.reference/audio/library/rooms.json).'); return; }
+    if (!cat) { el('p', this.loaded ? 'The candidates are not on this machine (.reference/audio/library/rooms.json).' : 'Loading the candidates…'); return; }
+    labTabs(root, 'atmos', this.notes, atmosLeft(cat, this.notes));
+    // which rooms still have tracks waiting, so you know where to go next
+    const rooms = Object.keys(cat.rooms).map((r) => { const k = atmosLeft(cat, this.notes, r); return `${r} ${k ? `(${k} to review)` : '✓'}`; });
+    el('p', `Rooms: ${rooms.join(', ')}. Amber: not marked or written on yet.`);
     const list = cat.rooms[room];
     if (!list) { el('p', `No candidates for this room yet. Rooms with some: ${Object.keys(cat.rooms).join(', ')}.`); return; }
     const e = this.audio.engine;
@@ -117,7 +129,10 @@ export class AtmosLab {
         const t = cat.tracks[id], key = `${lk}/${id}`, n = (this.notes[key] ??= {}), url = `/__ref/${t.file}`;
         const box = el('div', '', root, 't');
         box.classList.toggle('on', e?.bedOf(slot) === url);
-        el('b', t.title, box);
+        const done = heardIt(this.notes, key);
+        const title = el('b', t.title, box);
+        const st = el('span', done ? ` · ${n.mark ?? 'noted'}` : ' · to review', title);
+        st.style.cssText = `font-size:11px;font-weight:600;color:${done ? '#8fc98f' : '#e0a23a'}`;
         el('small', `${t.note} ${Math.floor(t.secs / 60)}:${String(Math.round(t.secs % 60)).padStart(2, '0')}, ${t.author}, ${t.licence}.`, box);
         const row = el('div', '', box, 'row');
         const play = el('button', e?.bedOf(slot) === url ? 'Playing' : 'Play', row);
@@ -129,7 +144,7 @@ export class AtmosLab {
         }
         const ta = el('textarea', '', box) as HTMLTextAreaElement;
         ta.placeholder = 'What it feels like here, in your own words'; ta.value = n.note ?? '';
-        ta.onblur = () => { if ((n.note ?? '') !== ta.value) { n.note = ta.value; this.save(key); } };
+        ta.onblur = () => { if ((n.note ?? '') !== ta.value) { n.note = ta.value; this.save(key); this.draw(); } };
       }
     }
     el('h3', 'This room overall');

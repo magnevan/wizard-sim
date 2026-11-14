@@ -26,6 +26,8 @@ const STAND_INS: Readonly<Record<string, string>> = {
 };
 
 export interface Volumes { master: number; effects: number; music: number }
+/** The two long beds a room can have under its sounds. */
+export type BedSlot = 'music' | 'ambience';
 
 interface Voice {
   out: GainNode; pan: StereoPannerNode | null; lp: BiquadFilterNode; send: GainNode;
@@ -52,6 +54,7 @@ export class AudioEngine {
   private voices = new Set<Voice>();
   private loops = new Map<string, Voice>();
   private irs = new Map<EnvName, AudioBuffer>();
+  private beds = new Map<BedSlot, { g: GainNode; url: string; end(): void }>();
   env: EnvName = 'hall';
   /** Voices started since boot, and clips asked for that weren't there: for the debug line and the checks. */
   readonly stats = { voices: 0, stolen: 0, missing: 0 };
@@ -63,7 +66,7 @@ export class AudioEngine {
     limiter.threshold.value = -9; limiter.knee.value = 8; limiter.ratio.value = 10; limiter.attack.value = 0.003; limiter.release.value = 0.16;
     this.master.connect(limiter).connect(ctx.destination);
     this.effects = ctx.createGain(); this.effects.connect(this.master);
-    this.music = ctx.createGain(); this.music.connect(this.master); // reserved: nothing plays through it yet
+    this.music = ctx.createGain(); this.music.connect(this.master); // only the dev server's music candidates play through it yet (bed)
     this.sendBus = ctx.createGain();
     this.reverb = ctx.createConvolver();
     this.sendBus.connect(this.reverb).connect(this.effects);
@@ -88,6 +91,53 @@ export class AudioEngine {
       this.irs.set(env, ir);
     }
     this.reverb.buffer = ir;
+  }
+
+  /**
+   * A long bed under everything: the room's music or its ambience. A new one crossfades over the old over `fade` s; null fades
+   * it out. Ambience is decoded and looped without a gap on the effects bus; music streams from a media element on the music bus
+   * (it's minutes long). For now only the dev server's Atmosphere Lab and its picks use this (atmos.ts).
+   */
+  bed(slot: BedSlot, url: string | null, gain = 1, fade = 2): void {
+    const t = this.ctx.currentTime, old = this.beds.get(slot);
+    if (old) {
+      old.g.gain.cancelScheduledValues(t); old.g.gain.setValueAtTime(old.g.gain.value, t); old.g.gain.linearRampToValueAtTime(0, t + fade);
+      setTimeout(() => old.end(), fade * 1000 + 100);
+      this.beds.delete(slot);
+    }
+    if (!url) return;
+    const g = this.ctx.createGain();
+    g.gain.value = 0;
+    g.connect(slot === 'music' ? this.music : this.effects);
+    const bed = { g, url, end: () => g.disconnect() };
+    this.beds.set(slot, bed);
+    const up = () => { const n = this.ctx.currentTime; g.gain.setValueAtTime(0, n); g.gain.linearRampToValueAtTime(gain, n + fade); };
+    if (slot === 'music' && this.ctx instanceof AudioContext) {
+      const el = new Audio(url);
+      el.loop = true;
+      const s = this.ctx.createMediaElementSource(el);
+      s.connect(g);
+      void el.play().catch(() => undefined);
+      up();
+      bed.end = () => { el.pause(); el.src = ''; s.disconnect(); g.disconnect(); };
+      return;
+    }
+    void fetch(url).then((r) => r.arrayBuffer()).then((b) => this.ctx.decodeAudioData(b)).then((buf) => {
+      if (this.beds.get(slot) !== bed) return; // replaced while it loaded
+      const s = this.ctx.createBufferSource();
+      s.buffer = buf; s.loop = true; s.connect(g); s.start();
+      up();
+      bed.end = () => { try { s.stop(); } catch { /* never started */ } s.disconnect(); g.disconnect(); };
+    }).catch(() => undefined);
+  }
+
+  /** What a bed slot is playing, or null. */
+  bedOf(slot: BedSlot): string | null { return this.beds.get(slot)?.url ?? null; }
+
+  /** A playing bed's level, without restarting it. */
+  bedGain(slot: BedSlot, gain: number): void {
+    const b = this.beds.get(slot);
+    if (b) { const n = this.ctx.currentTime; b.g.gain.cancelScheduledValues(n); b.g.gain.setTargetAtTime(gain, n, 0.1); }
   }
 
   has(clip: string): boolean { return this.buffers.has(clip); }

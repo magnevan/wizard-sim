@@ -67,3 +67,4 @@ Dated, long-form thinking sessions. Once written, each is a record and isn't rew
 | 2026-11-11 | [spell-audit](2026-11-11-spell-audit.md) | Spell audit: every spell inventoried, then decided step by step | |
 | 2026-11-13 | [engine-architecture-audit](2026-11-13-engine-architecture-audit.md) | Five-agent audit of `game/`: solid core, but modes, enemies, spells and effects are hard-coded branches; a phased plan (room modules, encounters as data, carry state) | |
 | 2026-11-13 | [encounters-as-data](2026-11-13-encounters-as-data.md) | Phase 2, part 1: Prop tags, Marker and Region entities, the encounter runner; the battery lesson ported unchanged | |
+| 2026-11-14 | [sound-overnight](2026-11-14-sound-overnight.md) | Overnight sound pass: Life, Shield, Cold, Arcane and Lightning kits in the Lab (60 generated takes, CLAP as a helper), glyph arming, and CC0 music and ambience per room in an Atmosphere Lab | |

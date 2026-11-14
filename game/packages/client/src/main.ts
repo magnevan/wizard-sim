@@ -145,8 +145,13 @@ async function boot(): Promise<void> {
   view.sound = audio?.director ?? null;
   // ?lab=fire on the dev server: the Sound Lab. The check goes first so a build drops the whole file.
   let lab: { input(w: World): PlayerInput | null } | null = null;
-  if (import.meta.env.DEV && audio && params.get('lab')) void import('./audio/lab').then((m) => { lab = new m.SoundLab(audio, params.get('lab')!); });
-  else if (import.meta.env.DEV && audio && params.get('baseline') !== '0') void import('./audio/baseline').then((m) => m.loadBaseline(audio));
+  // ?lab=atmos: the Atmosphere Lab (music and ambience per room); without it, each room plays the beds marked Right there
+  if (import.meta.env.DEV && audio && params.get('lab') === 'atmos') void import('./audio/atmos').then((m) => { lab = new m.AtmosLab(audio); });
+  else if (import.meta.env.DEV && audio && params.get('lab')) void import('./audio/lab').then((m) => { lab = new m.SoundLab(audio, params.get('lab')!); });
+  else if (import.meta.env.DEV && audio && params.get('baseline') !== '0') {
+    void import('./audio/baseline').then((m) => m.loadBaseline(audio));
+    void import('./audio/atmos').then((m) => m.roomBeds(audio, () => world.def.id));
+  }
   const fit = () => view.resize(host.clientWidth, host.clientHeight, Number(params.get('scale')) || undefined);
   fit();
   addEventListener('resize', fit);

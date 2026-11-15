@@ -37,13 +37,7 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[] }>> = {
     el: 'fire',
     moments: [
       // r3, settled unless it sounds wrong: catch, roar 1, and no cut-off (the roar dies away over 0.5 s instead)
-      { id: 'flamethrower-r3', name: 'Flamethrower', spell: 'fire,fire,fire/force', listen: 'Your picks, now in the game: the catch, roar take 1, and no cut-off. The roar dies away over half a second as you let go. Play the whole spell and listen to the ending.',
-        sections: [{ name: 'Catch', key: 'start', takes: 1 }, { name: 'Roar', key: 'hold', takes: 1 }] },
-      // the ring is settled (take 3)
-      // settled 2026-11-12: the fireball (charge 1, throw 3 with its echo, landing 3) and the beam (3)
-      // settled 2026-11-12: On fire (round 8's take 2, 4 dB under the reference's level)
-      // settled 2026-11-12: round 9's hit (3, also Fire on yourself), burst (1), eruption (1, for now) and floor (On fire's loop).
-      // Fire's wall is never heard (walls are Shield spells): it goes with Shield's sounds
+      // settled 2026-11-14: the flamethrower (catch and roar) confirmed Right: Fire is complete
     ],
   },
   // 2026-11-14, overnight round 1 (tools/sfx/elements-1.json): Life, Shield, Cold, Arcane and Lightning, a kit each, three takes
@@ -56,23 +50,14 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[] }>> = {
       // ring r2 (2026-11-14): the thud helps, but the shimmer was "very grating", "maybe like 30%"
       { id: 'ring-r3', name: 'Healing ring', spell: 'life,life/area', hurt: true, listen: 'A veil of light rising in a widening circle round you. Round 3: the three takes of round 2, with the shimmer at 30 % and the soft tap (the catch of the beam) at full, so the thud leads. Take 1 is the bright shimmer, take 2 the deeper, darker one, take 3 the short one (cut to 1 s). You had the level of the ring at 30 % for round 2: set it back to 100 % to hear these as made.',
         sections: [{ name: 'Ring', key: 'burst', takes: 3, other: 'Reference' }] },
-      { id: 'spring-r1', name: 'Healing spring', spell: 'life,life/place', hurt: true, listen: 'A spring of light welling up where you aim, lasting several seconds. Its cast is settled (self-heal take 1); this is the loop while it lasts, still at your 55 %. New takes from a plainer prompt are proposed, waiting for your OK.',
-        sections: [{ name: 'Spring', key: 'ground', takes: 3 }] },
-      { id: 'spray-r1', name: 'Healing spray', spell: 'life,life,fire/force', hurt: true, listen: 'Life + Fire: a cone of warm light (Water and Cold make the Rescue and Cooling sprays, the same sound). All three borrowed takes were rejected (rain, a mist with a drop, watery); its own prompts are proposed, waiting for your OK.',
-        sections: [{ name: 'Spray', key: 'hold', takes: 3, other: 'Reference' }] },
+      // the spring's loop and the spray: every take so far rejected; new prompts wait for the user's OK
     ],
   },
   shield: {
     el: 'shield',
     moments: [
-      { id: 'wall-r1', name: 'Barrier', spell: 'shield/place;shield/area', listen: 'A force-field barrier drawn as an arc where you aim, then the Ring of barriers round you, in turn. Both play the same takes. A coated barrier (Shield + Fire, and so on) plays these too.',
-        sections: [{ name: 'Arc', key: 'wall', takes: 3, other: 'Reference' }, { name: 'Ring', key: 'burst', takes: 3, other: 'Reference' }] },
-      { id: 'ward-r1', name: 'Ward', spell: 'shield/self', listen: 'A ward closing round you.',
-        sections: [{ name: 'Ward', key: 'self', takes: 3, other: 'Reference' }] },
-      { id: 'block-r1', name: 'Blow on a barrier', spell: 'shield/place', listen: 'What a blow or an arrow sounds like when a barrier or ward turns it aside. Nothing attacks in the Lab, so press Play it. It\'s heard often in a fight, so it should be soft.',
-        sections: [{ name: 'Blocked', key: 'land', takes: 3, direct: true }] },
-      { id: 'blink-r1', name: 'Blink', spell: 'shield/force', listen: 'Shield on Force: you blink to the cursor. The blink makes the sound; the cast itself is silent, so it isn\'t heard twice.',
-        sections: [{ name: 'Blink', key: 'force', takes: 3 }] },
+      // settled 2026-11-14: the barrier take 2 (arc and ring), the ward take 3, blocks takes 1 and 2 at random (3 kept for arrows),
+      // the blink take 1
     ],
   },
   cold: {
@@ -80,39 +65,33 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[] }>> = {
     moments: [
       // settled 2026-11-14 and out of the Lab: the spray and its catch (take 2, "even better" than 1), the ring (take 3, "a more
       // forceful burst") and the frost hit (take 1): "3/1 is the best combo"
-      { id: 'fog-r2', name: 'Freezing fog', spell: 'cold,cold/place', listen: 'Cold Place: a low heavy fog pouring out where you aim, lying for 16 s. Round 1\'s lying fog was the spray slowed down ("there is no cone being blown here"); you asked for "more of a crackling sound of freezing". The new loop (one take, made here) is the frost hits\' own crackles scattered thinly over a quiet cold hush. Judge the cast with it: take 3 was "maybe ok".',
-        sections: [{ name: 'Cast', key: 'place', takes: 3, other: 'Reference' }, { name: 'Lying fog', key: 'ground', takes: 1 }] },
+      // settled 2026-11-14: the fog's cast, take 3. Its lying loop (the crackle bed, rejected) waits for generated takes
     ],
   },
   arcane: {
     el: 'arcane',
     moments: [
-      { id: 'beam-r1', name: 'Arcane beam', spell: 'arcane,arcane/force', listen: 'The raw, piercing beam held on the dummies.',
-        sections: [{ name: 'Catch', key: 'beamStart', takes: 3, other: 'Reference' }, { name: 'Beam', key: 'beam', takes: 3, other: 'Reference' }] },
-      { id: 'nova-r1', name: 'Arcane nova', spell: 'arcane,arcane/area', listen: 'A pressure wave blown out from you at chest height.',
+      // settled 2026-11-14: the beam take 2 and its catch take 2, Attune take 1
+      { id: 'nova-r2', name: 'Arcane nova', spell: 'arcane,arcane/area', listen: 'A pressure wave blown out from you. You marked the reference Right, and said our take 3 sounded more explosive with a better start, but a chime in its tail. Round 2 is that start: take 1 cut at 0.5 s, take 2 at 0.8 s, take 3 the 0.5 s cut over the deep boom of round 1 take 1. The blast\'s explosion plays the nova too.',
         sections: [{ name: 'Nova', key: 'burst', takes: 3, other: 'Reference' }] },
-      { id: 'blast-r1', name: 'Arcane blast', spell: 'arcane,arcane/place', listen: 'A mark on the floor where you aim, a ring tightening on it, then it bursts. The mark is new; the burst is the nova\'s takes (take n is nova n).',
+      { id: 'blast-r2', name: 'Arcane blast', spell: 'arcane,arcane/place', listen: 'A mark on the floor where you aim, then it explodes 0.6 s later. Round 1\'s marks rose for 1.5 s, so they were still building after the explosion. Round 2 squeezes each into the 0.6 s fuse, quickening into the bang (the bang is the nova\'s take, chosen on that row).',
         sections: [{ name: 'Mark', key: 'place', takes: 3, other: 'Reference' }] },
-      { id: 'attune-r1', name: 'Attune and burst', spell: 'arcane/self;arcane,arcane/conjure', listen: 'Arcane on yourself (Attune), then the Arcane burst (Weapon cast), in turn. No clips of their own: Attune is the beam\'s catch, and the burst is the nova cut short (take n from catch n and nova n).',
-        sections: [{ name: 'Attune', key: 'self', takes: 3, other: 'Reference' }, { name: 'Burst', key: 'force', takes: 3, other: 'Reference' }] },
+      { id: 'burst-r1', name: 'Arcane burst', spell: 'arcane,arcane/conjure', listen: 'Arcane with the Weapon cast: a short cone of force. Its takes are round 1\'s novas cut to 0.8 s. You heard nothing last time: the Lab played only the first spell of a pair, now fixed.',
+        sections: [{ name: 'Burst', key: 'force', takes: 3, other: 'Reference' }] },
     ],
   },
   lightning: {
     el: 'lightning',
     moments: [
-      { id: 'arc-r1', name: 'Lightning arc', spell: 'lightning,lightning/force', listen: 'The arc held, jumping between the dummies. Each jump is a small zap on the body (the discharge\'s first crack, cut short). The catch is the discharge clips.',
-        sections: [{ name: 'Catch', key: 'beamStart', takes: 3, other: 'Reference' }, { name: 'Arc', key: 'beam', takes: 3, other: 'Reference' }, { name: 'Zap', key: 'land', takes: 3, other: 'Reference' }] },
-      { id: 'discharge-r1', name: 'Discharge', spell: 'lightning,lightning/area', listen: 'Bolts leaping out of you in every direction.',
-        sections: [{ name: 'Discharge', key: 'burst', takes: 3, other: 'Reference' }] },
-      { id: 'strike-r1', name: 'Lightning strike', spell: 'lightning,lightning/place', listen: 'A bolt from the sky where you aim: a white flash, a ring.',
-        sections: [{ name: 'Strike', key: 'place', takes: 3, other: 'Reference' }] },
+      // settled 2026-11-14: the arc take 1 and its catch take 1, the zap take 2, Discharge take 3, the strike take 1: Lightning is complete
     ],
   },
   sigil: {
     el: 'sigil',
     moments: [
       // 2026-11-14: other elements' glyphs arming, made from the elements' round 1 clips (Cold's ice crack is settled)
-      { id: 'glyph-arm-r1', name: 'Glyphs arming', spell: 'sigil,sigil,life/place;sigil,sigil,lightning/place;sigil,sigil,arcane/place;sigil,sigil,fire/place', listen: 'A Life, Lightning, Arcane and Fire glyph, in turn: each etches, then arms 0.8 s later. Arming played the same click for all but Cold. Each now has a small sound of its element (one take), with the click to compare: Life a soft breath of light, Lightning a zap, Arcane the thump of its beam, Fire its soft hit.',
+      // r1 played no glyph at all: two Sigil runes cancel, so each spell was its element's own Place (the user: "cant hear anything")
+      { id: 'glyph-arm-r2', name: 'Glyphs arming', spell: 'sigil,life/place;sigil,lightning/place;sigil,arcane/place;sigil,fire/place', listen: 'A Life, Lightning, Arcane and Fire glyph, in turn: each etches, then arms 0.8 s later. Arming played the same click for all but Cold. Each now has a small sound of its element (one take), with the click to compare: Life a soft breath of light, Lightning a zap, Arcane the thump of its beam, Fire its soft hit.',
         sections: [{ name: 'Life', key: 'glyph+life', takes: 1, other: 'Click' }, { name: 'Lightning', key: 'glyph+lightning', takes: 1, other: 'Click' }, { name: 'Arcane', key: 'glyph+arcane', takes: 1, other: 'Click' }, { name: 'Fire', key: 'glyph+fire', takes: 1, other: 'Click' }] },
       // settled 2026-11-11 and out of the Lab: Haste's hum (hum 3) and the rune blop (take 1)
       // orbitals (sigil-12.json) came out on 2026-11-11: every take rejected, and circling stays silent. Its row can come back with
@@ -264,6 +243,7 @@ export class SoundLab {
   private redraw: (() => void) | null = null;
 
   constructor(private audio: GameAudio, private name: string) {
+    (window as unknown as { __lab?: SoundLab }).__lab = this; // for headless checks of what plays
     const d = audio.director;
     d.hear = (k) => { const x = extraOf(k); return this.solo !== null || !x || this.extras[x]; };
     d.hearPlan = (p: Plan) => this.solo === null || p.layers.some((l) => this.soloClips.has(l.clip));
@@ -285,7 +265,8 @@ export class SoundLab {
     if (this.hurt) for (let i = 0; i < w.bodies.kind.length; i++) if (w.bodies.kind[i] === KIND.wizard || w.bodies.kind[i] === KIND.dummy) w.bodies.hp[i] = w.bodies.maxHp[i] / 2;
     if (this.clear) { w.devices.type.fill(0); w.devices.chan.fill(0); w.seats.aura.fill(0); this.clear = false; }
     // a single play ends with the wizard put out, so the burn's loop ends with it and the next play starts from quiet
-    if (this.once && this.tick >= PERIOD) { this.stop(); calm(w); }
+    // a moment of several spells in turn (a;b) plays each of them once
+    if (this.once && this.tick >= PERIOD * (this.demo?.seq?.length ?? 1)) { this.stop(); calm(w); }
     if (!this.demo) return null;
     if (this.douse) for (let i = 1; i < w.bodies.burn.length; i++) w.bodies.burn[i] = 0;
     // every play starts the same: still burning or wet from the last one, a Fire cast on yourself only dries you,

@@ -62,3 +62,20 @@ The engine gained a `bed` player: ambience decoded and looped without a gap on t
 ## Next
 
 Pick takes in the Labs; settled parts move into the kit the way Fire's did. Each element then goes to the public game when it's complete (Fire is still waiting for that). Tomorrow's calls (60 a day) can redo whatever's rejected, from the user's own words.
+
+## The next day: the user's review
+
+- **Settled** (the dev game plays them; they left the Lab):
+  - **Life:** the beam (take 1, "friendly"), a new catch from the user's own wording (take 3, "a nice soft tap with a slight echo"), the heal tick (take 1, about 10 dB under round 1), self-heal and palm (take 1), the spring's cast (take 1, for now), and the ring (round 3 take 3: round 1's shimmer at 30 % under the catch's tap, "good enough").
+  - **Shield:** the barrier (take 2, arc and ring), the ward (take 3), the blink (take 1, "a very good fit for the speed of the spell"), and blocked blows (takes 1 and 2 at random; take 3 is kept for arrows, once the sim says what a block stopped).
+  - **Frost:** the spray and its catch (take 2, "even better" than 1), the ring (take 3, "more like a forceful burst"), the hit (take 1), the fog's cast (take 3, "a rapid flow of cold air and crackling").
+  - **Arcane:** the beam and its catch (take 2), Attune (take 1).
+  - **Lightning, complete:** the arc and its catch (take 1), the zap (take 2), Discharge (take 3), the strike (take 1).
+  - **Fire, complete:** the flamethrower confirmed.
+- **Still open:** the Healing spring's loop and the Healing spray (every take rejected: rain, waves, mist with a drop), and the freezing fog's lying loop (the spray slowed down had "no cone being blown"; a crackle bed made from the hits was "too dynamic"). Prompts for all three wait for the user's OK. Arcane's nova and blast are in round 2, made locally: the nova from take 3's start, which was "more explosive", and the blast's marks squeezed into its 0.6 s fuse (round 1's were still rising after the explosion).
+- **Lab bugs found by the review:**
+  - A row of several spells in turn played only the first on Once, so the Arcane burst and the ring's takes "had no sound".
+  - The glyph row cast no glyph at all: two Sigil runes cancel (Sigil cancels Sigil), so each was its element's own Place.
+  - Both are fixed. The Lab is now one page (`?lab`) with tabs and counts of takes still to review, and each take shows its prompt and how it was made.
+- **Music:** "great overall, but we need some battle music as well". Seven fight tracks were in the battery's list, but the tab showed only the room you stood in. Now it lists every track by mood, with Use here to pick one for the room. Ten more CC0 battle tracks are in (now 16 battle and boss tracks). The user marked every interior bed and most calm tracks Right, and said The Old Tower Inn "could be the academy" (now its default).
+- **Generation pace:** the daily cap went from 60 to 300 calls (the plan can move from 10k to 121k credits a month), but rounds stay at three takes, keeping credits for refining.

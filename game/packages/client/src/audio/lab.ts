@@ -48,9 +48,11 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[] }>> = {
       // settled 2026-11-14 and out of the Lab: the beam (take 1, "friendly"), its catch (round 2 take 3, "a nice soft tap with a slight
       // echo"), the heal tick (take 1, quieter, then the user's 80 %), healing yourself and the palm (take 1), the spring's cast (take 1, for now)
       // ring r2 (2026-11-14): the thud helps, but the shimmer was "very grating", "maybe like 30%"
-      { id: 'ring-r3', name: 'Healing ring', spell: 'life,life/area', hurt: true, listen: 'A veil of light rising in a widening circle round you. Round 3: the three takes of round 2, with the shimmer at 30 % and the soft tap (the catch of the beam) at full, so the thud leads. Take 1 is the bright shimmer, take 2 the deeper, darker one, take 3 the short one (cut to 1 s). You had the level of the ring at 30 % for round 2: set it back to 100 % to hear these as made.',
-        sections: [{ name: 'Ring', key: 'burst', takes: 3, other: 'Reference' }] },
-      // the spring's loop and the spray: every take so far rejected; new prompts wait for the user's OK
+      // settled 2026-11-14: the ring, round 3 take 3 ("good enough")
+      { id: 'spring-r2', name: 'Healing spring', spell: 'life,life/place', hurt: true, listen: 'The loop while a healing spring lasts (its cast is settled). Round 1 was rain, dripping and waves. Round 2 uses your plainer prompts, one each, to see where the generator goes with them: take 1 "A magical healing spring", take 2 "A spring of healing light on the ground", take 3 "Healing magic lingering on the ground". They swelled in and out, so each is cut to its steadiest few seconds and made into a loop (your level is still 55 %).',
+        sections: [{ name: 'Spring', key: 'ground', takes: 3 }] },
+      { id: 'spray-r2', name: 'Healing spray', spell: 'life,life,fire/force', hurt: true, listen: 'Life + Fire: a cone of warm light. Its own prompts at last: takes 1 and 2 a soft spray of warm light, an airy breath with a faint glow; take 3 just "A healing spray of magic light". They came back mostly as a soft high hiss, so listen for whether it reads as light or as steam.',
+        sections: [{ name: 'Spray', key: 'hold', takes: 3, other: 'Reference' }] },
     ],
   },
   shield: {
@@ -65,7 +67,9 @@ const LABS: Readonly<Record<string, { el: ElementName; moments: Moment[] }>> = {
     moments: [
       // settled 2026-11-14 and out of the Lab: the spray and its catch (take 2, "even better" than 1), the ring (take 3, "a more
       // forceful burst") and the frost hit (take 1): "3/1 is the best combo"
-      // settled 2026-11-14: the fog's cast, take 3. Its lying loop (the crackle bed, rejected) waits for generated takes
+      // settled 2026-11-14: the fog's cast, take 3
+      { id: 'fog-r3', name: 'Freezing fog', spell: 'cold,cold/place', listen: 'The loop while the fog lies (16 s), after its cast (settled, take 3). You asked for "more of a crackling sound of freezing", static rather than busy. Three generated takes of frost forming and crackling with a faint cold hush, each cut to its steady part and made into a loop.',
+        sections: [{ name: 'Lying fog', key: 'ground', takes: 3 }] },
     ],
   },
   arcane: {

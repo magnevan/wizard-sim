@@ -10,6 +10,8 @@ prototypes/*/artifact/
 .claude/settings.local.json
 game/artifact/
 game/shots/
+docs/personal notes/
+
 
 # Kept locally only: numbers read from the user's own game install
 docs/reference/magicka-numbers-extracted.md

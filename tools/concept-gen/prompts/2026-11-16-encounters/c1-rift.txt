@@ -1,0 +1,13 @@
+Generate one image with your image generation tool, then save it as creatures-rift.png in the current directory. Reply with just the file name.
+
+The attached images are style references: high-detail pixel art, top-down 3/4 view from above, the palette of a warm-stone academy world where violet arcane cracks glow through the ground.
+
+Subject: a game creature concept sheet, "rift-touched beasts": ordinary wild animals that violet arcane crystals have started growing out of, as if the magic welling up from the rifts has seeped into them. Each one keeps a real animal's body and silhouette, with jagged violet crystals erupting along its spine, horns or shoulders and a faint violet glow in its eyes. Lay them out in one row on a plain, softly lit parchment-grey background, each standing on a small patch of grass and violet-cracked earth, drawn at the size it would be next to a small human wizard (include one small wizard in a blue robe at the far left for scale):
+
+1. Rift wolf: a lean grey wolf with a ridge of small crystals down its back, mid-lope. Small, fast, comes in packs (show three of them together).
+2. Crag ram: a heavy mountain ram with huge curled horns crusted in violet crystal, head lowered in a charge, dust kicking up behind it.
+3. Rift mole: a big blind digging mole half out of a hole in the ground, its claws and snout tipped with crystal, earth and rubble scattered round the hole.
+4. Shard moth: a large moth hovering a little above the ground, its wings thin sheets of glassy violet crystal that catch and bend the light.
+5. Rift aurochs: a huge wild bull, several times a wizard's height at the shoulder, with long forward horns and a mane of large crystal spikes along its hump.
+
+No text, no labels.

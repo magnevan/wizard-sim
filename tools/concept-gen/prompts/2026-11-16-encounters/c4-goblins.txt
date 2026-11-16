@@ -1,0 +1,13 @@
+Generate one image with your image generation tool, then save it as creatures-goblins.png in the current directory. Reply with just the file name.
+
+The attached images are style references: high-detail pixel art, top-down 3/4 view from above, a warm-stone academy world with brass machines and violet arcane cracks, a dark forest of the wilds glowing faintly violet.
+
+Subject: a game creature concept sheet, "the goblin warband": goblins from the wilds who raid the academy's district while its ward is down. Scrappy and clever rather than monstrous: patched leathers, bone and wood, scavenged brass bits and blue academy cloth worn as trophies. Lay them out in one row on a plain, softly lit parchment-grey background, each on a small patch of ground, at the size each would be next to a small human wizard (include one small wizard in a blue robe at the far left for scale):
+
+1. Raider: a small, wiry goblin with a jagged knife, running low. Comes in groups (show three).
+2. Archer: a goblin with a short bow and a quiver, crouched behind a scavenged wooden board.
+3. Shieldbearer: a stocky goblin behind a big round shield made from a scavenged brass machine panel, a short spear over its top.
+4. Hooker: a goblin swinging a hook on a long chain, ready to throw it and drag someone in.
+5. Brute: a hulking goblin chieftain twice a wizard's height, with a huge stone-headed maul raised overhead.
+
+No text, no labels.

@@ -1,0 +1,20 @@
+Generate one image with your image generation tool, then save it as ground-materials.png in the current directory. Reply with just the file name.
+
+The attached images are style references: high-detail pixel art seen from above, the warm palette of a stone academy district with violet arcane cracks.
+
+Subject: an environment concept sheet of ground materials for a game, shown as a grid of twelve square swatches (four across, three down) seen straight from above, each a seamless patch of one ground type, separated by thin parchment-grey gaps:
+
+1. Academy paving, large warm stone slabs.
+2. A cobbled road with worn ruts.
+3. Meadow grass with small flowers, fine violet cracks glowing through it.
+4. The cracked dry floor of a drained cistern.
+5. Ankle-deep clear water over stone, with ripples.
+6. Stone rimed with frost.
+7. A wet harbor quay, shining puddles reflecting the sky.
+8. A glassy ice sheet with trapped bubbles.
+9. Burnt ground after a gorse fire: ash, charred stems, glowing embers.
+10. Mud and rubble from a rockslide.
+11. Paving split by a glowing violet rift crack.
+12. Forest floor of the wilds: dark loam, roots and violet-glowing moss.
+
+No text, no labels.

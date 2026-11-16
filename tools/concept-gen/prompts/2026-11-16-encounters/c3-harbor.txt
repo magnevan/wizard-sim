@@ -1,0 +1,11 @@
+Generate one image with your image generation tool, then save it as creatures-harbor.png in the current directory. Reply with just the file name.
+
+The attached images are style references: high-detail pixel art, top-down 3/4 view from above, a warm-stone harbor town with brass fittings, heavy surf and violet arcane cracks.
+
+Subject: a game creature concept sheet, "things from the surf": sea creatures driven ashore by the strange morning, some touched by small violet crystals. Lay them out in one row on a plain, softly lit parchment-grey background, each on a small patch of wet quay stone, at the size each would be next to a small human wizard (include one small wizard in a blue robe at the far left for scale):
+
+1. Brine crab: a big armoured crab as tall as a wizard's waist, holding one enormous claw up in front of it like a shield, barnacles and a few violet crystals on its shell, dripping seawater.
+2. Surf crawlers: a scuttling group of six small, glistening, eel-like crawlers with little crab legs, always soaking wet, spilling out of a breaking wave's foam.
+3. Storm gulls: a flock of five lean grey gulls with crackling static between their wing tips and a few sparks in their feathers, swooping low together.
+
+No text, no labels.

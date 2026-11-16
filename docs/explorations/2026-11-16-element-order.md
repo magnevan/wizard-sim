@@ -4,7 +4,7 @@ Brainstorm, 2026-11-16, for the user's idea: you learn an element when a machine
 
 Pillars touched: 5 (told through places), 2 (each element should arrive in a situation that shows what it's for), 6 (the repairs are devices whose input is your spells, not minigames) and 3 (what a co-op partner does while you learn).
 
-**Round 2 is current.** The first round below is kept as the record; [Round 2](#round-2-the-route-and-the-stops) replaces its order table with the user's answers, an independent review and a fleshed-out route.
+**Round 2 is current.** The first round below is kept as the record; [Round 2](#round-2-the-route-and-the-stops) replaces its order table with the user's answers, an independent review and a fleshed-out route. The fights at each stop, and the creatures, are in [the opening's encounters](2026-11-16-opening-encounters.md).
 
 ## What the user said
 
@@ -140,7 +140,7 @@ A fresh agent reviewed round 1 against the pillars and canon. Kept here because 
 
 **You fix the thing and get the spell.** Each stop has a machine that draws on a field, a fix you make with what you already have (your hands, or the elements you've learned), and an environmental effect that's that place's own. The machine comes back, and its field spills into you as it does. The fix always uses what you just learned, so each stop practises the last element while it hands you the next.
 
-**Shield and the rule.** The element notes say Shield isn't drawn from the land, so a ward pylon can't spill it the way a field machine does. Round 2's answer: the pylons don't draw on a field. They store the refusal of the academy's casters, poured into them over years, the old world's way of casting through structures (canon). Relighting one spills a caster's stored will into you, not a field. The rule holds, and the essence stays true. Sigil works the same way at the finale.
+**Shield and the rule.** *Corrected by the user after round 2:* "It's totally fine that shield power comes from wells, but it's a little different since there's not a 'shield' (or sigil) field." The element notes' drain rules (Shield as concentration, Sigil as attention) describe the spell effect, not where the power comes from; Claude had misread them as lore and proposed that the pylons held the casters' stored will. That story is dropped. The ward pylons are machines fed by a well like any other, and relighting one teaches Shield. The only difference is that no Shield or Sigil field exists in the land, so there are no Shield or Sigil zones. A fitting source: the ward draws on the armillary, which is why it only holds while the armillary does. Question 2 below is answered by this.
 
 ### The route
 

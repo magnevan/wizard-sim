@@ -1,0 +1,12 @@
+Generate one image with your image generation tool, then save it as creatures-overgrowth.png in the current directory. Reply with just the file name.
+
+The attached images are style references: high-detail pixel art, top-down 3/4 view from above, a warm-stone academy world with brass machines and violet arcane cracks.
+
+Subject: a game creature concept sheet, "things of the overgrowth": creatures born from wild, runaway plant growth, the kind that bursts out of an overgrown glasshouse or the old forest of the wilds. Lay them out in one row on a plain, softly lit parchment-grey background, each on a small patch of ground, at the size each would be next to a small human wizard (include one small wizard in a blue robe at the far left for scale):
+
+1. Thornback: a low, broad beast made of tangled bramble and thorny branches, walking on four stubby root-legs, with fresh green shoots sprouting from its back where it has been cut. About the size of a large dog.
+2. Thornspitter: a rooted plant creature like a giant seed pod on a thick stalk, with a puckered mouth at the top that spits volleys of thorns; a little spray of thorns in the air above it. Waist-high, it doesn't walk.
+3. Vine lasher: a tall, thin knot of whip-like vines with a hooded flower head, one long vine reaching far out to coil round something. Taller than a wizard.
+4. Gorse imp: a small, quick, impish figure made of burning gorse twigs and embers, flames licking from its head and hands, sparks trailing behind it. Knee-high.
+
+No text, no labels.

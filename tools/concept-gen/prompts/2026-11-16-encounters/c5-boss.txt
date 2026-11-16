@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as boss-aurochs.png in the current directory. Reply with just the file name.
+
+The attached images are style references: high-detail pixel art, top-down 3/4 view from above, the academy's paved courtyard with violet arcane cracks.
+
+Subject: a boss concept sheet for "the rift aurochs", a huge wild bull of the wilds with long forward horns and a mane of large violet crystal spikes along its hump, several times a small wizard's height at the shoulder, crystals growing through its dark shaggy hide. Show it three times across a wide, plain, softly lit parchment-grey sheet, each on a patch of cracked paving: (1) standing, head turned, a small wizard in a blue robe nearby for scale; (2) rearing back with its crystals flaring bright violet, glowing lines spreading on the ground in a wide ring around it as a warning; (3) slamming its front hooves down, a ring of violet crystal shards bursting up out of the paving around it. No text, no labels.

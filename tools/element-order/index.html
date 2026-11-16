@@ -59,7 +59,13 @@ figcaption { font-size: 14px; color: var(--muted); margin-top: 8px }
 /* stops */
 .stop { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 0; margin-top: 22px;
   background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; border-top: 5px solid var(--el) }
-.stop .art img { display: block; width: 100%; height: 100%; object-fit: cover; min-height: 220px }
+.stop .art { display: grid; align-content: start; gap: 2px; background: var(--ink) }
+.stop .art img { display: block; width: 100%; height: auto }
+.stop .art .cap { font: 700 12px var(--display); letter-spacing: .08em; color: var(--bg); padding: 4px 10px }
+.sheets { display: grid; gap: 28px; margin-top: 18px }
+.sheet { display: grid; gap: 10px }
+.sheet p { font-size: 15.5px }
+h3.round { margin-top: 28px; color: var(--brass) }
 .stop .art.none { display: grid; place-items: center; padding: 24px; color: var(--muted); font-style: italic; min-height: 160px;
   background: repeating-linear-gradient(135deg, transparent 0 10px, var(--line) 10px 11px) }
 .stop .body { padding: 18px 20px 20px; display: grid; gap: 10px; align-content: start; min-width: 0 }
@@ -102,9 +108,9 @@ ul.assets { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 6px; max-w
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Wizard Sim · opening · round 2, 16 November 2026</div>
+    <div class="eyebrow">Wizard Sim · opening · round 3, 16 November 2026</div>
     <h1>The morning everything breaks</h1>
-    <p class="lede">The order you learn the elements in, reworked from your answers. The rule is now simple: you fix the thing, and you get the spell. Each stop has a machine that draws on a field, a fix made with what you already have, and an effect of its own. The route goes out and back through the courtyard, whose channels light up as you go. Everything here is still a proposal.</p>
+    <p class="lede">The order you learn the elements in, and now the fights. The rule is simple: you fix the thing, and you get the spell. Each stop has a machine, a fix made with what you already have, an effect of its own, and a fight that asks the question its new element answers best. The route goes out and back through the courtyard, whose channels light up as you go. Everything here is still a proposal.</p>
   </header>
 
   <div class="save" role="status"><span id="saveState">Connecting to saved answers…</span><span id="tally"></span></div>
@@ -136,6 +142,13 @@ ul.assets { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 6px; max-w
   <figcaption>Eight machines in one design language, working above and broken below: Life, Fire, Water, Cold, Lightning, Earth, Arcane, Shield. A starting point for a new asset type, each needing its states.</figcaption>
   <div class="stack" id="sheetMark"></div>
 
+  <h2>Who's attacking</h2>
+  <p class="lede">Two families. The goblin warband (the built roster) raids through the ward gap, at the battery, the ward and the finale. Beasts are the fallout around the machines: rift-touched wildlife, runaway overgrowth, things from the surf. Goblins bring tactics; beasts bring nature. Five new behaviours in all: charger, regrowth, always wet, burrower, and a reflector held for later.</p>
+  <div class="sheets" id="creatures"></div>
+
+  <h2>Places and materials</h2>
+  <div class="sheets" id="envs"></div>
+
   <h2>Questions</h2>
   <p class="hint">No answer means you accept the recommended option.</p>
   <div id="questions"></div>
@@ -157,70 +170,97 @@ ul.assets { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 6px; max-w
     { id: 'courtyard', n: '0', name: 'Start', col: 'arcane', x: 47, y: 22, img: 'area-courtyard-start', place: 'The courtyard, first visit', min: '10 min, beats 1 to 3',
       rows: [['What happens', 'You come out of the briefing. The armillary stutters overhead and the seven channels in the paving are dim. The masters send the cohort to the infirmary first. The drill yard (beats 2 and 3) can sit beside the courtyard.'],
         ['You get', 'Nothing yet, apart from the etched focus (Sigil with Conjure).']],
-      idea: 'The progress map, as you suggested: you see here what needs doing, and you cross the courtyard between stops.' },
+      idea: 'The progress map, as you suggested: you see here what needs doing, and you cross the courtyard between stops.',
+      fight: 'None. The drill yard’s hands lessons and small hands test stay as built.' },
     { id: 'life', n: '1', name: 'Life', col: 'life', x: 12, y: 31, img: 'area-life-v2', place: 'The infirmary', min: '5 min',
       rows: [['The machine', 'The healers’ lantern-well, which feeds their tools: lamps over the cots, a healing bath, the glasshouse.'],
         ['What’s wrong', 'Overnight its own field ran wild. Vines from the glasshouse choked the conduits and the well went dark.'],
         ['The fix', 'Cut the vines away with your hands and your conjured blade, the drill yard’s lesson used straight away. The well relights faintly and Life spills into you: the first-cast moment.'],
         ['Then', 'The well needs time to regenerate, so the healers need your hands. Heal everyone, with the heal combinations on screen. No enemies, or one or two strays.']],
-      idea: 'Its own effect: healing blooms that grew overnight pulse a small heal, and vines creep back over the paths slowly.' },
+      idea: 'Its own effect: healing blooms that grew overnight pulse a small heal, and vines creep back over the paths slowly.',
+      fight: 'No enemies: the low-pressure first cast. The pressure is the patients. Split the cots between you and heal each other.' },
     { id: 'fire', n: '2', name: 'Fire', col: 'fire', x: 16, y: 52, img: null, place: 'The battery (built)', min: '8 min, beats 4 to 7',
       rows: [['As built', 'Drive the defence, its well fails, the bar goes dark, and Fire comes from your hands.'],
         ['What’s new', 'Life is already yours, so this is your second element and your first that hurts. The first real fight, survivable because you can heal.']],
-      idea: 'Its own effect: the gorse fire the dying turret sets. It keeps spreading while you’re away, and it’s waiting at the waterworks.' },
+      idea: 'Its own effect: the gorse fire the dying turret sets. It keeps spreading while you’re away, and it’s waiting at the waterworks.',
+      fight: 'The warband’s first probe, as built: raiders, archers, a brute. A possible addition: thornbacks on the gorse slope that shrug off your blade and only stay down when burning, so Fire is plainly the answer.', fightImg: 'fight-battery' },
     { id: 'shield', n: '3', name: 'Shield', col: 'shield', x: 68, y: 15, img: 'area-shield-v2', place: 'The ward line, behind the academy', min: '8 min',
       rows: [['On the way', 'Crossing the courtyard back from the battery, you hear the ward bell. Another channel glows in the paving.'],
         ['What’s wrong', 'Three pylons went dark when the armillary stuttered. Creatures are coming through, and the academy guards are losing the line.'],
         ['The fix', 'Each pylon’s socket asks for an element you have. Feed Life and Fire into them while the guards hold. The first pylon relights and its stored ward spills into you: Shield.'],
         ['Then', 'Hold the gap with barriers while the last pylons recharge, and ward the guards beside you. A bigger fight than the battery, with allies.']],
-      idea: 'Its own effect: the barrier panels flicker on and off, opening and closing lanes. The gap closes, but the barrier only holds while the armillary does, which sets up the finale.' },
+      idea: 'Its own effect: the barrier panels flicker on and off, opening and closing lanes. The gap closes, but the barrier only holds while the armillary does, which sets up the finale. The pylons are machines fed by a well (the armillary) like any other.',
+      fight: 'Before: rift wolves through the gap, thornspitters lobbing thorn volleys over the guards. After: a barrier breaks a volley, a ward keeps a guard standing, and a vine lasher or goblin hooker drags someone toward the forest, so rescue them. Roles: one holds a barrier, one wards guards, one feeds the last socket, one rescues.', fightImg: 'fight-ward' },
     { id: 'water', n: '4', name: 'Water', col: 'water', x: 78, y: 61, img: 'area-water-v2', place: 'The waterworks in the gorge', min: '7 min',
       rows: [['The job', 'The waterfall drops to the bottom of the gorge; the academy, its cistern and the fire are up on the hill. The Water well lifts the pool up the aqueduct. It’s steam-assisted, the Fire and Water confluence.'],
         ['What’s wrong', 'The boiler went cold, the wheel stopped, the cistern is empty, and the gorse fire has reached its sheds.'],
         ['The fix', 'Relight the boiler with Fire. Water surges up the aqueduct and spills into you.'],
         ['Then', 'Douse the fire before it takes the sheds. Steam rises where water meets burning gorse, which gives cover. Creatures in the dry basin are a side fight.']],
-      idea: 'Its own effect: the cistern is the arena, and it fills during the fight. Dry ground becomes ankle-deep water, which teaches Wet just before the harbor.' },
+      idea: 'Its own effect: the cistern is the arena, and it fills during the fight. Dry ground becomes ankle-deep water, which teaches Wet just before the harbor.',
+      fight: 'Before: gorse imps (the built fire imp) leap from the burning sheds; Fire does nothing to them. After: soak them and they fizzle, and as the cistern fills, every imp that runs in drowns its own flame. Steam off the sheds is cover from archers on the rim.', fightImg: 'fight-water' },
     { id: 'harbor', n: '5', name: 'Cold, Lightning', col: 'cold', x: 40, y: 83, img: 'area-harbor-v2', place: 'The harbor', min: '10 min',
       rows: [['The approach', 'From the top of the stairs you see both machines: frost fanning from the icehouse, and the lighthouse coil arcing on its islet.'],
         ['Cold', 'The frost heart burst its frame. Melt the ice jamming its door with Fire and shut the frame. Cold spills into you, and now you can freeze the wet patches and soaked creatures.'],
         ['Lightning', 'The coil arcs into anything wet on the causeway. A tip: Fire dries you, and Wet fades on its own. Ward each other across, then strike the wrenched rod back into the coil. Lightning spills into you.'],
         ['Then', 'The last fight on the quay. Lightning chains through soaked creatures and soaked friends: the first real lesson in friendly fire, with wards to answer it.']],
-      idea: 'Its own effect: surf breaks over the quay edge on a rhythm and leaves wet patches. Where it lands on frosted stone, it freezes into ice sheets.' },
+      idea: 'Its own effect: surf breaks over the quay edge on a rhythm and leaves wet patches. Where it lands on frosted stone, it freezes into ice sheets.',
+      fight: 'Brine crabs hold the stairs with a claw raised like a shield: freeze one and flank it. Each set of waves brings a pack of surf crawlers, already soaked: one arc chains the lot. Storm gulls (optional) dive at the wet, so dry off. Roles: one freezes, one flanks, one watches the waves.', fightImg: 'fight-harbor' },
     { id: 'earth', n: '6', name: 'Earth', col: 'earth', x: 53, y: 59, img: 'area-earth', place: 'The cliff road, climbing back up', min: '5 min',
       rows: [['The machine', 'The masons’ anchor stones, which hold up the retaining walls of the switchback.'],
         ['What’s wrong', 'Tremors from the armillary shook the road. One anchor went dark, its wall slumped, and a rockslide blocks the way.'],
         ['The fix', 'The anchor is half-buried. Wash it clear with Water. It relights and Earth spills into you.'],
         ['Then', 'Clear the slide and hold the road. Raise walls against falling rock, and launch stone with Fire in it to blast the slide away.']],
-      idea: 'Its own effect: tremors drop boulders from above, with a shadow showing where each will land. Short: the first stop to fold into the harbor if the route runs long.' },
+      idea: 'Its own effect: tremors drop boulders from above, with a shadow showing where each will land. Short: the first stop to fold into the harbor if the route runs long.',
+      fight: 'Crag rams charge down the straight stretches: a wall across the lane and they stun themselves on it. Goblin archers shoot from the terrace above: a wall is cover. The ground rumbles where rift moles will surface: drop rock on the spot.', fightImg: 'fight-cliff' },
     { id: 'finale', n: '7', name: 'Arcane', col: 'arcane', x: 51, y: 28, img: 'area-arcane-finale', place: 'The courtyard finale', min: '10 min',
       rows: [['Arriving', 'Six channels glow. The armillary flares, the ward flickers out behind the academy, and creatures pour in. Masters, guards and the healers you helped fight with you. The biggest battle of the opening.'],
         ['What you do', 'The armillary’s three rings have slipped. Each has a lock at the plinth’s edge that takes spells as input, asking for the elements of the channels beside it. Defend a lock while one of you feeds it.'],
         ['Arcane', 'When the first ring locks, the column steadies enough to step into. Arcane spills into everyone, and the rest is fought with the beam.'],
         ['How it ends', 'The third ring locks, the seventh channel lights, and the ward comes back up. Why it stuttered stays open (canon).']],
-      idea: 'Locking a ring binds magic into a lasting form, which is Sigil’s essence. It could be where the rest of Sigil’s gestures unlock (question 5). Its own effect: rift cracks flare along their length and push the fight around.' },
+      idea: 'Locking a ring binds magic into a lasting form, which is Sigil’s essence. It could be where the rest of Sigil’s gestures unlock (question 4). Its own effect: rift cracks flare along their length and push the fight around.',
+      fight: 'The warband’s main force and the beasts come in together. After the first lock, the rift aurochs: its slam is warned by a ring of glowing lines, then crystal shards burst up. A brute’s question, sustained damage, and the beam you just got answers it. Roles: two feed the locks, two hold the aurochs, then everyone beams.', fightImg: 'fight-boss' },
   ];
   const QUESTIONS = [
     { id: 'r2-q-1-shield', n: 'Q1', title: 'Shield third, or last?',
       text: 'You suggested moving Shield earlier and making Arcane the bigger battle. Your stop note also said Shield last seemed right.',
       choices: [['third', 'Third, at the ward line; the ward fails again at the finale', 'Wards before Lightning; the biggest fight is the courtyard.', true],
         ['last', 'Last, with the finale at the ward line', 'Arcane comes before it; the forest edge is the big battle.', false]] },
-    { id: 'r2-q-2-will', n: 'Q2', title: 'Is the pylons’ stored will a good enough reason for Shield to spill?',
-      text: 'Round 1’s question, put plainly. The element notes say Shield comes from the caster, not from a field, so a field machine can’t spill it. Round 2 says the ward pylons don’t draw on a field: they hold the will of the academy’s casters, stored over years, the old way of casting through structures. Relighting one gives you that.',
-      choices: [['fine', 'That works', 'The rule holds for every element.', true],
-        ['other', 'Shield should come differently', 'Say how in the note.', false]] },
-    { id: 'r2-q-3-locks', n: 'Q3', title: 'The finale’s ring-locks?',
+    { id: 'r2-q-3-locks', n: 'Q2', title: 'The finale’s ring-locks?',
       text: 'What players do at the armillary: defend three locks and feed each the elements of its channels.',
       choices: [['elements', 'Feed each lock its channels’ elements', 'Uses everything you’ve learned; spells as device input.', true],
         ['physical', 'Something more physical', 'Turn, push or strike the rings back into line.', false],
         ['other', 'Something else', 'Say what in the note.', false]] },
-    { id: 'r2-q-4-flex', n: 'Q4', title: 'Allow one flex in the order?',
+    { id: 'r2-q-4-flex', n: 'Q3', title: 'Allow one flex in the order?',
       text: 'You wondered whether players might flex the order. The chain keeps the combos in order. One possible flex point: the waterworks and the harbor swap.',
       choices: [['strict', 'Keep the chain strict', 'Wet before freeze and chain, every time.', true],
         ['swap', 'Allow that one swap', 'The harbor first teaches Wet from the surf instead.', false]] },
-    { id: 'r2-q-5-sigil', n: 'Q5', title: 'Sigil at the finale?',
+    { id: 'r2-q-5-sigil', n: 'Q4', title: 'Sigil at the finale?',
       text: 'The etched focus gives Sigil with Conjure only. Locking the rings is binding magic into a lasting form.',
       choices: [['finale', 'The rest of Sigil’s gestures unlock here', 'The opening ends with the full base set.', true],
         ['later', 'Keep Sigil’s growth for later in the campaign', 'The opening ends with the elements; Sigil grows by training.', false]] },
+    { id: 'r3-q-1-foes', n: 'Q5', round: 'Encounters', title: 'Who attacks?',
+      text: 'Each stop’s fight asks the question its new element answers best. The goblins reuse everything built; the beasts give each place creatures that belong there.',
+      choices: [['both', 'Both, by place', 'The warband through the gap; beasts around the machines.', true],
+        ['goblins', 'The warband only', 'All built; the same faces everywhere.', false],
+        ['beasts', 'Beasts only', 'Nature gone strange; the built roster goes unused.', false]] },
+    { id: 'r3-q-2-first', n: 'Q6', title: 'Which new behaviour first?',
+      text: 'Five new behaviours: charger, regrowth, always wet, burrower, reflector.',
+      choices: [['charger', 'Charger', 'The cliff road needs it, and it works anywhere with lanes.', true],
+        ['regrowth', 'Regrowth', 'Thornbacks: Fire’s question at the battery.', false],
+        ['wet', 'Always wet', 'Surf crawlers: Lightning’s question at the harbor.', false],
+        ['burrower', 'Burrower', 'Rift moles: a preparation question.', false]] },
+    { id: 'r3-q-3-infirmary', n: 'Q7', title: 'Enemies at the infirmary?',
+      text: 'The first cast is meant to be low pressure.',
+      choices: [['none', 'None', 'The pressure is the patients.', true],
+        ['strays', 'A small stray fight at the end', 'A couple of wolves, to try healing under pressure.', false]] },
+    { id: 'r3-q-4-moth', n: 'Q8', title: 'The shard moth, a reflector?',
+      text: 'It bounces beams and projectiles, so it asks you to switch forms.',
+      choices: [['later', 'Later in the campaign', 'It would punish the beam the finale just gave you.', true],
+        ['finale', 'In the finale, as a twist', 'Once the beam is yours, a reason to put it down.', false]] },
+    { id: 'r3-q-5-tone', n: 'Q9', title: 'The goblins’ tone?',
+      text: 'Opportunists raiding while the ward is down.',
+      choices: [['light', 'Opportunists with trophies and scavenged panels', 'Light, the odd dry joke (pillar 5).', true],
+        ['dark', 'Something darker', 'Say how in the note.', false]] },
   ];
   const MARKS = [['like', 'Inspiring'], ['mixed', 'Mixed'], ['no', 'Not this']];
 
@@ -271,13 +311,15 @@ ul.assets { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 6px; max-w
   // ---------- stops ----------
   for (const s of STOPS) {
     const card = el('article', 'stop'); card.id = 'stop-' + s.id; card.style.setProperty('--el', `var(--${s.col})`);
-    const art = s.img ? el('div', 'art', `<img src="img/${s.img}.jpg" alt="Concept image: ${esc(s.place)}" loading="lazy" width="1774" height="887">`)
-                      : el('div', 'art none', 'Built already: no new image');
+    let artHtml = s.img ? `<img src="img/${s.img}.jpg" alt="Concept image: ${esc(s.place)}" loading="lazy" width="1774" height="887">` : '';
+    if (s.fightImg) artHtml += `<span class="cap">The fight</span><img src="img/${s.fightImg}.jpg" alt="Concept image: the fight at ${esc(s.place)}" loading="lazy" width="1774" height="887">`;
+    const art = artHtml ? el('div', 'art', artHtml) : el('div', 'art none', 'Built already: no new image');
     const body = el('div', 'body');
     body.append(el('div', 'head', `<span class="num">${esc(s.n)}</span><h3>${esc(s.name)} · ${esc(s.place)}</h3><span class="chip how">${esc(s.min)}</span>`));
-    body.append(el('dl', null, s.rows.map(([t, d]) => `<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('')));
+    body.append(el('dl', null, s.rows.concat([['The fight', s.fight]]).map(([t, d]) => `<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('')));
     body.append(el('p', 'idea', esc(s.idea)));
     if (s.img) body.append(markBlock('img-' + s.img, 'The ' + s.place + ' image as inspiration'));
+    if (s.fightImg) body.append(markBlock('img-' + s.fightImg, 'The fight image at ' + s.place + ' as inspiration'));
     const sid = 'r2-stop-' + s.id;
     const ta = el('textarea'); ta.rows = 2; ta.id = 'a-' + sid; ta.placeholder = 'Note on this stop (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on the ' + s.name + ' stop');
     noteBox(ta, 'answers', sid);
@@ -288,8 +330,34 @@ ul.assets { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 6px; max-w
   }
   $('sheetMark').append(markBlock('img-machines-sheet', 'The machine sheet as inspiration'));
 
+  // ---------- creature and environment sheets ----------
+  const SHEETS = {
+    creatures: [
+      ['creatures-goblins', 2172, 724, 'The goblin warband', 'The built roster with a light touch: raiders, an archer behind a board, a shieldbearer with a machine-panel shield, a hooker (the grabber), a chieftain (the brute). Academy cloth worn as trophies. Battery, ward line, finale.'],
+      ['creatures-rift', 2172, 724, 'Rift-touched beasts', 'Wildlife with crystals growing out of it. Rift wolf: a pack (the swarmer). Crag ram: new, a charger stopped by a wall. Rift mole: new, a burrower from a rumbling spot. Shard moth: new, a reflector, held for later. Rift aurochs: the boss.'],
+      ['creatures-overgrowth', 1983, 793, 'The overgrowth', 'Thornback: new, regrows unless burning (Fire’s question). Thornspitter: a rooted archer whose volleys a barrier stops (Shield’s). Vine lasher: the grabber. Gorse imp: the built fire imp, restyled (Water’s question).'],
+      ['creatures-harbor', 2172, 724, 'From the surf', 'Brine crab: the shieldbearer, its claw the guard; freeze it and flank. Surf crawlers: new, always wet, arriving with the waves; Lightning chains them. Storm gulls (optional): immune to Lightning, they dive at the wet.'],
+      ['boss-aurochs', 2172, 724, 'The rift aurochs', 'The finale’s boss: standing, rearing with a glowing ring as the slam’s warning, then the crystal burst. The ring is the telegraph to build. This sheet drifted toward a bear-bull; the rift sheet’s version is the better aurochs.'],
+    ],
+    envs: [
+      ['wilds-edge', 1774, 887, 'Beyond the ward', 'Where the morning comes from: the goblin camp with a scavenged turret and academy banners, rift cracks pouring violet light, beasts on the paths to the gap.'],
+      ['academy-buildings', 1536, 1024, 'Academy buildings at real scale', 'Lecture hall, dormitories, the library-observatory, workshops with brass pipes, the gatehouse, a cloister: a kit of map edges for the courtyard and the drill yard.'],
+      ['ground-materials', 1448, 1086, 'Ground materials', 'One for each place: paving, road, rift meadow, dry cistern, shallow water, frost, wet quay, ice sheet, burnt gorse, slide mud, rift-cracked paving, the wilds’ floor. Close to a tile brief.'],
+    ],
+  };
+  for (const [box, list] of Object.entries(SHEETS)) {
+    for (const [slug, w, h, title, text] of list) {
+      const s = el('article', 'sheet');
+      s.append(el('figure', 'map', `<img src="img/${slug}.jpg" alt="Concept sheet: ${esc(title)}" width="${w}" height="${h}" loading="lazy">`));
+      s.append(el('h3', null, esc(title)), el('p', null, esc(text)), markBlock('img-' + slug, title + ' as inspiration'));
+      $(box).append(s);
+    }
+  }
+
   // ---------- questions ----------
+  $('questions').append(el('h3', 'round', 'The route'));
   for (const q of QUESTIONS) {
+    if (q.round) $('questions').append(el('h3', 'round', esc(q.round)));
     const row = el('article', 'q'); row.id = q.id;
     const rec = q.choices.find((c) => c[3]);
     row.append(el('div', null, `<h3>${esc(q.n)} · ${esc(q.title)}</h3><p style="margin-top:6px">${esc(q.text)}</p><p style="margin-top:6px"><b>Recommended:</b> ${esc(rec[1])}.</p><span class="slug">answers/${q.id}</span>`));

@@ -1,0 +1,14 @@
+Generate one image with your image generation tool, then save it as academy-buildings.png in the current directory. Reply with just the file name.
+
+The attached images are style references: high-detail pixel art, top-down 3/4 view from above, the academy's warm stone, blue slate roofs, gold trim and blue-and-gold banners.
+
+Subject: an environment concept sheet of the academy's buildings, drawn at true scale as the walls and edges of playable spaces rather than as small props. Six buildings laid out in two rows on a plain, softly lit parchment-grey background, each with a short stretch of paved ground in front of it and a few small figures in blue robes beside the doors for scale:
+
+1. The lecture hall: a long hall with tall arched windows and a lantern-topped roof, broad steps to a pair of great doors.
+2. Dormitories: a three-storey row of student lodgings with many small windows, chimneys and window boxes.
+3. The library tower: a round tower with a domed observatory top and a brass telescope.
+4. The workshops: a low brick-and-stone engineering workshop with big brass pipes, a chimney, open bay doors and machine parts outside.
+5. The gatehouse: a fortified gate with two towers, a portcullis and a walkway on top.
+6. A cloister: a square of arcaded walkways around a small garden with a fountain.
+
+No text, no labels.

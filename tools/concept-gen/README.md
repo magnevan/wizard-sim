@@ -37,3 +37,12 @@ A new district from round 1's district plus the user's harbor concept, then seve
 - Naming the action in progress (a wizard feeding fire into a socket, washing an anchor clear) puts the fix itself in the picture, which is the most useful thing for a stop.
 - A sheet of eight objects in two rows (working above, broken below) came out clean and consistent: a good way to explore an asset family.
 - Battle scenes crowd fast; ask for fewer figures if the layout matters more than the drama.
+
+### 2026-11-16, encounters
+
+Fourteen images for [the opening's encounters](../../docs/explorations/2026-11-16-opening-encounters.md): four creature sheets, a boss sheet, academy buildings, ground materials and the wilds beyond the ward (eight in parallel), then six fight moments made from each place's close-up plus the matching creature sheet.
+
+- Creature sheets: one row on a parchment-grey ground with a small wizard at the left for scale gave consistent sizes. "Real animal first, crystals second" kept the beasts believable.
+- A creature's design drifts between sheets (the aurochs became a bear-bull on its own sheet). Pass the sheet you want kept as the reference, not a description.
+- Fight moments: "readable like a gameplay screenshot: a modest number of figures, each clearly separated" fixed round 2's crowded finale. Describing the question being answered (a volley breaking on a barrier, a ram stunned on a wall) makes each image explain its stop.
+- Three references per call (place, creature sheet, second sheet) worked.

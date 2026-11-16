@@ -68,4 +68,5 @@ Dated records of brainstorms, reviews and playtests. The last column identifies 
 | 2026-11-13 | [engine-architecture-audit](2026-11-13-engine-architecture-audit.md) | Five-agent audit of `game/`: solid core, but modes, enemies, spells and effects are hard-coded branches; a phased plan (room modules, encounters as data, carry state) | |
 | 2026-11-13 | [encounters-as-data](2026-11-13-encounters-as-data.md) | Phase 2, part 1: Prop tags, Marker and Region entities, the encounter runner; the battery lesson ported unchanged | |
 | 2026-11-16 | [campaign-map-pipeline](2026-11-16-campaign-map-pipeline.md) | From world map to playable blockout, with the Academy-to-Battery walk as the first test | |
-| 2026-11-16 | [element-order](2026-11-16-element-order.md) | The order you learn the elements in: machines spill their field into you, Life first, Shield last at the broken ward; Codex concept images | |
+| 2026-11-16 | [element-order](2026-11-16-element-order.md) | The order you learn the elements in: fix a machine, get its element; Life first, an out-and-back route through the courtyard, Arcane as the finale; Codex concept images | |
+| 2026-11-16 | [opening-encounters](2026-11-16-opening-encounters.md) | The opening's fights: each stop asks the question its new element answers; the goblin warband plus rift-touched beasts, overgrowth and things from the surf | |

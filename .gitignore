@@ -16,6 +16,7 @@ docs/personal notes/
 # Kept locally only: numbers read from the user's own game install
 docs/reference/magicka-numbers-extracted.md
 .claude/worktrees/
+docs/.obsidian/
 
 # API keys and other secrets (never committed): see tools/art-trial/README.md
 .secrets/

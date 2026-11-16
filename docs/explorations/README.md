@@ -67,3 +67,4 @@ Dated records of brainstorms, reviews and playtests. The last column identifies 
 | 2026-11-11 | [spell-audit](2026-11-11-spell-audit.md) | Spell audit: every spell inventoried, then decided step by step | |
 | 2026-11-13 | [engine-architecture-audit](2026-11-13-engine-architecture-audit.md) | Five-agent audit of `game/`: solid core, but modes, enemies, spells and effects are hard-coded branches; a phased plan (room modules, encounters as data, carry state) | |
 | 2026-11-13 | [encounters-as-data](2026-11-13-encounters-as-data.md) | Phase 2, part 1: Prop tags, Marker and Region entities, the encounter runner; the battery lesson ported unchanged | |
+| 2026-11-16 | [campaign-map-pipeline](2026-11-16-campaign-map-pipeline.md) | From world map to playable blockout, with the Academy-to-Battery walk as the first test | |

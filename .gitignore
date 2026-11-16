@@ -16,7 +16,10 @@ docs/personal notes/
 # Kept locally only: numbers read from the user's own game install
 docs/reference/magicka-numbers-extracted.md
 .claude/worktrees/
-docs/.obsidian/
+docs/.obsidian/*
+!docs/.obsidian/snippets/
+docs/.obsidian/snippets/*
+!docs/.obsidian/snippets/wizard-sim.css
 
 # API keys and other secrets (never committed): see tools/art-trial/README.md
 .secrets/

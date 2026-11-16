@@ -1,3 +1,8 @@
+---
+cssclasses:
+  - ws-polished
+---
+
 # Spell balance
 
 [Start here](../start-here.md) · [Playable spell rules](../current-state.md) · [Design pillars](../vision.md)
@@ -12,4 +17,5 @@
 
 Keep intended trade-offs here as decisions are made. For a measurement worth keeping, record the tested build, the scenario and the result in a dated exploration, then link to it.
 
-For early campaign regen, 0.5 runes per second already felt generous to the user in a playtest. The starting value is still a tuning question. [Round 4 feedback](../archive/claude-review-feedback-2026-11-16.md#world-and-progression)
+> [!in-review] Open tuning question · early regen
+> In playtesting, 0.5 runes per second already felt generous. The starting value is still open. [Round 4 feedback](../archive/claude-review-feedback-2026-11-16.md#world-and-progression)

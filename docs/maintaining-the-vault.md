@@ -2,6 +2,10 @@
 
 [Start here](start-here.md) · [Work in progress](work-in-progress.md)
 
+## Obsidian appearance
+
+In **Settings → Appearance → CSS snippets**, reload the list and enable `wizard-sim`. The shared snippet styles the notes in light and dark mode. Use the same callouts for navigation, active reviews and foldable context. [Obsidian snippet guide](https://obsidian.md/help/snippets)
+
 ## Where things go
 
 | Folder | What belongs here |

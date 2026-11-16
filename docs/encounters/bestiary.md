@@ -1,3 +1,8 @@
+---
+cssclasses:
+  - ws-polished
+---
+
 # Bestiary
 
 [Start here](../start-here.md) · [World](../world/world.md)
@@ -15,8 +20,5 @@ Bramble and Straw goblin are passive tutorial targets. The implemented roster an
 
 Keep one row per creature until it needs a note of its own. Link to it from encounter and area notes where it appears.
 
-## Context
-
-- [Original encounter design](../explorations/2026-11-03-encounters.md)
-- [Enemy attack review](../explorations/2026-11-06-enemy-attacks.md)
-- [Encounters as data](../explorations/2026-11-13-encounters-as-data.md)
+> [!field-notes]- Encounter design notes
+> [Original encounter design](../explorations/2026-11-03-encounters.md) · [Enemy attack review](../explorations/2026-11-06-enemy-attacks.md) · [Encounters as data](../explorations/2026-11-13-encounters-as-data.md)

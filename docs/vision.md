@@ -1,3 +1,8 @@
+---
+cssclasses:
+  - ws-polished
+---
+
 # Vision (draft)
 
 Distilled from the first conversation (2026-11-02) and revised since. Record pillar revisions in the [decision log](decisions/README.md). See [Current state](current-state.md) for the playable build.

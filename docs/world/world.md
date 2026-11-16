@@ -1,4 +1,9 @@
-# World
+---
+cssclasses:
+  - ws-polished
+---
+
+# World atlas
 
 [Start here](../start-here.md) · [Approved setting](../campaign/canon.md#approved) · [Element essences](elements.md)
 
@@ -17,7 +22,12 @@ Browse from the continent to its regions and from a region to its areas. Give ea
 | Academy | [Approved setting](../campaign/canon.md#approved) · [Opening space diagram](../campaign/01-opening/space.md) |
 | Battery | [Playable area](../current-state.md#rooms) · [Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) |
 
-## Context
+## Map studies
+
+> [!atlas]- Field Atlas · draft map
+> Seed 1207, an exploration of the continent and its landmarks. Place names here are provisional.
+>
+> ![Illustrated Field Atlas draft with the Academy, elemental wells and surrounding biomes](../reference/Seed%201207%20enhanced.png)
 
 - [Field Atlas review](https://claude.ai/artifact/GcPxANHrBCEXTC3ioembus) and [Atlas Lettering](https://claude.ai/artifact/5SAWjZodk2BiZN2VamX4Ds) hold the map and naming explorations.
 - [World and progression exploration](../explorations/2026-11-07-world-and-progression.md) covers field bands, unlocks and the encounter library.

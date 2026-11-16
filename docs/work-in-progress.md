@@ -1,14 +1,27 @@
+---
+cssclasses:
+  - ws-polished
+---
+
 # Work in progress
 
 [Start here](start-here.md)
 
 ## Campaign opening
 
-The last recorded scope is beats 1–7, through the battery. The yard was marked too small, so the next layout review can check its size against a wizard and the surrounding Academy buildings. [Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) · [Saved marks](archive/claude-review-feedback-2026-11-16.md#opening-segment) · [Playable battery](current-state.md#rooms)
+> [!in-review] Next layout review
+> Check the size of the drill yard against a wizard and the surrounding Academy buildings. The yard was marked too small.
+
+The last recorded scope is beats 1–7, through the battery.
+
+[Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) · [Saved marks](archive/claude-review-feedback-2026-11-16.md#opening-segment) · [Playable battery](current-state.md#rooms)
 
 ## Sound design
 
-Use the dev Sound Lab (`?lab=<element>`) to compare the current takes in play. Capture decisions about the clip or cast moment being reviewed. The [sound direction](presentation/sound.md) holds the rules that carry over between kits.
+> [!in-review] Compare takes in play
+> Open the dev Sound Lab with `?lab=<element>`. Capture decisions about the clip or cast moment being reviewed.
+
+The [sound direction](presentation/sound.md) holds the rules that carry over between kits.
 
 ## Picking up another review
 

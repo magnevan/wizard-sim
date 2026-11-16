@@ -1,3 +1,8 @@
+---
+cssclasses:
+  - ws-polished
+---
+
 # Sound direction
 
 [Start here](../start-here.md)
@@ -9,6 +14,5 @@
 
 The checked-in audio bank and element kits live in `game/content/audio/` and `game/packages/client/src/audio/`. See `game/content/audio/README.md` for provenance. A local reference bank can be used for lab comparisons.
 
-## Context
-
-[Decision to review element kits in-game](../decisions/README.md#2026-11-06-sound-goes-depth-first-explorations2026-11-06-sound-depth-firstmd) · [Fire and Sigil review notes](../explorations/2026-11-08-fire-sound.md) · [Earlier gallery ratings](../archive/claude-review-feedback-2026-11-16.md#sound-gallery)
+> [!field-notes]- Review history
+> [Decision to review element kits in-game](../decisions/README.md#2026-11-06-sound-goes-depth-first-explorations2026-11-06-sound-depth-firstmd) · [Fire and Sigil review notes](../explorations/2026-11-08-fire-sound.md) · [Earlier gallery ratings](../archive/claude-review-feedback-2026-11-16.md#sound-gallery)

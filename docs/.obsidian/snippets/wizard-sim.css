@@ -1,0 +1,149 @@
+/* Design vault typography and note components. Uses the selected Obsidian theme's page background. */
+body.theme-light {
+  --ws-ink: #252d29;
+  --ws-muted: #555e57;
+  --ws-link: #265d52;
+  --ws-gold: #875725;
+  --ws-rule: #d7ccba;
+  --ws-sheet: #f6f0e5;
+  --ws-shade: #efe9df;
+}
+
+body.theme-dark {
+  --ws-ink: #eee7da;
+  --ws-muted: #bcb4a6;
+  --ws-link: #9ad6c3;
+  --ws-gold: #e4b67d;
+  --ws-rule: #534c40;
+  --ws-sheet: #2b2924;
+  --ws-shade: #272925;
+}
+
+:is(.markdown-preview-view, .markdown-source-view) {
+  --h1-color: var(--ws-ink);
+  --h2-color: var(--ws-ink);
+  --h1-font: Georgia, "Times New Roman", serif;
+  --h2-font: Georgia, "Times New Roman", serif;
+  --h1-size: 2.45em;
+  --h2-size: 1.55em;
+  --h1-line-height: 1.08;
+  --h2-line-height: 1.2;
+  --h2-weight: 600;
+  --link-color: var(--ws-link);
+  --link-external-color: var(--ws-link);
+  --line-height-normal: 1.64;
+  --table-header-background: var(--ws-sheet);
+  --table-row-alt-background: var(--ws-shade);
+  --table-border-color: var(--ws-rule);
+}
+
+.markdown-preview-view .markdown-rendered,
+.markdown-preview-view.markdown-rendered {
+  --p-spacing: 0.95em;
+}
+
+.markdown-preview-view .el-h2 > h2 {
+  border-bottom: 1px solid var(--ws-rule);
+  padding-bottom: 0.32em;
+}
+
+.markdown-preview-view .el-h1 > h1 {
+  letter-spacing: -0.035em;
+}
+
+.markdown-preview-view :is(th, td) {
+  vertical-align: top;
+}
+
+.markdown-preview-view .el-li li + li {
+  margin-block-start: 0.4em;
+}
+
+/* These notes already have an authored title. Leave the inline file title on elsewhere. */
+:is(.markdown-preview-view, .markdown-source-view).ws-polished .inline-title {
+  display: none;
+}
+
+.markdown-preview-view.ws-polished .metadata-container {
+  display: none;
+}
+
+.markdown-preview-view.ws-home {
+  --file-line-width: 55rem;
+}
+
+.ws-polished img {
+  border-radius: 8px;
+}
+
+.ws-home img[alt="The Academy and the road to the battery"] {
+  display: block;
+  width: 100%;
+  max-height: 15rem;
+  aspect-ratio: 3.5 / 1;
+  object-fit: cover;
+  object-position: center 37%;
+  border: 1px solid var(--ws-rule);
+}
+
+.ws-home .el-p:has(img[alt="The Academy and the road to the battery"]) + .el-p em {
+  color: var(--ws-muted);
+  font-size: 0.85em;
+}
+
+.callout[data-callout="catalogue"] {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  container-type: inline-size;
+}
+
+.callout[data-callout="catalogue"] > .callout-title {
+  display: none;
+}
+
+.callout[data-callout="catalogue"] > .callout-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+@container (max-width: 32rem) {
+  .callout[data-callout="catalogue"] > .callout-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.callout[data-callout="catalogue"] > .callout-content > .callout {
+  margin: 0;
+}
+
+.callout:is([data-callout="atlas"], [data-callout="magic"], [data-callout="fieldwork"],
+  [data-callout="workshop"], [data-callout="in-review"], [data-callout="field-notes"]) {
+  --callout-color: 134, 100, 56;
+  --callout-border-width: 1px;
+  --callout-border-opacity: 0.45;
+  --callout-radius: 8px;
+  background: var(--ws-sheet);
+  border-color: var(--ws-rule);
+}
+
+.callout[data-callout="atlas"] { --callout-icon: lucide-compass; }
+.callout[data-callout="magic"] { --callout-icon: lucide-sparkles; }
+.callout[data-callout="fieldwork"] { --callout-icon: lucide-swords; }
+.callout[data-callout="workshop"] { --callout-icon: lucide-hammer; }
+.callout[data-callout="in-review"] { --callout-icon: lucide-clipboard-list; }
+.callout[data-callout="field-notes"] { --callout-icon: lucide-book-open; }
+
+.callout:is([data-callout="atlas"], [data-callout="magic"], [data-callout="fieldwork"],
+  [data-callout="workshop"], [data-callout="in-review"], [data-callout="field-notes"]) > .callout-title {
+  color: var(--ws-gold);
+}
+
+.callout[data-callout="catalogue"] .callout-content p {
+  margin-block: 0.25em 0;
+}
+
+.callout[data-callout="field-notes"] > .callout-content {
+  color: var(--ws-muted);
+}

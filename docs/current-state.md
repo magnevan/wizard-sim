@@ -1,8 +1,18 @@
+---
+cssclasses:
+  - ws-polished
+---
+
 # Current state
 
 Implemented behavior in this checkout. See [Story canon](campaign/canon.md) for approved story and [Work in progress](work-in-progress.md) for open reviews. The game code and data own exact values. Links marked D point to the decision log.
 
 Play it: https://magnevan.github.io/wizard-sim/ (code in `../game/`, commands in `../game/README.md`).
+
+> [!workshop] Jump to
+> [Casting](#controls-and-spell-grammar) · [Rune regen](#runes-and-regen) · [Shield and Sigil](#shield-and-sigil) · [Weapons and guards](#weapons-and-guards)
+>
+> [Rooms](#rooms) · [Statuses](#statuses) · [Sound](#sound) · [Netcode](#netcode-and-determinism)
 
 ## Controls and spell grammar
 - **Spells are proposal C:** form × cast + payload. The strongest element picks the form (Shield / Sigil > Life > Earth > Arcane > Ice > Lightning > sprays); the others are payload. 43 cells, 944 distinct spells, 0 inert additions in the Atlas (`node tools/spell-atlas/audit-c.js`). D: [The overnight drafts, reviewed](decisions/README.md#2026-11-04-the-overnight-drafts-reviewed-see-explorations2026-11-04-overnight-draftsmd), [Seal becomes an element](decisions/README.md#2026-11-03-seal-becomes-an-element-steam-and-ice-dropped-see-explorations2026-11-03-structures-review-and-elementsmd).

@@ -65,6 +65,12 @@ Built: `?wizscale=` (1 to 2) in `game/packages/client/src/art/rigs.ts` scales th
 - The chieftain is about 2.5 wizards tall at 1.7 (121 vs 49 px); for exactly twice, regenerate it at about 100 px.
 - The sim's sizes (body radius, reach) don't change, so the drawn wizard is wider than its hit circle; worth checking in play.
 
+## A smaller chieftain
+
+The user: the 128 px chieftain is too big; height is close, "but in overall size/volume he's just way out of scale with the other goblins". Redrawn at 96 px (3 generations) as "the biggest goblin of the warband ... with the same goblin build": 89 px tall with its maul (about 1.8 bigger wizards) and visibly leaner. It shares the band's bright green, outline and chunky shapes, and its cape became one big blue academy banner. All eight facings hold. The 128 px one is kept in the library.
+
+The bought goblins have one pose each so far: standing, in eight directions. The only animation is the round 1 raider's run.
+
 ## Claude's picks, pending the review
 
 1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in.

@@ -143,5 +143,18 @@
       "before": 1603,
       "after": 1600
     }
+  },
+  "chieftain96": {
+    "slug": "chieftain-96",
+    "id": "b73ad600-7dc3-4ec8-8bfa-b4a99e78000c",
+    "tool": "create_character",
+    "mode": "v3",
+    "size": 96,
+    "view": "high top-down",
+    "detail": "medium detail",
+    "cost": 3,
+    "why": "The user: the 128 px chieftain is too big, 'in overall size/volume he's just way out of scale with the other goblins'.",
+    "description": "A goblin chieftain, the biggest goblin of the warband: taller and broader than the other goblins but with the same goblin build, wiry long arms, a hunched stance, bright olive-green skin, long pointed ears, a tusked grin. Carries a big maul over its shoulder: a square stone head banded in brass with a glowing violet rune, a leather-wrapped wooden haft. A necklace of small bones, a wide leather belt with a brass gear-wheel buckle, a short ragged cape of fur and torn blue academy banners with gold stars, leather bracers, bare clawed feet. Bold readable pixel art, chunky shapes, dark outline.",
+    "result": "89 px tall with the maul, 82 wide (the old one: 121 x 105)."
   }
 }

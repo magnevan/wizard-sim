@@ -21,4 +21,4 @@ Bramble and Straw goblin are passive tutorial targets. The implemented roster an
 Keep one row per creature until it needs a note of its own. Link to it from encounter and area notes where it appears.
 
 > [!field-notes]- Encounter design notes
-> [Original encounter design](../explorations/2026-11-03-encounters.md) · [Enemy attack review](../explorations/2026-11-06-enemy-attacks.md) · [Encounters as data](../explorations/2026-11-13-encounters-as-data.md)
+> [Original encounter design](../explorations/2026-11-03-encounters.md) · [Enemy attack review](../explorations/2026-11-06-enemy-attacks.md) · [Encounters as data](../explorations/2026-11-13-encounters-as-data.md) · [The opening's encounters and proposed creatures](../explorations/2026-11-16-opening-encounters.md)

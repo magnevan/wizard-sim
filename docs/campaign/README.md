@@ -2,7 +2,8 @@
 
 How a piece of the campaign goes from an idea to something in the game. Proposed 2026-11-09, to be changed once we've run it once.
 
-- `canon.md`: what the user has approved. Read it first.
+- [Story canon](canon.md): what the user has approved. Read it first.
+- [Story development notes](story-development.md): proposals and previous directions.
 - `NN-name/`: one folder per segment. Each stage adds a file.
 - `../../tools/segments/NN-name/`: the segment's working document, an artifact with one chapter per place. Anything still being worked on lives there.
 
@@ -10,7 +11,7 @@ A **segment** is one continuous stretch of play with one job to do: the opening,
 
 ## The stages
 
-Each stage is cheap to throw away and has one question to answer. Don't start the next stage until the user has passed this one. Anything unanswered at a gate defaults to Claude's recommendation.
+Each stage answers one question before the user passes it. When testing an unresolved detail within a stage, label the chosen option as a playtest assumption.
 
 | # | Stage | File | Question it answers | Shape |
 |---|---|---|---|---|
@@ -27,7 +28,7 @@ Each stage is cheap to throw away and has one question to answer. Don't start th
 - **Gameplay first, then words, then art.** The script waits for the blockout, because beats change when they're played. The overnight story run showed the limit of paper: blind judges ranked first a story the user rejected within minutes.
 - **Stages can go backwards.** A blockout that isn't fun goes back to the beat chart, and that's the process working.
 - **Short and plain.** Tables and fragments, no prose. If a stage needs more than a page, the segment is too big.
-- **Every claim has a status.** New story facts are proposals until they're in `canon.md`.
+- **Story approval is explicit.** Put new facts in the working segment as proposals and add them to [Story canon](canon.md) once the user approves them.
 - **Each stage gets something to look at** where it helps: a beat strip, a bubble diagram, a block sketch, with answer boxes next to what they ask about.
 - **Reuse before inventing.** Check the encounter library (`../explorations/2026-11-07-world-and-progression.md`) and what the game already does.
 

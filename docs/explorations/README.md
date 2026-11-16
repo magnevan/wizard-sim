@@ -1,6 +1,6 @@
 # Explorations
 
-Dated, long-form thinking sessions. Once written, each is a record and isn't rewritten; a superseded statement gets one short italic pointer. Newer explorations supersede older ones. For what's true now, see `../current-state.md`; for what was decided, `../decisions/README.md`.
+Dated records of brainstorms, reviews and playtests. The last column identifies explicit replacements. A newer date alone leaves the status of a proposal open. See [Work in progress](../work-in-progress.md) for current reviews and the [decision log](../decisions/README.md) for recorded choices.
 
 | Date | Exploration | What it is | Supersedes / superseded by |
 |---|---|---|---|
@@ -41,7 +41,7 @@ Dated, long-form thinking sessions. Once written, each is a record and isn't rew
 | 2026-11-06 | [map-pipeline-stage-1](2026-11-06-map-pipeline-stage-1.md) | The rooms become LDtk maps, compiled into the sim | |
 | 2026-11-06 | [art-trial](2026-11-06-art-trial.md) | The art trial, round 1: which source makes which assets | Followed by art-trial-round-2 |
 | 2026-11-06 | [art-trial-round-2](2026-11-06-art-trial-round-2.md) | The art trial, round 2: the mock Academy room | |
-| 2026-11-06 | [sound](2026-11-06-sound.md) | Sound, stage 1: an engine, a first set of sounds, the Sound Gallery | Approach replaced by sound-depth-first |
+| 2026-11-06 | [sound](2026-11-06-sound.md) | Sound, stage 1: an engine, a first set of sounds, the Sound Gallery | Review process replaced by the [Sound Lab](../presentation/sound.md) |
 | 2026-11-06 | [sound-depth-first](2026-11-06-sound-depth-first.md) | Sound goes depth first, an element at a time | |
 | 2026-11-06 | [sigil-sound](2026-11-06-sigil-sound.md) | Sigil's sound: first round with generated clips | Followed by fire-sound |
 | 2026-11-07 | [world-and-progression](2026-11-07-world-and-progression.md) | The world as fields, zones, unlock pacing, shrines, encounters, story spines for one or four players | |

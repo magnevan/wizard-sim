@@ -1,6 +1,6 @@
-# Ideas
+# Idea bank
 
-There's one file per mechanic, copied from `_template.md`. The status lives in the frontmatter, and this table mirrors it: `raw` → `developing` → `prototyping` → `adopted` / `parked` / `rejected`. For what's built right now, see `../current-state.md`.
+One file per mechanic, copied from `_template.md`. The table mirrors each note's status. A prototype can stay in the idea bank after it is playable. [Work in progress](../work-in-progress.md) lists the reviews currently getting attention.
 
 | Idea | Status | Pillars |
 |---|---|---|
@@ -25,9 +25,3 @@ There's one file per mechanic, copied from `_template.md`. The status lives in t
 | [survive-mode](survive-mode.md) | prototyping (`#survive` in the game, 12 power-ups: explorations/2026-11-05-survive-mode.md) | 1, 3, 7 |
 | [tutorial](tutorial.md) | prototyping (19 beats designed in `explorations/2026-11-06-tutorial.md`; all 19 playable at `#tutorial` since pass 2, `explorations/2026-11-06-tutorial-pass-2.md`; lore to come from the user) | 2, 4, 1, 7 |
 | [air-element](air-element.md) | parked (deferred; a full draft waits on the user's `air-*` answers) | 2, 3, 5 |
-
-## Open design lists (not idea files)
-
-| List | Status | Where |
-|---|---|---|
-| Inert additions in the game ("adding an element always changes the spell") | **Life family resolved** (the size rule, then every element in a heal lends resistance). The **Weapon, Self and Place families' status is untracked**: no re-run of `npm run audit` since the weapons and guards rounds is recorded. Next: re-run it, record the counts, and decide each remaining family. | `../explorations/2026-11-05-inert-audit.md`, `game/tools/audit-report.json` |

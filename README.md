@@ -1,6 +1,6 @@
 # Wizard Sim
 
-A co-op, top-down spellcasting game inspired by Magicka: a design sandbox plus the game itself. Start with `docs/vision.md` for the pillars, and `docs/current-state.md` for what's true right now.
+A co-op, top-down spellcasting game inspired by Magicka: a design sandbox plus the game itself. Start with the [design vault](docs/start-here.md), the [design pillars](docs/vision.md), or the [playable state](docs/current-state.md).
 
 **Play:** https://magnevan.github.io/wizard-sim/ (two to four players; open **Co-op online**, create a room and share the four-letter code).
 
@@ -22,7 +22,7 @@ The live game is public. The rest are private claude.ai pages where the design w
 | [Weapon Moveset Review](https://claude.ai/artifact/F3FyhonePFv5JVeSLfk1U9) | `tools/weapon-moves/` | Conjured weapons and guards, move by move (rounds 1–4 rated). |
 | [Survive Review](https://claude.ai/artifact/HMQPuLJQWvMsXezHSHJn1a) | `tools/survive-review/` | The Survive mode: the arena and wave loop, every power-up as a rateable card, Rally and Echo in motion, and the open questions. |
 | [Rune Economy](https://claude.ai/artifact/HnMgNHWfFop3Xhy4eRcFAe) | `tools/rune-economy/` | A rune-flow simulator: four play styles under the old flat regen or the shared budget (α, R, pool size, glyphs), runes cast over time, and its questions (answered; the shared budget is built). |
-| [Sound Gallery](https://claude.ai/artifact/1q44UnJP32BfR4wFVfkvVi) | `tools/sound-gallery/` | The game's sounds to rate: every element and cast shape, a spell mixer, and the rune, room and wall variations side by side. |
+| [Sound Gallery](https://claude.ai/artifact/1q44UnJP32BfR4wFVfkvVi) | `tools/sound-gallery/` | First audio review. Current reviews use the [in-game Sound Lab](docs/presentation/sound.md). |
 | [Training Grounds Blueprint](https://claude.ai/artifact/KKuX6w48CM9KCwZtHB7rzf) | `tools/training-grounds/` | The academy's outdoor training ground as a concept: what it's for, seven shapes, a terraced plan to refine before any art. |
 | [Opening Segment](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) | `tools/segments/01-opening/` | The working document for the game's opening: beats 1 to 7, their maps at true scale with a camera preview, and what's still open |
 | [Outdoor Art Kit](https://claude.ai/artifact/QNKgjigTb14KmCe8mod1kT) | `tools/outdoor-kit/` | A mock training yard for the outdoor sword lesson, under both cameras, with the proposed PixelLab purchases to approve. |

@@ -32,10 +32,11 @@ Flat +X% damage as the main axis.
 - Is warm-up per fight, per level, or per session?
 - How do trade-offs avoid making co-op partners incompatible?
 
-## Where it stands (2026-11-05)
-No campaign progression is built. Survive's power-ups are the only growth in the game, and they're run-scoped, not kept: see `survive-mode.md`. Its "Where the pillars push back" notes (`../explorations/2026-11-05-survive-mode.md`) are the current thinking on flat numbers versus pillar 1.
+## In the build
 
-## Where it stands (2026-11-08)
+The battery grants Fire to the party. Campaign checkpoints carry the party's unlocked pools. See [Current state](../current-state.md#rooms). Survive's power-ups last for the run. [Survive design notes](../explorations/2026-11-05-survive-mode.md)
+
+## Campaign design notes (2026-11-08)
 From `../explorations/2026-11-07-world-and-progression.md`, rounds 1 and 2:
 - **Unlocks, U2:** a core set at the academy, a few things held back for story beats; what's held back is open (the etched-focus Sigil and Air are Claude's proposals).
 - **The queue is five runes from the start.** Regen is the main lever (sustain), pool size the second (burst). **Pools start at 1** and grow to at most about 5 (2026-11-08), so early spells are mixes, never stacks.

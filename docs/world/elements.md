@@ -2,18 +2,18 @@
 
 A living page, unlike the dated explorations: edit it when the world or the spells change. It records the essence of each element, so the world (places, creatures, people, devices) and the spells can be designed from the same idea. The spell list may change over time; when a spell and its element's essence disagree, decide which one moves, and note it here.
 
-Started 2026-11-07 from `../explorations/2026-11-07-world-and-progression.md`. The premise is the user's; the essences are Claude's proposals, agreed in outline and open to change. Lore details (names, history) stay the user's.
+See [Story canon](../campaign/canon.md#approved) for the approved setting. The element identities below are working design sketches agreed in outline. [World and Progression exploration](../explorations/2026-11-07-world-and-progression.md)
 
 ## The premise
 
 Magic runs through the world as **fields** (broad, slow, like a climate) and **veins** (narrow, strong, like a river or an ore seam). People settle where fields help them, the way towns grow along rivers: smiths at a swell of fire, farms on water and life, mines on earth. Where a field is strong, the craft built on it advanced further, so some places have steam engines or rudimentary electricity while the rest of the world is medieval.
 
-Seven elements are **fields**: Water, Fire, Cold, Lightning, Earth, Life, Arcane. Two are **innate**: Shield and Sigil belong to the caster, not the land.
+The seven **field elements** are Water, Fire, Cold, Lightning, Earth, Life and Arcane. The two **caster elements** are Shield and Sigil.
 
-**Casting is new (the user, 2026-11-09).** Until the veins began shifting, wizards worked magic only through structures that tap fields. The shift is why they can now draw on it themselves, and the academy's years over an Arcane vein are why these people can. "Innate" below still means "of the caster, not the land", but a better word is wanted now that all casting is new. See `../campaign/canon.md`.
+**Casting directly is new.** The vein shift made it possible for wizards to cast from their hands. This note uses *caster elements* as a working label for Shield and Sigil, which belong to the caster. [Story canon](../campaign/canon.md#approved)
 
 **What this means in play:**
-- Zones bend the *regen share* of field elements; they never touch Shield or Sigil, which work the same everywhere. Your innate magic is the baseline you carry into every region.
+- Zones bend the *regen share* of field elements. Shield and Sigil work the same everywhere.
 - Field elements deepen through *attunement* at places in the world; Shield and Sigil grow through *training*.
 - Where two fields meet, the spell rules for that pair show up in the landscape (a Fire and Water confluence is a land of steam).
 
@@ -75,25 +75,24 @@ Seven elements are **fields**: Water, Fire, Cold, Lightning, Earth, Life, Arcane
 - **In play:** the raw, piercing beam; Attune (Arcane on yourself) floods every pool's regen, because the deep field feeds the others.
 - **Opposite:** Life.
 
-## The innate elements
+## The caster elements
 
 Both cost the caster's own attention, which is why they behave unlike the field elements in the rules.
 
 ### Shield: the will to refuse
 - **What it is:** a caster's capacity to hold and to not be moved. Not drawn from the land, so no zone weakens it.
 - **Why it drains:** refusing takes **continuous concentration**. Barriers and wards drain the Shield pool while they stand (Model A), and they drain harder as they're hit: refusing a change costs more the harder the world pushes. When the concentration runs out, the oldest gives way. *(The user, 2026-11-08.)*
-- **In play:** barriers, wards on allies, guards (Shield + Weapon), the parry.
+- **In play:** barriers, wards on allies, guards (Shield + Weapon), the parry and Blink.
 - **Opposite:** Sigil.
 
 ### Sigil: the will to shape
 - **What it is:** a caster's capacity to bind magic into a lasting form: a blade, a turret, a glyph. Only casters can do it, which is why weapons and devices need Sigil.
 - **Why it binds a rune:** holding a shape takes **discrete attention**. Each device holds one Sigil rune until it goes off, breaks or is dismissed. Shield is concentration held continuously; Sigil is attention held in pieces.
-- **In play:** weapons, turrets, glyphs, orbitals, the Lens, Blink, auras, the Double, the sculpting wand.
+- **In play:** weapons, turrets, glyphs, orbitals, the Lens, auras, the Double, the sculpting wand.
 - **Opposite:** Shield.
 
 ## Undecided
 
 - **Air** (`../ideas/air-element.md`): a tenth element would make five clean pairs (Earth's opposite) and is a candidate for the element unlocked late, through the story. As a field: high places, steady winds, maybe what lifts airships. Cost: a tenth key, about 81 % more spells, and changes to Water and the Shield wave.
 - **Confluences** so far: Earth + Fire, the forge city; Fire + Water, steam towns; Fire + Lightning, arc foundries; Lightning + Cold, spark peaks; Cold + Water, ice roads; Life + Water, the breadbasket. More to come.
-- **Veins have no direct gameplay effect** (settled 2026-11-08).
 - **Do fields have a cost when tapped?** Can a vein be overdrawn and run dry? It's a story question (spine C in the exploration) as much as a world one.

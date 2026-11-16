@@ -1,11 +1,11 @@
 # Vision (draft)
 
-Distilled from the first conversation (2026-11-02) and revised since; the game built on it is public at https://magnevan.github.io/wizard-sim/. Change it on purpose, and log changes in `decisions/`. For what's built and decided right now, see `current-state.md`.
+Distilled from the first conversation (2026-11-02) and revised since. Record pillar revisions in the [decision log](decisions/README.md). See [Current state](current-state.md) for the playable build.
 
 ## Pillars
 
 1. **Mastery lives mostly in the player's hands; character growth widens what your hands can do.**
-   Most power comes from what *you* know and can execute. A returning player should be strong from minute one, because they remember how to cast; a veteran has a far bigger edge here than in most RPGs. The character still grows a lot over the campaign (more runes, faster regen, unlocked elements and casts), but that growth raises the *ceiling* of what skilled hands can express, not the floor: longer queues, more things standing at once. It doesn't make a spell hit harder or play it for you. Prefer progression that lets you lean into a playstyle, do more things at once, or speed up as you warm up, over flat +X% numbers. *(2026-11-03; reworded 2026-11-07 for the RPG-paced campaign.)*
+   Most power comes from what *you* know and can execute. A returning player should be strong from minute one because they remember how to cast. Campaign growth raises the ceiling of what skilled hands can express through more runes, faster regen, and new elements and casts. Progression can help a player lean into a playstyle, keep more things active at once, or speed up as they warm up. Keep baseline spell damage tied to the cast itself. *(2026-11-03; reworded 2026-11-07 for the RPG-paced campaign.)*
 
 2. **Spells are a language, not a menu.**
    Players compose spells from parts and discover combinations nobody told them about. The space should feel wider than Magicka's fixed set of shapes, without becoming unreadable to the caster, to teammates, or in the heat of play.
@@ -31,11 +31,8 @@ Top-down. Mouse and keyboard first; gamepads already work for local co-op (seats
 
 ## Open questions
 
-- ~~What does the spell structure look like beyond "elements → derived shape"?~~ **Answered:** proposal C, form × cast + payload; the strongest element picks the form, Shield and Sigil are elements, and with nothing queued the same gestures are weapon moves (`decisions/README.md`: "The overnight drafts, reviewed", "Grammar v2 in the game").
-- What does a dedicated support player actually *press*? **Partly answered:** wards and auras cast on the ally under the cursor, Life spells that only heal and lend resistance, the Healing link and Mend (Healing hands), the Leaf aegis, the Lens, and Rally in Survive. Still open: what makes support *skillful* rather than a heal-bot.
-- What do playstyle-leaning progression and warm-up progression look like concretely?
-- ~~Is there a casting resource, and what is it?~~ **Answered:** element runes: a small pool per element (about 4), one shared regen budget (since 2026-11-05: about 1 rune a second in total, split among the pools that aren't full), reserved when queued and spent on cast; stuff costs once, energy costs upkeep; Sigil devices bind a rune (`decisions/README.md`: "Resources and battlefield", "Calls Claude made while building milestone 1").
-- Where in the campaign does practice happen, and how does it avoid feeling like homework? *So far (2026-11-06):* the tutorial prototype (`#tutorial`) is first contact: short practical beats, each a small problem the new skill solves, with an "I know this" skip. Practice stays in the Sanctum, whose trials could later reuse tutorial beats, and the help panel (F1) shows what any queue does without leaving the fight. Where practice sits in the campaign is still open (`explorations/2026-11-06-tutorial.md`, question 8). *Proposed (2026-11-08), the user's idea:* a meditation sandbox you can enter from anywhere, with dummies and summonable enemies, that co-op partners can join (`ideas/sanctum.md`).
-- How slow is "slower"? Is it about enemy design, casting time, or both? *So far:* both. Wind-up grows with a spell's size, a spell's recovery is fixed (each weapon has its own Strike rhythm; Haste shortens both), and rune regen sets the pace; enemies were made tougher and slower-hitting after the Magicka baseline. Whether it feels right is a play-test question for the balance pass.
-- Is Air a tenth element (`ideas/air-element.md`)?
-- Does a run mode (Survive) get to bend pillar 1 with flat-number power-ups, or is it held to the campaign's rule? (Built on the recommendation that run modes may; `explorations/2026-11-05-survive-mode.md` question 3.)
+- What makes [support play](ideas/support-verbs.md) skillful moment to moment?
+- What do playstyle choices and warm-up progression look like in a campaign? [Progression ideas](ideas/progression.md)
+- How does the [meditation dream](ideas/sanctum.md) fit into the campaign's rhythm?
+- Do enemy attacks and casting time leave enough room to read a fight and choose a spell? [Spell balance](systems/spell-balance.md)
+- How should Survive's power growth relate to pillar 1? [Survive design notes](explorations/2026-11-05-survive-mode.md)

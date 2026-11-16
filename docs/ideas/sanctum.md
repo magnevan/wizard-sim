@@ -25,7 +25,7 @@ It could feel like homework, so it should be optional and fun on its own terms.
 
 ## Smallest test
 This is whatever prototype comes first. Every prototype is effectively a sanctum room.
-*(Since 2026-11-04 the game's default room is the Sanctum: three practice dummies, with the tuning panel (F1) for readouts, spawning and time control. It's a test room, not the shared hub this idea describes, which stays parked.)*
+The playable Sanctum is a test room with practice dummies. Its tuning panel opens with F2. [Current state](../current-state.md#rooms)
 
 ## The meditation sandbox (the user, 2026-11-08)
 The user's answer to "Magicka has no right space to practise": a meditative state you can enter at any time, taking you to a sandbox with dummies and summonable enemies; co-op partners click on you to join your dream; a button exits. Each hub may also have a practice yard. Claude's proposals (when it's allowed, what it holds, the tech under rollback) are in `../explorations/2026-11-07-world-and-progression.md`, "Claude's responses to round 2". This supersedes the parked shared tower: the sandbox is reached from anywhere, not walked to.

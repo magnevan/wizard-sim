@@ -6,14 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A design sandbox for a cooperative spellcasting game inspired by Magicka, plus the game itself (Wizard Sim). The design writing and review pages decide what the game should be; `game/` builds it. The game is public and playable at https://magnevan.github.io/wizard-sim/ (repo https://github.com/magnevan/wizard-sim), deployed on every push to main, so keep main working. It's still early: ideas matter more than polish.
 
-For what's true right now (controls, rules, rooms, netcode, open questions), read `docs/current-state.md`.
+Start at `docs/start-here.md`. For implemented controls, rules, rooms and netcode, read `docs/current-state.md`. For active reviews, read `docs/work-in-progress.md`.
 
 The source of truth for what the game is trying to be is `docs/vision.md`. Read it before proposing or judging a mechanic. When an idea conflicts with a pillar, say so plainly; don't quietly bend the pillar.
 
 ## Layout
 
 - `docs/vision.md`: design pillars and open questions. It changes slowly and only when the user agrees.
-- `docs/current-state.md`: one page of what's true now, each line linked to its decision, plus the live open questions. Update it when a decision changes what's built.
+- `docs/current-state.md`: playable behavior. Update affected summaries when implementation changes and link to code and data for exact values.
 - `docs/archive/`: old worklogs, kept as records.
 - `docs/world/`: living pages about the setting, edited as it changes (unlike explorations). `elements.md` holds each element's essence, which informs both the world and the spells.
 - `docs/campaign/`: how campaign segments get made (`README.md`, stage by stage), one folder per segment, and `canon.md`, the one page saying which story facts the user has approved. Read `canon.md` before writing story; everything not in its Approved section is an option.
@@ -21,13 +21,13 @@ The source of truth for what the game is trying to be is `docs/vision.md`. Read 
 - `tools/art-import/`: free scripts that turn bought art into game assets: `ground.py` cuts the painter's textures, `props.py` registers the opening's props, `kits.py` prepares the wall kits, `defence.py` and `stakes_broken.py` the battery's defences and broken stakes.
 - `tools/turret-3d/`: the turret head as a Blender model rendered to palette-locked pixel-art facings; see its README.
 - `docs/reference/`: notes on Magicka and other reference games. Facts recalled from memory are marked *(unverified)*.
-- `docs/explorations/`: dated, long-form thinking sessions (`YYYY-MM-DD-topic.md`). Once written, they're a record and aren't rewritten. Newer explorations supersede older ones.
+- `docs/explorations/`: dated brainstorms, playtests and review records (`YYYY-MM-DD-topic.md`). Link an explicit replacement when an exploration is superseded.
 - `docs/ideas/`: one file per mechanic idea, written from `docs/ideas/_template.md`. Each has a status: `raw` → `developing` → `prototyping` → `adopted` / `parked` / `rejected`.
 - `docs/decisions/`: an append-only log of design decisions and the reasons for them (`decisions/README.md` is the index).
 - `tools/spell-gallery/`: a published page of animated spell vignettes the user rates. Ratings are stored in the artifact's db, and Claude reads them back into the docs. See its README for adding spells, the headless-Chrome filmstrip check, and how to read ratings.
 - `tools/spell-tree/`: the Spell Tree Explorer, an interactive page for proposal A. `resolver.js` holds the rules. The user's answers to the open questions are in its db collection `answers`.
 - `tools/spell-atlas/`: the Spell Atlas, the whole tree under proposal C as one form × cast grid, plus a Structures section. `depth-c.js` counts what each rune-pool depth can reach. `rules-c.js` holds the rules (runs in node too). `audit-c.js` and `audit-a1.js` count element additions that change nothing; run them after any rule change, and keep inert additions at 0. Its db holds `answers` (questions) and `cells` (per-cell ratings).
-- **Feedback lives in artifact dbs.** At the start of every session, read all of them (the root `README.md` lists every published page's URL, as does the memory file of artifact URLs) and fold any new ratings or notes into the docs before doing anything else.
+- **Feedback lives in artifact dbs.** Read the relevant artifact for the review in progress when its feedback is available. The root `README.md` lists the published reviews. Keep individual ratings in the review record and promote accepted decisions and reusable guidance to the owning topic.
 - `tools/art-styles/`: the Art Style Explorer, the same fight in six art directions. Ratings are in its db collection `ratings`.
 - `tools/art-pixel-hd/`: Pixel Battlefield, the leading art direction (high-res pixel art, 3/4 camera) shown full screen with structures and the rune HUD. Answers are in its db collection `answers`.
 - `tools/spell-vfx/`: the Spell VFX gallery, looping pixel-art vignettes of the current spells in the Pixel Battlefield style. Its `rules-c.js` is a snapshot of the Atlas rules: re-copy it after rule changes. Ratings are in its db collection `ratings`, one doc per vignette slug; card questions (`q-*`) and `general` are in `answers`. It also shows the enemies' attacks (`vfx-attacks.js`, a port of `game/.../art/enemy-attacks.ts`): re-port it when those change. `filmstrip.html` is QA only, so don't publish it.
@@ -59,16 +59,16 @@ Project skills live in `.claude/skills/`:
 ## Keeping the docs current
 
 The user wants Claude to actively maintain the docs and keep the process on track:
-- After any design discussion, update the affected files without being asked: summarize it in a new exploration, update idea statuses and the `ideas/README.md` table, log decisions, and edit pillars in `vision.md` when the user changes them.
-- Rejected ideas stay in the docs, marked rejected and with the reason, so they aren't proposed again.
-- When the conversation drifts, point back to the current open questions in `vision.md` and the active `developing` ideas. Suggest the next step.
+- When a design decision is made, update its owning note and log the reason. Record substantial brainstorms, tests and feedback in dated explorations. Edit the pillars in `vision.md` when the user changes them. See `docs/maintaining-the-vault.md`.
+- Keep rejected ideas and their rationale in the related exploration or decision log.
+- Keep `docs/work-in-progress.md` focused on reviews the user is doing now. Remove each review from the list when it ends.
 - Don't jump to prototyping before the design question is clear; the user prefers to explore first.
 
 ## Keeping it tidy (checkable rules)
 
 These came out of the 2026-11-12 repo audit; each one is a mess that audit had to clean up.
 - **Indexes in the same commit.** A new exploration gets its row in `docs/explorations/README.md` (one table, date order, no blank lines or bullets inside it). A new decision gets its link on the matching topic line at the top of `docs/decisions/README.md`.
-- **One fact, every page that states it.** Changing rooms, scenario keys, npm scripts or URL params updates, in the same commit: `game/README.md`, the `game/` line above, `game/content/README.md` (rooms and keys) and `docs/current-state.md`. A decision that reverses a claim also fixes `current-state.md` (the golden hash line included) and adds a superseded pointer in the idea file it changes.
+- **One home per fact.** Update the owning source when rooms, keys, commands or rules change. Update any affected summary in the same change or link it to the owning source. Add a superseded pointer to related ideas when a decision changes their status.
 - **Check before you write a key or number in a doc.** Panels: F1 help, F2 Tune, F3 Tools, F4 Stats. Numbers come from `game/packages/sim/src/config.ts`, not from memory or an older doc.
 - **Links:** `node tools/docs-check/check-links.mjs` must report 0 broken links before a docs commit.
 - **Snapshots:** after changing a source, re-sync its copies or record the drift in the copy's README: `tools/spell-vfx/rules-c.js` (from the Atlas), `tools/spell-vfx/vfx-attacks.js` (from `enemy-attacks.ts`), `tools/survive-review/copy.js` (Survive's numbers), `tools/sound-gallery/engine.js` and `bank.js` (`npm run sound-gallery`). The review pages also copy small helpers between them (`core.js`, `fx.js`, `pixel.js`, `stage.js`): before editing one, find its other copies and change them together.

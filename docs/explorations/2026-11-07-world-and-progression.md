@@ -224,6 +224,8 @@ On the page; unanswered means the recommendation stands.
 
 ## Round 4: Claude's overnight proposals (2026-11-08, nothing decided)
 
+*Later feedback is filed under [World and Progression](../archive/claude-review-feedback-2026-11-16.md#world-and-progression).*
+
 **Sigil in the queue before the art is learned.** Four ways to read it:
 - **S1, Sigil means a weapon.** Until you learn the art, any cast with Sigil queued conjures the weapon, whatever the gesture: one rule, "Sigil is a blade". The HUD's Sigil pip shows a small blade, and the help panel's rows all read "weapon". It's the easiest to parse, but it changes when the art is learned (Force with Sigil becomes a turret).
 - **S2, it fizzles.** A non-Conjure cast with Sigil queued fails with a dull spark and a "the focus can only shape blades" cue; the runes are refunded. Honest, and it hints at more to come, but a failed cast mid-fight feels bad.

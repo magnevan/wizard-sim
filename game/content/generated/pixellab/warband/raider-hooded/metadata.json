@@ -1,0 +1,103 @@
+{
+  "group_id": "248ebc26-03bf-4b5c-ba2d-5fd14557f57c",
+  "states": [
+    {
+      "character": {
+        "id": "f63caed8-8da5-4730-ac54-4623b0c12e78",
+        "name": "Idle",
+        "prompt": "A small, wiry green-skinned goblin raider, short and hunched, wearing a ragged deep blue academy hood with a small gold star, stolen as a trophy, long pointed ears poking out of it, sly grin. Patched brown leather tunic, a lumpy leather sack of loot on its back, cloth-wrapped forearms, bare clawed feet. Holds a curved jagged blade low in its right hand. Warm earthy colours: olive green skin, brown leather, deep blue cloth, a little brass. Detailed pixel art, dark outline.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-16T17:49:38.236006+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "run": {
+            "west": [
+              "Idle/animations/run/west/frame_000.png",
+              "Idle/animations/run/west/frame_001.png",
+              "Idle/animations/run/west/frame_002.png",
+              "Idle/animations/run/west/frame_003.png",
+              "Idle/animations/run/west/frame_004.png",
+              "Idle/animations/run/west/frame_005.png"
+            ],
+            "south-west": [
+              "Idle/animations/run/south-west/frame_000.png",
+              "Idle/animations/run/south-west/frame_001.png",
+              "Idle/animations/run/south-west/frame_002.png",
+              "Idle/animations/run/south-west/frame_003.png",
+              "Idle/animations/run/south-west/frame_004.png",
+              "Idle/animations/run/south-west/frame_005.png"
+            ],
+            "north-west": [
+              "Idle/animations/run/north-west/frame_000.png",
+              "Idle/animations/run/north-west/frame_001.png",
+              "Idle/animations/run/north-west/frame_002.png",
+              "Idle/animations/run/north-west/frame_003.png",
+              "Idle/animations/run/north-west/frame_004.png",
+              "Idle/animations/run/north-west/frame_005.png"
+            ],
+            "south-east": [
+              "Idle/animations/run/south-east/frame_000.png",
+              "Idle/animations/run/south-east/frame_001.png",
+              "Idle/animations/run/south-east/frame_002.png",
+              "Idle/animations/run/south-east/frame_003.png",
+              "Idle/animations/run/south-east/frame_004.png",
+              "Idle/animations/run/south-east/frame_005.png"
+            ],
+            "east": [
+              "Idle/animations/run/east/frame_000.png",
+              "Idle/animations/run/east/frame_001.png",
+              "Idle/animations/run/east/frame_002.png",
+              "Idle/animations/run/east/frame_003.png",
+              "Idle/animations/run/east/frame_004.png",
+              "Idle/animations/run/east/frame_005.png"
+            ],
+            "north": [
+              "Idle/animations/run/north/frame_000.png",
+              "Idle/animations/run/north/frame_001.png",
+              "Idle/animations/run/north/frame_002.png",
+              "Idle/animations/run/north/frame_003.png",
+              "Idle/animations/run/north/frame_004.png",
+              "Idle/animations/run/north/frame_005.png"
+            ],
+            "south": [
+              "Idle/animations/run/south/frame_000.png",
+              "Idle/animations/run/south/frame_001.png",
+              "Idle/animations/run/south/frame_002.png",
+              "Idle/animations/run/south/frame_003.png",
+              "Idle/animations/run/south/frame_004.png",
+              "Idle/animations/run/south/frame_005.png"
+            ],
+            "north-east": [
+              "Idle/animations/run/north-east/frame_000.png",
+              "Idle/animations/run/north-east/frame_001.png",
+              "Idle/animations/run/north-east/frame_002.png",
+              "Idle/animations/run/north-east/frame_003.png",
+              "Idle/animations/run/north-east/frame_004.png",
+              "Idle/animations/run/north-east/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-16T17:56:29.622266"
+}

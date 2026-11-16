@@ -1,0 +1,206 @@
+<meta charset="utf-8">
+<title>Goblin Warband Art</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* One dark look on purpose, shared with the other art reviews: pixel art is judged against the game's own colours.
+   Layout: one reading column; the scene first, then each goblin with its verdict directly under it. */
+:root {
+  color-scheme: dark;
+  --stone: #1d2420; --slab: #28322d; --line: #404c45;
+  --ink: #e8e4d8; --dim: #a9b0a4;
+  --gold: #ffd860; --keep: #7fd08a; --maybe: #e8c060; --cut: #e8836a;
+  --display: 'Silkscreen', ui-monospace, 'Courier New', monospace;
+  --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+body { background: var(--stone); color: var(--ink); font: 16px/1.55 var(--body); }
+main { max-width: 1120px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 44px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(28px, 5vw, 42px); color: var(--gold); }
+h2 { font-size: 22px; }
+h3 { font-size: 16px; }
+p { margin: 0; max-width: 68ch; }
+.lede, section, .job, .q { display: grid; gap: 12px; min-width: 0; }
+section { gap: 20px; }
+.dim { color: var(--dim); }
+.pick { color: var(--gold); }
+img { image-rendering: pixelated; display: block; width: 100%; height: auto; }
+img.photo { image-rendering: auto; }
+figcaption { font-size: 14px; color: var(--dim); }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+.budget { display: flex; flex-wrap: wrap; gap: 6px 24px; font-variant-numeric: tabular-nums; }
+.budget b { font: 400 18px var(--display); color: var(--gold); }
+.head { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; }
+.cost { font: 13px var(--display); color: var(--gold); }
+ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; max-width: 72ch; }
+.jobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 30px 24px; }
+.rate { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.marks { display: flex; gap: 6px; flex: none; flex-wrap: wrap; }
+button { font: 13px var(--display); color: var(--ink); background: var(--slab); border: 1px solid var(--line); padding: 8px 12px; cursor: pointer; }
+button:hover { border-color: var(--dim); }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+button[aria-pressed="true"][data-tone="keep"] { background: var(--keep); border-color: var(--keep); color: var(--stone); }
+button[aria-pressed="true"][data-tone="maybe"] { background: var(--maybe); border-color: var(--maybe); color: var(--stone); }
+button[aria-pressed="true"][data-tone="cut"] { background: var(--cut); border-color: var(--cut); color: var(--stone); }
+textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(--body); color: var(--ink); background: var(--slab); border: 1px solid var(--line); padding: 8px 10px; resize: vertical; box-sizing: border-box; }
+.q textarea { width: 100%; }
+.opts { margin: 0; padding-left: 20px; display: grid; gap: 4px; max-width: 72ch; }
+#save { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); font-size: 13px; background: var(--slab); border: 1px solid var(--line); padding: 4px 10px; color: var(--dim); }
+#save.bad { color: var(--cut); }
+</style>
+
+<main>
+  <header class="lede">
+    <h1>Goblin Warband Art</h1>
+    <p>The warband from the opening's encounters, bought from PixelLab as real 8-direction sprites to replace the code-drawn placeholders. Each prompt follows the concept sheet: scrappy opportunists in patched leather, blue academy cloth worn as trophies, a shield cut from a machine panel, and a brass-banded maul.</p>
+    <p class="dim">Marks and notes save as you go. An empty box means my pick stands.</p>
+    <div class="budget">
+      <span>Spent: <b>23 generations</b></span>
+      <span>Left this month: <b>1,613</b></span>
+      <span>Resets: <b>7 Dec</b></span>
+    </div>
+  </header>
+
+  <section aria-labelledby="scene">
+    <h2 id="scene">In a fight</h2>
+    <p>The band on the game's own ground tiles, next to props we already bought (a training dummy, crates, a bush, a banner). This is a picture, not the game: nothing is wired in yet.</p>
+    <figure><img src="img/scene.png" alt="Two mock fight scenes. Top: the goblins as bought, each about as tall as the dummy and much more detailed than the props. Bottom: the small goblins halved to the props' scale, with the chieftain unchanged and towering over them."><figcaption>Top: as bought. The small goblins are drawn at twice the props' pixel density, so they look oversized and too detailed. Bottom: halved locally to match. The size is right, but the faces turn to mush.</figcaption></figure>
+    <p>The chieftain already fits: it is drawn at the props' density and stands twice a wizard's height, as the concept asked. The small goblins are the problem. To fit, they need to be drawn at about 30 to 36 px tall, not shrunk afterwards.</p>
+  </section>
+
+  <section aria-labelledby="size">
+    <h2 id="size">Drawn small vs shrunk</h2>
+    <figure><img src="img/density.png" alt="The training dummy, three halved hooded raiders, three hooded raiders generated at 40 px, and the chieftain, on dirt."><figcaption>Left to right: the dummy, the 64 px raider halved locally, the same raider generated at 40 px (2 generations), and the chieftain.</figcaption></figure>
+    <p>Generated small is clearly better: chunky shapes, a readable face, blade and sack. Two things to fix in a redo: its skin came out tan instead of green, and at 36 px it stands as tall as the dummy, while the concept has raiders at about 0.6 of a wizard's height. A 32 px canvas would fit better.</p>
+  </section>
+
+  <section aria-labelledby="bought">
+    <h2 id="bought">What came back</h2>
+    <figure><img src="img/sheet.png" alt="Six goblins, each in eight facings: goggled raider, hooded raider, archer, shieldbearer, hooker and the chieftain."><figcaption>All eight facings at 2×. Rows: goggled raider, hooded raider, archer, shieldbearer, hooker, chieftain (128 px canvas; the others are 64 px).</figcaption></figure>
+    <p class="dim">Mark each: Keep the design, Redo it, or Cut it. "Keep" means keep the look; the small ones would still be redrawn at the right size.</p>
+    <div class="jobs" id="jobs"></div>
+  </section>
+
+  <section aria-labelledby="motion">
+    <h2 id="motion">Motion test</h2>
+    <p>One bought animation before buying more: the hooded raider's template run, 6 frames, all eight directions (8 generations).</p>
+    <figure><img src="img/run.gif" alt="The hooded raider running in place, facing south-west, south, east and north."><figcaption>South-west, south, east, north.</figcaption></figure>
+    <ul>
+      <li>It stays the same goblin in every frame. The blade and sack hold their shape instead of morphing.</li>
+      <li>The stride is short; it reads as a jog more than a sprint.</li>
+      <li>Facing east, the blade hides behind the body for half the cycle. North frame 1 has a stray 3-pixel fragment at the feet.</li>
+    </ul>
+    <div class="rate" id="run-rate"></div>
+  </section>
+
+  <section aria-labelledby="concept">
+    <h2 id="concept">The brief</h2>
+    <figure><img class="photo" src="img/concept.jpg" alt="Codex concept sheet of the goblin warband: a wizard for scale, raiders, an archer behind a board, a shieldbearer with a brass machine-panel shield, a hooker with a chain, and a huge chieftain with a stone maul."><figcaption>The concept sheet from the opening's encounters. Inspiration only; the archer's board is a separate prop in the game.</figcaption></figure>
+  </section>
+
+  <section aria-labelledby="qs">
+    <h2 id="qs">Questions</h2>
+    <div id="questions" style="display:grid;gap:28px"></div>
+  </section>
+</main>
+<div id="save" role="status">Loading…</div>
+
+<script>
+const JOBS = [
+  { id: 'gob-raider-goggles', name: 'Raider, goggles', cost: 2, notes: 'Knife, topknot and goggles, blue cloth at the waist. Skin reads muddy brown, so the face gets lost at small sizes.' },
+  { id: 'gob-raider-hooded', name: 'Raider, hooded', cost: 2, notes: 'Blue star hood and loot sack. The clearest silhouette of the small ones; it is also the one tested at 40 px and running.' },
+  { id: 'gob-archer', name: 'Archer', cost: 2, notes: 'Red-lens goggles on a leather cap, short bow, quiver. Stands; the board it hides behind can be a prop.' },
+  { id: 'gob-shieldbearer', name: 'Shieldbearer', cost: 2, notes: 'Brass panel shield with a vent grille and blue cloth, iron helmet, spear. The shield faces forward in every direction, which suits the guard.' },
+  { id: 'gob-hooker', name: 'Hooker', cost: 2, notes: 'Iron hook and chain over the shoulder, blue sash. The hook is small; it may need to be bigger to read as the grab threat.' },
+  { id: 'gob-chieftain', name: 'Chieftain (brute)', cost: 3, notes: 'Fur cape, skulls, gear-wheel buckle, brass-banded maul with a violet rune. Already at the right density. Its back view is mostly cape.' },
+  { id: 'gob-raider-40', name: 'Raider, hooded, 40 px test', cost: 2, notes: 'Generated at the props\' density. Reads better than the halved 64 px one; tan skin, a little tall.' },
+];
+const QUESTIONS = [
+  { id: 'q-1-density', title: 'How big are the goblins drawn?', text: 'The game\'s props are about 30 px per metre. The small goblins came back at twice that.',
+    options: ['Redraw the small goblins at about 32 px, at the props\' density (2 generations each, about 10 in all).', 'Keep 64 px and raise the whole game\'s art to that density, props and wizards too.', 'Something else.'],
+    pick: 'Redraw at about 32 px. The chieftain already matches, and the props stay as they are.' },
+  { id: 'q-2-motion', title: 'Which animations to buy?', text: 'About 8 generations per animation for a small goblin (all eight directions), 16 for the chieftain.',
+    options: ['Run, attack (with its telegraph pose) and death for every goblin: about 170 generations.', 'Run only for now, attacks drawn in code over the sprite.', 'Something else.'],
+    pick: 'Run, attack and death for all six, bought after the size is settled so nothing is bought twice. Attack wind-ups are generated as custom actions ("raises knife overhead", "swings the hook back") and checked frame by frame.' },
+  { id: 'q-3-wiring', title: 'Wire them into the game?', text: 'Today every actor is a code rig: 16 facings, walk phases, and statuses (burning, wet, frozen) painted on the body.',
+    options: ['Sprites for the goblins, with statuses as tints and overlays on the sprite, the 16 facings snapped to the nearest of 8.', 'Wait until the wizards get sprites too, so the whole cast changes at once.'],
+    pick: 'Sprites for the goblins first, in the battery, behind a toggle like the Academy\'s prop sets, so you can compare them with the rigs in play.' },
+  { id: 'q-4-look', title: 'The look', text: 'Skin came out brown or tan on two of seven. The blue academy cloth reads well as the band\'s shared colour.',
+    options: ['Push the skin to bright olive green in the redo prompts.', 'Keep the mix of greens and browns: it varies the crowd.'],
+    pick: 'Brighter olive green, so the goblins never blend into the dirt.' },
+  { id: 'general', title: 'Anything else', text: 'Missing members, tone, details to add.', options: [], pick: '' },
+];
+
+let db = null;
+const state = {}, timers = {};
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const setSave = (t, bad) => { $('save').textContent = t; $('save').classList.toggle('bad', !!bad); };
+
+async function write(coll, id, patch) {
+  const k = coll + '/' + id;
+  state[k] = { ...state[k], ...patch, updatedAt: new Date().toISOString() };
+  paint();
+  if (!db) { setSave('Saving isn\'t available in this view.', true); return; }
+  setSave('Saving…');
+  try { await db.doc(k).set(state[k]); setSave('All saved'); }
+  catch { setSave('Couldn\'t save. Check your connection and try again.', true); }
+}
+function marks(coll, id, options) {
+  const box = el('div', 'marks');
+  for (const [value, label, tone] of options) {
+    const b = el('button', '', label);
+    b.type = 'button'; b.dataset.key = coll + '/' + id; b.dataset.value = value; b.dataset.tone = tone; b.setAttribute('aria-pressed', 'false');
+    b.onclick = () => write(coll, id, { mark: state[coll + '/' + id]?.mark === value ? null : value });
+    box.append(b);
+  }
+  return box;
+}
+function note(coll, id, placeholder) {
+  const t = el('textarea');
+  t.id = 'note-' + id; t.rows = 1; t.placeholder = placeholder; t.setAttribute('aria-label', placeholder);
+  const save = () => { clearTimeout(timers[id]); if ((state[coll + '/' + id]?.note ?? '') !== t.value) write(coll, id, { note: t.value }); };
+  t.oninput = () => { clearTimeout(timers[id]); timers[id] = setTimeout(save, 700); };
+  t.onblur = save;
+  return t;
+}
+function paint() {
+  document.querySelectorAll('button[data-key]').forEach((b) => b.setAttribute('aria-pressed', String(state[b.dataset.key]?.mark === b.dataset.value)));
+}
+const KRC = [['keep', 'Keep', 'keep'], ['redo', 'Redo', 'maybe'], ['cut', 'Cut', 'cut']];
+for (const j of JOBS) {
+  const box = el('article', 'job'), head = el('div', 'head');
+  head.append(el('h3', '', j.name), el('span', 'cost', j.cost + ' gen'));
+  const r = el('div', 'rate'); r.append(marks('ratings', j.id, KRC), note('ratings', j.id, 'What to change'));
+  box.append(head, el('p', '', j.notes), r); $('jobs').append(box);
+}
+$('run-rate').append(marks('ratings', 'anim-run', KRC), note('ratings', 'anim-run', 'How does the motion feel?'));
+for (const q of QUESTIONS) {
+  const box = el('div', 'q');
+  box.append(el('h3', '', q.title), el('p', '', q.text));
+  if (q.options.length) { const ol = el('ol', 'opts'); q.options.forEach((o) => ol.append(el('li', '', o))); box.append(ol); }
+  if (q.pick) box.append(el('p', 'pick', 'My pick: ' + q.pick));
+  box.append(note('answers', q.id, 'Your answer'));
+  $('questions').append(box);
+}
+function fill(coll, snap) {
+  for (const d of snap.docs) {
+    const data = d.data() ?? {}, k = coll + '/' + d.id;
+    state[k] = { ...state[k], ...data };
+    const t = $('note-' + d.id);
+    if (t && document.activeElement !== t) t.value = data.note ?? '';
+  }
+  paint();
+}
+(async () => {
+  const stop = setTimeout(() => setSave('Couldn\'t load your marks. Reload to try again.', true), 10000);
+  try {
+    db = await window.claude?.use?.('db');
+    if (!db) { clearTimeout(stop); setSave('Saving isn\'t available in this view.', true); return; }
+    let first = 2;
+    const failed = () => { clearTimeout(stop); setSave('Couldn\'t load your marks. Reload to try again.', true); };
+    for (const coll of ['ratings', 'answers']) db.collection(coll).onSnapshot((snap) => { fill(coll, snap); if (--first === 0) { clearTimeout(stop); setSave('All saved'); } }, failed);
+  } catch { clearTimeout(stop); setSave('Couldn\'t load your marks. Reload to try again.', true); }
+})();
+</script>

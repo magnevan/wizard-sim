@@ -1,0 +1,36 @@
+{
+  "group_id": "eaf9a4f1-2382-4446-81f4-b5369faf15ab",
+  "states": [
+    {
+      "character": {
+        "id": "f11b573f-70f4-4f79-88a0-e8b872a3e8b1",
+        "name": "Idle",
+        "prompt": "A small, wiry green-skinned goblin raider, short and hunched, wearing a ragged deep blue academy hood with a small gold star, stolen as a trophy, long pointed ears poking out of it, sly grin. Patched brown leather tunic, a lumpy leather sack of loot on its back, cloth-wrapped forearms, bare clawed feet. Holds a curved jagged blade low in its right hand. Warm earthy colours: olive green skin, brown leather, deep blue cloth, a little brass. Bold readable pixel art, chunky shapes, dark outline.",
+        "size": {
+          "width": 40,
+          "height": 40
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-16T17:54:48.051138+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-16T17:56:28.068682"
+}

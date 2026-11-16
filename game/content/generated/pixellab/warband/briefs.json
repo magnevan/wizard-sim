@@ -1,0 +1,28 @@
+{
+  "batch": "2026-11-16 goblin warband, round 1",
+  "source": "docs/explorations/2026-11-16-opening-encounters.md (the goblin warband concept, creatures-goblins.jpg)",
+  "tool": "create_character",
+  "common": { "mode": "v3", "view": "high top-down", "detail": "high detail", "outline": "single color black outline" },
+  "characters": [
+    { "slug": "raider-goggles", "id": "5365fc0d-ab6a-4147-97ed-4e9aa51099b7", "size": 64, "cost": 2, "archetype": "swarmer",
+      "description": "A small, wiry green-skinned goblin raider, short and hunched, long pointed ears, big toothy grin, brass goggles pushed up on its forehead, a topknot of dark hair. Patched brown leather vest and wraps, a torn strip of deep blue academy cloth with a small gold star tied round its waist as a trophy, bare clawed feet. Holds a jagged steel knife in its right hand, crouched low and ready to run. Warm earthy colours: olive green skin, brown leather, brass, deep blue cloth. Detailed pixel art, dark outline." },
+    { "slug": "raider-hooded", "id": "f63caed8-8da5-4730-ac54-4623b0c12e78", "size": 64, "cost": 2, "archetype": "swarmer",
+      "description": "A small, wiry green-skinned goblin raider, short and hunched, wearing a ragged deep blue academy hood with a small gold star, stolen as a trophy, long pointed ears poking out of it, sly grin. Patched brown leather tunic, a lumpy leather sack of loot on its back, cloth-wrapped forearms, bare clawed feet. Holds a curved jagged blade low in its right hand. Warm earthy colours: olive green skin, brown leather, deep blue cloth, a little brass. Detailed pixel art, dark outline." },
+    { "slug": "archer", "id": "57f06239-ba75-42d6-b81a-684af75f5436", "size": 64, "cost": 2, "archetype": "caster",
+      "description": "A small green-skinned goblin archer, wiry and alert, long pointed ears, a dented leather cap with round red-lensed brass goggles over its eyes. Holds a short curved wooden bow in its left hand, a leather quiver of feathered arrows on its back. Patched brown leathers, a deep blue academy cloth scarf with a gold star worn as a trophy, bare clawed feet. Warm earthy colours: olive green skin, brown leather, brass, deep blue cloth. Detailed pixel art, dark outline." },
+    { "slug": "shieldbearer", "id": "5a89655d-27c1-467b-b6e1-c880b4e8a496", "size": 64, "cost": 2, "archetype": "shieldbearer",
+      "description": "A stocky, broad green-skinned goblin shieldbearer in a dented iron helmet, long pointed ears, scowling. Holds a big round shield in front of its body made from a scavenged brass machine panel: riveted brass plate with a small slotted vent grille and a little brass gear wheel on its face, a strip of deep blue academy cloth with a gold star hanging from its rim. A short iron-tipped spear in its other hand. Patched brown leathers, leather boots. Warm earthy colours: olive green skin, brass, iron, brown leather, deep blue cloth. Detailed pixel art, dark outline." },
+    { "slug": "hooker", "id": "b1459626-7b37-47a4-853d-66dff4e1ff27", "size": 64, "cost": 2, "archetype": "grabber",
+      "description": "A lean green-skinned goblin hooker, long pointed ears, wild grin, brass goggles on its forehead. Holds a heavy iron grappling hook on a long iron chain, the chain coiled over its left hand and shoulder, the hook in its right hand ready to throw. Patched brown leathers, a deep blue academy cloth sash with a gold star worn as a trophy, leather wraps on its shins, bare clawed feet. Warm earthy colours: olive green skin, brown leather, dark iron, brass, deep blue cloth. Detailed pixel art, dark outline." },
+    { "slug": "chieftain", "id": "421a10a5-35de-4917-b4e4-d6a9bb219066", "size": 128, "cost": 3, "archetype": "brute",
+      "description": "A hulking goblin chieftain, huge and muscular, broad shoulders, thick arms, roaring with tusked teeth, long pointed ears, olive green skin. Carries an enormous maul over its shoulder: a heavy square stone head banded in brass with a glowing violet rune carved on it, a long wooden haft wrapped in leather. Wears a necklace of small bones and skulls, a wide leather belt with a brass gear-wheel buckle, a ragged cape of furs and torn deep blue academy banners with gold stars, leather bracers, bare feet. Warm earthy colours: olive green skin, brown leather and fur, brass, grey stone, deep blue cloth. Detailed pixel art, dark outline." }
+  ],
+  "tests": [
+    { "slug": "raider-hooded-40", "id": "f11b573f-70f4-4f79-88a0-e8b872a3e8b1", "tool": "create_character", "size": 40, "detail": "medium detail", "cost": 2,
+      "why": "Is a goblin drawn natively at the props' density better than the 64 px one halved locally?",
+      "description": "The raider-hooded description, ending 'Bold readable pixel art, chunky shapes, dark outline.' instead of 'Detailed pixel art, dark outline.'" },
+    { "slug": "raider-hooded/run", "character": "f63caed8-8da5-4730-ac54-4623b0c12e78", "tool": "animate_character", "template_animation_id": "running-6-frames", "mode": "template", "cost": 8,
+      "why": "One motion test before buying animations for the band." }
+  ],
+  "balance": { "before": "1636 generations remaining (2026-11-16)", "after": "1613 (23 spent: 13 characters, 2 for the 40 px test, 8 for the run cycle)" }
+}

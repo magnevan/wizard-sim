@@ -1,0 +1,36 @@
+{
+  "group_id": "669b9d42-4fda-477e-af10-5cb4e3243c2d",
+  "states": [
+    {
+      "character": {
+        "id": "5a89655d-27c1-467b-b6e1-c880b4e8a496",
+        "name": "Idle",
+        "prompt": "A stocky, broad green-skinned goblin shieldbearer in a dented iron helmet, long pointed ears, scowling. Holds a big round shield in front of its body made from a scavenged brass machine panel: riveted brass plate with a small slotted vent grille and a little brass gear wheel on its face, a strip of deep blue academy cloth with a gold star hanging from its rim. A short iron-tipped spear in its other hand. Patched brown leathers, leather boots. Warm earthy colours: olive green skin, brass, iron, brown leather, deep blue cloth. Detailed pixel art, dark outline.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-16T17:49:38.591921+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-16T17:52:50.144473"
+}

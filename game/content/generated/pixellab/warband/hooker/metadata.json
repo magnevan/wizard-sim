@@ -1,0 +1,36 @@
+{
+  "group_id": "4bdbcc66-059e-4754-928c-f778abb146e9",
+  "states": [
+    {
+      "character": {
+        "id": "b1459626-7b37-47a4-853d-66dff4e1ff27",
+        "name": "Idle",
+        "prompt": "A lean green-skinned goblin hooker, long pointed ears, wild grin, brass goggles on its forehead. Holds a heavy iron grappling hook on a long iron chain, the chain coiled over its left hand and shoulder, the hook in its right hand ready to throw. Patched brown leathers, a deep blue academy cloth sash with a gold star worn as a trophy, leather wraps on its shins, bare clawed feet. Warm earthy colours: olive green skin, brown leather, dark iron, brass, deep blue cloth. Detailed pixel art, dark outline.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-16T17:49:38.752560+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-16T17:52:50.938784"
+}

@@ -16,6 +16,13 @@ The last recorded scope is beats 1–7, through the battery.
 
 [Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) · [Saved marks](archive/claude-review-feedback-2026-11-16.md#opening-segment) · [Playable battery](current-state.md#rooms)
 
+## Goblin warband art
+
+> [!in-review] Mark the bought goblins
+> Six goblins bought from PixelLab as 8-direction sprites, plus a run cycle. Decide the drawing size (the small ones are twice the props' density), which animations to buy, and whether to wire them into the battery.
+
+[Goblin Warband Art review](https://claude.ai/artifact/4WNayLNFUL2TNuffPfTMsJ) · [Exploration](explorations/2026-11-16-warband-art.md)
+
 ## Sound design
 
 > [!in-review] Compare takes in play

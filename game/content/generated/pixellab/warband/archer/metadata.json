@@ -1,0 +1,36 @@
+{
+  "group_id": "3169264a-5c23-4093-a3b1-18c545e7e452",
+  "states": [
+    {
+      "character": {
+        "id": "57f06239-ba75-42d6-b81a-684af75f5436",
+        "name": "Idle",
+        "prompt": "A small green-skinned goblin archer, wiry and alert, long pointed ears, a dented leather cap with round red-lensed brass goggles over its eyes. Holds a short curved wooden bow in its left hand, a leather quiver of feathered arrows on its back. Patched brown leathers, a deep blue academy cloth scarf with a gold star worn as a trophy, bare clawed feet. Warm earthy colours: olive green skin, brown leather, brass, deep blue cloth. Detailed pixel art, dark outline.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-16T17:49:38.414777+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-16T17:52:49.322349"
+}

@@ -19,7 +19,7 @@ The last recorded scope is beats 1–7, through the battery.
 ## Goblin warband art
 
 > [!in-review] Mark the bought goblins
-> Round 2 redrew the small goblins at 32 px, which beat two Codex paths. Mark the set, then decide which animations to buy and whether to wire them into the battery.
+> The bought art is drawn at about twice the game's pixel density (a round 2 goblin is as tall as today's wizard). First decide the density: double it (60 px wizards) or redraw everything smaller. Then animations and wiring.
 
 [Goblin Warband Art review](https://claude.ai/artifact/4WNayLNFUL2TNuffPfTMsJ) · [Exploration](explorations/2026-11-16-warband-art.md)
 

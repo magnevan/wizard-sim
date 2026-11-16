@@ -1,0 +1,36 @@
+{
+  "group_id": "503d35f6-1cd1-4e7f-b87e-ceb9fa6fec91",
+  "states": [
+    {
+      "character": {
+        "id": "029ed889-8c9e-4ceb-99cf-b9474e1936ef",
+        "name": "Idle",
+        "prompt": "A young apprentice wizard of a magic academy, slim, brown hair, wearing a deep blue robe with small gold stars and gold trim, a brown leather belt with pouches, brown boots. Holds a tall wooden staff topped with a small brass armillary ring holding a glowing violet crystal. Standing upright, calm and ready. Warm colours: deep blue cloth, gold, brown leather, violet glow. Detailed pixel art, dark outline.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-16T20:21:25.381687+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-16T20:23:37.703306"
+}

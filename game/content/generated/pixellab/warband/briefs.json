@@ -126,5 +126,22 @@
       "before": 1613,
       "after": 1603
     }
+  },
+  "wizard": {
+    "slug": "wizard",
+    "id": "029ed889-8c9e-4ceb-99cf-b9474e1936ef",
+    "tool": "create_character",
+    "mode": "v3",
+    "size": 64,
+    "view": "high top-down",
+    "detail": "high detail",
+    "cost": 2,
+    "why": "A wizard for scale at the bought art's density (60 px), to show what doubling the game's pixel density would look like.",
+    "description": "A young apprentice wizard of a magic academy, slim, brown hair, wearing a deep blue robe with small gold stars and gold trim, a brown leather belt with pouches, brown boots. Holds a tall wooden staff topped with a small brass armillary ring holding a glowing violet crystal. Standing upright, calm and ready. Warm colours: deep blue cloth, gold, brown leather, violet glow. Detailed pixel art, dark outline.",
+    "note": "A first run (aca66801) was cancelled mid-generation and charged 1 generation with no result.",
+    "balance": {
+      "before": 1603,
+      "after": 1600
+    }
   }
 }

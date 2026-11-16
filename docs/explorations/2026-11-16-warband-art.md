@@ -4,7 +4,7 @@ Art purchase, 2026-11-16, from [the opening's encounters](2026-11-16-opening-enc
 
 ## What was bought
 
-23 PixelLab generations (1,636 → 1,613). Raw files, ids and prompts: `game/content/generated/pixellab/warband/` (`briefs.json`).
+23 PixelLab generations (1,636 → 1,613); 36 by the end of the review so far (1,600 left). Raw files, ids and prompts: `game/content/generated/pixellab/warband/` (`briefs.json`).
 
 | Goblin | Archetype | Canvas | Cost |
 |---|---|---|---|
@@ -36,9 +36,28 @@ The user then said other paths than PixelLab were fine if the quality stayed as 
 
 So the small goblins come from PixelLab drawn at the target size; Codex is for design sheets. Sources: `docs/reference/warband-sprites/`, prompts in `tools/concept-gen/prompts/2026-11-16-warband-sprites/`.
 
+## Size against the game's wizard
+
+The user couldn't judge size against the dummy prop and asked for the wizard in the game. Painted by the game's own rigs at 1x (`game/scripts/rig-lineup.mjs`), at 16 art pixels per world unit (`PPU` in `game/packages/client/src/camera.ts`):
+
+| | Height (art px) |
+|---|---|
+| Wizard rig, with its hat | 29 |
+| Goblin and archer rigs | 15 |
+| Brute rig | 25 |
+| Round 2 PixelLab goblins | about 30 |
+| PixelLab chieftain | 121 |
+
+So every bought sprite is drawn at about **twice the game's density**: the round 2 goblins are as tall as the wizard instead of half, and the chieftain is four wizards tall instead of two. The bought props were the wrong yardstick, as they're already oversized next to the wizard (the dummy prop is 40 px). The question is the game's density, not the goblins:
+
+- **Keep today's density:** goblins about 16 px tall, the chieftain about 60, with most of the detail gone.
+- **Double it:** 60 px wizard sprites, and the round 2 goblins and chieftain fit as they are. Costs: the wizards need sprites instead of the code rigs, the camera shows half the ground at the same zoom unless it zooms out, and the props look small and would need upscaling or redrawing.
+
+A PixelLab wizard at 60 px (2 generations, plus 1 for a cancelled first run) shows the doubled version: `tools/warband-art/img/scene-doubled.png`. Claude's pick is to double it; that's the user's call (`q-5-scale` on the review page).
+
 ## Claude's picks, pending the review
 
-1. Use the round 2 set (32 px) and the round 1 chieftain.
+1. Double the game's pixel density, then use the round 2 set (32 px), the round 1 chieftain and 60 px wizard sprites.
 2. Then buy run, attack (with its telegraph pose) and death for all six, about 170 generations, checked frame by frame.
 3. Wire the goblins in as sprites in the battery, behind a toggle against the rigs, with statuses as tints and overlays and 16 facings snapped to 8.
 4. Keep round 2's bright olive skin for any further goblins.

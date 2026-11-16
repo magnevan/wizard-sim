@@ -56,23 +56,42 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     <p>The warband from the opening's encounters, bought from PixelLab as real 8-direction sprites to replace the code-drawn placeholders. Each prompt follows the concept sheet: scrappy opportunists in patched leather, blue academy cloth worn as trophies, a shield cut from a machine panel, and a brass-banded maul.</p>
     <p class="dim">Marks and notes save as you go. An empty box means my pick stands.</p>
     <div class="budget">
-      <span>Spent: <b>33 generations</b> (round 2: 10)</span>
-      <span>Left this month: <b>1,603</b></span>
+      <span>Spent: <b>36 generations</b></span>
+      <span>Left this month: <b>1,600</b></span>
       <span>Resets: <b>7 Dec</b></span>
     </div>
   </header>
 
+  <section aria-labelledby="now">
+    <h2 id="now">Start here: size against the game's wizard</h2>
+    <p>Where each picture comes from:</p>
+    <ul>
+      <li><b>PixelLab</b>: every goblin you'd use, both rounds, the run animation, and the blue wizard below. Round 1 drew them at 64 px, round 2 at 32 px.</li>
+      <li><b>Codex</b>: only the two magenta sheets at the end of round 2, and the two rows marked Codex. Codex was the experiment; it lost.</li>
+      <li><b>The game</b>: the small red-hat wizard and the rig goblins, painted by the game's own code at their true size.</li>
+    </ul>
+    <figure><img src="img/lineup.png" alt="Rows of goblins on dirt, each row starting with the game's small red-hat wizard. Top row: the game's own tiny goblins, archer and brute. Then PixelLab's 32 px goblins, as tall as the wizard, and the chieftain, four times its height. Then the 64 px goblins, twice the wizard's height. Then two Codex rows."><figcaption>Every row starts with today's in-game wizard (29 px with its hat), all at true relative size. Today's goblins are 15 px: chest height on the wizard. Even the round 2 goblins are as tall as it, and the chieftain is four wizards tall.</figcaption></figure>
+    <p><b>So the question is the game's pixel density, not the goblins.</b> Today the game draws a wizard about 29 px tall. All the bought art is drawn at about twice that density. There are two ways to make it fit:</p>
+    <ul>
+      <li><b>Keep today's density.</b> Goblins would have to be drawn about 16 px tall and the chieftain about 60. Most of the detail you see here would go.</li>
+      <li><b>Double the game's density.</b> Wizards become 60 px sprites like the one below, and the round 2 goblins and the chieftain fit as they are. The cost: the wizards need real sprites (the code rigs would be redrawn or replaced), the camera shows half as much ground at the same zoom unless it zooms out, and the bought props look small at this size, so they'd need upscaling or redrawing.</li>
+    </ul>
+    <figure><img src="img/scene-doubled.png" alt="Two blue-robed wizards with staffs face a band of small green goblins and a huge goblin chieftain with a stone maul, on grass and dirt, with crates, a banner and a bush."><figcaption>The fight at doubled density, everything 1:1: two PixelLab wizards (60 px), the round 2 goblins, the chieftain, and props we own.</figcaption></figure>
+    <figure><img src="img/wizard.png" alt="The PixelLab wizard in a blue star robe with a brass-ringed staff, in eight facings."><figcaption>The PixelLab wizard (2 generations), all eight facings at 3×. Bought to show the doubled density; the game still uses its code wizard.</figcaption></figure>
+    <div class="rate" id="wiz-rate"></div>
+  </section>
+
   <section aria-labelledby="r2">
-    <h2 id="r2">Round 2: three ways to the right size</h2>
-    <p>Round 1 showed that the small goblins have to be drawn at about 30 px to sit with the props. Three paths, each judged at game size on the game's dirt, next to the dummy and the chieftain:</p>
+    <h2 id="r2">Round 2: PixelLab at 32 px vs two Codex paths</h2>
+    <p>Round 1's goblins were too big next to the props, so round 2 redrew them smaller and tried Codex as well. Judged here beside the training-dummy prop; the lineup above compares them with the game's wizard instead.</p>
     <figure><img src="img/paths.png" alt="Four rows on dirt beside a training dummy, with the chieftain on the right. Row A: five crisp green goblins from PixelLab. Row B: the same five from Codex, converted, muddy and yellow-brown. Row C: a hooded raider in eight directions from Codex, converted, darker and tan. Row D: PixelLab's hooded raider in eight directions."><figcaption>A: PixelLab, drawn at 32 px (10 generations). B: a Codex sheet of the five, converted to pixel art. C: a Codex turnaround of one raider in eight directions, converted at its own pixel grid. Last row: PixelLab's raider in all eight directions.</figcaption></figure>
     <ul>
       <li><b>A wins.</b> Crisp silhouettes, bright green skin that stands off the dirt, every prop readable, and the same goblin in every direction.</li>
       <li><b>B has the best designs but can't shrink.</b> The Codex sheet is drawn with about 100 px of detail per goblin, so at 30 px it turns to mush. Its green was also an illusion: the skin is yellow-olive and only looked green against the magenta.</li>
       <li><b>C is usable but second.</b> Codex held one goblin through eight directions by itself, which is new. Converted, it's darker and blobbier than A, with tan skin and a strap it invented on the sack.</li>
     </ul>
-    <p>So the path is PixelLab drawn at the target size, with Codex for design sheets. The Codex originals are below.</p>
-    <figure><img src="img/sheet-32.png" alt="The five small goblins from PixelLab at 32 px, each in eight facings."><figcaption>The round 2 set, all facings at 5×. Rows: goggled raider, hooded raider, archer, shieldbearer, hooker. One stray grey cluster under the goggled raider facing south-east can be cleaned for free.</figcaption></figure>
+    <p>So the path is PixelLab drawn at the target size, with Codex for design sheets. The two Codex originals are at the end of this section.</p>
+    <figure><img src="img/sheet-32.png" alt="The five small goblins from PixelLab at 32 px, each in eight facings."><figcaption>PixelLab, round 2: the set, all facings at 5×. Rows: goggled raider, hooded raider, archer, shieldbearer, hooker. One stray grey cluster under the goggled raider facing south-east can be cleaned for free.</figcaption></figure>
     <div class="jobs" id="jobs2"></div>
     <div class="two" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px">
       <figure><img src="img/codex-front.jpg" alt="Codex sheet: five goblins facing the viewer on magenta, very detailed."><figcaption>Codex: the five, facing the viewer (B's source).</figcaption></figure>
@@ -81,27 +100,27 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
   </section>
 
   <section aria-labelledby="scene">
-    <h2 id="scene">In a fight</h2>
+    <h2 id="scene">Round 1: PixelLab at 64 px, in a fight</h2>
     <p>The band on the game's own ground tiles, next to props we already bought (a training dummy, crates, a bush, a banner). This is a picture, not the game: nothing is wired in yet.</p>
     <figure><img src="img/scene.png" alt="Two mock fight scenes. Top: the goblins as bought, each about as tall as the dummy and much more detailed than the props. Bottom: the small goblins halved to the props' scale, with the chieftain unchanged and towering over them."><figcaption>Top: as bought. The small goblins are drawn at twice the props' pixel density, so they look oversized and too detailed. Bottom: halved locally to match. The size is right, but the faces turn to mush.</figcaption></figure>
     <p>The chieftain already fits: it is drawn at the props' density and stands twice a wizard's height, as the concept asked. The small goblins are the problem. To fit, they need to be drawn at about 30 to 36 px tall, not shrunk afterwards.</p>
   </section>
 
   <section aria-labelledby="size">
-    <h2 id="size">Drawn small vs shrunk</h2>
+    <h2 id="size">Round 1: drawn small vs shrunk</h2>
     <figure><img src="img/density.png" alt="The training dummy, three halved hooded raiders, three hooded raiders generated at 40 px, and the chieftain, on dirt."><figcaption>Left to right: the dummy, the 64 px raider halved locally, the same raider generated at 40 px (2 generations), and the chieftain.</figcaption></figure>
     <p>Generated small is clearly better: chunky shapes, a readable face, blade and sack. Two things to fix in a redo: its skin came out tan instead of green, and at 36 px it stands as tall as the dummy, while the concept has raiders at about 0.6 of a wizard's height. A 32 px canvas would fit better.</p>
   </section>
 
   <section aria-labelledby="bought">
-    <h2 id="bought">What came back</h2>
+    <h2 id="bought">Round 1: what came back (PixelLab)</h2>
     <figure><img src="img/sheet.png" alt="Six goblins, each in eight facings: goggled raider, hooded raider, archer, shieldbearer, hooker and the chieftain."><figcaption>All eight facings at 2×. Rows: goggled raider, hooded raider, archer, shieldbearer, hooker, chieftain (128 px canvas; the others are 64 px).</figcaption></figure>
     <p class="dim">Mark each: Keep the design, Redo it, or Cut it. "Keep" means keep the look; the small ones would still be redrawn at the right size.</p>
     <div class="jobs" id="jobs"></div>
   </section>
 
   <section aria-labelledby="motion">
-    <h2 id="motion">Motion test</h2>
+    <h2 id="motion">Motion test (PixelLab, round 1)</h2>
     <p>One bought animation before buying more: the hooded raider's template run, 6 frames, all eight directions (8 generations).</p>
     <figure><img src="img/run.gif" alt="The hooded raider running in place, facing south-west, south, east and north."><figcaption>South-west, south, east, north.</figcaption></figure>
     <ul>
@@ -147,6 +166,9 @@ const QUESTIONS = [
   { id: 'q-4-look', title: 'The look', text: 'Round 2 asked for bright olive-green skin and got it. The blue academy cloth reads well as the band\'s shared colour.',
     options: ['Keep the bright green of round 2.', 'Go back to a mix of greens and browns: it varies the crowd.'],
     pick: 'Keep the bright green, so the goblins never blend into the dirt.' },
+  { id: 'q-5-scale', title: 'Which pixel density?', text: 'Today a wizard is about 29 px tall; every bought sprite is drawn at about twice that.',
+    options: ['Double the game's density: 60 px wizard sprites, the round 2 goblins and the chieftain as they are, props upscaled or redrawn.', 'Keep today's density: redraw the goblins about 16 px tall and the chieftain about 60, with much less detail.'],
+    pick: 'Double it. The detail is what makes the band read as scavengers with trophies, and it suits the high-res pixel art of the Pixel Battlefield direction. It's a big change, so it needs your call.' },
   { id: 'general', title: 'Anything else', text: 'Missing members, tone, details to add.', options: [], pick: '' },
 ];
 
@@ -207,6 +229,7 @@ for (const j of JOBS2) {
   const r = el('div', 'rate'); r.append(marks('ratings', j.id, KRC), note('ratings', j.id, 'What to change'));
   box.append(head, el('p', '', j.notes), r); $('jobs2').append(box);
 }
+$('wiz-rate').append(marks('ratings', 'wizard-pl', KRC), note('ratings', 'wizard-pl', 'The wizard: keep as a direction, or not?'));
 $('run-rate').append(marks('ratings', 'anim-run', KRC), note('ratings', 'anim-run', 'How does the motion feel?'));
 for (const q of QUESTIONS) {
   const box = el('div', 'q');

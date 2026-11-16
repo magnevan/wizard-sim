@@ -71,6 +71,17 @@ The user: the 128 px chieftain is too big; height is close, "but in overall size
 
 The bought goblins have one pose each so far: standing, in eight directions. The only animation is the round 1 raider's run.
 
+## One goblin in motion, and two ways to die
+
+The user asked for walk and attack on one goblin, and to try code or Codex for the deaths. The hooded raider at 32 px, the most common enemy:
+
+- **Walk** (PixelLab's `walking` template, 6 frames × 8 directions, 8 generations): the goblin stays itself and the stride reads, but **the blade is dropped** in most directions (a stray streak remains in one east frame). The template redraws the body on a skeleton and loses small held items; the round 1 run at 64 px kept its blade. A retry as a v3 custom walk "holding its curved blade" (8 generations) should keep it.
+- **Attack** (v3 custom, 9 frames × 8 directions, 44 px canvas, 8 generations): the blade survives every frame and the overhead wind-up is a readable telegraph. East is clean; south and south-west turn to face another way partway through the slash, and north reads weakly. Fixable by redoing those directions alone.
+- **Code deaths** (`tools/warband-art/deaths.py`, free): the game's own death styles from `art/deaths.ts` run on the sprite's pixels: topple (stiff tip, a poof), fire (flames off the top edges, char, crumble to ash), shatter (frozen, tips over, breaks into shards) and arcane (violet seams, pieces drift apart). Every direction and element comes for free, and wiring it means letting `capture()` take a sprite instead of painting the rig.
+- **Codex death** (6 frames, free on the subscription): the most charming and story-like (the blade flies, it lands flat, the loot sack spills coins, a poof), and it converts cleanly at its own grid (about 8.7 screen px per art px; 64 colours keep the blue hood). But the goblin drifted: rounder and bigger-headed, a little bigger than the sprite, and it faces the camera only.
+
+Claude's pick: code deaths, borrowing the Codex strip's ideas as code (the dropped blade, the spilled loot).
+
 ## Claude's picks, pending the review
 
 1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in.

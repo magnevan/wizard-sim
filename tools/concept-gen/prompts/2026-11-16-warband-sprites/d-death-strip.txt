@@ -1,0 +1,13 @@
+Generate one image with your image generation tool, then save it as raider-death.png in the current directory. Reply with just the file name.
+
+The attached images are a small pixel-art game sprite of a hooded goblin raider, shown 8x on magenta: the first facing the viewer, the second facing down and to the left. Draw exactly this character, at exactly this pixel size: the same chunky square pixels (each sprite pixel is one square block), the same dark one-pixel outline, the same colours, the same high top-down camera.
+
+Subject: a sprite-sheet strip of the raider's death animation, six frames in one row from left to right, evenly spaced, on a flat, pure magenta (#FF00FF) background, every frame the same size with the feet on one baseline:
+1. Hit: the raider jerks back, arms flung up, the blade flying from its hand.
+2. Staggering backwards, knees buckling, head thrown back.
+3. Toppling over sideways, halfway to the ground.
+4. Lying flat on its back on the ground, limp, the loot sack spilled beside it.
+5. Lying still, a few coins and trinkets scattered from the sack.
+6. A small puff of grey-white smoke where the body was, with the dropped blade on the ground.
+
+Cartoonish and light in tone. Plain magenta everywhere around the figures, with no shadows on the ground and no text.

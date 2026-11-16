@@ -156,5 +156,33 @@
     "why": "The user: the 128 px chieftain is too big, 'in overall size/volume he's just way out of scale with the other goblins'.",
     "description": "A goblin chieftain, the biggest goblin of the warband: taller and broader than the other goblins but with the same goblin build, wiry long arms, a hunched stance, bright olive-green skin, long pointed ears, a tusked grin. Carries a big maul over its shoulder: a square stone head banded in brass with a glowing violet rune, a leather-wrapped wooden haft. A necklace of small bones, a wide leather belt with a brass gear-wheel buckle, a short ragged cape of fur and torn blue academy banners with gold stars, leather bracers, bare clawed feet. Bold readable pixel art, chunky shapes, dark outline.",
     "result": "89 px tall with the maul, 82 wide (the old one: 121 x 105)."
+  },
+  "motion": {
+    "character": "raider-hooded-32 (784b0036-c6a1-4ec6-aa28-eaaa383f3385)",
+    "walk": {
+      "tool": "animate_character",
+      "mode": "template",
+      "template_animation_id": "walking",
+      "group": "0dd5082c-65ea-4540-9a44-f1aaeca94d95",
+      "frames": 6,
+      "directions": 8,
+      "cost": 8,
+      "result": "Identity holds and the stride reads, but the blade is dropped in most directions."
+    },
+    "attack": {
+      "tool": "animate_character",
+      "mode": "v3",
+      "group": "0d4db211-f757-465e-9775-bdd8655f6396",
+      "frames": "9 (1 reference + 8)",
+      "directions": 8,
+      "cost": 8,
+      "canvas": "44x44",
+      "action_description": "raises its curved blade high, then lunges forward with a fast downward slash, then recovers",
+      "result": "Blade kept throughout; east is clean; south and south-west turn partway through the slash."
+    },
+    "balance": {
+      "before": 1597,
+      "after": 1581
+    }
   }
 }

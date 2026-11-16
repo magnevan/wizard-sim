@@ -56,14 +56,37 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     <p>The warband from the opening's encounters, bought from PixelLab as real 8-direction sprites to replace the code-drawn placeholders. Each prompt follows the concept sheet: scrappy opportunists in patched leather, blue academy cloth worn as trophies, a shield cut from a machine panel, and a brass-banded maul.</p>
     <p class="dim">Marks and notes save as you go. An empty box means my pick stands.</p>
     <div class="budget">
-      <span>Spent: <b>39 generations</b></span>
-      <span>Left this month: <b>1,597</b></span>
+      <span>Spent: <b>55 generations</b></span>
+      <span>Left this month: <b>1,581</b></span>
       <span>Resets: <b>7 Dec</b></span>
     </div>
   </header>
 
+  <section aria-labelledby="motion2">
+    <h2 id="motion2">Latest: one goblin in motion</h2>
+    <p>The hooded raider at 32 px, the most common enemy. Walk and attack from PixelLab (16 generations); deaths two ways, both free.</p>
+    <h3>Walk (PixelLab template, 6 frames)</h3>
+    <figure><img src="img/raider-walk.gif" alt="The hooded goblin raider walking in place, facing south, south-west, east and north."><figcaption>South, south-west, east, north. All eight directions were bought.</figcaption></figure>
+    <p>It stays the same goblin and the stride reads, but it drops its blade in most directions: the template redraws the body on a skeleton and loses small things it holds. Retrying as a custom walk "holding its curved blade" (8 generations) should keep it.</p>
+    <div class="rate" id="walk-rate"></div>
+    <h3>Attack (PixelLab custom, 9 frames)</h3>
+    <figure><img src="img/raider-attack.gif" alt="The raider raising its curved blade overhead and slashing down, in four directions."><figcaption>South, south-west, east, north.</figcaption></figure>
+    <p>The blade stays in every frame, and the overhead wind-up is a clear warning before the hit. East is clean. South and south-west turn to face another way partway through the slash, and north reads weakly; those directions can be redone alone (1 generation each).</p>
+    <div class="rate" id="attack-rate"></div>
+    <h3>Death by code</h3>
+    <figure><img src="img/deaths-code.gif" alt="Four deaths of the raider side by side, looping: a stiff topple and a poof; flames, charring and a crumble to ash; frozen blue, a tip over and a burst of ice shards; violet seams splitting it into drifting pieces."><figcaption>The game's own death styles, run on the sprite's pixels: topple, fire, shatter, arcane.</figcaption></figure>
+    <figure><img src="img/deaths-code-strip.png" alt="The same four deaths as a frame strip, top to bottom over time."><figcaption>The same, frame by frame (time runs down).</figcaption></figure>
+    <p>The game already plays these on the code goblins, by painting the rig and animating its pixels. Feeding it the sprite's pixels instead gives every direction and every element for free.</p>
+    <div class="rate" id="dcode-rate"></div>
+    <h3>Death by Codex</h3>
+    <figure><img src="img/death-codex-strip.png" alt="The raider sprite, then six drawn death frames: hit with the blade flying, staggering, toppling, lying flat with the loot sack, coins spilled, a puff of smoke beside the blade and the sack."><figcaption>Left: the PixelLab sprite. Then Codex's six frames, converted to game size.</figcaption></figure>
+    <figure><img src="img/death-codex.gif" alt="The Codex death playing beside the standing sprite."><figcaption>Played beside the sprite.</figcaption></figure>
+    <p>The most charming: the blade flies, it lands flat, the sack spills coins, a poof. But the goblin drifted rounder and bigger-headed than ours, it's a little bigger, and it faces the camera only.</p>
+    <div class="rate" id="dcodex-rate"></div>
+  </section>
+
   <section aria-labelledby="chief">
-    <h2 id="chief">Latest: a smaller chieftain</h2>
+    <h2 id="chief">A smaller chieftain</h2>
     <p>The 128 px chieftain was out of scale with the band in bulk, not just height. Redrawn at 96 px (3 generations) as the biggest goblin of the band, with the same build: 89 px tall with its maul, against 121.</p>
     <figure><img src="img/chieftain-96.png" alt="The bigger red wizard, the five 32 px goblins and the new, leaner chieftain in a row on dirt; to the right, the wizard again beside the old, bulkier chieftain."><figcaption>Left: the 1.7× wizard, the 32 px goblins and the new chieftain. Right: the wizard and the old chieftain.</figcaption></figure>
     <figure><img src="img/chieftain-96-sheet.png" alt="The new chieftain in eight facings: a green goblin with a stone maul over its shoulder and a long blue banner cape."><figcaption>All eight facings. The cape became one big blue academy banner.</figcaption></figure>
@@ -197,6 +220,9 @@ const QUESTIONS = [
   { id: 'q-7-chieftain', title: 'The chieftain's size', text: 'Beside the bigger wizard the chieftain is about 2.5 wizards tall (121 vs 49 px). The concept had it at about two.',
     options: ['Keep it: a boss can loom.', 'Regenerate it at about 100 px (3 generations), so it's twice a wizard.'],
     pick: 'Done: you found it too bulky, so it was redrawn at 96 px (see Latest). Mark it there.' },
+  { id: 'q-8-death', title: 'Deaths: code or drawn?', text: 'Code runs the game\'s death styles on any sprite, every direction and element, for free. A drawn death is more charming but is one direction, one style, and drifts off-model.',
+    options: ['Code, borrowing the drawn one\'s ideas (the blade flying, spilled loot) as code.', 'Drawn deaths (Codex or PixelLab) for the base death, code for the elemental ones.', 'Something else.'],
+    pick: 'Code, with the blade flying and the loot spilling added as code.' },
   { id: 'general', title: 'Anything else', text: 'Missing members, tone, details to add.', options: [], pick: '' },
 ];
 
@@ -257,6 +283,10 @@ for (const j of JOBS2) {
   const r = el('div', 'rate'); r.append(marks('ratings', j.id, KRC), note('ratings', j.id, 'What to change'));
   box.append(head, el('p', '', j.notes), r); $('jobs2').append(box);
 }
+$('walk-rate').append(marks('ratings', 'anim32-walk', KRC), note('ratings', 'anim32-walk', 'How does the walk feel?'));
+$('attack-rate').append(marks('ratings', 'anim32-attack', KRC), note('ratings', 'anim32-attack', 'How does the attack read?'));
+$('dcode-rate').append(marks('ratings', 'death-code', KRC), note('ratings', 'death-code', 'Which of the four, what to change'));
+$('dcodex-rate').append(marks('ratings', 'death-codex', KRC), note('ratings', 'death-codex', 'Worth pursuing?'));
 $('chief-rate').append(marks('ratings', 'gob96-chieftain', KRC), note('ratings', 'gob96-chieftain', 'Right size now?'));
 $('wiz-rate').append(marks('ratings', 'wizard-pl', KRC), note('ratings', 'wizard-pl', 'The wizard: keep as a direction, or not?'));
 $('run-rate').append(marks('ratings', 'anim-run', KRC), note('ratings', 'anim-run', 'How does the motion feel?'));

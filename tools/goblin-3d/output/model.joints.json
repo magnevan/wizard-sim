@@ -1,0 +1,16 @@
+{
+  "about": "Meshy's raider: joints read off render.py --joints-view (front and side, 0.1-unit grid). Lower hips, wider shoulders, arms out at about 50 degrees, which the rest turn brings in to the skeleton's A-pose.",
+  "joints": {
+    "hips": [[0, 0, 0.70], [0, 0, 0.98]],
+    "spine": [[0, 0, 0.98], [0, 0, 1.25]],
+    "head": [[0, -0.02, 1.25], [0, -0.02, 2.0]],
+    "upper_arm.L": [[0.32, 0, 1.19], [0.53, 0, 1.02]],
+    "forearm.L": [[0.53, 0, 1.02], [0.64, -0.03, 0.86]],
+    "hand.L": [[0.64, -0.03, 0.86], [0.70, -0.05, 0.70]],
+    "thigh.L": [[0.15, 0, 0.68], [0.17, 0, 0.38]],
+    "shin.L": [[0.17, 0, 0.38], [0.19, 0.02, 0.12]],
+    "foot.L": [[0.19, 0.02, 0.12], [0.20, -0.25, 0.04]],
+    "sack": [[0.12, 0.33, 1.15], [0.22, 0.40, 1.80]]
+  },
+  "rest": [["upper_arm.L", "Y", 22]]
+}

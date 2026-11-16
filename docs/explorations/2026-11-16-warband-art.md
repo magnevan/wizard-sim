@@ -97,6 +97,15 @@ The pipeline (`tools/goblin-3d/`): a model on a shared goblin skeleton, the move
 
 Claude's pick: motion from 3D. Wait for the Meshy row, then choose the model source; next, a fuller face and finer detail in the pixel step, and a second goblin on the same skeleton to prove the reuse.
 
+## From 3D, round 2: Meshy, and moves with weight
+
+The user's verdict on round 1: Claude's model is poor, Codex's reasonable (one sample, so its steadiness is unknown). The moves were stiff: the run wants a forward lean and side-to-side movement, and the slash had no weight, where PixelLab's steps in and swings the body.
+
+- **Meshy** (the user ran it on Codex's front picture): the closest to PixelLab at 32 px, chunky with the face, star and sack readable. It dropped the blade, so Codex's is grafted into its hand (`--add`). It came as 442k vertices, thinned to 20k. Its joints were fitted once from a gridded front and side view (`output/model.joints.json`, a few minutes); Blender's automatic weights failed silently, and nearest-bone weights needed bone thickness, or the arm took an ear.
+- **Moves:** the walk sways over the standing foot with the pelvis dropping and shoulders against hips; the run leans hard, rocks, pumps, kicks up and leaves the ground; the attack crouches and coils with the blade high over the right shoulder (so the warning shows from every side), steps in, uncoils hips then shoulders, slashes diagonally across, holds the impact two frames, recovers. Bugs on the way: arm turns composed in the wrong order (a T-pose wind-up), and a raised arm's tilt sign flips, which hid the blade behind the head.
+
+Claude's pick: Meshy for models (Codex draws its input), motion from 3D. Next, a second goblin through the same steps to see how steady Meshy is and what fitting costs, and a small preview for tuning moves instead of editing numbers.
+
 ## Claude's picks, pending the review
 
 1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in.

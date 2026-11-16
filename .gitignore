@@ -32,3 +32,7 @@ tools/art-trial/out/
 tools/map-labels/map.jpg
 tools/story-review/map.jpg
 tools/segments/01-opening/img/well-references.jpg
+
+# image-to-3D downloads are large (Meshy: 26 MB); keep only their joints files
+tools/goblin-3d/output/*.glb
+tools/goblin-3d/__pycache__/

@@ -1,6 +1,6 @@
 """Render a goblin model through the shared rig: every move, 8 directions, the game's camera. No generation calls.
 
-  blender --background --python tools/goblin-3d/render.py -- <model> <out_dir> [moves] [--preview]
+  blender --background --python tools/goblin-3d/render.py -- <model> <out_dir> [moves] [--preview] [--add=<model.py>:<bone>] [--height=<k>]
 
 <model> is a .py that builds parts named after bones (raider.py, raider_codex.py) or a .glb/.obj/.fbx mesh
 (image-to-3D), which is scaled to the rig's height and bound with automatic weights.
@@ -20,6 +20,8 @@ MODEL, OUT = args[0], args[1]
 MOVES = [a for a in args[2:] if not a.startswith('--')]
 MOVES = MOVES[0].split(',') if MOVES else ['idle', 'walk', 'run', 'attack']
 PREVIEW = '--preview' in args
+# --height=0.95: an imported mesh is scaled to this share of the skeleton's height (its ears or hood tip may stand above it)
+FIT_H = float(next((a[9:] for a in args if a.startswith('--height=')), 1.0))
 CANVAS, PPU, SUPER = 48, 16, 4
 DIRS = {'south': 0, 'south-east': 45, 'east': 90, 'north-east': 135, 'north': 180, 'north-west': -135, 'west': -90, 'south-west': -45}
 
@@ -40,26 +42,73 @@ elif ext == '.fbx':
 meshes = [o for o in bpy.data.objects if o not in before and o.type == 'MESH']
 for o in [o for o in bpy.data.objects if o not in before and o.type != 'MESH']:
     bpy.data.objects.remove(o)   # imported armatures, empties, cameras: we bring our own
+# a model whose proportions or rest pose differ from the skeleton's (image-to-3D) brings <model>.joints.json:
+# {"joints": {"hand.L": [[x,y,z], [x,y,z]], ...}, "rest": [["upper_arm.L", "Y", -40], ...]}; .R bones mirror .L ones not given
+JFILE = os.path.splitext(MODEL)[0] + '.joints.json'
+if os.path.exists(JFILE):
+    import json
+    R.fit(json.load(open(JFILE)))
+    print('fitted joints from', JFILE)
 rig = R.build_armature()
 if ext == '.py':
     missing = R.bind_by_name(rig, meshes)
     if missing: print('UNNAMED PARTS (bound to spine):', missing)
 else:
-    # stand it on Z = 0, centred, the rig's height; the caller makes sure it faces -Y
+    import numpy as np
+    from mathutils import Matrix
     for m in meshes:
-        m.parent = None
-        bpy.context.view_layer.objects.active = m
-        m.select_set(True)
+        # image-to-3D meshes are far denser than a 30 px sprite needs (Meshy: 440k vertices); thin them first
+        if len(m.data.vertices) > 30000:
+            d = m.modifiers.new('thin', 'DECIMATE'); d.ratio = 20000 / len(m.data.vertices)
+            bpy.context.view_layer.objects.active = m
+            bpy.ops.object.modifier_apply(modifier=d.name)
+        mw = m.matrix_world.copy(); m.parent = None; m.matrix_world = mw
     bpy.context.view_layer.update()
-    pts = [m.matrix_world @ v.co for m in meshes for v in m.data.vertices]
-    lo = Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts)))
-    hi = Vector((max(p.x for p in pts), max(p.y for p in pts), max(p.z for p in pts)))
-    k = 1.98 / (hi.z - lo.z)
+    pts = np.concatenate([np.array([tuple(m.matrix_world @ v.co) for v in m.data.vertices]) for m in meshes])
+    lo, hi = pts.min(0), pts.max(0)
+    # stand it on Z = 0 at the rig's height, centred on its feet (the bounding box would put a big sack or ears in the middle)
+    feet = pts[pts[:, 2] < lo[2] + 0.08 * (hi[2] - lo[2])]
+    cx, cy = (feet[:, 0].min() + feet[:, 0].max()) / 2, (feet[:, 1].min() + feet[:, 1].max()) / 2
+    k = (1.98 * FIT_H) / (hi[2] - lo[2])
     for m in meshes:
-        m.matrix_world = __import__('mathutils').Matrix.Diagonal((k, k, k, 1)) @ __import__('mathutils').Matrix.Translation((-(lo.x + hi.x) / 2, -(lo.y + hi.y) / 2, -lo.z)) @ m.matrix_world
-    bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        m.matrix_world = Matrix.Diagonal((k, k, k, 1)) @ Matrix.Translation((-cx, -cy, -lo[2])) @ m.matrix_world
+        bpy.context.view_layer.objects.active = m
+        bpy.ops.object.select_all(action='DESELECT'); m.select_set(True)
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     R.bind_auto(rig, meshes)
+
+# --add=<model.py>:<bone>[,<bone>]: graft parts from another model (a blade the image-to-3D tool dropped)
+for a in [a for a in args if a.startswith('--add=')]:
+    src, bones = a[6:].rsplit(':', 1)
+    keep = bones.split(',')
+    have = set(bpy.data.objects)
+    exec(compile(open(src, encoding='utf-8-sig').read(), src, 'exec'), {'__name__': '__model__', '__file__': src})
+    kept = []
+    for o in [o for o in bpy.data.objects if o not in have]:
+        if o.type == 'MESH' and R.bone_for(o.name) in keep: kept.append(o)
+        else: bpy.data.objects.remove(o)
+    for o in kept:   # it was made for the default skeleton: carry it to where this model's bone is
+        b = R.bone_for(o.name)
+        o.location += Vector(R.JOINTS[b][0]) - Vector(R.DEFAULT[b][0])
+        bpy.context.view_layer.update()
+        bpy.context.view_layer.objects.active = o; bpy.ops.object.select_all(action='DESELECT'); o.select_set(True)
+        bpy.ops.object.transform_apply(location=True)
+    R.bind_by_name(rig, kept)
+
+if '--joints-view' in args:
+    # straight-on front and side views with the skeleton's scale untouched, for reading joint positions off a grid
+    cam = bpy.data.cameras.new('jc'); cam.type = 'ORTHO'; cam.ortho_scale = 3.0
+    co = bpy.data.objects.new('jc', cam); scene.collection.objects.link(co); scene.camera = co
+    sun = bpy.data.lights.new('js', 'SUN'); sun.energy = 3; so = bpy.data.objects.new('js', sun); scene.collection.objects.link(so)
+    so.rotation_euler = (0.6, 0, -0.5)
+    r = scene.render; r.engine = 'CYCLES'; scene.cycles.samples = 16; r.resolution_x = r.resolution_y = 512; r.film_transparent = True
+    for name, loc in (('front', (0, -20, 1.05)), ('side', (20, 0, 1.05))):
+        for pose in ('raw', 'rest'):
+            R.rest(rig, model_rest=(pose == 'rest'))
+            co.location = loc; co.rotation_euler = (Vector((0, 0, 1.05)) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
+            bpy.context.view_layer.update()
+            r.filepath = os.path.join(OUT, f'joints-{name}-{pose}.png'); bpy.ops.render.render(write_still=True)
+    sys.exit(0)
 
 # hand-drawn sprites are squatter than the real thing: wider and a little shorter, from every side
 rig.scale = (1.15, 1.15, 0.92)
@@ -125,7 +174,7 @@ def shoot(path, flat=True):
 if PREVIEW:
     # the model itself, big and smooth: front, three-quarter, side, back, at the game's angle
     r.resolution_x = r.resolution_y = 512; scene.cycles.samples = 48
-    R.rest(rig); rig.location.z = 0
+    R.rest(rig)
     for name, deg in (('south', 0), ('south-east', 45), ('east', 90), ('north', 180)):
         rig.rotation_euler = (0, 0, math.radians(deg))
         bpy.context.view_layer.update()
@@ -137,7 +186,7 @@ for mv in MOVES:
     for d, deg in DIRS.items():
         rig.rotation_euler = (0, 0, math.radians(deg))
         for i in range(n):
-            R.rest(rig); rig.location.z = 0
+            R.rest(rig)
             fn(rig, i, n)
             bpy.context.view_layer.update()
             shoot(os.path.join(OUT, mv, d, f'f{i:02d}.png'))

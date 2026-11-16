@@ -24,4 +24,5 @@ One file per mechanic, copied from `_template.md`. The table mirrors each note's
 | [battlefield-building](battlefield-building.md) | prototyping (walls, curtains, turrets, glyphs in the engine) | 6, 7, 3 |
 | [survive-mode](survive-mode.md) | prototyping (`#survive` in the game, 12 power-ups: explorations/2026-11-05-survive-mode.md) | 1, 3, 7 |
 | [tutorial](tutorial.md) | prototyping (19 beats designed in `explorations/2026-11-06-tutorial.md`; all 19 playable at `#tutorial` since pass 2, `explorations/2026-11-06-tutorial-pass-2.md`; lore to come from the user) | 2, 4, 1, 7 |
+| [element-spillover](element-spillover.md) | raw (the opening's element order: `explorations/2026-11-16-element-order.md`) | 5, 2, 6 |
 | [air-element](air-element.md) | parked (deferred; a full draft waits on the user's `air-*` answers) | 2, 3, 5 |

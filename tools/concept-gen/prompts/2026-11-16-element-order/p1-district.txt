@@ -1,0 +1,16 @@
+Generate one image with your image generation tool, then save it as district-v1.png in the current directory. Reply with just the file name.
+
+Use the attached images as style references only (high-detail pixel art, 3/4 bird's-eye view from high above, warm sunlight, blue-and-gold academy). Do not copy their layouts.
+
+Subject: a wizard academy's district on a rocky coastal headland, on the morning everything breaks. The land is a patchwork laced with faint violet arcane rifts glowing through cracks in the ground: this is a place where magic sits close to the surface. Read it as a route with clear waypoints that a small group of young wizards walks from top-left to bottom-right:
+
+1. The academy on its terraced hill, with a bronze armillary sphere in the main courtyard pouring a column of violet light that flickers unevenly.
+2. Just outside the academy gate, a field infirmary: white canvas tents and a glasshouse full of green glowing plants around a brass lantern-machine that sheds soft green light, with stretchers and wounded people waiting.
+3. A road down past a small fortified battery: a low wall with four bronze fire turrets, one of them belching black smoke, and the dry gorse slope below it on fire.
+4. A stone pump-house and aqueduct carrying water from a waterfall, its great wheel stopped, a basin cracked and dry.
+5. Down at the harbor: an icehouse built into the cliff with frost spilling out of its broken door, crates and ships at the piers.
+6. A lighthouse on a rock with a copper coil at its top instead of a flame, sparking wildly, storm clouds gathering only around it.
+7. A cliff road where a retaining wall has cracked and a rockslide half blocks the way.
+8. At the far edge, the border with the wilds: a long ward wall with tall stone pylons that should hold a shimmering blue barrier between them. The barrier is torn open in a wide gap, and shadowy creatures from the dark forest beyond are slipping through toward the district.
+
+Keep every waypoint small and readable, connected by roads and paths, with lots of trees, rocks and terrain between them. No text, no labels.

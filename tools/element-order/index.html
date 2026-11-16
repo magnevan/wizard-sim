@@ -1,0 +1,367 @@
+<title>The Morning Everything Breaks</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Alegreya+Sans+SC:wght@500;700&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: a repair ledger. The district map on top, then one work order per stop in the order you'd learn the elements, then the questions. */
+:root {
+  --bg: #eceae3; --panel: #f7f5ef; --ink: #1c2540; --muted: #5b6275; --line: #d3cfc3;
+  --brass: #94701f; --brass-soft: #e9dcb8; --accent: #2f4a8f; --warn: #a3402b;
+  --life: #3f8a3a; --fire: #c4471f; --water: #2b74b8; --cold: #5aa7c4; --lightning: #8a5bd6;
+  --earth: #8a6436; --arcane: #9442c2; --shield: #4f7fd8;
+  --display: "Alegreya Sans SC", "Trebuchet MS", sans-serif;
+  --body: "Alegreya", Georgia, serif;
+  --mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121725; --panel: #1b2234; --ink: #e8e4d8; --muted: #a3a8b8; --line: #2e364c;
+  --brass: #d6b25e; --brass-soft: #3a3322; --accent: #8fb0ff; --warn: #f08a70;
+  --life: #6cc063; --fire: #f07a4e; --water: #5ea6ec; --cold: #8fd3ea; --lightning: #b591f5;
+  --earth: #c2945c; --arcane: #c37ef0; --shield: #86aaf5; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121725; --panel: #1b2234; --ink: #e8e4d8; --muted: #a3a8b8; --line: #2e364c;
+  --brass: #d6b25e; --brass-soft: #3a3322; --accent: #8fb0ff; --warn: #f08a70;
+  --life: #6cc063; --fire: #f07a4e; --water: #5ea6ec; --cold: #8fd3ea; --lightning: #b591f5;
+  --earth: #c2945c; --arcane: #c37ef0; --shield: #86aaf5; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 17px/1.55 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 28px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: .02em; text-wrap: balance; margin: 0 }
+h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.05 }
+h2 { font-size: 26px; margin-top: 56px; padding-bottom: 6px; border-bottom: 2px solid var(--brass) }
+h3 { font-size: 20px }
+p { margin: 0; max-width: 68ch }
+.lede { margin-top: 12px; font-size: 19px; color: var(--muted) }
+.eyebrow { font-family: var(--display); color: var(--brass); letter-spacing: .12em; font-size: 14px }
+.stack { display: grid; gap: 14px; margin-top: 16px }
+a { color: var(--accent) }
+.save { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between;
+  margin-top: 18px; padding: 8px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; font-size: 15px }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg) }
+#saveState.warn { color: var(--warn) }
+.hint { font-size: 14px; color: var(--muted) }
+
+/* map */
+figure { margin: 0 }
+.map { position: relative; margin-top: 22px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line) }
+.map img { display: block; width: 100% }
+.pin { position: absolute; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; font: 700 15px var(--display); color: #fff; border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.6); text-decoration: none }
+.pin:focus-visible { outline: 3px solid var(--brass); outline-offset: 2px }
+figcaption { font-size: 14px; color: var(--muted); margin-top: 8px }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 15px; padding: 0; list-style: none }
+.legend li { display: flex; align-items: center; gap: 6px }
+.dot { width: 12px; height: 12px; border-radius: 50% }
+
+/* stops */
+.stop { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 0; margin-top: 22px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; border-top: 5px solid var(--el) }
+.stop .art img { display: block; width: 100%; height: 100%; object-fit: cover; min-height: 220px }
+.stop .art.none { display: grid; place-items: center; padding: 24px; color: var(--muted); font-style: italic; min-height: 160px;
+  background: repeating-linear-gradient(135deg, transparent 0 10px, var(--line) 10px 11px) }
+.stop .body { padding: 18px 20px 20px; display: grid; gap: 10px; align-content: start; min-width: 0 }
+.stop .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap }
+.num { font: 700 28px var(--display); color: var(--el) }
+.chip { font: 700 13px var(--display); letter-spacing: .08em; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--el); color: var(--el) }
+.chip.how { border-color: var(--brass); color: var(--brass) }
+dl { margin: 0; display: grid; gap: 8px }
+dt { font: 700 13px var(--display); letter-spacing: .08em; color: var(--muted) }
+dd { margin: 0 }
+.idea { border-left: 3px solid var(--brass); padding-left: 10px; font-style: italic }
+.marks { display: flex; flex-wrap: wrap; gap: 6px }
+button { font: 500 15px var(--body); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer }
+button:hover:not(:disabled) { border-color: var(--brass) }
+button[aria-pressed="true"] { background: var(--brass-soft); border-color: var(--brass); font-weight: 700 }
+button:disabled { opacity: .55; cursor: default }
+button:focus-visible, textarea:focus-visible { outline: 3px solid var(--brass); outline-offset: 1px }
+textarea { width: 100%; font: 15px/1.45 var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: vertical }
+.slug { font: 12px var(--mono); color: var(--muted) }
+@media (max-width: 760px) { .stop { grid-template-columns: 1fr } .stop .art img { min-height: 0; height: auto } }
+
+/* directions */
+.dirs { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 18px }
+.dir { padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); display: grid; gap: 6px; align-content: start }
+.dir.pick { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass) }
+.dir h3 { font-size: 17px }
+.dir p { font-size: 15.5px }
+.tag { font: 700 12px var(--display); letter-spacing: .08em; color: var(--brass) }
+
+/* questions */
+.q { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--line) }
+.q .choices { display: grid; gap: 6px }
+.q .choices button { text-align: left; display: grid; gap: 2px }
+.q .choices small { font-size: 14px; color: var(--muted); font-weight: 400 }
+.rec { font: 700 12px var(--display); letter-spacing: .08em; color: var(--brass) }
+@media (max-width: 760px) { .q { grid-template-columns: 1fr } }
+ul.assets { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 6px; max-width: 75ch }
+@media (prefers-reduced-motion: no-preference) { .pin { transition: transform .15s } .pin:hover { transform: translate(-50%, -50%) scale(1.15) } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Wizard Sim · opening · brainstorm, 16 November 2026</div>
+    <h1>The morning everything breaks</h1>
+    <p class="lede">Your idea: each element is learned when a machine drawing on its field spills it into you. The district sits in an Arcane zone, where every field is close to the surface. You start with Life, fix a run of urgent breakdowns, and learn Shield last at the ward line, because the barrier to the wilds is down. Below is Claude's version of that order, with concept images made in Codex. Everything here is a proposal.</p>
+  </header>
+
+  <div class="save" role="status"><span id="saveState">Connecting to saved answers…</span><span id="tally"></span></div>
+
+  <figure class="map" id="map">
+    <img src="img/district-v1.jpg" alt="Painted district: the academy on its hill, an infirmary, the battery with a fire below it, a pump-house, the harbor icehouse, a lighthouse with a sparking coil, a cracked cliff road and a broken ward wall at the edge of a dark forest" width="1672" height="941">
+  </figure>
+  <figcaption>The district, generated from a numbered list of waypoints. The numbers are the proposed order, not the order along the road. Inspiration only: the layout isn't kept.</figcaption>
+  <ul class="legend" id="legend"></ul>
+
+  <h2>The proposed order</h2>
+  <div class="stack">
+    <p><b>Overflow or drought.</b> To keep eight arrivals from repeating, the spill isn't the same each time. Some machines are overflowing and drench you. Others are starving, and you drive them until they're dry, then carry on from your own hands as at the battery. Shield is the one nothing spills: it's a caster element, so it comes from you when there's nothing left to draw on.</p>
+    <p class="hint">Mark each image as inspiration and leave a note on any stop. No mark means it's fine as it is.</p>
+  </div>
+  <div id="stops"></div>
+
+  <h2>Nine directions</h2>
+  <p class="lede">How the stops could be strung together. The highlighted ones make up Claude's pick: a linear chain with varied spills, some of the siege's pressure, and your ward line as the finale.</p>
+  <div class="dirs" id="dirs"></div>
+
+  <h2>Asset types the images suggest</h2>
+  <ul class="assets">
+    <li><b>A family of field machines,</b> one per element, in the academy's brass and stone, each with its own silhouette and a working, overflowing, starving and dead state. The battery's turrets are the first of the family.</li>
+    <li><b>Ground that spreads:</b> a fan of frost, a dry basin that floods, rift cracks, wet sheen, overgrowth creeping over paths.</li>
+    <li><b>Camp and siege dressing:</b> tents, cots and stretchers, herb racks, covered wagons, sandbags, a guard post with a bell.</li>
+    <li><b>Harbor and waterworks:</b> water wheel, sluice gates, aqueduct, cranes, nets, piers, a boat locked in ice.</li>
+    <li><b>People at work:</b> healers, porters, guards, harbor workers, so it's a morning in a real place.</li>
+    <li><b>Rift-touched creatures:</b> ordinary animals with violet crystals growing on them, a cheap way to vary the bestiary near Arcane.</li>
+  </ul>
+
+  <h2>Questions</h2>
+  <p class="hint">No answer means you accept the recommended option.</p>
+  <div id="questions"></div>
+  <div class="stack">
+    <label for="general"><h3>Anything else</h3></label>
+    <textarea id="general" rows="3" placeholder="General note"></textarea>
+    <span class="slug">answers/general</span>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+  // x, y: the place on the district image, in percent.
+  const STOPS = [
+    { id: 'life', el: 'Life', x: 12, y: 33, img: 'area-life', how: 'Overflow', place: 'The field infirmary outside the gate',
+      wrong: 'The mender’s lamp is overflowing and the glasshouse has grown wild overnight. Wounded are coming in from the ward line.',
+      reach: 'You carry the wounded through the lamp’s light while the healers work, and it soaks into you.',
+      teaches: 'Casting at allies on purpose and healing yourself. Support from minute one.',
+      idea: 'The ring of tents around the lamp makes a hub with paths crossing at the machine. The lamp looks too much like the armillary; each machine needs its own shape.' },
+    { id: 'fire', el: 'Fire', x: 40, y: 23, img: null, how: 'Drought', place: 'The battery (built)',
+      wrong: 'The defence’s well is failing.',
+      reach: 'You drive the defence until it’s dry, then hold from your hands: beats 4 to 7 as built.',
+      teaches: 'Casting modes, “you are the well”, the blade.',
+      idea: 'Built already, so no new image. The dying turret setting the gorse alight is what sends you to the waterworks.' },
+    { id: 'water', el: 'Water', x: 45, y: 45, img: 'area-water', how: 'Drought', place: 'The waterworks below the falls',
+      wrong: 'The gorse fire is spreading toward the sheds, and the pump’s well has stalled, so there’s no water to fight it.',
+      reach: 'You crank the last water through until it runs dry, then douse from your hands.',
+      teaches: 'Fire and Water: douse, steam, Wet.',
+      idea: 'The drained reservoir is a stepped arena with a sluice on each side. Restoring the pump could flood it mid-fight, so the same floor turns wet and teaches Wet on the spot.' },
+    { id: 'cold', el: 'Cold', x: 66, y: 53, img: 'area-harbor', how: 'Overflow', place: 'The harbor icehouse',
+      wrong: 'Its frost well burst and is freezing the quay.',
+      reach: 'You’re frozen in place for a moment and break out holding it.',
+      teaches: 'Water and Cold: freeze, ice underfoot.',
+      idea: 'The frost spreads as a fan across the quay, a ground state that grows. Both harbor machines fit in one frame, which supports doubling up.' },
+    { id: 'lightning', el: 'Lightning', x: 89, y: 27, img: 'area-harbor', how: 'Overflow', place: 'The lighthouse coil',
+      wrong: 'The coil arcs wildly under a storm of its own, and ships can’t come in.',
+      reach: 'Mid-fight, on the wet causeway, you’re struck.',
+      teaches: 'Wet and Lightning, chaining, and the first real lesson in friendly fire through water.',
+      idea: 'Same image as Cold. New creature: wolves with violet crystals on their backs, wildlife touched by the rifts.' },
+    { id: 'earth', el: 'Earth', x: 71, y: 70, img: null, how: 'Drought', place: 'The cliff road',
+      wrong: 'The masons’ anchor stones went dead, the retaining wall slumped and a rockslide blocks the road.',
+      reach: 'You hold an anchor up until it’s spent, then raise stone yourself.',
+      teaches: 'Walls, mass, Earth carrying Fire.',
+      idea: 'No close-up yet; the district shows the slide. The first stop to fold into another if the route is cut to six.' },
+    { id: 'arcane', el: 'Arcane', x: 15, y: 9, img: 'area-arcane', how: 'Overflow', place: 'The academy courtyard, the armillary',
+      wrong: 'The Arcane well under everything is stuttering. It’s the common cause of the morning; why it happens stays open.',
+      reach: 'You step into the column.',
+      teaches: 'The beam, Attune, Life and Arcane cancelling. Why everything broke.',
+      idea: 'Seven coloured channels run out from the armillary, all dark but Arcane’s. The courtyard could be the morning’s progress map, each channel lighting as its machine is fixed.' },
+    { id: 'shield', el: 'Shield', x: 78, y: 86, img: 'area-shield', how: 'From you', place: 'The ward line',
+      wrong: 'Three pylons are dark, and creatures pour through the gap.',
+      reach: 'Nothing spills, because there’s nothing left to draw on. You refuse them yourself.',
+      teaches: 'Barriers, wards on allies, the parry. Then you relight each pylon by feeding it the element its socket asks for: the final exam.',
+      idea: 'Dark pylons with coloured sockets, a guard post with a bell, wounded guards. It puts the ward right behind the academy, which raises the stakes.' },
+  ];
+  const DIRS = [
+    ['The triage morning', 'A linear chain. Each fix’s fallout points to the next. Combos arrive in order. Closest to Magicka and to canon’s “linear, region to region”.', true],
+    ['The infirmary job board', 'Borrowed from Breath of the Wild’s Divine Beasts. The wounded name broken machines; pick your order; the ward waits for all of them. Costs the combo order.', false],
+    ['The siege clock', 'Borrowed from Majora’s Mask’s moon. The breach is visible all morning and creatures trickle in between stops, more each time. Pressure without a timer.', true],
+    ['Confluence machines', 'Two elements per stop, at machines drawing on two fields. Half the stops and an instant combo, but half the “new rune” moments.', false],
+    ['Overflow and drought', 'Not a structure but a way to vary each arrival: some machines drench you, others you drive until they’re dry.', true],
+    ['The sponge', 'Wild. Spills are involuntary and happen mid-fight. Suits the lighthouse; too unreliable as the rule.', false],
+    ['Gates', 'Borrowed from Metroid. Each element opens the way to the next. Fine once or twice, but as a rule it’s the level gimmick pillar 6 warns against.', false],
+    ['The surge first', 'Borrowed from Metroid Prime’s opening. Everything lights for one fight, burns out, and comes back one by one. A taste of the full set, but it spoils the first cast.', false],
+    ['Conservative', 'Life and Fire as now, then the rest at once in a surge (the brief’s beat 9), with Shield held for the ward line. Shortest, least worldbuilding.', false],
+  ];
+  const QUESTIONS = [
+    { id: 'q-1-first', n: 'Q1', title: 'Life or Fire for your first innate cast?',
+      text: 'Beats 4 to 7 are built around Fire: drive the defence, it runs dry, the rune is yours. With Life first, Life is your first innate cast.',
+      choices: [['quiet', 'Life arrives quietly; the battery stays “the moment”', 'The overflow is a gift you barely notice; the drought is the discovery.', true],
+        ['life-moment', 'The infirmary becomes the first-cast moment', 'The battery is your second element.', false],
+        ['fire-first', 'Fire first, then Life at the infirmary', 'The battery’s wounded are carried there afterwards.', false]] },
+    { id: 'q-2-structure', n: 'Q2', title: 'A chain or a job board?',
+      text: 'A chain teaches combos in order (Water, then Cold freezes it, then Lightning chains through it). A board gives choice but must work in any order.',
+      choices: [['chain', 'A linear chain, with the breach visible all morning', 'Directions 1, 3 and 5.', true],
+        ['board', 'The infirmary job board', 'Any order; the ward line last.', false],
+        ['mix', 'A chain to Water, then a board', 'The first three in order, then free.', false]] },
+    { id: 'q-3-stops', n: 'Q3', title: 'Eight stops, or fewer?',
+      text: 'The brief has the opening at about 30 minutes. Eight stops at 3 to 5 minutes, plus walking, is nearer 50.',
+      choices: [['six', 'Six stops', 'The harbor teaches Cold and Lightning together; Earth is learned on the cliff road on the way to the ward.', true],
+        ['eight', 'All eight', 'A longer opening; each element gets its own place.', false],
+        ['surge', 'Fewer still, with a surge', 'Life, Fire and Water each get a stop; the rest arrive at the armillary.', false]] },
+    { id: 'q-4-arcane-regen', n: 'Q4', title: 'What does “more available in the Arcane zone” mean in numbers?',
+      text: 'Canon has regions bending regen toward their element without changing the total (q-2-total).',
+      choices: [['even', 'Even regen, the same total', 'No element is favoured; “more available” is the story’s reason you can learn them all here.', true],
+        ['higher', 'A higher total here', 'Changes q-2-total for this zone.', false]] },
+  ];
+  const MARKS = [['like', 'Inspiring'], ['mixed', 'Mixed'], ['no', 'Not this']];
+
+  // ---------- state ----------
+  const answers = {}, ratings = {}; let db = null;
+  const setSave = (t, w) => { $('saveState').textContent = t; $('saveState').classList.toggle('warn', !!w); };
+  const chains = {};
+  function write(col, id, body) {
+    const store = col === 'answers' ? answers : ratings;
+    store[id] = Object.assign({}, store[id], body);
+    paint();
+    if (!db) return;
+    setSave('Saving…');
+    const cur = store[id];
+    const doc = col === 'answers' ? { choice: cur.choice || null, note: cur.note || '' } : { mark: cur.mark || null, note: cur.note || '' };
+    doc.updatedAt = new Date().toISOString();
+    const k = col + '/' + id;
+    chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set(doc)).then(() => setSave('All saved')).catch(() => setSave('Couldn’t save that. Check your connection and try again.', true));
+  }
+  function noteBox(ta, col, id) {
+    let timer;
+    const store = () => col === 'answers' ? answers : ratings;
+    ta.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => write(col, id, { note: ta.value }), 900); });
+    ta.addEventListener('blur', () => { clearTimeout(timer); if ((store()[id]?.note || '') !== ta.value) write(col, id, { note: ta.value }); });
+  }
+  const groups = []; // { col, id, kind:'mark'|'choice', box, ta }
+
+  // ---------- map pins and legend ----------
+  STOPS.forEach((s, i) => {
+    const c = `var(--${s.el.toLowerCase()})`;
+    const a = el('a', 'pin', String(i + 1)); a.href = '#stop-' + s.id; a.style.left = s.x + '%'; a.style.top = s.y + '%'; a.style.background = c;
+    a.setAttribute('aria-label', `${i + 1}: ${s.el}, ${s.place}`);
+    $('map').append(a);
+    const li = el('li', null, `<span class="dot" style="background:${c}"></span>${i + 1} ${esc(s.el)}`);
+    $('legend').append(li);
+  });
+
+  // ---------- stops ----------
+  STOPS.forEach((s, i) => {
+    const card = el('article', 'stop'); card.id = 'stop-' + s.id; card.style.setProperty('--el', `var(--${s.el.toLowerCase()})`);
+    const art = s.img ? el('div', 'art', `<img src="img/${s.img}.jpg" alt="Concept image: ${esc(s.place)}" loading="lazy" width="1774" height="887">`)
+                      : el('div', 'art none', 'No close-up yet');
+    const body = el('div', 'body');
+    body.append(el('div', 'head', `<span class="num">${i + 1}</span><h3>${esc(s.el)} · ${esc(s.place)}</h3><span class="chip how">${esc(s.how)}</span>`));
+    body.append(el('dl', null, `<div><dt>What’s wrong</dt><dd>${esc(s.wrong)}</dd></div><div><dt>How it reaches you</dt><dd>${esc(s.reach)}</dd></div><div><dt>Teaches</dt><dd>${esc(s.teaches)}</dd></div>`));
+    body.append(el('p', 'idea', esc(s.idea)));
+    if (s.img) {
+      const rid = 'img-' + s.img;
+      const box = el('div', 'marks'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'The image as inspiration');
+      for (const [v, l] of MARKS) {
+        const b = el('button', null, esc(l)); b.type = 'button'; b.dataset.v = v; b.disabled = true;
+        b.addEventListener('click', () => write('ratings', rid, { mark: ratings[rid]?.mark === v ? null : v }));
+        box.append(b);
+      }
+      body.append(box);
+      const ta = el('textarea'); ta.rows = 2; ta.id = 'r-' + rid + '-' + s.id; ta.placeholder = 'Note on the image (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on the image for ' + s.el);
+      // Cold and Lightning share an image: only the first carries the note box.
+      if (!groups.some((g) => g.id === rid)) { noteBox(ta, 'ratings', rid); body.append(ta, el('span', 'slug', 'ratings/' + rid)); groups.push({ col: 'ratings', id: rid, kind: 'mark', box, ta }); }
+      else { groups.push({ col: 'ratings', id: rid, kind: 'mark', box, ta: null }); }
+    }
+    const sid = 'stop-' + s.id;
+    const ta2 = el('textarea'); ta2.rows = 2; ta2.id = 'a-' + sid; ta2.placeholder = 'Note on this stop (optional)'; ta2.disabled = true; ta2.setAttribute('aria-label', 'Note on the ' + s.el + ' stop');
+    noteBox(ta2, 'answers', sid);
+    body.append(ta2, el('span', 'slug', 'answers/' + sid));
+    groups.push({ col: 'answers', id: sid, kind: 'note', box: null, ta: ta2 });
+    card.append(art, body);
+    $('stops').append(card);
+  });
+  // the district image gets its own mark under the map
+  {
+    const rid = 'img-district-v1';
+    const wrap = el('div', 'stack');
+    const box = el('div', 'marks'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'The district image as inspiration');
+    for (const [v, l] of MARKS) { const b = el('button', null, esc(l)); b.type = 'button'; b.dataset.v = v; b.disabled = true; b.addEventListener('click', () => write('ratings', rid, { mark: ratings[rid]?.mark === v ? null : v })); box.append(b); }
+    const ta = el('textarea'); ta.rows = 2; ta.id = 'r-district'; ta.placeholder = 'Note on the district image (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on the district image');
+    noteBox(ta, 'ratings', rid);
+    wrap.append(box, ta, el('span', 'slug', 'ratings/' + rid));
+    $('legend').after(wrap);
+    groups.push({ col: 'ratings', id: rid, kind: 'mark', box, ta });
+  }
+
+  // ---------- directions ----------
+  DIRS.forEach(([t, d, pick], i) => {
+    const c = el('article', 'dir' + (pick ? ' pick' : ''), `<span class="tag">${i + 1}${pick ? ' · in Claude’s pick' : ''}</span><h3>${esc(t)}</h3><p>${esc(d)}</p>`);
+    $('dirs').append(c);
+  });
+
+  // ---------- questions ----------
+  for (const q of QUESTIONS) {
+    const row = el('article', 'q'); row.id = q.id;
+    const rec = q.choices.find((c) => c[3]);
+    row.append(el('div', null, `<h3>${esc(q.n)} · ${esc(q.title)}</h3><p style="margin-top:6px">${esc(q.text)}</p><p style="margin-top:6px"><b>Recommended:</b> ${esc(rec[1])}.</p><span class="slug">answers/${q.id}</span>`));
+    const side = el('div', 'stack'); side.style.marginTop = '0';
+    const box = el('div', 'choices'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', q.title);
+    for (const [v, l, sub, r] of q.choices) {
+      const b = el('button', null, `<b>${esc(l)}</b>${r ? '<span class="rec">Recommended</span>' : ''}<small>${esc(sub)}</small>`); b.type = 'button'; b.dataset.v = v; b.disabled = true;
+      b.addEventListener('click', () => write('answers', q.id, { choice: answers[q.id]?.choice === v ? null : v }));
+      box.append(b);
+    }
+    const ta = el('textarea'); ta.rows = 2; ta.id = 'a-' + q.id; ta.placeholder = 'Note (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on ' + q.title);
+    noteBox(ta, 'answers', q.id);
+    side.append(box, ta);
+    row.append(side);
+    $('questions').append(row);
+    groups.push({ col: 'answers', id: q.id, kind: 'choice', box, ta });
+  }
+  const gen = $('general'); gen.disabled = true; noteBox(gen, 'answers', 'general');
+
+  function paint() {
+    let answered = 0;
+    for (const g of groups) {
+      const store = g.col === 'answers' ? answers : ratings;
+      const cur = store[g.id] || {};
+      const val = g.kind === 'choice' ? cur.choice : cur.mark;
+      if (g.box) for (const b of g.box.children) { b.setAttribute('aria-pressed', String(b.dataset.v === val)); b.disabled = !db; }
+      if (g.ta) { g.ta.disabled = !db; if (document.activeElement !== g.ta && g.ta.value !== (cur.note || '')) g.ta.value = cur.note || ''; }
+      if (g.kind === 'choice' && val) answered++;
+    }
+    gen.disabled = !db;
+    if (document.activeElement !== gen && gen.value !== (answers.general?.note || '')) gen.value = answers.general?.note || '';
+    $('tally').innerHTML = `<b>${answered}</b> of ${QUESTIONS.length} questions answered`;
+  }
+  paint();
+
+  (async () => {
+    try { db = await window.claude?.use?.('db'); } catch { db = null; }
+    if (!db) { setSave('Read-only here: answers need the page’s saved-answers store, which isn’t available in this view.', true); paint(); return; }
+    paint();
+    const timer = setTimeout(() => setSave('Saved answers are slow to load. You can still answer; changes save when the connection returns.', true), 10000);
+    let pending = 2;
+    const listen = (col, store) => db.collection(col).onSnapshot((snap) => {
+      for (const d of snap.docs) { const x = d.data(); store[d.id] = col === 'answers' ? { choice: x.choice || null, note: x.note || '' } : { mark: x.mark || null, note: x.note || '' }; }
+      if (!snap.metadata.fromCache && --pending <= 0) { clearTimeout(timer); if (!snap.metadata.hasPendingWrites) setSave('All saved'); }
+      paint();
+    }, () => { clearTimeout(timer); db = null; setSave('Saved answers are unavailable, so the page is read-only. Reload to try again.', true); paint(); });
+    listen('answers', answers); listen('ratings', ratings);
+  })();
+})();
+</script>

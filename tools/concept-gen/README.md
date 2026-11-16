@@ -46,3 +46,11 @@ Fourteen images for [the opening's encounters](../../docs/explorations/2026-11-1
 - A creature's design drifts between sheets (the aurochs became a bear-bull on its own sheet). Pass the sheet you want kept as the reference, not a description.
 - Fight moments: "readable like a gameplay screenshot: a modest number of figures, each clearly separated" fixed round 2's crowded finale. Describing the question being answered (a volley breaking on a barrier, a ram stunned on a wall) makes each image explain its stop.
 - Three references per call (place, creature sheet, second sheet) worked.
+
+### 2026-11-16, warband sprites
+
+Two tries at game sprites instead of concepts, for the [warband art](../../docs/explorations/2026-11-16-warband-art.md): the five small goblins facing the viewer, and one raider in eight directions. References: a PixelLab sprite upscaled with nearest-neighbour on magenta, plus the warband concept sheet. Both lost to PixelLab drawn at 32 px.
+
+- "Match its pixel-art style exactly" copied the look but not the scale: the five came back with about 100 px of detail each and no clean grid, so they can't be shrunk to 30 px.
+- With a small sprite as the reference, the turnaround kept a real grid (about 40 px figures) and held the character through eight directions, in the requested order. It invented a curly strap on the sack.
+- A magenta background makes yellow-olive look green. Judge colours on the game's ground, not on the key colour.

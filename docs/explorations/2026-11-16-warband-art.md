@@ -26,9 +26,19 @@ All `create_character` v3, high top-down, eight directions, positive-only prompt
 - **The template run holds its shape.** Blade and sack stay rigid, unlike the morphing rings in the battery well's bought animations. The stride is short, and the blade hides behind the body facing east.
 - Two of seven came out with brown or tan skin, which blends into dirt.
 
+## Round 2: three ways to the right size
+
+The user then said other paths than PixelLab were fine if the quality stayed as high. Three were tried for the small goblins and judged at game size on the dirt beside the dummy and the chieftain (`tools/warband-art/img/paths.png`):
+
+- **A: PixelLab v3 drawn at 32 px** (10 generations, 1,613 → 1,603). The clear winner: crisp silhouettes, bright green skin that stands off the dirt, every prop readable, the same goblin in all eight directions. One stray grey cluster under the goggled raider facing south-east.
+- **B: Codex, the five facing the viewer**, in the chieftain's style, then converted (`tools/warband-art/pixelize.py`). The best designs of any path, but drawn with about 100 px of detail per goblin and no real pixel grid, so at 30 px they turn to mush. The skin is yellow-olive (193, 174, 54) that only looked green against the magenta background.
+- **C: Codex, one raider in eight directions.** Codex held the character through the turnaround by itself, on a real grid of about 8.5 screen pixels per art pixel (about 40 px figures). Converted, it's darker and blobbier than A, with tan skin and a strap it invented on the sack.
+
+So the small goblins come from PixelLab drawn at the target size; Codex is for design sheets. Sources: `docs/reference/warband-sprites/`, prompts in `tools/concept-gen/prompts/2026-11-16-warband-sprites/`.
+
 ## Claude's picks, pending the review
 
-1. Redraw the five small goblins at about 32 px (about 10 generations). Keep the chieftain.
+1. Use the round 2 set (32 px) and the round 1 chieftain.
 2. Then buy run, attack (with its telegraph pose) and death for all six, about 170 generations, checked frame by frame.
 3. Wire the goblins in as sprites in the battery, behind a toggle against the rigs, with statuses as tints and overlays and 16 facings snapped to 8.
-4. Brighter olive skin in the redo prompts.
+4. Keep round 2's bright olive skin for any further goblins.

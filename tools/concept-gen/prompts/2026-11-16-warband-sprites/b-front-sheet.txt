@@ -1,0 +1,13 @@
+Generate one image with your image generation tool, then save it as goblins-front.png in the current directory. Reply with just the file name.
+
+The attached images are references. The first is a pixel-art sprite of a goblin chieftain from our game (shown 4x, on magenta): match its pixel-art style exactly, with crisp square pixels, a dark one-pixel outline, warm earthy shading and a high top-down 3/4 camera. The second is our concept sheet for the goblin warband: use it for the designs.
+
+Subject: a game sprite sheet of five small goblin warriors, in one evenly spaced row on a flat, pure magenta (#FF00FF) background. Each goblin stands facing straight toward the viewer, full body, feet on the same baseline, the same size as each other, each about one third the height of the chieftain reference. They are scrappy, clever raiders with bright olive-green skin, long pointed ears, patched brown leather, and torn blue academy cloth with small gold stars worn as trophies. Big readable shapes, chunky pixel clusters, faces clearly visible.
+
+1. Raider: wiry and hunched, brass goggles pushed up on its forehead, a dark topknot, a jagged knife held low.
+2. Raider: wearing a ragged blue academy hood with a gold star, a lumpy loot sack on its back, a curved blade.
+3. Archer: a dented leather cap with red-lensed brass goggles, a short curved bow in one hand, a quiver on its back.
+4. Shieldbearer: stocky, iron helmet, a large round shield made from a riveted brass machine panel with a vent grille and a small gear, a short spear.
+5. Hooker: lean, a heavy iron grappling hook in one hand and a long iron chain coiled over its shoulder.
+
+Plain magenta background everywhere around the figures, with no shadows on the ground and no text.

@@ -1,9 +1,11 @@
 import sys, os
+# usage: python tools/warband-art/sheet.py <warband-dir> <out.png> [goblin,goblin,...] [scale]
 from PIL import Image, ImageDraw
 root = sys.argv[1]; out = sys.argv[2]
-chars = ['raider-goggles', 'raider-hooded', 'archer', 'shieldbearer', 'hooker', 'chieftain']
+chars = sys.argv[3].split(',') if len(sys.argv) > 3 else ['raider-goggles', 'raider-hooded', 'archer', 'shieldbearer', 'hooker', 'chieftain']
 dirs = ['south', 'south-east', 'east', 'north-east', 'north', 'north-west', 'west', 'south-west']
-S = 2; CELL = 128
+S = int(sys.argv[4]) if len(sys.argv) > 4 else 2
+CELL = max(Image.open(os.path.join(root, c, 'Idle', 'rotations', 'south.png')).width for c in chars)
 sheet = Image.new('RGBA', (CELL * S * 8 + 20, (CELL * S + 10) * len(chars)), (196, 186, 170, 255))
 for r, c in enumerate(chars):
     for i, d in enumerate(dirs):

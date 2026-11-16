@@ -1,0 +1,36 @@
+{
+  "group_id": "da4d5991-c235-4214-9732-1dd8bd9c1f2e",
+  "states": [
+    {
+      "character": {
+        "id": "762daae3-100e-4623-b942-b8628e92e079",
+        "name": "Idle",
+        "prompt": "A small wiry goblin raider with bright olive-green skin, long pointed ears, a big toothy grin, brass goggles pushed up on its forehead, a dark topknot. Patched brown leather vest, a torn strip of blue academy cloth with a gold star tied at its waist, bare clawed feet. A jagged steel knife held low in its right hand, crouched and ready to run. Bold readable pixel art, chunky shapes, dark outline.",
+        "size": {
+          "width": 32,
+          "height": 32
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-16T18:01:19.747682+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-16T18:03:22.871048"
+}

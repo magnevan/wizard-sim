@@ -1,0 +1,9 @@
+Generate one image with your image generation tool, then save it as raider-turnaround.png in the current directory. Reply with just the file name.
+
+The attached images are references. The first is a pixel-art sprite of a goblin chieftain from our game (shown 4x, on magenta): match its pixel-art style exactly, with crisp square pixels, a dark one-pixel outline, warm earthy shading and a high top-down 3/4 camera. The second is a small hooded goblin raider sprite (shown 8x): this is the character to draw.
+
+Subject: a game sprite turnaround sheet of that one hooded goblin raider, the same character drawn eight times, on a flat, pure magenta (#FF00FF) background. Two rows of four, evenly spaced, every figure the same size with feet on its row's baseline.
+Top row, left to right: facing the viewer; facing down and to the right; facing right in profile; facing up and to the right, three-quarters from behind.
+Bottom row, left to right: facing away from the viewer, seen from behind; facing up and to the left, three-quarters from behind; facing left in profile; facing down and to the left.
+
+The raider: small and wiry, bright olive-green skin, long pointed ears, a ragged blue academy hood with a small gold star, a patched brown leather tunic, a lumpy leather loot sack on its back, cloth-wrapped forearms, a curved jagged blade in its right hand. Big readable shapes, chunky pixel clusters. Plain magenta everywhere around the figures, with no shadows on the ground and no text.

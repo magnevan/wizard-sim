@@ -56,11 +56,29 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     <p>The warband from the opening's encounters, bought from PixelLab as real 8-direction sprites to replace the code-drawn placeholders. Each prompt follows the concept sheet: scrappy opportunists in patched leather, blue academy cloth worn as trophies, a shield cut from a machine panel, and a brass-banded maul.</p>
     <p class="dim">Marks and notes save as you go. An empty box means my pick stands.</p>
     <div class="budget">
-      <span>Spent: <b>23 generations</b></span>
-      <span>Left this month: <b>1,613</b></span>
+      <span>Spent: <b>33 generations</b> (round 2: 10)</span>
+      <span>Left this month: <b>1,603</b></span>
       <span>Resets: <b>7 Dec</b></span>
     </div>
   </header>
+
+  <section aria-labelledby="r2">
+    <h2 id="r2">Round 2: three ways to the right size</h2>
+    <p>Round 1 showed that the small goblins have to be drawn at about 30 px to sit with the props. Three paths, each judged at game size on the game's dirt, next to the dummy and the chieftain:</p>
+    <figure><img src="img/paths.png" alt="Four rows on dirt beside a training dummy, with the chieftain on the right. Row A: five crisp green goblins from PixelLab. Row B: the same five from Codex, converted, muddy and yellow-brown. Row C: a hooded raider in eight directions from Codex, converted, darker and tan. Row D: PixelLab's hooded raider in eight directions."><figcaption>A: PixelLab, drawn at 32 px (10 generations). B: a Codex sheet of the five, converted to pixel art. C: a Codex turnaround of one raider in eight directions, converted at its own pixel grid. Last row: PixelLab's raider in all eight directions.</figcaption></figure>
+    <ul>
+      <li><b>A wins.</b> Crisp silhouettes, bright green skin that stands off the dirt, every prop readable, and the same goblin in every direction.</li>
+      <li><b>B has the best designs but can't shrink.</b> The Codex sheet is drawn with about 100 px of detail per goblin, so at 30 px it turns to mush. Its green was also an illusion: the skin is yellow-olive and only looked green against the magenta.</li>
+      <li><b>C is usable but second.</b> Codex held one goblin through eight directions by itself, which is new. Converted, it's darker and blobbier than A, with tan skin and a strap it invented on the sack.</li>
+    </ul>
+    <p>So the path is PixelLab drawn at the target size, with Codex for design sheets. The Codex originals are below.</p>
+    <figure><img src="img/sheet-32.png" alt="The five small goblins from PixelLab at 32 px, each in eight facings."><figcaption>The round 2 set, all facings at 5×. Rows: goggled raider, hooded raider, archer, shieldbearer, hooker. One stray grey cluster under the goggled raider facing south-east can be cleaned for free.</figcaption></figure>
+    <div class="jobs" id="jobs2"></div>
+    <div class="two" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px">
+      <figure><img src="img/codex-front.jpg" alt="Codex sheet: five goblins facing the viewer on magenta, very detailed."><figcaption>Codex: the five, facing the viewer (B's source).</figcaption></figure>
+      <figure><img src="img/codex-turnaround.jpg" alt="Codex sheet: one hooded goblin raider in eight directions on magenta."><figcaption>Codex: the hooded raider in eight directions (C's source).</figcaption></figure>
+    </div>
+  </section>
 
   <section aria-labelledby="scene">
     <h2 id="scene">In a fight</h2>
@@ -119,16 +137,16 @@ const JOBS = [
 const QUESTIONS = [
   { id: 'q-1-density', title: 'How big are the goblins drawn?', text: 'The game\'s props are about 30 px per metre. The small goblins came back at twice that.',
     options: ['Redraw the small goblins at about 32 px, at the props\' density (2 generations each, about 10 in all).', 'Keep 64 px and raise the whole game\'s art to that density, props and wizards too.', 'Something else.'],
-    pick: 'Redraw at about 32 px. The chieftain already matches, and the props stay as they are.' },
+    pick: 'Done in round 2: the 32 px set. The chieftain already matches, and the props stay as they are.' },
   { id: 'q-2-motion', title: 'Which animations to buy?', text: 'About 8 generations per animation for a small goblin (all eight directions), 16 for the chieftain.',
     options: ['Run, attack (with its telegraph pose) and death for every goblin: about 170 generations.', 'Run only for now, attacks drawn in code over the sprite.', 'Something else.'],
     pick: 'Run, attack and death for all six, bought after the size is settled so nothing is bought twice. Attack wind-ups are generated as custom actions ("raises knife overhead", "swings the hook back") and checked frame by frame.' },
   { id: 'q-3-wiring', title: 'Wire them into the game?', text: 'Today every actor is a code rig: 16 facings, walk phases, and statuses (burning, wet, frozen) painted on the body.',
     options: ['Sprites for the goblins, with statuses as tints and overlays on the sprite, the 16 facings snapped to the nearest of 8.', 'Wait until the wizards get sprites too, so the whole cast changes at once.'],
     pick: 'Sprites for the goblins first, in the battery, behind a toggle like the Academy\'s prop sets, so you can compare them with the rigs in play.' },
-  { id: 'q-4-look', title: 'The look', text: 'Skin came out brown or tan on two of seven. The blue academy cloth reads well as the band\'s shared colour.',
-    options: ['Push the skin to bright olive green in the redo prompts.', 'Keep the mix of greens and browns: it varies the crowd.'],
-    pick: 'Brighter olive green, so the goblins never blend into the dirt.' },
+  { id: 'q-4-look', title: 'The look', text: 'Round 2 asked for bright olive-green skin and got it. The blue academy cloth reads well as the band\'s shared colour.',
+    options: ['Keep the bright green of round 2.', 'Go back to a mix of greens and browns: it varies the crowd.'],
+    pick: 'Keep the bright green, so the goblins never blend into the dirt.' },
   { id: 'general', title: 'Anything else', text: 'Missing members, tone, details to add.', options: [], pick: '' },
 ];
 
@@ -174,6 +192,20 @@ for (const j of JOBS) {
   head.append(el('h3', '', j.name), el('span', 'cost', j.cost + ' gen'));
   const r = el('div', 'rate'); r.append(marks('ratings', j.id, KRC), note('ratings', j.id, 'What to change'));
   box.append(head, el('p', '', j.notes), r); $('jobs').append(box);
+}
+const JOBS2 = [
+  { id: 'gob32-raider-goggles', name: 'Raider, goggles (32)', notes: 'Goggles, topknot, knife. Green now, and the face reads.' },
+  { id: 'gob32-raider-hooded', name: 'Raider, hooded (32)', notes: 'Hood and sack; the sack is the whole back view.' },
+  { id: 'gob32-archer', name: 'Archer (32)', notes: 'Red goggle lenses read as big bug eyes at this size.' },
+  { id: 'gob32-shieldbearer', name: 'Shieldbearer (32)', notes: 'Helmet and panel shield with its gear; the shield stays in front.' },
+  { id: 'gob32-hooker', name: 'Hooker (32)', notes: 'Hook and chain read; the hook could be bigger.' },
+  { id: 'path-codex', name: 'The Codex paths', notes: 'Mark Keep if Codex sprites are worth pursuing further, for example asked to draw at a chunkier pixel size.' },
+];
+for (const j of JOBS2) {
+  const box = el('article', 'job'), head = el('div', 'head');
+  head.append(el('h3', '', j.name));
+  const r = el('div', 'rate'); r.append(marks('ratings', j.id, KRC), note('ratings', j.id, 'What to change'));
+  box.append(head, el('p', '', j.notes), r); $('jobs2').append(box);
 }
 $('run-rate').append(marks('ratings', 'anim-run', KRC), note('ratings', 'anim-run', 'How does the motion feel?'));
 for (const q of QUESTIONS) {

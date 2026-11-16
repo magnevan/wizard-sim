@@ -1,0 +1,36 @@
+{
+  "group_id": "309abdbf-f02b-4521-a347-da05d159ac47",
+  "states": [
+    {
+      "character": {
+        "id": "784b0036-c6a1-4ec6-aa28-eaaa383f3385",
+        "name": "Idle",
+        "prompt": "A small wiry goblin raider with bright olive-green skin, wearing a ragged blue academy hood with a gold star, long pointed ears poking out of it, a sly grin. Patched brown leather tunic, a lumpy leather loot sack on its back, cloth-wrapped forearms, bare clawed feet. A curved jagged blade held low in its right hand. Bold readable pixel art, chunky shapes, dark outline.",
+        "size": {
+          "width": 32,
+          "height": 32
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-16T18:01:19.938923+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-16T18:03:23.721991"
+}

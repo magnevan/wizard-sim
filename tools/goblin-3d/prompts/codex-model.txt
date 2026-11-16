@@ -1,0 +1,30 @@
+Write a Blender Python script that builds a 3D model of a goblin, and save it as raider_codex.py in the current directory. When it's done, reply with just the file name.
+
+The attached images show the character to build: a small hooded goblin raider from our game, as a pixel-art sprite (8x) and as a turnaround sheet of eight facings. The model will be rendered orthographically from about 30 degrees above the ground and turned into a pixel-art sprite about 30 pixels tall, so big readable shapes and clear colour areas matter far more than detail. Low-poly and stylised is right. Aim for a model that, seen from any side at that size, reads as this goblin.
+
+The raider: small and wiry with a big head, bright olive-green skin, long pointed ears sticking out sideways, a ragged dark blue hood with a small gold star on the front, a patched brown leather tunic with a ragged hem and a belt, a lumpy brown leather loot sack on its back, cloth-wrapped forearms, bare feet, and a curved jagged short blade in its right hand.
+
+The script's contract (another script animates and renders the result, so follow it exactly):
+- It runs in Blender 5.2 in background mode: `blender --background --python raider_codex.py`. Use only bpy, bmesh and mathutils. Don't clear the scene, add cameras or lights, or render. Just add the goblin's mesh objects to the scene collection.
+- Units and axes: 1 Blender unit is 1 game unit, +Z is up, the feet stand on Z = 0, the goblin is centred on X = 0, Y = 0 and faces -Y. Its right hand is on the -X side. It is about 2.0 units tall to the top of the hood.
+- It stands in the rest pose of the skeleton below: arms angled down and out (an A-pose), legs a little apart.
+- Each mesh object moves with exactly one bone, and is named after that bone, optionally with a suffix after a dot or underscore (for example `head`, `head.ears`, `head_hood`, `forearm.R`, `forearm.R_wrap`). The blade is its own object named `blade`; the loot sack is `sack`. Every part of the model belongs to one of these names.
+- Give each object one or more materials with plain flat base colours set on the Principled BSDF (no textures, no image files). Use clear, saturated colours close to the sprite's: olive-green skin, dark blue hood, gold star, two browns for the leather, a light grey-tan for the wraps, a light steel blade with a dark grip.
+- Keep each object's origin anywhere; place geometry in world space at the rest pose.
+
+The skeleton, joints in world coordinates (x, y, z). Bones with .L are on the goblin's left (+X); .R mirrors them to -X.
+- hips: from (0, 0, 0.74) to (0, 0, 0.95). The pelvis and the tunic's lower part.
+- spine: from (0, 0, 0.95) to (0, 0, 1.28). The chest, shoulders and tunic's upper part.
+- head: from (0, 0, 1.28) to (0, 0, 1.98). Head, face, ears, hood. The head is big: about 0.6 wide without the ears, ears reaching out to about x = +-0.62.
+- upper_arm.L: from (0.27, 0, 1.20) to (0.40, 0, 0.96).
+- forearm.L: from (0.40, 0, 0.96) to (0.47, -0.04, 0.72).
+- hand.L: from (0.47, -0.04, 0.72) to (0.50, -0.06, 0.62).
+- upper_arm.R, forearm.R, hand.R: the same with x negated.
+- thigh.L: from (0.13, 0, 0.76) to (0.15, 0, 0.42).
+- shin.L: from (0.15, 0, 0.42) to (0.15, 0.02, 0.09).
+- foot.L: from (0.15, 0.02, 0.09) to (0.15, -0.20, 0.03). The foot reaches forward to about y = -0.24.
+- thigh.R, shin.R, foot.R: the same with x negated.
+- blade: from the grip in the right hand at (-0.50, -0.08, 0.66) to the tip at (-0.56, -0.42, 0.38). A curved, jagged short sword about 0.5 long, its flat side facing sideways (+-X).
+- sack: from (0, 0.24, 1.10) to (0, 0.30, 1.42). A lumpy round sack on the back, its top tied off, about 0.45 across.
+
+Blender 5.2 is installed at "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe". If you can run it, check that the script runs without errors (for example with `--python-expr` after loading your script to save a test render to a PNG in the current directory) and fix anything that breaks. If you can't run it, write the script carefully for the Blender 5 API.

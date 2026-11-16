@@ -55,3 +55,5 @@ Two tries at game sprites instead of concepts, for the [warband art](../../docs/
 - With a small sprite as the reference, the turnaround kept a real grid (about 40 px figures) and held the character through eight directions, in the requested order. It invented a curly strap on the sack.
 - A magenta background makes yellow-olive look green. Judge colours on the game's ground, not on the key colour.
 - A six-frame death strip from the 32 px sprite (8x on magenta, two facings): a real grid (about 8.7 px), all six beats as numbered, and good invented detail (spilled coins, the blade flying). The character drifted rounder and bigger-headed. Converting needs about 64 colours, or the blue hood merges into the green.
+- Inputs for image-to-3D (`tools/goblin-3d/prompts/meshy-*.txt`): asked for a smooth turntable-style render in an A-pose on white, with the pixel sprites as design references only. Both came back clean (a front view, and front, side and back on one baseline) and on-model.
+- `gen.sh` also runs code prompts: `tools/goblin-3d/prompts/codex-model.txt` had Codex write a whole Blender model script to a given skeleton, and it ran Blender itself to test it.

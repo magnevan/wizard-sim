@@ -82,6 +82,21 @@ The user asked for walk and attack on one goblin, and to try code or Codex for t
 
 Claude's pick: code deaths, borrowing the Codex strip's ideas as code (the dropped blade, the spilled loot).
 
+## From 3D models: motion that costs nothing per frame
+
+The user's constraint: PixelLab animation is too dear for iteration (and glitchy: the south-west attack swaps hands, east uses the left hand, north hits behind its back), and the goal is roughly a warband a day, which no per-frame budget covers. They asked to try three model sources: one built by Claude in Blender, one made by Codex, and image-to-3D (Meshy's free tier, driven by the user).
+
+The pipeline (`tools/goblin-3d/`): a model on a shared goblin skeleton, the moves as code (walk, run, attack), every frame rendered from the game's camera in 8 directions, then turned into pixel art. All free; 240 frames in about 40 seconds.
+
+- **Claude's model** (`raider.py`, primitives): reads as the goblin, simple and round; the face is weak and the hood reads a little like a helmet.
+- **Codex's model** (`raider_codex.py`, a Blender script Codex wrote from the turnaround, and checked in Blender itself): the better design, with a real hood opening, a scowl and wrapped forearms. It came back in one try and needed no fixes.
+- **Meshy**: Codex drew two input pictures (`input/meshy-front.png`, an A-pose front view; `input/meshy-views.png`, front, side and back). The user uploads one and hands back a `.glb`; the one-piece mesh path is tested.
+- **The pixel step mattered more than the model.** Snapping the lit render to PixelLab's palette washed the hood out, and freestyle lines turned to noise at 4x. What works: a flat render gives each pixel its part, the lit render gives one of four tones per part (shadows lean blue, lights warm), the darker part at a seam gets a dark line, and the outline goes outside the silhouette so a two-pixel blade stays steel. A 1.15 x 0.92 squash makes the figures as squat as drawn sprites.
+- **Motion:** the slash is in front, in the right hand, in every direction, because the code can't do otherwise. The first pass had every forward swing backwards (a sign error, fixed); this is the class of bug code makes, and it's fixed once for every goblin.
+- Against PixelLab, both are less detailed (fewer textures, plainer faces), but the same goblin from every side.
+
+Claude's pick: motion from 3D. Wait for the Meshy row, then choose the model source; next, a fuller face and finer detail in the pixel step, and a second goblin on the same skeleton to prove the reuse.
+
 ## Claude's picks, pending the review
 
 1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in.

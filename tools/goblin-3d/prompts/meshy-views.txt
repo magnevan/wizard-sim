@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as meshy-views.png in the current directory. Reply with just the file name.
+
+The attached images are references for the character's design only: a pixel-art goblin raider from our game (a single sprite shown 8x, and a turnaround sheet of the same goblin). Do not copy their pixel-art style.
+
+Subject: a character model sheet for an image-to-3D tool. The same small hooded goblin raider drawn three times side by side at exactly the same size, feet on one shared baseline, evenly spaced: left, the front view (facing the viewer); middle, the side view (facing right, in profile); right, the back view (facing away). Orthographic views at eye level, relaxed A-pose (arms angled down and slightly away from the body, legs a little apart), on a plain pure white background, evenly and softly lit like a clean 3D game model turntable render, with smooth stylised shapes and simple colours.
+
+The raider: small and wiry with a big head, bright olive-green skin, long pointed ears sticking out sideways, a ragged dark blue hood with a small gold star on the front, a patched brown leather tunic with a ragged hem and a belt, a lumpy brown leather loot sack strapped to its back, cloth-wrapped forearms, bare three-toed feet, and a curved jagged short blade held in its right hand, pointing down and slightly forward. Chunky, readable shapes with stylised proportions.

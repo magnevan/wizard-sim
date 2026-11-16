@@ -27,6 +27,7 @@ section { gap: 20px; }
 .pick { color: var(--gold); }
 img { image-rendering: pixelated; display: block; width: 100%; height: auto; }
 img.photo { image-rendering: auto; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 figcaption { font-size: 14px; color: var(--dim); }
 figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
 .budget { display: flex; flex-wrap: wrap; gap: 6px 24px; font-variant-numeric: tabular-nums; }
@@ -62,8 +63,33 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="threed">
+    <h2 id="threed">Latest: the raider from 3D models</h2>
+    <p>Paying per frame can't keep up with a warband a day, so this tries a path where an extra move, direction or retake costs nothing. A 3D model of the goblin goes on a shared skeleton, and code poses it: walk, run and attack, the same moves for every goblin of this build. Every frame is rendered from the game's camera in all 8 directions and turned into pixel art. No credits spent; a full set (240 frames) takes about 40 seconds.</p>
+    <p>Three ways to get the model. Two are done: <b>Claude's</b>, built from simple shapes in Blender, and <b>Codex's</b>, a Blender script Codex wrote from the turnaround. The third, <b>image-to-3D (Meshy)</b>, is waiting for you (see the end of this section).</p>
+    <h3>Standing, 8 directions, against the PixelLab sprite</h3>
+    <figure><img src="img/3d-still.png" alt="Three rows of the hooded goblin raider in eight directions on dirt: the PixelLab sprite, Claude's 3D model and Codex's 3D model, both turned into pixel art."><figcaption>Top: PixelLab. Middle: Claude's model. Bottom: Codex's model. South, south-east, east, north-east, north, north-west, west, south-west.</figcaption></figure>
+    <p>Neither has PixelLab's fine detail yet. But both stay the same goblin from every side, and the blade is always in the right hand: that's guaranteed, not hoped for. Codex's model is the better one: a real hood opening, a face with a scowl, wrapped forearms.</p>
+    <div class="rate" id="m3d-claude-rate"></div>
+    <div class="rate" id="m3d-codex-rate"></div>
+    <h3>Walk, run, attack</h3>
+    <figure><img src="img/3d-walk.gif" alt="PixelLab's walk beside Claude's and Codex's 3D goblins walking, four directions each."><figcaption>Walk. Rows as above; south, south-west, east, north.</figcaption></figure>
+    <figure><img src="img/3d-run.gif" alt="Claude's and Codex's 3D goblins running, leaning into the stride, four directions each. PixelLab has no run."><figcaption>Run (PixelLab has none, so its row is empty).</figcaption></figure>
+    <figure><img src="img/3d-attack.gif" alt="PixelLab's attack beside the two 3D goblins raising the blade overhead and slashing down in front of them."><figcaption>Attack: wind up overhead, hold, slash down in front, recover.</figcaption></figure>
+    <p>The moves are code (<code>tools/goblin-3d/rig.py</code>), so the glitches you found in PixelLab's attack can't happen here: the slash is always in front, in the right hand, in every direction. The timing and poses are a first pass, and every change is free.</p>
+    <div class="rate" id="m3d-motion-rate"></div>
+    <h3>The models themselves</h3>
+    <figure><img class="photo" src="img/3d-models.png" alt="The two 3D goblin models rendered smoothly from the front, three-quarter, side and back: Claude's round, simple goblin above, Codex's faceted goblin with a deep hood below."><figcaption>Top: Claude's. Bottom: Codex's.</figcaption></figure>
+    <h3>Your turn: image-to-3D in Meshy</h3>
+    <p>Codex drew these two pictures for an image-to-3D tool (free, on your subscription). In Meshy, use <b>Image to 3D</b>: either the single front view, or the three views in its multi-view mode if it offers one. Download the model as <b>.glb</b> and save it as <code>tools/goblin-3d/input/meshy.glb</code> (or anywhere, and tell me where). I'll put it through the same skeleton, moves and pixel step, and add a row here. If Meshy offers a rig or animations, skip them: ours are applied the same way to every model.</p>
+    <div class="grid2">
+      <figure><img class="photo" src="img/meshy-front.png" alt="A smooth, stylised render of the hooded goblin raider standing in an A-pose, facing the viewer, on white."><figcaption>Front view: <code>tools/goblin-3d/input/meshy-front.png</code></figcaption></figure>
+      <figure><img class="photo" src="img/meshy-views.png" alt="The same goblin in front, side and back views, on white."><figcaption>Front, side, back: <code>tools/goblin-3d/input/meshy-views.png</code></figcaption></figure>
+    </div>
+  </section>
+
   <section aria-labelledby="motion2">
-    <h2 id="motion2">Latest: one goblin in motion</h2>
+    <h2 id="motion2">One goblin in motion (PixelLab)</h2>
     <p>The hooded raider at 32 px, the most common enemy. Walk and attack from PixelLab (16 generations); deaths two ways, both free.</p>
     <h3>Walk (PixelLab template, 6 frames)</h3>
     <figure><img src="img/raider-walk.gif" alt="The hooded goblin raider walking in place, facing south, south-west, east and north."><figcaption>South, south-west, east, north. All eight directions were bought.</figcaption></figure>
@@ -223,6 +249,9 @@ const QUESTIONS = [
   { id: 'q-8-death', title: 'Deaths: code or drawn?', text: 'Code runs the game\'s death styles on any sprite, every direction and element, for free. A drawn death is more charming but is one direction, one style, and drifts off-model.',
     options: ['Code, borrowing the drawn one\'s ideas (the blade flying, spilled loot) as code.', 'Drawn deaths (Codex or PixelLab) for the base death, code for the elemental ones.', 'Something else.'],
     pick: 'Code, with the blade flying and the loot spilling added as code.' },
+  { id: 'q-9-pipeline', title: 'The daily pipeline', text: 'At a warband a day, paid frames can\'t be the source of motion. The 3D path makes moves, directions and retakes free; the cost moves to making one model per goblin.',
+    options: ['3D models for motion: Codex designs and writes the model, code poses it, PixelLab only for an occasional polish pass.', 'Wait for the Meshy row before deciding.', 'Something else.'],
+    pick: 'Wait for Meshy, then pick the model source. Either way, motion from 3D: next steps are a fuller face and finer detail in the pixel step, and a second goblin on the same skeleton to prove the reuse.' },
   { id: 'general', title: 'Anything else', text: 'Missing members, tone, details to add.', options: [], pick: '' },
 ];
 
@@ -283,6 +312,9 @@ for (const j of JOBS2) {
   const r = el('div', 'rate'); r.append(marks('ratings', j.id, KRC), note('ratings', j.id, 'What to change'));
   box.append(head, el('p', '', j.notes), r); $('jobs2').append(box);
 }
+$('m3d-claude-rate').append(el('b', '', "Claude's model"), marks('ratings', 'm3d-claude', KRC), note('ratings', 'm3d-claude', 'What to change'));
+$('m3d-codex-rate').append(el('b', '', "Codex's model"), marks('ratings', 'm3d-codex', KRC), note('ratings', 'm3d-codex', 'What to change'));
+$('m3d-motion-rate').append(el('b', '', 'The moves'), marks('ratings', 'm3d-motion', KRC), note('ratings', 'm3d-motion', 'Timing, poses, what reads'));
 $('walk-rate').append(marks('ratings', 'anim32-walk', KRC), note('ratings', 'anim32-walk', 'How does the walk feel?'));
 $('attack-rate').append(marks('ratings', 'anim32-attack', KRC), note('ratings', 'anim32-attack', 'How does the attack read?'));
 $('dcode-rate').append(marks('ratings', 'death-code', KRC), note('ratings', 'death-code', 'Which of the four, what to change'));

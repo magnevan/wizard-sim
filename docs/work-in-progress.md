@@ -19,7 +19,7 @@ The last recorded scope is beats 1–7, through the battery.
 ## Goblin warband art
 
 > [!in-review] Mark the bought goblins
-> The bought art is drawn at about twice the game's pixel density (a round 2 goblin is as tall as today's wizard). First decide the density: double it (60 px wizards) or redraw everything smaller. Then animations and wiring.
+> Scale settled: the 32 px goblins, and today's wizard drawn bigger (`?wizscale=1.7`, about 50 px). Check the bigger wizard in play, then decide the chieftain's size, the animations, and wiring the goblin sprites in (which makes 1.7 the default).
 
 [Goblin Warband Art review](https://claude.ai/artifact/4WNayLNFUL2TNuffPfTMsJ) · [Exploration](explorations/2026-11-16-warband-art.md)
 

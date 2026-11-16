@@ -32,6 +32,7 @@
  *   ?perf=1       record each frame's sim, draw and render time on wizardSim.perf (scripts/perf.mjs)
  *   ?props=lean|simple|code   the art test's prop set (the Academy; O cycles it there)
  *   ?wizard=hd    the detailed wizard, in any room (I toggles it in the Academy)
+ *   ?wizscale=1.7 draw the wizard bigger (1 to 2; 1.7 is about 50 px), geometry not pixels (art/rigs.ts WIZ_Z)
  *   ?sound=0      no sound at all; &vol-master=0.5 (also vol-effects, vol-music) sets a volume from 0 to 1
  *   ?menu=Scenarios  open the Esc menu at boot on that section (Resume, Scenarios, Multiplayer, Controls,
  *                 Settings); &menuAt=N opens it at tick N instead (screenshots of the menu over a fight)

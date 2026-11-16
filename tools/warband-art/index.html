@@ -62,8 +62,21 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="grow">
+    <h2 id="grow">Latest: the same wizard, drawn bigger</h2>
+    <p>Your call: the 32 px goblins are the right scale, and today's wizard (hat, beard, no face) grows to about 50 px. The wizard is drawn by code, so it now has a size switch that scales its shapes, not its pixels: the robe, hat and staff get more pixels, while 1 px details stay 1 px, matching the goblins' density. At 1.7× it's 49 px tall.</p>
+    <figure><img src="img/wiz-stores.png" alt="Two screenshots of the battery's stores: left, today's small red wizard beside an open equipment chest, its hat level with the crate; right, the same wizard 1.7 times bigger, standing well above the chest."><figcaption>The game itself, the battery's stores. Left: today. Right: <code>?wizscale=1.7</code>. It can look into the chest now.</figcaption></figure>
+    <figure><img src="img/wiz-yard.png" alt="Two screenshots of the battery yard by the well and a lantern post, the wizard small on the left and bigger on the right."><figcaption>By the well and the lantern post: the post is about wizard height now.</figcaption></figure>
+    <figure><img src="img/wiz-poses.png" alt="Six poses of the red wizard, small above and bigger below: facing the camera, three-quarter, side, back, gathering a spell, casting."><figcaption>Same design, more pixels. Top: today. Bottom: 1.7×. Facing the camera, turning, side, back, gathering, casting.</figcaption></figure>
+    <figure><img src="img/lineup-wiz17.png" alt="The lineup again with the bigger wizard at the start of each row: the 32 px goblins come to about 0.6 of its height; the chieftain is about two and a half times its height."><figcaption>The lineup with the 1.7× wizard. The 32 px goblins come to about 0.6 of its height, as in the concept. The chieftain is about 2.5 wizards tall.</figcaption></figure>
+    <ul>
+      <li><b>Try it:</b> add <code>?wizscale=1.7</code> to the game's address (any room). It's a switch, not the default yet: until the goblin sprites go in, today's tiny goblin rigs would look odd beside it.</li>
+      <li>Only the drawing grows. The wizard's body in the game (what bumps, what gets hit) is the same size, so the drawn wizard is a little wider than its hit area. Worth a look in play.</li>
+    </ul>
+  </section>
+
   <section aria-labelledby="now">
-    <h2 id="now">Start here: size against the game's wizard</h2>
+    <h2 id="now">Before that: size against today's wizard</h2>
     <p>Where each picture comes from:</p>
     <ul>
       <li><b>PixelLab</b>: every goblin you'd use, both rounds, the run animation, and the blue wizard below. Round 1 drew them at 64 px, round 2 at 32 px.</li>
@@ -168,7 +181,13 @@ const QUESTIONS = [
     pick: 'Keep the bright green, so the goblins never blend into the dirt.' },
   { id: 'q-5-scale', title: 'Which pixel density?', text: 'Today a wizard is about 29 px tall; every bought sprite is drawn at about twice that.',
     options: ['Double the game's density: 60 px wizard sprites, the round 2 goblins and the chieftain as they are, props upscaled or redrawn.', 'Keep today's density: redraw the goblins about 16 px tall and the chieftain about 60, with much less detail.'],
-    pick: 'Double it. The detail is what makes the band read as scavengers with trophies, and it suits the high-res pixel art of the Pixel Battlefield direction. It's a big change, so it needs your call.' },
+    pick: 'Settled by you: the 32 px goblins, and today's wizard drawn about 1.7× bigger (see Latest).' },
+  { id: 'q-6-wizard', title: 'The bigger wizard in play', text: 'Try ?wizscale=1.7 in any room. Is 1.7 right, and does anything look off (the hit area, spells, the hat)?',
+    options: ['1.7 (49 px) as it is.', 'A different size: say which (1.5 is 44 px).'],
+    pick: '1.7, made the default when the goblin sprites go in.' },
+  { id: 'q-7-chieftain', title: 'The chieftain's size', text: 'Beside the bigger wizard the chieftain is about 2.5 wizards tall (121 vs 49 px). The concept had it at about two.',
+    options: ['Keep it: a boss can loom.', 'Regenerate it at about 100 px (3 generations), so it's twice a wizard.'],
+    pick: 'Keep it. It reads as the boss, and nothing else in the band comes close.' },
   { id: 'general', title: 'Anything else', text: 'Missing members, tone, details to add.', options: [], pick: '' },
 ];
 

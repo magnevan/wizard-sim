@@ -55,9 +55,19 @@ So every bought sprite is drawn at about **twice the game's density**: the round
 
 A PixelLab wizard at 60 px (2 generations, plus 1 for a cancelled first run) shows the doubled version: `tools/warband-art/img/scene-doubled.png`. Claude's pick is to double it; that's the user's call (`q-5-scale` on the review page).
 
+## The user's call: 32 px goblins, a bigger wizard of the same design
+
+The user, after the lineup: the 32 px goblins are about the right scale; the wizard should grow instead, to about 50 px. The PixelLab wizard is "a hard no": keep the current one, "bit top hat, no face, beard, very classic wizard vibe". Today's wizard is too small for the environment too: beside the battery's equipment chest it can "barely peak into it". The art direction is simple, so it's flexible.
+
+Built: `?wizscale=` (1 to 2) in `game/packages/client/src/art/rigs.ts` scales the wizard rig's geometry, not its pixels: positions, widths and line weights grow, the robe and hat are drawn in finer steps, and 1 px details stay 1 px, so it keeps the bought sprites' density. At 1 every rig paints pixel-identical to before (checked against the old renders). At 1.7 it's 49 px tall and looks over the chest (`tools/warband-art/img/wiz-stores.png`); next to it the 32 px goblins are about 0.6 of its height, as in the concept.
+
+- Left as a URL switch, not the default: until the goblin sprites are wired in, the game's 15 px goblin rigs would look tiny beside a 49 px wizard.
+- The chieftain is about 2.5 wizards tall at 1.7 (121 vs 49 px); for exactly twice, regenerate it at about 100 px.
+- The sim's sizes (body radius, reach) don't change, so the drawn wizard is wider than its hit circle; worth checking in play.
+
 ## Claude's picks, pending the review
 
-1. Double the game's pixel density, then use the round 2 set (32 px), the round 1 chieftain and 60 px wizard sprites.
+1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in.
 2. Then buy run, attack (with its telegraph pose) and death for all six, about 170 generations, checked frame by frame.
 3. Wire the goblins in as sprites in the battery, behind a toggle against the rigs, with statuses as tints and overlays and 16 facings snapped to 8.
 4. Keep round 2's bright olive skin for any further goblins.

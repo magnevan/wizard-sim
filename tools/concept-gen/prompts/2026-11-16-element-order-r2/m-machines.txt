@@ -1,0 +1,17 @@
+Generate one image with your image generation tool, then save it as machines-sheet.png in the current directory. Reply with just the file name.
+
+The attached images are style references: high-detail pixel art, 3/4 view from above, a blue-roofed academy built of warm stone with brass and gold fittings.
+
+Subject: a game concept sheet of eight magical machines that the academy built to draw on the world's magic fields. They all share one design language (warm stone bases, brass frames, rings and pipes, small blue-and-gold banners), but each has its own unmistakable silhouette and a glowing core in its element's colour. Lay them out on a plain, softly lit parchment-grey background in two rows of eight, each machine standing on a small square of its own ground. Top row: each machine working, its core glowing steadily. Bottom row: the same machine broken, matching the column above it.
+
+The eight, left to right:
+1. Life: a healers' lantern-well, a tall brass cage around a green crystal, with thin pipes running off to small lamps. Broken: dark, choked by vines.
+2. Fire: a squat bronze fire turret on a stone plinth, with a nozzle and a glowing orange core. Broken: cold, sputtering black smoke.
+3. Water: a lift pump, a ring of blue glass vessels around a central brass column, with a pipe rising off it. Broken: the vessels cracked and dry.
+4. Cold: a frost heart, a pale blue crystal in a heavy riveted brass frame, rimed with ice. Broken: burst open, spilling a fan of frost.
+5. Lightning: a copper coil on a stone tower top, crackling violet-white. Broken: arcing wildly in every direction.
+6. Earth: an anchor stone, a carved standing stone banded with brass, glowing amber in its carved grooves. Broken: dark, cracked and tilted.
+7. Arcane: a bronze armillary sphere on a stepped plinth with a violet column of light. Broken: its rings knocked out of line, the light stuttering.
+8. Shield: a ward pylon, a stone pillar crowned with a pale blue crystal, a coloured socket at its base. Broken: the crystal dark.
+
+No text, no labels, no numbers.

@@ -4,6 +4,8 @@ Brainstorm, 2026-11-16, for the user's idea: you learn an element when a machine
 
 Pillars touched: 5 (told through places), 2 (each element should arrive in a situation that shows what it's for), 6 (the repairs are devices whose input is your spells, not minigames) and 3 (what a co-op partner does while you learn).
 
+**Round 2 is current.** The first round below is kept as the record; [Round 2](#round-2-the-route-and-the-stops) replaces its order table with the user's answers, an independent review and a fleshed-out route.
+
 ## What the user said
 
 - The concept art is inspiration only: for layouts, for new asset types, mixing ideas between images. None of it ships.
@@ -93,3 +95,173 @@ On the review page, with answer boxes next to each.
 2. **A linear chain or an infirmary job board?** Chain (Claude's pick) for combos in order; board for choice.
 3. **Eight stops, or fewer?** All eight; or six, with the harbor teaching Cold and Lightning together and Earth folded into the cliff road on the way to the ward (Claude's pick: six, to stay near 30 to 40 minutes).
 4. **What does "more available in the Arcane zone" mean in numbers?** Even regen across every element, the same total (Claude's pick); or a higher total here, which changes `q-2-total`.
+
+### The user's answers, round 1
+
+On the page (`answers`, `ratings`):
+
+| Id | Answer | Note |
+|---|---|---|
+| `q-1-first` | The infirmary is the first-cast moment | "This just seems right from a gameplay perspective. Life is also a more chill introduction to the cast mechanics." |
+| `q-2-structure` | A linear chain | |
+| `q-3-stops` | Six stops | |
+| `q-4-arcane-regen` | Even regen, the same total | |
+| `stop-life` | | The carrying is wrong. The well is connected to tools and devices the healers use; it's offline and you fix it, get infused in the process, and heal everyone there. Low stress, with the heal combinations shown on screen. The well comes back faint and needs time to regenerate, which is why you still need to heal. |
+| `stop-water` | | Dousing fire is good; combat can be a side thing, with enemies to fight off everywhere as you reclaim things. Water might sit better next to Lightning or Cold for the combos. |
+| `stop-cold` | | Arrive, fight some enemies, see the frost machine and fix it, which infuses you. Waves from the ocean during the fight could interact with the frost from the machine. |
+| `stop-lightning` | | Water and Lightning is another good combo; maybe show a tip for drying yourself off. |
+| `stop-earth` | | Needs more detail to judge. |
+| `stop-arcane` | | "I'm not quite clear what players will actually do here." |
+| `stop-shield` | | Suits a larger, longer battle by the forest edge. Flexible on Shield last; maybe allies fight here too. |
+| `img-area-life` | Inspiring | Uses Life's growth as well as healing; the tents say it's a temporary setup. |
+| `img-area-water` | Mixed | The wheel and the well's design are good, but with a natural waterfall it isn't clear what the Water element's job is, and the reservoir has no clear connection to anything. |
+| `img-area-harbor` | Inspiring | The frost well as a harbor's icehouse is "exactly the type of creativity I was hoping for". Everything won't fit on one screen, but hints of each element can show as you come down. |
+| `img-area-arcane` | (no mark) | The progress map could be a stop at the start that shows what needs doing, walked past a few times, though players might flex the order. The visual is inspiring. |
+| `img-area-shield` | Inspiring | "Great visual." |
+| `general` | | "I'm very happy with this brainstorm, it provides a lot of creativity and the concept art is great at fleshing it out." |
+
+In chat, after reading an independent review of round 1: "Really successful overall." Flesh out the path and the individual sections more, and be generous with Codex images. On the review's points:
+- Life before Fire is good: "You learn casting in a lower pressure environment, and without healing everything is much harder."
+- The mechanism can largely be "you fix the thing and get the spell", with unique environmental effects in each area.
+- The route has to be fixed. "We could make a sort of there and back route where we pass by arcane a few times."
+- "We can maybe move shield earlier, and then make a bigger battle at arcane instead."
+- Waves splashing at the harbor, not rain: "Being constantly wet is hard to work around."
+- Sigil in the finale "could work". Shared regen with Life first is fine. The starter zone doesn't need to teach regen as a property of a place.
+
+### What the independent review found
+
+A fresh agent reviewed round 1 against the pillars and canon. Kept here because the user read it alongside the brainstorm.
+- **Accepted and fixed in round 2:** droughts repeated the battery (now each stop is a fix with its own environment); carrying, cranking and being frozen weren't spells (now fixes use the hands or a spell); the route sent you back and forth with no shape, and Q3's six didn't add up; Shield last left no wards before Lightning's friendly-fire lesson; the parry belongs to the hands' Defend (taught in the drill yard), not to Shield; the blade is taught at beat 3, not at the battery; the waterworks had a waterfall running beside it; the harbor's rain made the whole arena wet.
+- **Also from the review:** Sigil is a caster element like Shield, so the finale can be about shaping; the courtyard's seven channels are the seven fields, so Shield and Sigil aren't on that map; the honest length is nearer an hour; canon's "linear, region to region" is about regions, not the shape inside one.
+
+## Round 2: the route and the stops
+
+### The rule
+
+**You fix the thing and get the spell.** Each stop has a machine that draws on a field, a fix you make with what you already have (your hands, or the elements you've learned), and an environmental effect that's that place's own. The machine comes back, and its field spills into you as it does. The fix always uses what you just learned, so each stop practises the last element while it hands you the next.
+
+**Shield and the rule.** The element notes say Shield isn't drawn from the land, so a ward pylon can't spill it the way a field machine does. Round 2's answer: the pylons don't draw on a field. They store the refusal of the academy's casters, poured into them over years, the old world's way of casting through structures (canon). Relighting one spills a caster's stored will into you, not a field. The rule holds, and the essence stays true. Sigil works the same way at the finale.
+
+### The route
+
+There and back, with the courtyard as the knot. Every road leaves from it, and you cross it between stops, so the seven channels in its paving show your progress each time you pass.
+
+![The district, round 2](../reference/element-order/district-v2.jpg)
+
+| Pass | Where | Element | About |
+|---|---|---|---|
+| 0 | The courtyard: the briefing, the drill yard beside it | None (the focus gives Sigil with Conjure) | 10 min (beats 1 to 3) |
+| 1 | The infirmary, just outside the main gate | Life | 5 min |
+| 2 | Down the road to the battery | Fire | 8 min (beats 4 to 7) |
+| | Back through the courtyard: the ward bell is ringing | | |
+| 3 | The ward line, right behind the academy | Shield | 8 min |
+| | Back through the courtyard, out to the gorge | | |
+| 4 | The waterworks | Water | 7 min |
+| 5 | Down to the harbor | Cold, then Lightning | 10 min |
+| 6 | The cliff road, climbing back up | Earth | 5 min |
+| 7 | The courtyard, the finale | Arcane | 10 min |
+
+About 65 minutes with the walking, against the brief's 30. The tutorial segment runs until the base set is unlocked (canon), so the minutes are guesses until a blockout is played. If it runs long, the cliff road folds into the harbor's climb, or the infirmary and the battery share a fight.
+
+**Why this order.** Life first, for the low-pressure first cast (the user). Fire stays where it's built. Shield third: you have something to protect your friends with before anything chains through them, and the ward's alarm is what pulls you back up the hill. Water, then the harbor straight after, so Wet leads into freeze and chain the moment you have them. Earth on the climb back, short. Arcane last, the cause and the biggest fight.
+
+### 0. The courtyard, first visit
+
+You come out of the briefing into the courtyard. The armillary stutters overhead and the seven channels in the paving are dim. The masters send the new cohort to help where it can: the infirmary first. This is where the drill yard (beats 2 and 3) can sit, beside the courtyard, so the map makes sense of the opening's first ten minutes.
+
+### 1. The infirmary: Life, the first cast
+
+- **The machine:** the healers' lantern-well. It feeds the tools they use: lamps over the cots, a healing bath, the glasshouse of medicinal plants.
+- **What's wrong:** overnight, its own field ran wild. Vines from the glasshouse have grown over the conduits and choked the well dark, and the tools are dead. Wounded are coming in from the ward line.
+- **The fix:** cut the vines away from the conduits with your hands and your conjured blade (the drill yard's lesson, used straight away). The last one frees the well. It relights faintly, and Life spills into you: the first-cast moment, with its own animation.
+- **Then:** the well comes back faint and needs time to regenerate, so the healers need your hands. Heal everyone there. The heal combinations are shown on screen. No enemies, or only one or two strays.
+- **The place's own effect:** healing blooms that grew overnight pulse a small heal to anyone near them. Vines creep back over the paths slowly.
+- **Co-op:** heal the patients and each other. Healing a friend is always deliberate.
+
+### 2. The battery: Fire (built)
+
+Beats 4 to 7 as built: drive the defence, its well fails, the bar goes dark, and Fire arrives from your hands. With Life already yours, the moment becomes your second element and your first that hurts. The first real fight, survivable because you can heal. The place's own effect is the gorse fire on the slope below, set by the dying turret. It keeps burning, and spreads, while you're away.
+
+### 3. The ward line: Shield
+
+- **On the way:** crossing the courtyard back from the battery, you hear the ward's bell. One channel more glows in the paving.
+- **The machine:** the ward pylons right behind the academy, each crowned with a crystal, with a coloured socket at its base.
+- **What's wrong:** three pylons went dark when the armillary stuttered, and creatures are coming through the gap. Academy guards are holding the line and losing.
+- **The fix:** each socket asks for an element you have. Feed Life and Fire into them while the guards hold. The first pylon relights, and its stored ward spills into you: Shield.
+- **Then:** hold the gap with barriers while the last pylons recharge, and ward the guards fighting beside you. A larger fight than the battery, with allies.
+- **The place's own effect:** the barrier panels between the lit pylons flicker on and off, opening and closing lanes along the line.
+- **How it ends:** the gap closes, but the barrier still flickers. It will only hold while the armillary does, which is the finale's setup.
+
+### 4. The waterworks: Water
+
+- **The job, made clear:** the waterfall drops into a pool at the bottom of the gorge, and the academy, its cisterns and the burning slope are all up on the hill. The water is down there and the fire is up here. The Water well's job is lifting: its pump lifts the pool up the aqueduct to the big cistern beside the academy. It's steam-assisted, the Fire and Water confluence the element notes describe.
+- **What's wrong:** the pump's boiler went cold when the armillary stuttered. The wheel has stopped, the aqueduct is dry and the cistern is empty, and the gorse fire is now at the cistern's sheds.
+- **The fix:** relight the boiler with Fire, the element you learned two stops ago used on a device. The vessels glow, water surges up the aqueduct, and Water spills into you.
+- **Then:** douse the gorse fire before it takes the sheds. Steam rises where water meets the burning gorse, which is cover. Creatures in the dry basin are a side fight while you work, as the user suggested.
+- **The place's own effect:** the cistern is the arena, and it fills during the fight. A dry, cracked floor becomes ankle-deep water, so the same ground teaches Wet just before the harbor.
+
+### 5. The harbor: Cold, then Lightning
+
+- **The approach:** from the top of the stairs above the quay you see both machines: frost fanning out of the icehouse to the left, the lighthouse coil arcing on its islet to the right. Then you go down into the fight on the quay.
+- **The place's own effect:** surf breaks over the quay's edge on a rhythm and leaves wet patches. It isn't rain, so you're wet only where you stand.
+- **Cold:** the icehouse's frost heart burst its frame, and frost spreads across the quay. Where waves hit frosted stone, they freeze into ice sheets. The fix: melt the ice jamming the frame's door with Fire, and shut the frame. Cold spills into you, and now you can freeze the wet patches and the soaked creatures yourself.
+- **Lightning:** the coil arcs into anything wet on the causeway, and the waves soak you as you cross. A tip appears: Fire dries you, and Wet fades on its own. Ward each other across, using the Shield from stop 3. The fix: at the top, strike the wrenched rod back into the coil. Lightning spills into you and the arcs settle.
+- **Then:** the last fight on the wet quay. Lightning chains through soaked creatures, and through soaked friends. It's the first real lesson in friendly fire, with wards to answer it.
+
+### 6. The cliff road: Earth
+
+- **The machine:** the masons' anchor stones, carved standing stones banded with brass, which hold up the retaining walls of the switchback between the harbor and the academy.
+- **What's wrong:** tremors from the stuttering armillary have shaken the road. One anchor went dark, its wall slumped, and a rockslide blocks the way up. Rift-touched creatures are coming down the slope.
+- **The fix:** the anchor is half-buried in mud and rubble. Wash it clear with Water, the last element but two. It relights, and Earth spills into you.
+- **Then:** clear the slide and hold the road as you climb. Tremors drop boulders from above, shown by a shadow before each lands. Raise Earth walls to shelter behind, and launch rock with Fire in it (Earth carries the other elements) to blast the slide off the road.
+- **The place's own effect:** tremors, and falling rock you can see coming.
+- **Short,** about five minutes. It's the first stop to fold elsewhere if the route runs long.
+
+### 7. The courtyard finale: Arcane
+
+The user asked what players actually do here. Round 2's answer:
+
+- **Arriving:** six of the seven channels in the paving now glow. As you cross the courtyard, the armillary flares. The ward, which only holds while the armillary does, flickers out behind the academy, and creatures pour into the courtyard from the back. Masters, guards and the healers you helped fight alongside you. It's the biggest battle of the opening.
+- **What you do:** the armillary's three great rings have slipped out of line. Each one has a lock at the edge of the plinth, a device that takes spells as input. Each lock asks for the elements of the channels beside it, so the finale uses everything you've learned. Defend a lock while one of you feeds it.
+- **Arcane:** when the first ring locks, the column steadies enough to step into. Arcane spills into everyone at once, and the remaining two locks and waves are fought with the beam in hand: the opening's power moment.
+- **How it ends:** the third ring locks, the column stands steady, the seventh channel lights, and the ward comes back up behind the academy. Why the armillary stuttered stays unanswered (canon). It's the year the veins shift.
+- **Sigil:** locking a ring is binding magic into a lasting form, which is Sigil's essence. It could be where the masters recognise it and the rest of Sigil's gestures unlock, beyond the etched focus's Conjure. See question 5.
+- **The place's own effect:** rift cracks in the paving flare along their length on a rhythm, so the ground itself pushes the fight around. Stones float above the cracks.
+
+### Effects, one per place
+
+| Place | Its own effect | What it asks of you |
+|---|---|---|
+| Infirmary | Healing blooms, creeping vines | Nothing hard: a calm place to learn casting |
+| Battery | Gorse fire that spreads | Fire patches deny ground |
+| Ward line | Barrier panels that flicker | Lanes open and close; watch the line |
+| Waterworks | The cistern fills mid-fight | Dry ground becomes wet; steam where water meets fire |
+| Harbor | Surf on a rhythm; frost that freezes waves | Wet patches come and go; ice sheets form |
+| Cliff road | Tremors and falling rock | Watch the shadows, build cover |
+| Courtyard | Rift cracks that flare | The floor pushes the fight around |
+
+### Round 2 images
+
+Generated from the round 2 district, with the camera reference as before. In `docs/reference/element-order/`.
+
+| Image | What it shows, and what it suggests |
+|---|---|
+| [District](../reference/element-order/district-v2.jpg) | The route works as a shape: the courtyard in the middle, roads out like spokes, the ward right behind the academy with its gap, the lift from the waterfall's pool up the aqueduct to the cistern beside the academy, and the switchback with its slide between the harbor and the gate |
+| [Machine family](../reference/element-order/machines-sheet.jpg) | Eight machines in one language, working above and broken below. Each silhouette is distinct, which fixes round 1's lamp-like-armillary problem. The broken states (vines, smoke, cracked vessels, a fan of ice, wild arcs, a tilted stone, slipped rings, a dark crystal) are what a player reads from a distance |
+| [Courtyard, start](../reference/element-order/area-courtyard-start.jpg) | A real hub: a gate to each stop, the infirmary's tents and glasshouse beyond one, the drill yard with targets and dummies beside it, the brass works behind, stairs to the sea at the front. The masters brief the cohort on the plinth steps |
+| [Infirmary](../reference/element-order/area-life-v2.jpg) | The conduits run like spokes from the well to the cots, the stills and the healing bath, so you can see what the fix brings back. The glasshouse's vines run along the conduits into the cage. Four zones round the well, one per healer's tool |
+| [Ward line](../reference/element-order/area-shield-v2.jpg) | Guards and wizards fighting together in the open field before the gap, a wizard feeding fire into a dark pylon's socket while its crystal relights, the barrier half-faded next to the gap. The academy wall, gate and bell are right behind |
+| [Waterworks](../reference/element-order/area-water-v2.jpg) | The lift reads at last: the aqueduct from the waterfall's pool, the wheel, the boiler with its firebox being lit, the ring of vessels, and the huge empty cistern with sluice gates, the burning sheds on its rim. The cistern is a very large arena; in the game it would be smaller |
+| [Harbor](../reference/element-order/area-harbor-v2.jpg) | Stairs down from the top, the icehouse fanning ice on the left, surf breaking along the quay's edge and leaving it wet only there, the coil on the islet with its own small cloud. Ice floes by the frozen boat could be stepping stones |
+| [Cliff road](../reference/element-order/area-earth.jpg) | Anchor stones glow at each bend of the switchback; the slipped one lies tilted in the slide while a wizard washes it with water, and three more shelter in a ring of raised stone from a falling boulder. Wolves come down the slide itself |
+| [Finale](../reference/element-order/area-arcane-finale.jpg) | The biggest scene: crooked rings, the locks at the plinth, six lit channels, a horned boss through the back archway, masters casting from the stairs, healers in the corners. Busy enough to suggest the battle needs clear lanes (the channels could be them) |
+
+New asset ideas from round 2: the healers' tools (lamps over cots, stills, a healing bath), conduits on the ground between a machine and what it powers, a boiler with an open firebox, sluice gates, terraced retaining walls with anchors at the bends, ring-locks, a horned boss from the wilds.
+
+### Questions, round 2
+
+1. **Shield earlier, at the ward line third, with the ward failing again at the finale?** Or Shield last, with the finale at the ward and Arcane before it?
+2. **Is the pylons' stored will a good enough reason for Shield to spill?** Round 1 asked whether Shield should break the rule. Plainly: the element notes say Shield comes from the caster, not from a field, so a machine can't spill it. Round 2 says the pylons hold the will of the academy's casters, stored over years, and relighting one gives you that. Is that fine, or should Shield come differently?
+3. **The finale's locks:** feed each lock the elements of its channels (Claude's pick), or something more physical?
+4. **Order flex:** the user wondered whether players might flex the order. The chain keeps the combos in order; one flex point would be letting the harbor and the waterworks swap. Keep the chain strict (Claude's pick), or allow that one swap?
+5. **Sigil at the finale:** unlock the rest of Sigil's gestures when you lock the rings (Claude's pick), or keep Sigil's growth for later in the campaign?

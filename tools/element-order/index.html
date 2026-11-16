@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Alegreya+Sans+SC:wght@500;700&family=JetBrains+Mono:wght@400&display=swap">
 <style>
-/* Layout: a repair ledger. The district map on top, then one work order per stop in the order you'd learn the elements, then the questions. */
+/* Layout: a repair ledger. The district map on top, then one work order per stop along the route, the machine family, then the questions. */
 :root {
   --bg: #eceae3; --panel: #f7f5ef; --ink: #1c2540; --muted: #5b6275; --line: #d3cfc3;
   --brass: #94701f; --brass-soft: #e9dcb8; --accent: #2f4a8f; --warn: #a3402b;
@@ -102,39 +102,39 @@ ul.assets { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 6px; max-w
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Wizard Sim · opening · brainstorm, 16 November 2026</div>
+    <div class="eyebrow">Wizard Sim · opening · round 2, 16 November 2026</div>
     <h1>The morning everything breaks</h1>
-    <p class="lede">Your idea: each element is learned when a machine drawing on its field spills it into you. The district sits in an Arcane zone, where every field is close to the surface. You start with Life, fix a run of urgent breakdowns, and learn Shield last at the ward line, because the barrier to the wilds is down. Below is Claude's version of that order, with concept images made in Codex. Everything here is a proposal.</p>
+    <p class="lede">The order you learn the elements in, reworked from your answers. The rule is now simple: you fix the thing, and you get the spell. Each stop has a machine that draws on a field, a fix made with what you already have, and an effect of its own. The route goes out and back through the courtyard, whose channels light up as you go. Everything here is still a proposal.</p>
   </header>
 
   <div class="save" role="status"><span id="saveState">Connecting to saved answers…</span><span id="tally"></span></div>
 
   <figure class="map" id="map">
-    <img src="img/district-v1.jpg" alt="Painted district: the academy on its hill, an infirmary, the battery with a fire below it, a pump-house, the harbor icehouse, a lighthouse with a sparking coil, a cracked cliff road and a broken ward wall at the edge of a dark forest" width="1672" height="941">
+    <img src="img/district-v2.jpg" alt="Painted district: the academy and its armillary in the centre with roads leaving it like spokes, the ward line and a dark forest behind it, an infirmary by the gate, a battery with a fire below it, a gorge with a waterfall, pump-house, aqueduct and round cistern, a harbor with an icehouse and a lighthouse, and a switchback cliff road with a rockslide" width="1672" height="941">
   </figure>
-  <figcaption>The district, generated from a numbered list of waypoints. The numbers are the proposed order, not the order along the road. Inspiration only: the layout isn't kept.</figcaption>
+  <figcaption>The district, round 2: every road starts at the courtyard. Numbers are the stops in order. Inspiration only.</figcaption>
   <ul class="legend" id="legend"></ul>
 
-  <h2>The proposed order</h2>
-  <div class="stack">
-    <p><b>Overflow or drought.</b> To keep eight arrivals from repeating, the spill isn't the same each time. Some machines are overflowing and drench you. Others are starving, and you drive them until they're dry, then carry on from your own hands as at the battery. Shield is the one nothing spills: it's a caster element, so it comes from you when there's nothing left to draw on.</p>
-    <p class="hint">Mark each image as inspiration and leave a note on any stop. No mark means it's fine as it is.</p>
-  </div>
+  <h2>What changed since round 1</h2>
+  <ul class="assets">
+    <li><b>Fix the thing, get the spell.</b> Round 1's overflow and drought arrivals are gone. Each fix uses your hands or the element you learned last, so every stop practises one element while it hands you the next.</li>
+    <li><b>Life is the first cast,</b> at the infirmary, as you chose. The battery is your second element.</li>
+    <li><b>Shield moved to third.</b> You have wards for your friends before Lightning chains through them, and the ward alarm is what pulls you back up the hill. The biggest battle is now the courtyard finale.</li>
+    <li><b>The route is out and back</b> through the courtyard, passed four times.</li>
+    <li><b>The harbor has surf, not rain,</b> so you're wet only where the waves land. The waterworks' job is lifting: the water is at the bottom of the gorge and the fire is up on the hill.</li>
+    <li><b>Six stops plus a short one,</b> with Cold and Lightning together at the harbor and Earth on the climb back. Honestly about an hour, with walking.</li>
+  </ul>
+
+  <h2>The stops</h2>
+  <p class="hint">Mark each image as inspiration and leave a note on any stop. No mark means it's fine as it is. Round 1's answers are kept and summarised in the exploration.</p>
   <div id="stops"></div>
 
-  <h2>Nine directions</h2>
-  <p class="lede">How the stops could be strung together. The highlighted ones make up Claude's pick: a linear chain with varied spills, some of the siege's pressure, and your ward line as the finale.</p>
-  <div class="dirs" id="dirs"></div>
-
-  <h2>Asset types the images suggest</h2>
-  <ul class="assets">
-    <li><b>A family of field machines,</b> one per element, in the academy's brass and stone, each with its own silhouette and a working, overflowing, starving and dead state. The battery's turrets are the first of the family.</li>
-    <li><b>Ground that spreads:</b> a fan of frost, a dry basin that floods, rift cracks, wet sheen, overgrowth creeping over paths.</li>
-    <li><b>Camp and siege dressing:</b> tents, cots and stretchers, herb racks, covered wagons, sandbags, a guard post with a bell.</li>
-    <li><b>Harbor and waterworks:</b> water wheel, sluice gates, aqueduct, cranes, nets, piers, a boat locked in ice.</li>
-    <li><b>People at work:</b> healers, porters, guards, harbor workers, so it's a morning in a real place.</li>
-    <li><b>Rift-touched creatures:</b> ordinary animals with violet crystals growing on them, a cheap way to vary the bestiary near Arcane.</li>
-  </ul>
+  <h2>The machine family</h2>
+  <figure class="map">
+    <img src="img/machines-sheet.jpg" alt="Concept sheet of eight brass and stone machines, working on the top row and broken on the bottom: a green lantern-well, a bronze fire turret, a ring of blue water vessels, a frost crystal in a frame, a lightning coil tower, an amber-grooved anchor stone, an armillary sphere, and a ward pylon with a blue crystal" width="1774" height="887" loading="lazy">
+  </figure>
+  <figcaption>Eight machines in one design language, working above and broken below: Life, Fire, Water, Cold, Lightning, Earth, Arcane, Shield. A starting point for a new asset type, each needing its states.</figcaption>
+  <div class="stack" id="sheetMark"></div>
 
   <h2>Questions</h2>
   <p class="hint">No answer means you accept the recommended option.</p>
@@ -142,7 +142,7 @@ ul.assets { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 6px; max-w
   <div class="stack">
     <label for="general"><h3>Anything else</h3></label>
     <textarea id="general" rows="3" placeholder="General note"></textarea>
-    <span class="slug">answers/general</span>
+    <span class="slug">answers/r2-general</span>
   </div>
 </div>
 
@@ -152,80 +152,75 @@ ul.assets { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 6px; max-w
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 
-  // x, y: the place on the district image, in percent.
+  // x, y: the place on the district image, in percent. col: the colour token.
   const STOPS = [
-    { id: 'life', el: 'Life', x: 12, y: 33, img: 'area-life', how: 'Overflow', place: 'The field infirmary outside the gate',
-      wrong: 'The mender’s lamp is overflowing and the glasshouse has grown wild overnight. Wounded are coming in from the ward line.',
-      reach: 'You carry the wounded through the lamp’s light while the healers work, and it soaks into you.',
-      teaches: 'Casting at allies on purpose and healing yourself. Support from minute one.',
-      idea: 'The ring of tents around the lamp makes a hub with paths crossing at the machine. The lamp looks too much like the armillary; each machine needs its own shape.' },
-    { id: 'fire', el: 'Fire', x: 40, y: 23, img: null, how: 'Drought', place: 'The battery (built)',
-      wrong: 'The defence’s well is failing.',
-      reach: 'You drive the defence until it’s dry, then hold from your hands: beats 4 to 7 as built.',
-      teaches: 'Casting modes, “you are the well”, the blade.',
-      idea: 'Built already, so no new image. The dying turret setting the gorse alight is what sends you to the waterworks.' },
-    { id: 'water', el: 'Water', x: 45, y: 45, img: 'area-water', how: 'Drought', place: 'The waterworks below the falls',
-      wrong: 'The gorse fire is spreading toward the sheds, and the pump’s well has stalled, so there’s no water to fight it.',
-      reach: 'You crank the last water through until it runs dry, then douse from your hands.',
-      teaches: 'Fire and Water: douse, steam, Wet.',
-      idea: 'The drained reservoir is a stepped arena with a sluice on each side. Restoring the pump could flood it mid-fight, so the same floor turns wet and teaches Wet on the spot.' },
-    { id: 'cold', el: 'Cold', x: 66, y: 53, img: 'area-harbor', how: 'Overflow', place: 'The harbor icehouse',
-      wrong: 'Its frost well burst and is freezing the quay.',
-      reach: 'You’re frozen in place for a moment and break out holding it.',
-      teaches: 'Water and Cold: freeze, ice underfoot.',
-      idea: 'The frost spreads as a fan across the quay, a ground state that grows. Both harbor machines fit in one frame, which supports doubling up.' },
-    { id: 'lightning', el: 'Lightning', x: 89, y: 27, img: 'area-harbor', how: 'Overflow', place: 'The lighthouse coil',
-      wrong: 'The coil arcs wildly under a storm of its own, and ships can’t come in.',
-      reach: 'Mid-fight, on the wet causeway, you’re struck.',
-      teaches: 'Wet and Lightning, chaining, and the first real lesson in friendly fire through water.',
-      idea: 'Same image as Cold. New creature: wolves with violet crystals on their backs, wildlife touched by the rifts.' },
-    { id: 'earth', el: 'Earth', x: 71, y: 70, img: null, how: 'Drought', place: 'The cliff road',
-      wrong: 'The masons’ anchor stones went dead, the retaining wall slumped and a rockslide blocks the road.',
-      reach: 'You hold an anchor up until it’s spent, then raise stone yourself.',
-      teaches: 'Walls, mass, Earth carrying Fire.',
-      idea: 'No close-up yet; the district shows the slide. The first stop to fold into another if the route is cut to six.' },
-    { id: 'arcane', el: 'Arcane', x: 15, y: 9, img: 'area-arcane', how: 'Overflow', place: 'The academy courtyard, the armillary',
-      wrong: 'The Arcane well under everything is stuttering. It’s the common cause of the morning; why it happens stays open.',
-      reach: 'You step into the column.',
-      teaches: 'The beam, Attune, Life and Arcane cancelling. Why everything broke.',
-      idea: 'Seven coloured channels run out from the armillary, all dark but Arcane’s. The courtyard could be the morning’s progress map, each channel lighting as its machine is fixed.' },
-    { id: 'shield', el: 'Shield', x: 78, y: 86, img: 'area-shield', how: 'From you', place: 'The ward line',
-      wrong: 'Three pylons are dark, and creatures pour through the gap.',
-      reach: 'Nothing spills, because there’s nothing left to draw on. You refuse them yourself.',
-      teaches: 'Barriers, wards on allies, the parry. Then you relight each pylon by feeding it the element its socket asks for: the final exam.',
-      idea: 'Dark pylons with coloured sockets, a guard post with a bell, wounded guards. It puts the ward right behind the academy, which raises the stakes.' },
-  ];
-  const DIRS = [
-    ['The triage morning', 'A linear chain. Each fix’s fallout points to the next. Combos arrive in order. Closest to Magicka and to canon’s “linear, region to region”.', true],
-    ['The infirmary job board', 'Borrowed from Breath of the Wild’s Divine Beasts. The wounded name broken machines; pick your order; the ward waits for all of them. Costs the combo order.', false],
-    ['The siege clock', 'Borrowed from Majora’s Mask’s moon. The breach is visible all morning and creatures trickle in between stops, more each time. Pressure without a timer.', true],
-    ['Confluence machines', 'Two elements per stop, at machines drawing on two fields. Half the stops and an instant combo, but half the “new rune” moments.', false],
-    ['Overflow and drought', 'Not a structure but a way to vary each arrival: some machines drench you, others you drive until they’re dry.', true],
-    ['The sponge', 'Wild. Spills are involuntary and happen mid-fight. Suits the lighthouse; too unreliable as the rule.', false],
-    ['Gates', 'Borrowed from Metroid. Each element opens the way to the next. Fine once or twice, but as a rule it’s the level gimmick pillar 6 warns against.', false],
-    ['The surge first', 'Borrowed from Metroid Prime’s opening. Everything lights for one fight, burns out, and comes back one by one. A taste of the full set, but it spoils the first cast.', false],
-    ['Conservative', 'Life and Fire as now, then the rest at once in a surge (the brief’s beat 9), with Shield held for the ward line. Shortest, least worldbuilding.', false],
+    { id: 'courtyard', n: '0', name: 'Start', col: 'arcane', x: 47, y: 22, img: 'area-courtyard-start', place: 'The courtyard, first visit', min: '10 min, beats 1 to 3',
+      rows: [['What happens', 'You come out of the briefing. The armillary stutters overhead and the seven channels in the paving are dim. The masters send the cohort to the infirmary first. The drill yard (beats 2 and 3) can sit beside the courtyard.'],
+        ['You get', 'Nothing yet, apart from the etched focus (Sigil with Conjure).']],
+      idea: 'The progress map, as you suggested: you see here what needs doing, and you cross the courtyard between stops.' },
+    { id: 'life', n: '1', name: 'Life', col: 'life', x: 12, y: 31, img: 'area-life-v2', place: 'The infirmary', min: '5 min',
+      rows: [['The machine', 'The healers’ lantern-well, which feeds their tools: lamps over the cots, a healing bath, the glasshouse.'],
+        ['What’s wrong', 'Overnight its own field ran wild. Vines from the glasshouse choked the conduits and the well went dark.'],
+        ['The fix', 'Cut the vines away with your hands and your conjured blade, the drill yard’s lesson used straight away. The well relights faintly and Life spills into you: the first-cast moment.'],
+        ['Then', 'The well needs time to regenerate, so the healers need your hands. Heal everyone, with the heal combinations on screen. No enemies, or one or two strays.']],
+      idea: 'Its own effect: healing blooms that grew overnight pulse a small heal, and vines creep back over the paths slowly.' },
+    { id: 'fire', n: '2', name: 'Fire', col: 'fire', x: 16, y: 52, img: null, place: 'The battery (built)', min: '8 min, beats 4 to 7',
+      rows: [['As built', 'Drive the defence, its well fails, the bar goes dark, and Fire comes from your hands.'],
+        ['What’s new', 'Life is already yours, so this is your second element and your first that hurts. The first real fight, survivable because you can heal.']],
+      idea: 'Its own effect: the gorse fire the dying turret sets. It keeps spreading while you’re away, and it’s waiting at the waterworks.' },
+    { id: 'shield', n: '3', name: 'Shield', col: 'shield', x: 68, y: 15, img: 'area-shield-v2', place: 'The ward line, behind the academy', min: '8 min',
+      rows: [['On the way', 'Crossing the courtyard back from the battery, you hear the ward bell. Another channel glows in the paving.'],
+        ['What’s wrong', 'Three pylons went dark when the armillary stuttered. Creatures are coming through, and the academy guards are losing the line.'],
+        ['The fix', 'Each pylon’s socket asks for an element you have. Feed Life and Fire into them while the guards hold. The first pylon relights and its stored ward spills into you: Shield.'],
+        ['Then', 'Hold the gap with barriers while the last pylons recharge, and ward the guards beside you. A bigger fight than the battery, with allies.']],
+      idea: 'Its own effect: the barrier panels flicker on and off, opening and closing lanes. The gap closes, but the barrier only holds while the armillary does, which sets up the finale.' },
+    { id: 'water', n: '4', name: 'Water', col: 'water', x: 78, y: 61, img: 'area-water-v2', place: 'The waterworks in the gorge', min: '7 min',
+      rows: [['The job', 'The waterfall drops to the bottom of the gorge; the academy, its cistern and the fire are up on the hill. The Water well lifts the pool up the aqueduct. It’s steam-assisted, the Fire and Water confluence.'],
+        ['What’s wrong', 'The boiler went cold, the wheel stopped, the cistern is empty, and the gorse fire has reached its sheds.'],
+        ['The fix', 'Relight the boiler with Fire. Water surges up the aqueduct and spills into you.'],
+        ['Then', 'Douse the fire before it takes the sheds. Steam rises where water meets burning gorse, which gives cover. Creatures in the dry basin are a side fight.']],
+      idea: 'Its own effect: the cistern is the arena, and it fills during the fight. Dry ground becomes ankle-deep water, which teaches Wet just before the harbor.' },
+    { id: 'harbor', n: '5', name: 'Cold, Lightning', col: 'cold', x: 40, y: 83, img: 'area-harbor-v2', place: 'The harbor', min: '10 min',
+      rows: [['The approach', 'From the top of the stairs you see both machines: frost fanning from the icehouse, and the lighthouse coil arcing on its islet.'],
+        ['Cold', 'The frost heart burst its frame. Melt the ice jamming its door with Fire and shut the frame. Cold spills into you, and now you can freeze the wet patches and soaked creatures.'],
+        ['Lightning', 'The coil arcs into anything wet on the causeway. A tip: Fire dries you, and Wet fades on its own. Ward each other across, then strike the wrenched rod back into the coil. Lightning spills into you.'],
+        ['Then', 'The last fight on the quay. Lightning chains through soaked creatures and soaked friends: the first real lesson in friendly fire, with wards to answer it.']],
+      idea: 'Its own effect: surf breaks over the quay edge on a rhythm and leaves wet patches. Where it lands on frosted stone, it freezes into ice sheets.' },
+    { id: 'earth', n: '6', name: 'Earth', col: 'earth', x: 53, y: 59, img: 'area-earth', place: 'The cliff road, climbing back up', min: '5 min',
+      rows: [['The machine', 'The masons’ anchor stones, which hold up the retaining walls of the switchback.'],
+        ['What’s wrong', 'Tremors from the armillary shook the road. One anchor went dark, its wall slumped, and a rockslide blocks the way.'],
+        ['The fix', 'The anchor is half-buried. Wash it clear with Water. It relights and Earth spills into you.'],
+        ['Then', 'Clear the slide and hold the road. Raise walls against falling rock, and launch stone with Fire in it to blast the slide away.']],
+      idea: 'Its own effect: tremors drop boulders from above, with a shadow showing where each will land. Short: the first stop to fold into the harbor if the route runs long.' },
+    { id: 'finale', n: '7', name: 'Arcane', col: 'arcane', x: 51, y: 28, img: 'area-arcane-finale', place: 'The courtyard finale', min: '10 min',
+      rows: [['Arriving', 'Six channels glow. The armillary flares, the ward flickers out behind the academy, and creatures pour in. Masters, guards and the healers you helped fight with you. The biggest battle of the opening.'],
+        ['What you do', 'The armillary’s three rings have slipped. Each has a lock at the plinth’s edge that takes spells as input, asking for the elements of the channels beside it. Defend a lock while one of you feeds it.'],
+        ['Arcane', 'When the first ring locks, the column steadies enough to step into. Arcane spills into everyone, and the rest is fought with the beam.'],
+        ['How it ends', 'The third ring locks, the seventh channel lights, and the ward comes back up. Why it stuttered stays open (canon).']],
+      idea: 'Locking a ring binds magic into a lasting form, which is Sigil’s essence. It could be where the rest of Sigil’s gestures unlock (question 5). Its own effect: rift cracks flare along their length and push the fight around.' },
   ];
   const QUESTIONS = [
-    { id: 'q-1-first', n: 'Q1', title: 'Life or Fire for your first innate cast?',
-      text: 'Beats 4 to 7 are built around Fire: drive the defence, it runs dry, the rune is yours. With Life first, Life is your first innate cast.',
-      choices: [['quiet', 'Life arrives quietly; the battery stays “the moment”', 'The overflow is a gift you barely notice; the drought is the discovery.', true],
-        ['life-moment', 'The infirmary becomes the first-cast moment', 'The battery is your second element.', false],
-        ['fire-first', 'Fire first, then Life at the infirmary', 'The battery’s wounded are carried there afterwards.', false]] },
-    { id: 'q-2-structure', n: 'Q2', title: 'A chain or a job board?',
-      text: 'A chain teaches combos in order (Water, then Cold freezes it, then Lightning chains through it). A board gives choice but must work in any order.',
-      choices: [['chain', 'A linear chain, with the breach visible all morning', 'Directions 1, 3 and 5.', true],
-        ['board', 'The infirmary job board', 'Any order; the ward line last.', false],
-        ['mix', 'A chain to Water, then a board', 'The first three in order, then free.', false]] },
-    { id: 'q-3-stops', n: 'Q3', title: 'Eight stops, or fewer?',
-      text: 'The brief has the opening at about 30 minutes. Eight stops at 3 to 5 minutes, plus walking, is nearer 50.',
-      choices: [['six', 'Six stops', 'The harbor teaches Cold and Lightning together; Earth is learned on the cliff road on the way to the ward.', true],
-        ['eight', 'All eight', 'A longer opening; each element gets its own place.', false],
-        ['surge', 'Fewer still, with a surge', 'Life, Fire and Water each get a stop; the rest arrive at the armillary.', false]] },
-    { id: 'q-4-arcane-regen', n: 'Q4', title: 'What does “more available in the Arcane zone” mean in numbers?',
-      text: 'Canon has regions bending regen toward their element without changing the total (q-2-total).',
-      choices: [['even', 'Even regen, the same total', 'No element is favoured; “more available” is the story’s reason you can learn them all here.', true],
-        ['higher', 'A higher total here', 'Changes q-2-total for this zone.', false]] },
+    { id: 'r2-q-1-shield', n: 'Q1', title: 'Shield third, or last?',
+      text: 'You suggested moving Shield earlier and making Arcane the bigger battle. Your stop note also said Shield last seemed right.',
+      choices: [['third', 'Third, at the ward line; the ward fails again at the finale', 'Wards before Lightning; the biggest fight is the courtyard.', true],
+        ['last', 'Last, with the finale at the ward line', 'Arcane comes before it; the forest edge is the big battle.', false]] },
+    { id: 'r2-q-2-will', n: 'Q2', title: 'Is the pylons’ stored will a good enough reason for Shield to spill?',
+      text: 'Round 1’s question, put plainly. The element notes say Shield comes from the caster, not from a field, so a field machine can’t spill it. Round 2 says the ward pylons don’t draw on a field: they hold the will of the academy’s casters, stored over years, the old way of casting through structures. Relighting one gives you that.',
+      choices: [['fine', 'That works', 'The rule holds for every element.', true],
+        ['other', 'Shield should come differently', 'Say how in the note.', false]] },
+    { id: 'r2-q-3-locks', n: 'Q3', title: 'The finale’s ring-locks?',
+      text: 'What players do at the armillary: defend three locks and feed each the elements of its channels.',
+      choices: [['elements', 'Feed each lock its channels’ elements', 'Uses everything you’ve learned; spells as device input.', true],
+        ['physical', 'Something more physical', 'Turn, push or strike the rings back into line.', false],
+        ['other', 'Something else', 'Say what in the note.', false]] },
+    { id: 'r2-q-4-flex', n: 'Q4', title: 'Allow one flex in the order?',
+      text: 'You wondered whether players might flex the order. The chain keeps the combos in order. One possible flex point: the waterworks and the harbor swap.',
+      choices: [['strict', 'Keep the chain strict', 'Wet before freeze and chain, every time.', true],
+        ['swap', 'Allow that one swap', 'The harbor first teaches Wet from the surf instead.', false]] },
+    { id: 'r2-q-5-sigil', n: 'Q5', title: 'Sigil at the finale?',
+      text: 'The etched focus gives Sigil with Conjure only. Locking the rings is binding magic into a lasting form.',
+      choices: [['finale', 'The rest of Sigil’s gestures unlock here', 'The opening ends with the full base set.', true],
+        ['later', 'Keep Sigil’s growth for later in the campaign', 'The opening ends with the elements; Sigil grows by training.', false]] },
   ];
   const MARKS = [['like', 'Inspiring'], ['mixed', 'Mixed'], ['no', 'Not this']];
 
@@ -251,67 +246,47 @@ ul.assets { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 6px; max-w
     ta.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => write(col, id, { note: ta.value }), 900); });
     ta.addEventListener('blur', () => { clearTimeout(timer); if ((store()[id]?.note || '') !== ta.value) write(col, id, { note: ta.value }); });
   }
-  const groups = []; // { col, id, kind:'mark'|'choice', box, ta }
-
-  // ---------- map pins and legend ----------
-  STOPS.forEach((s, i) => {
-    const c = `var(--${s.el.toLowerCase()})`;
-    const a = el('a', 'pin', String(i + 1)); a.href = '#stop-' + s.id; a.style.left = s.x + '%'; a.style.top = s.y + '%'; a.style.background = c;
-    a.setAttribute('aria-label', `${i + 1}: ${s.el}, ${s.place}`);
-    $('map').append(a);
-    const li = el('li', null, `<span class="dot" style="background:${c}"></span>${i + 1} ${esc(s.el)}`);
-    $('legend').append(li);
-  });
-
-  // ---------- stops ----------
-  STOPS.forEach((s, i) => {
-    const card = el('article', 'stop'); card.id = 'stop-' + s.id; card.style.setProperty('--el', `var(--${s.el.toLowerCase()})`);
-    const art = s.img ? el('div', 'art', `<img src="img/${s.img}.jpg" alt="Concept image: ${esc(s.place)}" loading="lazy" width="1774" height="887">`)
-                      : el('div', 'art none', 'No close-up yet');
-    const body = el('div', 'body');
-    body.append(el('div', 'head', `<span class="num">${i + 1}</span><h3>${esc(s.el)} · ${esc(s.place)}</h3><span class="chip how">${esc(s.how)}</span>`));
-    body.append(el('dl', null, `<div><dt>What’s wrong</dt><dd>${esc(s.wrong)}</dd></div><div><dt>How it reaches you</dt><dd>${esc(s.reach)}</dd></div><div><dt>Teaches</dt><dd>${esc(s.teaches)}</dd></div>`));
-    body.append(el('p', 'idea', esc(s.idea)));
-    if (s.img) {
-      const rid = 'img-' + s.img;
-      const box = el('div', 'marks'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'The image as inspiration');
-      for (const [v, l] of MARKS) {
-        const b = el('button', null, esc(l)); b.type = 'button'; b.dataset.v = v; b.disabled = true;
-        b.addEventListener('click', () => write('ratings', rid, { mark: ratings[rid]?.mark === v ? null : v }));
-        box.append(b);
-      }
-      body.append(box);
-      const ta = el('textarea'); ta.rows = 2; ta.id = 'r-' + rid + '-' + s.id; ta.placeholder = 'Note on the image (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on the image for ' + s.el);
-      // Cold and Lightning share an image: only the first carries the note box.
-      if (!groups.some((g) => g.id === rid)) { noteBox(ta, 'ratings', rid); body.append(ta, el('span', 'slug', 'ratings/' + rid)); groups.push({ col: 'ratings', id: rid, kind: 'mark', box, ta }); }
-      else { groups.push({ col: 'ratings', id: rid, kind: 'mark', box, ta: null }); }
-    }
-    const sid = 'stop-' + s.id;
-    const ta2 = el('textarea'); ta2.rows = 2; ta2.id = 'a-' + sid; ta2.placeholder = 'Note on this stop (optional)'; ta2.disabled = true; ta2.setAttribute('aria-label', 'Note on the ' + s.el + ' stop');
-    noteBox(ta2, 'answers', sid);
-    body.append(ta2, el('span', 'slug', 'answers/' + sid));
-    groups.push({ col: 'answers', id: sid, kind: 'note', box: null, ta: ta2 });
-    card.append(art, body);
-    $('stops').append(card);
-  });
-  // the district image gets its own mark under the map
-  {
-    const rid = 'img-district-v1';
-    const wrap = el('div', 'stack');
-    const box = el('div', 'marks'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'The district image as inspiration');
+  const groups = [];
+  function markBlock(rid, label) {
+    const wrap = el('div', 'stack'); wrap.style.marginTop = '0';
+    const box = el('div', 'marks'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', label);
     for (const [v, l] of MARKS) { const b = el('button', null, esc(l)); b.type = 'button'; b.dataset.v = v; b.disabled = true; b.addEventListener('click', () => write('ratings', rid, { mark: ratings[rid]?.mark === v ? null : v })); box.append(b); }
-    const ta = el('textarea'); ta.rows = 2; ta.id = 'r-district'; ta.placeholder = 'Note on the district image (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on the district image');
+    const ta = el('textarea'); ta.rows = 2; ta.id = 'r-' + rid; ta.placeholder = 'Note on the image (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note: ' + label);
     noteBox(ta, 'ratings', rid);
     wrap.append(box, ta, el('span', 'slug', 'ratings/' + rid));
-    $('legend').after(wrap);
     groups.push({ col: 'ratings', id: rid, kind: 'mark', box, ta });
+    return wrap;
   }
 
-  // ---------- directions ----------
-  DIRS.forEach(([t, d, pick], i) => {
-    const c = el('article', 'dir' + (pick ? ' pick' : ''), `<span class="tag">${i + 1}${pick ? ' · in Claude’s pick' : ''}</span><h3>${esc(t)}</h3><p>${esc(d)}</p>`);
-    $('dirs').append(c);
-  });
+  // ---------- map pins and legend ----------
+  for (const s of STOPS) {
+    const c = `var(--${s.col})`;
+    const a = el('a', 'pin', esc(s.n)); a.href = '#stop-' + s.id; a.style.left = s.x + '%'; a.style.top = s.y + '%'; a.style.background = c;
+    a.setAttribute('aria-label', `${s.n}: ${s.name}, ${s.place}`);
+    $('map').append(a);
+    $('legend').append(el('li', null, `<span class="dot" style="background:${c}"></span>${esc(s.n)} ${esc(s.name)}`));
+  }
+  $('legend').after(markBlock('img-district-v2', 'The round 2 district as inspiration'));
+
+  // ---------- stops ----------
+  for (const s of STOPS) {
+    const card = el('article', 'stop'); card.id = 'stop-' + s.id; card.style.setProperty('--el', `var(--${s.col})`);
+    const art = s.img ? el('div', 'art', `<img src="img/${s.img}.jpg" alt="Concept image: ${esc(s.place)}" loading="lazy" width="1774" height="887">`)
+                      : el('div', 'art none', 'Built already: no new image');
+    const body = el('div', 'body');
+    body.append(el('div', 'head', `<span class="num">${esc(s.n)}</span><h3>${esc(s.name)} · ${esc(s.place)}</h3><span class="chip how">${esc(s.min)}</span>`));
+    body.append(el('dl', null, s.rows.map(([t, d]) => `<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('')));
+    body.append(el('p', 'idea', esc(s.idea)));
+    if (s.img) body.append(markBlock('img-' + s.img, 'The ' + s.place + ' image as inspiration'));
+    const sid = 'r2-stop-' + s.id;
+    const ta = el('textarea'); ta.rows = 2; ta.id = 'a-' + sid; ta.placeholder = 'Note on this stop (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on the ' + s.name + ' stop');
+    noteBox(ta, 'answers', sid);
+    body.append(ta, el('span', 'slug', 'answers/' + sid));
+    groups.push({ col: 'answers', id: sid, kind: 'note', box: null, ta });
+    card.append(art, body);
+    $('stops').append(card);
+  }
+  $('sheetMark').append(markBlock('img-machines-sheet', 'The machine sheet as inspiration'));
 
   // ---------- questions ----------
   for (const q of QUESTIONS) {
@@ -332,7 +307,7 @@ ul.assets { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 6px; max-w
     $('questions').append(row);
     groups.push({ col: 'answers', id: q.id, kind: 'choice', box, ta });
   }
-  const gen = $('general'); gen.disabled = true; noteBox(gen, 'answers', 'general');
+  const gen = $('general'); gen.disabled = true; noteBox(gen, 'answers', 'r2-general');
 
   function paint() {
     let answered = 0;
@@ -345,7 +320,8 @@ ul.assets { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 6px; max-w
       if (g.kind === 'choice' && val) answered++;
     }
     gen.disabled = !db;
-    if (document.activeElement !== gen && gen.value !== (answers.general?.note || '')) gen.value = answers.general?.note || '';
+    const gn = answers['r2-general']?.note || '';
+    if (document.activeElement !== gen && gen.value !== gn) gen.value = gn;
     $('tally').innerHTML = `<b>${answered}</b> of ${QUESTIONS.length} questions answered`;
   }
   paint();

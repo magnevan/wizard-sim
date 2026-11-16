@@ -1,0 +1,15 @@
+Generate one image with your image generation tool, then save it as district-v2.png in the current directory. Reply with just the file name.
+
+The attached images are style references (high-detail pixel art, 3/4 bird's-eye view from high above, warm morning sunlight, blue-roofed academy with gold trim, violet arcane cracks glowing through the ground). The first one is an earlier draft of this same place: keep its look and its places, but arrange them as described below.
+
+Subject: a wizard academy's district on a rocky coastal headland, on the morning everything breaks, arranged so that every road starts and ends at the academy's central courtyard.
+
+- The center of the image: the academy on its terraced hill. In its main courtyard stands a giant bronze armillary sphere pouring a flickering column of violet light. Roads leave the academy like spokes of a wheel.
+- Directly behind the academy (toward the top of the image), close to its back wall: the ward line, a long row of stone pylons with a shimmering blue barrier between them, along the edge of a dark, tangled forest that glows faintly violet. In one place the barrier is torn and a few dark creatures slip through.
+- Just outside the academy's main gate, to the left: a field infirmary of white tents around a glasshouse overgrown with vines, and a brass lantern-well, dark.
+- A road leads down to the lower left: a small walled battery with four bronze fire turrets on a ridge, one smoking, and the dry gorse slope below it burning.
+- To the right of the academy, a deep gorge: a waterfall drops into a pool at the very bottom. Beside the pool, a stone pump-house with a great water wheel and a brass machine that lifts the water UP a long aqueduct to a big round cistern on the hillside next to the academy. The wheel has stopped, the aqueduct is dry, and the cistern is empty. The gorse fire is creeping toward the cistern.
+- At the bottom of the image, the harbor: an icehouse cut into the cliff with frost spilling out of its burst door, piers and ships, and a lighthouse on a rocky islet with a sparking copper coil at its top. The weather is clear, with heavy surf: big waves crash against the quay and throw spray over it.
+- A switchback cliff road climbs from the harbor back up to the academy. Halfway up, a retaining wall has slumped and a rockslide half blocks the road.
+
+Four small young wizards in blue robes walk one of the roads. Keep every place small and readable, with trees, rocks and terrain between them. No text, no labels.

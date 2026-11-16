@@ -27,3 +27,13 @@ The district and five close-ups for the [element order brainstorm](../../docs/ex
 - The model adds good unasked-for ideas (the stepped dry basin, seven coloured channels from the armillary, crystal-backed wolves). Leave room for that by describing what's wrong at a place, not every prop.
 - Scale is loose: buildings are large next to the paths and figures. Read sizes off a blockout, not the art.
 - Close-ups don't keep the district's geography (the ward line sits beside the academy in its close-up), even with the district attached.
+
+### 2026-11-16, element order round 2
+
+A new district from round 1's district plus the user's harbor concept, then seven close-ups from the new district, and a machine sheet from two close-ups. Nine images, all usable; seven ran in parallel in about ten minutes.
+
+- "Arranged so that every road starts and ends at the courtyard" and "roads leave the academy like spokes" gave the hub shape asked for. Placing each place by direction (behind, to the left, at the bottom) worked.
+- Describing what a machine is *for* (lifting water from the gorge to the cistern; conduits to the healers' tools) made the close-ups read as working systems, which round 1's images didn't.
+- Naming the action in progress (a wizard feeding fire into a socket, washing an anchor clear) puts the fix itself in the picture, which is the most useful thing for a stop.
+- A sheet of eight objects in two rows (working above, broken below) came out clean and consistent: a good way to explore an asset family.
+- Battle scenes crowd fast; ask for fewer figures if the layout matters more than the drama.

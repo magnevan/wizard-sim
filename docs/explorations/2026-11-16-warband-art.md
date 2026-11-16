@@ -106,6 +106,12 @@ The user's verdict on round 1: Claude's model is poor, Codex's reasonable (one s
 
 Claude's pick: Meshy for models (Codex draws its input), motion from 3D. Next, a second goblin through the same steps to see how steady Meshy is and what fitting costs, and a small preview for tuning moves instead of editing numbers.
 
+## Camera height for characters
+
+The user noticed PixelLab draws the goblin closer to face-on than the 3D renders, which use the ground's 30 degrees. Drawing characters lower than the ground is the usual cheat in 2D games with a high camera: faces and fronts read better. `render.py --elev=` tries it on Meshy's raider at 30, 20 and 10: at 30 hood and sack dominate and the face is a sliver; at 10 face, eyes and legs show and the proportions match PixelLab's (about 3 px taller). The cost is a figure that looks stood up on the ground rather than seen from above, most visible at the feet and shadow. Claude's pick: 15 to 20, checked in the battery scene.
+
+The user also raised Meshy's paid tier (rigging, an animation library, text-to-3D). Unanswered by tests yet: whether its library motion suits a chibi goblin and weapon attacks, and whether text-to-3D holds the house style as well as a Codex picture the user can approve first.
+
 ## Claude's picks, pending the review
 
 1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in.

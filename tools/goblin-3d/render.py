@@ -116,7 +116,8 @@ rig.scale = (1.15, 1.15, 0.92)
 # ---- camera, light, render settings --------------------------------------------------------------------------------------
 cam = bpy.data.cameras.new('cam'); cam.type = 'ORTHO'; cam.ortho_scale = CANVAS / PPU
 cam_o = bpy.data.objects.new('cam', cam); scene.collection.objects.link(cam_o); scene.camera = cam_o
-ELEV = math.radians(30)
+# --elev=20: the camera's height in degrees. The ground is drawn at 30; sprites are often drawn lower, closer to face-on
+ELEV = math.radians(float(next((a[7:] for a in args if a.startswith('--elev=')), 30)))
 LOOK = Vector((0, 0, 1.05))
 def aim(elev, dist=40):
     cam_o.location = LOOK + Vector((0, -math.cos(elev), math.sin(elev))) * dist

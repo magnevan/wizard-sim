@@ -63,8 +63,18 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="elev">
+    <h2 id="elev">Latest: how high the camera sits for characters</h2>
+    <p>You noticed PixelLab draws the goblin closer to face-on than our renders. That's normal: most 2D games with a high camera draw characters lower than the ground, because faces and fronts read better, and nobody notices the mismatch. A 3D render can pick any height for free. Here is Meshy's raider at the game's 30 degrees, at 20 and at 10.</p>
+    <figure><img src="img/3d-elev-still.png" alt="The PixelLab raider, then Meshy's raider rendered from 30, 20 and 10 degrees above the ground, eight directions each. Lower angles show more face and legs and less hood and sack."><figcaption>Top: PixelLab. Then Meshy at 30, 20 and 10 degrees. South, south-east, east, north-east, north, north-west, west, south-west.</figcaption></figure>
+    <figure><img src="img/3d-elev-walk.gif" alt="The same four rows walking."><figcaption>Walk.</figcaption></figure>
+    <figure><img src="img/3d-elev-attack.gif" alt="The same four rows attacking."><figcaption>Attack.</figcaption></figure>
+    <p>At 30 the hood and the sack take over and the face is a sliver. At 10 the face, eyes and legs show, and it sits closest to PixelLab's proportions; it also stands about 3 px taller. The cost: the lower the angle, the more a character looks stood up on the ground rather than seen from above, which shows most where it meets the ground (its shadow and feet). My pick: <b>15 to 20</b>, checked in the battery scene before it's settled.</p>
+    <div class="rate" id="elev-rate"></div>
+  </section>
+
   <section aria-labelledby="threed">
-    <h2 id="threed">Latest: the raider from 3D models, round 2</h2>
+    <h2 id="threed">The raider from 3D models, round 2</h2>
     <p>Paying per frame can't keep up with a warband a day, so this path makes an extra move, direction or retake cost nothing. A 3D model goes on a shared goblin skeleton, code poses it, and every frame is rendered from the game's camera in 8 directions and turned into pixel art. No credits spent.</p>
     <p>Round 2 drops Claude's model (you found it poor) and adds <b>Meshy's</b>, made from Codex's front-view picture. Meshy dropped the blade, so Codex's blade is grafted into its right hand. Its proportions and pose differ from the skeleton's (lower hips, arms out at 50°), so its joints are fitted to it once, in a small file beside the model.</p>
     <h3>Standing, 8 directions</h3>
@@ -312,6 +322,7 @@ for (const j of JOBS2) {
   const r = el('div', 'rate'); r.append(marks('ratings', j.id, KRC), note('ratings', j.id, 'What to change'));
   box.append(head, el('p', '', j.notes), r); $('jobs2').append(box);
 }
+$('elev-rate').append(el('b', '', 'Camera height'), marks('ratings', 'm3d-elev', [['30', '30', 'cut'], ['20', '20', 'keep'], ['10', '10', 'maybe']]), note('ratings', 'm3d-elev', 'Which height, or between'));
 $('m3d-codex-rate').append(el('b', '', "Codex's model"), marks('ratings', 'm3d-codex', KRC), note('ratings', 'm3d-codex', 'What to change'));
 $('m3d-meshy-rate').append(el('b', '', "Meshy's model"), marks('ratings', 'm3d-meshy', KRC), note('ratings', 'm3d-meshy', 'What to change'));
 $('m3d-motion2-rate').append(el('b', '', 'The moves'), marks('ratings', 'm3d-motion2', KRC), note('ratings', 'm3d-motion2', 'Timing, poses, what reads'));

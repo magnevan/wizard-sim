@@ -143,7 +143,11 @@ export class WorldView {
   private castPose(w: World, who: number, t: number): void {
     const id = w.seats.castId[who];
     if (id === CAST_ID.force || id === CAST_ID.conjure) this.holdUntil[who] = t + 0.35;
+    if (id === CAST_ID.area || id === CAST_ID.self) { this.shot[who] = id === CAST_ID.area ? 2 : 3; this.shotAt[who] = t; }
   }
+  /** Each seat's latest one-shot move for a live wizard (RigState.shot) and the sim time it went off. */
+  private shot = new Uint8Array(MAX_SEATS);
+  private shotAt = new Float64Array(MAX_SEATS);
   private prevBX = new Float64Array(MAX_BODIES);
   /** Each enemy's swing count and last hitT (art/sprites.ts picks an attack variant per swing). */
   private swingN = new Uint16Array(MAX_BODIES);
@@ -240,6 +244,7 @@ export class WorldView {
       // Blink is instant: no sliding between the two spots
       if (e.kind === 'blink' && e.who >= 0) { this.prevBX[e.who] = b.x[e.who]; this.prevBY[e.who] = b.y[e.who]; }
       if (e.kind === 'fizzle' && e.ev === EV.death && e.who >= 0) this.onDeath(w, e, t);
+      if (e.kind === 'move' && (e.text === 'strike' || e.text === 'sweep') && e.who >= 0 && e.who < MAX_SEATS) { this.shot[e.who] = 1; this.shotAt[e.who] = t; }
       if (e.kind === 'cast' && e.who >= 0 && e.who < MAX_SEATS) {
         this.castPose(w, e.who, t);
         for (let k = 0; k < s.castLen[e.who]; k++) if (e.who === this.hud.seat) this.hud.spent(s.castQueue[e.who * 5 + k], t);
@@ -550,7 +555,7 @@ export class WorldView {
   private rigState(w: World, i: number, t: number, ct: number): RigState {
     const b = w.bodies, s = this.rig, kind = this.rigOf(w, i), arch = b.arch[i];
     s.kind = kind; s.seed = i & 1; s.variant = 0; s.pal = 0; s.hd = kind === 'wizard' && this.wizardHd ? 1 : 0;
-    s.punch = -1; s.smash = -1; s.draw = 0; s.atk = -1; s.hold = 0; s.hitT = NaN; s.swing = 0; s.prep = 0; s.cast = 0; s.vx = 0; s.vy = 0;
+    s.punch = -1; s.smash = -1; s.draw = 0; s.atk = -1; s.hold = 0; s.hitT = NaN; s.swing = 0; s.shot = 0; s.shotT = 0; s.prep = 0; s.cast = 0; s.vx = 0; s.vy = 0;
     // a Double is its owner's wizard (drawn translucent and violet-tinted by the sprite)
     const owner = b.kind[i] === KIND.double ? this.ownerOf(w, i) : i;
     // a conjured weapon or wand replaces the staff (a Double keeps the staff: only seats draw weapons)
@@ -575,7 +580,7 @@ export class WorldView {
       const vx = (b.x[i] - this.prevBX[i]) * 60 * PPU;
       s.vx = vx > 25 ? 60 : vx < -25 ? -60 : 0;
     }
-    if (owner < MAX_SEATS) { s.prep = Math.round(this.prepS[owner] * 2) / 2; s.cast = Math.round(this.castS[owner] * 2) / 2; }
+    if (owner < MAX_SEATS) { s.prep = Math.round(this.prepS[owner] * 2) / 2; s.cast = Math.round(this.castS[owner] * 2) / 2; s.shot = this.shot[owner]; s.shotT = t - this.shotAt[owner]; }
     // hit: a squash and a white flash, soft while a beam keeps hitting
     const fa = t - this.flashT[i];
     s.flash = fa < 0 ? 0 : this.flashSoft[i] ? (fa < 0.08 ? 4 : 0) : fa < 0.05 ? 16 : fa < 0.1 ? 9 : fa < 0.18 ? 4 : 0;

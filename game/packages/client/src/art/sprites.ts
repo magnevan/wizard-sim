@@ -162,6 +162,8 @@ function stretch(a: Anchors, k: number): Anchors {
 
 /** After an attack's hit: its follow-through plays this long before a moving body's legs take over, over BLEND (s). */
 const FOLLOW = 0.25, BLEND = 0.3;
+/** A wizard's one-shot starts this long (s) before its release, so the game's instant cast gets a moment's wind-up. */
+const SHOT_LEAD = 0.2;
 
 /**
  * What a live model (art/live3d.ts) shows for a rig state: the same choices as cellOf, as a clip time instead of a sheet
@@ -180,6 +182,15 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
   if (s.dead > 0) return { move: 'death', t: dur('death') * Math.min(1, s.dead), face, flash };
   if (s.kind === 'wizard') {
     const seat = X.TEAMS[s.pal % X.TEAMS.length], c = meta.casts?.cast;
+    // a one-shot (the staff's blow, an Area or Self cast) plays from just before its release, the release a moment
+    // after it went off in the game, then hands back
+    if (s.shot) {
+      const a = meta.attacks[0], o = s.shot === 1 ? (a ? { first: a.first, hit: a.hit, last: a.last } : undefined) : meta.casts?.[s.shot === 2 ? 'area' : 'self'];
+      if (o) {
+        const t = Math.max(o.first, o.hit - SHOT_LEAD) + s.shotT;
+        if (s.shotT >= 0 && t <= o.last) return { move: s.shot === 1 ? 'attack0' : s.shot === 2 ? 'area' : 'self', t, face, flash, seat };
+      }
+    }
     // a Force cast: the push clip into its full stretch (halfway from the release to the clip's end), held while the
     // spell flows; gathering loops in real time (as the sheet's cellOf)
     if (c && s.cast > 0) { const held = c.hit + (c.last - c.hit) / 2; return { move: 'cast', t: c.first + (held - c.first) * Math.min(1, s.cast), face, flash, seat }; }
@@ -217,7 +228,7 @@ export function spriteFrame(s: RigState, who: number, rigAnchors: Anchors): Fram
   const lm = LIVE3D_ON ? liveMeta(slug) : undefined;
   if (lm && sh) {
     const px = lm.height ? lm.height * PX_PER_UNIT : sh.meta.height;
-    const live = liveFrame(slug, livePose(slug, s, who), stretch(rigAnchors, px / HEIGHT[s.kind]));
+    const live = liveFrame(slug, livePose(slug, s, who), stretch(rigAnchors, px / HEIGHT[s.kind]), who);
     if (live) return live;
   }
   load();

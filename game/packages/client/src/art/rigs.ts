@@ -64,6 +64,11 @@ export interface RigState {
    * frame cache): the facing in radians, and the art px walked, which drives the walk and run clips by their stride.
    */
   faceT: number; dist: number;
+  /**
+   * Live 3D only: a wizard's latest one-shot move and the seconds since it went off: 1 a weapon blow (Strike or
+   * Sweep), 2 an Area cast, 3 a Self cast; 0 none.
+   */
+  shot: number; shotT: number;
   // Deaths only (art/deaths.ts paints these states uncached each frame; the view's cached states
   // never set them, so the frame cache key leaves them out):
   /** Tint every colour toward `tint` by tintK (a char, a scald flush). */
@@ -88,7 +93,7 @@ export interface RigState {
 
 export const newRigState = (): RigState => ({
   kind: 'goblin', pal: 0, variant: 0, seed: 0, face: 0, spd: 0, ph: 0, idle: 0, vx: 0, vy: 0, prep: 0, cast: 0, sq: 0, dead: 0,
-  burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0, atk: -1, hold: 0, hitT: NaN, swing: 0, faceT: 0, dist: 0,
+  burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0, atk: -1, hold: 0, hitT: NaN, swing: 0, faceT: 0, dist: 0, shot: 0, shotT: 0,
   tint: null, tintK: 0, outline: null, eyeCol: null, eyesShut: 0, fallSide: 0, flashCol: null, bare: 0, crown: 1, alpha: 1, hd: 0,
 });
 

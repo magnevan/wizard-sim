@@ -260,7 +260,7 @@ interface Model { scene: THREE.Object3D; clips: Map<string, THREE.AnimationClip>
 interface Seat { on: { value: number }; main: { value: THREE.Vector3 }; trim: { value: THREE.Vector3 } }
 interface Soft { node: THREE.Object3D; axis: THREE.Object3D; k: number; rest: THREE.Quaternion }
 interface Inst {
-  seat: Seat; soft: Soft[];
+  seat: Seat; soft: Soft[]; tip: THREE.Object3D | null;
   root: THREE.Group; shift: THREE.Group; turn: THREE.Group; body: THREE.Object3D; mixer: THREE.AnimationMixer;
   actions: Map<string, THREE.AnimationAction>; hips: THREE.Object3D | null; rest: THREE.Vector3; flash: { value: number };
   bow: { tips: THREE.Object3D[]; nock: THREE.Object3D; grip: THREE.Object3D; hand: THREE.Object3D; fore: THREE.Object3D; parts: THREE.Mesh[] } | null;
@@ -322,7 +322,7 @@ function instance(slug: string, m: Model): Inst {
     const n = node(body, sp.node), ax = node(body, sp.axis);
     if (n && ax) soft.push({ node: n, axis: ax, k: sp.k, rest: n.quaternion.clone() });
   }
-  return { seat, soft, root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
+  return { seat, soft, tip: node(body, 'staff socket') ?? null, root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
 }
 
 const ease = (t: number) => t * t * (3 - 2 * t);
@@ -414,7 +414,9 @@ function stringOf(inst: Inst, m: Model, p: LivePose, stage: THREE.Group): void {
 }
 
 // ---- booking and flushing --------------------------------------------------------------------------------------------------------
-interface Booking { slug: string; slot: Slot; pose: LivePose }
+interface Booking { slug: string; slot: Slot; pose: LivePose; key: string }
+/** Each live body's staff tip last frame (art px from the feet), where its spells start (anchors tip and charge). */
+const tips = new Map<string, [number, number]>();
 const booked: Booking[] = [];
 let nextSmall = 0, nextBig = 0;
 
@@ -422,7 +424,7 @@ let nextSmall = 0, nextBig = 0;
  * A body's live frame for this draw, or null (live drawing is off, its model isn't loaded yet, or the atlas is full):
  * the caller falls back to the baked sheet. `anchors` are the rig's, already fitted to the sprite's height.
  */
-export function liveFrame(slug: string, p: LivePose, anchors: Anchors): Frame | null {
+export function liveFrame(slug: string, p: LivePose, anchors: Anchors, who = 0): Frame | null {
   if (!LIVE3D_ON || failed) return null;
   if (!model(slug)) return null;
   if (!gl) gl = makeGl();
@@ -430,8 +432,9 @@ export function liveFrame(slug: string, p: LivePose, anchors: Anchors): Frame | 
   const big = BIG_SLUGS.has(slug);
   const k = big ? (nextBig < NBIG ? NSMALL + nextBig++ : -1) : (nextSmall < NSMALL ? nextSmall++ : -1);
   if (k < 0) return null;
-  const slot = slots[k];
-  booked.push({ slug, slot, pose: p });
+  const slot = slots[k], key = slug + '|' + who, tip = tips.get(key);
+  if (tip) anchors = { ...anchors, tip, charge: tip };
+  booked.push({ slug, slot, pose: p, key });
   if (!slot.frame) slot.frame = { tex: slot.tex!, a: anchors, c: gl.out, sx: slot.cx, sy: slot.cy };
   else slot.frame = { ...slot.frame, a: anchors };
   return slot.frame;
@@ -468,7 +471,12 @@ export function flushLive(): void {
     const x = b.slot.x * SUPER, y = (AH - b.slot.y - size) * SUPER, w = size * SUPER;
     hiRT.viewport.set(x, y, w, w); hiRT.scissor.set(x, y, w, w); hiRT.scissorTest = true;
     renderer.setRenderTarget(hiRT);
-    renderer.render(scene, b.slot.big ? g.camBig : g.camSmall);
+    const cam = b.slot.big ? g.camBig : g.camSmall;
+    renderer.render(scene, cam);
+    if (inst.tip) {   // the staff's socket, projected into the slot, as art px from the feet
+      const o = b.slot.big ? BIG : SMALL, q = inst.tip.getWorldPosition(v1).project(cam);
+      tips.set(b.key, [Math.round((q.x + 1) / 2 * o.size - o.feet[0]), Math.round((1 - q.y) / 2 * o.size - o.feet[1])]);
+    }
     stage.clear();
   }
   hiRT.scissorTest = false; hiRT.viewport.set(0, 0, AW * SUPER, AH * SUPER);

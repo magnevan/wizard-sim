@@ -57,3 +57,12 @@ Two tries at game sprites instead of concepts, for the [warband art](../../docs/
 - A six-frame death strip from the 32 px sprite (8x on magenta, two facings): a real grid (about 8.7 px), all six beats as numbered, and good invented detail (spilled coins, the blade flying). The character drifted rounder and bigger-headed. Converting needs about 64 colours, or the blue hood merges into the green.
 - Inputs for image-to-3D (`tools/sprites-3d/prompts/meshy-*.txt`): asked for a smooth turntable-style render in an A-pose on white, with the pixel sprites as design references only. Both came back clean (a front view, and front, side and back on one baseline) and on-model.
 - `gen.sh` also runs code prompts: `tools/sprites-3d/prompts/codex-model.txt` had Codex write a whole Blender model script to a given skeleton, and it ran Blender itself to test it.
+
+### 2026-11-17, wizard arms
+
+Prop sheets for the wizard's conjured weapons and guards, for the [warband art](../../docs/explorations/2026-11-16-warband-art.md) review. References: the approved goblin weapon sheet (`tools/sprites-3d/input/roster/weapons.png`) for layout and finish, and the wizard's model sheet (`wizard.png` beside it) for style and size. Each set comes in two directions: A made of the element, B forged with the element as an inlay.
+
+- Both weapon sheets came back clean, on white and in the goblin sheet's finish, in about a minute each. Codex put long weapons lying flat along the bottom on its own.
+- "Made of its element" turns weak shapes literal: the flame sword became a torch, the maul a mushroom. Water and Cold both turn pale blue unless their colours are told apart ("deep blue" against "cyan").
+- Scale on a sheet is loose even with heights given against the wizard; set sizes when the prop goes in the hand.
+- Four at once: the computer ran low on memory and the runs were stopped. Two weapon images survived (one only in `~/.codex/generated_images/`). Run two at a time while other heavy work is open.

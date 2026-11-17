@@ -1,0 +1,16 @@
+Generate one image with your image generation tool, then save it as weapons-a.png in the current directory. Reply with just the file name.
+
+The attached images are references. The first is a weapon reference sheet made for our game's goblins: match its layout, rendering style and finish exactly (smooth stylised shapes, chunky readable forms, simple colours, soft even lighting, plain white background). The second is the 3D-model reference picture of our player wizard, a short stocky storybook wizard with big chunky hands, about 1.4 metres tall counting his huge hat: the new weapons are for him, so match his style and size them for his hands.
+
+Subject: a weapon reference sheet for a 3D modeller. Seven magic weapons that the wizard conjures out of the elements, laid out in two rows (four on top, three below), each shown flat from the side, well apart and fully in frame, on a plain pure white background, evenly and softly lit like clean 3D game prop renders. Each weapon is made mostly of its own element, shaped into a solid, sculpted, toy-like form (no loose particles, smoke or sparks: the game adds those as effects), with only a small grip of plain material where the hand holds it. Grips are thick and chunky for big cartoon hands; heads and blades are big and bold so each reads from far away.
+
+Top row, left to right:
+1. Flame sword (Fire), about half the wizard's height: a short broad blade sculpted as one stylised flame, layered orange to yellow with a hot pale core, tongues of flame along its edges like carved scallops; a dark iron crossguard and a leather-wrapped grip.
+2. Stone maul (Earth), about three quarters of the wizard's height: a big rough boulder head of brown-grey rock with a few crystal chips, bound to a thick gnarled wooden haft by twisted roots.
+3. Echo focus (Arcane), about a third of the wizard's height: a short dark wand whose tip holds a big glowing magenta-violet orb in a little three-pronged cradle.
+4. Ice bow (Ice), about two thirds of the wizard's height: a bow carved from pale blue faceted ice, thick limbs with frosted white edges, a pale glowing string.
+
+Bottom row, left to right:
+5. Frost spear (Cold), a little taller than the wizard: a pale frosted shaft ending in a long jagged icicle head of clear cyan crystal, with rings of frost where head meets shaft.
+6. Lightning whip (Lightning): a short handle of dark wood with a violet crystal pommel, and a lash of jagged zig-zag violet-white lightning, solid and segmented like a chain of bolts, hanging in one loose S-curve.
+7. Tide trident (Water), a little taller than the wizard: a long shaft of smooth deep blue water, a crossbar shaped as a curling wave, three barbed prongs of glassy blue water with white foam tips.

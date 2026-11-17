@@ -187,6 +187,17 @@ The wizard followed: the other session's branch ("The wizard from 3D", above) wa
 - **A conjured weapon on the live wizard.** The code rig drew the conjured weapon in the wizard's hand in place of the staff (`RigState.bare`); the live model still holds its staff. Give the live wizard the weapon (a prop per weapon on the hand, as the goblins' props, or the rig's drawing composited) and hide the staff while it's held.
 - **Walk and run tuned to the real movement speed.** The clips now play by distance over their measured stride (feet planted), but each body's speed differs from its clip's natural pace (a goblin moves about three times the walk clip's own speed), so some cycles play fast. Go over every walk and run: which clip at which speed (the walk-to-run threshold), whether to pick or buy clips nearer each body's speed, and the stride measurement itself.
 
+## The wizard's weapons and guards, pictures for Meshy (2026-11-17)
+
+The user asked for new weapons and shields for the 3D wizard at his new size: Codex concept art they approve, then meshes. The seven conjured weapon objects (flame sword, stone maul, echo focus, ice bow, frost spear, lightning whip, tide trident; Healing hands stays bare) were drawn as two sheets, with the goblin weapon sheet (layout and finish) and the wizard's model sheet (style and size) as references. Prompts: `tools/concept-gen/prompts/2026-11-17-wizard-arms/`. Sheets: `docs/reference/wizard-arms/`.
+
+- **A, conjured:** each weapon made of its element. Bold, but the flame sword reads as a torch, the maul as a mushroom, and the spear and trident are the same pale blue.
+- **B, forged:** wood and gold with the element as a glowing blade, head or gem. It matches the wizard's gold trim, gives Meshy solid separate parts, and keeps every element's colour apart.
+
+Claude's pick: B for all seven. The whip's lash is animated in code either way (a rigid mesh can't swing; see the generated-animation limits), so only its handle needs a model. Each approved weapon is a Meshy prop at smart topology, about 15 credits, about 105 for all seven, with a fresh OK before spending. On the review page as `arm-<weapon>` {mark a/b/redo}.
+
+The two guard sheets (the eight guards, in the same two directions) were stopped when the computer ran low on memory, before Codex drew them; they run again when the user says.
+
 ## Claude's picks, pending the review
 
 *(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the goblins and the wizard are drawn live from 3D in the game; see the sections above.)*

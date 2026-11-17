@@ -144,10 +144,16 @@ async function boot(): Promise<void> {
   // Sound is prepared after boot and starts on the first input, as browsers ask; ?sound=0 leaves it out (audio/game-audio.ts).
   const audio = params.get('sound') === '0' ? null : new GameAudio(loadVolumes(params), !headless);
   view.sound = audio?.director ?? null;
-  // ?lab=fire on the dev server: the Sound Lab. The check goes first so a build drops the whole file.
+  // ?lab on the dev server: the Sound Lab, one page with a tab per element and one for music and ambience. The check goes first so a build drops the whole file.
   let lab: { input(w: World): PlayerInput | null } | null = null;
-  if (import.meta.env.DEV && audio && params.get('lab')) void import('./audio/lab').then((m) => { lab = new m.SoundLab(audio, params.get('lab')!); });
-  else if (import.meta.env.DEV && audio && params.get('baseline') !== '0') void import('./audio/baseline').then((m) => m.loadBaseline(audio));
+  // ?lab=atmos: the Atmosphere Lab (music and ambience per room); without it, each room plays the beds marked Right there
+  if (import.meta.env.DEV && audio && params.get('lab') === 'atmos') void import('./audio/atmos').then((m) => { lab = new m.AtmosLab(audio); });
+  // ?lab on its own opens the first lab with takes still to review; its tabs reach the rest
+  else if (import.meta.env.DEV && audio && params.has('lab')) void import('./audio/lab').then((m) => { lab = new m.SoundLab(audio, params.get('lab') ?? ''); });
+  else if (import.meta.env.DEV && audio && params.get('baseline') !== '0') {
+    void import('./audio/baseline').then((m) => m.loadBaseline(audio));
+    void import('./audio/atmos').then((m) => m.roomBeds(audio, () => world.def.id));
+  }
   const fit = () => view.resize(host.clientWidth, host.clientHeight, Number(params.get('scale')) || undefined);
   fit();
   addEventListener('resize', fit);

@@ -19,7 +19,7 @@ The last recorded scope is beats 1–7, through the battery.
 ## Sound design
 
 > [!in-review] Compare takes in play
-> Open the dev Sound Lab with `?lab=<element>`. Capture decisions about the clip or cast moment being reviewed.
+> Open the dev Sound Lab with `?lab` (a tab per element, and one for music and ambience). Capture decisions about the clip or cast moment being reviewed.
 
 The [sound direction](presentation/sound.md) holds the rules that carry over between kits.
 

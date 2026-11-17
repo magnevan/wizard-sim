@@ -149,7 +149,7 @@ async function boot(): Promise<void> {
   const keyboard = new KeyboardMouse(app.canvas, view.camera);
   let recorder = new ReplayRecorder(7, MAX_SEATS);
   const tune = new TunePanel(optOn('tune'));
-  const tools = new ToolsPanel(world, view.camera, app.canvas, optOn('tools'));
+  const tools = new ToolsPanel(world, view.camera, app.canvas, optOn('tools'), optOn('stage'));
   const stats = new StatsPanel(world, optOn('stats'));
   const inspect = new Inspect(world, view.camera);
   const help = new HelpPanel(world, view, headless ? null : pads, { headless, open: optOn('help'), force: opt('helpq'), hint: optOn('helphint'), stats: optOn('helpstats') });

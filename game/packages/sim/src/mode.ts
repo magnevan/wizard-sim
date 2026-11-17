@@ -58,6 +58,8 @@ export interface Possession {
 export interface EnemyRules {
   /** Enemy i holds a spot instead of fighting, battering what's there (the battery's lanes). */
   holdAt?(w: World, i: number): [number, number] | undefined;
+  /** Which way enemy i faces while it holds its spot (turns; default 0.25, south: the wall). The dev stage aims a puppet's swing with it. */
+  holdFace?(w: World, i: number): number | undefined;
   /** Enemy i walks to a spot and stands there, doing nothing (the yard's sparring soldiers, waiting their turn). */
   restAt?(w: World, i: number): [number, number] | undefined;
   /** Who enemy i goes for, before the nearest wizard (-1: nobody in particular). */

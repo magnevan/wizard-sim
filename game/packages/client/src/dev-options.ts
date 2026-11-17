@@ -53,6 +53,7 @@ export const OPTIONS = [
   // ---- Panels: what is open at boot ----
   { key: 'tune', group: 'Panels', label: 'Open Tune', kind: 'flag', help: 'Open this panel at boot (F2).' },
   { key: 'tools', group: 'Panels', label: 'Open Tools', kind: 'flag', help: 'Open the tools panel at boot (F3: cheats, time, spawning).' },
+  { key: 'stage', group: 'Panels', label: 'Stage tools', kind: 'flag', help: 'The Model Viewer\'s play area: opens the Tools panel with its Stage on (enemies held still, God mode). Puppet and weapon controls are in the Stage section.' },
   { key: 'stats', group: 'Panels', label: 'Open Stats', kind: 'flag', help: 'Open the stats panel at boot (F4: tick, hash, fps, meters).' },
   { key: 'help', group: 'Panels', label: 'Open Help', kind: 'flag', help: 'Open the help panel at boot (F1).' },
   { key: 'helpq', group: 'Panels', label: 'Help shows queue', kind: 'text', help: 'Show that queue (water,cold) or those hands (hands:water) in the help panel.' },

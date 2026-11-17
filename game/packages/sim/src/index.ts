@@ -34,4 +34,4 @@ export { newTutorialBot, tutorialBotInput, type TutorialBotMemory } from './tuto
 export { survivePlan, SURVIVE_TIMES, grant, restartRun, raiseAltars, chooseElement, keyWave } from './survive';
 export { botInput, newBotMemory, type BotMemory } from './bot';
 export { tunables, findTunable, overrides, applyOverrides, resetTuning, tuningHash, type Tunable } from './tuning';
-export { devSpawnEnemy, devRefillRunes, devHeal, devClearEnemies, devStartWave, devSkipLull, devStopWaves, devRestartRun } from './dev';
+export { devSpawnEnemy, devRefillRunes, devHeal, devClearEnemies, devStartWave, devSkipLull, devStopWaves, devRestartRun, devStage, devStageOff, devPuppetAttack, devConjure, DEV_WEAPONS, type DevStage } from './dev';

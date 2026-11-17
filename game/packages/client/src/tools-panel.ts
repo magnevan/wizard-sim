@@ -4,7 +4,8 @@
  *
  * Cheats edit the world from outside step(), so a run that used one no longer replays from its
  * inputs: the Stats panel then says "dev-edited". Online they're off (they would desync the match).
- * While the panel is open: N spawns the chosen enemy at the cursor, P pauses, `.` steps one tick.
+ * While the panel is open: N spawns the chosen enemy at the cursor, P pauses, `.` steps one tick, K takes or lets go of
+ * a puppet (the Stage section, stage-tools.ts: the Model Viewer's play area).
  */
 import { perkOf } from './art/perks';
 import {
@@ -13,6 +14,7 @@ import {
 } from '@wizard-sim/sim';
 import type { Camera } from './camera';
 import { DebugPanel, h, panelSection, renderFlags } from './debug-panel';
+import { StageTools } from './stage-tools';
 
 const SCALES = [0.25, 0.5, 1, 2];
 
@@ -34,9 +36,14 @@ export class ToolsPanel extends DebugPanel {
   private el: Record<'msg' | 'pause' | 'flags', HTMLElement> | null = null;
   private scaleBtns: HTMLButtonElement[] = [];
   private toggles: { key: 'infiniteRunes' | 'godMode'; box: HTMLInputElement }[] = [];
+  /** The Stage section: enemies held still, a puppet, any weapon (stage-tools.ts). */
+  readonly stage: StageTools;
 
-  constructor(private world: World, private camera: Camera, canvas: HTMLElement, openNow = false) {
+  /** `stageNow`: the Stage at boot (?stage=1): the panel opens with enemies held still and God mode on. */
+  constructor(private world: World, private camera: Camera, canvas: HTMLElement, openNow = false, stageNow = false) {
     super('right', 'F3', 'Tools', 'Debug tools', 2);
+    this.stage = new StageTools(world, camera, canvas, () => { if (!this.offline()) return false; this.cheat(); return true; }, () => this.isOpen);
+    if (stageNow) { this.godMode = true; this.devEdited = true; this.stage.setHold(true); openNow = true; }
     canvas.addEventListener('pointermove', (e) => { this.cursor = { x: e.clientX, y: e.clientY }; });
     addEventListener('keydown', (e) => {
       if (!this.isOpen || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -53,6 +60,7 @@ export class ToolsPanel extends DebugPanel {
   /** After every sim step: apply the cheats, so the next step starts topped up. */
   afterStep(): void {
     if (this.online()) return;
+    this.stage.afterStep();
     const w = this.world;
     if (this.infiniteRunes) devRefillRunes(w, 0);
     if (this.godMode) for (let s = 0; s < MAX_SEATS; s++) if (w.bodies.kind[s] === KIND.wizard && w.bodies.team[s] === TEAM.players) devHeal(w, s);
@@ -153,7 +161,8 @@ export class ToolsPanel extends DebugPanel {
         pu, act('Give P1', () => grant(this.world, 0, Number(pu.value), Number(pu.value) === PU.deepEl ? EL.fire : 0), 'P1 takes this power-up now'));
       enemies.appendChild(sv);
     }
-    this.toolsEnd = enemies.parentElement!;
+    this.stage.fill(panelSection('Stage', true, root));
+    this.toolsEnd = root.lastElementChild!;
     for (const x of this.extra) this.placeSection(x);
   }
 

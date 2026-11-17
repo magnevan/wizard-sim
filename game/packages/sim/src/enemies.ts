@@ -111,7 +111,7 @@ export function tickEnemies(w: World): void {
 
     // the mode may have it hold a spot instead (the battery's lanes: harmless, they batter a wall)
     const hold = rules?.holdAt?.(w, i);
-    if (hold) { holdWall(w, i, a, hold); continue; }
+    if (hold) { holdWall(w, i, a, hold, rules?.holdFace?.(w, i) ?? 0.25); continue; }
     const rest = rules?.restAt?.(w, i);
     if (rest) { standAt(w, i, a, rest); continue; }
     let t = b.ai[i] === AI.windup ? b.target[i] : -1;
@@ -147,7 +147,7 @@ export function tickEnemies(w: World): void {
  * The battery: an enemy goes to a spot and batters what's south of it, harmlessly, wind-up and blow over and over (the
  * view draws them as it would any attack): the stakes as you arrive, else the wall in front of a defence (holdSpot).
  */
-function holdWall(w: World, i: number, a: (typeof ARCHETYPES)[number], [sx, sy]: [number, number]): void {
+function holdWall(w: World, i: number, a: (typeof ARCHETYPES)[number], [sx, sy]: [number, number], face: number): void {
   const b = w.bodies;
   if (len(sx - b.x[i], sy - b.y[i]) > 0.5) {
     if (b.ai[i] !== AI.approach) setAi(w, i, AI.approach);
@@ -155,8 +155,10 @@ function holdWall(w: World, i: number, a: (typeof ARCHETYPES)[number], [sx, sy]:
     move(w, i, [sx, sy], -1, a.speed * b.speedMult[i] * chillPace(b.chill[i]));
     return;
   }
-  turnToward(w, i, 0.25); // facing south: the wall, or the stakes
-  b.target[i] = -1; b.lockX[i] = b.x[i]; b.lockY[i] = b.y[i] + 1.5;
+  turnToward(w, i, face); // facing south, the wall or the stakes, unless the mode says otherwise
+  b.target[i] = -1;
+  if (face === 0.25) { b.lockX[i] = b.x[i]; b.lockY[i] = b.y[i] + 1.5; } // south, exactly (the battery's replays)
+  else { b.lockX[i] = b.x[i] + cosTurns(face) * 1.5; b.lockY[i] = b.y[i] + sinTurns(face) * 1.5; }
   if (b.ai[i] === AI.approach && b.aiT[i] > T(0.3)) setAi(w, i, AI.windup);
   else if (b.ai[i] === AI.windup && b.aiT[i] >= T(a.windup)) setAi(w, i, AI.cooldown);
   else if (b.ai[i] === AI.cooldown && b.aiT[i] >= T(a.cooldown)) setAi(w, i, AI.approach);

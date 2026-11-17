@@ -63,8 +63,22 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="ingame">
+    <h2 id="ingame">Latest: the whole band, in the game</h2>
+    <p>Your approved pictures went all the way through, unattended: a Meshy model each (made the cheap way, 15 credits), a rig (5) and only the clips their mechanics use (3 each), weapons as small 3D props on the hands, every move rendered in 8 directions at 20° and turned into 32 px pixel art, then packed into one sheet per goblin. <b>142 Meshy credits</b> in all, under your cap.</p>
+    <p><b>Try it:</b> the game on this branch draws the band from these sprites by default, in every room (<code>?sprites=0</code> brings back the code rigs). The wizard is 1.7× while they're on, the size you settled. The common goblins are the hooded and goggled raiders (two hooded to one goggled), the grabber is the hooker and the brute the chieftain; the imp and the tutorial's straw goblin keep their rigs.</p>
+    <figure><img src="img/roster-ingame.png" alt="A wave of hooded goblin raiders walking toward two wizards in the arena, at game size, enlarged."><figcaption>In the arena, the first wave (screenshot, enlarged 2×). Their shadows are longer than the rigs' because they're taller.</figcaption></figure>
+    <figure><img src="img/roster-still.png" alt="Six goblins standing in eight directions: hooded raider, goggled raider, archer, shieldbearer, hooker and the big chieftain with his maul."><figcaption>Standing, 8 directions: east, south-east, south, south-west, west, north-west, north, north-east.</figcaption></figure>
+    <figure><img src="img/roster-walk.gif" alt="All six walking in four directions."><figcaption>Walk (Meshy's free walk). South, south-west, east, north.</figcaption></figure>
+    <figure><img src="img/roster-run.gif" alt="All six running."><figcaption>Run: the raiders use Lean Forward Sprint, the rest Meshy's free run.</figcaption></figure>
+    <figure><img src="img/roster-attack.gif" alt="Every attack: the raiders' three slashes each, the archer's shot, the shieldbearer's spear thrust and shield push, the hooker's crouch and throw, the chieftain's maul swing."><figcaption>Attacks as the game plays them: each clip is warped so its wind-up fills the game's telegraph, the blow lands on the beat, then the recovery. A raider picks one of its three slashes for life.</figcaption></figure>
+    <figure><img src="img/roster-death.gif" alt="All six knocked down."><figcaption>Death: the knock-down; in the game the body then lies still and fades.</figcaption></figure>
+    <p>What I'd still change: the raiders' wind-up is mostly a held guard before the spin-slash (readable, but tame); the archer's draw is subtle; the hooker is still a little lime after a colour fix; elemental deaths don't play on sprites yet (your order: roster first). Statuses are a tint for now, and a hit flashes the sprite white.</p>
+    <div class="rate" id="ingame-rate"></div>
+  </section>
+
   <section aria-labelledby="roster">
-    <h2 id="roster">Latest: the rest of the band, pictures for Meshy</h2>
+    <h2 id="roster">Before that: the rest of the band, pictures for Meshy</h2>
     <p>The next step in the roster pipeline: one picture per goblin for Meshy to build a 3D model from. Each is drawn by Codex (free) from its 32 px sprite, matched to the hooded raider's picture so the band shares one build and finish. Hands are empty on purpose: Meshy drops thin things like blades, and a shield held in front would hide the body it has to rebuild. The weapons are drawn separately below and grafted on, like the raider's blade. Worn gear (goggles, helmet, quiver, chain, cape) stays on the body.</p>
     <p><b>An approved picture is what goes to Meshy</b> (about 20 credits each: model 15, rig 5). Mark Redo with a note and I'll draw it again, free.</p>
     <div class="jobs" id="concepts"></div>
@@ -374,6 +388,7 @@ for (const c of CONCEPTS) {
   const r = el('div', 'rate'); r.append(marks('ratings', 'con-' + c.id, AR), note('ratings', 'con-' + c.id, 'What to change'));
   box.append(el('h3', '', c.name), fig, el('p', '', c.notes), r); $('concepts').append(box);
 }
+$('ingame-rate').append(el('b', '', 'The band in play'), marks('ratings', 'ingame-band', KRC), note('ratings', 'ingame-band', 'Which goblin or move to redo, and how'));
 $('con-weapons-rate').append(el('b', '', 'Weapons'), marks('ratings', 'con-weapons', AR), note('ratings', 'con-weapons', 'Which to redo, and how'));
 for (const [id, what] of [['walk', 'Which walk'], ['run', 'Which run'], ['attack', 'Which attack'], ['extra', 'Idle and death']])
   $('clip-' + id + '-rate').append(el('b', '', what), marks('ratings', 'clip-' + id, [['code', 'Mine', 'maybe'], ['meshy', 'Meshy', 'keep'], ['mix', 'Mix', 'maybe']]), note('ratings', 'clip-' + id, 'Which row, what to change'));

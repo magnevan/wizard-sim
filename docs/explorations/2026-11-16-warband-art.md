@@ -124,6 +124,18 @@ Claude's pick: library clips for humanoid enemies (free walk, Lean Forward Sprin
 
 **The user's reply (2026-11-17):** the clips are very good, but buy only what a mechanic uses. Slow walk (maybe for chilled, later) and sneak have no mechanic, and combat idle isn't needed yet (perhaps later, for moments the AI has nothing to do). About three attack variants per enemy, depending on the enemy, so attacks look varied. Knock Down is the default death. Next: fill out the roster's animations first; elemental deaths later. Claude's plan for that: per member, a Codex T-pose picture (approved first), a Meshy smart-topology model (15) and rig (5), the weapon grafted, owned clips copied onto the new rig in Blender if that works (the first new goblin tests it), each attack retimed to the game's wind-up, strike, impact and recovery beats, then the usual render and pixel pass. New clips only where a member's mechanic needs one: an archery shot, a shield guard, a hook throw, a ground slam.
 
+## The roster into the game (2026-11-17, autonomous run)
+
+The user approved all five pictures and asked for the pipeline to run to the game unattended (Meshy cap 200, then 300 credits; spent 142). Each goblin: a Meshy smart-topology model (15, `meshy-t2.5`, 15k triangles, T-pose), a rig (5) and only the clips its mechanics use (3 each). Weapons are small Blender props attached to a bone (`props.py`). `roster.sh` renders every clip in 8 directions at 20 degrees and pixelizes it; `pack.py` packs one sheet per goblin (`game/content/assets/sprites/<slug>/`) and warps each attack so its wind-up, strike and recovery land on the game's beats, with the strike found as the weapon hand's fastest step. The client's `art/sprites.ts` draws them in place of the code rigs (on by default, `?sprites=0` for the rigs), with the wizard at 1.7x while they're on.
+
+What showed up on the way:
+- Running six Codex picture jobs at once overloaded its sandbox: every image was made but none saved; they were taken from `~/.codex/generated_images/`.
+- The chieftain was cropped and its maul read as a stick: the camera now aims at the scaled body's middle, the maul head is bigger, and it renders at 1.8x a goblin.
+- The archer's bow vanished at 32 px (made thicker) and its strike was tracked on the wrong hand (now the draw hand).
+- The hooker's Meshy texture came out lime; `pack.py` grades it toward the band's olive. Still a little yellow.
+- The raiders' wind-up is mostly a held guard pose before the body-spin slash; it reads as a telegraph but is less dramatic than the full clip. The archer's draw is subtle.
+- Deaths are the knock-down for every sprite goblin, then lying still and fading; the code rigs' elemental deaths don't play on sprites yet (the user's order: roster first, elemental deaths later).
+
 ## Claude's picks, pending the review
 
 1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in.

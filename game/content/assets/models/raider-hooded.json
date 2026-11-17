@@ -1,0 +1,84 @@
+{
+ "slug": "raider-hooded",
+ "fps": 24,
+ "clips": {
+  "walk": {
+   "source": "Armature|walking_man|baselayer",
+   "duration": 1.0333,
+   "stride": 1.1214
+  },
+  "run": {
+   "source": "Lean_Forward_Sprint_inplace",
+   "duration": 0.5667,
+   "stride": 1.2233
+  },
+  "attack0": {
+   "source": "Left_Slash",
+   "duration": 3.1667
+  },
+  "attack1": {
+   "source": "Thrust_Slash",
+   "duration": 3.0
+  },
+  "attack2": {
+   "source": "Right_Hand_Sword_Slash",
+   "duration": 1.5
+  },
+  "death": {
+   "source": "Knock_Down",
+   "duration": 2.5
+  }
+ },
+ "attacks": [
+  {
+   "clip": "attack0",
+   "first": 0.0,
+   "hit": 0.6666666666666666,
+   "last": 2.4166666666666665,
+   "cut": null
+  },
+  {
+   "clip": "attack1",
+   "first": 0.0,
+   "hit": 0.75,
+   "last": 2.7083333333333335,
+   "cut": null
+  },
+  {
+   "clip": "attack2",
+   "first": 0.0,
+   "hit": 0.5416666666666666,
+   "last": 1.3333333333333333,
+   "cut": null
+  }
+ ],
+ "yaw": {},
+ "release": {},
+ "tris": 5000,
+ "bones": [
+  "Hips",
+  "Spine02",
+  "Spine01",
+  "Spine",
+  "neck",
+  "Head",
+  "head_end",
+  "headfront",
+  "LeftShoulder",
+  "LeftArm",
+  "LeftForeArm",
+  "LeftHand",
+  "RightShoulder",
+  "RightArm",
+  "RightForeArm",
+  "RightHand",
+  "LeftUpLeg",
+  "LeftLeg",
+  "LeftFoot",
+  "LeftToeBase",
+  "RightUpLeg",
+  "RightLeg",
+  "RightFoot",
+  "RightToeBase"
+ ]
+}

@@ -12,6 +12,7 @@
 import { Texture } from 'pixi.js';
 import { HEIGHT, CELL_H, CELL_W, FEET_X, FEET_Y, SPRITES_ON, type Anchors, type RigState } from './rigs';
 import type { Frame } from './actors';
+import { LIVE3D_ON, liveFrame, liveMeta, type LivePose } from './live3d';
 import * as X from './px';
 
 interface Move { row: number; n: number }
@@ -111,16 +112,56 @@ function stretch(a: Anchors, k: number): Anchors {
   return { tip: p(a.tip), chest: p(a.chest), head: p(a.head), hands: a.hands.map(p), charge: p(a.charge) };
 }
 
+/** After an attack's hit: its follow-through plays this long before a moving body's legs take over, over BLEND (s). */
+const FOLLOW = 0.25, BLEND = 0.3;
+
+/**
+ * What a live model (art/live3d.ts) shows for a rig state: the same choices as cellOf, as a clip time instead of a sheet
+ * frame. An attack runs on the game's clock with its hit on the game's hit; a cut hold is skipped, as the sheet leaves it out.
+ */
+function livePose(slug: string, s: RigState, who: number): LivePose {
+  const meta = liveMeta(slug)!, face = s.faceT, flash = s.flash >= 9;
+  const dur = (m: string) => meta.clips[m]?.duration ?? 1;
+  // walk and run go by the distance walked over the clip's stride (art px: model units x the squash x 16 px a unit),
+  // so the feet stay planted whatever the body's speed
+  const step = (m: string) => {
+    const c = meta.clips[m], stride = (c?.stride ?? 1) * 1.15 * 16;
+    return (((s.dist / stride) % 1) + 1) % 1 * (c?.duration ?? 1);
+  };
+  const legs = s.spd >= 1 ? 'run' : 'walk';
+  if (s.dead > 0) return { move: 'death', t: dur('death') * Math.min(1, s.dead), face, flash };
+  if ((s.hitT === s.hitT || s.hold > 0) && meta.attacks.length) {
+    const a = meta.attacks[variantOf(who, s.swing, meta.attacks.length)];
+    const cut = a.cut, gap = cut ? cut[1] - cut[0] + 1 / meta.fps : 0;
+    // time on the clip with the cut hold taken out, then back to clip time
+    const kept = (t: number) => (cut && t > cut[1] ? t - gap : t);
+    const u = kept(a.hit) + (s.hold > 0 ? 1 / meta.fps : s.hitT);
+    const t = Math.max(a.first, cut && u >= cut[0] ? u + gap : u);
+    // the game creeps a goblin forward through its recovery: once the follow-through is done and it moves, its legs
+    // take over (a crossfade into the walk), so it doesn't slide on the attack's planted feet
+    const k = s.spd > 0 && s.hitT > FOLLOW ? Math.min(1, (s.hitT - FOLLOW) / BLEND) : 0;
+    const w2 = k * k * (3 - 2 * k);
+    if (t <= a.last && w2 < 1) return { move: a.clip, t, face, flash, ...(w2 > 0 ? { move2: legs, t2: step(legs), w2 } : {}) };
+  }
+  if (s.spd > 0) return { move: legs, t: step(legs), face, flash };
+  return { move: 'walk', t: 0, face, flash };
+}
+
 const cache = new Map<string, Frame>();
 /**
  * The sprite frame for a rig state, or null (a code rig, or its sheet not loaded yet). `rigAnchors` are the code rig's
- * anchors for the same state, which effects aim at; they are stretched to the sprite's size.
+ * anchors for the same state, which effects aim at; they are stretched to the sprite's size. Drawn live from the 3D
+ * model when it has one (art/live3d.ts), else from the baked sheet.
  */
 export function spriteFrame(s: RigState, who: number, rigAnchors: Anchors): Frame | null {
   const slug = slugOf(s);
   if (!slug) return null;
-  load();
   const sh = sheets.get(slug);
+  if (LIVE3D_ON && sh && liveMeta(slug)) {
+    const live = liveFrame(slug, livePose(slug, s, who), stretch(rigAnchors, sh.meta.height / HEIGHT[s.kind]));
+    if (live) return live;
+  }
+  load();
   if (!sh?.img) return null;
   const [m, f] = cellOf(sh, s, who), dir = dirOf(s.face), white = s.flash >= 9;
   const key = slug + '|' + m.row + '|' + dir + '|' + f + '|' + (white ? 1 : 0);
@@ -145,11 +186,19 @@ export function mulTint(a: number, b: number): number {
   return ch(16) | ch(8) | ch(0);
 }
 
-/** A death on a sprite: the knock-down plays once, then lies still and fades. */
-export interface SpriteDeath { slug: string; dir: number; x: number; y: number; t0: number }
+/** A death on a sprite: the knock-down plays once, then lies still and fades. `face` for a live model, `dir` for a sheet. */
+export interface SpriteDeath { slug: string; dir: number; face: number; x: number; y: number; t0: number }
 export const DEATH_HOLD = 1.6, DEATH_FADE = 0.6;
 /** The frame of a death `td` seconds in, and its opacity; null once it has faded out. */
 export function deathFrame(d: SpriteDeath, td: number, rigAnchors: Anchors): { f: Frame; alpha: number } | null {
+  const meta = LIVE3D_ON ? liveMeta(d.slug) : undefined;
+  if (meta) {
+    const play = meta.clips.death?.duration ?? 2;
+    if (td > play + DEATH_HOLD + DEATH_FADE) return null;
+    const f = liveFrame(d.slug, { move: 'death', t: Math.min(td, play), face: d.face, flash: false }, rigAnchors);
+    const fade = td - play - DEATH_HOLD;
+    if (f) return { f, alpha: fade > 0 ? Math.max(0, 1 - fade / DEATH_FADE) : 1 };
+  }
   const sh = sheets.get(d.slug);
   if (!sh?.img) return null;
   const m = sh.meta.moves.death, play = m.n / (sh.meta.fps || 12);

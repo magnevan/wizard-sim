@@ -213,6 +213,12 @@ if '--joints-view' in args:
             r.filepath = os.path.join(OUT, f'joints-{name}-{pose}.png'); bpy.ops.render.render(write_still=True)
     sys.exit(0)
 
+# --export=<out.glb>: the game's live 3D model instead of renders (export_game.py), from the model as set up so far
+if ANIM and any(a.startswith('--export=') for a in args):
+    import export_game
+    export_game.run(globals())
+    sys.exit(0)
+
 # hand-drawn sprites are squatter than the real thing: wider and a little shorter, from every side
 rig.scale = (1.15, 1.15, 0.92)
 

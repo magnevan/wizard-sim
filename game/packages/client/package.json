@@ -13,6 +13,10 @@
     "@wizard-sim/rules": "*",
     "@wizard-sim/sim": "*",
     "peerjs": "^1.5.4",
-    "pixi.js": "^8.22.0"
+    "pixi.js": "^8.22.0",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.187.0"
   }
 }

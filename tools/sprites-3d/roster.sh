@@ -2,25 +2,16 @@
 # Render and pixelize the warband roster from its Meshy rigs and clips (tools/sprites-3d/output/<slug>/, gitignored).
 # usage: tools/sprites-3d/roster.sh <work-dir> [slug ...]    then: python tools/sprites-3d/pack.py <work-dir>
 # Writes <work-dir>/<slug>/ (4x renders, track.json per move) and <work-dir>/<slug>-px/ (game-size frames).
+# The baked sheets are the fallback now (?live3d=0); the game draws the roster live from export.sh's models.
 set -u
 cd "$(dirname "$0")/../.."
 W="$(cygpath -m "$1")"; shift
 B="${BLENDER:-/c/Program Files/Blender Foundation/Blender 5.2/blender.exe}"
 O=tools/sprites-3d/output
-P=tools/sprites-3d/props.py
 ELEV=--elev=20
 FPS=--fps=24   # 24 so a slowed goblin (chilled) still shows 12 distinct frames a second
-# slug: model files | render options
-declare -A OPTS=(
-  [raider-hooded]="--add=tools/sprites-3d/raider_codex.py:blade"
-  [raider-goggles]="--prop=$P:knife@RightHand"
-  [archer]="--prop=$P:bow@LeftHand --release=archery_shot:39 --yaw=archery_shot:-90:14:30:48:58"   # the clip shoots out of its left side
-  [shieldbearer]="--prop=$P:spear@RightHand --prop=$P:shield@LeftForeArm"
-  [hooker]="--prop=$P:hook@RightHand"
-  [chieftain]="--prop=$P:maul@RightHand --canvas=96 --height=1.8"
-)
-declare -A DIR=([raider-hooded]=meshy-rig)
-slugs=("$@"); [ ${#slugs[@]} -eq 0 ] && slugs=(raider-hooded raider-goggles archer shieldbearer hooker chieftain)
+source tools/sprites-3d/roster-opts.sh
+slugs=("$@"); [ ${#slugs[@]} -eq 0 ] && slugs=("${ROSTER[@]}")
 for s in "${slugs[@]}"; do
   d="$O/${DIR[$s]:-$s}"
   rm -rf "${W:?}/${s:?}" "${W:?}/${s:?}-px"

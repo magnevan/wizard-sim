@@ -21,21 +21,9 @@ OUT = os.path.join(ROOT, 'game', 'content', 'assets', 'sprites')
 DIRS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east']
 DEATH = 18   # frames of the knock-down at 12 fps (scaled with the render's rate)
 MAX_W = 4096
-LEAD = 1.2   # seconds of clip kept before an attack's hit: the longest game wind-up (the brute's 1.1)
 
-# per character: which rendered clips play which move (substring of the clip's folder name)
-ROLES = {
-    'raider-hooded': {'walk': 'walking', 'run': 'sprint', 'attack': ['left_slash', 'thrust_slash', 'right_hand_sword_slash'], 'death': 'knock_down'},
-    'raider-goggles': {'walk': 'walking', 'run': 'sprint', 'attack': ['left_slash', 'thrust_slash', 'right_hand_sword_slash'], 'death': 'knock_down'},
-    # the archer's shot: the arrow leaves at clip frame 39 (render.py --release); the full draw held before it (34..38)
-    # is left out, so the game's 1 s wind-up shows the draw rising into the shot
-    'archer': {'walk': 'walking', 'run': 'running', 'attack': ['archery_shot'], 'death': 'knock_down',
-               'tune': {'archery_shot': {'hit': 39, 'cut': (34, 38)}}},
-    'shieldbearer': {'walk': 'walking', 'run': 'running', 'attack': ['thrust_slash', 'shield_push'], 'death': 'knock_down'},
-    'hooker': {'walk': 'walking', 'run': 'running', 'attack': ['crouch_pull_and_throw'], 'death': 'knock_down', 'grade': (0.84, 0.93, 0.9)},
-    'chieftain': {'walk': 'walking', 'run': 'running', 'attack': ['heavy_hammer_swing'], 'death': 'knock_down'},
-}
-
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from roles import ROLES, window   # shared with render.py --export
 
 def clip_dir(px, key):
     hits = sorted(d for d in os.listdir(px) if key in d and os.path.isdir(os.path.join(px, d)))
@@ -59,28 +47,6 @@ def graded(im):
     return Image.merge('RGBA', (r, g, b, a))
 
 
-def beats(track):
-    """(start, strike, end) frame positions of an attack clip from the weapon hand's path: the strike is its fastest step."""
-    pts = [p for p in track['hand']]
-    n = len(pts)
-    if n < 4 or any(p is None for p in pts): return 0, n * 0.5, n - 1
-    sp = [math.dist(pts[k], pts[k + 1]) for k in range(n - 1)]
-    lo, hi = int(n * 0.1), max(int(n * 0.1) + 1, int(n * 0.9))
-    s = max(range(lo, hi), key=lambda k: sp[k])
-    peak = sp[s] or 1
-    start = 0
-    for k in range(s, -1, -1):   # back to where the wind-up begins: the hand first moves with intent
-        if sp[k] < 0.08 * peak: start = k; break
-    # back from the clip's end to the last step that still moves: the recovery is over there. (Searching forward for the
-    # first still step stopped at holds, like an archer's pause after the shot, and cut the return to rest; the sprite
-    # then snapped back.)
-    end = n - 1
-    for k in range(n - 2, s, -1):
-        if sp[k] >= 0.05 * peak: end = k + 1; break
-    end = min(n - 1, max(end, s + 4) + 1)
-    return start, s + 0.5, end
-
-
 def pack(work, slug):
     px, raw = os.path.join(work, slug + '-px'), os.path.join(work, slug)
     R = ROLES[slug]
@@ -97,20 +63,9 @@ def pack(work, slug):
     for k, key in enumerate(R['attack']):
         c = clip_dir(px, key)
         tr = json.load(open(os.path.join(raw, c, 'track.json')))
-        b = beats(tr)
-        # the clip at its own speed, trimmed to the wind-up's start and the settled recovery; `hit` is the contact
-        # frame (just after the hand's fastest step), which the client lines up with the game's hit. ROLES `tune`
-        # overrides per clip, in clip frames: `hit` where the fastest step isn't the hit (a bow's is the reach for the
-        # arrow), `cut` a still hold to drop (frames left out, never retimed), `first` / `end`.
-        # (`tune` frames are given at 12 fps and scaled to the render's rate)
-        fps = tr.get('fps', 12); at = lambda v: round(v * fps / 12)
-        o = R.get('tune', {}).get(key, {})
-        first, last = at(o['first']) if 'first' in o else int(b[0]), at(o['end']) if 'end' in o else int(b[2])
-        hit = min(last, at(o['hit']) if 'hit' in o else round(b[1] + 0.5))
-        # keep at least LEAD seconds before the hit: the client starts a clip one game wind-up before its hit, and a
-        # trimmed start would hold its first frame through the rest of the wind-up
-        if 'first' not in o: first = max(0, min(first, hit - round(LEAD * fps)))
-        cut = tuple(at(v) for v in o['cut']) if 'cut' in o else (1, 0)
+        # the clip at its own speed (roles.window: trimmed, the contact frame `hit`, a still hold `cut` out, never retimed)
+        fps = tr.get('fps', 12)
+        first, hit, last, cut, b = window(tr['hand'], fps, R.get('tune', {}).get(key, {}))
         keep = [f for f in range(first, last + 1) if f == hit or not (cut[0] <= f <= cut[1])]
         rows.append((f'attack{k}', [[fr[f] for f in keep] for fr in (frames(px, c, d) for d in DIRS)]))
         atk_meta.append({'clip': c, 'beats': [round(v, 1) for v in b], 'frames': keep, 'hit': keep.index(hit)})

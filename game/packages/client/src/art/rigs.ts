@@ -59,6 +59,11 @@ export interface RigState {
   hitT: number;
   /** Sprites only: the body's swing count (view.ts), so each attack picks its own variant. */
   swing: number;
+  /**
+   * Live 3D only (art/live3d.ts), unrounded so a model turns and steps smoothly (face and ph are rounded for the rigs'
+   * frame cache): the facing in radians, and the art px walked, which drives the walk and run clips by their stride.
+   */
+  faceT: number; dist: number;
   // Deaths only (art/deaths.ts paints these states uncached each frame; the view's cached states
   // never set them, so the frame cache key leaves them out):
   /** Tint every colour toward `tint` by tintK (a char, a scald flush). */
@@ -83,7 +88,7 @@ export interface RigState {
 
 export const newRigState = (): RigState => ({
   kind: 'goblin', pal: 0, variant: 0, seed: 0, face: 0, spd: 0, ph: 0, idle: 0, vx: 0, vy: 0, prep: 0, cast: 0, sq: 0, dead: 0,
-  burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0, atk: -1, hold: 0, hitT: NaN, swing: 0,
+  burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0, atk: -1, hold: 0, hitT: NaN, swing: 0, faceT: 0, dist: 0,
   tint: null, tintK: 0, outline: null, eyeCol: null, eyesShut: 0, fallSide: 0, flashCol: null, bare: 0, crown: 1, alpha: 1, hd: 0,
 });
 
@@ -96,8 +101,8 @@ export const SPRITES_ON = (() => {
 })();
 
 /**
- * The wizard's drawing scale, from ?wizscale= (1 to 2; default 1.7 with sprites on, else 1). Its geometry grows and its pixels
- * don't: 1 px details stay 1 px, so a bigger wizard keeps the density of the bought sprites
+ * The wizard's drawing scale, from ?wizscale= (1 to 2; default 1.4 with sprites on, else 1; the user found 1.7 too big,
+ * 2026-11-17). Its geometry grows and its pixels don't: 1 px details stay 1 px, so a bigger wizard keeps the density of the bought sprites
  * (explorations/2026-11-16-warband-art.md). The sim's sizes don't change.
  */
 export const WIZ_Z = wizScale();
@@ -105,8 +110,8 @@ function wizScale(): number {
   try {
     const q = new URLSearchParams(globalThis.location?.search ?? '');
     const v = Number(q.get('wizscale'));
-    return v >= 1 && v <= 2 ? v : SPRITES_ON ? 1.7 : 1;
-  } catch { return SPRITES_ON ? 1.7 : 1; }
+    return v >= 1 && v <= 2 ? v : SPRITES_ON ? 1.4 : 1;
+  } catch { return SPRITES_ON ? 1.4 : 1; }
 }
 
 export const HEIGHT: Record<RigKind, number> = { wizard: 23 * WIZ_Z, goblin: 12, archer: 12, brute: 23, dummy: 18, bramble: 15, sack: 12 };

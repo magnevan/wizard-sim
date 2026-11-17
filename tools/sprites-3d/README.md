@@ -61,6 +61,8 @@ The chieftain renders at 1.8x a goblin's height on a 96 px frame (`--canvas=96 -
 
 `python review.py <out-dir>` makes the review images from the packed sheets (all six standing in 8 directions, and walk, run, attack and death GIFs); copy them to `tools/warband-art/img/roster-*`.
 
+7. **Export for live 3D** (what the game draws now): `tools/sprites-3d/export.sh [slug ...]` runs `render.py --export` (`export_game.py`) per character with the same options as the renders (`roster-opts.sh`): the model set up as for a render, its moves' clips as animations named `walk`, `run`, `attack0`.., `death`, thinned to about 5,000 triangles with a 256 px JPEG texture, into `game/content/assets/models/<slug>.glb`, and `<slug>.json` with each attack's first, hit and last time and cut hold (`roles.window`, shared with `pack.py`), the archer's turn and release, and each walk and run clip's stride (how far the ground passes under the planted foot in one loop). About half a minute a character. The client (`art/live3d.ts`) does the squash, the camera and the pixel pass on the GPU. Baked sheets (steps 5 and 6) are now the fallback only.
+
 ### Adding a creature (the checklist)
 
 1. Codex picture, T-pose, front view, empty hands (`prompts/roster/<slug>.txt` as the pattern). Run Codex jobs **one or two at a time**: six at once made every image but saved none (they were recovered from `~/.codex/generated_images/`). The user approves the picture before any credits.

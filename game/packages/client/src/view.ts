@@ -22,6 +22,7 @@ import {
 import { Camera, FY, PPU } from './camera';
 import { ActorFrames, FEET_X, FEET_Y } from './art/actors';
 import { deathDir, deathFrame, mulTint, slugOf, spriteFrame, statusTint, type SpriteDeath } from './art/sprites';
+import { flushLive } from './art/live3d';
 import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
 import { floorLayout, floorPlaceholder } from './art/floor';
@@ -153,6 +154,8 @@ export class WorldView {
   private prevKind = new Uint8Array(MAX_BODIES);
   // cosmetic per-body state: walk phase, speed, hit flash (attack poses come straight from the sim's ai / aiT)
   private ph = new Float64Array(MAX_BODIES);
+  /** Art px each body has walked, unrounded (live 3D models play walk and run by it). */
+  private dist = new Float64Array(MAX_BODIES);
   private spd = new Float64Array(MAX_BODIES);
   private flashT = new Float64Array(MAX_BODIES).fill(-9);
   private flashSoft = new Uint8Array(MAX_BODIES);
@@ -244,10 +247,11 @@ export class WorldView {
     }
     for (let i = 0; i < MAX_BODIES; i++) {
       if (!b.kind[i]) continue;
-      if (this.prevKind[i] !== b.kind[i]) { this.prevBX[i] = b.x[i]; this.prevBY[i] = b.y[i]; this.ph[i] = 0; this.flashT[i] = -9; this.hitAt[i] = NaN; }
+      if (this.prevKind[i] !== b.kind[i]) { this.prevBX[i] = b.x[i]; this.prevBY[i] = b.y[i]; this.ph[i] = 0; this.dist[i] = 0; this.flashT[i] = -9; this.hitAt[i] = NaN; }
       const d = Math.hypot(b.x[i] - this.prevBX[i], b.y[i] - this.prevBY[i]);
       this.spd[i] += (d * 60 / 4.2 - this.spd[i]) * 0.3;
       this.ph[i] += (d * PPU / STRIDE[this.rigOf(w, i)]) * Math.PI;
+      this.dist[i] += d * PPU;
     }
     // eased poses: staff raised while gathering, Area and Place; held out level for Force
     for (let i = 0; i < MAX_SEATS; i++) {
@@ -289,7 +293,7 @@ export class WorldView {
     if (slug) {
       // rollback: a tick shown twice (or a corrected one) must not play the same death again
       if (this.spriteDeaths.some((d) => d.who === i && Math.abs(d.tick - e.tick) < 90)) return;
-      this.spriteDeaths.push({ slug, dir: deathDir(s.face), x: Math.round(gx(b.x[i])), y: Math.round(gy(b.y[i])), t0: NaN, who: i, tick: e.tick, kind: s.kind });
+      this.spriteDeaths.push({ slug, dir: deathDir(s.face), face: s.face, x: Math.round(gx(b.x[i])), y: Math.round(gy(b.y[i])), t0: NaN, who: i, tick: e.tick, kind: s.kind });
       return;
     }
     this.deaths.add({ ...s, x: Math.round(gx(b.x[i])), y: Math.round(gy(b.y[i])), z: 0 }, {
@@ -374,6 +378,7 @@ export class WorldView {
     }
 
     this.drawSpriteDeaths(ct, fx0, fy0);
+    flushLive(); // the live 3D bodies booked above render into their atlas slots now (art/live3d.ts)
 
     const ax = (x: number) => ox + Math.round(x * PPU), ay = (y: number) => cam.toArtY(y);
     drawTelegraphs(w, { ground: this.sGround.clear(), overlay: this.sOverlay.clear(), ax, ay }, Math.round(ct * 60));
@@ -564,6 +569,7 @@ export class WorldView {
     const sp = this.spd[i];
     s.spd = sp < 0.15 ? 0 : sp < 0.6 ? 0.5 : 1;
     s.ph = s.spd ? (Math.round(mod(this.ph[i], TAU) / TAU * 8) / 8) * TAU : 0;
+    s.faceT = b.face[i] * TAU; s.dist = this.dist[i];
     s.idle = (Math.round(mod(ct * 2.6 + i, TAU) / TAU * 4) / 4) * TAU;
     if (kind === 'wizard' && s.spd) {
       const vx = (b.x[i] - this.prevBX[i]) * 60 * PPU;

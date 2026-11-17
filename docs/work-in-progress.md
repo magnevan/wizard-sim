@@ -23,6 +23,13 @@ The last recorded scope is beats 1–7, through the battery.
 
 The [sound direction](presentation/sound.md) holds the rules that carry over between kits.
 
+## Enemies and AI
+
+> [!in-review] Mark the enemies and the AI plan
+> On the Enemy Roster, mark each candidate enemy build, maybe or cut, and answer its seven questions. On Enemy Wizards, mark the plays and honesty rules and answer its questions.
+
+[Enemy Roster](https://claude.ai/artifact/QSBW1MzxrF7P1cktdfnXtP) · [Enemy Wizards](https://claude.ai/artifact/CssUe9PniLQRJ4LkKRZo9J) · [Enemies and AI](explorations/2026-11-14-enemies-and-ai.md) · [Enemy wizards](explorations/2026-11-14-enemy-wizards.md) · [Encounter-level AI](explorations/2026-11-14-encounter-level-ai.md)
+
 ## Picking up another review
 
 Add a review here when there's a specific decision or test to do. Keep its next question and a link to the working material. When it ends, update the owning topic with any decision or reusable rule and remove the review from this page.

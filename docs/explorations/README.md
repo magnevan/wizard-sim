@@ -67,6 +67,9 @@ Dated records of brainstorms, reviews and playtests. The last column identifies 
 | 2026-11-11 | [spell-audit](2026-11-11-spell-audit.md) | Spell audit: every spell inventoried, then decided step by step | |
 | 2026-11-13 | [engine-architecture-audit](2026-11-13-engine-architecture-audit.md) | Five-agent audit of `game/`: solid core, but modes, enemies, spells and effects are hard-coded branches; a phased plan (room modules, encounters as data, carry state) | |
 | 2026-11-13 | [encounters-as-data](2026-11-13-encounters-as-data.md) | Phase 2, part 1: Prop tags, Marker and Region entities, the encounter runner; the battery lesson ported unchanged | |
+| 2026-11-14 | [enemies-and-ai](2026-11-14-enemies-and-ai.md) | Magicka 1 and 2's enemies researched; thirteen candidate enemies; attack tokens, pacing, and companions as input bots with utility scoring | |
+| 2026-11-14 | [enemy-wizards](2026-11-14-enemy-wizards.md) | Enemy wizards: the queue as the tell, plays, honesty rules, three tiers, AI seats | Fills in enemies-and-ai's rival and hedge wizards |
+| 2026-11-14 | [encounter-level-ai](2026-11-14-encounter-level-ai.md) | The user's notes: AI at the encounter level (the demand budget, volleys), compositions and the layering ladder, defensive encounters, the Sigil economy (turrets can't be hurt) | |
 | 2026-11-16 | [campaign-map-pipeline](2026-11-16-campaign-map-pipeline.md) | From world map to playable blockout, with the Academy-to-Battery walk as the first test | |
 | 2026-11-16 | [element-order](2026-11-16-element-order.md) | The order you learn the elements in: fix a machine, get its element; Life first, an out-and-back route through the courtyard, Arcane as the finale; Codex concept images | |
 | 2026-11-16 | [opening-encounters](2026-11-16-opening-encounters.md) | The opening's fights: each stop asks the question its new element answers; the goblin warband plus rift-touched beasts, overgrowth and things from the surf | |

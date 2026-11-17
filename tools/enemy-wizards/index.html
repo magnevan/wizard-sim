@@ -1,0 +1,515 @@
+<title>Enemy Wizards</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: the Enemy Roster's field-guide look; a wide duel plate (stage over timeline) as the centrepiece, rateable rows below. */
+:root {
+  --bg: #eef0ea; --panel: #f8f9f5; --ink: #1d2620; --muted: #5a665d; --line: #c9d0c6;
+  --accent: #2f6b4f; --accent-ink: #ffffff; --warn: #a2442a; --chip: #e1e6dd;
+  --stage: #1f2a24; --stage-line: #3a4a41; --stage-ink: #d8e2da;
+  --wiz: #6fa8ff; --foe: #e46a55; --dodge: #e7c45a; --punish: #7fd49a;
+  --fire: #ee7a32; --water: #4a9be0; --cold: #a9dcef; --light: #c7a6ff; --earth: #b08a55; --life: #5fca7b; --arcane: #d6487f; --shield: #e7c45a; --sigil: #e9e2c8;
+  --f-display: "IM Fell English SC", "Palatino Linotype", Georgia, serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151b17; --panel: #1c241f; --ink: #e3ebe4; --muted: #9aa99e; --line: #33413a;
+  --accent: #74c79c; --accent-ink: #10180f; --warn: #ec8a6c; --chip: #26302a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151b17; --panel: #1c241f; --ink: #e3ebe4; --muted: #9aa99e; --line: #33413a;
+  --accent: #74c79c; --accent-ink: #10180f; --warn: #ec8a6c; --chip: #26302a; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--f-body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; display: grid; gap: 44px; }
+.prose { max-width: 70ch; display: grid; gap: 12px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 400; text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); }
+h2 { font-size: 1.9rem; }
+h3 { font-size: 1.3rem; }
+p { margin: 0; }
+a { color: var(--accent); }
+code { font-family: var(--f-mono); font-size: .88em; }
+.eyebrow { font: 600 .74rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.12rem; }
+.muted { color: var(--muted); }
+.small { font-size: .9rem; }
+section { display: grid; gap: 18px; }
+.status { font: .85rem var(--f-mono); color: var(--muted); }
+.status.bad { color: var(--warn); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.fact { border-top: 2px solid var(--ink); padding-top: 8px; display: grid; gap: 4px; min-width: 0; }
+.fact b { font-family: var(--f-display); font-weight: 400; font-size: 1.15rem; }
+.three { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.tell { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: grid; gap: 6px; min-width: 0; }
+.tell .n { font: 600 .8rem var(--f-mono); color: var(--muted); }
+.chip { display: inline-block; font: 600 .72rem/1 var(--f-mono); padding: 4px 7px; border-radius: 3px; background: var(--chip); color: var(--ink); letter-spacing: .03em; }
+.chip.rec { background: var(--accent); color: var(--accent-ink); }
+/* duel plate */
+.duel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 14px; }
+.duel canvas { width: 100%; display: block; max-width: 100%; border-radius: 6px; }
+#stage { aspect-ratio: 640 / 250; background: var(--stage); }
+#timeline { aspect-ratio: 640 / 120; }
+.controls { display: flex; gap: 14px 18px; flex-wrap: wrap; align-items: center; font-size: .92rem; }
+.seg { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.seg button, .marks button, .choices button, .plain { font: 600 .85rem var(--f-body); padding: 6px 11px; border-radius: 4px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+.seg button:hover, .marks button:hover:not(:disabled), .choices button:hover:not(:disabled), .plain:hover { border-color: var(--accent); }
+.seg button[aria-pressed="true"], .marks button[aria-pressed="true"], .choices button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button:disabled { opacity: .55; cursor: default; }
+button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.scrub { display: flex; gap: 10px; align-items: center; }
+.scrub input { flex: 1; min-width: 0; }
+.readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.ro { border-left: 3px solid var(--line); padding-left: 10px; display: grid; gap: 2px; }
+.ro b { font: 600 1.25rem var(--f-mono); font-variant-numeric: tabular-nums; }
+.ro span { font-size: .82rem; color: var(--muted); }
+.ro.dodge { border-color: var(--dodge); }
+.ro.punish { border-color: var(--punish); }
+.playnote { font-size: .95rem; }
+/* tables */
+.tablebox { overflow-x: auto; }
+table { border-collapse: collapse; font-size: .92rem; width: 100%; }
+th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); }
+td.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* rateable rows */
+.rows { display: grid; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; padding: 14px 0; border-top: 1px solid var(--line); }
+@media (max-width: 720px) { .row { grid-template-columns: 1fr; } }
+.row > div:first-child { display: grid; gap: 5px; min-width: 0; }
+.runes { display: inline-flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.rune { width: 14px; height: 14px; border-radius: 50%; display: inline-block; border: 1px solid #0005; }
+.kv { font-size: .9rem; color: var(--muted); }
+.kv b { color: var(--ink); font-weight: 600; }
+.side { display: grid; gap: 8px; align-content: start; }
+.marks { display: flex; gap: 6px; flex-wrap: wrap; }
+textarea { width: 100%; box-sizing: border-box; font: .92rem var(--f-body); padding: 7px 9px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--ink); resize: vertical; }
+.slug { font: .72rem var(--f-mono); color: var(--muted); }
+.qrow { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; padding: 16px 0; border-top: 1px solid var(--line); }
+@media (max-width: 760px) { .qrow { grid-template-columns: 1fr; } }
+.qtext { display: grid; gap: 6px; min-width: 0; }
+.choices { display: grid; gap: 6px; }
+.choices button { text-align: left; font-weight: 400; }
+.choices button .chip { margin-left: 6px; }
+.qn { font-family: var(--f-mono); font-size: .9rem; color: var(--muted); margin-right: 6px; }
+.readout { font: .85rem var(--f-mono); color: var(--muted); }
+footer { font-size: .85rem; color: var(--muted); display: grid; gap: 6px; }
+</style>
+
+<div class="wrap">
+  <header class="prose">
+    <span class="eyebrow">Wizard Sim · design review · 2026-11-14</span>
+    <h1>Enemy Wizards</h1>
+    <p class="lede">How an enemy wizard could fight with our spells: tactical enough to feel like a wizard, beatable on purpose. Mark the plays and the honesty rules, try the duel timeline, and answer the questions at the bottom. Anything left blank means you accept the recommendation.</p>
+    <p class="status" id="save">Connecting to saved marks…</p>
+  </header>
+
+  <section class="prose" aria-labelledby="h-mag">
+    <span class="eyebrow">Research</span>
+    <h2 id="h-mag">Magicka's wizard fights</h2>
+    <div class="facts">
+      <div class="fact"><b>Grimnir glows first</b><span class="small">He glows before a big spell, the way your wizard does, and a shield raised on the glow absorbs his conflagration. The fight plays like taking turns.</span></div>
+      <div class="fact"><b>Small fixed repertoires</b><span class="small">Goblin wizards wear their element's colour and cast a set list. All of them heal themselves, dry off with fire and douse themselves with water.</span></div>
+      <div class="fact"><b>They hit their own</b><span class="small">Goblin casters mostly soak and shock goblins. The ch. 4 Disciples hit their own machine if you hide behind it.</span></div>
+      <div class="fact"><b>Death's wind-up is the opening</b><span class="small">Death can only be hit while he winds up an attack. The tell is also your chance.</span></div>
+      <div class="fact"><b>The fight everyone hated</b><span class="small">The six-round Mind Duel: casters that one-shot you, ledges, and a restart from round one. Hard for the wrong reasons, not because the AI was clever.</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-princ">
+    <div class="prose">
+      <span class="eyebrow">The principle</span>
+      <h2 id="h-princ">A player who has to show its hand</h2>
+      <p>An enemy wizard plays by your rules: runes from pools on the shared regen, the same wind-up and recovery, friendly fire, wet, burning and chill. Its fairness comes from three things you can see. It never reads your keys; it sees the world through a reaction delay, and only what a co-op partner could see.</p>
+    </div>
+    <div class="three">
+      <div class="tell"><span class="n">1</span><h3>The queue is the tell</h3><p class="small">Its runes gather at its staff one at a time, as yours do, slower than a skilled player types. Water, Water… you know what's next.</p></div>
+      <div class="tell"><span class="n">2</span><h3>The commit</h3><p class="small">Spells of four or more runes add a focus glow before the wind-up. Once it glows, it's committed. Shield, Blink or stun it.</p></div>
+      <div class="tell"><span class="n">3</span><h3>The recovery</h3><p class="small">Every cast ends in a breath, twice as long after a big one. That's your opening.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-duel">
+    <div class="prose">
+      <span class="eyebrow">Try it</span>
+      <h2 id="h-duel">The duel timeline</h2>
+      <p>One play from start to finish, using the spec's numbers and the game's wind-up (0.12 s + 0.04 s a rune) and recovery (0.18 s). The yellow bracket is how long you can see it coming; the green one is your opening.</p>
+    </div>
+    <div class="duel">
+      <div class="controls">
+        <span class="seg" role="group" aria-label="Tier" id="tiers"></span>
+        <span class="seg" role="group" aria-label="Play" id="plays"></span>
+      </div>
+      <canvas id="stage" width="1280" height="500" role="img" aria-label="An enemy wizard on the right gathers runes at its staff, glows, winds up and casts at you on the left, then recovers"></canvas>
+      <canvas id="timeline" width="1280" height="240" role="img" aria-label="The play's timeline: notice, choose, queue, focus, wind-up, cast and breath, with the dodge and punish windows marked"></canvas>
+      <div class="scrub"><button type="button" class="plain" id="pp">Pause</button><input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Scrub the timeline"></div>
+      <div class="readouts">
+        <div class="ro dodge"><b id="r-dodge">–</b><span>you see it coming (first rune to impact)</span></div>
+        <div class="ro punish"><b id="r-punish">–</b><span>your opening after its last cast</span></div>
+        <div class="ro"><b id="r-total">–</b><span>the whole play</span></div>
+        <div class="ro"><b id="r-runes">–</b><span>runes it spends</span></div>
+      </div>
+      <p class="playnote" id="playnote"></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-plays">
+    <div class="prose">
+      <span class="eyebrow">Mark each one</span>
+      <h2 id="h-plays">Plays</h2>
+      <p>A play is one cast or a short named string of casts. The AI scores and picks plays, not single spells, so they read as intentions you learn to name. Each wizard carries a few. They use the same grammar and casts as yours.</p>
+      <p class="readout" id="ptally"></p>
+    </div>
+    <div class="rows" id="playrows"></div>
+  </section>
+
+  <section aria-labelledby="h-tactics">
+    <div class="prose">
+      <span class="eyebrow">Tactics, kept cheap</span>
+      <h2 id="h-tactics">How it moves and thinks</h2>
+      <ul class="small" style="margin:0;padding-left:1.2em;display:grid;gap:6px">
+        <li><b>A range band</b> by style: the duelist keeps 6 to 9 u, the brawler 3 to 5, the summoner stays behind its allies. It strafes inside the band and backs off when you close.</li>
+        <li><b>Cover</b> while it recovers: a pillar, a wall or its own allies between you.</li>
+        <li><b>A counter table by tier:</b> an apprentice knows nothing; an adept knows wet → lightning, burning → douse itself, your ward → switch; a master also knows freeze and shatter, cancels and baiting a puddle.</li>
+        <li><b>Memory that can be wrong:</b> it remembers your ward and your favourite element for a few seconds. Change your ward and it's briefly wrong. Bungie built Halo's surprises on this.</li>
+        <li><b>Friendly fire:</b> it soaks itself in its own Rain, burns in its own patch and hits its allies. Apprentices never check for allies, adepts half the time, masters always.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-rules">
+    <div class="prose">
+      <span class="eyebrow">Mark each one</span>
+      <h2 id="h-rules">Beatable on purpose: the honesty rules</h2>
+    </div>
+    <div class="rows" id="rulerows"></div>
+  </section>
+
+  <section aria-labelledby="h-tiers">
+    <div class="prose">
+      <span class="eyebrow">Tiers</span>
+      <h2 id="h-tiers">One brain, three sets of numbers</h2>
+      <p>Difficulty moves an encounter one tier step on these knobs. HP and damage stay as tuned.</p>
+    </div>
+    <div class="tablebox"><table id="tiertable"></table></div>
+  </section>
+
+  <section class="prose" aria-labelledby="h-enc">
+    <span class="eyebrow">Encounters</span>
+    <h2 id="h-enc">Where they show up</h2>
+    <ul class="small" style="margin:0;padding-left:1.2em;display:grid;gap:6px">
+      <li><b>Hedge wizards in a crowd</b> (apprentice): a goblin caster among goblins, with two plays, often hitting its own side. The common case and the first to build.</li>
+      <li><b>The duel</b> (adept, alone, in a ring or courtyard): a story beat. The opponent is yours to write: a rival, an examiner, anyone.</li>
+      <li><b>A coven</b> (two or three adepts): they share one set-up and payoff token, so one wets and the other shocks, never both at once.</li>
+      <li><b>A boss</b> (master, phases, adds): one new play per phase, with adds that pressure you without crowding the read.</li>
+    </ul>
+    <p class="small">It's the same brain as the companions proposed on the <a href="https://claude.ai/artifact/QSBW1MzxrF7P1cktdfnXtP">Enemy Roster</a>, with the team flipped and different weights. Building one gives you most of the other.</p>
+    <h3>What it costs to build</h3>
+    <p class="small">Casting state is per seat today: four seats hold the runes, pools and cast phase. <b>AI seats</b> (recommended) add seats 4 to 7 for casters driven inside the sim by an input bot, so every rule works unchanged and the queue shows at the staff for free. The cost is that the per-seat arrays double; the pathfinding fields can stay at four. <b>A caster component</b> on enemy bodies is cheaper per enemy but forks the casting code. Either one waits for the engine rework's phase 2.</p>
+  </section>
+
+  <section aria-labelledby="h-q">
+    <div class="prose">
+      <span class="eyebrow">Questions</span>
+      <h2 id="h-q">Seven decisions</h2>
+      <p>No answer means you accept the recommended option.</p>
+      <p class="readout" id="qtally"></p>
+    </div>
+    <div id="questions"></div>
+    <div class="qrow">
+      <div class="qtext"><h3>General notes</h3><p>Anything else: wizard fights you remember, plays to add, what would make a duel fun for you.</p><span class="slug">answers/general</span></div>
+      <div class="side"><textarea id="general" rows="5" placeholder="Notes" aria-label="General notes" disabled></textarea></div>
+    </div>
+  </section>
+
+  <footer class="prose">
+    <p>Written up in <code>docs/explorations/2026-11-14-enemy-wizards.md</code>, with sources. Things recalled from memory rather than read are marked unverified there.</p>
+    <p>Sources: Magickapedia (Grimnir, Goblin wizards, Druid, Necromancer, Dwarf), carlsguides chapters 4, 6, 8, 10 and 12, Butcher and Griesemer on Halo's AI, Damian Isla at Develop 2008, and the Maia chess project.</p>
+  </footer>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const COLS = ['stage', 'stage-line', 'stage-ink', 'wiz', 'foe', 'dodge', 'punish', 'fire', 'water', 'cold', 'light', 'earth', 'life', 'arcane', 'shield', 'sigil', 'ink', 'muted', 'line', 'panel'];
+const C = {};
+const readColors = () => { for (const k of COLS) C[k] = css('--' + k); };
+readColors();
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', readColors);
+const EL_COL = { water: 'water', fire: 'fire', cold: 'cold', lightning: 'light', earth: 'earth', life: 'life', arcane: 'arcane', shield: 'shield', sigil: 'sigil' };
+const runeDots = (rs) => '<span class="runes">' + rs.map((r) => `<span class="rune" title="${r}" style="background:var(--${EL_COL[r]})"></span>`).join('') + '</span>';
+
+// ---------- the numbers (the spec's) ----------
+const GAME = { windup: 0.12, perRune: 0.04, recovery: 0.18, floor: 0.8 };
+const TIERS = [
+  { id: 'apprentice', name: 'Apprentice', pace: 2.5, react: 0.5, focus: 0.6, breath: 0.6, aim: 8, second: 35, plays: '2 to 3', counters: 'none', allies: 'never', pools: 2 },
+  { id: 'adept', name: 'Adept', pace: 4, react: 0.35, focus: 0.45, breath: 0.4, aim: 4, second: 20, plays: '4 to 6', counters: 'basic', allies: 'half', pools: 3 },
+  { id: 'master', name: 'Master', pace: 6, react: 0.25, focus: 0.35, breath: 0.25, aim: 2, second: 10, plays: '6 to 9', counters: 'full', allies: 'always', pools: 4 },
+];
+const THINK = 0.15;
+
+// casts: runes, the effect drawn, heavy (can hit 30+), cast button
+const PLAYS = [
+  { id: 'poke', name: 'Poke', casts: [{ runes: ['arcane'], fx: 'bolt', btn: 'Force' }],
+    when: 'Filler; nothing better scores.', answer: 'Sidestep.', note: 'A one-rune Arcane bolt: barely any warning, barely any damage.' },
+  { id: 'soak', name: 'Soak and shock', casts: [{ runes: ['water', 'water'], fx: 'spray', btn: 'Force' }, { runes: ['lightning'], fx: 'arc', btn: 'Force', heavy: true }],
+    when: 'Its target is in range and not warded against Lightning.', answer: 'Dry yourself with Fire; ward against Lightning; close in during the gap.', note: 'Two casts. The soak is the tell for the shock; the gap between them is the time to dry off.' },
+  { id: 'freeze', name: 'Freeze and shatter', casts: [{ runes: ['water'], fx: 'spray', btn: 'Force' }, { runes: ['cold', 'cold'], fx: 'spray', btn: 'Force' }, { runes: ['earth', 'earth', 'earth'], fx: 'rock', btn: 'Force', heavy: true }],
+    when: 'A target is soaked; Adept and up.', answer: 'Fire breaks the freeze; get out of the puddle.', note: 'Three casts: long, readable and strong. It spends six runes, so it has little left afterwards.' },
+  { id: 'rain', name: 'Rain', casts: [{ runes: ['water', 'water'], fx: 'rain', btn: 'Place' }],
+    when: 'Two or more of you are close together.', answer: 'A Shield ward keeps the rain off; scatter.', note: 'The druid\'s opener: it sets up everything Lightning does next.' },
+  { id: 'flamewall', name: 'Flame wall', casts: [{ runes: ['shield', 'fire'], fx: 'wall', btn: 'Place' }],
+    when: 'You\'re closing in and it wants range.', answer: 'Go round; Water or Cold puts it out.', note: '' },
+  { id: 'ward', name: 'Ward up', casts: [{ runes: ['shield', 'fire'], fx: 'ward', btn: 'Self' }],
+    when: 'Your last few hits were mostly one element (here, Fire).', answer: 'Switch element. It remembers your hits for a while, so switching catches it out.', note: 'No danger to you: the whole play is an opening.' },
+  { id: 'barrier', name: 'Barrier', casts: [{ runes: ['shield'], fx: 'wall', btn: 'Place' }],
+    when: 'You\'re channelling a beam at it.', answer: 'Go round; area casts.', note: '' },
+  { id: 'blink', name: 'Blink away', casts: [{ runes: ['shield'], fx: 'blink', btn: 'Force' }],
+    when: 'Cornered, low on health, or it saw your big spell winding up.', answer: 'Predict the landing; glyphs.', note: '' },
+  { id: 'selfcare', name: 'Douse, dry or thaw itself', casts: [{ runes: ['water'], fx: 'ward', btn: 'Self' }],
+    when: 'It\'s burning, wet or frozen.', answer: 'It spent a turn on itself: punish.', note: '' },
+  { id: 'mend', name: 'Mend', casts: [{ runes: ['life', 'life'], fx: 'ward', btn: 'Self' }],
+    when: 'Low health; at most twice a fight.', answer: 'Interrupt with a stun; it\'s open while it heals.', note: '' },
+  { id: 'turret', name: 'Turret', casts: [{ runes: ['sigil', 'fire'], fx: 'turret', btn: 'Force' }],
+    when: 'Adept and up, in a quiet moment.', answer: 'Break it; it binds a rune the wizard can\'t use.', note: '' },
+  { id: 'signature', name: 'Signature', casts: [{ runes: ['fire', 'fire', 'earth', 'earth', 'earth'], fx: 'meteor', btn: 'Force', heavy: true }],
+    when: 'Its big spell, on a long timer.', answer: 'Shield on the glow; punish the long recovery.', note: 'Five runes: the focus glow, then a meteor. Even a master gives you about 1.3 s, then a long breath.' },
+];
+const DEMO = ['poke', 'soak', 'freeze', 'ward', 'signature'];
+
+const RULES = [
+  { id: 'noinput', name: 'No input reading', body: 'Decisions come from world state through its reaction delay. It reacts to your cast once your wind-up has started, never to the keys you press. Whether it may read the runes gathering at your staff is question 2.' },
+  { id: 'economy', name: 'The same economy', body: 'Same pools, regen, wind-up and upkeep. No free casts. It can run dry, and its staff shows it.' },
+  { id: 'tellscale', name: 'The tell grows with the danger', body: 'Anything that can deal 30 or more damage gets at least 0.8 s from its first rune to impact (the focus glow stretches to meet it). Nothing one-shots a wizard at full health.' },
+  { id: 'opening', name: 'Every big spell ends in an opening', body: 'The breath after a cast doubles after a spell of four or more runes.' },
+  { id: 'human', name: 'Mistakes a person would make', body: 'It picks the second-best play some of the time, is late by its reaction delay, overcommits to a channel, forgets your ward, shocks while standing in its own puddle. The Maia chess project found weak play should look like a weaker human, not a crippled engine.' },
+  { id: 'habits', name: 'Habits you can learn', body: 'Each named wizard has one or two signatures ("after a Blink it always opens with fire"), deterministic enough to exploit.' },
+  { id: 'nochain', name: 'No lock-down chains', body: 'After it freezes or stuns a wizard, it can\'t freeze or stun that wizard again for 4 s.' },
+  { id: 'phase', name: 'One new trick per phase', body: 'A boss adds one play at each phase, so you learn them one at a time.' },
+];
+
+const QUESTIONS = [
+  { id: 'q-1-tell', n: 1, title: 'The queue as the main tell', text: 'Its runes gather at its staff in their colours, as yours do. Is that enough to read, or does it need more?',
+    choices: [['staff', 'At its staff, as players\' runes are', 'rec'], ['bigger', 'Bigger: the runes also float over its head'], ['hidden', 'Hidden; rely on the glow and wind-up']] },
+  { id: 'q-2-reads', n: 2, title: 'What it may react to', text: 'It never reads keys. The question is whether the runes gathering at your staff count as public, as they are to a co-op partner.',
+    choices: [['casts', 'Only your casts (from wind-up on) and the world', 'rec'], ['master-queue', 'Also your queue, at Master tier only'], ['all-queue', 'Also your queue, at every tier']] },
+  { id: 'q-3-selfharm', n: 3, title: 'It obeys friendly fire and its own statuses', text: 'It can soak itself in its own Rain, burn in its own fire and hit its allies, at every tier. Masters just check more often.',
+    choices: [['yes', 'Yes, at every tier', 'rec'], ['apprentice', 'Only apprentices hurt themselves and their side'], ['no', 'No, enemy spells spare enemies']] },
+  { id: 'q-4-engine', n: 4, title: 'How to give it a wizard\'s hands', text: 'AI seats reuse every rule and the staff display; a caster component is cheaper per enemy but forks the casting code.',
+    choices: [['ai-seats', 'AI seats (seats 4 to 7, driven in the sim)', 'rec'], ['component', 'A caster component on enemy bodies']] },
+  { id: 'q-5-first', n: 5, title: 'The first wizard encounter', text: 'Which to build first, once the engine rework allows new content.',
+    choices: [['hedge', 'Hedge wizards in a goblin crowd', 'rec'], ['duel', 'A lone duel'], ['coven', 'A coven of two or three']] },
+  { id: 'q-6-difficulty', n: 6, title: 'How difficulty moves it', text: 'Tiers are set per encounter by the campaign. Difficulty can shift a whole tier, or one slider can move every knob a little.',
+    choices: [['tier-step', 'Difficulty moves an encounter one tier step', 'rec'], ['slider', 'One global slider over every knob']] },
+  { id: 'q-7-named', n: 7, title: 'Named wizards with habits', text: 'Duels and bosses get named wizards with one or two learnable signatures. Who they are is yours to write.',
+    choices: [['yes', 'Yes, named with signatures; I write who they are', 'rec'], ['generic', 'Keep them generic']] },
+];
+
+// ---------- timeline maths ----------
+function schedule(play, tier) {
+  const segs = []; let t = 0;
+  segs.push({ k: 'notice', a: t, b: t += tier.react });
+  segs.push({ k: 'choose', a: t, b: t += THINK });
+  let firstRune = null, lastImpact = 0, punishA = 0, punishB = 0, runes = 0;
+  const casts = [];
+  play.casts.forEach((c, ci) => {
+    const n = c.runes.length, big = n >= 4; runes += n;
+    const q0 = t, qdur = n / tier.pace;
+    if (firstRune === null) firstRune = q0;
+    segs.push({ k: 'queue', a: t, b: t += qdur, c: ci });
+    const wind = GAME.windup + GAME.perRune * n;
+    let focus = big ? tier.focus : 0;
+    if (c.heavy) { const seen = qdur + focus + wind; if (seen < GAME.floor) focus += GAME.floor - seen; }
+    if (focus > 0) segs.push({ k: 'focus', a: t, b: t += focus, c: ci });
+    segs.push({ k: 'windup', a: t, b: t += wind, c: ci });
+    const castA = t, flight = (c.fx === 'bolt' || c.fx === 'rock' || c.fx === 'meteor') ? 0.3 : 0.15;
+    segs.push({ k: 'cast', a: t, b: t += flight, c: ci });
+    const impact = t;
+    const rec = GAME.recovery + tier.breath * (big ? 2 : 1);
+    segs.push({ k: 'breath', a: t, b: t += rec, c: ci });
+    casts.push({ ...c, q0, qdur, castA, impact, n });
+    lastImpact = impact; punishA = impact; punishB = t;
+    if (ci < play.casts.length - 1) segs.push({ k: 'choose', a: t, b: t += THINK * 0.5 });
+  });
+  const harmless = play.casts.every((c) => ['ward', 'wall', 'blink', 'turret'].includes(c.fx));
+  return { segs, total: t, firstRune, impact: lastImpact, dodge: harmless ? null : (play.casts.length > 1 ? casts[1].impact - casts[1].q0 : lastImpact - firstRune), firstDodge: casts[0].impact - casts[0].q0, punish: punishB - punishA, punishA, punishB, runes, casts, harmless };
+}
+const SEG = { notice: ['it notices', 'stage-line'], choose: ['chooses', 'stage-line'], queue: ['queue', 'dodge'], focus: ['focus glow', 'sigil'], windup: ['wind-up', 'foe'], cast: ['cast', 'foe'], breath: ['breath', 'punish'] };
+
+// ---------- duel UI ----------
+let tier = TIERS[0], play = PLAYS.find((p) => p.id === 'soak'), S = schedule(play, tier), T = 0, playing = !REDUCED;
+for (const tr of TIERS) { const b = el('button', null, tr.name); b.type = 'button'; b.dataset.v = tr.id; b.addEventListener('click', () => { tier = tr; reset(); }); $('tiers').append(b); }
+for (const id of DEMO) { const p = PLAYS.find((x) => x.id === id); const b = el('button', null, esc(p.name)); b.type = 'button'; b.dataset.v = id; b.addEventListener('click', () => { play = p; reset(); }); $('plays').append(b); }
+function reset() {
+  S = schedule(play, tier); T = REDUCED ? S.impact - 0.05 : 0;
+  for (const b of $('tiers').children) b.setAttribute('aria-pressed', String(b.dataset.v === tier.id));
+  for (const b of $('plays').children) b.setAttribute('aria-pressed', String(b.dataset.v === play.id));
+  $('r-dodge').textContent = S.dodge == null ? 'no threat' : S.dodge.toFixed(2) + ' s';
+  $('r-punish').textContent = S.punish.toFixed(2) + ' s';
+  $('r-total').textContent = S.total.toFixed(2) + ' s';
+  $('r-runes').textContent = String(S.runes);
+  const extra = play.casts.length > 1 ? ` The dodge figure is for its last cast; the first gives you ${S.firstDodge.toFixed(2)} s.` : '';
+  $('playnote').innerHTML = `<b>${esc(play.name)}</b> (${esc(tier.name.toLowerCase())}): ${esc(play.note || play.when)}${esc(extra)} <span class="muted">Answer: ${esc(play.answer)}</span>`;
+}
+$('pp').addEventListener('click', () => { playing = !playing; $('pp').textContent = playing ? 'Pause' : 'Play'; });
+$('scrub').addEventListener('input', (e) => { playing = false; $('pp').textContent = 'Play'; T = (+e.target.value / 1000) * (S.total + 0.6); });
+if (REDUCED) $('pp').textContent = 'Play';
+
+function drawStage() {
+  const cv = $('stage'), g = cv.getContext('2d'); g.setTransform(cv.width / 640, 0, 0, cv.height / 250, 0, 0);
+  g.fillStyle = C.stage; g.fillRect(0, 0, 640, 250);
+  g.strokeStyle = C['stage-line']; g.lineWidth = 1; for (let x = 20; x < 640; x += 40) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 250); g.stroke(); }
+  const px = 130, py = 140, ex = 500, ey = 130;
+  const seg = S.segs.find((s) => T >= s.a && T < s.b) || S.segs[S.segs.length - 1];
+  const ci = seg.c ?? (S.casts.findIndex((c) => T < c.q0) - 1);
+  // which cast are we in (or the last one past)
+  let cur = S.casts[0]; for (const c of S.casts) if (T >= c.q0) cur = c;
+  // the player
+  g.beginPath(); g.arc(px, py, 13, 0, Math.PI * 2); g.fillStyle = C.wiz; g.fill();
+  label(g, 'you', px, py + 32);
+  // the enemy wizard
+  const recovering = seg.k === 'breath', winding = seg.k === 'windup', focusing = seg.k === 'focus';
+  const lean = winding ? Math.sin((T - seg.a) * 40) * 1.5 : 0;
+  if (focusing) { const k = (T - seg.a) / (seg.b - seg.a); for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(ex, ey, 20 + i * 7 + k * 8, 0, Math.PI * 2); g.strokeStyle = C.shield; g.globalAlpha = 0.6 - i * 0.18; g.lineWidth = 2; g.stroke(); g.globalAlpha = 1; } }
+  g.beginPath(); g.arc(ex + lean, ey, 14, 0, Math.PI * 2); g.fillStyle = recovering ? '#7a6d69' : '#b8505e'; g.fill();
+  // staff
+  const sx = ex - 18, sy = ey - 26; g.beginPath(); g.moveTo(ex - 10, ey + 14); g.lineTo(sx, sy); g.strokeStyle = '#a58a62'; g.lineWidth = 3; g.stroke();
+  // queued runes orbit the staff head
+  if (T >= cur.q0 && T < cur.castA) {
+    const shown = Math.min(cur.n, Math.floor((T - cur.q0) * tier.pace) + 1);
+    for (let i = 0; i < shown; i++) { const a = T * 3 + i * (Math.PI * 2 / Math.max(shown, 1)); g.beginPath(); g.arc(sx + Math.cos(a) * 11, sy + Math.sin(a) * 6, 5, 0, Math.PI * 2); g.fillStyle = C[EL_COL[cur.runes[i]]]; g.fill(); g.strokeStyle = '#0007'; g.lineWidth = 1; g.stroke(); }
+  }
+  label(g, recovering ? 'open' : tier.name.toLowerCase(), ex, ey + 34, recovering ? C.punish : C['stage-ink']);
+  // effect
+  if (seg.k === 'cast' || (seg.k === 'breath' && T - seg.a < 0.25)) {
+    const k = seg.k === 'cast' ? (T - seg.a) / (seg.b - seg.a) : 1, col = C[EL_COL[cur.runes[0]]];
+    const fx = cur.fx;
+    if (fx === 'bolt' || fx === 'rock' || fx === 'meteor') { const x = ex - 20 + (px + 16 - ex + 20) * k, y = ey - 6 + (py - ey + 6) * k - (fx === 'meteor' ? Math.sin(k * Math.PI) * 40 : 0); g.beginPath(); g.arc(x, y, fx === 'meteor' ? 12 : fx === 'rock' ? 8 : 5, 0, Math.PI * 2); g.fillStyle = fx === 'meteor' ? C.fire : col; g.fill(); if (k >= 1) ring(g, px, py, 30, fx === 'meteor' ? C.fire : col); }
+    else if (fx === 'spray') { g.beginPath(); g.moveTo(ex - 18, ey); g.lineTo(px + 10, py - 34); g.lineTo(px + 10, py + 34); g.closePath(); g.globalAlpha = 0.35; g.fillStyle = col; g.fill(); g.globalAlpha = 1; }
+    else if (fx === 'arc') { g.beginPath(); g.moveTo(ex - 18, ey); for (let i = 1; i <= 8; i++) { const x = ex - 18 + (px - ex + 18) * i / 8, y = ey + (py - ey) * i / 8 + (i < 8 ? (Math.sin(i * 7.3 + T * 50) * 10) : 0); g.lineTo(x, y); } g.strokeStyle = C.light; g.lineWidth = 3; g.stroke(); }
+    else if (fx === 'rain') { for (let i = 0; i < 26; i++) { const x = px - 50 + (i * 37) % 100, y = (py - 60) + ((i * 53 + T * 300) % 100); g.beginPath(); g.moveTo(x, y); g.lineTo(x - 2, y + 7); g.strokeStyle = C.water; g.lineWidth = 1.5; g.stroke(); } }
+    else if (fx === 'ward') { ring(g, ex, ey, 22, C[EL_COL[cur.runes[1] || cur.runes[0]]]); }
+    else if (fx === 'wall') { g.beginPath(); g.moveTo(330, 80); g.lineTo(330, 190); g.strokeStyle = cur.runes.includes('fire') ? C.fire : C.shield; g.lineWidth = 6; g.stroke(); }
+    else if (fx === 'blink') { ring(g, ex, ey, 20 * (1 - k) + 4, C.shield); }
+    else if (fx === 'turret') { g.beginPath(); g.arc(420, 190, 8, 0, Math.PI * 2); g.fillStyle = C.sigil; g.fill(); }
+  }
+  // impact flash on the player
+  if (!S.harmless && Math.abs(T - S.impact) < 0.12) ring(g, px, py, 22, C.foe);
+  // legend of the step
+  label(g, SEG[seg.k][0], 320, 26, C['stage-ink'], 13);
+}
+function label(g, s, x, y, col, size = 11) { g.font = `600 ${size}px ${css('--f-mono') || 'monospace'}`; g.fillStyle = col || C['stage-ink']; g.textAlign = 'center'; g.fillText(s, x, y); }
+function ring(g, x, y, r, col) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.strokeStyle = col; g.lineWidth = 2.5; g.stroke(); }
+
+function drawTimeline() {
+  const cv = $('timeline'), g = cv.getContext('2d'); g.setTransform(cv.width / 640, 0, 0, cv.height / 120, 0, 0);
+  g.clearRect(0, 0, 640, 120);
+  const L = 12, R = 628, span = S.total + 0.6, X = (t) => L + (R - L) * t / span;
+  // seconds grid
+  g.font = `11px ${css('--f-mono') || 'monospace'}`; g.textAlign = 'center';
+  for (let s = 0; s <= span + 1e-6; s += 0.5) { const x = X(s); g.beginPath(); g.moveTo(x, 40); g.lineTo(x, 74); g.strokeStyle = C.line; g.lineWidth = 1; g.stroke(); g.fillStyle = C.muted; g.fillText(s.toFixed(1) + 's', x, 112); }
+  // segments
+  for (const s of S.segs) { g.fillStyle = C[SEG[s.k][1]]; g.globalAlpha = s.k === 'notice' || s.k === 'choose' ? 0.5 : 0.85; g.fillRect(X(s.a), 46, Math.max(1, X(s.b) - X(s.a) - 1), 22); g.globalAlpha = 1;
+    if (X(s.b) - X(s.a) > 46) { g.fillStyle = s.k === 'notice' || s.k === 'choose' ? C.ink : '#10180f'; g.font = `600 10px ${css('--f-mono') || 'monospace'}`; g.fillText(SEG[s.k][0], (X(s.a) + X(s.b)) / 2, 61); } }
+  // rune ticks within queue segments
+  for (const c of S.casts) for (let i = 0; i < c.n; i++) { const x = X(c.q0 + i / tier.pace) + 4; g.beginPath(); g.arc(x, 41, 3.5, 0, Math.PI * 2); g.fillStyle = C[EL_COL[c.runes[i]]]; g.fill(); g.strokeStyle = '#0006'; g.stroke(); }
+  // brackets
+  const bracket = (a, b, y, col, txt) => { g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); g.moveTo(X(a), y + 6); g.lineTo(X(a), y); g.lineTo(X(b), y); g.lineTo(X(b), y + 6); g.stroke(); g.fillStyle = col; g.font = `600 11px ${css('--f-mono') || 'monospace'}`; g.fillText(txt, (X(a) + X(b)) / 2, y - 5); };
+  const last = S.casts[S.casts.length - 1];
+  if (S.dodge != null) bracket(play.casts.length > 1 ? last.q0 : S.firstRune, S.impact, 28, C.dodge, 'you see it coming ' + S.dodge.toFixed(2) + ' s');
+  bracket(S.punishA, S.punishB, 86, C.punish, 'opening ' + S.punish.toFixed(2) + ' s');
+  // playhead
+  const x = X(Math.min(T, span)); g.beginPath(); g.moveTo(x, 36); g.lineTo(x, 78); g.strokeStyle = C.ink; g.lineWidth = 2; g.stroke();
+}
+
+// ---------- rateable rows ----------
+let db = null;
+const ratings = {}, answers = {}, chains = {};
+const setSave = (s, bad) => { const e = $('save'); e.textContent = s; e.classList.toggle('bad', !!bad); };
+function write(col, id, doc) { if (!db) return; const k = col + '/' + id;
+  chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set({ ...doc, updatedAt: new Date().toISOString() })).then(() => setSave('All saved')).catch(() => setSave('Couldn’t save that. Check your connection and try again.', true)); }
+function putRating(id, patch) { ratings[id] = { mark: null, note: '', ...ratings[id], ...patch }; write('ratings', id, { mark: ratings[id].mark || null, note: ratings[id].note || '' }); paint(); }
+function putAnswer(id, patch) { answers[id] = { choice: null, note: '', ...answers[id], ...patch }; write('answers', id, { choice: answers[id].choice || null, note: answers[id].note || '' }); paint(); }
+function noteBox(ta, get, put) { let timer;
+  ta.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => put({ note: ta.value }), 900); });
+  ta.addEventListener('blur', () => { clearTimeout(timer); if ((get()?.note || '') !== ta.value) put({ note: ta.value }); }); }
+const markers = [], MARKS = [['yes', 'Yes'], ['maybe', 'Maybe'], ['no', 'No']];
+function addRow(host, slug, title, bodyHtml) {
+  const r = el('div', 'row'); r.id = slug;
+  r.append(el('div', null, `<h3>${esc(title)}</h3>${bodyHtml}<span class="slug">ratings/${slug}</span>`));
+  const side = el('div', 'side'), row = el('div', 'marks'); row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Rate ' + title);
+  for (const [v, label] of MARKS) { const b = el('button', null, label); b.type = 'button'; b.dataset.v = v; b.disabled = true; b.addEventListener('click', () => putRating(slug, { mark: ratings[slug]?.mark === v ? null : v })); row.append(b); }
+  const ta = el('textarea'); ta.rows = 2; ta.id = 'note-' + slug; ta.placeholder = 'Note (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on ' + title);
+  noteBox(ta, () => ratings[slug], (p) => putRating(slug, p));
+  side.append(row, ta); r.append(side); host.append(r); markers.push({ slug, row, ta });
+}
+for (const p of PLAYS) {
+  const q = p.casts.map((c) => `${runeDots(c.runes)} <span class="kv">on ${esc(c.btn)}</span>`).join(' <span class="kv">then</span> ');
+  addRow($('playrows'), 'play-' + p.id, p.name, `<p>${q}</p><p class="kv"><b>Chosen when:</b> ${esc(p.when)}</p><p class="kv"><b>Your answer:</b> ${esc(p.answer)}</p>`);
+}
+for (const r of RULES) addRow($('rulerows'), 'rule-' + r.id, r.name, `<p class="small">${esc(r.body)}</p>`);
+
+// tier table
+(() => {
+  const rows = [['Typing pace', (t) => t.pace + ' runes/s'], ['Reaction delay', (t) => t.react + ' s'], ['Focus glow (4+ runes)', (t) => t.focus + ' s'], ['Breath after a cast', (t) => t.breath + ' s (×2 after a big one)'], ['Aim error', (t) => t.aim + '°'], ['Picks the second-best play', (t) => t.second + ' %'], ['Plays it knows', (t) => t.plays], ['Counter table', (t) => t.counters], ['Checks for allies in the way', (t) => t.allies], ['Rune pools', (t) => t.pools + ' each']];
+  let h = '<thead><tr><th>Knob</th>' + TIERS.map((t) => `<th>${t.name}</th>`).join('') + '</tr></thead><tbody>';
+  for (const [k, f] of rows) h += `<tr><td>${k}</td>` + TIERS.map((t) => `<td class="num">${esc(f(t))}</td>`).join('') + '</tr>';
+  $('tiertable').innerHTML = h + '</tbody>';
+})();
+
+// questions
+const askers = [];
+for (const Q of QUESTIONS) {
+  const r = el('article', 'qrow'); r.id = Q.id; const rec = Q.choices.find((c) => c[2] === 'rec');
+  r.append(el('div', 'qtext', `<h3><span class="qn">${Q.n}</span>${esc(Q.title)}</h3><p>${esc(Q.text)}</p><p class="small"><b>Recommended:</b> ${esc(rec[1])}.</p><span class="slug">answers/${Q.id}</span>`));
+  const side = el('div', 'side'), ch = el('div', 'choices'); ch.setAttribute('role', 'group'); ch.setAttribute('aria-label', Q.title);
+  for (const [v, label, tag] of Q.choices) { const b = el('button', null, esc(label) + (tag === 'rec' ? '<span class="chip rec">Recommended</span>' : '')); b.type = 'button'; b.dataset.v = v; b.disabled = true; b.addEventListener('click', () => putAnswer(Q.id, { choice: answers[Q.id]?.choice === v ? null : v })); ch.append(b); }
+  const ta = el('textarea'); ta.rows = 2; ta.id = 'ans-' + Q.id; ta.placeholder = 'Note (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on ' + Q.title);
+  noteBox(ta, () => answers[Q.id], (p) => putAnswer(Q.id, p));
+  side.append(ch, ta); r.append(side); askers.push({ id: Q.id, ch, ta }); $('questions').append(r);
+}
+const gen = $('general'); noteBox(gen, () => answers.general, (p) => putAnswer('general', p));
+
+function paint() {
+  let pm = 0;
+  for (const M of markers) { const r = ratings[M.slug] || {}; if (M.slug.startsWith('play-') && r.mark) pm++;
+    for (const b of M.row.children) { b.setAttribute('aria-pressed', String(b.dataset.v === r.mark)); b.disabled = !db; }
+    M.ta.disabled = !db; if (document.activeElement !== M.ta && M.ta.value !== (r.note || '')) M.ta.value = r.note || ''; }
+  $('ptally').textContent = `${pm} of ${PLAYS.length} plays marked`;
+  let a = 0;
+  for (const A of askers) { const ans = answers[A.id] || {}; if (ans.choice) a++;
+    for (const b of A.ch.children) { b.setAttribute('aria-pressed', String(b.dataset.v === ans.choice)); b.disabled = !db; }
+    A.ta.disabled = !db; if (document.activeElement !== A.ta && A.ta.value !== (ans.note || '')) A.ta.value = ans.note || ''; }
+  gen.disabled = !db; if (document.activeElement !== gen && gen.value !== (answers.general?.note || '')) gen.value = answers.general?.note || '';
+  $('qtally').textContent = `${a} of ${QUESTIONS.length} answered`;
+}
+
+// ---------- run ----------
+reset();
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (playing) { T += dt * 0.6; if (T > S.total + 0.6) T = 0; $('scrub').value = String(Math.round(T / (S.total + 0.6) * 1000)); }
+  drawStage(); drawTimeline();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+paint();
+(async () => {
+  try { db = await window.claude?.use?.('db'); } catch { db = null; }
+  if (!db) { setSave('Read-only here: marks need the page’s saved store, which isn’t available in this view.', true); paint(); return; }
+  paint(); setSave('Loading saved marks…');
+  const timer = setTimeout(() => setSave('Saved marks are slow to load. You can still mark; changes save when the connection returns.', true), 10000);
+  let pending = 2;
+  const done = (snap) => { if (!snap.metadata.fromCache && --pending <= 0) { clearTimeout(timer); if (!snap.metadata.hasPendingWrites) setSave('All saved'); } };
+  const fail = () => { clearTimeout(timer); db = null; setSave('Saved marks are unavailable, so the page is read-only. Reload to try again.', true); paint(); };
+  db.collection('ratings').onSnapshot((snap) => { for (const d of snap.docs) { const x = d.data(); ratings[d.id] = { mark: x.mark || null, note: x.note || '' }; } done(snap); paint(); }, fail);
+  db.collection('answers').onSnapshot((snap) => { for (const d of snap.docs) { const x = d.data(); answers[d.id] = { choice: x.choice || null, note: x.note || '' }; } done(snap); paint(); }, fail);
+})();
+})();
+</script>

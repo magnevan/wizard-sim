@@ -5,7 +5,7 @@
 // The live side copies tools/sprites-3d: the render's camera (orthographic, 20 degrees up, 16 px a unit), squash
 // (1.15 wide, 0.92 tall) and light (upper left, toward the viewer), then pixelize.py's rules on the GPU: render at 4x,
 // each art pixel takes the commonest colour of its 4x4 block, light banded into four tones per part (shadows lean blue,
-// lights warm), and an ink outline outside the silhouette. Missing: pixelize's one-pixel seams between parts.
+// lights warm), a one-pixel dark seam where two parts meet, and an ink outline outside each goblin.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
@@ -45,68 +45,57 @@ renderer.info.autoReset = false;
 $('wrap').append(renderer.domElement);
 for (const s of $('cap').children) (s as HTMLElement).style.width = (W * SCALE) / 2 + 'px';
 
-const rt = (w: number, h: number, depth: boolean) => {
+const rt = (w: number, h: number, depth: boolean, count = 1) => {
   // half float: alpha carries each live goblin's depth rank (0.5 + rank / 512), which 8 bits can't hold
-  const t = new THREE.WebGLRenderTarget(w, h, { depthBuffer: depth, type: THREE.HalfFloatType, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
-  t.texture.colorSpace = THREE.NoColorSpace;
+  const t = new THREE.WebGLRenderTarget(w, h, { count, depthBuffer: depth, type: THREE.HalfFloatType, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
+  for (const x of t.textures) x.colorSpace = THREE.NoColorSpace;
   return t;
 };
-const hiRT = rt(W * SUPER, H * SUPER, true), lowRT = rt(W, H, false), finalRT = rt(W, H, false);
+// hiRT and lowRT hold two layers, as pixelize.py's two shots: [0] each part's flat colour (sRGB) and the goblin's rank,
+// [1] the light ratio (how bright the lit surface is against its flat colour)
+const hiRT = rt(W * SUPER, H * SUPER, true, 2), lowRT = rt(W, H, false, 2), finalRT = rt(W, H, false);
 
 const quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 const quad = (frag: string, uniforms: Record<string, THREE.IUniform>) => {
   const m = new THREE.ShaderMaterial({
-    uniforms, depthTest: false, depthWrite: false,
-    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
-    fragmentShader: frag,
+    uniforms, depthTest: false, depthWrite: false, glslVersion: THREE.GLSL3,
+    vertexShader: 'out vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    // GLSL3 passes declare their own outputs; location 0 keeps the familiar name
+    fragmentShader: 'layout(location = 0) out highp vec4 pcColor;\n#define gl_FragColor pcColor\n' + frag,
   });
   const s = new THREE.Scene(); s.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m));
   return s;
 };
-// each art pixel: the commonest colour of its 4x4 block, if at least half the block is covered
+const N = SUPER * SUPER;
+// each art pixel, as pixelize.py: its part is the commonest flat colour of its 4x4 block (binned to 32 levels, one
+// goblin), if half the block is covered; its colour and light are that part's means over the block
 const resolve = quad(`
-  uniform sampler2D tHi; uniform vec2 hiSize;
+  layout(location = 1) out highp vec4 oRatio;
+  uniform sampler2D tFlat; uniform sampler2D tRatio;
+  bool same(vec4 a, vec4 b) { return abs(a.a - b.a) < 0.5 / 512.0 && floor(a.rgb * 32.0) == floor(b.rgb * 32.0); }
   void main() {
     ivec2 p = ivec2(gl_FragCoord.xy) * ${SUPER};
-    vec4 c[${SUPER * SUPER}]; int cover = 0;
+    vec4 c[${N}]; float r[${N}]; int cover = 0;
     for (int j = 0; j < ${SUPER}; j++) for (int i = 0; i < ${SUPER}; i++) {
-      vec4 s = texelFetch(tHi, p + ivec2(i, j), 0); c[j * ${SUPER} + i] = s; if (s.a > 0.5) cover++;
+      int k = j * ${SUPER} + i;
+      c[k] = texelFetch(tFlat, p + ivec2(i, j), 0); r[k] = texelFetch(tRatio, p + ivec2(i, j), 0).r;
+      if (c[k].a > 0.5) cover++;
     }
-    if (cover * 2 < ${SUPER * SUPER}) { gl_FragColor = vec4(0.0); return; }
-    int best = -1, bestN = 0;
-    for (int a = 0; a < ${SUPER * SUPER}; a++) {
+    if (cover * 2 < ${N}) { gl_FragColor = vec4(0.0); oRatio = vec4(0.0); return; }
+    int best = 0, bestN = 0;
+    for (int a = 0; a < ${N}; a++) {
       if (c[a].a <= 0.5) continue;
       int n = 0;
-      for (int b = 0; b < ${SUPER * SUPER}; b++) if (c[b].a > 0.5 && abs(c[a].a - c[b].a) < 0.5 / 512.0 && all(lessThan(abs(c[a].rgb - c[b].rgb), vec3(1.5 / 32.0)))) n++;
+      for (int b = 0; b < ${N}; b++) if (c[b].a > 0.5 && same(c[a], c[b])) n++;
       if (n > bestN) { bestN = n; best = a; }
     }
-    // the mean of the winning group, as pixelize.py averages its commonest part, so texture noise doesn't speckle
-    vec4 w = vec4(0.0); for (int a = 0; a < ${SUPER * SUPER}; a++) if (a == best) w = c[a];
-    vec3 sum = vec3(0.0); float m = 0.0;
-    for (int b = 0; b < ${SUPER * SUPER}; b++) if (c[b].a > 0.5 && abs(w.a - c[b].a) < 0.5 / 512.0 && all(lessThan(abs(w.rgb - c[b].rgb), vec3(1.5 / 32.0)))) { sum += c[b].rgb; m += 1.0; }
-    gl_FragColor = vec4(sum / max(m, 1.0), w.a);
-  }`, { tHi: { value: hiRT.texture }, hiSize: { value: new THREE.Vector2(W * SUPER, H * SUPER) } });
-// the ink goes outside each goblin's shape, as pixelize.py, and over whoever stands behind it, as overlapping
-// sprites do: a pixel is inked when a 4-neighbour belongs to a goblin in front of it (a higher rank; empty is -1)
-const outline = quad(`
-  uniform sampler2D tLow; uniform vec3 ink;
-  float rankOf(vec4 c) { return c.a > 0.25 ? floor((c.a - 0.5) * 512.0 + 0.5) : -1.0; }
-  void main() {
-    ivec2 p = ivec2(gl_FragCoord.xy);
-    vec4 c = texelFetch(tLow, p, 0); float r = rankOf(c);
-    float n = max(max(rankOf(texelFetch(tLow, p + ivec2(1, 0), 0)), rankOf(texelFetch(tLow, p - ivec2(1, 0), 0))),
-                  max(rankOf(texelFetch(tLow, p + ivec2(0, 1), 0)), rankOf(texelFetch(tLow, p - ivec2(0, 1), 0))));
-    gl_FragColor = n > r ? vec4(ink, 1.0) : r >= 0.0 ? vec4(c.rgb, 1.0) : vec4(0.0);
-  }`, { tLow: { value: lowRT.texture }, ink: { value: INK } });
-const blit = quad(`
-  uniform sampler2D tFinal; uniform sampler2D tLow; uniform vec3 dirt; uniform float debug; varying vec2 vUv;
-  void main() {
-    vec4 c = texture2D(tFinal, vUv); gl_FragColor = vec4(c.a > 0.5 ? c.rgb : dirt, 1.0);
-    if (debug > 0.5) { float a = texture2D(tLow, vUv).a; float r = (a - 0.5) * 512.0; if (a > 0.25) gl_FragColor = vec4(fract(r * 0.137), fract(r * 0.311), fract(r * 0.071), 1.0); }
-  }`,
-  { tFinal: { value: finalRT.texture }, tLow: { value: lowRT.texture }, dirt: { value: DIRT }, debug: { value: new URLSearchParams(location.search).get('debug') === 'rank' ? 1 : 0 } });
+    vec4 w = vec4(0.0); for (int a = 0; a < ${N}; a++) if (a == best) w = c[a];
+    vec3 sum = vec3(0.0); float rs = 0.0, m = 0.0;
+    for (int b = 0; b < ${N}; b++) if (c[b].a > 0.5 && same(w, c[b])) { sum += c[b].rgb; rs += r[b]; m += 1.0; }
+    gl_FragColor = vec4(sum / m, w.a); oRatio = vec4(rs / m, 0.0, 0.0, 1.0);
+  }`, { tFlat: { value: hiRT.textures[0] }, tRatio: { value: hiRT.textures[1] } });
 
-// ---- the toon material: pixelize.py's four tones per part, on the GPU ----------------------------------------------
+// ---- pixelize.py's tones, seams and ink, on the GPU ---------------------------------------------------------------------
 const TONE_GLSL = `
   vec3 toSrgb(vec3 c) { return pow(max(c, 0.0), vec3(1.0 / 2.2)); }
   float lumaOf(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
@@ -129,19 +118,52 @@ const TONE_GLSL = `
     else if (lv == 3) c = vec3(shiftHue(c.x, 0.15, 0.06), c.y * 0.85, min(1.0, c.z * 1.2 + 0.04));
     return hsv2rgb(c);
   }`;
+// Per art pixel: the light banded into four tones; where two parts meet, the darker one takes its dark tone (a
+// one-pixel seam, pixelize.py's rule: a neighbour of another part brighter by 18 of 255); and the ink outside each
+// goblin and over whoever stands behind it (a 4-neighbour of a goblin in front: a higher rank; empty is -1).
+const shade = quad(`
+  uniform sampler2D tFlat; uniform sampler2D tRatio; uniform vec3 ink;
+  ${TONE_GLSL}
+  float rankOf(vec4 c) { return c.a > 0.25 ? floor((c.a - 0.5) * 512.0 + 0.5) : -1.0; }
+  void main() {
+    ivec2 p = ivec2(gl_FragCoord.xy);
+    vec4 c = texelFetch(tFlat, p, 0); float r = rankOf(c);
+    ivec2 d[4] = ivec2[4](ivec2(1, 0), ivec2(-1, 0), ivec2(0, 1), ivec2(0, -1));
+    float front = -1.0; bool seam = false; float L = lumaOf(c.rgb);
+    for (int k = 0; k < 4; k++) {
+      vec4 n = texelFetch(tFlat, p + d[k], 0); float rn = rankOf(n);
+      front = max(front, rn);
+      if (r >= 0.0 && rn >= 0.0 && (rn != r || floor(n.rgb * 32.0) != floor(c.rgb * 32.0)) && L < lumaOf(n.rgb) - 18.0 / 255.0) seam = true;
+    }
+    if (front > r) { gl_FragColor = vec4(ink, 1.0); return; }
+    if (r < 0.0) { gl_FragColor = vec4(0.0); return; }
+    float ratio = texelFetch(tRatio, p, 0).r;
+    int lv = ratio < ${BANDS[0]} ? 0 : ratio < ${BANDS[1]} ? 1 : ratio < ${BANDS[2]} ? 2 : 3;
+    gl_FragColor = vec4(toneOf(c.rgb, seam ? 0 : lv), 1.0);
+  }`, { tFlat: { value: lowRT.textures[0] }, tRatio: { value: lowRT.textures[1] }, ink: { value: INK } });
+const blit = quad(`
+  uniform sampler2D tFinal; uniform sampler2D tLow; uniform vec3 dirt; uniform float debug; in vec2 vUv;
+  void main() {
+    vec4 c = texture(tFinal, vUv); gl_FragColor = vec4(c.a > 0.5 ? c.rgb : dirt, 1.0);
+    if (debug > 0.5) { float a = texture(tLow, vUv).a; float r = (a - 0.5) * 512.0; if (a > 0.25) gl_FragColor = vec4(fract(r * 0.137), fract(r * 0.311), fract(r * 0.071), 1.0); }
+  }`,
+  { tFinal: { value: finalRT.texture }, tLow: { value: lowRT.textures[0] }, dirt: { value: DIRT }, debug: { value: new URLSearchParams(location.search).get('debug') === 'rank' ? 1 : 0 } });
+
+// The material writes the two layers: each part's flat colour (its texture, sRGB) with the goblin's rank, and the light
+// ratio, which the shade pass bands. The tones come after the resolve, as in pixelize.py, so the commonest part decides
+// each pixel and the seams can find where parts meet.
 function toon(m: THREE.MeshLambertMaterial): THREE.MeshLambertMaterial {
   const rank = { value: 0 }; m.userData.rank = rank;
   m.onBeforeCompile = (sh) => {
     sh.uniforms.rank = rank;
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float rank;\n' + TONE_GLSL)
+      .replace('#include <common>', '#include <common>\nuniform float rank;\nlayout(location = 1) out highp vec4 gRatio;\n' + TONE_GLSL)
       .replace('#include <opaque_fragment>', `
         vec3 albedo = toSrgb(diffuseColor.rgb);
         float ratio = lumaOf(toSrgb(outgoingLight)) / max(lumaOf(albedo), 0.03);
-        int lv = ratio < ${BANDS[0]} ? 0 : ratio < ${BANDS[1]} ? 1 : ratio < ${BANDS[2]} ? 2 : 3;
-        outgoingLight = toneOf(albedo, lv);
         #include <opaque_fragment>
-        gl_FragColor.a = 0.5 + rank / 512.0;   // after opaque_fragment, which sets an opaque material's alpha to 1`);
+        gl_FragColor = vec4(albedo, 0.5 + rank / 512.0);   // after opaque_fragment, which sets an opaque material's alpha to 1
+        gRatio = vec4(ratio, 0.0, 0.0, 1.0);`);
   };
   return m;
 }
@@ -302,7 +324,7 @@ function render() {
   renderer.setRenderTarget(hiRT); renderer.setClearColor(0x000000, 0); renderer.clear();
   if (show3d) renderer.render(scene3d, cam);
   renderer.setRenderTarget(lowRT); renderer.render(resolve, quadCam);
-  renderer.setRenderTarget(finalRT); renderer.render(outline, quadCam);
+  renderer.setRenderTarget(finalRT); renderer.render(shade, quadCam);
   renderer.autoClear = false; renderer.render(spriteScene, pixCam); renderer.autoClear = true;
   renderer.setRenderTarget(null); renderer.render(blit, quadCam);
 }

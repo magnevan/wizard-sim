@@ -29,21 +29,23 @@ both sides), count, pixel snap for the live side, and the live side on or off. U
 
 How the live side is drawn (`src/main.ts`), copying `tools/sprites-3d` so the comparison is fair: the render's camera
 (orthographic, 20 degrees up, 16 px a unit), its squash (1.15 wide, 0.92 tall) and light (upper left, toward the
-viewer); then `pixelize.py`'s rules on the GPU. The scene renders at 4x into a half-float target; each art pixel takes
-the mean of the commonest colour in its 4x4 block (if half the block is covered); a toon material bands the light
-into four tones per part (shadows lean blue, lights warm, the same thresholds); and an ink outline goes outside each
-goblin and over whoever stands behind it (each goblin writes its depth rank into alpha). The blade is a plain box on
-the right hand, a stand-in for the grafted Codex blade. Missing next to the baked pass: its one-pixel seams between
-parts.
+viewer); then `pixelize.py`'s rules on the GPU, in its order. The scene renders at 4x into two half-float layers, like the
+baked render's two shots: each part's flat colour (with the goblin's depth rank in alpha) and the light ratio. Each
+art pixel takes the commonest part of its 4x4 block (if half the block is covered) and that part's mean colour and
+light; then the light is banded into four tones (shadows lean blue, lights warm, the same thresholds), the darker side
+of a meeting between two parts takes its dark tone (the one-pixel seams), and an ink outline goes outside each goblin
+and over whoever stands behind it. The blade is a plain box on the right hand, a stand-in for the grafted Codex
+blade.
 
 ## Findings
 
 - **Cost (2026-11-17, AMD Radeon 780M, an integrated laptop GPU, D3D11, headless Chrome):** 12, 50 and 100 live goblins
-  all hold the frame cap (about 57 fps headless). 200 drop to 49 fps: the CPU work of posing the skeletons
+  all hold the frame cap (about 57 fps headless). 200 drop to 49 to 54 fps: the CPU work of posing the skeletons
   (`AnimationMixer`, about 0.09 ms a goblin) reaches 19 ms a frame, while the GPU keeps up with 6.2 million triangles.
   The Meshy model is about 31,000 triangles a goblin, far more than 32 px needs: thinning it would help weaker GPUs, but
   the CPU cost is per bone, not per triangle. In software (SwiftShader) live 3D runs at 10 to 14 fps against 44 with
   sprites only: a floor, not a real machine.
-- **Look:** to judge by the user, moving, in the dev page or the GIFs on the Goblin Warband Art page. On stills, the
-  live goblins read as the same goblin at the same size with outlines between them; their colours are a little muddier
-  and the face less crisp than the baked frames, which pick their pixels from a cleaner flat-colour pass.
+- **Look:** to judge by the user, moving, in the dev page or the GIFs on the Goblin Warband Art page. The first pass
+  outlined only each silhouette; the user saw the baked frames line every edge between parts. The pass was rebuilt in
+  `pixelize.py`'s order (part first, then tone and seams), and on stills the live goblins now read close to the baked
+  ones: the same goblin at the same size, seams between hood, face, sack and arms, outlines between goblins.

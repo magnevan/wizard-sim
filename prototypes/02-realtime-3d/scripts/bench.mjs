@@ -37,7 +37,15 @@ try {
   const ws = new WebSocket(target.webSocketDebuggerUrl);
   await new Promise((r) => ws.addEventListener('open', r));
   let id = 0; const waiting = new Map();
-  ws.addEventListener('message', (e) => { const m = JSON.parse(e.data); if (m.id && waiting.has(m.id)) { waiting.get(m.id)(m); waiting.delete(m.id); } });
+  const seen = new Set();
+  ws.addEventListener('message', (e) => {
+    const m = JSON.parse(e.data);
+    if (m.id && waiting.has(m.id)) { waiting.get(m.id)(m); waiting.delete(m.id); }
+    // the page's errors (a shader that won't compile shows up here), each once
+    const err = m.method === 'Runtime.exceptionThrown' ? m.params.exceptionDetails.exception?.description ?? m.params.exceptionDetails.text
+      : m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error' ? m.params.args.map((a) => a.value ?? a.description).join(' ') : null;
+    if (err && !seen.has(err)) { seen.add(err); console.error('page:', String(err).slice(0, 1500)); }
+  });
   const cdp = (method, params = {}) => new Promise((r) => { const n = ++id; waiting.set(n, r); ws.send(JSON.stringify({ id: n, method, params })); });
   const evaluate = async (expr) => (await cdp('Runtime.evaluate', { expression: expr, returnByValue: true })).result?.result?.value;
   const open = async (query) => {

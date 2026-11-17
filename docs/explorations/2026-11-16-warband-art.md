@@ -112,6 +112,16 @@ The user noticed PixelLab draws the goblin closer to face-on than the 3D renders
 
 The user also raised Meshy's paid tier (rigging, an animation library, text-to-3D). Unanswered by tests yet: whether its library motion suits a chibi goblin and weapon attacks, and whether text-to-3D holds the house style as well as a Codex picture the user can approve first.
 
+## From 3D, round 3: Meshy's rig and animation library (2026-11-17)
+
+Through the Meshy MCP server, with the user's sign-off for 40 credits: the raider was remeshed to 30k triangles (5; Meshy rigs at most 380k, and the web-app model was 824k), rigged (5, with a walk and a run free), and given ten library clips (3 each): Slow Orc Walk, Sneaky Walk, Lean Forward Sprint, Standard Forward Charge, Left Slash, Right-hand Sword Slash, Thrust Slash, Charged Slash, Combat Idle, Knock Down. `render.py --anim` plays a rigged model's own clips through the same camera and pixel pass, cancels the hips' travel so sprites stay in place (`--root` keeps it), and carries the grafted blade to `RightHand` through hand frames built from the forearm and the forward axis, so bone roll doesn't matter.
+
+What it showed: the library slashes have the weight the user asked for (wind-up, step in, whole-body swing), Left Slash and Thrust Slash most of all. They run about 3 s against the code attack's 1.5 s, which is fixable for free by sampling faster. The body turn hides the blade behind the sack for a few frames in some directions. Lean Forward Sprint has the lean the free run lacks. Knock Down gives an 8-direction fall for 3 credits. Meshy rigs only humanoid bodies, so non-humanoid creatures keep the code moves.
+
+The user's point on cost: don't make a high-poly model and pay to thin it. Smart topology (`meshy-t2.5`, `target_polycount` about 15k, T-pose) costs 15 credits textured instead of 30 and rigs as made; it's the default for the next goblins.
+
+Claude's pick: library clips for humanoid enemies (free walk, Lean Forward Sprint, Thrust or Left Slash at about 1.5 s, Combat Idle, Knock Down), code moves for the rest. Next: a second goblin made with smart topology and rigged, and a test of copying these clips onto it in Blender (every Meshy rig has the same 24 bones), which would make a clip a one-time cost.
+
 ## Claude's picks, pending the review
 
 1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in.

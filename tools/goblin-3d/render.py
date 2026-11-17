@@ -267,12 +267,26 @@ def clip_move(act, n=None):
         if ad.action != act:
             ad.action = act
             if getattr(act, 'slots', None) and len(act.slots): ad.action_slot = act.slots[0]
+        arm.matrix_basis = ARM_BASIS
         scene.frame_set(int(round(f0 + (f1 - f0) * i / n)))   # a loop's last frame is its first: stop one short
+        if not KEEP_ROOT:
+            # sprites stay put (the game moves them): cancel the hips' travel over the ground, keep their rise and fall
+            bpy.context.view_layer.update()
+            hips = arm.matrix_world @ arm.pose.bones[ROOT_BONE].head
+            rest = rig.matrix_world @ HIPS_REST
+            d = Vector((hips.x - rest.x, hips.y - rest.y, 0))
+            arm.matrix_world = Matrix.Translation(-d) @ arm.matrix_world
     return n, fn
 
 
 if ANIM:
     import re
+    # --root keeps a clip's travel (a lunge, a fall sliding back); by default the hips stay over the turntable's centre
+    KEEP_ROOT = '--root' in args
+    ROOT_BONE = next((a[7:] for a in args if a.startswith('--hips=')), 'Hips')
+    ARM_BASIS = arm.matrix_basis.copy()
+    bpy.context.view_layer.update()
+    HIPS_REST = rig.matrix_world.inverted() @ (arm.matrix_world @ arm.data.bones[ROOT_BONE].head_local)
     # glTF clips are named 'Armature|walking_man|baselayer': the middle part names the move and the output folder
     slug = lambda s: re.sub(r'[^a-z0-9]+', '_', (s.split('|')[1] if s.count('|') >= 2 else s).lower()).strip('_')
     if not [a for a in args[2:] if not a.startswith('--')]: MOVES = [a.name for a in CLIPS]

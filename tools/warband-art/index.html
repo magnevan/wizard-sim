@@ -63,8 +63,35 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="clips">
+    <h2 id="clips">Latest: Meshy's animator vs my code moves</h2>
+    <p>Same raider, same 20° camera, same pixel pass, blade grafted into the right hand. The difference is who moves it: the top row of each GIF is my code moves on our skeleton, the rows below are Meshy's rig playing clips from its animation library (motion-captured or animator-made). Rigging cost 5 credits, the ten clips 3 each, plus 5 to thin the model first: <b>40 Meshy credits</b>, signed off.</p>
+    <h3>Walk</h3>
+    <figure><img src="img/3d-clips-walk.gif" alt="Four rows of the hooded raider walking in four directions: my code walk, Meshy's standard walk, a slow orc walk and a sneaky walk."><figcaption>My walk; Meshy's free walk; Slow Orc Walk; Sneaky Walk. South, south-west, east, north.</figcaption></figure>
+    <div class="rate" id="clip-walk-rate"></div>
+    <h3>Run</h3>
+    <figure><img src="img/3d-clips-run.gif" alt="Four rows running: my code run, Meshy's free run, a lean-forward sprint and a forward charge."><figcaption>My run; Meshy's free run; Lean Forward Sprint; Standard Forward Charge.</figcaption></figure>
+    <div class="rate" id="clip-run-rate"></div>
+    <h3>Attack</h3>
+    <figure><img src="img/3d-clips-attack.gif" alt="Five rows attacking: my code slash and four of Meshy's sword clips: left slash, right-hand sword slash, thrust slash and charged slash."><figcaption>My attack; Left Slash; Right-hand Sword Slash; Thrust Slash; Charged Slash.</figcaption></figure>
+    <div class="rate" id="clip-attack-rate"></div>
+    <h3>Idle and a death</h3>
+    <figure><img src="img/3d-clips-extra.gif" alt="Two rows: a combat idle, swaying on bent knees, and a knock-down death."><figcaption>Combat Idle; Knock Down.</figcaption></figure>
+    <div class="rate" id="clip-extra-rate"></div>
+    <p>What I see:</p>
+    <ul class="opts">
+      <li><b>Weight:</b> Meshy's slashes have what you asked for: a wind-up, a step in and the whole body swinging through. Left Slash and Thrust Slash are the clearest. Mine are tidier poses but stiffer.</li>
+      <li><b>Length:</b> they're made for 3D games, not for a goblin you have to read and dodge. Left Slash runs 3.2 s, Thrust Slash 3 s; mine is 1.5 s. Playing them faster or cutting the idle ends is free (it's just which frames get rendered), so the length isn't a blocker.</li>
+      <li><b>Readability:</b> the big body turn hides the blade behind the sack for a few frames in some directions. Mine keeps the blade on the outside in every direction, on purpose.</li>
+      <li><b>Run:</b> Meshy's free run is upright; Lean Forward Sprint has the lean you wanted.</li>
+      <li><b>Death:</b> Knock Down is a proper fall in 8 directions for 3 credits, something code deaths can't do and drawn deaths cost a lot for.</li>
+      <li><b>Limits:</b> Meshy only rigs two-legged, human-shaped bodies. Beasts, slimes and constructs would still need our own skeleton and code moves, so both routes stay.</li>
+    </ul>
+    <p>My pick for humanoid enemies: Meshy's clips. Free walk, Lean Forward Sprint, Thrust Slash (or Left Slash) sped up to about 1.5 s, Combat Idle and Knock Down. Code moves stay for everything else. Meshy charges per rigged model (3 credits a clip), but every Meshy rig has the same 24 bones, so I expect these clips to copy onto the next goblin in Blender for free. That's untested. The next step tests it: a second goblin made the cheaper way (15 credits to make, 5 to rig), with these clips copied on.</p>
+  </section>
+
   <section aria-labelledby="elev">
-    <h2 id="elev">Latest: how high the camera sits for characters</h2>
+    <h2 id="elev">Before that: how high the camera sits for characters</h2>
     <p>You noticed PixelLab draws the goblin closer to face-on than our renders. That's normal: most 2D games with a high camera draw characters lower than the ground, because faces and fronts read better, and nobody notices the mismatch. A 3D render can pick any height for free. Here is Meshy's raider at the game's 30 degrees, at 20 and at 10.</p>
     <figure><img src="img/3d-elev-still.png" alt="The PixelLab raider, then Meshy's raider rendered from 30, 20 and 10 degrees above the ground, eight directions each. Lower angles show more face and legs and less hood and sack."><figcaption>Top: PixelLab. Then Meshy at 30, 20 and 10 degrees. South, south-east, east, north-east, north, north-west, west, south-west.</figcaption></figure>
     <figure><img src="img/3d-elev-walk.gif" alt="The same four rows walking."><figcaption>Walk.</figcaption></figure>
@@ -322,6 +349,8 @@ for (const j of JOBS2) {
   const r = el('div', 'rate'); r.append(marks('ratings', j.id, KRC), note('ratings', j.id, 'What to change'));
   box.append(head, el('p', '', j.notes), r); $('jobs2').append(box);
 }
+for (const [id, what] of [['walk', 'Which walk'], ['run', 'Which run'], ['attack', 'Which attack'], ['extra', 'Idle and death']])
+  $('clip-' + id + '-rate').append(el('b', '', what), marks('ratings', 'clip-' + id, [['code', 'Mine', 'maybe'], ['meshy', 'Meshy', 'keep'], ['mix', 'Mix', 'maybe']]), note('ratings', 'clip-' + id, 'Which row, what to change'));
 $('elev-rate').append(el('b', '', 'Camera height'), marks('ratings', 'm3d-elev', [['30', '30', 'cut'], ['20', '20', 'keep'], ['10', '10', 'maybe']]), note('ratings', 'm3d-elev', 'Which height, or between'));
 $('m3d-codex-rate').append(el('b', '', "Codex's model"), marks('ratings', 'm3d-codex', KRC), note('ratings', 'm3d-codex', 'What to change'));
 $('m3d-meshy-rate').append(el('b', '', "Meshy's model"), marks('ratings', 'm3d-meshy', KRC), note('ratings', 'm3d-meshy', 'What to change'));

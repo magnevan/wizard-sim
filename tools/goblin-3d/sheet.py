@@ -76,14 +76,24 @@ if mode == 'still':
         rows.append(label(row_img(cells), lab + '   (' + ', '.join(DIRS8) + ')'))
     stack(rows).save(out)
 else:
+    # a source may name its own move and frame time, <label>=<dir>@<move>#<ms> (Meshy's 12 fps clips beside our code
+    # moves); rows with different frame times are put on a common 28 ms tick, each looping at its own speed
     move = sys.argv[3]
-    srcs = [a.split('=', 1) for a in sys.argv[4:]]
-    seqs = [[frames(s, move, d) for d in DIRS4] for _, s in srcs]
-    n = max(len(f) for sq in seqs for f in sq)
+    base = 110 if move != 'run' else 80
+    srcs = []
+    for a in sys.argv[4:]:
+        lab, src = a.split('=', 1)
+        src, _, ms = src.partition('#')
+        src, _, mv = src.partition('@')
+        srcs.append((lab, src, mv or move, int(ms) if ms else base))
+    seqs = [[frames(s, mv, d) for d in DIRS4] for _, s, mv, _ in srcs]
+    lens = [max(len(f) for f in sq) * ms for sq, (*_, ms) in zip(seqs, srcs)]
+    same = len({ms for *_, ms in srcs}) == 1
+    tick = srcs[0][3] if same else 28
     out_frames = []
-    for i in range(n):
-        rows = [label(row_img([f[i % len(f)] if f else None for f in sq]), lab + '   ' + move) for (lab, _), sq in zip(srcs, seqs)]
+    for t in range(0, max(lens), tick):
+        rows = [label(row_img([f[(t // ms) % len(f)] if f else None for f in sq]), lab + '   ' + mv)
+                for (lab, _, mv, ms), sq in zip(srcs, seqs)]
         out_frames.append(stack(rows).convert('P', palette=Image.ADAPTIVE, colors=255))
-    ms = 110 if move != 'run' else 80
-    out_frames[0].save(out, save_all=True, append_images=out_frames[1:], duration=ms, loop=0, disposal=2)
+    out_frames[0].save(out, save_all=True, append_images=out_frames[1:], duration=tick, loop=0, disposal=2)
 print('wrote', out)

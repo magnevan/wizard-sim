@@ -136,9 +136,20 @@ What showed up on the way:
 - The raiders' wind-up is mostly a held guard pose before the body-spin slash; it reads as a telegraph but is less dramatic than the full clip. The archer's draw is subtle.
 - Deaths are the knock-down for every sprite goblin, then lying still and fading; the code rigs' elemental deaths don't play on sprites yet (the user's order: roster first, elemental deaths later).
 
+Checks: `npm run check` (632 tests) and `npm run check:browser` passed; only drawing code changed. In an arena screenshot the goblins stand at about 0.6 of the 1.7x wizard's height. The page's last section ("the whole band, in the game", rating `ingame-band`) shows it.
+
+Open after the run, for the user's review:
+- The sprites' shadows are long (the sprites are taller than the rigs), and the goblins overlap at the old, tighter spacing.
+- The chieftain's 96 px frame may clip its widest swings at the sides (the run's estimate; not checked in play).
+- Statuses only tint the sprite and a hit flashes it white; elemental deaths on sprites come later.
+- Whether owned clips copy onto a new Meshy rig for free is still untested.
+- Not merged to main (a push to main deploys the public game).
+
 ## Claude's picks, pending the review
 
-1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in.
+*(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the sprites are wired in; see the two sections above.)*
+
+1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in. *(Done: 1.7 is the default while sprites are on.)*
 2. Then buy run, attack (with its telegraph pose) and death for all six, about 170 generations, checked frame by frame.
 3. Wire the goblins in as sprites in the battery, behind a toggle against the rigs, with statuses as tints and overlays and 16 facings snapped to 8.
 4. Keep round 2's bright olive skin for any further goblins.

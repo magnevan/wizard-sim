@@ -17,7 +17,7 @@ That writes, per model, the 4x renders (`<name>/`), the game-size frames (`<name
 
 ## Image-to-3D models (Meshy)
 
-Codex draws the input (`prompts/meshy-front.txt`), the user makes the model in Meshy (free tier, Image to 3D, front view) and saves the `.glb` in `output/` (gitignored: 26 MB). Meshy's own rig and animations aren't used. It has to face the viewer in its front view (glTF's forward becomes -Y on import).
+The first route (round 2, before the Meshy MCP): Codex draws the input (`prompts/meshy-front.txt`), the user makes the model in Meshy (free tier, Image to 3D, front view) and saves the `.glb` in `output/` (gitignored: 26 MB), and our skeleton and code moves pose it. The roster now uses Meshy's rig and clips instead (below); this route stays for creatures Meshy can't rig. It has to face the viewer in its front view (glTF's forward becomes -Y on import).
 
 Its proportions and rest pose won't match the skeleton, so each model gets `<model>.joints.json` beside it, once:
 
@@ -55,3 +55,27 @@ Five more goblins went through the whole pipeline on 2026-11-17 (the user approv
 7. **Game**: `game/packages/client/src/art/sprites.ts` draws them (on by default; `?sprites=0` for the code rigs).
 
 The chieftain renders at 1.8x a goblin's height on a 96 px frame (`--canvas=96 --height=1.8`); the camera aims at the scaled body's middle.
+
+`python review.py <out-dir>` makes the review images from the packed sheets (all six standing in 8 directions, and walk, run, attack and death GIFs); copy them to `tools/warband-art/img/roster-*`.
+
+### Adding a creature (the checklist)
+
+1. Codex picture, T-pose, front view, empty hands (`prompts/roster/<slug>.txt` as the pattern). Run Codex jobs **one or two at a time**: six at once made every image but saved none (they were recovered from `~/.codex/generated_images/`). The user approves the picture before any credits.
+2. Meshy, with sign-off on the credits: `meshy_image_to_3d` smart topology (above), then `meshy_rig`, then `meshy_animate` with only the clips a mechanic plays (library ids used so far: Left Slash 97, Right-hand Sword Slash 219, Thrust Slash 240, Lean Forward Sprint 644, Knock Down 187, Archery Shot 224, Shield Push 220, Crouch Pull and Throw 239, Heavy Hammer Swing 128). Download `walking.glb`, `running.glb` and `clips.glb` into `output/<slug>/`.
+3. A prop in `props.py` if it holds anything; add the slug's options to `roster.sh` and its clips to `ROLES` in `pack.py`.
+4. `roster.sh`, then `pack.py`, then look at the attack rows frame by frame (the strike detection can pick an early frame) and the colours against the band.
+5. Map the game's enemy kind to the slug in the client (`art/sprites.ts`, `view.ts`), then from `game/`: `npm run check`, `npm run check:browser`, and a screenshot of a room with enemies (shoot one room per run; three chained shots under one time limit looked like a hang).
+
+Untested: copying owned clips onto a new rig in Blender (every Meshy rig has the same 24 bones), which would make each clip a one-time cost. The roster run bought clips per goblin instead.
+
+### Meshy task ids (to re-download the gitignored GLBs)
+
+| Slug | Model | Rig | Clips |
+|---|---|---|---|
+| raider-goggles | `01a1e720-4feb-73e6-917b-52e5e8770149` | `01a1e721-459a-725f-8495-e6f0d111db5c` | `01a1e723-0525-71ac-98d4-f41dd092fe3d` |
+| archer | `01a1e720-5791-71bf-a069-ed96222124f0` | `01a1e721-661b-7035-8042-44000c153731` | `01a1e723-07d9-7207-a5c0-de19040f3d04` |
+| shieldbearer | `01a1e720-5dc7-77d4-8a08-ca48cd550a6f` | `01a1e721-7950-759b-95f6-a1c0be787401` | `01a1e723-09e2-7448-b695-5bc6ad6f88aa` |
+| hooker | `01a1e720-6589-77ef-bb6f-59ef63569bb7` | `01a1e721-8666-7439-a4ac-32c2623a0de9` | `01a1e723-0be1-72b7-9299-f66613ebe0bd` |
+| chieftain | `01a1e720-6d9b-73cf-8363-dbefe537101f` | `01a1e721-94ad-7048-9783-ccd9d07375a8` | `01a1e723-0e13-7124-8893-23f1811e01d3` |
+
+The hooded raider's are listed above under `--anim`. Credits spent: 40 on the hooded raider, 142 on the five (75 models, 25 rigs, 42 clips).

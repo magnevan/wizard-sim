@@ -18,8 +18,8 @@ The last recorded scope is beats 1–7, through the battery.
 
 ## Goblin warband art
 
-> [!in-review] Mark the bought goblins
-> Scale settled: the 32 px goblins, and today's wizard drawn bigger (`?wizscale=1.7`, about 50 px). Check the bigger wizard in play, then decide the chieftain's size, the animations, and wiring the goblin sprites in (which makes 1.7 the default).
+> [!in-review] Judge the band in play
+> All six goblins are in the game as sprites rendered from Meshy's 3D models (branch `worktree-goblin-warband-art`, not merged; `?sprites=0` for the old rigs), with the wizard drawn 1.7x. Mark the page's last section (`ingame-band`): which goblin or move to redo. Known weak spots are listed in the exploration. Elemental deaths on sprites come after.
 
 [Goblin Warband Art review](https://claude.ai/artifact/4WNayLNFUL2TNuffPfTMsJ) · [Exploration](explorations/2026-11-16-warband-art.md)
 

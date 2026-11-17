@@ -1,0 +1,8 @@
+Generate one image with your image generation tool, then save it as weapons.png in the current directory. Reply with just the file name.
+
+The attached images are references for design only: pixel-art sprites of the goblins from our game, shown from four sides, holding these weapons. Do not copy their pixel-art style. The last image is a 3D-model reference picture of one of the goblins: match its rendering style and finish.
+
+Subject: a weapon reference sheet for a 3D modeller. Six goblin weapons laid out in two rows of three, each shown flat from the side, well apart, on a plain pure white background, evenly and softly lit like clean 3D game prop renders, with smooth stylised shapes and simple colours. All are scavenged, crude and chunky, sized for a small goblin (about a metre tall).
+
+Top row, left to right: a jagged steel knife with a leather-wrapped grip; a short curved wooden bow, strung, with leather wraps at the grip; a short spear with a wooden shaft and a riveted iron leaf-shaped tip.
+Bottom row, left to right: a big round shield, seen face on, made from a scavenged brass machine panel: riveted brass plate with a small slotted vent grille and a little brass gear wheel on its face, a strip of deep blue cloth with a gold star hanging from its rim; a heavy dark iron grappling hook with three curved prongs, with a short length of its iron chain; a big two-handed maul: a square grey stone head banded in brass with a glowing violet rune carved on its face, on a long leather-wrapped wooden haft.

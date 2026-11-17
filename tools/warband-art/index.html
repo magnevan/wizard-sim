@@ -63,8 +63,18 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="roster">
+    <h2 id="roster">Latest: the rest of the band, pictures for Meshy</h2>
+    <p>The next step in the roster pipeline: one picture per goblin for Meshy to build a 3D model from. Each is drawn by Codex (free) from its 32 px sprite, matched to the hooded raider's picture so the band shares one build and finish. Hands are empty on purpose: Meshy drops thin things like blades, and a shield held in front would hide the body it has to rebuild. The weapons are drawn separately below and grafted on, like the raider's blade. Worn gear (goggles, helmet, quiver, chain, cape) stays on the body.</p>
+    <p><b>An approved picture is what goes to Meshy</b> (about 20 credits each: model 15, rig 5). Mark Redo with a note and I'll draw it again, free.</p>
+    <div class="jobs" id="concepts"></div>
+    <h3>Weapons</h3>
+    <figure><img class="photo" src="img/roster-weapons.png" alt="Six goblin weapons on white: a jagged knife, a short bow, a spear, a brass machine-panel shield with a vent grille and gear, an iron grappling hook with chain, and a stone maul banded in brass with a violet rune."><figcaption>Knife (goggled raider), bow (archer), spear and shield (shieldbearer), hook (hooker), maul (chieftain). Codex can write these as small 3D models for free, as it did the raider's blade. Two things I'd change: the spear is short and stubby, and the maul's rune reads as the letter G.</figcaption></figure>
+    <div class="rate" id="con-weapons-rate"></div>
+  </section>
+
   <section aria-labelledby="clips">
-    <h2 id="clips">Latest: Meshy's animator vs my code moves</h2>
+    <h2 id="clips">Before that: Meshy's animator vs my code moves</h2>
     <p>Same raider, same 20° camera, same pixel pass, blade grafted into the right hand. The difference is who moves it: the top row of each GIF is my code moves on our skeleton, the rows below are Meshy's rig playing clips from its animation library (motion-captured or animator-made). Rigging cost 5 credits, the ten clips 3 each, plus 5 to thin the model first: <b>40 Meshy credits</b>, signed off.</p>
     <h3>Walk</h3>
     <figure><img src="img/3d-clips-walk.gif" alt="Four rows of the hooded raider walking in four directions: my code walk, Meshy's standard walk, a slow orc walk and a sneaky walk."><figcaption>My walk; Meshy's free walk; Slow Orc Walk; Sneaky Walk. South, south-west, east, north.</figcaption></figure>
@@ -275,13 +285,13 @@ const QUESTIONS = [
     options: ['Keep the bright green of round 2.', 'Go back to a mix of greens and browns: it varies the crowd.'],
     pick: 'Keep the bright green, so the goblins never blend into the dirt.' },
   { id: 'q-5-scale', title: 'Which pixel density?', text: 'Today a wizard is about 29 px tall; every bought sprite is drawn at about twice that.',
-    options: ['Double the game's density: 60 px wizard sprites, the round 2 goblins and the chieftain as they are, props upscaled or redrawn.', 'Keep today's density: redraw the goblins about 16 px tall and the chieftain about 60, with much less detail.'],
-    pick: 'Settled by you: the 32 px goblins, and today's wizard drawn about 1.7× bigger (see Latest).' },
+    options: ['Double the game\'s density: 60 px wizard sprites, the round 2 goblins and the chieftain as they are, props upscaled or redrawn.', 'Keep today\'s density: redraw the goblins about 16 px tall and the chieftain about 60, with much less detail.'],
+    pick: 'Settled by you: the 32 px goblins, and today\'s wizard drawn about 1.7× bigger (see Latest).' },
   { id: 'q-6-wizard', title: 'The bigger wizard in play', text: 'Try ?wizscale=1.7 in any room. Is 1.7 right, and does anything look off (the hit area, spells, the hat)?',
     options: ['1.7 (49 px) as it is.', 'A different size: say which (1.5 is 44 px).'],
     pick: '1.7, made the default when the goblin sprites go in.' },
-  { id: 'q-7-chieftain', title: 'The chieftain's size', text: 'Beside the bigger wizard the chieftain is about 2.5 wizards tall (121 vs 49 px). The concept had it at about two.',
-    options: ['Keep it: a boss can loom.', 'Regenerate it at about 100 px (3 generations), so it's twice a wizard.'],
+  { id: 'q-7-chieftain', title: 'The chieftain\'s size', text: 'Beside the bigger wizard the chieftain is about 2.5 wizards tall (121 vs 49 px). The concept had it at about two.',
+    options: ['Keep it: a boss can loom.', 'Regenerate it at about 100 px (3 generations), so it\'s twice a wizard.'],
     pick: 'Done: you found it too bulky, so it was redrawn at 96 px (see Latest). Mark it there.' },
   { id: 'q-8-death', title: 'Deaths: code or drawn?', text: 'Code runs the game\'s death styles on any sprite, every direction and element, for free. A drawn death is more charming but is one direction, one style, and drifts off-model.',
     options: ['Code, borrowing the drawn one\'s ideas (the blade flying, spilled loot) as code.', 'Drawn deaths (Codex or PixelLab) for the base death, code for the elemental ones.', 'Something else.'],
@@ -349,6 +359,22 @@ for (const j of JOBS2) {
   const r = el('div', 'rate'); r.append(marks('ratings', j.id, KRC), note('ratings', j.id, 'What to change'));
   box.append(head, el('p', '', j.notes), r); $('jobs2').append(box);
 }
+const AR = [['approve', 'Approve', 'keep'], ['redo', 'Redo', 'maybe']];
+const CONCEPTS = [
+  { id: 'raider-goggles', name: 'Raider, goggles', notes: 'Topknot, goggles, the toothy grin and the blue trophy cloth with its star all carried over. A little leaner and longer in the leg than the hooded raider. The knife is grafted on.' },
+  { id: 'archer', name: 'Archer', notes: 'Red-lensed goggles on the cap, the quiver over its shoulder, the blue scarf. Meshy may lose the thin arrow fletching, as it lost the blade; at 32 px it would read as a quiver either way.' },
+  { id: 'shieldbearer', name: 'Shieldbearer', notes: 'Stockier, as asked: iron helmet, shoulder guards, boots, and a blue tabard with a star. The shield and spear are grafted on.' },
+  { id: 'hooker', name: 'Hooker', notes: 'The chain is worn as a bandolier, so it moves with the body; the hook and its throwing length of chain are separate. Goggles and blue sash as in the sprite.' },
+  { id: 'chieftain', name: 'Chieftain', notes: "Fur collar and a cape of torn blue banners, the gear-wheel buckle, a tooth necklace, tusks. It's drawn the same size as the others here: its size is set when it's rendered (the 96 px canvas), not by the picture." },
+];
+for (const c of CONCEPTS) {
+  const box = el('article', 'job'), fig = el('figure'), img = el('img', 'photo');
+  img.src = 'img/roster-' + c.id + '.png'; img.alt = 'Codex picture of the ' + c.name.toLowerCase() + ' for Meshy, beside its 32 px sprite.';
+  fig.append(img);
+  const r = el('div', 'rate'); r.append(marks('ratings', 'con-' + c.id, AR), note('ratings', 'con-' + c.id, 'What to change'));
+  box.append(el('h3', '', c.name), fig, el('p', '', c.notes), r); $('concepts').append(box);
+}
+$('con-weapons-rate').append(el('b', '', 'Weapons'), marks('ratings', 'con-weapons', AR), note('ratings', 'con-weapons', 'Which to redo, and how'));
 for (const [id, what] of [['walk', 'Which walk'], ['run', 'Which run'], ['attack', 'Which attack'], ['extra', 'Idle and death']])
   $('clip-' + id + '-rate').append(el('b', '', what), marks('ratings', 'clip-' + id, [['code', 'Mine', 'maybe'], ['meshy', 'Meshy', 'keep'], ['mix', 'Mix', 'maybe']]), note('ratings', 'clip-' + id, 'Which row, what to change'));
 $('elev-rate').append(el('b', '', 'Camera height'), marks('ratings', 'm3d-elev', [['30', '30', 'cut'], ['20', '20', 'keep'], ['10', '10', 'maybe']]), note('ratings', 'm3d-elev', 'Which height, or between'));

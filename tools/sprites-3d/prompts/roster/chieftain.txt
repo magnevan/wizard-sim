@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as chieftain.png in the current directory. Reply with just the file name.
+
+The attached images are references for design only. The first is a pixel-art sprite of this goblin from our game, shown from four sides; do not copy its pixel-art style. The second is a 3D-model reference picture of an ordinary goblin from the same warband: match its rendering style, skin colour and finish exactly, so the two look like members of one band.
+
+Subject: a character model reference for an image-to-3D tool. One goblin chieftain, full body, standing in a relaxed A-pose (arms angled down and slightly away from the body, hands open with fingers relaxed and empty, legs a little apart), facing the viewer straight on, seen at eye level. The whole figure is in frame with margin around it, centred, on a plain pure white background, evenly and softly lit like a clean 3D game model turntable render, with smooth stylised shapes and simple colours.
+
+The chieftain: the biggest goblin of the band, taller and broader than the others but with the same goblin build: wiry long arms, a slight hunch, a big head, bright olive-green skin, long pointed ears sticking out sideways, a tusked grin. A necklace of small bones, a wide leather belt with a brass gear-wheel buckle, leather bracers, a short ragged cape of brown fur and torn deep blue banners with gold stars hanging from its shoulders to mid-thigh, bare three-toed feet. Chunky, readable shapes with stylised proportions.

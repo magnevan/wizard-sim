@@ -724,5 +724,648 @@
     "mark": "Wrong",
     "note": "no sound",
     "at": "2026-11-12T01:19:24.129Z"
+  },
+  "life/beam-r1/beamStart/take3": {
+    "note": "Too sharp, irritating",
+    "mark": "Wrong",
+    "at": "2026-11-14T14:37:40.541Z"
+  },
+  "life/beam-r1/beamStart/take2": {
+    "mark": "Close",
+    "note": "Maybe, it's not fully convincing, but not terrible either. Main problem is that it doesn't feel like an initiation sound. Magicka has a small impact-ish sound. ",
+    "at": "2026-11-14T14:41:24.816Z"
+  },
+  "life/beam-r1/beamStart/take1": {
+    "note": "Maybe, but it feels too smooth, not like the beginning of any effect",
+    "at": "2026-11-14T14:40:57.307Z"
+  },
+  "life/beam-r1/beamStart/other": {
+    "mark": "Right",
+    "note": "Feels like a nice sound. Like something connecting with a little clashed followed by a small strum",
+    "at": "2026-11-14T14:40:30.820Z"
+  },
+  "life/beam-r1/beam/take1": {
+    "mark": "Right",
+    "note": "I like this one. Feels like a beam sound, but feels friendly. Maybe a bit better than the Magicka sound",
+    "at": "2026-11-14T14:42:28.755Z"
+  },
+  "life/beam-r1/beam/take3": {
+    "mark": "Wrong",
+    "note": "sounds like water pouring.",
+    "at": "2026-11-14T14:42:51.543Z"
+  },
+  "life/beam-r1/beam/take2": {
+    "mark": "Close",
+    "note": "It's not bad, but the sound is very very slow, and take 1 is already quite good.",
+    "at": "2026-11-14T14:42:44.249Z"
+  },
+  "life/beam-r1/tick/take1": {
+    "mark": "Right",
+    "note": "Sounds pretty good, but it should be quite a bit more quiet, it's overpowering the other sounds.",
+    "at": "2026-11-14T14:44:47.965Z"
+  },
+  "life/beam-r1/tick/take3": {
+    "mark": "Close",
+    "at": "2026-11-14T14:43:55.931Z"
+  },
+  "life/beam-r1": {
+    "note": "Beam sound is pretty good, but we need a catch sound that goes with it, or alternatively we just don't have a catch sound at all. ",
+    "at": "2026-11-14T14:45:48.956Z"
+  },
+  "life/spray-r1/hold/take3": {
+    "mark": "Close",
+    "at": "2026-11-14T15:01:06.026Z",
+    "note": "Still watery, its a reasonable spray sound. It loops poorly because the sound fades in and out a lot."
+  },
+  "life/spray-r1/hold/other": {
+    "mark": "Wrong",
+    "at": "2026-11-14T14:47:26.286Z"
+  },
+  "life/spray-r1/hold/take1": {
+    "mark": "Wrong",
+    "note": "Sounds like heavy rain, not the right vibe",
+    "at": "2026-11-14T14:55:11.491Z"
+  },
+  "life/spray-r1/hold/take2": {
+    "mark": "Wrong",
+    "at": "2026-11-14T14:55:26.278Z",
+    "note": "Sounds like a light mist with a single heavy drop"
+  },
+  "life/level/beamStart": {
+    "level": 1,
+    "at": "2026-11-14T15:01:13.508Z"
+  },
+  "life/beam-r2/beamStart/take3": {
+    "mark": "Right",
+    "note": "This one feels good, it's a nice soft tap with a slight echo",
+    "at": "2026-11-14T15:02:08.482Z"
+  },
+  "life/beam-r2/beamStart/take2": {
+    "mark": "Close",
+    "at": "2026-11-14T15:02:14.855Z"
+  },
+  "life/level/tick": {
+    "level": 0.8,
+    "at": "2026-11-14T15:02:30.149Z"
+  },
+  "life/beam-r2": {
+    "note": "Its good with the new catch. I'd reduce heal tick to 80%",
+    "at": "2026-11-14T15:03:00.765Z"
+  },
+  "life/ring-r1/burst/take1": {
+    "note": "I don't quite like the tone its using for the shimmer. It's not a terrible sound if I play it at a lower volume otherwise.",
+    "mark": "Close",
+    "at": "2026-11-14T15:09:54.027Z"
+  },
+  "life/level/burst": {
+    "level": 0.3,
+    "at": "2026-11-14T15:36:22.314Z"
+  },
+  "life/ring-r1/burst/take3": {
+    "note": "The sound at the start is not bad, but there's a strum that lingers too long",
+    "at": "2026-11-14T15:07:25.452Z"
+  },
+  "life/ring-r1/burst/other": {
+    "mark": "Right",
+    "note": "It has a nice thud at the beginning, which helps accentuate the movement that makes it a wave. Then its a simmer similar to take 1, but maybe slightly deeper?",
+    "at": "2026-11-14T15:08:52.065Z"
+  },
+  "life/ring-r1": {
+    "note": "I think we just need a thud or something at the start to help accentuate it, then it'll work",
+    "at": "2026-11-14T15:09:12.529Z"
+  },
+  "life/spring-r1/place/take3": {
+    "mark": "Wrong",
+    "at": "2026-11-14T15:10:28.154Z"
+  },
+  "life/spring-r1/ground/take2": {
+    "mark": "Wrong",
+    "note": "sounds like waves crashing at the beach or something",
+    "at": "2026-11-14T15:12:31.559Z"
+  },
+  "life/spring-r1/ground/take3": {
+    "mark": "Close",
+    "note": "gentle ticking and some rain",
+    "at": "2026-11-14T15:15:35.363Z"
+  },
+  "life/level/ground": {
+    "level": 0.55,
+    "at": "2026-11-14T15:11:51.088Z"
+  },
+  "life/beam-r2/tick/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T15:13:57.324Z"
+  },
+  "life/spring-r1/place/take1": {
+    "mark": "Close",
+    "note": "Seems ok. Hard to judge since healing doesn't have a natural sound, but this has an ok vibe.",
+    "at": "2026-11-14T15:14:51.187Z"
+  },
+  "life/level/place": {
+    "level": 0.8,
+    "at": "2026-11-14T15:14:15.869Z"
+  },
+  "life/spring-r1/ground/take1": {
+    "note": "it sounds like gentle water dripping, raining.",
+    "mark": "Close",
+    "at": "2026-11-14T15:15:17.308Z"
+  },
+  "life/spring-r1": {
+    "note": "It's hard, because I don't have a good intuition for what is the right sound for this. We could try a more generic prompt, without connecting it to descriptions of sounds, and see what directions elevenlabs might give us.",
+    "at": "2026-11-14T15:16:38.619Z"
+  },
+  "life/self-r1/self/take3": {
+    "mark": "Wrong",
+    "at": "2026-11-14T15:17:06.333Z"
+  },
+  "life/self-r1/self/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T15:17:16.629Z"
+  },
+  "life/self-r1/force/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T15:19:23.234Z"
+  },
+  "life/self-r1": {
+    "note": "Sounds pretty good",
+    "at": "2026-11-14T15:19:29.118Z"
+  },
+  "cold/spray-r1/start/take1": {
+    "mark": "Right",
+    "note": "",
+    "at": "2026-11-14T15:22:18.817Z"
+  },
+  "cold/spray-r1/start/take2": {
+    "mark": "Right",
+    "note": "",
+    "at": "2026-11-14T15:26:15.760Z"
+  },
+  "cold/level/start": {
+    "level": 1,
+    "at": "2026-11-14T15:24:34.137Z"
+  },
+  "cold/spray-r1/hold/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T15:25:29.074Z"
+  },
+  "cold/spray-r1/hold/take2": {
+    "mark": "Right",
+    "at": "2026-11-14T15:26:17.645Z"
+  },
+  "cold/spray-r1": {
+    "mark": "Right",
+    "note": "These are very good. I thought take 1 was great, but take 2 was even better. Take 3 is a lot more like magicka, but  I like 1/2 better.",
+    "at": "2026-11-14T15:26:48.420Z"
+  },
+  "cold/ring-r1/burst/take1": {
+    "mark": "Close",
+    "at": "2026-11-14T15:28:10.789Z"
+  },
+  "cold/ring-r1/land/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T15:27:08.032Z"
+  },
+  "cold/ring-r1/burst/take3": {
+    "mark": "Right",
+    "note": "These are all very good, take 3 wins because it sounds a bit more like a forceful burst.",
+    "at": "2026-11-14T15:28:48.978Z"
+  },
+  "cold/ring-r1/burst/take2": {
+    "mark": "Close",
+    "at": "2026-11-14T15:28:12.380Z"
+  },
+  "cold/ring-r1": {
+    "mark": "Right",
+    "note": "Very good sounds overall, hard to pick, but I think 3/1 is the best combo.",
+    "at": "2026-11-14T15:29:48.796Z"
+  },
+  "cold/level/place": {
+    "level": 0.7,
+    "at": "2026-11-14T15:31:06.048Z"
+  },
+  "cold/fog-r1/place/take3": {
+    "mark": "Close",
+    "note": "This one is maybe ok... but I think we need to know what the ongoing sound will be like before making a call.",
+    "at": "2026-11-14T15:33:10.566Z"
+  },
+  "cold/fog-r1/ground/take3": {
+    "mark": "Close",
+    "note": "I think it should be more of a crackling sound of freezing. The description doesn't match the effect. There is no cone being blowin here.",
+    "at": "2026-11-14T15:32:28.445Z"
+  },
+  "cold/fog-r1/ground/take2": {
+    "mark": "Wrong",
+    "at": "2026-11-14T15:31:34.597Z"
+  },
+  "cold/fog-r1/ground/take1": {
+    "mark": "Wrong",
+    "at": "2026-11-14T15:31:35.917Z"
+  },
+  "cold/fog-r1": {
+    "mark": "Wrong",
+    "note": "Overall these don't feel quite right",
+    "at": "2026-11-14T15:32:42.361Z"
+  },
+  "life/ring-r2/burst/take2": {
+    "mark": "Close",
+    "at": "2026-11-14T15:35:56.734Z",
+    "note": "the thud helps, but the shimmer sound is just very grating"
+  },
+  "life/ring-r2/burst/take3": {
+    "mark": "Close",
+    "note": "This one is ok now with the thud, but we need to significantly lower the volume of the simmer sound, maybe like 30%.",
+    "at": "2026-11-14T15:36:46.467Z"
+  },
+  "life/ring-r3/burst/take1": {
+    "mark": "Close",
+    "at": "2026-11-14T23:08:21.955Z"
+  },
+  "life/ring-r3/burst/take2": {
+    "mark": "Wrong",
+    "at": "2026-11-14T23:09:22.027Z"
+  },
+  "life/ring-r3/burst/take3": {
+    "mark": "Right",
+    "note": "doesn't feel quite right, but its good enough",
+    "at": "2026-11-14T23:10:50.083Z"
+  },
+  "shield/wall-r1/wall/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:11:29.327Z"
+  },
+  "shield/wall-r1/wall/take2": {
+    "mark": "Right",
+    "at": "2026-11-14T23:12:33.564Z"
+  },
+  "shield/wall-r1/wall/take3": {
+    "mark": "Close",
+    "note": "a little too \"small\" for a barrier, but could be a good barrier sound.",
+    "at": "2026-11-14T23:13:01.986Z"
+  },
+  "shield/wall-r1/burst/take2": {
+    "note": "its silent",
+    "at": "2026-11-14T23:14:12.238Z"
+  },
+  "shield/wall-r1/burst/take3": {
+    "note": "its silent",
+    "at": "2026-11-14T23:14:18.067Z"
+  },
+  "shield/wall-r1/burst/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:14:22.008Z"
+  },
+  "shield/wall-r1": {
+    "note": "take 1 and 2 both seem fine. maybe a slight prefernce for take 2 overall",
+    "at": "2026-11-14T23:15:04.788Z"
+  },
+  "shield/ward-r1/self/take1": {
+    "mark": "Close",
+    "at": "2026-11-14T23:16:09.578Z"
+  },
+  "shield/ward-r1/self/take3": {
+    "mark": "Right",
+    "at": "2026-11-14T23:15:34.845Z"
+  },
+  "shield/ward-r1/self/take2": {
+    "mark": "Close",
+    "at": "2026-11-14T23:15:38.252Z"
+  },
+  "shield/ward-r1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:16:03.019Z"
+  },
+  "shield/block-r1/land/take2": {
+    "mark": "Right",
+    "at": "2026-11-14T23:16:45.915Z"
+  },
+  "shield/block-r1/land/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:16:47.390Z"
+  },
+  "shield/block-r1/land/take3": {
+    "mark": "Right",
+    "at": "2026-11-14T23:16:48.910Z"
+  },
+  "shield/block-r1": {
+    "note": "all 3 are good, maybe 3 can be arrows and 1 and 2 can just be variations on hits?",
+    "mark": "Right",
+    "at": "2026-11-14T23:17:23.245Z"
+  },
+  "shield/blink-r1/force/take1": {
+    "mark": "Right",
+    "note": "feels like a very good fit for the speed of the spell and the effect",
+    "at": "2026-11-14T23:18:42.291Z"
+  },
+  "shield/blink-r1/force/take2": {
+    "mark": "Close",
+    "note": "not bad either, just prefer take 1 a little bit",
+    "at": "2026-11-14T23:18:55.133Z"
+  },
+  "shield/blink-r1/force/take3": {
+    "mark": "Close",
+    "note": "its a good effect, but I think with the visual effect take 1 fits better",
+    "at": "2026-11-14T23:19:13.751Z"
+  },
+  "shield/blink-r1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:19:18.015Z"
+  },
+  "cold/fog-r2/place/take1": {
+    "mark": "Wrong",
+    "note": "gives a bit too much of a machine sound",
+    "at": "2026-11-14T23:19:56.837Z"
+  },
+  "cold/fog-r2/place/take2": {
+    "mark": "Wrong",
+    "note": "same as 1",
+    "at": "2026-11-14T23:20:08.942Z"
+  },
+  "cold/fog-r2/place/take3": {
+    "mark": "Right",
+    "note": "this sounds right, like a rapid flow of cold air and cracklling from the freeze",
+    "at": "2026-11-14T23:20:51.067Z"
+  },
+  "cold/fog-r2/place/other": {
+    "note": "I don't think this is from magicka",
+    "at": "2026-11-14T23:20:27.315Z"
+  },
+  "cold/fog-r2/ground/take1": {
+    "note": "it has too many small distinct  sounds, it sounds dynamic instead of static, and it doesn't loop well",
+    "mark": "Wrong",
+    "at": "2026-11-14T23:22:14.434Z"
+  },
+  "arcane/beam-r1/beamStart/take2": {
+    "mark": "Right",
+    "at": "2026-11-14T23:22:52.419Z"
+  },
+  "arcane/beam-r1/beamStart/take1": {
+    "mark": "Close",
+    "at": "2026-11-14T23:22:53.723Z"
+  },
+  "arcane/beam-r1/beamStart/take3": {
+    "mark": "Close",
+    "at": "2026-11-14T23:22:59.822Z"
+  },
+  "arcane/beam-r1/beam/take3": {
+    "mark": "Wrong",
+    "at": "2026-11-14T23:23:13.799Z"
+  },
+  "arcane/beam-r1/beam/take2": {
+    "mark": "Right",
+    "at": "2026-11-14T23:24:38.354Z"
+  },
+  "arcane/beam-r1/beam/take1": {
+    "mark": "Close",
+    "at": "2026-11-14T23:23:18.137Z"
+  },
+  "arcane/beam-r1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:24:41.780Z"
+  },
+  "arcane/nova-r1/burst/take1": {
+    "mark": "Wrong",
+    "note": "sound is too long, and it doesn't sound forcefull enough",
+    "at": "2026-11-14T23:25:34.514Z"
+  },
+  "arcane/nova-r1/burst/take2": {
+    "note": "sounds too mild, like a gust of air",
+    "mark": "Wrong",
+    "at": "2026-11-14T23:25:51.867Z"
+  },
+  "arcane/nova-r1/burst/take3": {
+    "mark": "Close",
+    "note": "sounds more explosive, but not quite the right vibe. The initial sound is better, and the after sound  doesn't sound so good, with a little chime in it",
+    "at": "2026-11-14T23:26:50.497Z"
+  },
+  "arcane/nova-r1/burst/other": {
+    "mark": "Right",
+    "at": "2026-11-14T23:26:58.190Z"
+  },
+  "arcane/nova-r1": {
+    "mark": "Close",
+    "at": "2026-11-14T23:27:02.524Z"
+  },
+  "arcane/blast-r1/place/take1": {
+    "mark": "Wrong",
+    "note": "just a rush of air, but nothing that matches the explosions",
+    "at": "2026-11-14T23:27:59.685Z"
+  },
+  "arcane/blast-r1/place/take2": {
+    "mark": "Wrong",
+    "note": "a buzz of energy, but no burst that matches animation",
+    "at": "2026-11-14T23:29:07.622Z"
+  },
+  "arcane/blast-r1/place/take3": {
+    "mark": "Wrong",
+    "note": "nothing to match the explosion that happens",
+    "at": "2026-11-14T23:29:21.266Z"
+  },
+  "arcane/blast-r1": {
+    "mark": "Wrong",
+    "at": "2026-11-14T23:29:29.551Z"
+  },
+  "arcane/attune-r1/self/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:29:52.601Z"
+  },
+  "arcane/attune-r1/force/take1": {
+    "note": "no sound",
+    "at": "2026-11-14T23:30:09.782Z"
+  },
+  "arcane/attune-r1/force/take2": {
+    "note": "no sound",
+    "at": "2026-11-14T23:30:12.285Z"
+  },
+  "arcane/attune-r1/force/take3": {
+    "note": "no sound",
+    "at": "2026-11-14T23:30:30.668Z"
+  },
+  "arcane/attune-r1/self/take2": {
+    "note": "sounds a little off, just kind of a small damaging sound",
+    "at": "2026-11-14T23:30:55.383Z"
+  },
+  "arcane/attune-r1/self/take3": {
+    "mark": "Wrong",
+    "note": "",
+    "at": "2026-11-14T23:31:23.534Z"
+  },
+  "lightning/arc-r1/beam/take3": {
+    "mark": "Wrong",
+    "at": "2026-11-14T23:32:10.317Z"
+  },
+  "lightning/arc-r1/beam/take2": {
+    "mark": "Wrong",
+    "at": "2026-11-14T23:32:11.445Z"
+  },
+  "lightning/arc-r1/beam/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:32:13.304Z"
+  },
+  "lightning/arc-r1/beamStart/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:32:30.047Z"
+  },
+  "lightning/arc-r1/land/take2": {
+    "mark": "Right",
+    "at": "2026-11-14T23:32:42.257Z"
+  },
+  "lightning/arc-r1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:33:05.797Z"
+  },
+  "lightning/discharge-r1/burst/take3": {
+    "mark": "Right",
+    "at": "2026-11-14T23:33:48.059Z"
+  },
+  "lightning/discharge-r1/burst/take1": {
+    "mark": "Close",
+    "at": "2026-11-14T23:34:23.609Z"
+  },
+  "lightning/discharge-r1/burst/take2": {
+    "mark": "Close",
+    "at": "2026-11-14T23:34:24.943Z"
+  },
+  "lightning/discharge-r1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:34:25.843Z"
+  },
+  "lightning/strike-r1/place/take2": {
+    "mark": "Wrong",
+    "at": "2026-11-14T23:34:41.212Z"
+  },
+  "lightning/strike-r1/place/take3": {
+    "mark": "Wrong",
+    "at": "2026-11-14T23:34:49.273Z"
+  },
+  "lightning/strike-r1/place/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:34:55.026Z"
+  },
+  "lightning/strike-r1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:34:56.093Z"
+  },
+  "lightning/arc-r1/beamStart/take2": {
+    "mark": "Close",
+    "at": "2026-11-14T23:35:07.610Z"
+  },
+  "lightning/arc-r1/beamStart/take3": {
+    "mark": "Close",
+    "at": "2026-11-14T23:35:09.914Z"
+  },
+  "lightning/arc-r1/land/take1": {
+    "mark": "Close",
+    "at": "2026-11-14T23:35:14.742Z"
+  },
+  "lightning/arc-r1/land/take3": {
+    "mark": "Close",
+    "at": "2026-11-14T23:35:16.342Z"
+  },
+  "sigil/glyph-arm-r1/glyph+life/take1": {
+    "note": "cant hear anything",
+    "at": "2026-11-14T23:35:51.325Z"
+  },
+  "sigil/glyph-arm-r1/glyph+life/other": {
+    "note": "cant hear anything",
+    "at": "2026-11-14T23:35:56.157Z"
+  },
+  "sigil/glyph-arm-r1/glyph+lightning/take1": {
+    "note": "cant hear anything",
+    "at": "2026-11-14T23:36:33.076Z"
+  },
+  "sigil/glyph-arm-r1/glyph+lightning/other": {
+    "note": "cant hear anything",
+    "at": "2026-11-14T23:36:36.085Z"
+  },
+  "sigil/glyph-arm-r1/glyph+arcane/take1": {
+    "note": "cant hear anything",
+    "at": "2026-11-14T23:36:43.157Z"
+  },
+  "sigil/glyph-arm-r1/glyph+arcane/other": {
+    "note": "cant hear anything",
+    "at": "2026-11-14T23:36:48.980Z"
+  },
+  "sigil/glyph-arm-r1/glyph+fire/take1": {
+    "note": "cant hear anything",
+    "at": "2026-11-14T23:36:56.211Z"
+  },
+  "sigil/glyph-arm-r1/glyph+fire/other": {
+    "note": "cant hear anything",
+    "at": "2026-11-14T23:36:59.459Z"
+  },
+  "fire/flamethrower-r3/start/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:37:15.818Z"
+  },
+  "fire/flamethrower-r3/hold/take1": {
+    "mark": "Right",
+    "at": "2026-11-14T23:37:20.123Z"
+  },
+  "atmos/sanctum/ambience/in-stone": {
+    "mark": "Right",
+    "at": "2026-11-14T23:44:19.069Z"
+  },
+  "atmos/sanctum/ambience/in-hearth": {
+    "mark": "Right",
+    "at": "2026-11-14T23:44:25.695Z"
+  },
+  "atmos/sanctum/ambience/in-hallhearth": {
+    "mark": "Right",
+    "at": "2026-11-14T23:44:36.988Z"
+  },
+  "atmos/sanctum/ambience/in-stone-warm": {
+    "note": "i cant tell the difference, it has a scary vibe",
+    "mark": "Right",
+    "at": "2026-11-14T23:45:23.921Z"
+  },
+  "atmos/sanctum/music/m-exploration": {
+    "mark": "Right",
+    "at": "2026-11-14T23:48:25.676Z",
+    "note": "cozy good generic exploration"
+  },
+  "atmos/sanctum/music/m-town": {
+    "mark": "Right",
+    "note": "cozy town vibes",
+    "at": "2026-11-14T23:48:44.098Z"
+  },
+  "atmos/sanctum/music/m-fields": {
+    "mark": "Right",
+    "note": "could be the right ambiance for some location",
+    "at": "2026-11-14T23:48:02.031Z"
+  },
+  "atmos/sanctum/music/m-risingmoon": {
+    "mark": "Right",
+    "note": "slightly scary, tense music. Vibes like you are in a dark place.",
+    "at": "2026-11-14T23:49:28.097Z"
+  },
+  "atmos/sanctum/music/m-magictown": {
+    "mark": "Right",
+    "note": "could be used in some town",
+    "at": "2026-11-14T23:49:59.592Z"
+  },
+  "atmos/sanctum/music/m-contemplation": {
+    "mark": "Close",
+    "note": "There could be a place that fits this vibe, but it's just a very slow song that I feel like won't quite fit anywhere",
+    "at": "2026-11-14T23:51:02.127Z"
+  },
+  "atmos/sanctum/music/m-bard": {
+    "mark": "Right",
+    "note": "Nice cozy generic music for walking around",
+    "at": "2026-11-14T23:51:26.831Z"
+  },
+  "atmos/sanctum/music/m-inn": {
+    "note": "good generic medieval music, it could fit an academy",
+    "at": "2026-11-14T23:52:10.701Z"
+  },
+  "atmos/sanctum": {
+    "note": "The old tower inn could be the academy. These are all good tracks for their suitable locations.",
+    "at": "2026-11-14T23:53:19.535Z"
+  },
+  "life/spring-r2/ground/take3": {
+    "at": "2026-11-15T00:27:02.327Z"
+  },
+  "life/spring-r2": {
+    "note": "the loops on these are really bad",
+    "at": "2026-11-15T00:27:10.434Z"
   }
 }

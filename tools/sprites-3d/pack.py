@@ -21,6 +21,7 @@ OUT = os.path.join(ROOT, 'game', 'content', 'assets', 'sprites')
 DIRS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east']
 DEATH = 18   # frames of the knock-down at 12 fps (scaled with the render's rate)
 MAX_W = 4096
+LEAD = 1.2   # seconds of clip kept before an attack's hit: the longest game wind-up (the brute's 1.1)
 
 # per character: which rendered clips play which move (substring of the clip's folder name)
 ROLES = {
@@ -46,7 +47,8 @@ GRADE = (1, 1, 1)
 
 
 def frames(px, clip, d):
-    return [graded(Image.open(f).convert('RGBA')) for f in sorted(glob.glob(os.path.join(px, clip, d, 'f*.png')))]
+    fs = sorted(glob.glob(os.path.join(px, clip, d, 'f*.png')), key=lambda f: int(os.path.basename(f)[1:-4]))   # f99 before f100
+    return [graded(Image.open(f).convert('RGBA')) for f in fs]
 
 
 def graded(im):
@@ -105,6 +107,9 @@ def pack(work, slug):
         o = R.get('tune', {}).get(key, {})
         first, last = at(o['first']) if 'first' in o else int(b[0]), at(o['end']) if 'end' in o else int(b[2])
         hit = min(last, at(o['hit']) if 'hit' in o else round(b[1] + 0.5))
+        # keep at least LEAD seconds before the hit: the client starts a clip one game wind-up before its hit, and a
+        # trimmed start would hold its first frame through the rest of the wind-up
+        if 'first' not in o: first = max(0, min(first, hit - round(LEAD * fps)))
         cut = tuple(at(v) for v in o['cut']) if 'cut' in o else (1, 0)
         keep = [f for f in range(first, last + 1) if f == hit or not (cut[0] <= f <= cut[1])]
         rows.append((f'attack{k}', [[fr[f] for f in keep] for fr in (frames(px, c, d) for d in DIRS)]))

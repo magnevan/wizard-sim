@@ -63,8 +63,31 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="live3d">
+    <h2 id="live3d">Latest: goblins drawn live from 3D, and 24 fps sheets</h2>
+    <p>Two things from your note that slowed goblins get choppy at 12 frames a second.</p>
+    <p><b>The sheets are now 24 fps</b> for five of the six (the chieftain's render was stopped when the computer ran low on memory; it stays at 12 until it's re-rendered). The game plays every clip on the game's own clock, so a goblin at full speed shows 24 frames a second and one slowed to half still shows 12.</p>
+    <p><b>The real-time test</b> (<code>prototypes/02-realtime-3d</code>): the hooded raider drawn live from its 3D model, through a shader that does what the baked pixel pass does: four tones per part, the dark seams where parts meet (after your note; the first try outlined only the silhouette), and an outline round each goblin. Left: live. Right: the baked sheet, in step.</p>
+    <figure><img src="img/rt3d-turn.gif" alt="Six goblins on each side walking in place and slowly turning: on the left, drawn live, they turn smoothly through every angle; on the right, the baked sprites jump between eight facings."><figcaption>Walking in place while turning. The live goblins turn through every angle; the baked ones snap between 8 facings. Watch for flicker on the live edges as they turn.</figcaption></figure>
+    <figure><img src="img/rt3d-slow.gif" alt="The same goblins walking in circles at a quarter of normal speed: the live ones move smoothly, the baked ones step from frame to frame."><figcaption>Walking at a quarter speed (a heavy slow). Live keeps moving every frame; baked steps (these sheets were 12 fps when filmed).</figcaption></figure>
+    <p><b>Cost</b>, on this computer's built-in laptop graphics (Radeon 780M): 100 goblins drawn live hold full frame rate; 200 drop to about 50 fps, held back by the processor posing the skeletons, not by the graphics. The models are far more detailed than 32 px needs (31,000 triangles each), so there's room to spare. To try it yourself: <code>npm install</code> and <code>npm run dev</code> in <code>prototypes/02-realtime-3d</code>, then open <code>localhost:5191</code> (speed and count sliders at the top).</p>
+    <p class="dim">Still missing on the live side: the Codex blade (a plain grey box stands in), and the baked render's slightly crisper faces.</p>
+    <div class="rate" id="rt3d-rate"></div>
+  </section>
+
+  <section aria-labelledby="wiz3d">
+    <h2 id="wiz3d">Also new: the wizard, from 3D</h2>
+    <p>You liked the wizard's look but not how it held up at 1.7×: the code rig grows its shapes, not its detail, so beside the goblins it read as a few flat slabs. So it went through the goblins' pipeline with its design unchanged: Codex drew the same wizard (big floppy hat with a gold band, no face under the brim, white beard, bell robe with gold trim) as a model sheet, you approved it, and Meshy made the model, rig and six clips. <b>38 Meshy credits</b>, as agreed.</p>
+    <figure><img class="photo" src="img/wiz3d-pic.jpg" alt="Codex's model sheet: a stocky storybook wizard in a crimson robe and huge crimson hat with gold trim, white beard, arms out."><figcaption>The picture Meshy built from (Codex, approved).</figcaption></figure>
+    <figure><img src="img/wiz3d-ingame.png" alt="Two wizards in the arena: on the left the code-drawn ones, on the right the new sprites, a red one and a blue one gathering a spell with the staff raised."><figcaption>The same moment in the game, enlarged: the code rig at 1.7× (left) and the new sprite (right). <code>?wizsprite=0</code> on this branch brings the code rig back.</figcaption></figure>
+    <figure><img src="img/wiz3d-still.png" alt="The wizard standing in eight directions, in the four seat colours: red, blue, gold and violet."><figcaption>Standing, 8 directions, all four seats. There is one red sheet; the game recolours robe, hat and trim for each seat from its own palette.</figcaption></figure>
+    <figure><img src="img/wiz3d-moves.gif" alt="The wizard's moves facing south-east: walk, run, gathering, the Force cast, the staff strike, Self, Area and the knock-down."><figcaption>Every move, facing south-east: walk, run, <b>gathering</b> (loops while a spell gathers), <b>Force cast</b> (in the game it pushes out and holds at full stretch while the spell flows), the staff strike, <b>Self</b>, <b>Area</b>, death. The staff is a little 3D prop that stays upright as he walks instead of swinging with the wrist.</figcaption></figure>
+    <p>Not wired yet: Self, Area and the staff strike are on the sheet but the game doesn't play them (it can't yet tell Area from gathering), spells still start where the old staff tip was (it lines up while gathering, not always while casting), and a conjured weapon doesn't replace the staff. What I'd change: the Area clip's slam looks like a face-down flop from above, so I'd swap it; the robe's dark inside shows as he falls.</p>
+    <div class="rate" id="wiz3d-rate"></div>
+  </section>
+
   <section aria-labelledby="archer">
-    <h2 id="archer">Latest: the archer's shot, and the frame rate</h2>
+    <h2 id="archer">Before that: the archer's shot, and the frame rate</h2>
     <p>You saw the archer holding its bow oddly. Four things were wrong, all fixed:</p>
     <ul class="opts">
       <li><b>It shot sideways.</b> Meshy's archery clip stands side-on to the target, like a real archer, so the arrow left from the goblin's left side, 90° off where it faces. It now turns side-on as the bow comes up and back to face ahead as it lowers, so the shot goes where it's looking.</li>
@@ -406,6 +429,8 @@ for (const c of CONCEPTS) {
   const r = el('div', 'rate'); r.append(marks('ratings', 'con-' + c.id, AR), note('ratings', 'con-' + c.id, 'What to change'));
   box.append(el('h3', '', c.name), fig, el('p', '', c.notes), r); $('concepts').append(box);
 }
+$('rt3d-rate').append(el('b', '', 'Live 3D or baked'), marks('ratings', 'rt3d', [['live', 'Live 3D', 'keep'], ['baked', 'Baked sheets', 'maybe'], ['more', 'Test more', 'maybe']]), note('ratings', 'rt3d', 'What you see: flicker, look, feel'));
+$('wiz3d-rate').append(el('b', '', 'The 3D wizard'), marks('ratings', 'wiz-3d', KRC), note('ratings', 'wiz-3d', 'What to change: look, a move, the size'));
 $('archer-shot-rate').append(el('b', '', "The archer's shot"), marks('ratings', 'archer-shot', KRC), note('ratings', 'archer-shot', 'What still looks off'));
 $('fps-rate').append(el('b', '', 'Frame rate'), marks('ratings', 'fps-attack', [['12', '12 fps', 'maybe'], ['24', '24 fps', 'keep'], ['mix', 'Attacks only', 'maybe']]), note('ratings', 'fps-attack', 'What you see'));
 $('ingame-rate').append(el('b', '', 'The band in play'), marks('ratings', 'ingame-band', KRC), note('ratings', 'ingame-band', 'Which goblin or move to redo, and how'));

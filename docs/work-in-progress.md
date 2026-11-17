@@ -19,7 +19,7 @@ The last recorded scope is beats 1–7, through the battery.
 ## Goblin warband art
 
 > [!in-review] Judge the band in play
-> All six goblins are in the game as sprites rendered from Meshy's 3D models (branch `worktree-goblin-warband-art`, not merged; `?sprites=0` for the old rigs), with the wizard drawn 1.7x. Mark the page's latest sections: the archer's reworked shot (`archer-shot`), 12 or 24 fps attacks (`fps-attack`), and the band in play (`ingame-band`): which goblin or move to redo. Known weak spots are listed in the exploration. Elemental deaths on sprites come after.
+> All six goblins are in the game as sprites rendered from Meshy's 3D models (branch `worktree-goblin-warband-art`, not merged; `?sprites=0` for the old rigs), with the wizard drawn 1.7x. Mark the page's latest sections: the archer's reworked shot (`archer-shot`), 12 or 24 fps attacks (`fps-attack`), goblins drawn live from 3D or baked (`rt3d`, `prototypes/02-realtime-3d`), and the band in play (`ingame-band`): which goblin or move to redo. Known weak spots are listed in the exploration. Elemental deaths on sprites come after.
 
 [Goblin Warband Art review](https://claude.ai/artifact/4WNayLNFUL2TNuffPfTMsJ) · [Exploration](explorations/2026-11-16-warband-art.md)
 

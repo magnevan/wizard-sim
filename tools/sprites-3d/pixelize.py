@@ -81,7 +81,8 @@ def frame(lit, flat):
 
 
 n, ratios = 0, []
-for f in sorted(glob.glob(os.path.join(SRC, '*', '*', 'f??.png'))):
+# fNN.png, and fNNN.png past frame 99 (a long clip at 24 fps); not the _flat shots
+for f in sorted(f for f in glob.glob(os.path.join(SRC, '*', '*', 'f*.png')) if not f.endswith('_flat.png')):
     rel = os.path.relpath(f, SRC)
     if rel.startswith('preview'): continue
     lit = np.array(Image.open(f).convert('RGBA'))

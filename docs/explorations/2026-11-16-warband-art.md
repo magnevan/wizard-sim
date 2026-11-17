@@ -165,6 +165,12 @@ Left: the 1 s wind-up is shorter than the clip's raise, so the shot starts partw
 
 The user also asked why 12 fps: it's `render.py`'s `ANIM_FPS`, the usual pixel-art rate (at 32 px most moves are a pixel or two a frame; fewer frames read crisper and keep sheets small), carried over from the PixelLab work rather than tested on these clips. Fast blows get one or two frames at 12. The review page (version 15) shows the hooded raider's Left Slash at 12 and 24 fps side by side (`fps-attack`) and the archer before and after (`archer-shot`).
 
+## Slow goblins: 24 fps sheets and a real-time 3D test (2026-11-17)
+
+The user: at 12 fps a slowed goblin gets choppier still; could the 3D models be drawn in the game directly, with the pixel look as a shader? Both were done:
+- **24 fps sheets.** `roster.sh` renders at 24 (`render.py --fps`); the client plays clips on the game's clock, so a slowed goblin steps through the extra frames. Five of six sheets are 24 fps; the chieftain's render was stopped for low memory and stays at 12 until re-rendered. Two bugs on the way: `pixelize.py` matched only `f??.png` and `pack.py` sorted names as text, both wrong past frame 99. At 24 fps the wind-up start detection trimmed too close to the hit, so `pack.py` now keeps 1.2 s before it. The render is slow (about 40 minutes a roster; see `tools/sprites-3d/README.md`).
+- **Real-time 3D** (`prototypes/02-realtime-3d`): the hooded raider drawn live with three.js beside its baked sheet, through `pixelize.py`'s rules as shaders. The user saw the first pass outline only silhouettes where the baked frames line every edge between parts; the pass was rebuilt in pixelize's order (part, then tone and seams). On an AMD Radeon 780M 100 live goblins hold the frame cap, 200 reach about 50 fps (CPU skeleton posing). The look moving (flicker on edges as they turn) is the user's call: the review page's `rt3d`.
+
 ## Claude's picks, pending the review
 
 *(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the sprites are wired in; see the two sections above.)*

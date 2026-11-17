@@ -1,0 +1,74 @@
+# Guards, round 3: from static props to living conjurations (2026-11-17)
+
+The wizard's guards went into the game as Blender props (`tools/sprites-3d/wizprops.py`; they were built in Blender rather than by Meshy, see [warband-art](2026-11-16-warband-art.md#the-wizards-weapons-and-guards-pictures-for-meshy-2026-11-17)). The user, looking at them in play: they are a direct, static render of the concept art and miss what moves in it. Flames are rigid cones, the Prism is a flat purple, the Leaf doesn't read as a leaf, and Ice is a blue shield held upside down. Guards should also be bigger and louder. This page is the plan to fix that. It covers the guards first; the weapons follow the same system later. It also covers how a guard shows more than one element.
+
+Review: [Goblin Warband Art](https://claude.ai/artifact/4WNayLNFUL2TNuffPfTMsJ), section "Next: guards, round 3", marks `g3-<guard>` and answers `g3-q-*`.
+
+## What's wrong, in one line
+
+Each guard is one rigid mesh, with every part of the picture modelled, including the parts that should move. In the concept art, only the guard's **core** is solid. The flames, arcs, water and light around it are effects.
+
+## The fix: three layers per guard
+
+| Layer | What it is | Where it lives | Examples |
+|---|---|---|---|
+| **Core** | The solid part, the only static mesh: small and bold, so it reads at game size | Blender, `wizprops.py` | the gold buckler, the molten Ember disc, the metal hoop, the rock slab |
+| **Shell** | Animated surfaces on the live model: a translucent shimmer, colours sweeping across, water flowing, cracks pulsing | three.js materials in `art/live3d.ts`, picked by the mesh part's name (`ward*`, `hue*`, `flow*`, `pulse*`) | the Mirror's ward, the Prism's rainbow, the Tide's flowing disc |
+| **Emitters** | Pixel particles anchored to points on the guard | 2D in `view-structures.ts` | flame tongues round the rim, lightning arcing across the hoop, fog falling, spray, drifting leaves |
+
+The shell goes through the same pixel pass as the model, so it pixelates the same way. The emitters already exist for every guard, but today each one has only the guard's middle as an anchor. They need the guard's **frame**: its centre, its two in-plane axes on screen, and a few named sockets (empties in Blender: `sock_rim_*`, `sock_core`, `sock_drip`). With the frame, a ring of arcs, a radial spray or a falling curtain follows the guard's tilt as he turns and blocks.
+
+**Bigger and louder.** Bucklers grow about 1.3×. The tower guards (Earth, Ice) stand about shoulder height. Every guard gets a constant idle effect, not only a glow while blocking. A raised-guard pose comes with this pass (the arm still hangs down while blocking today). The tower guards ride at his side and come across his front only when he blocks, so they don't hide the body and weapon all the time.
+
+## Guard by guard
+
+| Guard | The user's vibe | Core (mesh) | Shell and emitters | New art? |
+|---|---|---|---|---|
+| **Mirror** (Shield) | Only the buckler's core is solid; the rest is a translucent shimmer, like the other Shield spells | A small gold buckler | A gold ward shell (bright edge, slow ripple) at about twice the buckler's width. It flares and ripples where a shot glances off. This is the same shimmer as the Shield barriers, so it reads as "Shield". | No (sheet C) |
+| **Bulwark** (Earth) | Massive, imposing: a tower shield, not a buckler. Drop the magma, it overlaps Fire. | A tall slab of carved stone, shoulder height, a few set stones, no glowing cracks | Grit and dust falling from its edges. When blocking it plants on the ground with a dust puff. | Yes: tower shield, plus the infusion sheet (below) |
+| **Ember** (Fire) | A small buckler, a magma core, the outer part fire | The molten disc only: dark rock with a pulsing hot core. The flame cones go. | Flame tongues all round the rim that rise upward (not radially), embers, a heat flicker. They flare on block and parry. | No |
+| **Ice** (new guard, Shield + Ice) | A large ice shield, imposing and spiky; strong like Earth but trades defence for spike damage, leaning into caltrops | A big ice kite bristling with spikes, held point down (today's is upside down) | Glints, falling ice chips, a crack of shards on block | Yes |
+| **Rime** (Frost, Shield + Cold) | A rimed metal shield with frost fog falling off it | A round steel-blue shield crusted with white rime | Cold mist falling off its lower edge and pooling at his feet, a few snow glints | Yes |
+| **Spark** (Lightning) | Almost all VFX: a metal ring like a buckler's rim floating round the hand, lightning arcing between points on it | A thin metal hoop that floats and turns slowly. The spikes and the web go. | 4 to 6 jagged arcs between points on the ring, re-rolled every few frames, now and then one to the hand. On block, the arcs fill the ring into a web. | Small sketch |
+| **Tide** (Water) | New art: like a fireman's water curtain, a continuous flow shooting out radially | A small spinning water core at the hand | A flowing disc of water (shell) spraying out radially, spray and droplets at its edge, a splash at the ground. On block, the jets push harder. | Yes |
+| **Prism** (Arcane) | The concept is good, but in the game it's just purple; colours need to dance across it | The hexagon, as now | A rainbow band sweeping across the facets (shell), spectral glints on the edges. Its charge makes the sweep faster and brighter. | No |
+| **Leaf** (Life) | The concept is good, but the render doesn't read as a leaf | A fan of three big leaves with pointed tips splayed outward, each split light and dark by its midrib, with a bigger vine and bud | The leaves rustle (a slow sway), plus drifting pollen and petals when it heals | No |
+
+## Splitting Ice from Frost (a rules change)
+
+Cold and Ice both lead to the Rime kite today (`guards.ts` `GUARD_OF`), so the Ice guard plays like a Frost guard. Ice's identity in the rules is damage and spikes (Ice shards, Caltrops, Shield + Ice is a spike wall that stabs whoever presses on it), so the guard should share it:
+
+- **Rime** (Cold) keeps today's rules: chills melee attackers, a parry freezes, Ice slide, Skater.
+- **The Ice guard** (Ice), a new guard: its block stops melee like the Bulwark's, but it has less HP and weaker resistances. A melee attacker that hits it is stabbed (physical). A parry bursts spikes outward and leaves a small patch of caltrops in front (`ZONE.caltrops`). Retreat drops caltrops where you stood. Passive: none, or a small stab to whatever bumps you.
+- **What it costs:** a new `GUARD` id, a row in the resistance table, Tune entries, a golden-hash update and a decision-log entry. It is close to the Ember's thorns, so the difference has to stay clear: Ember burns whoever hits the block; Ice wounds more and leaves the ground dangerous, at the cost of defence.
+
+## More than one element: the lead builds the guard, extras infuse it
+
+A guard holds up to five runes, so it can carry Shield, its lead and up to three more elements. Today each extra is shown as a coloured arc on the rim, plus that element's particles (`art/accent.ts`). That shows an element is mixed in, but it doesn't change the guard's look. The plan is to tie how an extra shows to what kind of guard it joins:
+
+- **Solid guards** (Bulwark, Ice, Rime, Leaf, the Mirror's buckler) take an extra **into their matter**. Fire: glowing magma veins (so the magma the user liked comes back, as Earth + Fire). Cold: a rime crust on the top edge. Ice: spikes out of the edges. Lightning: arcs jumping between studs. Water: a wet sheen and drips. Arcane: carved runes glowing. Life: moss and vines. Shield: a gold rim. Each infusion is a few small mesh parts per guard, hidden until needed (as the props are today), plus an emissive tint and that element's emitter.
+- **Energy guards** (Ember's flames, Spark's arcs, Tide's stream, Prism's light, the Mirror's ward) take an extra **into their energy**: part of the flames, arcs or water take its colour and behaviour. Spark + Fire: orange-tipped arcs that drop embers. Tide + Cold: a slushy stream that sheds flakes. Tide + Fire: the spray steams.
+- **At most two infusions show**, the ones with the most runes first, then the element order. A third extra stays as a rim arc. One rune shows a hint; two show it in full (the same half and full steps as `ARMS.mixShare`).
+- **Earth goes first**, because the user wants it to take on other forms well. All eight Bulwark infusions get drawn on one sheet before they're built, and they test the system.
+
+Authoring all 8 × 9 pairs by hand is too much work. The solid guards share one recipe per extra, adapted to each guard's sockets, and only Earth gets bespoke parts at first.
+
+**Weapons later, the same way.** The sockets there are the blade's edge, the tip and the grip. Solid weapons (maul, spear, bow, trident) take extras into their matter, and energy weapons (the flame blade, the whip's lash) into their energy.
+
+## Order of work
+
+1. **Groundwork (code, free):** the guard frame and sockets projected each frame; shell materials picked by part name in `live3d.ts`; infusion parts shown by the seat's extras; Stage panel buttons for a guard with extras mixed in; `arms-shots.mjs` writing short GIFs, because these guards have to be judged in motion.
+2. **Concept art (Codex, free, approved before building):** one sheet of the new guards (Earth tower, Ice spikes, Rime metal, Tide curtain, Spark ring) and one sheet of the Bulwark with each of the other elements infused.
+3. **Guards that need no new art:** Mirror ward, Ember flames, Prism colours, Leaf silhouette, Spark ring. Reviewed as GIFs at game size.
+4. **New cores from the approved art:** Bulwark, Ice, Rime, Tide, in Blender. If a primitive build looks too crude, Meshy could build one (about 15 credits each, asked first).
+5. **The Ice guard's rules:** the split above, its decision log and the docs.
+6. **Infusions:** the shared recipe, then the Bulwark's own parts.
+7. **The raised-guard pose and the size pass,** then weapons on the same system.
+
+## Open questions (on the review page)
+
+- `g3-q-1-ice`: the Ice guard's rules as above, or another shape? *Pick: as above.*
+- `g3-q-2-shimmer`: does every guard get a faint Shield shimmer all the time, or only the Mirror (and the others while blocking)? *Pick: only the Mirror; the others show it while blocking, so each element stays distinct.*
+- `g3-q-3-size`: bucklers 1.3× and tower guards at shoulder height, carried at the side? *Pick: yes.*
+- `g3-q-4-mix`: two infusions at most, the rest as rim arcs? *Pick: yes.*
+- `g3-q-5-tide`: the water as a full radial disc, or a curtain fanned out in front? *Pick: a radial disc that leans forward, so it reads from every facing.*

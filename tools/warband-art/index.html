@@ -63,8 +63,46 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="g3">
+    <h2 id="g3">Newest: guards, round 3, the plan</h2>
+    <p>Your note: the guards in the game are a direct, static render of the concept art and miss everything in it that moves. You're right, and it's one cause. Each guard is a single rigid mesh with every part of the picture modelled, flames included. In the art, only the <b>core</b> is solid. (A correction: these were built in Blender from primitives, not by Meshy; Meshy is still available for a core if Blender looks too crude.)</p>
+    <h3>Three layers per guard</h3>
+    <ul class="opts">
+      <li><b>Core:</b> the only static mesh. Small and bold, so it reads at game size.</li>
+      <li><b>Shell:</b> animated surfaces on the 3D model: a translucent shimmer, colours sweeping across, water flowing, cracks pulsing. They go through the same pixel pass, so they pixelate like the model.</li>
+      <li><b>Particles:</b> pixel effects pinned to points on the guard: flames round the rim, arcs across a ring, fog falling, spray. Today they only know the guard's middle. They'll get its whole frame (its tilt and named points on it), so a ring of lightning tilts with the guard as he turns and blocks.</li>
+    </ul>
+    <p><b>Bigger and louder:</b> bucklers about 1.3×, the tower guards (Earth, Ice) at shoulder height, carried at the side and brought across the front only while blocking. Every guard gets an idle effect that's always on, and the raised-guard pose comes with this pass.</p>
+    <h3>Guard by guard</h3>
+    <p class="dim">Mark each plan Yes, or Change with a note. An empty mark means my plan stands.</p>
+    <div class="jobs" id="g3-picks"></div>
+    <h3>Ice and Frost become two guards</h3>
+    <p>Cold and Ice both lead to the Rime kite today, which is why Ice feels like Frost. Ice's identity in the rules is damage and spikes (Ice shards, Caltrops, and Shield + Ice is already a spike wall that stabs whoever presses on it), so the plan gives Ice its own guard. <b>Rime (Cold)</b> keeps today's rules: it chills melee attackers, a parry freezes them, plus Ice slide and Skater. <b>The Ice guard</b> blocks melee like the Bulwark but has less HP and weaker resistances. Melee attackers that hit it get stabbed. A parry bursts spikes and leaves a small caltrop patch in front, and Retreat drops caltrops where you stood. The cost: a new guard in the rules, and the difference from the Ember's thorns has to stay clear. Ember burns whoever hits it; Ice wounds more and makes the ground dangerous, at the cost of defence.</p>
+    <h3>More than one element</h3>
+    <p>Today an extra element shows as a coloured arc on the rim plus its particles. That shows the element is there, but the guard's look doesn't change. The plan: <b>the lead builds the guard, and extras infuse it</b>, in a way that depends on the guard.</p>
+    <ul class="opts">
+      <li><b>Solid guards</b> (Earth, Ice, Frost, Leaf, the Mirror's buckler) take an extra into their matter. Fire adds glowing magma veins (so the magma you liked comes back, as Earth + Fire), Cold a rime crust, Ice spikes from the edges, Lightning arcs between studs, Water a wet sheen and drips, Arcane glowing carved runes, Life moss and vines, Shield a gold rim.</li>
+      <li><b>Energy guards</b> (Ember's flames, Spark's arcs, Tide's stream, Prism's light, the Mirror's ward) take it into their energy. Spark + Fire gives orange arcs that drop embers; Tide + Cold a slushy stream that sheds flakes; Tide + Fire spray that steams.</li>
+      <li>At most two infusions show (most runes first). A third extra stays a rim arc. One rune is a hint, two the full effect, as in the rules' mixing.</li>
+      <li><b>Earth goes first:</b> one sheet of the Bulwark with each of the other elements infused, drawn before anything is built. The weapons use the same system later: the blade's edge, the tip and the grip are their points.</li>
+    </ul>
+    <div class="rate" id="g3-mix-rate"></div>
+    <h3>Order of work</h3>
+    <ol class="opts">
+      <li>Groundwork in code: the guard's frame and points, shell materials by part name, infusion parts, Stage buttons to mix extras into a guard, and short GIFs from the game (these have to be judged in motion).</li>
+      <li>Concept art (Codex, free) for your approval: the new guards (Earth tower, Ice spikes, Frost metal, Tide curtain, Spark ring) and the Earth infusion sheet.</li>
+      <li>The guards that need no new art: Mirror, Ember, Prism, Leaf, Spark.</li>
+      <li>New cores from the approved art: Earth, Ice, Frost, Tide.</li>
+      <li>The Ice guard's rules.</li>
+      <li>Infusions: the shared recipe, then Earth's own parts.</li>
+      <li>The raised-guard pose and the size pass, then the weapons.</li>
+    </ol>
+    <h3>Questions</h3>
+    <div id="g3-questions" style="display:grid;gap:28px"></div>
+  </section>
+
   <section aria-labelledby="arms">
-    <h2 id="arms">Newest: the wizard's weapons and guards</h2>
+    <h2 id="arms">Before that: the wizard's weapons and guards</h2>
     <h3>In the game</h3>
     <p>They're in. A conjured weapon now replaces the staff with its own 3D prop, and the guard sits on his forearm. The 2D effects are drawn along the prop where it is on screen: flame tongues up the sword, drips off the trident, frost smoking off the spear, grit off the maul, motes round the focus. The whip's lash is still drawn by code, hanging from the 3D handle. The weapon swings with the blow's own 3D clip. Life's glowing hands and the wand stay as they were. To try them yourself, open the Tools panel (F3): its Stage section now has <b>Guard</b> buttons next to <b>Weapon</b>.</p>
     <figure><img src="img/arms-ingame.jpg" alt="Nine rows of the red wizard in the game, standing on stone, five facings each, holding: a flame sword and gold mirror, a stone maul behind a big rock slab, a magenta focus with a flaming ember ring, a white ice bow and ice kite, a long cyan spear and a violet lightning ring, a violet whip lash and a blue water spiral, a blue trident and a pink hexagon, glowing green hands and a leaf, and the plain staff."><figcaption>Screenshots from the game (the live 3D wizard on a real GPU, Sanctum, 4× pixel scale). Facings: south, south-east, east, north-east, south-west. Rows: sword + Mirror, maul + Bulwark, focus + Ember, bow + Rime, spear + Spark, whip + Tide, trident + Prism, Life + Leaf, and the staff with no guard.</figcaption></figure>
@@ -493,6 +531,45 @@ for (const c of GUARDS) {
   const box = el('article', 'job');
   const r = el('div', 'rate'); r.append(marks('ratings', 'guard-' + c.id, ACR), note('ratings', 'guard-' + c.id, 'What to change'));
   box.append(el('h3', '', c.name), el('p', '', c.notes), r); $('guard-picks').append(box);
+}
+const YC = [['yes', 'Yes', 'keep'], ['change', 'Change', 'maybe']];
+const G3 = [
+  { id: 'mirror', name: 'Mirror (Shield)', vibe: "Only the buckler's core is solid; the rest a translucent shimmer like the other Shield spells.", plan: 'A small gold buckler inside a gold ward shell about twice its width, with a bright edge and a slow ripple. It flares where a shot glances off. The same shimmer as the Shield barriers, so it reads as Shield.', art: 'No new art (sheet C).' },
+  { id: 'bulwark', name: 'Bulwark (Earth)', vibe: 'Massive and imposing: a tower shield. No magma, since that overlaps Fire.', plan: 'A tall slab of carved stone, shoulder height, with a few set stones and no glowing cracks. Grit and dust fall from its edges. When blocking it plants on the ground with a dust puff. Carried at his side, across the front only while blocking.', art: 'New art: the tower, plus the infusion sheet.' },
+  { id: 'ember', name: 'Ember (Fire)', vibe: 'A small buckler with a magma core, the outer part fire, and the fire moving.', plan: 'The molten disc only: dark rock with a pulsing hot core. The rigid flame cones go. Flames become particles: tongues all round the rim that rise upward, embers, a heat flicker, flaring on block and parry.', art: 'No new art.' },
+  { id: 'ice', name: 'Ice (new guard)', vibe: 'A large, imposing, spiky ice shield; strong like Earth, but trading defence for spike damage.', plan: "A big ice kite bristling with spikes, held point down (today's is upside down). Glints, falling chips, a crack of shards on block. Rules in \"Ice and Frost become two guards\" below.", art: 'New art.' },
+  { id: 'rime', name: 'Rime (Frost)', vibe: 'A rimed metal shield with frost fog falling off it.', plan: "A round steel-blue shield crusted with white rime. Cold mist falls off its lower edge and pools at his feet, with a few snow glints. Keeps today's Frost rules.", art: 'New art.' },
+  { id: 'spark', name: 'Spark (Lightning)', vibe: "Almost all VFX: a metal ring like a buckler's rim floating round the hand, lightning arcing between points on it.", plan: 'A thin metal hoop that floats and turns slowly. The spikes and web go. 4 to 6 jagged arcs between points on the ring, re-rolled every few frames, now and then one to his hand. On block the arcs fill the ring into a web.', art: 'A quick sketch.' },
+  { id: 'tide', name: 'Tide (Water)', vibe: "Like a fireman's water curtain: a continuous flow shooting out radially.", plan: 'A small spinning water core at the hand, and a flowing disc of water spraying out from it. Spray and droplets at the edge, a splash at the ground. On block, the jets push harder (it already shoves).', art: 'New art.' },
+  { id: 'prism', name: 'Prism (Arcane)', vibe: "The hexagon is right; in the game it's just purple. Colours need to dance across it.", plan: 'The hexagon as now, with a rainbow band sweeping across the facets and spectral glints on its edges. Its stored charge makes the sweep faster and brighter, so the charge shows too.', art: 'No new art.' },
+  { id: 'leaf', name: 'Leaf (Life)', vibe: "The concept is good; the render doesn't read as a leaf.", plan: 'A fan of three big leaves with pointed tips splayed outward, each split light and dark by its midrib (what makes a leaf read when small), with a bigger vine and bud. The leaves sway, and pollen and petals drift off when it heals.', art: 'No new art.' },
+];
+for (const c of G3) {
+  const box = el('article', 'job');
+  const r = el('div', 'rate'); r.append(marks('ratings', 'g3-' + c.id, YC), note('ratings', 'g3-' + c.id, 'What to change'));
+  const v = el('p', 'dim'); v.append(el('b', '', 'Your vibe: '), document.createTextNode(c.vibe));
+  const pl = el('p'); pl.append(el('b', '', 'Plan: '), document.createTextNode(c.plan + ' '), el('span', 'pick', c.art));
+  box.append(el('h3', '', c.name), v, pl, r); $('g3-picks').append(box);
+}
+$('g3-mix-rate').append(el('b', '', 'Infusions'), marks('ratings', 'g3-mix', YC), note('ratings', 'g3-mix', 'How extras should show'));
+const G3Q = [
+  { id: 'g3-q-1-ice', title: "The Ice guard's rules", text: 'It blocks melee, stabs melee attackers, parries into a spike burst plus caltrops, and Retreat drops caltrops. It has less HP and weaker resistances than the Bulwark.',
+    options: ['As above.', 'Keep one shared Ice/Frost guard and only change its look.', 'Something else.'], pick: 'As above.' },
+  { id: 'g3-q-2-shimmer', title: 'Where the Shield shimmer shows', text: 'The Mirror is mostly shimmer. Should the others carry a faint shimmer too?',
+    options: ['Only the Mirror all the time; the others while blocking.', 'Every guard all the time, faintly.'], pick: 'Only the Mirror all the time, so each element stays distinct; every guard shows it while blocking.' },
+  { id: 'g3-q-3-size', title: 'How big', text: 'Bigger and louder, but the tower guards could hide the wizard and his weapon.',
+    options: ['Bucklers 1.3×, towers at shoulder height, carried at the side, across the front while blocking.', 'Everything about 1.5×, always in front.'], pick: 'The first.' },
+  { id: 'g3-q-4-mix', title: 'How many extras show', text: 'A guard can carry up to three elements besides its lead.',
+    options: ['Two infusions at most; a third stays a rim arc.', 'All of them, smaller.'], pick: 'Two at most, so the guard stays readable.' },
+  { id: 'g3-q-5-tide', title: "The water curtain's shape", text: "A fireman's water shield sprays out in a disc; seen from the side, a flat disc becomes a line.",
+    options: ['A radial disc that leans forward (a shallow cone), so it reads from every facing.', 'A curtain fanned out in front only.'], pick: 'The leaning disc.' },
+];
+for (const q of G3Q) {
+  const box = el('div', 'q');
+  box.append(el('h3', '', q.title), el('p', '', q.text));
+  const ol = el('ol', 'opts'); q.options.forEach((o) => ol.append(el('li', '', o))); box.append(ol);
+  box.append(el('p', 'pick', 'My pick: ' + q.pick), note('answers', q.id, 'Your answer'));
+  $('g3-questions').append(box);
 }
 $('arms-ingame-rate').append(el('b', '', 'In the game'), marks('ratings', 'arms-ingame', KRC), note('ratings', 'arms-ingame', 'What to change: size, effects, the block'));
 $('arms-props-rate').append(el('b', '', 'The props'), marks('ratings', 'arms-props', KRC), note('ratings', 'arms-props', 'Which to change: size, shape, colour'));

@@ -12,6 +12,8 @@ content/
     world/Tutorial.ldtkl   the tutorial's chamber (its per-beat layouts are still code: sim/src/tutorial-data.ts)
     world/Academy.ldtkl    the mock room for judging art (#academy)
     world/Battery.ldtkl    the opening's first job, an outdoor area (#battery); written by tools/segments/01-opening/battery-level.py
+    world/Yard.ldtkl       the opening's drill yard in a corner of the academy (#yard); written by tools/segments/01-opening/yard-level.py,
+                           which also writes its stations' Markers and the scenery people's (ids x-<kind>-<act>-...)
   assets/props/<id>/       the asset registry: meta.json and images, below
   generated/               every raw image bought from an AI tool (its README). Never edited; look here before any call
 packages/content/          the build, the check and the grid CLI (node, no runtime part)
@@ -69,7 +71,7 @@ Only values the game understands are defined. Pits, water and the like come when
 
 **Tags are roles, listed in `content/tags.json`** with what the game does with each. A tag means the same in every room (the room is already the scope, so no `battery-` prefix), which lets shared pieces like `openAtMarkers('gap')` work anywhere. The build fails on a tag that isn't listed, and a test checks that every tag the sim asks for is there, so a typo can't silently find nothing. When one level holds several of the same thing in different places (a streamed chapter), scope by Region, not by renaming the tag. Unique things get an `id`, not a tag.
 
-**Markers and Regions belong to the LDtk file, not to a generator.** Claude places most of them; you can move, resize or add them in LDtk, and the level generators (`tools/segments/01-opening/battery-level.py`) keep every Marker and Region already in the level when they rewrite it. `npm run content -- grid <level> --entities` shows them as `M` and `R`.
+**Markers and Regions belong to the LDtk file, not to a generator.** Claude places most of them; you can move, resize or add them in LDtk, and the level generators (`tools/segments/01-opening/battery-level.py`, `yard-level.py`) keep every Marker and Region already in the level when they rewrite it (the yard's generator rewrites only the Markers it owns: its stations and its people). `npm run content -- grid <level> --entities` shows them as `M` and `R`.
 
 Static rock (Rock entities, traced outlines and blocking props) is the room's terrain: read-only data with a spatial lookup, not part of a rollback snapshot, and separate from the players' 160 wall slots. So a room **can have as many rock wall segments as it needs**. (A blocking prop takes one wall if its footprint is up to 0.6 u deep, two side by side up to 1 u, and past that a closed outline with rows across the inside.)
 

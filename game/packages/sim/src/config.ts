@@ -23,7 +23,22 @@ export const T = (seconds: number): number => Math.round(seconds * 60);
  * stabilizes it (the repair: the client fades to black and back and the well rises, art/power-down.ts); `relit`
  * seconds after the press its flow is full again and the defences can be possessed again.
  */
-export const WELL = { fail: 75, grace: 6, gutter: 1.4, surge: 3.6, own: 1, through: 3, repairReach: 4, relit: 4.6 } as const;
+export const WELL = { fail: 75, grace: 6, gutter: 1.4, surge: 3.6, own: 1, through: 2, repairReach: 4, relit: 4.6 } as const;
+
+/**
+ * The campaign's early going (the user, 2026-11-14, after replaying the battery). `regen`: your own pools' R in a
+ * campaign area, far under the arenas' (one Fire rune refilling every second made a single element spammy; the
+ * opening's brief already says "low regen"). `hardy`: wizards there have this many times BODY.wizardHp, unshown (the
+ * bar is a share), so the first fights from your own hands, with no healing yet, aren't brutal.
+ */
+export const CAMPAIGN = { regen: 0.25, hardy: 2 } as const;
+
+/**
+ * A channel circle (the user's proto mechanic, 2026-11-14): while you stand in one you can channel its element, `pool`
+ * runes of it, refilling at `regen` a second on top of your own R; step out and it's gone. Its radius matches the
+ * possession circles'. The battery's first is a Life circle by the well, there from the moment the gate falls.
+ */
+export const CHANNEL = { radius: 1.6, pool: 2, regen: 1.2 } as const;
 
 export const RUNES = {
   // Ice (Water + Cold combined) has no pool of its own: its runes come from Water's and Cold's.

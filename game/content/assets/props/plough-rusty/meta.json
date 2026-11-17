@@ -1,0 +1,23 @@
+{
+  "id": "plough-rusty",
+  "kind": "prop",
+  "name": "Rusty plough",
+  "footprint": [
+    1.3,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        22,
+        33
+      ],
+      "source": "pixellab",
+      "raw": "game/content/generated/pixellab/opening/yard/11.png",
+      "tool": "create_1_direction_object",
+      "edits": "trimmed only",
+      "status": "PixelLab output. Re-check its terms and the Steam AI disclosure before release."
+    }
+  }
+}

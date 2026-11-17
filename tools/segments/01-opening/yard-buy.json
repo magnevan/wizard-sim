@@ -1,0 +1,86 @@
+{
+  "note": "The drill yard's purchases (2026-11-14), word for word as sent. The user asked for the yard to be built out with assets ('get assets') and for the map to show a little of the academy around it. Raw output: game/content/generated/pixellab/opening/yard/.",
+  "balance_before": 1670,
+  "jobs": [
+    {
+      "id": "job-yard-leftovers",
+      "tool": "create_1_direction_object, size 48, top-down (16 objects)",
+      "why": "Your note r3-yard-place: leftover material from putting the yard up in a hurry, and some of what used to be here strewn to the side. Plus kit the soldiers drill with.",
+      "description": "Building material and old farm leftovers lying around a training yard. Hi-bit pixel art, dark outline, seen from above at an isometric angle.",
+      "items": [
+        "a stack of sawn timber planks resting on two wooden blocks",
+        "a pile of rough logs with bark",
+        "a stack of cut tan sandstone blocks",
+        "a wooden sawhorse with a half-sawn plank on it",
+        "a wooden ladder lying on the ground",
+        "a bundle of fence posts tied with rope",
+        "a canvas tarp pegged down over a heap of building material",
+        "a barrel of iron nails with a hammer leaning on it",
+        "a heap of gravel with a shovel stuck in it",
+        "an unfinished timber fence frame, two posts and one rail",
+        "an old wooden wagon wheel lying flat in the grass",
+        "a rusty old iron plough",
+        "an old broken wooden barrel with loose staves",
+        "a pile of old clay roof tiles",
+        "a wooden rack of padded training jerkins and leather helmets",
+        "a stack of round wooden practice shields against a crate"
+      ]
+    },
+    {
+      "id": "job-yard-buildings",
+      "tool": "create_map_object, high top-down, one call each",
+      "why": "The academy around the yard: the user wants to see a bit of the academy and the world around it. The school's wall kit is interior only, so the outside needs buildings.",
+      "items": [
+        [
+          "academy-hall",
+          200,
+          200,
+          "A long two-storey academy hall of pale cream sandstone with a blue slate roof, tall arched windows, a small square bell tower at one end and a wide wooden double door. Hi-bit pixel art, dark outline, seen from above at an isometric angle."
+        ],
+        [
+          "barracks",
+          160,
+          128,
+          "A long single-storey barracks of timber and grey fieldstone with a wooden shingle roof, a covered porch along the front and a weapon rack by the door. Hi-bit pixel art, dark outline, seen from above at an isometric angle."
+        ],
+        [
+          "equipment-shed",
+          128,
+          112,
+          "An open-sided equipment shed: four timber posts holding a wooden shingle roof, with practice weapons, straw targets and barrels stored underneath. Hi-bit pixel art, dark outline, seen from above at an isometric angle."
+        ],
+        [
+          "cloister-walk",
+          192,
+          128,
+          "A short covered cloister walkway of pale cream sandstone arches under a blue slate roof, open on both sides. Hi-bit pixel art, dark outline, seen from above at an isometric angle."
+        ]
+      ]
+    },
+    {
+      "id": "job-yard-kits",
+      "tool": "create_building_kit, isometric, 48 px tiles, layout materials, gable roof (10 generations each)",
+      "why": "The user, 2026-11-14: one-picture buildings come out the wrong scale. Kits put doors and storeys on the world's tile grid. Descriptions approved by the user ('Approved').",
+      "items": [
+        {
+          "name": "kit-academy-ext",
+          "wall_description": "pale cream sandstone walls with tall arched windows",
+          "floor_description": "worn grey flagstone floor",
+          "floor2_description": "blue-grey slate roof tiles",
+          "wall_tiles": 3
+        },
+        {
+          "name": "kit-timber",
+          "wall_description": "timber-framed walls over a grey fieldstone base",
+          "floor_description": "packed earth floor",
+          "floor2_description": "wooden shingle roof",
+          "wall_tiles": 2
+        }
+      ],
+      "assembled_by": "tools/art-import/buildings.py (bldg-academy-hall, bldg-academy-wing, bldg-barracks, bldg-shed)"
+    }
+  ],
+  "balance_after": 1656,
+  "spent": "14 generations: 10 for the props job, 1 for each building",
+  "balance_after_kits": 1636
+}

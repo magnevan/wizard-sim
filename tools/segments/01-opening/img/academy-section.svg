@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 540" font-family="system-ui, sans-serif">
+<rect width="1240" height="540" fill="#efe9dc"/>
+<path d="M40,470 L40,425.2 L96.0,411.2 L152,425.2 L152,470 Z" fill="#c9b9a0" stroke="#3f3a32" stroke-width="1.5"/>
+<text x="96.0" y="389.2" font-size="14" text-anchor="middle" font-weight="700" fill="#2b2620">Rejected kit hall</text>
+<text x="96.0" y="405.2" font-size="12" text-anchor="middle" font-weight="400" fill="#2b2620">8 m long, about 4 m high</text>
+<circle cx="156" cy="447.8" r="3.5" fill="#b5402a"/><path d="M156,448.3 L156,458.8 M152,451.1 L160,451.1 M156,458.8 L153,470 M156,458.8 L159,470" stroke="#b5402a" stroke-width="2.4" fill="none"/>
+<path d="M250,470 L250,274 L404.0,134 L558,274 L558,470 Z" fill="#a8a090" stroke="#3f3a32" stroke-width="1.5"/>
+<text x="404.0" y="112" font-size="14" text-anchor="middle" font-weight="700" fill="#2b2620">Great Hall, across</text>
+<text x="404.0" y="128" font-size="12" text-anchor="middle" font-weight="400" fill="#2b2620">22 m wide, walls 14 m, ridge 24 m</text>
+<rect x="554" y="397.2" width="8" height="72.8" fill="#5b3d26"/>
+<rect x="555" y="309.0" width="6" height="112" fill="#2c3340"/>
+<circle cx="578" cy="447.8" r="3.5" fill="#b5402a"/><path d="M578,448.3 L578,458.8 M574,451.1 L582,451.1 M578,458.8 L575,470 M578,458.8 L581,470" stroke="#b5402a" stroke-width="2.4" fill="none"/>
+<path d="M685.0,470 L685.0,134 L734,64 L783.0,134 L783.0,470 Z" fill="#c4bdae" stroke="#3f3a32" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="734" y="56" font-size="12" text-anchor="middle" font-weight="400" fill="#2b2620">gate tower behind, 29 m</text>
+<path d="M650,470 L650,288 L734.0,204 L818,288 L818,470 Z" fill="#a8a090" stroke="#3f3a32" stroke-width="1.5"/>
+<text x="734.0" y="182" font-size="14" text-anchor="middle" font-weight="700" fill="#2b2620"></text>
+<text x="734.0" y="198" font-size="12" text-anchor="middle" font-weight="400" fill="#2b2620"></text>
+<text x="734" y="425.2" font-size="14" text-anchor="middle" font-weight="700" fill="#2b2620">Workshops, across</text>
+<text x="734" y="441.2" font-size="12" text-anchor="middle" font-weight="400" fill="#2b2620">12 m deep, ridge 19 m</text>
+<line x1="650" y1="400" x2="818" y2="400" stroke="#3f3a32" stroke-width="1" stroke-dasharray="3 3"/>
+<line x1="650" y1="344" x2="818" y2="344" stroke="#3f3a32" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="815" y="415.4" width="6" height="40.6" fill="#2c3340"/>
+<rect x="815" y="352.4" width="6" height="30.800000000000004" fill="#2c3340"/>
+<rect x="815" y="299.2" width="6" height="28.0" fill="#2c3340"/>
+<circle cx="838" cy="447.8" r="3.5" fill="#b5402a"/><path d="M838,448.3 L838,458.8 M834,451.1 L842,451.1 M838,458.8 L835,470 M838,458.8 L841,470" stroke="#b5402a" stroke-width="2.4" fill="none"/>
+<text x="950" y="70" font-size="14" text-anchor="start" font-weight="700" fill="#2b2620">What one screen shows of a facade</text>
+<text x="950" y="90" font-size="12" text-anchor="start" font-weight="400" fill="#2b2620">(1080p: 480 × 270 art px; 14.5 px a metre)</text>
+<text x="950" y="125" font-size="13" text-anchor="start" font-weight="400" fill="#2b2620">2 u away</text>
+<rect x="1030" y="113" width="138.6" height="14" fill="#9c9483"/>
+<text x="1174.6" y="125" font-size="12" text-anchor="start" font-weight="400" fill="#2b2620">7.7 m</text>
+<text x="950" y="151" font-size="13" text-anchor="start" font-weight="400" fill="#2b2620">4 u away</text>
+<rect x="1030" y="139" width="111.60000000000001" height="14" fill="#9c9483"/>
+<text x="1147.6" y="151" font-size="12" text-anchor="start" font-weight="400" fill="#2b2620">6.2 m</text>
+<text x="950" y="177" font-size="13" text-anchor="start" font-weight="400" fill="#2b2620">6 u away</text>
+<rect x="1030" y="165" width="82.8" height="14" fill="#9c9483"/>
+<text x="1118.8" y="177" font-size="12" text-anchor="start" font-weight="400" fill="#2b2620">4.6 m</text>
+<text x="950" y="203" font-size="13" text-anchor="start" font-weight="400" fill="#2b2620">8 u away</text>
+<rect x="1030" y="191" width="55.800000000000004" height="14" fill="#9c9483"/>
+<text x="1091.8" y="203" font-size="12" text-anchor="start" font-weight="400" fill="#2b2620">3.1 m</text>
+<text x="950" y="229" font-size="13" text-anchor="start" font-weight="400" fill="#2b2620">12 u away</text>
+<rect x="1030" y="217" width="0" height="14" fill="#9c9483"/>
+<text x="1036" y="229" font-size="12" text-anchor="start" font-weight="400" fill="#2b2620">its foot only</text>
+<text x="950" y="270" font-size="12" text-anchor="start" font-weight="400" fill="#2b2620">So you see the ground floor and a little</text>
+<text x="950" y="286" font-size="12" text-anchor="start" font-weight="400" fill="#2b2620">more; storeys above are seen only</text>
+<text x="950" y="302" font-size="12" text-anchor="start" font-weight="400" fill="#2b2620">as you walk along the building.</text>
+<line x1="20" y1="470" x2="1220" y2="470" stroke="#2b2620" stroke-width="2"/>
+<rect x="40" y="492" width="140" height="5" fill="#2b2620"/>
+<text x="40" y="516" font-size="12" text-anchor="start" font-weight="400" fill="#2b2620">10 m</text>
+<text x="200" y="516" font-size="12" text-anchor="start" font-weight="400" fill="#2b2620">Red: a person, 1.8 m (a wizard). All drawn to one scale.</text>
+</svg>

@@ -6,12 +6,16 @@
  * Still to move (pass B, as they're next touched): the battery's spots in view.ts (where a driver's wizard stands,
  * the stakes breaking, the blackout), its flame from the tower's head in vfx.ts, and Survive's banner lines in hud.ts.
  */
-import { MAX_SEATS, pedestalNear, possessed, wellNear, type ModeId, type World } from '@wizard-sim/sim';
+import { MAX_SEATS, YARD, markerOf, pedestalNear, possessed, wellNear, type ModeId, type World } from '@wizard-sim/sim';
 import type { Ctx } from './art/px';
 import type { BodyView, LightFn } from './art/vfx';
 import { feedLines } from './art/feed-lines';
-import { drawKeys } from './key-caps';
+import { drawKeys, type Token } from './key-caps';
 import { drawTutorialWorld, type PieceFn } from './tutorial-view';
+import { yardPrompt } from './yard-text';
+import { gx, gy } from './art/field';
+import { FY, PPU } from './camera';
+import * as X from './art/px';
 
 /** What the structures layer lends a mode (view-structures.ts). */
 export interface StructureKit {
@@ -24,6 +28,10 @@ export interface StructureKit {
 export interface BannerKit {
   /** The battery's lesson: what to do now and its keys (hud.ts drawLesson). */
   lesson(w: World, t: number, viewW: number): void;
+  /** The seat the HUD is drawn for. */
+  seat(): number;
+  /** Any lesson's prompt (a few words over its keys), or nothing (the yard's: yard-text.ts). */
+  prompt(p: { keys: Token[]; head?: string } | undefined, t: number, viewW: number): void;
 }
 
 export interface RoomView {
@@ -48,6 +56,29 @@ const VIEWS: Partial<Record<ModeId, RoomView>> = {
       for (let i = 0; i < MAX_SEATS; i++) {
         const v = bodies[i];
         if (v?.on && w.seats.active[i] && !possessed(w, i) && (pedestalNear(w, i) >= 0 || wellNear(w, i))) drawKeys(o, [{ key: 'x' }], Math.round(v.x - 7), Math.round(v.y - 50), t);
+      }
+    },
+  },
+  yard: {
+    banner: (k, w, t, viewW) => k.prompt(yardPrompt(w, k.seat()), t, viewW),
+    ground: (g, w) => {
+      // the chalk ring the sack is shoved into, and the hands test's ring scuffed into the sand
+      for (const [id, r, a] of [['heavy-ring', YARD.ringR, 0.85], ['hands', YARD.ring, 0.45]] as const) {
+        const m = markerOf(w.def, id);
+        if (!m) continue;
+        const cx = gx(m.x), cy = gy(m.y), rx = r * PPU, ry = r * PPU * FY;
+        g.globalAlpha = a;
+        X.ring(g, cx, cy, rx, ry, '#f4eedc'); X.ring(g, cx, cy + 1, rx, ry, '#8a7a5a');
+        g.globalAlpha = 1;
+      }
+    },
+    overBodies: (o, w, bodies, t) => {
+      // by the rack without a focus: the X key over your head
+      const rack = markerOf(w.def, 'focus');
+      if (!rack || !w.yard) return;
+      for (let i = 0; i < MAX_SEATS; i++) {
+        const v = bodies[i];
+        if (v?.on && w.seats.active[i] && Math.hypot(w.bodies.x[i] - rack.x, w.bodies.y[i] - rack.y) < YARD.reach) drawKeys(o, [{ key: 'x' }], Math.round(v.x - 7), Math.round(v.y - 50), t);
       }
     },
   },

@@ -58,6 +58,7 @@ import { loadSaved } from './tune-io';
 import { WorldView } from './view';
 import { PROP_SETS } from './art/assets';
 import { newRigState, paint } from './art/rigs';
+import * as px from './art/px';
 import { broadcastBus, roomBus } from './net/bus';
 import { webrtcBus } from './net/webrtc';
 import { NetPlay } from './net/netplay';
@@ -213,7 +214,7 @@ async function boot(): Promise<void> {
       const s = net!.session!;
       view.setLocalSeat(net!.seat);
       s.hooks = {
-        before: (w) => { net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); stats.afterStep(); tools.afterStep(); help.afterStep(w); saves.update(w.mode.reached?.(w), partyOf(w)); } else view.replayStep(w); },
+        before: (w) => { net!.beforeTick(w.clock[0]); view.beforeStep(w); }, after: (w) => { if (!s.replaying) { view.afterStep(w); stats.afterStep(); tools.afterStep(); help.afterStep(w); saves.update(w.mode.reached?.(w), partyOf(w)); checkLeave(); } else view.replayStep(w); },
         preRewind: (w) => view.notePreRewind(w), postRewind: (w) => view.notePostRewind(w, net!.seat),
       };
     });
@@ -230,7 +231,17 @@ async function boot(): Promise<void> {
    * Go to another scenario. Alone (or in a lobby that hasn't started) the world is rebuilt in place,
    * keeping everyone who is seated; in a match only the host can, and everyone follows (netplay.ts).
    */
+  /** A campaign area the party walks out of (Mode.leaveTo: the yard's gate) hands over to the next, once. */
+  let leaving = false;
+  const checkLeave = () => {
+    const to = world.mode.leaveTo?.(world);
+    if (!to || leaving || headless) return;
+    leaving = true;
+    const next = scenarioOfRoom(to);
+    queueMicrotask(() => switchScenario(next));
+  };
   const switchScenario = (s: Scenario, checkpoint?: string, from?: PartyState) => {
+    leaving = false;
     // a campaign area starts with what the party has: handed over (Continue: the save's), or from the area it leaves
     const party = s.kind === 'campaign' ? from ?? partyOf(world) : undefined;
     if (net?.state === 'playing') { net.switchRoom(s.room, checkpoint, party); return; }
@@ -301,6 +312,7 @@ async function boot(): Promise<void> {
     tools.afterStep();
     help.afterStep(world);
     if (!headless) saves.update(world.mode.reached?.(world), partyOf(world));
+    checkLeave();
     stepsRun++;
   };
 
@@ -406,6 +418,6 @@ async function boot(): Promise<void> {
   // Expose the recorder for debugging: copy a replay of this session from the console.
   (window as unknown as { wizardSim: unknown }).wizardSim = {
     world, get recorder() { return recorder; }, tune, tools, stats, view, menu, help, audio, get net() { return net; },
-    app, perf, switchScenario, startWave: (n: number) => devStartWave(world, n, 1), art: { newRigState, paint },
+    app, perf, switchScenario, startWave: (n: number) => devStartWave(world, n, 1), art: { newRigState, paint, px },
   };
 }

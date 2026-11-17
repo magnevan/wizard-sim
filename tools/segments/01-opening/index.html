@@ -98,6 +98,7 @@ th { font-weight:600; color:var(--muted); font-size:14px; }
 <div class="saved" id="save">Connecting…</div>
 <section id="overview"></section>
 <div id="chapters" style="display:grid;gap:44px;min-width:0"></div>
+<section id="concept"></section>
 <section id="scale"></section>
 <section id="needs"></section>
 <section id="notes"></section>
@@ -236,6 +237,21 @@ function buildChapter(c){
  return sec;
 }
 
+/* Concepts: a place designed before its art (plan, section, grey box in the game), with a verdict and questions. */
+function buildConcepts(){
+ const list=SEG.concepts||[];if(!list.length)return;const root=$('concept');
+ for(const k of list){const sec=el('div');sec.id='concept-'+k.id;sec.style.cssText='display:grid;gap:14px;scroll-margin-top:44px';
+  const h=el('div','head');h.append(el('h2','',k.title),el('span','tag',k.status));sec.append(h,el('p','',k.lede));
+  const a=el('div','sheet');a.style.gap='8px';k.points.forEach(x=>a.append(lead(x)));sec.append(a);
+  const s=el('div','sheet');s.style.gridTemplateColumns='repeat(auto-fit,minmax(min(100%,400px),1fr))';k.images.forEach(([src,alt,cap])=>{const f=el('figure');f.style.cssText='margin:0;display:grid;gap:6px;align-content:start'+(src.endsWith('.svg')?';grid-column:1/-1':'');const i=el('img');i.src=src;i.alt=alt;i.style.cssText='width:100%;height:auto'+(src.endsWith('.jpg')?';image-rendering:pixelated':'');f.append(i,el('figcaption','cap',cap));s.append(f);});sec.append(s);
+  const v=el('div','sheet');v.append(el('h3','','Your verdict on the direction'),marks('ratings','concept-'+k.id,k.verdict),noteBox('ratings',`${ROUND}-concept-${k.id}`,'Notes on the concept'));
+  v.append(el('h3','','To decide'));
+  for(const q of k.questions){const d=el('div','solve');d.id='solve-'+q.id;const x=el('div'),y=el('div');
+   x.append(el('strong','',q.title),el('p','',q.body),noteBox('answers',`${ROUND}-${q.id}`,'Your take'));
+   const tag=el('span','tag','Proposal');tag.style.justifySelf='start';y.append(tag,el('p','',q.proposal));d.append(x,y);v.append(d);}
+  sec.append(v);root.append(sec);}
+}
+
 function buildBottom(){
  const sc=$('scale');sc.append(el('h2','','Rules of scale'));const a=el('div','sheet');a.style.gap='8px';SEG.rules.forEach(r=>a.append(lead(r)));sc.append(a);
  const lg=el('div','legend');for(const [n,k] of [['Floor','floor'],['Sand','sand'],['Grass','grass'],['Fought-over ground','field'],['Dirt','dirt'],['Water','water'],['Trees','tree'],['Wall or rock','wall'],['Structure','struct'],['Furniture or cover','furn'],['Danger or enemy entry','danger']]){const s=el('span');const i=el('i');i.style.background=KC(k);s.append(i,n);lg.append(s);}lg.append(el('span','','Dots: your route.'));sc.append(lg);
@@ -263,7 +279,7 @@ function paint(){document.querySelectorAll('button[data-key]').forEach(b=>b.setA
 function fill(c,snap){for(const d of snap.docs){const data=d.data()??{};state[c+'/'+d.id]=data;const t=$(`note-${c}-${d.id}`);if(t&&document.activeElement!==t)t.value=data.note??'';}paint();}
 function bindNotes(){document.querySelectorAll('textarea[data-c]').forEach(t=>t.addEventListener('input',()=>{const k=t.dataset.c+'/'+t.dataset.i;clearTimeout(timers[k]);setSave('Typing…');timers[k]=setTimeout(()=>write(t.dataset.c,t.dataset.i,{note:t.value}),600);}));}
 
-buildTop();SEG.chapters.forEach(c=>$('chapters').append(buildChapter(c)));buildBottom();bindNotes();
+buildTop();SEG.chapters.forEach(c=>$('chapters').append(buildChapter(c)));buildConcepts();buildBottom();bindNotes();
 (async()=>{
  const stop=setTimeout(()=>setSave(`Couldn't load your notes. Reload to try again.`,true),10000);
  try{

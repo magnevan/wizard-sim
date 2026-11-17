@@ -25,6 +25,13 @@ export interface Step {
   readonly sends?: boolean;
   /** s of quiet once its enemies are gone, before what comes next (default: the script's). 0: move on the same tick. */
   readonly pause?: number;
+  /**
+   * Count the step cleared with this many of its enemies still standing (all of them out of the slots): the next group
+   * comes while the last of this one is still fighting, so there's no lull to wait through (the user, 2026-11-14: the
+   * battery had "too much waiting for the next wave", and it hurt the realism). Only between a list's or loop's own
+   * groups: the step after still waits for a clean field. Default 0.
+   */
+  readonly overlap?: number;
   /** While this is true the step doesn't move on, even with its enemies gone (the battery: nobody at a defence). */
   readonly hold?: (w: World) => boolean;
   /** When this is true the step moves on at once: no clearing, no pause (the battery: someone takes a defence). */
@@ -89,6 +96,12 @@ export function remaining(w: World): number {
   return n;
 }
 
+/** Is a step's fight done: nothing left to come out of the slots, and at most `overlap` enemies standing? */
+function cleared(w: World, overlap: number): boolean {
+  for (let k = 0; k < MAX_PORTALS; k++) if (w.enc.left[k]) return false;
+  return remaining(w) <= overlap;
+}
+
 /** The index of the step after step `s`. */
 function nextOf(script: Script, s: number): number {
   const id = script.steps[s]?.next;
@@ -141,7 +154,9 @@ export function runScript(w: World, script: Script): void {
     }
   }
   if (step.after?.(w)) return;
-  if (step.end || remaining(w) || step.hold?.(w)) return;
+  // overlap only while the step has another group of its own to send: the step after waits for a clean field
+  const more = step.cycle === 'loop' || (step.cycle === 'list' && !!groupNow(step, st[3] + 1));
+  if (step.end || step.hold?.(w) || !cleared(w, more ? step.overlap ?? 0 : 0)) return;
   // its enemies are all gone: a quiet pause, then what comes next
   const pause = step.pause ?? script.pause;
   if (pause > 0) {

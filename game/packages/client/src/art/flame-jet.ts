@@ -51,33 +51,66 @@ const LIFE = 0.62;
 const BANDS = 7;
 
 
-/** The jet's particles this frame, back to front within each band. */
-function particles(j: Jet, t: number): P[] {
-  const [fx, fy] = j.from, [tx, ty] = j.to, sd = j.seed;
+/** A jet's shape at one moment: where along it a particle is, and how high its axis runs. */
+interface Shape {
+  at: (s: number, l: number, h: number) => [number, number, number, number];
+  axisH: (s: number) => number;
+}
+
+function shapeOf(j: Jet): Shape {
+  const [fx, fy] = j.from, [tx, ty] = j.to;
   const h0 = fy - j.nozzle[1], nx0 = j.nozzle[0] - fx; // the nozzle is above (and a little across from) the tower's spot
   // across the jet, on the ground: the ground direction with the squash taken out, turned a quarter, squashed back
   const gdx = tx - fx, gdy = (ty - fy) / FY, gl = Math.hypot(gdx, gdy) || 1, px = -gdy / gl, py = (gdx / gl) * FY;
-  const on = seg(t, j.t0, j.t0 + 0.08);
-  const out: P[] = [];
   // The path on the ground is a curve from under the nozzle to `to`, leaving along the barrel: where the sim's spray
   // lands can be off the barrel's line (it fires from the muzzle, past the wall), and this bends the jet there
   // smoothly. The barrel's length on the ground (without the squash) sets how hard it holds the barrel's line.
   const ax0 = fx + nx0, ay0 = fy, bl = Math.hypot(j.barrel[0], j.barrel[1] / FY) || 1, span = Math.hypot(tx - ax0, (ty - ay0) / FY);
   const cx = ax0 + (j.barrel[0] / bl) * span * 0.5, cy = ay0 + (j.barrel[1] / bl) * span * 0.5;
-  const at = (s: number, l: number, h: number): [number, number, number, number] => {
-    const k = Math.min(1, s), e = s - k, m = 1 - k;
-    // past the end it carries on along the curve's last direction
-    const gxp = m * m * ax0 + 2 * k * m * cx + k * k * tx + e * 2 * (tx - cx) + px * l;
-    const gyp = m * m * ay0 + 2 * k * m * cy + k * k * ty + e * 2 * (ty - cy) + py * l;
-    return [gxp, gyp, gxp, gyp - h];
+  return {
+    at: (s, l, h) => {
+      const k = Math.min(1, s), e = s - k, m = 1 - k;
+      // past the end it carries on along the curve's last direction
+      const gxp = m * m * ax0 + 2 * k * m * cx + k * k * tx + e * 2 * (tx - cx) + px * l;
+      const gyp = m * m * ay0 + 2 * k * m * cy + k * k * ty + e * 2 * (ty - cy) + py * l;
+      return [gxp, gyp, gxp, gyp - h];
+    },
+    // It leaves the barrel level and comes down to chest height as it goes, as a burning liquid would.
+    axisH: (s) => { const k = Math.min(1, s); return h0 + (j.endH - h0) * k * k; },
   };
-  // It leaves the barrel level and comes down to chest height as it goes, as a burning liquid would.
-  const axisH = (s: number) => { const k = Math.min(1, s); return h0 + (j.endH - h0) * k * k; };
+}
+
+/**
+ * Each jet's recent shapes, newest last, by its seed. A particle follows the jet as it was when it left the nozzle, so
+ * swinging the head moves only what's still to come: what's already in the air flies on along its own line (the user,
+ * 2026-11-14: the flamethrower teleported particles in the air). Kept as long as the longest-lived particle (smoke).
+ */
+const history = new Map<number, { t: number; shape: Shape }[]>();
+const KEEP = 1.6;
+
+function shapesOf(j: Jet, t: number): (ts: number) => Shape {
+  let h = history.get(j.seed);
+  if (!h || (h.length && t < h[h.length - 1].t)) { h = []; history.set(j.seed, h); } // a new jet, or time went back
+  const now = shapeOf(j);
+  h.push({ t, shape: now });
+  while (h.length > 1 && (h[0].t < t - KEEP || h[0].t < j.t0)) h.shift(); // nothing from before this jet began
+  return (ts) => {
+    // the newest shape from no later than ts (before the history, the oldest kept)
+    for (let k = h!.length - 1; k >= 0; k--) if (h![k].t <= ts) return h![k].shape;
+    return h![0].shape;
+  };
+}
+
+/** The jet's particles this frame, back to front within each band. */
+function particles(j: Jet, t: number): P[] {
+  const sd = j.seed, shapeAt = shapesOf(j, t);
+  const on = seg(t, j.t0, j.t0 + 0.08);
+  const out: P[] = [];
   const width = (s: number) => 1.4 + 15 * Math.pow(Math.min(1.1, s), 0.85);
 
   // the core: a dense, hot stream over the first third, so the jet is solid where it leaves the nozzle
-  for (const q of emit(t, 900, 0.16, (i, age, ts) => (ts < j.t0 ? null : { i, age }))) {
-    const i = q.i, a = q.age, s = a * 0.36 * Math.max(0.15, on);
+  for (const q of emit(t, 900, 0.16, (i, age, ts) => (ts < j.t0 ? null : { i, age, ts }))) {
+    const i = q.i, a = q.age, s = a * 0.36 * Math.max(0.15, on), { at, axisH } = shapeAt(q.ts);
     const l = (rand(i, 31, sd) * 2 - 1) * (0.6 + s * 6);
     const [gxp, gyp, x, y] = at(s, l, axisH(s) + Math.sin(i * 1.7 + t * 40) * 0.6);
     const heat = a * 0.42 + rand(i, 32, sd) * 0.12;
@@ -85,8 +118,8 @@ function particles(j: Jet, t: number): P[] {
   }
 
   // flame: born at the nozzle, slowing as it goes, so it bunches and billows at the far end
-  for (const q of emit(t, 560, LIFE, (i, age, ts) => (ts < j.t0 ? null : { i, age }))) {
-    const i = q.i, life = 0.75 + 0.25 * rand(i, 1, sd), a = q.age / life;
+  for (const q of emit(t, 560, LIFE, (i, age, ts) => (ts < j.t0 ? null : { i, age, ts }))) {
+    const i = q.i, life = 0.75 + 0.25 * rand(i, 1, sd), a = q.age / life, { at, axisH } = shapeAt(q.ts);
     if (a >= 1) continue;
     const reach = 0.86 + 0.24 * rand(i, 2, sd), s = (1 - Math.pow(1 - a, 1.8)) * reach * Math.max(0.15, on);
     const side = rand(i, 3, sd) * 2 - 1, l = side * Math.abs(side) ** 0.3 * width(s) + Math.sin(a * 11 + i * 0.7) * 2.2 * s;
@@ -102,7 +135,7 @@ function particles(j: Jet, t: number): P[] {
 
   // smoke: rises off the stream all along its far two thirds, thickest at the end
   for (const q of emit(t, 58, 1.5, (i, age, ts) => (ts < j.t0 + 0.12 ? null : { i, age, ts }))) {
-    const i = q.i, a = q.age, sb = 0.28 + 0.8 * Math.sqrt(rand(i, 11, sd));
+    const i = q.i, a = q.age, sb = 0.28 + 0.8 * Math.sqrt(rand(i, 11, sd)), { at, axisH } = shapeAt(q.ts);
     if (sb * Math.max(0.15, seg(q.ts, j.t0, j.t0 + 0.3)) > 1.1) continue;
     const side = rand(i, 12, sd) * 2 - 1, s = sb + a * 0.12, l = side * width(sb) * (0.7 + a * 0.5);
     const h = axisH(sb) + 4 + a * 34 + Math.sin(a * 5 + i) * 2;
@@ -113,7 +146,8 @@ function particles(j: Jet, t: number): P[] {
   }
 
   // embers: a few sparks that carry past the flame and fall
-  for (const q of emit(t, 34, 0.9, (i, age, ts) => (ts < j.t0 ? null : { i, age }))) {
+  for (const q of emit(t, 34, 0.9, (i, age, ts) => (ts < j.t0 ? null : { i, age, ts }))) {
+    const { at, axisH } = shapeAt(q.ts);
     const i = q.i, a = q.age, s = (1 - Math.pow(1 - a, 1.5)) * (0.95 + 0.35 * rand(i, 21, sd));
     const side = rand(i, 22, sd) * 2 - 1, l = side * width(s) * 1.1;
     const h = axisH(s) + Math.sin(a * Math.PI) * 10 - a * a * 18;

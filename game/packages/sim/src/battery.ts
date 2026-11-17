@@ -9,7 +9,7 @@
 import { len } from './geom';
 import { propsTagged } from './room';
 import { BTN, type PlayerInput } from './input';
-import { RUNES, T, WELL } from './config';
+import { CHANNEL, RUNES, T, WELL } from './config';
 import { EL, N_EL } from './elements';
 import { atan2Turns, cosTurns, sinTurns } from './trig';
 import { MAX_SEATS, PHASE, alive, infused, wellDry, type World } from './world';
@@ -38,6 +38,42 @@ export const BATTERY = {
   /** And burns whatever is this near where it lands, as well as along its cone. */
   splash: 1.7,
 } as const;
+
+/**
+ * The battery's Life circle, a channel circle (CHANNEL; the user's proto mechanic, 2026-11-14): south of the well, on the
+ * yard side, so you fall back from the fight to heal. It's there from the infusion on, when the fight comes to your
+ * own hands and you have no healing of your own. Who lays it (a travelling healer, in the user's sketch) is still open.
+ */
+export const LIFE_CIRCLE = { dx: 0, dy: 5.5 } as const;
+
+/** Where the Life circle is, once it's there. */
+export function lifeCircle(w: World): [number, number] | null {
+  if (!w.battery || !infused(w)) return null;
+  const well = at(w, 'well')[0];
+  return well ? [well.x + LIFE_CIRCLE.dx, well.y + LIFE_CIRCLE.dy] : null;
+}
+
+/** Is seat i standing in the Life circle (and not possessing a defence)? Geometry: in the sim's own frame only. */
+function standsInLifeCircle(w: World, i: number): boolean {
+  const c = lifeCircle(w);
+  if (!c || driving(w, i) || !alive(w, i)) return false;
+  return len(c[0] - w.bodies.x[i], c[1] - w.bodies.y[i]) < CHANNEL.radius;
+}
+
+/**
+ * Is seat i channeling the Life circle? Read from the battery's state (`channel`), set each tick by channelTick, so it
+ * reads the same from any copy of the world (the client's view turns positions, not this).
+ */
+export const inLifeCircle = (w: World, i: number): boolean => !!w.battery && i >= 0 && i < MAX_SEATS && w.battery.channel[i] === EL.life;
+
+/** Who stands in the circle now; step out of it and its Life is gone (a pool over its max isn't trimmed by itself). */
+export function channelTick(w: World): void {
+  const ch = w.battery!.channel;
+  for (let i = 0; i < MAX_SEATS; i++) {
+    ch[i] = standsInLifeCircle(w, i) ? EL.life : 0;
+    if (!ch[i]) w.seats.runes[i * N_EL + EL.life - 1] = 0;
+  }
+}
 
 /** Straight out from the wall, north, as a facing in turns. */
 const STRAIGHT_OUT = 0.75;

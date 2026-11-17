@@ -73,6 +73,7 @@ function turnDef(def: RoomDef): RoomDef {
       rock: def.rock.map(spin), propRock: def.propRock.map(spin),
       starts: def.starts.map(spin), dummies: def.dummies.map(spin), portals: def.portals.map(spin), altars: def.altars.map(spin),
       props: def.props.map((p) => ({ ...p, x: toU(p.x, p.y), y: toV(p.x, p.y) })),
+      markers: def.markers.map((m) => ({ ...m, x: toU(m.x, m.y), y: toV(m.x, m.y) })),
     } as RoomDef;
     defs.set(def, t);
   }

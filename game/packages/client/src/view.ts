@@ -16,11 +16,13 @@
  */
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
-  EV, AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, isPropWall,
+  EV, AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TUT_TAG, WALL, YTAG, isPropWall,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
 import { ActorFrames, FEET_X, FEET_Y } from './art/actors';
+import { Extras } from './art/extras';
+import { Massing, massingParam } from './art/massing';
 import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
 import { floorLayout, floorPlaceholder } from './art/floor';
@@ -30,7 +32,7 @@ import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
-import { blackout } from './art/power-down';
+import { blackout, wellShake } from './art/power-down';
 import type { PropSet } from './art/assets';
 import { AMBIENT, canvas as pxCanvas, stats, text as pxText } from './art/px';
 import { newRigState, type RigKind, type RigState } from './art/rigs';
@@ -42,7 +44,7 @@ import { Hud } from './hud';
 import { TutorialHud } from './tutorial-view';
 import type { SoundDirector } from './audio/director';
 
-const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10, bramble: 10, sack: 9 };
+const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10, bramble: 10, sack: 9, soldier: 9 };
 /** ?lighting=0 turns the scene lighting off, to compare. */
 const LIGHTING = typeof location === 'undefined' || new URLSearchParams(location.search).get('lighting') !== '0';
 /** How far the view leans out over the battlefield while you drive a defence: view units, across and up. */
@@ -84,6 +86,10 @@ export class WorldView {
   private actors = new Container();
   private lights = new Lights();
   private frames = new ActorFrames();
+  /** The people who live in the room (art/extras.ts): the drill yard's students and soldiers. */
+  private extras: Extras;
+  /** ?massing=<plan>: a concept's buildings as grey blocks at real size (art/massing.ts), in its room only. */
+  private massing: Massing | null = null;
   /** The room's props (art/props.ts). The art test's prop set is `props.set`. */
   readonly props: PropView;
   /** The art test: the detailed wizard (art/rigs.ts), client side only. */
@@ -182,12 +188,18 @@ export class WorldView {
     this.structs = new StructureView(this.actors);
     this.props = new PropView(this.actors, tint, 'lean');
     this.deaths = new Deaths(this.actors);
+    this.extras = new Extras(this.actors, this.frames);
+    const plan = massingParam();
+    if (plan) {
+      const m = (this.massing = new Massing(this.actors, plan));
+      this.props.skip = (u, v) => this.real?.def.id === plan.room && m.covers(u, v, this.real.dims.w, this.real.dims.h);
+    }
     if (this.lit) {
-      this.litLayer.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.lit.shadowSprite, this.lit.lightSprite, this.lit.glowLayer, this.actors, this.lit.vig);
+      this.litLayer.addChild(this.floor, this.props.under, this.vfx.ground, this.sGround, this.lit.shadowSprite, this.lit.lightSprite, this.lit.glowLayer, this.actors, this.lit.vig);
       this.litLayer.filters = [this.lit.grade];
       this.scene.addChild(this.litLayer, this.vfx.over, this.sOverlay);
     } else {
-      this.scene.addChild(this.floor, this.props.under, this.structs.scorch.sprite, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
+      this.scene.addChild(this.floor, this.props.under, this.vfx.ground, this.sGround, this.actors, this.lights.layer, this.vfx.over, this.sOverlay);
     }
     this.hudLayer.addChild(this.tut.fade, this.edges.g, this.hud.top, this.hud.sprite, this.hud.perks, this.hud.over, this.tut.sprite, this.tut.banner, this.repairFade, this.artLabel);
     this.root.addChild(this.scene, this.hudLayer);
@@ -270,7 +282,9 @@ export class WorldView {
     if (k === KIND.dummy) return 'dummy';
     const a = w.bodies.arch[i];
     if (a === ARCH.bramble) return 'bramble';
-    if (a === ARCH.straw && w.tut?.tag[i] === TUT_TAG.sack) return 'sack';
+    if (a === ARCH.straw && (w.tut?.tag[i] === TUT_TAG.sack || w.yard?.tag[i] === YTAG.sack)) return 'sack';
+    const yt = w.yard?.tag[i];
+    if (yt === YTAG.mallet || yt === YTAG.bow) return 'soldier'; // the drill yard's sparring partners
     return a === ARCH.brute ? 'brute' : a === ARCH.caster ? 'archer' : 'goblin';
   }
 
@@ -290,7 +304,7 @@ export class WorldView {
     this.props.room(w.def);
     this.aim(w, alpha, dt);
     // a death's or a brute slam's screen shake (last frame's, in whole art px): cosmetic only
-    const sh = Math.max(this.deaths.shake, this.atkShake), sx = sh > 0.3 ? Math.round(Math.sin(ct * 83) * sh) : 0, sy = sh > 0.3 ? Math.round(Math.cos(ct * 71) * sh * 0.6) : 0;
+    const sh = Math.max(this.deaths.shake, this.atkShake, w.battery ? wellShake(w) : 0), sx = sh > 0.3 ? Math.round(Math.sin(ct * 83) * sh) : 0, sy = sh > 0.3 ? Math.round(Math.cos(ct * 71) * sh * 0.6) : 0;
     this.scene.scale.set(cam.scale);
     this.scene.position.set(sx * cam.scale + cam.subX(), sy * cam.scale + cam.subY());
     // how long the sim has stood still (capped): lets sim-driven loops (orbitals) carry on smoothly
@@ -302,7 +316,9 @@ export class WorldView {
     const M = 24;
     this.vfx.view(-fx0 - M, -fy0 - M, cam.w + 2 * M, cam.h + 2 * M);
     this.vfx.ground.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy); this.vfx.over.position.set(fx0 + this.vfx.wx, fy0 + this.vfx.wy);
-    this.structs.scorch.sprite.position.set(fx0, fy0);
+    // the scorch marks: brought up to date, then laid in under everything on the effects' ground canvas
+    this.structs.scorch.draw(w, t);
+    this.vfx.underlay = (g, wx, wy, W, H) => this.structs.scorch.layInto(g, wx, wy, W, H);
     this.props.place(fx0, fy0);
     this.props.powerDown(w, ct, fx0, fy0); // the battery's well alive, and its power going down once it runs dry
     this.props.turnHeads(w, fx0, fy0);
@@ -336,6 +352,11 @@ export class WorldView {
       v.on = true; v.x = fx; v.y = fy; v.rig = s.kind;
     }
 
+    if (this.massing) {
+      this.massing.g.visible = w.def.id === this.massing.plan.room;
+      if (this.massing.g.visible) this.massing.draw(this.real.dims.w, this.real.dims.h, fx0, fy0);
+    }
+    this.extras.draw(w.def, ct, fx0, fy0, this.lit ? 0xffffff : AMBIENT); // the people who live here (the drill yard's)
     const ax = (x: number) => ox + Math.round(x * PPU), ay = (y: number) => cam.toArtY(y);
     drawTelegraphs(w, { ground: this.sGround.clear(), overlay: this.sOverlay.clear(), ax, ay }, Math.round(ct * 60));
 
@@ -358,6 +379,7 @@ export class WorldView {
         lit.shadow(v.f.tex, FEET_X, FEET_Y, fx0 + v.x, fy0 + v.y);
         if (i < MAX_SEATS && lit.carry) lit.light(fx0 + v.x, fy0 + v.y, 110, '#ffd9a8', lit.carry * 0.8, true);
       }
+      this.extras.each((f, x, y) => lit.shadow(f.tex, FEET_X, FEET_Y, fx0 + x, fy0 + y), fx0, fy0);
       const wl = w.walls, tr = w.terrain;
       const wall = (ax: number, ay: number, bx: number, by: number): void => {
         const x1 = fx0 + gx(ax), y1 = fy0 + gy(ay), x2 = fx0 + gx(bx), y2 = fy0 + gy(by);
@@ -516,7 +538,7 @@ export class WorldView {
       if (arch === ARCH.shieldbearer) { s.pal = 5; s.variant = 5; }
       else if (arch === ARCH.grabber) { s.pal = 4; s.variant = 4; }
       else if (arch === ARCH.imp) { s.pal = 3; s.variant = 3; }
-      else if (arch === ARCH.straw) { s.pal = 6; s.variant = 0; } // the tutorial's straw goblin
+      else if (arch === ARCH.straw || w.yard?.tag[i] === YTAG.goblin) { s.pal = 6; s.variant = 0; } // the tutorial's straw goblin; the yard's, animated
       else if (arch === ARCH.bramble) { s.variant = b.r[i] >= 0.65 ? 1 : 0; s.seed = i & 3; }
       else { s.pal = i % 3; s.variant = kind === 'goblin' ? i % 3 : 0; }
     }
@@ -548,7 +570,11 @@ export class WorldView {
     // enemy attack poses, from the sim's attack state (art/enemy-attacks.ts)
     if (b.kind[i] === KIND.enemy) {
       const k = attackK(w, i);
-      if (kind === 'brute') s.smash = k;
+      if (kind === 'soldier') {
+        s.variant = w.yard?.tag[i] === YTAG.mallet ? 1 : 2; s.pal = s.variant === 1 ? 0 : 1;
+        if (s.variant === 1) s.smash = k;
+        else { s.atk = k; if (b.ai[i] === AI.windup) s.draw = 1; }
+      } else if (kind === 'brute') s.smash = k;
       else if (kind === 'archer') {
         const A = ARCHETYPES[arch];
         if (b.ai[i] === AI.windup) s.draw = Math.round(Math.min(1, b.aiT[i] / Math.max(1, A.windup * 60)) * 4) / 4;

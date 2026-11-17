@@ -39,6 +39,22 @@ export function stored(els: Uint8Array, at: number, flags: number, mod: number, 
   return { counts: els, at, heal: !!(flags & PF.heal), scald: !!(flags & PF.scald), freeze: !!(flags & PF.freeze), mod: MODS[mod], look, formN: 1 };
 }
 
+/**
+ * How wide a placed spell lands, world units, by its shape and its lead's runes (and Survive's Lingering). The client's
+ * Place marker draws this same size (the user, 2026-11-14: the marker should match what's placed).
+ */
+export function placeRadius(w: World, src: number, spec: SpellSpec): number {
+  const n = spec.formN;
+  switch (spec.shape) {
+    case 'patch': return (SHAPES.patchRadius + 0.4 * (n - 1)) * lingerSize(w, src);
+    case 'blast': return 2 + 0.4 * n;
+    case 'geyser': return 0.9 + 0.4 * n;
+    case 'spring': return (1.8 + 0.4 * n) * lingerSize(w, src); // were 1.4 and 4: bigger, longer (2026-11-11)
+    case 'strike': return 0.9;
+    default: return 1.4;
+  }
+}
+
 export function hitOpts(p: Payload, source: number, scale: number, dirX = 0, dirY = 0, statusScale = 1, frontal = false): HitOpts {
   return { scale, heal: p.heal, scald: p.scald, freeze: p.freeze, source, dirX, dirY, push: p.mod === 'push' ? SHAPES.push : 0, statusScale, frontal };
 }
@@ -254,7 +270,7 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
     case 'patch': {
       // each extra rune of the lead: +0.4 u, and what lingers lasts SHAPES.lingerPerRune longer (steam, the floors it leaves)
       // Lingering (Survive) makes the whole patch wider and what it leaves last longer
-      const r = (SHAPES.patchRadius + 0.4 * (n - 1)) * lingerSize(w, src), longer = (1 + SHAPES.lingerPerRune * (n - 1)) * lingerLife(w, src);
+      const r = placeRadius(w, src, spec), longer = (1 + SHAPES.lingerPerRune * (n - 1)) * lingerLife(w, src);
       // Cold without Water is a freezing fog, not ice (the user, 2026-11-11: "like opening a deep freezer"): it chills
       // whoever stands in it and leaves the floor alone. Water + Cold is still the ice sheet.
       const fog = !spec.scald && !spec.freeze && spec.counts[EL.cold - 1] > 0;
@@ -280,12 +296,12 @@ export function fireSpell(w: World, src: number, spec: SpellSpec, face: number, 
       burstEvent(w, src, tx, ty, r, spec.look);
       break;
     }
-    case 'blast': { const z = spawnZone(w, ZONE.blast, src, p, tx, ty, 2 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); if (z >= 0) w.zones.scale[z] = k * blast; break; } // the delayed blast keeps its cast's scale (a glyph's power, the one-shot blast)
-    case 'geyser': { const z = spawnZone(w, ZONE.geyser, src, p, tx, ty, 0.9 + 0.4 * n, T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); if (z >= 0) w.zones.scale[z] = k * blast; break; }
-    case 'spring': spawnZone(w, ZONE.spring, src, p, tx, ty, (1.8 + 0.4 * n) * lingerSize(w, src), Math.round(T(6 + 2 * n) * lingerLife(w, src)), 0); break; // were 1.4 and 4: bigger, longer (2026-11-11)
+    case 'blast': { const z = spawnZone(w, ZONE.blast, src, p, tx, ty, placeRadius(w, src, spec), T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); if (z >= 0) w.zones.scale[z] = k * blast; break; } // the delayed blast keeps its cast's scale (a glyph's power, the one-shot blast)
+    case 'geyser': { const z = spawnZone(w, ZONE.geyser, src, p, tx, ty, placeRadius(w, src, spec), T(SHAPES.delayedBlast), T(SHAPES.delayedBlast)); if (z >= 0) w.zones.scale[z] = k * blast; break; }
+    case 'spring': spawnZone(w, ZONE.spring, src, p, tx, ty, placeRadius(w, src, spec), Math.round(T(6 + 2 * n) * lingerLife(w, src)), 0); break; // were 1.4 and 4: bigger, longer (2026-11-11)
     case 'strike':
       w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x: tx, y: ty - 6, x2: tx, y2: ty, look: spec.look });
-      disc(w, p, src, tx, ty, 0.9, SHAPES.strikePower * k, -1);
+      disc(w, p, src, tx, ty, placeRadius(w, src, spec), SHAPES.strikePower * k, -1);
       surge(w, tx, ty, p, src);
       break;
     case 'swing': // an empty Weapon cast: the bare staff's shove (your hands' moves go through heldBlow)

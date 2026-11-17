@@ -8,8 +8,10 @@ writes game/content/assets/sprites/<slug>/sheet.png and sheet.json, which the cl
 Rows are (move, direction), directions in the game's angle order (east, south-east, south, ... clockwise on screen),
 so a facing of `face` radians is row `round(face / (TAU / 8)) % 8` of a move. Columns are frames.
 Moves: idle (1 frame), walk and run (a cycle each; the game's stride phase picks the frame), attack (one entry per
-variant, ATK frames each, warped so the clip's wind-up, strike and recovery land on the game's attack beats:
-atk 0..0.5 wind-up, 0.5..0.6 the blow, 0.6..1 recovery), and death (the knock-down, at most DEATH frames).
+variant: the clip's own frames at its own speed, never retimed, from where the wind-up starts to where the recovery
+settles; sheet.json's `attacks[k].hit` is the contact frame, which the client plays on the game's hit tick), and
+death (the knock-down, at most DEATH frames). Smoothness comes before telegraphing: players aren't expected to dodge a
+goblin by reading its swing, so the swing is never stretched or squeezed (the user, 2026-11-17).
 """
 import glob, json, math, os, sys
 from PIL import Image
@@ -17,7 +19,7 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, 'game', 'content', 'assets', 'sprites')
 DIRS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east']
-ATK, DEATH = 16, 18
+DEATH = 18
 
 # per character: which rendered clips play which move (substring of the clip's folder name)
 ROLES = {
@@ -70,11 +72,6 @@ def beats(track):
     return start, s + 0.5, end
 
 
-def warp(a, start, strike, end):
-    """Game attack progress 0..1 -> clip frame position."""
-    if a < 0.5: return start + (strike - 1.5 - start) * (a / 0.5)
-    if a < 0.6: return strike - 1.5 + 3 * ((a - 0.5) / 0.1)
-    return strike + 1.5 + (end - strike - 1.5) * ((a - 0.6) / 0.4)
 
 
 def pack(work, slug):
@@ -92,9 +89,11 @@ def pack(work, slug):
         c = clip_dir(px, key)
         tr = json.load(open(os.path.join(raw, c, 'track.json')))
         b = beats(tr)
-        pick = [min(tr['frames'] - 1, max(0, round(warp((i + 0.5) / ATK, *b)))) for i in range(ATK)]
-        rows.append((f'attack{k}', [[fr[i] for i in pick] for fr in (frames(px, c, d) for d in DIRS)]))
-        atk_meta.append({'clip': c, 'beats': [round(v, 1) for v in b], 'frames': pick})
+        # the clip at its own speed, trimmed to the wind-up's start and the settled recovery; `hit` is the contact
+        # frame (just after the hand's fastest step), which the client lines up with the game's hit
+        first, last = int(b[0]), int(b[2])
+        rows.append((f'attack{k}', [fr[first:last + 1] for fr in (frames(px, c, d) for d in DIRS)]))
+        atk_meta.append({'clip': c, 'beats': [round(v, 1) for v in b], 'first': first, 'hit': min(last, round(b[1] + 0.5)) - first})
     c = clip_dir(px, R['death'])
     dead = [frames(px, c, d) for d in DIRS]
     n = len(dead[0]); keep = [round(i * (n - 1) / (DEATH - 1)) for i in range(DEATH)] if n > DEATH else list(range(n))

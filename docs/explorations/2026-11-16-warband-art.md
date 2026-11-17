@@ -145,6 +145,12 @@ Open after the run, for the user's review:
 - Whether owned clips copy onto a new Meshy rig for free is still untested.
 - Not merged to main (a push to main deploys the public game).
 
+## Attacks at their own speed (2026-11-17)
+
+The user: the animations look good overall, but notes about warping attacks to fit timings, and about attacks being less readable, assume dodging is a big part of the game. It might matter for really large enemies; nobody should have to watch a goblin to dodge it. What matters is that attacks look smooth.
+
+The warp did hurt that: the hooded raider's left slash showed frames 5,5,6,6,6,6,7,7 across its 0.6 s wind-up (the "held guard pose" above), the blow for about one 60 Hz tick, and the chieftain's last seven of 16 frames were the same two. So `pack.py` now keeps every clip frame at 12 fps and marks the contact frame, and the client plays it in real time with contact on the hit tick: an even five ticks a frame. A longer game wind-up holds the clip's first pose; a shorter one starts it partway (archer 2 frames, chieftain 4, hooker 5). The chieftain's swing hadn't played at all as a sprite (the brute's attack state went to `s.smash`); it does now. Logged in `decisions/README.md`.
+
 ## Claude's picks, pending the review
 
 *(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the sprites are wired in; see the two sections above.)*

@@ -51,6 +51,17 @@ export function attackK(w: World, i: number): number {
   return q >= 1 ? -1 : 0.6 + Math.round(q * 8) / 20;
 }
 
+/**
+ * Seconds from an enemy's hit (the wind-up's end), negative before it; NaN when it isn't attacking. The sprites play
+ * their clips at their own speed against this, so the contact frame lands on the hit (the grabber's dash holds it).
+ */
+export function hitT(w: World, i: number): number {
+  const b = w.bodies, ai = b.ai[i];
+  if (ai === AI.windup) return (b.aiT[i] - ARCHETYPES[b.arch[i]].windup * 60) / 60;
+  if (ai === AI.dash) return 0;
+  return ai === AI.cooldown ? b.aiT[i] / 60 : NaN;
+}
+
 /** A body's local frame on screen: forward f, right r, up u (rig units, the rig's own projection) -> field px. */
 function frameAt(v: BodyView, faceTurns: number): (f: number, r: number, u: number) => [number, number] {
   const a = (Math.round(faceTurns * 16) / 16) * TAU, cs = Math.cos(a), sn = Math.sin(a);

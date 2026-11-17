@@ -3,8 +3,8 @@
  * content/assets/sprites/<slug>/sheet.png + sheet.json). They stand in for the code rigs of the goblin warband: each
  * frame is copied into a cell the size of a rig cell with its feet on the rig's feet point, so shadows, silhouettes and
  * ghosts that read the cached frame keep working. Frames are picked from the same RigState the rigs paint from:
- * facing, walk or run phase, the attack's progress (pack.py warps each clip so its wind-up, strike and recovery land on
- * the game's beats), knocked down. Deaths play the knock-down. Statuses are a tint, a hit a white flash.
+ * facing, walk or run phase, the time from the attack's hit (each clip plays at its own speed, its contact frame on the
+ * hit; nothing is retimed, since smooth swings matter more than telegraphs here), knocked down. Deaths play the knock-down. Statuses are a tint, a hit a white flash.
  *
  * On by default; ?sprites=0 shows the code rigs. With sprites on the wizard is drawn 1.7x (rigs.ts WIZ_Z), the scale
  * the 32 px goblins were made for (explorations/2026-11-16-warband-art.md).
@@ -15,8 +15,9 @@ import type { Frame } from './actors';
 import * as X from './px';
 
 interface Move { row: number; n: number }
-interface SheetMeta { cell: [number, number]; feet: [number, number]; height: number; dirs: string[]; fps: number; moves: Record<string, Move> }
-interface Sheet { meta: SheetMeta; img: HTMLImageElement | null; attacks: Move[] }
+interface SheetMeta { cell: [number, number]; feet: [number, number]; height: number; dirs: string[]; fps: number; moves: Record<string, Move>; attacks?: { hit: number }[] }
+interface Attack extends Move { hit: number }
+interface Sheet { meta: SheetMeta; img: HTMLImageElement | null; attacks: Attack[] }
 
 const metas = import.meta.glob<SheetMeta>('../../../../content/assets/sprites/*/sheet.json', { eager: true, import: 'default' });
 const urls = import.meta.glob<string>('../../../../content/assets/sprites/*/sheet.png', { eager: true, query: '?url', import: 'default' });
@@ -25,7 +26,8 @@ const TAU = Math.PI * 2;
 const sheets = new Map<string, Sheet>();
 for (const [path, meta] of Object.entries(metas)) {
   const slug = path.split('/').slice(-2)[0];
-  const attacks = Object.keys(meta.moves).filter((k) => k.startsWith('attack')).sort().map((k) => meta.moves[k]);
+  const attacks = Object.keys(meta.moves).filter((k) => k.startsWith('attack')).sort()
+    .map((k, j) => ({ ...meta.moves[k], hit: meta.attacks?.[j]?.hit ?? Math.floor(meta.moves[k].n / 2) }));
   sheets.set(slug, { meta, img: null, attacks });
 }
 let loading = false;
@@ -65,9 +67,12 @@ const dirOf = (face: number): number => ((Math.round(face / (TAU / 8)) % 8) + 8)
 function cellOf(sh: Sheet, s: RigState, who: number): [Move, number] {
   const M = sh.meta.moves;
   if (s.dead > 0) { const d = M.death; return [d, Math.round((d.n - 1) * Math.min(1, s.dead))]; }
-  if ((s.atk >= 0 || s.hold > 0) && sh.attacks.length) {
-    const a = sh.attacks[who % sh.attacks.length], k = s.hold > 0 ? 0.62 : s.atk;
-    return [a, Math.min(a.n - 1, Math.floor(k * a.n))];
+  // an attack plays its clip at the clip's own speed, never retimed, with its contact frame on the game's hit: a longer
+  // wind-up than the clip's holds its first pose, a shorter one starts it partway; once the clip ends the body walks or idles
+  if ((s.hitT === s.hitT || s.hold > 0) && sh.attacks.length) {
+    const a = sh.attacks[who % sh.attacks.length];
+    const f = s.hold > 0 ? a.hit + 1 : a.hit + Math.round(s.hitT * (sh.meta.fps || 12));
+    if (f < a.n) return [a, Math.max(0, Math.min(a.n - 1, f))];
   }
   if (s.spd > 0) {
     const m = s.spd >= 1 ? M.run : M.walk;

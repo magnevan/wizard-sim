@@ -52,6 +52,11 @@ export interface RigState {
    * The grabber's dash is 0.6. hold: the grabber has a wizard in its claws (1 / 2: the squeeze frames).
    */
   atk: number; hold: number;
+  /**
+   * Sprites only (art/sprites.ts plays the clip in real time, so the frame cache key leaves it out): seconds from the
+   * enemy's hit, negative in the wind-up; NaN when it isn't attacking.
+   */
+  hitT: number;
   // Deaths only (art/deaths.ts paints these states uncached each frame; the view's cached states
   // never set them, so the frame cache key leaves them out):
   /** Tint every colour toward `tint` by tintK (a char, a scald flush). */
@@ -76,7 +81,7 @@ export interface RigState {
 
 export const newRigState = (): RigState => ({
   kind: 'goblin', pal: 0, variant: 0, seed: 0, face: 0, spd: 0, ph: 0, idle: 0, vx: 0, vy: 0, prep: 0, cast: 0, sq: 0, dead: 0,
-  burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0, atk: -1, hold: 0,
+  burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0, atk: -1, hold: 0, hitT: NaN,
   tint: null, tintK: 0, outline: null, eyeCol: null, eyesShut: 0, fallSide: 0, flashCol: null, bare: 0, crown: 1, alpha: 1, hd: 0,
 });
 

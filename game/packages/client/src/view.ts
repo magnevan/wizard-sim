@@ -37,7 +37,7 @@ import { AMBIENT, canvas as pxCanvas, stats, text as pxText } from './art/px';
 import { newRigState, type Anchors, type RigKind, type RigState } from './art/rigs';
 import { TAU, mod } from './art/util';
 import { Vfx, type BodyView } from './art/vfx';
-import { attackK, drawAttackFx } from './art/enemy-attacks';
+import { attackK, drawAttackFx, hitT } from './art/enemy-attacks';
 import { StructureView, drawTelegraphs } from './view-structures';
 import { Hud } from './hud';
 import { TutorialHud } from './tutorial-view';
@@ -540,7 +540,7 @@ export class WorldView {
   private rigState(w: World, i: number, t: number, ct: number): RigState {
     const b = w.bodies, s = this.rig, kind = this.rigOf(w, i), arch = b.arch[i];
     s.kind = kind; s.seed = i & 1; s.variant = 0; s.pal = 0; s.hd = kind === 'wizard' && this.wizardHd ? 1 : 0;
-    s.punch = -1; s.smash = -1; s.draw = 0; s.atk = -1; s.hold = 0; s.prep = 0; s.cast = 0; s.vx = 0; s.vy = 0;
+    s.punch = -1; s.smash = -1; s.draw = 0; s.atk = -1; s.hold = 0; s.hitT = NaN; s.prep = 0; s.cast = 0; s.vx = 0; s.vy = 0;
     // a Double is its owner's wizard (drawn translucent and violet-tinted by the sprite)
     const owner = b.kind[i] === KIND.double ? this.ownerOf(w, i) : i;
     // a conjured weapon or wand replaces the staff (a Double keeps the staff: only seats draw weapons)
@@ -582,6 +582,7 @@ export class WorldView {
     // enemy attack poses, from the sim's attack state (art/enemy-attacks.ts)
     if (b.kind[i] === KIND.enemy) {
       const k = attackK(w, i);
+      s.hitT = hitT(w, i);
       if (kind === 'brute') s.smash = k;
       else if (kind === 'archer') {
         const A = ARCHETYPES[arch];

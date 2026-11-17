@@ -64,7 +64,13 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
   </header>
 
   <section aria-labelledby="arms">
-    <h2 id="arms">Newest: the wizard's weapons and guards, pictures for Meshy</h2>
+    <h2 id="arms">Newest: the wizard's weapons and guards</h2>
+    <h3>Your picks, as props in his hands</h3>
+    <p>Your picks: every weapon from sheet A, every guard from A except the Mirror buckler from C. And your point that the sheets carry far more detail than the pixels will show changed the plan: <b>no Meshy</b>. They're built in Blender from a few chunky primitives, as the goblins' weapons were (free, <code>tools/sprites-3d/wizprops.py</code>), each in its element's colour with a soft glow, and the element itself (flame, frost, sparks, drips) comes from particle VFX in the game.</p>
+    <figure><img src="img/arms-props.jpg" alt="Eight rows of the red wizard holding a conjured weapon and guard: flame sword and gold mirror, rock maul and rock slab, magenta orb wand and flaming ember shield, ice bow and ice kite, frost spear and lightning ring, violet whip and water spiral, blue trident and magenta hexagon, and the leaf shield alone; game-size pixel art on the left, the smooth renders on the right."><figcaption>Walking pose, five facings (south, south-east, east, south-west, north-east). Left: the game's pixel pass, at game size, enlarged 4×. Right: the same renders, smooth. Rows: sword + Mirror, maul + Bulwark, focus + Ember, bow + Rime, spear + Spark, whip + Tide, trident + Prism, Leaf. Long weapons are kept near upright as he walks, like the staff.</figcaption></figure>
+    <p>What reads at game size: the rock slab, the flame-ringed Ember, the open Spark ring, the water spiral, the hexagon, the leaf, and each weapon's colour and length. What doesn't: anything finer. The sword is a yellow blade, not a flame; the spear's crystals are a cyan tip; the whip's zig-zag is a violet line. That's where the particles come in. The 2D weapons already have them (flame tongues licking up the sword, drips off the trident, a crackle on the whip, frost off the spear, motes round the orb), so the plan is to keep those, drawn along the 3D prop instead of a 2D blade, and hide the staff while a weapon is held. Guards keep their coat rims and the energy face while blocking (your Mirror's halo is the model for it).</p>
+    <div class="rate" id="arms-props-rate"></div>
+    <h3>Before that: the pictures</h3>
     <p>The conjured weapons and guards are still 2D drawings beside the 3D wizard. These are the pictures for their 3D models: seven weapon objects (Healing hands stays bare hands with a glow) and the eight guards. All drawn by Codex, free on your subscription.</p>
     <p><b>Round 2, after your note</b> that these are magical conjurations, not gear like the goblins': everything is now made of its element, with the wizard's model sheet and sheet A as the references instead of the goblin sheet. Forged B is still below for comparison, but it's off the table as a direction.</p>
     <h3>Guards</h3>
@@ -482,6 +488,7 @@ for (const c of GUARDS) {
   const r = el('div', 'rate'); r.append(marks('ratings', 'guard-' + c.id, ACR), note('ratings', 'guard-' + c.id, 'What to change'));
   box.append(el('h3', '', c.name), el('p', '', c.notes), r); $('guard-picks').append(box);
 }
+$('arms-props-rate').append(el('b', '', 'The props'), marks('ratings', 'arms-props', KRC), note('ratings', 'arms-props', 'Which to change: size, shape, colour'));
 $('rt3d-rate').append(el('b', '', 'Live 3D or baked'), marks('ratings', 'rt3d', [['live', 'Live 3D', 'keep'], ['baked', 'Baked sheets', 'maybe'], ['more', 'Test more', 'maybe']]), note('ratings', 'rt3d', 'What you see: flicker, look, feel'));
 $('wiz3d-rate').append(el('b', '', 'The 3D wizard'), marks('ratings', 'wiz-3d', KRC), note('ratings', 'wiz-3d', 'What to change: look, a move, the size'));
 $('archer-shot-rate').append(el('b', '', "The archer's shot"), marks('ratings', 'archer-shot', KRC), note('ratings', 'archer-shot', 'What still looks off'));

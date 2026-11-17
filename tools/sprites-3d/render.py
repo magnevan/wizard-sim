@@ -418,11 +418,14 @@ if any(a.startswith('--inspect=') for a in args):
         print('inspected', mv, n, 'frames')
     sys.exit(0)
 
+# --frames=0[,6]: render only these frames of each move (a quick look at props, not a sheet; skips track.json)
+ONLY_FRAMES = [int(k) for a in args if a.startswith('--frames=') for k in a[9:].split(',')]
 for mv in MOVES:
     n, fn = R.MOVES[mv]; CUR_MOVE = mv
     for d, deg in DIRS.items():
         rig.rotation_euler = (0, 0, math.radians(deg))
         for i in range(n):
+            if ONLY_FRAMES and i not in ONLY_FRAMES: continue
             R.rest(rig)
             fn(rig, i, n)
             for u in globals().get('PROP_UPDATES', []): u(arm, i, mv)

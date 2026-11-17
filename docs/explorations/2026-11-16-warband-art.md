@@ -239,6 +239,10 @@ Marks: `arm-<weapon>` {a/a2/b/redo}, `guard-<guard>` (mirror, bulwark, ember, ri
 
 So the props don't go to Meshy. Like the goblins' weapons (`tools/sprites-3d/props.py`), they're built in Blender from a few chunky primitives after the approved sheets, free, with the element's colour glowing where the sheet glows. The element is sold by particle VFX in the game around the prop (flames licking up the sword, drips off the trident, sparks on the whip, frost off the spear), which the 2D weapon drawings already have (`view-structures.ts` `weapon()`) and which carry over, anchored to the 3D prop.
 
+Built: `tools/sprites-3d/wizprops.py`, all 15, reusing `props.py`'s helpers and hand frames (weapons on RightHand, guards on LeftForeArm). The long weapons are soft props (`~0.25`), kept near upright as he walks like the staff; pointing straight out of the fist they lay across his body. Emission had to come down: at first glow strength the violet lash and the cyan spear rendered near-white in the pixel pass. At game size each reads as its colour and length plus the guard silhouettes (the rock slab, the flame-ringed Ember, the open Spark ring, the water spiral, the hexagon, the leaf); finer things (the sword's flame shape, the spear's crystals, the whip's zig-zag) are a blade, a tip and a line, so the particles carry them. Review sheet: `tools/sprites-3d/arms-sheet.py` (renders from `render.py --frames=0`, a new quick-look option), on the review page as `arms-props` {keep/redo/cut}.
+
+Next: export the props with the wizard's live model, show the one the seat holds and hide the staff, and draw the 2D weapons' particles along the 3D prop instead of a 2D blade.
+
 ## Claude's picks, pending the review
 
 *(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the goblins and the wizard are drawn live from 3D in the game; see the sections above.)*

@@ -74,14 +74,15 @@ def knife():
 
 
 def bow():
-    # held in the fist, limbs across the hand (upright when the arm points ahead), the string toward the archer
+    # held in the fist, limbs across the hand (upright when the arm points ahead), the string toward the archer;
+    # thick enough to survive at 32 px
     g = GRIP; up = Vector((0, 1, 0)); back = Vector((0, 0, -1))
-    parts = [rod('bow grip', g - up * 0.07, g + up * 0.07, 0.035, LEATHER())]
+    parts = [rod('bow grip', g - up * 0.08, g + up * 0.08, 0.05, LEATHER())]
     for s in (1, -1):
-        mid = g + up * s * 0.26 + back * -0.08
-        tip = g + up * s * 0.46 + back * 0.02
-        parts += [rod('bow limb a' + str(s), g + up * s * 0.06, mid, 0.03, WOOD()), rod('bow limb b' + str(s), mid, tip, 0.025, WOOD())]
-    parts.append(rod('bow string', g + up * 0.46 + back * 0.02, g - up * 0.46 + back * 0.02, 0.006, STRING(), verts=4))
+        mid = g + up * s * 0.32 + back * -0.12
+        tip = g + up * s * 0.56 + back * 0.02
+        parts += [rod('bow limb a' + str(s), g + up * s * 0.07, mid, 0.05, WOOD()), rod('bow limb b' + str(s), mid, tip, 0.042, WOOD())]
+    parts.append(rod('bow string', g + up * 0.56 + back * 0.02, g - up * 0.56 + back * 0.02, 0.012, STRING(), verts=4))
     return parts
 
 
@@ -121,12 +122,12 @@ def hook():
 
 def maul():
     g = GRIP; d = Vector((0.35, 0, 1)).normalized(); side = Vector((0, 1, 0))
-    head_c = g + d * 0.95
-    parts = [rod('maul haft', g - d * 0.25, g + d * 1.05, 0.04, WOOD()),
-             box('maul head', head_c, (0.20, 0.42, 0.24), STONE(), toward=d)]
+    head_c = g + d * 0.80
+    parts = [rod('maul haft', g - d * 0.22, g + d * 0.85, 0.045, WOOD()),
+             box('maul head', head_c, (0.32, 0.64, 0.36), STONE(), toward=d)]
     for s in (-1, 1):
-        parts.append(box('maul band' + str(s), head_c + side * s * 0.13, (0.215, 0.05, 0.255), BRASS(), toward=d))
-    parts.append(box('maul rune', head_c + d.cross(side).normalized() * 0.105, (0.10, 0.10, 0.02), RUNE(), toward=d.cross(side)))
+        parts.append(box('maul band' + str(s), head_c + side * s * 0.2, (0.34, 0.07, 0.38), BRASS(), toward=d))
+    parts.append(box('maul rune', head_c + d.cross(side).normalized() * 0.165, (0.16, 0.16, 0.02), RUNE(), toward=d.cross(side)))
     return parts
 
 

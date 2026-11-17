@@ -41,3 +41,17 @@ blender --background --python tools/sprites-3d/render.py -- output/meshy-rig/cli
 - `output/meshy-rig/` (gitignored GLBs): the hooded raider remeshed to 30k triangles (`walking.glb`, `running.glb`: Meshy's free walk and run; `clips.glb`: ten library clips). Meshy task ids: remesh `01a1e6d5-ecfc-75a5-ac80-9c63e802f0f8`, rig `01a1e6d7-0edb-7768-bc83-c1645e25f2f9`, clips `01a1e6d7-8177-70df-b8b5-bd124b98a838`.
 
 Costs (Meshy credits, 2026-11-17): rig 5 (walk and run included), library clips 3 each, remesh 5. Meshy rigs at most 380k triangles; the raider was made at 824k on the default model, so it needed the remesh. **Make the next goblins with smart topology** (`meshy_image_to_3d`, `model_type: smart-topology`, `ai_model: meshy-t2.5`, `target_polycount` ~15000, `pose_mode: t-pose`): 15 credits textured instead of 30, riggable as made, no remesh.
+
+## The warband roster, into the game
+
+Five more goblins went through the whole pipeline on 2026-11-17 (the user approved the pictures and a Meshy budget):
+
+1. **Pictures** (Codex, free): `prompts/roster/<slug>.txt` with the 32 px sprite and the hooded raider's picture as references, empty hands; weapons on their own sheet. In `input/roster/`.
+2. **Models** (Meshy, 15 each): image-to-3D with smart topology (`meshy-t2.5`, 15k triangles, T-pose, `meshy-n1` texture).
+3. **Rigs** (5 each, with a free walk and run) and **clips** (3 each, only what a mechanic uses): raiders three slashes, Lean Forward Sprint and Knock Down; archer Archery Shot; shieldbearer a spear thrust and Shield Push; hooker Crouch Pull and Throw (the grab); chieftain Heavy Hammer Swing; everyone Knock Down. GLBs in `output/<slug>/` (gitignored).
+4. **Weapons**: `props.py`, built in a bone's frame and attached with `render.py --prop=props.py:<name>@<Bone>` (knife, bow, spear, shield on `LeftForeArm`, hook, maul). `--height=` scales them with the body.
+5. **Render**: `roster.sh <work-dir> [slug ...]`: every clip in 8 directions at 20 degrees, body held in place, pixelized. render.py writes each clip's weapon-hand path (`track.json`, `--track=<Bone>`).
+6. **Pack**: `python pack.py <work-dir> [slug ...]` writes `game/content/assets/sprites/<slug>/sheet.png` and `sheet.json`: idle, walk, run, attacks and death per direction. Each attack is warped to the game's beats (wind-up to atk 0.5, the blow 0.5 to 0.6, recovery after), with the strike found as the weapon hand's fastest step. `ROLES` maps clips to moves and holds a colour grade for a texture off the palette (the hooker's came out lime).
+7. **Game**: `game/packages/client/src/art/sprites.ts` draws them (on by default; `?sprites=0` for the code rigs).
+
+The chieftain renders at 1.8x a goblin's height on a 96 px frame (`--canvas=96 --height=1.8`); the camera aims at the scaled body's middle.

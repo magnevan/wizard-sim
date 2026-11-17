@@ -1,0 +1,72 @@
+{
+ "cell": [
+  48,
+  48
+ ],
+ "dirs": [
+  "east",
+  "south-east",
+  "south",
+  "south-west",
+  "west",
+  "north-west",
+  "north",
+  "north-east"
+ ],
+ "moves": {
+  "idle": {
+   "row": 0,
+   "n": 1
+  },
+  "walk": {
+   "row": 8,
+   "n": 12
+  },
+  "run": {
+   "row": 16,
+   "n": 8
+  },
+  "attack0": {
+   "row": 24,
+   "n": 16
+  },
+  "death": {
+   "row": 32,
+   "n": 18
+  }
+ },
+ "feet": [
+  24,
+  42
+ ],
+ "height": 34,
+ "attacks": [
+  {
+   "clip": "archery_shot",
+   "beats": [
+    10,
+    25.5,
+    38
+   ],
+   "frames": [
+    11,
+    13,
+    14,
+    16,
+    18,
+    20,
+    21,
+    23,
+    25,
+    27,
+    29,
+    30,
+    32,
+    34,
+    35,
+    37
+   ]
+  }
+ ],
+ "fps": 12
+}

@@ -13,10 +13,10 @@ ELEV=--elev=20
 declare -A OPTS=(
   [raider-hooded]="--add=tools/sprites-3d/raider_codex.py:blade"
   [raider-goggles]="--prop=$P:knife@RightHand"
-  [archer]="--prop=$P:bow@LeftHand --track=LeftHand"
+  [archer]="--prop=$P:bow@LeftHand"
   [shieldbearer]="--prop=$P:spear@RightHand --prop=$P:shield@LeftForeArm"
   [hooker]="--prop=$P:hook@RightHand"
-  [chieftain]="--prop=$P:maul@RightHand --canvas=96 --height=2"
+  [chieftain]="--prop=$P:maul@RightHand --canvas=96 --height=1.8"
 )
 declare -A DIR=([raider-hooded]=meshy-rig)
 slugs=("$@"); [ ${#slugs[@]} -eq 0 ] && slugs=(raider-hooded raider-goggles archer shieldbearer hooker chieftain)

@@ -1,0 +1,102 @@
+{
+ "cell": [
+  48,
+  48
+ ],
+ "dirs": [
+  "east",
+  "south-east",
+  "south",
+  "south-west",
+  "west",
+  "north-west",
+  "north",
+  "north-east"
+ ],
+ "moves": {
+  "idle": {
+   "row": 0,
+   "n": 1
+  },
+  "walk": {
+   "row": 8,
+   "n": 12
+  },
+  "run": {
+   "row": 16,
+   "n": 8
+  },
+  "attack0": {
+   "row": 24,
+   "n": 16
+  },
+  "attack1": {
+   "row": 32,
+   "n": 16
+  },
+  "death": {
+   "row": 40,
+   "n": 18
+  }
+ },
+ "feet": [
+  24,
+  42
+ ],
+ "height": 33,
+ "attacks": [
+  {
+   "clip": "thrust_slash",
+   "beats": [
+    4,
+    8.5,
+    24
+   ],
+   "frames": [
+    4,
+    5,
+    5,
+    5,
+    6,
+    6,
+    6,
+    7,
+    8,
+    10,
+    12,
+    14,
+    16,
+    19,
+    21,
+    23
+   ]
+  },
+  {
+   "clip": "shield_push_left",
+   "beats": [
+    1,
+    14.5,
+    27
+   ],
+   "frames": [
+    2,
+    3,
+    5,
+    6,
+    8,
+    9,
+    11,
+    12,
+    14,
+    16,
+    18,
+    19,
+    21,
+    23,
+    24,
+    26
+   ]
+  }
+ ],
+ "fps": 12
+}

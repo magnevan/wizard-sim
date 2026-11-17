@@ -217,7 +217,7 @@ cam = bpy.data.cameras.new('cam'); cam.type = 'ORTHO'; cam.ortho_scale = CANVAS 
 cam_o = bpy.data.objects.new('cam', cam); scene.collection.objects.link(cam_o); scene.camera = cam_o
 # --elev=20: the camera's height in degrees. The ground is drawn at 30; sprites are often drawn lower, closer to face-on
 ELEV = math.radians(float(next((a[7:] for a in args if a.startswith('--elev=')), 30)))
-LOOK = Vector((0, 0, 1.05))
+LOOK = Vector((0, 0, 1.05 * FIT_H))   # the body's middle: a taller body (--height) is aimed at its own middle
 def aim(elev, dist=40):
     cam_o.location = LOOK + Vector((0, -math.cos(elev), math.sin(elev))) * dist
     cam_o.rotation_euler = (LOOK - cam_o.location).to_track_quat('-Z', 'Y').to_euler()

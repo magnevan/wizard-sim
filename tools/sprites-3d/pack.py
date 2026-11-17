@@ -25,7 +25,7 @@ ROLES = {
     'raider-goggles': {'walk': 'walking', 'run': 'sprint', 'attack': ['left_slash', 'thrust_slash', 'right_hand_sword_slash'], 'death': 'knock_down'},
     'archer': {'walk': 'walking', 'run': 'running', 'attack': ['archery_shot'], 'death': 'knock_down'},
     'shieldbearer': {'walk': 'walking', 'run': 'running', 'attack': ['thrust_slash', 'shield_push'], 'death': 'knock_down'},
-    'hooker': {'walk': 'walking', 'run': 'running', 'attack': ['crouch_pull_and_throw'], 'death': 'knock_down'},
+    'hooker': {'walk': 'walking', 'run': 'running', 'attack': ['crouch_pull_and_throw'], 'death': 'knock_down', 'grade': (0.84, 0.93, 0.9)},
     'chieftain': {'walk': 'walking', 'run': 'running', 'attack': ['heavy_hammer_swing'], 'death': 'knock_down'},
 }
 
@@ -36,8 +36,19 @@ def clip_dir(px, key):
     return hits[0]
 
 
+GRADE = (1, 1, 1)
+
+
 def frames(px, clip, d):
-    return [Image.open(f).convert('RGBA') for f in sorted(glob.glob(os.path.join(px, clip, d, 'f*.png')))]
+    return [graded(Image.open(f).convert('RGBA')) for f in sorted(glob.glob(os.path.join(px, clip, d, 'f*.png')))]
+
+
+def graded(im):
+    """A per-character colour grade (ROLES grade: r, g, b multipliers), for a Meshy texture off the band's palette."""
+    if GRADE == (1, 1, 1): return im
+    r, g, b, a = im.split()
+    r, g, b = (ch.point(lambda v, k=k: min(255, round(v * k))) for ch, k in zip((r, g, b), GRADE))
+    return Image.merge('RGBA', (r, g, b, a))
 
 
 def beats(track):
@@ -69,6 +80,8 @@ def warp(a, start, strike, end):
 def pack(work, slug):
     px, raw = os.path.join(work, slug + '-px'), os.path.join(work, slug)
     R = ROLES[slug]
+    global GRADE
+    GRADE = tuple(R.get('grade', (1, 1, 1)))
     rows = []   # (move key, list of 8 lists of frames)
     walk = clip_dir(px, R['walk'])
     rows.append(('idle', [frames(px, walk, d)[:1] for d in DIRS]))

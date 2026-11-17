@@ -1,0 +1,72 @@
+{
+ "cell": [
+  96,
+  96
+ ],
+ "dirs": [
+  "east",
+  "south-east",
+  "south",
+  "south-west",
+  "west",
+  "north-west",
+  "north",
+  "north-east"
+ ],
+ "moves": {
+  "idle": {
+   "row": 0,
+   "n": 1
+  },
+  "walk": {
+   "row": 8,
+   "n": 12
+  },
+  "run": {
+   "row": 16,
+   "n": 8
+  },
+  "attack0": {
+   "row": 24,
+   "n": 16
+  },
+  "death": {
+   "row": 32,
+   "n": 18
+  }
+ },
+ "feet": [
+  48,
+  80
+ ],
+ "height": 57,
+ "attacks": [
+  {
+   "clip": "heavy_hammer_swing",
+   "beats": [
+    2,
+    18.5,
+    21
+   ],
+   "frames": [
+    3,
+    5,
+    7,
+    9,
+    10,
+    12,
+    14,
+    16,
+    18,
+    20,
+    20,
+    20,
+    20,
+    21,
+    21,
+    21
+   ]
+  }
+ ],
+ "fps": 12
+}

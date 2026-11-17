@@ -1,9 +1,9 @@
-"""render.py --export=<out.glb> --slug=<slug> [--more=<other.glb> ...] [--tris=5000] [--tex=256]: the game's live 3D model.
+"""render.py --export=<out.glb> --slug=<slug> [--more=<other.glb> ...] [--tris=5000] [--tex=1024] [--pad=16]: the game's live 3D model.
 
 Called by render.py once the model is set up exactly as for a render (normalised to 1.98 units tall, feet on the
 origin, under the `turn` empty; props and grafted parts on their bones), before any camera, light or shader change.
 Writes one GLB per character with only the clips its moves use (ROLES in roles.py), each as an animation named for its
-move (walk, run, attack0.., death), the mesh thinned to about --tris triangles and textures cut to --tex px; and beside
+move (walk, run, attack0.., death), the mesh thinned to about --tris triangles and textures padded (--pad px round each atlas island) and cut to --tex px; and beside
 it <out>.json with each clip's length and each attack's timing in seconds (roles.window over the weapon hand's path,
 sampled at 24 fps), the body's --yaw turn and the bow's --release. The client (art/live3d.ts) plays these. The squash
 (wider and shorter, as hand-drawn sprites are) is left to the client.
@@ -25,12 +25,35 @@ def _bind(ad, act):
     if getattr(act, 'slots', None) and len(act.slots): ad.action_slot = act.slots[0]
 
 
+def pad_islands(img, n):
+    """Meshy's atlas is hundreds of small islands on black with no margin: shrunk and sampled, the black bleeds in at
+    every island edge (the cracks the Model Viewer showed, 2026-11-17). Spread each island's edge colours n px outward
+    over the black first, each new pixel the mean of its filled neighbours."""
+    import numpy as np
+    w, h = img.size
+    px = np.empty(w * h * 4, dtype=np.float32); img.pixels.foreach_get(px)
+    px = px.reshape(h, w, 4)
+    on = px[:, :, :3].max(axis=2) > 0.02
+    for _ in range(n):
+        if on.all(): break
+        acc = np.zeros((h, w, 3), np.float32); cnt = np.zeros((h, w), np.float32)
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)):
+            m = np.roll(np.roll(on, dy, 0), dx, 1)
+            acc += np.roll(np.roll(px[:, :, :3], dy, 0), dx, 1) * m[:, :, None]; cnt += m
+        grow = ~on & (cnt > 0)
+        px[grow, :3] = acc[grow] / cnt[grow][:, None]
+        on |= grow
+    img.pixels.foreach_set(px.ravel())
+    img.update()
+
+
 def run(g):
     args, arm, scene, meshes = g['args'], g['arm'], g['scene'], g['meshes']
     out = next(a[9:] for a in args if a.startswith('--export='))
     slug = next(a[7:] for a in args if a.startswith('--slug='))
     tris_goal = int(next((a[7:] for a in args if a.startswith('--tris=')), 5000))
-    tex = int(next((a[6:] for a in args if a.startswith('--tex=')), 256))
+    tex = int(next((a[6:] for a in args if a.startswith('--tex=')), 1024))
+    pad = int(next((a[6:] for a in args if a.startswith('--pad=')), 16))
     role = ROLES[slug]
 
     # clips from the other downloads (Meshy's walk and run come as their own files): keep the actions, drop the rest
@@ -155,10 +178,11 @@ def run(g):
             bpy.ops.object.modifier_apply(modifier='thin')
     after = sum(sum(len(p.vertices) - 2 for p in m.data.polygons) for m in meshes)
     for img in bpy.data.images:
+        if pad and img.type == 'IMAGE' and img.size[0] > 0: pad_islands(img, pad)
         if img.size[0] > tex or img.size[1] > tex: img.scale(tex, tex)
 
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
-    bpy.ops.export_scene.gltf(filepath=out, export_format='GLB', export_animation_mode='NLA_TRACKS', export_image_format='JPEG',
+    bpy.ops.export_scene.gltf(filepath=out, export_format='GLB', export_animation_mode='NLA_TRACKS', export_image_format='JPEG', export_jpeg_quality=90,
                               export_yup=True, export_apply=False, export_force_sampling=True, export_cameras=False, export_lights=False)
     hips = arm.pose.bones.get('Hips')
     meta['tris'] = after

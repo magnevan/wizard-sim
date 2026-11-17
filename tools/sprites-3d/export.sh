@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Export the warband roster as the game's live 3D models (render.py --export; see export_game.py). No generation calls.
 # usage: tools/sprites-3d/export.sh [slug ...]
-# Writes game/content/assets/models/<slug>.glb and <slug>.json from tools/sprites-3d/output/<slug>/ (gitignored Meshy
+# Writes game/content/assets/models/<slug>.glb and <slug>.json from tools/sprites-3d/output/<slug>/ (committed Meshy
 # downloads: clips.glb, walking.glb, running.glb). About half a minute a character.
 set -u
 cd "$(dirname "$0")/../.."

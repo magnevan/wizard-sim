@@ -5,6 +5,7 @@
 <model> is a .py that builds parts named after bones (raider.py, raider_codex.py) or a .glb/.obj/.fbx mesh
 (image-to-3D), which is scaled to the rig's height and bound with automatic weights.
 moves: comma list from rig.MOVES (default idle,walk,run,attack). --preview also renders large smooth views of the model.
+--anim: <model> is a rigged .glb/.fbx (Meshy's rig); its own clips are played instead (see README, "Meshy's rig and clips").
 Writes <out_dir>/<move>/<direction>/fNN.png at 4x, for pixelize.py.
 """
 import math, os, sys
@@ -28,10 +29,84 @@ DIRS = {'south': 0, 'south-east': 45, 'east': 90, 'north-east': 135, 'north': 18
 scene = bpy.context.scene
 for o in list(bpy.data.objects): bpy.data.objects.remove(o)
 
+# --anim: the model is a rigged .glb/.fbx with its own clips (a Meshy rig and its library animations). Its armature is
+# kept and its clips are played instead of rig.MOVES. moves are clip names (substring match), each optionally =<frames>;
+# with none, every clip is rendered at 12 fps.
+ANIM = '--anim' in args
+ANIM_FPS = 12
+
 # ---- the model -----------------------------------------------------------------------------------------------------------
 before = set(bpy.data.objects)
 ext = os.path.splitext(MODEL)[1].lower()
-if ext == '.py':
+if ANIM:
+    import numpy as np
+    from mathutils import Matrix
+    acts_before = set(bpy.data.actions)
+    if ext == '.fbx': bpy.ops.import_scene.fbx(filepath=MODEL)
+    else: bpy.ops.import_scene.gltf(filepath=MODEL)
+    new = [o for o in bpy.data.objects if o not in before]
+    arm = next(o for o in new if o.type == 'ARMATURE')
+    # only meshes skinned to the armature: Meshy's rigged GLBs also carry a stray 2 m icosphere
+    meshes = [o for o in new if o.type == 'MESH' and any(md.type == 'ARMATURE' for md in o.modifiers)]
+    drop = [o for o in new if o is not arm and o not in meshes and not o.children]
+    new = [o for o in new if o not in drop]
+    for o in drop: bpy.data.objects.remove(o)
+    CLIPS = [a for a in bpy.data.actions if a not in acts_before]
+    print('clips:', [a.name for a in CLIPS])
+    print('bones:', [b.name for b in arm.data.bones])
+    # every clip off while measuring, so the size and feet come from the rest pose
+    if arm.animation_data: arm.animation_data.action = None
+    for t in (arm.animation_data.nla_tracks if arm.animation_data else []): t.mute = True
+    bpy.context.view_layer.update()
+    pts = np.concatenate([np.array([tuple(m.matrix_world @ v.co) for v in m.data.vertices]) for m in meshes])   # the bind pose
+    lo, hi = pts.min(0), pts.max(0)
+    feet = pts[pts[:, 2] < lo[2] + 0.08 * (hi[2] - lo[2])]
+    cx, cy = (feet[:, 0].min() + feet[:, 0].max()) / 2, (feet[:, 1].min() + feet[:, 1].max()) / 2
+    k = (1.98 * FIT_H) / (hi[2] - lo[2])
+    # a turntable at the origin carries the whole import: render code turns and squashes it like our own rig
+    rig = bpy.data.objects.new('turn', None); scene.collection.objects.link(rig)
+    top = [o for o in new if o.name in bpy.data.objects and o.parent is None]
+    for o in top:
+        o.matrix_world = Matrix.Diagonal((k, k, k, 1)) @ Matrix.Translation((-cx, -cy, -lo[2])) @ o.matrix_world
+        o.parent = rig
+    R.rest = lambda *a, **kw: None   # the clip poses the model; there is no shared skeleton to reset
+
+    # --add=raider_codex.py:blade with a clip rig: the part is made for our skeleton's hand.R, so carry it from that
+    # hand's frame to the clip rig's hand (--hand=RightHand) in the bind pose and parent it there. The two rigs roll
+    # their hands differently: --blade-rot=x,y,z (degrees, about the hand) turns it into the grip.
+    HAND = next((a[7:] for a in args if a.startswith('--hand=')), 'RightHand')
+    BROT = [math.radians(float(v)) for v in next((a[12:] for a in args if a.startswith('--blade-rot=')), '0,0,0').split(',')]
+    for a in [a for a in args if a.startswith('--add=')]:
+        src, bones = a[6:].rsplit(':', 1)
+        keep = bones.split(',')
+        have = set(bpy.data.objects)
+        exec(compile(open(src, encoding='utf-8-sig').read(), src, 'exec'), {'__name__': '__model__', '__file__': src})
+        made = [o for o in bpy.data.objects if o not in have]
+        kept = [o for o in made if o.type == 'MESH' and R.bone_for(o.name) in keep]
+        for o in made:
+            if o not in kept: bpy.data.objects.remove(o)
+        # a hand frame both rigs agree on, whatever their bone roll: origin at the wrist, X along the forearm,
+        # Z as close to the character's forward (-Y) as the forearm allows
+        def frame(wrist, elbow):
+            x = (wrist - elbow).normalized()
+            z = Vector((0, -1, 0)); z = (z - x * z.dot(x)).normalized()
+            m = Matrix((x, z.cross(x), z)).transposed().to_4x4(); m.translation = wrist
+            return m
+        hand = R.JOINTS[keep[0]][2]
+        fore = R.JOINTS[hand][2]
+        src_hand = frame(Vector(R.JOINTS[hand][0]), Vector(R.JOINTS[fore][0]))
+        for pb in arm.pose.bones: pb.matrix_basis = Matrix()
+        bpy.context.view_layer.update()
+        hb = arm.data.bones[HAND]
+        from mathutils import Euler
+        dst_hand = frame(arm.matrix_world @ hb.head_local, arm.matrix_world @ hb.parent.head_local) @ Euler(BROT).to_matrix().to_4x4()
+        for o in kept:
+            mw = dst_hand @ src_hand.inverted() @ o.matrix_world
+            o.parent = arm; o.parent_type = 'BONE'; o.parent_bone = HAND
+            bpy.context.view_layer.update()
+            o.matrix_world = mw
+        print('grafted onto', HAND, [o.name for o in kept])
+elif ext == '.py':
     exec(compile(open(MODEL, encoding='utf-8-sig').read(), MODEL, 'exec'), {'__name__': '__model__', '__file__': MODEL})
 elif ext in ('.glb', '.gltf'):
     bpy.ops.import_scene.gltf(filepath=MODEL)
@@ -39,46 +114,47 @@ elif ext == '.obj':
     bpy.ops.wm.obj_import(filepath=MODEL)
 elif ext == '.fbx':
     bpy.ops.import_scene.fbx(filepath=MODEL)
-meshes = [o for o in bpy.data.objects if o not in before and o.type == 'MESH']
-for o in [o for o in bpy.data.objects if o not in before and o.type != 'MESH']:
-    bpy.data.objects.remove(o)   # imported armatures, empties, cameras: we bring our own
-# a model whose proportions or rest pose differ from the skeleton's (image-to-3D) brings <model>.joints.json:
-# {"joints": {"hand.L": [[x,y,z], [x,y,z]], ...}, "rest": [["upper_arm.L", "Y", -40], ...]}; .R bones mirror .L ones not given
-JFILE = os.path.splitext(MODEL)[0] + '.joints.json'
-if os.path.exists(JFILE):
-    import json
-    R.fit(json.load(open(JFILE)))
-    print('fitted joints from', JFILE)
-rig = R.build_armature()
-if ext == '.py':
-    missing = R.bind_by_name(rig, meshes)
-    if missing: print('UNNAMED PARTS (bound to spine):', missing)
-else:
-    import numpy as np
-    from mathutils import Matrix
-    for m in meshes:
-        # image-to-3D meshes are far denser than a 30 px sprite needs (Meshy: 440k vertices); thin them first
-        if len(m.data.vertices) > 30000:
-            d = m.modifiers.new('thin', 'DECIMATE'); d.ratio = 20000 / len(m.data.vertices)
+if not ANIM:
+    meshes = [o for o in bpy.data.objects if o not in before and o.type == 'MESH']
+    for o in [o for o in bpy.data.objects if o not in before and o.type != 'MESH']:
+        bpy.data.objects.remove(o)   # imported armatures, empties, cameras: we bring our own
+    # a model whose proportions or rest pose differ from the skeleton's (image-to-3D) brings <model>.joints.json:
+    # {"joints": {"hand.L": [[x,y,z], [x,y,z]], ...}, "rest": [["upper_arm.L", "Y", -40], ...]}; .R bones mirror .L ones not given
+    JFILE = os.path.splitext(MODEL)[0] + '.joints.json'
+    if os.path.exists(JFILE):
+        import json
+        R.fit(json.load(open(JFILE)))
+        print('fitted joints from', JFILE)
+    rig = R.build_armature()
+    if ext == '.py':
+        missing = R.bind_by_name(rig, meshes)
+        if missing: print('UNNAMED PARTS (bound to spine):', missing)
+    else:
+        import numpy as np
+        from mathutils import Matrix
+        for m in meshes:
+            # image-to-3D meshes are far denser than a 30 px sprite needs (Meshy: 440k vertices); thin them first
+            if len(m.data.vertices) > 30000:
+                d = m.modifiers.new('thin', 'DECIMATE'); d.ratio = 20000 / len(m.data.vertices)
+                bpy.context.view_layer.objects.active = m
+                bpy.ops.object.modifier_apply(modifier=d.name)
+            mw = m.matrix_world.copy(); m.parent = None; m.matrix_world = mw
+        bpy.context.view_layer.update()
+        pts = np.concatenate([np.array([tuple(m.matrix_world @ v.co) for v in m.data.vertices]) for m in meshes])
+        lo, hi = pts.min(0), pts.max(0)
+        # stand it on Z = 0 at the rig's height, centred on its feet (the bounding box would put a big sack or ears in the middle)
+        feet = pts[pts[:, 2] < lo[2] + 0.08 * (hi[2] - lo[2])]
+        cx, cy = (feet[:, 0].min() + feet[:, 0].max()) / 2, (feet[:, 1].min() + feet[:, 1].max()) / 2
+        k = (1.98 * FIT_H) / (hi[2] - lo[2])
+        for m in meshes:
+            m.matrix_world = Matrix.Diagonal((k, k, k, 1)) @ Matrix.Translation((-cx, -cy, -lo[2])) @ m.matrix_world
             bpy.context.view_layer.objects.active = m
-            bpy.ops.object.modifier_apply(modifier=d.name)
-        mw = m.matrix_world.copy(); m.parent = None; m.matrix_world = mw
-    bpy.context.view_layer.update()
-    pts = np.concatenate([np.array([tuple(m.matrix_world @ v.co) for v in m.data.vertices]) for m in meshes])
-    lo, hi = pts.min(0), pts.max(0)
-    # stand it on Z = 0 at the rig's height, centred on its feet (the bounding box would put a big sack or ears in the middle)
-    feet = pts[pts[:, 2] < lo[2] + 0.08 * (hi[2] - lo[2])]
-    cx, cy = (feet[:, 0].min() + feet[:, 0].max()) / 2, (feet[:, 1].min() + feet[:, 1].max()) / 2
-    k = (1.98 * FIT_H) / (hi[2] - lo[2])
-    for m in meshes:
-        m.matrix_world = Matrix.Diagonal((k, k, k, 1)) @ Matrix.Translation((-cx, -cy, -lo[2])) @ m.matrix_world
-        bpy.context.view_layer.objects.active = m
-        bpy.ops.object.select_all(action='DESELECT'); m.select_set(True)
-        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-    R.bind_auto(rig, meshes)
+            bpy.ops.object.select_all(action='DESELECT'); m.select_set(True)
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        R.bind_auto(rig, meshes)
 
 # --add=<model.py>:<bone>[,<bone>]: graft parts from another model (a blade the image-to-3D tool dropped)
-for a in [a for a in args if a.startswith('--add=')]:
+for a in [a for a in args if a.startswith('--add=') and not ANIM]:   # a clip rig grafts in its own block above
     src, bones = a[6:].rsplit(':', 1)
     keep = bones.split(',')
     have = set(bpy.data.objects)
@@ -181,6 +257,32 @@ if PREVIEW:
         bpy.context.view_layer.update()
         shoot(os.path.join(OUT, 'preview', name + '.png'), flat=False)
     r.resolution_x = r.resolution_y = CANVAS * SUPER; scene.cycles.samples = 16
+
+def clip_move(act, n=None):
+    """A rig.MOVES-style (frames, pose fn) that plays one imported clip, sampled evenly over its length."""
+    ad = arm.animation_data or arm.animation_data_create()
+    f0, f1 = act.frame_range
+    if n is None: n = max(2, round((f1 - f0) / scene.render.fps * ANIM_FPS))
+    def fn(_rig, i, n):
+        if ad.action != act:
+            ad.action = act
+            if getattr(act, 'slots', None) and len(act.slots): ad.action_slot = act.slots[0]
+        scene.frame_set(int(round(f0 + (f1 - f0) * i / n)))   # a loop's last frame is its first: stop one short
+    return n, fn
+
+
+if ANIM:
+    import re
+    # glTF clips are named 'Armature|walking_man|baselayer': the middle part names the move and the output folder
+    slug = lambda s: re.sub(r'[^a-z0-9]+', '_', (s.split('|')[1] if s.count('|') >= 2 else s).lower()).strip('_')
+    if not [a for a in args[2:] if not a.startswith('--')]: MOVES = [a.name for a in CLIPS]
+    picked = {}
+    for mv in MOVES:
+        name, _, frames = mv.partition('=')
+        act = next((a for a in CLIPS if a.name == name), None) or next(a for a in CLIPS if slug(name) in slug(a.name))
+        picked[slug(name)] = clip_move(act, int(frames) if frames else None)
+    R.MOVES = picked
+    MOVES = list(picked)
 
 for mv in MOVES:
     n, fn = R.MOVES[mv]

@@ -26,3 +26,18 @@ Its proportions and rest pose won't match the skeleton, so each model gets `<mod
 3. Re-run with `rest` and the json (`joints.py <dir> rest output/model.joints.json`) and check the arms hang where the skeleton's do.
 
 `output/model.joints.json` is the hooded raider's.
+
+## Meshy's rig and clips (`--anim`)
+
+The other route skips the joints fit: Meshy rigs the model and animates it from its library, and render.py plays those clips instead of our code moves.
+
+```
+blender --background --python tools/goblin-3d/render.py -- output/meshy-rig/clips.glb <dir> [clip[=frames],...] --anim --elev=20 --add=tools/goblin-3d/raider_codex.py:blade
+```
+
+- Clips are picked by name (`left_slash`, a substring of `Armature|Left_Slash|baselayer` works); with none, every clip in the file renders at 12 fps. Output folders take the clip's short name, so rename them to `walk`/`run`/`attack` before `sheet.py`.
+- `--add` grafts the blade onto the clip rig's `--hand=` bone (default `RightHand`). It is carried between hand frames built from the forearm and the character's forward, so the two rigs' bone roll doesn't matter; `--blade-rot=x,y,z` fine-tunes it.
+- Only meshes skinned to the armature are kept: Meshy's rigged GLBs also carry a stray 2 m icosphere.
+- `output/meshy-rig/` (gitignored GLBs): the hooded raider remeshed to 30k triangles (`walking.glb`, `running.glb`: Meshy's free walk and run; `clips.glb`: ten library clips). Meshy task ids: remesh `01a1e6d5-ecfc-75a5-ac80-9c63e802f0f8`, rig `01a1e6d7-0edb-7768-bc83-c1645e25f2f9`, clips `01a1e6d7-8177-70df-b8b5-bd124b98a838`.
+
+Costs (Meshy credits, 2026-11-17): rig 5 (walk and run included), library clips 3 each, remesh 5. Meshy rigs at most 380k triangles; the raider was made at 824k on the default model, so it needed the remesh. **Make the next goblins with smart topology** (`meshy_image_to_3d`, `model_type: smart-topology`, `ai_model: meshy-t2.5`, `target_polycount` ~15000, `pose_mode: t-pose`): 15 credits textured instead of 30, riggable as made, no remesh.

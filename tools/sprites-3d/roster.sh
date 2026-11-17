@@ -17,6 +17,7 @@ declare -A OPTS=(
   [shieldbearer]="--prop=$P:spear@RightHand --prop=$P:shield@LeftForeArm"
   [hooker]="--prop=$P:hook@RightHand"
   [chieftain]="--prop=$P:maul@RightHand --canvas=96 --height=1.8"
+  [wizard]="--prop=$P:staff~0.25@RightHand --canvas=64 --height=1.55"
 )
 declare -A DIR=([raider-hooded]=meshy-rig)
 slugs=("$@"); [ ${#slugs[@]} -eq 0 ] && slugs=(raider-hooded raider-goggles archer shieldbearer hooker chieftain)

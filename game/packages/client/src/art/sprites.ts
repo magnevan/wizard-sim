@@ -8,6 +8,11 @@
  *
  * On by default; ?sprites=0 shows the code rigs. With sprites on the wizard is drawn 1.7x (rigs.ts WIZ_Z), the scale
  * the 32 px goblins were made for (explorations/2026-11-16-warband-art.md).
+ *
+ * The wizard has a sheet too (made the same way from the code rig's design), recoloured per seat from px.ts TEAMS when
+ * it loads: its robe and hat are keyed by hue (crimson), its trim by gold. Gathering (prep) loops a raised-hands clip,
+ * a Force cast holds the push clip at its full stretch. ?wizsprite=0 keeps the wizard's code rig; the detailed drawing
+ * (hd) always does.
  */
 import { Texture } from 'pixi.js';
 import { HEIGHT, CELL_H, CELL_W, FEET_X, FEET_Y, SPRITES_ON, type Anchors, type RigState } from './rigs';
@@ -15,9 +20,14 @@ import type { Frame } from './actors';
 import * as X from './px';
 
 interface Move { row: number; n: number }
-interface SheetMeta { cell: [number, number]; feet: [number, number]; height: number; dirs: string[]; fps: number; moves: Record<string, Move>; attacks?: { hit: number }[] }
+interface SheetMeta { cell: [number, number]; feet: [number, number]; height: number; dirs: string[]; fps: number; moves: Record<string, Move>; attacks?: { hit: number }[]; casts?: Record<string, { hit: number }> }
 interface Attack extends Move { hit: number }
-interface Sheet { meta: SheetMeta; img: HTMLImageElement | null; attacks: Attack[] }
+interface Sheet { meta: SheetMeta; img: HTMLImageElement | null; attacks: Attack[]; seats?: HTMLCanvasElement[] }
+
+/** The wizard's sprite (on with the warband's unless ?wizsprite=0). */
+const WIZ_SPRITE = SPRITES_ON && (() => {
+  try { return new URLSearchParams(globalThis.location?.search ?? '').get('wizsprite') !== '0'; } catch { return true; }
+})();
 
 const metas = import.meta.glob<SheetMeta>('../../../../content/assets/sprites/*/sheet.json', { eager: true, import: 'default' });
 const urls = import.meta.glob<string>('../../../../content/assets/sprites/*/sheet.png', { eager: true, query: '?url', import: 'default' });
@@ -39,10 +49,39 @@ function load(): void {
     const slug = path.split('/').slice(-2)[0], sh = sheets.get(slug);
     if (!sh) continue;
     const img = new Image();
-    img.onload = () => { sh.img = img; };
+    img.onload = () => { if (slug === 'wizard') sh.seats = X.TEAMS.map((p) => seatSheet(img, p)); sh.img = img; };
     img.onerror = () => console.warn('sprites: could not load', url);
     img.src = url;
   }
+}
+
+const hexRgb = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+
+/**
+ * The wizard's sheet in one seat's colours. The pixelizer gives each part four tones (pixelize.py); the crimson robe
+ * and hat (hue 320..15, saturated) take the seat's deep / dark / main / light by brightness, the gold trim (hue 30..58,
+ * saturated) the seat's trim shaded by its brightness. Skin, beard, boots and the staff's wood are left alone.
+ */
+function seatSheet(img: HTMLImageElement, p: X.TeamPal): HTMLCanvasElement {
+  const { c, x } = X.canvas(img.width, img.height);
+  x.drawImage(img, 0, 0);
+  const d = x.getImageData(0, 0, img.width, img.height), a = d.data;
+  const ramp = [p.deep, p.dark, p.main, p.light].map(hexRgb), trim = hexRgb(p.trim);
+  for (let i = 0; i < a.length; i += 4) {
+    if (!a[i + 3]) continue;
+    const r = a[i], g = a[i + 1], b = a[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    if (mx < 40 || mx - mn < 0.45 * mx) continue;
+    const ch = mx - mn;
+    let h = mx === r ? ((g - b) / ch) % 6 : mx === g ? (b - r) / ch + 2 : (r - g) / ch + 4;
+    h = (h * 60 + 360) % 360;
+    const v = mx / 255;
+    let o: [number, number, number] | null = null;
+    if (h >= 320 || h <= 15) o = ramp[v < 0.45 ? 0 : v < 0.76 ? 1 : v < 0.9 ? 2 : 3];
+    else if (h >= 30 && h <= 58 && ch > 0.6 * mx) { const k = Math.min(1.1, v / 0.92); o = [trim[0] * k, trim[1] * k, trim[2] * k].map((q) => Math.min(255, Math.round(q))) as [number, number, number]; }
+    if (o) { a[i] = o[0]; a[i + 1] = o[1]; a[i + 2] = o[2]; }
+  }
+  x.putImageData(d, 0, 0);
+  return c;
 }
 
 /**
@@ -52,6 +91,7 @@ function load(): void {
  */
 export function slugOf(s: RigState): string | null {
   if (!SPRITES_ON) return null;
+  if (s.kind === 'wizard') return WIZ_SPRITE && !s.hd && sheets.has('wizard') ? 'wizard' : null;
   if (s.kind === 'archer') return 'archer';
   if (s.kind === 'brute') return 'chieftain';
   if (s.kind !== 'goblin' || s.pal === 6) return null;
@@ -79,6 +119,13 @@ function variantOf(who: number, swing: number, n: number): number {
 function cellOf(sh: Sheet, s: RigState, who: number): [Move, number] {
   const M = sh.meta.moves;
   if (s.dead > 0) { const d = M.death; return [d, Math.round((d.n - 1) * Math.min(1, s.dead))]; }
+  if (s.kind === 'wizard') {
+    // a Force cast: the push clip into its full stretch (halfway from the release to the clip's end), held there while
+    // the spell flows; gathering loops in real time
+    const c = M.cast, hit = sh.meta.casts?.cast?.hit ?? 0, held = c ? hit + Math.floor((c.n - 1 - hit) / 2) : 0;
+    if (c && s.cast > 0) return [c, Math.round(held * Math.min(1, s.cast))];
+    if (M.gather && s.prep > 0) return [M.gather, Math.floor((performance.now() / 1000) * (sh.meta.fps || 12)) % M.gather.n];
+  }
   // an attack plays its clip at the clip's own speed, never retimed, with its contact frame on the game's hit: a longer
   // wind-up than the clip's holds its first pose, a shorter one starts it partway; once the clip ends the body walks or idles
   if ((s.hitT === s.hitT || s.hold > 0) && sh.attacks.length) {
@@ -94,10 +141,10 @@ function cellOf(sh: Sheet, s: RigState, who: number): [Move, number] {
 }
 
 /** A cell-sized frame with the sheet frame on the rig's feet point; `white` for a hit flash. */
-function compose(sh: Sheet, m: Move, dir: number, f: number, white: boolean, a: Anchors): Frame {
+function compose(sh: Sheet, m: Move, dir: number, f: number, white: boolean, a: Anchors, seat = 0): Frame {
   const { c, x } = X.canvas(CELL_W, CELL_H);
   const [cw, ch] = sh.meta.cell, [fx, fy] = sh.meta.feet;
-  x.drawImage(sh.img!, f * cw, (m.row + dir) * ch, cw, ch, FEET_X - fx, FEET_Y - fy, cw, ch);
+  x.drawImage(sh.seats?.[seat % sh.seats.length] ?? sh.img!, f * cw, (m.row + dir) * ch, cw, ch, FEET_X - fx, FEET_Y - fy, cw, ch);
   if (white) { x.globalCompositeOperation = 'source-in'; x.fillStyle = '#ffffff'; x.fillRect(0, 0, CELL_W, CELL_H); x.globalCompositeOperation = 'source-over'; }
   const tex = Texture.from(c); tex.source.scaleMode = 'nearest';
   return { tex, a, c, sx: 0, sy: 0 };
@@ -121,9 +168,10 @@ export function spriteFrame(s: RigState, who: number, rigAnchors: Anchors): Fram
   const sh = sheets.get(slug);
   if (!sh?.img) return null;
   const [m, f] = cellOf(sh, s, who), dir = dirOf(s.face), white = s.flash >= 9;
-  const key = slug + '|' + m.row + '|' + dir + '|' + f + '|' + (white ? 1 : 0);
+  const seat = s.kind === 'wizard' ? s.pal : 0;
+  const key = slug + '|' + seat + '|' + m.row + '|' + dir + '|' + f + '|' + (white ? 1 : 0);
   let fr = cache.get(key);
-  if (!fr) { fr = compose(sh, m, dir, f, white, stretch(rigAnchors, sh.meta.height / HEIGHT[s.kind])); cache.set(key, fr); }
+  if (!fr) { fr = compose(sh, m, dir, f, white, stretch(rigAnchors, sh.meta.height / HEIGHT[s.kind]), seat); cache.set(key, fr); }
   return fr;
 }
 
@@ -153,7 +201,7 @@ export function deathFrame(d: SpriteDeath, td: number, rigAnchors: Anchors): { f
   const m = sh.meta.moves.death, play = m.n / (sh.meta.fps || 12);
   if (td > play + DEATH_HOLD + DEATH_FADE) return null;
   const f = Math.min(m.n - 1, Math.floor((td / play) * m.n));
-  const key = d.slug + '|' + m.row + '|' + d.dir + '|' + f + '|0';
+  const key = d.slug + '|0|' + m.row + '|' + d.dir + '|' + f + '|0';
   let fr = cache.get(key);
   if (!fr) { fr = compose(sh, m, d.dir, f, false, rigAnchors); cache.set(key, fr); }
   const fade = td - play - DEATH_HOLD;

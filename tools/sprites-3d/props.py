@@ -175,15 +175,17 @@ def maul():
 PURPLE = lambda: mat('prop socket', (0.16, 0.13, 0.22))
 WRAP = lambda: mat('prop wrap', (0.85, 0.75, 0.62))
 
-# The staff runs through the fist: across the palm (Y), leaning toward the wrist (-X) so it stands up when the arm hangs.
-STAFF_DIR = Vector((-0.35, 1, 0.12)).normalized()
+# The staff stands up from the fist when the arm hangs: back along the hand toward the wrist (-X), leaning a little
+# forward (-Z on a hanging arm). (Across the palm, Y, is the character's side: that held it like a quarterstaff.)
+STAFF_DIR = Vector((-1, 0, -0.30)).normalized()
+STAFF_OFF = Vector((0, 0, -0.05))  # just in front of the knuckles, so the shaft clears the forearm
 
 
 def staff():
     # The game's wizard staff (art/rigs.ts drawStaff): a wooden shaft about as tall as the hat brim, gripped a third of
     # the way up, a wrapped grip, an iron foot, and a claw at the top holding a dark socket (the game draws the orb's glow
     # there, in the colour of what is being cast). Lengths are for a 2-unit body; --height scales them.
-    g = GRIP; d = STAFF_DIR
+    g = GRIP + STAFF_OFF; d = STAFF_DIR
     side = d.cross(Vector((0, 0, 1))).normalized()
     top = g + d * 1.12
     parts = [rod('staff shaft', g - d * 0.52, top, 0.035, WOOD()),
@@ -198,5 +200,8 @@ def staff():
     parts.append(_obj('staff socket', PURPLE()))
     return parts
 
+
+# a soft prop's main axis (render.py --prop=props.py:<name>~k@<Bone>), straightened toward upright each frame
+PROP_AXIS = {'staff': tuple(STAFF_DIR)}
 
 PROPS = {'knife': knife, 'bow': bow, 'spear': spear, 'shield': shield, 'hook': hook, 'maul': maul, 'staff': staff}

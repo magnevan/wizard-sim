@@ -32,6 +32,11 @@ ROLES = {
     'shieldbearer': {'walk': 'walking', 'run': 'running', 'attack': ['thrust_slash', 'shield_push'], 'death': 'knock_down'},
     'hooker': {'walk': 'walking', 'run': 'running', 'attack': ['crouch_pull_and_throw'], 'death': 'knock_down', 'grade': (0.84, 0.93, 0.9)},
     'chieftain': {'walk': 'walking', 'run': 'running', 'attack': ['heavy_hammer_swing'], 'death': 'knock_down'},
+    # the wizard: the staff's shove and weapon Strike as its attack; spell moves as one-shots with a release frame
+    # (`casts`, found like an attack's hit), gathering as a loop (`loops`, the whole clip)
+    'wizard': {'walk': 'walking_man', 'run': 'running', 'attack': ['right_hand_sword_slash'], 'death': 'knock_down',
+               'casts': {'cast': 'mage_soell_cast_3', 'area': 'charged_ground_slam', 'self': 'mage_soell_cast'},
+               'loops': {'gather': 'mage_soell_cast_8'}},
 }
 
 
@@ -104,6 +109,15 @@ def pack(work, slug):
         keep = [f for f in range(first, last + 1) if f == hit or not (cut[0] <= f <= cut[1])]
         rows.append((f'attack{k}', [[fr[f] for f in keep] for fr in (frames(px, c, d) for d in DIRS)]))
         atk_meta.append({'clip': c, 'beats': [round(v, 1) for v in b], 'frames': keep, 'hit': keep.index(hit)})
+    cast_meta = {}
+    for name, key in R.get('casts', {}).items():
+        c = clip_dir(px, key)   # clip_dir takes the first sorted match: give a key no other clip's name starts with
+        b = beats(json.load(open(os.path.join(raw, c, 'track.json'))))
+        first, last = int(b[0]), int(b[2])
+        rows.append((name, [fr[first:last + 1] for fr in (frames(px, c, d) for d in DIRS)]))
+        cast_meta[name] = {'clip': c, 'beats': [round(v, 1) for v in b], 'first': first, 'hit': min(last, round(b[1] + 0.5)) - first}
+    for name, key in R.get('loops', {}).items():
+        rows.append((name, [frames(px, clip_dir(px, key), d) for d in DIRS]))
     c = clip_dir(px, R['death'])
     dead = [frames(px, c, d) for d in DIRS]
     n = len(dead[0]); keep = [round(i * (n - 1) / (DEATH - 1)) for i in range(DEATH)] if n > DEATH else list(range(n))
@@ -124,6 +138,7 @@ def pack(work, slug):
     meta['feet'] = [cw // 2, bottom - 1]
     meta['height'] = bottom - min(im.getbbox()[1] for per in rows[0][1] for im in per if im.getbbox())
     meta['attacks'] = atk_meta
+    if cast_meta: meta['casts'] = cast_meta
     meta['fps'] = 12
     os.makedirs(os.path.join(OUT, slug), exist_ok=True)
     sheet.save(os.path.join(OUT, slug, 'sheet.png'), optimize=True)

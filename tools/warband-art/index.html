@@ -63,8 +63,19 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="wiz3d">
+    <h2 id="wiz3d">Latest: the wizard, from 3D</h2>
+    <p>You liked the wizard's look but not how it held up at 1.7×: the code rig grows its shapes, not its detail, so beside the goblins it read as a few flat slabs. So it went through the goblins' pipeline with its design unchanged: Codex drew the same wizard (big floppy hat with a gold band, no face under the brim, white beard, bell robe with gold trim) as a model sheet, you approved it, and Meshy made the model, rig and six clips. <b>38 Meshy credits</b>, as agreed.</p>
+    <figure><img class="photo" src="img/wiz3d-pic.jpg" alt="Codex's model sheet: a stocky storybook wizard in a crimson robe and huge crimson hat with gold trim, white beard, arms out."><figcaption>The picture Meshy built from (Codex, approved).</figcaption></figure>
+    <figure><img src="img/wiz3d-ingame.png" alt="Two wizards in the arena: on the left the code-drawn ones, on the right the new sprites, a red one and a blue one gathering a spell with the staff raised."><figcaption>The same moment in the game, enlarged: the code rig at 1.7× (left) and the new sprite (right). <code>?wizsprite=0</code> on this branch brings the code rig back.</figcaption></figure>
+    <figure><img src="img/wiz3d-still.png" alt="The wizard standing in eight directions, in the four seat colours: red, blue, gold and violet."><figcaption>Standing, 8 directions, all four seats. There is one red sheet; the game recolours robe, hat and trim for each seat from its own palette.</figcaption></figure>
+    <figure><img src="img/wiz3d-moves.gif" alt="The wizard's moves facing south-east: walk, run, gathering, the Force cast, the staff strike, Self, Area and the knock-down."><figcaption>Every move, facing south-east: walk, run, <b>gathering</b> (loops while a spell gathers), <b>Force cast</b> (in the game it pushes out and holds at full stretch while the spell flows), the staff strike, <b>Self</b>, <b>Area</b>, death. The staff is a little 3D prop that stays upright as he walks instead of swinging with the wrist.</figcaption></figure>
+    <p>Not wired yet: Self, Area and the staff strike are on the sheet but the game doesn't play them (it can't yet tell Area from gathering), spells still start where the old staff tip was (it lines up while gathering, not always while casting), and a conjured weapon doesn't replace the staff. What I'd change: the Area clip's slam looks like a face-down flop from above, so I'd swap it; the robe's dark inside shows as he falls.</p>
+    <div class="rate" id="wiz3d-rate"></div>
+  </section>
+
   <section aria-labelledby="archer">
-    <h2 id="archer">Latest: the archer's shot, and the frame rate</h2>
+    <h2 id="archer">Before that: the archer's shot, and the frame rate</h2>
     <p>You saw the archer holding its bow oddly. Four things were wrong, all fixed:</p>
     <ul class="opts">
       <li><b>It shot sideways.</b> Meshy's archery clip stands side-on to the target, like a real archer, so the arrow left from the goblin's left side, 90° off where it faces. It now turns side-on as the bow comes up and back to face ahead as it lowers, so the shot goes where it's looking.</li>
@@ -406,6 +417,7 @@ for (const c of CONCEPTS) {
   const r = el('div', 'rate'); r.append(marks('ratings', 'con-' + c.id, AR), note('ratings', 'con-' + c.id, 'What to change'));
   box.append(el('h3', '', c.name), fig, el('p', '', c.notes), r); $('concepts').append(box);
 }
+$('wiz3d-rate').append(el('b', '', 'The 3D wizard'), marks('ratings', 'wiz-3d', KRC), note('ratings', 'wiz-3d', 'What to change: look, a move, the size'));
 $('archer-shot-rate').append(el('b', '', "The archer's shot"), marks('ratings', 'archer-shot', KRC), note('ratings', 'archer-shot', 'What still looks off'));
 $('fps-rate').append(el('b', '', 'Frame rate'), marks('ratings', 'fps-attack', [['12', '12 fps', 'maybe'], ['24', '24 fps', 'keep'], ['mix', 'Attacks only', 'maybe']]), note('ratings', 'fps-attack', 'What you see'));
 $('ingame-rate').append(el('b', '', 'The band in play'), marks('ratings', 'ingame-band', KRC), note('ratings', 'ingame-band', 'Which goblin or move to redo, and how'));

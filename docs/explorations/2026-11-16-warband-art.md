@@ -165,6 +165,10 @@ Left: the 1 s wind-up is shorter than the clip's raise, so the shot starts partw
 
 The user also asked why 12 fps: it's `render.py`'s `ANIM_FPS`, the usual pixel-art rate (at 32 px most moves are a pixel or two a frame; fewer frames read crisper and keep sheets small), carried over from the PixelLab work rather than tested on these clips. Fast blows get one or two frames at 12. The review page (version 15) shows the hooded raider's Left Slash at 12 and 24 fps side by side (`fps-attack`) and the archer before and after (`archer-shot`).
 
+## The wizard from 3D (2026-11-17)
+
+The user liked the wizard's design but not how the code rig held up at 1.7×: it grows its shapes, not its detail, so beside the Meshy goblins it read as flat slabs. It went through the same pipeline with its design unchanged (big floppy hat with a gold band, no face, white beard, bell robe with gold trim): a Codex model sheet the user approved, then 38 Meshy credits the user signed off (model 15, rig 5, six clips: gathering, the Force push, Area, Self, a staff strike, Knock Down). The staff is a Blender prop that keeps near upright as he walks (`render.py` soft props). One red sheet is recoloured per seat in the client from `TEAMS`. In the game: walk, run, gathering (a loop), the Force cast (held at full stretch) and death play; `?wizsprite=0` keeps the code rig. Details and what isn't wired yet: `tools/sprites-3d/README.md`, "The wizard". On the review page as `wiz-3d`.
+
 ## Claude's picks, pending the review
 
 *(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the sprites are wired in; see the two sections above.)*

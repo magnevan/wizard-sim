@@ -58,6 +58,9 @@ function simOf(slug: string): { name: string; radius: number; speed: number; rea
   const a = ARCHETYPES.find((x) => x.id === (ARCH_OF[slug] ?? 'swarmer'))!;
   return { name: a.name, radius: a.radius, speed: a.speed, reach: a.reach };
 }
+/** Not a clip: a body standing still holds the walk's first frame (sprites.ts livePose), so "idle" shows exactly that. */
+const IDLE = 'idle';
+const clipNames = (m: ModelMeta): string[] => [IDLE, ...Object.keys(m.clips)];
 const ONE_SHOTS: Record<string, 'attack0' | 'area' | 'self'> = { attack0: 'attack0', area: 'area', self: 'self' };
 
 // ---- the clip's marks: the game's timings ----------------------------------------------------------------------------------------
@@ -66,6 +69,7 @@ interface Span { a: number; b: number; label: string; color: string }
 interface Marks { marks: Mark[]; spans: Span[]; range: [number, number] | null; cut: [number, number] | null; note: string }
 function marksOf(slug: string, meta: ModelMeta, clip: string): Marks {
   const out: Marks = { marks: [], spans: [], range: null, cut: null, note: '' };
+  if (clip === IDLE) { out.note = "The models have no idle clip: in the game a body standing still holds the walk's first frame, as here."; return out; }
   const atk = meta.attacks.find((a) => a.clip === clip);
   if (atk) {
     out.marks.push({ t: atk.first, label: 'first', color: '#8a93a6' }, { t: atk.hit, label: 'hit', color: '#ff5a4a' }, { t: atk.last, label: 'last', color: '#8a93a6' });
@@ -190,7 +194,7 @@ async function loadModel(slug: string): Promise<void> {
   scene.add(inst.root);
   bones = new THREE.SkeletonHelper(inst.body); scene.add(bones);
   height = meta.height ?? 2;
-  if (!meta.clips[st.c]) st.c = meta.clips.walk ? 'walk' : Object.keys(meta.clips)[0];
+  if (st.c !== IDLE && !meta.clips[st.c]) st.c = meta.clips.walk ? 'walk' : Object.keys(meta.clips)[0];
   if (st.c2 && !meta.clips[st.c2]) st.c2 = '';
   const sim = simOf(slug);
   bodyRing.scale.setScalar(sim.radius);
@@ -251,7 +255,7 @@ function drawPixels(pose: LivePose, ghosts: LivePose[]): void {
     y += FEET_Y * rz;
     const slugs = liveSlugs(), ls = Math.round(step * 1.25), x0 = Math.round(W / 2 - (ls * (slugs.length - 1)) / 2);
     slugs.forEach((s, i) => {
-      const mm = liveMeta(s)!, clip = mm.clips[st.c] ? st.c : 'walk', d = mm.clips[clip]?.duration ?? 1;
+      const mm = liveMeta(s)!, clip = st.c !== IDLE && mm.clips[st.c] ? st.c : 'walk', d = mm.clips[clip]?.duration ?? 1;
       const p: LivePose = { move: clip, t: Math.min(pose.t, d - 1e-3), face: pose.face, flash: false, seat: s === 'wizard' ? TEAMS[Math.max(0, st.seat)] : undefined };
       book(s, p, x0 + i * ls, y, rz, 1, s, 40 + i);
     });
@@ -275,7 +279,7 @@ function drawPixels(pose: LivePose, ghosts: LivePose[]): void {
 
 // ---- the timeline -----------------------------------------------------------------------------------------------------------------
 let marks: Marks = { marks: [], spans: [], range: null, cut: null, note: '' };
-const dur = () => meta?.clips[st.c]?.duration ?? 1;
+const dur = () => (st.c === IDLE ? 1 : meta?.clips[st.c]?.duration ?? 1);
 function drawTimeline(): void {
   const dpr = devicePixelRatio, W = Math.round(tl.clientWidth * dpr), H = Math.round(tl.clientHeight * dpr);
   if (tl.width !== W || tl.height !== H) { tl.width = W; tl.height = H; }
@@ -412,6 +416,9 @@ let setFace = (_deg: number) => {};
 function buildModelPanel(): void {
   clipList.replaceChildren(); clip2Sel.replaceChildren(el('option', { value: '', textContent: 'none' }));
   if (!meta) { info.textContent = 'This model could not be loaded.'; return; }
+  const idle = el('button', { className: st.c === IDLE ? 'on' : '', title: 'What the game shows for a body standing still' }, IDLE, el('small', { textContent: 'walk, frame 0' }));
+  idle.onclick = () => setClip(IDLE);
+  clipList.append(idle);
   for (const [c, v] of Object.entries(meta.clips)) {
     const kind = meta.attacks.some((a) => a.clip === c) ? 'attack' : meta.casts?.[c] ? 'cast' : v.stride ? 'legs' : '';
     const b = el('button', { className: c === st.c ? 'on' : '', title: v.source }, c, el('small', { textContent: `${kind} ${v.duration.toFixed(2)} s` }));
@@ -465,7 +472,8 @@ function frame(now: number): void {
       if (st.t > hi || st.t < lo) st.t = lo;
     }
     const face = (st.f * Math.PI) / 180;
-    const pose: LivePose = { move: st.c, t: st.t, face, flash: st.flash, seat: st.m === 'wizard' && st.seat >= 0 ? TEAMS[st.seat] : undefined };
+    if (st.c === IDLE) st.t = 0;
+    const pose: LivePose = { move: st.c === IDLE ? 'walk' : st.c, t: st.t, face, flash: st.flash, seat: st.m === 'wizard' && st.seat >= 0 ? TEAMS[st.seat] : undefined };
     if (st.c2 && st.c2 !== st.c && meta.clips[st.c2]) Object.assign(pose, { move2: st.c2, t2: st.t % meta.clips[st.c2].duration, w2: st.w2 });
     // full size
     livePoseInst(inst, model, pose);
@@ -498,7 +506,7 @@ new ResizeObserver(resize).observe(pixBox);
 
 addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
-  const clips = meta ? Object.keys(meta.clips) : [];
+  const clips = meta ? clipNames(meta) : [];
   const k = e.key;
   if (k === ' ') { e.preventDefault(); setPlay(!st.play); }
   else if (k === ',') stepFrame(-1);

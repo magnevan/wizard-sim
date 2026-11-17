@@ -183,9 +183,9 @@ export interface Seats {
  * Conjured guards, one per lead element (Shield + it), and Shield alone = the Mirror buckler
  * (docs/explorations/2026-11-05-guards.md). `buckler` is the Mirror's old name.
  */
-export const GUARD = { none: 0, bulwark: 1, mirror: 2, buckler: 2, ember: 3, rime: 4, spark: 5, tide: 6, prism: 7, leaf: 8 } as const;
-/** Guard id -> its name in ARMS.hp (and the view). */
-export const GUARD_NAME: readonly string[] = ['none', 'bulwark', 'mirror', 'ember', 'rime', 'spark', 'tide', 'prism', 'leaf'];
+export const GUARD = { none: 0, bulwark: 1, mirror: 2, buckler: 2, ember: 3, rime: 4, spark: 5, tide: 6, prism: 7, leaf: 8, spike: 9 } as const;
+/** Guard id -> its name in ARMS.hp (and the view). The Spike kite (Ice) split from the Rime kite (Cold) on 2026-11-17. */
+export const GUARD_NAME: readonly string[] = ['none', 'bulwark', 'mirror', 'ember', 'rime', 'spark', 'tide', 'prism', 'leaf', 'spike'];
 
 export const WARD = { none: 0, ward: 1, mirror: 2, stone: 3 } as const;
 

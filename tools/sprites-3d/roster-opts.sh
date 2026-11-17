@@ -16,7 +16,8 @@ declare -A OPTS=(
 W=tools/sprites-3d/wizprops.py
 WIZ_ARMS="--show=staff"
 for a in sword earthmaul focus icebow frostspear whip trident; do WIZ_ARMS="$WIZ_ARMS --prop=$W:$a~0.25@RightHand"; done
-for a in mirror bulwark ember rime spark tide prism leaf; do WIZ_ARMS="$WIZ_ARMS --prop=$W:$a@LeftForeArm"; done
+# guards are soft too (round 3): kept upright, picture-up toward the sky, whatever the forearm does (wizprops.py PROP_AXIS)
+for a in mirror bulwark ember rime spark tide prism leaf spike; do WIZ_ARMS="$WIZ_ARMS --prop=$W:$a~0.15@LeftForeArm"; done
 # slug: its folder under tools/sprites-3d/output when it isn't the slug
 declare -A DIR=([raider-hooded]=meshy-rig)
 ROSTER=(raider-hooded raider-goggles archer shieldbearer hooker chieftain wizard)

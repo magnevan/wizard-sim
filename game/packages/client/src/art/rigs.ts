@@ -105,6 +105,12 @@ export interface Anchors {
   tip: [number, number]; chest: [number, number]; head: [number, number]; hands: [number, number][]; charge: [number, number];
   /** Live 3D only (art/live3d.ts): the conjured weapon shown in the hand, grip to tip, and the guard's middle; their 2D effects follow these. */
   blade?: [[number, number], [number, number]]; guard?: [number, number];
+  /**
+   * Live 3D only: the guard's frame on screen, so its effects lie in its plane. `u` and `v` are its two half-extents
+   * in its face (u the longer) as screen offsets from `guard`; `face` is how squarely its face turns to the camera
+   * (1 square on, 0 edge-on, below 0 its back).
+   */
+  guardFrame?: { u: [number, number]; v: [number, number]; face: number };
 }
 
 /** The warband drawn from 3D-rendered sprites (art/sprites.ts) instead of code rigs: on unless ?sprites=0. */

@@ -31,6 +31,7 @@ import * as X from './art/px';
 import type { Ctx, Pt, Ramp } from './art/px';
 import * as S from './art/sigil';
 import * as A from './art/accent';
+import * as GFX from './art/guard-fx';
 import { BURST_LIFE, drawBurst, hasBurst } from './art/novas';
 import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './art/util';
 import { elName, frosty, ramp, type BodyView, type LightFn } from './art/vfx';
@@ -228,11 +229,11 @@ class Scorch {
 const MOVE_LIFE: Record<string, number> = {
   dash: 0.45, flamestep: 0.5, iceslide: 0.7, backstep: 0.5, phase: 0.6, seedstep: 0.8, shovestep: 0.7, surge: 0.6, tidewave: 0.6,
   strike: 0.3, sweep: 0.42, imbue: 0.5,
-  parry: 0.4, block: 0.25, glance: 0.3, chill: 0.5, coat: 0.45, guardbreak: 0.8, flameburst: 0.45, chargedbolt: 0.4, lance: 0.4, javelin: 0.45, siphon: 0.5, mend: 0.6, link: 0.5, linkbreak: 0.5,
+  spikeburst: 0.45, spikestep: 0.4, parry: 0.4, block: 0.25, glance: 0.3, chill: 0.5, coat: 0.45, guardbreak: 0.8, flameburst: 0.45, chargedbolt: 0.4, lance: 0.4, javelin: 0.45, siphon: 0.5, mend: 0.6, link: 0.5, linkbreak: 0.5,
 };
 /** Each guard's colour. */
 const GUARD_RAMP: Record<string, Ramp> = {
-  mirror: EL.shield, bulwark: X.EARTH, ember: EL.fire, rime: EL.cold, spark: EL.lightning, tide: EL.water, prism: EL.arcane, leaf: X.LIFE,
+  mirror: EL.shield, bulwark: X.EARTH, ember: EL.fire, rime: EL.cold, spark: EL.lightning, tide: EL.water, prism: EL.arcane, leaf: X.LIFE, spike: EL.ice,
 };
 
 /** One of the guards (not the Bulwark, drawn with its facing) centred at (x, y), after the round-2 review page's drawings. */
@@ -294,7 +295,7 @@ function guardShape(c: Ctx, id: string, x: number, y: number, sz: number, t: num
 // =====================================================================================================
 interface SFx { kind: string; t0: number; life: number; seed: number; x: number; y: number; x2: number; y2: number; who: number; look: number; n: number; els?: Uint8Array; xs?: number[] }
 /** Moves made with a guard (guards.ts): their extras are the guard's; every other move's are the weapon's. */
-const GUARD_MOVES = new Set(['parry', 'block', 'glance', 'chill', 'coat', 'guardbreak', 'flameburst', 'lance', 'backstep', 'phase', 'seedstep', 'shovestep', 'surge', 'tidewave', 'flamestep', 'iceslide']);
+const GUARD_MOVES = new Set(['parry', 'block', 'glance', 'chill', 'coat', 'guardbreak', 'flameburst', 'lance', 'backstep', 'phase', 'seedstep', 'shovestep', 'surge', 'tidewave', 'flamestep', 'iceslide', 'spikeburst', 'spikestep']);
 
 export class StructureView {
   readonly scorch = new Scorch();
@@ -1613,7 +1614,7 @@ export class StructureView {
       X.rect(c, x - hw, y + hh - 1, hw * 2, 1, X.EARTH[4]);
       if (hw > 2.5) { X.rect(c, x - 1, y - hh + 2, 2, hh * 2 - 4, EL.shield[2]); X.rect(c, x - hw + 1, y - 1, hw * 2 - 2, 1, EL.shield[3]); }
       if (hpk < 0.5) X.lines(c, [[x - hw + 1, y - hh + 2], [x, y], [x - 1, y + hh - 2]], '#1a120c');
-    } else guardShape(c, name, x, y, 0.8 + 0.4 * raise, t, sn, hpk);
+    } else guardShape(c, name === 'spike' ? 'rime' : name, x, y, 0.8 + 0.4 * raise, t, sn, hpk);   // the 2D Spike kite borrows the Rime's kite
     // On the far side of the body (facing away, or slung on the hidden hip) the guard is drawn under the
     // wizard as it should be, and its rim shows through on top, dithered: a partner can always see
     // that you carry a guard and which one (the rim is in its colour, the Bulwark's square).
@@ -1626,7 +1627,11 @@ export class StructureView {
         for (let q = -hh; q <= hh; q++) for (const xx of [x - hw - 1, x + hw]) if (k > X.bay(Math.round(xx), Math.round(y + q))) X.px(o, xx, y + q, X.EARTH[0]);
       } else X.ring(o, x, y, 4.6 * sz * wx + 0.5, 5 * sz + 0.5, R[1], k);
     }
-    if (blocking) {
+    // Drawn live, the guard's moving parts (art/guard-fx.ts) lie in its plane; blocking, each element bursts out of it,
+    // and only the Mirror keeps the energy face below (the user: the Shield shimmer is the Mirror's alone).
+    const fr = live ? v.a?.guardFrame : undefined;
+    if (fr) GFX.guardFx(o, name, GUARD_EL[id] ?? 0, { x, y, u: fr.u, v: fr.v, face: fr.face }, t, blocking, raise, v.y, i * 97);
+    if (blocking && !(fr && id !== GUARD.mirror)) {
       // an energy face in front of the guard while it blocks, in the guard's colour; the Bulwark's is wide, the Mirror's narrow.
       // Facing away it would hide behind the body, so there it is drawn on top and wider, its two ends bright ticks
       // either side of the wizard: the block reads from behind as a glow wrapping round you.
@@ -1926,7 +1931,14 @@ export class StructureView {
         for (let j = 0; j < 14; j++) { const a = rand(j, 1, sd) * TAU, d = e * 24; if (rand(j, 2, sd) < e / f.life) continue; X.px(o, x + Math.cos(a) * d, y - 10 + Math.sin(a) * d * 0.6 - e * 10, j % 2 ? SV[0] : SV[2]); }
         return;
       }
-      case 'mv-dash': case 'mv-flamestep': case 'mv-iceslide': {
+      case 'mv-spikeburst': {
+        // the Spike kite's parry: ice shards burst forward in a fan from where you face
+        const v = bodies[f.who], q = e / f.life; if (!v?.on) return;
+        const fa = w.bodies.face[f.who] * TAU;
+        for (let j = 0; j < 9; j++) { const a = fa + (j / 8 - 0.5) * 1.1, d = 6 + q * 26; K.shard(o, v.x + Math.cos(a) * d, v.y - 8 + Math.sin(a) * d * FY, a, 7 * (1 - q), sd + j, 1 - q, EL.ice); }
+        return;
+      }
+      case 'mv-dash': case 'mv-flamestep': case 'mv-iceslide': case 'mv-spikestep': {
         // a streak along the move: frost for the spear's lunge and the ice slide, flame for the flame step
         const x2 = gx(f.x2), y2 = gy(f.y2), q = e / f.life, Rs = f.kind === 'mv-flamestep' ? EL.fire : X.FROST;
         for (let j = 0; j < 14; j++) {

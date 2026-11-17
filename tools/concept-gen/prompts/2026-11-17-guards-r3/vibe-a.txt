@@ -1,0 +1,13 @@
+Generate one image with your image generation tool, then save it as vibe-a.png in the current directory. Reply with just the file name.
+
+The attached images are references. The first is the 3D-model reference picture of our player wizard, a short stocky storybook wizard with big chunky hands, about 1.4 metres tall counting his huge hat: match its rendering style and finish exactly (smooth stylised shapes, chunky readable forms, simple bold colours, soft even lighting). The second is the earlier sheet of the shields he conjures out of the elements: same family, but these five replace their counterparts.
+
+These shields are magic: the wizard conjures each one out of an element with a spell. None is made by a smith. The game is seen from above at a distance and drawn as small pixel art, so every shape must be bold, chunky and readable as a silhouette; avoid fine detail.
+
+Subject: a concept sheet showing five magic shields ALIVE, as they look in the game with their magical effects playing, each held by the wizard on his left forearm. Five wizards in a row on a plain white background, each turned three-quarters toward the viewer and raising his shield to block. Show the effects boldly, like a frozen frame of a game animation.
+
+1. Earth tower shield (brown and grey stone): massive and imposing, a tall slab of carved stone nearly as tall as the wizard, squared and heavy with a few big set stones, planted on the ground in front of him. Dust and pebbles fall from its edges. No lava, no glowing cracks.
+2. Ice spike shield (white-blue clear ice): large and imposing, a big kite of jagged ice held point down, bristling with long ice spikes jutting outward from its face and edges like a hedgehog of icicles. Sharp glints, a few ice chips falling.
+3. Frost shield (steel blue and white): a round shield of cold blue metal thickly crusted with white rime and frost feathers on its rim. A heavy pale cold mist pours off its lower edge and falls to the ground, pooling round his feet like dry ice fog.
+4. Lightning ring (silver metal and violet-white lightning): just a thin floating metal ring, like the rim of a buckler with no middle, hovering round his hand. Many jagged violet-white lightning arcs crackle between points on the ring, crossing its empty centre, one arc jumping to his hand.
+5. Water curtain (deep blue and white water): like a fireman's water shield. From a small spinning ball of water at his hand, water shoots out radially in every direction in a continuous flowing disc, a round curtain of spraying water leaning slightly forward, droplets and white spray flying off its outer edge, splashing on the ground.

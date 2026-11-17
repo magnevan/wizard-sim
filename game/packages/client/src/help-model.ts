@@ -414,7 +414,8 @@ interface GuardInfo { name: string; el: Element; defend: string; retreatName: st
 export const GUARDS: Record<string, GuardInfo> = {
   mirror: { name: 'Mirror buckler', el: 'shield', defend: 'A narrow block that glances shots off; a parry reflects one.', retreatName: 'Backstep', retreat: 'A quick step back.', dist: ARMS.backstep },
   bulwark: { name: 'Bulwark', el: 'earth', defend: 'A wide block that also stops melee; a parry bashes the attacker down.', retreatName: 'Shove step', retreat: 'A short step that shoves and stuns whoever is in front.', dist: ARMS.shoveStep },
-  ember: { name: 'Ember targe', el: 'fire', defend: 'Blocking burns melee attackers; a parry sends a burst of flame.', retreatName: 'Flame step', retreat: 'Step back, leaving a line of fire.', dist: ARMS.flameStep },
+  ember: { name: 'Ember targe', el: 'fire', defend: 'Melee attackers that hit you catch fire; a parry sends a burst of flame.', retreatName: 'Flame step', retreat: 'Step back, leaving a line of fire.', dist: ARMS.flameStep },
+  spike: { name: 'Spike kite', el: 'ice', defend: 'A block that stops melee and stabs the attacker; a parry bursts spikes and leaves caltrops.', retreatName: 'Spike step', retreat: 'Step back, leaving caltrops where you stood.', dist: ARMS.spikeStep },
   rime: { name: 'Rime kite', el: 'cold', defend: 'Blocking chills melee attackers; a parry freezes them.', retreatName: 'Ice slide', retreat: 'Slide back on a strip of ice.', dist: ARMS.iceSlide },
   spark: { name: 'Spark ring', el: 'lightning', defend: 'The weakest block; a parry discharges into nearby enemies.', retreatName: 'Blink', retreat: 'Blink back, leaving a spark where you stood.', dist: ARMS.blink },
   tide: { name: 'Tide shield', el: 'water', defend: 'Blocking shoves and soaks attackers; a parry sends a shoving wave.', retreatName: 'Surge', retreat: 'Step back behind a wave that shoves.', dist: ARMS.surge },

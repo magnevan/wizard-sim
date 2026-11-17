@@ -1,0 +1,17 @@
+Generate one image with your image generation tool, then save it as earth-infusions.png in the current directory. Reply with just the file name.
+
+The attached images are references. The first is the 3D-model reference picture of our player wizard, a short stocky storybook wizard: match its rendering style and finish exactly (smooth stylised shapes, chunky readable forms, simple bold colours, soft even lighting). The second is the earlier sheet of the magic shields he conjures out of the elements.
+
+Subject: a concept sheet of one magic shield in eight versions. The wizard conjures an Earth tower shield: a tall slab of carved grey-brown stone, about twice as tall as wide, thick and heavy, with a few big rounded stones set in its face. When he mixes a second element into the spell, the stone takes it in and changes. Two rows of four, all face on, the same size and the same basic slab shape so they compare, on a plain pure white background. Bold, chunky, readable shapes; the effect of each element is part of the stone itself.
+
+Top row:
+1. Earth alone: plain carved stone, the set stones a little darker.
+2. Earth + Fire: the same slab split by thick glowing orange magma veins, its set stones turned to glowing embers, a heat glow at the edges.
+3. Earth + Cold: the slab's top edge and corners crusted with thick white frost and rime, its face dusted pale blue.
+4. Earth + Ice: clear blue ice spikes and crystals growing out of its edges and through its cracks.
+
+Bottom row:
+5. Earth + Lightning: bright metal studs set in the stone with violet-white lightning arcing between them.
+6. Earth + Water: dark wet stone with a glossy sheen, water running down its face and dripping from its bottom edge, a little moss.
+7. Earth + Arcane: carved runes across its face glowing magenta, small floating magenta crystal shards.
+8. Earth + Life: green moss, ferns and flowering vines growing over it, small leaves sprouting from its cracks.

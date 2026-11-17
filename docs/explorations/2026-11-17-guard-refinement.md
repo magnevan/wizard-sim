@@ -65,6 +65,31 @@ Authoring all 8 × 9 pairs by hand is too much work. The solid guards share one 
 6. **Infusions:** the shared recipe, then the Bulwark's own parts.
 7. **The raised-guard pose and the size pass,** then weapons on the same system.
 
+## The user's marks (read 2026-11-17)
+
+Every guard plan and the infusion plan are marked yes. Notes:
+
+- **Ice:** keep passive damage on both. "Both ember and ice can do passive damage, just differentiated between elements and the fire version should be much more damage heavy while ice is more defense heavy." So the Ice guard keeps a passive stab (whoever bumps or hits it), and it stays the sturdier of the two. Ember stays the damage guard.
+- **Shimmer:** only the Mirror has the Shield shimmer, not the others, not even while blocking. "They can have other element appropriate effects. Like some colored particles that burst out for that element." The generic energy face drawn while blocking is replaced by each element's own burst.
+- **Leaf:** it gets a new mesh. The plan meant no new concept art, not no new model.
+- **Size:** "Maybe the first, but I really have to see it in game to judge this." Build it, then show it in the game.
+- **Mix:** two infusions are fine; more would be rare. **Tide:** try the leaning disc.
+- **Budget:** Codex concept art is basically free and the Meshy plan is liberal, so generate more variants and use Meshy for the cores where it beats a Blender build. That changes the plan in step 4: the cores come from Meshy, built from the approved art, and Blender is the fallback.
+
+Round 3 art (prompts in `tools/concept-gen/prompts/2026-11-17-guards-r3/`): two "vibe" sheets of the five new guards with their effects drawn in, two clean core sheets for Meshy, and the Earth infusion sheet.
+
+## Built, first pass (2026-11-17)
+
+- **Concept art (Codex, free):** five sheets, kept in `docs/reference/wizard-arms/r3/`: two "vibe" sheets with the effects drawn in (A: the wizard holding each; B: each alone, the Earth tower as a castle rampart), two clean core sheets for Meshy, and the Earth infusion sheet (plain, magma veins, frost crust, ice crystals, studs with arcs, wet with drips, glowing runes, vines and flowers). On the review page as `g3-art-*`.
+- **Cores from Meshy (60 credits; balance 2,855 before):** the Earth tower, the Spike kite, the Rime shield and the Leaf fan, each `meshy-t2` smart topology at 3,000 triangles, textured by `meshy-n1` from its three-quarter view (`tools/sprites-3d/input/guards-r3/`, outputs in `output/guards-r3/`). `wizprops.py` `meshy()` imports one as a guard prop: it turns the core thinnest front to back (Meshy turns a three-quarter view about its upright axis), its picture-up toward the elbow, scales it, and shrinks its texture to 256 px. The primitive builds stay as `*_r2`. The Ember's flame cones are gone (only the molten disc is solid); the Spark ring is a bare silver hoop with six studs.
+- **Upright guards:** every guard is a soft prop now (`~0.15`, axis picture-up), as the staff is: kept upright whatever the forearm does. Built along the forearm, the tower lay on its side when the arm was held out, and the old Rime kite hung upside down.
+- **Shells** (`art/live3d.ts` `FX_GLSL`, by Blender material name): the Prism's rainbow sweeping across, the Ember core's hot pulse, the Mirror's halo as a dithered see-through ward with rings rippling out, the Tide's water flowing.
+- **Particles** (`art/guard-fx.ts`, in the guard's plane through its projected frame `Anchors.guardFrame`): flame tongues rising round the Ember's rim with embers; lightning arcs re-rolled between points on the Spark ring, filling it into a web while blocking; mist falling off the Rime and pooling at the feet; ice chips and glints off the Spike kite; spray off the Tide's rim; pollen and falling leaves off the Leaf; grit off the Bulwark; spectral glints round the Prism. Blocking, every guard but the Mirror bursts its own element's particles (the energy face stays the Mirror's only).
+- **Rules:** the Spike kite and Searing (decision log). Golden hash unchanged.
+- **Shots:** `npm run build`, then `node scripts/arms-shots.mjs --guards` (new: each guard alone, 12 frames idle and 12 blocking).
+
+Next: the user's marks on the art and the in-game look; the Tide's core and leaning disc, the Mirror's buckler from the core sheet; the infusion parts on the Bulwark; the raised-guard pose and the size pass.
+
 ## Open questions (on the review page)
 
 - `g3-q-1-ice`: the Ice guard's rules as above, or another shape? *Pick: as above.*

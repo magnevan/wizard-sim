@@ -19,8 +19,11 @@
  *   Guard (queue)          Defend: block / parry                 Retreat       Passive
  *   Mirror buckler (S)     narrow, glances shots / reflects one   Backstep 3u   Light: full speed blocking, widest parry
  *   Bulwark (S+E)          wide, stops melee / bashes down        Shove step    Anchored: no knockback (and 15 % slower)
- *   Ember targe (S+F)      thorns / a burst of flame              Flame step    Warm: no chill, freeze or burning; dry at once
+ *   Ember targe (S+F)      a block / a burst of flame             Flame step    Warm: no chill, freeze or burning; dry at once.
+ *                                                                               Searing: melee attackers that hit you catch fire
  *   Rime kite (S+C)        chills melee attackers / freezes them  Ice slide     Skater: glides on ice
+ *   Spike kite (S+Ice)     stops melee and stabs / a spike burst  Spike step    Bristling: melee attackers that hit you are stabbed
+ *                          and caltrops in front                  (caltrops)    (the defensive one of the two that hurt; 2026-11-17)
  *   Spark ring (S+L)       weakest / chain discharge              Blink         Grounded: chain lightning skips you
  *   Tide shield (S+W)      shoves and soaks / a shoving wave      Surge         Quenched: can't burn
  *   Prism (S+A)            stores what it blocks as charge /      Phase         Clear: allies' beams and sprays don't hurt you
@@ -57,12 +60,13 @@ const RES_TABLE: readonly (readonly number[])[] = [
   /* tide    */ [0, 1, -0.25, -0.5, 0],
   /* prism   */ [-0.25, 0, 0, 0, 1],
   /* leaf    */ [0, -0.25, 0, 0, 1],
+  /* spike   */ [1 / 3, -0.25, 1, 0, 0],
 ];
 /** The guard an element leads to, and the resistance column that is "its own" (-1: Water and Life deal no damage). */
-const GUARD_OF: Record<number, number> = { [EL.earth]: GUARD.bulwark, [EL.fire]: GUARD.ember, [EL.cold]: GUARD.rime, [EL.ice]: GUARD.rime, [EL.lightning]: GUARD.spark, [EL.water]: GUARD.tide, [EL.arcane]: GUARD.prism, [EL.life]: GUARD.leaf };
+const GUARD_OF: Record<number, number> = { [EL.earth]: GUARD.bulwark, [EL.fire]: GUARD.ember, [EL.cold]: GUARD.rime, [EL.ice]: GUARD.spike, [EL.lightning]: GUARD.spark, [EL.water]: GUARD.tide, [EL.arcane]: GUARD.prism, [EL.life]: GUARD.leaf };
 const OWN_COL: Record<number, number> = { [EL.earth]: RES.physical, [EL.fire]: RES.fire, [EL.cold]: RES.cold, [EL.ice]: RES.cold, [EL.lightning]: RES.lightning, [EL.arcane]: RES.arcane };
 /** A guard's colour element (the view, events). */
-export const GUARD_EL: readonly number[] = [0, EL.earth, EL.shield, EL.fire, EL.cold, EL.lightning, EL.water, EL.arcane, EL.life];
+export const GUARD_EL: readonly number[] = [0, EL.earth, EL.shield, EL.fire, EL.cold, EL.lightning, EL.water, EL.arcane, EL.life, EL.ice];
 
 export const guardOf = (w: World, i: number): number => (i >= 0 && i < MAX_SEATS ? w.seats.guard[i] : 0);
 /**
@@ -205,7 +209,7 @@ export function hasPassive(w: World, i: number, g: number): boolean {
   if (!lead) return false;
   if (lead === g) return true;
   const id = GUARD_EL[g];
-  return g !== GUARD.mirror && (extra(w, i, id) > 0 || (g === GUARD.rime && extra(w, i, EL.ice) > 0)); // Ice mixed in is Rime's too
+  return g !== GUARD.mirror && extra(w, i, id) > 0;
 }
 /** Anchored (Bulwark): no knockback while carried. */
 export const anchored = (w: World, i: number): boolean => hasPassive(w, i, GUARD.bulwark);
@@ -357,6 +361,13 @@ function parryEffect(w: World, i: number, src: number, melee: boolean): void {
       move(w, i, 'tidewave');
       break;
     case GUARD.leaf: healAround(w, i, ARMS.leafParryHeal, true, true); break;
+    case GUARD.spike: { // spikes burst out in a cone, and caltrops are left in front
+      const p = one(EL.ice), f = b.face[i];
+      cone(w, i, ARMS.spikeBurstRange, ARMS.spikeBurstHalf, (j, ux, uy) => { if (b.team[j] !== b.team[i]) hit(w, j, p, hitOpts(p, i, ARMS.spikeBurstScale, ux, uy)); });
+      spawnZone(w, ZONE.caltrops, i, p, b.x[i] + cosTurns(f) * 1.5, b.y[i] + sinTurns(f) * 1.5, ARMS.spikeCaltropR, T(ARMS.spikeCaltropLife), 0);
+      move(w, i, 'spikeburst');
+      break;
+    }
     default: break; // the Mirror and the Prism send the shot back (guardMissile, applyHit)
   }
 }
@@ -411,16 +422,28 @@ export function guardMelee(w: World, t: number, src: number, dmg: number, dx: nu
   const g = guardOf(w, t);
   if (!g) return 1;
   const b = w.bodies, land = taken(w, t, RES.physical);
-  if (!blocking(w, t) || !fromFront(w, t, dx, dy)) return land;
-  if (parrying(w, t)) { parryEffect(w, t, src, true); biteBack(w, t, src, -dx, -dy); return 0; }
   const foe = src >= 0 && alive(w, src);
+  if (!blocking(w, t) || !fromFront(w, t, dx, dy)) { passiveBite(w, t, src, foe, dx, dy); return land; }
+  if (parrying(w, t)) { parryEffect(w, t, src, true); biteBack(w, t, src, -dx, -dy); return 0; }
   if (foe) biteBack(w, t, src, -dx, -dy); // the coat bites back
   if (g === GUARD.prism) store(w, t, dmg); // the blow still lands, and the Prism keeps its force
-  if (foe && g === GUARD.ember) ignite(w, src, STATUS.burnContact, t); // thorns
+  passiveBite(w, t, src, foe, dx, dy);
+  if (foe && g === GUARD.spike) { const p = one(EL.ice); hit(w, src, p, hitOpts(p, t, ARMS.spikeStab, -dx, -dy)); } // the block's spikes
   if (foe && g === GUARD.rime) { addChill(w, src, ARMS.rimeChill); w.events.push({ tick: w.clock[0], kind: 'move', who: t, x: b.x[src], y: b.y[src], text: 'chill', look: EL.cold }); } // frost bites back
   if (foe && g === GUARD.tide) { applyHit(w, src, one(EL.water).counts, 0, { scale: 1, heal: false, scald: false, freeze: false, source: t, dirX: -dx, dirY: -dy, push: 0 }); b.kx[src] -= dx * ARMS.tideShove; b.ky[src] -= dy * ARMS.tideShove; }
-  if (g === GUARD.bulwark) { damageGuard(w, t, dmg); move(w, t, 'block'); return 0; }
+  if (g === GUARD.bulwark || g === GUARD.spike) { damageGuard(w, t, dmg); move(w, t, 'block'); return 0; }
   return land;
+}
+
+/**
+ * The two guards that hurt whoever lands a melee blow on you, from any side, blocking or not (the user, 2026-11-17:
+ * Fire the damage-heavy one, Ice the defensive one): Searing (Ember) sets the attacker alight; Bristling (Spike kite)
+ * stabs it. A mixed-in Fire or Ice brings its passive, as every passive does.
+ */
+function passiveBite(w: World, t: number, src: number, foe: boolean, dx: number, dy: number): void {
+  if (!foe) return;
+  if (hasPassive(w, t, GUARD.ember)) ignite(w, src, STATUS.burnContact, t);
+  if (hasPassive(w, t, GUARD.spike)) { const p = one(EL.ice); hit(w, src, p, hitOpts(p, t, ARMS.spikeTouch, -dx, -dy)); }
 }
 
 /**
@@ -515,6 +538,12 @@ export function guardRetreat(w: World, i: number, face: number): void {
       cone(w, i, ARMS.surgeReach, ARMS.surgeHalf, (j, ux, uy) => { hit(w, j, one(EL.water), hitOpts(one(EL.water), i, 1, ux, uy)); b.kx[j] += ux * ARMS.surgeKnock; b.ky[j] += uy * ARMS.surgeKnock; });
       floorDisc(w, x, y, 0.8, EL.water);
       move(w, i, 'surge', x + bx * (ARMS.surge * k), y + by * (ARMS.surge * k));
+      return;
+    }
+    case GUARD.spike: { // Spike step: a step back, caltrops left where you stood
+      push((ARMS.spikeStep * k));
+      spawnZone(w, ZONE.caltrops, i, one(EL.ice), x, y, ARMS.spikeCaltropR, T(ARMS.spikeCaltropLife), 0);
+      move(w, i, 'spikestep', x + bx * (ARMS.spikeStep * k), y + by * (ARMS.spikeStep * k));
       return;
     }
     case GUARD.prism: push((ARMS.phase * k)); s.retreatT[i] = T(ARMS.phaseTime); move(w, i, 'phase', x + bx * (ARMS.phase * k), y + by * (ARMS.phase * k)); return;

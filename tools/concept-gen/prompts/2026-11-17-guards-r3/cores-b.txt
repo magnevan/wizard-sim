@@ -1,0 +1,11 @@
+Generate one image with your image generation tool, then save it as cores-b.png in the current directory. Reply with just the file name.
+
+The attached images are references. The first is the 3D-model reference picture of our player wizard, a short stocky storybook wizard: match its rendering style and finish exactly (smooth stylised shapes, chunky readable forms, simple bold colours, soft even lighting). The second is the earlier sheet of the magic shields he conjures out of the elements.
+
+Subject: a clean 3D modelling reference sheet of five magic shield cores, for building each one as a 3D model with an image-to-3D tool. Each is shown alone, twice: face on, and at a three-quarter angle showing its thickness. Plain pure white background, evenly lit, nothing overlapping, no particles, flames, mist, sparks or effects of any kind (the game adds those as effects). Solid, chunky, toy-like forms with bold silhouettes.
+
+Row 1. Leaf shield: a fan of three huge living leaves spreading outward from the bottom like a hand of cards, each leaf broad with a sharp pointed tip, a thick pale glowing midrib, one half of each leaf lighter green and the other half darker; a thick curling vine wraps the base and ends in a round flower bud. It must read clearly as leaves even when tiny.
+Row 2. Ember core: a small round buckler of dark cracked volcanic rock, its cracks and centre glowing orange-yellow like lava. Just the disc, no flames.
+Row 3. Lightning ring: a thin circular ring of polished silver-violet metal, completely open in the middle, with six small round studs spaced round it.
+Row 4. Mirror buckler: a small round domed buckler of polished gold, mirror-bright, with a thick rounded rim.
+Row 5. Water core: a fist-sized sphere of swirling deep blue water with a white foam spiral, like a small whirlpool caught in a ball.

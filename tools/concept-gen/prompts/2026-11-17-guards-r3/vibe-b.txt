@@ -1,0 +1,13 @@
+Generate one image with your image generation tool, then save it as vibe-b.png in the current directory. Reply with just the file name.
+
+The attached images are references. The first is the 3D-model reference picture of our player wizard, a short stocky storybook wizard with big chunky hands, about 1.4 metres tall counting his huge hat: match its rendering style and finish exactly (smooth stylised shapes, chunky readable forms, simple bold colours, soft even lighting). The second is the earlier sheet of the shields he conjures out of the elements.
+
+These shields are magic: the wizard conjures each one out of an element with a spell. None is made by a smith. The game is seen from above at a distance and drawn as small pixel art, so every shape must be bold, chunky and readable as a silhouette.
+
+Subject: a concept sheet of five magic shields, each shown twice side by side on a plain white background: on the left the shield alone, face on; on the right the same shield seen from the side at three-quarters, with its magical effect playing round it like a frozen frame of a game animation. Five rows, one per shield. Bold, bright, toy-like, more exaggerated and playful than realistic.
+
+1. Earth: a tower shield of stacked, chunky, carved stone blocks, taller than it is wide, very heavy, a rugged top edge like a castle rampart. Effect: dust and small stones crumbling off it.
+2. Ice: a big jagged shield of clustered ice crystals pointing outward in every direction, like a crown of icicles round a solid ice centre, its point downward. Effect: glinting sparkles and shards breaking off.
+3. Frost: a round dome shield of frosted pale blue-grey metal, its rim crusted with thick white rime. Effect: thick white cold fog rolling and pouring off its bottom edge, falling downward.
+4. Lightning: an empty floating ring of polished silver metal with small studs round it. Effect: bright violet-white lightning arcing between the studs across the open middle.
+5. Water: a small swirling sphere of water. Effect: a flat whirling fan of water jets spraying out radially from it, like a lawn sprinkler or a fire hose shield, making a round shimmering curtain, foam and droplets at the rim.

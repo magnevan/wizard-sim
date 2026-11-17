@@ -129,6 +129,78 @@
    "firm": [
     "attack0"
    ]
+  },
+  {
+   "node": "mirror carrier",
+   "axis": "mirror carrier axis",
+   "k": 0.15,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "bulwark carrier",
+   "axis": "bulwark carrier axis",
+   "k": 0.15,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "ember carrier",
+   "axis": "ember carrier axis",
+   "k": 0.15,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "rime carrier",
+   "axis": "rime carrier axis",
+   "k": 0.15,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "spark carrier",
+   "axis": "spark carrier axis",
+   "k": 0.15,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "tide carrier",
+   "axis": "tide carrier axis",
+   "k": 0.15,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "prism carrier",
+   "axis": "prism carrier axis",
+   "k": 0.15,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "leaf carrier",
+   "axis": "leaf carrier axis",
+   "k": 0.15,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "spike carrier",
+   "axis": "spike carrier axis",
+   "k": 0.15,
+   "firm": [
+    "attack0"
+   ]
   }
  ],
  "height": 2.5344,
@@ -226,6 +298,12 @@
   {
    "node": "leaf carrier",
    "name": "leaf",
+   "bone": "LeftForeArm",
+   "drop": false
+  },
+  {
+   "node": "spike carrier",
+   "name": "spike",
    "bone": "LeftForeArm",
    "drop": false
   }

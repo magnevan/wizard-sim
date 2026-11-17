@@ -1,0 +1,9 @@
+Generate one image with your image generation tool, then save it as cores-a.png in the current directory. Reply with just the file name.
+
+The attached images are references. The first is the 3D-model reference picture of our player wizard, a short stocky storybook wizard: match its rendering style and finish exactly (smooth stylised shapes, chunky readable forms, simple bold colours, soft even lighting). The second is the earlier sheet of the magic shields he conjures out of the elements.
+
+Subject: a clean 3D modelling reference sheet of three magic shields, for building each one as a 3D model with an image-to-3D tool. Each shield is shown alone, twice: face on, and at a three-quarter angle showing its thickness. Plain pure white background, evenly lit, no shadows on the ground, nothing overlapping, no particles, mist, sparks or effects of any kind (the game adds those). Solid, chunky, toy-like forms with bold silhouettes; no fine detail.
+
+Row 1. Earth tower shield: a tall rectangular slab of carved grey-brown stone, about twice as tall as it is wide, thick and heavy, slightly tapered at the bottom, its edges chipped in big chunks, with three or four large rounded stones set into its face. No glow, no lava, no cracks of light.
+Row 2. Ice spike shield: a large kite shape of clear white-blue faceted ice, pointed at the bottom, with long thick ice spikes jutting outward from its edges and a few from its face, so its silhouette is a spiky star-kite.
+Row 3. Frost shield: a round shield of steel-blue metal, gently domed, with a thick raised rim crusted with chunky white frost and rime lumps, and a simple raised boss in the middle.

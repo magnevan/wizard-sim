@@ -244,14 +244,51 @@ function makeGl(): Gl | null {
  * The material writes the two layers: each part's flat colour (sRGB) and the light against it. A hit flash turns the
  * whole body white.
  */
-function toon(m: THREE.MeshLambertMaterial, flash: { value: number }, seat?: Seat): THREE.MeshLambertMaterial {
+/** Seconds, for the animated shells (FX_GLSL); set once a draw by flushLive. */
+const fxTime = { value: 0 };
+/**
+ * The guards' animated shells (docs/explorations/2026-11-17-guard-refinement.md), by the Blender material's name:
+ * 1 a rainbow sweeping across (the Prism), 2 a slow hot pulse (the Ember's core), 3 a dithered see-through ward with
+ * rings rippling out (the Mirror's halo), 4 bands flowing across (the Tide's water). 0 for every other material.
+ */
+function fxModeOf(name: string): number {
+  if (/^arm magenta/.test(name)) return 1;
+  if (/^arm (flame core|ember red)/.test(name)) return 2;
+  if (/^arm halo/.test(name)) return 3;
+  if (/^arm water/.test(name)) return 4;
+  return 0;
+}
+// object-space position, so a pattern sticks to the prop as it moves; a 4x4 Bayer threshold for the ward's see-through
+const FX_GLSL = `
+  float bayer4(vec2 p) { ivec2 q = ivec2(mod(p, 4.0)); int i = q.x + q.y * 4;
+    int b[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5); return (float(b[i]) + 0.5) / 16.0; }`;
+const FX_FRAG = `
+  if (fxMode == 1) {
+    float hh = fract(dot(vFx, vec3(2.6, 1.9, 1.4)) - fxTime * 0.45);
+    albedo = mix(albedo, hsv2rgb(vec3(hh, 0.55, max(0.85, rgb2hsv(albedo).z))), 0.7);
+  } else if (fxMode == 2) {
+    ratio *= 0.8 + 0.3 * sin(fxTime * 4.0 + dot(vFx, vec3(9.0, 7.0, 8.0)));
+  } else if (fxMode == 3) {
+    float band = sin(length(vFx) * 55.0 - fxTime * 5.0);
+    if (bayer4(gl_FragCoord.xy * 0.5) > 0.42 + 0.3 * band) discard;
+    ratio *= 1.0 + 0.35 * max(band, 0.0);
+  } else if (fxMode == 4) {
+    ratio *= 0.85 + 0.3 * sin(dot(vFx, vec3(38.0, 27.0, 33.0)) - fxTime * 7.0);
+  }`;
+
+function toon(m: THREE.MeshLambertMaterial, flash: { value: number }, seat?: Seat, fxMode = 0): THREE.MeshLambertMaterial {
   m.onBeforeCompile = (sh) => {
+    sh.uniforms.fxMode = { value: fxMode };
+    sh.uniforms.fxTime = fxTime;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vFx;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvFx = position;');
     sh.uniforms.flash = flash;
     sh.uniforms.seatOn = seat?.on ?? { value: 0 };
     sh.uniforms.seatMain = seat?.main ?? { value: new THREE.Vector3() };
     sh.uniforms.seatTrim = seat?.trim ?? { value: new THREE.Vector3() };
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float flash; uniform float seatOn; uniform vec3 seatMain; uniform vec3 seatTrim;\nlayout(location = 1) out highp vec4 gRatio;\n' + TONE_GLSL)
+      .replace('#include <common>', '#include <common>\nuniform float flash; uniform float seatOn; uniform vec3 seatMain; uniform vec3 seatTrim;\nuniform int fxMode; uniform float fxTime; varying vec3 vFx;\nlayout(location = 1) out highp vec4 gRatio;\n' + TONE_GLSL + FX_GLSL)
       .replace('#include <opaque_fragment>', `
         vec3 albedo = toSrgb(diffuseColor.rgb);
         float ratio = lumaOf(toSrgb(outgoingLight)) / max(lumaOf(albedo), 0.03);
@@ -262,6 +299,7 @@ function toon(m: THREE.MeshLambertMaterial, flash: { value: number }, seat?: Sea
             else if (h.x >= 30.0 / 360.0 && h.x <= 58.0 / 360.0 && h.y > 0.6) albedo = clamp(seatTrim * min(1.1, h.z / 0.92), 0.0, 1.0);
           }
         }
+        ${FX_FRAG}
         #include <opaque_fragment>
         gl_FragColor = vec4(mix(albedo, vec3(1.0), flash), 1.0);
         gRatio = vec4(mix(ratio, 1.0, flash) * 0.4, 0.0, 0.0, 1.0);`);
@@ -280,7 +318,12 @@ interface Drop { node: THREE.Object3D; rest: THREE.Matrix4; box: THREE.Box3 }
  * A prop by name: its carrier, and in the carrier's frame its far end along its main axis (a soft prop's: the weapon's
  * tip, where its particles run to) and the middle of its shape (a guard's).
  */
-interface Carrier { name: string; node: THREE.Object3D; held: boolean; tip: THREE.Vector3 | null; mid: THREE.Vector3 }
+interface Carrier { name: string; node: THREE.Object3D; held: boolean; tip: THREE.Vector3 | null; mid: THREE.Vector3; axes: THREE.Vector3[] }
+/** A shape's three half-extents along its box's axes, longest first: a guard's face is the first two, its normal the last. */
+function halfAxes(box: THREE.Box3): THREE.Vector3[] {
+  const s = box.getSize(new THREE.Vector3()).multiplyScalar(0.5);
+  return [new THREE.Vector3(s.x, 0, 0), new THREE.Vector3(0, s.y, 0), new THREE.Vector3(0, 0, s.z)].sort((a, b) => b.length() - a.length());
+}
 interface Inst {
   seat: Seat; soft: Soft[]; drops: Drop[]; carriers: Carrier[]; bowOf: THREE.Object3D | null; hands: [THREE.Object3D, THREE.Object3D] | null;
   root: THREE.Group; shift: THREE.Group; turn: THREE.Group; body: THREE.Object3D; mixer: THREE.AnimationMixer;
@@ -327,7 +370,7 @@ function instance(slug: string, m: Model, original = false): Inst {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
     const src = mesh.material as THREE.MeshStandardMaterial;
-    mesh.material = original ? src.clone() : toon(new THREE.MeshLambertMaterial({ map: src.map, color: src.color, emissive: src.emissive, emissiveMap: src.emissiveMap }), flash, seat);
+    mesh.material = original ? src.clone() : toon(new THREE.MeshLambertMaterial({ map: src.map, color: src.color, emissive: src.emissive, emissiveMap: src.emissiveMap }), flash, seat, fxModeOf(src.name ?? ''));
     mesh.frustumCulled = false;
   });
   const turn = new THREE.Group(); turn.add(body);
@@ -378,7 +421,7 @@ function instance(slug: string, m: Model, original = false): Inst {
       for (let c = 0; c < 8; c++) far = Math.max(far, v1.set(c & 1 ? box.max.x : box.min.x, c & 2 ? box.max.y : box.min.y, c & 4 ? box.max.z : box.min.z).dot(d));
       tip = d.multiplyScalar(far);
     }
-    carriers.push({ name: pr.name ?? pr.node.replace(/ carrier$/, ''), node: n, held: /Hand$/.test(pr.bone), tip, mid: box.getCenter(new THREE.Vector3()) });
+    carriers.push({ name: pr.name ?? pr.node.replace(/ carrier$/, ''), node: n, held: /Hand$/.test(pr.bone), tip, mid: box.getCenter(new THREE.Vector3()), axes: halfAxes(box) });
   }
   // a bow's string is drawn only while its carrier shows (the wizard's ice bow waits hidden)
   let bowOf: THREE.Object3D | null = null;
@@ -567,7 +610,7 @@ function castPoint(inst: Inst, m: Model): THREE.Vector3 {
 
 /** Each live caster's hands last frame (art px from the feet), where its spells start (anchors tip and charge). */
 const tips = new Map<string, [number, number]>();
-type Held = Pick<Anchors, 'blade' | 'guard'>;
+type Held = Pick<Anchors, 'blade' | 'guard' | 'guardFrame'>;
 /** Each body's shown conjured weapon (grip to tip) and guard (its middle) last frame, art px from the feet (Anchors.blade, .guard). */
 const held = new Map<string, Held>();
 
@@ -581,7 +624,13 @@ function heldOf(inst: Inst, m: Model, key: string, o: typeof SMALL, cam: THREE.C
   for (const c of inst.carriers) {
     if (!c.node.visible || m.meta.show?.includes(c.name)) continue;
     if (c.held && c.tip) out.blade = [px(c.node.localToWorld(v1.set(0, 0, 0))), px(c.node.localToWorld(v1.copy(c.tip)))];
-    else if (!c.held) out.guard = px(c.node.localToWorld(v1.copy(c.mid)));
+    else if (!c.held) {
+      const g = out.guard = px(c.node.localToWorld(v1.copy(c.mid)));
+      const off = (a: THREE.Vector3): [number, number] => { const p = px(c.node.localToWorld(v1.copy(c.mid).add(a))); return [p[0] - g[0], p[1] - g[1]]; };
+      // the normal's world direction against the camera's: 1 when the face looks straight at it
+      const o0 = c.node.localToWorld(v2.copy(c.mid)), n = c.node.localToWorld(v3.copy(c.mid).add(c.axes[2])).sub(o0).normalize();
+      out.guardFrame = { u: off(c.axes[0]), v: off(c.axes[1]), face: -n.dot(cam.getWorldDirection(v1)) };
+    }
   }
   if (out.blade || out.guard) held.set(key, out); else held.delete(key);
 }
@@ -603,7 +652,7 @@ export function liveFrame(slug: string, p: LivePose, anchors: Anchors, who = 0):
   const slot = slots[k], key = slug + '|' + who, tip = tips.get(key);
   if (tip) anchors = { ...anchors, tip, charge: tip };
   const hd = held.get(key);
-  if (hd || anchors.blade || anchors.guard) anchors = { ...anchors, blade: hd?.blade, guard: hd?.guard };
+  if (hd || anchors.blade || anchors.guard) anchors = { ...anchors, blade: hd?.blade, guard: hd?.guard, guardFrame: hd?.guardFrame };
   booked.push({ slug, slot, pose: p, key });
   if (!slot.frame) slot.frame = { tex: slot.tex!, a: anchors, c: gl.out, sx: slot.cx, sy: slot.cy };
   else slot.frame = { ...slot.frame, a: anchors };
@@ -615,6 +664,7 @@ export function flushLive(): void {
   const g = gl;
   const used = booked.splice(0);
   nextSmall = 0; nextBig = 0;
+  fxTime.value = performance.now() / 1000;
   if (!g || !used.length) return;
   const { renderer, hiRT, lowRT, scene, stage } = g;
   // only the rows in use are cleared and shaded (top-down y0..y1 of the atlas; GL rows run bottom up)

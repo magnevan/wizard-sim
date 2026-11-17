@@ -408,6 +408,14 @@ export const ARMS = {
   emberDouseMin: 10,
   /** A Tide shield's block shoves a melee attacker back this hard. */
   tideShove: 8,
+  /**
+   * The Spike kite (Ice; explorations/2026-11-17-guard-refinement.md), the defensive one of the two that hurt: its block
+   * stops melee like the Bulwark's and stabs the attacker (spikeStab, a share of an Ice rune); Bristling stabs any melee
+   * attacker that lands a blow on you, from any side (spikeTouch). Its parry bursts spikes in a cone and leaves caltrops
+   * in front; its Retreat (Spike step) leaves caltrops where you stood: radius spikeCaltropR, lasting spikeCaltropLife s.
+   */
+  spikeStab: 0.6, spikeTouch: 0.3, spikeBurstRange: 2.5, spikeBurstHalf: 0.18, spikeBurstScale: 1,
+  spikeStep: 2, spikeCaltropR: 0.9, spikeCaltropLife: 4,
   // ---- Parry effects ----
   /** Bulwark: bashes down an attacker within bashRange, knocking it back at bashKnock. */
   bashRange: 3, bashKnock: 9,
@@ -450,5 +458,5 @@ export const ARMS = {
   /** ...and fades by this much flat a second as well, so it ends (about 20 s after a strong heal) without a floor. */
   blessFade: 0.02,
   /** What each guard takes before it breaks. */
-  hp: { mirror: 90, bulwark: 160, ember: 90, rime: 90, spark: 45, tide: 90, prism: 90, leaf: 90 },
+  hp: { mirror: 90, bulwark: 160, ember: 90, rime: 90, spark: 45, tide: 90, prism: 90, leaf: 90, spike: 120 },
 };

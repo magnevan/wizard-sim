@@ -63,8 +63,31 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="g3b">
+    <h2 id="g3b">Newest: guards, round 3, first pass in the game</h2>
+    <p>Your marks are in: every plan is a yes. From your notes: only the Mirror has the Shield shimmer, and every other guard bursts its own element's particles while blocking. Fire and Ice both hurt attackers, with Fire the damage-heavy one. The Leaf gets a new model. And, on your note about budget, I made more art and used Meshy for the solid cores.</p>
+    <h3>The pictures (Codex)</h3>
+    <figure><img class="photo" src="img/g3-vibe-a.jpg" alt="Five red wizards, each holding a magic shield with its effect playing: a stone tower slab shedding dust and pebbles, a spiky ice kite shedding shards, a frosted round shield pouring cold mist to the ground, a floating silver ring crackling with violet lightning, and a round disc of water spraying out from a water ball at the hand."><figcaption>Vibe A: what the guards should feel like in play, effects included. Earth, Ice, Frost, Lightning, Water.</figcaption></figure>
+    <div class="rate" id="g3-art-vibe-a-rate"></div>
+    <figure><img class="photo" src="img/g3-vibe-b.jpg" alt="Five shields shown alone and then with their effects: a castle-rampart stone tower crumbling, a crown of ice crystals throwing shards, a frosted dome shield pouring fog, a studded silver ring with lightning between the studs, and a water sphere spraying a flat whirling fan of water."><figcaption>Vibe B, a more playful take: the Earth tower as a castle rampart, the Water as a flat sprinkler disc.</figcaption></figure>
+    <div class="rate" id="g3-art-vibe-b-rate"></div>
+    <div class="grid2">
+      <figure><img class="photo" src="img/g3-cores-a.jpg" alt="Three shield models front and three-quarter: a tall brown stone slab with big rounded stones set in it, a blue ice kite bristling with spikes, and a round steel-blue shield with thick white frost lumps on its rim."><figcaption>Cores for Meshy: Earth, Ice, Frost.</figcaption></figure>
+      <figure><img class="photo" src="img/g3-cores-b.jpg" alt="Five cores front and three-quarter: a fan of three green leaves with pale midribs and a bud, a disc of dark cracked rock glowing orange in its cracks, a studded silver ring open in the middle, a domed gold buckler, and a swirling blue and white water sphere."><figcaption>Cores: Leaf, Ember, Spark ring, Mirror buckler, Tide core.</figcaption></figure>
+    </div>
+    <div class="rate" id="g3-art-cores-rate"></div>
+    <figure><img class="photo" src="img/g3-earth-infusions.jpg" alt="The same stone slab eight times: plain; split by glowing orange magma veins; crusted with frost on top; with blue ice crystals growing from its edges; with metal studs linked by violet lightning; wet with water running and dripping and a little moss; carved with glowing magenta runes and floating crystal shards; and overgrown with vines, ferns and white flowers."><figcaption>The Earth tower taking a second element: plain, Fire, Cold, Ice; Lightning, Water, Arcane, Life. This is the model for every solid guard's infusions.</figcaption></figure>
+    <div class="rate" id="g3-art-earth-rate"></div>
+    <h3>In the game</h3>
+    <p>What's built: the <b>Earth tower, Spike kite, Frost shield and Leaf</b> are now Meshy models made from the core sheets (60 credits). The Ember is only its molten disc, with the flames as particles; the Spark is a bare silver ring with lightning arcing across it. The <b>Prism</b>'s colours sweep across it, the Ember's core pulses, the <b>Mirror</b>'s halo is a see-through ripple, and the Tide's water flows. Every guard now stays upright whatever his arm does, so nothing hangs upside down or lies sideways. <b>Ice is its own guard</b> in the rules, the Spike kite: it blocks melee, stabs whoever hits you, and its parry and retreat leave caltrops. The Ember now sets any melee attacker alight.</p>
+    <figure><img src="img/g3-ingame.png" alt="Nine rows of the wizard in five facings, each with a guard at his side: the gold buckler, the stone tower, the flaming ember disc, the spiky ice kite, the frosted round shield over a pool of mist, the silver ring with arcs, the water disc, the prism and the leaf fan."><figcaption>Five facings (south, south-east, east, north-east, south-west). Rows: Mirror, Earth, Ember, Spike (Ice), Rime (Frost), Spark, Tide, Prism, Leaf. The weapon is each element's.</figcaption></figure>
+    <figure><img src="img/g3-motion.gif" alt="Nine wizards seen from behind, each guard moving: flames licking round the ember, lightning crackling across the ring, mist falling from the frost shield, spray off the water, then all of them blocking with bursts of their element."><figcaption>In motion, seen from behind: a second idle, then blocking (each element bursts out of its guard). Top: Mirror, Earth, Ember, Spike, Rime. Bottom: Spark, Tide, Prism, Leaf.</figcaption></figure>
+    <div class="rate" id="g3-ingame-rate"></div>
+    <p>Not done yet: the Tide is still its old disc (its new core and leaning water disc are next), the Mirror keeps its old buckler, no infusion parts yet, and no raised-guard pose or size pass. You said size needs judging in the game, so that pass comes after you've seen these.</p>
+  </section>
+
   <section aria-labelledby="g3">
-    <h2 id="g3">Newest: guards, round 3, the plan</h2>
+    <h2 id="g3">Before that: guards, round 3, the plan</h2>
     <p>Your note: the guards in the game are a direct, static render of the concept art and miss everything in it that moves. You're right, and it's one cause. Each guard is a single rigid mesh with every part of the picture modelled, flames included. In the art, only the <b>core</b> is solid. (A correction: these were built in Blender from primitives, not by Meshy; Meshy is still available for a core if Blender looks too crude.)</p>
     <h3>Three layers per guard</h3>
     <ul class="opts">
@@ -551,6 +574,9 @@ for (const c of G3) {
   const pl = el('p'); pl.append(el('b', '', 'Plan: '), document.createTextNode(c.plan + ' '), el('span', 'pick', c.art));
   box.append(el('h3', '', c.name), v, pl, r); $('g3-picks').append(box);
 }
+for (const [id, what, ph] of [['g3-art-vibe-a', 'Vibe A', 'Which guard to change, and how'], ['g3-art-vibe-b', 'Vibe B', 'Anything from B to take (the rampart tower, the sprinkler disc)'],
+  ['g3-art-cores', 'The cores', 'Which core to redo'], ['g3-art-earth', 'Earth infusions', 'Which version to change'], ['g3-ingame', 'In the game', 'Size, effects, which guard reads wrong']])
+  $(id + '-rate').append(el('b', '', what), marks('ratings', id, KRC), note('ratings', id, ph));
 $('g3-mix-rate').append(el('b', '', 'Infusions'), marks('ratings', 'g3-mix', YC), note('ratings', 'g3-mix', 'How extras should show'));
 const G3Q = [
   { id: 'g3-q-1-ice', title: "The Ice guard's rules", text: 'It blocks melee, stabs melee attackers, parries into a spike burst plus caltrops, and Retreat drops caltrops. It has less HP and weaker resistances than the Bulwark.',

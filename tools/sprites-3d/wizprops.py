@@ -11,7 +11,7 @@ import math
 import os
 import bmesh
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 _src = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'props.py')
 exec(compile(open(_src, encoding='utf-8-sig').read(), _src, 'exec'), globals())   # mat, rod, box, cone, GRIP, bow...
@@ -195,6 +195,56 @@ V = Vector((0, 0, 1))                 # across it
 C = Vector((0.26, 0, 0)) + N * 0.17   # over the hand, as the goblin shield
 
 
+MESHY_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output', 'guards-r3')
+
+
+def meshy(name, height, lift=0.0, flip=1):
+    """A guard core built by Meshy (round 3; output/guards-r3/<name>.glb, from input/guards-r3/<name>.png), as one prop
+    part: its picture's up toward the elbow (-U, so it hangs the right way up as the arm hangs), its face out along N,
+    `height` tall along the forearm, centred over the hand (C) and `lift` further out. Its materials are renamed
+    'arm meshy <name>' so the game's shells (live3d.ts fxModeOf) can tell them apart from the body's."""
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=os.path.join(MESHY_DIR, name + '.glb'))
+    new = [o for o in bpy.data.objects if o not in before]
+    meshes = [o for o in new if o.type == 'MESH']
+    for o in new:
+        if o.type != 'MESH': o.select_set(False)
+    bpy.ops.object.select_all(action='DESELECT')
+    for o in meshes: o.select_set(True)
+    bpy.context.view_layer.objects.active = meshes[0]
+    if len(meshes) > 1: bpy.ops.object.join()
+    o = bpy.context.view_layer.objects.active
+    o.parent = None
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    for x in new:
+        if x.type != 'MESH': bpy.data.objects.remove(x)
+    o.name = name + ' core'
+    for k, m in enumerate(o.data.materials):
+        if not m: continue
+        m.name = 'arm meshy ' + name + (str(k) if k else '')
+        # Meshy's 2K texture is far more than a guard a dozen pixels across needs: 256 px keeps the model small
+        for nd in (m.node_tree.nodes if m.use_nodes else []):
+            if nd.type == 'TEX_IMAGE' and nd.image and nd.image.size[0] > 256: nd.image.scale(256, 256)
+    def box():
+        return (Vector([min(v.co[i] for v in o.data.vertices) for i in range(3)]),
+                Vector([max(v.co[i] for v in o.data.vertices) for i in range(3)]))
+    # built from a three-quarter view, a core can come back turned about its upright axis: turn it so it is thinnest
+    # front to back (Blender Y), the face toward -Y; `flip` turns it round when its back ends up in front
+    xy = [(v.co.x, v.co.y) for v in o.data.vertices]
+    def depth(a):
+        c, s_ = math.cos(a), math.sin(a)
+        ys = [-s_ * x + c * y for x, y in xy]
+        return max(ys) - min(ys)
+    best = min((k * math.pi / 72 for k in range(72)), key=depth)
+    o.data.transform(Matrix.Rotation(-best + (math.pi if flip < 0 else 0), 4, 'Z'))
+    lo, hi = box()
+    mid, s = (lo + hi) / 2, height / max(1e-6, hi.z - lo.z)
+    # columns: the model's +X (its right) to -V, its +Y (its back; glTF's front is Blender's -Y) to -N, its +Z (up) to -U
+    rot = Matrix(((-V.x, -N.x, -U.x), (-V.y, -N.y, -U.y), (-V.z, -N.z, -U.z))).to_4x4()
+    o.matrix_world = Matrix.Translation(C + N * lift) @ rot @ Matrix.Scale(s, 4) @ Matrix.Translation(-mid)
+    return o
+
+
 def mirror():
     # sheet C: a polished gold mirror disc inside a halo of golden light
     return [disc('mirror disc', C + N * 0.02, N, 0.17, 0.05, GOLD()),
@@ -204,6 +254,11 @@ def mirror():
 
 
 def bulwark():
+    # round 3 (Meshy, from docs/reference/wizard-arms/r3/): the Earth tower shield: a tall slab of carved stone with big set stones, shoulder height, no magma (the user: that's Fire's); dust and grit are the game's particles
+    return [meshy('bulwark', 0.95)]
+
+
+def bulwark_r2():
     # sheet A: a tall slab of torn-up rock, clods of earth on its edges, glowing cracks across the face
     pts = [(-0.24, -0.42), (0.10, -0.46), (0.26, -0.20), (0.24, 0.30), (0.10, 0.48), (-0.20, 0.44), (-0.27, 0.05)]
     parts = [slab('bulwark slab', pts, 0.14, ROCK(), C + N * 0.04, V, U)]
@@ -216,18 +271,18 @@ def bulwark():
 
 
 def ember():
-    # sheet A: a round shield of molten rock round a white-hot core, ringed by tongues of flame
-    parts = [disc('ember rock', C + N * 0.02, N, 0.26, 0.08, EMBER_RED()),
-             ball('ember core', C + N * 0.07, 0.10, FLAME_CORE(), scale=(1, 0.5, 1))]
-    for k in range(9):
-        a = k / 9 * math.tau
-        out = V * math.cos(a) + U * math.sin(a)
-        b = C + out * 0.22 + N * 0.02
-        parts.append(cone('ember tongue' + str(k), b, b + out * 0.16 + (V * -math.sin(a) + U * math.cos(a)) * 0.05, 0.07, FLAME(), verts=5))
-    return parts
+    # round 3: only the molten core is solid, a disc of dark rock round a white-hot middle (its shell pulses); the
+    # flames round its rim are the game's particles (art/guard-fx.ts), no longer rigid cones
+    return [disc('ember rock', C + N * 0.02, N, 0.30, 0.08, EMBER_RED()),
+            ball('ember core', C + N * 0.07, 0.12, FLAME_CORE(), scale=(1, 0.5, 1))]
 
 
 def rime():
+    # round 3 (Meshy, from docs/reference/wizard-arms/r3/): the Rime shield (Frost): round steel-blue metal crusted with white rime; the mist falling off it is the game's particles
+    return [meshy('rime', 0.62)]
+
+
+def rime_r2():
     # sheet A: a kite of faceted ice, frosted along its upper edges, pointed at the bottom (toward the elbow)
     pts = [(-0.24, 0.30), (0.24, 0.30), (0.26, 0.05), (0.0, -0.42), (-0.26, 0.05)]
     parts = [slab('rime kite', pts, 0.07, ICE(), C + N * 0.02, V, U),
@@ -237,19 +292,36 @@ def rime():
     return parts
 
 
+def spike():
+    # round 3 (Meshy, from docs/reference/wizard-arms/r3/): the Spike kite (Ice): a big kite of ice bristling with spikes, point down
+    return [meshy('spike', 0.85)]
+
+
+def spike_r2():
+    # round 3 stand-in (the Meshy core replaces it): the Spike kite, Ice's own guard, a big kite of ice pointed toward
+    # the hand (point down as the arm hangs; the Rime kite pointed the other way and read upside down), bristling
+    # with spikes from its edges and face
+    pts = [(-0.30, -0.34), (0.30, -0.34), (0.33, 0.02), (0.0, 0.50), (-0.33, 0.02)]
+    parts = [slab('spike kite', pts, 0.09, ICE(), C + N * 0.02, V, U),
+             slab('spike facet', [(0, -0.28), (0.18, 0.0), (0, 0.38), (-0.18, 0.0)], 0.11, CYAN(), C + N * 0.03, V, U)]
+    for k, (x, y, dx, dy) in enumerate(((-0.30, -0.34, -0.7, -0.7), (0.30, -0.34, 0.7, -0.7), (0.33, 0.02, 1, 0.1), (-0.33, 0.02, -1, 0.1),
+                                        (0.0, -0.34, 0, -1), (0.17, 0.26, 0.8, 0.5), (-0.17, 0.26, -0.8, 0.5))):
+        b = C + V * x + U * y + N * 0.03
+        parts.append(cone('spike edge' + str(k), b, b + (V * dx + U * dy).normalized() * 0.2, 0.06, FROST(), verts=5))
+    for k, (x, y) in enumerate(((0.0, 0.05), (-0.12, -0.15), (0.12, -0.15))):
+        b = C + V * x + U * y + N * 0.08
+        parts.append(cone('spike face' + str(k), b, b + N * 0.16, 0.05, FROST(), verts=5))
+    return parts
+
+
 def spark():
-    # sheet A: an open hoop of lightning, spiked, with a thin web of bolts across its middle (the weakest block)
-    parts = [ring('spark hoop', C + N * 0.02, N, 0.25, 0.04, VIOLET())]
-    for k in range(8):
-        a = k / 8 * math.tau + 0.2
-        out = V * math.cos(a) + U * math.sin(a)
-        parts.append(cone('spark spike' + str(k), C + out * 0.25 + N * 0.02, C + out * 0.36 + N * 0.02, 0.04, VIOLET(), verts=4))
-    for k in range(3):
-        a = k / 3 * math.tau
-        out = V * math.cos(a) + U * math.sin(a)
-        mid = C + out * 0.10 + (V * -math.sin(a) + U * math.cos(a)) * 0.04 + N * 0.02
-        parts += [rod('spark web a' + str(k), C + N * 0.02, mid, 0.012, SPARK_WHITE(), verts=4),
-                  rod('spark web b' + str(k), mid, C + out * 0.24 + N * 0.02, 0.012, SPARK_WHITE(), verts=4)]
+    # round 3: a buckler's rim with no middle, silver-violet metal with six studs; the lightning arcing between points
+    # on it is the game's particles (art/guard-fx.ts), so the open centre stays open (the weakest block)
+    metal = mat('arm spark metal', (0.70, 0.66, 0.86))
+    parts = [ring('spark hoop', C + N * 0.02, N, 0.30, 0.035, metal)]
+    for k in range(6):
+        a = k / 6 * math.tau
+        parts.append(ball('spark stud' + str(k), C + (V * math.cos(a) + U * math.sin(a)) * 0.30 + N * 0.02, 0.05, SPARK_WHITE()))
     return parts
 
 
@@ -274,6 +346,11 @@ def prism():
 
 
 def leaf():
+    # round 3 (Meshy, from docs/reference/wizard-arms/r3/): the Leaf aegis: a fan of three big leaves with pale midribs and a bud, so it reads as leaves when small
+    return [meshy('leaf', 0.66)]
+
+
+def leaf_r2():
     # sheet A: a shield grown from big living leaves, a glowing midrib, a vine curling up the side to a bud
     blade = [(0, -0.40), (0.20, -0.20), (0.24, 0.08), (0.12, 0.30), (0, 0.40), (-0.12, 0.30), (-0.24, 0.08), (-0.20, -0.20)]
     parts = [slab('leaf blade', blade, 0.05, LEAF(), C + N * 0.03, V, U),
@@ -289,7 +366,10 @@ def leaf():
 
 PROPS = {'sword': sword, 'earthmaul': earthmaul, 'focus': focus, 'icebow': icebow, 'frostspear': frostspear, 'whip': whip,
          'trident': trident, 'mirror': mirror, 'bulwark': bulwark, 'ember': ember, 'rime': rime, 'spark': spark, 'tide': tide,
-         'prism': prism, 'leaf': leaf}
+         'prism': prism, 'leaf': leaf, 'spike': spike}
 # long weapons are soft props (render.py ~k), kept near upright as the staff is, instead of pointing out of the fist
 PROP_AXIS = {'sword': tuple(UP), 'focus': tuple(UP), 'frostspear': tuple(UP), 'trident': tuple(UP), 'whip': tuple(UP),
              'earthmaul': tuple(Vector((0.30, 0, 1)).normalized()), 'icebow': (0, 0, 1)}
+# the guards' picture-up is toward the elbow (-U): kept upright, a tower shield stands and a kite hangs point down
+# however the forearm is held (round 3: the Rime kite read upside down, the tower lay on its side)
+PROP_AXIS.update({g: (-1, 0, 0) for g in ('mirror', 'bulwark', 'ember', 'rime', 'spark', 'tide', 'prism', 'leaf', 'spike')})

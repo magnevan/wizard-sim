@@ -86,7 +86,7 @@ Claude's pick: code deaths, borrowing the Codex strip's ideas as code (the dropp
 
 The user's constraint: PixelLab animation is too dear for iteration (and glitchy: the south-west attack swaps hands, east uses the left hand, north hits behind its back), and the goal is roughly a warband a day, which no per-frame budget covers. They asked to try three model sources: one built by Claude in Blender, one made by Codex, and image-to-3D (Meshy's free tier, driven by the user).
 
-The pipeline (`tools/goblin-3d/`): a model on a shared goblin skeleton, the moves as code (walk, run, attack), every frame rendered from the game's camera in 8 directions, then turned into pixel art. All free; 240 frames in about 40 seconds.
+The pipeline (`tools/sprites-3d/`): a model on a shared goblin skeleton, the moves as code (walk, run, attack), every frame rendered from the game's camera in 8 directions, then turned into pixel art. All free; 240 frames in about 40 seconds.
 
 - **Claude's model** (`raider.py`, primitives): reads as the goblin, simple and round; the face is weak and the hood reads a little like a helmet.
 - **Codex's model** (`raider_codex.py`, a Blender script Codex wrote from the turnaround, and checked in Blender itself): the better design, with a real hood opening, a scowl and wrapped forearms. It came back in one try and needed no fixes.

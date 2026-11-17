@@ -1,6 +1,6 @@
-"""Render a goblin model through the shared rig: every move, 8 directions, the game's camera. No generation calls.
+"""Render a character model through the shared rig: every move, 8 directions, the game's camera. No generation calls.
 
-  blender --background --python tools/goblin-3d/render.py -- <model> <out_dir> [moves] [--preview] [--add=<model.py>:<bone>] [--height=<k>]
+  blender --background --python tools/sprites-3d/render.py -- <model> <out_dir> [moves] [--preview] [--add=<model.py>:<bone>] [--height=<k>]
 
 <model> is a .py that builds parts named after bones (raider.py, raider_codex.py) or a .glb/.obj/.fbx mesh
 (image-to-3D), which is scaled to the rig's height and bound with automatic weights.

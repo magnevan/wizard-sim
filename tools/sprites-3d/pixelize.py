@@ -1,6 +1,6 @@
 """Renders from render.py -> pixel-art frames. No generation calls.
 
-  python tools/goblin-3d/pixelize.py <renders_dir> <out_dir>
+  python tools/sprites-3d/pixelize.py <renders_dir> <out_dir>
 
 Each frame comes as a lit render (fNN.png) and a flat one (fNN_flat.png, every part its own base colour), both at 4x.
 For each art pixel (a 4x4 block):

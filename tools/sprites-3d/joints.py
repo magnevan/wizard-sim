@@ -1,7 +1,7 @@
 """Draw a 0.1-unit grid and the skeleton over render.py --joints-view output, for fitting joints to an imported model.
 
-  blender --background --python tools/goblin-3d/render.py -- <model.glb> <dir> --joints-view [--add=...]
-  python tools/goblin-3d/joints.py <dir> rest|raw [model.joints.json]
+  blender --background --python tools/sprites-3d/render.py -- <model.glb> <dir> --joints-view [--add=...]
+  python tools/sprites-3d/joints.py <dir> rest|raw [model.joints.json]
 
 Writes <dir>/joints-<pose>.png: the front view left, the side view right (the goblin faces left there). The skeleton is
 drawn on "rest" only (yellow middle, blue left, red right). Read the joint positions off the grid into <model>.joints.json;

@@ -1,9 +1,9 @@
-# Goblins from 3D
+# Sprites from 3D
 
-Goblin sprites from 3D models: a model goes on a shared skeleton, code poses it (walk, run, attack), and every frame is rendered from the game's camera in 8 directions and turned into pixel art. No generation calls; a full set (4 moves, 8 directions, 240 frames) takes about 40 seconds. It's the spike for making motion cheap enough for a warband a day (`docs/explorations/2026-11-16-warband-art.md`, "From 3D models").
+Character sprites from 3D models, for any creature (the goblin warband was first, and its hooded raider is the worked example): a model goes on a shared skeleton, code poses it (walk, run, attack), and every frame is rendered from the game's camera in 8 directions and turned into pixel art. No generation calls; a full set (4 moves, 8 directions, 240 frames) takes about 40 seconds. It's the spike for making motion cheap enough for a warband a day (`docs/explorations/2026-11-16-warband-art.md`, "From 3D models").
 
 ```
-tools/goblin-3d/run.sh <work-dir> "Codex 3D=tools/goblin-3d/raider_codex.py" "Meshy 3D=tools/goblin-3d/output/model.glb|--add=tools/goblin-3d/raider_codex.py:blade"
+tools/sprites-3d/run.sh <work-dir> "Codex 3D=tools/sprites-3d/raider_codex.py" "Meshy 3D=tools/sprites-3d/output/model.glb|--add=tools/sprites-3d/raider_codex.py:blade"
 ```
 
 That writes, per model, the 4x renders (`<name>/`), the game-size frames (`<name>-px/<move>/<direction>/fNN.png`), and, for all of them beside the PixelLab raider, `still.png` and `walk.gif`, `run.gif`, `attack.gif`. Needs Blender 5.2 (set `BLENDER` if it isn't in the default place) and Python with Pillow and numpy.
@@ -21,7 +21,7 @@ Codex draws the input (`prompts/meshy-front.txt`), the user makes the model in M
 
 Its proportions and rest pose won't match the skeleton, so each model gets `<model>.joints.json` beside it, once:
 
-1. `blender --background --python tools/goblin-3d/render.py -- output/model.glb <dir> --joints-view`, then `python tools/goblin-3d/joints.py <dir> raw`: front and side views on a 0.1-unit grid.
+1. `blender --background --python tools/sprites-3d/render.py -- output/model.glb <dir> --joints-view`, then `python tools/sprites-3d/joints.py <dir> raw`: front and side views on a 0.1-unit grid.
 2. Read the joints off the grid into `joints` (`.R` bones mirror `.L` ones); bones not given ride along with their parent, so a grafted blade follows the hand. `rest` turns the model's own pose into the skeleton's A-pose (Meshy's arms stick out at about 50 degrees: `["upper_arm.L", "Y", 22]`).
 3. Re-run with `rest` and the json (`joints.py <dir> rest output/model.joints.json`) and check the arms hang where the skeleton's do.
 
@@ -32,7 +32,7 @@ Its proportions and rest pose won't match the skeleton, so each model gets `<mod
 The other route skips the joints fit: Meshy rigs the model and animates it from its library, and render.py plays those clips instead of our code moves.
 
 ```
-blender --background --python tools/goblin-3d/render.py -- output/meshy-rig/clips.glb <dir> [clip[=frames],...] --anim --elev=20 --add=tools/goblin-3d/raider_codex.py:blade
+blender --background --python tools/sprites-3d/render.py -- output/meshy-rig/clips.glb <dir> [clip[=frames],...] --anim --elev=20 --add=tools/sprites-3d/raider_codex.py:blade
 ```
 
 - Clips are picked by name (`left_slash`, a substring of `Armature|Left_Slash|baselayer` works); with none, every clip in the file renders at 12 fps. Output folders take the clip's short name, so rename them to `walk`/`run`/`attack` before `sheet.py`.

@@ -1,7 +1,7 @@
 """Comparison images on dirt, 4x, feet aligned. No generation calls.
 
-  python tools/goblin-3d/sheet.py still <out.png> <label>=<dir> ...        one row per source: 8 directions standing
-  python tools/goblin-3d/sheet.py gif <out.gif> <move> <label>=<dir> ...   one row per source: the move in 4 directions
+  python tools/sprites-3d/sheet.py still <out.png> <label>=<dir> ...        one row per source: 8 directions standing
+  python tools/sprites-3d/sheet.py gif <out.gif> <move> <label>=<dir> ...   one row per source: the move in 4 directions
 
 A source dir is pixelize.py output (<move>/<direction>/fNN.png) or a PixelLab character dir (rotations/, animations/).
 """

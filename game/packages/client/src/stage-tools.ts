@@ -8,11 +8,12 @@
  *                        the core's own attack code; with nobody there it swings at the air. Standing, it faces the cursor.
  *                        While a puppet is held the mouse is the puppet's; the keyboard still drives your wizard.
  *   Weapon               conjure any weapon (or the wand) at once, and it doesn't wear out.
+ *   Guard                conjure any of the eight guards at once, at full strength.
  *
  * All of it is dev world edits (sim dev.ts: devStage wraps the mode's enemy rules), off online like every cheat.
  * While the panel is open, K takes the enemy nearest the cursor as the puppet (or lets it go).
  */
-import { AI, ARCHETYPES, DEV_WEAPONS, KIND, STRUCT, atan2Turns, devConjure, devPuppetAttack, devSpawnEnemy, devStage, devStageOff, type DevStage, type World } from '@wizard-sim/sim';
+import { AI, ARCHETYPES, DEV_GUARDS, DEV_WEAPONS, KIND, STRUCT, atan2Turns, devConjure, devGuard, devPuppetAttack, devSpawnEnemy, devStage, devStageOff, type DevStage, type World } from '@wizard-sim/sim';
 import type { Camera } from './camera';
 import { h } from './debug-panel';
 
@@ -165,6 +166,11 @@ export class StageTools {
     const give = (what: number | 'wand') => { if (!this.cheat()) return; devConjure(this.world, 0, what); this.kept = what === 'wand' ? 0 : what; };
     for (const [name, what] of DEV_WEAPONS) wl.append(btn(name.split(' ')[0], () => give(what), `P1 conjures the ${name}; it doesn't wear out`));
     wl.append(btn('none', () => give(0), 'Put it away'));
+    const gl = line();
+    gl.append(h('span', 'tune-k', 'Guard'));
+    const guard = (id: number) => { if (this.cheat()) devGuard(this.world, 0, id); };
+    for (const [name, id] of DEV_GUARDS) gl.append(btn(name, () => guard(id), `P1 conjures the ${name} guard at full strength`));
+    gl.append(btn('none', () => guard(0), 'Put it away'));
     if (import.meta.env.DEV) {
       const a = h('a', '', 'Model Viewer');
       a.href = './models.html'; a.target = '_blank';

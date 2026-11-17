@@ -73,15 +73,165 @@
    "firm": [
     "attack0"
    ]
+  },
+  {
+   "node": "sword carrier",
+   "axis": "sword carrier axis",
+   "k": 0.25,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "earthmaul carrier",
+   "axis": "earthmaul carrier axis",
+   "k": 0.25,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "focus carrier",
+   "axis": "focus carrier axis",
+   "k": 0.25,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "icebow carrier",
+   "axis": "icebow carrier axis",
+   "k": 0.25,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "frostspear carrier",
+   "axis": "frostspear carrier axis",
+   "k": 0.25,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "whip carrier",
+   "axis": "whip carrier axis",
+   "k": 0.25,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "trident carrier",
+   "axis": "trident carrier axis",
+   "k": 0.25,
+   "firm": [
+    "attack0"
+   ]
   }
  ],
  "height": 2.5344,
  "props": [
   {
    "node": "staff carrier",
+   "name": "staff",
    "bone": "RightHand",
    "drop": true
+  },
+  {
+   "node": "sword carrier",
+   "name": "sword",
+   "bone": "RightHand",
+   "drop": true
+  },
+  {
+   "node": "earthmaul carrier",
+   "name": "earthmaul",
+   "bone": "RightHand",
+   "drop": true
+  },
+  {
+   "node": "focus carrier",
+   "name": "focus",
+   "bone": "RightHand",
+   "drop": true
+  },
+  {
+   "node": "icebow carrier",
+   "name": "icebow",
+   "bone": "RightHand",
+   "drop": true
+  },
+  {
+   "node": "frostspear carrier",
+   "name": "frostspear",
+   "bone": "RightHand",
+   "drop": true
+  },
+  {
+   "node": "whip carrier",
+   "name": "whip",
+   "bone": "RightHand",
+   "drop": true
+  },
+  {
+   "node": "trident carrier",
+   "name": "trident",
+   "bone": "RightHand",
+   "drop": true
+  },
+  {
+   "node": "mirror carrier",
+   "name": "mirror",
+   "bone": "LeftForeArm",
+   "drop": false
+  },
+  {
+   "node": "bulwark carrier",
+   "name": "bulwark",
+   "bone": "LeftForeArm",
+   "drop": false
+  },
+  {
+   "node": "ember carrier",
+   "name": "ember",
+   "bone": "LeftForeArm",
+   "drop": false
+  },
+  {
+   "node": "rime carrier",
+   "name": "rime",
+   "bone": "LeftForeArm",
+   "drop": false
+  },
+  {
+   "node": "spark carrier",
+   "name": "spark",
+   "bone": "LeftForeArm",
+   "drop": false
+  },
+  {
+   "node": "tide carrier",
+   "name": "tide",
+   "bone": "LeftForeArm",
+   "drop": false
+  },
+  {
+   "node": "prism carrier",
+   "name": "prism",
+   "bone": "LeftForeArm",
+   "drop": false
+  },
+  {
+   "node": "leaf carrier",
+   "name": "leaf",
+   "bone": "LeftForeArm",
+   "drop": false
   }
+ ],
+ "show": [
+  "staff"
  ],
  "tris": 5000,
  "bones": [

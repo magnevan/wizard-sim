@@ -1460,17 +1460,20 @@ export class StructureView {
     if (!v.a) return;
     const el = elName(w.seats.weapon[i]), side = P(1, 4, 8)[2];
     let c = side < -3.5 ? g : o;
-    const h: Pt = [v.x + v.a.hands[WEAPON_HAND][0], v.y + v.a.hands[WEAPON_HAND][1]];
+    // Drawn live in 3D (art/live3d.ts), the weapon is the model's own prop: only its effects are drawn here, along the
+    // prop from grip to tip as it is on screen (the 3D clip swings it, so no 2D blow either). `body` draws the 2D weapon.
+    const live = v.a.blade, body = !live;
+    const h: Pt = live ? [v.x + live[0][0], v.y + live[0][1]] : [v.x + v.a.hands[WEAPON_HAND][0], v.y + v.a.hands[WEAPON_HAND][1]];
     const fwd = Math.sign(P(1, 0, 0)[0] - v.x) || 1;
     // held up and a little forward
     const rest = (L: number, lean = 0.45): Pt => [h[0] + fwd * L * lean, h[1] - L * Math.sqrt(1 - lean * lean)];
-    let dir = rest;
+    let dir = live ? (): Pt => [v.x + live[1][0], v.y + live[1][1]] : rest;
     // a blow in progress: the Strike thrusts the weapon out along the aim and back; the Sweep spins it once round you
     const age = this.st - this.blowT0[i], kind = this.blowKind[i];
     // The Strike's recovery is drawn as its follow-through (ARMS.strikeRecovery): out fast, a beat held, then
     // back to rest slowly over the weapon's recovery, so the rhythm is seen, not a hidden cooldown.
     const dur = Math.max(THRUST, (ARMS.strikeRecovery as Record<string, number>)[el] ?? THRUST);
-    if (kind === 1 && age >= 0 && age < dur) {
+    if (live) { /* the 3D clip swings it */ } else if (kind === 1 && age >= 0 && age < dur) {
       const out = 0.07, m = age < out ? smooth(age / out) : 1 - smooth(clamp((age - out - 0.05) / (dur - out - 0.05), 0, 1)), a = this.blowAng[i], cx = Math.cos(a), cy = Math.sin(a) * FY;
       dir = (L, lean = 0.45) => { const r0 = rest(L, lean), ext = L * (1 + 0.45 * m); return [lerp(r0[0], h[0] + cx * ext, m), lerp(r0[1], h[1] - 3 + cy * ext, m)]; };
       if (m > 0.5) c = Math.sin(a) < -0.3 ? g : o;
@@ -1497,17 +1500,21 @@ export class StructureView {
     if (el === 'earth') {
       const tp = dir(11 * k, 0.35);
       blade = [[h[0], h[1] + 2], tp];
-      X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#1a120c', 3); X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#8a6a48', 1);
-      X.rect(c, tp[0] - 4, tp[1] - 3, 8, 6, '#1a120c'); X.rect(c, tp[0] - 3, tp[1] - 2, 6, 4, X.EARTH[2]); X.rect(c, tp[0] - 3, tp[1] - 2, 6, 1, X.EARTH[0]); X.rect(c, tp[0] - 3, tp[1] + 1, 6, 1, X.EARTH[4]);
-      X.px(c, tp[0] + 1, tp[1], X.EARTH[3]);
+      if (body) {
+        X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#1a120c', 3); X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#8a6a48', 1);
+        X.rect(c, tp[0] - 4, tp[1] - 3, 8, 6, '#1a120c'); X.rect(c, tp[0] - 3, tp[1] - 2, 6, 4, X.EARTH[2]); X.rect(c, tp[0] - 3, tp[1] - 2, 6, 1, X.EARTH[0]); X.rect(c, tp[0] - 3, tp[1] + 1, 6, 1, X.EARTH[4]);
+        X.px(c, tp[0] + 1, tp[1], X.EARTH[3]);
+      } else for (const p of emit(t, 4, 0.7, (q, age) => ({ x: tp[0] + (rand(q, 5, i) - 0.5) * 6, y: tp[1] + age * age * 16, age }))) X.px(o, p.x, p.y, p.age < 0.4 ? X.EARTH[1] : X.EARTH[3]);   // grit falling off the head
     } else if (el === 'arcane') {
       // the Arcane wand: a short dark rod with a violet orb at its tip; Siphon makes the orb swell and motes circle it
       const tp = dir(10 * k, 0.55), sip = w.seats.specT[i] > 0, r = (sip ? 2.8 + Math.sin(t * 12) * 0.5 : 2.2) * k + 0.5;
-      X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#120e1a', 3); X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#5a3a6a', 1);
+      if (body) { X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#120e1a', 3); X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#5a3a6a', 1); }
       X.glow(o, tp[0], tp[1], sip ? 10 : 6, EL.arcane[2], 0.6);
-      X.ellipse(c, tp[0], tp[1], r + 1, r + 1, '#120e1a');
-      X.ellipse(c, tp[0], tp[1], r, r, EL.arcane[3]); X.ellipse(c, tp[0] - 0.4, tp[1] - 0.4, r * 0.66, r * 0.66, EL.arcane[2]);
-      X.px(c, tp[0] - 1, tp[1] - 1, '#ffffff');
+      if (body) {
+        X.ellipse(c, tp[0], tp[1], r + 1, r + 1, '#120e1a');
+        X.ellipse(c, tp[0], tp[1], r, r, EL.arcane[3]); X.ellipse(c, tp[0] - 0.4, tp[1] - 0.4, r * 0.66, r * 0.66, EL.arcane[2]);
+        X.px(c, tp[0] - 1, tp[1] - 1, '#ffffff');
+      } else for (let q = 0; q < 3; q++) { const a = t * 3 + (q / 3) * TAU; X.px(Math.sin(a) < 0 ? g : o, tp[0] + Math.cos(a) * 4, tp[1] + Math.sin(a) * 2, q ? EL.arcane[1] : '#ffffff'); }   // motes round the orb
       blade = [[h[0], h[1] + 2], tp];
       // the wand's orb carries its extras too: a ring of their colours round it
       A.around(o, tp[0], tp[1], r + 2.5, r + 2.5, extras, t, i * 7);
@@ -1516,12 +1523,12 @@ export class StructureView {
     } else if (el === 'fire') {
       const tp = dir(14 * k, 0.4);
       blade = [[h[0], h[1] - 1], tp];
-      X.line(c, h[0] - fwd * 3, h[1] + 1, h[0] + fwd * 3, h[1] - 1, '#3a2a1a', 2); X.px(c, h[0], h[1] + 2, '#3a2a1a');
-      // a blade of flame: a hot body with tongues licking up along it, a white core
+      if (body) { X.line(c, h[0] - fwd * 3, h[1] + 1, h[0] + fwd * 3, h[1] - 1, '#3a2a1a', 2); X.px(c, h[0], h[1] + 2, '#3a2a1a'); }
+      // a blade of flame: a hot body with tongues licking up along it, a white core (live: the tongues on the 3D blade, from past the hilt)
       X.glow(c, lerp(h[0], tp[0], 0.6), lerp(h[1], tp[1], 0.6), 7, EL.fire[2], 0.6);
-      X.line(c, h[0], h[1] - 1, tp[0], tp[1], EL.fire[4], 3); X.line(c, h[0], h[1] - 1, tp[0], tp[1], EL.fire[2], 2);
-      for (let q = 0; q < 7; q++) { const f = q / 7, x = lerp(h[0], tp[0], f), y = lerp(h[1], tp[1], f); K.tongue(c, x, y + 2, 1.9 * (1 - f * 0.5), 4 + 2.5 * Math.sin(t * 14 + q * 1.7), Math.sin(t * 9 + q) * 0.8); }
-      X.line(c, h[0], h[1] - 1, tp[0], tp[1], EL.fire[0], 1); X.px(c, tp[0], tp[1], '#ffffff');
+      if (body) { X.line(c, h[0], h[1] - 1, tp[0], tp[1], EL.fire[4], 3); X.line(c, h[0], h[1] - 1, tp[0], tp[1], EL.fire[2], 2); }
+      for (let q = body ? 0 : 2; q < 7; q++) { const f = q / 7, x = lerp(h[0], tp[0], f), y = lerp(h[1], tp[1], f); K.tongue(c, x, y + 2, (body ? 1.9 : 1.4) * (1 - f * 0.5), (body ? 4 : 3) + 2.5 * Math.sin(t * 14 + q * 1.7), Math.sin(t * 9 + q) * 0.8); }
+      if (body) { X.line(c, h[0], h[1] - 1, tp[0], tp[1], EL.fire[0], 1); X.px(c, tp[0], tp[1], '#ffffff'); }
       for (const p of emit(t, 10, 0.5, (q, age) => ({ x: lerp(h[0], tp[0], rand(q, 2, i)) + Math.sin(age * 7 + q), y: lerp(h[1], tp[1], rand(q, 2, i)) - age * 9, age }))) X.px(o, p.x, p.y, K.fireCol(0.3 + p.age * 0.7));
       light(tp[0], v.y, 30, '#ff7020', 0.5);
     } else if (el === 'ice') {
@@ -1529,29 +1536,33 @@ export class StructureView {
       const I = EL.ice, draw = w.seats.handT[i] > TAP ? heavyCharge(w.seats.handT[i]) : 0;
       const top: Pt = [h[0] + fwd * 1, h[1] - 10 * k], bot: Pt = [h[0] + fwd * 1, h[1] + 5 * k], limbs: Pt[] = [];
       for (let q = 0; q <= 8; q++) { const f = q / 8, s = f * 2 - 1; limbs.push([lerp(top[0], bot[0], f) + fwd * 4 * k * (1 - s * s), lerp(top[1], bot[1], f)]); }
-      X.lines(c, limbs, I[5], 3); X.lines(c, limbs, I[2], 1);
-      X.px(c, top[0], top[1], '#ffffff'); X.px(c, bot[0], bot[1], I[1]);
       const nock: Pt = [h[0] - fwd * 4 * draw, h[1] - 2]; // the string's middle, pulled back as it draws
-      X.line(c, top[0], top[1], nock[0], nock[1], '#e8fbff', 1); X.line(c, nock[0], nock[1], bot[0], bot[1], '#e8fbff', 1);
+      if (body) {
+        X.lines(c, limbs, I[5], 3); X.lines(c, limbs, I[2], 1);
+        X.px(c, top[0], top[1], '#ffffff'); X.px(c, bot[0], bot[1], I[1]);
+        X.line(c, top[0], top[1], nock[0], nock[1], '#e8fbff', 1); X.line(c, nock[0], nock[1], bot[0], bot[1], '#e8fbff', 1);
+      } else if (Math.floor(t * 4 + i) % 5 === 0) { const tq = dir(0); X.px(o, tq[0], tq[1], '#ffffff'); }   // a glint off the upper limb
       if (draw > 0) {
         const tip: Pt = [h[0] + fwd * (7 + 2 * draw), h[1] - 2];
         X.line(c, nock[0], nock[1], tip[0], tip[1], I[3], 1); X.px(c, tip[0], tip[1], '#ffffff'); X.px(c, tip[0] - fwd, tip[1] - 1, I[1]);
         if (draw >= ARMS.fanPierceAt) X.glow(o, tip[0], tip[1], 5, I[2], 0.6); // full draw: it will pierce
       }
-      blade = limbs;
+      blade = live ? [h, dir(0)] : limbs;
       light(h[0], v.y, 24, I[3], 0.35 + 0.3 * draw);
     } else if (frosty(el)) {
       const tp = dir(15 * k, 0.25);
       blade = [[h[0], h[1] + 4], tp];
-      X.line(c, h[0], h[1] + 4, tp[0], tp[1], '#163e7a', 3); X.line(c, h[0], h[1] + 4, tp[0], tp[1], '#c4eefa', 1);
-      K.shard(c, tp[0], tp[1] - 2, -Math.PI / 2 + fwd * 0.25, 6, i * 3 + 1, 1);
+      if (body) { X.line(c, h[0], h[1] + 4, tp[0], tp[1], '#163e7a', 3); X.line(c, h[0], h[1] + 4, tp[0], tp[1], '#c4eefa', 1); K.shard(c, tp[0], tp[1] - 2, -Math.PI / 2 + fwd * 0.25, 6, i * 3 + 1, 1); }
+      // frost smoking off the head and sinking
+      else for (const p of emit(t, 6, 0.8, (q, age) => ({ x: tp[0] + (rand(q, 6, i) - 0.5) * 5 + age * 2, y: tp[1] + 1 + age * 6, age }))) X.px(o, p.x, p.y, p.age < 0.4 ? '#e8fbff' : '#9ff4ff');
       if (Math.floor(t * 4 + i) % 5 === 0) X.px(c, tp[0] - 1, tp[1] - 5, '#ffffff');
       light(tp[0], v.y, 24, '#9ff4ff', 0.35);
     } else if (el === 'lightning') {
       // the whip: a crackling lash hanging from the hand and swaying
       const pts: Pt[] = [];
-      for (let q = 0; q <= 8; q++) { const f = q / 8; pts.push([h[0] + fwd * f * 10 * k + Math.sin(t * 6 + f * 4) * f * 2, h[1] + f * f * 9 - f * 3 + Math.cos(t * 5 + f * 3) * f]); }
-      X.line(c, h[0], h[1], h[0] - fwd, h[1] + 2, '#3a2a4a', 2);
+      const e0: Pt = live ? dir(0) : h;   // live: the lash hangs from the 3D handle's end
+      for (let q = 0; q <= 8; q++) { const f = q / 8; pts.push([e0[0] + fwd * f * 10 * k + Math.sin(t * 6 + f * 4) * f * 2, e0[1] + f * f * 9 - f * 3 + Math.cos(t * 5 + f * 3) * f]); }
+      if (body) X.line(c, h[0], h[1], h[0] - fwd, h[1] + 2, '#3a2a4a', 2);
       if (Math.floor(t * 20) % 3 !== 2) { X.lines(c, pts, EL.lightning[3], 2); X.lines(c, pts, EL.lightning[1], 1); } else X.lines(c, pts, EL.lightning[2], 1);
       const e = pts[pts.length - 1]; X.px(c, e[0], e[1], '#ffffff');
       blade = pts;
@@ -1560,10 +1571,12 @@ export class StructureView {
       // the tide trident: a long shaft, a crossbar and three barbed prongs, water running off them
       const tp = dir(16 * k, 0.28); blade = [[h[0], h[1] + 3], tp];
       const L = Math.hypot(tp[0] - h[0], tp[1] - h[1]) || 1, fx = (tp[0] - h[0]) / L, fy = (tp[1] - h[1]) / L, nx = -fy, ny = fx;
-      X.line(c, h[0], h[1] + 3, tp[0], tp[1], '#1a2a3a', 3); X.line(c, h[0], h[1] + 3, tp[0], tp[1], '#6a8aa8', 1);
-      X.line(c, tp[0] - nx * 3.5, tp[1] - ny * 3.5, tp[0] + nx * 3.5, tp[1] + ny * 3.5, '#163a7a', 2);
-      X.line(c, tp[0] - nx * 3, tp[1] - ny * 3, tp[0] + nx * 3, tp[1] + ny * 3, EL.water[2], 1);
-      for (const sd of [-3, 0, 3]) {
+      if (body) {
+        X.line(c, h[0], h[1] + 3, tp[0], tp[1], '#1a2a3a', 3); X.line(c, h[0], h[1] + 3, tp[0], tp[1], '#6a8aa8', 1);
+        X.line(c, tp[0] - nx * 3.5, tp[1] - ny * 3.5, tp[0] + nx * 3.5, tp[1] + ny * 3.5, '#163a7a', 2);
+        X.line(c, tp[0] - nx * 3, tp[1] - ny * 3, tp[0] + nx * 3, tp[1] + ny * 3, EL.water[2], 1);
+      }
+      if (body) for (const sd of [-3, 0, 3]) {
         const b0: Pt = [tp[0] + nx * sd, tp[1] + ny * sd], L2 = sd ? 4 : 5.5, tip: Pt = [b0[0] + fx * L2, b0[1] + fy * L2];
         X.line(c, b0[0], b0[1], tip[0], tip[1], EL.water[1], 1); X.px(c, tip[0], tip[1], '#ffffff');
         if (sd) X.px(c, tip[0] - fx * 1.5 - nx * Math.sign(sd), tip[1] - fy * 1.5 - ny * Math.sign(sd), EL.water[1]); // the barb
@@ -1589,8 +1602,9 @@ export class StructureView {
     const hpk = clamp(s.guardHp[i] / (((ARMS.hp as Record<string, number>)[name] || 70) * guardSize(w, i)), 0, 1);
     const at = P(lerp(1, 6, raise), lerp(-5, 0, raise), lerp(6, 9, raise)), c = at[2] < -1.5 ? g : o;
     const face = (Math.round(w.bodies.face[i] * 16) / 16) * TAU, sn = Math.abs(Math.sin(face)), csn = Math.cos(face);
-    const x = at[0], y = at[1], R = GUARD_RAMP[name] ?? EL.shield;
-    if (bulwark) {
+    // drawn live in 3D (art/live3d.ts) the guard is the model's own prop on the forearm: what follows is drawn round it
+    const live = v.a?.guard, x = live ? v.x + live[0] : at[0], y = live ? v.y + live[1] : at[1], R = GUARD_RAMP[name] ?? EL.shield;
+    if (live) { /* the 3D prop */ } else if (bulwark) {
       const hw = 2.5 + (blocking ? 3 : 2) * sn, hh = blocking ? 8 : 6, th = Math.round(Math.abs(csn) * 2);
       if (th) X.rect(c, x - hw - (csn > 0 ? th : -hw * 2) - 1, y - hh, th + 1, hh * 2, X.EARTH[4]);
       X.rect(c, x - hw - 1, y - hh - 1, hw * 2 + 2, hh * 2 + 2, '#1a120c');

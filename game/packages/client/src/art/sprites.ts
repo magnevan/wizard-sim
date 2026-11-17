@@ -22,6 +22,7 @@ import { HEIGHT, CELL_H, CELL_W, FEET_X, FEET_Y, SPRITES_ON, type Anchors, type 
 import type { Frame } from './actors';
 import { LIVE3D_ON, PX_PER_UNIT, liveFrame, liveMeta, type LivePose } from './live3d';
 import * as X from './px';
+import { GUARD_NAME, N_EL, elementName } from '@wizard-sim/sim';
 import { optOn } from '../dev-options';
 
 interface Move { row: number; n: number }
@@ -170,6 +171,16 @@ export const SHOT_LEAD = 0.2;
 const GRIP_IN = 0.12, GRIP_OUT = 0.35;
 const smooth01 = (x: number) => { const k = Math.min(1, Math.max(0, x)); return k * k * (3 - 2 * k); };
 
+/** Each conjured weapon's 3D prop (tools/sprites-3d/wizprops.py), by element; Life (glowing hands) and the wand have none. */
+const WEAPON_PROP: Record<string, string> = { fire: 'sword', earth: 'earthmaul', arcane: 'focus', ice: 'icebow', cold: 'frostspear', lightning: 'whip', water: 'trident' };
+/**
+ * The wizard's props to show: its conjured weapon's in place of the staff (none for a wand or Life's bare hands, which
+ * are drawn in 2D), and its guard's on the forearm (GUARD_NAME is the prop's name).
+ */
+function wizardProps(s: RigState): string[] {
+  const wp = s.weapon >= 1 && s.weapon <= N_EL ? WEAPON_PROP[elementName(s.weapon)] : undefined, gp = s.guard ? GUARD_NAME[s.guard] : undefined;
+  return [...(wp ? [wp] : s.bare ? [] : ['staff']), ...(gp ? [gp] : [])];
+}
 /**
  * What a live model (art/live3d.ts) shows for a rig state: the same choices as cellOf, as a clip time instead of a sheet
  * frame. An attack runs on the game's clock with its hit on the game's hit; a cut hold is skipped, as the sheet leaves it out.
@@ -192,9 +203,9 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     const k = over / BLEND;
     return { move, t: last, face, flash, ...extra, move2: s.spd > 0 ? legs : 'walk', t2: s.spd > 0 ? step(legs) : 0, w2: k * k * (3 - 2 * k) };
   };
-  if (s.dead > 0) return { move: 'death', t: dur('death') * Math.min(1, s.dead), face, flash };
+  if (s.dead > 0) return { move: 'death', t: dur('death') * Math.min(1, s.dead), face, flash, ...(s.kind === 'wizard' ? { props: wizardProps(s) } : {}) };
   if (s.kind === 'wizard') {
-    const seat = X.TEAMS[s.pal % X.TEAMS.length], c = meta.casts?.cast;
+    const seat = X.TEAMS[s.pal % X.TEAMS.length], c = meta.casts?.cast, props = wizardProps(s);
     // a one-shot (the staff's blow, an Area or Self cast) plays from just before its release, the release a moment
     // after it went off in the game, over the legs if the wizard walks on, then eases back
     if (s.shot) {
@@ -203,16 +214,16 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
         const t0 = Math.max(o.first, o.hit - SHOT_LEAD), t = t0 + s.shotT, move = s.shot === 1 ? 'attack0' : s.shot === 2 ? 'area' : 'self';
         // the staff's blow grips the staff firmly (it swings with the hand) and lets it settle upright again after
         const grip = s.shot === 1 ? smooth01(s.shotT / GRIP_IN) * smooth01((o.last + BLEND - t) / GRIP_OUT) : undefined;
-        if (t <= o.last) return { move, t, face, flash, seat, grip, ...under };
-        const out = after(move, o.last, t - o.last, { seat, grip, ...under });
+        if (t <= o.last) return { move, t, face, flash, seat, grip, props, ...under };
+        const out = after(move, o.last, t - o.last, { seat, grip, props, ...under });
         if (out) return out;
       }
     }
     // a Force cast: the push clip into its full stretch (halfway from the release to the clip's end), held while the
     // spell flows. Queuing runes plays nothing: the body only casts when the spell goes off (the user, 2026-11-17).
-    if (c && s.cast > 0) { const held = c.hit + (c.last - c.hit) / 2; return { move: 'cast', t: c.first + (held - c.first) * Math.min(1, s.cast), face, flash, seat, ...under }; }
-    if (s.spd > 0) return { move: legs, t: step(legs), face, flash, seat };
-    return { move: 'walk', t: 0, face, flash, seat };
+    if (c && s.cast > 0) { const held = c.hit + (c.last - c.hit) / 2; return { move: 'cast', t: c.first + (held - c.first) * Math.min(1, s.cast), face, flash, seat, props, ...under }; }
+    if (s.spd > 0) return { move: legs, t: step(legs), face, flash, seat, props };
+    return { move: 'walk', t: 0, face, flash, seat, props };
   }
   if ((s.hitT === s.hitT || s.hold > 0) && meta.attacks.length) {
     const a = meta.attacks[variantOf(who, s.swing, meta.attacks.length)];

@@ -582,6 +582,8 @@ export class WorldView {
     const owner = b.kind[i] === KIND.double ? this.ownerOf(w, i) : i;
     // a conjured weapon or wand replaces the staff (a Double keeps the staff: only seats draw weapons)
     s.bare = kind === 'wizard' && i < MAX_SEATS && (w.seats.weapon[i] || w.seats.wand[i]) ? 1 : 0;
+    s.weapon = kind === 'wizard' && i < MAX_SEATS ? w.seats.weapon[i] : 0;
+    s.guard = kind === 'wizard' && i < MAX_SEATS ? w.seats.guard[i] : 0;
     if (kind === 'wizard') s.pal = owner % 4;
     else if (b.kind[i] === KIND.enemy || b.kind[i] === KIND.none) { // none: an enemy that just died (onDeath)
       if (arch === ARCH.shieldbearer) { s.pal = 5; s.variant = 5; }

@@ -11,6 +11,12 @@ declare -A OPTS=(
   [chieftain]="--prop=$P:maul@RightHand --canvas=96 --height=1.8"
   [wizard]="--prop=$P:staff~0.1@RightHand --firm=sword_slash --canvas=64 --height=1.28"   # 1.4x the code wizard (the user: 1.7 too big)
 )
+# the wizard also carries every conjured weapon and guard (wizprops.py), hidden: the game shows the one the seat holds
+# (--show: the props shown when the game names none; baked renders take only the staff)
+W=tools/sprites-3d/wizprops.py
+WIZ_ARMS="--show=staff"
+for a in sword earthmaul focus icebow frostspear whip trident; do WIZ_ARMS="$WIZ_ARMS --prop=$W:$a~0.25@RightHand"; done
+for a in mirror bulwark ember rime spark tide prism leaf; do WIZ_ARMS="$WIZ_ARMS --prop=$W:$a@LeftForeArm"; done
 # slug: its folder under tools/sprites-3d/output when it isn't the slug
 declare -A DIR=([raider-hooded]=meshy-rig)
 ROSTER=(raider-hooded raider-goggles archer shieldbearer hooker chieftain wizard)

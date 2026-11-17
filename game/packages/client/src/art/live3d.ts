@@ -40,7 +40,9 @@ export interface ModelMeta {
   /** Props kept nearer upright than the hand holds them (the wizard's staff): a carrier node, its axis marker, the share of tilt kept. */
   soft?: { node: string; axis: string; k: number; firm?: string[] }[];
   /** Each held prop's carrier node (at the grip) and its bone; `drop`: it falls from the hand when its holder dies. */
-  props?: { node: string; bone: string; drop: boolean }[];
+  props?: { node: string; name?: string; bone: string; drop: boolean }[];
+  /** The props shown when a pose names none (the wizard: its staff; its conjured weapons and guards wait hidden). */
+  show?: string[];
   /** Standing height in model units (--height included). */
   height?: number;
 }
@@ -56,6 +58,8 @@ export interface LivePose {
   legs?: string; tl?: number;
   /** How firmly a soft prop is held, 0 (kept upright) to 1 (every turn of the hand); by default 1 in its `firm` moves. */
   grip?: number;
+  /** The props to show by name (ModelMeta.props); the rest are hidden. By default the model's `show`, else all. */
+  props?: readonly string[];
 }
 
 const urls = import.meta.glob<string>('../../../../content/assets/models/*.glb', { eager: true, query: '?url', import: 'default' });
@@ -272,8 +276,13 @@ interface Seat { on: { value: number }; main: { value: THREE.Vector3 }; trim: { 
 interface Soft { node: THREE.Object3D; axis: THREE.Object3D; k: number; rest: THREE.Quaternion; firm: string[] }
 /** A held prop that falls when its holder dies: its carrier, the carrier's own local matrix, and its shape (carrier space). */
 interface Drop { node: THREE.Object3D; rest: THREE.Matrix4; box: THREE.Box3 }
+/**
+ * A prop by name: its carrier, and in the carrier's frame its far end along its main axis (a soft prop's: the weapon's
+ * tip, where its particles run to) and the middle of its shape (a guard's).
+ */
+interface Carrier { name: string; node: THREE.Object3D; held: boolean; tip: THREE.Vector3 | null; mid: THREE.Vector3 }
 interface Inst {
-  seat: Seat; soft: Soft[]; drops: Drop[]; hands: [THREE.Object3D, THREE.Object3D] | null;
+  seat: Seat; soft: Soft[]; drops: Drop[]; carriers: Carrier[]; bowOf: THREE.Object3D | null; hands: [THREE.Object3D, THREE.Object3D] | null;
   root: THREE.Group; shift: THREE.Group; turn: THREE.Group; body: THREE.Object3D; mixer: THREE.AnimationMixer;
   actions: Map<string, THREE.AnimationAction>; hips: THREE.Object3D | null; rest: THREE.Vector3; flash: { value: number };
   bow: { tips: THREE.Object3D[]; nock: THREE.Object3D; grip: THREE.Object3D; hand: THREE.Object3D; fore: THREE.Object3D; parts: THREE.Mesh[] } | null;
@@ -333,7 +342,7 @@ function instance(slug: string, m: Model, original = false): Inst {
   const tipA = node(body, 'bow tip+'), tipB = node(body, 'bow tip-'), nock = node(body, 'bow nock'), grip = node(body, 'bow grip point');
   const hand = node(body, 'RightHand'), fore = node(body, 'RightForeArm');
   if (tipA && tipB && nock && grip && hand && fore) {
-    const strMat = look(new THREE.MeshLambertMaterial({ color: new THREE.Color(0.85, 0.78, 0.55) }));
+    const strMat = look(new THREE.MeshLambertMaterial({ color: slug === 'wizard' ? new THREE.Color(0.75, 0.95, 1) : new THREE.Color(0.85, 0.78, 0.55) }));   // the wizard's bow is ice
     const woodMat = look(new THREE.MeshLambertMaterial({ color: new THREE.Color(0.45, 0.24, 0.1) }));
     const ironMat = look(new THREE.MeshLambertMaterial({ color: new THREE.Color(0.32, 0.32, 0.34) }));
     const rod = (r: number, mat: THREE.Material) => { const g = new THREE.CylinderGeometry(r, r, 1, 5); g.translate(0, 0.5, 0); const x = new THREE.Mesh(g, mat); x.frustumCulled = false; return x; };
@@ -345,12 +354,12 @@ function instance(slug: string, m: Model, original = false): Inst {
     const n = node(body, sp.node), ax = node(body, sp.axis);
     if (n && ax) soft.push({ node: n, axis: ax, k: sp.k, rest: n.quaternion.clone(), firm: sp.firm ?? [] });
   }
-  const drops: Drop[] = [];
+  const drops: Drop[] = [], carriers: Carrier[] = [];
+  body.updateMatrixWorld(true);
   for (const pr of m.meta.props ?? []) {
     const n = node(body, pr.node);
-    if (!n || !pr.drop) continue;
+    if (!n) continue;
     // its shape in the carrier's frame, for laying it down on the ground
-    n.updateMatrixWorld(true);
     const inv = n.matrixWorld.clone().invert(), box = new THREE.Box3();
     n.traverse((o) => {
       const g = (o as THREE.Mesh).geometry;
@@ -358,11 +367,25 @@ function instance(slug: string, m: Model, original = false): Inst {
       if (!g.boundingBox) g.computeBoundingBox();
       box.union(g.boundingBox!.clone().applyMatrix4(inv.clone().multiply(o.matrixWorld)));
     });
-    if (!box.isEmpty()) drops.push({ node: n, rest: n.matrix.clone(), box });
+    if (box.isEmpty()) continue;
+    if (pr.drop) drops.push({ node: n, rest: n.matrix.clone(), box });
+    // the far end along a soft prop's axis (its marker is a child of the carrier, along the axis)
+    const sp = m.meta.soft?.find((x) => x.node === pr.node), ax = sp ? node(body, sp.axis) : undefined;
+    let tip: THREE.Vector3 | null = null;
+    if (ax) {
+      const d = ax.position.clone().normalize();
+      let far = 0;
+      for (let c = 0; c < 8; c++) far = Math.max(far, v1.set(c & 1 ? box.max.x : box.min.x, c & 2 ? box.max.y : box.min.y, c & 4 ? box.max.z : box.min.z).dot(d));
+      tip = d.multiplyScalar(far);
+    }
+    carriers.push({ name: pr.name ?? pr.node.replace(/ carrier$/, ''), node: n, held: /Hand$/.test(pr.bone), tip, mid: box.getCenter(new THREE.Vector3()) });
   }
+  // a bow's string is drawn only while its carrier shows (the wizard's ice bow waits hidden)
+  let bowOf: THREE.Object3D | null = null;
+  for (let o = tipA?.parent ?? null; o && !bowOf; o = o.parent) if (carriers.some((c) => c.node === o)) bowOf = o;
   const lh = body.getObjectByName('LeftHand'), rh = body.getObjectByName('RightHand');
   const hands: Inst['hands'] = lh && rh ? [lh, rh] : null;
-  return { seat, soft, drops, hands, root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
+  return { seat, soft, drops, carriers, bowOf, hands, root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
 }
 
 const ease = (t: number) => t * t * (3 - 2 * t);
@@ -382,6 +405,8 @@ function pose(inst: Inst, m: Model, p: LivePose): void {
   const legs = p.legs && p.legs !== clipName && m.clips.has(p.legs) ? p.legs : null;
   const w1 = 1 - (second ? p.w2! : 0);
   for (const d of inst.drops) d.rest.decompose(d.node.position, d.node.quaternion, d.node.scale);
+  const show = p.props ?? m.meta.show;
+  for (const c of inst.carriers) c.node.visible = !show || show.includes(c.name);
   // a held prop lets go early in the death and falls beside the body (dropProps): where it was when it let go
   const fall = p.move === 'death' && inst.drops.length ? Math.min(DROP_AT, p.t) : -1;
   if (fall >= 0) {
@@ -483,6 +508,7 @@ const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Q
  */
 function softProps(inst: Inst, face: number, grip: number): void {
   for (const s of inst.soft) {
+    if (!s.node.visible) continue;
     s.node.quaternion.copy(s.rest);
     s.node.updateMatrixWorld(true);
     const p = s.node.getWorldPosition(v1), a = s.axis.getWorldPosition(v2).sub(p).normalize();
@@ -501,6 +527,7 @@ function softProps(inst: Inst, face: number, grip: number): void {
 function stringOf(inst: Inst, m: Model, p: LivePose, stage: THREE.Group): void {
   const bw = inst.bow!;
   for (const x of bw.parts) stage.remove(x);
+  if (inst.bowOf && !inst.bowOf.visible) return;
   const a = bw.tips[0].getWorldPosition(new THREE.Vector3()), b = bw.tips[1].getWorldPosition(new THREE.Vector3());
   const n0 = bw.nock.getWorldPosition(new THREE.Vector3()), g = bw.grip.getWorldPosition(new THREE.Vector3());
   const w0 = bw.fore.getWorldPosition(new THREE.Vector3()), w1 = bw.hand.getWorldPosition(new THREE.Vector3());
@@ -540,6 +567,24 @@ function castPoint(inst: Inst, m: Model): THREE.Vector3 {
 
 /** Each live caster's hands last frame (art px from the feet), where its spells start (anchors tip and charge). */
 const tips = new Map<string, [number, number]>();
+type Held = Pick<Anchors, 'blade' | 'guard'>;
+/** Each body's shown conjured weapon (grip to tip) and guard (its middle) last frame, art px from the feet (Anchors.blade, .guard). */
+const held = new Map<string, Held>();
+
+/**
+ * Where a body's shown arms are on screen this frame (art px from the feet, as `tips`): a prop in the hand that the
+ * model doesn't show by default (the wizard's conjured weapon, not its staff) from grip to tip, and a guard by its middle.
+ */
+function heldOf(inst: Inst, m: Model, key: string, o: typeof SMALL, cam: THREE.Camera): void {
+  const px = (w: THREE.Vector3): [number, number] => { const q = w.project(cam); return [(q.x + 1) / 2 * o.size - o.feet[0], (1 - q.y) / 2 * o.size - o.feet[1]]; };
+  const out: Held = {};
+  for (const c of inst.carriers) {
+    if (!c.node.visible || m.meta.show?.includes(c.name)) continue;
+    if (c.held && c.tip) out.blade = [px(c.node.localToWorld(v1.set(0, 0, 0))), px(c.node.localToWorld(v1.copy(c.tip)))];
+    else if (!c.held) out.guard = px(c.node.localToWorld(v1.copy(c.mid)));
+  }
+  if (out.blade || out.guard) held.set(key, out); else held.delete(key);
+}
 const booked: Booking[] = [];
 let nextSmall = 0, nextBig = 0;
 
@@ -557,6 +602,8 @@ export function liveFrame(slug: string, p: LivePose, anchors: Anchors, who = 0):
   if (k < 0) return null;
   const slot = slots[k], key = slug + '|' + who, tip = tips.get(key);
   if (tip) anchors = { ...anchors, tip, charge: tip };
+  const hd = held.get(key);
+  if (hd || anchors.blade || anchors.guard) anchors = { ...anchors, blade: hd?.blade, guard: hd?.guard };
   booked.push({ slug, slot, pose: p, key });
   if (!slot.frame) slot.frame = { tex: slot.tex!, a: anchors, c: gl.out, sx: slot.cx, sy: slot.cy };
   else slot.frame = { ...slot.frame, a: anchors };
@@ -600,6 +647,7 @@ export function flushLive(): void {
       const o = b.slot.big ? BIG : SMALL, q = castPoint(inst, m).project(cam);
       tips.set(b.key, [Math.round((q.x + 1) / 2 * o.size - o.feet[0]), Math.round((1 - q.y) / 2 * o.size - o.feet[1])]);
     }
+    heldOf(inst, m, b.key, b.slot.big ? BIG : SMALL, cam);
     stage.clear();
   }
   hiRT.scissorTest = false; hiRT.viewport.set(0, 0, AW * SUPER, AH * SUPER);

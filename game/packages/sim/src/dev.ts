@@ -10,8 +10,9 @@ import { atan2Turns, cosTurns, sinTurns } from './trig';
 import type { Mode } from './mode';
 import { openPortals } from './waves';
 import { openGates, restartRun } from './survive';
-import { AI, KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, runeMax, type World } from './world';
+import { AI, GUARD_NAME, KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, runeMax, type World } from './world';
 import { spawnEnemy } from './spawn';
+import { GUARD_EL, conjureGuard } from './guards';
 
 export function devSpawnEnemy(w: World, arch: number, x: number, y: number): number {
   return spawnEnemy(w, arch, x, y);
@@ -132,8 +133,18 @@ export function devConjure(w: World, seat: number, what: number | 'wand'): void 
   s.weaponEls.fill(0, seat * N_EL, (seat + 1) * N_EL);
   s.weaponUses[seat] = what && what !== 'wand' ? STRUCT.weaponUses : 0;
 }
+
+/** Seat's guard (a GUARD id, 0 to put it away), conjured as Shield plus its lead element would conjure it, at full strength. */
+export function devGuard(w: World, seat: number, id: number): void {
+  if (!id) { w.seats.guard[seat] = 0; w.seats.guardHp[seat] = 0; return; }
+  const counts = new Uint8Array(N_EL), el = GUARD_EL[id];
+  if (el && el !== EL.shield) counts[el - 1] = 1;
+  conjureGuard(w, seat, counts);
+}
+/** The guards devGuard can give, by name. */
+export const DEV_GUARDS: readonly [string, number][] = GUARD_NAME.slice(1).map((n, k) => [n, k + 1]);
 /** The weapons devConjure can give, by name. */
 export const DEV_WEAPONS: readonly [string, number | 'wand'][] = [
-  ['wand', 'wand'], ['maul (earth)', EL.earth], ['hook (arcane)', EL.arcane], ['sword (fire)', EL.fire], ['spear (cold)', EL.cold],
+  ['wand', 'wand'], ['maul (earth)', EL.earth], ['focus (arcane)', EL.arcane], ['sword (fire)', EL.fire], ['spear (cold)', EL.cold],
   ['bow (ice)', EL.ice], ['whip (lightning)', EL.lightning], ['trident (water)', EL.water], ['hands (life)', EL.life],
 ];

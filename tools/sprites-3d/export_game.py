@@ -166,12 +166,18 @@ def run(g):
                              'firm': [mv for mv, act in moves.items() if any(c in _slug(act.name) for c in firm)]})
     # every held prop's carrier: one held in a hand drops when its holder dies (the client lays it on the ground beside
     # the body); one strapped on (the shieldbearer's shield, on the forearm) stays with the body
-    meta['props'] = [{'node': e.name, 'bone': bone, 'drop': bone.endswith('Hand')} for e, _name, bone in g.get('CARRIERS', [])]
+    meta['props'] = [{'node': e.name, 'name': name, 'bone': bone, 'drop': bone.endswith('Hand')} for e, name, bone in g.get('CARRIERS', [])]
+    # --show=<name>[,<name>]: the props shown when the game names none (the wizard: the staff; its conjured arms wait hidden)
+    show = [c for a in args if a.startswith('--show=') for c in a[7:].split(',')]
+    if show: meta['show'] = show
 
     # the bow's live string and arrow are the client's (it draws them between the tips and the hand); drop the stand-ins
     for name in ('bow string', 'bow arrow', 'bow arrowhead'):
         o = bpy.data.objects.get(name)
         if o: bpy.data.objects.remove(o, do_unlink=True)
+    # the conjured whip's lash is the client's too (drawn and swung by code, wizprops.py whip): only its handle ships
+    for o in [o for o in bpy.data.objects if o.name.startswith('whip lash')]:
+        bpy.data.objects.remove(o, do_unlink=True)
 
     # thinned for 32 px: the shape survives at a fraction of Meshy's triangles, and skinning keeps its vertex groups
     total = sum(sum(len(p.vertices) - 2 for p in m.data.polygons) for m in meshes)

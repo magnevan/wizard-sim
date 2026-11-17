@@ -59,7 +59,7 @@ npm run perf           # build, then step() timed in node (Arena, Survive wave 1
 ```
 
 One-off scripts with no npm entry (run after `npm run build`; each prints its usage in its first lines):
-- **Shots for judging one effect:** `burst-shot` (the imbued bursts, a contact sheet), `caltrops-shot` (Ice Place), `coat-shot` (coated force fields, the imbue's skin, the stored spell), `fog-shot` (Cold Place), `ghost-shot` (a ghost rune and a pool in debt in the HUD), `light-shot` (spell light against a wall), `store-shot` (the stored spell's sigil).
+- **Shots for judging one effect:** `burst-shot` (the imbued bursts, a contact sheet), `caltrops-shot` (Ice Place), `coat-shot` (coated force fields, the imbue's skin, the stored spell), `fog-shot` (Cold Place), `ghost-shot` (a ghost rune and a pool in debt in the HUD), `light-shot` (spell light against a wall), `store-shot` (the stored spell's sigil), `arms-shots` (the wizard's conjured weapons and guards drawn live in 3D, five facings each; `--motion` adds a Strike and a block; needs a real GPU).
 - **Audits:** `occlusion-audit` (casts around walls and furniture, a cropped shot each, to check draw order by eye), `dither-check` (`art/px.ts`'s pattern-filled dithering gives exactly the per-pixel loops' pixels).
 - **Performance:** `perf-sim` (sim timing in node; `perf.mjs` imports it), `gpu-info` (which GPU a `--gpu` perf run used).
 

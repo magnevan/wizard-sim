@@ -21,6 +21,7 @@ import {
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
 import { ActorFrames, FEET_X, FEET_Y } from './art/actors';
+import { deathDir, deathFrame, mulTint, slugOf, spriteFrame, statusTint, type SpriteDeath } from './art/sprites';
 import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
 import { floorLayout, floorPlaceholder } from './art/floor';
@@ -33,7 +34,7 @@ import { PropView } from './art/props';
 import { blackout } from './art/power-down';
 import type { PropSet } from './art/assets';
 import { AMBIENT, canvas as pxCanvas, stats, text as pxText } from './art/px';
-import { newRigState, type RigKind, type RigState } from './art/rigs';
+import { newRigState, type Anchors, type RigKind, type RigState } from './art/rigs';
 import { TAU, mod } from './art/util';
 import { Vfx, type BodyView } from './art/vfx';
 import { attackK, drawAttackFx } from './art/enemy-attacks';
@@ -96,6 +97,9 @@ export class WorldView {
   private rig: RigState = newRigState();
   private structs: StructureView;
   private deaths: Deaths;
+  /** Deaths of the warband's sprites: the knock-down, then lying still and fading (art/sprites.ts). */
+  private spriteDeaths: (SpriteDeath & { who: number; tick: number; kind: RigKind })[] = [];
+  private deathSprites: Sprite[] = [];
   private frame = 0;
 
   /**
@@ -254,10 +258,35 @@ export class WorldView {
     this.sound?.afterStep(w, this.isLocal);
   }
 
+  private drawSpriteDeaths(ct: number, fx0: number, fy0: number): void {
+    const none = { tip: [0, 0], chest: [0, 0], head: [0, 0], hands: [], charge: [0, 0] } as Anchors;
+    let k = 0;
+    for (const d of this.spriteDeaths.slice()) {
+      if (Number.isNaN(d.t0)) d.t0 = ct;
+      const r = deathFrame(d, ct - d.t0, none);
+      if (!r) { if (ct - d.t0 > 0.5 || ct < d.t0) this.spriteDeaths.splice(this.spriteDeaths.indexOf(d), 1); continue; }
+      let spr = this.deathSprites[k];
+      if (!spr) { spr = new Sprite(); this.actors.addChild(spr); this.deathSprites.push(spr); }
+      spr.texture = r.f.tex; spr.alpha = r.alpha; spr.visible = true;
+      spr.tint = this.lit ? 0xffffff : AMBIENT;
+      spr.position.set(fx0 + d.x - FEET_X, fy0 + d.y - FEET_Y);
+      spr.zIndex = d.y * 128 - 64; // lying bodies sort under the living at the same spot
+      k++;
+    }
+    for (; k < this.deathSprites.length; k++) this.deathSprites[k].visible = false;
+  }
+
   /** An enemy died this step: its death plays from the rig state it had (its slot is already empty). */
   private onDeath(w: World, e: SimEvent, t: number): void {
     const i = e.who, b = w.bodies;
     const s = this.rigState(w, i, t, this.lastCt);
+    const slug = slugOf(s);
+    if (slug) {
+      // rollback: a tick shown twice (or a corrected one) must not play the same death again
+      if (this.spriteDeaths.some((d) => d.who === i && Math.abs(d.tick - e.tick) < 90)) return;
+      this.spriteDeaths.push({ slug, dir: deathDir(s.face), x: Math.round(gx(b.x[i])), y: Math.round(gy(b.y[i])), t0: NaN, who: i, tick: e.tick, kind: s.kind });
+      return;
+    }
     this.deaths.add({ ...s, x: Math.round(gx(b.x[i])), y: Math.round(gy(b.y[i])), z: 0 }, {
       el: e.el ?? 0, mix: e.mix ?? 0, shape: e.shape ?? 0, status: e.status ?? 0, dirX: e.x2 ?? 0, dirY: e.y2 ?? 0,
       overkill: Math.max(0, e.amount ?? 0) / Math.max(1, b.maxHp[i]), arch: e.look ?? 0,
@@ -325,16 +354,21 @@ export class WorldView {
       const fx = Math.round(gx(x)), fy = Math.round(gy(y));
       const s = this.rigState(w, i, t, ct);
       // past the paint budget a body keeps its last frame; one that has none yet is painted anyway
-      const fr = this.frames.get(s, !v.a);
+      const rig = this.frames.get(s, !v.a);
+      // the warband's 3D-rendered sprites stand in for their rigs (art/sprites.ts); the rig still gives the anchors
+      const sp = rig && b.kind[i] !== KIND.wizard && b.kind[i] !== KIND.double ? spriteFrame(s, i, rig.a) : null, fr = sp ?? rig;
       if (fr) { spr.texture = fr.tex; v.a = fr.a; v.f = fr; }
       spr.visible = !!v.a;
       const dbl = b.kind[i] === KIND.double;
       spr.alpha = dbl ? 0.62 + 0.08 * Math.sin(ct * 5) : 1;
       spr.tint = dbl ? 0xd8b4ff : this.lit ? 0xffffff : AMBIENT;
+      if (sp) spr.tint = mulTint(spr.tint, statusTint(s));
       spr.position.set(fx0 + fx - FEET_X, fy0 + fy - FEET_Y);
       spr.zIndex = fy * 128 + i;
       v.on = true; v.x = fx; v.y = fy; v.rig = s.kind;
     }
+
+    this.drawSpriteDeaths(ct, fx0, fy0);
 
     const ax = (x: number) => ox + Math.round(x * PPU), ay = (y: number) => cam.toArtY(y);
     drawTelegraphs(w, { ground: this.sGround.clear(), overlay: this.sOverlay.clear(), ax, ay }, Math.round(ct * 60));

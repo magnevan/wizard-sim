@@ -83,14 +83,23 @@ export const newRigState = (): RigState => ({
 /** Anchor points relative to the feet, in art px: where effects attach. */
 export interface Anchors { tip: [number, number]; chest: [number, number]; head: [number, number]; hands: [number, number][]; charge: [number, number] }
 
+/** The warband drawn from 3D-rendered sprites (art/sprites.ts) instead of code rigs: on unless ?sprites=0. */
+export const SPRITES_ON = (() => {
+  try { return !!globalThis.location && new URLSearchParams(globalThis.location.search).get('sprites') !== '0'; } catch { return false; }
+})();
+
 /**
- * The wizard's drawing scale, from ?wizscale= (1 to 2, default 1). Its geometry grows and its pixels
+ * The wizard's drawing scale, from ?wizscale= (1 to 2; default 1.7 with sprites on, else 1). Its geometry grows and its pixels
  * don't: 1 px details stay 1 px, so a bigger wizard keeps the density of the bought sprites
  * (explorations/2026-11-16-warband-art.md). The sim's sizes don't change.
  */
 export const WIZ_Z = wizScale();
 function wizScale(): number {
-  try { const v = Number(new URLSearchParams(globalThis.location?.search ?? '').get('wizscale')); return v >= 1 && v <= 2 ? v : 1; } catch { return 1; }
+  try {
+    const q = new URLSearchParams(globalThis.location?.search ?? '');
+    const v = Number(q.get('wizscale'));
+    return v >= 1 && v <= 2 ? v : SPRITES_ON ? 1.7 : 1;
+  } catch { return SPRITES_ON ? 1.7 : 1; }
 }
 
 export const HEIGHT: Record<RigKind, number> = { wizard: 23 * WIZ_Z, goblin: 12, archer: 12, brute: 23, dummy: 18, bramble: 15, sack: 12 };

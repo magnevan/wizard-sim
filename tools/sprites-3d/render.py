@@ -23,7 +23,8 @@ MOVES = MOVES[0].split(',') if MOVES else ['idle', 'walk', 'run', 'attack']
 PREVIEW = '--preview' in args
 # --height=0.95: an imported mesh is scaled to this share of the skeleton's height (its ears or hood tip may stand above it)
 FIT_H = float(next((a[9:] for a in args if a.startswith('--height=')), 1.0))
-CANVAS, PPU, SUPER = 48, 16, 4
+# --canvas=96: a bigger frame for a bigger body (the chieftain); the pixel density stays 16 per unit
+CANVAS, PPU, SUPER = int(next((a[9:] for a in args if a.startswith('--canvas=')), 48)), 16, 4
 DIRS = {'south': 0, 'south-east': 45, 'east': 90, 'north-east': 135, 'north': 180, 'north-west': -135, 'west': -90, 'south-west': -45}
 
 scene = bpy.context.scene
@@ -106,6 +107,28 @@ if ANIM:
             bpy.context.view_layer.update()
             o.matrix_world = mw
         print('grafted onto', HAND, [o.name for o in kept])
+
+    # --prop=props.py:<name>@<Bone> (repeatable): a held prop built in that bone's frame (see props.py) and parented to it
+    for a in [a for a in args if a.startswith('--prop=')]:
+        src, spec = a[7:].rsplit(':', 1)
+        name, bone = spec.split('@')
+        ns = {'__name__': '__props__', '__file__': src}
+        exec(compile(open(src, encoding='utf-8-sig').read(), src, 'exec'), ns)
+        for pb in arm.pose.bones: pb.matrix_basis = Matrix()
+        bpy.context.view_layer.update()
+        hb = arm.data.bones[bone]
+        head, elbow = arm.matrix_world @ hb.head_local, arm.matrix_world @ hb.parent.head_local
+        xv = (head - elbow).normalized()
+        zv = Vector((0, -1, 0)); zv = (zv - xv * zv.dot(xv)).normalized()
+        f = Matrix((xv, zv.cross(xv), zv)).transposed().to_4x4(); f.translation = head
+        parts = ns['PROPS'][name]()
+        bpy.context.view_layer.update()
+        for o in parts:
+            mw = f @ Matrix.Scale(FIT_H, 4) @ o.matrix_world   # props are sized for a goblin; a taller body (--height) scales them too
+            o.parent = arm; o.parent_type = 'BONE'; o.parent_bone = bone
+            bpy.context.view_layer.update()
+            o.matrix_world = mw
+        print('prop', name, 'on', bone, len(parts), 'parts')
 elif ext == '.py':
     exec(compile(open(MODEL, encoding='utf-8-sig').read(), MODEL, 'exec'), {'__name__': '__model__', '__file__': MODEL})
 elif ext in ('.glb', '.gltf'):
@@ -258,6 +281,9 @@ if PREVIEW:
         shoot(os.path.join(OUT, 'preview', name + '.png'), flat=False)
     r.resolution_x = r.resolution_y = CANVAS * SUPER; scene.cycles.samples = 16
 
+TRACK, TRACK_BONE = {}, next((a[8:] for a in args if a.startswith('--track=')), 'RightHand')
+
+
 def clip_move(act, n=None):
     """A rig.MOVES-style (frames, pose fn) that plays one imported clip, sampled evenly over its length."""
     ad = arm.animation_data or arm.animation_data_create()
@@ -276,6 +302,9 @@ def clip_move(act, n=None):
             rest = rig.matrix_world @ HIPS_REST
             d = Vector((hips.x - rest.x, hips.y - rest.y, 0))
             arm.matrix_world = Matrix.Translation(-d) @ arm.matrix_world
+        if abs(_rig.rotation_euler.z) < 1e-6:   # facing south: note where the weapon hand is, for finding the strike
+            bpy.context.view_layer.update()
+            TRACK.setdefault(id(act), {})[i] = list(arm.matrix_world @ arm.pose.bones[TRACK_BONE].head)
     return n, fn
 
 
@@ -290,11 +319,12 @@ if ANIM:
     # glTF clips are named 'Armature|walking_man|baselayer': the middle part names the move and the output folder
     slug = lambda s: re.sub(r'[^a-z0-9]+', '_', (s.split('|')[1] if s.count('|') >= 2 else s).lower()).strip('_')
     if not [a for a in args[2:] if not a.startswith('--')]: MOVES = [a.name for a in CLIPS]
-    picked = {}
+    picked, CLIP_OF = {}, {}
     for mv in MOVES:
         name, _, frames = mv.partition('=')
         act = next((a for a in CLIPS if a.name == name), None) or next(a for a in CLIPS if slug(name) in slug(a.name))
         picked[slug(name)] = clip_move(act, int(frames) if frames else None)
+        CLIP_OF[slug(name)] = act
     R.MOVES = picked
     MOVES = list(picked)
 
@@ -307,4 +337,8 @@ for mv in MOVES:
             fn(rig, i, n)
             bpy.context.view_layer.update()
             shoot(os.path.join(OUT, mv, d, f'f{i:02d}.png'))
+    if ANIM:
+        import json
+        tr = TRACK.get(id(CLIP_OF[mv]), {})
+        json.dump({'frames': n, 'fps': ANIM_FPS, 'hand': [tr.get(k) for k in range(n)]}, open(os.path.join(OUT, mv, 'track.json'), 'w'))
     print('rendered', mv, n, 'frames x 8')

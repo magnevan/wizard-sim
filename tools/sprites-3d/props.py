@@ -172,4 +172,31 @@ def maul():
     return parts
 
 
-PROPS = {'knife': knife, 'bow': bow, 'spear': spear, 'shield': shield, 'hook': hook, 'maul': maul}
+PURPLE = lambda: mat('prop socket', (0.16, 0.13, 0.22))
+WRAP = lambda: mat('prop wrap', (0.85, 0.75, 0.62))
+
+# The staff runs through the fist: across the palm (Y), leaning toward the wrist (-X) so it stands up when the arm hangs.
+STAFF_DIR = Vector((-0.35, 1, 0.12)).normalized()
+
+
+def staff():
+    # The game's wizard staff (art/rigs.ts drawStaff): a wooden shaft about as tall as the hat brim, gripped a third of
+    # the way up, a wrapped grip, an iron foot, and a claw at the top holding a dark socket (the game draws the orb's glow
+    # there, in the colour of what is being cast). Lengths are for a 2-unit body; --height scales them.
+    g = GRIP; d = STAFF_DIR
+    side = d.cross(Vector((0, 0, 1))).normalized()
+    top = g + d * 1.12
+    parts = [rod('staff shaft', g - d * 0.52, top, 0.035, WOOD()),
+             rod('staff foot', g - d * 0.56, g - d * 0.44, 0.042, IRON()),
+             rod('staff grip', g - d * 0.10, g + d * 0.14, 0.045, WRAP())]
+    for k, a in enumerate((0, 2.1, 4.2)):   # three claws curling up round the socket
+        out = (side * math.cos(a) + d.cross(side) * math.sin(a)).normalized()
+        mid = top + out * 0.08 + d * 0.06
+        parts += [rod('staff claw a' + str(k), top - d * 0.02, mid, 0.025, WOOD()),
+                  cone('staff claw b' + str(k), mid, mid + d * 0.10 - out * 0.03, 0.026, WOOD(), verts=5)]
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=0.075, location=top + d * 0.09)
+    parts.append(_obj('staff socket', PURPLE()))
+    return parts
+
+
+PROPS = {'knife': knife, 'bow': bow, 'spear': spear, 'shield': shield, 'hook': hook, 'maul': maul, 'staff': staff}

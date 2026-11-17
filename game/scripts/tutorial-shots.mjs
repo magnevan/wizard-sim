@@ -15,7 +15,7 @@ const stop = await startPreview();
 try {
   for (const beat of beats) {
     const file = join(out, `beat-${beat}.png`);
-    chrome(['--window-size=1280,800', `--virtual-time-budget=${ms}`, `--screenshot=${file}`, `${BASE}?room=tutorial&autoplay=1&beat=${beat}&debug=0${extra ? '&' + extra : ''}`]);
+    chrome(['--window-size=1280,800', `--virtual-time-budget=${ms}`, `--screenshot=${file}`, `${BASE}?room=tutorial&autoplay=1&beat=${beat}${extra ? '&' + extra : ''}`]);
     console.log('screenshot:', file);
   }
 } finally {

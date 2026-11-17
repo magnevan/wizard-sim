@@ -24,6 +24,7 @@ import { Rectangle, Texture } from 'pixi.js';
 import { CELL_H, CELL_W, FEET_X, FEET_Y, type Anchors } from './rigs';
 import type { Frame } from './actors';
 import type { TeamPal } from './px';
+import { opt } from '../dev-options';
 
 export interface ModelMeta {
   slug: string; fps: number;
@@ -56,7 +57,7 @@ const META = new Map(Object.entries(metas).map(([p, m]) => [slugOfPath(p), m]));
 const URLS = new Map(Object.entries(urls).map(([p, u]) => [slugOfPath(p), u]));
 
 /** ?live3d=0 turns it off; ?live3d=1 keeps it on even on a software renderer (which otherwise gets the sheets). */
-const LIVE3D_Q = (() => { try { return new URLSearchParams(globalThis.location?.search ?? '').get('live3d'); } catch { return null; } })();
+const LIVE3D_Q = opt('live3d');
 /** On unless ?live3d=0 (and only in a browser). */
 export const LIVE3D_ON = typeof document !== 'undefined' && LIVE3D_Q !== '0';
 export const liveMeta = (slug: string): ModelMeta | undefined => META.get(slug);

@@ -20,7 +20,7 @@ try {
   p.on('pageerror', (e) => fail('page error: ' + e.message));
   p.on('requestfailed', (r) => fail('request failed: ' + r.url()));
   await p.setViewport({ width: 1280, height: 800 });
-  await p.goto(`${BASE}?timerloop=1&debug=0#academy`);
+  await p.goto(`${BASE}?timerloop=1#academy`);
   await p.waitForFunction(() => window.wizardSim?.view.props.count > 0 && window.wizardSim.view.props.ready, { timeout: 20000, polling: 100 });
   await sleep(500);
   const st = () => p.evaluate(() => { const g = window.wizardSim; return { set: g.view.props.set, hd: g.view.wizardHd, ready: g.view.props.ready, count: g.view.props.count, room: g.world.def.id, url: location.search, x: g.world.bodies.x[0], y: g.world.bodies.y[0] }; });
@@ -73,7 +73,7 @@ try {
   const q = await browser.newPage();
   q.on('pageerror', (e) => fail('page error: ' + e.message));
   await q.setViewport({ width: 1280, height: 800 });
-  await q.goto(`${BASE}?timerloop=1&debug=0&props=code&wizard=hd#academy`);
+  await q.goto(`${BASE}?timerloop=1&props=code&wizard=hd#academy`);
   await q.waitForFunction(() => window.wizardSim?.view.props.count > 0 && window.wizardSim.view.props.ready, { timeout: 20000, polling: 100 });
   const s = await q.evaluate(() => ({ set: window.wizardSim.view.props.set, hd: window.wizardSim.view.wizardHd }));
   if (s.set !== 'code' || !s.hd) fail('the URL should pick the set and wizard: ' + JSON.stringify(s));

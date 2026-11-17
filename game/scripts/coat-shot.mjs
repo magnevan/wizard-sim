@@ -16,7 +16,7 @@ try {
   const p = await browser.newPage();
   p.on('pageerror', (e) => console.error('PAGE ERROR', e.message));
   await p.setViewport({ width: 1280, height: 800 });
-  await p.goto(`${BASE}?timerloop=1&debug=0${MOOD}#arena`);
+  await p.goto(`${BASE}?timerloop=1${MOOD}#arena`);
   await p.waitForFunction(() => window.wizardSim?.view.groundReady, { timeout: 60000, polling: 100 });
   await sleep(600);
   // ids: water 1, life 2, shield 3, cold 4, lightning 5, arcane 6, sigil 7, fire 8, earth 9, ice 10

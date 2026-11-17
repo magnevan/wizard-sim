@@ -22,7 +22,7 @@ try {
   const p = await browser.newPage();
   p.on('pageerror', (e) => { console.error('page error:', e.message); process.exitCode = 1; });
   await p.setViewport({ width: vw, height: vh });
-  await p.goto(`${BASE}?timerloop=1&debug=0&massing=${plan}#yard`);
+  await p.goto(`${BASE}?timerloop=1&massing=${plan}#yard`);
   await p.waitForFunction(() => window.wizardSim?.view.props.count > 0 && window.wizardSim.view.props.ready, { timeout: 60000, polling: 200 });
   await sleep(1500);
   const put = (x, y) => p.evaluate(([px, py]) => { const g = window.wizardSim, b = g.world.bodies, d = g.world.dims; b.x[0] = px - d.w / 2; b.y[0] = py - d.h / 2; b.vx[0] = 0; b.vy[0] = 0; }, [x, y]);

@@ -20,7 +20,7 @@ try {
   for (const z of scales) {
     const p = await browser.newPage();
     await p.setViewport({ width: 1280, height: 800 });
-    await p.goto(`${BASE}?timerloop=1&debug=0&wizscale=${z}#battery`);
+    await p.goto(`${BASE}?timerloop=1&wizscale=${z}#battery`);
     await p.waitForFunction(() => window.wizardSim?.view.props.count > 0 && window.wizardSim.view.props.ready, { timeout: 60000, polling: 200 });
     await sleep(1500);
     for (const [name, [x, y]] of Object.entries(SPOTS)) {

@@ -14,7 +14,7 @@ const browser = await puppeteer.launch({ executablePath: findChrome(), headless:
 try {
   const p = await browser.newPage();
   const qi = process.argv.indexOf('--query');
-  await p.goto(`${BASE}?timerloop=1&debug=0${qi > 0 ? '&' + process.argv[qi + 1] : ''}`);
+  await p.goto(`${BASE}?timerloop=1${qi > 0 ? '&' + process.argv[qi + 1] : ''}`);
   await p.waitForFunction(() => !!window.wizardSim?.art, { timeout: 20000, polling: 100 });
   const urls = await p.evaluate(() => {
     const { newRigState, paint } = window.wizardSim.art;

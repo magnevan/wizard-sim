@@ -17,7 +17,7 @@ const open = async (query, size = [1280, 800]) => {
   const p = await browser.newPage();
   p.on('pageerror', (e) => console.error('page error:', e.message));
   await p.setViewport({ width: size[0], height: size[1] });
-  await p.goto(`${BASE}?timerloop=1&debug=0${query}#academy`);
+  await p.goto(`${BASE}?timerloop=1${query}#academy`);
   await p.waitForFunction(() => window.wizardSim?.view.props.count > 0 && window.wizardSim.view.props.ready, { timeout: 20000, polling: 100 });
   // past the first seconds, or the room's walls still show the dust of rising; then the sim stands still
   await p.waitForFunction(() => window.wizardSim.world.clock[0] > 150, { timeout: 30000, polling: 100 });

@@ -123,7 +123,7 @@ try {
     });
     f.on('pageerror', (e) => fail('first-input page error: ' + e.message));
     await f.setViewport({ width: 1280, height: 800 });
-    await f.goto(`${BASE}?timerloop=1&debug=0&lights=0`);
+    await f.goto(`${BASE}?timerloop=1&lights=0`);
     await f.waitForFunction(() => window.wizardSim?.audio?.loaded > 60, { timeout: 20000, polling: 100 });
     await sleep(1500); // the code-made clips finish rendering
     const pre = await f.evaluate(() => {
@@ -145,14 +145,14 @@ try {
     const s = await browser.newPage();
     s.on('pageerror', (e) => fail('settings page error: ' + e.message));
     await s.setViewport({ width: 1280, height: 800 });
-    await s.goto(`${BASE}?menu=Settings&debug=0`);
+    await s.goto(`${BASE}?menu=Settings`);
     await s.waitForFunction(() => !!window.wizardSim?.menu?.open, { timeout: 20000 });
     await sleep(600);
     await s.screenshot({ path: join(out, 'sound-settings.png') });
     const setv = await s.evaluate(() => { const g2 = window.wizardSim, row = g2.menu.host.settings.find((x) => x.label === 'Master volume'); const was = row.value(); row.adjust(-1); return [was, row.value()]; });
     console.log('master volume', setv);
     if (setv[0] === setv[1]) fail('the volume row did nothing');
-    await s.goto(`${BASE}?menu=Settings&debug=0`);
+    await s.goto(`${BASE}?menu=Settings`);
     await s.waitForFunction(() => !!window.wizardSim?.menu?.open, { timeout: 20000 });
     const kept = await s.evaluate(() => window.wizardSim.menu.host.settings.find((x) => x.label === 'Master volume').value());
     if (kept !== setv[1]) fail(`the volume did not persist (${kept})`);

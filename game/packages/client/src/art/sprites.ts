@@ -22,6 +22,7 @@ import { HEIGHT, CELL_H, CELL_W, FEET_X, FEET_Y, SPRITES_ON, type Anchors, type 
 import type { Frame } from './actors';
 import { LIVE3D_ON, PX_PER_UNIT, liveFrame, liveMeta, type LivePose } from './live3d';
 import * as X from './px';
+import { optOn } from '../dev-options';
 
 interface Move { row: number; n: number }
 interface SheetMeta { cell: [number, number]; cols?: number; feet: [number, number]; height: number; dirs: string[]; fps: number; moves: Record<string, Move>; attacks?: { hit: number }[]; casts?: Record<string, { hit: number }> }
@@ -29,9 +30,7 @@ interface Attack extends Move { hit: number }
 interface Sheet { meta: SheetMeta; img: HTMLImageElement | null; attacks: Attack[]; seats?: HTMLCanvasElement[] }
 
 /** The wizard's sprite (on with the warband's unless ?wizsprite=0). */
-const WIZ_SPRITE = SPRITES_ON && (() => {
-  try { return new URLSearchParams(globalThis.location?.search ?? '').get('wizsprite') !== '0'; } catch { return true; }
-})();
+const WIZ_SPRITE = SPRITES_ON && optOn('wizsprite');
 
 const metas = import.meta.glob<SheetMeta>('../../../../content/assets/sprites/*/sheet.json', { eager: true, import: 'default' });
 const urls = import.meta.glob<string>('../../../../content/assets/sprites/*/sheet.png', { eager: true, query: '?url', import: 'default' });

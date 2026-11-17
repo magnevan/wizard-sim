@@ -13,6 +13,7 @@
 import { CU, FY, clamp, lerp, rand, smooth } from './util';
 import * as X from './px';
 import type { Ctx } from './px';
+import { optNum, optOn } from '../dev-options';
 
 export type RigKind = 'wizard' | 'goblin' | 'archer' | 'brute' | 'dummy' | 'bramble' | 'sack' | 'soldier';
 
@@ -102,7 +103,7 @@ export interface Anchors { tip: [number, number]; chest: [number, number]; head:
 
 /** The warband drawn from 3D-rendered sprites (art/sprites.ts) instead of code rigs: on unless ?sprites=0. */
 export const SPRITES_ON = (() => {
-  try { return !!globalThis.location && new URLSearchParams(globalThis.location.search).get('sprites') !== '0'; } catch { return false; }
+  return typeof location !== 'undefined' && optOn('sprites');
 })();
 
 /**
@@ -112,11 +113,8 @@ export const SPRITES_ON = (() => {
  */
 export const WIZ_Z = wizScale();
 function wizScale(): number {
-  try {
-    const q = new URLSearchParams(globalThis.location?.search ?? '');
-    const v = Number(q.get('wizscale'));
-    return v >= 1 && v <= 2 ? v : SPRITES_ON ? 1.4 : 1;
-  } catch { return SPRITES_ON ? 1.4 : 1; }
+  const v = optNum('wizscale');
+  return v >= 1 && v <= 2 ? v : SPRITES_ON ? 1.4 : 1;
 }
 
 export const HEIGHT: Record<RigKind, number> = { wizard: 23 * WIZ_Z, goblin: 12, archer: 12, brute: 23, dummy: 18, bramble: 15, sack: 12, soldier: 25 };

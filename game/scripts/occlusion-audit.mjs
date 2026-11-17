@@ -57,7 +57,7 @@ try {
     const p = await browser.newPage();
     p.on('pageerror', (e) => console.error('PAGE ERROR', name, e.message));
     await p.setViewport({ width: 1920, height: 1080 });
-    await p.goto(`${BASE}?timerloop=1&debug=0#${room}`);
+    await p.goto(`${BASE}?timerloop=1#${room}`);
     await p.waitForFunction(() => window.wizardSim?.view.groundReady && window.wizardSim.view.props.ready, { timeout: 60000, polling: 100 });
     await sleep(300);
     const r = await p.evaluate((anchor, at, aim) => {

@@ -23,7 +23,7 @@ try {
   p.on('pageerror', (e) => fail('page error: ' + e.message));
   p.on('requestfailed', (r) => fail('request failed: ' + r.url()));
   await p.setViewport({ width: 1280, height: 800 });
-  await p.goto(`${BASE}?timerloop=1&debug=0#yard`);
+  await p.goto(`${BASE}?timerloop=1#yard`);
   await p.waitForFunction(() => window.wizardSim?.view.props.count > 0 && window.wizardSim.view.props.ready, { timeout: 60000, polling: 200 });
   await sleep(1500);
   const room = await p.evaluate(() => ({ id: window.wizardSim.world.def.id, props: window.wizardSim.view.props.count, w: window.wizardSim.world.dims.w, h: window.wizardSim.world.dims.h }));

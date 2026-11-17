@@ -30,7 +30,7 @@ try {
   if (b.tut) fail('key 1 did not leave the tutorial');
 
   // the end card: stand in the Survive arch (a dev poke of the position; the sim does the rest)
-  await p.goto(`${BASE}?timerloop=1&debug=0#tutorial-20`); // a new query: a real load, not a hash change
+  await p.goto(`${BASE}?timerloop=1#tutorial-20`); // a new query: a real load, not a hash change
   await p.waitForFunction(() => !!window.wizardSim?.world?.tut, { timeout: 20000, polling: 100 });
   await sleep(600);
   const c = await st();
@@ -47,7 +47,7 @@ try {
 
   // every beat draws and plays in the page: each one starts at its own beat, the bot plays a moment, no errors
   for (let beat = 1; beat <= 20; beat++) {
-    await p.goto(`${BASE}?timerloop=1&debug=0&room=tutorial&autoplay=1&beat=${beat}&n=${beat}`);
+    await p.goto(`${BASE}?timerloop=1&room=tutorial&autoplay=1&beat=${beat}`);
     await p.waitForFunction(() => !!window.wizardSim?.world?.tut, { timeout: 20000, polling: 100 });
     await sleep(1200);
     const e = await st();
@@ -56,7 +56,7 @@ try {
   console.log('every beat loaded and played');
 
   // the bot plays a short beat through to the next in the page (the calm, the ready stone, the arrivals, the arch)
-  await p.goto(`${BASE}?timerloop=1&debug=0&room=tutorial&autoplay=1&beat=6`);
+  await p.goto(`${BASE}?timerloop=1&room=tutorial&autoplay=1&beat=6`);
   await p.waitForFunction(() => !!window.wizardSim?.world?.tut, { timeout: 20000, polling: 100 });
   const t0 = Date.now();
   let f = await st();

@@ -180,6 +180,12 @@ function injectStyle(): void {
 @media (max-width: 900px) { .tune.right { width: 300px; } .tune.left { width: 260px; } }
 .tune-search { width: 100%; margin: 10px 0 2px; padding: 5px 7px; }
 .tune-io { width: 100%; resize: vertical; font: 11px ui-monospace, Consolas, monospace; }
+.tune-opt { display: grid; grid-template-columns: minmax(0, 1fr) 112px 72px; align-items: center; column-gap: 6px; padding: 2px 6px; margin: 0 -6px; border-left: 2px solid transparent; border-radius: 2px; }
+.tune-opt.chg { background: rgba(255, 216, 96, 0.07); border-left-color: #ffd860; }
+.tune-opt select, .tune .tune-opt-text { width: 100%; text-align: left; }
+.tune-opt input[type=checkbox] { justify-self: start; margin: 0; }
+.tune-opt-key { font: 10.5px ui-monospace, Consolas, monospace; color: #8a8498; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tune-opt-head { padding-top: 6px; color: #cfc9dc; }
 .tune-msg { color: #8a8498; font-size: 11px; min-height: 14px; word-break: break-word; }
 .tune-msg:empty { display: none; }
 .tune-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }

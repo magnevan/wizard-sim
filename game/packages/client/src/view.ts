@@ -25,6 +25,7 @@ import { deathDir, deathFrame, mulTint, slugOf, spriteFrame, statusTint, type Sp
 import { flushLive } from './art/live3d';
 import { Extras } from './art/extras';
 import { Massing, massingParam } from './art/massing';
+import { optOn } from './dev-options';
 import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
 import { floorLayout, floorPlaceholder } from './art/floor';
@@ -48,7 +49,7 @@ import type { SoundDirector } from './audio/director';
 
 const STRIDE: Record<RigKind, number> = { wizard: 10, goblin: 7, archer: 7, brute: 13, dummy: 10, bramble: 10, sack: 9, soldier: 9 };
 /** ?lighting=0 turns the scene lighting off, to compare. */
-const LIGHTING = typeof location === 'undefined' || new URLSearchParams(location.search).get('lighting') !== '0';
+const LIGHTING = optOn('lighting');
 /** How far the view leans out over the battlefield while you drive a defence: view units, across and up. */
 const DRIVE_LOOK = 4.5;
 /** When the battery's well runs dry, the view glides back to your wizard over this many seconds, at this rate (1/s). */

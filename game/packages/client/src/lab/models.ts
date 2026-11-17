@@ -410,7 +410,7 @@ function buildSide(): void {
   side.append(h3('Keys'), el('div', { className: 'note', innerHTML: '<kbd>Space</kbd> play · <kbd>,</kbd> <kbd>.</kbd> frame · <kbd>←</kbd> <kbd>→</kbd> turn · <kbd>↑</kbd> <kbd>↓</kbd> clip · <kbd>G</kbd> game cam · <kbd>F</kbd> free cam · <kbd>1</kbd>–<kbd>3</kbd> view · <kbd>O</kbd> onion' }));
   const shot = el('button', { className: 'b', textContent: 'Save PNG' }); shot.onclick = savePng;
   side.append(row(shot));
-  side.append(h3('Play area'), el('div', { className: 'note', textContent: 'The real game in the Sanctum, with the Tools panel\'s Stage on: enemies held still, God mode, any weapon a click away, and any enemy as a puppet (left-click walks it, right-click attacks). Real spells, hits and deaths; F3 Time slows or steps it.' }));
+  side.append(h3('Play area'), el('div', { className: 'note', textContent: 'The real game in the Sanctum, with the Tools panel\'s Stage on: enemies held still, God mode, any weapon a click away, and any enemy as a puppet (hold left to walk it, right-click attacks). Real spells, hits and deaths; F3 Time slows or steps it.' }));
   const play = el('a', { className: 'b', textContent: 'Open the play area', href: './index.html?stage=1#sanctum', target: '_blank' });
   side.append(row(play));
 }

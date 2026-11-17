@@ -3,8 +3,8 @@
  * the real game, set up for looking at bodies rather than fighting them.
  *
  *   Hold enemies still   every enemy stands where it is; blows still flinch it, knock it about and kill it.
- *   Puppet               one enemy driven with the mouse: left-click (or drag) walks it there, right-click attacks
- *                        toward the cursor. A wizard there (yours: God mode keeps you up) is struck, shot or grabbed by
+ *   Puppet               one enemy driven with the mouse as you drive your wizard: hold the left button and it walks
+ *                        toward the cursor (let go and it stops); right-click attacks toward the cursor. A wizard there (yours: God mode keeps you up) is struck, shot or grabbed by
  *                        the core's own attack code; with nobody there it swings at the air. Standing, it faces the cursor.
  *                        While a puppet is held the mouse is the puppet's; the keyboard still drives your wizard.
  *   Weapon               conjure any weapon (or the wand) at once, and it doesn't wear out.
@@ -46,9 +46,16 @@ export class StageTools {
       // a second button pressed while one is held comes only as a move (a chord)
       this.press(e.buttons & ~this.buttons & 3);
       this.buttons = e.buttons & 3;
-      if (this.buttons & 1 && this.st.puppet >= 0) { const p = this.at(); this.st.goal = [p.x, p.y]; }
+      if (!(this.buttons & 1)) this.st.goal = null;
     }, true);
-    addEventListener('pointerup', (e) => { if (mine(e)) { e.stopImmediatePropagation(); this.buttons = e.buttons & 3; } }, true);
+    // a release anywhere (off the canvas too) stops the walk
+    addEventListener('pointerup', (e) => {
+      if (this.st.puppet < 0) return;
+      if (mine(e)) e.stopImmediatePropagation();
+      this.buttons = e.buttons & 3;
+      if (!(this.buttons & 1)) this.st.goal = null;
+    }, true);
+    addEventListener('blur', () => { this.buttons = 0; this.st.goal = null; });
     addEventListener('keydown', (e) => {
       if (!this.panelOpen() || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.code !== 'KeyK') return;
       if (this.st.puppet >= 0) this.release(); else this.take(this.nearestEnemy(this.at(), Infinity));
@@ -72,6 +79,8 @@ export class StageTools {
     if (this.kept && w.seats.weapon[0] === this.kept) w.seats.weaponUses[0] = STRUCT.weaponUses;
     else this.kept = 0;
     this.sync();
+    // walking while the left button is held: toward the cursor, wherever it is now (the camera may have moved)
+    if (i >= 0 && this.buttons & 1) { const p = this.at(); st.goal = [p.x, p.y]; }
     // a puppet standing still faces the cursor, so every facing can be looked at
     if (i >= 0 && b.kind[i] === KIND.enemy && !st.goal && b.ai[i] === AI.approach && this.cursor) {
       const p = this.at();
@@ -114,7 +123,7 @@ export class StageTools {
     if (!this.cheat()) return;
     Object.assign(this.st, { puppet: i, goal: null, aim: this.world.bodies.face[i] });
     this.sync();
-    this.say(`Puppet: ${ARCHETYPES[this.world.bodies.arch[i]].name} (#${i}). Left-click walks it, right-click attacks; K lets go.`);
+    this.say(`Puppet: ${ARCHETYPES[this.world.bodies.arch[i]].name} (#${i}). Hold left to walk it toward the cursor, right-click attacks; K lets go.`);
   }
 
   private release(why = ''): void {
@@ -148,7 +157,7 @@ export class StageTools {
     line().append(
       btn('Pick one', () => { this.picking = true; this.say('Click an enemy to drive it.'); }, 'Then click an enemy (or K: the one nearest the cursor)'),
       btn('Let go', () => this.release(), 'K while the panel is open'));
-    this.msg = h('div', 'tune-msg', 'Left-click walks a puppet, right-click attacks toward the cursor (a wizard there is struck for real: turn on God mode).');
+    this.msg = h('div', 'tune-msg', 'Hold left to walk a puppet toward the cursor, right-click to attack toward it (a wizard there is struck for real: turn on God mode).');
     body.appendChild(this.msg);
 
     const wl = line();

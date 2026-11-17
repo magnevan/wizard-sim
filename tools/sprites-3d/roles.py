@@ -15,7 +15,10 @@ ROLES = {
     # is left out, so the game's 1 s wind-up shows the draw rising into the shot
     'archer': {'walk': 'walking', 'run': 'running', 'attack': ['archery_shot'], 'death': 'knock_down',
                'tune': {'archery_shot': {'hit': 39, 'cut': (34, 38)}}},
-    'shieldbearer': {'walk': 'walking', 'run': 'running', 'attack': ['thrust_slash', 'shield_push'], 'death': 'knock_down'},
+    # the shieldbearer's thrust: Meshy's Thrust Slash thrusts (frames 0..8), then turns away and lunges into an overhead
+    # slash; only the thrust is kept (the user, 2026-11-17: "seems like two combined things"), easing back to the legs after
+    'shieldbearer': {'walk': 'walking', 'run': 'running', 'attack': ['thrust_slash', 'shield_push'], 'death': 'knock_down',
+                     'tune': {'thrust_slash': {'hit': 8, 'end': 10}}},
     'hooker': {'walk': 'walking', 'run': 'running', 'attack': ['crouch_pull_and_throw'], 'death': 'knock_down', 'grade': (0.84, 0.93, 0.9)},
     'chieftain': {'walk': 'walking', 'run': 'running', 'attack': ['heavy_hammer_swing'], 'death': 'knock_down'},
     # the wizard: the staff's shove and weapon Strike as its attack; spell moves as one-shots with a release frame

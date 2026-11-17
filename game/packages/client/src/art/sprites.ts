@@ -125,10 +125,9 @@ function cellOf(sh: Sheet, s: RigState, who: number): [Move, number] {
   if (s.dead > 0) { const d = M.death; return [d, Math.round((d.n - 1) * Math.min(1, s.dead))]; }
   if (s.kind === 'wizard') {
     // a Force cast: the push clip into its full stretch (halfway from the release to the clip's end), held there while
-    // the spell flows; gathering loops in real time
+    // the spell flows (queuing runes plays nothing)
     const c = M.cast, hit = sh.meta.casts?.cast?.hit ?? 0, held = c ? hit + Math.floor((c.n - 1 - hit) / 2) : 0;
     if (c && s.cast > 0) return [c, Math.round(held * Math.min(1, s.cast))];
-    if (M.gather && s.prep > 0) return [M.gather, Math.floor((performance.now() / 1000) * (sh.meta.fps || 12)) % M.gather.n];
   }
   // an attack plays its clip at the clip's own speed, never retimed, with its contact frame on the game's hit: a longer
   // wind-up than the clip's holds its first pose, a shorter one starts it partway; once the clip ends the body walks or idles
@@ -167,6 +166,9 @@ function stretch(a: Anchors, k: number): Anchors {
 const FOLLOW = 0.25, BLEND = 0.3;
 /** A wizard's one-shot starts this long (s) before its release, so the game's instant cast gets a moment's wind-up. */
 export const SHOT_LEAD = 0.2;
+/** The staff's blow takes the staff firmly over GRIP_IN (s) and lets it settle upright over GRIP_OUT as the blow ends. */
+const GRIP_IN = 0.12, GRIP_OUT = 0.35;
+const smooth01 = (x: number) => { const k = Math.min(1, Math.max(0, x)); return k * k * (3 - 2 * k); };
 
 /**
  * What a live model (art/live3d.ts) shows for a rig state: the same choices as cellOf, as a clip time instead of a sheet
@@ -182,22 +184,33 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     return (((s.dist / stride) % 1) + 1) % 1 * (c?.duration ?? 1);
   };
   const legs = s.spd >= 1 ? 'run' : 'walk';
+  // a moving body's legs under a move that drives its upper body (the wizard casts while walking)
+  const under = s.spd > 0 ? { legs, tl: step(legs) } : {};
+  // after a one-shot's last frame its pose eases into the legs (or the standing pose) over BLEND
+  const after = (move: string, last: number, over: number, extra: Partial<LivePose> = {}): LivePose | null => {
+    if (over < 0 || over >= BLEND) return null;
+    const k = over / BLEND;
+    return { move, t: last, face, flash, ...extra, move2: s.spd > 0 ? legs : 'walk', t2: s.spd > 0 ? step(legs) : 0, w2: k * k * (3 - 2 * k) };
+  };
   if (s.dead > 0) return { move: 'death', t: dur('death') * Math.min(1, s.dead), face, flash };
   if (s.kind === 'wizard') {
     const seat = X.TEAMS[s.pal % X.TEAMS.length], c = meta.casts?.cast;
     // a one-shot (the staff's blow, an Area or Self cast) plays from just before its release, the release a moment
-    // after it went off in the game, then hands back
+    // after it went off in the game, over the legs if the wizard walks on, then eases back
     if (s.shot) {
       const a = meta.attacks[0], o = s.shot === 1 ? (a ? { first: a.first, hit: a.hit, last: a.last } : undefined) : meta.casts?.[s.shot === 2 ? 'area' : 'self'];
-      if (o) {
-        const t = Math.max(o.first, o.hit - SHOT_LEAD) + s.shotT;
-        if (s.shotT >= 0 && t <= o.last) return { move: s.shot === 1 ? 'attack0' : s.shot === 2 ? 'area' : 'self', t, face, flash, seat };
+      if (o && s.shotT >= 0) {
+        const t0 = Math.max(o.first, o.hit - SHOT_LEAD), t = t0 + s.shotT, move = s.shot === 1 ? 'attack0' : s.shot === 2 ? 'area' : 'self';
+        // the staff's blow grips the staff firmly (it swings with the hand) and lets it settle upright again after
+        const grip = s.shot === 1 ? smooth01(s.shotT / GRIP_IN) * smooth01((o.last + BLEND - t) / GRIP_OUT) : undefined;
+        if (t <= o.last) return { move, t, face, flash, seat, grip, ...under };
+        const out = after(move, o.last, t - o.last, { seat, grip, ...under });
+        if (out) return out;
       }
     }
     // a Force cast: the push clip into its full stretch (halfway from the release to the clip's end), held while the
-    // spell flows; gathering loops in real time (as the sheet's cellOf)
-    if (c && s.cast > 0) { const held = c.hit + (c.last - c.hit) / 2; return { move: 'cast', t: c.first + (held - c.first) * Math.min(1, s.cast), face, flash, seat }; }
-    if (meta.clips.gather && s.prep > 0) return { move: 'gather', t: (performance.now() / 1000) % dur('gather'), face, flash, seat };
+    // spell flows. Queuing runes plays nothing: the body only casts when the spell goes off (the user, 2026-11-17).
+    if (c && s.cast > 0) { const held = c.hit + (c.last - c.hit) / 2; return { move: 'cast', t: c.first + (held - c.first) * Math.min(1, s.cast), face, flash, seat, ...under }; }
     if (s.spd > 0) return { move: legs, t: step(legs), face, flash, seat };
     return { move: 'walk', t: 0, face, flash, seat };
   }
@@ -213,6 +226,9 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     const k = s.spd > 0 && s.hitT > FOLLOW ? Math.min(1, (s.hitT - FOLLOW) / BLEND) : 0;
     const w2 = k * k * (3 - 2 * k);
     if (t <= a.last && w2 < 1) return { move: a.clip, t, face, flash, ...(w2 > 0 ? { move2: legs, t2: step(legs), w2 } : {}) };
+    // past its last frame (a clip cut short, like the shieldbearer's thrust): ease into the legs instead of snapping
+    const out = w2 < 1 ? after(a.clip, a.last, t - a.last) : null;
+    if (out) return out;
   }
   if (s.spd > 0) return { move: legs, t: step(legs), face, flash };
   return { move: 'walk', t: 0, face, flash };

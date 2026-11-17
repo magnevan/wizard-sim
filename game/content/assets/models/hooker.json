@@ -35,6 +35,13 @@
  "release": {},
  "soft": [],
  "height": 1.98,
+ "props": [
+  {
+   "node": "hook carrier",
+   "bone": "RightHand",
+   "drop": true
+  }
+ ],
  "tris": 5000,
  "bones": [
   "Hips",

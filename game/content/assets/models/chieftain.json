@@ -35,6 +35,13 @@
  "release": {},
  "soft": [],
  "height": 3.564,
+ "props": [
+  {
+   "node": "maul carrier",
+   "bone": "RightHand",
+   "drop": true
+  }
+ ],
  "tris": 5000,
  "bones": [
   "Hips",

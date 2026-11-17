@@ -136,15 +136,17 @@ def spear():
 
 
 def shield():
-    # strapped to the forearm, its face outward from the forearm's outer side, toward the character's forward
-    c = Vector((0.16, 0, 0.10)); n = Vector((0, 0, 1))
+    # strapped along the forearm, its face outward from the back of the forearm (Y: up in the palms-down T-pose), so a
+    # forearm raised across the chest holds it square to the front. (Facing the frame's Z, the T-pose's forward, it
+    # stood edge-on in the push: the user, 2026-11-17.)
+    n = Vector((0, 1, 0)); c = Vector((0.26, 0, 0)) + n * 0.17
     bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=0.36, depth=0.05, location=c)
     face = _obj('shield face', BRASS()); face.rotation_euler = n.to_track_quat('Z', 'Y').to_euler()
     bpy.ops.mesh.primitive_torus_add(major_radius=0.36, minor_radius=0.03, location=c + n * 0.02)
     rim = _obj('shield rim', IRON()); rim.rotation_euler = n.to_track_quat('Z', 'Y').to_euler()
-    grille = box('shield grille', c + n * 0.035 + Vector((0.10, -0.08, 0)), (0.14, 0.12, 0.015), IRON())
-    gear = rod('shield gear', c + n * 0.02 + Vector((-0.12, 0.12, 0)), c + n * 0.06 + Vector((-0.12, 0.12, 0)), 0.07, BRASS(), verts=10)
-    rag = box('shield cloth', c + Vector((0.38, 0.12, 0.04)), (0.18, 0.08, 0.015), CLOTH())
+    grille = box('shield grille', c + n * 0.035 + Vector((0.10, 0, -0.08)), (0.14, 0.015, 0.12), IRON())
+    gear = rod('shield gear', c + n * 0.02 + Vector((-0.12, 0, 0.12)), c + n * 0.06 + Vector((-0.12, 0, 0.12)), 0.07, BRASS(), verts=10)
+    rag = box('shield cloth', c + Vector((0.38, 0.04, 0.12)), (0.18, 0.015, 0.08), CLOTH())
     return [face, rim, grille, gear, rag]
 
 
@@ -177,10 +179,11 @@ def maul():
 PURPLE = lambda: mat('prop socket', (0.16, 0.13, 0.22))
 WRAP = lambda: mat('prop wrap', (0.85, 0.75, 0.62))
 
-# The staff stands up from the fist when the arm hangs: back along the hand toward the wrist (-X), leaning a little
-# forward (-Z on a hanging arm). (Across the palm, Y, is the character's side: that held it like a quarterstaff.)
-STAFF_DIR = Vector((-1, 0, -0.30)).normalized()
-STAFF_OFF = Vector((0, 0, -0.05))  # just in front of the knuckles, so the shaft clears the forearm
+# The staff runs through the fist as a sword's grip does: out of the thumb side (Z, the character's forward in the
+# T-pose), a little toward the fingers, like the knife. It used to run back along the forearm (-X), so the shaft lay
+# against the arm and seemed to hang from the elbow (the user, 2026-11-17). A soft staff (~k) pivots on the palm.
+STAFF_DIR = Vector((0.15, 0, 1)).normalized()
+STAFF_OFF = Vector((0, 0, 0))
 
 
 def staff():

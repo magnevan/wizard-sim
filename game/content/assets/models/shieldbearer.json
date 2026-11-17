@@ -29,8 +29,8 @@
   {
    "clip": "attack0",
    "first": 0.0,
-   "hit": 0.75,
-   "last": 2.75,
+   "hit": 0.6666666666666666,
+   "last": 0.8333333333333334,
    "cut": null
   },
   {
@@ -46,6 +46,18 @@
  "release": {},
  "soft": [],
  "height": 1.98,
+ "props": [
+  {
+   "node": "spear carrier",
+   "bone": "RightHand",
+   "drop": true
+  },
+  {
+   "node": "shield carrier",
+   "bone": "LeftForeArm",
+   "drop": false
+  }
+ ],
  "tris": 5000,
  "bones": [
   "Hips",

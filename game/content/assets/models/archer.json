@@ -48,6 +48,13 @@
  },
  "soft": [],
  "height": 1.98,
+ "props": [
+  {
+   "node": "bow carrier",
+   "bone": "LeftHand",
+   "drop": true
+  }
+ ],
  "tris": 5000,
  "bones": [
   "Hips",

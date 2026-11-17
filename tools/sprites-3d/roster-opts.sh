@@ -9,7 +9,7 @@ declare -A OPTS=(
   [shieldbearer]="--prop=$P:spear@RightHand --prop=$P:shield@LeftForeArm"
   [hooker]="--prop=$P:hook@RightHand"
   [chieftain]="--prop=$P:maul@RightHand --canvas=96 --height=1.8"
-  [wizard]="--prop=$P:staff~0.25@RightHand --canvas=64 --height=1.28"   # 1.4x the code wizard (the user: 1.7 too big)
+  [wizard]="--prop=$P:staff~0.1@RightHand --firm=sword_slash --canvas=64 --height=1.28"   # 1.4x the code wizard (the user: 1.7 too big)
 )
 # slug: its folder under tools/sprites-3d/output when it isn't the slug
 declare -A DIR=([raider-hooded]=meshy-rig)

@@ -25,6 +25,7 @@ PREVIEW = '--preview' in args
 FIT_H = float(next((a[9:] for a in args if a.startswith('--height=')), 1.0))
 # --canvas=96: a bigger frame for a bigger body (the chieftain); the pixel density stays 16 per unit
 CANVAS, PPU, SUPER = int(next((a[9:] for a in args if a.startswith('--canvas=')), 48)), 16, 4
+CARRIERS = []   # (carrier empty, prop name, bone): each --prop hangs from one
 SOFT = []   # (carrier empty, k, prop axis) for --prop=...:<name>~k: props that take only k of the hand's tilt
 DIRS = {'south': 0, 'south-east': 45, 'east': 90, 'north-east': 135, 'north': 180, 'north-west': -135, 'west': -90, 'south-west': -45}
 
@@ -104,11 +105,16 @@ if ANIM:
         hb = arm.data.bones[HAND]
         from mathutils import Euler
         dst_hand = frame(arm.matrix_world @ hb.head_local, arm.matrix_world @ hb.parent.head_local) @ Euler(BROT).to_matrix().to_4x4()
+        # hung from one carrier at the wrist, like a --prop's, so the game can drop it when its holder dies
+        e = bpy.data.objects.new(keep[0] + ' carrier', None); scene.collection.objects.link(e)
+        e.parent = arm; e.parent_type = 'BONE'; e.parent_bone = HAND
+        bpy.context.view_layer.update(); e.matrix_world = dst_hand
         for o in kept:
             mw = dst_hand @ src_hand.inverted() @ o.matrix_world
-            o.parent = arm; o.parent_type = 'BONE'; o.parent_bone = HAND
+            o.parent = e
             bpy.context.view_layer.update()
             o.matrix_world = mw
+        CARRIERS.append((e, keep[0], HAND))
         print('grafted onto', HAND, [o.name for o in kept])
 
     PROP_UPDATES = []
@@ -134,17 +140,19 @@ if ANIM:
             bpy.context.view_layer.update()
             o.matrix_world = mw
         PROP_UPDATES.extend(ns.get('UPDATES', []))   # props that follow more than their bone (a bow's string)
-        if soft:
-            # a long prop (the wizard's staff) shouldn't take every wrist tilt of a walk: an empty at the wrist carries
-            # it, and each frame (soft_props) its main axis is turned back toward upright by 1 - k
-            e = bpy.data.objects.new(name + ' carrier', None); scene.collection.objects.link(e)
-            e.parent = arm; e.parent_type = 'BONE'; e.parent_bone = bone
-            bpy.context.view_layer.update(); e.matrix_world = f
-            bpy.context.view_layer.update()
-            for o in parts:
-                mw = o.matrix_world.copy(); o.parent = e; o.parent_type = 'OBJECT'
-                bpy.context.view_layer.update(); o.matrix_world = mw
-            SOFT.append((e, e.matrix_basis.copy(), float(soft), Vector(ns['PROP_AXIS'][name])))
+        # every prop hangs from one empty on its bone, '<name> carrier', at the palm (the prop's GRIP): the game drops
+        # it as one piece when its holder dies (export_game.py lists it), and a soft prop turns on it. A long prop (the
+        # wizard's staff) shouldn't take every wrist tilt of a walk: each frame (soft_props) its main axis is turned
+        # back toward upright by 1 - k, pivoting in the fist
+        e = bpy.data.objects.new(name + ' carrier', None); scene.collection.objects.link(e)
+        e.parent = arm; e.parent_type = 'BONE'; e.parent_bone = bone
+        bpy.context.view_layer.update(); e.matrix_world = f @ Matrix.Translation(Vector(ns.get('GRIP', (0, 0, 0))) * FIT_H)
+        bpy.context.view_layer.update()
+        for o in parts:
+            mw = o.matrix_world.copy(); o.parent = e; o.parent_type = 'OBJECT'
+            bpy.context.view_layer.update(); o.matrix_world = mw
+        CARRIERS.append((e, name, bone))
+        if soft: SOFT.append((e, e.matrix_basis.copy(), float(soft), Vector(ns['PROP_AXIS'][name])))
         print('prop', name, 'on', bone, len(parts), 'parts', f'(soft {soft})' if soft else '')
 elif ext == '.py':
     exec(compile(open(MODEL, encoding='utf-8-sig').read(), MODEL, 'exec'), {'__name__': '__model__', '__file__': MODEL})
@@ -304,10 +312,17 @@ if PREVIEW:
         shoot(os.path.join(OUT, 'preview', name + '.png'), flat=False)
     r.resolution_x = r.resolution_y = CANVAS * SUPER; scene.cycles.samples = 16
 
+# --firm=<clip>[,<clip>]: clips (name substrings) in which soft props are held firmly, following the hand's every turn
+# (the wizard's staff in its blow and its casts: kept upright there, it hung from the hand instead of swinging)
+FIRM = [c for a in args if a.startswith('--firm=') for c in a[7:].split(',')]
+CUR_MOVE = ''
+
+
 def soft_props():
     """Turn each soft prop's main axis from where the hand holds it back toward upright (leaning a little toward the
-    character's forward), keeping k of the hand's tilt; the turn pivots on the wrist."""
+    character's forward), keeping k of the hand's tilt (all of it in a --firm clip); the turn pivots on the palm."""
     for e, basis, k, ax in SOFT:
+        if any(c in CUR_MOVE for c in FIRM): k = 1.0
         e.matrix_basis = basis
         bpy.context.view_layer.update()
         mw = e.matrix_world.copy(); p = mw.translation.copy()
@@ -384,8 +399,27 @@ if ANIM:
     R.MOVES = picked
     MOVES = list(picked)
 
+if any(a.startswith('--inspect=') for a in args):
+    # --inspect=<n>: n smooth stills per move from the south and the east (Workbench, textured, 384 px) into
+    # <out>/inspect/<move>-<dir>-fNN.png, for checking how props sit in the hand (montage.py lays them out)
+    N_IN = int(next(a[10:] for a in args if a.startswith('--inspect=')))
+    r.engine = 'BLENDER_WORKBENCH'; scene.display.shading.color_type = 'TEXTURE'; scene.display.shading.light = 'STUDIO'
+    r.resolution_x = r.resolution_y = 512; cam.ortho_scale = 2.9 * FIT_H
+    for mv in MOVES:
+        n, fn = R.MOVES[mv]; CUR_MOVE = mv
+        for d in ('south', 'east'):
+            rig.rotation_euler = (0, 0, math.radians(DIRS[d]))
+            for j in range(N_IN):
+                i = round(j * (n - 1) / max(1, N_IN - 1))
+                R.rest(rig); fn(rig, i, n)
+                for u in globals().get('PROP_UPDATES', []): u(arm, i, mv)
+                bpy.context.view_layer.update(); soft_props()
+                r.filepath = os.path.join(OUT, 'inspect', f'{mv}-{d}-f{j:02d}.png'); bpy.ops.render.render(write_still=True)
+        print('inspected', mv, n, 'frames')
+    sys.exit(0)
+
 for mv in MOVES:
-    n, fn = R.MOVES[mv]
+    n, fn = R.MOVES[mv]; CUR_MOVE = mv
     for d, deg in DIRS.items():
         rig.rotation_euler = (0, 0, math.radians(deg))
         for i in range(n):

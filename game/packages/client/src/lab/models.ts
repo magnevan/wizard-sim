@@ -23,7 +23,7 @@ import type { Frame } from '../art/actors';
 const DEFAULTS = {
   m: 'wizard', c: 'walk', t: 0, f: 90, play: true, rate: 1, view: 'split', zoom: 0, cam: 'game',
   seat: 0, flash: false, squash: true, bones: false, rings: true, onion: false, ring8: false, lineup: false,
-  c2: '', w2: 0.5, drive: false, speed: 4.2, asGame: false, floor: '#3b3833',
+  c2: '', w2: 0.5, legs: '', drive: false, speed: 4.2, asGame: false, floor: '#3b3833',
 };
 type St = typeof DEFAULTS;
 const st: St = { ...DEFAULTS };
@@ -100,7 +100,7 @@ function marksOf(slug: string, meta: ModelMeta, clip: string): Marks {
   if (rel !== undefined && !out.marks.some((m) => Math.abs(m.t - rel) < 1e-3)) out.marks.push({ t: rel, label: 'release', color: '#5ac8ff' });
   const y = meta.yaw[clip];
   if (y) out.spans.push({ a: y[1], b: y[4], label: `turn ${y[0]}°`, color: 'rgba(90,150,255,.16)' });
-  if (clip === 'gather') out.note = 'Gathering loops in real time while runes are queued.';
+  if (clip === 'gather') out.note = 'Not played in the game: queuing runes plays no animation, only casting does.';
   if (clip === 'death') out.note = 'Plays once, lies still 1.6 s, then fades over 0.6 s.';
   if (meta.clips[clip]?.stride) out.note = 'The game plays walk and run by distance over the stride, not by the clock: try "drive by speed".';
   return out;
@@ -406,6 +406,12 @@ function buildSide(): void {
   side.append(row('weight', w2));
   side.append(el('div', { className: 'note', textContent: 'The game blends an attack\'s recovery into the walk or run once the follow-through is done.' }));
 
+  const legsSel = el('select');
+  legsSel.append(...['', 'walk', 'run'].map((v) => el('option', { value: v, textContent: v || 'the clip\'s own' })));
+  legsSel.value = st.legs; legsSel.onchange = () => { st.legs = legsSel.value; changed(); };
+  side.append(row('Legs', legsSel));
+  side.append(el('div', { className: 'note', textContent: 'A wizard walking while it casts: the clip drives the upper body, the walk or run the hips and legs.' }));
+
   side.append(h3('Drive by speed'), driveBox, driveNote);
   side.append(h3('Keys'), el('div', { className: 'note', innerHTML: '<kbd>Space</kbd> play · <kbd>,</kbd> <kbd>.</kbd> frame · <kbd>←</kbd> <kbd>→</kbd> turn · <kbd>↑</kbd> <kbd>↓</kbd> clip · <kbd>G</kbd> game cam · <kbd>F</kbd> free cam · <kbd>1</kbd>–<kbd>3</kbd> view · <kbd>O</kbd> onion' }));
   const shot = el('button', { className: 'b', textContent: 'Save PNG' }); shot.onclick = savePng;
@@ -478,6 +484,7 @@ function frame(now: number): void {
     if (st.c === IDLE) st.t = 0;
     const pose: LivePose = { move: st.c === IDLE ? 'walk' : st.c, t: st.t, face, flash: st.flash, seat: st.m === 'wizard' && st.seat >= 0 ? TEAMS[st.seat] : undefined };
     if (st.c2 && st.c2 !== st.c && meta.clips[st.c2]) Object.assign(pose, { move2: st.c2, t2: st.t % meta.clips[st.c2].duration, w2: st.w2 });
+    if (st.legs && st.legs !== st.c && meta.clips[st.legs]) Object.assign(pose, { legs: st.legs, tl: st.t % meta.clips[st.legs].duration });
     // full size
     livePoseInst(inst, model, pose);
     inst.root.scale.copy(st.squash ? LIVE_VIEW.squash : new THREE.Vector3(1, 1, 1));

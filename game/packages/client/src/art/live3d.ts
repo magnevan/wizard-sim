@@ -38,7 +38,9 @@ export interface ModelMeta {
   /** The wizard's spell moves: each one-shot's first, release and last time (clip seconds). */
   casts?: Record<string, { first: number; hit: number; last: number }>;
   /** Props kept nearer upright than the hand holds them (the wizard's staff): a carrier node, its axis marker, the share of tilt kept. */
-  soft?: { node: string; axis: string; k: number }[];
+  soft?: { node: string; axis: string; k: number; firm?: string[] }[];
+  /** Each held prop's carrier node (at the grip) and its bone; `drop`: it falls from the hand when its holder dies. */
+  props?: { node: string; bone: string; drop: boolean }[];
   /** Standing height in model units (--height included). */
   height?: number;
 }
@@ -48,7 +50,13 @@ export const PX_PER_UNIT = 17;
  * What to show: a move and a time into its clip, facing `face` (radians, 0 east, clockwise on screen); optionally a second
  * clip blended in with weight w2 (an attack's recovery handing over to the walk).
  */
-export interface LivePose { move: string; t: number; face: number; flash: boolean; move2?: string; t2?: number; w2?: number; seat?: TeamPal }
+export interface LivePose {
+  move: string; t: number; face: number; flash: boolean; move2?: string; t2?: number; w2?: number; seat?: TeamPal;
+  /** Walking while the move plays: the move drives the upper body, this clip (walk or run) at time tl the hips and legs. */
+  legs?: string; tl?: number;
+  /** How firmly a soft prop is held, 0 (kept upright) to 1 (every turn of the hand); by default 1 in its `firm` moves. */
+  grip?: number;
+}
 
 const urls = import.meta.glob<string>('../../../../content/assets/models/*.glb', { eager: true, query: '?url', import: 'default' });
 const metas = import.meta.glob<ModelMeta>('../../../../content/assets/models/*.json', { eager: true, import: 'default' });
@@ -258,10 +266,14 @@ function toon(m: THREE.MeshLambertMaterial, flash: { value: number }, seat?: Sea
 }
 
 interface Model { scene: THREE.Object3D; clips: Map<string, THREE.AnimationClip>; meta: ModelMeta }
+/** The tracks a walking body's legs drive: the hips (the body's sway and travel) and both legs (Meshy's bone names). */
+const LOWER = /^(Hips|(Left|Right)(UpLeg|Leg|Foot|ToeBase))\./;
 interface Seat { on: { value: number }; main: { value: THREE.Vector3 }; trim: { value: THREE.Vector3 } }
-interface Soft { node: THREE.Object3D; axis: THREE.Object3D; k: number; rest: THREE.Quaternion }
+interface Soft { node: THREE.Object3D; axis: THREE.Object3D; k: number; rest: THREE.Quaternion; firm: string[] }
+/** A held prop that falls when its holder dies: its carrier, the carrier's own local matrix, and its shape (carrier space). */
+interface Drop { node: THREE.Object3D; rest: THREE.Matrix4; box: THREE.Box3 }
 interface Inst {
-  seat: Seat; soft: Soft[]; tip: THREE.Object3D | null;
+  seat: Seat; soft: Soft[]; drops: Drop[]; hands: [THREE.Object3D, THREE.Object3D] | null;
   root: THREE.Group; shift: THREE.Group; turn: THREE.Group; body: THREE.Object3D; mixer: THREE.AnimationMixer;
   actions: Map<string, THREE.AnimationAction>; hips: THREE.Object3D | null; rest: THREE.Vector3; flash: { value: number };
   bow: { tips: THREE.Object3D[]; nock: THREE.Object3D; grip: THREE.Object3D; hand: THREE.Object3D; fore: THREE.Object3D; parts: THREE.Mesh[] } | null;
@@ -278,7 +290,15 @@ function model(slug: string): Model | null {
     if (!url || !meta) { models.set(slug, 'failed'); return null; }
     models.set(slug, 'loading');
     loader.loadAsync(url).then((g) => {
-      models.set(slug, { scene: g.scene, clips: new Map(g.animations.map((a) => [a.name, a])), meta });
+      const clips = new Map(g.animations.map((a) => [a.name, a]));
+      // each clip's halves, so a move can play over walking legs (LivePose.legs): '<clip>:upper' is everything above
+      // the hips, '<clip>:lower' the hips and legs
+      for (const a of g.animations) {
+        const lower = a.tracks.filter((t) => LOWER.test(t.name)), upper = a.tracks.filter((t) => !LOWER.test(t.name));
+        clips.set(a.name + ':upper', new THREE.AnimationClip(a.name + ':upper', a.duration, upper));
+        clips.set(a.name + ':lower', new THREE.AnimationClip(a.name + ':lower', a.duration, lower));
+      }
+      models.set(slug, { scene: g.scene, clips, meta });
     }).catch((e) => { console.warn('live3d: could not load', slug, e); models.set(slug, 'failed'); });
   }
   return null;
@@ -323,9 +343,26 @@ function instance(slug: string, m: Model, original = false): Inst {
   const soft: Soft[] = [];
   for (const sp of m.meta.soft ?? []) {
     const n = node(body, sp.node), ax = node(body, sp.axis);
-    if (n && ax) soft.push({ node: n, axis: ax, k: sp.k, rest: n.quaternion.clone() });
+    if (n && ax) soft.push({ node: n, axis: ax, k: sp.k, rest: n.quaternion.clone(), firm: sp.firm ?? [] });
   }
-  return { seat, soft, tip: node(body, 'staff socket') ?? null, root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
+  const drops: Drop[] = [];
+  for (const pr of m.meta.props ?? []) {
+    const n = node(body, pr.node);
+    if (!n || !pr.drop) continue;
+    // its shape in the carrier's frame, for laying it down on the ground
+    n.updateMatrixWorld(true);
+    const inv = n.matrixWorld.clone().invert(), box = new THREE.Box3();
+    n.traverse((o) => {
+      const g = (o as THREE.Mesh).geometry;
+      if (!(o as THREE.Mesh).isMesh || !g) return;
+      if (!g.boundingBox) g.computeBoundingBox();
+      box.union(g.boundingBox!.clone().applyMatrix4(inv.clone().multiply(o.matrixWorld)));
+    });
+    if (!box.isEmpty()) drops.push({ node: n, rest: n.matrix.clone(), box });
+  }
+  const lh = body.getObjectByName('LeftHand'), rh = body.getObjectByName('RightHand');
+  const hands: Inst['hands'] = lh && rh ? [lh, rh] : null;
+  return { seat, soft, drops, hands, root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
 }
 
 const ease = (t: number) => t * t * (3 - 2 * t);
@@ -342,15 +379,45 @@ function rodBetween(mesh: THREE.Mesh, a: THREE.Vector3, b: THREE.Vector3): void 
 function pose(inst: Inst, m: Model, p: LivePose): void {
   const clipName = m.clips.has(p.move) ? p.move : 'walk';
   const second = p.move2 && p.w2 && m.clips.has(p.move2) && p.move2 !== clipName ? p.move2 : null;
-  // each playing clip at its own time and weight; update(0) applies them
+  const legs = p.legs && p.legs !== clipName && m.clips.has(p.legs) ? p.legs : null;
+  const w1 = 1 - (second ? p.w2! : 0);
+  for (const d of inst.drops) d.rest.decompose(d.node.position, d.node.quaternion, d.node.scale);
+  // a held prop lets go early in the death and falls beside the body (dropProps): where it was when it let go
+  const fall = p.move === 'death' && inst.drops.length ? Math.min(DROP_AT, p.t) : -1;
+  if (fall >= 0) {
+    play(inst, [[clipName, 1, fall]]);
+    place(inst, m, p);
+    if (inst.soft.length) softProps(inst, p.face, 0);
+    inst.root.updateMatrixWorld(true);
+    const toRoot = inst.root.matrixWorld.clone().invert();
+    for (const d of inst.drops) DROP_FROM.set(d, toRoot.clone().multiply(d.node.matrixWorld));
+  }
+  // each playing clip at its own time and weight: walking under a move, the move drives the upper body and the legs
+  // clip the hips and legs
+  play(inst, [
+    ...(legs ? [[clipName + ':upper', w1, p.t], [legs + ':lower', w1, p.tl ?? 0]] as const : [[clipName, w1, p.t]] as const),
+    ...(second ? [[second, p.w2!, p.t2 ?? 0]] as const : []),
+  ]);
+  place(inst, m, p);
+  if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0));
+  if (fall >= 0) dropProps(inst, p.t - fall);
+}
+
+/** Plays exactly these clips, each at its weight and time (update(0) applies them). */
+function play(inst: Inst, on: readonly (readonly [string, number, number])[]): void {
   for (const [k, a] of inst.actions) {
-    const on = k === clipName ? 1 - (second ? p.w2! : 0) : k === second ? p.w2! : 0;
-    if (!on) { if (a.isRunning()) a.stop(); continue; }
+    const c = on.find((x) => x[0] === k);
+    if (!c || !c[1]) { if (a.isRunning()) a.stop(); continue; }
     if (!a.isRunning()) { a.reset(); a.play(); }
-    a.setEffectiveWeight(on);
-    a.time = Math.min(Math.max(0, k === clipName ? p.t : p.t2 ?? 0), a.getClip().duration - 1e-4);
+    a.setEffectiveWeight(c[1]);
+    a.time = Math.min(Math.max(0, c[2]), a.getClip().duration - 1e-4);
   }
   inst.mixer.update(0);
+}
+
+/** The body's turn, its facing, the hips held over the feet, its flash and seat colours (after the clips are applied). */
+function place(inst: Inst, m: Model, p: LivePose): void {
+  const clipName = m.clips.has(p.move) ? p.move : 'walk';
   const y = m.meta.yaw[clipName];
   let k = 0;
   if (y) {
@@ -369,22 +436,59 @@ function pose(inst: Inst, m: Model, p: LivePose): void {
   inst.flash.value = p.flash ? 1 : 0;
   inst.seat.on.value = p.seat ? 1 : 0;
   if (p.seat) { inst.seat.main.value.copy(hexVec(p.seat.main)); inst.seat.trim.value.copy(hexVec(p.seat.trim)); }
-  if (inst.soft.length) softProps(inst, p.face);
+}
+
+/** When a dying body's held props let go (s into the death clip), and how fast they fall (model units/s², 2 units ≈ 1 m). */
+const DROP_AT = 0.25, GRAVITY = 16;
+const DROP_FROM = new Map<Drop, THREE.Matrix4>();
+const m1 = new THREE.Matrix4(), m2 = new THREE.Matrix4(), dp = new THREE.Vector3(), dq = new THREE.Quaternion(), ds = new THREE.Vector3();
+/**
+ * Each dropped prop, `dt` s after it let go: from where the hand held it (the body's frame, so it stays put while the
+ * game moves the body), it falls under gravity and tips over to lie flat on the ground, its long side level, the
+ * lowest point of its shape on the ground. Worked out from the clip time alone, so any frame can be drawn.
+ */
+function dropProps(inst: Inst, dt: number): void {
+  inst.root.updateMatrixWorld(true);
+  for (const d of inst.drops) {
+    const from = DROP_FROM.get(d);
+    if (!from) continue;
+    from.decompose(dp, dq, ds);
+    // the long side, in the body's frame: laid level (kept as it is if it already points straight up or down)
+    const size = d.box.getSize(v1), long = size.x >= size.y && size.x >= size.z ? v2.set(1, 0, 0) : size.y >= size.z ? v2.set(0, 1, 0) : v2.set(0, 0, 1);
+    const a = long.applyQuaternion(dq).normalize(), flat = v3.set(a.x, 0, a.z);
+    const land = flat.lengthSq() > 1e-4 ? qa.setFromUnitVectors(a, flat.normalize()).multiply(dq) : qa.copy(dq);
+    // resting height: the lowest corner of its shape, laid down, on the ground
+    let lowest = Infinity;
+    for (let c = 0; c < 8; c++) {
+      v1.set(c & 1 ? d.box.max.x : d.box.min.x, c & 2 ? d.box.max.y : d.box.min.y, c & 4 ? d.box.max.z : d.box.min.z).multiply(ds).applyQuaternion(land);
+      lowest = Math.min(lowest, v1.y);
+    }
+    const y0 = dp.y, y1 = -lowest, T = Math.max(0.15, Math.sqrt(Math.max(0, 2 * (y0 - y1)) / GRAVITY));
+    const u = Math.min(1, dt / T);
+    dp.y = y0 + (y1 - y0) * u * u;
+    dq.slerp(land, ease(Math.min(1, dt / (T * 0.9))));
+    // body frame -> the carrier's parent's frame
+    m1.compose(dp, dq, ds).premultiply(inst.root.matrixWorld);
+    m2.copy(d.node.parent!.matrixWorld).invert().multiply(m1);
+    m2.decompose(d.node.position, d.node.quaternion, d.node.scale);
+    d.node.updateMatrixWorld(true);
+  }
 }
 
 const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Quaternion(), qi = new THREE.Quaternion();
 /**
  * render.py soft_props: each soft prop's main axis is turned from where the hand holds it back toward upright (leaning
- * a little toward the facing), keeping k of the hand's tilt; it turns about the carrier's own origin, the wrist.
+ * a little toward the facing), keeping k of the hand's tilt, all of it as `grip` reaches 1 (a staff's blow); it turns
+ * about the carrier's own origin, the palm.
  */
-function softProps(inst: Inst, face: number): void {
+function softProps(inst: Inst, face: number, grip: number): void {
   for (const s of inst.soft) {
     s.node.quaternion.copy(s.rest);
     s.node.updateMatrixWorld(true);
     const p = s.node.getWorldPosition(v1), a = s.axis.getWorldPosition(v2).sub(p).normalize();
     const want = v3.set(Math.cos(face) * 0.12, 1, Math.sin(face) * 0.12).normalize();
     const turn = qa.setFromUnitVectors(a, want);
-    qi.identity().slerp(turn, 1 - s.k);
+    qi.identity().slerp(turn, (1 - s.k) * (1 - grip));
     // world rotation -> the carrier's local one
     s.node.getWorldQuaternion(qb);
     s.node.parent!.getWorldQuaternion(qp);
@@ -418,7 +522,23 @@ function stringOf(inst: Inst, m: Model, p: LivePose, stage: THREE.Group): void {
 
 // ---- booking and flushing --------------------------------------------------------------------------------------------------------
 interface Booking { slug: string; slot: Slot; pose: LivePose; key: string }
-/** Each live body's staff tip last frame (art px from the feet), where its spells start (anchors tip and charge). */
+/**
+ * Where a caster's spells start: between its palms, leaning toward the hand further forward (the one doing the
+ * casting), so a spell leaves the hands whatever they hold (the user, 2026-11-17: the staff's tip tied every spell to
+ * the staff). World space, in v1.
+ */
+function castPoint(inst: Inst, m: Model): THREE.Vector3 {
+  const reach = 0.09 * (m.meta.height ?? 1.98) / 1.98;   // the palm, just past the wrist (props.py GRIP)
+  const palm = (h: THREE.Object3D, out: THREE.Vector3) => {
+    const w = h.getWorldPosition(out), e = h.parent!.getWorldPosition(v3);
+    return w.add(e.subVectors(w, e).normalize().multiplyScalar(reach));
+  };
+  const l = palm(inst.hands![0], v1), r = palm(inst.hands![1], v2);
+  const zl = inst.root.worldToLocal(l.clone()).z, zr = inst.root.worldToLocal(r.clone()).z;   // the body faces local +Z
+  return l.lerp(r, Math.min(1, Math.max(0, 0.5 + (zr - zl) / 0.5)));
+}
+
+/** Each live caster's hands last frame (art px from the feet), where its spells start (anchors tip and charge). */
 const tips = new Map<string, [number, number]>();
 const booked: Booking[] = [];
 let nextSmall = 0, nextBig = 0;
@@ -476,8 +596,8 @@ export function flushLive(): void {
     renderer.setRenderTarget(hiRT);
     const cam = b.slot.big ? g.camBig : g.camSmall;
     renderer.render(scene, cam);
-    if (inst.tip) {   // the staff's socket, projected into the slot, as art px from the feet
-      const o = b.slot.big ? BIG : SMALL, q = inst.tip.getWorldPosition(v1).project(cam);
+    if (inst.hands && m.meta.casts) {   // a caster's hands, projected into the slot, as art px from the feet
+      const o = b.slot.big ? BIG : SMALL, q = castPoint(inst, m).project(cam);
       tips.set(b.key, [Math.round((q.x + 1) / 2 * o.size - o.feet[0]), Math.round((1 - q.y) / 2 * o.size - o.feet[1])]);
     }
     stage.clear();

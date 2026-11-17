@@ -157,10 +157,16 @@ def run(g):
 
     # soft props (the wizard's staff, render.py SOFT): the client turns the carrier back toward upright each frame as
     # soft_props does; a marker child at the prop's main axis gives that axis in whatever frame the export settles on
+    # (render.py --firm: the moves whose clips hold it firmly, taking every turn of the hand, the client easing between)
+    firm = [c for a in args if a.startswith('--firm=') for c in a[7:].split(',')]
     for e, _basis, k, ax in g.get('SOFT', []):
         mk = bpy.data.objects.new(e.name + ' axis', None); scene.collection.objects.link(mk)
         mk.parent = e; mk.location = ax
-        meta['soft'].append({'node': e.name, 'axis': mk.name, 'k': k})
+        meta['soft'].append({'node': e.name, 'axis': mk.name, 'k': k,
+                             'firm': [mv for mv, act in moves.items() if any(c in _slug(act.name) for c in firm)]})
+    # every held prop's carrier: one held in a hand drops when its holder dies (the client lays it on the ground beside
+    # the body); one strapped on (the shieldbearer's shield, on the forearm) stays with the body
+    meta['props'] = [{'node': e.name, 'bone': bone, 'drop': bone.endswith('Hand')} for e, _name, bone in g.get('CARRIERS', [])]
 
     # the bow's live string and arrow are the client's (it draws them between the tips and the hand); drop the stand-ins
     for name in ('bow string', 'bow arrow', 'bow arrowhead'):

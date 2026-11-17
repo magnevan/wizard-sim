@@ -17,7 +17,7 @@
 import { Texture } from 'pixi.js';
 import { HEIGHT, CELL_H, CELL_W, FEET_X, FEET_Y, SPRITES_ON, type Anchors, type RigState } from './rigs';
 import type { Frame } from './actors';
-import { LIVE3D_ON, liveFrame, liveMeta, type LivePose } from './live3d';
+import { LIVE3D_ON, PX_PER_UNIT, liveFrame, liveMeta, type LivePose } from './live3d';
 import * as X from './px';
 
 interface Move { row: number; n: number }
@@ -178,6 +178,15 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
   };
   const legs = s.spd >= 1 ? 'run' : 'walk';
   if (s.dead > 0) return { move: 'death', t: dur('death') * Math.min(1, s.dead), face, flash };
+  if (s.kind === 'wizard') {
+    const seat = X.TEAMS[s.pal % X.TEAMS.length], c = meta.casts?.cast;
+    // a Force cast: the push clip into its full stretch (halfway from the release to the clip's end), held while the
+    // spell flows; gathering loops in real time (as the sheet's cellOf)
+    if (c && s.cast > 0) { const held = c.hit + (c.last - c.hit) / 2; return { move: 'cast', t: c.first + (held - c.first) * Math.min(1, s.cast), face, flash, seat }; }
+    if (meta.clips.gather && s.prep > 0) return { move: 'gather', t: (performance.now() / 1000) % dur('gather'), face, flash, seat };
+    if (s.spd > 0) return { move: legs, t: step(legs), face, flash, seat };
+    return { move: 'walk', t: 0, face, flash, seat };
+  }
   if ((s.hitT === s.hitT || s.hold > 0) && meta.attacks.length) {
     const a = meta.attacks[variantOf(who, s.swing, meta.attacks.length)];
     const cut = a.cut, gap = cut ? cut[1] - cut[0] + 1 / meta.fps : 0;
@@ -205,8 +214,10 @@ export function spriteFrame(s: RigState, who: number, rigAnchors: Anchors): Fram
   const slug = slugOf(s);
   if (!slug) return null;
   const sh = sheets.get(slug);
-  if (LIVE3D_ON && sh && liveMeta(slug)) {
-    const live = liveFrame(slug, livePose(slug, s, who), stretch(rigAnchors, sh.meta.height / HEIGHT[s.kind]));
+  const lm = LIVE3D_ON ? liveMeta(slug) : undefined;
+  if (lm && sh) {
+    const px = lm.height ? lm.height * PX_PER_UNIT : sh.meta.height;
+    const live = liveFrame(slug, livePose(slug, s, who), stretch(rigAnchors, px / HEIGHT[s.kind]));
     if (live) return live;
   }
   load();

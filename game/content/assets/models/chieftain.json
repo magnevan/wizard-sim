@@ -30,8 +30,11 @@
    "cut": null
   }
  ],
+ "casts": {},
  "yaw": {},
  "release": {},
+ "soft": [],
+ "height": 3.564,
  "tris": 5000,
  "bones": [
   "Hips",

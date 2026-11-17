@@ -117,9 +117,12 @@ function wizScale(): number {
 export const HEIGHT: Record<RigKind, number> = { wizard: 23 * WIZ_Z, goblin: 12, archer: 12, brute: 23, dummy: 18, bramble: 15, sack: 12 };
 export const WIDTH: Record<RigKind, number> = { wizard: 6 * WIZ_Z, goblin: 5, archer: 5, brute: 9, dummy: 6, bramble: 10, sack: 5 };
 
-const SW = Math.ceil(88 * WIZ_Z), SH = SW, AX = Math.round(44 * WIZ_Z), AY = Math.round(70 * WIZ_Z);
+// the cell is sized for a 1.7x wizard even when it's drawn smaller: the chieftain and the live 3D bodies (art/live3d.ts)
+// are drawn into the same cell and need its room
+const CZ = Math.max(WIZ_Z, 1.7);
+const SW = Math.ceil(88 * CZ), SH = SW, AX = Math.round(44 * CZ), AY = Math.round(70 * CZ);
 /** Only this box of the scratch canvases is ever cleared or copied. */
-const BX = AX - Math.ceil(23 * WIZ_Z), BY = AY - Math.ceil(46 * WIZ_Z), BW = Math.ceil(46 * WIZ_Z), BH = Math.ceil(54 * WIZ_Z);
+const BX = AX - Math.ceil(23 * CZ), BY = AY - Math.ceil(46 * CZ), BW = Math.ceil(46 * CZ), BH = Math.ceil(54 * CZ);
 /** A composed frame: the box plus a 1 px outline all round; the feet sit at (FX, FY0). */
 export const CELL_W = BW + 2, CELL_H = BH + 2, FEET_X = AX - BX + 1, FEET_Y = AY - BY + 1;
 

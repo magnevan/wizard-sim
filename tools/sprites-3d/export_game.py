@@ -11,7 +11,7 @@ sampled at 24 fps), the body's --yaw turn and the bow's --release. The client (a
 import json, math, os, re
 import bpy
 from mathutils import Vector
-from roles import ROLES, window
+from roles import ROLES, beats, window
 
 FPS = 24
 
@@ -48,12 +48,20 @@ def run(g):
     moves = {'walk': find(role['walk']), 'run': find(role['run'])}
     for k, key in enumerate(role['attack']): moves[f'attack{k}'] = find(key)
     moves['death'] = find(role['death'])
+    for name, key in {**role.get('casts', {}), **role.get('loops', {})}.items(): moves[name] = find(key)   # the wizard's spell moves
 
     # each attack's timing, from the weapon hand's path at 24 fps (as render.py's track.json, as pack.py reads it)
     ad = arm.animation_data or arm.animation_data_create()
     for t in ad.nla_tracks: t.mute = True
     hand_bone = next((a[8:] for a in args if a.startswith('--track=')), 'RightHand')
-    meta = {'slug': slug, 'fps': FPS, 'clips': {}, 'attacks': [], 'yaw': {}, 'release': {}}
+    meta = {'slug': slug, 'fps': FPS, 'clips': {}, 'attacks': [], 'casts': {}, 'yaw': {}, 'release': {}, 'soft': []}
+    # standing height (world units, as rendered: --height included), for fitting the rig's anchor points to the body
+    for t in ad.nla_tracks: t.mute = True
+    ad.action = None
+    for pb in arm.pose.bones: pb.matrix_basis.identity()
+    bpy.context.view_layer.update()
+    zs = [(m.matrix_world @ Vector(c)).z for m in meshes for c in m.bound_box]
+    meta['height'] = round(max(zs) - min(zs), 4)
     for name, act in moves.items():
         f0, f1 = act.frame_range
         meta['clips'][name] = {'source': act.name, 'duration': round((f1 - f0) / scene.render.fps, 4)}
@@ -77,6 +85,21 @@ def run(g):
             if y[0] in key: meta['yaw'][f'attack{k}'] = [float(y[1])] + [int(v) / 12 for v in y[2:6]]
         for r in rel_args:
             if r[0] in key: meta['release'][f'attack{k}'] = int(r[1]) / 12
+    # the wizard's spell moves: each one-shot's release (found like an attack's hit), in clip seconds
+    for name in role.get('casts', {}):
+        act = moves[name]
+        f0, f1 = act.frame_range
+        n = max(2, round((f1 - f0) / scene.render.fps * FPS))
+        _bind(ad, act)
+        hand = []
+        for i in range(n):
+            f = f0 + (f1 - f0) * i / n
+            scene.frame_set(int(f), subframe=f - int(f))
+            bpy.context.view_layer.update()
+            hand.append(list(arm.matrix_world @ arm.pose.bones[hand_bone].head))
+        b = beats(hand)
+        meta['casts'][name] = {'first': int(b[0]) / FPS, 'hit': min(int(b[2]), round(b[1] + 0.5)) / FPS, 'last': int(b[2]) / FPS}
+
     # each cycle's stride: how far the ground passes under the feet in one loop (model units), so the client plays walk
     # and run by distance walked and the feet stay planted. An in-place clip moves its planted foot back (+Y, the model
     # faces -Y); a clip that travels moves its hips forward instead.
@@ -108,6 +131,13 @@ def run(g):
         if getattr(act, 'slots', None) and len(act.slots):
             try: st.action_slot = act.slots[0]
             except Exception: pass
+
+    # soft props (the wizard's staff, render.py SOFT): the client turns the carrier back toward upright each frame as
+    # soft_props does; a marker child at the prop's main axis gives that axis in whatever frame the export settles on
+    for e, _basis, k, ax in g.get('SOFT', []):
+        mk = bpy.data.objects.new(e.name + ' axis', None); scene.collection.objects.link(mk)
+        mk.parent = e; mk.location = ax
+        meta['soft'].append({'node': e.name, 'axis': mk.name, 'k': k})
 
     # the bow's live string and arrow are the client's (it draws them between the tips and the hand); drop the stand-ins
     for name in ('bow string', 'bow arrow', 'bow arrowhead'):

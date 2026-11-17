@@ -23,6 +23,7 @@ import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { Rectangle, Texture } from 'pixi.js';
 import { CELL_H, CELL_W, FEET_X, FEET_Y, type Anchors } from './rigs';
 import type { Frame } from './actors';
+import type { TeamPal } from './px';
 
 export interface ModelMeta {
   slug: string; fps: number;
@@ -33,12 +34,20 @@ export interface ModelMeta {
   yaw: Record<string, [number, number, number, number, number]>;
   /** A bow clip's release, in clip seconds: the string follows the draw hand until then. */
   release: Record<string, number>;
+  /** The wizard's spell moves: each one-shot's first, release and last time (clip seconds). */
+  casts?: Record<string, { first: number; hit: number; last: number }>;
+  /** Props kept nearer upright than the hand holds them (the wizard's staff): a carrier node, its axis marker, the share of tilt kept. */
+  soft?: { node: string; axis: string; k: number }[];
+  /** Standing height in model units (--height included). */
+  height?: number;
 }
+/** Art px of standing height per model unit, measured against the baked sheets (35 px for a 1.98-unit goblin). */
+export const PX_PER_UNIT = 17;
 /**
  * What to show: a move and a time into its clip, facing `face` (radians, 0 east, clockwise on screen); optionally a second
  * clip blended in with weight w2 (an attack's recovery handing over to the walk).
  */
-export interface LivePose { move: string; t: number; face: number; flash: boolean; move2?: string; t2?: number; w2?: number }
+export interface LivePose { move: string; t: number; face: number; flash: boolean; move2?: string; t2?: number; w2?: number; seat?: TeamPal }
 
 const urls = import.meta.glob<string>('../../../../content/assets/models/*.glb', { eager: true, query: '?url', import: 'default' });
 const metas = import.meta.glob<ModelMeta>('../../../../content/assets/models/*.json', { eager: true, import: 'default' });
@@ -222,14 +231,24 @@ function makeGl(): Gl | null {
  * The material writes the two layers: each part's flat colour (sRGB) and the light against it. A hit flash turns the
  * whole body white.
  */
-function toon(m: THREE.MeshLambertMaterial, flash: { value: number }): THREE.MeshLambertMaterial {
+function toon(m: THREE.MeshLambertMaterial, flash: { value: number }, seat?: Seat): THREE.MeshLambertMaterial {
   m.onBeforeCompile = (sh) => {
     sh.uniforms.flash = flash;
+    sh.uniforms.seatOn = seat?.on ?? { value: 0 };
+    sh.uniforms.seatMain = seat?.main ?? { value: new THREE.Vector3() };
+    sh.uniforms.seatTrim = seat?.trim ?? { value: new THREE.Vector3() };
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float flash;\nlayout(location = 1) out highp vec4 gRatio;\n' + TONE_GLSL)
+      .replace('#include <common>', '#include <common>\nuniform float flash; uniform float seatOn; uniform vec3 seatMain; uniform vec3 seatTrim;\nlayout(location = 1) out highp vec4 gRatio;\n' + TONE_GLSL)
       .replace('#include <opaque_fragment>', `
         vec3 albedo = toSrgb(diffuseColor.rgb);
         float ratio = lumaOf(toSrgb(outgoingLight)) / max(lumaOf(albedo), 0.03);
+        if (seatOn > 0.5) {   // the seat's colours, as sprites.ts seatSheet: crimson cloth to the robe, gold to the trim
+          vec3 h = rgb2hsv(albedo);
+          if (h.z > 0.16 && h.y > 0.45) {
+            if (h.x >= 320.0 / 360.0 || h.x <= 15.0 / 360.0) albedo = clamp(seatMain * (h.z / 0.62), 0.0, 1.0);
+            else if (h.x >= 30.0 / 360.0 && h.x <= 58.0 / 360.0 && h.y > 0.6) albedo = clamp(seatTrim * min(1.1, h.z / 0.92), 0.0, 1.0);
+          }
+        }
         #include <opaque_fragment>
         gl_FragColor = vec4(mix(albedo, vec3(1.0), flash), 1.0);
         gRatio = vec4(mix(ratio, 1.0, flash) * 0.4, 0.0, 0.0, 1.0);`);
@@ -238,7 +257,10 @@ function toon(m: THREE.MeshLambertMaterial, flash: { value: number }): THREE.Mes
 }
 
 interface Model { scene: THREE.Object3D; clips: Map<string, THREE.AnimationClip>; meta: ModelMeta }
+interface Seat { on: { value: number }; main: { value: THREE.Vector3 }; trim: { value: THREE.Vector3 } }
+interface Soft { node: THREE.Object3D; axis: THREE.Object3D; k: number; rest: THREE.Quaternion }
 interface Inst {
+  seat: Seat; soft: Soft[];
   root: THREE.Group; shift: THREE.Group; turn: THREE.Group; body: THREE.Object3D; mixer: THREE.AnimationMixer;
   actions: Map<string, THREE.AnimationAction>; hips: THREE.Object3D | null; rest: THREE.Vector3; flash: { value: number };
   bow: { tips: THREE.Object3D[]; nock: THREE.Object3D; grip: THREE.Object3D; hand: THREE.Object3D; fore: THREE.Object3D; parts: THREE.Mesh[] } | null;
@@ -261,14 +283,19 @@ function model(slug: string): Model | null {
   return null;
 }
 
+/** A node by its Blender name: the glTF loader turns spaces into underscores and drops a few characters. */
+const node = (o: THREE.Object3D, name: string) => o.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name));
+const hexVec = (h: string) => new THREE.Vector3(parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255);
+
 function instance(slug: string, m: Model): Inst {
   const flash = { value: 0 };
+  const seat: Seat = { on: { value: 0 }, main: { value: new THREE.Vector3() }, trim: { value: new THREE.Vector3() } };
   const body = SkeletonUtils.clone(m.scene);
   body.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
     const src = mesh.material as THREE.MeshStandardMaterial;
-    mesh.material = toon(new THREE.MeshLambertMaterial({ map: src.map, color: src.color, emissive: src.emissive, emissiveMap: src.emissiveMap }), flash);
+    mesh.material = toon(new THREE.MeshLambertMaterial({ map: src.map, color: src.color, emissive: src.emissive, emissiveMap: src.emissiveMap }), flash, seat);
     mesh.frustumCulled = false;
   });
   const turn = new THREE.Group(); turn.add(body);
@@ -280,8 +307,8 @@ function instance(slug: string, m: Model): Inst {
   const mixer = new THREE.AnimationMixer(body);
   const actions = new Map([...m.clips].map(([k, c]) => [k, mixer.clipAction(c)]));
   let bow: Inst['bow'] = null;
-  const tipA = body.getObjectByName('bow tip+'), tipB = body.getObjectByName('bow tip-'), nock = body.getObjectByName('bow nock'), grip = body.getObjectByName('bow grip point');
-  const hand = body.getObjectByName('RightHand'), fore = body.getObjectByName('RightForeArm');
+  const tipA = node(body, 'bow tip+'), tipB = node(body, 'bow tip-'), nock = node(body, 'bow nock'), grip = node(body, 'bow grip point');
+  const hand = node(body, 'RightHand'), fore = node(body, 'RightForeArm');
   if (tipA && tipB && nock && grip && hand && fore) {
     const strMat = toon(new THREE.MeshLambertMaterial({ color: new THREE.Color(0.85, 0.78, 0.55) }), flash);
     const woodMat = toon(new THREE.MeshLambertMaterial({ color: new THREE.Color(0.45, 0.24, 0.1) }), flash);
@@ -290,7 +317,12 @@ function instance(slug: string, m: Model): Inst {
     const head = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.17, 4), ironMat);
     bow = { tips: [tipA, tipB], nock, grip, hand, fore, parts: [rod(0.014, strMat), rod(0.014, strMat), rod(0.02, woodMat), head] };
   }
-  return { root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
+  const soft: Soft[] = [];
+  for (const sp of m.meta.soft ?? []) {
+    const n = node(body, sp.node), ax = node(body, sp.axis);
+    if (n && ax) soft.push({ node: n, axis: ax, k: sp.k, rest: n.quaternion.clone() });
+  }
+  return { seat, soft, root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
 }
 
 const ease = (t: number) => t * t * (3 - 2 * t);
@@ -332,6 +364,30 @@ function pose(inst: Inst, m: Model, p: LivePose): void {
     inst.root.updateMatrixWorld(true);
   }
   inst.flash.value = p.flash ? 1 : 0;
+  inst.seat.on.value = p.seat ? 1 : 0;
+  if (p.seat) { inst.seat.main.value.copy(hexVec(p.seat.main)); inst.seat.trim.value.copy(hexVec(p.seat.trim)); }
+  if (inst.soft.length) softProps(inst, p.face);
+}
+
+const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Quaternion(), qi = new THREE.Quaternion();
+/**
+ * render.py soft_props: each soft prop's main axis is turned from where the hand holds it back toward upright (leaning
+ * a little toward the facing), keeping k of the hand's tilt; it turns about the carrier's own origin, the wrist.
+ */
+function softProps(inst: Inst, face: number): void {
+  for (const s of inst.soft) {
+    s.node.quaternion.copy(s.rest);
+    s.node.updateMatrixWorld(true);
+    const p = s.node.getWorldPosition(v1), a = s.axis.getWorldPosition(v2).sub(p).normalize();
+    const want = v3.set(Math.cos(face) * 0.12, 1, Math.sin(face) * 0.12).normalize();
+    const turn = qa.setFromUnitVectors(a, want);
+    qi.identity().slerp(turn, 1 - s.k);
+    // world rotation -> the carrier's local one
+    s.node.getWorldQuaternion(qb);
+    s.node.parent!.getWorldQuaternion(qp);
+    s.node.quaternion.copy(qp.invert().multiply(qi).multiply(qb));
+    s.node.updateMatrixWorld(true);
+  }
 }
 
 /** The archer's string: tip to the draw hand to tip, with an arrow nocked, while drawing and before the release. */

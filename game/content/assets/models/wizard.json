@@ -1,0 +1,103 @@
+{
+ "slug": "wizard",
+ "fps": 24,
+ "clips": {
+  "walk": {
+   "source": "Armature|walking_man|baselayer",
+   "duration": 1.0333,
+   "stride": 1.3172
+  },
+  "run": {
+   "source": "Armature|running|baselayer",
+   "duration": 0.6333,
+   "stride": 1.6283
+  },
+  "attack0": {
+   "source": "Right_Hand_Sword_Slash",
+   "duration": 1.5
+  },
+  "death": {
+   "source": "Knock_Down",
+   "duration": 2.5
+  },
+  "cast": {
+   "source": "mage_soell_cast_3",
+   "duration": 3.3333
+  },
+  "area": {
+   "source": "Charged_Ground_Slam",
+   "duration": 3.0
+  },
+  "self": {
+   "source": "mage_soell_cast",
+   "duration": 2.2667
+  },
+  "gather": {
+   "source": "mage_soell_cast_8",
+   "duration": 1.3333
+  }
+ },
+ "attacks": [
+  {
+   "clip": "attack0",
+   "first": 0.0,
+   "hit": 0.5416666666666666,
+   "last": 1.3333333333333333,
+   "cut": null
+  }
+ ],
+ "casts": {
+  "cast": {
+   "first": 0.6666666666666666,
+   "hit": 0.9166666666666666,
+   "last": 3.2916666666666665
+  },
+  "area": {
+   "first": 1.375,
+   "hit": 1.625,
+   "last": 2.9583333333333335
+  },
+  "self": {
+   "first": 0.041666666666666664,
+   "hit": 0.5833333333333334,
+   "last": 2.0
+  }
+ },
+ "yaw": {},
+ "release": {},
+ "soft": [
+  {
+   "node": "staff carrier",
+   "axis": "staff carrier axis",
+   "k": 0.25
+  }
+ ],
+ "height": 2.5344,
+ "tris": 5000,
+ "bones": [
+  "Hips",
+  "Spine02",
+  "Spine01",
+  "Spine",
+  "neck",
+  "Head",
+  "head_end",
+  "headfront",
+  "LeftShoulder",
+  "LeftArm",
+  "LeftForeArm",
+  "LeftHand",
+  "RightShoulder",
+  "RightArm",
+  "RightForeArm",
+  "RightHand",
+  "LeftUpLeg",
+  "LeftLeg",
+  "LeftFoot",
+  "LeftToeBase",
+  "RightUpLeg",
+  "RightLeg",
+  "RightFoot",
+  "RightToeBase"
+ ]
+}

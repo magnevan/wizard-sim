@@ -13,4 +13,4 @@ declare -A OPTS=(
 )
 # slug: its folder under tools/sprites-3d/output when it isn't the slug
 declare -A DIR=([raider-hooded]=meshy-rig)
-ROSTER=(raider-hooded raider-goggles archer shieldbearer hooker chieftain)
+ROSTER=(raider-hooded raider-goggles archer shieldbearer hooker chieftain wizard)

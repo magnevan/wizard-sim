@@ -83,4 +83,17 @@ Untested: copying owned clips onto a new rig in Blender (every Meshy rig has the
 | hooker | `01a1e720-6589-77ef-bb6f-59ef63569bb7` | `01a1e721-8666-7439-a4ac-32c2623a0de9` | `01a1e723-0be1-72b7-9299-f66613ebe0bd` |
 | chieftain | `01a1e720-6d9b-73cf-8363-dbefe537101f` | `01a1e721-94ad-7048-9783-ccd9d07375a8` | `01a1e723-0e13-7124-8893-23f1811e01d3` |
 
+| wizard | `01a1e8a6-014d-71db-a48f-3a79516f85a1` | `01a1e8a6-cef9-7556-8eb0-2a3fa41b20c8` | `01a1e8a7-508f-7681-9bf5-acf5a21a970d` |
+
 The hooded raider's are listed above under `--anim`. Credits spent: 40 on the hooded raider, 142 on the five (75 models, 25 rigs, 42 clips).
+
+## The wizard
+
+The players' wizard went through the same pipeline on 2026-11-17, because the code rig drawn 1.7x (`rigs.ts` `WIZ_Z`) read as flat slabs beside the goblins. The design is the code rig's, unchanged: `prompts/roster/wizard.txt` gives Codex the game's wizard sprites and the hooded raider's 3D picture, and asks for the same wizard in the goblins' finish (`input/roster/wizard.png`, approved by the user). Meshy: 38 credits (model 15, rig 5, six clips 18): Mage Spell Cast 8 (137, hands raised: gathering), Mage Spell Cast 3 (132, two-handed push: Force casts), Charged Ground Slam (127, Area), Mage Spell Cast (129, Self), Right-hand Sword Slash (219, the staff's shove and weapon Strikes), Knock Down (187).
+
+- **Size:** `--height=1.55 --canvas=64`: about 49 px, the height the user picked for the bigger wizard.
+- **The staff** is `props.py` `staff`, held as `staff~0.25@RightHand`: a *soft* prop. A rigid one takes every wrist tilt of the walk and swings like a quarterstaff; `~k` makes render.py (`soft_props`) turn its main axis (`PROP_AXIS`) back toward upright each frame, keeping k of the hand's tilt.
+- **Moves:** `pack.py` `ROLES['wizard']` adds `casts` (one-shots trimmed and given a release frame like an attack's hit: `cast`, `area`, `self`) and `loops` (`gather`, the whole clip). `sheet.json` lists them under `casts`.
+- **Seats:** one red sheet; `art/sprites.ts` `seatSheet` recolours it for each seat from `px.ts` `TEAMS` when it loads (robe and hat keyed by crimson hue, trim by gold), so the seat colours keep one home.
+- **In the game:** on with the warband's sprites, `?wizsprite=0` for the code rig; the detailed drawing (hd) stays code. Not yet: the Area and Self clips aren't played (the client has no signal telling them apart from gathering), spell effects still start at the code rig's staff tip (stretched), and a conjured weapon doesn't replace the sprite's staff.
+

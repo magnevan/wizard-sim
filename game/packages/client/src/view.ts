@@ -289,7 +289,7 @@ export class WorldView {
   private onDeath(w: World, e: SimEvent, t: number): void {
     const i = e.who, b = w.bodies;
     const s = this.rigState(w, i, t, this.lastCt);
-    const slug = slugOf(s);
+    const slug = s.kind === 'wizard' ? null : slugOf(s); // a Double's end keeps its own effect, not a knock-down
     if (slug) {
       // rollback: a tick shown twice (or a corrected one) must not play the same death again
       if (this.spriteDeaths.some((d) => d.who === i && Math.abs(d.tick - e.tick) < 90)) return;
@@ -365,13 +365,13 @@ export class WorldView {
       // past the paint budget a body keeps its last frame; one that has none yet is painted anyway
       const rig = this.frames.get(s, !v.a);
       // the warband's 3D-rendered sprites stand in for their rigs (art/sprites.ts); the rig still gives the anchors
-      const sp = rig && b.kind[i] !== KIND.wizard && b.kind[i] !== KIND.double ? spriteFrame(s, i, rig.a) : null, fr = sp ?? rig;
+      const sp = rig ? spriteFrame(s, i, rig.a) : null, fr = sp ?? rig;
       if (fr) { spr.texture = fr.tex; v.a = fr.a; v.f = fr; }
       spr.visible = !!v.a;
       const dbl = b.kind[i] === KIND.double;
       spr.alpha = dbl ? 0.62 + 0.08 * Math.sin(ct * 5) : 1;
       spr.tint = dbl ? 0xd8b4ff : this.lit ? 0xffffff : AMBIENT;
-      if (sp) spr.tint = mulTint(spr.tint, statusTint(s));
+      if (sp && !dbl) spr.tint = mulTint(spr.tint, statusTint(s));
       spr.position.set(fx0 + fx - FEET_X, fy0 + fy - FEET_Y);
       spr.zIndex = fy * 128 + i;
       v.on = true; v.x = fx; v.y = fy; v.rig = s.kind;

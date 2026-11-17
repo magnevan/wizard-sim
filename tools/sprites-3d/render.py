@@ -10,7 +10,7 @@ Writes <out_dir>/<move>/<direction>/fNN.png at 4x, for pixelize.py.
 """
 import math, os, sys
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Quaternion, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -25,6 +25,7 @@ PREVIEW = '--preview' in args
 FIT_H = float(next((a[9:] for a in args if a.startswith('--height=')), 1.0))
 # --canvas=96: a bigger frame for a bigger body (the chieftain); the pixel density stays 16 per unit
 CANVAS, PPU, SUPER = int(next((a[9:] for a in args if a.startswith('--canvas=')), 48)), 16, 4
+SOFT = []   # (carrier empty, k, prop axis) for --prop=...:<name>~k: props that take only k of the hand's tilt
 DIRS = {'south': 0, 'south-east': 45, 'east': 90, 'north-east': 135, 'north': 180, 'north-west': -135, 'west': -90, 'south-west': -45}
 
 scene = bpy.context.scene
@@ -115,6 +116,7 @@ if ANIM:
     for a in [a for a in args if a.startswith('--prop=')]:
         src, spec = a[7:].rsplit(':', 1)
         name, bone = spec.split('@')
+        name, _, soft = name.partition('~')   # staff~0.25: follows the hand, but only a quarter of its tilt (see SOFT)
         ns = {'__name__': '__props__', '__file__': src}
         exec(compile(open(src, encoding='utf-8-sig').read(), src, 'exec'), ns)
         for pb in arm.pose.bones: pb.matrix_basis = Matrix()
@@ -132,7 +134,18 @@ if ANIM:
             bpy.context.view_layer.update()
             o.matrix_world = mw
         PROP_UPDATES.extend(ns.get('UPDATES', []))   # props that follow more than their bone (a bow's string)
-        print('prop', name, 'on', bone, len(parts), 'parts')
+        if soft:
+            # a long prop (the wizard's staff) shouldn't take every wrist tilt of a walk: an empty at the wrist carries
+            # it, and each frame (soft_props) its main axis is turned back toward upright by 1 - k
+            e = bpy.data.objects.new(name + ' carrier', None); scene.collection.objects.link(e)
+            e.parent = arm; e.parent_type = 'BONE'; e.parent_bone = bone
+            bpy.context.view_layer.update(); e.matrix_world = f
+            bpy.context.view_layer.update()
+            for o in parts:
+                mw = o.matrix_world.copy(); o.parent = e; o.parent_type = 'OBJECT'
+                bpy.context.view_layer.update(); o.matrix_world = mw
+            SOFT.append((e, e.matrix_basis.copy(), float(soft), Vector(ns['PROP_AXIS'][name])))
+        print('prop', name, 'on', bone, len(parts), 'parts', f'(soft {soft})' if soft else '')
 elif ext == '.py':
     exec(compile(open(MODEL, encoding='utf-8-sig').read(), MODEL, 'exec'), {'__name__': '__model__', '__file__': MODEL})
 elif ext in ('.glb', '.gltf'):
@@ -291,6 +304,21 @@ if PREVIEW:
         shoot(os.path.join(OUT, 'preview', name + '.png'), flat=False)
     r.resolution_x = r.resolution_y = CANVAS * SUPER; scene.cycles.samples = 16
 
+def soft_props():
+    """Turn each soft prop's main axis from where the hand holds it back toward upright (leaning a little toward the
+    character's forward), keeping k of the hand's tilt; the turn pivots on the wrist."""
+    for e, basis, k, ax in SOFT:
+        e.matrix_basis = basis
+        bpy.context.view_layer.update()
+        mw = e.matrix_world.copy(); p = mw.translation.copy()
+        fwd = rig.matrix_world.to_3x3() @ Vector((0, -1, 0))
+        up = (Vector((0, 0, 1)) + fwd * 0.12).normalized()
+        a = (mw.to_3x3() @ ax).normalized()
+        q = Quaternion().slerp(a.rotation_difference(up), 1 - k)
+        e.matrix_world = Matrix.Translation(p) @ q.to_matrix().to_4x4() @ Matrix.Translation(-p) @ mw
+    if SOFT: bpy.context.view_layer.update()
+
+
 TRACK, TRACK_BONE = {}, next((a[8:] for a in args if a.startswith('--track=')), 'RightHand')
 
 
@@ -365,6 +393,7 @@ for mv in MOVES:
             fn(rig, i, n)
             for u in globals().get('PROP_UPDATES', []): u(arm, i, mv)
             bpy.context.view_layer.update()
+            soft_props()
             shoot(os.path.join(OUT, mv, d, f'f{i:02d}.png'))
     if ANIM:
         import json

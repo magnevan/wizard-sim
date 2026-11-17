@@ -18,6 +18,11 @@ ROLES = {
     'shieldbearer': {'walk': 'walking', 'run': 'running', 'attack': ['thrust_slash', 'shield_push'], 'death': 'knock_down'},
     'hooker': {'walk': 'walking', 'run': 'running', 'attack': ['crouch_pull_and_throw'], 'death': 'knock_down', 'grade': (0.84, 0.93, 0.9)},
     'chieftain': {'walk': 'walking', 'run': 'running', 'attack': ['heavy_hammer_swing'], 'death': 'knock_down'},
+    # the wizard: the staff's shove and weapon Strike as its attack; spell moves as one-shots with a release frame
+    # (`casts`, found like an attack's hit), gathering as a loop (`loops`, the whole clip)
+    'wizard': {'walk': 'walking_man', 'run': 'running', 'attack': ['right_hand_sword_slash'], 'death': 'knock_down',
+               'casts': {'cast': 'mage_soell_cast_3', 'area': 'charged_ground_slam', 'self': 'mage_soell_cast'},
+               'loops': {'gather': 'mage_soell_cast_8'}},
 }
 LEAD = 1.2   # seconds of clip kept before an attack's hit: the longest game wind-up (the brute's 1.1)
 

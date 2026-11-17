@@ -23,7 +23,7 @@ DEATH = 18   # frames of the knock-down at 12 fps (scaled with the render's rate
 MAX_W = 4096
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from roles import ROLES, window   # shared with render.py --export
+from roles import ROLES, beats, window   # shared with render.py --export
 
 def clip_dir(px, key):
     hits = sorted(d for d in os.listdir(px) if key in d and os.path.isdir(os.path.join(px, d)))
@@ -69,6 +69,15 @@ def pack(work, slug):
         keep = [f for f in range(first, last + 1) if f == hit or not (cut[0] <= f <= cut[1])]
         rows.append((f'attack{k}', [[fr[f] for f in keep] for fr in (frames(px, c, d) for d in DIRS)]))
         atk_meta.append({'clip': c, 'beats': [round(v, 1) for v in b], 'frames': keep, 'hit': keep.index(hit)})
+    cast_meta = {}
+    for name, key in R.get('casts', {}).items():
+        c = clip_dir(px, key)   # clip_dir takes the first sorted match: give a key no other clip's name starts with
+        b = beats(json.load(open(os.path.join(raw, c, 'track.json')))['hand'])
+        first, last = int(b[0]), int(b[2])
+        rows.append((name, [fr[first:last + 1] for fr in (frames(px, c, d) for d in DIRS)]))
+        cast_meta[name] = {'clip': c, 'beats': [round(v, 1) for v in b], 'first': first, 'hit': min(last, round(b[1] + 0.5)) - first}
+    for name, key in R.get('loops', {}).items():
+        rows.append((name, [frames(px, clip_dir(px, key), d) for d in DIRS]))
     c = clip_dir(px, R['death'])
     dead = [frames(px, c, d) for d in DIRS]
     cap = round(DEATH * fps / 12)   # the knock-down, thinned to DEATH frames a 12 fps second's worth
@@ -93,6 +102,7 @@ def pack(work, slug):
     meta['feet'] = [cw // 2, bottom - 1]
     meta['height'] = bottom - min(im.getbbox()[1] for per in rows[0][1] for im in per if im.getbbox())
     meta['attacks'] = atk_meta
+    if cast_meta: meta['casts'] = cast_meta
     meta['fps'] = fps
     os.makedirs(os.path.join(OUT, slug), exist_ok=True)
     sheet.save(os.path.join(OUT, slug, 'sheet.png'), optimize=True)

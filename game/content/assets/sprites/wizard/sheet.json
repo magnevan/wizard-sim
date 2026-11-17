@@ -1,0 +1,123 @@
+{
+ "cell": [
+  64,
+  64
+ ],
+ "dirs": [
+  "east",
+  "south-east",
+  "south",
+  "south-west",
+  "west",
+  "north-west",
+  "north",
+  "north-east"
+ ],
+ "moves": {
+  "idle": {
+   "row": 0,
+   "n": 1
+  },
+  "walk": {
+   "row": 8,
+   "n": 12
+  },
+  "run": {
+   "row": 16,
+   "n": 8
+  },
+  "attack0": {
+   "row": 24,
+   "n": 18
+  },
+  "cast": {
+   "row": 32,
+   "n": 32
+  },
+  "area": {
+   "row": 40,
+   "n": 20
+  },
+  "self": {
+   "row": 48,
+   "n": 27
+  },
+  "gather": {
+   "row": 56,
+   "n": 16
+  },
+  "death": {
+   "row": 64,
+   "n": 18
+  }
+ },
+ "feet": [
+  32,
+  60
+ ],
+ "height": 53,
+ "attacks": [
+  {
+   "clip": "right_hand_sword_slash",
+   "beats": [
+    0,
+    6.5,
+    17
+   ],
+   "frames": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17
+   ],
+   "hit": 7
+  }
+ ],
+ "casts": {
+  "cast": {
+   "clip": "mage_soell_cast_3",
+   "beats": [
+    8,
+    10.5,
+    39
+   ],
+   "first": 8,
+   "hit": 3
+  },
+  "area": {
+   "clip": "charged_ground_slam",
+   "beats": [
+    16,
+    19.5,
+    35
+   ],
+   "first": 16,
+   "hit": 4
+  },
+  "self": {
+   "clip": "mage_soell_cast",
+   "beats": [
+    0,
+    6.5,
+    26
+   ],
+   "first": 0,
+   "hit": 7
+  }
+ },
+ "fps": 12
+}

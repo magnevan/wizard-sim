@@ -6,8 +6,11 @@
  * facing, walk or run phase, the time from the attack's hit (each clip plays at its own speed, its contact frame on the
  * hit; nothing is retimed, since smooth swings matter more than telegraphs here), knocked down. Deaths play the knock-down. Statuses are a tint, a hit a white flash.
  *
- * On by default; ?sprites=0 shows the code rigs. With sprites on the wizard is drawn 1.7x (rigs.ts WIZ_Z), the scale
- * the 32 px goblins were made for (explorations/2026-11-16-warband-art.md).
+ * On by default; ?sprites=0 shows the code rigs. With sprites on the wizard is drawn 1.4x (rigs.ts WIZ_Z; the user found
+ * 1.7 too big), beside the 32 px goblins (explorations/2026-11-16-warband-art.md).
+ *
+ * Bodies with a 3D model are drawn live (art/live3d.ts); these baked sheets are the fallback: before a model loads,
+ * without a usable GPU, or with ?live3d=0. The wizard's fallback sheet was baked for 1.7x and is not re-made.
  *
  * The wizard has a sheet too (made the same way from the code rig's design), recoloured per seat from px.ts TEAMS when
  * it loads: its robe and hat are keyed by hue (crimson), its trim by gold. Gathering (prep) loops a raised-hands clip,

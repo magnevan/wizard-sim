@@ -1628,7 +1628,7 @@ The user, on the kit-built yard buildings: "the buildings look absolutely horrif
 
 ## 2026-11-17: Character sprites come from 3D models; the goblins are 32 px and the wizard is drawn 1.7x (`explorations/2026-11-16-warband-art.md`)
 
-- **Scale:** the 32 px goblins are right; the wizard grows instead, keeping its look ("bit top hat, no face, beard"), drawn at 1.7x (about 50 px). The PixelLab wizard is "a hard no".
+- **Scale:** the 32 px goblins are right; the wizard grows instead, keeping its look ("bit top hat, no face, beard"), drawn at 1.7x (about 50 px). The PixelLab wizard is "a hard no". *(The scale was changed to 1.4x the same day: [Characters drawn live from 3D](#2026-11-17-characters-are-drawn-live-from-their-3d-models-the-wizard-at-14x-explorations2026-11-16-warband-artmd).)*
 - **Motion from 3D, not per-frame generation.** PixelLab animation is too dear to iterate (and swapped hands, hit behind the back) for a goal of roughly a warband a day. A Codex picture becomes a Meshy model (smart topology, about 15k triangles, so it rigs without a paid remesh: "don't generate high-poly and pay to remesh"), Meshy rigs it and its library clips animate it, and `tools/sprites-3d/` renders 8 directions to pixel art. Rejected: Claude's own Blender model ("pretty bad"); code moves for humanoids (stiff, no weight in the slash). Code moves stay for creatures Meshy can't rig.
 - **Buy only the clips a mechanic plays:** about three attack variants per enemy, Knock Down as the default death; no slow walk, sneak or combat idle until a mechanic needs them. The roster first, elemental deaths later.
 - The six goblins are in the game as sprites, on by default with `?sprites=0` for the code rigs; pending the user's review of the band in play.

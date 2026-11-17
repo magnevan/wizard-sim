@@ -14,6 +14,6 @@ Prototypes are disposable. Once one has answered its question, it's done. Any sh
 | Prototype | Question | Status |
 |---|---|---|
 | [01-skeleton](01-skeleton/) | A first playable of proposal A (TypeScript + Vite + Canvas2D): casting, waves, gamepads. Published at https://claude.ai/artifact/HmEKJfEUvzY7amrNTCXHSv. | **Superseded by `game/`** (2026-11-04). Its input buffer, gamepad mapping, flow fields and wave director were ported there. Kept as a record. |
-| [02-realtime-3d](02-realtime-3d/) | Does a goblin drawn live from its 3D model through a pixel shader look as good as its baked sprite (moving, turning, slowed), and how many fit in a frame? | **Open** (2026-11-17): built and benchmarked; the look is the user's call. |
+| [02-realtime-3d](02-realtime-3d/) | Does a goblin drawn live from its 3D model through a pixel shader look as good as its baked sprite (moving, turning, slowed), and how many fit in a frame? | **Answered** (2026-11-17): yes; the user chose live 3D for all characters, now in the game (`art/live3d.ts`). |
 
 New mechanics are now usually tried straight in `game/` (the user's "build optimistically"); a prototype here is still the right tool when a question needs a throwaway test outside the game.

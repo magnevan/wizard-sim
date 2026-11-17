@@ -1,5 +1,11 @@
 # 02: real-time 3D goblins through a pixel shader
 
+**Answered (2026-11-17): yes.** The user, on this prototype: "The 3D version is much better, and it's going to be the more
+flexible approach. Let's do this for all the characters." The game now draws the goblin warband and the wizard this
+way (`game/packages/client/src/art/live3d.ts`, models from `tools/sprites-3d/export.sh`, thinned to about 5,000
+triangles); the baked sheets are its fallback. See "Live 3D in the game" in the exploration and the decision
+[Characters are drawn live from their 3D models](../../docs/decisions/README.md#2026-11-17-characters-are-drawn-live-from-their-3d-models-the-wizard-at-14x-explorations2026-11-16-warband-artmd).
+
 ## Question
 
 Does the hooded raider drawn live from its 3D model, through a shader that copies the baked pixel pass, look as good as
@@ -8,7 +14,7 @@ its baked sprite while it walks, turns and is slowed, and how many fit in a fram
 Why ask: baked sheets are sampled at a fixed rate (12, now 24 fps), so a slowed goblin (chilled) shows fewer frames a
 second and gets choppy; they also turn in 8 steps. A live model has neither limit, and needs no sheets at all. The risks
 are the look (pixel shimmer as a model turns or moves less than a pixel) and the cost. See
-`docs/explorations/2026-11-16-warband-art.md` ("Real-time 3D test").
+`docs/explorations/2026-11-16-warband-art.md` ("Slow goblins: 24 fps sheets and a real-time 3D test").
 
 ## Run
 
@@ -49,3 +55,4 @@ blade.
   outlined only each silhouette; the user saw the baked frames line every edge between parts. The pass was rebuilt in
   `pixelize.py`'s order (part first, then tone and seams), and on stills the live goblins now read close to the baked
   ones: the same goblin at the same size, seams between hood, face, sack and arms, outlines between goblins.
+- **Outcome:** the user judged the look moving and chose live 3D for every character (above).

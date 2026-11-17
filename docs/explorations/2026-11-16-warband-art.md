@@ -1,6 +1,6 @@
 # The goblin warband as bought sprites, round 1
 
-Art purchase, 2026-11-16, from [the opening's encounters](2026-11-16-opening-encounters.md) (its warband concept sheet). The user asked to turn the explorations into more fleshed-out assets for the warband, whose game art is still code-drawn placeholder rigs (`game/packages/client/src/art/rigs.ts`). Review page: [Goblin Warband Art](https://claude.ai/artifact/4WNayLNFUL2TNuffPfTMsJ) (`tools/warband-art/`). Nothing is wired into the game yet.
+Art purchase, 2026-11-16, from [the opening's encounters](2026-11-16-opening-encounters.md) (its warband concept sheet). The user asked to turn the explorations into more fleshed-out assets for the warband, whose game art is still code-drawn placeholder rigs (`game/packages/client/src/art/rigs.ts`). Review page: [Goblin Warband Art](https://claude.ai/artifact/4WNayLNFUL2TNuffPfTMsJ) (`tools/warband-art/`). Where it ended: the six goblins and the wizard are drawn live from 3D models in the game, the wizard at 1.4x ("Live 3D in the game", below); the sections before it are the steps on the way, and their statements hold for their date.
 
 ## What was bought
 
@@ -126,7 +126,7 @@ Claude's pick: library clips for humanoid enemies (free walk, Lean Forward Sprin
 
 ## The roster into the game (2026-11-17, autonomous run)
 
-The user approved all five pictures and asked for the pipeline to run to the game unattended (Meshy cap 200, then 300 credits; spent 142). Each goblin: a Meshy smart-topology model (15, `meshy-t2.5`, 15k triangles, T-pose), a rig (5) and only the clips its mechanics use (3 each). Weapons are small Blender props attached to a bone (`props.py`). `roster.sh` renders every clip in 8 directions at 20 degrees and pixelizes it; `pack.py` packs one sheet per goblin (`game/content/assets/sprites/<slug>/`) and warps each attack so its wind-up, strike and recovery land on the game's beats, with the strike found as the weapon hand's fastest step. The client's `art/sprites.ts` draws them in place of the code rigs (on by default, `?sprites=0` for the rigs), with the wizard at 1.7x while they're on.
+The user approved all five pictures and asked for the pipeline to run to the game unattended (Meshy cap 200, then 300 credits; spent 142). Each goblin: a Meshy smart-topology model (15, `meshy-t2.5`, 15k triangles, T-pose), a rig (5) and only the clips its mechanics use (3 each). Weapons are small Blender props attached to a bone (`props.py`). `roster.sh` renders every clip in 8 directions at 20 degrees and pixelizes it; `pack.py` packs one sheet per goblin (`game/content/assets/sprites/<slug>/`) and warps each attack so its wind-up, strike and recovery land on the game's beats, with the strike found as the weapon hand's fastest step. The client's `art/sprites.ts` draws them in place of the code rigs (on by default, `?sprites=0` for the rigs), with the wizard at 1.7x while they're on. *(Later: 1.4x, and all of them drawn live from 3D; see "Live 3D in the game".)*
 
 What showed up on the way:
 - Running six Codex picture jobs at once overloaded its sandbox: every image was made but none saved; they were taken from `~/.codex/generated_images/`.
@@ -165,6 +165,10 @@ Left: the 1 s wind-up is shorter than the clip's raise, so the shot starts partw
 
 The user also asked why 12 fps: it's `render.py`'s `ANIM_FPS`, the usual pixel-art rate (at 32 px most moves are a pixel or two a frame; fewer frames read crisper and keep sheets small), carried over from the PixelLab work rather than tested on these clips. Fast blows get one or two frames at 12. The review page (version 15) shows the hooded raider's Left Slash at 12 and 24 fps side by side (`fps-attack`) and the archer before and after (`archer-shot`).
 
+## The wizard from 3D (2026-11-17)
+
+The user liked the wizard's design but not how the code rig held up at 1.7×: it grows its shapes, not its detail, so beside the Meshy goblins it read as flat slabs. It went through the same pipeline with its design unchanged (big floppy hat with a gold band, no face, white beard, bell robe with gold trim): a Codex model sheet the user approved, then 38 Meshy credits the user signed off (model 15, rig 5, six clips: gathering, the Force push, Area, Self, a staff strike, Knock Down). The staff is a Blender prop that keeps near upright as he walks (`render.py` soft props). One red sheet is recoloured per seat in the client from `TEAMS`. In the game: walk, run, gathering (a loop), the Force cast (held at full stretch) and death play; `?wizsprite=0` keeps the code rig. Details and what isn't wired yet: `tools/sprites-3d/README.md`, "The wizard". On the review page as `wiz-3d`. *(Since then drawn live from its model at 1.4x, with Self, Area and the staff blow playing their clips and spells starting from the live staff's tip; see "Live 3D in the game".)*
+
 ## Slow goblins: 24 fps sheets and a real-time 3D test (2026-11-17)
 
 The user: at 12 fps a slowed goblin gets choppier still; could the 3D models be drawn in the game directly, with the pixel look as a shader? Both were done:
@@ -173,23 +177,21 @@ The user: at 12 fps a slowed goblin gets choppier still; could the 3D models be 
 
 ## Live 3D in the game (2026-11-17)
 
-The user, on the prototype: "The 3D version is much better, and it's going to be the more flexible approach. Let's do this for all the characters." Built for the six goblins (`art/live3d.ts`, models from `tools/sprites-3d/export.sh`); the wizard's model is on another branch and follows when it merges. Watching it in the dev server, the user saw the goblin slide forward while attacking and the walk not match its speed: the game creeps a goblin forward at 30% speed through its recovery while the clip stands still, and the walk cycle ran at a fixed 14 px a loop tuned for the code rigs, rounded to 8 steps. Now walk and run go by distance over each clip's measured stride, a creeping recovery crossfades into the walk after a quarter-second follow-through, and live bodies use the unrounded facing. The user also set the wizard's scale to 1.4 (1.7 was too big). A software renderer can't keep up (a headless screenshot took over four minutes), so it falls back to the sheets.
+The user, on the prototype: "The 3D version is much better, and it's going to be the more flexible approach. Let's do this for all the characters." Built for the six goblins (`art/live3d.ts`, models from `tools/sprites-3d/export.sh`); the wizard's model was on another branch then. Watching it in the dev server, the user saw the goblin slide forward while attacking and the walk not match its speed: the game creeps a goblin forward at 30% speed through its recovery while the clip stands still, and the walk cycle ran at a fixed 14 px a loop tuned for the code rigs, rounded to 8 steps. Now walk and run go by distance over each clip's measured stride, a creeping recovery crossfades into the walk after a quarter-second follow-through, and live bodies use the unrounded facing. The user also set the wizard's scale to 1.4 (1.7 was too big). A software renderer can't keep up (a headless screenshot took over four minutes), so it falls back to the sheets.
 
-The wizard followed: the other session's branch (its section below) was merged in, and the wizard exported and drawn live at the user's 1.4x, with its seat recolouring and the staff's upright correction moved to the GPU and its gathering and Force-cast poses driven from the rig state. Its baked fallback sheet is still at the old size (1.55 height, for 1.7x); the user: no new fallback sheet is needed.
+The wizard followed: the other session's branch ("The wizard from 3D", above) was merged in, and the wizard exported and drawn live at the user's 1.4x, with its seat recolouring and the staff's upright correction moved to the GPU and its gathering and Force-cast poses driven from the rig state. Its baked fallback sheet is still at the old size (1.55 height, for 1.7x); the user: no new fallback sheet is needed.
+
+**Marks on the review page (db `ratings`, read 2026-11-17):** `ingame-band` keep, `archer-shot` keep, `rt3d` live (built, above); all five roster pictures and `con-weapons` approve ("Maybe spear should be longer, but its hard to guess without seeing it on the model"). Not marked yet: `wiz-3d`, and `fps-attack`, which live 3D makes moot (a live model plays at any rate; the sheets are only the fallback).
 
 **Follow-ups (the user, 2026-11-17):**
 - **A conjured weapon on the live wizard.** The code rig drew the conjured weapon in the wizard's hand in place of the staff (`RigState.bare`); the live model still holds its staff. Give the live wizard the weapon (a prop per weapon on the hand, as the goblins' props, or the rig's drawing composited) and hide the staff while it's held.
 - **Walk and run tuned to the real movement speed.** The clips now play by distance over their measured stride (feet planted), but each body's speed differs from its clip's natural pace (a goblin moves about three times the walk clip's own speed), so some cycles play fast. Go over every walk and run: which clip at which speed (the walk-to-run threshold), whether to pick or buy clips nearer each body's speed, and the stride measurement itself.
 
-## The wizard from 3D (2026-11-17)
-
-The user liked the wizard's design but not how the code rig held up at 1.7×: it grows its shapes, not its detail, so beside the Meshy goblins it read as flat slabs. It went through the same pipeline with its design unchanged (big floppy hat with a gold band, no face, white beard, bell robe with gold trim): a Codex model sheet the user approved, then 38 Meshy credits the user signed off (model 15, rig 5, six clips: gathering, the Force push, Area, Self, a staff strike, Knock Down). The staff is a Blender prop that keeps near upright as he walks (`render.py` soft props). One red sheet is recoloured per seat in the client from `TEAMS`. In the game: walk, run, gathering (a loop), the Force cast (held at full stretch) and death play; `?wizsprite=0` keeps the code rig. Details and what isn't wired yet: `tools/sprites-3d/README.md`, "The wizard". On the review page as `wiz-3d`.
-
 ## Claude's picks, pending the review
 
-*(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the sprites are wired in; see the two sections above.)*
+*(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the goblins and the wizard are drawn live from 3D in the game; see the sections above.)*
 
-1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in. *(Done: 1.7 is the default while sprites are on.)*
+1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in. *(Done: 1.7 was the default while sprites were on; the user then set 1.4.)*
 2. Then buy run, attack (with its telegraph pose) and death for all six, about 170 generations, checked frame by frame.
 3. Wire the goblins in as sprites in the battery, behind a toggle against the rigs, with statuses as tints and overlays and 16 facings snapped to 8.
 4. Keep round 2's bright olive skin for any further goblins.

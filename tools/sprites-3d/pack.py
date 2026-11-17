@@ -3,10 +3,13 @@
   python tools/sprites-3d/pack.py <work-dir> [slug ...]
 
 Reads <work-dir>/<slug>-px/<clip>/<direction>/fNN.png (pixelize.py) and <work-dir>/<slug>/<clip>/track.json (render.py),
-writes game/content/assets/sprites/<slug>/sheet.png and sheet.json, which the client's art/sprites.ts plays.
+writes game/content/assets/sprites/<slug>/sheet.png and sheet.json, which the client's art/sprites.ts plays. The game
+now draws these characters live from export.sh's models (art/live3d.ts); the sheets are the fallback (?live3d=0, or a
+software renderer). Clips and timing come from roles.py, shared with the export.
 
 Rows are (move, direction), directions in the game's angle order (east, south-east, south, ... clockwise on screen),
-so a facing of `face` radians is row `round(face / (TAU / 8)) % 8` of a move. Columns are frames.
+so a facing of `face` radians is row `round(face / (TAU / 8)) % 8` of a move. Columns are frames; a move longer than the
+sheet's `cols` wraps into further bands of 8 rows (frame f at column f % cols, row row + dir + 8 * (f // cols)).
 Moves: idle (1 frame), walk and run (a cycle each; the game's stride phase picks the frame), attack (one entry per
 variant: the clip's own frames at its own speed, never retimed, from where the wind-up starts to where the recovery
 settles; sheet.json's `attacks[k].hit` is the contact frame, which the client plays on the game's hit tick), and

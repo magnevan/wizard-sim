@@ -63,14 +63,26 @@ export function slugOf(s: RigState): string | null {
 
 const dirOf = (face: number): number => ((Math.round(face / (TAU / 8)) % 8) + 8) % 8;
 
-/** The cell (move, frame) a state shows. `who` picks the attack variant, so a band doesn't swing in step. */
+/**
+ * An attack variant, picked afresh for each swing: a hash of the body and the swing's hit tick, so it holds through one
+ * attack, differs between neighbours, and survives a rollback re-simulation. Purely cosmetic; enemies whose attacks
+ * differ in what they do should have the sim choose instead.
+ */
+function variantOf(who: number, swing: number, n: number): number {
+  if (n < 2) return 0;
+  let h = Math.imul(who + 1, 0x9e3779b1) ^ Math.imul(swing, 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d); h ^= h >>> 12;
+  return (h >>> 0) % n;
+}
+
+/** The cell (move, frame) a state shows. */
 function cellOf(sh: Sheet, s: RigState, who: number): [Move, number] {
   const M = sh.meta.moves;
   if (s.dead > 0) { const d = M.death; return [d, Math.round((d.n - 1) * Math.min(1, s.dead))]; }
   // an attack plays its clip at the clip's own speed, never retimed, with its contact frame on the game's hit: a longer
   // wind-up than the clip's holds its first pose, a shorter one starts it partway; once the clip ends the body walks or idles
   if ((s.hitT === s.hitT || s.hold > 0) && sh.attacks.length) {
-    const a = sh.attacks[who % sh.attacks.length];
+    const a = sh.attacks[variantOf(who, s.swing, sh.attacks.length)];
     const f = s.hold > 0 ? a.hit + 1 : a.hit + Math.round(s.hitT * (sh.meta.fps || 12));
     if (f < a.n) return [a, Math.max(0, Math.min(a.n - 1, f))];
   }

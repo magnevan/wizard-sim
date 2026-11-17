@@ -144,6 +144,9 @@ export class WorldView {
     if (id === CAST_ID.force || id === CAST_ID.conjure) this.holdUntil[who] = t + 0.35;
   }
   private prevBX = new Float64Array(MAX_BODIES);
+  /** Each enemy's swing count and last hitT (art/sprites.ts picks an attack variant per swing). */
+  private swingN = new Uint16Array(MAX_BODIES);
+  private lastHitT = new Float64Array(MAX_BODIES).fill(NaN);
   private prevBY = new Float64Array(MAX_BODIES);
   private prevKind = new Uint8Array(MAX_BODIES);
   // cosmetic per-body state: walk phase, speed, hit flash (attack poses come straight from the sim's ai / aiT)
@@ -540,7 +543,7 @@ export class WorldView {
   private rigState(w: World, i: number, t: number, ct: number): RigState {
     const b = w.bodies, s = this.rig, kind = this.rigOf(w, i), arch = b.arch[i];
     s.kind = kind; s.seed = i & 1; s.variant = 0; s.pal = 0; s.hd = kind === 'wizard' && this.wizardHd ? 1 : 0;
-    s.punch = -1; s.smash = -1; s.draw = 0; s.atk = -1; s.hold = 0; s.hitT = NaN; s.prep = 0; s.cast = 0; s.vx = 0; s.vy = 0;
+    s.punch = -1; s.smash = -1; s.draw = 0; s.atk = -1; s.hold = 0; s.hitT = NaN; s.swing = 0; s.prep = 0; s.cast = 0; s.vx = 0; s.vy = 0;
     // a Double is its owner's wizard (drawn translucent and violet-tinted by the sprite)
     const owner = b.kind[i] === KIND.double ? this.ownerOf(w, i) : i;
     // a conjured weapon or wand replaces the staff (a Double keeps the staff: only seats draw weapons)
@@ -582,7 +585,11 @@ export class WorldView {
     // enemy attack poses, from the sim's attack state (art/enemy-attacks.ts)
     if (b.kind[i] === KIND.enemy) {
       const k = attackK(w, i);
-      s.hitT = hitT(w, i);
+      // a new swing starts when an attack begins or its clock jumps back (a fresh wind-up); the count picks the
+      // sprite's attack variant. Counted here, not from sim ticks: a chill pauses the attack clock.
+      const h = hitT(w, i), was = this.lastHitT[i];
+      if (h === h && !(was === was && h >= was - 0.3)) this.swingN[i] = (this.swingN[i] + 1) & 0xffff;
+      this.lastHitT[i] = h; s.hitT = h; s.swing = this.swingN[i];
       if (kind === 'brute') s.smash = k;
       else if (kind === 'archer') {
         const A = ARCHETYPES[arch];

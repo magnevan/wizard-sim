@@ -57,7 +57,7 @@ export function attackK(w: World, i: number): number {
  */
 export function hitT(w: World, i: number): number {
   const b = w.bodies, ai = b.ai[i];
-  if (ai === AI.windup) return (b.aiT[i] - ARCHETYPES[b.arch[i]].windup * 60) / 60;
+  if (ai === AI.windup) return (b.aiT[i] - Math.round(ARCHETYPES[b.arch[i]].windup * 60)) / 60; // the sim's T(): it hits on that tick
   if (ai === AI.dash) return 0;
   return ai === AI.cooldown ? b.aiT[i] / 60 : NaN;
 }

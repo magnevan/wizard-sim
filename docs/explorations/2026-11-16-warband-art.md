@@ -151,6 +151,8 @@ The user: the animations look good overall, but notes about warping attacks to f
 
 The warp did hurt that: the hooded raider's left slash showed frames 5,5,6,6,6,6,7,7 across its 0.6 s wind-up (the "held guard pose" above), the blow for about one 60 Hz tick, and the chieftain's last seven of 16 frames were the same two. So `pack.py` now keeps every clip frame at 12 fps and marks the contact frame, and the client plays it in real time with contact on the hit tick: an even five ticks a frame. A longer game wind-up holds the clip's first pose; a shorter one starts it partway (archer 2 frames, chieftain 4, hooker 5). The chieftain's swing hadn't played at all as a sprite (the brute's attack state went to `s.smash`); it does now. Logged in `decisions/README.md`.
 
+The review page also said "a raider picks one of its three slashes for life": the client picked the variant from the body's index, for every goblin with more than one clip (the shieldbearer too). The user: cycle or randomise; pick deliberately only where attacks differ in what they do. Now each swing picks at random. The page's caption and its "held guard" note were updated (version 14).
+
 ## Claude's picks, pending the review
 
 *(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the sprites are wired in; see the two sections above.)*

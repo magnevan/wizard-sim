@@ -13,7 +13,7 @@ ELEV=--elev=20
 declare -A OPTS=(
   [raider-hooded]="--add=tools/sprites-3d/raider_codex.py:blade"
   [raider-goggles]="--prop=$P:knife@RightHand"
-  [archer]="--prop=$P:bow@LeftHand"
+  [archer]="--prop=$P:bow@LeftHand --release=archery_shot:39 --yaw=archery_shot:-90:14:30:48:58"   # the clip shoots out of its left side
   [shieldbearer]="--prop=$P:spear@RightHand --prop=$P:shield@LeftForeArm"
   [hooker]="--prop=$P:hook@RightHand"
   [chieftain]="--prop=$P:maul@RightHand --canvas=96 --height=1.8"

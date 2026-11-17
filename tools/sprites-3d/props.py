@@ -73,17 +73,58 @@ def knife():
             box('knife blade', g + d * 0.30, (0.04, 0.12, 0.40), STEEL(), toward=d)]
 
 
+def _empty(name, p):
+    o = bpy.data.objects.new(name, None); bpy.context.scene.collection.objects.link(o); o.location = p
+    return o
+
+
+def _cli():
+    import sys
+    return sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
+
+
+# --release=<clip>:<frame>: the frame a bow clip lets the arrow go (the string stays on the draw hand until then)
+RELEASE = {k: int(v) for k, v in (a[10:].rsplit(':', 1) for a in _cli() if a.startswith('--release='))}
+# Per-frame updates for props that follow more than their own bone (render.py calls each as fn(arm, frame, move)).
+UPDATES = []
+
+
 def bow():
-    # held in the fist, limbs across the hand (upright when the arm points ahead), the string toward the archer;
-    # thick enough to survive at 32 px
-    g = GRIP; up = Vector((0, 1, 0)); back = Vector((0, 0, -1))
+    # Held in the left fist with the limbs along the hand frame's Z: Meshy's archery clip holds the hand so that Z is
+    # world-up at full draw (measured: about 0.99), and the bow belly faces +X, along the forearm toward the target.
+    # The string runs tip to tip, and while the right hand is behind the grip and near the arrow line (before the
+    # clip's --release frame) it bends back to that hand with an arrow nocked. Thick enough to survive at 32 px.
+    g = GRIP; up = Vector((0, 0, 1)); fwd = Vector((1, 0, 0))
     parts = [rod('bow grip', g - up * 0.08, g + up * 0.08, 0.05, LEATHER())]
     for s in (1, -1):
-        mid = g + up * s * 0.32 + back * -0.12
-        tip = g + up * s * 0.56 + back * 0.02
+        mid = g + up * s * 0.32 + fwd * 0.12
+        tip = g + up * s * 0.56 - fwd * 0.02
         parts += [rod('bow limb a' + str(s), g + up * s * 0.07, mid, 0.05, WOOD()), rod('bow limb b' + str(s), mid, tip, 0.042, WOOD())]
-    parts.append(rod('bow string', g + up * 0.56 + back * 0.02, g - up * 0.56 + back * 0.02, 0.012, STRING(), verts=4))
-    return parts
+    tips = [_empty('bow tip+', g + up * 0.56 - fwd * 0.02), _empty('bow tip-', g - up * 0.56 - fwd * 0.02)]
+    nock, grip = _empty('bow nock', g - fwd * 0.02), _empty('bow grip point', g)
+    cu = bpy.data.curves.new('bow string', 'CURVE'); cu.dimensions = '3D'; cu.bevel_depth = 0.014; cu.bevel_resolution = 1
+    sp = cu.splines.new('POLY'); sp.points.add(2); cu.materials.append(STRING())
+    string = bpy.data.objects.new('bow string', cu); bpy.context.scene.collection.objects.link(string)
+    arrow = rod('bow arrow', (0, 0, 0), (0, 0, 1), 0.02, WOOD(), verts=6)
+    head = cone('bow arrowhead', (0, 0, 0.95), (0, 0, 1.12), 0.045, IRON(), verts=4); head.parent = arrow
+    def update(arm, i, mv):
+        bpy.context.view_layer.update()
+        a, b = (t.matrix_world.translation.copy() for t in tips)
+        n0, gp = nock.matrix_world.translation.copy(), grip.matrix_world.translation.copy()
+        pb = arm.pose.bones['RightHand']; w0, w1 = arm.matrix_world @ pb.head, arm.matrix_world @ pb.tail
+        rh = w0 + (w1 - w0).normalized() * GRIP.x * (a - b).length / 1.12   # the palm (a leaf bone's tail length is arbitrary)
+        L = (a - b).length; u = (a - b).normalized(); f = (gp - n0).normalized()
+        rel = rh - gp; along = rel.dot(f); vert = rel.dot(u); lat = (rel - f * along - u * vert).length
+        rel_frame = next((v for k, v in RELEASE.items() if k in mv), None)
+
+        hooked = along < -0.05 * L and lat < 0.3 * L and abs(vert) < 0.3 * L and (rel_frame is None or i <= rel_frame)
+        for p, v in zip(sp.points, (a, rh if hooked else n0, b)): p.co = (*v, 1)
+        arrow.hide_render = head.hide_render = not hooked
+        if hooked:
+            d = gp - rh
+            arrow.matrix_world = Matrix.Translation(rh) @ d.to_track_quat('Z', 'Y').to_matrix().to_4x4() @ Matrix.Diagonal((1, 1, d.length + 0.3 * L / 1.12, 1))
+    UPDATES.append(update)
+    return parts + tips + [nock, grip]
 
 
 def spear():

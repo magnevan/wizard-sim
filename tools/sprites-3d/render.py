@@ -108,6 +108,7 @@ if ANIM:
             o.matrix_world = mw
         print('grafted onto', HAND, [o.name for o in kept])
 
+    PROP_UPDATES = []
     # --prop=props.py:<name>@<Bone> (repeatable): a held prop built in that bone's frame (see props.py) and parented to it
     for a in [a for a in args if a.startswith('--prop=')]:
         src, spec = a[7:].rsplit(':', 1)
@@ -128,6 +129,7 @@ if ANIM:
             o.parent = arm; o.parent_type = 'BONE'; o.parent_bone = bone
             bpy.context.view_layer.update()
             o.matrix_world = mw
+        PROP_UPDATES.extend(ns.get('UPDATES', []))   # props that follow more than their bone (a bow's string)
         print('prop', name, 'on', bone, len(parts), 'parts')
 elif ext == '.py':
     exec(compile(open(MODEL, encoding='utf-8-sig').read(), MODEL, 'exec'), {'__name__': '__model__', '__file__': MODEL})
@@ -293,7 +295,7 @@ def clip_move(act, n=None):
         if ad.action != act:
             ad.action = act
             if getattr(act, 'slots', None) and len(act.slots): ad.action_slot = act.slots[0]
-        arm.matrix_basis = ARM_BASIS
+        arm.matrix_basis = yaw_at(id(act), i) @ ARM_BASIS
         scene.frame_set(int(round(f0 + (f1 - f0) * i / n)))   # a loop's last frame is its first: stop one short
         if not KEEP_ROOT:
             # sprites stay put (the game moves them): cancel the hips' travel over the ground, keep their rise and fall
@@ -314,6 +316,22 @@ if ANIM:
     KEEP_ROOT = '--root' in args
     ROOT_BONE = next((a[7:] for a in args if a.startswith('--hips=')), 'Hips')
     ARM_BASIS = arm.matrix_basis.copy()
+    # --yaw=<clip>:<degrees>[:<a>:<b>:<c>:<d>]: turn the body for one clip, for a clip that attacks off its facing (an
+    # archer stands side-on and shoots out of its left side, so its archery clip turns -90 to send the arrow along the
+    # facing). With frames, the turn eases in over a..b and back out over c..d (rendered frames), so the body turns
+    # side-on as the bow comes up and faces ahead again at rest, matching the idle and walk at either end.
+    YAW_ARGS = [a[6:].split(':') for a in args if a.startswith('--yaw=')]
+    YAW = {}
+
+    def yaw_at(key, i):
+        if key not in YAW: return Matrix()
+        deg, ramp = YAW[key]
+        k = 1.0
+        if ramp:
+            a, b, c, d = ramp
+            ease = lambda t: t * t * (3 - 2 * t)
+            k = 0 if i <= a or i >= d else ease((i - a) / (b - a)) if i < b else ease((d - i) / (d - c)) if i > c else 1
+        return Matrix.Rotation(math.radians(deg * k), 4, 'Z')
     bpy.context.view_layer.update()
     HIPS_REST = rig.matrix_world.inverted() @ (arm.matrix_world @ arm.data.bones[ROOT_BONE].head_local)
     # glTF clips are named 'Armature|walking_man|baselayer': the middle part names the move and the output folder
@@ -325,6 +343,8 @@ if ANIM:
         act = next((a for a in CLIPS if a.name == name), None) or next(a for a in CLIPS if slug(name) in slug(a.name))
         picked[slug(name)] = clip_move(act, int(frames) if frames else None)
         CLIP_OF[slug(name)] = act
+        for k, deg, *ramp in YAW_ARGS:
+            if k in slug(name): YAW[id(act)] = (float(deg), [int(v) for v in ramp] if len(ramp) == 4 else None)
     R.MOVES = picked
     MOVES = list(picked)
 
@@ -335,6 +355,7 @@ for mv in MOVES:
         for i in range(n):
             R.rest(rig)
             fn(rig, i, n)
+            for u in globals().get('PROP_UPDATES', []): u(arm, i, mv)
             bpy.context.view_layer.update()
             shoot(os.path.join(OUT, mv, d, f'f{i:02d}.png'))
     if ANIM:

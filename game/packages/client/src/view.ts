@@ -147,6 +147,8 @@ export class WorldView {
   /** Each enemy's swing count and last hitT (art/sprites.ts picks an attack variant per swing). */
   private swingN = new Uint16Array(MAX_BODIES);
   private lastHitT = new Float64Array(MAX_BODIES).fill(NaN);
+  /** The client time of each enemy's last hit, so its sprite can finish the recovery after the sim's cooldown. */
+  private hitAt = new Float64Array(MAX_BODIES).fill(NaN);
   private prevBY = new Float64Array(MAX_BODIES);
   private prevKind = new Uint8Array(MAX_BODIES);
   // cosmetic per-body state: walk phase, speed, hit flash (attack poses come straight from the sim's ai / aiT)
@@ -242,7 +244,7 @@ export class WorldView {
     }
     for (let i = 0; i < MAX_BODIES; i++) {
       if (!b.kind[i]) continue;
-      if (this.prevKind[i] !== b.kind[i]) { this.prevBX[i] = b.x[i]; this.prevBY[i] = b.y[i]; this.ph[i] = 0; this.flashT[i] = -9; }
+      if (this.prevKind[i] !== b.kind[i]) { this.prevBX[i] = b.x[i]; this.prevBY[i] = b.y[i]; this.ph[i] = 0; this.flashT[i] = -9; this.hitAt[i] = NaN; }
       const d = Math.hypot(b.x[i] - this.prevBX[i], b.y[i] - this.prevBY[i]);
       this.spd[i] += (d * 60 / 4.2 - this.spd[i]) * 0.3;
       this.ph[i] += (d * PPU / STRIDE[this.rigOf(w, i)]) * Math.PI;
@@ -589,7 +591,11 @@ export class WorldView {
       // sprite's attack variant. Counted here, not from sim ticks: a chill pauses the attack clock.
       const h = hitT(w, i), was = this.lastHitT[i];
       if (h === h && !(was === was && h >= was - 0.3)) this.swingN[i] = (this.swingN[i] + 1) & 0xffff;
-      this.lastHitT[i] = h; s.hitT = h; s.swing = this.swingN[i];
+      this.lastHitT[i] = h; s.swing = this.swingN[i];
+      // the sprite's recovery plays to the clip's end even when the sim's cooldown ends first (a cut snaps back);
+      // art/sprites.ts drops to walk or idle once the clip is over
+      if (h === h) { s.hitT = h; this.hitAt[i] = h >= 0 ? ct - h : NaN; }
+      else s.hitT = ct - this.hitAt[i] < 3 ? ct - this.hitAt[i] : NaN;
       if (kind === 'brute') s.smash = k;
       else if (kind === 'archer') {
         const A = ARCHETYPES[arch];

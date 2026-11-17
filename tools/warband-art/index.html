@@ -63,8 +63,26 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="archer">
+    <h2 id="archer">Latest: the archer's shot, and the frame rate</h2>
+    <p>You saw the archer holding its bow oddly. Four things were wrong, all fixed:</p>
+    <ul class="opts">
+      <li><b>It shot sideways.</b> Meshy's archery clip stands side-on to the target, like a real archer, so the arrow left from the goblin's left side, 90° off where it faces. It now turns side-on as the bow comes up and back to face ahead as it lowers, so the shot goes where it's looking.</li>
+      <li><b>The bow lay flat.</b> My bow sat in the hand on the wrong axis; at full draw its limbs were nearly horizontal. They're upright now.</li>
+      <li><b>No draw.</b> The string was a rigid stick between the tips. It now bends back to the drawing hand with an arrow nocked, and snaps straight on the release.</li>
+      <li><b>The hit came too early, and it snapped back at the end.</b> The game fired on the moment the hand reached for the arrow; it now fires on the release. The clip was cut off during the pause after the shot, with the bow still raised; it now plays through to rest.</li>
+    </ul>
+    <figure><img src="img/archer-shot.gif" alt="Two rows of the archer shooting, four directions each. Top, before: the bow flat and the draw unclear, ending with a jump back to standing. Bottom, after: the goblin turns side-on, the bow upright, draws the string back and shoots toward its facing, then lowers the bow and turns back."><figcaption>As the game plays it, at game size (enlarged 4×). Top: before. Bottom: now. South-east, east, south, south-west.</figcaption></figure>
+    <p>One jump is left at the start. The game gives the archer a 1 second wind-up, shorter than the clip's own raise and draw, so the clip starts partway in and the goblin is already half turned. Fixing that means a longer archer wind-up (a gameplay change) or starting the draw while it's still lining up its shot.</p>
+    <div class="rate" id="archer-shot-rate"></div>
+    <h3>12 or 24 frames a second?</h3>
+    <p>Every clip is rendered at 12 frames a second, the usual rate for pixel-art sprites: at 32 px most moves shift a pixel or two per frame, and fewer frames read crisper and keep the sheets small. The cost shows on fast moves: a slash's fastest part gets one or two frames, so it jumps instead of sweeping. Here is the hooded raider's Left Slash both ways, in real time.</p>
+    <figure><img src="img/fps-compare.gif" alt="Two rows of the hooded raider slashing in three directions: top at 12 frames a second, bottom at 24, in step."><figcaption>Top: 12 fps (today). Bottom: 24 fps. South-east, east, south-west. 24 fps doubles each goblin's attack rows in the sheet, and costs nothing else (no credits, a few minutes of rendering).</figcaption></figure>
+    <div class="rate" id="fps-rate"></div>
+  </section>
+
   <section aria-labelledby="ingame">
-    <h2 id="ingame">Latest: the whole band, in the game</h2>
+    <h2 id="ingame">Before that: the whole band, in the game</h2>
     <p>Your approved pictures went all the way through, unattended: a Meshy model each (made the cheap way, 15 credits), a rig (5) and only the clips their mechanics use (3 each), weapons as small 3D props on the hands, every move rendered in 8 directions at 20° and turned into 32 px pixel art, then packed into one sheet per goblin. <b>142 Meshy credits</b> in all, under your cap.</p>
     <p><b>Try it:</b> the game on this branch draws the band from these sprites by default, in every room (<code>?sprites=0</code> brings back the code rigs). The wizard is 1.7× while they're on, the size you settled. The common goblins are the hooded and goggled raiders (two hooded to one goggled), the grabber is the hooker and the brute the chieftain; the imp and the tutorial's straw goblin keep their rigs.</p>
     <figure><img src="img/roster-ingame.png" alt="A wave of hooded goblin raiders walking toward two wizards in the arena, at game size, enlarged."><figcaption>In the arena, the first wave (screenshot, enlarged 2×). Their shadows are longer than the rigs' because they're taller.</figcaption></figure>
@@ -388,6 +406,8 @@ for (const c of CONCEPTS) {
   const r = el('div', 'rate'); r.append(marks('ratings', 'con-' + c.id, AR), note('ratings', 'con-' + c.id, 'What to change'));
   box.append(el('h3', '', c.name), fig, el('p', '', c.notes), r); $('concepts').append(box);
 }
+$('archer-shot-rate').append(el('b', '', "The archer's shot"), marks('ratings', 'archer-shot', KRC), note('ratings', 'archer-shot', 'What still looks off'));
+$('fps-rate').append(el('b', '', 'Frame rate'), marks('ratings', 'fps-attack', [['12', '12 fps', 'maybe'], ['24', '24 fps', 'keep'], ['mix', 'Attacks only', 'maybe']]), note('ratings', 'fps-attack', 'What you see'));
 $('ingame-rate').append(el('b', '', 'The band in play'), marks('ratings', 'ingame-band', KRC), note('ratings', 'ingame-band', 'Which goblin or move to redo, and how'));
 $('con-weapons-rate').append(el('b', '', 'Weapons'), marks('ratings', 'con-weapons', AR), note('ratings', 'con-weapons', 'Which to redo, and how'));
 for (const [id, what] of [['walk', 'Which walk'], ['run', 'Which run'], ['attack', 'Which attack'], ['extra', 'Idle and death']])

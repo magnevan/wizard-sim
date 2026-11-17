@@ -153,6 +153,18 @@ The warp did hurt that: the hooded raider's left slash showed frames 5,5,6,6,6,6
 
 The review page also said "a raider picks one of its three slashes for life": the client picked the variant from the body's index, for every goblin with more than one clip (the shieldbearer too). The user: cycle or randomise; pick deliberately only where attacks differ in what they do. Now each swing picks at random. The page's caption and its "held guard" note were updated (version 14).
 
+## The archer's shot, and 12 or 24 fps (2026-11-17)
+
+The user: the archer's attack looks off, the goblin holds the bow in a weird way, and it snaps back at the end. Found four faults:
+- Meshy's Archery Shot stands side-on and shoots out of the character's left side, so the arrow left 90° off the goblin's facing. `render.py --yaw=archery_shot:-90:14:30:48:58` turns the body side-on as the bow comes up and back as it lowers, so the shot follows the facing and the clip starts and ends in the idle's stance.
+- The bow's limbs sat on the hand's Y axis; measured in Blender, Z is world-up at full draw (about 0.99), so at full draw the bow lay nearly flat. Now on Z.
+- The string was a rigid rod. It now bends back to the drawing hand with an arrow nocked until the release (`--release=archery_shot:39`).
+- `pack.py`'s strike (the hand's fastest step) was frame 14, the reach for the arrow, so the game fired before the draw; the hit is now the release, frame 39 (ROLES `tune`), and the held full draw (34 to 38) is left out so the 1 s wind-up shows the draw rising. The end search stopped at the pause after the shot with the bow still up (frame 38 of 60): it now searches back from the clip's end, which lengthens every goblin's recovery a little, and the client lets a sprite finish its recovery after the sim's cooldown ends (`hitAt` in `view.ts`) instead of snapping to walk or idle.
+
+Left: the 1 s wind-up is shorter than the clip's raise, so the shot starts partway into the turn (a small jump from idle). The fix would be a longer archer wind-up (gameplay) or starting the draw while it lines up.
+
+The user also asked why 12 fps: it's `render.py`'s `ANIM_FPS`, the usual pixel-art rate (at 32 px most moves are a pixel or two a frame; fewer frames read crisper and keep sheets small), carried over from the PixelLab work rather than tested on these clips. Fast blows get one or two frames at 12. The review page (version 15) shows the hooded raider's Left Slash at 12 and 24 fps side by side (`fps-attack`) and the archer before and after (`archer-shot`).
+
 ## Claude's picks, pending the review
 
 *(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the sprites are wired in; see the two sections above.)*

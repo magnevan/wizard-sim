@@ -25,7 +25,10 @@ DEATH = 18
 ROLES = {
     'raider-hooded': {'walk': 'walking', 'run': 'sprint', 'attack': ['left_slash', 'thrust_slash', 'right_hand_sword_slash'], 'death': 'knock_down'},
     'raider-goggles': {'walk': 'walking', 'run': 'sprint', 'attack': ['left_slash', 'thrust_slash', 'right_hand_sword_slash'], 'death': 'knock_down'},
-    'archer': {'walk': 'walking', 'run': 'running', 'attack': ['archery_shot'], 'death': 'knock_down'},
+    # the archer's shot: the arrow leaves at clip frame 39 (render.py --release); the full draw held before it (34..38)
+    # is left out, so the game's 1 s wind-up shows the draw rising into the shot
+    'archer': {'walk': 'walking', 'run': 'running', 'attack': ['archery_shot'], 'death': 'knock_down',
+               'tune': {'archery_shot': {'hit': 39, 'cut': (34, 38)}}},
     'shieldbearer': {'walk': 'walking', 'run': 'running', 'attack': ['thrust_slash', 'shield_push'], 'death': 'knock_down'},
     'hooker': {'walk': 'walking', 'run': 'running', 'attack': ['crouch_pull_and_throw'], 'death': 'knock_down', 'grade': (0.84, 0.93, 0.9)},
     'chieftain': {'walk': 'walking', 'run': 'running', 'attack': ['heavy_hammer_swing'], 'death': 'knock_down'},
@@ -65,13 +68,14 @@ def beats(track):
     start = 0
     for k in range(s, -1, -1):   # back to where the wind-up begins: the hand first moves with intent
         if sp[k] < 0.08 * peak: start = k; break
+    # back from the clip's end to the last step that still moves: the recovery is over there. (Searching forward for the
+    # first still step stopped at holds, like an archer's pause after the shot, and cut the return to rest; the sprite
+    # then snapped back.)
     end = n - 1
-    for k in range(s + 1, n - 1):   # forward to where the recovery has settled
-        if sp[k] < 0.05 * peak and k > s + 2: end = k; break
-    end = min(n - 1, max(end, s + 4) + 3)
+    for k in range(n - 2, s, -1):
+        if sp[k] >= 0.05 * peak: end = k + 1; break
+    end = min(n - 1, max(end, s + 4) + 1)
     return start, s + 0.5, end
-
-
 
 
 def pack(work, slug):
@@ -90,10 +94,16 @@ def pack(work, slug):
         tr = json.load(open(os.path.join(raw, c, 'track.json')))
         b = beats(tr)
         # the clip at its own speed, trimmed to the wind-up's start and the settled recovery; `hit` is the contact
-        # frame (just after the hand's fastest step), which the client lines up with the game's hit
-        first, last = int(b[0]), int(b[2])
-        rows.append((f'attack{k}', [fr[first:last + 1] for fr in (frames(px, c, d) for d in DIRS)]))
-        atk_meta.append({'clip': c, 'beats': [round(v, 1) for v in b], 'first': first, 'hit': min(last, round(b[1] + 0.5)) - first})
+        # frame (just after the hand's fastest step), which the client lines up with the game's hit. ROLES `tune`
+        # overrides per clip, in clip frames: `hit` where the fastest step isn't the hit (a bow's is the reach for the
+        # arrow), `cut` a still hold to drop (frames left out, never retimed), `first` / `end`.
+        o = R.get('tune', {}).get(key, {})
+        first, last = o.get('first', int(b[0])), o.get('end', int(b[2]))
+        hit = min(last, o.get('hit', round(b[1] + 0.5)))
+        cut = o.get('cut', (1, 0))
+        keep = [f for f in range(first, last + 1) if f == hit or not (cut[0] <= f <= cut[1])]
+        rows.append((f'attack{k}', [[fr[f] for f in keep] for fr in (frames(px, c, d) for d in DIRS)]))
+        atk_meta.append({'clip': c, 'beats': [round(v, 1) for v in b], 'frames': keep, 'hit': keep.index(hit)})
     c = clip_dir(px, R['death'])
     dead = [frames(px, c, d) for d in DIRS]
     n = len(dead[0]); keep = [round(i * (n - 1) / (DEATH - 1)) for i in range(DEATH)] if n > DEATH else list(range(n))

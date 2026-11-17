@@ -19,7 +19,8 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, 'game', 'content', 'assets', 'sprites')
 DIRS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east']
-DEATH = 18
+DEATH = 18   # frames of the knock-down at 12 fps (scaled with the render's rate)
+MAX_W = 4096
 
 # per character: which rendered clips play which move (substring of the clip's folder name)
 ROLES = {
@@ -85,6 +86,8 @@ def pack(work, slug):
     GRADE = tuple(R.get('grade', (1, 1, 1)))
     rows = []   # (move key, list of 8 lists of frames)
     walk = clip_dir(px, R['walk'])
+    wt = os.path.join(raw, walk, 'track.json')
+    fps = json.load(open(wt)).get('fps', 12) if os.path.exists(wt) else 12
     rows.append(('idle', [frames(px, walk, d)[:1] for d in DIRS]))
     rows.append(('walk', [frames(px, walk, d) for d in DIRS]))
     rows.append(('run', [frames(px, clip_dir(px, R['run']), d) for d in DIRS]))
@@ -97,34 +100,40 @@ def pack(work, slug):
         # frame (just after the hand's fastest step), which the client lines up with the game's hit. ROLES `tune`
         # overrides per clip, in clip frames: `hit` where the fastest step isn't the hit (a bow's is the reach for the
         # arrow), `cut` a still hold to drop (frames left out, never retimed), `first` / `end`.
+        # (`tune` frames are given at 12 fps and scaled to the render's rate)
+        fps = tr.get('fps', 12); at = lambda v: round(v * fps / 12)
         o = R.get('tune', {}).get(key, {})
-        first, last = o.get('first', int(b[0])), o.get('end', int(b[2]))
-        hit = min(last, o.get('hit', round(b[1] + 0.5)))
-        cut = o.get('cut', (1, 0))
+        first, last = at(o['first']) if 'first' in o else int(b[0]), at(o['end']) if 'end' in o else int(b[2])
+        hit = min(last, at(o['hit']) if 'hit' in o else round(b[1] + 0.5))
+        cut = tuple(at(v) for v in o['cut']) if 'cut' in o else (1, 0)
         keep = [f for f in range(first, last + 1) if f == hit or not (cut[0] <= f <= cut[1])]
         rows.append((f'attack{k}', [[fr[f] for f in keep] for fr in (frames(px, c, d) for d in DIRS)]))
         atk_meta.append({'clip': c, 'beats': [round(v, 1) for v in b], 'frames': keep, 'hit': keep.index(hit)})
     c = clip_dir(px, R['death'])
     dead = [frames(px, c, d) for d in DIRS]
-    n = len(dead[0]); keep = [round(i * (n - 1) / (DEATH - 1)) for i in range(DEATH)] if n > DEATH else list(range(n))
+    cap = round(DEATH * fps / 12)   # the knock-down, thinned to DEATH frames a 12 fps second's worth
+    n = len(dead[0]); keep = [round(i * (n - 1) / (cap - 1)) for i in range(cap)] if n > cap else list(range(n))
     rows.append(('death', [[fr[i] for i in keep] for fr in dead]))
 
+    # A move longer than `cols` frames wraps into further bands of 8 direction rows: frame f of direction d sits at
+    # column f % cols, row `row + d + 8 * (f // cols)`. cols keeps the sheet within 4096 px, which every GPU takes.
     cw, ch = rows[0][1][0][0].size
-    cols = max(len(f) for _, per in rows for f in per)
-    sheet = Image.new('RGBA', (cols * cw, len(rows) * 8 * ch), (0, 0, 0, 0))
-    meta = {'cell': [cw, ch], 'dirs': DIRS, 'moves': {}}
+    cols = min(max(len(f) for _, per in rows for f in per), MAX_W // cw)
+    bands = [(len(per[0]) + cols - 1) // cols for _, per in rows]
+    sheet = Image.new('RGBA', (cols * cw, sum(bands) * 8 * ch), (0, 0, 0, 0))
+    meta = {'cell': [cw, ch], 'cols': cols, 'dirs': DIRS, 'moves': {}}
     r = 0
-    for key, per in rows:
+    for (key, per), nb in zip(rows, bands):
         meta['moves'][key] = {'row': r, 'n': len(per[0])}
-        for fr in per:
-            for i, im in enumerate(fr): sheet.alpha_composite(im, (i * cw, r * ch))
-            r += 1
+        for d, fr in enumerate(per):
+            for i, im in enumerate(fr): sheet.alpha_composite(im, ((i % cols) * cw, (r + d + 8 * (i // cols)) * ch))
+        r += 8 * nb
     # the feet: the standing frames' lowest opaque row, centred (render.py stands the model's feet on the frame's centre line)
     bottom = max(im.getbbox()[3] for per in rows[0][1] for im in per if im.getbbox())
     meta['feet'] = [cw // 2, bottom - 1]
     meta['height'] = bottom - min(im.getbbox()[1] for per in rows[0][1] for im in per if im.getbbox())
     meta['attacks'] = atk_meta
-    meta['fps'] = 12
+    meta['fps'] = fps
     os.makedirs(os.path.join(OUT, slug), exist_ok=True)
     sheet.save(os.path.join(OUT, slug, 'sheet.png'), optimize=True)
     json.dump(meta, open(os.path.join(OUT, slug, 'sheet.json'), 'w'), indent=1)

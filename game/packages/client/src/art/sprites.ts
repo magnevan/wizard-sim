@@ -15,7 +15,7 @@ import type { Frame } from './actors';
 import * as X from './px';
 
 interface Move { row: number; n: number }
-interface SheetMeta { cell: [number, number]; feet: [number, number]; height: number; dirs: string[]; fps: number; moves: Record<string, Move>; attacks?: { hit: number }[] }
+interface SheetMeta { cell: [number, number]; cols?: number; feet: [number, number]; height: number; dirs: string[]; fps: number; moves: Record<string, Move>; attacks?: { hit: number }[] }
 interface Attack extends Move { hit: number }
 interface Sheet { meta: SheetMeta; img: HTMLImageElement | null; attacks: Attack[] }
 
@@ -97,7 +97,9 @@ function cellOf(sh: Sheet, s: RigState, who: number): [Move, number] {
 function compose(sh: Sheet, m: Move, dir: number, f: number, white: boolean, a: Anchors): Frame {
   const { c, x } = X.canvas(CELL_W, CELL_H);
   const [cw, ch] = sh.meta.cell, [fx, fy] = sh.meta.feet;
-  x.drawImage(sh.img!, f * cw, (m.row + dir) * ch, cw, ch, FEET_X - fx, FEET_Y - fy, cw, ch);
+  // a long move wraps into further bands of 8 direction rows (pack.py): frame f at column f % cols
+  const cols = sh.meta.cols ?? Infinity, col = f % cols, band = Math.floor(f / cols);
+  x.drawImage(sh.img!, col * cw, (m.row + dir + 8 * band) * ch, cw, ch, FEET_X - fx, FEET_Y - fy, cw, ch);
   if (white) { x.globalCompositeOperation = 'source-in'; x.fillStyle = '#ffffff'; x.fillRect(0, 0, CELL_W, CELL_H); x.globalCompositeOperation = 'source-over'; }
   const tex = Texture.from(c); tex.source.scaleMode = 'nearest';
   return { tex, a, c, sx: 0, sy: 0 };

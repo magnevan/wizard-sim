@@ -9,6 +9,7 @@ B="${BLENDER:-/c/Program Files/Blender Foundation/Blender 5.2/blender.exe}"
 O=tools/sprites-3d/output
 P=tools/sprites-3d/props.py
 ELEV=--elev=20
+FPS=--fps=24   # 24 so a slowed goblin (chilled) still shows 12 distinct frames a second
 # slug: model files | render options
 declare -A OPTS=(
   [raider-hooded]="--add=tools/sprites-3d/raider_codex.py:blade"
@@ -26,7 +27,7 @@ for s in "${slugs[@]}"; do
   for f in walking running clips; do
     only=""; [ "$s" = raider-hooded ] && [ $f = clips ] && only="left_slash,thrust_slash,right_hand_sword_slash,lean_forward_sprint,knock_down"
     [ "$s" != "${s#raider}" ] && [ $f = running ] && continue   # raiders run with the sprint clip
-    "$B" --background --python tools/sprites-3d/render.py -- "$d/$f.glb" "$W/$s" $only --anim $ELEV ${OPTS[$s]} 2>&1 | grep -E "^clips|rendered|Error|Traceback|line [0-9]" | sed "s/^/$s: /"
+    "$B" --background --python tools/sprites-3d/render.py -- "$d/$f.glb" "$W/$s" $only --anim $ELEV $FPS ${OPTS[$s]} 2>&1 | grep -E "^clips|rendered|Error|Traceback|line [0-9]" | sed "s/^/$s: /"
   done
   python tools/sprites-3d/pixelize.py "$W/$s" "$W/$s-px" | tail -1 | sed "s/^/$s: /"
 done

@@ -84,7 +84,9 @@ def _cli():
 
 
 # --release=<clip>:<frame>: the frame a bow clip lets the arrow go (the string stays on the draw hand until then)
-RELEASE = {k: int(v) for k, v in (a[10:].rsplit(':', 1) for a in _cli() if a.startswith('--release='))}
+# (given at 12 fps, scaled to the render's --fps)
+_F12 = int(next((a[6:] for a in _cli() if a.startswith('--fps=')), 12)) / 12
+RELEASE = {k: round(int(v) * _F12) for k, v in (a[10:].rsplit(':', 1) for a in _cli() if a.startswith('--release='))}
 # Per-frame updates for props that follow more than their own bone (render.py calls each as fn(arm, frame, move)).
 UPDATES = []
 

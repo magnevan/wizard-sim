@@ -32,9 +32,11 @@ for o in list(bpy.data.objects): bpy.data.objects.remove(o)
 
 # --anim: the model is a rigged .glb/.fbx with its own clips (a Meshy rig and its library animations). Its armature is
 # kept and its clips are played instead of rig.MOVES. moves are clip names (substring match), each optionally =<frames>;
-# with none, every clip is rendered at 12 fps.
+# with none, every clip is rendered at --fps (default 12; the roster uses 24, so a slowed body still gets 12 distinct
+# frames a second). Frame numbers in --yaw and --release are given at 12 fps and scaled to the render's rate.
 ANIM = '--anim' in args
-ANIM_FPS = 12
+ANIM_FPS = int(next((a[6:] for a in args if a.startswith('--fps=')), 12))
+F12 = ANIM_FPS / 12
 
 # ---- the model -----------------------------------------------------------------------------------------------------------
 before = set(bpy.data.objects)
@@ -344,7 +346,7 @@ if ANIM:
         picked[slug(name)] = clip_move(act, int(frames) if frames else None)
         CLIP_OF[slug(name)] = act
         for k, deg, *ramp in YAW_ARGS:
-            if k in slug(name): YAW[id(act)] = (float(deg), [int(v) for v in ramp] if len(ramp) == 4 else None)
+            if k in slug(name): YAW[id(act)] = (float(deg), [round(int(v) * F12) for v in ramp] if len(ramp) == 4 else None)
     R.MOVES = picked
     MOVES = list(picked)
 

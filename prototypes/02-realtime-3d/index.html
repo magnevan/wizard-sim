@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Real-time 3D goblins</title>
+  <style>
+    body { margin: 0; background: #1d2420; color: #e8e4d8; font: 14px/1.4 system-ui, sans-serif; }
+    #ui { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding: 8px 12px; }
+    #ui label { display: flex; gap: 6px; align-items: center; }
+    #stats { font: 13px ui-monospace, monospace; color: #ffd860; }
+    #wrap { display: flex; justify-content: center; }
+    canvas { image-rendering: pixelated; display: block; }
+    .cap { display: flex; justify-content: center; gap: 0; font-size: 13px; color: #a9b0a4; }
+    .cap span { text-align: center; }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <label>Move <select id="mode"><option value="walk">walk in a circle</option><option value="attack">attack (16 facings)</option><option value="turn">walk in place, turning</option></select></label>
+    <label>Speed <input id="speed" type="range" min="0.05" max="1" step="0.05" value="1"><span id="speedv">1.00</span></label>
+    <label>Count <input id="count" type="range" min="1" max="200" step="1" value="12"><span id="countv">12</span></label>
+    <label><input id="snap" type="checkbox" checked> snap 3D to pixels</label>
+    <label><input id="show3d" type="checkbox" checked> 3D side on</label>
+    <span id="stats"></span>
+  </div>
+  <div class="cap" id="cap"><span>Real-time 3D, pixel shader</span><span>Baked sheet (game/content)</span></div>
+  <div id="wrap"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

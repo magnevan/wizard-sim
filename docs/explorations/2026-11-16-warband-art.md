@@ -218,6 +218,27 @@ The archer and the shieldbearer walk at twice and 1.6 times their walk clip's pa
 
 New tooling: `render.py --inspect=<n>` renders n smooth stills a move from the south and the east (Workbench, with props and the soft staff as the game turns it) and `montage.py` lays them out, for checking a prop in the hand before an export; the viewer has a Legs option (a clip over walking or running legs).
 
+## The wizard's weapons and guards, pictures for Meshy (2026-11-17)
+
+The user asked for new weapons and shields for the 3D wizard at his new size: Codex concept art they approve, then meshes. The seven conjured weapon objects (flame sword, stone maul, echo focus, ice bow, frost spear, lightning whip, tide trident; Healing hands stays bare) were drawn as two sheets, with the goblin weapon sheet (layout and finish) and the wizard's model sheet (style and size) as references. Prompts: `tools/concept-gen/prompts/2026-11-17-wizard-arms/`. Sheets: `docs/reference/wizard-arms/`.
+
+- **A, conjured:** each weapon made of its element. Bold, but the flame sword reads as a torch, the maul as a mushroom, and the spear and trident are the same pale blue.
+- **B, forged:** wood and gold with the element as a glowing blade, head or gem. It matches the wizard's gold trim, gives Meshy solid separate parts, and keeps every element's colour apart.
+
+Claude's pick: B for all seven. The whip's lash is animated in code either way (a rigid mesh can't swing; see the generated-animation limits), so only its handle needs a model. Each approved weapon is a Meshy prop at smart topology, about 15 credits, about 105 for all seven, with a fresh OK before spending. On the review page as `arm-<weapon>` {mark a/b/redo}.
+
+The two guard sheets (the eight guards, in the same two directions) were stopped when the computer ran low on memory, before Codex drew them; they run again when the user says.
+
+**Round 2 (the user):** "Let's do shields too. Keep in mind that these are magical conjurations, different than the goblins normal weapons." So forged B is dropped as a direction, and everything is made of its element, drawn from the wizard's model sheet and sheet A instead of the goblin sheet:
+- **Weapons A2:** A with its problems named in the prompt. The sword reads as a sword, the maul as a hammer, and each element has its own colour (Ice white-blue, Cold cyan, Water deep blue). The maul lost its magic as plain stone. Claude's pick: A2 for six, and the maul as A2's shape with A's glowing crystals.
+- **Guards A** (the element sculpted: a gold disc, a torn-up rock slab, a ball of molten rock in flame, an ice kite, an open lightning hoop, a water spiral, a crystal hexagon, living leaves) and **guards C** (a translucent ward of light round a small solid core). Claude's pick: A as the models, which gives bold solid silhouettes that Meshy rebuilds well, with C's glowing ward reused as the block effect (the game already draws an energy face while blocking). C's glow would be shader work, and its pale faces may wash out on the ground.
+
+Marks: `arm-<weapon>` {a/a2/b/redo}, `guard-<guard>` (mirror, bulwark, ember, rime, spark, tide, prism, leaf) {a/c/redo}. Meshy at about 15 credits a prop: about 105 for the weapons, 120 for the guards, each spend with its own OK.
+
+**The user's picks (read 2026-11-17):** all seven weapons from sheet A (not A2: "I don't think A2 really looked better"); every guard from A except the Mirror buckler, which is C (the gold mirror in a halo). And: "the LOD here is much much higher than we're going to see with the pixels in game. I think particle VFX is going to be important to sell the effect that don't really show up with the plain model."
+
+So the props don't go to Meshy. Like the goblins' weapons (`tools/sprites-3d/props.py`), they're built in Blender from a few chunky primitives after the approved sheets, free, with the element's colour glowing where the sheet glows. The element is sold by particle VFX in the game around the prop (flames licking up the sword, drips off the trident, sparks on the whip, frost off the spear), which the 2D weapon drawings already have (`view-structures.ts` `weapon()`) and which carry over, anchored to the 3D prop.
+
 ## Claude's picks, pending the review
 
 *(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the goblins and the wizard are drawn live from 3D in the game; see the sections above.)*

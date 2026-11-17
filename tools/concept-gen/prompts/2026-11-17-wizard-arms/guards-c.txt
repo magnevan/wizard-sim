@@ -1,0 +1,17 @@
+Generate one image with your image generation tool, then save it as guards-c.png in the current directory. Reply with just the file name.
+
+The attached images are references. The first is the 3D-model reference picture of our player wizard, a short stocky storybook wizard with big chunky hands, about 1.4 metres tall counting his huge hat: match its rendering style and finish exactly (smooth stylised shapes, chunky readable forms, simple colours, soft even lighting). The second is a sheet of the magic weapons he conjures out of the elements: the new shields belong to the same family.
+
+Subject: a shield reference sheet for a 3D modeller. Eight magic shields that the wizard conjures with a spell: ward shields of glowing elemental energy. Each is a translucent, softly glowing shield-shaped field of its element's colour, bright at the rim and clearer toward the middle, built around one small solid sculpted core of the element at its centre (the part a modeller makes as a mesh; the glow will be a shader). No wood, leather, rivets or forged metal, and no loose particles or smoke. Laid out in two rows of four, each seen face on, well apart and fully in frame, on a plain pure white background, evenly and softly lit like clean 3D game prop renders. Every one has its own clear silhouette and colour, so a teammate can tell them apart from far away.
+
+Top row, left to right:
+1. Mirror buckler (Shield, warm gold), small, about the size of the wizard's head: a round ward of golden light around a polished golden mirror disc.
+2. Bulwark (Earth, brown and amber), big, as tall as the wizard's body: a tall rectangular ward of amber light around a heavy rough rock slab, chunks of rock floating at its corners.
+3. Ember targe (Fire, orange and red), medium: a round ward of flickering orange light around a glowing coal, flame-tongue shapes licking up its rim.
+4. Rime kite (Cold, pale cyan), medium-tall: a kite-shaped ward of pale cyan light, frosted at the edges, around a cluster of ice crystals.
+
+Bottom row, left to right:
+5. Spark ring (Lightning, violet), medium: a ring of jagged violet lightning with a nearly clear centre, around a small floating violet crystal.
+6. Tide shield (Water, deep blue), medium: a round ward of rippling deep blue water light with a wave curl at its rim, around a spinning sphere of water.
+7. Prism pane (Arcane, magenta-pink), medium: a hexagonal ward of magenta light with sharp faceted edges, around a glowing magenta prism.
+8. Leaf aegis (Life, bright green), medium-tall: a leaf-shaped ward of soft green light around a living sprout with two leaves, a vine tracing its rim.

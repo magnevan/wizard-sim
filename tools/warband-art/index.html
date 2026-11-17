@@ -63,8 +63,30 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="arms">
+    <h2 id="arms">Newest: the wizard's weapons and guards, pictures for Meshy</h2>
+    <p>The conjured weapons and guards are still 2D drawings beside the 3D wizard. These are the pictures for their 3D models: seven weapon objects (Healing hands stays bare hands with a glow) and the eight guards. All drawn by Codex, free on your subscription.</p>
+    <p><b>Round 2, after your note</b> that these are magical conjurations, not gear like the goblins': everything is now made of its element, with the wizard's model sheet and sheet A as the references instead of the goblin sheet. Forged B is still below for comparison, but it's off the table as a direction.</p>
+    <h3>Guards</h3>
+    <figure><img class="photo" src="img/guards-a.jpg" alt="Eight shields made of their elements on white: a gold disc, a slab of rock with glowing cracks, a ball of molten rock ringed in flame, a kite of frosted ice, a hoop of violet lightning with a web across it, a swirling blue water disc with foam waves, a rainbow-edged magenta crystal hexagon, and a shield of green leaves with a vine and bud."><figcaption>A, the element sculpted. Top: Mirror buckler, Bulwark, Ember targe, Rime kite. Bottom: Spark ring, Tide shield, Prism pane, Leaf aegis.</figcaption></figure>
+    <figure><img class="photo" src="img/guards-c.jpg" alt="Eight translucent glowing wards on white, each round a small solid core: a gold mirror, a rock with floating corner stones, a coal ringed in flame, ice crystals in a frosted kite, a violet crystal in a lightning ring, a water sphere in a wave ring, a magenta prism in a hexagon, a sprout in a leaf-shaped vine ward."><figcaption>C, a ward of light round a small core. Same order.</figcaption></figure>
+    <p><b>A</b> gives each guard a bold, solid silhouette, which is what Meshy rebuilds best, and each one reads at game size. The buckler is the plainest (a gold disc). <b>C</b> is the most spell-like, but most of each shield is translucent glow, which is our shader rather than a mesh; only the small core is a model, and the pale faces may wash out on the ground. <span class="pick">My pick: A as the models, with C's glowing ward reused as the effect while blocking (the game already draws an energy face during a block).</span></p>
+    <div class="jobs" id="guard-picks"></div>
+    <h3>Weapons</h3>
+    <figure><img class="photo" src="img/weapons-a2.jpg" alt="Seven weapons made of their elements, round 2: a flame-bladed sword with a red twisted grip, a blocky stone hammer, a magenta orb with three crystal shards over a crystal rod, a white ice bow, a cyan ice spear, a violet lightning whip, and a deep blue water trident with foam tips."><figcaption>A2, round 2: A with its problems fixed. Same order as below.</figcaption></figure>
+    <ul class="opts">
+      <li><b>A, conjured:</b> each weapon made of its element, toy-like. The boldest silhouettes, but the flame sword reads as a torch, the maul as a mushroom, and the spear and trident are the same pale blue, so Cold and Water blur together.</li>
+      <li><b>B, forged:</b> an academy wizard's arms in wood and gold, the element as one glowing blade, head or gem. The gold matches his hat band and hem, each part is a solid separate shape (what Meshy rebuilds best), and every element keeps its own colour.</li>
+    </ul>
+    <figure><img class="photo" src="img/weapons-a.jpg" alt="Seven weapons made of their elements on white: a sword whose blade is a flame, a boulder maul bound with roots, a short wand with a violet orb, an ice bow, an icicle spear, a lightning whip, and a trident of blue water with foam caps."><figcaption>A, conjured. Top: flame sword, stone maul, echo focus, ice bow. Bottom: frost spear, lightning whip, tide trident.</figcaption></figure>
+    <figure><img class="photo" src="img/weapons-b.jpg" alt="Seven wizard weapons in wood and gold on white: a sword with a glowing flame-shaped orange blade and red gem, a stone maul with gold bands and a mountain rune, a gold-cradled magenta orb wand, a wooden bow with ice-crystal tips, a long spear with a cyan crystal head, a braided whip with a glowing violet thread, and a long trident with glowing blue prongs."><figcaption>B, forged. Same order; the spear, whip and trident lie along the bottom.</figcaption></figure>
+    <p>Sizes on the sheets are loose; each model is scaled when it's put in his hand (spear and trident a little taller than him, maul about three quarters, sword about half). The whip's lash will be animated by code either way, since a stiff mesh can't swing; only the handle needs a model. The glow (fire, lightning, the orb) will be the shader's, as on the goblins' rune. <span class="pick">My pick: A2 for six; for the maul, A2's hammer shape with A's glowing crystals, since A2's plain stone lost the magic.</span></p>
+    <p><b>Mark each:</b> which take, or Redo with a note. An approved picture goes to Meshy as a prop (no rig needed): about 15 credits each at smart topology, so about 105 for the weapons and 120 for the guards. I'll ask again before spending.</p>
+    <div class="jobs" id="arms-picks"></div>
+  </section>
+
   <section aria-labelledby="live3d">
-    <h2 id="live3d">Latest: goblins drawn live from 3D, and 24 fps sheets</h2>
+    <h2 id="live3d">Before that: goblins drawn live from 3D, and 24 fps sheets</h2>
     <p>Two things from your note that slowed goblins get choppy at 12 frames a second.</p>
     <p><b>The sheets are now 24 fps</b> for five of the six (the chieftain's render was stopped when the computer ran low on memory; it stays at 12 until it's re-rendered). The game plays every clip on the game's own clock, so a goblin at full speed shows 24 frames a second and one slowed to half still shows 12.</p>
     <p><b>The real-time test</b> (<code>prototypes/02-realtime-3d</code>): the hooded raider drawn live from its 3D model, through a shader that does what the baked pixel pass does: four tones per part, the dark seams where parts meet (after your note; the first try outlined only the silhouette), and an outline round each goblin. Left: live. Right: the baked sheet, in step.</p>
@@ -428,6 +450,37 @@ for (const c of CONCEPTS) {
   fig.append(img);
   const r = el('div', 'rate'); r.append(marks('ratings', 'con-' + c.id, AR), note('ratings', 'con-' + c.id, 'What to change'));
   box.append(el('h3', '', c.name), fig, el('p', '', c.notes), r); $('concepts').append(box);
+}
+const ARMS = [
+  { id: 'sword', name: 'Flame sword', notes: 'A: a flame on a hilt, reads as a torch. A2: a pointed flame blade with a twisted red flame grip; reads as a sword.' },
+  { id: 'maul', name: 'Stone maul', notes: "A: a boulder lashed with roots (a mushroom shape; its crystals are violet, Arcane's colour). A2: a clear hammer of stacked stone, but plain. My pick mixes A2's shape with glowing crystals." },
+  { id: 'focus', name: 'Echo focus', notes: 'A: an orb in a cradle on a stubby handle. A2: the orb floats over a crystal rod with three shards round it, which suits the Echo and its orbiting runes.' },
+  { id: 'bow', name: 'Ice bow', notes: 'A: blue ice. A2: white-blue ice, so it no longer shares Cold\'s colour.' },
+  { id: 'spear', name: 'Frost spear', notes: 'Both: an icicle head on an ice shaft. A2 is clear cyan throughout, set apart from the trident\'s blue.' },
+  { id: 'whip', name: 'Lightning whip', notes: 'Both: a solid zig-zag bolt for a lash. A2\'s handle is lightning too. The lash is code-animated either way; the handle is the model.' },
+  { id: 'trident', name: 'Tide trident', notes: 'A: pale like the spear. A2: deep blue twisted water; the foam tips read a little like snow caps.' },
+];
+const ABR = [['a', 'A', 'keep'], ['a2', 'A2', 'keep'], ['b', 'B', 'keep'], ['redo', 'Redo', 'maybe']];
+for (const c of ARMS) {
+  const box = el('article', 'job');
+  const r = el('div', 'rate'); r.append(marks('ratings', 'arm-' + c.id, ABR), note('ratings', 'arm-' + c.id, 'What to change'));
+  box.append(el('h3', '', c.name), el('p', '', c.notes), r); $('arms-picks').append(box);
+}
+const GUARDS = [
+  { id: 'mirror', name: 'Mirror buckler', notes: 'A: a plain gold disc, the least distinctive. C: a gold mirror in a halo.' },
+  { id: 'bulwark', name: 'Bulwark', notes: 'A: a torn-up rock slab with glowing cracks and clods of earth; the tank\'s shield reads as heavy. C: a rock in an amber frame.' },
+  { id: 'ember', name: 'Ember targe', notes: 'A: a ball of molten rock ringed in flame. C: a coal in a flame ring.' },
+  { id: 'rime', name: 'Rime kite', notes: 'A: a faceted ice kite with frosted edges. C: crystals in a frosted kite ward.' },
+  { id: 'spark', name: 'Spark ring', notes: 'Both open in the middle, as the weakest block should look. A: a sculpted lightning hoop with a web. C: a bolt ring round a crystal.' },
+  { id: 'tide', name: 'Tide shield', notes: 'A: a swirling water disc with foam waves. C: a wave ring round a water sphere.' },
+  { id: 'prism', name: 'Prism pane', notes: 'A: a rainbow-edged crystal hexagon. C: a pink hexagon ward round a prism.' },
+  { id: 'leaf', name: 'Leaf aegis', notes: 'A: big living leaves with a vine and bud. C: a sprout in a vine-edged ward.' },
+];
+const ACR = [['a', 'A', 'keep'], ['c', 'C', 'keep'], ['redo', 'Redo', 'maybe']];
+for (const c of GUARDS) {
+  const box = el('article', 'job');
+  const r = el('div', 'rate'); r.append(marks('ratings', 'guard-' + c.id, ACR), note('ratings', 'guard-' + c.id, 'What to change'));
+  box.append(el('h3', '', c.name), el('p', '', c.notes), r); $('guard-picks').append(box);
 }
 $('rt3d-rate').append(el('b', '', 'Live 3D or baked'), marks('ratings', 'rt3d', [['live', 'Live 3D', 'keep'], ['baked', 'Baked sheets', 'maybe'], ['more', 'Test more', 'maybe']]), note('ratings', 'rt3d', 'What you see: flicker, look, feel'));
 $('wiz3d-rate').append(el('b', '', 'The 3D wizard'), marks('ratings', 'wiz-3d', KRC), note('ratings', 'wiz-3d', 'What to change: look, a move, the size'));

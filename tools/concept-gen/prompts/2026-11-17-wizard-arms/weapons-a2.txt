@@ -1,0 +1,18 @@
+Generate one image with your image generation tool, then save it as weapons-a2.png in the current directory. Reply with just the file name.
+
+The attached images are references. The first is the 3D-model reference picture of our player wizard, a short stocky storybook wizard with big chunky hands, about 1.4 metres tall counting his huge hat: match its rendering style and finish exactly. The second is a first draft of the weapons he conjures: keep its look and layout, but fix the problems listed below.
+
+Subject: a weapon reference sheet for a 3D modeller. Seven magic weapons that the wizard conjures out of the elements with a spell. They are not made by any smith: each is pure magic, the element itself shaped into a weapon. Laid out in two rows (four on top, three below), each shown flat from the side, well apart and fully in frame, on a plain pure white background, evenly and softly lit like clean 3D game prop renders. Each is sculpted from its element into a solid, toy-like form; at most a simple grip of the same element where the hand holds it, no wood, leather, rivets or forged metal, and no loose particles, smoke or sparks (the game adds those as effects). Grips are thick for big cartoon hands; heads and blades are big and bold.
+
+Each element has its own colour, never shared: Fire orange and yellow, Earth brown and grey stone, Arcane magenta-pink, Ice pale icy white-blue, Cold clear cyan, Lightning violet and white, Water deep saturated blue.
+
+Top row, left to right:
+1. Flame sword (Fire), about half the wizard's height: a clearly sword-shaped blade, long, straight and pointed, sculpted from layered flame, its edges rippling like flame tongues, a hot pale core; the crossguard and grip also of darker red flame. It must read as a sword, not a torch.
+2. Stone maul (Earth), about three quarters of the wizard's height: a big blocky rectangular hammer head of rough stone, flat striking faces on both ends, on a straight thick haft of stacked stone pieces. It must read as a hammer.
+3. Echo focus (Arcane), about a third of the wizard's height: a big glowing magenta orb floating above a short crystal rod of magenta crystal, three crystal shards circling the orb.
+4. Ice bow (Ice), about two thirds of the wizard's height: a bow carved from pale white-blue ice, thick limbs, a glowing pale string.
+
+Bottom row, left to right:
+5. Frost spear (Cold), a little taller than the wizard: a long straight shaft of clear cyan ice, a big jagged cyan crystal head.
+6. Lightning whip (Lightning): a handle of solid violet lightning, and a lash of jagged zig-zag violet-white lightning, solid and segmented like a chain of bolts, hanging in one loose S-curve.
+7. Tide trident (Water), a little taller than the wizard: a long shaft of deep saturated blue swirling water, a crossbar of a curling wave, three barbed prongs of deep blue water with white foam only at the tips.

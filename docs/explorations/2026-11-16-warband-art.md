@@ -122,6 +122,8 @@ The user's point on cost: don't make a high-poly model and pay to thin it. Smart
 
 Claude's pick: library clips for humanoid enemies (free walk, Lean Forward Sprint, Thrust or Left Slash at about 1.5 s, Combat Idle, Knock Down), code moves for the rest. Next: a second goblin made with smart topology and rigged, and a test of copying these clips onto it in Blender (every Meshy rig has the same 24 bones), which would make a clip a one-time cost.
 
+**The user's reply (2026-11-17):** the clips are very good, but buy only what a mechanic uses. Slow walk (maybe for chilled, later) and sneak have no mechanic, and combat idle isn't needed yet (perhaps later, for moments the AI has nothing to do). About three attack variants per enemy, depending on the enemy, so attacks look varied. Knock Down is the default death. Next: fill out the roster's animations first; elemental deaths later. Claude's plan for that: per member, a Codex T-pose picture (approved first), a Meshy smart-topology model (15) and rig (5), the weapon grafted, owned clips copied onto the new rig in Blender if that works (the first new goblin tests it), each attack retimed to the game's wind-up, strike, impact and recovery beats, then the usual render and pixel pass. New clips only where a member's mechanic needs one: an archery shot, a shield guard, a hook throw, a ground slam.
+
 ## Claude's picks, pending the review
 
 1. Settled by the user: the round 2 set (32 px) and the current wizard drawn at about 1.7× (`?wizscale=1.7`). Make 1.7 the default when the goblin sprites go in.

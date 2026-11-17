@@ -1,17 +1,17 @@
 Generate one image with your image generation tool, then save it as guards-a.png in the current directory. Reply with just the file name.
 
-The attached images are references. The first is a weapon reference sheet made for our game's goblins: match its rendering style and finish exactly (smooth stylised shapes, chunky readable forms, simple colours, soft even lighting, plain white background). The second is the 3D-model reference picture of our player wizard, a short stocky storybook wizard with big chunky hands, about 1.4 metres tall counting his huge hat: the new shields are for him, held on one forearm, so match his style and size them for him.
+The attached images are references. The first is the 3D-model reference picture of our player wizard, a short stocky storybook wizard with big chunky hands, about 1.4 metres tall counting his huge hat: match its rendering style and finish exactly (smooth stylised shapes, chunky readable forms, simple colours, soft even lighting). The second is a sheet of the magic weapons he conjures out of the elements: the new shields belong to the same family, so match its look.
 
-Subject: a shield reference sheet for a 3D modeller. Eight magic shields that the wizard conjures out of the elements, laid out in two rows of four, each seen face on, well apart and fully in frame, on a plain pure white background, evenly and softly lit like clean 3D game prop renders. Each shield is made mostly of its own element, shaped into a solid, sculpted, toy-like form (no loose particles, smoke or sparks: the game adds those as effects). Every one has its own clear silhouette, so a teammate can tell them apart from far away.
+Subject: a shield reference sheet for a 3D modeller. Eight magic shields that the wizard conjures out of the elements with a spell. They are not made by any smith: each is pure magic, the element itself shaped into a shield and held on his forearm. Laid out in two rows of four, each seen face on, well apart and fully in frame, on a plain pure white background, evenly and softly lit like clean 3D game prop renders. Each is sculpted from its element into a solid, toy-like form, with no wood, leather, rivets or forged metal, and no loose particles, smoke or sparks (the game adds those as effects). Every one has its own clear silhouette and colour, so a teammate can tell them apart from far away.
 
 Top row, left to right:
-1. Mirror buckler (Shield), small, about the size of the wizard's head and hat brim: a round buckler of polished gold with a mirror-bright domed centre and a thin rim.
-2. Bulwark (Earth), big, as tall as the wizard's body: a tall rectangular slab of rough brown-grey stone with chipped edges and a gold cross band set into its face.
-3. Ember targe (Fire), medium: a round targe of dark charred wood and iron, a ring of iron studs, glowing orange ember cracks running across its face to a hot glowing boss.
-4. Rime kite (Cold), medium-tall: a kite shield of faceted pale blue ice, frosted white edges, a pointed bottom.
+1. Mirror buckler (Shield, warm gold), small, about the size of the wizard's head: a round disc of solid golden light, a mirror-bright domed face with a soft halo rim.
+2. Bulwark (Earth, brown and grey), big, as tall as the wizard's body: a tall slab of raw rock torn from the ground, rough chipped edges, a few pebbles and clumps of earth stuck to it, a faint golden glow in its cracks.
+3. Ember targe (Fire, orange and red), medium: a round shield of glowing molten rock and coals, a ring of flame-tongue shapes around its rim, a white-hot core.
+4. Rime kite (Cold, pale cyan and white), medium-tall: a kite-shaped slab of clear faceted ice, frost feathers grown over its edges, a pointed bottom.
 
 Bottom row, left to right:
-5. Spark ring (Lightning), medium: an open hoop of dark metal, its centre filled by a thin flat web of jagged violet-white lightning strands, solid and sculpted.
-6. Tide shield (Water), medium: a round shield of swirling deep blue water shaped into a spiral wave, a thick rim of white foam.
-7. Prism pane (Arcane), medium: a hexagonal pane of faceted magenta-violet crystal glass in a slim dark frame, light catching in rainbow edges.
-8. Leaf aegis (Life), medium-tall: a shield made of a few big overlapping green leaves, a pale green midrib, a curling vine round its edge.
+5. Spark ring (Lightning, violet and white), medium: a hoop of crackling violet lightning, its open centre spanned by a web of jagged bolts, all solid and sculpted.
+6. Tide shield (Water, deep blue), medium: a round disc of swirling deep blue water caught mid-spin as a spiral, a curling wave crest round its rim with white foam.
+7. Prism pane (Arcane, magenta-pink), medium: a hexagonal pane of faceted magenta crystal glass, glowing from inside, rainbow light at its edges.
+8. Leaf aegis (Life, bright green), medium-tall: a shield grown from a few huge overlapping living leaves, a pale glowing midrib, a curling vine with a small bud round its edge.

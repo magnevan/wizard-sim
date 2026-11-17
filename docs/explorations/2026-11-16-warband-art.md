@@ -198,6 +198,12 @@ Claude's pick: B for all seven. The whip's lash is animated in code either way (
 
 The two guard sheets (the eight guards, in the same two directions) were stopped when the computer ran low on memory, before Codex drew them; they run again when the user says.
 
+**Round 2 (the user):** "Let's do shields too. Keep in mind that these are magical conjurations, different than the goblins normal weapons." So forged B is dropped as a direction, and everything is made of its element, drawn from the wizard's model sheet and sheet A instead of the goblin sheet:
+- **Weapons A2:** A with its problems named in the prompt. The sword reads as a sword, the maul as a hammer, and each element has its own colour (Ice white-blue, Cold cyan, Water deep blue). The maul lost its magic as plain stone. Claude's pick: A2 for six, and the maul as A2's shape with A's glowing crystals.
+- **Guards A** (the element sculpted: a gold disc, a torn-up rock slab, a ball of molten rock in flame, an ice kite, an open lightning hoop, a water spiral, a crystal hexagon, living leaves) and **guards C** (a translucent ward of light round a small solid core). Claude's pick: A as the models, which gives bold solid silhouettes that Meshy rebuilds well, with C's glowing ward reused as the block effect (the game already draws an energy face while blocking). C's glow would be shader work, and its pale faces may wash out on the ground.
+
+Marks: `arm-<weapon>` {a/a2/b/redo}, `guard-<guard>` (mirror, bulwark, ember, rime, spark, tide, prism, leaf) {a/c/redo}. Meshy at about 15 credits a prop: about 105 for the weapons, 120 for the guards, each spend with its own OK.
+
 ## Claude's picks, pending the review
 
 *(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the goblins and the wizard are drawn live from 3D in the game; see the sections above.)*

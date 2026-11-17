@@ -1,6 +1,6 @@
 # Sprites from 3D
 
-**Now (2026-11-17):** the game draws the warband and the wizard live from their 3D models (`export.sh`, step 7 of [the roster](#the-warband-roster-into-the-game); `game/packages/client/src/art/live3d.ts`). The baked sheets below are the fallback only (`?live3d=0`, or a software renderer).
+**Now (2026-11-17):** the game draws the warband and the wizard live from their 3D models (`export.sh`, step 7 of [the roster](#the-warband-roster-into-the-game); `game/packages/client/src/art/live3d.ts`). The baked sheets below are the fallback only (`?live3d=0`, or a software renderer). Check an export in the Model Viewer (`/models.html` on the game's dev server; Vite reloads it when a model changes).
 
 Character sprites from 3D models, for any creature (the goblin warband was first, and its hooded raider is the worked example): a model goes on a shared skeleton, code poses it (walk, run, attack), and every frame is rendered from the game's camera in 8 directions and turned into pixel art. No generation calls; a full set (4 moves, 8 directions, 240 frames) takes about 40 seconds. It's the spike for making motion cheap enough for a warband a day (`docs/explorations/2026-11-16-warband-art.md`, "From 3D models").
 

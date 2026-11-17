@@ -204,7 +204,7 @@ function makeGl(): Gl | null {
         gl_FragColor = vec4(toneOf(c.rgb, seam ? 0 : lv), 1.0);
       }`, { tFlat: { value: lowRT.textures[0] }, tRatio: { value: lowRT.textures[1] }, ink: { value: new THREE.Vector3(26 / 255, 18 / 255, 14 / 255) } });
     const scene = new THREE.Scene();
-    const sun = new THREE.DirectionalLight(0xffffff, SUN); sun.position.set(-7, 12, 9);
+    const sun = new THREE.DirectionalLight(0xffffff, SUN); sun.position.set(-7, 12, 9); // LIVE_VIEW.sun
     scene.add(sun, sun.target, new THREE.AmbientLight(new THREE.Color(1, 0.95, 0.88), AMB));
     const stage = new THREE.Group(); scene.add(stage);
     // a slot's camera: the body's feet (the origin) land on the slot's feet point
@@ -288,15 +288,17 @@ function model(slug: string): Model | null {
 const node = (o: THREE.Object3D, name: string) => o.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name));
 const hexVec = (h: string) => new THREE.Vector3(parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255);
 
-function instance(slug: string, m: Model): Inst {
+function instance(slug: string, m: Model, original = false): Inst {
   const flash = { value: 0 };
+  // the dev viewer's full-size view (lab/models.ts) keeps the model's own materials
+  const look = (mat: THREE.MeshLambertMaterial) => (original ? mat : toon(mat, flash));
   const seat: Seat = { on: { value: 0 }, main: { value: new THREE.Vector3() }, trim: { value: new THREE.Vector3() } };
   const body = SkeletonUtils.clone(m.scene);
   body.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
     const src = mesh.material as THREE.MeshStandardMaterial;
-    mesh.material = toon(new THREE.MeshLambertMaterial({ map: src.map, color: src.color, emissive: src.emissive, emissiveMap: src.emissiveMap }), flash, seat);
+    mesh.material = original ? src.clone() : toon(new THREE.MeshLambertMaterial({ map: src.map, color: src.color, emissive: src.emissive, emissiveMap: src.emissiveMap }), flash, seat);
     mesh.frustumCulled = false;
   });
   const turn = new THREE.Group(); turn.add(body);
@@ -311,9 +313,9 @@ function instance(slug: string, m: Model): Inst {
   const tipA = node(body, 'bow tip+'), tipB = node(body, 'bow tip-'), nock = node(body, 'bow nock'), grip = node(body, 'bow grip point');
   const hand = node(body, 'RightHand'), fore = node(body, 'RightForeArm');
   if (tipA && tipB && nock && grip && hand && fore) {
-    const strMat = toon(new THREE.MeshLambertMaterial({ color: new THREE.Color(0.85, 0.78, 0.55) }), flash);
-    const woodMat = toon(new THREE.MeshLambertMaterial({ color: new THREE.Color(0.45, 0.24, 0.1) }), flash);
-    const ironMat = toon(new THREE.MeshLambertMaterial({ color: new THREE.Color(0.32, 0.32, 0.34) }), flash);
+    const strMat = look(new THREE.MeshLambertMaterial({ color: new THREE.Color(0.85, 0.78, 0.55) }));
+    const woodMat = look(new THREE.MeshLambertMaterial({ color: new THREE.Color(0.45, 0.24, 0.1) }));
+    const ironMat = look(new THREE.MeshLambertMaterial({ color: new THREE.Color(0.32, 0.32, 0.34) }));
     const rod = (r: number, mat: THREE.Material) => { const g = new THREE.CylinderGeometry(r, r, 1, 5); g.translate(0, 0.5, 0); const x = new THREE.Mesh(g, mat); x.frustumCulled = false; return x; };
     const head = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.17, 4), ironMat);
     bow = { tips: [tipA, tipB], nock, grip, hand, fore, parts: [rod(0.014, strMat), rod(0.014, strMat), rod(0.02, woodMat), head] };
@@ -499,3 +501,31 @@ export function flushLive(): void {
   }
   g.base.source.update();
 }
+
+// ---- for dev tools (lab/models.ts, the model viewer) -------------------------------------------------------------------------------
+export type LiveModel = Model;
+export type LiveInst = Inst;
+/** Every model the game can draw live. */
+export const liveSlugs = (): string[] => [...META.keys()].filter((s) => URLS.has(s)).sort();
+/** Is live drawing working here (WebGL2, not a software renderer, not ?live3d=0)? Known after the first liveFrame. */
+export const liveWorks = (): boolean => LIVE3D_ON && !failed;
+/** A model, once loaded (shared with the game's own cache); null if it can't be. */
+export function liveModel(slug: string): Promise<LiveModel | null> {
+  return new Promise((res) => {
+    const tick = () => {
+      const m = models.get(slug);
+      if (m === 'failed') res(null);
+      else if (m && m !== 'loading') res(m);
+      else { model(slug); setTimeout(tick, 40); }
+    };
+    tick();
+  });
+}
+/** A posable copy of a model: the game's (toon materials, for the pixel pass) or with its own materials (`original`). */
+export const liveInstance = (slug: string, m: LiveModel, original: boolean): LiveInst => instance(slug, m, original);
+/** Poses a copy exactly as the game does (the clip, its body turn, the hips held over the feet, the staff kept upright). */
+export const livePoseInst = (inst: LiveInst, m: LiveModel, p: LivePose): void => pose(inst, m, p);
+/** The archer's string and nocked arrow for this pose, added to `stage` (removed again by the next call). */
+export const liveString = (inst: LiveInst, m: LiveModel, p: LivePose, stage: THREE.Group): void => { if (inst.bow) stringOf(inst, m, p, stage); };
+/** The game camera and light: elevation (radians), art px a unit, the squash on every body, the sun's place, the light levels. */
+export const LIVE_VIEW = { elev: ELEV, ppu: PPU, squash: SQUASH, sun: new THREE.Vector3(-7, 12, 9), sunI: SUN, ambI: AMB } as const;

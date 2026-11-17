@@ -166,7 +166,7 @@ function stretch(a: Anchors, k: number): Anchors {
 /** After an attack's hit: its follow-through plays this long before a moving body's legs take over, over BLEND (s). */
 const FOLLOW = 0.25, BLEND = 0.3;
 /** A wizard's one-shot starts this long (s) before its release, so the game's instant cast gets a moment's wind-up. */
-const SHOT_LEAD = 0.2;
+export const SHOT_LEAD = 0.2;
 
 /**
  * What a live model (art/live3d.ts) shows for a rig state: the same choices as cellOf, as a clip time instead of a sheet

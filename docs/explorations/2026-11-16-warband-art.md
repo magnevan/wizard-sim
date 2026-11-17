@@ -187,6 +187,22 @@ The wizard followed: the other session's branch ("The wizard from 3D", above) wa
 - **A conjured weapon on the live wizard.** The code rig drew the conjured weapon in the wizard's hand in place of the staff (`RigState.bare`); the live model still holds its staff. Give the live wizard the weapon (a prop per weapon on the hand, as the goblins' props, or the rig's drawing composited) and hide the staff while it's held.
 - **Walk and run tuned to the real movement speed.** The clips now play by distance over their measured stride (feet planted), but each body's speed differs from its clip's natural pace (a goblin moves about three times the walk clip's own speed), so some cycles play fast. Go over every walk and run: which clip at which speed (the walk-to-run threshold), whether to pick or buy clips nearer each body's speed, and the stride measurement itself.
 
+**The Model Viewer (2026-11-17).** Asked for better tooling to see the models and their animations, Claude built a dev page, `/models.html` on the dev server (`game/packages/client/src/lab/models.ts`; never built, as the other labs). It shows any live model full size (orbit, pan, zoom, and a button back to the game's camera) beside the game's own pixel renderer (the same `liveFrame` and `flushLive` calls the game makes), every clip on a timeline marked with the game's timings (an attack's first, hit, last and cut hold, a cast's release, the wizard's one-shot start and Force hold, a body turn), and switches for 8 facings, a line-up of every model at game size, onion skin, the skeleton, the sim's radius and reach, a seat's colours, the hit flash, a second clip blended in, and "play as the game". Its state is in the URL's #hash. Next, by the user's order: conjured weapons on the wizard with cast effects, then a small play area with dummies that react and die.
+
+Its "drive by speed" check gives the numbers for the walk-and-run follow-up. A clip's natural pace is its stride (x 1.15, the squash) per loop; the game plays run from 2.52 u/s (0.6 of a wizard's 4.2):
+
+| Model | Game speed (u/s) | Clip the game plays | Walk's pace | Run's pace | Plays at |
+| --- | --- | --- | --- | --- | --- |
+| wizard | 4.2 | run | 1.47 | 2.96 | 1.42x |
+| raider-hooded | 3.2 | run | 1.25 | 2.48 | 1.29x |
+| raider-goggles | 3.2 | run | 1.21 | 2.42 | 1.32x |
+| hooker (grabber) | 2.8 | run | 1.15 | 2.31 | 1.21x |
+| archer | 2.4 | walk | 1.19 | 2.38 | 2.02x |
+| shieldbearer | 2.2 | walk | 1.36 | 2.73 | 1.61x |
+| chieftain (brute) | 1.8 | walk | 2.84 | 5.66 | 0.63x |
+
+The archer and the shieldbearer walk at twice and 1.6 times their walk clip's pace while their run would fit (1.0x and 0.8x), and the chieftain's walk is too slow a clip for its speed. A threshold per body (or run for both) would fix the first two without new clips.
+
 ## Claude's picks, pending the review
 
 *(Superseded on 2026-11-17: motion comes from 3D, not PixelLab, and the goblins and the wizard are drawn live from 3D in the game; see the sections above.)*

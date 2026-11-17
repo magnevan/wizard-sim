@@ -131,7 +131,7 @@ async function measure(browser, sc) {
     }
   });
   const [path, hash] = sc.url.split('#');
-  await p.goto(`${BASE}${path}&perf=1&debug=0${has('gpu') ? '&rafloop=1' : ''}${query ? '&' + query : ''}${hash ? '#' + hash : ''}`);
+  await p.goto(`${BASE}${path}&perf=1${has('gpu') ? '&rafloop=1' : ''}${query ? '&' + query : ''}${hash ? '#' + hash : ''}`);
   if (has('sound')) await p.keyboard.press('KeyQ');
   await p.waitForFunction(() => !!window.wizardSim?.perf, { timeout: 30000, polling: 100 });
   await sc.setup?.(p);

@@ -41,6 +41,7 @@ import { roomView, type StructureKit } from './room-views';
 import { kitOf, kitRun, sideZ, stampTexture, wallsAllFar } from './art/wall-kit';
 import { toU, toV, toX, toY } from './iso-world';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
+import { opt } from './dev-options';
 
 /** A wall of fire that belongs to the place (the battery's gate) stands this much taller than a cast one. */
 const GATE_FIRE = 3.4;
@@ -65,7 +66,7 @@ function placeSpot(w: World, i: number): [number, number] {
 }
 const EL = X.EL, SV = EL.sigil, AMBIENT = X.AMBIENT;
 /** ?structoff=walls,waves,... hides parts of this view (for isolating a slow or broken part). */
-const OFF = (typeof location !== 'undefined' ? new URLSearchParams(location.search).get('structoff') ?? '' : '').split(',');
+const OFF = (opt('structoff') ?? '').split(',');
 const LIFE = X.LIFE;
 /** The bare staff's blows: plain greys. */
 const STAFF: Ramp = ['#ffffff', '#e8e4f0', '#b8b4c8', '#8a8498', '#5a5468'];

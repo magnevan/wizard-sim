@@ -16,7 +16,7 @@ const browser = await puppeteer.launch({ executablePath: findChrome(), headless:
 try {
   const p = await browser.newPage();
   p.on('pageerror', (e) => { console.error('page error:', e.message); process.exitCode = 1; });
-  await p.goto(`${BASE}?timerloop=1&debug=0#battery`);
+  await p.goto(`${BASE}?timerloop=1#battery`);
   await p.waitForFunction(() => window.wizardSim?.view.props.count > 0 && window.wizardSim.view.props.ready && window.wizardSim.view.props.well?.ready, { timeout: 60000, polling: 200 });
   // each sequence: [name, seconds, (s) => [power, unstable, repair], moments to keep (s)]
   const sheets = await p.evaluate(() => {

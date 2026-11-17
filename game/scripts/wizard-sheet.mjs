@@ -12,7 +12,7 @@ const stop = await startPreview();
 const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 try {
   const p = await browser.newPage();
-  await p.goto(`${BASE}?timerloop=1&debug=0`);
+  await p.goto(`${BASE}?timerloop=1`);
   await p.waitForFunction(() => !!window.wizardSim?.art, { timeout: 20000, polling: 100 });
   const url = await p.evaluate(() => {
     const { newRigState, paint } = window.wizardSim.art;

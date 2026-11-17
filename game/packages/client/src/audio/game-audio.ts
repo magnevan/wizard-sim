@@ -15,6 +15,7 @@ import { SoundDirector, type SoundSink } from './director';
 import { SYNTH_IDS } from './synth';
 import type { Plan } from './recipes';
 import type { EnvName, Place } from './variation';
+import { opt } from '../dev-options';
 
 const KEY = 'wizard-sim-volumes';
 export const VOLUME_STEP = 0.1;
@@ -22,11 +23,12 @@ export const VOLUME_STEP = 0.1;
 const PREPARE_DELAY_MS = 250;
 export const DEFAULT_VOLUMES: Volumes = { master: 0.8, effects: 0.9, music: 0.7 };
 
-export function loadVolumes(params: URLSearchParams): Volumes {
+/** The saved volumes, with ?vol-master= (and vol-effects, vol-music) over them. */
+export function loadVolumes(): Volumes {
   const v = { ...DEFAULT_VOLUMES };
   try { Object.assign(v, JSON.parse(localStorage.getItem(KEY) ?? '{}')); } catch { /* blocked, or nothing saved */ }
   for (const k of ['master', 'effects', 'music'] as const) {
-    const p = params.get(`vol-${k}`);
+    const p = opt(`vol-${k}`);
     if (p !== null && Number.isFinite(Number(p))) v[k] = Number(p);
     v[k] = Math.max(0, Math.min(1, Number(v[k]) || 0));
   }
@@ -34,7 +36,7 @@ export function loadVolumes(params: URLSearchParams): Volumes {
 }
 
 /** The volume rows of the Esc menu's Settings. A row reads OFF with no sound at all on this page. */
-export function volumeSettings(audio: GameAudio | null, setParam: (k: string, v: string | null) => void): { label: string; blurb: string; value(): string; adjust(by: -1 | 1): void }[] {
+export function volumeSettings(audio: GameAudio | null, setParam: (k: `vol-${keyof Volumes}`, v: string | null) => void): { label: string; blurb: string; value(): string; adjust(by: -1 | 1): void }[] {
   const row = (label: string, blurb: string, k: keyof Volumes) => ({
     label, blurb,
     value: () => (audio ? `${Math.round(audio.volumes[k] * 100)}%` : 'OFF'),

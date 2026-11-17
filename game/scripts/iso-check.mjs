@@ -21,7 +21,7 @@ try {
     p.on('requestfailed', (r) => fail(`${room}: request failed: ${r.url()}`));
     await p.setViewport({ width: 1920, height: 1080 });
     const t0 = Date.now();
-    await p.goto(`${BASE}?timerloop=1&debug=0#${room}`);
+    await p.goto(`${BASE}?timerloop=1#${room}`);
     await p.waitForFunction(() => window.wizardSim?.view.groundReady && window.wizardSim.view.props.ready, { timeout: 60000, polling: 100 });
     const ms = Date.now() - t0;
     await sleep(800);
@@ -41,7 +41,7 @@ try {
     const p = await browser.newPage();
     p.on('pageerror', (e) => fail(`${q}: page error: ${e.message}`));
     await p.setViewport({ width: 1920, height: 1080 });
-    await p.goto(`${BASE}?timerloop=1&debug=0&${q}#${arg('moodroom', 'academy')}`);
+    await p.goto(`${BASE}?timerloop=1&${q}#${arg('moodroom', 'academy')}`);
     await p.waitForFunction(() => window.wizardSim?.view.groundReady && window.wizardSim.view.props.ready, { timeout: 60000, polling: 100 });
     await sleep(800);
     await p.screenshot({ path: join(out, q.replace('=', '-') + '.png') });

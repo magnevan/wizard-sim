@@ -9,6 +9,7 @@ Read `game/README.md` first: commands, layout and the determinism rules.
 - Headless Chrome: the scripts start their own `vite preview` on port 4187 and stop only that process. Never kill Chrome or other node processes broadly; other sessions' servers may be running (an old skeleton preview sits on 4173 and 4180).
 - The rooms are LDtk maps in `content/maps` (`content/README.md`). Never edit `packages/sim/src/rooms.gen.ts` by hand: change the maps (the LDtk JSON, or `npm run content -- grid <room> --write`), then `npm run content:build` and `npm run content:check`. A ported or edited room that should play the same must keep the golden hash and its bot runs' hashes.
 - After a sim or rules change, run `npm run audit`, `balance`, `balance:weapons` and `scaling` and commit their `tools/*-report.json` with the change, so the committed reports describe the committed game.
+- **URL options:** a new `?key` goes in `packages/client/src/dev-options.ts` (label, help, kind, `live` if it applies without a reload) and is read with `opt()` / `optOn()` / `optNum()`, never `URLSearchParams`; the Tune panel's URL options section then shows it, and `test/dev-options.test.ts` checks both the code and the scripts' URLs. When you tell the user about one, name it both ways: Tune › URL options › its label, or `?key=`.
 - New `scripts/*.mjs`: its first lines give a usage line naming the script itself, and it gets an npm script or a line in `README.md`.
 
 Code rules from the 2026-11-12 audit (each one caught a real bug):

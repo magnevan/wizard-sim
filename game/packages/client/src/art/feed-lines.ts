@@ -17,6 +17,7 @@ import { BSTEP, CHANNEL, EL, LIFE_CIRCLE, MAX_SEATS, WELL, infused, pedestalNear
 import { toU, toV, toX, toY } from '../iso-world';
 import { gx, gy } from './field';
 import { PATH_STYLES, PathLayer, Shimmer, drawGlyphCircle, drawGlyphPath, pathLength, snap, type Box, type GlyphPath, type PathStyle, type RuneLook } from './glyph-path';
+import { opt } from '../dev-options';
 import { POWER, dryTime, lineLight, overload } from './power-down';
 import * as X from './px';
 import { clamp, rand } from './util';
@@ -297,8 +298,7 @@ function occupied(w: World, k: number): boolean {
  * The paths' style: PATH_STYLES by ?paths= in the URL, or window.__pathStyle (screenshots set it live). By default e,
  * see-through, worn and carved (the user's pick, 2026-11-12, from scripts/path-styles.mjs).
  */
-const URL_STYLE = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('paths');
 function pathStyle(): PathStyle {
-  const id = (globalThis as { __pathStyle?: string }).__pathStyle ?? URL_STYLE ?? 'e';
+  const id = (globalThis as { __pathStyle?: string }).__pathStyle ?? opt('paths') ?? 'e';
   return PATH_STYLES[id] ?? PATH_STYLES.e;
 }

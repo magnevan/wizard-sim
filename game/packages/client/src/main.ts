@@ -3,38 +3,9 @@
  * many 60 Hz sim steps to run this frame, feeds each one a recorded input, then draws once
  * with the leftover fraction as the interpolation alpha.
  *
- * URL params:
- *   ?script=1     both wizards play the scripted run (for headless screenshots; the loop then uses setTimeout,
- *                 because headless Chrome's virtual time doesn't advance requestAnimationFrame)
- *   ?selftest=1   no rendering: run the golden replay and publish its hash on <html data-hash>
- *   ?autoplay=1   the Arena with bots piloting seats 0 and 1 (setTimeout loop too: the way to screenshot enemies and waves)
- *   ?spell=arcane+fire/force   both seats cast chosen spells at the dummies (demo.ts; &spell2= for seat 1)
- *   ?room=arena   play the Arena (waves of enemies) instead of the Sanctum's dummies; ?room=survive (or #survive):
- *                 Survive, endless waves in a walled arena with a power-up pick between them
- *   ?room=tutorial (or #tutorial)   the tutorial, 19 beats (sim tutorial.ts); &beat=N (or #tutorial-N) starts
- *                 at beat N; with ?autoplay=1 a bot plays it through (screenshots of each beat)
- *   ?scale=N      force the integer pixel scale
- *   ?renderer=webgpu   try WebGPU instead of WebGL
- *   ?scene=rally  with ?room=survive and a headless loop: a Rally in progress, nobody pressing anything (demo.ts)
- *   ?scene=three  the same, but the pick with +1 to three half chosen and some pools refilling
- *   ?scene=enemyattacks  (any room, headless) every enemy frozen at one beat of its attack, the sim not stepping;
- *                 &phase=wind|strike|impact|recover|loop, &face=turns (demo.ts)
- *   ?local=N      the camera follows seat N only, as a networked player's screen would (others get edge arrows)
- *   ?pauseAt=N    pause the sim at tick N (like P in the tools panel; cosmetic animation keeps running)
- *   ?tune=1       open the tuning panel at boot (F2 or the Tune button toggles it; tune-panel.ts)
- *   ?tools=1      open the tools panel at boot (F3 or the Tools button: cheats, time, spawning; tools-panel.ts)
- *   ?stats=1      open the stats panel at boot (F4 or the Stats button: tick, hash, fps, meters; stats-panel.ts)
- *   ?help=1       open the help panel at boot (F1, the ? button or D-pad up toggles it; help-panel.ts);
- *                 ?helpq=water,cold or ?helpq=hands:water shows that queue or those hands, ?helphint=1 the first-session hint,
- *                 ?helpstats=1 its numbers
- *   ?net=bc       online co-op between tabs of this page on one machine (BroadcastChannel), for testing
- *                 alone; on claude.ai the Co-op panel uses the artifact's room instead (net/)
- *   ?perf=1       record each frame's sim, draw and render time on wizardSim.perf (scripts/perf.mjs)
- *   ?props=lean|simple|code   the art test's prop set (the Academy; O cycles it there)
- *   ?wizard=hd    the detailed wizard, in any room (I toggles it in the Academy)
- *   ?sound=0      no sound at all; &vol-master=0.5 (also vol-effects, vol-music) sets a volume from 0 to 1
- *   ?menu=Scenarios  open the Esc menu at boot on that section (Resume, Scenarios, Multiplayer, Controls,
- *                 Settings); &menuAt=N opens it at tick N instead (screenshots of the menu over a fight)
+ * URL options (?room=arena, ?autoplay=1, ...): every one is declared, with its help, in dev-options.ts,
+ * and the Tune panel (F2) lists them under "URL options" as controls. Read them through opt() /
+ * optOn() / optNum() from there, never from location.search.
  *
  * Scenarios (rooms) are listed in scenarios.ts: the number keys and the Esc menu (menu.ts) switch
  * between them in place, without a reload, so an open online lobby survives the switch.
@@ -64,31 +35,22 @@ import { webrtcBus } from './net/webrtc';
 import { NetPlay } from './net/netplay';
 import { EscMenu, type Setting } from './menu';
 import { GameAudio, loadVolumes, volumeSettings } from './audio/game-audio';
+import { MENU_SECTIONS, onOption, opt, optNum, optOn, seedOpt, setOpt } from './dev-options';
 import { fromLocation, hashFor, scenarioById, scenarioForKey, scenarioOfRoom, worldFor, type Scenario } from './scenarios';
 
-const params = new URLSearchParams(location.search);
 // Artifact links carry no query string, only a plain #anchor: #arena, #ally or #arena-ally work there too.
 const start = fromLocation(location.search, location.hash);
-if (start.ally) params.set('ally', '1');
-/** Rewrites one URL param in place (no reload), so a reload keeps the menu's settings. */
-const setParam = (k: string, v: string | null) => {
-  try {
-    const q = new URLSearchParams(location.search);
-    if (v === null) q.delete(k); else q.set(k, v);
-    const qs = q.toString();
-    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
-  } catch { /* a sandboxed page may refuse: the setting still applies until a reload */ }
-};
+if (start.ally) seedOpt('ally', '1');
 // #tutorial-7 (or ?beat=7): the tutorial starting at beat 7
-for (const tok of location.hash.slice(1).split('-')) if (/^\d+$/.test(tok)) params.set('beat', tok);
+for (const tok of location.hash.slice(1).split('-')) if (/^\d+$/.test(tok)) seedOpt('beat', tok);
 const hud = document.getElementById('hud')!;
 
-if (params.get('selftest') === '1') selftest();
+if (optOn('selftest')) selftest();
 else void boot();
 
 /** Runs the golden replay with no rendering, for scripts/browser-check.mjs. */
 function selftest(): void {
-  const ticks = Number(params.get('ticks') ?? 1800);
+  const ticks = Number(opt('ticks') ?? 1800);
   const r = runReplay(scriptedReplay(ticks));
   document.documentElement.dataset.hash = hex(r.hash);
   document.documentElement.dataset.trail = r.trail.map(hex).join(',');
@@ -96,9 +58,9 @@ function selftest(): void {
 }
 
 async function boot(): Promise<void> {
-  const scripted = params.get('script') === '1';
-  const autoplay = params.get('autoplay') === '1';
-  const demo = [parseDemo(params.get('spell')), parseDemo(params.get('spell2') ?? params.get('spell'))];
+  const scripted = optOn('script');
+  const autoplay = optOn('autoplay');
+  const demo = [parseDemo(opt('spell')), parseDemo(opt('spell2') ?? opt('spell'))];
   const headless = scripted || autoplay || !!demo[0];
   // ?autoplay=1: bots fight the Arena, or play the tutorial through when it was asked for
   let scenario: Scenario = autoplay && start.scenario.id !== 'tutorial' && start.scenario.id !== 'academy' ? scenarioById('arena')! : start.scenario;
@@ -106,7 +68,7 @@ async function boot(): Promise<void> {
   TextureSource.defaultOptions.scaleMode = 'nearest';
   // Headless runs seat two wizards. Interactive play starts with you alone; gamepads join seats 1-3
   // with any button, and ?ally=1 puts a bot wizard on seat 1 (a dev ally for trying co-op solo).
-  const ally = params.get('ally') === '1';
+  const ally = optOn('ally');
   const players = headless ? 2 : ally ? 2 : 1;
   const host = document.getElementById('app')!;
 
@@ -119,8 +81,8 @@ async function boot(): Promise<void> {
     roundPixels: true,
     background: '#0e1712', // the grass at the edge of the floor, in dusk
     // Headless screenshots read the canvas after the frame was presented.
-    preserveDrawingBuffer: headless && params.get('rafloop') !== '1',
-    preference: params.get('renderer') === 'webgpu' ? 'webgpu' : 'webgl',
+    preserveDrawingBuffer: headless && !optOn('rafloop'),
+    preference: opt('renderer') === 'webgpu' ? 'webgpu' : 'webgl',
   });
   app.ticker.stop();
   host.appendChild(app.canvas);
@@ -128,64 +90,69 @@ async function boot(): Promise<void> {
   // #hud only shows a draw error now; the game's numbers are in the Stats panel (F4)
   hud.style.display = 'none';
   const view = new WorldView();
-  view.lightsOn = params.get('lights') !== '0';
   view.setRenderer(app.renderer);
-  view.mood = params.get('mood');
-  // the art test (the Academy): which props and which wizard. Client only: each player picks their own.
-  const askedSet = PROP_SETS.find((s) => s === params.get('props'));
-  if (askedSet) view.props.set = askedSet;
-  view.wizardHd = params.get('wizard') === 'hd';
+  // The live view options (dev-options.ts): applied now, and again whenever the Esc menu, a key or the Tune panel sets one.
+  // The art test's props and wizard are client only: each player picks their own.
+  const viewOptions = () => {
+    view.lightsOn = optOn('lights');
+    view.mood = opt('mood');
+    view.props.set = PROP_SETS.find((s) => s === opt('props')) ?? 'lean';
+    view.wizardHd = opt('wizard') === 'hd';
+  };
+  viewOptions();
+  for (const k of ['lights', 'mood', 'props', 'wizard'] as const) onOption(k, viewOptions);
   // ?ally=1's bot stands in for a partner on another screen: the camera doesn't follow it
   if (ally && !headless) view.isLocal = (s) => s !== 1;
   // tests and screenshots: ?local=0 frames seat 0 only (the others get edge arrows)
-  const onlySeat = params.get('local');
+  const onlySeat = opt('local');
   if (onlySeat !== null && onlySeat !== '') { const k = Number(onlySeat); view.isLocal = (s) => s === k; }
   app.stage.addChild(view.root);
   // Sound is prepared after boot and starts on the first input, as browsers ask; ?sound=0 leaves it out (audio/game-audio.ts).
-  const audio = params.get('sound') === '0' ? null : new GameAudio(loadVolumes(params), !headless);
+  const audio = !optOn('sound') ? null : new GameAudio(loadVolumes(), !headless);
   view.sound = audio?.director ?? null;
   // ?lab on the dev server: the Sound Lab, one page with a tab per element and one for music and ambience. The check goes first so a build drops the whole file.
   let lab: { input(w: World): PlayerInput | null } | null = null;
   // ?lab=atmos: the Atmosphere Lab (music and ambience per room); without it, each room plays the beds marked Right there
-  if (import.meta.env.DEV && audio && params.get('lab') === 'atmos') void import('./audio/atmos').then((m) => { lab = new m.AtmosLab(audio); });
+  if (import.meta.env.DEV && audio && opt('lab') === 'atmos') void import('./audio/atmos').then((m) => { lab = new m.AtmosLab(audio); });
   // ?lab on its own opens the first lab with takes still to review; its tabs reach the rest
-  else if (import.meta.env.DEV && audio && params.has('lab')) void import('./audio/lab').then((m) => { lab = new m.SoundLab(audio, params.get('lab') ?? ''); });
-  else if (import.meta.env.DEV && audio && params.get('baseline') !== '0') {
+  else if (import.meta.env.DEV && audio && opt('lab') !== null) void import('./audio/lab').then((m) => { lab = new m.SoundLab(audio, opt('lab') ?? ''); });
+  else if (import.meta.env.DEV && audio && optOn('baseline')) {
     void import('./audio/baseline').then((m) => m.loadBaseline(audio));
     void import('./audio/atmos').then((m) => m.roomBeds(audio, () => world.def.id));
   }
-  const fit = () => view.resize(host.clientWidth, host.clientHeight, Number(params.get('scale')) || undefined);
+  const fit = () => view.resize(host.clientWidth, host.clientHeight, optNum('scale') || undefined);
   fit();
   addEventListener('resize', fit);
+  onOption('scale', fit);
 
   // the saved tuning goes in before the world exists, so spawn-time numbers (hp, radii) use it too
   loadSaved();
   // ?at=<checkpoint> starts a chapter part-way (the battery: well-failing, repair); ?fail=1 and ?fail=2 are the old names
   const failAlias: Record<string, string> = { 1: 'well-failing', 2: 'repair' };
-  const startAt = params.get('at') ?? failAlias[params.get('fail') ?? ''] ?? undefined;
-  const world = createWorld(7, players, { room, tutorialBeat: Number(params.get('beat')) || undefined, checkpoint: startAt });
+  const startAt = opt('at') ?? failAlias[opt('fail') ?? ''] ?? undefined;
+  const world = createWorld(7, players, { room, tutorialBeat: optNum('beat') || undefined, checkpoint: startAt });
   // the campaign save: the last checkpoint passed in a chapter, written as you pass it (saves.ts)
   const saves = new SaveWatch(() => scenario);
   // the tutorial's end card: walking into an arch switches rooms, as the 1 / 2 / 3 keys do
   if (!headless) view.tut.onExit = (to) => { const s = scenarioById(to); if (s) switchScenario(s); };
   // ?scene=rally / ?scene=three (Survive, headless): a rally in progress, or +1 to three being chosen, for screenshots (demo.ts)
-  const sceneName = headless && world.run ? params.get('scene') : null;
+  const sceneName = headless && world.run ? opt('scene') : null;
   const scene = sceneName === 'rally' || sceneName === 'three';
   if (sceneName === 'rally') rallyScene(world);
   if (sceneName === 'three') threeScene(world);
   // ?scene=enemyattacks (headless, any room): the sim never steps; each frame poses every enemy at one beat of its attack
-  const atkScene = headless && params.get('scene') === 'enemyattacks';
-  const atkPhase = params.get('phase') ?? 'wind', atkFace = Number(params.get('face') ?? 0.06);
+  const atkScene = headless && opt('scene') === 'enemyattacks';
+  const atkPhase = opt('phase') ?? 'wind', atkFace = Number(opt('face') ?? 0.06);
   const bots = [newBotMemory(), newBotMemory()];
   const tutBots = [newTutorialBot(), newTutorialBot()];
   const pads = new PadSeats();
   const keyboard = new KeyboardMouse(app.canvas, view.camera);
   let recorder = new ReplayRecorder(7, MAX_SEATS);
-  const tune = new TunePanel(params.get('tune') === '1');
-  const tools = new ToolsPanel(world, view.camera, app.canvas, params.get('tools') === '1');
-  const stats = new StatsPanel(world, params.get('stats') === '1');
+  const tune = new TunePanel(optOn('tune'));
+  const tools = new ToolsPanel(world, view.camera, app.canvas, optOn('tools'));
+  const stats = new StatsPanel(world, optOn('stats'));
   const inspect = new Inspect(world, view.camera);
-  const help = new HelpPanel(world, view, headless ? null : pads, { headless, open: params.get('help') === '1', force: params.get('helpq'), hint: params.get('helphint') === '1', stats: params.get('helpstats') === '1' });
+  const help = new HelpPanel(world, view, headless ? null : pads, { headless, open: optOn('help'), force: opt('helpq'), hint: optOn('helphint'), stats: optOn('helpstats') });
   app.stage.addChild(help.root);
 
   const inputsFor = (tick: number): PlayerInput[] => {
@@ -208,7 +175,7 @@ async function boot(): Promise<void> {
   let menu: EscMenu | null = null;
   if (!headless) {
     // On claude.ai: the artifact's room. Elsewhere (the dev server, a hosted page): WebRTC, or tabs with ?net=bc.
-    const bus = params.get('net') === 'bc' ? broadcastBus() : (await roomBus()) ?? webrtcBus();
+    const bus = opt('net') === 'bc' ? broadcastBus() : (await roomBus()) ?? webrtcBus();
     if (bus) net = new NetPlay(bus, world, room, () => {
       acc = 0;
       menu?.hide(); // the match begins (or moved): back to the game
@@ -270,29 +237,27 @@ async function boot(): Promise<void> {
   // O and I, in the Academy only: nothing a player can hit by accident elsewhere.
   addEventListener('keydown', (e) => {
     if (e.repeat || scenario.id !== 'academy' || menu?.open) return;
-    if (e.code === 'KeyO') { const s = PROP_SETS[(PROP_SETS.indexOf(view.props.set) + 1) % PROP_SETS.length]; view.props.set = s; setParam('props', s === 'lean' ? null : s); }
-    if (e.code === 'KeyI') { view.wizardHd = !view.wizardHd; setParam('wizard', view.wizardHd ? 'hd' : null); }
+    if (e.code === 'KeyO') { const s = PROP_SETS[(PROP_SETS.indexOf(view.props.set) + 1) % PROP_SETS.length]; view.props.set = s; setOpt('props', s === 'lean' ? null : s); }
+    if (e.code === 'KeyI') { setOpt('wizard', view.wizardHd ? null : 'hd'); }
   });
 
   const scaleSteps = [0, 1, 2, 3, 4];
   const settings: Setting[] = [
     {
       label: 'Pixel scale', blurb: 'How big each art pixel is on screen. Auto fits about 270 art pixels of height.',
-      value: () => (Number(params.get('scale')) ? `${params.get('scale')}x` : 'AUTO'),
+      value: () => (optNum('scale') ? `${optNum('scale')}x` : 'AUTO'),
       adjust: (by) => {
-        const i = Math.max(0, scaleSteps.indexOf(Number(params.get('scale')) || 0));
+        const i = Math.max(0, scaleSteps.indexOf(optNum('scale')));
         const next = scaleSteps[(i + by + scaleSteps.length) % scaleSteps.length];
-        if (next) params.set('scale', String(next)); else params.delete('scale');
-        setParam('scale', next ? String(next) : null);
-        fit();
+        setOpt('scale', next ? String(next) : null);
       },
     },
     {
       label: 'Lights', blurb: 'The glow of spells and fire. Off is lighter on slow machines.',
       value: () => (view.lightsOn ? 'ON' : 'OFF'),
-      adjust: () => { view.lightsOn = !view.lightsOn; setParam('lights', view.lightsOn ? null : '0'); },
+      adjust: () => setOpt('lights', view.lightsOn ? '0' : null),
     },
-    ...volumeSettings(audio, setParam),
+    ...volumeSettings(audio, setOpt),
   ];
   menu = new EscMenu({
     queued: () => world.seats.queueLen[net?.state === 'playing' ? net.seat : 0],
@@ -304,8 +269,8 @@ async function boot(): Promise<void> {
     uiSound: (k) => audio?.director.ui(k),
   });
   help.padsBlocked = () => menu!.open; // the D-pad moves the menu while it's open
-  const menuAsk = params.get('menu'), menuAt = Number(params.get('menuAt')) || 0;
-  const menuSection = (['Resume', 'Scenarios', 'Multiplayer', 'Controls', 'Settings'] as const).find((x) => x.toLowerCase() === (menuAsk ?? '').toLowerCase());
+  const menuAsk = opt('menu'), menuAt = optNum('menuAt');
+  const menuSection = MENU_SECTIONS.find((x) => x.toLowerCase() === (menuAsk ?? '').toLowerCase());
   if (menuAsk && !menuAt) menu.show(menuSection ?? 'Resume');
 
   const runStep = () => {
@@ -346,9 +311,9 @@ async function boot(): Promise<void> {
   };
   // ?pauseAt=N pauses the sim at tick N as the tuning panel's P does (for checking that cosmetic
   // animation keeps running on real time while the sim stands still)
-  const pauseAt = Number(params.get('pauseAt')) || 0;
+  const pauseAt = optNum('pauseAt');
   // ?perf=1: per-frame timings (ms) for scripts/perf.mjs; steps = sim steps run that frame
-  const perf = params.get('perf') === '1' ? { sim: [] as number[], steps: [] as number[], help: [] as number[], draw: [] as number[], render: [] as number[], frame: [] as number[] } : null;
+  const perf = optOn('perf') ? { sim: [] as number[], steps: [] as number[], help: [] as number[], draw: [] as number[], render: [] as number[], frame: [] as number[] } : null;
   let stepsRun = 0;
   let lastFrame = performance.now();
   const frame = () => {
@@ -404,7 +369,7 @@ async function boot(): Promise<void> {
     flags: tune.flags() + tools.flags(),
   });
   // ?timerloop=1: timers instead of animation frames, so a background tab keeps running (the co-op e2e test).
-  const schedule = (headless || params.get('timerloop') === '1') && params.get('rafloop') !== '1' ? (f: () => void) => setTimeout(f, 1000 / 60) : (f: () => void) => requestAnimationFrame(f);
+  const schedule = (headless || optOn('timerloop')) && !optOn('rafloop') ? (f: () => void) => setTimeout(f, 1000 / 60) : (f: () => void) => requestAnimationFrame(f);
   schedule(frame);
   // A co-op match must go on in a page that gets no animation frames (a hidden tab, a window covered by another, a
   // minimised one): otherwise it stops stepping and sending, and the others drop it the moment anyone acts. While frames

@@ -14,6 +14,7 @@
 import { Container, Graphics } from 'pixi.js';
 import { toU, toV, toX, toY } from '../iso-world';
 import { gx, gy } from './field';
+import { opt } from '../dev-options';
 
 /** Art px per metre of height (a 1.8 m person is a 26 px wizard). */
 export const PX_PER_M = 14.5;
@@ -171,7 +172,6 @@ export class Massing {
 
 /** ?massing=<plan> names the concept to preview, or nothing. */
 export const massingParam = (): MassingPlan | null => {
-  if (typeof location === 'undefined') return null;
-  const id = new URLSearchParams(location.search).get('massing');
+  const id = opt('massing');
   return id ? MASSING[id] ?? null : null;
 };

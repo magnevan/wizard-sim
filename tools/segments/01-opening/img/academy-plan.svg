@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 896 752" font-family="system-ui, sans-serif">
+<rect width="896" height="752" fill="#efe9dc"/>
+<defs><pattern id="seen" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="10" fill="#e3d6a8"/><line x1="0" y1="0" x2="0" y2="10" stroke="#d2bf7c" stroke-width="3"/></pattern></defs>
+<rect x="128" y="144" width="720" height="544" fill="#cfdcb4" stroke="#7d8b62" stroke-width="1.5"/>
+<path d="M176,616.0 L272,616.0 L272,272 L848,272 L848,176 L176,176 Z" fill="url(#seen)" opacity=".9"/>
+<polyline points="316.8,592 308.8,520 280,488 260.0,436.0 268.0,388.0 320,348.0 376,344 416,388.0 528,404.8 600,372.0 624,324.0 624,256 592,228.0 528,220.0 496,204.0 496,144" fill="none" stroke="#8a6a44" stroke-width="2.5" stroke-dasharray="3 6" stroke-linecap="round"/>
+<circle cx="256" cy="464" r="5" fill="none" stroke="#8a6a44" stroke-width="2"/>
+<circle cx="284.0" cy="459.2" r="5" fill="none" stroke="#8a6a44" stroke-width="2"/>
+<circle cx="312" cy="464" r="5" fill="none" stroke="#8a6a44" stroke-width="2"/>
+<circle cx="340.0" cy="459.2" r="5" fill="none" stroke="#8a6a44" stroke-width="2"/>
+<circle cx="244.0" cy="392" r="5" fill="none" stroke="#8a6a44" stroke-width="2"/>
+<circle cx="352" cy="316.0" r="5" fill="none" stroke="#8a6a44" stroke-width="2"/>
+<circle cx="440" cy="404.0" r="5" fill="none" stroke="#8a6a44" stroke-width="2"/>
+<circle cx="680" cy="272" r="5" fill="none" stroke="#8a6a44" stroke-width="2"/>
+<circle cx="560" cy="220.0" r="5" fill="none" stroke="#8a6a44" stroke-width="2"/>
+<polyline points="208,489.3 240,448 240,304 272,240 448,228.0 592,232 528,212.0 496,188.8" fill="none" stroke="#b5402a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="240" cy="408" r="6" fill="#b5402a"/>
+<text x="252.8" y="412.8" font-size="13" text-anchor="start" font-weight="600" fill="#8e2f1d">Strike lanes</text>
+<circle cx="248" cy="280" r="6" fill="#b5402a"/>
+<text x="260.8" y="284.8" font-size="13" text-anchor="start" font-weight="600" fill="#8e2f1d">Heavy and the slam ring</text>
+<circle cx="368" cy="228.0" r="6" fill="#b5402a"/>
+<text x="380.8" y="232.8" font-size="13" text-anchor="start" font-weight="600" fill="#8e2f1d">Parry lane</text>
+<circle cx="608" cy="256" r="6" fill="#b5402a"/>
+<text x="620.8" y="260.8" font-size="13" text-anchor="start" font-weight="600" fill="#8e2f1d">Hands ring</text>
+<circle cx="544" cy="208" r="6" fill="#b5402a"/>
+<text x="556.8" y="212.8" font-size="13" text-anchor="start" font-weight="600" fill="#8e2f1d">Rack</text>
+<rect x="149.3" y="16.0" width="810.7" height="160.0" fill="#8d8676" stroke="#3f3a32" stroke-width="1.5"/>
+<rect x="-117.3" y="149.3" width="293.3" height="466.7" fill="#9c9483" stroke="#3f3a32" stroke-width="1.5"/>
+<rect x="449.3" y="42.7" width="93.3" height="146.7" fill="#6f685b" stroke="#3f3a32" stroke-width="1.5"/>
+<rect x="176" y="183.3" width="16" height="12.0" fill="#9c9483" stroke="#3f3a32" stroke-width="1"/>
+<rect x="176" y="250.0" width="16" height="12.0" fill="#9c9483" stroke="#3f3a32" stroke-width="1"/>
+<rect x="176" y="316.7" width="16" height="12.0" fill="#9c9483" stroke="#3f3a32" stroke-width="1"/>
+<rect x="176" y="383.3" width="16" height="12.0" fill="#9c9483" stroke="#3f3a32" stroke-width="1"/>
+<rect x="176" y="450.0" width="16" height="12.0" fill="#9c9483" stroke="#3f3a32" stroke-width="1"/>
+<rect x="176" y="516.7" width="16" height="12.0" fill="#9c9483" stroke="#3f3a32" stroke-width="1"/>
+<rect x="176" y="583.3" width="16" height="12.0" fill="#9c9483" stroke="#3f3a32" stroke-width="1"/>
+<rect x="168" y="478.1" width="11.2" height="22.4" fill="#5b3d26"/>
+<rect x="480.0" y="184.5" width="32.0" height="6.4" fill="#14161b"/>
+<text x="92.0" y="368" font-size="16" text-anchor="middle" font-weight="700" fill="#fbf7ee">GREAT HALL</text>
+<text x="92.0" y="388.8" font-size="12" text-anchor="middle" font-weight="400" fill="#fbf7ee">30 × 20 m inside:</text>
+<text x="92.0" y="404.8" font-size="12" text-anchor="middle" font-weight="400" fill="#fbf7ee">the lecture hall</text>
+<text x="92.0" y="420.8" font-size="12" text-anchor="middle" font-weight="400" fill="#fbf7ee">of beat 1</text>
+<text x="92.0" y="441.6" font-size="12" text-anchor="middle" font-weight="400" fill="#fbf7ee">walls 14 m,</text>
+<text x="92.0" y="457.6" font-size="12" text-anchor="middle" font-weight="400" fill="#fbf7ee">ridge 24 m</text>
+<text x="288" y="100.0" font-size="16" text-anchor="start" font-weight="700" fill="#fbf7ee">WORKSHOPS</text>
+<text x="288" y="120" font-size="12" text-anchor="start" font-weight="400" fill="#fbf7ee">three storeys (5 + 4 + 4 m), ridge 19 m, 12 m deep</text>
+<text x="496" y="28.0" font-size="12" text-anchor="middle" font-weight="700" fill="#2b2620">GATE TOWER, 29 m</text>
+<text x="496" y="147.2" font-size="11" text-anchor="middle" font-weight="400" fill="#fbf7ee">passage</text>
+<text x="496" y="161.6" font-size="11" text-anchor="middle" font-weight="400" fill="#fbf7ee">to the battery</text>
+<text x="185.6" y="522.9" font-size="11" text-anchor="start" font-weight="400" fill="#2b2620">door, from beat 1</text>
+<text x="280" y="544" font-size="12" text-anchor="start" font-weight="400" fill="#6e5a1e">Hatched: within 12 u of a facade,</text>
+<text x="280" y="561.6" font-size="12" text-anchor="start" font-weight="400" fill="#6e5a1e">where some of the academy is on screen</text>
+<text x="840" y="672" font-size="12" text-anchor="end" font-weight="400" fill="#2b2620">The yard as built: 90 × 68 u, 54 × 41 m</text>
+<text x="840" y="712" font-size="12" text-anchor="end" font-weight="400" fill="#2b2620">Brown dots: the route and stations as built. Red: the route proposed.</text>
+<rect x="144" y="704" width="133.3" height="8" fill="#2b2620"/>
+<text x="144" y="732.8" font-size="12" text-anchor="start" font-weight="400" fill="#2b2620">10 m (16.7 u)</text>
+<path d="M32,48 l18,18 M32,48 l0,10 M32,48 l10,0" stroke="#2b2620" stroke-width="2" fill="none"/>
+<text x="32" y="36.8" font-size="11" text-anchor="start" font-weight="400" fill="#2b2620">top of the screen</text>
+</svg>

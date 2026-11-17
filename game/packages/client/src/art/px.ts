@@ -6,7 +6,7 @@
  */
 
 /** A 2D context that remembers its last fillStyle: parsing it is the hot path for tiny rects. */
-export type Ctx = CanvasRenderingContext2D & { _fs?: string | null };
+export type Ctx = CanvasRenderingContext2D & { _fs?: string | CanvasPattern | null };
 export type Pt = readonly [number, number];
 export type Ramp = readonly string[];
 
@@ -32,15 +32,60 @@ export function fs(c: Ctx, col: string): void { if (c._fs !== col) { c.fillStyle
 export function rect(c: Ctx, x: number, y: number, w: number, h: number, col: string): void { stats.fills++; fs(c, col); c.fillRect(R(x), R(y), R(w), R(h)); }
 export function px(c: Ctx, x: number, y: number, col: string): void { stats.fills++; fs(c, col); c.fillRect(R(x), R(y), 1, 1); }
 
+/**
+ * Ordered dither as a fill style: the 4x4 Bayer tile in `col`, lit where `a > bay(x, y)`. Patterns sit on the
+ * context's coordinate origin, as bay() does, so filling a span with one lights exactly the pixels a loop of 1x1
+ * fills would, in one call (thousands of tiny fills were the effects' main cost). False when it lights nothing;
+ * at full strength it's the plain colour.
+ */
+const ditherPats = new Map<string, CanvasPattern>();
+let patCtx: CanvasRenderingContext2D | null = null;
+function tilePattern(key: string, col: string, on: (i: number, j: number) => boolean): CanvasPattern {
+  let p = ditherPats.get(key);
+  if (!p) {
+    // a CPU canvas, like the ones it fills (a GPU-backed tile is read back at every fill)
+    const { c: t, x } = canvas(4, 4);
+    x.fillStyle = col;
+    for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) if (on(i, j)) x.fillRect(i, j, 1, 1);
+    patCtx ??= x;
+    p = patCtx.createPattern(t, 'repeat')!;
+    ditherPats.set(key, p);
+  }
+  return p;
+}
+/**
+ * A pattern fill costs more to set up than a 1x1 fill but no more for a long span, so shapes narrower than these (px)
+ * keep the 1x1 fills: the crossovers measured in Chrome's software canvas (ellipse rx ~7, glow r ~24).
+ */
+const PATTERN_FROM = { ellipse: 8, poly: 16, glow: 24 } as const;
+export function dither(c: Ctx, col: string, a: number): boolean {
+  let level = 0;
+  for (let i = 0; i < 16; i++) if (a > BAYER[i]) level++;
+  if (level === 0) return false;
+  if (level === 16) { fs(c, col); return true; }
+  const p = tilePattern(col + '/' + level, col, (i, j) => a > BAYER[i + (j << 2)]);
+  if (c._fs !== p) { c.fillStyle = p; c._fs = p; }
+  return true;
+}
+/** The glow's rim: a checker, lit where (x + y) is odd. */
+function checker(c: Ctx, col: string): void {
+  const p = tilePattern(col + '/checker', col, (i, j) => ((i + j) & 1) === 1);
+  if (c._fs !== p) { c.fillStyle = p; c._fs = p; }
+}
+
 /** Filled ellipse by rows; with a < 1 it is ordered-dithered. */
 export function ellipse(c: Ctx, cx: number, cy: number, rx: number, ry: number, col: string, a = 1): void {
   if (!ok(cx, cy, rx, ry) || ry > 2000) return;
-  fs(c, col); stats.fills += Math.ceil(ry * 2) * (a >= 1 ? 1 : Math.ceil(rx));
   const y0 = R(cy), iry = Math.max(0, R(ry)), irx = Math.max(0, rx);
+  // dithered: a pattern per row when wide, else pixel by pixel (the same pixels either way)
+  const byPx = a < 1 && irx < PATTERN_FROM.ellipse;
+  if (a >= 1 || byPx) fs(c, col);
+  else if (!dither(c, col, a)) return;
+  stats.fills += (2 * iry + 1) * (byPx ? Math.ceil(irx) : 1);
   for (let dy = -iry; dy <= iry; dy++) {
     const k = iry ? dy / (ry + 0.5) : 0, hw = irx * Math.sqrt(Math.max(0, 1 - k * k));
     const xa = R(cx - hw), xb = R(cx + hw);
-    if (a >= 1) { c.fillRect(xa, y0 + dy, Math.max(1, xb - xa), 1); continue; }
+    if (!byPx) { c.fillRect(xa, y0 + dy, Math.max(1, xb - xa), 1); continue; }
     for (let x = xa; x < Math.max(xa + 1, xb); x++) if (a > bay(x, y0 + dy)) c.fillRect(x, y0 + dy, 1, 1);
   }
 }
@@ -64,10 +109,13 @@ const xs: number[] = [];
 /** Scanline polygon fill (pixel centres), optional dither alpha. */
 export function poly(c: Ctx, pts: readonly Pt[], col: string, a = 1): void {
   if (pts.length < 3 || a <= 0) return;
-  fs(c, col);
-  let y0 = Infinity, y1 = -Infinity;
-  for (const p of pts) { if (!ok(p[0], p[1])) return; if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1]; }
-  stats.fills += Math.ceil(y1 - y0) * (a >= 1 ? 1 : 8);
+  let y0 = Infinity, y1 = -Infinity, x0 = Infinity, x1 = -Infinity;
+  for (const p of pts) { if (!ok(p[0], p[1])) return; if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1]; if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; }
+  // dithered: a pattern per span when wide, else pixel by pixel (the same pixels either way)
+  const byPx = a < 1 && x1 - x0 < PATTERN_FROM.poly;
+  if (a >= 1 || byPx) fs(c, col);
+  else if (!dither(c, col, a)) return;
+  stats.fills += Math.ceil(y1 - y0) * (byPx ? 8 : 1);
   y0 = Math.floor(y0); y1 = Math.ceil(y1);
   for (let y = y0; y <= y1; y++) {
     const yc = y + 0.5;
@@ -85,7 +133,7 @@ export function poly(c: Ctx, pts: readonly Pt[], col: string, a = 1): void {
     for (let k = 0; k + 1 < n; k += 2) {
       const xa = R(xs[k]), xb = R(xs[k + 1]);
       if (xb <= xa) continue;
-      if (a >= 1) c.fillRect(xa, y, xb - xa, 1);
+      if (!byPx) c.fillRect(xa, y, xb - xa, 1);
       else for (let x = xa; x < xb; x++) if (a > bay(x, y)) c.fillRect(x, y, 1, 1);
     }
   }
@@ -112,8 +160,32 @@ export function lines(c: Ctx, pts: readonly Pt[], col: string, w = 1): void { fo
 /** Dithered radial glow (solid colour: a core, then a checker rim). Ground-flattened with fy. */
 export function glow(c: Ctx, cx: number, cy: number, r: number, col: string, a: number, fy = 1): void {
   if (r < 0.6 || a <= 0.02 || !ok(cx, cy, r) || r > 300) return;
+  if (r < PATTERN_FROM.glow) { glowByPx(c, cx, cy, r, col, a, fy); return; }
+  // per row: the solid core as one span, the checker rim as a span or two of the checker pattern (the core and the
+  // rim never overlap, so all the cores go first, in the plain colour, then all the rims)
+  const ry = r * fy, x0 = Math.floor(cx - r), x1 = Math.ceil(cx + r), y0 = Math.floor(cy - ry), y1 = Math.ceil(cy + ry);
+  const dCore = a > 0.5 ? Math.pow(1 - Math.pow(0.5 / a, 1 / 1.6), 2) : -1, dRim = a > 0.22 ? Math.pow(1 - Math.pow(0.22 / a, 1 / 1.6), 2) : -1;
+  for (let pass = 0; pass < 2; pass++) {
+    if (pass === 0) { if (dCore < 0) continue; fs(c, col); } else checker(c, col);
+    for (let y = y0; y <= y1; y++) {
+      const dy = (y + 0.5 - cy) / ry, dy2 = dy * dy;
+      if (dy2 >= dRim) continue;
+      const hr = Math.sqrt(dRim - dy2) * r, hc = dCore > dy2 ? Math.sqrt(dCore - dy2) * r : -1;
+      const ra = Math.max(x0, Math.ceil(cx - hr - 0.5)), rb = Math.min(x1, Math.floor(cx + hr - 0.5));
+      if (hc >= 0) {
+        const ca = Math.ceil(cx - hc - 0.5), cb = Math.floor(cx + hc - 0.5);
+        if (pass === 0) { if (cb >= ca) { c.fillRect(ca, y, cb - ca + 1, 1); stats.fills++; } continue; }
+        if (ca > ra) { c.fillRect(ra, y, ca - ra, 1); stats.fills++; }
+        const sa = Math.max(cb + 1, ra);
+        if (rb >= sa) { c.fillRect(sa, y, rb - sa + 1, 1); stats.fills++; }
+      } else if (pass === 1 && rb >= ra) { c.fillRect(ra, y, rb - ra + 1, 1); stats.fills++; }
+    }
+  }
+}
+
+/** glow() pixel by pixel: the solid core as one span, the checker rim one pixel at a time (cheaper for a small glow). */
+function glowByPx(c: Ctx, cx: number, cy: number, r: number, col: string, a: number, fy: number): void {
   fs(c, col);
-  // per row: the solid core as one span, the checker rim pixel by pixel
   const ry = r * fy, x0 = Math.floor(cx - r), x1 = Math.ceil(cx + r), y0 = Math.floor(cy - ry), y1 = Math.ceil(cy + ry);
   const dCore = a > 0.5 ? Math.pow(1 - Math.pow(0.5 / a, 1 / 1.6), 2) : -1, dRim = a > 0.22 ? Math.pow(1 - Math.pow(0.22 / a, 1 / 1.6), 2) : -1;
   for (let y = y0; y <= y1; y++) {

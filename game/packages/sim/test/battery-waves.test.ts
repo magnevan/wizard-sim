@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ARCH, BATTERY, BSTEP, BTN, EL, KIND, MAX_SEATS, NO_INPUT, WALL, WELL, createWorld, infused, pedestalNear, runeMax, step, wellDry } from '../src';
+import { ARCH, BATTERY, BODY, BSTEP, BTN, CAMPAIGN, CHANNEL, EL, KIND, MAX_SEATS, NO_INPUT, WALL, WELL, createWorld, inLifeCircle, infused, lifeCircle, pedestalNear, regenOf, runeMax, step, wellDry } from '../src';
 import { BWAVES } from '../src/battery-waves';
 import { driveSpray } from '../src/battery';
 
@@ -178,6 +178,27 @@ describe('the well failing (beats 5 to 7)', () => {
     step(w, x); step(w, NO_INPUTS);
     expect(w.battery!.drive[0]).toBe(-1);
     expect(fire(w)).toBe(WELL.own);
+  });
+});
+
+describe('the campaign\'s early going in the battery', () => {
+  it('is hardier, regenerates slowly, and lets you channel Life in the circle by the well once you\'re infused', () => {
+    const w = createWorld(1, 1, { room: 'battery', checkpoint: 'repair' });
+    expect(w.bodies.maxHp[0]).toBe(BODY.wizardHp * CAMPAIGN.hardy);
+    idle(w, WELL.surge); // past the infusion: the circle is there
+    const c = lifeCircle(w)!;
+    expect(c).not.toBeNull();
+    expect(regenOf(w, 0)).toBeCloseTo(CAMPAIGN.regen, 6);
+    w.bodies.x[0] = c[0]; w.bodies.y[0] = c[1];
+    idle(w, 3);
+    expect(inLifeCircle(w, 0)).toBe(true);
+    expect(runeMax(w, 0, EL.life)).toBe(CHANNEL.pool);
+    expect(w.seats.runes[EL.life - 1]).toBeGreaterThan(1);
+    // out of it, the Life is gone
+    w.bodies.x[0] = c[0] + 6;
+    idle(w, 0.1);
+    expect(runeMax(w, 0, EL.life)).toBe(0);
+    expect(w.seats.runes[EL.life - 1]).toBe(0);
   });
 });
 

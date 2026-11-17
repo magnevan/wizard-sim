@@ -73,6 +73,8 @@ export class PropView {
   private shadowTex: Texture | null = null;
   private items: Item[] = [];
   private def: RoomDef | null = null;
+  /** A preview's filter: a prop whose foot (turned view units) it covers isn't laid out (art/massing.ts). */
+  skip: ((u: number, v: number) => boolean) | null = null;
   private fx = NaN;
   private fy = NaN;
   private wanted = 0;
@@ -100,6 +102,7 @@ export class PropView {
     if (!def.props.length) { this.wanted++; this.ready = true; return; } // a dress still on its way is for the old room
     const { c, x } = X.canvas(FIELD.W, FIELD.H);
     for (const p of def.props) {
+      if (this.skip?.(p.x, p.y)) continue;
       const meta = propMeta(p.asset);
       if (!meta) continue;
       const spr = new Sprite();

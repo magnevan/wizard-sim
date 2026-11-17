@@ -272,7 +272,11 @@ export function composeHit(el: ElementName | null, amount: number, rand: Rand = 
   return { name: `hit:${el ?? 'plain'}`, layers, wet: 0 };
 }
 
-export const composeHeal = (rand: Rand = Math.random): Plan => one('heal', pick(ELEMENTS.life.hit, rand), 0.42, 1.25, 0.04);
+/** A heal's tick on a body: Life's kit, where it has one (the old chime was "awful", 2026-11-14). */
+export function composeHeal(rand: Rand = Math.random): Plan {
+  const k = kitOf('life')?.tick;
+  return k?.length ? kitPlan('kit:tick', k, rand) : one('heal', pick(ELEMENTS.life.hit, rand), 0.42, 1.25, 0.04);
+}
 
 export function composeDeath(kind: typeof DEATH_KINDS[number], el: ElementName | null, rand: Rand = Math.random): Plan {
   const growl = pick(kind === 'big' ? ['growl-big-1', 'growl-big-2'] : ['growl-1', 'growl-2', 'growl-3', 'growl-4'], rand);
@@ -357,9 +361,17 @@ export function composeDismiss(el: ElementName, rand: Rand = Math.random): Plan 
   const d = kitOf(el)?.dismiss;
   return d ? kitPlan('kit:dismiss', d, rand) : null; // an empty one means silence
 }
-export const composeBlink = (): Plan => one('blink', 'y-blink', 0.7, 1, 0.05);
+/** A Blink: Shield's kit's `force`, where it has one. */
+export function composeBlink(rand: Rand = Math.random): Plan {
+  const k = kitOf('shield')?.force;
+  return k?.length ? kitPlan('kit:blink', k, rand) : one('blink', 'y-blink', 0.7, 1, 0.05);
+}
 export const composeRockBreak = (rand: Rand = Math.random): Plan => many('wall:break', 0.04, [pick(['earth-hit-3', 'earth-hit-4'], rand), 0.8, 0.8], ['debris', 0.7], ['y-sub', 0.4]);
-export const composeBlocked = (rand: Rand = Math.random): Plan => one('blocked', pick(['shield-hit-2', 'shield-hit-3'], rand), 0.5, 1.1);
+/** A blow turned aside by a barrier or ward: Shield's kit's `land`, where it has one. Heard often, so it's soft. */
+export function composeBlocked(rand: Rand = Math.random): Plan {
+  const k = kitOf('shield')?.land;
+  return k?.length ? kitPlan('kit:blocked', k, rand) : one('blocked', pick(['shield-hit-2', 'shield-hit-3'], rand), 0.5, 1.1);
+}
 
 export const UI_SOUNDS = ['move', 'select', 'open', 'close', 'adjust', 'error'] as const;
 export type UiSound = typeof UI_SOUNDS[number];
@@ -391,8 +403,32 @@ export const composeRain = (): Plan => ({ name: 'zone:rain', wet: 0, layers: [
   { clip: 'y-flow', gain: 0.2, rate: 2, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true },
 ] });
 export const composeSteamCloud = (): Plan => ({ name: 'zone:steam', wet: 0, layers: [{ clip: 'y-steam', gain: 0.36, rate: 1, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }] });
-export const composeSpring = (): Plan => ({ name: 'zone:spring', wet: 0, layers: [{ clip: 'water-gurgle', gain: 0.32, rate: 1.1, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }, { clip: 'y-life', gain: 0.16, rate: 1, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }] });
+/** The freezing fog, while it lies: Cold's kit's `ground`, or nothing. */
+export function composeFrostFog(): Plan | null {
+  const k = kitOf('cold')?.ground;
+  return k?.length ? kitPlan('kit:fog', k, Math.random) : null;
+}
+/** A healing spring, while it wells: Life's kit's `ground`, where it has one. */
+export const composeSpring = (): Plan => { const k = kitOf('life')?.ground; return k?.length ? kitPlan('kit:spring', k, Math.random) : springPlan(); };
+const springPlan = (): Plan => ({ name: 'zone:spring', wet: 0, layers: [{ clip: 'water-gurgle', gain: 0.32, rate: 1.1, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }, { clip: 'y-life', gain: 0.16, rate: 1, at: 0, attack: 0.2, hold: 0, release: 0.3, loop: true }] });
 export const composeSparkField = (): Plan => ({ name: 'zone:spark', wet: 0, layers: [{ clip: 'y-buzz', gain: 0.4, rate: 1.2, at: 0, attack: 0.1, hold: 0, release: 0.2, loop: true }] });
+
+/**
+ * The battery's well overloading (the user, 2026-11-14: the overload should sound as it builds, then burst). A drone that
+ * climbs a step at each `stage` 0..3 of the overload: an electric buzz over a low rushing hum, a crackle joining from
+ * stage 2. Each stage is its own loop, so moving up a stage crossfades into a higher, louder one.
+ */
+export const composeWellOverload = (stage: number): Plan => ({
+  name: `well:overload${stage}`, wet: 0.05,
+  layers: [
+    { clip: 'y-buzz', gain: 0.16 + 0.08 * stage, rate: 0.6 + 0.16 * stage, at: 0, attack: 0.5, hold: 0, release: 0.5, loop: true },
+    { clip: 'y-flow', gain: 0.1 + 0.05 * stage, rate: 0.45 + 0.12 * stage, at: 0, attack: 0.5, hold: 0, release: 0.5, loop: true },
+    ...(stage >= 2 ? [{ clip: 'fire-crackle', gain: 0.18 * (stage - 1), rate: 1.4, at: 0, attack: 0.4, hold: 0, release: 0.4, loop: true }] : []),
+  ],
+});
+
+/** The well bursting as it gives out: a deep boom, a thunder crack and arcs snapping off. */
+export const composeWellBurst = (): Plan => many('well:burst', 0.25, ['boom-2', 1, 0.8], ['y-sub', 0.9], ['thunder-crack', 0.7, 1, 0.02], ['y-zap-1', 0.6, 0.8, 0.05], ['y-zap-3', 0.5, 0.7, 0.14]);
 export const composeBurning = (): Plan => { const k = kitOf('fire')?.status; return k ? kitPlan('kit:burn', k, Math.random) : burningPlan(); };
 const burningPlan = (): Plan => ({ name: 'burn', wet: 0, layers: [{ clip: 'fire-crackle', gain: 0.5, rate: 1.1, at: 0, attack: 0.15, hold: 0, release: 0.25, loop: true }] });
 export const composeFloorFire = (): Plan => { const k = kitOf('fire')?.ground; return k ? kitPlan('kit:ground', k, Math.random) : floorFirePlan(); };

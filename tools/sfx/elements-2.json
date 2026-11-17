@@ -1,0 +1,11 @@
+[
+  { "id": "gen-life-spring2-1", "secs": 6, "loop": true, "text": "A magical healing spring." },
+  { "id": "gen-life-spring2-2", "secs": 6, "loop": true, "text": "A spring of healing light on the ground." },
+  { "id": "gen-life-spring2-3", "secs": 6, "loop": true, "text": "Healing magic lingering on the ground." },
+  { "id": "gen-life-spray2-1", "secs": 6, "loop": true, "text": "A soft spray of warm healing light from an open hand: a gentle, airy, continuous breath with a faint warm glow." },
+  { "id": "gen-life-spray2-2", "secs": 6, "loop": true, "text": "A soft spray of warm healing light from an open hand: a gentle, airy, continuous breath with a faint warm glow." },
+  { "id": "gen-life-spray2-3", "secs": 6, "loop": true, "text": "A healing spray of magic light." },
+  { "id": "gen-cold-fogloop2-1", "secs": 6, "loop": true, "text": "Freezing fog lying on the ground: frost slowly forming and crackling, soft creaks of ice, a faint cold hush of air." },
+  { "id": "gen-cold-fogloop2-2", "secs": 6, "loop": true, "text": "Freezing fog lying on the ground: frost slowly forming and crackling, soft creaks of ice, a faint cold hush of air." },
+  { "id": "gen-cold-fogloop2-3", "secs": 6, "loop": true, "text": "Freezing fog lying on the ground: frost slowly forming and crackling, soft creaks of ice, a faint cold hush of air." }
+]

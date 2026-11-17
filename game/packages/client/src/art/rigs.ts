@@ -14,7 +14,7 @@ import { CU, FY, clamp, lerp, rand, smooth } from './util';
 import * as X from './px';
 import type { Ctx } from './px';
 
-export type RigKind = 'wizard' | 'goblin' | 'archer' | 'brute' | 'dummy' | 'bramble' | 'sack';
+export type RigKind = 'wizard' | 'goblin' | 'archer' | 'brute' | 'dummy' | 'bramble' | 'sack' | 'soldier';
 
 /** Everything a rig needs to draw one frame. art/actors.ts fills it with quantized values. */
 export interface RigState {
@@ -119,8 +119,8 @@ function wizScale(): number {
   } catch { return SPRITES_ON ? 1.4 : 1; }
 }
 
-export const HEIGHT: Record<RigKind, number> = { wizard: 23 * WIZ_Z, goblin: 12, archer: 12, brute: 23, dummy: 18, bramble: 15, sack: 12 };
-export const WIDTH: Record<RigKind, number> = { wizard: 6 * WIZ_Z, goblin: 5, archer: 5, brute: 9, dummy: 6, bramble: 10, sack: 5 };
+export const HEIGHT: Record<RigKind, number> = { wizard: 23 * WIZ_Z, goblin: 12, archer: 12, brute: 23, dummy: 18, bramble: 15, sack: 12, soldier: 25 };
+export const WIDTH: Record<RigKind, number> = { wizard: 6 * WIZ_Z, goblin: 5, archer: 5, brute: 9, dummy: 6, bramble: 10, sack: 5, soldier: 6 };
 
 // the cell is sized for a 1.7x wizard even when it's drawn smaller: the chieftain and the live 3D bodies (art/live3d.ts)
 // are drawn into the same cell and need its room
@@ -205,7 +205,7 @@ const out: Partial<Anchors> = {};
 function drawWizard(s: RigState): void {
   // Z scales the geometry (WIZ_Z); S scales a pixel offset or size, LW a line width.
   const Z = WIZ_Z, S = (n: number) => n * Z, LW = (n: number) => Math.max(1, Math.round(n * Z));
-  const pal = X.TEAMS[s.pal % 4], T = tinter(s), fr0 = frame(s, Z), { cs, sn, P } = fr0, kx = fr0.kx * Z;
+  const pal = s.pal >= 4 ? STUDENTS[(s.pal - 4) % STUDENTS.length] : X.TEAMS[s.pal % 4], T = tinter(s), fr0 = frame(s, Z), { cs, sn, P } = fr0, kx = fr0.kx * Z;
   const walk = Math.min(1, s.spd), cast = s.cast, prep = s.prep, hd = s.hd > 0;
   const bob = Math.abs(Math.sin(s.ph)) * 1.3 * walk + Math.sin(s.idle) * 0.35 * (1 - walk);
   const st = Math.sin(s.ph) * 3.4 * walk;
@@ -859,6 +859,128 @@ const rel = (p: [number, number] | undefined, fb: [number, number]): [number, nu
  * outline, the colour and the emissive layer, statuses and the hit flash. Returns its anchors,
  * relative to the feet.
  */
+// ======================================================================
+// Students and hired soldiers (the drill yard: tools/segments/01-opening/yard-level.py)
+// ======================================================================
+/** Other students' robes, wizard pal 4 and up: the academy's plain ones, so the seats' four colours stand out. */
+const STUDENTS: X.TeamPal[] = [
+  { main: '#6a7290', light: '#8e96b2', dark: '#434a64', deep: '#262a3c', trim: '#c8ccd8', name: 'Slate' },
+  { main: '#7a6450', light: '#a08870', dark: '#4e3e30', deep: '#2c221a', trim: '#e0d0b0', name: 'Umber' },
+  { main: '#4e7a62', light: '#72a084', dark: '#30503e', deep: '#1a2e22', trim: '#d4e4c8', name: 'Moss' },
+];
+/** A soldier's tabard over a quilted jerkin, by pal. */
+const TABARD = [
+  { main: '#8a2a2e', light: '#b04a46', dark: '#561a20' },
+  { main: '#2e4e7a', light: '#4a70a0', dark: '#1c304e' },
+  { main: '#5a6a2e', light: '#7a8c46', dark: '#38421c' },
+];
+const JERKIN = { main: '#9c8a6a', light: '#c0ae8a', dark: '#6a5a42' };
+const STEEL = { light: '#d8dce4', main: '#9aa0ac', dark: '#5a606c', deep: '#33363e' };
+const WOOD = { light: '#c49a64', main: '#8e6a40', dark: '#5a4028' };
+/** How much bigger than his drawing a soldier stands. */
+const SOLDIER_K = 1.3;
+
+/**
+ * A hired soldier, at a wizard's scale: boots, trousers, a quilted jerkin under a tabard, a kettle helmet. Variant is
+ * what they carry: 0 a wooden practice sword, 1 a heavy wooden mallet (the slam: s.smash, as the brute's), 2 a crossbow
+ * (held level; s.draw, s.atk), 3 a spear. s.atk swings the sword or thrusts the spear.
+ */
+function drawSoldier(s: RigState): void {
+  const tab = TABARD[s.pal % TABARD.length], T = tinter(s), { cs, sn, kx, P: P0 } = frame(s), v = s.variant;
+  const walk = Math.min(1, s.spd);
+  const [sW, sS] = atkWeights(v === 1 ? s.smash : s.atk);
+  const lean = v === 1 ? -0.06 * sW + 0.14 * sS : 0.05 * sS;
+  // drawn in the wizard's units, then made a grown man's size: a wizard's robe and hat out-top him only a little
+  const P: Proj = (f, r, u) => P0((f + lean * Math.max(0, u - 4)) * SOLDIER_K, r * SOLDIER_K, u * SOLDIER_K);
+  const bob = Math.abs(Math.sin(s.ph)) * 1.2 * walk + Math.sin(s.idle) * 0.3 * (1 - walk);
+  const st = Math.sin(s.ph) * 3.2 * walk, lift = (k: number) => Math.max(0, Math.cos(s.ph + k)) * 1.8 * walk;
+  // legs and boots
+  for (const side of [-1, 1]) {
+    const f = P(-side * st, side * 1.8, lift(side < 0 ? 0 : Math.PI)), hip = P(0, side * 1.6, 6 + bob);
+    X.line(sc, hip[0], hip[1], f[0], f[1] - 1, T('#4a4038'), 2);
+    X.rect(sc, f[0] - 1, f[1] - 1, 3, 2, T('#2a201a'));
+  }
+  // hands by what they carry and the attack's pose
+  const rest: [V3, V3] = v === 1 ? [[3, -1.6, 8 + bob], [3.4, 1.8, 6.6 + bob]] : v === 2 ? [[4.4, -1.4, 10 + bob], [3.2, 2.2, 9.6 + bob]]
+    : [[0.8 - st * 0.5, -4, 6.4 + bob], [1.6 + st * 0.5, 4, 7.4 + bob]];
+  const wind: [V3, V3] = v === 1 ? [[-0.6, -1.2, 22 + bob], [-0.2, 1.4, 21 + bob]] : v === 3 ? [[0, -3.6, 8 + bob], [-1.5, 3, 9 + bob]]
+    : v === 2 ? [[4.6, -1.4, 10.6 + bob], [2.4, 2.4, 10.4 + bob]] : [[0.6, -4, 7 + bob], [-0.5, 4.2, 15.5 + bob]];
+  const hit: [V3, V3] = v === 1 ? [[6.4, -1.4, 4 + bob], [6.8, 1.6, 3.2 + bob]] : v === 3 ? [[5.4, -2.6, 9 + bob], [7.6, 1.2, 9.4 + bob]]
+    : v === 2 ? [[4.4, -1.4, 10 + bob], [3.2, 2.2, 9.6 + bob]] : [[2, -4, 8 + bob], [6.6, 2.4, 8 + bob]];
+  const hL = blend(rest[0], wind[0], hit[0], sW, sS), hR = blend(rest[1], wind[1], hit[1], sW, sS);
+  const arm = (side: number, h: V3) => {
+    const sh = P(0, side * 3.2, 11 + bob), hp = P(...h);
+    X.line(sc, sh[0], sh[1], hp[0], hp[1], T(JERKIN.dark), 2);
+    X.rect(sc, hp[0] - 0.5, hp[1] - 0.5, 2, 2, T(SKIN.main));
+  };
+  // what they carry, from the right hand (both hands for the mallet and crossbow)
+  const carry = () => {
+    const a = P(...hR);
+    if (v === 0) {
+      // the practice sword points up and forward at rest, along the swing as it lands
+      const tipV: V3 = blend([hR[0] + 2.5, hR[1] + 0.4, hR[2] + 7], [hR[0] - 4, hR[1], hR[2] + 5], [hR[0] + 8, hR[1] - 0.5, hR[2] - 1], sW, sS);
+      const b = P(...tipV);
+      X.line(sc, a[0], a[1], b[0], b[1], T(WOOD.light)); X.line(sc, a[0] + 1, a[1], b[0] + 1, b[1], T(WOOD.dark));
+      const g = P(hR[0] + 0.4, hR[1], hR[2] + 0.8); X.rect(sc, g[0] - 1, g[1], 3, 1, T(WOOD.dark));
+      out.tip = [b[0], b[1]];
+    } else if (v === 1) {
+      // the mallet: a long handle from both hands, a heavy block on the end
+      const mid: V3 = [(hL[0] + hR[0]) / 2, (hL[1] + hR[1]) / 2, (hL[2] + hR[2]) / 2];
+      const up = sW > 0.4 && sS < 0.2, head: V3 = up ? [mid[0] - 3, mid[1], mid[2] + 6] : blend([mid[0] + 2, mid[1], mid[2] + 9], [mid[0] - 3, mid[1], mid[2] + 6], [mid[0] + 7, mid[1], mid[2] - 2], 0, sS);
+      const h0 = P(...mid), h1 = P(...head);
+      X.line(sc, h0[0], h0[1], h1[0], h1[1], T(WOOD.dark), 2);
+      X.rect(sc, h1[0] - 3, h1[1] - 2, 6, 4, T(WOOD.main)); X.rect(sc, h1[0] - 3, h1[1] - 2, 6, 1, T(WOOD.light)); X.rect(sc, h1[0] - 3, h1[1] + 1, 6, 1, T(WOOD.dark));
+      out.tip = [h1[0], h1[1]];
+    } else if (v === 2) {
+      // the crossbow, level along the facing: a stock and a bow across its end
+      const n = P(hR[0] + 5.5, hR[1] - 1, hR[2] + 0.4), b = P(hR[0] - 1, hR[1] - 0.8, hR[2] - 0.2);
+      X.line(sc, b[0], b[1], n[0], n[1], T(WOOD.main), 2);
+      const l = P(hR[0] + 5, hR[1] - 4, hR[2] + 0.4), r = P(hR[0] + 5, hR[1] + 2, hR[2] + 0.4);
+      X.line(sc, l[0], l[1], r[0], r[1], T(STEEL.dark));
+      if (s.draw > 0.3 || s.atk < 0) { const q = P(hR[0] + 3, hR[1] - 1, hR[2] + 0.6); X.line(sc, l[0], l[1], q[0], q[1], T('#e0d8c0')); X.line(sc, r[0], r[1], q[0], q[1], T('#e0d8c0')); }
+      out.tip = [n[0], n[1]];
+    } else {
+      // the spear: upright at rest, levelled in the thrust
+      const butt = blend([hR[0] - 0.5, hR[1], hR[2] - 6], [hR[0] - 5, hR[1], hR[2] - 1], [hR[0] - 6, hR[1], hR[2]], sW, sS);
+      const tip = blend([hR[0] + 0.8, hR[1], hR[2] + 13], [hR[0] + 7, hR[1], hR[2] + 1], [hR[0] + 10, hR[1], hR[2]], sW, sS);
+      const a0 = P(...butt), a1 = P(...tip);
+      X.line(sc, a0[0], a0[1], a1[0], a1[1], T(WOOD.main));
+      X.rect(sc, a1[0] - 0.5, a1[1] - 1.5, 2, 3, T(STEEL.light));
+      out.tip = [a1[0], a1[1]];
+    }
+  };
+  const back = P(...hR)[2] < -0.2;
+  if (P(...hL)[2] < -0.2) arm(-1, hL);
+  if (back) { arm(1, hR); carry(); }
+  // the body: a quilted jerkin with a tabard down the front and back, a belt
+  const prof = (u: number) => (u > 9 ? 3.0 - (u - 9) * 0.25 : 2.8 + (9 - u) * 0.12) * kx;
+  bodyRows(sc, (f, r, u) => P(f, r, u + bob), 5, 11, prof, null, JERKIN, T, (u, _x, k) => {
+    if (u === 7) return k > 0.45 && k < 0.58 && sn > -0.3 ? '#c8a050' : '#3a2a1e'; // belt
+    if ((u <= 6 && Math.abs(k - (0.5 + cs * 0.3)) < 0.22) || (u > 7 && Math.abs(k - (0.5 + cs * 0.3)) < 0.18)) return k < 0.45 ? tab.light : tab.main; // the tabard
+    if (u === 5) return JERKIN.dark;
+    return null;
+  });
+  const shp = P(0.2, 0, 11 + bob);
+  X.ellipse(sc, shp[0], shp[1], 3.4 * kx, 1.8, T(tab.dark));
+  // head: face from the front, and a kettle helmet with a wide brim
+  const hc = P(0.4, 0, 13.4 + bob);
+  X.ellipse(sc, hc[0], hc[1], 2.2 * kx, 2.0, T(SKIN.main));
+  if (sn > -0.4) {
+    for (const r of [-1, 1]) if (visible(sn, cs, 2.2, r)) { const e = P(2.2, r, 13.6 + bob); X.px(sc, e[0], e[1], '#1a1420'); }
+    const ch = P(1.8, 0, 12.4 + bob); X.px(sc, ch[0], ch[1], T(SKIN.dark));
+  }
+  const brim = P(0.2, 0, 15 + bob);
+  X.ellipse(sc, brim[0], brim[1] + 0.5, 4.4 * kx, 2.4, T(STEEL.deep));
+  X.ellipse(sc, brim[0], brim[1], 4.2 * kx, 2.1, T(STEEL.dark));
+  const dome = P(0.2, 0, 16.6 + bob);
+  X.ellipse(sc, dome[0], dome[1], 2.6 * kx, 2.2, T(STEEL.main));
+  X.rect(sc, dome[0] - 1.5, dome[1] - 1.5, 2, 1, T(STEEL.light));
+  if (P(...hL)[2] >= -0.2) arm(-1, hL);
+  if (!back) { arm(1, hR); carry(); }
+  const c2 = P(1.5, 0, 9.5 + bob), h2 = P(0.4, 0, 14 + bob), a = P(...hL), b = P(...hR);
+  out.chest = [c2[0], c2[1]]; out.head = [h2[0], h2[1]]; out.hands = [[a[0], a[1]], [b[0], b[1]]];
+}
+
 export function paint(s: RigState, dst: Ctx, fx: number, fy: number): Anchors {
   sc.globalCompositeOperation = 'source-over'; se.globalCompositeOperation = 'source-over';
   sc.clearRect(BX - 1, BY - 1, BW + 2, BH + 2); se.clearRect(BX - 1, BY - 1, BW + 2, BH + 2);
@@ -869,6 +991,7 @@ export function paint(s: RigState, dst: Ctx, fx: number, fy: number): Anchors {
   else if (s.kind === 'dummy') drawDummy(s);
   else if (s.kind === 'bramble') drawBramble(s);
   else if (s.kind === 'sack') drawSack(s);
+  else if (s.kind === 'soldier') drawSoldier(s);
   else drawGoblin(s, s.kind === 'archer');
   if (s.chill > 0.05 && s.frozen < 0.2) rime(s);
   if (s.wet > 0.05 && s.frozen < 0.2) wetSheen(s);

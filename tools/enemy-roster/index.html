@@ -1,0 +1,636 @@
+<title>Enemy Roster</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a field guide. A narrow reading column for the prose; the bestiary breaks out to a wide card grid; demos sit in framed plates. */
+:root {
+  --bg: #eef0ea; --panel: #f8f9f5; --ink: #1d2620; --muted: #5a665d; --line: #c9d0c6;
+  --accent: #2f6b4f; --accent-ink: #ffffff; --warn: #a2442a; --chip: #e1e6dd;
+  --stage: #1f2a24; --stage-line: #3a4a41; --stage-ink: #d8e2da;
+  --wiz: #6fa8ff; --foe: #e46a55; --ally: #7fd49a;
+  --fire: #ee7a32; --water: #4a9be0; --cold: #a9dcef; --light: #c7a6ff; --earth: #b08a55; --life: #5fca7b; --arcane: #d6487f; --shield: #e7c45a;
+  --f-display: "IM Fell English SC", "Palatino Linotype", Georgia, serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151b17; --panel: #1c241f; --ink: #e3ebe4; --muted: #9aa99e; --line: #33413a;
+  --accent: #74c79c; --accent-ink: #10180f; --warn: #ec8a6c; --chip: #26302a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151b17; --panel: #1c241f; --ink: #e3ebe4; --muted: #9aa99e; --line: #33413a;
+  --accent: #74c79c; --accent-ink: #10180f; --warn: #ec8a6c; --chip: #26302a; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--f-body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; display: grid; gap: 44px; }
+.prose { max-width: 70ch; display: grid; gap: 12px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 400; text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); }
+h2 { font-size: 1.9rem; }
+h3 { font-size: 1.35rem; }
+p { margin: 0; }
+a { color: var(--accent); }
+.eyebrow { font: 600 .74rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.12rem; }
+.muted { color: var(--muted); }
+.small { font-size: .9rem; }
+section { display: grid; gap: 18px; }
+.status { font: .85rem var(--f-mono); color: var(--muted); }
+.status.bad { color: var(--warn); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.fact { border-top: 2px solid var(--ink); padding-top: 8px; display: grid; gap: 4px; min-width: 0; }
+.fact b { font-family: var(--f-display); font-weight: 400; font-size: 1.15rem; }
+ul.tight { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.chip { display: inline-block; font: 600 .72rem/1 var(--f-mono); padding: 4px 7px; border-radius: 3px; background: var(--chip); color: var(--ink); letter-spacing: .03em; }
+.chip.rec { background: var(--accent); color: var(--accent-ink); }
+/* bestiary */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 18px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.card.first { border-color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); }
+.card header { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.card canvas { width: 100%; aspect-ratio: 16 / 7; background: var(--stage); border-radius: 4px; display: block; max-width: 100%; }
+.q { font-family: var(--f-display); font-size: 1.1rem; color: var(--accent); }
+dl { margin: 0; display: grid; grid-template-columns: 6.2em 1fr; gap: 4px 10px; font-size: .93rem; }
+dt { color: var(--muted); font-weight: 600; }
+dd { margin: 0; min-width: 0; }
+.slug { font: .72rem var(--f-mono); color: var(--muted); }
+.marks { display: flex; gap: 6px; flex-wrap: wrap; }
+.marks button, .choices button, .seg button { font: 600 .85rem var(--f-body); padding: 6px 11px; border-radius: 4px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+.marks button:hover:not(:disabled), .choices button:hover:not(:disabled), .seg button:hover { border-color: var(--accent); }
+.marks button[aria-pressed="true"], .choices button[aria-pressed="true"], .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button:disabled { opacity: .55; cursor: default; }
+button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+textarea { width: 100%; box-sizing: border-box; font: .92rem var(--f-body); padding: 7px 9px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--ink); resize: vertical; }
+/* plates */
+.plate { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 820px) { .plate { grid-template-columns: 1fr; } }
+.plate canvas { width: 100%; aspect-ratio: 4 / 3; background: var(--stage); border-radius: 6px; display: block; max-width: 100%; }
+.controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-size: .92rem; }
+.seg { display: inline-flex; gap: 4px; }
+.readout { font: .85rem var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+/* AI layer items */
+.layers { display: grid; gap: 12px; }
+.layer { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; padding: 14px 0; border-top: 1px solid var(--line); }
+@media (max-width: 720px) { .layer { grid-template-columns: 1fr; } }
+.layer > div:first-child { display: grid; gap: 6px; min-width: 0; }
+.side { display: grid; gap: 8px; align-content: start; }
+/* questions */
+.qrow { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; padding: 16px 0; border-top: 1px solid var(--line); }
+@media (max-width: 760px) { .qrow { grid-template-columns: 1fr; } }
+.qtext { display: grid; gap: 6px; min-width: 0; }
+.choices { display: grid; gap: 6px; }
+.choices button { text-align: left; font-weight: 400; }
+.choices button .chip { margin-left: 6px; }
+.qn { font-family: var(--f-mono); font-size: .9rem; color: var(--muted); margin-right: 6px; }
+table { border-collapse: collapse; font-size: .9rem; width: 100%; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); }
+.tablebox { overflow-x: auto; }
+footer { font-size: .85rem; color: var(--muted); display: grid; gap: 6px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="prose">
+    <span class="eyebrow">Wizard Sim · design review · 2026-11-14</span>
+    <h1>Enemy Roster</h1>
+    <p class="lede">Thirteen candidate enemies drawn from Magicka 1 and 2, and a plan to make enemies fight fairly and companions look sensible, without deep strategy. Mark each enemy <b>Build</b>, <b>Maybe</b> or <b>Cut</b>, rate the AI layers, and answer the questions at the bottom. Anything left blank means you accept the recommendation.</p>
+    <p class="status" id="save">Connecting to saved marks…</p>
+  </header>
+
+  <section class="prose" aria-labelledby="h-research">
+    <span class="eyebrow">Research</span>
+    <h2 id="h-research">What Magicka did</h2>
+    <p>Magicka 1 has about fifty enemy types in families (goblins, orcs, trolls, dwarves, beastmen, undead, demons, treants). Magicka 2 reuses the families and tells them apart mostly by elemental weakness. Magicka 2 has almost no wiki coverage, so it's thinly sourced here.</p>
+    <div class="facts">
+      <div class="fact"><b>Your tools are the answer</b><span class="small">Push throws the goblin bomber's bombs back. Fire stops a troll's regeneration. A shield beats the dwarf priest's one-shot boulder. Life hurts the undead and Arcane heals them.</span></div>
+      <div class="fact"><b>Enemies hurt each other</b><span class="small">Goblin shamans and wizards cast so loosely they mostly hit goblins. The captain's freezing spin and a troll's hammer hit their own side. Cheap, readable and funny.</span></div>
+      <div class="fact"><b>Small rules with big reads</b><span class="small">Goblins panic when burning. A troll won't grab a wizard who's on fire. Demons split in three unless exploded. A wight leaves a skeleton. Alpha beastmen lend nearby monsters a resistance.</span></div>
+      <div class="fact"><b>What went wrong in 2</b><span class="small">Reviewers liked the variety but not the clutter: swarms from every side, hits from off screen, little room for tactics. Resistances you can't see read as homework.</span></div>
+    </div>
+    <details class="small">
+      <summary>Magicka 1 enemies that stand out (Magickapedia, carlsguides)</summary>
+      <ul class="tight" style="margin-top:8px">
+        <li><b>Goblin bomber</b>: bombs lie on the ground, then burst (knockdown, burning); fire on the bomber sets them off; it drops 4 to 5 bombs when it dies.</li>
+        <li><b>Goblin shaman</b>: water beam, then lightning on the wet wizard; random teleports; a fire ward that also covers nearby goblins.</li>
+        <li><b>Goblin wizards</b> ("the Aristocrats"): robes in their element, set repertoires, all self-heal and use fire to dry themselves and water when burning; weak to the opposite of their colour.</li>
+        <li><b>Goblin warrior and captain</b>: a shield with its own HP; they speed up once it breaks.</li>
+        <li><b>Trolls</b>: 6,000+ HP, regenerate unless burning; hammers, cannons that lob or shoot straight, and grabbing a wizard to eat (mash to escape). The snow troll won't grab a wizard who's on fire or wearing rock or ice.</li>
+        <li><b>Beastmen</b>: raiders leap across the map and sidestep; brutes charge when you're close; Alphas carry a resistance aura.</li>
+        <li><b>Dwarves</b>: warriors teleport into melee; priests charge a one-shot 5× earth boulder, shield themselves, heal others and are pushed into lava.</li>
+        <li><b>Undead</b>: Life hurts, Arcane heals. Wights lunge; Darksouls come in four elements, weak to their opposite; skeletons ignore sprays; the necromancer hides in its zombies.</li>
+        <li><b>Demons</b> phase out and in, and split into demonlings unless finished with a big explosion.</li>
+        <li><b>Grimnir</b>: glows before a tornado or a conflagration; a shield absorbs the conflagration; wet then shock hurts him.</li>
+      </ul>
+    </details>
+    <p class="small muted">Today the game has six fighting enemies: goblin, brute, shieldbearer, archer, grabber and fire imp. Each runs a small state machine (approach, telegraphed wind-up, strike, cooldown) and chases the nearest wizard. Nothing coordinates them, so every goblin in reach winds up at once.</p>
+  </section>
+
+  <section aria-labelledby="h-roster">
+    <div class="prose">
+      <span class="eyebrow">Proposals · mark each one</span>
+      <h2 id="h-roster">The bestiary</h2>
+      <p>Each enemy asks the players one question, as in the 11-03 encounters exploration, and each answer uses a verb the game already has. The outlined cards are the recommended first batch.</p>
+      <p class="readout" id="tally"></p>
+    </div>
+    <div class="grid" id="roster"></div>
+  </section>
+
+  <section aria-labelledby="h-enemy-ai">
+    <div class="prose">
+      <span class="eyebrow">AI · enemies</span>
+      <h2 id="h-enemy-ai">A fair fight, not a clever one</h2>
+      <p>Keep the per-enemy state machine, which already drives the four-beat telegraph, and add small layers on top. The first is the one that changes the feel most.</p>
+    </div>
+    <div class="plate">
+      <canvas id="tokens" width="640" height="480" aria-label="Nine goblins around a wizard; with tokens on, only a few wind up at once and the rest wait on a ring"></canvas>
+      <div class="prose" style="gap:14px">
+        <h3>Attack tokens</h3>
+        <p>An enemy takes a token from its target before it winds up. Without one, it waits on a ring about 3 u out, shuffles sideways and feints. Batman Arkham, Assassin's Creed and DOOM (2016) all keep crowds readable this way.</p>
+        <div class="controls">
+          <span class="seg" role="group" aria-label="Tokens">
+            <button type="button" id="tk-off" aria-pressed="false">No tokens (today)</button>
+            <button type="button" id="tk-on" aria-pressed="true">Tokens</button>
+          </span>
+          <label for="tk-n">Melee tokens: <b id="tk-nv">2</b></label>
+          <input type="range" id="tk-n" min="1" max="5" value="2">
+        </div>
+        <p class="readout" id="tk-read">…</p>
+        <div class="legend"><span><i style="background:var(--wiz)"></i>wizard</span><span><i style="background:var(--foe)"></i>winding up</span><span><i style="background:#8b6f66"></i>waiting</span></div>
+        <p class="small muted">The demo uses goblin numbers (0.6 s wind-up, 0.9 s recovery, 5 damage). The wizard doesn't fight back.</p>
+      </div>
+    </div>
+    <div class="layers" id="enemy-layers"></div>
+  </section>
+
+  <section aria-labelledby="h-comp-ai">
+    <div class="prose">
+      <span class="eyebrow">AI · companions</span>
+      <h2 id="h-comp-ai">Seems smart, isn't clever</h2>
+      <p>There's no companion design yet. The canon says the cohort is "you" and the world carries the story more than deep companions do, so a companion is probably a classmate or a summoned helper rather than a personality-driven partner.</p>
+    </div>
+    <div class="plate">
+      <canvas id="comp" width="640" height="480" aria-label="A companion keeps beside the player and out of the player's aim cone, and shows an intent glyph before it acts"></canvas>
+      <div class="prose" style="gap:14px">
+        <h3>Out of your line of fire</h3>
+        <p>The player's aim sweeps across a crowd. The companion keeps to a follow ring and slides round it to stay out of the cone you aim through. Before it casts, it checks that no ally is in the spell's footprint. A glyph over its head shows what it's about to do.</p>
+        <div class="controls">
+          <span class="seg" role="group" aria-label="Companion habits">
+            <button type="button" id="cp-off" aria-pressed="false">Naive follower</button>
+            <button type="button" id="cp-on" aria-pressed="true">With the habits</button>
+          </span>
+        </div>
+        <p class="readout" id="cp-read">…</p>
+        <div class="legend"><span><i style="background:var(--wiz)"></i>you</span><span><i style="background:var(--ally)"></i>companion</span><span><i style="background:var(--foe)"></i>enemies</span></div>
+      </div>
+    </div>
+    <div class="layers" id="comp-layers"></div>
+  </section>
+
+  <section aria-labelledby="h-q">
+    <div class="prose">
+      <span class="eyebrow">Questions</span>
+      <h2 id="h-q">Seven decisions</h2>
+      <p>No answer means you accept the recommended option.</p>
+      <p class="readout" id="qtally"></p>
+    </div>
+    <div id="questions"></div>
+    <div class="qrow">
+      <div class="qtext"><h3>General notes</h3><p>Anything else: enemies you'd like that aren't here, Magicka favourites, things to avoid.</p><span class="slug">answers/general</span></div>
+      <div class="side"><textarea id="general" rows="5" placeholder="Notes" aria-label="General notes" disabled></textarea></div>
+    </div>
+  </section>
+
+  <footer class="prose">
+    <p>Written up in <code>docs/explorations/2026-11-14-enemies-and-ai.md</code>, which lists the sources. Things recalled from memory rather than read are marked unverified there.</p>
+    <p>Sources: Magickapedia (enemy table and family pages), carlsguides chapters 6, 8 and 11, a Steam weakness thread, PCGamesN and GamesBeat on Magicka 2, Game Developer on melee enemy AI, Dave Mark's utility AI, Mike Booth on the Left 4 Dead director, Irrational on Elizabeth.</p>
+  </footer>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { for (const k of ['stage', 'stage-line', 'stage-ink', 'wiz', 'foe', 'ally', 'fire', 'water', 'cold', 'light', 'earth', 'life', 'arcane', 'shield']) C[k] = css('--' + k); };
+readColors();
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', readColors);
+
+// ---------- drawing helpers (art units: a vignette is 160 x 70) ----------
+const TAU = Math.PI * 2;
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = (t) => t * t * (3 - 2 * t);
+const seg = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+function dot(g, x, y, r, col, ring) { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fillStyle = col; g.fill(); if (ring) { g.lineWidth = 1; g.strokeStyle = ring; g.stroke(); } }
+function circ(g, x, y, r, col, w = 1, dash) { g.beginPath(); g.setLineDash(dash || []); g.arc(x, y, r, 0, TAU); g.lineWidth = w; g.strokeStyle = col; g.stroke(); g.setLineDash([]); }
+function line(g, x1, y1, x2, y2, col, w = 1, dash) { g.beginPath(); g.setLineDash(dash || []); g.moveTo(x1, y1); g.lineTo(x2, y2); g.lineWidth = w; g.strokeStyle = col; g.stroke(); g.setLineDash([]); }
+function txt(g, s, x, y, col, size = 7) { g.font = `600 ${size}px ${css('--f-mono') || 'monospace'}`; g.fillStyle = col; g.textAlign = 'center'; g.fillText(s, x, y); }
+function ground(g) { g.fillStyle = C.stage; g.fillRect(0, 0, 160, 70); g.strokeStyle = C['stage-line']; g.lineWidth = 0.5; for (let x = 10; x < 160; x += 20) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 70); g.stroke(); } }
+const wiz = (g, x, y) => dot(g, x, y, 4, C.wiz, '#0006');
+const foe = (g, x, y, r = 3.2, col) => dot(g, x, y, r, col || C.foe, '#0006');
+function alpha(g, a, f) { g.save(); g.globalAlpha = a; f(); g.restore(); }
+
+// ---------- the bestiary ----------
+const ENEMIES = [
+  { id: 'sapper', name: 'Sapper', kin: 'goblin', from: 'Goblin bomber (M1)', q: 'Can you turn their weapon on them?', first: true,
+    fights: 'Lobs a fused bomb at a marked spot; it lies 1.5 s, then bursts (knockback, burn). Fire on the sapper sets off its satchel.',
+    answers: 'Push or an Area Force sends the bombs back; fire it inside its own crowd; a wall soaks the burst.',
+    cost: 'A lobbed missile with a ground mark and a fuse. Bombs are bodies Force can push. Small.',
+    draw(g, t) { ground(g); wiz(g, 120, 38); foe(g, 24, 40); foe(g, 34, 28); foe(g, 32, 52);
+      const fl = seg(t, 0.05, 0.4), bx = lerp(28, 110, fl), by = lerp(38, 40, fl) - Math.sin(fl * Math.PI) * 26;
+      if (t < 0.75) circ(g, 110, 40, 9, C.fire, 0.8, [2, 2]);
+      if (t > 0.05 && t < 0.4) dot(g, bx, by, 2.2, '#222', C.fire);
+      if (t >= 0.4 && t < 0.62) { dot(g, 110, 40, 2.4, '#222', C.fire); if (Math.floor(t * 40) % 2) dot(g, 110, 37, 1, C.fire); }
+      if (t >= 0.62 && t < 0.75) { const k = seg(t, 0.62, 0.75); circ(g, 110, 40, 3 + k * 14, C.fire, 2); }
+      if (t > 0.5 && t < 0.62) { line(g, 120, 38, 112, 40, C.shield, 1); txt(g, 'push', 128, 26, C['stage-ink']); }
+      if (t >= 0.62) { const k = seg(t, 0.62, 0.95); txt(g, 'pushed back', 70, 64, C['stage-ink']); } } },
+  { id: 'charger', name: 'Charger', kin: 'beast', from: 'Beast brute (M1)', q: 'Can you use walls?', first: true,
+    fights: 'Walks slowly. Within about 6 u it paws the ground (a long tell), then charges in a straight line. Hitting rock or a barrier stuns it for 2 s.',
+    answers: 'Sidestep; drop a wall in its line and punish the stun.',
+    cost: 'A dash attack (the grabber has one) that ends on a wall hit with a stun. Small.',
+    draw(g, t) { ground(g); wiz(g, 140, 35); line(g, 112, 18, 112, 52, C.earth, 3);
+      const paw = t < 0.35, x = paw ? 24 + Math.sin(t * 90) * 1.2 : lerp(24, 105, ease(seg(t, 0.35, 0.55)));
+      if (paw) line(g, 30, 35, 104, 35, C.foe, 0.8, [3, 3]);
+      foe(g, x, 35, 6);
+      if (t > 0.55) { const k = (t * 8) % 1; for (let i = 0; i < 3; i++) { const a = k * TAU + i * TAU / 3; dot(g, 105 + Math.cos(a) * 8, 26 + Math.sin(a) * 2, 1.2, C.shield); } txt(g, 'stunned 2 s', 90, 62, C['stage-ink']); } } },
+  { id: 'troll', name: 'Troll', kin: 'troll', from: 'Magicka trolls', q: 'Can you keep it burning?', first: true,
+    fights: 'Big and slow with a heavy club and a ground tell. Heals fast unless it is burning. Grabs a wizard and chews slowly; an ally or a big hit frees them. Won\'t grab a wizard who\'s burning or wearing stone.',
+    answers: 'One player keeps it burning while the other deals damage; rescue the grabbed; a Fire or stone ward on whoever it\'s chasing.',
+    cost: 'Regeneration gated on burning, and the grabber\'s hold with a slower drain. Medium.',
+    draw(g, t) { ground(g); wiz(g, 30, 40); wiz(g, 132, 46); const burning = t > 0.45;
+      foe(g, 92, 34, 11, '#7b6a4c');
+      const hp = burning ? lerp(0.85, 0.35, seg(t, 0.45, 1)) : 0.6 + 0.25 * seg(t, 0, 0.45);
+      g.fillStyle = '#0008'; g.fillRect(72, 14, 40, 3); g.fillStyle = C.life; g.fillRect(72, 14, 40 * hp, 3);
+      if (!burning) { const k = (t * 5) % 1; txt(g, '+', 100 + k * 3, 30 - k * 10, C.life, 9); txt(g, 'regenerating', 92, 64, C['stage-ink']); }
+      else { for (let i = 0; i < 5; i++) { const k = (t * 3 + i / 5) % 1; dot(g, 84 + i * 4, 30 - k * 12, 1.6 * (1 - k), C.fire); } line(g, 36, 40, 80, 36, C.fire, 1.5); txt(g, 'burning: no regen', 92, 64, C['stage-ink']); } } },
+  { id: 'shaman', name: 'Warding shaman', kin: 'goblin', from: 'Goblin shaman, Alpha auras (M1)', q: 'Can you prioritise, or switch element?', first: true,
+    fights: 'Stays back and raises a ward of one element over itself and every ally within 4 u, shown with the game\'s ward outline. Recasts on a long timer and flees when approached.',
+    answers: 'Kill it first (Point, Yank, a flank), or switch element.',
+    cost: 'Wards already exist for wizards; this applies one to enemy bodies. Small.',
+    draw(g, t) { ground(g); wiz(g, 18, 35); const sx = 128, sy = 35;
+      circ(g, sx, sy, 30, C.water, 0.8, [3, 3]); foe(g, sx, sy, 3, '#9d6fd1');
+      for (const [x, y] of [[100, 22], [104, 48], [112, 35]]) { foe(g, x, y); circ(g, x, y, 5, C.fire, 1.2); }
+      circ(g, sx, sy, 5, C.fire, 1.2);
+      const k = seg(t, 0.1, 0.5); if (k > 0 && k < 1) dot(g, lerp(24, 108, k), 35, 2.4, C.fire);
+      if (t >= 0.5 && t < 0.8) { txt(g, 'resisted', 104, 62, C['stage-ink']); circ(g, 112, 35, 7 + seg(t, 0.5, 0.8) * 4, C.fire, 1); } } },
+  { id: 'hedge', name: 'Hedge wizard', kin: 'goblin', from: 'Goblin shamans and wizards (M1)', q: 'Can you use their spells against them?', first: true,
+    fights: 'Casts real spells from our grammar from a short list (wet then shock, a fire spray), with clear wind-ups, and aims loosely. Its sprays and arcs hit goblins as readily as you. Frail.',
+    answers: 'Bait it into its own crowd; ward against its element; kill it quickly.',
+    cost: 'An enemy that queues runes and casts through the same compile path as a wizard. The stepping stone to companions and the rival wizard. Medium.',
+    draw(g, t) { ground(g); wiz(g, 132, 36); const hx = 30, hy = 36;
+      foe(g, hx, hy, 3.4, '#5e8f6a'); foe(g, 78, 30); foe(g, 84, 44);
+      if (t < 0.35) { const k = (t * 6) % 1; circ(g, hx, hy, 6 + k * 3, C.water, 1); txt(g, 'wind-up', hx, 58, C['stage-ink']); }
+      else if (t < 0.8) { g.beginPath(); g.moveTo(hx + 3, hy); g.arc(hx, hy, 70, -0.22, 0.22); g.closePath(); g.fillStyle = C.water + '55'; g.fill();
+        for (const [x, y] of [[78, 30], [84, 44]]) circ(g, x, y, 5, C.water, 1.2); txt(g, 'its own goblins soaked', 90, 64, C['stage-ink']); }
+      else { txt(g, 'next: shock', hx + 40, 64, C['stage-ink']); } } },
+  { id: 'leaper', name: 'Leaper', kin: 'beast', from: 'Beast raider (M1)', q: 'Can you hit what won\'t stand still?',
+    fights: 'Leaps 6 to 8 u to a marked landing spot, its shadow growing there first. Now and then sidesteps one missile.',
+    answers: 'An Area cast on the landing; a glyph; a stun mid-air.',
+    cost: 'A jump with a landing mark (the brute\'s locked circle, smaller). Small.',
+    draw(g, t) { ground(g); wiz(g, 130, 36); const k = ease(seg(t, 0.25, 0.7)), x = lerp(26, 104, k), y = 40 - Math.sin(k * Math.PI) * 24;
+      if (t < 0.7) { const s = seg(t, 0, 0.7); dot(g, 104, 42, 2 + s * 5, '#0007'); circ(g, 104, 42, 8, C.foe, 0.8, [2, 2]); }
+      foe(g, x, t < 0.25 ? 40 : y, 3.6); if (t > 0.7) { circ(g, 104, 42, 4 + seg(t, 0.7, 0.85) * 10, C['stage-ink'], 1); txt(g, 'lands where marked', 80, 64, C['stage-ink']); } } },
+  { id: 'slime', name: 'Mire slime', kin: 'elemental', from: 'Demons splitting (M1), the 11-03 water slime', q: 'Do you finish with a big blow?',
+    fights: 'Slow and wet, and soaks whatever it touches. A small hit that kills it splits it in two; one spell of 3+ runes kills it clean. Lightning hurts it double.',
+    answers: 'Charge a bigger spell; shock the puddle.',
+    cost: 'A death rule keyed on the size of the killing hit, and a smaller spawn. Small.',
+    draw(g, t) { ground(g); wiz(g, 20, 36);
+      if (t < 0.3) { dot(g, 110, 38, 9, C.water + 'cc', '#0006'); const k = seg(t, 0.05, 0.3); dot(g, lerp(26, 100, k), 37, 1.6, C.arcane); }
+      else if (t < 0.65) { const k = ease(seg(t, 0.3, 0.45)); dot(g, 110 - k * 10, 38 - k * 8, 6, C.water + 'cc', '#0006'); dot(g, 110 + k * 10, 38 + k * 8, 6, C.water + 'cc', '#0006'); txt(g, 'small hit: splits', 80, 64, C['stage-ink']); }
+      else { const k = seg(t, 0.65, 0.8); dot(g, lerp(26, 100, k), 30, 3.6, C.light); if (k >= 1) { circ(g, 100, 30, 4 + seg(t, 0.8, 1) * 12, C.light, 1.5); dot(g, 120, 46, 6, C.water + 'cc', '#0006'); txt(g, 'big hit: clean', 80, 64, C['stage-ink']); } else { dot(g, 100, 30, 6, C.water + 'cc', '#0006'); dot(g, 120, 46, 6, C.water + 'cc', '#0006'); } } } },
+  { id: 'gravecaller', name: 'Gravecaller', kin: 'human', from: 'Necromancer (M1)', q: 'Can you reach the source?',
+    fights: 'Raises shambling dead from fallen enemies\' bodies (a 1 s tell on each corpse) and keeps to the middle of them. The dead are weak, and Life hurts them.',
+    answers: 'Life sprays or rings; a Point cast on it; Yank it out.',
+    cost: 'Corpses as a short-lived world thing, and a summon. Medium.',
+    draw(g, t) { ground(g); wiz(g, 20, 36); foe(g, 112, 36, 3.4, '#6b5a8f');
+      const pts = [[92, 22], [96, 50], [130, 26], [132, 48], [86, 36]];
+      pts.forEach(([x, y], i) => { const k = seg(t, 0.15 + i * 0.07, 0.35 + i * 0.07);
+        if (k <= 0) txt(g, '×', x, y + 3, '#8a8f8a', 8); else if (k < 1) circ(g, x, y, 2 + k * 4, '#b9a6e6', 1); else foe(g, x, y, 2.6, '#8f9a8c'); });
+      if (t > 0.75) txt(g, 'it hides among them', 80, 66, C['stage-ink']); } },
+  { id: 'singer', name: 'Stone-singer', kin: 'dwarf', from: 'Dwarf priest (M1)', q: 'Do you raise a shield in time?',
+    fights: 'Charges a boulder for 2.5 s with a loud tell, then throws it hard enough to down a wizard. Wards itself against lightning.',
+    answers: 'A barrier or a stone ward; interrupt it with a stun; knock it into a hazard.',
+    cost: 'A long-charge missile; the rest exists. Small.',
+    draw(g, t) { ground(g); wiz(g, 132, 36); foe(g, 24, 36, 4.2, '#8a7a62');
+      if (t < 0.55) { const k = seg(t, 0, 0.55); dot(g, 34, 36, 2 + k * 6, C.earth, '#0006'); txt(g, 'charging', 30, 60, C['stage-ink']); }
+      if (t > 0.35) { g.beginPath(); g.arc(132, 36, 12, Math.PI * 0.7, Math.PI * 1.3); g.lineWidth = 2.5; g.strokeStyle = C.shield; g.stroke(); }
+      if (t >= 0.55 && t < 0.78) dot(g, lerp(34, 118, seg(t, 0.55, 0.78)), 36, 8, C.earth, '#0006');
+      if (t >= 0.78) { const k = seg(t, 0.78, 1); for (let i = 0; i < 6; i++) { const a = Math.PI * 0.6 + i * 0.25; dot(g, 118 + Math.cos(a) * k * 16, 36 + Math.sin(a) * k * 16, 2, C.earth); } txt(g, 'shield held', 120, 62, C['stage-ink']); } } },
+  { id: 'elemental', name: 'Element-born', kin: 'elemental', from: 'Darksouls (M1), our fire imp', q: 'Do you read the battlefield?',
+    fights: 'A family made of one element each: immune to it, weak to its opposite, and leaving its element on whoever it hits. A frost wisp, a storm wisp, a mud-thing, next to the fire imp.',
+    answers: 'Element choice.',
+    cost: 'Data on the imp\'s pattern, plus art per variant. Small each.',
+    draw(g, t) { ground(g); const xs = [[30, C.fire, 'fire'], [65, C.cold, 'frost'], [100, C.light, 'storm'], [135, C.earth, 'mud']];
+      xs.forEach(([x, c, n], i) => { const b = Math.sin(t * TAU + i) * 3; for (let j = 0; j < 4; j++) { const a = t * TAU * 2 + j * TAU / 4; dot(g, x + Math.cos(a) * 7, 30 + b + Math.sin(a) * 3, 1.1, c); } dot(g, x, 30 + b, 4, c, '#0006'); txt(g, n, x, 58, C['stage-ink']); }); } },
+  { id: 'mirror', name: 'Mirror', kin: 'construct', from: 'The 11-03 reflector', q: 'Can you switch forms?',
+    fights: 'Reflects missiles and beams that strike its face back along their path.',
+    answers: 'Area, Place and Weapon casts, which don\'t travel through it.',
+    cost: 'A reflect rule in the missile and beam code. Medium (beams).',
+    draw(g, t) { ground(g); wiz(g, 24, 36); line(g, 118, 22, 118, 50, '#d9e6ee', 3); foe(g, 126, 36, 4, '#7d8fa0');
+      const k = t < 0.5 ? seg(t, 0, 0.5) : 1 - seg(t, 0.5, 1); dot(g, lerp(30, 114, k), 36, 2.2, C.arcane);
+      if (t > 0.5) txt(g, 'reflected', 70, 60, C['stage-ink']); } },
+  { id: 'burrower', name: 'Burrower', kin: 'beast', from: 'The 11-03 burrower', q: 'Did you prepare?',
+    fights: 'Surfaces from marked holes on a beat you can learn.',
+    answers: 'Glyphs, turrets and walls placed in the lull.',
+    cost: 'Spawn points with a visible rhythm; the encounter runner can drive them. Small.',
+    draw(g, t) { ground(g); wiz(g, 20, 36); const holes = [[70, 20], [110, 46], [140, 22]];
+      holes.forEach(([x, y], i) => { dot(g, x, y, 5, '#0009'); const beat = (t * 2 + i / 3) % 1; circ(g, x, y, 5 + beat * 6, C.foe, 0.8); });
+      circ(g, 110, 46, 8, C.arcane, 1, [2, 1]); if (t > 0.6) { foe(g, 110, 46); circ(g, 110, 46, 4 + seg(t, 0.6, 0.8) * 10, C.arcane, 1.5); txt(g, 'a glyph was waiting', 80, 66, C['stage-ink']); } } },
+  { id: 'rival', name: 'Rival wizard', kin: 'elite', from: 'Grimnir, the Aristocrats (M1)', q: 'Can you out-cast a wizard?',
+    fights: 'A full wizard body run by the companion brain (below) on the enemy side: wards itself, blinks, dries itself when wet, heals.',
+    answers: 'Everything you know. A mini-boss.',
+    cost: 'Comes free once companions exist. Large before that.',
+    draw(g, t) { ground(g); wiz(g, 24, 36); const bx = t < 0.5 ? 120 : 132, by = t < 0.5 ? 30 : 48;
+      if (t > 0.45 && t < 0.55) circ(g, 120, 30, 6, C.shield, 1, [2, 2]);
+      dot(g, bx, by, 4, '#c25a5a', '#0006'); circ(g, bx, by, 6.5, C.light, 1);
+      const k = seg(t, 0.1, 0.48); if (k > 0 && k < 1) line(g, 30, 36, lerp(30, 120, k), lerp(36, 30, k), C.light, 1.5);
+      txt(g, t < 0.5 ? 'warded vs lightning' : 'blinked away', 100, 64, C['stage-ink']); } },
+];
+
+// ---------- AI layers ----------
+const ENEMY_AI = [
+  { id: 'ai-tokens', name: 'Attack tokens', rec: true, body: 'An enemy takes a token from the wizard it targets before a wind-up: 2 melee, 1 ranged and 1 heavy per wizard, scaled by difficulty. Without one it waits on a ring, shuffles and feints. Tokens come back on a strike, a stun, a freeze, death or a timeout. Aztez also never lets two enemies use the same attack type at once.' },
+  { id: 'ai-slots', name: 'Surround slots', rec: true, body: 'Waiting enemies take the nearest free slot on a ring round their target and swap now and then, so they spread out and flank rather than stack. The shieldbearer takes the front slot and goblins the sides.' },
+  { id: 'ai-react', name: 'React to the floor, with a delay', rec: true, body: 'Enemies step out of danger they can see (a burning patch, a geyser mark, a brute\'s circle, a sapper\'s bomb) after a 0.3 to 0.5 s delay, so it looks like they noticed rather than knew. Burning goblins panic and run, spreading fire. A shaman wets itself to put a fire out.' },
+  { id: 'ai-target', name: 'Sticky targeting', rec: true, body: 'A score per wizard (distance, who hurt it recently, a Double\'s taunt), and once picked, a target is kept for at least 2 s so attention doesn\'t flicker. Never a downed wizard.' },
+  { id: 'ai-pacing', name: 'A pacing director', rec: true, body: 'A stress number per wizard rises with damage taken and nearby enemies and decays. While it\'s high, the encounter runner holds new spawns. This is the Left 4 Dead director in about 30 lines, and it protects the lulls that preparation (pillar 7) needs.' },
+  { id: 'ai-difficulty', name: 'Difficulty turns the knobs above, not HP', rec: true, body: 'Harder means more tokens, a shorter reaction delay, shorter telegraphs and quicker re-attacks. HP and damage stay as tuned, so fights stay readable at any difficulty.' },
+];
+const COMP_AI = [
+  { id: 'ai-inputbot', name: 'A companion presses buttons', rec: true, body: 'A companion is a wizard body driven by an input bot, like today\'s bot pilot: it queues runes it can pay for, aims and casts. It obeys every rule a player does, friendly fire included, and is deterministic. Its memory moves into world state so it runs on every peer under rollback.' },
+  { id: 'ai-utility', name: 'Utility scoring over about ten plays', rec: true, body: 'Heal or ward an ally, soak then shock a group, an arc of stone against a crowd, interrupt a brute\'s wind-up, free a grabbed ally, Rally a downed one, reposition, attack your target, step out of danger. Each play gets a score from a few inputs and the best one runs. It commits for at least 0.5 s, and a new play has to beat the current one by a margin, so it doesn\'t twitch. Each enemy\'s question gets a known answer, which the bot half-has already.' },
+  { id: 'ai-habits', name: 'The five habits', rec: true, body: 'Stay on a follow ring, out of your aim cone. Test every cast\'s footprint with the sim\'s own hit shapes and hold it if an ally is inside. Complement you: what you just cast makes its counterpart score higher (you soak, it shocks). Rescues first. Show intent with a glyph a beat before acting.' },
+  { id: 'ai-profiles', name: 'Profiles, not personalities', rec: true, body: 'Healer, warden and striker are weight sets over the same plays. Cheap variety for "many characters, met in simple ways".' },
+  { id: 'ai-limits', name: 'Fair limits', rec: true, body: 'A 0.3 s reaction delay and a slower queue than a skilled player, so a companion never out-supports a person (pillar 3).' },
+  { id: 'ai-gambits', name: 'Editable gambit lists (FFXII, Dragon Age)', rec: false, body: 'Not proposed: an editor for "if this, then cast that" rules is a minigame outside the spell language (pillar 6), and far more than looking sensible needs. Listed so it can be rejected on the record.' },
+];
+
+const QUESTIONS = [
+  { id: 'q-1-first', n: 1, title: 'The first batch', text: 'Which enemies to build first. The recommendation pays off verbs we already have (Force push, walls, Fire, element switching, the spell language) and adds a lobbed threat, a line threat, a sustain check, a priority target and enemy friendly fire.',
+    choices: [['five', 'Sapper, Charger, Troll, Warding shaman, Hedge wizard', 'rec'], ['three', 'Just three: Sapper, Charger, Troll (no casters yet)'], ['marks', 'Go by my Build marks on the cards']] },
+  { id: 'q-2-casters', n: 2, title: 'Enemies cast our spells', text: 'Should enemy casters (hedge wizard, shaman, rival) cast real spells from the grammar, with the same wind-up and friendly fire, or bespoke attacks like the archer\'s bolt?',
+    choices: [['grammar', 'Real spells, from short fixed lists per enemy', 'rec'], ['bespoke', 'Bespoke attacks only'], ['elites', 'Real spells only for elites and bosses']] },
+  { id: 'q-3-tokens', n: 3, title: 'How many attack at once', text: 'Attack tokens per wizard on normal difficulty. Today there\'s no limit.',
+    choices: [['2-1-1', '2 melee + 1 ranged + 1 heavy', 'rec'], ['3-2-1', '3 melee + 2 ranged + 1 heavy (busier)'], ['none', 'No tokens; keep it as it is']] },
+  { id: 'q-4-panic', n: 4, title: 'Burning goblins panic', text: 'Goblin-sized enemies that catch fire run about for a moment, spreading fire, as in Magicka. Panic for wizards was rejected; this is enemies only.',
+    choices: [['yes', 'Yes, goblins and other small ones', 'rec'], ['no', 'No']] },
+  { id: 'q-5-who', n: 5, title: 'What a companion is', text: 'Who fights beside you when it isn\'t another player.',
+    choices: [['classmates', 'Classmates in campaign segments first; summons later', 'rec'], ['summons', 'Only summons and conjured helpers'], ['fill', 'Bots that fill empty co-op seats'], ['none', 'No companions for now']] },
+  { id: 'q-6-orders', n: 6, title: 'How much you control a companion', text: 'Orders cost a key and attention; none means trusting the AI.',
+    choices: [['later-key', 'Nothing at first; one stance key later (follow, hold, focus my target)', 'rec'], ['key-now', 'A stance key from the start'], ['none', 'Never; they act on their own']] },
+  { id: 'q-7-rules', n: 7, title: 'Companions obey the rules', text: 'Companions pay runes, wind up and can hurt you, exactly as a player does. The alternative is cheating quietly (free casts, no friendly fire).',
+    choices: [['same', 'Same rules as players', 'rec'], ['no-ff', 'Same, but they can\'t hurt allies'], ['cheat', 'Cheat freely if it looks better']] },
+];
+
+// ---------- saved marks and answers (db) ----------
+let db = null;
+const ratings = {}, answers = {}, chains = {};
+const setSave = (s, bad) => { const e = $('save'); e.textContent = s; e.classList.toggle('bad', !!bad); };
+function write(col, id, doc) {
+  if (!db) return;
+  const k = col + '/' + id;
+  chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set({ ...doc, updatedAt: new Date().toISOString() })).then(() => setSave('All saved')).catch(() => setSave('Couldn’t save that. Check your connection and try again.', true));
+}
+function putRating(id, patch) { ratings[id] = { mark: null, note: '', ...ratings[id], ...patch }; write('ratings', id, { mark: ratings[id].mark || null, note: ratings[id].note || '' }); paint(); }
+function putAnswer(id, patch) { answers[id] = { choice: null, note: '', ...answers[id], ...patch }; write('answers', id, { choice: answers[id].choice || null, note: answers[id].note || '' }); paint(); }
+function noteBox(ta, get, put) {
+  let timer;
+  ta.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => put({ note: ta.value }), 900); });
+  ta.addEventListener('blur', () => { clearTimeout(timer); if ((get()?.note || '') !== ta.value) put({ note: ta.value }); });
+}
+
+// ---------- build the cards ----------
+const markers = [];
+const vignettes = [];
+const MARKS = [['build', 'Build'], ['maybe', 'Maybe'], ['cut', 'Cut']];
+for (const e of ENEMIES) {
+  const slug = 'en-' + e.id;
+  const card = el('article', 'card' + (e.first ? ' first' : '')); card.id = slug;
+  const head = el('header', null, `<h3>${esc(e.name)}</h3><span>${e.first ? '<span class="chip rec">first batch</span> ' : ''}<span class="chip">${esc(e.kin)}</span></span>`);
+  const cv = el('canvas'); cv.width = 480; cv.height = 210; cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', e.name + ': ' + e.fights);
+  vignettes.push({ cv, draw: e.draw, off: Math.random() });
+  const q = el('p', 'q', esc(e.q));
+  const dl = el('dl', null, `<dt>Fights</dt><dd>${esc(e.fights)}</dd><dt>Answers</dt><dd>${esc(e.answers)}</dd><dt>From</dt><dd>${esc(e.from)}</dd><dt>Cost</dt><dd>${esc(e.cost)}</dd>`);
+  const row = el('div', 'marks'); row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Mark ' + e.name);
+  for (const [v, label] of MARKS) { const b = el('button', null, label); b.type = 'button'; b.dataset.v = v; b.disabled = true;
+    b.addEventListener('click', () => putRating(slug, { mark: ratings[slug]?.mark === v ? null : v })); row.append(b); }
+  const ta = el('textarea'); ta.rows = 2; ta.id = 'note-' + slug; ta.placeholder = 'Note (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on ' + e.name);
+  noteBox(ta, () => ratings[slug], (p) => putRating(slug, p));
+  card.append(head, cv, q, dl, row, ta, el('span', 'slug', 'ratings/' + slug));
+  markers.push({ slug, row, ta });
+  $('roster').append(card);
+}
+const LAYER_MARKS = [['yes', 'Yes'], ['maybe', 'Maybe'], ['no', 'No']];
+function layers(list, host) {
+  for (const L of list) {
+    const r = el('div', 'layer'); r.id = L.id;
+    r.append(el('div', null, `<h3>${esc(L.name)} ${L.rec ? '<span class="chip rec">recommended</span>' : '<span class="chip">not proposed</span>'}</h3><p>${esc(L.body)}</p><span class="slug">ratings/${L.id}</span>`));
+    const side = el('div', 'side');
+    const row = el('div', 'marks'); row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Rate ' + L.name);
+    for (const [v, label] of LAYER_MARKS) { const b = el('button', null, label); b.type = 'button'; b.dataset.v = v; b.disabled = true;
+      b.addEventListener('click', () => putRating(L.id, { mark: ratings[L.id]?.mark === v ? null : v })); row.append(b); }
+    const ta = el('textarea'); ta.rows = 2; ta.id = 'note-' + L.id; ta.placeholder = 'Note (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on ' + L.name);
+    noteBox(ta, () => ratings[L.id], (p) => putRating(L.id, p));
+    side.append(row, ta); r.append(side);
+    markers.push({ slug: L.id, row, ta });
+    host.append(r);
+  }
+}
+layers(ENEMY_AI, $('enemy-layers'));
+layers(COMP_AI, $('comp-layers'));
+
+const askers = [];
+for (const Q of QUESTIONS) {
+  const r = el('article', 'qrow'); r.id = Q.id;
+  const rec = Q.choices.find((c) => c[2] === 'rec');
+  r.append(el('div', 'qtext', `<h3><span class="qn">${Q.n}</span>${esc(Q.title)}</h3><p>${esc(Q.text)}</p><p class="small"><b>Recommended:</b> ${esc(rec[1])}.</p><span class="slug">answers/${Q.id}</span>`));
+  const side = el('div', 'side'), ch = el('div', 'choices'); ch.setAttribute('role', 'group'); ch.setAttribute('aria-label', Q.title);
+  for (const [v, label, tag] of Q.choices) { const b = el('button', null, esc(label) + (tag === 'rec' ? '<span class="chip rec">Recommended</span>' : '')); b.type = 'button'; b.dataset.v = v; b.disabled = true;
+    b.addEventListener('click', () => putAnswer(Q.id, { choice: answers[Q.id]?.choice === v ? null : v })); ch.append(b); }
+  const ta = el('textarea'); ta.rows = 2; ta.id = 'ans-' + Q.id; ta.placeholder = 'Note (optional)'; ta.disabled = true; ta.setAttribute('aria-label', 'Note on ' + Q.title);
+  noteBox(ta, () => answers[Q.id], (p) => putAnswer(Q.id, p));
+  side.append(ch, ta); r.append(side);
+  askers.push({ id: Q.id, ch, ta });
+  $('questions').append(r);
+}
+const gen = $('general'); noteBox(gen, () => answers.general, (p) => putAnswer('general', p));
+
+function paint() {
+  let marked = 0, build = 0;
+  for (const M of markers) {
+    const r = ratings[M.slug] || {};
+    if (M.slug.startsWith('en-') && r.mark) { marked++; if (r.mark === 'build') build++; }
+    for (const b of M.row.children) { b.setAttribute('aria-pressed', String(b.dataset.v === r.mark)); b.disabled = !db; }
+    M.ta.disabled = !db;
+    if (document.activeElement !== M.ta && M.ta.value !== (r.note || '')) M.ta.value = r.note || '';
+  }
+  $('tally').textContent = `${marked} of ${ENEMIES.length} enemies marked · ${build} to build`;
+  let a = 0;
+  for (const A of askers) {
+    const ans = answers[A.id] || {}; if (ans.choice) a++;
+    for (const b of A.ch.children) { b.setAttribute('aria-pressed', String(b.dataset.v === ans.choice)); b.disabled = !db; }
+    A.ta.disabled = !db;
+    if (document.activeElement !== A.ta && A.ta.value !== (ans.note || '')) A.ta.value = ans.note || '';
+  }
+  gen.disabled = !db;
+  if (document.activeElement !== gen && gen.value !== (answers.general?.note || '')) gen.value = answers.general?.note || '';
+  $('qtally').textContent = `${a} of ${QUESTIONS.length} answered`;
+}
+
+// ---------- vignette loop ----------
+const LOOP = 3.6;
+function drawVignettes(now) {
+  for (const v of vignettes) {
+    const g = v.cv.getContext('2d'); g.setTransform(v.cv.width / 160, 0, 0, v.cv.height / 70, 0, 0);
+    const t = REDUCED ? 0.6 : ((now / 1000 / LOOP + v.off) % 1);
+    v.draw(g, t);
+  }
+}
+
+// ---------- token demo ----------
+const TK = { on: true, n: 2, foes: [], hits: [], t: 0 };
+const TW = 640, TH = 480, U = 26; // px per unit
+function tkReset() {
+  TK.foes = []; TK.hits = []; TK.t = 0;
+  for (let i = 0; i < 9; i++) { const a = i / 9 * TAU; TK.foes.push({ x: Math.cos(a) * 9, y: Math.sin(a) * 7, st: 'approach', tm: 0, slot: a, tok: false }); }
+}
+function tkStep(dt) {
+  TK.t += dt;
+  const wx = Math.cos(TK.t * 0.25) * 1.5, wy = Math.sin(TK.t * 0.25) * 1.0;
+  let held = TK.foes.filter((f) => f.tok).length;
+  for (const f of TK.foes) {
+    const dx = wx - f.x, dy = wy - f.y, d = Math.hypot(dx, dy) || 1;
+    if (f.st === 'approach') {
+      const wantRing = TK.on && !f.tok;
+      if (wantRing && d < 3.6 && held < TK.n) { f.tok = true; held++; }
+      if (TK.on && !f.tok) {
+        f.slot += dt * 0.35 * (f.x > 0 ? 1 : -1) * 0.5;
+        const tx = wx + Math.cos(f.slot) * 3.2, ty = wy + Math.sin(f.slot) * 3.2, ex = tx - f.x, ey = ty - f.y, el2 = Math.hypot(ex, ey);
+        if (el2 > 0.1) { f.x += ex / el2 * Math.min(el2, 3.2 * dt); f.y += ey / el2 * Math.min(el2, 3.2 * dt); }
+      } else if (d > 0.75) { f.x += dx / d * 3.2 * dt; f.y += dy / d * 3.2 * dt; }
+      else { f.st = 'windup'; f.tm = 0; }
+    } else if (f.st === 'windup') { f.tm += dt; if (f.tm >= 0.6) { f.st = 'cool'; f.tm = 0; TK.hits.push(TK.t); } }
+    else { f.tm += dt; if (f.tm >= 0.9) { f.st = 'approach'; f.tm = 0; if (f.tok) { f.tok = false; held--; f.slot = Math.atan2(f.y - wy, f.x - wx); } } }
+  }
+  // keep bodies apart
+  for (let i = 0; i < TK.foes.length; i++) for (let j = i + 1; j < TK.foes.length; j++) {
+    const a = TK.foes[i], b = TK.foes[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+    if (d < 0.6) { const p = (0.6 - d) / 2; a.x -= dx / d * p; a.y -= dy / d * p; b.x += dx / d * p; b.y += dy / d * p; }
+  }
+  for (const f of TK.foes) { const dx = f.x - wx, dy = f.y - wy, d = Math.hypot(dx, dy) || 1; if (d < 0.7) { f.x = wx + dx / d * 0.7; f.y = wy + dy / d * 0.7; } }
+  TK.hits = TK.hits.filter((h) => TK.t - h < 10);
+  return [wx, wy];
+}
+function tkDraw([wx, wy]) {
+  const cv = $('tokens'), g = cv.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = C.stage; g.fillRect(0, 0, TW, TH);
+  g.strokeStyle = C['stage-line']; g.lineWidth = 1; for (let x = 0; x < TW; x += U) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, TH); g.stroke(); } for (let y = 0; y < TH; y += U) { g.beginPath(); g.moveTo(0, y); g.lineTo(TW, y); g.stroke(); }
+  const P = (x, y) => [TW / 2 + x * U, TH / 2 + y * U];
+  const [cx, cy] = P(wx, wy);
+  if (TK.on) { g.setLineDash([5, 5]); g.beginPath(); g.arc(cx, cy, 3.2 * U, 0, TAU); g.strokeStyle = C['stage-ink'] + '55'; g.stroke(); g.setLineDash([]); }
+  let winding = 0;
+  for (const f of TK.foes) {
+    const [x, y] = P(f.x, f.y), w = f.st === 'windup';
+    if (w) { winding++; g.beginPath(); g.moveTo(x, y); g.lineTo(cx, cy); g.strokeStyle = C.foe + '99'; g.lineWidth = 2; g.stroke(); }
+    g.beginPath(); g.arc(x, y, 0.32 * U, 0, TAU); g.fillStyle = w ? C.foe : (f.st === 'cool' ? '#b4786c' : '#8b6f66'); g.fill();
+    if (f.tok) { g.beginPath(); g.arc(x, y - 0.55 * U, 3, 0, TAU); g.fillStyle = C.shield; g.fill(); }
+  }
+  g.beginPath(); g.arc(cx, cy, 0.42 * U, 0, TAU); g.fillStyle = C.wiz; g.fill();
+  TK.peak = Math.max(TK.peak || 0, winding);
+  const dps = (TK.hits.length * 5) / Math.min(10, Math.max(TK.t, 0.001));
+  $('tk-read').textContent = `${winding} winding up now · ${TK.hits.length} blows in the last 10 s (≈${dps.toFixed(1)} damage/s)`;
+}
+function tkMode(on) { TK.on = on; TK.peak = 0; $('tk-on').setAttribute('aria-pressed', String(on)); $('tk-off').setAttribute('aria-pressed', String(!on)); tkReset(); }
+$('tk-on').addEventListener('click', () => tkMode(true));
+$('tk-off').addEventListener('click', () => tkMode(false));
+$('tk-n').addEventListener('input', (e) => { TK.n = +e.target.value; $('tk-nv').textContent = TK.n; });
+tkReset();
+
+// ---------- companion demo ----------
+const CP = { on: true, x: -2, y: 2, t: 0, blocked: 0, frames: 0, glyph: 0 };
+const ENEMIES_CP = [[6, -2.5], [7.2, 0.5], [6.2, 2.8], [8.5, -1], [8.3, 2]];
+function cpStep(dt) {
+  CP.t += dt;
+  const px = -3 + Math.sin(CP.t * 0.3) * 0.8, py = Math.cos(CP.t * 0.21) * 0.6;
+  const aim = Math.sin(CP.t * 0.9) * 0.55; // radians, sweeping across the crowd
+  let tx, ty;
+  if (!CP.on) { tx = px + 1.8; ty = py + 0.2; } // naive: tag along in front-right, where the action is
+  else {
+    // pick the point on a 2.2 u ring that is furthest from the aim cone, preferring beside and behind
+    let best = null, bs = -1e9;
+    for (let i = 0; i < 24; i++) {
+      const a = i / 24 * TAU, x = px + Math.cos(a) * 2.2, y = py + Math.sin(a) * 2.2;
+      const off = Math.abs(((a - aim + Math.PI) % TAU + TAU) % TAU - Math.PI);
+      const s = Math.min(off, 1.6) * 2 - Math.abs(off - 1.9) * 0.6 - Math.hypot(x - CP.x, y - CP.y) * 0.15;
+      if (s > bs) { bs = s; best = [x, y]; }
+    }
+    [tx, ty] = best;
+  }
+  const dx = tx - CP.x, dy = ty - CP.y, d = Math.hypot(dx, dy);
+  if (d > 0.05) { const v = Math.min(d, 4 * dt); CP.x += dx / d * v; CP.y += dy / d * v; }
+  // in the cone?
+  const rx = CP.x - px, ry = CP.y - py, ang = Math.atan2(ry, rx), off = Math.abs(((ang - aim + Math.PI) % TAU + TAU) % TAU - Math.PI);
+  const inCone = off < 0.32 && Math.hypot(rx, ry) < 12;
+  CP.frames++; if (inCone) CP.blocked++;
+  CP.glyph = (CP.t % 3) / 3;
+  return { px, py, aim, inCone };
+}
+function cpDraw(s) {
+  const cv = $('comp'), g = cv.getContext('2d'), Uc = 30;
+  g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = C.stage; g.fillRect(0, 0, TW, TH);
+  const P = (x, y) => [TW / 2 - 40 + x * Uc, TH / 2 + y * Uc];
+  const [px, py] = P(s.px, s.py);
+  // aim cone
+  g.beginPath(); g.moveTo(px, py); g.arc(px, py, 12 * Uc, s.aim - 0.32, s.aim + 0.32); g.closePath(); g.fillStyle = (s.inCone ? C.foe : C.wiz) + '33'; g.fill();
+  if (CP.on) { g.setLineDash([4, 5]); g.beginPath(); g.arc(px, py, 2.2 * Uc, 0, TAU); g.strokeStyle = C.ally + '88'; g.lineWidth = 1; g.stroke(); g.setLineDash([]); }
+  for (const [ex, ey] of ENEMIES_CP) { const [x, y] = P(ex, ey); g.beginPath(); g.arc(x, y, 0.35 * Uc, 0, TAU); g.fillStyle = C.foe; g.fill(); }
+  // player's shot along the aim
+  const k = (CP.t * 1.4) % 1; g.beginPath(); g.arc(px + Math.cos(s.aim) * k * 11 * Uc, py + Math.sin(s.aim) * k * 11 * Uc, 4, 0, TAU); g.fillStyle = C.fire; g.fill();
+  g.beginPath(); g.arc(px, py, 0.42 * Uc, 0, TAU); g.fillStyle = C.wiz; g.fill();
+  const [cx, cy] = P(CP.x, CP.y);
+  g.beginPath(); g.arc(cx, cy, 0.4 * Uc, 0, TAU); g.fillStyle = C.ally; g.fill();
+  if (s.inCone) { g.lineWidth = 3; g.strokeStyle = C.foe; g.stroke(); }
+  if (CP.on && CP.glyph > 0.55) { // intent glyph, then the cast
+    g.beginPath(); g.moveTo(cx, cy - 22); g.lineTo(cx - 6, cy - 14); g.lineTo(cx + 6, cy - 14); g.closePath(); g.fillStyle = C.light; g.fill();
+    if (CP.glyph > 0.8) { const [ex, ey] = P(7.2, 0.5); g.beginPath(); g.moveTo(cx, cy); g.lineTo(ex, ey); g.strokeStyle = C.light; g.lineWidth = 2; g.stroke(); }
+  }
+  const pct = CP.frames ? Math.round(CP.blocked / CP.frames * 100) : 0;
+  $('cp-read').textContent = `in your line of fire ${pct}% of the time` + (CP.on ? ' · glyph shows a lightning arc coming' : '');
+}
+function cpMode(on) { CP.on = on; CP.blocked = 0; CP.frames = 0; $('cp-on').setAttribute('aria-pressed', String(on)); $('cp-off').setAttribute('aria-pressed', String(!on)); }
+$('cp-on').addEventListener('click', () => cpMode(true));
+$('cp-off').addEventListener('click', () => cpMode(false));
+
+// ---------- run ----------
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  drawVignettes(now);
+  tkDraw(tkStep(REDUCED ? 0 : dt));
+  cpDraw(cpStep(REDUCED ? 0 : dt));
+  if (!REDUCED) requestAnimationFrame(frame);
+}
+if (REDUCED) { for (let i = 0; i < 160; i++) { tkStep(1 / 30); cpStep(1 / 30); } }
+requestAnimationFrame(frame);
+
+paint();
+(async () => {
+  try { db = await window.claude?.use?.('db'); } catch { db = null; }
+  if (!db) { setSave('Read-only here: marks need the page’s saved store, which isn’t available in this view.', true); paint(); return; }
+  paint();
+  const timer = setTimeout(() => setSave('Saved marks are slow to load. You can still mark; changes save when the connection returns.', true), 10000);
+  let pending = 2;
+  const done = (snap) => { if (!snap.metadata.fromCache && --pending <= 0) { clearTimeout(timer); if (!snap.metadata.hasPendingWrites) setSave('All saved'); } };
+  const fail = () => { clearTimeout(timer); db = null; setSave('Saved marks are unavailable, so the page is read-only. Reload to try again.', true); paint(); };
+  db.collection('ratings').onSnapshot((snap) => { for (const d of snap.docs) { const x = d.data(); ratings[d.id] = { mark: x.mark || null, note: x.note || '' }; } done(snap); paint(); }, fail);
+  db.collection('answers').onSnapshot((snap) => { for (const d of snap.docs) { const x = d.data(); answers[d.id] = { choice: x.choice || null, note: x.note || '' }; } done(snap); paint(); }, fail);
+  setSave('Loading saved marks…');
+})();
+})();
+</script>

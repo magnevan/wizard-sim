@@ -92,7 +92,8 @@ function seatSheet(img: HTMLImageElement, p: X.TeamPal): HTMLCanvasElement {
  */
 export function slugOf(s: RigState): string | null {
   if (!SPRITES_ON) return null;
-  if (s.kind === 'wizard') return WIZ_SPRITE && !s.hd && sheets.has('wizard') ? 'wizard' : null;
+  // players' wizards (seats 0..3); the drill yard's students (pal 4 on) keep their code rigs and robes
+  if (s.kind === 'wizard') return WIZ_SPRITE && !s.hd && s.pal < 4 && sheets.has('wizard') ? 'wizard' : null;
   if (s.kind === 'archer') return 'archer';
   if (s.kind === 'brute') return 'chieftain';
   if (s.kind !== 'goblin' || s.pal === 6) return null;

@@ -20,10 +20,11 @@ import {
 } from '@wizard-sim/sim';
 import {
   composeAuraLoop, composeBlink, composeOrbStrike, composeBlocked, composeBurning, composeCharge, composeDeath, composeDismiss, composeDowned, composeDry, composeFlight, composeFloorFire,
-  composeFootstep, composeHeal, composeMissileLand, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak,
-  composeSparkField, composeSpell, composeSpring, composeSteamCloud, composeStinger, composeStrike, composeStop, composeSustain, composeTelegraph, composeUi,
+  composeFootstep, composeFrostFog, composeHeal, composeMissileLand, composeHit, composeImpact, composeInteraction, composeMove, composeQueue, composeRain, composeRockBreak,
+  composeSparkField, composeSpell, composeWellBurst, composeWellOverload, composeSpring, composeSteamCloud, composeStinger, composeStrike, composeStop, composeSustain, composeTelegraph, composeUi,
   shapeOf, type ElementName, type EnemyKind, type Plan, type ShapeName, type SpellSound, type UiSound, type WeaponMove,
 } from './recipes';
+import { overload } from '../art/power-down';
 import { LoopTable, Limiter, crosses, envOfRoom, jitter, placeOf, type EnvName, type GroupRule, type Listener, type Place, type Rand } from './variation';
 
 /** How many of the room's own rock walls lie on the line from the ears to a source. */
@@ -239,6 +240,8 @@ export class SoundDirector {
       }
       case 'heal': this.ask('heal', x, y, () => composeHeal(r)); return;
       case 'burst': {
+        // the battery's well bursting as it gives out: heard from anywhere (art/power-down.ts overload)
+        if (e.ev === EV.wellDry) { this.ask('stinger', x, y, composeWellBurst, 1, true); return; }
         // a nova's own burst: the cast this same tick already is that sound
         if (e.who >= 0 && e.who < MAX_SEATS && e.tick - this.lastCastTick[e.who] <= 2) return;
         const gone = e.ev === EV.dismiss && el ? composeDismiss(el, r) : null;
@@ -258,7 +261,7 @@ export class SoundDirector {
         return;
       }
       case 'surge': this.ask('zap', x, y, () => composeImpact('lightning', 0.6, r)); return;
-      case 'blink': this.ask('move', x, y, composeBlink); return;
+      case 'blink': this.ask('move', x, y, () => composeBlink(r)); return;
       case 'shatter': this.ask('interaction', x, y, () => composeInteraction('shatter', r), 1, false, 'shatter'); return;
       case 'freeze': this.ask('interaction', x, y, () => composeInteraction('freeze', r), 1, false, 'freeze'); return;
       case 'fizzle':
@@ -403,9 +406,12 @@ export class SoundDirector {
       const snd = spellSoundOf(compile(queueFromCounts(dv.els, k), 'force'));
       add(`chan:device${k}|${snd.shape}`, { plan: () => composeSustain(sustainOf(snd), this.rand), tail: () => composeStop(sustainOf(snd), this.rand), x: dv.x[k], y: dv.y[k], gain: 0.8 });
     }
+    // the freezing fog is silent until Cold's kit has a sound for it
+    const fog = composeFrostFog();
     for (let k = 0; k < MAX_ZONES; k++) {
       const t = z.type[k];
-      const plan = t === ZONE.rain ? composeRain : t === ZONE.steam ? composeSteamCloud : t === ZONE.spring ? composeSpring : t === ZONE.spark ? composeSparkField : null;
+      const plan = t === ZONE.rain ? composeRain : t === ZONE.steam ? composeSteamCloud : t === ZONE.spring ? composeSpring : t === ZONE.spark ? composeSparkField
+        : t === ZONE.frost && fog ? () => fog : null;
       if (plan) add(`zone:${k}|${t}`, { plan, x: z.x[k], y: z.y[k], gain: 1 });
     }
     // missiles in flight, a thin trail of their element; a few are enough
@@ -423,6 +429,9 @@ export class SoundDirector {
       burns++;
       if (d < burnD) { burnD = d; burnX = b.x[i]; burnY = b.y[i]; }
     }
+    // the battery's well overloading: a drone that climbs as it nears bursting, centred on you wherever you are
+    const o = overload(w);
+    if (o > 0.05) { const stage = Math.min(3, Math.floor(o * 4)); add(`well:overload|${stage}`, { plan: () => composeWellOverload(stage), x: l.cx, y: l.cy, gain: 0.5 + 0.5 * o }); }
     if (burns) add('burn|fire', { plan: composeBurning, x: burnX, y: burnY, gain: Math.min(1, 0.6 + burns * 0.08) });
     // burning floor: scanned a few times a second, it can't change faster than that matters
     const ff = this.floorFire;

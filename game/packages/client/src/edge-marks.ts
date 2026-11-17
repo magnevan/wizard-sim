@@ -6,7 +6,7 @@
  * as a few marks, not a fringe of them. Drawn in the HUD layer (it doesn't zoom), in whole pixels.
  */
 import { Graphics } from 'pixi.js';
-import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, type World } from '@wizard-sim/sim';
+import { KIND, MAX_PORTALS, MAX_SEATS, PHASE_ENC, YTAG, type World } from '@wizard-sim/sim';
 import type { Camera } from './camera';
 import { TEAMS } from './art/px';
 
@@ -41,7 +41,7 @@ export class EdgeMarks {
     const packs = new Map<number, { x: number; y: number; ux: number; uy: number; n: number }>();
     const b = w.bodies;
     for (let i = MAX_SEATS; i < b.kind.length; i++) {
-      if (b.kind[i] !== KIND.enemy) continue;
+      if (b.kind[i] !== KIND.enemy || (w.yard && w.yard.tag[i] !== YTAG.goblin)) continue; // the drill yard's straw, sack and sparring soldiers are no threat
       const [x, y] = at(i), m = place(x, y);
       if (!m) continue;
       const key = Math.round(m[0] / BUCKET) * 4096 + Math.round(m[1] / BUCKET);

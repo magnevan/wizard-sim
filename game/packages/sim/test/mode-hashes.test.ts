@@ -105,6 +105,8 @@ const RUNS: Record<string, () => Trail> = {
   arena: () => trail(createWorld(5, 2, { room: 'arena' }), 2400, bots(2)),
   survive: () => trail(createWorld(7, 2, { room: 'survive' }), 2400, bots(2)),
   battery: () => trail(createWorld(1, 1, { room: 'battery' }), 2400, batteryDriver()),
+  // two bots let loose in the drill yard: the straw goblins, the sparring soldiers
+  yard: () => trail(createWorld(7, 2, { room: 'yard' }), 2400, bots(2)),
   tutorial: () => {
     const m = newTutorialBot();
     return trail(createWorld(3, 1, { room: 'tutorial' }), 3000, (w) => [tutorialBotInput(w, 0, m), NO_INPUT, NO_INPUT, NO_INPUT]);

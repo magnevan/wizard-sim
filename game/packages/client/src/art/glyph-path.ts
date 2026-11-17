@@ -86,14 +86,21 @@ export class Shimmer {
   private m = X.canvas(4, 4);
   private s = X.canvas(4, 4);
   private pats: CanvasPattern[] = [];
+  /** The parts of the canvases this frame works in (begin's `boxes`). */
+  private boxes: Box[] = [];
   /** `col`: the shimmer's colour (a hot tone of the paths' own). */
   constructor(private col: string) {}
 
-  /** Clears the mask to the ground canvas's size and turn; returns it to stamp into. */
-  begin(g: Ctx): Ctx {
+  /**
+   * Clears the mask to the ground canvas's size and turn; returns it to stamp into. `boxes` (canvas px, not
+   * overlapping): where the paths can be; every pass over the whole canvas keeps to them (each is a full-canvas
+   * composite otherwise, every frame, and the paths are thin).
+   */
+  begin(g: Ctx, boxes?: readonly Box[]): Ctx {
     for (const cv of [this.m, this.s]) if (cv.c.width !== g.canvas.width || cv.c.height !== g.canvas.height) { cv.c.width = g.canvas.width; cv.c.height = g.canvas.height; cv.x.imageSmoothingEnabled = false; }
+    this.boxes = boxesIn(boxes, g.canvas);
     const x = this.m.x;
-    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, this.m.c.width, this.m.c.height); x._fs = null;
+    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, this.m.c.width, this.m.c.height); x._fs = null; // whole: see layerLike
     x.setTransform(g.getTransform());
     return x;
   }
@@ -103,18 +110,22 @@ export class Shimmer {
     if (k <= 0.01) return;
     erase?.(this.m.x);
     if (!this.pats.length) this.pats = [streaks(96, 48, [[2, 1, 0], [-1, 2, 1.7], [3, -1, 3.1]], this.col, this.m.x), streaks(64, 40, [[1, -2, 0.4], [3, 1, 2.2]], this.col, this.m.x)];
-    const s = this.s.x, W = this.s.c.width, H = this.s.c.height, at = g.getTransform();
-    s.setTransform(1, 0, 0, 1, 0, 0); s.globalCompositeOperation = 'source-over'; s.globalAlpha = 1; s.clearRect(0, 0, W, H);
+    const s = this.s.x, at = g.getTransform();
+    if (!this.boxes.length) return;
+    s.setTransform(1, 0, 0, 1, 0, 0); s.globalCompositeOperation = 'source-over'; s.globalAlpha = 1; s.clearRect(0, 0, this.s.c.width, this.s.c.height);
     // the two layers, drifting, in the ground's own coordinates
     const drift: [number, number][] = [[t * 9, -t * 4], [-t * 6, -t * 7]];
     this.pats.forEach((p, i) => {
       p.setTransform(new DOMMatrix().translate(at.e + drift[i][0], at.f + drift[i][1]));
       s.globalCompositeOperation = i ? 'lighter' : 'source-over';
-      s.fillStyle = p; s.fillRect(0, 0, W, H);
+      s.fillStyle = p;
+      for (const b of this.boxes) s.fillRect(b.x, b.y, b.w, b.h);
     });
-    s.globalCompositeOperation = 'destination-in'; s.drawImage(this.m.c, 0, 0);
+    // destination-in clears whatever it isn't drawn over, so it's one draw over them all
+    s.globalCompositeOperation = 'destination-in';
+    unbounded(this.boxes, (b) => s.drawImage(this.m.c, b.x, b.y, b.w, b.h, b.x, b.y, b.w, b.h));
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'lighter'; g.globalAlpha = k;
-    g.drawImage(this.s.c, 0, 0);
+    for (const b of this.boxes) g.drawImage(this.s.c, b.x, b.y, b.w, b.h, b.x, b.y, b.w, b.h);
     g.restore(); g._fs = null;
   }
 }
@@ -150,7 +161,34 @@ function wearTexture(style: PathStyle, ctx: Ctx): CanvasPattern {
   return ctx.createPattern(cv.c, 'repeat')!;
 }
 
-/** A canvas the size and turn of the ground canvas `g`, cleared. */
+/** A rectangle in a canvas's own pixels. */
+export interface Box { x: number; y: number; w: number; h: number }
+/** `boxes` in whole pixels, cut to the canvas, empty ones dropped; the whole canvas without any. */
+function boxesIn(boxes: readonly Box[] | undefined, c: { width: number; height: number }): Box[] {
+  if (!boxes) return [{ x: 0, y: 0, w: c.width, h: c.height }];
+  const out: Box[] = [];
+  for (const box of boxes) {
+    const x0 = Math.max(0, Math.floor(box.x)), y0 = Math.max(0, Math.floor(box.y)), x1 = Math.min(c.width, Math.ceil(box.x + box.w)), y1 = Math.min(c.height, Math.ceil(box.y + box.h));
+    if (x1 > x0 && y1 > y0) out.push({ x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
+  }
+  return out;
+}
+
+/**
+ * Runs `op` once over the boxes' bounding box: for the composite modes that clear what they don't draw over
+ * (source-in, destination-in), which one op per box would do to the boxes before it. No clip is needed (and a clip
+ * rounds the blend a shade differently): between the boxes these canvases hold nothing, so there's nothing to keep.
+ */
+function unbounded(boxes: readonly Box[], op: (b: Box) => void): void {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const b of boxes) { x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.w); y1 = Math.max(y1, b.y + b.h); }
+  op({ x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
+}
+
+/**
+ * A canvas the size and turn of the ground canvas `g`, cleared. Cleared whole, though only boxes of it are used: these
+ * layers are copied from every frame, and a write that leaves any of the old picture standing copies all of it first.
+ */
 function layerLike(cv: { c: HTMLCanvasElement; x: Ctx }, g: Ctx): Ctx {
   if (cv.c.width !== g.canvas.width || cv.c.height !== g.canvas.height) { cv.c.width = g.canvas.width; cv.c.height = g.canvas.height; cv.x.imageSmoothingEnabled = false; }
   const x = cv.x;
@@ -167,8 +205,11 @@ export class PathLayer {
   private l = X.canvas(4, 4);
   private dark = X.canvas(4, 4);
   private wear = new Map<PathStyle, CanvasPattern>();
+  /** The parts of the canvases this frame works in (begin's `boxes`). */
+  private boxes: Box[] = [];
 
-  begin(g: Ctx): Ctx { return layerLike(this.l, g); }
+  /** `boxes` (canvas px, not overlapping): where the paths can be, as for Shimmer.begin. */
+  begin(g: Ctx, boxes?: readonly Box[]): Ctx { this.boxes = boxesIn(boxes, g.canvas); return layerLike(this.l, g); }
 
   /** Erases the style's wear out of `x` (a canvas laid out like the ground canvas `g`). */
   wearOut(x: Ctx, g: Ctx, style: PathStyle): void {
@@ -178,20 +219,27 @@ export class PathLayer {
     const at = g.getTransform();
     p.setTransform(new DOMMatrix().translate(at.e, at.f));
     x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'destination-out'; x.fillStyle = p;
-    x.fillRect(0, 0, x.canvas.width, x.canvas.height); x.restore(); x._fs = null;
+    for (const b of this.boxes) x.fillRect(b.x, b.y, b.w, b.h);
+    x.restore(); x._fs = null;
   }
 
   end(g: Ctx, style: PathStyle): void {
-    const l = this.l;
+    const l = this.l, B = this.boxes;
+    if (!B.length) return;
     this.wearOut(l.x, g, style);
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
     if (style.carve) {
       const d = layerLike(this.dark, g);
-      d.setTransform(1, 0, 0, 1, 0, 0); d.drawImage(l.c, 0, 0);
-      d.globalCompositeOperation = 'source-in'; d.fillStyle = '#1a0e08'; d.fillRect(0, 0, this.dark.c.width, this.dark.c.height); d._fs = null;
-      g.globalAlpha = 0.7 * style.rune; g.drawImage(this.dark.c, 0, 1);
+      d.setTransform(1, 0, 0, 1, 0, 0);
+      for (const b of B) d.drawImage(l.c, b.x, b.y, b.w, b.h, b.x, b.y, b.w, b.h);
+      d.globalCompositeOperation = 'source-in'; d.fillStyle = '#1a0e08';
+      unbounded(B, (b) => d.fillRect(b.x, b.y, b.w, b.h));
+      d._fs = null;
+      g.globalAlpha = 0.7 * style.rune;
+      for (const b of B) g.drawImage(this.dark.c, b.x, b.y, b.w, b.h, b.x, b.y + 1, b.w, b.h);
     }
-    g.globalAlpha = style.rune; g.drawImage(l.c, 0, 0);
+    g.globalAlpha = style.rune;
+    for (const b of B) g.drawImage(l.c, b.x, b.y, b.w, b.h, b.x, b.y, b.w, b.h);
     g.restore(); g._fs = null;
   }
 }

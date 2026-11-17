@@ -404,6 +404,8 @@ export interface Battery {
   flow: Float64Array;
   /** [0] ticks since the flow ran out, [1] ticks since the well ran dry, [2] ticks since its repair began (0: not yet). */
   wellT: Int32Array;
+  /** The element each seat channels from a channel circle it stands in, or 0 (battery.ts channelTick). */
+  channel: Int8Array;
 }
 
 /** Has the repair begun (X at the well once the fight is over, battery-waves.ts)? */
@@ -413,6 +415,19 @@ export const wellRepaired = (w: World): boolean => !!w.battery && w.battery.well
 export const wellDry = (w: World): boolean => !!w.battery && w.battery.wellT[1] > 0;
 /** Has the infusion come (WELL.surge after the well ran dry)? Then every wizard has a Fire pool of its own. */
 export const infused = (w: World): boolean => !!w.battery && w.battery.wellT[1] > T(WELL.surge);
+
+/**
+ * The drill yard (yard.ts): its stations' progress, what each body is to it, and who has taken a charged focus. Only a
+ * yard world has one.
+ */
+export interface Yard {
+  /** yard.ts YS: the stations done, their counters and timers, and the leave flag. */
+  state: Int32Array;
+  /** What each body is to the yard (yard.ts YTAG). */
+  tag: Uint8Array;
+  /** Per seat: 1 once it has taken a charged focus from the rack. */
+  focus: Uint8Array;
+}
 
 /** Survive's run: the altar pick and every seat's power-ups. Only a survive world has one. */
 export interface Run {
@@ -523,6 +538,8 @@ export interface World {
   battery: Battery | null;
   /** Tutorial only (null elsewhere, like run). */
   tut: Tutorial | null;
+  /** The drill yard only (yard.ts). */
+  yard: Yard | null;
   /** A campaign area only: what the party has unlocked, carried between areas (Party). */
   party: Party | null;
   events: SimEvent[];
@@ -698,7 +715,7 @@ export function createWorldWith(mode: Mode, seed: number, players: number, opts:
       els: u8(MAX_DEVICES * N_EL), timer: i32(MAX_DEVICES), life: i32(MAX_DEVICES), charges: u8(MAX_DEVICES), phase: f64(MAX_DEVICES),
       heal: u8(MAX_DEVICES), look: u8(MAX_DEVICES), born: i32(MAX_DEVICES), chan: i32(MAX_DEVICES),
     },
-    run: null, battery: null, tut: null, party: mode.campaign ? newParty(opts.party) : null,
+    run: null, battery: null, tut: null, yard: null, party: mode.campaign ? newParty(opts.party) : null,
     events: [],
   };
   mode.state?.(w, opts);
@@ -712,7 +729,7 @@ export function createWorldWith(mode: Mode, seed: number, players: number, opts:
 export function joinSeat(w: World, i: number): void {
   if (w.seats.active[i]) return;
   w.seats.active[i] = 1;
-  spawnBody(w, i, KIND.wizard, TEAM.players, w.def.starts[i][0], w.def.starts[i][1], BODY.wizardHp, BODY.wizardRadius);
+  spawnBody(w, i, KIND.wizard, TEAM.players, w.def.starts[i][0], w.def.starts[i][1], w.mode.wizardHp?.(w, i) ?? BODY.wizardHp, BODY.wizardRadius);
   for (let e = 1; e <= N_EL; e++) w.seats.runes[i * N_EL + e - 1] = runeMax(w, i, e);
 }
 

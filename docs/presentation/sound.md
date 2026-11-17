@@ -9,7 +9,7 @@ cssclasses:
 
 - Develop and review one element kit at a time. Build sounds for the jobs that element performs and use what you learn on the next kit.
 - Give each kit a recognizable character across its jobs. Shield creation, sustain and reflection can share a character while sounding distinct. Keep queue and cancellation cues subtle alongside spell sounds.
-- Judge sounds against the same moment in play. The dev Sound Lab (`?lab=<element>`) lets you compare variants while watching the cast, its impact and any lasting effect.
+- Judge sounds against the same moment in play. The dev Sound Lab (`?lab`, a tab per element; `?lab=<tab>` opens one) lets you compare variants while watching the cast, its impact and any lasting effect.
 - Give audible feedback to changes that matter in play. An orbital sounds on impact, and the burning loop communicates the status continuously.
 
 The checked-in audio bank and element kits live in `game/content/audio/` and `game/packages/client/src/audio/`. See `game/content/audio/README.md` for provenance. A local reference bank can be used for lab comparisons.

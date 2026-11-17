@@ -22,6 +22,7 @@ import {
 import { Camera, FY, PPU } from './camera';
 import { ActorFrames, FEET_X, FEET_Y } from './art/actors';
 import { Extras } from './art/extras';
+import { Massing, massingParam } from './art/massing';
 import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
 import { floorLayout, floorPlaceholder } from './art/floor';
@@ -87,6 +88,8 @@ export class WorldView {
   private frames = new ActorFrames();
   /** The people who live in the room (art/extras.ts): the drill yard's students and soldiers. */
   private extras: Extras;
+  /** ?massing=<plan>: a concept's buildings as grey blocks at real size (art/massing.ts), in its room only. */
+  private massing: Massing | null = null;
   /** The room's props (art/props.ts). The art test's prop set is `props.set`. */
   readonly props: PropView;
   /** The art test: the detailed wizard (art/rigs.ts), client side only. */
@@ -186,6 +189,11 @@ export class WorldView {
     this.props = new PropView(this.actors, tint, 'lean');
     this.deaths = new Deaths(this.actors);
     this.extras = new Extras(this.actors, this.frames);
+    const plan = massingParam();
+    if (plan) {
+      const m = (this.massing = new Massing(this.actors, plan));
+      this.props.skip = (u, v) => this.real?.def.id === plan.room && m.covers(u, v, this.real.dims.w, this.real.dims.h);
+    }
     if (this.lit) {
       this.litLayer.addChild(this.floor, this.props.under, this.vfx.ground, this.sGround, this.lit.shadowSprite, this.lit.lightSprite, this.lit.glowLayer, this.actors, this.lit.vig);
       this.litLayer.filters = [this.lit.grade];
@@ -344,6 +352,10 @@ export class WorldView {
       v.on = true; v.x = fx; v.y = fy; v.rig = s.kind;
     }
 
+    if (this.massing) {
+      this.massing.g.visible = w.def.id === this.massing.plan.room;
+      if (this.massing.g.visible) this.massing.draw(this.real.dims.w, this.real.dims.h, fx0, fy0);
+    }
     this.extras.draw(w.def, ct, fx0, fy0, this.lit ? 0xffffff : AMBIENT); // the people who live here (the drill yard's)
     const ax = (x: number) => ox + Math.round(x * PPU), ay = (y: number) => cam.toArtY(y);
     drawTelegraphs(w, { ground: this.sGround.clear(), overlay: this.sOverlay.clear(), ax, ay }, Math.round(ct * 60));

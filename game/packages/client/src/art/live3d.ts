@@ -483,7 +483,7 @@ function pose(inst: Inst, m: Model, p: LivePose): void {
   ]);
   place(inst, m, p);
   if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0));
-  placeGuard(inst, p.guardUp ?? 0);
+  placeGuard(inst, GUARD_PLACE.pin === 'carry' ? 0 : GUARD_PLACE.pin === 'block' ? 1 : p.guardUp ?? 0);
   if (fall >= 0) dropProps(inst, p.t - fall);
 }
 
@@ -588,13 +588,17 @@ const WORLD_UP = new THREE.Vector3(0, 1, 0);
 /**
  * Where a guard sits, in torso lengths (hips to shoulders: this wizard is short-legged and big-headed, so hip heights put
  * it at his ear; the user, 2026-11-18), from his shoulders, so a clip that twists his torso turns the guard with it.
- * Carried: CARRY_UP above the hips, CARRY_OUT out past the left shoulder and CARRY_AHEAD forward, its face turned
- * CARRY_ANGLE from the front out to the side and its top leaning out by CARRY_TILT. Raised: BLOCK_UP above the hips,
- * BLOCK_AHEAD in front of the shoulders plus BLOCK_SIZE of its own half height (a tower stands further out), square on.
+ * (The numbers are GUARD_PLACE's, which the Tools panel's Stage section edits live.) Carried: carryUp above the hips, carryOut out past the left shoulder and carryAhead forward, its face turned
+ * carryAngle from the front out to the side and its top leaning out by carryTilt. Raised: blockUp above the hips,
+ * blockAhead in front of the shoulders plus blockSize of its own half height (a tower stands further out), square on.
  */
-const CARRY_UP = 0.3, CARRY_OUT = 0.45, CARRY_AHEAD = 0.1, CARRY_ANGLE = 0.95, CARRY_TILT = 0.2;
-const BLOCK_UP = 0.55, BLOCK_AHEAD = 0.9, BLOCK_SIZE = 0.45;
-const qC = new THREE.Quaternion(), qB = new THREE.Quaternion(), gL = new THREE.Vector3(), gH = new THREE.Vector3(), pC = new THREE.Vector3(), pB = new THREE.Vector3();
+export const GUARD_PLACE = {
+  carryUp: 0.3, carryOut: 0.45, carryAhead: 0.1, carryAngle: 0.95, carryTilt: 0.2,
+  blockUp: 0.55, blockAhead: 0.9, blockSize: 0.45, blockYaw: 0,
+  /** 'carry' / 'block' hold that pose whatever the wizard does (the Tools panel's placing aid); 'auto' follows the game. */
+  pin: 'auto' as 'auto' | 'carry' | 'block',
+};
+const gY = new THREE.Vector3(), qC = new THREE.Quaternion(), qB = new THREE.Quaternion(), gL = new THREE.Vector3(), gH = new THREE.Vector3(), pC = new THREE.Vector3(), pB = new THREE.Vector3();
 /** The rotation that takes the guard's current (up, face) frame (mAT, mA's transpose) to (up, face), into `out`. */
 function turnTo(out: THREE.Quaternion, up: THREE.Vector3, face: THREE.Vector3): THREE.Quaternion {
   gS.crossVectors(up, face);
@@ -607,6 +611,7 @@ function turnTo(out: THREE.Quaternion, up: THREE.Vector3, face: THREE.Vector3): 
  * axis; its face is its face marker (the export's, from wizprops.py PROP_FACE). The arm's clip still moves the arm.
  */
 function placeGuard(inst: Inst, w: number): void {
+  const G = GUARD_PLACE;
   if (!inst.hips) return;
   for (const c of inst.carriers) {
     if (c.held || !c.node.visible) continue;
@@ -636,14 +641,14 @@ function placeGuard(inst: Inst, w: number): void {
     const lx = lA.x, lz = lA.z;
     const half = c.node.localToWorld(v2.copy(c.mid).add(c.axes[0])).distanceTo(gMid);   // its own half height
     // carried: out at the side, face turned out, top leaning out
-    const upC = v1.copy(WORLD_UP).addScaledVector(gL, CARRY_TILT).normalize();
-    const faceC = v2.copy(gF).multiplyScalar(Math.cos(CARRY_ANGLE)).addScaledVector(gL, Math.sin(CARRY_ANGLE));
+    const upC = v1.copy(WORLD_UP).addScaledVector(gL, G.carryTilt).normalize();
+    const faceC = v2.copy(gF).multiplyScalar(Math.cos(G.carryAngle)).addScaledVector(gL, Math.sin(G.carryAngle));
     faceC.addScaledVector(upC, -faceC.dot(upC)).normalize();
     turnTo(qC, upC, faceC);
-    pC.set(lx, hips.y + CARRY_UP * torso, lz).addScaledVector(gL, CARRY_OUT * torso).addScaledVector(gF, CARRY_AHEAD * torso);
+    pC.set(lx, hips.y + G.carryUp * torso, lz).addScaledVector(gL, G.carryOut * torso).addScaledVector(gF, G.carryAhead * torso);
     // raised: square in front
-    turnTo(qB, WORLD_UP, gF);
-    pB.set(sx, hips.y + BLOCK_UP * torso, sz).addScaledVector(gF, BLOCK_AHEAD * torso + BLOCK_SIZE * half);
+    turnTo(qB, WORLD_UP, gY.copy(gF).applyAxisAngle(WORLD_UP, G.blockYaw));
+    pB.set(sx, hips.y + G.blockUp * torso, sz).addScaledVector(gF, G.blockAhead * torso + G.blockSize * half);
     if (!Number.isFinite(qC.w) || !Number.isFinite(qB.w)) continue;
     qw.copy(qC).slerp(qB, w);
     pC.lerp(pB, w);

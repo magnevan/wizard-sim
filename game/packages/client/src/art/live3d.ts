@@ -62,7 +62,7 @@ export interface LivePose {
   grip?: number;
   /** The props to show by name (ModelMeta.props); the rest are hidden. By default the model's `show`, else all. */
   props?: readonly string[];
-  /** Blocking, 0..1: the strapped guard is turned upright and square to the way the body faces (squareGuard). */
+  /** Blocking, 0..1: the strapped guard goes from its carried place at the side to square in front of the chest (placeGuard). */
   guardUp?: number;
 }
 
@@ -479,7 +479,7 @@ function pose(inst: Inst, m: Model, p: LivePose): void {
   ]);
   place(inst, m, p);
   if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0));
-  if (p.guardUp) squareGuard(inst, p.guardUp);
+  placeGuard(inst, p.guardUp ?? 0);
   if (fall >= 0) dropProps(inst, p.t - fall);
 }
 
@@ -578,18 +578,32 @@ function softProps(inst: Inst, face: number, grip: number): void {
   }
 }
 
-const mA = new THREE.Matrix4(), mB = new THREE.Matrix4(), qg = new THREE.Quaternion(), qw = new THREE.Quaternion();
+const mA = new THREE.Matrix4(), mAT = new THREE.Matrix4(), mB = new THREE.Matrix4(), qw = new THREE.Quaternion();
 const gUp = new THREE.Vector3(), gN = new THREE.Vector3(), gS = new THREE.Vector3(), gMid = new THREE.Vector3(), gO = new THREE.Vector3(), gF = new THREE.Vector3();
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
-/** Where a raised guard's middle goes, in hip heights: this far above the hips and this far in front of them. */
-const GUARD_CHEST = 0.35, GUARD_AHEAD = 0.55;
 /**
- * Blocking (round 3, the user: a defend animation that uses the shield): the block clip raises the forearm, and each
- * shown strapped guard (a soft prop off a hand) is turned by w toward standing upright with its face square to the way
- * the body faces, about its own middle, so a buckler isn't caught edge-on and a tower shield stands in front. Its up is
- * its soft axis; its face is its face marker (the export's, from wizprops.py PROP_FACE).
+ * Where a guard sits, in hip heights (round 3, the user's third look: "the default shield position a bit higher up, and
+ * angled out to the side"; blocking, the tower went into the body and walking clipped it into the face). Carried: CARRY_UP
+ * above the hips, CARRY_OUT out to the left and CARRY_AHEAD forward, its face turned CARRY_ANGLE from the front out to
+ * the side and its top leaning out by CARRY_TILT. Raised: BLOCK_UP above the hips, BLOCK_AHEAD in front, plus BLOCK_SIZE
+ * of its own half height (a tower stands further out), square to the facing.
  */
-function squareGuard(inst: Inst, w: number): void {
+const CARRY_UP = 0.45, CARRY_OUT = 0.6, CARRY_AHEAD = 0.12, CARRY_ANGLE = 0.95, CARRY_TILT = 0.22;
+const BLOCK_UP = 0.35, BLOCK_AHEAD = 0.6, BLOCK_SIZE = 0.45;
+const qC = new THREE.Quaternion(), qB = new THREE.Quaternion(), gL = new THREE.Vector3(), gH = new THREE.Vector3(), pC = new THREE.Vector3(), pB = new THREE.Vector3();
+/** The rotation that takes the guard's current (up, face) frame (mAT, mA's transpose) to (up, face), into `out`. */
+function turnTo(out: THREE.Quaternion, up: THREE.Vector3, face: THREE.Vector3): THREE.Quaternion {
+  gS.crossVectors(up, face);
+  mB.makeBasis(up, face, gS);
+  return out.setFromRotationMatrix(mB.multiply(mAT));
+}
+/**
+ * Places each shown strapped guard (a soft prop off the forearm, with a face marker) by the body, not by the forearm's
+ * every swing: carried at the side, or (by w, the block's ease) raised square in front of the chest. Its up is its soft
+ * axis; its face is its face marker (the export's, from wizprops.py PROP_FACE). The arm's clip still moves the arm.
+ */
+function placeGuard(inst: Inst, w: number): void {
+  if (!inst.hips) return;
   for (const c of inst.carriers) {
     if (c.held || !c.node.visible) continue;
     const s = inst.soft.find((x) => x.node === c.node);
@@ -607,20 +621,28 @@ function squareGuard(inst: Inst, w: number): void {
     gN.normalize();
     gS.crossVectors(gUp, gN);
     mA.makeBasis(gUp, gN, gS);
-    inst.root.getWorldDirection(gF); gF.y = 0; gF.normalize();   // the body faces the root's +Z
-    gS.crossVectors(WORLD_UP, gF);
-    mB.makeBasis(WORLD_UP, gF, gS);
-    qg.setFromRotationMatrix(mB.multiply(mA.transpose()));
-    if (!Number.isFinite(qg.w)) continue;
-    qw.identity().slerp(qg, w);
-    // turned about its middle, and its middle carried toward a spot in front of the chest (the clip's forearm can put a
-    // strapped guard behind the body), in world space, then back into its parent's frame
-    const pos = v1.copy(gO).sub(gMid).applyQuaternion(qw).add(gMid);
-    if (inst.hips) {
-      const hh = inst.hips.getWorldPosition(v2).y - inst.root.getWorldPosition(v3).y;   // hip height, world units
-      const at = v2.addScaledVector(WORLD_UP, GUARD_CHEST * hh).addScaledVector(gF, GUARD_AHEAD * hh);
-      pos.addScaledVector(at.sub(gMid), w);
-    }
+    mAT.copy(mA).transpose();
+    // the body's frame: forward (the root's +Z), up, and its left (the side the guard's arm is on: the left upper arm)
+    inst.root.getWorldDirection(gF); gF.y = 0; gF.normalize();
+    gL.crossVectors(WORLD_UP, gF);
+    const hips = inst.hips.getWorldPosition(gH), hh = hips.y - inst.root.getWorldPosition(v3).y;
+    const arm = inst.hands?.[0].parent?.parent;
+    if (arm && arm.getWorldPosition(v3).sub(hips).dot(gL) < 0) gL.negate();
+    const half = c.node.localToWorld(v2.copy(c.mid).add(c.axes[0])).distanceTo(gMid);   // its own half height
+    // carried: out at the side, face turned out, top leaning out
+    const upC = v1.copy(WORLD_UP).addScaledVector(gL, CARRY_TILT).normalize();
+    const faceC = v2.copy(gF).multiplyScalar(Math.cos(CARRY_ANGLE)).addScaledVector(gL, Math.sin(CARRY_ANGLE));
+    faceC.addScaledVector(upC, -faceC.dot(upC)).normalize();
+    turnTo(qC, upC, faceC);
+    pC.copy(hips).addScaledVector(WORLD_UP, CARRY_UP * hh).addScaledVector(gL, CARRY_OUT * hh).addScaledVector(gF, CARRY_AHEAD * hh);
+    // raised: square in front
+    turnTo(qB, WORLD_UP, gF);
+    pB.copy(hips).addScaledVector(WORLD_UP, BLOCK_UP * hh).addScaledVector(gF, BLOCK_AHEAD * hh + BLOCK_SIZE * half);
+    if (!Number.isFinite(qC.w) || !Number.isFinite(qB.w)) continue;
+    qw.copy(qC).slerp(qB, w);
+    pC.lerp(pB, w);
+    // the carrier's new origin: the middle at its spot, the rest turned round it
+    const pos = v1.copy(gO).sub(gMid).applyQuaternion(qw).add(pC);
     c.node.getWorldQuaternion(qa).premultiply(qw);
     c.node.parent!.getWorldQuaternion(qp).invert();
     c.node.quaternion.copy(qp.multiply(qa));

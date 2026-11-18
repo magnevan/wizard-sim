@@ -106,6 +106,13 @@ Notes on the first pass, and what changed:
 
 Meshy this round: 50 credits.
 
+## Third look (the user, 2026-11-18)
+
+- **"When defending with earth you put the shield inside your body ... When walking it clips into your face"; "the default shield position a bit higher up, and angled out to the side".** The guard is no longer placed by the forearm's every swing. `art/live3d.ts` `placeGuard` sets it by the body each frame: carried at the left (from the left upper arm), at chest height, turned out to the side and its top leaning out (`CARRY_*`); raised, square in front of the chest and further out by its own size so a tower clears the body (`BLOCK_*`); blended by the block's ease. The clips still move the arm. Casting looked right and is unchanged.
+- **Ember:** "particle effects look weird when facing to the side ... give the shield some translucency". The flames' frame keeps its narrow side at least 0.6 of its wide one (`guard-fx.ts` `widen`), so edge-on they still form a shield, and the solid core is smaller (0.30 to 0.20), so the flames carry it.
+- **Prism:** "exactly how I'd imagined it" for the colour; "more faceted like a gem and less flat". Rebuilt as a cut gem: a hexagonal girdle, a crown of six bevels and six facets to a point, a shallow pavilion behind, flat-shaded, so each facet takes its own hue.
+- **Translucency, why not yet:** the live models go through the pixel pass, which keeps each pixel's majority colour and drops pixels less than half covered, so a see-through surface can only come out as a stipple (the Rime's first mist, which the user disliked). Real translucency would mean drawing that part in the 2D layer instead (as the effects are), a separate step to decide.
+
 ## Open questions (on the review page)
 
 - `g3-q-1-ice`: the Ice guard's rules as above, or another shape? *Pick: as above.*

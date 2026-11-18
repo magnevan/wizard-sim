@@ -63,8 +63,24 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="g3d">
+    <h2 id="g3d">Newest: guards, round 3, after your third look</h2>
+    <ul class="opts">
+      <li><b>Where the shield sits:</b> it no longer follows every swing of the forearm, which is what pushed the Earth tower into his body and the guards into his face as he walked. Carried, it sits higher, out at his left side, turned out to the side with its top leaning out. Blocking, it comes square in front of his chest, and further out the bigger it is, so the tower stands clear of him. His arm still moves with the clips; casting is unchanged.</li>
+      <li><b>Ember:</b> seen side-on, the flames now keep a shield's shape instead of a thin streak, and the solid core is smaller, so it's more flame than rock.</li>
+      <li><b>Prism:</b> now a cut gem: a hexagon with a faceted crown to a point and a shallow back, each facet catching its own colour as it turns.</li>
+      <li><b>Translucency:</b> not yet, because of how the models become pixels: each pixel takes the main colour under it, so a see-through surface can only come out as a stipple, like the first frost mist you didn't like. Real translucency would mean drawing those parts as effects in the 2D layer instead. Worth trying on the Ember and the Prism if you'd like it.</li>
+    </ul>
+    <figure><img src="img/g3d-idle.png" alt="Nine rows of the wizard in five facings with each guard carried higher at his left side, turned out and leaning outward: the buckler with its ward, the stone tower beside his shoulder, a flame disc, the spiky ice kite, the frost shield, the silver ring, the water disc, the pink gem and the leaf fan."><figcaption>Carried, five facings (south, south-east, east, north-east, south-west). Rows: Mirror, Earth, Ember, Spike, Frost, Spark, Tide, Prism, Leaf.</figcaption></figure>
+    <div class="rate" id="g3d-idle-rate"></div>
+    <figure><img src="img/g3d-block.png" alt="The same rows blocking: every guard held square in front of his chest, the stone tower standing clear of his body, the flames a round shield, the gem in front."><figcaption>Blocking, the same rows and facings.</figcaption></figure>
+    <div class="rate" id="g3d-block-rate"></div>
+    <figure><img src="img/g3d-motion.gif" alt="Nine wizards seen from behind in motion: each guard carried at the side, then raised in front."><figcaption>In motion: standing, then raising the guard. Top: Mirror, Earth, Ember, Spike, Frost. Bottom: Spark, Tide, Prism, Leaf.</figcaption></figure>
+    <div class="rate" id="g3d-motion-rate"></div>
+  </section>
+
   <section aria-labelledby="g3c">
-    <h2 id="g3c">Newest: guards, round 3, after your second look</h2>
+    <h2 id="g3c">Before that: guards, round 3, after your second look</h2>
     <p>Your notes, one by one:</p>
     <ul class="opts">
       <li><b>Bigger:</b> every guard is scaled up again. The Spike (1.8×), Prism (1.7×) and Leaf (1.6×) grew the most, then the Spark, Ember, Frost and Tide.</li>
@@ -599,7 +615,8 @@ for (const c of G3) {
 }
 for (const [id, what, ph] of [['g3-art-vibe-a', 'Vibe A', 'Which guard to change, and how'], ['g3-art-vibe-b', 'Vibe B', 'Anything from B to take (the rampart tower, the sprinkler disc)'],
   ['g3-art-cores', 'The cores', 'Which core to redo'], ['g3-art-earth', 'Earth infusions', 'Which version to change'], ['g3-ingame', 'In the game', 'Size, effects, which guard reads wrong'],
-  ['g3c-idle', 'Standing', 'Size, which guard reads wrong'], ['g3c-block', 'Blocking', 'The pose, where the guard sits'], ['g3c-motion', 'In motion', 'Flames, mist, the Prism']])
+  ['g3c-idle', 'Standing', 'Size, which guard reads wrong'], ['g3c-block', 'Blocking', 'The pose, where the guard sits'], ['g3c-motion', 'In motion', 'Flames, mist, the Prism'],
+  ['g3d-idle', 'Carried', 'Height, angle, which guard reads wrong'], ['g3d-block', 'Blocking', 'Where the guard sits'], ['g3d-motion', 'In motion', 'Anything clipping']])
   $(id + '-rate').append(el('b', '', what), marks('ratings', id, KRC), note('ratings', id, ph));
 $('g3-mix-rate').append(el('b', '', 'Infusions'), marks('ratings', 'g3-mix', YC), note('ratings', 'g3-mix', 'How extras should show'));
 const G3Q = [

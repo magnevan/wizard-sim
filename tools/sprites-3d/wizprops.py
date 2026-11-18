@@ -273,8 +273,9 @@ def bulwark_r2():
 def ember():
     # round 3: only the molten core is solid, a disc of dark rock round a white-hot middle (its shell pulses); the
     # flames round its rim are the game's particles (art/guard-fx.ts), no longer rigid cones
-    return [disc('ember rock', C + N * 0.02, N, 0.30, 0.08, EMBER_RED()),
-            ball('ember core', C + N * 0.07, 0.12, FLAME_CORE(), scale=(1, 0.5, 1))]
+    # (third look: a smaller core, so the flames carry it and it reads less solid)
+    return [disc('ember rock', C + N * 0.02, N, 0.20, 0.07, EMBER_RED()),
+            ball('ember core', C + N * 0.06, 0.09, FLAME_CORE(), scale=(1, 0.5, 1))]
 
 
 def rime():
@@ -338,11 +339,27 @@ def tide():
 
 
 def prism():
-    # sheet A: a hexagonal pane of faceted magenta crystal
-    hexa = [(math.cos(k / 6 * math.tau) * 0.27, math.sin(k / 6 * math.tau) * 0.27) for k in range(6)]
-    inner = [(x * 0.55, y * 0.55) for x, y in hexa]
-    return [slab('prism pane', hexa, 0.06, MAGENTA(), C + N * 0.02, V, U),
-            slab('prism facet', inner, 0.09, glow('arm magenta light', (1.0, 0.65, 0.95), 2.0, rough=0.1), C + N * 0.03, V, U)]
+    # round 3 (the user: "more faceted like a gem and less flat"): a cut gem, a hexagonal girdle with a faceted crown
+    # in front (six bevels, then six facets meeting at a point) and a shallow pavilion behind, every facet flat, so
+    # each catches its own hue from the shell (the colour follows each facet's angle to the camera)
+    R, h1, h2, hb = 0.27, 0.07, 0.13, 0.08
+    ring = lambda r, d: [C + V * (math.cos(k / 6 * math.tau) * r) + U * (math.sin(k / 6 * math.tau) * r) + N * d for k in range(6)]
+    me = bpy.data.meshes.new('prism gem'); bm = bmesh.new()
+    girdle = [bm.verts.new(p) for p in ring(R, 0.0)]
+    table = [bm.verts.new(p) for p in ring(R * 0.55, h1)]
+    crown = bm.verts.new(C + N * h2)
+    back = bm.verts.new(C - N * hb)
+    for k in range(6):
+        j = (k + 1) % 6
+        bm.faces.new((girdle[k], girdle[j], table[j], table[k]))   # the bevels
+        bm.faces.new((table[k], table[j], crown))                 # the crown's facets
+        bm.faces.new((girdle[j], girdle[k], back))                # the pavilion behind
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(me); bm.free()
+    for f in me.polygons: f.use_smooth = False
+    o = bpy.data.objects.new('prism gem', me); bpy.context.scene.collection.objects.link(o)
+    o.data.materials.append(MAGENTA())
+    return [o]
 
 
 def leaf():

@@ -19,6 +19,16 @@ export interface GuardFrame { x: number; y: number; u: Pt; v: Pt; face: number }
 
 /** A point on the guard's rim (angle a, k of the way out), on screen. */
 const rim = (f: GuardFrame, a: number, k = 1): Pt => [f.x + (f.u[0] * Math.cos(a) + f.v[0] * Math.sin(a)) * k, f.y + (f.u[1] * Math.cos(a) + f.v[1] * Math.sin(a)) * k];
+/**
+ * The frame with its narrow side kept at least k of its wide one: seen edge-on a guard's face is a line, and things
+ * drawn round its rim (the Ember's flames) should still make a shield's shape, not a vertical streak (round 3).
+ */
+function widen(f: GuardFrame, k: number): GuardFrame {
+  const lu = Math.hypot(f.u[0], f.u[1]), lv = Math.hypot(f.v[0], f.v[1]);
+  if (lv >= lu * k || lu < 1e-6) return f;
+  const px = -f.u[1] / lu, py = f.u[0] / lu, sgn = f.v[0] * px + f.v[1] * py >= 0 ? 1 : -1, want = lu * k;
+  return { ...f, v: [px * want * sgn, py * want * sgn] };
+}
 /** How far out the rim reaches on screen (px), for spreads. */
 const reach = (f: GuardFrame): number => Math.max(3, Math.hypot(f.u[0], f.u[1]), Math.hypot(f.v[0], f.v[1]));
 const SPECTRUM = ['#ff6a8a', '#ffb84a', '#fff27a', '#7af08a', '#6ad8ff', '#9a8aff', '#f08aff'];
@@ -56,6 +66,7 @@ export function guardFx(o: Ctx, id: string, el: number, f: GuardFrame, t: number
   remember(seed, t, f, feet);
   switch (id) {
     case 'ember': {
+      f = widen(f, 0.6);
       // a shield made of flame (the user, 2026-11-18: "more yellow -> red ... the border less defined"): tongues across
       // the whole face, yellow at the heart, orange, then red round a ragged rim, all rising whatever the guard's tilt
       for (const [k, n, Rr, hk] of [[1.08, 12, OUTER, 1], [0.72, 9, MID, 0.85], [0.35, 5, HEART, 0.7]] as const) {

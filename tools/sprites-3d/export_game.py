@@ -123,6 +123,7 @@ def run(g):
         b = beats(hand)
         meta['casts'][name] = {'first': int(b[0]) / FPS, 'hit': min(int(b[2]), round(b[1] + 0.5)) / FPS, 'last': int(b[2]) / FPS}
 
+
     # each cycle's stride: how far the ground passes under the feet in one loop (model units), so the client plays walk
     # and run by distance walked and the feet stay planted. An in-place clip moves its planted foot back (+Y, the model
     # faces -Y); a clip that travels moves its hips forward instead.
@@ -164,6 +165,12 @@ def run(g):
         mk.parent = e; mk.location = ax
         meta['soft'].append({'node': e.name, 'axis': mk.name, 'k': k,
                              'firm': [mv for mv, act in moves.items() if any(c in _slug(act.name) for c in firm)]})
+    # a guard's face normal (render.py FACES), as a marker child as the soft axis is: the client turns the guard square
+    # to the body's facing while blocking
+    for e, fv in g.get('FACES', []):
+        mk = bpy.data.objects.new(e.name + ' face', None); scene.collection.objects.link(mk)
+        mk.parent = e; mk.location = fv
+        meta.setdefault('faces', {})[e.name] = mk.name
     # every held prop's carrier: one held in a hand drops when its holder dies (the client lays it on the ground beside
     # the body); one strapped on (the shieldbearer's shield, on the forearm) stays with the body
     meta['props'] = [{'node': e.name, 'name': name, 'bone': bone, 'drop': bone.endswith('Hand')} for e, name, bone in g.get('CARRIERS', [])]

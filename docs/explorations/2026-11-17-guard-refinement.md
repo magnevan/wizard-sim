@@ -90,6 +90,22 @@ Round 3 art (prompts in `tools/concept-gen/prompts/2026-11-17-guards-r3/`): two 
 
 Next: the user's marks on the art and the in-game look; the Tide's core and leaning disc, the Mirror's buckler from the core sheet; the infusion parts on the Bulwark; the raised-guard pose and the size pass.
 
+## Second look (the user, 2026-11-18)
+
+Notes on the first pass, and what changed:
+
+- **"Overall shields can be scaled up a bit more still"; Spike "way too small", Prism and Leaf "too small", Spark "a little small".** Every guard is scaled in `wizprops.py` (`GUARD_SCALE`: Spike 1.8, Prism 1.7, Leaf 1.6, Spark 1.45, Ember 1.4, Rime and Tide 1.35, Mirror 1.3, Bulwark 1.25).
+- **"Earth shield is held incorrectly."** Two causes: every guard hung flat against the arm with its face turned out sideways, so the camera saw the tower edge-on; and the Meshy tower, built from the three-quarter view, came out a thick block (0.71 by 0.87 by 1.0). Now every guard turns its face 0.8 rad toward the front (`GUARD_YAW`), and the tower was rebuilt from the front view (0.69 by 0.97 by 0.30, a slab; 15 credits; the first build kept as `bulwark-34.glb`).
+- **"The shield outline that is shown through the character ... should probably be removed."** Removed (`view-structures.ts`).
+- **"We need to create some defend animation where the character uses the shield."** Meshy's library guards (Block1, Block10, Shield Push Left; 9 credits, kept in `output/wizard/blocks.glb`) raise the forearm to the face, where the hat's brim hides it from our camera. So two clips were made with Meshy's text-to-motion (20 credits) and put on the wizard's rig (6): a buckler held across the chest (`guard-block.glb`) and a crouch braced behind a tower (`guard-brace.glb`), the loops `block` and `brace` (`roles.py`). The client plays one while the guard is up (`art/sprites.ts`; the Bulwark and Spike kite brace), fast to its held pose. The clip only moves the arm: `art/live3d.ts` `squareGuard` turns the guard upright and square to the body's facing and carries it to the front of the chest, by the block's ease. The export marks each guard's face normal (`PROP_FACE`, a marker child as the soft axis is); found on the way: a marker's position comes through in Blender's axes, so the client converts it (x, z, -y) as the geometry was.
+- **Mirror:** the ward ring is half again as wide (0.30 to 0.46), its ripple softer (the rings read as a target).
+- **Fire:** "more of a shield made of flames": tongues across the whole face in three rings (yellow heart, orange, red rim), and the rock's shell flickers between deep red and yellow instead of a glowing red disc.
+- **Rime:** "the stippled blue area doesn't look like frost, and ... what's already fallen off shouldn't track with the character". Falling particles (mist, grit, chips, leaves) now start from where the guard was when they fell (`guard-fx.ts` keeps each guard's last 2.5 s of positions), and the mist is solid pale wisps that thin by shrinking, never dithered.
+- **Prism:** "the color being static if you stay still, but ... affected by the normal direction". The shell now takes its hue from each facet's angle to the camera (the view-space normal), mixed in at 45 %, and the glints are rare.
+- **Caltrops:** left for its own thread, with the Ice Place spell.
+
+Meshy this round: 50 credits.
+
 ## Open questions (on the review page)
 
 - `g3-q-1-ice`: the Ice guard's rules as above, or another shape? *Pick: as above.*

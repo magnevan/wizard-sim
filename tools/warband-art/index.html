@@ -63,8 +63,31 @@ textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 15px/1.4 var(-
     </div>
   </header>
 
+  <section aria-labelledby="g3c">
+    <h2 id="g3c">Newest: guards, round 3, after your second look</h2>
+    <p>Your notes, one by one:</p>
+    <ul class="opts">
+      <li><b>Bigger:</b> every guard is scaled up again. The Spike (1.8×), Prism (1.7×) and Leaf (1.6×) grew the most, then the Spark, Ember, Frost and Tide.</li>
+      <li><b>The Earth shield held wrong:</b> two things. Every guard hung flat against the arm with its face turned out sideways, so you saw the tower edge-on. And Meshy had built it as a thick block from the three-quarter picture. Now every guard faces forward and out, and the tower was rebuilt from the front view as a real slab.</li>
+      <li><b>The outline through the body:</b> removed.</li>
+      <li><b>A defend animation:</b> while blocking, he now holds the guard up in front of him: a buckler across the chest, or a crouch braced behind the Earth tower or the Spike kite. Meshy's ready-made block clips raised it to his face, where the hat brim hides it from our camera, so I had Meshy make these two from a text description.</li>
+      <li><b>Mirror:</b> the outer ring is half again as wide, and its ripple is softer (the rings read as a target).</li>
+      <li><b>Fire:</b> now more a shield made of flame: tongues across the whole face, yellow at the heart, orange, then red round a ragged rim. The rock under them flickers between red and yellow.</li>
+      <li><b>Frost:</b> the mist is pale, solid wisps now, not a stippled blue, and whatever falls off stays where it fell when he walks on (the same for the Earth's grit, the Spike's chips and the Leaf's leaves).</li>
+      <li><b>Prism:</b> no running rainbow. Each facet's colour comes from its angle to the camera, so it holds still when you do and shifts as you turn.</li>
+      <li><b>Caltrops:</b> left for the separate thread, as you said.</li>
+    </ul>
+    <figure><img src="img/g3c-idle.png" alt="Nine rows of the wizard in five facings with a bigger guard at his side, each facing forward: gold buckler with a wide ward, a stone tower slab, a disc of flames, a spiky ice kite, a frosted round shield, a silver ring, a water disc, a prism and a leaf fan."><figcaption>Standing, five facings (south, south-east, east, north-east, south-west). Rows: Mirror, Earth, Ember, Spike, Frost, Spark, Tide, Prism, Leaf.</figcaption></figure>
+    <div class="rate" id="g3c-idle-rate"></div>
+    <figure><img src="img/g3c-block.png" alt="The same nine rows blocking: each guard held up in front of his chest, square to the way he faces: the flames as a wall, the spiky ice, the ring crackling, the leaf upright."><figcaption>Blocking, the same rows and facings. The guard comes square in front of him; its element bursts out of it.</figcaption></figure>
+    <div class="rate" id="g3c-block-rate"></div>
+    <figure><img src="img/g3c-motion.gif" alt="Nine wizards in motion, seen from behind: flames flickering yellow to red, lightning on the ring, pale mist falling from the frost shield, then all of them raising their guards in front."><figcaption>In motion: a second standing, then raising the guard. Top: Mirror, Earth, Ember, Spike, Frost. Bottom: Spark, Tide, Prism, Leaf.</figcaption></figure>
+    <div class="rate" id="g3c-motion-rate"></div>
+    <p class="dim">Meshy this round: 50 credits (the block clips 35, the new tower 15). Still to do: the Tide's water disc, the Mirror's new buckler, the infusion parts.</p>
+  </section>
+
   <section aria-labelledby="g3b">
-    <h2 id="g3b">Newest: guards, round 3, first pass in the game</h2>
+    <h2 id="g3b">Before that: guards, round 3, first pass in the game</h2>
     <p>Your marks are in: every plan is a yes. From your notes: only the Mirror has the Shield shimmer, and every other guard bursts its own element's particles while blocking. Fire and Ice both hurt attackers, with Fire the damage-heavy one. The Leaf gets a new model. And, on your note about budget, I made more art and used Meshy for the solid cores.</p>
     <h3>The pictures (Codex)</h3>
     <figure><img class="photo" src="img/g3-vibe-a.jpg" alt="Five red wizards, each holding a magic shield with its effect playing: a stone tower slab shedding dust and pebbles, a spiky ice kite shedding shards, a frosted round shield pouring cold mist to the ground, a floating silver ring crackling with violet lightning, and a round disc of water spraying out from a water ball at the hand."><figcaption>Vibe A: what the guards should feel like in play, effects included. Earth, Ice, Frost, Lightning, Water.</figcaption></figure>
@@ -575,7 +598,8 @@ for (const c of G3) {
   box.append(el('h3', '', c.name), v, pl, r); $('g3-picks').append(box);
 }
 for (const [id, what, ph] of [['g3-art-vibe-a', 'Vibe A', 'Which guard to change, and how'], ['g3-art-vibe-b', 'Vibe B', 'Anything from B to take (the rampart tower, the sprinkler disc)'],
-  ['g3-art-cores', 'The cores', 'Which core to redo'], ['g3-art-earth', 'Earth infusions', 'Which version to change'], ['g3-ingame', 'In the game', 'Size, effects, which guard reads wrong']])
+  ['g3-art-cores', 'The cores', 'Which core to redo'], ['g3-art-earth', 'Earth infusions', 'Which version to change'], ['g3-ingame', 'In the game', 'Size, effects, which guard reads wrong'],
+  ['g3c-idle', 'Standing', 'Size, which guard reads wrong'], ['g3c-block', 'Blocking', 'The pose, where the guard sits'], ['g3c-motion', 'In motion', 'Flames, mist, the Prism']])
   $(id + '-rate').append(el('b', '', what), marks('ratings', id, KRC), note('ratings', id, ph));
 $('g3-mix-rate').append(el('b', '', 'Infusions'), marks('ratings', 'g3-mix', YC), note('ratings', 'g3-mix', 'How extras should show'));
 const G3Q = [

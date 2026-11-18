@@ -1615,19 +1615,8 @@ export class StructureView {
       if (hw > 2.5) { X.rect(c, x - 1, y - hh + 2, 2, hh * 2 - 4, EL.shield[2]); X.rect(c, x - hw + 1, y - 1, hw * 2 - 2, 1, EL.shield[3]); }
       if (hpk < 0.5) X.lines(c, [[x - hw + 1, y - hh + 2], [x, y], [x - 1, y + hh - 2]], '#1a120c');
     } else guardShape(c, name === 'spike' ? 'rime' : name, x, y, 0.8 + 0.4 * raise, t, sn, hpk);   // the 2D Spike kite borrows the Rime's kite
-    // On the far side of the body (facing away, or slung on the hidden hip) the guard is drawn under the
-    // wizard as it should be, and its rim shows through on top, dithered: a partner can always see
-    // that you carry a guard and which one (the rim is in its colour, the Bulwark's square).
-    const away = c === g;
-    if (away) {
-      const k = blocking ? 0.75 : 0.5, sz = 0.8 + 0.4 * raise, wx = 0.55 + 0.45 * sn;
-      if (bulwark) {
-        const hw = 2.5 + (blocking ? 3 : 2) * sn, hh = blocking ? 8 : 6;
-        for (let q = -hw; q <= hw; q++) for (const yy of [y - hh - 1, y + hh]) if (k > X.bay(Math.round(x + q), Math.round(yy))) X.px(o, x + q, yy, X.EARTH[0]);
-        for (let q = -hh; q <= hh; q++) for (const xx of [x - hw - 1, x + hw]) if (k > X.bay(Math.round(xx), Math.round(y + q))) X.px(o, xx, y + q, X.EARTH[0]);
-      } else X.ring(o, x, y, 4.6 * sz * wx + 0.5, 5 * sz + 0.5, R[1], k);
-    }
-    // Drawn live, the guard's moving parts (art/guard-fx.ts) lie in its plane; blocking, each element bursts out of it,
+    // On the far side of the body the guard is simply hidden by it (the dithered rim drawn through the body was removed:
+    // the user, 2026-11-18, "doesn't really help"). Drawn live, the guard's moving parts (art/guard-fx.ts) lie in its plane; blocking, each element bursts out of it,
     // and only the Mirror keeps the energy face below (the user: the Shield shimmer is the Mirror's alone).
     const fr = live ? v.a?.guardFrame : undefined;
     if (fr) GFX.guardFx(o, name, GUARD_EL[id] ?? 0, { x, y, u: fr.u, v: fr.v, face: fr.face }, t, blocking, raise, v.y, i * 97);

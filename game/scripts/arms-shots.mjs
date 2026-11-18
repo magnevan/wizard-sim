@@ -1,6 +1,6 @@
 // The wizard's conjured weapons and guards as the game draws them live in 3D (art/live3d.ts, the props from
 // tools/sprites-3d/wizprops.py) with their 2D effects, each pair in five facings, standing.
-// Usage (after npm run build): node scripts/arms-shots.mjs [--out shots/arms] [--full] [--motion] [--guards]   (needs a real GPU: d3d11)
+// Usage (after npm run build): node scripts/arms-shots.mjs [--out shots/arms] [--full] [--motion] [--guards] [--block]   (needs a real GPU: d3d11)
 // Writes <out>/<weapon>-<guard>-<facing>.png crops round seat 0 (--full: whole frames instead); --motion adds a Strike
 // frame by frame (-strike0..7) and a held block (-block) for four of them; --guards each guard alone in motion,
 // 12 frames idle and 12 blocking (guard-<guard>-idleNN / -blockNN).
@@ -41,9 +41,11 @@ try {
         window.__hold = setInterval(() => { s.weapon[0] = wid; s.weaponUses[0] = 9; s.wand[0] = 0; s.guard[0] = gid; s.guardHp[0] = 999; }, 10);
       }, wid, gid);
       await sleep(700);
+      if (process.argv.includes('--block')) { await p.keyboard.down('Space'); await sleep(600); }   // every facing blocking
       const file = join(out, `${wn}-${gn}-${fn}.png`);
       if (full) await p.screenshot({ path: file });
       else await p.screenshot({ path: file, clip: { x: MID[0] - 100, y: MID[1] - 170, width: 200, height: 190 } });
+      if (process.argv.includes('--block')) { await p.keyboard.up('Space'); await sleep(300); }
     }
     console.log('shot', wn, gn);
   }
@@ -84,6 +86,14 @@ try {
       await p.keyboard.down('Space'); await sleep(120);
       for (let k = 0; k < 12; k++) { await p.screenshot({ path: join(out, `guard-${gn}-block${String(k).padStart(2, '0')}.png`), clip }); await sleep(60); }
       await p.keyboard.up('Space');
+      // the Rime walking off: what fell from it should stay where it fell (guard-<g>-walkNN, a wider crop)
+      if (gn === 'rime') {
+        await sleep(400);
+        await p.mouse.move(MID[0] + 400, MID[1]); await p.mouse.down();   // hold left: walk toward the cursor
+        for (let k = 0; k < 10; k++) { await p.screenshot({ path: join(out, `guard-${gn}-walk${String(k).padStart(2, '0')}.png`), clip: { x: MID[0] - 200, y: MID[1] - 170, width: 400, height: 190 } }); await sleep(70); }
+        await p.mouse.up();
+        await p.mouse.move(MID[0] - 400, MID[1]); await p.mouse.down(); await sleep(700); await p.mouse.up();   // and back
+      }
       console.log('guard', gn);
     }
   }

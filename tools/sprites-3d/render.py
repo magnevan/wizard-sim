@@ -27,6 +27,7 @@ FIT_H = float(next((a[9:] for a in args if a.startswith('--height=')), 1.0))
 CANVAS, PPU, SUPER = int(next((a[9:] for a in args if a.startswith('--canvas=')), 48)), 16, 4
 CARRIERS = []   # (carrier empty, prop name, bone): each --prop hangs from one
 SOFT = []   # (carrier empty, k, prop axis) for --prop=...:<name>~k: props that take only k of the hand's tilt
+FACES = []   # (carrier empty, face normal): a guard's face, from its props file's PROP_FACE (the client squares it while blocking)
 DIRS = {'south': 0, 'south-east': 45, 'east': 90, 'north-east': 135, 'north': 180, 'north-west': -135, 'west': -90, 'south-west': -45}
 
 scene = bpy.context.scene
@@ -153,6 +154,7 @@ if ANIM:
             bpy.context.view_layer.update(); o.matrix_world = mw
         CARRIERS.append((e, name, bone))
         if soft: SOFT.append((e, e.matrix_basis.copy(), float(soft), Vector(ns['PROP_AXIS'][name])))
+        if name in ns.get('PROP_FACE', {}): FACES.append((e, Vector(ns['PROP_FACE'][name])))
         print('prop', name, 'on', bone, len(parts), 'parts', f'(soft {soft})' if soft else '')
 elif ext == '.py':
     exec(compile(open(MODEL, encoding='utf-8-sig').read(), MODEL, 'exec'), {'__name__': '__model__', '__file__': MODEL})

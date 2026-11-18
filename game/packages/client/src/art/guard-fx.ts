@@ -22,6 +22,30 @@ const rim = (f: GuardFrame, a: number, k = 1): Pt => [f.x + (f.u[0] * Math.cos(a
 /** How far out the rim reaches on screen (px), for spreads. */
 const reach = (f: GuardFrame): number => Math.max(3, Math.hypot(f.u[0], f.u[1]), Math.hypot(f.v[0], f.v[1]));
 const SPECTRUM = ['#ff6a8a', '#ffb84a', '#fff27a', '#7af08a', '#6ad8ff', '#9a8aff', '#f08aff'];
+/** The Ember's flame, brightest first (K.tongue: core, middle, edge): yellow at the heart, orange, red round the rim. */
+const HEART = ['#ffffff', '#fffbe0', '#fff4c0', '#ffe060', '#ffc040'], MID = ['#fff4c0', '#ffd860', '#ffb040', '#ff9a30', '#ff7a28'];
+const OUTER = ['#ffd860', '#ff9a30', '#ff6a24', '#e8402a', '#b8281e'];
+
+/**
+ * Where each guard was lately (by seed): things that fall off it (mist, grit, chips, leaves) start from where the guard
+ * was when they fell, so they stay behind as the wizard moves on instead of riding along. Field px, which the camera
+ * doesn't move. View state only, never the sim's.
+ */
+const TRAIL = new Map<number, { t: number; f: GuardFrame; feet: number }[]>();
+const KEEP = 2.5;
+function remember(seed: number, t: number, f: GuardFrame, feet: number): void {
+  let h = TRAIL.get(seed);
+  if (!h) TRAIL.set(seed, (h = []));
+  if (h.length && t < h[h.length - 1].t) h.length = 0;   // time went back (a new room, a reset)
+  if (!h.length || t > h[h.length - 1].t) h.push({ t, f, feet });
+  while (h.length > 1 && h[0].t < t - KEEP) h.shift();
+}
+/** The guard as it was at time ts (the latest record at or before it; the oldest kept if ts is older). */
+function born(seed: number, ts: number): { f: GuardFrame; feet: number } {
+  const h = TRAIL.get(seed)!;
+  for (let k = h.length - 1; k >= 0; k--) if (h[k].t <= ts) return h[k];
+  return h[0];
+}
 
 /**
  * Draws a live guard's moving parts. `id` is the guard's name (GUARD_NAME), `el` its element id (for the block bursts),
@@ -29,16 +53,19 @@ const SPECTRUM = ['#ff6a8a', '#ffb84a', '#fff27a', '#7af08a', '#6ad8ff', '#9a8af
  */
 export function guardFx(o: Ctx, id: string, el: number, f: GuardFrame, t: number, blocking: boolean, raise: number, feet: number, seed: number): void {
   const fl = Math.floor(t * 20), big = blocking ? 1.4 : 1, R = reach(f);
+  remember(seed, t, f, feet);
   switch (id) {
     case 'ember': {
-      // tongues all round the rim, rising (screen up) whatever the guard's tilt; the core's glow is the shell's pulse
-      const n = 11;
-      for (let k = 0; k < n; k++) {
-        const a = (k / n) * TAU + t * 0.6, p = rim(f, a, 1.05), w = 0.8 + rand(k, fl >> 1, seed) * 0.6;
-        const h = (3 + 3 * rand(k, fl, seed + 1)) * big * (p[1] < f.y ? 1.25 : 0.8);
-        K.tongue(o, p[0], p[1] + 1, w * big, h, Math.sin(t * 9 + k * 1.7) * 1.4);
+      // a shield made of flame (the user, 2026-11-18: "more yellow -> red ... the border less defined"): tongues across
+      // the whole face, yellow at the heart, orange, then red round a ragged rim, all rising whatever the guard's tilt
+      for (const [k, n, Rr, hk] of [[1.08, 12, OUTER, 1], [0.72, 9, MID, 0.85], [0.35, 5, HEART, 0.7]] as const) {
+        for (let q = 0; q < n; q++) {
+          const a = (q / n) * TAU + t * (0.5 + k * 0.3) + k, p = rim(f, a, k + (rand(q, fl >> 1, seed + k * 9) - 0.5) * 0.25);
+          const h = (3 + 4 * rand(q, fl, seed + 1)) * big * hk * (p[1] < f.y ? 1.25 : 0.85), w = (0.9 + rand(q, fl >> 1, seed) * 0.7) * big;
+          K.tongue(o, p[0], p[1] + 1, w, h, Math.sin(t * 9 + q * 1.7 + k * 3) * 1.4, Rr);
+        }
       }
-      for (const q of emit(t, 10 * big, 0.8, (j, age) => { const p = rim(f, rand(j, 2, seed) * TAU); return { x: p[0] + Math.sin(j + age * 7) * 2, y: p[1] - age * 14, age }; }))
+      for (const q of emit(t, 12 * big, 0.8, (j, age) => { const p = rim(f, rand(j, 2, seed) * TAU, 0.3 + 0.8 * rand(j, 3, seed)); return { x: p[0] + Math.sin(j + age * 7) * 2, y: p[1] - age * 16, age }; }))
         X.px(o, q.x, q.y, K.fireCol(q.age));
       break;
     }
@@ -54,22 +81,25 @@ export function guardFx(o: Ctx, id: string, el: number, f: GuardFrame, t: number
       break;
     }
     case 'spike': {
-      // ice chips breaking off and falling, hard glints on the spikes
-      for (const q of emit(t, 5 * big, 0.6, (j, age) => { const p = rim(f, rand(j, 10, seed) * TAU); return { x: p[0], y: Math.min(feet, p[1] + age * age * 26), age }; }))
+      // ice chips breaking off and falling where it was, hard glints on the spikes
+      for (const q of emit(t, 5 * big, 0.6, (j, age, ts) => { const g = born(seed, ts), p = rim(g.f, rand(j, 10, seed) * TAU); return { x: p[0], y: Math.min(g.feet, p[1] + age * age * 26), age }; }))
         X.px(o, q.x, q.y, q.age < 0.5 ? '#ffffff' : X.EL.ice[3]);
       for (let k = 0; k < 2; k++) if ((fl + k * 3) % 6 === 0) { const p = rim(f, rand(fl, 11 + k, seed) * TAU, 1.05); X.px(o, p[0], p[1], '#ffffff'); X.px(o, p[0] - 1, p[1], X.EL.ice[1]); X.px(o, p[0] + 1, p[1], X.EL.ice[1]); }
       break;
     }
     case 'rime': {
-      // cold mist pouring off the lower edge and falling to pool at the feet; a few glints on the face
-      // thin wisps, dithered (half-tone puffs), the pooled ones flatter and fading
-      for (const q of emit(t, 6 * big, 1.8, (j, age) => {
-        const a = Math.PI * (0.15 + 0.7 * rand(j, 3, seed)), p = rim(f, a), lo = p[1] > f.y ? p : rim(f, a + Math.PI);
-        const fall = Math.min(feet - lo[1], age * 22);
-        return { x: lo[0] + (rand(j, 4, seed) - 0.5) * 8 * age, y: lo[1] + fall, age, pool: lo[1] + fall >= feet - 0.5 };
+      // frost fog rolling off the lower edge (the user, 2026-11-18: not a stippled blue, and what has fallen stays where
+      // it fell): pale wisps, each from where the shield was when it left it, sinking slowly and swelling as they thin,
+      // then spreading low over the ground and fading
+      for (const q of emit(t, 6 * big, 2.2, (j, age, ts) => {
+        const g = born(seed, ts), a = Math.PI * (0.2 + 0.6 * rand(j, 3, seed)), p0 = rim(g.f, a), lo = p0[1] > g.f.y ? p0 : rim(g.f, a + Math.PI);
+        const sink = Math.min(g.feet - lo[1], age * age * 30 + age * 6), ground = lo[1] + sink >= g.feet - 0.5;
+        return { x: lo[0] + (rand(j, 4, seed) - 0.5) * 10 * age + Math.sin(age * 5 + j) * 1.2, y: lo[1] + sink, age, ground };
       })) {
-        if (q.pool) X.ellipse(o, q.x, q.y, 2 + q.age * 5, 1 + q.age, X.FROST[3], 0.5);
-        else K.puff(o, q.x, q.y, 1 + q.age * 1.5, q.age < 0.4 ? X.FROST[1] : X.FROST[3], 0.5);
+        // solid pale wisps that thin by shrinking, never dithered (a half-tone read as a stippled blue patch, not frost)
+        const fade = 1 - q.age;
+        if (q.ground) K.puff(o, q.x, q.y, (1.5 + q.age * 3) * fade + 0.4, q.age < 0.6 ? X.FROST[0] : X.FROST[1], 1);
+        else K.puff(o, q.x, q.y, (0.8 + q.age * 1.6) * (0.4 + 0.6 * fade), q.age < 0.3 ? '#ffffff' : X.FROST[0], 1);
       }
       if (fl % 5 === 0) { const p = rim(f, rand(fl, 5, seed) * TAU, 0.6); X.px(o, p[0], p[1], '#ffffff'); }
       break;
@@ -86,20 +116,20 @@ export function guardFx(o: Ctx, id: string, el: number, f: GuardFrame, t: number
     case 'leaf': {
       // pollen drifting up, and now and then a small leaf falling
       K.sparkle(o, f.x, f.y, t, 1, R, seed, X.LIFE, 6);
-      for (const q of emit(t, 1.2, 2, (j, age) => { const p = rim(f, rand(j, 7, seed) * TAU); return { x: p[0] + Math.sin(age * 8 + j) * 3, y: p[1] + age * Math.max(4, feet - p[1]), age }; })) {
+      for (const q of emit(t, 1.2, 2, (j, age, ts) => { const g = born(seed, ts), p = rim(g.f, rand(j, 7, seed) * TAU); return { x: p[0] + Math.sin(age * 8 + j) * 3, y: p[1] + age * Math.max(4, g.feet - p[1]), age }; })) {
         X.px(o, q.x, q.y, X.LIFE[4]); X.px(o, q.x + 1, q.y, X.LIFE[3]);
       }
       break;
     }
     case 'bulwark': {
       // grit and pebbles shaking off its edges
-      for (const q of emit(t, 6 * big, 0.7, (j, age) => { const p = rim(f, rand(j, 8, seed) * TAU); return { x: p[0], y: Math.min(feet, p[1] + age * age * 30), age, j }; }))
+      for (const q of emit(t, 6 * big, 0.7, (j, age, ts) => { const g = born(seed, ts), p = rim(g.f, rand(j, 8, seed) * TAU); return { x: p[0], y: Math.min(g.feet, p[1] + age * age * 30), age, j }; }))
         X.px(o, q.x, q.y, q.j % 2 ? X.EARTH[2] : X.EARTH[4]);
       break;
     }
     case 'prism': {
-      // spectral glints chasing round the edges (the facets' sweep is the shell's)
-      for (let k = 0; k < 3; k++) { const a = t * 1.7 + (k / 3) * TAU, p = rim(f, a, 0.95); X.px(o, p[0], p[1], SPECTRUM[(fl + k * 2) % SPECTRUM.length]); X.px(o, p[0], p[1] - 1, '#ffffff'); }
+      // now and then a single spectral glint (the colour itself is the shell's, by each facet's angle to the camera)
+      if (fl % 9 === 0) { const p = rim(f, rand(fl, 12, seed) * TAU, 0.8); X.px(o, p[0], p[1], '#ffffff'); X.px(o, p[0] + 1, p[1], SPECTRUM[(fl / 9) % SPECTRUM.length | 0]); }
       break;
     }
     case 'mirror': {

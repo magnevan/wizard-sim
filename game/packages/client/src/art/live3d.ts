@@ -33,6 +33,8 @@ export interface ModelMeta {
   attacks: { clip: string; first: number; hit: number; last: number; cut: [number, number] | null }[];
   /** A clip's body turn: [degrees, ease in from, to, ease out from, to] in clip seconds. */
   yaw: Record<string, [number, number, number, number, number]>;
+  /** A guard carrier's face marker by carrier node (the export's FACES): its face normal, squared to the body while blocking. */
+  faces?: Record<string, string>;
   /** A bow clip's release, in clip seconds: the string follows the draw hand until then. */
   release: Record<string, number>;
   /** The wizard's spell moves: each one-shot's first, release and last time (clip seconds). */
@@ -60,6 +62,8 @@ export interface LivePose {
   grip?: number;
   /** The props to show by name (ModelMeta.props); the rest are hidden. By default the model's `show`, else all. */
   props?: readonly string[];
+  /** Blocking, 0..1: the strapped guard is turned upright and square to the way the body faces (squareGuard). */
+  guardUp?: number;
 }
 
 const urls = import.meta.glob<string>('../../../../content/assets/models/*.glb', { eager: true, query: '?url', import: 'default' });
@@ -264,14 +268,21 @@ const FX_GLSL = `
     int b[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5); return (float(b[i]) + 0.5) / 16.0; }`;
 const FX_FRAG = `
   if (fxMode == 1) {
-    float hh = fract(dot(vFx, vec3(2.6, 1.9, 1.4)) - fxTime * 0.45);
-    albedo = mix(albedo, hsv2rgb(vec3(hh, 0.55, max(0.85, rgb2hsv(albedo).z))), 0.7);
+    // the Prism: light it reflects, its hue set by each facet's angle to the camera (the view-space normal), added on
+    // top; standing still it holds still, and it shifts as the guard turns (the user: not a rainbow that runs on)
+    vec3 nv = normalize(vNormal);
+    float hh = fract(nv.x * 0.55 + nv.y * 0.35 + 0.1);
+    albedo = mix(albedo, hsv2rgb(vec3(hh, 0.65, max(0.8, rgb2hsv(albedo).z))), 0.45);   // mixed in, not added (added, it blew out to white)
   } else if (fxMode == 2) {
-    ratio *= 0.8 + 0.3 * sin(fxTime * 4.0 + dot(vFx, vec3(9.0, 7.0, 8.0)));
+    // the Ember: a shield of flame, not a glowing red disc: its rock flickers between deep red and yellow
+    float fl = 0.5 + 0.5 * sin(dot(vFx, vec3(23.0, 17.0, 19.0)) + fxTime * 6.0) * sin(dot(vFx, vec3(-11.0, 29.0, 7.0)) - fxTime * 4.3);
+    albedo = mix(vec3(0.82, 0.16, 0.05), vec3(1.0, 0.82, 0.25), fl);
+    ratio *= 0.9 + 0.25 * fl;
   } else if (fxMode == 3) {
-    float band = sin(length(vFx) * 55.0 - fxTime * 5.0);
-    if (bayer4(gl_FragCoord.xy * 0.5) > 0.42 + 0.3 * band) discard;
-    ratio *= 1.0 + 0.35 * max(band, 0.0);
+    // a soft shimmer: mostly see-through, slow faint swells rather than hard rings (round 3: the rings read as a target)
+    float band = sin(length(vFx) * 30.0 - fxTime * 3.0);
+    if (bayer4(gl_FragCoord.xy * 0.5) > 0.38 + 0.12 * band) discard;
+    ratio *= 1.0 + 0.15 * max(band, 0.0);
   } else if (fxMode == 4) {
     ratio *= 0.85 + 0.3 * sin(dot(vFx, vec3(38.0, 27.0, 33.0)) - fxTime * 7.0);
   }`;
@@ -318,7 +329,7 @@ interface Drop { node: THREE.Object3D; rest: THREE.Matrix4; box: THREE.Box3 }
  * A prop by name: its carrier, and in the carrier's frame its far end along its main axis (a soft prop's: the weapon's
  * tip, where its particles run to) and the middle of its shape (a guard's).
  */
-interface Carrier { name: string; node: THREE.Object3D; held: boolean; tip: THREE.Vector3 | null; mid: THREE.Vector3; axes: THREE.Vector3[] }
+interface Carrier { name: string; node: THREE.Object3D; held: boolean; tip: THREE.Vector3 | null; mid: THREE.Vector3; axes: THREE.Vector3[]; face?: THREE.Object3D }
 /** A shape's three half-extents along its box's axes, longest first: a guard's face is the first two, its normal the last. */
 function halfAxes(box: THREE.Box3): THREE.Vector3[] {
   const s = box.getSize(new THREE.Vector3()).multiplyScalar(0.5);
@@ -421,7 +432,7 @@ function instance(slug: string, m: Model, original = false): Inst {
       for (let c = 0; c < 8; c++) far = Math.max(far, v1.set(c & 1 ? box.max.x : box.min.x, c & 2 ? box.max.y : box.min.y, c & 4 ? box.max.z : box.min.z).dot(d));
       tip = d.multiplyScalar(far);
     }
-    carriers.push({ name: pr.name ?? pr.node.replace(/ carrier$/, ''), node: n, held: /Hand$/.test(pr.bone), tip, mid: box.getCenter(new THREE.Vector3()), axes: halfAxes(box) });
+    carriers.push({ name: pr.name ?? pr.node.replace(/ carrier$/, ''), node: n, held: /Hand$/.test(pr.bone), tip, mid: box.getCenter(new THREE.Vector3()), axes: halfAxes(box), face: m.meta.faces?.[pr.node] ? node(body, m.meta.faces[pr.node]) : undefined });
   }
   // a bow's string is drawn only while its carrier shows (the wizard's ice bow waits hidden)
   let bowOf: THREE.Object3D | null = null;
@@ -468,6 +479,7 @@ function pose(inst: Inst, m: Model, p: LivePose): void {
   ]);
   place(inst, m, p);
   if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0));
+  if (p.guardUp) squareGuard(inst, p.guardUp);
   if (fall >= 0) dropProps(inst, p.t - fall);
 }
 
@@ -563,6 +575,57 @@ function softProps(inst: Inst, face: number, grip: number): void {
     s.node.parent!.getWorldQuaternion(qp);
     s.node.quaternion.copy(qp.invert().multiply(qi).multiply(qb));
     s.node.updateMatrixWorld(true);
+  }
+}
+
+const mA = new THREE.Matrix4(), mB = new THREE.Matrix4(), qg = new THREE.Quaternion(), qw = new THREE.Quaternion();
+const gUp = new THREE.Vector3(), gN = new THREE.Vector3(), gS = new THREE.Vector3(), gMid = new THREE.Vector3(), gO = new THREE.Vector3(), gF = new THREE.Vector3();
+const WORLD_UP = new THREE.Vector3(0, 1, 0);
+/** Where a raised guard's middle goes, in hip heights: this far above the hips and this far in front of them. */
+const GUARD_CHEST = 0.35, GUARD_AHEAD = 0.55;
+/**
+ * Blocking (round 3, the user: a defend animation that uses the shield): the block clip raises the forearm, and each
+ * shown strapped guard (a soft prop off a hand) is turned by w toward standing upright with its face square to the way
+ * the body faces, about its own middle, so a buckler isn't caught edge-on and a tower shield stands in front. Its up is
+ * its soft axis; its face is its face marker (the export's, from wizprops.py PROP_FACE).
+ */
+function squareGuard(inst: Inst, w: number): void {
+  for (const c of inst.carriers) {
+    if (c.held || !c.node.visible) continue;
+    const s = inst.soft.find((x) => x.node === c.node);
+    if (!s || !c.face) continue;
+    c.node.updateMatrixWorld(true);
+    c.node.getWorldPosition(gO);
+    gUp.copy(s.axis.getWorldPosition(v1)).sub(gO).normalize();
+    c.node.localToWorld(gMid.copy(c.mid));
+    // the marker's local position, Blender's Z-up axes in the carrier frame as written by the export; the guard's own
+    // geometry came through the glTF Y-up conversion, so take the marker the same way: (x, y, z) -> (x, z, -y)
+    const fp = c.face.position;
+    gN.copy(c.node.localToWorld(v1.set(fp.x, fp.z, -fp.y))).sub(gO);
+    gN.addScaledVector(gUp, -gN.dot(gUp));
+    if (gN.lengthSq() < 1e-8) continue;
+    gN.normalize();
+    gS.crossVectors(gUp, gN);
+    mA.makeBasis(gUp, gN, gS);
+    inst.root.getWorldDirection(gF); gF.y = 0; gF.normalize();   // the body faces the root's +Z
+    gS.crossVectors(WORLD_UP, gF);
+    mB.makeBasis(WORLD_UP, gF, gS);
+    qg.setFromRotationMatrix(mB.multiply(mA.transpose()));
+    if (!Number.isFinite(qg.w)) continue;
+    qw.identity().slerp(qg, w);
+    // turned about its middle, and its middle carried toward a spot in front of the chest (the clip's forearm can put a
+    // strapped guard behind the body), in world space, then back into its parent's frame
+    const pos = v1.copy(gO).sub(gMid).applyQuaternion(qw).add(gMid);
+    if (inst.hips) {
+      const hh = inst.hips.getWorldPosition(v2).y - inst.root.getWorldPosition(v3).y;   // hip height, world units
+      const at = v2.addScaledVector(WORLD_UP, GUARD_CHEST * hh).addScaledVector(gF, GUARD_AHEAD * hh);
+      pos.addScaledVector(at.sub(gMid), w);
+    }
+    c.node.getWorldQuaternion(qa).premultiply(qw);
+    c.node.parent!.getWorldQuaternion(qp).invert();
+    c.node.quaternion.copy(qp.multiply(qa));
+    c.node.position.copy(c.node.parent!.worldToLocal(pos));
+    c.node.updateMatrixWorld(true);
   }
 }
 

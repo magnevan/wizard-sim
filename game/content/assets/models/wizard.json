@@ -35,6 +35,14 @@
   "gather": {
    "source": "mage_soell_cast_8",
    "duration": 1.3333
+  },
+  "block": {
+   "source": "guard_block",
+   "duration": 2.9667
+  },
+  "brace": {
+   "source": "guard_brace",
+   "duration": 2.9667
   }
  },
  "attacks": [
@@ -204,6 +212,17 @@
   }
  ],
  "height": 2.5344,
+ "faces": {
+  "mirror carrier": "mirror carrier face",
+  "bulwark carrier": "bulwark carrier face",
+  "ember carrier": "ember carrier face",
+  "rime carrier": "rime carrier face",
+  "spark carrier": "spark carrier face",
+  "tide carrier": "tide carrier face",
+  "prism carrier": "prism carrier face",
+  "leaf carrier": "leaf carrier face",
+  "spike carrier": "spike carrier face"
+ },
  "props": [
   {
    "node": "staff carrier",

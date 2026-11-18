@@ -25,7 +25,9 @@ ROLES = {
     # (`casts`, found like an attack's hit), gathering as a loop (`loops`, the whole clip)
     'wizard': {'walk': 'walking_man', 'run': 'running', 'attack': ['right_hand_sword_slash'], 'death': 'knock_down',
                'casts': {'cast': 'mage_soell_cast_3', 'area': 'charged_ground_slam', 'self': 'mage_soell_cast'},
-               'loops': {'gather': 'mage_soell_cast_8'}},
+               # the guard clips (round 3): Meshy text-to-motion, a buckler held across the chest (output/wizard/guard-block.glb) and a
+               # crouch braced behind a tower shield (guard-brace.glb); the library's boxing guards held it under the hat brim
+               'loops': {'gather': 'mage_soell_cast_8', 'block': 'guard_block', 'brace': 'guard_brace'}},
 }
 LEAD = 1.2   # seconds of clip kept before an attack's hit: the longest game wind-up (the brute's 1.1)
 

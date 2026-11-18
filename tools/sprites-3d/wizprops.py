@@ -249,8 +249,8 @@ def mirror():
     # sheet C: a polished gold mirror disc inside a halo of golden light
     return [disc('mirror disc', C + N * 0.02, N, 0.17, 0.05, GOLD()),
             ring('mirror rim', C + N * 0.04, N, 0.17, 0.02, GOLD()),
-            disc('mirror ward', C, N, 0.30, 0.012, HALO(), verts=24),
-            ring('mirror halo', C, N, 0.30, 0.025, HALO())]
+            disc('mirror ward', C, N, 0.46, 0.012, HALO(), verts=28),   # round 3: a wider ward, so the shimmer reads
+            ring('mirror halo', C, N, 0.46, 0.03, HALO())]
 
 
 def bulwark():
@@ -367,6 +367,26 @@ def leaf_r2():
 PROPS = {'sword': sword, 'earthmaul': earthmaul, 'focus': focus, 'icebow': icebow, 'frostspear': frostspear, 'whip': whip,
          'trident': trident, 'mirror': mirror, 'bulwark': bulwark, 'ember': ember, 'rime': rime, 'spark': spark, 'tide': tide,
          'prism': prism, 'leaf': leaf, 'spike': spike}
+# Round 3, the user's second look: every guard bigger (the Spike, Prism and Leaf most), and held facing forward and
+# out instead of flat against the arm, so the camera sees its face (the tower read as a slab carried edge-on).
+GUARD_SCALE = {'mirror': 1.3, 'bulwark': 1.25, 'ember': 1.4, 'rime': 1.35, 'spark': 1.45, 'tide': 1.35, 'prism': 1.7,
+               'leaf': 1.6, 'spike': 1.8}
+GUARD_YAW = 0.8   # radians the face turns from straight out toward the front, about the forearm
+
+
+def _guard(fn, k):
+    def build():
+        parts = fn()
+        bpy.context.view_layer.update()
+        m = Matrix.Translation(C) @ Matrix.Rotation(GUARD_YAW, 4, 'X') @ Matrix.Scale(k, 4) @ Matrix.Translation(-C)
+        for o in parts: o.matrix_world = m @ o.matrix_world
+        return parts
+    return build
+
+
+for _g, _k in GUARD_SCALE.items(): PROPS[_g] = _guard(PROPS[_g], _k)
+# each guard's face normal in the carrier frame (N turned GUARD_YAW toward the front): the export marks it for the client
+PROP_FACE = {g: (0.0, math.cos(GUARD_YAW), math.sin(GUARD_YAW)) for g in GUARD_SCALE}
 # long weapons are soft props (render.py ~k), kept near upright as the staff is, instead of pointing out of the fist
 PROP_AXIS = {'sword': tuple(UP), 'focus': tuple(UP), 'frostspear': tuple(UP), 'trident': tuple(UP), 'whip': tuple(UP),
              'earthmaul': tuple(Vector((0.30, 0, 1)).normalized()), 'icebow': (0, 0, 1)}

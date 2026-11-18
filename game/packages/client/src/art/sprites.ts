@@ -22,7 +22,7 @@ import { HEIGHT, CELL_H, CELL_W, FEET_X, FEET_Y, SPRITES_ON, type Anchors, type 
 import type { Frame } from './actors';
 import { LIVE3D_ON, PX_PER_UNIT, liveFrame, liveMeta, type LivePose } from './live3d';
 import * as X from './px';
-import { GUARD_NAME, N_EL, elementName } from '@wizard-sim/sim';
+import { GUARD, GUARD_NAME, N_EL, elementName } from '@wizard-sim/sim';
 import { optOn } from '../dev-options';
 
 interface Move { row: number; n: number }
@@ -169,6 +169,8 @@ const FOLLOW = 0.25, BLEND = 0.3;
 export const SHOT_LEAD = 0.2;
 /** The staff's blow takes the staff firmly over GRIP_IN (s) and lets it settle upright over GRIP_OUT as the blow ends. */
 const GRIP_IN = 0.12, GRIP_OUT = 0.35;
+/** Blocking (livePose): the guard clip eases in over BLOCK_IN s and plays GUARD_RATE times fast to GUARD_HOLD of its length, held there. */
+const BLOCK_IN = 0.12, GUARD_HOLD = 0.75, GUARD_RATE = 2.5;
 const smooth01 = (x: number) => { const k = Math.min(1, Math.max(0, x)); return k * k * (3 - 2 * k); };
 
 /** Each conjured weapon's 3D prop (tools/sprites-3d/wizprops.py), by element; Life (glowing hands) and the wand have none. */
@@ -218,6 +220,16 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
         const out = after(move, o.last, t - o.last, { seat, grip, props, ...under });
         if (out) return out;
       }
+    }
+    // Blocking: the guard raised (round 3, the user: "some defend animation where the character uses the shield"). The tower
+    // guards (Bulwark, Spike kite) brace behind theirs in a crouch; the rest hold theirs across the chest (Meshy text-to-
+    // motion clips: the library's boxing guards held it up under the hat brim). Each plays fast to its held pose and
+    // stays there, easing in over BLOCK_IN, over the legs if the wizard walks while blocking.
+    if (s.block > 0 && s.guard && meta.clips.block) {
+      const tower = (s.guard === GUARD.bulwark || s.guard === GUARD.spike) && !!meta.clips.brace, mv = tower ? 'brace' : 'block', d = dur(mv), sec = s.block / 60;
+      const t = Math.min(d * GUARD_HOLD, sec * GUARD_RATE), k = Math.min(1, sec / BLOCK_IN);   // up fast, then held
+      const e = k * k * (3 - 2 * k);
+      return { move: mv, t, face, flash, seat, props, ...under, move2: s.spd > 0 ? legs : 'walk', t2: s.spd > 0 ? step(legs) : 0, w2: 1 - e, guardUp: e };
     }
     // a Force cast: the push clip into its full stretch (halfway from the release to the clip's end), held while the
     // spell flows. Queuing runes plays nothing: the body only casts when the spell goes off (the user, 2026-11-17).

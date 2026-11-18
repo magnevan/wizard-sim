@@ -14,6 +14,7 @@ slugs=("$@"); [ ${#slugs[@]} -eq 0 ] && slugs=("${ROSTER[@]}")
 for s in "${slugs[@]}"; do
   d="$O/${DIR[$s]:-$s}"
   more="--more=$d/walking.glb"; [ "$s" = "${s#raider}" ] && more="$more --more=$d/running.glb"   # raiders run with the sprint clip in clips.glb
+  for gc in "$d"/guard-*.glb; do [ -f "$gc" ] && more="$more --more=$gc"; done   # the wizard's guard clips (round 3)
   "$B" --background --python tools/sprites-3d/render.py -- "$d/clips.glb" "$TMP/$s" --anim --export="$OUT/$s.glb" --slug="$s" $more ${OPTS[$s]} $([ "$s" = wizard ] && echo "$WIZ_ARMS") 2>&1 \
     | grep -E "^exported|Error|Traceback|line [0-9]|SystemExit|no clip" | sed "s/^/$s: /"
 done

@@ -584,6 +584,7 @@ export class WorldView {
     s.bare = kind === 'wizard' && i < MAX_SEATS && (w.seats.weapon[i] || w.seats.wand[i]) ? 1 : 0;
     s.weapon = kind === 'wizard' && i < MAX_SEATS ? w.seats.weapon[i] : 0;
     s.guard = kind === 'wizard' && i < MAX_SEATS ? w.seats.guard[i] : 0;
+    s.block = kind === 'wizard' && i < MAX_SEATS && w.seats.guard[i] ? w.seats.guardT[i] : 0;
     if (kind === 'wizard') s.pal = owner % 4;
     else if (b.kind[i] === KIND.enemy || b.kind[i] === KIND.none) { // none: an enemy that just died (onDeath)
       if (arch === ARCH.shieldbearer) { s.pal = 5; s.variant = 5; }

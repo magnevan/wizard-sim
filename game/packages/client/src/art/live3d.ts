@@ -593,8 +593,8 @@ const WORLD_UP = new THREE.Vector3(0, 1, 0);
  * blockAhead in front of the shoulders (blockOut sideways, toward his left) plus blockSize of its own half height (a tower stands further out), square on.
  */
 export const GUARD_PLACE = {
-  carryUp: 0.3, carryOut: 0.45, carryAhead: 0.1, carryAngle: 0.95, carryTilt: 0.2,
-  blockUp: 0.55, blockAhead: 0.9, blockOut: 0, blockSize: 0.45, blockYaw: 0,
+  carryUp: 0.31, carryOut: 1.2, carryAhead: 1, carryAngle: 2.5, carryTilt: 0.2,
+  blockUp: 1.19, blockAhead: 1.32, blockOut: 1.64, blockSize: 0.89, blockYaw: 1.7,
   /** 'carry' / 'block' hold that pose whatever the wizard does (the Tools panel's placing aid); 'auto' follows the game. */
   pin: 'auto' as 'auto' | 'carry' | 'block',
   /** Show the wizards facing this way (0..1 of a turn) whatever the mouse does; -1 follows the game. The placing aid again. */

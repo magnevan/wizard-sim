@@ -195,7 +195,7 @@ export class StageTools {
     const rows: [keyof typeof G, string, number, number, number][] = [
       ['carryUp', 'Carried: up', -0.5, 1.5, 0.01], ['carryOut', 'Carried: out to the side', -1.5, 1.5, 0.01], ['carryAhead', 'Carried: forward', -1, 1, 0.01],
       ['carryAngle', 'Carried: turn outward', -3.14, 3.14, 0.02], ['carryTilt', 'Carried: top leans out', -1, 1, 0.01],
-      ['blockUp', 'Blocking: up', -0.5, 1.5, 0.01], ['blockAhead', 'Blocking: forward', -0.5, 2, 0.01], ['blockSize', 'Blocking: stand off by its size', -1, 2, 0.01], ['blockYaw', 'Blocking: turn', -3.14, 3.14, 0.02],
+      ['blockUp', 'Blocking: up', -0.5, 1.5, 0.01], ['blockAhead', 'Blocking: forward', -1, 5, 0.02], ['blockOut', 'Blocking: sideways (his left)', -3, 3, 0.02], ['blockSize', 'Blocking: stand off by its size', -2, 4, 0.01], ['blockYaw', 'Blocking: turn', -3.14, 3.14, 0.02],
       ['facing', 'Wizard faces (-1 = follow the mouse; 0 east, .25 south, .5 west, .75 north)', -1, 0.9375, 0.0625],
     ];
     const sync: (() => void)[] = [];

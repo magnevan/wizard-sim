@@ -590,11 +590,11 @@ const WORLD_UP = new THREE.Vector3(0, 1, 0);
  * it at his ear; the user, 2026-11-18), from his shoulders, so a clip that twists his torso turns the guard with it.
  * (The numbers are GUARD_PLACE's, which the Tools panel's Stage section edits live.) Carried: carryUp above the hips, carryOut out past the left shoulder and carryAhead forward, its face turned
  * carryAngle from the front out to the side and its top leaning out by carryTilt. Raised: blockUp above the hips,
- * blockAhead in front of the shoulders plus blockSize of its own half height (a tower stands further out), square on.
+ * blockAhead in front of the shoulders (blockOut sideways, toward his left) plus blockSize of its own half height (a tower stands further out), square on.
  */
 export const GUARD_PLACE = {
   carryUp: 0.3, carryOut: 0.45, carryAhead: 0.1, carryAngle: 0.95, carryTilt: 0.2,
-  blockUp: 0.55, blockAhead: 0.9, blockSize: 0.45, blockYaw: 0,
+  blockUp: 0.55, blockAhead: 0.9, blockOut: 0, blockSize: 0.45, blockYaw: 0,
   /** 'carry' / 'block' hold that pose whatever the wizard does (the Tools panel's placing aid); 'auto' follows the game. */
   pin: 'auto' as 'auto' | 'carry' | 'block',
   /** Show the wizards facing this way (0..1 of a turn) whatever the mouse does; -1 follows the game. The placing aid again. */
@@ -650,7 +650,7 @@ function placeGuard(inst: Inst, w: number): void {
     pC.set(lx, hips.y + G.carryUp * torso, lz).addScaledVector(gL, G.carryOut * torso).addScaledVector(gF, G.carryAhead * torso);
     // raised: square in front
     turnTo(qB, WORLD_UP, gY.copy(gF).applyAxisAngle(WORLD_UP, G.blockYaw));
-    pB.set(sx, hips.y + G.blockUp * torso, sz).addScaledVector(gF, G.blockAhead * torso + G.blockSize * half);
+    pB.set(sx, hips.y + G.blockUp * torso, sz).addScaledVector(gF, G.blockAhead * torso + G.blockSize * half).addScaledVector(gL, G.blockOut * torso);
     if (!Number.isFinite(qC.w) || !Number.isFinite(qB.w)) continue;
     qw.copy(qC).slerp(qB, w);
     pC.lerp(pB, w);

@@ -186,16 +186,17 @@ export class StageTools {
    */
   private fillPlacement(body: HTMLElement, line: () => HTMLElement, btn: (l: string, f: () => void, t?: string) => HTMLElement): void {
     const G = GUARD_PLACE, D = { ...G };
-    body.appendChild(h('div', 'tune-msg', 'Place the guard: pick a pose, drag until it sits right, then Copy numbers and send them. Pose holds the pose while you look (turn the wizard with the mouse or the puppet cursor).'));
+    body.appendChild(h('div', 'tune-msg', 'Place the guard: pick a pose, drag until it sits right, then Copy numbers and send them. The numbers box is two-way: paste numbers in and the sliders follow. Pose holds the pose; the last slider fixes the way the wizard faces so the mouse cannot turn him.'));
     const out = h('textarea') as HTMLTextAreaElement;
-    out.rows = 3; out.readOnly = true; out.style.cssText = 'width:100%;font:11px monospace';
-    const show = () => { out.value = JSON.stringify({ ...G, pin: undefined }); };
+    out.rows = 4; out.spellcheck = false; out.style.cssText = 'width:100%;font:11px monospace';
+    const show = () => { const { pin: _p, ...rest } = G; out.value = JSON.stringify(rest); };
     const pl = line(); pl.append(h('span', 'tune-k', 'Pose'));
     for (const [name, v] of [['auto', 'auto'], ['carried', 'carry'], ['blocking', 'block']] as const) pl.append(btn(name, () => { G.pin = v; }, v === 'auto' ? 'Follow the game' : `Hold the ${name} pose`));
     const rows: [keyof typeof G, string, number, number, number][] = [
       ['carryUp', 'Carried: up', -0.5, 1.5, 0.01], ['carryOut', 'Carried: out to the side', -1.5, 1.5, 0.01], ['carryAhead', 'Carried: forward', -1, 1, 0.01],
       ['carryAngle', 'Carried: turn outward', -3.14, 3.14, 0.02], ['carryTilt', 'Carried: top leans out', -1, 1, 0.01],
       ['blockUp', 'Blocking: up', -0.5, 1.5, 0.01], ['blockAhead', 'Blocking: forward', -0.5, 2, 0.01], ['blockSize', 'Blocking: stand off by its size', -1, 2, 0.01], ['blockYaw', 'Blocking: turn', -3.14, 3.14, 0.02],
+      ['facing', 'Wizard faces (-1 = follow the mouse; 0 east, .25 south, .5 west, .75 north)', -1, 0.9375, 0.0625],
     ];
     const sync: (() => void)[] = [];
     for (const [k, label, lo, hi, step] of rows) {
@@ -210,6 +211,15 @@ export class StageTools {
     const bl = line();
     bl.append(btn('Reset', () => { Object.assign(G, D); G.pin = 'auto'; for (const f of sync) f(); show(); }),
       btn('Copy numbers', () => { show(); void navigator.clipboard?.writeText(out.value); out.select(); }, 'Copies the numbers, and shows them below'));
+        // two-way: edit or paste the numbers and they move the sliders (and the guard) as you type
+    out.addEventListener('input', () => {
+      try {
+        const o = JSON.parse(out.value) as Record<string, unknown>;
+        for (const k of Object.keys(o)) if (k !== 'pin' && typeof o[k] === 'number' && k in G) (G as unknown as Record<string, number>)[k] = o[k] as number;
+        for (const f of sync) f();
+        out.style.outline = '';
+      } catch { out.style.outline = '1px solid #c55'; }
+    });
     body.appendChild(out); show();
   }
 }

@@ -597,6 +597,8 @@ export const GUARD_PLACE = {
   blockUp: 0.55, blockAhead: 0.9, blockSize: 0.45, blockYaw: 0,
   /** 'carry' / 'block' hold that pose whatever the wizard does (the Tools panel's placing aid); 'auto' follows the game. */
   pin: 'auto' as 'auto' | 'carry' | 'block',
+  /** Show the wizards facing this way (0..1 of a turn) whatever the mouse does; -1 follows the game. The placing aid again. */
+  facing: -1,
 };
 const gY = new THREE.Vector3(), qC = new THREE.Quaternion(), qB = new THREE.Quaternion(), gL = new THREE.Vector3(), gH = new THREE.Vector3(), pC = new THREE.Vector3(), pB = new THREE.Vector3();
 /** The rotation that takes the guard's current (up, face) frame (mAT, mA's transpose) to (up, face), into `out`. */

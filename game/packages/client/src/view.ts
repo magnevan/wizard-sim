@@ -600,6 +600,7 @@ export class WorldView {
     s.spd = sp < 0.15 ? 0 : sp < 0.6 ? 0.5 : 1;
     s.ph = s.spd ? (Math.round(mod(this.ph[i], TAU) / TAU * 8) / 8) * TAU : 0;
     s.faceT = b.face[i] * TAU; s.dist = this.dist[i];
+    if (kind === 'wizard' && GUARD_PLACE.facing >= 0) { s.face = (Math.round(GUARD_PLACE.facing * 16) / 16) * TAU; s.faceT = GUARD_PLACE.facing * TAU; }
     s.idle = (Math.round(mod(ct * 2.6 + i, TAU) / TAU * 4) / 4) * TAU;
     if (kind === 'wizard' && s.spd) {
       const vx = (b.x[i] - this.prevBX[i]) * 60 * PPU;

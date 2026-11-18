@@ -339,6 +339,8 @@ interface Inst {
   seat: Seat; soft: Soft[]; drops: Drop[]; carriers: Carrier[]; bowOf: THREE.Object3D | null; hands: [THREE.Object3D, THREE.Object3D] | null;
   root: THREE.Group; shift: THREE.Group; turn: THREE.Group; body: THREE.Object3D; mixer: THREE.AnimationMixer;
   actions: Map<string, THREE.AnimationAction>; hips: THREE.Object3D | null; rest: THREE.Vector3; flash: { value: number };
+  /** The upper arms (left, right), for the body's frame from its shoulders (placeGuard). */
+  arms: [THREE.Object3D, THREE.Object3D] | null;
   bow: { tips: THREE.Object3D[]; nock: THREE.Object3D; grip: THREE.Object3D; hand: THREE.Object3D; fore: THREE.Object3D; parts: THREE.Mesh[] } | null;
 }
 const models = new Map<string, Model | 'loading' | 'failed'>();
@@ -439,7 +441,9 @@ function instance(slug: string, m: Model, original = false): Inst {
   for (let o = tipA?.parent ?? null; o && !bowOf; o = o.parent) if (carriers.some((c) => c.node === o)) bowOf = o;
   const lh = body.getObjectByName('LeftHand'), rh = body.getObjectByName('RightHand');
   const hands: Inst['hands'] = lh && rh ? [lh, rh] : null;
-  return { seat, soft, drops, carriers, bowOf, hands, root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
+  const la = body.getObjectByName('LeftArm'), ra = body.getObjectByName('RightArm');
+  const arms: Inst['arms'] = la && ra ? [la, ra] : null;
+  return { seat, soft, drops, carriers, bowOf, hands, arms, root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
 }
 
 const ease = (t: number) => t * t * (3 - 2 * t);
@@ -582,14 +586,14 @@ const mA = new THREE.Matrix4(), mAT = new THREE.Matrix4(), mB = new THREE.Matrix
 const gUp = new THREE.Vector3(), gN = new THREE.Vector3(), gS = new THREE.Vector3(), gMid = new THREE.Vector3(), gO = new THREE.Vector3(), gF = new THREE.Vector3();
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 /**
- * Where a guard sits, in hip heights (round 3, the user's third look: "the default shield position a bit higher up, and
- * angled out to the side"; blocking, the tower went into the body and walking clipped it into the face). Carried: CARRY_UP
- * above the hips, CARRY_OUT out to the left and CARRY_AHEAD forward, its face turned CARRY_ANGLE from the front out to
- * the side and its top leaning out by CARRY_TILT. Raised: BLOCK_UP above the hips, BLOCK_AHEAD in front, plus BLOCK_SIZE
- * of its own half height (a tower stands further out), square to the facing.
+ * Where a guard sits, in torso lengths (hips to shoulders: this wizard is short-legged and big-headed, so hip heights put
+ * it at his ear; the user, 2026-11-18), from his shoulders, so a clip that twists his torso turns the guard with it.
+ * Carried: CARRY_UP above the hips, CARRY_OUT out past the left shoulder and CARRY_AHEAD forward, its face turned
+ * CARRY_ANGLE from the front out to the side and its top leaning out by CARRY_TILT. Raised: BLOCK_UP above the hips,
+ * BLOCK_AHEAD in front of the shoulders plus BLOCK_SIZE of its own half height (a tower stands further out), square on.
  */
-const CARRY_UP = 0.45, CARRY_OUT = 0.6, CARRY_AHEAD = 0.12, CARRY_ANGLE = 0.95, CARRY_TILT = 0.22;
-const BLOCK_UP = 0.35, BLOCK_AHEAD = 0.6, BLOCK_SIZE = 0.45;
+const CARRY_UP = 0.3, CARRY_OUT = 0.45, CARRY_AHEAD = 0.1, CARRY_ANGLE = 0.95, CARRY_TILT = 0.2;
+const BLOCK_UP = 0.55, BLOCK_AHEAD = 0.9, BLOCK_SIZE = 0.45;
 const qC = new THREE.Quaternion(), qB = new THREE.Quaternion(), gL = new THREE.Vector3(), gH = new THREE.Vector3(), pC = new THREE.Vector3(), pB = new THREE.Vector3();
 /** The rotation that takes the guard's current (up, face) frame (mAT, mA's transpose) to (up, face), into `out`. */
 function turnTo(out: THREE.Quaternion, up: THREE.Vector3, face: THREE.Vector3): THREE.Quaternion {
@@ -622,22 +626,24 @@ function placeGuard(inst: Inst, w: number): void {
     gS.crossVectors(gUp, gN);
     mA.makeBasis(gUp, gN, gS);
     mAT.copy(mA).transpose();
-    // the body's frame: forward (the root's +Z), up, and its left (the side the guard's arm is on: the left upper arm)
-    inst.root.getWorldDirection(gF); gF.y = 0; gF.normalize();
-    gL.crossVectors(WORLD_UP, gF);
-    const hips = inst.hips.getWorldPosition(gH), hh = hips.y - inst.root.getWorldPosition(v3).y;
-    const arm = inst.hands?.[0].parent?.parent;
-    if (arm && arm.getWorldPosition(v3).sub(hips).dot(gL) < 0) gL.negate();
+    // the body's frame, from the shoulders: left (the guard's side), forward, and the torso's length
+    if (!inst.arms) continue;
+    const lA = inst.arms[0].getWorldPosition(v3), rA = inst.arms[1].getWorldPosition(gL);
+    const sy = (lA.y + rA.y) / 2, hips = inst.hips.getWorldPosition(gH), torso = Math.max(1e-4, sy - hips.y);
+    const sx = (lA.x + rA.x) / 2, sz = (lA.z + rA.z) / 2;
+    gL.sub(lA).negate(); gL.y = 0; gL.normalize();   // right shoulder to left, flat: his left
+    gF.crossVectors(gL, WORLD_UP);                  // left x up = forward (left +X, up +Y: forward +Z)
+    const lx = lA.x, lz = lA.z;
     const half = c.node.localToWorld(v2.copy(c.mid).add(c.axes[0])).distanceTo(gMid);   // its own half height
     // carried: out at the side, face turned out, top leaning out
     const upC = v1.copy(WORLD_UP).addScaledVector(gL, CARRY_TILT).normalize();
     const faceC = v2.copy(gF).multiplyScalar(Math.cos(CARRY_ANGLE)).addScaledVector(gL, Math.sin(CARRY_ANGLE));
     faceC.addScaledVector(upC, -faceC.dot(upC)).normalize();
     turnTo(qC, upC, faceC);
-    pC.copy(hips).addScaledVector(WORLD_UP, CARRY_UP * hh).addScaledVector(gL, CARRY_OUT * hh).addScaledVector(gF, CARRY_AHEAD * hh);
+    pC.set(lx, hips.y + CARRY_UP * torso, lz).addScaledVector(gL, CARRY_OUT * torso).addScaledVector(gF, CARRY_AHEAD * torso);
     // raised: square in front
     turnTo(qB, WORLD_UP, gF);
-    pB.copy(hips).addScaledVector(WORLD_UP, BLOCK_UP * hh).addScaledVector(gF, BLOCK_AHEAD * hh + BLOCK_SIZE * half);
+    pB.set(sx, hips.y + BLOCK_UP * torso, sz).addScaledVector(gF, BLOCK_AHEAD * torso + BLOCK_SIZE * half);
     if (!Number.isFinite(qC.w) || !Number.isFinite(qB.w)) continue;
     qw.copy(qC).slerp(qB, w);
     pC.lerp(pB, w);

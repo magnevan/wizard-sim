@@ -18,7 +18,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const PAIRS = [['sword', 8, 'mirror', 2], ['earthmaul', 9, 'bulwark', 1], ['focus', 6, 'ember', 3], ['icebow', 10, 'rime', 4],
   ['frostspear', 4, 'spark', 5], ['whip', 5, 'tide', 6], ['trident', 1, 'prism', 7], ['life', 2, 'leaf', 8], ['icebow', 10, 'spike', 9], ['staff', 0, 'none', 0]];
 // facings: where the mouse aims from the wizard (the camera keeps seat 0 near the middle of the frame), screen px
-const FACES = [['s', 0, 300], ['se', 260, 200], ['e', 280, 0], ['ne', 260, -200], ['sw', -260, 200]];
+const FACES = [['s', 0, 300], ['se', 260, 200], ['e', 280, 0], ['ne', 260, -200], ['sw', -260, 200], ['w', -280, 0]];
 const MID = [640, 390];
 
 const stop = await startPreview();

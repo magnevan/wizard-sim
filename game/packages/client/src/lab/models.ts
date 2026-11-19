@@ -13,7 +13,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ARCHETYPES, BODY } from '@wizard-sim/sim';
-import { LIVE_VIEW, flushLive, liveFrame, liveInstance, liveMeta, liveModel, livePoseInst, liveSlugs, liveString, liveWorks, type LiveInst, type LiveModel, type LivePose, type ModelMeta } from '../art/live3d';
+import { GUARD_PLACE, LIVE_VIEW, flushLive, liveFrame, liveInstance, liveMeta, liveModel, livePoseInst, liveSlugs, liveString, liveWorks, type LiveInst, type LiveModel, type LivePose, type ModelMeta } from '../art/live3d';
 import { CELL_H, CELL_W, FEET_X, FEET_Y, type Anchors } from '../art/rigs';
 import { TEAMS } from '../art/px';
 import { SHOT_LEAD } from '../art/sprites';
@@ -23,7 +23,7 @@ import type { Frame } from '../art/actors';
 const DEFAULTS = {
   m: 'wizard', c: 'walk', t: 0, f: 90, play: true, rate: 1, view: 'split', zoom: 0, cam: 'game',
   seat: 0, flash: false, squash: true, bones: false, rings: true, onion: false, ring8: false, lineup: false,
-  c2: '', w2: 0.5, legs: '', drive: false, speed: 4.2, asGame: false, floor: '#3b3833',
+  wp: '', gd: '', gu: 0, c2: '', w2: 0.5, legs: '', drive: false, speed: 4.2, asGame: false, floor: '#3b3833',
 };
 type St = typeof DEFAULTS;
 const st: St = { ...DEFAULTS };
@@ -331,6 +331,7 @@ function stepFrame(n: number): void {
 // ---- the side panel ---------------------------------------------------------------------------------------------------------------
 const modelList = el('div', { className: 'list' }), clipList = el('div', { className: 'list' }), info = el('div', { className: 'note' });
 const clip2Sel = el('select');
+const gearBox = el('div');
 const driveBox = el('div'), driveNote = el('div', { className: 'note' });
 const camFree = el('button', { className: 'b', textContent: 'Free', title: 'F' }), camGame = el('button', { className: 'b', textContent: 'Game camera', title: 'G' });
 camFree.onclick = freeCam; camGame.onclick = gameCam;
@@ -397,6 +398,8 @@ function buildSide(): void {
   seatSel.value = String(st.seat); seatSel.onchange = () => { st.seat = Number(seatSel.value); changed(); };
   side.append(row('Wizard seat', seatSel));
 
+  side.append(h3('Weapons and guards'), gearBox);
+
   side.append(h3('Timing'));
   side.append(row(check('play as the game', 'asGame', 'Loop only the part the game plays, and skip a cut hold')));
   side.append(row('Blend in', clip2Sel));
@@ -440,6 +443,59 @@ function buildModelPanel(): void {
   const sim = simOf(st.m);
   info.textContent = `${marks.note} ${meta.slug}: ${meta.height?.toFixed(2) ?? '?'} units tall, ${(meta as { tris?: number }).tris ?? '?'} tris. Sim: radius ${sim.radius} u, speed ${sim.speed} u/s` + (sim.reach !== null ? `, reach ${sim.reach} u.` : '.');
   syncDrive();
+  buildGear();
+}
+
+// ---- weapons and guards on the wizard (moved here from the Tools panel's Stage section) ------------------------------------------------
+const WEAPONS: [string, string][] = [['staff (wand)', ''], ['sword (fire)', 'sword'], ['maul (earth)', 'earthmaul'], ['focus (arcane)', 'focus'], ['bow (ice)', 'icebow'], ['spear (cold)', 'frostspear'], ['whip (lightning)', 'whip'], ['trident (water)', 'trident']];
+const GUARDS: [string, string][] = [['none', ''], ['mirror', 'mirror'], ['bulwark', 'bulwark'], ['ember', 'ember'], ['rime', 'rime'], ['spark', 'spark'], ['tide', 'tide'], ['prism', 'prism'], ['leaf', 'leaf'], ['spike', 'spike']];
+function buildGear(): void {
+  gearBox.replaceChildren();
+  if (st.m !== 'wizard') { gearBox.append(el('div', { className: 'note', textContent: 'Only the wizard carries them.' })); return; }
+  const pick = (label: string, list: [string, string][], key: 'wp' | 'gd') => {
+    const sel = el('select');
+    sel.append(...list.map(([n, v]) => el('option', { value: v, textContent: n })));
+    sel.value = st[key]; sel.onchange = () => { st[key] = sel.value; changed(); };
+    return row(label, sel);
+  };
+  gearBox.append(pick('Weapon', WEAPONS, 'wp'), pick('Guard', GUARDS, 'gd'));
+  const G = GUARD_PLACE as unknown as Record<string, number>, D = { ...G };
+  const gu = el('input', { type: 'range', min: '0', max: '1', step: '0.05', value: String(st.gu) });
+  const guOut = el('span', { textContent: st.gu.toFixed(2) });
+  gu.oninput = () => { st.gu = Number(gu.value); guOut.textContent = st.gu.toFixed(2); changed(); };
+  gearBox.append(row('Raised', gu, guOut), el('div', { className: 'note', textContent: 'Raised: 0 is the guard carried at the side, 1 square in front of the chest (blocking).' }));
+  gearBox.append(el('div', { className: 'note', textContent: 'Place the guard: drag until it sits right, then Copy numbers and send them. The numbers box is two-way: paste numbers in and the sliders follow. Lengths are in torso lengths (hips to shoulders). Pick a guard first.' }));
+  const out = el('textarea', { rows: 4, spellcheck: false });
+  out.style.cssText = 'width:100%;font:11px monospace';
+  const show = () => { out.value = JSON.stringify(G); };
+  const rows: [string, string, number, number, number][] = [
+    ['carryUp', 'Carried: up', -0.5, 1.5, 0.01], ['carryOut', 'Carried: out to the side', -1.5, 1.5, 0.01], ['carryAhead', 'Carried: forward', -1, 1, 0.01],
+    ['carryAngle', 'Carried: turn outward', -3.14, 3.14, 0.02], ['carryTilt', 'Carried: top leans out', -1, 1, 0.01],
+    ['blockUp', 'Blocking: up', -0.5, 1.5, 0.01], ['blockAhead', 'Blocking: forward', -1, 5, 0.02], ['blockOut', 'Blocking: sideways (his left)', -3, 3, 0.02],
+    ['blockSize', 'Blocking: stand off by its size', -2, 4, 0.01], ['blockYaw', 'Blocking: turn', -3.14, 3.14, 0.02],
+  ];
+  const syncs: (() => void)[] = [];
+  for (const [k, label, lo, hi, step] of rows) {
+    const r = el('input', { type: 'range', min: String(lo), max: String(hi), step: String(step), value: String(G[k]) });
+    const n = el('span', { textContent: G[k].toFixed(2) });
+    r.oninput = () => { G[k] = Number(r.value); n.textContent = G[k].toFixed(2); show(); };
+    syncs.push(() => { r.value = String(G[k]); n.textContent = G[k].toFixed(2); });
+    gearBox.append(el('div', { className: 'note', textContent: label }), row(r, n));
+  }
+  const reset = el('button', { className: 'b', textContent: 'Reset' });
+  reset.onclick = () => { Object.assign(G, D); for (const f of syncs) f(); show(); };
+  const copy = el('button', { className: 'b', textContent: 'Copy numbers', title: 'Copies the numbers, and shows them below' });
+  copy.onclick = () => { show(); void navigator.clipboard?.writeText(out.value); out.select(); };
+  gearBox.append(row(reset, copy));
+  out.addEventListener('input', () => {
+    try {
+      const o = JSON.parse(out.value) as Record<string, unknown>;
+      for (const k of Object.keys(o)) if (typeof o[k] === 'number' && k in G) G[k] = o[k] as number;
+      for (const f of syncs) f();
+      out.style.outline = '';
+    } catch { out.style.outline = '1px solid #c55'; }
+  });
+  gearBox.append(out); show();
 }
 
 function syncDrive(): void {
@@ -483,6 +539,7 @@ function frame(now: number): void {
     const face = (st.f * Math.PI) / 180;
     if (st.c === IDLE) st.t = 0;
     const pose: LivePose = { move: st.c === IDLE ? 'walk' : st.c, t: st.t, face, flash: st.flash, seat: st.m === 'wizard' && st.seat >= 0 ? TEAMS[st.seat] : undefined };
+    if (st.m === 'wizard' && (st.wp || st.gd)) Object.assign(pose, { props: [st.wp || 'staff', ...(st.gd ? [st.gd] : [])], guardUp: st.gu });
     if (st.c2 && st.c2 !== st.c && meta.clips[st.c2]) Object.assign(pose, { move2: st.c2, t2: st.t % meta.clips[st.c2].duration, w2: st.w2 });
     if (st.legs && st.legs !== st.c && meta.clips[st.legs]) Object.assign(pose, { legs: st.legs, tl: st.t % meta.clips[st.legs].duration });
     // full size

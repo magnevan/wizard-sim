@@ -483,7 +483,7 @@ function pose(inst: Inst, m: Model, p: LivePose): void {
   ]);
   place(inst, m, p);
   if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0));
-  placeGuard(inst, GUARD_PLACE.pin === 'carry' ? 0 : GUARD_PLACE.pin === 'block' ? 1 : p.guardUp ?? 0);
+  placeGuard(inst, p.guardUp ?? 0);
   if (fall >= 0) dropProps(inst, p.t - fall);
 }
 
@@ -588,17 +588,13 @@ const WORLD_UP = new THREE.Vector3(0, 1, 0);
 /**
  * Where a guard sits, in torso lengths (hips to shoulders: this wizard is short-legged and big-headed, so hip heights put
  * it at his ear; the user, 2026-11-18), from his shoulders, so a clip that twists his torso turns the guard with it.
- * (The numbers are GUARD_PLACE's, which the Tools panel's Stage section edits live.) Carried: carryUp above the hips, carryOut out past the left shoulder and carryAhead forward, its face turned
+ * (The numbers are GUARD_PLACE's, which the Model Viewer's Weapons and guards section edits live.) Carried: carryUp above the hips, carryOut out past the left shoulder and carryAhead forward, its face turned
  * carryAngle from the front out to the side and its top leaning out by carryTilt. Raised: blockUp above the hips,
  * blockAhead in front of the shoulders (blockOut sideways, toward his left) plus blockSize of its own half height (a tower stands further out), square on.
  */
 export const GUARD_PLACE = {
   carryUp: 0.31, carryOut: 1.2, carryAhead: 1, carryAngle: 2.5, carryTilt: 0.2,
   blockUp: 1.19, blockAhead: 1.32, blockOut: 1.64, blockSize: 0.89, blockYaw: 1.7,
-  /** 'carry' / 'block' hold that pose whatever the wizard does (the Tools panel's placing aid); 'auto' follows the game. */
-  pin: 'auto' as 'auto' | 'carry' | 'block',
-  /** Show the wizards facing this way (0..1 of a turn) whatever the mouse does; -1 follows the game. The placing aid again. */
-  facing: -1,
 };
 const gY = new THREE.Vector3(), qC = new THREE.Quaternion(), qB = new THREE.Quaternion(), gL = new THREE.Vector3(), gH = new THREE.Vector3(), pC = new THREE.Vector3(), pB = new THREE.Vector3();
 /** The rotation that takes the guard's current (up, face) frame (mAT, mA's transpose) to (up, face), into `out`. */

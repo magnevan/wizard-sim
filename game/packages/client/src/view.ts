@@ -22,7 +22,7 @@ import {
 import { Camera, FY, PPU } from './camera';
 import { ActorFrames, FEET_X, FEET_Y } from './art/actors';
 import { deathDir, deathFrame, mulTint, slugOf, spriteFrame, statusTint, type SpriteDeath } from './art/sprites';
-import { GUARD_PLACE, flushLive } from './art/live3d';
+import { flushLive } from './art/live3d';
 import { Extras } from './art/extras';
 import { Massing, massingParam } from './art/massing';
 import { optOn } from './dev-options';
@@ -584,7 +584,7 @@ export class WorldView {
     s.bare = kind === 'wizard' && i < MAX_SEATS && (w.seats.weapon[i] || w.seats.wand[i]) ? 1 : 0;
     s.weapon = kind === 'wizard' && i < MAX_SEATS ? w.seats.weapon[i] : 0;
     s.guard = kind === 'wizard' && i < MAX_SEATS ? w.seats.guard[i] : 0;
-    s.block = kind === 'wizard' && i < MAX_SEATS && w.seats.guard[i] ? (GUARD_PLACE.pin === 'auto' ? w.seats.guardT[i] : GUARD_PLACE.pin === 'block' ? 600 : 0) : 0;
+    s.block = kind === 'wizard' && i < MAX_SEATS && w.seats.guard[i] ? w.seats.guardT[i] : 0;
     if (kind === 'wizard') s.pal = owner % 4;
     else if (b.kind[i] === KIND.enemy || b.kind[i] === KIND.none) { // none: an enemy that just died (onDeath)
       if (arch === ARCH.shieldbearer) { s.pal = 5; s.variant = 5; }
@@ -600,7 +600,6 @@ export class WorldView {
     s.spd = sp < 0.15 ? 0 : sp < 0.6 ? 0.5 : 1;
     s.ph = s.spd ? (Math.round(mod(this.ph[i], TAU) / TAU * 8) / 8) * TAU : 0;
     s.faceT = b.face[i] * TAU; s.dist = this.dist[i];
-    if (kind === 'wizard' && GUARD_PLACE.facing >= 0) { s.face = (Math.round(GUARD_PLACE.facing * 16) / 16) * TAU; s.faceT = GUARD_PLACE.facing * TAU; }
     s.idle = (Math.round(mod(ct * 2.6 + i, TAU) / TAU * 4) / 4) * TAU;
     if (kind === 'wizard' && s.spd) {
       const vx = (b.x[i] - this.prevBX[i]) * 60 * PPU;

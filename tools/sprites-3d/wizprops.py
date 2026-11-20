@@ -198,7 +198,7 @@ C = Vector((0.26, 0, 0)) + N * 0.17   # over the hand, as the goblin shield
 MESHY_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output', 'guards-r3')
 
 
-def meshy(name, height, lift=0.0, flip=1):
+def meshy(name, height, lift=0.0, flip=1, thin=1.0):
     """A guard core built by Meshy (round 3; output/guards-r3/<name>.glb, from input/guards-r3/<name>.png), as one prop
     part: its picture's up toward the elbow (-U, so it hangs the right way up as the arm hangs), its face out along N,
     `height` tall along the forearm, centred over the hand (C) and `lift` further out. Its materials are renamed
@@ -237,6 +237,7 @@ def meshy(name, height, lift=0.0, flip=1):
         return max(ys) - min(ys)
     best = min((k * math.pi / 72 for k in range(72)), key=depth)
     o.data.transform(Matrix.Rotation(-best + (math.pi if flip < 0 else 0), 4, 'Z'))
+    if thin != 1.0: o.data.transform(Matrix.Diagonal((1, thin, 1, 1)))   # front to back is now Y: `thin` flattens a chunky core
     lo, hi = box()
     mid, s = (lo + hi) / 2, height / max(1e-6, hi.z - lo.z)
     # columns: the model's +X (its right) to -V, its +Y (its back; glTF's front is Blender's -Y) to -N, its +Z (up) to -U
@@ -255,6 +256,7 @@ def mirror():
 
 def bulwark():
     # round 3 (Meshy, from docs/reference/wizard-arms/r3/): the Earth tower shield: a tall slab of carved stone with big set stones, shoulder height, no magma (the user: that's Fire's); dust and grit are the game's particles
+    # round 4: the first model came with a grey base plate and hollow slots under it and a shattered texture (the user: "extra vertices on the bottom", "texture issue"); remade from the same picture as smart topology (meshy-t2.5 + meshy-n1, task 01a1f63f-76c7-7262-bad2-2d944dd65550), the old one kept as bulwark-r3.glb
     return [meshy('bulwark', 0.95)]
 
 
@@ -295,7 +297,7 @@ def rime_r2():
 
 def spike():
     # round 3 (Meshy, from docs/reference/wizard-arms/r3/): the Spike kite (Ice): a big kite of ice bristling with spikes, point down
-    return [meshy('spike', 0.85)]
+    return [meshy('spike', 0.85, thin=0.55)]   # round 4: too thick (the user), 0.5 deep for 1 tall before
 
 
 def spike_r2():
@@ -364,7 +366,7 @@ def prism():
 
 def leaf():
     # round 3 (Meshy, from docs/reference/wizard-arms/r3/): the Leaf aegis: a fan of three big leaves with pale midribs and a bud, so it reads as leaves when small
-    return [meshy('leaf', 0.66)]
+    return [meshy('leaf', 0.66, thin=0.55)]   # round 4: too thick (the user), 0.44 deep for 1 tall before
 
 
 def leaf_r2():

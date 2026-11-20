@@ -12,12 +12,17 @@
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { ARCHETYPES, BODY } from '@wizard-sim/sim';
+import { Container } from 'pixi.js';
+import { ARCHETYPES, BODY, EL as ELID, GUARD, N_EL, type World } from '@wizard-sim/sim';
 import { GUARD_PLACE, LIVE_VIEW, flushLive, liveFrame, liveInstance, liveMeta, liveModel, livePoseInst, liveSlugs, liveString, liveWorks, type LiveInst, type LiveModel, type LivePose, type ModelMeta } from '../art/live3d';
 import { CELL_H, CELL_W, FEET_X, FEET_Y, type Anchors } from '../art/rigs';
 import { TEAMS } from '../art/px';
 import { SHOT_LEAD } from '../art/sprites';
 import type { Frame } from '../art/actors';
+import * as X from '../art/px';
+import { CU, FY, TAU } from '../art/util';
+import type { BodyView } from '../art/vfx';
+import { StructureView } from '../view-structures';
 
 // ---- state, kept in the #hash ------------------------------------------------------------------------------------------------
 const DEFAULTS = {
@@ -228,21 +233,21 @@ function fitPix(): void {
 }
 const DIRS = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
 
-interface Booked { f: Frame | null; x: number; y: number; z: number; a: number; label?: string; top?: boolean }
+interface Booked { f: Frame | null; x: number; y: number; z: number; a: number; label?: string; top?: boolean; fx?: LivePose }
 function drawPixels(pose: LivePose, ghosts: LivePose[]): void {
   const W = pixCanvas.width, H = pixCanvas.height, dpr = devicePixelRatio;
   px.imageSmoothingEnabled = false;
   px.fillStyle = st.floor; px.fillRect(0, 0, W, H);
   if (!model || !meta) return;
   const z = pixZoom(), gz = gameScale(), list: Booked[] = [];
-  const book = (slug: string, p: LivePose, x: number, y: number, zz: number, a = 1, label?: string, who = 0, top = false) =>
-    list.push({ f: liveFrame(slug, p, ANCH, who), x, y, z: zz, a, label, top });
+  const book = (slug: string, p: LivePose, x: number, y: number, zz: number, a = 1, label?: string, who = 0, top = false, fx = false) =>
+    list.push({ f: liveFrame(slug, p, ANCH, who), x, y, z: zz, a, label, top, fx: fx ? p : undefined });
   // the main body (and its ghosts), the feet a little below the middle
   const mx = Math.round(W / 2), my = Math.round(24 * dpr + FEET_Y * z), rz = rowScale();
   ghosts.forEach((g, i) => book(st.m, g, mx, my, z, 0.28, undefined, 10 + i));
-  book(st.m, pose, mx, my, z, 1);
+  book(st.m, pose, mx, my, z, 1, undefined, 0, false, true);
   // the same frame at the game's own size, top right
-  book(st.m, pose, W - Math.round(CELL_W * gz * 0.75), Math.round(28 * dpr + FEET_Y * gz), gz, 1, `game size (${gz}x)`, 1, true);
+  book(st.m, pose, W - Math.round(CELL_W * gz * 0.75), Math.round(28 * dpr + FEET_Y * gz), gz, 1, `game size (${gz}x)`, 1, true, true);
   let y = Math.round(24 * dpr + CELL_H * z);
   const step = STEP * rz;
   if (st.ring8) {
@@ -271,10 +276,46 @@ function drawPixels(pose: LivePose, ghosts: LivePose[]): void {
     if (b.label) { px.globalAlpha = 1; px.fillStyle = '#9aa0ad'; px.fillText(b.label, b.x, b.top ? 18 * dpr : b.y + 12 * dpr); }
     if (!b.f) continue;
     px.globalAlpha = b.a;
+    // a wizard's weapon and guard bring their own particles (the game's code), under the body and over it
+    const fx = b.fx ? armsLayers(b.f, b.fx) : null;
+    const put = (c: HTMLCanvasElement) => px.drawImage(c, 0, 0, c.width, c.height, b.x - (FEET_X + FX_PAD) * b.z, b.y - (FEET_Y + FX_PAD) * b.z, c.width * b.z, c.height * b.z);
+    if (fx) put(fx.g);
     px.drawImage(b.f.c as CanvasImageSource, b.f.sx, b.f.sy, CELL_W, CELL_H, b.x - FEET_X * b.z, b.y - FEET_Y * b.z, CELL_W * b.z, CELL_H * b.z);
+    if (fx) put(fx.o);
   }
   px.globalAlpha = 1; px.textAlign = 'left';
   $('pixtag').textContent = `Pixel, the game's own renderer: ${z}x` + (st.zoom ? '' : ' (fit)') + (st.ring8 || st.lineup ? `; rows at ${rz}x` : '');
+}
+
+// ---- the weapons' and guards' own effects -----------------------------------------------------------------------------------------
+/** The wizard's weapon props and the element each one conjures (sprites.ts WEAPON_PROP, the other way round). */
+const WEAPON_EL: Record<string, number> = { sword: ELID.fire, earthmaul: ELID.earth, focus: ELID.arcane, icebow: ELID.ice, frostspear: ELID.cold, whip: ELID.lightning, trident: ELID.water };
+const armsView = new StructureView(new Container());
+/** Art px of room round a cell for effects that run past it, and the two layers (behind the body, over it). */
+const FX_PAD = 48;
+const fxG = X.canvas(CELL_W + 2 * FX_PAD, CELL_H + 2 * FX_PAD), fxO = X.canvas(CELL_W + 2 * FX_PAD, CELL_H + 2 * FX_PAD);
+/**
+ * The picked weapon's and guard's effects for this frame: the game's own StructureView.armsFx on a one-seat stand-in
+ * world, laid over the live frame f (its anchors say where the prop is on screen). Null when nothing is picked.
+ */
+function armsLayers(f: Frame, pose: LivePose): { g: HTMLCanvasElement; o: HTMLCanvasElement } | null {
+  if (st.m !== 'wizard') return null;
+  const guard = st.gd ? GUARD[st.gd as keyof typeof GUARD] ?? 0 : 0, weapon = WEAPON_EL[st.wp] ?? 0;
+  if (!guard && !weapon) return null;
+  const up = pose.guardUp ?? 0;
+  const world = {
+    seats: {
+      weapon: Uint8Array.of(weapon), weaponEls: new Uint8Array(N_EL), specT: new Float64Array(1), handT: new Float64Array(1),
+      guard: Uint8Array.of(guard), guardEls: new Uint8Array(N_EL), guardT: Float64Array.of(up > 0 ? 6 * up + 0.01 : 0), guardHp: Float64Array.of(999), guardCharge: new Float64Array(1),
+    },
+    bodies: { face: Float64Array.of(pose.face / TAU) },
+  } as unknown as World;
+  for (const c of [fxG, fxO]) c.x.clearRect(0, 0, c.c.width, c.c.height);
+  const v: BodyView = { on: true, x: FX_PAD + FEET_X, y: FX_PAD + FEET_Y, a: f.a, rig: 'wizard', seat: 0, f };
+  const cs = Math.cos(pose.face), sn = Math.sin(pose.face);
+  const P = (a: number, b: number, u: number): [number, number, number] => [v.x + a * cs - b * sn, v.y + (a * sn + b * cs) * FY - u * CU, a * sn + b * cs];
+  armsView.armsFx(world, 0, v, performance.now() / 1000, fxG.x, fxO.x, P, () => {});
+  return { g: fxG.c, o: fxO.c };
 }
 
 // ---- the timeline -----------------------------------------------------------------------------------------------------------------
@@ -464,7 +505,7 @@ function buildGear(): void {
   const guOut = el('span', { textContent: st.gu.toFixed(2) });
   gu.oninput = () => { st.gu = Number(gu.value); guOut.textContent = st.gu.toFixed(2); changed(); };
   gearBox.append(row('Raised', gu, guOut), el('div', { className: 'note', textContent: 'Raised: 0 is the guard carried at the side, 1 square in front of the chest (blocking).' }));
-  gearBox.append(el('div', { className: 'note', textContent: 'Place the guard: drag until it sits right, then Copy numbers and send them. The numbers box is two-way: paste numbers in and the sliders follow. Lengths are in torso lengths (hips to shoulders). Pick a guard first.' }));
+  gearBox.append(el('div', { className: 'note', textContent: 'Place the guard: drag until it sits right, then Copy numbers and send them. The numbers box is two-way: paste numbers in and the sliders follow. Lengths are in torso lengths (hips to shoulders). Pick a guard first. Their particles show in the pixel view (the same effect code as the game); the full-size view has the 3D props only.' }));
   const out = el('textarea', { rows: 4, spellcheck: false });
   out.style.cssText = 'width:100%;font:11px monospace';
   const show = () => { out.value = JSON.stringify(G); };

@@ -1456,6 +1456,17 @@ export class StructureView {
     light(mid[0], gy(f.y), 40 + reach * 0.3, R0[2], 0.7 * fade);
   }
 
+  /**
+   * Seat i's conjured weapon and guard effects alone, drawn by the very code the game uses (weapon, guard), for the dev
+   * Model Viewer (lab/models.ts), which has no World of its own: `w` need only carry the seat's weapon, guard and body
+   * facing. `v.a` is a live frame's anchors (blade, guard, guardFrame); `t` is clock time in seconds.
+   */
+  armsFx(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], light: LightFn): void {
+    this.st = t;
+    if (w.seats.weapon[i]) this.weapon(w, i, v, t, g, o, P, 1, light);
+    if (w.seats.guard[i]) this.guard(w, i, v, t, g, o, P, 1, light);
+  }
+
   /** Conjured weapons, distinct per element: stone maul, arcane hook, flame sword, frost spear, lightning whip, tide glaive, healing hands. */
   private weapon(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], up: number, light: LightFn): void {
     if (!v.a) return;

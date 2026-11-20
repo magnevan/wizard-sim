@@ -218,6 +218,18 @@ The archer and the shieldbearer walk at twice and 1.6 times their walk clip's pa
 
 New tooling: `render.py --inspect=<n>` renders n smooth stills a move from the south and the east (Workbench, with props and the soft staff as the game turns it) and `montage.py` lays them out, for checking a prop in the hand before an export; the viewer has a Legs option (a clip over walking or running legs).
 
+## Weapon and guard fixes from the viewer (2026-11-19)
+
+The user's list after trying the weapons and guards in the Model Viewer, and what was done (live numbers in `art/live3d.ts`: `WEAPON_HOLD`, `PIN`, `GUARD_SLIDE`):
+- **Bulwark mesh:** the Meshy model came with a grey base plate and hollow slots under it (the "extra vertices at the bottom") and a texture atlas shattered into slivers (the bad right side). Remade from the same approved picture with smart topology (`meshy-t2.5` + `meshy-n1`, 15 credits, task `01a1f63f-76c7-7262-bad2-2d944dd65550`; the standard `meshy-7.1` try, 30 credits, was 115k triangles and is kept as `bulwark-r4-hd.glb`, the old one as `bulwark-r3.glb`). The new one has a flat back, like a tower shield, and no plate.
+- **Shield arm:** a carried guard is placed by the body, so the left arm no longer swings free of it: with a guard shown, the arm's bones are turned 85% of the way to the standing pose in every clip but blocking, the guard clips and death. Casting with a guard is therefore one-handed (the right arm casts), which also covers the nice-to-have of a different cast with a shield; dedicated one-handed clips would cost Meshy credits and are not made.
+- **Guard in the death:** guards now let go with the weapons and slide outward as they fall (they were strapped on).
+- **Weapons too close to the body:** a conjured weapon's axis now leans forward and outward instead of standing upright at the belly, and its grip sits a little ahead and out (`WEAPON_HOLD`), so a blade clears the beard and hat brim. The staff keeps its carry; a blow still hands the weapon to the clip.
+- **Leaf and Spike too thick:** the Meshy cores are flattened to 0.55 of their depth in `wizprops.py` (`meshy(..., thin=0.55)`).
+- **Weapon particles in the viewer:** the pixel view now draws the picked weapon's and guard's effects with the game's own code (`StructureView.armsFx`, on a one-seat stand-in world), under and over the live frame. The full-size view shows the 3D props only.
+
+Checking: `game/scripts/viewer-shots.mjs` screenshots the viewer at given states (it needs a real GPU).
+
 ## The wizard's weapons and guards, pictures for Meshy (2026-11-17)
 
 The user asked for new weapons and shields for the 3D wizard at his new size: Codex concept art they approve, then meshes. The seven conjured weapon objects (flame sword, stone maul, echo focus, ice bow, frost spear, lightning whip, tide trident; Healing hands stays bare) were drawn as two sheets, with the goblin weapon sheet (layout and finish) and the wizard's model sheet (style and size) as references. Prompts: `tools/concept-gen/prompts/2026-11-17-wizard-arms/`. Sheets: `docs/reference/wizard-arms/`.

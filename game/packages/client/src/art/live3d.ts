@@ -322,9 +322,9 @@ interface Model { scene: THREE.Object3D; clips: Map<string, THREE.AnimationClip>
 /** The tracks a walking body's legs drive: the hips (the body's sway and travel) and both legs (Meshy's bone names). */
 const LOWER = /^(Hips|(Left|Right)(UpLeg|Leg|Foot|ToeBase))\./;
 interface Seat { on: { value: number }; main: { value: THREE.Vector3 }; trim: { value: THREE.Vector3 } }
-interface Soft { node: THREE.Object3D; axis: THREE.Object3D; k: number; rest: THREE.Quaternion; firm: string[] }
+interface Soft { node: THREE.Object3D; axis: THREE.Object3D; k: number; rest: THREE.Quaternion; restPos: THREE.Vector3; firm: string[] }
 /** A held prop that falls when its holder dies: its carrier, the carrier's own local matrix, and its shape (carrier space). */
-interface Drop { node: THREE.Object3D; rest: THREE.Matrix4; box: THREE.Box3 }
+interface Drop { node: THREE.Object3D; rest: THREE.Matrix4; box: THREE.Box3; slide: boolean }
 /**
  * A prop by name: its carrier, and in the carrier's frame its far end along its main axis (a soft prop's: the weapon's
  * tip, where its particles run to) and the middle of its shape (a guard's).
@@ -341,6 +341,8 @@ interface Inst {
   actions: Map<string, THREE.AnimationAction>; hips: THREE.Object3D | null; rest: THREE.Vector3; flash: { value: number };
   /** The upper arms (left, right), for the body's frame from its shoulders (placeGuard). */
   arms: [THREE.Object3D, THREE.Object3D] | null;
+  /** The guard arm's bones (shoulder to hand) and the standing pose they are held toward while a guard is carried (pinGuardArm). */
+  pin: { bones: THREE.Object3D[]; stand: THREE.Quaternion[] };
   bow: { tips: THREE.Object3D[]; nock: THREE.Object3D; grip: THREE.Object3D; hand: THREE.Object3D; fore: THREE.Object3D; parts: THREE.Mesh[] } | null;
 }
 const models = new Map<string, Model | 'loading' | 'failed'>();
@@ -408,7 +410,7 @@ function instance(slug: string, m: Model, original = false): Inst {
   const soft: Soft[] = [];
   for (const sp of m.meta.soft ?? []) {
     const n = node(body, sp.node), ax = node(body, sp.axis);
-    if (n && ax) soft.push({ node: n, axis: ax, k: sp.k, rest: n.quaternion.clone(), firm: sp.firm ?? [] });
+    if (n && ax) soft.push({ node: n, axis: ax, k: sp.k, rest: n.quaternion.clone(), restPos: n.position.clone(), firm: sp.firm ?? [] });
   }
   const drops: Drop[] = [], carriers: Carrier[] = [];
   body.updateMatrixWorld(true);
@@ -424,7 +426,7 @@ function instance(slug: string, m: Model, original = false): Inst {
       box.union(g.boundingBox!.clone().applyMatrix4(inv.clone().multiply(o.matrixWorld)));
     });
     if (box.isEmpty()) continue;
-    if (pr.drop) drops.push({ node: n, rest: n.matrix.clone(), box });
+    if (pr.drop || !/Hand$/.test(pr.bone)) drops.push({ node: n, rest: n.matrix.clone(), box, slide: !/Hand$/.test(pr.bone) });   // a guard lets go in the death as a weapon does
     // the far end along a soft prop's axis (its marker is a child of the carrier, along the axis)
     const sp = m.meta.soft?.find((x) => x.node === pr.node), ax = sp ? node(body, sp.axis) : undefined;
     let tip: THREE.Vector3 | null = null;
@@ -443,7 +445,15 @@ function instance(slug: string, m: Model, original = false): Inst {
   const hands: Inst['hands'] = lh && rh ? [lh, rh] : null;
   const la = body.getObjectByName('LeftArm'), ra = body.getObjectByName('RightArm');
   const arms: Inst['arms'] = la && ra ? [la, ra] : null;
-  return { seat, soft, drops, carriers, bowOf, hands, arms, root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
+  // the guard arm's standing pose: the walk's first frame (what a body standing still holds), read once
+  const pin: Inst['pin'] = { bones: ['LeftShoulder', 'LeftArm', 'LeftForeArm', 'LeftHand'].map((n) => body.getObjectByName(n)).filter((o): o is THREE.Object3D => !!o), stand: [] };
+  const walkAction = actions.get('walk');
+  if (walkAction && m.meta.props?.some((pr) => !/Hand$/.test(pr.bone))) {
+    walkAction.reset().play(); walkAction.time = 0; mixer.update(0);
+    pin.stand = pin.bones.map((b) => b.quaternion.clone());
+    walkAction.stop();
+  }
+  return { seat, soft, drops, carriers, bowOf, hands, arms, pin, root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
 }
 
 const ease = (t: number) => t * t * (3 - 2 * t);
@@ -471,6 +481,7 @@ function pose(inst: Inst, m: Model, p: LivePose): void {
     play(inst, [[clipName, 1, fall]]);
     place(inst, m, p);
     if (inst.soft.length) softProps(inst, p.face, 0);
+    placeGuard(inst, 0);
     inst.root.updateMatrixWorld(true);
     const toRoot = inst.root.matrixWorld.clone().invert();
     for (const d of inst.drops) DROP_FROM.set(d, toRoot.clone().multiply(d.node.matrixWorld));
@@ -481,6 +492,7 @@ function pose(inst: Inst, m: Model, p: LivePose): void {
     ...(legs ? [[clipName + ':upper', w1, p.t], [legs + ':lower', w1, p.tl ?? 0]] as const : [[clipName, w1, p.t]] as const),
     ...(second ? [[second, p.w2!, p.t2 ?? 0]] as const : []),
   ]);
+  pinGuardArm(inst, p.move === 'death' || p.move === 'block' || p.move === 'brace' ? 0 : 1 - (p.guardUp ?? 0));
   place(inst, m, p);
   if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0));
   placeGuard(inst, p.guardUp ?? 0);
@@ -523,7 +535,7 @@ function place(inst: Inst, m: Model, p: LivePose): void {
 }
 
 /** When a dying body's held props let go (s into the death clip), and how fast they fall (model units/s², 2 units ≈ 1 m). */
-const DROP_AT = 0.25, GRAVITY = 16;
+const DROP_AT = 0.25, GRAVITY = 16, GUARD_SLIDE = 0.45;
 const DROP_FROM = new Map<Drop, THREE.Matrix4>();
 const m1 = new THREE.Matrix4(), m2 = new THREE.Matrix4(), dp = new THREE.Vector3(), dq = new THREE.Quaternion(), ds = new THREE.Vector3();
 /**
@@ -550,6 +562,10 @@ function dropProps(inst: Inst, dt: number): void {
     const y0 = dp.y, y1 = -lowest, T = Math.max(0.15, Math.sqrt(Math.max(0, 2 * (y0 - y1)) / GRAVITY));
     const u = Math.min(1, dt / T);
     dp.y = y0 + (y1 - y0) * u * u;
+    if (d.slide) {   // a guard, carried at his side, slides out as it falls so it lands clear of the body
+      const r = Math.hypot(dp.x, dp.z) || 1, k = GUARD_SLIDE * ease(u);
+      dp.x += (dp.x / r) * k; dp.z += (dp.z / r) * k;
+    }
     dq.slerp(land, ease(Math.min(1, dt / (T * 0.9))));
     // body frame -> the carrier's parent's frame
     m1.compose(dp, dq, ds).premultiply(inst.root.matrixWorld);
@@ -559,6 +575,12 @@ function dropProps(inst: Inst, dt: number): void {
   }
 }
 
+/**
+ * How a conjured weapon is held (the user, 2026-11-19: "carried too close to the body, clips into the face"): its axis
+ * leans `lean` forward and `side` outward (to the wielder's right) per unit of height instead of standing upright, and the
+ * grip is moved `hold` ahead and `holdSide` of that outward, in model units, so a blade clears the beard and hat brim.
+ */
+const WEAPON_HOLD = { lean: 0.6, side: 0.25, hold: 0.14, holdSide: 0.5 };
 const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Quaternion(), qi = new THREE.Quaternion();
 /**
  * render.py soft_props: each soft prop's main axis is turned from where the hand holds it back toward upright (leaning
@@ -569,9 +591,13 @@ function softProps(inst: Inst, face: number, grip: number): void {
   for (const s of inst.soft) {
     if (!s.node.visible) continue;
     s.node.quaternion.copy(s.rest);
+    s.node.position.copy(s.restPos);
     s.node.updateMatrixWorld(true);
     const p = s.node.getWorldPosition(v1), a = s.axis.getWorldPosition(v2).sub(p).normalize();
-    const want = v3.set(Math.cos(face) * 0.12, 1, Math.sin(face) * 0.12).normalize();
+    // a conjured weapon is held out from the body (WEAPON_HOLD): the staff stays upright at the side
+    const held = inst.carriers.some((c) => c.node === s.node && c.held && c.name !== 'staff');
+    const cs = Math.cos(face), sn = Math.sin(face), H = held ? WEAPON_HOLD : null;
+    const want = v3.set(cs * (H ? H.lean : 0.12) - sn * (H ? H.side : 0), 1, sn * (H ? H.lean : 0.12) + cs * (H ? H.side : 0)).normalize();
     const turn = qa.setFromUnitVectors(a, want);
     qi.identity().slerp(turn, (1 - s.k) * (1 - grip));
     // world rotation -> the carrier's local one
@@ -579,7 +605,26 @@ function softProps(inst: Inst, face: number, grip: number): void {
     s.node.parent!.getWorldQuaternion(qp);
     s.node.quaternion.copy(qp.invert().multiply(qi).multiply(qb));
     s.node.updateMatrixWorld(true);
+    if (H) {   // and the grip itself a little ahead and out, fading as a blow takes the weapon over
+      const k = (1 - grip) * H.hold;
+      s.node.getWorldPosition(v1).add(v2.set(cs * k - sn * k * H.holdSide, 0, sn * k + cs * k * H.holdSide));
+      s.node.position.copy(s.node.parent!.worldToLocal(v1));
+      s.node.updateMatrixWorld(true);
+    }
   }
+}
+
+/** How much of the guard arm's own swing a carried guard takes out: the arm is turned this far toward its standing pose. */
+const PIN = 0.85;
+/**
+ * A carried guard is placed by the body (placeGuard), so the arm that carries it must not swing free of it in a run or a
+ * cast (the user, 2026-11-19: "shield arm should move less, pin to shield"). With a guard shown, the arm's bones are turned
+ * from the clip toward the walk's first frame (the standing pose) by k of PIN; the other arm and the legs keep the clip,
+ * so a cast is one-handed and a run still pumps one arm. Blocking, death and the guard's own clips leave the arm alone (k 0).
+ */
+function pinGuardArm(inst: Inst, k: number): void {
+  if (k <= 0 || !inst.pin.stand.length || !inst.carriers.some((c) => !c.held && c.node.visible)) return;
+  inst.pin.bones.forEach((b, j) => b.quaternion.slerp(inst.pin.stand[j], PIN * k));
 }
 
 const mA = new THREE.Matrix4(), mAT = new THREE.Matrix4(), mB = new THREE.Matrix4(), qw = new THREE.Quaternion();

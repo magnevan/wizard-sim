@@ -58,10 +58,17 @@ export interface LivePose {
   move: string; t: number; face: number; flash: boolean; move2?: string; t2?: number; w2?: number; seat?: TeamPal;
   /** Walking while the move plays: the move drives the upper body, this clip (walk or run) at time tl the hips and legs. */
   legs?: string; tl?: number;
-  /** How firmly a soft prop is held, 0 (kept upright) to 1 (every turn of the hand); by default 1 in its `firm` moves. */
   /** A thrust: how far the shaft is turned to point along the facing (0..1), whatever the hand's tilt. */
   aim?: number;
+  /** How firmly a soft prop is held, 0 (kept upright) to 1 (every turn of the hand); by default 1 in its `firm` moves. */
   grip?: number;
+  /**
+   * Blended transitions (inertialization, `blendPose`): when the move changes or its clip time jumps, the body eases from
+   * the pose last shown into the new one, its gap closing with this half-life (s). Unset: no blending (the goblins).
+   */
+  hl?: number;
+  /** The clock for blending (s); by default the page's. The Model Viewer passes its own timeline's. */
+  now?: number;
   /** The props to show by name (ModelMeta.props); the rest are hidden. By default the model's `show`, else all. */
   props?: readonly string[];
   /** Blocking, 0..1: the strapped guard goes from its carried place at the side to square in front of the chest (placeGuard). */
@@ -346,6 +353,10 @@ interface Inst {
   /** The guard arm's bones (shoulder to hand) and the standing pose they are held toward while a guard is carried (pinGuardArm). */
   pin: { bones: THREE.Object3D[]; stand: THREE.Quaternion[] };
   bow: { tips: THREE.Object3D[]; nock: THREE.Object3D; grip: THREE.Object3D; hand: THREE.Object3D; fore: THREE.Object3D; parts: THREE.Mesh[] } | null;
+  /** What blendPose eases: the skeleton's bones, then (from `nBones`) the soft props' carriers. Same order in every copy of a model. */
+  blendNodes: THREE.Object3D[]; nBones: number;
+  /** The bones' rest pose, put back before each pose so a bone no playing clip moves can't keep an old blend's offset. */
+  restQ: Float32Array; restP: Float32Array;
 }
 const models = new Map<string, Model | 'loading' | 'failed'>();
 const pools = new Map<string, Inst[]>();
@@ -455,7 +466,87 @@ function instance(slug: string, m: Model, original = false): Inst {
     pin.stand = pin.bones.map((b) => b.quaternion.clone());
     walkAction.stop();
   }
-  return { seat, soft, drops, carriers, bowOf, hands, arms, pin, root, shift, turn, body, mixer, actions, hips, rest, flash, bow };
+  const bones: THREE.Object3D[] = [];
+  body.traverse((o) => { if ((o as THREE.Bone).isBone) bones.push(o); });
+  const restQ = new Float32Array(bones.length * 4), restP = new Float32Array(bones.length * 3);
+  bones.forEach((o, j) => { o.quaternion.toArray(restQ, j * 4); o.position.toArray(restP, j * 3); });
+  return { seat, soft, drops, carriers, bowOf, hands, arms, pin, root, shift, turn, body, mixer, actions, hips, rest, flash, bow, blendNodes: [...bones, ...soft.map((s) => s.node)], nBones: bones.length, restQ, restP };
+}
+
+// ---- blended transitions (inertialization) ---------------------------------------------------------------------------------------
+/**
+ * Each body's blending memory (by slug and seat, as `tips`): the pose last shown (local rotations, and the hips' position),
+ * and the offset still being closed between it and the pose its clips ask for, with that offset's rate of change.
+ * When a transition starts (the move changes, or its clip jumps), the offset becomes "what was shown minus what's asked
+ * for"; every draw it decays toward zero as a critically damped spring (Holden, "Spring-It-On"), so a jab into a jab,
+ * a cast or the standing pose eases from wherever the body was, and an interrupted ease simply starts from the screen.
+ * The user, 2026-11-20: "It's not natural to return to a base state between animations" (explorations/2026-11-20-weapon-motion-flow.md).
+ */
+interface Blend { now: number; move: string; t: number; hl: number; shown: Float32Array; off: Float32Array; vel: Float32Array; hip: Float32Array; hipV: Float32Array; hipShown: Float32Array }
+const blends = new Map<string, Blend>();
+const bq = new THREE.Quaternion(), bq2 = new THREE.Quaternion();
+/** Clip time moving faster than this many times real time counts as a jump (a cut), not playback. */
+const JUMP_RATE = 6;
+/** The gap at a transition (shown x inverse target) as a scaled angle-axis vector, into `out` at `j`. */
+function logQ(q: THREE.Quaternion, out: Float32Array, j: number): void {
+  if (q.w < 0) { q.x = -q.x; q.y = -q.y; q.z = -q.z; q.w = -q.w; }
+  const s = Math.hypot(q.x, q.y, q.z), a = 2 * Math.atan2(s, q.w), k = s > 1e-8 ? a / s : 2;
+  out[j] = q.x * k; out[j + 1] = q.y * k; out[j + 2] = q.z * k;
+}
+function expQ(x: number, y: number, z: number, out: THREE.Quaternion): THREE.Quaternion {
+  const a = Math.hypot(x, y, z), h = a / 2, k = a > 1e-8 ? Math.sin(h) / a : 0.5;
+  return out.set(x * k, y * k, z * k, Math.cos(h));
+}
+/**
+ * Applies the body's blend to its nodes [lo, hi) after the clips posed them (pass 0: the bones, before the hips are placed;
+ * pass 1: the soft props, after softProps aims them). Pass 0 also advances the springs and notices a transition.
+ */
+function blendPose(inst: Inst, key: string | undefined, p: LivePose, pass: 0 | 1, looping: boolean): void {
+  const N = inst.blendNodes.length, lo = pass ? inst.nBones : 0, hi = pass ? N : inst.nBones;
+  if (!key || p.hl === undefined || p.move === 'death') { if (key && pass === 0) blends.delete(key); return; }
+  let b = blends.get(key);
+  const now = p.now ?? performance.now() / 1000;
+  if (pass === 0) {
+    if (!b || b.shown.length !== N * 4 || now < b.now || now - b.now > 1) {   // first sight, a new model, or the clock jumped: no blend
+      b = { now, move: p.move, t: p.t, hl: p.hl, shown: new Float32Array(N * 4), off: new Float32Array(N * 3), vel: new Float32Array(N * 3), hip: new Float32Array(3), hipV: new Float32Array(3), hipShown: new Float32Array(3) };
+      blends.set(key, b);
+      b.shown[0] = NaN;   // nothing shown yet
+    }
+    const dt = now - b.now;
+    const cut = p.move !== b.move || (!looping && (p.t < b.t - 1e-3 || p.t - b.t > JUMP_RATE * dt + 0.02));
+    if (cut && b.shown[0] === b.shown[0]) {
+      // the new gap: what was shown, against what the clips ask for now; the gap's motion carries on (vel kept)
+      for (let j = 0; j < N; j++) {
+        const n = inst.blendNodes[j];
+        bq.set(b.shown[j * 4], b.shown[j * 4 + 1], b.shown[j * 4 + 2], b.shown[j * 4 + 3]);
+        if (j < inst.nBones) logQ(bq.multiply(bq2.copy(n.quaternion).invert()), b.off, j * 3);
+        else b.off[j * 3] = NaN;   // a soft prop's gap is taken in pass 1, once softProps has aimed it
+      }
+      if (inst.hips) for (let a = 0; a < 3; a++) b.hip[a] = b.hipShown[a] - inst.hips.position.getComponent(a);
+      b.hl = p.hl;
+    }
+    b.move = p.move; b.t = p.t; b.now = now;
+    // the springs: x' = v, critically damped to 0 with half-life hl
+    const y = (2 * Math.LN2) / Math.max(1e-3, b.hl), e = Math.exp(-y * dt);
+    const step = (x: Float32Array, v: Float32Array, j: number) => {
+      if (x[j] !== x[j]) return;
+      const j1 = v[j] + x[j] * y;
+      x[j] = e * (x[j] + j1 * dt); v[j] = e * (v[j] - j1 * y * dt);
+    };
+    for (let j = 0; j < N * 3; j++) step(b.off, b.vel, j);
+    for (let a = 0; a < 3; a++) step(b.hip, b.hipV, a);
+    if (inst.hips) { inst.hips.position.x += b.hip[0]; inst.hips.position.y += b.hip[1]; inst.hips.position.z += b.hip[2]; inst.hips.position.toArray(b.hipShown); }
+  }
+  if (!b) return;
+  for (let j = lo; j < hi; j++) {
+    const n = inst.blendNodes[j];
+    if (pass === 1 && b.off[j * 3] !== b.off[j * 3]) {   // a soft prop's gap at a transition (pass 0 marked it)
+      if (b.shown[0] === b.shown[0]) { bq.set(b.shown[j * 4], b.shown[j * 4 + 1], b.shown[j * 4 + 2], b.shown[j * 4 + 3]); logQ(bq.multiply(bq2.copy(n.quaternion).invert()), b.off, j * 3); }
+      else b.off[j * 3] = b.off[j * 3 + 1] = b.off[j * 3 + 2] = 0;
+    }
+    n.quaternion.premultiply(expQ(b.off[j * 3], b.off[j * 3 + 1], b.off[j * 3 + 2], bq));
+    n.quaternion.toArray(b.shown, j * 4);
+  }
 }
 
 const ease = (t: number) => t * t * (3 - 2 * t);
@@ -469,11 +560,12 @@ function rodBetween(mesh: THREE.Mesh, a: THREE.Vector3, b: THREE.Vector3): void 
 }
 
 /** Poses an instance: the clip at its time, the clip's body turn, the hips held over the feet as the bake does. */
-function pose(inst: Inst, m: Model, p: LivePose): void {
+function pose(inst: Inst, m: Model, p: LivePose, key?: string): void {
   const clipName = m.clips.has(p.move) ? p.move : 'walk';
   const second = p.move2 && p.w2 && m.clips.has(p.move2) && p.move2 !== clipName ? p.move2 : null;
   const legs = p.legs && p.legs !== clipName && m.clips.has(p.legs) ? p.legs : null;
   const w1 = 1 - (second ? p.w2! : 0);
+  for (let j = 0; j < inst.nBones; j++) { inst.blendNodes[j].quaternion.fromArray(inst.restQ, j * 4); inst.blendNodes[j].position.fromArray(inst.restP, j * 3); }
   for (const d of inst.drops) d.rest.decompose(d.node.position, d.node.quaternion, d.node.scale);
   const show = p.props ?? m.meta.show;
   for (const c of inst.carriers) c.node.visible = !show || show.includes(c.name);
@@ -495,8 +587,11 @@ function pose(inst: Inst, m: Model, p: LivePose): void {
     ...(second ? [[second, p.w2!, p.t2 ?? 0]] as const : []),
   ]);
   pinGuardArm(inst, p.move === 'death' || p.move === 'block' || p.move === 'brace' || p.move === 'shoot' ? 0 : 1 - (p.guardUp ?? 0));
+  const looping = !!m.meta.clips[clipName]?.stride;   // walk and run wrap round: their time going back is no cut
+  blendPose(inst, key, p, 0, looping);
   place(inst, m, p);
   if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0), p.aim);
+  blendPose(inst, key, p, 1, looping);
   placeGuard(inst, p.guardUp ?? 0, p.move === 'shoot' ? 1 : 0);
   if (fall >= 0) dropProps(inst, p.t - fall);
 }
@@ -829,7 +924,7 @@ export function flushLive(): void {
     let pool = pools.get(b.slug);
     if (!pool) pools.set(b.slug, (pool = []));
     const inst = pool[i] ?? (pool[i] = instance(b.slug, m));
-    pose(inst, m, b.pose);
+    pose(inst, m, b.pose, b.key);
     stage.add(inst.root);
     if (inst.bow) stringOf(inst, m, b.pose, stage);
     // the slot in the 4x target (GL's rows run bottom up)
@@ -888,7 +983,7 @@ export function liveModel(slug: string): Promise<LiveModel | null> {
 /** A posable copy of a model: the game's (toon materials, for the pixel pass) or with its own materials (`original`). */
 export const liveInstance = (slug: string, m: LiveModel, original: boolean): LiveInst => instance(slug, m, original);
 /** Poses a copy exactly as the game does (the clip, its body turn, the hips held over the feet, the staff kept upright). */
-export const livePoseInst = (inst: LiveInst, m: LiveModel, p: LivePose): void => pose(inst, m, p);
+export const livePoseInst = (inst: LiveInst, m: LiveModel, p: LivePose, blendKey?: string): void => pose(inst, m, p, blendKey);
 /** The archer's string and nocked arrow for this pose, added to `stage` (removed again by the next call). */
 export const liveString = (inst: LiveInst, m: LiveModel, p: LivePose, stage: THREE.Group): void => { if (inst.bow) stringOf(inst, m, p, stage); };
 /** The game camera and light: elevation (radians), art px a unit, the squash on every body, the sun's place, the light levels. */

@@ -178,8 +178,29 @@ const SHOT_DEFAULT = { wind: SHOT_WIND, lead: SHOT_LEAD, after: 1 };
 const shotRate = (move: string): number => (SHOT_TIMING[move] ?? SHOT_DEFAULT).after;
 /** A one-shot's first moments ease in from the standing pose over this many seconds, so the body doesn't snap into the clip. */
 const SHOT_EASE = 0.1;
-/** The clip a conjured weapon's blow plays: the sword, maul and focus swing, the whip lashes, the bow draws and looses, the staff, spear and trident thrust (the staff's overhead swing went through the hat). */
-const blowOf = (prop: string | undefined): string => prop === 'sword' || prop === 'earthmaul' || prop === 'focus' ? 'attack0' : prop === 'whip' ? 'lash' : prop === 'icebow' ? 'shoot' : 'thrust';
+/** The clip a conjured weapon's blow plays: the sword, maul and focus swing, the whip lashes, the bow draws and looses, the staff, spear and trident jab (the staff's overhead swing went through the hat). */
+const blowOf = (prop: string | undefined): string => prop === 'sword' || prop === 'earthmaul' || prop === 'focus' ? 'attack0' : prop === 'whip' ? 'lash' : prop === 'icebow' ? 'shoot' : 'jab';
+/**
+ * Movesets: a blow played as a cut-down path through its clip, then a held ready pose (the user, 2026-11-20: "I'm
+ * expecting more of a jab movement", "if you are repeating jabs, the character may stay hunched over with the spear in a
+ * forward position"). `path` is [s after the game's blow, clip s] keys, played straight between (the jab clip's own hold,
+ * 0.75 to 1.1 s, is skipped); `ready` is the clip time held for `linger` s after, so the next jab starts from it and a
+ * cast or the standing pose is eased into from it (live3d blendPose). `hl` is the half-life of the ease back to standing.
+ */
+const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number }> = {
+  jab: { path: [[0, 0.42], [0.1, 0.66], [0.16, 1.05], [0.4, 1.42]], ready: 0.42, linger: 0.8, hl: 0.09 },
+};
+/** Clip time on a moveset's path `s` seconds after the blow (clamped to its ends). */
+export function pathTime(path: readonly (readonly [number, number])[], s: number): number {
+  if (s <= path[0][0]) return path[0][1];
+  for (let k = 1; k < path.length; k++) {
+    const [s1, t1] = path[k];
+    if (s <= s1) { const [s0, t0] = path[k - 1]; return t0 + ((s - s0) / (s1 - s0)) * (t1 - t0); }
+  }
+  return path[path.length - 1][1];
+}
+/** The half-life (s) of the wizard's blended transitions (live3d blendPose); a moveset's settle sets its own. */
+const BLEND_HL = 0.05;
 /**
  * Where a one-shot's clip is `shotT` seconds after the game's release: the wind-up (from `first`, or SHOT_WIND before the
  * release) runs sped up to meet the release SHOT_LEAD later, then the clip plays on at its own pace.
@@ -196,7 +217,7 @@ const BLOCK_IN = 0.12, GUARD_HOLD = 0.75, GUARD_RATE = 2.5;
 const smooth01 = (x: number) => { const k = Math.min(1, Math.max(0, x)); return k * k * (3 - 2 * k); };
 
 /** Each conjured weapon's 3D prop (tools/sprites-3d/wizprops.py), by element; Life (glowing hands) and the wand have none. */
-const WEAPON_PROP: Record<string, string> = { fire: 'sword', earth: 'earthmaul', arcane: 'focus', ice: 'icebow', cold: 'frostspear', lightning: 'whip', water: 'trident' };
+export const WEAPON_PROP: Record<string, string> ={ fire: 'sword', earth: 'earthmaul', arcane: 'focus', ice: 'icebow', cold: 'frostspear', lightning: 'whip', water: 'trident' };
 /**
  * The wizard's props to show: its conjured weapon's in place of the staff (none for a wand or Life's bare hands, which
  * are drawn in 2D), and its guard's on the forearm (GUARD_NAME is the prop's name).
@@ -228,12 +249,24 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     return { move, t: last, face, flash, ...extra, move2: s.spd > 0 ? legs : 'walk', t2: s.spd > 0 ? step(legs) : 0, w2: k * k * (3 - 2 * k) };
   };
   if (s.dead > 0) return { move: 'death', t: dur('death') * Math.min(1, s.dead), face, flash, ...(s.kind === 'wizard' ? { props: wizardProps(s) } : {}) };
-  if (s.kind === 'wizard') {
+  // the wizard's changes of move blend from the pose on screen (live3d blendPose); `settle` (a moveset's ready pose let go) eases slower
+  let settle = 0;
+  if (s.kind === 'wizard') { const p = wizardPose(); return { ...p, hl: settle || BLEND_HL }; }
+  function wizardPose(): LivePose {
     const seat = X.TEAMS[s.pal % X.TEAMS.length], c = meta.casts?.cast, props = wizardProps(s);
+    // a moveset's blow (the jab): its path through the clip, then the ready pose held for its linger unless a cast or a
+    // block takes over; the shaft points along the facing throughout
+    const set = s.shot === 1 ? MOVESETS[blowOf(props[0])] : undefined;
+    if (set && s.shotT >= 0 && meta.clips[blowOf(props[0])]) {
+      const move = blowOf(props[0]), end = set.path[set.path.length - 1][0];
+      if (s.shotT < end) return { move, t: pathTime(set.path, s.shotT), face, flash, seat, grip: 1, aim: 1, props, ...under };
+      if (s.shotT < end + set.linger && !(s.cast > 0) && !(s.block > 0)) return { move, t: set.ready, face, flash, seat, grip: 1, aim: 1, props, ...under };
+      if (s.shotT < end + set.linger + 1 && !(s.cast > 0) && !(s.block > 0)) settle = set.hl;
+    }
     // a one-shot (a weapon's blow, an Area or Self cast) plays its whole wind-up, squeezed into the SHOT_LEAD between the
     // game's release and the body's (shotClipTime), easing in from the standing pose, over the legs if the wizard walks
     // on, then eases back (the user, 2026-11-20: "the game skips the first part of the animation, so there's no wind up")
-    if (s.shot) {
+    if (s.shot && !set) {
       const move = s.shot === 1 ? blowOf(props[0]) : s.shot === 2 ? 'area' : 'self';
       const a = meta.attacks[0], o = move === 'attack0' ? (a ? { first: a.first, hit: a.hit, last: a.last } : undefined) : meta.casts?.[move];
       if (o && s.shotT >= 0) {
@@ -282,6 +315,9 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
   if (s.spd > 0) return { move: legs, t: step(legs), face, flash };
   return { move: 'walk', t: 0, face, flash };
 }
+
+/** The pose the game shows for a wizard in rig state `s` (the Model Viewer's game sequences play it). */
+export const wizardLivePose = (s: RigState): LivePose => livePose('wizard', s, 0);
 
 const cache = new Map<string, Frame>();
 /**

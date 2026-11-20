@@ -36,6 +36,10 @@
    "source": "attack_thrust",
    "duration": 2.9667
   },
+  "jab": {
+   "source": "attack_jab",
+   "duration": 1.9667
+  },
   "lash": {
    "source": "attack_whip",
    "duration": 2.9667
@@ -86,6 +90,11 @@
    "first": 0.4583333333333333,
    "hit": 0.7083333333333334,
    "last": 2.5416666666666665
+  },
+  "jab": {
+   "first": 0.3333333333333333,
+   "hit": 0.5833333333333334,
+   "last": 1.75
   },
   "lash": {
    "first": 0.125,

@@ -26,7 +26,7 @@ ROLES = {
     'wizard': {'walk': 'walking_man', 'run': 'running', 'attack': ['right_hand_sword_slash'], 'death': 'knock_down',
                'casts': {'cast': 'mage_soell_cast_3', 'area': 'charged_ground_slam', 'self': 'mage_soell_cast',
                          # weapon blows (round 4): a two-handed thrust for the spear and trident, the lash for the whip, a draw and release for the bow
-                         'thrust': 'attack_thrust', 'lash': 'attack_whip', 'shoot': 'archery_shot'},
+                         'thrust': 'attack_thrust', 'jab': 'attack_jab', 'lash': 'attack_whip', 'shoot': 'archery_shot'},
                # the bow's draw is long and still: its release (the archer's, 3.25 s) and the draw before it, set by hand
                'cast_times': {'shoot': {'first': 2.0, 'hit': 3.25, 'last': 4.75}},
                # the guard clips (round 3): Meshy text-to-motion, a buckler held across the chest (output/wizard/guard-block.glb) and a

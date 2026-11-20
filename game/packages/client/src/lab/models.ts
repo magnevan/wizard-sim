@@ -15,9 +15,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Container } from 'pixi.js';
 import { ARCHETYPES, BODY, EL as ELID, GUARD, N_EL, type World } from '@wizard-sim/sim';
 import { GUARD_PLACE, LIVE_VIEW, flushLive, liveFrame, liveInstance, liveMeta, liveModel, livePoseInst, liveSlugs, liveString, liveWorks, type LiveInst, type LiveModel, type LivePose, type ModelMeta } from '../art/live3d';
-import { CELL_H, CELL_W, FEET_X, FEET_Y, type Anchors } from '../art/rigs';
+import { CELL_H, CELL_W, FEET_X, FEET_Y, newRigState, type Anchors, type RigState } from '../art/rigs';
 import { TEAMS } from '../art/px';
-import { SHOT_LEAD, shotClipTime } from '../art/sprites';
+import { SHOT_LEAD, shotClipTime, wizardLivePose } from '../art/sprites';
 import type { Frame } from '../art/actors';
 import * as X from '../art/px';
 import { CU, FY, TAU } from '../art/util';
@@ -65,6 +65,40 @@ function simOf(slug: string): { name: string; radius: number; speed: number; rea
 }
 /** Not a clip: a body standing still holds the walk's first frame (sprites.ts livePose), so "idle" shows exactly that. */
 const IDLE = 'idle';
+/**
+ * Game sequences (wizard only): scripted inputs on game seconds, posed by the game's own code (art/sprites.ts
+ * wizardLivePose, live3d's blended transitions) so what plays here is what the game plays (the user, 2026-11-20: "I want
+ * to be able to view the actual in-game animation in the model viewer"). Gaps follow the sim: the spear recovers in
+ * 0.9 s, the trident in 0.65. Pick the weapon and guard in Weapons and guards.
+ */
+interface SeqEv { at: number; kind: 'blow' | 'cast' | 'area' | 'self' | 'walk' | 'block'; len?: number }
+const SEQS: Record<string, { len: number; ev: SeqEv[] }> = {
+  '▶ blow': { len: 2, ev: [{ at: 0.2, kind: 'blow' }] },
+  '▶ blow x3 (spear)': { len: 3.4, ev: [{ at: 0.2, kind: 'blow' }, { at: 1.1, kind: 'blow' }, { at: 2, kind: 'blow' }] },
+  '▶ blow x4 (trident)': { len: 3.4, ev: [0.2, 0.85, 1.5, 2.15].map((at) => ({ at, kind: 'blow' as const })) },
+  '▶ blow, Force cast': { len: 3.2, ev: [{ at: 0.2, kind: 'blow' }, { at: 1.1, kind: 'cast', len: 1 }] },
+  '▶ blow, Self cast': { len: 3.2, ev: [{ at: 0.2, kind: 'blow' }, { at: 1.1, kind: 'self' }] },
+  '▶ blow, walk on': { len: 2.6, ev: [{ at: 0.2, kind: 'blow' }, { at: 0.6, kind: 'walk' }] },
+  '▶ walk, blow x2': { len: 2.8, ev: [{ at: 0, kind: 'walk' }, { at: 0.4, kind: 'blow' }, { at: 1.3, kind: 'blow' }] },
+  '▶ blow, block': { len: 2.8, ev: [{ at: 0.2, kind: 'blow' }, { at: 1.1, kind: 'block', len: 1 }] },
+};
+const isSeq = (c: string) => c in SEQS;
+/** The game's rig state for a sequence `t` s in. */
+function seqState(name: string, t: number, face: number): RigState {
+  const s = newRigState(), q = SEQS[name];
+  s.kind = 'wizard'; s.pal = Math.max(0, st.seat); s.face = s.faceT = face;
+  s.weapon = WEAPON_EL[st.wp] ?? 0; s.bare = s.weapon ? 1 : 0;
+  s.guard = st.gd ? GUARD[st.gd as keyof typeof GUARD] ?? 0 : 0;
+  for (const e of q.ev) {
+    if (e.at > t) continue;
+    const u = t - e.at;
+    if (e.kind === 'blow' || e.kind === 'area' || e.kind === 'self') { s.shot = e.kind === 'blow' ? 1 : e.kind === 'area' ? 2 : 3; s.shotT = u; }
+    if (e.kind === 'cast' && u < (e.len ?? 1)) s.cast = u < 0.05 ? 0.5 : 1;   // the view's cast pose steps by halves
+    if (e.kind === 'block' && u < (e.len ?? 1) && s.guard) s.block = Math.round(u * 60);
+    if (e.kind === 'walk') { s.spd = 0.5; s.dist = u * st.speed * 16 * 1.15; }
+  }
+  return s;
+}
 const clipNames = (m: ModelMeta): string[] => [IDLE, ...Object.keys(m.clips)];
 const ONE_SHOTS = new Set(['attack0', 'area', 'self', 'thrust', 'lash', 'shoot']);
 
@@ -74,6 +108,11 @@ interface Span { a: number; b: number; label: string; color: string }
 interface Marks { marks: Mark[]; spans: Span[]; range: [number, number] | null; cut: [number, number] | null; note: string }
 function marksOf(slug: string, meta: ModelMeta, clip: string): Marks {
   const out: Marks = { marks: [], spans: [], range: null, cut: null, note: '' };
+  if (isSeq(clip)) {
+    for (const e of SEQS[clip].ev) out.marks.push({ t: e.at, label: e.kind, color: e.kind === 'blow' ? '#ff5a4a' : '#5ac8ff' });
+    out.note = 'A game sequence: the game\'s own pose code on game seconds (the timeline), with its blended transitions. Weapon and guard from Weapons and guards (the staff when none).';
+    return out;
+  }
   if (clip === IDLE) { out.note = "The models have no idle clip: in the game a body standing still holds the walk's first frame, as here."; return out; }
   const atk = meta.attacks.find((a) => a.clip === clip);
   if (atk) {
@@ -199,7 +238,7 @@ async function loadModel(slug: string): Promise<void> {
   scene.add(inst.root);
   bones = new THREE.SkeletonHelper(inst.body); scene.add(bones);
   height = meta.height ?? 2;
-  if (st.c !== IDLE && !meta.clips[st.c]) st.c = meta.clips.walk ? 'walk' : Object.keys(meta.clips)[0];
+  if (st.c !== IDLE && !isSeq(st.c) && !meta.clips[st.c]) st.c = meta.clips.walk ? 'walk' : Object.keys(meta.clips)[0];
   if (st.c2 && !meta.clips[st.c2]) st.c2 = '';
   const sim = simOf(slug);
   bodyRing.scale.setScalar(sim.radius);
@@ -320,7 +359,7 @@ function armsLayers(f: Frame, pose: LivePose): { g: HTMLCanvasElement; o: HTMLCa
 
 // ---- the timeline -----------------------------------------------------------------------------------------------------------------
 let marks: Marks = { marks: [], spans: [], range: null, cut: null, note: '' };
-const dur = () => (st.c === IDLE ? 1 : meta?.clips[st.c]?.duration ?? 1);
+const dur = () => (st.c === IDLE ? 1 : isSeq(st.c) ? SEQS[st.c].len : meta?.clips[st.c]?.duration ?? 1);
 function drawTimeline(): void {
   const dpr = devicePixelRatio, W = Math.round(tl.clientWidth * dpr), H = Math.round(tl.clientHeight * dpr);
   if (tl.width !== W || tl.height !== H) { tl.width = W; tl.height = H; }
@@ -479,6 +518,12 @@ function buildModelPanel(): void {
     clipList.append(b);
     clip2Sel.append(el('option', { value: c, textContent: c }));
   }
+  if (st.m === 'wizard') for (const c of Object.keys(SEQS)) {
+    const b = el('button', { className: c === st.c ? 'on' : '', title: 'Scripted inputs through the game\'s own pose code' }, c, el('small', { textContent: `game ${SEQS[c].len.toFixed(1)} s` }));
+    b.onclick = () => setClip(c);
+    clipList.append(b);
+  }
+  if (isSeq(st.c) && st.m !== 'wizard') st.c = 'walk';
   clip2Sel.value = st.c2;
   marks = marksOf(st.m, meta, st.c);
   const sim = simOf(st.m);
@@ -563,7 +608,7 @@ function syncDrive(): void {
 }
 
 // ---- the loop ---------------------------------------------------------------------------------------------------------------------
-let dist = 0, last = performance.now();
+let dist = 0, last = performance.now(), seqT = 0;
 function frame(now: number): void {
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   if (meta && model && inst) {
@@ -579,12 +624,16 @@ function frame(now: number): void {
     }
     const face = (st.f * Math.PI) / 180;
     if (st.c === IDLE) st.t = 0;
-    const pose: LivePose = { move: st.c === IDLE ? 'walk' : st.c, t: st.t, face, flash: st.flash, seat: st.m === 'wizard' && st.seat >= 0 ? TEAMS[st.seat] : undefined, ...(st.m === 'wizard' && ['attack0', 'thrust', 'lash', 'shoot'].includes(st.c) ? { grip: 1, ...(st.c === 'thrust' ? { aim: 1 } : {}) } : {}) };
-    if (st.m === 'wizard' && (st.wp || st.gd)) Object.assign(pose, { props: [st.wp || 'staff', ...(st.gd ? [st.gd] : [])], guardUp: st.gu });
+    const seq = isSeq(st.c) && st.m === 'wizard';
+    // a sequence's blends remember the poses before: after a jump back (a loop, a scrub) it is replayed from the start
+    if (seq && (st.t < seqT || st.t - seqT > 0.1)) for (let u = 0; u < st.t; u += 1 / 60) livePoseInst(inst, model, { ...wizardLivePose(seqState(st.c, u, face)), now: u }, 'viewer');
+    seqT = st.t;
+    const pose: LivePose = seq ? { ...wizardLivePose(seqState(st.c, st.t, face)), now: st.t } : { move: st.c === IDLE ? 'walk' : st.c, t: st.t, face, flash: st.flash, seat: st.m === 'wizard' && st.seat >= 0 ? TEAMS[st.seat] : undefined, ...(st.m === 'wizard' && ['attack0', 'thrust', 'lash', 'shoot'].includes(st.c) ? { grip: 1, ...(st.c === 'thrust' ? { aim: 1 } : {}) } : {}) };
+    if (!seq && st.m === 'wizard' && (st.wp || st.gd)) Object.assign(pose, { props: [st.wp || 'staff', ...(st.gd ? [st.gd] : [])], guardUp: st.gu });
     if (st.c2 && st.c2 !== st.c && meta.clips[st.c2]) Object.assign(pose, { move2: st.c2, t2: st.t % meta.clips[st.c2].duration, w2: st.w2 });
     if (st.legs && st.legs !== st.c && meta.clips[st.legs]) Object.assign(pose, { legs: st.legs, tl: st.t % meta.clips[st.legs].duration });
     // full size
-    livePoseInst(inst, model, pose);
+    livePoseInst(inst, model, pose, seq ? 'viewer' : undefined);
     inst.root.scale.copy(st.squash ? LIVE_VIEW.squash : new THREE.Vector3(1, 1, 1));
     inst.root.updateMatrixWorld(true);
     liveString(inst, model, pose, strings);

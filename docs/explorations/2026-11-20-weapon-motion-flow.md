@@ -93,6 +93,15 @@ Recommendation: **(b)**, with the guard on the back keeping its passive effect a
 
 ## As built (2026-11-20), simpler than the spec
 
+**Handoff (paused 2026-11-20, commit c77a1cb, branch `worktree-weapon-fixes`, not merged).** Steps 1 to 3 are built. The user's first look found a T-pose when idle or paused, a swing smear on jabs, and a jab that didn't read. All three are fixed in c77a1cb, which the user hasn't re-reviewed:
+- The T-pose: bones were reset to rest before each pose, but three's mixer only writes values that changed. `pose()` now restores the mixer's own last output (`Inst.rawQ` / `rawP`).
+- The jab now reads. The shaft slides 0.4 units out through the hands (`MOVESETS.jab.slide`, `LivePose.slide`), and the 3D slot grew from 64 to 80 px (`live3d.ts` `SMALL`), so the trident's head is no longer cut off.
+- Staff jabs lost the crescent smear (`view-structures.ts` mv-strike).
+
+**Known flaw:** in the jab the left hand floats over the shaft. Aiming the shaft through both hands failed, because the clip holds them side by side; a hand-on-shaft IK is the fix.
+
+**How to check:** run `node scripts/viewer-shots.mjs --out <dir> "name=m=wizard&c=<url-encoded ▶ sequence>&t=<s>&f=0&wp=trident&play=0&view=pix"` from `game/` and look at the frames. Run `npm run build && npm run shot` for the game.
+
 The user: "We shouldn't have to overthink it too much, the pixelation hides some of the flaws."
 - **three.js still samples the clips.** The blend is a pass on top (`live3d.ts` `blendPose`): each body (by slug and seat) remembers the pose last shown. When the move changes or its clip time jumps, the gap is taken per bone and per soft prop and closed by a critically damped spring (half-life 0.05 s, 0.09 s when a ready stance is let go). Bones go back to their rest pose before each pose, so a bone no clip moves can't keep an old gap.
 - **Stances stay a pure function of game state** (`sprites.ts` `MOVESETS`): the jab's path through the clip and its ready hold are read from the seconds since the blow, so rollback and co-op need nothing new. The legs, readiness and aim layers, the off-hand IK and the effect layering are not built yet.

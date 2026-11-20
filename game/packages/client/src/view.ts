@@ -176,6 +176,13 @@ export class WorldView {
   private prepS = new Float64Array(MAX_SEATS);
   private castS = new Float64Array(MAX_SEATS);
   private holdUntil = new Float64Array(MAX_SEATS);
+  /**
+   * Each seat's sim phase last step, and whether its recovery follows a cast (wind-up, charge or channel) rather than a
+   * hand move (a Strike goes straight from idle to recovery and leaves the last cast's castId in place: read alone, that
+   * id played the Force push after every jab once a Force spell had been cast; the user, 2026-11-20).
+   */
+  private lastPhase = new Uint8Array(MAX_SEATS);
+  private recFromCast = new Uint8Array(MAX_SEATS);
 
   /** Scene lighting (art/lighting.ts), unless ?lighting=0; the help panel's little previews go without. Needs the renderer. */
   private lit: SceneLighting | null = null;
@@ -276,9 +283,12 @@ export class WorldView {
     // eased poses: staff raised while gathering, Area and Place; held out level for Force
     for (let i = 0; i < MAX_SEATS; i++) {
       const ph = s.phase[i], id = s.castId[i];
-      const force = id === CAST_ID.force || id === CAST_ID.conjure;
+      if (ph === PHASE.recover && this.lastPhase[i] !== PHASE.recover) this.recFromCast[i] = this.lastPhase[i] === PHASE.idle ? 0 : 1;
+      this.lastPhase[i] = ph;
+      const fromCast = ph !== PHASE.recover || this.recFromCast[i] === 1;
+      const force = fromCast && (id === CAST_ID.force || id === CAST_ID.conjure);
       const cast = ph === PHASE.channel || (force && ph === PHASE.recover) || t < this.holdUntil[i] ? 1 : 0;
-      const prep = !cast && (ph === PHASE.windup || ph === PHASE.charge || s.queueLen[i] > 0 || (!force && ph === PHASE.recover)) ? 1 : 0;
+      const prep = !cast && (ph === PHASE.windup || ph === PHASE.charge || s.queueLen[i] > 0 || (fromCast && !force && ph === PHASE.recover)) ? 1 : 0;
       this.castS[i] += (cast - this.castS[i]) * 0.35;
       this.prepS[i] += (prep - this.prepS[i]) * 0.3;
     }

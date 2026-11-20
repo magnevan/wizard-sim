@@ -170,7 +170,12 @@ export const SHOT_LEAD = 0.2;
 /** A one-shot's wind-up kept before its release (s of clip): a longer one (the lash, the bow's draw) starts this far back. */
 const SHOT_WIND = 0.5;
 /** Moves with their own timing: the bow's draw keeps a second of clip and has its release this long after the game's. */
-const SHOT_TIMING: Record<string, { wind: number; lead: number }> = { shoot: { wind: 1, lead: 0.35 } };
+const SHOT_TIMING: Record<string, { wind: number; lead: number; after: number }> = {
+  shoot: { wind: 1, lead: 0.35, after: 2 }, thrust: { wind: SHOT_WIND, lead: SHOT_LEAD, after: 3 }, lash: { wind: 0.6, lead: SHOT_LEAD, after: 2.5 },
+};
+const SHOT_DEFAULT = { wind: SHOT_WIND, lead: SHOT_LEAD, after: 1 };
+/** How much faster than the clip's own pace a move plays once released (the thrust's long pause and return are sped up: the user, 2026-11-20, "too long of a recovery"). */
+const shotRate = (move: string): number => (SHOT_TIMING[move] ?? SHOT_DEFAULT).after;
 /** A one-shot's first moments ease in from the standing pose over this many seconds, so the body doesn't snap into the clip. */
 const SHOT_EASE = 0.1;
 /** The clip a conjured weapon's blow plays: the sword, maul and focus swing, the whip lashes, the bow draws and looses, the staff, spear and trident thrust (the staff's overhead swing went through the hat). */
@@ -180,9 +185,9 @@ const blowOf = (prop: string | undefined): string => prop === 'sword' || prop ==
  * release) runs sped up to meet the release SHOT_LEAD later, then the clip plays on at its own pace.
  */
 export function shotClipTime(o: { first: number; hit: number }, shotT: number, move = ''): number {
-  const { wind, lead } = SHOT_TIMING[move] ?? { wind: SHOT_WIND, lead: SHOT_LEAD };
+  const { wind, lead, after } = SHOT_TIMING[move] ?? SHOT_DEFAULT;
   const start = Math.max(o.first, o.hit - wind);
-  return shotT >= lead ? o.hit + (shotT - lead) : start + (o.hit - start) * (shotT / lead);
+  return shotT >= lead ? o.hit + (shotT - lead) * after : start + (o.hit - start) * (shotT / lead);
 }
 /** The staff's blow takes the staff firmly over GRIP_IN (s) and lets it settle upright over GRIP_OUT as the blow ends. */
 const GRIP_IN = 0.12, GRIP_OUT = 0.35;
@@ -238,7 +243,7 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
         const into = 1 - smooth01(s.shotT / SHOT_EASE);
         const aim = move === 'thrust' ? grip : undefined;   // the shaft thrusts along the facing, not along the hand's tilt
         if (t <= o.last) return { move, t, face, flash, seat, grip, aim, props, ...under, ...(into > 0 ? { move2: standing, t2: s.spd > 0 ? step(legs) : 0, w2: into } : {}) };
-        const out = after(move, o.last, t - o.last, { seat, grip, aim, props, ...under });
+        const out = after(move, o.last, (t - o.last) / shotRate(move), { seat, grip, aim, props, ...under });
         if (out) return out;
       }
     }

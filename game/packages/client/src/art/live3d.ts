@@ -494,10 +494,10 @@ function pose(inst: Inst, m: Model, p: LivePose): void {
     ...(legs ? [[clipName + ':upper', w1, p.t], [legs + ':lower', w1, p.tl ?? 0]] as const : [[clipName, w1, p.t]] as const),
     ...(second ? [[second, p.w2!, p.t2 ?? 0]] as const : []),
   ]);
-  pinGuardArm(inst, p.move === 'death' || p.move === 'block' || p.move === 'brace' ? 0 : 1 - (p.guardUp ?? 0));
+  pinGuardArm(inst, p.move === 'death' || p.move === 'block' || p.move === 'brace' || p.move === 'shoot' ? 0 : 1 - (p.guardUp ?? 0));
   place(inst, m, p);
   if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0), p.aim);
-  placeGuard(inst, p.guardUp ?? 0);
+  placeGuard(inst, p.guardUp ?? 0, p.move === 'shoot' ? 1 : 0);
   if (fall >= 0) dropProps(inst, p.t - fall);
 }
 
@@ -658,7 +658,7 @@ function turnTo(out: THREE.Quaternion, up: THREE.Vector3, face: THREE.Vector3): 
  * every swing: carried at the side, or (by w, the block's ease) raised square in front of the chest. Its up is its soft
  * axis; its face is its face marker (the export's, from wizprops.py PROP_FACE). The arm's clip still moves the arm.
  */
-function placeGuard(inst: Inst, w: number): void {
+function placeGuard(inst: Inst, w: number, sling = 0): void {
   const G = GUARD_PLACE;
   if (!inst.hips) return;
   for (const c of inst.carriers) {
@@ -694,6 +694,8 @@ function placeGuard(inst: Inst, w: number): void {
     faceC.addScaledVector(upC, -faceC.dot(upC)).normalize();
     turnTo(qC, upC, faceC);
     pC.set(lx, hips.y + G.carryUp * torso, lz).addScaledVector(gL, G.carryOut * torso).addScaledVector(gF, G.carryAhead * torso);
+    // drawing a bow takes the guard arm: the guard swings round behind the shoulder, out of the bow's way (sling 0..1)
+    pC.addScaledVector(gF, -sling * (G.carryAhead + 0.9) * torso).addScaledVector(gL, -sling * 0.3 * torso);
     // raised: square in front
     turnTo(qB, WORLD_UP, gY.copy(gF).applyAxisAngle(WORLD_UP, G.blockYaw));
     pB.set(sx, hips.y + G.blockUp * torso, sz).addScaledVector(gF, G.blockAhead * torso + G.blockSize * half).addScaledVector(gL, G.blockOut * torso);

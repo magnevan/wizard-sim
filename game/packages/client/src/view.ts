@@ -56,6 +56,8 @@ const DRIVE_LOOK = 4.5;
 const DRY_GLIDE = 3.5, DRY_GLIDE_RATE = 1.5;
 const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL', simple: 'SIMPLE, ANGLED, LOW DETAIL', code: 'CODE, STRAIGHT-ON' };
 
+/** The move events that put the wizard's body through its weapon's blow clip (art/sprites.ts blowOf): each weapon's tap, heavy and special. */
+const BLOW_MOVES = new Set(['strike', 'sweep', 'arrow', 'volley', 'splinter', 'dash', 'javelin', 'lash', 'tideslash', 'firewave', 'fissure', 'chargedbolt']);
 export class WorldView {
   readonly camera = new Camera();
   /** Add this to the stage: the scene, and the HUD over it. */
@@ -257,7 +259,7 @@ export class WorldView {
       // Blink is instant: no sliding between the two spots
       if (e.kind === 'blink' && e.who >= 0) { this.prevBX[e.who] = b.x[e.who]; this.prevBY[e.who] = b.y[e.who]; }
       if (e.kind === 'fizzle' && e.ev === EV.death && e.who >= 0) this.onDeath(w, e, t);
-      if (e.kind === 'move' && (e.text === 'strike' || e.text === 'sweep') && e.who >= 0 && e.who < MAX_SEATS) { this.shot[e.who] = 1; this.shotAt[e.who] = t; }
+      if (e.kind === 'move' && BLOW_MOVES.has(e.text ?? '') && e.who >= 0 && e.who < MAX_SEATS) { this.shot[e.who] = 1; this.shotAt[e.who] = t; }
       if (e.kind === 'cast' && e.who >= 0 && e.who < MAX_SEATS) {
         this.castPose(w, e.who, t);
         for (let k = 0; k < s.castLen[e.who]; k++) if (e.who === this.hud.seat) this.hud.spent(s.castQueue[e.who * 5 + k], t);

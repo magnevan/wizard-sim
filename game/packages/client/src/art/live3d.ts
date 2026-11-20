@@ -69,6 +69,8 @@ export interface LivePose {
   hl?: number;
   /** The clock for blending (s); by default the page's. The Model Viewer passes its own timeline's. */
   now?: number;
+  /** A jab: how far (model units) the shaft slides forward through the hands, along the facing. */
+  slide?: number;
   /** The props to show by name (ModelMeta.props); the rest are hidden. By default the model's `show`, else all. */
   props?: readonly string[];
   /** Blocking, 0..1: the strapped guard goes from its carried place at the side to square in front of the chest (placeGuard). */
@@ -92,7 +94,8 @@ const PPU = 16, SUPER = 4, ELEV = (20 * Math.PI) / 180;
 const SQUASH = new THREE.Vector3(1.15, 0.92, 1.15);
 const SUN = 2.5, AMB = 1.4, BANDS = [0.55, 0.85, 1.25];
 /** Slots: small ones for goblins, big ones for the chieftain; the body's feet sit at FEET of its slot. */
-const SMALL = { size: 64, feet: [32, 56], cols: 12, rows: 6 };
+// (80 px, as wide as the rig cell: at 64 a jabbing trident's head was cut off 32 px out, the user 2026-11-20)
+const SMALL = { size: 80, feet: [40, 68], cols: 12, rows: 6 };
 const BIG = { size: 128, feet: [64, 112], cols: 6, rows: 1 };
 const BIG_SLUGS = new Set(['chieftain']);
 const AW = SMALL.cols * SMALL.size, AH = SMALL.rows * SMALL.size + BIG.rows * BIG.size;
@@ -355,8 +358,11 @@ interface Inst {
   bow: { tips: THREE.Object3D[]; nock: THREE.Object3D; grip: THREE.Object3D; hand: THREE.Object3D; fore: THREE.Object3D; parts: THREE.Mesh[] } | null;
   /** What blendPose eases: the skeleton's bones, then (from `nBones`) the soft props' carriers. Same order in every copy of a model. */
   blendNodes: THREE.Object3D[]; nBones: number;
-  /** The bones' rest pose, put back before each pose so a bone no playing clip moves can't keep an old blend's offset. */
-  restQ: Float32Array; restP: Float32Array;
+  /**
+   * The bones as the clips last left them, before any pinning or blending: put back before each pose, because three's
+   * mixer only writes a value that changed, so a paused or standing clip would otherwise keep the last pose's offsets.
+   */
+  rawQ: Float32Array; rawP: Float32Array;
 }
 const models = new Map<string, Model | 'loading' | 'failed'>();
 const pools = new Map<string, Inst[]>();
@@ -468,9 +474,9 @@ function instance(slug: string, m: Model, original = false): Inst {
   }
   const bones: THREE.Object3D[] = [];
   body.traverse((o) => { if ((o as THREE.Bone).isBone) bones.push(o); });
-  const restQ = new Float32Array(bones.length * 4), restP = new Float32Array(bones.length * 3);
-  bones.forEach((o, j) => { o.quaternion.toArray(restQ, j * 4); o.position.toArray(restP, j * 3); });
-  return { seat, soft, drops, carriers, bowOf, hands, arms, pin, root, shift, turn, body, mixer, actions, hips, rest, flash, bow, blendNodes: [...bones, ...soft.map((s) => s.node)], nBones: bones.length, restQ, restP };
+  const rawQ = new Float32Array(bones.length * 4), rawP = new Float32Array(bones.length * 3);
+  bones.forEach((o, j) => { o.quaternion.toArray(rawQ, j * 4); o.position.toArray(rawP, j * 3); });
+  return { seat, soft, drops, carriers, bowOf, hands, arms, pin, root, shift, turn, body, mixer, actions, hips, rest, flash, bow, blendNodes: [...bones, ...soft.map((s) => s.node)], nBones: bones.length, rawQ, rawP };
 }
 
 // ---- blended transitions (inertialization) ---------------------------------------------------------------------------------------
@@ -565,7 +571,7 @@ function pose(inst: Inst, m: Model, p: LivePose, key?: string): void {
   const second = p.move2 && p.w2 && m.clips.has(p.move2) && p.move2 !== clipName ? p.move2 : null;
   const legs = p.legs && p.legs !== clipName && m.clips.has(p.legs) ? p.legs : null;
   const w1 = 1 - (second ? p.w2! : 0);
-  for (let j = 0; j < inst.nBones; j++) { inst.blendNodes[j].quaternion.fromArray(inst.restQ, j * 4); inst.blendNodes[j].position.fromArray(inst.restP, j * 3); }
+  for (let j = 0; j < inst.nBones; j++) { inst.blendNodes[j].quaternion.fromArray(inst.rawQ, j * 4); inst.blendNodes[j].position.fromArray(inst.rawP, j * 3); }
   for (const d of inst.drops) d.rest.decompose(d.node.position, d.node.quaternion, d.node.scale);
   const show = p.props ?? m.meta.show;
   for (const c of inst.carriers) c.node.visible = !show || show.includes(c.name);
@@ -586,11 +592,12 @@ function pose(inst: Inst, m: Model, p: LivePose, key?: string): void {
     ...(legs ? [[clipName + ':upper', w1, p.t], [legs + ':lower', w1, p.tl ?? 0]] as const : [[clipName, w1, p.t]] as const),
     ...(second ? [[second, p.w2!, p.t2 ?? 0]] as const : []),
   ]);
+  for (let j = 0; j < inst.nBones; j++) { inst.blendNodes[j].quaternion.toArray(inst.rawQ, j * 4); inst.blendNodes[j].position.toArray(inst.rawP, j * 3); }
   pinGuardArm(inst, p.move === 'death' || p.move === 'block' || p.move === 'brace' || p.move === 'shoot' ? 0 : 1 - (p.guardUp ?? 0));
   const looping = !!m.meta.clips[clipName]?.stride;   // walk and run wrap round: their time going back is no cut
   blendPose(inst, key, p, 0, looping);
   place(inst, m, p);
-  if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0), p.aim);
+  if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0), p.aim, p.slide);
   blendPose(inst, key, p, 1, looping);
   placeGuard(inst, p.guardUp ?? 0, p.move === 'shoot' ? 1 : 0);
   if (fall >= 0) dropProps(inst, p.t - fall);
@@ -686,7 +693,7 @@ const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Q
  * a little toward the facing), keeping k of the hand's tilt, all of it as `grip` reaches 1 (a staff's blow); it turns
  * about the carrier's own origin, the palm.
  */
-function softProps(inst: Inst, face: number, grip: number, aim?: number): void {
+function softProps(inst: Inst, face: number, grip: number, aim?: number, slide = 0): void {
   for (const s of inst.soft) {
     if (!s.node.visible) continue;
     s.node.quaternion.copy(s.rest);
@@ -705,9 +712,9 @@ function softProps(inst: Inst, face: number, grip: number, aim?: number): void {
     s.node.parent!.getWorldQuaternion(qp);
     s.node.quaternion.copy(qp.invert().multiply(qi).multiply(qb));
     s.node.updateMatrixWorld(true);
-    if (H) {   // and the grip itself a little ahead and out, fading as a blow takes the weapon over
-      const k = (1 - grip) * H.hold;
-      s.node.getWorldPosition(v1).add(v2.set(cs * k - sn * k * H.holdSide * hs, 0, sn * k + cs * k * H.holdSide * hs));
+    if (H || slide) {   // and the grip itself a little ahead and out, fading as a blow takes the weapon over; a jab slides the shaft forward
+      const k = H ? (1 - grip) * H.hold : 0, hsd = H ? H.holdSide : 0;
+      s.node.getWorldPosition(v1).add(v2.set(cs * k - sn * k * hsd * hs + cs * slide, 0, sn * k + cs * k * hsd * hs + sn * slide));
       s.node.position.copy(s.node.parent!.worldToLocal(v1));
       s.node.updateMatrixWorld(true);
     }

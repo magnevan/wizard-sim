@@ -187,8 +187,10 @@ const blowOf = (prop: string | undefined): string => prop === 'sword' || prop ==
  * 0.75 to 1.1 s, is skipped); `ready` is the clip time held for `linger` s after, so the next jab starts from it and a
  * cast or the standing pose is eased into from it (live3d blendPose). `hl` is the half-life of the ease back to standing.
  */
-const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number }> = {
-  jab: { path: [[0, 0.42], [0.1, 0.66], [0.16, 1.05], [0.4, 1.42]], ready: 0.42, linger: 0.8, hl: 0.09 },
+const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; slide?: readonly (readonly [number, number])[] }> = {
+  // the clip's hands travel only ~0.2 units, too little to read at 40 px: the shaft also slides out through the hands
+  // (`slide`: [s after the blow, model units] keys), as a real spear thrust does
+  jab: { path: [[0, 0.42], [0.1, 0.66], [0.16, 1.05], [0.4, 1.42]], ready: 0.42, linger: 0.8, hl: 0.09, slide: [[0, 0], [0.1, 0.4], [0.17, 0.4], [0.34, 0]] },
 };
 /** Clip time on a moveset's path `s` seconds after the blow (clamped to its ends). */
 export function pathTime(path: readonly (readonly [number, number])[], s: number): number {
@@ -259,7 +261,7 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     const set = s.shot === 1 ? MOVESETS[blowOf(props[0])] : undefined;
     if (set && s.shotT >= 0 && meta.clips[blowOf(props[0])]) {
       const move = blowOf(props[0]), end = set.path[set.path.length - 1][0];
-      if (s.shotT < end) return { move, t: pathTime(set.path, s.shotT), face, flash, seat, grip: 1, aim: 1, props, ...under };
+      if (s.shotT < end) return { move, t: pathTime(set.path, s.shotT), face, flash, seat, grip: 1, aim: 1, props, ...under, ...(set.slide ? { slide: pathTime(set.slide, s.shotT) } : {}) };
       if (s.shotT < end + set.linger && !(s.cast > 0) && !(s.block > 0)) return { move, t: set.ready, face, flash, seat, grip: 1, aim: 1, props, ...under };
       if (s.shotT < end + set.linger + 1 && !(s.cast > 0) && !(s.block > 0)) settle = set.hl;
     }

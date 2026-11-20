@@ -2101,7 +2101,9 @@ export class StructureView {
             const p0 = at(aw + off * 0.6, reach * (0.25 + 0.4 * k)), p1 = at(aw + off, reach * k);
             X.line(o, p0[0], p0[1], p1[0], p1[1], Rb[2], 2); X.line(o, p0[0], p0[1], p1[0], p1[1], Rb[1], 1); X.px(o, p1[0], p1[1], '#ffffff');
           }
-          if (half >= 0.6 && el !== 'water' && q < 0.75) {
+          // the jabbing weapons (staff, spear, trident: art/sprites.ts blowOf) show only the straight thrust, no swing across
+          // the cone (the user, 2026-11-20: "jabbing still uses a swing effect in the air")
+          if (half >= 0.6 && el !== 'water' && el !== 'cold' && el !== '' && q < 0.75) {
             const n = 12;
             for (let j = 0; j < n; j++) {
               const u = j / n; if (u > k || rand(j, 3, sd) < q * 1.2) continue;

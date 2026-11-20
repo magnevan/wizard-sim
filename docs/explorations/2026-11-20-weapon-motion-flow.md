@@ -98,7 +98,7 @@ Recommendation: **(b)**, with the guard on the back keeping its passive effect a
 - The jab now reads. The shaft slides 0.4 units out through the hands (`MOVESETS.jab.slide`, `LivePose.slide`), and the 3D slot grew from 64 to 80 px (`live3d.ts` `SMALL`), so the trident's head is no longer cut off.
 - Staff jabs lost the crescent smear (`view-structures.ts` mv-strike).
 
-**Known flaw:** in the jab the left hand floats over the shaft. Aiming the shaft through both hands failed, because the clip holds them side by side; a hand-on-shaft IK is the fix.
+**Superseded by round 3 below** (the jab clip was replaced; the slide is gone). **Known flaw (then):** in the jab the left hand floats over the shaft. Aiming the shaft through both hands failed, because the clip holds them side by side; a hand-on-shaft IK is the fix.
 
 **How to check:** run `node scripts/viewer-shots.mjs --out <dir> "name=m=wizard&c=<url-encoded ▶ sequence>&t=<s>&f=0&wp=trident&play=0&view=pix"` from `game/` and look at the frames. Run `npm run build && npm run shot` for the game.
 
@@ -107,6 +107,18 @@ The user: "We shouldn't have to overthink it too much, the pixelation hides some
 - **Stances stay a pure function of game state** (`sprites.ts` `MOVESETS`): the jab's path through the clip and its ready hold are read from the seconds since the blow, so rollback and co-op need nothing new. The legs, readiness and aim layers, the off-hand IK and the effect layering are not built yet.
 - **The jab:** Meshy's single-jab clip (`attack-jab.glb`) played 0.42 → 0.66 → 1.05 → 1.42 s of clip in 0.4 s (its 0.35 s hold skipped), then its 0.42 s frame (crouched, spear level) held for 0.8 s. The triple-jab clip was one slow push, so it's kept as `spare-jab3.glb` and not exported.
 - **Sim:** `bufHand` and `cancelAt` per seat; `ARMS.strikeCommit` 0.4. The golden hash went from dd8360fb to 50d0f5ab and the mode trails were re-recorded. The flame sword's measured Strike DPS rose 10.2 → 10.7, because the test bot's presses no longer expire during its 0.8 s recovery; the fastest Strike rhythm is unchanged.
+
+## Round 3: the jab didn't make sense (2026-11-20)
+
+The user, on c77a1cb's trident in the Model Viewer: "The character lifts up his arm and lets the trident fall over... the trident retracts without a corresponding arm movement... the body movements don't fit the thrusting of a spear at all. It vaguely looks like he's maybe channeling a spell in a direction 45 degrees offset from the thrust." And: "think if there's a better way for you to understand when these motions just don't make any sense."
+
+**Why it happened.** The first jab clip was never a thrust. `scripts/clip-paths.mjs` (new) prints the joints in the body's frame. In that clip the hands rose above the head bone, stayed side by side (the line through them 55° to 80° off forward), and travelled 55° to the right while the chest turned 35° right. Our code then forced the shaft along the facing (`aim`) and slid it out and back with no arm behind it. Both of the user's observations follow from that. Judged only from game-camera frames at 40 px, the slide made it "read", so the clip itself was never questioned.
+
+**How motion gets checked now.** Before a bought clip is wired in, `clip-paths.mjs` must show what the prompt asked for. For a thrust that means: the striking hand travels well forward (over half a unit, model units at the rig's own scale), at chest height or lower, along a steady direction, with the chest turning into it. If that direction is off the facing, the body is turned to match. Then look at the ▶ sequence from the side (f=0), where reach and timing show, and at one diagonal. Don't judge the aim from a body facing the camera: at the camera's 20° elevation, a shaft pointing at the viewer is foreshortened and a small sideways part looks large. In this round that misled the eye even though the shaft was within 1° of the facing (measured).
+
+**What changed.** Three new text-to-motion jabs were bought (30 + 9 credits) and checked with the script. The one used (`attack-jab.glb`; the others are spares, see `tools/sprites-3d/README.md`) is a right-handed thrust: the right shoulder drives through and the hand reaches 1.5 units out, 49° left of the facing. `LivePose.turn` turns the body that much at the hips, so the blend eases it in and out. That squares the thrust to the facing and makes the ready stance left-shoulder-forward, with the shaft running through both hands. That fixes the floating left hand for now; the IK may not be needed. The fake shaft slide is gone (`MOVESETS.jab`: path 0.25 → 0.7 → 0.95 → 1.55 s of clip in 0.4 s, ready 0.25 s).
+
+**On reach.** The stubby body limits how far a thrust can go, but this one reads at game size. If more reach is needed, the magic can stretch it: a shaft that lengthens or a water spurt off the tip at the peak. Don't slide the shaft through still hands.
 
 ## Order of work
 

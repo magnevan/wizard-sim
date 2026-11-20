@@ -71,6 +71,11 @@ export interface LivePose {
   now?: number;
   /** A jab: how far (model units) the shaft slides forward through the hands, along the facing. */
   slide?: number;
+  /**
+   * The whole body turned this many degrees toward its right (at the hips, so the blend eases it in and out): a clip
+   * that strikes off its own facing, as the jab's thrust drives 49° to the left, is turned so the strike runs along it.
+   */
+  turn?: number;
   /** The props to show by name (ModelMeta.props); the rest are hidden. By default the model's `show`, else all. */
   props?: readonly string[];
   /** Blocking, 0..1: the strapped guard goes from its carried place at the side to square in front of the chest (placeGuard). */
@@ -594,6 +599,12 @@ function pose(inst: Inst, m: Model, p: LivePose, key?: string): void {
   ]);
   for (let j = 0; j < inst.nBones; j++) { inst.blendNodes[j].quaternion.toArray(inst.rawQ, j * 4); inst.blendNodes[j].position.toArray(inst.rawP, j * 3); }
   pinGuardArm(inst, p.move === 'death' || p.move === 'block' || p.move === 'brace' || p.move === 'shoot' ? 0 : 1 - (p.guardUp ?? 0));
+  if (p.turn && inst.hips?.parent) {   // the body turned about the vertical, in the hips' parent's frame
+    inst.hips.parent.updateWorldMatrix(true, false);
+    v1.set(0, 1, 0).applyQuaternion(inst.hips.parent.getWorldQuaternion(bq).invert());
+    bq2.setFromAxisAngle(v1, (-p.turn * Math.PI) / 180);
+    inst.hips.quaternion.premultiply(bq2); inst.hips.position.applyQuaternion(bq2);
+  }
   const looping = !!m.meta.clips[clipName]?.stride;   // walk and run wrap round: their time going back is no cut
   blendPose(inst, key, p, 0, looping);
   place(inst, m, p);

@@ -72,6 +72,8 @@ export interface RigState {
   shot: number; shotT: number;
   /** Live 3D only: which weapon blow `shot` 1 is (0 a Strike, 1 a Heavy, 2 a Sweep), and a Heavy held now, its charge 0..1 (0 none). */
   blow: number; charge: number;
+  /** Live 3D only: 1 while a seat's aim is on an enemy within its weapon's range (the bow is held drawn). */
+  aimed: number;
   /** Live 3D only: a seat's conjured weapon (its element id, 0 none) and guard (GUARD id, 0 none), shown as 3D props. */
   weapon: number; guard: number;
   /** Live 3D only: ticks a seat's guard has been held up (blocking), 0 when lowered: the wizard plays its guard clip. */
@@ -100,7 +102,7 @@ export interface RigState {
 
 export const newRigState = (): RigState => ({
   kind: 'goblin', pal: 0, variant: 0, seed: 0, face: 0, spd: 0, ph: 0, idle: 0, vx: 0, vy: 0, prep: 0, cast: 0, sq: 0, dead: 0,
-  burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0, atk: -1, hold: 0, hitT: NaN, swing: 0, faceT: 0, dist: 0, shot: 0, shotT: 0, blow: 0, charge: 0, weapon: 0, guard: 0, block: 0,
+  burn: 0, burnF: 0, wet: 0, wetF: 0, frozen: 0, chill: 0, shock: 0, flash: 0, punch: -1, smash: -1, draw: 0, atk: -1, hold: 0, hitT: NaN, swing: 0, faceT: 0, dist: 0, shot: 0, shotT: 0, blow: 0, charge: 0, aimed: 0, weapon: 0, guard: 0, block: 0,
   tint: null, tintK: 0, outline: null, eyeCol: null, eyesShut: 0, fallSide: 0, flashCol: null, bare: 0, crown: 1, alpha: 1, hd: 0,
 });
 

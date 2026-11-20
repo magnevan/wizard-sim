@@ -1,9 +1,10 @@
 // A weapon move filmed in the game itself (the Model Viewer leaves out the game's state: the cast pose, the 2D effects).
 // Usage (after npm run build): node scripts/blow-film.mjs [--out shots/blow] [--weapon trident] [--move strike|heavy|sweep]
-//   [--hold 1.2] [--frames 24] [--every 60] [--fresh]   (needs a real GPU: d3d11)
+//   [--hold 1.2] [--frames 24] [--every 60] [--fresh] [--uses n] [--aim dx,dy]   (needs a real GPU: d3d11)
 // Casts a Water Force first (as real play does: a Strike leaves the last cast's id in place), unless --fresh; then
 // films the move, aimed east, as <out>/<weapon>-<move>-NN.png crops round seat 0 (scale 4), and prints the seat's
-// phase every frame. --hold is how long a Heavy is held (s).
+// phase every frame. --hold is how long a Heavy is held (s); --uses gives the weapon n uses once (not topped up), to
+// see it run out; --aim is where the mouse aims from the wizard (screen px, default 280,0: east).
 import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import puppeteer from 'puppeteer-core';
@@ -26,10 +27,13 @@ try {
   await p.goto(`${BASE}?timerloop=1&stage=1&scale=4`);   // the Sanctum: no waves, the camera holds still
   await p.waitForFunction(() => window.wizardSim?.view.groundReady, { timeout: 60000, polling: 100 });
   await sleep(1500);
-  await p.mouse.move(MID[0] + 280, MID[1]);
+  const [ax, ay] = arg('aim', '280,0').split(',').map(Number);
+  await p.mouse.move(MID[0] + ax, MID[1] + ay);
   if (!process.argv.includes('--fresh')) { await p.keyboard.press('q'); await sleep(100); await p.mouse.down({ button: 'right' }); await sleep(60); await p.mouse.up({ button: 'right' }); await sleep(1200); }
   await p.evaluate((wid) => { const s = window.wizardSim.world.seats; clearInterval(window.__hold); window.__hold = setInterval(() => { s.weapon[0] = wid; s.weaponUses[0] = 9; s.wand[0] = 0; }, 10); }, WID[weapon] ?? 1);
   await sleep(1200);
+  const uses = arg('uses');
+  if (uses) await p.evaluate((n) => { clearInterval(window.__hold); window.wizardSim.world.seats.weaponUses[0] = n; }, Number(uses));
   const shoot = async (k) => {
     await p.screenshot({ path: join(out, `${weapon}-${mv}-${String(k).padStart(2, '0')}.png`), clip: { x: MID[0] - 110, y: MID[1] - 170, width: 300, height: 200 } });
     console.log(k, 'phase', await p.evaluate(() => window.wizardSim.world.seats.phase[0]));

@@ -16,7 +16,7 @@
  */
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
-  EV, AI, ARCH, ARCHETYPES, BSTEP, ARENA, CAST_ID, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TAP, TUT_TAG, WALL, YTAG, heavyCharge, isPropWall,
+  EV, AI, ARCH, ARCHETYPES, ARMS, BSTEP, ARENA, CAST_ID, EL, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TAP, TUT_TAG, WALL, YTAG, heavyCharge, isPropWall,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
@@ -57,6 +57,8 @@ const DRY_GLIDE = 3.5, DRY_GLIDE_RATE = 1.5;
 const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL', simple: 'SIMPLE, ANGLED, LOW DETAIL', code: 'CODE, STRAIGHT-ON' };
 
 /** The move events that put the wizard's body through its weapon's blow clip (art/sprites.ts blowOf): each weapon's tap, heavy and special. */
+/** The bow is held drawn while an enemy is within this share of its arrows' range and AIM_SIDE units of the aim line. */
+const AIM_REACH = 0.8, AIM_SIDE = 1.2;
 /** The blow moves that are a weapon's Heavy (hands.ts heavy): the body plays the weapon's heavy blow for them. */
 const HEAVY_MOVES = new Set(['tideslash', 'firewave', 'fissure', 'dash', 'chargedbolt']);
 const BLOW_MOVES = new Set(['strike', 'sweep', 'arrow', 'volley', 'splinter', 'dash', 'javelin', 'lash', 'tideslash', 'firewave', 'fissure', 'chargedbolt']);
@@ -161,6 +163,19 @@ export class WorldView {
   private shotAt = new Float64Array(MAX_SEATS);
   /** Which weapon blow a seat's last `shot` 1 was: 0 a Strike, 1 a Heavy, 2 a Sweep (RigState.blow). */
   private blowK = new Uint8Array(MAX_SEATS);
+  /**
+   * 1 when seat i's aim is on an enemy within its arrows' range: ahead, nearer than AIM_REACH of the range, and within
+   * AIM_SIDE units (plus its radius) of the aim line. Read from synced state only, so a partner sees the same stance.
+   */
+  private aimedAt(w: World, i: number): number {
+    const b = w.bodies, a = b.face[i] * TAU, dx = Math.cos(a), dy = Math.sin(a), range = ARMS.arrowSpeed * ARMS.arrowLife * AIM_REACH;
+    for (let j = 0; j < MAX_BODIES; j++) {
+      if (!b.kind[j] || j === i || b.team[j] === b.team[i] || b.downed[j] || b.kind[j] === KIND.wizard) continue;
+      const rx = b.x[j] - b.x[i], ry = b.y[j] - b.y[i], along = rx * dx + ry * dy;
+      if (along > 0 && along < range && Math.abs(-rx * dy + ry * dx) < AIM_SIDE + b.r[j]) return 1;
+    }
+    return 0;
+  }
   private prevBX = new Float64Array(MAX_BODIES);
   /** Each enemy's swing count and last hitT (art/sprites.ts picks an attack variant per swing). */
   private swingN = new Uint16Array(MAX_BODIES);
@@ -623,6 +638,7 @@ export class WorldView {
     }
     if (owner < MAX_SEATS) { s.prep = Math.round(this.prepS[owner] * 2) / 2; s.cast = Math.round(this.castS[owner] * 2) / 2; s.shot = this.shot[owner]; s.shotT = t - this.shotAt[owner]; s.blow = this.blowK[owner]; }
     s.charge = kind === 'wizard' && i < MAX_SEATS && w.seats.handT[i] > TAP ? Math.max(0.01, heavyCharge(w.seats.handT[i])) : 0;
+    s.aimed = kind === 'wizard' && i < MAX_SEATS && w.seats.weapon[i] === EL.ice ? this.aimedAt(w, i) : 0;
     // hit: a squash and a white flash, soft while a beam keeps hitting
     const fa = t - this.flashT[i];
     s.flash = fa < 0 ? 0 : this.flashSoft[i] ? (fa < 0.08 ? 4 : 0) : fa < 0.05 ? 16 : fa < 0.1 ? 9 : fa < 0.18 ? 4 : 0;

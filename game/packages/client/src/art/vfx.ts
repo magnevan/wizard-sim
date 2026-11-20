@@ -77,6 +77,7 @@ const IMBUE: readonly Ramp[] = [EL.earth, EL.fire, X.FROST, EL.lightning, EL.arc
 /** The seats' default staff orbs (the Battlefield's: Red arcane, Blue cold, Gold lightning, Violet earth). */
 const SEAT_EL = [6, 4, 5, 9];
 const STAFF_Z = 10; // missiles fly about this high (art px)
+const BOW_Z = 17;   // a bow's arrows: the drawn bow's height on the live 3D wizard
 const EL_COLD = 4; // Cold's element id (sim elements.ts)
 /** A missile's tier for its look: the runes it carries, 1..5. */
 const tierOf = (els: Uint8Array, j: number): number => { let s = 0; for (let k = 0; k < N_EL; k++) s += els[j * N_EL + k]; return clamp(s, 1, 5); };
@@ -1028,7 +1029,9 @@ export class Vfx {
         light(x, yg, 36, '#8ef07e', 0.55);
         continue;
       }
-      let y = yg - STAFF_Z;
+      // a bow's arrows fly at the drawn bow's height, so they leave from it (the user, 2026-11-20: "the arrow leaving from the bow")
+      const ow = m.owner[j], bowShot = ow >= 0 && ow < MAX_SEATS && elementName(w.seats.weapon[ow]) === 'ice';
+      let y = yg - (bowShot ? BOW_Z : STAFF_Z);
       // a rock just thrown leaves from where it was charged (its ball at the hand), easing onto its real path
       const lc = m.owner[j] < MAX_SEATS ? this.lastCharge[m.owner[j]] : null;
       if (ty === 1 && lc && e < 0.08 && ct - lc[2] < 0.3) { const b = smooth(clamp(e / 0.08, 0, 1)); x = lerp(lc[0], x, b); y = lerp(lc[1], y, b); }

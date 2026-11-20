@@ -187,7 +187,12 @@ const blowOf = (prop: string | undefined): string => prop === 'sword' || prop ==
  * 0.75 to 1.1 s, is skipped); `ready` is the clip time held for `linger` s after, so the next jab starts from it and a
  * cast or the standing pose is eased into from it (live3d blendPose). `hl` is the half-life of the ease back to standing.
  */
-const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; turn?: number; spin?: number; slide?: readonly (readonly [number, number])[] }> = {
+const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; turn?: number; spin?: number; slide?: readonly (readonly [number, number])[]; free?: boolean; raise?: boolean }> = {
+  // the bow (Archery Shot, release at 3.25 s): a shot from the drawn pose, then held drawn for `linger`, and drawn
+  // whenever the aim is on an enemy in range (`raise`, RigState.aimed), so the instant shot finishes a short release
+  // instead of firing before the bow is up (the user, 2026-11-20). `free`: the bow keeps its own hold (no shaft aim).
+  // The clip's 90° side-on turn is on the hips (`turn`), so it eases in and out instead of snapping (export --yaw).
+  shoot: { path: [[0, 3.1], [0.05, 3.3], [0.3, 3.65]], ready: 3.15, linger: 1, hl: 0.1, turn: 90, free: true, raise: true },
   // the Heavy (RigState.blow 1; the user, 2026-11-20: "I'd expect just pulling back and standing in a ready to jab
   // position, followed by maybe a more emphasized jab and just returning to normal"): held, the ready stance coiling
   // (COIL); released, the jab lunges and holds its full reach, then straight back to standing (no ready hold)
@@ -272,25 +277,34 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     // a moveset's blow (the jab): its path through the clip, then the ready pose held for its linger unless a cast or a
     // block takes over; the shaft points along the facing throughout
     const base = blowOf(props[0]), own = MOVESETS[base] && meta.clips[base];
+    const free = (m: { free?: boolean }) => (m.free ? {} : { aim: 1 });
+    const busy = s.cast > 0 || s.block > 0;
     // a Heavy held: the ready stance, the body coiling further round as it charges
-    if (own && s.charge > 0 && !(s.cast > 0) && !(s.block > 0)) {
+    if (own && s.charge > 0 && !busy) {
       const r = MOVESETS[base];
-      return { move: base, t: r.ready, face, flash, seat, grip: 1, aim: 1, props, turn: (r.turn ?? 0) + COIL * smooth01(s.charge * 2), ...under };
+      return { move: base, t: r.ready, face, flash, seat, grip: 1, ...free(r), props, turn: (r.turn ?? 0) + COIL * smooth01(s.charge * 2), ...under };
     }
     const set = s.shot === 1 ? MOVESETS[base + (s.blow === 1 ? 'Heavy' : s.blow === 2 ? 'Sweep' : '')] ?? MOVESETS[base] : undefined;
+    let settling = false;
     if (set && s.shotT >= 0 && own) {
       const move = base, end = set.path[set.path.length - 1][0];
       // a Sweep turns the body once round, the way the ring goes (against the clock on screen)
       const spun = set.spin && s.shotT < set.spin ? face - TAU * smooth01(s.shotT / set.spin) : face;
-      if (s.shotT < end) return { move, t: pathTime(set.path, s.shotT), face: spun, flash, seat, grip: 1, aim: 1, props, turn: set.turn, ...under, ...(set.slide ? { slide: pathTime(set.slide, s.shotT) } : {}) };
-      if (s.shotT < end + set.linger && !(s.cast > 0) && !(s.block > 0)) return { move, t: set.ready, face, flash, seat, grip: 1, aim: 1, props, turn: set.turn, ...under };
-      if (s.shotT < end + set.linger + 1 && !(s.cast > 0) && !(s.block > 0)) {
-        settle = set.hl;
+      if (s.shotT < end) return { move, t: pathTime(set.path, s.shotT), face: spun, flash, seat, grip: 1, ...free(set), props, turn: set.turn, ...under, ...(set.slide ? { slide: pathTime(set.slide, s.shotT) } : {}) };
+      if (s.shotT < end + set.linger && !busy) return { move, t: set.ready, face, flash, seat, grip: 1, ...free(set), props, turn: set.turn, ...under };
+      if (s.shotT < end + set.linger + 1 && !busy) {
+        settle = set.hl; settling = true;
         // the body settles fast, but the shaft is lifted back to the carry over SHAFT_LIFT: at the blend's pace a long
         // shaft swung up through the air like a second blow (the user, 2026-11-20: "a second slice towards the sky")
-        lift = 1 - smooth01((s.shotT - end - set.linger) / SHAFT_LIFT);
+        if (!set.free) lift = 1 - smooth01((s.shotT - end - set.linger) / SHAFT_LIFT);
       }
     }
+    // the bow held drawn while the aim is on an enemy in range (view.ts `aimed`)
+    if (own && MOVESETS[base].raise && s.aimed && !busy) {
+      const r = MOVESETS[base];
+      return { move: base, t: r.ready, face, flash, seat, grip: 1, ...free(r), props, turn: r.turn, ...under };
+    }
+    if (own && MOVESETS[base].raise && !settling && !busy) settle = MOVESETS[base].hl;   // lowered at the stance's pace too
     // a one-shot (a weapon's blow, an Area or Self cast) plays its whole wind-up, squeezed into the SHOT_LEAD between the
     // game's release and the body's (shotClipTime), easing in from the standing pose, over the legs if the wizard walks
     // on, then eases back (the user, 2026-11-20: "the game skips the first part of the animation, so there's no wind up")

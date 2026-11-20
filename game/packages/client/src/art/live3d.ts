@@ -629,7 +629,7 @@ function play(inst: Inst, on: readonly (readonly [string, number, number])[]): v
 /** The body's turn, its facing, the hips held over the feet, its flash and seat colours (after the clips are applied). */
 function place(inst: Inst, m: Model, p: LivePose): void {
   const clipName = m.clips.has(p.move) ? p.move : 'walk';
-  const y = m.meta.yaw[clipName];
+  const y = p.turn === undefined ? m.meta.yaw[clipName] : undefined;   // a pose's own turn (at the hips) replaces the clip's
   let k = 0;
   if (y) {
     const [, a, b, c, d] = y, t = p.t;

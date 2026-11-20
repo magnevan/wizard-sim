@@ -16,7 +16,7 @@
  */
 import { rules, type Cast, type Element } from '@wizard-sim/rules';
 import { compile, type SpellSpec } from './compile';
-import { RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
+import { ARMS, RHYTHM, RUNES, SHAPES, STRUCT, T } from './config';
 import { EL, KEYED_EL, N_EL, elementName, poolCost } from './elements';
 import { channelTick, fireSpell } from './effects';
 import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, fullMask, poolCap, recallOldest, sigilCap, spendMote, weaponSwing } from './structures';
@@ -225,9 +225,11 @@ function release(w: World, i: number, spec: SpellSpec, charge: number): void {
 }
 
 /** Recovery after a cast or a hand move; Haste (and Quickstep) shorten it as they do the wind-up. */
-function toRecovery(w: World, i: number, seconds = RHYTHM.recovery): void {
+function toRecovery(w: World, i: number, seconds = RHYTHM.recovery, cancels = false): void {
   w.seats.phase[i] = PHASE.recover;
   w.seats.timer[i] = Math.round(T(seconds) / hasteOf(w, i));
+  // a weapon blow's follow-through: past its committed share a spell or a Retreat may cut the rest (cast() below)
+  w.seats.cancelAt[i] = cancels ? Math.round(w.seats.timer[i] * (1 - ARMS.strikeCommit)) : 0;
 }
 
 function windupTick(w: World, i: number, held: number, act: boolean): void {
@@ -300,27 +302,35 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
     areaCast = s.areaHeld[i] < T(RHYTHM.placeHold) && !s.dragged[i] ? CAST_ID.area : CAST_ID.place;
   }
 
-  // A cast pressed while busy is buffered briefly, so no press is lost to recovery.
+  // A cast pressed while busy is buffered, so no press is lost to recovery: it waits through the whole recovery, then
+  // castBuffer more (the user, 2026-11-20: a jab then W+Space lost the Space). It keeps the meaning it had when pressed:
+  // pressed with no runes queued it's a weapon gesture, even if a rune is queued before it goes off.
   const forceCast = (pressed | released) & BTN.force && forcePlaces(w, i) ? released & BTN.force : pressed & BTN.force;
   const want = forceCast ? CAST_ID.force : areaCast || (pressed & BTN.self ? CAST_ID.self : pressed & BTN.weapon ? CAST_ID.conjure : 0);
-  if (want) { s.bufCast[i] = want; s.bufTicks[i] = T(RHYTHM.castBuffer); }
-  else if (s.bufTicks[i] > 0 && !owing(w, i) && --s.bufTicks[i] === 0) s.bufCast[i] = 0; // a cast waiting on ghost runes stays buffered
+  if (want) { s.bufCast[i] = want; s.bufTicks[i] = T(RHYTHM.castBuffer); s.bufHand[i] = s.queueLen[i] === 0 ? 1 : 0; }
+  else if (s.bufTicks[i] > 0 && s.phase[i] !== PHASE.recover && !owing(w, i) && --s.bufTicks[i] === 0) s.bufCast[i] = 0; // a cast waiting on ghost runes stays buffered
+  // A weapon's follow-through is cut short, once its committed share has passed, by a waiting spell or Retreat (the
+  // user, 2026-11-20: "Responsiveness and fluidity is more important"); the body eases from the blow into the cast.
+  if (s.phase[i] === PHASE.recover && s.cancelAt[i] > 0 && s.timer[i] <= s.cancelAt[i] && s.bufCast[i] && (s.bufHand[i] ? s.bufCast[i] === CAST_ID.conjure : s.queueLen[i] > 0)) {
+    s.phase[i] = PHASE.idle; s.timer[i] = 0; s.cancelAt[i] = 0;
+  }
 
   const act = canAct(w, i);
+  const hand = s.bufHand[i] && s.bufCast[i];   // a gesture pressed before runes were queued
   // Your hands (hands.ts): with no runes queued, the gestures are weapon moves.
-  if (s.phase[i] === PHASE.idle && act && (s.queueLen[i] === 0 || s.handT[i] > 0)) {
+  if (s.phase[i] === PHASE.idle && act && (s.queueLen[i] === 0 || s.handT[i] > 0 || hand)) {
     // Gestures pressed during the last recovery wait in the cast buffer, as spells do.
-    const face = aimFace(w, i), c = s.handT[i] === 0 && s.queueLen[i] === 0 ? s.bufCast[i] : 0;
-    if (c) { s.bufCast[i] = 0; s.bufTicks[i] = 0; }
+    const face = aimFace(w, i), c = s.handT[i] === 0 && (s.queueLen[i] === 0 || hand) ? s.bufCast[i] : 0;
+    if (c) { s.bufCast[i] = 0; s.bufTicks[i] = 0; s.bufHand[i] = 0; }
     if (c === CAST_ID.force) {
       if (held & BTN.force) s.handT[i] = 1;
-      else { const r = strikeRecovery(w, i); strike(w, i, face); toRecovery(w, i, r); return; } // tapped while busy: a Strike
+      else { const r = strikeRecovery(w, i); strike(w, i, face); toRecovery(w, i, r, true); return; } // tapped while busy: a Strike
     } else if (s.handT[i] > 0 && held & BTN.force) { if (++s.handT[i] > TAP) holdTick(w, i); }
     else if (s.handT[i] > 0) {
       const t = s.handT[i];
       s.handT[i] = 0; s.linkTo[i] = -1;
       // a Strike's recovery is its weapon's follow-through (read before the blow: the last use takes the weapon)
-      if (t <= TAP) { const r = strikeRecovery(w, i); strike(w, i, face); toRecovery(w, i, r); } else { heavy(w, i, face, heavyCharge(t)); toRecovery(w, i); }
+      if (t <= TAP) { const r = strikeRecovery(w, i); strike(w, i, face); toRecovery(w, i, r, true); } else { heavy(w, i, face, heavyCharge(t)); toRecovery(w, i); }
       return;
     }
     if (c === CAST_ID.area || c === CAST_ID.place) {
@@ -328,7 +338,7 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
       // a held Special (Siphon, Mend) ended on release; a Sweep recovers as a Strike does
       const sweeps = !ch && !channelsSpecial(w, i) && w.seats.weapon[i] !== EL.cold, r = sweeps ? strikeRecovery(w, i) : RHYTHM.recovery;
       if (!ch) { const [tx, ty] = target(w, i); special(w, i, face, tx, ty); }
-      toRecovery(w, i, r); return;
+      toRecovery(w, i, r, sweeps); return;
     }
     // Shift+RMB held: the wand's Siphon and the hands' Mend channel while it's down.
     if (held & BTN.area && s.areaHeld[i] > TAP && channelsSpecial(w, i)) { specialTick(w, i); return; }
@@ -390,7 +400,7 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
     }
     case PHASE.recover:
       if (s.timer[i] > 0) s.timer[i]--;
-      else s.phase[i] = PHASE.idle;
+      else { s.phase[i] = PHASE.idle; s.cancelAt[i] = 0; }
       break;
   }
 }

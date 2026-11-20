@@ -2,7 +2,7 @@
 
 The user's review of the spear and trident thrust (branch `worktree-weapon-fixes`, commit `3556166`): the jab is still far too long. In the Model Viewer the game starts the clip at about 0.5 s, the thrust is out at 0.7 s, it is **held to about 2.1 s**, and it is back at about 2.4 s. The user wants a jab, under a second, with no hold; transitions that don't return to a base pose between actions (jab → jab stays low and forward, jab → cast lifts the spear); and the game to catch the player's intent (clicks during recovery; RMB then W+Space for a heal).
 
-Status: plan answered (round 2 below), with the animator spec waiting on the user's read. Nothing is built yet.
+Status: building. Steps 1 to 3 built 2026-11-20 (blended transitions, the jab and its ready stance, the viewer's ▶ sequences, the press buffer and the cancel window); the bow and maul as two-handers, the other movesets and the side fixes are next.
 
 ## What the code does today
 
@@ -90,6 +90,14 @@ Recommendation: **(b)**, with the guard on the back keeping its passive effect a
 10. **The viewer runs the same Animator** on a scripted input timeline (sequence player). What it shows is the game's code path, in game seconds.
 
 **Rollout:** the wizard only, behind a URL option, until it beats the current path. The goblins keep the stateless path (their attack clips play at their own speed and need no chaining).
+
+## As built (2026-11-20), simpler than the spec
+
+The user: "We shouldn't have to overthink it too much, the pixelation hides some of the flaws."
+- **three.js still samples the clips.** The blend is a pass on top (`live3d.ts` `blendPose`): each body (by slug and seat) remembers the pose last shown. When the move changes or its clip time jumps, the gap is taken per bone and per soft prop and closed by a critically damped spring (half-life 0.05 s, 0.09 s when a ready stance is let go). Bones go back to their rest pose before each pose, so a bone no clip moves can't keep an old gap.
+- **Stances stay a pure function of game state** (`sprites.ts` `MOVESETS`): the jab's path through the clip and its ready hold are read from the seconds since the blow, so rollback and co-op need nothing new. The legs, readiness and aim layers, the off-hand IK and the effect layering are not built yet.
+- **The jab:** Meshy's single-jab clip (`attack-jab.glb`) played 0.42 → 0.66 → 1.05 → 1.42 s of clip in 0.4 s (its 0.35 s hold skipped), then its 0.42 s frame (crouched, spear level) held for 0.8 s. The triple-jab clip was one slow push, so it's kept as `spare-jab3.glb` and not exported.
+- **Sim:** `bufHand` and `cancelAt` per seat; `ARMS.strikeCommit` 0.4. The golden hash went from dd8360fb to 50d0f5ab and the mode trails were re-recorded. The flame sword's measured Strike DPS rose 10.2 → 10.7, because the test bot's presses no longer expire during its 0.8 s recovery; the fastest Strike rhythm is unchanged.
 
 ## Order of work
 

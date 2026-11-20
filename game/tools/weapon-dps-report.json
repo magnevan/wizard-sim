@@ -43,7 +43,7 @@
   },
   {
    "row": "Flame sword strike",
-   "dps10": 10.2,
+   "dps10": 10.7,
    "dps30": 10.9,
    "runes30": 4,
    "perRune30": 81.8,
@@ -132,10 +132,10 @@
   {
    "row": "Tide trident strike",
    "dps10": 10.5,
-   "dps30": 10,
+   "dps30": 10.3,
    "runes30": 4,
-   "perRune30": 75.3,
-   "dmg30": 301
+   "perRune30": 77,
+   "dmg30": 308
   },
   {
    "row": "Tide trident heavy",

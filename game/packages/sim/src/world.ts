@@ -136,6 +136,10 @@ export interface Seats {
   attune: Int32Array;
   /** A cast pressed while busy, waiting to start (CAST_ID), and ticks it keeps waiting. */
   bufCast: Uint8Array; bufTicks: Int32Array;
+  /** The waiting press was a weapon gesture (no runes queued when pressed): it stays one even if runes are queued after. */
+  bufHand: Uint8Array;
+  /** A weapon blow's recovery: once this few ticks are left, a spell or a Retreat may cut it short (0: it can't). */
+  cancelAt: Int32Array;
   // ---- Shield and Sigil on yourself ----
   /** Ward: WARD kind, what it resists (9 counts per seat), how much it can still absorb. */
   ward: Uint8Array; wardEls: Uint8Array; wardHp: Float64Array;
@@ -563,7 +567,7 @@ function seats(n: number): Seats {
   return {
     active: u8(n), runes: f64(n * N_EL), queue: u8(n * QUEUE_MAX), queueLen: u8(n), prevButtons: new Uint16Array(n),
     aimX: f64(n), aimY: f64(n), phase: u8(n), timer: i32(n), castId: u8(n), castQueue: u8(n * QUEUE_MAX), castLen: u8(n),
-    areaHeld: i32(n), holdX: f64(n), holdY: f64(n), dragged: u8(n), chanTicks: i32(n), chanTimer: i32(n), chanEndX: f64(n), chanEndY: f64(n), attune: i32(n), bufCast: u8(n), bufTicks: i32(n),
+    areaHeld: i32(n), holdX: f64(n), holdY: f64(n), dragged: u8(n), chanTicks: i32(n), chanTimer: i32(n), chanEndX: f64(n), chanEndY: f64(n), attune: i32(n), bufCast: u8(n), bufTicks: i32(n), bufHand: u8(n), cancelAt: i32(n),
     ward: u8(n), wardEls: u8(n * N_EL), wardHp: f64(n), wardBy: new Int16Array(n).fill(-1), auraEls: u8(n * N_EL), aura: i32(n), wand: u8(n),
     weapon: u8(n), weaponEls: u8(n * N_EL), weaponUses: i32(n), motes: u8(n), storeArm: u8(n), storeQ: u8(n * QUEUE_MAX), storeLen: u8(n), storeCast: u8(n), storeBorn: i32(n), drySigil: i32(n), owe: u8(n * QUEUE_MAX),
     guard: u8(n), guardHp: f64(n), guardT: i32(n), guardCharge: f64(n), handT: i32(n), double: new Int16Array(n).fill(-1), dblOX: f64(n), dblOY: f64(n), dblPaid: u8(n), dblEndX: f64(n), dblEndY: f64(n), dblBorn: i32(n), wandBorn: i32(n),

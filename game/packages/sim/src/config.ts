@@ -75,7 +75,7 @@ export const RHYTHM = {
   /** Channels (beams, sprays, arcs) are free for this long, then cost upkeep (no pool goes below zero: a dry one ends the channel). */
   naturalChannel: 2.5,
   upkeep: 0.4, // runes per second for each rune in the spell, from that rune's element, past the natural duration
-  /** A cast pressed while busy waits this long for the current one to finish. */
+  /** A cast pressed while busy waits this long after the current one finishes (it waits through a whole recovery). */
   castBuffer: 0.3,
   /** Earth Force: hold to charge, up to this long. */
   chargeMax: 1.0,
@@ -351,6 +351,8 @@ export const ARMS = {
    * half the DPS of the same element's committed spell (docs/explorations/2026-11-05-weapon-dps.md):
    * a weapon is the cheap, always-ready option, not the strongest. Light weapons recover fast, the maul slowly.
    */
+  /** The share of a Strike's or Sweep's recovery that's committed: after it, a spell or a Retreat may cut the rest short (the user, 2026-11-20: "Responsiveness and fluidity is more important"); another Strike still waits. */
+  strikeCommit: 0.4,
   strikeRecovery: { staff: 0.6, water: 0.65, life: 0.35, cold: 0.9, lightning: 0.9, fire: 0.8, earth: 1.4, arcane: 0.62, ice: 0.45 }, // the bow nocks fastest
   blowKnock: { staff: 3, water: 12, life: 0, cold: 4, lightning: 3, fire: 4, earth: 9 },
   blowHalf: { staff: 0.15, water: 0.11, life: 0.12, cold: 0.07, lightning: 0.1, fire: 0.15, earth: 0.15 },

@@ -678,4 +678,30 @@ describe('weapon rhythm: a weapon is the cheap option, not the strongest (explor
     expect(recovery(['sigil', 'earth'])).toBeGreaterThan(recovery([]) + 30);
     expect(Math.abs(recovery(['sigil', 'arcane']) - Math.round(ARMS.strikeRecovery.arcane * 60))).toBeLessThan(3);
   });
+
+  // the user, 2026-11-20: a jab then W+Space lost the Space; responsiveness over one flat rhythm
+  // (docs/explorations/2026-11-20-weapon-motion-flow.md)
+  const spearStrike = () => {
+    const { w, d } = arena();
+    d.aimAt(4, 0).conjure('sigil', 'cold').tick({}, 40).tick({ buttons: BTN.force }).tick();
+    return { w, d };
+  };
+  const full = Math.round(ARMS.strikeRecovery.cold * 60), commit = Math.round(full * ARMS.strikeCommit);
+  it('a spell pressed early in a Strike\'s recovery waits for it, and cuts it short once the commit has passed', () => {
+    const { w, d } = spearStrike();
+    d.queue('life').tick({ buttons: BTN.self });   // W, Space at once, a couple of ticks into the recovery
+    let n = 3;
+    while (w.seats.queueLen[0] > 0 && n < 200) { d.tick(); n++; }
+    expect(w.seats.queueLen[0]).toBe(0);
+    expect(n).toBeGreaterThanOrEqual(commit - 2);
+    expect(n).toBeLessThan(full - 10);
+  });
+  it('a Strike pressed during a Strike\'s recovery waits for all of it, and stays a Strike if a rune is queued after', () => {
+    const { w, d } = spearStrike();
+    d.tick({}, 4).tick({ buttons: BTN.force }).tick({}, 6).queue('fire');
+    let n = 12, second = -1;
+    for (; n < 200; n++) { const was = w.seats.phase[0]; d.tick(); if (was !== 0 && w.seats.phase[0] === 0) continue; if (second < 0 && was === 0 && w.seats.phase[0] !== 0) second = n; }
+    expect(second).toBeGreaterThanOrEqual(full - 3);
+    expect(w.seats.queueLen[0]).toBe(1);   // the Fire rune is still queued: the press went off as a Strike, not a Fire spell
+  });
 });

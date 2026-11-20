@@ -2089,7 +2089,10 @@ export class StructureView {
       }
       case 'mv-strike': case 'mv-sweep': case 'mv-imbue': {
         // weapon blows (hands.ts) and the imbued burst: drawn from where the wizard stood, toward (x2, y2)
-        const aw = Math.atan2(f.y2 - f.y, f.x2 - f.x), reach = Math.hypot(f.x2 - f.x, f.y2 - f.y) * PPU, q = e / f.life, cy0 = y - 8;
+        // the jabbing weapons (staff, spear, trident) thrust at hand height, 16 px up (measured off the live 3D body; the
+        // user, 2026-11-20: the jab's particles were "closer to the ground" than the trident); the swings stay at 8
+        const jabs = f.look === 0 || f.look === ELID.water || f.look === ELID.cold;
+        const aw = Math.atan2(f.y2 - f.y, f.x2 - f.x), reach = Math.hypot(f.x2 - f.x, f.y2 - f.y) * PPU, q = e / f.life, cy0 = y - (jabs && f.kind !== 'mv-imbue' ? 16 : 8);
         const at = (a: number, r: number): Pt => [x + Math.cos(a) * r, cy0 + Math.sin(a) * r * FY];
         if (f.kind === 'mv-imbue') { this.imbueFx(f, e, q, aw, reach, at, o, g, light); return; }
         const Rb = blowRamp(f.look), key = f.look ? elName(f.look) : 'staff', el = f.look ? key : '';

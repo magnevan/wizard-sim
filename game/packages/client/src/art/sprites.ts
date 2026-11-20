@@ -187,7 +187,14 @@ const blowOf = (prop: string | undefined): string => prop === 'sword' || prop ==
  * 0.75 to 1.1 s, is skipped); `ready` is the clip time held for `linger` s after, so the next jab starts from it and a
  * cast or the standing pose is eased into from it (live3d blendPose). `hl` is the half-life of the ease back to standing.
  */
-const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; turn?: number; slide?: readonly (readonly [number, number])[] }> = {
+const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; turn?: number; spin?: number; slide?: readonly (readonly [number, number])[] }> = {
+  // the Heavy (RigState.blow 1; the user, 2026-11-20: "I'd expect just pulling back and standing in a ready to jab
+  // position, followed by maybe a more emphasized jab and just returning to normal"): held, the ready stance coiling
+  // (COIL); released, the jab lunges and holds its full reach, then straight back to standing (no ready hold)
+  jabHeavy: { path: [[0, 0.25], [0.08, 0.75], [0.35, 0.95], [0.6, 1.55]], ready: 0.25, linger: 0, hl: 0.12, turn: 49 },
+  // the Sweep (blow 2): the jab's reach held while the whole body turns once (`spin` s, as the 2D ring's head,
+  // view-structures mv-sweep), so the ring is the trident's own path (the user: "a phantom trident sweep around you")
+  jabSweep: { path: [[0, 0.25], [0.06, 0.7], [0.3, 0.75], [0.5, 1.55]], ready: 0.25, linger: 0, hl: 0.12, turn: 49, spin: 0.42 * 0.7 },
   // the jab (Meshy text-to-motion, 2026-11-20 round 2: the first jab clip pushed up and 55° right, with the hands side by
   // side, so it read as a spell cast off to the side): a right-handed thrust, the right shoulder driving through, the
   // hand 1.5 units out at 0.75 s, 49° left of the body's facing (scripts/clip-paths.mjs). `turn` squares it to the facing,
@@ -203,6 +210,8 @@ export function pathTime(path: readonly (readonly [number, number])[], s: number
   }
   return path[path.length - 1][1];
 }
+/** A Heavy held: the body turns this many degrees further side-on than the ready stance, by half charge. */
+const COIL = 25;
 /** After a moveset's ready stance, its shaft is lifted back to the carry over this many seconds. */
 const SHAFT_LIFT = 0.6;
 /** The half-life (s) of the wizard's blended transitions (live3d blendPose); a moveset's settle sets its own. */
@@ -262,10 +271,18 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     const seat = X.TEAMS[s.pal % X.TEAMS.length], c = meta.casts?.cast, props = wizardProps(s);
     // a moveset's blow (the jab): its path through the clip, then the ready pose held for its linger unless a cast or a
     // block takes over; the shaft points along the facing throughout
-    const set = s.shot === 1 ? MOVESETS[blowOf(props[0])] : undefined;
-    if (set && s.shotT >= 0 && meta.clips[blowOf(props[0])]) {
-      const move = blowOf(props[0]), end = set.path[set.path.length - 1][0];
-      if (s.shotT < end) return { move, t: pathTime(set.path, s.shotT), face, flash, seat, grip: 1, aim: 1, props, turn: set.turn, ...under, ...(set.slide ? { slide: pathTime(set.slide, s.shotT) } : {}) };
+    const base = blowOf(props[0]), own = MOVESETS[base] && meta.clips[base];
+    // a Heavy held: the ready stance, the body coiling further round as it charges
+    if (own && s.charge > 0 && !(s.cast > 0) && !(s.block > 0)) {
+      const r = MOVESETS[base];
+      return { move: base, t: r.ready, face, flash, seat, grip: 1, aim: 1, props, turn: (r.turn ?? 0) + COIL * smooth01(s.charge * 2), ...under };
+    }
+    const set = s.shot === 1 ? MOVESETS[base + (s.blow === 1 ? 'Heavy' : s.blow === 2 ? 'Sweep' : '')] ?? MOVESETS[base] : undefined;
+    if (set && s.shotT >= 0 && own) {
+      const move = base, end = set.path[set.path.length - 1][0];
+      // a Sweep turns the body once round, the way the ring goes (against the clock on screen)
+      const spun = set.spin && s.shotT < set.spin ? face - TAU * smooth01(s.shotT / set.spin) : face;
+      if (s.shotT < end) return { move, t: pathTime(set.path, s.shotT), face: spun, flash, seat, grip: 1, aim: 1, props, turn: set.turn, ...under, ...(set.slide ? { slide: pathTime(set.slide, s.shotT) } : {}) };
       if (s.shotT < end + set.linger && !(s.cast > 0) && !(s.block > 0)) return { move, t: set.ready, face, flash, seat, grip: 1, aim: 1, props, turn: set.turn, ...under };
       if (s.shotT < end + set.linger + 1 && !(s.cast > 0) && !(s.block > 0)) {
         settle = set.hl;

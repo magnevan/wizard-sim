@@ -2,7 +2,7 @@
 
 The user's review of the spear and trident thrust (branch `worktree-weapon-fixes`, commit `3556166`): the jab is still far too long. In the Model Viewer the game starts the clip at about 0.5 s, the thrust is out at 0.7 s, it is **held to about 2.1 s**, and it is back at about 2.4 s. The user wants a jab, under a second, with no hold; transitions that don't return to a base pose between actions (jab → jab stays low and forward, jab → cast lifts the spear); and the game to catch the player's intent (clicks during recovery; RMB then W+Space for a heal).
 
-Status: plan, waiting on the user's answers. Nothing here is built yet.
+Status: plan answered (round 2 below), with the animator spec waiting on the user's read. Nothing is built yet.
 
 ## What the code does today
 
@@ -57,13 +57,46 @@ Recommendation: **(b)**, with the guard on the back keeping its passive effect a
 - **Arrow not from the bow:** the arrow's drawn origin should come from the bow prop's position in the live model, not the body or 2D rig anchor.
 - **Arrow fires before the bow is up:** keep the instant shot (responsive) and hide the gap with the stance: the bow stays half-raised when aiming at a nearby enemy or after a recent shot, so a shot only finishes a short draw.
 
+## The user's answers (2026-11-20, round 2)
+
+- Steps 1, 2 and 5 accepted. Step 3: try blending, but spec it first. The current stateless design can be rebuilt ("we also have the option of reinventing this").
+- **Intent poses from queued runes: leaning no.** A big rune-queue animation looked terrible before. At most a small cue, later. **The bow staying raised: yes.** Its tolerance (how close the aim must be to an enemy, how long it stays up) needs tuning.
+- **The cancel window: yes.** Responsiveness and fluidity matter more than one flat rhythm. It should look like the recovery fading into the cast.
+- **Particles through the body:** not only weapon tips. The flame buckler (guard effects) does it too, so the fix must cover any effect attached to a body.
+- **Bow and shield: (b), two-handed weapons.** The **maul** is the other two-hander (one ranged, one melee). It may need a new mesh and new animations.
+- **Clips:** buy new ones freely (Meshy credits are less scarce than Claude time). Two spear-jab text-to-motion clips were ordered (20 credits): a triple jab from a ready stance (2.5 s, task `01a1f96d-5e14-7327-a5e6-3d857acfa4e7`) and a single jab into a held ready stance (2 s, `01a1f96d-62aa-723b-9c54-eaeff8d8d15e`). Meshy keeps them until 2026-11-23; they still need applying to the wizard rig (`meshy_animate`, 3 credits each).
+
+## Animation spec: a per-body animator (replaces the stateless pose)
+
+**Today:** `livePose` (`art/sprites.ts`) turns a sim state into one pose description (a clip and time, plus a crossfade partner) with no memory of the last draw. `live3d.ts` samples it through a shared three.js `AnimationMixer` per model. Every smooth change has to be faked from state alone (`SHOT_EASE`, the `after` blend, the grip ramps), so any action that interrupts another snaps.
+
+**New:** each body gets an **Animator** that lives across draws (keyed like `tips`, by slug and seat), owns its pose, and is fed sim state and events. The shared model instance stays as the renderer: the animator writes its finished bone pose into it before each render.
+
+1. **Pose buffers, our own sampling.** Clips are sampled straight from their keyframe tracks into a flat pose buffer (local rotation and position per bone). Blending, masking and the transition offsets are arithmetic on buffers. The `AnimationMixer` goes. That makes every step testable without a render and identical in the game and the viewer.
+2. **Layers.**
+   - *Legs:* a 1D blend tree on speed (stand, walk, run), driven by distance walked (as now, so the feet stay planted).
+   - *Action (upper body, masked from the spine up):* a state machine per **moveset**. States: `carry`, `ready`, `jab`, `heavy`, `cast` (wind-up, hold, release), `block`, `draw` (bow) and `settle`. A state is a clip *segment* (from, to, contact time), a rate, and hold or loop. A full-body action (a lunge, the maul's slam) can take the legs too.
+   - *Stance:* a continuous 0..1 "readiness" that blends `carry` and `ready` (a 1D blend tree). It's smoothed by a spring and driven by signals: a blow in the last ~0.8 s, the bow's aim within tolerance of an enemy in range, a shot in the last ~1 s.
+   - *Aim (additive):* a spine and shoulder twist that points the weapon at the sim's aim. It replaces the `aim` and grip overrides on the prop.
+3. **Transitions are inertialized, not crossfaded.** On any discrete change of state, the animator takes the difference between the pose last shown and the new state's first pose, per bone, and decays that offset to zero with a critically damped spring (half-life per transition, default ~0.05 s, settled in ~0.15 s). It keeps the offset's velocity too, so a motion already under way carries through instead of stopping dead. A transition interrupted by another simply starts from the pose on screen, so chains like jab → jab → cast need no special cases. Only the target clip is sampled, so it costs less than a crossfade. Holden's dead blending is the fallback if the offset method shows artefacts on big rotations.
+   - *Why not crossfades or blend trees for this:* a crossfade needs both clips sampled and in sensible phase. Fading from a mid-jab into a cast's wind-up passes through an average of the two, and the hands drift off the shaft. Blend trees suit **continuous** parameters (speed, readiness, bow raise), so that's where they're used.
+   - *Why not motion matching:* it needs a large motion database. We have a dozen clips.
+4. **Contact sync.** A jab's segment starts so its contact frame lands on the sim's blow. The sim strikes on the press, so the body needs a wind-up of under ~0.1 s from `ready`. A late event (the network, a rollback) starts the segment partway through.
+5. **Moveset data per weapon** (a table next to `WEAPON_PROP`): the segments, the linger, the stance clips, the transition half-lives, and the share of the sim's `strikeRecovery` the jab's return takes. One-handed or **two-handed**: a two-hander puts the guard on the back.
+6. **Two-hand grip:** a two-bone IK keeps the off-hand on the shaft (spear, trident, staff, maul, the bow's string hand) through blends, so blended poses can't pull the hands apart.
+7. **Cancels look like fades:** when the sim lets a cast cut a recovery, the action layer jumps to `cast`, and the inertialized offset *is* the recovery fading into the cast.
+8. **Netcode:** the animator only reads synced sim state and events, so a co-op partner sees the same moves. A rollback that changes history just becomes another inertialized transition. Animation never feeds back into the sim.
+9. **Attached effects:** the animator knows, per draw, which body points (weapon tip, guard, hands) are in front of or behind the body from the camera. Effects attached to those points (drips, the fire sword's flame, the flame buckler) are drawn in a back layer under the sprite or a front layer over it.
+10. **The viewer runs the same Animator** on a scripted input timeline (sequence player). What it shows is the game's code path, in game seconds.
+
+**Rollout:** the wizard only, behind a URL option, until it beats the current path. The goblins keep the stateless path (their attack clips play at their own speed and need no chaining).
+
 ## Order of work
 
-1. Viewer game mode and sequence player (so every later step can be judged).
-2. Re-cut the thrust into ready / jab / settle, plus the stance memory, snapshot blending and the grip fix.
-3. Apply it to the other weapons (lash, bow, sword swing) and the intent poses.
-4. Sim buffer fixes (golden hash re-recorded on purpose).
-5. The cancel window, if the user wants it.
-6. The bow and shield direction, plus the trident, particle and arrow fixes.
+1. The Animator core (pose buffers, layers, inertialization) and the viewer's game mode and sequence player on it, for the wizard behind a URL option.
+2. The spear moveset from the new jab clip (ready, jab, settle), then the trident and staff.
+3. Sim: the buffer lasts the recovery and keeps the press's meaning; the cancel window (golden hash re-recorded on purpose).
+4. Two-handed weapons: the bow (stance raise with tuned tolerance) and the maul (new mesh and clips); the guard on the back.
+5. The other movesets (sword, whip, focus); attached effects in front of or behind the body; the trident cell, and the arrow from the bow.
 
 Sources: [Bollo, Inertialization (GDC 2018)](https://gdcvault.com/play/1025165/Inertialization-High-Performance-Animation-Transitions); [Holden, Dead Blending](https://theorangeduck.com/page/dead-blending); [Combat Canceled: God of War & action game design](https://www.gamedeveloper.com/game-platforms/combat-canceled-i-god-of-war-i-action-game-design); [Smash buffering](https://www.ssbwiki.com/Buffering); [Skyrim: building better combat](https://www.gameinformer.com/b/features/archive/2011/01/24/skyrim-building-better-combat.aspx).

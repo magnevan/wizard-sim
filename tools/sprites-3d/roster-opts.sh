@@ -15,7 +15,9 @@ declare -A OPTS=(
 # (--show: the props shown when the game names none; baked renders take only the staff)
 W=tools/sprites-3d/wizprops.py
 WIZ_ARMS="--show=staff"
-for a in sword earthmaul focus icebow frostspear whip trident; do WIZ_ARMS="$WIZ_ARMS --prop=$W:$a~0.25@RightHand"; done
+for a in sword earthmaul focus frostspear whip trident; do WIZ_ARMS="$WIZ_ARMS --prop=$W:$a~0.25@RightHand"; done
+# the bow is held in the left hand and drawn with the right, as the archer's; its clip turns the body sideways, as the archer's
+WIZ_ARMS="$WIZ_ARMS --prop=$W:icebow~0.25@LeftHand --release=archery_shot:39 --yaw=archery_shot:-90:24:31:48:58"
 # guards are soft too (round 3): kept upright, picture-up toward the sky, whatever the forearm does (wizprops.py PROP_AXIS)
 for a in mirror bulwark ember rime spark tide prism leaf spike; do WIZ_ARMS="$WIZ_ARMS --prop=$W:$a~0.15@LeftForeArm"; done
 # slug: its folder under tools/sprites-3d/output when it isn't the slug

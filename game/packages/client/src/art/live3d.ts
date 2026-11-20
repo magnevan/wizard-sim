@@ -59,6 +59,8 @@ export interface LivePose {
   /** Walking while the move plays: the move drives the upper body, this clip (walk or run) at time tl the hips and legs. */
   legs?: string; tl?: number;
   /** How firmly a soft prop is held, 0 (kept upright) to 1 (every turn of the hand); by default 1 in its `firm` moves. */
+  /** A thrust: how far the shaft is turned to point along the facing (0..1), whatever the hand's tilt. */
+  aim?: number;
   grip?: number;
   /** The props to show by name (ModelMeta.props); the rest are hidden. By default the model's `show`, else all. */
   props?: readonly string[];
@@ -329,7 +331,7 @@ interface Drop { node: THREE.Object3D; rest: THREE.Matrix4; box: THREE.Box3; sli
  * A prop by name: its carrier, and in the carrier's frame its far end along its main axis (a soft prop's: the weapon's
  * tip, where its particles run to) and the middle of its shape (a guard's).
  */
-interface Carrier { name: string; node: THREE.Object3D; held: boolean; tip: THREE.Vector3 | null; mid: THREE.Vector3; axes: THREE.Vector3[]; face?: THREE.Object3D }
+interface Carrier { name: string; node: THREE.Object3D; held: boolean; left: boolean; tip: THREE.Vector3 | null; mid: THREE.Vector3; axes: THREE.Vector3[]; face?: THREE.Object3D }
 /** A shape's three half-extents along its box's axes, longest first: a guard's face is the first two, its normal the last. */
 function halfAxes(box: THREE.Box3): THREE.Vector3[] {
   const s = box.getSize(new THREE.Vector3()).multiplyScalar(0.5);
@@ -436,7 +438,7 @@ function instance(slug: string, m: Model, original = false): Inst {
       for (let c = 0; c < 8; c++) far = Math.max(far, v1.set(c & 1 ? box.max.x : box.min.x, c & 2 ? box.max.y : box.min.y, c & 4 ? box.max.z : box.min.z).dot(d));
       tip = d.multiplyScalar(far);
     }
-    carriers.push({ name: pr.name ?? pr.node.replace(/ carrier$/, ''), node: n, held: /Hand$/.test(pr.bone), tip, mid: box.getCenter(new THREE.Vector3()), axes: halfAxes(box), face: m.meta.faces?.[pr.node] ? node(body, m.meta.faces[pr.node]) : undefined });
+    carriers.push({ name: pr.name ?? pr.node.replace(/ carrier$/, ''), node: n, held: /Hand$/.test(pr.bone), left: /^Left/.test(pr.bone), tip, mid: box.getCenter(new THREE.Vector3()), axes: halfAxes(box), face: m.meta.faces?.[pr.node] ? node(body, m.meta.faces[pr.node]) : undefined });
   }
   // a bow's string is drawn only while its carrier shows (the wizard's ice bow waits hidden)
   let bowOf: THREE.Object3D | null = null;
@@ -494,7 +496,7 @@ function pose(inst: Inst, m: Model, p: LivePose): void {
   ]);
   pinGuardArm(inst, p.move === 'death' || p.move === 'block' || p.move === 'brace' ? 0 : 1 - (p.guardUp ?? 0));
   place(inst, m, p);
-  if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0));
+  if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0), p.aim);
   placeGuard(inst, p.guardUp ?? 0);
   if (fall >= 0) dropProps(inst, p.t - fall);
 }
@@ -581,13 +583,15 @@ function dropProps(inst: Inst, dt: number): void {
  * grip is moved `hold` ahead and `holdSide` of that outward, in model units, so a blade clears the beard and hat brim.
  */
 const WEAPON_HOLD = { lean: 0.6, side: 0.25, hold: 0.14, holdSide: 0.5 };
+/** A thrust's shaft is aimed along the facing, this much up (of its length). */
+const AIM_UP = 0.12;
 const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Quaternion(), qi = new THREE.Quaternion();
 /**
  * render.py soft_props: each soft prop's main axis is turned from where the hand holds it back toward upright (leaning
  * a little toward the facing), keeping k of the hand's tilt, all of it as `grip` reaches 1 (a staff's blow); it turns
  * about the carrier's own origin, the palm.
  */
-function softProps(inst: Inst, face: number, grip: number): void {
+function softProps(inst: Inst, face: number, grip: number, aim?: number): void {
   for (const s of inst.soft) {
     if (!s.node.visible) continue;
     s.node.quaternion.copy(s.rest);
@@ -595,11 +599,12 @@ function softProps(inst: Inst, face: number, grip: number): void {
     s.node.updateMatrixWorld(true);
     const p = s.node.getWorldPosition(v1), a = s.axis.getWorldPosition(v2).sub(p).normalize();
     // a conjured weapon is held out from the body (WEAPON_HOLD): the staff stays upright at the side
-    const held = inst.carriers.some((c) => c.node === s.node && c.held && c.name !== 'staff');
-    const cs = Math.cos(face), sn = Math.sin(face), H = held ? WEAPON_HOLD : null;
-    const want = v3.set(cs * (H ? H.lean : 0.12) - sn * (H ? H.side : 0), 1, sn * (H ? H.lean : 0.12) + cs * (H ? H.side : 0)).normalize();
+    const car = inst.carriers.find((c) => c.node === s.node), held = !!car && car.held && car.name !== 'staff';
+    const cs = Math.cos(face), sn = Math.sin(face), H = held ? WEAPON_HOLD : null, hs = car?.left ? -1 : 1;   // a weapon in the left hand is held out to the left
+    // a thrust aims the shaft along the facing (aim 0..1 of the way there), whatever the hand's own tilt
+    const want = aim !== undefined ? v3.set(cs, AIM_UP, sn).normalize() : v3.set(cs * (H ? H.lean : 0.12) - sn * (H ? H.side * hs : 0), 1, sn * (H ? H.lean : 0.12) + cs * (H ? H.side * hs : 0)).normalize();
     const turn = qa.setFromUnitVectors(a, want);
-    qi.identity().slerp(turn, (1 - s.k) * (1 - grip));
+    qi.identity().slerp(turn, aim !== undefined ? aim : (1 - s.k) * (1 - grip));
     // world rotation -> the carrier's local one
     s.node.getWorldQuaternion(qb);
     s.node.parent!.getWorldQuaternion(qp);
@@ -607,7 +612,7 @@ function softProps(inst: Inst, face: number, grip: number): void {
     s.node.updateMatrixWorld(true);
     if (H) {   // and the grip itself a little ahead and out, fading as a blow takes the weapon over
       const k = (1 - grip) * H.hold;
-      s.node.getWorldPosition(v1).add(v2.set(cs * k - sn * k * H.holdSide, 0, sn * k + cs * k * H.holdSide));
+      s.node.getWorldPosition(v1).add(v2.set(cs * k - sn * k * H.holdSide * hs, 0, sn * k + cs * k * H.holdSide * hs));
       s.node.position.copy(s.node.parent!.worldToLocal(v1));
       s.node.updateMatrixWorld(true);
     }
@@ -639,7 +644,7 @@ const WORLD_UP = new THREE.Vector3(0, 1, 0);
  */
 export const GUARD_PLACE = {
   carryUp: 0.31, carryOut: 1.2, carryAhead: 1, carryAngle: 2.5, carryTilt: 0.2,
-  blockUp: 1.19, blockAhead: 1.32, blockOut: 1.64, blockSize: 0.89, blockYaw: 1.7,
+  blockUp: 1.19, blockAhead: 1.52, blockOut: 1.64, blockSize: 0.89, blockYaw: 1.7,
 };
 const gY = new THREE.Vector3(), qC = new THREE.Quaternion(), qB = new THREE.Quaternion(), gL = new THREE.Vector3(), gH = new THREE.Vector3(), pC = new THREE.Vector3(), pB = new THREE.Vector3();
 /** The rotation that takes the guard's current (up, face) frame (mAT, mA's transpose) to (up, face), into `out`. */
@@ -717,7 +722,7 @@ function stringOf(inst: Inst, m: Model, p: LivePose, stage: THREE.Group): void {
   const rh = w1.clone().add(w1.clone().sub(w0).normalize().multiplyScalar(0.09 * L / 1.12));   // the palm
   const rel = rh.clone().sub(g), along = rel.dot(f), vert = rel.dot(u), lat = rel.clone().sub(f.clone().multiplyScalar(along)).sub(u.clone().multiplyScalar(vert)).length();
   const release = m.meta.release[p.move];
-  const hooked = p.move.startsWith('attack') && along < -0.05 * L && lat < 0.3 * L && Math.abs(vert) < 0.3 * L && (release === undefined || p.t <= release);
+  const hooked = (p.move.startsWith('attack') || p.move === 'shoot') && along < -0.05 * L && lat < 0.3 * L && Math.abs(vert) < 0.3 * L && (release === undefined || p.t <= release);
   const mid = hooked ? rh : n0;
   rodBetween(bw.parts[0], a, mid); rodBetween(bw.parts[1], mid, b);
   stage.add(bw.parts[0], bw.parts[1]);

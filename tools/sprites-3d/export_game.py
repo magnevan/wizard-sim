@@ -122,6 +122,12 @@ def run(g):
             hand.append(list(arm.matrix_world @ arm.pose.bones[hand_bone].head))
         b = beats(hand)
         meta['casts'][name] = {'first': int(b[0]) / FPS, 'hit': min(int(b[2]), round(b[1] + 0.5)) / FPS, 'last': int(b[2]) / FPS}
+        meta['casts'][name].update(role.get('cast_times', {}).get(name, {}))   # a clip the hand's path can't read (the bow's draw): times set by hand, in seconds
+        key = role['casts'][name]
+        for y in yaw_args:   # --yaw / --release frames are 12 fps, as for an attack
+            if y[0] in key: meta['yaw'][name] = [float(y[1])] + [int(v) / 12 for v in y[2:6]]
+        for r in rel_args:
+            if r[0] in key: meta['release'][name] = int(r[1]) / 12
 
 
     # each cycle's stride: how far the ground passes under the feet in one loop (model units), so the client plays walk

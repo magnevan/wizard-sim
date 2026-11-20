@@ -32,6 +32,18 @@
    "source": "mage_soell_cast",
    "duration": 2.2667
   },
+  "thrust": {
+   "source": "attack_thrust",
+   "duration": 2.9667
+  },
+  "lash": {
+   "source": "attack_whip",
+   "duration": 2.9667
+  },
+  "shoot": {
+   "source": "Armature|Archery_Shot|baselayer",
+   "duration": 5.0
+  },
   "gather": {
    "source": "mage_soell_cast_8",
    "duration": 1.3333
@@ -69,10 +81,35 @@
    "first": 0.041666666666666664,
    "hit": 0.5833333333333334,
    "last": 2.0
+  },
+  "thrust": {
+   "first": 0.4583333333333333,
+   "hit": 0.7083333333333334,
+   "last": 2.5416666666666665
+  },
+  "lash": {
+   "first": 0.125,
+   "hit": 1.125,
+   "last": 2.9166666666666665
+  },
+  "shoot": {
+   "first": 2.0,
+   "hit": 3.25,
+   "last": 4.75
   }
  },
- "yaw": {},
- "release": {},
+ "yaw": {
+  "shoot": [
+   -90.0,
+   2.0,
+   2.5833333333333335,
+   4.0,
+   4.833333333333333
+  ]
+ },
+ "release": {
+  "shoot": 3.25
+ },
  "soft": [
   {
    "node": "staff carrier",
@@ -107,14 +144,6 @@
    ]
   },
   {
-   "node": "icebow carrier",
-   "axis": "icebow carrier axis",
-   "k": 0.25,
-   "firm": [
-    "attack0"
-   ]
-  },
-  {
    "node": "frostspear carrier",
    "axis": "frostspear carrier axis",
    "k": 0.25,
@@ -133,6 +162,14 @@
   {
    "node": "trident carrier",
    "axis": "trident carrier axis",
+   "k": 0.25,
+   "firm": [
+    "attack0"
+   ]
+  },
+  {
+   "node": "icebow carrier",
+   "axis": "icebow carrier axis",
    "k": 0.25,
    "firm": [
     "attack0"
@@ -249,12 +286,6 @@
    "drop": true
   },
   {
-   "node": "icebow carrier",
-   "name": "icebow",
-   "bone": "RightHand",
-   "drop": true
-  },
-  {
    "node": "frostspear carrier",
    "name": "frostspear",
    "bone": "RightHand",
@@ -270,6 +301,12 @@
    "node": "trident carrier",
    "name": "trident",
    "bone": "RightHand",
+   "drop": true
+  },
+  {
+   "node": "icebow carrier",
+   "name": "icebow",
+   "bone": "LeftHand",
    "drop": true
   },
   {

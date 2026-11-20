@@ -17,7 +17,7 @@ import { ARCHETYPES, BODY, EL as ELID, GUARD, N_EL, type World } from '@wizard-s
 import { GUARD_PLACE, LIVE_VIEW, flushLive, liveFrame, liveInstance, liveMeta, liveModel, livePoseInst, liveSlugs, liveString, liveWorks, type LiveInst, type LiveModel, type LivePose, type ModelMeta } from '../art/live3d';
 import { CELL_H, CELL_W, FEET_X, FEET_Y, type Anchors } from '../art/rigs';
 import { TEAMS } from '../art/px';
-import { SHOT_LEAD } from '../art/sprites';
+import { SHOT_LEAD, shotClipTime } from '../art/sprites';
 import type { Frame } from '../art/actors';
 import * as X from '../art/px';
 import { CU, FY, TAU } from '../art/util';
@@ -66,7 +66,7 @@ function simOf(slug: string): { name: string; radius: number; speed: number; rea
 /** Not a clip: a body standing still holds the walk's first frame (sprites.ts livePose), so "idle" shows exactly that. */
 const IDLE = 'idle';
 const clipNames = (m: ModelMeta): string[] => [IDLE, ...Object.keys(m.clips)];
-const ONE_SHOTS: Record<string, 'attack0' | 'area' | 'self'> = { attack0: 'attack0', area: 'area', self: 'self' };
+const ONE_SHOTS = new Set(['attack0', 'area', 'self', 'thrust', 'lash', 'shoot']);
 
 // ---- the clip's marks: the game's timings ----------------------------------------------------------------------------------------
 interface Mark { t: number; label: string; color: string }
@@ -92,13 +92,13 @@ function marksOf(slug: string, meta: ModelMeta, clip: string): Marks {
       out.note = 'A Force cast pushes from "first" into "held" as the spell charges, then holds there while it flows.';
     }
   }
-  if (slug === 'wizard' && ONE_SHOTS[clip]) {
+  if (slug === 'wizard' && ONE_SHOTS.has(clip)) {
     const o = clip === 'attack0' ? atk : cast;
     if (o) {
-      const start = Math.max(o.first, o.hit - SHOT_LEAD);
+      const start = shotClipTime(o, 0, clip);
       out.marks.push({ t: start, label: 'game starts', color: '#e0b04a' });
       out.range = [start, o.last];
-      out.note = `The wizard's one-shots start ${SHOT_LEAD} s before the release (the game's cast is instant), then hand back.`;
+      out.note = `The wizard's one-shots run their wind-up in the ${SHOT_LEAD} s before the release (the game's cast is instant), then play on and hand back.`;
     }
   }
   const rel = meta.release[clip];
@@ -579,7 +579,7 @@ function frame(now: number): void {
     }
     const face = (st.f * Math.PI) / 180;
     if (st.c === IDLE) st.t = 0;
-    const pose: LivePose = { move: st.c === IDLE ? 'walk' : st.c, t: st.t, face, flash: st.flash, seat: st.m === 'wizard' && st.seat >= 0 ? TEAMS[st.seat] : undefined };
+    const pose: LivePose = { move: st.c === IDLE ? 'walk' : st.c, t: st.t, face, flash: st.flash, seat: st.m === 'wizard' && st.seat >= 0 ? TEAMS[st.seat] : undefined, ...(st.m === 'wizard' && ['attack0', 'thrust', 'lash', 'shoot'].includes(st.c) ? { grip: 1, ...(st.c === 'thrust' ? { aim: 1 } : {}) } : {}) };
     if (st.m === 'wizard' && (st.wp || st.gd)) Object.assign(pose, { props: [st.wp || 'staff', ...(st.gd ? [st.gd] : [])], guardUp: st.gu });
     if (st.c2 && st.c2 !== st.c && meta.clips[st.c2]) Object.assign(pose, { move2: st.c2, t2: st.t % meta.clips[st.c2].duration, w2: st.w2 });
     if (st.legs && st.legs !== st.c && meta.clips[st.legs]) Object.assign(pose, { legs: st.legs, tl: st.t % meta.clips[st.legs].duration });

@@ -167,6 +167,23 @@ function stretch(a: Anchors, k: number): Anchors {
 const FOLLOW = 0.25, BLEND = 0.3;
 /** A wizard's one-shot starts this long (s) before its release, so the game's instant cast gets a moment's wind-up. */
 export const SHOT_LEAD = 0.2;
+/** A one-shot's wind-up kept before its release (s of clip): a longer one (the lash, the bow's draw) starts this far back. */
+const SHOT_WIND = 0.5;
+/** Moves with their own timing: the bow's draw keeps a second of clip and has its release this long after the game's. */
+const SHOT_TIMING: Record<string, { wind: number; lead: number }> = { shoot: { wind: 1, lead: 0.35 } };
+/** A one-shot's first moments ease in from the standing pose over this many seconds, so the body doesn't snap into the clip. */
+const SHOT_EASE = 0.1;
+/** The clip a conjured weapon's blow plays: the sword, maul and focus swing, the whip lashes, the bow draws and looses, the staff, spear and trident thrust (the staff's overhead swing went through the hat). */
+const blowOf = (prop: string | undefined): string => prop === 'sword' || prop === 'earthmaul' || prop === 'focus' ? 'attack0' : prop === 'whip' ? 'lash' : prop === 'icebow' ? 'shoot' : 'thrust';
+/**
+ * Where a one-shot's clip is `shotT` seconds after the game's release: the wind-up (from `first`, or SHOT_WIND before the
+ * release) runs sped up to meet the release SHOT_LEAD later, then the clip plays on at its own pace.
+ */
+export function shotClipTime(o: { first: number; hit: number }, shotT: number, move = ''): number {
+  const { wind, lead } = SHOT_TIMING[move] ?? { wind: SHOT_WIND, lead: SHOT_LEAD };
+  const start = Math.max(o.first, o.hit - wind);
+  return shotT >= lead ? o.hit + (shotT - lead) : start + (o.hit - start) * (shotT / lead);
+}
 /** The staff's blow takes the staff firmly over GRIP_IN (s) and lets it settle upright over GRIP_OUT as the blow ends. */
 const GRIP_IN = 0.12, GRIP_OUT = 0.35;
 /** Blocking (livePose): the guard clip eases in over BLOCK_IN s and plays GUARD_RATE times fast to GUARD_HOLD of its length, held there. */
@@ -208,16 +225,20 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
   if (s.dead > 0) return { move: 'death', t: dur('death') * Math.min(1, s.dead), face, flash, ...(s.kind === 'wizard' ? { props: wizardProps(s) } : {}) };
   if (s.kind === 'wizard') {
     const seat = X.TEAMS[s.pal % X.TEAMS.length], c = meta.casts?.cast, props = wizardProps(s);
-    // a one-shot (the staff's blow, an Area or Self cast) plays from just before its release, the release a moment
-    // after it went off in the game, over the legs if the wizard walks on, then eases back
+    // a one-shot (a weapon's blow, an Area or Self cast) plays its whole wind-up, squeezed into the SHOT_LEAD between the
+    // game's release and the body's (shotClipTime), easing in from the standing pose, over the legs if the wizard walks
+    // on, then eases back (the user, 2026-11-20: "the game skips the first part of the animation, so there's no wind up")
     if (s.shot) {
-      const a = meta.attacks[0], o = s.shot === 1 ? (a ? { first: a.first, hit: a.hit, last: a.last } : undefined) : meta.casts?.[s.shot === 2 ? 'area' : 'self'];
+      const move = s.shot === 1 ? blowOf(props[0]) : s.shot === 2 ? 'area' : 'self';
+      const a = meta.attacks[0], o = move === 'attack0' ? (a ? { first: a.first, hit: a.hit, last: a.last } : undefined) : meta.casts?.[move];
       if (o && s.shotT >= 0) {
-        const t0 = Math.max(o.first, o.hit - SHOT_LEAD), t = t0 + s.shotT, move = s.shot === 1 ? 'attack0' : s.shot === 2 ? 'area' : 'self';
+        const t = shotClipTime(o, s.shotT, move), standing = s.spd > 0 ? legs : 'walk';
         // the staff's blow grips the staff firmly (it swings with the hand) and lets it settle upright again after
         const grip = s.shot === 1 ? smooth01(s.shotT / GRIP_IN) * smooth01((o.last + BLEND - t) / GRIP_OUT) : undefined;
-        if (t <= o.last) return { move, t, face, flash, seat, grip, props, ...under };
-        const out = after(move, o.last, t - o.last, { seat, grip, props, ...under });
+        const into = 1 - smooth01(s.shotT / SHOT_EASE);
+        const aim = move === 'thrust' ? grip : undefined;   // the shaft thrusts along the facing, not along the hand's tilt
+        if (t <= o.last) return { move, t, face, flash, seat, grip, aim, props, ...under, ...(into > 0 ? { move2: standing, t2: s.spd > 0 ? step(legs) : 0, w2: into } : {}) };
+        const out = after(move, o.last, t - o.last, { seat, grip, aim, props, ...under });
         if (out) return out;
       }
     }

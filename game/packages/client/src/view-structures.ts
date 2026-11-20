@@ -1467,6 +1467,42 @@ export class StructureView {
     if (w.seats.guard[i]) this.guard(w, i, v, t, g, o, P, 1, light);
   }
 
+  /** Each seat's whip lash: a rope of points hung from the handle's end (see lash). */
+  private lashes = new Map<number, { p: [number, number][]; q: [number, number][]; t: number }>();
+  /**
+   * The whip's lash, a rope hung from `e0` (the handle's end on screen) and let fall: it trails behind the handle as it
+   * swings and drapes down when it stops (the user, 2026-11-20: "doesn't drape behind and sticks up in front"). Points
+   * (and their last positions) are kept per seat; a long gap or a rewind starts it hanging again.
+   */
+  private lash(i: number, e0: Pt, t: number, k: number): Pt[] {
+    const N = 8, seg = 1.5 * k + 0.3;
+    let r = this.lashes.get(i);
+    if (!r || t - r.t > 0.3 || t < r.t - 0.05) {
+      const p: [number, number][] = []; for (let j = 0; j <= N; j++) p.push([e0[0], e0[1] + j * seg]);
+      r = { p, q: p.map((x): [number, number] => [x[0], x[1]]), t }; this.lashes.set(i, r);
+    }
+    const dt = t - r.t;
+    if (dt > 0) {
+      const steps = Math.min(4, Math.max(1, Math.round(dt * 60)));
+      for (let n = 0; n < steps; n++) {
+        for (let j = 1; j <= N; j++) {
+          const x = r.p[j], o = r.q[j], vx = (x[0] - o[0]) * 0.88, vy = (x[1] - o[1]) * 0.88;
+          o[0] = x[0]; o[1] = x[1]; x[0] += vx; x[1] += vy + 0.3;
+        }
+        r.p[0][0] = e0[0]; r.p[0][1] = e0[1];
+        for (let it = 0; it < 6; it++) {
+          r.p[0][0] = e0[0]; r.p[0][1] = e0[1];
+          for (let j = 0; j < N; j++) {
+            const a = r.p[j], b = r.p[j + 1], dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy) || 1e-6, f = (d - seg) / d;
+            if (j === 0) { b[0] -= dx * f; b[1] -= dy * f; } else { a[0] += dx * f * 0.5; a[1] += dy * f * 0.5; b[0] -= dx * f * 0.5; b[1] -= dy * f * 0.5; }
+          }
+        }
+      }
+    }
+    r.t = t;
+    return r.p;
+  }
+
   /** Conjured weapons, distinct per element: stone maul, arcane hook, flame sword, frost spear, lightning whip, tide glaive, healing hands. */
   private weapon(w: World, i: number, v: BodyView, t: number, g: Ctx, o: Ctx, P: (f: number, r: number, u: number) => [number, number, number], up: number, light: LightFn): void {
     if (!v.a) return;
@@ -1571,9 +1607,8 @@ export class StructureView {
       light(tp[0], v.y, 24, '#9ff4ff', 0.35);
     } else if (el === 'lightning') {
       // the whip: a crackling lash hanging from the hand and swaying
-      const pts: Pt[] = [];
       const e0: Pt = live ? dir(0) : h;   // live: the lash hangs from the 3D handle's end
-      for (let q = 0; q <= 8; q++) { const f = q / 8; pts.push([e0[0] + fwd * f * 10 * k + Math.sin(t * 6 + f * 4) * f * 2, e0[1] + f * f * 9 - f * 3 + Math.cos(t * 5 + f * 3) * f]); }
+      const pts = this.lash(i, e0, t, k);
       if (body) X.line(c, h[0], h[1], h[0] - fwd, h[1] + 2, '#3a2a4a', 2);
       if (Math.floor(t * 20) % 3 !== 2) { X.lines(c, pts, EL.lightning[3], 2); X.lines(c, pts, EL.lightning[1], 1); } else X.lines(c, pts, EL.lightning[2], 1);
       const e = pts[pts.length - 1]; X.px(c, e[0], e[1], '#ffffff');

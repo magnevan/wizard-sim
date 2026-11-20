@@ -203,6 +203,8 @@ export function pathTime(path: readonly (readonly [number, number])[], s: number
   }
   return path[path.length - 1][1];
 }
+/** After a moveset's ready stance, its shaft is lifted back to the carry over this many seconds. */
+const SHAFT_LIFT = 0.6;
 /** The half-life (s) of the wizard's blended transitions (live3d blendPose); a moveset's settle sets its own. */
 const BLEND_HL = 0.05;
 /**
@@ -254,8 +256,8 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
   };
   if (s.dead > 0) return { move: 'death', t: dur('death') * Math.min(1, s.dead), face, flash, ...(s.kind === 'wizard' ? { props: wizardProps(s) } : {}) };
   // the wizard's changes of move blend from the pose on screen (live3d blendPose); `settle` (a moveset's ready pose let go) eases slower
-  let settle = 0;
-  if (s.kind === 'wizard') { const p = wizardPose(); return { ...p, hl: settle || BLEND_HL }; }
+  let settle = 0, lift: number | undefined;
+  if (s.kind === 'wizard') { const p = wizardPose(); return { ...p, hl: settle || BLEND_HL, ...(lift !== undefined && p.aim === undefined ? { aim: lift } : {}) }; }
   function wizardPose(): LivePose {
     const seat = X.TEAMS[s.pal % X.TEAMS.length], c = meta.casts?.cast, props = wizardProps(s);
     // a moveset's blow (the jab): its path through the clip, then the ready pose held for its linger unless a cast or a
@@ -265,7 +267,12 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
       const move = blowOf(props[0]), end = set.path[set.path.length - 1][0];
       if (s.shotT < end) return { move, t: pathTime(set.path, s.shotT), face, flash, seat, grip: 1, aim: 1, props, turn: set.turn, ...under, ...(set.slide ? { slide: pathTime(set.slide, s.shotT) } : {}) };
       if (s.shotT < end + set.linger && !(s.cast > 0) && !(s.block > 0)) return { move, t: set.ready, face, flash, seat, grip: 1, aim: 1, props, turn: set.turn, ...under };
-      if (s.shotT < end + set.linger + 1 && !(s.cast > 0) && !(s.block > 0)) settle = set.hl;
+      if (s.shotT < end + set.linger + 1 && !(s.cast > 0) && !(s.block > 0)) {
+        settle = set.hl;
+        // the body settles fast, but the shaft is lifted back to the carry over SHAFT_LIFT: at the blend's pace a long
+        // shaft swung up through the air like a second blow (the user, 2026-11-20: "a second slice towards the sky")
+        lift = 1 - smooth01((s.shotT - end - set.linger) / SHAFT_LIFT);
+      }
     }
     // a one-shot (a weapon's blow, an Area or Self cast) plays its whole wind-up, squeezed into the SHOT_LEAD between the
     // game's release and the body's (shotClipTime), easing in from the standing pose, over the legs if the wizard walks

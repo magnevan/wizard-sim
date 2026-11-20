@@ -698,7 +698,7 @@ function dropProps(inst: Inst, dt: number): void {
 const WEAPON_HOLD = { lean: 0.6, side: 0.25, hold: 0.14, holdSide: 0.5 };
 /** A thrust's shaft is aimed along the facing, this much up (of its length). */
 const AIM_UP = 0.12;
-const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Quaternion(), qi = new THREE.Quaternion();
+const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Quaternion(), qi = new THREE.Quaternion(), aimDir = new THREE.Vector3();
 /**
  * render.py soft_props: each soft prop's main axis is turned from where the hand holds it back toward upright (leaning
  * a little toward the facing), keeping k of the hand's tilt, all of it as `grip` reaches 1 (a staff's blow); it turns
@@ -714,10 +714,13 @@ function softProps(inst: Inst, face: number, grip: number, aim?: number, slide =
     // a conjured weapon is held out from the body (WEAPON_HOLD): the staff stays upright at the side
     const car = inst.carriers.find((c) => c.node === s.node), held = !!car && car.held && car.name !== 'staff';
     const cs = Math.cos(face), sn = Math.sin(face), H = held ? WEAPON_HOLD : null, hs = car?.left ? -1 : 1;   // a weapon in the left hand is held out to the left
-    // a thrust aims the shaft along the facing (aim 0..1 of the way there), whatever the hand's own tilt
-    const want = aim !== undefined ? v3.set(cs, AIM_UP, sn).normalize() : v3.set(cs * (H ? H.lean : 0.12) - sn * (H ? H.side * hs : 0), 1, sn * (H ? H.lean : 0.12) + cs * (H ? H.side * hs : 0)).normalize();
+    // a thrust aims the shaft along the facing, whatever the hand's own tilt; `aim` 0..1 goes from the usual hold to
+    // there, so a jab's shaft can be lifted back to the carry slowly (0 is exactly the hold without an aim)
+    const want = v3.set(cs * (H ? H.lean : 0.12) - sn * (H ? H.side * hs : 0), 1, sn * (H ? H.lean : 0.12) + cs * (H ? H.side * hs : 0)).normalize();
+    const w = aim ?? 0;
+    if (w > 0) want.lerp(aimDir.set(cs, AIM_UP, sn).normalize(), w).normalize();   // (not v2: `a` is v2)
     const turn = qa.setFromUnitVectors(a, want);
-    qi.identity().slerp(turn, aim !== undefined ? aim : (1 - s.k) * (1 - grip));
+    qi.identity().slerp(turn, w + (1 - w) * (1 - s.k) * (1 - grip));
     // world rotation -> the carrier's local one
     s.node.getWorldQuaternion(qb);
     s.node.parent!.getWorldQuaternion(qp);

@@ -530,7 +530,7 @@ function blendPose(inst: Inst, key: string | undefined, p: LivePose, pass: 0 | 1
   const N = inst.blendNodes.length, lo = pass ? inst.nBones : 0, hi = pass ? N : inst.nBones;
   if (!key || p.hl === undefined || p.move === 'death') { if (key && pass === 0) blends.delete(key); return; }
   let b = blends.get(key);
-  const now = p.now ?? performance.now() / 1000;
+  const now = p.now ?? liveNow();
   if (pass === 0) {
     if (!b || b.shown.length !== N * 4 || now < b.now || now - b.now > 1) {   // first sight, a new model, or the clock jumped: no blend
       b = { now, move: p.move, t: p.t, hl: p.hl, shown: new Float32Array(N * 4), off: new Float32Array(N * 3), vel: new Float32Array(N * 3), hip: new Float32Array(3), hipV: new Float32Array(3), hipShown: new Float32Array(3) };
@@ -953,6 +953,15 @@ function heldOf(inst: Inst, m: Model, key: string, o: typeof SMALL, cam: THREE.C
   if (out.blade || out.guard) held.set(key, out); else held.delete(key);
 }
 const booked: Booking[] = [];
+/**
+ * The VFX Lab's two hooks (lab/vfx-lab): a clock for the pose blends and the shader's time instead of real time (so a
+ * frame is a function of the sim's time), and a prefix for the per-body keys, so several views of several worlds don't
+ * share one body's blend. The game sets neither.
+ */
+let liveClock: (() => number) | null = null, liveScope = '';
+const liveNow = (): number => (liveClock ? liveClock() : performance.now() / 1000);
+export function setLiveClock(clock: (() => number) | null): void { liveClock = clock; }
+export function setLiveScope(scope: string): void { liveScope = scope; }
 let nextSmall = 0, nextBig = 0;
 
 /**
@@ -967,7 +976,7 @@ export function liveFrame(slug: string, p: LivePose, anchors: Anchors, who = 0):
   const big = BIG_SLUGS.has(slug);
   const k = big ? (nextBig < NBIG ? NSMALL + nextBig++ : -1) : (nextSmall < NSMALL ? nextSmall++ : -1);
   if (k < 0) return null;
-  const slot = slots[k], key = slug + '|' + who, tip = tips.get(key);
+  const slot = slots[k], key = liveScope + slug + '|' + who, tip = tips.get(key);
   if (tip) anchors = { ...anchors, tip, charge: tip };
   const hd = held.get(key);
   if (hd || anchors.blade || anchors.guard) anchors = { ...anchors, blade: hd?.blade, guard: hd?.guard, guardFrame: hd?.guardFrame };
@@ -982,7 +991,7 @@ export function flushLive(): void {
   const g = gl;
   const used = booked.splice(0);
   nextSmall = 0; nextBig = 0;
-  fxTime.value = performance.now() / 1000;
+  fxTime.value = liveNow();
   if (!g || !used.length) return;
   const { renderer, hiRT, lowRT, scene, stage } = g;
   // only the rows in use are cleared and shaded (top-down y0..y1 of the atlas; GL rows run bottom up)

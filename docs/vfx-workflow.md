@@ -25,11 +25,22 @@ When working from a reference image or clip, take it apart into these fields fir
 
 ## 2. Build it in the VFX Lab
 
-Build with the game's own code (`game/packages/client/vfx-lab.html`, see its header for the URL parameters), not in a separate copy. Judge it in more than the empty scene: at least `crowd`, and `coop` for anything that fills the screen.
+Build with the game's own code, not in a separate copy. The VFX Lab (`/vfx-lab.html` on the dev server, `npm run dev` in `game/`) casts any spell through the real sim and view; its URL options are listed at the top of `game/packages/client/src/lab/vfx-lab/main.ts`. For example:
+
+- `vfx-lab.html?spell=fire,fire,fire&scene=crowd`: loops the cast live.
+- `&t=0.5`: freezes 0.5 s after the cast (negative times show the wind-up).
+- `&grid=runes&ns=1,3,5`: the same spell at one, three and five runes side by side.
+- `scene=` `empty`, `crowd`, `dark`, `coop` (four wizards; `others=` sets their spells) or `ally`. Scenes are data in `src/lab/vfx-lab/scenes.ts`; add one when an effect needs another context.
+
+Judge it in more than the empty scene: at least `crowd`, and `coop` for anything that fills the screen.
 
 ## 3. Check it before the user sees it
 
-Render a contact sheet and difference frames (`npm run vfx-sheet` in `game/`) across the effect's life at one, three and five runes, and read them. Then go through the rubric below and write down the single biggest problem.
+Render a contact sheet and difference frames across the effect's life at one, three and five runes, and read them:
+
+    npm run vfx-sheet -- --page vfx-lab.html --query "spell=fire,fire,fire&scene=crowd&bar=0" --from 0 --to 1.2 --frames 12 --cols 4 --out shots/vfx/fire
+
+It writes `sheet.png` (the frames), `diff.png` (new pixels in colour, vanished ones in magenta: what moved) and `metrics.json`. In the lab, trust the lab's own numbers (`particles`, `fxLive`, `vfxMs`) over the pixel count, which counts the floor too. Frames 0.03 to 0.06 s apart show particles travelling; wider gaps only show churn. Then go through the rubric below and write down the single biggest problem.
 
 ## 4. One change per round
 

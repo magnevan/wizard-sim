@@ -54,9 +54,18 @@ function load(): void {
     if (!sh) continue;
     const img = new Image();
     img.onload = () => { if (slug === 'wizard') sh.seats = X.TEAMS.map((p) => seatSheet(img, p)); sh.img = img; };
-    img.onerror = () => console.warn('sprites: could not load', url);
+    img.onerror = () => { failedSheets++; console.warn('sprites: could not load', url); };
     img.src = url;
   }
+}
+
+/** Have the baked sheets all arrived (or failed)? Starts loading them. For pages that wait before drawing a frame to keep (the VFX Lab). */
+let failedSheets = 0;
+export function sheetsReady(): boolean {
+  load();
+  let pending = 0;
+  for (const path of Object.keys(urls)) { const sh = sheets.get(path.split('/').slice(-2)[0]); if (sh && !sh.img) pending++; }
+  return pending <= failedSheets;
 }
 
 const hexRgb = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];

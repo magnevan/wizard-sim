@@ -5,17 +5,18 @@ Record: [VFX workflow](../explorations/2026-11-21-vfx-workflow.md) · Guide: [vf
 
 ## Where it stands
 
-The plan is approved. Step 1 (the spec template and critique rubric) is written; the VFX Lab and the contact-sheet tool are being built on the `worktree-vfx-workflow` branch.
+The plan is approved. Steps 1 to 3 are built on the `worktree-vfx-workflow` branch: the guide (spec template and rubric), the VFX Lab, and `npm run vfx-sheet`. Nobody has used the loop on a real effect yet.
 
 ## Next
 
-- [ ] The VFX Lab (`game/packages/client/vfx-lab.html`): the game's sim and view, scene presets, `?t=` frozen frames, `window.vfxLab`.
-- [ ] Contact sheets, difference frames and metrics (`game/scripts/vfx-sheet.mjs`), pointed at the VFX Lab.
+- [ ] The user tries the VFX Lab and says whether the scenes are the right ones.
 - [ ] Try the loop on one real effect: issue #4 (added-element particles read as noise) is a good first case.
 - [ ] Live sliders for the selected effect, and about three variants side by side.
 - [ ] Pull out the arc primitive (lightning arc and chain heal draw it twice) as the first behavioural primitive.
 - [ ] Decide 2D vs 3D particles before pulling out more primitives.
-- [ ] Once the lab covers the gallery's cards, publish it as the gallery's replacement and retire the hand ports.
+- [ ] More scenes: a wall to splash against, surface floors (water, fire), an interior. A grid of several spells side by side, toward replacing the gallery.
+- [ ] `WorldView` has no `destroy`, so stepping the lab backwards many times leaks GPU textures. Fine for now.
+- [ ] Once the lab covers the gallery's cards, publish it as the gallery's replacement and retire the hand ports, and the Spray, Nova and Missile Labs.
 
 Parked: finer-resolution particles ([#12](https://github.com/magnevan/wizard-sim/issues/12)).
 
@@ -26,3 +27,4 @@ Parked: finer-resolution particles ([#12](https://github.com/magnevan/wizard-sim
 ## Done
 
 - 2026-11-21 The plan, merged from Claude's and Codex's lists; the spec template and rubric
+- 2026-11-21 The VFX Lab (real sim and view, five scenes, rune grid, `window.vfxLab`) and `npm run vfx-sheet` (contact sheets, difference frames, metrics)

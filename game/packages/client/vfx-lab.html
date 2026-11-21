@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VFX Lab</title>
+<style>
+  html, body { margin: 0; background: #14161b; color: #c8ccd6; font: 13px system-ui, sans-serif; }
+  #bar { padding: 6px 10px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  #bar input, #bar select, #bar button { font: inherit; background: #22252d; color: inherit; border: 1px solid #3a3f4b; border-radius: 3px; padding: 1px 4px; }
+  #bar .note { flex-basis: 100%; color: #7d8494; font-size: 12px; }
+  #app { position: relative; display: inline-block; }
+  #app canvas { display: block; image-rendering: pixelated; }
+  #app .label { position: absolute; top: 3px; font: 11px ui-monospace, Consolas, monospace; color: #e8e2c8; text-shadow: 0 1px 0 #000; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div id="app"></div>
+<script type="module" src="./src/lab/vfx-lab/main.ts"></script>
+</body>
+</html>

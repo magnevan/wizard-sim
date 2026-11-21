@@ -72,6 +72,13 @@ export interface LivePose {
   /** A jab: how far (model units) the shaft slides forward through the hands, along the facing. */
   slide?: number;
   /**
+   * A two-handed swing (the maul): the weapon's haft is turned to run out along the arms, from the shoulders' middle
+   * through the hands', so its head leads the swing and lands ahead of the fists instead of riding the wrist (the user,
+   * 2026-11-21: "it just looks like the character slamming the ground with his fist"). The number leans it down by that
+   * much per unit of the arm line (a level arm line at 0.8 points the haft 39° down, to the ground; one overhead stays up).
+   */
+  haft?: number;
+  /**
    * The whole body turned this many degrees toward its right (at the hips, so the blend eases it in and out): a clip
    * that strikes off its own facing, as the jab's thrust drives 49° to the left, is turned so the strike runs along it.
    */
@@ -611,7 +618,7 @@ function pose(inst: Inst, m: Model, p: LivePose, key?: string): void {
   const looping = !!m.meta.clips[clipName]?.stride;   // walk and run wrap round: their time going back is no cut
   blendPose(inst, key, p, 0, looping);
   place(inst, m, p);
-  if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0), p.aim, p.slide);
+  if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0), p.aim, p.slide, p.haft);
   blendPose(inst, key, p, 1, looping);
   placeGuard(inst, p.guardUp ?? 0, sling);
   if (fall >= 0) dropProps(inst, p.t - fall);
@@ -701,13 +708,17 @@ function dropProps(inst: Inst, dt: number): void {
 const WEAPON_HOLD = { lean: 0.6, side: 0.25, hold: 0.14, holdSide: 0.5 };
 /** A thrust's shaft is aimed along the facing, this much up (of its length). */
 const AIM_UP = 0.12;
-const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Quaternion(), qi = new THREE.Quaternion(), aimDir = new THREE.Vector3();
+/** A two-hander's haft is leaned down (LivePose.haft) fully once the arm line is level, none from this sine above level (30°). */
+const HAFT_LEVEL = 0.5;
+/** A two-hander's haft never points steeper than this sine below level (40°). */
+const HAFT_LOW = 0.65;
+const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Quaternion(), qi = new THREE.Quaternion(), aimDir = new THREE.Vector3(), hS = new THREE.Vector3(), hT = new THREE.Vector3();
 /**
  * render.py soft_props: each soft prop's main axis is turned from where the hand holds it back toward upright (leaning
  * a little toward the facing), keeping k of the hand's tilt, all of it as `grip` reaches 1 (a staff's blow); it turns
  * about the carrier's own origin, the palm.
  */
-function softProps(inst: Inst, face: number, grip: number, aim?: number, slide = 0): void {
+function softProps(inst: Inst, face: number, grip: number, aim?: number, slide = 0, haft?: number): void {
   for (const s of inst.soft) {
     if (!s.node.visible) continue;
     s.node.quaternion.copy(s.rest);
@@ -720,8 +731,23 @@ function softProps(inst: Inst, face: number, grip: number, aim?: number, slide =
     // a thrust aims the shaft along the facing, whatever the hand's own tilt; `aim` 0..1 goes from the usual hold to
     // there, so a jab's shaft can be lifted back to the carry slowly (0 is exactly the hold without an aim)
     const want = v3.set(cs * (H ? H.lean : 0.12) - sn * (H ? H.side * hs : 0), 1, sn * (H ? H.lean : 0.12) + cs * (H ? H.side * hs : 0)).normalize();
-    const w = aim ?? 0;
+    let w = aim ?? 0;
     if (w > 0) want.lerp(aimDir.set(cs, AIM_UP, sn).normalize(), w).normalize();   // (not v2: `a` is v2)
+    // a two-handed swing: the haft out along the arms (LivePose.haft)
+    if (haft !== undefined && held && inst.arms && inst.hands) {
+      inst.arms[0].getWorldPosition(hS); hS.add(inst.arms[1].getWorldPosition(hT)).multiplyScalar(0.5);
+      inst.hands[0].getWorldPosition(hT); hT.add(inst.hands[1].getWorldPosition(aimDir)).multiplyScalar(0.5).sub(hS);
+      // leaned down only as the arms come down past HAFT_LEVEL (sin of the angle above level): raised, it follows them
+      if (hT.lengthSq() > 1e-8) {
+        hT.normalize(); const k = Math.min(1, Math.max(0, (HAFT_LEVEL - hT.y) / HAFT_LEVEL)); hT.y -= haft * k * k * (3 - 2 * k); hT.normalize();
+        // never steeper than HAFT_LOW below level: hands hanging low (a recovery) rest the head on the ground ahead, not through the feet
+        if (hT.y < -HAFT_LOW) {
+          const flat = Math.hypot(hT.x, hT.z), r = Math.sqrt(1 - HAFT_LOW * HAFT_LOW);
+          if (flat > 1e-3) hT.set((hT.x / flat) * r, -HAFT_LOW, (hT.z / flat) * r); else hT.set(cs * r, -HAFT_LOW, sn * r);
+        }
+        want.copy(hT); w = 1;
+      }
+    }
     const turn = qa.setFromUnitVectors(a, want);
     qi.identity().slerp(turn, w + (1 - w) * (1 - s.k) * (1 - grip));
     // world rotation -> the carrier's local one

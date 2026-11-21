@@ -21,7 +21,7 @@ import {
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
 import { ActorFrames, FEET_X, FEET_Y } from './art/actors';
-import { deathDir, deathFrame, mulTint, slugOf, spriteFrame, statusTint, type SpriteDeath } from './art/sprites';
+import { comboNext, deathDir, deathFrame, mulTint, slugOf, spriteFrame, statusTint, type SpriteDeath } from './art/sprites';
 import { flushLive } from './art/live3d';
 import { Extras } from './art/extras';
 import { Massing, massingParam } from './art/massing';
@@ -57,8 +57,6 @@ const DRY_GLIDE = 3.5, DRY_GLIDE_RATE = 1.5;
 const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL', simple: 'SIMPLE, ANGLED, LOW DETAIL', code: 'CODE, STRAIGHT-ON' };
 
 /** The move events that put the wizard's body through its weapon's blow clip (art/sprites.ts blowOf): each weapon's tap, heavy and special. */
-/** A Strike within COMBO_GAP s of the end of the last one's recovery (ARMS.strikeRecovery) moves its combo on, through COMBO_LEN blows (art/sprites.ts MOVESETS `Combo`n). */
-const COMBO_GAP = 0.5, COMBO_LEN = 2;
 /** The bow is held drawn while an enemy is within this share of its arrows' range and AIM_SIDE units of the aim line. */
 const AIM_REACH = 0.8, AIM_SIDE = 1.2;
 /** The blow moves that are a weapon's Heavy (hands.ts heavy): the body plays the weapon's heavy blow for them. */
@@ -292,7 +290,7 @@ export class WorldView {
       if (e.kind === 'fizzle' && e.ev === EV.death && e.who >= 0) this.onDeath(w, e, t);
       if (e.kind === 'move' && BLOW_MOVES.has(e.text ?? '') && e.who >= 0 && e.who < MAX_SEATS) { this.shot[e.who] = 1; this.shotAt[e.who] = t; this.blowK[e.who] = HEAVY_MOVES.has(e.text ?? '') ? 1 : e.text === 'sweep' ? 2 : 0;
         // Strikes in quick succession are a combo: each one soon after the last moves it on (a pause starts it over)
-        if (e.text === 'strike') { const wk = w.seats.weapon[e.who] ? elementName(w.seats.weapon[e.who]) : 'staff', rec = (ARMS.strikeRecovery as Record<string, number>)[wk] ?? ARMS.strikeRecovery.staff; this.combo[e.who] = t - this.strikeAt[e.who] < rec + COMBO_GAP ? (this.combo[e.who] + 1) % COMBO_LEN : 0; this.strikeAt[e.who] = t; }
+        if (e.text === 'strike') { const wk = w.seats.weapon[e.who] ? elementName(w.seats.weapon[e.who]) : 'staff', rec = (ARMS.strikeRecovery as Record<string, number>)[wk] ?? ARMS.strikeRecovery.staff; this.combo[e.who] = comboNext(this.combo[e.who], t - this.strikeAt[e.who], rec); this.strikeAt[e.who] = t; }
       }
       if (e.kind === 'cast' && e.who >= 0 && e.who < MAX_SEATS) {
         this.castPose(w, e.who, t);

@@ -13,11 +13,11 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Container } from 'pixi.js';
-import { ARCHETYPES, BODY, EL as ELID, GUARD, N_EL, type World } from '@wizard-sim/sim';
+import { ARCHETYPES, ARMS, BODY, EL as ELID, GUARD, N_EL, T, TAP, elementName, heavyCharge, type World } from '@wizard-sim/sim';
 import { GUARD_PLACE, LIVE_VIEW, flushLive, liveFrame, liveInstance, liveMeta, liveModel, livePoseInst, liveSlugs, liveString, liveWorks, type LiveInst, type LiveModel, type LivePose, type ModelMeta } from '../art/live3d';
 import { CELL_H, CELL_W, FEET_X, FEET_Y, newRigState, type Anchors, type RigState } from '../art/rigs';
 import { TEAMS } from '../art/px';
-import { SHOT_LEAD, shotClipTime, wizardLivePose } from '../art/sprites';
+import { COMBO_GAP, SHOT_LEAD, comboNext, shotClipTime, wizardLivePose } from '../art/sprites';
 import type { Frame } from '../art/actors';
 import * as X from '../art/px';
 import { CU, FY, TAU } from '../art/util';
@@ -71,8 +71,25 @@ const IDLE = 'idle';
  * to be able to view the actual in-game animation in the model viewer"). Gaps follow the sim: the spear recovers in
  * 0.9 s, the trident in 0.65. Pick the weapon and guard in Weapons and guards.
  */
-interface SeqEv { at: number; kind: 'blow' | 'cast' | 'area' | 'self' | 'walk' | 'block'; len?: number }
-const SEQS: Record<string, { len: number; ev: SeqEv[] }> = {
+interface SeqEv { at: number; kind: 'blow' | 'heavy' | 'sweep' | 'cast' | 'area' | 'self' | 'walk' | 'block'; len?: number }
+interface Seq { len: number; ev: SeqEv[] }
+/** Strikes at these times, the sequence running on `tail` s after the last. */
+const strikes = (ats: number[], tail = 2): Seq => ({ len: ats[ats.length - 1] + tail, ev: ats.map((at) => ({ at, kind: 'blow' as const })) });
+/**
+ * The sequences; a function is timed from the held weapon's Strike recovery `r` (ARMS.strikeRecovery), so a combo
+ * plays at the game's pace whatever the weapon. `heavy` is pressed at `at`, held `len` s (charging) and released;
+ * `sweep` is the weapon's Special (its Area cast). The combo ones were asked for to judge the maul's (the user, 2026-11-21).
+ */
+const SEQS: Record<string, Seq | ((r: number) => Seq)> = {
+  // paced: each Strike just after the last one's recovery, inside the combo gap
+  '▶ combo, paced': (r) => strikes([0, 1, 2, 3].map((k) => 0.2 + k * (r + 0.15))),
+  // mashed: each Strike as soon as the last can be cancelled (ARMS.strikeCommit of its recovery)
+  '▶ combo, mashed': (r) => strikes([0, 1, 2, 3].map((k) => 0.2 + k * r * ARMS.strikeCommit)),
+  // two blows, a pause longer than the combo gap, then a Strike that starts it over
+  '▶ combo, pause, again': (r) => strikes([0.2, 0.35 + r, 0.35 + r + r + COMBO_GAP + 0.4]),
+  '▶ combo, then Heavy': (r) => ({ len: 0.5 + 2 * r + 0.9 + 2, ev: [{ at: 0.2, kind: 'blow' }, { at: 0.35 + r, kind: 'blow' }, { at: 0.5 + 2 * r, kind: 'heavy', len: 0.9 }] }),
+  '▶ Heavy (held 1 s)': { len: 3.2, ev: [{ at: 0.2, kind: 'heavy', len: 1 }] },
+  '▶ Sweep': { len: 2.6, ev: [{ at: 0.2, kind: 'sweep' }] },
   '▶ blow': { len: 2, ev: [{ at: 0.2, kind: 'blow' }] },
   '▶ blow x3 (spear)': { len: 3.4, ev: [{ at: 0.2, kind: 'blow' }, { at: 1.1, kind: 'blow' }, { at: 2, kind: 'blow' }] },
   '▶ blow x4 (trident)': { len: 3.4, ev: [0.2, 0.85, 1.5, 2.15].map((at) => ({ at, kind: 'blow' as const })) },
@@ -83,16 +100,33 @@ const SEQS: Record<string, { len: number; ev: SeqEv[] }> = {
   '▶ blow, block': { len: 2.8, ev: [{ at: 0.2, kind: 'blow' }, { at: 1.1, kind: 'block', len: 1 }] },
 };
 const isSeq = (c: string) => c in SEQS;
+/** The held weapon's Strike recovery, s (the staff's for none). */
+const recoveryOf = (): number => { const el = WEAPON_EL[st.wp], r = ARMS.strikeRecovery as Record<string, number>; return r[el ? elementName(el) : 'staff'] ?? r.staff; };
+const seqOf = (name: string): Seq => { const q = SEQS[name]; return typeof q === 'function' ? q(recoveryOf()) : q; };
+/** Each event's combo step (a Strike's RigState.combo, by the game's own rule; -1 for the rest). */
+function comboSteps(ev: SeqEv[]): number[] {
+  const r = recoveryOf();
+  let c = 0, last = -99;
+  return ev.map((e) => { if (e.kind !== 'blow') return -1; c = comboNext(c, e.at - last, r); last = e.at; return c; });
+}
 /** The game's rig state for a sequence `t` s in. */
 function seqState(name: string, t: number, face: number): RigState {
-  const s = newRigState(), q = SEQS[name];
+  const s = newRigState(), q = seqOf(name), steps = comboSteps(q.ev);
   s.kind = 'wizard'; s.pal = Math.max(0, st.seat); s.face = s.faceT = face;
   s.weapon = WEAPON_EL[st.wp] ?? 0; s.bare = s.weapon ? 1 : 0;
   s.guard = st.gd ? GUARD[st.gd as keyof typeof GUARD] ?? 0 : 0;
-  for (const e of q.ev) {
+  for (const [k, e] of q.ev.entries()) {
     if (e.at > t) continue;
     const u = t - e.at;
-    if (e.kind === 'blow' || e.kind === 'area' || e.kind === 'self') { s.shot = e.kind === 'blow' ? 1 : e.kind === 'area' ? 2 : 3; s.shotT = u; }
+    if (e.kind === 'blow' || e.kind === 'area' || e.kind === 'self') { s.shot = e.kind === 'blow' ? 1 : e.kind === 'area' ? 2 : 3; s.shotT = u; s.blow = 0; }
+    if (e.kind === 'blow') s.combo = steps[k];
+    // a Heavy: charging while held (view.ts: the charge shows once the press is longer than a tap), then the heavy blow
+    if (e.kind === 'heavy') {
+      const held = e.len ?? 1;
+      if (u < held) { s.charge = T(u) > TAP ? Math.max(0.01, heavyCharge(T(u))) : 0; s.shot = 0; }
+      else { s.charge = 0; s.shot = 1; s.shotT = u - held; s.blow = 1; }
+    }
+    if (e.kind === 'sweep') { s.shot = 1; s.shotT = u; s.blow = 2; }
     if (e.kind === 'cast' && u < (e.len ?? 1)) s.cast = u < 0.05 ? 0.5 : 1;   // the view's cast pose steps by halves
     if (e.kind === 'block' && u < (e.len ?? 1) && s.guard) s.block = Math.round(u * 60);
     if (e.kind === 'walk') { s.spd = 0.5; s.dist = u * st.speed * 16 * 1.15; }
@@ -109,8 +143,14 @@ interface Marks { marks: Mark[]; spans: Span[]; range: [number, number] | null; 
 function marksOf(slug: string, meta: ModelMeta, clip: string): Marks {
   const out: Marks = { marks: [], spans: [], range: null, cut: null, note: '' };
   if (isSeq(clip)) {
-    for (const e of SEQS[clip].ev) out.marks.push({ t: e.at, label: e.kind, color: e.kind === 'blow' ? '#ff5a4a' : '#5ac8ff' });
-    out.note = 'A game sequence: the game\'s own pose code on game seconds (the timeline), with its blended transitions. Weapon and guard from Weapons and guards (the staff when none).';
+    const q = seqOf(clip), steps = comboSteps(q.ev);
+    for (const [k, e] of q.ev.entries()) {
+      const red = e.kind === 'blow' || e.kind === 'heavy' || e.kind === 'sweep';
+      out.marks.push({ t: e.at, label: e.kind === 'blow' ? `strike ${steps[k] + 1}` : e.kind === 'heavy' ? 'heavy held' : e.kind, color: red ? '#ff5a4a' : '#5ac8ff' });
+      if (e.kind === 'heavy') { out.marks.push({ t: e.at + (e.len ?? 1), label: 'release', color: '#ff5a4a' }); out.spans.push({ a: e.at, b: e.at + (e.len ?? 1), label: 'charging', color: 'rgba(224,176,74,.22)' }); }
+    }
+    out.note = 'A game sequence: the game\'s own pose code on game seconds (the timeline), with its blended transitions. Weapon and guard from Weapons and guards (the staff when none).'
+      + (typeof SEQS[clip] === 'function' ? ` Timed from this weapon's Strike recovery (${recoveryOf()} s); "strike n" is the blow's place in its combo (a Strike within ${COMBO_GAP} s of the last one's recovery moves it on).` : '');
     return out;
   }
   if (clip === IDLE) { out.note = "The models have no idle clip: in the game a body standing still holds the walk's first frame, as here."; return out; }
@@ -359,7 +399,7 @@ function armsLayers(f: Frame, pose: LivePose): { g: HTMLCanvasElement; o: HTMLCa
 
 // ---- the timeline -----------------------------------------------------------------------------------------------------------------
 let marks: Marks = { marks: [], spans: [], range: null, cut: null, note: '' };
-const dur = () => (st.c === IDLE ? 1 : isSeq(st.c) ? SEQS[st.c].len : meta?.clips[st.c]?.duration ?? 1);
+const dur = () => (st.c === IDLE ? 1 : isSeq(st.c) ? seqOf(st.c).len : meta?.clips[st.c]?.duration ?? 1);
 function drawTimeline(): void {
   const dpr = devicePixelRatio, W = Math.round(tl.clientWidth * dpr), H = Math.round(tl.clientHeight * dpr);
   if (tl.width !== W || tl.height !== H) { tl.width = W; tl.height = H; }
@@ -519,7 +559,7 @@ function buildModelPanel(): void {
     clip2Sel.append(el('option', { value: c, textContent: c }));
   }
   if (st.m === 'wizard') for (const c of Object.keys(SEQS)) {
-    const b = el('button', { className: c === st.c ? 'on' : '', title: 'Scripted inputs through the game\'s own pose code' }, c, el('small', { textContent: `game ${SEQS[c].len.toFixed(1)} s` }));
+    const b = el('button', { className: c === st.c ? 'on' : '', title: 'Scripted inputs through the game\'s own pose code' }, c, el('small', { textContent: `game ${seqOf(c).len.toFixed(1)} s` }));
     b.onclick = () => setClip(c);
     clipList.append(b);
   }
@@ -541,7 +581,8 @@ function buildGear(): void {
   const pick = (label: string, list: [string, string][], key: 'wp' | 'gd') => {
     const sel = el('select');
     sel.append(...list.map(([n, v]) => el('option', { value: v, textContent: n })));
-    sel.value = st[key]; sel.onchange = () => { st[key] = sel.value; changed(); };
+    // a sequence timed from the weapon's recovery re-times (its marks and length) when the weapon changes
+    sel.value = st[key]; sel.onchange = () => { st[key] = sel.value; changed(); if (key === 'wp' && isSeq(st.c)) buildModelPanel(); };
     return row(label, sel);
   };
   gearBox.append(pick('Weapon', WEAPONS, 'wp'), pick('Guard', GUARDS, 'gd'));

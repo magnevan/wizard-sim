@@ -187,19 +187,20 @@ const blowOf = (prop: string | undefined): string => prop === 'earthmaul' ? 'sma
  * 0.75 to 1.1 s, is skipped); `ready` is the clip time held for `linger` s after, so the next jab starts from it and a
  * cast or the standing pose is eased into from it (live3d blendPose). `hl` is the half-life of the ease back to standing.
  */
-const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; turn?: number; spin?: number; slide?: readonly (readonly [number, number])[]; free?: boolean; raise?: boolean; coil?: number; clip?: string }> = {
-  // the maul, two-handed (attack-maul.glb: wound up over the right shoulder by 0.55 s, the head on the ground at 0.95,
-  // struck 52° left of the facing, so turned by that): the Strike starts from the hammer raised and smashes down; a
-  // held Heavy keeps it raised overhead (`coil`, the clip time held while charging), its release a bigger smash; the
-  // Sweep holds the swing's mid-point out level while the body turns once
-  // (the user, 2026-11-21: started already raised, the short click "looks weird (like hes taking a bow)": it now winds
-  // up from the carry first, the blow landing 0.3 s in; Strikes in quick succession go on through a combo)
-  smash: { path: [[0, 0.15], [0.18, 0.55], [0.3, 0.93], [0.45, 1.05], [0.8, 1.75]], ready: 1.75, linger: 0.3, hl: 0.1, turn: 52, free: true, coil: 0.55 },
+const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; turn?: number; spin?: number; slide?: readonly (readonly [number, number])[]; free?: boolean; haft?: number; raise?: boolean; coil?: number; clip?: string }> = {
+  // the maul, two-handed (attack-maul.glb, round 8: raised over the right shoulder by 0.7 s, then struck out with the
+  // arms extended at waist height at 0.9, the back kept straight, 55° left of the facing, so turned by that; the first
+  // smash, now spare-maul-crouch.glb, folded the body double with the fists on the ground, the user: "looks like the
+  // character slamming the ground with his fist"). The Strike winds up from the carry, the blow landing 0.3 s in; a
+  // held Heavy keeps it raised (`coil`, the clip time held while charging), its release a bigger smash; the Sweep holds
+  // the swing's mid-point out level while the body turns once. Strikes in quick succession go on through a combo.
+  // The haft runs out along the arms through the blow (`haft`), so the head leads the swing and lands ahead of the hands.
+  smash: { path: [[0, 0.1], [0.2, 0.66], [0.3, 0.9], [0.45, 1.0], [0.8, 1.75]], ready: 1.75, linger: 0.3, hl: 0.1, turn: 55, free: true, coil: 0.7, haft: 0.8 },
   // the combo's second blow: a flat swing across from right to left (attack-maul-swing.glb, the hands crossing the
   // front at 0.5 s), then the next Strike smashes again
-  smashCombo1: { path: [[0, 0.15], [0.15, 0.32], [0.3, 0.55], [0.45, 0.78], [0.8, 1.6]], ready: 1.6, linger: 0.3, hl: 0.1, turn: 0, free: true, clip: 'swing' },
-  smashHeavy: { path: [[0, 0.55], [0.12, 0.95], [0.45, 1.1], [0.8, 1.75]], ready: 1.75, linger: 0, hl: 0.12, turn: 52, free: true },
-  smashSweep: { path: [[0, 0.6], [0.06, 0.76], [0.3, 0.78], [0.5, 1.6]], ready: 1.75, linger: 0, hl: 0.12, turn: 52, free: true, spin: 0.42 * 0.7 },
+  smashCombo1: { path: [[0, 0.15], [0.15, 0.32], [0.3, 0.55], [0.45, 0.78], [0.8, 1.6]], ready: 1.6, linger: 0.3, hl: 0.1, turn: 0, free: true, haft: 0.15, clip: 'swing' },
+  smashHeavy: { path: [[0, 0.7], [0.12, 0.92], [0.45, 1.05], [0.8, 1.75]], ready: 1.75, linger: 0, hl: 0.12, turn: 55, free: true, haft: 0.8 },
+  smashSweep: { path: [[0, 0.7], [0.06, 0.86], [0.3, 0.88], [0.5, 1.6]], ready: 1.75, linger: 0, hl: 0.12, turn: 55, free: true, haft: 0.2, spin: 0.42 * 0.7 },
   // the bow (Archery Shot, release at 3.25 s): a shot from the drawn pose, then held drawn for `linger`, and drawn
   // whenever the aim is on an enemy in range (`raise`, RigState.aimed), so the instant shot finishes a short release
   // instead of firing before the bow is up (the user, 2026-11-20). `free`: the bow keeps its own hold (no shaft aim).
@@ -218,6 +219,10 @@ const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; r
   // which also makes the ready stance (0.25 s, drawn back) left shoulder forward, as a spearman stands
   jab: { path: [[0, 0.25], [0.1, 0.7], [0.16, 0.95], [0.4, 1.55]], ready: 0.25, linger: 0.8, hl: 0.09, turn: 49 },
 };
+/** A Strike within COMBO_GAP s of the end of the last one's recovery (ARMS.strikeRecovery) moves its combo on, through COMBO_LEN blows (MOVESETS `Combo`n). */
+export const COMBO_GAP = 0.5, COMBO_LEN = 2;
+/** A Strike's place in its combo (RigState.combo), from the last one's place, the seconds since it and its weapon's Strike recovery (view.ts and the Model Viewer both use this). */
+export const comboNext = (last: number, since: number, recovery: number): number => (since < recovery + COMBO_GAP ? (last + 1) % COMBO_LEN : 0);
 /** Clip time on a moveset's path `s` seconds after the blow (clamped to its ends). */
 export function pathTime(path: readonly (readonly [number, number])[], s: number): number {
   if (s <= path[0][0]) return path[0][1];
@@ -293,7 +298,8 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     // a moveset's blow (the jab): its path through the clip, then the ready pose held for its linger unless a cast or a
     // block takes over; the shaft points along the facing throughout
     const base = blowOf(props[0]), own = MOVESETS[base] && meta.clips[base];
-    const free = (m: { free?: boolean }) => (m.free ? {} : { aim: 1 });
+    // `free`: the weapon keeps the hand's own hold (no shaft aim); `haft`: a two-hander's haft runs out along the arms, leaned down by it (LivePose.haft)
+    const free = (m: { free?: boolean; haft?: number }) => (m.haft !== undefined ? { haft: m.haft } : m.free ? {} : { aim: 1 });
     const busy = s.cast > 0 || s.block > 0;
     // a Heavy held: the ready stance, the body coiling further round as it charges
     if (own && s.charge > 0 && !busy) {

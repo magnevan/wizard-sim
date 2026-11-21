@@ -819,7 +819,9 @@ function placeGuard(inst: Inst, w: number, sling = 0): void {
     // a two-handed weapon (or a bow drawn) takes the guard arm: the guard rides in the middle of the back, its face
     // turned out behind (sling 0..1), where the body hides it from most of the camera's angles
     if (sling > 0) {
-      turnTo(qS, WORLD_UP, v2.copy(gF).negate());
+      // flat on the back: the raised guard's square-on turn (blockYaw: turnTo's face is the frame's, not the guard's
+      // normal) turned half round to face behind (the user, 2026-11-21: it "sits on the edge instead of flat")
+      turnTo(qS, WORLD_UP, v2.copy(gF).applyAxisAngle(WORLD_UP, G.blockYaw + Math.PI));
       pS.set(sx, hips.y + SLUNG_UP * torso, sz).addScaledVector(gF, -SLUNG_BACK * torso);
       if (Number.isFinite(qS.w)) { qC.slerp(qS, sling); pC.lerp(pS, sling); }
     }

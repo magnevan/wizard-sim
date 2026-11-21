@@ -35,4 +35,4 @@ cssclasses:
 
 ## Reference
 
-[Ideas and project history](archive/README.md) · [Maintaining the vault](maintaining-the-vault.md)
+[Ideas and project history](archive/README.md) · [Maintaining the vault](maintaining-the-vault.md) · [Making particle VFX](vfx-workflow.md)

@@ -79,6 +79,11 @@ export interface LivePose {
    */
   haft?: number;
   /**
+   * A maul's swing (sprites.ts SMASH_ARC): the haft pointed [elevation, sideways] degrees from the facing (0 level
+   * ahead, 90 up, past 90 back over the shoulders; sideways to the wielder's right), about the palm. Over `haft`.
+   */
+  arc?: readonly [number, number];
+  /**
    * The whole body turned this many degrees toward its right (at the hips, so the blend eases it in and out): a clip
    * that strikes off its own facing, as the jab's thrust drives 49° to the left, is turned so the strike runs along it.
    */
@@ -618,7 +623,7 @@ function pose(inst: Inst, m: Model, p: LivePose, key?: string): void {
   const looping = !!m.meta.clips[clipName]?.stride;   // walk and run wrap round: their time going back is no cut
   blendPose(inst, key, p, 0, looping);
   place(inst, m, p);
-  if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0), p.aim, p.slide, p.haft);
+  if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0), p.aim, p.slide, p.haft, p.arc);
   blendPose(inst, key, p, 1, looping);
   placeGuard(inst, p.guardUp ?? 0, sling);
   if (fall >= 0) dropProps(inst, p.t - fall);
@@ -718,7 +723,7 @@ const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Q
  * a little toward the facing), keeping k of the hand's tilt, all of it as `grip` reaches 1 (a staff's blow); it turns
  * about the carrier's own origin, the palm.
  */
-function softProps(inst: Inst, face: number, grip: number, aim?: number, slide = 0, haft?: number): void {
+function softProps(inst: Inst, face: number, grip: number, aim?: number, slide = 0, haft?: number, arc?: readonly [number, number]): void {
   for (const s of inst.soft) {
     if (!s.node.visible) continue;
     s.node.quaternion.copy(s.rest);
@@ -734,7 +739,10 @@ function softProps(inst: Inst, face: number, grip: number, aim?: number, slide =
     let w = aim ?? 0;
     if (w > 0) want.lerp(aimDir.set(cs, AIM_UP, sn).normalize(), w).normalize();   // (not v2: `a` is v2)
     // a two-handed swing: the haft out along the arms (LivePose.haft)
-    if (haft !== undefined && held && inst.arms && inst.hands) {
+    if (arc && held) {   // a maul's swing on its own keys (LivePose.arc): along the facing, turned right by `sideways`
+      const el = (arc[0] * Math.PI) / 180, sd = (arc[1] * Math.PI) / 180, ce = Math.cos(el), fx = Math.cos(sd), rx = Math.sin(sd);
+      want.set(ce * (cs * fx - sn * rx), Math.sin(el), ce * (sn * fx + cs * rx)); w = 1;
+    } else if (haft !== undefined && held && inst.arms && inst.hands) {
       inst.arms[0].getWorldPosition(hS); hS.add(inst.arms[1].getWorldPosition(hT)).multiplyScalar(0.5);
       inst.hands[0].getWorldPosition(hT); hT.add(inst.hands[1].getWorldPosition(aimDir)).multiplyScalar(0.5).sub(hS);
       // leaned down only as the arms come down past HAFT_LEVEL (sin of the angle above level): raised, it follows them

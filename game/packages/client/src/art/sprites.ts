@@ -187,19 +187,35 @@ const blowOf = (prop: string | undefined): string => prop === 'earthmaul' ? 'sma
  * 0.75 to 1.1 s, is skipped); `ready` is the clip time held for `linger` s after, so the next jab starts from it and a
  * cast or the standing pose is eased into from it (live3d blendPose). `hl` is the half-life of the ease back to standing.
  */
-const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; turn?: number; spin?: number; slide?: readonly (readonly [number, number])[]; free?: boolean; haft?: number; raise?: boolean; coil?: number; clip?: string }> = {
+/**
+ * A maul's swing (round 9, the user, 2026-11-21: "the hand movements are better, but the maul doesnt swing around like
+ * youd expect a maul to do"): the haft along the arms only turned as far as they did, at their pace. A heavy head lags:
+ * it drops behind the back as the hands go up, then whips over far faster than they move and slams down. So the haft
+ * follows keys on the clip's time, [clip s, elevation degrees (0 level ahead, 90 straight up, past 90 back over the
+ * shoulders), sideways degrees (to the wielder's right)], both measured from the facing (the strike's line after `turn`).
+ * The smash (attack-maul.glb: the hands top out at 0.7 s and strike at 0.9): raised, cocked 205° (the head behind the
+ * back), whipped over in 0.1 clip s to 38° below level, the head on the ground ahead, and it rests there.
+ */
+const SMASH_ARC = [[0.1, 70, 0], [0.4, 120, 10], [0.6, 170, -35], [0.72, 200, -40], [0.8, 135, -15], [0.86, 40, 0], [0.9, -38, 0], [1.75, -38, 0]] as const;
+/**
+ * The flat swing (attack-maul-swing.glb: the hands right at 0.3 s, across the front at 0.5, left by 0.7, the chest
+ * following through 110°): the head held out right, lagging back behind as the hands start across, then whipped
+ * round through the front (the hit) and on round to the left, settling down ahead.
+ */
+const SWING_ARC = [[0.15, 15, 90], [0.32, 5, 150], [0.45, 0, 70], [0.52, -5, 0], [0.62, -10, -80], [0.8, -20, -125], [1.1, -32, -80], [1.6, -38, 10]] as const;
+const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; turn?: number; spin?: number; slide?: readonly (readonly [number, number])[]; free?: boolean; haft?: number; arc?: readonly (readonly [number, number, number])[]; raise?: boolean; coil?: number; clip?: string }> = {
   // the maul, two-handed (attack-maul.glb, round 8: raised over the right shoulder by 0.7 s, then struck out with the
   // arms extended at waist height at 0.9, the back kept straight, 55° left of the facing, so turned by that; the first
   // smash, now spare-maul-crouch.glb, folded the body double with the fists on the ground, the user: "looks like the
   // character slamming the ground with his fist"). The Strike winds up from the carry, the blow landing 0.3 s in; a
   // held Heavy keeps it raised (`coil`, the clip time held while charging), its release a bigger smash; the Sweep holds
   // the swing's mid-point out level while the body turns once. Strikes in quick succession go on through a combo.
-  // The haft runs out along the arms through the blow (`haft`), so the head leads the swing and lands ahead of the hands.
-  smash: { path: [[0, 0.1], [0.2, 0.66], [0.3, 0.9], [0.45, 1.0], [0.8, 1.75]], ready: 1.75, linger: 0.3, hl: 0.1, turn: 55, free: true, coil: 0.7, haft: 0.8 },
+  // The haft swings on its own arc (`arc`, SMASH_ARC), the head lagging and then whipping over.
+  smash: { path: [[0, 0.1], [0.2, 0.66], [0.3, 0.9], [0.45, 1.0], [0.8, 1.75]], ready: 1.75, linger: 0.3, hl: 0.1, turn: 55, free: true, coil: 0.7, arc: SMASH_ARC },
   // the combo's second blow: a flat swing across from right to left (attack-maul-swing.glb, the hands crossing the
   // front at 0.5 s), then the next Strike smashes again
-  smashCombo1: { path: [[0, 0.15], [0.15, 0.32], [0.3, 0.55], [0.45, 0.78], [0.8, 1.6]], ready: 1.6, linger: 0.3, hl: 0.1, turn: 0, free: true, haft: 0.15, clip: 'swing' },
-  smashHeavy: { path: [[0, 0.7], [0.12, 0.92], [0.45, 1.05], [0.8, 1.75]], ready: 1.75, linger: 0, hl: 0.12, turn: 55, free: true, haft: 0.8 },
+  smashCombo1: { path: [[0, 0.15], [0.15, 0.32], [0.3, 0.55], [0.45, 0.78], [0.8, 1.6]], ready: 1.6, linger: 0.3, hl: 0.1, turn: 0, free: true, arc: SWING_ARC, clip: 'swing' },
+  smashHeavy: { path: [[0, 0.7], [0.12, 0.92], [0.45, 1.05], [0.8, 1.75]], ready: 1.75, linger: 0, hl: 0.12, turn: 55, free: true, arc: SMASH_ARC },
   smashSweep: { path: [[0, 0.7], [0.06, 0.86], [0.3, 0.88], [0.5, 1.6]], ready: 1.75, linger: 0, hl: 0.12, turn: 55, free: true, haft: 0.2, spin: 0.42 * 0.7 },
   // the bow (Archery Shot, release at 3.25 s): a shot from the drawn pose, then held drawn for `linger`, and drawn
   // whenever the aim is on an enemy in range (`raise`, RigState.aimed), so the instant shot finishes a short release
@@ -223,6 +239,16 @@ const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; r
 export const COMBO_GAP = 0.5, COMBO_LEN = 2;
 /** A Strike's place in its combo (RigState.combo), from the last one's place, the seconds since it and its weapon's Strike recovery (view.ts and the Model Viewer both use this). */
 export const comboNext = (last: number, since: number, recovery: number): number => (since < recovery + COMBO_GAP ? (last + 1) % COMBO_LEN : 0);
+/** A maul's haft at clip time `t` on its arc's keys (SMASH_ARC): [elevation, sideways] degrees, straight between keys, held past the ends. */
+export function arcAt(arc: readonly (readonly [number, number, number])[], t: number): [number, number] {
+  if (t <= arc[0][0]) return [arc[0][1], arc[0][2]];
+  for (let k = 1; k < arc.length; k++) {
+    const b = arc[k];
+    if (t <= b[0]) { const a = arc[k - 1], u = (t - a[0]) / (b[0] - a[0]); return [a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u]; }
+  }
+  const z = arc[arc.length - 1];
+  return [z[1], z[2]];
+}
 /** Clip time on a moveset's path `s` seconds after the blow (clamped to its ends). */
 export function pathTime(path: readonly (readonly [number, number])[], s: number): number {
   if (s <= path[0][0]) return path[0][1];
@@ -298,13 +324,15 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     // a moveset's blow (the jab): its path through the clip, then the ready pose held for its linger unless a cast or a
     // block takes over; the shaft points along the facing throughout
     const base = blowOf(props[0]), own = MOVESETS[base] && meta.clips[base];
-    // `free`: the weapon keeps the hand's own hold (no shaft aim); `haft`: a two-hander's haft runs out along the arms, leaned down by it (LivePose.haft)
-    const free = (m: { free?: boolean; haft?: number }) => (m.haft !== undefined ? { haft: m.haft } : m.free ? {} : { aim: 1 });
+    // `free`: the weapon keeps the hand's own hold (no shaft aim); `arc`: a maul's haft on its swing's keys at clip time
+    // `t` (LivePose.arc); `haft`: a two-hander's haft out along the arms, leaned down by it (LivePose.haft)
+    const free = (m: { free?: boolean; haft?: number; arc?: readonly (readonly [number, number, number])[] }, t: number) =>
+      (m.arc ? { arc: arcAt(m.arc, t) } : m.haft !== undefined ? { haft: m.haft } : m.free ? {} : { aim: 1 });
     const busy = s.cast > 0 || s.block > 0;
     // a Heavy held: the ready stance, the body coiling further round as it charges
     if (own && s.charge > 0 && !busy) {
       const r = MOVESETS[base];
-      return { move: base, t: r.coil ?? r.ready, face, flash, seat, grip: 1, ...free(r), props, turn: (r.turn ?? 0) + COIL * smooth01(s.charge * 2), ...under };
+      return { move: base, t: r.coil ?? r.ready, face, flash, seat, grip: 1, ...free(r, r.coil ?? r.ready), props, turn: (r.turn ?? 0) + COIL * smooth01(s.charge * 2), ...under };
     }
     const kind = s.blow === 1 ? 'Heavy' : s.blow === 2 ? 'Sweep' : s.combo ? 'Combo' + s.combo : '';
     const pick = s.shot === 1 ? MOVESETS[base + kind] : undefined;
@@ -314,8 +342,8 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
       const move = set.clip ?? base, end = set.path[set.path.length - 1][0];
       // a Sweep turns the body once round, the way the ring goes (against the clock on screen)
       const spun = set.spin && s.shotT < set.spin ? face - TAU * smooth01(s.shotT / set.spin) : face;
-      if (s.shotT < end) return { move, t: pathTime(set.path, s.shotT), face: spun, flash, seat, grip: 1, ...free(set), props, turn: set.turn, ...under, ...(set.slide ? { slide: pathTime(set.slide, s.shotT) } : {}) };
-      if (s.shotT < end + set.linger && !busy) return { move, t: set.ready, face, flash, seat, grip: 1, ...free(set), props, turn: set.turn, ...under };
+      if (s.shotT < end) return { move, t: pathTime(set.path, s.shotT), face: spun, flash, seat, grip: 1, ...free(set, pathTime(set.path, s.shotT)), props, turn: set.turn, ...under, ...(set.slide ? { slide: pathTime(set.slide, s.shotT) } : {}) };
+      if (s.shotT < end + set.linger && !busy) return { move, t: set.ready, face, flash, seat, grip: 1, ...free(set, set.ready), props, turn: set.turn, ...under };
       if (s.shotT < end + set.linger + 1 && !busy) {
         settle = set.hl; settling = true;
         // the body settles fast, but the shaft is lifted back to the carry over SHAFT_LIFT: at the blend's pace a long
@@ -326,7 +354,7 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     // the bow held drawn while the aim is on an enemy in range (view.ts `aimed`)
     if (own && MOVESETS[base].raise && s.aimed && !busy) {
       const r = MOVESETS[base];
-      return { move: base, t: r.ready, face, flash, seat, grip: 1, ...free(r), props, turn: r.turn, ...under };
+      return { move: base, t: r.ready, face, flash, seat, grip: 1, ...free(r, r.ready), props, turn: r.turn, ...under };
     }
     if (own && MOVESETS[base].raise && !settling && !busy) settle = MOVESETS[base].hl;   // lowered at the stance's pace too
     // a one-shot (a weapon's blow, an Area or Self cast) plays its whole wind-up, squeezed into the SHOT_LEAD between the

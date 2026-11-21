@@ -23,6 +23,8 @@ Each stage answers one question before the user passes it. When testing an unres
 | 6 | **Dressing** | asset list | What does it look like? | The assets the blockout calls for, then art, judged in the whole scene. Paid generation needs the user's sign-off |
 | 7 | **Finish** | | Does it hold together? | Sound, tuning, a co-op pass, a run with four players |
 
+**Places come from concept images (2026-11-16).** Between the space diagram and the blockout, Codex draws each place from its purpose and connections, one level at a time (world, biome, region, area), using the parent level's image as reference. The blockout's screenshots then guide the dressing. Assembling scenes from bought assets looked like stickers. See the [map pipeline](../explorations/2026-11-16-campaign-map-pipeline.md).
+
 ## Rules that keep it honest
 
 - **Gameplay first, then words, then art.** The script waits for the blockout, because beats change when they're played. The overnight story run showed the limit of paper: blind judges ranked first a story the user rejected within minutes.

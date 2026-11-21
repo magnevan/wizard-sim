@@ -9,12 +9,12 @@ cssclasses:
 
 ## Campaign opening
 
-> [!in-review] Next layout review
-> Check the size of the drill yard against a wizard and the surrounding Academy buildings. The yard was marked too small.
+> [!in-review] The morning's fights
+> On The Morning Everything Breaks, answer the five encounter questions (`r3-q-*`): who attacks, which new behaviour first, whether the infirmary has a fight, the shard moth, the goblins' tone. Then mark the academy concept on the Opening Segment page, where the yard was marked too small.
 
-The last recorded scope is beats 1–7, through the battery.
+The opening is a chain of eight stops, Life first; the yard and the battery are built ([route](campaign/01-opening/brief.md#the-route), [thread](threads/opening.md)).
 
-[Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) · [Saved marks](archive/claude-review-feedback-2026-11-16.md#opening-segment) · [Playable battery](current-state.md#rooms)
+[The Morning Everything Breaks](https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews) · [Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) · [Saved marks](archive/claude-review-feedback-2026-11-16.md#opening-segment) · [Playable battery](current-state.md#rooms)
 
 ## Goblin warband art
 

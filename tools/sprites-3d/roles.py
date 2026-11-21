@@ -30,9 +30,13 @@ ROLES = {
                          # the maul's two-handed overhead smash (2026-11-20, text-to-motion: output/wizard/attack-maul.glb)
                          'smash': 'attack_maul',
                          # its combo's second blow, a flat two-handed swing from right to left (output/wizard/attack-maul-swing.glb)
-                         'swing': 'attack_maul_swing'},
-               # the bow's draw is long and still: its release (the archer's, 3.25 s) and the draw before it, set by hand
-               'cast_times': {'shoot': {'first': 2.0, 'hit': 3.25, 'last': 4.75}},
+                         'swing': 'attack_maul_swing',
+                         # the Arcane wand's bolt (2026-11-21, text-to-motion: output/wizard/attack-wand.glb): the hand up by
+                         # the ear, flicked out to point ahead at shoulder height, held, lowered
+                         'bolt': 'attack_wand'},
+               # the bow's draw is long and still: its release (the archer's, 3.25 s) and the draw before it, set by hand;
+               # the wand's flick lands at 0.6 s (clip-paths.mjs: the hand reaches 0.37 out at shoulder height)
+               'cast_times': {'shoot': {'first': 2.0, 'hit': 3.25, 'last': 4.75}, 'bolt': {'first': 0.2, 'hit': 0.6, 'last': 1.9}},
                # the guard clips (round 3): Meshy text-to-motion, a buckler held across the chest (output/wizard/guard-block.glb) and a
                # crouch braced behind a tower shield (guard-brace.glb); the library's boxing guards held it under the hat brim
                'loops': {'gather': 'mage_soell_cast_8', 'block': 'guard_block', 'brace': 'guard_brace'}},

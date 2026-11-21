@@ -43,6 +43,7 @@ import { kitOf, kitRun, sideZ, stampTexture, wallsAllFar } from './art/wall-kit'
 import { toU, toV, toX, toY } from './iso-world';
 import { RISE_STEPS, SLAB_OX, SLAB_OY, SlabCache, facePoint, paintSlab, wallGeom, type WallGeom, type WallSpec } from './art/walls';
 import { opt } from './dev-options';
+import { shotLead } from './art/sprites';
 
 /** A wall of fire that belongs to the place (the battery's gate) stands this much taller than a cast one. */
 const GATE_FIRE = 3.4;
@@ -367,6 +368,11 @@ export class StructureView {
       if ((e.text === 'strike' || e.text === 'sweep') && e.who >= 0 && e.who < MAX_SEATS) {
         this.blowT0[e.who] = t; this.blowKind[e.who] = e.text === 'strike' ? 1 : 2; this.blowAng[e.who] = Math.atan2((e.y2 ?? e.y) - e.y, (e.x2 ?? e.x) - e.x);
       }
+      // the whip's blows (its Strike and its Heavy lash) steer its strand (lash)
+      if ((e.text === 'strike' || e.text === 'lash') && e.look === ELID.lightning && e.who >= 0 && e.who < MAX_SEATS) {
+        this.lashT0[e.who] = t; this.lashAng[e.who] = Math.atan2((e.y2 ?? e.y) - e.y, (e.x2 ?? e.x) - e.x);
+      }
+      if (e.text === 'bolt') continue;   // the wand's light bolt: only the body's cast (sprites.ts); the missile is its effect
       // what the weapon or guard carries besides its lead, at the moment of the move (the last use takes the weapon)
       const seat = e.who >= 0 && e.who < MAX_SEATS, gm = GUARD_MOVES.has(e.text);
       const xs = !seat || e.text === 'imbue' ? [] : gm ? A.extrasOf(s.guardEls, e.who, ELID.shield, GUARD_EL[s.guard[e.who]] ?? 0) : e.look ? A.extrasOf(s.weaponEls, e.who, e.look) : [];
@@ -1471,13 +1477,24 @@ export class StructureView {
 
   /** Each seat's whip lash: a rope of points hung from the handle's end (see lash). */
   private lashes = new Map<number, { p: [number, number][]; q: [number, number][]; t: number }>();
+  /** Each seat's last whip blow: when (view time) and toward where (world radians), for its strand's wind-up and crack. */
+  private lashT0 = new Float64Array(MAX_SEATS).fill(-9); private lashAng = new Float64Array(MAX_SEATS);
   /**
    * The whip's lash, a rope hung from `e0` (the handle's end on screen) and let fall: it trails behind the handle as it
    * swings and drapes down when it stops (the user, 2026-11-20: "doesn't drape behind and sticks up in front"). Points
    * (and their last positions) are kept per seat; a long gap or a rewind starts it hanging again.
+   * A blow steers it on the body's clock (sprites.ts shotLead: the clip's crack comes that long after the game's
+   * release): through the wind-up it is flung out behind the wizard, away from the aim, then at the crack it snaps out
+   * straight along the aim and is let go to fall (#6: "no wind up that puts the strand behind you").
    */
   private lash(i: number, e0: Pt, t: number, k: number): Pt[] {
     const N = 8, seg = 1.5 * k + 0.3;
+    const lead = shotLead('lash'), age = this.st - this.lashT0[i], a = this.lashAng[i];   // blows are stamped in sim time (st), the rope steps on the clock (t)
+    const ux = Math.cos(a), uy = Math.sin(a) * FY, un = Math.hypot(ux, uy) || 1, ax = ux / un, ay = uy / un;
+    // the wind-up's pull (px per step², against the aim, lifted against the drop) and the crack's snap (0..1, straight out)
+    // (filmed slowed, 2026-11-21: the clip has the hand overhead at 0.25 s after the release and cracked forward by 0.32)
+    const back = age >= 0 && age < lead * 0.9 ? smooth(age / (lead * 0.3)) : 0;
+    const snap = age >= lead * 0.85 && age < lead + 0.16 ? Math.sin(Math.PI * clamp((age - lead * 0.85) / (lead * 0.15 + 0.16), 0, 1)) : 0;
     let r = this.lashes.get(i);
     if (!r || t - r.t > 0.3 || t < r.t - 0.05) {
       const p: [number, number][] = []; for (let j = 0; j <= N; j++) p.push([e0[0], e0[1] + j * seg]);
@@ -1489,7 +1506,7 @@ export class StructureView {
       for (let n = 0; n < steps; n++) {
         for (let j = 1; j <= N; j++) {
           const x = r.p[j], o = r.q[j], vx = (x[0] - o[0]) * 0.88, vy = (x[1] - o[1]) * 0.88;
-          o[0] = x[0]; o[1] = x[1]; x[0] += vx; x[1] += vy + 0.3;
+          o[0] = x[0]; o[1] = x[1]; x[0] += vx - ax * 0.7 * back; x[1] += vy + 0.3 - (ay * 0.7 + 0.35) * back;
         }
         r.p[0][0] = e0[0]; r.p[0][1] = e0[1];
         for (let it = 0; it < 6; it++) {
@@ -1498,6 +1515,17 @@ export class StructureView {
             const a = r.p[j], b = r.p[j + 1], dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy) || 1e-6, f = (d - seg) / d;
             if (j === 0) { b[0] -= dx * f; b[1] -= dy * f; } else { a[0] += dx * f * 0.5; a[1] += dy * f * 0.5; b[0] -= dx * f * 0.5; b[1] -= dy * f * 0.5; }
           }
+        }
+        // the crack: each point pulled toward the strand laid straight out along the aim (its motion carries on after)
+        if (snap > 0) for (let j = 1; j <= N; j++) {
+          const x = r.p[j], o = r.q[j];
+          x[0] = lerp(x[0], e0[0] + ax * seg * j, snap * 0.6); x[1] = lerp(x[1], e0[1] + ay * seg * j - 2, snap * 0.6);
+          o[0] = lerp(o[0], x[0], snap * 0.5); o[1] = lerp(o[1], x[1], snap * 0.5);   // its motion damped, so it doesn't fly on past its length
+        }
+        // never longer than it is: each point kept within a segment (and a little give) of the one before, from the handle out
+        for (let j = 1; j <= N; j++) {
+          const a = r.p[j - 1], b = r.p[j], dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy), m = seg * 1.1;
+          if (d > m) { b[0] = a[0] + (dx / d) * m; b[1] = a[1] + (dy / d) * m; }
         }
       }
     }

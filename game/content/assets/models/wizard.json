@@ -56,6 +56,10 @@
    "source": "attack_maul_swing",
    "duration": 1.9667
   },
+  "bolt": {
+   "source": "attack_wand",
+   "duration": 1.9667
+  },
   "gather": {
    "source": "mage_soell_cast_8",
    "duration": 1.3333
@@ -123,6 +127,11 @@
    "first": 0.0,
    "hit": 0.5,
    "last": 1.9166666666666667
+  },
+  "bolt": {
+   "first": 0.2,
+   "hit": 0.6,
+   "last": 1.9
   }
  },
  "yaw": {

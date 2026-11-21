@@ -21,7 +21,7 @@ import { EL, KEYED_EL, N_EL, elementName, poolCost } from './elements';
 import { channelTick, fireSpell } from './effects';
 import { STRUCTURE_SHAPES, castStructure, dismissAt, dismissShieldAt, doubleRepeat, hasteOf, payDouble, fullMask, poolCap, recallOldest, sigilCap, spendMote, weaponSwing } from './structures';
 import { len } from './geom';
-import { guardRelease } from './guards';
+import { guardRelease, twoHanded } from './guards';
 import { AIM_UNIT, BTN, type PlayerInput } from './input';
 import { TAP, channelsSpecial, heavy, heavyCharge, holdTick, retreat, special, specialTick, strike, strikeRecovery } from './hands';
 import { atan2Turns } from './trig';
@@ -278,8 +278,9 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   payGhosts(w, i);
 
   // A conjured guard blocks while Space is held with an empty queue (Defend, grammar v2; guards.ts).
-  // Any weapon move or spell drops the block, and so does the fixed recovery after a Retreat.
-  const defend = s.guard[i] && held & BTN.self && s.queueLen[i] === 0;
+  // Any weapon move or spell drops the block, and so does the fixed recovery after a Retreat. A two-handed weapon (the
+  // bow, the maul) leaves no hand for it: the guard rides on the back.
+  const defend = s.guard[i] && held & BTN.self && s.queueLen[i] === 0 && !twoHanded(s.weapon[i]);
   const wasUp = s.guardT[i] > 0;
   s.guardT[i] = defend && !s.guardCd[i] && s.phase[i] === PHASE.idle && !s.handT[i] && canAct(w, i) ? s.guardT[i] + 1 : 0;
   if (wasUp && !s.guardT[i]) guardRelease(w, i); // the Prism's Lance

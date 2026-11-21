@@ -72,6 +72,8 @@ const LIFE = X.LIFE;
 /** The bare staff's blows: plain greys. */
 const STAFF: Ramp = ['#ffffff', '#e8e4f0', '#b8b4c8', '#8a8498', '#5a5468'];
 /** A weapon blow's colours by its look (0: the staff). */
+/** A live guard this far (model units) behind the body's middle, along the view, has its effects drawn behind the body. */
+const GUARD_BEHIND = 0.15;
 const blowRamp = (look: number): Ramp => (look === 0 ? STAFF : look === ELID.life ? LIFE : ramp(look));
 /** How long the held weapon's thrust (Strike) and spin (Sweep) take on the wizard (s). */
 const THRUST = 0.22, SPIN = 0.3;
@@ -1665,7 +1667,9 @@ export class StructureView {
     // the user, 2026-11-18, "doesn't really help"). Drawn live, the guard's moving parts (art/guard-fx.ts) lie in its plane; blocking, each element bursts out of it,
     // and only the Mirror keeps the energy face below (the user: the Shield shimmer is the Mirror's alone).
     const fr = live ? v.a?.guardFrame : undefined;
-    if (fr) GFX.guardFx(o, name, GUARD_EL[id] ?? 0, { x, y, u: fr.u, v: fr.v, face: fr.face }, t, blocking, raise, v.y, i * 97);
+    // a guard behind the body (on the back with a two-hander, or round the far side) has its effects drawn behind it too
+    // (the user, 2026-11-20: effects "drawn in front of or behind" the body, the flame buckler)
+    if (fr) GFX.guardFx(fr.behind > GUARD_BEHIND ? g : o, name, GUARD_EL[id] ?? 0, { x, y, u: fr.u, v: fr.v, face: fr.face }, t, blocking, raise, v.y, i * 97);
     if (blocking && !(fr && id !== GUARD.mirror)) {
       // an energy face in front of the guard while it blocks, in the guard's colour; the Bulwark's is wide, the Mirror's narrow.
       // Facing away it would hide behind the body, so there it is drawn on top and wider, its two ends bright ticks

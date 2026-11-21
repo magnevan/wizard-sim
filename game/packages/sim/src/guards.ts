@@ -225,6 +225,11 @@ export const grounded = (w: World, i: number): boolean => hasPassive(w, i, GUARD
 export const clear = (w: World, i: number): boolean => i < MAX_SEATS && hasPassive(w, i, GUARD.prism);
 /** Phasing back (the Prism's Retreat) or the spear's dash: passes through bodies. */
 export const phased = (w: World, i: number): boolean => i < MAX_SEATS && ((guardOf(w, i) === GUARD.prism && w.seats.retreatT[i] > 0) || w.seats.dashT[i] > 0);
+/**
+ * The two-handed weapons, the ice bow and the earth maul: while one is out a carried guard rides on the back, keeping its
+ * passive and its Retreat but not its block (decisions 2026-11-20, "Two-handed weapons").
+ */
+export const twoHanded = (weapon: number): boolean => weapon === EL.ice || weapon === EL.earth;
 export const blocking = (w: World, i: number): boolean => guardOf(w, i) !== 0 && w.seats.guardT[i] > 0;
 
 /**

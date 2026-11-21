@@ -10,7 +10,7 @@
 import { rules, type Cast, type Element, type SpellDescriptor } from '@wizard-sim/rules';
 import {
   ARMS, COMBAT, DAMAGE, GUARD_NAME, QUEUE_MAX, RHYTHM, RUNES, SHAPES, STATUS, STRUCT, SURFACE,
-  compile, elementName, formCurve, imbueReach, type SpellSpec,
+  compile, elementName, formCurve, imbueReach, twoHanded, type SpellSpec,
 } from '@wizard-sim/sim';
 import type { Demo } from './demo';
 
@@ -441,7 +441,9 @@ export function handsRows(h: HandsState): HelpRow[] {
       scale: '', stats: [`${ARMS.heavyScale}X A STRIKE`, `CHARGE UP TO ${RHYTHM.chargeMax}S${uses(2)}`], demo: { els: [], cast: 'heavy' } },
     { slot: 'special', keys: K('R', true, W.held ? 'HOLD' : '', W.held ? 'LT HOLD' : 'LT'), title: W.specialName, text: W.special, tags: [], look,
       scale: '', stats: [W.held ? `HOLD${h.weapon ? ', 1 USE/S' : ''}` : `${ARMS.sweepScale}X A STRIKE${uses(2)}`], demo: { els: [], cast: W.held ? 'channel' : 'special' } },
-    G
+    G && twoHanded(h.weapon)
+      ? { slot: 'defend', keys: K(null, false, '', 'RB', true), title: 'Defend', text: `The ${W.name.toLowerCase()} takes both hands: the ${G.name.toLowerCase()} rides on your back. It keeps its Retreat and what it does for you, but can't block.`, tags: [], look: G.el, scale: '', stats: [], demo: no, idle: true }
+      : G
       ? { slot: 'defend', keys: K(null, false, 'HOLD', 'RB', true), title: 'Defend', text: 'Hold to block; tap as a hit lands to parry. ' + G.defend, tags: [], look: G.el,
         scale: '', stats: [`PARRY WINDOW ${gName === 'mirror' ? ARMS.parryMirror : ARMS.parry}S`], demo: { els: [], cast: 'block' } }
       : { slot: 'defend', keys: K(null, false, '', 'RB', true), title: 'Defend', text: 'No guard. Queue Shield and an element, then Shift+LMB, to conjure one.', tags: [], look: null, scale: '', stats: [], demo: no, idle: true },

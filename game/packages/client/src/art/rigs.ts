@@ -114,9 +114,10 @@ export interface Anchors {
   /**
    * Live 3D only: the guard's frame on screen, so its effects lie in its plane. `u` and `v` are its two half-extents
    * in its face (u the longer) as screen offsets from `guard`; `face` is how squarely its face turns to the camera
-   * (1 square on, 0 edge-on, below 0 its back).
+   * (1 square on, 0 edge-on, below 0 its back); `behind` how far (model units) it is behind the body's middle along
+   * the camera's view (above GUARD_BEHIND its effects are drawn behind the body).
    */
-  guardFrame?: { u: [number, number]; v: [number, number]; face: number };
+  guardFrame?: { u: [number, number]; v: [number, number]; face: number; behind: number };
 }
 
 /** The warband drawn from 3D-rendered sprites (art/sprites.ts) instead of code rigs: on unless ?sprites=0. */

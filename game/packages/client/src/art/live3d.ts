@@ -76,6 +76,8 @@ export interface LivePose {
    * that strikes off its own facing, as the jab's thrust drives 49° to the left, is turned so the strike runs along it.
    */
   turn?: number;
+  /** The guard slung behind the shoulder (0..1): a two-handed weapon (the bow, the maul) leaves it on the back. By default 1 while the bow shoots. */
+  sling?: number;
   /** The props to show by name (ModelMeta.props); the rest are hidden. By default the model's `show`, else all. */
   props?: readonly string[];
   /** Blocking, 0..1: the strapped guard goes from its carried place at the side to square in front of the chest (placeGuard). */
@@ -598,7 +600,8 @@ function pose(inst: Inst, m: Model, p: LivePose, key?: string): void {
     ...(second ? [[second, p.w2!, p.t2 ?? 0]] as const : []),
   ]);
   for (let j = 0; j < inst.nBones; j++) { inst.blendNodes[j].quaternion.toArray(inst.rawQ, j * 4); inst.blendNodes[j].position.toArray(inst.rawP, j * 3); }
-  pinGuardArm(inst, p.move === 'death' || p.move === 'block' || p.move === 'brace' || p.move === 'shoot' ? 0 : 1 - (p.guardUp ?? 0));
+  const sling = p.sling ?? (p.move === 'shoot' ? 1 : 0);
+  pinGuardArm(inst, p.move === 'death' || p.move === 'block' || p.move === 'brace' || sling ? 0 : 1 - (p.guardUp ?? 0));
   if (p.turn && inst.hips?.parent) {   // the body turned about the vertical, in the hips' parent's frame
     inst.hips.parent.updateWorldMatrix(true, false);
     v1.set(0, 1, 0).applyQuaternion(inst.hips.parent.getWorldQuaternion(bq).invert());
@@ -610,7 +613,7 @@ function pose(inst: Inst, m: Model, p: LivePose, key?: string): void {
   place(inst, m, p);
   if (inst.soft.length) softProps(inst, p.face, p.grip ?? (inst.soft[0].firm.includes(clipName) ? 1 : 0), p.aim, p.slide);
   blendPose(inst, key, p, 1, looping);
-  placeGuard(inst, p.guardUp ?? 0, p.move === 'shoot' ? 1 : 0);
+  placeGuard(inst, p.guardUp ?? 0, sling);
   if (fall >= 0) dropProps(inst, p.t - fall);
 }
 
@@ -762,6 +765,9 @@ export const GUARD_PLACE = {
   carryUp: 0.31, carryOut: 1.2, carryAhead: 1, carryAngle: 2.5, carryTilt: 0.2,
   blockUp: 1.19, blockAhead: 1.52, blockOut: 1.64, blockSize: 0.89, blockYaw: 1.7,
 };
+/** A slung guard's middle: this far up from the hips and back from the shoulders' middle, in torso lengths. */
+const SLUNG_UP = 0.7, SLUNG_BACK = 0.65;
+const qS = new THREE.Quaternion(), pS = new THREE.Vector3();
 const gY = new THREE.Vector3(), qC = new THREE.Quaternion(), qB = new THREE.Quaternion(), gL = new THREE.Vector3(), gH = new THREE.Vector3(), pC = new THREE.Vector3(), pB = new THREE.Vector3();
 /** The rotation that takes the guard's current (up, face) frame (mAT, mA's transpose) to (up, face), into `out`. */
 function turnTo(out: THREE.Quaternion, up: THREE.Vector3, face: THREE.Vector3): THREE.Quaternion {
@@ -810,8 +816,13 @@ function placeGuard(inst: Inst, w: number, sling = 0): void {
     faceC.addScaledVector(upC, -faceC.dot(upC)).normalize();
     turnTo(qC, upC, faceC);
     pC.set(lx, hips.y + G.carryUp * torso, lz).addScaledVector(gL, G.carryOut * torso).addScaledVector(gF, G.carryAhead * torso);
-    // drawing a bow takes the guard arm: the guard swings round behind the shoulder, out of the bow's way (sling 0..1)
-    pC.addScaledVector(gF, -sling * (G.carryAhead + 0.9) * torso).addScaledVector(gL, -sling * 0.3 * torso);
+    // a two-handed weapon (or a bow drawn) takes the guard arm: the guard rides in the middle of the back, its face
+    // turned out behind (sling 0..1), where the body hides it from most of the camera's angles
+    if (sling > 0) {
+      turnTo(qS, WORLD_UP, v2.copy(gF).negate());
+      pS.set(sx, hips.y + SLUNG_UP * torso, sz).addScaledVector(gF, -SLUNG_BACK * torso);
+      if (Number.isFinite(qS.w)) { qC.slerp(qS, sling); pC.lerp(pS, sling); }
+    }
     // raised: square in front
     turnTo(qB, WORLD_UP, gY.copy(gF).applyAxisAngle(WORLD_UP, G.blockYaw));
     pB.set(sx, hips.y + G.blockUp * torso, sz).addScaledVector(gF, G.blockAhead * torso + G.blockSize * half).addScaledVector(gL, G.blockOut * torso);
@@ -891,7 +902,13 @@ function heldOf(inst: Inst, m: Model, key: string, o: typeof SMALL, cam: THREE.C
       const off = (a: THREE.Vector3): [number, number] => { const p = px(c.node.localToWorld(v1.copy(c.mid).add(a))); return [p[0] - g[0], p[1] - g[1]]; };
       // the normal's world direction against the camera's: 1 when the face looks straight at it
       const o0 = c.node.localToWorld(v2.copy(c.mid)), n = c.node.localToWorld(v3.copy(c.mid).add(c.axes[2])).sub(o0).normalize();
-      out.guardFrame = { u: off(c.axes[0]), v: off(c.axes[1]), face: -n.dot(cam.getWorldDirection(v1)) };
+      // how far behind the body's middle it is, along the camera's view (model units): its effects go behind the body then
+      const u = off(c.axes[0]), v = off(c.axes[1]);   // (before v1 is reused below)
+      const dir = cam.getWorldDirection(v1), face = -n.dot(dir), mid = inst.hips ? inst.hips.getWorldPosition(gH) : o0;
+      // in the ground plane: the guard rides higher than the hips, and the camera's downward tilt would eat its depth
+      dir.y = 0; dir.normalize();
+      const behind = v3.copy(o0).sub(mid).setY(0).dot(dir);   // (n is v3: read above)
+      out.guardFrame = { u, v, face, behind };
     }
   }
   if (out.blade || out.guard) held.set(key, out); else held.delete(key);

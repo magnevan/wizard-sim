@@ -22,7 +22,7 @@ import { HEIGHT, CELL_H, CELL_W, FEET_X, FEET_Y, SPRITES_ON, type Anchors, type 
 import type { Frame } from './actors';
 import { LIVE3D_ON, PX_PER_UNIT, liveFrame, liveMeta, type LivePose } from './live3d';
 import * as X from './px';
-import { GUARD, GUARD_NAME, N_EL, elementName } from '@wizard-sim/sim';
+import { GUARD, GUARD_NAME, N_EL, elementName, twoHanded } from '@wizard-sim/sim';
 import { optOn } from '../dev-options';
 
 interface Move { row: number; n: number }
@@ -271,7 +271,11 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
   if (s.dead > 0) return { move: 'death', t: dur('death') * Math.min(1, s.dead), face, flash, ...(s.kind === 'wizard' ? { props: wizardProps(s) } : {}) };
   // the wizard's changes of move blend from the pose on screen (live3d blendPose); `settle` (a moveset's ready pose let go) eases slower
   let settle = 0, lift: number | undefined;
-  if (s.kind === 'wizard') { const p = wizardPose(); return { ...p, hl: settle || BLEND_HL, ...(lift !== undefined && p.aim === undefined ? { aim: lift } : {}) }; }
+  if (s.kind === 'wizard') {
+    const p = wizardPose();
+    // a two-handed weapon (the bow, the maul) carries the guard on its back
+    return { ...p, hl: settle || BLEND_HL, ...(lift !== undefined && p.aim === undefined ? { aim: lift } : {}), ...(s.guard && twoHanded(s.weapon) ? { sling: 1 } : {}) };
+  }
   function wizardPose(): LivePose {
     const seat = X.TEAMS[s.pal % X.TEAMS.length], c = meta.casts?.cast, props = wizardProps(s);
     // a moveset's blow (the jab): its path through the clip, then the ready pose held for its linger unless a cast or a

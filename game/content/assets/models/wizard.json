@@ -48,6 +48,10 @@
    "source": "Armature|Archery_Shot|baselayer",
    "duration": 5.0
   },
+  "smash": {
+   "source": "attack_maul",
+   "duration": 1.9667
+  },
   "gather": {
    "source": "mage_soell_cast_8",
    "duration": 1.3333
@@ -105,6 +109,11 @@
    "first": 2.0,
    "hit": 3.25,
    "last": 4.75
+  },
+  "smash": {
+   "first": 0.0,
+   "hit": 0.7083333333333334,
+   "last": 1.9166666666666667
   }
  },
  "yaw": {

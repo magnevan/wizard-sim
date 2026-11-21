@@ -179,7 +179,7 @@ const shotRate = (move: string): number => (SHOT_TIMING[move] ?? SHOT_DEFAULT).a
 /** A one-shot's first moments ease in from the standing pose over this many seconds, so the body doesn't snap into the clip. */
 const SHOT_EASE = 0.1;
 /** The clip a conjured weapon's blow plays: the sword, maul and focus swing, the whip lashes, the bow draws and looses, the staff, spear and trident jab (the staff's overhead swing went through the hat). */
-const blowOf = (prop: string | undefined): string => prop === 'sword' || prop === 'earthmaul' || prop === 'focus' ? 'attack0' : prop === 'whip' ? 'lash' : prop === 'icebow' ? 'shoot' : 'jab';
+const blowOf = (prop: string | undefined): string => prop === 'earthmaul' ? 'smash' : prop === 'sword' || prop === 'focus' ? 'attack0' : prop === 'whip' ? 'lash' : prop === 'icebow' ? 'shoot' : 'jab';
 /**
  * Movesets: a blow played as a cut-down path through its clip, then a held ready pose (the user, 2026-11-20: "I'm
  * expecting more of a jab movement", "if you are repeating jabs, the character may stay hunched over with the spear in a
@@ -187,7 +187,14 @@ const blowOf = (prop: string | undefined): string => prop === 'sword' || prop ==
  * 0.75 to 1.1 s, is skipped); `ready` is the clip time held for `linger` s after, so the next jab starts from it and a
  * cast or the standing pose is eased into from it (live3d blendPose). `hl` is the half-life of the ease back to standing.
  */
-const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; turn?: number; spin?: number; slide?: readonly (readonly [number, number])[]; free?: boolean; raise?: boolean }> = {
+const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; turn?: number; spin?: number; slide?: readonly (readonly [number, number])[]; free?: boolean; raise?: boolean; coil?: number }> = {
+  // the maul, two-handed (attack-maul.glb: wound up over the right shoulder by 0.55 s, the head on the ground at 0.95,
+  // struck 52° left of the facing, so turned by that): the Strike starts from the hammer raised and smashes down; a
+  // held Heavy keeps it raised overhead (`coil`, the clip time held while charging), its release a bigger smash; the
+  // Sweep holds the swing's mid-point out level while the body turns once
+  smash: { path: [[0, 0.5], [0.1, 0.92], [0.28, 1.1], [0.55, 1.75]], ready: 1.75, linger: 0.3, hl: 0.1, turn: 52, free: true, coil: 0.55 },
+  smashHeavy: { path: [[0, 0.55], [0.12, 0.95], [0.45, 1.1], [0.8, 1.75]], ready: 1.75, linger: 0, hl: 0.12, turn: 52, free: true },
+  smashSweep: { path: [[0, 0.6], [0.06, 0.76], [0.3, 0.78], [0.5, 1.6]], ready: 1.75, linger: 0, hl: 0.12, turn: 52, free: true, spin: 0.42 * 0.7 },
   // the bow (Archery Shot, release at 3.25 s): a shot from the drawn pose, then held drawn for `linger`, and drawn
   // whenever the aim is on an enemy in range (`raise`, RigState.aimed), so the instant shot finishes a short release
   // instead of firing before the bow is up (the user, 2026-11-20). `free`: the bow keeps its own hold (no shaft aim).
@@ -286,7 +293,7 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     // a Heavy held: the ready stance, the body coiling further round as it charges
     if (own && s.charge > 0 && !busy) {
       const r = MOVESETS[base];
-      return { move: base, t: r.ready, face, flash, seat, grip: 1, ...free(r), props, turn: (r.turn ?? 0) + COIL * smooth01(s.charge * 2), ...under };
+      return { move: base, t: r.coil ?? r.ready, face, flash, seat, grip: 1, ...free(r), props, turn: (r.turn ?? 0) + COIL * smooth01(s.charge * 2), ...under };
     }
     const set = s.shot === 1 ? MOVESETS[base + (s.blow === 1 ? 'Heavy' : s.blow === 2 ? 'Sweep' : '')] ?? MOVESETS[base] : undefined;
     let settling = false;

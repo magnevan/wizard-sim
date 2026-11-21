@@ -103,7 +103,8 @@ def earthmaul():
     # sheet A: a lumpy boulder lashed to a gnarled haft with roots, two violet crystals in the rock
     g = GRIP; d = Vector((0.30, 0, 1)).normalized(); side = Vector((0, 1, 0))
     head = g + d * 0.78
-    parts = [rod('maul haft', g - d * 0.22, g + d * 0.75, 0.05, ROOT(), verts=6),
+    # two-handed (2026-11-20): the haft runs on below the fist for the other hand, a knot of root at its end
+    parts = [rod('maul haft', g - d * 0.42, g + d * 0.75, 0.05, ROOT(), verts=6), ball('maul knot', g - d * 0.44, 0.065, ROOT()),
              ball('maul boulder', head, 0.24, ROCK(), scale=(1.15, 1.0, 0.85)),
              ball('maul lump', head + side * 0.16 + d * 0.06, 0.13, ROCK())]
     for k in range(3):   # roots wound round the haft and over the boulder's neck

@@ -32,12 +32,15 @@ export interface CellSpec {
   mood: string | null;
   /** Keeps this panel's live 3D bodies apart from the other panels'. */
   scope: string;
+  /** Where wizard 0 aims (view space), instead of the scene's target; its demo's `at` must say the same in world space. */
+  aim0: V | null;
 }
 
 /** demoInput lags seat s by 37 ticks a seat (two moments of one spell); the lab's wizards cast together. */
 const LAG = 37;
 
-const worldX = (p: V) => toX(p[0], p[1]), worldY = (p: V) => toY(p[0], p[1]);
+/** A view-space point (scenes.ts) in the world. */
+export const worldX = (p: V): number => toX(p[0], p[1]), worldY = (p: V): number => toY(p[0], p[1]);
 
 export class Cell {
   readonly root = new Container();
@@ -51,11 +54,12 @@ export class Cell {
   private mask = new Graphics();
   private inputs: PlayerInput[] = new Array(MAX_SEATS).fill(NO_INPUT);
 
-  constructor(readonly spec: CellSpec, renderer: Renderer) {
+  /** `reuse`: a view of an earlier panel to draw with (a new view each time would leave its GPU resources behind). */
+  constructor(readonly spec: CellSpec, renderer: Renderer, reuse?: WorldView) {
     const sc = spec.scene, w = (this.world = createWorld(spec.seed, sc.wizards.length, { room: sc.room, dummies: false }));
     const b = w.bodies;
     sc.wizards.forEach((wz, i) => {
-      const aim = wz.aim ?? sc.target;
+      const aim = (i === 0 ? spec.aim0 : null) ?? wz.aim ?? sc.target;
       b.x[i] = worldX(wz.at); b.y[i] = worldY(wz.at);
       b.face[i] = atan2Turns(worldY(aim) - b.y[i], worldX(aim) - b.x[i]);
     });
@@ -75,13 +79,15 @@ export class Cell {
     // the effect canvases are sized from FIELD when a view is made: fit it to this room first
     const tw = turnedWorld(w);
     fitField(tw.dims.w, tw.dims.h);
-    const v = (this.view = new WorldView());
-    v.setRenderer(renderer);
+    const v = (this.view = reuse ?? new WorldView());
+    if (!reuse) {
+      v.setRenderer(renderer);
+      // the view's HUD, wave strip and edge arrows are not wanted here
+      const hudLayer = v.root.children[1];
+      if (hudLayer) hudLayer.visible = false;
+      v.hud.draw = () => {};
+    }
     v.mood = spec.mood ?? sc.mood ?? null;
-    // the view's HUD, wave strip and edge arrows are not wanted here
-    const hudLayer = v.root.children[1];
-    if (hudLayer) hudLayer.visible = false;
-    v.hud.draw = () => {};
     // the camera stays on the scene (and on the zoomed part of it)
     const [lu, lv] = sc.look, z = spec.zoom, fw = z ? z[2] : spec.w, fh = z ? z[3] : spec.h;
     const du = z ? (z[0] + z[2] / 2 - spec.w / 2) / PPU : 0, dv = z ? (z[1] + z[3] / 2 - spec.h / 2) / (PPU * FY) : 0;
@@ -140,4 +146,11 @@ export class Cell {
   }
 
   destroy(): void { this.root.destroy({ children: true }); }
+  /** Done with this panel, its view kept for the next (a reused view sees the new world's clock start over, as after a room switch). */
+  release(): WorldView {
+    this.root.removeChild(this.view.root);
+    this.view.root.mask = null;
+    this.root.destroy({ children: true });
+    return this.view;
+  }
 }

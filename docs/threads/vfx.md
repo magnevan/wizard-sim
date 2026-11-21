@@ -5,13 +5,14 @@ Record: [VFX workflow](../explorations/2026-11-21-vfx-workflow.md) · Guide: [vf
 
 ## Where it stands
 
-The plan is approved. Steps 1 to 3 are built on the `worktree-vfx-workflow` branch: the guide (spec template and rubric), the VFX Lab, and `npm run vfx-sheet`. Nobody has used the loop on a real effect yet.
+The plan is approved. Steps 1 to 3 are built on the `worktree-vfx-workflow` branch: the guide (spec template and rubric), the VFX Lab, and `npm run vfx-sheet`. Round 2 (the user's notes: no aim control, reloads, typing runes) added the lab's side panel and the first knobs (the three sprays, nova speed) with Save to `fx-knobs.json`. Nobody has used the loop on a real effect yet.
 
 ## Next
 
 - [ ] The user tries the VFX Lab and says whether the scenes are the right ones.
 - [ ] Try the loop on one real effect: issue #4 (added-element particles read as noise) is a good first case.
-- [ ] Live sliders for the selected effect, and about three variants side by side.
+- [ ] A/B: pin the current knob values, change them, and see both side by side at the same time and seed.
+- [ ] Knobs for each effect as it is reworked (the weapons' added elements for #4 next), not all up front.
 - [ ] Pull out the arc primitive (lightning arc and chain heal draw it twice) as the first behavioural primitive.
 - [ ] Decide 2D vs 3D particles before pulling out more primitives.
 - [ ] More scenes: a wall to splash against, surface floors (water, fire), an interior. A grid of several spells side by side, toward replacing the gallery.
@@ -28,3 +29,4 @@ Parked: finer-resolution particles ([#12](https://github.com/magnevan/wizard-sim
 
 - 2026-11-21 The plan, merged from Claude's and Codex's lists; the spec template and rubric
 - 2026-11-21 The VFX Lab (real sim and view, five scenes, rune grid, `window.vfxLab`) and `npm run vfx-sheet` (contact sheets, difference frames, metrics)
+- 2026-11-21 Round 2: the lab's side panel (rune keys, forms, drag aim, scene, time scrubber, rune grid), live without reloads; the knob registry (`art/fx-knobs.ts`), 25 knobs and the slider panel with Save

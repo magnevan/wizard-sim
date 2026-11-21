@@ -8,12 +8,15 @@
  *   ?hit=1        the sim's hit sector, dotted
  *   ?kinds=water,fire,cold,scald   which columns (also arcane-beam, life-beam, fire-beam: the beams' rune tiers)
  *   ?scale=3      screen px per art px
+ *
+ * The "knobs" box in the bar opens the VFX knob panel (lab/vfx-lab/knob-panel.ts): the sprays' sliders, live.
  */
 import * as X from '../art/px';
 import * as K from '../art/kit';
 import { AimTrail, sprayJet, type Aim, type JetKind } from '../art/spray-jet';
 import { FY, TAU } from '../art/util';
 import { SHAPES } from '@wizard-sim/sim';
+import { mountKnobPanel } from './vfx-lab/knob-panel';
 
 const q = new URLSearchParams(location.search);
 const frozen = q.has('t') ? Number(q.get('t')) : null;
@@ -36,6 +39,21 @@ for (const [name, get, set] of [['sweep', () => sweep, (v: boolean) => { sweep =
   const l = document.createElement('label'), b = document.createElement('input');
   b.type = 'checkbox'; b.checked = get(); b.onchange = () => set(b.checked);
   l.append(b, ' ' + name); bar.append(l);
+}
+// the VFX knobs (art/fx-knobs.ts), docked on the right; whether it's open is remembered per browser
+{
+  const l = document.createElement('label'), b = document.createElement('input'), dock = document.createElement('div');
+  dock.style.cssText = 'position:fixed;top:4px;right:4px;max-height:calc(100vh - 8px);overflow:auto;z-index:2;display:none';
+  let mounted = false;
+  const open = (on: boolean): void => {
+    if (on && !mounted) { mountKnobPanel(dock, () => { if (frozen !== null) frame(); }); mounted = true; }
+    dock.style.display = on ? '' : 'none';
+    try { localStorage.setItem('sprayLab.knobs', on ? '1' : '0'); } catch { /* blocked storage */ }
+  };
+  b.type = 'checkbox'; b.onchange = () => open(b.checked);
+  try { b.checked = localStorage.getItem('sprayLab.knobs') === '1'; } catch { /* blocked storage */ }
+  l.append(b, ' knobs'); bar.append(l); document.body.append(dock);
+  if (b.checked) queueMicrotask(() => open(true));
 }
 const note = document.createElement('span');
 note.textContent = 'rows: 1 to 5 runes of the form element' + (old ? ' · left of each pair: the old cone' : '');

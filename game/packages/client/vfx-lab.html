@@ -6,17 +6,19 @@
 <title>VFX Lab</title>
 <style>
   html, body { margin: 0; background: #14161b; color: #c8ccd6; font: 13px system-ui, sans-serif; }
-  #bar { padding: 6px 10px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  #bar input, #bar select, #bar button { font: inherit; background: #22252d; color: inherit; border: 1px solid #3a3f4b; border-radius: 3px; padding: 1px 4px; }
-  #bar .note { flex-basis: 100%; color: #7d8494; font-size: 12px; }
-  #app { position: relative; display: inline-block; }
+  body { display: flex; align-items: flex-start; }
+  /* the stage comes first in the page (capture tools take the first canvas); the panel is shown on its left */
+  #stage { flex: 1; min-width: 0; padding: 10px; overflow: auto; height: 100vh; box-sizing: border-box; }
+  #panel { order: -1; }
+  #app { position: relative; display: inline-block; vertical-align: top; }
   #app canvas { display: block; image-rendering: pixelated; }
+  #app canvas.overlay { position: absolute; left: 0; top: 0; cursor: crosshair; }
   #app .label { position: absolute; top: 3px; font: 11px ui-monospace, Consolas, monospace; color: #e8e2c8; text-shadow: 0 1px 0 #000; pointer-events: none; }
 </style>
 </head>
 <body>
-<div id="bar"></div>
-<div id="app"></div>
+<div id="stage"><div id="app"></div></div>
+<div id="panel"></div>
 <script type="module" src="./src/lab/vfx-lab/main.ts"></script>
 </body>
 </html>

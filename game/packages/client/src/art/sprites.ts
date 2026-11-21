@@ -448,6 +448,16 @@ export function spriteFrame(s: RigState, who: number, rigAnchors: Anchors): Fram
   return fr;
 }
 
+/**
+ * Forgets the composed sheet frames. A cached frame keeps the anchors of the first rig state that made it (the key
+ * doesn't hold everything the anchors depend on), so what a page drew before decides where later spells start; the VFX
+ * Lab clears it for frames that must match a fresh page's.
+ */
+export function resetSheetFrames(): void {
+  for (const fr of cache.values()) fr.tex.destroy(true);
+  cache.clear();
+}
+
 /** A multiply tint for a sprite's statuses (the code rigs paint them on the body). */
 export function statusTint(s: RigState): number {
   if (s.frozen > 0) return 0x8fd0ff;

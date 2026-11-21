@@ -4,6 +4,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
+import { parseKnobValues } from './src/art/fx-knobs-check';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -32,6 +33,36 @@ function soundLab(): Plugin {
           all[id] = { ...note, at: new Date().toISOString() };
           writeFileSync(notes, `${JSON.stringify(all, null, 2)}\n`);
           res.end('ok');
+        });
+      });
+    },
+  };
+}
+
+/**
+ * The VFX knob panel's Save (lab/vfx-lab/knob-panel.ts), dev server only: POST /__fx/knobs with `{ id: number }`
+ * writes src/art/fx-knobs.json (sorted, pretty); GET returns it. Anything but an object of finite numbers under
+ * knob-shaped ids is refused whole, so a bad post can't half-write the file.
+ */
+function fxKnobs(): Plugin {
+  const file = join(here, 'src/art/fx-knobs.json');
+  return {
+    name: 'fx-knobs', apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/__fx/knobs', (req, res) => {
+        res.setHeader('content-type', 'application/json');
+        if (req.method !== 'POST') { res.end(existsSync(file) ? readFileSync(file, 'utf8') : '{}'); return; }
+        let body = '';
+        req.on('data', (c) => { body += c; if (body.length > 1e6) req.destroy(); });
+        req.on('end', () => {
+          const fail = (errors: string[]): void => { res.statusCode = 400; res.end(JSON.stringify({ ok: false, errors })); };
+          let raw: unknown;
+          try { raw = JSON.parse(body); } catch { fail(['not JSON']); return; }
+          const { values, errors } = parseKnobValues(raw);
+          if (errors.length) { fail(errors); return; }
+          const sorted = Object.fromEntries(Object.entries(values).sort(([a], [b]) => (a < b ? -1 : 1)));
+          writeFileSync(file, `${JSON.stringify(sorted, null, 2)}\n`);
+          res.end(JSON.stringify({ ok: true, count: Object.keys(sorted).length }));
         });
       });
     },
@@ -70,7 +101,7 @@ function gitCommit(): string {
 // base './' so the built dist/ works from any path (the artifact, itch.io, a file server).
 export default defineConfig({
   base: './',
-  plugins: [soundLab()],
+  plugins: [soundLab(), fxKnobs()],
   define: { __SIM_BUILD__: JSON.stringify(simBuild()), __BUILD_COMMIT__: JSON.stringify(gitCommit()) },
   server: { port: 5187 },
   preview: { port: 4187 },

@@ -15,6 +15,7 @@ import * as K from './kit';
 import * as X from './px';
 import type { Ctx, Pt } from './px';
 import { FY, TAU, clamp, easeOut, rand, seg } from './util';
+import { defKnob } from './fx-knobs';
 
 export type NovaLight = (x: number, y: number, r: number, col: string, a: number, soft?: boolean) => void;
 export type NovaPart = 'far' | 'near';
@@ -565,8 +566,10 @@ export function drawBurst(o: Ctx, g: Ctx, look: number, x: number, y: number, r:
  * because every nova took the same time to reach its edge). A smaller one plays faster, down to a floor.
  */
 export const NOVA_REF = 3 * 16;
+/** A knob (fx-knobs.ts) on every nova's pace: above 1 the waves travel faster, below slower (and live longer). */
+const K_NOVA_SPEED = defKnob('nova.all.speed', 1, { min: 0.4, max: 2.5, help: 'how fast every Area ring travels out (the effect also lasts longer when slower)' });
 /** How much slower than the tuned timings a nova of radius r px plays. */
-export const novaStretch = (r: number): number => clamp(r / NOVA_REF, 0.7, 3);
+export const novaStretch = (r: number): number => clamp(r / NOVA_REF, 0.7, 3) / K_NOVA_SPEED.v;
 
 /** Has element `look` a nova of its own here? */
 export const hasNova = (look: number): boolean => !!NOVAS[look];

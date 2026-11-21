@@ -68,3 +68,11 @@ Prop sheets for the wizard's conjured weapons and guards, for the [warband art](
 - Four at once: the computer ran low on memory and the runs were stopped. Two weapon images survived (one only in `~/.codex/generated_images/`). Run two at a time while other heavy work is open.
 - Round 2 (the user: they are magical conjurations, unlike the goblins' gear): the references were the wizard's sheet plus sheet A, and the goblin sheet was dropped. "Not made by any smith ... no wood, leather, rivets or forged metal" kept everything elemental. Naming each draft's fault ("must read as a sword, not a torch") and giving each element a colour of its own fixed them in one try. Two at a time, then one, ran in about three minutes with no memory trouble.
 - A "ward of light round a small solid core" gave translucent, more spell-like shields, but most of each is glow (shader work), not mesh.
+
+### 2026-11-21, elemental weapons
+
+Nine sheets of weapon variants for [elemental weapons](../../docs/explorations/2026-11-21-elemental-weapons.md), written by `tools/weapon-variants/prompts.mjs`, with the approved `docs/reference/wizard-arms/weapons-a.jpg` as the reference (plus the wizard's model sheet for the Healing hands). Nine runs, five at a time, about 15 minutes in all; all 50 cells usable.
+
+- A grid of six ("an even grid of 3 columns and 2 rows ... in reading order") came back in the asked order every time and slices cleanly by its emptiest columns and rows (`slice.py`).
+- One fixed motif per element across every prompt (Water a blue ribbon, Earth bolted stone plates...) gave a consistent visual language across sheets, and "give each added element its own part of the weapon" kept pairs and triples apart.
+- The first five runs again lost their saves under load ("node_repl failed"); their images were in `~/.codex/generated_images/<session>/`, identified by looking. The second batch of four saved normally.

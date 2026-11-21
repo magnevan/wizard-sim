@@ -1,0 +1,248 @@
+<title>Elemental Arms</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus+SC&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: an armoury ledger. One band per weapon, its variants as cards on white plates (the art's own ground). */
+:root {
+  --bg: #eef0f4; --panel: #ffffff; --ink: #1c2130; --muted: #5d6578; --line: #d5d9e2; --accent: #7a3fd0; --plate: #ffffff;
+  --good: #1f8a4c; --warn: #a86a00; --bad: #b3372f;
+  --display: 'Marcellus SC', 'Palatino Linotype', Georgia, serif;
+  --body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12141b; --panel: #1b1e28; --ink: #e6e8ef; --muted: #9aa1b4; --line: #2d3242; --accent: #b48cff; --plate: #f4f5f8;
+  --good: #4cc47f; --warn: #e0a640; --bad: #ef6b60; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12141b; --panel: #1b1e28; --ink: #e6e8ef; --muted: #9aa1b4; --line: #2d3242; --accent: #b48cff; --plate: #f4f5f8;
+  --good: #4cc47f; --warn: #e0a640; --bad: #ef6b60; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 48px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; letter-spacing: .02em; }
+h1 { font-size: clamp(34px, 6vw, 54px); line-height: 1.05; }
+h2 { font-size: 28px; }
+h3 { font-size: 17px; font-family: var(--body); font-weight: 600; letter-spacing: 0; }
+p { margin: 0; max-width: 68ch; }
+.muted { color: var(--muted); }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-weight: 600; }
+header { display: grid; gap: 14px; }
+.tally { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.tally a { text-decoration: none; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px 5px 8px; display: inline-flex; gap: 8px; align-items: center; font-size: 13.5px; }
+.tally a b { font-variant-numeric: tabular-nums; }
+.tally a:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.rules > div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 6px; align-content: start; }
+.motifs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 22px; }
+.motif { display: grid; grid-template-columns: 14px 1fr; gap: 10px; align-items: baseline; font-size: 14px; }
+.motif .dot { transform: translateY(2px); }
+section.weapon { display: grid; gap: 18px; scroll-margin-top: 16px; }
+.whead { display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 26px; }
+.whead .row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.count { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.why { font-size: 14px; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+.card.mk-keep { border-color: var(--good); } .card.mk-maybe { border-color: var(--warn); } .card.mk-no { opacity: .62; }
+.plate { background: var(--plate); aspect-ratio: 1; display: grid; place-items: center; position: relative; }
+.plate img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.plate .wait { color: #7a8194; font-size: 13px; padding: 20px; text-align: center; }
+.plate .src { position: absolute; left: 8px; bottom: 8px; font-size: 11px; color: #6a7183; background: rgba(255,255,255,.85); border-radius: 4px; padding: 1px 6px; }
+.body { padding: 12px 14px 14px; display: grid; gap: 9px; align-content: start; min-width: 0; }
+.name { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-weight: 600; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 500; border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px 1px 5px; }
+.chip .dot { width: 9px; height: 9px; }
+.keys { font-family: var(--mono); font-size: 12px; color: var(--muted); display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+.keys kbd { font: inherit; color: var(--ink); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; min-width: 1.4em; text-align: center; }
+.adds { display: grid; gap: 5px; font-size: 13px; color: var(--muted); }
+.adds b { color: var(--ink); font-weight: 600; }
+.marks { display: flex; gap: 6px; }
+.marks button { flex: 1; font: 500 13px var(--body); padding: 5px 0; border-radius: 7px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.marks button[aria-pressed="true"][data-m="keep"] { background: var(--good); border-color: var(--good); color: #fff; }
+.marks button[aria-pressed="true"][data-m="maybe"] { background: var(--warn); border-color: var(--warn); color: #fff; }
+.marks button[aria-pressed="true"][data-m="no"] { background: var(--bad); border-color: var(--bad); color: #fff; }
+.marks button:disabled { cursor: default; opacity: .5; }
+textarea { width: 100%; box-sizing: border-box; min-height: 52px; resize: vertical; font: 13px/1.4 var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; }
+.save { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; justify-self: end; font-size: 12.5px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; color: var(--muted); }
+.save.bad { color: var(--bad); }
+.sheets { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.sheets figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.sheets img { display: block; width: 100%; background: #fff; }
+.sheets figcaption { padding: 8px 12px; font-size: 13px; color: var(--muted); }
+.general { display: grid; gap: 10px; max-width: 760px; }
+.general textarea { min-height: 110px; font-size: 14px; }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color .15s, opacity .15s; } }
+@media (max-width: 480px) { .grid { grid-template-columns: 1fr; } .sheets { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+  <div class="save" id="save" role="status">Loading saved marks…</div>
+  <header>
+    <div class="eyebrow">Wizard Sim · issue #4 · every conjured weapon and its infusions</div>
+    <h1>Elemental Arms</h1>
+    <p>A weapon is <b>Sigil + elements</b> cast with the Weapon key. The strongest element leads and picks the weapon; every other element in the queue rides along as an infusion. Pressing every key sequence through the game's own spell rules gives <b id="total">57</b> distinct weapons: eight bases and the extra-element sets each can carry, counting a repeated element once.</p>
+    <p class="muted">The pictures are Codex concepts for inspiration, drawn from the approved weapon sheet. The brief for every one: show each added element as one solid feature in its own colour, sculpted into the weapon, so nothing reads as particle noise at game size. Mark the ones worth chasing.</p>
+    <nav class="tally" id="tally" aria-label="Weapons"></nav>
+  </header>
+
+  <div class="rules">
+    <div><h3>What limits the list</h3><p class="muted">The queue holds Sigil plus four runes. Opposites cancel rune for rune: Fire and Cold, Water and Lightning, Life and Arcane, Earth and Lightning, and Fire melts Ice. Water and Cold merge into Ice.</p></div>
+    <div><h3>Who leads</h3><p class="muted">Life, then Earth, then Arcane, then Lightning, then Ice, then whichever of Water, Fire and Cold has the most runes. An element that outranks the base takes the weapon over, so a Frost spear given Earth becomes a Stone maul.</p></div>
+    <div><h3>The visual language asked for</h3><p class="muted">The same motif for an element on every weapon, so a partner learns it once. Two or three extras each get their own part of the weapon (head, shaft, grip) instead of mixing.</p></div>
+  </div>
+
+  <div class="motifs" id="motifs" aria-label="Infusion motifs"></div>
+
+  <main id="weapons" style="display:grid;gap:48px"></main>
+
+  <section style="display:grid;gap:14px">
+    <h2>The sheets as generated</h2>
+    <p class="muted">The cards above are cut from these. If a crop looks off, the whole sheet is the source.</p>
+    <div class="sheets" id="sheets"></div>
+  </section>
+
+  <section class="general">
+    <h2>General notes</h2>
+    <label for="general" class="muted">Which direction to take into the VFX fix for issue #4, or anything else.</label>
+    <textarea id="general" placeholder="Notes on the whole set"></textarea>
+  </section>
+</div>
+
+<script>
+(() => {
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+const vid = (w, v) => slug(w.title) + '--' + (v.extras.length ? v.extras.join('-') : 'pure');
+
+const ORDER = ['Flame sword', 'Tide trident', 'Frost spear', 'Ice bow', 'Lightning whip', 'Arcane wand', 'Stone maul', 'Healing hands'];
+const WHY = {
+  'Flame sword': 'Only Water can join it, and with Fire the water is steam. Cold and Ice cancel Fire; Life, Earth, Arcane and Lightning outrank it and take over.',
+  'Tide trident': 'Only Fire can join it. Lightning cancels Water, Cold merges with it into Ice (an Ice bow), and Life, Earth and Arcane take over.',
+  'Frost spear': 'Nothing can join it. Water turns it to Ice, Fire cancels it, and every other element outranks Cold. It is the one weapon with no infusions.',
+  'Ice bow': 'Cold, Water and Lightning can join it. Fire melts it; Life, Earth and Arcane take over.',
+  'Lightning whip': 'Cold and Fire can join it. Water and Earth cancel Lightning; Ice, Life and Arcane take over.',
+  'Arcane wand': 'Water, Fire, Cold, Ice and Lightning can join it, two at a time. Life cancels Arcane and Earth takes over.',
+  'Stone maul': 'Arcane, Water, Fire, Cold and Ice can join it, up to three. Lightning cancels Earth and Life takes over.',
+  'Healing hands': 'Life leads over everything, so almost anything can join: all but Arcane, which cancels it, up to three extras. The extras lend the heal their resistances and shapes.',
+};
+const MOTIF = {
+  fire: 'a molten core: glowing cracks and an ember-bright edge, like lava under a crust',
+  water: 'a ribbon of deep-blue water spiralling round it, with glassy droplet beads',
+  cold: 'a crust of white-cyan frost rime and snow caps on edges and tips',
+  ice: 'clear white-blue faceted crystals growing out of it like spikes',
+  lightning: 'lavender-white zig-zag inlays like glowing fracture lines, and a copper coil',
+  arcane: 'magenta-pink rune inlays and one floating crystal shard',
+  earth: 'chunky plates of rough brown stone bolted on like armour',
+};
+const SHEETS = [
+  ['hands-1', 'Healing hands, 1'], ['hands-2', 'Healing hands, 2'], ['hands-3', 'Healing hands, 3'],
+  ['wand-1', 'Arcane wand, 1'], ['wand-2', 'Arcane wand, 2'], ['maul-1', 'Stone maul, 1'], ['maul-2', 'Stone maul, 2'],
+  ['bow-maul', 'Ice bow, and the last maul'], ['small', 'Trident, sword and whip'],
+];
+
+let DATA = null;
+const ratings = {}, chains = {};
+let db = null;
+const setSave = (s, bad) => { const e = $('save'); e.textContent = s; e.classList.toggle('bad', !!bad); };
+
+function dot(el) { return `<span class="dot" style="background:${DATA.colors[el].color}"></span>`; }
+function chip(el) { return `<span class="chip">${dot(el)}${esc(DATA.colors[el].name)}</span>`; }
+function keys(pressed) {
+  return pressed.map((e) => `<kbd title="${esc(DATA.colors[e].name)}">${esc(DATA.colors[e].key)}</kbd>`).join('') + '<span>then Weapon</span>';
+}
+
+function render() {
+  const ws = ORDER.map((t) => DATA.weapons.find((w) => w.title === t)).filter(Boolean);
+  $('total').textContent = ws.reduce((n, w) => n + w.variants.length, 0);
+  $('tally').innerHTML = ws.map((w) => `<a href="#${slug(w.title)}">${dot(w.lead)}${esc(w.title)} <b>${w.variants.length}</b></a>`).join('');
+  $('motifs').innerHTML = Object.entries(MOTIF).map(([el, t]) => `<div class="motif">${dot(el)}<span><b>${esc(DATA.colors[el].name)}</b>: ${esc(t)}</span></div>`).join('');
+  $('weapons').innerHTML = ws.map((w) => `
+    <section class="weapon" id="${slug(w.title)}">
+      <div class="whead">
+        <div class="row"><h2>${esc(w.title)}</h2>${chip(w.lead)}<span class="count">${w.variants.length} ${w.variants.length === 1 ? 'version' : 'versions'}</span></div>
+        <p class="muted">${esc(w.text.replace(/ Lasts until.*$/, ''))}</p>
+        <p class="why">${esc(WHY[w.title] || '')}</p>
+      </div>
+      <div class="grid">${w.variants.map((v) => card(w, v)).join('')}</div>
+    </section>`).join('');
+  $('sheets').innerHTML = SHEETS.map(([f, cap]) => `<figure><img src="img/sheet-${f}.jpg" alt="Concept sheet: ${esc(cap)}" loading="lazy" onerror="this.closest('figure').hidden=true"><figcaption>${esc(cap)}</figcaption></figure>`).join('');
+  for (const ta of document.querySelectorAll('textarea[data-id]')) noteBox(ta);
+  noteBox($('general'));
+  paint();
+}
+
+function card(w, v) {
+  const id = vid(w, v);
+  const name = v.extras.length ? `${esc(w.title)} + ${v.extras.map((e) => esc(DATA.colors[e].name)).join(' + ')}` : `${esc(w.title)}, plain`;
+  const adds = v.extras.map((e) => { const a = v.adds[e]; return a ? `<div>${dot(e)} <b>${esc(a.trait)}</b>: ${esc(a.text)}</div>` : ''; }).join('');
+  return `<article class="card" data-card="${id}">
+    <div class="plate"><img src="img/${id}.jpg" alt="Concept art: ${name}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'wait',textContent:'Picture not ready yet'}))"></div>
+    <div class="body">
+      <div class="name">${name}</div>
+      <div class="keys">${keys(v.pressed)}</div>
+      ${adds ? `<div class="adds">${adds}</div>` : '<div class="adds">The base weapon, as on the approved sheet.</div>'}
+      <div class="marks" role="group" aria-label="Mark ${name}">
+        <button data-id="${id}" data-m="keep" aria-pressed="false">Keep</button>
+        <button data-id="${id}" data-m="maybe" aria-pressed="false">Maybe</button>
+        <button data-id="${id}" data-m="no" aria-pressed="false">No</button>
+      </div>
+      <textarea data-id="${id}" id="note-${id}" aria-label="Note on ${name}" placeholder="Note"></textarea>
+    </div>
+  </article>`;
+}
+
+function paint() {
+  for (const b of document.querySelectorAll('.marks button')) {
+    const r = ratings['v-' + b.dataset.id];
+    b.setAttribute('aria-pressed', String(!!r && r.mark === b.dataset.m));
+    b.disabled = !db;
+  }
+  for (const c of document.querySelectorAll('[data-card]')) {
+    const m = ratings['v-' + c.dataset.card]?.mark;
+    c.classList.toggle('mk-keep', m === 'keep'); c.classList.toggle('mk-maybe', m === 'maybe'); c.classList.toggle('mk-no', m === 'no');
+  }
+  for (const ta of document.querySelectorAll('textarea')) {
+    const key = ta.dataset.id ? 'v-' + ta.dataset.id : 'general';
+    if (document.activeElement !== ta && ratings[key]) ta.value = ratings[key].note || '';
+    ta.readOnly = !db;
+  }
+}
+
+function put(key, patch) {
+  ratings[key] = { mark: null, note: '', ...ratings[key], ...patch };
+  paint();
+  if (!db) return;
+  const k = 'ratings/' + key;
+  const doc = { mark: ratings[key].mark || null, note: ratings[key].note || '', updatedAt: new Date().toISOString() };
+  setSave('Saving…');
+  chains[k] = (chains[k] || Promise.resolve()).then(() => db.doc(k).set(doc)).then(() => setSave('All saved')).catch(() => setSave('Couldn’t save that. Check your connection and try again.', true));
+}
+function noteBox(ta) {
+  const key = ta.dataset.id ? 'v-' + ta.dataset.id : 'general';
+  let timer;
+  ta.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => put(key, { note: ta.value }), 900); });
+  ta.addEventListener('blur', () => { clearTimeout(timer); if ((ratings[key]?.note || '') !== ta.value) put(key, { note: ta.value }); });
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.marks button'); if (!b || !db) return;
+  const key = 'v-' + b.dataset.id;
+  put(key, { mark: ratings[key]?.mark === b.dataset.m ? null : b.dataset.m });
+});
+
+fetch('variants.json').then((r) => r.json()).then((d) => { DATA = d; render(); }).catch(() => { $('weapons').textContent = 'The weapon list failed to load. Reload the page to try again.'; });
+
+(async () => {
+  try { db = await window.claude?.use?.('db'); } catch { db = null; }
+  if (!db) { setSave('Read-only here: marks need the page’s saved store, which isn’t available in this view.', true); paint(); return; }
+  paint();
+  const timer = setTimeout(() => setSave('Saved marks are slow to load. You can still mark; changes save when the connection returns.', true), 10000);
+  db.collection('ratings').onSnapshot((snap) => {
+    for (const d of snap.docs) { const x = d.data(); ratings[d.id] = { mark: x.mark || null, note: x.note || '' }; }
+    if (!snap.metadata.fromCache) { clearTimeout(timer); if (!snap.metadata.hasPendingWrites) setSave('All saved'); }
+    paint();
+  }, () => { clearTimeout(timer); db = null; setSave('Saved marks are unavailable, so the page is read-only. Reload to try again.', true); paint(); });
+})();
+})();
+</script>

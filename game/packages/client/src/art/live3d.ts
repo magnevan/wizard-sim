@@ -765,8 +765,8 @@ export const GUARD_PLACE = {
   carryUp: 0.31, carryOut: 1.2, carryAhead: 1, carryAngle: 2.5, carryTilt: 0.2,
   blockUp: 1.19, blockAhead: 1.52, blockOut: 1.64, blockSize: 0.89, blockYaw: 1.7,
 };
-/** A slung guard's middle: this far up from the hips and back from the shoulders' middle, in torso lengths. */
-const SLUNG_UP = 0.7, SLUNG_BACK = 0.65;
+/** A slung guard's middle: SLUNG_UP up from the hips and SLUNG_BACK back from the shoulders' middle, in torso lengths, plus its half thickness and SLUNG_WIDE of its half height (a wide guard clears the robe). */
+const SLUNG_UP = 0.75, SLUNG_BACK = 0.72, SLUNG_WIDE = 0.06;
 const qS = new THREE.Quaternion(), pS = new THREE.Vector3();
 const gY = new THREE.Vector3(), qC = new THREE.Quaternion(), qB = new THREE.Quaternion(), gL = new THREE.Vector3(), gH = new THREE.Vector3(), pC = new THREE.Vector3(), pB = new THREE.Vector3();
 /** The rotation that takes the guard's current (up, face) frame (mAT, mA's transpose) to (up, face), into `out`. */
@@ -822,7 +822,10 @@ function placeGuard(inst: Inst, w: number, sling = 0): void {
       // flat on the back: the raised guard's square-on turn (blockYaw: turnTo's face is the frame's, not the guard's
       // normal) turned half round to face behind (the user, 2026-11-21: it "sits on the edge instead of flat")
       turnTo(qS, WORLD_UP, v2.copy(gF).applyAxisAngle(WORLD_UP, G.blockYaw + Math.PI));
-      pS.set(sx, hips.y + SLUNG_UP * torso, sz).addScaledVector(gF, -SLUNG_BACK * torso);
+      // out from the spine by its own half thickness too, so a thick or wide one doesn't sink into the robe (the user,
+      // 2026-11-21: "too close to the center of the character. mirror buckler clips a lot")
+      const thick = c.node.localToWorld(v1.copy(c.mid).add(c.axes[2])).distanceTo(gMid);
+      pS.set(sx, hips.y + SLUNG_UP * torso, sz).addScaledVector(gF, -(SLUNG_BACK * torso + thick + SLUNG_WIDE * half));
       if (Number.isFinite(qS.w)) { qC.slerp(qS, sling); pC.lerp(pS, sling); }
     }
     // raised: square in front

@@ -187,12 +187,17 @@ const blowOf = (prop: string | undefined): string => prop === 'earthmaul' ? 'sma
  * 0.75 to 1.1 s, is skipped); `ready` is the clip time held for `linger` s after, so the next jab starts from it and a
  * cast or the standing pose is eased into from it (live3d blendPose). `hl` is the half-life of the ease back to standing.
  */
-const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; turn?: number; spin?: number; slide?: readonly (readonly [number, number])[]; free?: boolean; raise?: boolean; coil?: number }> = {
+const MOVESETS: Record<string, { path: readonly (readonly [number, number])[]; ready: number; linger: number; hl: number; turn?: number; spin?: number; slide?: readonly (readonly [number, number])[]; free?: boolean; raise?: boolean; coil?: number; clip?: string }> = {
   // the maul, two-handed (attack-maul.glb: wound up over the right shoulder by 0.55 s, the head on the ground at 0.95,
   // struck 52° left of the facing, so turned by that): the Strike starts from the hammer raised and smashes down; a
   // held Heavy keeps it raised overhead (`coil`, the clip time held while charging), its release a bigger smash; the
   // Sweep holds the swing's mid-point out level while the body turns once
-  smash: { path: [[0, 0.5], [0.1, 0.92], [0.28, 1.1], [0.55, 1.75]], ready: 1.75, linger: 0.3, hl: 0.1, turn: 52, free: true, coil: 0.55 },
+  // (the user, 2026-11-21: started already raised, the short click "looks weird (like hes taking a bow)": it now winds
+  // up from the carry first, the blow landing 0.3 s in; Strikes in quick succession go on through a combo)
+  smash: { path: [[0, 0.15], [0.18, 0.55], [0.3, 0.93], [0.45, 1.05], [0.8, 1.75]], ready: 1.75, linger: 0.3, hl: 0.1, turn: 52, free: true, coil: 0.55 },
+  // the combo's second blow: a flat swing across from right to left (attack-maul-swing.glb, the hands crossing the
+  // front at 0.5 s), then the next Strike smashes again
+  smashCombo1: { path: [[0, 0.15], [0.15, 0.32], [0.3, 0.55], [0.45, 0.78], [0.8, 1.6]], ready: 1.6, linger: 0.3, hl: 0.1, turn: 0, free: true, clip: 'swing' },
   smashHeavy: { path: [[0, 0.55], [0.12, 0.95], [0.45, 1.1], [0.8, 1.75]], ready: 1.75, linger: 0, hl: 0.12, turn: 52, free: true },
   smashSweep: { path: [[0, 0.6], [0.06, 0.76], [0.3, 0.78], [0.5, 1.6]], ready: 1.75, linger: 0, hl: 0.12, turn: 52, free: true, spin: 0.42 * 0.7 },
   // the bow (Archery Shot, release at 3.25 s): a shot from the drawn pose, then held drawn for `linger`, and drawn
@@ -295,10 +300,12 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
       const r = MOVESETS[base];
       return { move: base, t: r.coil ?? r.ready, face, flash, seat, grip: 1, ...free(r), props, turn: (r.turn ?? 0) + COIL * smooth01(s.charge * 2), ...under };
     }
-    const set = s.shot === 1 ? MOVESETS[base + (s.blow === 1 ? 'Heavy' : s.blow === 2 ? 'Sweep' : '')] ?? MOVESETS[base] : undefined;
+    const kind = s.blow === 1 ? 'Heavy' : s.blow === 2 ? 'Sweep' : s.combo ? 'Combo' + s.combo : '';
+    const pick = s.shot === 1 ? MOVESETS[base + kind] : undefined;
+    const set = s.shot === 1 ? (pick && meta.clips[pick.clip ?? base] ? pick : MOVESETS[base]) : undefined;
     let settling = false;
     if (set && s.shotT >= 0 && own) {
-      const move = base, end = set.path[set.path.length - 1][0];
+      const move = set.clip ?? base, end = set.path[set.path.length - 1][0];
       // a Sweep turns the body once round, the way the ring goes (against the clock on screen)
       const spun = set.spin && s.shotT < set.spin ? face - TAU * smooth01(s.shotT / set.spin) : face;
       if (s.shotT < end) return { move, t: pathTime(set.path, s.shotT), face: spun, flash, seat, grip: 1, ...free(set), props, turn: set.turn, ...under, ...(set.slide ? { slide: pathTime(set.slide, s.shotT) } : {}) };

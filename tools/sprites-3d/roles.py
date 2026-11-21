@@ -28,7 +28,9 @@ ROLES = {
                          # weapon blows (round 4): a two-handed thrust for the spear and trident, the lash for the whip, a draw and release for the bow
                          'thrust': 'attack_thrust', 'jab': 'attack_jab', 'lash': 'attack_whip', 'shoot': 'archery_shot',
                          # the maul's two-handed overhead smash (2026-11-20, text-to-motion: output/wizard/attack-maul.glb)
-                         'smash': 'attack_maul'},
+                         'smash': 'attack_maul',
+                         # its combo's second blow, a flat two-handed swing from right to left (output/wizard/attack-maul-swing.glb)
+                         'swing': 'attack_maul_swing'},
                # the bow's draw is long and still: its release (the archer's, 3.25 s) and the draw before it, set by hand
                'cast_times': {'shoot': {'first': 2.0, 'hit': 3.25, 'last': 4.75}},
                # the guard clips (round 3): Meshy text-to-motion, a buckler held across the chest (output/wizard/guard-block.glb) and a

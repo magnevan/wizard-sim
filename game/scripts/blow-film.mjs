@@ -1,11 +1,12 @@
 // A weapon move filmed in the game itself (the Model Viewer leaves out the game's state: the cast pose, the 2D effects).
 // Usage (after npm run build): node scripts/blow-film.mjs [--out shots/blow] [--weapon trident] [--move strike|heavy|sweep|block]
-//   [--hold 1.2] [--frames 24] [--every 60] [--fresh] [--uses n] [--aim dx,dy] [--guard ember]   (needs a real GPU: d3d11)
+//   [--hold 1.2] [--frames 24] [--every 60] [--fresh] [--uses n] [--aim dx,dy] [--guard ember] [--again 0.7]   (needs a real GPU: d3d11)
 // Casts a Water Force first (as real play does: a Strike leaves the last cast's id in place), unless --fresh; then
 // films the move, aimed east, as <out>/<weapon>-<move>-NN.png crops round seat 0 (scale 4), and prints the seat's
 // phase every frame. --hold is how long a Heavy is held (s); --uses gives the weapon n uses once (not topped up), to
 // see it run out; --aim is where the mouse aims from the wizard (screen px, default 280,0: east);
-// --guard gives it a guard (block holds Space).
+// --guard gives it a guard (block holds Space); --again taps the move once more that many seconds after the first
+// (a Strike combo).
 import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import puppeteer from 'puppeteer-core';
@@ -53,5 +54,10 @@ try {
   else await sleep(60);
   if (mv !== 'block') await p.mouse.up({ button: 'right' });
   if (mv === 'sweep') await p.keyboard.up('Shift');
-  while (k < frames) { await shoot(k++); await sleep(every); }
+  const again = Number(arg('again', '0')), t0 = Date.now();
+  let tapped = !again;
+  while (k < frames) {
+    if (!tapped && Date.now() - t0 >= again * 1000) { tapped = true; await p.mouse.down({ button: 'right' }); await sleep(60); await p.mouse.up({ button: 'right' }); }
+    await shoot(k++); await sleep(every);
+  }
 } finally { await browser.close(); stop(); }

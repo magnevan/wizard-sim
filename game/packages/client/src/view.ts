@@ -16,7 +16,7 @@
  */
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
-  EV, AI, ARCH, ARCHETYPES, ARMS, BSTEP, ARENA, CAST_ID, EL, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TAP, TUT_TAG, WALL, YTAG, heavyCharge, isPropWall,
+  EV, AI, ARCH, ARCHETYPES, ARMS, BSTEP, ARENA, CAST_ID, EL, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TAP, TUT_TAG, WALL, YTAG, elementName, heavyCharge, isPropWall,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
@@ -57,6 +57,8 @@ const DRY_GLIDE = 3.5, DRY_GLIDE_RATE = 1.5;
 const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL', simple: 'SIMPLE, ANGLED, LOW DETAIL', code: 'CODE, STRAIGHT-ON' };
 
 /** The move events that put the wizard's body through its weapon's blow clip (art/sprites.ts blowOf): each weapon's tap, heavy and special. */
+/** A Strike within COMBO_GAP s of the end of the last one's recovery (ARMS.strikeRecovery) moves its combo on, through COMBO_LEN blows (art/sprites.ts MOVESETS `Combo`n). */
+const COMBO_GAP = 0.5, COMBO_LEN = 2;
 /** The bow is held drawn while an enemy is within this share of its arrows' range and AIM_SIDE units of the aim line. */
 const AIM_REACH = 0.8, AIM_SIDE = 1.2;
 /** The blow moves that are a weapon's Heavy (hands.ts heavy): the body plays the weapon's heavy blow for them. */
@@ -163,6 +165,9 @@ export class WorldView {
   private shotAt = new Float64Array(MAX_SEATS);
   /** Which weapon blow a seat's last `shot` 1 was: 0 a Strike, 1 a Heavy, 2 a Sweep (RigState.blow). */
   private blowK = new Uint8Array(MAX_SEATS);
+  /** Each seat's place in its Strike combo, and when its last Strike went off (RigState.combo). */
+  private combo = new Uint8Array(MAX_SEATS);
+  private strikeAt = new Float64Array(MAX_SEATS).fill(-9);
   /**
    * 1 when seat i's aim is on an enemy within its arrows' range: ahead, nearer than AIM_REACH of the range, and within
    * AIM_SIDE units (plus its radius) of the aim line. Read from synced state only, so a partner sees the same stance.
@@ -285,7 +290,10 @@ export class WorldView {
       // Blink is instant: no sliding between the two spots
       if (e.kind === 'blink' && e.who >= 0) { this.prevBX[e.who] = b.x[e.who]; this.prevBY[e.who] = b.y[e.who]; }
       if (e.kind === 'fizzle' && e.ev === EV.death && e.who >= 0) this.onDeath(w, e, t);
-      if (e.kind === 'move' && BLOW_MOVES.has(e.text ?? '') && e.who >= 0 && e.who < MAX_SEATS) { this.shot[e.who] = 1; this.shotAt[e.who] = t; this.blowK[e.who] = HEAVY_MOVES.has(e.text ?? '') ? 1 : e.text === 'sweep' ? 2 : 0; }
+      if (e.kind === 'move' && BLOW_MOVES.has(e.text ?? '') && e.who >= 0 && e.who < MAX_SEATS) { this.shot[e.who] = 1; this.shotAt[e.who] = t; this.blowK[e.who] = HEAVY_MOVES.has(e.text ?? '') ? 1 : e.text === 'sweep' ? 2 : 0;
+        // Strikes in quick succession are a combo: each one soon after the last moves it on (a pause starts it over)
+        if (e.text === 'strike') { const wk = w.seats.weapon[e.who] ? elementName(w.seats.weapon[e.who]) : 'staff', rec = (ARMS.strikeRecovery as Record<string, number>)[wk] ?? ARMS.strikeRecovery.staff; this.combo[e.who] = t - this.strikeAt[e.who] < rec + COMBO_GAP ? (this.combo[e.who] + 1) % COMBO_LEN : 0; this.strikeAt[e.who] = t; }
+      }
       if (e.kind === 'cast' && e.who >= 0 && e.who < MAX_SEATS) {
         this.castPose(w, e.who, t);
         for (let k = 0; k < s.castLen[e.who]; k++) if (e.who === this.hud.seat) this.hud.spent(s.castQueue[e.who * 5 + k], t);
@@ -636,7 +644,7 @@ export class WorldView {
       const vx = (b.x[i] - this.prevBX[i]) * 60 * PPU;
       s.vx = vx > 25 ? 60 : vx < -25 ? -60 : 0;
     }
-    if (owner < MAX_SEATS) { s.prep = Math.round(this.prepS[owner] * 2) / 2; s.cast = Math.round(this.castS[owner] * 2) / 2; s.shot = this.shot[owner]; s.shotT = t - this.shotAt[owner]; s.blow = this.blowK[owner]; }
+    if (owner < MAX_SEATS) { s.prep = Math.round(this.prepS[owner] * 2) / 2; s.cast = Math.round(this.castS[owner] * 2) / 2; s.shot = this.shot[owner]; s.shotT = t - this.shotAt[owner]; s.blow = this.blowK[owner]; s.combo = this.combo[owner]; }
     s.charge = kind === 'wizard' && i < MAX_SEATS && w.seats.handT[i] > TAP ? Math.max(0.01, heavyCharge(w.seats.handT[i])) : 0;
     s.aimed = kind === 'wizard' && i < MAX_SEATS && w.seats.weapon[i] === EL.ice ? this.aimedAt(w, i) : 0;
     // hit: a squash and a white flash, soft while a beam keeps hitting

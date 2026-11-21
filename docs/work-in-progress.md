@@ -5,7 +5,7 @@ cssclasses:
 
 # Work in progress
 
-[Start here](start-here.md)
+[Start here](start-here.md) · [Threads](threads/README.md) · [Backlog (GitHub issues)](https://github.com/magnevan/wizard-sim/issues) · [How tasks work](tasks.md)
 
 ## Campaign opening
 

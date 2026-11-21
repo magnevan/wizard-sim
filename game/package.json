@@ -24,6 +24,7 @@
     "check:iso": "npm run build && node scripts/iso-check.mjs",
     "check:battery": "npm run build && node scripts/battery-check.mjs",
     "check:yard": "npm run build && node scripts/yard-check.mjs",
+    "check:report": "npm run build && node scripts/report-check.mjs",
     "massing": "node scripts/massing-shots.mjs",
     "shots:tutorial": "npm run build && node scripts/tutorial-shots.mjs",
     "check:webrtc": "npm run build && node scripts/net-e2e.mjs --webrtc",

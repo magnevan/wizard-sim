@@ -1,0 +1,14 @@
+name: Note
+description: Something you noticed. One line in the title is enough.
+labels: [inbox]
+body:
+  - type: textarea
+    id: details
+    attributes:
+      label: Details (optional)
+      description: Anything more. Paste a screenshot with Ctrl+V. Pressing F8 in the game fills in where you are for you.
+  - type: input
+    id: where
+    attributes:
+      label: Where (optional)
+      placeholder: "#battery ?at=well-failing, the maul's Heavy, ..."

@@ -34,6 +34,8 @@ export interface MenuHost {
   onToggle(open: boolean): void;
   /** A click for moving, choosing or changing something in the menu. */
   uiSound?(kind: 'move' | 'select' | 'adjust'): void;
+  /** Open the F8 report box (report.ts); absent headless. */
+  report?(): void;
 }
 
 export interface Setting { label: string; blurb: string; value(): string; adjust(by: -1 | 1): void }
@@ -78,6 +80,7 @@ const CONTROLS: [string, string][] = [
   ['1 2 3 4', 'Sanctum, Arena, Survive, Tutorial'],
   ['F1', 'Help panel (Shift+F1: numbers)'],
   ['F2 F3 F4', 'Tuning, tools, stats panels'],
+  ['F8', 'Report an issue (opens GitHub)'],
   ['Hold Alt', 'Inspect what is under the cursor'],
 ];
 
@@ -247,6 +250,10 @@ export class EscMenu {
         { text: this.online ? 'Your wizard stands still while this menu is open.' : 'Nothing moves until you come back.', col: COL.sub },
         { text: '', col: COL.sub },
         { text: 'Esc, Start or Enter on Resume to go back.', col: COL.dim },
+        ...(this.host.report ? [
+          { text: '', col: COL.sub },
+          { item: { label: 'Report an issue  (F8)', blurb: 'Write a line about what you saw; it opens as a GitHub issue with where you are.', enabled: true, act: () => this.host.report!() } },
+        ] : []),
       ];
     }
     if (section === 'Scenarios') {

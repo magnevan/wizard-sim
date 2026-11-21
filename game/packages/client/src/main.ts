@@ -34,6 +34,7 @@ import { broadcastBus, roomBus } from './net/bus';
 import { webrtcBus } from './net/webrtc';
 import { NetPlay } from './net/netplay';
 import { EscMenu, type Setting } from './menu';
+import { ReportBox } from './report';
 import { GameAudio, loadVolumes, volumeSettings } from './audio/game-audio';
 import { MENU_SECTIONS, onOption, opt, optNum, optOn, seedOpt, setOpt } from './dev-options';
 import { fromLocation, hashFor, scenarioById, scenarioForKey, scenarioOfRoom, worldFor, type Scenario } from './scenarios';
@@ -259,6 +260,17 @@ async function boot(): Promise<void> {
     },
     ...volumeSettings(audio, setOpt),
   ];
+  // F8: file an issue from the game (report.ts); made before the menu so its keys come first
+  const report = headless ? null : new ReportBox({
+    where: () => ({ name: scenario.name, id: scenario.id }),
+    checkpoint: () => world.mode.reached?.(world),
+    rows: () => stats.info().rows,
+    shot: async () => {
+      const c = app.renderer.extract.canvas({ target: app.stage }) as HTMLCanvasElement;
+      return new Promise<Blob | null>((ok) => (c.toBlob ? c.toBlob(ok, 'image/png') : ok(null)));
+    },
+    onToggle: () => { keyboard.release(); pads.resync(); },
+  });
   menu = new EscMenu({
     queued: () => world.seats.queueLen[net?.state === 'playing' ? net.seat : 0],
     net,
@@ -267,6 +279,7 @@ async function boot(): Promise<void> {
     settings,
     onToggle: (open) => { keyboard.release(); pads.resync(); audio?.director.ui(open ? 'open' : 'close'); },
     uiSound: (k) => audio?.director.ui(k),
+    report: report ? () => { menu!.hide(); report.show(); } : undefined,
   });
   help.padsBlocked = () => menu!.open; // the D-pad moves the menu while it's open
   const menuAsk = opt('menu'), menuAt = optNum('menuAt');
@@ -325,6 +338,7 @@ async function boot(): Promise<void> {
     menu!.frame(now);
     if (atkScene) { enemyAttackScene(world, atkPhase, atkFace, now); view.beforeStep(world); }
     else if (net?.state === 'playing') netSteps(now);
+    else if (report?.open) { /* filing a report: the world stands still */ }
     else if (menu!.pausing) { /* the menu is open: the world stands still */ }
     else if (tools.paused) for (let n = tools.takeSteps(); n > 0; n--) runStep();
     else {

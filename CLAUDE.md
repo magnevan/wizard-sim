@@ -13,6 +13,7 @@ The source of truth for what the game is trying to be is `docs/vision.md`. Read 
 ## Layout
 
 - `docs/vision.md`: design pillars and open questions. It changes slowly and only when the user agrees.
+- `docs/tasks.md`: how work is tracked. Threads (ordered lines of work) live in `docs/threads/`, loose discoveries are GitHub issues on magnevan/wizard-sim, and memory holds working preferences only.
 - `docs/current-state.md`: playable behavior. Update affected summaries when implementation changes and link to code and data for exact values.
 - `docs/archive/`: old worklogs, kept as records.
 - `docs/world/`: living pages about the setting, edited as it changes (unlike explorations). `elements.md` holds each element's essence, which informs both the world and the spells.
@@ -31,6 +32,10 @@ The source of truth for what the game is trying to be is `docs/vision.md`. Read 
 Project skills live in `.claude/skills/`:
 - `brainstorm`: a structured ideation session on a topic. It writes an exploration doc and/or idea files.
 - `prototype`: turns an idea into a minimal playable test of one specific question.
+- `file`: "file that" files a discovery as a GitHub issue in one call, then goes back to the work at hand.
+- `triage`: Sonnet labels the issue inbox, links files, closes duplicates and flags possibly obsolete issues with `recheck`.
+
+**Tasks (docs/tasks.md):** when resuming a line of work, read its `docs/threads/` file first and update its status line and Next list as you go. When you notice something outside the current task, file it with the `file` skill rather than fixing it or forgetting it. List issues by label or search, titles only (`--json number,title`), and never dump the whole backlog. Fixing commits say `Fixes #n`.
 
 ## Keeping the docs current
 

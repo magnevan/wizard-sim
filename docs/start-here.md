@@ -30,6 +30,8 @@ cssclasses:
 
 > [!in-review] Active reviews
 > [Campaign opening](work-in-progress.md#campaign-opening) · [Sound design reviews](work-in-progress.md#sound-design)
+>
+> [Threads](threads/README.md) · [Backlog](https://github.com/magnevan/wizard-sim/issues) · [How tasks work](tasks.md)
 
 ## Reference
 

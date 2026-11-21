@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, normalize } from 'node:path';
@@ -57,11 +58,20 @@ function simBuild(): string {
   return h.digest('hex').slice(0, 8);
 }
 
+/** The commit being built, short, for bug reports (report.ts); "+changes" when the tree has uncommitted edits. */
+function gitCommit(): string {
+  try {
+    const sha = execSync('git rev-parse --short HEAD', { cwd: here, encoding: 'utf8' }).trim();
+    const dirty = execSync('git status --porcelain --untracked-files=no', { cwd: here, encoding: 'utf8' }).trim() !== '';
+    return dirty ? `${sha}+changes` : sha;
+  } catch { return 'unknown'; }
+}
+
 // base './' so the built dist/ works from any path (the artifact, itch.io, a file server).
 export default defineConfig({
   base: './',
   plugins: [soundLab()],
-  define: { __SIM_BUILD__: JSON.stringify(simBuild()) },
+  define: { __SIM_BUILD__: JSON.stringify(simBuild()), __BUILD_COMMIT__: JSON.stringify(gitCommit()) },
   server: { port: 5187 },
   preview: { port: 4187 },
   build: {

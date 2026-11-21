@@ -588,7 +588,8 @@ function rodBetween(mesh: THREE.Mesh, a: THREE.Vector3, b: THREE.Vector3): void 
 function pose(inst: Inst, m: Model, p: LivePose, key?: string): void {
   const clipName = m.clips.has(p.move) ? p.move : 'walk';
   const second = p.move2 && p.w2 && m.clips.has(p.move2) && p.move2 !== clipName ? p.move2 : null;
-  const legs = p.legs && p.legs !== clipName && m.clips.has(p.legs) ? p.legs : null;
+  // the legs may be the move's own clip at another time (standing on the walk's first frame, stepping round on its legs)
+  const legs = p.legs && (p.legs !== clipName || p.tl !== p.t) && m.clips.has(p.legs) ? p.legs : null;
   const w1 = 1 - (second ? p.w2! : 0);
   for (let j = 0; j < inst.nBones; j++) { inst.blendNodes[j].quaternion.fromArray(inst.rawQ, j * 4); inst.blendNodes[j].position.fromArray(inst.rawP, j * 3); }
   for (const d of inst.drops) d.rest.decompose(d.node.position, d.node.quaternion, d.node.scale);

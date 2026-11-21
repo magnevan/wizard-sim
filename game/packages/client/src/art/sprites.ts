@@ -171,15 +171,24 @@ export const SHOT_LEAD = 0.2;
 const SHOT_WIND = 0.5;
 /** Moves with their own timing: the bow's draw keeps a second of clip and has its release this long after the game's. */
 const SHOT_TIMING: Record<string, { wind: number; lead: number; after: number }> = {
-  shoot: { wind: 1, lead: 0.35, after: 2 }, thrust: { wind: SHOT_WIND, lead: SHOT_LEAD, after: 3 }, lash: { wind: 0.6, lead: SHOT_LEAD, after: 2.5 },
+  // the lash keeps its whole wind-up (from 0.125 s: the hand drawn back behind the shoulder by 0.63, raised overhead
+  // by 1.0, cracked forward at 1.125; clip-paths.mjs), so the strand is seen going out behind first (#6)
+  shoot: { wind: 1, lead: 0.35, after: 2 }, thrust: { wind: SHOT_WIND, lead: SHOT_LEAD, after: 3 }, lash: { wind: 1, lead: 0.3, after: 2.5 },
+  bolt: { wind: SHOT_WIND, lead: 0.12, after: 1.6 },
 };
 const SHOT_DEFAULT = { wind: SHOT_WIND, lead: SHOT_LEAD, after: 1 };
+/** Seconds from the game's release of a one-shot to the body's (its clip's hit): the whip's strand cracks on it. */
+export const shotLead = (move: string): number => (SHOT_TIMING[move] ?? SHOT_DEFAULT).lead;
 /** How much faster than the clip's own pace a move plays once released (the thrust's long pause and return are sped up: the user, 2026-11-20, "too long of a recovery"). */
 const shotRate = (move: string): number => (SHOT_TIMING[move] ?? SHOT_DEFAULT).after;
 /** A one-shot's first moments ease in from the standing pose over this many seconds, so the body doesn't snap into the clip. */
 const SHOT_EASE = 0.1;
-/** The clip a conjured weapon's blow plays: the sword, maul and focus swing, the whip lashes, the bow draws and looses, the staff, spear and trident jab (the staff's overhead swing went through the hat). */
-const blowOf = (prop: string | undefined): string => prop === 'earthmaul' ? 'smash' : prop === 'sword' || prop === 'focus' ? 'attack0' : prop === 'whip' ? 'lash' : prop === 'icebow' ? 'shoot' : 'jab';
+/**
+ * The clip a conjured weapon's blow plays: the sword swings, the maul smashes, the whip lashes, the bow draws and looses,
+ * the Arcane wand (the focus) flicks its bolt out (#7: it had borrowed the sword's slash, and its light bolt played
+ * nothing), the staff, spear and trident jab (the staff's overhead swing went through the hat).
+ */
+const blowOf = (prop: string | undefined): string => prop === 'earthmaul' ? 'smash' : prop === 'sword' ? 'attack0' : prop === 'focus' ? 'bolt' : prop === 'whip' ? 'lash' : prop === 'icebow' ? 'shoot' : 'jab';
 /**
  * Movesets: a blow played as a cut-down path through its clip, then a held ready pose (the user, 2026-11-20: "I'm
  * expecting more of a jab movement", "if you are repeating jabs, the character may stay hunched over with the spear in a
@@ -305,6 +314,8 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
   const legs = s.spd >= 1 ? 'run' : 'walk';
   // a moving body's legs under a move that drives its upper body (the wizard casts while walking)
   const under = s.spd > 0 ? { legs, tl: step(legs) } : {};
+  // standing and turning on the spot: the walk's legs at the turn steps' phase under the standing body (#3)
+  const turnSteps = s.spd === 0 && s.turnPh > 0 ? { legs: 'walk', tl: s.turnPh * dur('walk') } : {};
   // after a one-shot's last frame its pose eases into the legs (or the standing pose) over BLEND
   const after = (move: string, last: number, over: number, extra: Partial<LivePose> = {}): LivePose | null => {
     if (over < 0 || over >= BLEND) return null;
@@ -388,7 +399,7 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     // spell flows. Queuing runes plays nothing: the body only casts when the spell goes off (the user, 2026-11-17).
     if (c && s.cast > 0) { const held = c.hit + (c.last - c.hit) / 2; return { move: 'cast', t: c.first + (held - c.first) * Math.min(1, s.cast), face, flash, seat, props, ...under }; }
     if (s.spd > 0) return { move: legs, t: step(legs), face, flash, seat, props };
-    return { move: 'walk', t: 0, face, flash, seat, props };
+    return { move: 'walk', t: 0, face, flash, seat, props, ...turnSteps };
   }
   if ((s.hitT === s.hitT || s.hold > 0) && meta.attacks.length) {
     const a = meta.attacks[variantOf(who, s.swing, meta.attacks.length)];
@@ -407,7 +418,7 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
     if (out) return out;
   }
   if (s.spd > 0) return { move: legs, t: step(legs), face, flash };
-  return { move: 'walk', t: 0, face, flash };
+  return { move: 'walk', t: 0, face, flash, ...turnSteps };
 }
 
 /** The pose the game shows for a wizard in rig state `s` (the Model Viewer's game sequences play it). */

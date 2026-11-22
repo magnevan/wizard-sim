@@ -71,7 +71,7 @@ export const TUNING_HELP: Readonly<Record<string, string>> = {
   'structures.idleDrain': 'Shield runes per second each energy wall drains while it stands (Model A).',
   'shapes.fireBlast': 'Multiplies the direct hit of a Fire ring and a Fire burst (one rune: 6 x this). Burning is on top.',
   'shapes.coldBlast': 'Multiplies the direct hit of a Cold ring and a Cold burst (one rune: 5 x this).',
-  'shapes.streamPower': 'The Shard stream (Ice Force): its damage a second against a beam with the same runes. 1.3 = a stream that lands every shard deals 1.3 times the rate of a beam.',
+  'shapes.streamPower': 'The Shard stream (Ice Force): its damage a second against a beam with the same runes. 1.7 = a stream that lands every shard deals what a two-rune beam does (an Ice is two runes).',
   'shapes.streamRate': 'Shards a second the Shard stream fires with one Ice. Each extra Ice fires faster (+70 % a rune), each shard a share as much lighter: the damage a second is set by streamPower.',
   'shapes.streamArc': 'The Shard stream on trial: 1 = each shard arches out to the side and curves onto the cursor (meeting there), 0 = straight along your aim.',
   'shapes.streamSettle': 'Seconds of holding the Shard stream before its aim settles from streamSpread to streamSettled (the spin-up).',

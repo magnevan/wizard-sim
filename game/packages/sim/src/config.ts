@@ -202,11 +202,11 @@ export const SHAPES = {
    * The Shard stream (Ice Force, the user, 2026-11-22, issue #9: "a machine gun of shards", Ice's other beam): a channel
    * that looses streamRate shards a second along your aim at one Ice; every extra Ice fires faster instead of harder
    * (the rate grows on Ice's form curve, +70 % a rune, and each shard's share shrinks to match, the user, 2026-11-22).
-   * Its damage a second is streamPower x a beam's for the same payload (1.3: the first build's 2 was "a bit high").
+   * Its damage a second is streamPower x a beam's for the same payload (1.7: an Ice is two runes of regen, so it deals what a two-rune beam does; the first build had 2, then 1.3).
    * The aim starts loose (streamSpread turns either side) and settles to streamSettled over streamSettle s of holding.
    * Shards reach streamRange u and stop at the first body: you sweep a crowd, you don't pierce it.
    */
-  streamRate: 7, streamPower: 1.3, streamSpread: 0.03, streamSettled: 0.006, streamSettle: 0.6, streamRange: 10,
+  streamRate: 7, streamPower: 1.7, streamSpread: 0.03, streamSettled: 0.006, streamSettle: 0.6, streamRange: 10,
   /**
    * The stream's arc (on trial, the user, 2026-11-22: "the ice arches out before racing to the target"): with streamArc 1
    * each shard leaves streamArcAngle turns to one side (alternating), at streamArcStart of its speed, then curves toward

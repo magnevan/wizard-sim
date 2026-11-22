@@ -119,3 +119,18 @@ The arc lands the same on a dummy at the cursor; it differs on movers and off-cu
 **The channel cost already applied.** It's the same rule as beams (`cast.ts`): past the free 2.5 s every rune in the channel costs `RHYTHM.upkeep` (0.4 a second) from its own pool, and an Ice pays from Water *and* Cold. Held 8 s, a one-rune stream and a one-rune beam both stay topped up, because regen outpaces upkeep. A 3-Ice stream ran Water and Cold dry and stopped. A 3-Arcane beam kept going, because it draws its 1.2 a second from one pool and the stream from two. A test now pins it.
 
 **Open:** does the arc earn its place? It looks livelier and focuses at the cursor, but it no longer goes where the shards point, and sweeping a pack gets harder. Pick: keep it off until the user has tried it (F2 › Spell shapes › streamArc = 1); if it wins, it becomes the default and `streamSpread` matters less.
+
+## Round 3: priced as two runes
+
+The user: the stream should hit "more similar to two runes, because that's how much of the regen we are using"; reaching a higher top damage is fine. So `streamPower` is 1.3 → 1.7, the factor a second rune adds to a beam (1 + 0.7). Measured as above, damage a second at 3 / 6 / 9 u:
+
+| | at 3 u | at 6 u | at 9 u |
+|---|---|---|---|
+| Stream, 1 Ice (2 runes) | 24.9 | 23.3 | 23.3 |
+| Arcane beam, 2 Arcane | 24.7 | 24.7 | 24.7 |
+| Stream, 2 Ice (4 runes) | 42.0 | 40.4 | 37.3 |
+| Arcane beam, 4 Arcane | 43.3 | 43.3 | 43.3 |
+| Stream, 3 Ice (6 runes) | 59.1 | 57.5 | 52.8 |
+
+One Ice now pays what it costs. Since a queue holds five slots, three Ice (six runes' worth) gives a top damage no beam reaches. It also pays upkeep on six runes past the free 2.5 s, so it can't hold for long.
+

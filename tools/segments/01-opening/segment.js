@@ -97,6 +97,21 @@ chapters:[
  ]},
 ],
 concepts:[
+{id:'court-art-b2',title:'The courtyard’s art: three ways that don’t repaint the grey-box',status:'New, 2026-11-22: waiting on you',
+ lede:`After your notes on the first test (“repainting the grey-box locks it into bad directions”), Codex tried three ways that start from the brief instead: a whole screen composed freely, the hall as separate building pieces, and the ground as pieces with designed kerbs. Every prompt named the camera and the light, attached the wizard for scale, and asked for your points: windows flat in the wall, a kerb that shows which surface is higher, planters with plinths, and the banners as a matching pair. All free; nothing is in the game. A new critic, using the rubric with your notes, judged them blind. Its scores are below so you can see whether it now agrees with you.`,
+ points:[
+  [`A, composed freely (critic: 3, craft 8).`,` It answers every complaint you had about the first test: a real gate, windows flat in the wall, banners facing front and matching, every form with a purpose, kerbs and steps that show what’s on top. It’s held back by pixel scale (drawn far finer than the wizard), a gate barely as tall as a person, a passage drawn in converging perspective, and detail everywhere with no plain paving to rest the eye.`],
+  [`B, building pieces (critic: 3, craft 7).`,` The hall front, the piers and the planter would work once brought to the game’s pixel size. The corner is drawn at 45°, isometric, so it fails the viewpoint check. The gate’s two jambs don’t match.`],
+  [`C, ground pieces (critic: 2, craft 6).`,` Drawn as slanted parallelograms, an isometric angle that won’t tile on the game’s grid. The kerb and the steps with their cheek walls are worth keeping as reference: they solve “which one is on top”.`],
+  [`My read, and the critic’s.`,` A is the target: compose freely, then cut or derive the pieces from it. The next prompts would ask for the picture on a hard pixel grid at the wizard’s pixel size, a gate at least 2.5 wizards tall with its passage drawn straight on, plain paving fields, and ground tiles as screen-aligned rectangles. The pieces you like would then be the ones refined in PixelLab, once you’ve approved the descriptions.`],
+ ],
+ images:[
+  ['img/b2-court-free-a.jpg','A: a courtyard composed freely by Codex. A cream stone great hall with arched windows, gold trim and a blue slate roof with dormers spans the top, with a central arched gateway flanked by matching blue star banners; a cobbled road runs down between raised planters of lilac and evergreens to a wide stair with flaming braziers on its piers, dropping into a round plaza with inlaid star discs and the top of a brass armillary.','A, composed freely from the brief.'],
+  ['img/b2-court-kit-b.jpg','B: building pieces on magenta: a two-storey hall front with arched windows and banners, an arched gateway with a dormered roof, a corner of the hall drawn at 45 degrees, a pair of stone piers with brass lanterns, and a planter of lilac.','B, building pieces.'],
+  ['img/b2-court-ground-c.jpg','C: ground pieces on magenta, each drawn as a slanted parallelogram: sandstone paving, cobbled road, paving raised above the road along a carved kerb, the kerb turning a corner, three steps with cheek walls, and grass meeting paving along a stone edging.','C, ground pieces.'],
+ ],
+ verdict:[['a','Pursue A'],['b','Pursue B'],['c','Pursue C'],['mix','A as target, pieces from it'],['none','None of these']],
+ questions:[]},
 {id:'court-art-test',title:'The courtyard’s art: two free Codex tests',status:'New, 2026-11-22: waiting on you',
  lede:`You rated the code-drawn art 1–2/10, so it’s gone and the places are back to plain grey-box. Before choosing an art pipeline, Codex repainted one grey-box screen of the courtyard two ways, in the concept’s style. Free; nothing here is in the game yet.`,
  points:[

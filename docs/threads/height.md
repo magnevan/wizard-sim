@@ -15,10 +15,7 @@ The game is flat throughout: wall segments and a 2D nav grid, with no height any
 - [ ] Phase 4, minimal: `zAt(x, y)`, with bodies and props drawn at their tier's height, and cliff faces as flat-coloured strips. That's enough to walk the grey-box and judge flow.
 - [ ] Phase 7: the sense lint in `content:check`.
 - [ ] Before any art: phase 3 (shots and height), phase 4 in full (painted cliff faces, effects and lighting at height), phase 5 (buildings sorted by footprint).
-- [ ] Follow-up, as rooms grow: enemy pathfinding over big rooms. Enemies only need to path when players are close (this isn't an RTS), so the options are:
-  - nav only inside a window round the players;
-  - a coarse grid for long distances and a fine one near you;
-  - nav limited to the regions where fights happen.
+Not in this thread: pathfinding over big rooms is [#17](https://github.com/magnevan/wizard-sim/issues/17), a follow-up.
 
 ## How to work here
 

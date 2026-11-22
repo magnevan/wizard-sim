@@ -31,7 +31,7 @@ Phases 1, 2 and 6 alone give a walkable grey-box with real cliffs, which is enou
   - a coarse grid for distance and a fine one nearby;
   - nav only in the regions where fights happen.
 
-  It's tracked on the [height thread](../threads/height.md).
+  Filed as [#17](https://github.com/magnevan/wizard-sim/issues/17).
 - **One sort key.** Today everything sorts on its feet's y (`y*128 + k`). Tiers add a height to the drawing but not to the sort, which is right for things standing on a tier. Cliff faces and building strips need care where they meet a lower tier in front.
 - **Spells that lie on the floor.** Water, ice and fire surfaces (`w.surf`) and floor discs are per cell, ignoring tiers. A puddle on a ledge stays on the ledge's cells, which is right. Lightning surging along water across a cliff is wrong, but rare.
 - **The hash.** Any `RoomDef` change alters `roomHash`. The JS and sim copies must change together, and the mode-hash trails are re-recorded.

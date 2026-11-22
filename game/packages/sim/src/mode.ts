@@ -8,7 +8,7 @@
 import type { PlayerInput } from './input';
 import type { PartyState, Room, World } from './world';
 
-export type ModeId = 'sandbox' | 'arena' | 'survive' | 'battery' | 'tutorial' | 'yard' | 'court';
+export type ModeId = 'sandbox' | 'arena' | 'survive' | 'battery' | 'tutorial' | 'yard' | 'court' | 'infirmary';
 
 export interface WorldOpts {
   /** False: no practice dummies in a room that would have them. */

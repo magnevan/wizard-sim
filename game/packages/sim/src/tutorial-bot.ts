@@ -34,6 +34,9 @@ function nearest(w: World, s: number, ...tags: number[]): number {
   return best;
 }
 
+/** A plan's button meaning "the ring": the Weapon cast, aimed at yourself. */
+const RING = -1;
+
 export function tutorialBotInput(w: World, s: number, m: TutorialBotMemory): PlayerInput {
   const t = w.tut, b = w.bodies, seats = w.seats;
   if (!t || !seats.active[s] || b.kind[s] !== KIND.wizard) return NO_INPUT;
@@ -139,7 +142,7 @@ export function tutorialBotInput(w: World, s: number, m: TutorialBotMemory): Pla
       const e = nearest(w, s, TAG.goblin, TAG.chilled);
       if (e < 0) break;
       aim(b.x[e], b.y[e]);
-      if (d2(x, y, b.x[e], b.y[e]) < 2.2 && ready() && runes(EL.cold) >= 1) plan([EL.cold], BTN.area, 1, 25);
+      if (d2(x, y, b.x[e], b.y[e]) < 2.2 && ready() && runes(EL.cold) >= 1) plan([EL.cold], RING, 1, 25);
       break;
     }
     case TUT_BEAT.cancel:
@@ -168,8 +171,8 @@ export function tutorialBotInput(w: World, s: number, m: TutorialBotMemory): Pla
       let frozen = false;
       for (let i = MAX_SEATS; i < b.kind.length; i++) if (b.kind[i] === KIND.enemy && t.tag[i] === TAG.straw && b.frozen[i]) frozen = true;
       if (ready()) {
-        if (frozen && runes(EL.earth) >= 1) plan([EL.earth], BTN.area, 1, 20);
-        else if (!frozen && runes(EL.water) >= 1 && runes(EL.cold) >= 1) plan([EL.water, EL.cold], BTN.area, 1, 20);
+        if (frozen && runes(EL.earth) >= 1) plan([EL.earth], RING, 1, 20);
+        else if (!frozen && runes(EL.water) >= 1 && runes(EL.cold) >= 1) plan([EL.water, EL.cold], RING, 1, 20);
       }
       break;
     }
@@ -223,9 +226,11 @@ export function tutorialBotInput(w: World, s: number, m: TutorialBotMemory): Pla
   // the plan: one press a tick, then the held button, then a rest
   if (st[TS.fade] === 0) {
     if (m.presses.length) press = m.presses.shift()!;
-    else if (m.hold > 0) { buttons |= m.button; m.hold--; }
+    else if (m.hold > 0) { buttons |= m.button === RING ? BTN.weapon : m.button; m.hold--; }
     else if (m.rest > 0) m.rest--;
   }
+  // a ring is the burst aimed at yourself, held there until it's released (the ring merged into the burst, 2026-11-22)
+  if (m.button === RING && (m.hold > 0 || m.rest > 0)) { ax = 0; ay = 0; }
   // a Heavy being charged, or a beam, stands still
   if (m.hold > 0 && m.button === BTN.force && (beat === TUT_BEAT.heavy || beat === TUT_BEAT.life)) { mx = 0; my = 0; }
   return quantize({ ...NO_INPUT, buttons, press0: press, moveX: mx, moveY: my, aimX: ax / AIM_UNIT, aimY: ay / AIM_UNIT });

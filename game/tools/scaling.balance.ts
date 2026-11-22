@@ -17,6 +17,7 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
+import { ringBtn } from './ring';
 import { rules, type Element } from '@wizard-sim/rules';
 import { BTN, KIND, N_EL, NO_INPUT, RHYTHM, compile, createWorld, elementId, quantize, step, type PlayerInput, type World } from '../packages/sim/src';
 import { scaleLine, spellNumbers } from '../packages/client/src/help-model';
@@ -49,7 +50,7 @@ function run(queue: Element[], cast: Cast, pack: number): Run {
   const heals = compile(queue, cast).heal;
   const w = scene(dx, heals ? 0 : pack, heals);
   const spec = compile(queue, cast);
-  const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: dx * 32, aimY: 0, ...o })];
+  const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: cast === 'area' ? 0 : dx * 32, aimY: 0, ...o })]; // the ring: aimed at yourself
   // Pools are refilled past their max before each press (a ladder reaches 5 of anything); the sim
   // clamps them back each tick, so spending is read from the queue: one rune a press (no channel here
   // runs past its free time, so no upkeep is paid).
@@ -58,7 +59,7 @@ function run(queue: Element[], cast: Cast, pack: number): Run {
   const go = (inp: PlayerInput[]) => step(w, inp);
   const start = w.clock[0];
   for (const e of queue) { top(); go(aim({ press0: elementId(e) })); }
-  const btn = cast === 'force' ? BTN.force : BTN.area;
+  const btn = cast === 'force' ? BTN.force : cast === 'area' ? ringBtn(queue) : BTN.area;
   const hold = cast === 'place' ? 30 : spec.channel ? Math.round(RHYTHM.naturalChannel * 60 * (spec.shape === 'beam' ? spec.formN : 1)) + 12 : spec.charge ? 70 : 2;
   for (let t = 0; t < hold; t++) go(aim({ buttons: btn }));
   let busyEnd = w.clock[0];

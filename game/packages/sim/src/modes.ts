@@ -16,6 +16,7 @@ import { ARCHETYPES, ATTACK } from './archetypes';
 import { beginTutorialTick, tickTutorial } from './tutorial';
 import { tutPool, TUT_ORDER } from './tutorial-data';
 import { courtLeaveTo } from './court';
+import { infirmaryLeaveTo } from './infirmary';
 import { YARD_CHECKPOINTS, YS, lateYard, newYard, sparRest, sparStandoff, sparTarget, tickYard, yardPress, yardReached, yardRuneMax } from './yard';
 import type { Mode, ModeId, WorldOpts } from './mode';
 import {
@@ -149,10 +150,20 @@ const COURT_MODE: Mode = {
   leaveTo: courtLeaveTo,
 };
 
-export const MODES: Readonly<Record<ModeId, Mode>> = { sandbox: SANDBOX, arena: ARENA_MODE, survive: SURVIVE, battery: BATTERY_MODE, tutorial: TUTORIAL, yard: YARD_MODE, court: COURT_MODE };
+/** The infirmary: outside the main gate on the battery road; for now only its gates (infirmary.ts). */
+const INFIRMARY_MODE: Mode = {
+  id: 'infirmary',
+  campaign: true,
+  setup: () => {},
+  director: () => {},
+  runeMax: () => 0,
+  leaveTo: infirmaryLeaveTo,
+};
+
+export const MODES: Readonly<Record<ModeId, Mode>> = { sandbox: SANDBOX, arena: ARENA_MODE, survive: SURVIVE, battery: BATTERY_MODE, tutorial: TUTORIAL, yard: YARD_MODE, court: COURT_MODE, infirmary: INFIRMARY_MODE };
 
 const ROOM_MODE: Readonly<Record<Room, ModeId>> = {
-  sanctum: 'sandbox', academy: 'sandbox', arena: 'arena', survive: 'survive', battery: 'battery', tutorial: 'tutorial', yard: 'yard', court: 'court',
+  sanctum: 'sandbox', academy: 'sandbox', terraces: 'sandbox', arena: 'arena', survive: 'survive', battery: 'battery', tutorial: 'tutorial', yard: 'yard', court: 'court', infirmary: 'infirmary',
 };
 
 export const modeOf = (room: Room): Mode => MODES[ROOM_MODE[room]];

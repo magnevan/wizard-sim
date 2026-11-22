@@ -4,8 +4,10 @@
 import { GRID_PX, PX_PER_UNIT, layerOf, fieldOf, loadProps, loadTags, roomId, toWorldX, toWorldY } from './ldtk.mjs';
 
 /** Terrain: IntGrid value identifier -> the character in a room's terrain rows. 0 (unpainted) is floor. */
-export const TERRAIN_CHARS = { floor: '.', rock: '#' };
-export const FLOOR = TERRAIN_CHARS.floor, ROCK = TERRAIN_CHARS.rock;
+export const TERRAIN_CHARS = { floor: '.', rock: '#', void: '_' };
+export const FLOOR = TERRAIN_CHARS.floor, ROCK = TERRAIN_CHARS.rock, VOID = TERRAIN_CHARS.void;
+/** Rock and void both stop everything; void is outside the room's outline and is drawn as nothing. */
+export const isBlocked = (ch) => ch === ROCK || ch === VOID;
 
 /**
  * Ground: IntGrid value identifier -> the character in a room's ground rows. 0 (unpainted) is '.'.
@@ -62,13 +64,13 @@ export function terrainLegend(project) {
 }
 
 /**
- * Grid-aligned rock (cells marked '#') -> wall segments along every rock / floor boundary, merged
+ * Grid-aligned rock and void (cells marked '#' or '_') -> wall segments along every blocked / floor boundary, merged
  * into the longest straight runs. Edges on the room's border are left out (the room's edge already
  * stops everything). Order: horizontal runs top to bottom, then vertical runs left to right.
  */
 export function traceRock(rows, w, h) {
   const gh = rows.length, gw = rows[0]?.length ?? 0;
-  const rock = (x, y) => rows[y][x] === ROCK;
+  const rock = (x, y) => isBlocked(rows[y][x]);
   const X = (cx) => (cx * GRID_PX - (w * PX_PER_UNIT) / 2) / PX_PER_UNIT;
   const Y = (cy) => (cy * GRID_PX - (h * PX_PER_UNIT) / 2) / PX_PER_UNIT;
   const segs = [];
@@ -89,6 +91,108 @@ export function traceRock(rows, w, h) {
     }
   }
   return segs;
+}
+
+/** The characters for tiers 0 to 61 in a room's height rows, in order. */
+export const TIER_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+/**
+ * Height: IntGrid identifier -> the character in a room's height rows. 0 (unpainted) is tier 0, t1..t61
+ * are tiers 1-61 ('1'..'9', 'a'..'z', 'A'..'Z'), and a stair (or ramp) cell is '/': it joins the tiers it touches.
+ */
+export const HEIGHT_CHARS = { ...Object.fromEntries(Array.from({ length: 61 }, (_, i) => [`t${i + 1}`, TIER_CHARS[i + 1]])), stair: '/' };
+export const STAIR = HEIGHT_CHARS.stair;
+/** A tier's number from its character. */
+export const tierOf = (ch) => TIER_CHARS.indexOf(ch);
+/** The most two cells' heights may differ, in metres, and still be walked between: a step, not a cliff. */
+export const STEP_M = 0.5;
+
+/** A level's Height layer as rows (TIER_CHARS tier, '/' stair), or null if it paints nothing. Throws on a value the game doesn't know. */
+export function heightRows(project, level) {
+  const layer = layerOf(level, 'Height');
+  if (!layer || !layer.intGridCsv.some((v) => v !== 0)) return null;
+  const def = project.defs.layers.find((l) => l.identifier === 'Height');
+  const legend = new Map([[0, '0'], ...def.intGridValues.map((v) => [v.value, HEIGHT_CHARS[v.identifier]])]);
+  const rows = [];
+  for (let y = 0; y < layer.__cHei; y++) {
+    let row = '';
+    for (let x = 0; x < layer.__cWid; x++) {
+      const ch = legend.get(layer.intGridCsv[y * layer.__cWid + x] ?? 0);
+      if (!ch) throw new Error(`${level.identifier}: Height cell ${x},${y} is a value the game doesn't know`);
+      row += ch;
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+/** A level field's value by identifier (undefined if the level has no such field). */
+const levelField = (level, identifier) => (level.fieldInstances ?? []).find((f) => f.__identifier === identifier)?.__value;
+
+/**
+ * Tier edges -> cliff segments. An edge between two cells whose heights differ by more than a step (STEP_M) is a cliff,
+ * unless either cell is blocked (rock or void: their own outline is already a wall) or a stair (a stair
+ * joins whatever it touches). Cliffs merge into the longest straight runs with the same two tiers, the
+ * same order as traceRock. Returns { segs, tiers }: tiers[i] is [upper, lower] for segs[i].
+ */
+export function traceCliffs(terrain, height, metres, w, h) {
+  const gh = height.length, gw = height[0]?.length ?? 0;
+  const X = (cx) => (cx * GRID_PX - (w * PX_PER_UNIT) / 2) / PX_PER_UNIT;
+  const Y = (cy) => (cy * GRID_PX - (h * PX_PER_UNIT) / 2) / PX_PER_UNIT;
+  /** The edge between cells a and b: [upper, lower], or null if it isn't a cliff. */
+  const cliff = (ax, ay, bx, by) => {
+    const a = height[ay][ax], b = height[by][bx];
+    if (a === STAIR || b === STAIR || isBlocked(terrain[ay]?.[ax]) || isBlocked(terrain[by]?.[bx])) return null;
+    const ta = tierOf(a), tb = tierOf(b);
+    if (Math.abs(metres[ta] - metres[tb]) <= STEP_M) return null;
+    return metres[ta] > metres[tb] ? [ta, tb] : [tb, ta];
+  };
+  const segs = [], tiers = [];
+  const run = (n, at, seg) => {
+    let start = -1, key = null;
+    for (let i = 0; i <= n; i++) {
+      const c = i < n ? at(i) : null, k = c && c.join();
+      if (start >= 0 && k !== key) { segs.push(seg(start, i)); tiers.push(key.split(',').map(Number)); start = -1; }
+      if (c && start < 0) { start = i; key = k; }
+    }
+  };
+  for (let y = 1; y < gh; y++) run(gw, (x) => cliff(x, y - 1, x, y), (a, b) => [X(a), Y(y), X(b), Y(y)]);
+  for (let x = 1; x < gw; x++) run(gh, (y) => cliff(x - 1, y, x, y), (a, b) => [X(x), Y(a), X(x), Y(b)]);
+  return { segs, tiers };
+}
+
+/**
+ * A level's tiers -> the room's `height`, or null for a flat level. Errors: no metres for a painted tier,
+ * a stair that doesn't join two heights. The cliffs come back separately: they go on the end of `rock`.
+ */
+export function compileHeight(project, level, terrain, w, h, errors) {
+  let rows;
+  try { rows = heightRows(project, level); } catch (e) { errors.push(e.message); return null; }
+  if (!rows) return null;
+  const L = level.identifier, raw = levelField(level, 'tierMetres');
+  const metres = Array.isArray(raw) ? raw : [];
+  const used = new Set();
+  for (const r of rows) for (const ch of r) if (ch !== STAIR) used.add(tierOf(ch));
+  for (const t of [...used].sort()) if (typeof metres[t] !== 'number') errors.push(`${L}: tier ${t} is painted but the level's tierMetres has no height for it (has ${JSON.stringify(metres)}; tier 0 is the first entry)`);
+  if (errors.length) return null;
+  // Each connected run of stair cells must touch at least two different heights, or it joins nothing.
+  const gh = rows.length, gw = rows[0].length, seen = new Uint8Array(gw * gh);
+  for (let y0 = 0; y0 < gh; y0++) for (let x0 = 0; x0 < gw; x0++) {
+    if (rows[y0][x0] !== STAIR || seen[y0 * gw + x0]) continue;
+    const touch = new Set(), stack = [[x0, y0]];
+    seen[y0 * gw + x0] = 1;
+    while (stack.length) {
+      const [x, y] = stack.pop();
+      for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+        if (nx < 0 || ny < 0 || nx >= gw || ny >= gh || isBlocked(terrain[ny]?.[nx])) continue;
+        const ch = rows[ny][nx];
+        if (ch !== STAIR) { touch.add(metres[tierOf(ch)]); continue; }
+        if (!seen[ny * gw + nx]) { seen[ny * gw + nx] = 1; stack.push([nx, ny]); }
+      }
+    }
+    if (touch.size < 2) errors.push(`${L}: the stair at cell ${x0},${y0} touches ${touch.size ? 'only one height' : 'no tier'}; a stair joins two`);
+  }
+  const { segs, tiers } = traceCliffs(terrain, rows, metres, w, h);
+  return { height: { metres: metres.slice(0, Math.max(...used) + 1), rows, cliffs: tiers }, cliffRock: segs };
 }
 
 /** A level's Terrain layer as rows of characters (row 0 is the top, y = -h / 2). */
@@ -185,7 +289,12 @@ export function compileLevel(project, level, assets = loadProps(), tags = loadTa
   }
   for (let s = 0; s < 4; s++) if (!starts[s]) errors.push(`${level.identifier}: no PlayerStart for seat ${s}`);
   if (rows) rock.push(...traceRock(rows, w, h));
+  // Tiers: the cliffs go on the end of rock, so bodies, nav and shots stop at them like any rock wall.
+  // A flat level has no `height` key at all, so its room (and its hash) is what it was before tiers existed.
+  const tiered = rows ? compileHeight(project, level, rows, w, h, errors) : null;
+  if (tiered) rock.push(...tiered.cliffRock);
   const room = { id, w, h, terrain: rows ?? [], rock, starts: [...starts], dummies, portals, altars, props, propRock, markers, regions };
+  if (tiered) room.height = tiered.height;
   return { room, errors };
 }
 
@@ -277,6 +386,11 @@ export function emitModule(rooms) {
     out.push(`    propRock: ${pts(r.propRock, 3)},`);
     out.push(r.markers.length ? `    markers: [\n${r.markers.map((m) => `      { id: '${m.id}', x: ${num(m.x)}, y: ${num(m.y)}${m.tag ? `, tag: '${m.tag}'` : ''} },`).join('\n')}\n    ],` : '    markers: [],');
     out.push(r.regions.length ? `    regions: [\n${r.regions.map((g) => `      { id: '${g.id}', x: ${num(g.x)}, y: ${num(g.y)}, w: ${num(g.w)}, h: ${num(g.h)} },`).join('\n')}\n    ],` : '    regions: [],');
+    if (r.height) {
+      out.push('    height: {', `      metres: [${r.height.metres.map(num).join(', ')}],`, `      // tiers '0'-'9', 'a'-'z', 'A'-'Z'; '${STAIR}' stair. The last ${r.height.cliffs.length} rock walls are the cliffs, each [upper, lower] in cliffs`, '      rows: [');
+      for (const row of r.height.rows) out.push(`        '${row}',`);
+      out.push('      ],', `      cliffs: ${pts(r.height.cliffs, 12)},`, '    },');
+    }
     out.push('  },');
   }
   out.push('} as const satisfies Readonly<Record<string, RoomDef>>;', '');

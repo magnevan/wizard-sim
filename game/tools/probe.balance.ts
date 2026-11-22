@@ -6,6 +6,7 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
+import { ringBtn } from './ring';
 import { rules, type Element } from '@wizard-sim/rules';
 import { BTN, KIND, N_EL, NO_INPUT, RHYTHM, compile, createWorld, elementId, quantize, step, type PlayerInput, type World } from '../packages/sim/src';
 
@@ -36,7 +37,7 @@ function run(code: string, cast: Cast, pack: number, wet = false) {
   const b = w.bodies;
   if (wet) for (let i = 8; i < 8 + pack; i++) b.wet[i] = 600;
   const x0 = Array.from({ length: pack }, (_, k) => [b.x[8 + k], b.y[8 + k]]);
-  const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: dx * 32, aimY: 0, ...o })];
+  const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: cast === 'area' ? 0 : dx * 32, aimY: 0, ...o })]; // the ring: aimed at yourself
   let dmg = 0, denied = 0, chill = 0, ticks = 0, frozeAny = 0;
   const go = (inp: PlayerInput[]) => {
     step(w, inp); ticks++;
@@ -50,7 +51,7 @@ function run(code: string, cast: Cast, pack: number, wet = false) {
   };
   let moved = 0;
   for (const e of presses) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; go(aim({ press0: elementId(e) })); }
-  const btn = cast === 'force' ? BTN.force : cast === 'conjure' ? BTN.weapon : BTN.area;
+  const btn = cast === 'force' ? BTN.force : cast === 'conjure' ? BTN.weapon : cast === 'area' ? ringBtn(q) : BTN.area;
   const hold = cast === 'place' ? 30 : cast === 'conjure' ? 2 : spec.channel ? Math.round(RHYTHM.naturalChannel * 60) + 12 : spec.charge ? 70 : 2;
   const start = ticks;
   for (let t = 0; t < hold; t++) go(aim({ buttons: btn }));
@@ -105,7 +106,7 @@ it('measures when an imbue beats more Life: Life + Fire against Life + Life, und
     const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: 32, aimY: 0, ...o })];
     for (const e of q) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; step(w, aim({ press0: elementId(e) })); }
     for (let t = 0; t < secs * 60; t++) {
-      step(w, t < 2 ? aim({ buttons: BTN.area }) : aim());
+      step(w, t < 2 ? aim({ buttons: ringBtn(q), aimX: 0 }) : aim()); // a healing ring: aimed at yourself
       b.hp[0] -= (dps / 60) * (f * taken(w, 0, RES.fire) + (1 - f));
     }
     return b.hp[0];
@@ -139,9 +140,9 @@ it('measures effective healing on three hurt wizards', () => {
     for (const i of [0, 1, 2, 8]) b.hp[i] = 40;
     const presses = [...code].flatMap((c) => (c === 'I' ? ['water', 'cold'] : [L[c]]) as Element[]);
     const spec = compile([...code].map((c) => (c === 'I' ? 'ice' : L[c])) as Element[], cast);
-    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: (spread ? 5.5 : dx) * 32, aimY: 0, ...o }), NO_INPUT, NO_INPUT];
+    const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: cast === 'area' ? 0 : (spread ? 5.5 : dx) * 32, aimY: 0, ...o }), NO_INPUT, NO_INPUT];
     for (const e of presses) { for (let k = 0; k < N_EL; k++) w.seats.runes[k] = 9; step(w, aim({ press0: elementId(e) })); }
-    const btn = cast === 'force' ? BTN.force : BTN.area;
+    const btn = cast === 'force' ? BTN.force : cast === 'area' ? ringBtn(presses) : BTN.area;
     const hold = cast === 'place' ? 30 : spec.channel ? Math.round(RHYTHM.naturalChannel * 60) + 12 : spec.charge ? 70 : 2;
     const sum = () => b.hp[0] + b.hp[1] + b.hp[2];
     const hp0 = sum();
@@ -228,7 +229,7 @@ it('measures Sigil devices: turrets, orbitals, glyphs and auras against the plai
   const plain = (code: string, cast: Cast) => run(code.replace('G', ''), cast, 1);
   for (const code of ['GF', 'GFF', 'GA', 'GAF', 'GE', 'GEE', 'GL', 'GI', 'GC', 'GW', 'GH']) {
     const base = code.slice(1), n = presses(base).length - (code.includes('I') ? 1 : 0);
-    const tur = device(code, BTN.force, 30, 5, 1, 1.5), orb = device(code, BTN.area, 2, 2.6), gly = device(code, BTN.area, 30, 4), aura = device(code, BTN.self, 2, 1.8, code.includes('H') ? 0 : 1.8);
+    const tur = device(code, BTN.force, 30, 5, 1, 1.5), orb = device(code, BTN.area, 2, 2.6, 0, 0), gly = device(code, BTN.area, 30, 4), aura = device(code, BTN.self, 2, 1.8, code.includes('H') ? 0 : 1.8);
     const pf = plain(code, 'force'), pp = plain(code, 'place');
     rows.push(`${code.padEnd(4)} (${n} rune${n > 1 ? 's' : ''} + Sigil)`
       + `  turret ${tur.dmg} in ${SECS} s for ${tur.spent} runes (${tur.spent ? Math.round(tur.dmg / tur.spent) : '-'} a rune; your own ${pf?.title ?? '?'} ${pf ? Math.round(pf.perTarget / n) : '?'} a rune)`
@@ -259,7 +260,8 @@ it('measures how long a barrier holds a pack off', async () => {
     for (let k = 0; k < N_EL; k++) s.runes[k] = 9;
     for (const e of q) step(w, aim({ press0: elementId(e) }));
     for (let k = 0; k < N_EL; k++) s.runes[k] = 4;
-    for (let t = 0; t < hold; t++) step(w, aim({ buttons: BTN.area }));
+    for (let t = 0; t < hold; t++) step(w, aim({ buttons: BTN.area, ...(hold < 20 ? { aimX: 0 } : {}) })); // a ring: Place on yourself
+    if (hold < 20) step(w, aim({ aimX: 0 }));
     let t = 0, firstHurt = -1, broke = -1, minPool = 9, bitten = 0;
     const walls = () => Array.from(w.walls.type).filter((x) => x === WALL.barrier || x === WALL.curtain).length;
     for (let k = 0; k < 40 && !walls(); k++) step(w, aim());

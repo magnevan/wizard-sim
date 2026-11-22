@@ -12,9 +12,9 @@ const out = resolve(arg('out', 'shots/yard'));
 mkdirSync(out, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fail = (msg) => { console.error('FAIL:', msg); process.exitCode = 1; };
-// plan coordinates (tools/segments/01-opening/yard-level.py) -> the sim's, whose origin is the area's centre
-const SPOTS = { start: [120, 67], garden: [100, 86], into: [44, 83], hall: [6, 40], strike: [13, 63], heavy: [17, 46], retreat: [19, 27], corner: [8, 8],
-  parry: [31, 11], lane: [44, 11], hands: [82, 18], focus: [100, 8], drill: [72, 40], casting: [39, 44], out: [114, 50], gate: [120, 70] };
+// Where to look: the level's own Markers (written from plan D's MARKERS by tools/place-plans/to_ldtk.py), in the sim's
+// coordinates (origin at the area's centre), so the check follows the plan when it moves
+const SPOTS = ['strike', 'heavy', 'retreat', 'parry', 'parry-home', 'hands', 'focus'];
 
 const stop = await startPreview();
 const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -24,7 +24,8 @@ try {
   p.on('requestfailed', (r) => fail('request failed: ' + r.url()));
   await p.setViewport({ width: 1280, height: 800 });
   await p.goto(`${BASE}?timerloop=1#yard`);
-  await p.waitForFunction(() => window.wizardSim?.view.props.count > 0 && window.wizardSim.view.props.ready, { timeout: 60000, polling: 200 });
+  // the grey-box from plan D has no props yet (they come with the beauty stage): wait for the ground and whatever props there are
+  await p.waitForFunction(() => window.wizardSim?.view.groundReady && window.wizardSim.view.props.ready, { timeout: 60000, polling: 200 });
   await sleep(1500);
   const room = await p.evaluate(() => ({ id: window.wizardSim.world.def.id, props: window.wizardSim.view.props.count, w: window.wizardSim.world.dims.w, h: window.wizardSim.world.dims.h }));
   console.log('loaded', room);
@@ -33,14 +34,18 @@ try {
   console.log('yard bodies (tags)', bodies.join(','));
   if (bodies.length < 7) fail(`expected 4 straw goblins, the sack and 2 soldiers, got ${bodies.length}`);
 
-  const put = (x, y) => p.evaluate(([px, py]) => { const g = window.wizardSim, b = g.world.bodies, d = g.world.dims; b.x[0] = px - d.w / 2; b.y[0] = py - d.h / 2; b.vx[0] = 0; b.vy[0] = 0; }, [x, y]);
-  for (const [name, [x, y]] of Object.entries(SPOTS)) {
-    await put(x, y);
+  const markers = await p.evaluate(() => Object.fromEntries(window.wizardSim.world.def.markers.map((m) => [m.id, [m.x, m.y]])));
+  for (const id of [...SPOTS, 'gate']) if (!markers[id]) fail(`the level has no marker ${id}`);
+  const put = (x, y) => p.evaluate(([px, py]) => { const b = window.wizardSim.world.bodies; b.x[0] = px; b.y[0] = py; b.vx[0] = 0; b.vy[0] = 0; }, [x, y]);
+  await p.screenshot({ path: join(out, 'start.png') });
+  for (const name of SPOTS) {
+    if (!markers[name]) continue;
+    await put(...markers[name]);
     await sleep(name === 'retreat' || name === 'parry' || name === 'hands' ? 2600 : 1300);
     await p.screenshot({ path: join(out, name + '.png') });
   }
   // the rack: Use gives a charged focus (one Fire, one Sigil)
-  await put(100, 6.8);
+  await put(...markers.focus);
   await sleep(500);
   await p.keyboard.down('KeyX'); await sleep(120); await p.keyboard.up('KeyX');
   await sleep(500);
@@ -49,7 +54,7 @@ try {
   if (!focus.focus) fail('Use at the rack should give a charged focus');
   await p.screenshot({ path: join(out, 'focus-taken.png') });
   // the gate: with a focus, walking up to it goes back into the courtyard
-  await put(125.6, 72);
+  await put(...markers.gate);
   await p.waitForFunction(() => window.wizardSim.world.def.id === 'court', { timeout: 8000, polling: 100 }).catch(() => fail('the gate should take the party back into the courtyard'));
   console.log('left for', await p.evaluate(() => window.wizardSim.world.def.id));
   console.log(process.exitCode ? 'yard check FAILED' : 'yard check ok', '->', out);

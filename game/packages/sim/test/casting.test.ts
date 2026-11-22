@@ -24,6 +24,17 @@ class Driver {
   queue(...els: Element[]): this { for (const e of els) this.tick({ press0: elementId(e) }); return this; }
   /** Press a button, hold it `hold` ticks, release, then let the cast play out. */
   cast(btn: number, hold = 1, after = 40): this { this.tick({ buttons: btn }, hold); return this.tick({}, after); }
+  /**
+   * Aimed at yourself and released there (the ring merged into the burst, 2026-11-22): with `btn` Weapon an element's ring,
+   * with Area (Place) Shield's ring or Sigil's orbitals and motes.
+   */
+  onMe(btn: number, hold = 1, after = 40): this {
+    const a = this.aim, me = () => { this.aim = { x: this.w.bodies.x[0], y: this.w.bodies.y[0] }; };
+    me(); this.tick({ buttons: btn }, hold); me(); this.tick({}, 1); this.aim = a;
+    return this.tick({}, Math.max(0, after - 1));
+  }
+  /** An element's ring: the burst aimed at yourself. */
+  ring(hold = 1, after = 40): this { return this.onMe(BTN.weapon, hold, after); }
   place(x: number, y: number, hold = 30): this { this.aimAt(x, y); return this.cast(BTN.area, hold); }
 }
 
@@ -179,11 +190,11 @@ describe('Force casts', () => {
   });
 
   it('chill counts Cold\'s share of a mixed spell: more Cold chills more, and a freeze uses it up', () => {
-    const mix = (q: Element[]) => { const { w, d, dummy } = range(2); d.queue(...q).cast(BTN.area, 1, 25); return w.bodies.chill[dummy]; };
+    const mix = (q: Element[]) => { const { w, d, dummy } = range(2); d.queue(...q).ring(1, 25); return w.bodies.chill[dummy]; };
     expect(mix(['arcane', 'cold', 'cold'])).toBeGreaterThan(mix(['arcane', 'arcane', 'cold']) * 1.5);
     const { w, d, dummy } = range(2);
     w.bodies.maxHp[dummy] = 30; w.bodies.wet[dummy] = 600;
-    d.queue('cold').cast(BTN.area, 1, 15);
+    d.queue('cold').ring(1, 15);
     expect(w.bodies.frozen[dummy]).toBeGreaterThan(0);
     expect(w.bodies.chill[dummy]).toBe(0);
   });
@@ -192,7 +203,7 @@ describe('Force casts', () => {
     const freeze = (chill: number) => {
       const { w, d, dummy } = range(2);
       w.bodies.maxHp[dummy] = 2000; w.bodies.wet[dummy] = 600; w.bodies.chill[dummy] = chill; // too big for one ring to chill to a freeze
-      d.queue('cold').cast(BTN.area, 1, 20);
+      d.queue('cold').ring(1, 20);
       return w.bodies.frozen[dummy];
     };
     expect(freeze(0)).toBe(0);
@@ -202,7 +213,7 @@ describe('Force casts', () => {
   it('burn is a pool: lit by any touch, grown by Fire\'s own damage and a little of the rest', () => {
     const pool = (q: Element[]) => {
       const { w, d, dummy } = range(2);
-      d.queue(...q).tick({ buttons: BTN.area }, 1);
+      d.queue(...q).ring(1, 0);
       let peak = 0;
       for (let k = 0; k < 40; k++) { d.tick({}, 1); peak = Math.max(peak, w.bodies.burnPool[dummy]); }
       return peak;
@@ -212,7 +223,7 @@ describe('Force casts', () => {
     expect(pool(['arcane', 'arcane', 'fire'])).toBeLessThan(pool(['fire', 'fire', 'fire']));
     const { w, d, dummy } = range(2);
     const hp = w.bodies.hp[dummy];
-    d.queue('fire').cast(BTN.area, 1, 300);
+    d.queue('fire').ring(1, 300);
     expect(hp - w.bodies.hp[dummy]).toBeCloseTo(DAMAGE.fire * SHAPES.fireBlast + pool(['fire']), 0); // the hit, then all of the pool
     expect(w.bodies.burn[dummy]).toBe(0);
   });
@@ -269,18 +280,18 @@ describe('Force casts', () => {
     };
     expect(zap(0.3)).toBeGreaterThan(zap(0));
     expect(zap(1)).toBeGreaterThan(zap(0.3));
-    const ring = (q: Element[]) => { const { w, d, dummy } = range(2); d.queue(...q).cast(BTN.area, 1, 30); return w.bodies.soak[dummy]; };
+    const ring = (q: Element[]) => { const { w, d, dummy } = range(2); d.queue(...q).ring(1, 30); return w.bodies.soak[dummy]; };
     expect(ring(['water', 'water'])).toBeGreaterThan(ring(['water']) * 1.5);
   });
 
   it('steam never soaks, and a soaked body takes more Fire to dry', () => {
     const steam = range(2);
-    steam.d.queue('water', 'fire').cast(BTN.area, 1, 30);
+    steam.d.queue('water', 'fire').ring(1, 30);
     expect(steam.w.bodies.wet[steam.dummy]).toBe(0);
     const dried = (fire: number) => {
       const { w, d, dummy } = range(2);
       w.bodies.maxHp[dummy] = 135; w.bodies.wet[dummy] = 1; w.bodies.soak[dummy] = 1;
-      d.queue(...Array<Element>(fire).fill('fire')).cast(BTN.area, 1, 30);
+      d.queue(...Array<Element>(fire).fill('fire')).ring(1, 30);
       return w.bodies.soak[dummy];
     };
     expect(dried(1)).toBeGreaterThan(0); // one Fire leaves a soaked body damp
@@ -300,7 +311,7 @@ describe('Force casts', () => {
     const water = (chill: number) => {
       const { w, d, dummy } = range(2);
       w.bodies.chill[dummy] = chill;
-      d.queue('water').cast(BTN.area, 1, 20);
+      d.queue('water').ring(1, 20);
       return w.bodies;
     };
     const dummy = 4;
@@ -327,20 +338,20 @@ describe('Force casts', () => {
   it('cold freezes the wet: a plain frost ring on a soaked target', () => {
     const { w, d, dummy } = range(2);
     w.bodies.maxHp[dummy] = 30; w.bodies.wet[dummy] = 600;
-    d.queue('cold').cast(BTN.area, 1, 30);
+    d.queue('cold').ring(1, 30);
     expect(w.bodies.frozen[dummy]).toBeGreaterThan(0);
     expect(w.bodies.wet[dummy]).toBe(0);
   });
 
   it('water + cold is ice: it neither soaks nor freezes a dry target, but freezes one already wet', () => {
     const dry = range(2);
-    dry.d.queue('water', 'cold').cast(BTN.area, 1, 30);
+    dry.d.queue('water', 'cold').ring(1, 30);
     expect(dry.w.bodies.chill[dry.dummy]).toBeGreaterThan(0);
     expect(dry.w.bodies.wet[dry.dummy]).toBe(0);
     expect(dry.w.bodies.frozen[dry.dummy]).toBe(0);
     const wet = range(2);
     wet.w.bodies.maxHp[wet.dummy] = 30; wet.w.bodies.wet[wet.dummy] = 600;
-    wet.d.queue('water', 'cold').cast(BTN.area, 1, 30);
+    wet.d.queue('water', 'cold').ring(1, 30);
     expect(wet.w.bodies.frozen[wet.dummy]).toBeGreaterThan(0);
   });
 
@@ -416,7 +427,7 @@ describe('Life (support)', () => {
   it('the Healing ring heals everyone around, enemies too', () => {
     const { w, d, dummy } = range(2);
     w.bodies.hp[dummy] = 100; w.bodies.hp[0] = 50;
-    d.queue('life').cast(BTN.area, 2);
+    d.queue('life').ring(2);
     expect(w.bodies.hp[dummy]).toBeGreaterThan(100);
     expect(w.bodies.hp[0]).toBeGreaterThan(50);
   });
@@ -443,7 +454,7 @@ describe('Life (support)', () => {
   it('every other element in a heal builds up its resistance, which fades: Life + Lightning + Cold', () => {
     const { w, d, dummy } = range(2);
     w.bodies.hp[dummy] = 100;
-    d.queue('life', 'lightning', 'cold').cast(BTN.area, 2);
+    d.queue('life', 'lightning', 'cold').ring(2);
     expect(w.bodies.hp[dummy]).toBeGreaterThan(100);
     expect(w.bodies.blessT[dummy]).toBeGreaterThan(0);
     expect(taken(w, dummy, RES.cold)).toBeLessThan(1); // the Cold, not leading the shape, still counts
@@ -510,7 +521,7 @@ describe('Area and Place', () => {
   it('an Area cast leaves no floor, so it neither soaks nor burns its caster', () => {
     for (const el of ['water', 'fire', 'cold'] as const) {
       const { w, d } = range(4);
-      d.queue(el, el).cast(BTN.area, 1, 60);
+      d.queue(el, el).ring(1, 60);
       expect(Array.from(w.surf.kind).every((k) => k === 0)).toBe(true);
       expect(w.bodies.wet[0]).toBe(0);
       expect(w.bodies.burn[0]).toBe(0);
@@ -521,7 +532,7 @@ describe('Area and Place', () => {
     const first = (q: Element[], btn: number) => {
       const { w, d, dummy } = range(1.6);
       const hp = w.bodies.hp[dummy];
-      d.queue(...q).cast(btn, 1, 20); // before much of the burn has ticked
+      if (btn === BTN.area) d.queue(...q).ring(1, 20); else d.queue(...q).cast(btn, 1, 20); // before much of the burn has ticked (Area: the ring, aimed at yourself)
       return hp - w.bodies.hp[dummy];
     };
     expect(first(['fire'], BTN.area)).toBeGreaterThan(DAMAGE.fire * SHAPES.fireBlast * 0.9);
@@ -606,7 +617,7 @@ describe('Area and Place', () => {
 
   it('an earthquake knocks down everyone around you', () => {
     const { w, d, dummy } = range(2);
-    d.queue('earth').tick({ buttons: BTN.area }, 2).tick({}, 15);
+    d.queue('earth').ring(2, 15);
     expect(w.bodies.down[dummy] + (400 - w.bodies.hp[dummy])).toBeGreaterThan(0);
   });
 

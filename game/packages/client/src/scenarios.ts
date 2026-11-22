@@ -24,6 +24,7 @@ export interface Scenario {
 }
 
 export const SCENARIOS: readonly Scenario[] = [
+  { id: 'infirmary', name: 'The opening: the infirmary', blurb: 'Outside the main gate on the battery road: the wounded under tents round a failing well (grey-box).', room: 'infirmary', kind: 'campaign' },
   { id: 'court', name: 'The opening: the courtyard', blurb: 'The academy\'s central court and its great armillary: the hub every road leaves from.', room: 'court', kind: 'campaign', key: '8' },
   { id: 'yard', name: 'The opening: the drill yard', blurb: 'The crash course in fighting, through a corner of the academy (beats 2 and 3).', room: 'yard', kind: 'campaign', key: '7' },
   { id: 'battery', name: 'The opening: the battery', blurb: 'The wall, its four defences and the failing well (beats 4 to 7).', room: 'battery', kind: 'campaign', key: '6' },
@@ -31,6 +32,7 @@ export const SCENARIOS: readonly Scenario[] = [
   { id: 'tutorial', name: 'Tutorial (prototype)', blurb: 'Learn the runes, the casts and your hands, one step at a time.', room: 'tutorial', kind: 'sandbox', key: '4' },
   { id: 'sanctum', name: 'Sanctum', blurb: 'The sandbox: three practice dummies and the tuning panel (F2).', room: 'sanctum', kind: 'sandbox', key: '1' },
   { id: 'academy', name: 'Academy (art test)', blurb: 'A mock room for judging art: O swaps the props, I the wizard.', room: 'academy', kind: 'sandbox', key: '5' },
+  { id: 'terraces', name: 'Terraces (height test)', blurb: 'Two tiers and a balcony joined by stairs: cliffs stop you, stairs take you up.', room: 'terraces', kind: 'sandbox', key: '9' },
   { id: 'arena', name: 'Arena (legacy)', blurb: 'Waves from portals, with lulls and breathers. Kept for tests; Survive replaces it.', room: 'arena', kind: 'sandbox', key: '2' },
 ];
 

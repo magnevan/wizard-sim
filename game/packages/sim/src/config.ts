@@ -64,8 +64,6 @@ export const RHYTHM = {
   windup: 0.12, // seconds, plus windupPerRune for each rune in the spell
   windupPerRune: 0.04,
   recovery: 0.18,
-  /** Area tap vs Place hold on the Area button. */
-  placeHold: 0.18, // was 0.25: the user found the wait from Area to Place a little long (2026-11-11)
   /** A Place drag counts once the cursor moved this far while held. */
   dragMin: 1.0,
   /** Channels (beams, sprays, arcs) are free for this long, then cost upkeep (no pool goes below zero: a dry one ends the channel). */
@@ -219,6 +217,13 @@ export const SHAPES = {
   forkRange: 4, forkTargets: 3, forkPower: 1.6, forkJump: 0.6,
   /** The burst's power against the ring's. It's 1 because the cone already earns its place: it spares allies beside and behind you. */
   imbuePower: 1,
+  /**
+   * The ring is the burst aimed at yourself (the ring merged into the burst, 2026-11-22): a Weapon cast released with the
+   * cursor within selfAim (u) of you is the element's ring, and a Place there lands on you (Shield's ring, Sigil's orbitals
+   * and motes). Further out the cone stretches: from stretchFrom to stretchTo (u of aim) its reach grows to farReach times
+   * and its half-angle shrinks to farHalf times, smoothly. Power per target stays.
+   */
+  selfAim: 1, imbueStretchFrom: 2.5, imbueStretchTo: 9, imbueFarReach: 2, imbueFarHalf: 0.3,
   /** A Fire ring's or burst's direct hit, times Fire's table damage (which is set for a spray's per-second rate). */
   fireBlast: 2,
   /** Ice's ring and burst, so the close cast beats the shards (spell audit, 2026-11-11: it was 16 for its two runes). */
@@ -274,7 +279,11 @@ export const CELL = 0.5;
 export const STRUCT = {
   rockHp: 120, rockHpPerRune: 40, energyHp: 80, energyHpPerRune: 20,
   wallsPerOwner: 40, // a technical ceiling: rock times out (rockLife) and energy drains your pool, so play rarely meets it
-  arcRadius: 2.2, arcHalf: 0.14, arcSegs: 5, ringRadius: 1.5, ringSegs: 8, drawnSeg: 1.2,
+  /** The quick Shield arc (Place, no drag) stands where the cursor is, centred on you: arcLen u long at any distance (so far
+   * off it's nearly straight), never nearer than arcMin. A Shield Place pressed within arcZone of you is the arc (or the
+   * ring) to the end; pressed further out, a first move within arcRadial (the sine of its angle off straight toward or
+   * away from you: 0.5 is 30°) is the arc, any other a line (the user, 2026-11-22; cast.ts tickSeat). */
+  arcLen: 3.9, arcMin: 1.5, arcZone: 3, arcRadial: 0.5, arcSegs: 5, ringRadius: 1.5, ringSegs: 8, drawnSeg: 1.2,
   /** Rock walls stand this long (s), plus rockLifePerEarth per extra Earth, crumbling over the last rockCrumble s. */
   rockLife: 25, rockLifePerEarth: 5, rockCrumble: 3,
   /** Ice walls (Shield + Ice): a spike barrier, weaker and shorter-lived than rock, that stabs whoever presses against it

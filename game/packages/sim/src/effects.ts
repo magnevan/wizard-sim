@@ -13,7 +13,7 @@ import { inCone, len, rayCircle } from './geom';
 import { HIT_KIND, addChill, addKnock, applyHit, drench, ignite, setHitKind, soakOf, tryFreeze, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
 import { TERRAIN_HIT, clipRay, collideWalls, damageWall, fieldAlong, fieldAt, isRockHit, lensAt, rayThroughLens, wallAt, wallDamage } from './walls';
-import { WALL, compile, imbueLine, imbueReach } from './compile';
+import { WALL, compile, imbueHalf, imbueLine, imbueReach, imbueStretch } from './compile';
 import { ARCHETYPES } from './archetypes';
 import { RES, grounded, guardMissile, phased, taken, warm } from './guards';
 import { EV, DT, KIND, MAX_MISSILES, MAX_SEATS, MAX_ZONES, MOD_ID, PF, PU, SURF, WARD, ZONE, alive, lingerLife, lingerSize, stackOf, type World } from './world';
@@ -172,8 +172,10 @@ export function oneShotBlast(spec: SpellSpec): number {
 
 /** The imbued burst: every queued element at full power in a short cone in front of you, as Magicka's imbue-and-release. Nothing stays in hand. `k` is the caster's scale, `power` the hit's (k x blast x close). */
 function imbue(w: World, src: number, p: Payload, spec: SpellSpec, x: number, y: number, face: number, dx: number, dy: number, k: number, power: number): void {
-  const b = w.bodies, reach = imbueReach(spec);
-  if (spec.form === EL.lightning) fork(w, src, spec, face, reach, k);
+  // aimed further out, the cone stretches: longer and narrower (a seat's own aim; anything else casts it unstretched)
+  const st = src < MAX_SEATS && w.seats.active[src] ? imbueStretch(len(w.seats.aimX[src], w.seats.aimY[src])) : 0;
+  const b = w.bodies, reach = imbueReach(spec, st), half = imbueHalf(st);
+  if (spec.form === EL.lightning) fork(w, src, spec, face, reach, k, half);
   else {
     setHitKind(HIT_KIND.burst);
     const line = imbueLine(spec);
@@ -183,7 +185,7 @@ function imbue(w: World, src: number, p: Payload, spec: SpellSpec, x: number, y:
         // along the line: how far out, and how far to the side
         const rx = b.x[i] - x, ry = b.y[i] - y, along = rx * dx + ry * dy, side = Math.abs(rx * dy - ry * dx);
         if (along < -b.r[i] || along > reach + b.r[i] || side > SHAPES.imbueLineHalf + b.r[i]) continue;
-      } else if (!inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
+      } else if (!inCone(x, y, face, half, reach, b.x[i], b.y[i], b.r[i])) continue;
       const ho = hitOpts(p, src, power * SHAPES.imbuePower, dx, dy);
       if (spec.form === EL.water) ho.push *= SHAPES.ringPush; // the Water burst shoves as hard as the Splash ring (it pushed nothing: no Push mod on Weapon casts)
       hit(w, i, p, ho);
@@ -191,7 +193,7 @@ function imbue(w: World, src: number, p: Payload, spec: SpellSpec, x: number, y:
   }
   let mask = 0;
   for (let e = 1; e <= N_EL; e++) if (spec.counts[e - 1]) mask |= 1 << e;
-  w.events.push({ tick: w.clock[0], kind: 'move', who: src, x, y, x2: x + dx * reach, y2: y + dy * reach, text: 'imbue', look: spec.look, amount: reach, els: mask });
+  w.events.push({ tick: w.clock[0], kind: 'move', who: src, x, y, x2: x + dx * reach, y2: y + dy * reach, text: 'imbue', look: spec.look, amount: reach, half, els: mask });
 }
 
 /** Fires a one-shot spell. `face` is the aim in turns, (tx, ty) the clamped target point, `charge` 0..1. */
@@ -506,7 +508,7 @@ export function chain(w: World, src: number, spec: SpellSpec, face: number, scal
  * The Lightning-led burst: bolts from the staff to the nearest targets in the cone at once (one more per extra Lightning),
  * each jumping on to one more body near it. With nothing in reach, a few bolts fork into the air.
  */
-function fork(w: World, src: number, spec: SpellSpec, face: number, reach: number, k: number): void {
+function fork(w: World, src: number, spec: SpellSpec, face: number, reach: number, k: number, half = SHAPES.imbueHalf): void {
   const b = w.bodies, x = b.x[src], y = b.y[src], p = payloadOf(spec);
   const n = SHAPES.forkTargets + Math.max(0, spec.counts[EL.lightning - 1] - 1);
   const hitList = [src];
@@ -515,7 +517,7 @@ function fork(w: World, src: number, spec: SpellSpec, face: number, reach: numbe
   for (let m = 0; m < n; m++) {
     let best = -1, bd = Infinity;
     for (let i = 0; i < b.kind.length; i++) {
-      if (!alive(w, i) || hitList.includes(i) || !inCone(x, y, face, SHAPES.imbueHalf, reach, b.x[i], b.y[i], b.r[i])) continue;
+      if (!alive(w, i) || hitList.includes(i) || !inCone(x, y, face, half, reach, b.x[i], b.y[i], b.r[i])) continue;
       const d = len(b.x[i] - x, b.y[i] - y);
       if (d < bd && clearLine(w, x, y, b.x[i], b.y[i])) { bd = d; best = i; }
     }
@@ -531,7 +533,7 @@ function fork(w: World, src: number, spec: SpellSpec, face: number, reach: numbe
   }
   // bolts into the air where there was no one to take them
   for (let m = firsts.length; m < Math.min(n, 3); m++) {
-    const a = face + (m - 1) * SHAPES.imbueHalf * 0.6, d = clipRay(w, x, y, cosTurns(a), sinTurns(a), reach * 0.7, w.bodies.team[src])[0];
+    const a = face + (m - 1) * half * 0.6, d = clipRay(w, x, y, cosTurns(a), sinTurns(a), reach * 0.7, w.bodies.team[src])[0];
     w.events.push({ tick: w.clock[0], kind: 'zap', who: src, x, y, x2: x + cosTurns(a) * d, y2: y + sinTurns(a) * d, look: spec.look });
   }
 }

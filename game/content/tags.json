@@ -7,6 +7,8 @@
     "well": "The battery's well: its light, where it runs dry, and where Use starts the repair (battery-waves.ts)."
   },
   "markers": {
-    "gap": "Where a group of enemies comes out: openAtMarkers('gap') sends one from every gap (encounter.ts)."
+    "gap": "Where a group of enemies comes out: openAtMarkers('gap') sends one from every gap (encounter.ts).",
+    "landmark": "A tall landmark: the prop standing on it is kept whole in frame as you come within about a screen of it (client camera.ts follow, view.ts).",
+    "vista": "A moment to see the nearest landmark whole: the first time a wizard comes within 4 u (or starts there), the camera pulls back on it, holds, and returns (client vista.ts)."
   }
 }

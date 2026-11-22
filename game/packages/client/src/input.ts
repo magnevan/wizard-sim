@@ -3,13 +3,15 @@
  * (no press is ever lost between ticks); held buttons are sampled. Gamepads are gamepad.ts.
  *
  * Bindings follow the skeleton and the Atlas: hold LMB to walk toward the cursor; RMB Force (hold to
- * channel or charge); Shift+RMB Area (tap) or Place (hold, drag to draw); Space Self; Shift+LMB Weapon; X Use;
+ * channel or charge); Shift+RMB Place (drag to draw); Space Self; Shift+LMB Weapon (the burst on release, the ring aimed
+ * at yourself); X Use;
  * element keys from the rules (Q W E R / A S D F G); Esc clears the queue. With an empty queue Esc
  * opens the menu instead: menu.ts catches that press before it gets here (menu-nav.ts escAction).
  */
 import { rules, type Element } from '@wizard-sim/rules';
 import { AIM_UNIT, BTN, elementId, quantize, type PlayerInput, type World } from '@wizard-sim/sim';
 import type { Camera } from './camera';
+import { liftAtWorld } from './art/heights';
 
 export class KeyboardMouse {
   private presses: number[] = [];
@@ -65,7 +67,8 @@ export class KeyboardMouse {
 
   /** The input for the next tick for the wizard in `seat`. */
   sample(w: World, seat: number): PlayerInput {
-    const p = this.camera.screenToWorld(this.sx, this.sy);
+    // the cursor is read at the height the wizard stands on, so aim and walking go where it points on the screen
+    const p = this.camera.screenToWorld(this.sx, this.sy, liftAtWorld(w.def, w.bodies.x[seat], w.bodies.y[seat]));
     const dx = p.x - w.bodies.x[seat], dy = p.y - w.bodies.y[seat];
     const len = Math.hypot(dx, dy);
     const walk = this.walking && len > 0.3;

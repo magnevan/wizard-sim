@@ -53,6 +53,13 @@ export class Lights {
   /** gain: how strong an intensity-1 light is drawn. */
   constructor(private gain = 0.55) {}
 
+  /** Frees the discs and the sprites (a view going away). */
+  destroy(): void {
+    this.layer.destroy({ children: true });
+    for (const t of this.tex) t.destroy(true);
+    for (const s of this.softs) s?.tex.destroy(true);
+  }
+
   begin(): void { this.n = 0; }
 
   /** The disc a light of radius r is drawn with, and that disc's true radius. */

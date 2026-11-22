@@ -68,7 +68,7 @@ A full-viewport test of the Hi-Bit Lit pixel direction (the user's favourite fro
 ## Pass 4.1 (2026-11-04): a new turret
 - The user found the turret "a bit boring, looks like a torch on a cube". It is now a Sigil device that reads as magic: a carved round dais with a violet groove, a fire crystal hovering over it (violet outline and halo; Fire is the look), and three stone plates with violet runes orbiting the crystal (Sigil is the form). A ring of six violet runes turns on the ground under it, inside Red's owner ring.
 - It animates with its rule: the plates pull in and the crystal swells and whitens as each rune from Red lands, it kicks up and the plates flare out on the shot, and it bobs while idle. While Red is dry the crystal sinks to a dull ember, the plates droop and dim, the ground runes blink and the owner ring is dashed.
-- `sigilDevice` and `runeRing` in `render.js` are copies of `K.sigilDevice` / `K.runeRing` in `tools/spell-vfx/fx.js`; keep the two in step. `orbZ` (14) is the crystal's centre, where the bolts start.
+- `sigilDevice` and `runeRing` in `render.js` are copies of `K.sigilDevice` / `K.runeRing` from the retired Spell VFX gallery (`fx.js`, in git history); no sync needed. `orbZ` (14) is the crystal's centre, where the bolts start.
 - The feedback panel is "Pass 4.1: new turret" and adds one question, `p5-turret`.
 
 ## Files

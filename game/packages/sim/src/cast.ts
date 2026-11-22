@@ -11,8 +11,8 @@
  * upkeep from its own pool (Ice from Water's and Cold's); they end when you let go or any of
  * those pools runs dry.
  *
- * Buttons: Force (press; hold to charge or channel), Area (tap = Area, hold = Place at the
- * cursor, drag while holding = drawn Place), Self, Weapon.
+ * Buttons: Force (press; hold to charge or channel), Area (Place at the cursor on release, drag while
+ * holding = drawn Place), Self, Weapon (with runes: the burst on release, a ring aimed at yourself; onYou).
  */
 import { rules, type Cast, type Element } from '@wizard-sim/rules';
 import { compile, type SpellSpec } from './compile';
@@ -212,6 +212,51 @@ export function selfTarget(w: World, i: number): number {
   return best;
 }
 
+/**
+ * A cast released with the cursor on yourself (within SHAPES.selfAim): an element's Weapon cast is its ring (the Area cast,
+ * which no button makes any more), and Shield's or Sigil's undragged Place is theirs: the closed ring, the orbitals, the
+ * motes. The ring merged into the burst (2026-11-22). Possessed fixtures keep their own shapes.
+ */
+/** Does a Weapon press arm a burst (fired on release) rather than conjure at once? Elements queued, not led by Shield or Sigil. */
+function burstArms(w: World, i: number): boolean {
+  if (w.seats.queueLen[i] === 0) return false;
+  const f = compile(queueOf(w, i), 'conjure').form;
+  return f !== EL.shield && f !== EL.sigil;
+}
+
+function onYou(w: World, i: number, c: number): number {
+  if (!aimOnYou(w, i)) return c;
+  const made = madeOnYou(w, i);
+  if (c === CAST_ID.conjure) return made ? c : CAST_ID.area;
+  return made && w.seats.dragged[i] !== DRAG.line ? CAST_ID.area : c; // a Shield line stays a line, even on you
+}
+
+/** What a held Place has become (seats.dragged). Readers that only ask "is it drawn?" compare with DRAG.line (1). */
+const DRAG = { none: 0, line: 1, arc: 2 } as const;
+
+const aimOnYou = (w: World, i: number): boolean => !possessed(w, i) && w.seats.queueLen[i] > 0 && len(w.seats.aimX[i], w.seats.aimY[i]) <= SHAPES.selfAim;
+const madeOnYou = (w: World, i: number): boolean => { const f = compile(queueOf(w, i), 'area').form; return f === EL.shield || f === EL.sigil; };
+
+/**
+ * Is a held Sigil Place on yourself right now? Then it draws no line: it's the orbitals or the motes, whatever came
+ * before, and a glyph line starts afresh where the cursor leaves you (issue #15, 2026-11-22).
+ */
+const placeOnYou = (w: World, i: number): boolean => aimOnYou(w, i) && madeOnYou(w, i);
+
+/** Is this a Shield Place? It reads the player's intent from the press and the first move (tickSeat). */
+const shieldPlace = (w: World, i: number): boolean => !possessed(w, i) && w.seats.queueLen[i] > 0 && compile(queueOf(w, i), 'place').form === EL.shield;
+
+/**
+ * Is the move from the press to the cursor roughly straight toward or away from you (you, the press and the cursor in
+ * a line, within STRUCT.arcRadial)? Then the player is sizing an arc, not drawing a line.
+ */
+function radial(w: World, i: number): boolean {
+  const s = w.seats, b = w.bodies;
+  const ux = s.holdX[i] - b.x[i], uy = s.holdY[i] - b.y[i], vx = b.x[i] + s.aimX[i] - s.holdX[i], vy = b.y[i] + s.aimY[i] - s.holdY[i];
+  const lu = len(ux, uy), lv = len(vx, vy);
+  return lu < 1e-6 || lv < 1e-6 || Math.abs(ux * vy - uy * vx) / (lu * lv) <= STRUCT.arcRadial;
+}
+
 function release(w: World, i: number, spec: SpellSpec, charge: number): void {
   const [tx, ty] = target(w, i, spec.shape === 'blink' ? STRUCT.blinkRange : SHAPES.placeRange);
   // Self on an ally gives them your Shield ward or Sigil aura. Plain elements and the Double stay on you.
@@ -291,23 +336,39 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   if (!chooseElement(w, i, inp.press0)) pressElement(w, i, inp.press0);
   if (!chooseElement(w, i, inp.press1)) pressElement(w, i, inp.press1);
 
-  // The Area button: tap for Area, hold for Place, drag while holding for a drawn Place.
-  if (pressed & BTN.area) { s.areaHeld[i] = 0; s.dragged[i] = 0; s.holdX[i] = b.x[i] + s.aimX[i]; s.holdY[i] = b.y[i] + s.aimY[i]; }
+  // Shift+RMB is Place, on release: drag while holding for a drawn Place. There's no Area tap to wait out (the ring merged
+  // into the burst, 2026-11-22), so a tap places at once; released on yourself, Shield and Sigil raise their ring (onYou).
+  // A Shield Place reads the player's intent once (the user, 2026-11-22): pressed within STRUCT.arcZone of you it's the
+  // arc (or, on you, the ring) to the end; pressed further out, its first move of dragMin decides: straight toward or away
+  // from you (radial) is the arc, any other way a line, which stays a line even near you (a doorway shut from beside it).
+  // Back at the press point a line is undecided again. A Sigil Place moves between its line and its motes or orbitals on
+  // you (placeOnYou).
+  if (pressed & BTN.area) {
+    s.areaHeld[i] = 0; s.holdX[i] = b.x[i] + s.aimX[i]; s.holdY[i] = b.y[i] + s.aimY[i];
+    s.dragged[i] = shieldPlace(w, i) && len(s.aimX[i], s.aimY[i]) <= STRUCT.arcZone ? DRAG.arc : DRAG.none;
+  }
   let areaCast = 0;
   if (held & BTN.area) {
     s.areaHeld[i]++;
-    if (len(b.x[i] + s.aimX[i] - s.holdX[i], b.y[i] + s.aimY[i] - s.holdY[i]) > RHYTHM.dragMin) s.dragged[i] = 1;
-    // Back at the start: no line after all. It's still a Place (the plain arc or glyph), never a tap's Area.
-    else if (s.dragged[i]) { s.dragged[i] = 0; s.areaHeld[i] = Math.max(s.areaHeld[i], T(RHYTHM.placeHold)); }
-  } else if (released & BTN.area) {
-    areaCast = s.areaHeld[i] < T(RHYTHM.placeHold) && !s.dragged[i] ? CAST_ID.area : CAST_ID.place;
-  }
+    const moved = len(b.x[i] + s.aimX[i] - s.holdX[i], b.y[i] + s.aimY[i] - s.holdY[i]) > RHYTHM.dragMin;
+    if (shieldPlace(w, i)) {
+      if (s.dragged[i] === DRAG.none && moved) s.dragged[i] = radial(w, i) ? DRAG.arc : DRAG.line;
+      else if (s.dragged[i] === DRAG.line && !moved) s.dragged[i] = DRAG.none;
+    } else if (placeOnYou(w, i)) { s.dragged[i] = DRAG.none; s.holdX[i] = b.x[i] + s.aimX[i]; s.holdY[i] = b.y[i] + s.aimY[i]; }
+    else s.dragged[i] = moved ? DRAG.line : DRAG.none; // back at the start: no line after all, the plain glyph
+  } else if (released & BTN.area) areaCast = onYou(w, i, CAST_ID.place);
+  // Shift+LMB with elements queued is the burst: armed on the press (held, the view previews its shape), cast on release,
+  // so the aim at release shapes it (onYou, imbue). A guard or weapon (Shield or Sigil leading) has no shape to preview and
+  // is conjured on the press, as is a hand move (Retreat) with nothing queued.
+  let weaponCast = 0;
+  if (pressed & BTN.weapon) { s.weaponArm[i] = burstArms(w, i) ? 1 : 0; if (!s.weaponArm[i]) weaponCast = CAST_ID.conjure; }
+  else if (released & BTN.weapon && s.weaponArm[i]) { s.weaponArm[i] = 0; if (s.queueLen[i] > 0) weaponCast = onYou(w, i, CAST_ID.conjure); }
 
   // A cast pressed while busy is buffered, so no press is lost to recovery: it waits through the whole recovery, then
   // castBuffer more (the user, 2026-11-20: a jab then W+Space lost the Space). It keeps the meaning it had when pressed:
   // pressed with no runes queued it's a weapon gesture, even if a rune is queued before it goes off.
   const forceCast = (pressed | released) & BTN.force && forcePlaces(w, i) ? released & BTN.force : pressed & BTN.force;
-  const want = forceCast ? CAST_ID.force : areaCast || (pressed & BTN.self ? CAST_ID.self : pressed & BTN.weapon ? CAST_ID.conjure : 0);
+  const want = forceCast ? CAST_ID.force : areaCast || (pressed & BTN.self ? CAST_ID.self : weaponCast);
   if (want) { s.bufCast[i] = want; s.bufTicks[i] = T(RHYTHM.castBuffer); s.bufHand[i] = s.queueLen[i] === 0 ? 1 : 0; }
   else if (s.bufTicks[i] > 0 && s.phase[i] !== PHASE.recover && !owing(w, i) && --s.bufTicks[i] === 0) s.bufCast[i] = 0; // a cast waiting on ghost runes stays buffered
   // A weapon's follow-through is cut short, once its committed share has passed, by a waiting spell or Retreat (the

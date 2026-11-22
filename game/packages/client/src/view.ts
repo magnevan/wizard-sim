@@ -30,15 +30,19 @@ import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
 import { floorLayout, floorPlaceholder } from './art/floor';
 import { groundTexture } from './art/ground-room';
+import { liftAt, liftRange } from './art/heights';
+import { Vistas, type LandmarkSpan } from './vista';
 import { toU, toV, toX, toY, turnedWorld } from './iso-world';
 import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
 import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
 import { blackout, wellShake } from './art/power-down';
-import type { PropSet } from './art/assets';
+import { propImage, propMeta, type PropSet } from './art/assets';
 import { AMBIENT, canvas as pxCanvas, stats, text as pxText } from './art/px';
 import { newRigState, type Anchors, type RigKind, type RigState } from './art/rigs';
+import { infusion } from './art/infuse';
+import { extrasOf } from './art/accent';
 import { TAU, mod } from './art/util';
 import { Vfx, type BodyView } from './art/vfx';
 import { attackK, drawAttackFx, hitT } from './art/enemy-attacks';
@@ -54,6 +58,8 @@ const LIGHTING = optOn('lighting');
 const DRIVE_LOOK = 4.5;
 /** When the battery's well runs dry, the view glides back to your wizard over this many seconds, at this rate (1/s). */
 const DRY_GLIDE = 3.5, DRY_GLIDE_RATE = 1.5;
+/** A tall landmark is kept whole in frame within LANDMARK_NEAR view units of the wizards, fading out by LANDMARK_FAR (about a screen). */
+const LANDMARK_NEAR = 24, LANDMARK_FAR = 36;
 const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL', simple: 'SIMPLE, ANGLED, LOW DETAIL', code: 'CODE, STRAIGHT-ON' };
 
 /** The move events that put the wizard's body through its weapon's blow clip (art/sprites.ts blowOf): each weapon's tap, heavy and special. */
@@ -89,6 +95,8 @@ export class WorldView {
   private floor = new Sprite(floorPlaceholder(this.floorAt));
   /** The play area the floor and effect canvases are painted for. */
   private arenaKey = '';
+  /** The camera's scripted looks at a landmark (vista.ts). */
+  readonly vista = new Vistas();
   /** Whether the floor's current texture is this view's own placeholder (the painted ground is shared). */
   private ownFloor = true;
   /** False while a room's painted ground is still on its way (tests and screenshots wait on it). */
@@ -269,6 +277,28 @@ export class WorldView {
     }
   }
 
+  /**
+   * Frees everything this view made on the GPU and drops its display tree: the effect canvases' textures, the scene
+   * lighting's maps, the actor frame pages, the structures' and deaths' canvases, the HUD's, the floor placeholder. What it
+   * shares with other views stays: the painted ground, prop images, the baked sheets, live3d's atlas. The game never
+   * destroys its view; the VFX Lab does on every rebuild.
+   */
+  destroy(): void {
+    this.vfx.destroy();
+    this.lit?.destroy();
+    this.lights.destroy();
+    this.frames.destroy();
+    this.structs.destroy();
+    this.deaths.destroy();
+    this.props.destroy();
+    this.hud.destroy();
+    this.tut.destroy();
+    if (this.ownFloor) this.floor.texture?.destroy(true);
+    this.artTex?.destroy(true); this.artTex = null;
+    this.litLayer.filters = [];
+    this.root.destroy({ children: true });
+  }
+
   /** Hide the additive lights (?lights=0), for checking what they add. */
   get lightsOn(): boolean { return this.lights.layer.visible; }
   set lightsOn(on: boolean) { this.lights.layer.visible = on; if (this.lit) this.lit.glowLayer.visible = on; }
@@ -290,6 +320,7 @@ export class WorldView {
   afterStep(real: World): void {
     const w = this.seen(real);
     const b = w.bodies, s = w.seats, t = this.simTime(w);
+    this.hud.noteStep(w);
     for (const e of w.events) {
       this.hud.onEvent(e.kind, e.who, e.look, e.text, t);
       if ((e.kind === 'hit' && (e.amount ?? 0) > 0) && e.who >= 0) {
@@ -444,7 +475,7 @@ export class WorldView {
       this.smoothX[i] *= 0.82; this.smoothY[i] *= 0.82; // the eased rollback correction fades each frame
       const home = i < MAX_SEATS && w.battery && w.battery.drive[i] >= 0; // driving a defence: your wizard stands where it stepped up
       const x = home ? toU(w.battery!.homeX[i], w.battery!.homeY[i]) : this.prevBX[i] + (b.x[i] - this.prevBX[i]) * alpha + this.smoothX[i], y = home ? toV(w.battery!.homeX[i], w.battery!.homeY[i]) : this.prevBY[i] + (b.y[i] - this.prevBY[i]) * alpha + this.smoothY[i];
-      const fx = Math.round(gx(x)), fy = Math.round(gy(y));
+      const fx = Math.round(gx(x)), fy = Math.round(gy(y)), up = liftAt(w.def, x, y); // drawn at the height under its feet, sorted by its feet
       const s = this.rigState(w, i, t, ct);
       // past the paint budget a body keeps its last frame; one that has none yet is painted anyway
       const rig = this.frames.get(s, !v.a);
@@ -456,15 +487,15 @@ export class WorldView {
       spr.alpha = dbl ? 0.62 + 0.08 * Math.sin(ct * 5) : 1;
       spr.tint = dbl ? 0xd8b4ff : this.lit ? 0xffffff : AMBIENT;
       if (sp && !dbl) spr.tint = mulTint(spr.tint, statusTint(s));
-      spr.position.set(fx0 + fx - FEET_X, fy0 + fy - FEET_Y);
+      spr.position.set(fx0 + fx - FEET_X, fy0 + fy - up - FEET_Y);
       spr.zIndex = fy * 128 + i;
-      v.on = true; v.x = fx; v.y = fy; v.rig = s.kind;
+      v.on = true; v.x = fx; v.y = fy - up; v.rig = s.kind;
     }
 
     this.drawSpriteDeaths(ct, fx0, fy0);
     flushLive(); // the live 3D bodies booked above render into their atlas slots now (art/live3d.ts)
     for (const m of this.massing) {
-      m.g.visible = w.def.id === m.plan.room;
+      m.g.visible = w.def.id === m.plan.room && !w.def.height; // a tiered room's buildings are its own raised cells (art/heights.ts)
       if (m.g.visible) m.draw(this.real.dims.w, this.real.dims.h, fx0, fy0);
     }
     this.extras.draw(w.def, ct, fx0, fy0, this.lit ? 0xffffff : AMBIENT); // the people who live here (the drill yard's)
@@ -506,7 +537,8 @@ export class WorldView {
     this.structs.behind = this.vfx.behind;
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
     this.lights.end();
-    this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;
+    this.fxLastMs = performance.now() - t0;
+    this.fxMs = this.fxMs * 0.9 + this.fxLastMs * 0.1;
     this.hud.draw(w, t, cam.hudW, cam.hudH);
     this.tut.draw(w, ct, cam.hudW, cam.hudH);
     // the battery's repair: the screen fades to black and back while the well is mended (art/power-down.ts)
@@ -564,13 +596,54 @@ export class WorldView {
     return (tick + alpha) / 60 + this.epoch;
   }
 
+  /**
+   * The nearest tall landmark (a Marker tagged `landmark`, with a prop standing on it) the camera should lean up to keep
+   * in frame: its top in view units, and how much (full within LANDMARK_NEAR of the wizards' middle, none past
+   * LANDMARK_FAR). Only when it stands up the screen from them: below, it's in frame already.
+   */
+  private landmarkKeep(w: World, spots: readonly { x: number; y: number }[]): { y: number; w: number } | undefined {
+    if (!spots.length) return undefined;
+    const cx = spots.reduce((a, p) => a + p.x, 0) / spots.length, cy = spots.reduce((a, p) => a + p.y, 0) / spots.length;
+    let best: { y: number; w: number } | undefined;
+    for (const m of w.def.markers) {
+      const s = m.tag === 'landmark' ? this.landmarkSpan(w, m.x, m.y) : null;
+      if (!s) continue;
+      const d = Math.hypot(m.x - cx, m.y - cy);
+      const k = Math.max(0, Math.min(1, (LANDMARK_FAR - d) / (LANDMARK_FAR - LANDMARK_NEAR)));
+      if (k > 0 && m.y < cy + 4 && (!best || k > best.w)) best = { y: s.top, w: k };
+    }
+    return best;
+  }
+
+  /** The landmark standing at view point (x, y): a Marker tagged `landmark` there with a prop on it. Its foot and top, view units. */
+  private landmarkSpan(w: World, x: number, y: number): LandmarkSpan | null {
+    const m = w.def.markers.find((k) => k.tag === 'landmark' && Math.abs(k.x - x) < 0.5 && Math.abs(k.y - y) < 0.5);
+    const prop = m && w.def.props.find((p) => Math.abs(p.x - m.x) < 0.5 && Math.abs(p.y - m.y) < 0.5);
+    const im = prop && propImage(prop.asset, 'lean');
+    if (!m || !prop || !im) return null;
+    const lift = liftAt(w.def, m.x, m.y), tall = im.foot[1] + (propMeta(prop.asset)?.lift ?? 0) + lift; // art px from the flat ground to its top
+    return { x: m.x, foot: m.y - lift / (PPU * FY), top: m.y - tall / (PPU * FY) };
+  }
+
+  /** The landmark nearest view point (x, y), for a vista there. */
+  private nearestLandmark(w: World, x: number, y: number): LandmarkSpan | null {
+    let best: LandmarkSpan | null = null, bd = Infinity;
+    for (const m of w.def.markers) {
+      if (m.tag !== 'landmark') continue;
+      const d = Math.hypot(m.x - x, m.y - y), s = d < bd ? this.landmarkSpan(w, m.x, m.y) : null;
+      if (s) { best = s; bd = d; }
+    }
+    return best;
+  }
+
   /** Repaints the floor and resizes the effect canvases when the world's play area changes (a survive world is bigger). */
   private fitArena(w: World): void {
     const d = w.dims, key = `${d.w}x${d.h}${w.def.id}`;
     if (key === this.arenaKey) return;
     this.arenaKey = key;
     if (fitField(d.w, d.h)) { this.vfx.resize(); this.structs.scorch.resize(); }
-    this.floorAt = floorLayout(d.w, d.h);
+    const lift = liftRange(w.def);
+    this.floorAt = floorLayout(d.w, d.h, lift.up, lift.down);
     if (this.ownFloor) this.floor.texture?.destroy(true);
     this.floor.texture = floorPlaceholder(this.floorAt);
     this.ownFloor = true;
@@ -607,7 +680,8 @@ export class WorldView {
     for (let s = 0; s < MAX_SEATS; s++) {
       if (b.kind[s] !== KIND.wizard) continue;
       const [x0, y0] = this.drawnAt(s, w, alpha), far = s < MAX_SEATS && w.battery && w.battery.drive[s] >= 0 ? DRIVE_LOOK : 0;
-      let p = { x: x0 + far, y: y0 - far }; // driving a defence, you look out over the battlefield: north is up and to the right
+      // aimed at where the wizard is drawn: in a tiered room, lifted by the height under its feet (art/heights.ts)
+      let p = { x: x0 + far, y: y0 - liftAt(w.def, x0, y0) / (PPU * FY) - far }; // driving a defence, you look out over the battlefield: north is up and to the right
       // the battery's well has just run dry: the view glides back from the battlefield to your wizard, slowly
       const dryT = w.battery ? w.battery.wellT[1] / 60 : 0;
       if (dryT > 0 && dryT < DRY_GLIDE) {
@@ -619,10 +693,20 @@ export class WorldView {
       if (this.isLocal(s)) (b.downed[s] ? down : up).push(p);
     }
     const mine = up.length + down.length;
-    this.camera.follow(w.dims.w, w.dims.h, mine ? (up.length ? up : down) : all, mine !== 1, dt);
+    const lift = liftRange(w.def), spots = mine ? (up.length ? up : down) : all, rise = lift.up / (PPU * FY), sink = lift.down / (PPU * FY);
+    // a vista (vista.ts): pulled back on the landmark for a moment, then back to following. It arms only once the room is
+    // drawn (its props and ground loaded), so on a slow load it isn't spent on a screen nobody can see yet.
+    const shown = this.props.ready && this.groundReady && optOn('vistas');
+    const shot = this.vista.update(w.def, mine && shown ? up : [], performance.now() / 1000, (x, y) => this.nearestLandmark(w, x, y), (s) => this.camera.fitSpan(s), (x, y) => liftAt(w.def, x, y) / (PPU * FY));
+    if (this.camera.zoom(shot && !shot.out ? shot.scale : this.camera.base)) this.scene.scale.set(this.camera.scale);
+    if (shot && !shot.out) { this.camera.follow(w.dims.w, w.dims.h, [{ x: shot.x, y: this.camera.centreForTop(shot.top) }], false, dt, rise, sink); return; }
+    this.camera.follow(w.dims.w, w.dims.h, spots, mine !== 1, dt, rise, sink, this.landmarkKeep(w, spots));
   }
 
   private fxMs = 0;
+  /** The last draw's effects pass, ms, and the event-born effects alive (the VFX Lab's metrics). */
+  fxLastMs = 0;
+  get fxLive(): number { return this.vfx.live; }
   private atkShake = 0;
   private lastCt = 0;
   private lastSimT = -1;
@@ -645,6 +729,7 @@ export class WorldView {
     // a conjured weapon or wand replaces the staff (a Double keeps the staff: only seats draw weapons)
     s.bare = kind === 'wizard' && i < MAX_SEATS && (w.seats.weapon[i] || w.seats.wand[i]) ? 1 : 0;
     s.weapon = kind === 'wizard' && i < MAX_SEATS ? w.seats.weapon[i] : 0;
+    s.infuse = s.weapon ? infusion(s.weapon, extrasOf(w.seats.weaponEls, i, s.weapon)).mat : 0;
     s.guard = kind === 'wizard' && i < MAX_SEATS ? w.seats.guard[i] : 0;
     s.block = kind === 'wizard' && i < MAX_SEATS && w.seats.guard[i] ? w.seats.guardT[i] : 0;
     if (kind === 'wizard') s.pal = owner % 4;

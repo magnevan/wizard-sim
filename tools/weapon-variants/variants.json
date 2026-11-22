@@ -1,0 +1,1396 @@
+{
+ "colors": {
+  "water": {
+   "name": "Water",
+   "color": "#3fa1ff",
+   "key": "Q"
+  },
+  "life": {
+   "name": "Life",
+   "color": "#5fe07a",
+   "key": "W"
+  },
+  "shield": {
+   "name": "Shield",
+   "color": "#ffe08a",
+   "key": "E"
+  },
+  "cold": {
+   "name": "Cold",
+   "color": "#aeefff",
+   "key": "R"
+  },
+  "lightning": {
+   "name": "Lightning",
+   "color": "#c7a8ff",
+   "key": "A"
+  },
+  "arcane": {
+   "name": "Arcane",
+   "color": "#ff4f9b",
+   "key": "S"
+  },
+  "earth": {
+   "name": "Earth",
+   "color": "#b5895a",
+   "key": "G"
+  },
+  "fire": {
+   "name": "Fire",
+   "color": "#ff7b39",
+   "key": "F"
+  },
+  "sigil": {
+   "name": "Sigil",
+   "color": "#d400ff",
+   "key": "D"
+  },
+  "ice": {
+   "name": "Ice",
+   "color": "#cdf3ff",
+   "key": "Q+R"
+  }
+ },
+ "weapons": [
+  {
+   "title": "Tide trident",
+   "lead": "water",
+   "text": "A trident: a narrow, long thrust that shoves hard. Its Heavy is a wave slash rolling along the floor that shoves and soaks; its Special a Sweep round you. Lasts until it breaks or you conjure another.",
+   "variants": [
+    {
+     "extras": [],
+     "queue": [
+      "water"
+     ],
+     "pressed": [
+      "sigil",
+      "water"
+     ],
+     "adds": {}
+    },
+    {
+     "extras": [
+      "fire"
+     ],
+     "queue": [
+      "water",
+      "fire"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "fire"
+     ],
+     "adds": {
+      "fire": {
+       "trait": "Burn",
+       "text": "Whatever it hits is set alight, and dried or thawed."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "title": "Healing hands",
+   "lead": "life",
+   "text": "Your hands glow: a Strike heals whoever is in front of you. Hold for the Healing link, which heals the ally under the cursor while it holds; the held Special, Mend, heals the allies around you as you walk slowly. Lasts until it breaks or you conjure another.",
+   "variants": [
+    {
+     "extras": [],
+     "queue": [
+      "life"
+     ],
+     "pressed": [
+      "sigil",
+      "life"
+     ],
+     "adds": {}
+    },
+    {
+     "extras": [
+      "cold"
+     ],
+     "queue": [
+      "life",
+      "cold"
+     ],
+     "pressed": [
+      "sigil",
+      "life",
+      "cold"
+     ],
+     "adds": {
+      "cold": {
+       "trait": "Chill",
+       "text": "Lends its spray: the heal comes out as a cone of cool mist, and puts out whoever it heals if burning. Whoever it heals resists cold, and a little of blows for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "earth"
+     ],
+     "queue": [
+      "life",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "life",
+      "earth"
+     ],
+     "adds": {
+      "earth": {
+       "trait": "Weight",
+       "text": "Lends its body: the heal is a lobbed stone that bursts where it lands. Whoever it heals resists blows, and a little fire and cold for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "fire"
+     ],
+     "queue": [
+      "life",
+      "fire"
+     ],
+     "pressed": [
+      "sigil",
+      "life",
+      "fire"
+     ],
+     "adds": {
+      "fire": {
+       "trait": "Burn",
+       "text": "Lends its spray: the heal comes out as a cone, and dries and thaws whoever it heals. Whoever it heals resists fire and cold for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "ice"
+     ],
+     "queue": [
+      "ice",
+      "life"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "life",
+      "cold"
+     ],
+     "adds": {
+      "ice": {
+       "trait": "Spike",
+       "text": "Lends its shards: the heal flies as a volley of bright ice shards, each healing whoever it strikes. Whoever it heals resists cold, and a little of blows for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "lightning"
+     ],
+     "queue": [
+      "life",
+      "lightning"
+     ],
+     "pressed": [
+      "sigil",
+      "life",
+      "lightning"
+     ],
+     "adds": {
+      "lightning": {
+       "trait": "Shock",
+       "text": "Lends its chain: the heal jumps on from ally to ally. Whoever it heals resists lightning for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "water"
+     ],
+     "queue": [
+      "water",
+      "life"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "life"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Lends its push: the spray shoves back the enemies it touches (allies it only heals), and puts out the burning. Whoever it heals resists fire for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "cold",
+      "earth"
+     ],
+     "queue": [
+      "life",
+      "cold",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "life",
+      "cold",
+      "earth"
+     ],
+     "adds": {
+      "cold": {
+       "trait": "Chill",
+       "text": "Lends its spray: the heal comes out as a cone of cool mist, and puts out whoever it heals if burning. (Another element leads the shape, so this one only adds its help.) Whoever it heals resists cold, and a little of blows for a few seconds. It never harms."
+      },
+      "earth": {
+       "trait": "Weight",
+       "text": "Lends its body: the heal is a lobbed stone that bursts where it lands. Whoever it heals resists blows, and a little fire and cold for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "cold",
+      "ice"
+     ],
+     "queue": [
+      "ice",
+      "life",
+      "cold"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "life",
+      "cold",
+      "cold"
+     ],
+     "adds": {
+      "ice": {
+       "trait": "Spike",
+       "text": "Lends its shards: the heal flies as a volley of bright ice shards, each healing whoever it strikes. Whoever it heals resists cold, and a little of blows for a few seconds. It never harms."
+      },
+      "cold": {
+       "trait": "Chill",
+       "text": "Lends its spray: the heal comes out as a cone of cool mist, and puts out whoever it heals if burning. (Another element leads the shape, so this one only adds its help.) Whoever it heals resists cold, and a little of blows for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "cold",
+      "lightning"
+     ],
+     "queue": [
+      "life",
+      "cold",
+      "lightning"
+     ],
+     "pressed": [
+      "sigil",
+      "life",
+      "cold",
+      "lightning"
+     ],
+     "adds": {
+      "cold": {
+       "trait": "Chill",
+       "text": "Lends its spray: the heal comes out as a cone of cool mist, and puts out whoever it heals if burning. (Another element leads the shape, so this one only adds its help.) Whoever it heals resists cold, and a little of blows for a few seconds. It never harms."
+      },
+      "lightning": {
+       "trait": "Shock",
+       "text": "Lends its chain: the heal jumps on from ally to ally. Whoever it heals resists lightning for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "earth",
+      "fire"
+     ],
+     "queue": [
+      "life",
+      "fire",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "life",
+      "fire",
+      "earth"
+     ],
+     "adds": {
+      "fire": {
+       "trait": "Burn",
+       "text": "Lends its spray: the heal comes out as a cone, and dries and thaws whoever it heals. (Another element leads the shape, so this one only adds its help.) Whoever it heals resists fire and cold for a few seconds. It never harms."
+      },
+      "earth": {
+       "trait": "Weight",
+       "text": "Lends its body: the heal is a lobbed stone that bursts where it lands. Whoever it heals resists blows, and a little fire and cold for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "earth",
+      "ice"
+     ],
+     "queue": [
+      "ice",
+      "life",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "life",
+      "cold",
+      "earth"
+     ],
+     "adds": {
+      "ice": {
+       "trait": "Spike",
+       "text": "Lends its shards: the heal flies as a volley of bright ice shards, each healing whoever it strikes. (Another element leads the shape, so this one only adds its help.) Whoever it heals resists cold, and a little of blows for a few seconds. It never harms."
+      },
+      "earth": {
+       "trait": "Weight",
+       "text": "Lends its body: the heal is a lobbed stone that bursts where it lands. Whoever it heals resists blows, and a little fire and cold for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "earth",
+      "water"
+     ],
+     "queue": [
+      "water",
+      "life",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "life",
+      "earth"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Lends its push: the spray shoves back the enemies it touches (allies it only heals), and puts out the burning. (Another element leads the shape, so this one only adds its help.) Whoever it heals resists fire for a few seconds. It never harms."
+      },
+      "earth": {
+       "trait": "Weight",
+       "text": "Lends its body: the heal is a lobbed stone that bursts where it lands. Whoever it heals resists blows, and a little fire and cold for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "fire",
+      "lightning"
+     ],
+     "queue": [
+      "life",
+      "lightning",
+      "fire"
+     ],
+     "pressed": [
+      "sigil",
+      "life",
+      "lightning",
+      "fire"
+     ],
+     "adds": {
+      "lightning": {
+       "trait": "Shock",
+       "text": "Lends its chain: the heal jumps on from ally to ally. Whoever it heals resists lightning for a few seconds. It never harms."
+      },
+      "fire": {
+       "trait": "Burn",
+       "text": "Lends its spray: the heal comes out as a cone, and dries and thaws whoever it heals. (Another element leads the shape, so this one only adds its help.) Whoever it heals resists fire and cold for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "fire",
+      "water"
+     ],
+     "queue": [
+      "water",
+      "life",
+      "fire"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "life",
+      "fire"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Lends its push: the spray shoves back the enemies it touches (allies it only heals), and puts out the burning. (Another element leads the shape, so this one only adds its help.) Whoever it heals resists fire for a few seconds. It never harms."
+      },
+      "fire": {
+       "trait": "Burn",
+       "text": "Lends its spray: the heal comes out as a cone, and dries and thaws whoever it heals. Whoever it heals resists fire and cold for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "ice",
+      "lightning"
+     ],
+     "queue": [
+      "ice",
+      "life",
+      "lightning"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "life",
+      "cold",
+      "lightning"
+     ],
+     "adds": {
+      "ice": {
+       "trait": "Spike",
+       "text": "Lends its shards: the heal flies as a volley of bright ice shards, each healing whoever it strikes. Whoever it heals resists cold, and a little of blows for a few seconds. It never harms."
+      },
+      "lightning": {
+       "trait": "Shock",
+       "text": "Lends its chain: the heal jumps on from ally to ally. (Another element leads the shape, so this one only adds its help.) Whoever it heals resists lightning for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "ice",
+      "water"
+     ],
+     "queue": [
+      "water",
+      "ice",
+      "life"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "water",
+      "life",
+      "cold"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Lends its push: the spray shoves back the enemies it touches (allies it only heals), and puts out the burning. (Another element leads the shape, so this one only adds its help.) Whoever it heals resists fire for a few seconds. It never harms."
+      },
+      "ice": {
+       "trait": "Spike",
+       "text": "Lends its shards: the heal flies as a volley of bright ice shards, each healing whoever it strikes. Whoever it heals resists cold, and a little of blows for a few seconds. It never harms."
+      }
+     }
+    },
+    {
+     "extras": [
+      "earth",
+      "fire",
+      "water"
+     ],
+     "queue": [
+      "water",
+      "life",
+      "fire",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "life",
+      "fire",
+      "earth"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Lends its push: the spray shoves back the enemies it touches (allies it only heals), and puts out the burning. (Another element leads the shape, so this one only adds its help.) Whoever it heals resists fire for a few seconds. It never harms."
+      },
+      "fire": {
+       "trait": "Burn",
+       "text": "Lends its spray: the heal comes out as a cone, and dries and thaws whoever it heals. (Another element leads the shape, so this one only adds its help.) Whoever it heals resists fire and cold for a few seconds. It never harms."
+      },
+      "earth": {
+       "trait": "Weight",
+       "text": "Lends its body: the heal is a lobbed stone that bursts where it lands. Whoever it heals resists blows, and a little fire and cold for a few seconds. It never harms."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "title": "Frost spear",
+   "lead": "cold",
+   "text": "A long spear with a chilling thrust. Its Heavy is an impaling dash (frozen targets on the way shatter); its Special throws a javelin that pins and frosts. Lasts until it breaks or you conjure another.",
+   "variants": [
+    {
+     "extras": [],
+     "queue": [
+      "cold"
+     ],
+     "pressed": [
+      "sigil",
+      "cold"
+     ],
+     "adds": {}
+    }
+   ]
+  },
+  {
+   "title": "Lightning whip",
+   "lead": "lightning",
+   "text": "A long-reach whip that shocks. Its Heavy is a chain lash: the first target, then up to 3 more; its Special a Sweep round you. Lasts until it breaks or you conjure another.",
+   "variants": [
+    {
+     "extras": [],
+     "queue": [
+      "lightning"
+     ],
+     "pressed": [
+      "sigil",
+      "lightning"
+     ],
+     "adds": {}
+    },
+    {
+     "extras": [
+      "cold"
+     ],
+     "queue": [
+      "cold",
+      "lightning"
+     ],
+     "pressed": [
+      "sigil",
+      "cold",
+      "lightning"
+     ],
+     "adds": {
+      "cold": {
+       "trait": "Chill",
+       "text": "Whatever it hits is chilled, moving and attacking slower the colder it gets, and frozen if it was already wet and cold enough; burning is put out. The spell bursts into a puff of frost where it ends, chilling everything near it (Frost puff)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "fire"
+     ],
+     "queue": [
+      "lightning",
+      "fire"
+     ],
+     "pressed": [
+      "sigil",
+      "lightning",
+      "fire"
+     ],
+     "adds": {
+      "fire": {
+       "trait": "Burn",
+       "text": "Whatever it hits is set alight, and dried or thawed."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "title": "Arcane wand",
+   "lead": "arcane",
+   "text": "A wand that shoots light arcane bolts; hold to charge a bolt that pierces. Its Special, Siphon, is held: you stand rooted while your runes regenerate fast. Lasts until it breaks or you conjure another.",
+   "variants": [
+    {
+     "extras": [],
+     "queue": [
+      "arcane"
+     ],
+     "pressed": [
+      "sigil",
+      "arcane"
+     ],
+     "adds": {}
+    },
+    {
+     "extras": [
+      "cold"
+     ],
+     "queue": [
+      "cold",
+      "arcane"
+     ],
+     "pressed": [
+      "sigil",
+      "cold",
+      "arcane"
+     ],
+     "adds": {
+      "cold": {
+       "trait": "Chill",
+       "text": "Whatever it hits is chilled, moving and attacking slower the colder it gets, and frozen if it was already wet and cold enough; burning is put out. The spell bursts into a puff of frost where it ends, chilling everything near it (Frost puff)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "fire"
+     ],
+     "queue": [
+      "arcane",
+      "fire"
+     ],
+     "pressed": [
+      "sigil",
+      "arcane",
+      "fire"
+     ],
+     "adds": {
+      "fire": {
+       "trait": "Burn",
+       "text": "Whatever it hits is set alight, and dried or thawed."
+      }
+     }
+    },
+    {
+     "extras": [
+      "ice"
+     ],
+     "queue": [
+      "ice",
+      "arcane"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "cold",
+      "arcane"
+     ],
+     "adds": {
+      "ice": {
+       "trait": "Spike",
+       "text": "Whatever it hits is struck hard by ice and chilled a little, and put out if burning; it is frozen if it was already wet. The water is frozen into the spell, so it never soaks. A frozen target shatters from a heavy hit. The spell splits into ice shards on impact, and they fly on (Shatter)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "lightning"
+     ],
+     "queue": [
+      "lightning",
+      "arcane"
+     ],
+     "pressed": [
+      "sigil",
+      "lightning",
+      "arcane"
+     ],
+     "adds": {
+      "lightning": {
+       "trait": "Shock",
+       "text": "Whatever it hits is shocked and stunned for a moment (a stun breaks a cast or wind-up, but you can still walk). The spell jumps on to a neighbour (Chain)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "water"
+     ],
+     "queue": [
+      "water",
+      "arcane"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "arcane"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Whatever it hits is soaked, put out if burning, and frozen if it was already cold enough. The spell shoves whatever it hits (Push)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "cold",
+      "ice"
+     ],
+     "queue": [
+      "ice",
+      "cold",
+      "arcane"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "cold",
+      "cold",
+      "arcane"
+     ],
+     "adds": {
+      "ice": {
+       "trait": "Spike",
+       "text": "Whatever it hits is struck hard by ice and chilled a little, and put out if burning; it is frozen if it was already wet. The water is frozen into the spell, so it never soaks. A frozen target shatters from a heavy hit. The spell splits into ice shards on impact, and they fly on (Shatter)."
+      },
+      "cold": {
+       "trait": "Chill",
+       "text": "Whatever it hits is chilled, moving and attacking slower the colder it gets, and frozen if it was already wet and cold enough; burning is put out. No frost puff: Ice leads the shape."
+      }
+     }
+    },
+    {
+     "extras": [
+      "cold",
+      "lightning"
+     ],
+     "queue": [
+      "cold",
+      "lightning",
+      "arcane"
+     ],
+     "pressed": [
+      "sigil",
+      "cold",
+      "lightning",
+      "arcane"
+     ],
+     "adds": {
+      "cold": {
+       "trait": "Chill",
+       "text": "Whatever it hits is chilled, moving and attacking slower the colder it gets, and frozen if it was already wet and cold enough; burning is put out. No frost puff: Lightning leads the shape."
+      },
+      "lightning": {
+       "trait": "Shock",
+       "text": "Whatever it hits is shocked and stunned for a moment (a stun breaks a cast or wind-up, but you can still walk). The spell jumps on to a neighbour (Chain)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "fire",
+      "lightning"
+     ],
+     "queue": [
+      "lightning",
+      "arcane",
+      "fire"
+     ],
+     "pressed": [
+      "sigil",
+      "lightning",
+      "arcane",
+      "fire"
+     ],
+     "adds": {
+      "lightning": {
+       "trait": "Shock",
+       "text": "Whatever it hits is shocked and stunned for a moment (a stun breaks a cast or wind-up, but you can still walk). The spell jumps on to a neighbour (Chain)."
+      },
+      "fire": {
+       "trait": "Burn",
+       "text": "Whatever it hits is set alight, and dried or thawed."
+      }
+     }
+    },
+    {
+     "extras": [
+      "fire",
+      "water"
+     ],
+     "queue": [
+      "water",
+      "arcane",
+      "fire"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "arcane",
+      "fire"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Whatever it hits is soaked, put out if burning, and frozen if it was already cold enough. No push: with Fire, the water is steam."
+      },
+      "fire": {
+       "trait": "Burn",
+       "text": "Whatever it hits is set alight, and dried or thawed."
+      }
+     }
+    },
+    {
+     "extras": [
+      "ice",
+      "lightning"
+     ],
+     "queue": [
+      "ice",
+      "lightning",
+      "arcane"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "cold",
+      "lightning",
+      "arcane"
+     ],
+     "adds": {
+      "ice": {
+       "trait": "Spike",
+       "text": "Whatever it hits is struck hard by ice and chilled a little, and put out if burning; it is frozen if it was already wet. The water is frozen into the spell, so it never soaks. A frozen target shatters from a heavy hit. No shatter: Lightning leads the shape."
+      },
+      "lightning": {
+       "trait": "Shock",
+       "text": "Whatever it hits is shocked and stunned for a moment (a stun breaks a cast or wind-up, but you can still walk). The spell jumps on to a neighbour (Chain)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "ice",
+      "water"
+     ],
+     "queue": [
+      "water",
+      "ice",
+      "arcane"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "water",
+      "cold",
+      "arcane"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Whatever it hits is put out if burning, but not soaked: the water freezes into the ice. No push: Ice leads the shape."
+      },
+      "ice": {
+       "trait": "Spike",
+       "text": "Whatever it hits is struck hard by ice and chilled a little, and put out if burning; it is frozen if it was already wet. The water is frozen into the spell, so it never soaks. A frozen target shatters from a heavy hit. The spell splits into ice shards on impact, and they fly on (Shatter)."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "title": "Flame sword",
+   "lead": "fire",
+   "text": "A blade that sets alight. Its Heavy is a rolling crescent of flame; its Special a Sweep round you. Lasts until it breaks or you conjure another.",
+   "variants": [
+    {
+     "extras": [],
+     "queue": [
+      "fire"
+     ],
+     "pressed": [
+      "sigil",
+      "fire"
+     ],
+     "adds": {}
+    },
+    {
+     "extras": [
+      "water"
+     ],
+     "queue": [
+      "water",
+      "fire",
+      "fire"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "fire",
+      "fire"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Whatever it hits is soaked, put out if burning, and frozen if it was already cold enough. No push: with Fire, the water is steam."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "title": "Stone maul",
+   "lead": "earth",
+   "text": "A slow, heavy hammer: every hit knocks down. Its Heavy is a fissure down one lane, knocking down all in it; its Special a Sweep round you. Lasts until it breaks or you conjure another.",
+   "variants": [
+    {
+     "extras": [],
+     "queue": [
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "earth"
+     ],
+     "adds": {}
+    },
+    {
+     "extras": [
+      "arcane"
+     ],
+     "queue": [
+      "arcane",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "arcane",
+      "earth"
+     ],
+     "adds": {
+      "arcane": {
+       "trait": "Expose",
+       "text": "Whatever it hits is exposed: for a moment its wards and resistances don't count, and structures take extra damage. The spell bursts in a small explosion where it lands (Burst)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "cold"
+     ],
+     "queue": [
+      "cold",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "cold",
+      "earth"
+     ],
+     "adds": {
+      "cold": {
+       "trait": "Chill",
+       "text": "Whatever it hits is chilled, moving and attacking slower the colder it gets, and frozen if it was already wet and cold enough; burning is put out. The spell bursts into a puff of frost where it ends, chilling everything near it (Frost puff)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "fire"
+     ],
+     "queue": [
+      "fire",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "fire",
+      "earth"
+     ],
+     "adds": {
+      "fire": {
+       "trait": "Burn",
+       "text": "Whatever it hits is set alight, and dried or thawed."
+      }
+     }
+    },
+    {
+     "extras": [
+      "ice"
+     ],
+     "queue": [
+      "ice",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "cold",
+      "earth"
+     ],
+     "adds": {
+      "ice": {
+       "trait": "Spike",
+       "text": "Whatever it hits is struck hard by ice and chilled a little, and put out if burning; it is frozen if it was already wet. The water is frozen into the spell, so it never soaks. A frozen target shatters from a heavy hit. The spell splits into ice shards on impact, and they fly on (Shatter)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "water"
+     ],
+     "queue": [
+      "water",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "earth"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Whatever it hits is soaked, put out if burning, and frozen if it was already cold enough. The spell shoves whatever it hits (Push)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "arcane",
+      "cold"
+     ],
+     "queue": [
+      "cold",
+      "arcane",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "cold",
+      "arcane",
+      "earth"
+     ],
+     "adds": {
+      "cold": {
+       "trait": "Chill",
+       "text": "Whatever it hits is chilled, moving and attacking slower the colder it gets, and frozen if it was already wet and cold enough; burning is put out. No frost puff: Arcane leads the shape."
+      },
+      "arcane": {
+       "trait": "Expose",
+       "text": "Whatever it hits is exposed: for a moment its wards and resistances don't count, and structures take extra damage. The spell bursts in a small explosion where it lands (Burst)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "arcane",
+      "fire"
+     ],
+     "queue": [
+      "arcane",
+      "fire",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "arcane",
+      "fire",
+      "earth"
+     ],
+     "adds": {
+      "arcane": {
+       "trait": "Expose",
+       "text": "Whatever it hits is exposed: for a moment its wards and resistances don't count, and structures take extra damage. The spell bursts in a small explosion where it lands (Burst)."
+      },
+      "fire": {
+       "trait": "Burn",
+       "text": "Whatever it hits is set alight, and dried or thawed."
+      }
+     }
+    },
+    {
+     "extras": [
+      "arcane",
+      "ice"
+     ],
+     "queue": [
+      "ice",
+      "arcane",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "cold",
+      "arcane",
+      "earth"
+     ],
+     "adds": {
+      "ice": {
+       "trait": "Spike",
+       "text": "Whatever it hits is struck hard by ice and chilled a little, and put out if burning; it is frozen if it was already wet. The water is frozen into the spell, so it never soaks. A frozen target shatters from a heavy hit. No shatter: Arcane leads the shape."
+      },
+      "arcane": {
+       "trait": "Expose",
+       "text": "Whatever it hits is exposed: for a moment its wards and resistances don't count, and structures take extra damage. The spell bursts in a small explosion where it lands (Burst)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "arcane",
+      "water"
+     ],
+     "queue": [
+      "water",
+      "arcane",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "arcane",
+      "earth"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Whatever it hits is soaked, put out if burning, and frozen if it was already cold enough. No push: Arcane leads the shape."
+      },
+      "arcane": {
+       "trait": "Expose",
+       "text": "Whatever it hits is exposed: for a moment its wards and resistances don't count, and structures take extra damage. The spell bursts in a small explosion where it lands (Burst)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "cold",
+      "ice"
+     ],
+     "queue": [
+      "ice",
+      "cold",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "cold",
+      "cold",
+      "earth"
+     ],
+     "adds": {
+      "ice": {
+       "trait": "Spike",
+       "text": "Whatever it hits is struck hard by ice and chilled a little, and put out if burning; it is frozen if it was already wet. The water is frozen into the spell, so it never soaks. A frozen target shatters from a heavy hit. The spell splits into ice shards on impact, and they fly on (Shatter)."
+      },
+      "cold": {
+       "trait": "Chill",
+       "text": "Whatever it hits is chilled, moving and attacking slower the colder it gets, and frozen if it was already wet and cold enough; burning is put out. No frost puff: Ice leads the shape."
+      }
+     }
+    },
+    {
+     "extras": [
+      "fire",
+      "water"
+     ],
+     "queue": [
+      "water",
+      "fire",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "fire",
+      "earth"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Whatever it hits is soaked, put out if burning, and frozen if it was already cold enough. No push: with Fire, the water is steam."
+      },
+      "fire": {
+       "trait": "Burn",
+       "text": "Whatever it hits is set alight, and dried or thawed."
+      }
+     }
+    },
+    {
+     "extras": [
+      "ice",
+      "water"
+     ],
+     "queue": [
+      "water",
+      "ice",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "water",
+      "cold",
+      "earth"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Whatever it hits is put out if burning, but not soaked: the water freezes into the ice. No push: Ice leads the shape."
+      },
+      "ice": {
+       "trait": "Spike",
+       "text": "Whatever it hits is struck hard by ice and chilled a little, and put out if burning; it is frozen if it was already wet. The water is frozen into the spell, so it never soaks. A frozen target shatters from a heavy hit. The spell splits into ice shards on impact, and they fly on (Shatter)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "arcane",
+      "fire",
+      "water"
+     ],
+     "queue": [
+      "water",
+      "arcane",
+      "fire",
+      "earth"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "arcane",
+      "fire",
+      "earth"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Whatever it hits is soaked, put out if burning, and frozen if it was already cold enough. No push: Arcane leads the shape."
+      },
+      "arcane": {
+       "trait": "Expose",
+       "text": "Whatever it hits is exposed: for a moment its wards and resistances don't count, and structures take extra damage. The spell bursts in a small explosion where it lands (Burst)."
+      },
+      "fire": {
+       "trait": "Burn",
+       "text": "Whatever it hits is set alight, and dried or thawed."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "title": "Ice bow",
+   "lead": "ice",
+   "text": "A bow of ice that looses quick icicles, the fastest shot in hand. Hold to draw a fan of three icicles; a full draw pierces. Its Special is a splinter shot at the cursor that bursts into flying shards. Lasts until it breaks or you conjure another.",
+   "variants": [
+    {
+     "extras": [],
+     "queue": [
+      "ice"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "cold"
+     ],
+     "adds": {}
+    },
+    {
+     "extras": [
+      "cold"
+     ],
+     "queue": [
+      "ice",
+      "cold"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "cold",
+      "cold"
+     ],
+     "adds": {
+      "cold": {
+       "trait": "Chill",
+       "text": "Whatever it hits is chilled, moving and attacking slower the colder it gets, and frozen if it was already wet and cold enough; burning is put out. The spell bursts into a puff of frost where it ends, chilling everything near it (Frost puff)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "lightning"
+     ],
+     "queue": [
+      "ice",
+      "lightning"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "cold",
+      "lightning"
+     ],
+     "adds": {
+      "lightning": {
+       "trait": "Shock",
+       "text": "Whatever it hits is shocked and stunned for a moment (a stun breaks a cast or wind-up, but you can still walk). The spell jumps on to a neighbour (Chain)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "water"
+     ],
+     "queue": [
+      "water",
+      "ice"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "water",
+      "cold"
+     ],
+     "adds": {
+      "water": {
+       "trait": "Soak",
+       "text": "Whatever it hits is put out if burning, but not soaked: the water freezes into the ice. The spell shoves whatever it hits (Push)."
+      }
+     }
+    },
+    {
+     "extras": [
+      "cold",
+      "lightning"
+     ],
+     "queue": [
+      "ice",
+      "cold",
+      "lightning"
+     ],
+     "pressed": [
+      "sigil",
+      "water",
+      "cold",
+      "cold",
+      "lightning"
+     ],
+     "adds": {
+      "cold": {
+       "trait": "Chill",
+       "text": "Whatever it hits is chilled, moving and attacking slower the colder it gets, and frozen if it was already wet and cold enough; burning is put out. No frost puff: Lightning leads the shape."
+      },
+      "lightning": {
+       "trait": "Shock",
+       "text": "Whatever it hits is shocked and stunned for a moment (a stun breaks a cast or wind-up, but you can still walk). The spell jumps on to a neighbour (Chain)."
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

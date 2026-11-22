@@ -1,6 +1,6 @@
 /**
  * The drill yard (docs/campaign/01-opening, beats 2 and 3): the crash course in fighting, as stations along one worn
- * path through a real place (the level: tools/segments/01-opening/yard-level.py). Nothing is a gate but the last: each
+ * path through a real place (the level: plan D, written by tools/place-plans/to_ldtk.py yard-d). Nothing is a gate but the last: each
  * station wakes as you walk up to it, its keys show while you're there and it isn't done, and you can always walk on
  * (a returning player gets through by walking). The way out north waits for a charged focus from the rack.
  *

@@ -191,6 +191,8 @@ export class SceneLighting {
   readonly grade = new ColorMatrixFilter();
   private shadowRoot = new Container();
   private casts = new WeakMap<Texture, { tex: Texture; sx: number; sy: number }>();
+  /** Every cast-shadow texture made, so destroy() can free them (a WeakMap can't be walked). */
+  private castTexes = new Set<Texture>();
   private lightRoot = new Container();
   private walls = new Graphics();
   private pool: Sprite[] = [];
@@ -242,6 +244,20 @@ export class SceneLighting {
     this.bg.position.set(-PAD, -PAD);
     this.clouds.position.set(-PAD, -PAD);
     this.vig.position.set(-PAD, -PAD);
+  }
+
+  /** Frees the maps, the light discs, the meshes and the cast shadows (a view going away; the game never does this). */
+  destroy(): void {
+    this.shadowTex?.destroy(true); this.lightTex?.destroy(true); this.shadowTex = this.lightTex = null;
+    this.vig.texture?.destroy(true);
+    this.clouds.texture.destroy(true);
+    for (const t of this.castTexes) t.destroy(true);
+    this.castTexes.clear();
+    for (const m of this.meshes) m.geo.destroy();
+    this.meshes = [];
+    this.lights.destroy(); this.glow.destroy();
+    this.grade.destroy();
+    this.shadowRoot.destroy({ children: true }); this.lightRoot.destroy({ children: true });
   }
 
   /** The art-pixel size of the view. Remakes the maps when it changes. */
@@ -342,7 +358,8 @@ export class SceneLighting {
     out.x.putImageData(im, 0, 0);
     const t = Texture.from(out.c);
     t.source.scaleMode = 'nearest';
-    had?.tex.destroy(true);
+    if (had) { had.tex.destroy(true); this.castTexes.delete(had.tex); }
+    this.castTexes.add(t);
     const cast = { tex: t, sx, sy };
     this.casts.set(tex, cast);
     return cast;

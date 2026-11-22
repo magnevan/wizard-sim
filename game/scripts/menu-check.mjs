@@ -60,7 +60,10 @@ try {
   await p.keyboard.press('ArrowLeft');
   await p.keyboard.press('ArrowUp');
   await p.keyboard.press('ArrowRight');
-  for (let i = 0; i < 3; i++) await p.keyboard.press('ArrowDown');
+  // walk down to Survive by its label: the list grows (chapters, checkpoints, Continue), so no fixed count
+  const focusedLabel = () => p.evaluate(() => { const m = window.wizardSim.menu; return m.nav.focus === 'items' ? m.items[m.nav.item]?.label ?? '' : ''; });
+  for (let i = 0; i < 30 && !(await focusedLabel()).startsWith('Survive'); i++) await p.keyboard.press('ArrowDown');
+  if (!(await focusedLabel()).startsWith('Survive')) fail('could not find Survive in the Scenarios list');
   await p.screenshot({ path: `${out}/menu-scenarios-focus-1280.png` });
   await p.keyboard.press('Enter');
   await sleep(500);

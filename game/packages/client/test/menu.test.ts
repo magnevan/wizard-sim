@@ -25,7 +25,7 @@ describe('the scenario registry', () => {
 
   it('maps 1 / 2 / 3 to the Sanctum, the Arena and Survive', () => {
     expect(['Digit1', 'Digit2', 'Digit3'].map((c) => scenarioForKey(c)?.id)).toEqual(['sanctum', 'arena', 'survive']);
-    expect(scenarioForKey('Digit9')).toBeUndefined();
+    expect(scenarioForKey('Digit0')).toBeUndefined();
     expect(scenarioForKey('KeyQ')).toBeUndefined();
   });
 

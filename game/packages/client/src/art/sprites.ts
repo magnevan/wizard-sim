@@ -54,9 +54,18 @@ function load(): void {
     if (!sh) continue;
     const img = new Image();
     img.onload = () => { if (slug === 'wizard') sh.seats = X.TEAMS.map((p) => seatSheet(img, p)); sh.img = img; };
-    img.onerror = () => console.warn('sprites: could not load', url);
+    img.onerror = () => { failedSheets++; console.warn('sprites: could not load', url); };
     img.src = url;
   }
+}
+
+/** Have the baked sheets all arrived (or failed)? Starts loading them. For pages that wait before drawing a frame to keep (the VFX Lab). */
+let failedSheets = 0;
+export function sheetsReady(): boolean {
+  load();
+  let pending = 0;
+  for (const path of Object.keys(urls)) { const sh = sheets.get(path.split('/').slice(-2)[0]); if (sh && !sh.img) pending++; }
+  return pending <= failedSheets;
 }
 
 const hexRgb = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
@@ -328,7 +337,7 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
   if (s.kind === 'wizard') {
     const p = wizardPose();
     // a two-handed weapon (the bow, the maul) carries the guard on its back
-    return { ...p, hl: settle || BLEND_HL, ...(lift !== undefined && p.aim === undefined ? { aim: lift } : {}), ...(s.guard && twoHanded(s.weapon) ? { sling: 1 } : {}) };
+    return { ...p, infuse: s.infuse, hl: settle || BLEND_HL, ...(lift !== undefined && p.aim === undefined ? { aim: lift } : {}), ...(s.guard && twoHanded(s.weapon) ? { sling: 1 } : {}) };
   }
   function wizardPose(): LivePose {
     const seat = X.TEAMS[s.pal % X.TEAMS.length], c = meta.casts?.cast, props = wizardProps(s);
@@ -445,9 +454,22 @@ export function spriteFrame(s: RigState, who: number, rigAnchors: Anchors): Fram
   const [m, f] = cellOf(sh, s, who), dir = dirOf(s.face), white = s.flash >= 9;
   const seat = s.kind === 'wizard' ? s.pal : 0;
   const key = slug + '|' + seat + '|' + m.row + '|' + dir + '|' + f + '|' + (white ? 1 : 0);
+  // the cache holds the image only: the anchors depend on more of the state than the key does (the hands of a pose
+  // sharing this cell), so each call gets this state's own (#13)
+  const a = stretch(rigAnchors, sh.meta.height / HEIGHT[s.kind]);
   let fr = cache.get(key);
-  if (!fr) { fr = compose(sh, m, dir, f, white, stretch(rigAnchors, sh.meta.height / HEIGHT[s.kind]), seat); cache.set(key, fr); }
-  return fr;
+  if (!fr) { fr = compose(sh, m, dir, f, white, a, seat); cache.set(key, fr); }
+  return fr.a === a ? fr : { ...fr, a };
+}
+
+/**
+ * Forgets the composed sheet frames. A cached frame keeps the anchors of the first rig state that made it (the key
+ * doesn't hold everything the anchors depend on), so what a page drew before decides where later spells start; the VFX
+ * Lab clears it for frames that must match a fresh page's.
+ */
+export function resetSheetFrames(): void {
+  for (const fr of cache.values()) fr.tex.destroy(true);
+  cache.clear();
 }
 
 /** A multiply tint for a sprite's statuses (the code rigs paint them on the body). */
@@ -487,6 +509,7 @@ export function deathFrame(d: SpriteDeath, td: number, rigAnchors: Anchors): { f
   const key = d.slug + '|0|' + m.row + '|' + d.dir + '|' + f + '|0';
   let fr = cache.get(key);
   if (!fr) { fr = compose(sh, m, d.dir, f, false, rigAnchors); cache.set(key, fr); }
+  if (fr.a !== rigAnchors) fr = { ...fr, a: rigAnchors }; // this death's own anchors, as above (#13)
   const fade = td - play - DEATH_HOLD;
   return { f: fr, alpha: fade > 0 ? Math.max(0, 1 - fade / DEATH_FADE) : 1 };
 }

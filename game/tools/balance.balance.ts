@@ -17,6 +17,7 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
+import { ringBtn } from './ring';
 import type { Element } from '@wizard-sim/rules';
 import {
   ARCHETYPES, BTN, KIND, NO_INPUT, PHASE_ENC, RHYTHM, RUNES, applyOverrides, botInput, compile, createWorld, elementId, newBotMemory,
@@ -58,13 +59,13 @@ function measure(queue: Element[], cast: 'force' | 'area' | 'place', pack: numbe
     w.bodies.kind[20] = KIND.wizard; w.bodies.team[20] = 1; w.bodies.x[20] = dx; w.bodies.y[20] = 0.9; w.bodies.r[20] = 0.45; w.bodies.hp[20] = 1; w.bodies.maxHp[20] = DUMMY_HP;
   }
   const spec = compile(queue, cast);
-  const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: dx * 32, aimY: 0, ...o })];
+  const aim = (o: Partial<PlayerInput> = {}) => [quantize({ ...NO_INPUT, aimX: cast === 'area' ? 0 : dx * 32, aimY: 0, ...o })]; // the ring: aimed at yourself
   let runes = 0, prev = w.seats.runes.slice(0, 9);
   const tickRunes = () => { const cur = w.seats.runes.slice(0, 9); for (let k = 0; k < 9; k++) runes += Math.max(0, prev[k] - cur[k]); prev = cur; };
   const go = (inp: PlayerInput[]) => { step(w, inp); tickRunes(); };
   for (const e of queue) go(aim({ press0: elementId(e) }));
   const start = w.clock[0];
-  const btn = cast === 'force' ? BTN.force : BTN.area;
+  const btn = cast === 'force' ? BTN.force : cast === 'area' ? ringBtn(queue) : BTN.area;
   const hold = cast === 'place' ? 30 : spec.channel ? Math.round(RHYTHM.naturalChannel * 60 * (spec.shape === 'beam' ? spec.formN : 1)) + 12 : spec.charge ? 70 : 2;
   for (let t = 0; t < hold; t++) go(aim({ buttons: btn }));
   let busyEnd = w.clock[0];

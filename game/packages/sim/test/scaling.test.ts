@@ -18,7 +18,9 @@ describe('rune scaling', () => {
   it("Water's own spray and splash push, harder with more Water; Rain and steam don't", () => {
     const pushed = (q: Element[], btn: number, hold: number) => {
       const { w, go, queue } = scene(2.2);
-      queue(q); go({ buttons: btn }, hold); go({}, 30);
+      queue(q);
+      // Area: the ring, the burst aimed at yourself (the ring merged into the burst, 2026-11-22)
+      if (btn === BTN.area) { go({ buttons: BTN.weapon, aimX: 0 }, hold); go({ aimX: 0 }, 30); } else { go({ buttons: btn }, hold); go({}, 30); }
       return w.bodies.x[1] - 2.2;
     };
     expect(pushed(['water'], BTN.force, 60)).toBeGreaterThan(0.3);
@@ -31,7 +33,8 @@ describe('rune scaling', () => {
   it('an Arcane nova and an Arcane beam both hit +70 % harder a rune', () => {
     const dealt = (q: Element[], btn: number, hold: number) => {
       const { w, go, queue } = scene(1.6, true);
-      queue(q); go({ buttons: btn }, hold); go({}, 40);
+      queue(q);
+      if (btn === BTN.area) { go({ buttons: BTN.weapon, aimX: 0 }, hold); go({ aimX: 0 }, 40); } else { go({ buttons: btn }, hold); go({}, 40); }
       return 1e5 - w.bodies.hp[4];
     };
     expect(dealt(['arcane', 'arcane'], BTN.area, 2) / dealt(['arcane'], BTN.area, 2)).toBeCloseTo(1.7, 1);

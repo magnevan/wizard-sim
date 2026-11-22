@@ -1,0 +1,429 @@
+[
+ {
+  "sheet": "hands-1",
+  "cols": 3,
+  "rows": 2,
+  "refs": [
+   "docs/reference/wizard-arms/weapons-a.jpg",
+   "tools/sprites-3d/input/roster/wizard.png"
+  ],
+  "cells": [
+   {
+    "weapon": "Healing hands",
+    "extras": []
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "cold"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "earth"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "fire"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "ice"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "lightning"
+    ]
+   }
+  ]
+ },
+ {
+  "sheet": "hands-2",
+  "cols": 3,
+  "rows": 2,
+  "refs": [
+   "docs/reference/wizard-arms/weapons-a.jpg",
+   "tools/sprites-3d/input/roster/wizard.png"
+  ],
+  "cells": [
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "water"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "cold",
+     "earth"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "cold",
+     "ice"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "cold",
+     "lightning"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "earth",
+     "fire"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "earth",
+     "ice"
+    ]
+   }
+  ]
+ },
+ {
+  "sheet": "hands-3",
+  "cols": 3,
+  "rows": 2,
+  "refs": [
+   "docs/reference/wizard-arms/weapons-a.jpg",
+   "tools/sprites-3d/input/roster/wizard.png"
+  ],
+  "cells": [
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "earth",
+     "water"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "fire",
+     "lightning"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "fire",
+     "water"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "ice",
+     "lightning"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "ice",
+     "water"
+    ]
+   },
+   {
+    "weapon": "Healing hands",
+    "extras": [
+     "earth",
+     "fire",
+     "water"
+    ]
+   }
+  ]
+ },
+ {
+  "sheet": "wand-1",
+  "cols": 3,
+  "rows": 2,
+  "refs": [
+   "docs/reference/wizard-arms/weapons-a.jpg"
+  ],
+  "cells": [
+   {
+    "weapon": "Arcane wand",
+    "extras": [
+     "cold"
+    ]
+   },
+   {
+    "weapon": "Arcane wand",
+    "extras": [
+     "fire"
+    ]
+   },
+   {
+    "weapon": "Arcane wand",
+    "extras": [
+     "ice"
+    ]
+   },
+   {
+    "weapon": "Arcane wand",
+    "extras": [
+     "lightning"
+    ]
+   },
+   {
+    "weapon": "Arcane wand",
+    "extras": [
+     "water"
+    ]
+   },
+   {
+    "weapon": "Arcane wand",
+    "extras": [
+     "cold",
+     "ice"
+    ]
+   }
+  ]
+ },
+ {
+  "sheet": "wand-2",
+  "cols": 3,
+  "rows": 2,
+  "refs": [
+   "docs/reference/wizard-arms/weapons-a.jpg"
+  ],
+  "cells": [
+   {
+    "weapon": "Arcane wand",
+    "extras": [
+     "cold",
+     "lightning"
+    ]
+   },
+   {
+    "weapon": "Arcane wand",
+    "extras": [
+     "fire",
+     "lightning"
+    ]
+   },
+   {
+    "weapon": "Arcane wand",
+    "extras": [
+     "fire",
+     "water"
+    ]
+   },
+   {
+    "weapon": "Arcane wand",
+    "extras": [
+     "ice",
+     "lightning"
+    ]
+   },
+   {
+    "weapon": "Arcane wand",
+    "extras": [
+     "ice",
+     "water"
+    ]
+   },
+   {
+    "weapon": "Arcane wand",
+    "extras": []
+   }
+  ]
+ },
+ {
+  "sheet": "maul-1",
+  "cols": 3,
+  "rows": 2,
+  "refs": [
+   "docs/reference/wizard-arms/weapons-a.jpg"
+  ],
+  "cells": [
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "arcane"
+    ]
+   },
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "cold"
+    ]
+   },
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "fire"
+    ]
+   },
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "ice"
+    ]
+   },
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "water"
+    ]
+   },
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "arcane",
+     "cold"
+    ]
+   }
+  ]
+ },
+ {
+  "sheet": "maul-2",
+  "cols": 3,
+  "rows": 2,
+  "refs": [
+   "docs/reference/wizard-arms/weapons-a.jpg"
+  ],
+  "cells": [
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "arcane",
+     "fire"
+    ]
+   },
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "arcane",
+     "ice"
+    ]
+   },
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "arcane",
+     "water"
+    ]
+   },
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "cold",
+     "ice"
+    ]
+   },
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "fire",
+     "water"
+    ]
+   },
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "ice",
+     "water"
+    ]
+   }
+  ]
+ },
+ {
+  "sheet": "bow-maul",
+  "cols": 3,
+  "rows": 2,
+  "refs": [
+   "docs/reference/wizard-arms/weapons-a.jpg"
+  ],
+  "cells": [
+   {
+    "weapon": "Ice bow",
+    "extras": [
+     "cold"
+    ]
+   },
+   {
+    "weapon": "Ice bow",
+    "extras": [
+     "lightning"
+    ]
+   },
+   {
+    "weapon": "Ice bow",
+    "extras": [
+     "water"
+    ]
+   },
+   {
+    "weapon": "Ice bow",
+    "extras": [
+     "cold",
+     "lightning"
+    ]
+   },
+   {
+    "weapon": "Stone maul",
+    "extras": [
+     "arcane",
+     "fire",
+     "water"
+    ]
+   },
+   {
+    "weapon": "Stone maul",
+    "extras": []
+   }
+  ]
+ },
+ {
+  "sheet": "small",
+  "cols": 2,
+  "rows": 2,
+  "refs": [
+   "docs/reference/wizard-arms/weapons-a.jpg"
+  ],
+  "cells": [
+   {
+    "weapon": "Tide trident",
+    "extras": [
+     "fire"
+    ]
+   },
+   {
+    "weapon": "Flame sword",
+    "extras": [
+     "water"
+    ]
+   },
+   {
+    "weapon": "Lightning whip",
+    "extras": [
+     "cold"
+    ]
+   },
+   {
+    "weapon": "Lightning whip",
+    "extras": [
+     "fire"
+    ]
+   }
+  ]
+ }
+]

@@ -1,4 +1,4 @@
-/* Copied from tools/spell-vfx/stage.js (2026-11-05) for the Weapon Moveset Review. Changes: the
+/* Copied from the retired Spell VFX gallery's stage.js (2026-11-05) for the Weapon Moveset Review. Changes: the
  * stage size is per vignette (V.w, V.h; default 200x124), the ground, scratch buffers and
  * the ambient light scale with it.
  * Spell VFX: the stage. One small pixel-art scene per vignette, rendered the way

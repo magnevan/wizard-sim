@@ -17,6 +17,17 @@ class Driver {
   aimAt(x: number, y: number): this { this.aim = { x, y }; return this; }
   queue(...els: Element[]): this { for (const e of els) this.tick({ press0: elementId(e) }); return this; }
   cast(btn: number, hold = 1, after = 40): this { this.tick({ buttons: btn }, hold); return this.tick({}, after); }
+  /**
+   * Aimed at yourself and released there (the ring merged into the burst, 2026-11-22): with `btn` Weapon an element's ring,
+   * with Area (Place) Shield's ring or Sigil's orbitals and motes.
+   */
+  onMe(btn: number, hold = 1, after = 40): this {
+    const a = this.aim, me = () => { this.aim = { x: this.w.bodies.x[0], y: this.w.bodies.y[0] }; };
+    me(); this.tick({ buttons: btn }, hold); me(); this.tick({}, 1); this.aim = a;
+    return this.tick({}, Math.max(0, after - 1));
+  }
+  /** An element's ring: the burst aimed at yourself. */
+  ring(hold = 1, after = 40): this { return this.onMe(BTN.weapon, hold, after); }
 }
 
 /** A quiet arena (no wave director) with one wizard at the origin and the given enemy. */
@@ -51,7 +62,7 @@ describe('enemies', () => {
     expect(a.w.bodies.hp[a.e]).toBe(ARCHETYPES[ARCH.shieldbearer].hp);
     const b = pit(ARCH.shieldbearer, 2);
     b.w.bodies.face[b.e] = 0.5;
-    b.d.queue('arcane').cast(BTN.area, 2, 20);
+    b.d.queue('arcane').ring(2, 20);
     expect(b.w.bodies.hp[b.e]).toBeLessThan(ARCHETYPES[ARCH.shieldbearer].hp);
   });
 
@@ -103,7 +114,7 @@ describe('enemies', () => {
 
   it('walled in completely, you are not safe: enemies break through the rock', () => {
     const { w, d, e } = pit(ARCH.swarmer, 6);
-    d.aimAt(6, 0).queue('shield', 'earth').cast(BTN.area, 1, 20); // a closed stone ring around you
+    d.aimAt(6, 0).queue('shield', 'earth').onMe(BTN.area, 1, 20); // a closed stone ring around you: Place on yourself
     const ring = () => Array.from(w.walls.type).filter((t) => t === WALL.rock).length;
     expect(ring()).toBe(STRUCT.ringSegs);
     const x0 = w.bodies.x[e], hp0 = Array.from(w.walls.hp).reduce((a, b) => a + b, 0);

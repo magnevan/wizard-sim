@@ -15,6 +15,7 @@ import { Container, Graphics, Sprite } from 'pixi.js';
 import { toU, toV, toX, toY } from '../iso-world';
 import { gx, gy } from './field';
 import { opt } from '../dev-options';
+import { PX_PER_M } from './heights';
 import { loadTexture } from './assets';
 
 /** The buildings' painted art (tools/building-art/cut.py): an image and where its block's (x1, y1, 0) lands in it. */
@@ -26,8 +27,7 @@ const artOf = (name: string): { url: string; anchor: [number, number] } | null =
   return url && meta ? { url, anchor: meta.anchor } : null;
 };
 
-/** Art px per metre of height (a 1.8 m person is a 26 px wizard). */
-export const PX_PER_M = 14.5;
+export { PX_PER_M } from './heights';
 /** Ground units per metre (a wizard 0.9 u across is about 0.55 m). */
 export const U_PER_M = 1 / 0.6;
 

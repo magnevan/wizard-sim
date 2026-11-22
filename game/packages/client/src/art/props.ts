@@ -13,6 +13,7 @@ import type { RoomDef } from '@wizard-sim/sim';
 import { FY, PPU } from '../camera';
 import { loadTexture, propImage, propMeta, type PropMeta, type PropSet } from './assets';
 import { FIELD, gx, gy } from './field';
+import { liftAt } from './heights';
 import { towersLit, unstable, wellPower, wellRepair } from './power-down';
 import { wellLit } from './well-anim';
 import * as X from './px';
@@ -85,6 +86,9 @@ export class PropView {
   private headClock = 0;
   constructor(private actors: Container, private tint: number, private current: PropSet) { this.under.addChild(this.shadows); }
 
+  /** Frees the shadows' texture (a view going away; the props' own images are shared and stay). */
+  destroy(): void { this.wanted++; this.shadowTex?.destroy(true); this.shadowTex = null; for (const t of this.headFrames) t.destroy(false); this.headFrames = []; }
+
   get set(): PropSet { return this.current; }
   set set(s: PropSet) { if (s !== this.current) { this.current = s; void this.dress(); } }
 
@@ -109,7 +113,7 @@ export class PropView {
       spr.tint = this.tint; spr.visible = false;
       spr.zIndex = Math.round(gy(p.y) + (meta.sort ?? 0)) * 128 + 100;
       (meta.flat ? this.under : this.actors).addChild(spr);
-      this.items.push({ asset: p.asset, meta, spr, x: gx(p.x), y: gy(p.y) - (meta.lift ?? 0), ox: 0, oy: 0, lit: 1 });
+      this.items.push({ asset: p.asset, meta, spr, x: gx(p.x), y: gy(p.y) - (meta.lift ?? 0) - liftAt(def, p.x, p.y), ox: 0, oy: 0, lit: 1 });
       if (meta.flat || meta.lift || meta.shadow === false) continue;
       const [fw, fh] = meta.footprint;
       X.shadow(x, gx(p.x), gy(p.y), (fw / 2) * PPU * 0.9, Math.max(2, (fh / 2) * PPU * FY), 10);

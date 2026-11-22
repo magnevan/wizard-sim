@@ -1,5 +1,5 @@
 /* Copied unchanged from tools/weapon-moves/actors.js (2026-11-05) for the Survive Review.
- * Copied from tools/spell-vfx/actors.js (2026-11-05) for the Weapon Moveset Review. Changes:
+ * Copied from the retired Spell VFX gallery's actors.js (2026-11-05) for the Weapon Moveset Review. Changes:
  * s.rig (a function (t, bob) -> { hL, hR, noStaff, drawR(sc, se, P, out), drawL(sc, se, P, out) })
  * lets a vignette pose both hands and draw a held weapon or guard inside the rig, so it gets
  * the outline, the light map and depth order; the actor box is wider (80 x 76) for long weapons.

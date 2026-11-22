@@ -1,5 +1,5 @@
 /**
- * The effects kit, ported from tools/spell-vfx/fx.js (and the helpers it took from the
+ * The effects kit, ported from the retired Spell VFX gallery's fx.js (in git history, ffe74f0) (and the helpers it took from the
  * Battlefield's render.js): flame tongues, puffs, jagged bolts, beams, sprays, rings,
  * shards, the fireball, the plasma arc, healing sparkles. All coordinates are art pixels in
  * one of the field canvases; heights are screen pixels up. Every function is pure in

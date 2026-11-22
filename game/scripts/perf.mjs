@@ -88,6 +88,7 @@ const caster = (keys, gesture, r) => async (p, running) => {
 };
 const sanctumSetup = async (p) => { await p.evaluate(() => { const g = window.wizardSim; g.tools.godMode = true; g.tools.infiniteRunes = true; }); };
 // the battery past the repair: Fire is yours, the fight over; the walls, props and lights stand all about
+SCENES.push({ name: 'yard-idle', url: '?room=yard' }, { name: 'court-idle', url: '?room=court' }); // the big walkable rooms: the court is a plan-made tiered room (art/heights.ts)
 SCENES.push({ name: 'battery-idle', url: '?at=repair#battery', setup: sanctumSetup });
 SCENES.push({ name: 'battery-patch', url: '?at=repair#battery', setup: sanctumSetup, during: caster('fff', 'place', 2.5) });
 SCENES.push({ name: 'battery-spray', url: '?at=repair#battery', setup: sanctumSetup, during: caster('ff', 'spray', 3) });

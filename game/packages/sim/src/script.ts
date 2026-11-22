@@ -25,13 +25,15 @@ export function scriptedInput(tick: number, player: number): PlayerInput {
   const a = Math.floor(t / 20) % 8;
   const AX = [160, 113, 0, -113, -160, -113, 0, 113], AY = [0, 113, 160, 113, 0, -113, -160, -113];
   const press0 = phase >= 4 && phase < 4 + recipe.length * 6 && (phase - 4) % 6 === 0 ? elementId(recipe[(phase - 4) / 6]) : 0;
-  // Most recipes are Force casts; every third is an Area tap, then a Place (hold), then a Self cast.
+  // Most recipes are Force casts; every third is a ring (the Weapon cast aimed at yourself, released there: the ring merged
+  // into the burst, 2026-11-22), then a Place (hold), then a Self cast.
   const k = (Math.floor(t / PERIOD) + player) % 6;
-  const buttons = k === 2 ? (phase >= 40 && phase < 43 ? BTN.area : 0)
+  const ring = k === 2 && phase >= 40 && phase < 44;
+  const buttons = k === 2 ? (phase >= 40 && phase < 43 ? BTN.weapon : 0)
     : k === 4 ? (phase >= 26 && phase < 48 ? BTN.area : 0)
     : k === 5 ? (phase >= 40 && phase < 42 ? BTN.self : 0)
     : phase >= 34 && phase < 46 ? BTN.force : 0;
-  return quantize({ buttons, press0, press1: 0, moveX, moveY, aimX: AX[a] * (player === 0 ? 1 : -1), aimY: AY[a] });
+  return quantize({ buttons, press0, press1: 0, moveX, moveY, aimX: ring ? 0 : AX[a] * (player === 0 ? 1 : -1), aimY: ring ? 0 : AY[a] });
 }
 
 export function scriptedReplay(ticks: number, players = 2, seed = 7): Replay {

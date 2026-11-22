@@ -13,12 +13,19 @@ import { SHAPES } from './config';
 /** Is this imbued burst a line? Earth makes it one, leading it or lending it its shape (a Life burst with Earth). */
 export const imbueLine = (spec: SpellSpec): boolean => spec.form === EL.earth || (spec.form === EL.life && spec.counts[EL.earth - 1] > 0);
 
-/** How far the imbued burst reaches, u: an Earth line is long, a Lightning-led one forks further than the cone. */
-export function imbueReach(spec: SpellSpec): number {
-  const extra = Math.max(0, spec.power - 1);
-  if (imbueLine(spec)) return SHAPES.imbueLineRange + SHAPES.imbueLinePerRune * extra;
-  return (spec.form === EL.lightning ? SHAPES.forkRange : SHAPES.imbueRange) + SHAPES.imbuePerRune * extra;
+/** How far the burst is stretched, 0..1, by the aim's distance (u) from the caster: 0 up close, 1 far out. */
+export const imbueStretch = (aim: number): number =>
+  Math.min(1, Math.max(0, (aim - SHAPES.imbueStretchFrom) / (SHAPES.imbueStretchTo - SHAPES.imbueStretchFrom)));
+
+/** How far the imbued burst reaches, u: an Earth line is long, a Lightning-led one forks further than the cone; `stretch` (imbueStretch) lengthens it. */
+export function imbueReach(spec: SpellSpec, stretch = 0): number {
+  const extra = Math.max(0, spec.power - 1), far = 1 + (SHAPES.imbueFarReach - 1) * stretch;
+  if (imbueLine(spec)) return (SHAPES.imbueLineRange + SHAPES.imbueLinePerRune * extra) * far;
+  return ((spec.form === EL.lightning ? SHAPES.forkRange : SHAPES.imbueRange) + SHAPES.imbuePerRune * extra) * far;
 }
+
+/** The burst cone's half-angle (turns) at a stretch: aimed further out, it narrows. */
+export const imbueHalf = (stretch = 0): number => SHAPES.imbueHalf * (1 - (1 - SHAPES.imbueFarHalf) * stretch);
 
 export type Shape =
   | 'beam' | 'spray' | 'arc' | 'missile' | 'shards'      // Force

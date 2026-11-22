@@ -110,7 +110,7 @@ Same explorer, shown above round 1. The scene now also tests proposal C's payloa
 - Chaos slider: removed. The user didn't notice it (effects sat at the edges and were spread across the loop). Background mayhem is now fixed at 0.8; `?chaos=` remains as a debug override.
 
 ### Spell VFX gallery (2026-11-04, built overnight)
-`tools/spell-vfx/` has 53 looping vignettes of the current spells in the Pixel Battlefield style: forms, payloads and water mixes, Shield barriers (tall walls with crack damage, the arc fading as Shield runes drain), Sigil devices and auras. Each one is rated in its db. Known weak spots:
+The retired Spell VFX gallery (`docs/archive/spell-vfx-gallery.md`) had 53 looping vignettes of the current spells in the Pixel Battlefield style: forms, payloads and water mixes, Shield barriers (tall walls with crack damage, the arc fading as Shield runes drain), Sigil devices and auras. Each one is rated in its db. Known weak spots:
 - wall cracks are faint on dark faces
 - the lens and wand "spared" moments are quick and lean on text labels (RELEASE, HALF, X2, ?, !)
 - the brute's hit flash is loud during beams
@@ -203,5 +203,5 @@ Built from the pass 2 feedback and published as v4. Feedback ids are `p3-*`.
   - **Conclusion:** fewer, more distinct deaths. Base, fire, cold, frozen shatter, lightning, arcane, earth (missile), steam, and an earthquake variant.
 
 ## Where it stands (2026-11-05): adopted
-The Pixel Battlefield look (high-res pixel art, the ~67° 3/4 camera, banded dusk light, outlined procedural wizards) is the game's look. Its actors, floor, lights, HUD and the Spell VFX gallery's effects and deaths are ported into `game/packages/client/src/art/` ([Engine stack](../decisions/README.md#2026-11-04-engine-stack-the-users-answers-on-the-engine-choice-page): milestone 1 uses "the Pixel Battlefield look"; [the look rule](../decisions/README.md#2026-11-04-the-look-rule-ice-shards-turret-draw-the-users-feedback-on-the-vfx-gallery-and-pixel-battlefield-pass-3)). New visuals are rated in the Spell VFX gallery (`tools/spell-vfx/`) and the Weapon Moveset Review.
+The Pixel Battlefield look (high-res pixel art, the ~67° 3/4 camera, banded dusk light, outlined procedural wizards) is the game's look. Its actors, floor, lights, HUD and the Spell VFX gallery's effects and deaths are ported into `game/packages/client/src/art/` ([Engine stack](../decisions/README.md#2026-11-04-engine-stack-the-users-answers-on-the-engine-choice-page): milestone 1 uses "the Pixel Battlefield look"; [the look rule](../decisions/README.md#2026-11-04-the-look-rule-ice-shards-turret-draw-the-users-feedback-on-the-vfx-gallery-and-pixel-battlefield-pass-3)). New visuals are rated in the VFX Lab (`docs/vfx-workflow.md`; the Spell VFX gallery is retired) and the Weapon Moveset Review.
 - Open question "Which direction?" **Answered:** the Pixel Battlefield direction, rated over the Art Style Explorer rounds above.

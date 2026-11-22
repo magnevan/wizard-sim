@@ -7,10 +7,12 @@
 //      reachable on foot from seat 0's start;
 //   5. the generated module (packages/sim/src/rooms.gen.ts) is up to date;
 //   6. the asset registry: every prop's meta.json is whole and names images that exist.
+// Then the sense lint (sense.mjs): warnings, printed but not failing.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
-import { compileProject, emitGrounds, emitModule, ROCK } from './compile.mjs';
+import { compileProject, emitGrounds, emitModule, isBlocked } from './compile.mjs';
+import { senseLintAll } from './sense.mjs';
 import { CELL, GAME, GEN_OUT, GROUND_OUT, LDTK_VERSION, SCHEMA, loadProject, loadProps } from './ldtk.mjs';
 
 const require = createRequire(import.meta.url);
@@ -26,7 +28,7 @@ export const SIM = {
   /** N_ALTARS */
   altars: 3,
   /** The rooms the sim's code names (createWorld, the scenarios). */
-  rooms: ['sanctum', 'arena', 'survive', 'tutorial', 'academy', 'battery', 'yard', 'court'],
+  rooms: ['sanctum', 'arena', 'survive', 'tutorial', 'academy', 'battery', 'yard', 'court', 'terraces', 'infirmary'],
 };
 
 let validators = null;
@@ -123,7 +125,7 @@ function checkRoom(room, errors) {
   if ((room.id === 'survive' || room.id === 'arena') && room.portals.length < 4) errors.push(`${R}: needs at least 4 portal spots (a wave opens up to 4)`);
   const walls = [...room.rock, ...room.propRock];
   const gw = Math.round(room.w / CELL), gh = Math.round(room.h / CELL);
-  const rockCell = (cx, cy) => room.terrain[cy]?.[cx] === ROCK;
+  const rockCell = (cx, cy) => isBlocked(room.terrain[cy]?.[cx]);
   const cellX = (x) => Math.floor((x + hw) / CELL), cellY = (y) => Math.floor((y + hh) / CELL);
 
   // Placement: inside the room and clear of rock.
@@ -135,7 +137,7 @@ function checkRoom(room, errors) {
   const clear = SIM.wallThickness + SIM.wizardRadius;
   for (const [name, [x, y]] of points) {
     if (Math.abs(x) > hw || Math.abs(y) > hh) { errors.push(`${R}: ${name} at ${x},${y} is outside the room`); continue; }
-    if (rockCell(cellX(x), cellY(y))) errors.push(`${R}: ${name} at ${x},${y} is inside painted rock`);
+    if (rockCell(cellX(x), cellY(y))) errors.push(`${R}: ${name} at ${x},${y} is inside painted rock or void`);
     for (const s of walls) {
       const d = segDist(x, y, ...s);
       if (d < clear) { errors.push(`${R}: ${name} at ${x},${y} is ${d.toFixed(2)} u from the rock wall ${s.join(',')} (needs ${clear})`); break; }
@@ -165,7 +167,9 @@ function checkRoom(room, errors) {
       seen[n] = 1; queue.push(n);
     }
   }
-  for (const [name, [x, y]] of points) {
+  // Gates (markers called gate-*) are how the party leaves a room, so they must be reachable too.
+  const gates = room.markers.filter((m) => m.id.startsWith('gate-')).map((m) => ['marker ' + m.id, [m.x, m.y]]);
+  for (const [name, [x, y]] of [...points, ...gates]) {
     const cx = Math.min(gw - 1, cellX(x)), cy = Math.min(gh - 1, cellY(y));
     let ok = false;
     for (let dy = -1; dy <= 1 && !ok; dy++) for (let dx = -1; dx <= 1 && !ok; dx++) ok = !!seen[(cy + dy) * gw + cx + dx] && cx + dx >= 0 && cx + dx < gw && cy + dy >= 0 && cy + dy < gh;
@@ -213,5 +217,6 @@ export function runCheck({ project = undefined, genOut = GEN_OUT } = {}) {
     const grounds = existsSync(GROUND_OUT) ? readFileSync(GROUND_OUT, 'utf8').replace(/\r\n/g, '\n') : '';
     if (grounds !== emitGrounds(loaded)) errors.push(`${GROUND_OUT} is stale: run \`npm run content:build\``);
   } catch (e) { errors.push(e.message); }
-  return { errors, rooms, source };
+  const warnings = errors.length ? [] : senseLintAll(loaded, rooms);
+  return { errors, warnings, rooms, source };
 }

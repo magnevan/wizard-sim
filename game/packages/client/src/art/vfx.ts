@@ -136,6 +136,8 @@ export class Vfx {
   private surf = X.canvas(FIELD.W, FIELD.H);
   private gt: Texture; private ot: Texture;
   private fx: Fx[] = [];
+  /** Event-born effects alive now (the VFX Lab's metrics). */
+  get live(): number { return this.fx.length; }
   /** What the floor canvas was painted for: each cell's kind and fade step (repainted when any changes). */
   private surfSeen = new Uint8Array(0);
   /** surfaces()' scratch: the burning cells along a row whose embers draw together. */
@@ -236,6 +238,9 @@ export class Vfx {
     this.ground = new Sprite(this.gt);
     this.over = new Sprite(this.ot);
   }
+
+  /** Frees the two effect textures (a view going away). */
+  destroy(): void { this.gt.destroy(true); this.ot.destroy(true); }
 
   /** FIELD changed size (a world with another play area): new canvases and textures to match. */
   resize(): void {
@@ -1054,6 +1059,21 @@ export class Vfx {
           X.px(o, x, y, X.LIFE[3]); X.glow(o, x, y, 4, X.LIFE[2], 0.6);
         } else {
           const SR: Ramp = el === 'cold' || el === 'water' ? EL.cold : el === 'earth' ? X.EARTH : R.length >= 6 ? R : [...R, R[R.length - 1]];
+          // a bow's arrow carries the bow's extras (the user, 2026-11-22): Lightning makes it a little bolt, Cold leaves a
+          // frost trail, Water a trail of drops; sparse, and left in the world where it passed
+          const bx = bowShot ? A.extrasOf(m.els, j, 10) : [], born = this.mT0[j];
+          if (bx.includes(4)) for (const p of emit(t, 22, 0.4, (i, age, ts) => { const back = (t - ts) * L * 16 + 4; return { x: x - ux * back + (rand(i, 2, sd) - 0.5) * 2, y: y - uy * back + age * 3, age }; }, born, t)) X.px(o, p.x, p.y, p.age < 0.4 ? '#ffffff' : X.FROST[2]);
+          if (bx.includes(1)) for (const p of emit(t, 16, 0.4, (i, age, ts) => { const back = (t - ts) * L * 16 + 4; return { x: x - ux * back + (rand(i, 3, sd) - 0.5) * 2, y: y - uy * back + age * age * 14, age, i }; }, born, t)) X.px(o, p.x, p.y, p.i % 3 ? '#8ad0ff' : '#ffffff');
+          if (bx.includes(5)) {
+            // the bolt: a short jagged zigzag from tail to head, redrawn every few frames, dimmer one frame in three
+            const fr = Math.floor(t * 20), zz: Pt[] = [];
+            for (let q = 0; q <= 4; q++) { const b = 12 - q * 3.5, off = q === 0 || q === 4 ? 0 : (q % 2 ? 1 : -1) * (1.2 + rand(fr, q, sd) * 1.8); zz.push([x - ux * b - uy * off, y - uy * b + ux * off]); }
+            if (fr % 3 !== 2) X.lines(o, zz, EL.lightning[3], 2);
+            X.lines(o, zz, fr % 3 === 2 ? EL.lightning[2] : '#ffffff', 1);
+            X.px(o, x + ux * 2, y + uy * 2, '#ffffff');
+            light(x, yg, 22, '#b08aff', 0.4);
+            continue;
+          }
           for (let k2 = 1; k2 <= 4; k2++) X.px(o, x - ux * k2 * 4, y - uy * k2 * 4, k2 === 1 ? SR[1] : k2 < 3 ? SR[2] : SR[4]);
           K.shard(o, x, y, Math.atan2(uy, ux), 6.5, sd, 1, SR);
         }

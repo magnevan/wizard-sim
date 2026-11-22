@@ -20,6 +20,13 @@ describe('camera vistas', () => {
     expect(v.update(def(), [{ x: 1, y: 10 }], 12, land, fit)).not.toBeNull(); // a new visit plays it again
   });
 
+  it('measures a marker where it is drawn: a wizard spawned on raised ground beside it sets it off', () => {
+    // the briefing: the ground 3.6 u up the screen, the wizard drawn there, 1.3 u off the marker each way (the court, 2026-11-22)
+    const lift = () => 3.6, wizard = [{ x: 1.3, y: 10 - 3.6 - 1.3 }];
+    expect(new Vistas().update(def(), wizard, 0, land, fit)).toBeNull(); // against the flat marker: 4.9 u, too far
+    expect(new Vistas().update(def(), wizard, 0, land, fit, lift)).not.toBeNull();
+  });
+
   it('needs a landmark to look at', () => {
     expect(new Vistas().update(def(), [{ x: 0, y: 10 }], 0, () => null, fit)).toBeNull();
   });

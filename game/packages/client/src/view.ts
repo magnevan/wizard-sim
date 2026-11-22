@@ -693,7 +693,7 @@ export class WorldView {
     const mine = up.length + down.length;
     const lift = liftRange(w.def), spots = mine ? (up.length ? up : down) : all, rise = lift.up / (PPU * FY), sink = lift.down / (PPU * FY);
     // a vista (vista.ts): pulled back on the landmark for a moment, then back to following
-    const shot = this.vistas.update(w.def, mine ? up : [], performance.now() / 1000, (x, y) => this.nearestLandmark(w, x, y), (s) => this.camera.fitSpan(s));
+    const shot = this.vistas.update(w.def, mine ? up : [], performance.now() / 1000, (x, y) => this.nearestLandmark(w, x, y), (s) => this.camera.fitSpan(s), (x, y) => liftAt(w.def, x, y) / (PPU * FY));
     if (this.camera.zoom(shot && !shot.out ? shot.scale : this.camera.base)) this.scene.scale.set(this.camera.scale);
     if (shot && !shot.out) { this.camera.follow(w.dims.w, w.dims.h, [{ x: shot.x, y: this.camera.centreForTop(shot.top) }], false, dt, rise, sink); return; }
     this.camera.follow(w.dims.w, w.dims.h, spots, mine !== 1, dt, rise, sink, this.landmarkKeep(w, spots));

@@ -36,17 +36,18 @@ export class Vistas {
   reset(): void { this.room = ''; this.done.clear(); this.run = null; }
 
   /**
-   * Once a frame. `spots`: this screen's wizards, where they're drawn (view units). `landmark` finds the span of the
-   * landmark nearest a point. `fit(span)` gives the scale at which `span` view units of height fill the play view.
-   * Returns the shot to show, or null to follow as usual.
+   * Once a frame. `spots`: this screen's wizards, where they're drawn (view units, lifted by the ground's height).
+   * `landmark` finds the span of the landmark nearest a point. `fit(span)` gives the scale at which `span` view units
+   * of height fill the play view. `lift(x, y)`: how far the ground at a view point is drawn above its flat place (view
+   * units), so a marker is measured where it's drawn, like the wizards. Returns the shot to show, or null to follow.
    */
   update(def: RoomDef, spots: readonly { x: number; y: number }[], now: number, landmark: (x: number, y: number) => LandmarkSpan | null,
-    fit: (span: number) => number): VistaShot | null {
+    fit: (span: number) => number, lift: (x: number, y: number) => number = () => 0): VistaShot | null {
     if (def.id !== this.room) { this.reset(); this.room = def.id; }
     if (!this.run && spots.length) {
       for (const m of def.markers) {
         if (m.tag !== 'vista' || this.done.has(m.id)) continue;
-        const near = spots.find((p) => Math.hypot(p.x - m.x, p.y - m.y) < VISTA_R);
+        const my = m.y - lift(m.x, m.y), near = spots.find((p) => Math.hypot(p.x - m.x, p.y - my) < VISTA_R);
         const land = near && landmark(m.x, m.y);
         if (!near || !land) continue;
         this.done.add(m.id);

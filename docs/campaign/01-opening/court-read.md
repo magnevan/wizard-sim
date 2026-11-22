@@ -122,3 +122,15 @@ The grey-box was walked in the game five times (2026-11-22, `npm run shot:route`
 Sense rounds on the plan-made level: 7.5 (rev 16: the gate piers squared), 7.5 (the sea looked stepped: faces dropping into water take the water's colour, #21), then **8/10 at rev 17** with a stone ledge at the sea cliff's foot. "Ready for the beauty stage: yes." The grey-box is done.
 
 **For the beauty stage:** gateposts on the drill-yard path set in a low wall or hedge, or matched as a pair; the sea landing's front edge and piles squared off; kerbs where two ground materials meet; flat coping on every parapet and pier; the falls with a stone sill, foam and spray; the quay with clean deck edges and bollards.
+
+## Beauty in the game (2026-11-22)
+
+| Round | Score | What changed after it |
+|---|---|---|
+| 1 | 2/10 | A stale build showed no props; dark diamonds over every terrace (flat rock shadows in a room with heights), white slabs, the old grey boxes over the new level: all fixed |
+| 2 | 4/10 | Every vertical face was one streaky brown: faces are cut stone under a pale coping; roofs slate-blue; parapets stone-topped |
+| 3 | 5/10 | Building fronts were huge identical slabs: fronts get an eave, pilasters, arched windows (some lit), a plinth; prop shadows fixed to their tier |
+| 4 | 5.5/10 | Pavings blended like camouflage: laid kerbs between pavings, a cobble inlay round the armillary, stone-topped piers |
+| 5 | 6/10 | Pale roofs read as glass: deep cobalt roofs; the falls in white streaks; the bridge deck in stone |
+
+**Still open (the critics' ranking):** roofs with ridges and finials; more greenery inside the stone (planters, lilac trees, vines); sea foam and moving water; warm-gold and violet light; more banners and brass lamps along the parapets; the terrace walls broken up with buttresses.

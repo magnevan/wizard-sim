@@ -146,7 +146,7 @@ P.fill([(44, -56), (52, -56), (52, -10), (44, -10)], 4.0, 'water')
 P.building(rect(41, -62, 55, -56), 4.0, 2.0, roof='wall')
 P.fill(rect(44, -11, 52, -10), 4.15, 'rock')                                                        # the weir: a stone sill flush with the water at the lip                                          # the culvert the river comes out of                                                 # the stream above the falls
 P.fill(rect(24, -34, 95, -26), 6.0, 'path')
-P.fill(rect(40, -34, 56, -26), 6.5, 'wood')                                                                        # the deck
+P.fill(rect(40, -34, 56, -26), 6.5, 'plaza')                                                                       # the deck, stone (beauty round 5: dark planks clashed)
 P.building(rect(40, -35, 56, -34), 6.5, 1.0, roof='wall'); P.building(rect(40, -26, 56, -25), 6.5, 1.0, roof='wall')   # parapets
 for dv in (-36, -24): P.building(circle((37, dv), 1.6), 6.0, 5.0)                                     # the gate: a matched pair of piers square across the road
 P.building(circle((66, -42), 6), 6.0, 14, 'battery tower')

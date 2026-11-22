@@ -149,6 +149,13 @@ function faceBuilding(px: number, k: number, n: number, fy: number, out: Float32
   faceStone(px, k, fy, 196, 182, 158, out);
 }
 
+/** Water going over an edge: the falls, in white streaks over the water's own colour. */
+function faceFalls(px: number, fy: number, tr: number, tg: number, tb: number, out: Float32Array): void {
+  const streak = hash2(px >> 1, 3), run = hash2(px >> 1, Math.floor((fy + streak * 40) / 5));
+  const w = 0.35 + 0.45 * streak * (0.6 + 0.4 * run);
+  out[0] = tr + (240 - tr) * w; out[1] = tg + (248 - tg) * w; out[2] = tb + (250 - tb) * w;
+}
+
 /** Art px of headroom a room's ground image needs above and below for its tiers. */
 export function liftRange(def: RoomDef): { up: number; down: number } {
   const hm = heightMap(def);
@@ -164,7 +171,7 @@ export interface PxToWorld { x(px: number, py: number): number; y(px: number, py
  * face: cut stone (faceStone), under a pale coping, darkening toward its foot. Nearer pixels overwrite farther ones, so
  * a raised terrace hides what's behind it. Void (outside the outline) is left dark.
  */
-export function liftGround(data: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, cam: PxToWorld, def: RoomDef, isRoof?: (x: number, y: number) => boolean): void {
+export function liftGround(data: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, cam: PxToWorld, def: RoomDef, isRoof?: (x: number, y: number) => boolean, isWater?: (x: number, y: number) => boolean): void {
   const hm = heightMap(def);
   if (!hm) return;
   const src = data.slice(), col = new Int32Array(H), gone = new Uint8Array(H);
@@ -183,10 +190,11 @@ export function liftGround(data: Uint8ClampedArray, W: number, H: number, OX: nu
       const next = py + 1 < H ? py + 1 - col[py + 1] : dest + 1;
       if (next > dest + 1) {
         const s = (py * W + px) * 4, n = next - dest - 1;
-        const front = isRoof?.(cam.x(px - OX, py - OY), cam.y(px - OX, py - OY)) ?? false;
+        const ex = cam.x(px - OX, py - OY), ey = cam.y(px - OX, py - OY);
+        const front = isRoof?.(ex, ey) ?? false, falls = !front && (isWater?.(ex, ey) ?? false);
         for (let fy = Math.max(0, dest + 1); fy < Math.min(H, next); fy++) {
           const d = (fy * W + px) * 4, k = fy - dest - 1, fade = 1 - 0.3 * ((fy - dest) / (next - dest));
-          if (front) faceBuilding(px, k, n, fy, STONE); else faceStone(px, k, fy, src[s], src[s + 1], src[s + 2], STONE);
+          if (front) faceBuilding(px, k, n, fy, STONE); else if (falls) faceFalls(px, fy, src[s], src[s + 1], src[s + 2], STONE); else faceStone(px, k, fy, src[s], src[s + 1], src[s + 2], STONE);
           data[d] = STONE[0] * fade; data[d + 1] = STONE[1] * fade; data[d + 2] = STONE[2] * fade; data[d + 3] = 255;
         }
       }

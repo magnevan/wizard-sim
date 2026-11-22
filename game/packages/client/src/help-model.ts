@@ -140,11 +140,11 @@ export function clip(lines: string[], max: number, cols: number): string[] {
  */
 const SHAPE_SCALE: Partial<Record<SpellSpec['shape'], number>> = {
   patch: 0.5, strike: 1.2, discharge: 0.8, palm: 1.2, geyser: 1.3, spring: 0.7,
-  beam: COMBAT.channelRate, spray: COMBAT.channelRate, arc: 0.5 / SHAPES.arcInterval,
+  beam: COMBAT.channelRate, spray: COMBAT.channelRate, arc: 0.5 / SHAPES.arcInterval, stream: COMBAT.channelRate * SHAPES.streamPower,
 };
-const PER_SECOND = new Set<SpellSpec['shape']>(['beam', 'spray', 'arc', 'spring']);
+const PER_SECOND = new Set<SpellSpec['shape']>(['beam', 'spray', 'arc', 'stream', 'spring']);
 /** Shapes that hit with their own payload when cast. Devices and structures are handled one by one. */
-const HITS = new Set<SpellSpec['shape']>(['beam', 'spray', 'arc', 'missile', 'shards', 'nova', 'quake', 'discharge', 'patch', 'blast', 'geyser', 'strike', 'spring', 'palm', 'imbue', 'wave']);
+const HITS = new Set<SpellSpec['shape']>(['beam', 'spray', 'arc', 'missile', 'shards', 'stream', 'nova', 'quake', 'discharge', 'patch', 'blast', 'geyser', 'strike', 'spring', 'palm', 'imbue', 'wave']);
 
 /** One number about a spell: shown in the stats line (unless hidden) and compared by the +1 rune line. */
 export interface Metric {
@@ -223,6 +223,7 @@ export function spellNumbers(queue: readonly Element[], cast: Cast, spec: SpellS
   const longer = 1 + SHAPES.lingerPerRune * (n - 1);
   switch (sh) {
     case 'beam': reach('RANGE', SHAPES.beamRange); break;
+    case 'stream': reach('RANGE', SHAPES.streamRange); break;
     case 'spray':
       reach('RANGE', SHAPES.sprayRange + 0.5 * (spec.sizeN - 1));
       m.push({ key: 'cone', label: 'CONE', v: 100 * (1 + 0.25 * (spec.sizeN - 1)), unit: '%', hidden: true });

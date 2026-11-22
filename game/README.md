@@ -166,7 +166,7 @@ Milestone 1 (deterministic core) is done, and the game has grown past it (online
   - recovery, with a short buffer so no press is lost
   - Blink (Shield on Force) is instant
 - **Every plain form × cast:**
-  - beams, sprays, arcs, rocks (pierce at full charge), ice shards
+  - beams, sprays, arcs, the Shard stream, rocks (pierce at full charge), healing shards
   - novas, quakes, discharges (the rings: Shift+LMB released on yourself)
   - the imbued burst, a cone toward the cursor that stretches longer and narrower the further out you aim (held, it shows its shape)
   - patches, delayed blasts, geysers, strikes, springs
@@ -204,7 +204,7 @@ Milestone 1 (deterministic core) is done, and the game has grown past it (online
 
 **Weapons and guards** (grammar v2; designed in `docs/explorations/2026-11-05-guards.md`, revised by the user's ratings through round 4 in `docs/explorations/2026-11-05-guards-round-2.md`). With nothing queued, your hands act:
 - RMB tap = Strike, RMB hold = the weapon's Heavy, Shift+RMB = its Special (some are held), Space = your guard's Defend (hold to block, tap as a hit lands to parry), Shift+LMB = its Retreat.
-- **Weapons** (`packages/sim/src/hands.ts`), Heavy / Special: bare staff (big shove / Sweep), Tide trident (wave slash / Sweep), Healing hands (Healing link / **Mend**, held), Frost spear (impaling dash / javelin), Lightning whip (chain lash / Sweep), **Arcane wand** (Strike a light bolt, Heavy a charged piercing bolt / **Siphon**, held: rooted, runes regenerate fast), Flame sword (fire wave / Sweep), Stone maul (fissure / Sweep), **Ice bow** (quick icicles; a drawn fan of three that pierces at full draw / **Splinter shot**).
+- **Weapons** (`packages/sim/src/hands.ts`), Heavy / Special: bare staff (big shove / Sweep), Tide trident (wave slash / Sweep), Healing hands (Healing link / **Mend**, held), Frost spear (impaling dash / javelin), Lightning whip (chain lash / Sweep), **Arcane wand** (Strike a light bolt, Heavy a charged piercing bolt / **Siphon**, held: rooted, runes regenerate fast), Flame sword (fire wave / Sweep), Stone maul (fissure / Sweep), **Ice bow** (quick icicles; a drawn lance that pierces its whole line / **Splinter shot**).
 - **Eight guards** (`packages/sim/src/guards.ts`), one per lead element: Mirror buckler, Bulwark, Ember targe, Rime kite, Spark ring, Tide shield, **Prism** (a Capacitor: it stores what its raised block takes, and lowering it fires the **Lance**), Leaf aegis. Each has its Defend, Retreat, passive and resistances while carried.
 - **Mixing:** the strongest element leads (Life > Earth > Arcane > Lightning; else the most runes of Water, Fire or Cold). Every other element brings its passive and resistance row (half per rune, all at 2). The Leaf takes only the extras' strengths; the other guards' extras are a coat that bites whoever hits the block. Resistance is hyperbolic (damage taken 1 / (1 + r)). Each guard rune past the first adds 15 % guard HP and Retreat distance. Source: `docs/explorations/2026-11-05-guards-round-2.md` ("Merged" and after).
 - Numbers: `ARMS` in `config.ts`.

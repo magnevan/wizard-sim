@@ -1,7 +1,7 @@
 // What extra runes do, after the rune-scaling audit (docs/explorations/2026-11-07-rune-scaling.md).
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
-import { BTN, KIND, NO_INPUT, RHYTHM, RUNES, SHAPES, compile, createWorld, elementId, quantize, step, type PlayerInput, type World } from '../src';
+import { BTN, COMBAT, KIND, NO_INPUT, RHYTHM, RUNES, SHAPES, compile, createWorld, elementId, quantize, step, type PlayerInput, type World } from '../src';
 
 /** Seat 0 at the origin aiming along +x; seat 1 (another wizard, idle) at (dx, 0); a dummy behind it when asked. */
 function scene(dx: number, dummy = false) {
@@ -75,18 +75,19 @@ describe('rune scaling', () => {
     expect(drain(['arcane', 'water', 'cold'], 'cold')).toBeCloseTo(RHYTHM.upkeep, 1);
   });
 
-  it('every ice shard flies at the same power', () => {
+  it('every shard of the Shard stream carries the same share of the channel: streamGap s of it, times streamPower', () => {
     const { w, go, queue } = scene(6);
     queue(['water', 'cold']);
-    go({ buttons: BTN.force }, 1);
-    let shards: number[] = [];
-    for (let t = 0; t < 30 && !shards.length; t++) {
-      go();
-      shards = [...w.missiles.alive.keys()].filter((j) => w.missiles.alive[j] && w.missiles.type[j] === 2).map((j) => w.missiles.scale[j]);
+    const scales = new Set<number>();
+    let launched = 0;
+    for (let t = 0; t < 40; t++) {
+      go({ buttons: BTN.force });
+      for (let j = 0; j < w.missiles.alive.length; j++) if (w.missiles.alive[j] && w.missiles.type[j] === 2) scales.add(w.missiles.scale[j]);
+      launched = Math.max(launched, [...w.missiles.alive].filter((a) => a).length);
     }
-    expect(shards.length).toBe(SHAPES.shardCount + 1); // 5, plus one a rune of the lead
-    expect(new Set(shards).size).toBe(1);
-    expect(shards[0]).toBeCloseTo(SHAPES.shardPower, 5);
+    expect(launched).toBeGreaterThan(0);
+    expect(scales.size).toBe(1);
+    expect([...scales][0]).toBeCloseTo(COMBAT.channelRate * SHAPES.streamGap * SHAPES.streamPower, 5);
   });
 
   it('Earth + Water + Cold flies as three fast ice shards, each a third of the rock', () => {

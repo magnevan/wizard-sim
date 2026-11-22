@@ -601,6 +601,23 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     // was awkward). Floors come from Place patches.
     return;
   }
+  if (spec.shape === 'stream') {
+    // The Shard stream: a shard every streamGap s, by the channel's own clock (so the Double, a turret and the Echo keep
+    // their own cadence). The aim wanders over a spread that settles as you hold: a low-discrepancy walk, no rng.
+    const gap = T(SHAPES.streamGap);
+    setEnd(x + dx * SHAPES.streamRange, y + dy * SHAPES.streamRange);
+    if (t % gap !== 0) return;
+    const settle = Math.min(1, t / T(SHAPES.streamSettle));
+    const spread = SHAPES.streamSpread + (SHAPES.streamSettled - SHAPES.streamSpread) * settle;
+    const a = face + spread * (2 * (((t / gap) * 0.618034) % 1) - 1);
+    const scale = COMBAT.channelRate * SHAPES.streamGap * SHAPES.streamPower * (follow ? follow.scale : 1);
+    const m = spawnMissile(w, src, p, cosTurns(a), sinTurns(a), 2, scale, 0, 0, from?.x, from?.y);
+    if (m >= 0) {
+      const sp = SHAPES.missileSpeed * SHAPES.iceFlight;
+      w.missiles.vx[m] = cosTurns(a) * sp; w.missiles.vy[m] = sinTurns(a) * sp; w.missiles.life[m] = T(SHAPES.streamRange / sp);
+    }
+    return;
+  }
   if (spec.shape === 'arc') {
     if (follow) { if (s.chanTimer[seat] === T(SHAPES.arcInterval)) chain(w, src, spec, face, (spec.heal ? SHAPES.chainHealPower : SHAPES.arcPower) * follow.scale); return; } // the echo zaps when its owner does
     if (s.chanTimer[src] > 0) { s.chanTimer[src]--; return; }

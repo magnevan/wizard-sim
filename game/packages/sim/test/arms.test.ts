@@ -460,17 +460,24 @@ describe('the Ice bow (Sigil + Water + Cold)', () => {
     expect(w.bodies.hp[t]).toBeLessThan(400);
   });
 
-  it('a full draw (Heavy) looses a fan of icicles that pierce', () => {
+  it('the Heavy looses one big icicle, the lance, that pierces every body in its line', () => {
     const { w, d, dummy } = arena();
-    const a = dummy(3, 0, 8), b = dummy(6, 0, 9);
-    d.aimAt(6, 0).conjure('sigil', 'water', 'cold');
-    let most = 0;
+    const a = dummy(3, 0, 8), b = dummy(5, 0, 9), c = dummy(7, 0, 10);
+    d.aimAt(7, 0).conjure('sigil', 'water', 'cold');
+    let most = 0, widest = 0;
     d.tick({ buttons: BTN.force }, 100); // a full draw
-    for (let k = 0; k < 20; k++) { d.tick({}, 1); most = Math.max(most, Array.from(w.missiles.alive).filter((x) => x).length); }
+    for (let k = 0; k < 20; k++) {
+      d.tick({}, 1);
+      const live = Array.from(w.missiles.alive).map((x, j) => (x ? j : -1)).filter((j) => j >= 0);
+      most = Math.max(most, live.length);
+      for (const j of live) widest = Math.max(widest, w.missiles.r[j]);
+    }
     d.tick({}, 30);
-    expect(most).toBe(ARMS.fanCount);
-    expect(w.bodies.hp[b]).toBeLessThan(400); // through the first dummy
-    expect(w.bodies.hp[a]).toBeLessThan(400);
+    expect(most).toBe(1);
+    expect(widest).toBeCloseTo(ARMS.lanceRadius, 5);
+    for (const t of [a, b, c]) expect(w.bodies.hp[t]).toBeLessThan(400); // through all three
+    // harder than a Strike's icicle on each of them
+    expect(400 - w.bodies.hp[c]).toBeGreaterThan(16 * ARMS.arrowScale * 1.5);
   });
 });
 

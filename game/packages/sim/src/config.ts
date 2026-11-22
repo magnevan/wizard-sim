@@ -198,6 +198,14 @@ export const SHAPES = {
   iceFlight: 1.5,
   /** Each ice shard's share of the payload: 0.75, so a full 6-shard volley lands the 4.5x it did before every shard hit alike. */
   shardPower: 0.75,
+  /**
+   * The Shard stream (Ice Force, the user, 2026-11-22, issue #9: "a machine gun of shards", Ice's other beam): a channel
+   * that looses a shard every streamGap s along your aim. Each shard carries streamGap s of the channel's damage, times
+   * streamPower (2: one Ice is two runes, like iceBlast), so a stream that lands all of it deals twice a beam's rate.
+   * The aim starts loose (streamSpread turns either side) and settles to streamSettled over streamSettle s of holding:
+   * the spin-up. Shards reach streamRange u and stop at the first body: you sweep a crowd, you don't pierce it.
+   */
+  streamGap: 0.1, streamPower: 2, streamSpread: 0.03, streamSettled: 0.006, streamSettle: 0.6, streamRange: 10,
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,
   patchRadius: 2, patchLife: 8, // were 1.6 and 6: the user asked for bigger, longer Place effects (2026-11-11)
@@ -387,9 +395,11 @@ export const ARMS = {
   javelinUses: 2, javelinSpeed: 16, pin: 1.5, frostRadius: 1.0,
   /** Arcane wand: the Strike bolt's power; Siphon (held Special, rooted) multiplies your rune regen, for siphonUses a second. */
   boltScale: 0.3, siphonMult: 4, siphonUses: 1,
-  /** Ice bow: the Strike icicle's power, speed (u/s, the wand's bolt flies 14) and life (s); the Heavy's fan of icicles
-   * (each at fanScale, fanSpread turns apart, piercing from fanPierceAt of a full draw); the Special's splinter shot. */
-  arrowScale: 0.45, arrowSpeed: 22, arrowLife: 0.8, fanCount: 3, fanScale: 0.6, fanSpread: 0.035, fanPierceAt: 0.8, splinterScale: 0.8,
+  /** Ice bow: the Strike icicle's power, speed (u/s, the wand's bolt flies 14) and life (s); the Heavy's lance, one big
+   * icicle that pierces everyone in its line (the user, 2026-11-22, issue #8: a fan of three was just three clicks),
+   * lanceScale at a full draw (0.6 of it untouched), lanceRadius u wide at a full draw, flying lanceLife s; the
+   * Special's splinter shot. */
+  arrowScale: 0.45, arrowSpeed: 22, arrowLife: 0.8, lanceScale: 1.5, lanceRadius: 0.35, lanceLife: 1.1, splinterScale: 0.8,
   /** Mend (Healing hands' held Special): heals allies within auraRange (not you) auraHeal hp/s, auraUses a second; you walk at auraWalk. */
   auraRange: 3.5, auraHeal: 7, auraUses: 1, auraWalk: 0.5,
   /** Carrying a guard, or a weapon, costs this much walking speed each (the user: carrying should slow you a little). */

@@ -39,7 +39,7 @@ describe('help panel model: queue -> rows', () => {
 
   it('Water + Cold make Ice, one rune with its own row: the names, and Caltrops described as spikes (not rain)', () => {
     expect(rules.addElement(rules.addElement([], 'water').queue, 'cold').queue).toEqual(['ice']);
-    expect(titles(['ice'])).toEqual(['Ice shards', 'Ice ring', 'Caltrops', 'Impale', 'Ice burst']);
+    expect(titles(['ice'])).toEqual(['Shard stream', 'Ice ring', 'Caltrops', 'Impale', 'Ice burst']);
     const m = helpModel(['ice'], bare);
     expect(m.rows[0].stats[0]).toBe('2 RUNES'); // an Ice is a Water and a Cold
     expect(m.rows[2].text).toMatch(/spikes/i);

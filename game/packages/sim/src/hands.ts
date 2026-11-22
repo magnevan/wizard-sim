@@ -16,7 +16,7 @@
  *   Frost spear       an impaling dash 2.5x its reach; frozen targets on the way shatter   Javelin (pins, frosts; 2 uses)
  *   Lightning whip    a chain lash: the first target, then up to 3 more   Sweep
  *   Arcane wand       a charged bolt that pierces                                           Siphon: hold, rooted, runes regenerate fast
- *   Ice bow           a drawn fan of three icicles; a full draw pierces                     Splinter shot: bursts into flying shards (2 uses)
+ *   Ice bow           a drawn lance: one big icicle that pierces its whole line             Splinter shot: bursts into flying shards (2 uses)
  *                     (its Strike: one quick icicle, the fastest shot in hand)
  *   Flame sword       a rolling crescent of flame that ignites, no lingering fire           Sweep
  *   Stone maul        a fissure down one lane, knocking down all in it    Sweep
@@ -68,19 +68,23 @@ export function strike(w: World, i: number, face: number): void {
  * The Ice bow's icicle: a thin shard that flies fast (ARMS.arrowSpeed, quicker than the wand's bolt) and carries
  * the bow's elements. `pierce`: a full draw goes through the first body. `mod`: the Special's splinter shot bursts.
  */
-function arrow(w: World, i: number, face: number, scale: number, pierce: boolean, splinter = false): void {
+function arrow(w: World, i: number, face: number, scale: number, pierce: boolean, splinter = false): number {
   const dx = cosTurns(face), dy = sinTurns(face), p = payloadOf(weaponSpec(w, i));
   const m = spawnMissile(w, i, splinter ? { ...p, mod: 'shatter' } : p, dx, dy, splinter ? 0 : 2, scale, 0, 0);
-  if (m < 0) return;
+  if (m < 0) return -1;
   const mm = w.missiles;
   mm.vx[m] = dx * ARMS.arrowSpeed; mm.vy[m] = dy * ARMS.arrowSpeed; mm.life[m] = T(ARMS.arrowLife);
   mm.r[m] = splinter ? 0.25 : 0.15; mm.pierce[m] = pierce ? 1 : 0;
+  return m;
 }
 
-/** The bow's drawn shot (Heavy): a fan of ARMS.fanCount icicles, harder the longer it was drawn; a full draw pierces. */
-function fan(w: World, i: number, face: number, charge: number): void {
-  const n = ARMS.fanCount, k = ARMS.fanScale * (0.6 + 0.4 * charge);
-  for (let j = 0; j < n; j++) arrow(w, i, face + (j - (n - 1) / 2) * ARMS.fanSpread, k, charge >= ARMS.fanPierceAt);
+/**
+ * The bow's drawn shot (Heavy): a lance, one big icicle that pierces everyone in its line (issue #8: a fan of three was
+ * no better than three clicks). The draw makes it harder, wider and longer-flying; walls still stop it.
+ */
+function lance(w: World, i: number, face: number, charge: number): void {
+  const m = arrow(w, i, face, ARMS.lanceScale * (0.6 + 0.4 * charge), true);
+  if (m >= 0) { w.missiles.r[m] = ARMS.lanceRadius * (0.6 + 0.4 * charge); w.missiles.life[m] = T(ARMS.lanceLife * (0.7 + 0.3 * charge)); }
   move(w, i, 'volley', EL.ice);
 }
 
@@ -109,7 +113,7 @@ export function heavy(w: World, i: number, face: number, charge: number): void {
       return;
     }
     case EL.cold: dash(w, i, face, k); spend(w, i, 2); return;
-    case EL.ice: fan(w, i, face, charge); spend(w, i, 2); return;
+    case EL.ice: lance(w, i, face, charge); spend(w, i, 2); return;
     case EL.lightning: lash(w, i, face, k); spend(w, i, 2); return;
     case EL.arcane: bolt(w, i, face, ARMS.chargedBolt * (0.5 + 0.5 * charge), charge >= 0.5); move(w, i, 'chargedbolt', EL.arcane); spend(w, i, 2); return;
     default: blow(w, i, face, 'strike', { scale: k, reach: ARMS.heavyReach }, 2); return;

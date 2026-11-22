@@ -28,3 +28,4 @@ Known issues to file or fix: a phantom trident (paused until the user has a clea
 - 2026-11-17 Model Viewer (`/models.html`), the Stage tools (`?stage=1`), the viewer's animation fixes, the conjured props in game
 - 2026-11-20 Blended transitions, the jab moveset, the press buffer and cancel window
 - 2026-11-21 Trident, bow, two-handers, the maul's smash and combo (336e8b4, 7ea008b, 3675fb0)
+- 2026-11-22 The Ice bow's Heavy is a lance, one big icicle piercing its line (#8; [ice rework](../explorations/2026-11-22-ice-rework.md))

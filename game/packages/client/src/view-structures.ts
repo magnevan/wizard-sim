@@ -1627,7 +1627,7 @@ export class StructureView {
       if (draw > 0) {
         const tip: Pt = [h[0] + fwd * (7 + 2 * draw), h[1] - 2];
         X.line(c, nock[0], nock[1], tip[0], tip[1], I[3], 1); X.px(c, tip[0], tip[1], '#ffffff'); X.px(c, tip[0] - fwd, tip[1] - 1, I[1]);
-        if (draw >= ARMS.fanPierceAt) X.glow(o, tip[0], tip[1], 5, I[2], 0.6); // full draw: it will pierce
+        X.glow(o, tip[0], tip[1], 2 + 4 * draw, I[2], 0.3 + 0.4 * draw); // the lance gathering at the tip: the longer the draw, the bigger it flies
       }
       blade = live ? [h, dir(0)] : limbs;
       light(h[0], v.y, 24, I[3], 0.35 + 0.3 * draw);

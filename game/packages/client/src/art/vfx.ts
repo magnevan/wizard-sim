@@ -1059,8 +1059,11 @@ export class Vfx {
           X.px(o, x, y, X.LIFE[3]); X.glow(o, x, y, 4, X.LIFE[2], 0.6);
         } else {
           const SR: Ramp = el === 'cold' || el === 'water' ? EL.cold : el === 'earth' ? X.EARTH : R.length >= 6 ? R : [...R, R[R.length - 1]];
-          for (let k2 = 1; k2 <= 4; k2++) X.px(o, x - ux * k2 * 4, y - uy * k2 * 4, k2 === 1 ? SR[1] : k2 < 3 ? SR[2] : SR[4]);
-          K.shard(o, x, y, Math.atan2(uy, ux), 6.5, sd, 1, SR);
+          // a big shard (the bow's lance) draws bigger, with a longer trail and its own light
+          const big = clamp(m.r[j] / 0.15, 1, 2.6);
+          for (let k2 = 1; k2 <= 4; k2++) X.px(o, x - ux * k2 * 4 * big, y - uy * k2 * 4 * big, k2 === 1 ? SR[1] : k2 < 3 ? SR[2] : SR[4]);
+          if (big > 1.2) { X.line(o, x - ux * 10 * big, y - uy * 10 * big, x, y, SR[2], 1); light(x, yg, 18 * big, '#9ff4ff', 0.4); }
+          K.shard(o, x, y, Math.atan2(uy, ux), 6.5 * big, sd, 1, SR);
         }
         continue;
       }

@@ -188,12 +188,12 @@
    "queue": "water+cold",
    "cast": "force",
    "runes": 2,
-   "seconds": 2.73,
-   "damage": 24,
+   "seconds": 2.93,
+   "damage": 80,
    "heal": 0,
-   "crowd": 48,
-   "dps": 9,
-   "perRune": 12
+   "crowd": 80,
+   "dps": 27,
+   "perRune": 40
   },
   {
    "title": "Arcane boulder",
@@ -453,7 +453,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 3.4,
+     "burst": 1.1,
      "sustained": null
     },
     {
@@ -544,7 +544,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 39.2,
+     "burst": 12.6,
      "sustained": null
     },
     {
@@ -635,7 +635,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 15.4,
+     "burst": 4.9,
      "sustained": null
     },
     {
@@ -726,7 +726,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 7.7,
+     "burst": 2.5,
      "sustained": null
     },
     {
@@ -817,7 +817,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 10.2,
+     "burst": 3.3,
      "sustained": null
     },
     {
@@ -908,7 +908,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 6.8,
+     "burst": 2.2,
      "sustained": null
     },
     {
@@ -999,7 +999,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 1.1,
+     "burst": 0.4,
      "sustained": null
     },
     {
@@ -1090,7 +1090,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 1.4,
+     "burst": 0.4,
      "sustained": null
     },
     {
@@ -1175,13 +1175,13 @@
  "waves": [
   {
    "name": "current",
-   "cleared": 4.5,
+   "cleared": 3.8,
    "clearedMin": 3,
    "clearedMax": 5,
-   "downs": 7.3,
-   "wipes": 3,
-   "kills": 30.3,
-   "damageTaken": 1510.5,
+   "downs": 6.5,
+   "wipes": 2.8,
+   "kills": 30,
+   "damageTaken": 1249.8,
    "clearSeconds": [
     13.9,
     38.2,
@@ -1190,138 +1190,130 @@
   },
   {
    "name": "slower regen (R 0.7)",
-   "cleared": 4.3,
-   "clearedMin": 4,
+   "cleared": 3.8,
+   "clearedMin": 3,
    "clearedMax": 5,
-   "downs": 7.5,
-   "wipes": 3.3,
+   "downs": 7,
+   "wipes": 2.8,
    "kills": 33.8,
-   "damageTaken": 1376.8,
+   "damageTaken": 1277.3,
    "clearSeconds": [
     13.9,
     18,
     7.2,
-    44
+    66.6,
+    19.8
    ]
   },
   {
    "name": "faster regen (R 1.4)",
-   "cleared": 5.8,
-   "clearedMin": 4,
-   "clearedMax": 7,
-   "downs": 3,
-   "wipes": 1,
-   "kills": 39.5,
-   "damageTaken": 1192,
+   "cleared": 3.8,
+   "clearedMin": 3,
+   "clearedMax": 6,
+   "downs": 4.3,
+   "wipes": 1.8,
+   "kills": 28,
+   "damageTaken": 1271,
    "clearSeconds": [
     13.9,
     27.5,
-    8.1,
-    36.9,
-    17.5,
-    35.1
+    8.1
    ]
   },
   {
    "name": "enemies hit 1.5x harder",
-   "cleared": 4.5,
-   "clearedMin": 4,
-   "clearedMax": 5,
-   "downs": 9.3,
-   "wipes": 4,
-   "kills": 31.8,
-   "damageTaken": 1491,
+   "cleared": 3.8,
+   "clearedMin": 3,
+   "clearedMax": 4,
+   "downs": 6.5,
+   "wipes": 2.8,
+   "kills": 29,
+   "damageTaken": 1036,
    "clearSeconds": [
     13.9,
     18,
-    4.2,
-    46.7,
-    16.2
+    4.2
    ]
   },
   {
    "name": "enemies 1.5x tougher",
-   "cleared": 4.5,
-   "clearedMin": 4,
-   "clearedMax": 5,
-   "downs": 5.3,
-   "wipes": 2,
-   "kills": 30,
-   "damageTaken": 1215.5,
+   "cleared": 3.5,
+   "clearedMin": 3,
+   "clearedMax": 4,
+   "downs": 4,
+   "wipes": 1.5,
+   "kills": 25.5,
+   "damageTaken": 1071.5,
    "clearSeconds": [
     44.2,
     23.5,
-    13.3,
-    85.8,
-    25.1
+    13.3
    ]
   },
   {
    "name": "heavier casts (windup x2)",
-   "cleared": 3.5,
+   "cleared": 3.3,
    "clearedMin": 1,
    "clearedMax": 5,
-   "downs": 6.3,
-   "wipes": 2.5,
-   "kills": 26,
-   "damageTaken": 1550,
+   "downs": 6.8,
+   "wipes": 3,
+   "kills": 26.5,
+   "damageTaken": 1542,
    "clearSeconds": [
     24.3,
     20,
-    8.8,
-    107.3,
-    33.3
+    8.8
    ]
   }
  ],
  "survive": [
   {
    "seed": 1,
-   "cleared": 3,
-   "fell": true,
-   "clearSeconds": "28.4 19.4 15.3",
-   "minHp": 0
+   "cleared": 4,
+   "fell": false,
+   "clearSeconds": "28.4 19.7 15.8 130.7",
+   "minHp": 9
   },
   {
    "seed": 2,
-   "cleared": 3,
+   "cleared": 1,
    "fell": true,
-   "clearSeconds": "24.5 41.4 38.2",
+   "clearSeconds": "24.5",
    "minHp": 0
   },
   {
    "seed": 3,
-   "cleared": 2,
-   "fell": true,
-   "clearSeconds": "39.9 33.3",
-   "minHp": 0
+   "cleared": 4,
+   "fell": false,
+   "clearSeconds": "39.9 79.8 28.7 41.7",
+   "minHp": 36
   },
   {
    "seed": 4,
-   "cleared": 4,
-   "fell": false,
-   "clearSeconds": "49.7 43.8 16.2 53.4",
-   "minHp": 43
+   "cleared": 1,
+   "fell": true,
+   "clearSeconds": "49.7",
+   "minHp": 0
   },
   {
    "seed": 5,
-   "cleared": 2,
+   "cleared": 3,
    "fell": true,
-   "clearSeconds": "21.7 25.8",
+   "clearSeconds": "21.7 25 38.1",
    "minHp": 0
   },
   {
    "seed": 6,
-   "cleared": 3,
-   "fell": true,
-   "clearSeconds": "42.7 24.3 20.2",
-   "minHp": 0
+   "cleared": 4,
+   "fell": false,
+   "clearSeconds": "42.7 30.5 41.9 111.5",
+   "minHp": 29
   },
   {
    "seed": 7,
-   "cleared": 2,
+   "cleared": 1,
    "fell": true,
-   "clearSeconds": "21.5 58.6",
+   "clearSeconds": "21.5",
    "minHp": 0
   },
   {

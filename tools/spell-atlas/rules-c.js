@@ -202,7 +202,7 @@
     cold: ['Frost spear', 'A long spear with a chilling thrust. Its Heavy is an impaling dash (frozen targets on the way shatter); its Special throws a javelin that pins and frosts.'],
   };
   // Ice conjures a bow: the second ranged weapon after the Arcane wand (the user: "another ranged design"). Ice's guard is Cold's Rime kite.
-  WEAPON.ice = ['Ice bow', 'A bow of ice that looses quick icicles, the fastest shot in hand. Hold to draw a fan of three icicles; a full draw pierces. Its Special is a splinter shot at the cursor that bursts into flying shards.'];
+  WEAPON.ice = ['Ice bow', 'A bow of ice that looses quick icicles, the fastest shot in hand. Hold to draw a lance: one big icicle that pierces everyone in its line, bigger and harder the longer you draw. Its Special is a splinter shot at the cursor that bursts into flying shards.'];
   // What Shield conjures, picked by its leading other element as a spell's form is (Life, Earth,
   // Arcane, Lightning, then the most of Water, Fire and Cold): the game's eight guards (its guards.ts),
   // used with nothing queued: hold Space to block, tap it as a hit lands to parry, Shift+LMB to Retreat.
@@ -299,7 +299,7 @@
       force: (p, o = {}) => {
         const L = o.lend;
         if (L === 'lightning') return ['Chain heal', 'A heal that leaps from you to the nearest hurt ally, then on from ally to ally.'];
-        if (L === 'ice') return ['Healing shards', 'A volley of bright ice shards along your aim, reaching farther than plain Ice shards. Each shard curves toward the hurt ally nearest its path and heals whoever it strikes: fire and forget, for a scattered team.'];
+        if (L === 'ice') return ['Healing shards', 'A volley of bright ice shards along your aim (Life keeps the one-shot volley that the Shard stream replaced). Each shard curves toward the hurt ally nearest its path and heals whoever it strikes: fire and forget, for a scattered team.'];
         if (L === 'cold') return ['Cooling spray', 'A cone of cool mist: it heals everyone in it and puts out the burning.'];
         if (L === 'water') return ['Rescue spray', 'A cone of healing water: it heals, shoves back the enemies it touches, and puts out the burning.'];
         if (L === 'earth') return ['Heal-stone', 'Hold to charge, release to lob a stone that bursts where it lands and heals everyone around. Throw it over a wall to your front line.'];
@@ -336,16 +336,16 @@
       place: () => ['Freezing fog', 'A low fog of bitter cold at the cursor for about 8 seconds: it chills whoever stands in it, and freezes puddles under it into ice. With Water, it freezes the ground into ice instead.'],
       conjure: swing('cold'),
     },
-    // Ice: a missile form, fast and spiky. A freezing spray was too strong, so Ice throws shards, not a cone.
+    // Ice: a missile form, fast and spiky. A freezing spray was too strong, so Ice throws shards, not a cone: a channelled stream of them (2026-11-22, issue #9).
     ice: {
-      force: () => ['Ice shards', 'A volley of jagged ice shards along your aim, faster than any other missile. Each shard pierces and hits hard, with a little chill; enough of them freeze a wet target, and a frozen target shatters from a heavy hit.'],
+      force: () => ['Shard stream', 'Hold Force: a stream of jagged ice shards pours along your aim, ten a second, faster than any other missile, as long as you channel: the beam of Ice. It starts loose and tightens as you hold. Each shard stops at the first body it meets, so sweep it across a crowd; walls and shields stop it. A little chill comes with each; enough of them freeze a wet target, and a frozen target shatters from a heavy hit.'],
       area: () => ['Ice ring', 'A ring of ice spikes bursts from you: it hurts, chills a little, and freezes whoever was already wet.'],
       place: () => ['Caltrops', 'Scatters ice spikes on the ground at the cursor for about 10 seconds. They do no harm where they land: whoever walks through them is stabbed by the distance they walk (fast feet bleed, standing still is safe). The spikes chill a little, like any Ice.'],
       conjure: swing('ice'),
     },
   };
   const FORMS = ['shield', 'sigil', 'life', 'earth', 'arcane', 'ice', 'lightning', 'water', 'fire', 'cold'];
-  const FORM_NAME = { shield: 'Barrier', sigil: 'Device', earth: 'Heavy missile', arcane: 'Beam', life: 'Heal', ice: 'Shards', lightning: 'Arc', water: 'Spray', fire: 'Spray', cold: 'Spray' };
+  const FORM_NAME = { shield: 'Barrier', sigil: 'Device', earth: 'Heavy missile', arcane: 'Beam', life: 'Heal', ice: 'Shard stream', lightning: 'Arc', water: 'Spray', fire: 'Spray', cold: 'Spray' };
   const CASTS = [
     ['force', 'Force', 'RMB', 'from you, along your aim'],
     // The ring merged into the burst (2026-11-22): no button of its own. It's the Weapon cast released with the cursor on

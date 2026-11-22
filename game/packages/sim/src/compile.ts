@@ -28,7 +28,7 @@ export function imbueReach(spec: SpellSpec, stretch = 0): number {
 export const imbueHalf = (stretch = 0): number => SHAPES.imbueHalf * (1 - (1 - SHAPES.imbueFarHalf) * stretch);
 
 export type Shape =
-  | 'beam' | 'spray' | 'arc' | 'missile' | 'shards'      // Force
+  | 'beam' | 'spray' | 'arc' | 'missile' | 'shards' | 'stream' // Force
   | 'nova' | 'quake' | 'discharge'                        // Area
   | 'patch' | 'blast' | 'geyser' | 'strike' | 'spring'    // Place
   | 'swing' | 'palm' | 'imbue'                            // Weapon (swing: the bare staff; imbue: the imbued burst)
@@ -130,8 +130,10 @@ export function compile(queue: readonly Element[], cast: Cast, opts: { drag?: bo
       spec.channel = cast === 'force';
       return spec;
     case 'ice':
-      // Ice shards (a freezing spray was too strong), the Ice ring, Caltrops, the Ice burst.
-      spec.shape = cast === 'force' ? 'shards' : cast === 'area' ? 'nova' : cast === 'place' ? 'patch' : 'imbue';
+      // The Shard stream (a channel: the user, 2026-11-22, issue #9: most of the one-shot volley missed), the Ice ring,
+      // Caltrops, the Ice burst. Life + Ice keeps the volley: the Healing shards.
+      spec.shape = cast === 'force' ? 'stream' : cast === 'area' ? 'nova' : cast === 'place' ? 'patch' : 'imbue';
+      spec.channel = cast === 'force';
       return spec;
     case 'water': case 'fire': case 'cold':
       if (cast === 'force') {

@@ -355,21 +355,23 @@ describe('Force casts', () => {
     expect(wet.w.bodies.frozen[wet.dummy]).toBeGreaterThan(0);
   });
 
-  it('water then cold make Ice, and Ice as Force is Ice shards: a volley of missiles, not a spray', () => {
+  it('water then cold make Ice, and Ice as Force is the Shard stream: a channel of missiles, ten a second while held', () => {
     const spec = compile(['ice'], 'force');
-    expect(spec.title).toBe('Ice shards');
-    expect(spec.shape).toBe('shards');
-    const { w, d } = range();
-    d.queue('water', 'cold').tick({ buttons: BTN.force }, 1);
-    // Ice shards fly fast (SHAPES.iceFlight): the most in flight at once, over the cast
+    expect(spec.title).toBe('Shard stream');
+    expect(spec.shape).toBe('stream');
+    expect(spec.channel).toBe(true);
+    const { w, d, dummy } = range(6);
+    d.queue('water', 'cold');
+    // hold for a second: a shard every SHAPES.streamGap, several in flight at once, the dummy ahead taking them
     let most = 0;
-    for (let t = 0; t < 30; t++) {
-      d.tick({}, 1);
-      let n = 0;
-      for (let j = 0; j < w.missiles.alive.length; j++) n += w.missiles.alive[j];
-      most = Math.max(most, n);
-    }
-    expect(most).toBeGreaterThanOrEqual(5);
+    for (let t = 0; t < 70; t++) { d.tick({ buttons: BTN.force }, 1); most = Math.max(most, Array.from(w.missiles.alive).filter((a) => a).length); }
+    expect(w.seats.phase[0]).toBe(PHASE.channel);
+    expect(most).toBeGreaterThanOrEqual(2);
+    d.tick({}, 30);
+    // a second of the stream lands about streamPower x 16 if every shard hits: well over half of it here
+    expect(400 - w.bodies.hp[dummy]).toBeGreaterThan(16 * SHAPES.streamPower * 0.5);
+    // nothing new leaves once you let go
+    expect(Array.from(w.missiles.alive).filter((a) => a).length).toBe(0);
   });
 
   it('the arcane beam hits the first body only, ally or not (friendly fire)', () => {

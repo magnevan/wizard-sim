@@ -88,3 +88,31 @@ The structure critic compared plans A to D, and the user chose D on 2026-11-22. 
 - Smoke or a lit window at the battery's tower, and pennants along the bridge.
 - A balustrade and a bench over the sea on the lower terrace, and a boat at the landing.
 - The hall's side doors set back under porches, so they read as side places.
+
+## Stage 2 in the game, and what's left for stages 3 and 4
+
+The grey-box was walked in the game five times (2026-11-22, `npm run shot:route` along the journey), the layout scoring 4, 5, 6, 7, then 7.5 out of 10:
+
+| Round | Plan D | What it found |
+|---|---|---|
+| 1 | rev 6 | Too big at play zoom: the arc was 8 screens of the same, and the dais never shared a frame with the balcony |
+| 2 | rev 7 | The armillary, then ten wizards tall, rose over the axis stair on screen and hid it |
+| 3 | rev 8 | The routes read; the overlook and the finale climb didn't land yet |
+| 4 | rev 9 | The overlook read as a crossroads; the hall passage and the gorge path were dead |
+| 5 | rev 10 | Ready for the sense stage; the reveal lands in the overlook bay |
+
+**For the sense stage:**
+- The overlook bay and the east flight's head blur together: separate them with a parapet run, or move the flight's head a tread east.
+- The bridgehead's tall gate tower stands south of the route at the east end, so it hides the wizard for a moment. Move it north of the path, or thin it.
+- The decks at the flights' heads are big and blank: give them an edge and a direction.
+
+**For the camera (engine):** the armillary can't be seen whole with the party in a 1080p frame (about 390 art px against about 170 px of view). The look-ahead helps. The briefing and the finale need a camera moment of their own, or the armillary has to be much smaller: the user's call, asked 2026-11-22.
+
+**For dressing:**
+- a tall marker at the gorge exit;
+- doors, banners or a skylight band along the hall passage;
+- planters, a balustrade or wear lines at the flights' heads;
+- a beacon at the quay;
+- parapets and kerbs at every drop;
+- different paving per level;
+- clean road edges.

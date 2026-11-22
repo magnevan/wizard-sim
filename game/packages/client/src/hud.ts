@@ -48,6 +48,11 @@ export class Hud {
   private unlockAt = new Float64Array(N_EL + 1).fill(-9);
   private lastTitle = '';
   private lastCastAt = -9;
+  /**
+   * Whether this seat's current recovery follows a spell. Weapon moves recover too, but castQueue still holds the
+   * last spell, so without this the chip showed that old combo on every swing (#2). Kept per sim step (noteStep).
+   */
+  private spellRecovery = false;
   /** Survive: each player's power-ups (top left), and the run-over card (centre). */
   readonly perks: Sprite;
   readonly over: Sprite;
@@ -248,7 +253,15 @@ export class Hud {
   onEvent(kind: string, who: number, look: number | undefined, text: string | undefined, t: number): void {
     if (who !== this.seat) return;
     if (kind === 'dry' && look) this.dryAt[look] = t;
-    if (kind === 'cast') { this.lastCastAt = t; if (text) this.lastTitle = text; }
+    if (kind === 'cast') { this.lastCastAt = t; this.spellRecovery = true; if (text) this.lastTitle = text; }
+  }
+
+  /** Call after each sim step, before its events: a spell phase marks the coming recovery as a spell's; idle clears it. */
+  noteStep(w: World): void {
+    const ph = w.seats.phase[this.seat];
+    if (ph === PHASE.idle) this.spellRecovery = false;
+    else if (ph !== PHASE.recover) this.spellRecovery = true;
+    else if (!this.spellRecovery) this.lastCastAt = -9; // a weapon move also ends the last spell's fading title
   }
 
   /** Redraws the HUD for time t (sim seconds) and places it at the bottom of a view w x h art px. */
@@ -299,7 +312,7 @@ export class Hud {
       X.rect(c, x0 - 3, y0 + RH + 12 + Math.round(16 * (1 - k)), 2, Math.max(1, Math.round(16 * k)), X.EL[GE][2]);
     }
 
-    const channel = s.phase[i] === PHASE.channel, spec = s.phase[i] !== PHASE.idle ? specOf(w, i) : null;
+    const channel = s.phase[i] === PHASE.channel, spec = s.phase[i] !== PHASE.idle && (s.phase[i] !== PHASE.recover || this.spellRecovery) ? specOf(w, i) : null;
     const upkeep = channel && spec && s.chanTicks[i] >= T(RHYTHM.naturalChannel) ? spec.form : 0;
     // the shared regen budget: each refilling pool's share of R (0..1) sets how bright its flow shows
     const full = fullMask(w, i), R = regenOf(w, i);

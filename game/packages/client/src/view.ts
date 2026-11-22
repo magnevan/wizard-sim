@@ -315,6 +315,7 @@ export class WorldView {
   afterStep(real: World): void {
     const w = this.seen(real);
     const b = w.bodies, s = w.seats, t = this.simTime(w);
+    this.hud.noteStep(w);
     for (const e of w.events) {
       this.hud.onEvent(e.kind, e.who, e.look, e.text, t);
       if ((e.kind === 'hit' && (e.amount ?? 0) > 0) && e.who >= 0) {

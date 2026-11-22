@@ -31,6 +31,7 @@ import * as X from './art/px';
 import type { Ctx, Pt, Ramp } from './art/px';
 import * as S from './art/sigil';
 import * as A from './art/accent';
+import { MAT, blowEls, infusion } from './art/infuse';
 import * as GFX from './art/guard-fx';
 import { BURST_LIFE, drawBurst, hasBurst } from './art/novas';
 import { CU, FY, TAU, clamp, easeOut, emit, lerp, mod, rand, seg, smooth } from './art/util';
@@ -379,7 +380,7 @@ export class StructureView {
       if (e.text === 'bolt') continue;   // the wand's light bolt: only the body's cast (sprites.ts); the missile is its effect
       // what the weapon or guard carries besides its lead, at the moment of the move (the last use takes the weapon)
       const seat = e.who >= 0 && e.who < MAX_SEATS, gm = GUARD_MOVES.has(e.text);
-      const xs = !seat || e.text === 'imbue' ? [] : gm ? A.extrasOf(s.guardEls, e.who, ELID.shield, GUARD_EL[s.guard[e.who]] ?? 0) : e.look ? A.extrasOf(s.weaponEls, e.who, e.look) : [];
+      const xs = !seat || e.text === 'imbue' ? [] : gm ? A.extrasOf(s.guardEls, e.who, ELID.shield, GUARD_EL[s.guard[e.who]] ?? 0) : e.look ? blowEls(e.look, A.extrasOf(s.weaponEls, e.who, e.look)) : [];   // a weapon's: its infusion's one colour (infuse.ts)
       this.add('mv-' + e.text, t, life, { who: e.who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, look: e.look ?? 0, seed: tick * 7 + e.who, n: e.text === 'imbue' ? e.els ?? 0 : seat ? s.guard[e.who] : 0, xs, half: e.half });
     }
     // walls: hits and breaks
@@ -1491,6 +1492,20 @@ export class StructureView {
    * release): through the wind-up it is flung out behind the wizard, away from the aim, then at the crack it snaps out
    * straight along the aim and is let go to fall (#6: "no wind up that puts the strand behind you").
    */
+  /**
+   * The Flame sword infused with Water: only the hilt is solid (live3d hides the flame), and the blade is a jet of steam
+   * escaping from it (the user, 2026-11-21: "a burst of steam escaping"): puffs leave the hilt along the blade, swelling
+   * and paling as they go, and the last of them drift up off the tip.
+   */
+  private steamBlade(o: Ctx, h: Pt, tp: Pt, t: number, i: number): void {
+    const dx = tp[0] - h[0], dy = tp[1] - h[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+    X.glow(o, lerp(h[0], tp[0], 0.5), lerp(h[1], tp[1], 0.5), 6, '#e8ecf2', 0.35);
+    for (const p of emit(t, 30, 0.45, (q, age) => {
+      const f = Math.min(1.15, age * 2.4), side = (rand(q, 3, i) - 0.5) * (1 + f * 3) + Math.sin(q * 1.7 + age * 9) * 0.6;
+      return { x: h[0] + dx * f + nx * side, y: h[1] + dy * f + ny * side - Math.max(0, f - 0.8) * 8, age, f };
+    })) K.puff(o, p.x, p.y, 0.8 + p.f * 1.6, p.f < 0.35 ? '#ffffff' : p.f < 0.8 ? '#e2e6ee' : '#b8c0cc', 0.85 - p.age * 0.7);
+  }
+
   private lash(i: number, e0: Pt, t: number, k: number): Pt[] {
     const N = 8, seg = 1.5 * k + 0.3;
     const lead = shotLead('lash'), age = this.st - this.lashT0[i], a = this.lashAng[i];   // blows are stamped in sim time (st), the rope steps on the clock (t)
@@ -1565,10 +1580,14 @@ export class StructureView {
       c = Math.sin(a) < -0.2 ? g : o;
     }
     const k = Math.min(1, up * 1.4 + 0.1);
-    // the extras it carries besides its lead (art/accent.ts): a band and particles along the blade, whatever the weapon
-    const extras = A.extrasOf(w.seats.weaponEls, i, w.seats.weapon[i]);
+    // the extras it carries besides its lead: the first sets the material of its element-bearing part, the rest one small
+    // effect each (art/infuse.ts; the 3D prop takes the material in live3d.ts, the effects are drawn by A.infused below)
+    const extras = A.extrasOf(w.seats.weaponEls, i, w.seats.weapon[i]), inf = infusion(w.seats.weapon[i], extras), steam = inf.mat === MAT.steam;
+    const matR = A.MAT_COL[inf.mat] ?? null;
     let blade: Pt[] | null = null;
     if (el === 'life') {
+      // the extras as shells round each hand's green core (drawn first, so the core sits on top)
+      for (const [m, hh] of v.a.hands.entries()) A.shells(o, v.x + hh[0], v.y + hh[1], extras, t + m * 0.5, k);
       for (const hh of v.a.hands) {
         const p: Pt = [v.x + hh[0], v.y + hh[1]];
         X.glow(o, p[0], p[1], 6 + Math.sin(t * 6) * 0.8, LIFE[3], 0.85 * k);
@@ -1576,7 +1595,6 @@ export class StructureView {
         for (const q of emit(t, 6, 0.6, (j, age) => ({ x: p[0] + (rand(j, 3, i) - 0.5) * 4, y: p[1] - age * 7, age }))) X.px(o, q.x, q.y, q.age < 0.5 ? LIFE[1] : LIFE[3]);
       }
       light(v.x, v.y - 8, 28, '#8ef07e', 0.5 * k);
-      for (const [m, hh] of v.a.hands.entries()) A.around(o, v.x + hh[0], v.y + hh[1], 4, 4, extras, t + m * 0.5, i * 31 + m);
       return;
     }
     if (el === 'earth') {
@@ -1591,28 +1609,30 @@ export class StructureView {
       // the Arcane wand: a short dark rod with a violet orb at its tip; Siphon makes the orb swell and motes circle it
       const tp = dir(10 * k, 0.55), sip = w.seats.specT[i] > 0, r = (sip ? 2.8 + Math.sin(t * 12) * 0.5 : 2.2) * k + 0.5;
       if (body) { X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#120e1a', 3); X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#5a3a6a', 1); }
-      X.glow(o, tp[0], tp[1], sip ? 10 : 6, EL.arcane[2], 0.6);
+      const orb = matR ?? EL.arcane;   // an infused orb is the element (a fireball, a snowball...): its glow too
+      X.glow(o, tp[0], tp[1], sip ? 10 : 6, orb[2], 0.6);
       if (body) {
         X.ellipse(c, tp[0], tp[1], r + 1, r + 1, '#120e1a');
-        X.ellipse(c, tp[0], tp[1], r, r, EL.arcane[3]); X.ellipse(c, tp[0] - 0.4, tp[1] - 0.4, r * 0.66, r * 0.66, EL.arcane[2]);
+        X.ellipse(c, tp[0], tp[1], r, r, orb[3] ?? orb[2]); X.ellipse(c, tp[0] - 0.4, tp[1] - 0.4, r * 0.66, r * 0.66, orb[2]);
         X.px(c, tp[0] - 1, tp[1] - 1, '#ffffff');
-      } else for (let q = 0; q < 3; q++) { const a = t * 3 + (q / 3) * TAU; X.px(Math.sin(a) < 0 ? g : o, tp[0] + Math.cos(a) * 4, tp[1] + Math.sin(a) * 2, q ? EL.arcane[1] : '#ffffff'); }   // motes round the orb
+      } else if (!inf.mat) for (let q = 0; q < 3; q++) { const a = t * 3 + (q / 3) * TAU; X.px(Math.sin(a) < 0 ? g : o, tp[0] + Math.cos(a) * 4, tp[1] + Math.sin(a) * 2, q ? EL.arcane[1] : '#ffffff'); }   // motes round the plain orb
       blade = [[h[0], h[1] + 2], tp];
-      // the wand's orb carries its extras too: a ring of their colours round it
-      A.around(o, tp[0], tp[1], r + 2.5, r + 2.5, extras, t, i * 7);
       if (sip) for (let q = 0; q < 5; q++) { const a = t * 5 + (q / 5) * TAU, rr = 9 - mod(t * 3 + q * 0.2, 1) * 7; X.px(Math.sin(a) < 0 ? g : o, tp[0] + Math.cos(a) * rr, tp[1] + Math.sin(a) * rr * 0.5, q % 2 ? EL.arcane[1] : '#ffffff'); }
-      light(tp[0], v.y, 26, '#ff4f9b', sip ? 0.7 : 0.4);
+      light(tp[0], v.y, 26, matR ? matR[2] : '#ff4f9b', sip ? 0.7 : 0.4);
     } else if (el === 'fire') {
       const tp = dir(14 * k, 0.4);
       blade = [[h[0], h[1] - 1], tp];
       if (body) { X.line(c, h[0] - fwd * 3, h[1] + 1, h[0] + fwd * 3, h[1] - 1, '#3a2a1a', 2); X.px(c, h[0], h[1] + 2, '#3a2a1a'); }
       // a blade of flame: a hot body with tongues licking up along it, a white core (live: the tongues on the 3D blade, from past the hilt)
+      if (steam) { this.steamBlade(o, h, tp, t, i); light(tp[0], v.y, 26, '#d8dee8', 0.35); }
+      else {
       X.glow(c, lerp(h[0], tp[0], 0.6), lerp(h[1], tp[1], 0.6), 7, EL.fire[2], 0.6);
       if (body) { X.line(c, h[0], h[1] - 1, tp[0], tp[1], EL.fire[4], 3); X.line(c, h[0], h[1] - 1, tp[0], tp[1], EL.fire[2], 2); }
       for (let q = body ? 0 : 2; q < 7; q++) { const f = q / 7, x = lerp(h[0], tp[0], f), y = lerp(h[1], tp[1], f); K.tongue(c, x, y + 2, (body ? 1.9 : 1.4) * (1 - f * 0.5), (body ? 4 : 3) + 2.5 * Math.sin(t * 14 + q * 1.7), Math.sin(t * 9 + q) * 0.8); }
       if (body) { X.line(c, h[0], h[1] - 1, tp[0], tp[1], EL.fire[0], 1); X.px(c, tp[0], tp[1], '#ffffff'); }
       for (const p of emit(t, 10, 0.5, (q, age) => ({ x: lerp(h[0], tp[0], rand(q, 2, i)) + Math.sin(age * 7 + q), y: lerp(h[1], tp[1], rand(q, 2, i)) - age * 9, age }))) X.px(o, p.x, p.y, K.fireCol(0.3 + p.age * 0.7));
       light(tp[0], v.y, 30, '#ff7020', 0.5);
+      }
     } else if (el === 'ice') {
       // the Ice bow: an upright bow of ice, bulging toward your aim, a pale string; held Heavy draws it back with an icicle nocked
       const I = EL.ice, draw = w.seats.handT[i] > TAP ? heavyCharge(w.seats.handT[i]) : 0;
@@ -1644,10 +1664,11 @@ export class StructureView {
       const e0: Pt = live ? dir(0) : h;   // live: the lash hangs from the 3D handle's end
       const pts = this.lash(i, e0, t, k);
       if (body) X.line(c, h[0], h[1], h[0] - fwd, h[1] + 2, '#3a2a4a', 2);
-      if (Math.floor(t * 20) % 3 !== 2) { X.lines(c, pts, EL.lightning[3], 2); X.lines(c, pts, EL.lightning[1], 1); } else X.lines(c, pts, EL.lightning[2], 1);
+      const LR = matR ?? EL.lightning;
+      if (Math.floor(t * 20) % 3 !== 2) { X.lines(c, pts, LR[3] ?? LR[2], 2); X.lines(c, pts, LR[1], 1); } else X.lines(c, pts, LR[2], 1);
       const e = pts[pts.length - 1]; X.px(c, e[0], e[1], '#ffffff');
       blade = pts;
-      light(h[0], v.y, 28, '#b08aff', 0.45);
+      light(h[0], v.y, 28, matR ? matR[2] : '#b08aff', 0.45);
     } else if (el === 'water') {
       // the tide trident: a long shaft, a crossbar and three barbed prongs, water running off them
       const tp = dir(16 * k, 0.28); blade = [[h[0], h[1] + 3], tp];
@@ -1662,14 +1683,19 @@ export class StructureView {
         X.line(c, b0[0], b0[1], tip[0], tip[1], EL.water[1], 1); X.px(c, tip[0], tip[1], '#ffffff');
         if (sd) X.px(c, tip[0] - fx * 1.5 - nx * Math.sign(sd), tip[1] - fy * 1.5 - ny * Math.sign(sd), EL.water[1]); // the barb
       }
-      for (const p of emit(t, 6, 0.5, (q, age) => ({ x: tp[0] + (rand(q, 4, i) - 0.5) * 7, y: tp[1] + 2 + age * age * 14, age }))) X.px(o, p.x, p.y, '#8ad0ff');
+      if (!steam) for (const p of emit(t, 6, 0.5, (q, age) => ({ x: tp[0] + (rand(q, 4, i) - 0.5) * 7, y: tp[1] + 2 + age * age * 14, age }))) X.px(o, p.x, p.y, '#8ad0ff');
       light(tp[0], v.y, 24, '#3a98ff', 0.35);
     } else {
       const R = ramp(w.seats.weapon[i]), tp = dir(11 * k);
       X.line(c, h[0], h[1], tp[0], tp[1], '#140e0a', 3); X.line(c, h[0], h[1], tp[0], tp[1], R[1], 1); X.glow(c, tp[0], tp[1], 4, R[2], 0.7);
       blade = [h, tp];
     }
-    if (blade) A.along(c, o, blade, extras, t, i * 131, light);
+    if (blade) {
+      // without 3D the prop can't take the material: its colour glows at the head instead
+      if (body && matR && el !== 'arcane' && el !== 'lightning') { const hd = blade[blade.length - 1]; X.glow(o, hd[0], hd[1], 5, matR[2], 0.7); }
+      // the whip's lash and the bow's limbs carry their effects along their middle, the rest at the head
+      A.infused(o, blade, el === 'fire' && steam ? { ...inf, mat: 0 } : inf, t, i * 131, light, el === 'lightning' || el === 'ice' ? 0.6 : 0.82);
+    }
     if (up < 1) X.ring(o, h[0], h[1] - 4, 2 + up * 10, 2 + up * 8, SV[1], 1 - up);
   }
 

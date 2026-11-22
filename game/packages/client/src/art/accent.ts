@@ -7,8 +7,10 @@
  *   - its own particle: fire licks and embers rising, frost rime and glints, lightning crackle, water drips,
  *     stone chunks, arcane rune sparks, life motes rising, shield glints
  *
- * Held weapons call `along`, guards and orbs `around`, moves (Strike thrust, Sweep ring, Heavies, guard
- * moves) `trail` and `burst`, bolts `bolt`. Pure functions of time and seed: no state.
+ * Guards call `around`, moves (Strike thrust, Sweep ring, Heavies, guard moves) `trail` and `burst`, bolts `bolt`.
+ * Held weapons no longer band every extra along the blade (issue #4, "the particles just read as noise"): their
+ * extras set the prop's material (infuse.ts, live3d.ts) and `infused` draws what goes with it; Healing hands get
+ * `shells`. Pure functions of time and seed: no state.
  */
 import * as K from './kit';
 import * as X from './px';
@@ -63,39 +65,6 @@ export function bit(o: Ctx, id: number, x: number, y: number, k: number, j: numb
 
 /** How each element's particles drift: fire and life rise, water and earth fall, the rest hang. */
 const drift = (id: number): number => (id === ID.fire ? -9 : id === ID.life ? -6 : id === ID.water ? 12 : id === ID.earth ? 8 : id === ID.arcane ? -3 : 0);
-
-/**
- * On a held weapon: `pts` is its line from grip to tip. Each extra adds a band of its colour beside
- * the blade (offset, so several sit side by side), a glow at the tip, and its particles along it.
- */
-export function along(c: Ctx, o: Ctx, pts: readonly Pt[], ids: readonly number[], t: number, seed: number, light?: (x: number, y: number, r: number, col: string, a: number) => void): void {
-  if (!ids.length || pts.length < 2) return;
-  const a = pts[0], z = pts[pts.length - 1], L = Math.hypot(z[0] - a[0], z[1] - a[1]) || 1, nx = -(z[1] - a[1]) / L, ny = (z[0] - a[0]) / L;
-  const at = (f: number): Pt => { const s = f * (pts.length - 1), k = Math.min(pts.length - 2, Math.floor(s)), u = s - k; return [lerp(pts[k][0], pts[k + 1][0], u), lerp(pts[k][1], pts[k + 1][1], u)]; };
-  ids.forEach((id, m) => {
-    const R = accentRamp(id), off = (m % 2 ? -1 : 1) * (1.5 + Math.floor(m / 2));
-    // the band: a stripe of the extra's colour along the blade, its light running up and down it
-    const run = (t * 1.6 + m * 0.37) % 1;
-    for (let q = 0; q <= 10; q++) {
-      const f = 0.15 + 0.85 * (q / 10), p = at(f), hot = Math.abs(f - run) < 0.12;
-      X.px(c, p[0] + nx * off, p[1] + ny * off, hot ? '#ffffff' : q % 2 ? R[1] : R[2]);
-      X.px(c, p[0] + nx * (off + Math.sign(off)), p[1] + ny * (off + Math.sign(off)), q % 2 ? R[2] : R[3] ?? R[2]);
-    }
-    const mid = at(0.6);
-    X.glow(o, mid[0], mid[1], 6, R[2], 0.3);
-    // a glow at the tip in the extra's colour, and its particles streaming off the blade
-    X.glow(o, z[0] + nx * off * 0.5, z[1] + ny * off * 0.5, 4.5, R[2], 0.5);
-    const dir = Math.atan2(z[1] - a[1], z[0] - a[0]);
-    if (id === ID.lightning) { // crackle hops between points on the blade
-      if (Math.floor(t * 16 + m) % 3 !== 2) { const f0 = rand(Math.floor(t * 16), m, seed), p0 = at(0.2 + 0.6 * f0), p1 = at(Math.min(1, 0.3 + 0.6 * f0)); K.zap(o, [p0[0] + nx * 3, p0[1] + ny * 3], [p1[0] - nx * 3, p1[1] - ny * 3], Math.floor(t * 16) + seed + m, R, 1, 0); }
-    }
-    if (id === ID.cold || id === ID.earth) { // rime crusted on the blade, stone chunks set in it: they stay put
-      for (let q = 0; q < 4; q++) { const p = at(0.3 + 0.18 * q); bit(c, id, p[0] + nx * off * (q % 2 ? -1 : 1), p[1] + ny * off * (q % 2 ? -1 : 1), 0.2, q + (id === ID.cold ? 1 : 0), dir + Math.PI / 2); }
-    }
-    for (const p of emit(t, 15, 0.6, (q, age) => { const f = 0.2 + 0.8 * rand(q, 5 + m, seed), b = at(f); return { x: b[0] + nx * off + Math.sin(q + age * 6) * 1.5, y: b[1] + ny * off + drift(id) * age, age, q }; })) bit(o, id, p.x, p.y, p.age, p.q, dir);
-    light?.(z[0], z[1] + 10, 22, R[2], 0.35);
-  });
-}
 
 /**
  * Round a point (a guard, a pair of hands, an orb): each extra is an arc of the rim, thick and in its
@@ -173,4 +142,56 @@ export function bolt(o: Ctx, x: number, y: number, ux: number, uy: number, ids: 
     X.glow(o, x, y, 5, R[2], 0.45);
     light?.(x, y + 12, 22, R[2], 0.35);
   });
+}
+
+/** A small rune (five rows of art px, a stem with two arms): Arcane on an infused weapon, glowing on its head. */
+const RUNE = ['x.x.x', '.xxx.', '..x..', '..x..', '..x..'];
+/** Each infusion material's ramp (infuse.ts MAT; steam a neutral grey, never water's blue). */
+export const MAT_COL: Record<number, Ramp> = { 1: X.EL.fire, 2: X.EL.water, 3: X.FROST, 4: X.EL.ice, 5: X.EL.lightning, 6: ['#ffffff', '#f0f2f6', '#d0d6de', '#a8b0bc', '#7a8290'] };
+
+/**
+ * An infused weapon (art/infuse.ts; docs/threads/elemental-weapons.md): the material is the 3D prop's (live3d.ts), so
+ * this draws only what goes with it, all at the head (`pts` grip to tip; the head is near the tip): the material's light,
+ * a few wisps where the material needs them (steam rising, water dripping), each leftover extra as one small effect in
+ * one colour, and the rune. A few particles a second each, never a band along the blade (issue #4: "the particles just
+ * read as noise").
+ */
+export function infused(o: Ctx, pts: readonly Pt[], inf: { mat: number; fx: readonly number[]; rune: boolean }, t: number, seed: number, light?: (x: number, y: number, r: number, col: string, a: number) => void, headAt = 0.82): void {
+  if (pts.length < 2 || (!inf.mat && !inf.fx.length && !inf.rune)) return;
+  const at = (f: number): Pt => { const s = f * (pts.length - 1), k = Math.min(pts.length - 2, Math.floor(s)), u = s - k; return [lerp(pts[k][0], pts[k + 1][0], u), lerp(pts[k][1], pts[k + 1][1], u)]; };
+  const [hx, hy] = at(headAt);
+  const M = MAT_COL[inf.mat];
+  if (M) light?.(hx, hy + 10, 24, M[2], 0.4);
+  // the material's own movement, where a solid colour can't carry it
+  if (inf.mat === 6) for (const p of emit(t, 7, 0.9, (q, age) => ({ x: hx + (rand(q, 3, seed) - 0.5) * 6 + Math.sin(q + age * 4) * 1.5, y: hy - 2 - age * 11, age }))) K.puff(o, p.x, p.y, 1 + p.age * 2.2, p.age < 0.4 ? '#f4f6fa' : '#c8ced8', 0.75 * (1 - p.age));
+  if (inf.mat === 2) for (const p of emit(t, 2.5, 0.45, (q, age) => ({ x: hx + (rand(q, 4, seed) - 0.5) * 5, y: hy + 3 + age * age * 22, age, q }))) bit(o, ID.water, p.x, p.y, p.age, p.q);
+  if (inf.mat === 1) for (const p of emit(t, 4, 0.6, (q, age) => ({ x: hx + (rand(q, 5, seed) - 0.5) * 6 + Math.sin(q + age * 7), y: hy - 2 - age * 10, age }))) X.px(o, p.x, p.y, K.fireCol(0.3 + p.age * 0.7));
+  // each leftover extra: one small effect
+  inf.fx.forEach((id, m) => {
+    const sd = seed + 17 * (m + 1);
+    if (id === ID.lightning) {   // a short crackle over the head now and then
+      const f = Math.floor(t * 9);
+      if (rand(f, 1, sd) < 0.4) { const a = rand(f, 2, sd) * TAU; K.zap(o, [hx + Math.cos(a) * 3, hy + Math.sin(a) * 2], [hx - Math.cos(a) * 5, hy - Math.sin(a) * 4], f + sd, X.EL.lightning, 1, 0); }
+    } else if (id === ID.water) for (const p of emit(t, 3, 0.45, (q, age) => ({ x: hx + (rand(q, 4, sd) - 0.5) * 5, y: hy + 3 + age * age * 22, age, q }))) bit(o, ID.water, p.x, p.y, p.age, p.q);
+    else if (id === ID.cold) for (const p of emit(t, 4, 1.0, (q, age) => ({ x: hx + (rand(q, 6, sd) - 0.5) * 7 + Math.sin(q * 2 + age * 5) * 1.5, y: hy + 1 + age * 9, age }))) { X.px(o, p.x, p.y, '#ffffff'); if (p.age < 0.5) { X.px(o, p.x - 1, p.y, X.FROST[2]); X.px(o, p.x + 1, p.y, X.FROST[2]); } }   // snow puffs falling off
+    else if (id === ID.fire) for (const p of emit(t, 4, 0.6, (q, age) => ({ x: hx + (rand(q, 5, sd) - 0.5) * 6 + Math.sin(q + age * 7), y: hy - 2 - age * 10, age }))) X.px(o, p.x, p.y, K.fireCol(0.3 + p.age * 0.7));   // embers
+    else if (id === ID.ice) { if (Math.floor(t * 3 + m) % 4 === 0) { X.px(o, hx + 2, hy - 2, '#ffffff'); X.px(o, hx + 1, hy - 2, X.EL.ice[1]); X.px(o, hx + 2, hy - 3, X.EL.ice[1]); } }   // a glint
+  });
+  if (inf.rune) {
+    const R = X.EL.arcane, pulse = 0.5 + 0.5 * Math.sin(t * 4 + seed);
+    X.glow(o, hx, hy, 5, R[2], 0.35 + 0.25 * pulse);
+    RUNE.forEach((row, ry) => { for (let rx = 0; rx < 5; rx++) if (row[rx] === 'x') X.px(o, hx - 2 + rx, hy - 2 + ry, ry === 1 && pulse > 0.6 ? '#ffffff' : R[1]); });
+  }
+}
+
+/**
+ * Healing hands' extras (the user, 2026-11-21: "glowing hands with a core of the heal color and shells made up of the
+ * other colors. No model"): a shell of each extra's colour round the hand's green core, the first innermost, breathing.
+ */
+export function shells(o: Ctx, x: number, y: number, ids: readonly number[], t: number, k = 1): void {
+  // solid glows nested outermost first, each a little wider than the one inside it; the caller draws the core on top
+  for (let m = ids.length - 1; m >= 0; m--) {
+    const R = accentRamp(ids[m]), r = 4.5 + (m + 1) * 2 + Math.sin(t * 5 + m * 1.3) * 0.4;
+    X.glow(o, x, y, r, R[2], k);
+  }
 }

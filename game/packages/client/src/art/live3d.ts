@@ -94,6 +94,8 @@ export interface LivePose {
   props?: readonly string[];
   /** Blocking, 0..1: the strapped guard goes from its carried place at the side to square in front of the chest (placeGuard). */
   guardUp?: number;
+  /** A conjured weapon's infusion (art/infuse.ts MAT): the material of its element-bearing part (INFUSED). 0: the prop's own. */
+  infuse?: number;
 }
 
 const urls = import.meta.glob<string>('../../../../content/assets/models/*.glb', { eager: true, query: '?url', import: 'default' });
@@ -286,6 +288,17 @@ const fxTime = { value: 0 };
  * 1 a rainbow sweeping across (the Prism), 2 a slow hot pulse (the Ember's core), 3 a dithered see-through ward with
  * rings rippling out (the Mirror's halo), 4 bands flowing across (the Tide's water). 0 for every other material.
  */
+/**
+ * A conjured weapon's element-bearing parts, by Blender object name (tools/sprites-3d/wizprops.py): what an infusion
+ * turns into its material (docs/threads/elemental-weapons.md). The maul's crystals are never shown (the user: the head
+ * and shaft read apart without them); the sword's flame blade gives way to a 2D burst of steam (view-structures.ts).
+ */
+const INFUSED = /^(maul (boulder|lump)|focus orb|bow limb|trident (prong|foam)|whip lash)/, HIDDEN = /^maul crystal/, STEAM_HIDES = /^sword (flame|core)/;
+const MAT_STEAM = 6;   // art/infuse.ts MAT.steam
+/** The object's own name, or the node's it's a primitive of (GLTFLoader puts multi-material meshes under a group). */
+const partName = (o: THREE.Object3D): string => o.name + '|' + (o.parent?.name ?? '');
+const partIs = (o: THREE.Object3D, re: RegExp) => partName(o).split('|').some((n) => re.test(n.replace(/_/g, ' ')));
+
 function fxModeOf(name: string): number {
   if (/^arm magenta/.test(name)) return 1;
   if (/^arm (flame core|ember red)/.test(name)) return 2;
@@ -316,11 +329,35 @@ const FX_FRAG = `
     ratio *= 1.0 + 0.15 * max(band, 0.0);
   } else if (fxMode == 4) {
     ratio *= 0.85 + 0.3 * sin(dot(vFx, vec3(38.0, 27.0, 33.0)) - fxTime * 7.0);
+  }
+  // an infused weapon's element-bearing part (infuse.ts MAT): the element as its material, alive but solid
+  if (infHead > 0.5 && infMode > 0) {
+    float n1 = 0.5 + 0.5 * sin(dot(vFx, vec3(23.0, 17.0, 19.0)) + fxTime * 6.0) * sin(dot(vFx, vec3(-11.0, 29.0, 7.0)) - fxTime * 4.3);
+    float flow = 0.5 + 0.5 * sin(dot(vFx, vec3(38.0, 27.0, 33.0)) - fxTime * 7.0);
+    if (infMode == 1) {          // fire: molten, flickering deep red to yellow, lit from within
+      albedo = mix(vec3(0.85, 0.18, 0.04), vec3(1.0, 0.84, 0.3), n1); ratio = max(ratio, 0.85) * (0.95 + 0.25 * n1);
+    } else if (infMode == 2) {   // water: deep blue with light bands flowing through it
+      albedo = mix(vec3(0.1, 0.36, 0.92), vec3(0.5, 0.84, 1.0), smoothstep(0.55, 0.95, flow)); ratio *= 0.9 + 0.25 * flow;
+    } else if (infMode == 3) {   // cold: packed snow, white with blue in the shade
+      albedo = mix(vec3(0.72, 0.84, 0.97), vec3(0.97, 0.99, 1.0), step(0.32, bayer4(vFx.xy * 60.0 + vFx.z * 40.0)));
+    } else if (infMode == 4) {   // ice: clear pale crystal, its facets catching the light
+      vec3 nv = normalize(vNormal);
+      albedo = mix(vec3(0.55, 0.85, 1.0), vec3(0.93, 0.99, 1.0), smoothstep(0.55, 0.9, nv.y * 0.6 + nv.x * 0.5 + 0.3)); ratio = max(ratio, 0.8);
+    } else if (infMode == 5) {   // lightning: violet-white, flaring now and then
+      float fl = step(0.82, fract(sin(floor(fxTime * 14.0) * 12.9898) * 43758.5453));
+      albedo = mix(vec3(0.6, 0.42, 1.0), vec3(0.96, 0.93, 1.0), max(fl, smoothstep(0.7, 1.0, n1))); ratio = max(ratio, 0.85) * (1.0 + 0.3 * fl);
+    } else if (infMode == 6) {   // steam: pale grey-white swirling, thin enough to see through in places
+      float sw = 0.5 + 0.5 * sin(dot(vFx, vec3(19.0, 31.0, 23.0)) + fxTime * 3.0);
+      if (bayer4(gl_FragCoord.xy * 0.5) > 0.6 + 0.4 * sw) discard;
+      albedo = mix(vec3(0.84, 0.84, 0.85), vec3(1.0, 1.0, 1.0), sw); ratio = max(ratio, 0.95);   // neutral: a cool grey steps to blue and reads as water   // neutral: a cool grey steps to blue and reads as water
+    }
   }`;
 
-function toon(m: THREE.MeshLambertMaterial, flash: { value: number }, seat?: Seat, fxMode = 0): THREE.MeshLambertMaterial {
+function toon(m: THREE.MeshLambertMaterial, flash: { value: number }, seat?: Seat, fxMode = 0, infuse?: { value: number }): THREE.MeshLambertMaterial {
   m.onBeforeCompile = (sh) => {
     sh.uniforms.fxMode = { value: fxMode };
+    sh.uniforms.infMode = infuse ?? { value: 0 };
+    sh.uniforms.infHead = { value: infuse ? 1 : 0 };
     sh.uniforms.fxTime = fxTime;
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vFx;')
@@ -330,7 +367,7 @@ function toon(m: THREE.MeshLambertMaterial, flash: { value: number }, seat?: Sea
     sh.uniforms.seatMain = seat?.main ?? { value: new THREE.Vector3() };
     sh.uniforms.seatTrim = seat?.trim ?? { value: new THREE.Vector3() };
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float flash; uniform float seatOn; uniform vec3 seatMain; uniform vec3 seatTrim;\nuniform int fxMode; uniform float fxTime; varying vec3 vFx;\nlayout(location = 1) out highp vec4 gRatio;\n' + TONE_GLSL + FX_GLSL)
+      .replace('#include <common>', '#include <common>\nuniform float flash; uniform float seatOn; uniform vec3 seatMain; uniform vec3 seatTrim;\nuniform int fxMode; uniform float fxTime; varying vec3 vFx; uniform int infMode; uniform float infHead;\nlayout(location = 1) out highp vec4 gRatio;\n' + TONE_GLSL + FX_GLSL)
       .replace('#include <opaque_fragment>', `
         vec3 albedo = toSrgb(diffuseColor.rgb);
         float ratio = lumaOf(toSrgb(outgoingLight)) / max(lumaOf(albedo), 0.03);
@@ -382,6 +419,8 @@ interface Inst {
    * mixer only writes a value that changed, so a paused or standing clip would otherwise keep the last pose's offsets.
    */
   rawQ: Float32Array; rawP: Float32Array;
+  /** The infusion's material (LivePose.infuse), shared by the element-bearing parts' shaders; the parts a material replaces (STEAM_HIDES). */
+  infuse: { value: number }; hideOnSteam: THREE.Object3D[];
 }
 const models = new Map<string, Model | 'loading' | 'failed'>();
 const pools = new Map<string, Inst[]>();
@@ -419,12 +458,15 @@ function instance(slug: string, m: Model, original = false): Inst {
   const look = (mat: THREE.MeshLambertMaterial) => (original ? mat : toon(mat, flash));
   const seat: Seat = { on: { value: 0 }, main: { value: new THREE.Vector3() }, trim: { value: new THREE.Vector3() } };
   const body = SkeletonUtils.clone(m.scene);
+  const infuse = { value: 0 }, hideOnSteam: THREE.Object3D[] = [];
   body.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
     const src = mesh.material as THREE.MeshStandardMaterial;
-    mesh.material = original ? src.clone() : toon(new THREE.MeshLambertMaterial({ map: src.map, color: src.color, emissive: src.emissive, emissiveMap: src.emissiveMap }), flash, seat, fxModeOf(src.name ?? ''));
+    mesh.material = original ? src.clone() : toon(new THREE.MeshLambertMaterial({ map: src.map, color: src.color, emissive: src.emissive, emissiveMap: src.emissiveMap }), flash, seat, fxModeOf(src.name ?? ''), partIs(o, INFUSED) ? infuse : undefined);
     mesh.frustumCulled = false;
+    if (!original && partIs(o, HIDDEN)) mesh.visible = false;
+    if (partIs(o, STEAM_HIDES)) hideOnSteam.push(o);
   });
   const turn = new THREE.Group(); turn.add(body);
   const shift = new THREE.Group(); shift.add(turn);
@@ -495,7 +537,7 @@ function instance(slug: string, m: Model, original = false): Inst {
   body.traverse((o) => { if ((o as THREE.Bone).isBone) bones.push(o); });
   const rawQ = new Float32Array(bones.length * 4), rawP = new Float32Array(bones.length * 3);
   bones.forEach((o, j) => { o.quaternion.toArray(rawQ, j * 4); o.position.toArray(rawP, j * 3); });
-  return { seat, soft, drops, carriers, bowOf, hands, arms, pin, root, shift, turn, body, mixer, actions, hips, rest, flash, bow, blendNodes: [...bones, ...soft.map((s) => s.node)], nBones: bones.length, rawQ, rawP };
+  return { seat, soft, drops, carriers, bowOf, hands, arms, pin, root, shift, turn, body, mixer, actions, hips, rest, flash, bow, infuse, hideOnSteam, blendNodes: [...bones, ...soft.map((s) => s.node)], nBones: bones.length, rawQ, rawP };
 }
 
 // ---- blended transitions (inertialization) ---------------------------------------------------------------------------------------
@@ -595,6 +637,8 @@ function pose(inst: Inst, m: Model, p: LivePose, key?: string): void {
   for (const d of inst.drops) d.rest.decompose(d.node.position, d.node.quaternion, d.node.scale);
   const show = p.props ?? m.meta.show;
   for (const c of inst.carriers) c.node.visible = !show || show.includes(c.name);
+  inst.infuse.value = p.infuse ?? 0;
+  for (const o of inst.hideOnSteam) o.visible = inst.infuse.value !== MAT_STEAM;
   // a held prop lets go early in the death and falls beside the body (dropProps): where it was when it let go
   const fall = p.move === 'death' && inst.drops.length ? Math.min(DROP_AT, p.t) : -1;
   if (fall >= 0) {

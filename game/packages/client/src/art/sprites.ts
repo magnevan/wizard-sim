@@ -337,7 +337,7 @@ function livePose(slug: string, s: RigState, who: number): LivePose {
   if (s.kind === 'wizard') {
     const p = wizardPose();
     // a two-handed weapon (the bow, the maul) carries the guard on its back
-    return { ...p, hl: settle || BLEND_HL, ...(lift !== undefined && p.aim === undefined ? { aim: lift } : {}), ...(s.guard && twoHanded(s.weapon) ? { sling: 1 } : {}) };
+    return { ...p, infuse: s.infuse, hl: settle || BLEND_HL, ...(lift !== undefined && p.aim === undefined ? { aim: lift } : {}), ...(s.guard && twoHanded(s.weapon) ? { sling: 1 } : {}) };
   }
   function wizardPose(): LivePose {
     const seat = X.TEAMS[s.pal % X.TEAMS.length], c = meta.casts?.cast, props = wizardProps(s);

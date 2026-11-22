@@ -1824,8 +1824,8 @@ export class StructureView {
     if (aiming) { if (this.st - this.aimT0 >= AIM_SHOWS) this.turretPreview(w, t, g, o, v); return; }
     const drag = s.dragged[i] === 1;
     // released on yourself, Shield and Sigil raise their ring, orbitals or motes (the ring merged into the burst, 2026-11-22),
-    // even after a drag: the cursor on you ends the line (the sim's placeOnYou)
-    const onMe = Math.hypot(s.aimX[i], s.aimY[i]) <= SHAPES.selfAim;
+    // unless it's a Shield line, which stays a line (a Sigil line ends on you: the sim's placeOnYou)
+    const onMe = !drag && Math.hypot(s.aimX[i], s.aimY[i]) <= SHAPES.selfAim;
     let spec;
     try { spec = compile(queueOf(w, i), 'place', { drag }); } catch { return; }
     if (onMe && (spec.form === ELID.shield || spec.form === ELID.sigil)) { try { spec = compile(queueOf(w, i), 'area'); } catch { return; } }

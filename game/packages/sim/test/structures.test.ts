@@ -126,35 +126,43 @@ describe('Shield', () => {
     expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
   });
 
-  it('a Place moves between the line and the ring by moving the cursor onto yourself and off (#16)', () => {
-    // pressed away, dragged into a line, then onto yourself: the ring, though it was a line a moment ago
-    const a = arena();
-    a.d.aimAt(5, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
-    a.d.aimAt(5, 4).tick({ buttons: BTN.area }, 3);
-    expect(a.w.seats.dragged[0]).toBe(1);
-    a.d.aimAt(0, 0).tick({ buttons: BTN.area }, 3);
-    expect(a.w.seats.dragged[0]).toBe(0);
-    a.d.tick({}, 40);
-    expect(walls(a.w, WALL.rock)).toBe(STRUCT.ringSegs);
-    // pressed on yourself, then out and dragged: the line starts where the cursor left the arc zone, not at your feet
-    const b = arena();
-    b.d.aimAt(0, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
-    for (let x = 0.5; x <= STRUCT.arcZone; x += 0.5) b.d.aimAt(x, 0).tick({ buttons: BTN.area }, 1); // out across the zone
-    expect(b.w.seats.dragged[0]).toBe(0);
-    b.d.aimAt(STRUCT.arcZone, 3).tick({ buttons: BTN.area }, 3);
-    expect(b.w.seats.dragged[0]).toBe(1);
-    expect(b.w.seats.holdX[0]).toBeCloseTo(STRUCT.arcZone, 1);
-    b.d.tick({}, 40);
-    const wl = b.w.walls, rocks = Array.from(wl.type).flatMap((t, k) => (t === WALL.rock ? [k] : []));
-    expect(rocks.length).toBeGreaterThan(0);
-    expect(rocks.length).not.toBe(STRUCT.arcSegs);
-    for (const k of rocks) expect(Math.min(Math.hypot(wl.x1[k], wl.y1[k]), Math.hypot(wl.x2[k], wl.y2[k]))).toBeGreaterThan(STRUCT.arcZone - 0.1); // none at your feet
+  it('a Shield line pressed away stays a line all the way to you: no arc, no ring (a doorway shut from beside it)', () => {
+    const { w, d } = arena();
+    d.aimAt(5, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
+    d.aimAt(5, 4).tick({ buttons: BTN.area }, 3); // sideways: a line
+    expect(w.seats.dragged[0]).toBe(1);
+    for (const [x, y] of [[2, 2], [0.5, 0.5], [0, 0]]) { d.aimAt(x, y).tick({ buttons: BTN.area }, 3); expect(w.seats.dragged[0]).toBe(1); }
+    d.tick({}, 40);
+    const n = walls(w, WALL.rock);
+    expect(n).toBeGreaterThan(0);
+    const k = Array.from(w.walls.type).indexOf(WALL.rock);
+    expect(Math.hypot(w.walls.x1[k] - 5, w.walls.y1[k])).toBeLessThan(0.1); // a line from the press point
+  });
+
+  it('a Shield Place pressed away and moved straight toward or away from you is the arc, and on you the ring (#16)', () => {
+    for (const [to, want] of [[3, STRUCT.arcSegs], [7.5, STRUCT.arcSegs], [0, STRUCT.ringSegs]] as const) {
+      const { w, d } = arena();
+      d.aimAt(5, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
+      d.aimAt(to, 0.3).tick({ buttons: BTN.area }, 3); // nearly radial
+      expect(w.seats.dragged[0]).toBe(2);
+      d.aimAt(to, 0).tick({ buttons: BTN.area }, 3).tick({}, 40);
+      expect(walls(w, WALL.rock)).toBe(want);
+      if (want === STRUCT.arcSegs) { const k = Array.from(w.walls.type).indexOf(WALL.rock); expect(Math.hypot(w.walls.x1[k], w.walls.y1[k])).toBeCloseTo(to, 1); }
+    }
+  });
+
+  it('a Shield Place pressed near you is the arc to the end: dragged out, it never becomes a line', () => {
+    const { w, d } = arena();
+    d.aimAt(2, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
+    for (const [x, y] of [[4, 1], [6, 4], [3, 6]]) { d.aimAt(x, y).tick({ buttons: BTN.area }, 3); expect(w.seats.dragged[0]).not.toBe(1); }
+    d.tick({}, 40);
+    expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
   });
 
   it('near you a held Shield Place never draws a line: the cursor swings and resizes the arc', () => {
     const { w, d } = arena();
     d.aimAt(2.5, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
-    for (const [x, y] of [[1.5, 1.5], [0, 2.5], [-1.2, 1.6]]) { d.aimAt(x, y).tick({ buttons: BTN.area }, 3); expect(w.seats.dragged[0]).toBe(0); }
+    for (const [x, y] of [[1.5, 1.5], [0, 2.5], [-1.2, 1.6]]) { d.aimAt(x, y).tick({ buttons: BTN.area }, 3); expect(w.seats.dragged[0]).not.toBe(1); }
     d.tick({}, 40);
     const wl = w.walls, rocks = Array.from(wl.type).flatMap((t, k) => (t === WALL.rock ? [k] : []));
     expect(rocks.length).toBe(STRUCT.arcSegs);

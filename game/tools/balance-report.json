@@ -1175,101 +1175,102 @@
  "waves": [
   {
    "name": "current",
-   "cleared": 4.3,
+   "cleared": 4.5,
    "clearedMin": 3,
    "clearedMax": 5,
-   "downs": 7.8,
-   "wipes": 3.5,
-   "kills": 32,
-   "damageTaken": 1623,
+   "downs": 7.3,
+   "wipes": 3,
+   "kills": 30.3,
+   "damageTaken": 1510.5,
    "clearSeconds": [
-    11.6,
-    17.7,
-    8.1,
-    52.9,
-    38
+    13.9,
+    38.2,
+    4.7
    ]
   },
   {
    "name": "slower regen (R 0.7)",
-   "cleared": 4,
-   "clearedMin": 3,
+   "cleared": 4.3,
+   "clearedMin": 4,
    "clearedMax": 5,
-   "downs": 8.5,
-   "wipes": 4,
+   "downs": 7.5,
+   "wipes": 3.3,
    "kills": 33.8,
-   "damageTaken": 1419.3,
+   "damageTaken": 1376.8,
    "clearSeconds": [
-    11.6,
-    24.4,
-    7.5,
-    40.7,
-    23.9
+    13.9,
+    18,
+    7.2,
+    44
    ]
   },
   {
    "name": "faster regen (R 1.4)",
-   "cleared": 5,
+   "cleared": 5.8,
    "clearedMin": 4,
-   "clearedMax": 6,
-   "downs": 4.5,
-   "wipes": 1.8,
-   "kills": 34,
-   "damageTaken": 1415.5,
+   "clearedMax": 7,
+   "downs": 3,
+   "wipes": 1,
+   "kills": 39.5,
+   "damageTaken": 1192,
    "clearSeconds": [
-    11.6,
-    17.8,
-    5.4,
-    42.2,
-    11.6,
-    43
+    13.9,
+    27.5,
+    8.1,
+    36.9,
+    17.5,
+    35.1
    ]
   },
   {
    "name": "enemies hit 1.5x harder",
-   "cleared": 3.8,
-   "clearedMin": 1,
+   "cleared": 4.5,
+   "clearedMin": 4,
    "clearedMax": 5,
-   "downs": 12,
-   "wipes": 5.8,
-   "kills": 27.3,
+   "downs": 9.3,
+   "wipes": 4,
+   "kills": 31.8,
    "damageTaken": 1491,
    "clearSeconds": [
-    11.6,
-    17.7,
-    8.1,
-    69.9,
-    16.6
+    13.9,
+    18,
+    4.2,
+    46.7,
+    16.2
    ]
   },
   {
    "name": "enemies 1.5x tougher",
-   "cleared": 2.5,
-   "clearedMin": 1,
+   "cleared": 4.5,
+   "clearedMin": 4,
    "clearedMax": 5,
-   "downs": 8.5,
-   "wipes": 3.8,
-   "kills": 23.8,
-   "damageTaken": 1526.5,
+   "downs": 5.3,
+   "wipes": 2,
+   "kills": 30,
+   "damageTaken": 1215.5,
    "clearSeconds": [
-    41.7,
-    19.5,
-    8.4,
-    52.8,
-    24.2
+    44.2,
+    23.5,
+    13.3,
+    85.8,
+    25.1
    ]
   },
   {
    "name": "heavier casts (windup x2)",
-   "cleared": 4,
+   "cleared": 3.5,
    "clearedMin": 1,
    "clearedMax": 5,
-   "downs": 5.8,
+   "downs": 6.3,
    "wipes": 2.5,
-   "kills": 29.5,
-   "damageTaken": 1558.5,
+   "kills": 26,
+   "damageTaken": 1550,
    "clearSeconds": [
-    17.1
+    24.3,
+    20,
+    8.8,
+    107.3,
+    33.3
    ]
   }
  ],
@@ -1297,37 +1298,37 @@
   },
   {
    "seed": 4,
-   "cleared": 2,
-   "fell": true,
-   "clearSeconds": "49.4 79.4",
-   "minHp": 0
+   "cleared": 4,
+   "fell": false,
+   "clearSeconds": "49.7 43.8 16.2 53.4",
+   "minHp": 43
   },
   {
    "seed": 5,
    "cleared": 2,
    "fell": true,
-   "clearSeconds": "17.4 43",
+   "clearSeconds": "21.7 25.8",
    "minHp": 0
   },
   {
    "seed": 6,
-   "cleared": 1,
+   "cleared": 3,
    "fell": true,
-   "clearSeconds": "37.5",
+   "clearSeconds": "42.7 24.3 20.2",
    "minHp": 0
   },
   {
    "seed": 7,
    "cleared": 2,
    "fell": true,
-   "clearSeconds": "24.4 20.9",
+   "clearSeconds": "21.5 58.6",
    "minHp": 0
   },
   {
    "seed": 8,
    "cleared": 1,
    "fell": true,
-   "clearSeconds": "42.3",
+   "clearSeconds": "18",
    "minHp": 0
   }
  ]

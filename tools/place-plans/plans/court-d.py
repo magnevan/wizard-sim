@@ -73,11 +73,15 @@ Revision 15 (the third sense round, 7/10): a parapet on every public edge over a
 (finish.lips everywhere); a weir where the stream goes over the falls.
 
 Revision 16 (the fourth sense round, 7.5/10): the battery road's gate piers as a matched round pair square across the
-road; the sea gateway's piers round and matched; the weir a stone sill flush with the water."""
+road; the sea gateway's piers round and matched; the weir a stone sill flush with the water.
+
+Revision 17 (the fifth sense round, 7.5/10): the sea read as two levels, because the sea court's cliff faces came down
+into the water and were drawn in its colour; a stone ledge now runs along the cliff's foot, so the faces stand on rock
+and the sea starts beyond it."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 16)', U=(-95, 110), V=(-62, 100))
+P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 17)', U=(-95, 110), V=(-62, 100))
 C = (0, -40)            # the amphitheatre's centre, up the screen
 ARM = (0, 18)
 SEA = -6.0
@@ -89,6 +93,7 @@ for c, r in [((-60, -46), 8), ((28, -50), 6), ((-66, -8), 6)]:
     P.fill(circle(c, r), 6.0, 'trees')
 # the sea and the terraces cut into the hillside
 P.fill(arc_band(C, 0, 150, 5, 175), SEA, 'deep')
+P.fill(arc_band(C, 0, 93, 20, 160), -5.5, 'rock')            # a stone ledge along the cliff's foot, so the faces stand on rock, not in the sea
 P.fill(arc_band(C, 0, 90, 20, 160), 1.0, 'paving')          # the sea court
 P.fill(arc_band(C, 0, 70, 24, 156), 3.0, 'plaza')           # the middle terrace
 P.fill(circle(ARM, 20), 3.0, 'plaza')                       # the round plaza's rim, a bastion over the sea court

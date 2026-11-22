@@ -24,7 +24,7 @@ A place passes each gate before the next stage starts. A stage can send the plac
 | 1 | **Structure** | **Three plans that really differ**, as plan specs, drawn from above and in the game's camera, extruded by height. Each passes the walk report (`tools/place-plans/to_ldtk.py <plan> --report`) before a critic sees it | Structure critic, then the user picks one (or a mix) | `tools/place-plans/` and the segment page |
 | 2 | **Flow** | First, play-size frames along each route from the plan tool (`--frames`), with no labels. Then a walkable grey-box of the chosen plan, with heights, stairs, cliffs and water | Flow critic on the frames, first blind ("where would you walk?"), then with the plan; on the grey-box, the [sense lint](#the-sense-rules) passes too | `tools/place-plans/out/`, then the LDtk level |
 | 3 | **Sense** | The grey-box dressed with props in grey or rough art | Sense critic and the lint | Same level |
-| 4 | **Beauty** | Codex art: buildings, props, ground, lighting | Beauty critic, the loop we already had | Same level |
+| 4 | **Beauty** | Codex art: buildings, props, ground, lighting. A blockout's boxes face the camera squarely because they're drawn on the grid; the art needn't, and buildings and props can turn 45° as in the concepts (the user, 2026-11-22) | Beauty critic, the loop we already had | Same level |
 
 **Divergence rule (stage 1).** The three plans can't share a footprint shape, and at least one has to make the user say "huh". Plans come from the read and the principles, never from an earlier blockout. When a later stage sends a place back to stage 1, it gets three new plans, not a patch.
 

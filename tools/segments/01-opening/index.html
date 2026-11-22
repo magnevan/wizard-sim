@@ -119,6 +119,7 @@ th { font-weight:600; color:var(--muted); font-size:14px; }
 </main>
 
 <script src="segment.js"></script>
+<script src="renders.js" onerror="window.RENDERS={}"></script>
 <script>
 const SEG=window.SEGMENT, ROUND='r'+SEG.round;
 const VW=30, SPEED=4.2;
@@ -271,6 +272,7 @@ function buildConcepts(){
   const h=el('div','head');h.append(el('h2','',k.title),el('span','tag',k.status));sec.append(h,el('p','',k.lede));
   const a=el('div','sheet');a.style.gap='8px';k.points.forEach(x=>a.append(lead(x)));sec.append(a);
   const s=el('div','sheet');s.style.gridTemplateColumns='repeat(auto-fit,minmax(min(100%,400px),1fr))';k.images.forEach(([src,alt,cap])=>{const f=el('figure');f.style.cssText='margin:0;display:grid;gap:6px;align-content:start'+(src.endsWith('.svg')?';grid-column:1/-1':'');const i=el('img');i.src=src;i.alt=alt;i.style.cssText='width:100%;height:auto'+(src.endsWith('.jpg')?';image-rendering:pixelated':'');f.append(i,el('figcaption','cap',cap));s.append(f);});sec.append(s);
+  const rr=(window.RENDERS||{})[k.id]||[];if(rr.length){const r=el('div','sheet');r.style.gridTemplateColumns='repeat(auto-fit,minmax(min(100%,400px),1fr))';const t=el('h3','','Concept art from the blockout');t.style.gridColumn='1/-1';const n=el('p','cap','Painted by a separate agent from the grey-box, in the concept art\u2019s style, for you only: the critics and the designer don\u2019t see these.');n.style.gridColumn='1/-1';r.append(t,n);rr.forEach(([src,cap])=>{const f=el('figure');f.style.cssText='margin:0;display:grid;gap:6px;align-content:start';const i=el('img');i.src=src;i.alt=cap;i.style.cssText='width:100%;height:auto';f.append(i,el('figcaption','cap',cap));r.append(f);});sec.append(r);}
   const v=el('div','sheet');v.append(el('h3','','Your verdict on the direction'),marks('ratings','concept-'+k.id,k.verdict),noteBox('ratings',`${ROUND}-concept-${k.id}`,'Notes on the concept'));
   v.append(el('h3','','To decide'));
   for(const q of k.questions){const d=el('div','solve');d.id='solve-'+q.id;const x=el('div'),y=el('div');
@@ -316,4 +318,13 @@ buildTop();SEG.chapters.forEach(c=>$('chapters').append(buildChapter(c)));buildC
   for(const c of ['ratings','answers'])db.collection(c).onSnapshot(s=>{fill(c,s);if(--first===0){clearTimeout(stop);setSave('All saved');}},failed);
  }catch{clearTimeout(stop);setSave(`Couldn't load your notes. Reload to try again.`,true);}
 })();
+/* Click to zoom: any picture opens full size over the page; click it to switch between fitting the screen and its real
+   pixels (scroll to pan); click outside it or press Escape to close. */
+(()=>{const lb=document.createElement('div');lb.id='lb';lb.style.cssText='position:fixed;inset:0;z-index:999;background:rgba(10,10,14,.94);display:none;overflow:auto;cursor:zoom-out';
+ const im=document.createElement('img');im.style.cssText='display:block;margin:auto;cursor:zoom-in;image-rendering:pixelated';lb.append(im);document.body.append(lb);
+ let full=false;const fit=()=>{im.style.maxWidth=full?'none':'100vw';im.style.maxHeight=full?'none':'100vh';im.style.cursor=full?'zoom-out':'zoom-in';};
+ document.addEventListener('click',e=>{const t=e.target;if(t.tagName==='IMG'&&!t.closest('#lb')){im.src=t.currentSrc||t.src;im.alt=t.alt;full=false;fit();lb.style.display='block';lb.scrollTo(0,0);e.preventDefault();}
+  else if(t===im){full=!full;fit();}else if(t===lb){lb.style.display='none';}});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')lb.style.display='none';});
+ const st=document.createElement('style');st.textContent='main img{cursor:zoom-in}';document.head.append(st);})();
 </script>

@@ -46,3 +46,9 @@ Stop 1, the first cast, Life ([the brief](brief.md#the-route)). There are no ene
 |---|---|
 | Up the road | The academy's main gate (the courtyard's bridge) |
 | Down the road | The battery |
+
+## The user's answers (2026-11-22)
+
+- **Plan D chosen:** "The layout feels good. The flow is very good, where you see the people to heal first."
+- **The cots are open from the start:** "No they should be open, there are patients there and some nurses. But the equipment they're using has gone dark." So you can heal from the start. The tents' equipment (lamps, brass instruments) lights up when the well does.
+- **For dressing:** "the blocking feels like everything will be angled a certain way (straight to the camera), but we don't necessarily have to generate the assets like that. The concept art has the objects at 45 degree angles and it looks quite good." Blockouts are drawn on the grid, so their boxes face the camera squarely. At the art stage, buildings and props can turn 45°, as in the concept.

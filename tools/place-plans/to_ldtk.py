@@ -37,7 +37,7 @@ R2 = math.sqrt(0.5)
 MATERIAL_GROUND = {
     'grass': 'grass', 'path': 'dirt', 'road': 'cobble', 'paving': 'flagstone', 'plaza': 'flagstone', 'dais': 'flagstone',   # one warm family: the white slabs read as bathroom tile (beauty critic, 2026-11-22)
     'stairs': 'flagstone', 'wood': 'planks', 'sand': 'sand', 'water': 'water', 'deep': 'water', 'trees': 'leaves',
-    'rock': 'gravel', 'roof': 'ash', 'wall': 'gravel', 'void': None,   # roofs dark, never a floor material (the sense critic, 2026-11-22)
+    'rock': 'gravel', 'roof': 'slabs', 'wall': 'flagstone', 'void': None,   # roofs never a floor material (the sense critic); slabs toned to blue-grey slate for them, parapets topped in warm stone (the beauty critic, 2026-11-22)
 }
 
 # Per spec: the level it writes, and the ids its markers get. Gate ids are what the sim looks for (sim/src/court.ts).

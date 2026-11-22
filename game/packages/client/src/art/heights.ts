@@ -108,6 +108,23 @@ export function drawnZ(hm: HeightMap, x: number, y: number): number {
   return Object.is(a, d) && !Object.is(a, c) ? a : c;
 }
 
+const STONE = new Float32Array(3);
+/** A small hash for a block's own tone. */
+const hash2 = (a: number, b: number): number => { let h = Math.imul(a, 374761393) + Math.imul(b, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+/**
+ * One pixel of a retaining wall's face: cream ashlar in courses with staggered joints, each block its own tone, under a
+ * pale coping, the stone warmed a little by the ground on top (the beauty critic, 2026-11-22: the faces streaked the
+ * edge's own colour down, and read as a quarry, not an academy). k is px below the edge, fy the screen row (the courses
+ * line up across neighbouring columns).
+ */
+function faceStone(px: number, k: number, fy: number, tr: number, tg: number, tb: number, out: Float32Array): void {
+  if (k < 3) { const c = k === 2 ? 0.62 : 1; out[0] = 228 * c; out[1] = 218 * c; out[2] = 196 * c; return; }   // the coping and its shadow line
+  const COURSE = 7, BLOCK = 17, row = Math.floor(fy / COURSE), off = row & 1 ? 8 : 0, bx = Math.floor((px + off) / BLOCK);
+  if (fy % COURSE === 0 || (px + off) % BLOCK === 0) { out[0] = 118; out[1] = 106; out[2] = 94; return; }       // mortar
+  const t = 0.9 + 0.16 * hash2(bx, row), w = 0.12;
+  out[0] = (196 * (1 - w) + tr * w) * t; out[1] = (182 * (1 - w) + tg * w) * t; out[2] = (158 * (1 - w) + tb * w) * t;
+}
+
 /** Art px of headroom a room's ground image needs above and below for its tiers. */
 export function liftRange(def: RoomDef): { up: number; down: number } {
   const hm = heightMap(def);
@@ -120,8 +137,8 @@ export interface PxToWorld { x(px: number, py: number): number; y(px: number, py
 /**
  * Lifts a finished ground image by height. Each column is walked from the back (top) to the front, every pixel moved up
  * by its cell's height; where the ground drops toward the camera, the gap below the edge is filled with that edge's
- * face: its own colour darkened, a flat strip. Nearer pixels overwrite farther ones, so a raised terrace hides what's
- * behind it. Void (outside the outline) is left dark.
+ * face: cut stone (faceStone), under a pale coping, darkening toward its foot. Nearer pixels overwrite farther ones, so
+ * a raised terrace hides what's behind it. Void (outside the outline) is left dark.
  */
 export function liftGround(data: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, cam: PxToWorld, def: RoomDef): void {
   const hm = heightMap(def);
@@ -141,10 +158,11 @@ export function liftGround(data: Uint8ClampedArray, W: number, H: number, OX: nu
       // a drop toward the camera: the face runs from just below this pixel down to where the next row lands
       const next = py + 1 < H ? py + 1 - col[py + 1] : dest + 1;
       if (next > dest + 1) {
-        const s = (py * W + px) * 4, r = src[s] * 0.5 + 34, g = src[s + 1] * 0.45 + 28, b = src[s + 2] * 0.4 + 24;
+        const s = (py * W + px) * 4;
         for (let fy = Math.max(0, dest + 1); fy < Math.min(H, next); fy++) {
-          const d = (fy * W + px) * 4, dark = fy === dest + 1 ? 1.15 : 1 - 0.25 * ((fy - dest) / (next - dest));
-          data[d] = r * dark; data[d + 1] = g * dark; data[d + 2] = b * dark; data[d + 3] = 255;
+          const d = (fy * W + px) * 4, k = fy - dest - 1, fade = 1 - 0.3 * ((fy - dest) / (next - dest));
+          faceStone(px, k, fy, src[s], src[s + 1], src[s + 2], STONE);
+          data[d] = STONE[0] * fade; data[d + 1] = STONE[1] * fade; data[d + 2] = STONE[2] * fade; data[d + 3] = 255;
         }
       }
     }

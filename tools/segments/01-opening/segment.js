@@ -13,6 +13,7 @@ board:{cols:['Brief and beats','Space diagram','Concept art','Blockout','Script'
  note:`One row per stop, one column per stage of the campaign workflow. A stop goes deep one at a time: the others wait at concept art until their turn. Updated with every change to the segment.`,
  rows:[
   ['0 · Briefing and the yard','#yard',[['done','Approved 11-22'],['review','The plan, below'],['done','Approved 11-22'],['review','Reworked 11-22: walk #yard'],['later'],['started','Props bought'],['later']]],
+  ['0 · The courtyard (hub)','#concept-court-plans',[['done'],['review','Four plans, below'],['done'],['later','Waits on height in the engine'],['later'],['started','Rounds 1–7, to be redone'],['later']]],
   ['1 · Infirmary (Life)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['done','Thorns added (r2)'],['next','After the yard'],['done','Two rounds'],['later'],['later'],['later'],['later']]],
   ['2 · Battery (Fire)','#battery',[['next','Rewrite as your second element'],['done'],['done'],['done','Repair beat open'],['later'],['started','Defence, well, wall'],['later']]],
   ['3 · Ward line (Shield)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['started','The fix: burn something off'],['later'],['done'],['later'],['later'],['later'],['later']]],
@@ -26,11 +27,12 @@ stages:[
  ['Brief','draft'],['Beat chart','draft'],['Space diagram','review'],['Blockout','started','The yard and the battery are walkable'],['Script','later'],['Dressing','started','General art bought'],['Finish','later'],
 ],
 needsYou:[
+ ['#concept-court-plans','The courtyard: pick a plan (A to D), and say yes or no to height in the engine and to the new cycle.'],
  ['#yard','Walk the reworked yard (#yard, key 7) and mark its plan: about right, too small or too big.'],
  ['#solve-yard-prompts','Round 5 on the yard: the prompts, the etched rule and the soldiers.'],
  ['https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews','Optional: the five encounter questions on The Morning Everything Breaks (my picks stand until you answer), and the proposal of at most one new creature per stop.'],
 ],
-onMe:[`The district's roads as a space diagram with walk times, and where the small fights go.`,`Rewrite the battery as your second element (its infusion line and prompts).`,`The battery's repair beat.`,`Then the infirmary: space diagram and blockout.`],
+onMe:[`The courtyard: the chosen plan as a walkable grey-box once height is in the engine.`,`The district's roads as a space diagram with walk times, and where the small fights go.`,`Rewrite the battery as your second element (its infusion line and prompts).`,`The battery's repair beat.`,`Then the infirmary: space diagram and blockout.`],
 chapters:[
 {id:'hall',name:'The briefing',
  note:`Where it happens is open: at the armillary in the courtyard (proposed, see the weapons section below) or in the lecture hall. The old hall plan is archived.`,
@@ -112,6 +114,27 @@ chapters:[
  ]},
 ],
 concepts:[
+{id:'court-plans',title:'The courtyard, from the ground up',status:'Up for review 2026-11-22',
+ lede:`You said the courtyard was stuck in a local maximum: a flat rectangle, no depth, no flow, details that make no sense. So it starts again under the new cycle for making a place (docs/campaign/making-a-place.md): read the concept as a plan, draw three plans that really differ, let a structure critic compare them, then you pick. Grey boxes on purpose: these are bones, not art. A critic who was shown our current build alongside them, without being told which it was, gave it 4/10.`,
+ points:[
+  [`A, the Compass (5/10).`,` The concept's octagon on a plateau, climbing from a sea landing up a grand stair; gates on the axes, pavilions on the diagonals, a gorge and waterfall to the east. The critic: the clearest flow and a roomy fight floor, but flat inside and "a diagram".`],
+  [`B, the Terraces (7/10).`,` A descent to the sea in three curved terraces, like an amphitheatre facing the camera. You arrive on the top terrace and look down on everything. The critic: the best height and edges, but the armillary sat on a cramped bastion at the cliff, and there was no north road.`],
+  [`C, the Chasm (6/10).`,` The wild one: the octagon split by a sea inlet, the armillary on an island between two cliffs, reached by bridges, a waterfall behind it. The critic: the best landmark pull, a poor fight floor (two thin wings and a small island).`],
+  [`D, the critic's mix (my pick).`,` B as the base, with A's round plaza and north gate and C's sea inlet. The middle terrace opens into a round plaza sunk a metre in rings of steps, the armillary at its heart: the finale's floor, with a balcony above it. Broad stairs (the critic's warning about a charging beast in narrow ones). The battery road crosses the inlet on a bridge you look down from. The north road goes through the great hall.`],
+  [`What comes next.`,` The plan you pick becomes a walkable grey-box with real cliffs and stairs, and a flow critic walks it at play zoom. That needs height in the engine, which it doesn't have (the second question). Art comes last.`],
+ ],
+ images:[
+  ['img/court-plan-d.png','Grey-box plan D in the game camera: three curved terraces descending to the sea, a round sunken plaza with the armillary at the centre of the middle terrace, the great hall at the top with the north road through it, a sea inlet and waterfall on the east crossed by the battery road’s bridge.','D, the critic’s mix: terraces round a sunken plaza (my pick).'],
+  ['img/court-plan-b.png','Grey-box plan B: three curved terraces like an amphitheatre facing the sea, the armillary on a round bastion jutting over the lowest terrace.','B, the Terraces.'],
+  ['img/court-plan-a.png','Grey-box plan A: an octagonal walled plaza on a plateau with four corner pavilions and four gates, a long stair down the sea cliff to a landing, a river gorge with a waterfall to the east.','A, the Compass.'],
+  ['img/court-plan-c.png','Grey-box plan C: the courtyard split by a sea inlet, the armillary on a rock island between two cliffs joined by stone bridges, a waterfall at the inlet’s head, a lighthouse at its mouth.','C, the Chasm.'],
+  ['img/courtyard-start.jpg','Concept: the academy courtyard with the giant armillary in the middle, seven channels in the paving, an octagonal plaza, a grand stair down to the sea, a waterfall on the right.','The concept they were read from.'],
+ ],
+ verdict:[['d','D'],['b','B'],['a','A'],['c','C'],['none','None: new plans']],
+ questions:[
+  {id:'court-engine',title:'Height in the engine?',body:`Every plan needs cliffs, terraces and stairs. Today the game is flat throughout. The plan (docs/explorations/2026-11-22-height-and-outlines.md): tiers in the level, cliffs as walls, stairs joining them, any outline shape, then shots that pass over an edge from above but hit the face from below, everything drawn at its tier's height, and buildings sorted by their footprint so you walk behind them correctly.`,proposal:`Go, in two parts: first a walkable grey-box with real cliffs (enough for the flow stage), then shots and drawing before any art.`},
+  {id:'court-cycle',title:'The cycle for making a place',body:`Read, structure, flow, sense, beauty: each stage with its own critic, plans that really differ at the start, a lint for mistakes a script can catch, and a log where everything you catch becomes a rule (docs/campaign/making-a-place.md).`,proposal:`Use it for every place from now, starting with the courtyard. You cut what isn't paying for itself.`},
+ ]},
 {id:'weapons',title:'The weapons section',status:'Approved 2026-11-22',
  lede:`You asked to map out the section where you learn to use weapons. The catch: every conjured weapon belongs to an element (the flame sword is Fire, the healing hands Life, the maul Earth), and in the yard you have none yet. So my proposal teaches the moves every weapon shares, gives one weapon from stored charge, and lets the yard show you the rest of the family in plain steel. Seven directions and their costs are in docs/explorations/2026-11-22-weapons-yard-and-walks.md.`,
  points:[

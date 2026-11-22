@@ -4,6 +4,7 @@ How a piece of the campaign goes from an idea to something in the game. Proposed
 
 - [Story canon](canon.md): what the user has approved. Read it first.
 - [Story development notes](story-development.md): proposals and previous directions.
+- [Making a place](making-a-place.md): how one place goes from concept art to level: read, structure (three plans), flow, sense, beauty, each with its own critic, and a log for improving the cycle. Its checklist is [level-design principles](level-design.md).
 - `NN-name/`: one folder per segment. Each stage adds a file.
 - `../../tools/segments/NN-name/`: the segment's working document, an artifact with one chapter per place. Anything still being worked on lives there.
 

@@ -10,6 +10,7 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 
 ## Next
 
+- [ ] The courtyard under the new cycle ([making a place](../campaign/making-a-place.md)): the user picks a plan (A to D, `concept-court-plans` on the segment page) and answers height in the engine (`r5-court-engine`) and the cycle (`r5-court-cycle`). Then the walkable grey-box and the flow critic.
 - [x] The yard's space diagram and blockout (2026-11-22). Next: the user walks it.
 - [ ] The district's roads as a space diagram with walk times, and where the small fights go.
 - [ ] The infirmary (Life, the first cast): space diagram, Codex concept from the blockout's footprint, then an LDtk blockout. It's the smallest test of the new shape.
@@ -37,5 +38,6 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 - 2026-11-16 The route: Life first, one element per stop, eight stops; each stop's fight and creatures (designed)
 - 2026-11-17 Merged to main (ad06e8c)
 - 2026-11-21 The brief rewritten for the route
+- 2026-11-22 The courtyard: seven art rounds plateaued at 6/10; restarted under [making a place](../campaign/making-a-place.md) with four structure plans
 - 2026-11-22 The yard reworked as a blockout along the academy (130 × 100, grey-box ranges, stations wait before acting)
 - 2026-11-22 The weapons section and the walks brainstormed; the board on the segment page; old layouts and the academy concept archived ([record](../archive/opening-segment-old-layouts-2026-11-22.md))

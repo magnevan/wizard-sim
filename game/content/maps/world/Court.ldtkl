@@ -735,6 +735,57 @@
 					],
 					"__worldX": null,
 					"__worldY": null
+				},
+				{
+					"__identifier": "Prop",
+					"__grid": [ 257, 271 ],
+					"__pivot": [ 0.5, 0.5 ],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#E0A85C",
+					"iid": "a4366085-5c4f-592f-8092-e25bfb9571e9",
+					"width": 10,
+					"height": 10,
+					"defUid": 105,
+					"px": [ 2575, 2715 ],
+					"fieldInstances": [
+						{
+							"__identifier": "asset",
+							"__type": "String",
+							"__value": "codex-armillary-grand",
+							"__tile": null,
+							"defUid": 106,
+							"realEditorValues": [
+								{
+									"id": "V_String",
+									"params": [ "codex-armillary-grand" ]
+								}
+							]
+						},
+						{
+							"__identifier": "blocks",
+							"__type": "Bool",
+							"__value": true,
+							"__tile": null,
+							"defUid": 107,
+							"realEditorValues": [
+								{
+									"id": "V_Bool",
+									"params": [ true ]
+								}
+							]
+						},
+						{
+							"__identifier": "tag",
+							"__type": "String",
+							"__value": null,
+							"__tile": null,
+							"defUid": 110,
+							"realEditorValues": []
+						}
+					],
+					"__worldX": null,
+					"__worldY": null
 				}
 			]
 		},

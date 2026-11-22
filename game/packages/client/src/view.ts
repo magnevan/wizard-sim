@@ -633,7 +633,8 @@ export class WorldView {
     for (let s = 0; s < MAX_SEATS; s++) {
       if (b.kind[s] !== KIND.wizard) continue;
       const [x0, y0] = this.drawnAt(s, w, alpha), far = s < MAX_SEATS && w.battery && w.battery.drive[s] >= 0 ? DRIVE_LOOK : 0;
-      let p = { x: x0 + far, y: y0 - far }; // driving a defence, you look out over the battlefield: north is up and to the right
+      // aimed at where the wizard is drawn: in a tiered room, lifted by the height under its feet (art/heights.ts)
+      let p = { x: x0 + far, y: y0 - liftAt(w.def, x0, y0) / (PPU * FY) - far }; // driving a defence, you look out over the battlefield: north is up and to the right
       // the battery's well has just run dry: the view glides back from the battlefield to your wizard, slowly
       const dryT = w.battery ? w.battery.wellT[1] / 60 : 0;
       if (dryT > 0 && dryT < DRY_GLIDE) {
@@ -645,7 +646,8 @@ export class WorldView {
       if (this.isLocal(s)) (b.downed[s] ? down : up).push(p);
     }
     const mine = up.length + down.length;
-    this.camera.follow(w.dims.w, w.dims.h, mine ? (up.length ? up : down) : all, mine !== 1, dt);
+    const lift = liftRange(w.def);
+    this.camera.follow(w.dims.w, w.dims.h, mine ? (up.length ? up : down) : all, mine !== 1, dt, lift.up / (PPU * FY), lift.down / (PPU * FY));
   }
 
   private fxMs = 0;

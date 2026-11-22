@@ -11,8 +11,9 @@ What it writes, from the plan's 1 u world cells (each becomes 2 x 2 of the level
             water get their top's height too, for drawing. Cells more than 0.5 m apart are parted by a cliff, so a flight
             of stairs (0.35 m steps) walks, and its sides are cliffs where they stand above the ground beside them.
   Ground    what each material looks like (MATERIAL_GROUND below).
-  Entities  the four starts, and Markers for the gates, the doors and the landmark (ids in LEVELS below). No props:
-            the grey-box is the plan alone; props come with the beauty stage.
+  Entities  the four starts, Markers for the gates, the doors and the landmark (ids in LEVELS below), and the few
+            props a level lists in LEVELS (a landmark's volume, which the flow stage has to see). Everything else is the
+            plan alone; props come with the beauty stage.
 
 The level replaces the room's previous one (its uid and place in LDtk's world view are kept), so whatever wrote it
 before (tools/segments/01-opening/court-level.py for the court) is superseded. The plan specs are untouched: this file
@@ -44,6 +45,8 @@ LEVELS = {
         gates={'to the drill yard': 'gate-yard', 'to the battery': 'gate-battery', 'north road': 'gate-north', 'sea landing': 'gate-sea'},
         landmarks={'the armillary': 'armillary'},
         start='journey',   # the first pass's first point
+        # (asset, the landmark it stands on, blocks): the great armillary on its dais, so the reveal can be judged
+        props=[('codex-armillary-grand', 'the armillary', True)],
     ),
 }
 
@@ -167,6 +170,10 @@ def write_level(name):
     for (p, label, *_) in P.marks:
         mid = cfg['landmarks'].get(label) or label.replace('the ', '').replace(' ', '-')
         es.append(entity('Marker', mid, p, {'id': mid}))
+    marks = {label: p for (p, label, *_) in P.marks}
+    for n, (asset, at, blocks) in enumerate(cfg.get('props', [])):
+        if at not in marks: raise SystemExit(f'{name}: prop {asset} stands on the landmark "{at}", which the plan doesn\'t have')
+        es.append(entity('Prop', f'prop-{n}', marks[at], {'asset': asset, 'blocks': blocks, 'tag': None}))
 
     # ---- the level: the room's current file as the template, so its uid and place in the world view stay ----
     level_name = cfg['level']

@@ -8,7 +8,9 @@
  */
 import { CELL, type RoomDef } from '@wizard-sim/sim';
 import { toX, toY } from '../iso-world';
-import { PX_PER_M } from './massing';
+
+/** Art px per metre of height (a 1.8 m person is a 26 px wizard). */
+export const PX_PER_M = 14.5;
 
 /** The characters of tiers 0 to 61 in the rows (packages/content/src/compile.mjs TIER_CHARS). */
 const TIER_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -72,6 +74,8 @@ export function zAt(def: RoomDef, x: number, y: number): number {
   return hm.m[cy * hm.gw + cx];
 }
 
+/** How many art px something standing at real world point (x, y) is drawn above the flat ground. */
+export const liftAtWorld = (def: RoomDef, x: number, y: number): number => (def.height ? Math.round(zAt(def, x, y) * PX_PER_M) : 0);
 /** How many art px something standing at view point (u, v) is drawn above the flat ground. */
 export const liftAt = (def: RoomDef, u: number, v: number): number => (def.height ? Math.round(zAt(def, toX(u, v), toY(u, v)) * PX_PER_M) : 0);
 

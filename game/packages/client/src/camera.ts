@@ -67,9 +67,11 @@ export class Camera {
    * Once a frame: aim at this screen's own wizards. aw x ah is the arena; spots are the local
    * seats' wizards (the living ones, or the downed ones if none is up); the camera aims at their
    * middle. `shared`: several local seats play on this one screen (couch co-op), so an arena that
-   * fits is framed still, as before. dt is real seconds since the last frame.
+   * fits is framed still, as before. dt is real seconds since the last frame. Spots are where the wizards are drawn;
+   * `rise` and `sink` (world units of screen height) widen the north and south limits for a tiered room, whose ground
+   * is drawn above and below its flat outline (art/heights.ts).
    */
-  follow(aw: number, ah: number, spots: readonly Spot[], shared: boolean, dt: number): void {
+  follow(aw: number, ah: number, spots: readonly Spot[], shared: boolean, dt: number, rise = 0, sink = 0): void {
     // Couch co-op in an arena that fits is framed as before: centred, and lifted to clear the rune HUD when there's room.
     // (the whole view counts here, HUD and all: the Sanctum at 4x sits partly behind the HUD, as it always did)
     this.following = !shared || aw * PPU > this.w || ah * PPU * FY > this.h;
@@ -89,7 +91,7 @@ export class Camera {
     // fits, the same two limits swap: the view drifts toward you only until the far edge would leave it.
     const lx = -aw / 2 - PAD_X + hx, rx = aw / 2 + PAD_X - hx;
     tx = Math.max(Math.min(lx, rx), Math.min(Math.max(lx, rx), tx));
-    const ly = -ah / 2 - PAD_N + up, ry = ah / 2 + PAD_S - down;
+    const ly = -ah / 2 - PAD_N - rise + up, ry = ah / 2 + PAD_S + sink - down;
     ty = Math.max(Math.min(ly, ry), Math.min(Math.max(ly, ry), ty));
     // ease toward it (a fresh view jumps straight there)
     const k = this.placed ? 1 - Math.exp(-Math.min(0.1, Math.max(0, dt)) * 5) : 1;
@@ -111,9 +113,12 @@ export class Camera {
   toArtX(x: number): number { return this.originX() + Math.round(x * PPU); }
   toArtY(y: number): number { return this.originY() + Math.round(y * PPU * FY); }
 
-  /** Screen pixel -> world point on the ground. */
-  screenToWorld(sx: number, sy: number): { x: number; y: number } {
-    const a = (sx / this.scale - this.w / 2) / PPU + this.cx, b = (sy / this.scale - this.h / 2) / (PPU * FY) + this.cy;
+  /**
+   * Screen pixel -> world point on the ground. `lift`: the art px the ground is drawn above its flat place there (a
+   * tiered room, art/heights.ts); aiming passes its wizard's, so the cursor is read at the height it stands on.
+   */
+  screenToWorld(sx: number, sy: number, lift = 0): { x: number; y: number } {
+    const a = (sx / this.scale - this.w / 2) / PPU + this.cx, b = (sy / this.scale - this.h / 2 + lift) / (PPU * FY) + this.cy;
     return { x: toX(a, b), y: toY(a, b) };
   }
   /** World point -> screen pixel (the inverse of screenToWorld). */

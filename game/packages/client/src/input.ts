@@ -11,6 +11,7 @@
 import { rules, type Element } from '@wizard-sim/rules';
 import { AIM_UNIT, BTN, elementId, quantize, type PlayerInput, type World } from '@wizard-sim/sim';
 import type { Camera } from './camera';
+import { liftAtWorld } from './art/heights';
 
 export class KeyboardMouse {
   private presses: number[] = [];
@@ -66,7 +67,8 @@ export class KeyboardMouse {
 
   /** The input for the next tick for the wizard in `seat`. */
   sample(w: World, seat: number): PlayerInput {
-    const p = this.camera.screenToWorld(this.sx, this.sy);
+    // the cursor is read at the height the wizard stands on, so aim and walking go where it points on the screen
+    const p = this.camera.screenToWorld(this.sx, this.sy, liftAtWorld(w.def, w.bodies.x[seat], w.bodies.y[seat]));
     const dx = p.x - w.bodies.x[seat], dy = p.y - w.bodies.y[seat];
     const len = Math.hypot(dx, dy);
     const walk = this.walking && len > 0.3;

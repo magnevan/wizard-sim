@@ -3,7 +3,8 @@
 // tools/place-plans/journey_spots.py.
 // Usage (after npm run build):
 //   python ../tools/place-plans/journey_spots.py court-d > spots.json
-//   node scripts/route-shots.mjs --room court --spots spots.json [--size 1920x1080] [--out shots/route] [--settle 1200]
+//   node scripts/route-shots.mjs --room court --spots spots.json [--size 1920x1080] [--out shots/route] [--settle 1200] [--query vistas=0]
+// In rooms with landmark vistas pass --query vistas=0: headless, a vista's pull-back renders very slowly in software.
 import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import puppeteer from 'puppeteer-core';

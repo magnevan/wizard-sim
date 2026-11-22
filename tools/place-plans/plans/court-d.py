@@ -60,11 +60,14 @@ where the way down is.
 Revision 12 (the sense critic, 5.5/10): every door gets a forecourt on a straight wall (the balcony road moves out to
 r 31, the workshops and the library off the cliff corners with their doors mid-face); a knee-high lip along every road
 edge that drops a tier; the drill yard's road ends at a gate with two piers; the sea runs on past the edges so no void
-shows; the river comes out of a culvert under the north wall; the land past the inlet that no route reaches is woods."""
+shows; the river comes out of a culvert under the north wall; the land past the inlet that no route reaches is woods.
+
+Revision 13 (the engine's new checks): a belt of woods 12 u deep along the land's edges, open only where the roads leave,
+so no walkable ground sees the void; cheek walls down both sides of each flight, so its head has no unguarded drop."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 12)', U=(-95, 110), V=(-62, 100))
+P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 13)', U=(-95, 110), V=(-62, 100))
 C = (0, -40)            # the amphitheatre's centre, up the screen
 ARM = (0, 18)
 SEA = -9.0
@@ -90,7 +93,10 @@ P.building(arc_band(C, 8, 20, 35, 145), 6.0, 12.0, 'great hall', doors=[polar(C,
 P.fill(orect(polar(C, 14, 90), 6, 14, math.radians(90)), 6.0, 'path')
 P.fill(rect(-3, -46, 3, -30), 6.0, 'path')
 for du in (-6.5, 3.5): P.building(rect(du, -45, du + 3, -42), 6.0, 8.0)                              # the north gate's towers
+for su in (-26, 26): P.fill(rect(su - 5, -17, su + 5, -12.5), 6.0, 'paving')                        # a landing at each flight's head, square to it
 for su in (-26, 26): P.stairs(orect((su, -7.5), 8, 10, math.radians(90)), 6.0, 3.0, 90)              # the paired flights, either side of the dais
+for su in (-26, 26):                                                                                 # their cheek walls
+    for side in (-1, 1): P.building(rect(su + side * 4.5 - 0.5, -13, su + side * 4.5 + 0.5, -2), 3.0, 3.5, roof='wall')
 P.fill(rect(3, -6, 13, -5), 5.8, 'stairs'); P.fill(rect(3, -5, 13, -4), 5.4, 'stairs'); P.fill(rect(3, -4, 13, 3), 5.0, 'paving')             # the overlook: two treads down into a bay jutting over the drop, east of the axis
 P.building(rect(3, 3, 13, 4), 5.0, 1.0, roof='wall')                                                 # its parapet
 for du in (2, 13): P.building(rect(du, -5, du + 1, 4), 5.0, 1.0, roof='wall')                         # its side parapets
@@ -149,6 +155,12 @@ low = np.zeros_like(walk)
 for dy, dx in ((0, 1), (1, 0), (0, -1), (-1, 0)):
     nb = np.roll(np.roll(P.h, dy, 0), dx, 1)
     low |= (P.h - nb > 1.5) & ~np.roll(np.roll(P.bld, dy, 0), dx, 1)
+# a belt of woods along the land's edges (12 u), open where the roads leave, so no walkable ground sees the void
+edge = np.zeros_like(walk); edge[:12, :] = edge[-12:, :] = edge[:, :12] = edge[:, -12:] = True
+inbox = (P.CU > P.U[0] + 12) & (P.CU < P.U[1] - 12) & (P.CV > P.V[0] + 12) & (P.CV < P.V[1] - 12)
+belt = walk & ~inbox & ~np.isin(P.m, ['road', 'path', 'wood', 'stairs'])
+P.m[belt] = 'trees'
+walk = walk & ~belt
 lip = walk & near & low & (P.m != 'stairs') & (P.h > 4.5)
 P.h[lip] += 1.0; P.m[lip] = 'wall'; P.bld[lip] = True                  # a knee-high lip along every road edge that drops a tier
 P.landmark(ARM, 'the armillary', 10, 5.5)

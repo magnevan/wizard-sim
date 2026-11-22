@@ -57,3 +57,12 @@ The structure critic ranked C, the ring, at 6.5/10; A, the gallery, at 6; and B,
 | 2 | rev 2 | 7/10 | "Ready for the in-game grey-box" |
 
 **For the game:** block the north-east flight (a soldier or a rope) until the hands ring is done, so seeing it from the arrival is harmless. **For dressing:** treads on the parry lane, the soldiers set out along the crossing pointing at the way back, and the blank rim behind the bays.
+
+## Stage 2 in the game (2026-11-22)
+
+| Round | Plan D | Score | What changed after it |
+|---|---|---|---|
+| 1 | rev 2 | 6/10 | The way back was more than a screen from the rack, so it now goes up the parry lane's own flight (rev 3). The pit's depth reads flat from its south rim (principle 23); that's for dressing |
+| 2 | rev 3 | 7/10 | "Leads at every step. Ready for the sense stage" |
+
+**For dressing:** treads and stepping side walls on the parry lane so it reads as a descent; a body for the rack; a lip on the rim's inner edge and a darker pit floor; the scenery soldiers along the crossing. The way back retraces the bays (about 5 screens): legible, the weakest stretch, kept.

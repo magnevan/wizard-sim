@@ -10,7 +10,7 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 
 ## Next
 
-- [ ] The courtyard under the new cycle ([making a place](../campaign/making-a-place.md)): plan D chosen (2026-11-22). Flow on frames done (revision 5, four rounds; [the read](../campaign/01-opening/court-read.md#stage-1-and-2-the-plan-and-flow-on-frames)). Next: the walkable grey-box once the [height thread](height.md) lands, and flow again there with the dressing cues.
+- [ ] The courtyard under the new cycle ([making a place](../campaign/making-a-place.md)): plan D chosen (2026-11-22). Flow on frames done (revision 5, four rounds; [the read](../campaign/01-opening/court-read.md#stage-1-and-2-the-plan-and-flow-on-frames)). The grey-box was walked in-game on 2026-11-22 (4/10: too big at play zoom), so plan D rev 7 pulls it together. Next: the engine session rewrites the Court from rev 7 and adds the armillary, then the in-game flow round again (`npm run shot:route`; it was killed for low memory once).
 - [x] The yard's space diagram and blockout (2026-11-22). Next: the user walks it.
 - [ ] The district's roads as a space diagram with walk times, and where the small fights go.
 - [ ] The infirmary (Life, the first cast): space diagram, Codex concept from the blockout's footprint, then an LDtk blockout. It's the smallest test of the new shape.

@@ -1,0 +1,11 @@
+Generate one image with your image generation tool, then save it as magcam-render.png in the current directory. Reply with just the file name.
+
+A finished in-game screenshot, 1920 x 1080, of a co-op top-down wizard game.
+
+The first two attached images are the concept art: follow their palette, mood, materials and warm morning light. The third attached image is a screenshot of another game, attached ONLY for its camera and scale: copy its camera angle (looking steeply down at about 50 degrees, so you see both a lot of ground and the full front faces of walls) and its closeness (one building's wall fills much of the screen). Do not copy anything else from it. The last attached image is our player's wizard at its in-game size: the wizard stands about 200 px tall on this 1080 px screen, and a door is about twice the wizard's height.
+
+Style: a stylised 3D-rendered game look, like a modern top-down action game rendered in real time: chunky readable forms, hand-painted textures on the models, soft real-time shadows and ambient occlusion.
+
+The scene, seen up close from that camera: the wizard stands in the forecourt of a wizard academy's great hall. The hall's cream stone front, with tall arched windows set flat in the wall, gold trim and a deep blue slate roof, runs across the upper part of the screen, and its grand arched gateway (about two and a half wizards tall) is just right of centre, with a passage running straight back through it. Two matching blue star banners hang either side of the gateway, facing straight out. Warm sandstone paving fills the forecourt; a cobbled road runs out of the gateway, set a step lower than the paving behind a clean carved kerb. Raised stone planters with lilac and evergreens stand against the hall's wall. One light from the upper left: shadows fall down and to the right.
+
+No interface, no text, no other characters.

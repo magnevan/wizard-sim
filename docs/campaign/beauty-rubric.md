@@ -20,6 +20,7 @@ Don't tell the critic what changed since the last round, or what earlier rounds 
 |---|---|---|
 | H1 | **Mixed pixel scales** | Sprites or tiles at different pixel densities, or scaled or rotated by non-integer amounts. The game's own sprites count: a backdrop painted finer than the wizard fails |
 | H2 | **Mixed viewpoints** | Something drawn at a different angle from the game's 3/4 view. Check every part separately, not just whole objects: windows at a different angle from their wall; a floor pattern drawn as if seen from straight above while the walls are seen at 3/4; an isometric prop on a 3/4 floor; a paired prop turned sideways (the user's notes, 2026-11-22) |
+| H6 | **Wrong camera** | Not the game's camera: as steep and as close as Magicka's (`docs/reference/magicka/steam-ss-726544c3.jpg`), looking down at roughly 50°, one building's wall filling much of the screen, a door about twice the wizard's height. Too shallow or too far out fails, however beautiful (the user, 2026-11-22) |
 | H3 | **Inconsistent scale** | Doors, steps or props that don't match the characters' size. Monumental doors and gates may be several times a character's height; ordinary doors and steps may not |
 | H4 | **Inconsistent light** | Highlights and cast shadows pointing different ways |
 | H5 | **Code-drawn art** | Procedural facades, stone, kerbs or patterns standing in for painted art (our rule, from the user) |
@@ -38,7 +39,7 @@ Don't tell the critic what changed since the last round, or what earlier rounds 
 | R8 | **Props out of palette** | A rock, crate or plant that doesn't share the ground's hues |
 | R9 | **Floating objects** | No contact or cast shadow, so things don't sit on the ground |
 | R10 | **No colour scheme** | Every hue at full strength, "template" local colours (green grass, grey stone) with no unifying light |
-| R11 | **No rest areas, no focal point** | Detail spread evenly everywhere |
+| R11 | **No rest areas, no focal point** | Detail spread evenly everywhere. Weigh it lightly: a rich scene with busy paving beats a dull one, and toning down a walkway fixes it (the user, 2026-11-22) |
 | R12 | **Gameplay hidden** | Scenery covering the players or blurring what's walkable |
 | R13 | **Doesn't serve its intent** | Pretty, but not the place the story beat and the journey need. Give the critic the place's read (`NN-name/<place>-read.md`) |
 | R15 | **Ambiguous layering** | Where two surfaces meet (a pavement and a road, a step and a floor), you can't tell which one is on top or higher; the edge is jagged instead of a laid kerb or a clear step (the user, 2026-11-22) |
@@ -65,3 +66,4 @@ Don't tell the critic what changed since the last round, or what earlier rounds 
 - **`court-2026-11-22-user-1to2-*`** (the code-drawn courtyard, 1–2/10): "horrible", "extremely far off from acceptable", "huge issues with textures, transitions"; also unnatural transitions, broken lines, perspective looking wrong, too much repetition.
 - **`court-2026-11-22-user-belowok-codex-a.jpg`** (Codex's whole-screen repaint of the grey-box, marked "neither", not good enough): the critic scored it 3 (craft 7) and missed most of these. An odd plateau by the windows near the gate, with no meaning. The pavement-to-road transition is jagged, and you can't tell which is on top. The windows sit at a different angle from the wall. The windows and flower beds look sunken. The banners face sideways and aren't symmetrical. The road's tile pattern looks seen from straight above. The user's diagnosis: repainting the grey-box directly locks the painting into the grey-box's bad shapes.
 - **`court-2026-11-22-user-belowok-codex-b.jpg`** (Codex repainting only the great hall): there's no real gate, just windows. The windows' angle is better than in (a).
+- **`b2-court-free-a`** (Codex composing the courtyard freely; on the opening page): "much more beautiful", and the critic now "feels closer". Two major flaws: the angle is too shallow (see Magicka's camera, H6), and the scale is far too low. The user disagreed with two of the critic's notes. A lack of rest areas is a small issue next to dull art. The gate's two sides do match: the critic saw a mismatch that wasn't there, so name only faults you can point to.

@@ -1,5 +1,7 @@
 # The academy as environment, a concept (2026-11-15)
 
+> **Archived 2026-11-22.** Taken off the segment page with the old yard layout it was drawn over ([record](../archive/opening-segment-old-layouts-2026-11-22.md)). Its real-size rules are in the page's rules of scale; its direction continues in [the weapons section](2026-11-22-weapons-yard-and-walks.md).
+
 After the kit-built buildings were rejected ([Buildings are environment](../decisions/README.md#2026-11-14-buildings-are-environment-not-assets-the-kit-buildings-rejected)), the user agreed to "start that concept": the academy round the drill yard, designed as the place itself at real size, before any art. It's on the [Opening Segment](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) page under "The academy as environment", with a verdict mark (`ratings/concept-academy`) and three questions (`answers/r5-academy-court`, `r5-academy-route`, `r5-academy-build`). Nothing is decided.
 
 ## Real size

@@ -10,7 +10,7 @@ cssclasses:
 ## Campaign opening
 
 > [!in-review] The weapons section and the walks
-> On the Opening Segment page: a verdict and three questions on the weapons section, a verdict and one question on the walks, and the academy concept (published for the first time on 2026-11-22). Its board shows where every stop stands, and its Waiting on you list holds every open question for the opening.
+> On the Opening Segment page: a verdict and three questions on the weapons section, a verdict and one question on the walks. Old layouts are archived ([record](archive/opening-segment-old-layouts-2026-11-22.md)). Its board shows where every stop stands, and its Waiting on you list holds every open question for the opening.
 
 The opening is a chain of eight stops, Life first; the yard and the battery are built ([route](campaign/01-opening/brief.md#the-route), [thread](threads/opening.md)).
 

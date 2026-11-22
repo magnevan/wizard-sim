@@ -15,7 +15,6 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 - [ ] The district's roads as a space diagram with walk times.
 - [ ] The infirmary (Life, the first cast): space diagram, Codex concept from the blockout's footprint, then an LDtk blockout. It's the smallest test of the new shape.
 - [ ] The battery as the second element: its infusion text and prompts, and room to heal in its fight.
-- [ ] The yard's size against a wizard and the Academy buildings: marked too small. The academy-as-environment concept (`concept-academy`, `r5-academy-*`) is waiting for the user's marks.
 - [ ] The user's playtest notes on the yard: round 5's `r5-yard-prompts`, `r5-yard-etched`, `r5-yard-soldiers`.
 - [ ] The rule for etched glyphs.
 - [ ] The battery's repair beat: the well's third state (the `repair` animation is cut and waiting) and "press X to stabilize".
@@ -39,4 +38,4 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 - 2026-11-16 The route: Life first, one element per stop, eight stops; each stop's fight and creatures (designed)
 - 2026-11-17 Merged to main (ad06e8c)
 - 2026-11-21 The brief rewritten for the route
-- 2026-11-22 The weapons section and the walks brainstormed; the board on the segment page
+- 2026-11-22 The weapons section and the walks brainstormed; the board on the segment page; old layouts and the academy concept archived ([record](../archive/opening-segment-old-layouts-2026-11-22.md))

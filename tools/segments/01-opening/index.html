@@ -212,8 +212,8 @@ function buildChapter(c){
  const m=c.map,sec=el('section');sec.id=c.id;
  const nums=c.beats.map(b=>b.n),mins=c.beats.reduce((a,b)=>a+b.min,0);
  const head=el('div','chapter-head');
- const t=el('div','head');t.append(el('h2','',c.name),el('span','dim',`beat${nums.length>1?'s':''} ${nums.length>1?nums[0]+'–'+nums[nums.length-1]:nums[0]} · about ${Math.round(mins)} min · ${m.W} × ${m.H} u`));
- head.append(t);sec.append(head);
+ const t=el('div','head');t.append(el('h2','',c.name),el('span','dim',`beat${nums.length>1?'s':''} ${nums.length>1?nums[0]+'–'+nums[nums.length-1]:nums[0]} · about ${Math.round(mins)} min`+(m?` · ${m.W} × ${m.H} u`:'')));
+ head.append(t);if(c.note)head.append(el('p','cap',c.note));sec.append(head);
 
  const beats=el('div','sheet');beats.style.gap='0';
  for(const b of c.beats){
@@ -228,6 +228,7 @@ function buildChapter(c){
  }
  sec.append(beats);
 
+ if(m){
  const sheet=el('div','sheet');
  const mh=el('div','head');mh.append(el('h3','','The map'),el('span','dim',`${(m.W/VW).toFixed(1)} screens wide · walk through ${Math.round(pathLen(m.route)/SPEED)} s`));
  sheet.append(mh,el('p','',m.what));
@@ -248,6 +249,7 @@ function buildChapter(c){
  for(const z of m.zones){const tr=el('tr');z.forEach(x=>tr.append(el('td','',x)));tbody.append(tr);}tb.append(tbody);right.append(tb);
  right.append(marks('ratings','map-'+c.id,[['small','Too small'],['right','About right'],['big','Too big']]),noteBox('ratings',`${ROUND}-map-${c.id}`,'Notes on this map'));
  below.append(left,right);sheet.append(wrap,below);sec.append(sheet);update();
+ }
 
  if(c.shots){const s=el('div','sheet');c.shots.forEach(([src,alt,cap])=>{const f=el('figure');f.style.cssText='margin:0;display:grid;gap:6px';const i=el('img');i.src=src;i.alt=alt;i.style.cssText='width:100%;height:auto;image-rendering:pixelated';f.append(i,el('figcaption','cap',cap));s.append(f);});sec.append(s);}
  if((c.settled&&c.settled.length)||c.solve.length){
@@ -282,7 +284,7 @@ function buildBottom(){
  const lg=el('div','legend');for(const [n,k] of [['Floor','floor'],['Sand','sand'],['Grass','grass'],['Fought-over ground','field'],['Dirt','dirt'],['Water','water'],['Trees','tree'],['Wall or rock','wall'],['Structure','struct'],['Furniture or cover','furn'],['Danger or enemy entry','danger']]){const s=el('span');const i=el('i');i.style.background=KC(k);s.append(i,n);lg.append(s);}lg.append(el('span','','Dots: your route.'));sc.append(lg);
 
  const n=$('needs');n.append(el('h2','','What it needs'));
- for(const j of [].concat(SEG.buy)){const buy=el('div','sheet');buy.id=j.anchor||'buy';buy.style.scrollMarginTop='44px';
+ for(const j of [].concat(SEG.buy||[])){const buy=el('div','sheet');buy.id=j.anchor||'buy';buy.style.scrollMarginTop='44px';
  const jh=el('div','head');jh.append(el('h3','',j.name),el('span','dim',j.costLabel||j.cost+' generations'));
  buy.append(jh,el('p','',j.why));(j.points||[]).forEach(x=>buy.append(lead(x)));buy.append(el('p','cap',j.tool));j.lines.forEach(x=>buy.append(el('div','quote',x)));
  (j.images||[]).forEach(([src,alt,cap])=>{const f=el('figure');f.style.cssText='margin:0;display:grid;gap:6px';const i=el('img');i.src=src;i.alt=alt;i.style.cssText='width:100%;height:auto'+(src.endsWith('.png')?';image-rendering:pixelated':'');f.append(i,el('figcaption','cap',cap));buy.append(f);});

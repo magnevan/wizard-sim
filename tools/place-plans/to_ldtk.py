@@ -56,7 +56,8 @@ LEVELS = {
         # gate ids are what the sim looks for (sim/src/infirmary.ts)
         gates={'from the main gate': 'gate-court', 'to the battery': 'gate-battery'},
         landmarks={'the well': 'well'},
-        start=(0, -22),   # on the road in, 10 u past the main gate (a start inside a gate's reach would leave at once)
+        start=(0, -18),   # on the road in, 14 u past the main gate (a start inside a gate's reach would leave at once;
+                          # rev 4's road is narrower at 10 u, where two starts stood within 0.7 u of its kerb)
     ),
     'yard-d': dict(
         level='Yard',

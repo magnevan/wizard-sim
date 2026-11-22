@@ -24,11 +24,16 @@ beside the road; the side buildings are lower so they can't cover the road.
 Revision 5 (flow critic round 4, 5/10, the third round without the score moving): the cheap structural fixes it named.
 A tall marker at each turn of the arc (a bell tower west, a beacon east), threshold pillars where the arc meets each seam,
 and the road a step above the terrace so it reads as the route. The rest (lamps, paving, light) is dressing, judged in
-the grey-box."""
+the grey-box.
+
+Revision 6 (to_ldtk.py --report, the engine's step rule: more than 0.5 m between neighbouring cells is a cliff; flights
+want about 3 u of run per metre along a screen vertical): the grand stair runs 12 u straight from the balcony down to
+the sunk floor; the dais rises in two 0.5 m rings instead of four steep flights; the stair to the sea court is 12 u; the
+sea landing is a quay at -5 m, 12 u of stair below the sea court."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 5)', U=(-95, 105), V=(-68, 86))
+P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 6)', U=(-95, 105), V=(-68, 86))
 C = (0, -62)          # the amphitheatre's centre, up the screen
 ARM = polar(C, 80, 90)  # (0, 18)
 SEA = -9.0
@@ -49,15 +54,13 @@ for r, h in ((26, 2.75), (25, 2.5), (24, 2.25)):            # sunk a metre in ri
 P.fill(circle(ARM, 23), 2.0, 'dais')
 P.fill(arc_band(C, 0, 54, 20, 160), 6.0, 'paving')          # the top terrace, a balcony over the plaza
 P.fill(rect(-95, -60, -38, -40), 6.0, 'grass'); P.fill(rect(38, -60, 105, -40), 6.0, 'grass')   # the land out to the seams
-P.fill(circle(ARM, 6.5), 3.5, 'plaza')
-for a in (45, 135, 225, 315):                               # four short flights onto the dais
-    P.stairs(orect(polar(ARM, 7.8, a), 4, 3, math.radians(a)), 3.5, 2.0, a)
+P.fill(circle(ARM, 7.5), 2.5, 'stairs'); P.fill(circle(ARM, 6.5), 3.0, 'plaza')   # the dais, in two 0.5 m rings you can step up anywhere
 
 # the north road: straight down through the great hall's gate (the model route)
 P.building(arc_band(C, 18, 32, 30, 150), 6.0, 12.0, 'great hall', doors=[polar(C, 33, 70), polar(C, 33, 110)])
 P.fill(orect(polar(C, 25, 90), 6, 16, math.radians(90)), 6.0, 'path')
 P.fill(rect(-3, -68, 3, -40), 6.0, 'path')
-P.stairs(orect(polar(C, 56.5, 90), 16, 7, math.radians(90)), 6.0, 3.0, 90)                           # the grand stair
+P.stairs(orect((0, -11), 16, 12, math.radians(90)), 6.0, 2.0, 90)                                    # the grand stair, balcony to the sunk floor
 for du in (-10, 10): P.building(rect(du - 1.5, -12, du + 1.5, -9), 6.0, 6.0)                         # pylons at its head
 
 # the cross road: an arc along the top terrace in front of the hall, from the yard's seam to the battery's
@@ -69,9 +72,9 @@ for a0, a1, nm in ((26, 40, 'workshops'), (140, 154, 'library')):
     P.building(arc_band(C, 62, 84, a0, a1, 10), 3.0, 7.0, nm, doors=[polar(C, 72, a1 + 1.5 if a0 < 90 else a0 - 1.5)])
 
 # the sea landing: straight below the armillary, an axis stair off the plaza's rim, then down the cliff
-P.stairs(orect((0, 50), 10, 10, math.radians(90)), 3.0, -1.0, 90)
-P.stairs(orect(polar(C, 129, 90), 10, 12, math.radians(90)), -1.0, -7.5, 90)
-P.fill(rect(-6, 72, 6, 80), -7.5, 'wood')
+P.stairs(orect((0, 51), 10, 12, math.radians(90)), 3.0, -1.0, 90)
+P.stairs(orect(polar(C, 129, 90), 10, 12, math.radians(90)), -1.0, -5.0, 90)
+P.fill(rect(-6, 73, 6, 80), -5.0, 'wood')
 for du in (-7, 7): P.building(rect(du - 1.5, 43, du + 1.5, 46), 3.0, 5.0)                            # the rim's gateway
 
 # the battery: across the head of a sea inlet to the east. The terrace's arc runs on over one parapeted deck above the
@@ -86,7 +89,7 @@ P.building(circle((86, -58), 6), 6.0, 14, 'battery tower')
 BAT = (100, -48)
 
 # openings in the plaza's ring of steps where each route arrives, and the main routes' own paving
-for brg in (270, 90):
+for brg in (90,):
     P.stairs(orect(polar(ARM, 25, brg), 10, 6, math.radians(brg)), 2.0, 3.0, brg)
 P.fill(rect(-62, -54, -38, -46), 6.0, 'path')
 P.strip([YARD] + ARC + [polar(C, 43, 20), (40, -48), BAT], 8)

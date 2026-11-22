@@ -97,6 +97,22 @@ chapters:[
  ]},
 ],
 concepts:[
+{id:'court-art-test',title:'The courtyard’s art: two free Codex tests',status:'New, 2026-11-22: waiting on you',
+ lede:`You rated the code-drawn art 1–2/10, so it’s gone and the places are back to plain grey-box. Before choosing an art pipeline, Codex repainted one grey-box screen of the courtyard two ways, in the concept’s style. Free; nothing here is in the game yet.`,
+ points:[
+  [`(a) The whole screen repainted.`,` Closest to the concept by far: cream stone, gold trim, cobalt roofs, planting, laid paving. The catch: it drifted from the layout. The hall came forward and grew an arch, and the ledges were redrawn, so it can’t be laid over the game as it is. To use it, the painting would have to be held to the grey-box (stricter prompts, or painting the ground and the buildings separately) and cut into ground and overhead layers.`],
+  [`(b) Only the great hall repainted.`,` The hall keeps its outline, so it could go straight into the game as a building sprite, and the old building-art pipeline already works this way. But next to the untouched grey-box ground it clashes. The ground and the transitions would need their own painted answer.`],
+  [`My read.`,` (a) shows the ceiling we want, and (b) is the safer way to build it. A likely path is buildings painted whole as in (b), plus painted ground with the transitions decided by the painter, with (a) as the target picture each place is judged against. The beauty critic now scores against frames you’ve rated (docs/campaign/anchors/).`],
+ ],
+ images:[
+  ['img/court-art-screen.jpg','Test (a): the grey-box courtyard screen repainted by Codex. A cream stone great hall with tall arched windows, gold trim and cobalt slate roofs flanks a grand arched gateway; flower beds and vines line its walls; warm sandstone paving; the star banners, the brass armillary and a lantern pillar are kept.','(a) The whole screen, repainted.'],
+  ['img/court-art-hall.jpg','Test (b): the same screen with only the great hall repainted, as two cream stone wings with arched lit windows, blue banners and cobalt roofs; the ground, ledges and props are still the grey-box.','(b) Only the hall, repainted.'],
+  ['img/court-art-greybox.jpg','The grey-box screen both were painted from: two tall brown blocks either side of a cobbled road, pale paving, low ledges, the banners and the armillary.','The grey-box they were painted from.'],
+ ],
+ verdict:[['a','Go after (a)'],['b','Build from (b)'],['both','(b) now, (a) as the target'],['neither','Neither']],
+ questions:[
+  {id:'art-drift',title:'How strict must a painting be about the layout?',body:`Test (a) moved things: the hall came forward and the ledges changed. The game’s walls and stairs are fixed by the plan, so a painting has to match them, or the plan has to bend to the painting.`,proposal:`The plan stays fixed. Paintings are held to it, and a painting that moves a wall is redone, not adopted.`},
+ ]},
 {id:'yard-plans',title:'The drill yard, from the ground up',status:'Plan D chosen 2026-11-22',
  lede:`The yard through the new cycle (docs/campaign/01-opening/yard-read.md). Its stations, their order and their rules carry over from the yard as built; its layout doesn't. Three plans that really differ, the structure critic's mix, and a control: the yard as built today, which the critic scored 3.5/10 without knowing what it was ("no path linking them, so you can't read the order").`,
  points:[

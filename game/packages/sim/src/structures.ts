@@ -74,6 +74,12 @@ function arcWall(w: World, src: number, spec: SpellSpec, cx: number, cy: number,
   }
 }
 
+/** The quick arc for a cursor `dist` from you: its radius and half-angle (turns), STRUCT.arcLen long. */
+export function arcShape(dist: number): { r: number; half: number } {
+  const r = Math.max(STRUCT.arcMin, Math.min(SHAPES.placeRange, dist));
+  return { r, half: Math.min(0.5, STRUCT.arcLen / (2 * 6.283185307179586 * r)) }; // length = 2 · half · τ · r
+}
+
 function drawnWall(w: World, src: number, spec: SpellSpec, x1: number, y1: number, x2: number, y2: number): void {
   const d = len(x2 - x1, y2 - y1), n = Math.max(1, Math.ceil(d / STRUCT.drawnSeg)), hp = wallHp(spec);
   for (let k = 0; k < n; k++) {
@@ -177,7 +183,7 @@ export function castStructure(w: World, src: number, spec: SpellSpec, face: numb
   const b = w.bodies, s = w.seats, x = b.x[src], y = b.y[src];
   switch (spec.shape) {
     case 'ring': arcWall(w, src, spec, x, y, STRUCT.ringRadius, 0, 0.5, STRUCT.ringSegs); break;
-    case 'arcwall': arcWall(w, src, spec, x, y, STRUCT.arcRadius, face, STRUCT.arcHalf, STRUCT.arcSegs); break;
+    case 'arcwall': { const a = arcShape(len(tx - x, ty - y)); arcWall(w, src, spec, x, y, a.r, face, a.half, STRUCT.arcSegs); break; }
     case 'drawnwall': drawnWall(w, src, spec, hx, hy, tx, ty); break;
     case 'ward': putWard(w, on, spec, src); break;
     case 'guard': conjureGuard(w, src, spec.counts); break; // held alongside your weapon (no two-handed weapons)

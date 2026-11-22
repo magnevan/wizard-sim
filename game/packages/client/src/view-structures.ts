@@ -19,7 +19,7 @@
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
-  EV, AI, ARCH, drivePlace, placeRadius, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
+  EV, AI, ARCH, arcShape, drivePlace, placeRadius, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
   N_ALTARS, N_EL, PERKS, QUEUE_MAX, orbitAngle, PHASE, PHASE_ENC, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, formOf, glyphRadiusOf, imbueHalf, imbueLine, imbueReach, imbueStretch, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
   isPropWall, terrainNear,
@@ -1842,7 +1842,8 @@ export class StructureView {
       X.ring(g, v.x, v.y, r * 1.12, r * 1.12 * FY, matCol, 0.3);
       return;
     } else if (spec.shape === 'arcwall') {
-      const face = Math.atan2(s.aimY[i], s.aimX[i]), half = STRUCT.arcHalf * TAU, r = STRUCT.arcRadius;
+      // at the cursor, centred on you (the sim's arcShape)
+      const face = Math.atan2(s.aimY[i], s.aimX[i]), arc = arcShape(Math.hypot(s.aimX[i], s.aimY[i])), half = arc.half * TAU, r = arc.r;
       const pts: Pt[] = [];
       for (let q = 0; q <= 24; q++) { const a = face - half + (2 * half * q) / 24; pts.push([gx(b.x[i] + Math.cos(a) * r), gy(b.y[i] + Math.sin(a) * r)]); }
       this.ghostWall(g, o, pts, t, matCol, k, spec.wall === WALL.rock ? 14 : 15);

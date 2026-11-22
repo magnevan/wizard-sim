@@ -1,6 +1,6 @@
 # Height tiers, room outlines and building order: an engine plan
 
-**Status: a proposal waiting for the user's OK (2026-11-22).** It comes from [making a place](../campaign/making-a-place.md): the courtyard's plans need cliffs, terraces, stairs, a real waterline and shapes other than rectangles. Today the sim is flat throughout: it has wall segments and a 2D nav grid, and no notion of height anywhere. A survey of the code (2026-11-22) found where each piece lives; the file references below come from it.
+**Status: a proposal waiting for the user's OK (2026-11-22).** Work is tracked on the [height thread](../threads/height.md). It comes from [making a place](../campaign/making-a-place.md): the courtyard's plans need cliffs, terraces, stairs, a real waterline and shapes other than rectangles. Today the sim is flat throughout: it has wall segments and a 2D nav grid, and no notion of height anywhere. A survey of the code (2026-11-22) found where each piece lives; the file references below come from it.
 
 ## In the hands
 
@@ -26,12 +26,12 @@ Phases 1, 2 and 6 alone give a walkable grey-box with real cliffs, which is enou
 
 ## Risks
 
-- **Room size.** A place laid out square to the screen covers a world box about 1.4 times wider. The three courtyard plans need about 220 to 245 u, and the nav grid is 0.5 u cells for each seat, sized to the largest room (`MAX_CELLS`). That's about 4 times today's largest room. Options:
-  - a 1 u nav cell for big rooms;
-  - nav only inside regions where enemies fight;
-  - trimming the void corners from the grid.
+- **Room size: a follow-up, not a blocker.** A place laid out square to the screen covers a world box about 1.4 times wider. The three courtyard plans need about 220 to 245 u, and the nav grid is 0.5 u cells for each seat, sized to the largest room (`MAX_CELLS`). That's about 4 times today's largest room. The user (2026-11-22): this is solvable later, since enemies only attack once you're reasonably close; this isn't an RTS. The options:
+  - nav only inside a window round the players;
+  - a coarse grid for distance and a fine one nearby;
+  - nav only in the regions where fights happen.
 
-  `npm run perf` decides.
+  It's tracked on the [height thread](../threads/height.md).
 - **One sort key.** Today everything sorts on its feet's y (`y*128 + k`). Tiers add a height to the drawing but not to the sort, which is right for things standing on a tier. Cliff faces and building strips need care where they meet a lower tier in front.
 - **Spells that lie on the floor.** Water, ice and fire surfaces (`w.surf`) and floor discs are per cell, ignoring tiers. A puddle on a ledge stays on the ledge's cells, which is right. Lightning surging along water across a cliff is wrong, but rare.
 - **The hash.** Any `RoomDef` change alters `roomHash`. The JS and sim copies must change together, and the mode-hash trails are re-recorded.

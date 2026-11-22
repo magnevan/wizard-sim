@@ -28,6 +28,9 @@ export interface VistaShot {
 interface Running { id: string; t0: number; land: LandmarkSpan; wx: number; wy: number }
 
 export class Vistas {
+  /** What it's doing, for tests and scripts (window.wizardSim.view.vista.phase): idle, or in / hold / out of vista `id`. */
+  phase: 'idle' | 'in' | 'hold' | 'out' = 'idle';
+  id = '';
   private room = '';
   private done = new Set<string>();
   private run: Running | null = null;
@@ -56,9 +59,10 @@ export class Vistas {
       }
     }
     const r = this.run;
-    if (!r) return null;
+    if (!r) { this.phase = 'idle'; return null; }
     const t = now - r.t0;
-    if (t > VISTA_IN + VISTA_HOLD + VISTA_OUT) { this.run = null; return null; }
+    if (t > VISTA_IN + VISTA_HOLD + VISTA_OUT) { this.run = null; this.phase = 'idle'; return null; }
+    this.id = r.id; this.phase = t < VISTA_IN ? 'in' : t < VISTA_IN + VISTA_HOLD ? 'hold' : 'out';
     const top = r.land.top - 1, bottom = Math.max(r.land.foot, r.wy) + 1;
     return { x: (r.land.x + r.wx) / 2, top, scale: fit(bottom - top), out: t > VISTA_IN + VISTA_HOLD };
   }

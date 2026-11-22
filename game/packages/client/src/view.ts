@@ -94,7 +94,7 @@ export class WorldView {
   /** The play area the floor and effect canvases are painted for. */
   private arenaKey = '';
   /** The camera's scripted looks at a landmark (vista.ts). */
-  private vistas = new Vistas();
+  readonly vista = new Vistas();
   /** Whether the floor's current texture is this view's own placeholder (the painted ground is shared). */
   private ownFloor = true;
   /** False while a room's painted ground is still on its way (tests and screenshots wait on it). */
@@ -692,8 +692,10 @@ export class WorldView {
     }
     const mine = up.length + down.length;
     const lift = liftRange(w.def), spots = mine ? (up.length ? up : down) : all, rise = lift.up / (PPU * FY), sink = lift.down / (PPU * FY);
-    // a vista (vista.ts): pulled back on the landmark for a moment, then back to following
-    const shot = this.vistas.update(w.def, mine ? up : [], performance.now() / 1000, (x, y) => this.nearestLandmark(w, x, y), (s) => this.camera.fitSpan(s), (x, y) => liftAt(w.def, x, y) / (PPU * FY));
+    // a vista (vista.ts): pulled back on the landmark for a moment, then back to following. It arms only once the room is
+    // drawn (its props and ground loaded), so on a slow load it isn't spent on a screen nobody can see yet.
+    const shown = this.props.ready && this.groundReady;
+    const shot = this.vista.update(w.def, mine && shown ? up : [], performance.now() / 1000, (x, y) => this.nearestLandmark(w, x, y), (s) => this.camera.fitSpan(s), (x, y) => liftAt(w.def, x, y) / (PPU * FY));
     if (this.camera.zoom(shot && !shot.out ? shot.scale : this.camera.base)) this.scene.scale.set(this.camera.scale);
     if (shot && !shot.out) { this.camera.follow(w.dims.w, w.dims.h, [{ x: shot.x, y: this.camera.centreForTop(shot.top) }], false, dt, rise, sink); return; }
     this.camera.follow(w.dims.w, w.dims.h, spots, mine !== 1, dt, rise, sink, this.landmarkKeep(w, spots));

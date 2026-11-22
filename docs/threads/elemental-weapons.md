@@ -40,17 +40,19 @@ The user's marks, turned into one list. "Material" is the element-bearing part's
 - **Flame sword (Fire), 2 versions.** Pure: keep. Water: only the hilt stays; the blade is a burst of steam escaping (2D).
 - **Ice bow (Ice), 5 versions.** Pure, Cold, and Cold + Lightning: keep. Lightning: lightning is the dominant colour of the limbs. Water: just some dripping.
 - **Healing hands (Life), 18 versions.** No model. Glowing hands with a core in the heal colour and a shell for each other element.
-- **Tide trident (Water), 2 versions.** Pure: keep. Fire: the user isn't sure it should exist. Open question below; until then it is drawn by the rule (steam prongs).
-- **Frost spear (Cold), 1 version.** Pure: keep. It can't be infused.
+- **Tide trident (Water), 2 versions.** Pure: keep. Fire: it stays (the user, 2026-11-22: "I like having more spell options possible. So maybe they can both exist"). So Water + Fire is the trident with steam prongs and Fire, Fire + Water the steam sword.
+- **Frost spear (Cold), 1 version.** Pure: keep. It can't be infused. The user calls that "a small problem", with no clear solution yet (parked below).
 
 ## Next
 
 - [ ] The user marks round 2 on Elemental Arms (one mark per weapon, all its versions in one sheet).
-- [ ] The hands with three extras: the dithered shells start to mix. Try solid rings, or cap it at two shells, if the user agrees.
 - [ ] Effects that fall or rise (drips, snow, embers) move with the weapon over their short life. Pin them to the world where they spawned if it shows in play.
 - [ ] Knobs for the infusion looks (the shader modes' colours, effect rates), per the VFX workflow, once the user's notes say which ones need tuning.
-- [ ] Open: should Water + Fire (the trident with fire) be possible at all? The user: "Not sure this version should be possible." This is a rules question (`tools/spell-atlas/rules-c.js`).
-- [ ] Open: the Frost spear can never be infused (the exploration's note). Is that a design problem?
+- [ ] Remove the 2D fallback weapons ([#18](https://github.com/magnevan/wizard-sim/issues/18)); the user doesn't want the old drawing kept as bloat.
+
+Parked: the Frost spear can never be infused. The user: "a small problem, but I don't have a clear solution."
+
+Settled 2026-11-22: the trident with Fire stays, next to the steam sword. The hands blurring a little with three extras is fine (the user: "probably fine that it blurs a bit in this case").
 - [ ] Rebuild the maul without crystals in `tools/sprites-3d/wizprops.py` on the next export. Until then the game hides them.
 
 ## How to work here

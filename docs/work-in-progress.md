@@ -19,7 +19,7 @@ The last recorded scope is beats 1–7, through the battery.
 ## Elemental weapons (issue #4)
 
 > [!in-review] Round 2: the infusions in the game
-> Your round-1 marks are built: the extras change the material of the weapon's element-bearing part (a fiery maul head, a fireball orb, a steam blade), plus at most one small effect, instead of bands of particles. Each weapon's versions are on the page as the game draws them; mark each weapon keep, maybe or no. Two questions remain open: should the trident with Fire exist, and is a Frost spear that can never be infused a problem?
+> Your round-1 marks are built: the extras change the material of the weapon's element-bearing part (a fiery maul head, a fireball orb, a steam blade), plus at most one small effect, instead of bands of particles. Each weapon's versions are on the page as the game draws them; mark each weapon keep, maybe or no. The trident with Fire stays; the Frost spear that can never be infused is parked.
 
 [Elemental Arms](https://claude.ai/artifact/BVhH8ibwbLs7Zp8FcbPyB1) · [Thread](threads/elemental-weapons.md) · [Exploration](explorations/2026-11-21-elemental-weapons.md) · [Issue #4](https://github.com/magnevan/wizard-sim/issues/4)
 

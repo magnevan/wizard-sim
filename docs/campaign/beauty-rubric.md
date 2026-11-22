@@ -1,15 +1,15 @@
 # The beauty rubric
 
-How the beauty critic judges a place's art. It's used in stage 4 of [making a place](making-a-place.md). Written 2026-11-22, after an uncalibrated critic scored code-drawn art 6/10 while the user rated it 1–2. The criteria come from what pixel artists and environment artists have written; the sources are listed at the end. Nothing here was invented for the rubric except the scoring procedure, which is our own synthesis. No published artist-written rubric for game scenes was found.
+How the beauty critic judges a place's art. It's used in stage 4 of [making a place](making-a-place.md). Written 2026-11-22 and tried the same day on the courtyard's grey-box (1/10) and two Codex repaints (2 and 3/10; the whole-screen repaint's craft score was 7, capped by mixed pixel scales and light direction), after an uncalibrated critic scored code-drawn art 6/10 while the user rated it 1–2. The criteria come from what pixel artists and environment artists have written; the sources are listed at the end. Nothing here was invented for the rubric except the scoring procedure, which is our own synthesis. No published artist-written rubric for game scenes was found.
 
 ## The procedure
 
 1. **Look at full size.** Use single frames at 1920 × 1080, never contact sheets: thumbnails hide seams, noise and repetition. Look at three frames at least, including one with a building and one with a change of material.
 2. **Calibrate first.** The concept art is 9–10. A bare grey-box is 1. [The anchors](anchors/) are frames the user has rated, each named with its rating. No frame scores above an anchor it doesn't clearly beat in craft.
 3. **Hard caps.** For each one, answer pass or fail and point to where it fails. **Any failure caps the score at 3.**
-4. **The greyscale test.** Desaturate the frame in your head or with a tool. The walkable floor, the characters and anything dangerous must separate by value. A failure caps the score at 4.
+4. **The greyscale test.** Desaturate the frame in your head or with a tool. The walkable floor and the characters (and anything dangerous, when there is any) must separate by value. A failure caps the score at 4.
 5. **Refinements.** Note each defect found, with where it is. Several defects in one frame cap the score at 6.
-6. **Then the score**, against the anchors, with one sentence on what keeps it from the next band.
+6. **Then two scores**, against the anchors. The **score** has the caps applied. The **craft score** has none, so frames that fail the same cap can still be told apart. Add one sentence on what keeps the frame from the next band.
 7. **The one change.** Name the defect that costs the most. Name the art source or pipeline that would fix it, not a tweak. Never suggest drawing art in code (the user, 2026-11-22).
 
 Don't tell the critic what changed since the last round, or what earlier rounds scored. It judges the frame, not the progress.
@@ -18,9 +18,9 @@ Don't tell the critic what changed since the last round, or what earlier rounds 
 
 | # | Defect | What it looks like |
 |---|---|---|
-| H1 | **Mixed pixel scales** | Sprites or tiles at different pixel densities, or scaled or rotated by non-integer amounts |
+| H1 | **Mixed pixel scales** | Sprites or tiles at different pixel densities, or scaled or rotated by non-integer amounts. The game's own sprites count: a backdrop painted finer than the wizard fails |
 | H2 | **Mixed viewpoints** | Something drawn at a different angle from the game's 3/4 view: an isometric prop on a 3/4 floor, or a building seen from the front beside one seen from above |
-| H3 | **Inconsistent scale** | Doors, steps or props that don't match the characters' size |
+| H3 | **Inconsistent scale** | Doors, steps or props that don't match the characters' size. Monumental doors and gates may be several times a character's height; ordinary doors and steps may not |
 | H4 | **Inconsistent light** | Highlights and cast shadows pointing different ways |
 | H5 | **Code-drawn art** | Procedural facades, stone, kerbs or patterns standing in for painted art (our rule, from the user) |
 
@@ -40,7 +40,7 @@ Don't tell the critic what changed since the last round, or what earlier rounds 
 | R10 | **No colour scheme** | Every hue at full strength, "template" local colours (green grass, grey stone) with no unifying light |
 | R11 | **No rest areas, no focal point** | Detail spread evenly everywhere |
 | R12 | **Gameplay hidden** | Scenery covering the players or blurring what's walkable |
-| R13 | **Doesn't serve its intent** | Pretty, but not the place the story beat and the journey need (see the place's read) |
+| R13 | **Doesn't serve its intent** | Pretty, but not the place the story beat and the journey need. Give the critic the place's read (`NN-name/<place>-read.md`) |
 | R14 | **No wear or history** | Clean, untouched surfaces: no dirt at wall bases, no moss in joints, no worn steps *(unverified as a beauty criterion; common practice)* |
 
 ## Sources

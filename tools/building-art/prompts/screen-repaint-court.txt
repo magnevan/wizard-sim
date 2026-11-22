@@ -1,0 +1,10 @@
+Generate one image with your image generation tool, then save it as screen-repaint-court.png in the current directory. Reply with just the file name.
+
+The first attached image is a screenshot of a top-down co-op wizard game seen from high above at a 3/4 angle, 1920 x 1080. It is a grey-box: the shapes are right but the art is placeholder. The other attached images are the concept art: the look we want.
+
+Repaint the screenshot as finished high-detail pixel art in the concept art's style, palette and warm morning light, keeping the layout EXACTLY: every wall, edge, step, terrace and opening stays at the same place and size on screen, so the painting can be laid over the game.
+- The two tall brown blocks either side of the paved road at the top are the great hall of a wizard academy: cream stone walls with tall arched windows, gold trim, a deep blue slate roof seen from above, and a grand gateway where the road passes between them.
+- The pale paved ground is a sunlit courtyard in warm sandstone paving with clean laid borders and a little moss in the joints.
+- The low ledges and steps are carved stone with copings.
+- Keep the red-hatted wizard, the two blue star banners, the brass armillary at the bottom and the lantern pillar on the right exactly where they are and as they look.
+- Show only the game world: the corners hold ground and buildings like the rest of the scene.

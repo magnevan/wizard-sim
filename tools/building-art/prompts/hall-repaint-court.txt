@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as hall-repaint-court.png in the current directory. Reply with just the file name.
+
+The first attached image is a screenshot of a top-down co-op wizard game seen from high above at a 3/4 angle, 1920 x 1080. The other attached images are the concept art: the look we want.
+
+Repaint ONLY the two tall brown blocks either side of the paved road at the top of the screenshot, as the great hall of a wizard academy in the concept art's high-detail pixel-art style: cream stone walls with tall arched windows, gold trim, a deep blue slate roof seen from above, and a grand gateway where the road passes between the two halves. Each block keeps exactly its outline on screen. Everything else in the image stays exactly as it is, pixel for pixel: the ground, the ledges, the wizard, the banners, the armillary and the lantern.

@@ -13,7 +13,7 @@ board:{cols:['Brief and beats','Space diagram','Concept art','Blockout','Script'
  note:`One row per stop, one column per stage of the campaign workflow. A stop goes deep one at a time: the others wait at concept art until their turn. Updated with every change to the segment.`,
  rows:[
   ['0 · Briefing and the yard','#concept-yard-plans',[['done','Approved 11-22'],['done','Plan D chosen 11-22'],['done','Approved 11-22'],['done','Plan D in the game: flow 7, sense 8/10: grey-box done'],['later'],['started','Props bought'],['later']]],
-  ['0 · The courtyard (hub)','#concept-court-plans',[['done'],['done','Plan D chosen 11-22; flow rev 5'],['done'],['done','Flow 7.5, sense 8/10 (rev 17): grey-box done'],['later'],['started','Beauty round 1: first dressing'],['later']]],
+  ['0 · The courtyard (hub)','#concept-court-plans',[['done'],['done','Plan D chosen 11-22; flow rev 5'],['done'],['done','Flow 7.5, sense 8/10 (rev 17): grey-box done'],['later'],['started','Code-drawn art rejected (1–2/10), reverted; free Codex tests next'],['later']]],
   ['1 · Infirmary (Life)','#concept-inf-plans',[['done','Thorns added (r2)'],['done','Plan D chosen 11-22'],['done','Two rounds'],['done','Plan D in the game: flow 8, sense 9/10: grey-box done'],['later'],['later'],['later']]],
   ['2 · Battery (Fire)','#battery',[['next','Rewrite as your second element'],['done'],['done'],['done','Repair beat open'],['later'],['started','Defence, well, wall'],['later']]],
   ['3 · Ward line (Shield)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['started','The fix: burn something off'],['later'],['done'],['later'],['later'],['later'],['later']]],

@@ -50,6 +50,12 @@ section.weapon { display: grid; gap: 18px; scroll-margin-top: 16px; }
 .r2grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; align-items: start; }
 .r2plate { aspect-ratio: auto; max-height: 720px; overflow-y: auto; place-items: start center; }
 .r2plate img { height: auto; image-rendering: pixelated; }
+.game { margin: 0; background: #14161c; border-top: 1px solid var(--line); }
+.game img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.game figcaption { font-size: 11.5px; color: #aab0c0; padding: 4px 8px; }
+.jump { font-weight: 600; color: var(--accent); }
+.card { grid-template-rows: auto auto 1fr; }
+.card.r2 { grid-template-rows: auto 1fr; }
 .plate .wait { color: #7a8194; font-size: 13px; padding: 20px; text-align: center; }
 .plate .src { position: absolute; left: 8px; bottom: 8px; font-size: 11px; color: #6a7183; background: rgba(255,255,255,.85); border-radius: 4px; padding: 1px 6px; }
 .body { padding: 12px 14px 14px; display: grid; gap: 9px; align-content: start; min-width: 0; }
@@ -86,6 +92,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 52px; resize: vertic
     <h1>Elemental Arms</h1>
     <p>A weapon is <b>Sigil + elements</b> cast with the Weapon key. The strongest element leads and picks the weapon; every other element in the queue rides along as an infusion. Pressing every key sequence through the game's own spell rules gives <b id="total">57</b> distinct weapons: eight bases and the extra-element sets each can carry, counting a repeated element once.</p>
     <p class="muted">The pictures are Codex concepts for inspiration, drawn from the approved weapon sheet. The brief for every one: show each added element as one solid feature in its own colour, sculpted into the weapon, so nothing reads as particle noise at game size. Mark the ones worth chasing.</p>
+    <p><a class="jump" href="#round2">See every weapon as the game now draws it ↓</a></p>
     <nav class="tally" id="tally" aria-label="Weapons"></nav>
   </header>
 
@@ -213,7 +220,8 @@ function card(w, v) {
   const name = v.extras.length ? `${esc(w.title)} + ${v.extras.map((e) => esc(DATA.colors[e].name)).join(' + ')}` : `${esc(w.title)}, plain`;
   const adds = v.extras.map((e) => { const a = v.adds[e]; return a ? `<div>${dot(e)} <b>${esc(a.trait)}</b>: ${esc(a.text)}</div>` : ''; }).join('');
   return `<article class="card" data-card="${id}">
-    <div class="plate"><img src="img/${id}.jpg" alt="Concept art: ${name}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'wait',textContent:'Picture not ready yet'}))"></div>
+    <div class="plate"><img src="img/${id}.jpg" alt="Concept art: ${name}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'wait',textContent:'Picture not ready yet'}))"><span class="src">Concept</span></div>
+    <figure class="game"><img src="img/game-${id}.png" alt="${name} in the game: mid-Strike, then held" loading="lazy" onerror="this.closest('figure').hidden=true"><figcaption>In the game: mid-Strike, then held</figcaption></figure>
     <div class="body">
       <div class="name">${name}</div>
       <div class="keys">${keys(v.pressed)}</div>

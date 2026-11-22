@@ -26,4 +26,6 @@ A plan spec is a short Python file that builds a `Plan` (in `plan.py`) and calls
 
 In the game view, cliff faces are drawn on the sides the camera sees (+x and +y). The plan view marks a drop over 1.6 m with a thick line and smaller steps with a thin one. The stats line gives the world box, the walkable area and the flat tiers.
 
-**Later** (the [engine plan](../../docs/explorations/2026-11-22-height-and-outlines.md), phase 6): the same cells are written to the LDtk level's Terrain, Height and Ground layers.
+**Plan to level** (phase 6 of the [engine plan](../../docs/explorations/2026-11-22-height-and-outlines.md)): `python tools/place-plans/to_ldtk.py court-d` writes the spec's cells into its LDtk level (Terrain, Height, Ground, the starts and the gate, door and landmark markers; which level and which marker ids are in `LEVELS` in `to_ldtk.py`), then build and check from `game/`. Every distinct height becomes a tier; cells more than 0.5 m apart are parted by a cliff.
+
+`--report` only says how the plan walks: its walkable regions with what's in each, anything cut off from the start, and every jump of more than 0.5 m inside a flight of stairs. Run it before writing the level: the plan views can't show these (they draw no line between two stair cells). A flight walks if each 1 u world cell along it changes height by 0.5 m at most: give it about 2 u of run per metre of drop, and about 3 u per metre when it runs along a screen diagonal, since the world grid is turned 45° to the screen.

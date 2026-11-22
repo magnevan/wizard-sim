@@ -7,7 +7,7 @@
 //   npm run content -- grid <level> --entities    the same with entities marked (a view only)
 //   npm run content -- grid <level> --write <file|->   write text rows back into the level's file
 //   npm run content -- ground <level> [--write <file|->]   the same for the Ground layer (what the floor looks like)
-//   npm run content -- height <level> [--write <file|->]   the same for the Height layer ('0'-'9' tier, '/' stair)
+//   npm run content -- height <level> [--write <file|->]   the same for the Height layer ('0'-'9', 'a'-'z', 'A'-'Z' tier, '/' stair)
 // After a write, run content:build, then content:check.
 import { writeFileSync } from 'node:fs';
 import { runCheck } from './check.mjs';

@@ -56,7 +56,7 @@ export interface RoomDef {
 export interface HeightDef {
   /** Each tier's height in metres, by tier number (tier 0 is unpainted ground). */
   readonly metres: readonly number[];
-  /** One row per CELL from the top, like `terrain`: '0'-'9' a tier, '/' a stair or ramp joining the tiers it touches. */
+  /** One row per CELL from the top, like `terrain`: a tier ('0'-'9', 'a'-'z', 'A'-'Z' for 0-61), '/' a stair or ramp joining the tiers it touches. */
   readonly rows: readonly string[];
   /** [upper, lower] tier for each cliff wall, in the order they end `rock`. */
   readonly cliffs: readonly (readonly [number, number])[];

@@ -165,7 +165,9 @@ function checkRoom(room, errors) {
       seen[n] = 1; queue.push(n);
     }
   }
-  for (const [name, [x, y]] of points) {
+  // Gates (markers called gate-*) are how the party leaves a room, so they must be reachable too.
+  const gates = room.markers.filter((m) => m.id.startsWith('gate-')).map((m) => ['marker ' + m.id, [m.x, m.y]]);
+  for (const [name, [x, y]] of [...points, ...gates]) {
     const cx = Math.min(gw - 1, cellX(x)), cy = Math.min(gh - 1, cellY(y));
     let ok = false;
     for (let dy = -1; dy <= 1 && !ok; dy++) for (let dx = -1; dx <= 1 && !ok; dx++) ok = !!seen[(cy + dy) * gw + cx + dx] && cx + dx >= 0 && cx + dx < gw && cy + dy >= 0 && cy + dy < gh;

@@ -237,6 +237,9 @@ describe('height tiers', () => {
     expect(C.traceCliffs(terrain, height, [0, 0], 4, 2).segs).toEqual([]); // two tiers at the same height are one floor
     expect(C.traceCliffs(['........', '........', '####....', '........'], height, [0, 3], 4, 2).segs).toEqual([[0.5, 0, 2, 0]]); // rock has its own outline
     // a run splits where the two tiers it parts change
+    // a step of up to STEP_M (0.5 m) is walked, not a cliff; tiers past 9 are letters
+    expect(C.traceCliffs(['....', '....'], ['0123', '0000'], [0, 0.3, 0.8, 1.2], 2, 1).segs).toEqual([[0, 0, 0.5, 0], [0.5, 0, 1, 0]]);
+    expect(C.tierOf('a')).toBe(10); expect(C.tierOf('Z')).toBe(61);
     expect(C.traceCliffs(['....', '....'], ['1122', '0000'], [0, 3, 6], 2, 1).tiers).toEqual([[1, 0], [2, 0], [2, 1]]); // and the 1|2 edge between them
   });
 
@@ -258,7 +261,7 @@ describe('height tiers', () => {
   it("without its stair, the terrace can't be reached; a start in the void is caught", () => {
     const s = scratch();
     s.edit('world/Terraces.ldtkl', (l) => {
-      const h = heightOf(l), stair = 10;
+      const h = heightOf(l), stair = 100;
       // the wide stair's cells become tiers: the terrace (and the balcony above it) is cut off from the floor
       h.intGridCsv = h.intGridCsv.map((v: number, i: number) => (v === stair && Math.floor(i / h.__cWid) > 12 ? (Math.floor(i / h.__cWid) <= 21 ? 1 : 0) : v));
       const start = entitiesOf(l).find((e: any) => e.__identifier === 'PlayerStart' && e.fieldInstances[0].__value === 2);
@@ -276,7 +279,7 @@ describe('height tiers', () => {
     s.edit('world/Sanctum.ldtkl', (l) => {
       const h = heightOf(l);
       h.intGridCsv[0] = 1; // a tier-1 cell in the corner, and no tierMetres
-      h.intGridCsv[h.__cWid * 20 + 20] = 10; // a lone stair on tier 0
+      h.intGridCsv[h.__cWid * 20 + 20] = 100; // a lone stair on tier 0
     });
     const errs = s.check();
     expect(errs.some((e) => e.includes('tier 1 is painted') && e.includes('tierMetres'))).toBe(true);
@@ -297,8 +300,8 @@ describe('height tiers', () => {
     lines[0] = '0' + lines[0].slice(1);
     expect(C.writeLayer(loaded, entry, lines.join('\n'), 'Height')).toBe(1);
     expect(heightOf(C.findLevel(C.loadProject(s.project), 'terraces').level).intGridCsv[0]).toBe(0);
-    expect(stairValue(loaded.project)).toBe(10);
-    expect(() => C.writeLayer(loaded, entry, lines.join('\n').replace('0', 'x'), 'Height')).toThrow(/not a height character/);
+    expect(stairValue(loaded.project)).toBe(100);
+    expect(() => C.writeLayer(loaded, entry, lines.join('\n').replace('0', '!'), 'Height')).toThrow(/not a height character/);
   });
 });
 

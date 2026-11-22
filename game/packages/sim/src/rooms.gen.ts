@@ -1868,7 +1868,7 @@ export const ROOM_DEFS = {
     regions: [],
     height: {
       metres: [0, 3, 6],
-      // '0'-'9' tier, '/' stair. The last 5 rock walls are the cliffs, each [upper, lower] in cliffs
+      // tiers '0'-'9', 'a'-'z', 'A'-'Z'; '/' stair. The last 5 rock walls are the cliffs, each [upper, lower] in cliffs
       rows: [
         '1111111111111111111111111111111111111111111122222222222222222222',
         '1111111111111111111111111111111111111111111122222222222222222222',

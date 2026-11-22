@@ -132,7 +132,7 @@
 				"identifier": "Height",
 				"type": "IntGrid",
 				"uid": 118,
-				"doc": "Which tier each cell stands on. Unpainted = tier 0; t1-t9 are tiers whose heights in metres the level's tierMetres field gives (tier 0 is the first entry); stair is a stair or ramp joining the tiers it touches. Edges between tiers become cliffs. See game/content/README.md.",
+				"doc": "Which tier each cell stands on. Unpainted = tier 0; t1-t61 are tiers whose heights in metres the level's tierMetres field gives (tier 0 is the first entry). Neighbours more than 0.5 m apart are parted by a cliff. stair is a stair or ramp joining whatever tiers it touches. See game/content/README.md.",
 				"uiColor": null,
 				"gridSize": 10,
 				"guideGridWid": 0,
@@ -157,70 +157,434 @@
 					{
 						"value": 1,
 						"identifier": "t1",
-						"color": "#5A7A5C",
+						"color": "#203F5A",
 						"tile": null,
 						"groupUid": 0
 					},
 					{
 						"value": 2,
 						"identifier": "t2",
-						"color": "#7A9A6C",
+						"color": "#224259",
 						"tile": null,
 						"groupUid": 0
 					},
 					{
 						"value": 3,
 						"identifier": "t3",
-						"color": "#9AB87C",
+						"color": "#244559",
 						"tile": null,
 						"groupUid": 0
 					},
 					{
 						"value": 4,
 						"identifier": "t4",
-						"color": "#BAD08C",
+						"color": "#264858",
 						"tile": null,
 						"groupUid": 0
 					},
 					{
 						"value": 5,
 						"identifier": "t5",
-						"color": "#D8E09C",
+						"color": "#284B58",
 						"tile": null,
 						"groupUid": 0
 					},
 					{
 						"value": 6,
 						"identifier": "t6",
-						"color": "#E8D890",
+						"color": "#2A4E57",
 						"tile": null,
 						"groupUid": 0
 					},
 					{
 						"value": 7,
 						"identifier": "t7",
-						"color": "#E8C080",
+						"color": "#2C5157",
 						"tile": null,
 						"groupUid": 0
 					},
 					{
 						"value": 8,
 						"identifier": "t8",
-						"color": "#E0A070",
+						"color": "#2E5456",
 						"tile": null,
 						"groupUid": 0
 					},
 					{
 						"value": 9,
 						"identifier": "t9",
-						"color": "#D88060",
+						"color": "#305756",
 						"tile": null,
 						"groupUid": 0
 					},
 					{
 						"value": 10,
+						"identifier": "t10",
+						"color": "#325A55",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 11,
+						"identifier": "t11",
+						"color": "#345C55",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 12,
+						"identifier": "t12",
+						"color": "#365F54",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 13,
+						"identifier": "t13",
+						"color": "#386254",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 14,
+						"identifier": "t14",
+						"color": "#3A6553",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 15,
+						"identifier": "t15",
+						"color": "#3C6853",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 16,
+						"identifier": "t16",
+						"color": "#3D6B52",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 17,
+						"identifier": "t17",
+						"color": "#3F6E52",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 18,
+						"identifier": "t18",
+						"color": "#417151",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 19,
+						"identifier": "t19",
+						"color": "#437451",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 20,
+						"identifier": "t20",
+						"color": "#457750",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 21,
+						"identifier": "t21",
+						"color": "#4A7A51",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 22,
+						"identifier": "t22",
+						"color": "#4F7C52",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 23,
+						"identifier": "t23",
+						"color": "#547F54",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 24,
+						"identifier": "t24",
+						"color": "#5A8155",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 25,
+						"identifier": "t25",
+						"color": "#5F8357",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 26,
+						"identifier": "t26",
+						"color": "#658658",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 27,
+						"identifier": "t27",
+						"color": "#6A885A",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 28,
+						"identifier": "t28",
+						"color": "#6F8B5B",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 29,
+						"identifier": "t29",
+						"color": "#758D5D",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 30,
+						"identifier": "t30",
+						"color": "#7A905E",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 31,
+						"identifier": "t31",
+						"color": "#809260",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 32,
+						"identifier": "t32",
+						"color": "#859561",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 33,
+						"identifier": "t33",
+						"color": "#8B9763",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 34,
+						"identifier": "t34",
+						"color": "#909A64",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 35,
+						"identifier": "t35",
+						"color": "#959C66",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 36,
+						"identifier": "t36",
+						"color": "#9B9F67",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 37,
+						"identifier": "t37",
+						"color": "#A0A169",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 38,
+						"identifier": "t38",
+						"color": "#A6A36A",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 39,
+						"identifier": "t39",
+						"color": "#ABA66C",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 40,
+						"identifier": "t40",
+						"color": "#B0A86D",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 41,
+						"identifier": "t41",
+						"color": "#B5AB6F",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 42,
+						"identifier": "t42",
+						"color": "#B8AD74",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 43,
+						"identifier": "t43",
+						"color": "#BBB078",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 44,
+						"identifier": "t44",
+						"color": "#BEB27D",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 45,
+						"identifier": "t45",
+						"color": "#C1B581",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 46,
+						"identifier": "t46",
+						"color": "#C4B786",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 47,
+						"identifier": "t47",
+						"color": "#C7BA8A",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 48,
+						"identifier": "t48",
+						"color": "#CABC8E",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 49,
+						"identifier": "t49",
+						"color": "#CDBE93",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 50,
+						"identifier": "t50",
+						"color": "#D0C197",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 51,
+						"identifier": "t51",
+						"color": "#D2C39C",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 52,
+						"identifier": "t52",
+						"color": "#D5C6A0",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 53,
+						"identifier": "t53",
+						"color": "#D8C8A5",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 54,
+						"identifier": "t54",
+						"color": "#DBCBA9",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 55,
+						"identifier": "t55",
+						"color": "#DECDAD",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 56,
+						"identifier": "t56",
+						"color": "#E1D0B2",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 57,
+						"identifier": "t57",
+						"color": "#E4D2B6",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 58,
+						"identifier": "t58",
+						"color": "#E7D5BB",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 59,
+						"identifier": "t59",
+						"color": "#EAD7BF",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 60,
+						"identifier": "t60",
+						"color": "#EDDAC4",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 61,
+						"identifier": "t61",
+						"color": "#F0DCC8",
+						"tile": null,
+						"groupUid": 0
+					},
+					{
+						"value": 100,
 						"identifier": "stair",
-						"color": "#F0F0F0",
+						"color": "#FF40C0",
 						"tile": null,
 						"groupUid": 0
 					}

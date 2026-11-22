@@ -12,9 +12,9 @@ scope:`Eight stops, about 65 minutes with the walks. The drill yard (beats 2 and
 board:{cols:['Brief and beats','Space diagram','Concept art','Blockout','Script','Dressing','Finish'],
  note:`One row per stop, one column per stage of the campaign workflow. A stop goes deep one at a time: the others wait at concept art until their turn. Updated with every change to the segment.`,
  rows:[
-  ['0 · Briefing and the yard','#concept-yard-plans',[['done','Approved 11-22'],['done','Plan D chosen 11-22'],['done','Approved 11-22'],['done','Playable as built (#yard)'],['later'],['started','Props bought'],['later']]],
-  ['0 · The courtyard (hub)','#concept-court-plans',[['done'],['done','Plan D chosen 11-22; flow rev 5'],['done'],['started','Flow passed, 7.5/10; sense stage, rev 11'],['later'],['started','Rounds 1–7, to be redone'],['later']]],
-  ['1 · Infirmary (Life)','#concept-inf-plans',[['done','Thorns added (r2)'],['done','Plan D chosen 11-22'],['done','Two rounds'],['later'],['later'],['later'],['later']]],
+  ['0 · Briefing and the yard','#concept-yard-plans',[['done','Approved 11-22'],['done','Plan D chosen 11-22'],['done','Approved 11-22'],['done','Plan D in the game: flow passed 7/10; sense next'],['later'],['started','Props bought'],['later']]],
+  ['0 · The courtyard (hub)','#concept-court-plans',[['done'],['done','Plan D chosen 11-22; flow rev 5'],['done'],['done','Flow 7.5, sense 8/10 (rev 17): grey-box done'],['later'],['next','Beauty stage next (old rounds 1–7 redone)'],['later']]],
+  ['1 · Infirmary (Life)','#concept-inf-plans',[['done','Thorns added (r2)'],['done','Plan D chosen 11-22'],['done','Two rounds'],['started','Plan D in the game: flow passed 8/10 (rev 7); sense next'],['later'],['later'],['later']]],
   ['2 · Battery (Fire)','#battery',[['next','Rewrite as your second element'],['done'],['done'],['done','Repair beat open'],['later'],['started','Defence, well, wall'],['later']]],
   ['3 · Ward line (Shield)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['started','The fix: burn something off'],['later'],['done'],['later'],['later'],['later'],['later']]],
   ['4 · Waterworks (Water)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['done'],['later'],['done'],['later'],['later'],['later'],['later']]],

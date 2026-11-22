@@ -23,11 +23,14 @@ the shore flights are longer to match, the shore a little further down.
 
 Revision 6 (the third in-game round, 7/10): the lower loop's two flights differ too; the way back up from the shore runs
 along the cliff face, east to west, instead of straight up, and so no longer opens at the mouth of the way out; the
-paved road starts at the well's tier, pulling you east."""
+paved road starts at the well's tier, pulling you east.
+
+Revision 7 (flow passed in the game, 8/10): the east flight from the overlook a long narrow run along the drop, so it
+is no twin of the west block."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('inf-d', 'Infirmary D: the slope with raised conduits (rev 6)', U=(-46, 88), V=(-46, 38))
+P = Plan('inf-d', 'Infirmary D: the slope with raised conduits (rev 7)', U=(-46, 88), V=(-46, 38))
 W0 = (0, -3)
 P.fill(rect(-46, -46, 88, 38), 5.0, 'grass')
 P.fill(rect(-34, -8, 88, 38), 3.5, 'grass')                       # the well's tier, level to the east edge
@@ -40,7 +43,7 @@ for a in (232, 254, 286, 308):                                    # the tents in
 P.note((0, -24), 'cots under tents')
 P.fill(rect(-8, -8, 8, 0), 3.5, 'paving')                         # the well's apron at the foot of the drop, between the flights
 P.stairs(rect(-14, -9, -8, -4), 5.0, 3.5, 'V')                    # the west flight, straight down by the greenhouse
-P.stairs(rect(6, -8, 12, -4), 5.0, 3.5, 'U')                      # the east flight, along the drop towards the stills
+P.stairs(rect(3, -7, 15, -4), 5.0, 3.5, 'U')                      # the east flight, along the drop towards the stills
 P.building(rect(-6, -9, 6, -8), 5.0, 1.0, roof='wall')            # the overlook's balustrade on the axis
 P.fill(rect(-28, 0, 44, 12), 3.5, 'paving')
 P.fill(circle(W0, 5), 4.0, 'dais')

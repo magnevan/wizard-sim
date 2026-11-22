@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { rules, type Element } from '@wizard-sim/rules';
 import {
-  BTN, DAMAGE, EL, KEYED_EL, KIND, N_EL, NO_INPUT, PHASE, RHYTHM, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step,
+  BTN, DAMAGE, EL, KEYED_EL, KIND, N_EL, NO_INPUT, PHASE, RHYTHM, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step, streamLane,
   type PlayerInput, type World,
 } from '../src';
 import { cellAt } from '../src/effects';
@@ -379,6 +379,15 @@ describe('Force casts', () => {
     for (let k = 0; k < 5; k++) d.queue('water', 'cold');
     expect(w.seats.queueLen[0]).toBe(5);
     expect(compile(['ice', 'ice', 'ice', 'ice', 'ice'], 'force').formN).toBe(5);
+  });
+
+  it('the Shard stream fires a pair of lanes per Ice up to 10, the new tiers filling in 1 4 2 5 3', () => {
+    expect([1, 2, 3, 4, 5].map((n) => streamLane(n, 0, 6).lanes)).toEqual([2, 4, 6, 8, 10]);
+    const at = (tier: number) => Math.abs(streamLane(5, (tier - 1) * 2, 6).turn);
+    const order = [1, 2, 3, 4, 5].sort((a, b) => at(a) - at(b));
+    expect(order).toEqual([1, 4, 2, 5, 3]);
+    expect(at(3)).toBeCloseTo(SHAPES.streamArcSpread); // tiers 1 to 3 keep their places
+    expect(streamLane(3, 4, 6).turn).toBeCloseTo(streamLane(5, 4, 6).turn);
   });
 
   it('the arc of the Shard stream (on trial): shards leave to the side and curve onto the cursor, landing on what stands there', () => {

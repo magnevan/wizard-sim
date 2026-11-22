@@ -77,6 +77,8 @@ const IMBUE: readonly Ramp[] = [EL.earth, EL.fire, X.FROST, EL.lightning, EL.arc
 /** The seats' default staff orbs (the Battlefield's: Red arcane, Blue cold, Gold lightning, Violet earth). */
 const SEAT_EL = [6, 4, 5, 9];
 const STAFF_Z = 10; // missiles fly about this high (art px)
+/** Seconds a shard takes to crystallise out of the air when it's made (K.shardBirth). */
+const SHARD_BIRTH = 0.12;
 const BOW_Z = 17;   // a bow's arrows: the drawn bow's height on the live 3D wizard
 const EL_COLD = 4; // Cold's element id (sim elements.ts)
 /** A missile's tier for its look: the runes it carries, 1..5. */
@@ -116,11 +118,13 @@ export class Vfx {
   readonly ground: Sprite;
   readonly over: Sprite;
   /** Reports what stands in the scene: texture, top-left and foot y, in field px. Set by the view. */
-  occluders: ((emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number, piece?: boolean) => void) => void) | null = null;
+  occluders: ((emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number, piece?: boolean, chan?: boolean) => void) => void) | null = null;
   /** This frame's walls and furniture, for behind(). */
   private solids: { tex: Texture; x: number; y: number; footY: number; z: number; piece: boolean }[] = [];
   /** The bodies, which only the novas' far pass goes behind (novaDepth). */
   private softs: { tex: Texture; x: number; y: number; footY: number; z: number; piece: boolean }[] = [];
+  /** The wizards channelling: no cover for their own beams, but they hide the missiles behind them (behind(..., 'missile')). */
+  private chans: { tex: Texture; x: number; y: number; footY: number; z: number; piece: boolean }[] = [];
   private cover: { tex: Texture; x: number; y: number; rows: number }[] = [];
   private gh = X.canvas(96, 96);
   /** Every enemy's sprite, its spot in the field and its sort key: those a wall stands in front of show through it (ghosts). */
@@ -395,8 +399,8 @@ export class Vfx {
     o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, W, H); o.setTransform(1, 0, 0, 1, -this.wx, -this.wy);
     g._fs = o._fs = null;
     this.underlay?.(g, this.wx, this.wy, W, H); // the scorch marks (view-structures.ts Scorch)
-    this.solids.length = 0; this.softs.length = 0;
-    this.occluders?.((tex, x, y, footY, solid, z, piece) => { (solid ? this.solids : this.softs).push({ tex, x, y, footY, z, piece: !!piece }); });
+    this.solids.length = 0; this.softs.length = 0; this.chans.length = 0;
+    this.occluders?.((tex, x, y, footY, solid, z, piece, chan) => { (solid ? this.solids : chan ? this.chans : this.softs).push({ tex, x, y, footY, z, piece: !!piece }); });
     const room = roomView(w);
     room.ground?.(g, w, ct, light); // the mode's ground marks, under everything (the battery's glyph paths)
     this.surfaces(w, ct, light);
@@ -449,9 +453,9 @@ export class Vfx {
     this.channels(w, t, bodies, light);
     this.o = real;
     b.globalCompositeOperation = 'destination-out';
-    this.occluders((tex, x, y, footY, solid) => {
+    this.occluders((tex, x, y, footY, solid, _z, _piece, chan) => {
       const f = tex.frame;
-      if (!f) return;
+      if (!f || chan) return;
       // every caster is behind this wall or desk: none of the effect can be in front of it, right down to its foot
       const whole = solid && (lowest < footY || this.farHits.some(([hx, hy]) => footY > hy - 24 && x < hx + 44 && x + f.width > hx - 44));
       const h = whole ? f.height : Math.min(f.height, Math.floor(footY - CHEST - y));
@@ -469,13 +473,14 @@ export class Vfx {
    * in. With nothing in front (the usual case) it goes straight on the layer. `spread`: it lies over
    * the ground out to R, so it can also pass behind things sorted behind its centre (art/depth.ts).
    * `overWalls`: it's high enough to pass over the wall pieces (not the props), so only props hide it.
+   * `bodiesToo`: the bodies hide it too; 'missile', the wizards channelling as well (a shard behind its own caster).
    */
-  behind = (ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread = false, bodiesToo = false, overWalls = false): void => {
+  behind = (ax: number, ay: number, R: number, draw: (o: Ctx) => void, spread = false, bodiesToo: boolean | 'missile' = false, overWalls = false): void => {
     if (this.o === this.b || this.inBehind) { draw(this.o.x); return; } // already inside a pass
     const z = depthOf(ay), x0 = Math.floor(ax - R - 24), x1 = Math.ceil(ax + R + 24), y0 = Math.floor(ay - R - 70), y1 = Math.ceil(ay + R + 24), reach = ay - R * FY;
     const cover = this.cover;
     cover.length = 0;
-    for (const s of bodiesToo ? [...this.solids, ...this.softs] : this.solids) {
+    for (const s of bodiesToo === 'missile' ? [...this.solids, ...this.softs, ...this.chans] : bodiesToo ? [...this.solids, ...this.softs] : this.solids) {
       const f = s.tex.frame;
       if (!f || (overWalls && s.piece) || s.x > x1 || s.x + f.width < x0 || s.y > y1 || s.y + f.height < y0) continue;
       const rows = rowsHidden(f.height, s.y, s.footY, s.z, z, reach, spread, CHEST);
@@ -1060,10 +1065,18 @@ export class Vfx {
         } else {
           const SR: Ramp = el === 'cold' || el === 'water' ? EL.cold : el === 'earth' ? X.EARTH : R.length >= 6 ? R : [...R, R[R.length - 1]];
           // a big shard (the bow's lance) draws bigger, with a longer trail and its own light
-          const big = clamp(m.r[j] / 0.15, 1, 2.6);
-          for (let k2 = 1; k2 <= 4; k2++) X.px(o, x - ux * k2 * 4 * big, y - uy * k2 * 4 * big, k2 === 1 ? SR[1] : k2 < 3 ? SR[2] : SR[4]);
-          if (big > 1.2) { X.line(o, x - ux * 10 * big, y - uy * 10 * big, x, y, SR[2], 1); light(x, yg, 18 * big, '#9ff4ff', 0.4); }
-          K.shard(o, x, y, Math.atan2(uy, ux), 6.5 * big, sd, 1, SR);
+          const big = clamp(m.r[j] / 0.15, 1, 2.6), ang = Math.atan2(uy, ux);
+          // a shard is born out of the air, not popped in (the user, 2026-11-22): it crystallises over SHARD_BIRTH s (K.shardBirth); a bow's arrow leaves the drawn bow whole
+          const k = bowShot ? 1 : clamp(e / SHARD_BIRTH, 0, 1);
+          const draw = (c: Ctx): void => {
+            if (k < 1 || e < SHARD_BIRTH + 0.1) K.shardBirth(c, x, y, ang, e / SHARD_BIRTH, sd, SR, light, yg);
+            const sz = 0.2 + 0.8 * smooth(k);
+            for (let k2 = 1; k2 <= 4; k2++) if (k2 <= k * 5) X.px(c, x - ux * k2 * 4 * big, y - uy * k2 * 4 * big, k2 === 1 ? SR[1] : k2 < 3 ? SR[2] : SR[4]);
+            if (big > 1.2) { X.line(c, x - ux * 10 * big, y - uy * 10 * big, x, y, SR[2], 1); light(x, yg, 18 * big, '#9ff4ff', 0.4); }
+            K.shard(c, x, y, ang, 6.5 * big * sz, sd, 0.5 + 0.5 * k, SR);
+          };
+          // a shard behind a wizard (the stream's rear lanes leave behind you) is hidden by them
+          this.behind(x, yg, 10 * big, draw, false, 'missile');
         }
         continue;
       }

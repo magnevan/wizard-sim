@@ -11,11 +11,11 @@ import type { Graphics } from 'pixi.js';
 import { MAX_SEATS, PF, PHASE, SHAPES, arcPath, arcRadius, atan2Turns, cosTurns, sinTurns, specOf, streamAimD, streamLane, type World } from '@wizard-sim/sim';
 
 export type ArcPt = [number, number];
-/** One path in world units: `tier` 1 is the inner lanes; `preview` the lane lines, else a shard's own path; `at` where the shard is now. */
+/** One path in world units: `tier` 1 to 5 its lane's tier (effects.ts STREAM_TIER_AT); `preview` the lane lines, else a shard's own path; `at` where the shard is now. */
 export interface ArcLine { pts: ArcPt[]; tier: number; preview: boolean; at?: ArcPt }
 
-/** Lane colours, inner first: cyan inner, yellow middle, magenta outer (the ones behind you). */
-export const ARC_COLS = [0x7ff0ff, 0xffd84a, 0xff7ad9];
+/** Lane colours by tier: cyan front (1), yellow middle (2), magenta rear (3, behind you), green (4, between 1 and 2), orange (5, between 2 and 3). */
+export const ARC_COLS = [0x7ff0ff, 0xffd84a, 0xff7ad9, 0x8aff7a, 0xffa24a];
 
 /** Every Shard stream path in the world now: the channelling wizards' lane previews and the arcing shards' own paths. */
 export function streamArcs(w: World): ArcLine[] {
@@ -30,11 +30,11 @@ export function streamArcs(w: World): ArcLine[] {
       const { lanes } = streamLane(spec.formN, 0, aimD);
       for (let lane = 0; lane < lanes; lane++) {
         // as effects.ts does: it leaves from your side in its lane's direction, floats, turns, runs in
-        const { turn, out: float, radius } = streamLane(spec.formN, lane, aimD);
+        const { tier, turn, out: float, radius } = streamLane(spec.formN, lane, aimD);
         const hx = dx * cosTurns(turn) - dy * sinTurns(turn), hy = dx * sinTurns(turn) + dy * cosTurns(turn);
         const sx = b.x[i] + hx * off, sy = b.y[i] + hy * off;
         const r = arcRadius(sx, sy, hx, hy, tx, ty, float, radius);
-        out.push({ pts: arcPath(sx, sy, hx, hy, tx, ty, float, r), tier: (lane >> 1) + 1, preview: true });
+        out.push({ pts: arcPath(sx, sy, hx, hy, tx, ty, float, r), tier, preview: true });
       }
     }
   }

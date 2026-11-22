@@ -179,3 +179,13 @@ The front lanes turn least, so they race first; the rear lanes make the biggest 
 
 At a 7 u aim with three Ice the loops are big: the rear lanes swing about 6 u out, and the middle lanes go past the target before coming back in. `streamArcRadius` is the knob if that's too much.
 
+## Round 7: the user's tuning, 8 and 10 lanes, hidden behind you, born out of the air
+
+The user tuned it in F2: "a radius of 1.5 and arcout at 0 (not needed with radius), streamarcstart at 0.5 feels about right". Those are the defaults now (`streamArcRadius` 1.5, `streamArcOut` 0, `streamArcStart` 0.5).
+
+**Lanes for four and five Ice:** "continue that pattern for 4 and 5. It would be rare, since that's 10 runes channeling, but could be cool as a super end game thing", filling in "1 4 2 5 3, with 1 2 and 3 retaining their existing position". So a pair a tier: 8 lanes from `streamLanes8At` (4 Ice), 10 from `streamLanes10At` (5). Tier 4 leaves at half of `streamArcSpread`, between 1 and 2; tier 5 at five sixths, between 2 and 3 (`STREAM_TIER_AT` in `effects.ts`). A lane at share f turns on (0.7 + 0.9 f) × `streamArcRadius`, which keeps 1, 1.3 and 1.6 for the first three. The overlay colours the new tiers green and orange.
+
+**Shards behind the wizard showed over them:** the shards draw on the effects layer above every body, and a channelling wizard was left out of what hides effects (so a beam isn't cut by its own caster). Now a channelling wizard still hides missiles, though not their own beam, and each shard draws through `behind()`, so one in a rear lane disappears behind its caster's silhouette and comes back round.
+
+**Shards popped into being.** The user asked for some birth effect, look open. Claude's pick, built: they crystallise out of the air over 0.12 s (`SHARD_BIRTH` in `vfx.ts`, `K.shardBirth`). Six frost motes draw in from round the spot, a cold haze gathers, the shard grows from a fifth of its size and its trail fills in, then a four-point white glint flashes as it sets and fades. A bow's arrow still leaves the bow whole. Other looks to try if this doesn't read: a frost ring round the caster where the lanes leave (the air freezing while you channel), or each shard snapping out of a small rune glyph.
+

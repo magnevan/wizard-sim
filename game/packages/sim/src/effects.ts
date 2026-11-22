@@ -774,18 +774,26 @@ export function streamAimD(w: World, i: number): number {
   return Math.min(SHAPES.streamRange, Math.max(2, len(w.seats.aimX[i], w.seats.aimY[i])));
 }
 
+/** Where each tier of the Shard stream's lanes sits, as a share of streamArcSpread: 1, 2, 3 keep their places, 4 and 5 fill in between ("1 4 2 5 3"). */
+export const STREAM_TIER_AT = [1 / 3, 2 / 3, 1, 1 / 2, 5 / 6];
+
+/** How many lanes the Shard stream fires in with `nIce` Ice: a pair a tier, from streamLanes4At ... streamLanes10At. */
+export function streamLanes(nIce: number): number {
+  const n = Math.max(1, nIce), S = SHAPES;
+  return n >= S.streamLanes10At ? 10 : n >= S.streamLanes8At ? 8 : n >= S.streamLanes6At ? 6 : n >= S.streamLanes4At ? 4 : 2;
+}
+
 /**
- * The Shard stream's lane for its `shot`-th shard: 2 lanes at one Ice, 4 from streamLanes4At, 6 from streamLanes6At.
- * `turn`: the direction it leaves in, turns from the aim (tier 1, 2, 3 leave at a third, two thirds and all of
- * streamArcSpread, either side); `out`: how far it floats straight before it turns (u: a third, two thirds and all of
- * streamArcOut); `radius`: the turn's radius (u: streamArcRadius, 1.3 and 1.6 times it). Shared with the client's arc
- * overlay (?arcs=1), so the lines are the shards' own paths.
+ * The Shard stream's lane for its `shot`-th shard (streamLanes: 2 to 10 lanes, a pair a tier). `tier` 1 to 5; `turn`:
+ * the direction it leaves in, turns from the aim (its tier's share f of streamArcSpread, STREAM_TIER_AT, either side);
+ * `out`: how far it floats straight before it turns (f x streamArcOut u); `radius`: the turn's radius
+ * ((0.7 + 0.9 f) x streamArcRadius u: 1, 1.3, 1.6 for tiers 1 to 3). Shared with the client's arc overlay (?arcs=1),
+ * so the lines are the shards' own paths.
  */
-export function streamLane(formN: number, shot: number, aimD: number): { lanes: number; turn: number; out: number; radius: number } {
+export function streamLane(formN: number, shot: number, aimD: number): { lanes: number; tier: number; turn: number; out: number; radius: number } {
   void aimD;
-  const nIce = Math.max(1, formN), lanes = nIce >= SHAPES.streamLanes6At ? 6 : nIce >= SHAPES.streamLanes4At ? 4 : 2;
-  const lane = shot % lanes, side = lane % 2 ? 1 : -1, tier = (lane >> 1) + 1;
-  return { lanes, turn: (side * SHAPES.streamArcSpread * tier) / 3, out: (SHAPES.streamArcOut * tier) / 3, radius: SHAPES.streamArcRadius * (1 + 0.3 * (tier - 1)) };
+  const lanes = streamLanes(formN), lane = shot % lanes, side = lane % 2 ? 1 : -1, tier = (lane >> 1) + 1, f = STREAM_TIER_AT[tier - 1];
+  return { lanes, tier, turn: side * SHAPES.streamArcSpread * f, out: SHAPES.streamArcOut * f, radius: SHAPES.streamArcRadius * (0.7 + 0.9 * f) };
 }
 
 /**

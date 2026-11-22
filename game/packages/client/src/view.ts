@@ -231,11 +231,13 @@ export class WorldView {
   setRenderer(r: Renderer): void { this.renderer = r; }
   /** What stands in the scene, for effects to go behind (art/vfx.ts). Positions are field px; fx0, fy0 convert from the scene's. */
   private occluderSource(w: World, fx0: number, fy0: number) {
-    return (emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number, piece?: boolean) => void) => {
+    return (emit: (tex: Texture, x: number, y: number, footY: number, solid: boolean, z: number, piece?: boolean, chan?: boolean) => void) => {
       for (let i = 0; i < MAX_BODIES; i++) {
         const spr = this.sprites[i], v = this.views[i];
-        if (!v.on || !spr.visible || (i < MAX_SEATS && w.seats.active[i] && w.seats.phase[i] === PHASE.channel)) continue;
-        emit(spr.texture, spr.position.x - fx0, spr.position.y - fy0, v.y, false, spr.zIndex);
+        if (!v.on || !spr.visible) continue;
+        // a wizard channelling is no cover for their own beam (it leaves from them), but still hides a missile behind them
+        const chan = i < MAX_SEATS && !!w.seats.active[i] && w.seats.phase[i] === PHASE.channel;
+        emit(spr.texture, spr.position.x - fx0, spr.position.y - fy0, v.y, false, spr.zIndex, false, chan);
       }
       this.props.sprites((s, _x, y) => emit(s.texture, s.position.x - fx0, s.position.y - fy0, y - fy0, true, s.zIndex));
       // pieces carry the origin they were laid out with: effects that draw before the walls see last frame's

@@ -17,7 +17,7 @@ export * from './trig';
 export * from './state';
 export { compile, imbueHalf, imbueLine, imbueReach, imbueStretch, WALL, type SpellSpec, type Shape, type Mod } from './compile';
 export { queueOf, selfTarget, specOf } from './cast';
-export { arcPath, arcRadius, arcTurn, placeRadius, streamAimD, streamLane } from './effects';
+export { STREAM_TIER_AT, arcPath, arcRadius, arcTurn, placeRadius, streamAimD, streamLane, streamLanes } from './effects';
 export { HIT_KIND, hitKindNow, setHitKind } from './hit';
 export { GUARD_EL, guardCoatLook, guardSize, twoHanded } from './guards';
 export { arcShape, fullMask, poolCap, glyphRadiusOf, hasteOf, orbitAngle } from './structures';

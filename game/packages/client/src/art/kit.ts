@@ -403,6 +403,30 @@ export function shard(c: Ctx, x: number, y: number, ang: number, len: number, se
   X.line(c, h0[0], h0[1], h1[0], h1[1], a > 0.6 ? '#ffffff' : R[1]);
   const tp = P(1, 0); X.px(c, tp[0], tp[1], '#ffffff');
 }
+/**
+ * A shard being born, at q = its age over its birth time (0 to 1, then a little past it as the glint fades): frost
+ * motes drawn in from round it, a cold haze that gathers, and a four-point white glint as it sets. The shard itself
+ * grows from a sliver over the same time (the caller draws it).
+ */
+export function shardBirth(c: Ctx, x: number, y: number, ang: number, q: number, seed: number, R: Ramp = EL.cold, light?: (x: number, y: number, r: number, col: string, a: number) => void, yg = y): void {
+  if (q < 0) return;
+  if (q < 1) {
+    const pull = smooth(q), d = 9 * (1 - pull);
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * TAU + rand(seed, k, 7) * 0.8 + ang;
+      X.px(c, x + Math.cos(a) * d, y + Math.sin(a) * d * 0.75, k % 2 ? R[1] : '#ffffff');
+    }
+    X.glow(c, x, y, 3 + 4 * pull, R[2], 0.25 + 0.35 * pull);
+  }
+  // the glint peaks as it sets and fades over the next ~0.8 of its birth time
+  const g = q < 0.7 ? 0 : q < 1 ? (q - 0.7) / 0.3 : Math.max(0, 1 - (q - 1) / 0.8);
+  if (g > 0.05) {
+    const L = Math.round(1 + 3 * g);
+    for (let i = 1; i <= L; i++) { const col = i < L ? '#ffffff' : R[1]; X.px(c, x - i, y, col); X.px(c, x + i, y, col); X.px(c, x, y - i, col); X.px(c, x, y + i, col); }
+    X.px(c, x, y, '#ffffff');
+    light?.(x, yg, 14, '#cff8ff', 0.35 * g);
+  }
+}
 /** A fireball: layered flame body, tongues streaming back against the motion, white-hot core. */
 export function fireball(c: Ctx, x: number, y: number, r: number, t: number, vx = 1, vy = 0, seed = 0): void {
   const L = Math.hypot(vx, vy) || 1, ux = vx / L, uy = vy / L;

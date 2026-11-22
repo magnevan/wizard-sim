@@ -215,13 +215,16 @@ export const SHAPES = {
    * then rapidly accelerate"; "I want some sort of minimum radius"): with streamArc 1 each shard leaves your side in its
    * lane's direction, floats straight on at streamArcStart of its speed, then turns at that speed on a circle of at
    * least streamArcRadius u until it faces the cursor where it left, then races up to full speed over streamArcBoost s.
-   * The lanes take turns: 2 at one Ice, 4 from streamLanes4At Ice, 6 from streamLanes6At; tier 1, 2, 3 (inner, middle,
-   * outer) leave at a third, two thirds and all of streamArcSpread turns off your aim (0.4: the outer pair behind you),
-   * float a third, two thirds and all of streamArcOut u, and turn on 1, 1.3 and 1.6 x streamArcRadius. Only where the
-   * cursor would sit inside that circle (a very close aim) does the radius shrink, just enough to land.
+   * The lanes take turns, a pair a tier: 2 at one Ice, 4 from streamLanes4At Ice, 6 from streamLanes6At, 8 from
+   * streamLanes8At, 10 from streamLanes10At (the user: "continue that pattern for 4 and 5 ... a super end game thing",
+   * filling in "1 4 2 5 3"). Tiers 1, 2, 3 leave at a third, two thirds and all of streamArcSpread turns off your aim
+   * (0.4: the outer pair behind you); tier 4 between 1 and 2 (a half), tier 5 between 2 and 3 (five sixths). A lane at
+   * share f of the spread floats f x streamArcOut u and turns on (0.7 + 0.9 f) x streamArcRadius (1, 1.3 and 1.6 for
+   * tiers 1 to 3). Only where the cursor would sit inside that circle (a very close aim) does the radius shrink, just
+   * enough to land. The user's tuning, 2026-11-22: radius 1.5, no float (the radius does its work), float speed 0.5.
    */
-  streamArc: 1, streamArcSpread: 0.4, streamArcOut: 1.5, streamArcRadius: 2.5, streamArcStart: 0.35, streamArcBoost: 0.12,
-  streamLanes4At: 2, streamLanes6At: 3,
+  streamArc: 1, streamArcSpread: 0.4, streamArcOut: 0, streamArcRadius: 1.5, streamArcStart: 0.5, streamArcBoost: 0.12,
+  streamLanes4At: 2, streamLanes6At: 3, streamLanes8At: 4, streamLanes10At: 5,
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,
   patchRadius: 2, patchLife: 8, // were 1.6 and 6: the user asked for bigger, longer Place effects (2026-11-11)

@@ -299,7 +299,7 @@ function guardShape(c: Ctx, id: string, x: number, y: number, sz: number, t: num
 }
 
 // =====================================================================================================
-interface SFx { kind: string; t0: number; life: number; seed: number; x: number; y: number; x2: number; y2: number; who: number; look: number; n: number; els?: Uint8Array; xs?: number[]; half?: number }
+interface SFx { kind: string; t0: number; life: number; seed: number; x: number; y: number; x2: number; y2: number; who: number; look: number; n: number; els?: Uint8Array; xs?: number[]; half?: number; /** A weapon blow's infusion material (infuse.ts MAT), 0 none. */ mat?: number }
 /** Moves made with a guard (guards.ts): their extras are the guard's; every other move's are the weapon's. */
 const GUARD_MOVES = new Set(['parry', 'block', 'glance', 'chill', 'coat', 'guardbreak', 'flameburst', 'lance', 'backstep', 'phase', 'seedstep', 'shovestep', 'surge', 'tidewave', 'flamestep', 'iceslide', 'spikeburst', 'spikestep']);
 
@@ -381,7 +381,8 @@ export class StructureView {
       // what the weapon or guard carries besides its lead, at the moment of the move (the last use takes the weapon)
       const seat = e.who >= 0 && e.who < MAX_SEATS, gm = GUARD_MOVES.has(e.text);
       const xs = !seat || e.text === 'imbue' ? [] : gm ? A.extrasOf(s.guardEls, e.who, ELID.shield, GUARD_EL[s.guard[e.who]] ?? 0) : e.look ? blowEls(e.look, A.extrasOf(s.weaponEls, e.who, e.look)) : [];   // a weapon's: its infusion's one colour (infuse.ts)
-      this.add('mv-' + e.text, t, life, { who: e.who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, look: e.look ?? 0, seed: tick * 7 + e.who, n: e.text === 'imbue' ? e.els ?? 0 : seat ? s.guard[e.who] : 0, xs, half: e.half });
+      const mat = seat && !gm && e.look && e.text !== 'imbue' ? infusion(e.look, A.extrasOf(s.weaponEls, e.who, e.look)).mat : 0;
+      this.add('mv-' + e.text, t, life, { who: e.who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, look: e.look ?? 0, seed: tick * 7 + e.who, n: e.text === 'imbue' ? e.els ?? 0 : seat ? s.guard[e.who] : 0, xs: mat === MAT.steam ? [] : xs, half: e.half, mat });
     }
     // walls: hits and breaks
     for (let k = 0; k < MAX_WALLS; k++) {
@@ -1401,6 +1402,10 @@ export class StructureView {
     if (e < 0 || e > 0.4) return;
     const q = e / 0.4, ux = Math.cos(a), uy = Math.sin(a) * FY;
     if (el === 'earth') { K.dust(o, p[0], p[1] + 6, e, sd, n, 14, '#8a7a68', 0.4); return; }
+    if (el === 'steam') {   // a puff of steam bursting off the hit and rising (an infused blow: infuse.ts MAT.steam)
+      for (let j = 0; j < n; j++) { const sp = (rand(j, 1, sd) - 0.5) * 2.2, d = e * (20 + rand(j, 2, sd) * 22); K.puff(o, p[0] + Math.cos(a + sp) * d, p[1] + Math.sin(a + sp) * d * FY - e * 26, 1.2 + q * 3, q < 0.5 ? '#ffffff' : '#d0d6de', 0.8 * (1 - q)); }
+      return;
+    }
     if (el === 'lightning' && q < 0.5) {
       const r = 2 + q * 10;
       X.line(o, p[0] - r, p[1], p[0] + r, p[1], '#ffffff'); X.line(o, p[0], p[1] - r, p[0], p[1] + r, '#ffffff');
@@ -1610,7 +1615,9 @@ export class StructureView {
       const tp = dir(10 * k, 0.55), sip = w.seats.specT[i] > 0, r = (sip ? 2.8 + Math.sin(t * 12) * 0.5 : 2.2) * k + 0.5;
       if (body) { X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#120e1a', 3); X.line(c, h[0], h[1] + 2, tp[0], tp[1], '#5a3a6a', 1); }
       const orb = matR ?? EL.arcane;   // an infused orb is the element (a fireball, a snowball...): its glow too
-      X.glow(o, tp[0], tp[1], sip ? 10 : 6, orb[2], 0.6);
+      // the glow over the orb: only on the plain one or without 3D. Over an infused 3D orb its dither read as "a ring with
+      // a plus inside" on top of the element (the user, round 2), so there the orb's material shows alone
+      if (!live || !inf.mat || sip) X.glow(o, tp[0], tp[1], sip ? 10 : 6, orb[2], 0.6);
       if (body) {
         X.ellipse(c, tp[0], tp[1], r + 1, r + 1, '#120e1a');
         X.ellipse(c, tp[0], tp[1], r, r, orb[3] ?? orb[2]); X.ellipse(c, tp[0] - 0.4, tp[1] - 0.4, r * 0.66, r * 0.66, orb[2]);
@@ -1650,7 +1657,14 @@ export class StructureView {
         if (draw >= ARMS.fanPierceAt) X.glow(o, tip[0], tip[1], 5, I[2], 0.6); // full draw: it will pierce
       }
       blade = live ? [h, dir(0)] : limbs;
-      light(h[0], v.y, 24, I[3], 0.35 + 0.3 * draw);
+      // Cold on the bow: frosted blue limbs (live3d's Cold material; white snow read as the plain bow's pale ice, the user,
+      // 2026-11-22: "I can't see any difference"), snow sifting off them and rime glinting. No 2D haze over the 3D prop
+      if (inf.mat === MAT.cold) {
+        const bl = blade, on = (f: number): Pt => { const s = f * (bl.length - 1), k2 = Math.min(bl.length - 2, Math.floor(s)), u = s - k2; return [lerp(bl[k2][0], bl[k2 + 1][0], u), lerp(bl[k2][1], bl[k2 + 1][1], u)]; };
+        for (const p of emit(t, 6, 1.1, (q, age) => { const b0 = on(0.15 + 0.8 * rand(q, 7, i)); return { x: b0[0] + Math.sin(q * 2 + age * 5) * 1.5, y: b0[1] + age * 12, age }; })) { X.px(o, p.x, p.y, '#ffffff'); if (p.age < 0.5) { X.px(o, p.x - 1, p.y, X.FROST[2]); X.px(o, p.x + 1, p.y, X.FROST[2]); } }
+        if (Math.floor(t * 5 + i) % 4 === 0) { const r = on(rand(Math.floor(t * 5), 8, i)); X.px(o, r[0] + 1, r[1], '#ffffff'); }
+      }
+      light(h[0], v.y, 24, inf.mat === MAT.cold ? X.FROST[3] : I[3], 0.35 + 0.3 * draw);
     } else if (frosty(el)) {
       const tp = dir(15 * k, 0.25);
       blade = [[h[0], h[1] + 4], tp];
@@ -1932,7 +1946,7 @@ export class StructureView {
     // Every weapon and guard move shows the extras it carries (art/accent.ts), beside its own effect:
     // along its path (a dash, lash, wave, Retreat) or thrown off where it happens (a parry, a charged bolt).
     // The Strike and the Sweep lay theirs along their own shapes, below.
-    if (f.xs?.length && f.kind !== 'mv-strike' && f.kind !== 'mv-sweep') {
+    if (f.xs?.length && f.kind !== 'mv-strike' && f.kind !== 'mv-sweep' && f.kind !== 'mv-arrow' && f.kind !== 'mv-volley') {
       const q = e / f.life, x2 = gx(f.x2), y2 = gy(f.y2), far = Math.hypot(x2 - x, y2 - y) > 6;
       if (far) { A.trail(o, [x, y - 8], [x2, y2 - 8], f.xs, q, sd, 10); A.burst(o, [x2, y2 - 8], f.xs, q, sd + 1, 6, 16); }
       else A.burst(o, [x, y - 10], f.xs, q, sd, 7, 18);
@@ -2194,6 +2208,20 @@ export class StructureView {
         for (let j = 0; j < 10; j++) { const kq = rand(j, 1, sd); X.px(o, lerp(x, x2, kq), lerp(y, y2, kq) - 10 + q * q * 20, j % 2 ? LIFE[1] : LIFE[3]); }
         return;
       }
+      case 'mv-arrow': case 'mv-volley': {
+        // The bow's recoil (the user, 2026-11-22: "more like a sort of recoil from the bow firing - only shooting back in
+        // the opposite direction"): a few bits of what the bow carries thrown back off it, away from the shot, in ~0.2 s
+        if (!bodies[f.who]?.on || e > 0.22) return;
+        const q = e / 0.22, a = w.bodies.face[f.who] * TAU, bx = -Math.cos(a), by = -Math.sin(a) * FY, bl = Math.hypot(bx, by) || 1;
+        const ux = bx / bl, uy = by / bl, x0 = x - ux * 7, y0 = y - 16 - uy * 7;   // from the bow, in front of the body
+        const xs = A.extrasOf(w.seats.weaponEls, f.who, ELID.ice), has = (id: number) => xs.includes(id);
+        const out = (j: number, k: number): Pt => { const sp = (rand(j, 1, sd) - 0.5) * 1.0, d = q * (12 + rand(j, 2, sd) * 10) * k; return [x0 + (ux * Math.cos(sp) - uy * Math.sin(sp)) * d, y0 + (uy * Math.cos(sp) + ux * Math.sin(sp)) * d]; };
+        if (has(ELID.lightning) && q < 0.7 && Math.floor(e * 40) % 3 !== 2) for (let j = 0; j < 3; j++) { const p0 = out(j, 0.3), p1 = out(j, 1.1); K.zap(o, p0, p1, sd + j * 7 + Math.floor(e * 40), EL.lightning, 1, 0); X.px(o, p1[0], p1[1], '#ffffff'); }
+        if (has(ELID.cold)) for (let j = 0; j < 3; j++) { const p = out(j + 3, 0.8); K.puff(o, p[0], p[1] + q * 3, 0.8 + q * 1.2, q < 0.4 ? '#ffffff' : X.FROST[2], 0.8 * (1 - q)); }
+        if (has(ELID.water)) for (let j = 0; j < 4; j++) { const p = out(j + 6, 0.8); X.px(o, p[0], p[1] + e * e * 120, j % 2 ? '#ffffff' : '#8ad0ff'); }
+        if (!xs.length) for (let j = 0; j < 3; j++) { const p = out(j + 9, 0.7); if (rand(j, 3, sd) > q) X.px(o, p[0], p[1], j % 2 ? '#ffffff' : EL.ice[1]); }
+        return;
+      }
       case 'mv-strike': case 'mv-sweep': case 'mv-imbue': {
         // weapon blows (hands.ts) and the imbued burst: drawn from where the wizard stood, toward (x2, y2)
         // the jabbing weapons (staff, spear, trident) thrust at hand height, 16 px up (measured off the live 3D body; the
@@ -2202,7 +2230,7 @@ export class StructureView {
         const aw = Math.atan2(f.y2 - f.y, f.x2 - f.x), reach = Math.hypot(f.x2 - f.x, f.y2 - f.y) * PPU, q = e / f.life, cy0 = y - (jabs && f.kind !== 'mv-imbue' ? 16 : 8);
         const at = (a: number, r: number): Pt => [x + Math.cos(a) * r, cy0 + Math.sin(a) * r * FY];
         if (f.kind === 'mv-imbue') { this.imbueFx(f, e, q, aw, reach, at, o, g, light); return; }
-        const Rb = blowRamp(f.look), key = f.look ? elName(f.look) : 'staff', el = f.look ? key : '';
+        const steamy = f.mat === MAT.steam, Rb = steamy ? (A.MAT_COL[MAT.steam] as Ramp) : blowRamp(f.look), key = f.look ? elName(f.look) : 'staff', el = steamy ? 'steam' : f.look ? key : '';
         if (f.kind === 'mv-strike') {
           // the thrust: streaks shooting out along the aim (three prongs for the trident), then a smear across the cone at the reach
           const half = ((ARMS.blowHalf as Record<string, number>)[key] ?? 0.15) * TAU, k = easeOut(clamp(q / 0.35, 0, 1));

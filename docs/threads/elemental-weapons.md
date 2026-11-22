@@ -45,7 +45,9 @@ The user's marks, turned into one list. "Material" is the element-bearing part's
 
 ## Next
 
-- [ ] The user marks round 2 on Elemental Arms (one mark per weapon, all its versions in one sheet).
+- [ ] The user looks at round 3 (the wand, the bow, the trident's hits, Cold as blue frost) on Elemental Arms. Round 2 marks: keep for the maul, sword, spear, whip, hands and trident; maybe for the wand and bow.
+- [ ] Whether the maul's Cold head stays blue frost or goes back to white snow (Cold became blue everywhere so the bow could differ from Ice).
+- [ ] The steam sword: the user, "a bit weird, but I have trouble imagining how this could look not weird". Kept; revisit if an idea comes.
 - [ ] Effects that fall or rise (drips, snow, embers) move with the weapon over their short life. Pin them to the world where they spawned if it shows in play.
 - [ ] Knobs for the infusion looks (the shader modes' colours, effect rates), per the VFX workflow, once the user's notes say which ones need tuning.
 - [ ] Remove the 2D fallback weapons ([#18](https://github.com/magnevan/wizard-sim/issues/18)); the user doesn't want the old drawing kept as bloat.
@@ -64,4 +66,5 @@ Settled 2026-11-22: the trident with Fire stays, next to the steam sword. The ha
 
 - 2026-11-21 The 57 variants and Codex concepts, the Elemental Arms page
 - 2026-11-22 The user's marks read into the fix list and the spec above
+- 2026-11-22 Round 3, from the round-2 marks: no 2D glow over an infused 3D orb (it read as "a ring with a plus"); the trident with Fire hits with steam (`blowSpray` 'steam', the blow's `mat`); the bow's recoil kicks back opposite the shot in the infusion's element (`mv-arrow`/`mv-volley`), Lightning arrows are zigzag bolts, Cold and Water arrows leave trails (`art/vfx.ts` missiles); Cold's material is blue frost so the Cold bow differs from plain Ice. #19 filed (the Cold wand flashes its caster white).
 - 2026-11-22 Round 2 in the game: `art/infuse.ts`, the infusion shaders in `art/live3d.ts`, `A.infused` and `A.shells` in `art/accent.ts` (`A.along` removed), the steam blade, the recoloured lash, blows in one colour, no maul crystals. In the lab: `then=`, `focus=`, `scene=weapon`, sheets that keep every row, and `vfx-sheet --gl gpu` (the sheets had been showing the 2D fallback). `tools/weapon-variants/ingame.mjs` renders the page's sheets.

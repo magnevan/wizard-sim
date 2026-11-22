@@ -103,7 +103,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 52px; resize: vertic
   </div>
 
   <section class="round2" id="round2" style="display:grid;gap:18px">
-    <h2>Round 2: in the game</h2>
+    <h2>In the game (rounds 2 and 3)</h2>
     <p>Built from your marks and your general note, <b>the lead sets the shape and the extras set the element</b>. The first extra, in the order Ice, then Steam (Fire with Water), then Fire, Water, Cold and Lightning, turns the part that carries the element into that material: the maul's head, the wand's orb, the bow's limbs, the trident's prongs, the whip's lash. Each other extra adds one small effect: Lightning a crackle, Water a drip, Cold snow puffs, Fire embers, Ice a glint. Arcane is a glowing rune. The bands of particles along the blade are gone.</p>
     <p class="muted">Each sheet is the game's own drawing (the VFX Lab, live 3D): a row per version, mid-Strike on the left and held on the right. To see one moving, run the game's dev server and open <code>vfx-lab.html?spells=sigil,earth,fire/weapon&amp;scene=weapon&amp;focus=1&amp;then=strike</code>.</p>
     <div class="r2grid" id="r2"></div>
@@ -156,12 +156,12 @@ const MOTIF = {
 };
 /** Round 2: what changed per weapon (docs/threads/elemental-weapons.md). Marked as v-r2-<weapon>. */
 const R2 = {
-  'Stone maul': 'No crystals. The head becomes the material: molten, flowing water, packed snow, ice crystal, or swirling steam (Fire + Water). Arcane adds a glowing rune; a second extra adds its effect (Ice + Cold: snow puffs falling; Ice + Water: drips).',
-  'Arcane wand': 'The orb becomes the element: a fireball, a ball of water, a snowball (Cold, and Cold + Ice), an icy orb, a ball of lightning, a ball of steam. A second extra adds its effect: crackle, or drips. The ring of colours round the orb is gone.',
+  'Stone maul': 'Round 3: Cold is now frosty blue on every weapon (it had to differ from Ice on the bow), so this snowy head turned blue too; say if the maul should stay white. Round 2: no crystals. The head becomes the material: molten, flowing water, packed snow, ice crystal, or swirling steam (Fire + Water). Arcane adds a glowing rune; a second extra adds its effect (Ice + Cold: snow puffs falling; Ice + Water: drips).',
+  'Arcane wand': 'Round 3: the glow drawn over the orb is gone (it was the ring with a plus), so the orb shows only its element; Cold is a blue frost orb now. Round 2: the orb becomes the element: a fireball, a ball of water, a snowball (Cold, and Cold + Ice), an icy orb, a ball of lightning, a ball of steam. A second extra adds its effect: crackle, or drips. The ring of colours round the orb is gone.',
   'Lightning whip': 'The lash takes the element: flame-coloured with a few embers for Fire, icy with snow puffs for Cold.',
   'Flame sword': 'With Water, only the hilt stays solid and the blade is a jet of steam escaping from it. (Pressed as Fire, Fire, Water: with one of each, Water leads and you get the trident.)',
-  'Ice bow': 'Lightning turns the limbs violet (lightning dominant). Cold frosts them white. Water only drips.',
-  'Tide trident': 'With Fire, the prongs are steam. It stays, next to the steam sword (your call, 2026-11-22).',
+  'Ice bow': 'Round 3: a recoil kicks back opposite the shot (ice glints, frost puffs, water drops or lightning sparks), Lightning arrows are little zigzag bolts, Cold arrows leave a frost trail and Water arrows a few drops, and Cold frosts the limbs blue so it differs from the plain bow. Round 2: Lightning turns the limbs violet; Water only drips.',
+  'Tide trident': 'Round 3: with Fire its hits throw steam, not water. Round 2: with Fire the prongs are steam; it stays, next to the steam sword.',
   'Healing hands': 'No model: each hand is a green core with a shell for each extra, the first innermost. Clear with one or two extras; with three the shells start to blur.',
   'Frost spear': 'Nothing can join it, so it is unchanged.',
 };
@@ -221,7 +221,7 @@ function card(w, v) {
   const adds = v.extras.map((e) => { const a = v.adds[e]; return a ? `<div>${dot(e)} <b>${esc(a.trait)}</b>: ${esc(a.text)}</div>` : ''; }).join('');
   return `<article class="card" data-card="${id}">
     <div class="plate"><img src="img/${id}.jpg" alt="Concept art: ${name}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'wait',textContent:'Picture not ready yet'}))"><span class="src">Concept</span></div>
-    <figure class="game"><img src="img/game-${id}.png" alt="${name} in the game: mid-Strike, then held" loading="lazy" onerror="this.closest('figure').hidden=true"><figcaption>In the game: mid-Strike, then held</figcaption></figure>
+    <figure class="game"><img src="img/game-${id}.png" alt="${name} in the game: mid-Strike, then held" loading="lazy" onerror="this.closest('figure').hidden=true"><figcaption>In the game (round 2): mid-Strike, then held</figcaption></figure>
     <div class="body">
       <div class="name">${name}</div>
       <div class="keys">${keys(v.pressed)}</div>

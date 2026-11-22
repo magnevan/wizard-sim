@@ -338,8 +338,8 @@ const FX_FRAG = `
       albedo = mix(vec3(0.85, 0.18, 0.04), vec3(1.0, 0.84, 0.3), n1); ratio = max(ratio, 0.85) * (0.95 + 0.25 * n1);
     } else if (infMode == 2) {   // water: deep blue with light bands flowing through it
       albedo = mix(vec3(0.1, 0.36, 0.92), vec3(0.5, 0.84, 1.0), smoothstep(0.55, 0.95, flow)); ratio *= 0.9 + 0.25 * flow;
-    } else if (infMode == 3) {   // cold: packed snow, white with blue in the shade
-      albedo = mix(vec3(0.72, 0.84, 0.97), vec3(0.97, 0.99, 1.0), step(0.32, bayer4(vFx.xy * 60.0 + vFx.z * 40.0)));
+    } else if (infMode == 3) {   // cold: frost, a clear cold blue speckled with white rime (white snow read as plain ice)
+      albedo = mix(vec3(0.32, 0.72, 0.95), vec3(0.95, 0.99, 1.0), step(0.62, bayer4(vFx.xy * 60.0 + vFx.z * 40.0)));
     } else if (infMode == 4) {   // ice: clear pale crystal, its facets catching the light
       vec3 nv = normalize(vNormal);
       albedo = mix(vec3(0.55, 0.85, 1.0), vec3(0.93, 0.99, 1.0), smoothstep(0.55, 0.9, nv.y * 0.6 + nv.x * 0.5 + 0.3)); ratio = max(ratio, 0.8);

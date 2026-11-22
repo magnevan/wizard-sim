@@ -108,7 +108,7 @@ describe('driving a defence', () => {
     expect(driveTarget(w, 0)[1]).toBeLessThan(BATTERY.wallY);
   });
 
-  it('makes the same half-ring with the Weapon cast as with Area', () => {
+  it('makes its half-ring with the Weapon cast, wherever you aim', () => {
     const ringWith = (cast: number) => {
       const { w } = atPedestal();
       take(w);
@@ -118,10 +118,8 @@ describe('driving a defence', () => {
       for (let i = 0; i < 40 && !ring; i++) { ring = w.events.find((e) => e.kind === 'burst' && e.who === 0) ?? null; step(w, NO_INPUTS); }
       return ring;
     };
-    const area = ringWith(BTN.area), weapon = ringWith(BTN.weapon);
-    expect(area).not.toBeNull();
+    const weapon = ringWith(BTN.weapon);
     expect(weapon).not.toBeNull();
-    expect(weapon!.amount).toBeCloseTo(area!.amount!, 5);
     expect(weapon!.amount).toBeGreaterThanOrEqual(BATTERY.ringRadius);
   });
 

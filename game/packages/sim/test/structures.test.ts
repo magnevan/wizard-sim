@@ -22,6 +22,17 @@ class Driver {
   aimAt(x: number, y: number): this { this.aim = { x, y }; return this; }
   queue(...els: Element[]): this { for (const e of els) this.tick({ press0: elementId(e) }); return this; }
   cast(btn: number, hold = 1, after = 40): this { this.tick({ buttons: btn }, hold); return this.tick({}, after); }
+  /**
+   * Aimed at yourself and released there (the ring merged into the burst, 2026-11-22): with `btn` Weapon an element's ring,
+   * with Area (Place) Shield's ring or Sigil's orbitals and motes.
+   */
+  onMe(btn: number, hold = 1, after = 40): this {
+    const a = this.aim, me = () => { this.aim = { x: this.w.bodies.x[0], y: this.w.bodies.y[0] }; };
+    me(); this.tick({ buttons: btn }, hold); me(); this.tick({}, 1); this.aim = a;
+    return this.tick({}, Math.max(0, after - 1));
+  }
+  /** An element's ring: the burst aimed at yourself. */
+  ring(hold = 1, after = 40): this { return this.onMe(BTN.weapon, hold, after); }
   place(x: number, y: number, hold = 30): this { this.aimAt(x, y); return this.cast(BTN.area, hold); }
 }
 
@@ -96,7 +107,7 @@ describe('Shield', () => {
     for (const [r, hold] of [[STRUCT.arcRadius, 20], [STRUCT.ringRadius, 1]] as const) {
       const { w, d } = arena(2);
       w.bodies.x[1] = r; w.bodies.y[1] = 0; w.bodies.hp[1] = 40;
-      d.aimAt(5, 0).queue('shield', 'life').cast(BTN.area, hold, 100); // hold: the arc; tap: the ring
+      d.aimAt(5, 0).queue('shield', 'life'); if (hold > 1) d.cast(BTN.area, hold, 100); else d.onMe(BTN.area, hold, 100); // at the cursor: the arc; on yourself: the ring
       healed.push(w.bodies.hp[1] - 40);
     }
     expect(healed[0]).toBeGreaterThan(0);
@@ -287,7 +298,7 @@ describe('Sigil', () => {
     w.bodies.x[1] = 1.4; w.bodies.y[1] = 0; w.bodies.team[1] = 9; // a foe beside you
     d.aimAt(4, 0).queue('sigil').cast(BTN.force, 1, 20);
     expect(w.seats.storeArm[0]).toBe(1);
-    d.queue('fire', 'fire').cast(BTN.area, 2, 40); // a Fire ring: stored, not cast
+    d.queue('fire', 'fire').ring(2, 40); // a Fire ring: stored, not cast
     expect(w.seats.storeLen[0]).toBe(2);
     expect(w.bodies.hp[1]).toBe(100);
     expect(w.seats.runes[EL.sigil - 1]).toBeLessThan(RUNES.max.sigil - 0.9); // it binds a Sigil rune
@@ -298,11 +309,11 @@ describe('Sigil', () => {
 
   it('your orbit is one device: more orbital casts add orbs to the ring, which binds one Sigil rune', () => {
     const { w, d } = arena();
-    for (let c = 0; c < 4; c++) d.queue('sigil', 'fire').cast(BTN.area, 2, 40);
+    for (let c = 0; c < 4; c++) d.queue('sigil', 'fire').onMe(BTN.area, 2, 40);
     expect(devices(w, DEVICE.orbital)).toBe(4);
     expect(w.seats.runes[EL.sigil - 1]).toBeGreaterThan(RUNES.max.sigil - 1.05); // one rune bound, the rest given back
     // the ring holds what one full cast makes: a fifth orb pushes out the oldest
-    d.queue('sigil', 'fire').cast(BTN.area, 2, 40);
+    d.queue('sigil', 'fire').onMe(BTN.area, 2, 40);
     let orbs = 0; for (let k = 0; k < w.devices.type.length; k++) if (w.devices.type[k] === DEVICE.orbital) orbs += w.devices.charges[k];
     expect(orbs).toBe(STRUCT.orbitMax);
   });
@@ -388,16 +399,16 @@ describe('Sigil', () => {
   it('orbitals strike an enemy that comes close', () => {
     const { w, d, dummy } = arena();
     const t = dummy(1.6, 0);
-    d.queue('sigil', 'earth', 'earth').cast(BTN.area, 2, 120);
+    d.queue('sigil', 'earth', 'earth').onMe(BTN.area, 2, 120);
     expect(w.bodies.hp[t]).toBeLessThan(400);
   });
 
   it('stacked orbitals share one ring, spaced evenly', () => {
     const { w, d } = arena();
     d.aimAt(6, 0); // aimed at yourself, a Sigil cast would dismiss the orbitals instead
-    d.queue('sigil', 'earth', 'earth').cast(BTN.area, 2, 40);
+    d.queue('sigil', 'earth', 'earth').onMe(BTN.area, 2, 40);
     w.seats.runes.fill(5); // the first cast emptied Earth
-    d.queue('sigil', 'earth', 'earth').cast(BTN.area, 2, 40);
+    d.queue('sigil', 'earth', 'earth').onMe(BTN.area, 2, 40);
     const ks = [...w.devices.type.keys()].filter((k) => w.devices.type[k] === DEVICE.orbital);
     expect(ks.length).toBe(2);
     const angles = ks.flatMap((k) => [0, 1].map((p) => ((orbitAngle(w, k, p) % 1) + 1) % 1)).sort((a, b) => a - b);
@@ -407,14 +418,14 @@ describe('Sigil', () => {
   it('orbitals strike a foe closing in before it reaches the ring', () => {
     const { w, d, dummy } = arena();
     const t = dummy(2.8, 0);
-    d.queue('sigil', 'earth').cast(BTN.area, 2, 120);
+    d.queue('sigil', 'earth').onMe(BTN.area, 2, 120);
     expect(w.bodies.hp[t]).toBeLessThan(400);
   });
 
   it("an orbital's strike is marked as one, for its sound", () => {
     const { w, d, dummy } = arena();
     dummy(3.2, 0); // the Sound Lab's distance
-    d.queue('sigil', 'fire', 'fire').cast(BTN.area, 2, 0);
+    d.queue('sigil', 'fire', 'fire').onMe(BTN.area, 2, 0);
     const at: number[] = [];
     for (let t = 0; t < 400 && at.length < 2; t++) {
       d.tick({}, 1);
@@ -429,7 +440,7 @@ describe('Sigil', () => {
     for (const dy of [-3.2, 3.2]) {
       const { w, d, dummy } = arena();
       dummy(0, dy);
-      d.queue('sigil', 'fire').cast(BTN.area, 2, 0);
+      d.queue('sigil', 'fire').onMe(BTN.area, 2, 0);
       const cast = w.clock[0];
       let at = -1;
       for (let t = 0; t < 300 && at < 0; t++) { d.tick({}, 1); if (w.events.some((e) => e.kind === 'zap')) at = w.clock[0]; }

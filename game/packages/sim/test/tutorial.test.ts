@@ -250,7 +250,8 @@ describe('tutorial', () => {
     expect(b.hp[d]).toBeLessThan(b.maxHp[d]); // no dummy reset
     expect(b.down[z]).toBeGreaterThan(0); // asleep
     b.x[0] = (b.x[d] + b.x[z]) / 2 - 0.8; b.y[0] = (b.y[d] + b.y[z]) / 2;
-    for (let k = 0; k < 3; k++) { idle(w, 1, { press0: EL.life }); idle(w, 1, { press0: EL.life }); idle(w, 1, { buttons: BTN.area }); idle(w, 60); idle(w, T(2)); }
+    // the healing ring: the burst aimed at yourself (no aim), the ring merged into the burst (2026-11-22)
+    for (let k = 0; k < 3; k++) { idle(w, 1, { press0: EL.life }); idle(w, 1, { press0: EL.life }); idle(w, 1, { buttons: BTN.weapon }); idle(w, 60); idle(w, T(2)); }
     expect(t.tag[z]).toBe(TUT_TAG.foe); // awake
   });
 });

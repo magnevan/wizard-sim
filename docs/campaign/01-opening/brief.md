@@ -15,16 +15,18 @@
 
 ## The route
 
-| # | Stop | Element | The fix | The fight | Min | State |
-|---|---|---|---|---|---|---|
-| 0 | The courtyard and the drill yard (beats 1 to 3) | none; the focus gives Sigil with Conjure | | none, the hands test | 10 | yard built (`#yard`); briefing not built |
-| 1 | The infirmary, outside the main gate | **Life, your first cast** (the user) | cut the vines off the conduits with your hands and blade; the thorns cut you, so you heal yourself (the user) | none: heal the wounded on cots at your own pace, combinations shown on screen | 5 | designed |
-| 2 | The battery (beats 4 to 7) | Fire | drive the defence until its well runs dry | goblin raiders, archers, a brute | 8 | built (`#battery`), still written as your *first* cast |
-| 3 | The ward line, behind the academy | Shield (third: the user) | burn something off the pylons (the user; what it is, open) | rift wolves, goblin archers' volleys, guards beside you | 8 | designed |
-| 4 | The waterworks | Water | relight the boiler with Fire | gorse imps (the built fire imp), wolves; the cistern fills | 7 | designed |
-| 5 | The harbor | Cold, then Lightning | the frost heart, then the coil | brine crabs, surf-soaked wolves; the friendly-fire lesson | 10 | designed |
-| 6 | The cliff road | Earth | wash the buried anchor clear with Water | crag rams, archers | 5 | designed |
-| 7 | The courtyard finale | Arcane | lock the armillary's rings | the warband and beasts, the rift aurochs | 10 | designed |
+Where each stop stands, stage by stage, is the board at the top of the [Opening Segment](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) page (`board` in `tools/segments/01-opening/segment.js`).
+
+| # | Stop | Element | The fix | The fight | Min |
+|---|---|---|---|---|---|
+| 0 | The courtyard and the drill yard (beats 1 to 3) | none; the focus gives Sigil with Conjure | | none, the hands test | 10 |
+| 1 | The infirmary, outside the main gate | **Life, your first cast** (the user) | cut the vines off the conduits with your hands and blade; the thorns cut you, so you heal yourself (the user) | none: heal the wounded on cots at your own pace, combinations shown on screen | 5 |
+| 2 | The battery (beats 4 to 7) | Fire | drive the defence until its well runs dry | goblin raiders, archers, a brute | 8 |
+| 3 | The ward line, behind the academy | Shield (third: the user) | burn something off the pylons (the user; what it is, open) | rift wolves, goblin archers' volleys, guards beside you | 8 |
+| 4 | The waterworks | Water | relight the boiler with Fire | gorse imps (the built fire imp), wolves; the cistern fills | 7 |
+| 5 | The harbor | Cold, then Lightning | the frost heart, then the coil | brine crabs, surf-soaked wolves; the friendly-fire lesson | 10 |
+| 6 | The cliff road | Earth | wash the buried anchor clear with Water | crag rams, archers | 5 |
+| 7 | The courtyard finale | Arcane | lock the armillary's rings | the warband and beasts, the rift aurochs | 10 |
 
 You pass back through the courtyard after the battery (the ward bell) and after the ward line (out to the gorge).
 

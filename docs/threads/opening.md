@@ -1,6 +1,7 @@
 # The campaign opening (the morning everything breaks)
 
-Status: active · Last touched: 2026-11-21 at 56e581a
+Status: active · Last touched: 2026-11-22
+Where each stop stands: the board at the top of the [Opening Segment](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) page. The working rules: [staying on track](../campaign/README.md#staying-on-track).
 Record: [brief and route](../campaign/01-opening/brief.md) · [element order](../explorations/2026-11-16-element-order.md) · [encounters](../explorations/2026-11-16-opening-encounters.md) · [battery playtest todo](../explorations/2026-11-10-battery-playtest-todo.md) · [Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) (beats 1 to 7, source `tools/segments/01-opening/`) · [The Morning Everything Breaks](https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews) (the route, source `tools/element-order/`) · [canon](../campaign/canon.md)
 
 ## Where it stands
@@ -9,8 +10,9 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 
 ## Next
 
-- [ ] Map the weapons section at the start (the drill yard, beats 2 and 3): what it teaches now there are seven weapons and guards, then its place in the academy, with Codex concepts.
-- [ ] Design the walks between stops: what happens on them, and how long they are. A district-level map of all the stops would set both.
+- [ ] The user's verdicts on the weapons section and the walks (concepts on the Opening Segment page; [exploration](../explorations/2026-11-22-weapons-yard-and-walks.md)).
+- [ ] Rework the yard's blockout beside the courtyard, along the ranges.
+- [ ] The district's roads as a space diagram with walk times.
 - [ ] The infirmary (Life, the first cast): space diagram, Codex concept from the blockout's footprint, then an LDtk blockout. It's the smallest test of the new shape.
 - [ ] The battery as the second element: its infusion text and prompts, and room to heal in its fight.
 - [ ] The yard's size against a wizard and the Academy buildings: marked too small. The academy-as-environment concept (`concept-academy`, `r5-academy-*`) is waiting for the user's marks.
@@ -37,3 +39,4 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 - 2026-11-16 The route: Life first, one element per stop, eight stops; each stop's fight and creatures (designed)
 - 2026-11-17 Merged to main (ad06e8c)
 - 2026-11-21 The brief rewritten for the route
+- 2026-11-22 The weapons section and the walks brainstormed; the board on the segment page

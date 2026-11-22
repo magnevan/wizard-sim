@@ -1,0 +1,13 @@
+Generate one image with your image generation tool, then save it as d3-district-roads.png in the current directory. Reply with just the file name.
+
+The attached image is this same district, drawn earlier: keep its look, its places and its geography (the academy and its armillary in the centre, the ward line and forest behind, the infirmary tents and glasshouse to the left, the battery and burning gorse down to the lower left, the gorge, waterfall, water wheel and aqueduct to the right, the harbor, icehouse and lighthouse at the bottom, the switchback cliff road climbing back up). Draw it a little closer in, so the roads between the places are longer and get more room.
+
+This time the subject is the roads themselves, on the morning everything breaks. Each road between two places has something along it that makes the walk feel lived in:
+- The road from the academy gate to the infirmary: a cart of wounded guards being pulled toward the tents, healers running alongside.
+- The road down to the battery: a lookout point on a bend where the smoking battery and the burning slope are in full view below; a hedge of dry brambles across the old farm track beside it.
+- The path from the academy's back gate to the ward line: a bell tower on the wall ringing, guards hurrying along the path with spears.
+- The road into the gorge: a narrow stone bridge high over the gorge with a view down to the stopped water wheel; smoke drifting across from the gorse fire.
+- The road down to the harbor: stairs and terraces with fishermen hauling a frozen net, ice glittering on the steps lower down.
+- The cliff road: a half-buried waystone, a wayside shrine, fallen rocks.
+
+A few small groups of young wizards in blue robes walk these roads. Keep every place small and readable, with trees, rocks and terrain between them. No text, no labels.

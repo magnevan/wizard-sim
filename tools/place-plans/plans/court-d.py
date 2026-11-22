@@ -29,98 +29,99 @@ the grey-box.
 Revision 6 (to_ldtk.py --report, the engine's step rule: more than 0.5 m between neighbouring cells is a cliff; flights
 want about 3 u of run per metre along a screen vertical): the grand stair runs 12 u straight from the balcony down to
 the sunk floor; the dais rises in two 0.5 m rings instead of four steep flights; the stair to the sea court is 12 u; the
-sea landing is a quay at -5 m, 12 u of stair below the sea court."""
+sea landing is a quay at -5 m, 12 u of stair below the sea court.
+
+Revision 7 (the first in-game flow round, 4/10): at play zoom the plan was too big. The arc was about 8 near-identical
+screens and the dais never shared a frame with the balcony. Everything is pulled together: the arc's radius 43 -> 28
+(about 1.2 screens a side), the grand stair's head about 25 u from the dais (the armillary's 14 m rises into frame from
+there), a smaller sunk floor, shorter runs to the gates, the bridge and the quay."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 6)', U=(-95, 105), V=(-68, 86))
-C = (0, -62)          # the amphitheatre's centre, up the screen
-ARM = polar(C, 80, 90)  # (0, 18)
+P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 7)', U=(-80, 95), V=(-56, 72))
+C = (0, -40)            # the amphitheatre's centre, up the screen
+ARM = (0, 18)
 SEA = -9.0
 def toward(a, b, d):  # the point d along from a towards b
     L = math.dist(a, b); return (a[0] + (b[0] - a[0]) * d / L, a[1] + (b[1] - a[1]) * d / L)
-def bearing(a, b): return math.degrees(math.atan2(b[1] - a[1], b[0] - a[0]))
 
-P.fill(rect(-95, -68, 105, 86), 6.0, 'grass')
-for c, r in [((-84, -20), 11), ((-30, -60), 8), ((50, -56), 9), ((-80, 18), 7)]:
+P.fill(rect(-80, -56, 95, 72), 6.0, 'grass')
+for c, r in [((-60, -46), 8), ((28, -50), 6), ((-66, -8), 6)]:
     P.fill(circle(c, r), 6.0, 'trees')
 # the sea and the terraces cut into the hillside
-P.fill(arc_band(C, 0, 168, 5, 175), SEA, 'deep')
-P.fill(arc_band(C, 0, 126, 20, 160), -1.0, 'paving')        # the sea court
-P.fill(arc_band(C, 0, 100, 24, 156), 3.0, 'plaza')          # the middle terrace
-P.fill(circle(ARM, 27), 3.0, 'plaza')                       # the round plaza's rim, a bastion over the sea court
-for r, h in ((26, 2.75), (25, 2.5), (24, 2.25)):            # sunk a metre in rings of steps
+P.fill(arc_band(C, 0, 150, 5, 175), SEA, 'deep')
+P.fill(arc_band(C, 0, 90, 20, 160), -1.0, 'paving')         # the sea court
+P.fill(arc_band(C, 0, 70, 24, 156), 3.0, 'plaza')           # the middle terrace
+P.fill(circle(ARM, 20), 3.0, 'plaza')                       # the round plaza's rim, a bastion over the sea court
+for r, h in ((18, 2.75), (17, 2.5), (16, 2.25)):            # sunk a metre in rings of steps
     P.fill(circle(ARM, r), h, 'stairs')
-P.fill(circle(ARM, 23), 2.0, 'dais')
-P.fill(arc_band(C, 0, 54, 20, 160), 6.0, 'paving')          # the top terrace, a balcony over the plaza
-P.fill(rect(-95, -60, -38, -40), 6.0, 'grass'); P.fill(rect(38, -60, 105, -40), 6.0, 'grass')   # the land out to the seams
+P.fill(circle(ARM, 15), 2.0, 'dais')
+P.fill(arc_band(C, 0, 38, 20, 160), 6.0, 'paving')          # the top terrace, a balcony over the plaza
+P.fill(rect(-80, -42, -24, -20), 6.0, 'grass'); P.fill(rect(24, -42, 95, -20), 6.0, 'grass')   # the land out to the seams
 P.fill(circle(ARM, 7.5), 2.5, 'stairs'); P.fill(circle(ARM, 6.5), 3.0, 'plaza')   # the dais, in two 0.5 m rings you can step up anywhere
 
-# the north road: straight down through the great hall's gate (the model route)
-P.building(arc_band(C, 18, 32, 30, 150), 6.0, 12.0, 'great hall', doors=[polar(C, 33, 70), polar(C, 33, 110)])
-P.fill(orect(polar(C, 25, 90), 6, 16, math.radians(90)), 6.0, 'path')
-P.fill(rect(-3, -68, 3, -40), 6.0, 'path')
-P.stairs(orect((0, -11), 16, 12, math.radians(90)), 6.0, 2.0, 90)                                    # the grand stair, balcony to the sunk floor
-for du in (-10, 10): P.building(rect(du - 1.5, -12, du + 1.5, -9), 6.0, 6.0)                         # pylons at its head
+# the north road: straight down through the great hall's gate
+P.building(arc_band(C, 8, 20, 35, 145), 6.0, 12.0, 'great hall', doors=[polar(C, 21, 65), polar(C, 21, 115)])
+P.fill(orect(polar(C, 14, 90), 6, 14, math.radians(90)), 6.0, 'path')
+P.fill(rect(-3, -56, 3, -30), 6.0, 'path')
+P.stairs(orect((0, -1), 16, 12, math.radians(90)), 6.0, 2.0, 90)                                     # the grand stair, balcony to the sunk floor
+for du in (-10, 10): P.building(rect(du - 1.5, -9, du + 1.5, -6), 6.0, 6.0)                          # pylons at its head
 
 # the cross road: an arc along the top terrace in front of the hall, from the yard's seam to the battery's
-ARC = [polar(C, 43, a) for a in range(158, 89, -4)] + [polar(C, 43, a) for a in range(90, 21, -4)]
-YARD = (-58, -50)
+ARC = [polar(C, 28, a) for a in range(160, 89, -5)] + [polar(C, 28, a) for a in range(90, 19, -5)]
+YARD = (-44, -30)
 
 # a library and workshops on the middle terrace's wings, doors facing the plaza
 for a0, a1, nm in ((26, 40, 'workshops'), (140, 154, 'library')):
-    P.building(arc_band(C, 62, 84, a0, a1, 10), 3.0, 7.0, nm, doors=[polar(C, 72, a1 + 1.5 if a0 < 90 else a0 - 1.5)])
+    P.building(arc_band(C, 45, 62, a0, a1, 10), 3.0, 7.0, nm, doors=[polar(C, 53, a1 + 2 if a0 < 90 else a0 - 2)])
 
 # the sea landing: straight below the armillary, an axis stair off the plaza's rim, then down the cliff
-P.stairs(orect((0, 51), 10, 12, math.radians(90)), 3.0, -1.0, 90)
-P.stairs(orect(polar(C, 129, 90), 10, 12, math.radians(90)), -1.0, -5.0, 90)
-P.fill(rect(-6, 73, 6, 80), -5.0, 'wood')
-for du in (-7, 7): P.building(rect(du - 1.5, 43, du + 1.5, 46), 3.0, 5.0)                            # the rim's gateway
+P.stairs(orect((0, 44), 10, 12, math.radians(90)), 3.0, -1.0, 90)
+P.stairs(orect((0, 56), 10, 12, math.radians(90)), -1.0, -5.0, 90)
+P.fill(rect(-6, 62, 6, 69), -5.0, 'wood')
+for du in (-7, 7): P.building(rect(du - 1.5, 35, du + 1.5, 38), 3.0, 5.0)                            # the rim's gateway
 
-# the battery: across the head of a sea inlet to the east. The terrace's arc runs on over one parapeted deck above the
-# falls; the battery's tower stands beside the road just beyond, on its north side so it can't hide you
-P.fill([(44, 86), (46, 54), (52, 30), (60, 4), (64, -20), (72, -20), (78, 10), (82, 40), (104, 50), (105, 86)], SEA, 'deep')   # the inlet
-P.fill([(64, -68), (72, -68), (72, -20), (64, -20)], 4.0, 'water')                                                  # the stream above the falls
-P.fill(rect(40, -52, 105, -44), 6.0, 'path')
-P.fill(rect(58, -52, 78, -44), 6.5, 'wood')                                                                         # the deck
-P.building(rect(58, -53, 78, -52), 6.5, 1.0, roof='wall'); P.building(rect(58, -44, 78, -43), 6.5, 1.0, roof='wall')   # parapets
-P.building(rect(54, -56, 57, -53), 6.0, 8.0); P.building(rect(54, -43, 57, -40), 6.0, 8.0)                          # gate towers
-P.building(circle((86, -58), 6), 6.0, 14, 'battery tower')
-BAT = (100, -48)
+# the battery: across the head of a sea inlet to the east, over one parapeted deck above the falls; the battery's tower
+# beside the road just beyond, on its north side so it can't hide you
+P.fill([(38, 72), (40, 40), (43, 10), (44, -10), (52, -10), (58, 20), (64, 45), (95, 52), (95, 72)], SEA, 'deep')   # the inlet
+P.fill([(44, -56), (52, -56), (52, -10), (44, -10)], 4.0, 'water')                                                 # the stream above the falls
+P.fill(rect(24, -34, 95, -26), 6.0, 'path')
+P.fill(rect(40, -34, 56, -26), 6.5, 'wood')                                                                        # the deck
+P.building(rect(40, -35, 56, -34), 6.5, 1.0, roof='wall'); P.building(rect(40, -26, 56, -25), 6.5, 1.0, roof='wall')   # parapets
+P.building(rect(36, -38, 39, -35), 6.0, 8.0); P.building(rect(36, -25, 39, -22), 6.0, 8.0)                         # gate towers
+P.building(circle((66, -42), 6), 6.0, 14, 'battery tower')
+BAT = (86, -30)
+P.fill(rect(53, -56, 59, -34), 6.0, 'path')                                                                        # the gorge path up beside the stream
+GORGE = (56, -52)
 
-# openings in the plaza's ring of steps where each route arrives, and the main routes' own paving
-for brg in (90,):
-    P.stairs(orect(polar(ARM, 25, brg), 10, 6, math.radians(brg)), 2.0, 3.0, brg)
-P.fill(rect(-62, -54, -38, -46), 6.0, 'path')
-P.strip([YARD] + ARC + [polar(C, 43, 20), (40, -48), BAT], 8)
-P.strip([(0, -68), polar(C, 50, 90)], 6); P.strip([polar(C, 43, 90), polar(C, 60, 90), (0, 9)], 14)
+# openings in the plaza's ring of steps, and the main routes' own paving
+P.stairs(orect(polar(ARM, 17, 90), 10, 6, math.radians(90)), 2.0, 3.0, 90)
+P.fill(rect(-48, -34, -24, -26), 6.0, 'path')
+P.strip([YARD] + ARC + [polar(C, 28, 20), (30, -30), BAT], 8)
+P.strip([(0, -56), polar(C, 30, 90)], 6)
 
 for a, nm in ((156, 'bell tower'), (24, 'beacon')):                    # a tall marker at each turn of the arc, on its north side
-    P.building(circle(polar(C, 35, a), 3.5), 6.0, 13.0, nm)
+    P.building(circle(polar(C, 21, a), 3.0), 6.0, 13.0, nm)
 for a in (160, 20):                                                     # threshold pillars where the arc meets each seam
-    for r in (38, 48): P.building(circle(polar(C, r, a), 1.3), 6.0, 5.0)
+    for r in (23, 33): P.building(circle(polar(C, r, a), 1.3), 6.0, 5.0)
 P.h[(P.m == 'road') & (P.h == 6.0)] += 0.3                              # the road a step above the terrace
 P.landmark(ARM, 'the armillary', 14, 8)
-P.gate(YARD, 'to the drill yard'); P.gate(BAT, 'to the battery'); P.gate((0, -66), 'north road'); P.gate((0, 76), 'sea landing')
-P.route([YARD] + ARC[:18] + [polar(C, 62, 90), (-2, 10)], 'main')                                # arriving from the yard
-P.route([BAT, (40, -48)] + ARC[::-1][:18] + [polar(C, 62, 90), (2, 10)], 'main')                  # coming back from the battery
-P.route([(0, -66), polar(C, 50, 90), polar(C, 62, 90), (0, 10)], 'main')   # the north road
-P.route([(0, 76), (0, 56), (0, 26)], 'side')                               # up from the sea landing
-# the journey through the courtyard, in the order of the brief's route (docs/campaign/01-opening/brief.md); which exit
-# leads to which stop is a proposal: the infirmary just outside the main gate on the battery's road, the ward line behind
-# the academy up the north road, the gorge up the stream past the bridge, the harbour and cliff road at the sea landing
-J = polar(C, 43, 90); STAIR = polar(C, 62, 90); ARC_W, ARC_E = ARC[:18], ARC[17:]
-GORGE = (68, -66)
-P.journey([(-8, 32), (0, 27)], 'The briefing at the armillary', 'Start below the dais: the armillary fills the screen, the beam stutters above the masters')
+P.gate(YARD, 'to the drill yard'); P.gate(BAT, 'to the battery'); P.gate((0, -54), 'north road'); P.gate((0, 66), 'sea landing')
+J = polar(C, 28, 90); STAIR = (0, 6); ARC_W, ARC_E = ARC[:15], ARC[14:]
+P.route([YARD] + ARC_W + [STAIR, (-2, 10)], 'main')                                  # arriving from the yard
+P.route([BAT, (30, -30)] + ARC_E[::-1] + [STAIR, (2, 10)], 'main')                    # coming back from the battery
+P.route([(0, -54), J, STAIR, (0, 10)], 'main')                                       # the north road
+P.route([(0, 66), (0, 50), (0, 26)], 'side')                                         # up from the sea landing
+# the journey through the courtyard, in the order of the brief's route; the exits as the user approved (2026-11-22)
+P.journey([(-8, 30), (0, 26)], 'The briefing at the armillary', 'Start below the dais: the armillary fills the screen, the beam stutters above the masters')
 P.journey([(0, 10), STAIR, J] + ARC_W[::-1] + [YARD], 'Out to the drill yard', 'Up the grand stair, west along the balcony; the bell tower marks the turn')
-P.journey([YARD] + ARC_W + ARC_E + [(40, -48), BAT], 'Back from the yard, out through the main gate: the infirmary, then the battery',
-          'The reveal: at the top of the grand stair the armillary is framed between the pylons; the beacon pulls you east')
-P.journey([BAT, (40, -48)] + ARC_E[::-1] + [STAIR, (0, 10), STAIR, J, (0, -66)], 'Back from the battery: the ward bell, then out north to the ward line',
+P.journey([YARD] + ARC_W + ARC_E + [(30, -30), BAT], 'Back from the yard, out through the main gate: the infirmary, then the battery',
+          'The reveal: at the top of the grand stair the armillary rises between the pylons; the beacon pulls you east')
+P.journey([BAT, (30, -30)] + ARC_E[::-1] + [STAIR, (0, 10), STAIR, J, (0, -54)], 'Back from the battery: the ward bell, then out north to the ward line',
           'Homecoming: down the grand stair to the bell at the dais, then up through the great hall')
-P.journey([(0, -66), J, STAIR, (0, 10), STAIR, J] + ARC_E + [(40, -48), (64, -48), GORGE], 'Back from the ward line, out to the gorge',
+P.journey([(0, -54), J, STAIR, (0, 10), STAIR, J] + ARC_E + [(30, -30), (56, -30), GORGE], 'Back from the ward line, out to the gorge',
           'The best approach: straight down the north road onto the armillary; out past the falls')
-P.journey([(0, 76), (0, 56), (0, 44), (0, 27)], 'The finale: up from the sea landing',
+P.journey([(0, 66), (0, 50), (0, 38), (0, 26)], 'The finale: up from the sea landing',
           'The climb from the sea, framed by the rim’s gateway; the armillary torn open above the warband')
-P.fill(rect(64, -68, 72, -52), 6.0, 'path')   # the gorge path up beside the stream
 P.render()
 if "--frames" in sys.argv: P.frames()

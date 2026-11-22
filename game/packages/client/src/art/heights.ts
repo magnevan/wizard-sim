@@ -24,6 +24,8 @@ export interface HeightMap {
   /** Is the cell outside the room's outline (void)? */
   out: Uint8Array;
   lo: number; hi: number;
+  /** The block size the heights come in, in cells: 2 for a level written from a plan (1 u blocks), else 1. */
+  b: number;
 }
 
 const maps = new WeakMap<object, HeightMap>();
@@ -60,7 +62,13 @@ export function heightMap(def: RoomDef): HeightMap | null {
   }
   let lo = Infinity, hi = -Infinity;
   for (let k = 0; k < m.length; k++) if (!out[k]) { lo = Math.min(lo, m[k]); hi = Math.max(hi, m[k]); }
-  hm = { gw, gh, w: def.w, h: def.h, m, out, lo: Math.min(0, lo), hi: Math.max(0, hi) };
+  // a plan-made level comes in 1 u blocks (2 x 2 cells): its edges are cut at that size, so its 45 degree runs come out straight
+  let b = gw % 2 === 0 && gh % 2 === 0 ? 2 : 1;
+  for (let y = 0; y < gh && b === 2; y += 2) for (let x = 0; x < gw && b === 2; x += 2) {
+    const k = y * gw + x;
+    for (const o of [1, gw, gw + 1]) if (m[k + o] !== m[k] || out[k + o] !== out[k]) { b = 1; break; }
+  }
+  hm = { gw, gh, w: def.w, h: def.h, m, out, lo: Math.min(0, lo), hi: Math.max(0, hi), b };
   maps.set(hd, hm);
   return hm;
 }
@@ -78,6 +86,27 @@ export function zAt(def: RoomDef, x: number, y: number): number {
 export const liftAtWorld = (def: RoomDef, x: number, y: number): number => (def.height ? Math.round(zAt(def, x, y) * PX_PER_M) : 0);
 /** How many art px something standing at view point (u, v) is drawn above the flat ground. */
 export const liftAt = (def: RoomDef, u: number, v: number): number => (def.height ? Math.round(zAt(def, toX(u, v), toY(u, v)) * PX_PER_M) : 0);
+
+/**
+ * Metres the ground is drawn at, at a real world point: NaN in the void, 0 off the map. Unlike zAt (the cell a body
+ * stands in), a block's corner takes its two neighbours' height where they agree and the block's differs, cut on the
+ * diagonal: a staircase of blocks draws as a straight 45 degree edge and a curve as a chamfered one, while a straight
+ * strip (a parapet, a lip) keeps its width, since one of its neighbours is itself.
+ */
+export function drawnZ(hm: HeightMap, x: number, y: number): number {
+  const s = CELL * hm.b, ux = (x + hm.w / 2) / s, uy = (y + hm.h / 2) / s, bx = Math.floor(ux), by = Math.floor(uy);
+  const bw = hm.gw / hm.b, bh = hm.gh / hm.b;
+  if (bx < 0 || by < 0 || bx >= bw || by >= bh) return 0;
+  const v = (i: number, j: number): number => {
+    if (i < 0 || j < 0 || i >= bw || j >= bh) return 0;
+    const k = j * hm.b * hm.gw + i * hm.b;
+    return hm.out[k] ? NaN : hm.m[k];
+  };
+  const c = v(bx, by), fx = ux - bx, fy = uy - by;
+  if (Math.abs(fx - 0.5) + Math.abs(fy - 0.5) <= 0.5) return c;
+  const a = v(bx + (fx < 0.5 ? -1 : 1), by), d = v(bx, by + (fy < 0.5 ? -1 : 1));
+  return Object.is(a, d) && !Object.is(a, c) ? a : c;
+}
 
 /** Art px of headroom a room's ground image needs above and below for its tiers. */
 export function liftRange(def: RoomDef): { up: number; down: number } {
@@ -97,19 +126,16 @@ export interface PxToWorld { x(px: number, py: number): number; y(px: number, py
 export function liftGround(data: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, cam: PxToWorld, def: RoomDef): void {
   const hm = heightMap(def);
   if (!hm) return;
-  const src = data.slice(), col = new Int32Array(H), cell = new Int32Array(H);
+  const src = data.slice(), col = new Int32Array(H), gone = new Uint8Array(H);
   data.fill(0);
   for (let i = 3; i < data.length; i += 4) { data[i - 3] = 14; data[i - 2] = 16; data[i - 1] = 22; data[i] = 255; }
-  const at = (px: number, py: number): number => {
-    const x = cam.x(px - OX, py - OY), y = cam.y(px - OX, py - OY);
-    const cx = Math.floor((x + hm.w / 2) / CELL), cy = Math.floor((y + hm.h / 2) / CELL);
-    return cx < 0 || cy < 0 || cx >= hm.gw || cy >= hm.gh ? -1 : cy * hm.gw + cx;
-  };
   for (let px = 0; px < W; px++) {
-    for (let py = 0; py < H; py++) { const k = at(px, py); cell[py] = k; col[py] = k < 0 ? 0 : Math.round(hm.m[k] * PX_PER_M); }
     for (let py = 0; py < H; py++) {
-      const k = cell[py];
-      if (k >= 0 && hm.out[k]) continue;
+      const z = drawnZ(hm, cam.x(px - OX, py - OY), cam.y(px - OX, py - OY));
+      gone[py] = Number.isNaN(z) ? 1 : 0; col[py] = gone[py] ? 0 : Math.round(z * PX_PER_M);
+    }
+    for (let py = 0; py < H; py++) {
+      if (gone[py]) continue;
       const dest = py - col[py];
       if (dest >= 0 && dest < H) { const s = (py * W + px) * 4, d = (dest * W + px) * 4; data[d] = src[s]; data[d + 1] = src[s + 1]; data[d + 2] = src[s + 2]; data[d + 3] = 255; }
       // a drop toward the camera: the face runs from just below this pixel down to where the next row lands

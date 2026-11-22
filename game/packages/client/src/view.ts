@@ -694,7 +694,7 @@ export class WorldView {
     const lift = liftRange(w.def), spots = mine ? (up.length ? up : down) : all, rise = lift.up / (PPU * FY), sink = lift.down / (PPU * FY);
     // a vista (vista.ts): pulled back on the landmark for a moment, then back to following. It arms only once the room is
     // drawn (its props and ground loaded), so on a slow load it isn't spent on a screen nobody can see yet.
-    const shown = this.props.ready && this.groundReady;
+    const shown = this.props.ready && this.groundReady && optOn('vistas');
     const shot = this.vista.update(w.def, mine && shown ? up : [], performance.now() / 1000, (x, y) => this.nearestLandmark(w, x, y), (s) => this.camera.fitSpan(s), (x, y) => liftAt(w.def, x, y) / (PPU * FY));
     if (this.camera.zoom(shot && !shot.out ? shot.scale : this.camera.base)) this.scene.scale.set(this.camera.scale);
     if (shot && !shot.out) { this.camera.follow(w.dims.w, w.dims.h, [{ x: shot.x, y: this.camera.centreForTop(shot.top) }], false, dt, rise, sink); return; }

@@ -35,7 +35,7 @@ R2 = math.sqrt(0.5)
 MATERIAL_GROUND = {
     'grass': 'grass', 'path': 'dirt', 'road': 'cobble', 'paving': 'slabs', 'plaza': 'flagstone', 'dais': 'slabs',
     'stairs': 'flagstone', 'wood': 'planks', 'sand': 'sand', 'water': 'water', 'deep': 'water', 'trees': 'leaves',
-    'rock': 'gravel', 'roof': 'slabs', 'wall': 'slabs', 'void': None,
+    'rock': 'gravel', 'roof': 'ash', 'wall': 'gravel', 'void': None,   # roofs dark, never a floor material (the sense critic, 2026-11-22)
 }
 
 # Per spec: the level it writes, and the ids its markers get. Gate ids are what the sim looks for (sim/src/court.ts).
@@ -206,6 +206,7 @@ def write_level(name):
 
 
 STEP_M = 0.5   # the game's walkable step (game/packages/content/src/compile.mjs STEP_M): more is a cliff
+DROP_M, DROP_NEAR = 1.0, 2   # a drop of more than DROP_M metres within DROP_NEAR u of a route wants a lip (the sense rules)
 
 def report(name, P=None):
     """What the level will walk like, at the plan's resolution: the walkable regions (cells joined by steps of at most
@@ -257,7 +258,36 @@ def report(name, P=None):
     for (u, v), a, b in jumps[:12]: print(f'  ({u}, {v}) {a:.2f} -> {b:.2f}')
     start_c = where(start)
     cut_off = [t for c, ts in things.items() if c != start_c for t in ts]
-    return dict(regions=len(sizes), jumps=len(jumps), cut_off=cut_off)
+
+    # along the routes (the journey's passes, and any route drawn): every 0.5 u
+    samples = []
+    for pts in [p for p, *_ in P.passes] + [p for p, _ in P.routes]:
+        for (u0, v0), (u1, v1) in zip(pts, pts[1:]):
+            n = max(1, int(math.hypot(u1 - u0, v1 - v0) / 0.5))
+            samples += [(u0 + (u1 - u0) * k / n, v0 + (v1 - v0) * k / n) for k in range(n + 1)]
+    cell = lambda p: (int((p[1] - p[0]) * R2 - P.y0), int((p[0] + p[1]) * R2 - P.x0))
+    # unguarded drops: walkable ground within DROP_NEAR of a route standing more than DROP_M over its neighbour, with no
+    # lip (the neighbour is the drop itself, not a raised kerb, parapet or wall between)
+    drops = {}
+    for p in samples:
+        ci, cj = cell(p)
+        for i in range(ci - DROP_NEAR, ci + DROP_NEAR + 1):
+            for j in range(cj - DROP_NEAR, cj + DROP_NEAR + 1):
+                if not (0 <= i < ny and 0 <= j < nx) or not walk[i, j] or (i, j) in drops: continue
+                if math.hypot(float(P.CU[i, j]) - p[0], float(P.CV[i, j]) - p[1]) > DROP_NEAR: continue
+                for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):
+                    if 0 <= a < ny and 0 <= b < nx and P.m[a, b] != 'void' and P.h[i, j] - P.h[a, b] > DROP_M:
+                        drops[(i, j)] = float(P.h[i, j] - P.h[a, b]); break
+    print(f'{len(drops)} cells of route-side ground (within {DROP_NEAR} u of a route) over an unguarded drop of more than {DROP_M} m' + (', e.g. (U, V, drop m):' if drops else ''))
+    for (i, j), d in list(drops.items())[:8]: print(f'  {uv(i, j)} {d:.1f}')
+    # walkable regions no route reaches
+    reached = {comp[i, j] for i, j in map(cell, samples) if 0 <= i < ny and 0 <= j < nx and comp[i, j] >= 0}
+    unvisited = [c for c in order if sizes[c] >= 30 and c not in reached]
+    print(f'{len(unvisited)} walkable regions of 30 u2 or more that no route passes through' + (':' if unvisited else ''))
+    for c in unvisited:
+        i, j = np.argwhere(comp == c)[0]
+        print(f'  {sizes[c]:6d} u2 at {float(P.h[i, j]):5.2f} m near {uv(i, j)}')
+    return dict(regions=len(sizes), jumps=len(jumps), cut_off=cut_off, drops=len(drops), unvisited=len(unvisited))
 
 
 if __name__ == '__main__':

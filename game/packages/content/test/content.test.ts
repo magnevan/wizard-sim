@@ -334,6 +334,26 @@ describe('the sense lint', () => {
     expect(C.senseLint(room({ height }), ground)).toEqual([]);
   });
 
+  it('a door opening straight onto a road wants a forecourt', () => {
+    expect(C.senseLint(room({ markers: [{ id: 'door-1', x: 0, y: 0 }] }), Array(12).fill('c'.repeat(16)))[0]).toMatch(/door-1 .*opens straight onto a road/);
+  });
+
+  it('the void may not come within a screen of walkable ground', () => {
+    // a 30 x 6 u room: void at the west end; ground 5 u from it warns, ground 15 u away doesn't count
+    const wide = (over: Record<string, unknown>) => ({ id: 'test', w: 30, h: 6, rock: [], propRock: [], markers: [], ...over });
+    const terrain = Array.from({ length: 12 }, () => '_'.repeat(4) + '.'.repeat(56));
+    expect(C.senseLint(wide({ terrain }), null)[0]).toMatch(/the void is within 12 u .* of \d+ u2 of walkable ground/);
+    const walled = Array.from({ length: 12 }, () => '_'.repeat(4) + '#'.repeat(26) + '.'.repeat(30)); // 13 u of rock first
+    expect(C.senseLint(wide({ terrain: walled }), null)).toEqual([]);
+  });
+
+  it('a roof standing over walkable ground is never painted a floor material', () => {
+    const terrain = fill(Array(12).fill('.'.repeat(16)), 0, 0, 15, 5, '#'); // a block over the north half
+    const height = { metres: [0, 3], rows: fill(Array(12).fill('0'.repeat(16)), 0, 0, 15, 5, '1'), cliffs: [] };
+    expect(C.senseLint(room({ terrain, height }), Array(12).fill('h'.repeat(16)))[0]).toMatch(/painted slabs, a floor material/);
+    expect(C.senseLint(room({ terrain, height }), fill(Array(12).fill('h'.repeat(16)), 0, 0, 15, 5, 'a'))).toEqual([]); // ash: a roof
+  });
+
   it('the committed maps pass it (warnings are printed by content:check, never errors)', () => {
     const { errors, warnings } = C.runCheck();
     expect(errors).toEqual([]);

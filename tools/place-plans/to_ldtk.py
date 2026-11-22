@@ -28,6 +28,7 @@ sys.path.insert(0, HERE)
 import plan as planmod
 
 MAPS = os.path.normpath(os.path.join(HERE, '../../game/content/maps'))
+PROPS_DIR = os.path.normpath(os.path.join(HERE, '../../game/content/assets/props'))
 PX = 20          # LDtk px per world unit
 SUB = 2          # level cells per plan cell (0.5 u cells, 1 u plan cells)
 R2 = math.sqrt(0.5)
@@ -88,7 +89,9 @@ def load_spec(name):
         g = runpy.run_path(os.path.join(HERE, 'plans', name + '.py'))
     finally:
         planmod.Plan.render, sys.argv = render, argv
-    return next(v for v in g.values() if isinstance(v, planmod.Plan)), dict(g.get('MARKERS', {}))
+    P = next(v for v in g.values() if isinstance(v, planmod.Plan))
+    P.dress = list(g.get('PROPS', []))   # the beauty stage's dressing: [(asset, (U, V), blocks)], written as Props
+    return P, dict(g.get('MARKERS', {}))
 
 
 # ---- LDtk's layout (the same as game/packages/content/src/ldtk.mjs stringify, so diffs stay small) ----------------
@@ -207,6 +210,9 @@ def write_level(name):
     for n, (asset, at, blocks) in enumerate(cfg.get('props', [])):
         if at not in marks: raise SystemExit(f'{name}: prop {asset} stands on the landmark "{at}", which the plan doesn\'t have')
         es.append(entity('Prop', f'prop-{n}', marks[at], {'asset': asset, 'blocks': blocks, 'tag': None}))
+    for n, (asset, p, blocks) in enumerate(getattr(P, 'dress', [])):
+        if not os.path.isdir(os.path.join(PROPS_DIR, asset)): raise SystemExit(f'{name}: no prop "{asset}" in {PROPS_DIR}')
+        es.append(entity('Prop', f'dress-{n}', p, {'asset': asset, 'blocks': blocks, 'tag': None}))
 
     # ---- the level: the room's current file as the template, so its uid and place in the world view stay ----
     level_name = cfg['level']
@@ -326,7 +332,25 @@ def report(name, P=None):
     for c in unvisited:
         i, j = np.argwhere(comp == c)[0]
         print(f'  {sizes[c]:6d} u2 at {float(P.h[i, j]):5.2f} m near {uv(i, j)}')
-    return dict(regions=len(sizes), jumps=len(jumps), cut_off=cut_off, drops=len(drops), unvisited=len(unvisited))
+    # the world's edge in view: walkable ground nearer the plan's box than the camera sees (the sense critics, 2026-11-22:
+    # the yard's woods and the infirmary's sea stopped a screen out, and the edge showed as a sheer drop). The camera
+    # shows about 7 u to each side and 8 u down, but the ground's face at the world's edge hangs below it by its height
+    # (z * 14.5 px against 8 px per u of V: about 1.8 u per metre), so the margin at the bottom grows with the height.
+    EDGE = dict(bottom=10, per_m=1.8, sides=12, top=12)
+    bottom = P.V[1] - (EDGE['bottom'] + EDGE['per_m'] * np.maximum(P.h, 0))
+    near_edge = walk & ((P.CV > bottom) | (P.CU < P.U[0] + EDGE['sides']) | (P.CU > P.U[1] - EDGE['sides']) | (P.CV < P.V[0] + EDGE['top']))
+    # only ground you can stand on without leaving: reached from the start with every gate's reach (3 u) closed
+    from scipy import ndimage as _nd
+    open_ = walk.copy()
+    for g, _ in P.gates: open_ &= np.hypot(P.CU - g[0], P.CV - g[1]) > 3.5
+    lab, _n = _nd.label(open_)
+    s0 = P.passes[0][0][0] if P.passes else (0, 0)
+    k = np.unravel_index(np.argmin(np.hypot(P.CU - s0[0], P.CV - s0[1]) + np.where(open_, 0, 1e9)), walk.shape)
+    near_edge &= lab == lab[k]
+    for g, _ in P.gates: near_edge &= np.hypot(P.CU - g[0], P.CV - g[1]) > 6   # stepping into a gate may see the edge
+    print(f'{int(near_edge.sum())} u2 of walkable ground within sight of the world\'s edge (bottom {EDGE["bottom"]} u + {EDGE["per_m"]} u a metre, sides {EDGE["sides"]} u, top {EDGE["top"]} u; ground past a gate or within 6 u of one not counted)' + (', e.g.' if near_edge.any() else ''))
+    for i, j in np.argwhere(near_edge)[:4]: print(f'  {uv(i, j)}')
+    return dict(regions=len(sizes), jumps=len(jumps), cut_off=cut_off, drops=len(drops), unvisited=len(unvisited), edge=int(near_edge.sum()))
 
 
 if __name__ == '__main__':

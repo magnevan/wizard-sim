@@ -29,3 +29,12 @@ In the game view, cliff faces are drawn on the sides the camera sees (+x and +y)
 **Plan to level** (phase 6 of the [engine plan](../../docs/explorations/2026-11-22-height-and-outlines.md)): `python tools/place-plans/to_ldtk.py court-d` writes the spec's cells into its LDtk level (Terrain, Height, Ground, the starts and the gate, door and landmark markers; which level and which marker ids are in `LEVELS` in `to_ldtk.py`), then build and check from `game/`. Every distinct height becomes a tier; cells more than 0.5 m apart are parted by a cliff.
 
 `--report` only says how the plan walks: its walkable regions with what's in each, anything cut off from the start, every jump of more than 0.5 m inside a flight of stairs, ground within 2 u of a route standing over an unguarded drop of more than 1 m, and walkable regions no route (journey pass or drawn route) passes through. Run it before writing the level: the plan views can't show these (they draw no line between two stair cells). A flight walks if each 1 u world cell along it changes height by 0.5 m at most: give it about 2 u of run per metre of drop, and about 3 u per metre when it runs along a screen diagonal, since the world grid is turned 45° to the screen.
+
+It also counts **walkable ground within sight of the world's edge**: within 12 u of the plan box's top and sides, or, at the bottom, 10 u plus 1.8 u for each metre of height. A tier's face at the box's edge hangs below it on screen by about that much. Only ground you can reach from the start without passing a gate counts, and nothing within 6 u of a gate. Keep it at 0: carry the land, the woods or the sea on past it.
+
+**Finishing** (`finish.py`, called at a spec's end):
+- `lips(P)`: walls along drops near routes, or `everywhere=True` along every public edge over a metre.
+- `close_gates(P)`: closes each gate's line, so no one walks round a gate. The sim leaves within 3 u of a gate's marker, so on a road 8 u wide you could step past it. The line runs square to the journey's way in, out to the first wall, cliff or woods on each side.
+- `woods_unreached(P)`: turns walkable ground no one can reach into woods.
+
+**Dressing** (the beauty stage): a spec may list `PROPS = [(asset, (U, V), blocks), ...]` with assets from `game/content/assets/props/`. `to_ldtk.py` writes them as Props.

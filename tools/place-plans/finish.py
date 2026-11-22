@@ -47,3 +47,31 @@ def woods_unreached(P, step=0.5):
     lost = walk & ~seen
     P.m[lost] = 'trees'
     return int(lost.sum())
+
+
+def close_gates(P, reach=3.0, band=1.0, far=60.0):
+    """Closes each gate's line, so the only way past a gate is through its reach (the sim leaves within 3 u of a gate's
+    marker, sim/src/court.ts; a road 8 u wide, and the grass beside a road, let you walk round a gate to the world's
+    edge, 2026-11-22). The line runs through the gate square to the way in (the journey's next point from the gate, else the box's centre); out from the reach on
+    each side, every walkable cell on it (`band` u either side) becomes woods, until the line meets ground you can't walk
+    on, so it never cuts across the room."""
+    cu, cv = (P.U[0] + P.U[1]) / 2, (P.V[0] + P.V[1]) / 2
+    walk = np.vectorize(lambda m: MAT[m][2])(P.m) & ~P.bld
+    for (gu, gv), _ in P.gates:
+        du, dv = gu - cu, gv - cv
+        for pts, *_ in P.passes:                                         # the way in: the journey's next point from the gate
+            for k, q in enumerate(pts):
+                if math.hypot(q[0] - gu, q[1] - gv) < 1 and len(pts) > 1:
+                    nb = pts[k + 1] if k + 1 < len(pts) else pts[k - 1]; du, dv = gu - nb[0], gv - nb[1]
+        L = math.hypot(du, dv) or 1; du, dv = du / L, dv / L
+        along = (P.CU - gu) * du + (P.CV - gv) * dv
+        across = -(P.CU - gu) * dv + (P.CV - gv) * du
+        gi = np.unravel_index(np.argmin(np.hypot(P.CU - gu, P.CV - gv)), P.h.shape)
+        line = (np.abs(along) <= band) & (np.abs(P.h - P.h[gi]) <= 0.5)   # on the gate's own tier: a cliff ends the line
+        for side in (1, -1):
+            a = reach
+            while a < far:
+                seg = line & (side * across > a) & (side * across <= a + 0.5)
+                if seg.any() and not (seg & walk).any(): break      # the line has reached a wall, a cliff or woods
+                P.m[seg & walk] = 'trees'
+                a += 0.5

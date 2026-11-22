@@ -29,16 +29,20 @@ Revision 7 (flow passed in the game, 8/10): the east flight from the overlook a 
 is no twin of the west block.
 
 Revision 8 (the first sense round in the game, 7/10): the sea runs 27 u past the shore, past anything the camera
-shows from the beach, so no void shows beyond the water."""
+shows from the beach, so no void shows beyond the water.
+
+Revision 9 (the second sense round, 8/10): the land and the sea run 18 u further east, past the camera's view from the
+shore's east end. Woods outside both gates, and each gate's line closed (finish.close_gates), so no one walks round a
+gate to the world's edge."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('inf-d', 'Infirmary D: the slope with raised conduits (rev 8)', U=(-46, 88), V=(-46, 56))
+P = Plan('inf-d', 'Infirmary D: the slope with raised conduits (rev 9)', U=(-46, 106), V=(-46, 56))
 W0 = (0, -3)
-P.fill(rect(-46, -46, 88, 56), 5.0, 'grass')
-P.fill(rect(-34, -8, 88, 56), 3.5, 'grass')                       # the well's tier, level to the east edge
+P.fill(rect(-46, -46, 106, 56), 5.0, 'grass')
+P.fill(rect(-34, -8, 106, 56), 3.5, 'grass')                       # the well's tier, level to the east edge
 P.fill(rect(-34, 23, 50, 38), 0.0, 'sand')                        # the shore
-P.fill([(-46, 29), (88, 27), (88, 56), (-46, 56)], -1.0, 'water')  # the sea
+P.fill([(-46, 29), (106, 26), (106, 56), (-46, 56)], -1.0, 'water')  # the sea
 P.fill(rect(-28, -22, 28, -8), 5.0, 'paving')                     # the top tier: the road's terrace
 P.fill(rect(-3, -46, 3, -22), 5.0, 'path')                        # the road in, on the axis
 for a in (232, 254, 286, 308):                                    # the tents in a shallow arc facing the well; open, equipment dark
@@ -59,7 +63,7 @@ P.stairs(rect(7, 19, 19, 23), 0.0, 3.5, 'U')                      # and up again
 P.fill(circle((0, 27), 3), -0.5, 'water'); P.fill(arc_band((0, 27), 3, 4.5, 0, 360), 0.5, 'paving')   # the bath on the shore, its rim a kerb up
 P.fill(rect(-14, 23, 14, 26), 0.0, 'paving')                                                          # the shore walk
 # the way out: east along the well's tier and on, past the battery's smokestack
-P.fill(rect(26, 4, 88, 10), 3.5, 'road')
+P.fill(rect(26, 4, 106, 10), 3.5, 'road')
 for c in ((-26, 8), (-20, 9), (-26, -1)): P.fill(circle(c, 2.2), 3.8, 'grass')   # garden beds by the greenhouse
 P.building(circle((56, 1), 2.5), 3.5, 14.0, "the battery's smoke")
 P.landmark(W0, 'the well', 6, 3)
@@ -73,6 +77,9 @@ walk = np.isin(P.m, ['plaza', 'paving', 'grass', 'path', 'road', 'dais', 'stairs
 inbox = (P.CU > P.U[0] + 12) & (P.CU < P.U[1] - 12) & (P.CV > P.V[0] + 12) & (P.CV < P.V[1] - 8)
 P.m[walk & ~inbox & ~np.isin(P.m, ['road', 'path', 'sand', 'stairs'])] = 'trees'   # woods along the edges, open where the roads leave
 from finish import lips, woods_unreached
-lips(P); woods_unreached(P)
+P.m[(P.CU > 71) & (P.m == 'grass')] = 'trees'
+P.m[(P.CV < -33) & (P.m == 'grass')] = 'trees'                    # outside the north gate's wall: woods, the road running through                    # past the battery gate: woods, the road running on into them
+from finish import close_gates
+lips(P); close_gates(P); woods_unreached(P)
 P.render()
 if "--frames" in sys.argv: P.frames()

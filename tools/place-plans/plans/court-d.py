@@ -184,6 +184,7 @@ from finish import lips as _lips
 _lips(P, everywhere=True)                                             # a parapet on every public edge over a metre
 P.landmark(ARM, 'the armillary', 10, 5.5)
 P.gate(YARD, 'to the drill yard'); P.gate(BAT, 'to the battery'); P.gate((0, -44), 'north road'); P.gate((0, 76), 'sea landing')
+from finish import close_gates; close_gates(P)                       # no way round a gate on a wide road
 J = polar(C, 31, 90); ARC_W, ARC_E = ARC[:15], ARC[14:]
 WT, WF, ET, EF, DAIS = (-26, -13), (-26, -1), (26, -13), (26, -1), (0, 9)       # the flights' tops and feet, the dais's north step
 WDOWN, EDOWN = [WT, WF, (-14, 6), DAIS], [ET, EF, (14, 6), DAIS]

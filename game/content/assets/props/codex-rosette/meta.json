@@ -1,0 +1,23 @@
+{
+  "id": "codex-rosette",
+  "kind": "prop",
+  "name": "Rosette",
+  "footprint": [
+    0.3,
+    0.3
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        384,
+        192
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/rosette-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later."
+    }
+  },
+  "flat": true
+}

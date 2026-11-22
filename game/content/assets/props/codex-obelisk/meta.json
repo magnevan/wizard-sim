@@ -1,0 +1,22 @@
+{
+  "id": "codex-obelisk",
+  "kind": "prop",
+  "name": "Obelisk",
+  "footprint": [
+    1.0,
+    1.0
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        12,
+        57
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/props-c-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later."
+    }
+  }
+}

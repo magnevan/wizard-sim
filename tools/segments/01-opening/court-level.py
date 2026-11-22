@@ -55,10 +55,9 @@ def seg_dist(x, y, a, b):
 r_arm = lambda x, y: math.hypot(x - ARM[0], (y - ARM[1]))
 # the channels: seven strips of setts running out from the plinth, toward the gates and the roads
 CHANNELS = [math.radians(a) for a in (-90, -38, 14, 66, 118, 170, 222)]
-for a in CHANNELS:
-    end = (ARM[0] + math.cos(a) * 80, ARM[1] + math.sin(a) * 80)
-    paint(lambda x, y, e=end: seg_dist(x, y, ARM, e) < 1.1 and r_arm(x, y) > PLINTH_R, 'cobble')
-paint(lambda x, y: r_arm(x, y) < PLINTH_R + 3, 'cobble')           # the setts round the plinth
+# the channels and the ring round the plinth are an inlaid floor (a flat Codex prop, codex-rosette); a band of setts
+# along the buildings' feet and the balustrade frames the plaza
+paint(lambda x, y: (x < 7 or y < 7 or y > SEA_Y - 3 or x > W - 4), 'cobble')
 paint(lambda x, y: x < 4 or y < 4, 'flagstone')                    # the buildings' feet
 paint(lambda x, y: y > SEA_Y + 1.2, 'water')                       # the sea below the terrace (it carries on past the edge)
 paint(lambda x, y: x > W - 3 and abs(y - GATE_BATTERY[1]) < 5, 'cobble')   # the road out of the east gate
@@ -78,6 +77,8 @@ def balustrade_y(x, y0, y1):
     for k in range(n):
         prop('codex-balustrade-y', x, y0 + (k + .5) * (y1 - y0) / n, True)
 
+# the inlaid rosette round it, the seven channels in it (a flat Codex prop, 48 u across)
+prop('codex-rosette', ARM[0], ARM[1])
 # the great armillary (Codex: one large prop, sorted with the bodies so you can walk behind it; it blocks its plinth)
 prop('codex-armillary-grand', ARM[0], ARM[1], True)
 for k in range(8):                                      # lantern pillars round the plinth
@@ -85,16 +86,22 @@ for k in range(8):                                      # lantern pillars round 
     prop('codex-lantern-pillar', ARM[0] + math.cos(a) * (PLINTH_R + 4.5), ARM[1] + math.sin(a) * (PLINTH_R + 4.5), True)
 for a in (0.25, 0.75):                                  # benches on the near side, facing it
     prop('codex-bench', ARM[0] + math.cos(a * math.pi) * (PLINTH_R + 9), ARM[1] + math.sin(a * math.pi) * (PLINTH_R + 9), True)
-# a ring of flower beds between the channels, and in each quarter of the plaza a planted island with a lilac tree and
-# benches, so the court reads as a designed space rather than an empty floor (round 5 critique)
-for k in range(7):
-    a = (CHANNELS[k] + CHANNELS[(k + 1) % 7] + (2 * math.pi if k == 6 else 0)) / 2
-    prop('codex-urn-planter', ARM[0] + math.cos(a) * (PLINTH_R + 9), ARM[1] + math.sin(a) * (PLINTH_R + 9), True)
-for cx, cy in [(30, 30), (120, 30), (30, 82), (120, 82)]:
-    prop('codex-lilac-tree', cx, cy, True)
-    for dx, dy, asset in [(-4, 0, 'codex-lavender-foxglove'), (4, 0, 'codex-white-shrub'), (0, 4, 'codex-yellow-shrub'), (0, -4, 'codex-lilac-shrub')]:
-        prop(asset, cx + dx, cy + dy, not asset.startswith(('codex-lavender', 'codex-white')))
-    prop('codex-bench', cx + 6.5, cy + 6.5, True)
+# the plaza's quarters (round 6 critique: one stamped group everywhere read as repetition): two fountains and two rose
+# beds, each on a compass medallion, with benches facing them
+for (cx, cy), feature in zip([(30, 28), (120, 28), (28, 84), (122, 84)], ['codex-fountain-big', 'codex-rose-bed-big', 'codex-rose-bed-big', 'codex-fountain-big']):
+    prop('codex-medallion-big', cx, cy)
+    prop(feature, cx, cy, True)
+    prop('codex-bench', cx + 7, cy + 5, True)
+    prop('codex-bench', cx - 7, cy + 5, True)
+# obelisks either side of each gate, banner poles along the main building, the tower's door on a star tile
+for x, y in [(8, 30), (8, 42), (W - 7, GATE_BATTERY[1] - 8), (W - 7, GATE_BATTERY[1] + 8)]:
+    prop('codex-obelisk', x, y, True)
+for x in (40, 58, 92, 110):
+    prop('codex-banner-pole', x, 8, True)
+prop('codex-star-tile', 75, 6)
+# the scholars: tables and book carts along the cloister, where the library is
+for y, asset in [(56, 'codex-scholar-table'), (62, 'codex-book-cart'), (70, 'codex-scholar-table'), (77, 'codex-book-cart')]:
+    prop(asset, 10, y, True)
 # the terrace's edge above the sea, with the stairs down (closed for now: urns across the top step)
 balustrade_x(SEA_Y, 1, STAIRS[0]); balustrade_x(SEA_Y, STAIRS[1], W - 1)
 for x in (STAIRS[0], STAIRS[1]):
@@ -132,6 +139,11 @@ person('student', 'idle', 5, 0, 135, 69, 73.5)
 for x, y, f in [(96, 40, 180), (98, 42, 200), (40, 30, 0), (112, 76, 270), (114, 74, 250), (30, 88, 90)]:
     person('student', 'idle', [4, 5, 6][len(extras) % 3], 0, f, x, y)
 person('student', 'walk', 4, 0, 0, 50, 46); person('student', 'walk', 6, 0, 180, 104, 30)
+# students in small groups: at the fountains, at the scholars' tables, crossing to the tower, watching the armillary
+for x, y, f, act in [(36, 33, 200, 'idle'), (38, 31, 230, 'idle'), (114, 86, 300, 'idle'), (116, 88, 330, 'idle'), (118, 85, 270, 'idle'),
+                     (14, 56, 180, 'cast'), (14, 70, 180, 'idle'), (16, 72, 200, 'idle'), (70, 22, 270, 'walk'), (80, 24, 270, 'walk'),
+                     (92, 66, 210, 'idle'), (94, 64, 230, 'idle'), (56, 40, 30, 'idle'), (58, 42, 60, 'idle'), (100, 96, 300, 'walk')]:
+    person('student', act, [4, 5, 6][len(extras) % 3], 0, f, x, y)
 person('soldier', 'idle', 0, 3, 180, 142, 46); person('soldier', 'idle', 0, 3, 180, 142, 58)   # the gate's guards
 
 # ---- the level -------------------------------------------------------------------------------------------------------

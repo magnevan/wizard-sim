@@ -1,0 +1,22 @@
+{
+  "id": "codex-scholar-table",
+  "kind": "prop",
+  "name": "Scholar table",
+  "footprint": [
+    2.2,
+    1.2
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        28,
+        44
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/props-c-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later."
+    }
+  }
+}

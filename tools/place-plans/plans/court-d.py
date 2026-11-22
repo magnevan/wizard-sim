@@ -63,14 +63,18 @@ edge that drops a tier; the drill yard's road ends at a gate with two piers; the
 shows; the river comes out of a culvert under the north wall; the land past the inlet that no route reaches is woods.
 
 Revision 13 (the engine's new checks): a belt of woods 12 u deep along the land's edges, open only where the roads leave,
-so no walkable ground sees the void; cheek walls down both sides of each flight, so its head has no unguarded drop."""
+so no walkable ground sees the void; cheek walls down both sides of each flight, so its head has no unguarded drop.
+
+Revision 14 (the second sense round, 6.5/10): the sea one level, a metre under the quay, so the quay stands at the water;
+buildings at real scale (the great hall 16 m; the library and the workshops 9 m, as tall as they can be south of the
+balcony road without hiding it); a stoop at each of the hall's doors; the battery road's gate as two matching piers."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 13)', U=(-95, 110), V=(-62, 100))
+P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 14)', U=(-95, 110), V=(-62, 100))
 C = (0, -40)            # the amphitheatre's centre, up the screen
 ARM = (0, 18)
-SEA = -9.0
+SEA = -6.0
 def toward(a, b, d):  # the point d along from a towards b
     L = math.dist(a, b); return (a[0] + (b[0] - a[0]) * d / L, a[1] + (b[1] - a[1]) * d / L)
 
@@ -89,8 +93,9 @@ P.fill(rect(-95, -42, -24, -20), 6.0, 'grass'); P.fill(rect(24, -42, 110, -20), 
 P.fill(circle(ARM, 7.5), 2.5, 'stairs'); P.fill(circle(ARM, 6.5), 3.0, 'plaza')   # the dais, in two 0.5 m rings you can step up anywhere
 
 # the north road: straight down through the great hall's gate
-P.building(arc_band(C, 8, 20, 35, 145), 6.0, 12.0, 'great hall', doors=[polar(C, 21, 65), polar(C, 21, 115)])
+P.building(arc_band(C, 8, 20, 35, 145), 6.0, 16.0, 'great hall', doors=[polar(C, 21, 65), polar(C, 21, 115)])
 P.fill(orect(polar(C, 14, 90), 6, 14, math.radians(90)), 6.0, 'path')
+for a in (65, 115): P.fill(circle(polar(C, 22, a), 2.2), 6.5, 'dais')                             # a stoop at each of the hall's doors
 P.fill(rect(-3, -46, 3, -30), 6.0, 'path')
 for du in (-6.5, 3.5): P.building(rect(du, -45, du + 3, -42), 6.0, 8.0)                              # the north gate's towers
 for su in (-26, 26): P.fill(rect(su - 5, -17, su + 5, -12.5), 6.0, 'paving')                        # a landing at each flight's head, square to it
@@ -110,7 +115,7 @@ YARD = (-44, -30)
 
 # a library and workshops on the middle terrace's wings, doors facing the plaza
 for a0, a1, nm in ((42, 56, 'workshops'), (124, 138, 'library')):
-    P.building(arc_band(C, 50, 66, a0, a1, 10), 3.0, 7.0, nm, doors=[polar(C, 48.5, (a0 + a1) / 2)])
+    P.building(arc_band(C, 50, 66, a0, a1, 10), 3.0, 9.0, nm, doors=[polar(C, 48.5, (a0 + a1) / 2)])
 
 # the sea landing: straight below the armillary, an axis stair off the plaza's rim, then down the cliff
 P.stairs(orect((0, 41), 10, 6, math.radians(90)), 3.0, 1.0, 90)
@@ -128,7 +133,7 @@ P.building(rect(41, -62, 55, -56), 4.0, 2.0, roof='wall')                       
 P.fill(rect(24, -34, 95, -26), 6.0, 'path')
 P.fill(rect(40, -34, 56, -26), 6.5, 'wood')                                                                        # the deck
 P.building(rect(40, -35, 56, -34), 6.5, 1.0, roof='wall'); P.building(rect(40, -26, 56, -25), 6.5, 1.0, roof='wall')   # parapets
-P.building(rect(36, -38, 39, -35), 6.0, 8.0); P.building(rect(36, -25, 39, -22), 6.0, 3.0)                         # a gate tower north of the road, a post south of it
+P.building(rect(36, -37, 38.5, -34.5), 6.0, 5.0); P.building(rect(36, -25.5, 38.5, -23), 6.0, 5.0)                    # the gate: two matching piers either side of the road
 P.building(circle((66, -42), 6), 6.0, 14, 'battery tower')
 BAT = (74, -30)
 P.fill(rect(53, -46, 59, -34), 6.0, 'path')                                                                        # the gorge path up beside the stream

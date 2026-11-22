@@ -36,6 +36,7 @@ Docs: `game/content/README.md` (Height), `docs/current-state.md`, and the room l
 - [ ] Phase 4, minimal (after phase 6; the user left the order to Claude and asked for both, 2026-11-22): `zAt(x, y)`, with bodies and props drawn at their tier's height, and cliff faces as flat-coloured strips. That's enough to walk the grey-box and judge flow.
 - [ ] Two fixes from the first in-game flow round (2026-11-22): the camera should follow the wizard's drawn position at height, not the unlifted ground point; and the generated court needs the armillary prop on its dais.
 - [ ] A camera look-ahead for landmarks (the fourth in-game flow round on the courtyard, 2026-11-22): within about a screen of a tall landmark, bias the framing so the whole of it stays in view. Walking up the screen towards the armillary, it leaves the top of the frame (the briefing, the finale climb).
+- [ ] Camera sequences (the user, 2026-11-22): at the courtyard's briefing and finale arrival, a scripted pull-back or pan brings the whole armillary into view, then returns to play. It's triggered from a level marker.
 - [ ] Seams between places (proposed): `content:check` verifies both sides of each seam match. See [the continuous world](../explorations/2026-11-09-continuous-world-todo.md#2026-11-22-the-segment-as-one-map).
 - [ ] Phase 7: the sense lint in `content:check`.
 - [ ] Before any art: phase 3 (shots and height), phase 4 in full (painted cliff faces, effects and lighting at height), phase 5 (buildings sorted by footprint).

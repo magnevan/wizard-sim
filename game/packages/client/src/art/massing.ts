@@ -64,7 +64,7 @@ const M = U_PER_M;
  * The map is 130 x 100 u (78 x 60 m). The two ranges stand just past its far edges, so their faces are the map's
  * edge and nothing needs to collide with them: west, the Great Hall (the strike lanes, the sack and the slam ring
  * run along its foot) and the library wing south of it; north, the workshops, three storeys, with the armoury's
- * tower over the door where the rack stands. The courtyard opens to the south-east, the armillary on its plinth.
+ * tower over the door where the rack stands. A garden terrace to the south-east, by the gate to the courtyard.
  */
 const ARMOURY_X = 100;
 const hall: Block = {
@@ -98,11 +98,32 @@ const tower: Block = {
     { at: 2.5, w: 2, z0: 14, z1: 17, kind: 'window' },
   ],
 };
-/** The armillary on its plinth in the courtyard, where the briefing is: a stand-in block for the sphere. */
-const plinth: Block = { id: 'plinth', x0: 95, x1: 105, y0: 77, y1: 87, h: 1.6, wall: 0xb9b2a4, side: 0x8f8879, art: 'armillary' };
-const sphere: Block = { id: 'armillary', x0: 96.5, x1: 103.5, y0: 78.5, y1: 85.5, h: 9, wall: 0xb08d57, side: 0x8a6c3f, paintedIn: 'plinth' };
-const ACADEMY: MassingPlan = { id: 'academy', room: 'yard', clear: 1.5, blocks: [worksWest, worksEast, tower, hall, library, plinth, sphere] };
-export const MASSING: Record<string, MassingPlan> = { academy: ACADEMY };
+const ACADEMY: MassingPlan = { id: 'academy', room: 'yard', clear: 1.5, blocks: [worksWest, worksEast, tower, hall, library] };
+/**
+ * The courtyard (blockout, 2026-11-22: tools/segments/01-opening/court-level.py, 150 x 110 u): the academy's main
+ * building along the north edge in two halves with its tower over the grand portal, and the cloister range along the
+ * west edge in two halves with the archway through to the drill yard. The great armillary in the middle is a prop
+ * (codex-armillary-grand), sorted with the bodies, since you walk all round it.
+ */
+const courtRows = (from: number, to: number): Row[] => [
+  { from, to, every: 4.5, w: 2.4, z0: 1.2, z1: 4.6, kind: 'window' },
+  { from, to, every: 4.5, w: 1.6, z0: 7.4, z1: 10.2, kind: 'window' },
+  { from, to, every: 4.5, w: 1.6, z0: 12.2, z1: 14.8, kind: 'window' },
+];
+const COURT: MassingPlan = {
+  id: 'court', room: 'court', clear: 1.5,
+  blocks: [
+    { id: 'court-north-west', x0: 0, x1: 69, y0: -14 * M, y1: 0, h: 16, rise: 8, ridge: 'x', south: courtRows(3, 40), art: 'court-north-west' },
+    { id: 'court-north-east', x0: 81, x1: 154, y0: -14 * M, y1: 0, h: 16, rise: 8, ridge: 'x', south: courtRows(2, 43), art: 'court-north-east' },
+    { id: 'court-tower', x0: 66, x1: 84, y0: -16 * M, y1: 1, h: 30, rise: 9, ridge: 'x', wall: 0xc4bdae, side: 0x958e7f, art: 'court-tower',
+      south: [{ at: 2.6, w: 5.6, z0: 0, z1: 7.5, kind: 'door' }, { at: 3.6, w: 3.6, z0: 11, z1: 15, kind: 'window' }, { at: 3.6, w: 3.6, z0: 18.5, z1: 22.5, kind: 'window' }] },
+    { id: 'court-west-north', x0: -20 * M, x1: 0, y0: -14 * M, y1: 55, h: 14, rise: 9, ridge: 'y', art: 'court-west-north',
+      east: [{ from: 3, to: 27, every: 4.5, w: 2.2, z0: 3.5, z1: 11, kind: 'window' }, { from: 42, to: 55, every: 4.5, w: 2.2, z0: 3.5, z1: 11, kind: 'window' }, { at: 29.5, w: 7.5, z0: 0, z1: 7, kind: 'void' }] },
+    { id: 'court-west-south', x0: -20 * M, x1: 0, y0: 55, y1: 124, h: 14, rise: 9, ridge: 'y', art: 'court-west-south',
+      east: [{ from: 2, to: 40, every: 4.5, w: 2.2, z0: 3.5, z1: 11, kind: 'window' }] },
+  ],
+};
+export const MASSING: Record<string, MassingPlan> = { academy: ACADEMY, court: COURT };
 
 const DARK = { window: 0x2c3340, door: 0x4a3626, void: 0x14161b };
 const ROOF = 0x56627a, ROOF_EDGE = 0x3a4458, WALL = 0xaaa394, SIDE = 0x837c6e, EDGE = 0x5d574c;
@@ -206,5 +227,5 @@ export class Massing {
   }
 }
 
-/** ?massing=<plan> names the grey box to show (the academy's, in the yard, by default); ?massing=off shows none. */
-export const massingParam = (): MassingPlan | null => MASSING[opt('massing') ?? 'academy'] ?? null;
+/** Every room's grey box (each shows only in its own room); ?massing=off shows none. */
+export const massingParam = (): MassingPlan[] => (opt('massing') === 'off' ? [] : Object.values(MASSING));

@@ -1,7 +1,7 @@
 """Cuts a Codex prop sheet (props.txt: objects on magenta, a scale wizard leftmost) into the game's prop assets.
 No generation calls.
 
-  python tools/building-art/props.py <sheet.png> <id1> <id2> ... [--wizard 36] [--prefix codex-] [--wizard-left]
+  python tools/building-art/props.py <sheet.png> <id1> <id2> ... [--wizard 36 | --height px] [--prefix codex-] [--wizard-left] [--grow 6]
 
 Objects are found as separate blobs on the magenta, ordered top row first and left to right within a row (rows are
 blobs whose middles are close in height). The first blob (top row, leftmost) is the scale wizard: the sheet is scaled so it is --wizard art
@@ -26,7 +26,7 @@ def key(a):
 def main():
     args = [a for a in sys.argv[1:]]
     opt = lambda k, d: args[args.index(k) + 1] if k in args else d
-    flags = {'--wizard', '--prefix', '--keep-raw', '--grow'}
+    flags = {'--wizard', '--prefix', '--keep-raw', '--grow', '--height'}
     args = [a for a in args if a != '--wizard-left'] + (['--wizard-left'] if '--wizard-left' in args else [])
     pos, i = [], 0
     while i < len(args):
@@ -48,11 +48,16 @@ def main():
         else: cur.append(s)
     rows.append(cur)
     order = [s for r in rows for s in sorted(r, key=lambda s: s[1].start)]
-    # the scale wizard: the top row's first, or with --wizard-left the leftmost object (when it stands lower than its row)
-    wizard = min(order, key=lambda s: s[1].start) if '--wizard-left' in args else order[0]
-    order.remove(wizard)
-    k = wiz_px / (wizard[0].stop - wizard[0].start)
-    print(f'{len(order)} objects; scale {k:.3f} (wizard {wizard[0].stop - wizard[0].start} px)')
+    if '--height' in args:
+        # no scale figure: one object, scaled to this height in art px
+        k = float(opt('--height', '0')) / max(s[0].stop - s[0].start for s in order)
+        print(f'{len(order)} objects; scale {k:.3f} (--height)')
+    else:
+        # the scale wizard: the top row's first, or with --wizard-left the leftmost object (when it stands lower than its row)
+        wizard = min(order, key=lambda s: s[1].start) if '--wizard-left' in args else order[0]
+        order.remove(wizard)
+        k = wiz_px / (wizard[0].stop - wizard[0].start)
+        print(f'{len(order)} objects; scale {k:.3f} (wizard {wizard[0].stop - wizard[0].start} px)')
     if len(ids) != len(order):
         print('ids given:', len(ids), 'objects found:', len(order), '(give one id per object, - to skip)')
     for sl, pid in zip(order, ids):

@@ -1,5 +1,5 @@
 // The drill yard (the opening's beats 2 and 3) in real Chrome: it loads from its #anchor, every prop arrives, the
-// stations are there, Use at the rack gives a charged focus, the gate takes the party on to the battery, and nothing
+// stations are there, Use at the rack gives a charged focus, the gate takes the party back into the courtyard, and nothing
 // errors. Screenshots from around the area, the stations and the academy round it.
 // Usage (after npm run build): node scripts/yard-check.mjs [--out dir]
 import { mkdirSync } from 'node:fs';
@@ -13,7 +13,7 @@ mkdirSync(out, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fail = (msg) => { console.error('FAIL:', msg); process.exitCode = 1; };
 // plan coordinates (tools/segments/01-opening/yard-level.py) -> the sim's, whose origin is the area's centre
-const SPOTS = { start: [86, 90], armillary: [92, 85], into: [44, 83], hall: [6, 40], strike: [13, 63], heavy: [17, 46], retreat: [19, 27], corner: [8, 8],
+const SPOTS = { start: [120, 67], garden: [100, 86], into: [44, 83], hall: [6, 40], strike: [13, 63], heavy: [17, 46], retreat: [19, 27], corner: [8, 8],
   parry: [31, 11], lane: [44, 11], hands: [82, 18], focus: [100, 8], drill: [72, 40], casting: [39, 44], out: [114, 50], gate: [120, 70] };
 
 const stop = await startPreview();
@@ -48,9 +48,9 @@ try {
   console.log('focus', focus);
   if (!focus.focus) fail('Use at the rack should give a charged focus');
   await p.screenshot({ path: join(out, 'focus-taken.png') });
-  // the gate: with a focus, walking up to it goes on to the battery
+  // the gate: with a focus, walking up to it goes back into the courtyard
   await put(125.6, 72);
-  await p.waitForFunction(() => window.wizardSim.world.def.id === 'battery', { timeout: 8000, polling: 100 }).catch(() => fail('the gate should take the party on to the battery'));
+  await p.waitForFunction(() => window.wizardSim.world.def.id === 'court', { timeout: 8000, polling: 100 }).catch(() => fail('the gate should take the party back into the courtyard'));
   console.log('left for', await p.evaluate(() => window.wizardSim.world.def.id));
   console.log(process.exitCode ? 'yard check FAILED' : 'yard check ok', '->', out);
 } finally {

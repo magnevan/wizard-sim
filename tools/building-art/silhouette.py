@@ -18,9 +18,9 @@ from PIL import Image, ImageDraw
 M = 1 / 0.6                  # units per metre
 PPU, FY, PX_PER_M = 16, 0.5, 14.5
 S = math.sqrt(0.5)
-MAP_W, MAP_H = 130, 100      # the yard
+MAP_W, MAP_H = 130, 100      # the yard; a building in another map says so in MAP_OF
 CANVAS = (1774, 887)
-MAGENTA, WALL, SIDE, ROOF, DARK = (255, 0, 255), (170, 163, 148), (131, 124, 110), (86, 98, 122), {'window': (44, 51, 64), 'door': (74, 54, 38)}
+MAGENTA, WALL, SIDE, ROOF, DARK = (255, 0, 255), (170, 163, 148), (131, 124, 110), (86, 98, 122), {'window': (44, 51, 64), 'door': (74, 54, 38), 'void': (20, 22, 27)}
 
 def block(id, x0, x1, y0, y1, h, rise=0, ridge=None, east=(), south=()):
     return dict(id=id, x0=x0, x1=x1, y0=y0, y1=y1, h=h, rise=rise, ridge=ridge, east=list(east), south=list(south))
@@ -44,10 +44,23 @@ BUILDINGS = {
                       south=[(1.8, 3.4, 0, 4.2, 'door'), (2.5, 2, 8, 11, 'window'), (2.5, 2, 14, 17, 'window')])],
     # the armillary on its plinth in the courtyard: drawn as the plinth with a tall block where the sphere stands, painted as one
     'armillary': [block('plinth', 95, 105, 77, 87, 1.6), block('sphere', 96.5, 103.5, 78.5, 85.5, 9)],
+    # the courtyard (court-level.py, 150 x 110): the main building along the north in two halves and its tower over the
+    # portal, the cloister range along the west in two halves, its archway through to the yard in the northern half
+    'court-north-west': [block('court-north-west', 0, 69, -14 * M, 0, 16, 8, 'x',
+                               south=row(3, 40, 4.5, 2.4, 1.2, 4.6) + row(3, 40, 4.5, 1.6, 7.4, 10.2) + row(3, 40, 4.5, 1.6, 12.2, 14.8))],
+    'court-north-east': [block('court-north-east', 81, 154, -14 * M, 0, 16, 8, 'x',
+                               south=row(2, 43, 4.5, 2.4, 1.2, 4.6) + row(2, 43, 4.5, 1.6, 7.4, 10.2) + row(2, 43, 4.5, 1.6, 12.2, 14.8))],
+    'court-tower': [block('court-tower', 66, 84, -16 * M, 1, 30, 9, 'x',
+                          south=[(2.6, 5.6, 0, 7.5, 'door'), (3.6, 3.6, 11, 15, 'window'), (3.6, 3.6, 18.5, 22.5, 'window'), (4.1, 2.6, 25, 28, 'window')])],
+    'court-west-north': [block('court-west-north', -20 * M, 0, -14 * M, 55, 14, 9, 'y',
+                               east=row(3, 27, 4.5, 2.2, 3.5, 11) + row(42, 55, 4.5, 2.2, 3.5, 11) + [(29.5, 7.5, 0, 7, 'void')])],
+    'court-west-south': [block('court-west-south', -20 * M, 0, 55, 124, 14, 9, 'y',
+                               east=row(2, 40, 4.5, 2.2, 3.5, 11))],
 }
+MAP_OF = {name: (150, 110) for name in ('court-north-west', 'court-north-east', 'court-tower', 'court-west-north', 'court-west-south')}
 
 def pt(px, py, z):
-    x, y = px - MAP_W / 2, py - MAP_H / 2
+    x, y = px - MAP[0] / 2, py - MAP[1] / 2
     return ((x - y) * S * PPU, (x + y) * S * PPU * FY - z * PX_PER_M)
 
 def faces(b):
@@ -73,7 +86,11 @@ def faces(b):
         out += [([pt(x1, y0, h), pt(x1, y1, h), pt(xm, y1, h + rise), pt(xm, y0, h + rise)], ROOF), ([pt(x0, y1, h), pt(x1, y1, h), pt(xm, y1, h + rise)], WALL)]
     return out
 
+MAP = (MAP_W, MAP_H)
+
 def render(name, out_dir):
+    global MAP
+    MAP = MAP_OF.get(name, (MAP_W, MAP_H))
     blocks = BUILDINGS[name]
     polys = [f for b in blocks for f in faces(b)]
     xs = [p[0] for poly, _ in polys for p in poly]; ys = [p[1] for poly, _ in polys for p in poly]

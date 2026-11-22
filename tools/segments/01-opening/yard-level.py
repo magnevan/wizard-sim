@@ -32,7 +32,7 @@ rng = random.Random(2203)
 BAL_X, BAL_Y = 46, 54
 IN_GAP = (78, 88)            # on the west run (y): from the courtyard into the yard
 OUT_GAP = (108, 120)         # on the north run (x): from the yard back into the courtyard
-ARMILLARY = (100, 82)        # the plinth is 10 x 10 (art/massing.ts draws it and the sphere)
+GARDEN = (96, 80)            # the garden terrace's middle: a round bed with a planter
 # the stations (sim yard.ts finds them by these ids)
 STRAW = [(8, 58), (11.5, 57.4), (15, 58), (18.5, 57.4)]
 HEAVY, RING = (14, 44), (9.5, 40.5)
@@ -42,8 +42,8 @@ HANDS = (82, 18)
 HANDS_IN = [(76.5, 12.5), (87.5, 12.5), (76.5, 23.5), (87.5, 23.5)]
 FOCUS = (100, 5)
 GATE = (127, 72)
-STARTS = [(84.5, 89), (87.1, 89), (84.5, 91.4), (87.1, 91.4)]
-PATH = [(86, 90), (70, 86), (BAL_X, 83), (28, 78), (17, 70), (13, 63), (17, 50), (20, 38), (23, 30), (23, 18), (27, 12), (PARRY_HOME[0] - 3, 12.5),
+STARTS = [(119, 63.5), (121.6, 63.5), (119, 65.9), (121.6, 65.9)]
+PATH = [(120, 69), (104, 76), (86, 84), (70, 86), (BAL_X, 83), (28, 78), (17, 70), (13, 63), (17, 50), (20, 38), (23, 30), (23, 18), (27, 12), (PARRY_HOME[0] - 3, 12.5),
         (70, 16), (HANDS[0], HANDS[1] + 7.5), (93, 16), (FOCUS[0], FOCUS[1] + 2.5), (108, 15), (114, 34), (114, BAL_Y), (118, 64), GATE]
 
 
@@ -110,8 +110,11 @@ paint(rect(54, 28, 46, 20, 1.6, 18), 'dirt')                                    
 paint(rect(32, 36, 12, 12, 1.2, 19), 'dirt')                                        # the students' casting line
 paint(path(PATH, 3.2, .8, 20), 'dirt')                                              # the worn path, station to station
 # the courtyard: paving, the armillary's plinth, its seven channels (dim; the finale lights them)
-paint(in_court, 'flagstone')
-paint(lambda x, y: math.hypot(x - ARMILLARY[0], y - ARMILLARY[1]) < 8.5, 'cobble')
+# the garden terrace (the courtyard is its own room since 2026-11-22): lawn, a gravel walk from the gate, a round bed
+paint(in_court, 'grass')
+paint(path([(GATE[0], GATE[1]), (120, 69), (104, 76), (86, 84), (70, 86), (BAL_X - 4, 83)], 3.4, .3, 24), 'gravel')
+paint(path([(114, BAL_Y - 5), (114, 64), (118, 68)], 3.0, .3, 25), 'gravel')
+paint(lambda x, y: math.hypot(x - GARDEN[0], y - GARDEN[1]) < 6.5, 'dirt')
 paint(path([(BAL_X - 6, 83), (BAL_X + 4, 83)], 5, .2, 21), 'flagstone')          # the opening into the yard, paved through
 paint(path([(114, BAL_Y - 5), (114, BAL_Y + 3)], 6, .2, 22), 'flagstone')        # the opening back out
 paint(rect(GATE[0] - 6, GATE[1] - 4, 10, 8, .3, 23), 'cobble')                     # the courtyard's east gate
@@ -152,28 +155,25 @@ balustrade_y(BAL_X, BAL_Y + .6, IN_GAP[0]); balustrade_y(BAL_X, IN_GAP[1], H - .
 balustrade_x(BAL_Y, BAL_X + .6, OUT_GAP[0]); balustrade_x(BAL_Y, OUT_GAP[1], W - .6)
 for x, y in [(BAL_X, BAL_Y), (BAL_X, IN_GAP[0]), (BAL_X, IN_GAP[1]), (OUT_GAP[0], BAL_Y), (OUT_GAP[1], BAL_Y)]:
     prop('codex-lantern-pillar', x, y, True)
-# the courtyard's edges: the same balustrade south and east, the east gate in it
+# the terrace's edges: the same balustrade south and east, the gate through to the courtyard in it
 balustrade_x(H - .8, BAL_X + .6, W - .6)
 balustrade_y(W - .8, BAL_Y + .6, GATE[1] - 4.5); balustrade_y(W - .8, GATE[1] + 4.5, H - .6)
 for dy in (-3.8, 3.8):
     prop('battery-pillar', W - 1.6, GATE[1] + dy, True)
     prop('banner-red', W - 3.4, GATE[1] + dy * 1.4)
 prop('signpost', GATE[0] - 5, GATE[1] - 5.5, True)
-# the armillary's plinth: solid all round (the grey box hides these, art/massing.ts)
-run_x('stone-wall-low', 77.25, 95.5, 105)
-run_x('stone-wall-low', 86.75, 95.5, 105)
-run_y('stone-wall-low-flip', 95.25, 78, 86.5)
-run_y('stone-wall-low-flip', 104.75, 78, 86.5)
-for k in range(8):                                  # lanterns round the plinth, benches further out
-    a = k * math.pi / 4 + math.pi / 8
-    prop('codex-lantern-post', ARMILLARY[0] + math.cos(a) * 9, ARMILLARY[1] + math.sin(a) * 9, True)
-for a in (0.25, 0.75):          # benches on the near side only: anything north of the grey box draws over it
-    prop('codex-bench', ARMILLARY[0] + math.cos(a * math.pi) * 15, ARMILLARY[1] + math.sin(a * math.pi) * 15, True)
+# the round bed: an urn in its middle, flowers round it, benches looking at it
+prop('codex-urn-planter', GARDEN[0], GARDEN[1], True)
+for k, asset in enumerate(['codex-lilac-shrub', 'codex-lavender-foxglove', 'codex-yellow-shrub', 'codex-white-shrub', 'codex-lilac-shrub', 'codex-lavender-foxglove']):
+    a = k * math.pi / 3
+    prop(asset, GARDEN[0] + math.cos(a) * 4.2, GARDEN[1] + math.sin(a) * 4.2, not asset.startswith(('codex-lavender', 'codex-white')))
+for a in (0.25, 0.75):
+    prop('codex-bench', GARDEN[0] + math.cos(a * math.pi) * 9.5, GARDEN[1] + math.sin(a * math.pi) * 9.5, True)
 for asset, x, y in [('codex-conifer-tall', 50, 58), ('codex-conifer-tall', 50, 96), ('codex-conifer-tall', 125.5, 58), ('codex-conifer-round', 125, 95),
                     ('codex-urn-planter', 112, 92), ('codex-urn-planter', 88, 92),
                     ('codex-lilac-shrub', 54, 62), ('codex-yellow-shrub', 58, 59), ('codex-white-shrub', 52, 70), ('codex-lavender-foxglove', 56, 95),
                     ('codex-lilac-shrub', 120, 95), ('codex-yellow-shrub', 124, 88), ('codex-lavender-foxglove', 104, 95),
-                    ('codex-star-banner', 92.5, 90.5), ('codex-star-banner', 107.5, 90.5), ('codex-mossy-rocks', 66, 96), ('codex-notice-board', 72, 76)]:
+                    ('codex-lilac-tree', 70, 70), ('codex-lilac-tree', 112, 90), ('codex-mossy-rocks', 66, 96), ('codex-notice-board', 112, 62)]:
     prop(asset, x, y, not asset.startswith(('codex-star-banner', 'codex-lavender', 'codex-white')))
 # along the Great Hall's foot: lanterns, a bench by its door, the notice board
 for y in (14, 30, 50, 66):
@@ -227,14 +227,7 @@ for asset, x, y in [('planks-stacked', 50, 51.4), ('logs-pile', 54, 51.6), ('sto
                     ('nail-barrel', 68, 52.2), ('gravel-heap', 71.5, 51.6), ('wheelbarrow', 75, 52), ('fence-posts-bundle', 43.6, 66), ('ladder-lying', 43.4, 72),
                     ('handcart', 30, 50)]:
     prop(asset, x, y, asset not in ('ladder-lying',))
-# a little life in the grass (the yard only)
-for asset in ['tall-grass-tuft'] * 4 + ['yellow-dandelion', 'three-pebbles'] * 2:
-    for _ in range(40):
-        x, y = rng.uniform(5, W - 5), rng.uniform(5, H - 5)
-        if in_court(x, y) or min(seg_dist(x, y, PATH[i], PATH[i + 1]) for i in range(len(PATH) - 1)) < 2.6 or any(math.hypot(x - p[1], y - p[2]) < 3 for p in props):
-            continue
-        prop(asset, x, y)
-        break
+# no loose scatter: the Codex ground textures carry their own pebbles and tufts (round 4 critique: lone props read as noise)
 
 # ---- the people who live here (art/extras.ts draws them; the sim never sees them) -----------------------------------
 extras = []
@@ -255,8 +248,7 @@ person('soldier', 'idle', 0, 0, 180, 68, 45)         # their sergeant
 person('student', 'cast', 4, 0, 270, 35, 43)         # the casting line
 person('student', 'cast', 6, 0, 270, 39, 43)
 person('student', 'idle', 5, 0, 300, 43, 44.5)
-person('student', 'idle', 6, 0, 135, 96.5, 89)       # the masters at the armillary, facing you
-person('student', 'idle', 5, 0, 135, 99.5, 89.5)
+person('student', 'idle', 6, 0, 225, 103, 84)       # in the garden, by the round bed
 person('student', 'walk', 4, 0, 180, 72, 66)         # the courtyard, busy this morning
 person('student', 'idle', 5, 0, 90, 118, 90)
 person('student', 'idle', 6, 0, 270, 119.5, 91.5)

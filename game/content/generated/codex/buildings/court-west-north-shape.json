@@ -1,0 +1,22 @@
+{
+ "building": "court-west-north",
+ "scale": 0.9726,
+ "anchor_plan": [
+  0,
+  55
+ ],
+ "anchor_px": [
+  639.43,
+  867.0
+ ],
+ "size": [
+  1774,
+  887
+ ],
+ "bbox": [
+  273,
+  20,
+  1501,
+  867
+ ]
+}

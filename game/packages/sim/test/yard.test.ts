@@ -72,7 +72,7 @@ describe('the drill yard', () => {
     expect(w.seats.runes[EL.fire - 1]).toBe(0); // a focus holds a charge: it doesn't refill
     put(w, 0, 'gate');
     run(w, 2);
-    expect(w.mode.leaveTo?.(w)).toBe('battery');
+    expect(w.mode.leaveTo?.(w)).toBe('court');
   });
 
   it('the hands test sends four straw goblins at whoever stands in its ring a moment, once', () => {

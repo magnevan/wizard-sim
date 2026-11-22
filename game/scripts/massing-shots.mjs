@@ -14,7 +14,7 @@ mkdirSync(out, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // plan coordinates (tools/segments/01-opening/yard-level.py)
 const SPOTS = { 'hall-door': [5, 38], corner: [6, 6], 'hall-mid': [6, 24], workshops: [40, 5], armoury: [100, 9], 'yard-mid': [60, 36],
-  strike: [13, 63], start: [86, 90], armillary: [94, 88], far: [110, 60] };
+  strike: [13, 63], start: [120, 67], garden: [100, 86], far: [110, 60] };
 
 const stop = await startPreview();
 const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });

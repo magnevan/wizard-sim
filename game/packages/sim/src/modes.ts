@@ -15,6 +15,7 @@ import { BATTERY_CHECKPOINTS, BWAVES, batteryReached, batteryStandoff, holdSpot,
 import { ARCHETYPES, ATTACK } from './archetypes';
 import { beginTutorialTick, tickTutorial } from './tutorial';
 import { tutPool, TUT_ORDER } from './tutorial-data';
+import { courtLeaveTo } from './court';
 import { YARD_CHECKPOINTS, YS, lateYard, newYard, sparRest, sparStandoff, sparTarget, tickYard, yardPress, yardReached, yardRuneMax } from './yard';
 import type { Mode, ModeId, WorldOpts } from './mode';
 import {
@@ -120,7 +121,7 @@ const TUTORIAL: Mode = {
 
 /**
  * The drill yard: the opening's crash course, stations along a path (yard.ts). A campaign area, so the party carries on
- * to the battery through its gate; it teaches no element of its own, the focus's charge is the academy's.
+ * back into the courtyard through its gate; it teaches no element of its own, the focus's charge is the academy's.
  */
 const YARD_MODE: Mode = {
   id: 'yard',
@@ -135,15 +136,25 @@ const YARD_MODE: Mode = {
   regen: (w, i) => (i >= 0 && i < MAX_SEATS ? 0 : undefined), // a focus holds a charge; it doesn't refill
   pools: (w) => [w.yard!],
   onSpawn: (w, i) => { w.yard!.tag[i] = 0; },
-  leaveTo: (w) => (w.yard!.state[YS.leave] ? 'battery' : undefined),
+  leaveTo: (w) => (w.yard!.state[YS.leave] ? 'court' : undefined),
   checkpoints: YARD_CHECKPOINTS,
   reached: yardReached,
 };
 
-export const MODES: Readonly<Record<ModeId, Mode>> = { sandbox: SANDBOX, arena: ARENA_MODE, survive: SURVIVE, battery: BATTERY_MODE, tutorial: TUTORIAL, yard: YARD_MODE };
+/** The courtyard: the academy's central court and the opening's hub; for now only its gates out (court.ts). */
+const COURT_MODE: Mode = {
+  id: 'court',
+  campaign: true,
+  setup: () => {},
+  director: () => {},
+  runeMax: () => 0,
+  leaveTo: courtLeaveTo,
+};
+
+export const MODES: Readonly<Record<ModeId, Mode>> = { sandbox: SANDBOX, arena: ARENA_MODE, survive: SURVIVE, battery: BATTERY_MODE, tutorial: TUTORIAL, yard: YARD_MODE, court: COURT_MODE };
 
 const ROOM_MODE: Readonly<Record<Room, ModeId>> = {
-  sanctum: 'sandbox', academy: 'sandbox', arena: 'arena', survive: 'survive', battery: 'battery', tutorial: 'tutorial', yard: 'yard',
+  sanctum: 'sandbox', academy: 'sandbox', arena: 'arena', survive: 'survive', battery: 'battery', tutorial: 'tutorial', yard: 'yard', court: 'court',
 };
 
 export const modeOf = (room: Room): Mode => MODES[ROOM_MODE[room]];

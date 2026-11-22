@@ -31,6 +31,7 @@ import { FIELD, fitField, gx, gy } from './art/field';
 import { floorLayout, floorPlaceholder } from './art/floor';
 import { groundTexture } from './art/ground-room';
 import { liftAt, liftRange } from './art/heights';
+import { Vistas, type LandmarkSpan } from './vista';
 import { toU, toV, toX, toY, turnedWorld } from './iso-world';
 import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
 import { EdgeMarks } from './edge-marks';
@@ -92,6 +93,8 @@ export class WorldView {
   private floor = new Sprite(floorPlaceholder(this.floorAt));
   /** The play area the floor and effect canvases are painted for. */
   private arenaKey = '';
+  /** The camera's scripted looks at a landmark (vista.ts). */
+  private vistas = new Vistas();
   /** Whether the floor's current texture is this view's own placeholder (the painted ground is shared). */
   private ownFloor = true;
   /** False while a room's painted ground is still on its way (tests and screenshots wait on it). */
@@ -601,14 +604,32 @@ export class WorldView {
     const cx = spots.reduce((a, p) => a + p.x, 0) / spots.length, cy = spots.reduce((a, p) => a + p.y, 0) / spots.length;
     let best: { y: number; w: number } | undefined;
     for (const m of w.def.markers) {
-      if (m.tag !== 'landmark') continue;
-      const prop = w.def.props.find((p) => Math.abs(p.x - m.x) < 0.5 && Math.abs(p.y - m.y) < 0.5);
-      const im = prop && propImage(prop.asset, 'lean');
-      if (!prop || !im) continue;
-      const tall = im.foot[1] + (propMeta(prop.asset)?.lift ?? 0) + liftAt(w.def, m.x, m.y); // art px from the flat ground to its top
-      const top = m.y - tall / (PPU * FY), d = Math.hypot(m.x - cx, m.y - cy);
+      const s = m.tag === 'landmark' ? this.landmarkSpan(w, m.x, m.y) : null;
+      if (!s) continue;
+      const d = Math.hypot(m.x - cx, m.y - cy);
       const k = Math.max(0, Math.min(1, (LANDMARK_FAR - d) / (LANDMARK_FAR - LANDMARK_NEAR)));
-      if (k > 0 && m.y < cy + 4 && (!best || k > best.w)) best = { y: top, w: k };
+      if (k > 0 && m.y < cy + 4 && (!best || k > best.w)) best = { y: s.top, w: k };
+    }
+    return best;
+  }
+
+  /** The landmark standing at view point (x, y): a Marker tagged `landmark` there with a prop on it. Its foot and top, view units. */
+  private landmarkSpan(w: World, x: number, y: number): LandmarkSpan | null {
+    const m = w.def.markers.find((k) => k.tag === 'landmark' && Math.abs(k.x - x) < 0.5 && Math.abs(k.y - y) < 0.5);
+    const prop = m && w.def.props.find((p) => Math.abs(p.x - m.x) < 0.5 && Math.abs(p.y - m.y) < 0.5);
+    const im = prop && propImage(prop.asset, 'lean');
+    if (!m || !prop || !im) return null;
+    const lift = liftAt(w.def, m.x, m.y), tall = im.foot[1] + (propMeta(prop.asset)?.lift ?? 0) + lift; // art px from the flat ground to its top
+    return { x: m.x, foot: m.y - lift / (PPU * FY), top: m.y - tall / (PPU * FY) };
+  }
+
+  /** The landmark nearest view point (x, y), for a vista there. */
+  private nearestLandmark(w: World, x: number, y: number): LandmarkSpan | null {
+    let best: LandmarkSpan | null = null, bd = Infinity;
+    for (const m of w.def.markers) {
+      if (m.tag !== 'landmark') continue;
+      const d = Math.hypot(m.x - x, m.y - y), s = d < bd ? this.landmarkSpan(w, m.x, m.y) : null;
+      if (s) { best = s; bd = d; }
     }
     return best;
   }
@@ -670,8 +691,12 @@ export class WorldView {
       if (this.isLocal(s)) (b.downed[s] ? down : up).push(p);
     }
     const mine = up.length + down.length;
-    const lift = liftRange(w.def), spots = mine ? (up.length ? up : down) : all;
-    this.camera.follow(w.dims.w, w.dims.h, spots, mine !== 1, dt, lift.up / (PPU * FY), lift.down / (PPU * FY), this.landmarkKeep(w, spots));
+    const lift = liftRange(w.def), spots = mine ? (up.length ? up : down) : all, rise = lift.up / (PPU * FY), sink = lift.down / (PPU * FY);
+    // a vista (vista.ts): pulled back on the landmark for a moment, then back to following
+    const shot = this.vistas.update(w.def, mine ? up : [], performance.now() / 1000, (x, y) => this.nearestLandmark(w, x, y), (s) => this.camera.fitSpan(s));
+    if (this.camera.zoom(shot && !shot.out ? shot.scale : this.camera.base)) this.scene.scale.set(this.camera.scale);
+    if (shot && !shot.out) { this.camera.follow(w.dims.w, w.dims.h, [{ x: shot.x, y: this.camera.centreForTop(shot.top) }], false, dt, rise, sink); return; }
+    this.camera.follow(w.dims.w, w.dims.h, spots, mine !== 1, dt, rise, sink, this.landmarkKeep(w, spots));
   }
 
   private fxMs = 0;

@@ -23,7 +23,8 @@ function fail(msg) { console.error(msg); process.exit(1); }
 
 switch (cmd) {
   case 'check': {
-    const { errors, rooms } = runCheck();
+    const { errors, warnings, rooms } = runCheck();
+    if (warnings?.length) console.warn(`content:check: ${warnings.length} sense warning(s) (docs/campaign/making-a-place.md#the-sense-rules)\n` + warnings.map((e) => '  - ' + e).join('\n'));
     if (errors.length) { console.error(`content:check: ${errors.length} problem(s)\n` + errors.map((e) => '  - ' + e).join('\n')); process.exit(1); }
     console.log(`content:check: ok (${rooms.map((r) => `${r.id} ${hex(roomHash(r))}`).join(', ')})`);
     break;

@@ -7,10 +7,12 @@
 //      reachable on foot from seat 0's start;
 //   5. the generated module (packages/sim/src/rooms.gen.ts) is up to date;
 //   6. the asset registry: every prop's meta.json is whole and names images that exist.
+// Then the sense lint (sense.mjs): warnings, printed but not failing.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { compileProject, emitGrounds, emitModule, isBlocked } from './compile.mjs';
+import { senseLintAll } from './sense.mjs';
 import { CELL, GAME, GEN_OUT, GROUND_OUT, LDTK_VERSION, SCHEMA, loadProject, loadProps } from './ldtk.mjs';
 
 const require = createRequire(import.meta.url);
@@ -215,5 +217,6 @@ export function runCheck({ project = undefined, genOut = GEN_OUT } = {}) {
     const grounds = existsSync(GROUND_OUT) ? readFileSync(GROUND_OUT, 'utf8').replace(/\r\n/g, '\n') : '';
     if (grounds !== emitGrounds(loaded)) errors.push(`${GROUND_OUT} is stale: run \`npm run content:build\``);
   } catch (e) { errors.push(e.message); }
-  return { errors, rooms, source };
+  const warnings = errors.length ? [] : senseLintAll(loaded, rooms);
+  return { errors, warnings, rooms, source };
 }

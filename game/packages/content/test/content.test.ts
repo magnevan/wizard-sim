@@ -305,6 +305,42 @@ describe('height tiers', () => {
   });
 });
 
+describe('the sense lint', () => {
+  // an 8 x 6 u room (16 x 12 cells), all floor at tier 0 unless a test paints it
+  const room = (over: Record<string, unknown> = {}) => ({
+    id: 'test', w: 8, h: 6, terrain: Array.from({ length: 12 }, () => '.'.repeat(16)), rock: [], propRock: [], markers: [], ...over,
+  });
+  const fill = (rows: string[], x0: number, y0: number, x1: number, y1: number, ch: string) =>
+    rows.map((r, y) => (y < y0 || y > y1 ? r : r.slice(0, x0) + ch.repeat(x1 - x0 + 1) + r.slice(x1 + 1)));
+
+  it('a door needs a clear, walkable approach with a path to it', () => {
+    const door = [{ id: 'door-1', x: 0, y: 0 }];
+    expect(C.senseLint(room({ markers: door }), Array(12).fill('d'.repeat(16)))).toEqual([]);
+    // boxed in by rock 1 u round it: nothing clear in any direction
+    const boxed = fill(fill(Array(12).fill('.'.repeat(16)), 4, 2, 11, 9, '#'), 7, 5, 8, 6, '.');
+    expect(C.senseLint(room({ terrain: boxed, markers: door }), null)[0]).toMatch(/door-1 .* no clear approach/);
+    // open, but all grass: no path leads to it
+    expect(C.senseLint(room({ markers: door }), Array(12).fill('g'.repeat(16)))[0]).toMatch(/door-1 .*no path leads to it/);
+    // a blocking prop counts as something tall in the way, all round
+    const ring = [[-1, -1, 1, -1], [1, -1, 1, 1], [1, 1, -1, 1], [-1, 1, -1, -1]];
+    expect(C.senseLint(room({ markers: door, propRock: ring }), null)[0]).toMatch(/no clear approach/);
+  });
+
+  it('water may meet a drop, never grass or paving at its own height', () => {
+    const ground = fill(Array(12).fill('g'.repeat(16)), 0, 0, 15, 5, 'w');
+    expect(C.senseLint(room(), ground)[0]).toMatch(/water meets grass directly along 16 cell edge/);
+    // the same edge with the grass 3 m above the water: a cliff, which is a proper edge
+    const height = { metres: [0, 3], rows: fill(Array(12).fill('0'.repeat(16)), 0, 6, 15, 11, '1'), cliffs: [] };
+    expect(C.senseLint(room({ height }), ground)).toEqual([]);
+  });
+
+  it('the committed maps pass it (warnings are printed by content:check, never errors)', () => {
+    const { errors, warnings } = C.runCheck();
+    expect(errors).toEqual([]);
+    expect(Array.isArray(warnings)).toBe(true);
+  });
+});
+
 describe('the grid CLI', () => {
   it('prints rows and writes them back', () => {
     const s = scratch();

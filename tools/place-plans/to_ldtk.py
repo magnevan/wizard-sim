@@ -47,6 +47,9 @@ LEVELS = {
         start='journey',   # the first pass's first point
         # (asset, the landmark it stands on, blocks): the great armillary on its dais, so the reveal can be judged
         props=[('codex-armillary-grand', 'the armillary', True)],
+        # (journey pass, 'first' or 'last' point): where the camera pulls back to show the landmark whole (client vista.ts):
+        # the briefing at the start, and the finale's arrival
+        vistas=[(0, 'first'), (-1, 'last')],
     ),
 }
 
@@ -170,6 +173,9 @@ def write_level(name):
     for (p, label, *_) in P.marks:
         mid = cfg['landmarks'].get(label) or label.replace('the ', '').replace(' ', '-')
         es.append(entity('Marker', mid, p, {'id': mid, 'tag': 'landmark'}))   # the camera keeps a landmark in frame near it
+    for n, (k, end) in enumerate(cfg.get('vistas', [])):
+        pts = P.passes[k][0]
+        es.append(entity('Marker', f'vista-{n + 1}', pts[0] if end == 'first' else pts[-1], {'id': f'vista-{n + 1}', 'tag': 'vista'}))
     marks = {label: p for (p, label, *_) in P.marks}
     for n, (asset, at, blocks) in enumerate(cfg.get('props', [])):
         if at not in marks: raise SystemExit(f'{name}: prop {asset} stands on the landmark "{at}", which the plan doesn\'t have')

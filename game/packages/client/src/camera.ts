@@ -107,6 +107,19 @@ export class Camera {
     this.placed = true;
   }
 
+  /** The largest whole scale, at most the base, at which `span` view units of height fit between the sky strip and the rune HUD (vista.ts). */
+  fitSpan(span: number): number {
+    return Math.max(1, Math.min(this.base, Math.floor((this.sh - HUD_H * this.base) / (span * PPU * FY + SKY))));
+  }
+  /** Shows the scene at a whole `scale` (a vista's pull-back; the HUD keeps the base scale). True if it changed. */
+  zoom(scale: number): boolean {
+    if (scale === this.scale) return false;
+    this.scale = scale; this.w = Math.ceil(this.sw / scale); this.h = Math.ceil(this.sh / scale);
+    return true;
+  }
+  /** The view-centre y that puts view y `top` at the top of the play view (just under the sky strip). */
+  centreForTop(top: number): number { return top + this.upY(); }
+
   /** Forget where the camera was: the next follow() jumps (a new world). */
   reset(): void { this.placed = false; }
 

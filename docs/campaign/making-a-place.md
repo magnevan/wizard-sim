@@ -59,13 +59,13 @@ Mistakes a script can catch go in `content:check`. A rule goes there as soon as 
 
 | Rule | Check |
 |---|---|
-| A door has 3 u clear in front of it, and a path material leads to it | lint (planned) |
-| Every gate and marker is reachable from the start along walkable ground | lint (planned) |
-| Water always meets a shore, a quay or a cliff, never grass or paving directly | lint (planned) |
+| A door has 3 u clear in front of it, and a path material leads to it | lint, warning (`game/packages/content/src/sense.mjs`) |
+| Every gate and marker is reachable from the start along walkable ground | `content:check`, error, for starts, portals and `gate-*` markers; `to_ldtk.py --report` for every marker of a plan |
+| Water always meets a shore, a quay or a cliff, never grass or paving directly | lint, warning |
 | Two ground materials meet with a transition: an edge tile, a kerb, or a scatter blend | critic, then lint |
-| Nothing taller than knee height blocks a door, a gate, stairs or a sightline marked in the plan | lint (planned) |
+| Nothing taller than knee height blocks a door, a gate, stairs or a sightline marked in the plan | lint, warning, for doors and gates (their 3 u approach); stair heads and sightlines: critic |
 | A building is drawn in front of what stands behind it and behind what stands in front (sorted by footprint) | engine |
-| Stairs and ramps join two tiers at both ends; a cliff edge has a lip or a wall | lint (planned) |
+| Stairs and ramps join two tiers at both ends; a cliff edge has a lip or a wall | `content:check`, error, for painted stairs; `to_ldtk.py --report` for a plan's flights; lips: critic |
 | Plants grow on soil, not on paving, unless they're in a planter | critic |
 
 ## Improving the cycle

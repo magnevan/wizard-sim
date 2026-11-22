@@ -102,9 +102,6 @@ P.fill(circle(ARM, 17), 2.0, 'dais')
 P.fill(arc_band(C, 0, 38, 20, 160), 6.0, 'paving')          # the top terrace, a balcony over the plaza
 P.fill(rect(-95, -42, -24, -20), 6.0, 'grass'); P.fill(rect(24, -42, 110, -20), 6.0, 'grass')   # the land out to the seams
 P.fill(circle(ARM, 7.5), 2.5, 'stairs'); P.fill(circle(ARM, 6.5), 3.0, 'plaza')   # the dais, in two 0.5 m rings you can step up anywhere
-# the plaza's pavement, laid round the armillary: two rings and eight spokes of cobble in the flagstone (beauty round 4)
-for r0 in (10, 14): P.fill(arc_band(ARM, r0, r0 + 2, 0, 360, 72), 2.0, 'road')
-for a in range(0, 360, 45): P.fill(orect(polar(ARM, 12, a), 8, 2.0, math.radians(a)), 2.0, 'road')
 
 # the north road: straight down through the great hall's gate
 P.building(arc_band(C, 8, 20, 35, 145), 6.0, 16.0, 'great hall', doors=[polar(C, 21, 65), polar(C, 21, 115)])
@@ -146,7 +143,7 @@ P.fill([(44, -56), (52, -56), (52, -10), (44, -10)], 4.0, 'water')
 P.building(rect(41, -62, 55, -56), 4.0, 2.0, roof='wall')
 P.fill(rect(44, -11, 52, -10), 4.15, 'rock')                                                        # the weir: a stone sill flush with the water at the lip                                          # the culvert the river comes out of                                                 # the stream above the falls
 P.fill(rect(24, -34, 95, -26), 6.0, 'path')
-P.fill(rect(40, -34, 56, -26), 6.5, 'plaza')                                                                       # the deck, stone (beauty round 5: dark planks clashed)
+P.fill(rect(40, -34, 56, -26), 6.5, 'wood')                                                                        # the deck
 P.building(rect(40, -35, 56, -34), 6.5, 1.0, roof='wall'); P.building(rect(40, -26, 56, -25), 6.5, 1.0, roof='wall')   # parapets
 for dv in (-36, -24): P.building(circle((37, dv), 1.6), 6.0, 5.0)                                     # the gate: a matched pair of piers square across the road
 P.building(circle((66, -42), 6), 6.0, 14, 'battery tower')

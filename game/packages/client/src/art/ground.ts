@@ -175,9 +175,6 @@ function texel(base: Material, x: number, y: number, px: number, py: number): vo
  * material for unpainted cells. Colours come from screen position, so textures don't shear with the
  * camera. A material with a grid in it is marked `iso` and sampled along the ground instead.
  */
-/** Pavings that meet at a laid kerb rather than a blend: flagstone, cobble, slabs, planks. */
-const HARD = new Set(['f', 'c', 'h', 'p']);
-
 export function paintGround(out: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, g: GroundMap, mats: Readonly<Record<string, Material>>, base: string, cam: GroundCamera): void {
   const f = buildField(g, base);
   const layers = f.chars.map((c) => styleOf(c).layer), styles = f.chars.map(styleOf), byIndex = f.chars.map((c) => mats[c] ?? mats[base]);
@@ -196,13 +193,7 @@ export function paintGround(out: Uint8ClampedArray, W: number, H: number, OX: nu
       const seam = mix.a !== mix.b;
       if (seam) {
         const a = mix.a, b = mix.b, s = mix.s, st = styles[a];
-        if (HARD.has(f.chars[a]) && HARD.has(f.chars[b])) {
-          // two pavings meet at a laid edge: a clean cut, a dark kerb line and a pale stone beside it (the beauty critic,
-          // 2026-11-22: blended cobble and flagstone read as camouflage blotches)
-          k = s > 0 ? a : b;
-          const e = Math.abs(s);
-          if (e < 0.07) shade = 0.58; else if (e < 0.16) shade = 1.18;
-        } else if (a === water || b === water) {
+        if (a === water || b === water) {
           // the water is always the lower layer: a dark wet bank, then a broken foam line, then depth
           const foam = (vnoise(px * 0.16, py * 0.3, 74) - 0.5) * 0.14;
           k = s + foam > -0.02 ? a : b;

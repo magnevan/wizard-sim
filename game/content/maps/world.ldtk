@@ -1752,14 +1752,10 @@
 				{
 					"__identifier": "tierMetres",
 					"__type": "Array<Float>",
-					"__value": [ 2.0, 3.0, 3.33, 3.67, 4.0, 4.33, 4.67, 5.0, 5.33, 5.67, 6.0, 6.5, 7.0, 15.0, 21.0 ],
+					"__value": [ 3.0, 3.33, 3.67, 4.0, 4.33, 4.67, 5.0, 5.33, 5.67, 6.0, 6.5, 7.0, 15.0, 21.0 ],
 					"__tile": null,
 					"defUid": 119,
 					"realEditorValues": [
-						{
-							"id": "V_Float",
-							"params": [ 2.0 ]
-						},
 						{
 							"id": "V_Float",
 							"params": [ 3.0 ]
@@ -2123,8 +2119,8 @@
 			"worldX": 14660,
 			"worldY": 0,
 			"worldDepth": 0,
-			"pxWid": 3120,
-			"pxHei": 3100,
+			"pxWid": 3360,
+			"pxHei": 3360,
 			"__bgColor": "#3F6443",
 			"bgColor": "#3F6443",
 			"useAutoIdentifier": false,

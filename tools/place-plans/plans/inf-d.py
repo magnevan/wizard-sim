@@ -26,16 +26,19 @@ along the cliff face, east to west, instead of straight up, and so no longer ope
 paved road starts at the well's tier, pulling you east.
 
 Revision 7 (flow passed in the game, 8/10): the east flight from the overlook a long narrow run along the drop, so it
-is no twin of the west block."""
+is no twin of the west block.
+
+Revision 8 (the first sense round in the game, 7/10): the sea runs 27 u past the shore, past anything the camera
+shows from the beach, so no void shows beyond the water."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('inf-d', 'Infirmary D: the slope with raised conduits (rev 7)', U=(-46, 88), V=(-46, 38))
+P = Plan('inf-d', 'Infirmary D: the slope with raised conduits (rev 8)', U=(-46, 88), V=(-46, 56))
 W0 = (0, -3)
-P.fill(rect(-46, -46, 88, 38), 5.0, 'grass')
-P.fill(rect(-34, -8, 88, 38), 3.5, 'grass')                       # the well's tier, level to the east edge
+P.fill(rect(-46, -46, 88, 56), 5.0, 'grass')
+P.fill(rect(-34, -8, 88, 56), 3.5, 'grass')                       # the well's tier, level to the east edge
 P.fill(rect(-34, 23, 50, 38), 0.0, 'sand')                        # the shore
-P.fill([(-46, 29), (88, 27), (88, 38), (-46, 38)], -1.0, 'water')  # the sea
+P.fill([(-46, 29), (88, 27), (88, 56), (-46, 56)], -1.0, 'water')  # the sea
 P.fill(rect(-28, -22, 28, -8), 5.0, 'paving')                     # the top tier: the road's terrace
 P.fill(rect(-3, -46, 3, -22), 5.0, 'path')                        # the road in, on the axis
 for a in (232, 254, 286, 308):                                    # the tents in a shallow arc facing the well; open, equipment dark

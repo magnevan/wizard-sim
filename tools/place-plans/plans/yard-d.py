@@ -14,15 +14,18 @@ juts out over the pit, a place of its own.
 Revision 3 (the first in-game round, 6/10): the way back is the parry lane's own flight, within a screen of the rack and
 the hands ring and so always in view (the north-east flight across the pit was more than a screen off); back along the
 rim past the bays to the gate. The pit's depth reads only from inside it (its inner drop faces away from the camera),
-so that's for dressing: a lip on the rim's inner edge and a darker floor."""
+so that's for dressing: a lip on the rim's inner edge and a darker floor.
+
+Revision 4 (the first sense round in the game, 6/10): the woods south of the rim stood 4 m below it, so the yard read as
+a mound with a bowl on top; they're level with the rim now, and the pit is the only drop."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('yard-d', 'Drill yard D: the horseshoe (rev 3)', U=(-56, 58), V=(-48, 46))
+P = Plan('yard-d', 'Drill yard D: the horseshoe (rev 4)', U=(-56, 58), V=(-48, 46))
 O = (0, 0)
 PIT, RIM = 22, 38
 P.fill(rect(-56, -48, 58, 46), 6.0, 'grass')
-P.fill(rect(-56, 28, 58, 46), 2.0, 'trees')                                  # woods below the south rim
+P.fill(rect(-56, 28, 58, 46), 6.0, 'trees')                                  # woods level with the rim, so the yard is cut into level ground
 P.building(arc_band(O, 28, 46, 200, 340, 30), 3.0, 18.0, 'the ranges')        # the academy along the north, standing in the pit
 P.fill(arc_band(O, 0, RIM, -25, 205, 40), 6.0, 'paving')                      # the rim, round east, south and west
 P.fill(circle(O, PIT), 3.0, 'path')                                           # the pit, sunk 3 m

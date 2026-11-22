@@ -35,8 +35,6 @@ const SCATTER: Readonly<Record<string, { every: number; items: readonly string[]
   s: { every: 30, items: ['three-pebbles', 'single-small-pebble', 'white-bird-feather'] },
   r: { every: 12, items: ['cracked-small-rock', 'round-river-stone', 'three-pebbles'] },
   a: { every: 18, items: ['cracked-small-rock', 'small-pile-of-twigs'] },
-  f: { every: 40, items: ['short-grass-tuft'] },
-  c: { every: 40, items: ['short-grass-tuft'] },
 };
 const SPOT = 14; // art px between scatter spots
 

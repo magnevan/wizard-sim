@@ -58,6 +58,8 @@ CHANNELS = [math.radians(a) for a in (-90, -38, 14, 66, 118, 170, 222)]
 # the channels and the ring round the plinth are an inlaid floor (a flat Codex prop, codex-rosette); a band of setts
 # along the buildings' feet and the balustrade frames the plaza
 paint(lambda x, y: (x < 7 or y < 7 or y > SEA_Y - 3 or x > W - 4), 'cobble')
+paint(lambda x, y: (6 <= x < 8 and y >= 6) or (6 <= y < 8 and x >= 6) or (SEA_Y - 4 < y <= SEA_Y - 2.5), 'slabs')   # a darker border band
+paint(lambda x, y: abs(r_arm(x, y) - 26.5) < 1.2, 'slabs')   # a ring band just outside the rosette
 paint(lambda x, y: x < 4 or y < 4, 'flagstone')                    # the buildings' feet
 paint(lambda x, y: y > SEA_Y + 1.2, 'water')                       # the sea below the terrace (it carries on past the edge)
 paint(lambda x, y: x > W - 3 and abs(y - GATE_BATTERY[1]) < 5, 'cobble')   # the road out of the east gate
@@ -91,8 +93,10 @@ for a in (0.25, 0.75):                                  # benches on the near si
 for (cx, cy), feature in zip([(30, 28), (120, 28), (28, 84), (122, 84)], ['codex-fountain-big', 'codex-rose-bed-big', 'codex-rose-bed-big', 'codex-fountain-big']):
     prop('codex-medallion-big', cx, cy)
     prop(feature, cx, cy, True)
-    prop('codex-bench', cx + 7, cy + 5, True)
-    prop('codex-bench', cx - 7, cy + 5, True)
+    for k in range(4):                              # benches in a ring round it
+        a = math.pi / 4 + k * math.pi / 2
+        prop('codex-bench', cx + math.cos(a) * 8, cy + math.sin(a) * 8, True)
+    prop('codex-lilac-tree', cx + 11, cy - 9, True); prop('codex-lilac-tree', cx - 11, cy - 9, True)
 # obelisks either side of each gate, banner poles along the main building, the tower's door on a star tile
 for x, y in [(8, 30), (8, 42), (W - 7, GATE_BATTERY[1] - 8), (W - 7, GATE_BATTERY[1] + 8)]:
     prop('codex-obelisk', x, y, True)

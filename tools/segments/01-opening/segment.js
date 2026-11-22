@@ -12,7 +12,7 @@ scope:`Eight stops, about 65 minutes with the walks. The drill yard (beats 2 and
 board:{cols:['Brief and beats','Space diagram','Concept art','Blockout','Script','Dressing','Finish'],
  note:`One row per stop, one column per stage of the campaign workflow. A stop goes deep one at a time: the others wait at concept art until their turn. Updated with every change to the segment.`,
  rows:[
-  ['0 · Briefing and the yard','#concept-weapons',[['review','The weapons section, below'],['review','Yard marked too small; redesign with the weapons section'],['review','New, below'],['started','#yard built; to rework'],['later'],['started','Props bought'],['later']]],
+  ['0 · Briefing and the yard','#concept-weapons',[['done','Approved 11-22'],['next','Larger; each station clear before it acts'],['done','Approved 11-22'],['started','#yard built; to rework'],['later'],['started','Props bought'],['later']]],
   ['1 · Infirmary (Life)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['done','Thorns added (r2)'],['next','After the yard'],['done','Two rounds'],['later'],['later'],['later'],['later']]],
   ['2 · Battery (Fire)','#battery',[['next','Rewrite as your second element'],['done'],['done'],['done','Repair beat open'],['later'],['started','Defence, well, wall'],['later']]],
   ['3 · Ward line (Shield)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['started','The fix: burn something off'],['later'],['done'],['later'],['later'],['later'],['later']]],
@@ -20,18 +20,16 @@ board:{cols:['Brief and beats','Space diagram','Concept art','Blockout','Script'
   ['5 · Harbor (Cold, Lightning)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['done'],['later'],['done'],['later'],['later'],['later'],['later']]],
   ['6 · Cliff road (Earth)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['done'],['later'],['done','One image'],['later'],['later'],['later'],['later']]],
   ['7 · Finale (Arcane)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['done','Solo: alternate lock and fight'],['later'],['done'],['later'],['later'],['later'],['later']]],
-  ['The walks between','#concept-walks',[['review','New, below'],['next','A district map with roads'],['review','New, below'],['later'],['later'],['later'],['later']]],
+  ['The walks between','#concept-walks',[['done','Approved 11-22; small fights on several'],['next','The district\'s roads, with walk times'],['done','Approved 11-22'],['later'],['later'],['later'],['later']]],
  ]},
 stages:[
  ['Brief','draft'],['Beat chart','draft'],['Space diagram','review'],['Blockout','started','The yard and the battery are walkable'],['Script','later'],['Dressing','started','General art bought'],['Finish','later'],
 ],
 needsYou:[
- ['#concept-weapons','The weapons section: what the yard teaches, and where it sits. A verdict and three questions.'],
- ['#concept-walks','The walks between stops: what happens on them. A verdict and one question.'],
  ['#solve-yard-prompts','Round 5 on the yard: the prompts, the etched rule and the soldiers.'],
  ['https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews','Optional: the five encounter questions on The Morning Everything Breaks (my picks stand until you answer), and the proposal of at most one new creature per stop.'],
 ],
-onMe:[`After your verdicts: rework the yard's blockout beside the courtyard, then draw the district's roads as a space diagram with walk times.`,`Rewrite the battery as your second element (its infusion line and prompts).`,`The battery's repair beat.`,`Then the infirmary: space diagram and blockout.`],
+onMe:[`The yard's space diagram and blockout: beside the courtyard, larger, each station showing what it does before it acts.`,`The district's roads as a space diagram with walk times, and where the small fights go.`,`Rewrite the battery as your second element (its infusion line and prompts).`,`The battery's repair beat.`,`Then the infirmary: space diagram and blockout.`],
 chapters:[
 {id:'hall',name:'The briefing',
  note:`Where it happens is open: at the armillary in the courtyard (proposed, see the weapons section below) or in the lecture hall. The old hall plan is archived.`,
@@ -99,7 +97,7 @@ chapters:[
  ]},
 ],
 concepts:[
-{id:'weapons',title:'The weapons section',status:'Brainstorm, up for review',
+{id:'weapons',title:'The weapons section',status:'Approved 2026-11-22',
  lede:`You asked to map out the section where you learn to use weapons. The catch: every conjured weapon belongs to an element (the flame sword is Fire, the healing hands Life, the maul Earth), and in the yard you have none yet. So my proposal teaches the moves every weapon shares, gives one weapon from stored charge, and lets the yard show you the rest of the family in plain steel. Seven directions and their costs are in docs/explorations/2026-11-22-weapons-yard-and-walks.md.`,
  points:[
   [`The moves, once, with your staff.`,` Strike, Heavy, Sweep, Retreat, Defend and the parry are the same on every weapon, so the stations teach them once, as built. That's pillar 1: the mastery is in your hands and carries over.`],
@@ -120,13 +118,13 @@ concepts:[
   {id:'weapons-open',title:'Does the yard stay open?',body:`You pass the courtyard after every stop. The yard could stay open beside it, with its straw goblins standing again, to try each new weapon; or it could close once you've left.`,proposal:`Keep it open, and say so once on the walk out of each stop ("the straw goblins are still up in the yard"). Nothing new to build.`},
   {id:'weapons-briefing',title:'Where is the briefing?',body:`Planned in the lecture hall (50 × 34). The courtyard concept puts the masters on the armillary's steps instead, with the column stuttering above them.`,proposal:`At the armillary. The trouble is in view from the first minute, the yard is next door, and the lecture hall can come back later in the campaign.`},
  ]},
-{id:'walks',title:'The walks between stops',status:'Brainstorm, up for review',
+{id:'walks',title:'The walks between stops',status:'Approved 2026-11-22',
  lede:`You said the walks need designing, and earlier that you want some long enough for the world to feel real. My proposal gives every walk a shape, keeps most of them free of fights, and uses the courtyard you pass through again and again to show how the morning is going.`,
  points:[
   [`Leave, middle, arrive.`,` Leaving, there's something harmless to try the new element on that the world offers: brambles across the farm track below the battery, a burning bush on the gorge path, a frozen net on the harbor stairs. The middle is quiet, with people and views: wounded carried up, guards running for the wall. Arriving, a lookout shows the next stop's trouble from above before you're in it (pillar 7).`],
   [`The courtyard changes each time.`,` One more of the armillary's seven channels lights after each stop, the wounded move, the masters are somewhere new. Progress shown in the world, not a menu, which is your note on the progress map.`],
   [`The column is the landmark.`,` The armillary's violet light is visible from every road, so you always know where home is. Smoke, spray and the ward's shimmer mark the other stops.`],
-  [`Fights only on the two longest walks,`,` the gorge and the harbor stairs, and only enemies you've already met. Every other walk is a walk.`],
+  [`Small fights on several walks,`,` low-challenge, with enemies you've already met, to practise your casting (your answer). Which walks, and how many, is for playtesting.`],
   [`How long.`,` A screen takes about 7 seconds to cross, so a walk of 20 to 60 seconds is 3 to 8 screens. Seven walks at about 40 seconds each is about 5 minutes of the opening's 65.`],
   [`Later:`,` shortcuts opened from the far side, so a returning player's second time through is quick (pillar 1).`],
  ],

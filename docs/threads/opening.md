@@ -10,9 +10,8 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 
 ## Next
 
-- [ ] The user's verdicts on the weapons section and the walks (concepts on the Opening Segment page; [exploration](../explorations/2026-11-22-weapons-yard-and-walks.md)).
-- [ ] Rework the yard's blockout beside the courtyard, along the ranges.
-- [ ] The district's roads as a space diagram with walk times.
+- [ ] The yard's space diagram, then its blockout: beside the courtyard along the ranges, larger than 90 × 68, each station showing what it does before it acts ([decision](../decisions/README.md#2026-11-22-the-openings-yard-teaches-the-moves-and-one-conjured-weapon-walks-have-a-shape-and-small-fights-explorations2026-11-22-weapons-yard-and-walksmd)). The briefing moves to the armillary.
+- [ ] The district's roads as a space diagram with walk times, and where the small fights go.
 - [ ] The infirmary (Life, the first cast): space diagram, Codex concept from the blockout's footprint, then an LDtk blockout. It's the smallest test of the new shape.
 - [ ] The battery as the second element: its infusion text and prompts, and room to heal in its fight.
 - [ ] The user's playtest notes on the yard: round 5's `r5-yard-prompts`, `r5-yard-etched`, `r5-yard-soldiers`.

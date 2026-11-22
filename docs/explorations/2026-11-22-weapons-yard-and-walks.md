@@ -1,6 +1,6 @@
 # The weapons section and the walks between stops
 
-Brainstorm, 2026-11-22, from the user's notes on [the opening's encounters](2026-11-16-opening-encounters.md#round-2-the-users-notes-2026-11-21): "we also need to figure out what the walks between these sections look like" and "map out the initial section where you learn to use weapons". Everything here is a proposal. It's on the [Opening Segment](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) page as two concepts with answer boxes. Images are Codex concept art in `docs/reference/opening-yard-walks/`, inspiration only.
+Brainstorm, 2026-11-22, from the user's notes on [the opening's encounters](2026-11-16-opening-encounters.md#round-2-the-users-notes-2026-11-21): "we also need to figure out what the walks between these sections look like" and "map out the initial section where you learn to use weapons". Approved 2026-11-22, with changes (see the user's answers at the end). It's on the [Opening Segment](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) page as two concepts with answer boxes. Images are Codex concept art in `docs/reference/opening-yard-walks/`, inspiration only.
 
 ## 1. The weapons section
 
@@ -87,3 +87,15 @@ On the page, with answer boxes next to each.
 2. **The yard stays open** to try each new weapon as you pass back through the courtyard (Claude's pick), or is it done once you leave?
 3. **The briefing:** at the armillary in the courtyard (Claude's pick), or in the lecture hall as planned?
 4. **Walks:** a shape of leave, middle and arrive, mostly without fights (Claude's pick), or a small fight on most of them?
+
+## The user's answers (2026-11-22)
+
+On the Opening Segment page. Logged as [a decision](../decisions/README.md#2026-11-22-the-openings-yard-teaches-the-moves-and-one-conjured-weapon-walks-have-a-shape-and-small-fights-explorations2026-11-22-weapons-yard-and-walksmd).
+
+| Id | Answer |
+|---|---|
+| `concept-weapons` | Go. "The size probably needs to be a bit larger, and we have to be careful that it's really clear what each station does. We can't just walk over and have someone suddenly shoot arrows at us." |
+| `weapons-focus`, `weapons-open`, `weapons-briefing` | "Proposal is good" for each: the moves and one flame sword; the yard stays open; the briefing at the armillary. |
+| `concept-walks` | Go. |
+| `walks-fights` | "We can experiment a little bit with this. I think some small fights are good to have in several places. They're low challenge encounters that let you practice your spellcasting a bit." So more than Claude's two: small fights on several walks. |
+

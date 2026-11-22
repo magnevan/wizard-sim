@@ -29,3 +29,20 @@ def lips(P, drop=1.0, rise=1.0):
     lip = walk & low & route_mask(P)                    # a flight's ends meet their landings within the step, so only its sides are walled (cheek walls)
     P.h[lip] += rise; P.m[lip] = 'wall'; P.bld[lip] = True
     return int(lip.sum())
+
+def woods_unreached(P, step=0.5):
+    """Walkable ground no one can reach from the journey's start (by the game's step rule) becomes woods."""
+    from collections import deque
+    walk = np.isin(P.m, [m for m, v in MAT.items() if v[2]]) & ~P.bld
+    u, v = P.passes[0][0][0] if P.passes else P.routes[0][0][0]
+    R2 = math.sqrt(0.5); j, i = int((u + v) * R2 - P.x0), int((v - u) * R2 - P.y0)
+    seen = np.zeros_like(walk); q = deque([(i, j)]); seen[i, j] = True
+    while q:
+        a, b = q.popleft()
+        for da, db in ((0, 1), (1, 0), (0, -1), (-1, 0)):
+            c, d = a + da, b + db
+            if 0 <= c < walk.shape[0] and 0 <= d < walk.shape[1] and walk[c, d] and not seen[c, d] and abs(P.h[c, d] - P.h[a, b]) <= step:
+                seen[c, d] = True; q.append((c, d))
+    lost = walk & ~seen
+    P.m[lost] = 'trees'
+    return int(lost.sum())

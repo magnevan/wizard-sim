@@ -1,43 +1,52 @@
-"""Infirmary plan D (the structure critic's mix: B, the slope, as the base, with C's conduits as raised walkways),
-compressed to about two screens by two. The road from the main gate arrives on the well's axis at the top tier, where the
-cots stand under tents with patients and nurses, their equipment gone dark: the wounded are the first thing you see. One short flight drops to the well's tier; the
-conduits are raised walkways from the well to the greenhouse, the stills and down to the bath on the shore, so cutting
-the vines has its own route. The tents' equipment lights up when the well does; the cots are open from the start (the user). The battery
-road leaves the top tier's east end and bends down the screen past a flight, the battery's smokestack in view."""
+"""Infirmary plan D (the structure critic's mix: B, the slope, as the base, with C's conduits as raised walkways), the
+user's pick (2026-11-22). The road from the main gate arrives on the well's axis at the top tier, where the patients and
+nurses wait under tents, their equipment gone dark: the wounded are the first thing you see.
+
+Revision 2 (the flow critic on flat frames, 6/10): twin flights either side of the well instead of one onto it (principle
+22), the axis an overlook with a balustrade looking down at the well; the fix as one loop instead of three spokes (the
+well, the west walkway, the greenhouse, down to the shore, the bath, along the shore, up to the stills, the east walkway,
+back to the well); the tents in a shallow arc facing the well, so the beam stays in view while you heal; the way out
+leaves from the well's tier along a paved road past the battery's smokestack, with woods past the edges, not void."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('inf-d', 'Infirmary D: the slope with raised conduits', U=(-38, 56), V=(-32, 28))
+P = Plan('inf-d', 'Infirmary D: the slope with raised conduits (rev 2)', U=(-46, 72), V=(-34, 32))
 W0 = (0, 2)
-P.fill(rect(-38, -32, 56, 28), 5.0, 'grass')
-P.fill(rect(-32, -8, 46, 28), 2.0, 'grass')                       # the well's tier
-P.fill(rect(-32, 12, 46, 28), 0.0, 'sand')                        # the shore strip
-P.fill([(-38, 18), (56, 16), (56, 28), (-38, 28)], -1.0, 'water')  # the sea
-P.fill(rect(-28, -20, 28, -8), 5.0, 'paving')                     # the top tier: the road's terrace
-P.fill(rect(-3, -32, 3, -20), 5.0, 'path')                        # the road in, on the axis
-for x in (-20, -10, 10, 20):                                      # the cots under tents, open; their equipment dark until the well relights
-    P.building(rect(x - 3.5, -19, x + 3.5, -15), 5.0, 2.5, roof='roof')
-P.note((0, -22), 'cots under tents')
-P.stairs(rect(-5, -9, 5, 0), 5.0, 2.0, 'V')                       # one short flight down to the well, on its axis
-P.fill(rect(-28, 0, 40, 12), 2.0, 'paving')
+P.fill(rect(-46, -34, 72, 32), 5.0, 'grass')
+P.fill(rect(-34, -8, 50, 32), 2.0, 'grass')                       # the well's tier
+P.fill(rect(-34, 18, 50, 32), 0.0, 'sand')                        # the shore
+P.fill([(-46, 23), (72, 21), (72, 32), (-46, 32)], -1.0, 'water')  # the sea
+P.fill(rect(-28, -22, 28, -8), 5.0, 'paving')                     # the top tier: the road's terrace
+P.fill(rect(-3, -34, 3, -22), 5.0, 'path')                        # the road in, on the axis
+for a in (232, 254, 286, 308):                                    # the tents in a shallow arc facing the well; open, equipment dark
+    c = polar(W0, 21, a); P.building(orect(c, 7, 4, math.radians(a)), 5.0, 2.5, roof='roof')
+P.note((0, -24), 'cots under tents')
+for su in (-11, 11): P.stairs(rect(su - 3, -9, su + 3, 0), 5.0, 2.0, 'V')   # twin flights either side of the well
+P.building(rect(-6, -9, 6, -8), 5.0, 1.0, roof='wall')            # the overlook's balustrade on the axis
+P.fill(rect(-28, 0, 44, 12), 2.0, 'paving')
 P.fill(circle(W0, 5), 2.5, 'dais')
 P.building(rect(-28, -6, -16, 4), 2.0, 6.0, 'greenhouse', doors=[(-15, 0)])
 P.building(rect(16, -6, 26, 2), 2.0, 5.0, 'stills', doors=[(15, -2)])
-for a, b in (((-5, 2), (-15, 1)), ((5, 1), (14, -1))):            # the conduits, raised walkways to what the well feeds
+for a, b in (((-5, 2), (-15, 1)), ((5, 1), (14, -1))):            # the conduits, raised walkways from the well
     L = math.dist(a, b); P.fill(orect(((a[0] + b[0]) / 2, (a[1] + b[1]) / 2), 3, L + 1, math.atan2(b[1] - a[1], b[0] - a[0])), 2.5, 'wood')
-P.fill(rect(-1.5, 7, 1.5, 12), 2.5, 'wood')                       # and down to the bath
-P.stairs(rect(-3, 12, 3, 18), 2.0, 0.0, 'V')
-P.fill(circle((0, 22), 3), -0.5, 'water'); P.fill(arc_band((0, 22), 3, 4.5, 0, 360), 0.0, 'paving')   # the bath on the shore
-# the battery road: from the top tier's east end, down a flight, then bending down the screen
-P.fill(rect(28, -20, 38, -12), 5.0, 'path')
-P.stairs(rect(32, -12, 38, -3), 5.0, 2.0, 'V')
-P.fill(rect(32, -3, 38, 12), 2.0, 'path'); P.fill(rect(38, 6, 56, 12), 2.0, 'path')
-P.building(circle((50, -2), 3), 2.0, 14.0, "the battery's smoke")
+P.stairs(rect(-24, 12, -18, 18), 2.0, 0.0, 'V')                   # down to the shore by the greenhouse
+P.stairs(rect(18, 12, 24, 18), 2.0, 0.0, 'V')                     # and up again by the stills
+P.fill(circle((0, 21), 3), -0.5, 'water'); P.fill(arc_band((0, 21), 3, 4.5, 0, 360), 0.0, 'paving')   # the bath on the shore
+P.fill(rect(-22, 19, 22, 21), 0.0, 'paving'); P.fill(rect(-22, 17, 22, 19), 0.0, 'paving')            # the shore walk
+# the way out: east along the well's tier and on, past the battery's smokestack
+P.fill(rect(40, 4, 72, 10), 2.0, 'road')
+P.building(circle((54, -3), 3), 2.0, 14.0, "the battery's smoke")
 P.landmark(W0, 'the well', 6, 3)
-P.gate((0, -30), 'from the main gate'); P.gate((54, 9), 'to the battery')
-P.journey([(0, -30), (0, -14), (0, -4), (0, -1)], 'In from the main gate: the cots, then down to the well', 'The wounded and their nurses first, the equipment dark, then the choked well below')
-P.journey([(0, 0), (-8, 2), (-14, 1), (-8, 2), (0, 4), (8, 1), (14, -1), (8, 1), (0, 6), (0, 10), (0, 16), (0, 8)], 'The fix: along the raised conduits', 'Cut the vines; the well relights; Life spills into you')
-P.journey([(0, -1), (0, -12), (-15, -13), (15, -13), (24, -13)], 'Up to the cots, the equipment lit', 'Heal the wounded along the terrace')
-P.journey([(24, -13), (34, -14), (35, -6), (35, 4), (44, 9), (54, 9)], 'Out to the battery', 'Down the east flight, the battery’s smoke ahead')
+P.gate((0, -32), 'from the main gate'); P.gate((70, 7), 'to the battery')
+P.journey([(0, -32), (0, -14), (-11, -11), (-11, 1), (-4, 4)], 'In from the main gate: the cots, then down to the well', 'The wounded and their nurses first, the equipment dark; the well below, framed by the overlook')
+P.journey([(-4, 4), (-10, 2), (-15, 1), (-21, 6), (-21, 12), (-21, 19), (-6, 19), (6, 19), (21, 19), (21, 12), (18, 4), (14, -1), (8, 1), (4, 4)], 'The fix: one loop along the conduits and the shore', 'Cut the vines round the loop; the well relights; Life spills into you')
+P.journey([(4, 4), (11, 1), (11, -10)] + [polar(W0, 15, a) for a in range(300, 235, -12)] + [(-11, -10)], 'Up to the cots, the equipment lit', 'Heal the wounded along the arc, the well in view below')
+P.journey([(-11, -10), (-11, 1), (10, 7), (30, 7), (44, 7), (70, 7)], 'Out to the battery', 'Along the well’s tier and the road, the battery’s smoke ahead')
+import numpy as np
+walk = np.isin(P.m, ['plaza', 'paving', 'grass', 'path', 'road', 'dais', 'stairs', 'wood', 'sand']) & ~P.bld
+inbox = (P.CU > P.U[0] + 10) & (P.CU < P.U[1] - 10) & (P.CV > P.V[0] + 10) & (P.CV < P.V[1] - 8)
+P.m[walk & ~inbox & ~np.isin(P.m, ['road', 'path', 'sand', 'stairs'])] = 'trees'   # woods along the edges, open where the roads leave
+from finish import lips, woods_unreached
+lips(P); woods_unreached(P)
 P.render()
 if "--frames" in sys.argv: P.frames()

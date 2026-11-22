@@ -13,6 +13,7 @@ The game is flat throughout: wall segments and a 2D nav grid, with no height any
 - [ ] Phase 2: check that collision, nav and `content:check` reachability respect the cliffs. They should, since cliffs are wall segments. Add a test room with two tiers and a stair.
 - [ ] Phase 6: `tools/place-plans/` writes an LDtk level from a plan spec (Terrain, Height and Ground layers, plus door, gate and landmark markers). Test it on the courtyard plan the user picks, or on plan D.
 - [ ] Phase 4, minimal: `zAt(x, y)`, with bodies and props drawn at their tier's height, and cliff faces as flat-coloured strips. That's enough to walk the grey-box and judge flow.
+- [ ] Seams between places (proposed): `content:check` verifies both sides of each seam match. See [the continuous world](../explorations/2026-11-09-continuous-world-todo.md#2026-11-22-the-segment-as-one-map).
 - [ ] Phase 7: the sense lint in `content:check`.
 - [ ] Before any art: phase 3 (shots and height), phase 4 in full (painted cliff faces, effects and lighting at height), phase 5 (buildings sorted by footprint).
 

@@ -41,6 +41,8 @@ import { blackout, wellShake } from './art/power-down';
 import { propImage, propMeta, type PropSet } from './art/assets';
 import { AMBIENT, canvas as pxCanvas, stats, text as pxText } from './art/px';
 import { newRigState, type Anchors, type RigKind, type RigState } from './art/rigs';
+import { infusion } from './art/infuse';
+import { extrasOf } from './art/accent';
 import { TAU, mod } from './art/util';
 import { Vfx, type BodyView } from './art/vfx';
 import { attackK, drawAttackFx, hitT } from './art/enemy-attacks';
@@ -727,6 +729,7 @@ export class WorldView {
     // a conjured weapon or wand replaces the staff (a Double keeps the staff: only seats draw weapons)
     s.bare = kind === 'wizard' && i < MAX_SEATS && (w.seats.weapon[i] || w.seats.wand[i]) ? 1 : 0;
     s.weapon = kind === 'wizard' && i < MAX_SEATS ? w.seats.weapon[i] : 0;
+    s.infuse = s.weapon ? infusion(s.weapon, extrasOf(w.seats.weaponEls, i, s.weapon)).mat : 0;
     s.guard = kind === 'wizard' && i < MAX_SEATS ? w.seats.guard[i] : 0;
     s.block = kind === 'wizard' && i < MAX_SEATS && w.seats.guard[i] ? w.seats.guardT[i] : 0;
     if (kind === 'wizard') s.pal = owner % 4;

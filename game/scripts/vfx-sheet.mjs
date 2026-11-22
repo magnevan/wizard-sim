@@ -9,6 +9,10 @@
 //   [--crop x,y,w,h]  CSS px of the page (default: the first <canvas>)   [--scale 2] [--cols 6]
 //   [--bg #rrggbb]    background colour (default: the most common colour over all frames)
 //   [--out shots/vfx/<name>] [--port 5189] [--viewport 1280x800] [--thresh 8]
+//   [--gl gpu|soft]   gpu (default): headless Chrome on the machine's GPU, so the live 3D models (art/live3d.ts: the
+//                     wizard, its weapons and their infusions) are drawn as in the game; soft: SwiftShader, where live3d
+//                     declines and the baked sheets and 2D weapons stand in (the old behaviour; CI has no GPU)
+//   The viewport grows to the page's full content (every row of a tall ?spells=) before the capture.
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -41,7 +45,9 @@ async function startDev() {
 }
 
 const { base, stop } = await startDev();
-const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, defaultViewport: { width: vw, height: vh }, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const GL = arg('gl', process.env.CI ? 'soft' : 'gpu');
+const glArgs = GL === 'soft' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--enable-gpu', '--ignore-gpu-blocklist', ...(process.platform === 'win32' ? ['--use-angle=d3d11'] : [])];
+const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, defaultViewport: { width: vw, height: vh }, args: glArgs });
 try {
   const p = await browser.newPage();
   const errors = [];
@@ -53,11 +59,21 @@ try {
   await p.goto(url(times[0]));
   await ready();
   const useApi = await p.evaluate(() => typeof window.vfxLab?.setTime === 'function');
+  // grow the viewport to the content (a screenshot clip outside it comes out cut), then show the first frame again
+  const full = await p.evaluate(() => {
+    const c = document.querySelector('canvas')?.getBoundingClientRect(), d = document.documentElement;
+    return [Math.ceil(Math.max(d.scrollWidth, c ? c.right : 0)), Math.ceil(Math.max(d.scrollHeight, c ? c.bottom : 0))];
+  });
+  const grown = full[0] > vw || full[1] > vh;
+  if (grown) {
+    await p.setViewport({ width: Math.max(vw, full[0]), height: Math.max(vh, full[1]) });
+    if (!useApi) { await p.goto(url(times[0])); await ready(); }
+  }
   const clip = crop?.length === 4 ? { x: crop[0], y: crop[1], width: crop[2], height: crop[3] }
     : await p.evaluate(() => { const r = (document.querySelector('canvas') ?? document.body).getBoundingClientRect(); return { x: Math.max(0, Math.floor(r.x)), y: Math.max(0, Math.floor(r.y)), width: Math.ceil(r.width), height: Math.ceil(r.height) }; });
   const shots = [], labMetrics = [];
   for (let i = 0; i < N; i++) {
-    if (i > 0 || !useApi) {
+    if (i > 0 || !useApi || grown) {
       if (useApi) { await p.evaluate((t) => window.vfxLab.setTime(t), times[i]); }
       else if (i > 0) { await p.goto(url(times[i])); await ready(); }
     }

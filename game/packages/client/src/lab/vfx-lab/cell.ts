@@ -48,12 +48,18 @@ export interface CellSpec {
   /** Wizard 0's aim swings (?sweep=1); wizard 0 walks once the spell has gone off (?move=1). */
   sweep: boolean;
   move: boolean;
+  /** Wizard 0's hands move after its spell (?then=), made over and over, or null. */
+  then: Demo | null;
 }
 
 /** ?sweep=1: the aim swings this far either way (radians) at this rate (rad/s of the sine), as the old Spray Lab's did. */
 const SWEEP_AMP = 0.75, SWEEP_RATE = 2.1;
 /** ?move=1: wizard 0 walks this way (world units, toward the right of the screen), at full stick. */
 const WALK: readonly [number, number] = [toX(1, 0), toY(1, 0)];
+
+/** ?then=: the first move's button goes down this many ticks after the spell's cast event, and comes again every THEN_REP ticks (each move's hold and the slowest recovery, the maul's 1.4 s). */
+export const THEN_GAP = 20;
+const THEN_REP: Record<string, number> = { strike: 96, special: 96, retreat: 60, heavy: 156, channel: 170, block: 170 };
 
 /** A sim snapshot is kept every this many ticks along the panel's timeline (scrubbing back restores the nearest). */
 export const SNAP_EVERY = 10;
@@ -100,6 +106,8 @@ export class Cell {
     this.start = snapshot(w);
     this.t0 = this.findCast();
     this.walkFrom = this.t0;
+    // demoInput's hands press at tick 10 of their cycle
+    if (spec.then) this.thenFrom = this.t0 + THEN_GAP - 10;
 
     // the effect canvases are sized from FIELD when a view is made: fit it to this room first
     const tw = turnedWorld(w);
@@ -130,6 +138,8 @@ export class Cell {
 
   /** From this step on, wizard 0 walks (?move=1): the spell's own step, known after the pre-pass. */
   private walkFrom = Infinity;
+  /** From this step on, wizard 0 makes its ?then= move instead of its spell. */
+  private thenFrom = Infinity;
 
   private inputsAt(tick: number): PlayerInput[] {
     for (let s = 0; s < MAX_SEATS; s++) {
@@ -141,7 +151,8 @@ export class Cell {
         const dx = d.at[0] - ox, dy = d.at[1] - oy;
         d = { ...d, at: [ox + dx * c - dy * sn, oy + dx * sn + dy * c] };
       }
-      let inp = demoInput(this.world, tick + s * LAG, s, d);
+      const th = s === 0 && this.spec.then && tick >= this.thenFrom ? this.spec.then : null;
+      let inp = th ? demoInput(this.world, (tick - this.thenFrom) % (THEN_REP[th.cast] ?? 96), 0, { ...th, at: d.at }) : demoInput(this.world, tick + s * LAG, s, d);
       if (s === 0 && this.spec.move && tick >= this.walkFrom) inp = quantize({ ...inp, moveX: WALK[0] * 127, moveY: WALK[1] * 127 });
       this.inputs[s] = inp;
     }

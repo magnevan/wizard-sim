@@ -225,11 +225,36 @@ function burstArms(w: World, i: number): boolean {
 }
 
 function onYou(w: World, i: number, c: number): number {
-  const s = w.seats;
-  if (possessed(w, i) || s.queueLen[i] === 0 || len(s.aimX[i], s.aimY[i]) > SHAPES.selfAim) return c;
-  const f = compile(queueOf(w, i), 'area').form, made = f === EL.shield || f === EL.sigil;
+  if (!aimOnYou(w, i)) return c;
+  const made = madeOnYou(w, i);
   if (c === CAST_ID.conjure) return made ? c : CAST_ID.area;
-  return made && !s.dragged[i] ? CAST_ID.area : c;
+  return made && w.seats.dragged[i] !== DRAG.line ? CAST_ID.area : c; // a Shield line stays a line, even on you
+}
+
+/** What a held Place has become (seats.dragged). Readers that only ask "is it drawn?" compare with DRAG.line (1). */
+const DRAG = { none: 0, line: 1, arc: 2 } as const;
+
+const aimOnYou = (w: World, i: number): boolean => !possessed(w, i) && w.seats.queueLen[i] > 0 && len(w.seats.aimX[i], w.seats.aimY[i]) <= SHAPES.selfAim;
+const madeOnYou = (w: World, i: number): boolean => { const f = compile(queueOf(w, i), 'area').form; return f === EL.shield || f === EL.sigil; };
+
+/**
+ * Is a held Sigil Place on yourself right now? Then it draws no line: it's the orbitals or the motes, whatever came
+ * before, and a glyph line starts afresh where the cursor leaves you (issue #15, 2026-11-22).
+ */
+const placeOnYou = (w: World, i: number): boolean => aimOnYou(w, i) && madeOnYou(w, i);
+
+/** Is this a Shield Place? It reads the player's intent from the press and the first move (tickSeat). */
+const shieldPlace = (w: World, i: number): boolean => !possessed(w, i) && w.seats.queueLen[i] > 0 && compile(queueOf(w, i), 'place').form === EL.shield;
+
+/**
+ * Is the move from the press to the cursor roughly straight toward or away from you (you, the press and the cursor in
+ * a line, within STRUCT.arcRadial)? Then the player is sizing an arc, not drawing a line.
+ */
+function radial(w: World, i: number): boolean {
+  const s = w.seats, b = w.bodies;
+  const ux = s.holdX[i] - b.x[i], uy = s.holdY[i] - b.y[i], vx = b.x[i] + s.aimX[i] - s.holdX[i], vy = b.y[i] + s.aimY[i] - s.holdY[i];
+  const lu = len(ux, uy), lv = len(vx, vy);
+  return lu < 1e-6 || lv < 1e-6 || Math.abs(ux * vy - uy * vx) / (lu * lv) <= STRUCT.arcRadial;
 }
 
 function release(w: World, i: number, spec: SpellSpec, charge: number): void {
@@ -313,12 +338,24 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
 
   // Shift+RMB is Place, on release: drag while holding for a drawn Place. There's no Area tap to wait out (the ring merged
   // into the burst, 2026-11-22), so a tap places at once; released on yourself, Shield and Sigil raise their ring (onYou).
-  if (pressed & BTN.area) { s.areaHeld[i] = 0; s.dragged[i] = 0; s.holdX[i] = b.x[i] + s.aimX[i]; s.holdY[i] = b.y[i] + s.aimY[i]; }
+  // A Shield Place reads the player's intent once (the user, 2026-11-22): pressed within STRUCT.arcZone of you it's the
+  // arc (or, on you, the ring) to the end; pressed further out, its first move of dragMin decides: straight toward or away
+  // from you (radial) is the arc, any other way a line, which stays a line even near you (a doorway shut from beside it).
+  // Back at the press point a line is undecided again. A Sigil Place moves between its line and its motes or orbitals on
+  // you (placeOnYou).
+  if (pressed & BTN.area) {
+    s.areaHeld[i] = 0; s.holdX[i] = b.x[i] + s.aimX[i]; s.holdY[i] = b.y[i] + s.aimY[i];
+    s.dragged[i] = shieldPlace(w, i) && len(s.aimX[i], s.aimY[i]) <= STRUCT.arcZone ? DRAG.arc : DRAG.none;
+  }
   let areaCast = 0;
   if (held & BTN.area) {
     s.areaHeld[i]++;
-    if (len(b.x[i] + s.aimX[i] - s.holdX[i], b.y[i] + s.aimY[i] - s.holdY[i]) > RHYTHM.dragMin) s.dragged[i] = 1;
-    else if (s.dragged[i]) s.dragged[i] = 0; // back at the start: no line after all, the plain arc or glyph
+    const moved = len(b.x[i] + s.aimX[i] - s.holdX[i], b.y[i] + s.aimY[i] - s.holdY[i]) > RHYTHM.dragMin;
+    if (shieldPlace(w, i)) {
+      if (s.dragged[i] === DRAG.none && moved) s.dragged[i] = radial(w, i) ? DRAG.arc : DRAG.line;
+      else if (s.dragged[i] === DRAG.line && !moved) s.dragged[i] = DRAG.none;
+    } else if (placeOnYou(w, i)) { s.dragged[i] = DRAG.none; s.holdX[i] = b.x[i] + s.aimX[i]; s.holdY[i] = b.y[i] + s.aimY[i]; }
+    else s.dragged[i] = moved ? DRAG.line : DRAG.none; // back at the start: no line after all, the plain glyph
   } else if (released & BTN.area) areaCast = onYou(w, i, CAST_ID.place);
   // Shift+LMB with elements queued is the burst: armed on the press (held, the view previews its shape), cast on release,
   // so the aim at release shapes it (onYou, imbue). A guard or weapon (Shield or Sigil leading) has no shape to preview and

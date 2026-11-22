@@ -30,7 +30,7 @@ try {
   if (b.tut) fail('key 1 did not leave the tutorial');
 
   // the end card: stand in the Survive arch (a dev poke of the position; the sim does the rest)
-  await p.goto(`${BASE}?timerloop=1#tutorial-20`); // a new query: a real load, not a hash change
+  await p.goto(`${BASE}?timerloop=1&beat=20#tutorial-20`); // a new query: a real load, not a hash change
   await p.waitForFunction(() => !!window.wizardSim?.world?.tut, { timeout: 20000, polling: 100 });
   await sleep(600);
   const c = await st();

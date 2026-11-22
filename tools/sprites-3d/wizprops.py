@@ -100,7 +100,8 @@ def sword():
 
 
 def earthmaul():
-    # sheet A: a lumpy boulder lashed to a gnarled haft with roots, two violet crystals in the rock
+    # sheet A: a lumpy boulder lashed to a gnarled haft with roots. Its two violet crystals are gone (the user, Elemental
+    # Arms 2026-11-21: the head and shaft read apart better without them; the game hid them first, live3d.ts HIDDEN)
     g = GRIP; d = Vector((0.30, 0, 1)).normalized(); side = Vector((0, 1, 0))
     head = g + d * 0.78
     # two-handed (2026-11-20): the haft runs on below the fist for the other hand, a knot of root at its end
@@ -109,8 +110,6 @@ def earthmaul():
              ball('maul lump', head + side * 0.16 + d * 0.06, 0.13, ROCK())]
     for k in range(3):   # roots wound round the haft and over the boulder's neck
         parts.append(ring('maul root' + str(k), g + d * (0.2 + 0.18 * k), d, 0.06, 0.022, ROOT()))
-    parts += [cone('maul crystal a', head + side * 0.18 + d * 0.10, head + side * 0.30 + d * 0.24, 0.05, AMETHYST(), verts=5),
-              cone('maul crystal b', head - side * 0.14 + d * 0.15, head - side * 0.22 + d * 0.30, 0.04, AMETHYST(), verts=5)]
     return parts
 
 

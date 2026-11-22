@@ -40,6 +40,10 @@ export interface LabState {
   sweep: boolean;
   /** Wizard 1 walks to the right of the screen from the moment the spell goes off. */
   move: boolean;
+  /** A hands move (HANDS) wizard 1 makes over and over after the spell (a conjured weapon, then swung), or null. */
+  then: string | null;
+  /** Each panel shows only a box this many art px wide round wizard 1, scaled up; null: the whole panel. */
+  focus: number | null;
   /** Kept from the URL; the panel doesn't change these. */
   scale: number;
   size: [number, number] | null;
@@ -70,7 +74,9 @@ export const pressesOf = (s: string): Element[] =>
 
 export function readState(search: string): LabState {
   const q = new URLSearchParams(search);
-  const [elsQ, formInSpell] = (q.get('spell') ?? 'fire,fire,fire').split('/');
+  const [elsQ, formThen] = (q.get('spell') ?? 'fire,fire,fire').split('/');
+  // `els/weapon>strike`: the form, then a hands move (as &then=)
+  const [formInSpell, thenInSpell] = formThen?.split('>') ?? [];
   let presses = pressesOf(elsQ);
   const runes = q.has('runes') ? Number(q.get('runes')) : NaN;
   if (runes >= 0 && runes <= 5) presses = atRunes(presses, runes);
@@ -94,6 +100,8 @@ export function readState(search: string): LabState {
     hit: q.get('hit') === '1',
     sweep: q.get('sweep') === '1',
     move: q.get('move') === '1',
+    then: [q.get('then'), thenInSpell].find((x) => x && isHands(x)) ?? null,
+    focus: q.get('focus') && q.get('focus') !== '0' ? (Number(q.get('focus')) > 1 ? Number(q.get('focus')) : 64) : null,
     scale: Math.max(1, Math.floor(Number(q.get('scale') ?? 2))),
     size: size && size.length === 2 && size.every((v) => v > 0) ? [size[0], size[1]] : null,
     zoom: zoom && zoom.length === 4 && zoom.every(Number.isFinite) ? [zoom[0], zoom[1], zoom[2], zoom[3]] : null,
@@ -125,5 +133,6 @@ export function writeState(s: LabState): void {
   set('hit', s.hit ? '1' : null);
   set('sweep', s.sweep ? '1' : null);
   set('move', s.move ? '1' : null);
+  set('then', s.then);
   try { history.replaceState(null, '', `${location.pathname}?${p.toString().replace(/%2C/g, ',').replace(/%3B/g, ';').replace(/%2F/g, '/')}${location.hash}`); } catch { /* sandboxed */ }
 }

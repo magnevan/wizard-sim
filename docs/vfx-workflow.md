@@ -32,7 +32,8 @@ Build with the game's own code, not in a separate copy. The VFX Lab (`/vfx-lab.h
 - `&grid=runes&ns=1,3,5`: the same spell at one, three and five runes side by side.
 - `&spells=water;fire;cold`: a row per spell; `&times=0.1,0.3,0.6,1`: a film strip of one spell.
 - `&hit=1`: the sim's hit shapes dotted over the stage (spray cones, beam lines, missiles, zones, area rings): check an effect against where it hurts. `&sweep=1` swings the aim, `&move=1` walks the caster.
-- `scene=` `empty`, `crowd`, `dark`, `coop` (four wizards; `others=` sets their spells) or `ally`. Scenes are data in `src/lab/vfx-lab/scenes.ts`; add one when an effect needs another context.
+- Conjured weapons: `&spells=sigil,earth,fire/weapon;sigil,arcane,fire/weapon&scene=weapon&focus=1&then=strike`: a row per weapon, each conjured, held, then swung over and over (`then=` takes any hands move: strike, heavy, special, channel, retreat, block; per row as `sigil,earth,fire/weapon>heavy`). t = 0 is the conjure; the button goes down at t = 1/3 s and again every 1.6 s. `&focus=1` crops each panel to a 64 art px box round the caster, scaled up (`&focus=80` for a bigger box).
+- `scene=` `empty`, `crowd`, `dark`, `coop` (four wizards; `others=` sets their spells), `ally` or `weapon` (the caster turned three-quarters to the camera, a dummy in reach). Scenes are data in `src/lab/vfx-lab/scenes.ts`; add one when an effect needs another context.
 
 Judge it in more than the empty scene: at least `crowd`, and `coop` for anything that fills the screen.
 
@@ -42,7 +43,7 @@ Render a contact sheet and difference frames across the effect's life at one, th
 
     npm run vfx-sheet -- --page vfx-lab.html --query "spell=fire,fire,fire&scene=crowd&bar=0" --from 0 --to 1.2 --frames 12 --cols 4 --out shots/vfx/fire
 
-It writes `sheet.png` (the frames), `diff.png` (new pixels in colour, vanished ones in magenta: what moved) and `metrics.json`. In the lab, trust the lab's own numbers (`particles`, `fxLive`, `vfxMs`) over the pixel count, which counts the floor too. Frames 0.03 to 0.06 s apart show particles travelling; wider gaps only show churn. Then go through the rubric below and write down the single biggest problem.
+The viewport grows to the page, so every row of a tall `spells=` lands in the sheet. It runs headless Chrome on the machine's GPU (`--gl gpu`, the default), so the live 3D models (the wizard, its weapons and their infusions) are drawn as in the game; `--gl soft` is SwiftShader, where `live3d.ts` declines and the baked sheets and 2D weapons stand in, which is how the checks run and how CI would. Judge anything on a 3D body with the GPU. It writes `sheet.png` (the frames), `diff.png` (new pixels in colour, vanished ones in magenta: what moved) and `metrics.json`. In the lab, trust the lab's own numbers (`particles`, `fxLive`, `vfxMs`) over the pixel count, which counts the floor too. Frames 0.03 to 0.06 s apart show particles travelling; wider gaps only show churn. Then go through the rubric below and write down the single biggest problem.
 
 ## 4. One change per round
 

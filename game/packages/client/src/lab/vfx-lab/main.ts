@@ -14,7 +14,7 @@
  *   &runes=3                that many presses: the spell's, then more of the first (or cut short)
  *   &aim=deg,dist           wizard 1's aim from where they stand, on the ground: 0 deg to the right of the screen,
  *                           90 toward the camera; dist in world units. Without it, the scene's target
- *   &scene=empty            empty, crowd, dark, coop, ally (scenes.ts)
+ *   &scene=empty            empty, crowd, dark, coop, ally, weapon (scenes.ts)
  *   &others=a/force;b/area  the other wizards' spells in a scene that has them (coop)
  *   &mood=night             a lighting mood instead of the scene's
  *   &seed=7                 the world's seed
@@ -30,10 +30,16 @@
  *   &hit=1                  the sim's hit shapes dotted over the stage (hit-overlay.ts): spray cones, beam lines,
  *                           missiles and their flight, zones, area rings
  *   &sweep=1                wizard 1's aim swings back and forth (0.75 rad either way, sin(t * 2.1)): a sweeping spray
+ *   &then=strike            after the spell, wizard 1 makes that hands move (strike, heavy, special, channel, retreat,
+ *                           block) over and over: a conjured weapon held, then swung. Per row in a recipe:
+ *                           `sigil,earth,fire/weapon>heavy`. t = 0 stays the spell; the button goes down at
+ *                           t = 1/3 s (cell.ts THEN_GAP) and again every 1.6 s (heavy 2.6 s, held 1 s; channel, block 2.8 s)
  *   &move=1                 wizard 1 walks to the right of the screen once the spell has gone off
  *   &scale=2                screen px per art px (the game picks 2 to 4 by window height)
  *   &size=480x270           each panel's size in art px (the game shows about 270 art px of height)
  *   &zoom=x,y,w,h           show only that part of each panel (art px from its top left)
+ *   &focus=1                each panel shows only a 64 art px box round wizard 1, scaled up to the panel's size (a held
+ *                           weapon big enough to judge); &focus=80 sets the box. Replaces &zoom
  *   &bar=0                  no side panel (a clean page for captures)
  * The game's own view options work here too: ?lights=0, ?lighting=0, ?live3d=0, ?sprites=0, ?wizscale=...
  *
@@ -50,7 +56,7 @@ import { emitCount } from '../../art/util';
 import { stats } from '../../art/px';
 import { liveModel, liveSlugs, liveWorks, setLiveClock } from '../../art/live3d';
 import { resetSheetFrames, sheetsReady } from '../../art/sprites';
-import { FY } from '../../camera';
+import { FY, PPU } from '../../camera';
 import { toU, toV } from '../../iso-world';
 import type { WorldView } from '../../view';
 import { Cell, worldX, worldY, type CellSpec } from './cell';
@@ -80,6 +86,14 @@ function demoAt(recipe: string | null, at: V): Demo | null {
   if (d) { d.at = [worldX(at), worldY(at)]; for (const s of d.seq ?? []) s.at = d.at; }
   return d;
 }
+/** ?focus=: a box of that many art px round wizard 1 (a little above the feet, where a held weapon is), as a zoom, and the scale that shows it as big as the panel would be. */
+function focusBox(w: number, h: number): { zoom: [number, number, number, number]; scale: number } | null {
+  const F = S.focus;
+  if (!F) return null;
+  const sc = sceneOf(), [u, v] = sc.wizards[0].at;
+  const x = w / 2 + (u - sc.look[0]) * PPU, y = h / 2 + (v - sc.look[1]) * PPU * FY - 14;
+  return { zoom: [Math.round(x - F / 2), Math.round(y - F / 2), F, F], scale: Math.max(S.scale, Math.floor((Math.min(w, h) * S.scale) / F)) };
+}
 const panelSize = (): [number, number] => S.size ?? (S.grid || S.times?.length ? [200, 200] : S.spells?.length ? [320, 180] : [480, 270]);
 /**
  * The panels: a row per spell (?spells=, else the main one) and per A/B variant, and along each row a column per rune
@@ -88,8 +102,9 @@ const panelSize = (): [number, number] => S.size ?? (S.grid || S.times?.length ?
 function specs(): CellSpec[] {
   const sc = sceneOf(), a0 = aim0(), [w, h] = panelSize(), others = (S.others ?? '').split(';').filter(Boolean);
   const rows = S.spells?.length
-    ? S.spells.map((r) => { const [els, f] = r.split('/'); return { label: r, presses: pressesOf(els), form: f || S.form }; })
-    : [{ label: '', presses: S.presses, form: S.form }];
+    ? S.spells.map((r) => { const [els, ft = ''] = r.split('/'), [f, th] = ft.split('>'); return { label: r, presses: pressesOf(els), form: f || S.form, then: th && isHands(th) ? th : S.then }; })
+    : [{ label: '', presses: S.presses, form: S.form, then: S.then }];
+  const fb = focusBox(w, h);
   const cols: { n: number | null; dt: number; label: string }[] = S.grid ? S.ns.map((n) => ({ n, dt: 0, label: `${n} rune${n > 1 ? 's' : ''}` }))
     : S.times?.length ? S.times.map((t) => ({ n: null, dt: t, label: `${t} s` })) : [{ n: null, dt: 0, label: '' }];
   // A/B side by side: the setup twice, A's row (the pinned knobs) over B's (the live ones); flip: one row, drawn with
@@ -100,8 +115,9 @@ function specs(): CellSpec[] {
   return rows.flatMap((row, ri) => variants.flatMap((v) => cols.map((col, k) => {
     const n = col.n ?? row.presses.length;
     return {
-      scene: sc, seed: S.seed, w, h, scale: S.scale, zoom: S.zoom, mood: S.mood, scope: `lab${ri}${v.name}${k}:`, aim0: a0,
+      scene: sc, seed: S.seed, w, h, scale: fb?.scale ?? S.scale, zoom: fb?.zoom ?? S.zoom, mood: S.mood, scope: `lab${ri}${v.name}${k}:`, aim0: a0,
       knobs: v.knobs, variant: v.name, runes: n, row: `${ri}|${v.name}`, dt: col.dt, sweep: S.sweep, move: S.move,
+      then: row.then ? demoAt(`/${row.then}`, a0 ?? sc.target) : null,
       label: [row.label, v.name && (v.name === 'A' ? 'A (pinned)' : 'B (live)'), col.label].filter(Boolean).join('  '),
       demos: sc.wizards.map((wz, i) => i === 0
         ? demoAt(`${isHands(row.form) ? '' : atRunes(row.presses, n).join(',')}/${row.form}`, a0 ?? sc.target)

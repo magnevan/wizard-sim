@@ -68,6 +68,10 @@ export const SCENES: Readonly<Record<string, SceneDef>> = {
     dummies: [[0, 0]],
     enemies: [{ arch: 'swarmer', at: [1, -0.8] }, { arch: 'swarmer', at: [-0.9, 1] }, { arch: 'swarmer', at: [0.8, 1.2] }],
   },
+  weapon: {
+    blurb: 'Held weapons: the caster turned three-quarters toward the camera (weapon hand in front), a dummy in reach.',
+    room: 'sanctum', wizards: [{ at: [-0.8, -0.4] }], target: [0.4, 0.45], dummies: [[0.4, 0.45]], look: [-0.3, -0.4],
+  },
   ally: {
     blurb: 'An ally wizard stands at the target, beside a dummy (friendly fire is on).',
     room: 'sanctum', wizards: [{ at: [-2.5, 0] }, { at: [2.3, 0.2] }], target: [2.3, 0.2], dummies: [[3.2, -0.5]], look: [0.2, -0.6],

@@ -5,7 +5,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { BODY, CELL, CONTENT_HASH, NO_INPUT, N_ALTARS, ROOM_HASH, ROOMS, STRUCT, createTerrain, createWorld, isPropWall, roomHash as simRoomHash, snapshot, step } from '@wizard-sim/sim';
+import { BODY, CELL, CONTENT_HASH, NO_INPUT, N_ALTARS, ROOM_HASH, ROOMS, STRUCT, createTerrain, createWorld, firstCliff, isPropWall, roomHash as simRoomHash, snapshot, step } from '@wizard-sim/sim';
 import * as C from '../src/index.mjs';
 
 /** A scratch copy of the maps and of the generated module, to break. */
@@ -220,6 +220,85 @@ describe('terrain has no budget', () => {
     b.x[0] = (x1 + x2) / 2; b.y[0] = y1 + 0.05;
     step(big, [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT]);
     expect(Math.abs(b.y[0] - y1)).toBeGreaterThan(b.r[0] + STRUCT.wallThickness - 0.1); // pushed clear of the wall it stood on
+  });
+});
+
+describe('height tiers', () => {
+  const heightOf = (level: any) => level.layerInstances.find((l: any) => l.__identifier === 'Height');
+  const stairValue = (project: any) => project.defs.layers.find((l: any) => l.identifier === 'Height').intGridValues.find((v: any) => v.identifier === 'stair').value;
+
+  it('trace tier edges into cliffs, with gaps at stairs, none at equal heights or along rock', () => {
+    // 8 x 4 cells (4 x 2 u): tier 1 on the top two rows, tier 0 below, a two-cell stair in the middle
+    const terrain = ['........', '........', '........', '........'];
+    const height = ['11111111', '111//111', '000//000', '00000000'];
+    const { segs, tiers } = C.traceCliffs(terrain, height, [0, 3], 4, 2);
+    expect(segs).toEqual([[-2, 0, -0.5, 0], [0.5, 0, 2, 0]]);
+    expect(tiers).toEqual([[1, 0], [1, 0]]);
+    expect(C.traceCliffs(terrain, height, [0, 0], 4, 2).segs).toEqual([]); // two tiers at the same height are one floor
+    expect(C.traceCliffs(['........', '........', '####....', '........'], height, [0, 3], 4, 2).segs).toEqual([[0.5, 0, 2, 0]]); // rock has its own outline
+    // a run splits where the two tiers it parts change
+    expect(C.traceCliffs(['....', '....'], ['1122', '0000'], [0, 3, 6], 2, 1).tiers).toEqual([[1, 0], [2, 0], [2, 1]]); // and the 1|2 edge between them
+  });
+
+  it('the Terraces room: its cliffs end the rock list and stop a body; flat rooms have no height', () => {
+    const def = ROOMS.terraces, hd = def.height!;
+    expect(hd.metres).toEqual([0, 3, 6]);
+    expect(firstCliff(def)).toBe(def.rock.length - hd.cliffs.length);
+    for (const id of Object.keys(ROOMS) as (keyof typeof ROOMS)[]) if (id !== 'terraces') expect('height' in ROOMS[id]).toBe(false);
+    // the terrace's edge (y = -1), west of the stair: a body standing on it is pushed off, and the wall is terrain
+    const k = def.rock.findIndex((s, i) => i >= firstCliff(def) && s[1] === -1 && s[3] === -1 && s[0] < 0);
+    expect(hd.cliffs[k - firstCliff(def)]).toEqual([1, 0]);
+    const w = createWorld(3, 1, { room: 'terraces' }), b = w.bodies;
+    expect(w.terrain.n).toBe(def.rock.length);
+    b.x[0] = -8; b.y[0] = -1 + 0.05;
+    step(w, [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT]);
+    expect(b.y[0] + 1).toBeGreaterThan(b.r[0] + STRUCT.wallThickness - 0.1);
+  });
+
+  it("without its stair, the terrace can't be reached; a start in the void is caught", () => {
+    const s = scratch();
+    s.edit('world/Terraces.ldtkl', (l) => {
+      const h = heightOf(l), stair = 10;
+      // the wide stair's cells become tiers: the terrace (and the balcony above it) is cut off from the floor
+      h.intGridCsv = h.intGridCsv.map((v: number, i: number) => (v === stair && Math.floor(i / h.__cWid) > 12 ? (Math.floor(i / h.__cWid) <= 21 ? 1 : 0) : v));
+      const start = entitiesOf(l).find((e: any) => e.__identifier === 'PlayerStart' && e.fieldInstances[0].__value === 2);
+      start.px = [C.toPx(-15.5, l.pxWid), C.toPx(11.5, l.pxHei)];
+    });
+    const errs = s.check();
+    expect(errs.some((e) => e.includes('portal 0') && e.includes("can't be reached"))).toBe(true);
+    expect(errs.some((e) => e.includes('portal 2') && e.includes("can't be reached"))).toBe(true);
+    expect(errs.some((e) => e.includes('portal 3') && e.includes("can't be reached"))).toBe(false); // on the floor
+    expect(errs.some((e) => e.includes('start 2') && e.includes('inside painted rock or void'))).toBe(true);
+  });
+
+  it('refuses a painted tier with no height, and a stair that joins nothing', () => {
+    const s = scratch();
+    s.edit('world/Sanctum.ldtkl', (l) => {
+      const h = heightOf(l);
+      h.intGridCsv[0] = 1; // a tier-1 cell in the corner, and no tierMetres
+      h.intGridCsv[h.__cWid * 20 + 20] = 10; // a lone stair on tier 0
+    });
+    const errs = s.check();
+    expect(errs.some((e) => e.includes('tier 1 is painted') && e.includes('tierMetres'))).toBe(true);
+    s.edit('world/Sanctum.ldtkl', (l) => {
+      heightOf(l).intGridCsv[0] = 0;
+      const tm = l.fieldInstances.find((f: any) => f.__identifier === 'tierMetres');
+      tm.__value = [0]; tm.realEditorValues = [{ id: 'V_Float', params: [0] }];
+    });
+    expect(s.check().some((e) => e.includes('the stair at cell 20,20 touches only one height'))).toBe(true);
+  });
+
+  it('the height CLI prints rows and writes them back', () => {
+    const s = scratch();
+    const loaded = C.loadProject(s.project), entry = C.findLevel(loaded, 'terraces');
+    const lines: string[] = C.printLayer(loaded.project, entry.level, 'Height').trim().split('\n').filter((l: string) => !l.startsWith('//'));
+    expect(lines.length).toBe(48);
+    expect(lines[20].slice(26, 38)).toBe('11////////11');
+    lines[0] = '0' + lines[0].slice(1);
+    expect(C.writeLayer(loaded, entry, lines.join('\n'), 'Height')).toBe(1);
+    expect(heightOf(C.findLevel(C.loadProject(s.project), 'terraces').level).intGridCsv[0]).toBe(0);
+    expect(stairValue(loaded.project)).toBe(10);
+    expect(() => C.writeLayer(loaded, entry, lines.join('\n').replace('0', 'x'), 'Height')).toThrow(/not a height character/);
   });
 });
 

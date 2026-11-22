@@ -1,6 +1,6 @@
 // The Terrain IntGrid as text rows, for reading and diffs, and text rows written back into a level.
 import { readFileSync } from 'node:fs';
-import { FLOOR, GROUND_CHARS, ROCK, terrainLegend, terrainRows } from './compile.mjs';
+import { FLOOR, GROUND_CHARS, HEIGHT_CHARS, ROCK, VOID, terrainLegend, terrainRows } from './compile.mjs';
 import { CELL, GRID_PX, PX_PER_UNIT, layerOf, saveJson, toWorldX, toWorldY } from './ldtk.mjs';
 
 /** Overlay marks for --entities (read-only: write refuses them). */
@@ -10,7 +10,7 @@ const header = (level, layer, legend) => [
   `// ${level.identifier}: ${layer.__cWid} x ${layer.__cHei} cells of ${CELL} u (${level.pxWid / PX_PER_UNIT} x ${level.pxHei / PX_PER_UNIT} u). Row 0 is the top.`,
   `// legend: ${[...legend].filter(([, ch]) => ch).map(([v, ch]) => `'${ch}' ${v === 0 ? 'floor (unpainted)' : `${v} ${terrainName(ch)}`}`).join(', ')}`,
 ];
-const terrainName = (ch) => (ch === ROCK ? 'rock' : ch === FLOOR ? 'floor' : '?');
+const terrainName = (ch) => (ch === ROCK ? 'rock' : ch === VOID ? 'void' : ch === FLOOR ? 'floor' : '?');
 
 /** A level's terrain as text. With `entities`, entity cells are marked (S start, D dummy, P portal, A altar, + free rock). */
 export function printGrid(project, level, { entities = false } = {}) {
@@ -78,30 +78,38 @@ export function writeGrid(loaded, entry, text) {
 
 export const readText = (file) => readFileSync(file === '-' ? 0 : file, 'utf8');
 
-/** Ground layer: identifier -> value for a project. */
-const groundValues = (project) => new Map(project.defs.layers.find((l) => l.identifier === 'Ground').intGridValues.map((v) => [GROUND_CHARS[v.identifier], v.value]));
+/**
+ * An IntGrid layer drawn with one character per identifier (`chars`), `blank` for unpainted: the Ground
+ * layer (what the floor looks like) and the Height layer (tiers and stairs).
+ */
+const LAYERS = {
+  Ground: { chars: GROUND_CHARS, blank: '.' },
+  Height: { chars: HEIGHT_CHARS, blank: '0' },
+};
+const layerValues = (project, name) => new Map(project.defs.layers.find((l) => l.identifier === name).intGridValues.map((v) => [LAYERS[name].chars[v.identifier], v.value]));
 
-/** A level's Ground layer as text: '.' unpainted, then one character per material. */
-export function printGround(project, level) {
-  const layer = layerOf(level, 'Ground');
-  if (!layer) throw new Error(`${level.identifier} has no Ground layer`);
-  const byValue = new Map([[0, '.'], ...[...groundValues(project)].map(([c, v]) => [v, c])]), lines = [`// ${level.identifier} ground: ${layer.__cWid} x ${layer.__cHei} cells. ${Object.entries(GROUND_CHARS).map(([n, c]) => `${c} ${n}`).join(', ')}, . unpainted`];
+/** A level's Ground or Height layer as text. */
+export function printLayer(project, level, name) {
+  const layer = layerOf(level, name), { chars, blank } = LAYERS[name];
+  if (!layer) throw new Error(`${level.identifier} has no ${name} layer`);
+  const byValue = new Map([[0, blank], ...[...layerValues(project, name)].map(([c, v]) => [v, c])]);
+  const lines = [`// ${level.identifier} ${name.toLowerCase()}: ${layer.__cWid} x ${layer.__cHei} cells. ${Object.entries(chars).map(([n, c]) => `${c} ${n}`).join(', ')}, ${blank} unpainted`];
   for (let y = 0; y < layer.__cHei; y++) lines.push(layer.intGridCsv.slice(y * layer.__cWid, (y + 1) * layer.__cWid).map((v) => byValue.get(v) ?? '?').join(''));
   return lines.join('\n') + '\n';
 }
 
-/** Text rows -> a level's Ground layer. Returns how many cells changed. */
-export function writeGround(loaded, entry, text) {
-  const { level, path } = entry, layer = layerOf(level, 'Ground');
-  if (!layer) throw new Error(`${level.identifier} has no Ground layer`);
+/** Text rows -> a level's Ground or Height layer. Returns how many cells changed. */
+export function writeLayer(loaded, entry, text, name) {
+  const { level, path } = entry, layer = layerOf(level, name), { blank } = LAYERS[name];
+  if (!layer) throw new Error(`${level.identifier} has no ${name} layer`);
   const rows = text.replace(/\r/g, '').split('\n').filter((l) => l.trim() && !l.startsWith('//'));
   if (rows.length !== layer.__cHei) throw new Error(`${level.identifier} is ${layer.__cHei} rows tall; got ${rows.length}`);
-  const values = groundValues(loaded.project), csv = [];
+  const values = layerValues(loaded.project, name), csv = [];
   rows.forEach((row, y) => {
     if (row.length !== layer.__cWid) throw new Error(`row ${y} is ${row.length} wide; ${level.identifier} is ${layer.__cWid}`);
     for (const ch of row) {
-      const v = ch === '.' ? 0 : values.get(ch);
-      if (v === undefined) throw new Error(`row ${y}: '${ch}' is not a ground character`);
+      const v = ch === blank ? 0 : values.get(ch);
+      if (v === undefined) throw new Error(`row ${y}: '${ch}' is not a ${name.toLowerCase()} character`);
       csv.push(v);
     }
   });
@@ -110,3 +118,6 @@ export function writeGround(loaded, entry, text) {
   saveJson(path ?? loaded.path, path ? level : loaded.project);
   return changed;
 }
+
+export const printGround = (project, level) => printLayer(project, level, 'Ground');
+export const writeGround = (loaded, entry, text) => writeLayer(loaded, entry, text, 'Ground');

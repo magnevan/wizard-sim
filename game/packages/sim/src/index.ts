@@ -8,7 +8,7 @@ export { archAt, goStep, groupNow, openAtMarkers, partyIn, remaining, runScript,
 export { BATTERY, LIFE_CIRCLE, drivePlace, driving, inLifeCircle, lifeCircle, pedestalNear, sprayReach } from './battery';
 export { BATTERY_CHECKPOINTS, BSTEP, wellNear } from './battery-waves';
 export { createTerrain, terrainNear, terrainAlong, type Terrain } from './terrain';
-export { inRegion, markerOf, markersTagged, propsTagged, regionOf, roomHash, type MarkerDef, type RegionDef, type RoomDef, type Pt as RoomPt, type Seg as RoomSeg } from './room';
+export { firstCliff, inRegion, markerOf, markersTagged, propsTagged, regionOf, roomHash, type HeightDef, type MarkerDef, type RegionDef, type RoomDef, type Pt as RoomPt, type Seg as RoomSeg } from './room';
 export * from './config';
 export * from './elements';
 export * from './input';

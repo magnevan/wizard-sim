@@ -143,7 +143,7 @@ const YARD_MODE: Mode = {
 export const MODES: Readonly<Record<ModeId, Mode>> = { sandbox: SANDBOX, arena: ARENA_MODE, survive: SURVIVE, battery: BATTERY_MODE, tutorial: TUTORIAL, yard: YARD_MODE };
 
 const ROOM_MODE: Readonly<Record<Room, ModeId>> = {
-  sanctum: 'sandbox', academy: 'sandbox', arena: 'arena', survive: 'survive', battery: 'battery', tutorial: 'tutorial', yard: 'yard',
+  sanctum: 'sandbox', academy: 'sandbox', terraces: 'sandbox', arena: 'arena', survive: 'survive', battery: 'battery', tutorial: 'tutorial', yard: 'yard',
 };
 
 export const modeOf = (room: Room): Mode => MODES[ROOM_MODE[room]];

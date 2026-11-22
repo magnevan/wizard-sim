@@ -45,7 +45,25 @@ export interface RoomDef {
   /** Named spots and areas for the encounter script (encounter.ts) and code. Ids are unique across both. */
   readonly markers: readonly MarkerDef[];
   readonly regions: readonly RegionDef[];
+  /** The room's tiers (LDtk Height layer). A flat room has none, and its hash is what it was before tiers. */
+  readonly height?: HeightDef;
 }
+
+/**
+ * A room's tiers. Cliffs are plain rock walls (the last `cliffs.length` entries of `rock`), so bodies,
+ * nav and shots stop at them with no rule of their own; `cliffs` says which two tiers each one parts.
+ */
+export interface HeightDef {
+  /** Each tier's height in metres, by tier number (tier 0 is unpainted ground). */
+  readonly metres: readonly number[];
+  /** One row per CELL from the top, like `terrain`: '0'-'9' a tier, '/' a stair or ramp joining the tiers it touches. */
+  readonly rows: readonly string[];
+  /** [upper, lower] tier for each cliff wall, in the order they end `rock`. */
+  readonly cliffs: readonly (readonly [number, number])[];
+}
+
+/** The index in `def.rock` of the first cliff wall (rock.length if the room is flat). */
+export const firstCliff = (def: RoomDef): number => def.rock.length - (def.height?.cliffs.length ?? 0);
 
 /** The props with this tag, in map order. */
 export const propsTagged = (def: RoomDef, tag: string): readonly PropDef[] => def.props.filter((p) => p.tag === tag);

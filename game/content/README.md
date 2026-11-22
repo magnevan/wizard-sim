@@ -14,6 +14,7 @@ content/
     world/Battery.ldtkl    the opening's first job, an outdoor area (#battery); written by tools/segments/01-opening/battery-level.py
     world/Yard.ldtkl       the opening's drill yard in a corner of the academy (#yard); written by tools/segments/01-opening/yard-level.py,
                            which also writes its stations' Markers and the scenery people's (ids x-<kind>-<act>-...)
+    world/Terraces.ldtkl   the test room for height tiers (#terraces); written by packages/content/src/terraces-level.mjs
   assets/props/<id>/       the asset registry: meta.json and images, below
   generated/               every raw image bought from an AI tool (its README). Never edited; look here before any call
 packages/content/          the build, the check and the grid CLI (node, no runtime part)
@@ -53,8 +54,20 @@ What the ground is, one value per cell.
 |---|---|---|---|
 | (unpainted) | floor | the level's background, `#3F6443` (the grass of our floor art) | walkable ground |
 | 1 | rock | `#74786C` | static rock that never breaks: walls block walking, shots and sight. The build traces the outline of every painted area into wall segments (merged into the longest straight runs; none along the room's edge, which already stops everything). |
+| 2 | void | `#101014` | outside the room's outline: it blocks like rock (its outline is traced the same way, and rock against void needs no wall) and is meant to be drawn as nothing, so a room can be any shape, not only a rectangle. Painted cells print as `_`. |
 
 Only values the game understands are defined. Pits, water and the like come when the sim has them (the tutorial's pit is still code).
+
+### Height (IntGrid)
+
+Which tier each cell stands on, one value per cell. Unpainted is tier 0; `t1` to `t9` are tiers 1 to 9; `stair` is a stair or ramp. The level's **`tierMetres`** field (Level › custom fields) gives each tier's height in metres, tier 0 first: the Terraces' is `[0, 3, 6]`. A tier is a number, not an order, so a sea can be a tier below 0 m.
+
+- **Cliffs.** Every edge between two cells at different heights becomes a cliff: a rock wall segment, merged into the longest straight runs, so bodies, nav, shots and `content:check`'s reachability stop at it with no rule of their own. No cliff is drawn where either cell is rock or void (their outline is already a wall) or a stair. Tiers at the same height are one floor.
+- **Stairs** join whatever they touch: a run of stair cells between a terrace and the floor leaves a gap in the cliff exactly as wide as the stair. Its sides are open too, so it plays as a ramp. A run of stair cells that touches only one height is an error.
+- **In the room** (`RoomDef.height`): the tier rows (`'0'`-`'9'`, `'/'` stair), the metres, and for each cliff its `[upper, lower]` tiers. The cliffs are the last entries of `rock` (`firstCliff(def)` in `sim/src/room.ts`). A level with no Height cells has no `height` at all, so a flat room's hash is what it was before tiers existed.
+- **Not yet:** height isn't drawn (cliffs show as stone walls) and shots don't use it. The phases are in `docs/threads/height.md`.
+
+Edit it in LDtk, or as text with `npm run content -- height <level>` and `--write <file|->`.
 
 ### Entities
 
@@ -103,8 +116,8 @@ The room's id is the level's name with a lower-case first letter (`Survive` → 
 
 1. The project and every level file against LDtk's official JSON schema (1.5.3), and the pinned version.
 2. References: every layer, entity and field instance has its definition, IntGrid values are defined, level files exist and match the project's list, iids are unique, entity-reference fields (none yet) point at real entities.
-3. The rooms compile: known entities only, all four seats' starts, three altars or none, at least four portals in the Arena and Survive.
-4. Placement: every start, dummy, portal and altar is inside the room, not on painted rock and at least 0.7 u from any rock wall or blocking prop, and **reachable on foot from seat 0's start** on the enemies' pathfinding grid (rock widened as `nav.ts` widens it). Every prop is inside the room.
+3. The rooms compile: known entities only, every painted tier has a height in `tierMetres`, every stair joins two heights, all four seats' starts, three altars or none, at least four portals in the Arena and Survive.
+4. Placement: every start, dummy, portal and altar is inside the room, not on painted rock or void and at least 0.7 u from any rock wall or blocking prop, and **reachable on foot from seat 0's start** on the enemies' pathfinding grid (rock widened as `nav.ts` widens it). Every prop is inside the room.
 5. `packages/sim/src/rooms.gen.ts` is what the maps compile to.
 6. The asset registry: every Prop names an asset that exists; every `meta.json` is whole; its images exist and none are left out; a generated image names a raw file that exists.
 
@@ -115,6 +128,7 @@ npm run content -- list                         # each level: size, room hash, r
 npm run content -- grid survive                 # the Terrain layer as text: '.' floor, '#' rock, row 0 at the top
 npm run content -- grid survive --entities      # the same with S starts, D dummies, P portals, A altars, + free rock, O props (a view only)
 npm run content -- grid sanctum --write rows.txt   # write text rows back into the level ('-' reads stdin); lines starting // are ignored
+npm run content -- height terraces              # the Height layer as text: '0'-'9' tier, '/' stair (and --write, the same way)
 ```
 
 A write changes only the level's `intGridCsv`. Then run `content:build` and `content:check`. The printed header lines start with `//`, so a printed grid can be edited and written straight back (not one printed with `--entities`: its marks aren't terrain).

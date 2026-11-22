@@ -294,6 +294,8 @@ for n, li in enumerate(level['layerInstances']):
         li['entityInstances'] = es
     elif li['__identifier'] == 'Terrain':
         li['intGridCsv'] = [0] * (CW * CH)
+    elif li['__identifier'] == 'Height':
+        li['intGridCsv'] = [0] * (CW * CH)   # flat: no tiers yet
     elif li['__identifier'] == 'Ground':
         li['intGridCsv'] = [v for row in grid for v in row]
 json.dump(level, open(os.path.join(MAPS, 'world/Yard.ldtkl'), 'w', encoding='utf-8', newline='\n'), indent=2)

@@ -10,7 +10,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
-import { compileProject, emitGrounds, emitModule, ROCK } from './compile.mjs';
+import { compileProject, emitGrounds, emitModule, isBlocked } from './compile.mjs';
 import { CELL, GAME, GEN_OUT, GROUND_OUT, LDTK_VERSION, SCHEMA, loadProject, loadProps } from './ldtk.mjs';
 
 const require = createRequire(import.meta.url);
@@ -26,7 +26,7 @@ export const SIM = {
   /** N_ALTARS */
   altars: 3,
   /** The rooms the sim's code names (createWorld, the scenarios). */
-  rooms: ['sanctum', 'arena', 'survive', 'tutorial', 'academy', 'battery', 'yard'],
+  rooms: ['sanctum', 'arena', 'survive', 'tutorial', 'academy', 'battery', 'yard', 'terraces'],
 };
 
 let validators = null;
@@ -123,7 +123,7 @@ function checkRoom(room, errors) {
   if ((room.id === 'survive' || room.id === 'arena') && room.portals.length < 4) errors.push(`${R}: needs at least 4 portal spots (a wave opens up to 4)`);
   const walls = [...room.rock, ...room.propRock];
   const gw = Math.round(room.w / CELL), gh = Math.round(room.h / CELL);
-  const rockCell = (cx, cy) => room.terrain[cy]?.[cx] === ROCK;
+  const rockCell = (cx, cy) => isBlocked(room.terrain[cy]?.[cx]);
   const cellX = (x) => Math.floor((x + hw) / CELL), cellY = (y) => Math.floor((y + hh) / CELL);
 
   // Placement: inside the room and clear of rock.
@@ -135,7 +135,7 @@ function checkRoom(room, errors) {
   const clear = SIM.wallThickness + SIM.wizardRadius;
   for (const [name, [x, y]] of points) {
     if (Math.abs(x) > hw || Math.abs(y) > hh) { errors.push(`${R}: ${name} at ${x},${y} is outside the room`); continue; }
-    if (rockCell(cellX(x), cellY(y))) errors.push(`${R}: ${name} at ${x},${y} is inside painted rock`);
+    if (rockCell(cellX(x), cellY(y))) errors.push(`${R}: ${name} at ${x},${y} is inside painted rock or void`);
     for (const s of walls) {
       const d = segDist(x, y, ...s);
       if (d < clear) { errors.push(`${R}: ${name} at ${x},${y} is ${d.toFixed(2)} u from the rock wall ${s.join(',')} (needs ${clear})`); break; }

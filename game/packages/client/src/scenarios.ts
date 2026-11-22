@@ -30,6 +30,7 @@ export const SCENARIOS: readonly Scenario[] = [
   { id: 'tutorial', name: 'Tutorial (prototype)', blurb: 'Learn the runes, the casts and your hands, one step at a time.', room: 'tutorial', kind: 'sandbox', key: '4' },
   { id: 'sanctum', name: 'Sanctum', blurb: 'The sandbox: three practice dummies and the tuning panel (F2).', room: 'sanctum', kind: 'sandbox', key: '1' },
   { id: 'academy', name: 'Academy (art test)', blurb: 'A mock room for judging art: O swaps the props, I the wizard.', room: 'academy', kind: 'sandbox', key: '5' },
+  { id: 'terraces', name: 'Terraces (height test)', blurb: 'Two tiers and a balcony joined by stairs: cliffs stop you, stairs take you up.', room: 'terraces', kind: 'sandbox', key: '8' },
   { id: 'arena', name: 'Arena (legacy)', blurb: 'Waves from portals, with lulls and breathers. Kept for tests; Survive replaces it.', room: 'arena', kind: 'sandbox', key: '2' },
 ];
 

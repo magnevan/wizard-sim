@@ -7,11 +7,12 @@
 //   npm run content -- grid <level> --entities    the same with entities marked (a view only)
 //   npm run content -- grid <level> --write <file|->   write text rows back into the level's file
 //   npm run content -- ground <level> [--write <file|->]   the same for the Ground layer (what the floor looks like)
+//   npm run content -- height <level> [--write <file|->]   the same for the Height layer ('0'-'9' tier, '/' stair)
 // After a write, run content:build, then content:check.
 import { writeFileSync } from 'node:fs';
 import { runCheck } from './check.mjs';
 import { compileProject, emitGrounds, emitModule, hex, roomHash } from './compile.mjs';
-import { printGround, printGrid, readText, writeGround, writeGrid } from './grid.mjs';
+import { printGrid, printLayer, readText, writeGrid, writeLayer } from './grid.mjs';
 import { GEN_OUT, GROUND_OUT, findLevel, layerOf, loadProject } from './ldtk.mjs';
 
 const [cmd, ...args] = process.argv.slice(2);
@@ -58,14 +59,16 @@ switch (cmd) {
     } else process.stdout.write(printGrid(loaded.project, entry.level, { entities: flag('entities') }));
     break;
   }
-  case 'ground': {
+  case 'ground':
+  case 'height': {
+    const layer = cmd === 'ground' ? 'Ground' : 'Height';
     const name = args.find((a) => !a.startsWith('--') && a !== opt('write'));
-    if (!name) fail('usage: ground <level> [--write <file|->]');
+    if (!name) fail(`usage: ${cmd} <level> [--write <file|->]`);
     const loaded = loadProject(), entry = findLevel(loaded, name), src = opt('write');
-    if (src !== undefined) console.log(`${entry.level.identifier}: ${writeGround(loaded, entry, readText(src))} ground cell(s) changed. Now run: npm run content:build && npm run content:check`);
-    else process.stdout.write(printGround(loaded.project, entry.level));
+    if (src !== undefined) console.log(`${entry.level.identifier}: ${writeLayer(loaded, entry, readText(src), layer)} ${cmd} cell(s) changed. Now run: npm run content:build && npm run content:check`);
+    else process.stdout.write(printLayer(loaded.project, entry.level, layer));
     break;
   }
   default:
-    fail('usage: content <check | build | list | grid <level> [--entities] [--write <file|->] | ground <level> [--write <file|->]>');
+    fail('usage: content <check | build | list | grid <level> [--entities] [--write <file|->] | ground|height <level> [--write <file|->]>');
 }

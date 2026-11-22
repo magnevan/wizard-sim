@@ -11,7 +11,7 @@
   "iid": "c337107f-514c-4883-8916-62ef21941c22",
   "jsonVersion": "1.5.3",
   "appBuildId": 473703,
-  "nextUid": 117,
+  "nextUid": 121,
   "identifierStyle": "Capitalize",
   "toc": [],
   "worldLayout": "Free",
@@ -82,7 +82,7 @@
         "identifier": "Terrain",
         "type": "IntGrid",
         "uid": 2,
-        "doc": "What the ground is, one cell = 0.5 world units. Unpainted = floor. See game/content/README.md.",
+        "doc": "What the ground is, one cell = 0.5 world units. Unpainted = floor, rock blocks, void is outside the room's outline (blocks, drawn as nothing). See game/content/README.md.",
         "uiColor": null,
         "gridSize": 10,
         "guideGridWid": 0,
@@ -108,6 +108,119 @@
             "value": 1,
             "identifier": "rock",
             "color": "#74786C",
+            "tile": null,
+            "groupUid": 0
+          },
+          {
+            "value": 2,
+            "identifier": "void",
+            "color": "#101014",
+            "tile": null,
+            "groupUid": 0
+          }
+        ],
+        "intGridValuesGroups": [],
+        "autoRuleGroups": [],
+        "autoSourceLayerDefUid": null,
+        "tilesetDefUid": null,
+        "tilePivotX": 0,
+        "tilePivotY": 0,
+        "biomeFieldUid": null
+      },
+      {
+        "__type": "IntGrid",
+        "identifier": "Height",
+        "type": "IntGrid",
+        "uid": 117,
+        "doc": "Which tier each cell stands on. Unpainted = tier 0; t1-t9 are tiers whose heights in metres the level's tierMetres field gives (tier 0 is the first entry); stair is a stair or ramp joining the tiers it touches. Edges between tiers become cliffs. See game/content/README.md.",
+        "uiColor": null,
+        "gridSize": 10,
+        "guideGridWid": 0,
+        "guideGridHei": 0,
+        "displayOpacity": 0.5,
+        "inactiveOpacity": 0.6,
+        "hideInList": false,
+        "hideFieldsWhenInactive": true,
+        "canSelectWhenInactive": true,
+        "renderInWorldView": true,
+        "pxOffsetX": 0,
+        "pxOffsetY": 0,
+        "parallaxFactorX": 0,
+        "parallaxFactorY": 0,
+        "parallaxScaling": true,
+        "requiredTags": [],
+        "excludedTags": [],
+        "autoTilesKilledByOtherLayerUid": null,
+        "uiFilterTags": [],
+        "useAsyncRender": false,
+        "intGridValues": [
+          {
+            "value": 1,
+            "identifier": "t1",
+            "color": "#5A7A5C",
+            "tile": null,
+            "groupUid": 0
+          },
+          {
+            "value": 2,
+            "identifier": "t2",
+            "color": "#7A9A6C",
+            "tile": null,
+            "groupUid": 0
+          },
+          {
+            "value": 3,
+            "identifier": "t3",
+            "color": "#9AB87C",
+            "tile": null,
+            "groupUid": 0
+          },
+          {
+            "value": 4,
+            "identifier": "t4",
+            "color": "#BAD08C",
+            "tile": null,
+            "groupUid": 0
+          },
+          {
+            "value": 5,
+            "identifier": "t5",
+            "color": "#D8E09C",
+            "tile": null,
+            "groupUid": 0
+          },
+          {
+            "value": 6,
+            "identifier": "t6",
+            "color": "#E8D890",
+            "tile": null,
+            "groupUid": 0
+          },
+          {
+            "value": 7,
+            "identifier": "t7",
+            "color": "#E8C080",
+            "tile": null,
+            "groupUid": 0
+          },
+          {
+            "value": 8,
+            "identifier": "t8",
+            "color": "#E0A070",
+            "tile": null,
+            "groupUid": 0
+          },
+          {
+            "value": 9,
+            "identifier": "t9",
+            "color": "#D88060",
+            "tile": null,
+            "groupUid": 0
+          },
+          {
+            "value": 10,
+            "identifier": "stair",
+            "color": "#F0F0F0",
             "tile": null,
             "groupUid": 0
           }
@@ -1023,7 +1136,45 @@
     "tilesets": [],
     "enums": [],
     "externalEnums": [],
-    "levelFields": []
+    "levelFields": [
+      {
+        "identifier": "tierMetres",
+        "doc": "Height in metres of tier 0, 1, 2 ... (Height layer). Needed once the level paints any tier; tier 0 is usually 0.",
+        "__type": "Array<Float>",
+        "uid": 118,
+        "type": "F_Float",
+        "isArray": true,
+        "canBeNull": true,
+        "arrayMinLength": null,
+        "arrayMaxLength": 10,
+        "editorDisplayMode": "Hidden",
+        "editorDisplayScale": 1,
+        "editorDisplayPos": "Above",
+        "editorLinkStyle": "StraightArrow",
+        "editorDisplayColor": null,
+        "editorAlwaysShow": false,
+        "editorShowInWorld": true,
+        "editorCutLongValues": true,
+        "editorTextSuffix": null,
+        "editorTextPrefix": null,
+        "useForSmartColor": false,
+        "exportToToc": false,
+        "searchable": false,
+        "min": null,
+        "max": null,
+        "regex": null,
+        "acceptFileTypes": null,
+        "defaultOverride": null,
+        "textLanguageMode": null,
+        "symmetricalRef": false,
+        "autoChainRef": false,
+        "allowOutOfLevelRef": true,
+        "allowedRefs": "OnlySame",
+        "allowedRefsEntityUid": null,
+        "allowedRefTags": [],
+        "tilesetUid": null
+      }
+    ]
   },
   "levels": [
     {
@@ -1045,7 +1196,16 @@
       "__smartColor": "#8FA28E",
       "__bgPos": null,
       "externalRelPath": "world/Sanctum.ldtkl",
-      "fieldInstances": [],
+      "fieldInstances": [
+        {
+          "__identifier": "tierMetres",
+          "__type": "Array<Float>",
+          "__value": [],
+          "__tile": null,
+          "defUid": 118,
+          "realEditorValues": []
+        }
+      ],
       "layerInstances": null,
       "__neighbours": []
     },
@@ -1068,7 +1228,16 @@
       "__smartColor": "#8FA28E",
       "__bgPos": null,
       "externalRelPath": "world/Arena.ldtkl",
-      "fieldInstances": [],
+      "fieldInstances": [
+        {
+          "__identifier": "tierMetres",
+          "__type": "Array<Float>",
+          "__value": [],
+          "__tile": null,
+          "defUid": 118,
+          "realEditorValues": []
+        }
+      ],
       "layerInstances": null,
       "__neighbours": []
     },
@@ -1091,7 +1260,16 @@
       "__smartColor": "#8FA28E",
       "__bgPos": null,
       "externalRelPath": "world/Survive.ldtkl",
-      "fieldInstances": [],
+      "fieldInstances": [
+        {
+          "__identifier": "tierMetres",
+          "__type": "Array<Float>",
+          "__value": [],
+          "__tile": null,
+          "defUid": 118,
+          "realEditorValues": []
+        }
+      ],
       "layerInstances": null,
       "__neighbours": []
     },
@@ -1114,7 +1292,16 @@
       "__smartColor": "#8FA28E",
       "__bgPos": null,
       "externalRelPath": "world/Tutorial.ldtkl",
-      "fieldInstances": [],
+      "fieldInstances": [
+        {
+          "__identifier": "tierMetres",
+          "__type": "Array<Float>",
+          "__value": [],
+          "__tile": null,
+          "defUid": 118,
+          "realEditorValues": []
+        }
+      ],
       "layerInstances": null,
       "__neighbours": []
     },
@@ -1137,7 +1324,71 @@
       "__smartColor": "#8FA28E",
       "__bgPos": null,
       "externalRelPath": "world/Academy.ldtkl",
-      "fieldInstances": [],
+      "fieldInstances": [
+        {
+          "__identifier": "tierMetres",
+          "__type": "Array<Float>",
+          "__value": [],
+          "__tile": null,
+          "defUid": 118,
+          "realEditorValues": []
+        }
+      ],
+      "layerInstances": null,
+      "__neighbours": []
+    },
+    {
+      "identifier": "Terraces",
+      "iid": "7e44ace5-0000-4000-8000-000000005010",
+      "uid": 120,
+      "worldX": 7640,
+      "worldY": 0,
+      "worldDepth": 0,
+      "pxWid": 640,
+      "pxHei": 480,
+      "__bgColor": "#3F6443",
+      "bgColor": "#3F6443",
+      "useAutoIdentifier": false,
+      "bgRelPath": null,
+      "bgPos": null,
+      "bgPivotX": 0.5,
+      "bgPivotY": 0.5,
+      "__smartColor": "#8FA28E",
+      "__bgPos": null,
+      "externalRelPath": "world/Terraces.ldtkl",
+      "fieldInstances": [
+        {
+          "__identifier": "tierMetres",
+          "__type": "Array<Float>",
+          "__value": [
+            0,
+            3,
+            6
+          ],
+          "__tile": null,
+          "defUid": 118,
+          "realEditorValues": [
+            {
+              "id": "V_Float",
+              "params": [
+                0
+              ]
+            },
+            {
+              "id": "V_Float",
+              "params": [
+                3
+              ]
+            },
+            {
+              "id": "V_Float",
+              "params": [
+                6
+              ]
+            }
+          ]
+        }
+      ],
       "layerInstances": null,
       "__neighbours": []
     },
@@ -1160,7 +1411,16 @@
       "__smartColor": "#8FA28E",
       "__bgPos": null,
       "externalRelPath": "world/Battery.ldtkl",
-      "fieldInstances": [],
+      "fieldInstances": [
+        {
+          "__identifier": "tierMetres",
+          "__type": "Array<Float>",
+          "__value": [],
+          "__tile": null,
+          "defUid": 118,
+          "realEditorValues": []
+        }
+      ],
       "layerInstances": null,
       "__neighbours": []
     },
@@ -1183,7 +1443,16 @@
       "__smartColor": "#8FA28E",
       "__bgPos": null,
       "externalRelPath": "world/Yard.ldtkl",
-      "fieldInstances": [],
+      "fieldInstances": [
+        {
+          "__identifier": "tierMetres",
+          "__type": "Array<Float>",
+          "__value": [],
+          "__tile": null,
+          "defUid": 118,
+          "realEditorValues": []
+        }
+      ],
       "layerInstances": null,
       "__neighbours": []
     }

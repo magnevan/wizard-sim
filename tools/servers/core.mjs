@@ -1,7 +1,7 @@
 // What the server manager knows about the machine. The parsing and classifying here are pure, so
 // core.test.mjs can run them on captured text; the functions at the bottom touch the real system.
 import { execFile, execFileSync, spawn } from 'node:child_process';
-import { existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, openSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +13,7 @@ export const HOME = join(homedir(), '.wizard-sim-servers');
 const REGISTRY = join(HOME, 'registry.json');
 
 // Port 4187 is left free: the browser check scripts refuse to run if something else holds it.
-export const FIRST_PORT = { dev: 5187, lan: 5187, preview: 4188 };
+export const FIRST_PORT = { dev: 5187, lan: 5187, preview: 4188, fresh: 4188 };
 
 const norm = (s) => String(s ?? '').replace(/\\/g, '/').replace(/\/{2,}/g, '/').toLowerCase();
 const endpoint = (s) => { const i = s.lastIndexOf(':'); return { addr: s.slice(0, i).replace(/[[\]]/g, ''), port: Number(s.slice(i + 1)) }; };
@@ -90,6 +90,7 @@ export function launchRoot(proc, chain) {
 }
 
 const kindOf = (cmd) => {
+  if (/fresh\.mjs/i.test(cmd)) return 'fresh';
   if (/vite(\.js)?["']?\s+preview\b/i.test(cmd)) return 'preview';
   if (/vite/i.test(cmd)) return 'dev';
   if (/http[.-]server/i.test(cmd)) return 'static';
@@ -110,11 +111,13 @@ export function buildRows({ listen, established, procs, worktrees, registry = []
     const proc = procs.get(pid), reg = registry.find((r) => r.pid === pid);
     if (!proc || !RUNTIME.test(proc.name)) continue;
     const cmd = proc.cmd ?? '', chain = ancestors(proc, procs);
-    let worktree = findWorktree(cmd, worktrees);
+    // fresh.mjs runs from the servers tool's own checkout, so its command line names two; the argument is the one served.
+    const served = /fresh\.mjs["']?\s+"?([^"]+?)"?\s+\d+\s*$/i.exec(cmd)?.[1];
+    let worktree = findWorktree(served ? `${served}/` : cmd, worktrees);
     for (const p of chain) worktree ??= findWorktree(p.cmd, worktrees);
     if (reg) worktree ??= findWorktree(`${reg.path}/`, worktrees) ?? { name: basename(reg.path), branch: '?', deleted: true };
-    const looksLikeServer = /vite|http[.-]server|\bserve\b/i.test(cmd);
-    const project = !!reg || (looksLikeServer && (!!worktree || /vite/i.test(cmd)));
+    const looksLikeServer = /vite|http[.-]server|\bserve\b|fresh\.mjs/i.test(cmd);
+    const project = !!reg || (looksLikeServer && (!!worktree || /vite|fresh\.mjs/i.test(cmd)));
     if (!project && !showAll) continue;
 
     const clients = [];
@@ -131,7 +134,8 @@ export function buildRows({ listen, established, procs, worktrees, registry = []
     rows.push({
       pid, rootPid: root.pid, created: proc.created, cmd, project, owner,
       orphan: owner === 'orphan', ports: [...ports].sort((a, b) => a - b),
-      lan: [...addrs].some((a) => !isLoopback(a)), kind: reg?.mode === 'preview' ? 'preview' : kindOf(cmd),
+      lan: [...addrs].some((a) => !isLoopback(a)), kind: reg?.mode === 'preview' || reg?.mode === 'fresh' ? reg.mode : kindOf(cmd),
+      worktreePath: worktree?.path,
       worktree: worktree?.name ?? '?', branch: worktree?.branch ?? '?', deleted: !!worktree?.deleted, sub,
       clients, log: reg?.log,
     });
@@ -143,6 +147,24 @@ export function summarizeClients(clients) {
   const counts = new Map();
   for (const c of clients) counts.set(c, (counts.get(c) ?? 0) + 1);
   return [...counts].map(([who, n]) => (n > 1 ? `${who} x${n}` : who)).join(', ');
+}
+
+/** Paths from `git status --porcelain` (v1): renames give the new name, quoted paths lose their quotes. */
+export function parseStatusPaths(porcelain) {
+  return porcelain.split(/\r?\n/).filter((l) => l.length > 3).map((l) => {
+    const p = l.slice(3).split(' -> ').pop();
+    return p.startsWith('"') ? p.slice(1, -1) : p;
+  });
+}
+
+/** One short cell for how far a build is behind its worktree: "current", "3 commits", "2 edits", "1c+4e". */
+export function formatBehind(b) {
+  if (!b) return 'no build';
+  const { commits, edits } = b;
+  if (commits == null) return edits ? `?+${edits}e` : '?';
+  if (!commits && !edits) return 'current';
+  if (commits && edits) return `${commits}c+${edits}e`;
+  return commits ? `${commits} commit${commits > 1 ? 's' : ''}` : `${edits} edit${edits > 1 ? 's' : ''}`;
 }
 
 export function formatAge(ms) {
@@ -172,12 +194,36 @@ export async function readProcesses() {
 
 export async function readWorktrees() {
   const { stdout } = await run('git', ['worktree', 'list', '--porcelain'], { cwd: here, windowsHide: true });
-  return parseWorktrees(stdout).filter((w) => existsSync(w.path)).map((w) => ({
-    ...w,
-    hasVite: existsSync(join(w.path, 'game/node_modules/vite/bin/vite.js')),
-    hasBuild: existsSync(join(w.path, 'game/packages/client/dist/index.html')),
-    isGame: existsSync(join(w.path, 'game/package.json')),
+  return Promise.all(parseWorktrees(stdout).filter((w) => existsSync(w.path)).map(async (w) => {
+    const isGame = existsSync(join(w.path, 'game/package.json')), build = isGame ? await readBuildState(w.path) : null;
+    return { ...w, isGame, build, hasBuild: !!build, hasVite: existsSync(join(w.path, 'game/node_modules/vite/bin/vite.js')) };
   }));
+}
+
+const DIST = 'game/packages/client/dist';
+
+/**
+ * How far a worktree's build is behind: commits under game/ since the commit it was built from, and files under
+ * game/ changed since it was built. A build older than the build-info stamp counts commits by date instead.
+ */
+export async function readBuildState(path) {
+  const index = join(path, DIST, 'index.html');
+  if (!existsSync(index)) return null;
+  let info = null;
+  try { info = JSON.parse(readFileSync(join(path, DIST, 'build-info.json'), 'utf8')); } catch { /* an older build */ }
+  const builtAt = info?.builtAt ?? statSync(index).mtimeMs;
+  const git = async (args) => (await run('git', args, { cwd: path, windowsHide: true, maxBuffer: 16 * 1024 * 1024 })).stdout;
+  let commits = null, edits = 0;
+  try {
+    const range = info?.commit && info.commit !== 'unknown' ? [`${info.commit}..HEAD`] : [`--since=@${Math.floor(builtAt / 1000)}`, 'HEAD'];
+    commits = Number((await git(['rev-list', '--count', ...range, '--', 'game'])).trim());
+  } catch { /* the build's commit is not in this checkout */ }
+  try {
+    for (const p of parseStatusPaths(await git(['status', '--porcelain', '--', 'game']))) {
+      try { if (statSync(join(path, p)).mtimeMs > builtAt) edits++; } catch { edits++; } // A deleted file is a change too.
+    }
+  } catch { /* leave edits at 0 */ }
+  return { builtAt, commit: info?.commit ?? null, commits, edits };
 }
 
 export function readRegistry() {
@@ -197,10 +243,14 @@ export function pruneRegistry(procs) {
 
 /** Starts vite in its own background process, logging to a file. It keeps running after this tool quits. */
 export function startServer(worktree, mode, port) {
-  const args = [join(worktree.path, 'game/node_modules/vite/bin/vite.js')];
-  if (mode === 'preview') args.push('preview');
-  args.push('--port', String(port), '--strictPort');
-  if (mode === 'lan') args.push('--host');
+  let args;
+  if (mode === 'fresh') args = [join(here, 'fresh.mjs'), worktree.path, String(port)];
+  else {
+    args = [join(worktree.path, 'game/node_modules/vite/bin/vite.js')];
+    if (mode === 'preview') args.push('preview');
+    args.push('--port', String(port), '--strictPort');
+    if (mode === 'lan') args.push('--host');
+  }
   mkdirSync(join(HOME, 'logs'), { recursive: true });
   const log = join(HOME, 'logs', `${worktree.name}-${port}-${Date.now()}.log`);
   const fd = openSync(log, 'a');
@@ -209,6 +259,18 @@ export function startServer(worktree, mode, port) {
   });
   child.unref();
   writeRegistry([...readRegistry(), { pid: child.pid, path: worktree.path, mode, port, log, startedAt: Date.now() }]);
+  return { pid: child.pid, log };
+}
+
+/** One `vite build` in a worktree, in the background; onDone gets the exit code. A preview server on it picks the new files up. */
+export function startBuild(worktree, onDone) {
+  mkdirSync(join(HOME, 'logs'), { recursive: true });
+  const log = join(HOME, 'logs', `${worktree.name}-build-${Date.now()}.log`);
+  const fd = openSync(log, 'a');
+  const child = spawn(process.execPath, [join(worktree.path, 'game/node_modules/vite/bin/vite.js'), 'build'], {
+    cwd: join(worktree.path, 'game/packages/client'), stdio: ['ignore', fd, fd], windowsHide: true,
+  });
+  child.on('exit', (code) => onDone(code, log));
   return { pid: child.pid, log };
 }
 

@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 // A terminal view of the local game servers: which worktree, which port, who is connected. See README.md.
 import {
-  FIRST_PORT, buildRows, formatAge, killServer, openUrl, pruneRegistry, readLogTail, readNetstat,
-  readProcesses, readWorktrees, startServer, summarizeClients,
+  FIRST_PORT, buildRows, formatAge, formatBehind, killServer, openUrl, pruneRegistry, readLogTail, readNetstat,
+  readProcesses, readWorktrees, startBuild, startServer, summarizeClients,
 } from './core.mjs';
 
-const POLL_MS = 2000, SLOW_MS = 15000, START_TIMEOUT_MS = 30000;
+const POLL_MS = 2000, SLOW_MS = 15000, START_TIMEOUT_MS = 60000;
 const MODES = [
   { id: 'dev', label: 'dev', hint: 'hot reload' },
   { id: 'lan', label: 'dev + LAN', hint: 'hot reload, reachable from other machines' },
-  { id: 'preview', label: 'preview', hint: 'serves the last build' },
+  { id: 'fresh', label: 'preview, rebuilt on save', hint: 'a build that follows your edits; refresh the page to see them' },
+  { id: 'preview', label: 'preview', hint: 'serves the last build as it is' },
 ];
+const BUILT = new Set(['preview', 'fresh']);
 const out = process.stdout, input = process.stdin;
 const c = {
   dim: (s) => `\x1b[2m${s}\x1b[22m`, bold: (s) => `\x1b[1m${s}\x1b[22m`, green: (s) => `\x1b[32m${s}\x1b[39m`,
@@ -23,7 +25,18 @@ const state = {
   rows: [], worktrees: [], procs: new Map(), net: { listen: [], established: [] }, registry: [],
   sel: 0, showAll: false, msg: '', msgTone: 'dim', view: 'list', seen: new Map(), pending: [], ready: false,
   pick: 0, pickWorktree: null, pickMode: null, portText: '', confirm: null, procsAt: 0, loading: false,
+  building: new Set(),
 };
+const worktreeOf = (r) => state.worktrees.find((w) => w.name === r.worktree && !r.deleted);
+
+/** What the BUILD column says: dev servers are always live; a built server says how far its build is behind. */
+function buildCell(r) {
+  if (!r.project) return '';
+  if (!BUILT.has(r.kind)) return 'live';
+  if (state.building.has(r.worktree)) return 'building';
+  return formatBehind(worktreeOf(r)?.build);
+}
+const describeBuild = (b) => (b ? `${formatBehind(b)}, built ${formatAge(Date.now() - b.builtAt)} ago` : 'no build yet');
 const say = (msg, tone = 'dim') => { state.msg = msg; state.msgTone = tone; };
 
 async function refresh({ fresh = false } = {}) {
@@ -76,8 +89,8 @@ function clientCell(r) {
 }
 
 function table(width, height) {
-  const widths = { port: 7, worktree: Math.max(14, Math.min(28, width - 60)), kind: 9, clients: 18, owner: 9, age: 7 };
-  const head = `  ${fit('PORT', widths.port)}${fit('WORKTREE', widths.worktree)}${fit('KIND', widths.kind)}${fit('CLIENTS', widths.clients)}${fit('OWNER', widths.owner)}${fit('AGE', widths.age)}PID`;
+  const widths = { port: 7, worktree: Math.max(14, Math.min(28, width - 72)), kind: 9, build: 12, clients: 18, owner: 9, age: 7 };
+  const head = `  ${fit('PORT', widths.port)}${fit('WORKTREE', widths.worktree)}${fit('KIND', widths.kind)}${fit('BUILD', widths.build)}${fit('CLIENTS', widths.clients)}${fit('OWNER', widths.owner)}${fit('AGE', widths.age)}PID`;
   const lines = [c.dim(fit(head, width))];
   if (!state.rows.length) lines.push(c.dim(state.ready ? '  No servers running. Press n to start one.' : '  Looking...'));
   const room = Math.max(1, height), first = Math.max(0, Math.min(state.sel - room + 1, state.rows.length - room));
@@ -85,13 +98,18 @@ function table(width, height) {
     const on = first + offset === state.sel;
     const name = `${r.worktree}${r.sub ? `/${r.sub}` : ''}${r.deleted ? ' (deleted)' : ''}`;
     const age = formatAge(Date.now() - Date.parse(r.created));
+    const build = buildCell(r);
     const cells = [
       fit(r.ports.join(','), widths.port), fit(name, widths.worktree), fit(r.kind + (r.lan ? '+lan' : ''), widths.kind),
-      fit(clientCell(r), widths.clients), fit(r.owner, widths.owner), fit(age, widths.age), String(r.pid),
+      fit(build, widths.build), fit(clientCell(r), widths.clients), fit(r.owner, widths.owner), fit(age, widths.age), String(r.pid),
     ];
     if (on) { lines.push(c.invert(fit(`> ${cells.join('')}`, width))); return; }
-    if (r.clients.length) cells[3] = c.green(cells[3]);
-    if (r.orphan) cells[4] = c.yellow(cells[4]);
+    if (build === 'current') cells[3] = c.green(cells[3]);
+    else if (build === 'building') cells[3] = c.cyan(cells[3]);
+    else if (BUILT.has(r.kind)) cells[3] = c.yellow(cells[3]);
+    else cells[3] = c.dim(cells[3]);
+    if (r.clients.length) cells[4] = c.green(cells[4]);
+    if (r.orphan) cells[5] = c.yellow(cells[5]);
     if (r.deleted) cells[1] = c.yellow(cells[1]);
     if (!r.project) cells[1] = c.dim(cells[1]);
     lines.push(`  ${cells.join('')}`);
@@ -107,7 +125,11 @@ function details(width) {
     `${c.dim('kill   ')}pid ${r.rootPid}${r.rootPid === r.pid ? '' : ` (the npm launcher, and the server under it)`}`,
     `${c.dim('command')} ${fit(r.cmd, width - 9)}`,
   ];
-  if (r.kind === 'preview' && !r.clients.length) lines.push(c.dim('A preview server holds no open connection, so an open tab shows as no client here.'));
+  if (BUILT.has(r.kind)) {
+    const b = worktreeOf(r)?.build;
+    lines.push(`${c.dim('build  ')}${describeBuild(b)}${b?.commit ? c.dim(`  (from ${b.commit.slice(0, 7)})`) : ''}${r.kind === 'fresh' ? c.dim('  rebuilds on save') : c.dim('  b rebuilds')}`);
+    if (!r.clients.length) lines.push(c.dim('A preview server holds no open connection, so an open tab shows as no client here.'));
+  }
   if (r.log) { lines.push(`${c.dim('log    ')}${fit(r.log, width - 8)}`); for (const l of readLogTail(r.log)) lines.push(c.dim(`  ${fit(l, width - 3)}`)); }
   return lines;
 }
@@ -129,7 +151,8 @@ const worktreeItems = () => state.worktrees.filter((w) => w.isGame).map((w) => {
 });
 const modeItems = () => MODES.map((m) => {
   const missing = m.id === 'preview' && !state.pickWorktree.hasBuild;
-  return { ...m, label: m.label.padEnd(12), disabled: missing, hint: missing ? 'no build yet: run npm run build in game/' : m.hint };
+  const hint = m.id === 'preview' ? (missing ? 'no build yet: pick "rebuilt on save", or b on a server here' : `${m.hint} (${describeBuild(state.pickWorktree.build)})`) : m.hint;
+  return { ...m, label: m.label.padEnd(26), disabled: missing, hint };
 });
 
 function draw() {
@@ -152,7 +175,7 @@ function draw() {
     const below = details(width), panel = state.view === 'confirm' ? state.confirm.lines : [];
     body = [...table(width, height - top.length - below.length - panel.length - 5), '', ...below];
     if (panel.length) body.push('', ...panel);
-    keys = state.view === 'confirm' ? 'y confirm   any other key cancels' : 'up/down select   n new   x kill   X kill idle orphans   o open   a all runtimes   r refresh   q quit';
+    keys = state.view === 'confirm' ? 'y confirm   any other key cancels' : 'up/down select   n new   b build   x kill   X kill idle orphans   o open   a all runtimes   r refresh   q quit';
   }
   const lines = [...top, ...body];
   while (lines.length < height - 2) lines.push('');
@@ -202,6 +225,24 @@ function start() {
   }
 }
 
+/** b: one build of the selected server's worktree. A preview server on it serves the new build on the next refresh. */
+function rebuild() {
+  const r = state.rows[state.sel], w = r && worktreeOf(r);
+  if (!w) { say('Select a server in a worktree that still exists.', 'yellow'); return; }
+  if (r.kind === 'fresh') { say(`${w.name} already rebuilds on every save.`); return; }
+  if (!w.hasVite) { say(`${w.name} needs npm install in game/ first.`, 'yellow'); return; }
+  if (state.building.has(w.name)) { say(`${w.name} is already building.`); return; }
+  state.building.add(w.name);
+  const at = Date.now();
+  say(`Building ${w.name}...`, 'cyan');
+  startBuild(w, (code, log) => {
+    state.building.delete(w.name);
+    if (code === 0) say(`Built ${w.name} in ${((Date.now() - at) / 1000).toFixed(1)}s. Refresh the page to see it.`, 'green');
+    else say(`Build of ${w.name} failed: ${readLogTail(log, 1)[0] ?? 'no output'}  Log: ${log}`, 'red');
+    refresh({ fresh: true });
+  });
+}
+
 function move(delta, length) {
   if (state.view === 'list') state.sel = Math.max(0, Math.min(state.rows.length - 1, state.sel + delta));
   else state.pick = Math.max(0, Math.min(length - 1, state.pick + delta));
@@ -241,6 +282,7 @@ function onKey(k) {
   else if (k === '\x1b[A' || k === 'k') move(-1);
   else if (k === '\x1b[B' || k === 'j') move(1);
   else if (k === 'n') { state.view = 'pick-worktree'; state.pick = 0; say(''); }
+  else if (k === 'b') rebuild();
   else if (k === 'x') requestKill();
   else if (k === 'X') requestKillOrphans();
   else if (k === 'o' && r) { openUrl(`http://localhost:${r.ports[0]}/`); say(`Opened port ${r.ports[0]}.`); }

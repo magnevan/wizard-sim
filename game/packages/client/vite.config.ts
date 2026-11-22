@@ -98,10 +98,28 @@ function gitCommit(): string {
   } catch { return 'unknown'; }
 }
 
+/**
+ * dist/build-info.json: the commit a build was made from, read by the servers tool (tools/servers/) to say how
+ * far a preview server's build is behind. Worked out on every build, so a watch rebuild stamps its own commit.
+ */
+function buildInfo(): Plugin {
+  return {
+    name: 'build-info', apply: 'build',
+    generateBundle() {
+      let commit = 'unknown', dirty = false;
+      try {
+        commit = execSync('git rev-parse HEAD', { cwd: here, encoding: 'utf8' }).trim();
+        dirty = execSync('git status --porcelain --untracked-files=no', { cwd: here, encoding: 'utf8' }).trim() !== '';
+      } catch { /* not a checkout */ }
+      this.emitFile({ type: 'asset', fileName: 'build-info.json', source: `${JSON.stringify({ commit, dirty, builtAt: Date.now() })}\n` });
+    },
+  };
+}
+
 // base './' so the built dist/ works from any path (the artifact, itch.io, a file server).
 export default defineConfig({
   base: './',
-  plugins: [soundLab(), fxKnobs()],
+  plugins: [soundLab(), fxKnobs(), buildInfo()],
   define: { __SIM_BUILD__: JSON.stringify(simBuild()), __BUILD_COMMIT__: JSON.stringify(gitCommit()) },
   server: { port: 5187 },
   preview: { port: 4187 },

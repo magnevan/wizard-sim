@@ -30,6 +30,7 @@ MAT = {
     'rock':   ((128, 120, 110), (96, 88, 82), False),
     'path':   ((190, 168, 130), (120, 104, 84), True),
     'paving': ((214, 196, 168), (160, 146, 128), True),
+    'road':   ((240, 222, 186), (168, 150, 126), True),
     'plaza':  ((226, 206, 172), (168, 150, 126), True),
     'dais':   ((236, 220, 190), (178, 160, 134), True),
     'stairs': ((206, 188, 160), (150, 134, 112), True),
@@ -101,15 +102,26 @@ class Plan:
         return k
 
     def stairs(self, poly, h0, h1, axis='V'):
-        """A flight from h0 at the low end of the axis (U or V, smaller value) to h1 at the high end, in steps."""
+        """A flight from h0 at the low end of the axis to h1 at the high end, in steps. The axis is 'U', 'V', or an
+        angle in degrees (0 = right, 90 = down the screen): h0 is at the end the angle points away from."""
         k = self.mask(poly)
-        c = self.CV if axis == 'V' else self.CU
+        if axis in ('U', 'V'): c = self.CV if axis == 'V' else self.CU
+        else: c = self.CU * math.cos(math.radians(axis)) + self.CV * math.sin(math.radians(axis))
         lo, hi = c[k].min(), c[k].max()
         t = np.clip((c - lo) / max(hi - lo, 1e-6), 0, 1)
         steps = max(2, int(round(abs(h1 - h0) / 0.35)))
         self.h[k] = (h0 + np.floor(t * steps + 0.5) / steps * (h1 - h0))[k]
         self.m[k] = 'stairs'; self.bld[k] = False
         return k
+
+    def strip(self, pts, width, mat='road'):
+        """Repaves walkable flat ground along a polyline (a main route's own paving); heights are kept."""
+        k = np.zeros_like(self.bld)
+        for (u0, v0), (u1, v1) in zip(pts, pts[1:]):
+            L = math.hypot(u1 - u0, v1 - v0)
+            k |= self.mask(orect(((u0 + u1) / 2, (v0 + v1) / 2), width, L + width, math.atan2(v1 - v0, u1 - u0)))
+        ok = np.isin(self.m, ['plaza', 'paving', 'grass', 'path', 'dais'])
+        self.m[k & ok & ~self.bld] = mat
 
     def building(self, poly, ground, height, name='', doors=(), roof='roof'):
         k = self.mask(poly); self.h[k] = ground + height; self.m[k] = roof; self.bld[k] = True
@@ -118,7 +130,7 @@ class Plan:
         return k
 
     def route(self, pts, rank='main'): self.routes.append((pts, rank))
-    def landmark(self, c, name, height=12.0): self.marks.append((c, name, height))
+    def landmark(self, c, name, height=12.0, radius=1.0): self.marks.append((c, name, height, radius))
     def gate(self, c, name): self.gates.append((c, name))
     def note(self, c, text): self.notes.append((c, text, None))
 
@@ -140,7 +152,7 @@ class Plan:
         b = self.draw(squash=0.5, zs=14.5 / 16, k=8, plan=False); b.save(os.path.join(OUT, f'{self.name}-game.png'))
         print(self.name, self.stats())
 
-    def draw(self, squash, zs, k, plan):
+    def draw(self, squash, zs, k, plan, overlays=True):
         """k = pixels per unit along U. Game view: squash 0.5, zs = 14.5/16 px per metre per (px per unit)."""
         zpx = zs * k
         zmax = float(self.h.max()) + 14
@@ -171,6 +183,10 @@ class Plan:
                         d.polygon([W2(ax, ay, z), W2(bx, by, z), W2(bx, by, nz), W2(ax, ay, nz)], fill=fc)
             d.polygon([W2(x, y, z), W2(x + 1, y, z), W2(x + 1, y + 1, z), W2(x, y + 1, z)], fill=tc)
         if plan: self._contours(d, W2)
+        self._P = P
+        if not overlays:
+            self._landmarks_only(d, P)
+            return img
         self._overlays(d, P, plan, k)
         f = font(22); d.text((20, 14), f'{self.title}  ({"plan" if plan else "game camera"})', font=f, fill=(240, 230, 210))
         s = self.stats(); d.text((20, 42), f"world box {s['world']}, walkable {s['walkable']}, tiers (m): {s['tiers']}", font=font(15), fill=(190, 184, 170))
@@ -204,7 +220,7 @@ class Plan:
                 for a, b in zip(xy, xy[1:]): dash(d, a, b, (255, 255, 255), 2)
         for (u, v), g in self.doors:
             x, y = P(u, v, g); d.rectangle([x - 4, y - 4, x + 4, y + 4], fill=(30, 20, 10), outline=(255, 200, 60))
-        for (u, v), name, hgt in self.marks:
+        for (u, v), name, hgt, *_ in self.marks:
             g = self.h_at(u, v); x, y = P(u, v, g); _, y2 = P(u, v, g + hgt)
             if plan:
                 d.ellipse([x - 9, y - 9, x + 9, y + 9], fill=(190, 120, 255), outline=(255, 255, 255), width=2)
@@ -223,6 +239,50 @@ class Plan:
             x0, y0 = P(self.U[1] - 36, self.V[1] - 26, 0); x1, y1 = P(self.U[1] - 6, self.V[1] - 5, 0)
             for a, b in (((x0, y0), (x1, y0)), ((x1, y0), (x1, y1)), ((x1, y1), (x0, y1)), ((x0, y1), (x0, y0))): dash(d, a, b, (255, 255, 255), 2)
             label(d, (x0 + 4, y0 + 4), 'one screen', f, (255, 255, 255))
+
+def _frames(self, every=14.0, scale=2):
+    """Play-sized frames along each route, no labels: a 30 u wide view with the wizard (a white dot) placed where the
+    camera puts it (the view reaches 13.6 u up the screen and 7.6 down). One contact sheet per route, for the flow critic."""
+    k = 16
+    img = self.draw(squash=0.5, zs=14.5 / 16, k=k, plan=False, overlays=False); P = self._P
+    fw, fh = 480, 270
+    sheets = []
+    for n, (pts, rank) in enumerate(self.routes):
+        samples, carry = [], 0.0
+        for (u0, v0), (u1, v1) in zip(pts, pts[1:]):
+            L = math.hypot(u1 - u0, v1 - v0); t = carry
+            while t <= L:
+                samples.append((u0 + (u1 - u0) * t / L, v0 + (v1 - v0) * t / L)); t += every
+            carry = t - L
+        samples.append(pts[-1])
+        crops = []
+        for u, v in samples:
+            x, y = P(u, v, self.h_at(u, v))
+            c = img.crop((int(x - fw / 2), int(y - fh * 0.64), int(x + fw / 2), int(y + fh * 0.36))).copy()
+            dd = ImageDraw.Draw(c); dd.ellipse([fw / 2 - 4, fh * 0.64 - 10, fw / 2 + 4, fh * 0.64], fill=(255, 255, 255), outline=(0, 0, 0))
+            crops.append(c.resize((fw * scale, fh * scale), Image.NEAREST))
+        cols = 2; rows = (len(crops) + 1) // 2
+        sheet = Image.new('RGB', (cols * fw * scale + 10, rows * (fh * scale + 30)), (10, 10, 14)); sd = ImageDraw.Draw(sheet)
+        for i, c in enumerate(crops):
+            X, Y = (i % cols) * (fw * scale + 10), (i // cols) * (fh * scale + 30)
+            sheet.paste(c, (X, Y + 26)); sd.text((X + 6, Y + 2), f'route {n + 1} ({rank}), step {i + 1} of {len(crops)}', font=font(18), fill=(230, 230, 230))
+        path = os.path.join(OUT, f'{self.name}-flow-{n + 1}.png'); sheet.save(path); sheets.append(path)
+    print('frames:', ', '.join(os.path.basename(p) for p in sheets))
+    return sheets
+Plan.frames = _frames
+
+def _landmarks_only(self, d, P):
+    for (u, v), name, hgt, rad in self.marks:
+        g = self.h_at(u, v); x, y = P(u, v, g); _, y2 = P(u, v, g + hgt)
+        k = 16; rx = rad * k; zc = (y + y2) / 2 - rad * k * 0.25          # rings about the upper half, as wide as the real one
+        d.rectangle([x - 0.25 * rx, zc, x + 0.25 * rx, y], fill=(150, 110, 60))
+        for sq in (1.0, 0.45, 0.2):
+            d.ellipse([x - rx, zc - rx * sq, x + rx, zc + rx * sq], outline=(230, 190, 90), width=6)
+        d.ellipse([x - rx * 0.3, zc - rx * 0.3, x + rx * 0.3, zc + rx * 0.3], fill=(200, 150, 255))
+        d.line([(x, zc), (x, zc - 420)], fill=(190, 120, 255), width=8)
+    for (u, v), g in self.doors:
+        x, y = P(u, v, g); d.rectangle([x - 10, y - 26, x + 10, y], fill=(40, 28, 18))
+Plan._landmarks_only = _landmarks_only
 
 def centroid(poly): return (sum(p[0] for p in poly) / len(poly), sum(p[1] for p in poly) / len(poly))
 

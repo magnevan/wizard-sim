@@ -54,3 +54,22 @@ So it's the hub, a landmark you keep returning to, and a battlefield for the fin
 | East | The battery (beats 4 to 7) | `gate-battery` |
 | North | The north road, later stops | none |
 | South, down | The sea landing and the harbour | none |
+
+## Stage 1 and 2: the plan, and flow on frames
+
+The structure critic compared plans A to D, and the user chose D on 2026-11-22. Four flow rounds on play-size frames from the plan tool then reshaped it (`tools/place-plans/plans/court-d.py`, revision 5; the scores and lessons are in [the cycle log](../making-a-place.md#the-cycle-log)):
+
+| Round | Score | What changed after it |
+|---|---|---|
+| 1 | 4/10 | Routes re-cut onto diagonals |
+| 2 | 5/10 | Every main arrival brought through the north, down one grand stair |
+| 3 | 5/10 | The cross road moved in front of the great hall, as a balcony arc |
+| 4 | 5/10 | A marker at each turn of the arc, threshold pillars, the road a step up; then stopped, as the rest is dressing |
+
+**Dressing cues carried into the grey-box**, for the flow check there:
+- Lamps or braziers along the arc, about one a screen, brighter towards the grand stair.
+- The arc and the spine in the best stone, the terraces plainer, and wear lines towards the plaza.
+- The armillary's violet light pooling on the plaza and running out along paving lines to each exit.
+- Smoke or a lit window at the battery's tower, and pennants along the bridge.
+- A balustrade and a bench over the sea on the lower terrace, and a boat at the landing.
+- The hall's side doors set back under porches, so they read as side places.

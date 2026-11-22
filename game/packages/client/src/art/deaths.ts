@@ -1,5 +1,5 @@
 /**
- * Enemy deaths, ported from the Spell VFX gallery (tools/spell-vfx/vfx-deaths.js), with the
+ * Enemy deaths, ported from the retired Spell VFX gallery (vfx-deaths.js in git history, ffe74f0), with the
  * user's verdicts on its cards: one base death per enemy plus an element overlay, and two
  * bespoke deaths that animate the body's own pixels.
  *
@@ -705,7 +705,7 @@ function arcane(d: Death, td: number, _fade = 1, limbs = false): Bespoke {
 }
 
 // ---------------------------------------------------------------------------------------------
-// The other archetypes (Spell VFX gallery, tools/spell-vfx/vfx-deaths-2.js). Each plays the goblin set
+// The other archetypes (retired Spell VFX gallery, vfx-deaths-2.js in git history). Each plays the goblin set
 // on its own rig, except where its body or character changes how a death reads:
 //   brute        too heavy to fly: base, boulder, quake and cold all end in the heavy fall (it kneels,
 //                tips over like a felled tree, the screen shakes, dust rolls out along its length)

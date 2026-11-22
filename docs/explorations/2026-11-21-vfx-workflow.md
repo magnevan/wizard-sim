@@ -4,7 +4,7 @@ The user asked for ways to improve how we make particle VFX, to go back and fort
 
 ## How it worked before
 
-- **Every effect existed twice.** The Spell VFX gallery (`tools/spell-vfx/`, about 6,800 lines of plain JS) is where looks were designed and rated. The game (`game/packages/client/src/art/vfx.ts`, `spray-jet.ts`, `novas.ts`, `deaths.ts` and others) got ports of them, often line by line. The gallery's README records where the copies have drifted.
+- **Every effect existed twice.** The Spell VFX gallery (`tools/spell-vfx/`, since retired and in git history; about 6,800 lines of plain JS) is where looks were designed and rated. The game (`game/packages/client/src/art/vfx.ts`, `spray-jet.ts`, `novas.ts`, `deaths.ts` and others) got ports of them, often line by line. The gallery's README records where the copies have drifted.
 - **Effects were code, not data.** A stream is an inline `emit(t, rate, life, fn)` call (`art/util.ts`) with its numbers in the drawing code. The emitter is good (stateless, deterministic), but nothing can be tuned without editing code.
 - **The loop was a round trip in words.** The user plays, describes the problem ("the middle looks static", "too round"), Claude edits, the user reloads. The Spray Lab (`spray-lab.html`, [spray VFX](2026-11-10-spray-vfx.md)) helped by showing one to five runes side by side with the game's own code, but only for sprays.
 
@@ -45,3 +45,11 @@ The user approved the merged plan (2026-11-21), in this order:
 6. Decide 2D vs 3D particles before investing heavily in 5.
 
 Claude's open question (should the user approve each spec before building?) went unanswered, so Claude's pick stands: the user approves the spec for a new or reworked effect; for a tweak the spec is Claude's working note.
+
+## 2D or 3D particles (2026-11-22)
+
+The user had no strong view and asked for a recommendation. Two facts settled most of it: depth around bodies is already handled in 2D (`art/depth.ts`), and the 3D models are rendered down to pixel art (`live3d.ts`), so everything already meets in one pixel-art picture. The rule: **mediums are 2D particles, solids go through 3D** ([decision](../decisions/README.md#2026-11-22-mediums-are-2d-particles-solids-go-through-3d)).
+
+## The old gallery is retired (2026-11-22)
+
+The user didn't use the Spell VFX gallery much and won't again. Its code was removed, its README kept as a record in the archive, and its published artifact left up for its ratings. The single-purpose labs (spray, nova, missile) are retired where the VFX Lab covers them.

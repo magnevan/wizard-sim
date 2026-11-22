@@ -2,7 +2,7 @@
  * The VFX Lab (dev server only: /vfx-lab.html). Any spell, cast by a real wizard in a real World and drawn by the
  * game's own WorldView, in a scene from scenes.ts, at the game's scale: what you see is what the game draws, and every
  * spell is covered with no wiring of its own. It is meant to replace the single-effect labs and, in time, the
- * hand-ported Spell VFX gallery (tools/spell-vfx).
+ * hand-ported Spell VFX gallery (retired 2026-11-22).
  *
  * The side panel (panel.ts) changes everything below in the page, and the address bar follows (state.ts), so a setup
  * stays linkable. Drag on the stage to aim.

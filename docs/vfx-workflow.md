@@ -75,4 +75,4 @@ What has worked, to keep: the frost spray after its redesign ("perfect, no notes
 - The effect code: `game/packages/client/src/art/` (`vfx.ts` and the files it imports).
 - Knobs: `art/fx-knobs.ts` declares live-tunable look parameters (the sprays' `spray.water|fire|cold.*`, `nova.all.speed`); the knob panel (`lab/vfx-lab/knob-panel.ts`, also the Spray Lab's "knobs" box) has a slider for each, and its Save writes `art/fx-knobs.json` through the dev server. Commit that file to keep the values; defaults in the code draw the look as it was.
 - The emitter: `emit()` in `art/util.ts` (stateless: the same time and seed always give the same particles).
-- The old gallery: `tools/spell-vfx/` (being replaced by the VFX Lab; its ratings stay in its artifact db).
+- The old gallery (retired 2026-11-22): `docs/archive/spell-vfx-gallery.md`; its ratings stay in its artifact db.

@@ -101,12 +101,12 @@ The grey-box was walked in the game five times (2026-11-22, `npm run shot:route`
 | 4 | rev 9 | The overlook read as a crossroads; the hall passage and the gorge path were dead |
 | 5 | rev 10 | Ready for the sense stage; the reveal lands in the overlook bay |
 
-**For the sense stage:**
+**For the sense stage** (rev 11 makes the first three fixes: the flights 4 u further out, the bridge's south tower a 3 m post, a parapet along the balcony's lip open at the flights and the bay):
 - The overlook bay and the east flight's head blur together: separate them with a parapet run, or move the flight's head a tread east.
 - The bridgehead's tall gate tower stands south of the route at the east end, so it hides the wizard for a moment. Move it north of the path, or thin it.
 - The decks at the flights' heads are big and blank: give them an edge and a direction.
 
-**For the camera (engine):** the armillary can't be seen whole with the party in a 1080p frame (about 390 art px against about 170 px of view). The look-ahead helps. The briefing and the finale need a camera moment of their own, or the armillary has to be much smaller: the user's call, asked 2026-11-22.
+**For the camera (engine):** the armillary can't be seen whole with the party in a 1080p frame (about 390 art px against about 170 px of view). The look-ahead helps. **The user (2026-11-22): "keep it large, and only show pieces of it on screen at a time, with maybe some sequences where the whole thing comes into view."** So it stays at about seven wizards tall, and the briefing and the finale get camera sequences that bring the whole armillary into view (asked of the engine session).
 
 **For dressing:**
 - a tall marker at the gorge exit;

@@ -13,7 +13,7 @@ board:{cols:['Brief and beats','Space diagram','Concept art','Blockout','Script'
  note:`One row per stop, one column per stage of the campaign workflow. A stop goes deep one at a time: the others wait at concept art until their turn. Updated with every change to the segment.`,
  rows:[
   ['0 · Briefing and the yard','#yard',[['done','Approved 11-22'],['review','The plan, below'],['done','Approved 11-22'],['review','Reworked 11-22: walk #yard'],['later'],['started','Props bought'],['later']]],
-  ['0 · The courtyard (hub)','#concept-court-plans',[['done'],['done','Plan D chosen 11-22; flow rev 5'],['done'],['done','Flow passed in the game, 7.5/10; sense next'],['later'],['started','Rounds 1–7, to be redone'],['later']]],
+  ['0 · The courtyard (hub)','#concept-court-plans',[['done'],['done','Plan D chosen 11-22; flow rev 5'],['done'],['started','Flow passed, 7.5/10; sense stage, rev 11'],['later'],['started','Rounds 1–7, to be redone'],['later']]],
   ['1 · Infirmary (Life)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['done','Thorns added (r2)'],['next','After the yard'],['done','Two rounds'],['later'],['later'],['later'],['later']]],
   ['2 · Battery (Fire)','#battery',[['next','Rewrite as your second element'],['done'],['done'],['done','Repair beat open'],['later'],['started','Defence, well, wall'],['later']]],
   ['3 · Ward line (Shield)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['started','The fix: burn something off'],['later'],['done'],['later'],['later'],['later'],['later']]],

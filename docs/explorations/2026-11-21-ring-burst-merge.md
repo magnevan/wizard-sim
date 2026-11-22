@@ -1,6 +1,6 @@
 # Merging the ring into the burst (2026-11-21)
 
-From [issue #10](https://github.com/magnevan/wizard-sim/issues/10) and the user's note: "fire ring and fire burst are really similar but on different keys. But fire ring and fire patch is quite different, but on the same key." The idea is to make the ring a variant of the burst, picked by how far away you aim and shown while you hold the button. Shift+RMB would then be Place only. Nothing is decided yet. This page maps which spells the change breaks and recommends a direction.
+From [issue #10](https://github.com/magnevan/wizard-sim/issues/10) and the user's note: "fire ring and fire burst are really similar but on different keys. But fire ring and fire patch is quite different, but on the same key." The idea is to make the ring a variant of the burst, picked by how far away you aim and shown while you hold the button. Shift+RMB would then be Place only. Decided 2026-11-22: see the answers near the end. This page maps which spells the change breaks and recommends a direction.
 
 Pillars touched: 2 (a language, not a menu), 3 (the dance: a ring hits the partner behind you, a cone doesn't), 4 (explicit rhythm).
 
@@ -79,7 +79,16 @@ Rejected alternatives for the collision: conjuring on a long Shift+LMB hold (it 
 
 The Atlas's `CASTS` row and help-panel rows (cell count 43 drops); the tutorial beats that teach Area and the Fire ring; the battery's prompts ("a half-ring from Area or the Weapon's burst"); Shield blink, which leaves "their Area spell" (it would leave the ring); the golden hash (the scripted run taps a Fire ring) and the bots; pad bindings (LT becomes Place only); the "rings are each element's strongest instant hit" rule (the Frost ring chills ×2, the Splash ring pushes ×2), which would apply to the ring end of the spectrum or to all of it.
 
-## Questions for the user
+## The user's answers (2026-11-22)
+
+Every recommendation was accepted ([decision](../decisions/README.md#2026-11-22-the-ring-merges-into-the-burst-aim-at-yourself-for-the-ring-explorations2026-11-21-ring-burst-mergemd)); the work is tracked in [the thread](../threads/ring-burst-merge.md).
+1. "Yes smoothly."
+2. "On yourself, I'll give feedback if I feel the radius is too strict."
+3. "Sounds good."
+4. "I think only while you hold? If its with shift, we don't know if its going to be a left or right click."
+- Gamepad: "we're not immediately building for a gamepad, but it's good to make a note of this." No interactive review page: "it's easy to playtest in any of the existing scenes."
+
+## Questions for the user (as asked)
 
 1. **Continuum or bands?** Claude recommends a continuum with the ring as a snap (direction 2). Bands (direction 3) are easier to read.
 2. **Ring band: cursor on yourself (about 1 u), or a wider "near" radius?** Claude recommends on yourself, for the melee reason above.

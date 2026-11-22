@@ -1768,8 +1768,8 @@
 			"worldX": 8400,
 			"worldY": 0,
 			"worldDepth": 0,
-			"pxWid": 4320,
-			"pxHei": 4300,
+			"pxWid": 4460,
+			"pxHei": 4440,
 			"__bgColor": "#3F6443",
 			"bgColor": "#3F6443",
 			"useAutoIdentifier": false,
@@ -1784,7 +1784,7 @@
 				{
 					"__identifier": "tierMetres",
 					"__type": "Array<Float>",
-					"__value": [ -9, -5, -4.64, -4.27, -3.91, -3.55, -3.18, -2.82, -2.45, -2.09, -1.73, -1.36, -1, -0.64, -0.27, 0.09, 0.45, 0.82, 1.18, 1.55, 1.91, 2, 2.25, 2.27, 2.33, 2.5, 2.64, 2.67, 2.75, 3, 3.33, 3.67, 4, 4.33, 4.67, 5, 5.33, 5.67, 6, 6.3, 6.5, 7, 7.5, 8, 10, 11, 12, 14, 18, 19, 20 ],
+					"__value": [ -9, -5, -4.67, -4.33, -4, -3.67, -3.33, -3, -2.67, -2.33, -2, -1.67, -1.33, -1, -0.67, -0.33, 0, 0.33, 0.67, 1, 1.33, 1.67, 2, 2.33, 2.5, 2.67, 3, 3.33, 3.67, 4, 4.33, 4.67, 5, 5.33, 5.67, 6, 6.3, 6.5, 7, 7.5, 8, 8.5, 10, 11, 14, 18, 19, 20, 21 ],
 					"__tile": null,
 					"defUid": 119,
 					"realEditorValues": [
@@ -1798,43 +1798,47 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ -4.64 ]
+							"params": [ -4.67 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ -4.27 ]
+							"params": [ -4.33 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ -3.91 ]
+							"params": [ -4 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ -3.55 ]
+							"params": [ -3.67 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ -3.18 ]
+							"params": [ -3.33 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ -2.82 ]
+							"params": [ -3 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ -2.45 ]
+							"params": [ -2.67 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ -2.09 ]
+							"params": [ -2.33 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ -1.73 ]
+							"params": [ -2 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ -1.36 ]
+							"params": [ -1.67 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -1.33 ]
 						},
 						{
 							"id": "V_Float",
@@ -1842,47 +1846,39 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ -0.64 ]
+							"params": [ -0.67 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ -0.27 ]
+							"params": [ -0.33 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 0.09 ]
+							"params": [ 0 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 0.45 ]
+							"params": [ 0.33 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 0.82 ]
+							"params": [ 0.67 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 1.18 ]
+							"params": [ 1 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 1.55 ]
+							"params": [ 1.33 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 1.91 ]
+							"params": [ 1.67 ]
 						},
 						{
 							"id": "V_Float",
 							"params": [ 2 ]
-						},
-						{
-							"id": "V_Float",
-							"params": [ 2.25 ]
-						},
-						{
-							"id": "V_Float",
-							"params": [ 2.27 ]
 						},
 						{
 							"id": "V_Float",
@@ -1894,15 +1890,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ 2.64 ]
-						},
-						{
-							"id": "V_Float",
 							"params": [ 2.67 ]
-						},
-						{
-							"id": "V_Float",
-							"params": [ 2.75 ]
 						},
 						{
 							"id": "V_Float",
@@ -1966,15 +1954,15 @@
 						},
 						{
 							"id": "V_Float",
+							"params": [ 8.5 ]
+						},
+						{
+							"id": "V_Float",
 							"params": [ 10 ]
 						},
 						{
 							"id": "V_Float",
 							"params": [ 11 ]
-						},
-						{
-							"id": "V_Float",
-							"params": [ 12 ]
 						},
 						{
 							"id": "V_Float",
@@ -1991,6 +1979,10 @@
 						{
 							"id": "V_Float",
 							"params": [ 20 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 21 ]
 						}
 					]
 				}
@@ -2002,7 +1994,7 @@
 			"identifier": "Terraces",
 			"iid": "7e44ace5-0000-4000-8000-000000005010",
 			"uid": 120,
-			"worldX": 12920,
+			"worldX": 13060,
 			"worldY": 0,
 			"worldDepth": 0,
 			"pxWid": 640,

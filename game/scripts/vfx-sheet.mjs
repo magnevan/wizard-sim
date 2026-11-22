@@ -5,7 +5,7 @@
 // The page is any lab honouring the `?t=<sec>` contract (clock frozen, then <html data-ready="1">); if it
 // exposes window.vfxLab.setTime(t) the page loads once and steps through time instead.
 // Labs are dev-server pages (not in the production build), so this starts `vite` itself and stops it after.
-// Usage: npm run vfx-sheet -- --page spray-lab.html --query "kinds=fire&rows=5" --from 0.2 --to 1.6 --frames 12
+// Usage: npm run vfx-sheet -- --page vfx-lab.html --query "spell=fire,fire,fire&scene=crowd&bar=0" --from 0 --to 1.2 --frames 12
 //   [--crop x,y,w,h]  CSS px of the page (default: the first <canvas>)   [--scale 2] [--cols 6]
 //   [--bg #rrggbb]    background colour (default: the most common colour over all frames)
 //   [--out shots/vfx/<name>] [--port 5189] [--viewport 1280x800] [--thresh 8]
@@ -16,7 +16,7 @@ import puppeteer from 'puppeteer-core';
 import { CLIENT, findChrome } from './serve.mjs';
 
 const arg = (name, dflt) => { const i = process.argv.indexOf('--' + name); return i > 0 ? process.argv[i + 1] : dflt; };
-const page = arg('page', 'spray-lab.html'), query = arg('query', '');
+const page = arg('page', 'vfx-lab.html'), query = arg('query', 'spell=fire,fire,fire&scene=crowd&bar=0');
 const t0 = Number(arg('from', 0)), t1 = Number(arg('to', 2)), N = Math.max(2, Number(arg('frames', 12)));
 const scale = Number(arg('scale', 2)), cols = Number(arg('cols', 6)), thresh = Number(arg('thresh', 8));
 const crop = arg('crop', '')?.split(',').map(Number), bg = arg('bg', '');

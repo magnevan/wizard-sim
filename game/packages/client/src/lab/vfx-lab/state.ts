@@ -30,6 +30,16 @@ export interface LabState {
   loop: number;
   grid: boolean;
   ns: number[];
+  /** Rows of other spells (recipes as ?spell= takes them, `els/form`), each drawn like the main one; null: just the main one. */
+  spells: string[] | null;
+  /** Columns at these moments (s after the cast, added to t), instead of one; null: one. */
+  times: number[] | null;
+  /** The sim's hit shapes dotted over the stage. */
+  hit: boolean;
+  /** Wizard 1's aim swings back and forth (as a player sweeping a crowd). */
+  sweep: boolean;
+  /** Wizard 1 walks to the right of the screen from the moment the spell goes off. */
+  move: boolean;
   /** Kept from the URL; the panel doesn't change these. */
   scale: number;
   size: [number, number] | null;
@@ -54,7 +64,8 @@ export function atRunes(els: readonly Element[], n: number): Element[] {
   return out;
 }
 
-const pressesOf = (s: string): Element[] =>
+/** The rune keys a recipe's elements are pressed as ('ice' is Water then Cold). */
+export const pressesOf = (s: string): Element[] =>
   s.split(/[+ ,]/).filter((e) => (rules.ALL as readonly string[]).includes(e)).flatMap((e) => rules.runesOf(e as Element));
 
 export function readState(search: string): LabState {
@@ -78,6 +89,11 @@ export function readState(search: string): LabState {
     loop: Number(q.get('loop') ?? 3) || 3,
     grid,
     ns: (q.get('ns') ?? '1,2,3,4,5').split(',').map(Number).filter((n) => n >= 1 && n <= 5),
+    spells: q.get('spells')?.split(';').map((x) => x.trim()).filter(Boolean) || null,
+    times: q.get('times')?.split(',').map(Number).filter(Number.isFinite) || null,
+    hit: q.get('hit') === '1',
+    sweep: q.get('sweep') === '1',
+    move: q.get('move') === '1',
     scale: Math.max(1, Math.floor(Number(q.get('scale') ?? 2))),
     size: size && size.length === 2 && size.every((v) => v > 0) ? [size[0], size[1]] : null,
     zoom: zoom && zoom.length === 4 && zoom.every(Number.isFinite) ? [zoom[0], zoom[1], zoom[2], zoom[3]] : null,
@@ -104,5 +120,10 @@ export function writeState(s: LabState): void {
   set('loop', s.loop === 3 ? null : String(s.loop));
   set('grid', s.grid ? 'runes' : null);
   set('ns', s.grid && s.ns.join(',') !== '1,2,3,4,5' ? s.ns.join(',') : null);
-  try { history.replaceState(null, '', `${location.pathname}?${p.toString().replace(/%2C/g, ',')}${location.hash}`); } catch { /* sandboxed */ }
+  set('spells', s.spells?.length ? s.spells.join(';') : null);
+  set('times', s.times?.length ? s.times.map(r3).join(',') : null);
+  set('hit', s.hit ? '1' : null);
+  set('sweep', s.sweep ? '1' : null);
+  set('move', s.move ? '1' : null);
+  try { history.replaceState(null, '', `${location.pathname}?${p.toString().replace(/%2C/g, ',').replace(/%3B/g, ';').replace(/%2F/g, '/')}${location.hash}`); } catch { /* sandboxed */ }
 }

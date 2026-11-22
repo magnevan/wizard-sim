@@ -5,7 +5,7 @@ Record: [VFX workflow](../explorations/2026-11-21-vfx-workflow.md) · Guide: [vf
 
 ## Where it stands
 
-The plan is approved. Steps 1 to 3 are built on the `worktree-vfx-workflow` branch: the guide (spec template and rubric), the VFX Lab, and `npm run vfx-sheet`. Round 2 (the user's notes: no aim control, reloads, typing runes) added the lab's side panel and the first knobs (the three sprays, nova speed) with Save to `fx-knobs.json`. Round 3 fixed the GPU leak and slow scrubbing and added knob A/B. Nobody has used the loop on a real effect yet.
+The plan is approved. Steps 1 to 3 are built on the `worktree-vfx-workflow` branch: the guide (spec template and rubric), the VFX Lab, and `npm run vfx-sheet`. Round 2 (the user's notes: no aim control, reloads, typing runes) added the lab's side panel and the first knobs (the three sprays, nova speed) with Save to `fx-knobs.json`. Round 3 fixed the GPU leak and slow scrubbing and added knob A/B. Round 4 absorbed the Spray, Nova and Missile Labs (hit shapes, sweep, walk, rows of spells, film strips) and deleted them. The tooling is done; nobody has used the loop on a real effect yet.
 
 ## Next
 
@@ -15,7 +15,6 @@ The plan is approved. Steps 1 to 3 are built on the `worktree-vfx-workflow` bran
 - [ ] Pull out the arc primitive (lightning arc and chain heal draw it twice) as the first behavioural primitive.
 - [ ] More scenes: a wall to splash against, surface floors (water, fire), an interior. A grid of several spells side by side.
 - [ ] A third variant (C) beside A/B, if two turn out not to be enough.
-- [ ] Retire the Spray, Nova and Missile Labs once the VFX Lab covers what they show (coverage table of 2026-11-22: missing are the sim hit-sector overlay, the swinging aim, the old-cone comparison, filmstrips at chosen times and the Earth missile kinds side by side), and retire the remaining hand ports.
 
 Parked: finer-resolution particles ([#12](https://github.com/magnevan/wizard-sim/issues/12)).
 
@@ -32,3 +31,4 @@ Parked: finer-resolution particles ([#12](https://github.com/magnevan/wizard-sim
 - 2026-11-21 Round 2: the lab's side panel (rune keys, forms, drag aim, scene, time scrubber, rune grid), live without reloads; the knob registry (`art/fx-knobs.ts`), 25 knobs and the slider panel with Save
 - 2026-11-22 Round 3: `WorldView.destroy()` (GPU textures flat over 200 rebuilds, were 40 → 1540), scrubbing about 5x faster (snapshots, drawing only the last ticks), knob A/B (side by side or flip with X)
 - 2026-11-22 2D vs 3D decided: mediums are 2D particles, solids go through 3D ([decision](../decisions/README.md#2026-11-22-mediums-are-2d-particles-solids-go-through-3d))
+- 2026-11-22 Round 4: hit shapes (`hit=1`), sweep, walk, rows of spells (`spells=`) and film strips (`times=`); the Spray, Nova and Missile Labs deleted (the old-cone comparison not ported: it was art-only)

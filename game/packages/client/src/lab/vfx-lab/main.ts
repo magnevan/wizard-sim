@@ -25,6 +25,12 @@
  *   &loop=3 &speed=0.5      the loop: recast this long after the cast; play at this speed (0.25, 0.5 or 1)
  *   &grid=runes             the spell at 1..5 runes side by side, one world and view each (&ns=1,3,5 picks them);
  *                           each panel's t counts from its own cast, so the wind-ups line up at t = 0
+ *   &spells=water;fire;earth,fire/area   a row per spell (recipes as ?spell= takes them), each like the main one
+ *   &times=0.1,0.3,0.6,1    a column per moment: each panel runs that many seconds ahead of t (opens paused at t = 0)
+ *   &hit=1                  the sim's hit shapes dotted over the stage (hit-overlay.ts): spray cones, beam lines,
+ *                           missiles and their flight, zones, area rings
+ *   &sweep=1                wizard 1's aim swings back and forth (0.75 rad either way, sin(t * 2.1)): a sweeping spray
+ *   &move=1                 wizard 1 walks to the right of the screen once the spell has gone off
  *   &scale=2                screen px per art px (the game picks 2 to 4 by window height)
  *   &size=480x270           each panel's size in art px (the game shows about 270 art px of height)
  *   &zoom=x,y,w,h           show only that part of each panel (art px from its top left)
@@ -49,12 +55,15 @@ import { toU, toV } from '../../iso-world';
 import type { WorldView } from '../../view';
 import { Cell, worldX, worldY, type CellSpec } from './cell';
 import { SCENES, type V } from './scenes';
-import { atRunes, isHands, readState, writeState } from './state';
+import { atRunes, isHands, pressesOf, readState, writeState } from './state';
 import { mountPanel } from './panel';
 import { mountKnobPanel } from './knob-panel';
 import { AB, AB_CSS, mountAB } from './ab';
+import { drawHits } from './hit-overlay';
 
 const S = readState(location.search);
+// a row of ?times= is a film strip: it opens paused, each column at its own moment
+if (S.times?.length && S.t === null) S.t = 0;
 const startT = S.t;
 
 // ---- the setup ------------------------------------------------------------------------------------------------------
@@ -71,21 +80,33 @@ function demoAt(recipe: string | null, at: V): Demo | null {
   if (d) { d.at = [worldX(at), worldY(at)]; for (const s of d.seq ?? []) s.at = d.at; }
   return d;
 }
-const panelSize = (): [number, number] => S.size ?? (S.grid ? [200, 200] : [480, 270]);
+const panelSize = (): [number, number] => S.size ?? (S.grid || S.times?.length ? [200, 200] : S.spells?.length ? [320, 180] : [480, 270]);
+/**
+ * The panels: a row per spell (?spells=, else the main one) and per A/B variant, and along each row a column per rune
+ * count (?grid=runes) or per moment (?times=), else one.
+ */
 function specs(): CellSpec[] {
   const sc = sceneOf(), a0 = aim0(), [w, h] = panelSize(), others = (S.others ?? '').split(';').filter(Boolean);
-  const counts = S.grid ? S.ns : [S.presses.length];
+  const rows = S.spells?.length
+    ? S.spells.map((r) => { const [els, f] = r.split('/'); return { label: r, presses: pressesOf(els), form: f || S.form }; })
+    : [{ label: '', presses: S.presses, form: S.form }];
+  const cols: { n: number | null; dt: number; label: string }[] = S.grid ? S.ns.map((n) => ({ n, dt: 0, label: `${n} rune${n > 1 ? 's' : ''}` }))
+    : S.times?.length ? S.times.map((t) => ({ n: null, dt: t, label: `${t} s` })) : [{ n: null, dt: 0, label: '' }];
   // A/B side by side: the setup twice, A's row (the pinned knobs) over B's (the live ones); flip: one row, drawn with
   // whichever is showing
   const variants: { name: string; knobs: () => Readonly<Record<string, number>> | null }[] = AB.on === 'side'
     ? [{ name: 'A', knobs: () => AB.a }, { name: 'B', knobs: () => null }]
     : [{ name: '', knobs: () => (AB.on === 'flip' && AB.showA ? AB.a : null) }];
-  return variants.flatMap((v) => counts.map((n, k) => ({
-    scene: sc, seed: S.seed, w, h, scale: S.scale, zoom: S.zoom, mood: S.mood, scope: `lab${v.name}${k}:`, aim0: a0,
-    knobs: v.knobs, variant: v.name, runes: n,
-    demos: sc.wizards.map((wz, i) => i === 0
-      ? demoAt(`${isHands(S.form) ? '' : atRunes(S.presses, n).join(',')}/${S.form}`, a0 ?? sc.target)
-      : demoAt(others[i - 1] ?? wz.spell ?? null, wz.aim ?? sc.target)),
+  return rows.flatMap((row, ri) => variants.flatMap((v) => cols.map((col, k) => {
+    const n = col.n ?? row.presses.length;
+    return {
+      scene: sc, seed: S.seed, w, h, scale: S.scale, zoom: S.zoom, mood: S.mood, scope: `lab${ri}${v.name}${k}:`, aim0: a0,
+      knobs: v.knobs, variant: v.name, runes: n, row: `${ri}|${v.name}`, dt: col.dt, sweep: S.sweep, move: S.move,
+      label: [row.label, v.name && (v.name === 'A' ? 'A (pinned)' : 'B (live)'), col.label].filter(Boolean).join('  '),
+      demos: sc.wizards.map((wz, i) => i === 0
+        ? demoAt(`${isHands(row.form) ? '' : atRunes(row.presses, n).join(',')}/${row.form}`, a0 ?? sc.target)
+        : demoAt(others[i - 1] ?? wz.spell ?? null, wz.aim ?? sc.target)),
+    };
   })));
 }
 
@@ -108,7 +129,7 @@ let hover = false, dragging = false;
 /** Lays the panels out: one row per A/B variant, the rune grid along it; labels and the flip badge. */
 function layout(): void {
   const rows: Cell[][] = [];
-  for (const c of cells) { const last = rows[rows.length - 1]; if (last && last[0].spec.variant === c.spec.variant) last.push(c); else rows.push([c]); }
+  for (const c of cells) { const last = rows[rows.length - 1]; if (last && last[0].spec.row === c.spec.row) last.push(c); else rows.push([c]); }
   let y = 0, W = 0;
   const lab = (k: number) => {
     let l = labels[k];
@@ -120,9 +141,9 @@ function layout(): void {
     let x = 0;
     for (const c of row) {
       c.root.position.set(x, y);
-      const l = lab(n++), v = c.spec.variant, runes = S.grid ? `${c.spec.runes} rune${c.spec.runes > 1 ? 's' : ''}` : '';
+      const l = lab(n++);
       l.style.left = `${x + 4}px`; l.style.top = `${y + 3}px`;
-      l.textContent = [v && (v === 'A' ? 'A (pinned)' : 'B (live)'), runes].filter(Boolean).join('  ');
+      l.textContent = c.spec.label;
       l.style.display = l.textContent ? '' : 'none';
       x += c.pxW;
     }
@@ -177,7 +198,7 @@ const simMs = (c: Cell, alpha: number): number => 1000 + ((c.tick + alpha) * 100
 
 /** Each panel's step and alpha at t s from its own cast. */
 const targetsAt = (t: number) => cells.map((c) => {
-  const at = Math.max(0, c.t0 + t * 60), whole = Math.abs(at - Math.round(at)) < 1e-6 ? Math.round(at) : Math.floor(at);
+  const at = Math.max(0, c.t0 + (t + c.spec.dt) * 60), whole = Math.abs(at - Math.round(at)) < 1e-6 ? Math.round(at) : Math.floor(at);
   return { steps: whole, alpha: Math.max(0, at - whole) };
 });
 
@@ -228,6 +249,7 @@ async function setTime(t: number): Promise<void> {
   }
   drawn = true; between = targets.some((x) => x.alpha !== 0);
   panel?.sync();
+  drawOverlay();
   document.documentElement.dataset.ready = '1';
 }
 
@@ -283,6 +305,7 @@ overlay.className = 'overlay';
 const og = overlay.getContext('2d')!;
 function drawOverlay(): void {
   og.clearRect(0, 0, overlay.width, overlay.height);
+  if (S.hit && cells.length) drawHits(og, cells);
   if (!(hover || dragging) || !cells.length) return;
   const sc = sceneOf(), at = sc.wizards[0].at, tgt = aim0() ?? sc.target;
   for (const c of cells) {
@@ -351,7 +374,7 @@ const readyP = (async () => {
   app.ticker.stop();
   // the stage's canvas comes first in the page (capture tools take the first canvas), the aim overlay over it
   host.prepend(app.canvas);
-  if (S.bar) host.append(overlay, badge);
+  host.append(overlay, badge);
   await assets();
   build(true);
   if (startT === null) cur = loopStart();
@@ -435,6 +458,7 @@ const panel = S.bar ? mountPanel(panelHost, S, {
   recast: () => { cur = loopStart(); for (const c of cells) c.restart(); playing = true; S.t = null; writeState(S); panel?.sync(); },
   scrub: (t) => showAt(t),
   speed: (v) => { S.speed = v; writeState(S); },
+  overlay: () => { writeState(S); drawOverlay(); },
   clock: () => ({ t: cur, playing, min: Math.floor(loopStart() * 60) / 60, max: S.loop }),
 }) : null;
 if (!S.bar) panelHost.style.display = 'none';

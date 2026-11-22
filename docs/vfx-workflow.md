@@ -30,6 +30,8 @@ Build with the game's own code, not in a separate copy. The VFX Lab (`/vfx-lab.h
 - `vfx-lab.html?spell=fire,fire,fire&scene=crowd`: loops the cast live.
 - `&t=0.5`: freezes 0.5 s after the cast (negative times show the wind-up).
 - `&grid=runes&ns=1,3,5`: the same spell at one, three and five runes side by side.
+- `&spells=water;fire;cold`: a row per spell; `&times=0.1,0.3,0.6,1`: a film strip of one spell.
+- `&hit=1`: the sim's hit shapes dotted over the stage (spray cones, beam lines, missiles, zones, area rings): check an effect against where it hurts. `&sweep=1` swings the aim, `&move=1` walks the caster.
 - `scene=` `empty`, `crowd`, `dark`, `coop` (four wizards; `others=` sets their spells) or `ally`. Scenes are data in `src/lab/vfx-lab/scenes.ts`; add one when an effect needs another context.
 
 Judge it in more than the empty scene: at least `crowd`, and `coop` for anything that fills the screen.
@@ -73,6 +75,6 @@ What has worked, to keep: the frost spray after its redesign ("perfect, no notes
 ## Where things live
 
 - The effect code: `game/packages/client/src/art/` (`vfx.ts` and the files it imports).
-- Knobs: `art/fx-knobs.ts` declares live-tunable look parameters (the sprays' `spray.water|fire|cold.*`, `nova.all.speed`); the knob panel (`lab/vfx-lab/knob-panel.ts`, also the Spray Lab's "knobs" box) has a slider for each, and its Save writes `art/fx-knobs.json` through the dev server. Commit that file to keep the values; defaults in the code draw the look as it was.
+- Knobs: `art/fx-knobs.ts` declares live-tunable look parameters (the sprays' `spray.water|fire|cold.*`, `nova.all.speed`); the knob panel (`lab/vfx-lab/knob-panel.ts`, in the VFX Lab's Knobs section) has a slider for each, and its Save writes `art/fx-knobs.json` through the dev server. Commit that file to keep the values; defaults in the code draw the look as it was.
 - The emitter: `emit()` in `art/util.ts` (stateless: the same time and seed always give the same particles).
 - The old gallery (retired 2026-11-22): `docs/archive/spell-vfx-gallery.md`; its ratings stay in its artifact db.

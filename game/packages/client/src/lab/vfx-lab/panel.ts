@@ -22,6 +22,8 @@ export interface PanelHooks {
   /** Pause at t. */
   scrub(t: number): void;
   speed(v: number): void;
+  /** Only what's drawn over the stage changed (the hit shapes). */
+  overlay(): void;
   /** The clock now (s from the cast), whether it's playing, and the scrubber's range. */
   clock(): { t: number; playing: boolean; min: number; max: number };
 }
@@ -113,6 +115,10 @@ export function mountPanel(host: HTMLElement, S: LabState, hooks: PanelHooks): {
   ang.onchange = aimSet; dist.onchange = aimSet;
   row(h('label', {}, 'angle', ang), h('label', {}, 'dist', dist), h('button', { textContent: 'Target', title: "Back to the scene's own target", onclick: () => { S.aim = null; setup(); } }));
   host.append(h('div', { className: 'hint', textContent: 'Drag on the stage to aim; the line shows while the pointer is over it.' }));
+  const sweep = h('input', { type: 'checkbox', title: 'The aim swings back and forth, as a player sweeping a crowd (?sweep=1)', onchange: () => { S.sweep = sweep.checked; setup(); } });
+  const move = h('input', { type: 'checkbox', title: 'The caster walks to the right of the screen once the spell goes off (?move=1)', onchange: () => { S.move = move.checked; setup(); } });
+  const hit = h('input', { type: 'checkbox', title: "The sim's hit shapes dotted over the stage (?hit=1)", onchange: () => { S.hit = hit.checked; hooks.overlay(); } });
+  row(h('label', {}, sweep, 'sweep'), h('label', {}, move, 'walk'), h('label', {}, hit, 'hit shapes'));
 
   // ---- scene
   section('Scene');
@@ -150,6 +156,13 @@ export function mountPanel(host: HTMLElement, S: LabState, hooks: PanelHooks): {
   }));
   row(h('label', {}, grid, 'rune grid'), ...nBtns);
   host.append(h('div', { className: 'hint', textContent: 'Each panel: the presses, then more of the first, or cut short.' }));
+  const spells = h('input', { type: 'text', placeholder: 'water;fire;earth,fire/area', title: 'A row per spell (?spells=): recipes as the spell box takes them, a form after a slash' });
+  spells.style.width = '100%';
+  spells.onchange = () => { const v = spells.value.split(';').map((x) => x.trim()).filter(Boolean); S.spells = v.length ? v : null; setup(); };
+  host.append(h('div', { className: 'hint', textContent: 'Rows of spells (empty: just the one above):' }), spells);
+  const times = h('input', { type: 'text', placeholder: '0.1,0.3,0.6,1', title: 'A column per moment (?times=): seconds after the cast, added to t' });
+  times.onchange = () => { const v = times.value.split(',').map((x) => x.trim()).filter(Boolean).map(Number).filter(Number.isFinite); S.times = v.length ? v : null; if (S.times && S.grid) S.grid = false; setup(); };
+  row(h('label', {}, 'times', times));
 
   // ---- knobs (knob-panel.ts mounts here when it exists)
   section('Knobs');
@@ -192,6 +205,9 @@ export function mountPanel(host: HTMLElement, S: LabState, hooks: PanelHooks): {
     blurb.textContent = (SCENES[S.scene] ?? SCENES.empty).blurb;
     loop.value = String(S.loop);
     grid.checked = S.grid;
+    sweep.checked = S.sweep; move.checked = S.move; hit.checked = S.hit;
+    if (document.activeElement !== spells) spells.value = (S.spells ?? []).join(';');
+    if (document.activeElement !== times) times.value = (S.times ?? []).join(',');
     nBtns.forEach((b, k) => { b.classList.toggle('on', S.ns.includes(k + 1)); b.disabled = !S.grid; });
     speedBtns.forEach((b, k) => b.classList.toggle('on', SPEEDS[k] === S.speed));
     syncClock();

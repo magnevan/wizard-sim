@@ -10,7 +10,7 @@
 import { Container, Graphics, type Renderer } from 'pixi.js';
 import {
   ARCH, BODY, EV, KEYED_EL, KIND, MAX_SEATS, NO_INPUT, QUEUE_MAX, TEAM, atan2Turns, createWorld, devRefillRunes, devSpawnEnemy, devStage,
-  hitKindNow, restore, setHitKind, snapshot, spawnBody, step, type PlayerInput, type Snapshot, type World,
+  hitKindNow, quantize, restore, setHitKind, snapshot, spawnBody, step, type PlayerInput, type Snapshot, type World,
 } from '@wizard-sim/sim';
 import { FY, PPU } from '../../camera';
 import { demoInput, type Demo } from '../../demo';
@@ -40,7 +40,20 @@ export interface CellSpec {
   /** The A/B row it sits in ('' without A/B) and its rune count, for the layout and its label. */
   variant: string;
   runes: number;
+  /** Its row (panels with the same key sit in one row) and its label. */
+  row: string;
+  label: string;
+  /** Seconds this panel runs ahead of the page's clock (a column of ?times=). */
+  dt: number;
+  /** Wizard 0's aim swings (?sweep=1); wizard 0 walks once the spell has gone off (?move=1). */
+  sweep: boolean;
+  move: boolean;
 }
+
+/** ?sweep=1: the aim swings this far either way (radians) at this rate (rad/s of the sine), as the old Spray Lab's did. */
+const SWEEP_AMP = 0.75, SWEEP_RATE = 2.1;
+/** ?move=1: wizard 0 walks this way (world units, toward the right of the screen), at full stick. */
+const WALK: readonly [number, number] = [toX(1, 0), toY(1, 0)];
 
 /** A sim snapshot is kept every this many ticks along the panel's timeline (scrubbing back restores the nearest). */
 export const SNAP_EVERY = 10;
@@ -86,6 +99,7 @@ export class Cell {
     for (let s = 0; s < sc.wizards.length; s++) devRefillRunes(w, s);
     this.start = snapshot(w);
     this.t0 = this.findCast();
+    this.walkFrom = this.t0;
 
     // the effect canvases are sized from FIELD when a view is made: fit it to this room first
     const tw = turnedWorld(w);
@@ -114,13 +128,28 @@ export class Cell {
   get pxW(): number { return (this.spec.zoom ? this.spec.zoom[2] : this.spec.w) * this.spec.scale; }
   get pxH(): number { return (this.spec.zoom ? this.spec.zoom[3] : this.spec.h) * this.spec.scale; }
 
+  /** From this step on, wizard 0 walks (?move=1): the spell's own step, known after the pre-pass. */
+  private walkFrom = Infinity;
+
   private inputsAt(tick: number): PlayerInput[] {
     for (let s = 0; s < MAX_SEATS; s++) {
-      const d = this.spec.demos[s];
-      this.inputs[s] = d && s < this.spec.scene.wizards.length ? demoInput(this.world, tick + s * LAG, s, d) : NO_INPUT;
+      let d = this.spec.demos[s];
+      if (!d || s >= this.spec.scene.wizards.length) { this.inputs[s] = NO_INPUT; continue; }
+      if (s === 0 && this.spec.sweep && d.at) {
+        // the aim point turned round the caster's start by a slow sine (a pure function of the tick)
+        const b = this.world.bodies, ox = b.x[0], oy = b.y[0], a = SWEEP_AMP * Math.sin((tick / 60) * SWEEP_RATE), c = Math.cos(a), sn = Math.sin(a);
+        const dx = d.at[0] - ox, dy = d.at[1] - oy;
+        d = { ...d, at: [ox + dx * c - dy * sn, oy + dx * sn + dy * c] };
+      }
+      let inp = demoInput(this.world, tick + s * LAG, s, d);
+      if (s === 0 && this.spec.move && tick >= this.walkFrom) inp = quantize({ ...inp, moveX: WALK[0] * 127, moveY: WALK[1] * 127 });
+      this.inputs[s] = inp;
     }
     return this.inputs;
   }
+
+  /** The area casts' rings so far (burst events: where and how wide), for the hit overlay. */
+  readonly bursts: { x: number; y: number; r: number; tick: number }[] = [];
 
   /** Runs the sim alone (no view) until wizard 0's spell goes off, then puts the world back. */
   private findCast(): number {
@@ -150,11 +179,12 @@ export class Cell {
     setHitKind(kind);
     this.tick++;
     this.keep(this.tick);
+    for (const e of this.world.events) if (e.kind === 'burst' && e.who >= 0 && e.who < MAX_SEATS) this.bursts.push({ x: e.x, y: e.y, r: e.amount ?? 0, tick: this.tick });
     return this.world.events.some((e) => e.ev === EV.death);
   }
 
   /** The scene from the top again (live looping; the view's clock carries on, so the old run's effects end). */
-  restart(): void { restore(this.world, this.start); this.tick = 0; }
+  restart(): void { restore(this.world, this.start); this.tick = 0; this.bursts.length = 0; }
 
   /**
    * Back to the latest kept state at or before `tick` (the view starts over there, as after restart: what it showed
@@ -166,6 +196,7 @@ export class Cell {
     if (best === 0) { this.restart(); return 0; }
     restore(this.world, this.snaps.get(best)!);
     this.tick = best;
+    for (let k = this.bursts.length - 1; k >= 0; k--) if (this.bursts[k].tick > best) this.bursts.splice(k, 1);
     return best;
   }
 

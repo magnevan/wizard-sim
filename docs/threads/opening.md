@@ -15,7 +15,7 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 - [ ] The drill yard through the cycle: read and journey done (`yard-read.md`), plans A to D on the segment page (`concept-yard-plans`; the critic ranked C 6.5, A 6, B 5.5, the built yard 3.5; D is its mix). The user chose D (2026-11-22). Next: flow on flat frames, then the engine writes its level from `yard-d.py` (its `MARKERS` give the stations' spots).
 - [x] The district's roads as a space diagram with walk times, and where the small fights go ([district](../campaign/01-opening/district.md), 2026-11-22; up for review).
 - [x] The battery as the second element (2026-11-22): Life is your own from the infirmary on (`CAMPAIGN.life`), the Life circle and `CHANNEL` are gone, and the hurt prompt is "Hurt? Heal yourself"; the infusion line stays the user's.
-- [ ] **Levels from the plans are on branch `opening-levels`** (2026-11-22: the yard from D rev 2, the infirmary from D rev 4, the court from D rev 15; 682 tests, check:yard and check:battery pass). It's for the engine session or the user to merge. What the yard's rewrite dropped, for its dressing stage:
+- [x] **Levels from the plans are on main** (2026-11-22, `a7a87e7`, deployed: the yard from D rev 3, the infirmary from D rev 7, the court from D rev 17; 688 tests, check:yard, battery, tutorial and academy pass). What the yard's rewrite dropped, for its dressing stage:
   - the old blockout's 153 props and its 21 scenery people (`client/src/art/extras.ts`);
   - the old academy grey boxes in `client/src/art/massing.ts`, which no longer line up (`?massing=off` hides them);
   - `tools/segments/01-opening/yard-level.py`, now superseded but still referenced by `extras.ts`, `rigs.ts` and `massing-shots.mjs`.

@@ -21,7 +21,7 @@ board:{cols:['Brief and beats','Space diagram','Concept art','Blockout','Script'
   ['5 · Harbor (Cold, Lightning)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['done'],['later'],['done'],['later'],['later'],['later'],['later']]],
   ['6 · Cliff road (Earth)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['done'],['later'],['done','One image'],['later'],['later'],['later'],['later']]],
   ['7 · Finale (Arcane)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['done','Solo: alternate lock and fight'],['later'],['done'],['later'],['later'],['later'],['later']]],
-  ['The walks between','#concept-walks',[['done','Approved 11-22; small fights on several'],['next','The district\'s roads, with walk times'],['done','Approved 11-22'],['later'],['later'],['later'],['later']]],
+  ['The walks between','#concept-walks',[['done','Approved 11-22; small fights on several'],['review','The district, with walk times (district.md)'],['done','Approved 11-22'],['later'],['later'],['later'],['later']]],
  ]},
 stages:[
  ['Brief','draft'],['Beat chart','draft'],['Space diagram','review'],['Blockout','started','The yard and the battery are walkable'],['Script','later'],['Dressing','started','General art bought'],['Finish','later'],
@@ -32,7 +32,7 @@ needsYou:[
  ['#solve-yard-prompts','Round 5 on the yard: the prompts, the etched rule and the soldiers.'],
  ['https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews','Optional: the five encounter questions on The Morning Everything Breaks (my picks stand until you answer), and the proposal of at most one new creature per stop.'],
 ],
-onMe:[`The courtyard: the chosen plan as a walkable grey-box once height is in the engine.`,`The district's roads as a space diagram with walk times, and where the small fights go.`,`Rewrite the battery as your second element (its infusion line and prompts).`,`The battery's repair beat.`,`Then the infirmary: space diagram and blockout.`],
+onMe:[`The courtyard: the chosen plan as a walkable grey-box once height is in the engine.`,`Rewrite the battery as your second element (its infusion line and prompts).`,`The battery's repair beat.`,`Then the infirmary: space diagram and blockout.`],
 chapters:[
 {id:'hall',name:'The briefing',
  note:`Where it happens is open: at the armillary in the courtyard (proposed, see the weapons section below) or in the lecture hall. The old hall plan is archived.`,
@@ -193,6 +193,7 @@ concepts:[
   [`Later:`,` shortcuts opened from the far side, so a returning player's second time through is quick (pillar 1).`],
  ],
  images:[
+  ['img/district-plan.png','The district from above: the academy on a plateau with the courtyard at its centre, the drill yard west, the ward line north, the infirmary and the battery east, the waterworks up the river, the harbor and the cliff road on the coast to the south; seven roads between them, the three with small fights in gold.','The space diagram (2026-11-22): seven walks, 5.5 minutes in all, small fights on the gorge bridge, the river path and the harbor stairs (docs/campaign/01-opening/district.md).'],
   ['img/walk-district.jpg','Concept: the whole district from above with the roads between the stops and something on each: a cart of wounded on the infirmary road, a lookout over the battery, guards on the path to the ward line, a high bridge over the gorge, fishermen on the harbor stairs, a shrine on the cliff road.','The district\'s roads, each with something on it (Codex concept).'],
   ['img/walk-battery.jpg','Concept: the road from the academy gate down to the battery. Guards help a wounded comrade up, a bramble hedge blocks an old farm track, a student points from a lookout bend at the smoking battery below, a fallen cart and a violet crack across the road.','The road to the battery: the wounded coming up, the brambles to burn on the way back, the lookout bend, the battery smoking ahead (Codex concept).'],
   ['img/walk-gorge.jpg','Concept: the path from the academy over a high stone bridge across the gorge, then zigzag steps down the cliff to the stopped water wheel. A bush burns on a ledge beside the path, a worker with a bucket backs away, smoke drifts across.','The gorge path: the bridge, the steps down, the burning bush to douse once you have Water, the stopped wheel below (Codex concept).'],

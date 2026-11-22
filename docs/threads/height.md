@@ -31,9 +31,9 @@ Docs: `game/content/README.md` (Height), `docs/current-state.md`, and the room l
 
 ## Next
 
-- [ ] Phase 6: `tools/place-plans/` writes an LDtk level from a plan spec (Terrain, Height and Ground layers, plus door, gate and landmark markers). Test it on the chosen courtyard plan, D revision 5 (`plans/court-d.py`). `tools/place-plans/` exists so far only on branch `worktree-opening-route-docs`, so build this phase on top of it.
+- [ ] Phase 6: `tools/place-plans/` writes an LDtk level from a plan spec (Terrain, Height and Ground layers, plus door, gate and landmark markers). Next up, before phase 4. Test it on the chosen courtyard plan, D revision 5 (`plans/court-d.py`). `tools/place-plans/` exists so far only on branch `worktree-opening-route-docs`, so build this phase on top of it.
 - [ ] Phase 2's one gap: a sim test of a wizard walking up a stair. `content:check` reachability across both of the test room's stairs already covers the nav side.
-- [ ] Phase 4, minimal (the user picks whether this or phase 6 comes next): `zAt(x, y)`, with bodies and props drawn at their tier's height, and cliff faces as flat-coloured strips. That's enough to walk the grey-box and judge flow.
+- [ ] Phase 4, minimal (after phase 6; the user left the order to Claude and asked for both, 2026-11-22): `zAt(x, y)`, with bodies and props drawn at their tier's height, and cliff faces as flat-coloured strips. That's enough to walk the grey-box and judge flow.
 - [ ] Seams between places (proposed): `content:check` verifies both sides of each seam match. See [the continuous world](../explorations/2026-11-09-continuous-world-todo.md#2026-11-22-the-segment-as-one-map).
 - [ ] Phase 7: the sense lint in `content:check`.
 - [ ] Before any art: phase 3 (shots and height), phase 4 in full (painted cliff faces, effects and lighting at height), phase 5 (buildings sorted by footprint).

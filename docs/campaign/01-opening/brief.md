@@ -28,7 +28,7 @@ Where each stop stands, stage by stage, is the board at the top of the [Opening 
 | 6 | The cliff road | Earth | wash the buried anchor clear with Water | crag rams, archers | 5 |
 | 7 | The courtyard finale | Arcane | lock the armillary's rings | the warband and beasts, the rift aurochs | 10 |
 
-You pass back through the courtyard after the battery (the ward bell) and after the ward line (out to the gorge).
+You pass back through the courtyard after the battery (the ward bell) and after the ward line (out to the gorge). The courtyard's exits (the user, 2026-11-22): the battery's bridge is the main gate, with the infirmary just outside on that road; the north road through the great hall leads to the ward line; a path up the stream past the bridge leads to the gorge; the finale arrives up from the sea landing, from the cliff road. The journey is in [the courtyard's read](court-read.md#the-journey).
 
 **Each fight is a question and its ingredients, not a script** (the user, 2026-11-21). It works for one player, co-op roles come on their own, and only playtesting settles it. **At most one new creature per stop**: four in all (wolf, crab, ram, aurochs), a playtest assumption from [the encounters, round 2](../../explorations/2026-11-16-opening-encounters.md#round-2-the-users-notes-2026-11-21).
 

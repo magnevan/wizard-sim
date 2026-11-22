@@ -621,17 +621,14 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     }
     // The arc: a curve from the hand to the cursor, bowing out to one side (tickMissiles: steerArc). The shards take turns
     // across 2, 4 or 6 lanes by the Ice in the spell; the inner lanes bow less.
-    const aimD = !from && !follow && src < MAX_SEATS ? Math.min(SHAPES.streamRange, Math.max(2, len(s.aimX[src], s.aimY[src]))) : 6; // a turret, the Double or the Echo: a mid-range bow
-    const nIce = Math.max(1, spec.formN), lanes = nIce >= SHAPES.streamLanes6At ? 6 : nIce >= SHAPES.streamLanes4At ? 4 : 2;
-    const lane = shot % lanes, side = lane % 2 ? 1 : -1, tier = (lane >> 1) + 1;
-    const width = (Math.min(SHAPES.streamArcWidth, aimD * SHAPES.streamArcReach) * tier) / (lanes / 2);
+    const aimD = !from && !follow && src < MAX_SEATS ? streamAimD(w, src) : 6; // a turret, the Double or the Echo: a mid-range bow
+    const { side, width } = streamLane(spec.formN, shot, aimD);
     const ax = cosTurns(a), ay = sinTurns(a), tx = x + ax * aimD, ty = y + ay * aimD;
     const m = spawnMissile(w, src, p, ax, ay, 2, scale, 0, 0, from?.x, from?.y);
     if (m >= 0) {
       const mm = w.missiles;
-      // a quadratic's widest point is half its control point's offset: the control sits 2 x width out, over the midpoint
       mm.sx[m] = mm.x[m]; mm.sy[m] = mm.y[m]; mm.tx[m] = tx; mm.ty[m] = ty; mm.arcU[m] = 0;
-      mm.cx[m] = (mm.x[m] + tx) / 2 - ay * side * 2 * width; mm.cy[m] = (mm.y[m] + ty) / 2 + ax * side * 2 * width;
+      [mm.cx[m], mm.cy[m]] = arcControl(mm.x[m], mm.y[m], tx, ty, side, width);
       mm.flags[m] |= PF.arc; mm.life[m] = T(SHAPES.streamRange / full + 0.4); // the curve's detour and slow start
       const ox = mm.cx[m] - mm.x[m], oy = mm.cy[m] - mm.y[m], ol = len(ox, oy) || 1, v0 = full * SHAPES.streamArcStart;
       mm.vx[m] = (ox / ol) * v0; mm.vy[m] = (oy / ol) * v0; // it leaves along the curve, slow: steerArc takes over next tick
@@ -770,6 +767,28 @@ function seekHurt(w: World, j: number): void {
     nx = ux * TURN_COS - uy * s; ny = ux * s + uy * TURN_COS;
   }
   m.vx[j] = nx * sp; m.vy[j] = ny * sp;
+}
+
+/** How far out the Shard stream aims for seat i: the cursor's distance, between 2 u and the stream's reach. */
+export function streamAimD(w: World, i: number): number {
+  return Math.min(SHAPES.streamRange, Math.max(2, len(w.seats.aimX[i], w.seats.aimY[i])));
+}
+
+/**
+ * The Shard stream's lane for its `shot`-th shard: 2 lanes at one Ice, 4 from streamLanes4At, 6 from streamLanes6At;
+ * which side it bows to (-1 or 1) and how far (u: the outer lanes streamArcWidth, capped at streamArcReach x aimD, the
+ * inner ones a share of it). Shared with the client's arc overlay (?arcs=1), so the lines are the shards' own curves.
+ */
+export function streamLane(formN: number, shot: number, aimD: number): { lanes: number; side: number; width: number } {
+  const nIce = Math.max(1, formN), lanes = nIce >= SHAPES.streamLanes6At ? 6 : nIce >= SHAPES.streamLanes4At ? 4 : 2;
+  const lane = shot % lanes, side = lane % 2 ? 1 : -1, tier = (lane >> 1) + 1;
+  return { lanes, side, width: (Math.min(SHAPES.streamArcWidth, aimD * SHAPES.streamArcReach) * tier) / (lanes / 2) };
+}
+
+/** The control point of a quadratic from (sx, sy) to (tx, ty) whose widest point bows `width` u to `side`: a quadratic bows half as far as its control point sits out. */
+export function arcControl(sx: number, sy: number, tx: number, ty: number, side: number, width: number): [number, number] {
+  const dx = tx - sx, dy = ty - sy, d = len(dx, dy) || 1, nx = -dy / d, ny = dx / d;
+  return [(sx + tx) / 2 + nx * side * 2 * width, (sy + ty) / 2 + ny * side * 2 * width];
 }
 
 /**

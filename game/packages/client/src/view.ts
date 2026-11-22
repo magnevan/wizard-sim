@@ -43,6 +43,7 @@ import { TAU, mod } from './art/util';
 import { Vfx, type BodyView } from './art/vfx';
 import { attackK, drawAttackFx, hitT } from './art/enemy-attacks';
 import { StructureView, drawTelegraphs } from './view-structures';
+import { drawStreamArcs } from './art/arc-debug';
 import { Hud } from './hud';
 import { TutorialHud } from './tutorial-view';
 import type { SoundDirector } from './audio/director';
@@ -496,6 +497,7 @@ export class WorldView {
     this.extras.draw(w.def, ct, fx0, fy0, this.lit ? 0xffffff : AMBIENT); // the people who live here (the drill yard's)
     const ax = (x: number) => ox + Math.round(x * PPU), ay = (y: number) => cam.toArtY(y);
     drawTelegraphs(w, { ground: this.sGround.clear(), overlay: this.sOverlay.clear(), ax, ay }, Math.round(ct * 60));
+    if (optOn('arcs')) drawStreamArcs(this.sOverlay, w, (x, y) => [fx0 + gx(toU(x, y)), fy0 + gy(toV(x, y))]); // ?arcs=1: the stream's curves, for tuning
 
     this.lights.begin();
     stats.fills = 0;

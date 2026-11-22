@@ -7,10 +7,12 @@
  *   - each missile's circle (missiles.r) and the rest of its flight (its velocity over its remaining life)
  *   - each zone's circle (Place: patches, blasts, springs, fog)
  *   - each area cast's ring (its burst event's radius), for half a second
+ *   - the Shard stream's arcs (art/arc-debug.ts): each lane's curve while it's channelled, and each arcing shard's path
  * Drawn on the stage's 2D overlay; positions go through each panel's own camera, so the ground's turn and squash apply.
  */
 import { DT, MAX_SEATS, PHASE, SHAPES, atan2Turns, specOf, type World } from '@wizard-sim/sim';
 import type { Cell } from './cell';
+import { ARC_COLS, streamArcs } from '../../art/arc-debug';
 
 const COL = 'rgba(255,255,255,0.9)', SHADE = 'rgba(0,0,0,0.55)', RING = 'rgba(255,214,90,0.95)';
 /** Ticks an area ring stays on the overlay after it went off. */
@@ -41,6 +43,7 @@ export function drawHits(g: CanvasRenderingContext2D, cells: readonly Cell[]): v
       dots(pts, col);
     };
     channels(w, dots);
+    for (const a of streamArcs(w)) dots(a.pts, a.preview ? '#' + ARC_COLS[Math.min(ARC_COLS.length, a.tier) - 1].toString(16).padStart(6, '0') : COL, a.preview ? 4 : 7);
     const m = w.missiles;
     for (let j = 0; j < m.alive.length; j++) {
       if (!m.alive[j]) continue;

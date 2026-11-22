@@ -156,3 +156,5 @@ The user: the arc "looks pretty good, but it's a little hard for me to tune the 
 
 The drop at range is flight time inside the 2.5 s window, not misses. The arc lands as well as the straight stream on a target at the cursor, slightly better at range because the curve corrects the spread. Its cost is the other way round: a target nearer than the cursor sees the lanes cross past it.
 
+**Tuning view** (the user: "show some debug view where the arcs are shown as lines"): Tune › URL options › Shard stream arcs (`?arcs=1`, live) draws, while you channel the stream, every lane's curve from the hand to the cursor (cyan inner lanes, yellow middle, magenta outer), and each arcing shard's own path, faint. The lines come from the sim's own `streamLane` / `arcControl` / `streamAimD` (`effects.ts`, which the shards use too), so moving `streamArcWidth`, `streamArcReach` or the lane thresholds in F2 moves them at once. The VFX Lab's hit overlay (`&hit=1`) draws the same curves (`art/arc-debug.ts`).
+

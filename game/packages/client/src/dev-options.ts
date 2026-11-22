@@ -74,6 +74,7 @@ export const OPTIONS = [
   { key: 'sprites', group: 'View', label: 'Character sprites', kind: 'flag', defaultOn: true, help: 'Off: the goblin warband and the wizard as code rigs instead of 3D models (art/rigs.ts SPRITES_ON).' },
   { key: 'wizsprite', group: 'View', label: 'Wizard sprite', kind: 'flag', defaultOn: true, help: 'Off: the wizard keeps its code rig while the warband is drawn from 3D.' },
   { key: 'wizscale', group: 'View', label: 'Wizard scale', kind: 'number', help: 'The wizard\'s drawing scale, 1 to 2 (default 1.4 with sprites on, else 1): geometry, not pixels (art/rigs.ts WIZ_Z).' },
+  { key: 'arcs', group: 'View', label: 'Shard stream arcs', kind: 'flag', live: true, help: 'Draw the arcs of the Shard stream as lines (art/arc-debug.ts): while you channel it, the curve of every lane to the cursor, and the path of each arcing shard. For tuning streamArc* in F2 Tune.' },
   { key: 'massing', group: 'View', label: 'Massing concept', kind: 'choice', choices: () => ['academy'], help: 'Show a concept\'s buildings round the room as grey boxes (art/massing.ts).' },
   { key: 'structoff', group: 'View', label: 'Hide structure parts', kind: 'text', help: 'Comma list of parts not to draw: walls, waves, devices, wizards, preview, fx (for isolating a slow or broken part).' },
   { key: 'renderer', group: 'View', label: 'Renderer', kind: 'choice', choices: () => ['webgpu'], help: 'Try WebGPU instead of WebGL.' },

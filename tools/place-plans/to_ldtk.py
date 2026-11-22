@@ -35,7 +35,7 @@ R2 = math.sqrt(0.5)
 
 # What each plan material looks like on the ground (game/content/README.md, Ground layer).
 MATERIAL_GROUND = {
-    'grass': 'grass', 'path': 'dirt', 'road': 'cobble', 'paving': 'slabs', 'plaza': 'flagstone', 'dais': 'slabs',
+    'grass': 'grass', 'path': 'dirt', 'road': 'cobble', 'paving': 'flagstone', 'plaza': 'flagstone', 'dais': 'flagstone',   # one warm family: the white slabs read as bathroom tile (beauty critic, 2026-11-22)
     'stairs': 'flagstone', 'wood': 'planks', 'sand': 'sand', 'water': 'water', 'deep': 'water', 'trees': 'leaves',
     'rock': 'gravel', 'roof': 'ash', 'wall': 'gravel', 'void': None,   # roofs dark, never a floor material (the sense critic, 2026-11-22)
 }

@@ -189,3 +189,13 @@ The user tuned it in F2: "a radius of 1.5 and arcout at 0 (not needed with radiu
 
 **Shards popped into being.** The user asked for some birth effect, look open. Claude's pick, built: they crystallise out of the air over 0.12 s (`SHARD_BIRTH` in `vfx.ts`, `K.shardBirth`). Six frost motes draw in from round the spot, a cold haze gathers, the shard grows from a fifth of its size and its trail fills in, then a four-point white glint flashes as it sets and fades. A bow's arrow still leaves the bow whole. Other looks to try if this doesn't read: a frost ring round the caster where the lanes leave (the air freezing while you channel), or each shard snapping out of a small rune glyph.
 
+## Round 8: off the beat
+
+The user, on the birth effect: "birth effect looks good. Now I'm wondering if we should add some randomness to the effect, because it repeats very obviously. Maybe some slight jitter in spawn timing?"
+
+- **Timing (sim):** each shot leaves early or late by up to half of `streamJitter` (0.6) of the gap between shots, so at one Ice the gaps run about 5 to 12 ticks instead of a strict 8 or 9. The rate is the same (every shot fires once; a test counts them), and the first shot still leaves at once. There's no rng: the offset is a hash of the shot's number, the same every run, so rollback and replays agree.
+- **Path (sim):** each shard's lane direction is nudged up to `streamArcJitter` (0.015 turns) either way, from a second hash, so a lane is a loose bundle rather than one line.
+- **Birth (client):** each shard is born at its own pace (0.75 to 1.3 × the 0.12 s), with 4 to 7 motes from 6 to 12 px out at their own angles. The glint sits at its own spot along the shard, is 2 to 4 px, and shows on about three in four.
+
+Both sim knobs are in F2 Tune › Spell shapes. Setting `streamJitter` to 0 puts the stream back on the beat.
+

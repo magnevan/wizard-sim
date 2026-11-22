@@ -390,6 +390,22 @@ describe('Force casts', () => {
     expect(streamLane(3, 4, 6).turn).toBeCloseTo(streamLane(5, 4, 6).turn);
   });
 
+  it('the Shard stream leaves off the beat (streamJitter) but keeps its rate: every shot once, the gaps uneven', () => {
+    const { w, d } = range(7);
+    d.queue('water', 'cold');
+    const prev = new Uint8Array(w.missiles.alive.length), gaps = new Set<number>();
+    let shots = 0, last = -1;
+    for (let t = 0; t < 120; t++) {
+      d.tick({ buttons: BTN.force }, 1);
+      let born = 0;
+      for (let j = 0; j < prev.length; j++) { if (w.missiles.alive[j] && !prev[j]) born++; prev[j] = w.missiles.alive[j]; }
+      if (born) { if (last >= 0) gaps.add(t - last); last = t; shots += born; }
+    }
+    const want = (120 * SHAPES.streamRate) / 60;
+    expect(Math.abs(shots - want)).toBeLessThanOrEqual(2);
+    expect(gaps.size).toBeGreaterThan(3);
+  });
+
   it('the arc of the Shard stream (on trial): shards leave to the side and curve onto the cursor, landing on what stands there', () => {
     const was = SHAPES.streamArc;
     (SHAPES as { streamArc: number }).streamArc = 1;

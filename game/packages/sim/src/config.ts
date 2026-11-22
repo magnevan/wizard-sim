@@ -225,6 +225,13 @@ export const SHAPES = {
    */
   streamArc: 1, streamArcSpread: 0.4, streamArcOut: 0, streamArcRadius: 1.5, streamArcStart: 0.5, streamArcBoost: 0.12,
   streamLanes4At: 2, streamLanes6At: 3, streamLanes8At: 4, streamLanes10At: 5,
+  /**
+   * Jitter, so the stream doesn't repeat on a visible beat (the user, 2026-11-22: "it repeats very obviously ... some
+   * slight jitter in spawn timing?"): each shot leaves up to half of streamJitter of the gap between shots early or late
+   * (at most 0.9), and each shard's lane direction is nudged up to streamArcJitter turns either way. Both from a hash
+   * of the shot's number, so the same every run.
+   */
+  streamJitter: 0.6, streamArcJitter: 0.015,
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,
   patchRadius: 2, patchLife: 8, // were 1.6 and 6: the user asked for bigger, longer Place effects (2026-11-11)

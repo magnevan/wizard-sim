@@ -604,11 +604,12 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
   if (spec.shape === 'stream') {
     // The Shard stream: streamRate shards a second at one Ice, faster with each extra Ice (Ice's form curve) and each
     // shard lighter to match, timed by the channel's own clock (the Double, a turret and the Echo keep their own cadence).
-    // The aim wanders over a spread that settles as you hold: a low-discrepancy walk, no rng.
+    // The aim wanders over a spread that settles as you hold: a low-discrepancy walk, no rng. Each shot leaves off the
+    // beat by up to half of streamJitter of the gap between shots (a hash of its number), so the beat doesn't show
+    // (the user, 2026-11-22: "it repeats very obviously"); the first leaves at once.
     setEnd(x + dx * SHAPES.streamRange, y + dy * SHAPES.streamRange);
     const grow = formCurve(EL.ice, Math.max(1, spec.formN), COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling), rate = SHAPES.streamRate * grow;
-    const shot = Math.floor((t * rate) / 60);
-    if (t > 0 && shot === Math.floor(((t - 1) * rate) / 60)) return;
+    const fire = (shot: number): void => {
     const settle = Math.min(1, t / T(SHAPES.streamSettle));
     const spread = SHAPES.streamSpread + (SHAPES.streamSettled - SHAPES.streamSpread) * settle;
     const a = face + spread * (2 * ((shot * 0.618034) % 1) - 1);
@@ -623,7 +624,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     // of at least streamArcRadius round onto the cursor, then a race to it (tickMissiles: steerArc). The shards take
     // turns across 2, 4 or 6 lanes by the Ice in the spell.
     const aimD = !from && !follow && src < MAX_SEATS ? streamAimD(w, src) : 6; // a turret, the Double or the Echo: a mid-range bow
-    const { turn, out, radius } = streamLane(spec.formN, shot, aimD);
+    const lane = streamLane(spec.formN, shot, aimD), { out, radius } = lane, turn = lane.turn + SHAPES.streamArcJitter * (2 * shotHash(shot, 2) - 1);
     const ax = cosTurns(a), ay = sinTurns(a), tx = x + ax * aimD, ty = y + ay * aimD;
     const hx = ax * cosTurns(turn) - ay * sinTurns(turn), hy = ax * sinTurns(turn) + ay * cosTurns(turn);
     const m = spawnMissile(w, src, p, hx, hy, 2, scale, 0, 0, from?.x, from?.y);
@@ -632,6 +633,12 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
       mm.tx[m] = tx; mm.ty[m] = ty; mm.arcL[m] = out; mm.arcR[m] = arcRadius(mm.x[m], mm.y[m], hx, hy, tx, ty, out, radius);
       mm.flags[m] |= PF.arc; mm.life[m] = T(SHAPES.streamRange / full + 2); // the float and the turn (behind you, for the outer lanes)
       mm.vx[m] = hx * v0; mm.vy[m] = hy * v0;
+    }
+    };
+    const lo = ((t - 1) * rate) / 60, hi = (t * rate) / 60, J = Math.min(0.9, SHAPES.streamJitter);
+    for (let shot = Math.max(0, Math.floor(hi) - 1); shot <= Math.floor(hi) + 1; shot++) {
+      const at = shot + (shot ? J * (shotHash(shot, 1) - 0.5) : 0);
+      if (at > lo && at <= hi) fire(shot);
     }
     return;
   }
@@ -772,6 +779,13 @@ function seekHurt(w: World, j: number): void {
 /** How far out the Shard stream aims for seat i: the cursor's distance, between 2 u and the stream's reach. */
 export function streamAimD(w: World, i: number): number {
   return Math.min(SHAPES.streamRange, Math.max(2, len(w.seats.aimX[i], w.seats.aimY[i])));
+}
+
+/** A small hash of a shot's number to 0..1 (the Shard stream's jitter: pure, no rng); `k` picks an independent stream. */
+function shotHash(shot: number, k: number): number {
+  let h = Math.imul(shot ^ Math.imul(k, 0x9e3779b9), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
 /** Where each tier of the Shard stream's lanes sits, as a share of streamArcSpread: 1, 2, 3 keep their places, 4 and 5 fill in between ("1 4 2 5 3"). */

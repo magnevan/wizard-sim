@@ -410,21 +410,25 @@ export function shard(c: Ctx, x: number, y: number, ang: number, len: number, se
  */
 export function shardBirth(c: Ctx, x: number, y: number, ang: number, q: number, seed: number, R: Ramp = EL.cold, light?: (x: number, y: number, r: number, col: string, a: number) => void, yg = y): void {
   if (q < 0) return;
+  // no two alike: how many motes and from how far, where the glint sits on the shard, its size, and whether it shows
+  const n = 4 + Math.floor(rand(seed, 11) * 4), far = 6 + rand(seed, 12) * 6, spin = rand(seed, 13) * TAU;
+  const glint = rand(seed, 14) < 0.75, gl = 2 + Math.floor(rand(seed, 15) * 3), off = (rand(seed, 16) - 0.3) * 4;
+  const gx = x + Math.cos(ang) * off, gy = y + Math.sin(ang) * off;
   if (q < 1) {
-    const pull = smooth(q), d = 9 * (1 - pull);
-    for (let k = 0; k < 6; k++) {
-      const a = (k / 6) * TAU + rand(seed, k, 7) * 0.8 + ang;
+    const pull = smooth(q);
+    for (let k = 0; k < n; k++) {
+      const a = (k / n) * TAU + rand(seed, k, 7) * 1.2 + spin, d = far * (0.7 + 0.5 * rand(seed, k, 8)) * (1 - pull);
       X.px(c, x + Math.cos(a) * d, y + Math.sin(a) * d * 0.75, k % 2 ? R[1] : '#ffffff');
     }
     X.glow(c, x, y, 3 + 4 * pull, R[2], 0.25 + 0.35 * pull);
   }
   // the glint peaks as it sets and fades over the next ~0.8 of its birth time
-  const g = q < 0.7 ? 0 : q < 1 ? (q - 0.7) / 0.3 : Math.max(0, 1 - (q - 1) / 0.8);
+  const g = !glint ? 0 : q < 0.7 ? 0 : q < 1 ? (q - 0.7) / 0.3 : Math.max(0, 1 - (q - 1) / 0.8);
   if (g > 0.05) {
-    const L = Math.round(1 + 3 * g);
-    for (let i = 1; i <= L; i++) { const col = i < L ? '#ffffff' : R[1]; X.px(c, x - i, y, col); X.px(c, x + i, y, col); X.px(c, x, y - i, col); X.px(c, x, y + i, col); }
-    X.px(c, x, y, '#ffffff');
-    light?.(x, yg, 14, '#cff8ff', 0.35 * g);
+    const L = Math.round(1 + gl * g);
+    for (let i = 1; i <= L; i++) { const col = i < L ? '#ffffff' : R[1]; X.px(c, gx - i, gy, col); X.px(c, gx + i, gy, col); X.px(c, gx, gy - i, col); X.px(c, gx, gy + i, col); }
+    X.px(c, gx, gy, '#ffffff');
+    light?.(gx, yg, 14, '#cff8ff', 0.35 * g);
   }
 }
 /** A fireball: layered flame body, tongues streaming back against the motion, white-hot core. */

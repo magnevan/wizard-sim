@@ -1067,9 +1067,10 @@ export class Vfx {
           // a big shard (the bow's lance) draws bigger, with a longer trail and its own light
           const big = clamp(m.r[j] / 0.15, 1, 2.6), ang = Math.atan2(uy, ux);
           // a shard is born out of the air, not popped in (the user, 2026-11-22): it crystallises over SHARD_BIRTH s (K.shardBirth); a bow's arrow leaves the drawn bow whole
-          const k = bowShot ? 1 : clamp(e / SHARD_BIRTH, 0, 1);
+          const born = SHARD_BIRTH * (0.75 + 0.55 * rand(sd, 21)); // each its own pace
+          const k = bowShot ? 1 : clamp(e / born, 0, 1);
           const draw = (c: Ctx): void => {
-            if (k < 1 || e < SHARD_BIRTH + 0.1) K.shardBirth(c, x, y, ang, e / SHARD_BIRTH, sd, SR, light, yg);
+            if (!bowShot && e < born * 1.8) K.shardBirth(c, x, y, ang, e / born, sd, SR, light, yg);
             const sz = 0.2 + 0.8 * smooth(k);
             for (let k2 = 1; k2 <= 4; k2++) if (k2 <= k * 5) X.px(c, x - ux * k2 * 4 * big, y - uy * k2 * 4 * big, k2 === 1 ? SR[1] : k2 < 3 ? SR[2] : SR[4]);
             if (big > 1.2) { X.line(c, x - ux * 10 * big, y - uy * 10 * big, x, y, SR[2], 1); light(x, yg, 18 * big, '#9ff4ff', 0.4); }

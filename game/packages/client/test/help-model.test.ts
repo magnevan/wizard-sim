@@ -88,7 +88,7 @@ describe('help panel model: queue -> rows', () => {
     expect(scale(['lightning'], 0)).toMatch(/JUMPS \+1/);
     expect(scale(['shield', 'earth'], 2)).toMatch(/HP \+40 A PIECE, STANDS \+5S/); // the lead of a Shield spell is its material
     expect(scale(['sigil', 'fire'], 3)).toBe('+1 FIRE: NOTHING MORE, WIND-UP +0.04S'); // a fire aura burns the same
-    expect(scale(['cold', 'cold', 'cold', 'cold'], 1)).toMatch(/\(A COLD POOL HOLDS 4\)$/);
+    expect(scale(['lightning', 'lightning', 'lightning', 'lightning'], 1)).toMatch(/\(A LIGHTNING POOL HOLDS 4\)$/);
     expect(scale(['fire', 'fire', 'fire', 'fire', 'fire'], 0)).toBe('QUEUE FULL: 5 RUNES IS THE MOST');
     expect(scale(['shield'], 2)).toBe('+1 SHIELD: SHIELD CANCELS SHIELD');
     expect(scale(['fire'], 3)).toBe(''); // Self on yourself: nothing to compare

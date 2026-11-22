@@ -42,7 +42,8 @@ export const CHANNEL = { radius: 1.6, pool: 2, regen: 1.2 } as const;
 
 export const RUNES = {
   // Ice (Water + Cold combined) has no pool of its own: its runes come from Water's and Cold's.
-  max: { water: 4, life: 4, shield: 4, cold: 4, lightning: 4, arcane: 4, sigil: 3, fire: 5, earth: 4, ice: 0 } as Record<Element, number>,
+  // Water and Cold hold 5 so a full queue of Ice fits (an Ice is a Water and a Cold; the user, 2026-11-22: "I can't go to 5 runes with ice, it caps at 4")
+  max: { water: 5, life: 4, shield: 4, cold: 5, lightning: 4, arcane: 4, sigil: 3, fire: 5, earth: 4, ice: 0 } as Record<Element, number>,
   /** R: runes per second in total, shared among the pools that aren't full. */
   regen: 1.0,
   /** An empty pool (under a whole rune) takes this many shares of R; every other pool that isn't full takes one (world.ts regenRate). */
@@ -204,16 +205,19 @@ export const SHAPES = {
    * (the rate grows on Ice's form curve, +70 % a rune, and each shard's share shrinks to match, the user, 2026-11-22).
    * Its damage a second is streamPower x a beam's for the same payload (1.7: an Ice is two runes of regen, so it deals what a two-rune beam does; the first build had 2, then 1.3).
    * The aim starts loose (streamSpread turns either side) and settles to streamSettled over streamSettle s of holding.
-   * Shards reach streamRange u and stop at the first body: you sweep a crowd, you don't pierce it.
+   * Shards reach streamRange u, a beam's reach (the user, 2026-11-22: "probably unbounded, similar to beams"; it was 10),
+   * and stop at the first body: you sweep a crowd, you don't pierce it.
    */
-  streamRate: 7, streamPower: 1.7, streamSpread: 0.03, streamSettled: 0.006, streamSettle: 0.6, streamRange: 10,
+  streamRate: 7, streamPower: 1.7, streamSpread: 0.03, streamSettled: 0.006, streamSettle: 0.6, streamRange: 30,
   /**
-   * The stream's arc (on trial, the user, 2026-11-22: "the ice arches out before racing to the target"): with streamArc 1
-   * each shard leaves streamArcAngle turns to one side (alternating), at streamArcStart of its speed, then curves toward
-   * the cursor where it left at up to streamArcTurn turns a second, reaching full speed over streamArcRamp s. Past the
-   * cursor it flies straight. The shards meet at the cursor's distance: aim further and they converge further out.
+   * The stream's arc (the user, 2026-11-22: "the ice arches out before racing to the target"; it "looks pretty good", on
+   * by default since): with streamArc 1 each shard flies a curve from your hand to the cursor where it left, bowing out
+   * to one side streamArcWidth u at its widest, then flies straight on past it. It leaves at streamArcStart of its speed
+   * and reaches full speed over streamArcRamp s. The bow is never wider than streamArcReach x the cursor's distance. The
+   * shards take turns across lanes: 2 at one Ice, 4 from streamLanes4At Ice, 6 from streamLanes6At; inner lanes bow less.
    */
-  streamArc: 0, streamArcAngle: 0.12, streamArcTurn: 1.6, streamArcStart: 0.45, streamArcRamp: 0.3,
+  streamArc: 1, streamArcWidth: 2.5, streamArcReach: 0.45, streamArcStart: 0.45, streamArcRamp: 0.3,
+  streamLanes4At: 2, streamLanes6At: 3,
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,
   patchRadius: 2, patchLife: 8, // were 1.6 and 6: the user asked for bigger, longer Place effects (2026-11-11)

@@ -214,8 +214,11 @@ export interface Missiles {
   flags: Uint8Array; mod: Uint8Array;
   /** Ticks before it leaves (a staggered volley): till then it waits at its caster's staff, harmless and unseen. */
   wait: Uint8Array;
-  /** Where an arcing shard (PF.arc, the Shard stream's arc) curves to: the cursor when it left. */
-  tx: Float64Array; ty: Float64Array;
+  /**
+   * An arcing shard's curve (PF.arc, the Shard stream's arc): a quadratic from where it left (sx, sy) past the control
+   * point (cx, cy) to the cursor when it left (tx, ty), and how far along it is (arcU, 0..1).
+   */
+  tx: Float64Array; ty: Float64Array; sx: Float64Array; sy: Float64Array; cx: Float64Array; cy: Float64Array; arcU: Float64Array;
 }
 
 /** Things that sit in the world for a while: delayed blasts, geysers, healing springs, steam clouds, rain. */
@@ -585,7 +588,7 @@ function missiles(n: number): Missiles {
   return {
     alive: u8(n), x: f64(n), y: f64(n), vx: f64(n), vy: f64(n), life: i32(n), owner: new Int16Array(n), els: u8(n * N_EL),
     scale: f64(n), r: f64(n), type: u8(n), pierce: u8(n), look: u8(n), lastHit: new Int16Array(n),
-    flags: u8(n), mod: u8(n), wait: u8(n), tx: f64(n), ty: f64(n),
+    flags: u8(n), mod: u8(n), wait: u8(n), tx: f64(n), ty: f64(n), sx: f64(n), sy: f64(n), cx: f64(n), cy: f64(n), arcU: f64(n),
   };
 }
 function zones(n: number): Zones {

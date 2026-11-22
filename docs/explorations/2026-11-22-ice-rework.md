@@ -134,3 +134,25 @@ The user: the stream should hit "more similar to two runes, because that's how m
 
 One Ice now pays what it costs. Since a queue holds five slots, three Ice (six runes' worth) gives a top damage no beam reaches. It also pays upkeep on six runes past the free 2.5 s, so it can't hold for long.
 
+## Round 4: a wider arc, more lanes, a beam's reach, five Ice
+
+The user: the arc "looks pretty good, but it's a little hard for me to tune the parameters". They asked for the shards to arc out a little further, and for the stream to jump from 2 to 4 or 6 streams past a number of runes. Then, mid-build: the range should be "probably unbounded, similar to beams"; and a bug, "I can't go to 5 runes with ice, it caps at 4".
+
+- **One knob for the bow.** The first arc steered on a turning rate from a launch angle. Two coupled numbers made it hard to tune, and worse, a wide bow couldn't come round onto a near cursor: the cursor sat inside the shard's turning circle. With the bow at 2.5 u, at 3 and 6 u it landed 3 and 0 damage a second. Now each shard flies a quadratic curve from the hand to the cursor where it left, bowing out exactly `streamArcWidth` (2.5 u) at its widest, capped at 0.45 × the aim distance. It always arrives, then flies straight on along its last heading.
+- **Lanes by Ice:** 2 lanes at one Ice, 4 from `streamLanes4At` (2), 6 from `streamLanes6At` (3). The shards take turns across them, and the inner lanes bow a third or half as far as the outer ones.
+- **Reach 30 u**, a beam's (`streamRange`, was 10).
+- **Five Ice:** an Ice is a Water and a Cold, and both pools held 4, so the queue stopped at four Ice. Water and Cold now hold 5, like Fire. The cost: five-Water and five-Cold spells are possible too, and both carry a little more reserve.
+- The arc is **on by default** (`streamArc` 1; 0 is the straight stream).
+
+**Measured** (a still dummy at the cursor, inside the room, 2.5 s held), damage a second:
+
+| | 3 u | 6 u | 9 u | 15 u | 20 u |
+|---|---|---|---|---|---|
+| Arc, 1 Ice | 24.9 | 24.9 | 23.3 | 20.2 | 17.1 |
+| Arc, 2 Ice | 42.0 | 40.4 | 40.4 | 35.7 | 29.5 |
+| Arc, 3 Ice | 59.1 | 57.5 | 56.0 | 51.3 | 42.0 |
+| Arc, 4 Ice | 74.6 | 73.1 | 71.5 | 65.3 | 51.3 |
+| Straight, 1 Ice | 24.9 | 23.3 | 23.3 | 20.2 | 14.0 |
+
+The drop at range is flight time inside the 2.5 s window, not misses. The arc lands as well as the straight stream on a target at the cursor, slightly better at range because the curve corrects the spread. Its cost is the other way round: a target nearer than the cursor sees the lanes cross past it.
+

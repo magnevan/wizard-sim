@@ -291,19 +291,19 @@
      "perSecond": 8,
      "gain": 1.13,
      "reach": 6,
-     "help": "+1 COLD: DMG ×1.12, FROST +8, RANGE +0.5U, CONE +25%, WIND-UP +0.04S (A COLD POOL HOLDS 4)"
+     "help": "+1 COLD: DMG ×1.12, FROST +8, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
     },
     {
      "n": 5,
      "title": "Frost spray",
      "shape": "spray",
-     "value": 23.8,
-     "crowd": 81,
+     "value": 26.3,
+     "crowd": 89.3,
      "runes": 5,
      "seconds": 3,
-     "perRune": 4.8,
-     "perSecond": 7.9,
-     "gain": 1,
+     "perRune": 5.3,
+     "perSecond": 8.8,
+     "gain": 1.1,
      "reach": 6.5,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
     }
@@ -368,19 +368,19 @@
      "perSecond": 40.2,
      "gain": 1.29,
      "reach": 4.8,
-     "help": "+1 COLD: DMG ×1.12, FROST +8, RADIUS +0.6U, WIND-UP +0.04S (A COLD POOL HOLDS 4)"
+     "help": "+1 COLD: DMG ×1.12, FROST +8, RADIUS +0.6U, WIND-UP +0.04S"
     },
     {
      "n": 5,
      "title": "Frost ring",
      "shape": "nova",
-     "value": 24.8,
-     "crowd": 124,
+     "value": 30.4,
+     "crowd": 152,
      "runes": 5,
-     "seconds": 0.63,
-     "perRune": 5,
-     "perSecond": 39.2,
-     "gain": 1,
+     "seconds": 0.67,
+     "perRune": 6.1,
+     "perSecond": 45.6,
+     "gain": 1.23,
      "reach": 5.4,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
     }
@@ -445,19 +445,19 @@
      "perSecond": 62.3,
      "gain": 1.3,
      "reach": 3.2,
-     "help": "+1 COLD: DMG ×1.12, FROST +8, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.04S (A COLD POOL HOLDS 4)"
+     "help": "+1 COLD: DMG ×1.12, FROST +8, RADIUS +0.4U, LASTS +3.2S, WIND-UP +0.04S"
     },
     {
      "n": 5,
      "title": "Freezing fog",
      "shape": "patch",
-     "value": 67.5,
-     "crowd": 337.5,
+     "value": 83.9,
+     "crowd": 419.3,
      "runes": 5,
-     "seconds": 1.1,
-     "perRune": 13.5,
-     "perSecond": 61.4,
-     "gain": 1,
+     "seconds": 1.13,
+     "perRune": 16.8,
+     "perSecond": 74,
+     "gain": 1.24,
      "reach": 3.6,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
     }
@@ -522,19 +522,19 @@
      "perSecond": 1.4,
      "gain": 1.02,
      "reach": 6,
-     "help": "+1 WATER: DMG ×1.12, PUSH +18U/S A SECOND, RANGE +0.5U, CONE +25%, WIND-UP +0.04S (A WATER POOL HOLDS 4)"
+     "help": "+1 WATER: DMG ×1.12, PUSH +18U/S A SECOND, RANGE +0.5U, CONE +25%, WIND-UP +0.04S"
     },
     {
      "n": 5,
      "title": "Water spray",
      "shape": "spray",
-     "value": 4.1,
-     "crowd": 14.4,
+     "value": 4.3,
+     "crowd": 14.9,
      "runes": 5,
      "seconds": 3,
-     "perRune": 0.8,
+     "perRune": 0.9,
      "perSecond": 1.4,
-     "gain": 1,
+     "gain": 1.05,
      "reach": 6.5,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
     }
@@ -599,19 +599,19 @@
      "perSecond": 13,
      "gain": 1.15,
      "reach": 4.8,
-     "help": "+1 WATER: DMG ×1.12, PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.04S (A WATER POOL HOLDS 4)"
+     "help": "+1 WATER: DMG ×1.12, PUSH +6U/S, RADIUS +0.6U, WIND-UP +0.04S"
     },
     {
      "n": 5,
      "title": "Splash ring",
      "shape": "nova",
-     "value": 8,
-     "crowd": 40,
+     "value": 8.9,
+     "crowd": 44.7,
      "runes": 5,
-     "seconds": 0.63,
-     "perRune": 1.6,
-     "perSecond": 12.6,
-     "gain": 1,
+     "seconds": 0.67,
+     "perRune": 1.8,
+     "perSecond": 13.4,
+     "gain": 1.12,
      "reach": 5.4,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
     }
@@ -676,19 +676,19 @@
      "perSecond": 3.7,
      "gain": 1.15,
      "reach": 3.2,
-     "help": "+1 WATER: DMG ×1.12, RADIUS +0.4U, LASTS +1S, WIND-UP +0.04S (A WATER POOL HOLDS 4)"
+     "help": "+1 WATER: DMG ×1.12, RADIUS +0.4U, LASTS +1S, WIND-UP +0.04S"
     },
     {
      "n": 5,
      "title": "Rain",
      "shape": "patch",
-     "value": 4,
-     "crowd": 20,
+     "value": 4.5,
+     "crowd": 22.4,
      "runes": 5,
-     "seconds": 1.1,
-     "perRune": 0.8,
-     "perSecond": 3.6,
-     "gain": 1,
+     "seconds": 1.13,
+     "perRune": 0.9,
+     "perSecond": 3.9,
+     "gain": 1.12,
      "reach": 3.6,
      "help": "QUEUE FULL: 5 RUNES IS THE MOST"
     }

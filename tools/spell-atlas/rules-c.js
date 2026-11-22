@@ -338,7 +338,7 @@
     },
     // Ice: a missile form, fast and spiky. A freezing spray was too strong, so Ice throws shards, not a cone: a channelled stream of them (2026-11-22, issue #9).
     ice: {
-      force: () => ['Shard stream', 'Hold Force: a stream of jagged ice shards pours along your aim, faster than any other missile, and every extra Ice fires them faster, as long as you channel: the beam of Ice. It starts loose and tightens as you hold. Each shard stops at the first body it meets, so sweep it across a crowd; walls and shields stop it. A little chill comes with each; enough of them freeze a wet target, and a frozen target shatters from a heavy hit.'],
+      force: () => ['Shard stream', 'Hold Force: a stream of jagged ice shards pours out as long as you channel, the beam of Ice. Each shard bows out to one side and curves onto the cursor, faster than any other missile; every extra Ice fires them faster, in more lanes (two, then four, then six). Each shard stops at the first body it meets, so sweep it across a crowd; walls and shields stop it. A little chill comes with each; enough of them freeze a wet target, and a frozen target shatters from a heavy hit.'],
       area: () => ['Ice ring', 'A ring of ice spikes bursts from you: it hurts, chills a little, and freezes whoever was already wet.'],
       place: () => ['Caltrops', 'Scatters ice spikes on the ground at the cursor for about 10 seconds. They do no harm where they land: whoever walks through them is stabbed by the distance they walk (fast feet bleed, standing still is safe). The spikes chill a little, like any Ice.'],
       conjure: swing('ice'),

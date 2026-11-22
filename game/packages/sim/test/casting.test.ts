@@ -374,6 +374,13 @@ describe('Force casts', () => {
     expect(Array.from(w.missiles.alive).filter((a) => a).length).toBe(0);
   });
 
+  it('a full queue of five Ice fits: Water and Cold each hold enough for it', () => {
+    const { w, d } = range();
+    for (let k = 0; k < 5; k++) d.queue('water', 'cold');
+    expect(w.seats.queueLen[0]).toBe(5);
+    expect(compile(['ice', 'ice', 'ice', 'ice', 'ice'], 'force').formN).toBe(5);
+  });
+
   it('the arc of the Shard stream (on trial): shards leave to the side and curve onto the cursor, landing on what stands there', () => {
     const was = SHAPES.streamArc;
     (SHAPES as { streamArc: number }).streamArc = 1;

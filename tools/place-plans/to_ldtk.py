@@ -169,7 +169,7 @@ def write_level(name):
         es.append(entity('Marker', f'door-{n + 1}', p, {'id': f'door-{n + 1}'}))
     for (p, label, *_) in P.marks:
         mid = cfg['landmarks'].get(label) or label.replace('the ', '').replace(' ', '-')
-        es.append(entity('Marker', mid, p, {'id': mid}))
+        es.append(entity('Marker', mid, p, {'id': mid, 'tag': 'landmark'}))   # the camera keeps a landmark in frame near it
     marks = {label: p for (p, label, *_) in P.marks}
     for n, (asset, at, blocks) in enumerate(cfg.get('props', [])):
         if at not in marks: raise SystemExit(f'{name}: prop {asset} stands on the landmark "{at}", which the plan doesn\'t have')

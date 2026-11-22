@@ -37,7 +37,7 @@ import { EdgeMarks } from './edge-marks';
 import { Lights } from './art/lights';
 import { PropView } from './art/props';
 import { blackout, wellShake } from './art/power-down';
-import type { PropSet } from './art/assets';
+import { propImage, propMeta, type PropSet } from './art/assets';
 import { AMBIENT, canvas as pxCanvas, stats, text as pxText } from './art/px';
 import { newRigState, type Anchors, type RigKind, type RigState } from './art/rigs';
 import { TAU, mod } from './art/util';
@@ -55,6 +55,8 @@ const LIGHTING = optOn('lighting');
 const DRIVE_LOOK = 4.5;
 /** When the battery's well runs dry, the view glides back to your wizard over this many seconds, at this rate (1/s). */
 const DRY_GLIDE = 3.5, DRY_GLIDE_RATE = 1.5;
+/** A tall landmark is kept whole in frame within LANDMARK_NEAR view units of the wizards, fading out by LANDMARK_FAR (about a screen). */
+const LANDMARK_NEAR = 24, LANDMARK_FAR = 36;
 const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL', simple: 'SIMPLE, ANGLED, LOW DETAIL', code: 'CODE, STRAIGHT-ON' };
 
 /** The move events that put the wizard's body through its weapon's blow clip (art/sprites.ts blowOf): each weapon's tap, heavy and special. */
@@ -589,6 +591,28 @@ export class WorldView {
     return (tick + alpha) / 60 + this.epoch;
   }
 
+  /**
+   * The nearest tall landmark (a Marker tagged `landmark`, with a prop standing on it) the camera should lean up to keep
+   * in frame: its top in view units, and how much (full within LANDMARK_NEAR of the wizards' middle, none past
+   * LANDMARK_FAR). Only when it stands up the screen from them: below, it's in frame already.
+   */
+  private landmarkKeep(w: World, spots: readonly { x: number; y: number }[]): { y: number; w: number } | undefined {
+    if (!spots.length) return undefined;
+    const cx = spots.reduce((a, p) => a + p.x, 0) / spots.length, cy = spots.reduce((a, p) => a + p.y, 0) / spots.length;
+    let best: { y: number; w: number } | undefined;
+    for (const m of w.def.markers) {
+      if (m.tag !== 'landmark') continue;
+      const prop = w.def.props.find((p) => Math.abs(p.x - m.x) < 0.5 && Math.abs(p.y - m.y) < 0.5);
+      const im = prop && propImage(prop.asset, 'lean');
+      if (!prop || !im) continue;
+      const tall = im.foot[1] + (propMeta(prop.asset)?.lift ?? 0) + liftAt(w.def, m.x, m.y); // art px from the flat ground to its top
+      const top = m.y - tall / (PPU * FY), d = Math.hypot(m.x - cx, m.y - cy);
+      const k = Math.max(0, Math.min(1, (LANDMARK_FAR - d) / (LANDMARK_FAR - LANDMARK_NEAR)));
+      if (k > 0 && m.y < cy + 4 && (!best || k > best.w)) best = { y: top, w: k };
+    }
+    return best;
+  }
+
   /** Repaints the floor and resizes the effect canvases when the world's play area changes (a survive world is bigger). */
   private fitArena(w: World): void {
     const d = w.dims, key = `${d.w}x${d.h}${w.def.id}`;
@@ -646,8 +670,8 @@ export class WorldView {
       if (this.isLocal(s)) (b.downed[s] ? down : up).push(p);
     }
     const mine = up.length + down.length;
-    const lift = liftRange(w.def);
-    this.camera.follow(w.dims.w, w.dims.h, mine ? (up.length ? up : down) : all, mine !== 1, dt, lift.up / (PPU * FY), lift.down / (PPU * FY));
+    const lift = liftRange(w.def), spots = mine ? (up.length ? up : down) : all;
+    this.camera.follow(w.dims.w, w.dims.h, spots, mine !== 1, dt, lift.up / (PPU * FY), lift.down / (PPU * FY), this.landmarkKeep(w, spots));
   }
 
   private fxMs = 0;

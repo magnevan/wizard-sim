@@ -23,6 +23,8 @@ const HUD_H = 74;
 const SKY = 26;
 /** How far past the arena's edge a following camera may look, world units: sides, north, south. */
 const PAD_X = 2, PAD_N = 2.5, PAD_S = 1.5;
+/** World units kept between a landmark's top (or a wizard) and the view's edge when the view leans to show it. */
+const KEEP_MARGIN = 1;
 
 export interface Spot { x: number; y: number }
 
@@ -69,9 +71,10 @@ export class Camera {
    * middle. `shared`: several local seats play on this one screen (couch co-op), so an arena that
    * fits is framed still, as before. dt is real seconds since the last frame. Spots are where the wizards are drawn;
    * `rise` and `sink` (world units of screen height) widen the north and south limits for a tiered room, whose ground
-   * is drawn above and below its flat outline (art/heights.ts).
+   * is drawn above and below its flat outline (art/heights.ts). `keep`: a point up the screen (a tall landmark's top,
+   * view units) the view leans up to keep in frame, by `keep.w` (0 to 1), so long as the wizards stay in it too.
    */
-  follow(aw: number, ah: number, spots: readonly Spot[], shared: boolean, dt: number, rise = 0, sink = 0): void {
+  follow(aw: number, ah: number, spots: readonly Spot[], shared: boolean, dt: number, rise = 0, sink = 0, keep?: { y: number; w: number }): void {
     // Couch co-op in an arena that fits is framed as before: centred, and lifted to clear the rune HUD when there's room.
     // (the whole view counts here, HUD and all: the Sanctum at 4x sits partly behind the HUD, as it always did)
     this.following = !shared || aw * PPU > this.w || ah * PPU * FY > this.h;
@@ -87,6 +90,11 @@ export class Camera {
     });
     let tx = (x0 + x1) / 2, ty = (y0 + y1) / 2;
     const hx = this.halfX(), up = this.upY(), down = this.downY();
+    if (keep && keep.w > 0) {
+      // the landmark's top a unit inside the view's top, but never past where the lowest wizard leaves its bottom
+      const want = Math.max(keep.y + up - KEEP_MARGIN, y1 - down + KEEP_MARGIN);
+      if (want < ty) ty += (want - ty) * keep.w;
+    }
     // The view stops a little past the arena's edge. Along an axis where the arena (and that margin)
     // fits, the same two limits swap: the view drifts toward you only until the far edge would leave it.
     const lx = -aw / 2 - PAD_X + hx, rx = aw / 2 + PAD_X - hx;

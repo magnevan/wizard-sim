@@ -9,7 +9,8 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 
 ## Next
 
-- [ ] The user's answers to the encounter questions (`r3-q-*` on The Morning Everything Breaks). Claude's picks stand until then.
+- [ ] Map the weapons section at the start (the drill yard, beats 2 and 3): what it teaches now there are seven weapons and guards, then its place in the academy, with Codex concepts.
+- [ ] Design the walks between stops: what happens on them, and how long they are. A district-level map of all the stops would set both.
 - [ ] The infirmary (Life, the first cast): space diagram, Codex concept from the blockout's footprint, then an LDtk blockout. It's the smallest test of the new shape.
 - [ ] The battery as the second element: its infusion text and prompts, and room to heal in its fight.
 - [ ] The yard's size against a wizard and the Academy buildings: marked too small. The academy-as-environment concept (`concept-academy`, `r5-academy-*`) is waiting for the user's marks.

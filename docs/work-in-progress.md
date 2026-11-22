@@ -9,8 +9,8 @@ cssclasses:
 
 ## Campaign opening
 
-> [!in-review] The morning's fights
-> On The Morning Everything Breaks, answer the five encounter questions (`r3-q-*`): who attacks, which new behaviour first, whether the infirmary has a fight, the shard moth, the goblins' tone. Then mark the academy concept on the Opening Segment page, where the yard was marked too small.
+> [!in-review] Fewer creatures
+> On [the encounters, round 2](explorations/2026-11-16-opening-encounters.md#round-2-the-users-notes-2026-11-21), check the proposal of one new creature per stop at most (four in all). Then mark the academy concept on the Opening Segment page, where the yard was marked too small.
 
 The opening is a chain of eight stops, Life first; the yard and the battery are built ([route](campaign/01-opening/brief.md#the-route), [thread](threads/opening.md)).
 

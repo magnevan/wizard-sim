@@ -18,15 +18,17 @@
 | # | Stop | Element | The fix | The fight | Min | State |
 |---|---|---|---|---|---|---|
 | 0 | The courtyard and the drill yard (beats 1 to 3) | none; the focus gives Sigil with Conjure | | none, the hands test | 10 | yard built (`#yard`); briefing not built |
-| 1 | The infirmary, outside the main gate | **Life, your first cast** (the user) | cut the vines off the conduits with your hands and blade | none: heal the wounded on cots, combinations shown on screen | 5 | designed |
+| 1 | The infirmary, outside the main gate | **Life, your first cast** (the user) | cut the vines off the conduits with your hands and blade; the thorns cut you, so you heal yourself (the user) | none: heal the wounded on cots at your own pace, combinations shown on screen | 5 | designed |
 | 2 | The battery (beats 4 to 7) | Fire | drive the defence until its well runs dry | goblin raiders, archers, a brute | 8 | built (`#battery`), still written as your *first* cast |
-| 3 | The ward line, behind the academy | Shield (third: the user) | feed Life and Fire into the pylons' sockets | rift wolves, thornspitters, guards beside you | 8 | designed |
-| 4 | The waterworks | Water | relight the boiler with Fire | gorse imps, wolves; the cistern fills | 7 | designed |
-| 5 | The harbor | Cold, then Lightning | the frost heart, then the coil | brine crabs, surf crawlers; the friendly-fire lesson | 10 | designed |
-| 6 | The cliff road | Earth | wash the buried anchor clear with Water | crag rams, archers, rift moles | 5 | designed |
+| 3 | The ward line, behind the academy | Shield (third: the user) | burn something off the pylons (the user; what it is, open) | rift wolves, goblin archers' volleys, guards beside you | 8 | designed |
+| 4 | The waterworks | Water | relight the boiler with Fire | gorse imps (the built fire imp), wolves; the cistern fills | 7 | designed |
+| 5 | The harbor | Cold, then Lightning | the frost heart, then the coil | brine crabs, surf-soaked wolves; the friendly-fire lesson | 10 | designed |
+| 6 | The cliff road | Earth | wash the buried anchor clear with Water | crag rams, archers | 5 | designed |
 | 7 | The courtyard finale | Arcane | lock the armillary's rings | the warband and beasts, the rift aurochs | 10 | designed |
 
 You pass back through the courtyard after the battery (the ward bell) and after the ward line (out to the gorge).
+
+**Each fight is a question and its ingredients, not a script** (the user, 2026-11-21). It works for one player, co-op roles come on their own, and only playtesting settles it. **At most one new creature per stop**: four in all (wolf, crab, ram, aurochs), a playtest assumption from [the encounters, round 2](../../explorations/2026-11-16-opening-encounters.md#round-2-the-users-notes-2026-11-21).
 
 **What changes at the battery.** With Life first, Fire is your second element and your first that hurts. You can heal in its fight. The infusion's text and the lesson's prompts (`client/src/battery-text.ts`) assume it's your first cast, so they need a second look.
 
@@ -37,6 +39,9 @@ You pass back through the courtyard after the battery (the ward bell) and after 
 - **The encounter questions** on The Morning Everything Breaks (`r3-q-1-foes` to `r3-q-5-tone`): who attacks, which new behaviour comes first, whether the infirmary has a fight, the shard moth, the goblins' tone. Claude's picks stand until answered.
 - **Stops the user wanted more on:** Earth ("I need more details"), and whether players can choose their own order at the Arcane map (`img-area-arcane`).
 - **The water stop's logic:** the concept image had a natural waterfall, so the machine's job wasn't clear (`img-area-water`). Round 2 moved it to a dry cistern and a boiler.
+- **The walks between stops** aren't designed. The user wants walks long enough that the world feels real (`general`, 2026-11-09), not tiny gaps between fights.
+- **The weapons section at the start** (the drill yard, beats 2 and 3) needs mapping again. It teaches only the flame sword today, and the wizard now has seven weapons and guards.
+- **The ward's fix:** what gets burned off the pylons.
 - **The meditation dream** has no stop yet.
 
 ## Needs from the game, for the next blockouts
@@ -48,4 +53,4 @@ New:
 - **Patients** for the infirmary: allies on cots who need healing.
 - **The etched rule:** Sigil only with Conjure, the other gestures locked (`r4-1-sigil`). Designed, not built.
 - **Early regen and pools.** The regen budget is shared among unlocked pools. Shared regen with Life first is fine (the user). The numbers need tuning per stop.
-- New creatures per stop (rift wolves, thornspitters, gorse imps, brine crabs, crag rams, rift moles, the aurochs).
+- Four new creatures: the rift wolf (a new look on the swarmer), the brine crab (on the shieldbearer), the crag ram (a new charger behaviour) and the rift aurochs (a scaled brute).

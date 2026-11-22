@@ -119,3 +119,28 @@ Prompts are in `tools/concept-gen/prompts/2026-11-16-encounters/`.
 3. **The infirmary:** no enemies (Claude's pick: the low-pressure first cast), or a small stray fight at the end?
 4. **The shard moth (a reflector):** later in the campaign (Claude's pick: it punishes the beam the opening has just given you), or in the finale as a twist?
 5. **The goblins' tone:** opportunists with trophies and scavenged machine panels (Claude's pick), or something darker?
+
+## Round 2: the user's notes (2026-11-21)
+
+The round 3 questions on the page weren't answered, so Claude's picks above stand as playtest assumptions. The user's notes, from the stops on The Morning Everything Breaks and in the session:
+
+- **Playtest decides.** Each stop is interesting at a high level, but only playing and refining will show what works.
+- **Too many new enemies.** Players won't have time to learn their movesets. The table above adds about twelve creatures to the six built.
+- **No choreography, no fixed roles.** A fight is a question and its ingredients, not a script. Every fight works with one player (canon: no beat depends on how many players there are). Co-op roles appear on their own and are never assigned. In the finale a lone player alternates between feeding a lock and fighting.
+- **The ward's fix** burns something off the pylon instead of feeding it Life and Fire ([element order, round 2 answers](2026-11-16-element-order.md#the-users-answers-round-2-2026-11-21)).
+
+### Proposal: one new creature per stop at most
+
+A playtest assumption, to be cut further if playing says so. Each new creature is the new element's question, and every other enemy in the fight is one you've already met. The beasts are one family (rift-touched, violet crystals), so a new one reads as a cousin of the last.
+
+| Stop | New | Everything else |
+|---|---|---|
+| Infirmary | none (no enemies; thorns cut you while you clear the vines) | |
+| Battery | none yet (the user is open to one later) | the warband: raiders, archers, the chieftain |
+| Ward line | **rift wolf**: the beasts' swarmer, and it comes back at every stop after | goblin archers' volleys are what Shield blocks; the hooker drags |
+| Waterworks | none: the gorse imp is the built fire imp | wolves |
+| Harbor | **brine crab**: the guard you freeze and flank | the surf soaks wolves for Lightning to chain through |
+| Cliff road | **crag ram**: the charger, stunned by an Earth wall | archers on the terrace |
+| Finale | **rift aurochs**: the boss | everything met so far |
+
+Four new creatures instead of about twelve. Cut or held for later: thornback, thornspitter, vine lasher, surf crawlers, storm gulls, rift mole, shard moth. Cost: fewer creatures that belong to one place, and the wolves carry a lot of fights. A cut creature can come back as a fight's twist once its stop has been played.

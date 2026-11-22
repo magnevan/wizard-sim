@@ -229,8 +229,14 @@ function onYou(w: World, i: number, c: number): number {
   if (possessed(w, i) || s.queueLen[i] === 0 || len(s.aimX[i], s.aimY[i]) > SHAPES.selfAim) return c;
   const f = compile(queueOf(w, i), 'area').form, made = f === EL.shield || f === EL.sigil;
   if (c === CAST_ID.conjure) return made ? c : CAST_ID.area;
-  return made && !s.dragged[i] ? CAST_ID.area : c;
+  return made ? CAST_ID.area : c;
 }
+
+/**
+ * Is a held Shield or Sigil Place on yourself right now? Then it draws no line: it's the ring, the orbitals or the motes,
+ * whatever came before, and a line starts afresh where the cursor leaves you (issues #15, #16, 2026-11-22).
+ */
+const placeOnYou = (w: World, i: number): boolean => onYou(w, i, CAST_ID.place) === CAST_ID.area;
 
 function release(w: World, i: number, spec: SpellSpec, charge: number): void {
   const [tx, ty] = target(w, i, spec.shape === 'blink' ? STRUCT.blinkRange : SHAPES.placeRange);
@@ -313,11 +319,13 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
 
   // Shift+RMB is Place, on release: drag while holding for a drawn Place. There's no Area tap to wait out (the ring merged
   // into the burst, 2026-11-22), so a tap places at once; released on yourself, Shield and Sigil raise their ring (onYou).
+  // While held, moving the cursor onto yourself and off again moves between the ring and the arc or line (placeOnYou).
   if (pressed & BTN.area) { s.areaHeld[i] = 0; s.dragged[i] = 0; s.holdX[i] = b.x[i] + s.aimX[i]; s.holdY[i] = b.y[i] + s.aimY[i]; }
   let areaCast = 0;
   if (held & BTN.area) {
     s.areaHeld[i]++;
-    if (len(b.x[i] + s.aimX[i] - s.holdX[i], b.y[i] + s.aimY[i] - s.holdY[i]) > RHYTHM.dragMin) s.dragged[i] = 1;
+    if (placeOnYou(w, i)) { s.dragged[i] = 0; s.holdX[i] = b.x[i] + s.aimX[i]; s.holdY[i] = b.y[i] + s.aimY[i]; }
+    else if (len(b.x[i] + s.aimX[i] - s.holdX[i], b.y[i] + s.aimY[i] - s.holdY[i]) > RHYTHM.dragMin) s.dragged[i] = 1;
     else if (s.dragged[i]) s.dragged[i] = 0; // back at the start: no line after all, the plain arc or glyph
   } else if (released & BTN.area) areaCast = onYou(w, i, CAST_ID.place);
   // Shift+LMB with elements queued is the burst: armed on the press (held, the view previews its shape), cast on release,

@@ -109,5 +109,7 @@ The checklist below comes from a full code sweep (2026-11-22). Paths are relativ
 
 ## Done
 
+- 2026-11-22 Follow-ups #15 and #16: a held Shift+RMB Place moves between its shapes with the mouse. The cursor on yourself (Shield or Sigil) is the ring, orbitals or motes even after a drag, and a line's anchor follows you there, so a line starts where the cursor leaves you (`sim/cast.ts` `placeOnYou`).
+
 - 2026-11-22 Exploration and decision (all of Claude's recommendations accepted).
 - 2026-11-22 Built: the sim, the preview, the help rows, the prompts, the rules text, the tests and the balance reports.

@@ -125,6 +125,43 @@ describe('Shield', () => {
     expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
   });
 
+  it('a Place moves between the line and the ring by moving the cursor onto yourself and off (#16)', () => {
+    // pressed away, dragged into a line, then onto yourself: the ring, though it was a line a moment ago
+    const a = arena();
+    a.d.aimAt(5, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
+    a.d.aimAt(5, 4).tick({ buttons: BTN.area }, 3);
+    expect(a.w.seats.dragged[0]).toBe(1);
+    a.d.aimAt(0, 0).tick({ buttons: BTN.area }, 3);
+    expect(a.w.seats.dragged[0]).toBe(0);
+    a.d.tick({}, 40);
+    expect(walls(a.w, WALL.rock)).toBe(STRUCT.ringSegs);
+    // pressed on yourself, then off and dragged: the line starts where the cursor left you, not at your feet
+    const b = arena();
+    b.d.aimAt(0, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
+    b.d.aimAt(0.9, 0).tick({ buttons: BTN.area }, 3); // still on you
+    b.d.aimAt(1.5, 0).tick({ buttons: BTN.area }, 3);
+    expect(b.w.seats.dragged[0]).toBe(0); // just off you: the arc so far
+    b.d.aimAt(1.5, 3).tick({ buttons: BTN.area }, 3);
+    expect(b.w.seats.dragged[0]).toBe(1);
+    expect(b.w.seats.holdX[0]).toBeCloseTo(0.9, 1);
+    b.d.tick({}, 40);
+    const wl = b.w.walls, rocks = Array.from(wl.type).flatMap((t, k) => (t === WALL.rock ? [k] : []));
+    expect(rocks.length).toBeGreaterThan(0);
+    expect(rocks.length).not.toBe(STRUCT.arcSegs);
+    for (const k of rocks) expect(Math.min(Math.hypot(wl.x1[k], wl.y1[k]), Math.hypot(wl.x2[k], wl.y2[k]))).toBeGreaterThan(0.8); // none at your feet
+  });
+
+  it('Sigil alone moves between the lens and the motes by moving the cursor (#15)', () => {
+    for (const end of ['me', 'away'] as const) {
+      const { w, d } = arena();
+      d.aimAt(end === 'me' ? 4 : 0, 0).queue('sigil').tick({ buttons: BTN.area }, 3);
+      d.aimAt(end === 'me' ? 0 : 4, end === 'me' ? 0 : 2).tick({ buttons: BTN.area }, 3);
+      d.tick({}, 40);
+      expect(w.seats.motes[0] > 0).toBe(end === 'me');
+      expect(devices(w, DEVICE.lens)).toBe(end === 'me' ? 0 : 1);
+    }
+  });
+
   it('a glyph dragged out and back is a plain glyph; one released away is a line', () => {
     for (const away of [false, true]) {
       const { w, d } = arena();

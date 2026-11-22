@@ -47,6 +47,7 @@ function arena(players = 1) {
   };
   return { w, d: new Driver(w), dummy };
 }
+const ARC = 2.2; // where these tests aim the quick arc: it stands at the cursor
 const walls = (w: World, type: number) => Array.from(w.walls.type).filter((t) => t === type).length;
 const devices = (w: World, type: number) => Array.from(w.devices.type).filter((t) => t === type).length;
 const rune = (w: World, el: Element, seat = 0) => w.seats.runes[seat * 9 + elementId(el) - 1];
@@ -55,7 +56,7 @@ describe('Shield', () => {
   it('Shield + Earth as Place raises a stone arc that stops a rock', () => {
     const { w, d, dummy } = arena();
     const t = dummy(5, 0);
-    d.aimAt(5, 0).queue('shield', 'earth').cast(BTN.area, 20, 20); // hold: Place without a drag = the arc
+    d.aimAt(ARC, 0).queue('shield', 'earth').cast(BTN.area, 20, 20); // hold: Place without a drag = the arc
     expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
     d.queue('earth').cast(BTN.force, 70, 40);
     expect(w.bodies.hp[t]).toBe(400);
@@ -64,7 +65,7 @@ describe('Shield', () => {
   it('Shield + Ice as Place raises an ice wall: a spike barrier that stops a rock, weaker than stone', () => {
     const { w, d, dummy } = arena();
     const t = dummy(5, 0);
-    d.aimAt(5, 0).queue('shield', 'water', 'cold').cast(BTN.area, 20, 20);
+    d.aimAt(ARC, 0).queue('shield', 'water', 'cold').cast(BTN.area, 20, 20);
     expect(walls(w, WALL.ice)).toBe(STRUCT.arcSegs);
     const k = Array.from(w.walls.type).indexOf(WALL.ice);
     expect(w.walls.maxHp[k]).toBeLessThan(STRUCT.rockHp);
@@ -74,9 +75,9 @@ describe('Shield', () => {
 
   it('an ice wall stabs whoever presses against it, and stands shorter than rock', () => {
     const { w, d } = arena(2);
-    w.bodies.x[1] = STRUCT.arcRadius + 0.55; w.bodies.y[1] = 0;
+    w.bodies.x[1] = ARC + 0.55; w.bodies.y[1] = 0;
     const hp0 = w.bodies.hp[1];
-    d.aimAt(5, 0).queue('shield', 'water', 'cold').cast(BTN.area, 20, 90);
+    d.aimAt(ARC, 0).queue('shield', 'water', 'cold').cast(BTN.area, 20, 90);
     expect(w.bodies.hp[1]).toBeLessThan(hp0);
     d.tick({}, 60 * (STRUCT.iceLife + 1));
     expect(walls(w, WALL.ice)).toBe(0);
@@ -84,7 +85,7 @@ describe('Shield', () => {
 
   it('fire melts an ice wall: a hit carrying Fire does STRUCT.iceMelt times the damage (not to stone)', () => {
     const { w, d } = arena();
-    d.aimAt(5, 0).queue('shield', 'water', 'cold').cast(BTN.area, 20, 20);
+    d.aimAt(ARC, 0).queue('shield', 'water', 'cold').cast(BTN.area, 20, 20);
     const [k1, k2] = Array.from(w.walls.type).flatMap((t, k) => (t === WALL.ice ? [k] : [])), h1 = w.walls.hp[k1], h2 = w.walls.hp[k2];
     damageWall(w, k1, 10, 0); damageWall(w, k2, 10, 1);
     expect(h1 - w.walls.hp[k1]).toBeCloseTo(10, 6);
@@ -94,8 +95,8 @@ describe('Shield', () => {
   it('coated rock acts on whoever touches it: a Life stone arc heals, a plain one does not', () => {
     for (const life of [true, false]) {
       const { w, d } = arena(2);
-      w.bodies.x[1] = STRUCT.arcRadius + 0.55; w.bodies.y[1] = 0; w.bodies.hp[1] = 50;
-      d.aimAt(5, 0).queue(...((life ? ['shield', 'life', 'earth'] : ['shield', 'earth']) as Element[])).cast(BTN.area, 20, 90);
+      w.bodies.x[1] = ARC + 0.55; w.bodies.y[1] = 0; w.bodies.hp[1] = 50;
+      d.aimAt(ARC, 0).queue(...((life ? ['shield', 'life', 'earth'] : ['shield', 'earth']) as Element[])).cast(BTN.area, 20, 90);
       expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
       if (life) expect(w.bodies.hp[1]).toBeGreaterThan(50);
       else expect(w.bodies.hp[1]).toBe(50);
@@ -104,10 +105,10 @@ describe('Shield', () => {
 
   it('a Life ring is small but heals as much per pulse as a Life arc', () => {
     const healed: number[] = [];
-    for (const [r, hold] of [[STRUCT.arcRadius, 20], [STRUCT.ringRadius, 1]] as const) {
+    for (const [r, hold] of [[ARC, 20], [STRUCT.ringRadius, 1]] as const) {
       const { w, d } = arena(2);
       w.bodies.x[1] = r; w.bodies.y[1] = 0; w.bodies.hp[1] = 40;
-      d.aimAt(5, 0).queue('shield', 'life'); if (hold > 1) d.cast(BTN.area, hold, 100); else d.onMe(BTN.area, hold, 100); // at the cursor: the arc; on yourself: the ring
+      d.aimAt(ARC, 0).queue('shield', 'life'); if (hold > 1) d.cast(BTN.area, hold, 100); else d.onMe(BTN.area, hold, 100); // at the cursor: the arc; on yourself: the ring
       healed.push(w.bodies.hp[1] - 40);
     }
     expect(healed[0]).toBeGreaterThan(0);
@@ -123,6 +124,76 @@ describe('Shield', () => {
     expect(w.seats.dragged[0]).toBe(0);
     d.tick({}, 40);
     expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
+  });
+
+  it('a Shield line pressed away stays a line all the way to you: no arc, no ring (a doorway shut from beside it)', () => {
+    const { w, d } = arena();
+    d.aimAt(5, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
+    d.aimAt(5, 4).tick({ buttons: BTN.area }, 3); // sideways: a line
+    expect(w.seats.dragged[0]).toBe(1);
+    for (const [x, y] of [[2, 2], [0.5, 0.5], [0, 0]]) { d.aimAt(x, y).tick({ buttons: BTN.area }, 3); expect(w.seats.dragged[0]).toBe(1); }
+    d.tick({}, 40);
+    const n = walls(w, WALL.rock);
+    expect(n).toBeGreaterThan(0);
+    const k = Array.from(w.walls.type).indexOf(WALL.rock);
+    expect(Math.hypot(w.walls.x1[k] - 5, w.walls.y1[k])).toBeLessThan(0.1); // a line from the press point
+  });
+
+  it('a Shield Place pressed away and moved straight toward or away from you is the arc, and on you the ring (#16)', () => {
+    for (const [to, want] of [[3, STRUCT.arcSegs], [7.5, STRUCT.arcSegs], [0, STRUCT.ringSegs]] as const) {
+      const { w, d } = arena();
+      d.aimAt(5, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
+      d.aimAt(to, 0.3).tick({ buttons: BTN.area }, 3); // nearly radial
+      expect(w.seats.dragged[0]).toBe(2);
+      d.aimAt(to, 0).tick({ buttons: BTN.area }, 3).tick({}, 40);
+      expect(walls(w, WALL.rock)).toBe(want);
+      if (want === STRUCT.arcSegs) { const k = Array.from(w.walls.type).indexOf(WALL.rock); expect(Math.hypot(w.walls.x1[k], w.walls.y1[k])).toBeCloseTo(to, 1); }
+    }
+  });
+
+  it('a Shield Place pressed near you is the arc to the end: dragged out, it never becomes a line', () => {
+    const { w, d } = arena();
+    d.aimAt(2, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
+    for (const [x, y] of [[4, 1], [6, 4], [3, 6]]) { d.aimAt(x, y).tick({ buttons: BTN.area }, 3); expect(w.seats.dragged[0]).not.toBe(1); }
+    d.tick({}, 40);
+    expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
+  });
+
+  it('near you a held Shield Place never draws a line: the cursor swings and resizes the arc', () => {
+    const { w, d } = arena();
+    d.aimAt(2.5, 0).queue('shield', 'earth').tick({ buttons: BTN.area }, 3);
+    for (const [x, y] of [[1.5, 1.5], [0, 2.5], [-1.2, 1.6]]) { d.aimAt(x, y).tick({ buttons: BTN.area }, 3); expect(w.seats.dragged[0]).not.toBe(1); }
+    d.tick({}, 40);
+    const wl = w.walls, rocks = Array.from(wl.type).flatMap((t, k) => (t === WALL.rock ? [k] : []));
+    expect(rocks.length).toBe(STRUCT.arcSegs);
+    // the arc's middle faces where the cursor was let go (-1.2, 1.6), 2 u out
+    const mx = rocks.reduce((a, k) => a + wl.x1[k] + wl.x2[k], 0) / (2 * rocks.length), my = rocks.reduce((a, k) => a + wl.y1[k] + wl.y2[k], 0) / (2 * rocks.length);
+    expect(Math.atan2(my, mx)).toBeCloseTo(Math.atan2(1.6, -1.2), 1);
+    for (const k of rocks) expect(Math.hypot(wl.x1[k], wl.y1[k])).toBeCloseTo(2, 1); // the aim is quantised
+  });
+
+  it('the quick arc stands at the cursor, centred on you, the same length near or far', () => {
+    for (const r of [STRUCT.arcMin, 4, 7]) {
+      const { w, d } = arena();
+      d.aimAt(r, 0).queue('shield', 'earth').cast(BTN.area, 20, 20);
+      const wl = w.walls, rocks = Array.from(wl.type).flatMap((t, k) => (t === WALL.rock ? [k] : []));
+      expect(rocks.length).toBe(STRUCT.arcSegs);
+      let length = 0;
+      for (const k of rocks) { expect(Math.hypot(wl.x1[k], wl.y1[k])).toBeCloseTo(r, 2); length += Math.hypot(wl.x2[k] - wl.x1[k], wl.y2[k] - wl.y1[k]); }
+      expect(length).toBeGreaterThan(STRUCT.arcLen * 0.95); // the chords of an arcLen arc
+      expect(length).toBeLessThanOrEqual(STRUCT.arcLen);
+    }
+  });
+
+  it('Sigil alone moves between the lens and the motes by moving the cursor (#15)', () => {
+    for (const end of ['me', 'away'] as const) {
+      const { w, d } = arena();
+      d.aimAt(end === 'me' ? 4 : 0, 0).queue('sigil').tick({ buttons: BTN.area }, 3);
+      d.aimAt(end === 'me' ? 0 : 4, end === 'me' ? 0 : 2).tick({ buttons: BTN.area }, 3);
+      d.tick({}, 40);
+      expect(w.seats.motes[0] > 0).toBe(end === 'me');
+      expect(devices(w, DEVICE.lens)).toBe(end === 'me' ? 0 : 1);
+    }
   });
 
   it('a glyph dragged out and back is a plain glyph; one released away is a line', () => {
@@ -171,7 +242,7 @@ describe('Shield', () => {
     w.bodies.x[1] = 4; w.bodies.y[1] = 0;
     const b = new Driver(w, 1).aimAt(-5, 0);
     b.tick({ moveX: -127 }, 90);
-    expect(w.bodies.x[1]).toBeGreaterThan(STRUCT.arcRadius);
+    expect(w.bodies.x[1]).toBeGreaterThan(ARC);
   });
 
   it('a barrier of Shield alone turns shots back, and drains the Shield pool', () => {
@@ -598,14 +669,14 @@ describe('Sigil', () => {
 
   it('double-tapping Shield over your wall brings the whole arc down', () => {
     const { w, d } = arena();
-    d.aimAt(5, 0).queue('shield', 'fire').cast(BTN.area, 20, 20); // a fire curtain arc
+    d.aimAt(ARC, 0).queue('shield', 'fire').cast(BTN.area, 20, 20); // a fire curtain arc
     expect(walls(w, WALL.curtain)).toBe(STRUCT.arcSegs);
-    d.aimAt(STRUCT.arcRadius, 0.3).queue('shield', 'shield');
+    d.aimAt(ARC, 0.3).queue('shield', 'shield');
     expect(walls(w, WALL.curtain)).toBe(0);
-    d.aimAt(5, 0).queue('shield', 'earth').cast(BTN.area, 20, 20);
+    d.aimAt(ARC, 0).queue('shield', 'earth').cast(BTN.area, 20, 20);
     d.aimAt(5, 0).queue('shield', 'shield'); // nothing under the cursor: just a cancel
     expect(walls(w, WALL.rock)).toBe(STRUCT.arcSegs);
-    d.aimAt(STRUCT.arcRadius, 0).queue('shield', 'shield');
+    d.aimAt(ARC, 0).queue('shield', 'shield');
     expect(walls(w, WALL.rock)).toBe(0);
   });
 

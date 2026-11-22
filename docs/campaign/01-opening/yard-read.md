@@ -48,3 +48,12 @@ Then the focus at the armoury's rack: one Fire and one Sigil, for the flame swor
 ## Stage 1: the plans, and the pick
 
 The structure critic ranked C, the ring, at 6.5/10; A, the gallery, at 6; and B, the descent, at 5.5. The yard as built, shown blind, scored 3.5. Plan D, the horseshoe (`tools/place-plans/plans/yard-d.py`), is the critic's mix, and the user chose it on 2026-11-22 ("D seems fine"). It has a pit sunk 3 m where the soldiers drill, open along the north to the ranges' foot. A rim runs round the east, south and west. The stations run down the screen from the arrival: strike, heavy and retreat as bays over the pit, the parry lane as a flight down into it, the hands ring on the pit floor, then the armoury at the west end. Its `MARKERS` give the sim's station spots (`sim/src/yard.ts`).
+
+## Stage 2 on flat frames (2026-11-22)
+
+| Round | Plan D | Score | What changed after it |
+|---|---|---|---|
+| 1 | rev 1 | 6/10 | The way back sat beside the arrival, inviting a skip, so the gate moved and the way back now climbs at the rim's north-east tip. The pit was oversized, so it's smaller. The bays read as flat stains, so they're now a tread up over the pit |
+| 2 | rev 2 | 7/10 | "Ready for the in-game grey-box" |
+
+**For the game:** block the north-east flight (a soldier or a rope) until the hands ring is done, so seeing it from the arrival is harmless. **For dressing:** treads on the parry lane, the soldiers set out along the crossing pointing at the way back, and the blank rim behind the bays.

@@ -35,7 +35,7 @@ for a, b in (((-5, 2), (-15, 1)), ((5, 1), (14, -1))):            # the conduits
     L = math.dist(a, b); P.fill(orect(((a[0] + b[0]) / 2, (a[1] + b[1]) / 2), 3, L + 1, math.atan2(b[1] - a[1], b[0] - a[0])), 2.5, 'wood')
 P.stairs(rect(-14, 12, -8, 18), 2.0, 0.0, 'V')                    # down to the shore by the greenhouse
 P.stairs(rect(8, 12, 14, 18), 2.0, 0.0, 'V')                      # and up again by the stills
-P.fill(circle((0, 21), 3), -0.5, 'water'); P.fill(arc_band((0, 21), 3, 4.5, 0, 360), 0.0, 'paving')   # the bath on the shore
+P.fill(circle((0, 21), 3), -0.5, 'water'); P.fill(arc_band((0, 21), 3, 4.5, 0, 360), 0.5, 'paving')   # the bath on the shore, its rim a kerb up
 P.fill(rect(-14, 17, 14, 21), 0.0, 'paving')                                                          # the shore walk
 # the way out: east along the well's tier and on, past the battery's smokestack
 P.fill(rect(40, 4, 72, 10), 2.0, 'road')
@@ -48,7 +48,7 @@ P.journey([(4, 4), (11, 1), (11, -10)] + [polar(W0, 15, a) for a in range(300, 2
 P.journey([(-11, -10), (-11, 1), (10, 7), (30, 7), (44, 7), (70, 7)], 'Out to the battery', 'Along the well’s tier and the road, the battery’s smoke ahead')
 import numpy as np
 walk = np.isin(P.m, ['plaza', 'paving', 'grass', 'path', 'road', 'dais', 'stairs', 'wood', 'sand']) & ~P.bld
-inbox = (P.CU > P.U[0] + 10) & (P.CU < P.U[1] - 10) & (P.CV > P.V[0] + 10) & (P.CV < P.V[1] - 8)
+inbox = (P.CU > P.U[0] + 12) & (P.CU < P.U[1] - 12) & (P.CV > P.V[0] + 12) & (P.CV < P.V[1] - 8)
 P.m[walk & ~inbox & ~np.isin(P.m, ['road', 'path', 'sand', 'stairs'])] = 'trees'   # woods along the edges, open where the roads leave
 from finish import lips, woods_unreached
 lips(P); woods_unreached(P)

@@ -44,3 +44,7 @@ Then the focus at the armoury's rack: one Fire and one Sigil, for the flame swor
 | 3 | The rack at the armoury door | The focus, the flame sword: Conjure |
 | 4 | Back out to the courtyard | The way home in view, and the bell tower marks the gate |
 | 5 | Later, passing by | The straw goblins standing again, to try each new weapon on |
+
+## Stage 1: the plans, and the pick
+
+The structure critic ranked C, the ring, at 6.5/10; A, the gallery, at 6; and B, the descent, at 5.5. The yard as built, shown blind, scored 3.5. Plan D, the horseshoe (`tools/place-plans/plans/yard-d.py`), is the critic's mix, and the user chose it on 2026-11-22 ("D seems fine"). It has a pit sunk 3 m where the soldiers drill, open along the north to the ranges' foot. A rim runs round the east, south and west. The stations run down the screen from the arrival: strike, heavy and retreat as bays over the pit, the parry lane as a flight down into it, the hands ring on the pit floor, then the armoury at the west end. Its `MARKERS` give the sim's station spots (`sim/src/yard.ts`).

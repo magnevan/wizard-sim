@@ -12,7 +12,7 @@ scope:`Eight stops, about 65 minutes with the walks. The drill yard (beats 2 and
 board:{cols:['Brief and beats','Space diagram','Concept art','Blockout','Script','Dressing','Finish'],
  note:`One row per stop, one column per stage of the campaign workflow. A stop goes deep one at a time: the others wait at concept art until their turn. Updated with every change to the segment.`,
  rows:[
-  ['0 · Briefing and the yard','#concept-yard-plans',[['done','Approved 11-22'],['review','Four plans, below'],['done','Approved 11-22'],['done','Playable as built (#yard)'],['later'],['started','Props bought'],['later']]],
+  ['0 · Briefing and the yard','#concept-yard-plans',[['done','Approved 11-22'],['done','Plan D chosen 11-22'],['done','Approved 11-22'],['done','Playable as built (#yard)'],['later'],['started','Props bought'],['later']]],
   ['0 · The courtyard (hub)','#concept-court-plans',[['done'],['done','Plan D chosen 11-22; flow rev 5'],['done'],['started','Flow passed, 7.5/10; sense stage, rev 11'],['later'],['started','Rounds 1–7, to be redone'],['later']]],
   ['1 · Infirmary (Life)','#concept-inf-plans',[['done','Thorns added (r2)'],['done','Plan D chosen 11-22'],['done','Two rounds'],['later'],['later'],['later'],['later']]],
   ['2 · Battery (Fire)','#battery',[['next','Rewrite as your second element'],['done'],['done'],['done','Repair beat open'],['later'],['started','Defence, well, wall'],['later']]],
@@ -27,7 +27,6 @@ stages:[
  ['Brief','draft'],['Beat chart','draft'],['Space diagram','review'],['Blockout','started','The yard and the battery are walkable'],['Script','later'],['Dressing','started','General art bought'],['Finish','later'],
 ],
 needsYou:[
- ['#concept-yard-plans','The drill yard: pick a plan (A to D).'],
  ['https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews','Optional: the five encounter questions on The Morning Everything Breaks (my picks stand until you answer), and the proposal of at most one new creature per stop.'],
 ],
 onMe:[`The courtyard: the chosen plan as a walkable grey-box once height is in the engine.`,`Rewrite the battery as your second element (its infusion line and prompts).`,`The battery's repair beat.`,`Then the infirmary: space diagram and blockout.`],
@@ -98,7 +97,7 @@ chapters:[
  ]},
 ],
 concepts:[
-{id:'yard-plans',title:'The drill yard, from the ground up',status:'Up for review 2026-11-22',
+{id:'yard-plans',title:'The drill yard, from the ground up',status:'Plan D chosen 2026-11-22',
  lede:`The yard through the new cycle (docs/campaign/01-opening/yard-read.md). Its stations, their order and their rules carry over from the yard as built; its layout doesn't. Three plans that really differ, the structure critic's mix, and a control: the yard as built today, which the critic scored 3.5/10 without knowing what it was ("no path linking them, so you can't read the order").`,
  points:[
   [`D, the horseshoe (the critic's mix, my pick).`,` A pit sunk 3 m where the soldiers drill, open along the north to the foot of the academy's ranges; a rim round its east, south and west, a low wall over woods on the south. From the arrival on the east the stations run down the screen first: strike, heavy and retreat as bays pushing out over the pit, then the parry lane as a straight flight down into it, the hands ring on the pit floor, and the armoury at the horseshoe's west end, its rack lit and in view from the arrival. Back across the pit through the soldiers, up a flight to the gate.`],

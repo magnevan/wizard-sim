@@ -92,7 +92,7 @@ export const OPTIONS = [
   // ---- Test runs: headless screenshots and checks (scripts/*.mjs) ----
   { key: 'script', group: 'Test runs', label: 'Scripted run', kind: 'flag', help: 'Both wizards play the scripted run (the loop uses timers, for headless Chrome).' },
   { key: 'autoplay', group: 'Test runs', label: 'Autoplay', kind: 'flag', help: 'Bots pilot seats 0 and 1 in the Arena, or play the tutorial through.' },
-  { key: 'spell', group: 'Test runs', label: 'Demo spell', kind: 'text', help: 'Both seats cast this at the dummies: runes, then /cast (force, area, place, self, weapon, drag, hold, holddrag, guard, wait; with nothing queued strike, heavy, special, retreat, block); @x,y sets the target, ; chains spells. E.g. arcane+fire/force, sigil+cold/weapon;/heavy (demo.ts).' },
+  { key: 'spell', group: 'Test runs', label: 'Demo spell', kind: 'text', help: 'Both seats cast this at the dummies: runes, then /cast (force, area (the ring, aimed at yourself), place, self, weapon, drag, hold, holddrag, burstheld, ringheld, guard, wait; with nothing queued strike, heavy, special, retreat, block); @x,y sets the target, ; chains spells. E.g. arcane+fire/force, sigil+cold/weapon;/heavy (demo.ts).' },
   { key: 'spell2', group: 'Test runs', label: 'Demo spell, seat 1', kind: 'text', help: 'Seat 1\'s spell, when it differs.' },
   { key: 'scene', group: 'Test runs', label: 'Scene', kind: 'choice', choices: () => ['rally', 'three', 'enemyattacks'], help: 'Headless: rally / three (Survive), or enemyattacks (every enemy frozen at one beat of its attack).' },
   { key: 'phase', group: 'Test runs', label: 'Attack phase', kind: 'choice', choices: () => ['wind', 'strike', 'impact', 'recover', 'loop'], help: 'With scene=enemyattacks.' },

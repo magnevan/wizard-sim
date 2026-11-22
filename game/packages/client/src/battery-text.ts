@@ -18,9 +18,9 @@ export const STEP_UP: BatteryPrompt = { head: 'Possess a defence', keys: [{ key:
  * the cast is for (the user, 2026-11-12: "very succinct tutorial instructions to give a little context").
  */
 export const DRIVING: Partial<Record<number, BatteryPrompt>> = {
-  [BSTEP.ring]: { head: 'Fire ring: clear the wall', keys: [F, 'then', { key: 'shift' }, 'plus', { key: 'rmb' }] },
+  [BSTEP.ring]: { head: 'Fire ring: clear the wall', keys: [F, 'then', { key: 'shift' }, 'plus', { key: 'lmb' }] },
   [BSTEP.spray]: { head: 'Flamethrower', keys: [F, 'then', { key: 'rmb', hold: true }] },
-  [BSTEP.place]: { head: 'Drop fire on the archers', keys: [F, 'then', { key: 'shift', hold: true }, 'plus', { key: 'rmb', hold: true }] },
+  [BSTEP.place]: { head: 'Drop fire on the archers', keys: [F, 'then', { key: 'shift' }, 'plus', { key: 'rmb' }] },
   [BSTEP.brute]: { head: 'More runes, more fire', keys: [F, F, F, 'then', { key: 'rmb', hold: true }] },
 };
 

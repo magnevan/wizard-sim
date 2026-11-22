@@ -6,7 +6,8 @@
  *   tilt; the last aim is kept when the stick is centred).
  *   A B X Y = Water Life Shield Cold. Hold LB for Lightning Arcane Sigil Fire (the keys' second row).
  *   Earth: LB + RB, or D-pad down.
- *   RT Force (hold to channel or charge). LT Area (tap) or Place (hold). RB Self. LB + RT Weapon.
+ *   RT Force (hold to channel or charge). LT Place. RB Self. LB + RT Weapon. The ring (the burst aimed at yourself) has no
+ *   pad gesture yet: the reticle never comes closer than AIM_MIN. Planned: the burst with the right stick centred.
  *   Back clears the queue. Start (Options) opens the Esc menu (menu.ts).
  *   D-pad up opens the help panel for this pad's seat (help-panel.ts).
  *   Any button but Start, freshly pressed on an unseated pad, joins the next free seat.

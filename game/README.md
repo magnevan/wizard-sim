@@ -166,7 +166,8 @@ Milestone 1 (deterministic core) is done, and the game has grown past it (online
   - Blink (Shield on Force) is instant
 - **Every plain form × cast:**
   - beams, sprays, arcs, rocks (pierce at full charge), ice shards
-  - novas, quakes, discharges
+  - novas, quakes, discharges (the rings: Shift+LMB released on yourself)
+  - the imbued burst, a cone toward the cursor that stretches longer and narrower the further out you aim (held, it shows its shape)
   - patches, delayed blasts, geysers, strikes, springs
   - swings, the healing palm, self casts
 - **Payload statuses and interactions:**
@@ -179,7 +180,8 @@ Milestone 1 (deterministic core) is done, and the game has grown past it (online
 - **Shield:**
   - waves, rings, quick arcs and drawn walls
   - rock and spike ice (hit points), barriers (force fields: they stop the other side and let your team through) and coated force fields (Shield + elements: each rune resists its element and bites whoever presses on it; Life heals)
-  - Blink, and with elements a parting gift: their Area spell where you stood
+  - Blink, and with elements a parting gift: their ring where you stood
+  - the closed ring is Shift+RMB released on yourself, as are Sigil's orbitals and rune motes
   - wards, the mirror ward, stone armour (its coat bites melee attackers), the Mending ward
   - Model A energy drain
 - **Sigil** (each binds a Sigil rune):

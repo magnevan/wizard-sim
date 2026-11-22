@@ -20,7 +20,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   EV, AI, ARCH, drivePlace, placeRadius, ARCHETYPES, ARMS, ATTACK, BTN, CELL, DEVICE, EL as ELID, GUARD, GUARD_EL, GUARD_NAME, KIND, MAX_BODIES, MAX_DEVICES, MAX_PORTALS, MAX_SEATS, MAX_WALLS, MAX_WAVES, MAX_ZONES, ZONE,
-  N_ALTARS, N_EL, PERKS, QUEUE_MAX, orbitAngle, PHASE, PHASE_ENC, RHYTHM, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, formOf, glyphRadiusOf, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
+  N_ALTARS, N_EL, PERKS, QUEUE_MAX, orbitAngle, PHASE, PHASE_ENC, RUNES, SHAPES, STRUCT, SURF, SURVIVE_TIMES, T, TAP, TERRAIN, WALL, WARD, WAVE_TIMES, compile, formOf, glyphRadiusOf, imbueHalf, imbueLine, imbueReach, imbueStretch, guardCoatLook, guardSize, heavyCharge, queueOf, selfTarget,
   type SimEvent, type World,
   isPropWall, terrainNear,
 } from '@wizard-sim/sim';
@@ -296,7 +296,7 @@ function guardShape(c: Ctx, id: string, x: number, y: number, sz: number, t: num
 }
 
 // =====================================================================================================
-interface SFx { kind: string; t0: number; life: number; seed: number; x: number; y: number; x2: number; y2: number; who: number; look: number; n: number; els?: Uint8Array; xs?: number[] }
+interface SFx { kind: string; t0: number; life: number; seed: number; x: number; y: number; x2: number; y2: number; who: number; look: number; n: number; els?: Uint8Array; xs?: number[]; half?: number }
 /** Moves made with a guard (guards.ts): their extras are the guard's; every other move's are the weapon's. */
 const GUARD_MOVES = new Set(['parry', 'block', 'glance', 'chill', 'coat', 'guardbreak', 'flameburst', 'lance', 'backstep', 'phase', 'seedstep', 'shovestep', 'surge', 'tidewave', 'flamestep', 'iceslide', 'spikeburst', 'spikestep']);
 
@@ -376,7 +376,7 @@ export class StructureView {
       // what the weapon or guard carries besides its lead, at the moment of the move (the last use takes the weapon)
       const seat = e.who >= 0 && e.who < MAX_SEATS, gm = GUARD_MOVES.has(e.text);
       const xs = !seat || e.text === 'imbue' ? [] : gm ? A.extrasOf(s.guardEls, e.who, ELID.shield, GUARD_EL[s.guard[e.who]] ?? 0) : e.look ? A.extrasOf(s.weaponEls, e.who, e.look) : [];
-      this.add('mv-' + e.text, t, life, { who: e.who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, look: e.look ?? 0, seed: tick * 7 + e.who, n: e.text === 'imbue' ? e.els ?? 0 : seat ? s.guard[e.who] : 0, xs });
+      this.add('mv-' + e.text, t, life, { who: e.who, x: e.x, y: e.y, x2: e.x2 ?? e.x, y2: e.y2 ?? e.y, look: e.look ?? 0, seed: tick * 7 + e.who, n: e.text === 'imbue' ? e.els ?? 0 : seat ? s.guard[e.who] : 0, xs, half: e.half });
     }
     // walls: hits and breaks
     for (let k = 0; k < MAX_WALLS; k++) {
@@ -1422,7 +1422,7 @@ export class StructureView {
     // The lead (the rules' priority: Earth, then Arcane, then Lightning) sets the shape: Earth a line, whatever else is
     // infused, its other element riding along it; Lightning a fork, whose bolts are the sim's zaps.
     const has = (id: number): boolean => !!(f.n & (1 << id)), line = has(ELID.earth), fork = !line && !has(ELID.arcane) && has(ELID.lightning);
-    const half = line ? Math.atan2(SHAPES.imbueLineHalf * 1.4, Math.max(1, r / PPU)) : SHAPES.imbueHalf * TAU, R = r * 1.2 + 40;
+    const half = line ? Math.atan2(SHAPES.imbueLineHalf * 1.4, Math.max(1, r / PPU)) : (f.half ?? SHAPES.imbueHalf) * TAU, R = r * 1.2 + 40;
     // an Earth line's infused element rides along its crack: the visual lead, else the first other element queued
     let rider = 0;
     if (line) { rider = f.look !== ELID.earth ? f.look : 0; for (let id = 1; id <= N_EL && !rider; id++) if (has(id) && id !== ELID.earth) rider = id; }
@@ -1443,7 +1443,7 @@ export class StructureView {
     const ids: number[] = [];
     for (let id = 1; id <= N_EL; id++) if (f.n & (1 << id)) ids.push(id);
     if (!ids.length) ids.push(f.look || ELID.arcane);
-    const half = SHAPES.imbueHalf * TAU, k = easeOut(clamp(q / 0.6, 0, 1)), fade = 1 - seg(q, 0.55, 1), r = 6 + (reach - 6) * k, n = 18;
+    const half = (f.half ?? SHAPES.imbueHalf) * TAU, k = easeOut(clamp(q / 0.6, 0, 1)), fade = 1 - seg(q, 0.55, 1), r = 6 + (reach - 6) * k, n = 18;
     for (let j = 0; j <= n; j++) {
       const u = j / n, a = aw - half + 2 * half * u, Re = blowRamp(ids[j % ids.length]), bulge = Math.sin(u * Math.PI);
       if (rand(j, 4, f.seed) > fade) continue;
@@ -1773,7 +1773,45 @@ export class StructureView {
     o.globalAlpha = a;
   }
 
+  /**
+   * A burst held on Shift+LMB (the ring merged into the burst, 2026-11-22): its shape on the floor until it's released, for
+   * every wizard holding one, so partners see a ring forming under you. On yourself the ring, else the cone toward the
+   * cursor (narrower and longer the further out), Earth's line.
+   */
+  private burstGhosts(w: World, t: number, g: Ctx, bodies: BodyView[]): void {
+    // drawn on the over layer: a painted floor covers the ground one
+    const s = w.seats;
+    for (let i = 0; i < MAX_SEATS; i++) {
+      if (!s.active[i] || !s.weaponArm[i] || !(s.prevButtons[i] & BTN.weapon) || !s.queueLen[i] || s.phase[i] !== PHASE.idle) continue;
+      const v = bodies[i]; if (!v?.on) continue;
+      const d = Math.hypot(s.aimX[i], s.aimY[i]), onMe = d <= SHAPES.selfAim;
+      let spec;
+      try { spec = compile(queueOf(w, i), onMe ? 'area' : 'conjure'); } catch { continue; }
+      if (spec.shape === 'todo') continue;
+      const R = (spec.look || spec.form) === ELID.life ? LIFE : ramp(spec.look || spec.form), mine = i === this.localSeat;
+      const a = mine ? 0.75 : 0.45, dot = (x: number, y: number, q: number) => { if ((q + Math.floor(t * 12)) % 4 !== 0) X.px(g, x, y, R[1]); };
+      const x0 = v.x, y0 = v.y, extra = Math.max(0, spec.power - 1);
+      if (onMe) {
+        const r = (SHAPES.novaRadius + (spec.shape === 'quake' ? 1 : 0) + SHAPES.novaPerRune * extra) * PPU;
+        X.ring(g, x0, y0, r, r * FY, R[1], a);
+        X.ring(g, x0, y0, r * 0.92, r * 0.92 * FY, R[2], a * 0.5);
+        continue;
+      }
+      const st = imbueStretch(d), reach = imbueReach(spec, st) * PPU, face = Math.atan2(s.aimY[i], s.aimX[i]);
+      const P = (ang: number, rr: number): Pt => [x0 + Math.cos(ang) * rr, y0 + Math.sin(ang) * rr * FY];
+      if (imbueLine(spec)) {
+        const hw = SHAPES.imbueLineHalf * PPU, nx = -Math.sin(face), ny = Math.cos(face);
+        for (const side of [-1, 1]) for (let q = 0; q < 40; q++) { const [px, py] = P(face, (reach * q) / 40); dot(px + nx * hw * side, py + ny * hw * side * FY, q); }
+        continue;
+      }
+      const half = imbueHalf(st) * TAU;
+      for (let q = 0; q <= 32; q++) { const [px, py] = P(face - half + (2 * half * q) / 32, reach); dot(px, py, q); }
+      for (const side of [-1, 1]) for (let q = 1; q < 24; q++) { const [px, py] = P(face + half * side, (reach * q) / 24); dot(px, py, q); }
+    }
+  }
+
   private preview(w: World, t: number, g: Ctx, o: Ctx, bodies: BodyView[]): void {
+    this.burstGhosts(w, t, o, bodies);
     const s = w.seats, b = w.bodies, i = this.localSeat;
     const held = !!(s.prevButtons[i] & BTN.area), aiming = !held && !!(s.prevButtons[i] & BTN.force);
     if (!aiming) this.aimT0 = -1; else if (this.aimT0 < 0) this.aimT0 = this.st;
@@ -1781,17 +1819,24 @@ export class StructureView {
     const v = bodies[i]; if (!v?.on) return;
     if (aiming) { if (this.st - this.aimT0 >= AIM_SHOWS) this.turretPreview(w, t, g, o, v); return; }
     const drag = s.dragged[i] === 1;
+    // released on yourself, Shield and Sigil raise their ring, orbitals or motes (the ring merged into the burst, 2026-11-22)
+    const onMe = !drag && Math.hypot(s.aimX[i], s.aimY[i]) <= SHAPES.selfAim;
     let spec;
     try { spec = compile(queueOf(w, i), 'place', { drag }); } catch { return; }
+    if (onMe && (spec.form === ELID.shield || spec.form === ELID.sigil)) { try { spec = compile(queueOf(w, i), 'area'); } catch { return; } }
     if (spec.shape === 'todo') return;
     const TEAM = X.TEAMS[i % 4], col = TEAM.light;
-    // nothing until the hold counts as Place (the user, 2026-11-11: the reticle showed for what was still an Area tap)
-    if (!drag && s.areaHeld[i] < T(RHYTHM.placeHold)) return;
-    const k = drag ? 1 : clamp(s.areaHeld[i] / T(RHYTHM.placeHold), 0, 1), dim = k < 1;
+    // a tap places now (no Area tap to wait out), so the preview shows at once
+    const k = 1, dim = false;
     const [cxw, cyw] = placeSpot(w, i), cx = gx(cxw), cy = gy(cyw);
     const look = spec.look || spec.form, R = look === ELID.life ? LIFE : ramp(look);
     const matCol = spec.wall === WALL.rock ? '#c8ab86' : spec.wall === WALL.ice ? EL.ice[1] : spec.wall === WALL.barrier ? EL.shield[1] : R[1];
-    if (spec.shape === 'arcwall') {
+    if (spec.shape === 'ring' || spec.shape === 'orbitals' || spec.shape === 'motes') {
+      const r = (spec.shape === 'ring' ? STRUCT.ringRadius : STRUCT.orbitRadius) * PPU;
+      X.ring(g, v.x, v.y, r, r * FY, matCol, 0.7);
+      X.ring(g, v.x, v.y, r * 1.12, r * 1.12 * FY, matCol, 0.3);
+      return;
+    } else if (spec.shape === 'arcwall') {
       const face = Math.atan2(s.aimY[i], s.aimX[i]), half = STRUCT.arcHalf * TAU, r = STRUCT.arcRadius;
       const pts: Pt[] = [];
       for (let q = 0; q <= 24; q++) { const a = face - half + (2 * half * q) / 24; pts.push([gx(b.x[i] + Math.cos(a) * r), gy(b.y[i] + Math.sin(a) * r)]); }

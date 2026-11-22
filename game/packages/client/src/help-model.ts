@@ -15,7 +15,7 @@ import {
 import type { Demo } from './demo';
 
 /** How a row is cast: the mouse button, Shift, tap or hold, or Space; and the gamepad's buttons. */
-export interface KeyGlyph { mouse: 'L' | 'R' | null; shift: boolean; note: '' | 'TAP' | 'HOLD'; space: boolean; pad: string }
+export interface KeyGlyph { mouse: 'L' | 'R' | null; shift: boolean; note: '' | 'TAP' | 'HOLD' | 'ON YOU'; space: boolean; pad: string }
 /** A coloured word after the description: an extra element's trait (Chill, Burn) or a mix (Scald). */
 export interface Tag { text: string; el: Element | null }
 
@@ -62,14 +62,21 @@ export interface HelpModel {
 
 const K = (mouse: KeyGlyph['mouse'], shift: boolean, note: KeyGlyph['note'], pad: string, space = false): KeyGlyph => ({ mouse, shift, note, space, pad });
 
-/** The five casts, in the order the rows show them, with their keys. */
+/**
+ * The five casts, in the order the rows show them, with their keys. The ring ('area') is no button of its own since the
+ * ring merged into the burst (2026-11-22): it's the Weapon cast aimed at yourself, or for Shield and Sigil a Place there
+ * (RING_MADE). The pad can't aim at yourself yet (its reticle starts 2.5 u out); its glyph is the gesture it will be.
+ */
 export const CAST_ROWS: { cast: Cast; keys: KeyGlyph; demo: string }[] = [
   { cast: 'force', keys: K('R', false, '', 'RT'), demo: 'force' },
-  { cast: 'area', keys: K('R', true, 'TAP', 'LT'), demo: 'area' },
-  { cast: 'place', keys: K('R', true, 'HOLD', 'LT HOLD'), demo: 'place' },
+  { cast: 'area', keys: K('L', true, 'ON YOU', 'LB+RT'), demo: 'area' },
+  { cast: 'place', keys: K('R', true, '', 'LT'), demo: 'place' },
   { cast: 'self', keys: K(null, false, '', 'RB', true), demo: 'self' },
   { cast: 'conjure', keys: K('L', true, '', 'LB+RT'), demo: 'weapon' },
 ];
+
+/** Shield's ring and Sigil's orbitals and motes: Place released on yourself. */
+const RING_MADE = K('R', true, 'ON YOU', 'LT');
 
 const ELS = rules.ALL as readonly Element[]; // the nine keyed elements, then Ice
 const EL_ID = (e: Element): number => ELS.indexOf(e) + 1;
@@ -381,6 +388,7 @@ export function spellRows(queue: readonly Element[]): HelpRow[] {
   return CAST_ROWS.map(({ cast, keys, demo }) => {
     const d = rules.resolve(queue, cast);
     const spec = compile(queue, cast);
+    if (cast === 'area' && (spec.form === EL_ID('shield') || spec.form === EL_ID('sigil'))) keys = RING_MADE;
     const tags: Tag[] = [];
     if (d.id !== 'elements/self') for (const p of d.payload) tags.push({ text: p.trait, el: p.el });
     for (const m of (d.mix as { trait: string; els: Element[] }[] | undefined) ?? []) tags.push({ text: m.trait, el: m.els[0] ?? null });

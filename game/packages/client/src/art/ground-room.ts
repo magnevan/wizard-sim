@@ -14,7 +14,7 @@ import * as X from './px';
 /** Ground character -> its image and whether it can be mirrored at random (not if it has joints to line up). Alternates are <file>-2.png and on. */
 const MATERIALS: Readonly<Record<string, { file: string; flip: boolean; calm?: number; iso?: boolean }>> = {
   g: { file: 'grass', flip: true, calm: 0.45 }, d: { file: 'dirt', flip: true }, s: { file: 'sand', flip: true },
-  f: { file: 'flagstone', flip: false }, c: { file: 'cobble', flip: false, iso: true }, m: { file: 'mud', flip: true },
+  f: { file: 'flagstone', flip: false, iso: true }, c: { file: 'cobble', flip: false }, m: { file: 'mud', flip: true },
   l: { file: 'leaves', flip: true }, r: { file: 'gravel', flip: true }, a: { file: 'ash', flip: true },
   p: { file: 'planks', flip: false }, h: { file: 'slabs', flip: false }, w: { file: 'water', flip: true },
 };
@@ -25,16 +25,16 @@ const urlOf = new Map(Object.entries(urls).map(([path, url]) => [path.split('/')
  * The small things lying about on each material: registry props, chosen by region so a meadow has
  * drifts of one flower rather than an even confetti. `every`: roughly one spot in this many gets something.
  */
+// The textures (tools/building-art, Codex) carry their own pebbles, clover and footprints since 2026-11-22, so the
+// scatter is sparse: a stray here and there, not a carpet.
 const SCATTER: Readonly<Record<string, { every: number; items: readonly string[] }>> = {
-  g: { every: 26, items: ['white-daisy-clump', 'yellow-buttercup-clump', 'red-poppy-clump', 'clover-patch', 'short-grass-tuft', 'tall-grass-tuft', 'dry-yellow-grass-tuft', 'yellow-dandelion', 'small-violet-cluster', 'pink-clover-blossom', 'three-pebbles'] },
-  d: { every: 14, items: ['single-small-pebble', 'three-pebbles', 'cracked-small-rock', 'small-pile-of-twigs'] },
+  g: { every: 70, items: ['white-daisy-clump', 'yellow-buttercup-clump', 'red-poppy-clump', 'clover-patch', 'short-grass-tuft', 'tall-grass-tuft', 'dry-yellow-grass-tuft', 'yellow-dandelion', 'small-violet-cluster', 'pink-clover-blossom', 'three-pebbles'] },
+  d: { every: 60, items: ['single-small-pebble', 'three-pebbles', 'cracked-small-rock'] },
   m: { every: 16, items: ['small-muddy-puddle', 'three-pebbles', 'single-small-pebble'] },
   l: { every: 6, items: ['green-fallen-leaves', 'orange-fallen-leaves', 'brown-mushroom-cluster', 'red-toadstool', 'tiny-white-mushrooms', 'twig-with-bracket-fungus', 'young-fern', 'small-pile-of-twigs', 'pine-cone', 'fallen-acorns'] },
   s: { every: 30, items: ['three-pebbles', 'single-small-pebble', 'white-bird-feather'] },
   r: { every: 12, items: ['cracked-small-rock', 'round-river-stone', 'three-pebbles'] },
   a: { every: 18, items: ['cracked-small-rock', 'small-pile-of-twigs'] },
-  f: { every: 40, items: ['short-grass-tuft'] },
-  c: { every: 40, items: ['short-grass-tuft'] },
 };
 const SPOT = 14; // art px between scatter spots
 
@@ -70,8 +70,10 @@ async function scatter(x: CanvasRenderingContext2D, g: GroundMap, W: number, H: 
  */
 const WOODS: Readonly<Record<string, { items: readonly string[]; clear: readonly (readonly [number, number, number, number])[] }>> = {
   battery: { items: ['pine', 'pine', 'oak', 'oak', 'oak-autumn', 'bush-round'], clear: [[-23, -99, -17, -36], [-3, -99, 3, -36], [19, -99, 25, -36], [-3, 36, 3, 99]] },
-  // the drill yard: the road north out of the gatehouse runs off between the fields
-  yard: { items: ['oak', 'oak', 'oak-autumn', 'pine', 'bush-round', 'bush-autumn'], clear: [[-2.5, -99, 4.5, -33]] },
+  // the drill yard: Codex trees (tools/building-art), mixed; the road out of the courtyard's east gate runs off east
+  yard: { items: ['codex-oak', 'codex-oak', 'codex-pine', 'codex-pine', 'codex-birch', 'codex-lilac-tree', 'codex-lilac-tree', 'codex-bush', 'codex-bush', 'codex-ferns', 'codex-boulder'], clear: [[64, 17, 99, 27]] },
+  // the courtyard: woods east of the low wall, the road out of the east gate, and none over the sea to the south
+  court: { items: ['codex-oak', 'codex-pine', 'codex-pine', 'codex-birch', 'codex-lilac-tree', 'codex-bush', 'codex-boulder'], clear: [[74, -9, 999, 3], [-999, 49, 999, 999]] },
 };
 const WOOD_SPOT = 30; // art px between trees
 

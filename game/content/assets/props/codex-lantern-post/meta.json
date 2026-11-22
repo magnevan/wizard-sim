@@ -1,0 +1,22 @@
+{
+  "id": "codex-lantern-post",
+  "kind": "prop",
+  "name": "Lantern post",
+  "footprint": [
+    0.4,
+    0.3
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        10,
+        56
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/props-b-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later."
+    }
+  }
+}

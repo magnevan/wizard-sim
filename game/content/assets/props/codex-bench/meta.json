@@ -1,0 +1,22 @@
+{
+  "id": "codex-bench",
+  "kind": "prop",
+  "name": "Bench",
+  "footprint": [
+    1.6,
+    0.6
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        24,
+        38
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/props-b-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later."
+    }
+  }
+}

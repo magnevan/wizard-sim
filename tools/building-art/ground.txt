@@ -1,0 +1,10 @@
+Generate one image with your image generation tool, then save it as ground-sheet.png in the current directory. Reply with just the file name.
+
+The attached images are the look we want: concept art and painted buildings of a wizard academy, in high-detail pixel art seen from high above at a 3/4 angle, warm morning light.
+
+Make a sheet of six ground textures for this game, as six large square swatches in two rows of three on a plain black background, with a clear black gap between them. Each swatch is a flat patch of ground seen straight from the game's camera, filling its square edge to edge, with even lighting and no objects, no figures, no shadows of things standing on it, and no border, so each can be repeated as a tiling floor:
+
+Top row: 1. short trodden lawn grass, mostly green with a little clover and tiny flowers. 2. worn packed dirt path, brown, with small pebbles and faint footprints. 3. pale raked training sand.
+Bottom row: 4. warm sandstone flagstone paving in irregular slabs with thin mossy joints. 5. grey cobblestones, rounded, set close. 6. dark forest floor of fallen leaves and needles.
+
+Match the attached images' palette and pixel-art detail.

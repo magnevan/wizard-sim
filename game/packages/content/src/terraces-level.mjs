@@ -60,7 +60,9 @@ const es = [
 ];
 
 const level = structuredClone(source);
-Object.assign(level, { identifier: NAME, iid: id('level'), uid: UID, worldX: 7640, worldY: 0, pxWid: pxW, pxHei: pxH });
+const others = project.levels.filter((l) => l.identifier !== NAME);
+const worldX = Math.max(...others.map((l) => l.worldX + l.pxWid)) + 200; // to the right of every other level in LDtk's world view
+Object.assign(level, { identifier: NAME, iid: id('level'), uid: UID, worldX, worldY: 0, pxWid: pxW, pxHei: pxH });
 for (const li of level.layerInstances) {
   Object.assign(li, { __cWid: CW, __cHei: CH, iid: id(li.__identifier), levelId: UID });
   if (li.__identifier === 'Entities') li.entityInstances = es;

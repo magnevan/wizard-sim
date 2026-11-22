@@ -27,3 +27,13 @@ Terrain needs no streaming in the sim: every peer has the whole map as data, and
 ## Until then
 
 The user pulled that step forward and left the rest for later: "at least the 40 wall limit thing for now".
+
+## 2026-11-22: the segment as one map
+
+**The user:** "In an ideal world we make this whole segment one large map you walk around with seamless transitions, even if segments are disconnected (we could stream them in and out). However if we're not able to make this work well, I'd be ok with some transitions (like walking to and edge and having a small load)." Their worry is that maps depend on each other a lot.
+
+**Proposed, not decided:**
+- **Seams are fixed contracts.** Each place stays its own LDtk level, placed in LDtk's world layout (the courtyard already has `worldX` 8400). Places meet only at seams: a gate, a bridge, or a road where it narrows. A seam's position, width and height are fixed, and either side can be redesigned freely as long as it keeps them. A check in `content:check` verifies both sides of each seam match. That handles the dependency worry at authoring time, which is where it bites.
+- **Start with short loads at the seams and keep the data seamless.** Today's room switch (`leaveTo`) becomes a hidden load while you walk through the gate. The levels are authored as if joined, so the sim can later load the next level alongside the current one (steps 2 to 5 above) without redoing any maps.
+- **The party crosses a seam together.** For example, the gate opens when everyone is near it. This follows the user's 2026-11-09 call that players stay reasonably close.
+- **Pathfinding over big rooms** is step 2 above, filed as [#17](https://github.com/magnevan/wizard-sim/issues/17).

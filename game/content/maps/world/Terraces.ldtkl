@@ -11,7 +11,7 @@
 	"identifier": "Terraces",
 	"iid": "7e44ace5-0000-4000-8000-000000005010",
 	"uid": 120,
-	"worldX": 7640,
+	"worldX": 11600,
 	"worldY": 0,
 	"worldDepth": 0,
 	"pxWid": 640,
@@ -32,7 +32,7 @@
 			"__type": "Array<Float>",
 			"__value": [ 0, 3, 6 ],
 			"__tile": null,
-			"defUid": 118,
+			"defUid": 119,
 			"realEditorValues": [
 				{
 					"id": "V_Float",
@@ -447,7 +447,7 @@
 			"__tilesetRelPath": null,
 			"iid": "7e44ace5-0000-4000-8000-000000006013",
 			"levelId": 120,
-			"layerDefUid": 117,
+			"layerDefUid": 118,
 			"pxOffsetX": 0,
 			"pxOffsetY": 0,
 			"visible": true,
@@ -503,7 +503,7 @@
 				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 			],
 			"autoLayerTiles": [],
-			"seed": 8883516,
+			"seed": 7178349,
 			"overrideTilesetUid": null,
 			"gridTiles": [],
 			"entityInstances": []

@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as armillary-grand.png in the current directory. Reply with just the file name.
+
+The first attached image is concept art of our wizard academy's central courtyard; its centrepiece is a giant bronze armillary sphere. The second is one of our painted academy buildings, for the style.
+
+Paint that great armillary on its own, as one game object, on a flat plain magenta (#FF00FF) background with nothing else: no ground, no shadow on the ground, no figures. Seen from high above at a 3/4 angle, like the attached images, in their high-detail pixel art and warm morning light. It is huge, the height of a four-storey building: a broad round stepped plinth of pale stone inlaid with gold, three steps up, seven small coloured gem lamps set round its rim (green, red, blue, pale ice-blue, white-blue, amber, violet); from it rises a tall bronze stem holding the sphere: many interlocking tilted bronze rings engraved with runes, some knocked slightly askew, round a flickering violet core, and a thin column of violet light shooting up from the top, stuttering. Fill the frame top to bottom with it, centred.

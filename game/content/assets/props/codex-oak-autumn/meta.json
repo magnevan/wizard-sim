@@ -1,0 +1,22 @@
+{
+  "id": "codex-oak-autumn",
+  "kind": "prop",
+  "name": "Oak autumn",
+  "footprint": [
+    1.0,
+    0.8
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        43,
+        79
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/trees-a-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later."
+    }
+  }
+}

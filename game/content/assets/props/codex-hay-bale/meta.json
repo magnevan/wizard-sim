@@ -1,0 +1,22 @@
+{
+  "id": "codex-hay-bale",
+  "kind": "prop",
+  "name": "Hay bale",
+  "footprint": [
+    1.6,
+    0.9
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        20,
+        29
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/props-b-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later."
+    }
+  }
+}

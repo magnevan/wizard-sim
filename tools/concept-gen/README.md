@@ -68,3 +68,13 @@ Prop sheets for the wizard's conjured weapons and guards, for the [warband art](
 - Four at once: the computer ran low on memory and the runs were stopped. Two weapon images survived (one only in `~/.codex/generated_images/`). Run two at a time while other heavy work is open.
 - Round 2 (the user: they are magical conjurations, unlike the goblins' gear): the references were the wizard's sheet plus sheet A, and the goblin sheet was dropped. "Not made by any smith ... no wood, leather, rivets or forged metal" kept everything elemental. Naming each draft's fault ("must read as a sword, not a torch") and giving each element a colour of its own fixed them in one try. Two at a time, then one, ran in about three minutes with no memory trouble.
 - A "ward of light round a small solid core" gave translucent, more spell-like shields, but most of each is glow (shader work), not mesh.
+
+### 2026-11-22, the yard and the walks
+
+Five images in parallel for [the weapons section and the walks](../../docs/explorations/2026-11-22-weapons-yard-and-walks.md), all usable, about eight minutes. The yard and the armoury from `area-courtyard-start.jpg` plus the camera reference; the district's roads from `district-v2.jpg` alone; two road close-ups from the district plus the camera reference.
+
+- "The academy's buildings are the edges of the space at their real size: tall three-storey ranges whose walls rise off the top of the frame" gave buildings at a believable scale for the first time.
+- Listing the stations "in order, each hugging the foot of the buildings" kept them in a row along the range, which is the academy concept's route.
+- A road drawn "diagonally from the top left to the bottom right" with a named moment at each point made a walk readable as a level.
+- Asking for "roads that are longer and get more room" moved the district's geography even with "keep its geography exactly"-style wording. Use the image for the moments on the roads, and settle the layout in the space diagram.
+

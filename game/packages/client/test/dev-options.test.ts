@@ -66,7 +66,7 @@ describe('URL options', () => {
   it('a boot-time option set later asks for a reload; one seeded at boot does not', () => {
     const k: OptionKey = 'massing';
     expect(changedSinceBoot(k)).toBe(false);
-    setOpt(k, 'academy', false);
+    setOpt(k, 'off', false);
     expect(changedSinceBoot(k)).toBe(true);
     setOpt(k, null, false);
     expect(changedSinceBoot(k)).toBe(false);

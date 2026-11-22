@@ -3,40 +3,48 @@
   python tools/segments/01-opening/yard-level.py
   (then, from game/) npm run content:build && npm run content:check
 
-A slice of the academy with its drill yard in it, not a room: the hall and the cloister you come out of along the south,
-a garden, the barracks and the shed east, the remains of the old farm the yard was put on to the west, and a low wall
-north with the gatehouse in it and fields past it. One worn path runs station to station in teaching order (the
-user, 2026-11-10: "the path sets the layout"); the game finds the stations by their Markers (sim yard.ts).
+Blockout of 2026-11-22 (docs/explorations/2026-11-22-weapons-yard-and-walks.md): the academy's north-west corner at real
+size. The Great Hall stands along the west edge and the workshops along the north, just past the map, so their faces
+are the map's edge; the client draws them as grey boxes (art/massing.ts, `academy`). The yard runs along their foot as
+an L; the courtyard with the armillary opens to the south-east behind a low balustrade. You start at the armillary
+(the briefing, beat 1, not built yet), go into the yard, along the hall (strike lanes, the sack, the slam ring), along
+the workshops (the parry lane, the hands ring, the rack at the armoury door), back into the courtyard and out by its
+east gate. The soldiers drill in the open middle with plain steel. The game finds the stations by their Markers
+(sim yard.ts).
 
-Coordinates are the plan's (90 x 68, origin top-left, north up). Running this replaces the level, so make hand edits
-here rather than in LDtk until the layout has settled. Markers whose id starts with "x-" are people who live here (the
-client draws them, art/extras.ts): x-<kind>-<act>-<palette>-<variant>-<facing in degrees, 0 east, 90 south>-<n>.
+Coordinates are the plan's (130 x 100, origin top-left, north up; 1 u is about 0.6 m). Running this replaces the
+level, so make hand edits here rather than in LDtk until the layout has settled. Markers whose id starts with "x-" are
+people who live here (the client draws them, art/extras.ts):
+x-<kind>-<act>-<palette>-<variant>-<facing in degrees, 0 east, 90 south>-<n>.
 """
 import copy, json, math, os, random, uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MAPS = os.path.join(HERE, '../../../game/content/maps')
-W, H, CELL = 90, 68, 0.5
+W, H, CELL = 130, 100, 0.5
 CW, CH = int(W / CELL), int(H / CELL)
 PX = 20
 GROUND = dict(grass=1, dirt=2, sand=3, flagstone=4, cobble=5, mud=6, leaves=7, gravel=8, ash=9, planks=10, slabs=11, water=12)
 NS = uuid.UUID('9b3c1e52-1d7a-4c0e-8f61-5a0d2c7e4b19')
 rng = random.Random(2203)
 
-WALL_Y = 5                  # the low wall along the north, the gatehouse in it
-GATE_X = 46
+# the balustrade between the yard (north and west) and the courtyard (south-east), with its two openings
+BAL_X, BAL_Y = 46, 54
+IN_GAP = (78, 88)            # on the west run (y): from the courtyard into the yard
+OUT_GAP = (108, 120)         # on the north run (x): from the yard back into the courtyard
+GARDEN = (96, 80)            # the garden terrace's middle: a round bed with a planter
 # the stations (sim yard.ts finds them by these ids)
-STRAW = [(16, 40), (19.5, 39.4), (23, 40), (26.5, 39.4)]
-HEAVY, RING = (14.5, 31), (10.5, 27.5)
-RETREAT = (28, 21.5)
-PARRY, PARRY_HOME = (39, 32.5), (61, 32.5)
-HANDS = (69, 16)
-HANDS_IN = [(63.5, 10.5), (74.5, 10.5), (63.5, 21.5), (74.5, 21.5)]
-FOCUS = (54, 9.5)
-GATE = (GATE_X, 7.6)
-STARTS = [(23, 52), (25.6, 52), (23, 54), (25.6, 54)]
-PATH = [(23.6, 56), (22.6, 47), (19, 43), (16.5, 36.5), (17.5, 30.5), (24, 25.5), (31, 25), (36, 30.5), (50, 32.6), (59, 28.5),
-        (62, 22.5), (62, 14), (58, 10.5), (50, 9.5), (GATE_X, 7.5), (GATE_X, 0)]
+STRAW = [(8, 58), (11.5, 57.4), (15, 58), (18.5, 57.4)]
+HEAVY, RING = (14, 44), (9.5, 40.5)
+RETREAT = (16, 26)
+PARRY, PARRY_HOME = (30, 11), (60, 11)
+HANDS = (82, 18)
+HANDS_IN = [(76.5, 12.5), (87.5, 12.5), (76.5, 23.5), (87.5, 23.5)]
+FOCUS = (100, 5)
+GATE = (127, 72)
+STARTS = [(119, 63.5), (121.6, 63.5), (119, 65.9), (121.6, 65.9)]
+PATH = [(120, 69), (104, 76), (86, 84), (70, 86), (BAL_X, 83), (28, 78), (17, 70), (13, 63), (17, 50), (20, 38), (23, 30), (23, 18), (27, 12), (PARRY_HOME[0] - 3, 12.5),
+        (70, 16), (HANDS[0], HANDS[1] + 7.5), (93, 16), (FOCUS[0], FOCUS[1] + 2.5), (108, 15), (114, 34), (114, BAL_Y), (118, 64), GATE]
 
 
 def iid(*parts):
@@ -85,154 +93,166 @@ def path(points, width, rough=.5, seed=7):
 def disc(cx, cy, r, rough=0, seed=3):
     return lambda x, y: math.hypot(x - cx, y - cy) + (noise(x, y, seed) - .5) * rough * 2 < r
 
-# the edges: woods east and west, behind the academy, and the fields' far side past the north wall
-paint(lambda x, y: x < 2 + noise(x, y, 40) * 2 or x > W - 3 - noise(x, y, 41) * 2 or y > H - 2.5 - noise(x, y, 43), 'leaves')
-# north of the wall: ploughed fields either side of the road
-paint(lambda x, y: y < WALL_Y - .8 and (x < GATE_X - 4 or x > GATE_X + 4) and int(y * 2) % 2 == 0 and noise(x, y, 44) > .3, 'mud')
-paint(rect(GATE_X - 2.2, 0, 4.4, WALL_Y + 1, .4, 45), 'cobble')
-# the yard: grass trodden thin over most of it, worn to dirt where people drill
-paint(lambda x, y: 9 < x < 78 and 8 < y < 50 and noise(x, y, 11) > .52, 'dirt')
-paint(rect(12, 34, 18, 10, 1.6, 12), 'dirt')          # the strike lanes
-paint(disc(*RING, 2.4, .6, 13), 'sand')                 # the shove pit, the ring chalked on it (the client)
+in_court = lambda x, y: x > BAL_X and y > BAL_Y
+# the yard: trodden earth over most of it, as in the concepts, with grass left at its margins (along the balustrade
+# and in the corners), in islands where nobody drills, and in a strip under the buildings' feet
+yard_dirt = lambda x, y: (not in_court(x, y) and x > 6 and y > 6 and min(BAL_X - x if y > BAL_Y else 99, BAL_Y - y if x > BAL_X else 99) > 4
+                          and noise(x, y, 11) > .3)
+paint(yard_dirt, 'dirt')
+paint(lambda x, y: not in_court(x, y) and (x < 3.5 or y < 3.5), 'flagstone')
+paint(rect(4, 53, 19, 9, 1.2, 12), 'dirt')                                          # the strike lanes
+paint(disc(*RING, 2.4, .6, 13), 'sand')                                             # the shove pit, the ring chalked on it (the client)
 paint(disc(*HEAVY, 2.2, .6, 14), 'sand')
-paint(disc(*RETREAT, 4.6, .8, 15), 'sand')              # the slam ring
-paint(rect(PARRY[0] - 2, PARRY[1] - 2.6, PARRY_HOME[0] - PARRY[0] + 4, 5.2, .6, 16), 'sand')   # the parry lane
-paint(disc(*HANDS, 6.6, 1.0, 17), 'sand')               # the hands test's ring
-paint(rect(66, 35, 14, 13, 1.4, 18), 'dirt')            # the soldiers' drill ground by the barracks
-paint(path(PATH, 2.6, .7, 19), 'dirt')                  # the worn path, station to station
-paint(path([(23.6, 56), (44, 57), (60, 55), (76, 50), (79, 44)], 2.2, .6, 20), 'gravel')   # hall to garden to barracks
-paint(rect(12, 54, 36, 5, .5, 21), 'flagstone')         # the apron before the hall and the cloister
-paint(rect(53, 52, 21, 12, 1.2, 22), 'grass')           # the garden
-paint(path([(54, 58), (72, 58)], 1.6, .2, 23), 'flagstone')
-paint(path([(63, 53), (63, 63)], 1.6, .2, 24), 'flagstone')
-paint(disc(63, 58, 2.4), 'flagstone')
-paint(rect(56, 42, 10, 7, .8, 25), 'gravel')            # the shed's hardstanding, the building stock
-paint(lambda x, y: x < 10 and 10 < y < 50 and noise(x, y, 26) > .62, 'dirt')   # the old farm's last tracks
+paint(disc(*RETREAT, 4.6, .8, 15), 'sand')                                          # the slam ring
+paint(rect(PARRY[0] - 2, PARRY[1] - 3, PARRY_HOME[0] - PARRY[0] + 4, 6, .5, 16), 'sand')   # the parry lane, fenced (below)
+paint(disc(*HANDS, 6.6, 1.0, 17), 'sand')                                           # the hands test's ring
+paint(rect(54, 28, 46, 20, 1.6, 18), 'dirt')                                        # the soldiers' drill ground
+paint(rect(32, 36, 12, 12, 1.2, 19), 'dirt')                                        # the students' casting line
+paint(path(PATH, 3.2, .8, 20), 'dirt')                                              # the worn path, station to station
+# the courtyard: paving, the armillary's plinth, its seven channels (dim; the finale lights them)
+# the garden terrace (the courtyard is its own room since 2026-11-22): lawn, a gravel walk from the gate, a round bed
+paint(in_court, 'grass')
+paint(path([(GATE[0], GATE[1]), (120, 69), (104, 76), (86, 84), (70, 86), (BAL_X - 4, 83)], 3.4, .3, 24), 'gravel')
+paint(path([(114, BAL_Y - 5), (114, 64), (118, 68)], 3.0, .3, 25), 'gravel')
+paint(lambda x, y: math.hypot(x - GARDEN[0], y - GARDEN[1]) < 6.5, 'dirt')
+paint(path([(BAL_X - 6, 83), (BAL_X + 4, 83)], 5, .2, 21), 'flagstone')          # the opening into the yard, paved through
+paint(path([(114, BAL_Y - 5), (114, BAL_Y + 3)], 6, .2, 22), 'flagstone')        # the opening back out
+paint(rect(GATE[0] - 6, GATE[1] - 4, 10, 8, .3, 23), 'cobble')                     # the courtyard's east gate
 
 # ---- props -----------------------------------------------------------------------------------------------------------
 props = []
 def prop(asset, x, y, blocks=False):
     props.append((asset, round(x * 4) / 4, round(y * 4) / 4, blocks))
 
-# the academy along the south: the hall you come out of, the cloister, the garden
-# No buildings as props: at a real scale a building is the environment, not an object in it (the user, 2026-11-14,
-# rejecting both the bought one-picture buildings and the kit-assembled ones). The academy waits for its own design.
-prop('notice-board', 30.5, 56.2, True)
-for x in (17, 33, 47):
-    prop('lantern-post', x, 55.2, True)
-prop('well', 63, 58, True)
-for asset, x, y in [('bench', 59.5, 55.6), ('bench', 66.5, 55.6), ('bench', 59.5, 60.6), ('oak', 56, 54), ('oak', 71, 62.5), ('bush-round', 54.5, 63),
-                    ('bush-round', 72.5, 53.5), ('beehive', 70.5, 60), ('cabbage-patch', 56.5, 61), ('cabbage-patch', 58.5, 62.5)]:
-    prop(asset, x, y, asset not in ('cabbage-patch',))
-for asset, x, y in [('white-daisy-clump', 61, 56), ('red-poppy-clump', 65.5, 60.5), ('purple-lavender-sprig', 60.5, 59.5), ('yellow-buttercup-clump', 66, 56.5),
-                    ('orange-marigold', 57.5, 57), ('blue-cornflower-clump', 68, 60), ('tall-foxglove-stem', 54.5, 55.5), ('small-potted-herb', 62, 54.5), ('sleeping-grey-cat', 66.3, 55)]:
-    prop(asset, x, y)
-for x in (54, 56, 70, 72):
-    prop('stone-wall-low', x, 51.3, True)                 # the garden's low wall, open where the paths come through
-# the barracks and their drill ground, the shed with the building stock round it
-for asset, x, y in [('water-trough', 74.5, 47.5), ('jerkin-rack', 76.5, 36.5), ('practice-shields', 78.5, 36.2), ('washing-line', 84, 50), ('weapon-rack', 72.5, 34.8),
-                    ('banner-red', 70, 34.5), ('barrel', 84.5, 37.5), ('crates', 85, 39.5)]:
-    prop(asset, x, y, asset not in ('washing-line',))
-for asset, x, y in [('planks-stacked', 57, 49), ('logs-pile', 66, 49.5), ('stone-blocks', 55, 46.5), ('sawhorse', 58.6, 50.2), ('ladder-lying', 64.5, 51),
-                    ('fence-posts-bundle', 67.5, 47), ('tarp-heap', 54.5, 43.5), ('nail-barrel', 60, 50.4), ('gravel-heap', 52.5, 48.5), ('wheelbarrow', 54.6, 50.6),
-                    ('pile-of-sawdust', 57.6, 51.4), ('coil-of-rope', 63, 49.8)]:
-    prop(asset, x, y, asset not in ('ladder-lying', 'pile-of-sawdust', 'coil-of-rope'))
-# the yard's east edge, fenced in a hurry and not finished
-for k, y in enumerate([12, 14, 16, 18, 20, 22, 24, 26]):
-    prop('fence-rail-flip' if k < 6 else 'fence-frame', 81, y, k < 6)
-# the stations' own things
+def run_x(asset, y, x0, x1, step=1.75, skip=None, blocks=True):
+    x = x0
+    while x < x1:
+        if not (skip and skip[0] < x < skip[1]):
+            prop(asset, x, y, blocks)
+        x += step
+
+def run_y(asset, x, y0, y1, step=1.75, skip=None, blocks=True):
+    y = y0
+    while y < y1:
+        if not (skip and skip[0] < y < skip[1]):
+            prop(asset, x, y, blocks)
+        y += step
+
+# No buildings as props: at a real scale a building is the environment, not an object in it (the user, 2026-11-14).
+# The ranges are past the map's west and north edges (art/massing.ts).
+# the balustrade (Codex, tools/building-art), low, so the courtyard and the yard see each other: 8 u pieces between
+# lantern pillars, the pillars at its corners and either side of its openings
+BAL = 8.2
+def balustrade_x(y, x0, x1):
+    n = max(1, round((x1 - x0) / BAL))
+    for k in range(n):
+        prop('codex-balustrade-x', x0 + (k + .5) * (x1 - x0) / n, y, True)
+def balustrade_y(x, y0, y1):
+    n = max(1, round((y1 - y0) / BAL))
+    for k in range(n):
+        prop('codex-balustrade-y', x, y0 + (k + .5) * (y1 - y0) / n, True)
+balustrade_y(BAL_X, BAL_Y + .6, IN_GAP[0]); balustrade_y(BAL_X, IN_GAP[1], H - .6)
+balustrade_x(BAL_Y, BAL_X + .6, OUT_GAP[0]); balustrade_x(BAL_Y, OUT_GAP[1], W - .6)
+for x, y in [(BAL_X, BAL_Y), (BAL_X, IN_GAP[0]), (BAL_X, IN_GAP[1]), (OUT_GAP[0], BAL_Y), (OUT_GAP[1], BAL_Y)]:
+    prop('codex-lantern-pillar', x, y, True)
+# the terrace's edges: the same balustrade south and east, the gate through to the courtyard in it
+balustrade_x(H - .8, BAL_X + .6, W - .6)
+balustrade_y(W - .8, BAL_Y + .6, GATE[1] - 4.5); balustrade_y(W - .8, GATE[1] + 4.5, H - .6)
+for dy in (-3.8, 3.8):
+    prop('battery-pillar', W - 1.6, GATE[1] + dy, True)
+    prop('banner-red', W - 3.4, GATE[1] + dy * 1.4)
+prop('signpost', GATE[0] - 5, GATE[1] - 5.5, True)
+# the round bed: an urn in its middle, flowers round it, benches looking at it
+prop('codex-urn-planter', GARDEN[0], GARDEN[1], True)
+for k, asset in enumerate(['codex-lilac-shrub', 'codex-lavender-foxglove', 'codex-yellow-shrub', 'codex-white-shrub', 'codex-lilac-shrub', 'codex-lavender-foxglove']):
+    a = k * math.pi / 3
+    prop(asset, GARDEN[0] + math.cos(a) * 4.2, GARDEN[1] + math.sin(a) * 4.2, not asset.startswith(('codex-lavender', 'codex-white')))
+for a in (0.25, 0.75):
+    prop('codex-bench', GARDEN[0] + math.cos(a * math.pi) * 9.5, GARDEN[1] + math.sin(a * math.pi) * 9.5, True)
+for asset, x, y in [('codex-conifer-tall', 50, 58), ('codex-conifer-tall', 50, 96), ('codex-conifer-tall', 125.5, 58), ('codex-conifer-round', 125, 95),
+                    ('codex-urn-planter', 112, 92), ('codex-urn-planter', 88, 92),
+                    ('codex-lilac-shrub', 54, 62), ('codex-yellow-shrub', 58, 59), ('codex-white-shrub', 52, 70), ('codex-lavender-foxglove', 56, 95),
+                    ('codex-lilac-shrub', 120, 95), ('codex-yellow-shrub', 124, 88), ('codex-lavender-foxglove', 104, 95),
+                    ('codex-lilac-tree', 70, 70), ('codex-lilac-tree', 112, 90), ('codex-mossy-rocks', 66, 96), ('codex-notice-board', 112, 62)]:
+    prop(asset, x, y, not asset.startswith(('codex-star-banner', 'codex-lavender', 'codex-white')))
+# along the Great Hall's foot: lanterns, a bench by its door, the notice board
+for y in (14, 30, 50, 66):
+    prop('codex-lantern-post', 2.4, y, True)
+# planting along the buildings' feet, between the stations (Codex, tools/building-art)
+for asset, x, y in [('codex-lavender-foxglove', 3.2, 9), ('codex-lilac-shrub', 3.4, 20), ('codex-yellow-shrub', 3.4, 36), ('codex-white-shrub', 3.4, 70),
+                    ('codex-urn-planter', 3.4, 40.6), ('codex-urn-planter', 3.4, 47.4), ('codex-conifer-tall', 2.8, 75), ('codex-lilac-shrub', 3.4, 82),
+                    ('codex-lavender-foxglove', 3.4, 90), ('codex-conifer-round', 3, 97),
+                    ('codex-yellow-shrub', 12, 3.4), ('codex-lavender-foxglove', 20, 3.2), ('codex-lilac-shrub', 68, 3.4), ('codex-white-shrub', 76, 3.4),
+                    ('codex-lavender-foxglove', 86, 3.2), ('codex-conifer-tall', 93, 2.8), ('codex-urn-planter', 108, 3.4), ('codex-yellow-shrub', 116, 3.4),
+                    ('codex-mossy-rocks', 124, 4), ('codex-star-banner', 95.4, 2.6), ('codex-star-banner', 104.6, 2.6)]:
+    prop(asset, x, y, not asset.startswith(('codex-star-banner', 'codex-lavender', 'codex-white')))
+prop('codex-bench', 2.6, 44, True)
+# the strike lanes: a straw goblin at each post, dummies either side
 for x, y in STRAW:
-    prop('pell', x + .6, y - 2.6, True)                   # each lane's post behind its straw goblin
-for x in (14.4, 28.2):
-    prop('hay-bale', x, 38.4, True)
-prop('training-dummy', 12.3, 41.5, True); prop('dummy-worn', 29.5, 41.2, True)
-prop('training-sack', HEAVY[0] + 3.2, HEAVY[1] - .6, True)   # the sack's empty gallows, its sack on the ground in front
-prop('hay-bale', PARRY[0] - 2.6, PARRY[1], True)          # behind you in the lane: what the bolts that get past hit
-prop('hay-bale', PARRY[0] - 2.6, PARRY[1] + 1.4, True)
-prop('archer-platform', PARRY_HOME[0] + 3, PARRY_HOME[1] - 2.6, True)
-prop('target-weathered', PARRY_HOME[0] + 2.4, PARRY_HOME[1] + 2.6, True)
+    prop('codex-training-post', x + .6, y - 2.6, True)
+for x in (5.2, 21.6):
+    prop('codex-hay-bale', x, 56.4, True)
+prop('codex-straw-goblin-dummy', 4.4, 60.5, True); prop('codex-straw-goblin-dummy', 22.2, 60.5, True)
+# the sack and its chalk ring, the slam ring
+prop('codex-training-sack', HEAVY[0] + 3.2, HEAVY[1] - .6, True)
 prop('sword-rack', RETREAT[0] + 4.6, RETREAT[1] - 3.6, True)
 prop('round-wooden-stool-knocked-over', RETREAT[0] - 3.8, RETREAT[1] + 2.4)
-for asset, x, y in [('hay-bale', 76.5, 15.5), ('loose-pile-of-straw', 75.5, 17.2), ('loose-pile-of-straw', 64, 13), ('scarecrow', 76.6, 12.6)]:
-    prop(asset, x, y, asset in ('hay-bale', 'scarecrow'))
+# the parry lane along the workshops: fenced both sides, open at your end, the crossbowman's platform at the far end
+run_x('codex-fence-x', PARRY[1] - 3.8, PARRY[0] + 3.6, PARRY_HOME[0] - 1, step=4.2)
+run_x('codex-fence-x', PARRY[1] + 3.8, PARRY[0] + 3.6, PARRY_HOME[0] - 1, step=4.2)
+prop('codex-hay-bale', PARRY[0] - 2.6, PARRY[1] - .7, True)       # behind you in the lane: what the bolts that get past hit
+prop('codex-hay-bale', PARRY[0] - 2.6, PARRY[1] + .9, True)
+prop('archer-platform', PARRY_HOME[0] + 3, PARRY_HOME[1] - 2.6, True)
+prop('codex-archery-target', PARRY_HOME[0] + 2.4, PARRY_HOME[1] + 2.6, True)
+# the hands ring
+for asset, x, y in [('codex-hay-bale', 90.5, 14.5), ('loose-pile-of-straw', 89.5, 17), ('loose-pile-of-straw', 74, 16), ('scarecrow', 90.6, 21.6)]:
+    prop(asset, x, y, asset in ('codex-hay-bale', 'scarecrow'))
+# the rack at the armoury door
 prop('focus-rack', FOCUS[0], FOCUS[1] - 1.3, True)
-for asset, x, y in [('weapon-rack', FOCUS[0] + 2.6, FOCUS[1] - 1.4), ('crate-fittings', FOCUS[0] + 4.6, FOCUS[1] - .6), ('lantern-post', FOCUS[0] - 2.2, FOCUS[1] - 1.6)]:
+for asset, x, y in [('codex-weapon-rack', FOCUS[0] + 2.8, FOCUS[1] - 1.4), ('crate-fittings', FOCUS[0] + 4.8, FOCUS[1] - .6), ('codex-lantern-post', FOCUS[0] - 2.4, FOCUS[1] - 1.6)]:
     prop(asset, x, y, True)
-# the students' casting line, between the lanes and the shed: targets north, a bench behind
-for k in range(3):
-    prop('target', 38 + k * 4, 38.2, True)
-prop('bench', 42, 47.4, True)
-prop('stack-of-three-books', 41.4, 47.9)
-# the north wall, low, with the gatehouse in it and banners either side; the road and the fields past it
-x = 1.0
-while x < W - 1:
-    if not (GATE_X - 4.4 < x < GATE_X + 4.4):
-        prop('stone-wall-low', x, WALL_Y, True)
-    x += 1.75
-prop('gatehouse', GATE_X, WALL_Y + .2, True)
-for dx in (-5.2, 5.2):
-    prop('banner-red', GATE_X + dx, WALL_Y + 1.1)
-prop('signpost', GATE_X + 3.2, 2.2)
-for asset, x, y in [('scarecrow', 22, 2), ('cabbage-patch', 30, 2.4), ('cabbage-patch', 33, 1.5), ('hay-bale', 62, 2.2), ('hay-bale', 63.5, 3), ('wild-wheat-stalks', 70, 2), ('wild-wheat-stalks', 16, 2.6)]:
-    prop(asset, x, y)
-# the old farm the yard was put on, to the west: a ruined wall, a broken arch, an orchard gone wild, its leftovers
-for k, y in enumerate([14, 15.75, 19.25, 21, 22.75]):
-    prop('stone-wall-low-flip', 8.2, y, True)
-prop('pillar-broken', 8.2, 17.5, True)
-prop('arch-ruined', 5, 27, True)
-for asset, x, y in [('oak', 4.5, 34), ('oak-autumn', 7, 39.5), ('oak', 3.6, 45), ('stump-axe', 6.2, 31), ('log-fallen', 8.4, 43.2), ('wagon-wheel', 5.4, 36.5),
-                    ('plough-rusty', 6.6, 24), ('barrel-broken', 3.6, 20), ('roof-tiles-pile', 4.6, 16.4), ('broken-branch', 7.8, 47.6), ('fallen-acorns', 5, 35.4),
-                    ('stone-blocks', 3.4, 12), ('round-river-stone', 9, 30)]:
-    prop(asset, x, y, asset in ('oak', 'oak-autumn', 'stump-axe', 'log-fallen', 'plough-rusty', 'stone-blocks'))
-# leftovers from putting the yard up, strewn where they were dropped
-for asset, x, y in [('planks-stacked', 34.5, 15), ('fence-posts-bundle', 37, 13.6), ('sawhorse', 13, 47.6), ('ladder-lying', 47.5, 17), ('nail-barrel', 35.6, 17.2),
-                    ('tarp-heap', 12, 11), ('gravel-heap', 27, 49), ('handcart', 33, 50.2)]:
+# the soldiers' drill ground in the open middle: racks of plain steel, a post for the mallet, targets for the crossbows
+for asset, x, y in [('codex-weapon-rack', 56, 29.5), ('jerkin-rack', 59, 29.2), ('practice-shields', 62, 29.2), ('codex-training-post', 74, 35.4), ('banner-red', 54.5, 30),
+                    ('water-trough', 66, 47.5), ('barrel', 97.5, 46), ('codex-crates-barrel', 97.8, 44)]:
+    prop(asset, x, y, asset != 'banner-red')
+for y in (31, 35, 39):
+    prop('codex-archery-target', 98.5, y, True)
+# the students' casting line
+for x in (35, 39, 43):
+    prop('codex-archery-target', x, 37.2, True)
+prop('codex-bench', 38, 47.6, True)
+prop('stack-of-three-books', 37.4, 48.2)
+# building stock and leftovers along the inside of the balustrade, from putting the yard up in a hurry
+for asset, x, y in [('planks-stacked', 50, 51.4), ('logs-pile', 54, 51.6), ('stone-blocks', 58, 51.4), ('sawhorse', 61.6, 52), ('tarp-heap', 65, 51.4),
+                    ('nail-barrel', 68, 52.2), ('gravel-heap', 71.5, 51.6), ('wheelbarrow', 75, 52), ('fence-posts-bundle', 43.6, 66), ('ladder-lying', 43.4, 72),
+                    ('handcart', 30, 50)]:
     prop(asset, x, y, asset not in ('ladder-lying',))
-# a little life in the grass
-for asset in ['short-grass-tuft'] * 18 + ['tall-grass-tuft'] * 8 + ['clover-patch'] * 6 + ['dandelion-seed-puff', 'yellow-dandelion', 'molehill', 'small-brown-bird', 'resting-butterfly', 'single-small-pebble', 'three-pebbles', 'patch-of-bare-dirt'] * 2:
-    for _ in range(40):
-        x, y = rng.uniform(3, W - 4), rng.uniform(WALL_Y + 1.5, 52)
-        if min(seg_dist(x, y, PATH[i], PATH[i + 1]) for i in range(len(PATH) - 1)) < 2.4 or any(math.hypot(x - a, y - b) < 3 for a, b, _, _ in [(p[1], p[2], 0, 0) for p in props]):
-            continue
-        prop(asset, x, y)
-        break
-# the woods round it all
-def band(x0, y0, x1, y1, step=3.0):
-    y = y0 + 1
-    while y < y1:
-        xx = x0 + 1
-        while xx < x1:
-            px, py = xx + rng.uniform(-.8, .8), y + rng.uniform(-.8, .8)
-            if .6 < px < W - .6 and .6 < py < H - .6:
-                prop(rng.choice(['pine', 'oak', 'oak', 'oak-autumn', 'bush-round']), round(px * 2) / 2, round(py * 2) / 2, True)
-            xx += step
-        y += step
-band(0, WALL_Y + 1, 2.6, 52)
-band(W - 3.6, WALL_Y + 1, W, H)
-band(0, 52, 3, H)              # the woods west of the hall; nothing south of the academy's buildings, which would stand in front of them
-band(50, H - 3, W - 3.6, H)
-band(78, 52, W - 3.6, H - 3)
-for asset, x, y in [('pine', 4, 1.5), ('oak', 9, 2.5), ('pine', 78, 2), ('oak', 84, 1.5), ('pine', 88, 3)]:
-    prop(asset, x, y, True)
+# no loose scatter: the Codex ground textures carry their own pebbles and tufts (round 4 critique: lone props read as noise)
 
 # ---- the people who live here (art/extras.ts draws them; the sim never sees them) -----------------------------------
 extras = []
 def person(kind, act, pal, variant, face, x, y):
     extras.append((f'x-{kind}-{act}-{pal}-{variant}-{face}-{len(extras)}', x, y))
 
-for r in range(2):                                 # soldiers at spear drill before the barracks, facing west
+# soldiers' kit (art/rigs.ts drawSoldier): 0 practice sword, 1 mallet, 2 crossbow, 3 spear. The maul, the longbows and
+# the trident in the concept are art still to make; the mallet and crossbows stand in.
+for r in range(2):                                   # spear drill, facing west
     for c in range(3):
-        person('soldier', 'drill', 0, 3, 180, 70.5 + c * 2.2, 39 + r * 2.4)
-person('soldier', 'idle', 0, 0, 180, 74.6, 46.6)     # their sergeant, watching them
-person('soldier', 'spar', 1, 0, 0, 64.6, 37.6)     # two at it with practice swords
-person('soldier', 'spar', 2, 0, 180, 66.4, 37.6)
-person('student', 'cast', 4, 0, 270, 38, 42.4)     # the casting line, at the targets
-person('student', 'cast', 6, 0, 270, 42, 42.4)
-person('student', 'idle', 5, 0, 300, 45.6, 43.6)
-person('student', 'idle', 4, 0, 0, 59.4, 56.2)     # in the garden, on the benches
-person('student', 'idle', 5, 0, 180, 66.6, 56.2)
-person('student', 'walk', 6, 0, 0, 36, 57.4)       # walking the gravel walk, hall to garden and back
-person('student', 'idle', 4, 0, 90, 5.4, 32.6)     # reading under the old orchard's trees
+        person('soldier', 'drill', 0, 3, 180, 60 + c * 2.4, 33 + r * 2.6)
+person('soldier', 'drill', 1, 1, 180, 76, 35.6)      # the mallet at its post
+person('soldier', 'spar', 1, 0, 0, 76, 42.4)         # two at it with practice swords
+person('soldier', 'spar', 2, 0, 180, 78, 42.4)
+for y in (31, 35, 39):                               # crossbows at the targets
+    person('soldier', 'idle', 0, 2, 0, 88, y)
+person('soldier', 'idle', 0, 0, 180, 68, 45)         # their sergeant
+person('student', 'cast', 4, 0, 270, 35, 43)         # the casting line
+person('student', 'cast', 6, 0, 270, 39, 43)
+person('student', 'idle', 5, 0, 300, 43, 44.5)
+person('student', 'idle', 6, 0, 225, 103, 84)       # in the garden, by the round bed
+person('student', 'walk', 4, 0, 180, 72, 66)         # the courtyard, busy this morning
+person('student', 'idle', 5, 0, 90, 118, 90)
+person('student', 'idle', 6, 0, 270, 119.5, 91.5)
+person('student', 'walk', 6, 0, 0, 60, 72)
 
 # ---- the level -------------------------------------------------------------------------------------------------------
 source = json.load(open(os.path.join(MAPS, 'world/Academy.ldtkl'), encoding='utf-8'))
@@ -266,7 +286,7 @@ for s, (x, y) in enumerate(STARTS):
 for i, (asset, x, y, blocks) in enumerate(props):
     es.append(entity('Prop', i, x, y, {'asset': asset, 'blocks': blocks, 'tag': None}))
 MARKS = {'heavy': HEAVY, 'heavy-ring': RING, 'retreat': RETREAT, 'parry': PARRY, 'parry-home': PARRY_HOME, 'hands': HANDS, 'focus': FOCUS, 'gate': GATE,
-         'strike': (21, 42.6)}
+         'strike': (13, 62.6)}
 MARKS.update({f'straw-{k}': p for k, p in enumerate(STRAW)})
 MARKS.update({f'hands-in-{k}': p for k, p in enumerate(HANDS_IN)})
 for name, (x, y) in MARKS.items():

@@ -1,0 +1,22 @@
+{
+  "id": "codex-lavender-foxglove",
+  "kind": "prop",
+  "name": "Lavender foxglove",
+  "footprint": [
+    2.5,
+    1.25
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        27,
+        45
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/props-a-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later."
+    }
+  }
+}

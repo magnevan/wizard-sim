@@ -32,7 +32,7 @@
 			"__type": "Array<Float>",
 			"__value": [],
 			"__tile": null,
-			"defUid": 118,
+			"defUid": 119,
 			"realEditorValues": []
 		}
 	],
@@ -1480,9 +1480,9 @@
 			"__pxTotalOffsetY": 0,
 			"__tilesetDefUid": null,
 			"__tilesetRelPath": null,
-			"iid": "e9317c51-89a5-4a45-ab42-41fb443f845e",
+			"iid": "82138636-12ec-4f85-af60-48453a1d791c",
 			"levelId": 101,
-			"layerDefUid": 117,
+			"layerDefUid": 118,
 			"pxOffsetX": 0,
 			"pxOffsetY": 0,
 			"visible": true,
@@ -1522,7 +1522,7 @@
 				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 			],
 			"autoLayerTiles": [],
-			"seed": 2882876,
+			"seed": 1091983,
 			"overrideTilesetUid": null,
 			"gridTiles": [],
 			"entityInstances": []

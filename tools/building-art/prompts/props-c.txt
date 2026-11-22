@@ -1,0 +1,10 @@
+Generate one image with your image generation tool, then save it as props-c.png in the current directory. Reply with just the file name.
+
+The attached images are the look we want: a wizard academy in high-detail pixel art, seen from high above at a 3/4 angle, warm morning light from the upper left, and our painted academy buildings.
+
+Make a sheet of separate objects for this game, every one standing on its own on a flat, plain magenta (#FF00FF) background with clear magenta space all round it, no ground under them and no shadows. All drawn at one consistent scale, in the same 3/4 view as the attached images. Leftmost, for scale only: a small young wizard in a blue robe and pointed hat, standing.
+
+Then, in rows: 1. a round inlaid compass-rose floor medallion of pale stone and gold, lying flat on the ground (seen as a wide ellipse). 2. a square inlaid floor tile of blue stone with a gold star, lying flat. 3. a tall slim stone obelisk with gold runes and a violet crystal on top. 4. a tall banner pole with a long blue and gold academy pennant. 5. a scholars' wooden table with open books, scrolls and a brass instrument. 6. a wooden book cart piled with books. 7. a small round stone fountain with a gold rim and clear water. 8. a planted bed of low boxwood hedge with pink roses inside, square, seen in 3/4.
+
+Match the attached images' palette, light and pixel-art detail exactly.
+

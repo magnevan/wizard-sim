@@ -1,0 +1,26 @@
+{
+  "id": "codex-balustrade-y",
+  "kind": "prop",
+  "name": "Balustrade y",
+  "footprint": [
+    0.5,
+    8.2
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        48,
+        28
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/props-a-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later.",
+      "ops": [
+        "sheared to a -0.5 base slope (tools/building-art/shear.py)"
+      ]
+    }
+  },
+  "shadow": false
+}

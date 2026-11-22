@@ -1,0 +1,22 @@
+{
+  "id": "codex-yellow-shrub",
+  "kind": "prop",
+  "name": "Yellow shrub",
+  "footprint": [
+    2.05,
+    1.02
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        22,
+        32
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/props-a-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later."
+    }
+  }
+}

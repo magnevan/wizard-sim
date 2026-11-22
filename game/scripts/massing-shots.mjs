@@ -13,8 +13,8 @@ const [vw, vh] = arg('size', '1920x1080').split('x').map(Number);
 mkdirSync(out, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // plan coordinates (tools/segments/01-opening/yard-level.py)
-const SPOTS = { 'hall-door': [10, 47], corner: [12, 10], 'hall-mid': [11, 28], passage: [46, 8.5], workshops: [30, 8], focus: [56, 12],
-  'yard-mid': [34, 30], strike: [21, 43], start: [24.3, 53], far: [60, 40] };
+const SPOTS = { 'hall-door': [5, 38], corner: [6, 6], 'hall-mid': [6, 24], workshops: [40, 5], armoury: [100, 9], 'yard-mid': [60, 36],
+  strike: [13, 63], start: [120, 67], garden: [100, 86], far: [110, 60] };
 
 const stop = await startPreview();
 const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });

@@ -44,6 +44,20 @@ section { display:grid; gap:16px; min-width:0; scroll-margin-top:44px; }
 .stages .draft,.stages .started { border-top-color:var(--ok); }
 .stages .review { border-top-color:var(--accent); }
 .stages .next { border-top-style:dashed; border-top-color:var(--accent); }
+/* The board: every stop of the segment against every stage, so where each one stands is one glance. */
+.board { border-collapse:separate; border-spacing:2px; font-size:13px; min-width:760px; }
+.board th,.board td { border:0; padding:6px 8px; vertical-align:top; line-height:1.3; }
+.board thead th { font:500 12px var(--mono); color:var(--muted); }
+.board tbody th { font-weight:600; color:var(--ink); background:var(--sheet); min-width:130px; }
+.board tbody th a { color:var(--ink); }
+.board td { background:var(--sheet); border-top:4px solid var(--rule); color:var(--muted); }
+.board td b { display:block; font:600 12px var(--mono); color:var(--ink); }
+.board td.done { border-top-color:var(--ok); }
+.board td.started { border-top-color:var(--ok); border-top-style:dashed; }
+.board td.review { border-top-color:var(--accent); }
+.board td.review b { color:var(--accent); }
+.board td.next { border-top-color:var(--accent); border-top-style:dashed; }
+.board td.later { opacity:.6; }
 .todo { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
 @media (max-width:640px) { .todo { grid-template-columns:minmax(0,1fr); } }
 .todo > div { min-width:0; display:grid; gap:6px; align-content:start; }
@@ -97,8 +111,8 @@ th { font-weight:600; color:var(--muted); font-size:14px; }
 <header id="top"></header>
 <div class="saved" id="save">Connecting…</div>
 <section id="overview"></section>
+<section id="concept" style="display:grid;gap:44px"></section>
 <div id="chapters" style="display:grid;gap:44px;min-width:0"></div>
-<section id="concept"></section>
 <section id="scale"></section>
 <section id="needs"></section>
 <section id="notes"></section>
@@ -114,6 +128,7 @@ const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className
 const $=id=>document.getElementById(id);
 const pathLen=p=>p.slice(1).reduce((a,q,i)=>a+Math.hypot(q[0]-p[i][0],q[1]-p[i][1]),0);
 const LEADS={draft:'Draft',review:'In review',next:'Next',started:'Started',later:'Later'};
+const BOARD={done:'Done',started:'In progress',review:'Waiting on you',next:'Next for me',later:'Later'};
 
 function draw(svg,m,mode,cam){
  svg.replaceChildren();
@@ -168,9 +183,19 @@ const lead=([a,b])=>{const p=el('p');const s=el('strong','',a);p.append(s,b);ret
 function buildTop(){
  const h=$('top');h.append(el('div','eyebrow','Segment '+SEG.number),el('h1','',SEG.title),el('p','lede',SEG.lede),(()=>{const p=el('p','cap',SEG.scope);p.style.marginTop='8px';return p;})());
  const o=$('overview');
- const st=el('ol','stages');
- for(const [n,s,x] of SEG.stages){const li=el('li',s);li.append(el('b','',n),el('span','',x||LEADS[s]));st.append(li);}
- o.append(st);
+ if(SEG.board){
+  const B=SEG.board,wrap=el('div','scroll'),t=el('table','board');
+  const hr=el('tr');hr.append(el('th','','Stop'));B.cols.forEach(c=>hr.append(el('th','',c)));const th=el('thead');th.append(hr);t.append(th);
+  const tb=el('tbody');
+  for(const [name,href,cells] of B.rows){const tr=el('tr');const h=el('th');h.scope='row';if(href){const a=el('a','',name);a.href=href;h.append(a);}else h.textContent=name;tr.append(h);
+   cells.forEach(([s,x])=>{const td=el('td',s||'later');td.append(el('b','',BOARD[s||'later']));if(x)td.append(x);tr.append(td);});tb.append(tr);}
+  t.append(tb);wrap.append(t);o.append(wrap);
+  o.append(el('p','cap',B.note));
+ }else{
+  const st=el('ol','stages');
+  for(const [n,s,x] of SEG.stages){const li=el('li',s);li.append(el('b','',n),el('span','',x||LEADS[s]));st.append(li);}
+  o.append(st);
+ }
  const sheet=el('div','sheet'),todo=el('div','todo');
  const a=el('div');a.append(el('h3','','Waiting on you'));const ul=el('ul','tight');
  for(const [href,t] of SEG.needsYou){const li=el('li');const l=el('a','',t);l.href=href;li.append(l);ul.append(li);}a.append(ul);
@@ -187,8 +212,8 @@ function buildChapter(c){
  const m=c.map,sec=el('section');sec.id=c.id;
  const nums=c.beats.map(b=>b.n),mins=c.beats.reduce((a,b)=>a+b.min,0);
  const head=el('div','chapter-head');
- const t=el('div','head');t.append(el('h2','',c.name),el('span','dim',`beat${nums.length>1?'s':''} ${nums.length>1?nums[0]+'–'+nums[nums.length-1]:nums[0]} · about ${Math.round(mins)} min · ${m.W} × ${m.H} u`));
- head.append(t);sec.append(head);
+ const t=el('div','head');t.append(el('h2','',c.name),el('span','dim',`beat${nums.length>1?'s':''} ${nums.length>1?nums[0]+'–'+nums[nums.length-1]:nums[0]} · about ${Math.round(mins)} min`+(m?` · ${m.W} × ${m.H} u`:'')));
+ head.append(t);if(c.note)head.append(el('p','cap',c.note));sec.append(head);
 
  const beats=el('div','sheet');beats.style.gap='0';
  for(const b of c.beats){
@@ -203,6 +228,7 @@ function buildChapter(c){
  }
  sec.append(beats);
 
+ if(m){
  const sheet=el('div','sheet');
  const mh=el('div','head');mh.append(el('h3','','The map'),el('span','dim',`${(m.W/VW).toFixed(1)} screens wide · walk through ${Math.round(pathLen(m.route)/SPEED)} s`));
  sheet.append(mh,el('p','',m.what));
@@ -223,6 +249,7 @@ function buildChapter(c){
  for(const z of m.zones){const tr=el('tr');z.forEach(x=>tr.append(el('td','',x)));tbody.append(tr);}tb.append(tbody);right.append(tb);
  right.append(marks('ratings','map-'+c.id,[['small','Too small'],['right','About right'],['big','Too big']]),noteBox('ratings',`${ROUND}-map-${c.id}`,'Notes on this map'));
  below.append(left,right);sheet.append(wrap,below);sec.append(sheet);update();
+ }
 
  if(c.shots){const s=el('div','sheet');c.shots.forEach(([src,alt,cap])=>{const f=el('figure');f.style.cssText='margin:0;display:grid;gap:6px';const i=el('img');i.src=src;i.alt=alt;i.style.cssText='width:100%;height:auto;image-rendering:pixelated';f.append(i,el('figcaption','cap',cap));s.append(f);});sec.append(s);}
  if((c.settled&&c.settled.length)||c.solve.length){
@@ -257,7 +284,7 @@ function buildBottom(){
  const lg=el('div','legend');for(const [n,k] of [['Floor','floor'],['Sand','sand'],['Grass','grass'],['Fought-over ground','field'],['Dirt','dirt'],['Water','water'],['Trees','tree'],['Wall or rock','wall'],['Structure','struct'],['Furniture or cover','furn'],['Danger or enemy entry','danger']]){const s=el('span');const i=el('i');i.style.background=KC(k);s.append(i,n);lg.append(s);}lg.append(el('span','','Dots: your route.'));sc.append(lg);
 
  const n=$('needs');n.append(el('h2','','What it needs'));
- for(const j of [].concat(SEG.buy)){const buy=el('div','sheet');buy.id=j.anchor||'buy';buy.style.scrollMarginTop='44px';
+ for(const j of [].concat(SEG.buy||[])){const buy=el('div','sheet');buy.id=j.anchor||'buy';buy.style.scrollMarginTop='44px';
  const jh=el('div','head');jh.append(el('h3','',j.name),el('span','dim',j.costLabel||j.cost+' generations'));
  buy.append(jh,el('p','',j.why));(j.points||[]).forEach(x=>buy.append(lead(x)));buy.append(el('p','cap',j.tool));j.lines.forEach(x=>buy.append(el('div','quote',x)));
  (j.images||[]).forEach(([src,alt,cap])=>{const f=el('figure');f.style.cssText='margin:0;display:grid;gap:6px';const i=el('img');i.src=src;i.alt=alt;i.style.cssText='width:100%;height:auto'+(src.endsWith('.png')?';image-rendering:pixelated':'');f.append(i,el('figcaption','cap',cap));buy.append(f);});

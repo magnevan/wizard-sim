@@ -9,12 +9,12 @@ cssclasses:
 
 ## Campaign opening
 
-> [!in-review] Next layout review
-> Check the size of the drill yard against a wizard and the surrounding Academy buildings. The yard was marked too small.
+> [!in-review] Walk the reworked yard
+> The drill yard is rebuilt as a blockout along the academy (`#yard`, key 7): 130 × 100, the Great Hall and the workshops as grey boxes at real size, the courtyard and the armillary beside it, and every station waits a moment before it acts. Walk it, then mark its plan on the Opening Segment page (about right, too small, too big). Optional, whenever: the yard's round 5 questions, and the encounter questions on The Morning Everything Breaks.
 
-The last recorded scope is beats 1–7, through the battery.
+The opening is a chain of eight stops, Life first; the yard and the battery are built ([route](campaign/01-opening/brief.md#the-route), [thread](threads/opening.md)).
 
-[Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) · [Saved marks](archive/claude-review-feedback-2026-11-16.md#opening-segment) · [Playable battery](current-state.md#rooms)
+[The Morning Everything Breaks](https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews) · [Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) · [Saved marks](archive/claude-review-feedback-2026-11-16.md#opening-segment) · [Playable battery](current-state.md#rooms)
 
 ## Goblin warband art
 

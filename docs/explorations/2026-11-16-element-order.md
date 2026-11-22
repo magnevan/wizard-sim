@@ -265,3 +265,20 @@ New asset ideas from round 2: the healers' tools (lamps over cots, stills, a hea
 3. **The finale's locks:** feed each lock the elements of its channels (Claude's pick), or something more physical?
 4. **Order flex:** the user wondered whether players might flex the order. The chain keeps the combos in order; one flex point would be letting the harbor and the waterworks swap. Keep the chain strict (Claude's pick), or allow that one swap?
 5. **Sigil at the finale:** unlock the rest of Sigil's gestures when you lock the rings (Claude's pick), or keep Sigil's growth for later in the campaign?
+
+### The user's answers, round 2 (2026-11-21)
+
+| Id | Note |
+|---|---|
+| `r2-stop-life` | The vines are better than the plain click first imagined. Add small injuries for the players too (thorns that cut you while you clear the vines), so they have a reason to try self-casting. There's no real pressure in healing the cots; you can take your time. |
+| `r2-stop-fire` | The battery has matured and needs refinement, not a rethink. The map could be redone to show the gorse fire. A new enemy could be tried here as the encounter deepens. |
+| `r2-stop-shield` | Not sold on feeding Life and Fire into the pylons: nothing connects those elements to turning a pylon on. Use the elements to solve the problem, but make it logical: **burn something off the pylon** (preferred), or a plain "press X to fix". The fight reads as a fixed choreography, and its roles don't work for 1 to 4 players. |
+| `r2-stop-water` | Sounds good; the fight needn't follow that exact script, but it's a decent starting point. |
+| `r2-stop-harbor` | "Sounds fun!" |
+| `r2-stop-earth` | "Sounds like it could be fun." |
+| `r2-stop-finale` | Cool overall. There may be only one player; solvable by alternating between feeding a lock and fighting. |
+| `img-area-life-v2` | Mixed. The temporary camp against the permanent farming is right (set up fast because enemies came through the walls and people got hurt). One glasshouse is too little; hint at large fields beyond, even if they can't be explored. |
+| `img-machines-sheet` | Good; the battery already has models for the turret and the fire well. |
+| `img-area-shield-v2`, `img-area-water-v2`, `img-area-harbor-v2`, `img-fight-*` (ward, water, harbor), `img-creatures-goblins` | Liked (the goblins are already in the game). |
+
+General notes the same evening: each stop is interesting, but only playtesting and refining will show what works. Too many new enemies (see [the encounters, round 2](2026-11-16-opening-encounters.md#round-2-the-users-notes-2026-11-21)). The walks between stops and the weapons section at the start still need designing.

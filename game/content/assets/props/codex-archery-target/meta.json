@@ -1,0 +1,22 @@
+{
+  "id": "codex-archery-target",
+  "kind": "prop",
+  "name": "Archery target",
+  "footprint": [
+    1.0,
+    0.5
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        17,
+        45
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/props-b-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later."
+    }
+  }
+}

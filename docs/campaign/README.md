@@ -4,6 +4,7 @@ How a piece of the campaign goes from an idea to something in the game. Proposed
 
 - [Story canon](canon.md): what the user has approved. Read it first.
 - [Story development notes](story-development.md): proposals and previous directions.
+- [Making a place](making-a-place.md): how one place goes from concept art to level: read, structure (three plans), flow, sense, beauty, each with its own critic, and a log for improving the cycle. Its checklist is [level-design principles](level-design.md).
 - `NN-name/`: one folder per segment. Each stage adds a file.
 - `../../tools/segments/NN-name/`: the segment's working document, an artifact with one chapter per place. Anything still being worked on lives there.
 
@@ -23,6 +24,8 @@ Each stage answers one question before the user passes it. When testing an unres
 | 6 | **Dressing** | asset list | What does it look like? | The assets the blockout calls for, then art, judged in the whole scene. Paid generation needs the user's sign-off |
 | 7 | **Finish** | | Does it hold together? | Sound, tuning, a co-op pass, a run with four players |
 
+**Places come from concept images (2026-11-16).** Between the space diagram and the blockout, Codex draws each place from its purpose and connections, one level at a time (world, biome, region, area), using the parent level's image as reference. The blockout's screenshots then guide the dressing. Assembling scenes from bought assets looked like stickers. See the [map pipeline](../explorations/2026-11-16-campaign-map-pipeline.md).
+
 ## Rules that keep it honest
 
 - **Gameplay first, then words, then art.** The script waits for the blockout, because beats change when they're played. The overnight story run showed the limit of paper: blind judges ranked first a story the user rejected within minutes.
@@ -31,6 +34,17 @@ Each stage answers one question before the user passes it. When testing an unres
 - **Story approval is explicit.** Put new facts in the working segment as proposals and add them to [Story canon](canon.md) once the user approves them.
 - **Each stage gets something to look at** where it helps: a beat strip, a bubble diagram, a block sketch, with answer boxes next to what they ask about.
 - **Reuse before inventing.** Check the encounter library (`../explorations/2026-11-07-world-and-progression.md`) and what the game already does.
+
+## Staying on track
+
+A segment has many places at different stages, and going deep on one makes it easy to lose the rest. Decided 2026-11-22, after the opening's yard and battery work left two review pages with unanswered boxes and the brief a week behind.
+
+- **One page per segment.** The segment's working page (`tools/segments/NN-name/`) is where the user answers. New questions about the segment go on it as chapters or concepts, not on new pages. A brainstorm may still get its own page, but its decisions move to the segment page when the brainstorm ends.
+- **A board at the top of that page:** one row per stop (and one for the walks), one column per stage, each cell done, in progress, waiting on the user, next for Claude, or later. It answers "where are we" at a glance, and it's updated in the same commit as any change to the segment.
+- **Waiting on you lists every open question,** including ones on other pages, so nothing waits unseen.
+- **One stop deep at a time.** Past concept art, a stop moves through its stages before the next one starts. The others wait, shallow, at concept art.
+- **Discoveries go to issues.** Something noticed on the way (a bug, an idea for another stop) is filed with the `file` skill or F8, not added to the thread unless it's the next step.
+- **The thread file holds the order of work,** and the board holds where everything stands. Neither holds long notes; those go in the segment's explorations.
 
 ## Every brief answers
 

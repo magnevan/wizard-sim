@@ -1,0 +1,23 @@
+{
+  "id": "codex-armillary-grand",
+  "kind": "prop",
+  "name": "The great armillary",
+  "footprint": [
+    19.0,
+    19.0
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        168,
+        521
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/armillary-grand-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later."
+    }
+  },
+  "round": true
+}

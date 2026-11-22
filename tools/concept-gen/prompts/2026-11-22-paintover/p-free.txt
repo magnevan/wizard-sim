@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as OUTNAME.png in the current directory. Reply with just the file name.
+
+The first attached image is a screenshot of a level in our game, a grey-box blockout: the plain grey blocks are placeholder buildings, the ground is placeholder tiles. The second attached image is the finished look we want (concept art of the same academy).
+
+Paint this place as a finished, beautiful game level in the style of the second image: high-detail pixel art, warm morning light, the academy's real architecture with character (warm sandstone, blue slate roofs with gold trim, tall arched windows, buttresses, dormers, chimneys, ivy, carved doorways, banners), and ground that feels lived in: worn dirt paths, trodden grass, sand rings, flagstones, moss, scattered straw and tools.
+
+Use the screenshot as the plan: keep its camera, framing and image size, the buildings along the same edges, and the stations, paths, fences and walls where they are. Within that, you're free to add detail, texture and life. Leave out the interface: the buttons in the top-right corner and the label in the bottom-left corner become more of the scene.

@@ -1,0 +1,9 @@
+Generate one image with your image generation tool, then save it as OUTNAME.png in the current directory. Reply with just the file name.
+
+The attached images are the look we want: a wizard academy in high-detail pixel art, seen from high above at a 3/4 angle, warm morning light from the upper left, and our painted academy buildings.
+
+Make a sheet of separate objects for this game, every one standing on its own on a flat, plain magenta (#FF00FF) background with clear magenta space all round it, no ground under them and no shadows. All drawn at one consistent scale, in the same 3/4 view as the attached images. Leftmost, for scale only: a small young wizard in a blue robe and pointed hat, standing.
+
+Then, in rows: ITEMS
+
+Match the attached images' palette, light and pixel-art detail exactly.

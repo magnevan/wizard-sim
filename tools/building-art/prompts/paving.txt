@@ -1,0 +1,8 @@
+Generate one image with your image generation tool, then save it as paving.png in the current directory. Reply with just the file name.
+
+The attached image is concept art of our wizard academy's courtyard, in high-detail pixel art seen from high above at a 3/4 angle, warm morning light.
+
+Make a sheet of six paving textures for the courtyard floor, as six large square swatches in two rows of three on a plain black background with a clear black gap between them. Each fills its square edge to edge, seen straight from the game's camera, evenly lit, no objects, no shadows of standing things, no border, so it can repeat as a tiling floor:
+
+Top row: 1. large warm sandstone flagstones, irregular rectangles of varied size about four across the swatch, each stone a slightly different honey, cream or rose hue, with real dark grout lines and a little moss in a few joints. 2. the same large flagstones, a second arrangement with a few worn and cracked stones. 3. a darker border band paving: deep grey-brown dressed stone in long regular courses, crisp joints.
+Bottom row: 4. small warm grey setts in tight rows. 5. pale raked sand. 6. warm packed earth path.

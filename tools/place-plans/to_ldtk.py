@@ -148,9 +148,14 @@ def write_level(name):
     ny, nx = P.h.shape
     CW, CH = nx * SUB, ny * SUB
     terrain, height, ground = [0] * (CW * CH), [0] * (CW * CH), [0] * (CW * CH)
+    # a small roofed block (a pier, a post, a stub of tower) is masonry, not a building: topped in stone, so the client
+    # draws no windows on it (it draws a front on any face whose top is roof; the beauty critic, 2026-11-22)
+    from scipy import ndimage as _nd
+    lab, _n = _nd.label(P.m == 'roof')
+    small = np.isin(lab, [k for k, a in enumerate(np.bincount(lab.ravel()), 0) if k and a < 30])
     for i in range(ny):
         for j in range(nx):
-            m = P.m[i, j]
+            m = 'wall' if small[i, j] else P.m[i, j]
             t = 0 if walk[i, j] else TV['void'] if void[i, j] else TV['rock']
             hv = 0 if void[i, j] else tier[heights[i, j]]
             hv = 0 if hv == 0 else HV[f't{hv}']

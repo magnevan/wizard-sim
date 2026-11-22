@@ -10,6 +10,7 @@ import type { RoomDef } from '@wizard-sim/sim';
 import { ActorFrames, FEET_X, FEET_Y, type Frame } from './actors';
 import { newRigState, type RigKind, type RigState } from './rigs';
 import { gx, gy } from './field';
+import { liftAt } from './heights';
 import { toU, toV } from '../iso-world';
 
 const TAU = Math.PI * 2;
@@ -81,9 +82,9 @@ export class Extras {
       const spr = p.spr;
       spr.visible = !!p.f;
       if (!p.f) continue;
-      const fx = Math.round(gx(x)), fy = Math.round(gy(y));
+      const fx = Math.round(gx(x)), fy = Math.round(gy(y)), up = liftAt(def, x, y);
       spr.texture = p.f.tex; spr.tint = tint;
-      spr.position.set(fx0 + fx - FEET_X, fy0 + fy - FEET_Y);
+      spr.position.set(fx0 + fx - FEET_X, fy0 + fy - up - FEET_Y);
       spr.zIndex = fy * 128 + 127;
     }
   }

@@ -1768,8 +1768,8 @@
 			"worldX": 8400,
 			"worldY": 0,
 			"worldDepth": 0,
-			"pxWid": 3000,
-			"pxHei": 2200,
+			"pxWid": 5040,
+			"pxHei": 5020,
 			"__bgColor": "#3F6443",
 			"bgColor": "#3F6443",
 			"useAutoIdentifier": false,
@@ -1784,10 +1784,223 @@
 				{
 					"__identifier": "tierMetres",
 					"__type": "Array<Float>",
-					"__value": [],
+					"__value": [ -9, -5, -4.64, -4.27, -3.91, -3.55, -3.18, -2.82, -2.45, -2.09, -1.73, -1.36, -1, -0.64, -0.27, 0.09, 0.45, 0.82, 1.18, 1.55, 1.91, 2, 2.25, 2.27, 2.33, 2.36, 2.5, 2.64, 2.67, 2.73, 2.75, 3, 3.09, 3.45, 3.82, 4, 4.18, 4.55, 4.91, 5.27, 5.64, 6, 6.3, 6.5, 7.5, 8, 10, 11, 12, 14, 18, 19, 20 ],
 					"__tile": null,
 					"defUid": 119,
-					"realEditorValues": []
+					"realEditorValues": [
+						{
+							"id": "V_Float",
+							"params": [ -9 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -5 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -4.64 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -4.27 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -3.91 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -3.55 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -3.18 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -2.82 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -2.45 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -2.09 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -1.73 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -1.36 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -1 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -0.64 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -0.27 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 0.09 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 0.45 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 0.82 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 1.18 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 1.55 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 1.91 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2.25 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2.27 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2.33 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2.36 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2.5 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2.64 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2.67 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2.73 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2.75 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 3 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 3.09 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 3.45 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 3.82 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 4 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 4.18 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 4.55 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 4.91 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 5.27 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 5.64 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 6 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 6.3 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 6.5 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 7.5 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 8 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 10 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 11 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 12 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 14 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 18 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 19 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 20 ]
+						}
+					]
 				}
 			],
 			"layerInstances": null,
@@ -1797,7 +2010,7 @@
 			"identifier": "Terraces",
 			"iid": "7e44ace5-0000-4000-8000-000000005010",
 			"uid": 120,
-			"worldX": 11600,
+			"worldX": 13640,
 			"worldY": 0,
 			"worldDepth": 0,
 			"pxWid": 640,

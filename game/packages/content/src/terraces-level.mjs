@@ -18,6 +18,7 @@ const tier = (cx, cy) => {
   if (cx >= 28 && cx <= 35 && cy >= 19 && cy <= 25) return '/'; // the wide stair, terrace to floor
   if (cx >= 40 && cx <= 43 && cy >= 3 && cy <= 7) return '/'; // the narrow stair, terrace to balcony
   if (cx >= 44 && cy <= 9) return '2';
+  if (cx >= 14 && cx <= 17 && cy >= 8 && cy <= 11) return '2'; // the pillar's top, 3 m above the terrace (it's rock: drawn, never a cliff)
   return cy <= 21 ? '1' : '0';
 };
 const ground = (cx, cy) => {

@@ -3,6 +3,7 @@
  * and runs art/ground.ts over them. A room with no Ground cells is flagstone, with grass past its edge.
  */
 import { Texture } from 'pixi.js';
+import { ROOMS } from '@wizard-sim/sim';
 import { GROUNDS } from './grounds.gen';
 import { calmed, groundAt, isoCamera, matchColour, paintGround, type GroundCamera, type GroundMap, type Material } from './ground';
 import { loadTexture, propImage } from './assets';
@@ -10,6 +11,7 @@ import { rand, vnoise } from './util';
 import { PPU } from '../camera';
 import type { FloorLayout } from './floor';
 import * as X from './px';
+import { liftGround } from './heights';
 
 /** Ground character -> its image and whether it can be mirrored at random (not if it has joints to line up). Alternates are <file>-2.png and on. */
 const MATERIALS: Readonly<Record<string, { file: string; flip: boolean; calm?: number; iso?: boolean }>> = {
@@ -151,7 +153,9 @@ async function paint(room: string, w: number, h: number, l: FloorLayout): Promis
   paintGround(img.data, W, H, OX, OY, g, mats, base, cam);
   x.putImageData(img, 0, 0);
   await scatter(x, g, W, H, OX, OY, cam);
-  await woods(x, room, w, h, W, H, OX, OY, cam);
+  const def = (ROOMS as Readonly<Record<string, (typeof ROOMS)[keyof typeof ROOMS]>>)[room];
+  if (!def?.height) await woods(x, room, w, h, W, H, OX, OY, cam); // a tiered room's edge is in its plan (void, sea, trees as raised cells)
+  if (def?.height) { const lifted = x.getImageData(0, 0, W, H); liftGround(lifted.data, W, H, OX, OY, cam, def); x.putImageData(lifted, 0, 0); }
   const t = Texture.from(c);
   t.source.scaleMode = 'nearest';
   return t;

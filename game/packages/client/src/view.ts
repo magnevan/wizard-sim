@@ -30,6 +30,7 @@ import { Deaths } from './art/deaths';
 import { FIELD, fitField, gx, gy } from './art/field';
 import { floorLayout, floorPlaceholder } from './art/floor';
 import { groundTexture } from './art/ground-room';
+import { liftAt, liftRange } from './art/heights';
 import { toU, toV, toX, toY, turnedWorld } from './iso-world';
 import { PROP_LIGHTS, SceneLighting, moodOf } from './art/lighting';
 import { EdgeMarks } from './edge-marks';
@@ -467,7 +468,7 @@ export class WorldView {
       this.smoothX[i] *= 0.82; this.smoothY[i] *= 0.82; // the eased rollback correction fades each frame
       const home = i < MAX_SEATS && w.battery && w.battery.drive[i] >= 0; // driving a defence: your wizard stands where it stepped up
       const x = home ? toU(w.battery!.homeX[i], w.battery!.homeY[i]) : this.prevBX[i] + (b.x[i] - this.prevBX[i]) * alpha + this.smoothX[i], y = home ? toV(w.battery!.homeX[i], w.battery!.homeY[i]) : this.prevBY[i] + (b.y[i] - this.prevBY[i]) * alpha + this.smoothY[i];
-      const fx = Math.round(gx(x)), fy = Math.round(gy(y));
+      const fx = Math.round(gx(x)), fy = Math.round(gy(y)), up = liftAt(w.def, x, y); // drawn at the height under its feet, sorted by its feet
       const s = this.rigState(w, i, t, ct);
       // past the paint budget a body keeps its last frame; one that has none yet is painted anyway
       const rig = this.frames.get(s, !v.a);
@@ -479,15 +480,15 @@ export class WorldView {
       spr.alpha = dbl ? 0.62 + 0.08 * Math.sin(ct * 5) : 1;
       spr.tint = dbl ? 0xd8b4ff : this.lit ? 0xffffff : AMBIENT;
       if (sp && !dbl) spr.tint = mulTint(spr.tint, statusTint(s));
-      spr.position.set(fx0 + fx - FEET_X, fy0 + fy - FEET_Y);
+      spr.position.set(fx0 + fx - FEET_X, fy0 + fy - up - FEET_Y);
       spr.zIndex = fy * 128 + i;
-      v.on = true; v.x = fx; v.y = fy; v.rig = s.kind;
+      v.on = true; v.x = fx; v.y = fy - up; v.rig = s.kind;
     }
 
     this.drawSpriteDeaths(ct, fx0, fy0);
     flushLive(); // the live 3D bodies booked above render into their atlas slots now (art/live3d.ts)
     for (const m of this.massing) {
-      m.g.visible = w.def.id === m.plan.room;
+      m.g.visible = w.def.id === m.plan.room && !w.def.height; // a tiered room's buildings are its own raised cells (art/heights.ts)
       if (m.g.visible) m.draw(this.real.dims.w, this.real.dims.h, fx0, fy0);
     }
     this.extras.draw(w.def, ct, fx0, fy0, this.lit ? 0xffffff : AMBIENT); // the people who live here (the drill yard's)
@@ -594,7 +595,8 @@ export class WorldView {
     if (key === this.arenaKey) return;
     this.arenaKey = key;
     if (fitField(d.w, d.h)) { this.vfx.resize(); this.structs.scorch.resize(); }
-    this.floorAt = floorLayout(d.w, d.h);
+    const lift = liftRange(w.def);
+    this.floorAt = floorLayout(d.w, d.h, lift.up, lift.down);
     if (this.ownFloor) this.floor.texture?.destroy(true);
     this.floor.texture = floorPlaceholder(this.floorAt);
     this.ownFloor = true;

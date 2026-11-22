@@ -640,6 +640,7 @@ export class StructureView {
     for (let id = 0; id < nt + MAX_WALLS; id++) {
       const k = id - nt, isT = id < nt;
       const ty = isT ? WALL.rock : wl.type[k]; if (!ty || (isT && isPropWall(w, id))) continue; // a blocking prop: the prop is what shows
+      if (isT && w.def.height) continue; // a tiered room: its raised ground shows its cliffs and blocks (art/heights.ts)
       const sx1 = isT ? tr.x1[id] : wl.x1[k], sy1 = isT ? tr.y1[id] : wl.y1[k], sx2 = isT ? tr.x2[id] : wl.x2[k], sy2 = isT ? tr.y2[id] : wl.y2[k];
       const a: Pt = [gx(sx1), gy(sy1)], bb: Pt = [gx(sx2), gy(sy2)];
       const born = isT ? 0 : wl.born[k], own = isT ? TERRAIN : wl.owner[k];

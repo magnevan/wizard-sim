@@ -11,10 +11,13 @@ export interface FloorLayout { OX: number; OY: number; W: number; H: number }
 /** Margin round the area, world units: enough that the view never runs past the ground. */
 const marginFor = (aw: number): number => (aw > 30 ? 14 : 19);
 
-/** The ground image's size and where the room's centre is in it, for an area of aw x ah world units. */
-export function floorLayout(aw: number, ah: number): FloorLayout {
+/**
+ * The ground image's size and where the room's centre is in it, for an area of aw x ah world units. A tiered room's
+ * ground is drawn at height (art/heights.ts), so it gets `up` art px more above and `down` more below.
+ */
+export function floorLayout(aw: number, ah: number, up = 0, down = 0): FloorLayout {
   const M = marginFor(aw), half = Math.ceil((ah / 2 + M) * PPU * FY);
-  return { OX: (aw / 2 + M) * PPU, OY: half, W: (aw + 2 * M) * PPU, H: half * 2 };
+  return { OX: (aw / 2 + M) * PPU, OY: half + up, W: (aw + 2 * M) * PPU, H: half * 2 + up + down };
 }
 
 /** One flat colour, scaled to the layout by the sprite that shows it. */

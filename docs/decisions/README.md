@@ -1682,7 +1682,7 @@ Claude's recommendation; the user had no strong view, so it stands until a case 
 - **Rejected:** moving every particle to 3D (about 5,000 lines of effect code redone; a second way to keep pixels coherent), and deciding now without a failing case.
 
 ## 2026-11-22: A weapon's extras change its material (explorations/2026-11-21-elemental-weapons.md)
-The user, marking Elemental Arms: "the leading element sets the shape, but the subsequent versions sets the element. Like with other spells." Built on the recommendation (round 2 waits for the user's marks; [thread](../threads/elemental-weapons.md)).
+The user, marking Elemental Arms: "the leading element sets the shape, but the subsequent versions sets the element. Like with other spells." Built on the recommendation (round 2 waits for the user's marks; [thread](../archive/elemental-weapons.md)).
 - **The lead keeps its prop; the first extra changes its element-bearing part's material.** The order is Ice, Steam (Fire + Water), Fire, Water, Cold, Lightning. Exceptions from the user's notes: the wand's Cold + Ice is a snowball, and the bow's Water only drips (`art/infuse.ts`; the shaders in `art/live3d.ts`).
 - **Each other extra is one small effect, and Arcane is a rune.** At most about six particles per weapon, in one colour each. Nothing is banded along the blade. Blows show the material's one colour.
 - **Special cases:** the flame sword with Water is a hilt and a jet of steam; Healing hands have no model, only a green core with a shell per extra; the maul has no crystals.

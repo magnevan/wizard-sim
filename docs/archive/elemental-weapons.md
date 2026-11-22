@@ -1,6 +1,6 @@
 # Elemental weapons: infusions you can read
 
-Status: active · Last touched: 2026-11-22 (round 2 waiting for the user's marks)
+Status: finished 2026-11-22 (the user: "Looks good. I think we can leave it here"; merged to main, issue #4 closed) · Archived from `docs/threads/`
 Record: [elemental weapons](../explorations/2026-11-21-elemental-weapons.md) (the 57 variants, the concepts, the user's marks) · Issue [#4](https://github.com/magnevan/wizard-sim/issues/4) · Review page: Elemental Arms (`tools/weapon-variants/`, marks in its db) · First real use of the [VFX workflow](../vfx-workflow.md)
 
 ## Where it stands

@@ -290,7 +290,7 @@ const fxTime = { value: 0 };
  */
 /**
  * A conjured weapon's element-bearing parts, by Blender object name (tools/sprites-3d/wizprops.py): what an infusion
- * turns into its material (docs/threads/elemental-weapons.md). The maul's crystals are never shown (the user: the head
+ * turns into its material (docs/archive/elemental-weapons.md). The maul's crystals are never shown (the user: the head
  * and shaft read apart without them); the sword's flame blade gives way to a 2D burst of steam (view-structures.ts).
  */
 const INFUSED = /^(maul (boulder|lump)|focus orb|bow limb|trident (prong|foam)|whip lash)/, HIDDEN = /^maul crystal/, STEAM_HIDES = /^sword (flame|core)/;

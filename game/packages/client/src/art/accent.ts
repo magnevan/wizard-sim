@@ -150,7 +150,7 @@ const RUNE = ['x.x.x', '.xxx.', '..x..', '..x..', '..x..'];
 export const MAT_COL: Record<number, Ramp> = { 1: X.EL.fire, 2: X.EL.water, 3: X.FROST, 4: X.EL.ice, 5: X.EL.lightning, 6: ['#ffffff', '#f0f2f6', '#d0d6de', '#a8b0bc', '#7a8290'] };
 
 /**
- * An infused weapon (art/infuse.ts; docs/threads/elemental-weapons.md): the material is the 3D prop's (live3d.ts), so
+ * An infused weapon (art/infuse.ts; docs/archive/elemental-weapons.md): the material is the 3D prop's (live3d.ts), so
  * this draws only what goes with it, all at the head (`pts` grip to tip; the head is near the tip): the material's light,
  * a few wisps where the material needs them (steam rising, water dripping), each leftover extra as one small effect in
  * one colour, and the rune. A few particles a second each, never a band along the blade (issue #4: "the particles just

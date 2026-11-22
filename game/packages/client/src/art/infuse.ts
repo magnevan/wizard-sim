@@ -1,5 +1,5 @@
 /**
- * What a conjured weapon's extras look like (issue #4; docs/threads/elemental-weapons.md, the spec). The user's rule,
+ * What a conjured weapon's extras look like (issue #4; docs/archive/elemental-weapons.md, the spec). The user's rule,
  * 2026-11-21: "the leading element sets the shape, but the subsequent versions sets the element. Like with other
  * spells." So the lead keeps its prop, the first extra in MAT_ORDER turns the part that carries the element (the maul's
  * head, the wand's orb, the bow's limbs, the trident's prongs, the whip's lash) into that material, and each other

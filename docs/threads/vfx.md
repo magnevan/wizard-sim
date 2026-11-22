@@ -10,7 +10,7 @@ The plan is approved. Steps 1 to 3 are built on the `worktree-vfx-workflow` bran
 ## Next
 
 - [ ] The user tries the VFX Lab and says whether the scenes are the right ones.
-- [x] Issue #4 (added-element particles read as noise) gets its own thread, as the first real use of the loop: [elemental weapons](elemental-weapons.md). Round 2 built 2026-11-22; it added `then=`, `focus=` and `scene=weapon` to the lab, and `vfx-sheet` now runs on the GPU (`--gl gpu`) so live 3D shows.
+- [x] Issue #4 (added-element particles read as noise) gets its own thread, as the first real use of the loop: [elemental weapons](../archive/elemental-weapons.md). Round 2 built 2026-11-22; it added `then=`, `focus=` and `scene=weapon` to the lab, and `vfx-sheet` now runs on the GPU (`--gl gpu`) so live 3D shows.
 - [ ] Knobs for each effect as it is reworked (the weapons' added elements for #4 next), not all up front.
 - [ ] Pull out the arc primitive (lightning arc and chain heal draw it twice) as the first behavioural primitive.
 - [ ] More scenes: a wall to splash against, surface floors (water, fire), an interior. A grid of several spells side by side.

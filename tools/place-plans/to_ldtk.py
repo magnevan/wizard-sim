@@ -11,8 +11,9 @@ What it writes, from the plan's 1 u world cells (each becomes 2 x 2 of the level
             water get their top's height too, for drawing. Cells more than 0.5 m apart are parted by a cliff, so a flight
             of stairs (0.35 m steps) walks, and its sides are cliffs where they stand above the ground beside them.
   Ground    what each material looks like (MATERIAL_GROUND below).
-  Entities  the four starts, Markers for the gates, the doors and the landmark (ids in LEVELS below), and the few
-            props a level lists in LEVELS (a landmark's volume, which the flow stage has to see). Everything else is the
+  Entities  the four starts, Markers for the gates, the doors and the landmark (ids in LEVELS below), a Marker for each
+            of the spec's MARKERS ({id: (U, V)}, spots the room's sim looks up by id, like the drill yard's stations), and
+            the few props a level lists in LEVELS (a landmark's volume, which the flow stage has to see). Everything else is the
             plan alone; props come with the beauty stage.
 
 The level replaces the room's previous one (its uid and place in LDtk's world view are kept), so whatever wrote it
@@ -57,6 +58,14 @@ LEVELS = {
         landmarks={'the well': 'well'},
         start=(0, -22),   # on the road in, 10 u past the main gate (a start inside a gate's reach would leave at once)
     ),
+    'yard-d': dict(
+        level='Yard',
+        # the station spots (sim/src/yard.ts) are the spec's MARKERS; 'gate' and 'focus' are among them, so the gate and
+        # the landmark stand at their MARKERS spots
+        gates={'to the courtyard': 'gate'},
+        landmarks={'the rack': 'focus'},
+        start=(44, 18),   # on the rim, 12 u in from the gate, facing the strike lanes (the journey's first point is the gate)
+    ),
 }
 
 NS = uuid.UUID('6c1f0a52-3d7e-4b9a-8e21-5a4d9c7b0f13')
@@ -65,6 +74,12 @@ def iid(*parts): return str(uuid.uuid5(NS, '/'.join(map(str, parts))))
 
 def load_plan(name):
     """Runs plans/<name>.py with its drawing switched off and returns its Plan."""
+    return load_spec(name)[0]
+
+
+def load_spec(name):
+    """Runs plans/<name>.py with its drawing switched off: its Plan, and its MARKERS ({id: (U, V)}, the spots a room's
+    sim looks up by id, e.g. the drill yard's stations; empty if the spec has none)."""
     render, argv = planmod.Plan.render, sys.argv
     planmod.Plan.render = lambda self: None
     sys.argv = [name + '.py']
@@ -72,7 +87,7 @@ def load_plan(name):
         g = runpy.run_path(os.path.join(HERE, 'plans', name + '.py'))
     finally:
         planmod.Plan.render, sys.argv = render, argv
-    return next(v for v in g.values() if isinstance(v, planmod.Plan))
+    return next(v for v in g.values() if isinstance(v, planmod.Plan)), dict(g.get('MARKERS', {}))
 
 
 # ---- LDtk's layout (the same as game/packages/content/src/ldtk.mjs stringify, so diffs stay small) ----------------
@@ -112,7 +127,7 @@ def save(path, value):
 
 def write_level(name):
     cfg = LEVELS[name]
-    P = load_plan(name)
+    P, MARKERS = load_spec(name)
     project_path = os.path.join(MAPS, 'world.ldtk')
     project = json.load(open(project_path, encoding='utf-8'))
     layer_defs = {l['identifier']: l for l in project['defs']['layers']}
@@ -171,14 +186,19 @@ def write_level(name):
     start = P.passes[0][0][0] if cfg['start'] == 'journey' else cfg['start']
     for s, (du, dv) in enumerate([(-1.3, -1.3), (1.3, -1.3), (-1.3, 1.3), (1.3, 1.3)]):
         es.append(entity('PlayerStart', s, (start[0] + du, start[1] + dv), {'seat': s}))
+    # a gate or landmark whose id is also in the spec's MARKERS stands at the MARKERS spot (the sim's), written once
     for (p, label) in P.gates:
         if label not in cfg['gates']: raise SystemExit(f'{name}: gate "{label}" has no id in LEVELS')
-        es.append(entity('Marker', cfg['gates'][label], p, {'id': cfg['gates'][label]}))
+        gid = cfg['gates'][label]
+        es.append(entity('Marker', gid, MARKERS.get(gid, p), {'id': gid}))
     for n, (p, _) in enumerate(P.doors):
         es.append(entity('Marker', f'door-{n + 1}', p, {'id': f'door-{n + 1}'}))
     for (p, label, *_) in P.marks:
         mid = cfg['landmarks'].get(label) or label.replace('the ', '').replace(' ', '-')
-        es.append(entity('Marker', mid, p, {'id': mid, 'tag': 'landmark'}))   # the camera keeps a landmark in frame near it
+        es.append(entity('Marker', mid, MARKERS.get(mid, p), {'id': mid, 'tag': 'landmark'}))   # the camera keeps a landmark in frame near it
+    written = set(cfg['gates'].values()) | {cfg['landmarks'].get(l) or l.replace('the ', '').replace(' ', '-') for (_, l, *_) in P.marks}
+    for mid, p in MARKERS.items():
+        if mid not in written: es.append(entity('Marker', mid, p, {'id': mid}))
     for n, (k, end) in enumerate(cfg.get('vistas', [])):
         pts = P.passes[k][0]
         es.append(entity('Marker', f'vista-{n + 1}', pts[0] if end == 'first' else pts[-1], {'id': f'vista-{n + 1}', 'tag': 'vista'}))
@@ -231,7 +251,7 @@ def report(name, P=None):
     stairs (two stair cells side by side: a flight should never have a cliff in it). Positions are plan (U, V).
     The game's own check (content:check) is stricter: it also keeps bodies 0.7 u off every wall."""
     cfg = LEVELS[name]
-    P = P or load_plan(name)
+    P, MARKERS = (P, {}) if P else load_spec(name)
     walk = np.vectorize(lambda m: planmod.MAT[m][2])(P.m)
     ny, nx = P.h.shape
     uv = lambda i, j: (round(float(P.CU[i, j]), 1), round(float(P.CV[i, j]), 1))
@@ -264,6 +284,7 @@ def report(name, P=None):
     for p, label in P.gates: things.setdefault(where(p), []).append(cfg['gates'].get(label, label))
     for n, (p, _) in enumerate(P.doors): things.setdefault(where(p), []).append(f'door-{n + 1}')
     for p, label, *_ in P.marks: things.setdefault(where(p), []).append(cfg['landmarks'].get(label, label))
+    for mid, p in MARKERS.items(): things.setdefault(where(p), []).append(f'marker {mid}')
     order = sorted(range(len(sizes)), key=lambda c: -sizes[c])
     print(f'{name}: {len(sizes)} walkable regions joined by steps of at most {STEP_M} m (largest first; regions under 30 u2 left out unless they hold something):')
     for c in order:

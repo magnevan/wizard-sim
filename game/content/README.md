@@ -12,8 +12,8 @@ content/
     world/Tutorial.ldtkl   the tutorial's chamber (its per-beat layouts are still code: sim/src/tutorial-data.ts)
     world/Academy.ldtkl    the mock room for judging art (#academy)
     world/Battery.ldtkl    the opening's first job, an outdoor area (#battery); written by tools/segments/01-opening/battery-level.py
-    world/Yard.ldtkl       the opening's drill yard in a corner of the academy (#yard); written by tools/segments/01-opening/yard-level.py,
-                           which also writes its stations' Markers and the scenery people's (ids x-<kind>-<act>-...)
+    world/Yard.ldtkl       the opening's drill yard in a corner of the academy (#yard); written from plan D by tools/place-plans/to_ldtk.py yard-d,
+                           which also writes its stations' Markers (the spec's MARKERS); yard-level.py is superseded
     world/Terraces.ldtkl   the test room for height tiers (#terraces); written by packages/content/src/terraces-level.mjs
   assets/props/<id>/       the asset registry: meta.json and images, below
   generated/               every raw image bought from an AI tool (its README). Never edited; look here before any call

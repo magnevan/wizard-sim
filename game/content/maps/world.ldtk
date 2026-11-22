@@ -1736,8 +1736,8 @@
 			"worldX": 5640,
 			"worldY": 0,
 			"worldDepth": 0,
-			"pxWid": 2600,
-			"pxHei": 2000,
+			"pxWid": 2960,
+			"pxHei": 2960,
 			"__bgColor": "#3F6443",
 			"bgColor": "#3F6443",
 			"useAutoIdentifier": false,
@@ -1752,10 +1752,71 @@
 				{
 					"__identifier": "tierMetres",
 					"__type": "Array<Float>",
-					"__value": [],
+					"__value": [ 2.0, 3.0, 3.33, 3.67, 4.0, 4.33, 4.67, 5.0, 5.33, 5.67, 6.0, 6.5, 7.0, 15.0, 21.0 ],
 					"__tile": null,
 					"defUid": 119,
-					"realEditorValues": []
+					"realEditorValues": [
+						{
+							"id": "V_Float",
+							"params": [ 2.0 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 3.0 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 3.33 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 3.67 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 4.0 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 4.33 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 4.67 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 5.0 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 5.33 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 5.67 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 6.0 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 6.5 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 7.0 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 15.0 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 21.0 ]
+						}
+					]
 				}
 			],
 			"layerInstances": null,

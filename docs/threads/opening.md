@@ -25,7 +25,7 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 - **Places start from purpose, then pictures.** What the place is for and what connects to what comes first (the [campaign workflow](../campaign/README.md)). Then Codex draws the concept, one level at a time (world, biome, region, area), each level drawn with its parent's image as reference. Codex runs need no OK first. Then comes an LDtk blockout, and its screenshots guide the art. Buildings are environment at real size, never props. See the [map pipeline](../explorations/2026-11-16-campaign-map-pipeline.md) and [the academy as environment](../explorations/2026-11-15-academy-as-environment.md).
 - `npm run check:battery` and `npm run check:yard` drive the rooms and take screenshots (`game/shots/battery/`).
 - `?at=<checkpoint>` starts the battery part-way, for example `?at=well-failing`.
-- Levels are written by `tools/segments/01-opening/battery-level.py` and `yard-level.py`: rerun them, then `npm run content:build`.
+- Levels are written by `tools/segments/01-opening/battery-level.py` (the battery) and `python tools/place-plans/to_ldtk.py <court-d|inf-d|yard-d>` (the court, the infirmary and the yard, from their plans; `yard-level.py` is superseded): rerun them, then `npm run content:build`.
 - PixelLab and ElevenLabs need the user's sign-off on the description; Codex and Meshy don't.
 
 ## Done

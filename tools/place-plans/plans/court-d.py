@@ -45,11 +45,16 @@ pylons, behind a low parapet, where the armillary is framed across the drop. The
 Revision 9 (the third in-game flow round, 6/10: the routes read, the set pieces don't land yet): the finale climb is
 shorter and broken by a landing (the sea court raised to +1 m, the quay stair in two flights); the overlook juts out as a
 bay over the drop with low corner posts instead of tall pylons; the plaza's rim is two real 0.5 m treads; the battery's
-end of the road is a screen shorter; the bell tower has bulk; the north road ends at gate towers, not the void."""
+end of the road is a screen shorter; the bell tower has bulk; the north road ends at gate towers, not the void.
+
+Revision 10 (the fourth in-game flow round, 7/10 for the layout alone): the overlook steps down two treads into its own
+bay east of the axis, its prow over the drop, so it reads as a place apart and not as the north road's crossroads; the
+passage through the great hall is a screen shorter; the gorge path is shorter, beside the falls. The rest is camera (a
+look-ahead that keeps the landmark in frame) and dressing."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 9)', U=(-80, 95), V=(-56, 82))
+P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 10)', U=(-80, 95), V=(-56, 82))
 C = (0, -40)            # the amphitheatre's centre, up the screen
 ARM = (0, 18)
 SEA = -9.0
@@ -73,13 +78,14 @@ P.fill(circle(ARM, 7.5), 2.5, 'stairs'); P.fill(circle(ARM, 6.5), 3.0, 'plaza') 
 # the north road: straight down through the great hall's gate
 P.building(arc_band(C, 8, 20, 35, 145), 6.0, 12.0, 'great hall', doors=[polar(C, 21, 65), polar(C, 21, 115)])
 P.fill(orect(polar(C, 14, 90), 6, 14, math.radians(90)), 6.0, 'path')
-P.fill(rect(-3, -56, 3, -30), 6.0, 'path')
-for du in (-6.5, 3.5): P.building(rect(du, -52, du + 3, -49), 6.0, 8.0)                              # the north gate's towers
+P.fill(rect(-3, -46, 3, -30), 6.0, 'path')
+for du in (-6.5, 3.5): P.building(rect(du, -45, du + 3, -42), 6.0, 8.0)                              # the north gate's towers
 for su in (-22, 22): P.stairs(orect((su, -4.5), 8, 10, math.radians(90)), 6.0, 3.0, 90)              # the paired flights, either side of the dais
-P.fill(rect(-7, -6, 7, 1), 6.0, 'paving')                                                           # the overlook, a bay jutting over the drop
-P.building(rect(-7, 1, 7, 2), 6.0, 1.0, roof='wall')                                                 # its parapet
-for du in (-7, 6): P.building(rect(du, -6, du + 1, 2), 6.0, 1.0, roof='wall')                         # its side parapets
-for du in (-7.5, 6.5): P.building(rect(du - 0.5, 1, du + 1.5, 3), 6.0, 2.5)                          # low posts at its corners
+P.fill(rect(3, -10, 13, -8), 5.5, 'stairs'); P.fill(rect(3, -8, 13, 3), 5.0, 'paving')             # the overlook: two treads down into a bay jutting over the drop, east of the axis
+P.building(rect(3, 3, 13, 4), 5.0, 1.0, roof='wall')                                                 # its parapet
+for du in (2, 13): P.building(rect(du, -8, du + 1, 4), 5.0, 1.0, roof='wall')                         # its side parapets
+for du in (1.5, 12.5): P.building(rect(du, 3, du + 1.5, 4.5), 5.0, 2.5)                              # low posts at its prow
+P.building(rect(-9, -4, 1.5, -3), 6.0, 1.0, roof='wall')                                             # a low parapet along the axis lip
 
 # the cross road: an arc along the top terrace in front of the hall, from the yard's seam to the battery's
 ARC = [polar(C, 28, a) for a in range(160, 89, -5)] + [polar(C, 28, a) for a in range(90, 19, -5)]
@@ -107,14 +113,14 @@ P.building(rect(40, -35, 56, -34), 6.5, 1.0, roof='wall'); P.building(rect(40, -
 P.building(rect(36, -38, 39, -35), 6.0, 8.0); P.building(rect(36, -25, 39, -22), 6.0, 8.0)                         # gate towers
 P.building(circle((66, -42), 6), 6.0, 14, 'battery tower')
 BAT = (74, -30)
-P.fill(rect(53, -56, 59, -34), 6.0, 'path')                                                                        # the gorge path up beside the stream
-GORGE = (56, -52)
+P.fill(rect(53, -46, 59, -34), 6.0, 'path')                                                                        # the gorge path up beside the stream
+GORGE = (56, -44)
 
 # openings in the plaza's ring of steps, and the main routes' own paving
 P.stairs(orect(polar(ARM, 17, 90), 10, 6, math.radians(90)), 2.0, 3.0, 90)
 P.fill(rect(-48, -34, -24, -26), 6.0, 'path')
 P.strip([YARD] + ARC + [polar(C, 28, 20), (30, -30), BAT], 8)
-P.strip([(0, -56), polar(C, 30, 90)], 6)
+P.strip([(0, -46), polar(C, 30, 90)], 6)
 
 for a, nm, r in ((156, 'bell tower', 5.0), (24, 'beacon', 3.0)):     # a tall marker at each turn of the arc, on its north side
     P.building(circle(polar(C, 19, a), r), 6.0, 15.0 if r > 4 else 13.0, nm)
@@ -122,22 +128,22 @@ for a in (160, 20):                                                     # thresh
     for r in (23, 33): P.building(circle(polar(C, r, a), 1.3), 6.0, 5.0)
 P.h[(P.m == 'road') & (P.h == 6.0)] += 0.3                              # the road a step above the terrace
 P.landmark(ARM, 'the armillary', 10, 5.5)
-P.gate(YARD, 'to the drill yard'); P.gate(BAT, 'to the battery'); P.gate((0, -54), 'north road'); P.gate((0, 76), 'sea landing')
+P.gate(YARD, 'to the drill yard'); P.gate(BAT, 'to the battery'); P.gate((0, -44), 'north road'); P.gate((0, 76), 'sea landing')
 J = polar(C, 28, 90); ARC_W, ARC_E = ARC[:15], ARC[14:]
 WT, WF, ET, EF, DAIS = (-22, -10), (-22, 2), (22, -10), (22, 2), (0, 9)       # the flights' tops and feet, the dais's north step
 WDOWN, EDOWN = [WT, WF, (-12, 7), DAIS], [ET, EF, (12, 7), DAIS]
 P.route([YARD] + ARC_W[:10] + WDOWN, 'main')                                         # arriving from the yard
 P.route([BAT, (30, -30)] + ARC_E[::-1][:10] + EDOWN, 'main')                          # coming back from the battery
-P.route([(0, -54), J, (-12, -12)] + WDOWN, 'main')                                   # the north road
+P.route([(0, -44), J, (-12, -12)] + WDOWN, 'main')                                   # the north road
 P.route([(0, 76), (0, 50), (0, 26)], 'side')                                         # up from the sea landing
 # the journey through the courtyard, in the order of the brief's route; the exits as the user approved (2026-11-22)
 P.journey([(-8, 30), (0, 26)], 'The briefing at the armillary', 'Start below the dais: the armillary fills the screen, the beam stutters above the masters')
 P.journey(WDOWN[::-1] + ARC_W[::-1][5:] + [YARD], 'Out to the drill yard', 'Up the west flight, west along the balcony; the bell tower marks the turn')
-P.journey([YARD] + ARC_W + ARC_E + [(30, -30), BAT], 'Back from the yard, out through the main gate: the infirmary, then the battery',
-          'The reveal: at the overlook the armillary rises between the pylons, across the drop; the beacon pulls you east')
-P.journey([BAT, (30, -30)] + ARC_E[::-1][:10] + EDOWN + EDOWN[::-1][1:] + [(12, -12), J, (0, -54)], 'Back from the battery: the ward bell, then out north to the ward line',
+P.journey([YARD] + ARC_W + [(8, -11), (8, -2), (8, -11)] + ARC_E[1:] + [(30, -30), BAT], 'Back from the yard, out through the main gate: the infirmary, then the battery',
+          'The reveal: two steps down into the overlook bay, the armillary across the drop; the beacon pulls you east')
+P.journey([BAT, (30, -30)] + ARC_E[::-1][:10] + EDOWN + EDOWN[::-1][1:] + [(12, -12), J, (0, -44)], 'Back from the battery: the ward bell, then out north to the ward line',
           'Homecoming: down the east flight to the bell at the dais, then up through the great hall')
-P.journey([(0, -54), J, (-12, -12)] + WDOWN + EDOWN[::-1] + [(16, -16)] + ARC_E[5:] + [(30, -30), (56, -30), GORGE], 'Back from the ward line, out to the gorge',
+P.journey([(0, -44), J, (-12, -12)] + WDOWN + EDOWN[::-1] + [(16, -16)] + ARC_E[5:] + [(30, -30), (56, -30), GORGE], 'Back from the ward line, out to the gorge',
           'The best approach: straight down the north road to the overlook, the armillary ahead; out past the falls')
 P.journey([(0, 76), (0, 61), (0, 46), (0, 36), (0, 28)], 'The finale: up from the sea landing',
           'The climb from the sea, framed by the rim’s gateway; the armillary torn open above the warband')

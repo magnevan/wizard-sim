@@ -67,11 +67,14 @@ so no walkable ground sees the void; cheek walls down both sides of each flight,
 
 Revision 14 (the second sense round, 6.5/10): the sea one level, a metre under the quay, so the quay stands at the water;
 buildings at real scale (the great hall 16 m; the library and the workshops 9 m, as tall as they can be south of the
-balcony road without hiding it); a stoop at each of the hall's doors; the battery road's gate as two matching piers."""
+balcony road without hiding it); a stoop at each of the hall's doors; the battery road's gate as two matching piers.
+
+Revision 15 (the third sense round, 7/10): a parapet on every public edge over a metre, not only beside the routes
+(finish.lips everywhere); a weir where the stream goes over the falls."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 14)', U=(-95, 110), V=(-62, 100))
+P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 15)', U=(-95, 110), V=(-62, 100))
 C = (0, -40)            # the amphitheatre's centre, up the screen
 ARM = (0, 18)
 SEA = -6.0
@@ -129,7 +132,8 @@ for du in (-7, 7): P.building(rect(du - 1.5, 35, du + 1.5, 38), 3.0, 5.0)       
 # beside the road just beyond, on its north side so it can't hide you
 P.fill([(38, 100), (40, 40), (43, 10), (44, -10), (52, -10), (58, 20), (64, 45), (110, 52), (110, 100)], SEA, 'deep')   # the inlet
 P.fill([(44, -56), (52, -56), (52, -10), (44, -10)], 4.0, 'water')
-P.building(rect(41, -62, 55, -56), 4.0, 2.0, roof='wall')                                          # the culvert the river comes out of                                                 # the stream above the falls
+P.building(rect(41, -62, 55, -56), 4.0, 2.0, roof='wall')
+P.building(rect(44, -11, 52, -10), 4.0, 0.6, roof='wall')                                          # the weir where the stream goes over the falls                                          # the culvert the river comes out of                                                 # the stream above the falls
 P.fill(rect(24, -34, 95, -26), 6.0, 'path')
 P.fill(rect(40, -34, 56, -26), 6.5, 'wood')                                                                        # the deck
 P.building(rect(40, -35, 56, -34), 6.5, 1.0, roof='wall'); P.building(rect(40, -26, 56, -25), 6.5, 1.0, roof='wall')   # parapets
@@ -168,6 +172,8 @@ P.m[belt] = 'trees'
 walk = walk & ~belt
 lip = walk & near & low & (P.m != 'stairs') & (P.h > 4.5)
 P.h[lip] += 1.0; P.m[lip] = 'wall'; P.bld[lip] = True                  # a knee-high lip along every road edge that drops a tier
+from finish import lips as _lips
+_lips(P, everywhere=True)                                             # a parapet on every public edge over a metre
 P.landmark(ARM, 'the armillary', 10, 5.5)
 P.gate(YARD, 'to the drill yard'); P.gate(BAT, 'to the battery'); P.gate((0, -44), 'north road'); P.gate((0, 76), 'sea landing')
 J = polar(C, 31, 90); ARC_W, ARC_E = ARC[:15], ARC[14:]

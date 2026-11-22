@@ -116,3 +116,9 @@ The grey-box was walked in the game five times (2026-11-22, `npm run shot:route`
 - parapets and kerbs at every drop;
 - different paving per level;
 - clean road edges.
+
+## Sense passed in the game (2026-11-22)
+
+Sense rounds on the plan-made level: 7.5 (rev 16: the gate piers squared), 7.5 (the sea looked stepped: faces dropping into water take the water's colour, #21), then **8/10 at rev 17** with a stone ledge at the sea cliff's foot. "Ready for the beauty stage: yes." The grey-box is done.
+
+**For the beauty stage:** gateposts on the drill-yard path set in a low wall or hedge, or matched as a pair; the sea landing's front edge and piles squared off; kerbs where two ground materials meet; flat coping on every parapet and pier; the falls with a stone sill, foam and spray; the quay with clean deck edges and bollards.

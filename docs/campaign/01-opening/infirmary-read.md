@@ -65,3 +65,13 @@ Ready for the in-game grey-box (rev 3). For the game: a soft block on the east r
 ## Stage 2 in the game (2026-11-22)
 
 The first in-game round (rev 3, as the engine session built it at `feabfbb`) scored 6/10, down from 7 on flat frames. The stairs, the loop and the exit hold up. The view down from the top tier got worse: the camera shows only about 7.6 u below you, so from the overlook and the tents the well was off screen. Rev 4 moves the well 5 u north to the foot of the drop, extends the room east past the gate so the road runs into woods instead of void, and adds garden beds by the greenhouse so the loop's two halves differ. For dressing: posts under the walkways so they read as raised, and cots in the tents so the arc reads.
+
+## Flow in the game, rounds 2 to 4 (2026-11-22)
+
+| Round | Plan D | Score | What changed after it |
+|---|---|---|---|
+| 2 | rev 4 | 6.5/10 | A 3 m face below the overlook hid the well (principle 23), so the well's tier rises and the drop is 1.5 m (rev 5); the two flights differ |
+| 3 | rev 5 | 7/10 | The lower loop's flights were the same picture, so the way back up runs along the cliff face; the paved road starts at the well (rev 6) |
+| 4 | rev 6 | 8/10 | **Flow passed.** The east overlook flight becomes a long run along the drop, so it's no twin of the west (rev 7, into the sense stage) |
+
+**For dressing:** the walkways read as debris; the well needs its model; a different texture on the top tier and the well's tier so the 1.5 m step reads; different beds in the two gardens.

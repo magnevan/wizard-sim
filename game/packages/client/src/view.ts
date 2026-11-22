@@ -272,6 +272,28 @@ export class WorldView {
     }
   }
 
+  /**
+   * Frees everything this view made on the GPU and drops its display tree: the effect canvases' textures, the scene
+   * lighting's maps, the actor frame pages, the structures' and deaths' canvases, the HUD's, the floor placeholder. What it
+   * shares with other views stays: the painted ground, prop images, the baked sheets, live3d's atlas. The game never
+   * destroys its view; the VFX Lab does on every rebuild.
+   */
+  destroy(): void {
+    this.vfx.destroy();
+    this.lit?.destroy();
+    this.lights.destroy();
+    this.frames.destroy();
+    this.structs.destroy();
+    this.deaths.destroy();
+    this.props.destroy();
+    this.hud.destroy();
+    this.tut.destroy();
+    if (this.ownFloor) this.floor.texture?.destroy(true);
+    this.artTex?.destroy(true); this.artTex = null;
+    this.litLayer.filters = [];
+    this.root.destroy({ children: true });
+  }
+
   /** Hide the additive lights (?lights=0), for checking what they add. */
   get lightsOn(): boolean { return this.lights.layer.visible; }
   set lightsOn(on: boolean) { this.lights.layer.visible = on; if (this.lit) this.lit.glowLayer.visible = on; }
@@ -509,7 +531,8 @@ export class WorldView {
     this.structs.behind = this.vfx.behind;
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
     this.lights.end();
-    this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;
+    this.fxLastMs = performance.now() - t0;
+    this.fxMs = this.fxMs * 0.9 + this.fxLastMs * 0.1;
     this.hud.draw(w, t, cam.hudW, cam.hudH);
     this.tut.draw(w, ct, cam.hudW, cam.hudH);
     // the battery's repair: the screen fades to black and back while the well is mended (art/power-down.ts)
@@ -626,6 +649,9 @@ export class WorldView {
   }
 
   private fxMs = 0;
+  /** The last draw's effects pass, ms, and the event-born effects alive (the VFX Lab's metrics). */
+  fxLastMs = 0;
+  get fxLive(): number { return this.vfx.live; }
   private atkShake = 0;
   private lastCt = 0;
   private lastSimT = -1;

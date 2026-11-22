@@ -224,4 +224,6 @@ export class SlabCache {
     }
   }
   get size(): number { return this.map.size; }
+  /** Frees every slab (a view going away). */
+  destroy(): void { for (const tex of this.map.values()) tex?.destroy(true); this.map.clear(); }
 }

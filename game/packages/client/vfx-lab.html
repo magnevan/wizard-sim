@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VFX Lab</title>
+<style>
+  html, body { margin: 0; background: #14161b; color: #c8ccd6; font: 13px system-ui, sans-serif; }
+  body { display: flex; align-items: flex-start; }
+  /* the stage comes first in the page (capture tools take the first canvas); the panel is shown on its left */
+  #stage { flex: 1; min-width: 0; padding: 10px; overflow: auto; height: 100vh; box-sizing: border-box; }
+  #panel { order: -1; }
+  #app { position: relative; display: inline-block; vertical-align: top; }
+  #app canvas { display: block; image-rendering: pixelated; }
+  #app canvas.overlay { position: absolute; left: 0; top: 0; cursor: crosshair; }
+  #app .badge { position: absolute; right: 8px; top: 4px; font: 700 34px/1 ui-monospace, Consolas, monospace; color: #f0c060; text-shadow: 0 2px 0 #000; pointer-events: none; }
+  #app .badge.a { color: #8ad0ff; }
+  #app .label { position: absolute; top: 3px; font: 11px ui-monospace, Consolas, monospace; color: #e8e2c8; text-shadow: 0 1px 0 #000; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage"><div id="app"></div></div>
+<div id="panel"></div>
+<script type="module" src="./src/lab/vfx-lab/main.ts"></script>
+</body>
+</html>

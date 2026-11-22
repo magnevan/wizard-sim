@@ -151,6 +151,8 @@ class Pieces {
     d.spr.position.set(this.fx0 + rx, this.fy0 + ry); d.spr.zIndex = Math.round(z) * 128 + 100; d.spr.tint = tint; d.spr.visible = true;
     return x;
   }
+  /** Frees the per-frame canvases' textures (a view going away). */
+  destroy(): void { for (const d of this.dyn) d.tex.destroy(true); this.dyn = []; }
   end(): void {
     for (let i = this.nS; i < this.stat.length; i++) this.stat[i].visible = false;
     for (const d of this.dyn) { if (d.used) d.tex.source.update(); else d.spr.visible = false; }
@@ -301,6 +303,8 @@ interface SFx { kind: string; t0: number; life: number; seed: number; x: number;
 const GUARD_MOVES = new Set(['parry', 'block', 'glance', 'chill', 'coat', 'guardbreak', 'flameburst', 'lance', 'backstep', 'phase', 'seedstep', 'shovestep', 'surge', 'tidewave', 'flamestep', 'iceslide', 'spikeburst', 'spikestep']);
 
 export class StructureView {
+  /** Frees the textures it made: the pieces' canvases and the wall slabs (a view going away; the kit's stamps are shared). */
+  destroy(): void { this.pieces.destroy(); this.slabs.destroy(); this.lastTex.clear(); }
   readonly scorch = new Scorch();
   private pieces: Pieces;
   private sil = new Sil();

@@ -23,6 +23,9 @@ export function rand(a: number, b = 0, c = 0): number {
   return (h >>> 0) / 4294967296;
 }
 
+/** Particles emit() returned, counted only while `on` (the VFX Lab's metrics); off in the game, where it costs one test a call. */
+export const emitCount = { on: false, n: 0 };
+
 /**
  * A steady particle emitter as a pure function of time: particle k is born at k / rate and
  * lives `life` seconds. Only the live ones are visited, and with from/to only those born in
@@ -42,6 +45,7 @@ export function emit<T>(t: number, rate: number, life: number, fn: (i: number, a
     const p = fn(k, age, ts);
     if (p) out.push(p);
   }
+  if (emitCount.on) emitCount.n += out.length;
   return out;
 }
 

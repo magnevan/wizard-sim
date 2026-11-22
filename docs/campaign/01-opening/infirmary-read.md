@@ -61,3 +61,7 @@ Stop 1, the first cast, Life ([the brief](brief.md#the-route)). There are no ene
 | 2 | rev 2 | 7/10 | "Ready once the shore leg is shorter": its flights moved 10 u in, the road runs level to the seam, the smokestack stands beside it |
 
 Ready for the in-game grey-box (rev 3). For the game: a soft block on the east road until the well is lit, so nobody drifts off before the fix. Dressing notes from the critics: tents lighter than buildings, the conduits as visible pipes with vines on them, a bath that's more than a puddle.
+
+## Stage 2 in the game (2026-11-22)
+
+The first in-game round (rev 3, as the engine session built it at `feabfbb`) scored 6/10, down from 7 on flat frames. The stairs, the loop and the exit hold up. The view down from the top tier got worse: the camera shows only about 7.6 u below you, so from the overlook and the tents the well was off screen. Rev 4 moves the well 5 u north to the foot of the drop, extends the room east past the gate so the road runs into woods instead of void, and adds garden beds by the greenhouse so the loop's two halves differ. For dressing: posts under the walkways so they read as raised, and cots in the tents so the arc reads.

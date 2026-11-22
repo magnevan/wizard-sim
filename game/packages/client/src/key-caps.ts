@@ -8,11 +8,11 @@
 import * as X from './art/px';
 import type { Ctx } from './art/px';
 
-export type Key = 'fire' | 'life' | 'sigil' | 'shift' | 'space' | 'rmb' | 'lmb' | 'x' | 'circle' | 'lifecircle';
+export type Key = 'fire' | 'life' | 'sigil' | 'shift' | 'space' | 'rmb' | 'lmb' | 'x' | 'circle';
 export type Token = { key: Key; hold?: boolean } | 'then' | 'plus';
 
 const CAP_H = 16, GAP = 3;
-const CAP_W: Record<Key, number> = { fire: 17, life: 17, sigil: 17, shift: 30, space: 34, rmb: 14, lmb: 14, x: 15, circle: 22, lifecircle: 22 };
+const CAP_W: Record<Key, number> = { fire: 17, life: 17, sigil: 17, shift: 30, space: 34, rmb: 14, lmb: 14, x: 15, circle: 22 };
 const SEP_W = 9;
 /** Seconds each press is shown for: a tap, and a hold. And a rest before it starts over. */
 const TAP = 0.42, HOLD = 1.1, REST = 0.7;
@@ -64,7 +64,7 @@ const OUT = '#0a0810', FACE = '#2a2638', FACE_DOWN = '#4a3020', TOP = '#4a4460',
 function cap(c: Ctx, tok: { key: Key; hold?: boolean }, x: number, y: number, down: boolean, fill: number, t: number): void {
   const w = CAP_W[tok.key], dy = down ? 1 : 0;
   if (tok.key === 'rmb' || tok.key === 'lmb') { mouse(c, x, y, down, fill, !!tok.hold, tok.key === 'lmb'); return; }
-  if (tok.key === 'circle' || tok.key === 'lifecircle') { circle(c, x, y, t, tok.key === 'lifecircle'); return; }
+  if (tok.key === 'circle') { circle(c, x, y, t, false); return; }
   // the cap: an outline, its side showing under it (less when pressed), a bevelled face
   X.rect(c, x, y + dy, w, CAP_H - dy, OUT);
   X.rect(c, x + 1, y + CAP_H - 3, w - 2, 2, SIDE);

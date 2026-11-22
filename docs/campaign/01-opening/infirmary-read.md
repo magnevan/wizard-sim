@@ -52,3 +52,12 @@ Stop 1, the first cast, Life ([the brief](brief.md#the-route)). There are no ene
 - **Plan D chosen:** "The layout feels good. The flow is very good, where you see the people to heal first."
 - **The cots are open from the start:** "No they should be open, there are patients there and some nurses. But the equipment they're using has gone dark." So you can heal from the start. The tents' equipment (lamps, brass instruments) lights up when the well does.
 - **For dressing:** "the blocking feels like everything will be angled a certain way (straight to the camera), but we don't necessarily have to generate the assets like that. The concept art has the objects at 45 degree angles and it looks quite good." Blockouts are drawn on the grid, so their boxes face the camera squarely. At the art stage, buildings and props can turn 45°, as in the concept.
+
+## Stage 2 on flat frames (2026-11-22)
+
+| Round | Plan D | Score | What changed after it |
+|---|---|---|---|
+| 1 | rev 1 | 6/10 | One flight onto the well hid it, so twin flights and an overlook. The fix was three spokes, so it became one loop to the shore and back. The tents were a sideways strip, so they now stand in an arc facing the well. The exit started off a corner, so it now runs along a paved road |
+| 2 | rev 2 | 7/10 | "Ready once the shore leg is shorter": its flights moved 10 u in, the road runs level to the seam, the smokestack stands beside it |
+
+Ready for the in-game grey-box (rev 3). For the game: a soft block on the east road until the well is lit, so nobody drifts off before the fix. Dressing notes from the critics: tents lighter than buildings, the conduits as visible pipes with vines on them, a bath that's more than a puddle.

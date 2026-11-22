@@ -47,9 +47,15 @@ LEVELS = {
         start='journey',   # the first pass's first point
         # (asset, the landmark it stands on, blocks): the great armillary on its dais, so the reveal can be judged
         props=[('codex-armillary-grand', 'the armillary', True)],
-        # (journey pass, 'first' or 'last' point): where the camera pulls back to show the landmark whole (client vista.ts):
-        # the briefing at the start, and the finale's arrival
-        vistas=[(0, 'first'), (-1, 'last')],
+        # No vistas (camera pull-backs, client vista.ts): the user, 2026-11-22, "you'll see enough of it as you walk
+        # around". A level that wants one lists (journey pass, 'first' or 'last' point) here as vistas=[...].
+    ),
+    'inf-d': dict(
+        level='Infirmary',
+        # gate ids are what the sim looks for (sim/src/infirmary.ts)
+        gates={'from the main gate': 'gate-court', 'to the battery': 'gate-battery'},
+        landmarks={'the well': 'well'},
+        start=(0, -22),   # on the road in, 10 u past the main gate (a start inside a gate's reach would leave at once)
     ),
 }
 
@@ -185,7 +191,18 @@ def write_level(name):
     level_name = cfg['level']
     path = os.path.join(MAPS, 'world', level_name + '.ldtkl')
     stub = next((l for l in project['levels'] if l['identifier'] == level_name), None)
-    if stub is None: raise SystemExit(f'{name}: no level {level_name} in world.ldtk (add it first, e.g. with LDtk)')
+    if stub is None:
+        # a new room: the Court's level as the template (its layers and fields), a new uid, placed right of every level
+        template = json.load(open(os.path.join(MAPS, 'world', 'Court.ldtkl'), encoding='utf-8'))
+        uid = project['nextUid']; project['nextUid'] = uid + 1
+        right = max(l['worldX'] + l['pxWid'] for l in project['levels']) + 200
+        template.update(identifier=level_name, iid=iid(name, 'level'), uid=uid, worldX=right, worldY=0)
+        for li in template['layerInstances']: li.update(iid=iid(name, 'layer', li['__identifier']), levelId=uid)
+        save(path, template)
+        stub = {k: v for k, v in template.items() if k != '__header__'}
+        stub.update(layerInstances=None, externalRelPath=f'world/{level_name}.ldtkl')
+        project['levels'].append(stub)
+        print(f'{level_name}: a new level (uid {uid}), added to world.ldtk')
     level = json.load(open(path, encoding='utf-8'))
     level.update(pxWid=W * PX, pxHei=H * PX)
     for li in level['layerInstances']:

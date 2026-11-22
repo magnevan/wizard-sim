@@ -5,17 +5,18 @@
  * The room → mode table is the scenario registry's stand-in until rooms say their mode themselves (the campaign's
  * chapters will).
  */
-import { BODY, CAMPAIGN, CHANNEL, PERKS, RUNES, WELL } from './config';
+import { BODY, CAMPAIGN, PERKS, RUNES, WELL } from './config';
 import { WALL } from './compile';
 import { EL, N_EL } from './elements';
 import { tickWaves } from './waves';
 import { survivePress, tickSurvive } from './survive';
-import { BATTERY, batteryPress, channelTick, driveButtons, driveSpray, driveTarget, driving, inLifeCircle } from './battery';
+import { BATTERY, batteryPress, driveButtons, driveSpray, driveTarget, driving } from './battery';
 import { BATTERY_CHECKPOINTS, BWAVES, batteryReached, batteryStandoff, holdSpot, laneTarget, repairPress, tickBatteryWaves } from './battery-waves';
 import { ARCHETYPES, ATTACK } from './archetypes';
 import { beginTutorialTick, tickTutorial } from './tutorial';
 import { tutPool, TUT_ORDER } from './tutorial-data';
 import { courtLeaveTo } from './court';
+import { infirmaryLeaveTo } from './infirmary';
 import { YARD_CHECKPOINTS, YS, lateYard, newYard, sparRest, sparStandoff, sparTarget, tickYard, yardPress, yardReached, yardRuneMax } from './yard';
 import type { Mode, ModeId, WorldOpts } from './mode';
 import {
@@ -85,20 +86,18 @@ const BATTERY_MODE: Mode = {
   state: (w) => {
     w.battery = {
       drive: new Int8Array(MAX_SEATS).fill(-1), homeX: new Float64Array(MAX_SEATS), homeY: new Float64Array(MAX_SEATS),
-      lane: new Int8Array(MAX_BODIES).fill(-1), flow: new Float64Array([1]), wellT: new Int32Array(3), channel: new Int8Array(MAX_SEATS),
+      lane: new Int8Array(MAX_BODIES).fill(-1), flow: new Float64Array([1]), wellT: new Int32Array(3),
     };
   },
   setup: (w, opts) => { dummies(w, opts); raiseGateFire(w); },
-  press: (w, inputs) => { batteryPress(w, inputs); repairPress(w, inputs); channelTick(w); },
+  press: (w, inputs) => { batteryPress(w, inputs); repairPress(w, inputs); },
   director: (w) => tickBatteryWaves(w),
-  // a defence's pool is Fire only; once the well has infused you, you keep a little of your own; in the Life circle,
-  // its Life too (a channel circle)
-  runeMax: (w, i, id) => (id === EL.life ? (inLifeCircle(w, i) ? CHANNEL.pool : 0)
-    : id !== EL.fire ? 0 : w.battery!.drive[i] >= 0 ? RUNES.max.fire : infused(w) ? WELL.own : 0),
-  // a defence's pool fills as fast as the well still gives; your own as slowly as the campaign's early going, and
-  // faster while you channel the circle
-  regen: (w, i) => (i < 0 || i >= MAX_SEATS ? undefined : w.battery!.drive[i] >= 0 ? RUNES.regen * w.battery!.flow[0]
-    : CAMPAIGN.regen + (inLifeCircle(w, i) ? CHANNEL.regen : 0)),
+  // a defence's pool is Fire only; your own is the Life you brought from the infirmary, and once the well has infused
+  // you, a little Fire too
+  runeMax: (w, i, id) => (w.battery!.drive[i] >= 0 ? (id === EL.fire ? RUNES.max.fire : 0)
+    : id === EL.life ? CAMPAIGN.life : id === EL.fire && infused(w) ? WELL.own : 0),
+  // a defence's pool fills as fast as the well still gives; your own as slowly as the campaign's early going
+  regen: (w, i) => (i < 0 || i >= MAX_SEATS ? undefined : w.battery!.drive[i] >= 0 ? RUNES.regen * w.battery!.flow[0] : CAMPAIGN.regen),
   wizardHp: () => BODY.wizardHp * CAMPAIGN.hardy,
   pools: (w) => [w.battery!],
   onSpawn: (w, i) => { w.battery!.lane[i] = -1; }, // no lane until the battery sends it at a defence
@@ -151,10 +150,20 @@ const COURT_MODE: Mode = {
   leaveTo: courtLeaveTo,
 };
 
-export const MODES: Readonly<Record<ModeId, Mode>> = { sandbox: SANDBOX, arena: ARENA_MODE, survive: SURVIVE, battery: BATTERY_MODE, tutorial: TUTORIAL, yard: YARD_MODE, court: COURT_MODE };
+/** The infirmary: outside the main gate on the battery road; for now only its gates (infirmary.ts). */
+const INFIRMARY_MODE: Mode = {
+  id: 'infirmary',
+  campaign: true,
+  setup: () => {},
+  director: () => {},
+  runeMax: () => 0,
+  leaveTo: infirmaryLeaveTo,
+};
+
+export const MODES: Readonly<Record<ModeId, Mode>> = { sandbox: SANDBOX, arena: ARENA_MODE, survive: SURVIVE, battery: BATTERY_MODE, tutorial: TUTORIAL, yard: YARD_MODE, court: COURT_MODE, infirmary: INFIRMARY_MODE };
 
 const ROOM_MODE: Readonly<Record<Room, ModeId>> = {
-  sanctum: 'sandbox', academy: 'sandbox', terraces: 'sandbox', arena: 'arena', survive: 'survive', battery: 'battery', tutorial: 'tutorial', yard: 'yard', court: 'court',
+  sanctum: 'sandbox', academy: 'sandbox', terraces: 'sandbox', arena: 'arena', survive: 'survive', battery: 'battery', tutorial: 'tutorial', yard: 'yard', court: 'court', infirmary: 'infirmary',
 };
 
 export const modeOf = (room: Room): Mode => MODES[ROOM_MODE[room]];

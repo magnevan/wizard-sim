@@ -247,7 +247,7 @@ describe('height tiers', () => {
     const def = ROOMS.terraces, hd = def.height!;
     expect(hd.metres).toEqual([0, 3, 6]);
     expect(firstCliff(def)).toBe(def.rock.length - hd.cliffs.length);
-    for (const id of Object.keys(ROOMS) as (keyof typeof ROOMS)[]) expect('height' in ROOMS[id]).toBe(id === 'terraces' || id === 'court'); // court: written from its plan (tools/place-plans/to_ldtk.py)
+    for (const id of Object.keys(ROOMS) as (keyof typeof ROOMS)[]) expect('height' in ROOMS[id]).toBe(id === 'terraces' || id === 'court' || id === 'infirmary'); // court: written from its plan (tools/place-plans/to_ldtk.py)
     // the terrace's edge (y = -1), west of the stair: a body standing on it is pushed off, and the wall is terrain
     const k = def.rock.findIndex((s, i) => i >= firstCliff(def) && s[1] === -1 && s[3] === -1 && s[0] < 0);
     expect(hd.cliffs[k - firstCliff(def)]).toEqual([1, 0]);

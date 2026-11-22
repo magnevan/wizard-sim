@@ -412,8 +412,6 @@ export interface Battery {
   flow: Float64Array;
   /** [0] ticks since the flow ran out, [1] ticks since the well ran dry, [2] ticks since its repair began (0: not yet). */
   wellT: Int32Array;
-  /** The element each seat channels from a channel circle it stands in, or 0 (battery.ts channelTick). */
-  channel: Int8Array;
 }
 
 /** Has the repair begun (X at the well once the fight is over, battery-waves.ts)? */

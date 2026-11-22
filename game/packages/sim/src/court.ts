@@ -15,12 +15,12 @@ export const COURT = {
   reach: 3,
 } as const;
 
-/** The gates and where each leads. */
-const GATES: readonly (readonly [string, string])[] = [['gate-yard', 'yard'], ['gate-battery', 'battery']];
-
-/** Where the party is going now: the first gate someone stands in, or undefined. */
-export function courtLeaveTo(w: World): string | undefined {
-  for (const [id, to] of GATES) {
+/**
+ * A room's leaveTo from its gates: [marker id, the room it leads to]. The party goes the moment a wizard stands within
+ * COURT.reach of a gate's marker (the first gate in the list wins). Shared by the court and the infirmary.
+ */
+export const gatesLeaveTo = (gates: readonly (readonly [string, string])[]) => (w: World): string | undefined => {
+  for (const [id, to] of gates) {
     const m = markerOf(w.def, id);
     if (!m) continue;
     for (let i = 0; i < MAX_SEATS; i++) {
@@ -29,4 +29,7 @@ export function courtLeaveTo(w: World): string | undefined {
     }
   }
   return undefined;
-}
+};
+
+/** Where the party is going now from the court: the first gate someone stands in, or undefined. */
+export const courtLeaveTo = gatesLeaveTo([['gate-yard', 'yard'], ['gate-battery', 'battery']]);

@@ -11,7 +11,7 @@
 	"iid": "c337107f-514c-4883-8916-62ef21941c22",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 121,
+	"nextUid": 122,
 	"identifierStyle": "Capitalize",
 	"toc": [],
 	"worldLayout": "Free",
@@ -1784,17 +1784,17 @@
 				{
 					"__identifier": "tierMetres",
 					"__type": "Array<Float>",
-					"__value": [ -9.0, -5.0, -4.67, -4.33, -4.0, -3.67, -3.33, -3.0, -2.67, -2.33, -2.0, -1.67, -1.33, -1.0, -0.67, -0.33, 0.0, 0.33, 0.67, 1.0, 1.33, 1.67, 2.0, 2.33, 2.5, 2.67, 3.0, 3.33, 3.67, 4.0, 4.33, 4.67, 5.0, 5.33, 5.4, 5.67, 5.8, 6.0, 6.3, 6.5, 7.0, 7.3, 7.5, 8.0, 9.0, 10.0, 11.0, 14.0, 18.0, 19.0, 20.0, 21.0 ],
+					"__value": [ -6, -5, -4.67, -4.33, -4, -3.67, -3.33, -3, -2.67, -2.33, -2, -1.67, -1.33, -1, -0.67, -0.33, 0, 0.33, 0.67, 1, 1.33, 1.67, 2, 2.33, 2.5, 2.67, 3, 3.33, 3.67, 4, 4.33, 4.67, 5, 5.33, 5.4, 5.67, 5.8, 6, 6.3, 6.5, 7, 7.3, 7.5, 8, 10, 11, 12, 14, 19, 20, 21, 22 ],
 					"__tile": null,
 					"defUid": 119,
 					"realEditorValues": [
 						{
 							"id": "V_Float",
-							"params": [ -9.0 ]
+							"params": [ -6 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ -5.0 ]
+							"params": [ -5 ]
 						},
 						{
 							"id": "V_Float",
@@ -1806,7 +1806,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ -4.0 ]
+							"params": [ -4 ]
 						},
 						{
 							"id": "V_Float",
@@ -1818,7 +1818,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ -3.0 ]
+							"params": [ -3 ]
 						},
 						{
 							"id": "V_Float",
@@ -1830,7 +1830,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ -2.0 ]
+							"params": [ -2 ]
 						},
 						{
 							"id": "V_Float",
@@ -1842,7 +1842,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ -1.0 ]
+							"params": [ -1 ]
 						},
 						{
 							"id": "V_Float",
@@ -1854,7 +1854,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ 0.0 ]
+							"params": [ 0 ]
 						},
 						{
 							"id": "V_Float",
@@ -1866,7 +1866,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ 1.0 ]
+							"params": [ 1 ]
 						},
 						{
 							"id": "V_Float",
@@ -1878,7 +1878,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ 2.0 ]
+							"params": [ 2 ]
 						},
 						{
 							"id": "V_Float",
@@ -1894,7 +1894,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ 3.0 ]
+							"params": [ 3 ]
 						},
 						{
 							"id": "V_Float",
@@ -1906,7 +1906,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ 4.0 ]
+							"params": [ 4 ]
 						},
 						{
 							"id": "V_Float",
@@ -1918,7 +1918,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ 5.0 ]
+							"params": [ 5 ]
 						},
 						{
 							"id": "V_Float",
@@ -1938,7 +1938,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ 6.0 ]
+							"params": [ 6 ]
 						},
 						{
 							"id": "V_Float",
@@ -1950,7 +1950,7 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ 7.0 ]
+							"params": [ 7 ]
 						},
 						{
 							"id": "V_Float",
@@ -1962,39 +1962,39 @@
 						},
 						{
 							"id": "V_Float",
-							"params": [ 8.0 ]
+							"params": [ 8 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 9.0 ]
+							"params": [ 10 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 10.0 ]
+							"params": [ 11 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 11.0 ]
+							"params": [ 12 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 14.0 ]
+							"params": [ 14 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 18.0 ]
+							"params": [ 19 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 19.0 ]
+							"params": [ 20 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 20.0 ]
+							"params": [ 21 ]
 						},
 						{
 							"id": "V_Float",
-							"params": [ 21.0 ]
+							"params": [ 22 ]
 						}
 					]
 				}
@@ -2006,7 +2006,7 @@
 			"identifier": "Terraces",
 			"iid": "7e44ace5-0000-4000-8000-000000005010",
 			"uid": 120,
-			"worldX": 13820,
+			"worldX": 17480,
 			"worldY": 0,
 			"worldDepth": 0,
 			"pxWid": 640,
@@ -2040,6 +2040,139 @@
 						{
 							"id": "V_Float",
 							"params": [ 6 ]
+						}
+					]
+				}
+			],
+			"layerInstances": null,
+			"__neighbours": []
+		},
+		{
+			"identifier": "Infirmary",
+			"iid": "6eb1100f-1385-5100-935c-3aa3784f7b2d",
+			"uid": 121,
+			"worldX": 14660,
+			"worldY": 0,
+			"worldDepth": 0,
+			"pxWid": 2620,
+			"pxHei": 2620,
+			"__bgColor": "#3F6443",
+			"bgColor": "#3F6443",
+			"useAutoIdentifier": false,
+			"bgRelPath": null,
+			"bgPos": null,
+			"bgPivotX": 0.5,
+			"bgPivotY": 0.5,
+			"__smartColor": "#8FA28E",
+			"__bgPos": null,
+			"externalRelPath": "world/Infirmary.ldtkl",
+			"fieldInstances": [
+				{
+					"__identifier": "tierMetres",
+					"__type": "Array<Float>",
+					"__value": [ -1, -0.5, 0, 0.33, 0.67, 1, 1.33, 1.67, 2, 2.33, 2.5, 2.67, 3, 3.33, 3.67, 4, 4.33, 4.67, 5, 5.33, 6, 7, 7.5, 8, 16 ],
+					"__tile": null,
+					"defUid": 119,
+					"realEditorValues": [
+						{
+							"id": "V_Float",
+							"params": [ -1 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ -0.5 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 0 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 0.33 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 0.67 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 1 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 1.33 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 1.67 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2.33 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2.5 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 2.67 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 3 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 3.33 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 3.67 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 4 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 4.33 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 4.67 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 5 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 5.33 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 6 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 7 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 7.5 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 8 ]
+						},
+						{
+							"id": "V_Float",
+							"params": [ 16 ]
 						}
 					]
 				}

@@ -8,7 +8,7 @@
 import { possessed, possession } from './possess';
 import type { Mod, SpellSpec } from './compile';
 import { ARMS, BODY, CELL, COMBAT, PERKS, RUNES, SHAPES, STATUS, STRUCT, SURFACE, T } from './config';
-import { EL, N_EL, elementName, queueFromCounts } from './elements';
+import { EL, N_EL, elementName, formCurve, queueFromCounts } from './elements';
 import { inCone, len, rayCircle } from './geom';
 import { HIT_KIND, addChill, addKnock, applyHit, drench, ignite, setHitKind, soakOf, tryFreeze, type HitOpts } from './hit';
 import { cosTurns, sinTurns } from './trig';
@@ -602,19 +602,31 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     return;
   }
   if (spec.shape === 'stream') {
-    // The Shard stream: a shard every streamGap s, by the channel's own clock (so the Double, a turret and the Echo keep
-    // their own cadence). The aim wanders over a spread that settles as you hold: a low-discrepancy walk, no rng.
-    const gap = T(SHAPES.streamGap);
+    // The Shard stream: streamRate shards a second at one Ice, faster with each extra Ice (Ice's form curve) and each
+    // shard lighter to match, timed by the channel's own clock (the Double, a turret and the Echo keep their own cadence).
+    // The aim wanders over a spread that settles as you hold: a low-discrepancy walk, no rng.
     setEnd(x + dx * SHAPES.streamRange, y + dy * SHAPES.streamRange);
-    if (t % gap !== 0) return;
+    const grow = formCurve(EL.ice, Math.max(1, spec.formN), COMBAT.sprayExp, COMBAT.rockExp, COMBAT.formScaling), rate = SHAPES.streamRate * grow;
+    const shot = Math.floor((t * rate) / 60);
+    if (t > 0 && shot === Math.floor(((t - 1) * rate) / 60)) return;
     const settle = Math.min(1, t / T(SHAPES.streamSettle));
     const spread = SHAPES.streamSpread + (SHAPES.streamSettled - SHAPES.streamSpread) * settle;
-    const a = face + spread * (2 * (((t / gap) * 0.618034) % 1) - 1);
-    const scale = COMBAT.channelRate * SHAPES.streamGap * SHAPES.streamPower * (follow ? follow.scale : 1);
-    const m = spawnMissile(w, src, p, cosTurns(a), sinTurns(a), 2, scale, 0, 0, from?.x, from?.y);
+    const a = face + spread * (2 * ((shot * 0.618034) % 1) - 1);
+    const scale = (COMBAT.channelRate * SHAPES.streamPower * (follow ? follow.scale : 1)) / rate;
+    const full = SHAPES.missileSpeed * SHAPES.iceFlight;
+    if (!SHAPES.streamArc) {
+      const m = spawnMissile(w, src, p, cosTurns(a), sinTurns(a), 2, scale, 0, 0, from?.x, from?.y);
+      if (m >= 0) { w.missiles.vx[m] = cosTurns(a) * full; w.missiles.vy[m] = sinTurns(a) * full; w.missiles.life[m] = T(SHAPES.streamRange / full); }
+      return;
+    }
+    // The arc: out to one side (alternating), slow, then curving onto the cursor as it speeds up (tickMissiles: steerArc)
+    const aimD = !from && !follow && src < MAX_SEATS ? Math.min(SHAPES.streamRange, Math.max(2, len(s.aimX[src], s.aimY[src]))) : SHAPES.streamRange * 0.6;
+    const side = shot % 2 ? 1 : -1, out = a + side * SHAPES.streamArcAngle * (0.7 + 0.6 * ((shot * 0.381966) % 1));
+    const m = spawnMissile(w, src, p, cosTurns(out), sinTurns(out), 2, scale, 0, 0, from?.x, from?.y);
     if (m >= 0) {
-      const sp = SHAPES.missileSpeed * SHAPES.iceFlight;
-      w.missiles.vx[m] = cosTurns(a) * sp; w.missiles.vy[m] = sinTurns(a) * sp; w.missiles.life[m] = T(SHAPES.streamRange / sp);
+      const mm = w.missiles, sp = full * SHAPES.streamArcStart;
+      mm.vx[m] = cosTurns(out) * sp; mm.vy[m] = sinTurns(out) * sp; mm.life[m] = T((SHAPES.streamRange * 1.5) / full);
+      mm.flags[m] |= PF.arc; mm.tx[m] = x + cosTurns(a) * aimD; mm.ty[m] = y + sinTurns(a) * aimD;
     }
     return;
   }
@@ -661,6 +673,7 @@ export function tickMissiles(w: World): void {
       continue;
     }
     if (m.type[j] === 2 && m.flags[j] & PF.heal) seekHurt(w, j);
+    if (m.type[j] === 2 && m.flags[j] & PF.arc) steerArc(w, j);
     m.x[j] += m.vx[j] * DT; m.y[j] += m.vy[j] * DT;
     const out = Math.abs(m.x[j]) > w.dims.w / 2 || Math.abs(m.y[j]) > w.dims.h / 2;
     const p = stored(m.els, j, m.flags[j], m.mod[j], m.look[j]);
@@ -747,6 +760,25 @@ function seekHurt(w: World, j: number): void {
   if (bc < TURN_COS) { // too far round to reach this tick: turn the most it can, toward the ally
     const s = ux * by - uy * bx >= 0 ? TURN_SIN : -TURN_SIN;
     nx = ux * TURN_COS - uy * s; ny = ux * s + uy * TURN_COS;
+  }
+  m.vx[j] = nx * sp; m.vy[j] = ny * sp;
+}
+
+/**
+ * An arcing shard of the Shard stream: it speeds up toward full flight and turns, a limited angle a tick, toward the point
+ * it was aimed at. Once that point is behind it (or reached) it flies straight on.
+ */
+function steerArc(w: World, j: number): void {
+  const m = w.missiles, full = SHAPES.missileSpeed * SHAPES.iceFlight, ARC_COS = cosTurns(SHAPES.streamArcTurn / 60), ARC_SIN = sinTurns(SHAPES.streamArcTurn / 60);
+  const sp0 = len(m.vx[j], m.vy[j]) || 1, ux = m.vx[j] / sp0, uy = m.vy[j] / sp0;
+  const sp = Math.min(full, sp0 + (full * (1 - SHAPES.streamArcStart)) / T(SHAPES.streamArcRamp));
+  const dx = m.tx[j] - m.x[j], dy = m.ty[j] - m.y[j], d = len(dx, dy);
+  if (d < 0.3 || dx * ux + dy * uy < 0) { m.flags[j] &= ~PF.arc; m.vx[j] = ux * full; m.vy[j] = uy * full; return; }
+  const bx = dx / d, by = dy / d;
+  let nx = bx, ny = by;
+  if (bx * ux + by * uy < ARC_COS) { // too far round to reach this tick: turn the most it can
+    const sn = ux * by - uy * bx >= 0 ? ARC_SIN : -ARC_SIN;
+    nx = ux * ARC_COS - uy * sn; ny = ux * sn + uy * ARC_COS;
   }
   m.vx[j] = nx * sp; m.vy[j] = ny * sp;
 }

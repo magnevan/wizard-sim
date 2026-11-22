@@ -75,19 +75,30 @@ describe('rune scaling', () => {
     expect(drain(['arcane', 'water', 'cold'], 'cold')).toBeCloseTo(RHYTHM.upkeep, 1);
   });
 
-  it('every shard of the Shard stream carries the same share of the channel: streamGap s of it, times streamPower', () => {
-    const { w, go, queue } = scene(6);
-    queue(['water', 'cold']);
-    const scales = new Set<number>();
-    let launched = 0;
-    for (let t = 0; t < 40; t++) {
-      go({ buttons: BTN.force });
-      for (let j = 0; j < w.missiles.alive.length; j++) if (w.missiles.alive[j] && w.missiles.type[j] === 2) scales.add(w.missiles.scale[j]);
-      launched = Math.max(launched, [...w.missiles.alive].filter((a) => a).length);
-    }
-    expect(launched).toBeGreaterThan(0);
-    expect(scales.size).toBe(1);
-    expect([...scales][0]).toBeCloseTo(COMBAT.channelRate * SHAPES.streamGap * SHAPES.streamPower, 5);
+  it('the Shard stream: every extra Ice fires faster, each shard lighter to match, the damage a second on the Ice curve', () => {
+    const volley = (n: number) => {
+      const { w, go, queue } = scene(6);
+      queue(Array.from({ length: n }, () => ['water', 'cold'] as Element[]).flat());
+      const scales = new Set<number>(), seen = new Set<string>();
+      let shots = 0;
+      for (let t = 0; t < 120; t++) {
+        go({ buttons: BTN.force });
+        for (let j = 0; j < w.missiles.alive.length; j++) {
+          if (!w.missiles.alive[j] || w.missiles.type[j] !== 2) continue;
+          scales.add(w.missiles.scale[j]);
+          const k = `${j}:${w.missiles.life[j] + t}`; // a shard's slot and its death tick name it
+          if (!seen.has(k)) { seen.add(k); shots++; }
+        }
+      }
+      return { shots, scales: [...scales] };
+    };
+    const one = volley(1), two = volley(2);
+    expect(one.scales).toHaveLength(1);
+    expect(one.scales[0]).toBeCloseTo((COMBAT.channelRate * SHAPES.streamPower) / SHAPES.streamRate, 5);
+    const grow = 1 + COMBAT.formScaling;
+    expect(two.scales[0]).toBeCloseTo(one.scales[0] / grow, 5);
+    expect(two.shots / one.shots).toBeGreaterThan(grow * 0.85);
+    expect(two.shots / one.shots).toBeLessThan(grow * 1.15);
   });
 
   it('Earth + Water + Cold flies as three fast ice shards, each a third of the rock', () => {

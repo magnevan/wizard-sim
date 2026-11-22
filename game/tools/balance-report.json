@@ -189,11 +189,11 @@
    "cast": "force",
    "runes": 2,
    "seconds": 2.93,
-   "damage": 80,
+   "damage": 53,
    "heal": 0,
-   "crowd": 80,
-   "dps": 27,
-   "perRune": 40
+   "crowd": 53,
+   "dps": 18,
+   "perRune": 27
   },
   {
    "title": "Arcane boulder",
@@ -453,7 +453,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 1.1,
+     "burst": 1.7,
      "sustained": null
     },
     {
@@ -544,7 +544,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 12.6,
+     "burst": 19.1,
      "sustained": null
     },
     {
@@ -635,7 +635,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 4.9,
+     "burst": 7.5,
      "sustained": null
     },
     {
@@ -726,7 +726,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 2.5,
+     "burst": 3.8,
      "sustained": null
     },
     {
@@ -817,7 +817,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 3.3,
+     "burst": 5,
      "sustained": null
     },
     {
@@ -908,7 +908,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 2.2,
+     "burst": 3.3,
      "sustained": null
     },
     {
@@ -999,7 +999,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 0.4,
+     "burst": 0.6,
      "sustained": null
     },
     {
@@ -1090,7 +1090,7 @@
     },
     {
      "spell": "Water spray",
-     "burst": 0.4,
+     "burst": 0.7,
      "sustained": null
     },
     {

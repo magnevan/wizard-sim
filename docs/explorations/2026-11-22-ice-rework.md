@@ -92,3 +92,30 @@ The counts don't move, because a moved queue becomes an Ice cell carrying the ol
 - `config.ts` `SHAPES.stream*` and `ARMS.lance*` (the fan's `fan*` fields are gone). `hands.ts` `lance`. The client draws shards bigger by their radius (`art/vfx.ts`), and the bow's draw glow grows (`view-structures.ts`). The help panel shows the stream per second (`help-model.ts`).
 - Rules text: `tools/spell-atlas/rules-c.js` (Shard stream, the bow) and `npm run sync-rules`. Atlas: 43 cells, 944 spells, 0 inert, unchanged.
 - Golden hash re-recorded (`ca350d7c` → `81800b89`). With only Ice Force reverted the old hash returned, so the change is the stream's.
+
+## Round 2: the user's notes on the stream
+
+The user liked the stream and asked what its DPS was ("it might be a bit high"). They also asked for three more things: extra Ice runes should fire faster rather than harder, the base should come down, and the stream should have a channel cost like beams. They also suggested trying a version where the ice arches out before racing to the target.
+
+**The first build's DPS**, which was high: 1 Ice about 28/s, 2 Ice about 48/s, against 15/s for a one-rune Arcane beam and 25/s for two.
+
+**Built:**
+- **Fire rate grows with Ice.** At one Ice the stream fires `streamRate` 7 shards a second. Each extra Ice raises the rate on Ice's form curve (+70% a rune: about 12/s at two, 17/s at three), and each shard is lighter to match. More Ice reads as a faster gun, not bigger shards.
+- **Lower base:** `streamPower` 2 → 1.3.
+- **The arc, on trial** (`shapes.streamArc` in F2 Tune, off by default). Each shard leaves to one side (alternating), slow, then curves onto the cursor point while speeding up, and flies straight once past it. The shards meet at the cursor's distance, so aiming further focuses them further out. This is the converging-volley idea from #9 in a held form.
+
+**Measured (sim, a still dummy, 2.5 s held), damage a second:**
+
+| | at 3 u | at 6 u | at 9 u |
+|---|---|---|---|
+| Stream, 1 Ice | 19.0 | 17.8 | 17.8 |
+| Stream, 2 Ice | 32.1 | 30.9 | 28.5 |
+| Stream, 3 Ice | 45.2 | 44.0 | 40.4 |
+| Arcane beam, 1 | 14.7 | 14.7 | 14.7 |
+| Arcane beam, 2 | 24.7 | 24.7 | 24.7 |
+
+The arc lands the same on a dummy at the cursor; it differs on movers and off-cursor targets. Per rune paid, one Ice (two runes) is about 9/s against the beam's 15. Per slot in the queue, it's 1.2–1.3 × the beam: the price of travel time and misses.
+
+**The channel cost already applied.** It's the same rule as beams (`cast.ts`): past the free 2.5 s every rune in the channel costs `RHYTHM.upkeep` (0.4 a second) from its own pool, and an Ice pays from Water *and* Cold. Held 8 s, a one-rune stream and a one-rune beam both stay topped up, because regen outpaces upkeep. A 3-Ice stream ran Water and Cold dry and stopped. A 3-Arcane beam kept going, because it draws its 1.2 a second from one pool and the stream from two. A test now pins it.
+
+**Open:** does the arc earn its place? It looks livelier and focuses at the cursor, but it no longer goes where the shards point, and sweeping a pack gets harder. Pick: keep it off until the user has tried it (F2 › Spell shapes › streamArc = 1); if it wins, it becomes the default and `streamSpread` matters less.

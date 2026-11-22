@@ -200,12 +200,20 @@ export const SHAPES = {
   shardPower: 0.75,
   /**
    * The Shard stream (Ice Force, the user, 2026-11-22, issue #9: "a machine gun of shards", Ice's other beam): a channel
-   * that looses a shard every streamGap s along your aim. Each shard carries streamGap s of the channel's damage, times
-   * streamPower (2: one Ice is two runes, like iceBlast), so a stream that lands all of it deals twice a beam's rate.
-   * The aim starts loose (streamSpread turns either side) and settles to streamSettled over streamSettle s of holding:
-   * the spin-up. Shards reach streamRange u and stop at the first body: you sweep a crowd, you don't pierce it.
+   * that looses streamRate shards a second along your aim at one Ice; every extra Ice fires faster instead of harder
+   * (the rate grows on Ice's form curve, +70 % a rune, and each shard's share shrinks to match, the user, 2026-11-22).
+   * Its damage a second is streamPower x a beam's for the same payload (1.3: the first build's 2 was "a bit high").
+   * The aim starts loose (streamSpread turns either side) and settles to streamSettled over streamSettle s of holding.
+   * Shards reach streamRange u and stop at the first body: you sweep a crowd, you don't pierce it.
    */
-  streamGap: 0.1, streamPower: 2, streamSpread: 0.03, streamSettled: 0.006, streamSettle: 0.6, streamRange: 10,
+  streamRate: 7, streamPower: 1.3, streamSpread: 0.03, streamSettled: 0.006, streamSettle: 0.6, streamRange: 10,
+  /**
+   * The stream's arc (on trial, the user, 2026-11-22: "the ice arches out before racing to the target"): with streamArc 1
+   * each shard leaves streamArcAngle turns to one side (alternating), at streamArcStart of its speed, then curves toward
+   * the cursor where it left at up to streamArcTurn turns a second, reaching full speed over streamArcRamp s. Past the
+   * cursor it flies straight. The shards meet at the cursor's distance: aim further and they converge further out.
+   */
+  streamArc: 0, streamArcAngle: 0.12, streamArcTurn: 1.6, streamArcStart: 0.45, streamArcRamp: 0.3,
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,
   patchRadius: 2, patchLife: 8, // were 1.6 and 6: the user asked for bigger, longer Place effects (2026-11-11)

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { rules, type Element } from '@wizard-sim/rules';
 import {
-  BTN, DAMAGE, EL, KEYED_EL, KIND, N_EL, NO_INPUT, PHASE, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step,
+  BTN, DAMAGE, EL, KEYED_EL, KIND, N_EL, NO_INPUT, PHASE, RHYTHM, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step,
   type PlayerInput, type World,
 } from '../src';
 import { cellAt } from '../src/effects';
@@ -355,7 +355,7 @@ describe('Force casts', () => {
     expect(wet.w.bodies.frozen[wet.dummy]).toBeGreaterThan(0);
   });
 
-  it('water then cold make Ice, and Ice as Force is the Shard stream: a channel of missiles, ten a second while held', () => {
+  it('water then cold make Ice, and Ice as Force is the Shard stream: a channel of missiles while held', () => {
     const spec = compile(['ice'], 'force');
     expect(spec.title).toBe('Shard stream');
     expect(spec.shape).toBe('stream');
@@ -372,6 +372,33 @@ describe('Force casts', () => {
     expect(400 - w.bodies.hp[dummy]).toBeGreaterThan(16 * SHAPES.streamPower * 0.5);
     // nothing new leaves once you let go
     expect(Array.from(w.missiles.alive).filter((a) => a).length).toBe(0);
+  });
+
+  it('the arc of the Shard stream (on trial): shards leave to the side and curve onto the cursor, landing on what stands there', () => {
+    const was = SHAPES.streamArc;
+    (SHAPES as { streamArc: number }).streamArc = 1;
+    try {
+      const { w, d, dummy } = range(7);
+      d.queue('water', 'cold');
+      let wide = 0;
+      for (let t = 0; t < 60; t++) {
+        d.tick({ buttons: BTN.force }, 1);
+        for (let j = 0; j < w.missiles.alive.length; j++) if (w.missiles.alive[j]) wide = Math.max(wide, Math.abs(w.missiles.y[j]));
+      }
+      d.tick({}, 40);
+      expect(wide).toBeGreaterThan(0.5); // it bowed out to the side
+      expect(400 - w.bodies.hp[dummy]).toBeGreaterThan(16 * SHAPES.streamPower * 0.5); // and still landed on the cursor
+    } finally { (SHAPES as { streamArc: number }).streamArc = was; }
+  });
+
+  it('the Shard stream pays channel upkeep: past its free time each Ice costs from both Water and Cold', () => {
+    const { w, d } = range(6);
+    d.queue('water', 'cold', 'water', 'cold', 'water', 'cold');
+    d.tick({ buttons: BTN.force }, T(RHYTHM.naturalChannel));
+    const water = rune(w, 'water'), cold = rune(w, 'cold');
+    d.tick({ buttons: BTN.force }, 60);
+    expect(rune(w, 'water')).toBeLessThan(water);
+    expect(rune(w, 'cold')).toBeLessThan(cold);
   });
 
   it('the arcane beam hits the first body only, ally or not (friendly fire)', () => {

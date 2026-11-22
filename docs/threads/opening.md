@@ -12,7 +12,9 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 
 - [ ] The courtyard under the new cycle ([making a place](../campaign/making-a-place.md)): plan D chosen (2026-11-22). Flow on frames done (revision 5, four rounds; [the read](../campaign/01-opening/court-read.md#stage-1-and-2-the-plan-and-flow-on-frames)). The grey-box was walked in-game on 2026-11-22 (4/10: too big at play zoom), so plan D rev 7 pulls it together. In-game round 2 on rev 7 (5/10): the armillary hid the grand stair, so rev 8 flanks the dais with two flights and cuts the armillary to about 70%. Flow passed in the game (rev 10, 7.5/10 after 4, 5, 6, 7). The armillary stays large, with camera sequences at the briefing and the finale (the user). Sense stage started: rev 11 fixes the edges. Then the sense lint (phase 7 of the height thread) and the sense critic (the sense lint, phase 7 of the height thread, and the sense critic) with the leftovers listed in [the courtyard's read](../campaign/01-opening/court-read.md#stage-2-in-the-game-and-whats-left-for-stages-3-and-4).
 - [x] The yard's space diagram and blockout (2026-11-22). Next: the user walks it.
-- [ ] The district's roads as a space diagram with walk times, and where the small fights go.
+- [ ] The infirmary through the cycle: plan D chosen (2026-11-22; the tents open from the start, only their equipment dark). Next: the walk report, then flow in the game.
+- [ ] The drill yard through the cycle, after the infirmary: its pre-cycle plan was taken off the segment page on 2026-11-22.
+- [x] The district's roads as a space diagram with walk times, and where the small fights go ([district](../campaign/01-opening/district.md), 2026-11-22; up for review).
 - [ ] The infirmary (Life, the first cast): space diagram, Codex concept from the blockout's footprint, then an LDtk blockout. It's the smallest test of the new shape.
 - [ ] The battery as the second element: its infusion text and prompts, and room to heal in its fight.
 - [ ] The user's playtest notes on the yard: round 5's `r5-yard-prompts`, `r5-yard-etched`, `r5-yard-soldiers`.

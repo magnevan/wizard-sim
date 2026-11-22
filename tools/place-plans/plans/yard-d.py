@@ -35,6 +35,14 @@ P.stairs(orect(polar(O, 33, -12), 9, 12, math.radians(-12)), 3.0, 6.0, -12)
 for a2 in (230, 260, 290, 315):                                               # the soldiers drilling by the ranges
     P.note(polar(O, 18, a2), 'soldiers')
 P.gate((60, -1), 'to the courtyard')
+# the yard's markers by id, for sim/src/yard.ts (the station spots, in plan units U, V); to_ldtk writes them as Markers
+def _along(c, a, d):                                            # d units along the rim's tangent at angle a from c
+    t = math.radians(a + 90); return (c[0] + d * math.cos(t), c[1] + d * math.sin(t))
+_strike, _heavy, _retreat = (polar(O, 30, a) for a, _ in stations)
+MARKERS = {'strike': _strike, 'heavy': _heavy, 'heavy-ring': polar(O, 25.5, 50), 'retreat': _retreat,
+           'parry': polar(O, 38, 128), 'parry-home': polar(O, 15, 128), 'hands': hc, 'focus': RACK, 'gate': (58, -1)}
+MARKERS.update({f'straw-{k}': _along(_strike, 15, d) for k, d in enumerate((-4.5, -1.5, 1.5, 4.5))})
+MARKERS.update({f'hands-in-{k}': (hc[0] + du, hc[1] + dv) for k, (du, dv) in enumerate(((-5.5, -5.5), (5.5, -5.5), (-5.5, 5.5), (5.5, 5.5)))})
 P.journey([(60, -1), (44, -1), (36, 4)], 'In from the courtyard onto the east rim', 'The pit below, the soldiers by the ranges, the armoury’s glow across it')
 P.journey([polar(O, 37, a3) for a3 in range(10, 121, 10)] + [polar(O, 31, 128), polar(O, 24, 128), polar(O, 18, 140), hc], 'The stations, down the screen and round', 'Each bay seen before you reach it; the parry lane drops you into the pit')
 P.journey([hc, polar(O, 22, 180), RACK], 'The rack at the armoury door', 'The focus: the flame sword')

@@ -59,7 +59,7 @@ function blow(w: World, i: number, face: number, move: string, o: { half?: numbe
 }
 
 export function strike(w: World, i: number, face: number): void {
-  if (held(w, i) === EL.arcane) { bolt(w, i, face, ARMS.boltScale, false); spend(w, i, 1); return; } // the wand: a light bolt
+  if (held(w, i) === EL.arcane) { bolt(w, i, face, ARMS.boltScale, false); move(w, i, 'bolt', EL.arcane); spend(w, i, 1); return; } // the wand: a light bolt (the move plays its cast: #7)
   if (held(w, i) === EL.ice) { arrow(w, i, face, ARMS.arrowScale, false); move(w, i, 'arrow', EL.ice); spend(w, i, 1); return; } // the bow: one quick icicle
   blow(w, i, face, 'strike', {}, 1);
 }

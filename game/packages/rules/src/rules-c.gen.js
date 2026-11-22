@@ -224,10 +224,10 @@ const module = { exports: {} };
   // the imbued burst: the staff imbued with the queue and released, as in Magicka
   // Earth's is a line through the ground, and Lightning's forks (the user, 2026-11-11); the others are a cone
   const SWING_TEXT = {
-    earth: 'A tremor runs through the ground in a straight line in front of you, carrying every queued element at full power to whoever stands on it, whatever else you infuse. Nothing stays in your hand. The line reaches about 4.5 units, almost one more per extra rune',
-    lightning: 'Bolts fork from your staff to the three nearest targets in front of you, one more per extra Lightning, each hitting hard at once and jumping on to one more. Unlike the arc, it all lands up front: no channel. Nothing stays in your hand. It reaches about 4 units, a little more per extra rune',
+    earth: 'A tremor runs through the ground in a straight line toward the cursor, carrying every queued element at full power to whoever stands on it, whatever else you infuse. Nothing stays in your hand. The line reaches about 4.5 units, almost one more per extra rune, and up to twice as far the further out you aim; aim at yourself for the Earthquake',
+    lightning: 'Bolts fork from your staff to the three nearest targets in front of you, one more per extra Lightning, each hitting hard at once and jumping on to one more. Unlike the arc, it all lands up front: no channel. Nothing stays in your hand. It reaches about 4 units, a little more per extra rune, and further and narrower the further out you aim; aim at yourself for the Discharge',
   };
-  const swing = (f) => () => [SWING[f], (SWING_TEXT[f] ?? 'A burst of every queued element in a short cone in front of you, at full power. Nothing stays in your hand. The cone reaches about 2.5 units, and grows by about 0.6 per extra rune') + '; add Sigil for a conjured weapon, or Shield for a defensive one.'];
+  const swing = (f) => () => [SWING[f], (SWING_TEXT[f] ?? 'A burst of every queued element in a cone toward the cursor, at full power. Nothing stays in your hand. The cone reaches about 2.5 units, and grows by about 0.6 per extra rune; aim further out and it reaches up to twice as far, narrowing. Aimed at yourself, it is the ring') + '; add Sigil for a conjured weapon, or Shield for a defensive one.'];
   const glyphName = (o) => o.sub ? ELEMENTS[o.sub].name + ' ' : '';
 
   const CELLS = {
@@ -351,10 +351,12 @@ const module = { exports: {} };
   const FORM_NAME = { shield: 'Barrier', sigil: 'Device', earth: 'Heavy missile', arcane: 'Beam', life: 'Heal', ice: 'Shards', lightning: 'Arc', water: 'Spray', fire: 'Spray', cold: 'Spray' };
   const CASTS = [
     ['force', 'Force', 'RMB', 'from you, along your aim'],
-    ['area', 'Area', 'Shift+RMB tap', 'around you'],
-    ['place', 'Place', 'Shift+RMB hold', 'at the cursor (hold, let go; or drag)'],
+    // The ring merged into the burst (2026-11-22): no button of its own. It's the Weapon cast released with the cursor on
+    // you; for Shield and Sigil (whose Weapon cast conjures) a Place released on you.
+    ['area', 'Ring', 'Shift+LMB on you', 'around you (Shield, Sigil: Shift+RMB on you)'],
+    ['place', 'Place', 'Shift+RMB', 'at the cursor (or drag to draw)'],
     ['self', 'Self', 'MMB / Space', 'on you, or on the ally under the cursor'],
-    ['conjure', 'Weapon', 'Shift+LMB', 'a conjured weapon, or one imbued burst'],
+    ['conjure', 'Weapon', 'Shift+LMB', 'a conjured weapon, or a burst toward the cursor (held: its shape shows)'],
   ];
 
   const names = (els) => els.map((e) => ELEMENTS[e].name);

@@ -530,7 +530,7 @@ function blendPose(inst: Inst, key: string | undefined, p: LivePose, pass: 0 | 1
   const N = inst.blendNodes.length, lo = pass ? inst.nBones : 0, hi = pass ? N : inst.nBones;
   if (!key || p.hl === undefined || p.move === 'death') { if (key && pass === 0) blends.delete(key); return; }
   let b = blends.get(key);
-  const now = p.now ?? performance.now() / 1000;
+  const now = p.now ?? liveNow();
   if (pass === 0) {
     if (!b || b.shown.length !== N * 4 || now < b.now || now - b.now > 1) {   // first sight, a new model, or the clock jumped: no blend
       b = { now, move: p.move, t: p.t, hl: p.hl, shown: new Float32Array(N * 4), off: new Float32Array(N * 3), vel: new Float32Array(N * 3), hip: new Float32Array(3), hipV: new Float32Array(3), hipShown: new Float32Array(3) };
@@ -588,7 +588,8 @@ function rodBetween(mesh: THREE.Mesh, a: THREE.Vector3, b: THREE.Vector3): void 
 function pose(inst: Inst, m: Model, p: LivePose, key?: string): void {
   const clipName = m.clips.has(p.move) ? p.move : 'walk';
   const second = p.move2 && p.w2 && m.clips.has(p.move2) && p.move2 !== clipName ? p.move2 : null;
-  const legs = p.legs && p.legs !== clipName && m.clips.has(p.legs) ? p.legs : null;
+  // the legs may be the move's own clip at another time (standing on the walk's first frame, stepping round on its legs)
+  const legs = p.legs && (p.legs !== clipName || p.tl !== p.t) && m.clips.has(p.legs) ? p.legs : null;
   const w1 = 1 - (second ? p.w2! : 0);
   for (let j = 0; j < inst.nBones; j++) { inst.blendNodes[j].quaternion.fromArray(inst.rawQ, j * 4); inst.blendNodes[j].position.fromArray(inst.rawP, j * 3); }
   for (const d of inst.drops) d.rest.decompose(d.node.position, d.node.quaternion, d.node.scale);
@@ -953,6 +954,15 @@ function heldOf(inst: Inst, m: Model, key: string, o: typeof SMALL, cam: THREE.C
   if (out.blade || out.guard) held.set(key, out); else held.delete(key);
 }
 const booked: Booking[] = [];
+/**
+ * The VFX Lab's two hooks (lab/vfx-lab): a clock for the pose blends and the shader's time instead of real time (so a
+ * frame is a function of the sim's time), and a prefix for the per-body keys, so several views of several worlds don't
+ * share one body's blend. The game sets neither.
+ */
+let liveClock: (() => number) | null = null, liveScope = '';
+const liveNow = (): number => (liveClock ? liveClock() : performance.now() / 1000);
+export function setLiveClock(clock: (() => number) | null): void { liveClock = clock; }
+export function setLiveScope(scope: string): void { liveScope = scope; }
 let nextSmall = 0, nextBig = 0;
 
 /**
@@ -967,7 +977,7 @@ export function liveFrame(slug: string, p: LivePose, anchors: Anchors, who = 0):
   const big = BIG_SLUGS.has(slug);
   const k = big ? (nextBig < NBIG ? NSMALL + nextBig++ : -1) : (nextSmall < NSMALL ? nextSmall++ : -1);
   if (k < 0) return null;
-  const slot = slots[k], key = slug + '|' + who, tip = tips.get(key);
+  const slot = slots[k], key = liveScope + slug + '|' + who, tip = tips.get(key);
   if (tip) anchors = { ...anchors, tip, charge: tip };
   const hd = held.get(key);
   if (hd || anchors.blade || anchors.guard) anchors = { ...anchors, blade: hd?.blade, guard: hd?.guard, guardFrame: hd?.guardFrame };
@@ -982,7 +992,7 @@ export function flushLive(): void {
   const g = gl;
   const used = booked.splice(0);
   nextSmall = 0; nextBig = 0;
-  fxTime.value = performance.now() / 1000;
+  fxTime.value = liveNow();
   if (!g || !used.length) return;
   const { renderer, hiRT, lowRT, scene, stage } = g;
   // only the rows in use are cleared and shaded (top-down y0..y1 of the atlas; GL rows run bottom up)

@@ -129,6 +129,8 @@ export interface Seats {
   castId: Uint8Array; castQueue: Uint8Array; castLen: Uint8Array;
   /** Area button: ticks held, and where the press started (world). */
   areaHeld: Int32Array; holdX: Float64Array; holdY: Float64Array; dragged: Uint8Array;
+  /** The Weapon button went down with runes queued: the burst goes off when it's released (held, the view previews it). */
+  weaponArm: Uint8Array;
   /** Channel ticks so far (natural duration, then upkeep); charge ticks for Earth Force. */
   chanTicks: Int32Array; chanTimer: Int32Array;
   /** Where the beam (or spray tip) reached this tick, for the view. */
@@ -291,6 +293,8 @@ export interface SimEvent {
   amount?: number;
   /** The imbued burst's move: which elements it carried (bit 1 << element id). */
   els?: number;
+  /** The imbued burst's move: its cone's half-angle (turns), narrower the further out it was aimed. */
+  half?: number;
 }
 
 /**
@@ -567,7 +571,7 @@ function seats(n: number): Seats {
   return {
     active: u8(n), runes: f64(n * N_EL), queue: u8(n * QUEUE_MAX), queueLen: u8(n), prevButtons: new Uint16Array(n),
     aimX: f64(n), aimY: f64(n), phase: u8(n), timer: i32(n), castId: u8(n), castQueue: u8(n * QUEUE_MAX), castLen: u8(n),
-    areaHeld: i32(n), holdX: f64(n), holdY: f64(n), dragged: u8(n), chanTicks: i32(n), chanTimer: i32(n), chanEndX: f64(n), chanEndY: f64(n), attune: i32(n), bufCast: u8(n), bufTicks: i32(n), bufHand: u8(n), cancelAt: i32(n),
+    areaHeld: i32(n), holdX: f64(n), holdY: f64(n), dragged: u8(n), weaponArm: u8(n), chanTicks: i32(n), chanTimer: i32(n), chanEndX: f64(n), chanEndY: f64(n), attune: i32(n), bufCast: u8(n), bufTicks: i32(n), bufHand: u8(n), cancelAt: i32(n),
     ward: u8(n), wardEls: u8(n * N_EL), wardHp: f64(n), wardBy: new Int16Array(n).fill(-1), auraEls: u8(n * N_EL), aura: i32(n), wand: u8(n),
     weapon: u8(n), weaponEls: u8(n * N_EL), weaponUses: i32(n), motes: u8(n), storeArm: u8(n), storeQ: u8(n * QUEUE_MAX), storeLen: u8(n), storeCast: u8(n), storeBorn: i32(n), drySigil: i32(n), owe: u8(n * QUEUE_MAX),
     guard: u8(n), guardHp: f64(n), guardT: i32(n), guardCharge: f64(n), handT: i32(n), double: new Int16Array(n).fill(-1), dblOX: f64(n), dblOY: f64(n), dblPaid: u8(n), dblEndX: f64(n), dblEndY: f64(n), dblBorn: i32(n), wandBorn: i32(n),

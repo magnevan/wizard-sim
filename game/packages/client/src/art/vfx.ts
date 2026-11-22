@@ -136,6 +136,8 @@ export class Vfx {
   private surf = X.canvas(FIELD.W, FIELD.H);
   private gt: Texture; private ot: Texture;
   private fx: Fx[] = [];
+  /** Event-born effects alive now (the VFX Lab's metrics). */
+  get live(): number { return this.fx.length; }
   /** What the floor canvas was painted for: each cell's kind and fade step (repainted when any changes). */
   private surfSeen = new Uint8Array(0);
   /** surfaces()' scratch: the burning cells along a row whose embers draw together. */
@@ -236,6 +238,9 @@ export class Vfx {
     this.ground = new Sprite(this.gt);
     this.over = new Sprite(this.ot);
   }
+
+  /** Frees the two effect textures (a view going away). */
+  destroy(): void { this.gt.destroy(true); this.ot.destroy(true); }
 
   /** FIELD changed size (a world with another play area): new canvases and textures to match. */
   resize(): void {

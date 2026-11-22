@@ -10,7 +10,7 @@ Grammar v2 with an empty queue:
 - **The weapon:** RMB tap Strike, RMB hold Heavy, Shift+RMB Special.
 - **The guard:** Shift+LMB Retreat, Space Defend (hold to block, tap to parry).
 
-There are no two-handed weapons, and a weapon has about 30 uses. Everything is drawn in the Pixel Battlefield style (high-res pixel art, 3/4 camera), with the rigs and kit copied from `tools/spell-vfx/`. The page is self-contained, with no runtime imports from other tool directories.
+There are no two-handed weapons, and a weapon has about 30 uses. Everything is drawn in the Pixel Battlefield style (high-res pixel art, 3/4 camera), with the rigs and kit copied from the retired Spell VFX gallery (git history). The page is self-contained, with no runtime imports from other tool directories.
 
 Every vignette is a pure function of its local time, so loops are seamless and any frame can be reproduced.
 
@@ -54,14 +54,14 @@ To read them back, run `ArtifactData` `list` on `ratings` and `answers`. Then fo
 
 ## Files
 - `index.html`: the page (styles, header, sections).
-- `app.js`: cards, canvas sizing, the animation loop (only on-screen cards render, at about 30 fps), the read-only round-1 notes, and the db wiring (same pattern as `tools/spell-vfx/app.js`).
+- `app.js`: cards, canvas sizing, the animation loop (only on-screen cards render, at about 30 fps), the read-only round-1 notes, and the db wiring (same pattern as the retired gallery's `app.js`).
 - `copy.js`: the grammar table, the captions per slug, the guard captions and the open questions.
 - `weapons.js`:
   - the weapon and guard data (guards: block, parry, retreat, passive, trade-off, resistances) and the `R2` slug map;
   - `prop()` (draws a held weapon, including the trident and the Echo orb with its remembered runes), `track()` (keyframed poses), `MOVES`, `rig()` and `guard()` (the eight guard sprites).
 - `round3.js`, `round4.js`: the round-3 and round-4 vignettes, added to `PB.WMV` after `moves.js`.
 - `moves.js`: every vignette (`PB.WMV`). It holds the default Strike / Heavy / Sweep scenes plus the weapon-specific ones, the round-2 redesigns (`cold-heavy2`, `cold-javelin`, `fire-heavy2`, `earth-heavy2`, `life-heavy2`, `arcane2-*`), the weapon cards, the guard Defends and the guard Retreats.
-- **Copied from `tools/spell-vfx/`:**
+- **Copied from the retired Spell VFX gallery (git history):**
   - `core.js`, `pixel.js` and `fx.js`, unchanged;
   - `kit.js` (the shared helpers);
   - `stage.js` (per-vignette size);

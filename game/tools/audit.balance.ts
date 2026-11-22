@@ -17,6 +17,7 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
+import { ringBtn } from './ring';
 import { rules, type Element } from '@wizard-sim/rules';
 import { BTN, KIND, MAX_SEATS, N_EL, NO_INPUT, RUNES, createWorld, elementId, quantize, step, type PlayerInput, type World } from '../packages/sim/src';
 
@@ -42,10 +43,10 @@ function fill(w: World): void {
 /** Casts `queue` as `cast` and runs on, then fingerprints the outcome. */
 function play(queue: Element[], cast: Cast): string {
   const w = scene();
-  const aim = { aimX: 2.7 * 32, aimY: 0 };
+  const aim = cast === 'area' ? { aimX: 0, aimY: 0 } : { aimX: 2.7 * 32, aimY: 0 }; // the ring: aimed at yourself
   const tick = (over: Partial<PlayerInput> = {}) => { fill(w); step(w, [quantize({ ...NO_INPUT, ...aim, ...over }), NO_INPUT, NO_INPUT, NO_INPUT]); };
   for (const el of queue) tick({ press0: elementId(el) });
-  const btn = cast === 'force' ? BTN.force : cast === 'area' || cast === 'place' ? BTN.area : cast === 'self' ? BTN.self : BTN.weapon;
+  const btn = cast === 'force' ? BTN.force : cast === 'area' ? ringBtn(queue) : cast === 'place' ? BTN.area : cast === 'self' ? BTN.self : BTN.weapon;
   const hold = cast === 'force' ? 60 : cast === 'place' ? 30 : 1;
   for (let k = 0; k < hold; k++) tick({ buttons: btn });
   for (let k = 0; k < 90; k++) tick();

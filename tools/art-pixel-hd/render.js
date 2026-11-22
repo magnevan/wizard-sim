@@ -431,7 +431,7 @@
   // =====================================================================
   // Effects
   // =====================================================================
-  // ---- Pass 4.1: the Sigil turret, redesigned (copied from tools/spell-vfx/fx.js) ----
+  // ---- Pass 4.1: the Sigil turret, redesigned (copied from the retired Spell VFX gallery fx.js) ----
   function sigilDevice(op, em, x, y, t, o) {
     const R = o.R, SV = o.SV, fy = o.FY, rise = o.rise == null ? 1 : o.rise, rec = o.recoil || 0, ch = o.charge || 0, dry = o.dry || 0, feed = o.feed || 0;
     if (rise <= 0.02) return null;

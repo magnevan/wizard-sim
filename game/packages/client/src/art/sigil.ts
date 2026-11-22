@@ -1,5 +1,5 @@
 /**
- * Structure drawing kit, ported from tools/spell-vfx/fx.js (sigilDevice, runeRing, seal, glyph,
+ * Structure drawing kit, ported from the retired Spell VFX gallery's fx.js (in git history, ffe74f0) (sigilDevice, runeRing, seal, glyph,
  * lineGlyph, sheet, reticle, dragPath, aura) and vfx-sigil.js (the lens). Pure functions of
  * (time, seed) drawing in art pixels into a Canvas2D context; the caller picks the canvas
  * (a depth-sorted piece, or the field's ground / over canvas).

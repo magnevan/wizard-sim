@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Element } from '@wizard-sim/rules';
 import {
-  ARCH, ARCHETYPES, ARMS, BTN, EL, GUARD, KIND, NO_INPUT, SURF, TEAM, ZONE, createWorld, elementId, quantize, spawnBody, step,
+  ARCH, ARCHETYPES, ARMS, BTN, EL, GUARD, KIND, NO_INPUT, SHAPES, SURF, TEAM, ZONE, createWorld, elementId, quantize, spawnBody, step,
   type PlayerInput, type World,
 } from '../src';
 import { anchored, damageGuard, guardBeam, resist, RES, taken, walkMult } from '../src/guards';
@@ -618,9 +618,35 @@ describe('the imbued burst (Weapon cast with elements, no Sigil or Shield)', () 
   });
 
   it('more runes reach a little further and hit harder', () => {
-    const run = (q: Element[]) => { const { w, d, dummy } = arena(); const t = dummy(3.3, 0); d.aimAt(5, 0).queue(...q).cast(BTN.weapon, 1, 40); return 400 - w.bodies.hp[t]; };
+    // aimed at the cone's own reach, so it isn't stretched
+    const run = (q: Element[]) => { const { w, d, dummy } = arena(); const t = dummy(3.3, 0); d.aimAt(SHAPES.imbueStretchFrom, 0).queue(...q).cast(BTN.weapon, 1, 40); return 400 - w.bodies.hp[t]; };
     expect(run(['fire'])).toBe(0);
     expect(run(['fire', 'fire', 'fire'])).toBeGreaterThan(0);
+  });
+
+  // the ring merged into the burst (2026-11-22): aim distance shapes it
+  it('aimed further out, the burst reaches further and narrows; aimed at yourself, it is the ring', () => {
+    const hurt = (aim: number, tx: number, ty: number) => {
+      const { w, d, dummy } = arena(); const t = dummy(tx, ty);
+      d.aimAt(aim, 0).queue('fire').cast(BTN.weapon, 1, 40); return 400 - w.bodies.hp[t];
+    };
+    expect(hurt(SHAPES.imbueStretchFrom, 4.5, 0)).toBe(0);      // past the plain cone's reach
+    expect(hurt(SHAPES.imbueStretchTo, 4.5, 0)).toBeGreaterThan(0); // stretched, it gets there
+    expect(hurt(SHAPES.imbueStretchFrom, 1.6, 1)).toBeGreaterThan(0); // inside the plain cone's width
+    expect(hurt(SHAPES.imbueStretchTo, 1.6, 1.4)).toBe(0);         // stretched, it's too narrow
+    expect(hurt(SHAPES.imbueStretchFrom, -1.6, 0)).toBe(0);     // a cone spares who's behind you
+    expect(hurt(0, -1.6, 0)).toBeGreaterThan(0);                // aimed at yourself: the ring, all round
+  });
+
+  it('a burst goes off on release, so the aim then shapes it; a guard is conjured on the press', () => {
+    const { w, d } = arena();
+    d.queue('fire').tick({ buttons: BTN.weapon }, 20);
+    expect(w.seats.queueLen[0]).toBe(1); // still held: nothing cast
+    d.tick({}, 30);
+    expect(w.seats.queueLen[0]).toBe(0);
+    const g = arena();
+    g.d.queue('shield').tick({ buttons: BTN.weapon }, 30);
+    expect(g.w.seats.guard[0]).toBeGreaterThan(0);
   });
 
   it('an Earth-led burst is a long narrow line, and stays one with other elements infused', () => {

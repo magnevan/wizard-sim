@@ -1,4 +1,4 @@
-/* Shared vignette helpers, copied from tools/spell-vfx/vfx-forms.js (2026-11-05): K.life, K.kb, K.down,
+/* Shared vignette helpers, copied from the retired Spell VFX gallery's vfx-forms.js (2026-11-05): K.life, K.kb, K.down,
  * K.hop, K.flash, K.walk, K.hp, K.blobPts, K.puddle, K.ice. */
 (function () {
   'use strict';

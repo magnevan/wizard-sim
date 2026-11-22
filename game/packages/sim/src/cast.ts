@@ -11,8 +11,8 @@
  * upkeep from its own pool (Ice from Water's and Cold's); they end when you let go or any of
  * those pools runs dry.
  *
- * Buttons: Force (press; hold to charge or channel), Area (tap = Area, hold = Place at the
- * cursor, drag while holding = drawn Place), Self, Weapon.
+ * Buttons: Force (press; hold to charge or channel), Area (Place at the cursor on release, drag while
+ * holding = drawn Place), Self, Weapon (with runes: the burst on release, a ring aimed at yourself; onYou).
  */
 import { rules, type Cast, type Element } from '@wizard-sim/rules';
 import { compile, type SpellSpec } from './compile';
@@ -212,6 +212,26 @@ export function selfTarget(w: World, i: number): number {
   return best;
 }
 
+/**
+ * A cast released with the cursor on yourself (within SHAPES.selfAim): an element's Weapon cast is its ring (the Area cast,
+ * which no button makes any more), and Shield's or Sigil's undragged Place is theirs: the closed ring, the orbitals, the
+ * motes. The ring merged into the burst (2026-11-22). Possessed fixtures keep their own shapes.
+ */
+/** Does a Weapon press arm a burst (fired on release) rather than conjure at once? Elements queued, not led by Shield or Sigil. */
+function burstArms(w: World, i: number): boolean {
+  if (w.seats.queueLen[i] === 0) return false;
+  const f = compile(queueOf(w, i), 'conjure').form;
+  return f !== EL.shield && f !== EL.sigil;
+}
+
+function onYou(w: World, i: number, c: number): number {
+  const s = w.seats;
+  if (possessed(w, i) || s.queueLen[i] === 0 || len(s.aimX[i], s.aimY[i]) > SHAPES.selfAim) return c;
+  const f = compile(queueOf(w, i), 'area').form, made = f === EL.shield || f === EL.sigil;
+  if (c === CAST_ID.conjure) return made ? c : CAST_ID.area;
+  return made && !s.dragged[i] ? CAST_ID.area : c;
+}
+
 function release(w: World, i: number, spec: SpellSpec, charge: number): void {
   const [tx, ty] = target(w, i, spec.shape === 'blink' ? STRUCT.blinkRange : SHAPES.placeRange);
   // Self on an ally gives them your Shield ward or Sigil aura. Plain elements and the Double stay on you.
@@ -291,23 +311,27 @@ export function tickSeat(w: World, i: number, inp: PlayerInput): void {
   if (!chooseElement(w, i, inp.press0)) pressElement(w, i, inp.press0);
   if (!chooseElement(w, i, inp.press1)) pressElement(w, i, inp.press1);
 
-  // The Area button: tap for Area, hold for Place, drag while holding for a drawn Place.
+  // Shift+RMB is Place, on release: drag while holding for a drawn Place. There's no Area tap to wait out (the ring merged
+  // into the burst, 2026-11-22), so a tap places at once; released on yourself, Shield and Sigil raise their ring (onYou).
   if (pressed & BTN.area) { s.areaHeld[i] = 0; s.dragged[i] = 0; s.holdX[i] = b.x[i] + s.aimX[i]; s.holdY[i] = b.y[i] + s.aimY[i]; }
   let areaCast = 0;
   if (held & BTN.area) {
     s.areaHeld[i]++;
     if (len(b.x[i] + s.aimX[i] - s.holdX[i], b.y[i] + s.aimY[i] - s.holdY[i]) > RHYTHM.dragMin) s.dragged[i] = 1;
-    // Back at the start: no line after all. It's still a Place (the plain arc or glyph), never a tap's Area.
-    else if (s.dragged[i]) { s.dragged[i] = 0; s.areaHeld[i] = Math.max(s.areaHeld[i], T(RHYTHM.placeHold)); }
-  } else if (released & BTN.area) {
-    areaCast = s.areaHeld[i] < T(RHYTHM.placeHold) && !s.dragged[i] ? CAST_ID.area : CAST_ID.place;
-  }
+    else if (s.dragged[i]) s.dragged[i] = 0; // back at the start: no line after all, the plain arc or glyph
+  } else if (released & BTN.area) areaCast = onYou(w, i, CAST_ID.place);
+  // Shift+LMB with elements queued is the burst: armed on the press (held, the view previews its shape), cast on release,
+  // so the aim at release shapes it (onYou, imbue). A guard or weapon (Shield or Sigil leading) has no shape to preview and
+  // is conjured on the press, as is a hand move (Retreat) with nothing queued.
+  let weaponCast = 0;
+  if (pressed & BTN.weapon) { s.weaponArm[i] = burstArms(w, i) ? 1 : 0; if (!s.weaponArm[i]) weaponCast = CAST_ID.conjure; }
+  else if (released & BTN.weapon && s.weaponArm[i]) { s.weaponArm[i] = 0; if (s.queueLen[i] > 0) weaponCast = onYou(w, i, CAST_ID.conjure); }
 
   // A cast pressed while busy is buffered, so no press is lost to recovery: it waits through the whole recovery, then
   // castBuffer more (the user, 2026-11-20: a jab then W+Space lost the Space). It keeps the meaning it had when pressed:
   // pressed with no runes queued it's a weapon gesture, even if a rune is queued before it goes off.
   const forceCast = (pressed | released) & BTN.force && forcePlaces(w, i) ? released & BTN.force : pressed & BTN.force;
-  const want = forceCast ? CAST_ID.force : areaCast || (pressed & BTN.self ? CAST_ID.self : pressed & BTN.weapon ? CAST_ID.conjure : 0);
+  const want = forceCast ? CAST_ID.force : areaCast || (pressed & BTN.self ? CAST_ID.self : weaponCast);
   if (want) { s.bufCast[i] = want; s.bufTicks[i] = T(RHYTHM.castBuffer); s.bufHand[i] = s.queueLen[i] === 0 ? 1 : 0; }
   else if (s.bufTicks[i] > 0 && s.phase[i] !== PHASE.recover && !owing(w, i) && --s.bufTicks[i] === 0) s.bufCast[i] = 0; // a cast waiting on ghost runes stays buffered
   // A weapon's follow-through is cut short, once its committed share has passed, by a waiting spell or Retreat (the

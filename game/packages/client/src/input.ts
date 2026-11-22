@@ -3,7 +3,8 @@
  * (no press is ever lost between ticks); held buttons are sampled. Gamepads are gamepad.ts.
  *
  * Bindings follow the skeleton and the Atlas: hold LMB to walk toward the cursor; RMB Force (hold to
- * channel or charge); Shift+RMB Area (tap) or Place (hold, drag to draw); Space Self; Shift+LMB Weapon; X Use;
+ * channel or charge); Shift+RMB Place (drag to draw); Space Self; Shift+LMB Weapon (the burst on release, the ring aimed
+ * at yourself); X Use;
  * element keys from the rules (Q W E R / A S D F G); Esc clears the queue. With an empty queue Esc
  * opens the menu instead: menu.ts catches that press before it gets here (menu-nav.ts escAction).
  */

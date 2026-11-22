@@ -68,8 +68,6 @@ export const RHYTHM = {
   windup: 0.12, // seconds, plus windupPerRune for each rune in the spell
   windupPerRune: 0.04,
   recovery: 0.18,
-  /** Area tap vs Place hold on the Area button. */
-  placeHold: 0.18, // was 0.25: the user found the wait from Area to Place a little long (2026-11-11)
   /** A Place drag counts once the cursor moved this far while held. */
   dragMin: 1.0,
   /** Channels (beams, sprays, arcs) are free for this long, then cost upkeep (no pool goes below zero: a dry one ends the channel). */
@@ -223,6 +221,13 @@ export const SHAPES = {
   forkRange: 4, forkTargets: 3, forkPower: 1.6, forkJump: 0.6,
   /** The burst's power against the ring's. It's 1 because the cone already earns its place: it spares allies beside and behind you. */
   imbuePower: 1,
+  /**
+   * The ring is the burst aimed at yourself (the ring merged into the burst, 2026-11-22): a Weapon cast released with the
+   * cursor within selfAim (u) of you is the element's ring, and a Place there lands on you (Shield's ring, Sigil's orbitals
+   * and motes). Further out the cone stretches: from stretchFrom to stretchTo (u of aim) its reach grows to farReach times
+   * and its half-angle shrinks to farHalf times, smoothly. Power per target stays.
+   */
+  selfAim: 1, imbueStretchFrom: 2.5, imbueStretchTo: 9, imbueFarReach: 2, imbueFarHalf: 0.3,
   /** A Fire ring's or burst's direct hit, times Fire's table damage (which is set for a spray's per-second rate). */
   fireBlast: 2,
   /** Ice's ring and burst, so the close cast beats the shards (spell audit, 2026-11-11: it was 16 for its two runes). */

@@ -11,12 +11,15 @@ describe('help panel model: queue -> rows', () => {
     const m = helpModel(['fire'], bare);
     expect(m.mode).toBe('spell');
     expect(m.rows.map((r) => r.slot)).toEqual(['force', 'area', 'place', 'self', 'conjure']);
-    expect(m.rows.map((r) => r.keys.pad)).toEqual(['RT', 'LT', 'LT HOLD', 'RB', 'LB+RT']);
+    expect(m.rows.map((r) => r.keys.pad)).toEqual(['RT', 'LB+RT', 'LT', 'RB', 'LB+RT']);
     expect(m.rows[0].keys).toMatchObject({ mouse: 'R', shift: false });
-    expect(m.rows[1].keys).toMatchObject({ mouse: 'R', shift: true, note: 'TAP' });
-    expect(m.rows[2].keys).toMatchObject({ mouse: 'R', shift: true, note: 'HOLD' });
+    // the ring is the burst aimed at yourself (the ring merged into the burst, 2026-11-22); Place needs no hold
+    expect(m.rows[1].keys).toMatchObject({ mouse: 'L', shift: true, note: 'ON YOU' });
+    expect(m.rows[2].keys).toMatchObject({ mouse: 'R', shift: true, note: '' });
     expect(m.rows[3].keys.space).toBe(true);
     expect(m.rows[4].keys).toMatchObject({ mouse: 'L', shift: true });
+    // Shield's ring and Sigil's orbitals are Place on yourself
+    for (const q of [['shield'], ['sigil', 'fire']] as const) expect(helpModel([...q], bare).rows[1].keys).toMatchObject({ mouse: 'R', shift: true, note: 'ON YOU' });
   });
 
   it('Fire: the rules titles, short text, and a demo that queues Fire', () => {

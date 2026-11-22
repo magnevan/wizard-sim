@@ -1,3 +1,5 @@
+> **Retired 2026-11-22.** Replaced by the VFX Lab (see [the VFX workflow](../vfx-workflow.md)). The published artifact (https://claude.ai/artifact/F2LeDE6z1FWx3HuAPsP9Vz) stays up read-only, and its ratings db (collections `ratings` and `answers`) is the record of the user's feedback. The code (`tools/spell-vfx/`) is in git history: last commit that had it is `ffe74f0`. Paths below describe that code and no longer exist (`core.js` and `pixel.js` live on as `tools/art-trial/spell-vfx-core.js` and `spell-vfx-pixel.js`, used by `code-props.html`).
+
 # Spell VFX Gallery
 
 A page of looping pixel-art vignettes, one per spell of the current spell grammar (proposal C), drawn in the chosen art direction: the Pixel Battlefield look (high-res pixel art, the ~67° camera, banded dusk light, outlined procedural wizards). The user rates each vignette ★ Keep / ? Maybe / ✗ Cut, with an optional note. The question each one answers: can you tell what the spell does without reading the caption?

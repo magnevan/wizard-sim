@@ -52,7 +52,7 @@ These came out of the 2026-11-12 repo audit; each one is a mess that audit had t
 - **One home per fact.** Update the owning source when rooms, keys, commands or rules change. Update any affected summary in the same change or link it to the owning source. Add a superseded pointer to related ideas when a decision changes their status.
 - **Check before you write a key or number in a doc.** Panels: F1 help, F2 Tune, F3 Tools, F4 Stats. Numbers come from `game/packages/sim/src/config.ts`, not from memory or an older doc.
 - **Links:** `node tools/docs-check/check-links.mjs` must report 0 broken links before a docs commit.
-- **Snapshots:** after changing a source, re-sync its copies or record the drift in the copy's README: `tools/spell-vfx/rules-c.js` (from the Atlas), `tools/spell-vfx/vfx-attacks.js` (from `enemy-attacks.ts`), `tools/survive-review/copy.js` (Survive's numbers), `tools/sound-gallery/engine.js` and `bank.js` (`npm run sound-gallery`). The review pages also copy small helpers between them (`core.js`, `fx.js`, `pixel.js`, `stage.js`): before editing one, find its other copies and change them together.
+- **Snapshots:** after changing a source, re-sync its copies or record the drift in the copy's README: `tools/survive-review/copy.js` (Survive's numbers), `tools/sound-gallery/engine.js` and `bank.js` (`npm run sound-gallery`). The review pages also copy small helpers between them (`core.js`, `fx.js`, `pixel.js`, `stage.js`): before editing one, find its other copies and change them together.
 - **Finished lists move out.** An overnight list whose items are all done is `git mv`ed to `docs/archive/`.
 
 ## Conventions

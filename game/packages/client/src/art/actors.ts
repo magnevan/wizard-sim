@@ -60,6 +60,13 @@ export class ActorFrames {
 
   get size(): number { return this.map.size; }
 
+  /** Frees the pages (a view going away; the game never does this). */
+  destroy(): void {
+    this.reset();
+    for (const p of this.pages) p.tex.destroy(true);
+    this.pages = [];
+  }
+
   private reset(): void {
     for (const f of this.map.values()) f.tex.destroy(false);
     this.map.clear();

@@ -60,8 +60,14 @@ const PROP_LABEL: Record<PropSet, string> = { lean: 'LEAN, ANGLED, FULL DETAIL',
 /** The bow is held drawn while an enemy is within this share of its arrows' range and AIM_SIDE units of the aim line. */
 const AIM_REACH = 0.8, AIM_SIDE = 1.2;
 /** The blow moves that are a weapon's Heavy (hands.ts heavy): the body plays the weapon's heavy blow for them. */
-const HEAVY_MOVES = new Set(['tideslash', 'firewave', 'fissure', 'dash', 'chargedbolt']);
-const BLOW_MOVES = new Set(['strike', 'sweep', 'arrow', 'volley', 'splinter', 'dash', 'javelin', 'lash', 'tideslash', 'firewave', 'fissure', 'chargedbolt']);
+/**
+ * Turn steps (view.ts turnPh): a turn on the spot of more than TURN_MIN turns a tick owes TURN_STEPS walk cycles per
+ * whole turn (a half turn, two steps), stepped at TURN_RATE cycles a second, at most TURN_OWE_MAX cycles behind; the
+ * stepping starts once TURN_START cycles are owed (about 36 degrees turned).
+ */
+const TURN_MIN = 0.001, TURN_STEPS = 2, TURN_RATE = 1.8, TURN_OWE_MAX = 1.5, TURN_START = 0.2;
+const HEAVY_MOVES =new Set(['tideslash', 'firewave', 'fissure', 'dash', 'chargedbolt']);
+const BLOW_MOVES = new Set(['strike', 'sweep', 'arrow', 'volley', 'splinter', 'dash', 'javelin', 'lash', 'tideslash', 'firewave', 'fissure', 'bolt', 'chargedbolt']);
 export class WorldView {
   readonly camera = new Camera();
   /** Add this to the stage: the scene, and the HUD over it. */
@@ -192,6 +198,14 @@ export class WorldView {
   /** Art px each body has walked, unrounded (live 3D models play walk and run by it). */
   private dist = new Float64Array(MAX_BODIES);
   private spd = new Float64Array(MAX_BODIES);
+  /**
+   * Turning on the spot (#3: "the feet don't move at all"): each body's facing before the step, its turn steps' phase in
+   * walk cycles (RigState.turnPh) and the cycles still owed for the turn made. Owed cycles are paid out at a stepping
+   * pace, and a started cycle is always finished, so the feet come back together where the standing pose has them.
+   */
+  private prevFace = new Float64Array(MAX_BODIES);
+  private turnPh = new Float64Array(MAX_BODIES);
+  private turnOwe = new Float64Array(MAX_BODIES);
   private flashT = new Float64Array(MAX_BODIES).fill(-9);
   private flashSoft = new Uint8Array(MAX_BODIES);
   // per seat: eased poses (staff raised / staff forward) and how long a Force pose lingers
@@ -258,6 +272,28 @@ export class WorldView {
     }
   }
 
+  /**
+   * Frees everything this view made on the GPU and drops its display tree: the effect canvases' textures, the scene
+   * lighting's maps, the actor frame pages, the structures' and deaths' canvases, the HUD's, the floor placeholder. What it
+   * shares with other views stays: the painted ground, prop images, the baked sheets, live3d's atlas. The game never
+   * destroys its view; the VFX Lab does on every rebuild.
+   */
+  destroy(): void {
+    this.vfx.destroy();
+    this.lit?.destroy();
+    this.lights.destroy();
+    this.frames.destroy();
+    this.structs.destroy();
+    this.deaths.destroy();
+    this.props.destroy();
+    this.hud.destroy();
+    this.tut.destroy();
+    if (this.ownFloor) this.floor.texture?.destroy(true);
+    this.artTex?.destroy(true); this.artTex = null;
+    this.litLayer.filters = [];
+    this.root.destroy({ children: true });
+  }
+
   /** Hide the additive lights (?lights=0), for checking what they add. */
   get lightsOn(): boolean { return this.lights.layer.visible; }
   set lightsOn(on: boolean) { this.lights.layer.visible = on; if (this.lit) this.lit.glowLayer.visible = on; }
@@ -271,7 +307,7 @@ export class WorldView {
   /** Call right before each sim step, so the view can interpolate from here to the new state. */
   beforeStep(real: World): void {
     const w = this.seen(real);
-    this.prevBX.set(w.bodies.x); this.prevBY.set(w.bodies.y); this.prevKind.set(w.bodies.kind);
+    this.prevBX.set(w.bodies.x); this.prevBY.set(w.bodies.y); this.prevKind.set(w.bodies.kind); this.prevFace.set(w.bodies.face);
     this.vfx.noteBefore(w);
   }
 
@@ -279,6 +315,7 @@ export class WorldView {
   afterStep(real: World): void {
     const w = this.seen(real);
     const b = w.bodies, s = w.seats, t = this.simTime(w);
+    this.hud.noteStep(w);
     for (const e of w.events) {
       this.hud.onEvent(e.kind, e.who, e.look, e.text, t);
       if ((e.kind === 'hit' && (e.amount ?? 0) > 0) && e.who >= 0) {
@@ -304,6 +341,20 @@ export class WorldView {
       this.spd[i] += (d * 60 / 4.2 - this.spd[i]) * 0.3;
       this.ph[i] += (d * PPU / STRIDE[this.rigOf(w, i)]) * Math.PI;
       this.dist[i] += d * PPU;
+      // turn steps: a half turn on the spot is a walk cycle (two steps), stepped at up to TURN_RATE cycles a second
+      if (this.prevKind[i] !== b.kind[i]) { this.prevFace[i] = b.face[i]; this.turnPh[i] = 0; this.turnOwe[i] = 0; }
+      const turned = Math.abs(mod(b.face[i] - this.prevFace[i] + 0.5, 1) - 0.5);
+      if (this.spd[i] >= 0.15) { this.turnPh[i] = 0; this.turnOwe[i] = 0; }   // walking: the walk has the feet
+      else {
+        if (turned > TURN_MIN) this.turnOwe[i] = Math.min(TURN_OWE_MAX, this.turnOwe[i] + turned * TURN_STEPS);
+        else if (this.turnPh[i] === 0) this.turnOwe[i] *= 0.9;   // a small aim wobble fades instead of building up to a step
+        const ph = this.turnPh[i];
+        if ((ph === 0 && this.turnOwe[i] >= TURN_START) || ph > 0) {
+          const k = TURN_RATE / 60;
+          if (this.turnOwe[i] <= 0 && ph + k >= 1) this.turnPh[i] = 0;   // the cycle finished: standing again
+          else { this.turnPh[i] = (ph + k) % 1; this.turnOwe[i] = Math.max(0, this.turnOwe[i] - k); }
+        }
+      }
     }
     // eased poses: staff raised while gathering, Area and Place; held out level for Force
     for (let i = 0; i < MAX_SEATS; i++) {
@@ -481,7 +532,8 @@ export class WorldView {
     this.structs.behind = this.vfx.behind;
     this.vfx.draw(w, t, this.views, light, (g, o) => { this.structs.draw(w, t, ct, lead, g, o, this.views, light, fx0, fy0); this.deaths.draw(g, o, ct, light, fx0, fy0); this.atkShake = drawAttackFx(w, this.views, g, o, light, alpha, ct); }, ct);
     this.lights.end();
-    this.fxMs = this.fxMs * 0.9 + (performance.now() - t0) * 0.1;
+    this.fxLastMs = performance.now() - t0;
+    this.fxMs = this.fxMs * 0.9 + this.fxLastMs * 0.1;
     this.hud.draw(w, t, cam.hudW, cam.hudH);
     this.tut.draw(w, ct, cam.hudW, cam.hudH);
     // the battery's repair: the screen fades to black and back while the well is mended (art/power-down.ts)
@@ -598,6 +650,9 @@ export class WorldView {
   }
 
   private fxMs = 0;
+  /** The last draw's effects pass, ms, and the event-born effects alive (the VFX Lab's metrics). */
+  fxLastMs = 0;
+  get fxLive(): number { return this.vfx.live; }
   private atkShake = 0;
   private lastCt = 0;
   private lastSimT = -1;
@@ -636,7 +691,7 @@ export class WorldView {
     const sp = this.spd[i];
     s.spd = sp < 0.15 ? 0 : sp < 0.6 ? 0.5 : 1;
     s.ph = s.spd ? (Math.round(mod(this.ph[i], TAU) / TAU * 8) / 8) * TAU : 0;
-    s.faceT = b.face[i] * TAU; s.dist = this.dist[i];
+    s.faceT = b.face[i] * TAU; s.dist = this.dist[i]; s.turnPh = s.spd ? 0 : this.turnPh[i];
     s.idle = (Math.round(mod(ct * 2.6 + i, TAU) / TAU * 4) / 4) * TAU;
     if (kind === 'wizard' && s.spd) {
       const vx = (b.x[i] - this.prevBX[i]) * 60 * PPU;

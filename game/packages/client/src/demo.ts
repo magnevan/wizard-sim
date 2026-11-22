@@ -5,9 +5,10 @@
  *   ?spell=arcane,fire/force          seat 0's spell: elements joined by , or + (an unescaped + arrives as a space)
  *   &spell2=water+cold/force          seat 1's (optional)
  *
- * Casts: force (held about 1.5 s, so channels and charges show), area, place, self, weapon,
+ * Casts: force (held about 1.5 s, so channels and charges show), area (the ring: aimed at yourself), place, self, weapon,
  * drag (a Place drawn left to right across the target), hold (the Area button held and never let go: the
- * placement preview), holddrag (held while dragging, never let go), guard (Weapon cast, then the button held to block).
+ * placement preview), holddrag (held while dragging, never let go), burstheld / ringheld (Shift+LMB held and never let
+ * go, at the target or on yourself: the burst's preview), guard (Weapon cast, then the button held to block).
  * wait does nothing for a cycle (?spell=shield+earth/place;wait;wait keeps one wall up to watch it break).
  * A target after @ overrides where the seat aims: ?spell=shield+earth/drag@0,-2
  * Your hands, with nothing queued: strike, heavy, special, channel (Special held), retreat, block, on their
@@ -138,10 +139,12 @@ export function demoInput(w: World, tick: number, seat: number, d: Demo): Player
   const go = 10 + d.els.length * 6;
   let buttons = 0;
   if (d.cast === 'force') buttons = ph >= go && ph < go + 90 ? BTN.force : 0;
-  else if (d.cast === 'area') buttons = ph >= go && ph < go + 3 ? BTN.area : 0;
+  // the ring: aimed at yourself, Shift+LMB for elements, Shift+RMB (Place) for Shield's ring and Sigil's orbitals (2026-11-22)
+  else if (d.cast === 'area') buttons = ph >= go && ph < go + 3 ? (d.els.some((e) => e === EL.shield || e === EL.sigil) ? BTN.area : BTN.weapon) : 0;
   else if (d.cast === 'place') buttons = ph >= go && ph < go + 24 ? BTN.area : 0;
   else if (d.cast === 'self') buttons = ph >= go && ph < go + 2 ? BTN.self : 0;
   else if (d.cast === 'weapon') buttons = ph >= go && ph < go + 2 ? BTN.weapon : 0;
+  else if (d.cast === 'burstheld' || d.cast === 'ringheld') buttons = ph >= go ? BTN.weapon : 0; // the burst's preview: held, never let go
   else if (d.cast === 'drag') buttons = ph >= go && ph < go + 40 ? BTN.area : 0;
   else if (d.cast === 'hold' || d.cast === 'holddrag') buttons = ph >= go ? BTN.area : 0;
   // nothing queued: your hands. strike (RMB tap), heavy (RMB held 1 s), special (Shift+RMB), retreat (Shift+LMB), block (Space held)
@@ -154,6 +157,7 @@ export function demoInput(w: World, tick: number, seat: number, d: Demo): Player
   else if (d.cast === 'guard') buttons = (ph >= go && ph < go + 2) || ph >= go + 30 ? BTN.weapon : 0;
   let [tx, ty] = d.at ?? TARGET[seat % 2];
   if (d.cast === 'drag' || d.cast === 'holddrag') tx += -2 + 4 * Math.min(1, Math.max(0, (ph - go) / 36));
+  if (d.cast === 'ringheld' || (d.cast === 'area' && ph >= go && ph < go + 6)) { tx = w.bodies.x[seat]; ty = w.bodies.y[seat]; } // on yourself through the release
   const dx = tx - w.bodies.x[seat], dy = ty - w.bodies.y[seat];
   return quantize({ buttons, press0, press1: 0, moveX: 0, moveY: 0, aimX: dx / AIM_UNIT, aimY: dy / AIM_UNIT });
 }

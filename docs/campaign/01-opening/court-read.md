@@ -106,7 +106,7 @@ The grey-box was walked in the game five times (2026-11-22, `npm run shot:route`
 - The bridgehead's tall gate tower stands south of the route at the east end, so it hides the wizard for a moment. Move it north of the path, or thin it.
 - The decks at the flights' heads are big and blank: give them an edge and a direction.
 
-**For the camera (engine):** the armillary can't be seen whole with the party in a 1080p frame (about 390 art px against about 170 px of view). The look-ahead helps. **The user (2026-11-22): "keep it large, and only show pieces of it on screen at a time, with maybe some sequences where the whole thing comes into view."** So it stays at about seven wizards tall, and the briefing and the finale get camera sequences that bring the whole armillary into view (asked of the engine session).
+**For the camera (engine):** the armillary can't be seen whole with the party in a 1080p frame (about 390 art px against about 170 px of view). The look-ahead helps. **The user (2026-11-22): "keep it large, and only show pieces of it on screen at a time, with maybe some sequences where the whole thing comes into view."** So it stays at about seven wizards tall, and the briefing and the finale get camera sequences that bring the whole armillary into view (asked of the engine session). **Then (same day), after trying it:** no pull-back is needed: "you can't see it all at once, but it seems like you'll see enough of it as you walk around." The follow-up is a Meshy model of the armillary that can be animated ([#20](https://github.com/magnevan/wizard-sim/issues/20)).
 
 **For dressing:**
 - a tall marker at the gorge exit;

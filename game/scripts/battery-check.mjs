@@ -220,16 +220,13 @@ try {
   await shot('well-infusion');
   const own = await p.evaluate(() => { const w = window.wizardSim.world; return { step: w.enc.state[1], fire: w.seats.runes.reduce((m, v, k) => (k < 10 ? Math.max(m, v) : m), 0) }; });
   if (own.step !== 7 || own.fire < 1) fail(`the infusion should give you a rune of your own: step ${own.step}, best pool ${own.fire}`);
-  // the Life circle by the well (a channel circle): hurt, step into it and it gives you Life to heal with
-  await p.evaluate(() => {
-    const w = window.wizardSim.world, b = w.bodies, well = w.def.props.find((q) => q.asset === 'battery-well');
-    b.x[0] = well.x; b.y[0] = well.y + 5.5; b.hp[0] = b.maxHp[0] * 0.4;
-  });
+  // your own Life, brought from the infirmary (stop 1): hurt, you can heal yourself anywhere on your own feet
+  await p.evaluate(() => { const b = window.wizardSim.world.bodies; b.hp[0] = b.maxHp[0] * 0.4; });
   await sleep(1500);
-  await shot('life-circle');
-  const life = await p.evaluate(() => { const w = window.wizardSim.world; return { channel: w.battery.channel[0], runes: w.seats.runes[1] }; });
-  if (life.channel !== 2 || life.runes < 1) fail(`standing in the Life circle should give Life runes: channel ${life.channel}, Life ${life.runes}`);
-  console.log('the Life circle ok:', life.runes.toFixed(2), 'Life');
+  await shot('hurt-heal-yourself');
+  const life = await p.evaluate(() => window.wizardSim.world.seats.runes[1]);
+  if (life < 1) fail(`you should have Life of your own to heal with: Life ${life}`);
+  console.log('your own Life ok:', life.toFixed(2), 'Life');
   await sleep(4500);
   await shot('well-through');
   console.log('the well ok: dry, the gate open, a rune of your own');

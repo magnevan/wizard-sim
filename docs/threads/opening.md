@@ -16,7 +16,7 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 - [ ] The drill yard through the cycle, after the infirmary: its pre-cycle plan was taken off the segment page on 2026-11-22.
 - [x] The district's roads as a space diagram with walk times, and where the small fights go ([district](../campaign/01-opening/district.md), 2026-11-22; up for review).
 - [ ] The infirmary (Life, the first cast): space diagram, Codex concept from the blockout's footprint, then an LDtk blockout. It's the smallest test of the new shape.
-- [ ] The battery as the second element: its infusion text and prompts, and room to heal in its fight.
+- [x] The battery as the second element (2026-11-22): Life is your own from the infirmary on (`CAMPAIGN.life`), the Life circle and `CHANNEL` are gone, and the hurt prompt is "Hurt? Heal yourself"; the infusion line stays the user's.
 - [ ] The user's playtest notes on the yard: round 5's `r5-yard-prompts`, `r5-yard-etched`, `r5-yard-soldiers`.
 - [ ] The rule for etched glyphs.
 - [ ] The battery's repair beat: the well's third state (the `repair` animation is cut and waiting) and "press X to stabilize".

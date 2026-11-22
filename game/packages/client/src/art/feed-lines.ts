@@ -13,7 +13,7 @@
  * As the well fails (beat 5) runes start to gutter; when it runs dry (beat 6) the light drains back down every line into
  * the well (art/power-down.ts), and they stay dark.
  */
-import { BSTEP, CHANNEL, EL, LIFE_CIRCLE, MAX_SEATS, WELL, infused, pedestalNear, type World } from '@wizard-sim/sim';
+import { BSTEP, MAX_SEATS, pedestalNear, type World } from '@wizard-sim/sim';
 import { toU, toV, toX, toY } from '../iso-world';
 import { gx, gy } from './field';
 import { PATH_STYLES, PathLayer, Shimmer, drawGlyphCircle, drawGlyphPath, pathLength, snap, type Box, type GlyphPath, type PathStyle, type RuneLook } from './glyph-path';
@@ -173,7 +173,6 @@ export function feedLines(g: Parameters<typeof drawGlyphPath>[0], w: World, t: n
   layer.end(ground, style);
   shimmer.end(ground, t, 0.85 * (0.25 + 0.75 * power) * style.rune, (m) => layer.wearOut(m, ground, style));
   pathSparks(ground, w, t, feeds, light);
-  lifeCircleArt(ground, w, t, light);
 }
 
 /**
@@ -262,30 +261,6 @@ function pathSparks(g: Parameters<typeof drawGlyphPath>[0], w: World, t: number,
     }
   }
   sparks = keep.length > 600 ? keep.slice(-600) : keep;
-}
-
-/** The Life circle's glyphs: green, where the well's are orange. */
-const LIFE = { hot: '#eaffd8', lit: '#8af08e', warm: '#3fae5a', dim: '#1e5a30', cold: '#1a2a1c' } as const;
-
-/**
- * The battery's Life circle (sim battery.ts LIFE_CIRCLE, a channel circle): it lights up green from the infusion on,
- * breathing, and burns and turns while someone channels it. Drawn over the paths, on the ground.
- */
-function lifeCircleArt(g: Parameters<typeof drawGlyphPath>[0], w: World, t: number, light: LightFn): void {
-  if (!w.battery || !infused(w)) return;
-  const well = w.def.props.find((p) => p.asset === 'battery-well');
-  if (!well) return;
-  // the view's props are turned (iso-world.ts): the well back in the sim's world, and the circle off it there
-  const cx = toX(well.x, well.y) + LIFE_CIRCLE.dx, cy = toY(well.x, well.y) + LIFE_CIRCLE.dy;
-  const lit = clamp((dryTime(w) - WELL.surge) / 0.6, 0, 1); // it lights as you're infused
-  const used = w.battery.channel.some((e) => e === EL.life);
-  const k = lit * (used ? 1 : 0.65 + 0.3 * (0.5 + 0.5 * Math.sin(t * 2.6)));
-  const rune = (n: number): RuneLook => {
-    const b = clamp(k * (0.8 + 0.2 * Math.sin(t * 2.2 + n * 1.1)), 0, 1.2);
-    return b < 0.1 ? null : { col: b > 0.9 ? LIFE.hot : b > 0.6 ? LIFE.lit : b > 0.34 ? LIFE.warm : LIFE.dim, glow: b };
-  };
-  drawGlyphCircle(g, cx, cy, CHANNEL.radius, 97, k > 0.55 ? LIFE.lit : LIFE.warm, LIFE.cold, rune, { spin: used ? t * 0.8 : 0 });
-  light(gx(toU(cx, cy)), gy(toV(cx, cy)), 38, '#6ae07a', 0.32 * k);
 }
 
 /** Is a wizard standing in defence k's circle (and could step up)? */

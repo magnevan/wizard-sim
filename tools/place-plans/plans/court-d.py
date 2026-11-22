@@ -70,11 +70,14 @@ buildings at real scale (the great hall 16 m; the library and the workshops 9 m,
 balcony road without hiding it); a stoop at each of the hall's doors; the battery road's gate as two matching piers.
 
 Revision 15 (the third sense round, 7/10): a parapet on every public edge over a metre, not only beside the routes
-(finish.lips everywhere); a weir where the stream goes over the falls."""
+(finish.lips everywhere); a weir where the stream goes over the falls.
+
+Revision 16 (the fourth sense round, 7.5/10): the battery road's gate piers as a matched round pair square across the
+road; the sea gateway's piers round and matched; the weir a stone sill flush with the water."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 15)', U=(-95, 110), V=(-62, 100))
+P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 16)', U=(-95, 110), V=(-62, 100))
 C = (0, -40)            # the amphitheatre's centre, up the screen
 ARM = (0, 18)
 SEA = -6.0
@@ -126,18 +129,18 @@ P.stairs(orect((0, 54.5), 10, 9, math.radians(90)), 1.0, -2.0, 90)
 P.fill(rect(-7, 59, 7, 62), -2.0, 'paving')                                                         # the landing
 P.stairs(orect((0, 66.5), 10, 9, math.radians(90)), -2.0, -5.0, 90)
 P.fill(rect(-6, 71, 6, 79), -5.0, 'wood')
-for du in (-7, 7): P.building(rect(du - 1.5, 35, du + 1.5, 38), 3.0, 5.0)                            # the rim's gateway
+for du in (-7, 7): P.building(circle((du, 36.5), 1.6), 3.0, 5.0)                                      # the rim's gateway, a matched pair
 
 # the battery: across the head of a sea inlet to the east, over one parapeted deck above the falls; the battery's tower
 # beside the road just beyond, on its north side so it can't hide you
 P.fill([(38, 100), (40, 40), (43, 10), (44, -10), (52, -10), (58, 20), (64, 45), (110, 52), (110, 100)], SEA, 'deep')   # the inlet
 P.fill([(44, -56), (52, -56), (52, -10), (44, -10)], 4.0, 'water')
 P.building(rect(41, -62, 55, -56), 4.0, 2.0, roof='wall')
-P.building(rect(44, -11, 52, -10), 4.0, 0.6, roof='wall')                                          # the weir where the stream goes over the falls                                          # the culvert the river comes out of                                                 # the stream above the falls
+P.fill(rect(44, -11, 52, -10), 4.15, 'rock')                                                        # the weir: a stone sill flush with the water at the lip                                          # the culvert the river comes out of                                                 # the stream above the falls
 P.fill(rect(24, -34, 95, -26), 6.0, 'path')
 P.fill(rect(40, -34, 56, -26), 6.5, 'wood')                                                                        # the deck
 P.building(rect(40, -35, 56, -34), 6.5, 1.0, roof='wall'); P.building(rect(40, -26, 56, -25), 6.5, 1.0, roof='wall')   # parapets
-P.building(rect(36, -37, 38.5, -34.5), 6.0, 5.0); P.building(rect(36, -25.5, 38.5, -23), 6.0, 5.0)                    # the gate: two matching piers either side of the road
+for dv in (-36, -24): P.building(circle((37, dv), 1.6), 6.0, 5.0)                                     # the gate: a matched pair of piers square across the road
 P.building(circle((66, -42), 6), 6.0, 14, 'battery tower')
 BAT = (74, -30)
 P.fill(rect(53, -46, 59, -34), 6.0, 'path')                                                                        # the gorge path up beside the stream

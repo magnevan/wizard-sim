@@ -17,6 +17,7 @@
     "check": "npm run typecheck && npm test",
     "check:browser": "npm run build && node scripts/browser-check.mjs",
     "shot": "node scripts/screenshot.mjs",
+    "shot:overview": "node scripts/overview-shot.mjs",
     "check:net": "npm run build && node scripts/net-e2e.mjs",
     "check:menu": "npm run build && node scripts/menu-check.mjs",
     "check:tutorial": "npm run build && node scripts/tutorial-check.mjs",

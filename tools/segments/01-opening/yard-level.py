@@ -110,10 +110,6 @@ paint(rect(32, 36, 12, 12, 1.2, 19), 'dirt')                                    
 paint(path(PATH, 3.2, .8, 20), 'dirt')                                              # the worn path, station to station
 # the courtyard: paving, the armillary's plinth, its seven channels (dim; the finale lights them)
 paint(in_court, 'flagstone')
-for k in range(7):
-    a = math.pi * (0.55 + k * 0.21)
-    end = (ARMILLARY[0] + math.cos(a) * 40, ARMILLARY[1] + math.sin(a) * 40)
-    paint(lambda x, y, e=end: in_court(x, y) and seg_dist(x, y, ARMILLARY, e) < .7 and math.hypot(x - ARMILLARY[0], y - ARMILLARY[1]) > 7, 'cobble')
 paint(lambda x, y: math.hypot(x - ARMILLARY[0], y - ARMILLARY[1]) < 8.5, 'cobble')
 paint(path([(BAL_X - 6, 83), (BAL_X + 4, 83)], 5, .2, 21), 'flagstone')          # the opening into the yard, paved through
 paint(path([(114, BAL_Y - 5), (114, BAL_Y + 3)], 6, .2, 22), 'flagstone')        # the opening back out
@@ -140,14 +136,24 @@ def run_y(asset, x, y0, y1, step=1.75, skip=None, blocks=True):
 
 # No buildings as props: at a real scale a building is the environment, not an object in it (the user, 2026-11-14).
 # The ranges are past the map's west and north edges (art/massing.ts).
-# the balustrade, low, so the courtyard and the yard see each other; lanterns at its openings
-run_y('stone-wall-low-flip', BAL_X, BAL_Y + 1, H - 1, skip=IN_GAP)
-run_x('stone-wall-low', BAL_Y, BAL_X + 1, W - 1, skip=OUT_GAP)
-for x, y in [(BAL_X + 1.2, IN_GAP[0] - .4), (BAL_X + 1.2, IN_GAP[1] + .4), (OUT_GAP[0] - .4, BAL_Y + 1.2), (OUT_GAP[1] + .4, BAL_Y + 1.2)]:
-    prop('lantern-post', x, y, True)
-# the courtyard's edges: a terrace wall south and east, the east gate in it
-run_x('stone-wall-low', H - 1.2, BAL_X + 2, W - 1)
-run_y('stone-wall-low-flip', W - 1.2, BAL_Y + 2, H - 2, skip=(GATE[1] - 4.5, GATE[1] + 4.5))
+# the balustrade (Codex, tools/building-art), low, so the courtyard and the yard see each other: 8 u pieces between
+# lantern pillars, the pillars at its corners and either side of its openings
+BAL = 8.2
+def balustrade_x(y, x0, x1):
+    n = max(1, round((x1 - x0) / BAL))
+    for k in range(n):
+        prop('codex-balustrade-x', x0 + (k + .5) * (x1 - x0) / n, y, True)
+def balustrade_y(x, y0, y1):
+    n = max(1, round((y1 - y0) / BAL))
+    for k in range(n):
+        prop('codex-balustrade-y', x, y0 + (k + .5) * (y1 - y0) / n, True)
+balustrade_y(BAL_X, BAL_Y + .6, IN_GAP[0]); balustrade_y(BAL_X, IN_GAP[1], H - .6)
+balustrade_x(BAL_Y, BAL_X + .6, OUT_GAP[0]); balustrade_x(BAL_Y, OUT_GAP[1], W - .6)
+for x, y in [(BAL_X, BAL_Y), (BAL_X, IN_GAP[0]), (BAL_X, IN_GAP[1]), (OUT_GAP[0], BAL_Y), (OUT_GAP[1], BAL_Y)]:
+    prop('codex-lantern-pillar', x, y, True)
+# the courtyard's edges: the same balustrade south and east, the east gate in it
+balustrade_x(H - .8, BAL_X + .6, W - .6)
+balustrade_y(W - .8, BAL_Y + .6, GATE[1] - 4.5); balustrade_y(W - .8, GATE[1] + 4.5, H - .6)
 for dy in (-3.8, 3.8):
     prop('battery-pillar', W - 1.6, GATE[1] + dy, True)
     prop('banner-red', W - 3.4, GATE[1] + dy * 1.4)
@@ -162,12 +168,23 @@ for k in range(8):                                  # lanterns round the plinth,
     prop('lantern-post', ARMILLARY[0] + math.cos(a) * 9, ARMILLARY[1] + math.sin(a) * 9, True)
 for a in (0.25, 0.75):          # benches on the near side only: anything north of the grey box draws over it
     prop('bench', ARMILLARY[0] + math.cos(a * math.pi) * 15, ARMILLARY[1] + math.sin(a * math.pi) * 15, True)
-for asset, x, y in [('oak', 62, 95), ('oak', 123, 94), ('oak', 123, 58), ('bush-round', 52, 60),
-                    ('bush-round', 60, 58), ('notice-board', 72, 76)]:
-    prop(asset, x, y, asset != 'banner-violet')
+for asset, x, y in [('codex-conifer-tall', 50, 58), ('codex-conifer-tall', 50, 96), ('codex-conifer-tall', 125.5, 58), ('codex-conifer-round', 125, 95),
+                    ('codex-urn-planter', 112, 92), ('codex-urn-planter', 88, 92),
+                    ('codex-lilac-shrub', 54, 62), ('codex-yellow-shrub', 58, 59), ('codex-white-shrub', 52, 70), ('codex-lavender-foxglove', 56, 95),
+                    ('codex-lilac-shrub', 120, 95), ('codex-yellow-shrub', 124, 88), ('codex-lavender-foxglove', 104, 95),
+                    ('codex-star-banner', 92.5, 90.5), ('codex-star-banner', 107.5, 90.5), ('codex-mossy-rocks', 66, 96), ('notice-board', 72, 76)]:
+    prop(asset, x, y, not asset.startswith(('codex-star-banner', 'codex-lavender', 'codex-white')))
 # along the Great Hall's foot: lanterns, a bench by its door, the notice board
 for y in (14, 30, 50, 66):
     prop('lantern-post', 2.4, y, True)
+# planting along the buildings' feet, between the stations (Codex, tools/building-art)
+for asset, x, y in [('codex-lavender-foxglove', 3.2, 9), ('codex-lilac-shrub', 3.4, 20), ('codex-yellow-shrub', 3.4, 36), ('codex-white-shrub', 3.4, 70),
+                    ('codex-urn-planter', 3.4, 40.6), ('codex-urn-planter', 3.4, 47.4), ('codex-conifer-tall', 2.8, 75), ('codex-lilac-shrub', 3.4, 82),
+                    ('codex-lavender-foxglove', 3.4, 90), ('codex-conifer-round', 3, 97),
+                    ('codex-yellow-shrub', 12, 3.4), ('codex-lavender-foxglove', 20, 3.2), ('codex-lilac-shrub', 68, 3.4), ('codex-white-shrub', 76, 3.4),
+                    ('codex-lavender-foxglove', 86, 3.2), ('codex-conifer-tall', 93, 2.8), ('codex-urn-planter', 108, 3.4), ('codex-yellow-shrub', 116, 3.4),
+                    ('codex-mossy-rocks', 124, 4), ('codex-star-banner', 95.4, 2.6), ('codex-star-banner', 104.6, 2.6)]:
+    prop(asset, x, y, not asset.startswith(('codex-star-banner', 'codex-lavender', 'codex-white')))
 prop('bench', 2.6, 44, True)
 # the strike lanes: a straw goblin at each post, dummies either side
 for x, y in STRAW:

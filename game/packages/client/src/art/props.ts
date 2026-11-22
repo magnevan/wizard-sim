@@ -110,7 +110,7 @@ export class PropView {
       spr.zIndex = Math.round(gy(p.y) + (meta.sort ?? 0)) * 128 + 100;
       (meta.flat ? this.under : this.actors).addChild(spr);
       this.items.push({ asset: p.asset, meta, spr, x: gx(p.x), y: gy(p.y) - (meta.lift ?? 0), ox: 0, oy: 0, lit: 1 });
-      if (meta.flat || meta.lift) continue;
+      if (meta.flat || meta.lift || meta.shadow === false) continue;
       const [fw, fh] = meta.footprint;
       X.shadow(x, gx(p.x), gy(p.y), (fw / 2) * PPU * 0.9, Math.max(2, (fh / 2) * PPU * FY), 10);
     }

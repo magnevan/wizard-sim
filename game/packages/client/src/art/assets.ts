@@ -24,6 +24,8 @@ export interface PropMeta {
   lift?: number;
   /** Sorts this many art px further down the screen than its spot (negative: further back). */
   sort?: number;
+  /** false: no soft ground shadow (one long piece on the diagonal, such as a balustrade, has its own painted shade). */
+  shadow?: boolean;
   sets: Record<string, PropImage>;
 }
 

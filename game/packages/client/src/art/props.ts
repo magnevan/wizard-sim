@@ -116,7 +116,7 @@ export class PropView {
       this.items.push({ asset: p.asset, meta, spr, x: gx(p.x), y: gy(p.y) - (meta.lift ?? 0) - liftAt(def, p.x, p.y), ox: 0, oy: 0, lit: 1 });
       if (meta.flat || meta.lift || meta.shadow === false) continue;
       const [fw, fh] = meta.footprint;
-      X.shadow(x, gx(p.x), gy(p.y), (fw / 2) * PPU * 0.9, Math.max(2, (fh / 2) * PPU * FY), 10);
+      X.shadow(x, gx(p.x), gy(p.y) - liftAt(def, p.x, p.y), (fw / 2) * PPU * 0.9, Math.max(2, (fh / 2) * PPU * FY), 10);   // at the prop's own tier (2026-11-22: they fell a tier below, onto wall faces)
     }
     this.shadowTex = Texture.from(c);
     this.shadows.texture = this.shadowTex;

@@ -155,7 +155,7 @@ async function paint(room: string, w: number, h: number, l: FloorLayout): Promis
   await scatter(x, g, W, H, OX, OY, cam);
   const def = (ROOMS as Readonly<Record<string, (typeof ROOMS)[keyof typeof ROOMS]>>)[room];
   if (!def?.height) await woods(x, room, w, h, W, H, OX, OY, cam); // a tiered room's edge is in its plan (void, sea, trees as raised cells)
-  if (def?.height) { const lifted = x.getImageData(0, 0, W, H); liftGround(lifted.data, W, H, OX, OY, cam, def); x.putImageData(lifted, 0, 0); }
+  if (def?.height) { const lifted = x.getImageData(0, 0, W, H); liftGround(lifted.data, W, H, OX, OY, cam, def, (wx, wy) => groundAt(g, wx, wy) === 'h' /* slabs are roofs only: tools/place-plans/to_ldtk.py */); x.putImageData(lifted, 0, 0); }
   const t = Texture.from(c);
   t.source.scaleMode = 'nearest';
   return t;

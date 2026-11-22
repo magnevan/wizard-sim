@@ -125,6 +125,30 @@ function faceStone(px: number, k: number, fy: number, tr: number, tg: number, tb
   out[0] = (196 * (1 - w) + tr * w) * t; out[1] = (182 * (1 - w) + tg * w) * t; out[2] = (158 * (1 - w) + tb * w) * t;
 }
 
+const set = (out: Float32Array, r: number, g: number, b: number): void => { out[0] = r; out[1] = g; out[2] = b; };
+/**
+ * One pixel of a building's front (a face whose top is roof): a dark slate eave, pilasters, rows of arched windows (a
+ * few lit), and a darker plinth, over the same ashlar (the beauty critic, 2026-11-22: the fronts were huge identical
+ * slabs and the roofs read as holes without an eave). k is px below the eave, n the face's height in px.
+ */
+function faceBuilding(px: number, k: number, n: number, fy: number, out: Float32Array): void {
+  if (k < 3) return set(out, 74, 82, 102);                          // the eave
+  if (k < 5) return set(out, 46, 50, 62);                           // its shadow
+  if (k >= n - 6) return k === n - 6 ? set(out, 214, 202, 178) : set(out, 150, 138, 120);   // the plinth and its sill
+  const bay = 38, bx = Math.floor(px / bay), u = ((px % bay) + bay) % bay;
+  if (u < 5) return set(out, 216, 205, 182);                        // a pilaster
+  const win = 18, gap = 9, row = Math.floor((k - 9) / (win + gap)), v = (k - 9) - row * (win + gap);
+  if (k >= 9 && v >= 0 && v < win && k + (win - v) < n - 9 && u >= 15 && u < 29) {
+    const inset = v === 0 ? 4 : v === 1 ? 2 : v === 2 ? 1 : 0;      // the arch
+    if (u >= 15 + inset && u < 29 - inset) {
+      if (u === 21 || u === 22) return set(out, 120, 112, 100);     // the mullion
+      return hash2(bx, row + 7) < 0.3 ? set(out, 236, 186, 104) : set(out, 40, 46, 64);   // a lit pane, or dark glass
+    }
+    return set(out, 228, 218, 196);                                 // the window's stone surround
+  }
+  faceStone(px, k, fy, 196, 182, 158, out);
+}
+
 /** Art px of headroom a room's ground image needs above and below for its tiers. */
 export function liftRange(def: RoomDef): { up: number; down: number } {
   const hm = heightMap(def);
@@ -140,7 +164,7 @@ export interface PxToWorld { x(px: number, py: number): number; y(px: number, py
  * face: cut stone (faceStone), under a pale coping, darkening toward its foot. Nearer pixels overwrite farther ones, so
  * a raised terrace hides what's behind it. Void (outside the outline) is left dark.
  */
-export function liftGround(data: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, cam: PxToWorld, def: RoomDef): void {
+export function liftGround(data: Uint8ClampedArray, W: number, H: number, OX: number, OY: number, cam: PxToWorld, def: RoomDef, isRoof?: (x: number, y: number) => boolean): void {
   const hm = heightMap(def);
   if (!hm) return;
   const src = data.slice(), col = new Int32Array(H), gone = new Uint8Array(H);
@@ -158,10 +182,11 @@ export function liftGround(data: Uint8ClampedArray, W: number, H: number, OX: nu
       // a drop toward the camera: the face runs from just below this pixel down to where the next row lands
       const next = py + 1 < H ? py + 1 - col[py + 1] : dest + 1;
       if (next > dest + 1) {
-        const s = (py * W + px) * 4;
+        const s = (py * W + px) * 4, n = next - dest - 1;
+        const front = isRoof?.(cam.x(px - OX, py - OY), cam.y(px - OX, py - OY)) ?? false;
         for (let fy = Math.max(0, dest + 1); fy < Math.min(H, next); fy++) {
           const d = (fy * W + px) * 4, k = fy - dest - 1, fade = 1 - 0.3 * ((fy - dest) / (next - dest));
-          faceStone(px, k, fy, src[s], src[s + 1], src[s + 2], STONE);
+          if (front) faceBuilding(px, k, n, fy, STONE); else faceStone(px, k, fy, src[s], src[s + 1], src[s + 2], STONE);
           data[d] = STONE[0] * fade; data[d + 1] = STONE[1] * fade; data[d + 2] = STONE[2] * fade; data[d + 3] = 255;
         }
       }

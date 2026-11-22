@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as court-kit-b.png in the current directory. Reply with just the file name.
+
+A sheet of building pieces for a co-op wizard game in high-detail pixel art, in the style, palette and warm light of the attached concept art, on a plain flat magenta background (#ff00ff) with clear gaps between the pieces. The last attached image is the player's wizard sprite at its true in-game size: draw every piece at that pixel size and scale (a door is about twice the wizard's height, a storey about two and a half).
+
+Camera: high top-down three-quarter view, as in Children of Morta or Eastward. Each piece shows its front (south) face and its roof seen from above, nothing else; windows sit flat in the wall plane at exactly the wall's angle. One light from the upper left.
+
+The pieces, in a row: 1. a straight section of a two-storey academy hall front, cream ashlar, tall arched windows, gold trim, deep blue slate roof with a ridge; 2. a grand arched gateway for the same hall, with a passage through it and its own taller roof and gold finials; 3. an outside corner of the same hall; 4. a pair of matching stone piers with brass lanterns; 5. a raised stone planter with a plinth and lilac flowers.

@@ -1,0 +1,9 @@
+Generate one image with your image generation tool, then save it as court-free-a.png in the current directory. Reply with just the file name.
+
+A finished in-game screenshot, 1920 x 1080, of a co-op wizard game in high-detail pixel art, in the style, palette and warm morning light of the attached concept art. The last attached image is the player's wizard sprite at its true in-game size: everything is drawn at that same pixel size and scale (a door is about twice the wizard's height).
+
+Camera: high top-down three-quarter view, as in Children of Morta or Eastward. Every wall shows only its front (south) face, roofs are seen from above, and the ground and its paving pattern are foreshortened the same way as the walls, never seen from straight above. One light from the upper left: every shadow falls down and to the right.
+
+The scene: the courtyard of a wizard academy. Across the top of the screen stands the great hall, cream stone with tall arched windows set flat in its front wall, gold trim and a deep blue slate roof, with one grand arched gateway in the middle that a paved road runs out through. Two matching blue star banners stand either side of the gateway, facing straight out. The road runs down the screen through a sunlit forecourt to a low wide flight of steps that drops into a sunken round plaza at the bottom of the screen, where the top of a great brass armillary rises. The forecourt's paving and the road meet at a clean raised kerb, so you can always tell which is higher. Planting stands in raised stone beds with a plinth, never sunk into the ground.
+
+No characters, no interface, no text.

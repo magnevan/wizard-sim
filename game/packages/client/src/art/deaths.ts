@@ -1193,6 +1193,8 @@ export class Deaths {
   }
 
   get count(): number { return this.live.length; }
+  /** Frees the slots' textures (a view going away). */
+  destroy(): void { for (const s of this.slots) s.tex.destroy(true); this.slots = []; this.live = []; }
   /** The strongest screen shake asked for this frame (art px; a brute slamming down). */
   shake = 0;
 

@@ -281,6 +281,9 @@ export class TutorialHud {
     this.sprite.visible = this.banner.visible = this.fade.visible = false;
   }
 
+  /** Frees the two canvases' textures (a view going away). */
+  destroy(): void { this.tex.destroy(true); this.btex.destroy(true); }
+
   /** A new world (the menu's restart, a room switch): greet whatever beat it starts on, even the one showing now. */
   restart(): void { this.beat = -1; this.exited = false; }
 

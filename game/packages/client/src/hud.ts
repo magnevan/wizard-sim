@@ -70,6 +70,9 @@ export class Hud {
     this.perks.visible = false; this.over.visible = false;
   }
 
+  /** Frees the HUD's canvases' textures (a view going away). */
+  destroy(): void { for (const t of [this.tex, this.ttex, this.pkTex, this.ovTex]) t.destroy(true); }
+
   /** One player's picks, stacked: [power-up, element, count] in the order first taken. */
   private picksOf(w: World, s: number): [number, number, number][] {
     const r = w.run!, out: [number, number, number][] = [];

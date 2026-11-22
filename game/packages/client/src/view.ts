@@ -258,6 +258,28 @@ export class WorldView {
     }
   }
 
+  /**
+   * Frees everything this view made on the GPU and drops its display tree: the effect canvases' textures, the scene
+   * lighting's maps, the actor frame pages, the structures' and deaths' canvases, the HUD's, the floor placeholder. What it
+   * shares with other views stays: the painted ground, prop images, the baked sheets, live3d's atlas. The game never
+   * destroys its view; the VFX Lab does on every rebuild.
+   */
+  destroy(): void {
+    this.vfx.destroy();
+    this.lit?.destroy();
+    this.lights.destroy();
+    this.frames.destroy();
+    this.structs.destroy();
+    this.deaths.destroy();
+    this.props.destroy();
+    this.hud.destroy();
+    this.tut.destroy();
+    if (this.ownFloor) this.floor.texture?.destroy(true);
+    this.artTex?.destroy(true); this.artTex = null;
+    this.litLayer.filters = [];
+    this.root.destroy({ children: true });
+  }
+
   /** Hide the additive lights (?lights=0), for checking what they add. */
   get lightsOn(): boolean { return this.lights.layer.visible; }
   set lightsOn(on: boolean) { this.lights.layer.visible = on; if (this.lit) this.lit.glowLayer.visible = on; }

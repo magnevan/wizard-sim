@@ -44,7 +44,7 @@ It writes `sheet.png` (the frames), `diff.png` (new pixels in colour, vanished o
 
 ## 4. One change per round
 
-Each round makes the one change with the biggest effect, then shows it. When a note comes back, it's clear which change it is about. Variants go side by side, about three at a time, same seed.
+Each round makes the one change with the biggest effect, then shows it. When a note comes back, it's clear which change it is about. Variants go side by side, about three at a time, same seed. For a change made with knobs, pin the values before it as A in the lab's Knobs section (Pin as A), make the change (B), and show A and B: side by side, or flipped in place with X when the difference is small.
 
 ## The rubric
 

@@ -239,6 +239,9 @@ export class Vfx {
     this.over = new Sprite(this.ot);
   }
 
+  /** Frees the two effect textures (a view going away). */
+  destroy(): void { this.gt.destroy(true); this.ot.destroy(true); }
+
   /** FIELD changed size (a world with another play area): new canvases and textures to match. */
   resize(): void {
     this.surf = X.canvas(FIELD.W, FIELD.H);

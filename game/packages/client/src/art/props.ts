@@ -85,6 +85,9 @@ export class PropView {
   private headClock = 0;
   constructor(private actors: Container, private tint: number, private current: PropSet) { this.under.addChild(this.shadows); }
 
+  /** Frees the shadows' texture (a view going away; the props' own images are shared and stay). */
+  destroy(): void { this.wanted++; this.shadowTex?.destroy(true); this.shadowTex = null; for (const t of this.headFrames) t.destroy(false); this.headFrames = []; }
+
   get set(): PropSet { return this.current; }
   set set(s: PropSet) { if (s !== this.current) { this.current = s; void this.dress(); } }
 

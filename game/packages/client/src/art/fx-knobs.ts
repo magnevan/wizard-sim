@@ -93,6 +93,24 @@ export function setSavedKnobs(raw: unknown): string[] {
   return errors;
 }
 
+/** Every knob's live value, by id (a variant to compare against: the VFX Lab's A/B). */
+export function knobValues(): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const k of allKnobs()) out[k.id] = k.v;
+  return out;
+}
+
+/**
+ * Runs fn with these values in place of the live ones (unknown ids ignored), then puts the live ones back: one draw of
+ * a variant. Nothing is told (no change events), so nothing else sees the swap.
+ */
+export function withKnobs<T>(values: Readonly<Record<string, number>> | null, fn: () => T): T {
+  if (!values) return fn();
+  const was: [Knob, number][] = [];
+  for (const [id, v] of Object.entries(values)) { const k = reg.get(id); if (k && Number.isFinite(v) && k.v !== v) { was.push([k, k.v]); k.v = v; } }
+  try { return fn(); } finally { for (const [k, v] of was) k.v = v; }
+}
+
 /** Called with the knob that changed, or null when many did. Returns the unsubscribe. */
 export function onKnobChange(f: (k: Knob | null) => void): () => void {
   listeners.add(f);

@@ -31,7 +31,9 @@
  *   &bar=0                  no side panel (a clean page for captures)
  * The game's own view options work here too: ?lights=0, ?lighting=0, ?live3d=0, ?sprites=0, ?wizscale=...
  *
- * For tools: window.vfxLab = { ready, setTime(t), metrics(), info() } (see VfxLab below). setTime is exact: its frame
+ * Knobs: the sliders (knob-panel.ts) and the A/B (ab.ts: pin the values as A, compare side by side or flip with X).
+ *
+ * For tools: window.vfxLab = { ready, setTime(t), scrub(t), aim(deg, dist), metrics(), info() } (see VfxLab below). setTime is exact: its frame
  * is the one a fresh page with that ?t= shows. Moving the clock from the panel reuses the views (no fresh GPU resources
  * each time), so a panel frame can differ from the fresh one in cosmetic details.
  */
@@ -50,6 +52,7 @@ import { SCENES, type V } from './scenes';
 import { atRunes, isHands, readState, writeState } from './state';
 import { mountPanel } from './panel';
 import { mountKnobPanel } from './knob-panel';
+import { AB, AB_CSS, mountAB } from './ab';
 
 const S = readState(location.search);
 const startT = S.t;
@@ -72,12 +75,18 @@ const panelSize = (): [number, number] => S.size ?? (S.grid ? [200, 200] : [480,
 function specs(): CellSpec[] {
   const sc = sceneOf(), a0 = aim0(), [w, h] = panelSize(), others = (S.others ?? '').split(';').filter(Boolean);
   const counts = S.grid ? S.ns : [S.presses.length];
-  return counts.map((n, k) => ({
-    scene: sc, seed: S.seed, w, h, scale: S.scale, zoom: S.zoom, mood: S.mood, scope: `lab${k}:`, aim0: a0,
+  // A/B side by side: the setup twice, A's row (the pinned knobs) over B's (the live ones); flip: one row, drawn with
+  // whichever is showing
+  const variants: { name: string; knobs: () => Readonly<Record<string, number>> | null }[] = AB.on === 'side'
+    ? [{ name: 'A', knobs: () => AB.a }, { name: 'B', knobs: () => null }]
+    : [{ name: '', knobs: () => (AB.on === 'flip' && AB.showA ? AB.a : null) }];
+  return variants.flatMap((v) => counts.map((n, k) => ({
+    scene: sc, seed: S.seed, w, h, scale: S.scale, zoom: S.zoom, mood: S.mood, scope: `lab${v.name}${k}:`, aim0: a0,
+    knobs: v.knobs, variant: v.name, runes: n,
     demos: sc.wizards.map((wz, i) => i === 0
       ? demoAt(`${isHands(S.form) ? '' : atRunes(S.presses, n).join(',')}/${S.form}`, a0 ?? sc.target)
       : demoAt(others[i - 1] ?? wz.spell ?? null, wz.aim ?? sc.target)),
-  }));
+  })));
 }
 
 // ---- the page ------------------------------------------------------------------------------------------------------
@@ -96,21 +105,40 @@ let lastMetrics = { particles: 0, fills: 0, fxLive: 0, vfxMs: 0, drawMs: 0, rend
 /** The pointer is over the stage (or dragging an aim): the aim line shows. */
 let hover = false, dragging = false;
 
+/** Lays the panels out: one row per A/B variant, the rune grid along it; labels and the flip badge. */
 function layout(): void {
-  const W = cells.reduce((s, c) => s + c.pxW, 0), H = Math.max(...cells.map((c) => c.pxH));
-  app.renderer.resize(W, H);
-  overlay.width = W; overlay.height = H;
-  let x = 0;
-  cells.forEach((c, k) => {
-    c.root.position.set(x, 0);
-    const l = labels[k] ?? document.createElement('div');
-    if (!labels[k]) { l.className = 'label'; host.appendChild(l); labels[k] = l; }
-    l.style.left = `${x + 4}px`;
-    l.textContent = S.grid ? `${S.ns[k]} rune${S.ns[k] > 1 ? 's' : ''}` : '';
-    l.style.display = S.grid ? '' : 'none';
-    x += c.pxW;
-  });
-  for (let k = cells.length; k < labels.length; k++) labels[k].style.display = 'none';
+  const rows: Cell[][] = [];
+  for (const c of cells) { const last = rows[rows.length - 1]; if (last && last[0].spec.variant === c.spec.variant) last.push(c); else rows.push([c]); }
+  let y = 0, W = 0;
+  const lab = (k: number) => {
+    let l = labels[k];
+    if (!l) { l = labels[k] = document.createElement('div'); l.className = 'label'; host.appendChild(l); }
+    return l;
+  };
+  let n = 0;
+  for (const row of rows) {
+    let x = 0;
+    for (const c of row) {
+      c.root.position.set(x, y);
+      const l = lab(n++), v = c.spec.variant, runes = S.grid ? `${c.spec.runes} rune${c.spec.runes > 1 ? 's' : ''}` : '';
+      l.style.left = `${x + 4}px`; l.style.top = `${y + 3}px`;
+      l.textContent = [v && (v === 'A' ? 'A (pinned)' : 'B (live)'), runes].filter(Boolean).join('  ');
+      l.style.display = l.textContent ? '' : 'none';
+      x += c.pxW;
+    }
+    W = Math.max(W, x); y += Math.max(...row.map((c) => c.pxH));
+  }
+  for (let k = n; k < labels.length; k++) labels[k].style.display = 'none';
+  app.renderer.resize(W, y);
+  overlay.width = W; overlay.height = y;
+  flipBadge();
+}
+/** Flip: a big A or B on the stage, so you know which you're looking at. */
+const badge = Object.assign(document.createElement('div'), { className: 'badge' });
+function flipBadge(): void {
+  badge.style.display = AB.on === 'flip' ? '' : 'none';
+  badge.textContent = AB.showA ? 'A' : 'B';
+  badge.classList.toggle('a', AB.showA);
 }
 
 /** New panels for the setup. `fresh`: new views too (what a fresh page has: setTime's exact frames). */
@@ -154,16 +182,20 @@ const targetsAt = (t: number) => cells.map((c) => {
 });
 
 /**
- * Steps every panel to t (from the top if it's past it) and draws it. `drawBetween`: the ticks on the way are drawn too,
- * as the game does at 60 fps. The panel's way of moving the clock: setTime's frames need fresh views after it.
+ * Steps every panel to t and draws it: the panel's way of moving the clock (setTime's frames need fresh views after it).
+ * Back in time, a panel restores its latest sim snapshot at least LOOKBACK before t (cell.ts), so every effect still
+ * showing at t was born in the replay: the longest-lived ones, deaths, last 3.2 s. On the way only the last TAIL ticks
+ * are drawn, and any tick something died in (a death's clock starts at its first draw); `drawTail` false draws none.
  */
-function advance(t: number, drawBetween: boolean): void {
+const LOOKBACK = 4 * 60, TAIL = 12;
+function advance(t: number, drawTail: boolean): void {
   const targets = targetsAt(t);
   cells.forEach((c, k) => {
-    if (c.tick > targets[k].steps) c.restart();
-    while (c.tick < targets[k].steps) {
-      c.stepOnce();
-      if (drawBetween && c.tick < targets[k].steps) { const ms = simMs(c, 0); setLiveClock(() => ms / 1000); c.draw(0, ms); }
+    const to = targets[k].steps;
+    if (c.tick > to) c.rewind(to - LOOKBACK);
+    while (c.tick < to) {
+      const died = c.stepOnce();
+      if (drawTail && c.tick < to && (died || to - c.tick <= TAIL)) { const ms = simMs(c, 0); setLiveClock(() => ms / 1000); c.draw(0, ms); }
     }
   });
   drawAll(targets.map((x) => x.alpha));
@@ -253,12 +285,12 @@ function drawOverlay(): void {
   og.clearRect(0, 0, overlay.width, overlay.height);
   if (!(hover || dragging) || !cells.length) return;
   const sc = sceneOf(), at = sc.wizards[0].at, tgt = aim0() ?? sc.target;
-  let x0 = 0;
   for (const c of cells) {
     const cam = c.view.camera, a = cam.worldToScreen(worldX(at), worldY(at)), b = cam.worldToScreen(worldX(tgt), worldY(tgt));
+    const x0 = c.root.position.x, y0 = c.root.position.y;
     og.save();
-    og.beginPath(); og.rect(x0, 0, c.pxW, c.pxH); og.clip();
-    og.translate(x0, 0);
+    og.beginPath(); og.rect(x0, y0, c.pxW, c.pxH); og.clip();
+    og.translate(x0, y0);
     og.strokeStyle = 'rgba(255,240,160,0.85)'; og.lineWidth = 1.5; og.setLineDash([6, 4]);
     og.beginPath(); og.moveTo(a.x, a.y); og.lineTo(b.x, b.y); og.stroke();
     og.setLineDash([]);
@@ -271,17 +303,15 @@ function drawOverlay(): void {
       og.fillText(`${((Math.atan2(dv, du) * 180) / Math.PI).toFixed(0)} deg  ${Math.hypot(du, dv).toFixed(2)} u`, b.x + r + 6, b.y - 6);
     }
     og.restore();
-    x0 += c.pxW;
   }
 }
 /** The ground point under the pointer, in view space, from the panel it's over. */
 function groundAt(e: PointerEvent): V | null {
   const r = overlay.getBoundingClientRect();
-  let x = e.clientX - r.left;
-  const y = e.clientY - r.top;
+  const x = e.clientX - r.left, y = e.clientY - r.top;
   for (const c of cells) {
-    if (x < c.pxW) { const p = c.view.camera.screenToWorld(x, y); return [toU(p.x, p.y), toV(p.x, p.y)]; }
-    x -= c.pxW;
+    const lx = x - c.root.position.x, ly = y - c.root.position.y;
+    if (lx >= 0 && ly >= 0 && lx < c.pxW && ly < c.pxH) { const p = c.view.camera.screenToWorld(lx, ly); return [toU(p.x, p.y), toV(p.x, p.y)]; }
   }
   return null;
 }
@@ -321,11 +351,24 @@ const readyP = (async () => {
   app.ticker.stop();
   // the stage's canvas comes first in the page (capture tools take the first canvas), the aim overlay over it
   host.prepend(app.canvas);
-  if (S.bar) host.append(overlay);
+  if (S.bar) host.append(overlay, badge);
   await assets();
   build(true);
   if (startT === null) cur = loopStart();
 })();
+
+function snapTotals(): { snapshots: number; snapMB: number } {
+  let n = 0, b = 0;
+  for (const c of cells) { const st = c.snapStats; n += st.n; b += st.bytes; }
+  return { snapshots: n, snapMB: Math.round(b / 1e4) / 100 };
+}
+/** Texture sources the renderer holds on the GPU (its list keeps a hole where a destroyed one was). */
+function gpuTextures(): number {
+  const list = (app.renderer as unknown as { texture?: { managedTextures?: readonly unknown[] } } | undefined)?.texture?.managedTextures ?? [];
+  let n = 0;
+  for (const s of list) if (s) n++;
+  return n;
+}
 
 // ---- the API --------------------------------------------------------------------------------------------------------
 export interface VfxLab {
@@ -333,6 +376,10 @@ export interface VfxLab {
   ready: Promise<void>;
   /** Shows the frame `t` s from the cast (exactly as a fresh page with ?t= does) and resolves once it is rendered. Pauses. */
   setTime(t: number): Promise<void>;
+  /** The panel's way of moving the clock (fast: views reused, sim snapshots): pauses at t. Returns the ms it took. */
+  scrub(t: number): number;
+  /** Wizard 1's aim (degrees, units; null: the scene's target), applied as a drag on the stage does. Returns the ms it took. */
+  aim(deg: number | null, dist?: number): number;
   /** What the last frame cost and held. */
   metrics(): {
     t: number | null; ticks: number[]; t0: number[];
@@ -343,6 +390,10 @@ export interface VfxLab {
     /** ms: the effects pass (the view's own timer), every panel's whole draw, and the GPU render. */
     vfxMs: number; drawMs: number; renderMs: number;
     hashes: string[];
+    /** Texture sources the renderer holds on the GPU (memory checks: it should stay flat over rebuilds). */
+    gpuTextures: number;
+    /** Sim snapshots kept along the panels' timelines, and their size in MB. */
+    snapshots: number; snapMB: number;
   };
   info(): {
     spell: string; form: string; scene: string; seed: number; runes: number[]; grid: boolean; scale: number; size: [number, number];
@@ -353,6 +404,8 @@ export interface VfxLab {
 const lab: VfxLab = {
   ready: readyP.then(async () => { if (startT !== null) await setTime(startT); }),
   setTime,
+  scrub: (t) => { const t0 = performance.now(); showAt(t); return performance.now() - t0; },
+  aim: (deg, dist = 4) => { const t0 = performance.now(); S.aim = deg === null ? null : [deg, dist]; setupChanged(); panel?.sync(); return performance.now() - t0; },
   metrics: () => {
     let missiles = 0, zones = 0;
     for (const c of cells) {
@@ -360,7 +413,7 @@ const lab: VfxLab = {
       for (let j = 0; j < w.missiles.alive.length; j++) missiles += w.missiles.alive[j];
       for (let j = 0; j < w.zones.type.length; j++) if (w.zones.type[j]) zones++;
     }
-    return { t: playing ? null : cur, ticks: cells.map((c) => c.tick), t0: cells.map((c) => c.t0), missiles, zones, ...lastMetrics, hashes: cells.map((c) => hex(hashWorld(c.world))) };
+    return { t: playing ? null : cur, ticks: cells.map((c) => c.tick), t0: cells.map((c) => c.t0), missiles, zones, ...lastMetrics, hashes: cells.map((c) => hex(hashWorld(c.world))), gpuTextures: gpuTextures(), ...snapTotals() };
   },
   info: () => ({
     spell: S.presses.join(','), form: S.form, scene: SCENES[S.scene] ? S.scene : 'empty', seed: S.seed,
@@ -386,11 +439,23 @@ const panel = S.bar ? mountPanel(panelHost, S, {
 }) : null;
 if (!S.bar) panelHost.style.display = 'none';
 
-// The fx-knobs sliders (knob-panel.ts) in the panel's Knobs section; a change redraws the frame shown while paused
-// (playing, the next frame picks it up). Mounting it applies this browser's unsaved knob edits (localStorage), so a page
-// driven by a tool (navigator.webdriver: puppeteer, vfx-sheet) or with ?bar=0 goes without: it draws with the saved
-// knobs only (art/fx-knobs.json), and a ?t= capture stays the same everywhere.
-if (panel && !navigator.webdriver) mountKnobPanel(panel.knobs, () => { if (!playing && cells.length) { drawAll(targetsAt(cur).map((x) => x.alpha)); reused = true; } });
-else if (panel) panel.knobs.append(Object.assign(document.createElement('div'), { className: 'hint', textContent: 'Knobs are off in a page driven by a tool: it draws with the saved knobs only.' }));
+/** The frame shown, drawn again (a knob or the A/B changed); playing, the next frame picks it up. */
+let redrawQueued = false;
+function redraw(): void {
+  flipBadge();
+  if (redrawQueued) return;
+  redrawQueued = true; // many knobs can change at once (Swap): one draw for them all
+  requestAnimationFrame(() => { redrawQueued = false; if (!playing && cells.length) { drawAll(targetsAt(cur).map((x) => x.alpha)); reused = true; } });
+}
+
+// The A/B block and the fx-knobs sliders (knob-panel.ts) in the panel's Knobs section. Mounting the sliders applies this
+// browser's unsaved knob edits (localStorage), and A lives there too, so a page driven by a tool (navigator.webdriver:
+// puppeteer, vfx-sheet) or with ?bar=0 goes without both: it draws with the saved knobs only (art/fx-knobs.json), and a
+// ?t= capture stays the same everywhere.
+if (panel && !navigator.webdriver) {
+  document.head.append(Object.assign(document.createElement('style'), { textContent: AB_CSS }));
+  const syncAB = mountAB(panel.knobs, { layout: () => { if (cells.length) setupChanged(); flipBadge(); }, redraw });
+  mountKnobPanel(panel.knobs, () => { redraw(); syncAB(); });
+} else if (panel) panel.knobs.append(Object.assign(document.createElement('div'), { className: 'hint', textContent: 'Knobs and A/B are off in a page driven by a tool: it draws with the saved knobs only.' }));
 
 void lab.ready.then(() => { panel?.sync(); requestAnimationFrame(frame); });

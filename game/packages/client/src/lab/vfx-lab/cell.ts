@@ -9,13 +9,14 @@
  */
 import { Container, Graphics, type Renderer } from 'pixi.js';
 import {
-  ARCH, BODY, KEYED_EL, KIND, MAX_SEATS, NO_INPUT, QUEUE_MAX, TEAM, atan2Turns, createWorld, devRefillRunes, devSpawnEnemy, devStage,
+  ARCH, BODY, EV, KEYED_EL, KIND, MAX_SEATS, NO_INPUT, QUEUE_MAX, TEAM, atan2Turns, createWorld, devRefillRunes, devSpawnEnemy, devStage,
   hitKindNow, restore, setHitKind, snapshot, spawnBody, step, type PlayerInput, type Snapshot, type World,
 } from '@wizard-sim/sim';
 import { FY, PPU } from '../../camera';
 import { demoInput, type Demo } from '../../demo';
 import { fitField } from '../../art/field';
 import { setLiveScope } from '../../art/live3d';
+import { withKnobs } from '../../art/fx-knobs';
 import { toX, toY, turnedWorld } from '../../iso-world';
 import { WorldView } from '../../view';
 import type { SceneDef, V } from './scenes';
@@ -34,7 +35,15 @@ export interface CellSpec {
   scope: string;
   /** Where wizard 0 aims (view space), instead of the scene's target; its demo's `at` must say the same in world space. */
   aim0: V | null;
+  /** The knob values this panel draws with (an A/B variant), or null: the live ones. Read at every draw. */
+  knobs: () => Readonly<Record<string, number>> | null;
+  /** The A/B row it sits in ('' without A/B) and its rune count, for the layout and its label. */
+  variant: string;
+  runes: number;
 }
+
+/** A sim snapshot is kept every this many ticks along the panel's timeline (scrubbing back restores the nearest). */
+export const SNAP_EVERY = 10;
 
 /** demoInput lags seat s by 37 ticks a seat (two moments of one spell); the lab's wizards cast together. */
 const LAG = 37;
@@ -51,6 +60,8 @@ export class Cell {
   /** The step after which wizard 0's spell went off (its cast event): t = 0. */
   readonly t0: number;
   private start: Snapshot;
+  /** The timeline's snapshots by tick (SNAP_EVERY apart): the same inputs always give the same states, so they stay good until the setup changes (a new Cell). */
+  private snaps = new Map<number, Snapshot>();
   private mask = new Graphics();
   private inputs: PlayerInput[] = new Array(MAX_SEATS).fill(NO_INPUT);
 
@@ -118,6 +129,7 @@ export class Cell {
     let at = -1;
     for (let k = 0; k < 600 && at < 0; k++) {
       step(w, this.inputsAt(k));
+      this.keep(k + 1);
       if (w.events.some((e) => e.who === 0 && (e.kind === 'cast' || (hands && e.kind === 'move')))) at = k + 1;
     }
     restore(w, this.start);
@@ -126,8 +138,10 @@ export class Cell {
     return at >= 0 ? at : 10 + (d?.els.length ?? 0) * 6;
   }
 
-  /** One sim step, with the view told before and after, as the game's loop does. */
-  stepOnce(): void {
+  private keep(tick: number): void { if (tick % SNAP_EVERY === 0 && !this.snaps.has(tick)) this.snaps.set(tick, snapshot(this.world)); }
+
+  /** One sim step, with the view told before and after, as the game's loop does. True if something died in it. */
+  stepOnce(): boolean {
     const kind = hitKindNow();
     const inputs = this.inputsAt(this.tick);
     this.view.beforeStep(this.world);
@@ -135,17 +149,40 @@ export class Cell {
     this.view.afterStep(this.world);
     setHitKind(kind);
     this.tick++;
+    this.keep(this.tick);
+    return this.world.events.some((e) => e.ev === EV.death);
   }
 
   /** The scene from the top again (live looping; the view's clock carries on, so the old run's effects end). */
   restart(): void { restore(this.world, this.start); this.tick = 0; }
 
-  draw(alpha: number, now: number): void {
-    setLiveScope(this.spec.scope);
-    try { this.view.draw(this.world, alpha, now); } finally { setLiveScope(''); }
+  /**
+   * Back to the latest kept state at or before `tick` (the view starts over there, as after restart: what it showed
+   * from before that tick is gone). Returns the tick it went back to.
+   */
+  rewind(tick: number): number {
+    let best = 0;
+    for (const k of this.snaps.keys()) if (k <= tick && k > best) best = k;
+    if (best === 0) { this.restart(); return 0; }
+    restore(this.world, this.snaps.get(best)!);
+    this.tick = best;
+    return best;
   }
 
-  destroy(): void { this.root.destroy({ children: true }); }
+  /** How many snapshots are kept, and their bytes. */
+  get snapStats(): { n: number; bytes: number } {
+    let bytes = 0;
+    for (const sn of this.snaps.values()) for (const a of sn) bytes += a.byteLength;
+    return { n: this.snaps.size, bytes };
+  }
+
+  draw(alpha: number, now: number): void {
+    setLiveScope(this.spec.scope);
+    try { withKnobs(this.spec.knobs(), () => this.view.draw(this.world, alpha, now)); } finally { setLiveScope(''); }
+  }
+
+  /** Done with this panel and its view: everything the view made on the GPU is freed (WorldView.destroy). */
+  destroy(): void { this.view.destroy(); this.root.destroy({ children: true }); }
   /** Done with this panel, its view kept for the next (a reused view sees the new world's clock start over, as after a room switch). */
   release(): WorldView {
     this.root.removeChild(this.view.root);

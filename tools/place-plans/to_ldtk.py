@@ -350,7 +350,17 @@ def report(name, P=None):
     for g, _ in P.gates: near_edge &= np.hypot(P.CU - g[0], P.CV - g[1]) > 6   # stepping into a gate may see the edge
     print(f'{int(near_edge.sum())} u2 of walkable ground within sight of the world\'s edge (bottom {EDGE["bottom"]} u + {EDGE["per_m"]} u a metre, sides {EDGE["sides"]} u, top {EDGE["top"]} u; ground past a gate or within 6 u of one not counted)' + (', e.g.' if near_edge.any() else ''))
     for i, j in np.argwhere(near_edge)[:4]: print(f'  {uv(i, j)}')
-    return dict(regions=len(sizes), jumps=len(jumps), cut_off=cut_off, drops=len(drops), unvisited=len(unvisited), edge=int(near_edge.sum()))
+    # the dressing: a blocking prop off walkable ground (it would float or stand in a wall) or within 1.5 u of a route
+    bad = []
+    if getattr(P, 'dress', None):
+        from finish import route_mask
+        onroute = route_mask(P, 1.5)
+        for asset, (pu, pv), blocks in P.dress:
+            i, j = np.unravel_index(np.argmin(np.hypot(P.CU - pu, P.CV - pv)), walk.shape)
+            if blocks and (not walk[i, j] or onroute[i, j]): bad.append((asset, (pu, pv), 'on a route' if walk[i, j] else 'off walkable ground'))
+        print(f'{len(P.dress)} props; {len(bad)} blocking ones on a route or off walkable ground' + (':' if bad else ''))
+        for b in bad[:8]: print('  ', *b)
+    return dict(regions=len(sizes), jumps=len(jumps), cut_off=cut_off, drops=len(drops), unvisited=len(unvisited), edge=int(near_edge.sum()), props=len(bad))
 
 
 if __name__ == '__main__':

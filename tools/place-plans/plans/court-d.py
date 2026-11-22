@@ -203,5 +203,28 @@ P.journey([(0, -44), J, (-12, -12)] + WDOWN + EDOWN[::-1] + [(16, -16)] + ARC_E[
           'The best approach: straight down the north road to the overlook, the armillary ahead; out past the falls')
 P.journey([(0, 76), (0, 61), (0, 46), (0, 36), (0, 28)], 'The finale: up from the sea landing',
           'The climb from the sea, framed by the rim’s gateway; the armillary torn open above the warband')
+# ---- the beauty stage, round 1: dressing with the rough Codex props already in the game (to_ldtk writes PROPS) ----
+PROPS = []
+def _prop(asset, p, blocks=True): PROPS.append((asset, (round(float(p[0]), 2), round(float(p[1]), 2)), blocks))
+for a in (20, 36, 69, 86, 144, 160):                                  # a lantern pillar at each end of the balcony's parapet runs
+    _prop('codex-lantern-pillar', polar(C, 34.6, a))
+for a in (80, 100): _prop('codex-star-banner', polar(C, 22.5, a))       # banners either side of the great hall's gate
+for a in (0, 180, 25, 155): _prop('codex-urn-planter', polar(ARM, 19.2, a))   # urns on the plaza's rim, clear of the flights
+for a in (18, 162): _prop('codex-bench', polar(ARM, 25, a))             # benches on the middle terrace, facing the armillary
+for du in (-5.3, 5.3): _prop('codex-lantern-post', (du, 78.3))          # the quay's lamps
+for du in (-5, 5): _prop('codex-lantern-post', (du, 61.3))              # and the landing's
+# trees through the woods, within sight of walkable ground: a jittered grid, the species by place
+import random as _r
+_rng = _r.Random(17)
+_walkable = np.vectorize(lambda m: MAT[m][2])(P.m) & ~P.bld
+_seen = ndimage.binary_dilation(_walkable, iterations=14)
+_kinds = ['codex-oak', 'codex-pine', 'codex-conifer-tall', 'codex-oak-autumn', 'codex-birch']
+for tu in np.arange(P.U[0] + 2, P.U[1] - 1, 4.5):
+    for tv in np.arange(P.V[0] + 2, P.V[1] - 1, 4.0):
+        q = (tu + _rng.uniform(-1.6, 1.6), tv + _rng.uniform(-1.4, 1.4))
+        i, j = np.unravel_index(np.argmin(np.abs(P.CU - q[0]) + np.abs(P.CV - q[1])), P.m.shape)
+        if P.m[i, j] == 'trees' and _seen[i, j]:
+            _prop(_kinds[int(abs(q[0] * 0.13 + q[1] * 0.07 + _rng.random() * 1.5)) % len(_kinds)], q, False)
+
 P.render()
 if "--frames" in sys.argv: P.frames()

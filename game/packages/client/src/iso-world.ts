@@ -26,7 +26,7 @@ type Pair = readonly [string, string];
 const FIELDS: Readonly<Record<string, readonly Pair[]>> = {
   bodies: [['x', 'y'], ['vx', 'vy'], ['kx', 'ky'], ['lockX', 'lockY'], ['slamX', 'slamY'], ['lastDX', 'lastDY']],
   seats: [['aimX', 'aimY'], ['holdX', 'holdY'], ['chanEndX', 'chanEndY'], ['dblOX', 'dblOY'], ['dblEndX', 'dblEndY']],
-  missiles: [['x', 'y'], ['vx', 'vy']],
+  missiles: [['x', 'y'], ['vx', 'vy'], ['tx', 'ty']], // the last: where an arcing shard is headed (art/arc-debug.ts)
   zones: [['x', 'y']],
   walls: [['x1', 'y1'], ['x2', 'y2']],
   waves: [['x', 'y'], ['dx', 'dy']],

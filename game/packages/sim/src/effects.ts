@@ -619,19 +619,19 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
       if (m >= 0) { w.missiles.vx[m] = cosTurns(a) * full; w.missiles.vy[m] = sinTurns(a) * full; w.missiles.life[m] = T(SHAPES.streamRange / full); }
       return;
     }
-    // The arc: a curve from the hand to the cursor, bowing out to one side (tickMissiles: steerArc). The shards take turns
-    // across 2, 4 or 6 lanes by the Ice in the spell; the inner lanes bow less.
+    // The arc: out from your side in the lane's direction (the outer lanes behind you), a float straight on, then a turn
+    // of at least streamArcRadius round onto the cursor, then a race to it (tickMissiles: steerArc). The shards take
+    // turns across 2, 4 or 6 lanes by the Ice in the spell.
     const aimD = !from && !follow && src < MAX_SEATS ? streamAimD(w, src) : 6; // a turret, the Double or the Echo: a mid-range bow
-    const { side, width } = streamLane(spec.formN, shot, aimD);
+    const { turn, out, radius } = streamLane(spec.formN, shot, aimD);
     const ax = cosTurns(a), ay = sinTurns(a), tx = x + ax * aimD, ty = y + ay * aimD;
-    const m = spawnMissile(w, src, p, ax, ay, 2, scale, 0, 0, from?.x, from?.y);
+    const hx = ax * cosTurns(turn) - ay * sinTurns(turn), hy = ax * sinTurns(turn) + ay * cosTurns(turn);
+    const m = spawnMissile(w, src, p, hx, hy, 2, scale, 0, 0, from?.x, from?.y);
     if (m >= 0) {
-      const mm = w.missiles;
-      mm.sx[m] = mm.x[m]; mm.sy[m] = mm.y[m]; mm.tx[m] = tx; mm.ty[m] = ty; mm.arcU[m] = 0;
-      [mm.cx[m], mm.cy[m]] = arcControl(mm.x[m], mm.y[m], tx, ty, side, width);
-      mm.flags[m] |= PF.arc; mm.life[m] = T(SHAPES.streamRange / full + 0.4); // the curve's detour and slow start
-      const ox = mm.cx[m] - mm.x[m], oy = mm.cy[m] - mm.y[m], ol = len(ox, oy) || 1, v0 = full * SHAPES.streamArcStart;
-      mm.vx[m] = (ox / ol) * v0; mm.vy[m] = (oy / ol) * v0; // it leaves along the curve, slow: steerArc takes over next tick
+      const mm = w.missiles, v0 = full * SHAPES.streamArcStart;
+      mm.tx[m] = tx; mm.ty[m] = ty; mm.arcL[m] = out; mm.arcR[m] = arcRadius(mm.x[m], mm.y[m], hx, hy, tx, ty, out, radius);
+      mm.flags[m] |= PF.arc; mm.life[m] = T(SHAPES.streamRange / full + 2); // the float and the turn (behind you, for the outer lanes)
+      mm.vx[m] = hx * v0; mm.vy[m] = hy * v0;
     }
     return;
   }
@@ -775,37 +775,73 @@ export function streamAimD(w: World, i: number): number {
 }
 
 /**
- * The Shard stream's lane for its `shot`-th shard: 2 lanes at one Ice, 4 from streamLanes4At, 6 from streamLanes6At;
- * which side it bows to (-1 or 1) and how far (u: the outer lanes streamArcWidth, capped at streamArcReach x aimD, the
- * inner ones a share of it). Shared with the client's arc overlay (?arcs=1), so the lines are the shards' own curves.
+ * The Shard stream's lane for its `shot`-th shard: 2 lanes at one Ice, 4 from streamLanes4At, 6 from streamLanes6At.
+ * `turn`: the direction it leaves in, turns from the aim (tier 1, 2, 3 leave at a third, two thirds and all of
+ * streamArcSpread, either side); `out`: how far it floats straight before it turns (u: a third, two thirds and all of
+ * streamArcOut); `radius`: the turn's radius (u: streamArcRadius, 1.3 and 1.6 times it). Shared with the client's arc
+ * overlay (?arcs=1), so the lines are the shards' own paths.
  */
-export function streamLane(formN: number, shot: number, aimD: number): { lanes: number; side: number; width: number } {
+export function streamLane(formN: number, shot: number, aimD: number): { lanes: number; turn: number; out: number; radius: number } {
+  void aimD;
   const nIce = Math.max(1, formN), lanes = nIce >= SHAPES.streamLanes6At ? 6 : nIce >= SHAPES.streamLanes4At ? 4 : 2;
   const lane = shot % lanes, side = lane % 2 ? 1 : -1, tier = (lane >> 1) + 1;
-  return { lanes, side, width: (Math.min(SHAPES.streamArcWidth, aimD * SHAPES.streamArcReach) * tier) / (lanes / 2) };
-}
-
-/** The control point of a quadratic from (sx, sy) to (tx, ty) whose widest point bows `width` u to `side`: a quadratic bows half as far as its control point sits out. */
-export function arcControl(sx: number, sy: number, tx: number, ty: number, side: number, width: number): [number, number] {
-  const dx = tx - sx, dy = ty - sy, d = len(dx, dy) || 1, nx = -dy / d, ny = dx / d;
-  return [(sx + tx) / 2 + nx * side * 2 * width, (sy + ty) / 2 + ny * side * 2 * width];
+  return { lanes, turn: (side * SHAPES.streamArcSpread * tier) / 3, out: (SHAPES.streamArcOut * tier) / 3, radius: SHAPES.streamArcRadius * (1 + 0.3 * (tier - 1)) };
 }
 
 /**
- * An arcing shard of the Shard stream: it runs along its curve (sx, sy) -> (cx, cy) -> (tx, ty), speeding up toward full
- * flight; its velocity is set so this tick's move lands on the curve. At the end it flies straight on along the curve's
- * last heading.
+ * The radius a shard leaving (sx, sy) along (hx, hy) turns on after floating `out` u: `radius`, unless the cursor would
+ * sit inside that turning circle (it could never come round onto it); then the largest that still lands.
+ */
+export function arcRadius(sx: number, sy: number, hx: number, hy: number, tx: number, ty: number, out: number, radius: number): number {
+  const dx = tx - (sx + hx * out), dy = ty - (sy + hy * out), side = hx * dy - hy * dx >= 0 ? 1 : -1;
+  const along = dx * -hy * side + dy * hx * side; // how far the cursor sits toward the turn's centre
+  return along > 1e-6 ? Math.min(radius, (0.9 * (dx * dx + dy * dy)) / (2 * along)) : radius;
+}
+
+/**
+ * One step of an arcing shard's turn: its heading (ux, uy) after moving `ds` u on a circle of radius `r` toward the
+ * point (dx, dy) away, and whether it now faces it (then it flies straight at it). A turn never tighter than `r`.
+ */
+export function arcTurn(ux: number, uy: number, dx: number, dy: number, ds: number, r: number): [number, number, boolean] {
+  const d = len(dx, dy);
+  if (d < 0.3) return [ux, uy, true];
+  const bx = dx / d, by = dy / d, t = Math.min(0.25, ds / Math.max(0.05, r) / (2 * Math.PI)), c = cosTurns(t);
+  if (bx * ux + by * uy >= c) return [bx, by, true];
+  const sn = (ux * by - uy * bx >= 0 ? 1 : -1) * sinTurns(t);
+  return [ux * c - uy * sn, ux * sn + uy * c, false];
+}
+
+/** The whole path of an arcing shard, as points `ds` u apart (the arc overlay draws it): float, turn, then straight in. */
+export function arcPath(sx: number, sy: number, hx: number, hy: number, tx: number, ty: number, out: number, r: number, ds = 0.15): [number, number][] {
+  const pts: [number, number][] = [[sx, sy]];
+  let x = sx, y = sy, ux = hx, uy = hy, l = out;
+  for (let k = 0; k < 800; k++) {
+    if (l > 0) { const st = Math.min(ds, l); x += ux * st; y += uy * st; l -= st; pts.push([x, y]); continue; }
+    const [nx, ny, done] = arcTurn(ux, uy, tx - x, ty - y, ds, r);
+    if (done) { pts.push([tx, ty]); break; }
+    ux = nx; uy = ny; x += ux * ds; y += uy * ds; pts.push([x, y]);
+  }
+  return pts;
+}
+
+/**
+ * An arcing shard of the Shard stream, each tick: it floats at streamArcStart of its speed straight out (arcL u), then
+ * turns on its radius (arcR) at that speed until it faces the cursor, then races up to full speed over streamArcBoost s
+ * and flies on straight. The front lanes turn less, so they race sooner.
  */
 function steerArc(w: World, j: number): void {
-  const m = w.missiles, full = SHAPES.missileSpeed * SHAPES.iceFlight;
-  const sp0 = len(m.vx[j], m.vy[j]);
-  const sp = Math.min(full, Math.max(sp0, full * SHAPES.streamArcStart) + (full * (1 - SHAPES.streamArcStart)) / T(SHAPES.streamArcRamp));
-  const u = m.arcU[j], ax = m.cx[j] - m.sx[j], ay = m.cy[j] - m.sy[j], bx = m.tx[j] - m.cx[j], by = m.ty[j] - m.cy[j];
-  const dx = 2 * ((1 - u) * ax + u * bx), dy = 2 * ((1 - u) * ay + u * by), dl = len(dx, dy) || 1; // the curve's tangent
-  const u2 = Math.min(1, u + sp / 60 / dl);
-  if (u >= 1) { m.flags[j] &= ~PF.arc; m.vx[j] = (bx / (len(bx, by) || 1)) * full; m.vy[j] = (by / (len(bx, by) || 1)) * full; return; }
-  const k = 1 - u2, px = k * k * m.sx[j] + 2 * k * u2 * m.cx[j] + u2 * u2 * m.tx[j], py = k * k * m.sy[j] + 2 * k * u2 * m.cy[j] + u2 * u2 * m.ty[j];
-  m.vx[j] = (px - m.x[j]) * 60; m.vy[j] = (py - m.y[j]) * 60; m.arcU[j] = u2;
+  const m = w.missiles, full = SHAPES.missileSpeed * SHAPES.iceFlight, float = full * SHAPES.streamArcStart;
+  const sp0 = len(m.vx[j], m.vy[j]) || 1, ux = m.vx[j] / sp0, uy = m.vy[j] / sp0;
+  if (m.arcL[j] < 0) {
+    const sp = Math.min(full, sp0 + (full - float) / T(Math.max(0.01, SHAPES.streamArcBoost)));
+    if (sp >= full) m.flags[j] &= ~PF.arc;
+    m.vx[j] = ux * sp; m.vy[j] = uy * sp;
+    return;
+  }
+  if (m.arcL[j] > 0) { m.arcL[j] = Math.max(0, m.arcL[j] - float / 60); m.vx[j] = ux * float; m.vy[j] = uy * float; return; }
+  const [nx, ny, done] = arcTurn(ux, uy, m.tx[j] - m.x[j], m.ty[j] - m.y[j], float / 60, m.arcR[j]);
+  if (done) m.arcL[j] = -1;
+  m.vx[j] = nx * float; m.vy[j] = ny * float;
 }
 
 /** A payload with coated field k's elements added (not Shield or Life), or the same payload without one. */

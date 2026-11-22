@@ -158,3 +158,24 @@ The drop at range is flight time inside the 2.5 s window, not misses. The arc la
 
 **Tuning view** (the user: "show some debug view where the arcs are shown as lines"): Tune › URL options › Shard stream arcs (`?arcs=1`, live) draws, while you channel the stream, every lane's curve from the hand to the cursor (cyan inner lanes, yellow middle, magenta outer), and each arcing shard's own path, faint. The lines come from the sim's own `streamLane` / `arcControl` / `streamAimD` (`effects.ts`, which the shards use too), so moving `streamArcWidth`, `streamArcReach` or the lane thresholds in F2 moves them at once. The VFX Lab's hit overlay (`&hit=1`) draws the same curves (`art/arc-debug.ts`).
 
+## Round 5: lanes round the body, a float before the race
+
+The user (with `?arcs=1` on): the arc lines first sat off the body and the cursor, because the view drew from the already-turned world and turned the points again; fixed, and confirmed ("arcs look correct now"). Then: "more spread out around your body, when there's 6 some arcs should fire out behind you, then do a big arc out and towards the target". And: "acceleration is too rapid, I want them to dwell a little bit, like float out on the arc, and then rapidly accelerate to the target".
+
+- **Lanes are directions now.** Each lane leaves in its own direction: the inner pair a third of `streamArcSpread` either side of the aim, the middle pair two thirds, the outer pair all of it (0.4 turns, about 144 degrees, so behind you). Its curve's pull point sits out along that direction: `streamArcWidth` (4 u) for the outer lanes, 0.6 of it for the inner, never more than `streamArcReach` (0.8) × the cursor's distance, and at least 1.5 u. The shard spawns on that side of you, so a backward lane doesn't fly through you. The curve still always ends at the cursor.
+- **Float, then race.** Speed follows the curve, not the clock. A shard floats at `streamArcStart` (0.25) of full speed through the first `streamArcFloat` (0.35) of its curve, then speeds up to full over the next `streamArcBoost` (0.15). It replaces `streamArcRamp`, which was in seconds. Longer loops float over more ground, so the outer lanes dwell longest.
+
+## Round 6: a minimum turning radius
+
+The user, on round 5's curves: "the rear arcs should be larger, the turning radius of the ice shard is too small and it looks weird, we can also make the front shards reach acceleration faster than the rear shards". Then, on a smoother curve with two pull points: "the actual turn still looks really rapid, the arcs still have a sharp corner, I want some sort of minimum radius on them".
+
+A pull-point curve can always pinch: its tightest bend has no floor. So the path is now built from a radius:
+
+1. **Float out:** the shard leaves your side in its lane's direction and floats straight at `streamArcStart` (0.35) of its speed for a third, two thirds or all of `streamArcOut` (1.5 u), for the inner, middle and outer lanes.
+2. **Turn:** at that speed it turns on a circle of `streamArcRadius` (2.5 u; 1.3 × for the middle lanes, 1.6 × for the outer) until it faces the cursor where it left. The radius holds whatever the speed. Only where the cursor would sit inside that circle (a very close aim), where it could never come round, does the radius shrink, just enough to land.
+3. **Race:** it speeds up to full over `streamArcBoost` (0.12 s) and flies straight in, and on past.
+
+The front lanes turn least, so they race first; the rear lanes make the biggest loops and dwell longest. `streamArcWidth`, `streamArcReach` and `streamArcFloat` are gone. The overlay (`?arcs=1`) draws each lane's whole path from the sim's own `arcPath` (`effects.ts`), which steps the same turn the shards fly.
+
+At a 7 u aim with three Ice the loops are big: the rear lanes swing about 6 u out, and the middle lanes go past the target before coming back in. `streamArcRadius` is the knob if that's too much.
+

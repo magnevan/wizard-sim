@@ -210,13 +210,17 @@ export const SHAPES = {
    */
   streamRate: 7, streamPower: 1.7, streamSpread: 0.03, streamSettled: 0.006, streamSettle: 0.6, streamRange: 30,
   /**
-   * The stream's arc (the user, 2026-11-22: "the ice arches out before racing to the target"; it "looks pretty good", on
-   * by default since): with streamArc 1 each shard flies a curve from your hand to the cursor where it left, bowing out
-   * to one side streamArcWidth u at its widest, then flies straight on past it. It leaves at streamArcStart of its speed
-   * and reaches full speed over streamArcRamp s. The bow is never wider than streamArcReach x the cursor's distance. The
-   * shards take turns across lanes: 2 at one Ice, 4 from streamLanes4At Ice, 6 from streamLanes6At; inner lanes bow less.
+   * The stream's arc (the user, 2026-11-22: "the ice arches out before racing to the target"; "more spread out around
+   * your body", the outer lanes "out behind you, then a big arc out and towards the target"; "float out on the arc, and
+   * then rapidly accelerate"; "I want some sort of minimum radius"): with streamArc 1 each shard leaves your side in its
+   * lane's direction, floats straight on at streamArcStart of its speed, then turns at that speed on a circle of at
+   * least streamArcRadius u until it faces the cursor where it left, then races up to full speed over streamArcBoost s.
+   * The lanes take turns: 2 at one Ice, 4 from streamLanes4At Ice, 6 from streamLanes6At; tier 1, 2, 3 (inner, middle,
+   * outer) leave at a third, two thirds and all of streamArcSpread turns off your aim (0.4: the outer pair behind you),
+   * float a third, two thirds and all of streamArcOut u, and turn on 1, 1.3 and 1.6 x streamArcRadius. Only where the
+   * cursor would sit inside that circle (a very close aim) does the radius shrink, just enough to land.
    */
-  streamArc: 1, streamArcWidth: 2.5, streamArcReach: 0.45, streamArcStart: 0.45, streamArcRamp: 0.3,
+  streamArc: 1, streamArcSpread: 0.4, streamArcOut: 1.5, streamArcRadius: 2.5, streamArcStart: 0.35, streamArcBoost: 0.12,
   streamLanes4At: 2, streamLanes6At: 3,
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,

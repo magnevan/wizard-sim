@@ -497,7 +497,7 @@ export class WorldView {
     this.extras.draw(w.def, ct, fx0, fy0, this.lit ? 0xffffff : AMBIENT); // the people who live here (the drill yard's)
     const ax = (x: number) => ox + Math.round(x * PPU), ay = (y: number) => cam.toArtY(y);
     drawTelegraphs(w, { ground: this.sGround.clear(), overlay: this.sOverlay.clear(), ax, ay }, Math.round(ct * 60));
-    if (optOn('arcs')) drawStreamArcs(this.sOverlay, w, (x, y) => [fx0 + gx(toU(x, y)), fy0 + gy(toV(x, y))]); // ?arcs=1: the stream's curves, for tuning
+    if (optOn('arcs')) drawStreamArcs(this.sOverlay, w, (x, y) => [fx0 + gx(x), fy0 + gy(y)]); // ?arcs=1: the stream's curves, for tuning (w is the turned world: positions are already view axes)
 
     this.lights.begin();
     stats.fills = 0;

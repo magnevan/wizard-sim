@@ -48,7 +48,7 @@ So it's the hub, a landmark you keep returning to, and a battlefield for the fin
 
 ## The journey
 
-Every pass through the courtyard, in the brief's order. Which exit leads to which stop is a proposal: the infirmary just outside the main gate, on the battery's road; the ward line behind the academy, up the north road; the gorge up the stream past the bridge; the harbour and the cliff road at the sea landing. Drawn on plan D by `court-d.py` (`out/court-d-journey.png`).
+Every pass through the courtyard, in the brief's order. Which exit leads to which stop was approved by the user on 2026-11-22 ("your proposal seems fine"): the infirmary just outside the main gate, on the battery's road; the ward line behind the academy, up the north road; the gorge up the stream past the bridge; the harbour and the cliff road at the sea landing. Drawn on plan D by `court-d.py` (`out/court-d-journey.png`).
 
 | # | Pass | The moment it should give |
 |---|---|---|

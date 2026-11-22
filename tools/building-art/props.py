@@ -1,7 +1,7 @@
 """Cuts a Codex prop sheet (props.txt: objects on magenta, a scale wizard leftmost) into the game's prop assets.
 No generation calls.
 
-  python tools/building-art/props.py <sheet.png> <id1> <id2> ... [--wizard 36] [--prefix codex-] [--keep-raw dir]
+  python tools/building-art/props.py <sheet.png> <id1> <id2> ... [--wizard 36] [--prefix codex-] [--wizard-left]
 
 Objects are found as separate blobs on the magenta, ordered top row first and left to right within a row (rows are
 blobs whose middles are close in height). The first blob (top row, leftmost) is the scale wizard: the sheet is scaled so it is --wizard art
@@ -26,16 +26,18 @@ def key(a):
 def main():
     args = [a for a in sys.argv[1:]]
     opt = lambda k, d: args[args.index(k) + 1] if k in args else d
-    flags = {'--wizard', '--prefix', '--keep-raw'}
+    flags = {'--wizard', '--prefix', '--keep-raw', '--grow'}
+    args = [a for a in args if a != '--wizard-left'] + (['--wizard-left'] if '--wizard-left' in args else [])
     pos, i = [], 0
     while i < len(args):
         if args[i] in flags: i += 2; continue
+        if args[i] == '--wizard-left': i += 1; continue
         pos.append(args[i]); i += 1
     sheet_path, ids = pos[0], pos[1:]
     wiz_px, prefix = float(opt('--wizard', '36')), opt('--prefix', 'codex-')
     img = Image.open(sheet_path).convert('RGB'); a = np.asarray(img)
     solid = key(a)
-    grown = ndimage.binary_dilation(solid, iterations=6)
+    grown = ndimage.binary_dilation(solid, iterations=int(opt("--grow", "6")))
     labels, n = ndimage.label(grown)
     blobs = [s for s in ndimage.find_objects(labels) if (s[0].stop - s[0].start) * (s[1].stop - s[1].start) > 900]
     # rows: sort by middle height, group where the gap is big, then left to right
@@ -46,7 +48,9 @@ def main():
         else: cur.append(s)
     rows.append(cur)
     order = [s for r in rows for s in sorted(r, key=lambda s: s[1].start)]
-    wizard = order.pop(0)                                  # the top row's first: the scale wizard
+    # the scale wizard: the top row's first, or with --wizard-left the leftmost object (when it stands lower than its row)
+    wizard = min(order, key=lambda s: s[1].start) if '--wizard-left' in args else order[0]
+    order.remove(wizard)
     k = wiz_px / (wizard[0].stop - wizard[0].start)
     print(f'{len(order)} objects; scale {k:.3f} (wizard {wizard[0].stop - wizard[0].start} px)')
     if len(ids) != len(order):

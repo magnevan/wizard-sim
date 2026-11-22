@@ -1,0 +1,22 @@
+{
+  "id": "codex-lilac-tree",
+  "kind": "prop",
+  "name": "Lilac tree",
+  "footprint": [
+    0.8,
+    0.8
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        28,
+        51
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/trees-a-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later."
+    }
+  }
+}

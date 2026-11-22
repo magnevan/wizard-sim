@@ -94,10 +94,11 @@ def disc(cx, cy, r, rough=0, seed=3):
     return lambda x, y: math.hypot(x - cx, y - cy) + (noise(x, y, seed) - .5) * rough * 2 < r
 
 in_court = lambda x, y: x > BAL_X and y > BAL_Y
-# the yard: grass trodden thin, worn to dirt where people drill; the buildings' feet paved
-# grass, worn through only where people walk and drill (the concepts: trodden lawns, dirt where the feet go), with a
-# few thin patches along the buildings' feet where the shade keeps the grass short
-paint(lambda x, y: not in_court(x, y) and (x < 9 or y < 9) and noise(x, y, 11) > .62, 'dirt')
+# the yard: trodden earth over most of it, as in the concepts, with grass left at its margins (along the balustrade
+# and in the corners), in islands where nobody drills, and in a strip under the buildings' feet
+yard_dirt = lambda x, y: (not in_court(x, y) and x > 6 and y > 6 and min(BAL_X - x if y > BAL_Y else 99, BAL_Y - y if x > BAL_X else 99) > 4
+                          and noise(x, y, 11) > .3)
+paint(yard_dirt, 'dirt')
 paint(lambda x, y: not in_court(x, y) and (x < 3.5 or y < 3.5), 'flagstone')
 paint(rect(4, 53, 19, 9, 1.2, 12), 'dirt')                                          # the strike lanes
 paint(disc(*RING, 2.4, .6, 13), 'sand')                                             # the shove pit, the ring chalked on it (the client)
@@ -165,18 +166,18 @@ run_y('stone-wall-low-flip', 95.25, 78, 86.5)
 run_y('stone-wall-low-flip', 104.75, 78, 86.5)
 for k in range(8):                                  # lanterns round the plinth, benches further out
     a = k * math.pi / 4 + math.pi / 8
-    prop('lantern-post', ARMILLARY[0] + math.cos(a) * 9, ARMILLARY[1] + math.sin(a) * 9, True)
+    prop('codex-lantern-post', ARMILLARY[0] + math.cos(a) * 9, ARMILLARY[1] + math.sin(a) * 9, True)
 for a in (0.25, 0.75):          # benches on the near side only: anything north of the grey box draws over it
-    prop('bench', ARMILLARY[0] + math.cos(a * math.pi) * 15, ARMILLARY[1] + math.sin(a * math.pi) * 15, True)
+    prop('codex-bench', ARMILLARY[0] + math.cos(a * math.pi) * 15, ARMILLARY[1] + math.sin(a * math.pi) * 15, True)
 for asset, x, y in [('codex-conifer-tall', 50, 58), ('codex-conifer-tall', 50, 96), ('codex-conifer-tall', 125.5, 58), ('codex-conifer-round', 125, 95),
                     ('codex-urn-planter', 112, 92), ('codex-urn-planter', 88, 92),
                     ('codex-lilac-shrub', 54, 62), ('codex-yellow-shrub', 58, 59), ('codex-white-shrub', 52, 70), ('codex-lavender-foxglove', 56, 95),
                     ('codex-lilac-shrub', 120, 95), ('codex-yellow-shrub', 124, 88), ('codex-lavender-foxglove', 104, 95),
-                    ('codex-star-banner', 92.5, 90.5), ('codex-star-banner', 107.5, 90.5), ('codex-mossy-rocks', 66, 96), ('notice-board', 72, 76)]:
+                    ('codex-star-banner', 92.5, 90.5), ('codex-star-banner', 107.5, 90.5), ('codex-mossy-rocks', 66, 96), ('codex-notice-board', 72, 76)]:
     prop(asset, x, y, not asset.startswith(('codex-star-banner', 'codex-lavender', 'codex-white')))
 # along the Great Hall's foot: lanterns, a bench by its door, the notice board
 for y in (14, 30, 50, 66):
-    prop('lantern-post', 2.4, y, True)
+    prop('codex-lantern-post', 2.4, y, True)
 # planting along the buildings' feet, between the stations (Codex, tools/building-art)
 for asset, x, y in [('codex-lavender-foxglove', 3.2, 9), ('codex-lilac-shrub', 3.4, 20), ('codex-yellow-shrub', 3.4, 36), ('codex-white-shrub', 3.4, 70),
                     ('codex-urn-planter', 3.4, 40.6), ('codex-urn-planter', 3.4, 47.4), ('codex-conifer-tall', 2.8, 75), ('codex-lilac-shrub', 3.4, 82),
@@ -185,41 +186,41 @@ for asset, x, y in [('codex-lavender-foxglove', 3.2, 9), ('codex-lilac-shrub', 3
                     ('codex-lavender-foxglove', 86, 3.2), ('codex-conifer-tall', 93, 2.8), ('codex-urn-planter', 108, 3.4), ('codex-yellow-shrub', 116, 3.4),
                     ('codex-mossy-rocks', 124, 4), ('codex-star-banner', 95.4, 2.6), ('codex-star-banner', 104.6, 2.6)]:
     prop(asset, x, y, not asset.startswith(('codex-star-banner', 'codex-lavender', 'codex-white')))
-prop('bench', 2.6, 44, True)
+prop('codex-bench', 2.6, 44, True)
 # the strike lanes: a straw goblin at each post, dummies either side
 for x, y in STRAW:
-    prop('pell', x + .6, y - 2.6, True)
+    prop('codex-training-post', x + .6, y - 2.6, True)
 for x in (5.2, 21.6):
-    prop('hay-bale', x, 56.4, True)
-prop('training-dummy', 4.4, 60.5, True); prop('dummy-worn', 22.2, 60.5, True)
+    prop('codex-hay-bale', x, 56.4, True)
+prop('codex-straw-goblin-dummy', 4.4, 60.5, True); prop('codex-straw-goblin-dummy', 22.2, 60.5, True)
 # the sack and its chalk ring, the slam ring
-prop('training-sack', HEAVY[0] + 3.2, HEAVY[1] - .6, True)
+prop('codex-training-sack', HEAVY[0] + 3.2, HEAVY[1] - .6, True)
 prop('sword-rack', RETREAT[0] + 4.6, RETREAT[1] - 3.6, True)
 prop('round-wooden-stool-knocked-over', RETREAT[0] - 3.8, RETREAT[1] + 2.4)
 # the parry lane along the workshops: fenced both sides, open at your end, the crossbowman's platform at the far end
-run_x('fence-rail', PARRY[1] - 3.8, PARRY[0] + 1.5, PARRY_HOME[0] - .5)
-run_x('fence-rail', PARRY[1] + 3.8, PARRY[0] + 1.5, PARRY_HOME[0] - .5)
-prop('hay-bale', PARRY[0] - 2.6, PARRY[1] - .7, True)       # behind you in the lane: what the bolts that get past hit
-prop('hay-bale', PARRY[0] - 2.6, PARRY[1] + .9, True)
+run_x('codex-fence-x', PARRY[1] - 3.8, PARRY[0] + 3.6, PARRY_HOME[0] - 1, step=4.2)
+run_x('codex-fence-x', PARRY[1] + 3.8, PARRY[0] + 3.6, PARRY_HOME[0] - 1, step=4.2)
+prop('codex-hay-bale', PARRY[0] - 2.6, PARRY[1] - .7, True)       # behind you in the lane: what the bolts that get past hit
+prop('codex-hay-bale', PARRY[0] - 2.6, PARRY[1] + .9, True)
 prop('archer-platform', PARRY_HOME[0] + 3, PARRY_HOME[1] - 2.6, True)
-prop('target-weathered', PARRY_HOME[0] + 2.4, PARRY_HOME[1] + 2.6, True)
+prop('codex-archery-target', PARRY_HOME[0] + 2.4, PARRY_HOME[1] + 2.6, True)
 # the hands ring
-for asset, x, y in [('hay-bale', 90.5, 14.5), ('loose-pile-of-straw', 89.5, 17), ('loose-pile-of-straw', 74, 16), ('scarecrow', 90.6, 21.6)]:
-    prop(asset, x, y, asset in ('hay-bale', 'scarecrow'))
+for asset, x, y in [('codex-hay-bale', 90.5, 14.5), ('loose-pile-of-straw', 89.5, 17), ('loose-pile-of-straw', 74, 16), ('scarecrow', 90.6, 21.6)]:
+    prop(asset, x, y, asset in ('codex-hay-bale', 'scarecrow'))
 # the rack at the armoury door
 prop('focus-rack', FOCUS[0], FOCUS[1] - 1.3, True)
-for asset, x, y in [('weapon-rack', FOCUS[0] + 2.8, FOCUS[1] - 1.4), ('crate-fittings', FOCUS[0] + 4.8, FOCUS[1] - .6), ('lantern-post', FOCUS[0] - 2.4, FOCUS[1] - 1.6)]:
+for asset, x, y in [('codex-weapon-rack', FOCUS[0] + 2.8, FOCUS[1] - 1.4), ('crate-fittings', FOCUS[0] + 4.8, FOCUS[1] - .6), ('codex-lantern-post', FOCUS[0] - 2.4, FOCUS[1] - 1.6)]:
     prop(asset, x, y, True)
 # the soldiers' drill ground in the open middle: racks of plain steel, a post for the mallet, targets for the crossbows
-for asset, x, y in [('weapon-rack', 56, 29.5), ('jerkin-rack', 59, 29.2), ('practice-shields', 62, 29.2), ('pell', 74, 35.4), ('banner-red', 54.5, 30),
-                    ('water-trough', 66, 47.5), ('barrel', 97.5, 46), ('crates', 97.8, 44)]:
+for asset, x, y in [('codex-weapon-rack', 56, 29.5), ('jerkin-rack', 59, 29.2), ('practice-shields', 62, 29.2), ('codex-training-post', 74, 35.4), ('banner-red', 54.5, 30),
+                    ('water-trough', 66, 47.5), ('barrel', 97.5, 46), ('codex-crates-barrel', 97.8, 44)]:
     prop(asset, x, y, asset != 'banner-red')
 for y in (31, 35, 39):
-    prop('target', 98.5, y, True)
+    prop('codex-archery-target', 98.5, y, True)
 # the students' casting line
 for x in (35, 39, 43):
-    prop('target', x, 37.2, True)
-prop('bench', 38, 47.6, True)
+    prop('codex-archery-target', x, 37.2, True)
+prop('codex-bench', 38, 47.6, True)
 prop('stack-of-three-books', 37.4, 48.2)
 # building stock and leftovers along the inside of the balustrade, from putting the yard up in a hurry
 for asset, x, y in [('planks-stacked', 50, 51.4), ('logs-pile', 54, 51.6), ('stone-blocks', 58, 51.4), ('sawhorse', 61.6, 52), ('tarp-heap', 65, 51.4),
@@ -227,7 +228,7 @@ for asset, x, y in [('planks-stacked', 50, 51.4), ('logs-pile', 54, 51.6), ('sto
                     ('handcart', 30, 50)]:
     prop(asset, x, y, asset not in ('ladder-lying',))
 # a little life in the grass (the yard only)
-for asset in ['short-grass-tuft'] * 18 + ['tall-grass-tuft'] * 8 + ['clover-patch'] * 6 + ['dandelion-seed-puff', 'yellow-dandelion', 'small-brown-bird', 'resting-butterfly', 'three-pebbles', 'patch-of-bare-dirt'] * 2:
+for asset in ['tall-grass-tuft'] * 4 + ['yellow-dandelion', 'three-pebbles'] * 2:
     for _ in range(40):
         x, y = rng.uniform(5, W - 5), rng.uniform(5, H - 5)
         if in_court(x, y) or min(seg_dist(x, y, PATH[i], PATH[i + 1]) for i in range(len(PATH) - 1)) < 2.6 or any(math.hypot(x - p[1], y - p[2]) < 3 for p in props):

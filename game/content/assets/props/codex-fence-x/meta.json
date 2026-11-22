@@ -1,0 +1,26 @@
+{
+  "id": "codex-fence-x",
+  "kind": "prop",
+  "name": "Fence x",
+  "footprint": [
+    4.2,
+    0.3
+  ],
+  "sets": {
+    "lean": {
+      "file": "lean.png",
+      "foot": [
+        24,
+        29
+      ],
+      "source": "codex",
+      "raw": "game/content/generated/codex/props-b-2026-11-22.png",
+      "tool": "tools/building-art/props.py",
+      "status": "Rough-stage art from Codex (2026-11-22): replace with finished art later.",
+      "ops": [
+        "sheared to a +0.5 base slope (tools/building-art/shear.py)"
+      ]
+    }
+  },
+  "shadow": false
+}

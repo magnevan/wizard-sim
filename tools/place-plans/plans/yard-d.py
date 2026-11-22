@@ -57,6 +57,7 @@ P.journey([(56, 18), (40, 18), (30, 16)], 'In from the courtyard onto the rim, f
 P.journey([polar(O, 31, a3) for a3 in range(30, 125, 10)] + [polar(O, 30, 134), polar(O, 20, 134), polar(O, 14, 150), hc], 'The stations, down the screen and round', 'Each bay seen before you reach it; the parry lane drops you into the pit')
 P.journey([hc, polar(O, 16, 182), RACK], 'The rack at the armoury door', 'The focus: the flame sword')
 P.journey([RACK, polar(O, 16, 170), polar(O, 16, 134), polar(O, 30, 134), polar(O, 33, 120)] + [polar(O, 33, a3) for a3 in range(110, 20, -15)] + [(40, 18), (56, 18)], 'Back out to the courtyard', 'Up the parry lane’s flight, back along the rim past the bays to the gate')
+P.m[P.m == 'grass'] = 'trees'                                                 # no ground outside the rim: woods, so no void is in view
 from finish import lips, woods_unreached
 lips(P); woods_unreached(P)
 P.render()

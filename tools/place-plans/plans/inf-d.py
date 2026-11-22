@@ -23,14 +23,14 @@ the shore flights are longer to match, the shore a little further down."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('inf-d', 'Infirmary D: the slope with raised conduits (rev 5)', U=(-46, 88), V=(-34, 38))
+P = Plan('inf-d', 'Infirmary D: the slope with raised conduits (rev 5)', U=(-46, 88), V=(-46, 38))
 W0 = (0, -3)
-P.fill(rect(-46, -34, 88, 38), 5.0, 'grass')
+P.fill(rect(-46, -46, 88, 38), 5.0, 'grass')
 P.fill(rect(-34, -8, 88, 38), 3.5, 'grass')                       # the well's tier, level to the east edge
 P.fill(rect(-34, 23, 50, 38), 0.0, 'sand')                        # the shore
 P.fill([(-46, 29), (88, 27), (88, 38), (-46, 38)], -1.0, 'water')  # the sea
 P.fill(rect(-28, -22, 28, -8), 5.0, 'paving')                     # the top tier: the road's terrace
-P.fill(rect(-3, -34, 3, -22), 5.0, 'path')                        # the road in, on the axis
+P.fill(rect(-3, -46, 3, -22), 5.0, 'path')                        # the road in, on the axis
 for a in (232, 254, 286, 308):                                    # the tents in a shallow arc facing the well; open, equipment dark
     c = polar(W0, 21, a); P.building(orect(c, 7, 4, math.radians(a)), 5.0, 2.5, roof='roof')
 P.note((0, -24), 'cots under tents')
@@ -47,7 +47,7 @@ for a, b in (((-5, -3), (-15, 0)), ((5, -3), (14, -2))):            # the condui
 P.stairs(rect(-14, 12, -8, 23), 3.5, 0.0, 'V')                    # down to the shore by the greenhouse
 P.stairs(rect(8, 12, 14, 23), 3.5, 0.0, 'V')                      # and up again by the stills
 P.fill(circle((0, 27), 3), -0.5, 'water'); P.fill(arc_band((0, 27), 3, 4.5, 0, 360), 0.5, 'paving')   # the bath on the shore, its rim a kerb up
-P.fill(rect(-14, 23, 14, 27), 0.0, 'paving')                                                          # the shore walk
+P.fill(rect(-14, 23, 14, 26), 0.0, 'paving')                                                          # the shore walk
 # the way out: east along the well's tier and on, past the battery's smokestack
 P.fill(rect(40, 4, 88, 10), 3.5, 'road')
 for c in ((-26, 8), (-20, 9), (-26, -1)): P.fill(circle(c, 2.2), 3.8, 'grass')   # garden beds by the greenhouse

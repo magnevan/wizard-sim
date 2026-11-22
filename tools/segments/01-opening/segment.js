@@ -14,7 +14,7 @@ board:{cols:['Brief and beats','Space diagram','Concept art','Blockout','Script'
  rows:[
   ['0 · Briefing and the yard','#yard',[['done','Approved 11-22'],['review','The plan, below'],['done','Approved 11-22'],['review','Reworked 11-22: walk #yard'],['later'],['started','Props bought'],['later']]],
   ['0 · The courtyard (hub)','#concept-court-plans',[['done'],['done','Plan D chosen 11-22; flow rev 5'],['done'],['started','Flow passed, 7.5/10; sense stage, rev 11'],['later'],['started','Rounds 1–7, to be redone'],['later']]],
-  ['1 · Infirmary (Life)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['done','Thorns added (r2)'],['next','After the yard'],['done','Two rounds'],['later'],['later'],['later'],['later']]],
+  ['1 · Infirmary (Life)','#concept-inf-plans',[['done','Thorns added (r2)'],['review','Four plans, below'],['done','Two rounds'],['later'],['later'],['later'],['later']]],
   ['2 · Battery (Fire)','#battery',[['next','Rewrite as your second element'],['done'],['done'],['done','Repair beat open'],['later'],['started','Defence, well, wall'],['later']]],
   ['3 · Ward line (Shield)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['started','The fix: burn something off'],['later'],['done'],['later'],['later'],['later'],['later']]],
   ['4 · Waterworks (Water)','https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews',[['done'],['later'],['done'],['later'],['later'],['later'],['later']]],
@@ -27,6 +27,7 @@ stages:[
  ['Brief','draft'],['Beat chart','draft'],['Space diagram','review'],['Blockout','started','The yard and the battery are walkable'],['Script','later'],['Dressing','started','General art bought'],['Finish','later'],
 ],
 needsYou:[
+ ['#concept-inf-plans','The infirmary: pick a plan (A to D), and whether the cots wait for the well.'],
  ['#yard','Walk the reworked yard (#yard, key 7) and mark its plan: about right, too small or too big.'],
  ['#solve-yard-prompts','Round 5 on the yard: the prompts, the etched rule and the soldiers.'],
  ['https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews','Optional: the five encounter questions on The Morning Everything Breaks (my picks stand until you answer), and the proposal of at most one new creature per stop.'],
@@ -113,6 +114,27 @@ chapters:[
  ]},
 ],
 concepts:[
+{id:'inf-plans',title:'The infirmary, from the ground up',status:'Up for review 2026-11-22',
+ lede:`Stop 1, your first cast, run through the new cycle from the start (docs/campaign/01-opening/infirmary-read.md). The concept art falls into the courtyard's old trap, a flat walled box, but its best idea is kept: brass conduits run from the well to what it feeds, so cutting the vines along them gives the fix a route. Three plans that really differ, a structure critic's mix, and a control (the concept taken literally) that the critic scored 3/10 without knowing what it was.`,
+ points:[
+  [`D, the critic's mix (my pick).`,` B as the base with C's conduits as raised walkways, compressed to about two screens by two. You arrive on the well's axis at the top tier where the wounded wait in dark tents, go one short flight down to the well, cut the vines along the raised conduits (out to the greenhouse and the stills, down to the bath on the shore), and the tents light up when the well does. You leave down the east flight with the battery's smoke ahead.`],
+  [`B, the slope (7/10).`,` Terraces stepping down a hillside to the sea: the cots on top, the well in the middle, the greenhouse and bath at the bottom. The critic: real height and the best return pass, but too big, with empty lower terraces.`],
+  [`C, the pond (6/10).`,` The well on a platform in a pond, the conduits as walkways out to islands. The critic: the best idea for the fix (clearing the walkway is the way across) and for co-op (a spoke each), but only one level.`],
+  [`A, the sunken garden (5/10).`,` The garden set 2.5 m down below the road. A nice look down on arrival, but still a walled rectangle with nothing past its edges.`],
+  [`What comes next.`,` The plan you pick goes through the walk report, then flow in the game, as the courtyard did. The infirmary is small (about five minutes, no fight), so it should be quicker.`],
+ ],
+ images:[
+  ['img/inf-plan-d.png','Grey-box plan D in the game camera: the road arrives at the top tier with four tents in a row, a short flight drops to the well on the middle tier, raised brown walkways run from the well to the greenhouse on the left and the stills on the right and down to a round bath on the shore, and an east flight leads down past a tall smokestack to the battery road.','D, the critic\u2019s mix: the slope with raised conduits (my pick).'],
+  ['img/inf-journey-d.png','Plan D from above with four numbered passes: in from the main gate past the cots and down to the well; along the conduits and back; up to the cots; out by the east flight to the battery.','D\u2019s journey.'],
+  ['img/inf-plan-b.png','Grey-box plan B: three terraces stepping down a hillside to the sea, tents along the top, the well in the middle, the greenhouse and a bath at the bottom.','B, the slope.'],
+  ['img/inf-plan-c.png','Grey-box plan C: the well on a raised round platform in a pond, walkways out to islands with the greenhouse, the stills and the tents, a bridge out to the battery road.','C, the pond.'],
+  ['img/inf-plan-a.png','Grey-box plan A: a rectangular garden set below the road, a stair down on the well\u2019s axis, conduits crossing the paving, the tents on a raised dais, a sunken bath.','A, the sunken garden.'],
+  ['img/infirmary-concept.jpg','Concept: a walled infirmary garden with a caged well choked in vines at the centre, brass conduits running to a cracked greenhouse, stills, tents of cots and a sunken bath.','The concept they were read from.'],
+ ],
+ verdict:[['d','D'],['b','B'],['c','C'],['a','A'],['none','None: new plans']],
+ questions:[
+  {id:'inf-order',title:'Do the cots wait for the well?',body:`You see the wounded first, but can only heal once the well relights and Life spills into you. The tents could stay dark until then, so nobody tries to heal too early; or the cots could be open from the start, with a prompt.`,proposal:`Dark tents until the well relights: the light coming on is the cue, no prompt needed.`},
+ ]},
 {id:'court-plans',title:'The courtyard, from the ground up',status:'Plan D chosen; flow, revision 5',
  lede:`You said the courtyard was stuck in a local maximum: a flat rectangle, no depth, no flow, details that make no sense. So it starts again under the new cycle for making a place (docs/campaign/making-a-place.md): read the concept as a plan, draw three plans that really differ, let a structure critic compare them, then you pick. Grey boxes on purpose: these are bones, not art. A critic who was shown our current build alongside them, without being told which it was, gave it 4/10.`,
  points:[

@@ -445,9 +445,12 @@ export function spriteFrame(s: RigState, who: number, rigAnchors: Anchors): Fram
   const [m, f] = cellOf(sh, s, who), dir = dirOf(s.face), white = s.flash >= 9;
   const seat = s.kind === 'wizard' ? s.pal : 0;
   const key = slug + '|' + seat + '|' + m.row + '|' + dir + '|' + f + '|' + (white ? 1 : 0);
+  // the cache holds the image only: the anchors depend on more of the state than the key does (the hands of a pose
+  // sharing this cell), so each call gets this state's own (#13)
+  const a = stretch(rigAnchors, sh.meta.height / HEIGHT[s.kind]);
   let fr = cache.get(key);
-  if (!fr) { fr = compose(sh, m, dir, f, white, stretch(rigAnchors, sh.meta.height / HEIGHT[s.kind]), seat); cache.set(key, fr); }
-  return fr;
+  if (!fr) { fr = compose(sh, m, dir, f, white, a, seat); cache.set(key, fr); }
+  return fr.a === a ? fr : { ...fr, a };
 }
 
 /** A multiply tint for a sprite's statuses (the code rigs paint them on the body). */
@@ -487,6 +490,7 @@ export function deathFrame(d: SpriteDeath, td: number, rigAnchors: Anchors): { f
   const key = d.slug + '|0|' + m.row + '|' + d.dir + '|' + f + '|0';
   let fr = cache.get(key);
   if (!fr) { fr = compose(sh, m, d.dir, f, false, rigAnchors); cache.set(key, fr); }
+  if (fr.a !== rigAnchors) fr = { ...fr, a: rigAnchors }; // this death's own anchors, as above (#13)
   const fade = td - play - DEATH_HOLD;
   return { f: fr, alpha: fade > 0 ? Math.max(0, 1 - fade / DEATH_FADE) : 1 };
 }

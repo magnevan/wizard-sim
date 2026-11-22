@@ -19,14 +19,15 @@ def route_mask(P, reach=2.5):
             k |= P.mask(orect(((u0 + u1) / 2, (v0 + v1) / 2), 2 * reach, L + 2 * reach, math.atan2(v1 - v0, u1 - u0)))
     return k
 
-def lips(P, drop=1.0, rise=1.0):
+def lips(P, drop=1.0, rise=1.0, everywhere=False):
+    """everywhere=True: every public edge over `drop`, not only those within reach of a route (a builder's parapet rule)."""
     walk = np.isin(P.m, [m for m, v in MAT.items() if v[2]]) & ~P.bld
     low = np.zeros_like(walk)
     for dy, dx in ((0, 1), (1, 0), (0, -1), (-1, 0)):
         nb = np.roll(np.roll(P.h, dy, 0), dx, 1)
         nbld = np.roll(np.roll(P.bld, dy, 0), dx, 1)
         low |= (P.h - nb > drop) & ~nbld
-    lip = walk & low & route_mask(P)                    # a flight's ends meet their landings within the step, so only its sides are walled (cheek walls)
+    lip = walk & low & (True if everywhere else route_mask(P))                    # a flight's ends meet their landings within the step, so only its sides are walled (cheek walls)
     P.h[lip] += rise; P.m[lip] = 'wall'; P.bld[lip] = True
     return int(lip.sum())
 

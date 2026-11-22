@@ -1,6 +1,7 @@
 // The drill yard (yard.ts): its stations along the path, the charged focus at the rack, and the gate on to the battery.
 import { describe, expect, it } from 'vitest';
 import { BTN, EL, EV, KIND, MAX_SEATS, N_EL, NO_INPUT, T, YARD, YST, YTAG, createWorld, hashWorld, markerOf, runeMax, step, yardDone, type PlayerInput, type World } from '../src';
+import { sparTarget } from '../src/yard';
 
 const NONE: PlayerInput[] = [NO_INPUT, NO_INPUT, NO_INPUT, NO_INPUT];
 const run = (w: World, ticks: number, ins: PlayerInput[] = NONE) => { for (let i = 0; i < ticks; i++) step(w, ins); };
@@ -74,17 +75,35 @@ describe('the drill yard', () => {
     expect(w.mode.leaveTo?.(w)).toBe('battery');
   });
 
-  it('the hands test sends four straw goblins at whoever steps into its ring, once', () => {
+  it('the hands test sends four straw goblins at whoever stands in its ring a moment, once', () => {
     const w = createWorld(7, 1, { room: 'yard' });
     run(w, 2);
     put(w, 0, 'hands');
     run(w, 2);
+    expect(tagged(w, YTAG.goblin)).toHaveLength(0); // nothing happens to you just for stepping in
+    run(w, T(YARD.ready));
     expect(tagged(w, YTAG.goblin)).toHaveLength(4);
     for (const i of tagged(w, YTAG.goblin)) w.bodies.hp[i] = 0;
     run(w, 3);
     expect(yardDone(w, YST.hands)).toBe(true);
     run(w, 30);
     expect(tagged(w, YTAG.goblin)).toHaveLength(0); // not again until nobody is near
+  });
+
+  it('the sparring soldiers wait until you have stood at their station a moment', () => {
+    const w = createWorld(7, 1, { room: 'yard' });
+    run(w, 2);
+    const mallet = tagged(w, YTAG.mallet)[0], bow = tagged(w, YTAG.bow)[0];
+    put(w, 0, 'retreat');
+    run(w, 2);
+    expect(sparTarget(w, mallet)).toBe(-1);
+    run(w, T(YARD.ready));
+    expect(sparTarget(w, mallet)).toBe(0);
+    put(w, 0, 'parry');
+    run(w, 2);
+    expect(sparTarget(w, bow)).toBe(-1);
+    run(w, T(YARD.ready));
+    expect(sparTarget(w, bow)).toBe(0);
   });
 
   it('runs the same twice', () => {

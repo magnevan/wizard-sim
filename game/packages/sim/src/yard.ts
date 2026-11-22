@@ -14,7 +14,8 @@
  *            sword is the lesson (beat 3). Use again for a fresh charge.
  *   GATE     with a focus taken, the north gate: the party leaves for the battery (Mode.leaveTo).
  *
- * The sparring soldiers can't be beaten and never leave their station: with nobody there they wait at their spot
+ * A station that acts on you (the slam, the bolts, the rush) waits until someone has stood in it for YARD.ready, so
+ * you see it and its keys first. The sparring soldiers can't be beaten and never leave their station: with nobody there they wait at their spot
  * (EnemyRules.restAt). Nobody dies here: no encounter runs (enc.state[0] stays 0), so a wizard at 0 hp gets up whole
  * (effects.ts tickHealth), and lies still a moment first (below).
  *
@@ -52,8 +53,10 @@ export const YS = {
   leave: 6,
   /** Set up (the first tick lays the yard out). */
   laid: 7,
+  /** Ticks someone has stood in the slam ring, the parry lane, the hands ring: a station acts only after YARD.ready. */
+  ringT: 8, laneT: 9, handsT: 10,
 } as const;
-const YS_LEN = 8;
+const YS_LEN = 11;
 /** What a body is to the yard. */
 export const YTAG = { none: 0, straw: 1, sack: 2, mallet: 3, bow: 4, goblin: 5 } as const;
 
@@ -78,6 +81,11 @@ export const YARD = {
   buckler: 4,
   /** The charged focus: what it holds. */
   focusFire: 1, focusSigil: 1,
+  /**
+   * s someone must stand in a station before it acts (the slam, the first bolt, the straw goblins' rush): you see
+   * what it does and its keys first, and nothing happens to you just for walking past (the user, 2026-11-22).
+   */
+  ready: 1.5,
 } as const;
 
 export function newYard(): Yard {
@@ -149,6 +157,7 @@ export function sparTarget(w: World, i: number): number {
   if (tag !== YTAG.mallet && tag !== YTAG.bow) return -1;
   const home = at(w, tag === YTAG.mallet ? 'retreat' : 'parry-home');
   let best = -1, bd = Infinity;
+  if (w.yard!.state[tag === YTAG.bow ? YS.laneT : YS.ringT] < T(YARD.ready)) return -1;
   for (const s of wizards(w)) {
     if (w.bodies.down[s] > 0) continue;
     if (tag === YTAG.bow ? !inLane(w, s) : !near(w, s, home, YARD.near * 0.75)) continue;
@@ -178,8 +187,14 @@ export function sparStandoff(w: World, i: number): [number, number] | undefined 
 export function tickYard(w: World): void {
   const y = w.yard!, st = y.state, b = w.bodies;
   if (!st[YS.laid]) layOut(w);
-  // HANDS: four straw goblins come at whoever steps into the ring
-  if (st[YS.hands] === 0 && anyNear(w, 'hands', YARD.ring)) {
+  // how long someone has stood in each station that acts on you (each acts only after YARD.ready)
+  const ws = wizards(w).filter((i) => b.down[i] <= 0), cap = T(YARD.ready) + 1;
+  const stay = (slot: number, here: boolean) => { st[slot] = here ? Math.min(st[slot] + 1, cap) : 0; };
+  stay(YS.ringT, ws.some((i) => near(w, i, at(w, 'retreat'), YARD.near * 0.75)));
+  stay(YS.laneT, ws.some((i) => inLane(w, i)));
+  stay(YS.handsT, ws.some((i) => near(w, i, at(w, 'hands'), YARD.ring)));
+  // HANDS: four straw goblins come at whoever has stepped into the ring
+  if (st[YS.hands] === 0 && st[YS.handsT] >= T(YARD.ready)) {
     for (let k = 0; k < 4; k++) spawn(w, ARCH.swarmer, YTAG.goblin, at(w, `hands-in-${k}`), { hp: 6, dmg: 0.25, speed: 0.6 });
     st[YS.hands] = 1;
   } else if (st[YS.hands] === 2 && !anyNear(w, 'hands', YARD.rearm)) st[YS.hands] = 0;

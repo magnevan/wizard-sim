@@ -1,6 +1,6 @@
 /**
  * A concept's grey box: buildings as plain blocks at their real size, drawn in the real camera so
- * their scale can be judged against a wizard before any art exists (?massing=academy). Client only,
+ * their scale can be judged against a wizard before any art exists (on in the yard; ?massing=off hides it). Client only,
  * a preview: the sim never sees it, nothing collides with it, and no room hash changes.
  *
  * Blocks are given on the level's plan (units, origin at the map's top-left, as in yard-level.py)
@@ -42,59 +42,49 @@ export interface Block {
 export interface MassingPlan { id: string; /** The room it stands round. */ room: string; /** Far to near: each is drawn over the ones before it. */ blocks: Block[]; /** Props whose foot is inside this margin (units) of a block are hidden. */ clear: number }
 
 const M = U_PER_M;
-/** Buttresses along a face: small blocks standing out of it. */
-function buttresses(id: string, face: 'south' | 'east', line: number, from: number, to: number, every: number, h: number): Block[] {
-  const out: Block[] = [], d = 1.2 * M, t = 0.9 * M;
-  for (let s = from, k = 0; s <= to + 1e-6; s += every * M, k++) {
-    if (face === 'east') out.push({ id: `${id}-b${k}`, x0: line, x1: line + d, y0: s - t / 2, y1: s + t / 2, h, wall: 0xb9b2a4, side: 0x8f8879 });
-    else out.push({ id: `${id}-b${k}`, x0: s - t / 2, x1: s + t / 2, y0: line, y1: line + d, h, wall: 0xb9b2a4, side: 0x8f8879 });
-  }
-  return out;
-}
-
 /**
- * The academy round the drill yard (concept, 2026-11-15). The map is 90 x 68 u (54 x 41 m); the
- * academy closes its far sides. West: the Great Hall, the lecture hall of beat 1, 30 x 20 m inside.
- * North: the workshops range, three storeys, with the gate tower over the passage out to the battery.
+ * The academy round the drill yard (blockout, 2026-11-22: docs/explorations/2026-11-22-weapons-yard-and-walks.md).
+ * The map is 130 x 100 u (78 x 60 m). The two ranges stand just past its far edges, so their faces are the map's
+ * edge and nothing needs to collide with them: west, the Great Hall (the strike lanes, the sack and the slam ring
+ * run along its foot) and the library wing south of it; north, the workshops, three storeys, with the armoury's
+ * tower over the door where the rack stands. The courtyard opens to the south-east, the armillary on its plinth.
  */
-const HALL_E = 6, NORTH_S = 4;
+const ARMOURY_X = 100;
 const hall: Block = {
-  id: 'great-hall', x0: HALL_E - 22 * M, x1: HALL_E, y0: NORTH_S - 2 * M, y1: NORTH_S + 33 * M, h: 14, rise: 10, ridge: 'y',
+  id: 'great-hall', x0: -22 * M, x1: 0, y0: -12 * M, y1: 64, h: 14, rise: 10, ridge: 'y',
   east: [
-    // a bay every 5 m between the buttresses (at 3, 8 ... 33 m); the door has the bay at 25.5 m to itself
-    { from: 4.4, to: 22, every: 5, w: 2.2, z0: 3.5, z1: 11.5, kind: 'window' },
-    { from: 29.4, to: 35, every: 5, w: 2.2, z0: 3.5, z1: 11.5, kind: 'window' },
-    { at: 23.9, w: 3.2, z0: 0, z1: 5.2, kind: 'door' },
-    { at: 24.4, w: 2.2, z0: 7, z1: 11.5, kind: 'window' },
+    { from: 4, to: 31, every: 5, w: 2.2, z0: 3.5, z1: 11.5, kind: 'window' },
+    { from: 39, to: 50, every: 5, w: 2.2, z0: 3.5, z1: 11.5, kind: 'window' },
+    { at: 33.4, w: 3.2, z0: 0, z1: 5.2, kind: 'door' },
+    { at: 33.9, w: 2.2, z0: 7, z1: 11.5, kind: 'window' },
   ],
-  south: [{ at: 8.5, w: 5, z0: 4, z1: 13, kind: 'window' }],
+};
+const library: Block = {
+  id: 'library', x0: -18 * M, x1: 0, y0: 64, y1: 112, h: 9, rise: 6, ridge: 'y',
+  east: [{ from: 2, to: 28, every: 4, w: 1.8, z0: 2.5, z1: 7.5, kind: 'window' }],
 };
 const works: Block = {
-  id: 'workshops', x0: HALL_E - 2 * M, x1: 104, y0: NORTH_S - 12 * M, y1: NORTH_S, h: 13, rise: 6, ridge: 'x',
+  id: 'workshops', x0: 0, x1: 142, y0: -12 * M, y1: 0, h: 13, rise: 6, ridge: 'x',
   south: [
-    { from: 3, to: 60, every: 4.5, w: 2.4, z0: 1, z1: 3.9, kind: 'window' },
-    { from: 3, to: 60, every: 4.5, w: 1.4, z0: 6.2, z1: 8.4, kind: 'window' },
-    { from: 3, to: 60, every: 4.5, w: 1.4, z0: 10.2, z1: 12.2, kind: 'window' },
+    { from: 3, to: 85, every: 4.5, w: 2.4, z0: 1, z1: 3.9, kind: 'window' },
+    { from: 3, to: 85, every: 4.5, w: 1.4, z0: 6.2, z1: 8.4, kind: 'window' },
+    { from: 3, to: 85, every: 4.5, w: 1.4, z0: 10.2, z1: 12.2, kind: 'window' },
   ],
 };
-/** The gate tower: 7 m square, a step proud of the range, with the passage (4 x 5 m) through it. */
-const GATE_X = 46;
+/** The armoury's tower over its door, 7 m square: the rack stands at its foot. */
 const tower: Block = {
-  id: 'gate-tower', x0: GATE_X - 3.5 * M, x1: GATE_X + 3.5 * M, y0: NORTH_S - 10 * M, y1: NORTH_S + 1 * M, h: 24, rise: 5, ridge: 'x',
+  id: 'armoury', x0: ARMOURY_X - 3.5 * M, x1: ARMOURY_X + 3.5 * M, y0: -10 * M, y1: 0, h: 22, rise: 5, ridge: 'x',
   wall: 0xc4bdae, side: 0x958e7f,
   south: [
-    { at: 1.5, w: 4, z0: 0, z1: 5, kind: 'void' },
+    { at: 1.8, w: 3.4, z0: 0, z1: 4.2, kind: 'door' },
     { at: 2.5, w: 2, z0: 8, z1: 11, kind: 'window' },
     { at: 2.5, w: 2, z0: 14, z1: 17, kind: 'window' },
-    { at: 2.2, w: 2.6, z0: 19.5, z1: 22.5, kind: 'window' },
   ],
 };
-const ACADEMY: MassingPlan = {
-  id: 'academy',
-  room: 'yard',
-  clear: 1.5,
-  blocks: [works, tower, hall, ...buttresses('great-hall', 'east', HALL_E, hall.y0 + 3 * M, hall.y1 - 1 * M, 5, 11.5)],
-};
+/** The armillary on its plinth in the courtyard, where the briefing is: a stand-in block for the sphere. */
+const plinth: Block = { id: 'plinth', x0: 95, x1: 105, y0: 77, y1: 87, h: 1.6, wall: 0xb9b2a4, side: 0x8f8879 };
+const sphere: Block = { id: 'armillary', x0: 98.5, x1: 101.5, y0: 80.5, y1: 83.5, h: 9, wall: 0xb08d57, side: 0x8a6c3f };
+const ACADEMY: MassingPlan = { id: 'academy', room: 'yard', clear: 1.5, blocks: [works, tower, hall, library, plinth, sphere] };
 export const MASSING: Record<string, MassingPlan> = { academy: ACADEMY };
 
 const DARK = { window: 0x2c3340, door: 0x4a3626, void: 0x14161b };
@@ -170,8 +160,5 @@ export class Massing {
   }
 }
 
-/** ?massing=<plan> names the concept to preview, or nothing. */
-export const massingParam = (): MassingPlan | null => {
-  const id = opt('massing');
-  return id ? MASSING[id] ?? null : null;
-};
+/** ?massing=<plan> names the grey box to show (the academy's, in the yard, by default); ?massing=off shows none. */
+export const massingParam = (): MassingPlan | null => MASSING[opt('massing') ?? 'academy'] ?? null;

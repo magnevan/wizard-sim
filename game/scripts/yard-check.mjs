@@ -13,8 +13,8 @@ mkdirSync(out, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fail = (msg) => { console.error('FAIL:', msg); process.exitCode = 1; };
 // plan coordinates (tools/segments/01-opening/yard-level.py) -> the sim's, whose origin is the area's centre
-const SPOTS = { start: [24.3, 53], strike: [21, 43], heavy: [15, 33], retreat: [28, 25], parry: [41, 33], lane: [52, 34], hands: [66, 19], focus: [54, 12],
-  gate: [46, 9], garden: [62, 54], barracks: [72, 44], shed: [58, 51], farm: [9, 32], casting: [42, 45], north: [30, 8] };
+const SPOTS = { start: [86, 90], armillary: [92, 85], into: [44, 83], hall: [6, 40], strike: [13, 63], heavy: [17, 46], retreat: [19, 27], corner: [8, 8],
+  parry: [31, 11], lane: [44, 11], hands: [82, 18], focus: [100, 8], drill: [72, 40], casting: [39, 44], out: [114, 50], gate: [120, 70] };
 
 const stop = await startPreview();
 const browser = await puppeteer.launch({ executablePath: findChrome(), headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -40,7 +40,7 @@ try {
     await p.screenshot({ path: join(out, name + '.png') });
   }
   // the rack: Use gives a charged focus (one Fire, one Sigil)
-  await put(54, 11);
+  await put(100, 6.8);
   await sleep(500);
   await p.keyboard.down('KeyX'); await sleep(120); await p.keyboard.up('KeyX');
   await sleep(500);
@@ -49,7 +49,7 @@ try {
   if (!focus.focus) fail('Use at the rack should give a charged focus');
   await p.screenshot({ path: join(out, 'focus-taken.png') });
   // the gate: with a focus, walking up to it goes on to the battery
-  await put(46, 8.2);
+  await put(125.6, 72);
   await p.waitForFunction(() => window.wizardSim.world.def.id === 'battery', { timeout: 8000, polling: 100 }).catch(() => fail('the gate should take the party on to the battery'));
   console.log('left for', await p.evaluate(() => window.wizardSim.world.def.id));
   console.log(process.exitCode ? 'yard check FAILED' : 'yard check ok', '->', out);

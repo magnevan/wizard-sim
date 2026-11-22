@@ -10,7 +10,7 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 
 ## Next
 
-- [ ] The yard's space diagram, then its blockout: beside the courtyard along the ranges, larger than 90 × 68, each station showing what it does before it acts ([decision](../decisions/README.md#2026-11-22-the-openings-yard-teaches-the-moves-and-one-conjured-weapon-walks-have-a-shape-and-small-fights-explorations2026-11-22-weapons-yard-and-walksmd)). The briefing moves to the armillary.
+- [x] The yard's space diagram and blockout (2026-11-22). Next: the user walks it.
 - [ ] The district's roads as a space diagram with walk times, and where the small fights go.
 - [ ] The infirmary (Life, the first cast): space diagram, Codex concept from the blockout's footprint, then an LDtk blockout. It's the smallest test of the new shape.
 - [ ] The battery as the second element: its infusion text and prompts, and room to heal in its fight.
@@ -37,4 +37,5 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 - 2026-11-16 The route: Life first, one element per stop, eight stops; each stop's fight and creatures (designed)
 - 2026-11-17 Merged to main (ad06e8c)
 - 2026-11-21 The brief rewritten for the route
+- 2026-11-22 The yard reworked as a blockout along the academy (130 × 100, grey-box ranges, stations wait before acting)
 - 2026-11-22 The weapons section and the walks brainstormed; the board on the segment page; old layouts and the academy concept archived ([record](../archive/opening-segment-old-layouts-2026-11-22.md))

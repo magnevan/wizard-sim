@@ -5,7 +5,7 @@ One file per line of work that runs across sessions. How they work: [tasks.md](.
 | Thread | Status | Next step |
 |---|---|---|
 | [Wizard weapons and their motion](weapons.md) | active | the user's verdict on the maul; then the sword, whip and focus |
-| [The campaign opening](opening.md) | active | the yard's space diagram and blockout; then the district's roads |
+| [The campaign opening](opening.md) | active | the user walks the reworked yard; then the district's roads |
 | [Spell sounds, music and ambience](sound.md) | paused | the user's picks in the Sound Lab |
 
 Finished threads move to `docs/archive/`.

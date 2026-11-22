@@ -99,3 +99,11 @@ On the Opening Segment page. Logged as [a decision](../decisions/README.md#2026-
 | `concept-walks` | Go. |
 | `walks-fights` | "We can experiment a little bit with this. I think some small fights are good to have in several places. They're low challenge encounters that let you practice your spellcasting a bit." So more than Claude's two: small fights on several walks. |
 
+## As built: the yard's blockout (2026-11-22)
+
+- **The plan** is 130 × 100 u (78 × 60 m), about half as big again as the 90 × 68 marked too small. The Great Hall (50 m) and the library wing stand past the west edge, the workshops (85 m, three storeys) and the armoury tower past the north edge, so their faces are the map's edge and nothing collides with a grey box. The client draws them (`art/massing.ts`), on by default in the yard; `?massing=off` hides them.
+- **The route** (about 290 u, a minute and a bit at walking pace): the armillary in the courtyard, through the balustrade's west opening, north along the hall (strike lanes, the sack, the slam ring), east along the workshops (the fenced parry lane, the hands ring, the rack at the armoury door), back through the north opening into the courtyard and out by the east gate to the battery.
+- **Clear before it acts:** the slam, the bolts and the straw goblins' rush wait until someone has stood in the station for `YARD.ready` (1.5 s). The prompt shows from 8 u away, so you read it before you step in. The parry lane is fenced on both sides, open at your end, with the crossbowman in sight on his platform.
+- **The drill ground** holds the soldiers' plain steel with what the rigs have: spears, a mallet, crossbows, practice swords. The maul, longbows and trident in the concept are art still to make.
+- **Known limits:** a grey box draws under everything, so props north or west of one show on top of it; the courtyard keeps those sides clear. The briefing (beat 1) isn't built: you start at the armillary with the masters standing there.
+

@@ -74,7 +74,7 @@ export const OPTIONS = [
   { key: 'sprites', group: 'View', label: 'Character sprites', kind: 'flag', defaultOn: true, help: 'Off: the goblin warband and the wizard as code rigs instead of 3D models (art/rigs.ts SPRITES_ON).' },
   { key: 'wizsprite', group: 'View', label: 'Wizard sprite', kind: 'flag', defaultOn: true, help: 'Off: the wizard keeps its code rig while the warband is drawn from 3D.' },
   { key: 'wizscale', group: 'View', label: 'Wizard scale', kind: 'number', help: 'The wizard\'s drawing scale, 1 to 2 (default 1.4 with sprites on, else 1): geometry, not pixels (art/rigs.ts WIZ_Z).' },
-  { key: 'massing', group: 'View', label: 'Massing concept', kind: 'choice', choices: () => ['academy'], help: 'Show a concept\'s buildings round the room as grey boxes (art/massing.ts).' },
+  { key: 'massing', group: 'View', label: 'Grey-box buildings', kind: 'choice', choices: () => ['academy', 'off'], help: 'The academy\'s buildings round the drill yard as grey boxes at real size (art/massing.ts). On in the yard by default; off hides them.' },
   { key: 'structoff', group: 'View', label: 'Hide structure parts', kind: 'text', help: 'Comma list of parts not to draw: walls, waves, devices, wizards, preview, fx (for isolating a slow or broken part).' },
   { key: 'renderer', group: 'View', label: 'Renderer', kind: 'choice', choices: () => ['webgpu'], help: 'Try WebGPU instead of WebGL.' },
 

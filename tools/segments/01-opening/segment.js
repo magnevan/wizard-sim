@@ -97,6 +97,21 @@ chapters:[
  ]},
 ],
 concepts:[
+{id:'court-art-style',title:'Magicka’s camera, three styles: is pixel art worth keeping?',status:'New, 2026-11-22: waiting on you',
+ lede:`Your two flaws in the last batch were the camera (too shallow) and the scale (far too low), and you asked whether pixel art is causing more problems than it solves. So Codex painted the same courtyard spot at Magicka’s camera and closeness (its screenshot attached only for camera and scale), with our wizard at his in-game size, in three styles. All free; nothing is in the game.`,
+ points:[
+  [`P, pixel art.`,` Clean and readable. But Codex swapped our wizard for a cartoonish one of its own, and the passage through the gate converges in perspective. Every pixel attempt so far has also fought the pixel grid: Codex doesn’t draw on one.`],
+  [`H, hand-painted 2D.`,` Soft and warm, closest to the concept art. No pixel grid to keep, so Codex’s own output could be used much more directly.`],
+  [`R, a stylised 3D render.`,` The most finished, the closest to Magicka’s feel, and it kept our wizard’s look. The game already draws its characters and solid spells from 3D models, so a 3D-rendered world (Meshy models, or painted plates that look rendered) would match them.`],
+  [`What changes if we leave pixel art.`,` We’d revisit the “Pixel Battlefield” direction from the start of the project. The HUD and menus can stay pixel; that’s common. PixelLab would matter less, and Meshy or painted plates more. Characters already come from 3D, so they’d only need their pixel conversion turned down.`],
+ ],
+ images:[
+  ['img/b3-magcam-render.jpg','R: a stylised 3D-rendered courtyard at a steep close camera: the cream stone hall front with lit arched windows, gold finials and a blue slate roof, an arched gateway with a passage running straight back, matching star banners, raised planters of lilac and evergreens, warm sandstone paving and a cobbled road behind a kerb; our red-hatted wizard in the forecourt.','R, a stylised 3D render.'],
+  ['img/b3-magcam-painted.jpg','H: the same scene hand-painted, soft and warm: the hall front with gothic windows and gold trim, the gateway and its banners, planters, sandstone paving and a cobbled road; a red-coated wizard in the forecourt.','H, hand-painted 2D.'],
+  ['img/b3-magcam-pixel.jpg','P: the same scene in pixel art: the hall front with arched windows, the gateway with a passage drawn in converging perspective, banners, planters, paving and a cobbled road; a cartoonish wizard Codex drew in place of ours.','P, pixel art.'],
+ ],
+ verdict:[['render','3D render (R)'],['painted','Hand-painted (H)'],['pixel','Keep pixel art (P)'],['more','Need more tests']],
+ questions:[]},
 {id:'court-art-b2',title:'The courtyard’s art: three ways that don’t repaint the grey-box',status:'New, 2026-11-22: waiting on you',
  lede:`After your notes on the first test (“repainting the grey-box locks it into bad directions”), Codex tried three ways that start from the brief instead: a whole screen composed freely, the hall as separate building pieces, and the ground as pieces with designed kerbs. Every prompt named the camera and the light, attached the wizard for scale, and asked for your points: windows flat in the wall, a kerb that shows which surface is higher, planters with plinths, and the banners as a matching pair. All free; nothing is in the game. A new critic, using the rubric with your notes, judged them blind. Its scores are below so you can see whether it now agrees with you.`,
  points:[

@@ -6,14 +6,18 @@ Revision 2 (the flow critic on flat frames, 6/10): twin flights either side of t
 22), the axis an overlook with a balustrade looking down at the well; the fix as one loop instead of three spokes (the
 well, the west walkway, the greenhouse, down to the shore, the bath, along the shore, up to the stills, the east walkway,
 back to the well); the tents in a shallow arc facing the well, so the beam stays in view while you heal; the way out
-leaves from the well's tier along a paved road past the battery's smokestack, with woods past the edges, not void."""
+leaves from the well's tier along a paved road past the battery's smokestack, with woods past the edges, not void.
+
+Revision 3 (the flow critic, 7/10): the shore leg shortened so every frame along it shows the next flight (both shore
+flights 10 u in); the well's tier runs level to the east edge so the road stays paved to the seam; the smokestack beside
+the road, in view as you leave. In the game: a soft block on the east road until the well is lit."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('inf-d', 'Infirmary D: the slope with raised conduits (rev 2)', U=(-46, 72), V=(-34, 32))
+P = Plan('inf-d', 'Infirmary D: the slope with raised conduits (rev 3)', U=(-46, 72), V=(-34, 32))
 W0 = (0, 2)
 P.fill(rect(-46, -34, 72, 32), 5.0, 'grass')
-P.fill(rect(-34, -8, 50, 32), 2.0, 'grass')                       # the well's tier
+P.fill(rect(-34, -8, 72, 32), 2.0, 'grass')                       # the well's tier, level to the east edge
 P.fill(rect(-34, 18, 50, 32), 0.0, 'sand')                        # the shore
 P.fill([(-46, 23), (72, 21), (72, 32), (-46, 32)], -1.0, 'water')  # the sea
 P.fill(rect(-28, -22, 28, -8), 5.0, 'paving')                     # the top tier: the road's terrace
@@ -29,17 +33,17 @@ P.building(rect(-28, -6, -16, 4), 2.0, 6.0, 'greenhouse', doors=[(-15, 0)])
 P.building(rect(16, -6, 26, 2), 2.0, 5.0, 'stills', doors=[(15, -2)])
 for a, b in (((-5, 2), (-15, 1)), ((5, 1), (14, -1))):            # the conduits, raised walkways from the well
     L = math.dist(a, b); P.fill(orect(((a[0] + b[0]) / 2, (a[1] + b[1]) / 2), 3, L + 1, math.atan2(b[1] - a[1], b[0] - a[0])), 2.5, 'wood')
-P.stairs(rect(-24, 12, -18, 18), 2.0, 0.0, 'V')                   # down to the shore by the greenhouse
-P.stairs(rect(18, 12, 24, 18), 2.0, 0.0, 'V')                     # and up again by the stills
+P.stairs(rect(-14, 12, -8, 18), 2.0, 0.0, 'V')                    # down to the shore by the greenhouse
+P.stairs(rect(8, 12, 14, 18), 2.0, 0.0, 'V')                      # and up again by the stills
 P.fill(circle((0, 21), 3), -0.5, 'water'); P.fill(arc_band((0, 21), 3, 4.5, 0, 360), 0.0, 'paving')   # the bath on the shore
-P.fill(rect(-22, 19, 22, 21), 0.0, 'paving'); P.fill(rect(-22, 17, 22, 19), 0.0, 'paving')            # the shore walk
+P.fill(rect(-14, 17, 14, 21), 0.0, 'paving')                                                          # the shore walk
 # the way out: east along the well's tier and on, past the battery's smokestack
 P.fill(rect(40, 4, 72, 10), 2.0, 'road')
-P.building(circle((54, -3), 3), 2.0, 14.0, "the battery's smoke")
+P.building(circle((56, 1), 2.5), 2.0, 14.0, "the battery's smoke")
 P.landmark(W0, 'the well', 6, 3)
 P.gate((0, -32), 'from the main gate'); P.gate((70, 7), 'to the battery')
 P.journey([(0, -32), (0, -14), (-11, -11), (-11, 1), (-4, 4)], 'In from the main gate: the cots, then down to the well', 'The wounded and their nurses first, the equipment dark; the well below, framed by the overlook')
-P.journey([(-4, 4), (-10, 2), (-15, 1), (-21, 6), (-21, 12), (-21, 19), (-6, 19), (6, 19), (21, 19), (21, 12), (18, 4), (14, -1), (8, 1), (4, 4)], 'The fix: one loop along the conduits and the shore', 'Cut the vines round the loop; the well relights; Life spills into you')
+P.journey([(-4, 4), (-10, 2), (-15, 1), (-11, 6), (-11, 12), (-11, 19), (-5, 20), (5, 20), (11, 19), (11, 12), (13, 4), (14, -1), (8, 1), (4, 4)], 'The fix: one loop along the conduits and the shore', 'Cut the vines round the loop; the well relights; Life spills into you')
 P.journey([(4, 4), (11, 1), (11, -10)] + [polar(W0, 15, a) for a in range(300, 235, -12)] + [(-11, -10)], 'Up to the cots, the equipment lit', 'Heal the wounded along the arc, the well in view below')
 P.journey([(-11, -10), (-11, 1), (10, 7), (30, 7), (44, 7), (70, 7)], 'Out to the battery', 'Along the well’s tier and the road, the battery’s smoke ahead')
 import numpy as np

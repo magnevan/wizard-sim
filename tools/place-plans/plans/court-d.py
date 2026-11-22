@@ -103,5 +103,21 @@ P.route([YARD] + ARC[:18] + [polar(C, 62, 90), (-2, 10)], 'main')               
 P.route([BAT, (40, -48)] + ARC[::-1][:18] + [polar(C, 62, 90), (2, 10)], 'main')                  # coming back from the battery
 P.route([(0, -66), polar(C, 50, 90), polar(C, 62, 90), (0, 10)], 'main')   # the north road
 P.route([(0, 76), (0, 56), (0, 26)], 'side')                               # up from the sea landing
+# the journey through the courtyard, in the order of the brief's route (docs/campaign/01-opening/brief.md); which exit
+# leads to which stop is a proposal: the infirmary just outside the main gate on the battery's road, the ward line behind
+# the academy up the north road, the gorge up the stream past the bridge, the harbour and cliff road at the sea landing
+J = polar(C, 43, 90); STAIR = polar(C, 62, 90); ARC_W, ARC_E = ARC[:18], ARC[17:]
+GORGE = (68, -66)
+P.journey([(-8, 32), (0, 27)], 'The briefing at the armillary', 'Start below the dais: the armillary fills the screen, the beam stutters above the masters')
+P.journey([(0, 10), STAIR, J] + ARC_W[::-1] + [YARD], 'Out to the drill yard', 'Up the grand stair, west along the balcony; the bell tower marks the turn')
+P.journey([YARD] + ARC_W + ARC_E + [(40, -48), BAT], 'Back from the yard, out through the main gate: the infirmary, then the battery',
+          'The reveal: at the top of the grand stair the armillary is framed between the pylons; the beacon pulls you east')
+P.journey([BAT, (40, -48)] + ARC_E[::-1] + [STAIR, (0, 10), STAIR, J, (0, -66)], 'Back from the battery: the ward bell, then out north to the ward line',
+          'Homecoming: down the grand stair to the bell at the dais, then up through the great hall')
+P.journey([(0, -66), J, STAIR, (0, 10), STAIR, J] + ARC_E + [(40, -48), (64, -48), GORGE], 'Back from the ward line, out to the gorge',
+          'The best approach: straight down the north road onto the armillary; out past the falls')
+P.journey([(0, 76), (0, 56), (0, 44), (0, 27)], 'The finale: up from the sea landing',
+          'The climb from the sea, framed by the rim’s gateway; the armillary torn open above the warband')
+P.fill(rect(64, -68, 72, -52), 6.0, 'path')   # the gorge path up beside the stream
 P.render()
 if "--frames" in sys.argv: P.frames()

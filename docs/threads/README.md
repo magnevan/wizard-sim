@@ -6,7 +6,7 @@ One file per line of work that runs across sessions. How they work: [tasks.md](.
 |---|---|---|
 | [Wizard weapons and their motion](weapons.md) | active | the user's verdict on the maul; then the sword, whip and focus |
 | [The campaign opening](opening.md) | active | the user walks the reworked yard; then the district's roads |
-| [Height, outlines and building order](height.md) | active | phase 1: tiers in content, cliffs as wall segments |
+| [Height, outlines and building order](height.md) | active | phases 1–2 built (`worktree-height-tiers`); next phase 6 (plan to level) or a minimal phase 4 (drawing at height) |
 | [Spell sounds, music and ambience](sound.md) | paused | the user's picks in the Sound Lab |
 
 Finished threads move to `docs/archive/`.

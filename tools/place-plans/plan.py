@@ -78,7 +78,7 @@ class Plan:
         self.h = np.full((self.ny, self.nx), base, dtype=np.float32)
         self.m = np.full((self.ny, self.nx), base_mat, dtype=object)
         self.bld = np.zeros((self.ny, self.nx), dtype=bool)
-        self.routes, self.marks, self.gates, self.doors, self.notes = [], [], [], [], []
+        self.routes, self.marks, self.gates, self.doors, self.notes, self.passes = [], [], [], [], [], []
         # cell centres in U,V
         xs = self.x0 + np.arange(self.nx) + 0.5; ys = self.y0 + np.arange(self.ny) + 0.5
         X, Y = np.meshgrid(xs, ys)
@@ -130,6 +130,10 @@ class Plan:
         return k
 
     def route(self, pts, rank='main'): self.routes.append((pts, rank))
+    def journey(self, pts, label, moment=''):
+        """One pass through the place, in the order the player makes them: the points in walking order, what the pass is
+        for, and the moment it should give (a reveal, a homecoming, the finale)."""
+        self.passes.append((pts, label, moment))
     def landmark(self, c, name, height=12.0, radius=1.0): self.marks.append((c, name, height, radius))
     def gate(self, c, name): self.gates.append((c, name))
     def note(self, c, text): self.notes.append((c, text, None))
@@ -150,6 +154,7 @@ class Plan:
         os.makedirs(OUT, exist_ok=True)
         a = self.draw(squash=1.0, zs=0.0, k=6, plan=True); a.save(os.path.join(OUT, f'{self.name}-plan.png'))
         b = self.draw(squash=0.5, zs=14.5 / 16, k=8, plan=False); b.save(os.path.join(OUT, f'{self.name}-game.png'))
+        if self.passes: self.journey_map().save(os.path.join(OUT, f'{self.name}-journey.png'))
         print(self.name, self.stats())
 
     def draw(self, squash, zs, k, plan, overlays=True):
@@ -185,7 +190,7 @@ class Plan:
         if plan: self._contours(d, W2)
         self._P = P
         if not overlays:
-            self._landmarks_only(d, P)
+            if not plan: self._landmarks_only(d, P)
             return img
         self._overlays(d, P, plan, k)
         f = font(22); d.text((20, 14), f'{self.title}  ({"plan" if plan else "game camera"})', font=f, fill=(240, 230, 210))
@@ -247,7 +252,8 @@ def _frames(self, every=14.0, scale=2):
     img = self.draw(squash=0.5, zs=14.5 / 16, k=k, plan=False, overlays=False); P = self._P
     fw, fh = 480, 270
     sheets = []
-    for n, (pts, rank) in enumerate(self.routes):
+    walks = [(pts, label) for pts, label, _ in self.passes] or self.routes
+    for n, (pts, rank) in enumerate(walks):
         samples, carry = [], 0.0
         for (u0, v0), (u1, v1) in zip(pts, pts[1:]):
             L = math.hypot(u1 - u0, v1 - v0); t = carry
@@ -265,7 +271,7 @@ def _frames(self, every=14.0, scale=2):
         sheet = Image.new('RGB', (cols * fw * scale + 10, rows * (fh * scale + 30)), (10, 10, 14)); sd = ImageDraw.Draw(sheet)
         for i, c in enumerate(crops):
             X, Y = (i % cols) * (fw * scale + 10), (i // cols) * (fh * scale + 30)
-            sheet.paste(c, (X, Y + 26)); sd.text((X + 6, Y + 2), f'route {n + 1} ({rank}), step {i + 1} of {len(crops)}', font=font(18), fill=(230, 230, 230))
+            sheet.paste(c, (X, Y + 26)); sd.text((X + 6, Y + 2), f'{"pass" if self.passes else "route"} {n + 1} ({rank}), step {i + 1} of {len(crops)}', font=font(18), fill=(230, 230, 230))
         path = os.path.join(OUT, f'{self.name}-flow-{n + 1}.png'); sheet.save(path); sheets.append(path)
     print('frames:', ', '.join(os.path.basename(p) for p in sheets))
     return sheets
@@ -283,6 +289,43 @@ def _landmarks_only(self, d, P):
     for (u, v), g in self.doors:
         x, y = P(u, v, g); d.rectangle([x - 10, y - 26, x + 10, y], fill=(40, 28, 18))
 Plan._landmarks_only = _landmarks_only
+
+PASS_COL = [(255, 214, 90), (110, 220, 255), (255, 140, 110), (170, 255, 140), (230, 150, 255), (255, 255, 255), (255, 180, 40), (120, 160, 255)]
+def _journey_map(self):
+    """The plan from above with the journey on it: each pass numbered, in its own colour, arrows in its walking direction,
+    nudged sideways so passes along the same road stay apart; a legend lists what each pass is for."""
+    k = 6
+    img = self.draw(squash=1.0, zs=0.0, k=k, plan=True, overlays=False); P = self._P
+    d = ImageDraw.Draw(img); f = font(16)
+    n_all = len(self.passes)
+    for n, (pts, label, moment) in enumerate(self.passes):
+        col = PASS_COL[n % len(PASS_COL)]; off = (n - (n_all - 1) / 2) * 1.6
+        xy = []
+        for i, (u, v) in enumerate(pts):
+            a, b = pts[max(i - 1, 0)], pts[min(i + 1, len(pts) - 1)]
+            L = math.dist(a, b) or 1; nu, nv = -(b[1] - a[1]) / L, (b[0] - a[0]) / L
+            xy.append(P(u + nu * off, v + nv * off, 0))
+        d.line(xy, fill=(0, 0, 0), width=7); d.line(xy, fill=col, width=4)
+        for (x0, y0), (x1, y1) in zip(xy, xy[1:]):
+            L = math.hypot(x1 - x0, y1 - y0)
+            if L < 30: continue
+            ux, uy = (x1 - x0) / L, (y1 - y0) / L; mx, my = x0 + (x1 - x0) * 0.6, y0 + (y1 - y0) * 0.6
+            d.polygon([(mx + ux * 9, my + uy * 9), (mx - ux * 6 - uy * 7, my - uy * 6 + ux * 7), (mx - ux * 6 + uy * 7, my - uy * 6 - ux * 7)], fill=col, outline=(0, 0, 0))
+        x, y = xy[0]; d.ellipse([x - 12, y - 12, x + 12, y + 12], fill=col, outline=(0, 0, 0), width=2)
+        d.text((x - 5, y - 10), str(n + 1), font=f, fill=(0, 0, 0))
+    for (u, v), name, hgt, *_ in self.marks:
+        x, y = P(u, v, 0); d.ellipse([x - 9, y - 9, x + 9, y + 9], fill=(190, 120, 255), outline=(255, 255, 255), width=2)
+    # the legend
+    rows = [(f'{n + 1}. {label}', moment) for n, (_, label, moment) in enumerate(self.passes)]
+    H = 30 + 24 * sum(2 if m else 1 for _, m in rows)
+    out = Image.new('RGB', (img.width, img.height + H), (18, 20, 28)); out.paste(img, (0, 0)); od = ImageDraw.Draw(out)
+    y = img.height + 8
+    for n, (t, m) in enumerate(rows):
+        od.rectangle([20, y + 4, 34, y + 18], fill=PASS_COL[n % len(PASS_COL)]); od.text((44, y), t, font=f, fill=(235, 235, 235)); y += 24
+        if m: od.text((44, y), m, font=font(14), fill=(180, 176, 168)); y += 24
+    od.text((20, 14), f'{self.title}  (the journey)', font=font(22), fill=(240, 230, 210))
+    return out
+Plan.journey_map = _journey_map
 
 def centroid(poly): return (sum(p[0] for p in poly) / len(poly), sum(p[1] for p in poly) / len(poly))
 

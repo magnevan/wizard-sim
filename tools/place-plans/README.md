@@ -20,7 +20,9 @@ A plan spec is a short Python file that builds a `Plan` (in `plan.py`) and calls
 
 **Shapes** are `rect`, `circle`, `octagon`, `orect` (rotated rectangle), `arc_band` (a curved terrace) and `poly_n`. A boolean mask from `P.mask(...)` also works as a shape.
 
-**Flow frames.** `python tools/place-plans/plans/court-d.py --frames` writes `out/<name>-flow-<n>.png`, one sheet per route. Each sheet is a run of play-size screens along the route: 30 u wide, with the wizard where the camera puts it and no labels. The flow critic judges from these before the grey-box exists.
+**The journey.** `journey(points, label, moment)` adds one pass through the place, in the order the player makes them and in walking direction. `render()` then also writes `out/<name>-journey.png`: the plan from above with each pass numbered and arrowed, and a legend of what each is for.
+
+**Flow frames.** `python tools/place-plans/plans/court-d.py --frames` writes `out/<name>-flow-<n>.png`, one sheet per pass of the journey, or per route if there's no journey. Each sheet is a run of play-size screens along the route: 30 u wide, with the wizard where the camera puts it and no labels. The flow critic judges from these before the grey-box exists.
 
 In the game view, cliff faces are drawn on the sides the camera sees (+x and +y). The plan view marks a drop over 1.6 m with a thick line and smaller steps with a thin one. The stats line gives the world box, the walkable area and the flat tiers.
 

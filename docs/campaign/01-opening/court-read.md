@@ -46,6 +46,21 @@ So it's the hub, a landmark you keep returning to, and a battlefield for the fin
 - Four ways out: to the yard, to the battery, to the north road (later stops), and to the sea landing (the harbour, later).
 - A floor big enough for the finale: a warband, the aurochs charging, and four players.
 
+## The journey
+
+Every pass through the courtyard, in the brief's order. Which exit leads to which stop is a proposal: the infirmary just outside the main gate, on the battery's road; the ward line behind the academy, up the north road; the gorge up the stream past the bridge; the harbour and the cliff road at the sea landing. Drawn on plan D by `court-d.py` (`out/court-d-journey.png`).
+
+| # | Pass | The moment it should give |
+|---|---|---|
+| 1 | The briefing at the armillary | You start below the dais. The armillary fills the screen, and the beam stutters above the masters |
+| 2 | Out to the drill yard | Up the grand stair and west along the balcony. The bell tower marks the turn |
+| 3 | Back from the yard, out through the main gate to the infirmary, then the battery | **The reveal.** At the top of the grand stair the armillary is framed between the pylons. The beacon pulls you east |
+| 4 | Back from the battery: the ward bell, then north to the ward line | **Homecoming.** Down the grand stair to the bell at the dais, then up through the great hall |
+| 5 | Back from the ward line, out to the gorge | The best approach: straight down the north road onto the armillary, then out past the falls |
+| 6 | The finale: up from the sea landing | The climb from the sea, framed by the rim's gateway, with the armillary torn open above the warband |
+
+Most through-traffic stays on the balcony arc, and you go down into the plaza on four passes (the briefing, the bell, the way back from the ward line, the finale). So the arc is the hub you cross, and the plaza is a destination.
+
 ## Neighbours
 
 | Exit | Leads to | Today's marker |

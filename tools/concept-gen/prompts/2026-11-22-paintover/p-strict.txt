@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as OUTNAME.png in the current directory. Reply with just the file name.
+
+The first attached image is a screenshot of a level in our game, a grey-box blockout: the plain grey blocks are placeholder buildings, the ground is placeholder tiles. The second attached image is the finished look we want (concept art of the same academy).
+
+Repaint the first image as finished game art in the style of the second: high-detail pixel art, warm morning light, the academy's real architecture (warm sandstone, blue slate roofs with gold trim, tall arched windows, buttresses, carved doorways, banners), rich ground with worn dirt paths, trodden grass, sand, flagstones and moss.
+
+This repaint will be laid under the game exactly, so the layout must match the screenshot: keep the same camera, the same framing and the same image size. Every building's footprint and roofline, every path, ring, lane, fence, wall, lantern, rack, target, dummy and figure stays in the same place at the same size. Where the screenshot has a grey block, paint the real building filling that same block. Leave out the interface: the buttons in the top-right corner and the label in the bottom-left corner become more of the scene.

@@ -11,10 +11,20 @@
  * Scale: a wizard is 0.9 u across and about 26 art px tall with his hat, so 1 u is about 0.6 m
  * on the ground and a metre of height is about 14.5 art px.
  */
-import { Container, Graphics } from 'pixi.js';
+import { Container, Graphics, Sprite } from 'pixi.js';
 import { toU, toV, toX, toY } from '../iso-world';
 import { gx, gy } from './field';
 import { opt } from '../dev-options';
+import { loadTexture } from './assets';
+
+/** The buildings' painted art (tools/building-art/cut.py): an image and where its block's (x1, y1, 0) lands in it. */
+const ART_URL = import.meta.glob<string>('../../../../content/assets/buildings/*.png', { eager: true, query: '?url', import: 'default' });
+const ART_META = import.meta.glob<{ anchor: [number, number] }>('../../../../content/assets/buildings/*.json', { eager: true, import: 'default' });
+const artOf = (name: string): { url: string; anchor: [number, number] } | null => {
+  const key = (ext: string) => `../../../../content/assets/buildings/${name}.${ext}`;
+  const url = ART_URL[key('png')], meta = ART_META[key('json')];
+  return url && meta ? { url, anchor: meta.anchor } : null;
+};
 
 /** Art px per metre of height (a 1.8 m person is a 26 px wizard). */
 export const PX_PER_M = 14.5;
@@ -37,6 +47,13 @@ export interface Block {
   wall?: number; side?: number; roof?: number;
   /** Openings on the south face (along x) and the east face (along y). */
   south?: (Opening | Row)[]; east?: (Opening | Row)[];
+  /**
+   * Painted art for the block (content/assets/buildings/<art>.png, made by tools/building-art from the block's own
+   * shape): drawn instead of the grey block once it has loaded, placed by its json's anchor, the block's (x1, y1, 0).
+   */
+  art?: string;
+  /** This block is painted into another block's art (that block's id): hidden while that art shows. */
+  paintedIn?: string;
 }
 
 export interface MassingPlan { id: string; /** The room it stands round. */ room: string; /** Far to near: each is drawn over the ones before it. */ blocks: Block[]; /** Props whose foot is inside this margin (units) of a block are hidden. */ clear: number }
@@ -51,7 +68,7 @@ const M = U_PER_M;
  */
 const ARMOURY_X = 100;
 const hall: Block = {
-  id: 'great-hall', x0: -22 * M, x1: 0, y0: -12 * M, y1: 64, h: 14, rise: 10, ridge: 'y',
+  id: 'great-hall', x0: -22 * M, x1: 0, y0: -12 * M, y1: 64, h: 14, rise: 10, ridge: 'y', art: 'great-hall',
   east: [
     { from: 4, to: 31, every: 5, w: 2.2, z0: 3.5, z1: 11.5, kind: 'window' },
     { from: 39, to: 50, every: 5, w: 2.2, z0: 3.5, z1: 11.5, kind: 'window' },
@@ -60,21 +77,21 @@ const hall: Block = {
   ],
 };
 const library: Block = {
-  id: 'library', x0: -18 * M, x1: 0, y0: 64, y1: 112, h: 9, rise: 6, ridge: 'y',
+  id: 'library', x0: -18 * M, x1: 0, y0: 64, y1: 112, h: 9, rise: 6, ridge: 'y', art: 'library',
   east: [{ from: 2, to: 28, every: 4, w: 1.8, z0: 2.5, z1: 7.5, kind: 'window' }],
 };
-const works: Block = {
-  id: 'workshops', x0: 0, x1: 142, y0: -12 * M, y1: 0, h: 13, rise: 6, ridge: 'x',
-  south: [
-    { from: 3, to: 85, every: 4.5, w: 2.4, z0: 1, z1: 3.9, kind: 'window' },
-    { from: 3, to: 85, every: 4.5, w: 1.4, z0: 6.2, z1: 8.4, kind: 'window' },
-    { from: 3, to: 85, every: 4.5, w: 1.4, z0: 10.2, z1: 12.2, kind: 'window' },
-  ],
-};
+/** The workshops, in two halves so each fits one painted image (tools/building-art/silhouette.py draws the same). */
+const worksRows = (from: number): Row[] => [
+  { from, to: 42, every: 4.5, w: 2.4, z0: 1, z1: 3.9, kind: 'window' },
+  { from, to: 42, every: 4.5, w: 1.4, z0: 6.2, z1: 8.4, kind: 'window' },
+  { from, to: 42, every: 4.5, w: 1.4, z0: 10.2, z1: 12.2, kind: 'window' },
+];
+const worksWest: Block = { id: 'workshops-west', x0: 0, x1: 71, y0: -12 * M, y1: 0, h: 13, rise: 6, ridge: 'x', south: worksRows(3), art: 'workshops-west' };
+const worksEast: Block = { id: 'workshops-east', x0: 71, x1: 142, y0: -12 * M, y1: 0, h: 13, rise: 6, ridge: 'x', south: worksRows(1.5), art: 'armoury' };
 /** The armoury's tower over its door, 7 m square: the rack stands at its foot. */
 const tower: Block = {
   id: 'armoury', x0: ARMOURY_X - 3.5 * M, x1: ARMOURY_X + 3.5 * M, y0: -10 * M, y1: 0, h: 22, rise: 5, ridge: 'x',
-  wall: 0xc4bdae, side: 0x958e7f,
+  wall: 0xc4bdae, side: 0x958e7f, paintedIn: 'workshops-east',
   south: [
     { at: 1.8, w: 3.4, z0: 0, z1: 4.2, kind: 'door' },
     { at: 2.5, w: 2, z0: 8, z1: 11, kind: 'window' },
@@ -82,20 +99,49 @@ const tower: Block = {
   ],
 };
 /** The armillary on its plinth in the courtyard, where the briefing is: a stand-in block for the sphere. */
-const plinth: Block = { id: 'plinth', x0: 95, x1: 105, y0: 77, y1: 87, h: 1.6, wall: 0xb9b2a4, side: 0x8f8879 };
-const sphere: Block = { id: 'armillary', x0: 98.5, x1: 101.5, y0: 80.5, y1: 83.5, h: 9, wall: 0xb08d57, side: 0x8a6c3f };
-const ACADEMY: MassingPlan = { id: 'academy', room: 'yard', clear: 1.5, blocks: [works, tower, hall, library, plinth, sphere] };
+const plinth: Block = { id: 'plinth', x0: 95, x1: 105, y0: 77, y1: 87, h: 1.6, wall: 0xb9b2a4, side: 0x8f8879, art: 'armillary' };
+const sphere: Block = { id: 'armillary', x0: 96.5, x1: 103.5, y0: 78.5, y1: 85.5, h: 9, wall: 0xb08d57, side: 0x8a6c3f, paintedIn: 'plinth' };
+const ACADEMY: MassingPlan = { id: 'academy', room: 'yard', clear: 1.5, blocks: [worksWest, worksEast, tower, hall, library, plinth, sphere] };
 export const MASSING: Record<string, MassingPlan> = { academy: ACADEMY };
 
 const DARK = { window: 0x2c3340, door: 0x4a3626, void: 0x14161b };
 const ROOF = 0x56627a, ROOF_EDGE = 0x3a4458, WALL = 0xaaa394, SIDE = 0x837c6e, EDGE = 0x5d574c;
 
-/** Draws a plan's blocks under everything that stands, at the plan's real place in the turned view. */
+/** Draws a plan's blocks under everything that stands, at the plan's real place in the turned view: each as its painted art once that has loaded, else as a grey block. */
 export class Massing {
-  readonly g = new Graphics();
+  readonly g = new Container();
   private key = '';
   private dims = { w: 0, h: 0 };
-  constructor(parent: Container, readonly plan: MassingPlan) { this.g.zIndex = -1e9; parent.addChild(this.g); }
+  /** One layer per block, in the plan's order (far to near): its grey block, and its art once loaded. */
+  private parts: { b: Block; box: Graphics; art: Sprite | null; anchor: [number, number] }[];
+  constructor(parent: Container, readonly plan: MassingPlan) {
+    this.g.zIndex = -1e9;
+    parent.addChild(this.g);
+    this.parts = plan.blocks.map((b) => {
+      const part = { b, box: new Graphics(), art: null as Sprite | null, anchor: [0, 0] as [number, number] };
+      this.g.addChild(part.box);
+      const a = b.art ? artOf(b.art) : null;
+      if (a) void loadTexture(a.url).then((tex) => {
+        tex.source.scaleMode = 'nearest';
+        const spr = new Sprite(tex);
+        this.g.addChildAt(spr, this.g.getChildIndex(part.box));
+        part.art = spr; part.anchor = a.anchor;
+        this.show();
+      }).catch(() => { /* the grey block stays */ });
+      return part;
+    });
+  }
+
+  /** Each block's art where it has loaded (its grey block hidden), and blocks painted into shown art hidden too. */
+  private show(): void {
+    const painted = new Set(this.parts.filter((p) => p.art).map((p) => p.b.id));
+    for (const p of this.parts) {
+      p.box.visible = !p.art && !(p.b.paintedIn && painted.has(p.b.paintedIn));
+      if (!p.art) continue;
+      const [x, y] = this.pt(p.b.x1, p.b.y1, 0);
+      p.art.position.set(Math.round(x - p.anchor[0]), Math.round(y - p.anchor[1]));
+    }
+  }
 
   /** Plan (units) and height (metres) to the field's art px. */
   private pt(px: number, py: number, z: number): [number, number] {
@@ -114,8 +160,8 @@ export class Massing {
     this.g.position.set(fx0, fy0);
     if (key === this.key) return;
     this.key = key; this.dims = { w: dw, h: dh };
-    const g = this.g.clear();
-    for (const b of this.plan.blocks) this.block(g, b); // in the plan's order, far to near
+    for (const p of this.parts) this.block(p.box.clear(), p.b); // in the plan's order, far to near
+    this.show();
   }
 
   private quad(g: Graphics, pts: [number, number][], fill: number, edge?: number): void {

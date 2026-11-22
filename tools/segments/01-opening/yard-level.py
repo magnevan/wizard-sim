@@ -95,7 +95,9 @@ def disc(cx, cy, r, rough=0, seed=3):
 
 in_court = lambda x, y: x > BAL_X and y > BAL_Y
 # the yard: grass trodden thin, worn to dirt where people drill; the buildings' feet paved
-paint(lambda x, y: not in_court(x, y) and noise(x, y, 11) > .5, 'dirt')
+# grass, worn through only where people walk and drill (the concepts: trodden lawns, dirt where the feet go), with a
+# few thin patches along the buildings' feet where the shade keeps the grass short
+paint(lambda x, y: not in_court(x, y) and (x < 9 or y < 9) and noise(x, y, 11) > .62, 'dirt')
 paint(lambda x, y: not in_court(x, y) and (x < 3.5 or y < 3.5), 'flagstone')
 paint(rect(4, 53, 19, 9, 1.2, 12), 'dirt')                                          # the strike lanes
 paint(disc(*RING, 2.4, .6, 13), 'sand')                                             # the shove pit, the ring chalked on it (the client)
@@ -105,7 +107,7 @@ paint(rect(PARRY[0] - 2, PARRY[1] - 3, PARRY_HOME[0] - PARRY[0] + 4, 6, .5, 16),
 paint(disc(*HANDS, 6.6, 1.0, 17), 'sand')                                           # the hands test's ring
 paint(rect(54, 28, 46, 20, 1.6, 18), 'dirt')                                        # the soldiers' drill ground
 paint(rect(32, 36, 12, 12, 1.2, 19), 'dirt')                                        # the students' casting line
-paint(path(PATH, 2.8, .7, 20), 'dirt')                                              # the worn path, station to station
+paint(path(PATH, 3.2, .8, 20), 'dirt')                                              # the worn path, station to station
 # the courtyard: paving, the armillary's plinth, its seven channels (dim; the finale lights them)
 paint(in_court, 'flagstone')
 for k in range(7):

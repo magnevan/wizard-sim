@@ -54,6 +54,22 @@
   body.viewer .panel, body.viewer #help, body.viewer #toast { display: none !important; }
   #err { position: absolute; left: 50%; top: 60px; transform: translateX(-50%); display: none; max-width: 60%; padding: 10px 16px; border-radius: 10px; background: #c4493bee; color: #fff; font-size: 13px; pointer-events: none; white-space: pre-wrap; }
   #help .cam { opacity: .7; margin-top: 2px; }
+  #concept { left: 74px; top: 100px; bottom: 96px; width: 38vw; display: none; flex-direction: column; overflow: hidden; z-index: 2; }
+  #concept.open { display: flex; } #concept.big { width: calc(100vw - 400px); }
+  #concept .head { display: flex; gap: 6px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  #cv-tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; }
+  #cv-tabs button { padding: 2px; border: 2px solid transparent; border-radius: 6px; background: none; cursor: pointer; flex: none; }
+  #cv-tabs button.on { border-color: var(--slate); } #cv-tabs img { height: 34px; display: block; border-radius: 3px; }
+  #cv-view { flex: 1; position: relative; overflow: hidden; background: #2a2d34; cursor: crosshair; touch-action: none; }
+  #cv-view.panning { cursor: grabbing; }
+  #cv-img { position: absolute; left: 0; top: 0; transform-origin: 0 0; user-select: none; -webkit-user-drag: none; max-width: none; }
+  #cv-pins { position: absolute; inset: 0; pointer-events: none; }
+  .cv-pin { position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; background: var(--slate); color: #fff; border: 2px solid #fff; font: bold 11px system-ui; display: grid; place-items: center; cursor: pointer; pointer-events: auto; box-shadow: 0 1px 4px #000a; }
+  .cv-pin.sel { background: #ff8a3d; } .cv-pin.done { opacity: .5; }
+  #cv-empty { position: absolute; inset: 0; display: grid; place-items: center; color: #cfc6b8; text-align: center; padding: 20px; pointer-events: none; }
+  #concept .foot { display: flex; gap: 6px; align-items: center; padding: 6px 8px; border-top: 1px solid var(--line); }
+  #concept .foot input { font: inherit; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: #fffaf2; flex: 1; min-width: 80px; }
+  body.dropping::after { content: 'Drop the image: it becomes a concept for this map'; position: absolute; inset: 0; display: grid; place-items: center; background: #4a5a7acc; color: #fff; font-size: 22px; pointer-events: none; z-index: 9; }
   #keys { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; padding: 16px 20px; display: none; z-index: 5; }
   #keys table { border-collapse: collapse; width: 100%; } #keys td { padding: 3px 6px; border-bottom: 1px solid var(--line); vertical-align: top; } #keys td:first-child { white-space: nowrap; font-weight: 600; width: 130px; }
 </style>
@@ -64,6 +80,11 @@
 <div id="brushbar" class="panel"></div>
 <div id="side" class="panel"><section id="inspect"></section><section id="lists"></section></div>
 <div id="palette" class="panel"></div>
+<div id="concept" class="panel">
+  <div class="head"><b>Concepts</b><span id="cv-tabs"></span><button class="btn" id="cv-add" title="Add an image (or drop one on the editor, or paste one with Ctrl+V)">+ image</button><button class="btn" id="cv-big" title="Wider">⤢</button><button class="btn" id="cv-x" title="Close (K)">✕</button><input type="file" id="cv-file" accept="image/*" multiple hidden></div>
+  <div id="cv-view"><img id="cv-img" alt=""><div id="cv-pins"></div><div id="cv-empty">No concept images yet.<br>Drop one on the editor, paste one (Ctrl+V), or + image.</div></div>
+  <div class="foot"><input id="cv-title" title="The image's name"><button class="btn" id="cv-fit" title="Fit the image">fit</button><button class="btn" id="cv-rm" title="Remove this image (its pins stay)">remove</button><span class="meta">click: pin a note · wheel: zoom · drag: pan</span></div>
+</div>
 <div id="pinbox" class="panel"><textarea placeholder="What should change here? (Enter to save, Esc to cancel)"></textarea></div>
 <div id="toast"></div>
 <div id="help"></div>
@@ -78,8 +99,9 @@
   <tr><td>C · M</td><td>Show every corner's level · hide the markers</td></tr>
   <tr><td>Arrows · Q/E · Delete</td><td>Move, turn, remove the selected stair or prop (arrows follow the camera)</td></tr>
   <tr><td>Ctrl+Z · Ctrl+Y</td><td>Undo · redo (Claude's edits too)</td></tr>
+  <tr><td>K</td><td>Show or hide the concept images; click one to pin a note on it (drop or paste an image to add one)</td></tr>
   <tr><td>Esc</td><td>Clear the selection; with nothing selected, the inspector shows the map (grow, shrink, notes)</td></tr>
-</table><p class="meta" style="margin:10px 0 0">New level: “+ level” in the palette, name it, then paint where it goes. Stairs: select an edge between two levels and “Add a stair here”, or drag along it with S. Curves: ask Claude.</p></div>
+</table><p class="meta" style="margin:10px 0 0">New level: “+ level” in the palette, name it, then paint where it goes. Stairs: select an edge between two levels and “Add a stair here”, or drag along it with S. Curves: drag along a level's edge with A, then move out for the bulge.</p></div>
 <div id="err"></div>
 <script type="module" src="./src/lab/editor/main.ts"></script>
 </body>

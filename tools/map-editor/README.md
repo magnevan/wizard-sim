@@ -21,6 +21,8 @@ Everything happens in the 3D view. In Select, **left-drag** orbits (in the other
 | Prop | P | Click to place the prop chosen in the bar, facing the way chosen (Q/E) |
 | Pin | N | Click anything and write what should change. Claude sees new pins with your next message in the terminal, and its replies appear on the pin |
 
+**Concept images:** drop an image file on the editor, paste one (Ctrl+V), or **+ image** in the Concepts panel (**K**, or **Concepts** in the top bar), and it is kept with the map (`tools/kit/scenes/refs/<scene>/`, listed in `<scene>.refs.json`). The panel shows one large beside the 3D view, with the others as a strip: the wheel zooms, a drag pans, and a **click pins a note on that spot of the image** for Claude, like a pin on the map. Its pins show as numbered dots on the image, and in the pins list as "on the concept …"; clicking one there opens the image at it.
+
 **A new level:** **+ level** in the palette adds one a metre above the highest, opens it to be named, and switches to painting with it. **Ctrl+Z** and **Ctrl+Y** undo and redo anything, Claude's edits included. Problems show as red (error) and amber (warning) markers at their place and in the list on the right (a stray railing end beside an ambiguous cell folds under it); clicking one goes there. When Claude edits, a note says what it did and the changed corners glow for a moment.
 
 ## HTTP API
@@ -40,6 +42,9 @@ The dev server (default `http://127.0.0.1:5187`, or `$MAP_EDITOR_URL`) serves th
 | `GET /__map/history?name=N&n=20` | `{groups: [{group, author, label, rev, time}]}`, newest first |
 | `GET /__map/pins?name=N&status=open` | `{pins: [...]}`; `status` is `open`, `new` (open and not yet seen by Claude), `resolved` or `all` (default `open`) |
 | `POST /__map/pins` | Body `{name, op, ...}`: `add {note, anchor}`, `reply {id, text, author}`, `resolve {id, outcome: scene/rule/piece, text?}`, `seen {ids}`, `delete {id}` |
+| `GET /__map/refs?name=N` | The concept images pinned to the map: `{refs: [{id, title, file, time, path}]}` (`path`: the file on disk, under `tools/kit/scenes/refs/<scene>/`) |
+| `POST /__map/refs` | Body `{name, op, ...}`: `add {title, data}` (`data`: a `data:image/...;base64,` URL, or base64 with `filename`), `rename {id, title}`, `remove {id}` (the file goes; its pins stay) |
+| `GET /__map/ref-image?name=N&id=r1` | The image's bytes |
 | `GET /__map/view?name=N` | A PNG of the scene as the editor renders it (an open editor page showing that scene, or a hidden headless one): `&cam=top` (straight down), `game` (the game's camera) or `current`; `&x=&y=` (corners) to centre on, `&r=` (corners) half the width shown; `&pins=0&findings=0` hide the markers |
 
 ### Ops
@@ -62,4 +67,4 @@ Ops name things by id. Terraces may also be named by glyph.
 
 ## Pins
 
-A pin: `{id, note, author, anchor: {x, y, h?, obj?, inst?, cam?}, rev, status: open/resolved, seen, outcome?, thread: [{author, text, time}]}`. `anchor.obj` is the id of the object or terrace it was dropped on; `anchor.inst` the piece under it (`p` and `e`). Each pin is resolved with an outcome: `scene` (fixed in this map), `rule` (the compiler's behaviour; file an issue) or `piece` (a kit piece missing or bad; file an issue).
+A pin: `{id, note, author, anchor: {x, y, h?, obj?, inst?, cam?} or {ref: {id, u, v}}, rev, status: open/resolved, seen, outcome?, thread: [{author, text, time}]}`. `anchor.obj` is the id of the object or terrace it was dropped on; `anchor.inst` the piece under it (`p` and `e`). A pin on a concept image has `anchor.ref` instead: the image's id and where on it (`u`, `v` from its top left, 0 to 1); `cli.mjs ref <scene> show <id> --pin <pin>` writes the image with the pin drawn on it and a close-up around it, for Claude to look at. Each pin is resolved with an outcome: `scene` (fixed in this map), `rule` (the compiler's behaviour; file an issue) or `piece` (a kit piece missing or bad; file an issue).

@@ -12,6 +12,7 @@ import { buildKit, disposeKit, groundPlane, loadKitArt, setupStage, yOf, type In
 import type { Obj, Op, Scene, Terrace } from '../../../map-editor/ops';
 import type { Compiled, Finding } from '../../../map-editor/compile-worker';
 import type { Pin } from '../../../map-editor/store';
+import { Concepts } from './concepts';
 import { apexOf, arcPoints, edgeAt, fromSag, lineOf, runOn, sagFor, sagOf, type CurveShape, type EdgeLine, type Pt } from './curve';
 
 const ICON = import.meta.glob<string>('./icons/*.png', { eager: true, query: '?url', import: 'default' });
@@ -133,7 +134,7 @@ function rebuildMarkers() {
     markers.add(s);
   }
   for (const p of pins) {
-    if (p.status !== 'open') continue;
+    if (p.status !== 'open' || p.anchor.x == null || p.anchor.y == null) continue;   // a pin on a concept image shows there
     const s = sprite(p.id.replace('p', ''), '#4a5a7a');
     s.position.copy(at3(p.anchor.x, p.anchor.y, (p.anchor.h ?? heightAt(p.anchor.x, p.anchor.y)) + 2.6)); s.userData.pin = p.id;
     markers.add(s);
@@ -219,7 +220,7 @@ function onUpdate(d: Update) {
   adoptNewTerrace();
 }
 hot.on('map:update', onUpdate);
-hot.on('map:pins', (d: { name: string; pins: Pin[] }) => { if (d.name === name) { pins = d.pins; rebuildMarkers(); renderLists(); } });
+hot.on('map:pins', (d: { name: string; pins: Pin[] }) => { if (d.name === name) { pins = d.pins; rebuildMarkers(); renderLists(); concepts.renderPins(); } });
 hot.on('map:error', (d: { name: string; error: string }) => { if (d.name === name) { $('err').style.display = 'flex'; $('err').textContent = d.error; } });
 
 async function call(path: string, body?: unknown) {
@@ -239,6 +240,7 @@ async function open(n: string) {
   name = n; framed = false; sel = null; shown = null;
   history.replaceState(null, '', `?scene=${n}${q.get('art') === '0' ? '&art=0' : ''}`);
   const p = await call(`pins?name=${n}&status=all`); pins = p?.pins ?? [];
+  await concepts.load();
   hot.send('map:hello', { name: n });
 }
 
@@ -271,7 +273,7 @@ function focus(x: number, y: number, viewH?: number) {
 function selWhere(): [number, number] | null {
   if (!sel || !sc) return null;
   if (sel.type === 'edge') return sel.e;
-  if (sel.type === 'pin') { const p = pins.find((x) => x.id === (sel as { id: string }).id); return p ? [p.anchor.x, p.anchor.y] : null; }
+  if (sel.type === 'pin') { const p = pins.find((x) => x.id === (sel as { id: string }).id); return p?.anchor.x != null && p.anchor.y != null ? [p.anchor.x, p.anchor.y] : null; }
   if (sel.type === 'obj') {
     const o = sc.objects.find((x) => x.id === (sel as { id: string }).id) as Record<string, unknown> | undefined;
     const pts = [o?.at, o?.centre, ...((o?.head ?? o?.ends ?? []) as unknown[])].filter((p): p is [number, number] => Array.isArray(p));
@@ -493,7 +495,7 @@ const HELP: Record<Tool, string> = {
   stair: 'Drag along the edge where the stair should start; it runs down to the lower side (or select an edge and use Add a stair)',
   curve: 'Drag along a straight edge of a higher level for the ends, then move out for the bulge and click · drag a selected curve\'s handles to change it',
   prop: 'Click to place the prop · Q/E turn it first',
-  pin: 'Click anything and write what should change: Claude sees new pins with your next message',
+  pin: 'Click anything and write what should change: Claude sees new pins with your next message · K: concept images (click one to pin on it)',
 };
 
 const cv = renderer.domElement;
@@ -647,11 +649,22 @@ function openPinBox(ev: PointerEvent, h: Hit) {
     obj: it?.o ?? it?.src ?? h.floor?.id, inst: it ? { p: it.p, e: it.e } : undefined,
     cam: [...cam.position.toArray(), ...controls.target.toArray()].map((v) => Math.round(v * 100) / 100),
   };
+  showPinBox(ev);
+}
+/** The note box, beside where the user clicked (on the map or on a concept image). */
+function showPinBox(ev: { clientX: number; clientY: number }) {
   const box = $('pinbox'), ta = box.querySelector('textarea')!;
   box.style.display = 'block';
   box.style.left = `${Math.min(innerWidth - 290, ev.clientX + 12)}px`; box.style.top = `${Math.min(innerHeight - 110, ev.clientY + 12)}px`;
   ta.value = ''; ta.focus(); requestAnimationFrame(() => ta.focus());   // again after the click, which can take the focus back
 }
+const concepts = new Concepts({
+  scene: () => name, call, toast, pins: () => pins,
+  selectedPin: () => (sel?.type === 'pin' ? sel.id : null),
+  pinAt: (ev, anchor) => { pinAnchor = anchor; showPinBox(ev); },
+  selectPin: (id) => { sel = { type: 'pin', id }; highlightSel(); renderInspect(); concepts.renderPins(); },
+});
+hot.on('map:refs', (d: { name: string; refs: Parameters<Concepts['set']>[0] }) => { if (d.name === name) { concepts.set(d.refs); renderTop(); renderLists(); } });
 $('pinbox').querySelector('textarea')!.addEventListener('keydown', async (e) => {
   const ta = e.target as HTMLTextAreaElement;
   if (e.key === 'Escape') { $('pinbox').style.display = 'none'; return; }
@@ -688,6 +701,7 @@ addEventListener('keydown', (e) => {
   if (k === 'f') { const w = selWhere(); if (w) focus(w[0], w[1], 24); else frameAll(); return; }
   if (k === 'c') { cornersOn = !cornersOn; rebuildCorners(); renderTop(); return; }
   if (k === 'm') { showMarkers = !showMarkers; markers.visible = showMarkers; return; }
+  if (k === 'k') { concepts.toggle(); return; }
   if (k === '?' || k === 'h') { $('keys').style.display = $('keys').style.display === 'block' ? 'none' : 'block'; return; }
   if (k === 'i' && hoverCorner && sc) { const [x, y] = hoverCorner.map(Math.round); if (inMap(x, y)) { brushG = sc.corners[y][x]; renderPalette(); renderBrushbar(); toast(`Brush: ${terrace(brushG)?.name}`); } return; }
   if (k === 'escape' && (curving || drag?.kind === 'curve')) { drag = null; controls.enabled = true; cancelCurve(); return; }
@@ -741,6 +755,7 @@ function renderTop() {
     <span class="grow"></span>
     <button id="b-top" title="Look straight down (T)">Top</button><button id="b-game" title="The game's camera (G)">Game</button>
     <button id="b-corners" title="Show every corner's terrace (C)">${cornersOn ? '◉' : '○'} Corners</button>
+    <button id="b-concepts" title="Concept images for this map: click one to pin a note on it (K)">Concepts (${concepts.refs.length})</button>
     <button id="b-keys" title="All the keys (?)">?</button>
     <button id="b-undo" title="Undo (Ctrl+Z)"><img src="${icon('undo')}" width="18"></button>
     <button id="b-redo" title="Redo (Ctrl+Y)"><img src="${icon('redo')}" width="18"></button>`;
@@ -764,6 +779,7 @@ function renderTop() {
   $('b-game').onclick = () => dispatchEvent(new KeyboardEvent('keydown', { key: 'g' }));
   $('b-keys').onclick = () => dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
   $('b-corners').onclick = () => { cornersOn = !cornersOn; rebuildCorners(); renderTop(); };
+  $('b-concepts').onclick = () => concepts.toggle();
 }
 
 const TOOLS: [Tool, string, string, string][] = [
@@ -926,7 +942,7 @@ function renderInspect() {
 function pinHtml(p: Pin) {
   return `<div class="item pin ${p.status === 'resolved' ? 'done' : ''}" data-pin="${p.id}">
     <div><b>${esc(p.id)}</b> ${esc(p.note)}</div>
-    <div class="meta">(${p.anchor.x}, ${p.anchor.y})${p.anchor.obj ? ` · ${esc(p.anchor.obj)}` : ''}${p.anchor.inst ? ` · ${esc(p.anchor.inst.p)}` : ''} · ${p.status}${p.outcome ? `: ${p.outcome}` : ''}${p.status === 'open' ? (p.seen ? ' · Claude has seen it' : ' · new') : ''}</div>
+    <div class="meta">${p.anchor.ref ? `on the concept “${esc(concepts.title(p.anchor.ref.id) ?? `${p.anchor.ref.id}, removed`)}”` : `(${p.anchor.x}, ${p.anchor.y})`}${p.anchor.obj ? ` · ${esc(p.anchor.obj)}` : ''}${p.anchor.inst ? ` · ${esc(p.anchor.inst.p)}` : ''} · ${p.status}${p.outcome ? `: ${p.outcome}` : ''}${p.status === 'open' ? (p.seen ? ' · Claude has seen it' : ' · new') : ''}</div>
     ${p.thread.length ? `<div class="thread">${p.thread.map((m) => `<div><b>${m.author === 'claude' ? 'Claude' : esc(m.author)}:</b> ${esc(m.text)}</div>`).join('')}</div>` : ''}
     <div class="row">${p.status === 'open' ? `<button class="btn" data-act="resolve">Done</button>` : `<button class="btn" data-act="reopen">Reopen</button>`}<button class="btn" data-act="delete">Delete</button></div></div>`;
 }
@@ -947,7 +963,9 @@ function renderLists() {
     ${open.map(pinHtml).join('') || '<div class="meta">Pin a note on anything (N); Claude sees new pins with your next message in the terminal.</div>'}
     ${done.length ? `<div class="meta" style="margin-top:8px">Recently resolved</div>${done.map(pinHtml).join('')}` : ''}`;
   el.querySelectorAll<HTMLElement>('[data-f]').forEach((d) => { d.onclick = () => { const f = fs[Number(d.dataset.f)]; if (f.at) focus(f.at[0], f.at[1], 20); if (f.refs[0] && sc?.objects.some((o) => o.id === f.refs[0])) { sel = { type: 'obj', id: f.refs[0] }; highlightSel(); renderInspect(); } }; });
-  el.querySelectorAll<HTMLElement>('[data-pin]').forEach((d) => { d.onclick = () => { const p = pins.find((x) => x.id === d.dataset.pin); if (p) { focus(p.anchor.x, p.anchor.y); sel = { type: 'pin', id: p.id }; renderInspect(); } }; });
+  el.querySelectorAll<HTMLElement>('[data-pin]').forEach((d) => { d.onclick = () => { const p = pins.find((x) => x.id === d.dataset.pin); if (!p) return; sel = { type: 'pin', id: p.id }; renderInspect();
+    if (p.anchor.ref) { if (concepts.title(p.anchor.ref.id)) concepts.show(p.anchor.ref.id, p.anchor.ref); } else if (p.anchor.x != null && p.anchor.y != null) focus(p.anchor.x, p.anchor.y);
+    concepts.renderPins(); }; });
   bindPinButtons(el);
 }
 

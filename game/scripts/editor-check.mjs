@@ -1,9 +1,10 @@
 // usage: node scripts/editor-check.mjs [--url http://127.0.0.1:5187] [--out shots/editor-check]
 // A smoke test of the map editor (editor.html) against a running dev server (npm run dev): on a throwaway copy of
 // patch B (tools/kit/scenes/zz-check.scene.json, removed afterwards) it sets a wall section to a door, paints a bed
-// with the brush, drops a pin, undoes, draws a curve and drags its bulge, and asks for Claude's pictures (/__map/view), checking the server after each
+// with the brush, drops a pin, undoes, draws a curve and drags its bulge, pins a note on a concept image, and asks for Claude's pictures (/__map/view), checking the server after each
 // step. Screenshots go to --out. Exits 1 if a step fails or the page logs an error.
-import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer-core';
@@ -96,6 +97,25 @@ try {
   check(!(f.findings ?? []).some((x) => x.code === 'curve-ends'), `the compiler takes the curve (${(f.findings ?? []).map((x) => x.code).join(', ')})`);
   await page.screenshot({ path: `${OUT}/4c-semicircle.png` });
 
+  // 4d. a concept image: add one, open the panel (K), click its middle, write a note; then Claude's marked copy
+  const img = `${ROOT}/docs/reference/map-editor/patch-b-greybox.jpg`;
+  const added = await fetch(`${URL}/__map/refs`, { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name: 'zz-check', op: 'add', title: 'the greybox', filename: 'greybox.jpg', data: readFileSync(img).toString('base64') }) }).then((r) => r.json());
+  check(added.ref?.id, `a concept image is added (${JSON.stringify(added)})`);
+  await page.keyboard.press('Escape'); await page.keyboard.press('k'); await sleep(1500);
+  const box = await page.evaluate(() => { const r = document.getElementById('cv-view').getBoundingClientRect(); const i = document.getElementById('cv-img'); return { x: r.x + r.width / 2, y: r.y + r.height / 2, loaded: i.naturalWidth > 0 }; });
+  check(box.loaded, 'K opens the concept panel with the image');
+  await page.mouse.click(box.x, box.y); await sleep(600);
+  await page.keyboard.type('the terrace should be this wide'); await page.keyboard.press('Enter'); await sleep(600);
+  const cp = (await api('pins', { status: 'open' })).pins.find((p) => p.anchor.ref);
+  check(cp && cp.anchor.ref.id === added.ref?.id && Math.abs(cp.anchor.ref.u - 0.5) < 0.02 && Math.abs(cp.anchor.ref.v - 0.5) < 0.02, `a click on the image pins a note there (${JSON.stringify(cp?.anchor)})`);
+  await page.screenshot({ path: `${OUT}/4d-concept.png` });
+  if (cp) {
+    const cli = spawnSync('node', [`${ROOT}/tools/map-editor/cli.mjs`, 'ref', 'zz-check', 'show', cp.anchor.ref.id, '--pin', cp.id, '--out', `${OUT}/4d-marked.png`], { encoding: 'utf8', env: { ...process.env, MAP_EDITOR_URL: URL } });
+    check(cli.status === 0 && existsSync(`${OUT}/4d-marked.png`) && existsSync(`${OUT}/4d-marked-crop.png`), `cli ref show draws the pin, with a close-up (${(cli.stdout + cli.stderr).trim().split('\n').join(' | ')})`);
+  }
+  await page.keyboard.press('k');
+
   // 5. Claude's pictures
   let r = await fetch(map('view', { cam: 'top' }));
   check(r.ok && r.headers.get('content-type') === 'image/png', `the top-view picture is a PNG (${r.status}${r.ok ? '' : ` ${await r.clone().text()}`})`);
@@ -108,7 +128,8 @@ try {
   check(!errors.length, `no page errors${errors.length ? `: ${errors.join(' | ')}` : ''}`);
 } finally {
   await browser.close();
-  for (const ext of ['scene.json', 'pins.json', 'history.jsonl']) if (existsSync(`${SC}.${ext}`)) rmSync(`${SC}.${ext}`);
+  for (const ext of ['scene.json', 'pins.json', 'history.jsonl', 'refs.json']) if (existsSync(`${SC}.${ext}`)) rmSync(`${SC}.${ext}`);
+  rmSync(`${ROOT}/tools/kit/scenes/refs/zz-check`, { recursive: true, force: true });
 }
 console.log(fails.length ? `${fails.length} failed` : 'all passed');
 process.exit(fails.length ? 1 : 0);

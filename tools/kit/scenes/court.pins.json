@@ -1,0 +1,312 @@
+{
+ "next": 21,
+ "pins": [
+  {
+   "id": "p1",
+   "note": "SET PIECE: the armillary, about 10 m, the landmark. Needs the set-piece class (a unique Meshy model on a footprint the compiler keeps clear).",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 47.5,
+    "y": 40
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p2",
+   "note": "SET PIECE: the bell tower (15 m), the marker at the balcony road's west turn. A plain wall box for now.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 39,
+    "y": 15
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p3",
+   "note": "SET PIECE: the beacon (13 m), the marker at the east turn. Missing: too small to trace as a box.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 56,
+    "y": 15
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p4",
+   "note": "SET PIECE: the battery tower (14 m), beside the battery road. A plain wall box for now.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 80.5,
+    "y": 10
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p5",
+   "note": "FACADE: the great hall (16 m), with the north road passing through it and a stoop at each door. Now a plain wall box with no passage; it needs a gateway piece (an arch through a wall) and its facade.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 47.5,
+    "y": 17
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p6",
+   "note": "FACADE: the library (9 m), door mid-face toward the plaza. A plain wall box for now.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 28.5,
+    "y": 33
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p7",
+   "note": "FACADE: the workshops (9 m), door mid-face toward the plaza. A plain wall box for now.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 66.5,
+    "y": 33
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p8",
+   "note": "PIERS: the north gate's towers (8 m), a pair either side of the north road. Missing: a tall pier or gate-tower piece.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 47.5,
+    "y": 9
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p9",
+   "note": "PIERS: the rim's gateway, a matched round pair (5 m) framing the sea stair. Missing: a free-standing round pier piece.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 47.5,
+    "y": 49
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p10",
+   "note": "PIERS: the battery road's gate, a matched round pair (5 m) square across the road. Missing: the same round pier.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 66,
+    "y": 16
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p11",
+   "note": "PIERS: the drill yard's gate piers (4 m). Missing: a square gate pier.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 24.5,
+    "y": 16
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p12",
+   "note": "PIERS: threshold pillars (5 m) where the balcony road meets each seam (here and at the east end). Missing: the round pier.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 33,
+    "y": 16
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p13",
+   "note": "PIERS: the overlook's low prow posts (2.5 m). Missing: a short post; could be joint.pier, taller.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 51,
+    "y": 33
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p14",
+   "note": "CURVED FLIGHT: the plaza rim opens south in a sector of steps (2 to 3 m) down to the sea stair. Traced as flat bands of 0.5 m; needs a curved flight (step 3).",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 47.5,
+    "y": 48.5
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p15",
+   "note": "STEP RINGS: the dais is two 0.5 m rings you can step up anywhere, and the plaza is sunk in two treads. The kit has no step between a 0.3 m kerb and a flight, so the dais and the sunk floor can't be reached (unreachable). Needs ring flights or a \"steps\" edge (step 3).",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 53.9,
+    "y": 40.3
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p16",
+   "note": "SMALL STEPS: a 0.5 m stoop at each of the great hall's doors. Unreachable: same gap as the dais rings.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 42.6,
+    "y": 21.3
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p17",
+   "note": "SMALL STEPS: the overlook steps down two 0.4 m treads into its bay, with a 2.5 m drop on its prow (unguarded). Same gap; the bay's parapet comes back once the treads are steps.",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 51.5,
+    "y": 30
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p18",
+   "note": "SCENE: the kit's flights are longer than plan D's (0.5 u per 0.15 m step), so the -2 m landing between the middle and lower sea stairs is too short. Fix: move the lower flight and the quay two cells toward the sea.",
+   "author": "claude",
+   "rev": 0,
+   "status": "resolved",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 47.5,
+    "y": 62.5
+   },
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Done (rev 1): the -2 m landing is now 4 rows, the lower flight's head is at row 64.5 and the quay runs out to row 74.",
+     "time": "2026-11-23T21:37:21.784Z"
+    }
+   ],
+   "trace": true,
+   "outcome": "scene"
+  },
+  {
+   "id": "p19",
+   "note": "CURVES: every arc in plan D (the three terraces, the round plaza, the balcony road) is a 45-degree stand-in. A curve object can only bulge from one straight edge; these need general curves (kit-courtyard step 2).",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 37,
+    "y": 40
+   },
+   "thread": [],
+   "trace": true
+  },
+  {
+   "id": "p20",
+   "note": "FLOORS: the sea and the stream are `water`, the quay and the bridge deck `deck`. They draw as paving until the editor's renderer learns both (asked of the Map Editor session).",
+   "author": "claude",
+   "rev": 0,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T21:34:08.662603+00:00",
+   "anchor": {
+    "x": 47.5,
+    "y": 75
+   },
+   "thread": [],
+   "trace": true
+  }
+ ]
+}

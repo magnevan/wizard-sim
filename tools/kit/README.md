@@ -10,6 +10,8 @@ Places are built from made pieces on a square grid ([flexible building](../../do
 | `scene.py` | `convert <layout>` turns an old Python layout into a scene; `check <scene>` prints its findings with their places |
 | `worker.py` | The map editor's long-lived compiler (JSON lines in and out) |
 | `fit.py` | Blender: fits a generated model to its piece's box |
+| `trace_plan.py` | `python tools/kit/trace_plan.py court-d court` re-runs a place plan (`tools/place-plans/plans/`) on the kit's corner lattice and writes a first-draft scene, plus `<scene>.gaps.json`: what the kit can't say yet (set pieces, facades, curved flights). A one-off draft: after it, the scene is the source |
+| `court_pins.py` | The courtyard's gaps as map-editor pins (`scenes/court.pins.json`), named by hand |
 | `layouts/*.py` | The first two test patches as written by hand, kept as history; their scenes are the live copies |
 
 ## The scene format
@@ -32,7 +34,7 @@ Places are built from made pieces on a square grid ([flexible building](../../do
 ```
 
 - **Coordinates** are corners: corner `(x, y)` is `corners[y][x]`. Cells lie between corners; edges sit on half-coordinates.
-- **Terraces:** `h` in metres; `mat` is the floor (paving, plaza, road, lawn, roof, rock); `edge` is how the terrace meets lower ground: `wall` (a building), `parapet` (a balustrade on a retaining wall), `retain` (a retaining wall), `open` (a drop left open, as for a cliff). A drop of 0.3 m or less is a kerb whatever the edge. `walk: false` for ground nobody walks on (beds, roofs, cliffs). Each corner character is a terrace's `glyph`; its `id` is what everything else refers to.
+- **Terraces:** `h` in metres; `mat` is the floor (paving, plaza, road, lawn, roof, rock, water, deck; the renderer draws water and deck as paving until it learns them); `edge` is how the terrace meets lower ground: `wall` (a building), `parapet` (a balustrade on a retaining wall), `retain` (a retaining wall), `open` (a drop left open, as for a cliff). A drop of 0.3 m or less is a kerb whatever the edge. `walk: false` for ground nobody walks on (beds, roofs, cliffs). Each corner character is a terrace's `glyph`; its `id` is what everything else refers to.
 - **Flights:** `head` is the line the flight starts from, along a terrace's edge (a half-coordinate). Its top, bottom and direction come from the corners either side, and its length from the drop (0.15 m per step).
 - **Curves:** a terrace bulging past its grid edge along a circle from `ends[0]` to `ends[1]` round `centre`, bulging toward `out`.
 - **Edge overrides:** `at` is the midpoint of one straight edge section; `v` is `plain`, `window` or `door` on a wall, `plain` or `niche` on a parapet or retaining wall. Without one, the compiler chooses (windows every other bay, by position; niches on tall walls seen from walkable ground).

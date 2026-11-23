@@ -249,15 +249,15 @@ flowchart LR
   <li><b>Closure is a connectivity test, not an overlap.</b> A wall covering part of a wide flight leaves it open. When a solid wall or barrier touches a portal, the portal's cells are tested for a way across; only then is the edge closed or costed.</li>
   <li><b>One cost model for blocked routes.</b> Solid walls get an integer break cost on the edge, as players' force fields already have. One Dijkstra over the region graph (tens of nodes) then decides between going round and breaking through. No separate "detour budget".</li>
   <li><b>Only what changed is recomputed</b>: the touched portals' state and the affected windows. The dynamic portal state is a few bytes per portal in the snapshot.</li>
-  <li><b>A plan rule</b>: every fight area has at least two routes in, or its single choke is deliberate and named in the read. The walk report counts routes per region and flags single points of failure.</li>
-  <li><b>Walls on terrain</b>: a tier is defined by step connectivity (neighbours within 0.5 m), so a flight is one tier. A wall spell is clipped to the tier it is cast on (the aim point's tier for ranged casts, to be decided), never floating over a drop or buried in a cliff, and its preview shows the clipped length before it lands.</li>
+  <li><b>A plan rule</b>: one wall spell can seal a single flight or gate, so if a fight area has only one way in, players can shut the enemies out entirely. So every fight area has at least two ways in, unless the single entrance is a deliberate set piece (holding a bridge), written down as such in the place's read. The walk report counts the ways into each area and flags the ones with only one.</li>
+  <li><b>Walls on terrain</b> (your call: natural behaviour): a wall follows the ground it is cast on, so one aimed up a staircase or onto a higher tier climbs the steps with the ground. It stops only where a real cliff (over 0.5 m) would cut it, never floating over a drop or buried in a cliff, and its preview shows where it will stop before it lands.</li>
 </ul>
 
 <h3>Other gameplay effects of height</h3>
 <ul class="tight">
   <li><b>Shots and edges</b>: "shots pass over an edge from above, hit the face from below" needs shots to carry a height in state and cliffs to become directional segments. That is real sim work, not a given. Sight should stay symmetric, so enemies on a terrace don't get a free shot you can't return, with cover only close under an edge.</li>
-  <li><b>Knockback near drops</b>: today every public edge over 1 m has a parapet. Leaving some open, so knockback can push someone off, needs a falling state for bodies. Out of scope until decided.</li>
-  <li><b>Jumping down</b>: one-way links for enemies are cheap in the graph but need the same falling state. Left out of the first navigation step.</li>
+  <li><b>Knockback near drops</b> (your call: some drops are open): today every public edge over 1 m has a parapet. Open drops, where knockback can push someone off, need a falling state for bodies and a rule for what falling does. This joins the plan as sim work after navigation, and plans mark which edges are open on purpose.</li>
+  <li><b>Jumping down</b>: one-way links for enemies are cheap in the graph and use the same falling state, so they come with it, after the first navigation step.</li>
   <li><b>Readability</b>: what blocks must look like it blocks. That is what the agreement check protects; it's a gameplay requirement, not polish.</li>
 </ul>
 
@@ -265,7 +265,7 @@ flowchart LR
 <div class="table-box"><table>
 <thead><tr><th></th><th>Step</th><th>Where</th><th>Done when</th></tr></thead>
 <tbody>
-<tr><td class="num">0</td><td>A one-day frame-time measurement of the current spike on the target laptop</td><td>spike</td><td>Measured against a bar agreed beforehand (a named laptop, a frame-rate target with four wizards and spells); missing it badly ends the direction before anything else is spent</td></tr>
+<tr><td class="num">0</td><td>A one-day frame-time measurement of the current spike on the target laptop</td><td>spike</td><td>At least 30 fps on your laptop with four wizards and spells (more is better); missing it badly ends the direction before anything else is spent</td></tr>
 <tr><td class="num">1</td><td>Transitional agreement check, failing the build</td><td>main</td><td>It reports today's mismatches (parapets, piers)</td></tr>
 <tr><td class="num">2a</td><td>Plans as shape ops only; delete the override path</td><td>main</td><td>No numpy edits in plans; no hash change</td></tr>
 <tr><td class="num">2b</td><td>Collision segments from outlines; the permanent agreement check</td><td>main</td><td>Zero mismatches; golden hashes re-recorded on purpose</td></tr>
@@ -278,13 +278,12 @@ flowchart LR
 </tbody></table></div>
 <p>Steps 1 to 5 go on main: the compiler, collision from outlines, the stamp and navigation are valid for the pixel game too, and the courtyard is already too big for today's navigation whatever the art direction. Only the renderer, the kit and the performance pass stay on the spike, so the art decision stays reversible. Paused meanwhile: courtyard beauty rounds, critic tuning, new Meshy pieces, hand-placed dressing.</p>
 
-<h2>Questions worth your review</h2>
+<h2>Decided, and still open</h2>
 <ul>
-  <li>Which laptop, and what frame rate, is the adoption bar? Is about 15 MB per place acceptable?</li>
-  <li>For a ranged wall spell, should it clip to the caster's tier or the aim point's?</li>
-  <li>Should any drops be open, so knockback can push someone off? That needs a falling state, and so would enemies jumping down.</li>
-  <li>Is "two routes into every fight area, or a named choke" the right rule for plans?</li>
-  <li>Should steps 1 to 5 (the compiler, collision from outlines, navigation) go ahead on main now, ahead of the art decision? They change the golden hashes once, on purpose.</li>
+  <li><b>Decided (2026-11-23):</b> the adoption bar is at least 30 fps on your laptop; wall spells follow the ground naturally, climbing stairs and stopping at cliffs; some drops are open for knockback, so falling becomes sim work.</li>
+  <li><b>Open:</b> is about 15 MB per place acceptable?</li>
+  <li><b>Open:</b> the "two ways in" rule for fight areas (explained under "Spells that block paths").</li>
+  <li><b>Open:</b> should steps 1 to 5 (the compiler, collision from outlines, navigation) go ahead on main now, ahead of the art decision? They change the golden hashes once, on purpose.</li>
 </ul>
 
 <footer>Sources of truth: <span class="mono">tools/place-plans/</span> (plan, export, placement), <span class="mono">game/packages/client/src/lab/world3d.ts</span> (renderer), <span class="mono">docs/explorations/2026-11-23-stylised-3d.md</span> (history and plan), <span class="mono">docs/campaign/beauty-rubric.md</span> (critic). Frames from each round are on the Opening Segment page.</footer>

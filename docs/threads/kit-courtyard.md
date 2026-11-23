@@ -1,6 +1,6 @@
 # The courtyard on the kit (growing the kit by building a map)
 
-Status: active; the courtyard traced with true curves, steps and set pieces, 0 errors; next: the set pieces' models (Codex, then Meshy) · Last touched: 2026-11-23
+Status: active; the courtyard traced, with curves, steps and all eight set pieces modelled, 0 errors; next: facades for the hall, library and workshops · Last touched: 2026-11-23
 Record: [flexible building](../explorations/2026-11-23-flexible-building.md) (the kit, the grid) · the kit: `tools/kit/` ([README](../../tools/kit/README.md)) · [court read](../campaign/01-opening/court-read.md) · plan D: `tools/place-plans/plans/court-d.py` · [the opening thread](opening.md) (the places it's for) · [the map-editor thread](map-editor.md) (editor changes go there, not here)
 
 ## Where it stands
@@ -17,7 +17,8 @@ The order follows how much of the courtyard each gap blocks.
 - [x] **2. General curves** (2026-11-23): a `round` object in `compile.py` snaps any edge along a circle onto the true arc, convex or concave. The trace emits one per circle plan D draws (25 kept), so every arc in the courtyard is a curve. Rounds that touch thousands of cells use a spatial index (the courtyard compiles in about 1 s in the editor). Asked of the Map Editor session: a tool to draw and edit rounds.
 - [x] **3 (part). Small steps** (2026-11-23): a `steps` edge, a drop of 0.3 to 1 m you can step over anywhere (the dais rings, the sunk plaza, the stoops, the overlook's treads); over 1 m it is a parapet. Same-height levels meet in a seam with no edge piece. The courtyard has 0 errors. Asked of the Map Editor session: draw the step pieces (outlines now). A true curved flight is still open, if the rim's south opening needs one.
 - [x] **4a. The set-piece class** (2026-11-23): `setpiece` in `kit.json` (eight: the armillary, the bell tower, the beacon, the battery tower, round piers, gate towers, gate piers, posts) and in scenes; the trace places all 16 of the courtyard's, each on its own plinth where the plan set it on an edge. The courtyard compiles with 0 errors and 0 warnings. Asked of the Map Editor session: draw and place set pieces.
-- [ ] **4b. Their models**: a Codex picture each, then Meshy, then `fit.py`; the armillary first (it brings its own dais). The great hall, library and workshops need facade pieces (and the hall a passage for the north road).
+- [x] **4b. Their models** (2026-11-23): all eight from Codex pictures (`tools/concept-gen/prompts/2026-11-23-court-setpieces/`), Meshy (the armillary meshy-7.1 PBR, 30 credits; the rest smart topology, 15 each: 135 credits in all), fitted by `fit.py` evenly inside their boxes. Sources in `game/content/generated/meshy/kit-src/court/`. They weigh about 100 MB with 2K PBR textures: slim them before shipping.
+- [ ] **4c. Facades**: the great hall (with a passage for the north road), the library and the workshops are plain boxes; they need wall pieces in the concept's style (arcades, blue roofs).
 - [ ] **5. Water and the sea edge**: a water terrace, a quay edge and a cliff face (the inlet, the quay at -5 m, the falls).
 - [ ] **6. Spans**: the bridge over the inlet as a deck piece between two terraces.
 - [ ] **7. Dressing pass**: a loose Codex paint-over of the courtyard's greybox gives the dressing (niches, lamps, planters, floor channels to the exits). The pieces it asks for join the kit.

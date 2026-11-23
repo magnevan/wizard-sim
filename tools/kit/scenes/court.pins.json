@@ -6,7 +6,7 @@
    "note": "SET PIECE: the armillary, about 10 m, the landmark. Needs the set-piece class (a unique Meshy model on a footprint the compiler keeps clear).",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
@@ -23,16 +23,22 @@
      "author": "claude",
      "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
      "time": "2026-11-23T22:26:58.337Z"
+    },
+    {
+     "author": "claude",
+     "text": "Modelled (Codex picture, Meshy, fit.py): game/content/generated/meshy/kit/<name>.glb, drawn in place. Pin it again if it looks wrong in the scene.",
+     "time": "2026-11-23T23:11:16.160Z"
     }
    ],
-   "trace": true
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p2",
    "note": "SET PIECE: the bell tower (15 m), the marker at the balcony road's west turn. A plain wall box for now.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
@@ -44,16 +50,22 @@
      "author": "claude",
      "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
      "time": "2026-11-23T22:26:58.569Z"
+    },
+    {
+     "author": "claude",
+     "text": "Modelled (Codex picture, Meshy, fit.py): game/content/generated/meshy/kit/<name>.glb, drawn in place. Pin it again if it looks wrong in the scene.",
+     "time": "2026-11-23T23:11:16.369Z"
     }
    ],
-   "trace": true
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p3",
    "note": "SET PIECE: the beacon (13 m), the marker at the east turn. Missing: too small to trace as a box.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
@@ -65,16 +77,22 @@
      "author": "claude",
      "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
      "time": "2026-11-23T22:26:58.803Z"
+    },
+    {
+     "author": "claude",
+     "text": "Modelled (Codex picture, Meshy, fit.py): game/content/generated/meshy/kit/<name>.glb, drawn in place. Pin it again if it looks wrong in the scene.",
+     "time": "2026-11-23T23:11:16.584Z"
     }
    ],
-   "trace": true
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p4",
    "note": "SET PIECE: the battery tower (14 m), beside the battery road. A plain wall box for now.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
@@ -86,9 +104,15 @@
      "author": "claude",
      "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
      "time": "2026-11-23T22:26:59.022Z"
+    },
+    {
+     "author": "claude",
+     "text": "Modelled (Codex picture, Meshy, fit.py): game/content/generated/meshy/kit/<name>.glb, drawn in place. Pin it again if it looks wrong in the scene.",
+     "time": "2026-11-23T23:11:16.807Z"
     }
    ],
-   "trace": true
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p5",
@@ -140,7 +164,7 @@
    "note": "PIERS: the north gate's towers (8 m), a pair either side of the north road. Missing: a tall pier or gate-tower piece.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
@@ -152,16 +176,22 @@
      "author": "claude",
      "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
      "time": "2026-11-23T22:26:59.275Z"
+    },
+    {
+     "author": "claude",
+     "text": "Modelled (Codex picture, Meshy, fit.py): game/content/generated/meshy/kit/<name>.glb, drawn in place. Pin it again if it looks wrong in the scene.",
+     "time": "2026-11-23T23:11:17.008Z"
     }
    ],
-   "trace": true
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p9",
    "note": "PIERS: the rim's gateway, a matched round pair (5 m) framing the sea stair. Missing: a free-standing round pier piece.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
@@ -173,16 +203,22 @@
      "author": "claude",
      "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
      "time": "2026-11-23T22:26:59.515Z"
+    },
+    {
+     "author": "claude",
+     "text": "Modelled (Codex picture, Meshy, fit.py): game/content/generated/meshy/kit/<name>.glb, drawn in place. Pin it again if it looks wrong in the scene.",
+     "time": "2026-11-23T23:11:17.195Z"
     }
    ],
-   "trace": true
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p10",
    "note": "PIERS: the battery road's gate, a matched round pair (5 m) square across the road. Missing: the same round pier.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
@@ -194,16 +230,22 @@
      "author": "claude",
      "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
      "time": "2026-11-23T22:26:59.720Z"
+    },
+    {
+     "author": "claude",
+     "text": "Modelled (Codex picture, Meshy, fit.py): game/content/generated/meshy/kit/<name>.glb, drawn in place. Pin it again if it looks wrong in the scene.",
+     "time": "2026-11-23T23:11:17.392Z"
     }
    ],
-   "trace": true
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p11",
    "note": "PIERS: the drill yard's gate piers (4 m). Missing: a square gate pier.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
@@ -215,16 +257,22 @@
      "author": "claude",
      "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
      "time": "2026-11-23T22:26:59.974Z"
+    },
+    {
+     "author": "claude",
+     "text": "Modelled (Codex picture, Meshy, fit.py): game/content/generated/meshy/kit/<name>.glb, drawn in place. Pin it again if it looks wrong in the scene.",
+     "time": "2026-11-23T23:11:17.605Z"
     }
    ],
-   "trace": true
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p12",
    "note": "PIERS: threshold pillars (5 m) where the balcony road meets each seam (here and at the east end). Missing: the round pier.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
@@ -236,16 +284,22 @@
      "author": "claude",
      "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
      "time": "2026-11-23T22:27:00.235Z"
+    },
+    {
+     "author": "claude",
+     "text": "Modelled (Codex picture, Meshy, fit.py): game/content/generated/meshy/kit/<name>.glb, drawn in place. Pin it again if it looks wrong in the scene.",
+     "time": "2026-11-23T23:11:17.823Z"
     }
    ],
-   "trace": true
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p13",
    "note": "PIERS: the overlook's low prow posts (2.5 m). Missing: a short post; could be joint.pier, taller.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
@@ -257,9 +311,15 @@
      "author": "claude",
      "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
      "time": "2026-11-23T22:27:00.474Z"
+    },
+    {
+     "author": "claude",
+     "text": "Modelled (Codex picture, Meshy, fit.py): game/content/generated/meshy/kit/<name>.glb, drawn in place. Pin it again if it looks wrong in the scene.",
+     "time": "2026-11-23T23:11:18.031Z"
     }
    ],
-   "trace": true
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p14",
@@ -420,14 +480,21 @@
    "note": "CLIFF FACES: the inlet's banks and the woods' cliffs are 'open' edges with no piece, so their faces draw black. A rock face is asked of the Map Editor session (renderer); a cliff piece in the kit later (step 5).",
    "author": "user",
    "rev": 8,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T22:22:01.450Z",
    "anchor": {
     "x": 66,
     "y": 33
    },
-   "thread": []
+   "thread": [
+    {
+     "author": "claude",
+     "text": "The editor draws every floor's sides as rock now (kit-clean 5096dbe), so banks and cliffs read as rock. A made cliff piece can come later.",
+     "time": "2026-11-23T23:11:27.144Z"
+    }
+   ],
+   "outcome": "rule"
   }
  ]
 }

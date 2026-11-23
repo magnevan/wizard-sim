@@ -16,6 +16,8 @@ import { ROOMS } from '@wizard-sim/sim';
 import { heightMap } from '../art/heights';
 import { GROUNDS } from '../art/grounds.gen';
 import place from './world3d-place.json';
+import ground3dJson from './world3d-ground.json';
+const ground3d = ground3dJson as unknown as { regions: { mat: string; h: number; kind: string; ground: number | null; polys: number[][][][] }[]; faces: [number, number, number, number, number, number, string, string][] };
 
 const ROOM = 'court';
 const U_PER_M = 1 / 0.6;                 // world units per metre (art/massing.ts)
@@ -165,67 +167,95 @@ function top(key: string, pts: number[][], y: number) {
 // The level comes in 1 u blocks (2 x 2 cells) on a grid turned 45 degrees to the screen, so a straight edge across the
 // screen is a staircase of blocks. Each outer step corner is cut on the diagonal and the notch filled at the lower
 // height, so the staircase reads as the straight line the plan drew.
+// ---- the ground: from the plan's exact shapes (tools/place-plans/vector.py), or from the cells with ?ground=cells ----
+/** Plan material -> texture. */
+const PLAN_TEX: Record<string, string> = {
+  grass: 'grass', path: 'dirt', road: 'cobble', paving: 'flagstone', plaza: 'flagstone', dais: 'flagstone', stairs: 'flagstone',
+  wood: 'planks', sand: 'sand', water: 'water', deep: 'water', trees: 'leaves', rock: 'coping', roof: 'slate', wall: 'coping',
+};
+const sideKey = (mat: string) => (mat === 'grass' || mat === 'trees' || mat === 'path' ? 'cliff' : 'wall');
+if (q.get('ground') === 'cells') {
 const B = hm.b, BS = B * CELL, bw = Math.floor(gw / B), bh = Math.floor(gh / B);
-const CLIFF = 0.2; // metres: a flight's own treads (about 0.1) are never cut
-const Hb = (i: number, j: number) => (i < 0 || j < 0 || i >= bw || j >= bh || hm.out[j * B * gw + i * B] ? -Infinity : m[j * B * gw + i * B]);
-const Gb = (i: number, j: number) => ground(i * B, j * B);
-const fileOf = (ch: string) => GROUND_FILE[ch] ?? 'grass';
-const sideOf = (ch: string) => (ch === 'g' || ch === 'l' || ch === 'd' ? 'cliff' : 'wall');
-const yb = (h: number) => (h === -Infinity ? -12 : yOf(h));
-for (let j = 0; j < bh; j++) for (let i = 0; i < bw; i++) {
-  const h = Hb(i, j);
-  if (h === -Infinity) continue;
-  const ch = Gb(i, j), y = yOf(h);
-  const x0 = wx(i * B), z0 = wy(j * B), x1 = x0 + BS, z1 = z0 + BS, cx = x0 + BS / 2, cz = z0 + BS / 2;
-  const corner = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]];
-  // each corner's two edge neighbours: 0 (left, up), 1 (right, up), 2 (right, down), 3 (left, down)
-  const nb: [number, number][][] = [[[i - 1, j], [i, j - 1]], [[i + 1, j], [i, j - 1]], [[i + 1, j], [i, j + 1]], [[i - 1, j], [i, j + 1]]];
-  const cut = nb.map(([a, c]) => Hb(...a) < h - CLIFF && Hb(...c) < h - CLIFF);
-  const n = cut.filter(Boolean).length;
-  const leg = n === 1 ? BS : BS / 2;
-  const pts: number[][] = [];
-  const at = (c: number, toward: number, d: number) => [corner[c][0] + ((corner[toward][0] - corner[c][0]) * d) / BS, corner[c][1] + ((corner[toward][1] - corner[c][1]) * d) / BS];
-  for (let c = 0; c < 4; c++) {
-    const add = (q: number[]) => { const l = pts[pts.length - 1]; if (!l || Math.hypot(l[0] - q[0], l[1] - q[1]) > 1e-6) pts.push(q); };
-    if (cut[c]) { add(at(c, (c + 3) % 4, leg)); add(at(c, (c + 1) % 4, leg)); } else add(corner[c]);
-  }
-  if (pts.length > 2 && Math.hypot(pts[0][0] - pts[pts.length - 1][0], pts[0][1] - pts[pts.length - 1][1]) < 1e-6) pts.pop();
-  top(fileOf(ch), pts, y);
-  // which neighbour a straight piece of edge borders
-  const edgeNb = (p: number[], q: number[]): [number, number] | null => {
-    if (Math.abs(p[1] - z0) < 1e-6 && Math.abs(q[1] - z0) < 1e-6) return [i, j - 1];
-    if (Math.abs(p[1] - z1) < 1e-6 && Math.abs(q[1] - z1) < 1e-6) return [i, j + 1];
-    if (Math.abs(p[0] - x0) < 1e-6 && Math.abs(q[0] - x0) < 1e-6) return [i - 1, j];
-    if (Math.abs(p[0] - x1) < 1e-6 && Math.abs(q[0] - x1) < 1e-6) return [i + 1, j];
-    return null;
-  };
-  const fillOf = (c: number) => Math.max(Hb(...nb[c][0]), Hb(...nb[c][1]));
-  for (let k = 0; k < pts.length; k++) {
-    const p = pts[k], q = pts[(k + 1) % pts.length], e = edgeNb(p, q);
-    let lo: number;
-    if (e) lo = Hb(...e);
-    else { // a cut: which corner's?
-      const mid = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
-      let best = 0, bd = Infinity;
-      for (let c = 0; c < 4; c++) { const d = Math.hypot(corner[c][0] - mid[0], corner[c][1] - mid[1]); if (cut[c] && d < bd) { bd = d; best = c; } }
-      lo = fillOf(best);
+  const CLIFF = 0.2; // metres: a flight's own treads (about 0.1) are never cut
+  const Hb = (i: number, j: number) => (i < 0 || j < 0 || i >= bw || j >= bh || hm.out[j * B * gw + i * B] ? -Infinity : m[j * B * gw + i * B]);
+  const Gb = (i: number, j: number) => ground(i * B, j * B);
+  const fileOf = (ch: string) => GROUND_FILE[ch] ?? 'grass';
+  const sideOf = (ch: string) => (ch === 'g' || ch === 'l' || ch === 'd' ? 'cliff' : 'wall');
+  const yb = (h: number) => (h === -Infinity ? -12 : yOf(h));
+  for (let j = 0; j < bh; j++) for (let i = 0; i < bw; i++) {
+    const h = Hb(i, j);
+    if (h === -Infinity) continue;
+    const ch = Gb(i, j), y = yOf(h);
+    const x0 = wx(i * B), z0 = wy(j * B), x1 = x0 + BS, z1 = z0 + BS, cx = x0 + BS / 2, cz = z0 + BS / 2;
+    const corner = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]];
+    // each corner's two edge neighbours: 0 (left, up), 1 (right, up), 2 (right, down), 3 (left, down)
+    const nb: [number, number][][] = [[[i - 1, j], [i, j - 1]], [[i + 1, j], [i, j - 1]], [[i + 1, j], [i, j + 1]], [[i - 1, j], [i, j + 1]]];
+    const cut = nb.map(([a, c]) => Hb(...a) < h - CLIFF && Hb(...c) < h - CLIFF);
+    const n = cut.filter(Boolean).length;
+    const leg = n === 1 ? BS : BS / 2;
+    const pts: number[][] = [];
+    const at = (c: number, toward: number, d: number) => [corner[c][0] + ((corner[toward][0] - corner[c][0]) * d) / BS, corner[c][1] + ((corner[toward][1] - corner[c][1]) * d) / BS];
+    for (let c = 0; c < 4; c++) {
+      const add = (q: number[]) => { const l = pts[pts.length - 1]; if (!l || Math.hypot(l[0] - q[0], l[1] - q[1]) > 1e-6) pts.push(q); };
+      if (cut[c]) { add(at(c, (c + 3) % 4, leg)); add(at(c, (c + 1) % 4, leg)); } else add(corner[c]);
     }
-    if (yb(lo) < y - 0.01) side(sideOf(ch), [p[0], 0, p[1]], [q[0], 0, q[1]], y, yb(lo), cx, cz);
-  }
-  // the notches, filled at the higher of the two lower neighbours, with its own faces down to a lower one still
-  for (let c = 0; c < 4; c++) {
-    if (!cut[c]) continue;
-    const f = fillOf(c);
-    if (f === -Infinity) continue;
-    const fy = yOf(f), src = Hb(...nb[c][0]) >= Hb(...nb[c][1]) ? nb[c][0] : nb[c][1];
-    const A = at(c, (c + 3) % 4, leg), Cc = corner[c], D = at(c, (c + 1) % 4, leg);
-    top(fileOf(Gb(...src)), [A, Cc, D], fy);
-    for (const [p, q] of [[A, Cc], [Cc, D]]) {
-      const e = edgeNb(p, q);
-      if (!e) continue;
-      const lo = Hb(...e);
-      if (yb(lo) < fy - 0.01) side(sideOf(Gb(...src)), [p[0], 0, p[1]], [q[0], 0, q[1]], fy, yb(lo), cx, cz);
+    if (pts.length > 2 && Math.hypot(pts[0][0] - pts[pts.length - 1][0], pts[0][1] - pts[pts.length - 1][1]) < 1e-6) pts.pop();
+    top(fileOf(ch), pts, y);
+    // which neighbour a straight piece of edge borders
+    const edgeNb = (p: number[], q: number[]): [number, number] | null => {
+      if (Math.abs(p[1] - z0) < 1e-6 && Math.abs(q[1] - z0) < 1e-6) return [i, j - 1];
+      if (Math.abs(p[1] - z1) < 1e-6 && Math.abs(q[1] - z1) < 1e-6) return [i, j + 1];
+      if (Math.abs(p[0] - x0) < 1e-6 && Math.abs(q[0] - x0) < 1e-6) return [i - 1, j];
+      if (Math.abs(p[0] - x1) < 1e-6 && Math.abs(q[0] - x1) < 1e-6) return [i + 1, j];
+      return null;
+    };
+    const fillOf = (c: number) => Math.max(Hb(...nb[c][0]), Hb(...nb[c][1]));
+    for (let k = 0; k < pts.length; k++) {
+      const p = pts[k], q = pts[(k + 1) % pts.length], e = edgeNb(p, q);
+      let lo: number;
+      if (e) lo = Hb(...e);
+      else { // a cut: which corner's?
+        const mid = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+        let best = 0, bd = Infinity;
+        for (let c = 0; c < 4; c++) { const d = Math.hypot(corner[c][0] - mid[0], corner[c][1] - mid[1]); if (cut[c] && d < bd) { bd = d; best = c; } }
+        lo = fillOf(best);
+      }
+      if (yb(lo) < y - 0.01) side(sideOf(ch), [p[0], 0, p[1]], [q[0], 0, q[1]], y, yb(lo), cx, cz);
     }
+    // the notches, filled at the higher of the two lower neighbours, with its own faces down to a lower one still
+    for (let c = 0; c < 4; c++) {
+      if (!cut[c]) continue;
+      const f = fillOf(c);
+      if (f === -Infinity) continue;
+      const fy = yOf(f), src = Hb(...nb[c][0]) >= Hb(...nb[c][1]) ? nb[c][0] : nb[c][1];
+      const A = at(c, (c + 3) % 4, leg), Cc = corner[c], D = at(c, (c + 1) % 4, leg);
+      top(fileOf(Gb(...src)), [A, Cc, D], fy);
+      for (const [p, q] of [[A, Cc], [Cc, D]]) {
+        const e = edgeNb(p, q);
+        if (!e) continue;
+        const lo = Hb(...e);
+        if (yb(lo) < fy - 0.01) side(sideOf(Gb(...src)), [p[0], 0, p[1]], [q[0], 0, q[1]], fy, yb(lo), cx, cz);
+      }
+    }
+  }
+} else {
+  for (const rg of ground3d.regions) {
+    const file = PLAN_TEX[rg.mat] ?? 'grass';
+    const top = rg.mat === 'roof' ? (rg.ground ?? rg.h) + ROOF_M : rg.h;
+    const y = yOf(top), bf = buf(file);
+    for (const [outer, ...holes] of rg.polys) {
+      const contour = outer.map(([x, z]) => new THREE.Vector2(x, z)), hs = holes.map((h) => h.map(([x, z]) => new THREE.Vector2(x, z)));
+      const pts = [...contour, ...hs.flat()];
+      for (const [i0, i1, i2] of THREE.ShapeUtils.triangulateShape(contour, hs)) tri(bf, [i0, i1, i2].map((i) => [pts[i].x, y, pts[i].y]), [0, 1, 0], topUV);
+    }
+  }
+  const regionTop = new Map(ground3d.regions.map((r) => [r.mat + ':' + r.h, r.mat === 'roof' ? (r.ground ?? r.h) + ROOF_M : r.h]));
+  for (const [ax, ay, bx, by, top, low, mat] of ground3d.faces) {
+    const t = mat === 'roof' ? (regionTop.get(mat + ':' + top) ?? top) : top;
+    if (low >= t - 0.01) continue;
+    // outward: exteriors run counter-clockwise, so the right-hand side of a -> b
+    const L = Math.hypot(bx - ax, by - ay), nx = (by - ay) / L, nz = -(bx - ax) / L;
+    side(sideKey(mat), [ax, 0, ay], [bx, 0, by], yOf(t), yOf(low), (ax + bx) / 2 - nx, (ay + by) / 2 - nz);
   }
 }
 for (const [key, b] of bufs) {

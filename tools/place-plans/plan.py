@@ -79,6 +79,8 @@ class Plan:
         self.m = np.full((self.ny, self.nx), base_mat, dtype=object)
         self.bld = np.zeros((self.ny, self.nx), dtype=bool)
         self.routes, self.marks, self.gates, self.doors, self.notes, self.passes = [], [], [], [], [], []
+        # every shape op in order, for the vector export (vector.py): a cell mask passed instead of a shape isn't recorded
+        self.ops = []
         # cell centres in U,V
         xs = self.x0 + np.arange(self.nx) + 0.5; ys = self.y0 + np.arange(self.ny) + 0.5
         X, Y = np.meshgrid(xs, ys)
@@ -94,9 +96,11 @@ class Plan:
         return p.contains_points(pts).reshape(self.CU.shape)
 
     def fill(self, poly, h, mat):
+        if not isinstance(poly, np.ndarray): self.ops.append(('fill', list(poly), h, mat))
         k = self.mask(poly); self.h[k] = h; self.m[k] = mat; self.bld[k] = False; return k
 
     def raise_(self, poly, dh, mat=None):
+        if not isinstance(poly, np.ndarray): self.ops.append(('raise', list(poly), dh, mat))
         k = self.mask(poly); self.h[k] += dh
         if mat: self.m[k] = mat
         return k
@@ -104,6 +108,7 @@ class Plan:
     def stairs(self, poly, h0, h1, axis='V'):
         """A flight from h0 at the low end of the axis to h1 at the high end, in steps. The axis is 'U', 'V', or an
         angle in degrees (0 = right, 90 = down the screen): h0 is at the end the angle points away from."""
+        if not isinstance(poly, np.ndarray): self.ops.append(('stairs', list(poly), h0, h1, axis))
         k = self.mask(poly)
         if axis in ('U', 'V'): c = self.CV if axis == 'V' else self.CU
         else: c = self.CU * math.cos(math.radians(axis)) + self.CV * math.sin(math.radians(axis))
@@ -116,6 +121,7 @@ class Plan:
 
     def strip(self, pts, width, mat='road'):
         """Repaves walkable flat ground along a polyline (a main route's own paving); heights are kept."""
+        self.ops.append(('strip', list(pts), width, mat))
         k = np.zeros_like(self.bld)
         for (u0, v0), (u1, v1) in zip(pts, pts[1:]):
             L = math.hypot(u1 - u0, v1 - v0)
@@ -124,10 +130,16 @@ class Plan:
         self.m[k & ok & ~self.bld] = mat
 
     def building(self, poly, ground, height, name='', doors=(), roof='roof'):
+        if not isinstance(poly, np.ndarray): self.ops.append(('building', list(poly), ground, height, roof))
         k = self.mask(poly); self.h[k] = ground + height; self.m[k] = roof; self.bld[k] = True
         if name: self.notes.append((centroid(poly), name, ground + height))
         for d in doors: self.doors.append((d, ground))
         return k
+
+    def raise_mat(self, mat, at, dh):
+        """Raises every cell of material `mat` standing at height `at` by dh (e.g. a road a step above its terrace)."""
+        self.ops.append(('raise_mat', mat, at, dh))
+        self.h[(self.m == mat) & (self.h == at)] += dh
 
     def route(self, pts, rank='main'): self.routes.append((pts, rank))
     def journey(self, pts, label, moment=''):

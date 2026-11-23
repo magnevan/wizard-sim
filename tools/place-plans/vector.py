@@ -1,0 +1,181 @@
+"""The plan as exact shapes, for the 3D view's ground (phase A of the 3D plan, 2026-11-23).
+
+  python tools/place-plans/vector.py court-d   -> game/packages/client/src/lab/world3d-ground.json
+
+The plan tool paints cells; the cells are what the sim walks on, but drawing the ground from them turns every curve and
+diagonal into a staircase (the grid is turned 45 degrees to the screen). So the plan also records its shape ops
+(Plan.ops), and this replays them with shapely in painting order: each fill cuts its shape out of what was there and
+lays itself down, a building likewise, a raise or a road strip changes what it covers. The result is a set of disjoint
+regions, each with its material and height, in the room's world coordinates.
+
+Cell edits a spec makes by hand after its shapes (woods belts, ground no one reaches) can't be replayed, so the cells are
+compared with the regions afterwards, and every cell that differs becomes a small override region. The parapet lips
+(finish.lips) are left out: the walkway stays flat and the 3D kit stands on its edge. The count of cells that differ is
+printed; the sim's own data (the LDtk level) is unchanged.
+
+Each region carries its outline (exterior and holes); a flight of stairs is cut into its treads. `faces` are the
+vertical faces where a region's edge stands above its neighbour: segment, top, bottom, material.
+"""
+import json, math, os, sys
+import numpy as np
+import shapely
+from shapely.geometry import Polygon, MultiPolygon, LineString, box
+from shapely.ops import unary_union
+from shapely import affinity
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import to_ldtk
+
+R2 = math.sqrt(0.5)
+GRID = 0.05   # snapping, so shared edges stay shared
+
+def to_world(P):
+    cx0, cy0 = P.x0 + P.nx / 2, P.y0 + P.ny / 2
+    return lambda g: affinity.affine_transform(g, [R2, R2, -R2, R2, -cx0, -cy0])
+
+def clean(g):
+    g = shapely.set_precision(shapely.make_valid(g), GRID)
+    if g.is_empty: return g
+    polys = [p for p in (g.geoms if hasattr(g, 'geoms') else [g]) if isinstance(p, Polygon) and p.area > 0.01]
+    return MultiPolygon(polys) if len(polys) > 1 else (polys[0] if polys else Polygon())
+
+def export(name):
+    P, _ = to_ldtk.load_spec(name)
+    W = to_world(P)
+    regions = []          # [geom (world), dict(mat, h, kind, ...)]
+    def cut(g):
+        nonlocal regions
+        out = []
+        for rg, a in regions:
+            d = clean(rg.difference(g))
+            if not d.is_empty: out.append((d, a))
+        regions = out
+    for op in P.ops:
+        kind = op[0]
+        if kind == 'fill':
+            g = clean(W(Polygon(op[1]))); cut(g); regions.append((g, dict(mat=op[3], h=float(op[2]), kind='flat')))
+        elif kind == 'building':
+            g = clean(W(Polygon(op[1]))); cut(g)
+            regions.append((g, dict(mat=op[4], h=float(op[2] + op[3]), ground=float(op[2]), kind='building')))
+        elif kind == 'stairs':
+            g = clean(W(Polygon(op[1]))); cut(g)
+            ax = op[4]
+            du, dv = ((0, 1) if ax == 'V' else (1, 0)) if ax in ('U', 'V') else (math.cos(math.radians(ax)), math.sin(math.radians(ax)))
+            dx, dy = (du + dv) * R2, (dv - du) * R2
+            regions.append((g, dict(mat='stairs', h=float(op[2]), h0=float(op[2]), h1=float(op[3]), dir=[dx, dy], kind='stairs')))
+        elif kind == 'raise':
+            g = clean(W(Polygon(op[1]))); out = []
+            for rg, a in regions:
+                i, d = clean(rg.intersection(g)), clean(rg.difference(g))
+                if not d.is_empty: out.append((d, a))
+                if not i.is_empty:
+                    b = dict(a); b['h'] = a['h'] + op[2]
+                    if op[3]: b['mat'] = op[3]
+                    out.append((i, b))
+            regions = out
+        elif kind == 'strip':
+            pts, width, mat = op[1], op[2], op[3]
+            g = clean(W(LineString(pts).buffer(width / 2, cap_style='square', join_style='round')))
+            out = []
+            for rg, a in regions:
+                if a['kind'] == 'flat' and a['mat'] in ('plaza', 'paving', 'grass', 'path', 'dais'):
+                    i, d = clean(rg.intersection(g)), clean(rg.difference(g))
+                    if not d.is_empty: out.append((d, a))
+                    if not i.is_empty: b = dict(a); b['mat'] = mat; out.append((i, b))
+                else: out.append((rg, a))
+            regions = out
+        elif kind == 'raise_mat':
+            for k, (rg, a) in enumerate(regions):
+                if a['mat'] == op[1] and abs(a['h'] - op[2]) < 1e-6:
+                    b = dict(a); b['h'] = a['h'] + op[3]; regions[k] = (rg, b)
+    # ---- compare with the cells: overrides where a hand edit changed them ----
+    cx0, cy0 = P.x0 + P.nx / 2, P.y0 + P.ny / 2
+    X = (P.x0 + np.arange(P.nx) + 0.5)[None, :] - cx0 + np.zeros((P.ny, 1))
+    Y = (P.y0 + np.arange(P.ny) + 0.5)[:, None] - cy0 + np.zeros((1, P.nx))
+    vh = np.full(P.h.shape, np.nan); vm = np.full(P.h.shape, None, dtype=object); vk = np.full(P.h.shape, None, dtype=object)
+    for rg, a in regions:
+        inside = shapely.contains_xy(rg, X, Y)
+        vh[inside] = a['h']; vm[inside] = a['mat']; vk[inside] = a['kind']
+    same_m = vm == P.m
+    same_h = np.isfinite(vh) & (np.abs(vh - P.h) < 0.01)
+    stairs_ok = (vk == 'stairs') & (P.m == 'stairs')
+    building_ok = (vk == 'building') & P.bld
+    lip = (P.m == 'wall') & ~building_ok
+    differ = ~((same_m & same_h) | stairs_ok | building_ok | lip) & (P.m != 'void')
+    groups = {}
+    for i, j in zip(*np.nonzero(differ)):
+        key = (round(float(P.h[i, j]), 2), P.m[i, j])
+        x, y = X[i, j] - 0.5, Y[i, j] - 0.5
+        groups.setdefault(key, []).append(box(x, y, x + 1, y + 1))
+    if groups:
+        for (h, mat), bs in groups.items():
+            g = unary_union(bs)
+            # a hand-painted edge (a woods belt) is still a cell staircase: round it off so it doesn't read as one
+            g = clean(g.buffer(0.9, join_style='round').buffer(-0.9, join_style='round').simplify(0.25))
+            cut(g)                                                      # only what the rounded shape covers: no gaps
+            regions.append((g, dict(mat=mat, h=h, kind='building' if mat in ('roof',) else 'flat')))
+    # lips: the walkway under them, at the walkway's height (the cell's height less the lip)
+    lipg = [box(X[i, j] - 0.5, Y[i, j] - 0.5, X[i, j] + 0.5, Y[i, j] + 0.5) for i, j in zip(*np.nonzero(lip))]
+    # the plan's tiny blocks (piers, posts) stand as the pier model in 3D: the ground runs on under them
+    regions = [(rg, a if not (a['kind'] == 'building' and rg.area < 30) else dict(mat='paving', h=a.get('ground', a['h']), kind='flat')) for rg, a in regions]
+    # ---- stairs into treads ----
+    flat = []
+    for rg, a in regions:
+        if a['kind'] != 'stairs': flat.append((rg, a)); continue
+        dx, dy = a['dir']; steps = max(2, int(round(abs(a['h1'] - a['h0']) / 0.35)))
+        cs = [dx * x + dy * y for poly in (rg.geoms if hasattr(rg, 'geoms') else [rg]) for x, y in poly.exterior.coords]
+        lo, hi = min(cs), max(cs)
+        for q in range(steps + 1):
+            t0, t1 = max(0, (q - 0.5) / steps), min(1, (q + 0.5) / steps)
+            c0, c1 = lo + t0 * (hi - lo), lo + t1 * (hi - lo)
+            # a band across the flight: the strip c0 <= dx x + dy y <= c1
+            L = 1000; px, py = -dy, dx
+            band = Polygon([(dx * c0 + px * L, dy * c0 + py * L), (dx * c1 + px * L, dy * c1 + py * L), (dx * c1 - px * L, dy * c1 - py * L), (dx * c0 - px * L, dy * c0 - py * L)])
+            g = clean(rg.intersection(band))
+            if not g.is_empty: flat.append((g, dict(mat='stairs', h=a['h0'] + q / steps * (a['h1'] - a['h0']), kind='step')))
+    regions = flat
+    # ---- vertical faces: where an edge stands above what's beside it ----
+    tree = shapely.STRtree([rg for rg, _ in regions])
+    faces = []
+    for rg, a in regions:
+        for poly in (rg.geoms if hasattr(rg, 'geoms') else [rg]):
+            poly = shapely.geometry.polygon.orient(poly, 1.0)     # exterior counter-clockwise: outward is to the right
+            for ring in [poly.exterior] + list(poly.interiors):
+                cs = list(ring.coords)
+                for (x0, y0), (x1, y1) in zip(cs, cs[1:]):
+                    L = math.hypot(x1 - x0, y1 - y0)
+                    if L < 1e-6: continue
+                    nx, ny = (y1 - y0) / L, -(x1 - x0) / L
+                    n = max(1, int(math.ceil(L / 1.0)))
+                    for k in range(n):
+                        ax, ay = x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n
+                        bx, by = x0 + (x1 - x0) * (k + 1) / n, y0 + (y1 - y0) * (k + 1) / n
+                        mx, my = (ax + bx) / 2 + nx * 0.06, (ay + by) / 2 + ny * 0.06
+                        pt = shapely.Point(mx, my)
+                        lowh = -12.0
+                        for idx in tree.query(pt):
+                            if regions[idx][0].contains(pt): lowh = regions[idx][1]['h'] if regions[idx][1]['kind'] != 'building' else regions[idx][1]['h']; break
+                        top = a['h']
+                        if lowh < top - 0.01:
+                            faces.append([round(ax, 3), round(ay, 3), round(bx, 3), round(by, 3), round(top, 3), round(lowh, 3), a['mat'], a['kind']])
+    def rings(g):
+        out = []
+        for poly in (g.geoms if hasattr(g, 'geoms') else [g]):
+            poly = shapely.geometry.polygon.orient(poly, 1.0)
+            out.append([[[round(x, 3), round(y, 3)] for x, y in poly.exterior.coords[:-1]]] + [[[round(x, 3), round(y, 3)] for x, y in r.coords[:-1]] for r in poly.interiors])
+        return out
+    data = dict(plan=name, w=P.nx, h=P.ny,
+                regions=[dict(mat=a['mat'], h=round(a['h'], 3), kind=a['kind'], ground=a.get('ground'), polys=rings(rg)) for rg, a in regions],
+                faces=faces)
+    if os.environ.get('VECTOR_DEBUG'):
+        import collections
+        c = collections.Counter((P.m[i, j], vm[i, j], round(float(P.h[i, j] - (vh[i, j] if np.isfinite(vh[i, j]) else 0)), 2)) for i, j in zip(*np.nonzero(differ)))
+        for k, v in c.most_common(15): print(v, k)
+    return data, int(differ.sum()), int(lip.sum())
+
+if __name__ == '__main__':
+    name = sys.argv[1] if len(sys.argv) > 1 else 'court-d'
+    data, nd, nl = export(name)
+    dst = os.path.join(HERE, '..', '..', 'game', 'packages', 'client', 'src', 'lab', 'world3d-ground.json')
+    json.dump(data, open(dst, 'w'), separators=(',', ':'))
+    print(f"{name}: {len(data['regions'])} regions, {len(data['faces'])} face segments; {nd} cells differ from the shapes (overrides), {nl} parapet cells left flat; {os.path.getsize(dst) // 1024} KB")

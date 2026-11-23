@@ -162,7 +162,7 @@ for a, nm, r in ((156, 'bell tower', 5.0), (24, 'beacon', 3.0)):     # a tall ma
     P.building(circle(polar(C, 19, a), r), 6.0, 15.0 if r > 4 else 13.0, nm)
 for a in (160, 20):                                                     # threshold pillars where the arc meets each seam
     for r in (26, 36): P.building(circle(polar(C, r, a), 1.3), 6.0, 5.0)
-P.h[(P.m == 'road') & (P.h == 6.0)] += 0.3                              # the road a step above the terrace
+P.raise_mat('road', 6.0, 0.3)                                            # the road a step above the terrace
 import numpy as np
 from scipy import ndimage
 walk = np.isin(P.m, ['plaza', 'paving', 'grass', 'path', 'road', 'dais', 'stairs', 'wood', 'sand']) & ~P.bld

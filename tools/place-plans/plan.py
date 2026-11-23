@@ -78,6 +78,8 @@ class Plan:
         self.h = np.full((self.ny, self.nx), base, dtype=np.float32)
         self.m = np.full((self.ny, self.nx), base_mat, dtype=object)
         self.bld = np.zeros((self.ny, self.nx), dtype=bool)
+        # cells along a drop that a parapet guards (finish.lips): drawn as a balustrade, never a blocked cell (pipeline 2b)
+        self.guard = np.zeros((self.ny, self.nx), dtype=bool)
         self.routes, self.marks, self.gates, self.doors, self.notes, self.passes = [], [], [], [], [], []
         # every shape op in order, for the vector export (vector.py): a cell mask passed instead of a shape isn't recorded
         self.ops = []
@@ -134,6 +136,24 @@ class Plan:
         k = self.mask(poly); self.h[k] = ground + height; self.m[k] = roof; self.bld[k] = True
         if name: self.notes.append((centroid(poly), name, ground + height))
         for d in doors: self.doors.append((d, ground))
+        return k
+
+    def repaint(self, poly, to_mat, from_mats, at=None):
+        """Changes the material of the open ground of `from_mats` inside poly to `to_mat`, heights kept (woods belts,
+        land no route reaches, a gate's closed line), only on ground within 0.5 m of `at` if given. A recorded op, so the
+        resolved scene replays it exactly."""
+        self.ops.append(('repaint', list(poly), to_mat, tuple(from_mats), at))
+        k = self.mask(poly) & np.isin(self.m, list(from_mats)) & ~self.bld
+        if at is not None: k &= np.abs(self.h - at) <= 0.5
+        self.m[k] = to_mat
+        return k
+
+    def surface(self, poly, mat, on, dh=0.0):
+        """A surface on the open, flat ground at height `on` inside poly (never stairs or a building): changes its material
+        and lowers or raises it by dh (a road a kerb below its pavement). A recorded op."""
+        self.ops.append(('surface', list(poly), mat, on, dh))
+        k = self.mask(poly) & (np.abs(self.h - on) < 0.01) & ~self.bld & (self.m != 'stairs') & np.isin(self.m, [m for m, v in MAT.items() if v[2]])
+        self.m[k] = mat; self.h[k] += dh
         return k
 
     def raise_mat(self, mat, at, dh):

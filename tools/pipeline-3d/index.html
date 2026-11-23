@@ -55,7 +55,7 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line);
   <div class="eyebrow">Wizard Sim · art pipeline · design review</div>
   <h1>The Plan-to-3D Pipeline</h1>
   <p class="lede">How a place goes from a Python plan to a walkable, stylised 3D scene, as of courtyard plan revision 19, and the architecture we propose to move to. Part one describes what runs today and where it is weak. Part two proposes the changes, including what the terrain means for gameplay: navigation over terraces, and paths that players block with spells.</p>
-  <div class="meta"><span>branch spike-world3d</span><span>2026-11-23</span><span>scope: the courtyard (court-d)</span><span>status: exploring, not adopted</span><span>draft 4: three rounds with an outside reviewer</span></div>
+  <div class="meta"><span>branch spike-world3d</span><span>2026-11-23</span><span>scope: the courtyard (court-d)</span><span>status: exploring, not adopted</span><span>draft 6: steps 1–4 done; your concerns answered</span></div>
 </header>
 
 <h2>Part one: what runs today</h2>
@@ -278,8 +278,20 @@ flowchart LR
 </tbody></table></div>
 <p>Steps 1 to 5 go on main: the compiler, collision from outlines, the stamp and navigation are valid for the pixel game too, and the courtyard is already too big for today's navigation whatever the art direction. Only the renderer, the kit and the performance pass stay on the spike, so the art decision stays reversible. Paused meanwhile: courtyard beauty rounds, critic tuning, new Meshy pieces, hand-placed dressing.</p>
 
+<h2>Your three concerns (2026-11-23), and the proposed answer</h2>
+<h3>Is LDtk still the right tool for 3D places?</h3>
+<p>No. We chose it as a 2D grid editor for you; plan-made places are written in Python and never hand-edited in LDtk, so it is now only the file that carries the sim's grid. It can't hold what 3D needs: exact outlines, height as data, flights, edge treatments, placed models. Proposal: the compiled plan (the resolved scene) becomes the level format for 3D places, and the sim's grid is compiled from it directly; LDtk stays for the hand-made pixel rooms. A visual editor for 3D places is a separate, later question.</p>
+<h3>Is something inherent causing the artifacts?</h3>
+<p>Yes, two things. Plans <b>paint overlapping shapes in order</b>, so wherever a road, a landing and a terrace overlap there are notches and slivers: invisible on a grid, visible at exact scale (the jagged road edges). And plans <b>don't know what a stair or a landing is</b>: a flight is a ramp painted onto the ground with nothing saying it must land on something, and parapets come from a rule (a drop over 1 m gets one) that can't tell a flight's end from a terrace edge. So a flight can end at a cliff or a balustrade. The agreement check catches the picture disagreeing with collision, not a design that makes no sense.</p>
+<p>Proposal: describe a place by what it is. <b>Terraces</b> (outlines and heights), <b>connectors</b> (flights, ramps, gates, each naming the two terraces it joins, its width, and a landing at each end) and <b>edges</b> (each with a treatment: parapet, open drop, retaining wall; defaults where obvious). The compiler builds the geometry from that and refuses nonsense: a flight that doesn't land on walkable ground at both ends, an edge without a treatment, anything painted over a connector. Whole classes of artifact become impossible instead of patched. The terraces and connectors are also exactly navigation's region graph (step 5a): flights and gates are its portals.</p>
+<h3>Will it stay creative?</h3>
+<p>Only if the plan language stays expressive and concept art drives it. Terraces take any outline (organic curves, arcs, irregular polygons) and any heights; the rules check sense, not shape. Kits are for repetitive parts only; hero pieces stay bespoke. The gap between concept and plan, where we lost creativity before, closes with a tracer: Codex paints a top-down layout sketch, and a tool turns its regions into terraces and connectors as a first draft, refined from there instead of written from a blank file. Three really different plans per place, and a critic comparing against the concept, stay.</p>
+<h3>Proposed: step 4.5, before navigation</h3>
+<ol class="tight"><li>A short design for the semantic plan language (terraces, connectors, edges).</li><li>The courtyard's flights and terraces rebuilt in it, showing the stair and edge artifacts gone.</li><li>The scene as the 3D level format, LDtk kept for pixel rooms.</li></ol>
+
 <h2>Decided</h2>
 <ul>
+  <li><b>Done (2026-11-23, branch <code>pipeline-compiler</code>):</b> step 1, the agreement check (6,050 mismatched cells at first, 3 now in the courtyard, 10 in the yard); 2a, plans as shape ops only; 2b, what blocks is what's drawn; 3, one command with a stamp; 4, the yard through the pipeline. 690 tests pass.</li>
   <li><b>2026-11-23:</b> the adoption bar is at least 30 fps on your laptop; wall spells follow the ground naturally, climbing stairs and stopping at cliffs; some drops are open for knockback, so falling becomes sim work.</li>
   <li><b>2026-11-23:</b> about 15 MB per place is the budget; every fight area has two ways in unless its single entrance is a named set piece; steps 1 to 5 go ahead on main now, ahead of the art decision, on branch <code>pipeline-compiler</code>.</li>
 </ul>

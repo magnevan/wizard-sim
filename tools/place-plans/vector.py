@@ -1,6 +1,6 @@
 """The plan as exact shapes, for the 3D view's ground (phase A of the 3D plan, 2026-11-23).
 
-  python tools/place-plans/vector.py court-d   -> game/packages/client/src/lab/world3d-ground.json
+  python tools/place-plans/vector.py court-d [out.json]   -> tools/place-plans/out/court-d-scene.json
 
 The plan tool paints cells; the cells are what the sim walks on, but drawing the ground from them turns every curve and
 diagonal into a staircase (the grid is turned 45 degrees to the screen). So the plan also records its shape ops
@@ -8,8 +8,8 @@ diagonal into a staircase (the grid is turned 45 degrees to the screen). So the 
 lays itself down, a building likewise, a raise or a road strip changes what it covers. The result is a set of disjoint
 regions, each with its material and height, in the room's world coordinates.
 
-Cell edits a spec makes by hand after its shapes (woods belts, ground no one reaches) can't be replayed, so the cells are
-compared with the regions afterwards, and every cell that differs becomes a small override region. The parapet lips
+Every plan edit is a recorded op (step 2a of tools/pipeline-3d): a plan that edits cells directly fails here, with
+where the cells differ. The parapet lips
 (finish.lips) are left out: the walkway stays flat and the 3D kit stands on its edge. The count of cells that differ is
 printed; the sim's own data (the LDtk level) is unchanged.
 
@@ -36,7 +36,9 @@ def to_world(P):
     return lambda g: affinity.affine_transform(g, [R2, R2, -R2, R2, -cx0, -cy0])
 
 def clean(g):
-    g = shapely.set_precision(shapely.make_valid(g), GRID)
+    # snap to the grid, then detach it: shapely keeps a set precision on the geometry, and a negative buffer on a
+    # gridded geometry collapses to nothing (it silently deleted the overlook bay, 2026-11-23)
+    g = shapely.set_precision(shapely.set_precision(shapely.make_valid(g), GRID), 0.0)
     if g.is_empty: return g
     polys = [p for p in (g.geoms if hasattr(g, 'geoms') else [g]) if isinstance(p, Polygon) and p.area > 0.01]
     return MultiPolygon(polys) if len(polys) > 1 else (polys[0] if polys else Polygon())
@@ -57,9 +59,8 @@ def export(name):
         if kind == 'fill':
             g = clean(W(Polygon(op[1]))); cut(g); regions.append((g, dict(mat=op[3], h=float(op[2]), kind='flat')))
         elif kind == 'building':
-            if op[4] == 'wall': continue        # a cheek wall or parapet block: in 3D the edge kit (balustrades) stands there
             g = clean(W(Polygon(op[1]))); cut(g)
-            regions.append((g, dict(mat=op[4], h=float(op[2] + op[3]), ground=float(op[2]), kind='building')))
+            regions.append((g, dict(mat=op[4], h=float(op[2] + op[3]), ground=float(op[2]), kind='building', low_wall=op[4] == 'wall')))   # a cheek wall or parapet: solid, drawn as a low wall
         elif kind == 'stairs':
             g = clean(W(Polygon(op[1]))); cut(g)
             ax = op[4]
@@ -87,6 +88,26 @@ def export(name):
                     if not i.is_empty: b = dict(a); b['mat'] = mat; out.append((i, b))
                 else: out.append((rg, a))
             regions = out
+        elif kind == 'repaint':
+            g = clean(W(Polygon(op[1]))); out = []
+            for rg, a in regions:
+                ok = a['kind'] == 'flat' and a['mat'] in op[3] and (op[4] is None or abs(a['h'] - op[4]) <= 0.5)
+                i = clean(rg.intersection(g)) if ok else Polygon()
+                if i.is_empty: out.append((rg, a)); continue
+                d = clean(rg.difference(g))
+                if not d.is_empty: out.append((d, a))
+                b = dict(a); b['mat'] = op[2]; out.append((i, b))
+            regions = out
+        elif kind == 'surface':
+            g = clean(W(Polygon(op[1]))); out = []
+            for rg, a in regions:
+                ok = a['kind'] == 'flat' and a['mat'] in WALKABLE and abs(a['h'] - op[3]) < 0.01
+                i = clean(rg.intersection(g)) if ok else Polygon()
+                if i.is_empty: out.append((rg, a)); continue
+                d = clean(rg.difference(g))
+                if not d.is_empty: out.append((d, a))
+                b = dict(a); b['mat'] = op[2]; b['h'] = a['h'] + op[4]; out.append((i, b))
+            regions = out
         elif kind == 'raise_mat':
             for k, (rg, a) in enumerate(regions):
                 if a['mat'] == op[1] and abs(a['h'] - op[2]) < 1e-6:
@@ -108,23 +129,18 @@ def export(name):
     # rasterisation noise along curved edges isn't a hand edit: only differences thicker than a cell count
     from scipy import ndimage as _nd
     differ = _nd.binary_opening(differ, iterations=1)
-    groups = {}
-    for i, j in zip(*np.nonzero(differ)):
-        key = (round(float(P.h[i, j]), 2), P.m[i, j])
-        x, y = X[i, j] - 0.5, Y[i, j] - 0.5
-        groups.setdefault(key, []).append(box(x, y, x + 1, y + 1))
-    if groups:
-        for (h, mat), bs in groups.items():
-            g = unary_union(bs)
-            # a hand-painted edge (a woods belt) is still a cell staircase: round it off so it doesn't read as one
-            g = clean(g.buffer(0.9, join_style='round').buffer(-0.9, join_style='round').simplify(0.25))
-            if g.area < 4.0: continue                                   # a fragment: its neighbours take it (hygiene, below)
-            cut(g)                                                      # only what the rounded shape covers: no gaps
-            regions.append((g, dict(mat=mat, h=h, kind='building' if mat in ('roof',) else 'flat')))
-    # lips: the walkway under them, at the walkway's height (the cell's height less the lip)
-    lipg = [box(X[i, j] - 0.5, Y[i, j] - 0.5, X[i, j] + 0.5, Y[i, j] + 0.5) for i, j in zip(*np.nonzero(lip))]
+    # Every plan edit is a recorded op (pipeline step 2a), so the shapes and the cells must agree: a difference is an
+    # error in the plan (an edit made on cells), never reconstructed here.
+    if differ.any():
+        import collections
+        where = collections.Counter((P.m[i, j], round(float(P.h[i, j]), 2)) for i, j in zip(*np.nonzero(differ)))
+        i, j = np.argwhere(differ)[0]
+        raise SystemExit(f"{name}: {int(differ.sum())} cells differ from the plan's shape ops, e.g. near U,V "
+                         f"({P.CU[i, j]:.1f}, {P.CV[i, j]:.1f}); by (material, height): {dict(where.most_common(6))}. "
+                         "A plan edit was made on cells: make it a shape op (fill, repaint, building, stairs, raise_mat).")
     # the plan's tiny blocks (piers, posts) stand as the pier model in 3D: the ground runs on under them
-    regions = [(rg, a if not (a['kind'] == 'building' and rg.area < 30) else dict(mat='paving', h=a.get('ground', a['h']), kind='flat')) for rg, a in regions]
+    # the plan's small blocks (piers, posts) stay solid, drawn at their own footprint (pipeline 2b: what blocks is drawn)
+    regions = [(rg, dict(a, post=True) if a['kind'] == 'building' and rg.area < 30 else a) for rg, a in regions]
     # ---- hygiene: no notches, spikes or slivers (the user's circles, 2026-11-23) ----
     # Each region is opened then closed by R (removing anything narrower than about 2R, keeping curves), largest first,
     # each taking only what no larger one took; what's left over (the slivers between) goes to the neighbour it shares
@@ -137,7 +153,7 @@ def export(name):
         g, a = regions[k]
         b = lambda x, d: x.buffer(d, join_style='round', quad_segs=3)
         g2 = clean(clean(b(b(g, -R), R)).buffer(0).pipe if False else clean(b(b(clean(b(b(g, -R), R)), R), -R)).simplify(0.06))
-        g3 = clean(g2.intersection(total).difference(taken))
+        g3 = clean(g2.intersection(total).intersection(g.buffer(R * 1.01)).difference(taken))   # never more than R past its own shape (it swallowed the overlook bay)
         if not g3.is_empty: out[k] = g3; taken = clean(taken.union(g3))
     rest = clean(total.difference(taken))
     for part in (rest.geoms if hasattr(rest, 'geoms') else ([rest] if not rest.is_empty else [])):
@@ -199,7 +215,12 @@ def export(name):
                         if a['kind'] != 'flat' or a['mat'] not in WALKABLE: continue
                         dh = top - lowh
                         if nb is not None and nb['kind'] == 'building': continue
-                        if dh >= 0.6: segs.append(('parapet' if dh > 1.0 and a['mat'] in PAVED else 'retain', seg))
+                        if dh >= 0.6:
+                            # a parapet where the plan guards the edge (Semantic.parapets / finish.lips), else a retaining
+                            # wall: declared, not guessed from the drop (step 4.5)
+                            gi = int(math.floor((ay + by) / 2 - ny * 0.3 + cy0 - P.y0)); gj = int(math.floor((ax + bx) / 2 - nx * 0.3 + cx0 - P.x0))
+                            guarded = 0 <= gi < P.ny and 0 <= gj < P.nx and bool(P.guard[gi, gj])
+                            segs.append(('parapet' if guarded else 'retain', seg))
                         elif nb is not None and nb['kind'] in ('flat', 'step') and nb['mat'] != a['mat'] and dh > -0.01 and (dh > 0.01 or a['mat'] < nb['mat']):
                             if {a['mat'], nb['mat']} & PAVED and 'stairs' not in (a['mat'], nb['mat']) and not ({a['mat'], nb['mat']} <= {'dais', 'plaza', 'paving'}): segs.append(('kerb', seg))   # a flight's edge is its top step, never a kerb
     # ---- chain the typed segments into polylines (one direction: the ground on the left, the drop on the right) ----
@@ -271,7 +292,20 @@ def export(name):
 if __name__ == '__main__':
     name = sys.argv[1] if len(sys.argv) > 1 else 'court-d'
     data, nd, nl = export(name)
-    dst = os.path.join(HERE, '..', '..', 'game', 'packages', 'client', 'src', 'lab', 'world3d-ground.json')
+    # the resolved scene: tools/place-plans/out/ (gitignored) unless a path is given (the 3D spike passes its own)
+    dst = sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, 'out', name + '-scene.json')
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
     json.dump(data, open(dst, 'w'), separators=(',', ':'))
+    # the compact scene beside the level, for content:check's agreement check (regions only)
+    lvl = to_ldtk.LEVELS[name]['level']
+    sdir = os.path.join(HERE, '..', '..', 'game', 'content', 'maps', 'scenes'); os.makedirs(sdir, exist_ok=True)
+    rd = lambda polys: [[[[round(x, 2), round(y, 2)] for x, y in ring] for ring in poly] for poly in polys]
+    # the stamp: the level file's hash (line endings normalised), so content:check can tell a scene built for another level
+    import hashlib
+    lf = os.path.join(HERE, '..', '..', 'game', 'content', 'maps', 'world', lvl + '.ldtkl')
+    stamp = hashlib.sha1(open(lf, encoding='utf-8').read().replace('\r\n', '\n').encode('utf-8')).hexdigest()[:16] if os.path.exists(lf) else None
+    compact = dict(plan=name, level=lvl, levelHash=stamp, note='Written by tools/place-plans/vector.py; checked against the level by content:check (packages/content/src/scene.mjs).',
+                   regions=[dict(mat=r['mat'], h=r['h'], kind=r['kind'], polys=rd(r['polys'])) for r in data['regions']])
+    json.dump(compact, open(os.path.join(sdir, lvl.lower() + '.json'), 'w'), separators=(',', ':'))
     print(f"glitch report: {len(data['glitches']['wavy_edges'])} wavy edges", [(g['type'], g['length'], g['turn']) for g in data['glitches']['wavy_edges'][:8]])
-    print(f"{name}: {len(data['regions'])} regions, {len(data['faces'])} face segments, edges {dict((t, sum(1 for e in data['edges'] if e['type'] == t)) for t in ('retain', 'parapet', 'kerb'))}; {nd} cells differ from the shapes (overrides), {nl} parapet cells left flat; {os.path.getsize(dst) // 1024} KB")
+    print(f"{name}: {len(data['regions'])} regions, {len(data['faces'])} face segments, edges {dict((t, sum(1 for e in data['edges'] if e['type'] == t)) for t in ('retain', 'parapet', 'kerb'))}; {nd} cells differ from the shapes, {nl} parapet cells left flat; {os.path.getsize(dst) // 1024} KB")

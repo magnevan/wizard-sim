@@ -323,7 +323,7 @@ def report(name, P=None):
         ci, cj = cell(p)
         for i in range(ci - DROP_NEAR, ci + DROP_NEAR + 1):
             for j in range(cj - DROP_NEAR, cj + DROP_NEAR + 1):
-                if not (0 <= i < ny and 0 <= j < nx) or not walk[i, j] or (i, j) in drops: continue
+                if not (0 <= i < ny and 0 <= j < nx) or not walk[i, j] or P.guard[i, j] or (i, j) in drops: continue   # a parapet guards it
                 if math.hypot(float(P.CU[i, j]) - p[0], float(P.CV[i, j]) - p[1]) > DROP_NEAR: continue
                 for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):
                     if 0 <= a < ny and 0 <= b < nx and P.m[a, b] != 'void' and P.h[i, j] - P.h[a, b] > DROP_M:

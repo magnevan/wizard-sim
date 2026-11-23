@@ -1,0 +1,13 @@
+Generate one image with your image generation tool, then save it as editor-mockup.png in the current directory. Reply with just the file name.
+
+Design the screen of a friendly, polished map editor for a cosy stylised 3D wizard game, as a high-fidelity UI mockup at 16:9, the kind a great tools designer would make. The attached image is the level being edited: a terraced academy courtyard built from modular pieces (sandstone parapets, stairs, a hall, planted beds, lamps, a small red wizard for scale).
+
+The layout, left to right:
+- A slim tool bar down the left edge with seven icon buttons: brush, rectangle, fill, stairs, curve, prop, pin. The brush is active.
+- A large top-down plan of the same courtyard: a flat map of coloured terrace regions (hall, upper terrace, plaza, road, cliff, planted beds) on a faint square grid, with thin outlines for stairs and railings. A round brush cursor is painting the plaza bigger. Two small numbered pin markers sit on the map, and one small red error marker.
+- Beside it, the live 3D view of the courtyard, as in the attached image, with a gentle highlight on one railing the user has clicked.
+- A narrow panel on the right titled with a small sparkle icon: a conversation with an AI collaborator about the map. Two pin threads: pin 1, the user's note "this railing should stop at the stair", and the AI's short reply that it ended the run at the stair; pin 2, "make the fountain landing round". A text box and a Send button at the bottom.
+- Across the top: the map's name, a small "saved" status, a compile status with a green tick and one warning triangle, undo and redo, and a small green dot showing the AI is connected.
+- Across the bottom: a palette of terrace swatches (a colour chip, a name and a height each) and one row of the issue list.
+
+Style: warm, calm and readable, light parchment-grey panels with the game's sandstone and slate-blue accents, rounded corners, clear hierarchy, generous spacing, legible short labels. It should feel as approachable as a cosy building game, not like a heavy engine editor.

@@ -1,0 +1,19 @@
+Generate one image with your image generation tool, then save it as icon-sheet.png in the current directory. Reply with just the file name.
+
+A sheet of toolbar icons for a cosy stylised map editor of a wizard academy, as a clean grid of 12 icons in 3 rows of 4 on a plain light parchment-grey background, each icon centred in its own equal square with generous space around it. One consistent style: soft rounded shapes, a warm sandstone and slate-blue palette with small gold accents, a gentle top-left light, a thin dark outline so they read at 32 pixels. The attached image shows the game's look.
+
+In reading order:
+1. a paint brush dabbing a square of paving (paint terrain)
+2. a dashed rectangle over paving (rectangle select and paint)
+3. a paint bucket pouring onto a tile (fill)
+4. a short flight of stone stairs (place stairs)
+5. a curved stone parapet (place a curve)
+6. a small bench between two potted shrubs (place a prop)
+7. a map pin with a speech bubble (leave a comment)
+8. a small sparkle beside a speech bubble (send to the AI collaborator)
+9. a curved arrow turning back (undo)
+10. a curved arrow turning forward (redo)
+11. a red circle with a cross (error)
+12. an amber triangle with an exclamation mark (warning)
+
+No text and no labels anywhere on the sheet.

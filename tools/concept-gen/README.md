@@ -86,3 +86,11 @@ Five images in parallel for [the weapons section and the walks](../../docs/explo
 - A road drawn "diagonally from the top left to the bottom right" with a named moment at each point made a walk readable as a level.
 - Asking for "roads that are longer and get more room" moved the district's geography even with "keep its geography exactly"-style wording. Use the image for the moments on the roads, and settle the layout in the space diagram.
 
+### 2026-11-23, the map editor
+
+Two images in parallel for the [map editor spec](../../docs/explorations/2026-11-23-map-editor.md), both usable, about two minutes. The reference for both was a greybox shot of patch B (`npm run shot:lab -- <dir> 30,24 --page kit3d --query "layout=patch-b&view=60"`). The first batch of UI art, after the user's "For UI elements you can use codex to generate art".
+
+- A UI mockup laid out panel by panel ("a slim tool bar down the left edge with seven icon buttons… beside it… across the top…") came back in exactly that layout, with short legible labels and the reference level redrawn in both the plan and the 3D view.
+- It drew the plan as the pieces seen from above, not flat terrace colours as asked, and it rewrote the given chat lines slightly. Say "flat colour regions only" if the flat look is wanted.
+- An icon sheet of "12 icons in 3 rows of 4… each centred in its own equal square", with the action named in brackets after each picture, came back clean, in one style, and in the asked order, ready to cut.
+

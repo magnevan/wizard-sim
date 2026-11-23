@@ -136,6 +136,16 @@ class Plan:
         for d in doors: self.doors.append((d, ground))
         return k
 
+    def repaint(self, poly, to_mat, from_mats, at=None):
+        """Changes the material of the open ground of `from_mats` inside poly to `to_mat`, heights kept (woods belts,
+        land no route reaches, a gate's closed line), only on ground within 0.5 m of `at` if given. A recorded op, so the
+        resolved scene replays it exactly."""
+        self.ops.append(('repaint', list(poly), to_mat, tuple(from_mats), at))
+        k = self.mask(poly) & np.isin(self.m, list(from_mats)) & ~self.bld
+        if at is not None: k &= np.abs(self.h - at) <= 0.5
+        self.m[k] = to_mat
+        return k
+
     def raise_mat(self, mat, at, dh):
         """Raises every cell of material `mat` standing at height `at` by dh (e.g. a road a step above its terrace)."""
         self.ops.append(('raise_mat', mat, at, dh))

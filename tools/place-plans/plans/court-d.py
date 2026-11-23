@@ -85,7 +85,7 @@ poked into the road are gone (the terrace runs to the flights)."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 19)', U=(-95, 110), V=(-62, 100))
+P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 20)', U=(-95, 110), V=(-62, 100))
 C = (0, -40)            # the amphitheatre's centre, up the screen
 ARM = (0, 18)
 SEA = -6.0
@@ -168,21 +168,15 @@ for a in (160, 20):                                                     # thresh
     for r in (26, 36): P.building(circle(polar(C, r, a), 1.3), 6.0, 5.0)
 import numpy as np
 from scipy import ndimage
-walk = np.isin(P.m, ['plaza', 'paving', 'grass', 'path', 'road', 'dais', 'stairs', 'wood', 'sand']) & ~P.bld
-P.m[walk & (((P.CU > 52) & (P.CV > -22)) | ((P.CU < -40) & (P.CV > 60)))] = 'trees'   # land no route reaches (past the inlet, the far corner): woods
-near = ndimage.binary_dilation(np.isin(P.m, ['road', 'path']), iterations=4)
-low = np.zeros_like(walk)
-for dy, dx in ((0, 1), (1, 0), (0, -1), (-1, 0)):
-    nb = np.roll(np.roll(P.h, dy, 0), dx, 1)
-    low |= (P.h - nb > 1.5) & ~np.roll(np.roll(P.bld, dy, 0), dx, 1)
+# Every edit below is a recorded op (rev 20, pipeline step 2a): no direct cell edits, so the resolved scene is exact.
+WALK = ['plaza', 'paving', 'grass', 'path', 'road', 'dais', 'stairs', 'wood', 'sand']
+U0, U1, V0, V1 = P.U[0] - 1, P.U[1] + 1, P.V[0] - 1, P.V[1] + 1
+P.repaint(rect(52, -22, U1, V1), 'trees', WALK)                         # land no route reaches: past the inlet
+P.repaint(rect(U0, 60, -40, V1), 'trees', WALK)                         # and the far corner
 # a belt of woods along the land's edges (12 u), open where the roads leave, so no walkable ground sees the void
-edge = np.zeros_like(walk); edge[:12, :] = edge[-12:, :] = edge[:, :12] = edge[:, -12:] = True
-inbox = (P.CU > P.U[0] + 12) & (P.CU < P.U[1] - 12) & (P.CV > P.V[0] + 12) & (P.CV < P.V[1] - 12)
-belt = walk & ~inbox & ~np.isin(P.m, ['road', 'path', 'wood', 'stairs'])
-P.m[belt] = 'trees'
-walk = walk & ~belt
-lip = walk & near & low & (P.m != 'stairs') & (P.h > 4.5)
-P.h[lip] += 1.0; P.m[lip] = 'wall'; P.bld[lip] = True                  # a knee-high lip along every road edge that drops a tier
+OPEN = ['plaza', 'paving', 'grass', 'dais', 'sand']
+for band in (rect(U0, V0, U1, P.V[0] + 12), rect(U0, P.V[1] - 12, U1, V1), rect(U0, V0, P.U[0] + 12, V1), rect(P.U[1] - 12, V0, U1, V1)):
+    P.repaint(band, 'trees', OPEN)
 from finish import lips as _lips
 _lips(P, everywhere=True)                                             # a parapet on every public edge over a metre
 P.landmark(ARM, 'the armillary', 10, 5.5)

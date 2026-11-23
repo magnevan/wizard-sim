@@ -73,5 +73,10 @@ def close_gates(P, reach=3.0, band=1.0, far=60.0):
             while a < far:
                 seg = line & (side * across > a) & (side * across <= a + 0.5)
                 if seg.any() and not (seg & walk).any(): break      # the line has reached a wall, a cliff or woods
-                P.m[seg & walk] = 'trees'
                 a += 0.5
+            if a <= reach: continue
+            # one recorded op: the band from the reach out to where the line stopped, square to the way in
+            px, py = -dv * side, du * side                          # across, in U, V
+            c0, c1 = reach, a
+            corners = [(gu + px * c + du * s * band, gv + py * c + dv * s * band) for c, s in ((c0, -1), (c1, -1), (c1, 1), (c0, 1))]
+            P.repaint(corners, 'trees', [m for m, v in MAT.items() if v[2]], at=float(P.h[gi]))   # the gate's own tier only

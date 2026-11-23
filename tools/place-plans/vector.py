@@ -8,8 +8,8 @@ diagonal into a staircase (the grid is turned 45 degrees to the screen). So the 
 lays itself down, a building likewise, a raise or a road strip changes what it covers. The result is a set of disjoint
 regions, each with its material and height, in the room's world coordinates.
 
-Cell edits a spec makes by hand after its shapes (woods belts, ground no one reaches) can't be replayed, so the cells are
-compared with the regions afterwards, and every cell that differs becomes a small override region. The parapet lips
+Every plan edit is a recorded op (step 2a of tools/pipeline-3d): a plan that edits cells directly fails here, with
+where the cells differ. The parapet lips
 (finish.lips) are left out: the walkway stays flat and the 3D kit stands on its edge. The count of cells that differ is
 printed; the sim's own data (the LDtk level) is unchanged.
 
@@ -89,6 +89,16 @@ def export(name):
                     if not i.is_empty: b = dict(a); b['mat'] = mat; out.append((i, b))
                 else: out.append((rg, a))
             regions = out
+        elif kind == 'repaint':
+            g = clean(W(Polygon(op[1]))); out = []
+            for rg, a in regions:
+                ok = a['kind'] == 'flat' and a['mat'] in op[3] and (op[4] is None or abs(a['h'] - op[4]) <= 0.5)
+                i = clean(rg.intersection(g)) if ok else Polygon()
+                if i.is_empty: out.append((rg, a)); continue
+                d = clean(rg.difference(g))
+                if not d.is_empty: out.append((d, a))
+                b = dict(a); b['mat'] = op[2]; out.append((i, b))
+            regions = out
         elif kind == 'raise_mat':
             for k, (rg, a) in enumerate(regions):
                 if a['mat'] == op[1] and abs(a['h'] - op[2]) < 1e-6:
@@ -110,21 +120,15 @@ def export(name):
     # rasterisation noise along curved edges isn't a hand edit: only differences thicker than a cell count
     from scipy import ndimage as _nd
     differ = _nd.binary_opening(differ, iterations=1)
-    groups = {}
-    for i, j in zip(*np.nonzero(differ)):
-        key = (round(float(P.h[i, j]), 2), P.m[i, j])
-        x, y = X[i, j] - 0.5, Y[i, j] - 0.5
-        groups.setdefault(key, []).append(box(x, y, x + 1, y + 1))
-    if groups:
-        for (h, mat), bs in groups.items():
-            g = unary_union(bs)
-            # a hand-painted edge (a woods belt) is still a cell staircase: round it off so it doesn't read as one
-            g = clean(g.buffer(0.9, join_style='round').buffer(-0.9, join_style='round').simplify(0.25))
-            if g.area < 4.0: continue                                   # a fragment: its neighbours take it (hygiene, below)
-            cut(g)                                                      # only what the rounded shape covers: no gaps
-            regions.append((g, dict(mat=mat, h=h, kind='building' if mat in ('roof',) else 'flat')))
-    # lips: the walkway under them, at the walkway's height (the cell's height less the lip)
-    lipg = [box(X[i, j] - 0.5, Y[i, j] - 0.5, X[i, j] + 0.5, Y[i, j] + 0.5) for i, j in zip(*np.nonzero(lip))]
+    # Every plan edit is a recorded op (pipeline step 2a), so the shapes and the cells must agree: a difference is an
+    # error in the plan (an edit made on cells), never reconstructed here.
+    if differ.any():
+        import collections
+        where = collections.Counter((P.m[i, j], round(float(P.h[i, j]), 2)) for i, j in zip(*np.nonzero(differ)))
+        i, j = np.argwhere(differ)[0]
+        raise SystemExit(f"{name}: {int(differ.sum())} cells differ from the plan's shape ops, e.g. near U,V "
+                         f"({P.CU[i, j]:.1f}, {P.CV[i, j]:.1f}); by (material, height): {dict(where.most_common(6))}. "
+                         "A plan edit was made on cells: make it a shape op (fill, repaint, building, stairs, raise_mat).")
     # the plan's tiny blocks (piers, posts) stand as the pier model in 3D: the ground runs on under them
     regions = [(rg, a if not (a['kind'] == 'building' and rg.area < 30) else dict(mat='paving', h=a.get('ground', a['h']), kind='flat')) for rg, a in regions]
     # ---- hygiene: no notches, spikes or slivers (the user's circles, 2026-11-23) ----
@@ -285,4 +289,4 @@ if __name__ == '__main__':
                    regions=[dict(mat=r['mat'], h=r['h'], kind=r['kind'], polys=rd(r['polys'])) for r in data['regions']])
     json.dump(compact, open(os.path.join(sdir, lvl.lower() + '.json'), 'w'), separators=(',', ':'))
     print(f"glitch report: {len(data['glitches']['wavy_edges'])} wavy edges", [(g['type'], g['length'], g['turn']) for g in data['glitches']['wavy_edges'][:8]])
-    print(f"{name}: {len(data['regions'])} regions, {len(data['faces'])} face segments, edges {dict((t, sum(1 for e in data['edges'] if e['type'] == t)) for t in ('retain', 'parapet', 'kerb'))}; {nd} cells differ from the shapes (overrides), {nl} parapet cells left flat; {os.path.getsize(dst) // 1024} KB")
+    print(f"{name}: {len(data['regions'])} regions, {len(data['faces'])} face segments, edges {dict((t, sum(1 for e in data['edges'] if e['type'] == t)) for t in ('retain', 'parapet', 'kerb'))}; {nd} cells differ from the shapes, {nl} parapet cells left flat; {os.path.getsize(dst) // 1024} KB")

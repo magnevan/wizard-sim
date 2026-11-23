@@ -31,7 +31,16 @@ FIT = {
     'kerb': dict(len=2.0, dep=(-0.32, 0.0), hgt=(-0.6, 0.05), cut=True, budget=2500),
     'corner': dict(len=None, box=(0.72, 0.72), hgt=(-0.25, 0.14), cut=False, budget=2000),
     'niche': dict(len=2.0, dep=(-0.55, 0.12), hgt=(-2.0, 0.05 * M), cut=True, budget=8000),
-}[piece]
+}
+if piece.startswith('setpiece.'):
+    # a set piece: its footprint and height from kit.json, base centre at the pivot, scaled evenly across so a round piece
+    # stays round (it fills the footprint's narrower side); a landmark gets a bigger budget than a pier
+    import json, os
+    pc = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'kit.json'), encoding='utf-8'))['pieces'][piece]
+    fw, fd = pc['footprint']
+    FIT = dict(len=None, box=(fw, fd), hgt=(0.0, pc['height'] * M), cut=False, uniform=True, budget=30000 if fw >= 6 else 8000)
+else:
+    FIT = FIT[piece]
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=src)
@@ -66,6 +75,7 @@ lo, hi = bbox(); size = hi - lo
 over = 1.04 if FIT['cut'] else 1.0
 if FIT['len']: sx = FIT['len'] * over / size.x; sy = (FIT['dep'][1] - FIT['dep'][0]) / size.y
 else: sx = FIT['box'][0] / size.x; sy = FIT['box'][1] / size.y
+if FIT.get('uniform'): sx = sy = min(sx, sy)
 sz = (FIT['hgt'][1] - FIT['hgt'][0]) / size.z
 apply(Matrix.Diagonal((sx, sy, sz, 1)))
 lo, hi = bbox()

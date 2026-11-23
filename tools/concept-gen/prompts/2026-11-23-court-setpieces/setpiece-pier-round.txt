@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as setpiece-pier-round.png in the current directory. Reply with just the file name.
+
+The attached image is the academy courtyard this piece stands in: stylised, warm sandstone, gold trim, blue banners, warm light.
+
+Draw one single free-standing round stone gate pier from that courtyard, as a game asset on a plain light grey background, seen from slightly above in a three-quarter view: a round sandstone column about three times as tall as it is wide, on a square moulded plinth, with a moulded cornice near the top and a gold lantern on its cap, and a narrow blue banner with a gold star hanging on its front. Nothing else in the image: no wall, no gate, no ground, no shadow, no text.

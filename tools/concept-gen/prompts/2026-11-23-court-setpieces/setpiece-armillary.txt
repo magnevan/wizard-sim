@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as setpiece-armillary.png in the current directory. Reply with just the file name.
+
+The attached image is the academy courtyard this piece stands in: stylised, warm sandstone, gold and bronze trim, warm light.
+
+Draw the great armillary from the centre of that courtyard on its own, as a single game asset on a plain light grey background, seen from slightly above in a three-quarter view. It is one object standing on its own round stone dais: the dais is two low circular steps of warm sandstone with gold-capped lamp posts spaced around its upper rim; on the dais stands a carved bronze pedestal, and on the pedestal a large armillary sphere of several interlocking gilded bronze rings, tilted at different angles, with a glowing violet crystal core at its centre. The rings are thick and solid, with engraved bands. The whole object is about as tall as it is wide. Nothing else in the image: no courtyard, no people, no ground beyond the dais, no beam of light, no text.

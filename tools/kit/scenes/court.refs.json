@@ -1,0 +1,29 @@
+{
+ "next": 5,
+ "refs": [
+  {
+   "id": "r1",
+   "title": "The courtyard concept (the read's source: octagon, armillary, sea stair)",
+   "file": "r1-the-courtyard-concept-the-read-s-source-.jpg",
+   "time": "2026-11-23T22:41:50.822Z"
+  },
+  {
+   "id": "r2",
+   "title": "The academy overview (where the courtyard sits)",
+   "file": "r2-the-academy-overview-where-the-courtyard.png",
+   "time": "2026-11-23T22:41:51.054Z"
+  },
+  {
+   "id": "r3",
+   "title": "Plan D from above (rev 21): what the scene was traced from",
+   "file": "r3-plan-d-from-above-rev-21-what-the-scene-.png",
+   "time": "2026-11-23T22:41:59.992Z"
+  },
+  {
+   "id": "r4",
+   "title": "Plan D in the game camera",
+   "file": "r4-plan-d-in-the-game-camera.png",
+   "time": "2026-11-23T22:42:00.189Z"
+  }
+ ]
+}

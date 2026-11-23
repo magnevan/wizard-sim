@@ -57,6 +57,7 @@ def export(name):
         if kind == 'fill':
             g = clean(W(Polygon(op[1]))); cut(g); regions.append((g, dict(mat=op[3], h=float(op[2]), kind='flat')))
         elif kind == 'building':
+            if op[4] == 'wall': continue        # a cheek wall or parapet block: in 3D the edge kit (balustrades) stands there
             g = clean(W(Polygon(op[1]))); cut(g)
             regions.append((g, dict(mat=op[4], h=float(op[2] + op[3]), ground=float(op[2]), kind='building')))
         elif kind == 'stairs':
@@ -120,6 +121,28 @@ def export(name):
     lipg = [box(X[i, j] - 0.5, Y[i, j] - 0.5, X[i, j] + 0.5, Y[i, j] + 0.5) for i, j in zip(*np.nonzero(lip))]
     # the plan's tiny blocks (piers, posts) stand as the pier model in 3D: the ground runs on under them
     regions = [(rg, a if not (a['kind'] == 'building' and rg.area < 30) else dict(mat='paving', h=a.get('ground', a['h']), kind='flat')) for rg, a in regions]
+    # ---- hygiene: no notches, spikes or slivers (the user's circles, 2026-11-23) ----
+    # Each region is opened then closed by R (removing anything narrower than about 2R, keeping curves), largest first,
+    # each taking only what no larger one took; what's left over (the slivers between) goes to the neighbour it shares
+    # the most edge with.
+    R = float(os.environ.get('VECTOR_R', 0.9))
+    total = clean(unary_union([rg for rg, _ in regions]))
+    order = sorted(range(len(regions)), key=lambda k: -regions[k][0].area)
+    taken, out = Polygon(), {}
+    for k in order:
+        g, a = regions[k]
+        b = lambda x, d: x.buffer(d, join_style='round', quad_segs=3)
+        g2 = clean(clean(b(b(g, -R), R)).buffer(0).pipe if False else clean(b(b(clean(b(b(g, -R), R)), R), -R)).simplify(0.06))
+        g3 = clean(g2.intersection(total).difference(taken))
+        if not g3.is_empty: out[k] = g3; taken = clean(taken.union(g3))
+    rest = clean(total.difference(taken))
+    for part in (rest.geoms if hasattr(rest, 'geoms') else ([rest] if not rest.is_empty else [])):
+        best, bl = None, 0.0
+        for k, g in out.items():
+            l = part.boundary.intersection(g.buffer(0.02)).length
+            if l > bl: best, bl = k, l
+        if best is not None: out[best] = clean(out[best].union(part))
+    regions = [(out[k], regions[k][1]) for k in sorted(out)]
     # ---- stairs into treads ----
     flat = []
     for rg, a in regions:
@@ -166,7 +189,7 @@ def export(name):
                         if nb is not None and nb['kind'] == 'building': continue
                         if dh >= 0.6: segs.append(('parapet' if dh > 1.0 and a['mat'] in PAVED else 'retain', seg))
                         elif nb is not None and nb['kind'] in ('flat', 'step') and nb['mat'] != a['mat'] and dh > -0.01 and (dh > 0.01 or a['mat'] < nb['mat']):
-                            if {a['mat'], nb['mat']} & PAVED and not ({a['mat'], nb['mat']} <= {'stairs', 'dais', 'plaza', 'paving'}): segs.append(('kerb', seg))
+                            if {a['mat'], nb['mat']} & PAVED and 'stairs' not in (a['mat'], nb['mat']) and not ({a['mat'], nb['mat']} <= {'dais', 'plaza', 'paving'}): segs.append(('kerb', seg))   # a flight's edge is its top step, never a kerb
     # ---- chain the typed segments into polylines (one direction: the ground on the left, the drop on the right) ----
     edges = []
     for typ in ('retain', 'parapet', 'kerb'):
@@ -185,6 +208,7 @@ def export(name):
                 cur = nxt[0]; used.add(id(cur)); line.append(cur)
             pts = [[line[0][0], line[0][1]]] + [[c[2], c[3]] for c in line]
             simp = list(LineString(pts).simplify(0.08).coords) if len(pts) > 2 else pts
+            if LineString(simp).length < (2.0 if typ == 'kerb' else 1.0): continue   # a scrap, not an edge
             edges.append(dict(type=typ, pts=[[round(x, 3), round(y, 3)] for x, y in simp], top=line[0][4], low=round(min(c[5] for c in line), 3)))
     def rings(g):
         out = []
@@ -193,8 +217,39 @@ def export(name):
             out.append([[[round(x, 3), round(y, 3)] for x, y in poly.exterior.coords[:-1]]] + [[[round(x, 3), round(y, 3)] for x, y in r.coords[:-1]] for r in poly.interiors])
         return out
     data = dict(plan=name, w=P.nx, h=P.ny,
-                regions=[dict(mat=a['mat'], h=round(a['h'], 3), kind=a['kind'], ground=a.get('ground'), polys=rings(rg)) for rg, a in regions],
+                # `under`: each region a little larger, drawn just beneath, so hairlines where edges meet without shared corners don't show
+                regions=[dict(mat=a['mat'], h=round(a['h'], 3), kind=a['kind'], ground=a.get('ground'), polys=rings(rg), under=rings(clean(rg.buffer(0.15, join_style='mitre').simplify(0.05)))) for rg, a in regions],
                 faces=faces, edges=edges)
+    # ---- the glitch report: edges that wiggle (more turning than a curve of radius 2 u would need); a wiggling edge's
+    # line is smoothed (resampled every 0.5 u, averaged over about 2 u, ends kept) and checked again ----
+    def turning(pts):
+        t = 0.0
+        for (x0, y0), (x1, y1), (x2, y2) in zip(pts, pts[1:], pts[2:]):
+            t += abs((math.atan2(y2 - y1, x2 - x1) - math.atan2(y1 - y0, x1 - x0) + math.pi) % (2 * math.pi) - math.pi)
+        return t
+    def wiggles(pts):
+        L = LineString(pts).length
+        return len(pts) > 2 and L > 0 and turning(pts) / L > 0.5 + 2 * math.pi / L
+    for e in edges:
+        if not wiggles(e['pts']): continue
+        line = LineString(e['pts']); n = max(3, int(line.length / 0.5))
+        rs = [line.interpolate(k / n, normalized=True) for k in range(n + 1)]
+        xs, ys = [p.x for p in rs], [p.y for p in rs]
+        w = 2
+        sm = [(xs[k], ys[k]) if k in (0, n) else (sum(xs[max(0, k - w):k + w + 1]) / len(xs[max(0, k - w):k + w + 1]), sum(ys[max(0, k - w):k + w + 1]) / len(ys[max(0, k - w):k + w + 1])) for k in range(n + 1)]
+        e['pts'] = [[round(x, 3), round(y, 3)] for x, y in LineString(sm).simplify(0.05).coords]
+        e['smoothed'] = True
+    wavy = []
+    for e in edges:
+        pts = e['pts']
+        if len(pts) < 3: continue
+        turn = 0.0; L = 0.0
+        for (x0, y0), (x1, y1), (x2, y2) in zip(pts, pts[1:], pts[2:]):
+            a1, a2 = math.atan2(y1 - y0, x1 - x0), math.atan2(y2 - y1, x2 - x1)
+            turn += abs((a2 - a1 + math.pi) % (2 * math.pi) - math.pi)
+        L = sum(math.hypot(x1 - x0, y1 - y0) for (x0, y0), (x1, y1) in zip(pts, pts[1:]))
+        if L > 0 and turn / L > 0.5 + 2 * math.pi / max(L, 1e-6): wavy.append((e['type'], round(L, 1), round(math.degrees(turn)), pts[0]))
+    data['glitches'] = dict(wavy_edges=[dict(type=t, length=l, turn=a, at=p) for t, l, a, p in wavy])
     if os.environ.get('VECTOR_DEBUG'):
         import collections
         c = collections.Counter((P.m[i, j], vm[i, j], round(float(P.h[i, j] - (vh[i, j] if np.isfinite(vh[i, j]) else 0)), 2)) for i, j in zip(*np.nonzero(differ)))
@@ -206,4 +261,5 @@ if __name__ == '__main__':
     data, nd, nl = export(name)
     dst = os.path.join(HERE, '..', '..', 'game', 'packages', 'client', 'src', 'lab', 'world3d-ground.json')
     json.dump(data, open(dst, 'w'), separators=(',', ':'))
+    print(f"glitch report: {len(data['glitches']['wavy_edges'])} wavy edges", [(g['type'], g['length'], g['turn']) for g in data['glitches']['wavy_edges'][:8]])
     print(f"{name}: {len(data['regions'])} regions, {len(data['faces'])} face segments, edges {dict((t, sum(1 for e in data['edges'] if e['type'] == t)) for t in ('retain', 'parapet', 'kerb'))}; {nd} cells differ from the shapes (overrides), {nl} parapet cells left flat; {os.path.getsize(dst) // 1024} KB")

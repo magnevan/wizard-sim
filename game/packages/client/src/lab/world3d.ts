@@ -17,7 +17,7 @@ import { heightMap } from '../art/heights';
 import { GROUNDS } from '../art/grounds.gen';
 import place from './world3d-place.json';
 import ground3dJson from './world3d-ground.json';
-const ground3d = ground3dJson as unknown as { regions: { mat: string; h: number; kind: string; ground: number | null; polys: number[][][][] }[]; faces: [number, number, number, number, number, number, string, string][] };
+const ground3d = ground3dJson as unknown as { regions: { mat: string; h: number; kind: string; ground: number | null; polys: number[][][][]; under?: number[][][][] }[]; faces: [number, number, number, number, number, number, string, string][] };
 
 const ROOM = 'court';
 const U_PER_M = 1 / 0.6;                 // world units per metre (art/massing.ts)
@@ -242,8 +242,8 @@ const B = hm.b, BS = B * CELL, bw = Math.floor(gw / B), bh = Math.floor(gh / B);
   for (const rg of ground3d.regions) {
     const file = PLAN_TEX[rg.mat] ?? 'grass';
     const top = rg.mat === 'roof' ? (rg.ground ?? rg.h) + ROOF_M : rg.h;
-    const y = yOf(top), bf = buf(file);
-    for (const [outer, ...holes] of rg.polys) {
+    const bf = buf(file);
+    for (const [polys, y] of [[rg.under ?? [], yOf(top) - 0.03], [rg.polys, yOf(top)]] as [number[][][][], number][]) for (const [outer, ...holes] of polys) {
       const contour = outer.map(([x, z]) => new THREE.Vector2(x, z)), hs = holes.map((h) => h.map(([x, z]) => new THREE.Vector2(x, z)));
       const pts = [...contour, ...hs.flat()];
       for (const [i0, i1, i2] of THREE.ShapeUtils.triangulateShape(contour, hs)) tri(bf, [i0, i1, i2].map((i) => [pts[i].x, y, pts[i].y]), [0, 1, 0], topUV);

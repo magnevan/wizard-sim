@@ -193,9 +193,35 @@ for e in ground.get('edges', []):
     for k, (jx, jy) in enumerate(J):
         if k not in keep: continue
         if not any(math.hypot(jx - x, jy - y) < 0.6 for x, y, _ in piers): piers.append((jx, jy, e['top']))
+# ---- hygiene: hand-placed dressing stands on clear walkable ground, at least CLEAR u from any edge line; a piece that
+# doesn't is moved toward the courtyard's centre (up to 3 u) until it does, else dropped ----
+from shapely.geometry import Point as _Pt, LineString as _LS, Polygon as _Poly
+from shapely.ops import unary_union as _union
+CLEAR = 0.9
+_walk = _union([_Poly(r[0], r[1:]) for rg in ground['regions'] if rg['kind'] == 'flat' and rg['mat'] in ('paving', 'plaza', 'grass', 'dais') for r in rg['polys']]).buffer(0)   # never in a road
+_lines = _union([_LS(e['pts']) for e in ground['edges'] if len(e['pts']) > 1])
+_cx, _cy = world(*C)
+moved = removed = 0
+for pc in list(pieces):
+    if pc['kit'] == 'iso-lantern': pieces.remove(pc); continue         # lanterns stand on the parapets instead (below)
+    if pc['kit'] not in ('iso-cypress', 'iso-bench', 'iso-urn', 'iso-planter'): continue
+    ok = lambda x, y: _walk.contains(_Pt(x, y)) and _lines.distance(_Pt(x, y)) >= CLEAR + pc['width'] / 2
+    if ok(pc['x'], pc['y']): continue
+    found = None
+    for step in (0.5, 1.0, 1.5, 2.0, 2.5, 3.0):
+        for k in range(8):
+            th = k * math.pi / 4; x, y = pc['x'] + math.cos(th) * step, pc['y'] + math.sin(th) * step
+            if ok(x, y): found = (x, y); break
+        if found: break
+    if found: pc['x'], pc['y'] = round(found[0], 2), round(found[1], 2); moved += 1
+    else:
+        pieces.remove(pc); removed += 1
+print('dressing hygiene:', moved, 'moved,', removed, 'removed')
 # a pier's own inward step, so it stands on the walkway beside the balustrade's line
-for jx, jy, top in piers:
-    pieces.append(dict(kit='iso-pier', x=round(jx, 2), y=round(jy, 2), z=top, fx=0.7071, fy=0.7071, width=PIER_W))
+# every fourth pier along a parapet is a lantern post instead
+for k, (jx, jy, top) in enumerate(piers):
+    lamp = k % 4 == 2
+    pieces.append(dict(kit='iso-lantern' if lamp else 'iso-pier', x=round(jx, 2), y=round(jy, 2), z=top, fx=0.7071, fy=0.7071, width=0.9 if lamp else PIER_W))
 print('edge kit:', nspan, 'balustrade spans,', len(piers), 'parapet piers,', nw, 'wall modules,', np_, 'piers;', dropped, 'overlaps dropped')
 
 # the camera's start: in front of the gate, on the balcony road

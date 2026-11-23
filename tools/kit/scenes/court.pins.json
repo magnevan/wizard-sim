@@ -298,15 +298,22 @@
    "note": "FLOORS: the sea and the stream are `water`, the quay and the bridge deck `deck`. They draw as paving until the editor's renderer learns both (asked of the Map Editor session).",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
     "x": 47.5,
     "y": 75
    },
-   "thread": [],
-   "trace": true
+   "thread": [
+    {
+     "author": "claude",
+     "text": "The editor's renderer draws water and deck now (kit-clean e683a97, merged into court-kit).",
+     "time": "2026-11-23T21:59:16.097Z"
+    }
+   ],
+   "trace": true,
+   "outcome": "piece"
   }
  ]
 }

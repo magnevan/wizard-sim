@@ -1,6 +1,6 @@
 # Semantic plans: describing a place by what it is (2026-11-23)
 
-**Status:** a proposal for step 4.5 of the [plan-to-3D pipeline](../../tools/pipeline-3d/index.html), waiting on the user. It answers two of the user's concerns: artifacts that seem built into the pipeline (jagged road edges, flights that end at a cliff or a balustrade), and whether the pipeline leaves room for creative layouts.
+**Status:** superseded in direction by [flexible-building](2026-11-23-flexible-building.md) (its checks carry over). Was a proposal for step 4.5 of the [plan-to-3D pipeline](../../tools/pipeline-3d/index.html), waiting on the user. It answers two of the user's concerns: artifacts that seem built into the pipeline (jagged road edges, flights that end at a cliff or a balustrade), and whether the pipeline leaves room for creative layouts.
 
 ## The problem
 

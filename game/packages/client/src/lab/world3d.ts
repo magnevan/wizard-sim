@@ -240,8 +240,9 @@ const B = hm.b, BS = B * CELL, bw = Math.floor(gw / B), bh = Math.floor(gh / B);
   }
 } else {
   for (const rg of ground3d.regions) {
-    const file = PLAN_TEX[rg.mat] ?? 'grass';
-    const top = rg.mat === 'roof' ? (rg.ground ?? rg.h) + ROOF_M : rg.h;
+    // a pier or post: its footprint is paved ground at its base, and the pier model stands on it (spike3d_place.py)
+    const file = rg.kind === 'post' ? 'flagstone' : PLAN_TEX[rg.mat] ?? 'grass';
+    const top = rg.kind === 'post' ? (rg.ground ?? rg.h) : rg.mat === 'roof' ? (rg.ground ?? rg.h) + ROOF_M : rg.h;
     const bf = buf(file);
     for (const [polys, y] of [[rg.under ?? [], yOf(top) - 0.03], [rg.polys, yOf(top)]] as [number[][][][], number][]) for (const [outer, ...holes] of polys) {
       const contour = outer.map(([x, z]) => new THREE.Vector2(x, z)), hs = holes.map((h) => h.map(([x, z]) => new THREE.Vector2(x, z)));
@@ -250,7 +251,8 @@ const B = hm.b, BS = B * CELL, bw = Math.floor(gw / B), bh = Math.floor(gh / B);
     }
   }
   const regionTop = new Map(ground3d.regions.map((r) => [r.mat + ':' + r.h, r.mat === 'roof' ? (r.ground ?? r.h) + ROOF_M : r.h]));
-  for (const [ax, ay, bx, by, top, low, mat] of ground3d.faces) {
+  for (const [ax, ay, bx, by, top, low, mat, fkind] of ground3d.faces) {
+    if (fkind === 'post') continue;
     const t = mat === 'roof' ? (regionTop.get(mat + ':' + top) ?? top) : top;
     if (low >= t - 0.01) continue;
     // outward: exteriors run counter-clockwise, so the right-hand side of a -> b

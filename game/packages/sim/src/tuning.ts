@@ -83,6 +83,7 @@ export const TUNING_HELP: Readonly<Record<string, string>> = {
   'shapes.streamLanes6At': 'The Shard stream fires in 6 lanes (3 a side) from this many Ice.',
   'shapes.streamJitter': 'How far off the beat each shard of the Shard stream leaves, as a share of the gap between shots (0 = on the beat; at most 0.9).',
   'shapes.streamArcJitter': 'How far (turns) each arcing shard of the Shard stream may leave off its lane direction, either way.',
+  'shapes.streamShuffle': 'The Shard stream: 1 = each round of its lanes fires in a fresh shuffled order (every lane still once a round), so the shards do not arrive in regular waves; 0 = always in the same order.',
   'shapes.streamLanes8At': 'The Shard stream fires in 8 lanes (4 a side) from this many Ice; the new pair fills in between the front and the middle lanes.',
   'shapes.streamLanes10At': 'The Shard stream fires in 10 lanes (5 a side) from this many Ice; the new pair fills in between the middle and the rear lanes.',
   'shapes.streamSettle': 'Seconds of holding the Shard stream before its aim settles from streamSpread to streamSettled (the spin-up).',

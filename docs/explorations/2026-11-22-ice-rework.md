@@ -199,3 +199,24 @@ The user, on the birth effect: "birth effect looks good. Now I'm wondering if we
 
 Both sim knobs are in F2 Tune › Spell shapes. Setting `streamJitter` to 0 puts the stream back on the beat.
 
+## Round 9: the waves come from the lane order
+
+The user, 2026-11-23: "I have some trouble noticing the jitter, even as I tune it all the way to max and all the way off and watch at 0.25. Maybe a better way of doing this is having some "randomness" ... to which spot spawns an ice shard next? ... ice shards arrive in these distinct waves".
+
+Why: the shots went round the lanes in a fixed order, and the lanes' paths take different times (short at the front, long loops behind). So each round's arrivals at the cursor fell into the same pattern, round after round. Timing jitter of a fraction of a gap can't hide a pattern that repeats every six shots.
+
+Built: `streamShuffle` (1). Each round of the lanes fires in its own order, a shuffle from a hash of the round's number (`effects.ts streamLaneOf`). Every lane still fires once a round, so the spread stays even. The jitter stays too.
+
+Measured on a dummy at 7 u, two to six seconds into the channel. Clumping is how much damage varies between 6-tick windows (the spread over the mean); the beat is the strongest repeat in the arrivals (0 is none):
+
+| Ice | In order, no jitter | In order, jitter | Shuffled, jitter |
+|---|---|---|---|
+| 1 | 0.65, beat 0.50 | 0.65, 0.23 | 0.65, 0.23 |
+| 2 | 0.89, 0.60 | 0.90, 0.40 | 0.75, 0.12 |
+| 3 | 1.01, 0.46 | 0.88, 0.41 | 0.58, 0.11 |
+| 5 | 1.34, 0.58 | 1.45, 0.53 | 1.04, 0.28 |
+
+The jitter alone barely moved either number, which is why it was hard to see. One Ice is unchanged: its two lanes mirror each other and take the same time.
+
+If it still reads as waves, the next step is to time the arrivals rather than the launches. Each lane would launch early by its own path time, so the shards reach the cursor evenly spaced whatever their lane. That needs a little per-lane state in the sim (the path times change as the cursor moves).
+

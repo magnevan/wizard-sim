@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { rules, type Element } from '@wizard-sim/rules';
 import {
-  BTN, DAMAGE, EL, KEYED_EL, KIND, N_EL, NO_INPUT, PHASE, RHYTHM, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step, streamLane,
+  BTN, DAMAGE, EL, KEYED_EL, KIND, N_EL, NO_INPUT, PHASE, RHYTHM, RUNES, SHAPES, STATUS, SURF, T, ZONE, compile, createWorld, elementId, fullMask, quantize, regenRate, step, streamLane, streamLaneOf,
   type PlayerInput, type World,
 } from '../src';
 import { cellAt } from '../src/effects';
@@ -404,6 +404,16 @@ describe('Force casts', () => {
     const want = (120 * SHAPES.streamRate) / 60;
     expect(Math.abs(shots - want)).toBeLessThanOrEqual(2);
     expect(gaps.size).toBeGreaterThan(3);
+  });
+
+  it('the Shard stream shuffles each round of its lanes (streamShuffle): every lane once a round, the order changing', () => {
+    const orders = new Set<string>();
+    for (let round = 0; round < 8; round++) {
+      const lanes = Array.from({ length: 6 }, (_, k) => streamLaneOf(3, round * 6 + k));
+      expect([...lanes].sort()).toEqual([0, 1, 2, 3, 4, 5]);
+      orders.add(lanes.join());
+    }
+    expect(orders.size).toBeGreaterThan(5);
   });
 
   it('the arc of the Shard stream (on trial): shards leave to the side and curve onto the cursor, landing on what stands there', () => {

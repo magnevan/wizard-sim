@@ -624,7 +624,7 @@ export function channelTick(w: World, src: number, spec: SpellSpec, face: number
     // of at least streamArcRadius round onto the cursor, then a race to it (tickMissiles: steerArc). The shards take
     // turns across 2, 4 or 6 lanes by the Ice in the spell.
     const aimD = !from && !follow && src < MAX_SEATS ? streamAimD(w, src) : 6; // a turret, the Double or the Echo: a mid-range bow
-    const lane = streamLane(spec.formN, shot, aimD), { out, radius } = lane, turn = lane.turn + SHAPES.streamArcJitter * (2 * shotHash(shot, 2) - 1);
+    const lane = streamLane(spec.formN, streamLaneOf(spec.formN, shot), aimD), { out, radius } = lane, turn = lane.turn + SHAPES.streamArcJitter * (2 * shotHash(shot, 2) - 1);
     const ax = cosTurns(a), ay = sinTurns(a), tx = x + ax * aimD, ty = y + ay * aimD;
     const hx = ax * cosTurns(turn) - ay * sinTurns(turn), hy = ax * sinTurns(turn) + ay * cosTurns(turn);
     const m = spawnMissile(w, src, p, hx, hy, 2, scale, 0, 0, from?.x, from?.y);
@@ -786,6 +786,20 @@ function shotHash(shot: number, k: number): number {
   let h = Math.imul(shot ^ Math.imul(k, 0x9e3779b9), 0x85ebca6b);
   h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+/**
+ * Which lane the Shard stream's `shot`-th shard takes. With streamShuffle on, each round of the lanes goes in its
+ * own order (a shuffle from a hash of the round's number: pure, no rng); every lane still fires once a round. In order,
+ * the lanes' paths (short at the front, long loops at the back) brought the shards in as the same waves every round
+ * (the user, 2026-11-23: "ice shards arrive in these distinct waves").
+ */
+export function streamLaneOf(formN: number, shot: number): number {
+  const lanes = streamLanes(formN), k = shot % lanes;
+  if (!SHAPES.streamShuffle) return k;
+  const round = Math.floor(shot / lanes), order = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].slice(0, lanes);
+  for (let i = lanes - 1; i > 0; i--) { const j = Math.floor(shotHash(round * 16 + i, 3) * (i + 1)), o = order[i]; order[i] = order[j]; order[j] = o; }
+  return order[k];
 }
 
 /** Where each tier of the Shard stream's lanes sits, as a share of streamArcSpread: 1, 2, 3 keep their places, 4 and 5 fill in between ("1 4 2 5 3"). */

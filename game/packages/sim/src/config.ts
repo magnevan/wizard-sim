@@ -232,6 +232,8 @@ export const SHAPES = {
    * of the shot's number, so the same every run.
    */
   streamJitter: 0.6, streamArcJitter: 0.015,
+  /** 1: each round of the lanes fires in its own shuffled order (effects.ts streamLaneOf), so the shards don't arrive in the same waves every round; 0: in order. */
+  streamShuffle: 1,
   novaRadius: 3, novaPerRune: 0.6,
   placeRange: 9,
   patchRadius: 2, patchLife: 8, // were 1.6 and 6: the user asked for bigger, longer Place effects (2026-11-11)

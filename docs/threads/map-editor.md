@@ -1,6 +1,6 @@
 # A map editor the user and an LLM share
 
-Status: active, slice A built; next: grow the kit by building the courtyard in the editor · Last touched: 2026-11-23
+Status: active, slice A built; next: drawing curves by hand · Last touched: 2026-11-23
 Record: [the spec](../explorations/2026-11-23-map-editor.md) · [flexible building](../explorations/2026-11-23-flexible-building.md) (the kit, the grid, who draws the layout) · [the decision](../decisions/README.md#2026-11-23-a-square-grid-and-a-modular-kit-the-llm-arranges-layout-code-places-geometry-explorations2026-11-23-flexible-buildingmd) · the kit: `tools/kit/` · [the opening thread](opening.md) (the places it's for)
 
 ## Where it stands
@@ -9,18 +9,11 @@ The editor works: `npm run dev` in `game/`, then http://localhost:5187/editor.ht
 
 ## Next
 
-**The plan (2026-11-23): the kit grows by building a real map.** The courtyard is that map. Its structure is already approved: court plan D, rev 17 (`tools/place-plans/plans/court-d.py`), passed flow and sense at 8/10, so we trace it rather than paint a new layout. Each gap the trace hits becomes a piece or a rule, made once and reused by later places. The order follows how much of the courtyard each gap blocks:
+Editor changes live here; building the courtyard and growing the kit is its own thread, [kit-courtyard](kit-courtyard.md), which files editor gaps here as it hits them.
 
-- [ ] **1. Trace plan D into `court.scene.json`** with only what the kit has now. Curves become chamfers, and each missing thing gets a placeholder terrace plus a pin naming it. The pins become the courtyard's gap list, ranked by how much floor each one covers. The user walks it in the editor and pins more.
-- [ ] **2. Large free arcs** (compiler): curves of any radius bulging from any edge, not just one straight run. The courtyard is mostly arcs: three curved terraces, a round sunk plaza and the balcony.
-- [ ] **3. Curved flights and step rings** (compiler and a tread variant): the dais's two rings and the plaza's ring of steps.
-- [ ] **4. Set pieces** (a new kit class: one unique Meshy model on a footprint the compiler keeps clear and walls off): the armillary, the great hall's front, the bell tower, the beacon and the pylons. Each one: Codex picture, then Meshy, then `fit.py`.
-- [ ] **5. Water and the sea edge**: a water terrace, a quay edge and a cliff face (the inlet, the quay at -5 m, the falls).
-- [ ] **6. Spans**: the bridge over the inlet as a deck piece between two terraces.
-- [ ] **7. Dressing pass**: a loose Codex paint-over of the courtyard's greybox gives the dressing (niches, lamps, planters, floor channels to the exits). The pieces it asks for join the kit.
-- [ ] **Editor gaps, as the courtyard hits them**: placing a set piece, drawing curves by hand (needed from step 2), a figure for scale, copy and paste of regions, dragging a stair's ends.
+- [ ] **Curves by hand.** The scene format and compiler already have `curve` (a terrace bulging past one straight edge along a circle); the editor can only show them. A curve tool: drag along a terrace's edge for the ends, then drag out the bulge (radius); select one to edit its ends and radius. When the compiler learns general curves ([kit-courtyard](kit-courtyard.md) step 2), the tool grows with it.
+- [ ] Placing a set piece (once the kit has the class), a figure for scale, copy and paste of regions, dragging a stair's ends.
 - [ ] Later: push instead of pull, an MCP bridge with a Claude Code channel (check that an event starts a turn in an idle session).
-- [ ] Then the yard and the infirmary on the kit ([opening thread](opening.md)). They should need far fewer new pieces.
 
 ## Done
 

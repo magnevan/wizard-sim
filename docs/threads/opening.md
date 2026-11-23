@@ -12,7 +12,7 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 
 ## Next
 
-- [ ] **The opening's places from the kit** ([flexible building](../explorations/2026-11-23-flexible-building.md)): the courtyard first, traced from plan D (rev 17) into a scene in the map editor, with the kit growing as the trace needs it (the step list is in the [map-editor thread](map-editor.md)); then a loose paint-over of its greybox for the dressing. The kit needs ramps, sloping roads, larger free curves, wall variants and fountain, statue and tower pieces (the trace's list).
+- [ ] **The opening's places from the kit** ([flexible building](../explorations/2026-11-23-flexible-building.md)): the courtyard first, traced from plan D (rev 17) into a scene in the map editor, with the kit growing as the trace needs it (the step list is in the [kit-courtyard thread](kit-courtyard.md)); then a loose paint-over of its greybox for the dressing. The kit needs ramps, sloping roads, larger free curves, wall variants and fountain, statue and tower pieces (the trace's list).
 - [ ] **The map editor** the user and an LLM edit together: its own thread, [map-editor](map-editor.md). Places after the courtyard wait on it.
 - [ ] The yard and the infirmary redone on the kit. Their plan-made levels stay as the layouts' reference: the yard passed flow (rev 3, 7/10), the infirmary flow (rev 7, 8/10).
 - [ ] What the yard's rewrite dropped, for its dressing: the old blockout's 153 props and 21 scenery people (`client/src/art/extras.ts`), the old academy grey boxes (`client/src/art/massing.ts`, `?massing=off`), and `tools/segments/01-opening/yard-level.py` (superseded, still referenced by `extras.ts`, `rigs.ts` and `massing-shots.mjs`).

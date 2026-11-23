@@ -24,6 +24,14 @@
     "joint.pilaster": { "class": "joint", "footprint": [0.5, 0.3], "rot": "any" },
     "connector.flight": { "class": "connector", "width": [4.0, 8.0], "going": 0.5, "rise_m": 0.15, "note": "a whole flight: treads and its two cheek walls with coping, sloping with the steps" },
     "vignette.bench-planter": { "class": "vignette", "footprint": [4.0, 2.0], "clear": 2.0, "note": "a bench between two planters, its back to the front's opposite side" },
-    "vignette.lamp": { "class": "vignette", "footprint": [1.0, 1.0], "clear": 0.0 }
+    "vignette.lamp": { "class": "vignette", "footprint": [1.0, 1.0], "clear": 0.0 },
+    "setpiece.armillary": { "class": "setpiece", "shape": "round", "footprint": [15.0, 15.0], "height": 10.0, "note": "the courtyard's landmark: the armillary on its own round dais (two 0.5 m rings); one model" },
+    "setpiece.bell-tower": { "class": "setpiece", "shape": "round", "footprint": [10.0, 10.0], "height": 15.0, "note": "the marker at the balcony road's west turn" },
+    "setpiece.beacon": { "class": "setpiece", "shape": "round", "footprint": [6.0, 6.0], "height": 13.0, "note": "the marker at the balcony road's east turn" },
+    "setpiece.battery-tower": { "class": "setpiece", "shape": "round", "footprint": [12.0, 12.0], "height": 14.0, "note": "beside the battery road" },
+    "setpiece.pier-round": { "class": "setpiece", "shape": "round", "footprint": [3.0, 3.0], "height": 5.0, "note": "a free-standing round pier, set in matched pairs: gateways, gates, thresholds" },
+    "setpiece.gate-tower": { "class": "setpiece", "shape": "box", "footprint": [3.0, 3.0], "height": 8.0, "note": "a square tower either side of a road's gate" },
+    "setpiece.gate-pier": { "class": "setpiece", "shape": "box", "footprint": [2.0, 2.0], "height": 4.0, "note": "a square gate pier" },
+    "setpiece.post": { "class": "setpiece", "shape": "round", "footprint": [1.5, 1.5], "height": 2.5, "note": "a low post (the overlook's prow)" }
   }
 }

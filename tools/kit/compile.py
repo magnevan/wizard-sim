@@ -377,10 +377,13 @@ def compile_scene(sc):
                          dx=f['dx'], dy=f['dy'], len=f['length'] * G, n=f['n'], h=f['top_h'], low=f['bot_h'], rot=0, name=f['name'], src=f['id']))
 
     # ---- vignettes: on flat ground, clear of flights and their landings ----
-    fl_zones = []
+    fl_zones, fl_paths = [], []
     for f in flights:
         poly = Polygon([f['a'], f['b'], (f['b'][0] + f['dx'] * f['length'], f['b'][1] + f['dy'] * f['length']), (f['a'][0] + f['dx'] * f['length'], f['a'][1] + f['dy'] * f['length'])])
         fl_zones.append(poly.buffer(1.5, join_style='mitre'))   # the flight and a cell-and-a-half landing round it
+        (ax, ay), (bx, by), dx, dy, L = f['a'], f['b'], f['dx'], f['dy'], f['length']
+        fl_paths.append(Polygon([(ax - dx * 1.5, ay - dy * 1.5), (bx - dx * 1.5, by - dy * 1.5),
+                                 (bx + dx * (L + 1.5), by + dy * (L + 1.5)), (ax + dx * (L + 1.5), ay + dy * (L + 1.5))]))   # its width only, landings ahead and behind
     # flights (with their cheek walls) never overlap each other
     bodies = []
     for f in flights:
@@ -412,15 +415,24 @@ def compile_scene(sc):
             if f2 is not f and b2.intersection(run).area > 1e-6:
                 err('flight-runout', f"{f['name']}: {f2['name']} is in front of its foot", (rc.x, rc.y), [f['id'], f2['id']], 'warning')
 
-    for v in kind('vignette'):
+    for v in kind('vignette') + kind('setpiece'):       # a set piece is a vignette at the scale of a landmark: one model on a footprint
         pc = KIT['pieces'].get(v['piece'])
         if pc is None: err('piece', f"no piece {v['piece']!r} in kit.json", v['at'], [v['id']]); continue
         fw, fd = pc['footprint']; dx, dy = OUT[v.get('front', 'S')]
         hw, hd = (fw / 2 / G, fd / 2 / G) if dy else (fd / 2 / G, fw / 2 / G)
         box = Polygon([(v['at'][0] - hw, v['at'][1] - hd), (v['at'][0] + hw, v['at'][1] - hd), (v['at'][0] + hw, v['at'][1] + hd), (v['at'][0] - hw, v['at'][1] + hd)])
+        if pc.get('shape') == 'round': box = Point(v['at']).buffer(hw * 0.98, 24)      # a round piece stands on its circle
         on = [ch for ch, u in floor_u.items() if u.buffer(1e-6).contains(box)]
-        if not on: err('vignette-ground', f"{v['piece']} at {v['at']}: not wholly on one flat terrace", v['at'], [v['id']]); continue
-        if any(z.intersects(box) for z in fl_zones): err('vignette-flight', f"{v['piece']} at {v['at']}: in a flight or its landing", v['at'], [v['id']])
+        if not on and v['kind'] == 'setpiece':     # a set piece's plinth takes up a kerb: ground within 0.35 m will do
+            under = [ch for ch, u in floor_u.items() if u.intersection(box).area > 1e-6]
+            hs = [T[ch]['h'] for ch in under]
+            if under and max(hs) - min(hs) <= 0.35 and abs(unary_union([floor_u[c] for c in under]).intersection(box).area - box.area) < 1e-3:
+                on = [max(under, key=lambda c: T[c]['h'])]
+        if not on:
+            err('vignette-ground', f"{v['piece']} at {v['at']}: not wholly on one flat terrace" + (' (or ground within 0.35 m)' if v['kind'] == 'setpiece' else ''),
+                v['at'], [v['id']]); continue
+        zones = fl_paths if v['kind'] == 'setpiece' else fl_zones      # a set piece may flank a flight (gateway piers); never stand in its path
+        if any(z.intersects(box) for z in zones): err('vignette-flight', f"{v['piece']} at {v['at']}: in a flight or its landing", v['at'], [v['id']])
         inst.append(dict(p=v['piece'], x=v['at'][0] * G, y=v['at'][1] * G, h=T[on[0]]['h'], rot=math.atan2(dy, dx), src=v['id']))
 
     # ---- reachability: cells by terrace, joined where steps are small, plus flights ----

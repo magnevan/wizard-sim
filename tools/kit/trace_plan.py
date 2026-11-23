@@ -30,11 +30,22 @@ MATMAP = {  # plan material -> (kit floor, walkable, edge)
 FIXES = {
     'court': [   # the kit's flights (0.5 u a step) are longer than plan D's: the sea stair's -2 m landing grows, the lower flight and quay go two cells out
         ('paint', 'paving at -2 m', 45, 63, 50, 64), ('paint', 'wood at -5 m', 45, 65, 50, 74), ('head', 'sea stair, lower', [[45.0, 64.5], [50.0, 64.5]]),
+        ('disc', 'dais at 2 m', 47.5, 40.0, 4.6),   # the armillary's set piece brings its own dais: the floor under it is the sunk plaza's
     ],
 }
+SETPIECE_NAMES = {'bell tower': 'setpiece.bell-tower', 'battery tower': 'setpiece.battery-tower', 'beacon': 'setpiece.beacon',
+                  'the armillary': 'setpiece.armillary'}
 SMALL = 30.0  # u^2: a building smaller than this is a set piece (a pier, a pylon, a post), not a terrace
 
-gaps, flights = [], []
+gaps, flights, setpieces = [], [], []
+
+
+def setpiece_for(name, height, round_):
+    """The kit's set piece for a plan building: by name, else a pier by shape and height."""
+    if name in SETPIECE_NAMES: return SETPIECE_NAMES[name]
+    if height < 3: return 'setpiece.post'
+    if round_: return 'setpiece.pier-round'
+    return 'setpiece.gate-tower' if height >= 7 else 'setpiece.gate-pier'
 
 
 def area(poly):
@@ -66,9 +77,11 @@ def fill(self, poly, h, mat):
 def building(self, poly, ground, height, name='', doors=(), roof='roof'):
     if roof == 'wall':                       # the plan's own parapets and flight cheeks: the kit guards edges by rule
         return np.zeros_like(self.bld)
-    if not isinstance(poly, np.ndarray) and area(poly) < SMALL:
-        c = planmod.centroid(poly)
-        gaps.append(dict(kind='set-piece', what=name or f'a pier or post {height:g} m tall', at=c))
+    if not isinstance(poly, np.ndarray) and (area(poly) < SMALL or name in SETPIECE_NAMES):
+        setpieces.append(dict(piece=setpiece_for(name, height, len(poly) >= 24), at=planmod.centroid(poly), name=name, ground=ground))
+        # its plinth: the ground under it at its base height (the plan's building was its own ground)
+        k = self.mask(poly); self.h[k] = ground; self.bname[k] = ''; self.flightid[k] = 0; self.bld[k] = False
+        self.m[k & ~np.isin(self.m, ['plaza', 'paving', 'path', 'road', 'grass'])] = 'paving'
         return np.zeros_like(self.bld)
     k = self.mask(poly); self.h[k] = ground + height; self.m[k] = 'roof'; self.bld[k] = True
     self.bname[k] = name or f'a building {height:g} m'; self.flightid[k] = 0
@@ -97,7 +110,7 @@ def sflight(self, top, bottom, width, h_top, h_bottom, landing=2.5, cheeks=False
 
 
 def landmark(self, c, name, height=12.0, radius=1.0):
-    gaps.append(dict(kind='set-piece', what=f'{name} ({height:g} m)', at=c)); self.marks.append((c, name, height, radius))
+    setpieces.append(dict(piece=setpiece_for(name, height, True), at=c, name=name)); self.marks.append((c, name, height, radius))
 
 
 circles = {}   # (centre, r) in u -> angle ranges (None: the whole circle): every round shape the plan draws
@@ -236,6 +249,11 @@ def to_scene(P, scene_name):
             for y in range(y0, y1 + 1):
                 for x in range(x0, x1 + 1): rows[y][x] = g; kept.add((y, x))
         elif fx[0] == 'head' and fx[1] in byname: byname[fx[1]]['head'] = fx[2]
+        elif fx[0] == 'disc':       # ('disc', terrace name, cx, cy, r): every corner within r of (cx, cy) on one level
+            _, nm, cx, cy, rr = fx; g = next(t['glyph'] for t in terraces if t['name'] == nm)
+            for y in range(ny):
+                for x in range(nx):
+                    if math.hypot(x - cx, y - cy) <= rr: rows[y][x] = g; kept.add((y, x))
     fix_saddles(frozenset(kept))
     # rounds: each circle the plan drew (radius 3 u or more), kept only where an edge lies along it
     import compile as kc
@@ -247,6 +265,41 @@ def to_scene(P, scene_name):
         if None not in ranges:
             o['from'], o['to'] = min(a for a, _ in ranges) - 3, max(b for _, b in ranges) + 3
         objs.append(o)
+    probe = dict(schema=1, name=scene_name, G=2, terraces=terraces, corners=[''.join(r) for r in rows], objects=objs)
+    unused = {ref for f in kc.compile_scene(probe)['findings'] if f['code'] == 'round' for ref in f['refs']}
+    objs = [o for o in objs if o['id'] not in unused]
+    KITP = json.load(open(os.path.join(HERE, 'kit.json'), encoding='utf-8'))['pieces']
+    Tg = {t['glyph']: t for t in terraces}
+
+    def level_ground(at, rr, base):
+        """Every corner under a footprint of radius rr (cells) at `at` on walkable ground within 0.35 m, near the base height."""
+        hs = []
+        for y in range(math.floor(at[1] - rr), math.ceil(at[1] + rr) + 1):
+            for x in range(math.floor(at[0] - rr), math.ceil(at[0] + rr) + 1):
+                if not (0 <= y < ny and 0 <= x < nx): return False
+                if math.hypot(x - at[0], y - at[1]) > rr + 1.0: continue     # a cell beyond: true arcs can cut inside the corners
+                t = Tg[rows[y][x]]
+                if not t.get('walk', True) or t['edge'] == 'wall': return False
+                hs.append(t['h'])
+        return bool(hs) and max(hs) - min(hs) <= 0.35 and (base is None or abs(max(hs) - base) <= 0.5)
+
+    for n, sp in enumerate(setpieces, 1):
+        at = to_c(*sp['at']); rr = KITP[sp['piece']]['footprint'][0] / 2 / G
+        if not level_ground(at, rr, sp.get('ground')):   # a pier the plan set on an edge: the nearest spot within 1.5 cells on one level
+            offs = sorted({(dx / 2, dy / 2) for dx in range(-3, 4) for dy in range(-3, 4)}, key=lambda d: math.hypot(*d))
+            found = next(([at[0] + dx, at[1] + dy] for dx, dy in offs if level_ground([at[0] + dx, at[1] + dy], rr, sp.get('ground'))), None)
+            if found: at = found
+            elif sp.get('ground') is not None:     # no level spot near: its plinth, a cell wider than it, on the level at its base height
+                base = [t for t in terraces if abs(t['h'] - sp['ground']) < 0.01 and t.get('walk', True) and t['edge'] != 'wall']
+                near = [rows[y][x] for y in range(max(0, math.floor(at[1] - rr - 2)), min(ny, math.ceil(at[1] + rr + 3)))
+                        for x in range(max(0, math.floor(at[0] - rr - 2)), min(nx, math.ceil(at[0] + rr + 3))) if Tg[rows[y][x]] in base]
+                if near:
+                    g = Counter(near).most_common(1)[0][0]
+                    for y in range(max(0, math.floor(at[1] - rr - 1)), min(ny, math.ceil(at[1] + rr + 2))):
+                        for x in range(max(0, math.floor(at[0] - rr - 1)), min(nx, math.ceil(at[0] + rr + 2))):
+                            if math.hypot(x - at[0], y - at[1]) <= rr + 1.0: rows[y][x] = g; kept.add((y, x))
+        objs.append(dict(id=f's{n}', kind='setpiece', name=sp['name'] or sp['piece'].split('.')[1], piece=sp['piece'], at=at, front='S'))
+    fix_saddles(frozenset(kept))     # plinths painted above can leave a saddle at their rim
     probe = dict(schema=1, name=scene_name, G=2, terraces=terraces, corners=[''.join(r) for r in rows], objects=objs)
     unused = {ref for f in kc.compile_scene(probe)['findings'] if f['code'] == 'round' for ref in f['refs']}
     objs = [o for o in objs if o['id'] not in unused]

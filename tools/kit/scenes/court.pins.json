@@ -18,6 +18,11 @@
      "author": "claude",
      "text": "The dais under it is too small for the grid: plan D's two rings are 1 u apart, half a cell, so they trace as a chevron. Plan: model the armillary with its own round dais as one set piece, and keep the plaza's floor flat under it.",
      "time": "2026-11-23T22:22:01.308Z"
+    },
+    {
+     "author": "claude",
+     "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
+     "time": "2026-11-23T22:26:58.337Z"
     }
    ],
    "trace": true
@@ -34,7 +39,13 @@
     "x": 39,
     "y": 15
    },
-   "thread": [],
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
+     "time": "2026-11-23T22:26:58.569Z"
+    }
+   ],
    "trace": true
   },
   {
@@ -49,7 +60,13 @@
     "x": 56,
     "y": 15
    },
-   "thread": [],
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
+     "time": "2026-11-23T22:26:58.803Z"
+    }
+   ],
    "trace": true
   },
   {
@@ -64,7 +81,13 @@
     "x": 80.5,
     "y": 10
    },
-   "thread": [],
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
+     "time": "2026-11-23T22:26:59.022Z"
+    }
+   ],
    "trace": true
   },
   {
@@ -124,7 +147,13 @@
     "x": 47.5,
     "y": 9
    },
-   "thread": [],
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
+     "time": "2026-11-23T22:26:59.275Z"
+    }
+   ],
    "trace": true
   },
   {
@@ -139,7 +168,13 @@
     "x": 47.5,
     "y": 49
    },
-   "thread": [],
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
+     "time": "2026-11-23T22:26:59.515Z"
+    }
+   ],
    "trace": true
   },
   {
@@ -154,7 +189,13 @@
     "x": 66,
     "y": 16
    },
-   "thread": [],
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
+     "time": "2026-11-23T22:26:59.720Z"
+    }
+   ],
    "trace": true
   },
   {
@@ -169,7 +210,13 @@
     "x": 24.5,
     "y": 16
    },
-   "thread": [],
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
+     "time": "2026-11-23T22:26:59.974Z"
+    }
+   ],
    "trace": true
   },
   {
@@ -184,7 +231,13 @@
     "x": 33,
     "y": 16
    },
-   "thread": [],
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
+     "time": "2026-11-23T22:27:00.235Z"
+    }
+   ],
    "trace": true
   },
   {
@@ -199,7 +252,13 @@
     "x": 51,
     "y": 33
    },
-   "thread": [],
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Placed as a set piece (kit.json class 'setpiece': the scene's 'setpiece' objects, s1 to s16), on its own plinth where the plan set it on an edge. Open until its model is made (Codex picture, then Meshy, then fit.py); it draws once the editor learns the class.",
+     "time": "2026-11-23T22:27:00.474Z"
+    }
+   ],
    "trace": true
   },
   {

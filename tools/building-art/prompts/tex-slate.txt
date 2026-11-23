@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-slate.png in the current directory. Reply with just the file name.
+
+The attached image is the concept scene: match its palette, warm light and stylised hand-painted texture style.
+
+Deep cobalt blue slate roof shingles seen from straight above: rounded fish-scale slates in overlapping rows with subtle variation in blue and violet, a little weathering. A seamless tileable texture for a stylised 3D game, filling the whole square image edge to edge, evenly lit with no shadows cast by anything and no vignette, so its left edge continues into its right edge and its top into its bottom. Square image, high detail, crisp.

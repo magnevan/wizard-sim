@@ -26,13 +26,13 @@ const groundUrls = import.meta.glob<string>('../../../../content/assets/ground/*
 // round 3: seamless 3D textures from Codex (tools/building-art/tile3d.py), used where they exist
 const tileUrls = import.meta.glob<string>('../../../../content/generated/codex/tex3d-tiles/*.png', { eager: true, query: '?url', import: 'default' });
 /** World units one repeat of each texture covers. */
-const TILE: Record<string, number> = { flagstone: 4.5, cobble: 3.5, grass: 6, ashlar: 5, coping: 3 };
+const TILE: Record<string, number> = { slate: 3, flagstone: 4.5, cobble: 3.5, grass: 6, ashlar: 5, coping: 3 };
 const kitUrls = import.meta.glob<string>('../../../../content/generated/meshy/court-kit/*.glb', { eager: true, query: '?url', import: 'default' });
 const modelUrls = import.meta.glob<string>('../../../../content/assets/models/wizard.glb', { eager: true, query: '?url', import: 'default' });
 import wizMeta from '../../../../content/assets/models/wizard.json';
 const urlOf = (all: Record<string, string>, name: string) => Object.entries(all).find(([p]) => p.endsWith('/' + name))?.[1];
 
-const GROUND_FILE: Record<string, string> = { g: 'grass', d: 'dirt', s: 'sand', f: 'flagstone', c: 'cobble', m: 'mud', l: 'leaves', r: 'coping', a: 'flagstone', p: 'planks', h: 'flagstone', w: 'water' };
+const GROUND_FILE: Record<string, string> = { g: 'grass', d: 'dirt', s: 'sand', f: 'flagstone', c: 'cobble', m: 'mud', l: 'leaves', r: 'coping', a: 'slate', p: 'planks', h: 'flagstone', w: 'water' };
 
 // ---- the scene ----
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -73,7 +73,10 @@ const rows = GROUNDS[ROOM];
 const { gw, gh } = hm;
 const m = Float32Array.from(hm.m);
 const ground = (cx: number, cy: number) => rows[cy]?.[cx] ?? 'g';
-// buildings' roofs ('a', ash) come down to the ground they stand on: the kit stands there instead
+// buildings' roofs ('a', ash) stand at the wall modules' eaves above the ground they stand on, in slate (round 4: the
+// modules ring each footprint; their own roof pieces meet this one). ?roof= sets the height in metres.
+const ROOF_M = Number(q.get('roof') ?? 3.4);
+const isRoof = new Uint8Array(gw * gh);
 {
   const roof = new Uint8Array(gw * gh);
   for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) if (ground(x, y) === 'a' && !hm.out[y * gw + x]) roof[y * gw + x] = 1;
@@ -93,6 +96,7 @@ const ground = (cx: number, cy: number) => rows[cy]?.[cx] ?? 'g';
     for (let k = 0; k < roof.length; k++) if (roof[k] === 2) roof[k] = 3;
     if (!left) break;
   }
+  for (let k = 0; k < roof.length; k++) if (roof[k]) { m[k] += ROOF_M; isRoof[k] = 1; }
 }
 // the plan's parapets (a lip 1 m above the walkway, ground 'r') come down to the walkway: modelled balustrades stand
 // along the edges instead (round 3)
@@ -106,6 +110,16 @@ for (let pass = 0; pass < 3; pass++) for (let y = 0; y < gh; y++) for (let x = 0
     if (m[n] < m[k] - 0.5 && m[n] > best) best = m[n];
   }
   if (best > -Infinity && m[k] - best <= 1.3) m[k] = best;
+}
+// a piece placed with `flatten` (a pier standing where the plan had a block) levels the ground under it to its own height
+for (const pc of place.pieces as { x: number; y: number; z: number; flatten?: number }[]) {
+  if (!pc.flatten) continue;
+  const r = pc.flatten, c0 = Math.floor((pc.x - r + hm.w / 2) / CELL), c1 = Math.ceil((pc.x + r + hm.w / 2) / CELL);
+  const r0 = Math.floor((pc.y - r + hm.h / 2) / CELL), r1 = Math.ceil((pc.y + r + hm.h / 2) / CELL);
+  for (let cy = Math.max(0, r0); cy <= Math.min(gh - 1, r1); cy++) for (let cx = Math.max(0, c0); cx <= Math.min(gw - 1, c1); cx++) {
+    const x = -hm.w / 2 + (cx + 0.5) * CELL, y = -hm.h / 2 + (cy + 0.5) * CELL;
+    if (Math.hypot(x - pc.x, y - pc.y) <= r) m[cy * gw + cx] = pc.z;
+  }
 }
 const wx = (cx: number) => -hm.w / 2 + cx * CELL, wy = (cy: number) => -hm.h / 2 + cy * CELL;
 const yOf = (metres: number) => metres * U_PER_M;

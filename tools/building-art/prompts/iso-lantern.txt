@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as iso-lantern.png in the current directory. Reply with just the file name.
+
+The attached image is the concept scene.
+
+Isolate and generate a single ornate brass lantern post from the concept scene as a game asset: a slim dark iron post on a stone base with a glowing warm brass lantern on top. Standalone straight front-on orthographic view on a plain solid light grey background, perfectly centered, no ground plane, flowers, or characters. High detail, crisp edges, stylised hand-painted textures, square image.

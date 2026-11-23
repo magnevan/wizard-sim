@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as iso-bench.png in the current directory. Reply with just the file name.
+
+The attached image is the concept scene.
+
+Isolate and generate a single carved cream stone bench from the concept scene as a game asset, with scrolled ends and gold accents. Standalone straight front-on orthographic view on a plain solid light grey background, perfectly centered, no ground plane, flowers, or characters. High detail, crisp edges, stylised hand-painted textures, square image.

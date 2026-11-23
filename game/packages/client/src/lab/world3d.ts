@@ -328,7 +328,9 @@ function tick() {
   mixer?.update(dt);
   const z = yOf(metresAt(pos.x, pos.y) || 0);
   if (wizard) { wizard.position.set(pos.x, z, pos.y); wizard.rotation.y = facing; }
-  frame(new THREE.Vector3(pos.x, z + 1.2, pos.y));
+  // lead the view up the screen, so the buildings ahead keep their roofs in frame (?lead=0 to centre on the wizard)
+  const lead = Number(q.get('lead') ?? 3.5);
+  frame(new THREE.Vector3(pos.x - DOWN.x * lead, z + 1.2, pos.y - DOWN.z * lead));
   if (composer) composer.render(); else renderer.render(scene, cam);
   requestAnimationFrame(tick);
 }

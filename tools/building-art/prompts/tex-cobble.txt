@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-cobble.png in the current directory. Reply with just the file name.
+
+The attached image is the concept scene: match its palette, warm light and stylised hand-painted texture style.
+
+Cobbled road: rounded grey-tan cobblestones set close in rows, small dark joints, slightly worn tops. A seamless tileable texture for a stylised 3D game, seen from straight above (or straight on for a wall), filling the whole square image edge to edge, evenly lit with no shadows cast by anything and no vignette, so its left edge continues into its right edge and its top into its bottom. Square image, high detail, crisp.

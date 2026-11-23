@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as iso-steps.png in the current directory. Reply with just the file name.
+
+The attached image is the concept scene.
+
+Isolate and generate a single flight of five wide carved stone steps from the concept scene as a game asset, warm cream sandstone treads with crisp edges, a low carved cheek wall on each side. Standalone straight front-on orthographic view on a plain solid light grey background, perfectly centered, no ground plane, flowers, or characters. High detail, crisp edges, stylised hand-painted textures, square image.

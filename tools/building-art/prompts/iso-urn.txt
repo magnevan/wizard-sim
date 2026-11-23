@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as iso-urn.png in the current directory. Reply with just the file name.
+
+The attached image is the concept scene.
+
+Isolate and generate a single carved stone urn planter on a short pedestal from the concept scene as a game asset, overflowing with purple lilac flowers and trailing green ivy. Standalone straight front-on orthographic view on a plain solid light grey background, perfectly centered, no ground plane or characters. High detail, crisp edges, stylised hand-painted textures, square image.

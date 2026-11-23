@@ -99,6 +99,13 @@ The rule for runs had one bug: a run ending where another terrace's run goes on 
 - *Greybox first, loose paint-over:* told to change whatever makes it better, Codex kept the blockout's layout almost exactly and made it beautiful through dressing: arched niches with lamps in the retaining walls, flower boxes, a fountain in the lawn bed, piers with planters at the stair foot, inlaid compasses.
 - So the user's worry holds for layout: a greybox anchors the image model. Paint first gives the layout ideas; a paint-over of the traced greybox gives the dressing ideas and the art target. Use both, in that order.
 
+**Round 2 (same day).** Four more Meshy pieces, 60 credits: a stair tread, a kerb, a corner block, and a retaining section with an arched niche and lantern (taken from the paint-over).
+- **Flight cheeks** are a sloped wall of stacked courses with a sloped balustrade on it. The pieces are sheared, so the balusters stay upright. Piers stand between sections and a newel at the foot.
+- **Treads** are made pieces, and the flight's head sill is a row of them.
+- **A clear-run-out rule:** a flight's foot should have open ground in front of it, the flight's width and two cells deep. It is a *warning*, not an error; the user called a blocked run-out "more awkward than a hard block". It flags exactly the one awkward stair in patch B.
+- **A variant rule:** a niche goes on every third straight section of a retaining wall over 2 m, only where the wall is seen from walkable ground, and never beside a flight.
+- Codex's shell stalled while the computer was low on memory, but its images were safe in `~/.codex/generated_images/`.
+
 **What the kit needs next, from the trace:** ramps (straight and curved), sloping roads, larger free curves (curves bulging from any edge, not just a straight run), wall variants (a niche, an arcade), and pieces for fountains, statues and towers.
 
 ## A second opinion (a separate Fable session, via the user)

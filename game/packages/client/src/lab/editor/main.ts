@@ -8,11 +8,12 @@
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildKit, disposeKit, groundPlane, loadKitArt, setupStage, yOf, type Inst, type KitData } from '../kit-render';
+import { buildKit, disposeKit, groundPlane, kitPiece, loadKitArt, setKitPieces, setupStage, yOf, type Inst, type KitData, type KitPiece } from '../kit-render';
 import type { Obj, Op, Scene, Terrace } from '../../../map-editor/ops';
 import type { Compiled, Finding } from '../../../map-editor/compile-worker';
 import type { Pin } from '../../../map-editor/store';
 import { Concepts } from './concepts';
+import { angleOf, roundFrom, roundHandles, roundPoints, roundThrough, type RoundShape } from './round';
 import { apexOf, arcPoints, edgeAt, fromSag, lineOf, runOn, sagFor, sagOf, type CurveShape, type EdgeLine, type Pt } from './curve';
 
 const ICON = import.meta.glob<string>('./icons/*.png', { eager: true, query: '?url', import: 'default' });
@@ -42,7 +43,7 @@ if (q.get('art') !== '0') await loadKitArt();
 
 // ---- state ----
 type Sel = { type: 'edge'; e: [number, number]; p: string } | { type: 'obj'; id: string } | { type: 'terrace'; id: string } | { type: 'pin'; id: string } | null;
-type Tool = 'select' | 'brush' | 'rect' | 'stair' | 'curve' | 'prop' | 'pin';
+type Tool = 'select' | 'brush' | 'rect' | 'stair' | 'curve' | 'round' | 'prop' | 'pin';
 let rev = 0, sc: Scene | null = null, comp: Compiled | null = null, shown: KitData | null = null;
 let pins: Pin[] = [];
 let sel: Sel = null, tool: Tool = 'select';
@@ -60,6 +61,7 @@ const heightAt = (x: number, y: number) => terrace(glyphAt(x, y))?.h ?? 0;
 const at3 = (x: number, y: number, hm: number) => new THREE.Vector3(x * G(), yOf(hm), y * G());
 const inMap = (x: number, y: number) => !!sc && y >= 0 && y < sc.corners.length && x >= 0 && x < sc.corners[0].length;
 /** A finding's message with terrace glyphs ('P') replaced by their names. */
+const isProp = (o?: Obj) => o?.kind === 'vignette' || o?.kind === 'setpiece';
 const named = (msg: string) => msg.replace(/ \('.'\)/g, '').replace(/'(.)'/g, (m, g: string) => terrace(g)?.name ?? m).replace(/''s/g, "'s");
 
 // ---- layers: corners, brush preview, selection, markers, highlights ----
@@ -399,9 +401,70 @@ function showCurve(c: CurveShape, hm: number, ok: boolean) {
   showLine(pts, hm, col);
   setSquares(preview, [...pts.map(([x, y]) => ({ x, y, h: hm, c: col, s: 0.16 })), ...c.ends.map(([x, y]) => ({ x, y, h: hm, c: 0xff8a3d, s: 0.4 }))]);
 }
-/** The selected curve's three handles (its ends and the middle of its bulge) and its outline. */
+// ---- rounds (round.ts): a true circle the compiler snaps nearby edges onto; dashed, draped along the upper edge ----
+const roundLines = new THREE.Group(); world.add(roundLines);
+const selRound = () => (sel?.type === 'obj' ? sc?.objects.find((o) => o.id === (sel as { id: string }).id && o.kind === 'round') : undefined);
+/** The height to draw a round at, at a point: the highest level among the corners around it (it follows the upper edge). */
+const upperAt = (x: number, y: number) => Math.max(heightAt(Math.floor(x), Math.floor(y)), heightAt(Math.ceil(x), Math.floor(y)), heightAt(Math.floor(x), Math.ceil(y)), heightAt(Math.ceil(x), Math.ceil(y)));
+function dashed(o: RoundShape, color: number, dash = 0.7) {
+  const pts = roundPoints(o).map(([x, y]) => at3(x, y, upperAt(x, y)).setY(yOf(upperAt(x, y)) + 0.35));
+  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({ color, dashSize: dash, gapSize: dash * 0.6, depthTest: false, transparent: true }));
+  l.computeLineDistances(); l.renderOrder = 11; l.frustumCulled = false;
+  roundLines.add(l);
+}
+let roundPts: Pt[] = [], roundPreview: RoundShape | null = null;
+function rebuildRounds() {
+  roundLines.children.forEach((l) => { (l as THREE.Line).geometry.dispose(); ((l as THREE.Line).material as THREE.Material).dispose(); });
+  roundLines.clear();
+  const s = selRound();
+  if (tool === 'round' || s) for (const o of sc?.objects ?? []) if (o.kind === 'round' && (tool === 'round' || o === s)) dashed(o as unknown as RoundShape, o === s ? 0xffffff : 0x9fb6d9);
+  if (roundPreview) dashed(roundPreview, 0xffe08a);
+  if (tool === 'round') setSquares(preview, roundPts.map(([x, y]) => ({ x, y, h: upperAt(x, y), c: 0xff8a3d, s: 0.4 })));
+}
+function roundBar(o: RoundShape | null, what: string) {
+  const m = (v: number) => Math.round(v * G() * 0.6 * 10) / 10;
+  $('brushbar').style.display = 'flex';
+  $('brushbar').innerHTML = o ? `${what}: radius ${o.r} cells (${m(o.r)} m)${o.from != null ? `, from ${o.from}° to ${o.to}°` : ', a whole circle'}` : what;
+}
+async function commitRound(o: RoundShape) {
+  roundPts = []; roundPreview = null; rebuildRounds(); renderBrushbar();
+  const r = await apply([{ op: 'add', kind: 'round', name: 'a round', ...o }], 'add a round');
+  if (r?.minted?.[0]) { sel = { type: 'obj', id: r.minted[0] }; highlightSel(); renderInspect(); }
+}
+/** A round's handle dragged to p: the new shape. */
+function dragRound(b: RoundShape, which: string, p: Pt): RoundShape {
+  const q = (v: number) => Math.round(v * 4) / 4;
+  if (which === 'centre') return { ...b, centre: [q(p[0]), q(p[1])] };
+  if (which === 'r') return { ...b, r: Math.max(0.5, q(Math.hypot(p[0] - b.centre[0], p[1] - b.centre[1]))) };
+  return { ...b, [which]: Math.round(angleOf(b.centre, p)) % 360 };
+}
+
+/** The selected curve's three handles (its ends and the middle of its bulge) and its outline; a selected round's handles. */
 function rebuildHandles() {
   handles.clear();
+  rebuildRounds();
+  // a selected set piece: its footprint on the ground (a circle or its box, turned to its front)
+  const sp = sel?.type === 'obj' ? sc?.objects.find((o) => o.id === (sel as { id: string }).id && o.kind === 'setpiece') : undefined;
+  const fp = sp && kitPiece(String(sp.piece))?.footprint;
+  if (sp && fp && !curving && drag?.kind !== 'handle') {
+    const [cx, cy] = sp.at as Pt, side = sp.front === 'E' || sp.front === 'W', w = (side ? fp[1] : fp[0]) / G(), d = (side ? fp[0] : fp[1]) / G();
+    const pts: Pt[] = kitPiece(String(sp.piece))?.shape === 'round'
+      ? Array.from({ length: 49 }, (_, k) => [cx + (w / 2) * Math.cos((k / 48) * 2 * Math.PI), cy + (d / 2) * Math.sin((k / 48) * 2 * Math.PI)] as Pt)
+      : [[cx - w / 2, cy - d / 2], [cx + w / 2, cy - d / 2], [cx + w / 2, cy + d / 2], [cx - w / 2, cy + d / 2], [cx - w / 2, cy - d / 2]];
+    showLine(pts, heightAt(cx, cy), 0xff8a3d);
+    return;
+  }
+  const rd = selRound();
+  if (rd && (tool === 'select' || tool === 'round')) {
+    for (const [w, p] of roundHandles(rd as unknown as RoundShape)) {
+      const m = new THREE.Mesh(handleGeo, handleMat), hm = upperAt(p[0], p[1]);
+      m.position.copy(at3(p[0], p[1], hm)).setY(yOf(hm) + 0.45); m.userData.handle = w; m.userData.round = true; m.renderOrder = 12;
+      if (w === 'centre') m.scale.setScalar(1.3);
+      handles.add(m);
+    }
+    if (!curving && drag?.kind !== 'handle') showLine(null);
+    return;
+  }
   const o = selCurve();
   if (!o || (tool !== 'select' && tool !== 'curve')) { if (!curving && drag?.kind !== 'handle') showLine(null); return; }
   const c = o as unknown as CurveShape, hm = curveTerr(o)?.h ?? 0;
@@ -441,7 +504,9 @@ const setCurve = (id: string, c: CurveShape, label: string) => apply([{ op: 'set
 type Drag = { kind: 'paint'; start: [number, number]; last: [number, number]; corners: Map<string, [number, number]>; px: [number, number] }
   | { kind: 'prop'; id: string; start: [number, number]; at: [number, number] } | { kind: 'click'; px: [number, number] }
   | { kind: 'curve'; e: EdgeLine; a0: number; ends: [Pt, Pt]; ok: boolean }
-  | { kind: 'handle'; id: string; which: string; e: EdgeLine; hm: number; base: CurveShape; shape: CurveShape; ok: boolean };
+  | { kind: 'handle'; id: string; which: string; e: EdgeLine; hm: number; base: CurveShape; shape: CurveShape; ok: boolean }
+  | { kind: 'round'; start: Pt; px: [number, number]; moved: boolean }
+  | { kind: 'rhandle'; id: string; which: string; hm: number; base: RoundShape; shape: RoundShape };
 let drag: Drag | null = null;
 let hover: Hit | null = null, hoverCorner: [number, number] | null = null;
 
@@ -493,6 +558,7 @@ const HELP: Record<Tool, string> = {
   brush: 'Drag to paint the chosen terrace · [ ] brush size · Alt: one corner · I: pick the terrace under the cursor',
   rect: 'Drag over the cells to paint',
   stair: 'Drag along the edge where the stair should start; it runs down to the lower side (or select an edge and use Add a stair)',
+  round: 'Click three points along an edge to fit a round through them (or drag from a centre for a whole circle): every edge near it snaps onto it · Esc clears the points',
   curve: 'Drag along a straight edge of a higher level for the ends, then move out for the bulge and click · drag a selected curve\'s handles to change it',
   prop: 'Click to place the prop · Q/E turn it first',
   pin: 'Click anything and write what should change: Claude sees new pins with your next message · K: concept images (click one to pin on it)',
@@ -506,6 +572,24 @@ cv.addEventListener('pointerdown', (ev) => {
   alt = ev.altKey;
   $('pinbox').style.display = 'none';
   if (tool === 'curve' && curving) { commitCurve(); return; }
+  if ((tool === 'select' || tool === 'round') && handles.children.length && selRound()) {
+    castFrom(ev);
+    const hh = ray.intersectObjects(handles.children, false)[0], o = selRound()!;
+    if (hh) {
+      const base = o as unknown as RoundShape;
+      controls.enabled = false;
+      drag = { kind: 'rhandle', id: o.id, which: hh.object.userData.handle, hm: upperAt(...(hh.object.userData.handle === 'centre' ? base.centre : roundHandles(base).find(([w]) => w === hh.object.userData.handle)![1])), base, shape: base };
+      cv.setPointerCapture(ev.pointerId);
+      return;
+    }
+  }
+  if (tool === 'round') {
+    controls.enabled = false;
+    const c = groundAt(ev); if (!c) return;
+    drag = { kind: 'round', start: [Math.round(c[0] * 4) / 4, Math.round(c[1] * 4) / 4], px: [ev.clientX, ev.clientY], moved: false };
+    cv.setPointerCapture(ev.pointerId);
+    return;
+  }
   if ((tool === 'select' || tool === 'curve') && handles.children.length) {
     castFrom(ev);
     const hh = ray.intersectObjects(handles.children, false)[0], o = selCurve(), t = o && curveTerr(o);
@@ -528,7 +612,7 @@ cv.addEventListener('pointerdown', (ev) => {
   }
   if (tool === 'select') {
     const h = pick(ev), o = h?.inst != null && shown ? objOf(shown.instances[h.inst]) : undefined;
-    if (o?.kind === 'vignette' && !ev.shiftKey) {
+    if (o && isProp(o) && !ev.shiftKey) {
       controls.enabled = false; sel = { type: 'obj', id: o.id }; highlightSel(); renderInspect();
       drag = { kind: 'prop', id: o.id, start: o.at as [number, number], at: o.at as [number, number] };
       cv.setPointerCapture(ev.pointerId);
@@ -538,7 +622,7 @@ cv.addEventListener('pointerdown', (ev) => {
   controls.enabled = false;
   const c = groundAt(ev);
   if (!c) return;
-  if (tool === 'prop') { apply([{ op: 'add', kind: 'vignette', piece: propPiece, at: [Math.round(c[0] * 2) / 2, Math.round(c[1] * 2) / 2], front: propFront }], `place ${propPiece.replace('vignette.', '')}`); return; }
+  if (tool === 'prop') { apply([{ op: 'add', kind: propPiece.startsWith('setpiece.') ? 'setpiece' : 'vignette', piece: propPiece, at: [Math.round(c[0] * 2) / 2, Math.round(c[1] * 2) / 2], front: propFront }], `place ${pieceName(propPiece)}`); return; }
   if (tool === 'pin') { ev.preventDefault(); const h = pick(ev); if (h) openPinBox(ev, h); return; }
   drag = { kind: 'paint', start: c, last: c, corners: new Map(), px: [ev.clientX, ev.clientY] };
   cv.setPointerCapture(ev.pointerId);
@@ -565,6 +649,24 @@ cv.addEventListener('pointermove', (ev) => {
     curving.shape = fromSag(curving.ends, curving.e.out, sagFor(curving.ends, curving.e.out, p));
     const ok = inBounds(arcPoints(curving.shape));
     showCurve(curving.shape, hm, ok); curveBar(curving.shape, ok ? 'Click to place' : 'Off the map');
+    return;
+  }
+  if (drag?.kind === 'rhandle') {
+    const p = planeAt(ev, drag.hm); if (!p) return;
+    drag.shape = dragRound(drag.base, drag.which, p);
+    roundPreview = drag.shape; rebuildRounds(); roundBar(drag.shape, 'Release to set it');
+    return;
+  }
+  if (tool === 'round') {
+    const c = groundAt(ev); if (!c) return;
+    const p: Pt = [Math.round(c[0] * 4) / 4, Math.round(c[1] * 4) / 4];
+    if (drag?.kind === 'round') {
+      if (Math.hypot(ev.clientX - drag.px[0], ev.clientY - drag.px[1]) > 6) drag.moved = true;
+      if (drag.moved) { roundPreview = roundFrom(drag.start, p); rebuildRounds(); roundBar(roundPreview, 'A whole circle, release to place it'); return; }
+    }
+    roundPreview = roundPts.length === 2 ? roundThrough(roundPts[0], roundPts[1], p) : roundPts.length === 1 ? null : null;
+    rebuildRounds();
+    if (!drag) roundBar(roundPreview, roundPts.length === 2 ? 'Click the last point along the edge' : roundPts.length === 1 ? 'Click a second point along the edge, then a third' : 'Click three points along an edge to fit a round through them, or drag from a centre for a whole circle');
     return;
   }
   if (drag?.kind === 'handle') {
@@ -595,7 +697,25 @@ cv.addEventListener('pointerup', (ev) => {
     const e = d.e, shape = fromSag(d.ends, e.out, halfOf(d.ends));
     curving = { e, ends: d.ends, shape };
     showCurve(shape, hOf(e.glyph) ?? 0, inBounds(arcPoints(shape))); curveBar(shape, 'Move out for the bulge, click to place (Esc cancels)');
-    controls.enabled = false;
+    return;
+  }
+  if (d.kind === 'rhandle') {
+    endDrag(); roundPreview = null;
+    const s = d.shape, b = d.base;
+    if (s.r !== b.r || s.centre.join() !== b.centre.join() || s.from !== b.from || s.to !== b.to)
+      apply([{ op: 'set', id: d.id, centre: s.centre, r: s.r, ...(s.from != null ? { from: s.from, to: s.to } : {}) }], d.which === 'centre' ? 'move a round' : d.which === 'r' ? 'resize a round' : 'set a round\'s arc');
+    rebuildHandles();
+    return;
+  }
+  if (d.kind === 'round') {
+    endDrag();
+    const p = groundAt(ev);
+    if (d.moved && p) { const o = roundFrom(d.start, [Math.round(p[0] * 4) / 4, Math.round(p[1] * 4) / 4]); if (o.r >= 1) commitRound(o); else rebuildRounds(); return; }
+    roundPts.push(d.start);
+    if (roundPts.length === 3) {
+      const o = roundThrough(roundPts[0], roundPts[1], roundPts[2]);
+      if (o) commitRound(o); else { roundPts = []; roundPreview = null; rebuildRounds(); toast('Those three points are in a line: pick three along a curve', true); }
+    } else rebuildRounds();
     return;
   }
   if (d.kind === 'handle') {
@@ -676,7 +796,7 @@ $('pinbox').querySelector('textarea')!.addEventListener('keydown', async (e) => 
 });
 
 // ---- keys ----
-const TOOLKEY: Record<string, Tool> = { v: 'select', b: 'brush', r: 'rect', s: 'stair', a: 'curve', p: 'prop', n: 'pin' };
+const TOOLKEY: Record<string, Tool> = { v: 'select', b: 'brush', r: 'rect', s: 'stair', a: 'curve', o: 'round', p: 'prop', n: 'pin' };
 const FRONTS = ['N', 'E', 'S', 'W'];
 /** An arrow key as a step on the map, relative to where the camera looks. */
 function arrowStep(k: string): [number, number] | null {
@@ -705,10 +825,11 @@ addEventListener('keydown', (e) => {
   if (k === '?' || k === 'h') { $('keys').style.display = $('keys').style.display === 'block' ? 'none' : 'block'; return; }
   if (k === 'i' && hoverCorner && sc) { const [x, y] = hoverCorner.map(Math.round); if (inMap(x, y)) { brushG = sc.corners[y][x]; renderPalette(); renderBrushbar(); toast(`Brush: ${terrace(brushG)?.name}`); } return; }
   if (k === 'escape' && (curving || drag?.kind === 'curve')) { drag = null; controls.enabled = true; cancelCurve(); return; }
+  if (k === 'escape' && roundPts.length) { roundPts = []; roundPreview = null; rebuildRounds(); setSquares(preview, []); return; }
   if (k === 'escape') { sel = null; $('keys').style.display = 'none'; highlightSel(); renderInspect(); return; }
   if (k === 'q' || k === 'e') {
     const d = k === 'e' ? 1 : 3;
-    if (sel?.type === 'obj') { const o = sc?.objects.find((x) => x.id === (sel as { id: string }).id); if (o?.kind === 'vignette') apply([{ op: 'set', id: o.id, front: FRONTS[(FRONTS.indexOf(String(o.front ?? 'S')) + d) % 4] }], 'turn a prop'); }
+    if (sel?.type === 'obj') { const o = sc?.objects.find((x) => x.id === (sel as { id: string }).id); if (o && isProp(o)) apply([{ op: 'set', id: o.id, front: FRONTS[(FRONTS.indexOf(String(o.front ?? 'S')) + d) % 4] }], 'turn a prop'); }
     else { propFront = FRONTS[(FRONTS.indexOf(propFront) + d) % 4]; renderBrushbar(); }
     return;
   }
@@ -717,7 +838,7 @@ addEventListener('keydown', (e) => {
     e.preventDefault();
     const o = sc?.objects.find((x) => x.id === (sel as { id: string }).id), dir = arrowStep(k); if (!o || !dir) return;
     if (o.kind === 'curve') { toast("A curve sits on its level's edge: drag its end handles instead", true); return; }
-    const step = o.kind === 'vignette' && !e.shiftKey ? 0.5 : 1;
+    const step = isProp(o) && !e.shiftKey ? 0.5 : 1;
     apply([{ op: 'move', id: o.id, by: [dir[0] * step, dir[1] * step] }], `move ${o.id}`);
   }
 });
@@ -729,7 +850,7 @@ function toast(msg: string, bad = false) {
   clearTimeout(toastT); toastT = window.setTimeout(() => { t.style.opacity = '0'; }, bad ? 4500 : 2800);
 }
 function setTool(t: Tool) {
-  tool = t; drag = null; curving = null; controls.enabled = true; setSquares(preview, []); hoverBox.visible = false;
+  tool = t; drag = null; curving = null; roundPts = []; roundPreview = null; controls.enabled = true; setSquares(preview, []); hoverBox.visible = false;
   controls.mouseButtons = { LEFT: t === 'select' ? THREE.MOUSE.ROTATE : (null as unknown as THREE.MOUSE), MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.ROTATE };
   rebuildCorners(); rebuildHandles(); renderTools(); renderBrushbar(); info(hover);
 }
@@ -784,25 +905,32 @@ function renderTop() {
 
 const TOOLS: [Tool, string, string, string][] = [
   ['select', '', 'Select and inspect', 'V'], ['brush', 'brush', 'Paint terraces', 'B'], ['rect', 'rect', 'Paint a rectangle', 'R'],
-  ['stair', 'stair', 'Add a stair', 'S'], ['curve', 'curve', 'Curve an edge', 'A'], ['prop', 'prop', 'Place a prop', 'P'], ['pin', 'pin', 'Pin a note for Claude', 'N'],
+  ['stair', 'stair', 'Add a stair', 'S'], ['curve', 'curve', 'Curve an edge', 'A'], ['round', '◯', 'Round: snap edges onto a circle', 'O'], ['prop', 'prop', 'Place a prop', 'P'], ['pin', 'pin', 'Pin a note for Claude', 'N'],
 ];
 function renderTools() {
-  $('tools').innerHTML = TOOLS.map(([t, ic, title, key]) => `<button data-t="${t}" class="${tool === t ? 'on' : ''}" title="${title} (${key})">${ic ? `<img src="${icon(ic)}">` : '<span>↖</span>'}<kbd>${key}</kbd></button>`).join('');
+  $('tools').innerHTML = TOOLS.map(([t, ic, title, key]) => `<button data-t="${t}" class="${tool === t ? 'on' : ''}" title="${title} (${key})">${icon(ic) ? `<img src="${icon(ic)}">` : `<span>${ic || '↖'}</span>`}<kbd>${key}</kbd></button>`).join('');
   $('tools').querySelectorAll('button').forEach((b) => { b.onclick = () => setTool((b as HTMLElement).dataset.t as Tool); });
 }
 
-const PIECES = ['vignette.lamp', 'vignette.bench-planter'];
+/** What the Prop tool places: vignettes (small props) and set pieces (unique made pieces on a footprint), from kit.json. */
+let PIECES = ['vignette.lamp', 'vignette.bench-planter'];
+const pieceName = (p: string) => p.replace(/^(vignette|setpiece)\./, '');
+const pieceOptions = () => (['vignette', 'setpiece'] as const).map((c) => {
+  const ps = PIECES.filter((p) => p.startsWith(`${c}.`));
+  return ps.length ? `<optgroup label="${c === 'vignette' ? 'props' : 'set pieces'}">${ps.map((p) => `<option ${p === propPiece ? 'selected' : ''} value="${p}">${pieceName(p)}</option>`).join('')}</optgroup>` : '';
+}).join('');
 function renderBrushbar() {
   const bar = $('brushbar'), t = terrace(brushG);
   bar.style.display = tool === 'select' || tool === 'pin' ? 'none' : 'flex';
   if (tool === 'brush' || tool === 'rect') bar.innerHTML = `Painting <b>${esc(t?.name ?? brushG)}</b> (${t?.h ?? 0} m)${tool === 'brush' ? ` · brush ${brushN} cell${brushN > 1 ? 's' : ''} <button class="btn" id="bs-">−</button><button class="btn" id="bs+">+</button> · Alt: one corner` : ' · drag over the cells'}`;
   if (tool === 'stair') bar.innerHTML = 'Drag along an edge between two levels: the stair runs down from there';
+  if (tool === 'round') bar.innerHTML = 'Click three points along an edge to fit a round through them, or drag from a centre for a whole circle';
   if (tool === 'curve') bar.innerHTML = 'Drag along a straight edge of a higher level for the ends; then move out for the bulge and click';
-  if (tool === 'prop') bar.innerHTML = `<select id="piece" class="btn">${PIECES.map((p) => `<option ${p === propPiece ? 'selected' : ''} value="${p}">${p.replace('vignette.', '')}</option>`).join('')}</select> facing <span class="seg">${FRONTS.map((f) => `<button data-f="${f}" class="${f === propFront ? 'on' : ''}">${f}</button>`).join('')}</span>`;
+  if (tool === 'prop') bar.innerHTML = `<select id="piece" class="btn">${pieceOptions()}</select>${kitPiece(propPiece)?.footprint ? ` <span class="meta">${kitPiece(propPiece)!.footprint!.join(' × ')} u, ${kitPiece(propPiece)!.height} m</span>` : ''} facing <span class="seg">${FRONTS.map((f) => `<button data-f="${f}" class="${f === propFront ? 'on' : ''}">${f}</button>`).join('')}</span>`;
   const m = document.getElementById('bs-'), p = document.getElementById('bs+');
   if (m) m.onclick = () => { brushN = Math.max(1, brushN - 1); renderBrushbar(); };
   if (p) p.onclick = () => { brushN = Math.min(12, brushN + 1); renderBrushbar(); };
-  const ps = document.getElementById('piece') as HTMLSelectElement | null; if (ps) ps.onchange = () => { propPiece = ps.value; };
+  const ps = document.getElementById('piece') as HTMLSelectElement | null; if (ps) ps.onchange = () => { propPiece = ps.value; renderBrushbar(); };
   bar.querySelectorAll('[data-f]').forEach((b) => { (b as HTMLElement).onclick = () => { propFront = (b as HTMLElement).dataset.f!; renderBrushbar(); }; });
 }
 
@@ -910,13 +1038,31 @@ function renderInspect() {
     const o = sc.objects.find((x) => x.id === (sel as { id: string }).id) as Obj | undefined;
     if (!o) { el.innerHTML = '<h3>Object</h3><div class="meta">It was removed.</div>'; return; }
     const fields = Object.entries(o).filter(([k]) => !['id', 'kind', 'name'].includes(k)).map(([k, v]) => `<div class="row"><label>${esc(k)}</label><span>${esc(JSON.stringify(v))}</span></div>`).join('');
-    el.innerHTML = `<h3>${esc(o.kind === 'flight' ? 'stair' : o.kind === 'vignette' ? 'prop' : o.kind)} · ${esc(o.id)}</h3>
+    el.innerHTML = `<h3>${esc(o.kind === 'flight' ? 'stair' : o.kind === 'vignette' ? 'prop' : o.kind === 'setpiece' ? 'set piece' : o.kind)} · ${esc(o.id)}</h3>
       <div class="row"><label>Name</label><input id="o-name" value="${esc(o.name)}"></div>${fields}
-      ${o.kind === 'vignette' ? `<div class="row"><label>Facing</label><span class="seg">${FRONTS.map((f) => `<button data-f="${f}" class="${f === o.front ? 'on' : ''}">${f}</button>`).join('')}</span></div>` : ''}
+      ${isProp(o) ? `<div class="row"><label>Facing</label><span class="seg">${FRONTS.map((f) => `<button data-f="${f}" class="${f === o.front ? 'on' : ''}">${f}</button>`).join('')}</span></div>` : ''}
       ${o.kind === 'flight' ? '<div class="row"><label>Width</label><button class="btn" id="o-narrow">−1 cell</button><button class="btn" id="o-widen">+1 cell</button></div>' : ''}
       ${o.kind === 'curve' ? `<div class="row"><label>Bulge</label><button class="btn" id="c-less">−½ cell</button><button class="btn" id="c-more">+½ cell</button><button class="btn" id="c-semi">semicircle</button></div>
         <div class="meta">On ${esc(curveTerr(o)?.name ?? o.terrace)}: ${halfOf(o.ends as Pt[]) * 2} cells wide, bulging ${Math.round(sagOf(o as unknown as CurveShape) * 100) / 100}.</div>` : ''}
-      <div class="row"><button class="btn" id="o-del">Delete</button><span class="meta">${o.kind === 'vignette' ? 'Drag it, or arrows; Q/E turn it' : o.kind === 'curve' ? 'Drag its handles: the ends slide along the edge, the middle sets the bulge' : 'Arrows move it'}</span></div>`;
+      <div class="row"><button class="btn" id="o-del">Delete</button><span class="meta">${isProp(o) ? 'Drag it, or arrows; Q/E turn it' : o.kind === 'curve' ? 'Drag its handles: the ends slide along the edge, the middle sets the bulge' : 'Arrows move it'}</span></div>`;
+    if (o.kind === 'round') {
+      // the fields as controls, under the generic list (which shows them raw)
+      const box = document.createElement('div');
+      box.innerHTML = `<div class="row"><label>Radius</label><input id="rd-r" type="number" step="0.25" value="${o.r}" style="width:70px"> cells</div>
+        <div class="row"><label>Reach</label><input id="rd-tol" type="number" step="0.25" value="${o.tol ?? 0.75}" style="width:70px" title="How far an edge may lie from the circle and still snap onto it (cells)"> cells</div>
+        <div class="row"><label>Edges of</label><select id="rd-t"><option value="">any level</option>${sc.terraces.map((t) => `<option value="${t.id}" ${t.id === o.terrace ? 'selected' : ''}>${esc(t.name ?? t.id)}</option>`).join('')}</select></div>
+        <div class="row"><label>Arc</label><input id="rd-from" type="number" step="1" value="${o.from ?? ''}" placeholder="from" style="width:56px">° to <input id="rd-to" type="number" step="1" value="${o.to ?? ''}" placeholder="to" style="width:56px">° <button class="btn" id="rd-all">whole circle</button></div>
+        <div class="meta">Every edge within reach of this circle (runs of 3 or more) snaps onto it, curving out or in. Arc: 0° east, 90° south. Drag its handles: the big one moves it, the others set the radius and the arc's ends.</div>`;
+      el.querySelector('#o-del')!.closest('.row')!.before(box);
+      const set = (f: Record<string, unknown>, label: string) => apply([{ op: 'set', id: o.id, ...f }], label);
+      const n = (id: string) => $<HTMLInputElement>(id).value.trim();
+      $<HTMLInputElement>('rd-r').onchange = () => { const v = Number(n('rd-r')); if (v > 0) set({ r: v }, 'resize a round'); };
+      $<HTMLInputElement>('rd-tol').onchange = () => { const v = Number(n('rd-tol')); if (v > 0) set({ tol: v }, "a round's reach"); };
+      $<HTMLSelectElement>('rd-t').onchange = () => set({ terrace: n('rd-t') || null }, "a round's level");
+      const arc = () => { const f = n('rd-from'), t = n('rd-to'); if (f && t) set({ from: Number(f) % 360, to: Number(t) % 360 }, "set a round's arc"); else if (!f && !t) set({ from: null, to: null }, 'a whole round'); };
+      $<HTMLInputElement>('rd-from').onchange = arc; $<HTMLInputElement>('rd-to').onchange = arc;
+      $('rd-all').onclick = () => set({ from: null, to: null }, 'a whole round');
+    }
     if (o.kind === 'curve') {
       const c = o as unknown as CurveShape, half = halfOf(c.ends);
       const bulge = (s: number) => { const v = Math.max(0.25, Math.min(half * 2, s)); if (Math.abs(v - sagOf(c)) > 1e-3) setCurve(o.id, fromSag(c.ends, c.out, v), 'bulge a curve'); };
@@ -1012,5 +1158,10 @@ loop();
   state: () => ({ name, rev, tool, sel, brushG, errors: comp?.errors.length, warnings: comp?.warnings.length, pins: pins.length }),
 };
 fetch('/__map/scenes').then((r) => r.json()).then((j: { scenes: { name: string }[] }) => { sceneNames = j.scenes.map((s) => s.name); renderTop(); });
+// the kit's pieces: set pieces' sizes for the drawing, and what the Prop tool offers
+await fetch('/__map/kit').then((r) => r.json()).then((k: { pieces: Record<string, KitPiece> }) => {
+  setKitPieces(k.pieces);
+  PIECES = Object.keys(k.pieces).filter((p) => p.startsWith('vignette.') || p.startsWith('setpiece.'));
+}).catch(() => undefined);
 setTool('select');
 await open(name);

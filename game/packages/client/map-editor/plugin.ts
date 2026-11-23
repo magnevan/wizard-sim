@@ -135,6 +135,7 @@ export function mapEditor(repoRoot: string): Plugin {
       case 'GET history': { const s = await store(name); return json(res, 200, { rev: s.rev, groups: s.historyList(Number(q.n ?? 20)) }); }
       case 'GET pins': { const s = await store(name); return json(res, 200, { rev: s.rev, pins: s.pinList(q.status ?? 'open') }); }
       case 'POST pins': { const s = await store(name); return json(res, 200, s.pinOp(b)); }
+      case 'GET kit': return json(res, 200, JSON.parse(readFileSync(join(kitDir, 'kit.json'), 'utf8')));   // the pieces (set pieces' sizes, the prop list)
       case 'GET refs': { const s = await store(name); return json(res, 200, { refs: s.refs.map((r) => ({ ...r, path: join(s.refsDir, r.file) })) }); }
       case 'POST refs': { const s = await store(name); return json(res, 200, s.refOp(b)); }
       case 'GET ref-image': {

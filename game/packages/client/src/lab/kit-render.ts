@@ -45,6 +45,12 @@ const MAT = {
 export const FLOOR: Record<string, THREE.Material> = { paving: MAT.paving, plaza: MAT.plaza, road: MAT.road, lawn: MAT.lawn, roof: MAT.roof, rock: mat(0x7d7468),
   deck: mat(0x9a7a58), water: mat(0x4f7f9c, 0.25) };   // deck: timber (a quay, a bridge); water: the sea, a stream
 
+/** The kit's pieces as tools/kit/kit.json describes them (the map editor fetches it): set pieces need their size. */
+export type KitPiece = { class?: string; shape?: string; footprint?: [number, number]; height?: number; note?: string };
+const KIT_PIECES: Record<string, KitPiece> = {};
+export function setKitPieces(p: Record<string, KitPiece>) { Object.assign(KIT_PIECES, p); }
+export const kitPiece = (p: string): KitPiece | undefined => KIT_PIECES[p];
+
 // ---- made models: a fitted model (tools/kit/fit.py) replaces its placeholder wherever one exists ----
 const artUrls = import.meta.glob<string>('../../../../content/generated/meshy/kit/*.glb', { eager: true, query: '?url', import: 'default' });
 let ART: Record<string, THREE.Object3D> = {};
@@ -98,6 +104,12 @@ function balustrade(g: THREE.Group, L: number, h: number, inset: number) {
   const n = Math.max(1, Math.round((L - 2 * inset) / 0.32));
   for (let k = 0; k < n; k++) { const x = inset + ((k + 0.5) * (L - 2 * inset)) / n; box(g, MAT.stone, x - 0.07, x + 0.07, y0 + yOf(0.12), y0 + yOf(0.82), -0.27, -0.13); }
 }
+/** Steps along an edge (a short drop you can step over anywhere along it): treads of about 0.15 m, 0.5 u deep, out onto the lower side. */
+function steps(g: THREE.Group, L: number, h: number, low: number) {
+  const n = Math.max(2, Math.round((h - low) / 0.15)), rise = (h - low) / n;
+  box(g, MAT.face, 0, L, yOf(low) - 0.1, yOf(h), -0.06, 0);                                     // the top riser, under the upper floor's edge
+  for (let k = 1; k < n; k++) box(g, k % 2 ? MAT.stone : MAT.coping, 0, L, yOf(low) - 0.1, yOf(h - k * rise), (k - 1) * 0.5, k * 0.5);
+}
 function wall(g: THREE.Group, L: number, h: number, low: number, v?: string, door = false) {
   box(g, MAT.wall, 0, L, yOf(low) - 0.4, yOf(h), -0.6, 0);
   box(g, MAT.coping, 0, L, yOf(low) - 0.4, yOf(low) + yOf(0.5), -0.6, 0.08);              // a plinth course
@@ -132,6 +144,7 @@ function piece(it: Inst): THREE.Group | null {
     }
     else if (kind === 'kerb') { if (!art(g, 'kerb', 0, yOf(it.h), L / 2)) box(g, MAT.kerb, 0, L, yOf(low) - 0.1, yOf(it.h), -0.32, 0); }
     else if (kind === 'wall') wall(g, L, it.h, low, it.v, shape === 'door');
+    else if (kind === 'steps') steps(g, L, it.h, low);   // edge.steps.straight / .chamfer and sweep.steps
     return g;
   }
   if (cls === 'joint') {
@@ -200,6 +213,26 @@ function piece(it: Inst): THREE.Group | null {
     }
     return g;
   }
+  if (cls === 'setpiece') {
+    // a unique made piece on its footprint (a tower, the armillary): its model if made, else a stone stand-in of its
+    // footprint and height (kit.json, given by setKitPieces) on a slightly wider plinth
+    const g = new THREE.Group(), y = yOf(it.h);
+    g.position.set(it.x, 0, it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // local +z is the front
+    if (art(g, kind, 0, y)) return g;
+    const k = KIT_PIECES[it.p] ?? { shape: 'box', footprint: [2, 2], height: 4 };
+    const [w, d] = k.footprint ?? [2, 2], H = yOf(k.height ?? 4), P = yOf(0.35);
+    const solid = (sx: number, sz: number, y0: number, y1: number, m: THREE.Material) => {
+      if (k.shape === 'round') {
+        const c = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, y1 - y0, 40), m);
+        c.scale.set(sx, 1, sz); c.position.y = (y0 + y1) / 2; c.castShadow = c.receiveShadow = true; g.add(c);
+      } else box(g, m, -sx / 2, sx / 2, y0, y1, -sz / 2, sz / 2);
+    };
+    solid(w * 1.12, d * 1.12, y - 0.1, y + P, MAT.coping);              // the plinth
+    solid(w, d, y + P, y + H, MAT.stone);                                // the body
+    solid(w * 1.06, d * 1.06, y + H - yOf(0.3), y + H, MAT.coping);      // a cornice, so its top reads
+    box(g, MAT.dark, -Math.min(w, 1.4) / 2, Math.min(w, 1.4) / 2, y + P, y + P + Math.min(H * 0.4, yOf(2.6)), d / 2 - 0.05, d / 2 + 0.02);   // a door: its front
+    return g;
+  }
   if (cls === 'vignette') {
     const g = new THREE.Group(), y = yOf(it.h);
     g.position.set(it.x, 0, it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // local +z is the front
@@ -220,10 +253,28 @@ function piece(it: Inst): THREE.Group | null {
   return null;
 }
 
+// a floor's sides, down to the ground, in rock: where an edge has no piece (an 'open' edge: a cliff, a bank) this is
+// what shows; elsewhere the edge's piece stands in front of it (the offset keeps a wall face drawn over a side in its plane)
+const SIDE = new THREE.MeshStandardMaterial({ color: 0x7d7468, roughness: 0.95, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2 });
+function sides(rings: number[][][], top: number, bottom: number): THREE.Mesh | null {
+  if (top - bottom < 0.02) return null;
+  const pos: number[] = [];
+  for (const ring of rings) for (let i = 0; i < ring.length; i++) {
+    const [ax, ay] = ring[i], [bx, by] = ring[(i + 1) % ring.length];
+    if (ax === bx && ay === by) continue;
+    pos.push(ax, top, ay, bx, top, by, bx, bottom, by, ax, top, ay, bx, bottom, by, ax, bottom, ay);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, SIDE); m.castShadow = m.receiveShadow = true;
+  return m;
+}
+
 /** The floors and pieces of a compiled scene, as one group. */
 export function buildKit(data: KitData): THREE.Group {
   const root = new THREE.Group();
+  const bottom = yOf(Math.min(0, ...data.floors.map((f) => f.h)) - 0.4);
   for (const f of data.floors) for (const [outer, ...holes] of f.polys) {
+    const sd = sides([outer, ...holes], yOf(f.h), bottom); if (sd) root.add(sd);
     const s = new THREE.Shape(outer.map(([x, y]) => new THREE.Vector2(x, -y)));
     for (const h of holes) s.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, -y))));
     const m = new THREE.Mesh(new THREE.ShapeGeometry(s), FLOOR[f.mat] ?? MAT.paving);

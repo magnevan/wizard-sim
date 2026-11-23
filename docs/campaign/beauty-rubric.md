@@ -2,6 +2,8 @@
 
 How the beauty critic judges a place's art. It's used in stage 4 of [making a place](making-a-place.md). Written 2026-11-22 and tried the same day on the courtyard's grey-box (1/10) and two Codex repaints (2 and 3/10; the whole-screen repaint's craft score was 7, capped by mixed pixel scales and light direction), after an uncalibrated critic scored code-drawn art 6/10 while the user rated it 1–2. The criteria come from what pixel artists and environment artists have written; the sources are listed at the end. Nothing here was invented for the rubric except the scoring procedure, which is our own synthesis. No published artist-written rubric for game scenes was found.
 
+Since 2026-11-23 the opening's places are stylised 3D renders ([stylised 3D](../explorations/2026-11-23-stylised-3d.md)); the critic judges those frames by the same procedure.
+
 ## The procedure
 
 1. **Look at full size.** Use single frames at 1920 × 1080, never contact sheets: thumbnails hide seams, noise and repetition. Look at three frames at least, including one with a building and one with a change of material.

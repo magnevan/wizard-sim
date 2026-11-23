@@ -133,4 +133,6 @@ Sense rounds on the plan-made level: 7.5 (rev 16: the gate piers squared), 7.5 (
 | 4 | 5.5/10 | Pavings blended like camouflage: laid kerbs between pavings, a cobble inlay round the armillary, stone-topped piers |
 | 5 | 6/10 | Pale roofs read as glass: deep cobalt roofs; the falls in white streaks; the bridge deck in stone |
 
+**These rounds were reverted.** They were code-drawn art, and the user rated the result 1–2/10 while the critic gave 6; see [stylised 3D](../../explorations/2026-11-23-stylised-3d.md#how-we-got-here), section 1. The opening's art is now stylised 3D from the modular kit.
+
 **Still open (the critics' ranking):** roofs with ridges and finials; more greenery inside the stone (planters, lilac trees, vines); sea foam and moving water; warm-gold and violet light; more banners and brass lamps along the parapets; the terrace walls broken up with buttresses.

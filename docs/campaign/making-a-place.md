@@ -57,6 +57,8 @@ It doesn't judge fidelity to the concept. The concept is a source of ideas, not 
 
 **Art comes from painted sources, never from code** (the user, 2026-11-22). That means no procedural facades, stone, kerbs, inlays or re-tinted textures: they cap a place at about 2/10 however many rounds follow.
 
+**Stage 4's art is now the stylised-3D kit** (2026-11-23). Places are drawn in 3D from made pieces (Meshy models from Codex pictures, fitted in Blender) on a square grid, placed by `tools/kit/compile.py` from a layout ([flexible building](../explorations/2026-11-23-flexible-building.md), [stylised 3D](../explorations/2026-11-23-stylised-3d.md)). Code-drawn art stays excluded. The Codex-painted buildings and the stage table's note on blockout boxes come from the pixel era; the log rows below are history.
+
 ## The sense rules
 
 Mistakes a script can catch go in `content:check`. A rule goes there as soon as it can be checked automatically, and the rest stay with the sense critic.

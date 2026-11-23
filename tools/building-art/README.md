@@ -23,10 +23,12 @@ Known limit: the grey boxes and their art are drawn under everything (`zIndex -1
 
 ## 3D kit pieces (the stylised-3D spike, 2026-11-23)
 
+The spike's own files are archived on tag `archive/kit-test-2026-11-23`, not on this branch: the `prompts/iso-*.txt` and `tex-*.txt` prompts, `tile3d.py` (seamless 3D textures), the court-kit models and `spike3d_place.py`. Read one with `git show archive/kit-test-2026-11-23:<path>`. Kit pieces are now made for the modular kit: `tools/kit/` ([flexible building](../../docs/explorations/2026-11-23-flexible-building.md)).
+
 The pipeline the Meshy agent uses, with the image step done free in Codex:
 
 1. **Isolate.** Codex draws each piece on its own from a concept picture. The prompts are `prompts/iso-*.txt`, in the agent's pattern: "Isolate and generate a single modular … game asset module featuring: … Standalone straight front-on orthographic view on a plain solid light grey background, perfectly centered, no ground plane, flowers, or characters." Attach the concept scene. The agent itself uses GPT Image 2.5 Sunburst for this step, and Codex is the same family.
 2. **Model.** Meshy image to 3D: `ai_model` meshy-7.1, `enable_pbr` true, `texture_model` meshy-7 at 2k, `should_remesh` true with `target_polycount` about 30,000 (12,000 for a small piece). About 30 credits a piece.
-3. **Place.** Keep the downloads in `game/content/generated/meshy/court-kit/`. `tools/place-plans/spike3d_place.py` places them from the plan, and the spike page (`game/packages/client/world3d.html`) draws them.
+3. **Place.** Now: keep the downloads in `game/content/generated/meshy/kit-src/`; `tools/kit/fit.py` (Blender) fits each to its piece in `tools/kit/kit.json` (the fitted models are in `game/content/generated/meshy/kit/`), and `tools/kit/compile.py` places them from a layout for the greybox page (`game/packages/client/kit3d.html`). The kit's pieces used Meshy smart topology (meshy-t2.5, about 4–6k triangles, 15 credits each) rather than step 2's settings. In the spike (archived on the tag), the downloads were in `game/content/generated/meshy/court-kit/`, placed by `tools/place-plans/spike3d_place.py` and drawn by `game/packages/client/world3d.html`.
 
 What made round 1 splotchy: soft crops from a painted sheet as the input, and smart topology (meshy-t2) at 8,000 triangles with one colour texture and no normal map.

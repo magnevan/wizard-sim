@@ -9,10 +9,7 @@ cssclasses:
 
 ## Campaign opening
 
-> [!in-review] Walk the reworked yard
-> The drill yard is rebuilt as a blockout along the academy (`#yard`, key 7): 130 × 100, the Great Hall and the workshops as grey boxes at real size, the courtyard and the armillary beside it, and every station waits a moment before it acts. Walk it, then mark its plan on the Opening Segment page (about right, too small, too big). Optional, whenever: the yard's round 5 questions, and the encounter questions on The Morning Everything Breaks.
-
-The opening is a chain of eight stops, Life first; the yard and the battery are built ([route](campaign/01-opening/brief.md#the-route), [thread](threads/opening.md)).
+The opening is a chain of eight stops, Life first; the yard and the battery are built ([route](campaign/01-opening/brief.md#the-route), [thread](threads/opening.md)). Its places will be built in stylised 3D from a modular kit ([flexible building](explorations/2026-11-23-flexible-building.md)); a map editor the user and an LLM share comes next ([thread](threads/map-editor.md)). No review is open on it right now.
 
 [The Morning Everything Breaks](https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews) · [Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) · [Saved marks](archive/claude-review-feedback-2026-11-16.md#opening-segment) · [Playable battery](current-state.md#rooms)
 

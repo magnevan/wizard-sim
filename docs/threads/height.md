@@ -1,11 +1,11 @@
 # Height, outlines and building order in the engine
 
-Status: active · Last touched: 2026-11-22
+Status: active · Last touched: 2026-11-23
 Record: [the engine plan](../explorations/2026-11-22-height-and-outlines.md) · [making a place](../campaign/making-a-place.md) (why it's needed) · [place plans](../../tools/place-plans/README.md) (the specs it builds from) · the courtyard's plans on the [Opening Segment](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) page
 
 ## Where it stands
 
-Phases 1 and 2 are built on branch `worktree-height-tiers` (2af5ff0, pushed, not merged to main).
+Phases 1, 2, 4 (minimal), 6 and 7 are on main. Plans now reach the level through the pipeline compiler (`python tools/place-plans/build.py <plan>`: walk report, level, resolved scene, the agreement check), steps 0 to 4 of [the plan-to-3D pipeline](../../tools/pipeline-3d/index.html). The opening's places will be drawn in stylised 3D from the modular kit ([flexible building](../explorations/2026-11-23-flexible-building.md)), so the pixel-art drawing at height (phase 4 in full) is overtaken for them.
 
 **Levels.** LDtk levels can paint height tiers:
 - a `Height` IntGrid layer: unpainted is tier 0, then `t1` to `t9`, and `stair`;
@@ -19,7 +19,7 @@ Phases 1 and 2 are built on branch `worktree-height-tiers` (2af5ff0, pushed, not
 **Checks and the test room.**
 - `content:check` rejects a tier with no height and a stair that touches only one height. Void counts as blocked when placing starts and portals.
 - `npm run content -- height <level> [--write <file|->]` prints or writes a level's heights.
-- The test room is Terraces (`#terraces`, key 8, written by `content/src/terraces-level.mjs`): a floor, a 3 m terrace up a wide stair, a 6 m balcony up a narrow one, a pillar and a void corner.
+- The test room is Terraces (`#terraces`, key 9, written by `content/src/terraces-level.mjs`): a floor, a 3 m terrace up a wide stair, a 6 m balcony up a narrow one, a pillar and a void corner.
 
 **Limits for now.**
 - Cliffs render as stone walls, since nothing is drawn at height yet.
@@ -31,21 +31,15 @@ Docs: `game/content/README.md` (Height), `docs/current-state.md`, and the room l
 
 ## Next
 
-- [ ] Phase 6: `tools/place-plans/` writes an LDtk level from a plan spec (Terrain, Height and Ground layers, plus door, gate and landmark markers). Next up, before phase 4. Test it on the chosen courtyard plan, D revision 5 (`plans/court-d.py`). `tools/place-plans/` exists so far only on branch `worktree-opening-route-docs`, so build this phase on top of it.
+- [x] Phase 6: `tools/place-plans/` writes an LDtk level from a plan spec (`to_ldtk.py`, 61e1201). Now done by the pipeline compiler, `build.py` (steps 0 to 4, 2026-11-23).
+- [x] Phase 4, minimal: tiered rooms drawn at height (86a08e1); the camera and cursor at the wizard's height and the armillary in the court (74f0755).
+- [x] The camera look-ahead for landmarks (2fa2146). Camera vistas were built (4343fff), then taken out of the court (the user: "you'll see enough of it as you walk around"; feabfbb).
+- [x] From the courtyard's sense round: diagonal edges drawn straight, dark roofs, five more sense checks (04271ce).
+- [x] The handoffs from 2026-11-22: no court vista, the battery's rules, the infirmary's grey-box room, court rev 14 (feabfbb, then the levels on main, a7a87e7).
+- [x] Phase 7: the sense lint in `content:check` (`content/src/sense.mjs`, 4343fff). Further sense rules are overtaken by the pipeline's agreement check (step 1: the scene against what the sim walks on) and the kit's validators (`tools/kit/compile.py`), which refuse broken joins before a level exists.
 - [ ] Phase 2's one gap: a sim test of a wizard walking up a stair. `content:check` reachability across both of the test room's stairs already covers the nav side.
-- [ ] Phase 4, minimal (after phase 6; the user left the order to Claude and asked for both, 2026-11-22): `zAt(x, y)`, with bodies and props drawn at their tier's height, and cliff faces as flat-coloured strips. That's enough to walk the grey-box and judge flow.
-- [ ] Two fixes from the first in-game flow round (2026-11-22): the camera should follow the wizard's drawn position at height, not the unlifted ground point; and the generated court needs the armillary prop on its dais.
-- [ ] A camera look-ahead for landmarks (the fourth in-game flow round on the courtyard, 2026-11-22): within about a screen of a tall landmark, bias the framing so the whole of it stays in view. Walking up the screen towards the armillary, it leaves the top of the frame (the briefing, the finale climb).
-- [ ] Camera sequences (the user, 2026-11-22): at the courtyard's briefing and finale arrival, a scripted pull-back or pan brings the whole armillary into view, then returns to play. It's triggered from a level marker.
-- [ ] From the courtyard's sense round (2026-11-22): curved and diagonal cliff faces drawn as a grid sawtooth (smooth or 45° runs); roofs drawn in a walkable floor material; sense-lint candidates (no void visible from walkable ground, doors in an inside corner or with a road as their approach, an unguarded drop of over 1 m beside a route, roofs in floor materials, walkable regions no route reaches). The court's vista didn't fire on load (2026-11-22).
-- [ ] **Waiting for the engine session (written 2026-11-22, after it went offline):**
-  - **No vista for the court.** The user: "I don't even know if we need a pull back, you can't see it all at once, but it seems like you'll see enough of it as you walk around." Remove the court's vista markers. Keeping the vista code parked or removing it is the engine session's call. The armillary's Meshy model is [#20](https://github.com/magnevan/wizard-sim/issues/20).
-  - **The battery's rules changed on `worktree-opening-route-docs`** (2d4d454). The Life circle and `CHANNEL` are gone, and `CAMPAIGN.life` is your own Life pool. `modes.ts`, `world.ts` and `battery.ts` change, and the battery's mode hashes were re-recorded. On a merge conflict, regenerate the hashes instead of resolving by hand.
-  - **The infirmary is ready for its grey-box:** plan `inf-d` rev 3 (`tools/place-plans/plans/inf-d.py`) passes `--report` and the flow critic on flat frames. It needs a LEVELS entry in `to_ldtk.py` (gates: 'from the main gate', 'to the battery'; landmark: 'the well'; level name 'Infirmary'), and an `infirmary` room and mode in the sim. Its gates lead to the courtyard and the battery.
-  - **Courtyard plan D rev 14 (0cb7ecf) is ready to rewrite.** `--report` is clean. Its changes: the sea at -6 m, a metre under the quay; the hall at 16 m and the wings at 9 m; stoops at the hall's doors; paired gate piers.
 - [ ] Seams between places (proposed): `content:check` verifies both sides of each seam match. See [the continuous world](../explorations/2026-11-09-continuous-world-todo.md#2026-11-22-the-segment-as-one-map).
-- [ ] Phase 7: the sense lint in `content:check`.
-- [ ] Before any art: phase 3 (shots and height), phase 4 in full (painted cliff faces, effects and lighting at height), phase 5 (buildings sorted by footprint).
+- [ ] Phase 3 (shots and height) and phase 5 (buildings sorted by footprint), for the sim. Phase 4 in full (painted cliff faces, effects and lighting at height) only if a pixel room needs it.
 
 Not in this thread: pathfinding over big rooms is [#17](https://github.com/magnevan/wizard-sim/issues/17), a follow-up.
 
@@ -59,3 +53,5 @@ Not in this thread: pathfinding over big rooms is [#17](https://github.com/magne
 
 - 2026-11-22 The engine survey and the plan
 - 2026-11-22 Phases 1 and 2 on `worktree-height-tiers` (2af5ff0): tiers, stairs and void in LDtk; cliffs as walls; the Terraces test room (`#terraces`, key 8)
+- 2026-11-22 Phases 6, 4 (minimal) and 7, the camera at height, the look-ahead; the plan-made levels on main (a7a87e7)
+- 2026-11-23 Plan to level through the pipeline compiler (`build.py`, steps 0 to 4); the sense lint overtaken by the agreement check

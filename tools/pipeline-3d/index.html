@@ -55,8 +55,10 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line);
   <div class="eyebrow">Wizard Sim · art pipeline · design review</div>
   <h1>The Plan-to-3D Pipeline</h1>
   <p class="lede">How a place goes from a Python plan to a walkable, stylised 3D scene, as of courtyard plan revision 19, and the architecture we propose to move to. Part one describes what runs today and where it is weak. Part two proposes the changes, including what the terrain means for gameplay: navigation over terraces, and paths that players block with spells.</p>
-  <div class="meta"><span>branch spike-world3d</span><span>2026-11-23</span><span>scope: the courtyard (court-d)</span><span>status: exploring, not adopted</span><span>draft 6: steps 1–4 done; your concerns answered</span></div>
+  <div class="meta"><span>branch spike-world3d (archived)</span><span>2026-11-23</span><span>scope: the courtyard (court-d)</span><span>status: half superseded</span><span>draft 6: steps 1–4 done; your concerns answered</span></div>
 </header>
+
+<div class="risk"><strong>Superseded in part (2026-11-23).</strong> The compiler half is live on main: steps 0 to 4 (the plan compiler, the agreement check, plans as shape ops, what blocks is what's drawn, <code>build.py</code>, the yard). The renderer and placement half (<code>spike3d_place.py</code>, <code>tile3d.py</code>, <code>world3d.ts</code>) and step 4.5 are replaced by the modular kit, <code>tools/kit/</code> (<code>docs/explorations/2026-11-23-flexible-building.md</code>). The spike's code is on tag <code>archive/kit-test-2026-11-23</code>: read a file with <code>git show archive/kit-test-2026-11-23:&lt;path&gt;</code>. Below is the write-up as it stood.</div>
 
 <h2>Part one: what runs today</h2>
 <h3>The one-paragraph version</h3>
@@ -296,5 +298,5 @@ flowchart LR
   <li><b>2026-11-23:</b> about 15 MB per place is the budget; every fight area has two ways in unless its single entrance is a named set piece; steps 1 to 5 go ahead on main now, ahead of the art decision, on branch <code>pipeline-compiler</code>.</li>
 </ul>
 
-<footer>Sources of truth: <span class="mono">tools/place-plans/</span> (plan, export, placement), <span class="mono">game/packages/client/src/lab/world3d.ts</span> (renderer), <span class="mono">docs/explorations/2026-11-23-stylised-3d.md</span> (history and plan), <span class="mono">docs/campaign/beauty-rubric.md</span> (critic). Frames from each round are on the Opening Segment page.</footer>
+<footer>Sources of truth: <span class="mono">tools/place-plans/</span> (plan, export), <span class="mono">tools/kit/</span> (the modular kit that replaced placement and the renderer), <span class="mono">game/packages/client/src/lab/world3d.ts</span> (the spike's renderer, on tag archive/kit-test-2026-11-23), <span class="mono">docs/explorations/2026-11-23-stylised-3d.md</span> (history and plan), <span class="mono">docs/campaign/beauty-rubric.md</span> (critic). Frames from each round are on the Opening Segment page.</footer>
 </div>

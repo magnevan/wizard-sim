@@ -1,6 +1,8 @@
 # How flexible building games make pieces fit (2026-11-23)
 
-**Status:** research, waiting on the user. It follows the user's verdict on the step-4.5 courtyard: 30+ visual issues "give off a strong smell that something is fundamentally wrong with our approach", and an independent review that scored the work 4/10. It supersedes the direction of [semantic-plans](2026-11-23-semantic-plans.md), whose checks carry over.
+**Status:** adopted direction, in progress (2026-11-23). The square grid is decided (see [open questions](#open-questions)), and kit rounds 1 and 2 are done ([the test patch](#the-test-patch-2026-11-23-branch-kit-test)): `tools/kit/` (`kit.json`, `compile.py`, `fit.py`, `layouts/`) and the greybox page `game/packages/client/kit3d.html`. Next: a map editor the user and an LLM edit together on the same scene ([thread](../threads/map-editor.md)). Decisions: [the log](../decisions/README.md#2026-11-23-a-square-grid-and-a-modular-kit-the-llm-arranges-layout-code-places-geometry-explorations2026-11-23-flexible-buildingmd).
+
+It follows the user's verdict on the step-4.5 courtyard: 30+ visual issues "give off a strong smell that something is fundamentally wrong with our approach", and an independent review that scored the work 4/10. It supersedes the direction of [semantic-plans](2026-11-23-semantic-plans.md), whose checks carry over.
 
 ## Why the current approach fails
 
@@ -74,9 +76,11 @@ The fit step is the risk. Test it on a few pieces first.
 
 ## The test patch (2026-11-23, branch `kit-test`)
 
+The branch's commit-by-commit history is on tag `archive/kit-test-2026-11-23`; the kit itself is in `tools/kit/`.
+
 Built:
 - `tools/kit/`: `kit.json` (the asset contract), `compile.py` (a corner-grid layout to piece instances, with join checks), `fit.py` (Blender: a generated model fitted to its piece), and two layouts.
-- The greybox page `game/packages/client/kit3d.html` (shots: `node scripts/kit3d-shot.mjs`).
+- The greybox page `game/packages/client/kit3d.html` (shots: `npm run shot:lab -- <out-dir> x,y --query "layout=patch-b"` in `game/`).
 
 **Joins.** Straight edges, 45° chamfers, a swept bastion, a flight head and a lawn bed all join cleanly:
 - piers are turned to the bisector, so posts follow curves;

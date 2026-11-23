@@ -42,7 +42,8 @@ const MAT = {
   wall: mat(0xd8d2c6), face: mat(0xb7aea0), coping: mat(0xe6e0d4), stone: mat(0xd2cabd), dark: mat(0x2d2a2c),
   wood: mat(0x8a6a4c), leaf: mat(0x6f8f55), metal: mat(0x3b3d42, 0.5), kerb: mat(0xd9d4ca),
 } as const;
-export const FLOOR: Record<string, THREE.Material> = { paving: MAT.paving, plaza: MAT.plaza, road: MAT.road, lawn: MAT.lawn, roof: MAT.roof, rock: mat(0x7d7468) };
+export const FLOOR: Record<string, THREE.Material> = { paving: MAT.paving, plaza: MAT.plaza, road: MAT.road, lawn: MAT.lawn, roof: MAT.roof, rock: mat(0x7d7468),
+  deck: mat(0x9a7a58), water: mat(0x4f7f9c, 0.25) };   // deck: timber (a quay, a bridge); water: the sea, a stream
 
 // ---- made models: a fitted model (tools/kit/fit.py) replaces its placeholder wherever one exists ----
 const artUrls = import.meta.glob<string>('../../../../content/generated/meshy/kit/*.glb', { eager: true, query: '?url', import: 'default' });

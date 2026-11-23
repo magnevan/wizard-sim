@@ -1,7 +1,7 @@
 // usage: node scripts/editor-check.mjs [--url http://127.0.0.1:5187] [--out shots/editor-check]
 // A smoke test of the map editor (editor.html) against a running dev server (npm run dev): on a throwaway copy of
 // patch B (tools/kit/scenes/zz-check.scene.json, removed afterwards) it sets a wall section to a door, paints a bed
-// with the brush, drops a pin, undoes, and asks for Claude's pictures (/__map/view), checking the server after each
+// with the brush, drops a pin, undoes, draws a curve and drags its bulge, and asks for Claude's pictures (/__map/view), checking the server after each
 // step. Screenshots go to --out. Exits 1 if a step fails or the page logs an error.
 import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -73,6 +73,28 @@ try {
   await page.keyboard.down('Control'); await page.keyboard.press('z'); await page.keyboard.up('Control'); await waitRev(3);
   s = await api('scene');
   check(s.scene.corners[18].slice(6, 10) === 'PPPP', `Ctrl+Z undoes the stroke (row 18: ${s.scene.corners[18].slice(4, 12)})`);
+
+  // 4b. a curve: drag along the hall terrace's edge (y = 8.5) from x 3 to 9, move out 2 cells, click; then drag its bulge handle out to a semicircle
+  await page.keyboard.press('a');
+  const drag = async (from, to, steps = 8) => {
+    await page.mouse.move(...from); await page.mouse.down();
+    for (let k = 1; k <= steps; k++) await page.mouse.move(from[0] + ((to[0] - from[0]) * k) / steps, from[1] + ((to[1] - from[1]) * k) / steps);
+    await page.mouse.up();
+  };
+  await drag(await scr(3.2, 8.3, 2.1), await scr(8.8, 8.3, 2.1));
+  [sx, sy] = await scr(6, 10.5, 2.1); await page.mouse.move(sx, sy); await sleep(100); await page.mouse.click(sx, sy); await waitRev(4);
+  s = await api('scene');
+  const cv = s.scene.objects.find((o) => o.kind === 'curve' && o.id !== 'c1');
+  check(cv && JSON.stringify(cv.ends) === '[[3,8.5],[9,8.5]]' && cv.r === 3.25 && cv.out === 'S' && cv.terrace === 't-hall-terrace',
+    `the curve tool adds a curve on the hall terrace's edge, bulging 2 cells (${JSON.stringify(cv)})`);
+  await page.screenshot({ path: `${OUT}/4b-curve.png` });
+  await drag(await scr(6, 10.5, 2.1), await scr(6, 11.5, 2.1)); await waitRev(5);
+  s = await api('scene');
+  const cv2 = s.scene.objects.find((o) => o.id === cv?.id);
+  check(cv2?.r === 3 && JSON.stringify(cv2.centre) === '[6,8.5]', `dragging the bulge handle makes it a semicircle (${JSON.stringify(cv2)})`);
+  const f = await api('findings');
+  check(!(f.findings ?? []).some((x) => x.code === 'curve-ends'), `the compiler takes the curve (${(f.findings ?? []).map((x) => x.code).join(', ')})`);
+  await page.screenshot({ path: `${OUT}/4c-semicircle.png` });
 
   // 5. Claude's pictures
   let r = await fetch(map('view', { cam: 'top' }));

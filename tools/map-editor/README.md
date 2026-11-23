@@ -17,10 +17,11 @@ Everything happens in the 3D view. In Select, **left-drag** orbits (in the other
 | Brush | B | Drag to paint the chosen level, a whole cell at a time; **[ ]** change the size, **Alt** paints one corner, **I** picks up the level under the cursor, **1–9** choose from the palette. Cells a stroke would leave ambiguous are filled in |
 | Rectangle | R | Drag over the cells to paint |
 | Stair | S | Drag along the edge between two levels: the flight starts there and runs down to the lower side (it finds the drop within a cell of the drag) |
+| Curve | A | Bulge a level past a straight stretch of its edge along a circle (a bastion, a rounded terrace): drag along the edge for the ends, release, move out for the bulge (it snaps to a semicircle near half the width), click; **Esc** cancels. A selected curve (here or in Select) shows three handles: drag an end along the edge, or the middle for the bulge; the inspector has bulge ±½ and **semicircle** |
 | Prop | P | Click to place the prop chosen in the bar, facing the way chosen (Q/E) |
 | Pin | N | Click anything and write what should change. Claude sees new pins with your next message in the terminal, and its replies appear on the pin |
 
-**A new level:** **+ level** in the palette adds one a metre above the highest, opens it to be named, and switches to painting with it. **Ctrl+Z** and **Ctrl+Y** undo and redo anything, Claude's edits included. Problems show as red (error) and amber (warning) markers at their place and in the list on the right (a stray railing end beside an ambiguous cell folds under it); clicking one goes there. When Claude edits, a note says what it did and the changed corners glow for a moment. Curves can't be drawn by hand yet: ask Claude.
+**A new level:** **+ level** in the palette adds one a metre above the highest, opens it to be named, and switches to painting with it. **Ctrl+Z** and **Ctrl+Y** undo and redo anything, Claude's edits included. Problems show as red (error) and amber (warning) markers at their place and in the list on the right (a stray railing end beside an ambiguous cell folds under it); clicking one goes there. When Claude edits, a note says what it did and the changed corners glow for a moment.
 
 ## HTTP API
 

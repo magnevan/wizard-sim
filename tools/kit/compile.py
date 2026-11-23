@@ -115,6 +115,7 @@ def compile_scene(sc):
     # ---- marching squares, per cell and per level ----
     floors = {c: [] for c in T}
     segs = []        # (a, b, upper terrace, lower height): a->b with the higher side on the left
+    low_of = {}      # a straight segment's lower terrace, by its ends
     for i in range(ny):
         for j in range(nx):
             cs = [rows[i][j], rows[i][j + 1], rows[i + 1][j + 1], rows[i + 1][j]]       # TL TR BR BL
@@ -141,6 +142,7 @@ def compile_scene(sc):
                     cross = (b[0] - a[0]) * (cen.y - a[1]) - (b[1] - a[1]) * (cen.x - a[0])
                     if cross > 0: a, b = b, a
                     lower = max(T[c]['h'] for c, ins in zip(cs, inside) if not ins)
+                    low_of[(round(a[0], 4), round(a[1], 4), round(b[0], 4), round(b[1], 4))] = max((c for c, ins in zip(cs, inside) if not ins), key=lambda c: T[c]['h'])
                     segs.append([a, b, order[k], lower])
             for n, k in enumerate(ks):
                 p = polys.get(k)
@@ -209,10 +211,89 @@ def compile_scene(sc):
         for ch in floors:
             if ch != tg: floors[ch] = [p.difference(bulge) for p in floors[ch]]
 
+    # ---- rounds: a true circle the grid's stepped edges stand in for; every edge along it is snapped onto the arc ----
+    # {kind: round, centre, r, tol? (cells, default 0.75), terrace? (only its edges), from?/to? (degrees: 0 east, 90 south)}
+    # Works whichever side is higher (convex or concave): the floors between the stepped edge and the arc change hands.
+    from shapely.validation import make_valid
+    from shapely.strtree import STRtree
+    rounds = kind('round')
+    if rounds:   # every floor cell in one index: a round's pieces only touch the cells near its arc
+        cells = [[g, f] for g in floors for f in floors[g]]
+        tree = STRtree([f for _, f in cells])
+    for rd in rounds:
+        (cx, cy), r = rd['centre'], rd['r']; tol = rd.get('tol', 0.75)
+        only = glyph_of.get(rd.get('terrace'), rd.get('terrace'))
+        def ang_ok(p):
+            if 'from' not in rd: return True
+            a = math.degrees(math.atan2(p[1] - cy, p[0] - cx)) % 360; a0, a1 = rd['from'] % 360, rd['to'] % 360
+            return (a0 <= a <= a1) if a0 <= a1 else (a >= a0 or a <= a1)
+        near = lambda p: abs(math.hypot(p[0] - cx, p[1] - cy) - r) <= tol
+        cand = [s for s in segs if (only is None or s[2] == only) and near(s[0]) and near(s[1]) and ang_ok(((s[0][0] + s[1][0]) / 2, (s[0][1] + s[1][1]) / 2))]
+        if not cand:
+            err('round', f"{label(rd)}: no edge lies along its circle (centre {rd['centre']}, r {r})", (cx, cy), [rd['id']], 'warning'); continue
+        # chain them into runs, one per (upper terrace, lower height), in edge direction (higher side on the left)
+        k4 = lambda p: (round(p[0], 4), round(p[1], 4))
+        groups = {}
+        for s in cand: groups.setdefault((s[2], s[3]), []).append(s)
+        for (tg, lower), ss in groups.items():
+            start = {k4(s[0]): s for s in ss}; ends = {k4(s[1]) for s in ss}
+            used = set()
+            heads = [s for s in ss if k4(s[0]) not in ends] or ss[:1]
+            for h0 in heads:
+                if id(h0) in used: continue
+                chain, s = [], h0
+                while s is not None and id(s) not in used:
+                    used.add(id(s)); chain.append(s); s = start.get(k4(s[1]))
+                pts = [chain[0][0]] + [c[1] for c in chain]
+                if len(chain) < 3: continue      # a single step is fine as straight pieces
+                for c in chain: segs.remove(c)
+                # the arc through the run's angles, unwrapped along the chain
+                angs = [math.atan2(p[1] - cy, p[0] - cx) for p in pts]
+                for i in range(1, len(angs)):
+                    while angs[i] - angs[i - 1] > math.pi: angs[i] -= 2 * math.pi
+                    while angs[i] - angs[i - 1] < -math.pi: angs[i] += 2 * math.pi
+                a0, a1 = angs[0], angs[-1]
+                mk = lambda k: [pts[0]] + [(cx + r * math.cos(a0 + (a1 - a0) * t / k), cy + r * math.sin(a0 + (a1 - a0) * t / k)) for t in range(1, k)] + [pts[-1]]
+                fits = lambda arc: all(1.4 <= math.hypot(b[0] - a[0], b[1] - a[1]) * G <= 2.6 for a, b in zip(arc, arc[1:]))
+                k0 = max(1, round(abs(a1 - a0) * r * G / 2.0))           # sections of about 2 u; sweeps fit 1.4 to 2.6
+                arc = next((mk(k) for k in sorted(range(max(1, k0 - 3), k0 + 4), key=lambda k: abs(k - k0)) if fits(mk(k))), mk(k0))
+                # the ground between the stepped edge and the arc: on the higher side of the arc it's the upper terrace's
+                z = make_valid(Polygon(pts + arc[::-1]))
+                mid = len(arc) // 2; p, q = arc[mid - 1], arc[mid]
+                ux, uy = q[0] - p[0], q[1] - p[1]
+                up_inside = (ux * (cy - p[1]) - uy * (cx - p[0])) < 0      # the higher (left) side faces the centre
+                lowg = [g for g in T if abs(T[g]['h'] - lower) < 1e-6]
+                for piece in getattr(z, 'geoms', [z]):
+                    if piece.geom_type != 'Polygon' or piece.area < 1e-9: continue
+                    inside = Point(cx, cy).distance(piece.representative_point()) < r
+                    pb = piece.buffer(0.05)
+                    near_i = [i for i in tree.query(pb) if cells[i][1].intersects(pb)]
+                    if inside == up_inside: to = tg
+                    else:
+                        share = {g: sum(cells[i][1].intersection(pb).area for i in near_i if cells[i][0] == g) for g in lowg}
+                        to = max(share, key=share.get) if share else None
+                    for i in near_i:
+                        if cells[i][1].intersects(piece): cells[i][1] = cells[i][1].difference(piece)
+                    if to: cells.append([to, piece])     # not in the index: a later piece of the same arc never overlaps it
+                lg = max(lowg, key=lambda g: sum(1 for c in chain if low_of.get((round(c[0][0], 4), round(c[0][1], 4), round(c[1][0], 4), round(c[1][1], 4))) == g)) if lowg else None
+                for a, b in zip(arc, arc[1:]):
+                    if lg: low_of[(round(a[0], 4), round(a[1], 4), round(b[0], 4), round(b[1], 4))] = lg
+                    sweeps.append([a, b, tg, lower, ('sweep', rd['id'])])
+
+    if rounds:
+        floors = {g: [] for g in floors}
+        for g, f in cells:
+            if not f.is_empty: floors[g].append(f)
+
     # ---- edge treatment per segment ----
     def treat(s):
         up = T[s[2]]; drop = up['h'] - s[3]
+        lo = T.get(low_of.get((round(s[0][0], 4), round(s[0][1], 4), round(s[1][0], 4), round(s[1][1], 4)), ''), {})
+        if 0.3 < drop <= 1.0 and 'steps' in (up.get('edge'), lo.get('edge')) and up.get('walk', True) and lo.get('walk', True)                 and up.get('edge') != 'wall':
+            return 'steps'                  # a short drop either side asks to step over: steps all along it
+        if up.get('edge') == 'steps' and drop > 1.0: return 'parapet'
         if up.get('edge') == 'wall': return 'wall'
+        if drop < 0.01: return 'open'      # two levels at one height (woods beside a lawn): a seam, no edge piece
         if drop <= 0.3: return 'kerb'
         if up.get('edge') == 'open': return 'open'
         if drop > 1.0 and up.get('edge') != 'parapet':
@@ -232,7 +313,7 @@ def compile_scene(sc):
     for s in allsegs:
         for end in (0, 1): meets[key(s[end])] = meets.get(key(s[end]), 0) + 1
     for (v, tr, ter), lst in at_vertex.items():
-        if tr in ('kerb', 'open'): continue
+        if tr in ('kerb', 'open', 'steps'): continue
         dirs = []
         for s, end in lst:
             o = s[1 - end]; dirs.append(math.atan2(o[1] - v[1], o[0] - v[0]))
@@ -346,8 +427,8 @@ def compile_scene(sc):
     walk = {c for c in T if T[c].get('edge') != 'wall' and T[c].get('walk', True)}
     nodes = {c for c in walk if floors[c]}
     links = {c: set() for c in nodes}
-    for s in segs:
-        if s[4] == 'kerb':
+    for s in allsegs:
+        if s[4] in ('kerb', 'steps'):
             low = [c for c in nodes if abs(T[c]['h'] - s[3]) < 1e-6]
             for c in low:
                 if s[2] in links: links[s[2]].add(c); links[c].add(s[2])

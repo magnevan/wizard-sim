@@ -22,12 +22,17 @@ import semantic as semmod
 G = 2.0
 MATMAP = {  # plan material -> (kit floor, walkable, edge)
     'plaza': ('plaza', True, 'parapet'), 'paving': ('paving', True, 'parapet'), 'path': ('paving', True, 'parapet'),
-    'road': ('road', True, 'parapet'), 'dais': ('plaza', True, 'retain'), 'stairs': ('paving', True, 'retain'),
+    'road': ('road', True, 'parapet'), 'dais': ('plaza', True, 'steps'), 'stairs': ('paving', True, 'steps'),
     'grass': ('lawn', True, 'parapet'), 'sand': ('lawn', True, 'parapet'), 'wood': ('deck', True, 'parapet'),
     'trees': ('lawn', False, 'open'), 'rock': ('rock', False, 'open'), 'deep': ('water', False, 'open'),
     'water': ('water', False, 'open'), 'roof': ('roof', False, 'wall'), 'void': ('water', False, 'open'),
 }
-SMALL = 30.0   # u^2: a building smaller than this is a set piece (a pier, a pylon, a post), not a terrace
+FIXES = {
+    'court': [   # the kit's flights (0.5 u a step) are longer than plan D's: the sea stair's -2 m landing grows, the lower flight and quay go two cells out
+        ('paint', 'paving at -2 m', 45, 63, 50, 64), ('paint', 'wood at -5 m', 45, 65, 50, 74), ('head', 'sea stair, lower', [[45.0, 64.5], [50.0, 64.5]]),
+    ],
+}
+SMALL = 30.0  # u^2: a building smaller than this is a set piece (a pier, a pylon, a post), not a terrace
 
 gaps, flights = [], []
 
@@ -95,6 +100,21 @@ def landmark(self, c, name, height=12.0, radius=1.0):
     gaps.append(dict(kind='set-piece', what=f'{name} ({height:g} m)', at=c)); self.marks.append((c, name, height, radius))
 
 
+circles = {}   # (centre, r) in u -> angle ranges (None: the whole circle): every round shape the plan draws
+_circle, _arc_band = planmod.circle, planmod.arc_band
+
+
+def circle(c, r):
+    circles.setdefault((tuple(c), r), []).append(None); return _circle(c, r)
+
+
+def arc_band(c, r0, r1, a0, a1, n=40):
+    for rr in (r0, r1):
+        if rr > 0: circles.setdefault((tuple(c), rr), []).append((a0, a1))
+    return _arc_band(c, r0, r1, a0, a1, n)
+
+
+planmod.circle, planmod.arc_band = circle, arc_band
 planmod.Plan.__init__ = lattice_init
 planmod.Plan.fill = fill
 planmod.Plan.building = building
@@ -104,6 +124,8 @@ planmod.Plan.render = lambda self: None
 planmod.Plan.frames = lambda self, *a, **k: None
 semmod.Semantic.flight = sflight
 semmod.Semantic.check = lambda self: None   # the kit compiler checks flights itself
+import finish as finmod
+finmod.close_gates = lambda P, *a, **k: None   # the plan closes gate lines with strips of woods for its old sim; the kit has no use for them
 
 
 def trace(plan_name):
@@ -120,6 +142,8 @@ def to_scene(P, scene_name):
     for n, f in enumerate(flights, 1):
         h[P.flightid == n] = f['h_bottom']
     # stair cells outside flights (sectors, rings) snap to the nearest 0.5 m
+    sea = np.isin(P.m, ['deep', 'void'])           # all open water is one sea, at the plan's highest open-water level
+    if sea.any(): h[sea] = h[P.m == 'deep'].max() if (P.m == 'deep').any() else h[sea].max(); P.m[sea] = 'deep'
     loose = (P.m == 'stairs') & (P.flightid == 0)
     h[loose] = np.round(h[loose] * 2) / 2
     key = np.empty((ny, nx), dtype=object)
@@ -204,7 +228,28 @@ def to_scene(P, scene_name):
                 for x in range(x0, x1 + 1): rows[y][x] = bot_g; kept.add((y, x))
         hy = top_row + 0.5 * d
         objs.append(dict(id=f'f{n}', kind='flight', name=f['name'], head=[[float(x0), hy], [float(x1), hy]]))
+    # fixes the plan needs on the kit, by scene: ('paint', terrace name, x0, y0, x1, y1) inclusive corners, ('head', flight name, head)
+    byname = {o['name']: o for o in objs}
+    for fx in FIXES.get(scene_name, []):
+        if fx[0] == 'paint':
+            _, nm, x0, y0, x1, y1 = fx; g = next(t['glyph'] for t in terraces if t['name'] == nm)
+            for y in range(y0, y1 + 1):
+                for x in range(x0, x1 + 1): rows[y][x] = g; kept.add((y, x))
+        elif fx[0] == 'head' and fx[1] in byname: byname[fx[1]]['head'] = fx[2]
     fix_saddles(frozenset(kept))
+    # rounds: each circle the plan drew (radius 3 u or more), kept only where an edge lies along it
+    import compile as kc
+    n = 0
+    for ((cu, cv), r), ranges in sorted(circles.items(), key=lambda kv: -kv[0][1]):
+        if r < 3: continue
+        n += 1
+        o = dict(id=f'r{n}', kind='round', name=f'the circle r {r:g} u round ({cu:g}, {cv:g})', centre=to_c(cu, cv), r=r / G)
+        if None not in ranges:
+            o['from'], o['to'] = min(a for a, _ in ranges) - 3, max(b for _, b in ranges) + 3
+        objs.append(o)
+    probe = dict(schema=1, name=scene_name, G=2, terraces=terraces, corners=[''.join(r) for r in rows], objects=objs)
+    unused = {ref for f in kc.compile_scene(probe)['findings'] if f['code'] == 'round' for ref in f['refs']}
+    objs = [o for o in objs if o['id'] not in unused]
     for k, g in enumerate(gaps): g['at_c'] = to_c(*g['at'])
     notes = (f'Traced from tools/place-plans/plans/{P.name}.py ({P.title}) by tools/kit/trace_plan.py. One grid corner = '
              f'(U, V) = ({U0:g} + 2x, {V0:g} + 2y) in the plan. Gaps (what the kit cannot say yet) are pins.')

@@ -1,6 +1,6 @@
 """The courtyard trace's gap list as map-editor pins (tools/kit/scenes/court.pins.json), one per missing thing.
 
-  python tools/kit/court_pins.py        # after trace_plan.py court-d court; replaces Claude's open trace pins
+  python tools/kit/court_pins.py        # only right after a fresh trace (trace_plan.py court-d court); later, pins live in the editor
 
 Each pin says what plan D has there and what the kit lacks (a piece, a rule or a scene fix). Positions are corners.
 Kept by hand: the trace can't name piers from their sizes, so this file does (from court-d.py's comments).
@@ -26,15 +26,6 @@ PINS = [
     ((24.5, 16.0), 'PIERS: the drill yard\'s gate piers (4 m). Missing: a square gate pier.'),
     ((33.0, 16.0), 'PIERS: threshold pillars (5 m) where the balcony road meets each seam (here and at the east end). Missing: the round pier.'),
     ((51.0, 33.0), 'PIERS: the overlook\'s low prow posts (2.5 m). Missing: a short post; could be joint.pier, taller.'),
-    # flights the kit can't say
-    ((47.5, 48.5), 'CURVED FLIGHT: the plaza rim opens south in a sector of steps (2 to 3 m) down to the sea stair. Traced as flat bands of 0.5 m; needs a curved flight (step 3).'),
-    ((53.9, 40.3), 'STEP RINGS: the dais is two 0.5 m rings you can step up anywhere, and the plaza is sunk in two treads. The kit has no step between a 0.3 m kerb and a flight, so the dais and the sunk floor can\'t be reached (unreachable). Needs ring flights or a "steps" edge (step 3).'),
-    ((42.6, 21.3), 'SMALL STEPS: a 0.5 m stoop at each of the great hall\'s doors. Unreachable: same gap as the dais rings.'),
-    ((51.5, 30.0), 'SMALL STEPS: the overlook steps down two 0.4 m treads into its bay, with a 2.5 m drop on its prow (unguarded). Same gap; the bay\'s parapet comes back once the treads are steps.'),
-    # rules and scene fixes
-    ((47.5, 62.5), 'SCENE: the kit\'s flights are longer than plan D\'s (0.5 u per 0.15 m step), so the -2 m landing between the middle and lower sea stairs is too short. Fix: move the lower flight and the quay two cells toward the sea.'),
-    ((37.0, 40.0), 'CURVES: every arc in plan D (the three terraces, the round plaza, the balcony road) is a 45-degree stand-in. A curve object can only bulge from one straight edge; these need general curves (kit-courtyard step 2).'),
-    ((47.5, 75.0), 'FLOORS: the sea and the stream are `water`, the quay and the bridge deck `deck`. They draw as paving until the editor\'s renderer learns both (asked of the Map Editor session).'),
 ]
 
 now = datetime.now(timezone.utc).isoformat()

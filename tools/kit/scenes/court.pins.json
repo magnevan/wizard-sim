@@ -201,60 +201,88 @@
    "note": "CURVED FLIGHT: the plaza rim opens south in a sector of steps (2 to 3 m) down to the sea stair. Traced as flat bands of 0.5 m; needs a curved flight (step 3).",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
     "x": 47.5,
     "y": 48.5
    },
-   "thread": [],
-   "trace": true
+   "thread": [
+    {
+     "author": "claude",
+     "text": "The rim's south opening is now 0.5 m bands joined by the new 'steps' edge, so it's walkable. A true curved flight still waits (kit-courtyard step 3) if the steps don't read right.",
+     "time": "2026-11-23T22:20:35.109Z"
+    }
+   ],
+   "trace": true,
+   "outcome": "rule"
   },
   {
    "id": "p15",
    "note": "STEP RINGS: the dais is two 0.5 m rings you can step up anywhere, and the plaza is sunk in two treads. The kit has no step between a 0.3 m kerb and a flight, so the dais and the sunk floor can't be reached (unreachable). Needs ring flights or a \"steps\" edge (step 3).",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
     "x": 53.9,
     "y": 40.3
    },
-   "thread": [],
-   "trace": true
+   "thread": [
+    {
+     "author": "claude",
+     "text": "New 'steps' edge in compile.py: a drop of 0.3 to 1 m with 'steps' on either side gets a run of steps (edge.steps.*, sweep.steps) and counts as a way through. The dais and the sunk floor are reachable. The pieces draw as outlines until the renderer learns them.",
+     "time": "2026-11-23T22:20:35.278Z"
+    }
+   ],
+   "trace": true,
+   "outcome": "rule"
   },
   {
    "id": "p16",
    "note": "SMALL STEPS: a 0.5 m stoop at each of the great hall's doors. Unreachable: same gap as the dais rings.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
     "x": 42.6,
     "y": 21.3
    },
-   "thread": [],
-   "trace": true
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Reachable by the same 'steps' rule (the stoops are a 'steps' level).",
+     "time": "2026-11-23T22:20:35.437Z"
+    }
+   ],
+   "trace": true,
+   "outcome": "rule"
   },
   {
    "id": "p17",
    "note": "SMALL STEPS: the overlook steps down two 0.4 m treads into its bay, with a 2.5 m drop on its prow (unguarded). Same gap; the bay's parapet comes back once the treads are steps.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
     "x": 51.5,
     "y": 30
    },
-   "thread": [],
-   "trace": true
+   "thread": [
+    {
+     "author": "claude",
+     "text": "The treads join by 'steps'; over 1 m a 'steps' level falls back to a parapet, so the bay's 2.5 m prow is guarded.",
+     "time": "2026-11-23T22:20:35.639Z"
+    }
+   ],
+   "trace": true,
+   "outcome": "rule"
   },
   {
    "id": "p18",
@@ -283,15 +311,22 @@
    "note": "CURVES: every arc in plan D (the three terraces, the round plaza, the balcony road) is a 45-degree stand-in. A curve object can only bulge from one straight edge; these need general curves (kit-courtyard step 2).",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
     "x": 37,
     "y": 40
    },
-   "thread": [],
-   "trace": true
+   "thread": [
+    {
+     "author": "claude",
+     "text": "New 'round' object in compile.py: every edge lying along a circle snaps onto the true arc, convex or concave. trace_plan.py emits one per circle plan D draws (25 kept). A tool for drawing them is asked of the Map Editor session.",
+     "time": "2026-11-23T22:20:35.810Z"
+    }
+   ],
+   "trace": true,
+   "outcome": "rule"
   },
   {
    "id": "p20",

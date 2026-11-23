@@ -60,76 +60,11 @@ export interface MassingPlan { id: string; /** The room it stands round. */ room
 
 const M = U_PER_M;
 /**
- * The academy round the drill yard (blockout, 2026-11-22: docs/explorations/2026-11-22-weapons-yard-and-walks.md).
- * The map is 130 x 100 u (78 x 60 m). The two ranges stand just past its far edges, so their faces are the map's
- * edge and nothing needs to collide with them: west, the Great Hall (the strike lanes, the sack and the slam ring
- * run along its foot) and the library wing south of it; north, the workshops, three storeys, with the armoury's
- * tower over the door where the rack stands. A garden terrace to the south-east, by the gate to the courtyard.
- */
-const ARMOURY_X = 100;
-const hall: Block = {
-  id: 'great-hall', x0: -22 * M, x1: 0, y0: -12 * M, y1: 64, h: 14, rise: 10, ridge: 'y', art: 'great-hall',
-  east: [
-    { from: 4, to: 31, every: 5, w: 2.2, z0: 3.5, z1: 11.5, kind: 'window' },
-    { from: 39, to: 50, every: 5, w: 2.2, z0: 3.5, z1: 11.5, kind: 'window' },
-    { at: 33.4, w: 3.2, z0: 0, z1: 5.2, kind: 'door' },
-    { at: 33.9, w: 2.2, z0: 7, z1: 11.5, kind: 'window' },
-  ],
-};
-const library: Block = {
-  id: 'library', x0: -18 * M, x1: 0, y0: 64, y1: 112, h: 9, rise: 6, ridge: 'y', art: 'library',
-  east: [{ from: 2, to: 28, every: 4, w: 1.8, z0: 2.5, z1: 7.5, kind: 'window' }],
-};
-/** The workshops, in two halves so each fits one painted image (tools/building-art/silhouette.py draws the same). */
-const worksRows = (from: number): Row[] => [
-  { from, to: 42, every: 4.5, w: 2.4, z0: 1, z1: 3.9, kind: 'window' },
-  { from, to: 42, every: 4.5, w: 1.4, z0: 6.2, z1: 8.4, kind: 'window' },
-  { from, to: 42, every: 4.5, w: 1.4, z0: 10.2, z1: 12.2, kind: 'window' },
-];
-const worksWest: Block = { id: 'workshops-west', x0: 0, x1: 71, y0: -12 * M, y1: 0, h: 13, rise: 6, ridge: 'x', south: worksRows(3), art: 'workshops-west' };
-const worksEast: Block = { id: 'workshops-east', x0: 71, x1: 142, y0: -12 * M, y1: 0, h: 13, rise: 6, ridge: 'x', south: worksRows(1.5), art: 'armoury' };
-/** The armoury's tower over its door, 7 m square: the rack stands at its foot. */
-const tower: Block = {
-  id: 'armoury', x0: ARMOURY_X - 3.5 * M, x1: ARMOURY_X + 3.5 * M, y0: -10 * M, y1: 0, h: 22, rise: 5, ridge: 'x',
-  wall: 0xc4bdae, side: 0x958e7f, paintedIn: 'workshops-east',
-  south: [
-    { at: 1.8, w: 3.4, z0: 0, z1: 4.2, kind: 'door' },
-    { at: 2.5, w: 2, z0: 8, z1: 11, kind: 'window' },
-    { at: 2.5, w: 2, z0: 14, z1: 17, kind: 'window' },
-  ],
-};
-const ACADEMY: MassingPlan = { id: 'academy', room: 'yard', clear: 1.5, blocks: [worksWest, worksEast, tower, hall, library] };
-/**
- * The courtyard (blockout, 2026-11-22: tools/segments/01-opening/court-level.py, 150 x 110 u): the academy's main
- * building along the north edge in two halves with its tower over the grand portal, and the cloister range along the
- * west edge in two halves with the archway through to the drill yard. The great armillary in the middle is a prop
- * (codex-armillary-grand), sorted with the bodies, since you walk all round it.
- */
-const courtRows = (from: number, to: number): Row[] => [
-  { from, to, every: 4.5, w: 2.4, z0: 1.2, z1: 4.6, kind: 'window' },
-  { from, to, every: 4.5, w: 1.6, z0: 7.4, z1: 10.2, kind: 'window' },
-  { from, to, every: 4.5, w: 1.6, z0: 12.2, z1: 14.8, kind: 'window' },
-];
-const COURT: MassingPlan = {
-  id: 'court', room: 'court', clear: 1.5,
-  blocks: [
-    { id: 'court-north-west', x0: 0, x1: 69, y0: -14 * M, y1: 0, h: 16, rise: 8, ridge: 'x', south: courtRows(3, 40), art: 'court-north-west' },
-    { id: 'court-north-east', x0: 81, x1: 154, y0: -14 * M, y1: 0, h: 16, rise: 8, ridge: 'x', south: courtRows(2, 43), art: 'court-north-east' },
-    { id: 'court-tower', x0: 66, x1: 84, y0: -16 * M, y1: 1, h: 30, rise: 9, ridge: 'x', wall: 0xc4bdae, side: 0x958e7f, art: 'court-tower',
-      south: [{ at: 2.6, w: 5.6, z0: 0, z1: 7.5, kind: 'door' }, { at: 3.6, w: 3.6, z0: 11, z1: 15, kind: 'window' }, { at: 3.6, w: 3.6, z0: 18.5, z1: 22.5, kind: 'window' }] },
-    { id: 'court-west-north', x0: -20 * M, x1: 0, y0: -14 * M, y1: 55, h: 14, rise: 9, ridge: 'y', art: 'court-west-north',
-      east: [{ from: 3, to: 27, every: 4.5, w: 2.2, z0: 3.5, z1: 11, kind: 'window' }, { from: 42, to: 55, every: 4.5, w: 2.2, z0: 3.5, z1: 11, kind: 'window' }, { at: 29.5, w: 7.5, z0: 0, z1: 7, kind: 'void' }] },
-    { id: 'court-west-south', x0: -20 * M, x1: 0, y0: 55, y1: 124, h: 14, rise: 9, ridge: 'y', art: 'court-west-south',
-      east: [{ from: 2, to: 40, every: 4.5, w: 2.2, z0: 3.5, z1: 11, kind: 'window' }] },
-  ],
-};
-/**
  * The rooms' grey boxes. Empty since the courtyard and the drill yard became plan-made levels (2026-11-22,
- * tools/place-plans/): their buildings are tiers in the level now, and these old boxes stood in the wrong places (a
- * second armillary and stray walls in the courtyard). Kept for the building-art pipeline (tools/building-art/), which
- * paints from them; a plan-made level's buildings will get their art another way.
+ * tools/place-plans/): their buildings are tiers in the level now. The old academy and courtyard blockouts were
+ * removed on 2026-11-23 (nothing read them; tools/building-art/silhouette.py keeps its own copy of the numbers); they
+ * are in git history before that date.
  */
-export const OLD_BLOCKOUTS: Record<string, MassingPlan> = { academy: ACADEMY, court: COURT };
 export const MASSING: Record<string, MassingPlan> = {};
 
 const DARK = { window: 0x2c3340, door: 0x4a3626, void: 0x14161b };

@@ -37,6 +37,8 @@ npm run check:webrtc   # the same as check:net over real WebRTC (needs internet:
 npm run build && npm run shot -- --ms 4000 --out shots/run.png   # headless screenshot of the scripted run
                        # (also --size 1280x800, --query "room=arena&autoplay=1": any URL option, see below)
 npm run shots:tutorial # build, then one screenshot per tutorial beat, a bot playing it (shots/tutorial; --beats 1,2 --ms 2500)
+npm run shot:lab -- out 32,26 --query "layout=patch-b"   # a lab page (--page kit3d, the default) from the dev server, one shot per x,y (shots/lab)
+npm run fps:lab -- 10  # a lab page's frame rate on the real GPU, headed Chrome (--page, --query); the page must animate and walk on WASD
 npm run preview        # serve the last build (vite preview)
 npm run artifact       # build + package artifact/ for a claude.ai link
 npm run sync-rules     # after a rules change in tools/spell-atlas/rules-c.js

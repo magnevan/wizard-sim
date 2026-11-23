@@ -34,5 +34,5 @@ tools/story-review/map.jpg
 tools/segments/01-opening/img/well-references.jpg
 
 # image-to-3D downloads are large (Meshy: 26 MB); keep only their joints files
-tools/sprites-3d/__pycache__/
+__pycache__/
 tools/sprites-3d/input/**/*.log

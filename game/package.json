@@ -19,6 +19,8 @@
     "shot": "node scripts/screenshot.mjs",
     "shot:overview": "node scripts/overview-shot.mjs",
     "shot:route": "node scripts/route-shots.mjs",
+    "shot:lab": "node scripts/lab-shot.mjs",
+    "fps:lab": "node scripts/lab-fps.mjs",
     "check:net": "npm run build && node scripts/net-e2e.mjs",
     "check:menu": "npm run build && node scripts/menu-check.mjs",
     "check:tutorial": "npm run build && node scripts/tutorial-check.mjs",

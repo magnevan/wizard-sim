@@ -28,7 +28,10 @@ def lips(P, drop=1.0, rise=1.0, everywhere=False):
         nbld = np.roll(np.roll(P.bld, dy, 0), dx, 1)
         low |= (P.h - nb > drop) & ~nbld
     lip = walk & low & (True if everywhere else route_mask(P))                    # a flight's ends meet their landings within the step, so only its sides are walled (cheek walls)
-    P.h[lip] += rise; P.m[lip] = 'wall'; P.bld[lip] = True
+    # Pipeline step 2b: a parapet is drawn along the drop (a balustrade) and marked as guarded, but not raised into a
+    # blocked cell: the drop is already a cliff wall to the sim, and a raised 1 u strip was an invisible wall in front of
+    # the drawn balustrade. `rise` is kept for the call sites; it no longer changes the cells.
+    P.guard |= lip
     return int(lip.sum())
 
 def woods_unreached(P, step=0.5):

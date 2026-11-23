@@ -59,9 +59,8 @@ def export(name):
         if kind == 'fill':
             g = clean(W(Polygon(op[1]))); cut(g); regions.append((g, dict(mat=op[3], h=float(op[2]), kind='flat')))
         elif kind == 'building':
-            if op[4] == 'wall': continue        # a cheek wall or parapet block: in 3D the edge kit (balustrades) stands there
             g = clean(W(Polygon(op[1]))); cut(g)
-            regions.append((g, dict(mat=op[4], h=float(op[2] + op[3]), ground=float(op[2]), kind='building')))
+            regions.append((g, dict(mat=op[4], h=float(op[2] + op[3]), ground=float(op[2]), kind='building', low_wall=op[4] == 'wall')))   # a cheek wall or parapet: solid, drawn as a low wall
         elif kind == 'stairs':
             g = clean(W(Polygon(op[1]))); cut(g)
             ax = op[4]
@@ -130,7 +129,8 @@ def export(name):
                          f"({P.CU[i, j]:.1f}, {P.CV[i, j]:.1f}); by (material, height): {dict(where.most_common(6))}. "
                          "A plan edit was made on cells: make it a shape op (fill, repaint, building, stairs, raise_mat).")
     # the plan's tiny blocks (piers, posts) stand as the pier model in 3D: the ground runs on under them
-    regions = [(rg, a if not (a['kind'] == 'building' and rg.area < 30) else dict(mat='paving', h=a.get('ground', a['h']), kind='flat')) for rg, a in regions]
+    # the plan's small blocks (piers, posts) stay solid, drawn at their own footprint (pipeline 2b: what blocks is drawn)
+    regions = [(rg, dict(a, post=True) if a['kind'] == 'building' and rg.area < 30 else a) for rg, a in regions]
     # ---- hygiene: no notches, spikes or slivers (the user's circles, 2026-11-23) ----
     # Each region is opened then closed by R (removing anything narrower than about 2R, keeping curves), largest first,
     # each taking only what no larger one took; what's left over (the slivers between) goes to the neighbour it shares

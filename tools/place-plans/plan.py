@@ -78,6 +78,8 @@ class Plan:
         self.h = np.full((self.ny, self.nx), base, dtype=np.float32)
         self.m = np.full((self.ny, self.nx), base_mat, dtype=object)
         self.bld = np.zeros((self.ny, self.nx), dtype=bool)
+        # cells along a drop that a parapet guards (finish.lips): drawn as a balustrade, never a blocked cell (pipeline 2b)
+        self.guard = np.zeros((self.ny, self.nx), dtype=bool)
         self.routes, self.marks, self.gates, self.doors, self.notes, self.passes = [], [], [], [], [], []
         # every shape op in order, for the vector export (vector.py): a cell mask passed instead of a shape isn't recorded
         self.ops = []

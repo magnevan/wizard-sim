@@ -15,7 +15,7 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 - [ ] The drill yard through the cycle: read and journey done (`yard-read.md`), plans A to D on the segment page (`concept-yard-plans`; the critic ranked C 6.5, A 6, B 5.5, the built yard 3.5; D is its mix). The user chose D (2026-11-22). Next: flow on flat frames, then the engine writes its level from `yard-d.py` (its `MARKERS` give the stations' spots).
 - [x] The district's roads as a space diagram with walk times, and where the small fights go ([district](../campaign/01-opening/district.md), 2026-11-22; up for review).
 - [x] The battery as the second element (2026-11-22): Life is your own from the infirmary on (`CAMPAIGN.life`), the Life circle and `CHANNEL` are gone, and the hurt prompt is "Hurt? Heal yourself"; the infusion line stays the user's.
-- [ ] **Levels from the plans are on branch `opening-levels`** (2026-11-22: the yard from D rev 2, the infirmary from D rev 4, the court from D rev 15; 682 tests, check:yard and check:battery pass). It's for the engine session or the user to merge. What the yard's rewrite dropped, for its dressing stage:
+- [x] **Levels from the plans are on main** (2026-11-22, `a7a87e7`, deployed: the yard from D rev 3, the infirmary from D rev 7, the court from D rev 17; 688 tests, check:yard, battery, tutorial and academy pass). What the yard's rewrite dropped, for its dressing stage:
   - the old blockout's 153 props and its 21 scenery people (`client/src/art/extras.ts`);
   - the old academy grey boxes in `client/src/art/massing.ts`, which no longer line up (`?massing=off` hides them);
   - `tools/segments/01-opening/yard-level.py`, now superseded but still referenced by `extras.ts`, `rigs.ts` and `massing-shots.mjs`.
@@ -29,7 +29,7 @@ The opening is now a chain of eight stops: at each one you fix a machine and get
 - **Places start from purpose, then pictures.** What the place is for and what connects to what comes first (the [campaign workflow](../campaign/README.md)). Then Codex draws the concept, one level at a time (world, biome, region, area), each level drawn with its parent's image as reference. Codex runs need no OK first. Then comes an LDtk blockout, and its screenshots guide the art. Buildings are environment at real size, never props. See the [map pipeline](../explorations/2026-11-16-campaign-map-pipeline.md) and [the academy as environment](../explorations/2026-11-15-academy-as-environment.md).
 - `npm run check:battery` and `npm run check:yard` drive the rooms and take screenshots (`game/shots/battery/`).
 - `?at=<checkpoint>` starts the battery part-way, for example `?at=well-failing`.
-- Levels are written by `tools/segments/01-opening/battery-level.py` (the battery) and `python tools/place-plans/to_ldtk.py <court-d|inf-d|yard-d>` (the court, the infirmary and the yard, from their plans; `yard-level.py` is superseded): rerun them, then `npm run content:build`.
+- Levels are written by `tools/segments/01-opening/battery-level.py` (the battery) and `python tools/place-plans/build.py court-d` (the court: walk report, level, resolved scene, content build and check in one command) and `python tools/place-plans/to_ldtk.py <inf-d|yard-d>` (the infirmary and the yard, until they move to build.py; `yard-level.py` is superseded), then `npm run content:build`.
 - PixelLab and ElevenLabs need the user's sign-off on the description; Codex and Meshy don't.
 
 ## Done

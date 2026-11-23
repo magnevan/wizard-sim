@@ -278,12 +278,10 @@ flowchart LR
 </tbody></table></div>
 <p>Steps 1 to 5 go on main: the compiler, collision from outlines, the stamp and navigation are valid for the pixel game too, and the courtyard is already too big for today's navigation whatever the art direction. Only the renderer, the kit and the performance pass stay on the spike, so the art decision stays reversible. Paused meanwhile: courtyard beauty rounds, critic tuning, new Meshy pieces, hand-placed dressing.</p>
 
-<h2>Decided, and still open</h2>
+<h2>Decided</h2>
 <ul>
-  <li><b>Decided (2026-11-23):</b> the adoption bar is at least 30 fps on your laptop; wall spells follow the ground naturally, climbing stairs and stopping at cliffs; some drops are open for knockback, so falling becomes sim work.</li>
-  <li><b>Open:</b> is about 15 MB per place acceptable?</li>
-  <li><b>Open:</b> the "two ways in" rule for fight areas (explained under "Spells that block paths").</li>
-  <li><b>Open:</b> should steps 1 to 5 (the compiler, collision from outlines, navigation) go ahead on main now, ahead of the art decision? They change the golden hashes once, on purpose.</li>
+  <li><b>2026-11-23:</b> the adoption bar is at least 30 fps on your laptop; wall spells follow the ground naturally, climbing stairs and stopping at cliffs; some drops are open for knockback, so falling becomes sim work.</li>
+  <li><b>2026-11-23:</b> about 15 MB per place is the budget; every fight area has two ways in unless its single entrance is a named set piece; steps 1 to 5 go ahead on main now, ahead of the art decision, on branch <code>pipeline-compiler</code>.</li>
 </ul>
 
 <footer>Sources of truth: <span class="mono">tools/place-plans/</span> (plan, export, placement), <span class="mono">game/packages/client/src/lab/world3d.ts</span> (renderer), <span class="mono">docs/explorations/2026-11-23-stylised-3d.md</span> (history and plan), <span class="mono">docs/campaign/beauty-rubric.md</span> (critic). Frames from each round are on the Opening Segment page.</footer>

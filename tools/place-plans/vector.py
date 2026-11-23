@@ -28,6 +28,8 @@ import to_ldtk
 
 R2 = math.sqrt(0.5)
 GRID = 0.05   # snapping, so shared edges stay shared
+WALKABLE = {'grass', 'path', 'road', 'paving', 'plaza', 'dais', 'stairs', 'wood', 'sand'}
+PAVED = {'road', 'paving', 'plaza', 'dais', 'stairs', 'wood'}
 
 def to_world(P):
     cx0, cy0 = P.x0 + P.nx / 2, P.y0 + P.ny / 2
@@ -136,7 +138,7 @@ def export(name):
     regions = flat
     # ---- vertical faces: where an edge stands above what's beside it ----
     tree = shapely.STRtree([rg for rg, _ in regions])
-    faces = []
+    faces, segs = [], []
     for rg, a in regions:
         for poly in (rg.geoms if hasattr(rg, 'geoms') else [rg]):
             poly = shapely.geometry.polygon.orient(poly, 1.0)     # exterior counter-clockwise: outward is to the right
@@ -152,12 +154,38 @@ def export(name):
                         bx, by = x0 + (x1 - x0) * (k + 1) / n, y0 + (y1 - y0) * (k + 1) / n
                         mx, my = (ax + bx) / 2 + nx * 0.06, (ay + by) / 2 + ny * 0.06
                         pt = shapely.Point(mx, my)
-                        lowh = -12.0
+                        lowh, nb = -12.0, None
                         for idx in tree.query(pt):
-                            if regions[idx][0].contains(pt): lowh = regions[idx][1]['h'] if regions[idx][1]['kind'] != 'building' else regions[idx][1]['h']; break
+                            if regions[idx][0].contains(pt): lowh = regions[idx][1]['h']; nb = regions[idx][1]; break
                         top = a['h']
-                        if lowh < top - 0.01:
-                            faces.append([round(ax, 3), round(ay, 3), round(bx, 3), round(by, 3), round(top, 3), round(lowh, 3), a['mat'], a['kind']])
+                        seg = [round(ax, 3), round(ay, 3), round(bx, 3), round(by, 3), round(top, 3), round(lowh, 3), a['mat'], a['kind']]
+                        if lowh < top - 0.01: faces.append(seg)
+                        # an edge type, for the kit (phase B): only on walkable flat ground, never a building's own edge
+                        if a['kind'] != 'flat' or a['mat'] not in WALKABLE: continue
+                        dh = top - lowh
+                        if nb is not None and nb['kind'] == 'building': continue
+                        if dh >= 0.6: segs.append(('parapet' if dh > 1.0 and a['mat'] in PAVED else 'retain', seg))
+                        elif nb is not None and nb['kind'] in ('flat', 'step') and nb['mat'] != a['mat'] and dh > -0.01 and (dh > 0.01 or a['mat'] < nb['mat']):
+                            if {a['mat'], nb['mat']} & PAVED and not ({a['mat'], nb['mat']} <= {'stairs', 'dais', 'plaza', 'paving'}): segs.append(('kerb', seg))
+    # ---- chain the typed segments into polylines (one direction: the ground on the left, the drop on the right) ----
+    edges = []
+    for typ in ('retain', 'parapet', 'kerb'):
+        ss = [sg for t, sg in segs if t == typ]
+        start = {}
+        for sg in ss: start.setdefault((sg[0], sg[1]), []).append(sg)
+        used = set()
+        for sg in ss:
+            if id(sg) in used: continue
+            # walk back to the chain's start
+            line = [sg]; used.add(id(sg))
+            cur = sg
+            while True:
+                nxt = [c for c in start.get((cur[2], cur[3]), []) if id(c) not in used and abs(c[4] - cur[4]) < 0.05]
+                if not nxt: break
+                cur = nxt[0]; used.add(id(cur)); line.append(cur)
+            pts = [[line[0][0], line[0][1]]] + [[c[2], c[3]] for c in line]
+            simp = list(LineString(pts).simplify(0.08).coords) if len(pts) > 2 else pts
+            edges.append(dict(type=typ, pts=[[round(x, 3), round(y, 3)] for x, y in simp], top=line[0][4], low=round(min(c[5] for c in line), 3)))
     def rings(g):
         out = []
         for poly in (g.geoms if hasattr(g, 'geoms') else [g]):
@@ -166,7 +194,7 @@ def export(name):
         return out
     data = dict(plan=name, w=P.nx, h=P.ny,
                 regions=[dict(mat=a['mat'], h=round(a['h'], 3), kind=a['kind'], ground=a.get('ground'), polys=rings(rg)) for rg, a in regions],
-                faces=faces)
+                faces=faces, edges=edges)
     if os.environ.get('VECTOR_DEBUG'):
         import collections
         c = collections.Counter((P.m[i, j], vm[i, j], round(float(P.h[i, j] - (vh[i, j] if np.isfinite(vh[i, j]) else 0)), 2)) for i, j in zip(*np.nonzero(differ)))
@@ -178,4 +206,4 @@ if __name__ == '__main__':
     data, nd, nl = export(name)
     dst = os.path.join(HERE, '..', '..', 'game', 'packages', 'client', 'src', 'lab', 'world3d-ground.json')
     json.dump(data, open(dst, 'w'), separators=(',', ':'))
-    print(f"{name}: {len(data['regions'])} regions, {len(data['faces'])} face segments; {nd} cells differ from the shapes (overrides), {nl} parapet cells left flat; {os.path.getsize(dst) // 1024} KB")
+    print(f"{name}: {len(data['regions'])} regions, {len(data['faces'])} face segments, edges {dict((t, sum(1 for e in data['edges'] if e['type'] == t)) for t in ('retain', 'parapet', 'kerb'))}; {nd} cells differ from the shapes (overrides), {nl} parapet cells left flat; {os.path.getsize(dst) // 1024} KB")

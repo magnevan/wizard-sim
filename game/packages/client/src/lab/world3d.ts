@@ -258,6 +258,53 @@ const B = hm.b, BS = B * CELL, bw = Math.floor(gw / B), bh = Math.floor(gh / B);
     side(sideKey(mat), [ax, 0, ay], [bx, 0, by], yOf(t), yOf(low), (ax + bx) / 2 - nx, (ay + by) / 2 - nz);
   }
 }
+// ---- phase B: sweeps along the exact edges (tools/place-plans/vector.py): a stone coping on every retaining wall's top,
+// a kerb or edging where two ground materials meet. Built along the line itself, so they fit any curve; mitred joins. ----
+/** A box swept along `pts` (world x, y): `a`..`b` across the line (negative = outward, the right-hand side), `y0`..`y1`
+ *  in world units. Textured along its length. */
+function sweep(key: string, pts: number[][], a: number, b: number, y0: number, y1: number) {
+  const n = pts.length;
+  if (n < 2) return;
+  // per-vertex inward normal (left of the direction), mitred
+  const nrm: number[][] = [];
+  for (let k = 0; k < n; k++) {
+    const p = pts[Math.max(0, k - 1)], q = pts[Math.min(n - 1, k + 1)], cur = pts[k];
+    const d0 = k > 0 ? [cur[0] - p[0], cur[1] - p[1]] : [q[0] - cur[0], q[1] - cur[1]];
+    const d1 = k < n - 1 ? [q[0] - cur[0], q[1] - cur[1]] : d0;
+    const l0 = Math.hypot(d0[0], d0[1]) || 1, l1 = Math.hypot(d1[0], d1[1]) || 1;
+    const n0 = [-d0[1] / l0, d0[0] / l0], n1 = [-d1[1] / l1, d1[0] / l1];
+    let mx = n0[0] + n1[0], my = n0[1] + n1[1]; const ml = Math.hypot(mx, my) || 1; mx /= ml; my /= ml;
+    const c = Math.max(0.35, mx * n1[0] + my * n1[1]);
+    nrm.push([mx / c, my / c]);
+  }
+  let along = 0;
+  const bf = buf(key);
+  for (let k = 0; k + 1 < n; k++) {
+    const [p, q] = [pts[k], pts[k + 1]], [np, nq] = [nrm[k], nrm[k + 1]];
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]), u0 = along / TS, u1 = (along + L) / TS;
+    along += L;
+    const P = (pt: number[], nn: number[], off: number, y: number) => [pt[0] + nn[0] * off, y, pt[1] + nn[1] * off];
+    const pa0 = P(p, np, a, y1), pb0 = P(p, np, b, y1), qa0 = P(q, nq, a, y1), qb0 = P(q, nq, b, y1);
+    const pa1 = P(p, np, a, y0), qa1 = P(q, nq, a, y0), pb1 = P(p, np, b, y0), qb1 = P(q, nq, b, y0);
+    const topUVf = (v: number[]) => [(v[0] + v[2]) / TS, (v[0] - v[2]) / TS * 0.25];
+    // top
+    tri(bf, [pa0, qa0, qb0], [0, 1, 0], topUVf); tri(bf, [pa0, qb0, pb0], [0, 1, 0], topUVf);
+    // the outer face (a side) and the inner face (b side)
+    const on = [-(np[0] + nq[0]) / 2, 0, -(np[1] + nq[1]) / 2], inn = [-on[0], 0, -on[2]];
+    const uvOut = (v: number[]) => [Math.abs(v[0] - p[0]) + Math.abs(v[2] - p[1]) > 1e-6 && (v[0] === qa0[0] || v[0] === qa1[0]) ? u1 : u0, (v[1] - y0) / TS];
+    tri(bf, [pa0, pa1, qa1], on, uvOut); tri(bf, [pa0, qa1, qa0], on, uvOut);
+    const uvIn = (v: number[]) => [(v[0] === qb0[0] || v[0] === qb1[0]) ? u1 : u0, (v[1] - y0) / TS];
+    tri(bf, [pb0, qb1, pb1], inn, uvIn); tri(bf, [pb0, qb0, qb1], inn, uvIn);
+  }
+}
+if (q.get('ground') !== 'cells') {
+  const groundEdges = (ground3dJson as unknown as { edges?: { type: string; pts: number[][]; top: number; low: number }[] }).edges ?? [];
+  for (const e of groundEdges) {
+    const top = yOf(e.top);
+    if (e.type === 'retain' || e.type === 'parapet') sweep('coping', e.pts, -0.25, 0.55, top - 0.05, top + 0.28);   // a coping, overhanging the face
+    else if (e.type === 'kerb') sweep('coping', e.pts, -0.18, 0.18, top - 0.1, top + 0.1);                              // a kerb on the line
+  }
+}
 for (const [key, b] of bufs) {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(b.pos, 3));

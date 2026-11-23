@@ -93,7 +93,7 @@ lip = (P.m == 'wall') & ~((P.m == 'roof'))
 H = ndimage.gaussian_filter(P.h.astype(float), 2.0)
 gy, gx = np.gradient(H); l = np.hypot(gx, gy) + 1e-9
 drop = (-gx / l, -gy / l)                          # downhill: toward the drop
-nb = runs_along(lip, drop, 3.4, 'iso-balustrade', lambda i, j: P.h[i, j] - 1.0)
+nb = 0   # phase B: balustrades come from the exact edges (below)
 # buildings: their footprints' edge cells, by connected roof block
 roof = P.m == 'roof'
 lab, nlab = ndimage.label(roof)
@@ -139,12 +139,7 @@ for dy, dx in ((0, 1), (1, 0), (0, -1), (-1, 0)):
     nbh = np.roll(np.roll(P.h, dy, 0), dx, 1); nbm = np.roll(np.roll(P.m, dy, 0), dx, 1)
     lowest = np.minimum(lowest, np.where(nbm == 'void', np.inf, nbh))
 dropm = P.h - lowest
-cliff = walkish & ~roof & (dropm > 1.3) & (dropm <= 5.0)
-nr = 0
-for d in np.arange(1.5, 5.01, 0.5):
-    band = cliff & (np.abs(dropm - d) <= 0.25)
-    if band.any():
-        nr += runs_along(band, drop, d * RET_ASPECT * (1 / 0.6), 'iso-retaining', lambda i, j: lowest[i, j], height=lambda i, j: dropm[i, j] / 0.6 + 0.15)
+nr = 0   # phase B: retaining walls are the ground's own faces with a coping sweep (world3d.ts)
 # overlapping modules at corners and on curves: keep the first of any two of one kit closer than 0.55 of their widths
 kept, dropped = [], 0
 for pc in pieces:
@@ -153,7 +148,55 @@ for pc in pieces:
             dropped += 1; continue
     kept.append(pc)
 pieces[:] = kept
-print('edge kit:', nb, 'balustrades,', nw, 'wall modules,', np_, 'piers,', nr, 'retaining walls;', dropped, 'overlaps dropped')
+# ---- phase B: parapets from the exact edges (tools/place-plans/vector.py's world3d-ground.json) ----
+# Each parapet line is cut into chords about 3.4 u long, with a joint forced at every turn sharper than 30 degrees; a
+# balustrade module fills each chord exactly (stretched along its length, a fixed height), and a pier stands at each
+# joint. So it fits any curve or corner.
+GJ = os.path.join(HERE, '..', '..', 'game', 'packages', 'client', 'src', 'lab', 'world3d-ground.json')
+ground = json.load(open(GJ))
+SPAN, PIER_W, BAL_H = 3.4, 0.85, 1.3
+piers = []
+nspan = 0
+for e in ground.get('edges', []):
+    if e['type'] != 'parapet': continue
+    pts = [tuple(p) for p in e['pts']]
+    if len(pts) < 2: continue
+    cum = [0.0]
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]): cum.append(cum[-1] + math.hypot(x1 - x0, y1 - y0))
+    if cum[-1] < 2.5: continue                     # too short for a parapet: the coping alone
+    brk = [0.0]
+    for k in range(1, len(pts) - 1):
+        ax, ay = pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]; bx, by = pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]
+        t = abs(math.degrees(math.atan2(ax * by - ay * bx, ax * bx + ay * by)))
+        if t > 30: brk.append(cum[k])
+    brk.append(cum[-1])
+    joints = []
+    for d0, d1 in zip(brk, brk[1:]):
+        n = max(1, round((d1 - d0) / SPAN))
+        joints += [d0 + (d1 - d0) * k / n for k in range(n)]
+    joints.append(cum[-1])
+    def at(d):
+        for k in range(len(cum) - 1):
+            if cum[k + 1] >= d - 1e-9:
+                t = (d - cum[k]) / max(cum[k + 1] - cum[k], 1e-9)
+                return (pts[k][0] + (pts[k + 1][0] - pts[k][0]) * t, pts[k][1] + (pts[k + 1][1] - pts[k][1]) * t)
+        return pts[-1]
+    J = [at(d) for d in joints]
+    keep = {0, len(J) - 1} | {k for k, d in enumerate(joints) if any(abs(d - b) < 1e-6 for b in brk)} | set(range(0, len(J), 2))
+    for (px, py), (qx, qy) in zip(J, J[1:]):
+        L = math.hypot(qx - px, qy - py)
+        if L < 0.8: continue
+        ox, oy = (qy - py) / L, -(qx - px) / L          # outward: the drop is on the right of the line
+        mx, my = (px + qx) / 2 - ox * 0.35, (py + qy) / 2 - oy * 0.35
+        pieces.append(dict(kit='iso-balustrade', x=round(mx, 2), y=round(my, 2), z=e['top'], fx=round(ox, 4), fy=round(oy, 4), width=round(L - PIER_W * 0.6, 2), height=BAL_H))
+        nspan += 1
+    for k, (jx, jy) in enumerate(J):
+        if k not in keep: continue
+        if not any(math.hypot(jx - x, jy - y) < 0.6 for x, y, _ in piers): piers.append((jx, jy, e['top']))
+# a pier's own inward step, so it stands on the walkway beside the balustrade's line
+for jx, jy, top in piers:
+    pieces.append(dict(kit='iso-pier', x=round(jx, 2), y=round(jy, 2), z=top, fx=0.7071, fy=0.7071, width=PIER_W))
+print('edge kit:', nspan, 'balustrade spans,', len(piers), 'parapet piers,', nw, 'wall modules,', np_, 'piers;', dropped, 'overlaps dropped')
 
 # the camera's start: in front of the gate, on the balcony road
 sx, sy = world(0, -14)

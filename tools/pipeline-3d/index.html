@@ -265,7 +265,7 @@ flowchart LR
 <div class="table-box"><table>
 <thead><tr><th></th><th>Step</th><th>Where</th><th>Done when</th></tr></thead>
 <tbody>
-<tr><td class="num">0</td><td>A one-day frame-time measurement of the current spike on the target laptop</td><td>spike</td><td>At least 30 fps on your laptop with four wizards and spells (more is better); missing it badly ends the direction before anything else is spent</td></tr>
+<tr><td class="num">0</td><td>A one-day frame-time measurement of the current spike on the target laptop</td><td>spike</td><td>At least 30 fps on your laptop with four wizards and spells (more is better). <b>First measurement, 2026-11-23</b> (<code>npm run fps:world3d</code>, the spike alone, no enemies or spells, Radeon 780M, 1920 × 1080): 85 fps mean with ambient occlusion off (median frame 1.8 ms, p95 8 ms); 41 fps with it on, because the occlusion pass stalls about 300 ms every few frames. Rare 260 ms stalls remain with it off, likely first-time texture uploads. So the scene has plenty of headroom; the occlusion pass must be replaced or tuned, and textures preloaded.</td></tr>
 <tr><td class="num">1</td><td>Transitional agreement check, failing the build</td><td>main</td><td>It reports today's mismatches (parapets, piers)</td></tr>
 <tr><td class="num">2a</td><td>Plans as shape ops only; delete the override path</td><td>main</td><td>No numpy edits in plans; no hash change</td></tr>
 <tr><td class="num">2b</td><td>Collision segments from outlines; the permanent agreement check</td><td>main</td><td>Zero mismatches; golden hashes re-recorded on purpose</td></tr>

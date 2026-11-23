@@ -28,7 +28,10 @@ def lips(P, drop=1.0, rise=1.0, everywhere=False):
         nbld = np.roll(np.roll(P.bld, dy, 0), dx, 1)
         low |= (P.h - nb > drop) & ~nbld
     lip = walk & low & (True if everywhere else route_mask(P))                    # a flight's ends meet their landings within the step, so only its sides are walled (cheek walls)
-    P.h[lip] += rise; P.m[lip] = 'wall'; P.bld[lip] = True
+    # Pipeline step 2b: a parapet is drawn along the drop (a balustrade) and marked as guarded, but not raised into a
+    # blocked cell: the drop is already a cliff wall to the sim, and a raised 1 u strip was an invisible wall in front of
+    # the drawn balustrade. `rise` is kept for the call sites; it no longer changes the cells.
+    P.guard |= lip
     return int(lip.sum())
 
 def woods_unreached(P, step=0.5):
@@ -45,5 +48,56 @@ def woods_unreached(P, step=0.5):
             if 0 <= c < walk.shape[0] and 0 <= d < walk.shape[1] and walk[c, d] and not seen[c, d] and abs(P.h[c, d] - P.h[a, b]) <= step:
                 seen[c, d] = True; q.append((c, d))
     lost = walk & ~seen
-    P.m[lost] = 'trees'
+    # recorded as repaint ops (pipeline step 2a): the lost cells' outline, as polygons in U, V, one per material and height
+    for poly in mask_polys(P, lost):
+        P.repaint(poly, 'trees', [m for m, v in MAT.items() if v[2]])
     return int(lost.sum())
+
+
+def mask_polys(P, mask):
+    """A cell mask as polygons in U, V that cover exactly those cells' centres (each cell a 1 u square of the world grid,
+    turned 45 degrees in U, V). Holes come out as separate polygons over what surrounds them, which a repaint only
+    changes if it matches."""
+    from shapely.geometry import box
+    from shapely.ops import unary_union
+    R2 = math.sqrt(0.5)
+    cells = [box(P.x0 + j, P.y0 + i, P.x0 + j + 1, P.y0 + i + 1) for i, j in zip(*np.nonzero(mask))]
+    if not cells: return []
+    u = unary_union(cells).buffer(-0.05, join_style='mitre')   # a hair inside, so neighbours' centres stay out
+    out = []
+    for g in (u.geoms if hasattr(u, 'geoms') else [u]):
+        out.append([((x - y) * R2, (x + y) * R2) for x, y in list(g.exterior.coords)[:-1]])
+    return out
+
+
+def close_gates(P, reach=3.0, band=1.0, far=60.0):
+    """Closes each gate's line, so the only way past a gate is through its reach (the sim leaves within 3 u of a gate's
+    marker, sim/src/court.ts; a road 8 u wide, and the grass beside a road, let you walk round a gate to the world's
+    edge, 2026-11-22). The line runs through the gate square to the way in (the journey's next point from the gate, else the box's centre); out from the reach on
+    each side, every walkable cell on it (`band` u either side) becomes woods, until the line meets ground you can't walk
+    on, so it never cuts across the room."""
+    cu, cv = (P.U[0] + P.U[1]) / 2, (P.V[0] + P.V[1]) / 2
+    walk = np.vectorize(lambda m: MAT[m][2])(P.m) & ~P.bld
+    for (gu, gv), _ in P.gates:
+        du, dv = gu - cu, gv - cv
+        for pts, *_ in P.passes:                                         # the way in: the journey's next point from the gate
+            for k, q in enumerate(pts):
+                if math.hypot(q[0] - gu, q[1] - gv) < 1 and len(pts) > 1:
+                    nb = pts[k + 1] if k + 1 < len(pts) else pts[k - 1]; du, dv = gu - nb[0], gv - nb[1]
+        L = math.hypot(du, dv) or 1; du, dv = du / L, dv / L
+        along = (P.CU - gu) * du + (P.CV - gv) * dv
+        across = -(P.CU - gu) * dv + (P.CV - gv) * du
+        gi = np.unravel_index(np.argmin(np.hypot(P.CU - gu, P.CV - gv)), P.h.shape)
+        line = (np.abs(along) <= band) & (np.abs(P.h - P.h[gi]) <= 0.5)   # on the gate's own tier: a cliff ends the line
+        for side in (1, -1):
+            a = reach
+            while a < far:
+                seg = line & (side * across > a) & (side * across <= a + 0.5)
+                if seg.any() and not (seg & walk).any(): break      # the line has reached a wall, a cliff or woods
+                a += 0.5
+            if a <= reach: continue
+            # one recorded op: the band from the reach out to where the line stopped, square to the way in
+            px, py = -dv * side, du * side                          # across, in U, V
+            c0, c1 = reach, a
+            corners = [(gu + px * c + du * s * band, gv + py * c + dv * s * band) for c, s in ((c0, -1), (c1, -1), (c1, 1), (c0, 1))]
+            P.repaint(corners, 'trees', [m for m, v in MAT.items() if v[2]], at=float(P.h[gi]))   # the gate's own tier only

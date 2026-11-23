@@ -28,15 +28,16 @@ sys.path.insert(0, HERE)
 import plan as planmod
 
 MAPS = os.path.normpath(os.path.join(HERE, '../../game/content/maps'))
+PROPS_DIR = os.path.normpath(os.path.join(HERE, '../../game/content/assets/props'))
 PX = 20          # LDtk px per world unit
 SUB = 2          # level cells per plan cell (0.5 u cells, 1 u plan cells)
 R2 = math.sqrt(0.5)
 
 # What each plan material looks like on the ground (game/content/README.md, Ground layer).
 MATERIAL_GROUND = {
-    'grass': 'grass', 'path': 'dirt', 'road': 'cobble', 'paving': 'slabs', 'plaza': 'flagstone', 'dais': 'slabs',
+    'grass': 'grass', 'path': 'dirt', 'road': 'cobble', 'paving': 'flagstone', 'plaza': 'flagstone', 'dais': 'flagstone',   # one warm family: the white slabs read as bathroom tile (beauty critic, 2026-11-22)
     'stairs': 'flagstone', 'wood': 'planks', 'sand': 'sand', 'water': 'water', 'deep': 'water', 'trees': 'leaves',
-    'rock': 'gravel', 'roof': 'ash', 'wall': 'gravel', 'void': None,   # roofs dark, never a floor material (the sense critic, 2026-11-22)
+    'rock': 'gravel', 'roof': 'ash', 'wall': 'gravel', 'void': None,   # grey-box: roofs dark, never a floor material (the sense critic, 2026-11-22). Art comes from painted sources, never re-tinted textures (the user, 2026-11-22)
 }
 
 # Per spec: the level it writes, and the ids its markers get. Gate ids are what the sim looks for (sim/src/court.ts).
@@ -88,7 +89,9 @@ def load_spec(name):
         g = runpy.run_path(os.path.join(HERE, 'plans', name + '.py'))
     finally:
         planmod.Plan.render, sys.argv = render, argv
-    return next(v for v in g.values() if isinstance(v, planmod.Plan)), dict(g.get('MARKERS', {}))
+    P = next(v for v in g.values() if isinstance(v, planmod.Plan))
+    P.dress = list(g.get('PROPS', []))   # the beauty stage's dressing: [(asset, (U, V), blocks)], written as Props
+    return P, dict(g.get('MARKERS', {}))
 
 
 # ---- LDtk's layout (the same as game/packages/content/src/ldtk.mjs stringify, so diffs stay small) ----------------
@@ -145,9 +148,14 @@ def write_level(name):
     ny, nx = P.h.shape
     CW, CH = nx * SUB, ny * SUB
     terrain, height, ground = [0] * (CW * CH), [0] * (CW * CH), [0] * (CW * CH)
+    # a small roofed block (a pier, a post, a stub of tower) is masonry, not a building: topped in stone, so the client
+    # draws no windows on it (it draws a front on any face whose top is roof; the beauty critic, 2026-11-22)
+    from scipy import ndimage as _nd
+    lab, _n = _nd.label(P.m == 'roof')
+    small = np.isin(lab, [k for k, a in enumerate(np.bincount(lab.ravel()), 0) if k and a < 30])
     for i in range(ny):
         for j in range(nx):
-            m = P.m[i, j]
+            m = 'wall' if small[i, j] else P.m[i, j]
             t = 0 if walk[i, j] else TV['void'] if void[i, j] else TV['rock']
             hv = 0 if void[i, j] else tier[heights[i, j]]
             hv = 0 if hv == 0 else HV[f't{hv}']
@@ -207,6 +215,9 @@ def write_level(name):
     for n, (asset, at, blocks) in enumerate(cfg.get('props', [])):
         if at not in marks: raise SystemExit(f'{name}: prop {asset} stands on the landmark "{at}", which the plan doesn\'t have')
         es.append(entity('Prop', f'prop-{n}', marks[at], {'asset': asset, 'blocks': blocks, 'tag': None}))
+    for n, (asset, p, blocks) in enumerate(getattr(P, 'dress', [])):
+        if not os.path.isdir(os.path.join(PROPS_DIR, asset)): raise SystemExit(f'{name}: no prop "{asset}" in {PROPS_DIR}')
+        es.append(entity('Prop', f'dress-{n}', p, {'asset': asset, 'blocks': blocks, 'tag': None}))
 
     # ---- the level: the room's current file as the template, so its uid and place in the world view stay ----
     level_name = cfg['level']
@@ -312,7 +323,7 @@ def report(name, P=None):
         ci, cj = cell(p)
         for i in range(ci - DROP_NEAR, ci + DROP_NEAR + 1):
             for j in range(cj - DROP_NEAR, cj + DROP_NEAR + 1):
-                if not (0 <= i < ny and 0 <= j < nx) or not walk[i, j] or (i, j) in drops: continue
+                if not (0 <= i < ny and 0 <= j < nx) or not walk[i, j] or P.guard[i, j] or (i, j) in drops: continue   # a parapet guards it
                 if math.hypot(float(P.CU[i, j]) - p[0], float(P.CV[i, j]) - p[1]) > DROP_NEAR: continue
                 for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):
                     if 0 <= a < ny and 0 <= b < nx and P.m[a, b] != 'void' and P.h[i, j] - P.h[a, b] > DROP_M:
@@ -326,7 +337,35 @@ def report(name, P=None):
     for c in unvisited:
         i, j = np.argwhere(comp == c)[0]
         print(f'  {sizes[c]:6d} u2 at {float(P.h[i, j]):5.2f} m near {uv(i, j)}')
-    return dict(regions=len(sizes), jumps=len(jumps), cut_off=cut_off, drops=len(drops), unvisited=len(unvisited))
+    # the world's edge in view: walkable ground nearer the plan's box than the camera sees (the sense critics, 2026-11-22:
+    # the yard's woods and the infirmary's sea stopped a screen out, and the edge showed as a sheer drop). The camera
+    # shows about 7 u to each side and 8 u down, but the ground's face at the world's edge hangs below it by its height
+    # (z * 14.5 px against 8 px per u of V: about 1.8 u per metre), so the margin at the bottom grows with the height.
+    EDGE = dict(bottom=10, per_m=1.8, sides=12, top=12)
+    bottom = P.V[1] - (EDGE['bottom'] + EDGE['per_m'] * np.maximum(P.h, 0))
+    near_edge = walk & ((P.CV > bottom) | (P.CU < P.U[0] + EDGE['sides']) | (P.CU > P.U[1] - EDGE['sides']) | (P.CV < P.V[0] + EDGE['top']))
+    # only ground you can stand on without leaving: reached from the start with every gate's reach (3 u) closed
+    from scipy import ndimage as _nd
+    open_ = walk.copy()
+    for g, _ in P.gates: open_ &= np.hypot(P.CU - g[0], P.CV - g[1]) > 3.5
+    lab, _n = _nd.label(open_)
+    s0 = P.passes[0][0][0] if P.passes else (0, 0)
+    k = np.unravel_index(np.argmin(np.hypot(P.CU - s0[0], P.CV - s0[1]) + np.where(open_, 0, 1e9)), walk.shape)
+    near_edge &= lab == lab[k]
+    for g, _ in P.gates: near_edge &= np.hypot(P.CU - g[0], P.CV - g[1]) > 6   # stepping into a gate may see the edge
+    print(f'{int(near_edge.sum())} u2 of walkable ground within sight of the world\'s edge (bottom {EDGE["bottom"]} u + {EDGE["per_m"]} u a metre, sides {EDGE["sides"]} u, top {EDGE["top"]} u; ground past a gate or within 6 u of one not counted)' + (', e.g.' if near_edge.any() else ''))
+    for i, j in np.argwhere(near_edge)[:4]: print(f'  {uv(i, j)}')
+    # the dressing: a blocking prop off walkable ground (it would float or stand in a wall) or within 1.5 u of a route
+    bad = []
+    if getattr(P, 'dress', None):
+        from finish import route_mask
+        onroute = route_mask(P, 1.5)
+        for asset, (pu, pv), blocks in P.dress:
+            i, j = np.unravel_index(np.argmin(np.hypot(P.CU - pu, P.CV - pv)), walk.shape)
+            if blocks and (not walk[i, j] or onroute[i, j]): bad.append((asset, (pu, pv), 'on a route' if walk[i, j] else 'off walkable ground'))
+        print(f'{len(P.dress)} props; {len(bad)} blocking ones on a route or off walkable ground' + (':' if bad else ''))
+        for b in bad[:8]: print('  ', *b)
+    return dict(regions=len(sizes), jumps=len(jumps), cut_off=cut_off, drops=len(drops), unvisited=len(unvisited), edge=int(near_edge.sum()), props=len(bad))
 
 
 if __name__ == '__main__':

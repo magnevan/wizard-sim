@@ -14,6 +14,7 @@ import { createRequire } from 'node:module';
 import { compileProject, emitGrounds, emitModule, isBlocked } from './compile.mjs';
 import { senseLintAll } from './sense.mjs';
 import { CELL, GAME, GEN_OUT, GROUND_OUT, LDTK_VERSION, SCHEMA, loadProject, loadProps } from './ldtk.mjs';
+import { agreementAll } from './scene.mjs';
 
 const require = createRequire(import.meta.url);
 
@@ -218,5 +219,6 @@ export function runCheck({ project = undefined, genOut = GEN_OUT } = {}) {
     if (grounds !== emitGrounds(loaded)) errors.push(`${GROUND_OUT} is stale: run \`npm run content:build\``);
   } catch (e) { errors.push(e.message); }
   const warnings = errors.length ? [] : senseLintAll(loaded, rooms);
+  if (!errors.length) { const ag = agreementAll(rooms); errors.push(...ag.errors); warnings.push(...ag.warnings); }
   return { errors, warnings, rooms, source };
 }

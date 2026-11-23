@@ -123,7 +123,14 @@ const COURT: MassingPlan = {
       east: [{ from: 2, to: 40, every: 4.5, w: 2.2, z0: 3.5, z1: 11, kind: 'window' }] },
   ],
 };
-export const MASSING: Record<string, MassingPlan> = { academy: ACADEMY, court: COURT };
+/**
+ * The rooms' grey boxes. Empty since the courtyard and the drill yard became plan-made levels (2026-11-22,
+ * tools/place-plans/): their buildings are tiers in the level now, and these old boxes stood in the wrong places (a
+ * second armillary and stray walls in the courtyard). Kept for the building-art pipeline (tools/building-art/), which
+ * paints from them; a plan-made level's buildings will get their art another way.
+ */
+export const OLD_BLOCKOUTS: Record<string, MassingPlan> = { academy: ACADEMY, court: COURT };
+export const MASSING: Record<string, MassingPlan> = {};
 
 const DARK = { window: 0x2c3340, door: 0x4a3626, void: 0x14161b };
 const ROOF = 0x56627a, ROOF_EDGE = 0x3a4458, WALL = 0xaaa394, SIDE = 0x837c6e, EDGE = 0x5d574c;

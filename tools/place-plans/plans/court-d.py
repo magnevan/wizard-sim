@@ -77,14 +77,20 @@ road; the sea gateway's piers round and matched; the weir a stone sill flush wit
 
 Revision 17 (the fifth sense round, 7.5/10): the sea read as two levels, because the sea court's cliff faces came down
 into the water and were drawn in its colour; a stone ledge now runs along the cliff's foot, so the faces stand on rock
-and the sea starts beyond it."""
+and the sea starts beyond it.
+
+Revision 18 (the 3D spike, 2026-11-23): the roads as clean shapes that meet on purpose (one balcony band at fixed
+radii, straight roads to the seams and the north gate), a kerb below the pavements; the flights' landing rectangles that
+poked into the road are gone (the terrace runs to the flights)."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 17)', U=(-95, 110), V=(-62, 100))
+P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 21)', U=(-95, 110), V=(-62, 100))
 C = (0, -40)            # the amphitheatre's centre, up the screen
 ARM = (0, 18)
 SEA = -6.0
+KERB = 0.15     # the roads a kerb below the pavements (the user, 2026-11-23: the pavement is raised, not the road)
+ROAD_H = 6.0 - KERB
 def toward(a, b, d):  # the point d along from a towards b
     L = math.dist(a, b); return (a[0] + (b[0] - a[0]) * d / L, a[1] + (b[1] - a[1]) * d / L)
 
@@ -96,7 +102,7 @@ P.fill(arc_band(C, 0, 150, 5, 175), SEA, 'deep')
 P.fill(arc_band(C, 0, 93, 20, 160), -5.5, 'rock')            # a stone ledge along the cliff's foot, so the faces stand on rock, not in the sea
 P.fill(arc_band(C, 0, 90, 20, 160), 1.0, 'paving')          # the sea court
 P.fill(arc_band(C, 0, 70, 24, 156), 3.0, 'plaza')           # the middle terrace
-P.fill(circle(ARM, 20), 3.0, 'plaza')                       # the round plaza's rim, a bastion over the sea court
+P.fill(circle(ARM, 21), 3.0, 'plaza')                       # the round plaza's rim, a bastion over the sea court (rev 21: wide enough to land the sea stair)
 P.fill(circle(ARM, 18.5), 2.5, 'stairs')                    # sunk a metre in two real treads
 P.fill(circle(ARM, 17), 2.0, 'dais')
 P.fill(arc_band(C, 0, 38, 20, 160), 6.0, 'paving')          # the top terrace, a balcony over the plaza
@@ -109,10 +115,10 @@ P.fill(orect(polar(C, 14, 90), 6, 14, math.radians(90)), 6.0, 'path')
 for a in (65, 115): P.fill(circle(polar(C, 22, a), 2.2), 6.5, 'dais')                             # a stoop at each of the hall's doors
 P.fill(rect(-3, -46, 3, -30), 6.0, 'path')
 for du in (-6.5, 3.5): P.building(rect(du, -45, du + 3, -42), 6.0, 8.0)                              # the north gate's towers
-for su in (-26, 26): P.fill(rect(su - 5, -17, su + 5, -12.5), 6.0, 'paving')                        # a landing at each flight's head, square to it
-for su in (-26, 26): P.stairs(orect((su, -7.5), 8, 10, math.radians(90)), 6.0, 3.0, 90)              # the paired flights, either side of the dais
-for su in (-26, 26):                                                                                 # their cheek walls
-    for side in (-1, 1): P.building(rect(su + side * 4.5 - 0.5, -13, su + side * 4.5 + 0.5, -2), 3.0, 3.5, roof='wall')
+from semantic import Semantic
+S = Semantic(P)
+for su, nm in ((-26, 'west flight'), (26, 'east flight')):                                          # the paired flights, either side of the dais
+    S.flight(top=(su, -13.5), bottom=(su, -2.5), width=8, h_top=6.0, h_bottom=3.0, cheeks=True, cheek_h=0.5, pad='paving', name=nm)
 P.fill(rect(3, -6, 13, -5), 5.8, 'stairs'); P.fill(rect(3, -5, 13, -4), 5.4, 'stairs'); P.fill(rect(3, -4, 13, 3), 5.0, 'paving')             # the overlook: two treads down into a bay jutting over the drop, east of the axis
 P.building(rect(3, 3, 13, 4), 5.0, 1.0, roof='wall')                                                 # its parapet
 for du in (2, 13): P.building(rect(du, -5, du + 1, 4), 5.0, 1.0, roof='wall')                         # its side parapets
@@ -129,10 +135,10 @@ for a0, a1, nm in ((42, 56, 'workshops'), (124, 138, 'library')):
     P.building(arc_band(C, 50, 66, a0, a1, 10), 3.0, 9.0, nm, doors=[polar(C, 48.5, (a0 + a1) / 2)])
 
 # the sea landing: straight below the armillary, an axis stair off the plaza's rim, then down the cliff
-P.stairs(orect((0, 41), 10, 6, math.radians(90)), 3.0, 1.0, 90)
-P.stairs(orect((0, 54.5), 10, 9, math.radians(90)), 1.0, -2.0, 90)
+S.flight(top=(0, 39), bottom=(0, 44), width=10, h_top=3.0, h_bottom=1.0, landing=1.5, pad='plaza', name='sea stair, upper')
+S.flight(top=(0, 50), bottom=(0, 59), width=10, h_top=1.0, h_bottom=-2.0, landing=2.0, name='sea stair, middle')
 P.fill(rect(-7, 59, 7, 62), -2.0, 'paving')                                                         # the landing
-P.stairs(orect((0, 66.5), 10, 9, math.radians(90)), -2.0, -5.0, 90)
+S.flight(top=(0, 62), bottom=(0, 71), width=10, h_top=-2.0, h_bottom=-5.0, landing=2.0, name='sea stair, lower')
 P.fill(rect(-6, 71, 6, 79), -5.0, 'wood')
 for du in (-7, 7): P.building(circle((du, 36.5), 1.6), 3.0, 5.0)                                      # the rim's gateway, a matched pair
 
@@ -142,9 +148,9 @@ P.fill([(38, 100), (40, 40), (43, 10), (44, -10), (52, -10), (58, 20), (64, 45),
 P.fill([(44, -56), (52, -56), (52, -10), (44, -10)], 4.0, 'water')
 P.building(rect(41, -62, 55, -56), 4.0, 2.0, roof='wall')
 P.fill(rect(44, -11, 52, -10), 4.15, 'rock')                                                        # the weir: a stone sill flush with the water at the lip                                          # the culvert the river comes out of                                                 # the stream above the falls
-P.fill(rect(24, -34, 95, -26), 6.0, 'path')
-P.fill(rect(40, -34, 56, -26), 6.5, 'wood')                                                                        # the deck
-P.building(rect(40, -35, 56, -34), 6.5, 1.0, roof='wall'); P.building(rect(40, -26, 56, -25), 6.5, 1.0, roof='wall')   # parapets
+S.surface(rect(27, -34, 95, -26), 'road', on=6.0, dh=-KERB)                                                       # the battery road, on its terrace
+P.fill(rect(40, -34, 56, -26), ROAD_H, 'wood')                                                                     # the deck, level with the road
+P.building(rect(40, -35, 56, -34), ROAD_H, 1.0, roof='wall'); P.building(rect(40, -26, 56, -25), ROAD_H, 1.0, roof='wall')   # parapets
 for dv in (-36, -24): P.building(circle((37, dv), 1.6), 6.0, 5.0)                                     # the gate: a matched pair of piers square across the road
 P.building(circle((66, -42), 6), 6.0, 14, 'battery tower')
 BAT = (74, -30)
@@ -152,38 +158,32 @@ P.fill(rect(53, -46, 59, -34), 6.0, 'path')                                     
 GORGE = (56, -44)
 
 # openings in the plaza's ring of steps, and the main routes' own paving
-P.stairs(orect(polar(ARM, 17, 90), 10, 6, math.radians(90)), 2.0, 3.0, 90)
-P.fill(rect(-48, -34, -24, -26), 6.0, 'path')
+P.stairs(arc_band(ARM, 15.5, 19, 76, 104, 14), 2.0, 3.0, 90)                       # the opening south: a sector of the rings, radial sides, ending at the rim (rev 21)
+S.surface(rect(-48, -34, -27, -26), 'road', on=6.0, dh=-KERB)                                                   # the yard road
 for dv in (-36, -26): P.building(rect(-47, dv, -45, dv + 2), 6.0, 4.0)                              # the drill yard's gate piers
-P.strip([YARD] + ARC + [polar(C, 31, 20), (30, -30), BAT], 8)
-P.strip([(0, -46), polar(C, 30, 90)], 6)
+S.surface(arc_band(C, 27, 35, 18, 162, 90), 'road', on=6.0, dh=-KERB)                         # the balcony road: one band at fixed radii, on its terrace
+S.surface(rect(-3, -46, 3, -11), 'road', on=6.0, dh=-KERB)                                     # the north road, through the hall's passage
 
 for a, nm, r in ((156, 'bell tower', 5.0), (24, 'beacon', 3.0)):     # a tall marker at each turn of the arc, on its north side
     P.building(circle(polar(C, 19, a), r), 6.0, 15.0 if r > 4 else 13.0, nm)
 for a in (160, 20):                                                     # threshold pillars where the arc meets each seam
     for r in (26, 36): P.building(circle(polar(C, r, a), 1.3), 6.0, 5.0)
-P.h[(P.m == 'road') & (P.h == 6.0)] += 0.3                              # the road a step above the terrace
 import numpy as np
 from scipy import ndimage
-walk = np.isin(P.m, ['plaza', 'paving', 'grass', 'path', 'road', 'dais', 'stairs', 'wood', 'sand']) & ~P.bld
-P.m[walk & (((P.CU > 52) & (P.CV > -22)) | ((P.CU < -40) & (P.CV > 60)))] = 'trees'   # land no route reaches (past the inlet, the far corner): woods
-near = ndimage.binary_dilation(np.isin(P.m, ['road', 'path']), iterations=4)
-low = np.zeros_like(walk)
-for dy, dx in ((0, 1), (1, 0), (0, -1), (-1, 0)):
-    nb = np.roll(np.roll(P.h, dy, 0), dx, 1)
-    low |= (P.h - nb > 1.5) & ~np.roll(np.roll(P.bld, dy, 0), dx, 1)
+# Every edit below is a recorded op (rev 20, pipeline step 2a): no direct cell edits, so the resolved scene is exact.
+WALK = ['plaza', 'paving', 'grass', 'path', 'road', 'dais', 'stairs', 'wood', 'sand']
+U0, U1, V0, V1 = P.U[0] - 1, P.U[1] + 1, P.V[0] - 1, P.V[1] + 1
+P.repaint(rect(52, -22, U1, V1), 'trees', WALK)                         # land no route reaches: past the inlet
+P.repaint(rect(U0, 60, -40, V1), 'trees', WALK)                         # and the far corner
 # a belt of woods along the land's edges (12 u), open where the roads leave, so no walkable ground sees the void
-edge = np.zeros_like(walk); edge[:12, :] = edge[-12:, :] = edge[:, :12] = edge[:, -12:] = True
-inbox = (P.CU > P.U[0] + 12) & (P.CU < P.U[1] - 12) & (P.CV > P.V[0] + 12) & (P.CV < P.V[1] - 12)
-belt = walk & ~inbox & ~np.isin(P.m, ['road', 'path', 'wood', 'stairs'])
-P.m[belt] = 'trees'
-walk = walk & ~belt
-lip = walk & near & low & (P.m != 'stairs') & (P.h > 4.5)
-P.h[lip] += 1.0; P.m[lip] = 'wall'; P.bld[lip] = True                  # a knee-high lip along every road edge that drops a tier
-from finish import lips as _lips
-_lips(P, everywhere=True)                                             # a parapet on every public edge over a metre
+OPEN = ['plaza', 'paving', 'grass', 'dais', 'sand']
+for band in (rect(U0, V0, U1, P.V[0] + 12), rect(U0, P.V[1] - 12, U1, V1), rect(U0, V0, P.U[0] + 12, V1), rect(P.U[1] - 12, V0, U1, V1)):
+    P.repaint(band, 'trees', OPEN)
+S.parapets()                                                          # every public edge over a metre guarded, except flight ends
+S.check()                                                             # every flight lands
 P.landmark(ARM, 'the armillary', 10, 5.5)
 P.gate(YARD, 'to the drill yard'); P.gate(BAT, 'to the battery'); P.gate((0, -44), 'north road'); P.gate((0, 76), 'sea landing')
+from finish import close_gates; close_gates(P)                       # no way round a gate on a wide road
 J = polar(C, 31, 90); ARC_W, ARC_E = ARC[:15], ARC[14:]
 WT, WF, ET, EF, DAIS = (-26, -13), (-26, -1), (26, -13), (26, -1), (0, 9)       # the flights' tops and feet, the dais's north step
 WDOWN, EDOWN = [WT, WF, (-14, 6), DAIS], [ET, EF, (14, 6), DAIS]
@@ -202,5 +202,28 @@ P.journey([(0, -44), J, (-12, -12)] + WDOWN + EDOWN[::-1] + [(16, -16)] + ARC_E[
           'The best approach: straight down the north road to the overlook, the armillary ahead; out past the falls')
 P.journey([(0, 76), (0, 61), (0, 46), (0, 36), (0, 28)], 'The finale: up from the sea landing',
           'The climb from the sea, framed by the rim’s gateway; the armillary torn open above the warband')
+# ---- the beauty stage, round 1: dressing with the rough Codex props already in the game (to_ldtk writes PROPS) ----
+PROPS = []
+def _prop(asset, p, blocks=True): PROPS.append((asset, (round(float(p[0]), 2), round(float(p[1]), 2)), blocks))
+for a in (20, 36, 69, 86, 144, 160):                                  # a lantern pillar at each end of the balcony's parapet runs
+    _prop('codex-lantern-pillar', polar(C, 34.6, a))
+for a in (80, 100): _prop('codex-star-banner', polar(C, 22.5, a))       # banners either side of the great hall's gate
+for a in (0, 180, 25, 155): _prop('codex-urn-planter', polar(ARM, 19.2, a))   # urns on the plaza's rim, clear of the flights
+for a in (18, 162): _prop('codex-bench', polar(ARM, 25, a))             # benches on the middle terrace, facing the armillary
+for du in (-5.3, 5.3): _prop('codex-lantern-post', (du, 78.3))          # the quay's lamps
+for du in (-5, 5): _prop('codex-lantern-post', (du, 61.3))              # and the landing's
+# trees through the woods, within sight of walkable ground: a jittered grid, the species by place
+import random as _r
+_rng = _r.Random(17)
+_walkable = np.vectorize(lambda m: MAT[m][2])(P.m) & ~P.bld
+_seen = ndimage.binary_dilation(_walkable, iterations=14)
+_kinds = ['codex-oak', 'codex-pine', 'codex-conifer-tall', 'codex-oak-autumn', 'codex-birch']
+for tu in np.arange(P.U[0] + 2, P.U[1] - 1, 4.5):
+    for tv in np.arange(P.V[0] + 2, P.V[1] - 1, 4.0):
+        q = (tu + _rng.uniform(-1.6, 1.6), tv + _rng.uniform(-1.4, 1.4))
+        i, j = np.unravel_index(np.argmin(np.abs(P.CU - q[0]) + np.abs(P.CV - q[1])), P.m.shape)
+        if P.m[i, j] == 'trees' and _seen[i, j]:
+            _prop(_kinds[int(abs(q[0] * 0.13 + q[1] * 0.07 + _rng.random() * 1.5)) % len(_kinds)], q, False)
+
 P.render()
 if "--frames" in sys.argv: P.frames()

@@ -14,15 +14,21 @@ juts out over the pit, a place of its own.
 Revision 3 (the first in-game round, 6/10): the way back is the parry lane's own flight, within a screen of the rack and
 the hands ring and so always in view (the north-east flight across the pit was more than a screen off); back along the
 rim past the bays to the gate. The pit's depth reads only from inside it (its inner drop faces away from the camera),
-so that's for dressing: a lip on the rim's inner edge and a darker floor."""
+so that's for dressing: a lip on the rim's inner edge and a darker floor.
+
+Revision 4 (the first sense round in the game, 6/10): the woods south of the rim stood 4 m below it, so the yard read as
+a mound with a bowl on top; they're level with the rim now, and the pit is the only drop.
+
+Revision 5 (the second sense round, 7/10): the woods run 18 u further south, past the camera's view from the rim, and
+18 u further east past the gate; the gate's line closed (finish.close_gates)."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('yard-d', 'Drill yard D: the horseshoe (rev 3)', U=(-56, 58), V=(-48, 46))
+P = Plan('yard-d', 'Drill yard D: the horseshoe (rev 5)', U=(-56, 76), V=(-48, 64))
 O = (0, 0)
 PIT, RIM = 22, 38
-P.fill(rect(-56, -48, 58, 46), 6.0, 'grass')
-P.fill(rect(-56, 28, 58, 46), 2.0, 'trees')                                  # woods below the south rim
+P.fill(rect(-56, -48, 76, 64), 6.0, 'grass')
+P.fill(rect(-56, 28, 76, 64), 6.0, 'trees')                                  # woods level with the rim, so the yard is cut into level ground
 P.building(arc_band(O, 28, 46, 200, 340, 30), 3.0, 18.0, 'the ranges')        # the academy along the north, standing in the pit
 P.fill(arc_band(O, 0, RIM, -25, 205, 40), 6.0, 'paving')                      # the rim, round east, south and west
 P.fill(circle(O, PIT), 3.0, 'path')                                           # the pit, sunk 3 m
@@ -57,8 +63,9 @@ P.journey([(56, 18), (40, 18), (30, 16)], 'In from the courtyard onto the rim, f
 P.journey([polar(O, 31, a3) for a3 in range(30, 125, 10)] + [polar(O, 30, 134), polar(O, 20, 134), polar(O, 14, 150), hc], 'The stations, down the screen and round', 'Each bay seen before you reach it; the parry lane drops you into the pit')
 P.journey([hc, polar(O, 16, 182), RACK], 'The rack at the armoury door', 'The focus: the flame sword')
 P.journey([RACK, polar(O, 16, 170), polar(O, 16, 134), polar(O, 30, 134), polar(O, 33, 120)] + [polar(O, 33, a3) for a3 in range(110, 20, -15)] + [(40, 18), (56, 18)], 'Back out to the courtyard', 'Up the parry lane’s flight, back along the rim past the bays to the gate')
-P.m[P.m == 'grass'] = 'trees'                                                 # no ground outside the rim: woods, so no void is in view
+P.repaint(rect(-60, -52, 80, 68), 'trees', ['grass'])                       # no ground outside the rim: woods, so no void is in view
 from finish import lips, woods_unreached
-lips(P); woods_unreached(P)
+from finish import close_gates
+lips(P); close_gates(P); woods_unreached(P)
 P.render()
 if "--frames" in sys.argv: P.frames()

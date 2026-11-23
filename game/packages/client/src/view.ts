@@ -16,7 +16,7 @@
  */
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import {
-  EV, AI, ARCH, ARCHETYPES, ARMS, BSTEP, ARENA, CAST_ID, EL, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TAP, TUT_TAG, WALL, YTAG, elementName, heavyCharge, isPropWall,
+  EV, AI, ARCH, ARCHETYPES, ARMS, BSTEP, ARENA, CAST_ID, EL, KIND, MAX_BODIES, MAX_SEATS, MAX_WALLS, PHASE, TAP, TUT_TAG, WALL, YTAG, elementName, firstCliff, heavyCharge, isPropWall,
   type SimEvent, type World,
 } from '@wizard-sim/sim';
 import { Camera, FY, PPU } from './camera';
@@ -523,13 +523,19 @@ export class WorldView {
       }
       this.extras.each((f, x, y) => lit.shadow(f.tex, FEET_X, FEET_Y, fx0 + x, fy0 + y), fx0, fy0);
       const wl = w.walls, tr = w.terrain;
-      const wall = (ax: number, ay: number, bx: number, by: number): void => {
+      const wall = (ax: number, ay: number, bx: number, by: number, cast = true): void => {
         const x1 = fx0 + gx(ax), y1 = fy0 + gy(ay), x2 = fx0 + gx(bx), y2 = fy0 + gy(by);
+        if (!cast) return;
         lit.occluder(x1, y1, x2, y2);
-        lit.wall(x1, y1, x2, y2);
+        if (flatRock) lit.wall(x1, y1, x2, y2);
       };
       // the room's own rock, then what's been cast. Furniture throws its own sprite shadow, and doesn't stop light.
-      for (let k = 0; k < tr.n; k++) if (!isPropWall(w, k)) wall(tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k]);
+      // A room with height tiers casts no flat rock shadows: its rock is the outline of every cell you can't walk on
+      // (woods, parapets, buildings, cliffs), and each short edge's shadow, drawn at ground height, smeared dark diamonds
+      // over the terraces and walls (the beauty critic, 2026-11-22). Its blocks are tiers, shaded where they're drawn
+      // (art/heights.ts). Cliffs don't stop light either.
+      const flatRock = !w.def.height, cliff0 = firstCliff(w.def), rockN = w.def.rock.length;
+      for (let k = 0; k < tr.n; k++) if (!isPropWall(w, k)) wall(tr.x1[k], tr.y1[k], tr.x2[k], tr.y2[k], k < cliff0 || k >= rockN);
       for (let k = 0; k < MAX_WALLS; k++) if (wl.type[k] === WALL.rock) wall(wl.x1[k], wl.y1[k], wl.x2[k], wl.y2[k]);
     }
     this.vfx.occluders = this.occluderSource(w, fx0, fy0);

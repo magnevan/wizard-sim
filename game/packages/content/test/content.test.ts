@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { BODY, CELL, CONTENT_HASH, NO_INPUT, N_ALTARS, ROOM_HASH, ROOMS, STRUCT, createTerrain, createWorld, firstCliff, isPropWall, roomHash as simRoomHash, snapshot, step } from '@wizard-sim/sim';
 import * as C from '../src/index.mjs';
+import { agreement } from '../src/scene.mjs';
 
 /** A scratch copy of the maps and of the generated module, to break. */
 function scratch() {
@@ -403,5 +404,21 @@ describe('tags', () => {
     const loaded = C.loadProject(), { level } = C.findLevel(loaded, 'battery');
     const { errors } = C.compileLevel(loaded.project, level, C.loadProps(), { props: { tower: '' }, markers: {} });
     expect(errors.some((e: string) => e.includes('no prop tag "circle"'))).toBe(true);
+  });
+});
+
+describe('the agreement check (scene against sim)', () => {
+  // a 4 x 4 u room (8 x 8 cells), all floor at 0 m, with a 1 x 1 u rock block in the middle
+  const terrain = Array.from({ length: 8 }, (_, y) => Array.from({ length: 8 }, (_, x) => (x >= 3 && x <= 4 && y >= 3 && y <= 4 ? '#' : '.')).join(''));
+  const room = { id: 't', w: 4, h: 4, terrain, height: null };
+  const square = (x0: number, y0: number, x1: number, y1: number) => [[[x0, y0], [x1, y0], [x1, y1], [x0, y1]]];
+  it('agrees when the scene draws the block as solid', () => {
+    const scene = { regions: [{ mat: 'paving', h: 0, kind: 'flat', polys: [square(-2, -2, 2, 2)] }, { mat: 'roof', h: 3, kind: 'building', polys: [square(-0.5, -0.5, 0.5, 0.5)] }] };
+    // the block's cells lie inside the paving too; the building is drawn after it, so it wins
+    expect(agreement(room, scene).counts).toEqual({ invisibleWall: 0, hiddenHole: 0, height: 0 });
+  });
+  it('flags an invisible wall where the scene draws walkable ground over rock', () => {
+    const scene = { regions: [{ mat: 'paving', h: 0, kind: 'flat', polys: [square(-2, -2, 2, 2)] }] };
+    expect(agreement(room, scene).counts.invisibleWall).toBeGreaterThan(0);
   });
 });

@@ -1,0 +1,300 @@
+<title>The Plan-to-3D Pipeline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column with a left rail of stage numbers; tables and diagrams scroll in their own boxes. */
+:root {
+  --bg: #f6f5f1; --surface: #ffffff; --fg: #1f2328; --muted: #5d6470; --line: #dcd9d0;
+  --accent: #3550a8; --accent-soft: #e6eaf6; --warn: #a3501b; --warn-soft: #f8ebe0; --ok: #2d7a4f;
+  --display: "IBM Plex Serif", Georgia, serif; --body: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15171b; --surface: #1d2026; --fg: #e4e6ea; --muted: #9aa1ad; --line: #30343c;
+  --accent: #8ea6ef; --accent-soft: #232b44; --warn: #e39a63; --warn-soft: #33251b; --ok: #6ec795; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #15171b; --surface: #1d2026; --fg: #e4e6ea; --muted: #9aa1ad; --line: #30343c;
+  --accent: #8ea6ef; --accent-soft: #232b44; --warn: #e39a63; --warn-soft: #33251b; --ok: #6ec795; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header { border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 32px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 600 2.4rem/1.15 var(--display); margin: 12px 0 12px; text-wrap: balance; }
+h2 { font: 600 1.55rem/1.25 var(--display); margin: 56px 0 12px; text-wrap: balance; }
+h3 { font: 600 1.05rem/1.3 var(--body); margin: 28px 0 6px; }
+p, li { max-width: 68ch; }
+.lede { font-size: 1.1rem; color: var(--muted); max-width: 70ch; }
+code, .mono { font: 0.88em var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 3px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 24px; font: 13px var(--mono); color: var(--muted); margin-top: 16px; }
+.diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; overflow-x: auto; margin: 16px 0; }
+.stage { display: grid; grid-template-columns: 56px 1fr; gap: 0 16px; margin-top: 36px; }
+.stage .n { font: 600 1.6rem/1 var(--display); color: var(--accent); padding-top: 2px; }
+.stage > div { min-width: 0; }
+.stage h3 { margin-top: 0; font: 600 1.25rem/1.3 var(--display); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 10px 0; font-size: 15px; }
+.kv dt { font: 500 12px/1.9 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; }
+.table-box { overflow-x: auto; margin: 14px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { font: 500 12px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.risk { border-left: 3px solid var(--warn); background: var(--warn-soft); padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+.risk strong { color: var(--warn); }
+.sev { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 6px; border-radius: 3px; white-space: nowrap; }
+.sev.hi { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+.sev.md { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); }
+.sev.lo { color: var(--muted); border: 1px solid var(--line); }
+ul.tight li { margin: 4px 0; }
+footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+@media (max-width: 560px) { .stage { grid-template-columns: 1fr; } .stage .n { margin-bottom: 6px; } h1 { font-size: 1.9rem; } .kv { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Wizard Sim · art pipeline · design review</div>
+  <h1>The Plan-to-3D Pipeline</h1>
+  <p class="lede">How a place goes from a Python plan to a walkable, stylised 3D scene, as of courtyard plan revision 19, and the architecture we propose to move to. Part one describes what runs today and where it is weak. Part two proposes the changes, including what the terrain means for gameplay: navigation over terraces, and paths that players block with spells.</p>
+  <div class="meta"><span>branch spike-world3d</span><span>2026-11-23</span><span>scope: the courtyard (court-d)</span><span>status: exploring, not adopted</span><span>draft 6: steps 1–4 done; your concerns answered</span></div>
+</header>
+
+<h2>Part one: what runs today</h2>
+<h3>The one-paragraph version</h3>
+<p>A place is authored once, as a <b>plan</b>: a Python script of 2D shapes with heights and materials. The plan is consumed two ways. The <b>game</b> rasterises it into a grid of cells that the deterministic sim walks on (heights, cliffs as walls, gates, markers), exactly as before the 3D work. The <b>3D view</b> replays the same shape operations as exact polygons, derives typed edges (retaining walls, parapets, kerbs) from them, then decorates those edges and footprints with <b>painted assets</b>: Meshy models made from Codex pictures, and Codex-painted tiling textures. Simple geometry is built in code (ground polygons, wall faces, sweeps), but every surface you see comes from a painted source. Shots of the result go to a <b>calibrated critic</b> and to you.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  A["Plan spec<br/>plans/court-d.py<br/>shapes + heights + materials"] --> B["Cell grid<br/>(plan.py)<br/>1 u cells, 45° to screen"]
+  A --> C["Shape ops log<br/>Plan.ops"]
+  B --> D["Walk report<br/>to_ldtk --report"]
+  B --> E["LDtk level<br/>to_ldtk.py"]
+  E --> F["Sim (rooms.gen.ts)<br/>walks on 0.5 u cells"]
+  C --> G["Vector export<br/>vector.py · shapely"]
+  B -. "diff for hand edits" .-> G
+  G --> H["world3d-ground.json<br/>regions · faces · typed edges"]
+  H --> I["Kit placement<br/>spike3d_place.py"]
+  I --> J["world3d-place.json<br/>~360 placed pieces"]
+  K["Codex isolation<br/>(free)"] --> L["Meshy 7.1 PBR<br/>GLB models"]
+  M["Codex tiling textures<br/>tile3d.py"] --> N["Renderer<br/>world3d.ts · three.js"]
+  L --> N
+  H --> N
+  J --> N
+  N --> O["Shots → critic + you"]
+</pre>
+</div>
+
+<h3>Stages</h3>
+
+<div class="stage"><div class="n">1</div><div>
+<h3>The plan: one authored source</h3>
+<dl class="kv">
+  <dt>Input</dt><dd>A design read and a chosen layout (the structure and flow stages of <code>making-a-place.md</code>).</dd>
+  <dt>Output</dt><dd>A <code>Plan</code> object: a height grid, a material grid, gates, routes, the journey, landmarks, markers, and now an ordered <b>log of shape ops</b>.</dd>
+  <dt>Code</dt><dd><code>tools/place-plans/plan.py</code>, <code>plans/*.py</code>, <code>finish.py</code></dd>
+</dl>
+<p>Shapes are written in screen-aligned U,V units (1 u ≈ 0.6 m; a wizard is about 2.9 u tall). Operations are painted in order: <code>fill</code> (a polygon at a height and material), <code>stairs</code> (a polygon ramped along an axis, in 0.35 m treads), <code>building</code> (a footprint raised by its height), plus a few helpers. Later ops overwrite earlier ones, so order is the composition rule.</p>
+<p>Finishing passes then edit the cells directly: parapet lips on drops over 1 m, closing each gate's line, woods on unreachable ground, woods belts at the map edge (the courtyard does several of these inline). These are numpy edits on the grid, not shape ops.</p>
+<p><b>The rule we adopted today:</b> fix shapes here, not downstream. Plans written for the grid relied on overlaps that were invisible in cells (a road strip that repaved "whatever was under it", landing rectangles poking into a curved road). In 3D those overlaps become visible notches. Revisions 18 and 19 of the courtyard rewrite roads, steps and flight heads as shapes that meet on purpose.</p>
+</div></div>
+
+<div class="stage"><div class="n">2</div><div>
+<h3>Cells for the game: unchanged contract</h3>
+<dl class="kv">
+  <dt>Input</dt><dd>The plan's grids.</dd>
+  <dt>Output</dt><dd>An LDtk level (terrain, height tiers, ground material, markers, props), compiled to <code>rooms.gen.ts</code> for the sim and <code>grounds.gen.ts</code> for the client.</dd>
+  <dt>Code</dt><dd><code>to_ldtk.py</code>, then <code>npm run content:build</code> / <code>content:check</code></dd>
+</dl>
+<p>The sim still walks on 0.5 u cells, though the plan's cells are 1 u (each becomes 2 × 2), so the staircase it draws is 1 u. A height difference over 0.5 m between neighbours is a cliff: the compiler emits it as a rock <i>segment</i> along the cell edges, and bodies, navigation and shots collide with segments, not with cells. Before anything reaches the game, the <b>walk report</b> checks the plan: one connected region holds every gate and landmark, no jumps inside flights, no unguarded drops beside routes, no reachable ground within sight of the world's edge, no blocking prop on a route. The 3D work changes none of this, and determinism is untouched because everything 3D is client-only.</p>
+</div></div>
+
+<div class="stage"><div class="n">3</div><div>
+<h3>The vector export: exact shapes for the 3D view</h3>
+<dl class="kv">
+  <dt>Input</dt><dd>The plan's shape-op log, plus its final cell grids.</dd>
+  <dt>Output</dt><dd><code>world3d-ground.json</code>: disjoint regions (polygon, material, height), vertical faces, typed edge polylines, and a glitch report.</dd>
+  <dt>Code</dt><dd><code>tools/place-plans/vector.py</code> (shapely)</dd>
+</dl>
+<ol class="tight">
+  <li><b>Replay.</b> Each op is applied with polygon boolean ops in plan order, giving disjoint regions in world coordinates. Curves and diagonals stay exact instead of becoming 45° staircases.</li>
+  <li><b>Reconcile with hand edits.</b> Finishing passes edited cells, not shapes, so the replayed regions are compared with the final cells. Differences thicker than one cell become override regions, outlined from cells and rounded. Thin differences along curves are rasterisation noise and are ignored. Parapet lips and tiny blocks are dropped, since the 3D kit stands there instead.</li>
+  <li><b>Hygiene.</b> Each region is opened and closed by 0.3 u to remove hairlines. Leftover slivers go back to the region that owned them. This used to be a heavy-handed smoother; it is now deliberately small, because shape problems are fixed in the plan.</li>
+  <li><b>Stairs</b> are cut into tread polygons along their axis.</li>
+  <li><b>Faces.</b> Every region edge that stands above its neighbour emits a vertical face, from its top to the neighbour's height.</li>
+  <li><b>Typed edges.</b> Walkable edges are classified and chained into polylines. A drop at the edge of walkable ground is a <i>retaining wall</i>; a paved edge over a drop above 1 m is a <i>parapet</i>; two different materials meeting, at least one of them paved, is a <i>kerb</i> (so road against grass gets one; never on a flight, never between dais, plaza and paving). Edges that still turn more than a 2 u radius curve would are smoothed and reported.</li>
+</ol>
+</div></div>
+
+<div class="stage"><div class="n">4</div><div>
+<h3>Kit placement: assets on the plan</h3>
+<dl class="kv">
+  <dt>Input</dt><dd>The plan and the ground export.</dd>
+  <dt>Output</dt><dd><code>world3d-place.json</code>: about 360 placed pieces (kit id, position, ground height, facing, width, optional height).</dd>
+  <dt>Code</dt><dd><code>tools/place-plans/spike3d_place.py</code></dd>
+</dl>
+<p>Placement comes in three kinds, from most to least principled:</p>
+<ul class="tight">
+  <li><b>Along exact edges</b> (parapets). Each parapet polyline is cut into chords about 3.4 u long, with a joint forced at turns sharper than 30°. A balustrade is stretched to fill each chord exactly, with piers at the ends, at sharp turns and at every second joint, and every fourth pier (counted across the whole courtyard, not per parapet) a lantern. This fits any curve or corner.</li>
+  <li><b>Along cell edges</b> (building fronts). Wall modules are laid round each building footprint by walking its edge cells in runs of one direction. This is the older method, and still how non-hero buildings are dressed.</li>
+  <li><b>By hand, from the plan's geometry</b> (hero pieces). The great hall's gateway, wall modules along its arc, its piers, planters and cypresses are placed at polar coordinates matching the plan's hall.</li>
+</ul>
+<p>A hygiene pass then moves dressing that sits within 0.9 u (plus half its width) of an edge or off paving or grass, or drops it. In practice it currently removes every bench and urn, and the hand-placed lanterns are deleted outright in favour of the parapet ones. The old cell-based balustrade and retaining-wall code is still in the script but disabled.</p>
+</div></div>
+
+<div class="stage"><div class="n">5</div><div>
+<h3>Assets: painted sources only</h3>
+<dl class="kv">
+  <dt>Models</dt><dd>Codex isolates each piece from the concept as a front-on, orthographic picture on plain grey (the Meshy agent's prompt pattern). Meshy image-to-3D (meshy-7.1, PBR maps, remeshed to about 10–30k triangles) turns it into a model. About 30 credits a piece; 405 spent so far.</dd>
+  <dt>Textures</dt><dd>Codex paints seamless squares (flagstone, cobble, grass, ashlar, coping, slate) in the concept's palette; <code>tile3d.py</code> blends each with its half-shifted self so it tiles.</dd>
+  <dt>Rule</dt><dd>No art drawn in code. Geometry may be built in code (ground, faces, sweeps, flat roofs), provided its surface is painted. You approved this distinction on 2026-11-23, after rejecting code-drawn pixel art.</dd>
+</dl>
+<p>Every generated source is kept under <code>game/content/generated/</code>, with its prompt under <code>tools/building-art/prompts/</code>.</p>
+</div></div>
+
+<div class="stage"><div class="n">6</div><div>
+<h3>The renderer: a separate page, for now</h3>
+<dl class="kv">
+  <dt>Code</dt><dd><code>game/packages/client/world3d.html</code> + <code>src/lab/world3d.ts</code> (three.js, already a client dependency for the 3D characters)</dd>
+  <dt>Camera</dt><dd>Perspective, 28° field of view, pitched 46°, framed to show 18 u of ground, leading 3.5 u up the screen so buildings ahead stay in frame. Chosen to match Magicka's steep, close view.</dd>
+  <dt>Light</dt><dd>A warm, low sun with 4096 px shadow maps; a hemisphere fill; a faint room environment for the PBR materials; ambient occlusion (GTAO); ACES tone mapping.</dd>
+</dl>
+<p>The ground is built from the export: region polygons are triangulated and textured by material, faces become vertical quads in ashlar, and edges get swept profiles (a coping along retaining walls and parapets, a low kerb along material joins). Building footprints become flat slate roofs at one fixed eave height (3.4 m above their ground) whatever the plan's building height, so a 15 m bell tower is as tall as a shed. Each region also gets a slightly larger copy 0.15 u underneath, to hide hairline gaps. Each kit piece is a clone of its GLB, scaled to its placed width (and height, for pieces that carry one). The wizard is his own animated GLB; movement in the spike uses a simple step check (0.6 m, against the sim's 0.5) on the level's height grid, not the sim.</p>
+</div></div>
+
+<div class="stage"><div class="n">7</div><div>
+<h3>Evaluation: shots, a critic, and you</h3>
+<p><code>npm run shot:world3d</code> renders fixed spots headless (software GL) at 1920 × 1080. A beauty critic follows <code>docs/campaign/beauty-rubric.md</code>: full-size frames only; anchors you have rated, with your notes; hard caps (mixed scale, mixed viewpoint, inconsistent light, code-drawn art, the wrong camera); a greyscale readability test; then a score plus a separate craft score. It is never told what changed or what the last round scored, because that is what inflated it before. A glitch report from the export catches some geometric faults mechanically. The final check is your eye; your circled screenshot found faults that neither caught.</p>
+</div></div>
+
+<h3>Key design decisions</h3>
+<div class="table-box"><table>
+<thead><tr><th>Decision</th><th>Why</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td>One plan feeds both the sim and the 3D view</td><td>Layout, flow and walkability stay authored once and checked once; the 3D view cannot invent walkable ground.</td><td>Two derived representations that can drift apart (see risks).</td></tr>
+<tr><td>Sim stays on cells; only the picture goes vector</td><td>Determinism, netcode, navigation and tests are unaffected; the spike is reversible. (Part two deliberately gives this up for collision, in step 2b.)</td><td>Picture and collision come from different outlines. Today they differ by much more than the 1 u staircase: parapets and small piers are drawn thinner than they block (see the review below).</td></tr>
+<tr><td>Replay shape ops rather than vectorise cells</td><td>Exact curves and straight diagonals; marching squares on a 45° grid would bake the staircase in.</td><td>Cell edits made after the shapes need a reconcile step.</td></tr>
+<tr><td>Fix shape problems in the plan</td><td>Smoothing after the fact hid symptoms and made new wiggles.</td><td>Plans must be written more carefully; older plans need rewrites.</td></tr>
+<tr><td>Typed edges drive the kit</td><td>Walls, parapets and kerbs fit any shape when they follow the edge line, not cells.</td><td>Classification rules are heuristics (drop thresholds, material sets).</td></tr>
+<tr><td>Codex isolates, Meshy models</td><td>Free, high-volume picture iteration; paid modelling only for chosen pieces; quality matched the Meshy agent's own output.</td><td>Meshy models aren't designed to tile, and their proportions are whatever the picture implies.</td></tr>
+<tr><td>Renderer on its own page</td><td>Nothing in the shipped game changes until the direction is adopted.</td><td>A second renderer to merge later; the spike's movement and camera aren't the game's.</td></tr>
+</tbody></table></div>
+
+<h3>Known weak spots</h3>
+<p>These are the places I would look hardest. They are ordered by how likely each is to bite at scale, not by how visible it is today.</p>
+<div class="table-box"><table>
+<thead><tr><th>Severity</th><th>Weak spot</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td><span class="sev hi">High</span></td><td>Two truths: cells and polygons</td><td>The sim walks the cell grid; the view draws polygons. They differ by the 1 u staircase on every curve, and by far more where parapets and small piers block a wider area than they are drawn. Nothing checks the two agree.</td></tr>
+<tr><td><span class="sev hi">High</span></td><td>Hand edits on cells</td><td>Finishing passes (lips, woods belts, closing gates) edit cells, so the export reconstructs them from cells: about 4,500 cells in the courtyard, mostly woods. Their outlines are rounded cell shapes, not designed ones. Moving these into shape ops would make the plan the only truth.</td></tr>
+<tr><td><span class="sev hi">High</span></td><td>Buildings are not a kit yet</td><td>Wall modules are Meshy models with irregular ends, stretched to fit runs measured on cells. They don't join at corners, there are no corner pieces, and roofs are flat slate polygons. This is the planned phase C: tileable bays trimmed in Blender, corner pieces, footprints snapped to whole bays, roofs built from footprints.</td></tr>
+<tr><td><span class="sev md">Medium</span></td><td>Performance is unmeasured</td><td>The seven kit models actually placed come to about 90 MB of GLBs (the generated folder holds about 300 MB), 2K PBR textures, about 360 cloned (not instanced) pieces, 4K shadows and GTAO. Shots run in software GL, so they say nothing about frame rate. Instancing, compressed textures (KTX2) and a laptop measurement are needed before any adoption decision.</td></tr>
+<tr><td><span class="sev md">Medium</span></td><td>Edge classification is heuristic</td><td>Retaining wall, parapet and kerb are decided by height thresholds and material sets. Odd cases (a 0.6 m step beside grass, a flight's side) fall through or get the wrong treatment. A wrong type is visually loud: a balustrade across a top step, a kerb on a flight.</td></tr>
+<tr><td><span class="sev md">Medium</span></td><td>Placement methods are mixed</td><td>Exact-edge, cell-edge and hand-placed polar pieces coexist. Hand placement is tied to one plan's numbers and silently breaks if the plan's hall moves.</td></tr>
+<tr><td><span class="sev md">Medium</span></td><td>Evaluation still leans on you</td><td>The critic is calibrated by a handful of anchors and still hallucinated faults before. The glitch report only measures edge wiggle. Your circled screenshot found three kinds of fault neither caught: notches, slivers, and dressing on edges.</td></tr>
+<tr><td><span class="sev lo">Low</span></td><td>Not yet the game's renderer</td><td>The spike has its own camera, movement and lighting. Adoption means moving this into the game's view, turning the characters' pixel shader down, and revisiting spell effects.</td></tr>
+<tr><td><span class="sev lo">Low</span></td><td>Only the courtyard</td><td>The infirmary and yard plans still carry grid-era habits and need the same upstream rewrite before they export cleanly.</td></tr>
+</tbody></table></div>
+
+<h3>What the outside review found</h3>
+<p>A separate reviewer read this page against the code. Its points that change the picture above:</p>
+<ul class="tight">
+  <li><b>The picture and the collision differ by design, not by half a cell.</b> Parapet lips are 1 u blocking cells in the sim, but the view drops them and puts a thin balustrade inside the edge: an invisible wall about 1 u deep in front of every parapet. Small buildings (gate piers, threshold pillars, 5–8 u²) block their whole footprint in the sim but show as paving with a narrower pier. In a game where shots and knockback hit walls, this is a gameplay bug.</li>
+  <li><b>The reconcile diff isn't a check:</b> stairs and buildings are accepted without comparing heights, thin differences are erased, and the count is printed, never asserted. The spike's wizard walks the level's heights while the ground comes from a committed JSON, with nothing tying them to the same plan revision.</li>
+  <li><b>The pipeline is manual,</b> three scripts run by hand in order with no staleness check, and the placement script hard-codes the courtyard and its hall.</li>
+  <li><b>Asset weight</b> (about 90 MB for one place) doesn't fit a web build deployed on every push.</li>
+  <li>Its recommendations: an agreement check that fails the build; finishing passes as shape ops so the override path goes; one command for the chain; run the yard through untouched before anything else; then performance (compression, instancing, a laptop measurement); only then the building kit. Roofs belong on the painted side of the line. Heroes are whole models whose footprint the plan takes from the model. Adoption needs a frame-time target, about 15 MB per place, a draw-call count, the time and credits for a second place, and zero cell/polygon mismatches.</li>
+</ul>
+
+<h2>Part two: the proposed architecture</h2>
+
+<h3>The spine: shapes are the only truth</h3>
+<p>Today the plan is a script that paints cells and also logs shapes, and later passes edit the cells directly. Two things are derived (the sim's cells and the view's polygons) and they disagree in ways nothing checks. The proposal:</p>
+<ol class="tight">
+  <li><b>Every plan edit is a shape op</b>, including today's finishing passes: parapets become an <code>edge</code> op along a polyline, woods belts and unreachable ground become fills computed as polygons, gate closures become short wall ops. No numpy edits in plan specs. The override and rounding path in <code>vector.py</code> goes.</li>
+  <li><b>One compile step</b> turns the ops into a <i>resolved scene</i>: disjoint regions with heights, typed edges, and solid features (parapets, piers, walls, building footprints), each with an exact outline.</li>
+  <li><b>Collision comes from outlines as segments; cells keep heights and navigation only.</b> The sim already collides bodies, shots and navigation with wall segments (<code>w.terrain</code>: the body push-out and <code>clipRay</code> in <code>walls.ts</code>, and <code>nav.ts</code>). Rasterising a 0.3 u balustrade into 0.5 u cells would either lose it or fatten it back into the invisible wall we are removing. So the compiler emits collision segments straight from the resolved outlines: a parapet blocks exactly where its balustrade stands, a curved retaining wall is a smooth chain of segments, not a staircase. Cells carry the height grid and the navigation grid. This changes the golden hashes, on purpose, in its own commit.</li>
+  <li><b>The permanent agreement check is drawn against blocking</b>: the placed pieces' real footprints (placement data plus model bounds) and the drawn edges, compared with the collision segments and the walkable cells. Anything drawn as solid must block; nothing invisible may block, within a stated tolerance (about 0.15 u), using each model's traced footprint rather than its bounding box. It fails <code>content:check</code>. A cells-against-scene comparison is only a transitional tool while plans still carry numpy edits.</li>
+  <li><b>One command with a stamp</b>: plan → resolved scene → level, 3D ground and placement, all stamped with the plan's hash and the hashes of the models whose footprints it uses. A mismatch fails <code>content:check</code> and trips a development-only assert; a deployed client never refuses to draw.</li>
+  <li><b>Reproducible builds</b>: the compiled level is committed and never regenerated on a client. The geometry library is pinned, since its output can change between versions.</li>
+</ol>
+<p>Hygiene stays only as a guard: a sliver or notch the plan's ops leave is a compile error naming its position, not something to smooth away.</p>
+
+<h3>Assets: kits fit, heroes define their footprint</h3>
+<ul class="tight">
+  <li><b>No non-uniform stretching.</b> A run is filled with whole modules plus at most one filler, and the plan snaps lengths to whole bays. Balustrades become module and post pairs at a fixed pitch.</li>
+  <li><b>Building kit</b> (bay, corner, gable end, roof run, roof corner), trimmed and pivoted in Blender so pieces tile, with heights from the plan's building height.</li>
+  <li><b>Hero buildings</b> are whole models; the plan imports their footprint, traced from the model, instead of stretching the model to the plan.</li>
+  <li><b>Roofs move to the painted side</b>: roof modules from the kit, never a flat polygon.</li>
+  <li><b>Budget</b>: about 15 MB per place after Draco or meshopt geometry and KTX2 textures; repeated pieces instanced.</li>
+</ul>
+
+<h2>Part three: gameplay on terrain</h2>
+<p>Two rules keep this safe under rollback netcode. <b>The sim never reads the 3D view</b>: everything is computed from the resolved scene at build time or from sim state at run time, with integer costs. And <b>static data stays out of the snapshot</b>: anything baked at build time is read-only and outside <code>buffers()</code>; only small dynamic state is saved each tick.</p>
+
+<h3>Navigation: why today's won't scale</h3>
+<p>Today each seat has a Dijkstra distance field over 0.5 u cells, rebuilt every 0.3 s, stored in world state at <code>MAX_SEATS × MAX_CELLS</code> 32-bit integers. The courtyard level is 261 × 260 u, about 271,000 cells. The larger cost is the snapshot, not the search: four fields of that size are several megabytes saved every tick for rollback. And a resimulation that crosses a rebuild tick runs the rebuild again, so rebuilds have to be budgeted per rollback, not per 0.3 s. Issue #17 tracks this; it exists with or without 3D.</p>
+
+<h3>Navigation: proposed</h3>
+<ol class="tight">
+  <li><b>A region graph, baked at compile time and kept out of the snapshot.</b> Nodes are walkable areas; edges are the passages between them (flights, gates, openings), each with its cells and width. The compiler splits regions at narrow passages so the obvious chokes are edges.</li>
+  <li><b>Baked portal fields.</b> For each portal, a static distance field over its neighbouring regions, computed at build time. An enemy far from the fight follows these downhill toward the next portal on its route, so it steers round the armillary and piers inside a large region without any runtime search. Free under rollback, since nothing is saved.</li>
+  <li><b>One fine window per seat near the fight.</b> Each seat's field covers a window around its wizard, <b>wider than wall-casting range plus the longest wall</b> (place range is 9 u; the longest drawn wall is to be cited from config), so every fresh wall lands inside some seat's fine field. Players can chain up to 40 walls each across any width, so no region split can bound what they close; the windows can. Walls left behind outside every window are handled by bump-and-break: an enemy that meets one breaks it at its break cost. its origin snapped to a coarse grid with hysteresis so it doesn't thrash, and stored in state. The window's border takes its costs from the graph distances, so a path crosses the border without a jump. Window fields are small enough to snapshot.</li>
+  <li><b>In the wizard's own region but outside the window</b> (the plaza is wider than a window), there is no next portal. The rule: steer by the baked field of the portal nearest the wizard until the window is reached, then by the window's field.</li>
+  <li><b>Rebuilds are staggered</b> across seats and ticks, and triggered only from sim state (a wall's creation or expiry tick, or the existing timer), never from anything outside the sim.</li>
+  <li><b>Each enemy stores its chosen next portal</b>, and ties break by portal index, so packs don't oscillate between two equal routes.</li>
+</ol>
+
+<h3>Spells that block paths</h3>
+<ul class="tight">
+  <li><b>Closure is a connectivity test, not an overlap.</b> A wall covering part of a wide flight leaves it open. When a solid wall or barrier touches a portal, the portal's cells are tested for a way across; only then is the edge closed or costed.</li>
+  <li><b>One cost model for blocked routes.</b> Solid walls get an integer break cost on the edge, as players' force fields already have. One Dijkstra over the region graph (tens of nodes) then decides between going round and breaking through. No separate "detour budget".</li>
+  <li><b>Only what changed is recomputed</b>: the touched portals' state and the affected windows. The dynamic portal state is a few bytes per portal in the snapshot.</li>
+  <li><b>A plan rule</b>: one wall spell can seal a single flight or gate, so if a fight area has only one way in, players can shut the enemies out entirely. So every fight area has at least two ways in, unless the single entrance is a deliberate set piece (holding a bridge), written down as such in the place's read. The walk report counts the ways into each area and flags the ones with only one.</li>
+  <li><b>Walls on terrain</b> (your call: natural behaviour): a wall follows the ground it is cast on, so one aimed up a staircase or onto a higher tier climbs the steps with the ground. It stops only where a real cliff (over 0.5 m) would cut it, never floating over a drop or buried in a cliff, and its preview shows where it will stop before it lands.</li>
+</ul>
+
+<h3>Other gameplay effects of height</h3>
+<ul class="tight">
+  <li><b>Shots and edges</b>: "shots pass over an edge from above, hit the face from below" needs shots to carry a height in state and cliffs to become directional segments. That is real sim work, not a given. Sight should stay symmetric, so enemies on a terrace don't get a free shot you can't return, with cover only close under an edge.</li>
+  <li><b>Knockback near drops</b> (your call: some drops are open): today every public edge over 1 m has a parapet. Open drops, where knockback can push someone off, need a falling state for bodies and a rule for what falling does. This joins the plan as sim work after navigation, and plans mark which edges are open on purpose.</li>
+  <li><b>Jumping down</b>: one-way links for enemies are cheap in the graph and use the same falling state, so they come with it, after the first navigation step.</li>
+  <li><b>Readability</b>: what blocks must look like it blocks. That is what the agreement check protects; it's a gameplay requirement, not polish.</li>
+</ul>
+
+<h2>Proposed order of work</h2>
+<div class="table-box"><table>
+<thead><tr><th></th><th>Step</th><th>Where</th><th>Done when</th></tr></thead>
+<tbody>
+<tr><td class="num">0</td><td>A one-day frame-time measurement of the current spike on the target laptop</td><td>spike</td><td>At least 30 fps on your laptop with four wizards and spells (more is better). <b>First measurement, 2026-11-23</b> (<code>npm run fps:world3d</code>, the spike alone, no enemies or spells, Radeon 780M, 1920 × 1080): 85 fps mean with ambient occlusion off (median frame 1.8 ms, p95 8 ms); 41 fps with it on, because the occlusion pass stalls about 300 ms every few frames. Rare 260 ms stalls remain with it off, likely first-time texture uploads. So the scene has plenty of headroom; the occlusion pass must be replaced or tuned, and textures preloaded.</td></tr>
+<tr><td class="num">1</td><td>Transitional agreement check, failing the build</td><td>main</td><td>It reports today's mismatches (parapets, piers)</td></tr>
+<tr><td class="num">2a</td><td>Plans as shape ops only; delete the override path</td><td>main</td><td>No numpy edits in plans; no hash change</td></tr>
+<tr><td class="num">2b</td><td>Collision segments from outlines; the permanent agreement check</td><td>main</td><td>Zero mismatches; golden hashes re-recorded on purpose</td></tr>
+<tr><td class="num">3</td><td>One command with a stamp</td><td>main</td><td>A stale 3D ground fails the check</td></tr>
+<tr><td class="num">4</td><td>The yard through the pipeline, untouched</td><td>main</td><td>Everything courtyard-specific found and removed</td></tr>
+<tr><td class="num">5a</td><td>Static region graph, baked portal fields, per-seat windows; tick and snapshot cost measured</td><td>main, after 2b</td><td>A measured design spike: enemies cross the courtyard; exit criteria are tick cost and snapshot bytes</td></tr>
+<tr><td class="num">5b</td><td>Dynamic portals, wall break costs</td><td>main</td><td>Enemies reroute round a walled flight or break the wall, deterministically. Held until the window rule above is tested</td></tr>
+<tr><td class="num">6</td><td>Performance pass</td><td>spike</td><td>Target frame time with four wizards and spells; about 15 MB per place</td></tr>
+<tr><td class="num">7</td><td>Building kit and roofs</td><td>spike</td><td>A house of any whole-bay footprint joins at every corner</td></tr>
+</tbody></table></div>
+<p>Steps 1 to 5 go on main: the compiler, collision from outlines, the stamp and navigation are valid for the pixel game too, and the courtyard is already too big for today's navigation whatever the art direction. Only the renderer, the kit and the performance pass stay on the spike, so the art decision stays reversible. Paused meanwhile: courtyard beauty rounds, critic tuning, new Meshy pieces, hand-placed dressing.</p>
+
+<h2>Your three concerns (2026-11-23), and the proposed answer</h2>
+<h3>Is LDtk still the right tool for 3D places?</h3>
+<p>No. We chose it as a 2D grid editor for you; plan-made places are written in Python and never hand-edited in LDtk, so it is now only the file that carries the sim's grid. It can't hold what 3D needs: exact outlines, height as data, flights, edge treatments, placed models. Proposal: the compiled plan (the resolved scene) becomes the level format for 3D places, and the sim's grid is compiled from it directly; LDtk stays for the hand-made pixel rooms. A visual editor for 3D places is a separate, later question.</p>
+<h3>Is something inherent causing the artifacts?</h3>
+<p>Yes, two things. Plans <b>paint overlapping shapes in order</b>, so wherever a road, a landing and a terrace overlap there are notches and slivers: invisible on a grid, visible at exact scale (the jagged road edges). And plans <b>don't know what a stair or a landing is</b>: a flight is a ramp painted onto the ground with nothing saying it must land on something, and parapets come from a rule (a drop over 1 m gets one) that can't tell a flight's end from a terrace edge. So a flight can end at a cliff or a balustrade. The agreement check catches the picture disagreeing with collision, not a design that makes no sense.</p>
+<p>Proposal: describe a place by what it is. <b>Terraces</b> (outlines and heights), <b>connectors</b> (flights, ramps, gates, each naming the two terraces it joins, its width, and a landing at each end) and <b>edges</b> (each with a treatment: parapet, open drop, retaining wall; defaults where obvious). The compiler builds the geometry from that and refuses nonsense: a flight that doesn't land on walkable ground at both ends, an edge without a treatment, anything painted over a connector. Whole classes of artifact become impossible instead of patched. The terraces and connectors are also exactly navigation's region graph (step 5a): flights and gates are its portals.</p>
+<h3>Will it stay creative?</h3>
+<p>Only if the plan language stays expressive and concept art drives it. Terraces take any outline (organic curves, arcs, irregular polygons) and any heights; the rules check sense, not shape. Kits are for repetitive parts only; hero pieces stay bespoke. The gap between concept and plan, where we lost creativity before, closes with a tracer: Codex paints a top-down layout sketch, and a tool turns its regions into terraces and connectors as a first draft, refined from there instead of written from a blank file. Three really different plans per place, and a critic comparing against the concept, stay.</p>
+<h3>Proposed: step 4.5, before navigation</h3>
+<ol class="tight"><li>A short design for the semantic plan language (terraces, connectors, edges).</li><li>The courtyard's flights and terraces rebuilt in it, showing the stair and edge artifacts gone.</li><li>The scene as the 3D level format, LDtk kept for pixel rooms.</li></ol>
+
+<h2>Decided</h2>
+<ul>
+  <li><b>Done (2026-11-23, branch <code>pipeline-compiler</code>):</b> step 1, the agreement check (6,050 mismatched cells at first, 3 now in the courtyard, 10 in the yard); 2a, plans as shape ops only; 2b, what blocks is what's drawn; 3, one command with a stamp; 4, the yard through the pipeline. 690 tests pass.</li>
+  <li><b>2026-11-23:</b> the adoption bar is at least 30 fps on your laptop; wall spells follow the ground naturally, climbing stairs and stopping at cliffs; some drops are open for knockback, so falling becomes sim work.</li>
+  <li><b>2026-11-23:</b> about 15 MB per place is the budget; every fight area has two ways in unless its single entrance is a named set piece; steps 1 to 5 go ahead on main now, ahead of the art decision, on branch <code>pipeline-compiler</code>.</li>
+</ul>
+
+<footer>Sources of truth: <span class="mono">tools/place-plans/</span> (plan, export, placement), <span class="mono">game/packages/client/src/lab/world3d.ts</span> (renderer), <span class="mono">docs/explorations/2026-11-23-stylised-3d.md</span> (history and plan), <span class="mono">docs/campaign/beauty-rubric.md</span> (critic). Frames from each round are on the Opening Segment page.</footer>
+</div>

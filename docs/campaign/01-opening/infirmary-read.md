@@ -75,3 +75,9 @@ The first in-game round (rev 3, as the engine session built it at `feabfbb`) sco
 | 4 | rev 6 | 8/10 | **Flow passed.** The east overlook flight becomes a long run along the drop, so it's no twin of the west (rev 7, into the sense stage) |
 
 **For dressing:** the walkways read as debris; the well needs its model; a different texture on the top tier and the well's tier so the 1.5 m step reads; different beds in the two gardens.
+
+## Sense in the game (2026-11-22)
+
+Rounds: 7/10 (rev 7: the sea stopped 8 u out), 8/10 (rev 8: void at the sea's east end), then **9/10 at rev 9**: "ready for the beauty stage". The land and the sea run past the camera's view, woods stand outside both gates, and each gate's line is closed.
+
+**For the beauty stage:** the bath's paved rim stands half in the sea, so pull it onto the sand or give it a sea wall; tidy the pale tile scraps at the flights' feet; add a kerb at the north gate; and the dressing listed above.

@@ -1,0 +1,7 @@
+Generate one image with your image generation tool, then save it as court-ground-c.png in the current directory. Reply with just the file name.
+
+A sheet of ground pieces for a co-op wizard game in high-detail pixel art, in the style, palette and warm light of the attached concept art, on a plain flat magenta background (#ff00ff) with clear gaps between the pieces. The last attached image is the player's wizard sprite at its true in-game size: draw everything at that pixel size and scale.
+
+Camera: high top-down three-quarter view, as in Children of Morta or Eastward. The ground is foreshortened: paving joints run in the same view as the walls would, never as if seen from straight above. One light from the upper left: each raised edge casts its shadow down and to the right.
+
+The pieces: 1. a square patch of warm sandstone forecourt paving; 2. a square patch of cobbled road; 3. the paving raised one step above the road, meeting it along a straight carved kerb, so the higher surface is obvious; 4. the same kerb turning a corner; 5. a low wide flight of three stone steps going down toward the viewer, with carved cheek walls; 6. a patch of grass meeting the paving along a stone edging.

@@ -66,3 +66,13 @@ The structure critic ranked C, the ring, at 6.5/10; A, the gallery, at 6; and B,
 | 2 | rev 3 | 7/10 | "Leads at every step. Ready for the sense stage" |
 
 **For dressing:** treads and stepping side walls on the parry lane so it reads as a descent; a body for the rack; a lip on the rim's inner edge and a darker pit floor; the scenery soldiers along the crossing. The way back retraces the bays (about 5 screens): legible, the weakest stretch, kept.
+
+## Sense in the game (2026-11-22)
+
+| Round | Plan D | Score | What changed after it |
+|---|---|---|---|
+| 1 | rev 3 | 6/10 | The rim dropped 4 m sheer into low woods, so the yard read as a mound with a bowl on top: the woods are level with the rim now (rev 4) |
+| 2 | rev 4 | 7/10 | The woods' own end showed a screen past the rim: they run 18 u further, and the gate's line is closed (rev 5) |
+| 3 | rev 5 | 8/10 | **Sense passed**: "ready for the beauty stage" |
+
+**For the beauty stage:** posts or a low wall at the east gate (the path ends in open woods, with nothing for the gate to be a gap in); straight-cut decking and paving edges; the pit's lip and a darker floor; treads on the parry lane; a body for the rack; the props and scenery people the old blockout had.

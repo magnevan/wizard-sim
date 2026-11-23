@@ -270,10 +270,11 @@ for (const pc of place.pieces) {
       if (mt && 'metalness' in mt && !mt.metalnessMap) { mt.metalness = 0; mt.roughness = 0.85; }   // a flat Meshy material comes in metallic, which reads dark with no environment; a PBR one keeps its maps
     });
     const box = new THREE.Box3().setFromObject(o), size = box.getSize(new THREE.Vector3());
-    const s = pc.width / Math.max(size.x, 1e-6);
+    // a piece with a height (a retaining wall sized to its drop) takes it, stretching along its width to fill its run
+    const s = pc.width / Math.max(size.x, 1e-6), sh = (pc as { height?: number }).height ? (pc as { height: number }).height / Math.max(size.y, 1e-6) : s;
     const holder = new THREE.Group();
-    o.scale.setScalar(s);
-    o.position.set(-(box.min.x + size.x / 2) * s, -box.min.y * s, -(box.min.z + size.z / 2) * s);
+    o.scale.set(s, sh, sh);
+    o.position.set(-(box.min.x + size.x / 2) * s, -box.min.y * sh, -(box.min.z + size.z / 2) * sh);
     holder.add(o);
     holder.position.set(pc.x, yOf(pc.z), pc.y);
     holder.rotation.y = Math.atan2(pc.fx, pc.fy);   // the model's front (+z) turned to face (fx, fy)

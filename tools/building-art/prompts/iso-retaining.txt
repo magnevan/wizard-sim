@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as iso-retaining.png in the current directory. Reply with just the file name.
+
+The attached image is the concept scene.
+
+Isolate and generate a single modular stone retaining wall segment from the concept scene as a repeatable architectural game asset module: a straight section of cream and tan cut ashlar blocks in level courses, slightly battered, with a projecting pale stone coping along the top, a shallow buttress at each end, a carved plinth course along the bottom, a little moss in the lower joints and a few trailing ivy strands. About twice as wide as it is tall. Standalone straight front-on orthographic view on a plain solid light grey background, perfectly centered, no ground plane, flowers, or characters. High detail, crisp edges, stylised hand-painted textures, square image.

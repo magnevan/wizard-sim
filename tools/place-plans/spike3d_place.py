@@ -11,6 +11,7 @@ import json, math, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import to_ldtk
+from plan import MAT
 
 P, _ = to_ldtk.load_spec('court-d')
 R2 = math.sqrt(0.5)
@@ -48,7 +49,7 @@ def putw(kit, x, y, z, fx, fy, width):
     pieces.append(dict(kit=kit, x=round(float(x), 2), y=round(float(y), 2), z=round(float(z), 2), fx=round(float(fx), 4), fy=round(float(fy), 4), width=round(float(width), 2)))
 WX = np.vectorize(lambda u, v: world(u, v)[0])(P.CU, P.CV)
 WY = np.vectorize(lambda u, v: world(u, v)[1])(P.CU, P.CV)
-def runs_along(mask, outward, module, kit, zof, skip=None):
+def runs_along(mask, outward, module, kit, zof, skip=None, height=None):
     """Places `kit` modules about `module` u wide along the edge cells in `mask`, facing `outward` (per-cell unit vectors in
     index space, x = column, y = row)."""
     ii, jj = np.nonzero(mask)
@@ -79,6 +80,7 @@ def runs_along(mask, outward, module, kit, zof, skip=None):
                 fi, fj = min(max(int(round(cy)), 0), P.h.shape[0] - 1), min(max(int(round(cx)), 0), P.h.shape[1] - 1)
                 x = WX[i, j] + (cx - j); y = WY[i, j] + (cy - i)
                 putw(kit, x, y, zof(i, j), ox, oy, L / n)
+                if height is not None: pieces[-1]['height'] = round(float(height(i, j)), 2)
                 placed += 1
     return placed
 def outward_from(mask_f, sigma):
@@ -112,12 +114,46 @@ np_ = 0
 for k in np.unique(lab[small]):
     ci, cj = np.nonzero(lab == k)
     i, j = int(round(ci.mean())), int(round(cj.mean()))
-    w = 2 * math.sqrt(len(ci) / math.pi) + 0.2
+    w = min(2 * math.sqrt(len(ci) / math.pi) + 0.2, 1.9)                       # capped: big blocks made giant piers (round 5)
     ring = [(int(round(i + dy)), int(round(j + dx))) for dy, dx in ((0, 3), (3, 0), (0, -3), (-3, 0))]
     z = min(P.h[a, b] for a, b in ring if 0 <= a < P.h.shape[0] and 0 <= b < P.h.shape[1] and not roof[a, b])
     pieces.append(dict(kit='iso-pier', x=round(float(WX[i, j]), 2), y=round(float(WY[i, j]), 2), z=round(float(z), 2), fx=0.7071, fy=0.7071, width=round(w, 2), flatten=round(w / 2 + 0.4, 2)))
     np_ += 1
-print('edge kit:', nb, 'balustrades,', nw, 'wall modules,', np_, 'piers')
+# round 5: retaining walls along every drop of 1.3 to 5 m, each module sized so its height is the drop (its width from
+# the model's own proportions), base on the lower ground, facing down the drop
+import json as _json, struct as _struct
+def glb_aspect(name, default):
+    f = os.path.join(HERE, '..', '..', 'game', 'content', 'generated', 'meshy', 'court-kit', name + '.glb')
+    if not os.path.exists(f): return default
+    with open(f, 'rb') as fh:
+        fh.read(12); cl, _ = _struct.unpack('<II', fh.read(8)); j = _json.loads(fh.read(cl))
+    mn = [1e9] * 3; mx = [-1e9] * 3
+    for me in j['meshes']:
+        for pr in me['primitives']:
+            a = j['accessors'][pr['attributes']['POSITION']]; mn = [min(x, y) for x, y in zip(mn, a['min'])]; mx = [max(x, y) for x, y in zip(mx, a['max'])]
+    return (mx[0] - mn[0]) / max(mx[1] - mn[1], 1e-6)
+RET_ASPECT = glb_aspect('iso-retaining', 2.0)
+walkish = np.isin(P.m, [m for m, v in MAT.items() if v[2]]) | (P.m == 'wall')
+lowest = np.full(P.h.shape, np.inf)
+for dy, dx in ((0, 1), (1, 0), (0, -1), (-1, 0)):
+    nbh = np.roll(np.roll(P.h, dy, 0), dx, 1); nbm = np.roll(np.roll(P.m, dy, 0), dx, 1)
+    lowest = np.minimum(lowest, np.where(nbm == 'void', np.inf, nbh))
+dropm = P.h - lowest
+cliff = walkish & ~roof & (dropm > 1.3) & (dropm <= 5.0)
+nr = 0
+for d in np.arange(1.5, 5.01, 0.5):
+    band = cliff & (np.abs(dropm - d) <= 0.25)
+    if band.any():
+        nr += runs_along(band, drop, d * RET_ASPECT * (1 / 0.6), 'iso-retaining', lambda i, j: lowest[i, j], height=lambda i, j: dropm[i, j] / 0.6 + 0.15)
+# overlapping modules at corners and on curves: keep the first of any two of one kit closer than 0.55 of their widths
+kept, dropped = [], 0
+for pc in pieces:
+    if pc['kit'] in ('iso-wall', 'iso-balustrade', 'iso-retaining'):
+        if any(q['kit'] == pc['kit'] and math.hypot(q['x'] - pc['x'], q['y'] - pc['y']) < 0.55 * min(q['width'], pc['width']) for q in kept):
+            dropped += 1; continue
+    kept.append(pc)
+pieces[:] = kept
+print('edge kit:', nb, 'balustrades,', nw, 'wall modules,', np_, 'piers,', nr, 'retaining walls;', dropped, 'overlaps dropped')
 
 # the camera's start: in front of the gate, on the balcony road
 sx, sy = world(0, -14)

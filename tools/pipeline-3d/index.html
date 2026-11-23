@@ -93,7 +93,7 @@ flowchart LR
   <dt>Code</dt><dd><code>tools/place-plans/plan.py</code>, <code>plans/*.py</code>, <code>finish.py</code></dd>
 </dl>
 <p>Shapes are written in screen-aligned U,V units (1 u ≈ 0.6 m; a wizard is about 2.9 u tall). Operations are painted in order: <code>fill</code> (a polygon at a height and material), <code>stairs</code> (a polygon ramped along an axis, in 0.35 m treads), <code>building</code> (a footprint raised by its height), plus a few helpers. Later ops overwrite earlier ones, so order is the composition rule.</p>
-<p>Finishing passes then edit the cells directly: parapet lips on drops over 1 m, closing each gate's line, woods on unreachable ground, woods belts at the map edge. These are numpy edits on the grid, not shape ops.</p>
+<p>Finishing passes then edit the cells directly: parapet lips on drops over 1 m, closing each gate's line, woods on unreachable ground, woods belts at the map edge (the courtyard does several of these inline). These are numpy edits on the grid, not shape ops.</p>
 <p><b>The rule we adopted today:</b> fix shapes here, not downstream. Plans written for the grid relied on overlaps that were invisible in cells (a road strip that repaved "whatever was under it", landing rectangles poking into a curved road). In 3D those overlaps become visible notches. Revisions 18 and 19 of the courtyard rewrite roads, steps and flight heads as shapes that meet on purpose.</p>
 </div></div>
 
@@ -104,7 +104,7 @@ flowchart LR
   <dt>Output</dt><dd>An LDtk level (terrain, height tiers, ground material, markers, props), compiled to <code>rooms.gen.ts</code> for the sim and <code>grounds.gen.ts</code> for the client.</dd>
   <dt>Code</dt><dd><code>to_ldtk.py</code>, then <code>npm run content:build</code> / <code>content:check</code></dd>
 </dl>
-<p>The sim still walks on 0.5 u cells. A height difference over 0.5 m between neighbours is a cliff, which is a plain rock wall to bodies, navigation and shots. Before anything reaches the game, the <b>walk report</b> checks the plan: one connected region holds every gate and landmark, no jumps inside flights, no unguarded drops beside routes, no reachable ground within sight of the world's edge, no blocking prop on a route. The 3D work changes none of this, and determinism is untouched because everything 3D is client-only.</p>
+<p>The sim still walks on 0.5 u cells, though the plan's cells are 1 u (each becomes 2 × 2), so the staircase it draws is 1 u. A height difference over 0.5 m between neighbours is a cliff, which is a plain rock wall to bodies, navigation and shots. Before anything reaches the game, the <b>walk report</b> checks the plan: one connected region holds every gate and landmark, no jumps inside flights, no unguarded drops beside routes, no reachable ground within sight of the world's edge, no blocking prop on a route. The 3D work changes none of this, and determinism is untouched because everything 3D is client-only.</p>
 </div></div>
 
 <div class="stage"><div class="n">3</div><div>
@@ -120,24 +120,24 @@ flowchart LR
   <li><b>Hygiene.</b> Each region is opened and closed by 0.3 u to remove hairlines. Leftover slivers go back to the region that owned them. This used to be a heavy-handed smoother; it is now deliberately small, because shape problems are fixed in the plan.</li>
   <li><b>Stairs</b> are cut into tread polygons along their axis.</li>
   <li><b>Faces.</b> Every region edge that stands above its neighbour emits a vertical face, from its top to the neighbour's height.</li>
-  <li><b>Typed edges.</b> Walkable edges are classified and chained into polylines. A drop at the edge of walkable ground is a <i>retaining wall</i>; a paved edge over a drop above 1 m is a <i>parapet</i>; two paved materials meeting is a <i>kerb</i> (never on a flight). Edges that still turn more than a 2 u radius curve would are smoothed and reported.</li>
+  <li><b>Typed edges.</b> Walkable edges are classified and chained into polylines. A drop at the edge of walkable ground is a <i>retaining wall</i>; a paved edge over a drop above 1 m is a <i>parapet</i>; two different materials meeting, at least one of them paved, is a <i>kerb</i> (so road against grass gets one; never on a flight, never between dais, plaza and paving). Edges that still turn more than a 2 u radius curve would are smoothed and reported.</li>
 </ol>
 </div></div>
 
 <div class="stage"><div class="n">4</div><div>
 <h3>Kit placement: assets on the plan</h3>
 <dl class="kv">
-  <dt>Input</dt><dd>The plan, the ground export, and the models' own proportions.</dd>
+  <dt>Input</dt><dd>The plan and the ground export.</dd>
   <dt>Output</dt><dd><code>world3d-place.json</code>: about 360 placed pieces (kit id, position, ground height, facing, width, optional height).</dd>
   <dt>Code</dt><dd><code>tools/place-plans/spike3d_place.py</code></dd>
 </dl>
 <p>Placement comes in three kinds, from most to least principled:</p>
 <ul class="tight">
-  <li><b>Along exact edges</b> (parapets). Each parapet polyline is cut into chords about 3.4 u long, with a joint forced at turns sharper than 30°. A balustrade is stretched to fill each chord exactly, with piers at the ends, at sharp turns and at every second joint, and a lantern on every fourth pier. This fits any curve or corner.</li>
+  <li><b>Along exact edges</b> (parapets). Each parapet polyline is cut into chords about 3.4 u long, with a joint forced at turns sharper than 30°. A balustrade is stretched to fill each chord exactly, with piers at the ends, at sharp turns and at every second joint, and every fourth pier (counted across the whole courtyard, not per parapet) a lantern. This fits any curve or corner.</li>
   <li><b>Along cell edges</b> (building fronts). Wall modules are laid round each building footprint by walking its edge cells in runs of one direction. This is the older method, and still how non-hero buildings are dressed.</li>
   <li><b>By hand, from the plan's geometry</b> (hero pieces). The great hall's gateway, wall modules along its arc, its piers, planters and cypresses are placed at polar coordinates matching the plan's hall.</li>
 </ul>
-<p>A hygiene pass then moves dressing that sits within 0.9 u of an edge or off paving, or drops it.</p>
+<p>A hygiene pass then moves dressing that sits within 0.9 u (plus half its width) of an edge or off paving or grass, or drops it. In practice it currently removes every bench and urn, and the hand-placed lanterns are deleted outright in favour of the parapet ones. The old cell-based balustrade and retaining-wall code is still in the script but disabled.</p>
 </div></div>
 
 <div class="stage"><div class="n">5</div><div>
@@ -157,7 +157,7 @@ flowchart LR
   <dt>Camera</dt><dd>Perspective, 28° field of view, pitched 46°, framed to show 18 u of ground, leading 3.5 u up the screen so buildings ahead stay in frame. Chosen to match Magicka's steep, close view.</dd>
   <dt>Light</dt><dd>A warm, low sun with 4096 px shadow maps; a hemisphere fill; a faint room environment for the PBR materials; ambient occlusion (GTAO); ACES tone mapping.</dd>
 </dl>
-<p>The ground is built from the export: region polygons are triangulated and textured by material, faces become vertical quads in ashlar, and edges get swept profiles (a coping along retaining walls and parapets, a low kerb along material joins). Building footprints become flat slate roofs at the wall modules' eave height. Each kit piece is a clone of its GLB, scaled to its placed width (and height, for pieces that carry one). The wizard is his own animated GLB; movement in the spike uses a simple step check on the height grid, not the sim.</p>
+<p>The ground is built from the export: region polygons are triangulated and textured by material, faces become vertical quads in ashlar, and edges get swept profiles (a coping along retaining walls and parapets, a low kerb along material joins). Building footprints become flat slate roofs at one fixed eave height (3.4 m above their ground) whatever the plan's building height, so a 15 m bell tower is as tall as a shed. Each region also gets a slightly larger copy 0.15 u underneath, to hide hairline gaps. Each kit piece is a clone of its GLB, scaled to its placed width (and height, for pieces that carry one). The wizard is his own animated GLB; movement in the spike uses a simple step check (0.6 m, against the sim's 0.5) on the level's height grid, not the sim.</p>
 </div></div>
 
 <div class="stage"><div class="n">7</div><div>
@@ -186,13 +186,23 @@ flowchart LR
 <tr><td><span class="sev hi">High</span></td><td>Two truths: cells and polygons</td><td>The sim walks the cell grid; the view draws polygons. Where they differ by up to half a cell, a wizard can appear to stand on the edge of a step or clip a kerb. Nothing checks the two agree beyond the hand-edit diff. A tolerance check (every walkable cell inside a walkable region and vice versa) is cheap and missing.</td></tr>
 <tr><td><span class="sev hi">High</span></td><td>Hand edits on cells</td><td>Finishing passes (lips, woods belts, closing gates) edit cells, so the export reconstructs them from cells: about 4,500 cells in the courtyard, mostly woods. Their outlines are rounded cell shapes, not designed ones. Moving these into shape ops would make the plan the only truth.</td></tr>
 <tr><td><span class="sev hi">High</span></td><td>Buildings are not a kit yet</td><td>Wall modules are Meshy models with irregular ends, stretched to fit runs measured on cells. They don't join at corners, there are no corner pieces, and roofs are flat slate polygons. This is the planned phase C: tileable bays trimmed in Blender, corner pieces, footprints snapped to whole bays, roofs built from footprints.</td></tr>
-<tr><td><span class="sev md">Medium</span></td><td>Performance is unmeasured</td><td>Ten or so kit models totalling well over 100 MB of GLBs, 2K PBR textures, about 360 cloned (not instanced) pieces, 4K shadows and GTAO. Shots run in software GL, so they say nothing about frame rate. Instancing, compressed textures (KTX2) and a laptop measurement are needed before any adoption decision.</td></tr>
+<tr><td><span class="sev md">Medium</span></td><td>Performance is unmeasured</td><td>The seven kit models actually placed come to about 90 MB of GLBs (the generated folder holds about 300 MB), 2K PBR textures, about 360 cloned (not instanced) pieces, 4K shadows and GTAO. Shots run in software GL, so they say nothing about frame rate. Instancing, compressed textures (KTX2) and a laptop measurement are needed before any adoption decision.</td></tr>
 <tr><td><span class="sev md">Medium</span></td><td>Edge classification is heuristic</td><td>Retaining wall, parapet and kerb are decided by height thresholds and material sets. Odd cases (a 0.6 m step beside grass, a flight's side) fall through or get the wrong treatment. A wrong type is visually loud: a balustrade across a top step, a kerb on a flight.</td></tr>
 <tr><td><span class="sev md">Medium</span></td><td>Placement methods are mixed</td><td>Exact-edge, cell-edge and hand-placed polar pieces coexist. Hand placement is tied to one plan's numbers and silently breaks if the plan's hall moves.</td></tr>
 <tr><td><span class="sev md">Medium</span></td><td>Evaluation still leans on you</td><td>The critic is calibrated by a handful of anchors and still hallucinated faults before. The glitch report only measures edge wiggle. Your circled screenshot found three kinds of fault neither caught: notches, slivers, and dressing on edges.</td></tr>
 <tr><td><span class="sev lo">Low</span></td><td>Not yet the game's renderer</td><td>The spike has its own camera, movement and lighting. Adoption means moving this into the game's view, turning the characters' pixel shader down, and revisiting spell effects.</td></tr>
 <tr><td><span class="sev lo">Low</span></td><td>Only the courtyard</td><td>The infirmary and yard plans still carry grid-era habits and need the same upstream rewrite before they export cleanly.</td></tr>
 </tbody></table></div>
+
+<h2>An outside review (Fable, 2026-11-23)</h2>
+<p>A separate reviewer read this page against the code. Its points that change the picture above:</p>
+<ul class="tight">
+  <li><b>The picture and the collision differ by design, not by half a cell.</b> Parapet lips are 1 u blocking cells in the sim, but the view drops them and puts a thin balustrade inside the edge: an invisible wall about 1 u deep in front of every parapet. Small buildings (gate piers, threshold pillars, 5–8 u²) block their whole footprint in the sim but show as paving with a narrower pier. In a game where shots and knockback hit walls, this is a gameplay bug.</li>
+  <li><b>The reconcile diff isn't a check:</b> stairs and buildings are accepted without comparing heights, thin differences are erased, and the count is printed, never asserted. The spike's wizard walks the level's heights while the ground comes from a committed JSON, with nothing tying them to the same plan revision.</li>
+  <li><b>The pipeline is manual,</b> three scripts run by hand in order with no staleness check, and the placement script hard-codes the courtyard and its hall.</li>
+  <li><b>Asset weight</b> (about 90 MB for one place) doesn't fit a web build deployed on every push.</li>
+  <li>Its recommendations: an agreement check that fails the build; finishing passes as shape ops so the override path goes; one command for the chain; run the yard through untouched before anything else; then performance (compression, instancing, a laptop measurement); only then the building kit. Roofs belong on the painted side of the line. Heroes are whole models whose footprint the plan takes from the model. Adoption needs a frame-time target, about 15 MB per place, a draw-call count, the time and credits for a second place, and zero cell/polygon mismatches.</li>
+</ul>
 
 <h2>Questions worth your review</h2>
 <ul>

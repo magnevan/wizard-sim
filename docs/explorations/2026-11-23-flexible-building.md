@@ -72,6 +72,35 @@ Pieces must meet exact edge shapes (Bad North's matching edge vertices). Meshy d
 
 The fit step is the risk. Test it on a few pieces first.
 
+## The test patch (2026-11-23, branch `kit-test`)
+
+Built:
+- `tools/kit/`: `kit.json` (the asset contract), `compile.py` (a corner-grid layout to piece instances, with join checks), `fit.py` (Blender: a generated model fitted to its piece), and two layouts.
+- The greybox page `game/packages/client/kit3d.html` (shots: `node scripts/kit3d-shot.mjs`).
+
+**Joins.** Straight edges, 45° chamfers, a swept bastion, a flight head and a lawn bed all join cleanly:
+- piers are turned to the bisector, so posts follow curves;
+- runs end in newels at flight heads;
+- copings butt under corner blocks;
+- retaining walls are *stacked* from a made top course (with the coping) and plain courses, never stretched.
+
+The checks caught real faults while the layouts were written:
+- a curve ending between vertices;
+- a bench in a flight's landing;
+- a raised bed counted as walkable ground no one could reach;
+- two flights overlapping each other's cheek walls.
+
+The rule for runs had one bug: a run ending where another terrace's run goes on is a junction, not a dead end.
+
+**Meshy pieces.** A balustrade section, a pier and a retaining section, each from a Codex picture. Meshy smart topology (meshy-t2.5, about 4–6k triangles) cost 15 credits each, 45 in all. All three fitted to their boxes exactly. Placed by the compiler, they joined with no seams worth fixing. The ends are cut flat and every run's ends sit under a joint, so the cut never shows. Not made yet: the flight, the corner block, kerbs and walls.
+
+**Concept flow: both ways.**
+- *Paint first:* a free Codex painting of the corner was far more inventive: a sweeping curved ramp, a round fountain landing, a plaza with a rounded edge over a cliff, a gate off a sloping road. Traced by hand into the grid (`tools/kit/layouts/patch-b.py`), it kept the structure: hall, terrace, grand stair, fountain landing as a bastion, rounded plaza, beds, road gate. It lost what the kit can't say yet: curved ramps, sloping roads, free curved outlines (they became chamfers), towers, fountains.
+- *Greybox first, loose paint-over:* told to change whatever makes it better, Codex kept the blockout's layout almost exactly and made it beautiful through dressing: arched niches with lamps in the retaining walls, flower boxes, a fountain in the lawn bed, piers with planters at the stair foot, inlaid compasses.
+- So the user's worry holds for layout: a greybox anchors the image model. Paint first gives the layout ideas; a paint-over of the traced greybox gives the dressing ideas and the art target. Use both, in that order.
+
+**What the kit needs next, from the trace:** ramps (straight and curved), sloping roads, larger free curves (curves bulging from any edge, not just a straight run), wall variants (a niche, an arcade), and pieces for fountains, statues and towers.
+
 ## A second opinion (a separate Fable session, via the user)
 
 Given only a high-level description, it proposed:

@@ -98,6 +98,16 @@ def export(name):
                 if not d.is_empty: out.append((d, a))
                 b = dict(a); b['mat'] = op[2]; out.append((i, b))
             regions = out
+        elif kind == 'surface':
+            g = clean(W(Polygon(op[1]))); out = []
+            for rg, a in regions:
+                ok = a['kind'] == 'flat' and a['mat'] in WALKABLE and abs(a['h'] - op[3]) < 0.01
+                i = clean(rg.intersection(g)) if ok else Polygon()
+                if i.is_empty: out.append((rg, a)); continue
+                d = clean(rg.difference(g))
+                if not d.is_empty: out.append((d, a))
+                b = dict(a); b['mat'] = op[2]; b['h'] = a['h'] + op[4]; out.append((i, b))
+            regions = out
         elif kind == 'raise_mat':
             for k, (rg, a) in enumerate(regions):
                 if a['mat'] == op[1] and abs(a['h'] - op[2]) < 1e-6:
@@ -205,7 +215,12 @@ def export(name):
                         if a['kind'] != 'flat' or a['mat'] not in WALKABLE: continue
                         dh = top - lowh
                         if nb is not None and nb['kind'] == 'building': continue
-                        if dh >= 0.6: segs.append(('parapet' if dh > 1.0 and a['mat'] in PAVED else 'retain', seg))
+                        if dh >= 0.6:
+                            # a parapet where the plan guards the edge (Semantic.parapets / finish.lips), else a retaining
+                            # wall: declared, not guessed from the drop (step 4.5)
+                            gi = int(math.floor((ay + by) / 2 - ny * 0.3 + cy0 - P.y0)); gj = int(math.floor((ax + bx) / 2 - nx * 0.3 + cx0 - P.x0))
+                            guarded = 0 <= gi < P.ny and 0 <= gj < P.nx and bool(P.guard[gi, gj])
+                            segs.append(('parapet' if guarded else 'retain', seg))
                         elif nb is not None and nb['kind'] in ('flat', 'step') and nb['mat'] != a['mat'] and dh > -0.01 and (dh > 0.01 or a['mat'] < nb['mat']):
                             if {a['mat'], nb['mat']} & PAVED and 'stairs' not in (a['mat'], nb['mat']) and not ({a['mat'], nb['mat']} <= {'dais', 'plaza', 'paving'}): segs.append(('kerb', seg))   # a flight's edge is its top step, never a kerb
     # ---- chain the typed segments into polylines (one direction: the ground on the left, the drop on the right) ----

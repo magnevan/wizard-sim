@@ -148,6 +148,14 @@ class Plan:
         self.m[k] = to_mat
         return k
 
+    def surface(self, poly, mat, on, dh=0.0):
+        """A surface on the open, flat ground at height `on` inside poly (never stairs or a building): changes its material
+        and lowers or raises it by dh (a road a kerb below its pavement). A recorded op."""
+        self.ops.append(('surface', list(poly), mat, on, dh))
+        k = self.mask(poly) & (np.abs(self.h - on) < 0.01) & ~self.bld & (self.m != 'stairs') & np.isin(self.m, [m for m, v in MAT.items() if v[2]])
+        self.m[k] = mat; self.h[k] += dh
+        return k
+
     def raise_mat(self, mat, at, dh):
         """Raises every cell of material `mat` standing at height `at` by dh (e.g. a road a step above its terrace)."""
         self.ops.append(('raise_mat', mat, at, dh))

@@ -18,7 +18,8 @@ Everything happens in the 3D view. In Select, **left-drag** orbits (in the other
 | Rectangle | R | Drag over the cells to paint |
 | Stair | S | Drag along the edge between two levels: the flight starts there and runs down to the lower side (it finds the drop within a cell of the drag) |
 | Curve | A | Bulge a level past a straight stretch of its edge along a circle (a bastion, a rounded terrace): drag along the edge for the ends, release, move out for the bulge (it snaps to a semicircle near half the width), click; **Esc** cancels. A selected curve (here or in Select) shows three handles: drag an end along the edge, or the middle for the bulge; the inspector has bulge ±½ and **semicircle** |
-| Prop | P | Click to place the prop chosen in the bar, facing the way chosen (Q/E) |
+| Round | O | A true circle that every edge near it snaps onto, curving out or in, however it was painted (the compiler's `round`): **click three points** along an edge to fit a round through them (its arc runs from the first to the last), or **drag** from a centre for a whole circle. With the tool on, every round shows dashed. A selected round has handles (the big one moves it; the others set the radius and the arc's ends) and an inspector: radius, reach (how far an edge may lie from it and still snap), which level's edges, and the arc in degrees (0° east, 90° south). Paint near a round and the new edge snaps too |
+| Prop | P | Click to place the prop or set piece chosen in the bar (set pieces are the kit's unique made pieces on a footprint: towers, the armillary, gate piers; the bar shows the size), facing the way chosen (Q/E). Selected, a set piece shows its footprint; both drag, turn and delete the same way |
 | Pin | N | Click anything and write what should change. Claude sees new pins with your next message in the terminal, and its replies appear on the pin |
 
 **Concept images:** drop an image file on the editor, paste one (Ctrl+V), or **+ image** in the Concepts panel (**K**, or **Concepts** in the top bar), and it is kept with the map (`tools/kit/scenes/refs/<scene>/`, listed in `<scene>.refs.json`). The panel shows one large beside the 3D view, with the others as a strip: the wheel zooms, a drag pans, and a **click pins a note on that spot of the image** for Claude, like a pin on the map. Its pins show as numbered dots on the image, and in the pins list as "on the concept …"; clicking one there opens the image at it.
@@ -42,6 +43,7 @@ The dev server (default `http://127.0.0.1:5187`, or `$MAP_EDITOR_URL`) serves th
 | `GET /__map/history?name=N&n=20` | `{groups: [{group, author, label, rev, time}]}`, newest first |
 | `GET /__map/pins?name=N&status=open` | `{pins: [...]}`; `status` is `open`, `new` (open and not yet seen by Claude), `resolved` or `all` (default `open`) |
 | `POST /__map/pins` | Body `{name, op, ...}`: `add {note, anchor}`, `reply {id, text, author}`, `resolve {id, outcome: scene/rule/piece, text?}`, `seen {ids}`, `delete {id}` |
+| `GET /__map/kit` | `tools/kit/kit.json` (the pieces: the editor takes set pieces' sizes and the Prop tool's list from it) |
 | `GET /__map/refs?name=N` | The concept images pinned to the map: `{refs: [{id, title, file, time, path}]}` (`path`: the file on disk, under `tools/kit/scenes/refs/<scene>/`) |
 | `POST /__map/refs` | Body `{name, op, ...}`: `add {title, data}` (`data`: a `data:image/...;base64,` URL, or base64 with `filename`), `rename {id, title}`, `remove {id}` (the file goes; its pins stay) |
 | `GET /__map/ref-image?name=N&id=r1` | The image's bytes |
@@ -57,7 +59,7 @@ Ops name things by id. Terraces may also be named by glyph.
 | `add_terrace` | `name, h, mat, edge` (wall, parapet, retain, open), `walk?`, `glyph?`, `id?`: the reply's `minted` has the id |
 | `set_terrace` | `id`, then any of `name, h, mat, edge, walk, glyph` |
 | `remove_terrace` | `id` (refused while corners still use it) |
-| `add` | `kind` and its fields, `id?`: `flight {name, head: [[x, y], [x, y]]}`, `curve {name, terrace, centre, r, ends, out}`, `edge {at: [x, y] (an edge's midpoint), v: plain/window/door/niche}`, `vignette {piece, at, front: N/E/S/W}` |
+| `add` | `kind` and its fields, `id?`: `flight {name, head: [[x, y], [x, y]]}`, `curve {name, terrace, centre, r, ends, out}`, `round {name, centre, r, tol?, terrace?, from?, to?}` (from and to together, degrees), `setpiece {piece: "setpiece.<name>", at, front}`, `edge {at: [x, y] (an edge's midpoint), v: plain/window/door/niche}`, `vignette {piece, at, front: N/E/S/W}` |
 | `set` | `id`, then any fields (`null` deletes one) |
 | `move` | `id, by: [dx, dy]` (corners): moves `at`, `head`, `centre` and `ends` |
 | `remove` | `id` |

@@ -97,6 +97,32 @@ try {
   check(!(f.findings ?? []).some((x) => x.code === 'curve-ends'), `the compiler takes the curve (${(f.findings ?? []).map((x) => x.code).join(', ')})`);
   await page.screenshot({ path: `${OUT}/4c-semicircle.png` });
 
+  // 4e. a round: three clicks on a circle (centre 14, 15, r 4: east, south, west) fit it, arc 0 to 180; then its radius handle
+  await page.keyboard.press('Escape'); await page.keyboard.press('o');
+  for (const [x, y] of [[18, 15], [14, 19], [10, 15]]) { [sx, sy] = await scr(x, y); await page.mouse.move(sx, sy); await page.mouse.click(sx, sy); await sleep(150); }
+  await waitRev(6);
+  s = await api('scene');
+  const rd = s.scene.objects.find((o) => o.kind === 'round');
+  check(rd && JSON.stringify(rd.centre) === '[14,15]' && rd.r === 4 && rd.from === 0 && rd.to === 180, `three clicks fit a round through them (${JSON.stringify(rd)})`);
+  await drag(await scr(14, 19), await scr(14, 20, 0.4)); await waitRev(7);
+  s = await api('scene');
+  check(s.scene.objects.find((o) => o.id === rd?.id)?.r === 5, `dragging its radius handle resizes it (${JSON.stringify(s.scene.objects.find((o) => o.id === rd?.id))})`);
+  await page.screenshot({ path: `${OUT}/4e-round.png` });
+
+  // 4f. a set piece (when the kit has any): chosen in the Prop tool's list, placed with a click, drawn at its footprint
+  const kit = await fetch(`${URL}/__map/kit`).then((r) => r.json());
+  const setp = kit.pieces['setpiece.post'] ? 'setpiece.post' : Object.keys(kit.pieces).find((p) => p.startsWith('setpiece.'));
+  if (setp) {
+    await page.keyboard.press('Escape'); await page.keyboard.press('p'); await page.select('#piece', setp);
+    [sx, sy] = await scr(20, 18); await page.mouse.click(sx, sy); await waitRev(8);
+    s = await api('scene');
+    const sp = s.scene.objects.find((o) => o.kind === 'setpiece');
+    check(sp?.piece === setp && JSON.stringify(sp.at) === '[20,18]', `the Prop tool places a set piece (${JSON.stringify(sp)})`);
+    await page.keyboard.press('v'); await sleep(300); await page.mouse.click(sx, sy); await sleep(400);
+    check((await state()).sel?.id === sp?.id, `clicking it selects it (${JSON.stringify((await state()).sel)})`);
+    await page.screenshot({ path: `${OUT}/4f-setpiece.png` });
+  } else console.log('skip set piece: the kit has none');
+
   // 4d. a concept image: add one, open the panel (K), click its middle, write a note; then Claude's marked copy
   const img = `${ROOT}/docs/reference/map-editor/patch-b-greybox.jpg`;
   const added = await fetch(`${URL}/__map/refs`, { method: 'POST', headers: { 'content-type': 'application/json' },

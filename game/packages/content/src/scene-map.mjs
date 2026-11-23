@@ -16,7 +16,7 @@ const gh = room.terrain.length, gw = room.terrain[0].length, C = 0.5;
 const walk = new Int8Array(gw * gh).fill(-1), sh = new Float32Array(gw * gh).fill(NaN);
 const WALK = new Set(['grass', 'path', 'road', 'paving', 'plaza', 'dais', 'stairs', 'wood', 'sand']);
 for (const rg of scene.regions) {
-  const ok = rg.kind !== 'building' && WALK.has(rg.mat) ? 1 : 0;
+  const ok = rg.kind !== 'building' && rg.kind !== 'post' && WALK.has(rg.mat) ? 1 : 0;
   for (const poly of rg.polys) for (let cy = 0; cy < gh; cy++) {
     const yc = -room.h / 2 + (cy + 0.5) * C, xs = [];
     for (const ring of poly) for (let i = 0; i < ring.length; i++) { const [ax, ay] = ring[i], [bx, by] = ring[(i + 1) % ring.length]; if ((ay > yc) !== (by > yc)) xs.push(ax + ((yc - ay) / (by - ay)) * (bx - ax)); }

@@ -140,7 +140,7 @@ def export(name):
                          "A plan edit was made on cells: make it a shape op (fill, repaint, building, stairs, raise_mat).")
     # the plan's tiny blocks (piers, posts) stand as the pier model in 3D: the ground runs on under them
     # the plan's small blocks (piers, posts) stay solid, drawn at their own footprint (pipeline 2b: what blocks is drawn)
-    regions = [(rg, dict(a, post=True) if a['kind'] == 'building' and rg.area < 30 else a) for rg, a in regions]
+    regions = [(rg, dict(a, post=True) if a['kind'] == 'building' and rg.area < 30 and not a.get('low_wall') else a) for rg, a in regions]
     # ---- hygiene: no notches, spikes or slivers (the user's circles, 2026-11-23) ----
     # Each region is opened then closed by R (removing anything narrower than about 2R, keeping curves), largest first,
     # each taking only what no larger one took; what's left over (the slivers between) goes to the neighbour it shares
@@ -209,7 +209,9 @@ def export(name):
                                 if regions[idx][0].contains(pt): lowh = regions[idx][1]['h']; nb = regions[idx][1]; break
                             if nb is not None: break
                         top = a['h']
-                        seg = [round(ax, 3), round(ay, 3), round(bx, 3), round(by, 3), round(top, 3), round(lowh, 3), a['mat'], a['kind']]
+                        if a.get('post'):                          # a post's model stands on its base: only the ground under it gets a face (a retaining face where it straddles a drop)
+                            top = a.get('ground') if a.get('ground') is not None else lowh
+                        seg = [round(ax, 3), round(ay, 3), round(bx, 3), round(by, 3), round(top, 3), round(lowh, 3), 'paving' if a.get('post') else a['mat'], 'flat' if a.get('post') else a['kind']]
                         if lowh < top - 0.01: faces.append(seg)
                         # an edge type, for the kit (phase B): only on walkable flat ground, never a building's own edge
                         if a['kind'] != 'flat' or a['mat'] not in WALKABLE: continue
@@ -251,7 +253,7 @@ def export(name):
         return out
     data = dict(plan=name, w=P.nx, h=P.ny,
                 # `under`: each region a little larger, drawn just beneath, so hairlines where edges meet without shared corners don't show
-                regions=[dict(mat=a['mat'], h=round(a['h'], 3), kind=a['kind'], ground=a.get('ground'), polys=rings(rg), under=rings(clean(rg.buffer(0.15, join_style='mitre').simplify(0.05)))) for rg, a in regions],
+                regions=[dict(mat=a['mat'], h=round(a['h'], 3), kind='post' if a.get('post') else a['kind'], ground=a.get('ground'), polys=rings(rg), under=rings(clean(rg.buffer(0.15, join_style='mitre').simplify(0.05)))) for rg, a in regions],
                 faces=faces, edges=edges)
     # ---- the glitch report: edges that wiggle (more turning than a curve of radius 2 u would need); a wiggling edge's
     # line is smoothed (resampled every 0.5 u, averaged over about 2 u, ends kept) and checked again ----

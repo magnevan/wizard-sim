@@ -47,7 +47,7 @@ export function agreement(room, scene) {
   const gh = room.terrain.length, gw = room.terrain[0].length, w = room.w, h = room.h;
   const walk = new Int8Array(gw * gh).fill(-1), sh = new Float32Array(gw * gh).fill(NaN);   // -1 nothing drawn, 0 solid, 1 walkable
   for (const rg of scene.regions) {
-    const ok = rg.kind !== 'building' && WALKABLE.has(rg.mat) ? 1 : 0;
+    const ok = rg.kind !== 'building' && rg.kind !== 'post' && WALKABLE.has(rg.mat) ? 1 : 0;
     rasterise(rg.polys, gw, gh, w, h, (cx, cy) => { walk[cy * gw + cx] = ok; sh[cy * gw + cx] = rg.h; });
   }
   const hd = room.height, counts = { invisibleWall: 0, hiddenHole: 0, height: 0 }, eg = { invisibleWall: [], hiddenHole: [], height: [] };

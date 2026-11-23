@@ -11,11 +11,12 @@ The editor works: `npm run dev` in `game/`, then http://localhost:5187/editor.ht
 
 - [ ] The user tries the editor on patch B (and a blank scene from **New…**), pins what is awkward.
 - [ ] Push instead of pull: an MCP bridge with a Claude Code channel (check that an event starts a turn in an idle session).
-- [ ] Editing gaps: drag a stair's ends to resize it, curves by hand, copy and paste of regions, a help overlay for the keys.
+- [ ] Editing gaps: drag a stair's ends, curves by hand, copy and paste of regions, a figure for scale.
 - [ ] The courtyard as a scene, once the kit can say what it needs ([opening thread](opening.md)).
 
 ## Done
 
+- 2026-11-23: a usability pass after Fable's review and a from-scratch build (camera hints, strokes on the floor, + level, Add a stair here, selection, prop drag, map panel).
 - 2026-11-23: slice A: the compiler on scenes, the scene server (Vite plugin), the 3D editor, the CLI and the hook; `npm run editor:check` passes.
 
 - 2026-11-23: the spec ([exploration](../explorations/2026-11-23-map-editor.md)), with a Codex mockup of the screen and an icon sheet.

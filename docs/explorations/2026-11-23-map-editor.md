@@ -353,4 +353,13 @@ Slice A, changed by the user's answers. How to use it: [tools/map-editor/README.
 - **Checks:** `npm run editor:check` (select a wall and make it a door, paint, pin, undo, pictures: all pass), the ops tests, `npm run check`.
 - **The test from the spec, run by Claude playing both sides:** a pin on patch B's fountain steps ("you walk off it straight into the big stair"); the hook brought it in; dry runs showed that moving the steps took them off the landing's edge or put a lamp in their landing; narrowing the grand stair by one cell cleared the run-out with nothing new broken. It is applied to patch B (rev 1; undo it in the editor if unwanted). The simulated pin was deleted.
 
-Not built yet: the MCP bridge and channel (push), flight resizing by dragging, curves by hand, copy and paste, hotkey help, a walk mode.
+**A usability pass, the same day.** Fable reviewed the editor as a designer's first session would meet it, and Claude built a small place from a blank scene through the page. Changed:
+- the camera keys always shown, left-drag orbits in Select, zoom toward the cursor, F frames the selection, ? lists every key;
+- strokes follow the floor under the cursor (not a plane at the first hit's height, which shifted strokes across levels), fill in between pointer samples, and fill the cells they would leave ambiguous;
+- **+ level** opens the new level to be named and switches to painting with it; height has ±0.5; an update no longer redraws a panel the user is typing in;
+- **Add a stair here** on a selected edge; a dragged stair finds the drop within a cell and refuses where there is none; stairs can be widened and narrowed;
+- a selected level is filled, a selected piece outlined in orange, the piece under the cursor outlined before a click;
+- props drag with the mouse; arrows move relative to the camera; the map panel (nothing selected) grows and shrinks the map;
+- problems name levels instead of glyphs, and stray run ends beside an ambiguous cell fold under it; undo and redo say what they undid; "saving…" and "saved · rev"; an error banner that never blocks the page.
+
+Not built yet: the MCP bridge and channel (push), dragging a stair's ends, curves by hand, copy and paste, a walk mode, a figure for scale.

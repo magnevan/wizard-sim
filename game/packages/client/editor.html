@@ -52,7 +52,10 @@
   #pinbox textarea { width: 100%; box-sizing: border-box; font: inherit; border: 1px solid var(--line); border-radius: 6px; padding: 5px; height: 60px; resize: vertical; }
   #help { position: absolute; left: 74px; bottom: 96px; max-width: calc(100% - 400px); color: #f3ede3; font-size: 12px; background: #1d2027cc; padding: 4px 10px; border-radius: 8px; pointer-events: none; }
   body.viewer .panel, body.viewer #help, body.viewer #toast { display: none !important; }
-  #err { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: #f3ede3; font-size: 15px; }
+  #err { position: absolute; left: 50%; top: 60px; transform: translateX(-50%); display: none; max-width: 60%; padding: 10px 16px; border-radius: 10px; background: #c4493bee; color: #fff; font-size: 13px; pointer-events: none; white-space: pre-wrap; }
+  #help .cam { opacity: .7; margin-top: 2px; }
+  #keys { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; padding: 16px 20px; display: none; z-index: 5; }
+  #keys table { border-collapse: collapse; width: 100%; } #keys td { padding: 3px 6px; border-bottom: 1px solid var(--line); vertical-align: top; } #keys td:first-child { white-space: nowrap; font-weight: 600; width: 130px; }
 </style>
 </head>
 <body>
@@ -63,7 +66,20 @@
 <div id="palette" class="panel"></div>
 <div id="pinbox" class="panel"><textarea placeholder="What should change here? (Enter to save, Esc to cancel)"></textarea></div>
 <div id="toast"></div>
-<div id="help">Right-drag: orbit · middle-drag or Shift+right: pan · wheel: zoom · T top view · G game view · C corners · Ctrl+Z / Ctrl+Y</div>
+<div id="help"></div>
+<div id="keys" class="panel"><h3 style="margin:0 0 8px">Keys <span class="meta" style="font-weight:normal">(? or Esc to close)</span></h3><table>
+  <tr><td>V B R S P N</td><td>Select, brush, rectangle, stair, prop, pin</td></tr>
+  <tr><td>1 – 9</td><td>Paint with that level (the palette's numbers)</td></tr>
+  <tr><td>[ ] · Alt</td><td>Brush size · paint one corner</td></tr>
+  <tr><td>I</td><td>Pick up the level under the cursor</td></tr>
+  <tr><td>Left-drag (Select)</td><td>Orbit; right-drag orbits in every tool</td></tr>
+  <tr><td>Middle-drag, Shift+drag</td><td>Pan · wheel zooms toward the cursor</td></tr>
+  <tr><td>F · T · G</td><td>Frame the selection · look straight down · the game's camera</td></tr>
+  <tr><td>C · M</td><td>Show every corner's level · hide the markers</td></tr>
+  <tr><td>Arrows · Q/E · Delete</td><td>Move, turn, remove the selected stair or prop (arrows follow the camera)</td></tr>
+  <tr><td>Ctrl+Z · Ctrl+Y</td><td>Undo · redo (Claude's edits too)</td></tr>
+  <tr><td>Esc</td><td>Clear the selection; with nothing selected, the inspector shows the map (grow, shrink, notes)</td></tr>
+</table><p class="meta" style="margin:10px 0 0">New level: “+ level” in the palette, name it, then paint where it goes. Stairs: select an edge between two levels and “Add a stair here”, or drag along it with S. Curves: ask Claude.</p></div>
 <div id="err"></div>
 <script type="module" src="./src/lab/editor/main.ts"></script>
 </body>

@@ -9,22 +9,18 @@ The 3D map editor for the modular kit, shared by the user and Claude ([spec](../
 
 ## Using the editor
 
-Everything happens in the 3D view. **Right-drag** orbits, **middle-drag** or **Shift+right-drag** pans, the **wheel** zooms; **T** looks straight down (the plan), **G** goes back to the game's camera, **C** shows each corner's terrace as a coloured square, **M** hides the markers.
+Everything happens in the 3D view. In Select, **left-drag** orbits (in the other tools **right-drag** does), **middle-drag** or **Shift+drag** pans, the **wheel** zooms toward the cursor; **F** frames the selection, **T** looks straight down (the plan), **G** goes back to the game's camera, **C** shows every corner's level as a coloured square (the paint tools show where levels meet), **M** hides the markers, **?** lists every key.
 
 | Tool | Key | What it does |
 |---|---|---|
-| Select | V | Click a piece, floor, pin or marker. A wall section can be set to plain, window or door (a parapet to plain or niche) in the inspector; a floor opens its terrace (name, height, floor, edge, walkable); a stair or prop can be renamed, moved with the arrows, turned with Q/E and deleted |
-| Brush | B | Drag to paint the chosen terrace, a whole cell at a time; **[ ]** change the size, **Alt** paints one corner, **I** picks up the terrace under the cursor, **1–9** choose from the palette |
-| Rectangle | R | Drag a rectangle of corners |
-| Stair | S | Drag along a terrace's edge: the flight starts there and runs down to the lower side |
+| Select | V | Click a piece, floor, pin or marker. A wall section can be set to plain, window or door (a parapet to plain or niche), or get **Add a stair here** (2–4 cells wide); a floor opens its level (name, height with ±0.5, floor, edge, walkable); a stair can be widened or narrowed; a prop can be dragged, turned (Q/E) or deleted; arrows move the selection (relative to the camera). With nothing selected, the inspector shows the map: grow or shrink it at any side, and its notes |
+| Brush | B | Drag to paint the chosen level, a whole cell at a time; **[ ]** change the size, **Alt** paints one corner, **I** picks up the level under the cursor, **1–9** choose from the palette. Cells a stroke would leave ambiguous are filled in |
+| Rectangle | R | Drag over the cells to paint |
+| Stair | S | Drag along the edge between two levels: the flight starts there and runs down to the lower side (it finds the drop within a cell of the drag) |
 | Prop | P | Click to place the prop chosen in the bar, facing the way chosen (Q/E) |
 | Pin | N | Click anything and write what should change. Claude sees new pins with your next message in the terminal, and its replies appear on the pin |
 
-**Ctrl+Z** and **Ctrl+Y** undo and redo anything, Claude's edits included. Problems show as red (error) and amber (warning) markers at their place and in the list on the right; clicking one goes there. When Claude edits, a note says what it did and the changed corners glow for a moment.
-
-## Coordinates
-
-Everything is in **corner coordinates**: `x` is the corner column, `y` the corner row (row 0 is the first string in `corners`), so corner `(x, y)` is `corners[y][x]`. A cell `(j, i)` lies between corners `(j, i)` and `(j+1, i+1)`. Edges sit on half-coordinates: a flight's head along a row runs at `y = r + 0.5` between corner rows `r` and `r+1`. The compiler's instances are in u (`x / G` gives corners); heights are in metres.
+**A new level:** **+ level** in the palette adds one a metre above the highest, opens it to be named, and switches to painting with it. **Ctrl+Z** and **Ctrl+Y** undo and redo anything, Claude's edits included. Problems show as red (error) and amber (warning) markers at their place and in the list on the right (a stray railing end beside an ambiguous cell folds under it); clicking one goes there. When Claude edits, a note says what it did and the changed corners glow for a moment. Curves can't be drawn by hand yet: ask Claude.
 
 ## HTTP API
 

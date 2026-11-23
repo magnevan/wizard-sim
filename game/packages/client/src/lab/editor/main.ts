@@ -976,7 +976,11 @@ hot.on('map:view-request', (d: { id: number; name: string; opts: Record<string, 
 // ---- go ----
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); });
 cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix();
+// the hidden viewer page (?viewer=1) draws only when asked for a picture: on a software renderer a big scene takes
+// seconds a frame, and a running loop would starve the picture
+const viewer = !!q.get('viewer');
 const loop = () => {
+  if (viewer) return;
   if (flashMesh.count && performance.now() > flashUntil) setSquares(flashMesh, []);
   (flashMesh.material as THREE.MeshBasicMaterial).opacity = 0.35 + 0.35 * Math.abs(Math.sin(performance.now() / 180));
   sun.position.copy(controls.target).add(new THREE.Vector3(-30, 40, 22)); sun.target.position.copy(controls.target);

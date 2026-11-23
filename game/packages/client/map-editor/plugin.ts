@@ -70,12 +70,14 @@ export function mapEditor(repoRoot: string): Plugin {
   }
   async function view(name: string, opts: Record<string, string>): Promise<Buffer> {
     const live = () => [...pages].filter(([c, n]) => n === name && server.ws.clients.has(c)).map(([c]) => c);
-    let targets = live();
-    if (!targets.length) { await ensureHeadless(name); targets = live(); }
+    let targets = live(), hidden = false;
+    if (!targets.length) { await ensureHeadless(name); targets = live(); hidden = true; }
     if (!targets.length) throw new HttpError(503, `no editor page shows ${name}, and the hidden one didn't start`);
     const id = nextView++;
+    // the hidden page renders in software: a big scene (the courtyard, ~2,000 pieces) takes tens of seconds
+    const wait = hidden ? 90000 : 30000;
     return new Promise((ok, fail) => {
-      const t = setTimeout(() => { views.delete(id); fail(new HttpError(503, 'no editor page answered in time')); }, 30000);
+      const t = setTimeout(() => { views.delete(id); fail(new HttpError(503, `no editor page answered in ${wait / 1000} s${hidden ? ' (the hidden page renders in software: open the editor on this scene in Chrome for fast pictures)' : ''}`)); }, wait);
       views.set(id, { ok: (b) => { clearTimeout(t); ok(b); }, fail: (e) => { clearTimeout(t); fail(e); } });
       targets[0].send('map:view-request', { id, name, opts });
     });

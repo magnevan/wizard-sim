@@ -33,6 +33,7 @@
     "sync-rules": "node scripts/sync-rules.mjs",
     "content": "node packages/content/src/cli.mjs",
     "content:build": "node packages/content/src/cli.mjs build",
+    "content:scene-map": "node packages/content/src/scene-map.mjs",
     "content:check": "node packages/content/src/cli.mjs check",
     "audio:bank": "node scripts/audio-bank.mjs",
     "sound-gallery": "node scripts/sound-gallery.mjs",

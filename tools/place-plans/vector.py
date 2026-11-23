@@ -36,7 +36,9 @@ def to_world(P):
     return lambda g: affinity.affine_transform(g, [R2, R2, -R2, R2, -cx0, -cy0])
 
 def clean(g):
-    g = shapely.set_precision(shapely.make_valid(g), GRID)
+    # snap to the grid, then detach it: shapely keeps a set precision on the geometry, and a negative buffer on a
+    # gridded geometry collapses to nothing (it silently deleted the overlook bay, 2026-11-23)
+    g = shapely.set_precision(shapely.set_precision(shapely.make_valid(g), GRID), 0.0)
     if g.is_empty: return g
     polys = [p for p in (g.geoms if hasattr(g, 'geoms') else [g]) if isinstance(p, Polygon) and p.area > 0.01]
     return MultiPolygon(polys) if len(polys) > 1 else (polys[0] if polys else Polygon())
@@ -137,7 +139,7 @@ def export(name):
         g, a = regions[k]
         b = lambda x, d: x.buffer(d, join_style='round', quad_segs=3)
         g2 = clean(clean(b(b(g, -R), R)).buffer(0).pipe if False else clean(b(b(clean(b(b(g, -R), R)), R), -R)).simplify(0.06))
-        g3 = clean(g2.intersection(total).difference(taken))
+        g3 = clean(g2.intersection(total).intersection(g.buffer(R * 1.01)).difference(taken))   # never more than R past its own shape (it swallowed the overlook bay)
         if not g3.is_empty: out[k] = g3; taken = clean(taken.union(g3))
     rest = clean(total.difference(taken))
     for part in (rest.geoms if hasattr(rest, 'geoms') else ([rest] if not rest.is_empty else [])):
@@ -273,6 +275,14 @@ if __name__ == '__main__':
     data, nd, nl = export(name)
     # the resolved scene: tools/place-plans/out/ (gitignored) unless a path is given (the 3D spike passes its own)
     dst = sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, 'out', name + '-scene.json')
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
     json.dump(data, open(dst, 'w'), separators=(',', ':'))
+    # the compact scene beside the level, for content:check's agreement check (regions only)
+    lvl = to_ldtk.LEVELS[name]['level']
+    sdir = os.path.join(HERE, '..', '..', 'game', 'content', 'maps', 'scenes'); os.makedirs(sdir, exist_ok=True)
+    rd = lambda polys: [[[[round(x, 2), round(y, 2)] for x, y in ring] for ring in poly] for poly in polys]
+    compact = dict(plan=name, level=lvl, note='Written by tools/place-plans/vector.py; checked against the level by content:check (packages/content/src/scene.mjs).',
+                   regions=[dict(mat=r['mat'], h=r['h'], kind=r['kind'], polys=rd(r['polys'])) for r in data['regions']])
+    json.dump(compact, open(os.path.join(sdir, lvl.lower() + '.json'), 'w'), separators=(',', ':'))
     print(f"glitch report: {len(data['glitches']['wavy_edges'])} wavy edges", [(g['type'], g['length'], g['turn']) for g in data['glitches']['wavy_edges'][:8]])
     print(f"{name}: {len(data['regions'])} regions, {len(data['faces'])} face segments, edges {dict((t, sum(1 for e in data['edges'] if e['type'] == t)) for t in ('retain', 'parapet', 'kerb'))}; {nd} cells differ from the shapes (overrides), {nl} parapet cells left flat; {os.path.getsize(dst) // 1024} KB")

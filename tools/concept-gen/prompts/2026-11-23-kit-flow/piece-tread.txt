@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as piece-tread.png in the current directory. Reply with just the file name.
+
+The attached image shows the game's look: stylised 3D, warm sandstone, gold trim, warm light.
+
+Draw one single stair step in exactly that style, as a game asset on a plain light grey background, in a three-quarter view from slightly above: one long block of warm sandstone, about four times as wide as it is deep and quite thin, with a rounded front edge (a nosing) along its whole width, a little worn in the middle. Both short ends are cut off clean and flat. Nothing else in the image: no other steps, no ground, no shadow, no text.

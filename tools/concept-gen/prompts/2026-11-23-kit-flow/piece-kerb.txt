@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as piece-kerb.png in the current directory. Reply with just the file name.
+
+The attached image shows the game's look: stylised 3D, warm sandstone, gold trim, warm light.
+
+Draw one single straight section of kerb in exactly that style, as a game asset on a plain light grey background, in a three-quarter view from slightly above: three long pale sandstone kerb stones laid end to end in a row, each with a softly rounded top front edge, the row about eight times as long as it is tall. Both ends of the row are cut off clean and flat. Nothing else in the image: no road, no pavement, no shadow, no text.

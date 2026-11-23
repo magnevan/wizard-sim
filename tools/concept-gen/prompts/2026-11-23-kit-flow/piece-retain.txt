@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as piece-retain.png in the current directory. Reply with just the file name.
+
+The attached image shows the game's look: stylised 3D, warm sandstone, gold trim, warm light.
+
+Draw one single straight section of a sandstone retaining wall in exactly that style, as a game asset on a plain light grey background, in a three-quarter view from slightly above: a solid block of wall about as long as it is tall, built of coursed sandstone blocks, with a thick coping stone along its top that overhangs the front face a little. Both ends of the section are cut off clean and flat, showing the same block courses, so identical sections can be placed end to end. Nothing else in the image: no ground, no plants, no shadow, no text.

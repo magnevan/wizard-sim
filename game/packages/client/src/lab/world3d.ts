@@ -220,7 +220,11 @@ const kit = (name: string) => {
   let p = kitCache.get(name);
   // ?kit=gateway:/@fs/<abs path>.glb swaps a piece for any model file (the dev server serves it), to compare
   const swap = new Map((q.get('kit') ?? '').split(',').filter(Boolean).map((e) => e.split(/:(.*)/s).slice(0, 2) as [string, string]));
-  if (!p) { p = gltf.loadAsync(swap.get(name) ?? urlOf(kitUrls, name + '.glb')!).then((g) => g.scene); kitCache.set(name, p); }
+  if (!p) {
+    const url = swap.get(name) ?? urlOf(kitUrls, name + '.glb');
+    p = url ? gltf.loadAsync(url).then((g) => g.scene) : Promise.reject(new Error(`no model file for "${name}" in content/generated/meshy/court-kit/`));
+    kitCache.set(name, p);
+  }
   return p;
 };
 for (const pc of place.pieces) {
@@ -328,5 +332,14 @@ function tick() {
   if (composer) composer.render(); else renderer.render(scene, cam);
   requestAnimationFrame(tick);
 }
-Promise.all(pending).then(() => { (window as unknown as { __ready: boolean }).__ready = true; });
+// a status line, so a slow or failed load says so (the models are 9-17 MB each)
+const info = document.getElementById('info');
+let done = 0;
+const status = (t: string) => { if (info) info.textContent = t; console.log('[world3d]', t); };
+for (const p of pending) p.then(() => { done++; status(`Loading models ${done}/${pending.length}...`); }, (e: unknown) => status(`A model failed to load: ${e instanceof Error ? e.message : String(e)}`));
+status(`Loading models 0/${pending.length}... (about 55 MB)`);
+Promise.all(pending).then(() => {
+  (window as unknown as { __ready: boolean }).__ready = true;
+  status('Ready. WASD or arrows to walk. ?view=24 wider, ?pitch=40 shallower, ?ao=0 no ambient occlusion.');
+});
 tick();

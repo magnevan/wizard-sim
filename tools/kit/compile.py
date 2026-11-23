@@ -153,13 +153,16 @@ def compile_layout(name, G_override=None):
     for s in allsegs:
         for end in (0, 1): at_vertex.setdefault((key(s[end]), s[4], s[2]), []).append((s, end))
     joints = {}
+    meets = {}   # every run touching a vertex, of any terrace: a run may end where another one goes on
+    for s in allsegs:
+        for end in (0, 1): meets[key(s[end])] = meets.get(key(s[end]), 0) + 1
     for (v, tr, ter), lst in at_vertex.items():
         if tr in ('kerb', 'open'): continue
         dirs = []
         for s, end in lst:
             o = s[1 - end]; dirs.append(math.atan2(o[1] - v[1], o[0] - v[0]))
         dead = len(lst) == 1 and 0 < v[0] < nx and 0 < v[1] < ny
-        if dead and not any(key(e) == v for e in ends_at):
+        if dead and meets.get(v, 0) < 2 and not any(key(e) == v for e in ends_at):
             errs.append(f"an edge run of {ter!r} stops at ({v[0]},{v[1]}) with nothing to end on")
         if len(dirs) == 2: rot = math.atan2(math.sin(dirs[0]) + math.sin(dirs[1]), math.cos(dirs[0]) + math.cos(dirs[1]))
         else: rot = dirs[0]
@@ -202,6 +205,18 @@ def compile_layout(name, G_override=None):
     for f in flights:
         poly = Polygon([f['a'], f['b'], (f['b'][0] + f['dx'] * f['length'], f['b'][1] + f['dy'] * f['length']), (f['a'][0] + f['dx'] * f['length'], f['a'][1] + f['dy'] * f['length'])])
         fl_zones.append(poly.buffer(1.5, join_style='mitre'))   # the flight and a cell-and-a-half landing round it
+    # flights (with their cheek walls) never overlap each other
+    bodies = []
+    for f in flights:
+        (ax, ay), (bx, by) = f['a'], f['b']; w = math.hypot(bx - ax, by - ay); ux, uy = (bx - ax) / w, (by - ay) / w
+        c = 0.6 / G                                               # a cheek wall's width, in cells
+        ox, oy = f['dx'] * f['length'], f['dy'] * f['length']
+        p0, p1 = (ax - ux * c, ay - uy * c), (bx + ux * c, by + uy * c)
+        bodies.append((f['name'], Polygon([p0, p1, (p1[0] + ox, p1[1] + oy), (p0[0] + ox, p0[1] + oy)])))
+    for i in range(len(bodies)):
+        for j in range(i + 1, len(bodies)):
+            if bodies[i][1].intersects(bodies[j][1]) and bodies[i][1].intersection(bodies[j][1]).area > 1e-6:
+                errs.append(f"{bodies[i][0]} and {bodies[j][0]} overlap (their steps or cheek walls)")
     floor_u = {ch: unary_union(ps) for ch, ps in floors.items() if ps}
     for v in L.get('VIGNETTES', []):
         pc = KIT['pieces'][v['piece']]; fw, fd = pc['footprint']; dx, dy = OUT[v['front']]

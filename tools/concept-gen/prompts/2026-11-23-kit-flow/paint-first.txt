@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as paint-first.png in the current directory. Reply with just the file name.
+
+The attached image shows the look and camera we want: a stylised 3D game, warm morning light, a wizard academy of warm sandstone with blue slate roofs and gold trim, seen from high and close like Magicka, with the small red wizard for scale.
+
+Pull the camera back to show a larger piece of the academy at the same angle, about four times as much ground (the wizard small, about a twentieth of the image height): a corner of the academy's courtyard built into a slope. Somewhere there is an upper terrace in front of a hall, a lower square or plaza, a way down between them, and a road along one edge. Beyond that, design it the way a great level artist would: make it a beautiful, interesting place to walk and fight in, with shapes, levels, planting and details of your choosing. Show it as a playable level: open ground for a fight between four small wizards, with walls, railings and drops as its edges. No text, no labels, no interface.

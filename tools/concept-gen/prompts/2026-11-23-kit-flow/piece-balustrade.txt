@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as piece-balustrade.png in the current directory. Reply with just the file name.
+
+The attached image shows the game's look: stylised 3D, warm sandstone, gold trim, warm light.
+
+Draw one single straight section of stone balustrade in exactly that style, as a game asset on a plain light grey background, seen from the front and slightly above and to one side (a three-quarter view) so its length, height and depth all show: a low plinth, five round turned balusters, and a flat top rail. Both ends of the section are cut off clean and flat, with nothing at the ends (no posts, no pillars: those are separate pieces). The section is about twice as long as it is tall. Nothing else in the image: no ground, no shadow, no other objects, no text.

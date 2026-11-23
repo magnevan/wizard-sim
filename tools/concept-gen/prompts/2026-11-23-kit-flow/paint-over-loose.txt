@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as paint-over-loose.png in the current directory. Reply with just the file name.
+
+The first attached image is a grey-box blockout of a corner of a wizard academy's courtyard: a hall at the top, an upper terrace with a balustrade, a round bastion and a stair, a lower plaza with a raised lawn bed and two lamps, and a road along the bottom. The small red wizard shows the scale. The second attached image shows the look we want: a stylised 3D game, warm morning light, warm sandstone, blue slate roofs with gold trim.
+
+Paint this place as a finished, beautiful game level in that look, with the same camera and framing. Treat the blockout as a first sketch, not a plan to copy: it is plain and boring, and you are the level artist making it great. Change whatever makes it better: reshape the terraces, move or add stairs, add levels, niches, planters, trees, fountains, statues, arcades, archways, anything that gives the place character, while keeping roughly a hall above, a terrace, a way down, a plaza and a road, and open ground for a fight between four small wizards. No text, no labels, no interface.

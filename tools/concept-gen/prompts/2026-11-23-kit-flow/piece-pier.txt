@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as piece-pier.png in the current directory. Reply with just the file name.
+
+The attached image shows the game's look: stylised 3D, warm sandstone, gold trim, warm light.
+
+Draw one single square stone pier (the post that stands between two balustrade sections) in exactly that style, as a game asset on a plain light grey background, seen from slightly above in a three-quarter view: a square shaft about three times as tall as it is wide, a moulded base, a moulded cap, and a small gold ball on top, like the posts in the attached image. Nothing else in the image: no balustrade, no ground, no shadow, no text.

@@ -48,7 +48,7 @@ const MAT = {
   wall: mat(0xd8d2c6), face: mat(0xb7aea0), coping: mat(0xe6e0d4), stone: mat(0xd2cabd), dark: mat(0x2d2a2c),
   wood: mat(0x8a6a4c), leaf: mat(0x6f8f55), metal: mat(0x3b3d42, 0.5), kerb: mat(0xd9d4ca),
 } as const;
-const FLOOR: Record<string, THREE.Material> = { paving: MAT.paving, plaza: MAT.plaza, road: MAT.road, lawn: MAT.lawn, roof: MAT.roof };
+const FLOOR: Record<string, THREE.Material> = { paving: MAT.paving, plaza: MAT.plaza, road: MAT.road, lawn: MAT.lawn, roof: MAT.roof, rock: mat(0x7d7468) };
 
 function box(g: THREE.Group, m: THREE.Material, x0: number, x1: number, y0: number, y1: number, z0: number, z1: number) {
   if (x1 - x0 <= 1e-4 || y1 - y0 <= 1e-4 || z1 - z0 <= 1e-4) return;
@@ -68,7 +68,7 @@ for (const f of data.floors) for (const [outer, ...holes] of f.polys) {
 }
 { // the ground beyond the patch, a little below everything
   const g = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), mat(0x2a2d33));
-  g.rotation.x = -Math.PI / 2; g.position.set(data.size[0] / 2, yOf(-0.4), data.size[1] / 2); scene.add(g);
+  g.rotation.x = -Math.PI / 2; g.position.set(data.size[0] / 2, yOf(Math.min(...data.floors.map((f) => f.h)) - 0.4), data.size[1] / 2); scene.add(g);
 }
 
 // ---- pieces: each built in its own frame (x along the edge from its start, z out toward the lower side, y up) ----
@@ -103,18 +103,45 @@ function wall(g: THREE.Group, L: number, h: number, low: number, v?: string, doo
   }
 }
 
+// ---- made models: a fitted model (tools/kit/fit.py) replaces its placeholder wherever one exists (?art=0: none) ----
+const artUrls = import.meta.glob<string>('../../../../content/generated/meshy/kit/*.glb', { eager: true, query: '?url', import: 'default' });
+const ART: Record<string, THREE.Object3D> = {};
+if (q.get('art') !== '0') await Promise.all(Object.entries(artUrls).map(([p, url]) => new GLTFLoader().loadAsync(url).then((g) => {
+  g.scene.traverse((c) => { if ((c as THREE.Mesh).isMesh) c.castShadow = c.receiveShadow = true; });
+  ART[p.split('/').pop()!.replace('.glb', '')] = g.scene;
+})));
+/** A fitted model, placed in a piece's frame: moved, and stretched along x and y (u). */
+function art(g: THREE.Group, name: string, x: number, y: number, sx = 1, sy = 1, s = 1): boolean {
+  const a = ART[name]; if (!a) return false;
+  const o = a.clone(); o.position.set(x, y, 0); o.scale.set(sx * s, sy * s, s); g.add(o); return true;
+}
+
 for (const it of data.instances) {
   const [cls, kind, shape] = it.p.split('.');
   if (cls === 'edge' || cls === 'sweep') {
     const g = edgeFrame(it), L = it.len!, low = it.low!;
-    if (kind === 'retain') retain(g, L, it.h, low);
-    else if (kind === 'parapet') { retain(g, L, it.h, low); balustrade(g, L, it.h, 0.275); }
+    const drop = it.h - low;
+    // a made retaining wall: its top course with the coping, then plain courses stacked down past the lower floor
+    // (every other one mirrored, so the joints don't line up), never stretched
+    let madeRetain = false;
+    if ((kind === 'retain' || kind === 'parapet') && drop >= 0.3 && art(g, 'retain-top', 0, yOf(it.h), L / 2)) {
+      madeRetain = true;
+      for (let y = yOf(it.h) - 1.1, k = 0; y > yOf(low) - 0.4; y -= 0.78, k++) {
+        if (k % 2) art(g, 'retain-course', L, y, -L / 2); else art(g, 'retain-course', 0, y, L / 2);
+      }
+    }
+    if (kind === 'retain') { if (!madeRetain) retain(g, L, it.h, low); }
+    else if (kind === 'parapet') {
+      if (!madeRetain) retain(g, L, it.h, low);
+      if (!art(g, 'balustrade', 0.275, yOf(it.h + 0.05), (L - 0.55) / 1.45)) balustrade(g, L, it.h, 0.275);
+    }
     else if (kind === 'kerb') { box(g, MAT.kerb, 0, L, yOf(low) - 0.1, yOf(it.h), -0.32, 0); }
     else if (kind === 'wall') wall(g, L, it.h, low, it.v, shape === 'door');
     scene.add(g);
   } else if (cls === 'joint') {
     const g = new THREE.Group(); g.position.set(it.x, 0, it.y); g.rotation.y = -it.rot;
     const y = yOf(it.h);
+    if ((kind === 'pier' || kind === 'newel') && art(g, 'pier', 0, y, 1, 1, kind === 'newel' ? 1.25 : 1)) { scene.add(g); continue; }
     if (kind === 'pier') { box(g, MAT.stone, -0.275, 0.275, y, y + yOf(1.08), -0.275, 0.275); box(g, MAT.coping, -0.33, 0.33, y + yOf(1.08), y + yOf(1.2), -0.33, 0.33); }
     if (kind === 'newel') {
       box(g, MAT.stone, -0.35, 0.35, y - 0.2, y + yOf(1.25), -0.35, 0.35); box(g, MAT.coping, -0.42, 0.42, y + yOf(1.25), y + yOf(1.4), -0.42, 0.42);

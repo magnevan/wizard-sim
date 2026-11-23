@@ -38,3 +38,5 @@ It also counts **walkable ground within sight of the world's edge**: within 12 u
 - `woods_unreached(P)`: turns walkable ground no one can reach into woods.
 
 **Dressing** (the beauty stage): a spec may list `PROPS = [(asset, (U, V), blocks), ...]` with assets from `game/content/assets/props/`. `to_ldtk.py` writes them as Props.
+
+**One command** (step 3 of the [pipeline](../pipeline-3d/index.html)): `python tools/place-plans/build.py <plan>` runs the walk report (any problem stops it), writes the level, writes the resolved scene beside it (`game/content/maps/scenes/<room>.json`, stamped with the level file's hash), then `content:build` and `content:check`. The check fails if a scene was built for another version of its level, or if the scene and the sim disagree on more cells than `scenes/agreement-baseline.json` allows. `npm run content:scene-map -- <room> <out.ppm>` draws where they disagree. Every plan edit is a shape op (`fill`, `repaint`, `building`, `stairs`, `raise_mat`): a plan that edits cells directly fails the export.

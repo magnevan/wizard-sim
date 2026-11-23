@@ -285,7 +285,11 @@ if __name__ == '__main__':
     lvl = to_ldtk.LEVELS[name]['level']
     sdir = os.path.join(HERE, '..', '..', 'game', 'content', 'maps', 'scenes'); os.makedirs(sdir, exist_ok=True)
     rd = lambda polys: [[[[round(x, 2), round(y, 2)] for x, y in ring] for ring in poly] for poly in polys]
-    compact = dict(plan=name, level=lvl, note='Written by tools/place-plans/vector.py; checked against the level by content:check (packages/content/src/scene.mjs).',
+    # the stamp: the level file's hash (line endings normalised), so content:check can tell a scene built for another level
+    import hashlib
+    lf = os.path.join(HERE, '..', '..', 'game', 'content', 'maps', 'world', lvl + '.ldtkl')
+    stamp = hashlib.sha1(open(lf, encoding='utf-8').read().replace('\r\n', '\n').encode('utf-8')).hexdigest()[:16] if os.path.exists(lf) else None
+    compact = dict(plan=name, level=lvl, levelHash=stamp, note='Written by tools/place-plans/vector.py; checked against the level by content:check (packages/content/src/scene.mjs).',
                    regions=[dict(mat=r['mat'], h=r['h'], kind=r['kind'], polys=rd(r['polys'])) for r in data['regions']])
     json.dump(compact, open(os.path.join(sdir, lvl.lower() + '.json'), 'w'), separators=(',', ':'))
     print(f"glitch report: {len(data['glitches']['wavy_edges'])} wavy edges", [(g['type'], g['length'], g['turn']) for g in data['glitches']['wavy_edges'][:8]])

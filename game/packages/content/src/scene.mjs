@@ -8,6 +8,7 @@
 //   - both walkable, heights more than a tread apart (stairs are skipped: their cells ramp).
 // While plans still carry cell edits (finishing passes), today's mismatches are allowed up to a committed baseline
 // (scenes/agreement-baseline.json): a room may not get worse; step 2b of the pipeline brings every baseline to 0.
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CONTENT } from './ldtk.mjs';
@@ -75,7 +76,14 @@ export function agreementAll(rooms) {
   for (const room of rooms) {
     const f = join(SCENES, room.id + '.json');
     if (!existsSync(f)) continue;
-    const { counts, eg, total } = agreement(room, JSON.parse(readFileSync(f, 'utf8')));
+    const scene = JSON.parse(readFileSync(f, 'utf8'));
+    // the stamp: a scene built for a different version of its level is stale (step 3 of tools/pipeline-3d)
+    const lf = join(CONTENT, 'maps/world', (scene.level ?? room.id) + '.ldtkl');
+    if (scene.levelHash && existsSync(lf)) {
+      const now = createHash('sha1').update(readFileSync(lf, 'utf8').replace(/\r\n/g, '\n')).digest('hex').slice(0, 16);
+      if (now !== scene.levelHash) { errors.push(`${room.id}: the resolved scene was built for another version of ${scene.level}.ldtkl: run \`python tools/place-plans/build.py ${scene.plan}\``); continue; }
+    }
+    const { counts, eg, total } = agreement(room, scene);
     const detail = Object.entries(counts).filter(([, n]) => n).map(([k, n]) => `${n} ${k} (e.g. ${eg[k].join('; ')})`).join(', ');
     const allowed = baseline[room.id] ?? 0;
     if (total > allowed) errors.push(`${room.id}: the scene and the sim disagree on ${total} cells, more than the baseline ${allowed} (scenes/agreement-baseline.json): ${detail}`);

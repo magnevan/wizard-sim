@@ -4,17 +4,22 @@
  * here, one at a time: it is applied, checked for conflicts, written, compiled and broadcast to the open pages.
  */
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { applyOps, changedKeys, dumpScene, OpError, revert, shiftPoint, type Op, type Scene } from './ops';
 import type { CompileWorker, Compiled, Finding } from './compile-worker';
 
 export type Group = { group: number; author: string; label: string; rev: number; time: string; before: Scene; after: Scene; keys: string[] };
+/** A pin is on the map (x, y in corners) or on a concept image (ref: which, and u, v from its top left, 0 to 1). */
 export type Pin = {
   id: string; note: string; author: string; rev: number; status: 'open' | 'resolved'; seen: boolean; outcome?: string; time: string;
-  anchor: { x: number; y: number; h?: number; obj?: string; inst?: { p: string; e?: [number, number] }; cam?: number[] };
+  anchor: { x?: number; y?: number; h?: number; obj?: string; inst?: { p: string; e?: [number, number] }; cam?: number[]; ref?: { id: string; u: number; v: number } };
   thread: { author: string; text: string; time: string }[];
 };
+/** A concept image pinned to the scene: its file is tools/kit/scenes/refs/<scene>/<file>. */
+export type Ref = { id: string; title: string; file: string; time: string };
+const IMAGE: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
+export const imageType = (file: string) => IMAGE[file.split('.').pop()!.toLowerCase()];
 export type Broadcast = (event: string, data: unknown) => void;
 
 export class HttpError extends Error { constructor(public status: number, msg: string, public extra: Record<string, unknown> = {}) { super(msg); } }
@@ -37,9 +42,11 @@ export class SceneStore {
   history: Group[] = [];
   redoStack: Group[] = [];
   pins: Pin[] = [];
+  refs: Ref[] = [];
   lastWritten = '';
   private nextGroup = 1;
   private nextPin = 1;
+  private nextRef = 1;
   private queue: Promise<unknown> = Promise.resolve();
 
   constructor(public name: string, private dir: string, private worker: CompileWorker, private broadcast: Broadcast) {}
@@ -47,6 +54,8 @@ export class SceneStore {
   get file() { return join(this.dir, `${this.name}.scene.json`); }
   private get historyFile() { return join(this.dir, `${this.name}.history.jsonl`); }
   private get pinsFile() { return join(this.dir, `${this.name}.pins.json`); }
+  private get refsFile() { return join(this.dir, `${this.name}.refs.json`); }
+  get refsDir() { return join(this.dir, 'refs', this.name); }
 
   /** Run changes one at a time, in order. */
   private serial<T>(f: () => Promise<T>): Promise<T> {
@@ -67,6 +76,10 @@ export class SceneStore {
     if (existsSync(this.pinsFile)) {
       const p = JSON.parse(readFileSync(this.pinsFile, 'utf8')) as { next: number; pins: Pin[] };
       this.pins = p.pins; this.nextPin = p.next;
+    }
+    if (existsSync(this.refsFile)) {
+      const r = JSON.parse(readFileSync(this.refsFile, 'utf8')) as { next: number; refs: Ref[] };
+      this.refs = r.refs; this.nextRef = r.next;
     }
     // edited while the server was down: one external revision
     const last = this.history[this.history.length - 1];
@@ -143,7 +156,7 @@ export class SceneStore {
       const label = req.label ?? req.ops.map((o) => o.op).join(', ');
       this.record(prev, this.scene, author, label);
       this.redoStack = [];
-      if (res.shifts.length) { for (const p of this.pins) [p.anchor.x, p.anchor.y] = shiftPoint([p.anchor.x, p.anchor.y], res.shifts); this.savePins(); }
+      if (res.shifts.length) { for (const p of this.pins) if (p.anchor.x != null && p.anchor.y != null) [p.anchor.x, p.anchor.y] = shiftPoint([p.anchor.x, p.anchor.y], res.shifts); this.savePins(); }
       this.writeScene();
       const c = await this.recompile();
       this.publish({ author, label, keys });
@@ -236,7 +249,9 @@ export class SceneStore {
     switch (b.op) {
       case 'add': {
         const a = b.anchor as Pin['anchor'];
-        if (!a || typeof a.x !== 'number' || typeof a.y !== 'number') throw new HttpError(400, 'a pin needs anchor: {x, y}');
+        const onMap = !!a && typeof a.x === 'number' && typeof a.y === 'number';
+        const onRef = !!a?.ref && this.refs.some((r) => r.id === a.ref!.id) && [a.ref.u, a.ref.v].every((t) => typeof t === 'number' && t >= 0 && t <= 1);
+        if (!onMap && !onRef) throw new HttpError(400, `a pin needs anchor: {x, y} on the map, or {ref: {id, u, v}} on a concept image (have: ${this.refs.map((r) => r.id).join(', ') || 'none'}; u, v from 0 to 1)`);
         const p: Pin = { id: `p${this.nextPin++}`, note: String(b.note ?? ''), author: String(b.author ?? 'user'), rev: this.rev, status: 'open', seen: false, time: now, anchor: a, thread: [] };
         this.pins.push(p); this.savePins(); return { pin: p };
       }
@@ -252,6 +267,39 @@ export class SceneStore {
       case 'seen': { const ids = new Set((b.ids as string[]) ?? []); for (const p of this.pins) if (ids.has(p.id)) p.seen = true; this.savePins(); return { ok: true }; }
       case 'delete': { find(); this.pins = this.pins.filter((p) => p.id !== b.id); this.savePins(); return { ok: true }; }
       default: throw new HttpError(400, 'op must be add, reply, resolve, reopen, seen or delete');
+    }
+  }
+
+  // ---- concept images ----
+  private saveRefs() { atomicWrite(this.refsFile, `${JSON.stringify({ next: this.nextRef, refs: this.refs }, null, 1)}\n`); this.broadcast('map:refs', { name: this.name, refs: this.refs }); }
+  refPath(id: string) {
+    const r = this.refs.find((x) => x.id === id);
+    if (!r) throw new HttpError(404, `no concept image ${JSON.stringify(id)} (have: ${this.refs.map((x) => x.id).join(', ') || 'none'})`);
+    return { ref: r, path: join(this.refsDir, r.file) };
+  }
+  /** add {title, data: a data: URL or base64 with a file name}, rename {id, title}, remove {id} (its file goes; its pins stay, marked gone). */
+  refOp(b: Record<string, unknown>) {
+    switch (b.op) {
+      case 'add': {
+        const m = /^data:image\/(png|jpeg|webp|gif);base64,(.*)$/s.exec(String(b.data ?? ''));
+        const ext = m ? (m[1] === 'jpeg' ? 'jpg' : m[1]) : String(b.filename ?? '').split('.').pop()!.toLowerCase();
+        if (!imageType(`x.${ext}`)) throw new HttpError(400, 'data must be a PNG, JPEG, WebP or GIF (a data: URL, or base64 with filename)');
+        const bytes = Buffer.from(m ? m[2] : String(b.data ?? ''), 'base64');
+        if (!bytes.length) throw new HttpError(400, 'no image data');
+        const id = `r${this.nextRef++}`, title = String(b.title ?? '').trim() || `concept ${id}`;
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'concept';
+        const r: Ref = { id, title, file: `${id}-${slug}.${ext}`, time: new Date().toISOString() };
+        mkdirSync(this.refsDir, { recursive: true });
+        writeFileSync(join(this.refsDir, r.file), bytes);
+        this.refs.push(r); this.saveRefs(); return { ref: r };
+      }
+      case 'rename': { const { ref } = this.refPath(String(b.id)); ref.title = String(b.title ?? ref.title); this.saveRefs(); return { ref }; }
+      case 'remove': {
+        const { ref, path } = this.refPath(String(b.id));
+        if (existsSync(path)) rmSync(path);
+        this.refs = this.refs.filter((r) => r !== ref); this.saveRefs(); return { ok: true };
+      }
+      default: throw new HttpError(400, 'op must be add, rename or remove');
     }
   }
 

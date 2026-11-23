@@ -23,7 +23,9 @@ async function main() {
     if (!pins?.length) continue;
     for (const p of pins) {
       const a = p.anchor || {};
-      const where = [`(${a.x},${a.y})`, a.obj && `obj ${a.obj}`, a.inst && `piece ${a.inst.p ?? a.inst}`].filter(Boolean).join(', ');
+      const where = a.ref
+        ? `on concept image ${a.ref.id} at u=${a.ref.u} v=${a.ref.v}; look: cli.mjs ref ${s.name} show ${a.ref.id} --pin ${p.id}`
+        : [`(${a.x},${a.y})`, a.obj && `obj ${a.obj}`, a.inst && `piece ${a.inst.p ?? a.inst}`].filter(Boolean).join(', ');
       lines.push(`- ${s.name} ${p.id}: ${p.note} [${where}]`);
       count++;
     }
@@ -33,7 +35,7 @@ async function main() {
   console.log([
     `Map editor: ${count} new pin(s)`,
     ...lines,
-    'Use node tools/map-editor/cli.mjs (pins / query / view / apply) to act on them; reply and resolve each pin with an outcome (scene, rule or piece).',
+    'Use node tools/map-editor/cli.mjs (pins / query / view / ref show / apply) to act on them; reply and resolve each pin with an outcome (scene, rule or piece).',
   ].join('\n'));
   for (const m of toMark) {
     await fetch(`${BASE}/__map/pins`, {

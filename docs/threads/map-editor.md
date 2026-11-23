@@ -17,6 +17,7 @@ Editor changes live here; building the courtyard and growing the kit is its own 
 
 ## Done
 
+- 2026-11-23: concept images on a map: drop or paste one, the Concepts panel (K), a click on the image pins a note for Claude; Claude sees it marked with `cli.mjs ref <scene> show`.
 - 2026-11-23: curves by hand: the Curve tool (A), handles on a selected curve, bulge ±½ and semicircle ([what and how](../explorations/2026-11-23-map-editor.md#what-was-built-2026-11-23)); the floors `deck` and `water` for the courtyard.
 - 2026-11-23: a usability pass after Fable's review and a from-scratch build (camera hints, strokes on the floor, + level, Add a stair here, selection, prop drag, map panel).
 - 2026-11-23: slice A: the compiler on scenes, the scene server (Vite plugin), the 3D editor, the CLI and the hook; `npm run editor:check` passes.

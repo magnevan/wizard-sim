@@ -12,9 +12,14 @@
  *   apply <name> <ops|@file.json|-> [--base N] [--dry] [--label "..."] [--author user|claude]
  *   undo <name> [--author claude]   |  redo <name>   |  history <name> [n]
  *   pins <name> [--status open|new|resolved|all]
- *   pin <name> add <x> <y> <note>   |  reply <id> <text>  |  resolve <id> <scene|rule|piece> [text]
- *       seen <id...>  |  delete <id>
+ *   pin <name> add <x> <y> <note>   |  add --ref <id> <u> <v> <note>  |  reply <id> <text>
+ *       resolve <id> <scene|rule|piece> [text]  |  seen <id...>  |  delete <id>
  *   view <name> [--cam top|game|current] [--x X --y Y --r R] [--out path.png]
+ *   refs <name>                     the concept images pinned to the map, with their files and pins
+ *   ref <name> show <id> [--pin pN] [--out path.png]   the image with its open pins drawn on it (and with --pin,
+ *       a close-up around that pin: <out>-crop.png)
+ *   ref <name> add <file> [--title "..."]  |  rename <id> <title>  |  rm <id>
+ * Pins on a concept image have anchor.ref {id, u, v}: u, v from the image's top left, 0 to 1.
  * Base URL: $MAP_EDITOR_URL (default http://127.0.0.1:5187). Exit 2 if the server is down, 1 on errors.
  * Coordinates are corner coordinates: corner (x, y) is corners[y][x].
  */
@@ -23,7 +28,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 const BASE = (process.env.MAP_EDITOR_URL || 'http://127.0.0.1:5187').replace(/\/$/, '');
-const VALUE_FLAGS = new Set(['base', 'label', 'author', 'status', 'cam', 'x', 'y', 'r', 'out', 'from']);
+const VALUE_FLAGS = new Set(['base', 'label', 'author', 'status', 'cam', 'x', 'y', 'r', 'out', 'from', 'title', 'pin', 'ref']);
+const tmpDir = () => (process.env.CLAUDE_JOB_DIR ? path.join(process.env.CLAUDE_JOB_DIR, 'tmp') : os.tmpdir());
 
 function parseArgs(argv) {
   const pos = [], flags = {};
@@ -121,7 +127,7 @@ function showApply(d) {
 
 function showPin(p) {
   const a = p.anchor || {};
-  const where = [`(${a.x},${a.y})`, a.obj && `obj ${a.obj}`, a.inst && `inst p ${a.inst.p ?? a.inst}`].filter(Boolean).join(', ');
+  const where = [a.ref ? `on concept ${a.ref.id} at u=${a.ref.u} v=${a.ref.v} (see: ref <name> show ${a.ref.id} --pin ${p.id})` : `(${a.x},${a.y})`, a.obj && `obj ${a.obj}`, a.inst && `inst p ${a.inst.p ?? a.inst}`].filter(Boolean).join(', ');
   const L = [`pin ${p.id} [${p.status}${p.outcome ? ':' + p.outcome : ''}] by ${p.author}: ${p.note}`, `  anchor ${where}`];
   for (const t of p.thread || []) L.push(`  - ${t.author}: ${t.text}`);
   return L.join('\n');
@@ -201,13 +207,61 @@ async function main() {
     case 'pin': return pinCmd(name, rest, flags);
     case 'view': {
       const buf = await call('GET', 'view', { query: { name, cam: flags.cam, x: flags.x, y: flags.y, r: flags.r }, raw: true });
-      const dir = process.env.CLAUDE_JOB_DIR ? path.join(process.env.CLAUDE_JOB_DIR, 'tmp') : os.tmpdir();
-      const file = flags.out || path.join(dir, 'map-view.png');
+      const file = flags.out || path.join(tmpDir(), 'map-view.png');
       fs.mkdirSync(path.dirname(file), { recursive: true });
       fs.writeFileSync(file, buf);
       return console.log(file);
     }
+    case 'refs': {
+      const [r, p] = await Promise.all([call('GET', 'refs', { query: { name } }), call('GET', 'pins', { query: { name, status: 'all' } })]);
+      return out(flags, r, (d) => (d.refs.length ? d.refs.map((x) => {
+        const ps = p.pins.filter((q) => q.anchor?.ref?.id === x.id && q.status === 'open').map((q) => q.id);
+        return `${x.id}  "${x.title}"  ${x.path}${ps.length ? `  open pins: ${ps.join(', ')}` : ''}`;
+      }).join('\n') : 'no concept images (add one: ref <name> add <file>, or drop one on the editor)'));
+    }
+    case 'ref': return refCmd(name, rest, flags);
     default: die(`unknown command "${cmd}" (try: help)`);
+  }
+}
+
+async function refCmd(name, rest, flags) {
+  const [op, ...a] = rest;
+  switch (op) {
+    case 'add': {
+      if (!a[0] || !fs.existsSync(a[0])) die('ref <name> add <file> [--title "..."]: no such file');
+      const title = flags.title || path.basename(a[0]).replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
+      const d = await call('POST', 'refs', { body: { name, op: 'add', title, filename: path.basename(a[0]), data: fs.readFileSync(a[0]).toString('base64') } });
+      return out(flags, d, (d) => `added ${d.ref.id} "${d.ref.title}" (${d.ref.file})`);
+    }
+    case 'rename': {
+      if (a.length < 2) die('ref <name> rename <id> <title>');
+      const d = await call('POST', 'refs', { body: { name, op: 'rename', id: a[0], title: a.slice(1).join(' ') } });
+      return out(flags, d, (d) => `${d.ref.id} is "${d.ref.title}"`);
+    }
+    case 'rm': {
+      if (!a[0]) die('ref <name> rm <id>');
+      await call('POST', 'refs', { body: { name, op: 'remove', id: a[0] } });
+      return console.log(`removed ${a[0]}`);
+    }
+    case 'show': {
+      if (!a[0]) die('ref <name> show <id> [--pin pN] [--out path.png]');
+      const { refs } = await call('GET', 'refs', { query: { name } });
+      const ref = refs.find((x) => x.id === a[0]);
+      if (!ref) die(`no concept image ${a[0]} (have: ${refs.map((x) => x.id).join(', ') || 'none'})`);
+      const { pins } = await call('GET', 'pins', { query: { name, status: 'all' } });
+      const mine = pins.filter((p) => p.anchor?.ref?.id === ref.id && (p.status === 'open' || p.id === flags.pin));
+      const file = flags.out || path.join(tmpDir(), `concept-${name}-${ref.id}.png`);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      const marks = mine.map((p) => [p.anchor.ref.u, p.anchor.ref.v, p.id.replace('p', ''), p.id === flags.pin]);
+      const { spawnSync } = await import('node:child_process');
+      const py = spawnSync(process.platform === 'win32' ? 'python' : 'python3', [new URL('./mark.py', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'), ref.path, file, JSON.stringify(marks)], { encoding: 'utf8' });
+      if (py.status !== 0) { fs.copyFileSync(ref.path, file); console.error(`(no marks drawn: ${(py.stderr || py.error?.message || '').trim().split('\n').pop()})`); }
+      const L = [file];
+      if (flags.pin && py.status === 0) L.push(file.replace(/\.png$/, '-crop.png') + '  (close-up)');
+      for (const p of mine) L.push(`${p.id} at u=${p.anchor.ref.u} v=${p.anchor.ref.v}: ${p.note}`);
+      return console.log(L.join('\n'));
+    }
+    default: die('ref <name> show|add|rename|rm ...');
   }
 }
 
@@ -216,8 +270,8 @@ async function pinCmd(name, rest, flags) {
   let body;
   switch (op) {
     case 'add':
-      if (a.length < 3) die('pin <name> add <x> <y> <note>');
-      body = { op, note: a.slice(2).join(' '), anchor: { x: Number(a[0]), y: Number(a[1]) } }; break;
+      if (a.length < 3) die('pin <name> add <x> <y> <note>  |  pin <name> add --ref <id> <u> <v> <note>');
+      body = { op, note: a.slice(2).join(' '), author: flags.author, anchor: flags.ref ? { ref: { id: flags.ref, u: Number(a[0]), v: Number(a[1]) } } : { x: Number(a[0]), y: Number(a[1]) } }; break;
     case 'reply':
       if (a.length < 2) die('pin <name> reply <id> <text>');
       body = { op, id: a[0], text: a.slice(1).join(' '), author: flags.author || 'claude' }; break;

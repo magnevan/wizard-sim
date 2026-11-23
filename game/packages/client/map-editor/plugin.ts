@@ -12,7 +12,7 @@ import type { Browser, Page } from 'puppeteer-core';
 import type { Plugin, ViteDevServer, WebSocketClient } from 'vite';
 import { CompileWorker } from './compile-worker';
 import { dumpScene, type Scene } from './ops';
-import { HttpError, SceneStore } from './store';
+import { HttpError, imageType, SceneStore } from './store';
 
 const NAME = /^[a-z0-9][a-z0-9-]*$/;
 
@@ -40,7 +40,7 @@ export function mapEditor(repoRoot: string): Plugin {
 
   const body = (req: IncomingMessage) => new Promise<Record<string, unknown>>((ok, fail) => {
     let b = '';
-    req.on('data', (c) => { b += c; if (b.length > 5e6) req.destroy(); });
+    req.on('data', (c) => { b += c; if (b.length > 40e6) req.destroy(); });   // a concept image comes as base64
     req.on('end', () => { try { ok(b ? JSON.parse(b) : {}); } catch { fail(new HttpError(400, 'the body is not JSON')); } });
   });
   const json = (res: ServerResponse, status: number, v: unknown) => { res.statusCode = status; res.setHeader('content-type', 'application/json'); res.end(JSON.stringify(v)); };
@@ -135,6 +135,14 @@ export function mapEditor(repoRoot: string): Plugin {
       case 'GET history': { const s = await store(name); return json(res, 200, { rev: s.rev, groups: s.historyList(Number(q.n ?? 20)) }); }
       case 'GET pins': { const s = await store(name); return json(res, 200, { rev: s.rev, pins: s.pinList(q.status ?? 'open') }); }
       case 'POST pins': { const s = await store(name); return json(res, 200, s.pinOp(b)); }
+      case 'GET refs': { const s = await store(name); return json(res, 200, { refs: s.refs.map((r) => ({ ...r, path: join(s.refsDir, r.file) })) }); }
+      case 'POST refs': { const s = await store(name); return json(res, 200, s.refOp(b)); }
+      case 'GET ref-image': {
+        const { ref, path: file } = (await store(name)).refPath(String(q.id));
+        if (!existsSync(file)) throw new HttpError(404, `${ref.id}'s file is missing`);
+        res.setHeader('content-type', imageType(ref.file) ?? 'application/octet-stream'); res.setHeader('cache-control', 'no-cache');
+        res.end(readFileSync(file)); return;
+      }
       case 'GET view': {
         await store(name);
         const png = await view(name, q);

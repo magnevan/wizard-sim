@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as iso-wall.png in the current directory. Reply with just the file name.
+
+The attached image is the concept scene.
+
+Isolate and generate a single modular castle wall segment from the concept scene. A repeatable architectural game asset module featuring: beige carved stone brick facade, an arched gothic tracery window with warm golden interior light glowing through the glass panes, framed by carved stone pilasters on each side with subtle gold accents, and a section of blue slate roof shingles on top. Standalone straight front-on orthographic view on a plain solid light grey background, perfectly centered, no ground plane, flowers, or characters. High detail, crisp edges, stylised hand-painted textures, square image.

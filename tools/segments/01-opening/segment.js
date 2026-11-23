@@ -97,9 +97,10 @@ chapters:[
  ]},
 ],
 concepts:[
-{id:'court-art-spike3d',title:'The stylised-3D spike: the courtyard, walkable',status:'New, 2026-11-23: waiting on you',
+{id:'court-art-spike3d',title:'The stylised-3D spike: the courtyard, walkable',status:'Round 2, 2026-11-23: waiting on you',
  lede:`The spike you approved: the courtyard’s real plan-made level drawn in 3D, Meshy models of the great hall’s pieces standing on it, our wizard’s own model walking about, at a camera as steep and close as Magicka’s. It’s on its own page (world3d.html) on branch spike-world3d; the game itself is untouched.`,
  points:[
+  [`Round 2: the Meshy agent’s pipeline, on our side (2026-11-23).`,` You found round 1’s buildings splotchy, and the Meshy agent’s arch far more detailed. The difference was in the inputs and settings. The agent first isolates each piece from the concept as its own clean front-on picture (with GPT Image), then makes the model with Meshy 7.1 and full PBR maps (colour, normal, roughness, metal). Round 1 used soft crops of a painted sheet and the cheapest smart-topology settings, with one colour texture. Round 2 does the isolation free in Codex with the agent’s prompt pattern, then Meshy 7.1 with PBR, remeshed to about 30k triangles: four pieces, 120 credits. The first picture is round 2.`],
   [`What went in.`,` Five Meshy models (hall front, gateway, a corner, a pier, a planter: 75 credits) made from Codex’s building-pieces picture and placed from the plan by a script. The terrain comes straight from the level’s heights and ground, with its 45° staircases cut on the diagonal so edges run straight on screen. A warm sun on the camera’s side, real shadows, the wizard with only his staff.`],
   [`The bar we set, honestly.`,` Picture to placed model in well under an hour: yes (about 3 minutes in Meshy, placement automatic). Level heights to terrain automatically: yes. Frame rate on a laptop: not measured yet, since the shots are rendered in software. Frames near the R picture: yours to judge. The first picture is the dressed spot.`],
   [`What it isn’t yet.`,` Only the hall’s front is modelled. Parapets, the bell tower, the workshops and the steps are the grey-box extruded, with placeholder brick and gravel, so the second and third pictures are mostly bare. The ground textures are the old pixel ones. A real version would model those pieces too (more Meshy models, all cheap now) and use 3D-ready ground textures.`],
@@ -107,6 +108,8 @@ concepts:[
   [`To walk it yourself.`,` In game/: npm run dev, then open http://localhost:5187/world3d.html (WASD to walk). That also shows the frame rate on your machine.`],
  ],
  images:[
+  ['img/spike3d-r2-1.jpg','Round 2 of the 3D spike at the great hall’s gate: crisp cream stone walls in courses with gothic windows glowing gold, blue star banners on the gateway, stone piers with gold ball finials, carved planters of purple flowers and cypresses; the wizard on cobbles in warm light with a long shadow.','Round 2: the new pieces at the gate.'],
+  ['img/spike3d-r2-iso.jpg','The four pieces Codex isolated from the style-test picture, on plain grey: the gateway with banners, a wall module with a glowing gothic window, a stone pier with a gold ball, and a planter of lilac and cypresses.','What Meshy was given: the isolated pieces.'],
   ['img/spike3d-1.jpg','The 3D spike at the great hall’s gate: Meshy models of the cream stone hall with lit arched windows, gold trim and blue slate roofs, an arched gateway with star banners, two piers with brass lanterns; our red-hatted wizard with his staff on warm paving, casting a real shadow.','At the gate, after the critic’s light notes: a lower warm sun, ambient occlusion, the camera at 46°.'],
   ['img/spike3d-2.jpg','The 3D spike in the plaza: terraces stepping down in straight lines, brick-sided parapet blocks, the wizard on plain paving.','In the plaza: the unmodelled grey-box in 3D.'],
   ['img/spike3d-3.jpg','The 3D spike at the head of the east flight: a cobbled balcony road, a flight of steps down, extruded grey-box parapets and walls, a corner of the hall at the top left.','At the east flight.'],

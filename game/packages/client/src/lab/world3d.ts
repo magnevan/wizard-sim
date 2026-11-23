@@ -11,6 +11,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { ROOMS } from '@wizard-sim/sim';
 import { heightMap } from '../art/heights';
 import { GROUNDS } from '../art/grounds.gen';
@@ -42,6 +43,9 @@ document.body.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1d2230);
 scene.fog = new THREE.Fog(0x2a2f3c, 70, 140);
+// a soft environment for PBR materials to reflect (metal and gloss read dark without one)
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.15;
 
 // screen axes in world (x, y): the plan's U (screen right) and V (screen down) are turned 45 degrees to the world grid
 const R2 = Math.SQRT1_2;
@@ -214,7 +218,9 @@ const pending: Promise<unknown>[] = [];
 const kitCache = new Map<string, Promise<THREE.Object3D>>();
 const kit = (name: string) => {
   let p = kitCache.get(name);
-  if (!p) { p = gltf.loadAsync(urlOf(kitUrls, name + '.glb')!).then((g) => g.scene); kitCache.set(name, p); }
+  // ?kit=gateway:/@fs/<abs path>.glb swaps a piece for any model file (the dev server serves it), to compare
+  const swap = new Map((q.get('kit') ?? '').split(',').filter(Boolean).map((e) => e.split(/:(.*)/s).slice(0, 2) as [string, string]));
+  if (!p) { p = gltf.loadAsync(swap.get(name) ?? urlOf(kitUrls, name + '.glb')!).then((g) => g.scene); kitCache.set(name, p); }
   return p;
 };
 for (const pc of place.pieces) {
@@ -225,7 +231,7 @@ for (const pc of place.pieces) {
       if (!mesh.isMesh) return;
       mesh.castShadow = true; mesh.receiveShadow = true;
       const mt = mesh.material as THREE.MeshStandardMaterial;
-      if (mt && 'metalness' in mt) { mt.metalness = 0; mt.roughness = 0.85; }   // Meshy's materials come in metallic, which reads dark with no environment
+      if (mt && 'metalness' in mt && !mt.metalnessMap) { mt.metalness = 0; mt.roughness = 0.85; }   // a flat Meshy material comes in metallic, which reads dark with no environment; a PBR one keeps its maps
     });
     const box = new THREE.Box3().setFromObject(o), size = box.getSize(new THREE.Vector3());
     const s = pc.width / Math.max(size.x, 1e-6);

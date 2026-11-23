@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as iso-gateway.png in the current directory. Reply with just the file name.
+
+The attached image is the concept scene.
+
+Isolate and generate the grand archway gate from the concept scene as a single game asset. Featuring: a beige carved stone arch with a passage straight through it, gold trim along the arch, two matching hanging blue banners with gold eight-pointed stars on gold rods either side, a blue shield crest with a gold star above the keystone, gold finials on the two pillars, and a section of blue slate roof behind. Standalone straight front-on orthographic view on a plain solid light grey background, perfectly centered, no ground plane, flowers, or characters. High detail, crisp edges, stylised hand-painted textures, square image.

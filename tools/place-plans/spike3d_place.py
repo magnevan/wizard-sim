@@ -27,11 +27,11 @@ def put(kit, a, r=R, width=9.0, z=6.0, face=None):
     x, y = world(u, v); fx, fy = wdir(fu, fv)
     pieces.append(dict(kit=kit, x=round(x, 2), y=round(y, 2), z=z, fx=round(fx, 4), fy=round(fy, 4), width=width))
 
-put('gateway', 90, width=10)
-for a in (65, 115): put('hall-front', a, width=9)
-for a in (41, 139): put('hall-front', a, width=9)
-for a in (78, 102): put('pier', a, r=24, width=1.6)
-for a in (58, 72, 108, 122): put('planter', a, r=23, width=3.2)
+# round 2 (2026-11-23): the kit isolated from the style test's picture by Codex, then Meshy 7.1 with PBR maps
+put('iso-gateway', 90, width=10)
+for a in (70, 53, 36, 110, 127, 144): put('iso-wall', a, width=6.4)
+for a in (78, 102): put('iso-pier', a, r=24, width=1.6)
+for a in (61, 119): put('iso-planter', a, r=23.2, width=4.5)
 # the camera's start: in front of the gate, on the balcony road
 sx, sy = world(0, -14)
 out = dict(start=dict(x=round(sx, 2), y=round(sy, 2)), pieces=pieces, note=__doc__.strip().splitlines()[0])

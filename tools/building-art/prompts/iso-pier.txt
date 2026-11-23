@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as iso-pier.png in the current directory. Reply with just the file name.
+
+The attached image is the concept scene.
+
+Isolate and generate a single stone pier from the concept scene as a game asset: a square beige carved stone pillar with a gold ball finial on top, gold accent band, on a stepped stone base. Standalone straight front-on orthographic view on a plain solid light grey background, perfectly centered, no ground plane, flowers, or characters. High detail, crisp edges, stylised hand-painted textures, square image.

@@ -97,6 +97,21 @@ chapters:[
  ]},
 ],
 concepts:[
+{id:'court-art-spike3d',title:'The stylised-3D spike: the courtyard, walkable',status:'New, 2026-11-23: waiting on you',
+ lede:`The spike you approved: the courtyard’s real plan-made level drawn in 3D, Meshy models of the great hall’s pieces standing on it, our wizard’s own model walking about, at a camera as steep and close as Magicka’s. It’s on its own page (world3d.html) on branch spike-world3d; the game itself is untouched.`,
+ points:[
+  [`What went in.`,` Five Meshy models (hall front, gateway, a corner, a pier, a planter: 75 credits) made from Codex’s building-pieces picture and placed from the plan by a script. The terrain comes straight from the level’s heights and ground, with its 45° staircases cut on the diagonal so edges run straight on screen. A warm sun on the camera’s side, real shadows, the wizard with only his staff.`],
+  [`The bar we set, honestly.`,` Picture to placed model in well under an hour: yes (about 3 minutes in Meshy, placement automatic). Level heights to terrain automatically: yes. Frame rate on a laptop: not measured yet, since the shots are rendered in software. Frames near the R picture: yours to judge. The first picture is the dressed spot.`],
+  [`What it isn’t yet.`,` Only the hall’s front is modelled. Parapets, the bell tower, the workshops and the steps are the grey-box extruded, with placeholder brick and gravel, so the second and third pictures are mostly bare. The ground textures are the old pixel ones. A real version would model those pieces too (more Meshy models, all cheap now) and use 3D-ready ground textures.`],
+  [`To walk it yourself.`,` In game/: npm run dev, then open http://localhost:5187/world3d.html (WASD to walk). That also shows the frame rate on your machine.`],
+ ],
+ images:[
+  ['img/spike3d-1.jpg','The 3D spike at the great hall’s gate: Meshy models of the cream stone hall with lit arched windows, gold trim and blue slate roofs, an arched gateway with star banners, two piers with brass lanterns; our red-hatted wizard with his staff on warm paving, casting a real shadow.','At the gate: the modelled pieces.'],
+  ['img/spike3d-2.jpg','The 3D spike in the plaza: terraces stepping down in straight lines, brick-sided parapet blocks, the wizard on plain paving.','In the plaza: the unmodelled grey-box in 3D.'],
+  ['img/spike3d-3.jpg','The 3D spike at the head of the east flight: a cobbled balcony road, a flight of steps down, extruded grey-box parapets and walls, a corner of the hall at the top left.','At the east flight.'],
+ ],
+ verdict:[['go3d','Go stylised 3D'],['more3d','Promising: push the spike further'],['back','Back to pixel or painted'],['unsure','Unsure']],
+ questions:[]},
 {id:'court-art-style',title:'Magicka’s camera, three styles: is pixel art worth keeping?',status:'New, 2026-11-22: waiting on you',
  lede:`Your two flaws in the last batch were the camera (too shallow) and the scale (far too low), and you asked whether pixel art is causing more problems than it solves. So Codex painted the same courtyard spot at Magicka’s camera and closeness (its screenshot attached only for camera and scale), with our wizard at his in-game size, in three styles. All free; nothing is in the game.`,
  points:[

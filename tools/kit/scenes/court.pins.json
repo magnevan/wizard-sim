@@ -1,5 +1,5 @@
 {
- "next": 21,
+ "next": 22,
  "pins": [
   {
    "id": "p1",
@@ -13,7 +13,13 @@
     "x": 47.5,
     "y": 40
    },
-   "thread": [],
+   "thread": [
+    {
+     "author": "claude",
+     "text": "The dais under it is too small for the grid: plan D's two rings are 1 u apart, half a cell, so they trace as a chevron. Plan: model the armillary with its own round dais as one set piece, and keep the plaza's floor flat under it.",
+     "time": "2026-11-23T22:22:01.308Z"
+    }
+   ],
    "trace": true
   },
   {
@@ -349,6 +355,20 @@
    ],
    "trace": true,
    "outcome": "piece"
+  },
+  {
+   "id": "p21",
+   "note": "CLIFF FACES: the inlet's banks and the woods' cliffs are 'open' edges with no piece, so their faces draw black. A rock face is asked of the Map Editor session (renderer); a cliff piece in the kit later (step 5).",
+   "author": "user",
+   "rev": 8,
+   "status": "open",
+   "seen": true,
+   "time": "2026-11-23T22:22:01.450Z",
+   "anchor": {
+    "x": 66,
+    "y": 33
+   },
+   "thread": []
   }
  ]
 }

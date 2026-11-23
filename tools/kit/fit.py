@@ -25,6 +25,12 @@ FIT = {
     'retain-top': dict(len=2.0, dep=(-0.55, 0.12), hgt=(-1.1, 0.05 * M), cut=True, budget=6000),
     'retain-course': dict(len=2.0, dep=(-0.55, 0.12), hgt=(-1.1, 0.05 * M), cut=True, budget=5000, keep_below=-0.32),
     'pier': dict(len=None, box=(0.55, 0.55), hgt=(0.0, 1.3 * M), cut=False, budget=4000),
+    # round 2: a step (two modules make a 4 u flight), a kerb (its top a little proud of the pavement), the coping block
+    # over a turn, and a retaining section with an arched niche (a variant of the top course, as tall as two courses)
+    'tread': dict(len=2.0, dep=(-0.5, 0.06), hgt=(-0.42, 0.0), cut=True, budget=2500),
+    'kerb': dict(len=2.0, dep=(-0.32, 0.0), hgt=(-0.6, 0.05), cut=True, budget=2500),
+    'corner': dict(len=None, box=(0.72, 0.72), hgt=(-0.25, 0.14), cut=False, budget=2000),
+    'niche': dict(len=2.0, dep=(-0.55, 0.12), hgt=(-2.0, 0.05 * M), cut=True, budget=8000),
 }[piece]
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -51,7 +57,7 @@ lo, hi = bbox()
 if FIT['len'] and (hi.y - lo.y) > (hi.x - lo.x): apply(Matrix.Rotation(math.pi / 2, 4, 'Z'))
 # 2. the front: for a retaining section, the side the coping overhangs (its top reaches further than its middle)
 lo, hi = bbox()
-if piece == 'retain':
+if piece.startswith('retain') or piece == 'niche':
     vs = [v.co for v in ob.data.vertices]; zt = lo.z + 0.9 * (hi.z - lo.z); zm = lo.z + 0.5 * (hi.z - lo.z)
     top = [v.y for v in vs if v.z > zt]; mid = [v.y for v in vs if abs(v.z - zm) < 0.1 * (hi.z - lo.z)]
     if top and mid and (min(top) - min(mid)) > (max(mid) - max(top)): apply(Matrix.Rotation(math.pi, 4, 'Z'))   # overhang toward +y: turn it to -y

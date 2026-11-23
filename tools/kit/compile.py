@@ -194,6 +194,11 @@ def compile_layout(name, G_override=None):
         if tr == 'open': continue
         var = None
         if piece == 'edge.wall.straight': win += 1; var = 'window' if win % 2 else 'plain'
+        # a niche in a tall retaining wall: every third straight section of a long run, never next to a flight's head
+        if piece in ('edge.retain.straight', 'edge.parapet.straight') and T[ter]['h'] - lower >= 2.0 and (round(ax) + round(ay)) % 3 == 0 \
+                and all(math.hypot((ax + bx) / 2 - e[0], (ay + by) / 2 - e[1]) > 2.0 for e in ends_at) \
+                and any(abs(t['h'] - lower) < 1e-6 and t.get('walk', True) and t.get('edge') != 'wall' for t in T.values()):   # seen from ground people walk on
+            var = 'niche'
         inst.append(dict(p=piece, x=ax * G, y=ay * G, x2=bx * G, y2=by * G, h=T[ter]['h'], low=lower, rot=rot, len=ln * G, **({'v': var} if var else {})))
     inst += list(joints.values())
     for f in flights:
@@ -218,6 +223,17 @@ def compile_layout(name, G_override=None):
             if bodies[i][1].intersects(bodies[j][1]) and bodies[i][1].intersection(bodies[j][1]).area > 1e-6:
                 errs.append(f"{bodies[i][0]} and {bodies[j][0]} overlap (their steps or cheek walls)")
     floor_u = {ch: unary_union(ps) for ch, ps in floors.items() if ps}
+    # a flight's run-out: open, flat ground of its bottom terrace in front of its foot, its width and two cells deep.
+    # Something there is legal but awkward (the user: 'more awkward than a hard block'), so it's a warning.
+    for f, (nm, body) in zip(flights, bodies):
+        (ax, ay), (bx, by) = f['a'], f['b']; ox, oy = f['dx'] * f['length'], f['dy'] * f['length']
+        run = Polygon([(ax + ox, ay + oy), (bx + ox, by + oy), (bx + ox + f['dx'] * 2, by + oy + f['dy'] * 2), (ax + ox + f['dx'] * 2, ay + oy + f['dy'] * 2)])
+        ground = floor_u.get(f['bottom'])
+        miss = run.difference(ground) if ground is not None else run
+        if miss.area > 0.05 * run.area: warns.append(f"{nm}: the ground in front of its foot isn't clear {f['bottom']!r} for two cells ({miss.area / run.area:.0%} is a wall, a drop or another level)")
+        for n2, b2 in bodies:
+            if n2 != nm and b2.intersection(run).area > 1e-6: warns.append(f"{nm}: {n2} is in front of its foot")
+
     for v in L.get('VIGNETTES', []):
         pc = KIT['pieces'][v['piece']]; fw, fd = pc['footprint']; dx, dy = OUT[v['front']]
         hw, hd = (fw / 2 / G, fd / 2 / G) if dy else (fd / 2 / G, fw / 2 / G)
@@ -265,7 +281,7 @@ def compile_layout(name, G_override=None):
         out_floors.append(dict(t=ch, h=T[ch]['h'], mat=T[ch]['mat'], polys=polys))
     counts = {}
     for it in inst: counts[it['p']] = counts.get(it['p'], 0) + 1
-    return dict(G=G, size=[nx * G, ny * G], floors=out_floors, instances=inst, errors=errs, pieces=counts)
+    return dict(G=G, size=[nx * G, ny * G], floors=out_floors, instances=inst, errors=errs, warnings=warns, pieces=counts)
 
 
 def main():
@@ -275,7 +291,8 @@ def main():
     if r['errors']:
         print(f'{name}: {len(r["errors"])} problem(s):'); [print('  -', e) for e in r['errors']]; sys.exit(1)
     json.dump(r, open(out, 'w', encoding='utf-8'), separators=(',', ':'))
-    print(f'{name}: {len(r["instances"])} instances of {len(r["pieces"])} pieces, 0 problems -> {os.path.relpath(out)}')
+    print(f'{name}: {len(r["instances"])} instances of {len(r["pieces"])} pieces, 0 problems, {len(r["warnings"])} warning(s) -> {os.path.relpath(out)}')
+    for w in r['warnings']: print('  ! ' + w)
     for p, n in sorted(r['pieces'].items()): print(f'  {n:4d} {p}')
 
 

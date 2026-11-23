@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as piece-corner.png in the current directory. Reply with just the file name.
+
+The attached image shows the game's look: stylised 3D, warm sandstone, gold trim, warm light.
+
+Draw one single square corner stone in exactly that style, as a game asset on a plain light grey background, in a three-quarter view from slightly above: a thick square capstone of warm sandstone, a little wider than it is tall, with softly bevelled top edges and a thin gold band around its sides, the kind that sits on the corner of a low garden wall where two copings meet. Nothing else in the image: no wall, no ground, no shadow, no text.

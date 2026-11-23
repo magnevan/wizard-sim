@@ -116,6 +116,12 @@ function art(g: THREE.Group, name: string, x: number, y: number, sx = 1, sy = 1,
   const o = a.clone(); o.position.set(x, y, 0); o.scale.set(sx * s, sy * s, s); g.add(o); return true;
 }
 
+/** A fitted model placed by a basis (x along, y up, z out): a non-orthogonal x shears it down a slope, balusters upright. */
+function artBasis(g: THREE.Group, name: string, X: THREE.Vector3, Z: THREE.Vector3, P: THREE.Vector3): boolean {
+  const a = ART[name]; if (!a) return false;
+  const o = a.clone(); o.matrixAutoUpdate = false; o.matrix.makeBasis(X, new THREE.Vector3(0, 1, 0), Z).setPosition(P); g.add(o); return true;
+}
+
 for (const it of data.instances) {
   const [cls, kind, shape] = it.p.split('.');
   if (cls === 'edge' || cls === 'sweep') {
@@ -124,9 +130,10 @@ for (const it of data.instances) {
     // a made retaining wall: its top course with the coping, then plain courses stacked down past the lower floor
     // (every other one mirrored, so the joints don't line up), never stretched
     let madeRetain = false;
-    if ((kind === 'retain' || kind === 'parapet') && drop >= 0.3 && art(g, 'retain-top', 0, yOf(it.h), L / 2)) {
+    const niche = it.v === 'niche' && ART.niche;
+    if ((kind === 'retain' || kind === 'parapet') && drop >= 0.3 && art(g, niche ? 'niche' : 'retain-top', 0, yOf(it.h), L / 2)) {
       madeRetain = true;
-      for (let y = yOf(it.h) - 1.1, k = 0; y > yOf(low) - 0.4; y -= 0.78, k++) {
+      for (let y = yOf(it.h) - (niche ? 2.0 : 1.1), k = 0; y > yOf(low) - 0.4; y -= 0.78, k++) {
         if (k % 2) art(g, 'retain-course', L, y, -L / 2); else art(g, 'retain-course', 0, y, L / 2);
       }
     }
@@ -135,7 +142,7 @@ for (const it of data.instances) {
       if (!madeRetain) retain(g, L, it.h, low);
       if (!art(g, 'balustrade', 0.275, yOf(it.h + 0.05), (L - 0.55) / 1.45)) balustrade(g, L, it.h, 0.275);
     }
-    else if (kind === 'kerb') { box(g, MAT.kerb, 0, L, yOf(low) - 0.1, yOf(it.h), -0.32, 0); }
+    else if (kind === 'kerb') { if (!art(g, 'kerb', 0, yOf(it.h), L / 2)) box(g, MAT.kerb, 0, L, yOf(low) - 0.1, yOf(it.h), -0.32, 0); }
     else if (kind === 'wall') wall(g, L, it.h, low, it.v, shape === 'door');
     scene.add(g);
   } else if (cls === 'joint') {
@@ -147,6 +154,7 @@ for (const it of data.instances) {
       box(g, MAT.stone, -0.35, 0.35, y - 0.2, y + yOf(1.25), -0.35, 0.35); box(g, MAT.coping, -0.42, 0.42, y + yOf(1.25), y + yOf(1.4), -0.42, 0.42);
       const ball = new THREE.Mesh(new THREE.SphereGeometry(0.26, 20, 14), MAT.stone); ball.position.y = y + yOf(1.4) + 0.24; ball.castShadow = true; g.add(ball);
     }
+    if (kind === 'corner' && art(g, 'corner', 0, y + yOf(PROUD))) { scene.add(g); continue; }
     if (kind === 'corner') box(g, MAT.coping, -0.36, 0.36, y - yOf(COP), y + yOf(PROUD + 0.04), -0.36, 0.36);
     if (kind === 'pilaster') box(g, MAT.coping, -0.3, 0.3, yOf(it.low ?? it.h - 7) - 0.4, y - yOf(0.35), -0.3, 0.3);
     scene.add(g);
@@ -157,12 +165,38 @@ for (const it of data.instances) {
     g.matrixAutoUpdate = false;   // local: x across (head start to end), z out along the flight, y up
     g.matrix.makeBasis(new THREE.Vector3(ax, 0, ay), new THREE.Vector3(0, 1, 0), new THREE.Vector3(ox, 0, oy)).setPosition(it.x, 0, it.y);
     const rise = (it.h - it.low!) / n, go = L / n;
-    box(g, MAT.coping, -0.6, W + 0.6, yOf(it.h - rise) - 0.1, yOf(it.h + PROUD * 0.4), -0.45, 0.05);   // the head sill: the terrace's edge stone across the flight
+    // the head sill: the terrace's edge stone across the flight (a row of made treads level with the terrace, if made)
+    if (ART.tread) { for (let m = -0.6; m < W + 0.6 - 0.01; m += (W + 1.2) / Math.ceil((W + 1.2) / 2)) { art(g, 'tread', m, yOf(it.h) + 0.01, (W + 1.2) / Math.ceil((W + 1.2) / 2) / 2); g.children[g.children.length - 1].position.z = 0.0; } }
+    else box(g, MAT.coping, -0.6, W + 0.6, yOf(it.h - rise) - 0.1, yOf(it.h + PROUD * 0.4), -0.45, 0.05);
+    const madeTreads = !!ART.tread;
     for (let k = 0; k < n; k++) {
-      box(g, MAT.stone, 0, W, yOf(it.low!) - 0.4, yOf(it.h - (k + 1) * rise), k * go, (k + 1) * go);
-      box(g, MAT.coping, 0, W, yOf(it.h - (k + 1) * rise) - 0.05, yOf(it.h - (k + 1) * rise), k * go - 0.05, k * go + 0.08);   // a nosing
+      const top = yOf(it.h - (k + 1) * rise);
+      box(g, MAT.stone, 0, W, yOf(it.low!) - 0.4, madeTreads ? top - 0.3 : top, k * go, (k + 1) * go);
+      if (madeTreads && k < n - 1) { for (let m = 0; m + 1.99 < W; m += 2) art(g, 'tread', m, top, 1, 1); g.children.slice(-Math.round(W / 2)).forEach((o) => { o.position.z = (k + 1) * go - 0.06; }); }
+      else box(g, MAT.coping, 0, W, top - 0.05, top, k * go - 0.05, k * go + 0.08);   // a nosing
     }
-    for (const side of [-1, 1]) {
+    const sl = yOf(it.h - it.low!) / L, topAt = (z: number) => yOf(it.h + 0.1) - sl * z;
+    const madeCheeks = !!(ART['retain-top'] && ART['retain-course'] && ART.balustrade && ART.pier);
+    for (const side of madeCheeks ? [-1, 1] : []) {
+      const x0 = side < 0 ? -0.6 : W, cx = x0 + 0.3, Z = new THREE.Vector3(side, 0, 0);
+      // left (side -1) runs from the head down; right runs from the foot up, so neither side is mirrored inside out
+      const along = (z0: number, z1: number, len: number) => (side < 0 ? new THREE.Vector3(0, -sl, 1) : new THREE.Vector3(0, sl, -1)).multiplyScalar((z1 - z0) / len);
+      const start = (z0: number, z1: number) => (side < 0 ? z0 : z1);
+      const nm = Math.max(1, Math.ceil(L / 2)), lm = L / nm;
+      for (let i = 0; i < nm; i++) {
+        const z0 = i * lm, z1 = z0 + lm, zs = start(z0, z1), wx = side < 0 ? x0 + 0.06 : x0 + 0.54;
+        artBasis(g, 'retain-top', along(z0, z1, 2), Z, new THREE.Vector3(wx, topAt(zs), zs));
+        for (let y = topAt(zs) - 1.1; y > yOf(it.low!) - 1.6 - sl * lm; y -= 0.78) artBasis(g, 'retain-course', along(z0, z1, 2), Z, new THREE.Vector3(wx, y, zs));
+      }
+      const nb = Math.max(1, Math.round(L / 1.75)), lb = L / nb;
+      for (let i = 0; i < nb; i++) {
+        const z0 = i * lb + 0.15, z1 = (i + 1) * lb - 0.15, zs = start(z0, z1);
+        artBasis(g, 'balustrade', along(z0, z1, 1.45), Z, new THREE.Vector3(cx - side * 0.2, topAt(zs) + yOf(0.05), zs));
+        if (i > 0) { const pz = i * lb; art(g, 'pier', cx, topAt(pz) - 0.1, 1, 1, 0.85); g.children[g.children.length - 1].position.z = pz; }
+      }
+      art(g, 'pier', cx, yOf(it.low!), 1, 1, 1.25); g.children[g.children.length - 1].position.z = L - 0.4;   // the newel at the foot
+    }
+    for (const side of madeCheeks ? [] : [-1, 1]) {
       const x0 = side < 0 ? -0.6 : W, x1 = x0 + 0.6;
       const prof = new THREE.Shape([new THREE.Vector2(0, yOf(it.low!) - 0.4), new THREE.Vector2(L + 0.1, yOf(it.low!) - 0.4), new THREE.Vector2(L + 0.1, yOf(it.low! + 0.9)), new THREE.Vector2(0, yOf(it.h + 0.9))]);
       const geo = new THREE.ExtrudeGeometry(prof, { depth: 0.6, bevelEnabled: false });

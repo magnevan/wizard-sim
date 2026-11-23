@@ -23,12 +23,16 @@ const CELL = 0.5;
 const q = new URLSearchParams(location.search);
 
 const groundUrls = import.meta.glob<string>('../../../../content/assets/ground/*.png', { eager: true, query: '?url', import: 'default' });
+// round 3: seamless 3D textures from Codex (tools/building-art/tile3d.py), used where they exist
+const tileUrls = import.meta.glob<string>('../../../../content/generated/codex/tex3d-tiles/*.png', { eager: true, query: '?url', import: 'default' });
+/** World units one repeat of each texture covers. */
+const TILE: Record<string, number> = { flagstone: 4.5, cobble: 3.5, grass: 6, ashlar: 5, coping: 3 };
 const kitUrls = import.meta.glob<string>('../../../../content/generated/meshy/court-kit/*.glb', { eager: true, query: '?url', import: 'default' });
 const modelUrls = import.meta.glob<string>('../../../../content/assets/models/wizard.glb', { eager: true, query: '?url', import: 'default' });
 import wizMeta from '../../../../content/assets/models/wizard.json';
 const urlOf = (all: Record<string, string>, name: string) => Object.entries(all).find(([p]) => p.endsWith('/' + name))?.[1];
 
-const GROUND_FILE: Record<string, string> = { g: 'grass', d: 'dirt', s: 'sand', f: 'flagstone', c: 'cobble', m: 'mud', l: 'leaves', r: 'gravel', a: 'flagstone', p: 'planks', h: 'flagstone', w: 'water' };
+const GROUND_FILE: Record<string, string> = { g: 'grass', d: 'dirt', s: 'sand', f: 'flagstone', c: 'cobble', m: 'mud', l: 'leaves', r: 'coping', a: 'flagstone', p: 'planks', h: 'flagstone', w: 'water' };
 
 // ---- the scene ----
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -90,6 +94,19 @@ const ground = (cx: number, cy: number) => rows[cy]?.[cx] ?? 'g';
     if (!left) break;
   }
 }
+// the plan's parapets (a lip 1 m above the walkway, ground 'r') come down to the walkway: modelled balustrades stand
+// along the edges instead (round 3)
+for (let pass = 0; pass < 3; pass++) for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+  const k = y * gw + x;
+  if (ground(x, y) !== 'r' || hm.out[k]) continue;
+  let best = -Infinity;
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const nx = x + dx, ny = y + dy, n = ny * gw + nx;
+    if (nx < 0 || ny < 0 || nx >= gw || ny >= gh || hm.out[n] || ground(nx, ny) === 'r') continue;
+    if (m[n] < m[k] - 0.5 && m[n] > best) best = m[n];
+  }
+  if (best > -Infinity && m[k] - best <= 1.3) m[k] = best;
+}
 const wx = (cx: number) => -hm.w / 2 + cx * CELL, wy = (cy: number) => -hm.h / 2 + cy * CELL;
 const yOf = (metres: number) => metres * U_PER_M;
 const loader = new THREE.TextureLoader();
@@ -97,8 +114,9 @@ const tex = new Map<string, THREE.Texture>();
 const texOf = (file: string) => {
   let t = tex.get(file);
   if (!t) {
-    t = loader.load(urlOf(groundUrls, file + '.png')!);
+    t = loader.load(urlOf(tileUrls, file + '.png') ?? urlOf(groundUrls, file + '.png')!);
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+    if (TILE[file]) t.repeat.setScalar(TS / TILE[file]);
     tex.set(file, t);
   }
   return t;
@@ -203,8 +221,8 @@ for (const [key, b] of bufs) {
   g.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2));
   const mat = key === 'water'
     ? new THREE.MeshStandardMaterial({ color: 0x3f8fb8, roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.88 })
-    : key === 'wall' ? new THREE.MeshStandardMaterial({ map: texOf('flagstone'), color: 0xd9c6a8, roughness: 0.9 })
-    : key === 'cliff' ? new THREE.MeshStandardMaterial({ map: texOf('gravel'), color: 0xb7a58e, roughness: 1 })
+    : key === 'wall' ? new THREE.MeshStandardMaterial({ map: texOf('ashlar'), roughness: 0.9 })
+    : key === 'cliff' ? new THREE.MeshStandardMaterial({ map: texOf('ashlar'), color: 0xc9b9a0, roughness: 1 })
     : new THREE.MeshStandardMaterial({ map: texOf(key), roughness: 0.95 });
   mat.side = THREE.DoubleSide;
   const mesh = new THREE.Mesh(g, mat);

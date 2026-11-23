@@ -85,7 +85,7 @@ poked into the road are gone (the terrace runs to the flights)."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 18)', U=(-95, 110), V=(-62, 100))
+P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 19)', U=(-95, 110), V=(-62, 100))
 C = (0, -40)            # the amphitheatre's centre, up the screen
 ARM = (0, 18)
 SEA = -6.0
@@ -114,7 +114,7 @@ P.fill(orect(polar(C, 14, 90), 6, 14, math.radians(90)), 6.0, 'path')
 for a in (65, 115): P.fill(circle(polar(C, 22, a), 2.2), 6.5, 'dais')                             # a stoop at each of the hall's doors
 P.fill(rect(-3, -46, 3, -30), 6.0, 'path')
 for du in (-6.5, 3.5): P.building(rect(du, -45, du + 3, -42), 6.0, 8.0)                              # the north gate's towers
-for su in (-26, 26): P.stairs(orect((su, -7.5), 8, 10, math.radians(90)), 6.0, 3.0, 90)              # the paired flights, either side of the dais
+for su in (-26, 26): P.stairs(orect((su, -8.0), 8, 11, math.radians(90)), 6.0, 3.0, 90)              # the paired flights, either side of the dais; the top reaches into the terrace so the head is straight (rev 19)
 for su in (-26, 26):                                                                                 # their cheek walls
     for side in (-1, 1): P.building(rect(su + side * 4.5 - 0.5, -13, su + side * 4.5 + 0.5, -2), 3.0, 3.5, roof='wall')
 P.fill(rect(3, -6, 13, -5), 5.8, 'stairs'); P.fill(rect(3, -5, 13, -4), 5.4, 'stairs'); P.fill(rect(3, -4, 13, 3), 5.0, 'paving')             # the overlook: two treads down into a bay jutting over the drop, east of the axis
@@ -156,7 +156,7 @@ P.fill(rect(53, -46, 59, -34), 6.0, 'path')                                     
 GORGE = (56, -44)
 
 # openings in the plaza's ring of steps, and the main routes' own paving
-P.stairs(orect(polar(ARM, 17, 90), 10, 6, math.radians(90)), 2.0, 3.0, 90)
+P.stairs(arc_band(ARM, 15.5, 20.5, 76, 104, 14), 2.0, 3.0, 90)                     # the opening south: a sector of the rings, radial sides (rev 19)
 P.fill(rect(-48, -34, -27, -26), ROAD_H, 'road')                                                                # the yard road
 for dv in (-36, -26): P.building(rect(-47, dv, -45, dv + 2), 6.0, 4.0)                              # the drill yard's gate piers
 P.fill(arc_band(C, 27, 35, 18, 162, 90), ROAD_H, 'road')                                        # the balcony road: one band at fixed radii

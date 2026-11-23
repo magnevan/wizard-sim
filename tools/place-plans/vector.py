@@ -105,6 +105,9 @@ def export(name):
     building_ok = (vk == 'building') & P.bld
     lip = (P.m == 'wall') & ~building_ok
     differ = ~((same_m & same_h) | stairs_ok | building_ok | lip) & (P.m != 'void')
+    # rasterisation noise along curved edges isn't a hand edit: only differences thicker than a cell count
+    from scipy import ndimage as _nd
+    differ = _nd.binary_opening(differ, iterations=1)
     groups = {}
     for i, j in zip(*np.nonzero(differ)):
         key = (round(float(P.h[i, j]), 2), P.m[i, j])
@@ -115,6 +118,7 @@ def export(name):
             g = unary_union(bs)
             # a hand-painted edge (a woods belt) is still a cell staircase: round it off so it doesn't read as one
             g = clean(g.buffer(0.9, join_style='round').buffer(-0.9, join_style='round').simplify(0.25))
+            if g.area < 4.0: continue                                   # a fragment: its neighbours take it (hygiene, below)
             cut(g)                                                      # only what the rounded shape covers: no gaps
             regions.append((g, dict(mat=mat, h=h, kind='building' if mat in ('roof',) else 'flat')))
     # lips: the walkway under them, at the walkway's height (the cell's height less the lip)
@@ -126,7 +130,7 @@ def export(name):
     # each taking only what no larger one took; what's left over (the slivers between) goes to the neighbour it shares
     # the most edge with.
     R = float(os.environ.get('VECTOR_R', 0.3))   # slivers and hairlines only: shapes are clean upstream (the plan)
-    total = clean(unary_union([rg for rg, _ in regions]))
+    total = clean(unary_union([rg for rg, _ in regions]).buffer(0.25, join_style='mitre').buffer(-0.25, join_style='mitre'))   # with gaps between regions closed
     order = sorted(range(len(regions)), key=lambda k: -regions[k][0].area)
     taken, out = Polygon(), {}
     for k in order:
@@ -137,10 +141,15 @@ def export(name):
         if not g3.is_empty: out[k] = g3; taken = clean(taken.union(g3))
     rest = clean(total.difference(taken))
     for part in (rest.geoms if hasattr(rest, 'geoms') else ([rest] if not rest.is_empty else [])):
+        # back to the region that owned it before the clean-up (most of its area), else the one it shares most edge with
         best, bl = None, 0.0
-        for k, g in out.items():
-            l = part.boundary.intersection(g.buffer(0.02)).length
+        for k in out:
+            l = part.intersection(regions[k][0]).area
             if l > bl: best, bl = k, l
+        if best is None:
+            for k, g in out.items():
+                l = part.boundary.intersection(g.buffer(0.02)).length
+                if l > bl: best, bl = k, l
         if best is not None: out[best] = clean(out[best].union(part))
     regions = [(out[k], regions[k][1]) for k in sorted(out)]
     # ---- stairs into treads ----
@@ -178,8 +187,11 @@ def export(name):
                         mx, my = (ax + bx) / 2 + nx * 0.06, (ay + by) / 2 + ny * 0.06
                         pt = shapely.Point(mx, my)
                         lowh, nb = -12.0, None
-                        for idx in tree.query(pt):
-                            if regions[idx][0].contains(pt): lowh = regions[idx][1]['h']; nb = regions[idx][1]; break
+                        for probe in (0.06, 0.3, 0.6):             # a hairline gap isn't the void: look a little further
+                            pt = shapely.Point((ax + bx) / 2 + nx * probe, (ay + by) / 2 + ny * probe)
+                            for idx in tree.query(pt):
+                                if regions[idx][0].contains(pt): lowh = regions[idx][1]['h']; nb = regions[idx][1]; break
+                            if nb is not None: break
                         top = a['h']
                         seg = [round(ax, 3), round(ay, 3), round(bx, 3), round(by, 3), round(top, 3), round(lowh, 3), a['mat'], a['kind']]
                         if lowh < top - 0.01: faces.append(seg)

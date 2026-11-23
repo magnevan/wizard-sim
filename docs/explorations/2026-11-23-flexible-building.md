@@ -72,6 +72,33 @@ Pieces must meet exact edge shapes (Bad North's matching edge vertices). Meshy d
 
 The fit step is the risk. Test it on a few pieces first.
 
+## A second opinion (a separate Fable session, via the user)
+
+Given only a high-level description, it proposed:
+- the LLM writes intent and code does every placement;
+- an asset contract on import (pivot, scale, footprint in cells, front, placement class);
+- a level graph of beats;
+- a coarse semantic grid of about 2 m per zone, checked by code;
+- terrain by autotiling;
+- small vignettes as the unit of dressing;
+- dressing by rules that code places;
+- validators as CI, feeding a concrete list back to the model;
+- a vision pass for taste only;
+- inverting the concept flow: greybox first, then image generation paints over a render of it.
+
+It pointed to [Imperative vs. Declarative Programming Paradigms for Open-Universe Scene Generation](https://arxiv.org/abs/2504.05482) (2025). There the LLM writes a short program placing objects relative to each other, rather than relations for a solver. LLM-free correction then fixes overlaps and objects that float or miss their wall. People preferred it over a relation-solver baseline and Holodeck. Objects only face the four cardinal directions, and its LLM judge agreed with people only 77% of the time.
+
+**Where it agrees with this page:** a coarse grid, autotiling, validators, the LLM never writing geometry.
+
+**What it adds that we should take:**
+- the asset contract (it would have caught piers on cubes and windows sunk into walls);
+- vignettes plus dressing rules with clearance (the planter and the bench on landings);
+- the inverted concept flow, which matches the user's earlier [map paint pass](2026-11-08-fantasy-map.md) habit of layout first, then paint.
+
+**What it misses:** most of our artifacts are joins, not coordinates. It assumes autotiled terrain can be made "by code only" and keeps Meshy for props. That's where the code-drawn art came back. The tile art must be made pieces, and connectors (stairs, gates), railings along curves and their ends need a join contract. Those are this page's edge pieces and swept sections.
+
+**The paper fits our plan format.** Plans are already imperative Python. What failed was the level they worked at (free shapes), not the paradigm. Plans should place pieces and vignettes relative to each other.
+
 ## Open questions
 
 - **Grid: decided by the user (2026-11-23).** A square grid, not so coarse that it shows, with curves allowed so the grid isn't obvious. The proposed size is 2 u (about 1.2 m: four sim cells, about one and a half wizards wide), to be confirmed in the first test.

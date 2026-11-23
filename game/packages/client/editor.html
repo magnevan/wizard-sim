@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Map editor</title>
+<style>
+  :root { --paper: #f3ede3; --paper2: #e9e1d4; --ink: #2f2a25; --mute: #7a6f62; --line: #d6cbb9; --slate: #4a5a7a; --sand: #d9a56f; --red: #c4493b; --amber: #d9962b; --green: #4f8a52; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1d2027; font: 13px/1.35 system-ui, "Segoe UI", sans-serif; color: var(--ink); }
+  canvas { display: block; }
+  .panel { position: absolute; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 4px 16px #0005; }
+  #top { left: 8px; right: 8px; top: 8px; height: 40px; display: flex; align-items: center; gap: 12px; padding: 0 12px; }
+  #top select, #top button, .btn { font: inherit; background: var(--paper2); border: 1px solid var(--line); border-radius: 7px; padding: 4px 9px; cursor: pointer; color: var(--ink); }
+  #top button:hover, .btn:hover { background: #fff8ec; }
+  #top .grow { flex: 1; }
+  .chip { padding: 2px 9px; border-radius: 12px; border: 1px solid var(--line); background: var(--paper2); white-space: nowrap; }
+  .chip.ok { color: var(--green); } .chip.err { color: #fff; background: var(--red); border-color: var(--red); } .chip.warn { background: #f7e2b8; border-color: var(--amber); }
+  #tools { left: 8px; top: 56px; width: 58px; padding: 6px 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  #tools button { width: 46px; height: 46px; border: 1px solid transparent; border-radius: 9px; background: none; cursor: pointer; padding: 3px; position: relative; font-size: 20px; color: var(--ink); }
+  #tools button img { width: 36px; height: 36px; }
+  #tools button.on { background: var(--slate); border-color: var(--slate); }
+  #tools button.on span { color: #fff; }
+  #tools button:hover:not(.on) { background: var(--paper2); }
+  #tools button kbd { position: absolute; right: 2px; bottom: 0; font-size: 9px; color: var(--mute); }
+  #tools button.on kbd { color: #dde; }
+  #side { right: 8px; top: 56px; bottom: 96px; width: 300px; display: flex; flex-direction: column; overflow: hidden; }
+  #side section { padding: 10px 12px; border-bottom: 1px solid var(--line); overflow: auto; }
+  #side h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: .02em; color: var(--mute); text-transform: uppercase; }
+  #inspect { flex: 0 0 auto; max-height: 45%; }
+  #lists { flex: 1; }
+  .row { display: flex; gap: 6px; align-items: center; margin: 4px 0; flex-wrap: wrap; }
+  .row label { color: var(--mute); min-width: 52px; }
+  .row input, .row select { font: inherit; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: #fffaf2; width: 140px; }
+  .row input[type=checkbox] { width: auto; }
+  .seg button { font: inherit; padding: 3px 9px; border: 1px solid var(--line); background: var(--paper2); cursor: pointer; }
+  .seg button:first-child { border-radius: 7px 0 0 7px; } .seg button:last-child { border-radius: 0 7px 7px 0; } .seg button + button { border-left: none; }
+  .seg button.on { background: var(--slate); color: #fff; border-color: var(--slate); }
+  .item { padding: 6px 8px; border-radius: 7px; cursor: pointer; margin: 2px 0; }
+  .item:hover { background: var(--paper2); }
+  .item .meta { color: var(--mute); font-size: 11px; }
+  .item.err { border-left: 3px solid var(--red); } .item.warn { border-left: 3px solid var(--amber); } .item.pin { border-left: 3px solid var(--slate); } .item.done { opacity: .55; }
+  .thread { margin: 4px 0 0 6px; font-size: 12px; } .thread div { margin: 2px 0; } .thread b { color: var(--slate); }
+  #palette { left: 74px; right: 316px; bottom: 8px; height: 80px; display: flex; gap: 8px; padding: 8px; align-items: stretch; overflow-x: auto; }
+  .sw { min-width: 110px; border: 2px solid var(--line); border-radius: 9px; padding: 5px 8px; cursor: pointer; background: #fffaf2; display: flex; gap: 8px; align-items: center; }
+  .sw.on { border-color: var(--slate); box-shadow: 0 0 0 2px #4a5a7a55; }
+  .sw i { width: 26px; height: 40px; border-radius: 6px; flex: none; border: 1px solid #0002; }
+  .sw .n { font-weight: 600; } .sw .h { color: var(--mute); font-size: 12px; }
+  .sw.add { justify-content: center; font-size: 22px; color: var(--mute); min-width: 56px; }
+  #brushbar { position: absolute; left: 74px; top: 56px; padding: 6px 10px; display: flex; gap: 10px; align-items: center; }
+  #toast { position: absolute; left: 50%; top: 58px; transform: translateX(-50%); background: var(--slate); color: #fff; padding: 6px 14px; border-radius: 16px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  #pinbox { position: absolute; display: none; padding: 8px; width: 260px; }
+  #pinbox textarea { width: 100%; box-sizing: border-box; font: inherit; border: 1px solid var(--line); border-radius: 6px; padding: 5px; height: 60px; resize: vertical; }
+  #help { position: absolute; left: 74px; bottom: 96px; max-width: calc(100% - 400px); color: #f3ede3; font-size: 12px; background: #1d2027cc; padding: 4px 10px; border-radius: 8px; pointer-events: none; }
+  body.viewer .panel, body.viewer #help, body.viewer #toast { display: none !important; }
+  #err { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: #f3ede3; font-size: 15px; }
+</style>
+</head>
+<body>
+<div id="top" class="panel"></div>
+<div id="tools" class="panel"></div>
+<div id="brushbar" class="panel"></div>
+<div id="side" class="panel"><section id="inspect"></section><section id="lists"></section></div>
+<div id="palette" class="panel"></div>
+<div id="pinbox" class="panel"><textarea placeholder="What should change here? (Enter to save, Esc to cancel)"></textarea></div>
+<div id="toast"></div>
+<div id="help">Right-drag: orbit · middle-drag or Shift+right: pan · wheel: zoom · T top view · G game view · C corners · Ctrl+Z / Ctrl+Y</div>
+<div id="err"></div>
+<script type="module" src="./src/lab/editor/main.ts"></script>
+</body>
+</html>

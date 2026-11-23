@@ -1,0 +1,263 @@
+/**
+ * One scene as the map editor's server holds it: the scene, its revision, the undo history and the pins, with the
+ * files beside it in tools/kit/scenes/ (<name>.scene.json, .history.jsonl, .pins.json). Every change goes through
+ * here, one at a time: it is applied, checked for conflicts, written, compiled and broadcast to the open pages.
+ */
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { applyOps, changedKeys, dumpScene, OpError, revert, shiftPoint, type Op, type Scene } from './ops';
+import type { CompileWorker, Compiled, Finding } from './compile-worker';
+
+export type Group = { group: number; author: string; label: string; rev: number; time: string; before: Scene; after: Scene; keys: string[] };
+export type Pin = {
+  id: string; note: string; author: string; rev: number; status: 'open' | 'resolved'; seen: boolean; outcome?: string; time: string;
+  anchor: { x: number; y: number; h?: number; obj?: string; inst?: { p: string; e?: [number, number] }; cam?: number[] };
+  thread: { author: string; text: string; time: string }[];
+};
+export type Broadcast = (event: string, data: unknown) => void;
+
+export class HttpError extends Error { constructor(public status: number, msg: string, public extra: Record<string, unknown> = {}) { super(msg); } }
+
+const HISTORY_MAX = 300;
+const hash = (s: string) => createHash('sha1').update(s).digest('hex');
+const fkey = (f: Finding) => `${f.code}|${f.msg}`;
+const changedSummary = (keys: string[]) => ({ corners: keys.filter((k) => k.startsWith('c:')).length, ids: keys.filter((k) => k[1] === ':' && k[0] !== 'c').map((k) => k.slice(2)), resized: keys.includes('size') });
+
+function atomicWrite(file: string, text: string) {
+  const tmp = `${file}.tmp`;
+  writeFileSync(tmp, text);
+  renameSync(tmp, file);
+}
+
+export class SceneStore {
+  scene!: Scene;
+  rev = 0;
+  compiled: Compiled | null = null;
+  history: Group[] = [];
+  redoStack: Group[] = [];
+  pins: Pin[] = [];
+  lastWritten = '';
+  private nextGroup = 1;
+  private nextPin = 1;
+  private queue: Promise<unknown> = Promise.resolve();
+
+  constructor(public name: string, private dir: string, private worker: CompileWorker, private broadcast: Broadcast) {}
+
+  get file() { return join(this.dir, `${this.name}.scene.json`); }
+  private get historyFile() { return join(this.dir, `${this.name}.history.jsonl`); }
+  private get pinsFile() { return join(this.dir, `${this.name}.pins.json`); }
+
+  /** Run changes one at a time, in order. */
+  private serial<T>(f: () => Promise<T>): Promise<T> {
+    const p = this.queue.then(f, f);
+    this.queue = p.catch(() => undefined);
+    return p;
+  }
+
+  async load() {
+    const text = readFileSync(this.file, 'utf8');
+    this.scene = JSON.parse(text) as Scene;
+    this.lastWritten = hash(text);
+    if (existsSync(this.historyFile)) {
+      this.history = readFileSync(this.historyFile, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l) as Group).slice(-HISTORY_MAX);
+      const last = this.history[this.history.length - 1];
+      if (last) { this.rev = last.rev; this.nextGroup = last.group + 1; }
+    }
+    if (existsSync(this.pinsFile)) {
+      const p = JSON.parse(readFileSync(this.pinsFile, 'utf8')) as { next: number; pins: Pin[] };
+      this.pins = p.pins; this.nextPin = p.next;
+    }
+    // edited while the server was down: one external revision
+    const last = this.history[this.history.length - 1];
+    if (last && changedKeys(last.after, this.scene).length) this.record(last.after, this.scene, 'external', 'edited outside the editor');
+    await this.recompile();
+  }
+
+  private record(before: Scene, after: Scene, author: string, label: string): Group {
+    const g: Group = { group: this.nextGroup++, author, label, rev: ++this.rev, time: new Date().toISOString(), before, after, keys: changedKeys(before, after) };
+    this.history.push(g);
+    if (this.history.length > HISTORY_MAX) { this.history = this.history.slice(-HISTORY_MAX); this.saveHistory(); }
+    else writeFileSync(this.historyFile, `${JSON.stringify(g)}\n`, { flag: 'a' });
+    return g;
+  }
+
+  private saveHistory() { writeFileSync(this.historyFile, this.history.map((g) => JSON.stringify(g)).join('\n') + (this.history.length ? '\n' : '')); }
+  private savePins() { atomicWrite(this.pinsFile, `${JSON.stringify({ next: this.nextPin, pins: this.pins }, null, 1)}\n`); this.broadcast('map:pins', { name: this.name, pins: this.pins }); }
+
+  private writeScene() {
+    const text = dumpScene(this.scene);
+    this.lastWritten = hash(text);
+    atomicWrite(this.file, text);
+  }
+
+  private async recompile(): Promise<Compiled> {
+    try { this.compiled = await this.worker.compile(this.scene); }
+    catch (e) {
+      const msg = (e as Error).message;
+      this.compiled = { G: this.scene.G, size: [0, 0], floors: [], instances: [], pieces: {}, errors: [msg], warnings: [], findings: [{ code: 'crash', severity: 'error', msg, at: null, refs: [] }] };
+    }
+    return this.compiled;
+  }
+
+  summary() {
+    const c = this.compiled;
+    return { errors: c?.errors.length ?? 0, warnings: c?.warnings.length ?? 0, pieces: c ? Object.values(c.pieces).reduce((a, b) => a + b, 0) : 0, ms: c?.ms };
+  }
+
+  private publish(change: { author: string; label: string; keys: string[] }) {
+    this.broadcast('map:update', { name: this.name, rev: this.rev, scene: this.scene, compiled: this.compiled, change });
+  }
+
+  private diff(before: Compiled | null, after: Compiled) {
+    const was = new Map((before?.findings ?? []).map((f) => [fkey(f), f])), now = new Map(after.findings.map((f) => [fkey(f), f]));
+    const pieces: Record<string, number> = {};
+    for (const p of new Set([...Object.keys(before?.pieces ?? {}), ...Object.keys(after.pieces)])) {
+      const d = (after.pieces[p] ?? 0) - (before?.pieces[p] ?? 0);
+      if (d) pieces[p] = d;
+    }
+    return { added: [...now].filter(([k]) => !was.has(k)).map(([, f]) => f), resolved: [...was].filter(([k]) => !now.has(k)).map(([, f]) => f), pieces };
+  }
+
+  /** Apply a batch of ops as one undo group (or only compile it, with dry). */
+  apply(req: { ops: Op[]; author?: string; label?: string; base?: number; dry?: boolean }) {
+    return this.serial(async () => {
+      if (!Array.isArray(req.ops) || !req.ops.length) throw new HttpError(400, 'ops must be a non-empty array');
+      const author = req.author ?? 'claude';
+      let res;
+      try { res = applyOps(this.scene, req.ops); } catch (e) { if (e instanceof OpError) throw new HttpError(400, e.message); throw e; }
+      const keys = changedKeys(this.scene, res.scene);
+      if (typeof req.base === 'number' && req.base < this.rev) {
+        const later = new Set(this.history.filter((g) => g.rev > req.base! && g.author !== author).flatMap((g) => g.keys));
+        const conflicts = later.has('size') && keys.length ? ['size'] : keys.filter((k) => later.has(k) || (k === 'size' && later.size));
+        if (conflicts.length) throw new HttpError(409, `changed since rev ${req.base}: read the scene again`, { conflicts, rev: this.rev });
+      }
+      const before = this.compiled;
+      if (req.dry) {
+        const c = await this.worker.compile(res.scene);
+        return { dry: true, rev: this.rev, minted: res.minted, changed: changedSummary(keys), diff: this.diff(before, c) };
+      }
+      if (!keys.length) return { rev: this.rev, minted: res.minted, changed: changedSummary(keys), diff: { added: [], resolved: [], pieces: {} }, summary: this.summary() };
+      const prev = this.scene;
+      this.scene = res.scene;
+      const label = req.label ?? req.ops.map((o) => o.op).join(', ');
+      this.record(prev, this.scene, author, label);
+      this.redoStack = [];
+      if (res.shifts.length) { for (const p of this.pins) [p.anchor.x, p.anchor.y] = shiftPoint([p.anchor.x, p.anchor.y], res.shifts); this.savePins(); }
+      this.writeScene();
+      const c = await this.recompile();
+      this.publish({ author, label, keys });
+      return { rev: this.rev, minted: res.minted, changed: changedSummary(keys), diff: this.diff(before, c), summary: this.summary() };
+    });
+  }
+
+  /** Undo the latest group (the latest by `author`, if given), even if later groups were made after it. */
+  undo(author?: string) {
+    return this.serial(async () => {
+      let i = this.history.length - 1;
+      while (i >= 0 && (this.history[i].author === 'external' || (author && this.history[i].author !== author))) i--;
+      if (i < 0) throw new HttpError(404, author ? `nothing of ${author}'s to undo` : 'nothing to undo');
+      const g = this.history[i];
+      let next: Scene;
+      try { next = revert(this.scene, g.before, g.after); } catch (e) { throw new HttpError(409, (e as Error).message); }
+      const keys = changedKeys(this.scene, next);
+      this.history.splice(i, 1); this.saveHistory();
+      this.redoStack.push(g);
+      this.scene = next; this.rev++;
+      this.writeScene();
+      const before = this.compiled, c = await this.recompile();
+      this.publish({ author: g.author, label: `undo: ${g.label}`, keys });
+      return { rev: this.rev, undone: { label: g.label, author: g.author }, diff: this.diff(before, c), summary: this.summary() };
+    });
+  }
+
+  redo() {
+    return this.serial(async () => {
+      const g = this.redoStack.pop();
+      if (!g) throw new HttpError(404, 'nothing to redo');
+      let next: Scene;
+      try { next = revert(this.scene, g.after, g.before); } catch (e) { throw new HttpError(409, (e as Error).message); }
+      const prev = this.scene;
+      this.scene = next;
+      this.record(prev, next, g.author, g.label);
+      this.writeScene();
+      const before = this.compiled, c = await this.recompile();
+      this.publish({ author: g.author, label: `redo: ${g.label}`, keys: changedKeys(prev, next) });
+      return { rev: this.rev, redone: { label: g.label, author: g.author }, diff: this.diff(before, c), summary: this.summary() };
+    });
+  }
+
+  /** The scene file changed on disk, not through us (Claude's Edit, a git checkout). */
+  external(text: string) {
+    return this.serial(async () => {
+      if (hash(text) === this.lastWritten) return;
+      let next: Scene;
+      try { next = JSON.parse(text) as Scene; } catch { return; }   // half-written: the next change event brings the rest
+      this.lastWritten = hash(text);
+      const keys = changedKeys(this.scene, next);
+      if (!keys.length) return;
+      const prev = this.scene;
+      this.scene = next;
+      this.record(prev, next, 'external', 'edited outside the editor');
+      await this.recompile();
+      this.publish({ author: 'external', label: 'edited outside the editor', keys });
+    });
+  }
+
+  historyList(n = 20) {
+    return this.history.slice(-n).reverse().map(({ group, author, label, rev, time, keys }) => ({ group, author, label, rev, time, changed: keys.length }));
+  }
+
+  /** Facts near a point (within r corners) or in a rectangle. */
+  query(q: { x?: number; y?: number; r?: number; x0?: number; y0?: number; x1?: number; y1?: number }) {
+    const G = this.scene.G, rect = q.x0 != null;
+    const [x0, y0, x1, y1] = rect ? [q.x0!, q.y0!, q.x1!, q.y1!] : [q.x! - (q.r ?? 1.5), q.y! - (q.r ?? 1.5), q.x! + (q.r ?? 1.5), q.y! + (q.r ?? 1.5)];
+    const inside = (x: number, y: number) => (rect ? x >= Math.min(x0, x1) && x <= Math.max(x0, x1) && y >= Math.min(y0, y1) && y <= Math.max(y0, y1) : Math.hypot(x - q.x!, y - q.y!) <= (q.r ?? 1.5) + 1e-9);
+    const byGlyph = new Map(this.scene.terraces.map((t) => [t.glyph, t]));
+    const corners = [];
+    for (let y = Math.max(0, Math.ceil(Math.min(y0, y1))); y <= Math.min(this.scene.corners.length - 1, Math.floor(Math.max(y0, y1))); y++)
+      for (let x = Math.max(0, Math.ceil(Math.min(x0, x1))); x <= Math.min(this.scene.corners[0].length - 1, Math.floor(Math.max(x0, x1))); x++)
+        if (inside(x, y)) { const g = this.scene.corners[y][x]; corners.push({ x, y, glyph: g, terrace: byGlyph.get(g)?.id }); }
+    const pointsOf = (o: Record<string, unknown>): [number, number][] =>
+      [o.at, o.centre, ...((o.head ?? o.ends ?? []) as unknown[])].filter((p): p is [number, number] => Array.isArray(p));
+    const objects = this.scene.objects.filter((o) => pointsOf(o).some(([x, y]) => inside(x, y)));
+    const instances = (this.compiled?.instances ?? []).map((it) => {
+      const [x, y] = it.e ?? (it.x2 != null ? [(it.x + it.x2) / 2 / G, (it.y + it.y2!) / 2 / G] : [it.x / G, it.y / G]);
+      return { p: it.p, src: it.src, e: it.e, o: it.o, v: it.v, x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100, h: it.h };
+    }).filter((it) => inside(it.x, it.y));
+    const findings = (this.compiled?.findings ?? []).filter((f) => f.at && inside(f.at[0], f.at[1]));
+    return { rev: this.rev, corners, objects, instances, findings };
+  }
+
+  // ---- pins ----
+  pinOp(b: Record<string, unknown>) {
+    const now = new Date().toISOString();
+    const find = () => { const p = this.pins.find((p) => p.id === b.id); if (!p) throw new HttpError(404, `no pin ${JSON.stringify(b.id)}`); return p; };
+    switch (b.op) {
+      case 'add': {
+        const a = b.anchor as Pin['anchor'];
+        if (!a || typeof a.x !== 'number' || typeof a.y !== 'number') throw new HttpError(400, 'a pin needs anchor: {x, y}');
+        const p: Pin = { id: `p${this.nextPin++}`, note: String(b.note ?? ''), author: String(b.author ?? 'user'), rev: this.rev, status: 'open', seen: false, time: now, anchor: a, thread: [] };
+        this.pins.push(p); this.savePins(); return { pin: p };
+      }
+      case 'reply': { const p = find(); p.thread.push({ author: String(b.author ?? 'claude'), text: String(b.text ?? ''), time: now }); this.savePins(); return { pin: p }; }
+      case 'resolve': {
+        const p = find();
+        if (!['scene', 'rule', 'piece'].includes(String(b.outcome))) throw new HttpError(400, 'outcome must be scene, rule or piece');
+        p.status = 'resolved'; p.outcome = String(b.outcome);
+        if (b.text) p.thread.push({ author: String(b.author ?? 'claude'), text: String(b.text), time: now });
+        this.savePins(); return { pin: p };
+      }
+      case 'reopen': { const p = find(); p.status = 'open'; p.seen = false; this.savePins(); return { pin: p }; }
+      case 'seen': { const ids = new Set((b.ids as string[]) ?? []); for (const p of this.pins) if (ids.has(p.id)) p.seen = true; this.savePins(); return { ok: true }; }
+      case 'delete': { find(); this.pins = this.pins.filter((p) => p.id !== b.id); this.savePins(); return { ok: true }; }
+      default: throw new HttpError(400, 'op must be add, reply, resolve, reopen, seen or delete');
+    }
+  }
+
+  pinList(status = 'open') {
+    if (status === 'all') return this.pins;
+    if (status === 'new') return this.pins.filter((p) => p.status === 'open' && !p.seen);
+    return this.pins.filter((p) => p.status === status);
+  }
+}

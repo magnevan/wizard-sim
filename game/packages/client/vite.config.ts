@@ -5,6 +5,7 @@ import { dirname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import { parseKnobValues } from './src/art/fx-knobs-check';
+import { mapEditor } from './map-editor/plugin';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -119,7 +120,7 @@ function buildInfo(): Plugin {
 // base './' so the built dist/ works from any path (the artifact, itch.io, a file server).
 export default defineConfig({
   base: './',
-  plugins: [soundLab(), fxKnobs(), buildInfo()],
+  plugins: [soundLab(), fxKnobs(), mapEditor(join(here, '../../..')), buildInfo()],
   define: { __SIM_BUILD__: JSON.stringify(simBuild()), __BUILD_COMMIT__: JSON.stringify(gitCommit()) },
   server: { port: 5187 },
   preview: { port: 4187 },

@@ -11,8 +11,8 @@ cssclasses:
 
 The opening is a chain of eight stops, Life first; the yard and the battery are built ([route](campaign/01-opening/brief.md#the-route), [thread](threads/opening.md)). Its places will be built in stylised 3D from a modular kit ([flexible building](explorations/2026-11-23-flexible-building.md)); a map editor the user and an LLM share comes next ([thread](threads/map-editor.md)).
 
-> [!in-review] The map editor spec
-> Read [the spec](explorations/2026-11-23-map-editor.md) and answer its five open questions at the bottom (direct edits or proposals, where you talk to Claude, 2D plan for editing, the first place, build slice A now). No answer means Claude's recommendation stands.
+> [!in-review] Try the map editor
+> `npm run dev` in `game/`, then open http://localhost:5187/editor.html: patch B in 3D. Paint terraces, add stairs and props, click a wall section to make it a window or door, and pin (N) anything that should change: Claude sees new pins with your next message in the terminal. [How to use it](../tools/map-editor/README.md#using-the-editor).
 
 [The Morning Everything Breaks](https://claude.ai/artifact/9DwUCZHa8ibckf2vWiFews) · [Opening Segment review](https://claude.ai/artifact/22rU6WpjmMRHrToc5YbiPi) · [Saved marks](archive/claude-review-feedback-2026-11-16.md#opening-segment) · [Playable battery](current-state.md#rooms)
 

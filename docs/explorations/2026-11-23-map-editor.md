@@ -1,6 +1,6 @@
 # A map editor the user and Claude share (2026-11-23)
 
-**Status:** spec, draft 2 (2026-11-23), waiting on the user's answers to [the open questions](#open-questions-for-the-user). Nothing built yet. Thread: [map editor](../threads/map-editor.md). It builds on [flexible building](2026-11-23-flexible-building.md): places are corner-grid layouts compiled by `tools/kit/compile.py` into made kit pieces and drawn by `game/packages/client/src/lab/kit3d.ts`.
+**Status:** slice A built (2026-11-23), changed by the user's answers: edit in 3D, talk in the terminal, Claude edits directly ([what was built](#what-was-built-2026-11-23)). The spec below is draft 2 as reviewed; where the build departs from it, it says so there. Thread: [map editor](../threads/map-editor.md). It builds on [flexible building](2026-11-23-flexible-building.md): places are corner-grid layouts compiled by `tools/kit/compile.py` into made kit pieces and drawn by `game/packages/client/src/lab/kit3d.ts`.
 
 How it was made: Claude (Opus) wrote it with a small team. A Sonnet agent surveyed the kit code. An Opus agent researched editors and LLM-connected tools ([what other editors do](#what-other-editors-do)). A guide agent checked the Claude Code docs on how a browser can push to a session. Fable gave an independent first opinion, then reviewed draft 1 ([the review](#fables-review)). Codex drew a mockup of the screen and an icon sheet ([pictures](#pictures)).
 
@@ -9,7 +9,7 @@ How it was made: Claude (Opus) wrote it with a small team. A Sonnet agent survey
 A session, as the user would live it, on patch B (the kit's traced test patch):
 
 1. The user runs `npm run editor` and opens the editor. Patch B is there: a top-down plan on the left, the 3D view (greybox and the Meshy pieces made so far) on the right.
-2. In the terminal, Claude says it can see the scene: "patch B, 34×24 cells, compiles with one warning: the road gate has a wall in front of its foot."
+2. In the terminal, Claude says it can see the scene: "patch B, 34×24 cells, compiles with one warning: the fountain steps run straight into the grand stair."
 3. The user paints the plaza two cells bigger. The plan repaints under the brush at once, and the 3D view catches up within a second. A red marker appears where the paint left an ambiguous cell; one more corner and it's gone.
 4. The user drops three pins and types a note on each:
    - on the road gate: "this stair is awkward";
@@ -42,6 +42,8 @@ Step 5's third answer matters. Many things the user spots aren't in the map at a
 - **Dev only.** The editor never ships in the game build, since main deploys on every push.
 
 ## The screen
+
+*Superseded 2026-11-23: the user chose to edit in 3D; the build has one 3D view, with a top-down camera for the plan ([what was built](#what-was-built-2026-11-23)).*
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -330,6 +332,8 @@ What to judge in it:
 
 ## Open questions for the user
 
+*Answered 2026-11-23: 1 yes; 2 "maybe everything in terminal for now"; 3 "doing everything in 3d. Some things will not be possible in 2D, like adjusting windows"; 4 and 5 Claude's call: patch B, build now ([decision](../decisions/README.md#2026-11-23-the-map-editor-edit-in-3d-talk-in-the-terminal-claude-edits-directly-explorations2026-11-23-map-editormd)).*
+
 Each has Claude's recommendation; no answer means the recommendation stands.
 
 1. **Should Claude edit directly (with undo), or propose changes you accept?** Recommended: directly, with the changed cells glowing and an Undo on each reply. Proposal mode comes later if this feels loose.
@@ -337,3 +341,16 @@ Each has Claude's recommendation; no answer means the recommendation stands.
 3. **Edit in the 2D plan and judge in 3D?** Recommended: yes for now. Editing in 3D can come later if the plan feels indirect.
 4. **The first place to try it on.** Recommended: patch B, which has a known awkward stair. The alternative is the courtyard, once it's laid out in the kit.
 5. **Build slice A now?** Recommended: yes, right after your answers (or now, if you're happy with the recommendations).
+
+## What was built (2026-11-23)
+
+Slice A, changed by the user's answers. How to use it: [tools/map-editor/README.md](../../tools/map-editor/README.md).
+
+- **The compiler** (`tools/kit/compile.py`) takes a scene (JSON, `tools/kit/scenes/`), reports findings with a place and the ids involved, gives every piece its source, compiles a broken scene as far as it can, and chooses windows by position. Wall sections take overrides (`kind: edge`: plain, window, door, niche); doors became overrides. Patches A and B were converted; their pieces and floors are identical to before. A long-lived worker compiles patch B in about 70 ms (the 0.6 s measured before was Python starting). 300 random corner edits compiled without a crash.
+- **The scene server** is a dev-only Vite plugin (`game/packages/client/map-editor/`), not the separate process the spec proposed: the ops, the undo history (an undo group per call, any group undoable later), conflicts by base revision, pins, new scenes, the file watcher, and pictures for Claude from the open page or a hidden headless one.
+- **The editor** (`editor.html`, `src/lab/editor/main.ts`) is one 3D view with the tools select, brush, rectangle, stair, prop and pin; a top-down camera (T) for the plan and coloured corner markers (C) for the raw data; an inspector for wall sections, terraces and objects; the palette; the problems and pins lists; markers at each problem; and a glow on what Claude changed. Codex's icons are in the tool bar. The greybox page and the editor share `src/lab/kit-render.ts`.
+- **Claude's side:** `tools/map-editor/cli.mjs` and the `UserPromptSubmit` hook (`hook.mjs`). No MCP bridge or channel yet: the hook brings pins in with the user's next message.
+- **Checks:** `npm run editor:check` (select a wall and make it a door, paint, pin, undo, pictures: all pass), the ops tests, `npm run check`.
+- **The test from the spec, run by Claude playing both sides:** a pin on patch B's fountain steps ("you walk off it straight into the big stair"); the hook brought it in; dry runs showed that moving the steps took them off the landing's edge or put a lamp in their landing; narrowing the grand stair by one cell cleared the run-out with nothing new broken. It is applied to patch B (rev 1; undo it in the editor if unwanted). The simulated pin was deleted.
+
+Not built yet: the MCP bridge and channel (push), flight resizing by dragging, curves by hand, copy and paste, hotkey help, a walk mode.

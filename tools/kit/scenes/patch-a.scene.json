@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "name": "patch-a",
+  "G": 2,
+  "notes": "Test patch A (2026-11-23): a corner of a courtyard, to test building from a kit of made pieces on a corner grid.\n\nA layout is data an LLM can write: one character per grid CORNER (not per cell), each naming a terrace; the\ncompiler draws every cell from the made piece for its four corners (tools/kit/compile.py). Flights, curved edges,\ndoors and vignettes are named, never drawn.",
+  "terraces": [
+    {"id": "t-hall", "glyph": "B", "h": 10, "mat": "roof", "edge": "wall", "name": "the hall"},
+    {"id": "t-terrace", "glyph": "U", "h": 3, "mat": "paving", "edge": "parapet", "name": "the terrace"},
+    {"id": "t-a-lawn-bed", "glyph": "L", "h": 0.4, "mat": "lawn", "edge": "retain", "walk": false, "name": "a lawn bed"},
+    {"id": "t-plaza", "glyph": "P", "h": 0, "mat": "plaza", "edge": "retain", "name": "the plaza"},
+    {"id": "t-road", "glyph": "R", "h": -0.15, "mat": "road", "edge": "kerb", "name": "the road"}
+  ],
+  "corners": [
+    "BBBBBBBBBBBBBBBBBBBBBBBBB",
+    "BBBBBBBBBBBBBBBBBBBBBBBBB",
+    "BBBBBBBBBBBBBBBBBBBBBBBBB",
+    "UUUUUUUUUUUUUUUUUUUUUUUUU",
+    "UUUUUUUUUUUUUUUUUUUUUUUUU",
+    "UUUUUUUUUUUUUUUUUUUUUUUUU",
+    "UUUUUUUUUUUUUUUUUUUUUUUUU",
+    "PUUUUUUUUUUUUUUUUUUUUUUUU",
+    "PPUUUUUUUUUUUUUUUUUUUUUUU",
+    "PPPPPPPPPPPPPPPPPPPPPPPPP",
+    "PPPPPPPPPPPPPPPPPPPPPPPPP",
+    "PPPPPPPPPPPPPPPPPPPPPPPPP",
+    "PPLLLPPPPPPPPPPPPPPPPPPPP",
+    "PLLLLLPPPPPPPPPPPPPPPPPPP",
+    "PLLLLLPPPPPPPPPPPPPPPPPPP",
+    "PPLLLPPPPPPPPPPPPPPPPPPPP",
+    "RPPPPPPPPPPPPPPPPPPPPPPPP",
+    "RRPPPPPPPPPPPPPPPPPPPPPPR",
+    "RRRRRRRRRRRRRRRRRRRRRRRRR",
+    "RRRRRRRRRRRRRRRRRRRRRRRRR",
+    "RRRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "objects": [
+    {"id": "f1", "kind": "flight", "name": "the terrace stair", "head": [[7, 8.5], [11, 8.5]]},
+    {"id": "c1", "kind": "curve", "name": "the bastion", "terrace": "t-terrace", "centre": [18, 8.5], "r": 3, "ends": [[15, 8.5], [21, 8.5]], "out": "S"},
+    {"id": "e1", "kind": "edge", "name": "the hall door", "at": [12.5, 2.5], "v": "door"},
+    {"id": "v1", "kind": "vignette", "piece": "vignette.bench-planter", "at": [17, 6.5], "front": "S"},
+    {"id": "v2", "kind": "vignette", "piece": "vignette.lamp", "at": [12.5, 15.5], "front": "S"},
+    {"id": "v3", "kind": "vignette", "piece": "vignette.lamp", "at": [5.5, 15.5], "front": "S"}
+  ]
+}

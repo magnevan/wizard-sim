@@ -107,7 +107,7 @@ concepts:[
   [`To walk it yourself.`,` In game/: npm run dev, then open http://localhost:5187/world3d.html (WASD to walk). That also shows the frame rate on your machine.`],
  ],
  images:[
-  ['img/spike3d-1.jpg','The 3D spike at the great hall’s gate: Meshy models of the cream stone hall with lit arched windows, gold trim and blue slate roofs, an arched gateway with star banners, two piers with brass lanterns; our red-hatted wizard with his staff on warm paving, casting a real shadow.','At the gate: the modelled pieces.'],
+  ['img/spike3d-1.jpg','The 3D spike at the great hall’s gate: Meshy models of the cream stone hall with lit arched windows, gold trim and blue slate roofs, an arched gateway with star banners, two piers with brass lanterns; our red-hatted wizard with his staff on warm paving, casting a real shadow.','At the gate, after the critic’s light notes: a lower warm sun, ambient occlusion, the camera at 46°.'],
   ['img/spike3d-2.jpg','The 3D spike in the plaza: terraces stepping down in straight lines, brick-sided parapet blocks, the wizard on plain paving.','In the plaza: the unmodelled grey-box in 3D.'],
   ['img/spike3d-3.jpg','The 3D spike at the head of the east flight: a cobbled balcony road, a flight of steps down, extruded grey-box parapets and walls, a corner of the hall at the top left.','At the east flight.'],
  ],

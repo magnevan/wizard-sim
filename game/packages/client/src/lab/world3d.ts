@@ -7,6 +7,10 @@
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ROOMS } from '@wizard-sim/sim';
 import { heightMap } from '../art/heights';
 import { GROUNDS } from '../art/grounds.gen';
@@ -43,8 +47,8 @@ scene.fog = new THREE.Fog(0x2a2f3c, 70, 140);
 const R2 = Math.SQRT1_2;
 const RIGHT = new THREE.Vector3(R2, 0, -R2), DOWN = new THREE.Vector3(R2, 0, R2);
 
-scene.add(new THREE.HemisphereLight(0xcfe0ff, 0x8a6a4a, 1.7));
-const sun = new THREE.DirectionalLight(0xffe2b8, 2.6);
+scene.add(new THREE.HemisphereLight(0xc8d8ff, 0x9a7050, 1.5));
+const sun = new THREE.DirectionalLight(0xffc98f, 3.0);   // a low warm morning sun (the critic: flat midday light)
 sun.castShadow = true;
 sun.shadow.mapSize.set(4096, 4096);
 const sc = sun.shadow.camera as THREE.OrthographicCamera;
@@ -52,7 +56,7 @@ sc.left = -45; sc.right = 45; sc.top = 45; sc.bottom = -45; sc.near = 1; sc.far 
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
 scene.add(sun, sun.target);
 // from the upper left of the screen, fairly high: shadows fall down and to the right
-const SUN_OFF = RIGHT.clone().multiplyScalar(-34).add(DOWN.clone().multiplyScalar(18)).add(new THREE.Vector3(0, 50, 0));   // on the camera's side, so the faces you see are lit
+const SUN_OFF = RIGHT.clone().multiplyScalar(-46).add(DOWN.clone().multiplyScalar(22)).add(new THREE.Vector3(0, 34, 0));   // on the camera's side, so the faces you see are lit
 
 // ---- the terrain, from the level's heights and ground ----
 const def = (ROOMS as Record<string, Parameters<typeof heightMap>[0]>)[ROOM];
@@ -256,7 +260,7 @@ pending.push(gltf.loadAsync(urlOf(modelUrls, 'wizard.glb')!).then((g) => {
 }));
 
 // ---- the camera: steep and close, as Magicka's ----
-const PITCH = THREE.MathUtils.degToRad(Number(q.get('pitch') ?? 52));
+const PITCH = THREE.MathUtils.degToRad(Number(q.get('pitch') ?? 46));   // Magicka's, about (the critic: 52 let roofs take over)
 const ortho = q.get('ortho') === '1';
 const VIEW_H = Number(q.get('view') ?? 18); // world units of ground-plane height the screen shows at the target
 const cam: THREE.Camera = ortho
@@ -284,6 +288,18 @@ const keys = new Set<string>();
 addEventListener('keydown', (e) => keys.add(e.key.toLowerCase()));
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 addEventListener('resize', () => renderer.setSize(innerWidth, innerHeight));
+// ambient occlusion in the corners and at the feet of walls (?ao=0 to compare)
+let composer: EffectComposer | null = null;
+if (q.get('ao') !== '0') {
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, cam));
+  const ao = new GTAOPass(scene, cam, innerWidth, innerHeight);
+  ao.updateGtaoMaterial({ radius: 1.2, distanceFallOff: 1, thickness: 1.5 });
+  ao.blendIntensity = 0.85;
+  composer.addPass(ao);
+  composer.addPass(new OutputPass());
+}
+addEventListener('resize', () => composer?.setSize(innerWidth, innerHeight));
 const clock = new THREE.Clock();
 let facing = Math.atan2(-DOWN.x, -DOWN.z);
 function tick() {
@@ -303,7 +319,7 @@ function tick() {
   const z = yOf(metresAt(pos.x, pos.y) || 0);
   if (wizard) { wizard.position.set(pos.x, z, pos.y); wizard.rotation.y = facing; }
   frame(new THREE.Vector3(pos.x, z + 1.2, pos.y));
-  renderer.render(scene, cam);
+  if (composer) composer.render(); else renderer.render(scene, cam);
   requestAnimationFrame(tick);
 }
 Promise.all(pending).then(() => { (window as unknown as { __ready: boolean }).__ready = true; });

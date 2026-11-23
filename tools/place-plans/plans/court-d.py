@@ -77,14 +77,19 @@ road; the sea gateway's piers round and matched; the weir a stone sill flush wit
 
 Revision 17 (the fifth sense round, 7.5/10): the sea read as two levels, because the sea court's cliff faces came down
 into the water and were drawn in its colour; a stone ledge now runs along the cliff's foot, so the faces stand on rock
-and the sea starts beyond it."""
+and the sea starts beyond it.
+
+Revision 18 (the 3D spike, 2026-11-23): the roads as clean shapes that meet on purpose (one balcony band at fixed
+radii, straight roads to the seams and the north gate), a kerb below the pavements; the flights' landing rectangles that
+poked into the road are gone (the terrace runs to the flights)."""
 import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from plan import *
 
-P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 17)', U=(-95, 110), V=(-62, 100))
+P = Plan('court-d', 'Courtyard D: Terraces round a plaza (rev 18)', U=(-95, 110), V=(-62, 100))
 C = (0, -40)            # the amphitheatre's centre, up the screen
 ARM = (0, 18)
 SEA = -6.0
+ROAD_H = 5.85   # the roads a kerb below the pavements (the user, 2026-11-23: the pavement is raised, not the road)
 def toward(a, b, d):  # the point d along from a towards b
     L = math.dist(a, b); return (a[0] + (b[0] - a[0]) * d / L, a[1] + (b[1] - a[1]) * d / L)
 
@@ -109,7 +114,6 @@ P.fill(orect(polar(C, 14, 90), 6, 14, math.radians(90)), 6.0, 'path')
 for a in (65, 115): P.fill(circle(polar(C, 22, a), 2.2), 6.5, 'dais')                             # a stoop at each of the hall's doors
 P.fill(rect(-3, -46, 3, -30), 6.0, 'path')
 for du in (-6.5, 3.5): P.building(rect(du, -45, du + 3, -42), 6.0, 8.0)                              # the north gate's towers
-for su in (-26, 26): P.fill(rect(su - 5, -17, su + 5, -12.5), 6.0, 'paving')                        # a landing at each flight's head, square to it
 for su in (-26, 26): P.stairs(orect((su, -7.5), 8, 10, math.radians(90)), 6.0, 3.0, 90)              # the paired flights, either side of the dais
 for su in (-26, 26):                                                                                 # their cheek walls
     for side in (-1, 1): P.building(rect(su + side * 4.5 - 0.5, -13, su + side * 4.5 + 0.5, -2), 3.0, 3.5, roof='wall')
@@ -142,9 +146,9 @@ P.fill([(38, 100), (40, 40), (43, 10), (44, -10), (52, -10), (58, 20), (64, 45),
 P.fill([(44, -56), (52, -56), (52, -10), (44, -10)], 4.0, 'water')
 P.building(rect(41, -62, 55, -56), 4.0, 2.0, roof='wall')
 P.fill(rect(44, -11, 52, -10), 4.15, 'rock')                                                        # the weir: a stone sill flush with the water at the lip                                          # the culvert the river comes out of                                                 # the stream above the falls
-P.fill(rect(24, -34, 95, -26), 6.0, 'path')
-P.fill(rect(40, -34, 56, -26), 6.5, 'wood')                                                                        # the deck
-P.building(rect(40, -35, 56, -34), 6.5, 1.0, roof='wall'); P.building(rect(40, -26, 56, -25), 6.5, 1.0, roof='wall')   # parapets
+P.fill(rect(27, -34, 95, -26), ROAD_H, 'road')                                                                    # the battery road
+P.fill(rect(40, -34, 56, -26), ROAD_H, 'wood')                                                                     # the deck, level with the road
+P.building(rect(40, -35, 56, -34), ROAD_H, 1.0, roof='wall'); P.building(rect(40, -26, 56, -25), ROAD_H, 1.0, roof='wall')   # parapets
 for dv in (-36, -24): P.building(circle((37, dv), 1.6), 6.0, 5.0)                                     # the gate: a matched pair of piers square across the road
 P.building(circle((66, -42), 6), 6.0, 14, 'battery tower')
 BAT = (74, -30)
@@ -153,16 +157,15 @@ GORGE = (56, -44)
 
 # openings in the plaza's ring of steps, and the main routes' own paving
 P.stairs(orect(polar(ARM, 17, 90), 10, 6, math.radians(90)), 2.0, 3.0, 90)
-P.fill(rect(-48, -34, -24, -26), 6.0, 'path')
+P.fill(rect(-48, -34, -27, -26), ROAD_H, 'road')                                                                # the yard road
 for dv in (-36, -26): P.building(rect(-47, dv, -45, dv + 2), 6.0, 4.0)                              # the drill yard's gate piers
-P.strip([YARD] + ARC + [polar(C, 31, 20), (30, -30), BAT], 8)
-P.strip([(0, -46), polar(C, 30, 90)], 6)
+P.fill(arc_band(C, 27, 35, 18, 162, 90), ROAD_H, 'road')                                        # the balcony road: one band at fixed radii
+P.fill(rect(-3, -46, 3, -11), ROAD_H, 'road')                                                   # the north road, through the hall's passage
 
 for a, nm, r in ((156, 'bell tower', 5.0), (24, 'beacon', 3.0)):     # a tall marker at each turn of the arc, on its north side
     P.building(circle(polar(C, 19, a), r), 6.0, 15.0 if r > 4 else 13.0, nm)
 for a in (160, 20):                                                     # threshold pillars where the arc meets each seam
     for r in (26, 36): P.building(circle(polar(C, r, a), 1.3), 6.0, 5.0)
-P.raise_mat('road', 6.0, 0.3)                                            # the road a step above the terrace
 import numpy as np
 from scipy import ndimage
 walk = np.isin(P.m, ['plaza', 'paving', 'grass', 'path', 'road', 'dais', 'stairs', 'wood', 'sand']) & ~P.bld

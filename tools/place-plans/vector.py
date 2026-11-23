@@ -125,7 +125,7 @@ def export(name):
     # Each region is opened then closed by R (removing anything narrower than about 2R, keeping curves), largest first,
     # each taking only what no larger one took; what's left over (the slivers between) goes to the neighbour it shares
     # the most edge with.
-    R = float(os.environ.get('VECTOR_R', 0.9))
+    R = float(os.environ.get('VECTOR_R', 0.3))   # slivers and hairlines only: shapes are clean upstream (the plan)
     total = clean(unary_union([rg for rg, _ in regions]))
     order = sorted(range(len(regions)), key=lambda k: -regions[k][0].area)
     taken, out = Polygon(), {}

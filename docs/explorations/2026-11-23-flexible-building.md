@@ -74,7 +74,13 @@ The fit step is the risk. Test it on a few pieces first.
 
 ## Open questions
 
-- Is a relaxed irregular grid right for us, or a square grid with curve pieces? The irregular grid is the more organic option; the square grid is simpler to validate and navigate.
+- **Grid: decided by the user (2026-11-23).** A square grid, not so coarse that it shows, with curves allowed so the grid isn't obvious. The proposed size is 2 u (about 1.2 m: four sim cells, about one and a half wizards wide), to be confirmed in the first test.
+  - The size is set by the smallest ground shape we need (a pavement strip, a stair's width), not by the thinnest object. Railings, kerbs and copings sit on cell *edges* as edge pieces or swept paths, so they can be as thin as they like.
+  - The grid is hidden by four things:
+    - diagonal and rounded corner pieces;
+    - large curves as swept edges, with the flat floor clipped under them and the edge piece's coping covering the cut;
+    - floor textures laid continuously per terrace, never per cell;
+    - props and planting that break up the lines.
 - How many pieces does the opening's first place need? Townscaper's reskin estimate of about 500 says a full kit is large. The first test needs perhaps 15–25.
 - Who draws the layout? An LLM from a Codex concept sketch, or the user painting corners in a small editor? A small editor would also suit the user's "help early, step out later".
 

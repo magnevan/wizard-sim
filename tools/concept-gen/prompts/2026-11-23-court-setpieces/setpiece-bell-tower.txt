@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as setpiece-bell-tower.png in the current directory. Reply with just the file name.
+
+The attached image is the academy courtyard this piece stands in: stylised, warm sandstone, gold trim, blue slate roofs, warm light.
+
+Draw one round bell tower in exactly that style, as a single game asset on a plain light grey background, seen from slightly above in a three-quarter view: a tall slender round sandstone tower, three times as tall as it is wide at the base, on a moulded plinth, with a few narrow arched windows, an open belfry near the top with arched openings and a bronze bell visible inside, a gold-trimmed cornice, and a conical blue slate roof with a gold finial. Nothing else in the image: no walls, no ground, no people, no text.

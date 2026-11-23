@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as setpiece-post.png in the current directory. Reply with just the file name.
+
+The attached image is the academy courtyard this piece stands in: stylised, warm sandstone, gold trim, warm light.
+
+Draw one low round stone post in exactly that style, as a single game asset on a plain light grey background, seen from slightly above in a three-quarter view: a short round sandstone post about one and a half times as tall as it is wide, on a square moulded base, with a gold band near the top and a small gold lantern on its cap. Nothing else in the image: no railing, no ground, no shadow, no text.

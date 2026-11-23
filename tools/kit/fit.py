@@ -75,8 +75,8 @@ lo, hi = bbox(); size = hi - lo
 over = 1.04 if FIT['cut'] else 1.0
 if FIT['len']: sx = FIT['len'] * over / size.x; sy = (FIT['dep'][1] - FIT['dep'][0]) / size.y
 else: sx = FIT['box'][0] / size.x; sy = FIT['box'][1] / size.y
-if FIT.get('uniform'): sx = sy = min(sx, sy)
 sz = (FIT['hgt'][1] - FIT['hgt'][0]) / size.z
+if FIT.get('uniform'): sx = sy = sz = min(sx, sy, sz)   # a set piece keeps its proportions: inside its footprint and height
 apply(Matrix.Diagonal((sx, sy, sz, 1)))
 lo, hi = bbox()
 if FIT['len']:

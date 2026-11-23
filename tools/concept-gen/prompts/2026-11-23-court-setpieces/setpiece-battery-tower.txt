@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as setpiece-battery-tower.png in the current directory. Reply with just the file name.
+
+The attached image is the academy this piece belongs to: stylised, warm sandstone, gold trim, brass and copper machinery, warm light.
+
+Draw one round tower in exactly that style, as a single game asset on a plain light grey background, seen from slightly above in a three-quarter view: a stout round sandstone tower a little taller than it is wide, on a moulded plinth, wrapped by brass pipes that climb its sides, with small round windows, a crenellated top ring and a copper dome with a brass spire. Nothing else in the image: no walls, no ground, no people, no text.

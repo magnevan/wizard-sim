@@ -20,3 +20,13 @@ Known limit: the grey boxes and their art are drawn under everything (`zIndex -1
 ## Ground
 
 `ground.txt` asks for a sheet of six swatches (grass, dirt, sand, flagstone, cobble, forest leaves); `python tools/building-art/ground-tiles.py <sheet.png>` cuts them, scales them to the game's pixel size (`--scale`, 0.25: Codex draws about four times larger) and makes each tile by blending it with a half-shifted copy. It replaces those materials for every room.
+
+## 3D kit pieces (the stylised-3D spike, 2026-11-23)
+
+The pipeline the Meshy agent uses, with the image step done free in Codex:
+
+1. **Isolate.** Codex draws each piece on its own from a concept picture. The prompts are `prompts/iso-*.txt`, in the agent's pattern: "Isolate and generate a single modular … game asset module featuring: … Standalone straight front-on orthographic view on a plain solid light grey background, perfectly centered, no ground plane, flowers, or characters." Attach the concept scene. The agent itself uses GPT Image 2.5 Sunburst for this step, and Codex is the same family.
+2. **Model.** Meshy image to 3D: `ai_model` meshy-7.1, `enable_pbr` true, `texture_model` meshy-7 at 2k, `should_remesh` true with `target_polycount` about 30,000 (12,000 for a small piece). About 30 credits a piece.
+3. **Place.** Keep the downloads in `game/content/generated/meshy/court-kit/`. `tools/place-plans/spike3d_place.py` places them from the plan, and the spike page (`game/packages/client/world3d.html`) draws them.
+
+What made round 1 splotchy: soft crops from a painted sheet as the input, and smart topology (meshy-t2) at 8,000 triangles with one colour texture and no normal map.

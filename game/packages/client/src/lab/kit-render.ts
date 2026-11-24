@@ -240,6 +240,87 @@ function retain(g: THREE.Group, L: number, h: number, low: number) {
   box(g, TEX.ashlar ?? MAT.face, 0, L, yOf(low) - 0.4, yOf(h - COP), -0.45, 0);
   box(g, TEX.kerb ?? MAT.coping, 0, L, yOf(h - COP), yOf(h + PROUD), -0.5, COP_OUT);
 }
+// ---- arches, shaped by code to size (no models), dressed in the painted stone like the walls ----
+const GOLD = new THREE.MeshStandardMaterial({ color: 0xd8aa48, roughness: 0.35, metalness: 0.75 });
+/** A round-headed opening's outline (x from cx - r to cx + r, from y0 up, its crown at top), as a path. */
+function archPath(p: THREE.Path, cx: number, r: number, y0: number, top: number, close = true) {
+  p.moveTo(cx - r, y0); p.lineTo(cx - r, top - r); p.absarc(cx, top - r, r, Math.PI, 0, true); p.lineTo(cx + r, y0);
+  if (close) p.lineTo(cx - r, y0);
+  return p;
+}
+/** A shape extruded `depth` along +z, at z0, into g. */
+function slab(g: THREE.Group, s: THREE.Shape, depth: number, z0: number, m: THREE.Material) {
+  const mesh = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: false, curveSegments: 24 }), m);
+  mesh.position.z = z0; mesh.castShadow = mesh.receiveShadow = true; g.add(mesh);
+}
+/** A wall section's body by its variant: a blind arch recessed in it, a bridge face's coping alone, or the plain wall. */
+function wallBody(g: THREE.Group, L: number, h: number, low: number, v?: string) {
+  const cop = TEX.kerb ?? MAT.coping;
+  if (v === 'bridge') { box(g, cop, 0, L, yOf(h - COP), yOf(h + PROUD), -0.5, COP_OUT); return; }   // the arch under it draws the wall
+  if (v !== 'blind') { retain(g, L, h, low); return; }
+  // a blind arch (the court's sea walls; docs/reference/court-kit/court-sea-paintover.png): tall and narrow, about three
+  // times its width, high under the coping, recessed 0.25 u, with a sill, a thin gold moulding, and flat pilasters
+  const face = TEX.ashlar ?? MAT.face, R = 0.25, base = yOf(low) - 0.4, wallTop = yOf(h - COP);
+  const r = Math.max(0.25, (L - yOf(0.6)) / 2), cx = L / 2, top = wallTop - yOf(0.8);
+  const bot = Math.max(yOf(low) + 0.5, top - r * 2 * 3.2);
+  box(g, cop, 0, L, wallTop, yOf(h + PROUD), -0.5, COP_OUT);                                    // the coping
+  const front = new THREE.Shape([new THREE.Vector2(0, base), new THREE.Vector2(L, base), new THREE.Vector2(L, wallTop), new THREE.Vector2(0, wallTop)]);
+  front.holes.push(archPath(new THREE.Path(), cx, r, bot, top));
+  slab(g, front, R, -R, face);                                                                     // the face, the arch cut through it
+  box(g, face, 0, L, base, wallTop, -0.45, -R);                                                    // the wall behind: the recess's back
+  box(g, cop, cx - r - 0.1, cx + r + 0.1, bot - 0.14, bot, -R, 0.1);                              // the sill
+  const ring = archPath(new THREE.Shape(), cx, r + 0.07, bot, top + 0.07, false) as THREE.Shape;
+  ring.lineTo(cx + r, bot); ring.lineTo(cx + r, top - r); ring.absarc(cx, top - r, r, 0, Math.PI, false); ring.lineTo(cx - r, bot); ring.lineTo(cx - r - 0.07, bot);
+  slab(g, ring, 0.04, 0, GOLD);                                                                    // the gold moulding round it
+  box(g, face, 0, 0.32, base, wallTop, 0, 0.07); box(g, face, L - 0.32, L, base, wallTop, 0, 0.07);   // half-pilasters at its ends
+}
+/**
+ * A level crossing water on arches (arch.through): one face from (x, y) to (x2, y2), the other `depth` along (nx, ny);
+ * n segmental arches springing 0.3 m over the water at `low`, crowned 0.4 m under the deck at h. One outline with the
+ * arches as holes, extruded through the depth: both faces, the piers and the barrel soffits at once, in ashlar; a
+ * voussoir ring on each face. The water runs on under it (kit-water, open at the arch's mouths).
+ */
+function archThrough(it: Inst & { nx?: number; ny?: number; depth?: number; mat?: string }): THREE.Group {
+  const span = Math.hypot(it.x2! - it.x, it.y2! - it.y), D = it.depth ?? 4, nx = it.nx ?? 0, ny = it.ny ?? 1;
+  let ox = it.x, oy = it.y, dx = (it.x2! - it.x) / span, dy = (it.y2! - it.y) / span;
+  if (Math.abs(-dy - nx) + Math.abs(dx - ny) > 0.5) { ox = it.x2!; oy = it.y2!; dx = -dx; dy = -dy; }   // keep the frame right-handed (z = x × y)
+  const g = new THREE.Group(); g.matrixAutoUpdate = false;
+  g.matrix.makeBasis(new THREE.Vector3(dx, 0, dy), new THREE.Vector3(0, 1, 0), new THREE.Vector3(nx, 0, ny)).setPosition(ox, 0, oy);
+  const n = Math.max(1, it.n ?? 1), pier = 0.8, edge = 0.3, ow = (span - 2 * edge - (n - 1) * pier) / n;
+  const under = yOf(it.low!) - 0.4, deck = yOf(it.h) - 0.02, spring = yOf(it.low! + 0.3), crown = yOf(it.h - 0.4);
+  const body = new THREE.Shape([new THREE.Vector2(0, under), new THREE.Vector2(span, under), new THREE.Vector2(span, deck), new THREE.Vector2(0, deck)]);
+  const rings: THREE.Shape[] = [];
+  for (let k = 0; k < n; k++) {
+    const x0 = edge + k * (ow + pier), a = ow / 2, cx = x0 + a;
+    let rise = Math.max(0.2, crown - spring), ys = spring;
+    if (rise > a) { ys = crown - a; rise = a; }                        // no taller than a half circle: straight jambs below it
+    const R = (a * a + rise * rise) / (2 * rise), cy = ys + rise - R, th = Math.atan2(ys - cy, a);
+    // (the hole stays inside the outline, its foot just under the water: a hole crossing its outline breaks the triangulation)
+    const foot = under + 0.12, hole = new THREE.Path(); hole.moveTo(x0, foot); hole.lineTo(x0, ys); hole.absarc(cx, cy, R, Math.PI - th, th, true); hole.lineTo(x0 + ow, foot); hole.lineTo(x0, foot);
+    body.holes.push(hole);
+    // the voussoirs: a band round the arch, 0.35 u deep
+    const W = 0.35, ring = new THREE.Shape(), Ro = R + W, tho = Math.asin(Math.max(-1, Math.min(1, (ys - cy) / Ro)));
+    ring.moveTo(cx - Math.cos(tho) * Ro, ys); ring.absarc(cx, cy, Ro, Math.PI - tho, tho, true); ring.lineTo(cx + a, ys); ring.absarc(cx, cy, R, th, Math.PI - th, false); ring.lineTo(cx - Math.cos(tho) * Ro, ys);
+    rings.push(ring);
+  }
+  slab(g, body, D, 0, TEX.ashlar ?? MAT.face);
+  for (const ring of rings) { slab(g, ring, 0.06, -0.06, TEX.kerb ?? MAT.coping); slab(g, ring, 0.06, D, TEX.kerb ?? MAT.coping); }
+  return g;
+}
+/** The faces of the arches being built, in world u: water is open there (no foam) and floors grow no rock side over them. */
+const ARCH_FACES: number[][] = [];
+/** The wall sections with a blind arch cut in them: no rock side there either (it would fill the recess). */
+const BLIND_SEGS: number[][] = [];
+const onArchFace = (ax: number, ay: number, bx: number, by: number) => onSegs(ARCH_FACES, ax, ay, bx, by);
+/** Whether segment a-b lies along one of these (within a hair), as a floor's outline does along a face it bounds. */
+function onSegs(list: number[][], ax: number, ay: number, bx: number, by: number): boolean {
+  for (const [px, py, qx, qy] of list) {
+    const L = Math.hypot(qx - px, qy - py), ux = (qx - px) / L, uy = (qy - py) / L;
+    const off = (x: number, y: number) => Math.abs((x - px) * uy - (y - py) * ux), at = (x: number, y: number) => (x - px) * ux + (y - py) * uy;
+    if (off(ax, ay) < 0.06 && off(bx, by) < 0.06 && Math.min(at(ax, ay), at(bx, by)) > -0.06 && Math.max(at(ax, ay), at(bx, by)) < L + 0.06) return true;
+  }
+  return false;
+}
 function balustrade(g: THREE.Group, L: number, h: number, i0: number, i1 = i0) {
   const y0 = yOf(h), z0 = -0.36, z1 = -0.04;
   box(g, MAT.stone, i0, L - i1, y0, y0 + yOf(0.12), z0, z1);                         // the plinth
@@ -304,16 +385,17 @@ function piece(it: Inst): THREE.Group | null {
     let madeRetain = false;
     const niche = it.v === 'niche' && ART.niche;
     // (with an ashlar texture the wall is a plain shape wearing it, so its courses never repeat at a seam; a niche stays made)
-    if ((kind === 'retain' || kind === 'parapet') && drop >= 0.3 && (!TEX.ashlar || niche) && art(g, niche ? 'niche' : 'retain-top', 0, yOf(it.h), L / 2)) {
+    const shaped = it.v === 'blind' || it.v === 'bridge';   // shaped by code: a blind arch in the wall, or a bridge face (the arch draws below)
+    if ((kind === 'retain' || kind === 'parapet') && drop >= 0.3 && !shaped && (!TEX.ashlar || niche) && art(g, niche ? 'niche' : 'retain-top', 0, yOf(it.h), L / 2)) {
       madeRetain = true;
       if (TEX.ashlar) box(g, TEX.ashlar, 0, L, yOf(low) - 0.4, yOf(it.h) - 2.0, -0.45, 0);   // under a niche: the textured wall, as beside it
       else for (let y = yOf(it.h) - (niche ? 2.0 : 1.1), k = 0; y > yOf(low) - 0.4; y -= 0.78, k++) {
         if (k % 2) art(g, 'retain-course', L, y, -L / 2); else art(g, 'retain-course', 0, y, L / 2);
       }
     }
-    if (kind === 'retain') { if (!madeRetain) retain(g, L, it.h, low); }
+    if (kind === 'retain') { if (!madeRetain) wallBody(g, L, it.h, low, it.v); }
     else if (kind === 'parapet') {
-      if (!madeRetain) retain(g, L, it.h, low);
+      if (!madeRetain) wallBody(g, L, it.h, low, it.v);
       // pier face to pier face: on a straight run 0.275 at each end; on a bend, where the turned pier's face is
       const dx = (it.x2! - it.x) / L, dy = (it.y2! - it.y) / L, nx = -dy, ny = dx;
       const i0 = railInset(it.x, it.y, dx, dy, nx, ny), i1 = railInset(it.x2!, it.y2!, -dx, -dy, nx, ny);
@@ -421,6 +503,7 @@ function piece(it: Inst): THREE.Group | null {
   }
   if (cls === 'dress') return dressPiece(it, kind);
   if (cls === 'vine') return vinePiece(it);
+  if (cls === 'arch') return archThrough(it);
   if (cls === 'vignette') {
     const g = new THREE.Group(), y = yOf(it.h);
     g.position.set(it.x, 0, it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // local +z is the front
@@ -456,6 +539,7 @@ function sides(rings: number[][][], top: number, bottom: number): THREE.Mesh | n
   const pos: number[] = [];
   for (const ring of rings) for (let i = 0; i < ring.length; i++) {
     const [ax, ay] = ring[i], [bx, by] = ring[(i + 1) % ring.length];
+    if (onArchFace(ax, ay, bx, by) || onSegs(BLIND_SEGS, ax, ay, bx, by)) continue;   // an arch's face (open underneath) or a blind arch's recess
     if (ax === bx && ay === by) continue;
     pos.push(ax, top, ay, bx, top, by, bx, bottom, by, ax, top, ay, bx, bottom, by, ax, bottom, ay);
   }
@@ -680,7 +764,12 @@ function tintGroup(g: THREE.Object3D, tint: string) {
 /** The floors and pieces of a compiled scene, as one group. */
 export function buildKit(data: KitData): THREE.Group {
   const root = new THREE.Group();
-  JOINTS.clear(); SPINNERS.length = 0;
+  JOINTS.clear(); SPINNERS.length = 0; ARCH_FACES.length = 0; BLIND_SEGS.length = 0;
+  for (const it of data.instances) if (it.v === 'blind' && it.x2 != null) BLIND_SEGS.push([it.x, it.y, it.x2, it.y2!]);
+  for (const it of data.instances) if (it.p.startsWith('arch.')) {   // an arch's two faces, before the floors and water are built
+    const a = it as Inst & { nx?: number; ny?: number; depth?: number }, ex = (a.nx ?? 0) * (a.depth ?? 0), ey = (a.ny ?? 0) * (a.depth ?? 0);
+    ARCH_FACES.push([a.x, a.y, a.x2!, a.y2!], [a.x + ex, a.y + ey, a.x2! + ex, a.y2! + ey]);
+  }
   setDecal(data.instances.find((i) => isDecal(i.p)));
   for (const it of data.instances) if (it.p.startsWith('joint.')) JOINTS.set(jkey(it.x, it.y), it);
   const bottom = yOf(Math.min(0, ...data.floors.map((f) => f.h)) - 0.4);
@@ -693,7 +782,12 @@ export function buildKit(data: KitData): THREE.Group {
     m.userData.floor = f;
     root.add(m);
     // water: stylised and moving, all in code (kit-water.ts); the flat floor stays, hidden, for picking and painting
-    if (f.mat === 'water') { m.visible = false; root.add(waterMesh([outer, ...holes], yOf(f.h), data.size, TP_TIME)); }
+    if (f.mat === 'water') { m.visible = false; root.add(waterMesh([outer, ...holes], yOf(f.h), data.size, TP_TIME, 8, onArchFace)); }
+  }
+  // the water running on under each arch (open at its mouths: no foam across the stream there)
+  for (const it of data.instances) if (it.p.startsWith('arch.') && (it as Inst & { mat?: string }).mat === 'water') {
+    const a = it as Inst & { nx?: number; ny?: number; depth?: number }, ex = (a.nx ?? 0) * (a.depth ?? 0), ey = (a.ny ?? 0) * (a.depth ?? 0);
+    root.add(waterMesh([[[a.x, a.y], [a.x2!, a.y2!], [a.x2! + ex, a.y2! + ey], [a.x + ex, a.y + ey]]], yOf(a.low!) - 0.02, data.size, TP_TIME, 8, onArchFace));   // a hair under the stream, so it wins where they overlap
   }
   data.instances.forEach((it, i) => {
     const g = piece(it);

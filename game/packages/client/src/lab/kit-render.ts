@@ -10,6 +10,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RAIL_MOD, railFit } from './kit-fit';
 import { waterMesh } from './kit-water';
+import { FOLIAGE_TIME, grow, type Recipe } from './foliage';
 
 export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string;
   /** per instance (scatters, dressing): size, a colour multiplied in, metres above h, and the parts chosen per slot */
@@ -109,7 +110,9 @@ function setDecal(it: Inst | undefined) {
 export const isDecal = (p: string) => KIT_PIECES[p]?.class === 'decal';
 
 /** The kit's pieces as tools/kit/kit.json describes them (the map editor fetches it): set pieces need their size. */
-export type KitPiece = { class?: string; shape?: string; footprint?: [number, number]; height?: number; note?: string; stack?: string[]; parts?: Record<string, string[]> };
+export type KitPiece = { class?: string; shape?: string; footprint?: [number, number]; height?: number; note?: string; stack?: string[]; parts?: Record<string, string[]>;
+  /** a plant grown in code (lab/foliage.ts), with `box` [w, d, h] m for a stone trough or pot under it */
+  grow?: Recipe & { box?: [number, number, number] } };
 const KIT_PIECES: Record<string, KitPiece> = {};
 export function setKitPieces(p: Record<string, KitPiece>) { Object.assign(KIT_PIECES, p); }
 export const kitPiece = (p: string): KitPiece | undefined => KIT_PIECES[p];
@@ -169,6 +172,8 @@ function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0
   m.customProgramCacheKey = () => `tp${tile}`;
   return decalable(m);
 }
+/** A tiling texture's world-mapped material by name (paving, ashlar, smooth-stone...), once loadKitArt has run. */
+export const kitMat = (name: string): THREE.Material | undefined => TEX[name];
 /** The material for a floor of this mat: its texture if made, else its tone. */
 const floorMat = (mat: string): THREE.Material => TEX[mat] ?? FLOOR[mat] ?? MAT.paving;
 
@@ -202,6 +207,7 @@ const spinQ = new THREE.Quaternion();
 /** Turn every spinning part to where it is at time t (seconds): call it each frame. */
 export function spinKit(t: number) {
   TP_TIME.value = t;   // and flowing textures (water) drift
+  FOLIAGE_TIME.value = t;   // and the wind in the plants
   for (const s of SPINNERS) s.node.quaternion.copy(s.rest).multiply(spinQ.setFromAxisAngle(s.axis, ((t * s.rpm) / 60) * Math.PI * 2));
 }
 
@@ -387,8 +393,9 @@ function piece(it: Inst): THREE.Group | null {
     // (built from its floor up, at the group's origin, so an instance's scale grows it from where it stands)
     const g = new THREE.Group(), y = 0;
     g.position.set(it.x, yOf(it.h + (it.up ?? 0)), it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // local +z is the front
-    if (art(g, kind, 0, y)) return g;
     const k = KIT_PIECES[it.p] ?? { shape: 'box', footprint: [2, 2], height: 4 };
+    if (k.grow) return growInto(g, k.grow, seedOf(it), y);
+    if (art(g, kind, 0, y)) return g;
     const [w, d] = k.footprint ?? [2, 2], H = yOf(k.height ?? 4), P = yOf(0.35);
     const solid = (sx: number, sz: number, y0: number, y1: number, m: THREE.Material) => {
       if (k.shape === 'round') {
@@ -498,6 +505,7 @@ function dressPiece(it: Inst, kind: string): THREE.Group {
     for (const slot of stack) {
       const part = String(parts[slot] ?? ''), y0 = topOf(g);
       if (art(g, part, 0, y0)) continue;
+      if (PLANT_PARTS[part]) { growInto(g, PLANT_PARTS[part], seedOf(it), y0); continue; }
       // a stand-in in the slot's proportions (share of the width, share of the height, shape) until the part is made
       const [sw, sh, shape] = SLOT[slot] ?? [1, 1 / stack.length, 'box'];
       standIn(g, shape, w * sw, d * sw, y0, H * sh, slot === 'post' ? MAT.dark : PROP.stone);
@@ -505,6 +513,27 @@ function dressPiece(it: Inst, kind: string): THREE.Group {
     return g;
   }
   standIn(g, k.shape, w, d, 0, H, PROP.stone);
+  return g;
+}
+// ---- plants grown in code (lab/foliage.ts): set pieces with a "grow" recipe, a planter's plant, and vines on walls ----
+const seedOf = (it: Inst) => Math.round(it.x * 131 + it.y * 977 + it.h * 53 + (it.x2 ?? 0) * 17);
+/** A planter's plant part, grown until (unless) a model is made for it. */
+const PLANT_PARTS: Record<string, Recipe> = {
+  'plant-topiary': { kind: 'cone', h: 1.2, r: 0.3 }, 'plant-cypress': { kind: 'cone', h: 1.7, r: 0.26 },
+  'plant-flowers': { kind: 'bed', w: 0.7, d: 0.7, h: 0.45, back: 0, blooms: ['pink', 'white', 'lilac'] },
+  'plant-blossom': { kind: 'bush', r: 0.42, pal: ['green', 'gold'], bloom: { pal: 'pink', amount: 0.8 } },
+};
+/** Grow a recipe into g at height y0 (u): a stone trough of its `box` first, if it has one, then the plant on its soil. */
+function growInto(g: THREE.Group, recipe: Recipe & { box?: [number, number, number] }, seed: number, y0: number): THREE.Group {
+  let y = y0;
+  if (recipe.box) {
+    const [bw, bd, bh] = recipe.box.map(yOf), stone = TEX['smooth-stone'] ?? PROP.stone, lip = yOf(0.04);
+    box(g, stone, -bw / 2, bw / 2, y0, y0 + bh, -bd / 2, bd / 2);
+    box(g, stone, -bw / 2 - lip, bw / 2 + lip, y0 + bh - yOf(0.09), y0 + bh + yOf(0.02), -bd / 2 - lip, bd / 2 + lip);
+    box(g, TEX.dirt ?? MAT.wood, -bw / 2 + lip * 2, bw / 2 - lip * 2, y0 + bh, y0 + bh + yOf(0.03), -bd / 2 + lip * 2, bd / 2 - lip * 2);
+    y = y0 + bh + yOf(0.03);
+  }
+  const f = grow(recipe, seed); f.scale.setScalar(M); f.position.y = y; g.add(f);
   return g;
 }
 // ---- vines (kit.json class "vine", placed by dress rules on wall faces): painted cards, never stretched with the wall ----
@@ -571,6 +600,13 @@ function vinePiece(it: Inst & { len?: number; flip?: boolean; offset?: number; p
   const g = new THREE.Group(); g.matrixAutoUpdate = false;   // x along the wall, z out of its face, y up (as edgeFrame)
   g.matrix.makeBasis(new THREE.Vector3(dx, 0, dy), new THREE.Vector3(0, 1, 0), new THREE.Vector3(-dy, 0, dx)).setPosition(it.x, 0, it.y);
   const top = yOf(it.h - 0.15), pos: number[] = [], uv: number[] = [], idx: number[] = [];
+  if (k.grow?.kind === 'cascade') {
+    // grown in code: a cascade as wide as the section, hanging as far as the strip would, or as its longest path
+    const wallDrop = Math.max(0.3, it.h - (it.low ?? it.h - 3) - 0.3);
+    const drop = Math.min(wallDrop, it.paths ? Math.max(0.6, ...it.paths.flat().map((p) => p[1])) : it.len ?? 1.5);
+    const f = grow({ ...k.grow, w: (L / M) * 0.96, drop }, seedOf(it)); f.scale.setScalar(M); f.position.set(L / 2, top, 0); g.add(f);
+    return g;
+  }
   const quad = (pts: number[][], uvs: number[][]) => { const b = pos.length / 3; for (const p of pts) pos.push(...p); for (const t of uvs) uv.push(...t); idx.push(b, b + 1, b + 2, b, b + 2, b + 3); };
   if (it.paths) {
     const sheet = vineTexture(k.sheet), [cx, cy] = k.cells ?? [4, 3], size = yOf(Array.isArray(k.size_m) ? k.size_m[0] : k.size_m ?? 0.3) * (it.scale ?? 1);

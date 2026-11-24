@@ -94,3 +94,9 @@ Two images in parallel for the [map editor spec](../../docs/explorations/2026-11
 - It drew the plan as the pieces seen from above, not flat terrace colours as asked, and it rewrote the given chat lines slightly. Say "flat colour regions only" if the flat look is wanted.
 - An icon sheet of "12 icons in 3 rows of 4… each centred in its own equal square", with the action named in brackets after each picture, came back clean, in one style, and in the asked order, ready to cut.
 
+
+### 2026-11-24, foliage
+
+One ground texture for the [procedural foliage](../../docs/explorations/2026-11-24-procedural-foliage.md) lab: warm paving flags (`tex-cobble`), with the courtyard concept attached.
+
+- Asked for "warm rose-tan, a mid tone, clearly darker than cream", it came back brick red and about nine rows across. The game's copy is re-toned locally (half its colour kept, half replaced by its brightness in a tan, then lightened). Name the colour by pointing at the reference ("the same colour as the floor in the attached image") and ask for more, smaller flags next time.

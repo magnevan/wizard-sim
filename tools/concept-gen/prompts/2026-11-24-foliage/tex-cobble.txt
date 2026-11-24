@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-cobble.png in the current directory. Reply with just the file name.
+
+The attached image is the academy courtyard this texture is for: stylised, hand-painted, warm light. Look closely at its floor: small rectangular paving flags in warm rose-tan, dusty pink, peach and sand tones, each flag a slightly different tone from its neighbours, with soft darker joints and gently worn rounded corners.
+
+Draw a seamless tileable texture of exactly that paving, in exactly that painted style and those warm rose-tan colours at the same depth of tone (a mid tone, clearly darker than cream), seen straight down from above, filling the whole square image edge to edge. The flags are laid in straight running-bond rows, about ten rows across the image, each flag roughly twice as long as it is wide, with lively tone variation from flag to flag and a little painted texture on each. Evenly lit, flat, with one uniform light over the whole image. The pattern repeats cleanly when the image is tiled side by side.

@@ -1,5 +1,8 @@
 {
-  "schema": 1, "name": "court", "G": 2, "notes": "Traced from tools/place-plans/plans/court-d.py (Courtyard D: Terraces round a plaza (rev 21)) by tools/kit/trace_plan.py. One grid corner = (U, V) = (-95 + 2x, -62 + 2y) in the plan. Gaps (what the kit cannot say yet) are pins.",
+  "schema": 1,
+  "name": "court",
+  "G": 2,
+  "notes": "Traced from tools/place-plans/plans/court-d.py (Courtyard D: Terraces round a plaza (rev 21)) by tools/kit/trace_plan.py. One grid corner = (U, V) = (-95 + 2x, -62 + 2y) in the plan. Gaps (what the kit cannot say yet) are pins.",
   "terraces": [
     {"id": "t-sea", "glyph": "A", "name": "the sea", "h": -6, "mat": "water", "edge": "open", "walk": false},
     {"id": "t-rock", "glyph": "B", "name": "rock", "h": -5.5, "mat": "rock", "edge": "open", "walk": false},
@@ -165,6 +168,22 @@
     {"id": "w1", "kind": "scatter", "name": "the woods", "terrace": "t-woods", "pieces": ["setpiece.tree-oak", "setpiece.tree-pine", "setpiece.tree-blossom"], "spacing": 4.5, "margin": 1, "seed": 1},
     {"id": "w2", "kind": "scatter", "name": "the woods", "terrace": "t-woods-n", "pieces": ["setpiece.tree-oak", "setpiece.tree-pine", "setpiece.tree-blossom"], "spacing": 4.5, "margin": 1, "seed": 2},
     {"id": "w3", "kind": "scatter", "name": "the woods", "terrace": "t-woods-z", "pieces": ["setpiece.tree-oak", "setpiece.tree-pine", "setpiece.tree-blossom"], "spacing": 4.5, "margin": 1, "seed": 3},
-    {"id": "d1", "kind": "dress", "name": "courtyard formal", "style": "courtyard-formal", "seed": 1}
+    {"id": "d1", "kind": "dress", "name": "courtyard formal", "style": "courtyard-formal", "seed": 1},
+    {"kind": "setpiece", "name": "flower bed under the west terrace wall", "piece": "setpiece.flowerbed", "at": [39.64, 29.33], "front": "S", "turn": 24, "id": "s23"},
+    {"kind": "setpiece", "name": "flower bed under the west terrace wall, 2", "piece": "setpiece.flowerbed", "at": [43.5, 30.55], "front": "S", "turn": 12, "id": "s24"},
+    {"kind": "setpiece", "name": "topiary between the west beds", "piece": "setpiece.topiary", "at": [41.58, 29.94], "front": "S", "id": "s25"},
+    {"kind": "setpiece", "name": "topiary, west beds' outer end", "piece": "setpiece.topiary", "at": [37.9, 28.4], "front": "S", "id": "s26"},
+    {"kind": "setpiece", "name": "flower bed, east of the balcony", "piece": "setpiece.flowerbed", "at": [56.9, 28.6], "front": "S", "id": "s27", "turn": -24},
+    {"kind": "setpiece", "name": "topiary, east bed", "piece": "setpiece.topiary", "at": [55.7, 28.95], "front": "S", "id": "s28"},
+    {"kind": "setpiece", "name": "west garden corner: tree", "piece": "setpiece.tree-bloom", "at": [32.3, 39.9], "front": "S", "id": "s29"},
+    {"kind": "setpiece", "name": "west garden corner: gold shrub", "piece": "setpiece.bush-gold", "at": [33.8, 41.15], "front": "S", "id": "s30"},
+    {"kind": "setpiece", "name": "west garden corner: pink shrub", "piece": "setpiece.bush-pink", "at": [31.3, 38.9], "front": "S", "id": "s31"},
+    {"kind": "setpiece", "name": "west garden corner: lilac shrub", "piece": "setpiece.bush-lilac", "at": [35.05, 42.15], "front": "S", "id": "s32"},
+    {"kind": "setpiece", "name": "west garden corner: white shrub", "piece": "setpiece.bush-white", "at": [33.05, 38.9], "front": "S", "id": "s33"},
+    {"kind": "setpiece", "name": "east garden corner: tree", "piece": "setpiece.tree-bloom", "at": [62.7, 39.9], "front": "S", "id": "s34"},
+    {"kind": "setpiece", "name": "east garden corner: gold shrub", "piece": "setpiece.bush-gold", "at": [61.2, 41.15], "front": "S", "id": "s35"},
+    {"kind": "setpiece", "name": "east garden corner: lilac shrub", "piece": "setpiece.bush-lilac", "at": [63.7, 38.9], "front": "S", "id": "s36"},
+    {"kind": "setpiece", "name": "east garden corner: pink shrub", "piece": "setpiece.bush-pink", "at": [59.95, 42.15], "front": "S", "id": "s37"},
+    {"kind": "setpiece", "name": "east garden corner: gold shrub 2", "piece": "setpiece.bush-gold", "at": [61.95, 38.9], "front": "S", "id": "s38"}
   ]
 }

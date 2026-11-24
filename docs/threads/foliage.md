@@ -1,7 +1,7 @@
 # Outdoor foliage (plants, flowers, vines, ground cover)
 
-Status: active, handed off 2026-11-24 to a fresh session; next: study the concept art and propose · Last touched: 2026-11-24
-Record: [dressing with variation](../explorations/2026-11-24-dressing-variation.md) (incl. the Vines sections) · [the courtyard on the kit](kit-courtyard.md) (where it started) · the comparison that started this: [ours vs the paint-over](../reference/court-kit/court-vines-vs-paintover.png) · concept: [`area-courtyard-start.jpg`](../reference/element-order/area-courtyard-start.jpg), paint-overs of our grey-box: [plaza](../reference/court-kit/court-plaza-paintover.png), [whole court](../reference/court-kit/court-whole-paintover.png), [sea stair](../reference/court-kit/court-sea-paintover.png)
+Status: active; plants grown in code are built and in the courtyard scene (branch `foliage`); next: the user's verdict · Last touched: 2026-11-24
+Record: [procedural foliage](../explorations/2026-11-24-procedural-foliage.md) (what was built) · [dressing with variation](../explorations/2026-11-24-dressing-variation.md) (incl. the Vines sections) · [the courtyard on the kit](kit-courtyard.md) (where it started) · the comparison that started this: [ours vs the paint-over](../reference/court-kit/court-vines-vs-paintover.png) · concept: [`area-courtyard-start.jpg`](../reference/element-order/area-courtyard-start.jpg), paint-overs of our grey-box: [plaza](../reference/court-kit/court-plaza-paintover.png), [whole court](../reference/court-kit/court-whole-paintover.png), [sea stair](../reference/court-kit/court-sea-paintover.png)
 
 ## Why this thread
 
@@ -39,9 +39,16 @@ The courtyard's foliage looks much worse than the concept and the paint-overs, a
 - The dev server for a worktree: `npm run dev -w @wizard-sim/client -- --port <free port> --strictPort` in `game/`, then `MAP_EDITOR_URL=http://localhost:<port>`. Low-memory kills happen often: restart it when needed, stop it when idle.
 - Record decisions and comparisons in a dated exploration; keep this thread's Next list current.
 
+## Where it stands (2026-11-24)
+
+The user asked the fresh session for a procedural system and allowed it to bend "no code-drawn art" for this work. Built: `game/packages/client/src/lab/foliage.ts` (shrubs, beds, cones, hanging vines, a tree, grown from seeded recipes), a lab page (`foliage.html`, pictures with `node scripts/foliage-shot.mjs` in `game/`), set pieces with a `grow` recipe in `kit.json`, grown vines in place of the painted strips, and a `cobble` floor texture. Details and pictures: [procedural foliage](../explorations/2026-11-24-procedural-foliage.md).
+
 ## Next
 
-- [ ] Study the concept and the three paint-overs closely: list every kind of greenery, where it grows, at what scale relative to a wizard and a doorway, and how it meets stone. Propose an approach to the user with pictures before building.
-- [ ] Paving: a warmer, varied cobble-flag set for the courtyard floors (and a way to vary it over large areas).
-- [ ] Placeable flower beds and planting as editor objects.
-- [ ] Decide what to keep, change or drop of the vine system above.
+- [ ] The user judges the pictures against the concept at the game camera. Until then this is a trial, not a decision; the "no code-drawn art" rule stands everywhere else.
+- [x] Study the concept: the kinds of greenery, where they grow, their size (in the exploration).
+- [x] Placeable flower beds and planting as editor objects (set pieces with `grow`).
+- [x] The vine system: the dressing rules stay, each vine is now a grown cascade; the painted strips remain as the fallback.
+- [ ] Paving: `cobble` exists; choose where the courtyard uses it (with the courtyard thread), and a way to vary it over large areas.
+- [ ] Window boxes, plants between stones, climbers from a wall's foot; vines that follow a curved wall.
+- [ ] Decide between the code-drawn sprite sheet and a Codex-painted one.

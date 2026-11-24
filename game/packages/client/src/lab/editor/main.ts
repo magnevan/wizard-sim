@@ -1193,6 +1193,32 @@ function adoptNewTerrace() {
   toast('A new level: name it, set its height, then paint where it goes');
 }
 
+/** kit.json's dressing styles: named lists of rules (the compiler places by them). */
+type Style = { note?: string; rules?: Record<string, unknown>[] };
+let STYLES: Record<string, Style> = {};
+/** A rule, read out: "on every 3rd pier: urn or cap-lantern". */
+function ruleText(r: Record<string, unknown>): string {
+  const put = ((r.put as string[]) ?? []).map(pieceName).join(' or ');
+  if (r.on) return `on ${r.every && Number(r.every) > 1 ? `every ${r.every}${Number(r.every) === 2 ? 'nd' : Number(r.every) === 3 ? 'rd' : 'th'} ` : 'each '}${pieceName(String(r.on)).replace(/^joint\./, '')}: ${put}`;
+  if (r.at) return `at each ${String(r.at).replace(/-/g, ' ')}: ${put}`;
+  if (r.along) return `along ${r.along}s, every ${r.spacing ?? '?'} u${r.inset != null ? `, ${r.inset} u in` : ''}: ${put}`;
+  return `${JSON.stringify(r)}`;
+}
+/** A dress's controls: its style, seed (and a new one), its level, and the style's rules read out. */
+function dressBox(o: Obj): HTMLElement {
+  const box = document.createElement('div'), st = STYLES[String(o.style)];
+  const names = [...new Set([...Object.keys(STYLES), String(o.style)])];
+  box.innerHTML = `<div class="row"><label>Style</label><select id="dr-st">${names.map((n) => `<option ${n === o.style ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
+    <div class="row"><label>Seed</label><input id="dr-sd" type="number" step="1" value="${o.seed ?? 1}" style="width:70px"><button class="btn" id="dr-new" title="Another choice of pieces and parts by the same rules">new seed</button></div>
+    <div class="row"><label>On</label><select id="dr-t"><option value="">the whole scene</option>${sc!.terraces.map((t) => `<option value="${t.id}" ${t.id === o.terrace ? 'selected' : ''}>${esc(t.name ?? t.id)}</option>`).join('')}</select></div>
+    <div class="meta">${st ? `${esc(st.note ?? '')}<ul style="margin:4px 0 0 16px;padding:0">${(st.rules ?? []).map((r) => `<li>${esc(ruleText(r))}</li>`).join('')}</ul>` : 'This style is not in kit.json.'}</div>`;
+  const set = (f: Record<string, unknown>, label: string) => apply([{ op: 'set', id: o.id, ...f }], label);
+  (box.querySelector('#dr-st') as HTMLSelectElement).onchange = (e) => set({ style: (e.target as HTMLSelectElement).value }, "a dress's style");
+  (box.querySelector('#dr-sd') as HTMLInputElement).onchange = (e) => set({ seed: Math.round(Number((e.target as HTMLInputElement).value)) }, "a dress's seed");
+  (box.querySelector('#dr-new') as HTMLElement).onclick = () => set({ seed: 1 + Math.floor(Math.random() * 99999) }, 'dress anew');
+  (box.querySelector('#dr-t') as HTMLSelectElement).onchange = (e) => set({ terrace: (e.target as HTMLSelectElement).value || null }, "a dress's level");
+  return box;
+}
 /** A scatter's controls (a level filled with set pieces on a seeded grid: the woods' trees), in a box to put in a panel. */
 function scatterBox(o: Obj): HTMLElement {
   const box = document.createElement('div'), chosen = new Set((o.pieces as string[]) ?? []);
@@ -1311,6 +1337,7 @@ function renderInspect() {
         <div class="meta">On ${esc(curveTerr(o)?.name ?? o.terrace)}: ${halfOf(o.ends as Pt[]) * 2} cells wide, bulging ${Math.round(sagOf(o as unknown as CurveShape) * 100) / 100}.</div>` : ''}
       <div class="row"><button class="btn" id="o-del">Delete</button><span class="meta">${isProp(o) ? 'Drag it, or arrows; Q/E turn it' : o.kind === 'curve' ? 'Drag its handles: the ends slide along the edge, the middle sets the bulge' : 'Arrows move it'}</span></div>`;
     if (o.kind === 'scatter') el.querySelector('#o-del')!.closest('.row')!.before(scatterBox(o));
+    if (o.kind === 'dress') el.querySelector('#o-del')!.closest('.row')!.before(dressBox(o));
     if (o.kind === 'line') {
       const box = document.createElement('div');
       box.innerHTML = `<div class="row"><label>Reach</label><input id="ln-tol" type="number" step="0.25" value="${o.tol ?? 0.75}" style="width:70px" title="How far an edge may lie from the line and still snap onto it (cells)"> cells</div>
@@ -1438,13 +1465,15 @@ loop();
 (window as unknown as { __editor: unknown }).__editor = {
   screen: (x: number, y: number, h?: number) => { const v = at3(x, y, h ?? heightAt(x, y)).project(cam); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; },
   state: () => ({ name, rev, tool, sel, brushG, errors: comp?.errors.length, warnings: comp?.warnings.length, pins: pins.length, region, clip: clip && { w: clip.w, h: clip.h, objects: clip.objects.length } }),
+  /** Point the game camera at corner (x, y), showing about r corners either side. */
+  look: (x: number, y: number, r: number) => gameView(x, y, r * 2 * G()),
   /** The selected thing's handles, on screen. */
   handles: () => handles.children.map((m) => { const v = m.position.clone().project(cam); return { w: m.userData.handle as string, s: [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight] }; }),
 };
 fetch('/__map/scenes').then((r) => r.json()).then((j: { scenes: { name: string }[] }) => { sceneNames = j.scenes.map((s) => s.name); renderTop(); });
 // the kit's pieces: set pieces' sizes for the drawing, and what the Prop tool offers
-await fetch('/__map/kit').then((r) => r.json()).then((k: { pieces: Record<string, KitPiece> }) => {
-  setKitPieces(k.pieces);
+await fetch('/__map/kit').then((r) => r.json()).then((k: { pieces: Record<string, KitPiece>; styles?: Record<string, Style> }) => {
+  setKitPieces(k.pieces); STYLES = k.styles ?? {};
   PIECES = Object.keys(k.pieces).filter((p) => p.startsWith('vignette.') || p.startsWith('setpiece.'));
 }).catch(() => undefined);
 setTool('select');

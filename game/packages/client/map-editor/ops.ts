@@ -15,7 +15,7 @@ export type Shift = { axis: 'x' | 'y'; at: number; n: number };
 export class OpError extends Error {}
 
 const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-const KINDS: Record<string, string> = { flight: 'f', curve: 'c', round: 'r', line: 'l', edge: 'e', vignette: 'v', setpiece: 's', scatter: 'w' };
+const KINDS: Record<string, string> = { flight: 'f', curve: 'c', round: 'r', line: 'l', edge: 'e', vignette: 'v', setpiece: 's', scatter: 'w', dress: 'd' };
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 const slug = (s: string) => s.toLowerCase().replace(/^the /, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'x';
 const num = (v: unknown, what: string): number => {
@@ -111,6 +111,11 @@ export function applyOps(scene: Scene, ops: Op[]): { scene: Scene; minted: strin
           if (kind === 'line') {   // a true straight line, at any angle, the edges near it snap onto (compile.py): a, b, tol?, terrace?
             pt(obj.a, 'a'); pt(obj.b, 'b');
             if (typeof obj.terrace === 'string') obj.terrace = terraceOf(sc, obj.terrace).id;
+          }
+          if (kind === 'dress') {   // dresses the scene (or one level) by a style's rules (kit.json styles; compile.py): style, seed?, terrace?
+            if (typeof obj.style !== 'string' || !obj.style) throw new OpError('a dress needs style: a key of kit.json styles');
+            if (typeof obj.terrace === 'string') obj.terrace = terraceOf(sc, obj.terrace).id;
+            obj.seed ??= 1;
           }
           if (kind === 'scatter') {   // fills a level with set pieces on a seeded, jittered grid (compile.py): terrace, pieces, spacing?, margin?, seed?
             obj.terrace = terraceOf(sc, String(obj.terrace ?? '')).id;

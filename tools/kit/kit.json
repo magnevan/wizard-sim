@@ -15,6 +15,7 @@
     "sweep.retain": {"class": "sweep", "length": [1.4, 2.6], "stack": "drop"},
     "edge.steps.straight": {"class": "edge", "length": 2.0, "stack": "drop", "note": "a short drop (0.3 to 1 m) you can step over anywhere along it: treads of 0.15 m running out onto the lower side (the dais rings, a stoop)"},
     "edge.steps.chamfer": {"class": "edge", "length": 1.4142, "stack": "drop"},
+    "arch.through": {"class": "arch", "note": "a level crossing water on arches, built to size by the renderer: from (x,y) to (x2,y2) along one face, depth to the other face along (nx,ny), n arches across the span, springing at low, the deck at h; the water (mat) runs on under it. No model: the renderer shapes it and dresses it in the painted stone (ashlar)"},
     "sweep.steps": {"class": "sweep", "length": [1.4, 2.6], "stack": "drop", "note": "steps along a curve"},
     "sweep.kerb": {"class": "sweep", "length": [1.4, 2.6], "stack": "fixed", "note": "a kerb along a curve (a road a step below its pavement)"},
     "sweep.wall": {"class": "sweep", "length": [1.4, 2.6], "stack": "height", "note": "a building's wall along a curve (the great hall's front)"},

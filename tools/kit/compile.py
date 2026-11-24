@@ -354,6 +354,99 @@ def compile_scene(sc):
         v = key(e)
         if v in joints: joints[v]['p'] = 'joint.newel'
 
+    # ---- arches: shapes the renderer builds to size and dresses in the painted stone, never fixed models ----
+    def arches(allsegs, inst):
+        """Bridges: a walkable level whose two parallel faces stand over the same water is crossing it, so the water runs
+        on under an arch (arch.through, one arch per 6 m of span at most; the faces' sections there get v='bridge': only
+        their coping and railing are drawn). Blind arches: tall walls that rise from ground no one walks (the sea) get a
+        shallow arched recess on every third section (v='blind'; on a curve, every other sweep section)."""
+        lowt = lambda s: low_of.get((round(s[0][0], 4), round(s[0][1], 4), round(s[1][0], 4), round(s[1][1], 4)))
+        by_e = {tuple(i['e']): i for i in inst if 'e' in i}
+        mid = lambda s: (round((s[0][0] + s[1][0]) / 2, 4), round((s[0][1] + s[1][1]) / 2, 4))
+        out, k_sweep = [], {}
+        # blind arches
+        for s in allsegs:
+            it = by_e.get(mid(s))
+            if not it or it.get('v') or it['p'] not in ('edge.retain.straight', 'edge.parapet.straight', 'sweep.retain', 'sweep.parapet'): continue
+            lo = T.get(lowt(s), {}) if len(s) == 5 else {}
+            drop = T[s[2]]['h'] - s[3]
+            under = [t for t in T.values() if abs(t['h'] - s[3]) < 1e-6]
+            if drop < 3.0 or any(t.get('walk', True) and t['mat'] not in ('water',) for t in ([lo] if lo else under)): continue
+            if len(s) > 5:
+                k = k_sweep[s[5][1]] = k_sweep.get(s[5][1], -1) + 1
+                if k % 2: continue
+            elif (round(s[0][0]) + round(s[0][1])) % 3: continue
+            it['v'] = 'blind'
+        # bridges: straight faces of a walkable level over water, grouped into runs along one line
+        runs = {}
+        for s in allsegs:
+            if len(s) > 5 or s[4] == 'open': continue
+            up, lo = T[s[2]], T.get(lowt(s), {})
+            if not up.get('walk', True) or lo.get('mat') != 'water': continue
+            (ax, ay), (bx, by) = s[0], s[1]; L = math.hypot(bx - ax, by - ay); ux, uy = (bx - ax) / L, (by - ay) / L
+            if (ux, uy) < (0, 0) or (abs(ux) < 1e-9 and uy < 0): ux, uy = -ux, -uy      # one sense per line
+            ux, uy = round(ux, 6) + 0.0, round(uy, 6) + 0.0
+            off = round(ax * uy - ay * ux, 4)                                           # which parallel line
+            t0, t1 = sorted((ax * ux + ay * uy, bx * ux + by * uy))
+            runs.setdefault((s[2], lowt(s), ux, uy, off), []).append((t0, t1, s))
+        lines = {}
+        for (ter, lg, ux, uy, off), segs_ in runs.items():
+            segs_.sort(key=lambda r: r[0]); cur = None
+            for t0, t1, s in segs_:
+                if cur and t0 <= cur[1] + 1e-6: cur[1] = max(cur[1], t1); cur[2].append(s)
+                else:
+                    cur = [t0, t1, [s]]; lines.setdefault((ter, lg, ux, uy), []).append((off, cur))
+        parts = {}
+        def part(g, p):
+            """which connected body of level g (corners, 4-neighbour) the corner nearest p is in"""
+            if g not in parts:
+                lab, n = {}, 0
+                for y0, r in enumerate(rows):
+                    for x0, c in enumerate(r):
+                        if c != g or (x0, y0) in lab: continue
+                        n += 1; stack = [(x0, y0)]; lab[(x0, y0)] = n
+                        while stack:
+                            x, y = stack.pop()
+                            for q in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                                if q not in lab and 0 <= q[1] < len(rows) and 0 <= q[0] < len(rows[q[1]]) and rows[q[1]][q[0]] == g:
+                                    lab[q] = n; stack.append(q)
+                parts[g] = lab
+            return parts[g].get((math.floor(p[0] + 0.5), math.floor(p[1] + 0.5)))
+        seen = set()
+        for (ter, lg, ux, uy), faces in lines.items():
+            for i, (oa, ra) in enumerate(faces):
+                for ob, rb in faces[i + 1:]:
+                    d = abs(ob - oa); t0, t1 = max(ra[0], rb[0]), min(ra[1], rb[1])
+                    if d < 0.5 or d > 6 or t1 - t0 < 0.99 or (id(ra), id(rb)) in seen: continue
+                    seen.add((id(ra), id(rb)))
+                    nx, ny = uy, -ux                       # the line's normal; off grows along it
+                    if ob < oa: nx, ny = -nx, -ny
+                    at = lambda t, o: (ux * t + uy * o, uy * t - ux * o)      # a point: t along the line, o across it
+                    def glyph(t, o):
+                        x, y = at(t, o); x, y = math.floor(x + 0.5), math.floor(y + 0.5)
+                        return rows[y][x] if 0 <= y < len(rows) and 0 <= x < len(rows[y]) else None
+                    # a crossing, not two banks facing over the water (the level itself lies between its faces) nor a
+                    # pier (the water each side is one body already, round its end; under a bridge it is two)
+                    lo_o, hi_o = min(oa, ob), max(oa, ob); tm = (t0 + t1) / 2
+                    if glyph(tm, (oa + ob) / 2) != ter: continue
+                    sides = [next((part(lg, at(tm, o)) for o in os_ if glyph(tm, o) == lg), None)
+                             for os_ in ([lo_o - k for k in (0.5, 1.5, 2.5)], [hi_o + k for k in (0.5, 1.5, 2.5)])]
+                    if None in sides or sides[0] == sides[1]: continue
+                    px, py = at(t0, oa); qx, qy = at(t1, oa)                 # face A's start and end
+                    up, lo = T[ter], T[lg]
+                    span = (t1 - t0) * G; n = max(1, math.ceil(span / 6.0 - 1e-6))
+                    if up['h'] - lo['h'] < 1.2:
+                        err('arch-low', f"{up.get('name', ter)} crosses {lo.get('name', lg)} only {up['h'] - lo['h']:.2f} m above it: no room for an arch",
+                            (px, py), [gid[ter]], 'warning')
+                        continue
+                    out.append(dict(p='arch.through', x=px * G, y=py * G, x2=qx * G, y2=qy * G, nx=nx, ny=ny, depth=d * G, n=n,
+                                    h=up['h'], low=lo['h'], mat=lo['mat'], rot=math.atan2(uy, ux), len=span, src=gid[ter]))
+                    for r in (ra, rb):
+                        for s in r[2]:
+                            m = mid(s); tm = m[0] * ux + m[1] * uy
+                            if t0 - 1e-6 <= tm <= t1 + 1e-6 and by_e.get(m): by_e[m]['v'] = 'bridge'
+        return out
+
     # ---- instances ----
     inst = []
     overrides = {key(o['at']): o for o in kind('edge')}
@@ -392,6 +485,7 @@ def compile_scene(sc):
         inst.append(it)
     for o in kind('edge'):
         if o['id'] not in used_over: err('edge-missing', f"{label(o)}: no edge section at {o['at']}", o['at'], [o['id']], 'warning')
+    inst += arches(allsegs, inst)
     inst += list(joints.values())
     for f in flights:
         inst.append(dict(p='connector.flight', x=f['a'][0] * G, y=f['a'][1] * G, x2=f['b'][0] * G, y2=f['b'][1] * G,

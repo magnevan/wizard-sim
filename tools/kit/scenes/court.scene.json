@@ -19,7 +19,7 @@
     {"id": "t-rock-p", "glyph": "P", "name": "rock", "h": 4.15, "mat": "rock", "edge": "open", "walk": false},
     {"id": "t-paving-at-5-m-q", "glyph": "Q", "name": "the overlook bay", "h": 5, "mat": "cobble", "edge": "steps"},
     {"id": "t-road-at-5-85-m", "glyph": "T", "name": "road at 5.85 m", "h": 5.85, "mat": "road", "edge": "parapet"},
-    {"id": "t-wood-at-5-85-m", "glyph": "U", "name": "wood at 5.85 m", "h": 5.85, "mat": "deck", "edge": "parapet"},
+    {"id": "t-wood-at-5-85-m", "glyph": "U", "name": "the stream bridge", "h": 5.85, "mat": "road", "edge": "parapet"},
     {"id": "t-grass-at-6-m", "glyph": "V", "name": "grass at 6 m", "h": 6, "mat": "lawn", "edge": "parapet"},
     {"id": "t-path-at-6-m", "glyph": "W", "name": "the gorge path", "h": 6, "mat": "dirt", "edge": "parapet"},
     {"id": "t-paving-at-6-m", "glyph": "X", "name": "paving at 6 m", "h": 6, "mat": "cobble", "edge": "parapet"},

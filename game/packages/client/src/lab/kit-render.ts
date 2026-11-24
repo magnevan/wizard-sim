@@ -252,11 +252,11 @@ function wallBody(g: THREE.Group, L: number, h: number, low: number, v?: string)
   const cop = TEX.kerb ?? MAT.coping;
   if (v === 'bridge') { box(g, cop, 0, L, yOf(h - COP), yOf(h + PROUD), -0.5, COP_OUT); return; }   // the arch under it draws the wall
   if (v !== 'blind') { retain(g, L, h, low); return; }
-  // a blind arch (the court's sea walls; docs/reference/court-kit/court-sea-paintover.png): tall and narrow, about three
+  // a blind arch (the court's sea walls; docs/reference/court-kit/court-sea-paintover.png): tall and narrow, up to four
   // times its width, high under the coping, recessed 0.25 u, with a sill, a thin gold moulding, and flat pilasters
   const face = TEX.ashlar ?? MAT.face, R = 0.25, base = yOf(low) - 0.4, wallTop = yOf(h - COP);
   const r = Math.max(0.25, (L - yOf(0.6)) / 2), cx = L / 2, top = wallTop - yOf(0.8);
-  const bot = Math.max(yOf(low) + 0.5, top - r * 2 * 3.2);
+  const bot = Math.max(yOf(low + 1.5), top - r * 2 * 4);   // down to a base course 1.5 m over the lower floor, at most 4 times its width tall
   box(g, cop, 0, L, wallTop, yOf(h + PROUD), -0.5, COP_OUT);                                    // the coping
   const front = new THREE.Shape([new THREE.Vector2(0, base), new THREE.Vector2(L, base), new THREE.Vector2(L, wallTop), new THREE.Vector2(0, wallTop)]);
   front.holes.push(archPath(new THREE.Path(), cx, r, bot, top));

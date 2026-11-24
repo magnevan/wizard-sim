@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-magic-flow.png in the current directory. Reply with just the file name.
+
+The attached image is the academy courtyard this texture is for: stylised, hand-painted, warm sandstone, gold trim, warm light. Its plaza has channels of glowing elemental magic running into it.
+
+Draw a seamless tileable texture of a slowly flowing field of luminous magical energy, as it would fill a shallow stone channel seen straight down from above: soft bright ribbons and wisps streaming from left to right, a few small sparkles and motes, in pale near-white tones over a soft mid-grey, so it can be tinted to any element's colour. Stylised and hand-painted like the attached image, filling the whole square image edge to edge, evenly lit, with no objects, no stone, no edges and no text. The pattern repeats cleanly when the image is tiled side by side.

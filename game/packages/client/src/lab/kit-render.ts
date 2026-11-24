@@ -53,7 +53,7 @@ const PROP = { stone: mat(0xd2cabd), coping: mat(0xe6e0d4) };
 // One decal at a time (the plaza's disc). Its uniforms are shared by every receiving material, so setting them is enough.
 const DECAL = {
   dcOn: { value: 0 }, dcTex: { value: null as THREE.Texture | null }, dcC: { value: new THREE.Vector2() },
-  dcH: { value: new THREE.Vector2(1, 1) }, dcRot: { value: 0 }, dcRound: { value: 1 },
+  dcH: { value: new THREE.Vector2(1, 1) }, dcRot: { value: 0 }, dcRound: { value: 1 }, dcY: { value: new THREE.Vector2(-1e9, 1e9) },
 };
 /** Let a material take the decal (after any shader change it already makes). */
 function decalable<T extends THREE.Material>(m: T): T {
@@ -63,9 +63,9 @@ function decalable<T extends THREE.Material>(m: T): T {
     Object.assign(sh.uniforms, DECAL);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vDcPos;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvDcPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vDcPos;\nuniform float dcOn, dcRot, dcRound;\nuniform vec2 dcC, dcH;\nuniform sampler2D dcTex;')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vDcPos;\nuniform float dcOn, dcRot, dcRound;\nuniform vec2 dcC, dcH, dcY;\nuniform sampler2D dcTex;')
       .replace('#include <color_fragment>', `#include <color_fragment>
-        if (dcOn > 0.5) {
+        if (dcOn > 0.5 && vDcPos.y >= dcY.x && vDcPos.y <= dcY.y) {   // only within its height band: never up a tall wall in its footprint
           vec2 dd = vDcPos.xz - dcC; float cr = cos(dcRot), sr = sin(dcRot);
           vec2 q = vec2(cr * dd.x + sr * dd.y, -sr * dd.x + cr * dd.y) / dcH;      // -1..1 across the footprint
           if (dcRound > 0.5 ? dot(q, q) <= 1.0 : max(abs(q.x), abs(q.y)) <= 1.0) {
@@ -93,11 +93,13 @@ function loadDecal(path: string): Promise<THREE.Texture | null> {
 }
 /** Put the scene's decal (or none) on the ground: every receiving material shows it at once. */
 function setDecal(it: Inst | undefined) {
-  const k = it && KIT_PIECES[it.p] as KitPiece & { texture?: string };
+  const k = it && KIT_PIECES[it.p] as KitPiece & { texture?: string; reach?: number };
   if (!it || !k?.texture) { DECAL.dcOn.value = 0; return; }
   const [w, d] = k.footprint ?? [10, 10];
   DECAL.dcC.value.set(it.x, it.y); DECAL.dcH.value.set(w / 2, d / 2); DECAL.dcRound.value = k.shape === 'round' ? 1 : 0;
   DECAL.dcRot.value = it.rot - Math.PI / 2;   // its front (S by default) is the picture's bottom
+  // from its floor up to reach (m; kit.json, default 0.5): steps within it take the picture, a tall wall in its footprint doesn't
+  DECAL.dcY.value.set(yOf(it.h) - 0.05, yOf(it.h + (k.reach ?? 0.5)) + 0.05);
   loadDecal(k.texture).then((t) => { if (t) { DECAL.dcTex.value = t; DECAL.dcOn.value = 1; } });
 }
 export const isDecal = (p: string) => KIT_PIECES[p]?.class === 'decal';

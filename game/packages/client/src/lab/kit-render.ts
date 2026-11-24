@@ -253,8 +253,67 @@ function slab(g: THREE.Group, s: THREE.Shape, depth: number, z0: number, m: THRE
   const mesh = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: false, curveSegments: 24 }), m);
   mesh.position.z = z0; mesh.castShadow = mesh.receiveShadow = true; g.add(mesh);
 }
+// ---- a bay: one blind arch over three wall sections (its centre v 'blind' with bay: 3, the sides v 'blind-side'), laid
+// out along the whole bay ("bay coordinates", u from the bay's start), so it follows the wall round a curve ----
+type Bay = { s0: number; total: number; first: boolean; last: boolean };
+const BAYS = new Map<string, Bay>();
+const segKey = (it: { x: number; y: number; x2?: number; y2?: number }) => `${Math.round(it.x * 100)},${Math.round(it.y * 100)},${Math.round((it.x2 ?? 0) * 100)},${Math.round((it.y2 ?? 0) * 100)}`;
+/** Each bay's three sections: a centre and the sides sharing its endpoints; each section's start along the bay. */
+function findBays(insts: Inst[]) {
+  BAYS.clear();
+  const near = (a: number, b: number) => Math.abs(a - b) < 0.01;
+  const sides = insts.filter((i) => i.v === 'blind-side' && i.x2 != null);
+  for (const c of insts) {
+    if (c.v !== 'blind' || !(c as Inst & { bay?: number }).bay || c.x2 == null) continue;
+    const a = sides.find((s) => near(s.x2!, c.x) && near(s.y2!, c.y)) ?? sides.find((s) => near(s.x, c.x) && near(s.y, c.y));
+    const b = sides.find((s) => s !== a && near(s.x, c.x2!) && near(s.y, c.y2!)) ?? sides.find((s) => s !== a && near(s.x2!, c.x2!) && near(s.y2!, c.y2!));
+    const len = (s: Inst) => Math.hypot(s.x2! - s.x, s.y2! - s.y), La = a ? len(a) : 0, Lc = len(c), Lb = b ? len(b) : 0, total = La + Lc + Lb;
+    if (a) BAYS.set(segKey(a), { s0: 0, total, first: true, last: false });
+    BAYS.set(segKey(c), { s0: La, total, first: !a, last: !b });
+    if (b) BAYS.set(segKey(b), { s0: La + Lc, total, first: false, last: true });
+  }
+}
+/**
+ * One section's share of its bay's blind arch: the face with the arch's part in this section cut away (built as plain
+ * polygons, never a hole across the outline), the recess's back, its share of the sill and of the gold moulding (short
+ * pieces along the arch, each drawn by the section it falls in), and a half-pilaster at the bay's two ends.
+ */
+function bayWall(g: THREE.Group, L: number, h: number, low: number, bay: Bay) {
+  const face = TEX.ashlar ?? MAT.face, cop = TEX.kerb ?? MAT.coping, R = 0.25, base = yOf(low) - 0.4, wallTop = yOf(h - COP);
+  const r = Math.max(0.25, (bay.total - yOf(0.6)) / 2), cx = bay.total / 2 - bay.s0, top = wallTop - yOf(0.8);   // cx: in this section's x
+  const bot = Math.max(yOf(low + 1.5), top - r * 2 * 4);   // down to a base course 1.5 m over the lower floor, at most 4:1
+  const archY = (x: number) => top - r + Math.sqrt(Math.max(0, r * r - (x - cx) * (x - cx)));   // the opening's top at x
+  box(g, cop, 0, L, wallTop, yOf(h + PROUD), -0.5, COP_OUT);                                  // the coping
+  const poly = (pts: number[][]) => slab(g, new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y))), R, -R, face);
+  const xa = Math.max(0, cx - r), xb = Math.min(L, cx + r);
+  if (cx - r > 0) poly([[0, base], [Math.min(L, cx - r), base], [Math.min(L, cx - r), wallTop], [0, wallTop]]);   // stone left of the arch
+  if (cx + r < L) poly([[Math.max(0, cx + r), base], [L, base], [L, wallTop], [Math.max(0, cx + r), wallTop]]);   // and right of it
+  if (xb > xa) {
+    poly([[xa, base], [xb, base], [xb, bot], [xa, bot]]);                                     // under the sill
+    const n = Math.max(2, Math.ceil((xb - xa) / 0.12)), arc: number[][] = [];
+    for (let k = 0; k <= n; k++) { const x = xa + ((xb - xa) * k) / n; arc.push([x, archY(x)]); }
+    poly([...arc, [xb, wallTop], [xa, wallTop]]);                                               // above the arch's head
+    box(g, face, xa, xb, base, wallTop, -0.45, -R);                                             // the recess's back
+    box(g, cop, Math.max(0, cx - r - 0.1), Math.min(L, cx + r + 0.1), bot - 0.14, bot, -R, 0.1);   // the sill
+  }
+  // the gold moulding: short pieces along jambs and head, at r + 0.035 out, each in the section that holds its middle
+  const rr = r + 0.035, path: number[][] = [];
+  for (let y = bot; y < top - r; y += 0.15) path.push([cx - rr, y]);
+  for (let k = 0; k <= 32; k++) { const a = Math.PI - (Math.PI * k) / 32; path.push([cx + rr * Math.cos(a), top - r + rr * Math.sin(a)]); }
+  for (let y = top - r; y >= bot; y -= 0.15) path.push([cx + rr, y]);
+  for (let k = 0; k + 1 < path.length; k++) {
+    const [x0, y0] = path[k], [x1, y1] = path[k + 1], mx = (x0 + x1) / 2;
+    if (mx < 0 || mx >= L) continue;
+    const len = Math.hypot(x1 - x0, y1 - y0), piece = new THREE.Mesh(new THREE.BoxGeometry(len + 0.02, 0.07, 0.04), GOLD);
+    piece.position.set(mx, (y0 + y1) / 2, 0.02); piece.rotation.z = Math.atan2(y1 - y0, x1 - x0); g.add(piece);
+  }
+  if (bay.first) box(g, face, 0, 0.32, base, wallTop, 0, 0.07);                              // half-pilasters at the bay's ends
+  if (bay.last) box(g, face, L - 0.32, L, base, wallTop, 0, 0.07);
+}
+
 /** A wall section's body by its variant: a blind arch recessed in it, a bridge face's coping alone, or the plain wall. */
-function wallBody(g: THREE.Group, L: number, h: number, low: number, v?: string) {
+function wallBody(g: THREE.Group, L: number, h: number, low: number, v?: string, bay?: Bay) {
+  if (bay && (v === 'blind' || v === 'blind-side')) { bayWall(g, L, h, low, bay); return; }
   const cop = TEX.kerb ?? MAT.coping;
   if (v === 'bridge') { box(g, cop, 0, L, yOf(h - COP), yOf(h + PROUD), -0.5, COP_OUT); return; }   // the arch under it draws the wall
   if (v !== 'blind') { retain(g, L, h, low); return; }
@@ -385,7 +444,7 @@ function piece(it: Inst): THREE.Group | null {
     let madeRetain = false;
     const niche = it.v === 'niche' && ART.niche;
     // (with an ashlar texture the wall is a plain shape wearing it, so its courses never repeat at a seam; a niche stays made)
-    const shaped = it.v === 'blind' || it.v === 'bridge';   // shaped by code: a blind arch in the wall, or a bridge face (the arch draws below)
+    const shaped = it.v === 'blind' || it.v === 'blind-side' || it.v === 'bridge';   // shaped by code: a blind arch in the wall, or a bridge face (the arch draws below)
     if ((kind === 'retain' || kind === 'parapet') && drop >= 0.3 && !shaped && (!TEX.ashlar || niche) && art(g, niche ? 'niche' : 'retain-top', 0, yOf(it.h), L / 2)) {
       madeRetain = true;
       if (TEX.ashlar) box(g, TEX.ashlar, 0, L, yOf(low) - 0.4, yOf(it.h) - 2.0, -0.45, 0);   // under a niche: the textured wall, as beside it
@@ -393,9 +452,9 @@ function piece(it: Inst): THREE.Group | null {
         if (k % 2) art(g, 'retain-course', L, y, -L / 2); else art(g, 'retain-course', 0, y, L / 2);
       }
     }
-    if (kind === 'retain') { if (!madeRetain) wallBody(g, L, it.h, low, it.v); }
+    if (kind === 'retain') { if (!madeRetain) wallBody(g, L, it.h, low, it.v, BAYS.get(segKey(it))); }
     else if (kind === 'parapet') {
-      if (!madeRetain) wallBody(g, L, it.h, low, it.v);
+      if (!madeRetain) wallBody(g, L, it.h, low, it.v, BAYS.get(segKey(it)));
       // pier face to pier face: on a straight run 0.275 at each end; on a bend, where the turned pier's face is
       const dx = (it.x2! - it.x) / L, dy = (it.y2! - it.y) / L, nx = -dy, ny = dx;
       const i0 = railInset(it.x, it.y, dx, dy, nx, ny), i1 = railInset(it.x2!, it.y2!, -dx, -dy, nx, ny);
@@ -765,7 +824,8 @@ function tintGroup(g: THREE.Object3D, tint: string) {
 export function buildKit(data: KitData): THREE.Group {
   const root = new THREE.Group();
   JOINTS.clear(); SPINNERS.length = 0; ARCH_FACES.length = 0; BLIND_SEGS.length = 0;
-  for (const it of data.instances) if (it.v === 'blind' && it.x2 != null) BLIND_SEGS.push([it.x, it.y, it.x2, it.y2!]);
+  for (const it of data.instances) if ((it.v === 'blind' || it.v === 'blind-side') && it.x2 != null) BLIND_SEGS.push([it.x, it.y, it.x2, it.y2!]);
+  findBays(data.instances);
   for (const it of data.instances) if (it.p.startsWith('arch.')) {   // an arch's two faces, before the floors and water are built
     const a = it as Inst & { nx?: number; ny?: number; depth?: number }, ex = (a.nx ?? 0) * (a.depth ?? 0), ey = (a.ny ?? 0) * (a.depth ?? 0);
     ARCH_FACES.push([a.x, a.y, a.x2!, a.y2!], [a.x + ex, a.y + ey, a.x2! + ex, a.y2! + ey]);

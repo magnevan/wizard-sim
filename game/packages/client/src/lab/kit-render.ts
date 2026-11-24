@@ -13,7 +13,7 @@ import { fallMesh } from './kit-fall';
 import { waterMesh } from './kit-water';
 import { FOLIAGE_TIME, grow, type Recipe } from './foliage';
 
-export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string;
+export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string; ox?: number; oy?: number;
   /** a fall's lip (fall.curtain): its line in u, the lower water on the right */
   pts?: number[][];
   /** per instance (scatters, dressing): size, a colour multiplied in, metres above h, and the parts chosen per slot */
@@ -402,7 +402,7 @@ function railModules(g: THREE.Group, x0: number, span: number, y: number): boole
 // the joints of the kit being built, by corner: a balustrade runs to its piers' faces (buildKit fills it)
 const JOINTS = new Map<string, Inst>();
 const jkey = (x: number, y: number) => `${Math.round(x * 1000)},${Math.round(y * 1000)}`;
-const RAIL_Z = -0.2, PIER_HALF = 0.275, NEWEL_HALF = 0.275 * 1.25;
+const RAIL_Z = -0.2, PIER_SET = 0.3, PIER_HALF = 0.275, NEWEL_HALF = 0.275 * 1.25;
 /**
  * How far along a section, from its end at corner (vx, vy) going in direction (dx, dy), its balustrade meets the face
  * of the pier there. A pier is square and turned to the bisector of its two sections, so on a bend its face is
@@ -417,7 +417,8 @@ function railInset(vx: number, vy: number, dx: number, dy: number, nx: number, n
   let [tx, ty] = a[0];
   if (Math.abs(a[1][0] * dx + a[1][1] * dy) > Math.abs(tx * dx + ty * dy)) [tx, ty] = a[1];   // the face this section meets
   const along = tx * dx + ty * dy, s = Math.sign(along) || 1;
-  const x = (half - s * RAIL_Z * (tx * nx + ty * ny)) / Math.abs(along);
+  // the post stands PIER_SET inside the edge line (compile.py), so the rail lies RAIL_Z + PIER_SET from its centre
+  const x = (half - s * (RAIL_Z + PIER_SET) * (tx * nx + ty * ny)) / Math.abs(along);
   return Math.max(0.05, Math.min(x, 1.2));
 }
 /** Steps along an edge (a short drop you can step over anywhere along it): treads of about 0.15 m, 0.5 u deep, out onto the lower side. */
@@ -472,7 +473,7 @@ function piece(it: Inst): THREE.Group | null {
     return g;
   }
   if (cls === 'joint') {
-    const g = new THREE.Group(); g.position.set(it.x, 0, it.y); g.rotation.y = -it.rot;
+    const g = new THREE.Group(); g.position.set(it.x + (it.ox ?? 0), 0, it.y + (it.oy ?? 0)); g.rotation.y = -it.rot;
     const y = yOf(it.h);
     if ((kind === 'pier' || kind === 'newel') && art(g, 'pier', 0, y, 1, 1, kind === 'newel' ? 1.25 : 1)) return g;
     if (kind === 'pier') { box(g, MAT.stone, -0.275, 0.275, y, y + yOf(1.08), -0.275, 0.275); box(g, MAT.coping, -0.33, 0.33, y + yOf(1.08), y + yOf(1.2), -0.33, 0.33); }
@@ -498,10 +499,11 @@ function piece(it: Inst): THREE.Group | null {
     if (madeTreads) { for (let m = -0.6; m < W + 0.6 - 0.01; m += (W + 1.2) / Math.ceil((W + 1.2) / 2)) { art(g, 'tread', m, yOf(it.h) + 0.01, (W + 1.2) / Math.ceil((W + 1.2) / 2) / 2); g.children[g.children.length - 1].position.z = 0.0; } }
     else box(g, TEX.tread ?? MAT.coping, -0.6, W + 0.6, yOf(it.h - rise) - 0.1, yOf(it.h + PROUD * 0.4), -0.45, 0.05);
     for (let k = 0; k < n; k++) {
-      const top = yOf(it.h - (k + 1) * rise);
+      // the last tread's top is the lower floor's own height: sunk a hair so it never fights the floor it meets (pin p36)
+      const top = yOf(it.h - (k + 1) * rise) - (k === n - 1 ? 0.012 : 0);
       box(g, treadMat, 0, W, yOf(it.low!) - 0.4, madeTreads ? top - 0.3 : top, k * go, (k + 1) * go);
       if (madeTreads && k < n - 1) { for (let m = 0; m + 1.99 < W; m += 2) art(g, 'tread', m, top, 1, 1); g.children.slice(-Math.round(W / 2)).forEach((o) => { o.position.z = (k + 1) * go - 0.06; }); }
-      else if (!TEX.tread) box(g, MAT.coping, 0, W, top - 0.05, top, k * go - 0.05, k * go + 0.08);   // a nosing (a textured tread shows its own edge)
+      else if (!TEX.tread && k < n - 1) box(g, MAT.coping, 0, W, top - 0.05, top + 0.008, k * go - 0.05, k * go + 0.08);   // proud of the tread it lies on, not coplanar   // a nosing (a textured tread shows its own edge)
     }
     const sl = yOf(it.h - it.low!) / L, topAt = (z: number) => yOf(it.h + 0.1) - sl * z;
     // the cheek walls: made courses (retain-top, retain-course) unless there is an ashlar texture, then a plain wall

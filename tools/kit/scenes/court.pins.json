@@ -1,5 +1,5 @@
 {
- "next": 34,
+ "next": 38,
  "pins": [
   {
    "id": "p1",
@@ -571,7 +571,7 @@
    "note": "Model looks slightly broken, I can see through parts of it",
    "author": "user",
    "rev": 14,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T00:08:01.487Z",
    "anchor": {
@@ -601,8 +601,14 @@
      "author": "claude",
      "text": "Remade as a standard Meshy 7.1 model (12 open edges after fitting, where the old one had 168), and fit.py now welds and fills holes for every set piece. Reload to check.",
      "time": "2026-11-24T00:46:05.349Z"
+    },
+    {
+     "author": "claude",
+     "text": "The beacon was remade watertight in round 2 (standard meshy-7.1, welded before decimating). Checked again now: 12 open edges after welding, a double-sided material, and whole from all four sides. The see-through part is its open gold cage round the crystal, which is by design. Reopen if you still see a hole, with a closer camera.",
+     "time": "2026-11-24T22:31:03.596Z"
     }
-   ]
+   ],
+   "outcome": "piece"
   },
   {
    "id": "p24",
@@ -971,6 +977,135 @@
     }
    ],
    "outcome": "rule"
+  },
+  {
+   "id": "p34",
+   "note": "instead of a decal that spans across the ground, this could be a raised platform embedded in the ground. The colored stripes could be replaced by a lowered section filled with a magical, slowly flowing field",
+   "author": "user",
+   "rev": 35,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T22:22:05.117Z",
+   "anchor": {
+    "x": 56.04,
+    "y": 41.72,
+    "h": 2.57,
+    "obj": "r15",
+    "inst": {
+     "p": "sweep.steps",
+     "e": [
+      56.6167,
+      41.484
+     ]
+    },
+    "cam": [
+     113.74,
+     27.36,
+     102.94,
+     111.78,
+     3.33,
+     80.61
+    ]
+   },
+   "thread": []
+  },
+  {
+   "id": "p35",
+   "note": "the pillars for the railings hang over the edge in an unnatural way",
+   "author": "user",
+   "rev": 35,
+   "status": "resolved",
+   "seen": false,
+   "time": "2026-11-24T22:23:15.312Z",
+   "anchor": {
+    "x": 37.63,
+    "y": 55.04,
+    "h": 1.11,
+    "obj": "t-paving-at-1-m",
+    "inst": {
+     "p": "joint.pier"
+    },
+    "cam": [
+     79,
+     5.27,
+     118.15,
+     77.39,
+     3.33,
+     114.03
+    ]
+   },
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Piers and newels at parapet runs are now set back 0.3 u onto the upper floor (compile.py joints: ox/oy inside each section's edge line, solved for bends), so they stand on the wall's top instead of straddling the drop; rail insets in kit-render.ts railInset follow.",
+     "time": "2026-11-24T22:37:03.335Z"
+    }
+   ],
+   "outcome": "piece"
+  },
+  {
+   "id": "p36",
+   "note": "staircase z-fighting with ground",
+   "author": "user",
+   "rev": 35,
+   "status": "resolved",
+   "seen": false,
+   "time": "2026-11-24T22:23:38.924Z",
+   "anchor": {
+    "x": 45.39,
+    "y": 53.64,
+    "h": 1,
+    "obj": "f3",
+    "inst": {
+     "p": "connector.flight"
+    },
+    "cam": [
+     96.6,
+     14.03,
+     120.13,
+     93.25,
+     3.33,
+     107.66
+    ]
+   },
+   "thread": [
+    {
+     "author": "claude",
+     "text": "The last tread's top sat exactly at the lower floor height and each nosing's top was coplanar with its tread: the last tread is sunk 12 mm, nosings are proud 8 mm and skipped on the last step (kit-render.ts, connector.flight; applies to all flights).",
+     "time": "2026-11-24T22:37:03.496Z"
+    }
+   ],
+   "outcome": "piece"
+  },
+  {
+   "id": "p37",
+   "note": "road texture has obvious repeats when zoomed out. Ideally it would be composed of stones that follow the path the same way the concept images have it. This may be a concept we should prompt a more advanced model about to see if we can have some procedural solution.",
+   "author": "user",
+   "rev": 35,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T22:25:58.028Z",
+   "anchor": {
+    "x": 47.36,
+    "y": 25.71,
+    "h": 5.85,
+    "obj": "t-road-at-5-85-m",
+    "cam": [
+     103.13,
+     30.76,
+     77.46,
+     94.54,
+     3.33,
+     45.49
+    ]
+   },
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Handed to the texture agent the user is briefing (repeating ground, road and cliff textures; stones that follow the path). Left open for it.",
+     "time": "2026-11-24T22:31:03.754Z"
+    }
+   ]
   }
  ]
 }

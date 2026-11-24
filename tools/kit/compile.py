@@ -329,6 +329,7 @@ def compile_scene(sc):
     at_vertex = {}
     for s in allsegs:
         for end in (0, 1): at_vertex.setdefault((key(s[end]), s[4], s[2]), []).append((s, end))
+    PIER_SET = 0.3     # u: how far a balustrade post stands in from the edge line (its face then sits at the wall's, the coping over it a little proud)
     joints = {}
     meets = {}   # every run touching a vertex, of any terrace: a run may end where another one goes on
     for s in allsegs:
@@ -351,6 +352,21 @@ def compile_scene(sc):
         # (pin p25: a 6 m parapet started at the 5 m terrace's newel)
         if piece and (v not in joints or T[ter]['h'] > joints[v]['h']):
             joints[v] = dict(p=piece, x=v[0] * G, y=v[1] * G, h=T[ter]['h'], low=max(s[3] for s, _ in lst), rot=rot, src=gid[ter])
+            if tr == 'parapet':
+                # a post stands on the upper floor, set back so its face is flush with the wall: its centre lies PIER_SET u inside
+                # each section's edge line (pin p35: piers hung half over the drop). The upper side of a section a->b is (dy, -dx).
+                ups = []
+                for s, end in lst:
+                    ex, ey = s[1][0] - s[0][0], s[1][1] - s[0][1]; el = math.hypot(ex, ey) or 1
+                    ups.append((ey / el, -ex / el))
+                if len(ups) == 1 or abs(ups[0][0] * ups[1][1] - ups[0][1] * ups[1][0]) < 1e-3:
+                    ox, oy = ups[0][0] * PIER_SET, ups[0][1] * PIER_SET
+                else:      # on a bend: inside both lines by PIER_SET (o . n1 = o . n2 = PIER_SET)
+                    (a1, b1), (a2, b2) = ups[0], ups[1]; det = a1 * b2 - a2 * b1
+                    ox, oy = PIER_SET * (b2 - b1) / det, PIER_SET * (a1 - a2) / det
+                    m = math.hypot(ox, oy)
+                    if m > 3 * PIER_SET: ox, oy = ox * 3 * PIER_SET / m, oy * 3 * PIER_SET / m
+                joints[v]['ox'], joints[v]['oy'] = round(ox, 4), round(oy, 4)
     # newels at flight heads that end a run
     for e in ends_at:
         v = key(e)

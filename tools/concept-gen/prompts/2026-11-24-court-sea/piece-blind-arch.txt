@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as piece-blind-arch.png in the current directory. Reply with just the file name.
+
+The attached images are paintings of our wizard academy's courtyard: stylised 3D, warm sandstone, blue slate roofs with gold trim, warm morning light.
+
+Draw one bay of the courtyard's tall sea wall decoration (the blind arches and pilasters along the walls that rise from the sea in the paintings) on its own, as a single game asset on a plain light grey background, seen straight on, face-on, with a slight angle from above. A shallow relief panel to stand against a wall of warm sandstone ashlar: a tall, narrow blind arched window recessed a hand's depth into the stone, framed by a thin gold moulding, with a sill at the bottom; on each side half of a flat sandstone pilaster with a simple capital. The panel is about three units wide and five units tall, and only a few tenths of a unit deep; its back is flat. Nothing else in the image: no wall beyond the panel, no water, no balustrade, no people, no text.

@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as strip-violet.png in the current directory. Reply with just the file name.
+
+The first attached image is the academy courtyard's concept art (stylised, hand-painted, warm light, lush violet-flowering vines on sandstone walls). The second shows our wizard, who is 1.7 m tall: use him only for scale, and do not draw him.
+
+Draw a single vertical strip of a flowering violet climber like wisteria, green leaves with hanging violet and lilac flower clusters, hanging straight down from a straight horizontal top edge across the full width of the image, as a game texture on a plain flat bright green (#00ff00) background, seen straight on and flat, with no wall behind it. The strip is 1 metre wide and 3 metres long, so the image is three times as tall as wide; each leaf is about 6 centimetres long and each flower cluster about 20 centimetres long. Strands of different lengths, thicker at the top and thinning to a few trailing tendrils at the bottom. Evenly lit, no shadow, no text.

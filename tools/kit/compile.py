@@ -565,6 +565,40 @@ def compile_scene(sc):
                         px, py = ex + ux * sgn * 0.7 + f['dx'] * back, ey + uy * sgn * 0.7 + f['dy'] * back
                         if only is None or only.buffer(1e-6).contains(Point(px, py)):
                             put(rule['put'], px, py, f['top_h'] if head else f['bot_h'], math.atan2(f['dy'], f['dx']), on_floor=True)
+            elif 'drape' in rule or 'grow' in rule:
+                # vines on wall faces (docs/explorations/2026-11-24-dressing-variation.md, Vines). Painted pieces keep their
+                # real size (kit.json size_m), so a tall wall gets more vine, never bigger leaves.
+                # drape: a strip hung from the coping, cut to a share of the drop. grow: a seeded path that falls from
+                # the coping with gravity, wanders and branches, on which the renderer stamps painted clusters.
+                treat_ok = rule.get('drape') or rule.get('grow')
+                niche_at = {tuple(i['e']) for i in inst if i.get('v') == 'niche' and 'e' in i}
+                for s in allsegs:
+                    if s[4] not in treat_ok: continue
+                    drop = T[s[2]]['h'] - s[3]
+                    if drop < rule.get('min_drop', 1.0) or rng.random() > rule.get('chance', 0.3): continue
+                    (ax, ay), (bx, by) = s[0], s[1]
+                    mid = (round((ax + bx) / 2, 4), round((ay + by) / 2, 4))
+                    if mid in niche_at: continue
+                    if any(z.intersects(LineString([s[0], s[1]]).buffer(0.3)) for z in fl_zones): continue   # never over a flight
+                    if not ok_at(mid[0], mid[1]) and only is not None: continue
+                    pc_ = rng.choice(rule['put']); L = math.hypot(bx - ax, by - ay) * G * 0.6       # m along the wall
+                    base = dict(p=pc_, x=ax * G, y=ay * G, x2=bx * G, y2=by * G, h=T[s[2]]['h'], low=s[3], src=d_['id'], **vary(pc_, rng))
+                    if 'drape' in rule:
+                        base.update(len=round(drop * rng.uniform(*rule.get('share', [0.3, 0.85])), 2), flip=rng.random() < 0.5,
+                                    offset=round(rng.random(), 3))
+                    else:     # a path in wall-local metres: s along the wall from a, z down from the coping
+                        paths = []
+                        for _ in range(rng.randint(1, rule.get('branches', 2))):
+                            sx, z = rng.uniform(0.15, 0.85) * L, 0.0; pts = [[round(sx, 2), 0.0]]
+                            target = drop * rng.uniform(*rule.get('share', [0.4, 1.0])); drift = rng.uniform(-0.3, 0.3)
+                            while z < target and len(pts) < 60:
+                                step = rng.uniform(0.15, 0.3); z += step
+                                drift = max(-0.6, min(0.6, drift + rng.uniform(-0.15, 0.15)))
+                                sx = max(0.05, min(L - 0.05, sx + drift * step))
+                                pts.append([round(sx, 2), round(min(z, drop - 0.05), 2)])
+                            paths.append(pts)
+                        base.update(paths=paths)
+                    inst.append(base)
             elif rule.get('along') == 'road':    # kerbs between a pavement and a road: lamps on the pavement side
                 step = rule.get('spacing', 9) / G; inset = rule.get('inset', 0.6); acc = step / 2
                 for s in allsegs:

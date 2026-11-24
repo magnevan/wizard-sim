@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as clusters-ivy.png in the current directory. Reply with just the file name.
+
+The first attached image is the academy courtyard's concept art (stylised, hand-painted, warm light, lush violet-flowering vines on sandstone walls). The second shows our wizard, who is 1.7 m tall: use him only for scale, and do not draw him.
+
+Draw a sprite sheet of twelve separate clumps of ivy leaves, laid out in a four by three grid with clear space between them, on a plain flat bright green (#00ff00) background, seen straight on and flat. Each is a different shape: small round clumps, long trailing sprigs, a fork of two stems, a single drooping tendril, a dense knot. each clump is 20 to 40 centimetres across, its leaves about 8 centimetres, matching the wizard's scale. Evenly lit, no shadows, nothing touching the edges of its cell, no text.

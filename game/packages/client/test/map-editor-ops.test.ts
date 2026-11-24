@@ -64,6 +64,8 @@ describe('map editor ops', () => {
     expect(w.minted).toEqual(['w1']);
     expect(w.scene.objects[1]).toMatchObject({ terrace: 't-plaza', seed: 1 });
     expect(() => applyOps(base(), [{ op: 'add', kind: 'scatter', terrace: 'P', pieces: [] }])).toThrow(OpError);
+    expect(applyOps(base(), [{ op: 'add', kind: 'dress', style: 'courtyard-formal' }]).scene.objects[1]).toMatchObject({ id: 'd1', seed: 1 });
+    expect(() => applyOps(base(), [{ op: 'add', kind: 'dress' }])).toThrow(OpError);
   });
 
   it('writes the same file layout as tools/kit/scene.py', () => {

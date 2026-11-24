@@ -11,7 +11,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RAIL_MOD, railFit } from './kit-fit';
 import { waterMesh } from './kit-water';
 
-export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string };
+export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string;
+  /** per instance (scatters, dressing): size, a colour multiplied in, metres above h, and the parts chosen per slot */
+  scale?: number; tint?: string; up?: number; parts?: Record<string, string> };
 export type Floor = { t: string; id?: string; h: number; mat: string; polys: number[][][][] };
 export type KitData = { G: number; size: [number, number]; floors: Floor[]; instances: Inst[] };
 
@@ -107,7 +109,7 @@ function setDecal(it: Inst | undefined) {
 export const isDecal = (p: string) => KIT_PIECES[p]?.class === 'decal';
 
 /** The kit's pieces as tools/kit/kit.json describes them (the map editor fetches it): set pieces need their size. */
-export type KitPiece = { class?: string; shape?: string; footprint?: [number, number]; height?: number; note?: string };
+export type KitPiece = { class?: string; shape?: string; footprint?: [number, number]; height?: number; note?: string; stack?: string[]; parts?: Record<string, string[]> };
 const KIT_PIECES: Record<string, KitPiece> = {};
 export function setKitPieces(p: Record<string, KitPiece>) { Object.assign(KIT_PIECES, p); }
 export const kitPiece = (p: string): KitPiece | undefined => KIT_PIECES[p];
@@ -382,8 +384,9 @@ function piece(it: Inst): THREE.Group | null {
   if (cls === 'setpiece') {
     // a unique made piece on its footprint (a tower, the armillary): its model if made, else a stone stand-in of its
     // footprint and height (kit.json, given by setKitPieces) on a slightly wider plinth
-    const g = new THREE.Group(), y = yOf(it.h);
-    g.position.set(it.x, 0, it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // local +z is the front
+    // (built from its floor up, at the group's origin, so an instance's scale grows it from where it stands)
+    const g = new THREE.Group(), y = 0;
+    g.position.set(it.x, yOf(it.h + (it.up ?? 0)), it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // local +z is the front
     if (art(g, kind, 0, y)) return g;
     const k = KIT_PIECES[it.p] ?? { shape: 'box', footprint: [2, 2], height: 4 };
     const [w, d] = k.footprint ?? [2, 2], H = yOf(k.height ?? 4), P = yOf(0.35);
@@ -399,6 +402,7 @@ function piece(it: Inst): THREE.Group | null {
     box(g, MAT.dark, -Math.min(w, 1.4) / 2, Math.min(w, 1.4) / 2, y + P, y + P + Math.min(H * 0.4, yOf(2.6)), d / 2 - 0.05, d / 2 + 0.02);   // a door: its front
     return g;
   }
+  if (cls === 'dress') return dressPiece(it, kind);
   if (cls === 'vignette') {
     const g = new THREE.Group(), y = yOf(it.h);
     g.position.set(it.x, 0, it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // local +z is the front
@@ -442,6 +446,84 @@ function sides(rings: number[][][], top: number, bottom: number): THREE.Mesh | n
   return m;
 }
 
+// ---- dressing (kit.json class "dress": small pieces placed by a style's rules): urns, lanterns, planters, lamps ----
+/** An element's colour, for a banner's stand-in until its cloth and emblem texture are made. */
+const EMBLEM: Record<string, number> = { fire: 0xd8553a, cold: 0xdcecf4, water: 0x3f7fc8, life: 0x5aa851, shield: 0xd8b24a, arcane: 0x8a5ac8, earth: 0x8a6a44 };
+const bannerUrls = import.meta.glob<string>('../../../../content/generated/textures/banner-*.png', { eager: true, query: '?url', import: 'default' });
+const bannerTex: Record<string, THREE.Texture> = {};
+function bannerMap(emblem: string): THREE.Texture | null {
+  const url = bannerUrls[`../../../../content/generated/textures/banner-${emblem}.png`];
+  if (!url) return null;
+  if (!bannerTex[emblem]) { const t = new THREE.TextureLoader().load(url); t.colorSpace = THREE.SRGBColorSpace; bannerTex[emblem] = t; }
+  return bannerTex[emblem];
+}
+/** A stand-in of a footprint and height (u, world y), round or box, from y0. */
+function standIn(g: THREE.Group, shape: string | undefined, w: number, d: number, y0: number, h: number, m: THREE.Material) {
+  if (shape === 'round') { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, h, 24), m); c.scale.set(w, 1, d); c.position.y = y0 + h / 2; c.castShadow = c.receiveShadow = true; g.add(c); }
+  else box(g, m, -w / 2, w / 2, y0, y0 + h, -d / 2, d / 2);
+}
+/** A stacked part's stand-in by slot: its share of the piece's width and height, and its shape. */
+const SLOT: Record<string, [number, number, string]> = { pot: [0.8, 0.35, 'box'], plant: [1, 0.65, 'round'], post: [0.15, 0.82, 'round'], lantern: [0.45, 0.18, 'box'] };
+/** The top of what a group holds, in its own space (where the next stacked part goes). */
+function topOf(g: THREE.Group): number {
+  if (!g.children.length) return 0;
+  g.updateMatrixWorld(true);
+  const inv = g.matrixWorld.clone().invert(), b = new THREE.Box3();
+  for (const c of g.children) b.union(new THREE.Box3().setFromObject(c).applyMatrix4(inv));
+  return b.max.y;
+}
+/**
+ * A dress piece: its made model (<name>.glb) if there is one; else, for a piece of parts, each slot's part (<part>.glb)
+ * stacked on the one before; a banner wears its emblem's texture on its cloth; anything not made yet, a stand-in.
+ */
+function dressPiece(it: Inst, kind: string): THREE.Group {
+  const g = new THREE.Group(), k = KIT_PIECES[it.p] ?? {};
+  g.position.set(it.x, yOf(it.h + (it.up ?? 0)), it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));
+  const [w, d] = k.footprint ?? [0.8, 0.8], H = yOf(k.height ?? 1);
+  if (art(g, kind, 0, 0)) return g;
+  const parts = it.parts ?? {}, stack = k.stack ?? Object.keys(parts);
+  if (kind === 'banner') {
+    const map = bannerMap(String(parts.emblem ?? ''));
+    if (art(g, String(parts.cloth ?? 'banner-cloth'), 0, 0)) {
+      if (map) g.traverse((c) => { const m = c as THREE.Mesh; if (m.isMesh) { const mm = (m.material as THREE.MeshStandardMaterial).clone(); mm.map = map; mm.needsUpdate = true; m.material = mm; } });
+      return g;
+    }
+    box(g, MAT.dark, -0.04, 0.04, 0, H, -0.04, 0.04);                                         // its pole
+    const cloth = map ? new THREE.MeshStandardMaterial({ map, roughness: 0.9, side: THREE.DoubleSide }) : mat(EMBLEM[String(parts.emblem)] ?? 0xb0a090);
+    box(g, cloth, -w / 2, w / 2, H * 0.35, H * 0.95, 0.05, 0.1);
+    return g;
+  }
+  if (stack.length) {
+    for (const slot of stack) {
+      const part = String(parts[slot] ?? ''), y0 = topOf(g);
+      if (art(g, part, 0, y0)) continue;
+      // a stand-in in the slot's proportions (share of the width, share of the height, shape) until the part is made
+      const [sw, sh, shape] = SLOT[slot] ?? [1, 1 / stack.length, 'box'];
+      standIn(g, shape, w * sw, d * sw, y0, H * sh, slot === 'post' ? MAT.dark : PROP.stone);
+    }
+    return g;
+  }
+  standIn(g, k.shape, w, d, 0, H, PROP.stone);
+  return g;
+}
+/** An instance's tint ('#rrggbb', multiplying its colours): materials cloned once per tint, shared by every instance with it. */
+const tinted = new Map<string, THREE.Material>();
+function tintGroup(g: THREE.Object3D, tint: string) {
+  if (!/^#[0-9a-f]{6}$/i.test(tint) || tint.toLowerCase() === '#ffffff') return;
+  const c = new THREE.Color(tint);
+  g.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh) return;
+    const tintOne = (src: THREE.Material) => {
+      const key = `${src.uuid}|${tint}`;
+      let t = tinted.get(key);
+      if (!t) { t = src.clone(); const tc = (t as THREE.MeshStandardMaterial).color; if (tc) tc.multiply(c); tinted.set(key, t); }
+      return t;
+    };
+    m.material = Array.isArray(m.material) ? m.material.map(tintOne) : tintOne(m.material);
+  });
+}
+
 /** The floors and pieces of a compiled scene, as one group. */
 export function buildKit(data: KitData): THREE.Group {
   const root = new THREE.Group();
@@ -463,6 +545,8 @@ export function buildKit(data: KitData): THREE.Group {
   data.instances.forEach((it, i) => {
     const g = piece(it);
     if (!g) return;
+    if (it.scale && it.scale !== 1) g.scale.multiplyScalar(it.scale);
+    if (it.tint) tintGroup(g, it.tint);
     g.userData.inst = i;
     root.add(g);
   });

@@ -10,6 +10,7 @@ Places are built from made pieces on a square grid ([flexible building](../../do
 | `scene.py` | `convert <layout>` turns an old Python layout into a scene; `check <scene>` prints its findings with their places |
 | `worker.py` | The map editor's long-lived compiler (JSON lines in and out) |
 | `fit.py` | Blender: fits a generated model to its piece's box |
+| `slim.py` | After `fit.py`: re-encodes a fitted model's textures smaller, in place (JPEG; base colour 2048 px for landmark buildings, 1024 px otherwise; normal and metal-roughness half). Running it twice changes nothing |
 | `trace_plan.py` | `python tools/kit/trace_plan.py court-d court` re-runs a place plan (`tools/place-plans/plans/`) on the kit's corner lattice and writes a first-draft scene, plus `<scene>.gaps.json`: what the kit can't say yet (set pieces, facades, curved flights). A one-off draft: after it, the scene is the source |
 | `court_pins.py` | The courtyard's gaps as map-editor pins (`scenes/court.pins.json`), named by hand |
 | `layouts/*.py` | The first two test patches as written by hand, kept as history; their scenes are the live copies |

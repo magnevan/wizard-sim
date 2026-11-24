@@ -8,7 +8,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import wizMeta from '../../../../content/assets/models/wizard.json';
-import { buildKit, groundPlane, loadKitArt, setupStage, yOf, type KitData } from './kit-render';
+import { buildKit, groundPlane, loadKitArt, setupStage, spinKit, yOf, type KitData } from './kit-render';
 
 const q = new URLSearchParams(location.search);
 const layouts = import.meta.glob<KitData>('./kit-*.json', { eager: true, import: 'default' });
@@ -59,6 +59,6 @@ function frame() {
 }
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); frame(); });
 frame();
-const loop = () => { renderer.render(scene, cam); requestAnimationFrame(loop); };
+const loop = () => { spinKit(performance.now() / 1000); renderer.render(scene, cam); requestAnimationFrame(loop); };
 loop();
 Promise.all(pending).then(() => { (window as unknown as { __ready: boolean }).__ready = true; });

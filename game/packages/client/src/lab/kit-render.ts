@@ -75,7 +75,25 @@ function box(g: THREE.Group, m: THREE.Material, x0: number, x1: number, y0: numb
 /** A fitted model, placed in a piece's frame: moved, and stretched along x and y (u). */
 function art(g: THREE.Group, name: string, x: number, y: number, sx = 1, sy = 1, s = 1): boolean {
   const a = ART[name]; if (!a) return false;
-  const o = a.clone(); o.position.set(x, y, 0); o.scale.set(sx * s, sy * s, s); g.add(o); return true;
+  const o = a.clone(); o.position.set(x, y, 0); o.scale.set(sx * s, sy * s, s); g.add(o);
+  findSpinners(o);
+  return true;
+}
+
+// ---- parts that turn: a made model's nodes named "spin…" with glTF extras {axis: [x, y, z] (local), rpm} (the armillary's rings) ----
+const SPINNERS: { node: THREE.Object3D; rest: THREE.Quaternion; axis: THREE.Vector3; rpm: number }[] = [];
+function findSpinners(o: THREE.Object3D) {
+  o.traverse((n) => {
+    if (!n.name.toLowerCase().startsWith('spin')) return;
+    const ax = n.userData.axis as number[] | undefined, rpm = Number(n.userData.rpm ?? 1);
+    const axis = new THREE.Vector3(...(Array.isArray(ax) && ax.length === 3 ? ax : [0, 1, 0])).normalize();
+    if (axis.lengthSq() > 0 && Number.isFinite(rpm)) SPINNERS.push({ node: n, rest: n.quaternion.clone(), axis, rpm });
+  });
+}
+const spinQ = new THREE.Quaternion();
+/** Turn every spinning part to where it is at time t (seconds): call it each frame. */
+export function spinKit(t: number) {
+  for (const s of SPINNERS) s.node.quaternion.copy(s.rest).multiply(spinQ.setFromAxisAngle(s.axis, ((t * s.rpm) / 60) * Math.PI * 2));
 }
 
 /** A fitted model placed by a basis (x along, y up, z out): a non-orthogonal x shears it down a slope, balusters upright. */
@@ -97,12 +115,33 @@ function retain(g: THREE.Group, L: number, h: number, low: number) {
   box(g, MAT.face, 0, L, yOf(low) - 0.4, yOf(h - COP), -0.45, 0);
   box(g, MAT.coping, 0, L, yOf(h - COP), yOf(h + PROUD), -0.5, COP_OUT);
 }
-function balustrade(g: THREE.Group, L: number, h: number, inset: number) {
+function balustrade(g: THREE.Group, L: number, h: number, i0: number, i1 = i0) {
   const y0 = yOf(h), z0 = -0.36, z1 = -0.04;
-  box(g, MAT.stone, inset, L - inset, y0, y0 + yOf(0.12), z0, z1);                         // the plinth
-  box(g, MAT.stone, inset, L - inset, y0 + yOf(0.82), y0 + yOf(0.95), z0 - 0.03, z1 + 0.03);   // the rail
-  const n = Math.max(1, Math.round((L - 2 * inset) / 0.32));
-  for (let k = 0; k < n; k++) { const x = inset + ((k + 0.5) * (L - 2 * inset)) / n; box(g, MAT.stone, x - 0.07, x + 0.07, y0 + yOf(0.12), y0 + yOf(0.82), -0.27, -0.13); }
+  box(g, MAT.stone, i0, L - i1, y0, y0 + yOf(0.12), z0, z1);                         // the plinth
+  box(g, MAT.stone, i0, L - i1, y0 + yOf(0.82), y0 + yOf(0.95), z0 - 0.03, z1 + 0.03);   // the rail
+  const n = Math.max(1, Math.round((L - i0 - i1) / 0.32));
+  for (let k = 0; k < n; k++) { const x = i0 + ((k + 0.5) * (L - i0 - i1)) / n; box(g, MAT.stone, x - 0.07, x + 0.07, y0 + yOf(0.12), y0 + yOf(0.82), -0.27, -0.13); }
+}
+// the joints of the kit being built, by corner: a balustrade runs to its piers' faces (buildKit fills it)
+const JOINTS = new Map<string, Inst>();
+const jkey = (x: number, y: number) => `${Math.round(x * 1000)},${Math.round(y * 1000)}`;
+const RAIL_Z = -0.2, PIER_HALF = 0.275, NEWEL_HALF = 0.275 * 1.25;
+/**
+ * How far along a section, from its end at corner (vx, vy) going in direction (dx, dy), its balustrade meets the face
+ * of the pier there. A pier is square and turned to the bisector of its two sections, so on a bend its face is
+ * oblique to each: a balustrade at depth RAIL_Z behind the front line meets it nearer on one side, further on the
+ * other. On a straight run it is the pier's half-width, as before.
+ */
+function railInset(vx: number, vy: number, dx: number, dy: number, nx: number, ny: number): number {
+  const j = JOINTS.get(jkey(vx, vy));
+  if (!j || (j.p !== 'joint.pier' && j.p !== 'joint.newel')) return PIER_HALF;
+  const half = j.p === 'joint.newel' ? NEWEL_HALF : PIER_HALF;
+  const a: [number, number][] = [[Math.cos(j.rot), Math.sin(j.rot)], [-Math.sin(j.rot), Math.cos(j.rot)]];
+  let [tx, ty] = a[0];
+  if (Math.abs(a[1][0] * dx + a[1][1] * dy) > Math.abs(tx * dx + ty * dy)) [tx, ty] = a[1];   // the face this section meets
+  const along = tx * dx + ty * dy, s = Math.sign(along) || 1;
+  const x = (half - s * RAIL_Z * (tx * nx + ty * ny)) / Math.abs(along);
+  return Math.max(0.05, Math.min(x, 1.2));
 }
 /** Steps along an edge (a short drop you can step over anywhere along it): treads of about 0.15 m, 0.5 u deep, out onto the lower side. */
 function steps(g: THREE.Group, L: number, h: number, low: number) {
@@ -140,7 +179,10 @@ function piece(it: Inst): THREE.Group | null {
     if (kind === 'retain') { if (!madeRetain) retain(g, L, it.h, low); }
     else if (kind === 'parapet') {
       if (!madeRetain) retain(g, L, it.h, low);
-      if (!art(g, 'balustrade', 0.275, yOf(it.h + 0.05), (L - 0.55) / 1.45)) balustrade(g, L, it.h, 0.275);
+      // pier face to pier face: on a straight run 0.275 at each end; on a bend, where the turned pier's face is
+      const dx = (it.x2! - it.x) / L, dy = (it.y2! - it.y) / L, nx = -dy, ny = dx;
+      const i0 = railInset(it.x, it.y, dx, dy, nx, ny), i1 = railInset(it.x2!, it.y2!, -dx, -dy, nx, ny);
+      if (!art(g, 'balustrade', i0, yOf(it.h + 0.05), (L - i0 - i1) / 1.45)) balustrade(g, L, it.h, i0, i1);
     }
     else if (kind === 'kerb') { if (!art(g, 'kerb', 0, yOf(it.h), L / 2)) box(g, MAT.kerb, 0, L, yOf(low) - 0.1, yOf(it.h), -0.32, 0); }
     else if (kind === 'wall') wall(g, L, it.h, low, it.v, shape === 'door');
@@ -272,6 +314,8 @@ function sides(rings: number[][][], top: number, bottom: number): THREE.Mesh | n
 /** The floors and pieces of a compiled scene, as one group. */
 export function buildKit(data: KitData): THREE.Group {
   const root = new THREE.Group();
+  JOINTS.clear(); SPINNERS.length = 0;
+  for (const it of data.instances) if (it.p.startsWith('joint.')) JOINTS.set(jkey(it.x, it.y), it);
   const bottom = yOf(Math.min(0, ...data.floors.map((f) => f.h)) - 0.4);
   for (const f of data.floors) for (const [outer, ...holes] of f.polys) {
     const sd = sides([outer, ...holes], yOf(f.h), bottom); if (sd) root.add(sd);

@@ -8,7 +8,7 @@
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildKit, disposeKit, groundPlane, kitPiece, loadKitArt, setKitPieces, setupStage, yOf, type Inst, type KitData, type KitPiece } from '../kit-render';
+import { buildKit, disposeKit, groundPlane, kitPiece, loadKitArt, setKitPieces, setupStage, spinKit, yOf, type Inst, type KitData, type KitPiece } from '../kit-render';
 import { eachPoint, type Obj, type Op, type Scene, type Terrace } from '../../../map-editor/ops';
 import type { Compiled, Finding } from '../../../map-editor/compile-worker';
 import type { Pin } from '../../../map-editor/store';
@@ -1301,6 +1301,7 @@ cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix();
 const viewer = !!q.get('viewer');
 const loop = () => {
   if (viewer) return;
+  spinKit(performance.now() / 1000);
   if (flashMesh.count && performance.now() > flashUntil) setSquares(flashMesh, []);
   (flashMesh.material as THREE.MeshBasicMaterial).opacity = 0.35 + 0.35 * Math.abs(Math.sin(performance.now() / 180));
   sun.position.copy(controls.target).add(new THREE.Vector3(-30, 40, 22)); sun.target.position.copy(controls.target);

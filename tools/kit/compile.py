@@ -584,7 +584,8 @@ def compile_scene(sc):
                     pc_ = rng.choice(rule['put']); L = math.hypot(bx - ax, by - ay) * G * 0.6       # m along the wall
                     base = dict(p=pc_, x=ax * G, y=ay * G, x2=bx * G, y2=by * G, h=T[s[2]]['h'], low=s[3], src=d_['id'], **vary(pc_, rng))
                     if 'drape' in rule:
-                        base.update(len=round(drop * rng.uniform(*rule.get('share', [0.3, 0.85])), 2), flip=rng.random() < 0.5,
+                        tall = KIT['pieces'][pc_].get('size_m', [1, 3])[1]     # never longer than the painting (taller walls: grow)
+                        base.update(len=round(min(drop * rng.uniform(*rule.get('share', [0.3, 0.85])), tall * rng.uniform(0.7, 1.0)), 2), flip=rng.random() < 0.5,
                                     offset=round(rng.random(), 3))
                     else:     # a path in wall-local metres: s along the wall from a, z down from the coping
                         paths = []

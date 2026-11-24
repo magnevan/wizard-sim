@@ -1,5 +1,5 @@
 """Assemble the armillary set piece from its made parts: a base (the dais, pedestal and violet core) and one closed ring,
-copied three times round the core on nodes the renderer turns slowly (pin p22, 2026-11-24: the rings should be closed
+copied five times round the core on nodes the renderer turns slowly (pin p22, 2026-11-24: the rings should be closed
 and turn like a gyroscope).
 
   blender --background --python tools/kit/armillary.py -- <base.glb> <ring.glb> <out.glb>
@@ -19,7 +19,8 @@ pc = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ki
 W, H = pc['footprint'][0], pc['height'] * M
 
 # the rings: radius (as a share of the footprint's width), the empty's tilt (degrees about x, then about z), turns a minute
-RINGS = [(0.33, (0, 0), 2.0), (0.285, (62, 30), -3.0), (0.24, (-58, -40), 4.0)]
+# Five, as in the concept; nested radii sweep separate spheres, so turning rings never touch
+RINGS = [(0.33, (0, 0), 1.5), (0.30, (90, 0), -2.0), (0.27, (55, 35), 2.5), (0.24, (-50, -45), -3.0), (0.21, (25, 90), 3.5)]
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 

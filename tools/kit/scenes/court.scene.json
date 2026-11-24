@@ -1,8 +1,5 @@
 {
-  "schema": 1,
-  "name": "court",
-  "G": 2,
-  "notes": "Traced from tools/place-plans/plans/court-d.py (Courtyard D: Terraces round a plaza (rev 21)) by tools/kit/trace_plan.py. One grid corner = (U, V) = (-95 + 2x, -62 + 2y) in the plan. Gaps (what the kit cannot say yet) are pins.",
+  "schema": 1, "name": "court", "G": 2, "notes": "Traced from tools/place-plans/plans/court-d.py (Courtyard D: Terraces round a plaza (rev 21)) by tools/kit/trace_plan.py. One grid corner = (U, V) = (-95 + 2x, -62 + 2y) in the plan. Gaps (what the kit cannot say yet) are pins.",
   "terraces": [
     {"id": "t-sea", "glyph": "A", "name": "the sea", "h": -6, "mat": "water", "edge": "open", "walk": false},
     {"id": "t-rock", "glyph": "B", "name": "rock", "h": -5.5, "mat": "rock", "edge": "open", "walk": false},
@@ -167,6 +164,7 @@
     {"kind": "setpiece", "name": "the great hall", "piece": "setpiece.great-hall", "at": [47.75, 17], "front": "S", "id": "s22"},
     {"id": "w1", "kind": "scatter", "name": "the woods", "terrace": "t-woods", "pieces": ["setpiece.tree-oak", "setpiece.tree-pine", "setpiece.tree-blossom"], "spacing": 4.5, "margin": 1, "seed": 1},
     {"id": "w2", "kind": "scatter", "name": "the woods", "terrace": "t-woods-n", "pieces": ["setpiece.tree-oak", "setpiece.tree-pine", "setpiece.tree-blossom"], "spacing": 4.5, "margin": 1, "seed": 2},
-    {"id": "w3", "kind": "scatter", "name": "the woods", "terrace": "t-woods-z", "pieces": ["setpiece.tree-oak", "setpiece.tree-pine", "setpiece.tree-blossom"], "spacing": 4.5, "margin": 1, "seed": 3}
+    {"id": "w3", "kind": "scatter", "name": "the woods", "terrace": "t-woods-z", "pieces": ["setpiece.tree-oak", "setpiece.tree-pine", "setpiece.tree-blossom"], "spacing": 4.5, "margin": 1, "seed": 3},
+    {"id": "d1", "kind": "dress", "name": "courtyard formal", "style": "courtyard-formal", "seed": 1}
   ]
 }

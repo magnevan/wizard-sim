@@ -492,6 +492,15 @@ def compile_scene(sc):
     # ---- scatter: a level filled with pieces at a spacing (the woods' trees), jittered and seeded, so a scene always
     # gives the same woods: {kind: scatter, terrace, pieces: [...], spacing (u, default 7), margin (cells, default 1), seed}
     import random
+
+    def vary(piece, rng):
+        """A piece's seeded variation (kit.json 'vary'): scale and tint, and one of each of its 'parts'."""
+        pc_ = KIT['pieces'].get(piece, {}); v = pc_.get('vary', {}); out = {}
+        if 'scale' in v: out['scale'] = round(rng.uniform(*v['scale']), 3)
+        if v.get('tints'): out['tint'] = rng.choice(v['tints'])
+        if pc_.get('parts'): out['parts'] = {k: rng.choice(opts) for k, opts in pc_['parts'].items()}
+        return out
+
     for s_ in kind('scatter'):
         tg = glyph_of.get(s_.get('terrace'), s_.get('terrace'))
         ground = floor_u.get(tg)
@@ -507,10 +516,57 @@ def compile_scene(sc):
             while xx <= x1 and n < 600:
                 px, py = xx + rng.uniform(-0.4, 0.4) * step, yy + rng.uniform(-0.4, 0.4) * step
                 if inner.contains(Point(px, py)):
-                    inst.append(dict(p=rng.choice(pieces), x=px * G, y=py * G, h=T[tg]['h'], rot=rng.uniform(-math.pi, math.pi), src=s_['id']))
+                    pc_ = rng.choice(pieces)
+                    inst.append(dict(p=pc_, x=px * G, y=py * G, h=T[tg]['h'], rot=rng.uniform(-math.pi, math.pi), src=s_['id'], **vary(pc_, rng)))
                     n += 1
                 xx += step
             yy += step
+
+    # ---- dress: a style's rules put small pieces on sockets, at places and along roads (kit.json 'styles';
+    # docs/explorations/2026-11-24-dressing-variation.md): {kind: dress, style, seed, terrace? (only there)}
+    for d_ in kind('dress'):
+        style = KIT.get('styles', {}).get(d_.get('style'))
+        if not style: err('dress', f"{label(d_)}: no style {d_.get('style')!r} in kit.json", None, [d_['id']], 'warning'); continue
+        rng = random.Random(d_.get('seed', d_['id']))
+        only_g = glyph_of.get(d_.get('terrace'), d_.get('terrace'))
+        only = floor_u.get(only_g) if only_g else None
+        def ok_at(px, py):    # in scope, and clear of every flight's path
+            pt = Point(px, py)
+            return (only is None or only.buffer(1e-6).contains(pt)) and not any(z.contains(pt) for z in fl_paths)
+        def put(pieces, px, py, h, rot, up=0.0):
+            pc_ = rng.choice(pieces)
+            inst.append(dict(p=pc_, x=px * G, y=py * G, h=h, up=up, rot=rot, src=d_['id'], **vary(pc_, rng)))
+        for rule in style['rules']:
+            if 'on' in rule:      # sockets on existing joints: every nth, in a stable order
+                sock = KIT['pieces'][rule['on']].get('sockets', {}).get('cap', {})
+                js = sorted((j for j in joints.values() if j['p'] == rule['on']), key=lambda j: (round(j['y'], 3), round(j['x'], 3)))
+                for n_, j in enumerate(js):
+                    if n_ % rule.get('every', 1) == 0 and (only is None or only.buffer(0.6).contains(Point(j['x'] / G, j['y'] / G))):
+                        put(rule['put'], j['x'] / G, j['y'] / G, j['h'], j['rot'], sock.get('up', 0.0))
+            elif rule.get('at') in ('flight-head', 'flight-foot'):
+                for f in flights:
+                    (ax, ay), (bx, by) = f['a'], f['b']; w = math.hypot(bx - ax, by - ay); ux, uy = (bx - ax) / w, (by - ay) / w
+                    head = rule['at'] == 'flight-head'
+                    back = -0.8 if head else f['length'] + 0.8
+                    for (ex, ey), sgn in (((ax, ay), -1), ((bx, by), 1)):
+                        px, py = ex + ux * sgn * 0.7 + f['dx'] * back, ey + uy * sgn * 0.7 + f['dy'] * back
+                        if only is None or only.buffer(1e-6).contains(Point(px, py)):
+                            put(rule['put'], px, py, f['top_h'] if head else f['bot_h'], math.atan2(f['dy'], f['dx']))
+            elif rule.get('along') == 'road':    # kerbs between a pavement and a road: lamps on the pavement side
+                step = rule.get('spacing', 9) / G; inset = rule.get('inset', 0.6); acc = step / 2
+                for s in allsegs:
+                    if s[4] != 'kerb': continue
+                    lo = T.get(low_of.get((round(s[0][0], 4), round(s[0][1], 4), round(s[1][0], 4), round(s[1][1], 4)), ''), {})
+                    if lo.get('mat') != 'road' or T[s[2]].get('mat') == 'road': continue
+                    (ax, ay), (bx, by) = s[0], s[1]; L = math.hypot(bx - ax, by - ay)
+                    if L < 1e-6: continue
+                    nx_, ny_ = (by - ay) / L, -(bx - ax) / L          # toward the upper (pavement) side
+                    t = acc
+                    while t < L:
+                        px, py = ax + (bx - ax) * t / L + nx_ * inset, ay + (by - ay) * t / L + ny_ * inset
+                        if ok_at(px, py): put(rule['put'], px, py, T[s[2]]['h'], math.atan2(-ny_, -nx_))
+                        t += step
+                    acc = t - L
 
     # ---- reachability: cells by terrace, joined where steps are small, plus flights ----
     walk = {c for c in T if T[c].get('edge') != 'wall' and T[c].get('walk', True)}

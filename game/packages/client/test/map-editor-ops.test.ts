@@ -60,6 +60,10 @@ describe('map editor ops', () => {
     expect(r.scene.objects.find((o) => o.id === 'l1')).toMatchObject({ a: [0, 2.5], b: [3, 1.5] });
     expect(r.scene.objects.find((o) => o.id === 's1')).toMatchObject({ name: 'post', front: 'S' });
     expect(() => applyOps(base(), [{ op: 'add', kind: 'round', centre: [0, 0], r: 2, from: 10 }])).toThrow(OpError);
+    const w = applyOps(base(), [{ op: 'add', kind: 'scatter', terrace: 'P', pieces: ['setpiece.tree-oak'] }]);
+    expect(w.minted).toEqual(['w1']);
+    expect(w.scene.objects[1]).toMatchObject({ terrace: 't-plaza', seed: 1 });
+    expect(() => applyOps(base(), [{ op: 'add', kind: 'scatter', terrace: 'P', pieces: [] }])).toThrow(OpError);
   });
 
   it('writes the same file layout as tools/kit/scene.py', () => {

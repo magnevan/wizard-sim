@@ -1193,7 +1193,31 @@ function adoptNewTerrace() {
   toast('A new level: name it, set its height, then paint where it goes');
 }
 
-const MATS = ['paving', 'plaza', 'road', 'lawn', 'roof', 'rock', 'deck', 'water'], EDGES = ['parapet', 'retain', 'wall', 'open'];
+/** A scatter's controls (a level filled with set pieces on a seeded grid: the woods' trees), in a box to put in a panel. */
+function scatterBox(o: Obj): HTMLElement {
+  const box = document.createElement('div'), chosen = new Set((o.pieces as string[]) ?? []);
+  const kinds = PIECES.filter((p) => p.startsWith('setpiece.'));
+  for (const p of chosen) if (!kinds.includes(p)) kinds.push(p);
+  box.innerHTML = `<div class="row"><label>Pieces</label><span>${kinds.map((p) => `<label style="min-width:0;color:inherit;margin-right:6px"><input type="checkbox" data-sp="${esc(p)}" ${chosen.has(p) ? 'checked' : ''}> ${esc(pieceName(p))}</label>`).join('')}</span></div>
+    <div class="row"><label>Spacing</label><input id="sc-sp" type="number" step="0.5" value="${o.spacing ?? 7}" style="width:60px"> u apart</div>
+    <div class="row"><label>Margin</label><input id="sc-mg" type="number" step="0.5" value="${o.margin ?? 1}" style="width:60px"> cells from the edge</div>
+    <div class="row"><label>Seed</label><input id="sc-sd" type="number" step="1" value="${o.seed ?? 1}" style="width:60px"><button class="btn" id="sc-new" title="Another layout of the same density">new seed</button></div>
+    <div class="meta">Fills ${esc(curveTerr(o)?.name ?? o.terrace)} with these, on a jittered grid; the same seed gives the same layout every time.</div>`;
+  const set = (f: Record<string, unknown>, label: string) => apply([{ op: 'set', id: o.id, ...f }], label);
+  box.querySelectorAll<HTMLInputElement>('[data-sp]').forEach((c) => {
+    c.onchange = () => {
+      const ps = [...box.querySelectorAll<HTMLInputElement>('[data-sp]')].filter((x) => x.checked).map((x) => x.dataset.sp!);
+      if (!ps.length) { c.checked = true; toast('A scatter needs at least one piece', true); return; }
+      set({ pieces: ps }, "a scatter's pieces");
+    };
+  });
+  (box.querySelector('#sc-sp') as HTMLInputElement).onchange = (e) => { const v = Number((e.target as HTMLInputElement).value); if (v > 0) set({ spacing: v }, "a scatter's spacing"); };
+  (box.querySelector('#sc-mg') as HTMLInputElement).onchange = (e) => { const v = Number((e.target as HTMLInputElement).value); if (v >= 0) set({ margin: v }, "a scatter's margin"); };
+  (box.querySelector('#sc-sd') as HTMLInputElement).onchange = (e) => set({ seed: Math.round(Number((e.target as HTMLInputElement).value)) }, "a scatter's seed");
+  (box.querySelector('#sc-new') as HTMLElement).onclick = () => set({ seed: 1 + Math.floor(Math.random() * 99999) }, 'scatter anew');
+  return box;
+}
+const MATS = ['paving', 'plaza', 'road', 'lawn', 'woods', 'dirt', 'sand', 'roof', 'rock', 'deck', 'water'], EDGES = ['parapet', 'retain', 'wall', 'open'];
 const VARIANTS: Record<string, string[]> = { wall: ['plain', 'window', 'door'], parapet: ['plain', 'niche'], retain: ['plain', 'niche'] };
 function renderInspect() {
   if (typingIn('inspect')) return;
@@ -1236,6 +1260,16 @@ function renderInspect() {
     $<HTMLInputElement>('t-walk').onchange = blurThen(() => set({ walk: $<HTMLInputElement>('t-walk').checked }, `${t.name}: walkable`));
     $('t-brush').onclick = () => { brushG = t.glyph; setTool('brush'); renderPalette(); };
     $('t-del').onclick = () => apply([{ op: 'remove_terrace', id: t.id }], `remove ${t.name}`);
+    // what's scattered over it (trees), or a button to scatter some
+    const scs = sc.objects.filter((o) => o.kind === 'scatter' && o.terrace === t.id);
+    for (const s of scs) { const h = document.createElement('h3'); h.style.marginTop = '10px'; h.textContent = `Scatter · ${s.id}`; el.append(h, scatterBox(s)); }
+    const trees = PIECES.filter((p) => p.startsWith('setpiece.tree'));
+    if (!scs.length && PIECES.some((p) => p.startsWith('setpiece.'))) {
+      const b = document.createElement('div'); b.className = 'row';
+      b.innerHTML = '<button class="btn" id="t-scatter" title="Fill this level with set pieces (trees) on a seeded grid">Scatter pieces over it</button>';
+      el.append(b);
+      $('t-scatter').onclick = () => apply([{ op: 'add', kind: 'scatter', name: `${t.name}: scattered`, terrace: t.id, pieces: trees.length ? trees : [PIECES.find((p) => p.startsWith('setpiece.'))!], spacing: 7, margin: 1, seed: 1 }], 'scatter pieces');
+    }
     return;
   }
   if (sel.type === 'edge') {
@@ -1276,6 +1310,7 @@ function renderInspect() {
       ${o.kind === 'curve' ? `<div class="row"><label>Bulge</label><button class="btn" id="c-less">−½ cell</button><button class="btn" id="c-more">+½ cell</button><button class="btn" id="c-semi">semicircle</button></div>
         <div class="meta">On ${esc(curveTerr(o)?.name ?? o.terrace)}: ${halfOf(o.ends as Pt[]) * 2} cells wide, bulging ${Math.round(sagOf(o as unknown as CurveShape) * 100) / 100}.</div>` : ''}
       <div class="row"><button class="btn" id="o-del">Delete</button><span class="meta">${isProp(o) ? 'Drag it, or arrows; Q/E turn it' : o.kind === 'curve' ? 'Drag its handles: the ends slide along the edge, the middle sets the bulge' : 'Arrows move it'}</span></div>`;
+    if (o.kind === 'scatter') el.querySelector('#o-del')!.closest('.row')!.before(scatterBox(o));
     if (o.kind === 'line') {
       const box = document.createElement('div');
       box.innerHTML = `<div class="row"><label>Reach</label><input id="ln-tol" type="number" step="0.25" value="${o.tol ?? 0.75}" style="width:70px" title="How far an edge may lie from the line and still snap onto it (cells)"> cells</div>

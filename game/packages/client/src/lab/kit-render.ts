@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RAIL_MOD, railFit } from './kit-fit';
+import { waterMesh } from './kit-water';
 
 export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string };
 export type Floor = { t: string; id?: string; h: number; mat: string; polys: number[][][][] };
@@ -44,7 +45,8 @@ const MAT = {
   wood: mat(0x8a6a4c), leaf: mat(0x6f8f55), metal: mat(0x3b3d42, 0.5), kerb: mat(0xd9d4ca),
 } as const;
 export const FLOOR: Record<string, THREE.Material> = { paving: MAT.paving, plaza: MAT.plaza, road: MAT.road, lawn: MAT.lawn, roof: MAT.roof, rock: mat(0x7d7468),
-  deck: mat(0x9a7a58), water: mat(0x4f7f9c, 0.25) };   // deck: timber (a quay, a bridge); water: the sea, a stream
+  deck: mat(0x9a7a58), water: mat(0x4f7f9c, 0.25),   // deck: timber (a quay, a bridge); water: the sea, a stream
+  woods: mat(0x5f6e45), dirt: mat(0x8a7356), sand: mat(0xd6c49a) };   // the forest floor, a packed earth path, a beach
 // props and set pieces have their own stone, so a decal on the ground never paints them
 const PROP = { stone: mat(0xd2cabd), coping: mat(0xe6e0d4) };
 
@@ -133,28 +135,33 @@ const texUrls = import.meta.glob<string>('../../../../content/generated/textures
 const texTiles = import.meta.glob<Record<string, number>>('../../../../content/generated/textures/tiles.json', { eager: true, import: 'default' });
 /** u per tile, by texture: tiles.json beside the textures overrides these. */
 // (as tools/kit/textures.py makes them, TILE_U: paving 4, plaza 6, road 3, lawn 4)
-const TILE: Record<string, number> = { paving: 4, plaza: 6, road: 3, lawn: 4, rock: 6, deck: 3, ashlar: 3, 'smooth-stone': 2, tread: 2, kerb: 2, ...(Object.values(texTiles)[0] ?? {}) };
-const TEX: Record<string, THREE.MeshStandardMaterial> = {};
+const TILE: Record<string, number> = { paving: 4, plaza: 6, road: 3, lawn: 4, rock: 6, deck: 3, ashlar: 3, 'smooth-stone': 2, tread: 2, kerb: 2,
+  water: 8, woods: 4, dirt: 3, sand: 4, ...(Object.values(texTiles)[0] ?? {}) };
+/** Textures that drift on floors (tiles a second): water flows slowly. */
+const FLOW: Record<string, [number, number]> = { water: [0.012, 0.007] };
+const TP_TIME = { value: 0 };   // shared by every flowing texture; spinKit advances it each frame
+const TEX: Record<string, THREE.MeshStandardMaterial> = {}, RAW: Record<string, THREE.Texture> = {};
 async function loadTextures() {
   const loader = new THREE.TextureLoader();
   await Promise.all(Object.entries(texUrls).map(([p, url]) => loader.loadAsync(url).then((t) => {
     const name = p.split('/').pop()!.replace('.png', '');
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-    TEX[name] = triplanar(t, TILE[name] ?? 4);
+    TEX[name] = triplanar(t, TILE[name] ?? 4, FLOW[name]); RAW[name] = t;
   }).catch(() => undefined)));
   // one smooth stone serves treads, kerbs and copings, unless each has its own
   if (TEX['smooth-stone']) { TEX.tread ??= TEX['smooth-stone']; TEX.kerb ??= TEX['smooth-stone']; }
 }
 /** A material that samples tex by world position, blended over the three axes by the surface's facing. */
-function triplanar(tex: THREE.Texture, tile: number): THREE.MeshStandardMaterial {
-  const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.92 });
+function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0, 0]): THREE.MeshStandardMaterial {
+  const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: flow[0] || flow[1] ? 0.35 : 0.92 });
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tpMap = { value: tex }; sh.uniforms.tpScale = { value: 1 / tile };
+    sh.uniforms.tpFlow = { value: new THREE.Vector2(...flow) }; sh.uniforms.tpTime = TP_TIME;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTpPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvTpNrm = normalize(mat3(modelMatrix) * objectNormal);');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;\nuniform sampler2D tpMap;\nuniform float tpScale;')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;\nuniform sampler2D tpMap;\nuniform float tpScale, tpTime;\nuniform vec2 tpFlow;')
       .replace('#include <map_fragment>', `vec3 tpW = pow(abs(normalize(vTpNrm)), vec3(4.0)); tpW /= (tpW.x + tpW.y + tpW.z);
-        vec4 tpC = texture2D(tpMap, vTpPos.zy * tpScale) * tpW.x + texture2D(tpMap, vTpPos.xz * tpScale) * tpW.y + texture2D(tpMap, vTpPos.xy * tpScale) * tpW.z;
+        vec4 tpC = texture2D(tpMap, vTpPos.zy * tpScale) * tpW.x + texture2D(tpMap, vTpPos.xz * tpScale + tpFlow * tpTime) * tpW.y + texture2D(tpMap, vTpPos.xy * tpScale) * tpW.z;
         diffuseColor *= tpC;`);
   };
   m.customProgramCacheKey = () => `tp${tile}`;
@@ -192,6 +199,7 @@ function findSpinners(o: THREE.Object3D) {
 const spinQ = new THREE.Quaternion();
 /** Turn every spinning part to where it is at time t (seconds): call it each frame. */
 export function spinKit(t: number) {
+  TP_TIME.value = t;   // and flowing textures (water) drift
   for (const s of SPINNERS) s.node.quaternion.copy(s.rest).multiply(spinQ.setFromAxisAngle(s.axis, ((t * s.rpm) / 60) * Math.PI * 2));
 }
 
@@ -449,6 +457,8 @@ export function buildKit(data: KitData): THREE.Group {
     m.rotation.x = -Math.PI / 2; m.position.y = yOf(f.h); m.receiveShadow = true;
     m.userData.floor = f;
     root.add(m);
+    // water with its painting: a moving surface (kit-water.ts); the flat floor stays, hidden, for picking and painting
+    if (f.mat === 'water' && RAW.water) { m.visible = false; root.add(waterMesh([outer, ...holes], yOf(f.h), data.size, RAW.water, TP_TIME, TILE.water)); }
   }
   data.instances.forEach((it, i) => {
     const g = piece(it);

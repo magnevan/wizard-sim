@@ -278,11 +278,16 @@ async function open(n: string) {
 
 // ---- cameras ----
 const PITCH = THREE.MathUtils.degToRad(46);
-function gameView(cx: number, cy: number, viewH = 40) {
+/**
+ * The game's camera on corner (cx, cy), showing about viewH u of ground; or, for a picture, from another bearing (yaw,
+ * degrees round the target: 0 from the south as the game looks, 90 from the east) and elevation (pitch, degrees).
+ */
+function gameView(cx: number, cy: number, viewH = 40, pitch = PITCH, yaw = 0) {
   const t = new THREE.Vector3(cx * G(), yOf(heightAt(cx, cy)), cy * G());
-  const dist = (viewH * Math.sin(PITCH)) / (2 * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)));
+  // the game's framing keeps the ground's depth in view (sin pitch); seen low, side-on, keep the distance a whole view needs
+  const dist = (viewH * Math.max(Math.sin(pitch), 0.7)) / (2 * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)));
   controls.target.copy(t);
-  cam.position.copy(t).add(new THREE.Vector3(0, Math.sin(PITCH) * dist, Math.cos(PITCH) * dist));
+  cam.position.copy(t).add(new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch) * dist, Math.sin(pitch) * dist, Math.cos(yaw) * Math.cos(pitch) * dist));
   controls.update();
 }
 function topView(cx: number, cy: number, half: number) {
@@ -1432,7 +1437,11 @@ hot.on('map:view-request', async (d: { id: number; name: string; opts: Record<st
   const [tx, ty] = targetCorner();
   const x = o.x != null ? Number(o.x) : tx, y = o.y != null ? Number(o.y) : ty, r = o.r != null ? Number(o.r) : null;
   if (o.cam === 'top') topView(x, y, r ?? span() / G() / 2);
-  else if (o.cam === 'game' || o.x != null) gameView(x, y, (r ?? 12) * 2 * G());
+  else if (o.cam === 'game' || o.x != null || o.yaw != null || o.pitch != null) {
+    // &yaw= (degrees round the target: 0 from the south, 90 from the east) and &pitch= (elevation; 5 to 10 is near side-on)
+    const deg = (v: string | undefined, d: number) => (v != null && Number.isFinite(Number(v)) ? THREE.MathUtils.degToRad(Number(v)) : d);
+    gameView(x, y, (r ?? 12) * 2 * G(), Math.min(deg(o.pitch, PITCH), Math.PI / 2 - 0.01), deg(o.yaw, 0));
+  }
   markers.visible = true;
   for (const m of markers.children) m.visible = m.userData.pin ? o.pins !== '0' : o.findings !== '0';
   const hb = hoverBox.visible; hoverBox.visible = false;

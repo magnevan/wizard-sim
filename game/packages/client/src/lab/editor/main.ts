@@ -1438,6 +1438,8 @@ loop();
 (window as unknown as { __editor: unknown }).__editor = {
   screen: (x: number, y: number, h?: number) => { const v = at3(x, y, h ?? heightAt(x, y)).project(cam); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; },
   state: () => ({ name, rev, tool, sel, brushG, errors: comp?.errors.length, warnings: comp?.warnings.length, pins: pins.length, region, clip: clip && { w: clip.w, h: clip.h, objects: clip.objects.length } }),
+  /** Point the game camera at corner (x, y), showing about r corners either side. */
+  look: (x: number, y: number, r: number) => gameView(x, y, r * 2 * G()),
   /** The selected thing's handles, on screen. */
   handles: () => handles.children.map((m) => { const v = m.position.clone().project(cam); return { w: m.userData.handle as string, s: [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight] }; }),
 };

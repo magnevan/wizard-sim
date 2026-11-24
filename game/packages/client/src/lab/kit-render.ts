@@ -457,8 +457,8 @@ export function buildKit(data: KitData): THREE.Group {
     m.rotation.x = -Math.PI / 2; m.position.y = yOf(f.h); m.receiveShadow = true;
     m.userData.floor = f;
     root.add(m);
-    // water with its painting: a moving surface (kit-water.ts); the flat floor stays, hidden, for picking and painting
-    if (f.mat === 'water' && RAW.water) { m.visible = false; root.add(waterMesh([outer, ...holes], yOf(f.h), data.size, RAW.water, TP_TIME, TILE.water)); }
+    // water: stylised and moving, all in code (kit-water.ts); the flat floor stays, hidden, for picking and painting
+    if (f.mat === 'water') { m.visible = false; root.add(waterMesh([outer, ...holes], yOf(f.h), data.size, TP_TIME)); }
   }
   data.instances.forEach((it, i) => {
     const g = piece(it);

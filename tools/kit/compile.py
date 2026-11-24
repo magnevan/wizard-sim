@@ -359,12 +359,14 @@ def compile_scene(sc):
         """Bridges: a walkable level whose two parallel faces stand over the same water is crossing it, so the water runs
         on under an arch (arch.through, one arch per 6 m of span at most; the faces' sections there get v='bridge': only
         their coping and railing are drawn). Blind arches: tall walls that rise from ground no one walks (the sea) get a
-        shallow arched recess on every third section (v='blind'; on a curve, every third sweep section)."""
+        shallow arched recess over a bay of three sections, a plain section between bays (v='blind' with bay=3 on the middle, 'blind-side' either side)."""
         lowt = lambda s: low_of.get((round(s[0][0], 4), round(s[0][1], 4), round(s[1][0], 4), round(s[1][1], 4)))
         by_e = {tuple(i['e']): i for i in inst if 'e' in i}
         mid = lambda s: (round((s[0][0] + s[1][0]) / 2, 4), round((s[0][1] + s[1][1]) / 2, 4))
         out, k_sweep = [], {}
-        # blind arches
+        # blind arches: a bay of three sections, the arch on the middle one (v='blind', bay=3) and its two neighbours
+        # drawing their part of the front (v='blind-side'), so the arch is wide enough to reach down a tall wall
+        ok = []
         for s in allsegs:
             it = by_e.get(mid(s))
             if not it or it.get('v') or it['p'] not in ('edge.retain.straight', 'edge.parapet.straight', 'sweep.retain', 'sweep.parapet'): continue
@@ -372,11 +374,29 @@ def compile_scene(sc):
             drop = T[s[2]]['h'] - s[3]
             under = [t for t in T.values() if abs(t['h'] - s[3]) < 1e-6]
             if drop < 3.0 or any(t.get('walk', True) and t['mat'] not in ('water',) for t in ([lo] if lo else under)): continue
-            if len(s) > 5:
-                k = k_sweep[s[5][1]] = k_sweep.get(s[5][1], -1) + 1
-                if k % 3: continue
-            elif (round(s[0][0]) + round(s[0][1])) % 3: continue
-            it['v'] = 'blind'
+            ok.append(s)
+        pk = lambda p: (round(p[0], 4), round(p[1], 4))
+        at_end = {}
+        for s in ok:
+            for e in (0, 1): at_end.setdefault(pk(s[e]), []).append(s)
+        def along(a, b):        # the same wall going on: same level, drop and treatment; on a curve, the same curve
+            if a[2] != b[2] or abs(a[3] - b[3]) > 1e-6 or a[4] != b[4] or (len(a) > 5) != (len(b) > 5): return False
+            if len(a) > 5: return a[5][1] == b[5][1]
+            ua = (a[1][0] - a[0][0], a[1][1] - a[0][1]); ub = (b[1][0] - b[0][0], b[1][1] - b[0][1])
+            return abs(ua[0] * ub[1] - ua[1] * ub[0]) < 1e-6          # straight on
+        used = set()
+        for s in ok:
+            if id(s) in used: continue
+            ends = [[o for o in at_end.get(pk(s[e]), []) if o is not s and along(s, o) and id(o) not in used] for e in (0, 1)]
+            if len(ends[0]) != 1 or len(ends[1]) != 1: continue       # a neighbour at each end
+            nb = [ends[0][0], ends[1][0]]
+            for o in nb: used.add(id(o)); by_e[mid(o)]['v'] = 'blind-side'
+            used.add(id(s)); it = by_e[mid(s)]; it['v'] = 'blind'; it['bay'] = 3
+            # the sections either side of a bay are left plain: a bay, a pause, a bay
+            for o in nb:
+                for e in (0, 1):
+                    for q in at_end.get(pk(o[e]), []):
+                        if q is not o and q is not s and along(o, q): used.add(id(q))
         # bridges: straight faces of a walkable level over water, grouped into runs along one line
         runs = {}
         for s in allsegs:

@@ -38,6 +38,11 @@ def load(path, name):
     for o in list(bpy.context.scene.objects):
         if o not in before and o is not ob: bpy.data.objects.remove(o, do_unlink=True)
     ob.name = name
+    # weld: glTF splits vertices along texture seams, and decimating a split mesh tears holes along them (pin p22)
+    bm = bmesh.new(); bm.from_mesh(ob.data)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-4)
+    bmesh.ops.holes_fill(bm, edges=[e for e in bm.edges if e.is_boundary], sides=0)     # and close what Meshy left open
+    bm.to_mesh(ob.data); bm.free(); ob.data.update()
     return ob
 
 
@@ -85,7 +90,7 @@ print(f'armillary: gap {cup_top:.2f}..{crystal_bottom:.2f} u, crystal lifted {li
 
 # the ring: its thin dimension along x (so it stands upright, its plane y-z), centred, outer radius 1
 ring = load(ring_src, 'armillary-ring')
-RING_BUDGET = 6000      # triangles for one ring (the website's model is about 280k); the three copies share the mesh
+RING_BUDGET = 12000     # triangles for one ring (the website's model is about 325k); the five copies share the mesh
 tris = sum(len(p.vertices) - 2 for p in ring.data.polygons)
 if tris > RING_BUDGET:
     bpy.context.view_layer.objects.active = ring

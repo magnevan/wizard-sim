@@ -101,7 +101,13 @@ if FIT.get('keep_below') is not None:
     r = bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=(0, 0, FIT['keep_below']), plane_no=(0, 0, 1), clear_outer=True)
     bm.to_mesh(ob.data); bm.free(); ob.data.update()
     apply(Matrix.Translation(Vector((0, 0, -FIT['keep_below']))))
-# 5. the polygon budget
+# 5. the polygon budget. Weld first: glTF splits vertices along texture seams, and decimating a split mesh tears it
+# open along them (the beacon's and the armillary rings' holes, pins p23 and p22, 2026-11-24). UVs stay per corner.
+bm = bmesh.new(); bm.from_mesh(ob.data)
+bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-4)
+if FIT.get('uniform'):     # a set piece is seen all round: fill the holes Meshy's smart topology leaves (the beacon had 451 open edges)
+    bmesh.ops.holes_fill(bm, edges=[e for e in bm.edges if e.is_boundary], sides=0)
+bm.to_mesh(ob.data); bm.free(); ob.data.update()
 tris = sum(len(p.vertices) - 2 for p in ob.data.polygons)
 if tris > FIT['budget']:
     mod = ob.modifiers.new('dec', 'DECIMATE'); mod.ratio = FIT['budget'] / tris

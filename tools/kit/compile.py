@@ -326,7 +326,9 @@ def compile_scene(sc):
         straight_on = len(dirs) == 2 and abs(abs(dirs[0] - dirs[1]) - math.pi) < 1e-3
         if tr == 'wall' and straight_on and (round(v[0]) + round(v[1])) % 2: piece = None   # a pilaster every other bay, and at every corner
         if tr == 'retain' and len(dirs) == 2 and not straight_on: piece = 'joint.corner'   # a coping block over every turn, so copings never overlap bare
-        if piece and v not in joints:
+        # where runs of two terraces meet, the post is the higher run's, so neither railing ends against a short post
+        # (pin p25: a 6 m parapet started at the 5 m terrace's newel)
+        if piece and (v not in joints or T[ter]['h'] > joints[v]['h']):
             joints[v] = dict(p=piece, x=v[0] * G, y=v[1] * G, h=T[ter]['h'], low=max(s[3] for s, _ in lst), rot=rot, src=gid[ter])
     # newels at flight heads that end a run
     for e in ends_at:

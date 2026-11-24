@@ -501,7 +501,7 @@
    "note": "We should try to edit this model ourselves so that the rings are actually closed. I think this model is intended to look like a gyroscope, and I'd expect the rings to slowly rotate",
    "author": "user",
    "rev": 14,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T00:07:10.929Z",
    "anchor": {
@@ -526,8 +526,14 @@
      "author": "claude",
      "text": "Rebuilding it: a base (dais, pedestal, core) and one closed ring modelled separately, three copies assembled in Blender as separate parts, which the editor will turn slowly (asked of the Map Editor session).",
      "time": "2026-11-24T00:16:55.789Z"
+    },
+    {
+     "author": "claude",
+     "text": "Rebuilt: a base (dais, pedestal, crystal) and one closed ring made on meshy.ai, assembled by tools/kit/armillary.py. Three rings hang from spin nodes round the crystal (lifted so the rings clear the cup) and turn slowly (2, -3 and 4 turns a minute). About 10.4 m tall.",
+     "time": "2026-11-24T00:26:02.147Z"
     }
-   ]
+   ],
+   "outcome": "piece"
   },
   {
    "id": "p23",
@@ -603,7 +609,7 @@
    "note": "Railing doesn't quite connect to posts",
    "author": "user",
    "rev": 14,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T00:10:28.300Z",
    "anchor": {
@@ -632,8 +638,14 @@
      "author": "claude",
      "text": "That's where the renderer puts each balustrade section on a curved parapet; asked of the Map Editor session.",
      "time": "2026-11-24T00:16:55.673Z"
+    },
+    {
+     "author": "claude",
+     "text": "Two fixes: the renderer now starts each curved railing section at its pier's real face (Map Editor, kit-clean 573edba), and the compiler gives a corner where two levels' railings meet the higher level's post (it gave the first one's; the 6 m parapet here began at the 5 m newel). No railing ends on a lower post now.",
+     "time": "2026-11-24T00:26:02.925Z"
     }
-   ]
+   ],
+   "outcome": "rule"
   }
  ]
 }

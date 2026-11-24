@@ -1,0 +1,14 @@
+Generate one image with your image generation tool, then save it as blossoms.png in the current directory. Reply with just the file name.
+
+The attached image shows the game this is for: stylised, hand-painted, warm light. Look at how its flowers are painted: chunky, simple, readable shapes with clear light and shade.
+
+Draw a square sprite sheet: a 4 by 4 grid of sixteen separate flower heads, evenly spaced, each centred in its own equal square cell with clear empty space around it, on a flat, uniform, pure green (#00ff00) background.
+
+Every flower has pure white petals, shaded in soft cool greys as if made of white porcelain and lit from the upper left, so each petal looks curved and cupped, with a darker grey where petals overlap and near the centre, and a small golden-yellow centre. Painted in that chunky hand-painted game style, with crisp clean edges.
+
+Row 1: four five-petal blossoms seen straight from the front, each a little different in petal shape.
+Row 2: four five-petal blossoms tilted in three-quarter view, each facing a different way (up-left, up-right, down-left, down-right), so the flower is a foreshortened oval, the far petals shorter and the near petals overlapping the centre.
+Row 3: four blossoms seen from the side as open cups, the petals rising from a small base: one wide open, one half open, one nearly closed bud, and one many-petalled rose-like bloom in three-quarter view.
+Row 4: four tight clusters of four to six small blossoms at mixed angles, some facing front and some tilted, overlapping each other like a bunch of cherry blossom.
+
+Each flower head or cluster fills about three quarters of its cell. The sheet shows flower heads only: white petals and golden centres on the flat green.

@@ -45,10 +45,11 @@ The user asked the fresh session for a procedural system and allowed it to bend 
 
 ## Next
 
-- [ ] The user judges the pictures against the concept at the game camera. Until then this is a trial, not a decision; the "no code-drawn art" rule stands everywhere else.
+- [ ] The user's first look: "significantly better", flowers "a bit flat" (answered in round 2). Still a trial, not a decision; the "no code-drawn art" rule stands everywhere else.
 - [x] Study the concept: the kinds of greenery, where they grow, their size (in the exploration).
 - [x] Placeable flower beds and planting as editor objects (set pieces with `grow`).
 - [x] The vine system: the dressing rules stay, each vine is now a grown cascade; the painted strips remain as the fallback.
 - [ ] Paving: `cobble` exists; choose where the courtyard uses it (with the courtyard thread), and a way to vary it over large areas.
 - [ ] Window boxes, plants between stones, climbers from a wall's foot; vines that follow a curved wall.
-- [ ] Decide between the code-drawn sprite sheet and a Codex-painted one.
+- [x] Flat flowers (the user, 2026-11-24): Codex-painted grey sheets for blossoms and leaves, blossoms tilted and shaded, a shadow under each. Waiting for the user's second look.
+- [ ] Painted spikes to match.

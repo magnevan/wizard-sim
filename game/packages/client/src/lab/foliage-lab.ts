@@ -8,7 +8,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import wizMeta from '../../../../content/assets/models/wizard.json';
-import { Foliage, FOLIAGE_DEBUG, FOLIAGE_TIME, bed, bush, cascade, cone, rng, spriteCanvas, tree, type Pal } from './foliage';
+import { Foliage, FOLIAGE_DEBUG, FOLIAGE_TIME, foliageReady, bed, bush, cascade, cone, rng, spriteCanvas, tree, type Pal } from './foliage';
 import { M, kitMat, loadKitArt, setupStage } from './kit-render';
 
 const q = new URLSearchParams(location.search);
@@ -117,4 +117,5 @@ frame();
 const wind = q.get('wind') !== '0';
 const loop = () => { if (wind) FOLIAGE_TIME.value = performance.now() / 1000; renderer.render(scene, cam); requestAnimationFrame(loop); };
 loop();
-Promise.all(pending).then(() => { (window as unknown as { __ready: boolean }).__ready = true; });
+renderer.render(scene, cam);   // (compiles the plants' material, which starts the painted sheets loading)
+Promise.all(pending).then(() => foliageReady()).then(() => { (window as unknown as { __ready: boolean }).__ready = true; });

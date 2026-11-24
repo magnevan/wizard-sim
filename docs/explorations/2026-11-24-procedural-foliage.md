@@ -2,7 +2,7 @@
 
 2026-11-24 · thread: [outdoor foliage](../threads/foliage.md) · code: `game/packages/client/src/lab/foliage.ts` · lab page: `foliage.html`
 
-The user asked for a procedural foliage system that can reach the courtyard concept ([`area-courtyard-start.jpg`](../reference/element-order/area-courtyard-start.jpg)), built with fresh eyes, and allowed this session to bend the "no code-drawn art" rule: "that rule just exists because historically code drawn art has been very bad, but that's not necessarily the case for well crafted procedural stuff." This is the first result. The user has not yet judged it.
+The user asked for a procedural foliage system that can reach the courtyard concept ([`area-courtyard-start.jpg`](../reference/element-order/area-courtyard-start.jpg)), built with fresh eyes, and allowed this session to bend the "no code-drawn art" rule: "that rule just exists because historically code drawn art has been very bad, but that's not necessarily the case for well crafted procedural stuff." The user's first verdict (2026-11-24): "It looks significantly better. My main critique is that the flowers look a bit flat", fixable perhaps with better shading and varied angles, and Codex-painted sheets were welcome. Round 2 below answers that; the pictures here are round 2.
 
 ## What it looks like
 
@@ -34,12 +34,23 @@ Every mass is lit as one rounded form: yellow-green where the sun lands, blue-gr
 
 1. **A plant is a clump of lobes** (ellipsoids, a cone, hanging strands). A recipe places the lobes with a seeded random stream: a shrub is a main mass with smaller ones at its foot; a bed packs plants of three sizes, taller at the back.
 2. **Cards cover the lobes' outside.** Each card is a small square that always faces the camera. A card inside a neighbouring lobe is dropped, so a clump has one skin. Each card takes its lobe's surface direction for lighting, so the whole bush shades like one soft form.
-3. **Colour comes from a ramp.** A card's sprite is a grey picture (a rosette of leaves, a tuft, a blossom, a spike; sixteen on one sheet, drawn once in code). The shader adds up sunlight, the sprite's grey and how deep the card sits in the plant, and looks the sum up in an eight-step palette from blue-green shade to yellow highlight. One sheet serves every species and colour.
+3. **Colour comes from a ramp.** A card's sprite is a grey picture (a clump of leaves, a tuft, a blossom, a spike). Leaves and blossoms are painted by Codex in greys (round 2); spikes and the dark cores are still drawn in code. The shader adds up sunlight, the sprite's grey and how deep the card sits in the plant, and looks the sum up in an eight-step palette from blue-green shade to yellow highlight. One sheet serves every species and colour.
 4. **Blossoms gather in drifts**: a few spots per plant where they are thick, thinning away, one colour per drift.
 5. **Depth**: a dark core inside each lobe shows through the gaps, cards in the fold between two lobes are darker, hidden lobes cast the plant's shadow (and shade its own far side), and a soft dark patch sits on the ground under it.
 6. **Wind** leans each card a little, more toward a plant's top and a vine's tips.
 
 Recipes: `bush`, `bed`, `cone`, `cascade` (a vine over a wall's top), `tree`. Sizes are in metres. Same recipe and seed, same plant.
+
+## Round 2: flowers with form (2026-11-24)
+
+The first blossoms were flat discs: every one faced the camera, drawn from one code-made picture, lit the same. Changed:
+
+- **Painted sheets.** Codex painted two grey sheets of sixteen sprites each: blossoms (four from the front, four in three-quarter view, a side-on cup, a half-open one, a bud, a rose, four bunches) in white with golden eyes, and leaf clumps (broad, round, upright tufts, hanging sprays). `tools/kit/foliage_sheets.py` keys them, stretches the greys and centres each sprite (`game/content/generated/textures/foliage-blossoms.png`, `foliage-leaves.png`). The palette ramp still gives the colour, so one white blossom sheet makes pink, lilac, white, rose and yellow flowers.
+- **Angles.** Each blossom faces its own way, and the shader squashes its card along the way it leans, so a front-view blossom on the side of a bush is drawn as the oval it would show. About four in ten are front faces tilted this way, three in ten painted three-quarter or side views, the rest bunches.
+- **Shading.** A blossom now takes more of the sun and its depth in the plant, and every card is a little lighter on its sunward side.
+- **A shadow under each blossom**: the same shape in the leaf's deep tone, shifted down and away from the sun, so the flower stands off the leaves.
+
+If the painted sheets are missing, the code-drawn sprites are used.
 
 ## In the kit
 
@@ -55,13 +66,14 @@ A warm flag texture, `cobble` (Codex, prompt in `tools/concept-gen/prompts/2026-
 ## What it costs
 
 - Camera-facing cards look right from the game camera and while orbiting in the editor, but a plant has no true silhouette detail up close: at twice the game's zoom the cards read as stamps.
-- The sprites are code-drawn. They carry little of the look (the ramp and the lobes do most of it), and a Codex-painted grey sheet could replace them without other changes.
+- The painted leaf clumps are upright, so leaf cards now only lean up to about 45 degrees either way; a bush seen from straight above would show leaves all pointing "up the screen".
+- Each blossom is two cards (itself and its shadow).
 - A vine on a curved wall is laid along each section's straight chord, so it can cut a corner on a tight curve.
 - Not measured for speed yet. The lab stage is about 30 plants with one draw call each for cards.
 
 ## Open
 
 - The user's verdict against the concept, at the game camera.
-- Whether to swap the sprite sheet for a painted one.
+- Painted spikes (lavender, delphinium) to match the painted blossoms.
 - Window boxes, plants between paving stones, climbers growing up from a wall's foot.
 - Merging a scene's plants into few draw calls if it becomes slow.

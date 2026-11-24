@@ -1,0 +1,14 @@
+Generate one image with your image generation tool, then save it as leaves.png in the current directory. Reply with just the file name.
+
+The attached image shows the game this is for: stylised, hand-painted, warm light. Look at how its bushes are painted: chunky clumps of simple leaves with clear light and shade.
+
+Draw a square sprite sheet: a 4 by 4 grid of sixteen separate small clumps of leaves, evenly spaced, each centred in its own equal square cell with clear empty space around it, on a flat, uniform, pure magenta (#ff00ff) background.
+
+Every clump is painted in greys only, like a monochrome value study: white where the light from the upper left hits a leaf, mid grey on turned leaves, dark charcoal deep inside the clump between the leaves. Painted in that chunky hand-painted game style, with crisp clean edges and each leaf a simple readable shape.
+
+Row 1: four dense round clumps of broad pointed leaves, seen from above and slightly to the side, the leaves fanning outward and overlapping.
+Row 2: four dense round clumps of small rounded leaves, like clipped boxwood.
+Row 3: four tufts of fine narrow upright leaves, like the tip of a cypress branch, pointing up.
+Row 4: four short hanging sprays of vine leaves, the stem at the top of the cell and the heart-shaped leaves hanging down and overlapping, narrowing to a tip at the bottom.
+
+Each clump is compact and solid in its middle, with leaf tips making a lively edge, and fills about three quarters of its cell. The sheet shows grey leaves only on the flat magenta.

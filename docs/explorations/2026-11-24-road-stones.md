@@ -38,6 +38,18 @@ The user thinks laying the whole road stone by stone is feasible, and it is near
 - something better where rings from two sides meet: now the cobble tile shows through the gap, and pinched stones are left out;
 - a look at the cost: the court's kerbs are about 35,000 triangles and its one row of setts about 70,000; a full lay is several times that.
 
+## The user's verdict, and the painted ground (approach 4)
+
+The user on the laid stones: "approach 1-3 are all garbage": the kerb blocks look really bad, their textures glitchy and the transitions jagged, the floor-level setts "interfere weirdly with the ground texture", and the fully laid road reads as a bugged algorithm. The Codex paint-over "obviously looks good... execution is excellent", if not exactly the preferred pattern. So laid stones are off by default in the test below and the painted ground is the direction to pursue.
+
+The paint-over was a repainted screenshot, not something in the game. The test that puts it in the game:
+
+1. `kit3d.html?plan=30` renders the ground from straight above (north up, no shadows, floors and kerbs only): the guide.
+2. Codex repaints the guide as a texture "with every edge between road, kerb and pavement in exactly the same place" (`ground-paint.txt`). Both tries kept the edges in place (`painted-ground-plan.jpg`).
+3. The renderer lays the painting straight down over that rectangle onto every surface facing up, floors and kerb tops alike (`setGroundPaint` in `kit-render.ts`; `?paint=paint/court-road-a.png&prect=81,31.5625,111,48.4375&pgain=0.68&stones=0`).
+
+Result: `painted-ground-in-game.jpg` and `painted-ground-close.jpg`, real renders at the game camera. Open points: it is paler than the paint-over (a painting made over a lit picture is lit twice; `pgain` only darkens it), the stones are flat (painted shading only), one picture covers 30 by 17 u at about 64 px a u, so the court needs a grid of them with matching borders, and any map edit under a painting means repainting it.
+
 ## Trade-offs and what was not done
 
 - The road tile's rows run east to west everywhere, so they cross the north road and run along the east-west street. Only laying the road in rows (the experiment) fixes that.

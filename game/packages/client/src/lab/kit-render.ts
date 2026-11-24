@@ -160,6 +160,21 @@ const TILE: Record<string, number> = { paving: 4, plaza: 6, road: 9, lawn: 4, ro
   water: 8, woods: 4, dirt: 3, sand: 4, ...(Object.values(texTiles)[0] ?? {}) };
 /** Textures that drift on floors (tiles a second): water flows slowly. */
 const FLOW: Record<string, [number, number]> = { water: [0.012, 0.007] };
+/** Switches for trying things out (kit3d's URL): `stones` lays kerbs and road courses stone by stone (kit-road.ts). */
+export const KIT_OPTS = { stones: true };
+/**
+ * A ground painting (docs/explorations/2026-11-24-road-stones.md, approach 4): one picture of the ground seen from
+ * straight above, covering the rectangle ptRect (x0, z0, x1, z1 in u; its top edge is north), which replaces the
+ * tiling texture on every surface facing up inside it: floors and the tops of kerbs alike.
+ */
+const PAINT = { ptOn: { value: 0 }, ptTex: { value: null as THREE.Texture | null }, ptRect: { value: new THREE.Vector4() }, ptGain: { value: 1 } };
+/** Show a ground painting (a path under content/generated/textures/) over a rectangle of the scene, or none. */
+export async function setGroundPaint(path: string | null, rect?: [number, number, number, number], gain = 1): Promise<void> {
+  PAINT.ptGain.value = gain;   // a painting made over a lit picture is lit twice: darken it by this
+  const t = path ? await loadDecal(`textures/${path}`) : null;
+  PAINT.ptTex.value = t; PAINT.ptOn.value = t && rect ? 1 : 0;
+  if (rect) PAINT.ptRect.value.set(...rect);
+}
 const TP_TIME = { value: 0 };   // shared by every flowing texture; spinKit advances it each frame
 /**
  * Floors that vary over a long distance, so a tile's repeat doesn't show as a grid: the tile's own colour, read again
@@ -192,15 +207,21 @@ function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: flow[0] || flow[1] ? 0.35 : 0.92 });
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tpMap = { value: tex }; sh.uniforms.tpScale = { value: 1 / tile };
-    sh.uniforms.tpFlow = { value: new THREE.Vector2(...flow) }; sh.uniforms.tpTime = TP_TIME;
+    sh.uniforms.tpFlow = { value: new THREE.Vector2(...flow) }; sh.uniforms.tpTime = TP_TIME; Object.assign(sh.uniforms, PAINT);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTpPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvTpNrm = normalize(mat3(modelMatrix) * objectNormal);');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;\nuniform sampler2D tpMap;\nuniform float tpScale, tpTime;\nuniform vec2 tpFlow;')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;\nuniform sampler2D tpMap, ptTex;\nuniform float tpScale, tpTime, ptOn, ptGain;\nuniform vec2 tpFlow;\nuniform vec4 ptRect;')
       .replace('#include <map_fragment>', `vec3 tpW = pow(abs(normalize(vTpNrm)), vec3(4.0)); tpW /= (tpW.x + tpW.y + tpW.z);
         vec4 tpC = texture2D(tpMap, vTpPos.zy * tpScale) * tpW.x + texture2D(tpMap, vTpPos.xz * tpScale + tpFlow * tpTime) * tpW.y + texture2D(tpMap, vTpPos.xy * tpScale) * tpW.z;
         ${macro ? `vec3 tpFar = texture2D(tpMap, mat2(0.8, -0.6, 0.6, 0.8) * vTpPos.xz * tpScale * 0.137, 5.0).rgb, tpMean = texture2D(tpMap, vec2(0.5), 20.0).rgb;
         tpC.rgb *= clamp(1.0 + (dot(tpFar, vec3(0.333)) / max(dot(tpMean, vec3(0.333)), 0.02) - 1.0) * ${macro.toFixed(2)}, 0.8, 1.2);` : ''}
-        diffuseColor *= tpC;`);
+        diffuseColor *= tpC;
+        vec2 ptUv = (vTpPos.xz - ptRect.xy) / (ptRect.zw - ptRect.xy);
+        if (ptOn > 0.5 && ptUv.x > 0.0 && ptUv.x < 1.0 && ptUv.y > 0.0 && ptUv.y < 1.0) {
+          // faded in over the rectangle's rim, so the painting has no hard border on the ground
+          float ptK = tpW.y * smoothstep(0.0, 0.03, min(min(ptUv.x, 1.0 - ptUv.x), min(ptUv.y, 1.0 - ptUv.y)));
+          diffuseColor.rgb = mix(diffuseColor.rgb, texture2D(ptTex, vec2(ptUv.x, 1.0 - ptUv.y)).rgb * ptGain, ptK);
+        }`);
   };
   m.customProgramCacheKey = () => `tp${tile}m${macro}`;
   return decalable(m);
@@ -490,7 +511,7 @@ function piece(it: Inst): THREE.Group | null {
     else if (kind === 'kerb') {
       // laid stone by stone, all a scene's kerbs at once (buildKit, kit-road.ts): the piece itself is the bed of sand
       // that shows in the joints, and what a click on its stones finds
-      if (STONE.kerb) box(g, JOINT, 0, L, yOf(low) - 0.1, yOf(it.h) - 0.07, -KERB_W + 0.03, -0.03);
+      if (STONE.kerb && KIT_OPTS.stones) box(g, JOINT, 0, L, yOf(low) - 0.1, yOf(it.h) - 0.07, -KERB_W + 0.03, -0.03);
       else if (TEX.kerb || !art(g, 'kerb', 0, yOf(it.h), L / 2)) box(g, TEX.kerb ?? MAT.kerb, 0, L, yOf(low) - 0.1, yOf(it.h), -KERB_W, 0);
     }
     else if (kind === 'wall') wall(g, L, it.h, low, it.v, shape === 'door');
@@ -904,14 +925,14 @@ export function buildKit(data: KitData): THREE.Group {
     }
   }
   // the kerbs' stones, laid along each whole kerb so they run on across its pieces and are cut to its turns
-  if (STONE.kerb) {
+  if (STONE.kerb && KIT_OPTS.stones) {
     const kerbs = data.instances.filter((it) => /^(edge|sweep)\.kerb/.test(it.p) && it.x2 != null && it.low != null) as KerbSeg[];
     const m = new THREE.Mesh(kerbRows(kerbs, yOf, SHEETS.kerb), STONE.kerb);
     m.castShadow = m.receiveShadow = true; m.raycast = () => undefined;
     root.add(m);
   }
   // a road's courses of stones, one mesh per sheet (not picked: a click goes through to the road under them)
-  for (const sheet of new Set((data.courses ?? []).map((c) => c.sheet ?? 'sett'))) if (STONE[sheet]) {
+  for (const sheet of new Set((data.courses ?? []).map((c) => c.sheet ?? 'sett'))) if (STONE[sheet] && KIT_OPTS.stones) {
     const m = new THREE.Mesh(courseStones(data.courses!.filter((c) => (c.sheet ?? 'sett') === sheet), yOf, SHEETS[sheet]), STONE[sheet]);
     m.castShadow = m.receiveShadow = true; m.raycast = () => undefined;
     root.add(m);

@@ -3,12 +3,14 @@
  * tools/kit/compile.py into instances of made pieces, drawn by kit-render.ts (fitted Meshy models where made, plain
  * placeholders of their exact size elsewhere), so the joins can be judged. Its own page (kit3d.html).
  * ?layout=patch-a, ?x=&y= target (u), ?view=26, ?pitch=46, ?yaw=0 (degrees, turns the camera round the target),
- * ?wiz=0 hides the wizard, ?art=0 draws placeholders only. The map editor (editor.html) edits the same scenes live.
+ * ?wiz=0 hides the wizard, ?art=0 draws placeholders only. ?stones=0 draws kerbs plain and no road courses.
+ * ?plan=30 looks straight down on 30 u across (north up, no shadows, only floors and kerbs): the guide a ground painting is
+ * painted over; ?paint=paint/x.png&prect=x0,y0,x1,y1 lays a ground painting over that rectangle (u). The map editor (editor.html) edits the same scenes live.
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import wizMeta from '../../../../content/assets/models/wizard.json';
-import { buildKit, groundPlane, loadKitArt, setKitPieces, setupStage, spinKit, yOf, type KitData } from './kit-render';
+import { buildKit, groundPlane, KIT_OPTS, loadKitArt, setGroundPaint, setKitPieces, setupStage, spinKit, yOf, type KitData } from './kit-render';
 
 const q = new URLSearchParams(location.search);
 const layouts = import.meta.glob<KitData>('./kit-*.json', { eager: true, import: 'default' });
@@ -25,7 +27,11 @@ const sun = setupStage(renderer, scene);
 if (q.get('art') !== '0') await loadKitArt();
 // the kit's pieces (set pieces' sizes, decals) from the dev server's scene server, when there is one
 await fetch('/__map/kit').then((r) => r.json()).then((k) => setKitPieces(k.pieces)).catch(() => undefined);
-scene.add(groundPlane(data), buildKit(data));
+KIT_OPTS.stones = q.get('stones') !== '0';
+const PLAN = Number(q.get('plan') ?? 0);
+if (PLAN) renderer.shadowMap.enabled = false;
+if (q.get('paint')) await setGroundPaint(q.get('paint'), (q.get('prect') ?? '').split(',').map(Number) as [number, number, number, number], Number(q.get('pgain') ?? 1));
+scene.add(groundPlane(data), buildKit(PLAN ? { ...data, instances: data.instances.filter((i) => /^(edge|sweep)\.kerb/.test(i.p)), courses: [] } : data));
 
 // ---- the wizard, for scale ----
 const WIZ_H = 2.9;
@@ -50,8 +56,15 @@ if (q.get('wiz') !== '0') {
 // ---- the camera: Magicka's, about ----
 const PITCH = THREE.MathUtils.degToRad(Number(q.get('pitch') ?? 46)), YAW = THREE.MathUtils.degToRad(Number(q.get('yaw') ?? 0));
 const VIEW_H = Number(q.get('view') ?? 26);
-const cam = new THREE.PerspectiveCamera(28, innerWidth / innerHeight, 0.5, 500);
+const cam: THREE.PerspectiveCamera | THREE.OrthographicCamera = PLAN ? new THREE.OrthographicCamera() : new THREE.PerspectiveCamera(28, innerWidth / innerHeight, 0.5, 500);
 function frame() {
+  if (cam instanceof THREE.OrthographicCamera) {     // straight down, north up, PLAN u across
+    const hw = PLAN / 2, hh = hw * innerHeight / innerWidth;
+    Object.assign(cam, { left: -hw, right: hw, top: hh, bottom: -hh, near: 1, far: 400 });
+    cam.position.set(target.x, 200, target.z); cam.up.set(0, 0, -1); cam.lookAt(target.x, 0, target.z); cam.updateProjectionMatrix();
+    sun.position.set(target.x, 100, target.z + 0.01); sun.target.position.set(target.x, 0, target.z);
+    return;
+  }
   cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix();
   const dist = (VIEW_H * Math.sin(PITCH)) / (2 * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)));
   const t = target.clone().setY(yOf(Number(q.get('th') ?? 1.5)));

@@ -135,6 +135,16 @@ export async function loadKitArt(): Promise<void> {
 // texture runs on across pieces with no seam. Without a texture, a part draws as before (a flat tone or its made model).
 const texUrls = import.meta.glob<string>('../../../../content/generated/textures/*.png', { eager: true, query: '?url', import: 'default' });
 const texTiles = import.meta.glob<Record<string, number>>('../../../../content/generated/textures/tiles.json', { eager: true, import: 'default' });
+/** Textures that dress walls, steps and props, not floors. */
+const NOT_FLOOR = /^(ashlar|smooth-stone|tread|kerb|plaza-disc|tiles|vine-.*|banner-.*)$/;
+/**
+ * The floor materials a level can have, for the editor: the flat tones, and every texture (in the textures folder or
+ * in tiles.json) that isn't for walls, steps or props, so a new texture shows up as a floor on its own.
+ */
+export function floorMats(): string[] {
+  const named = [...Object.keys(texUrls).map((p) => p.split('/').pop()!.replace('.png', '')), ...Object.keys(Object.values(texTiles)[0] ?? {})];
+  return [...new Set([...Object.keys(FLOOR), ...named.filter((n) => !NOT_FLOOR.test(n))])].sort();
+}
 /** u per tile, by texture: tiles.json beside the textures overrides these. */
 // (as tools/kit/textures.py makes them, TILE_U: paving 4, plaza 6, road 3, lawn 4)
 const TILE: Record<string, number> = { paving: 4, plaza: 6, road: 3, lawn: 4, rock: 6, deck: 3, ashlar: 3, 'smooth-stone': 2, tread: 2, kerb: 2,

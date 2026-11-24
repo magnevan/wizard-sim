@@ -12,6 +12,7 @@ How things are made: pictures in Codex (free), models through the Meshy API (sta
 ## Next
 
 - [ ] **Dressing from the paint-overs**: flower boxes, banners, small trees in planters, lamps along the balcony road, violet cracks; these are vignettes or set pieces.
+- [ ] **Animated water** (the user, 2026-11-24): a water shader (scrolling layers of the painted water texture, ripple normals derived from it, a gentle swell, fresnel, foam at the shoreline, the stream flowing), asked of the Map Editor session; the painted texture carries the look (no code-drawn art).
 - [ ] **Water and the sea edge**: a quay edge and a cliff piece (the inlet, the falls). **Spans**: the bridge over the inlet.
 - [ ] **Slim the models** before shipping: about 100 MB of 2K PBR textures.
 - [ ] Then the yard and the infirmary on the kit. They should need far fewer new pieces.

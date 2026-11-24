@@ -1,6 +1,6 @@
 # Waterfalls (a reusable, procedural piece)
 
-Status: active; round 1 of style concepts made, waiting on the user's pick · Last touched: 2026-11-24
+Status: active; the ribbon (concept A) chosen and built as a compiler-found piece; waiting on the user's look at it moving in the editor · Last touched: 2026-11-24
 Record: the concepts: [`docs/reference/waterfall/`](../reference/waterfall/) · prompts: `tools/concept-gen/prompts/2026-11-24-waterfall/` · the water it joins: `game/packages/client/src/lab/kit-water.ts` · where it came from: [the courtyard on the kit](kit-courtyard.md) · branch `waterfall` (off `court-kit`)
 
 ## Why this thread
@@ -21,8 +21,21 @@ Four styles painted over the grey-box of the real spot ([the grey-box](../refere
 
 Claude's recommendation: A as the base piece (it matches the code-drawn toon water already in the kit, and scales to any drop for free), with D's splitting boulders and mist as options on the same piece, and B falling out for free once two falls can be chained through a painted pool. C kept as a possible set piece for the academy side later.
 
+## Built (2026-11-24)
+
+The user chose A ("the one that's more general"). What was built, on branch `waterfall`:
+
+- **A fall is painted, not placed.** Wherever a `water` level meets a lower `water` level across an edge (0.5 m or more), `compile.py` emits a `fall.curtain` for each unbroken run of the edge. No new editor tool: paint water at two heights side by side. A pond painted between two heights gives a cascade (concept B) for free.
+- **`kit-fall.ts` draws it to size**, in the kit water's colours: a ribbon that bends over the lip on a quarter round and drops to the lower water (streaks running down, a white crest breaking into drips, ragged sides, foam climbing its foot), chunky puffs that swell and bob at the foot with drops hopping out, and a foam wash with rings on the lower water. Straight, cornered and curved lips all work.
+- **The upper water runs to the lip**: no shore foam along it, and it flows toward the fall whatever its shape.
+- **The courtyard**: the rock sill at the stream's end is repainted as stream, so the stream pours 10 m into the inlet ([in the game camera](../reference/waterfall/falls-built-court.jpg)). **`patch-falls`** is the test scene: a tall narrow fall, a 3 m one, a cascade through a pond and a lip that turns a corner ([picture](../reference/waterfall/falls-built-patch.jpg)).
+
+Not yet judged: the motion (the pictures are stills). Known gaps: the fall is as wide as the straight part of the lip, so a stream's chamfered corners stay bare beside it; the stream north of the bridge doesn't know about the fall, so its flow may not match the part below the bridge; no sound.
+
 ## Next
 
-- [ ] The user picks a style (or a mix) from round 1.
-- [ ] Then the design question before any build: what the piece is in the editor (an object joining two water levels across an edge? found by the compiler wherever water meets lower water, like `arch.through`?), and what its knobs are (width, strands, boulders, mist).
-- [ ] The concepts are not yet on the court scene's Concepts panel (`cli.mjs ref court add`): add them once the editor's server is known to be serving the right worktree.
+- [ ] The user looks at it moving (`editor.html?scene=court`, or `?scene=patch-falls`) and says what's off: speed, streaks, foam, puffs.
+- [ ] Options on the piece, if wanted (an object on the edge, like an edge override): boulders that split the curtain and mist (concept D's parts), a narrower or thinner fall.
+- [ ] Flow for the whole stream (every body of water upstream of a fall flows toward it, under bridges too).
+- [ ] Merge `waterfall` into `court-kit` once the user is happy.
+- [ ] The concepts are not yet on the court scene's Concepts panel (`cli.mjs ref court add`).

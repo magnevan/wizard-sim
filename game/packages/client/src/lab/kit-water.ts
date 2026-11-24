@@ -93,8 +93,8 @@ const NOISE = /* glsl */ `
     return vec2(d1, d2);
   }`;
 
-/** A body of water: a grid over its box (for the swell), cut to its outline in the shader. */
-export function waterMesh(rings: Ring[], y: number, size: [number, number], time: { value: number }, tile = 8, open?: (ax: number, ay: number, bx: number, by: number) => boolean): THREE.Mesh {
+/** A body of water: a grid over its box (for the swell), cut to its outline in the shader. `toward`: the way it must flow (water above a fall runs to the lip), whatever its shape. */
+export function waterMesh(rings: Ring[], y: number, size: [number, number], time: { value: number }, tile = 8, open?: (ax: number, ay: number, bx: number, by: number) => boolean, toward?: [number, number]): THREE.Mesh {
   const xs = rings.flat().map((p) => p[0]), ys = rings.flat().map((p) => p[1]);
   const box = { x0: Math.min(...xs) - 0.5, y0: Math.min(...ys) - 0.5, x1: Math.max(...xs) + 0.5, y1: Math.max(...ys) + 0.5 };
   const bw = box.x1 - box.x0, bh = box.y1 - box.y0;
@@ -103,7 +103,8 @@ export function waterMesh(rings: Ring[], y: number, size: [number, number], time
   sdf.magFilter = sdf.minFilter = THREE.LinearFilter; sdf.needsUpdate = true;
   const geo = new THREE.PlaneGeometry(bw, bh, Math.min(256, Math.ceil(bw)), Math.min(256, Math.ceil(bh))).rotateX(-Math.PI / 2);
   const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.32, metalness: 0 });
-  const [fx, fy] = flowOf(rings[0]), speed = Math.hypot(fx, fy) * tile, stream = Math.hypot(fx, fy) > 0.03;
+  const tl = toward ? Math.hypot(toward[0], toward[1]) : 0;
+  const [fx, fy] = toward && tl > 0 ? [(toward[0] / tl) * 0.06, (toward[1] / tl) * 0.06] : flowOf(rings[0]), speed = Math.hypot(fx, fy) * tile, stream = Math.hypot(fx, fy) > 0.03;
   const col = (c: number) => new THREE.Color(c);
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, {

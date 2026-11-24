@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "name": "patch-falls",
+  "G": 2,
+  "notes": "A test patch for falls (fall.curtain): a tall narrow fall, a 3 m one, a cascade through a pond, and a lip that turns a corner.",
+  "terraces": [
+    {"id": "t-ground", "glyph": "P", "name": "rock", "h": 4.3, "mat": "rock", "edge": "open", "walk": false},
+    {"id": "t-below", "glyph": "C", "name": "the sea", "h": -6, "mat": "water", "edge": "open", "walk": false},
+    {"id": "t-high", "glyph": "A", "name": "the high stream", "h": 4, "mat": "water", "edge": "open", "walk": false},
+    {"id": "t-mid", "glyph": "B", "name": "the low stream", "h": -3, "mat": "water", "edge": "open", "walk": false},
+    {"id": "t-pond", "glyph": "D", "name": "the pond", "h": 0, "mat": "water", "edge": "open", "walk": false},
+    {"id": "t-pool", "glyph": "E", "name": "the corner pool", "h": 1, "mat": "water", "edge": "open", "walk": false}
+  ],
+  "corners": [
+    "PPAAAPPBBBBBPPAAAAPPCCCEEEE",
+    "PPAAAPPBBBBBPPAAAAPPCCCEEEE",
+    "PPAAAPPBBBBBPPAAAAPPCCCEEEE",
+    "PPAAAPPBBBBBPPAAAAPPCCCEEEE",
+    "PPAAAPPBBBBBPDDDDDDPCCCEEEE",
+    "PPAAAPPBBBBBPDDDDDDPCCCEEEE",
+    "PPAAAPPBBBBBPDDDDDDPCCCCCCC",
+    "PPAAAPPBBBBBPDDDDDDPCCCCCCC",
+    "PPAAAPPBBBBBPDDDDDDPCCCCCCC",
+    "CCCCCCCCCCCCCCCCCCCCCCCCCCC",
+    "CCCCCCCCCCCCCCCCCCCCCCCCCCC",
+    "CCCCCCCCCCCCCCCCCCCCCCCCCCC",
+    "CCCCCCCCCCCCCCCCCCCCCCCCCCC",
+    "CCCCCCCCCCCCCCCCCCCCCCCCCCC",
+    "CCCCCCCCCCCCCCCCCCCCCCCCCCC",
+    "CCCCCCCCCCCCCCCCCCCCCCCCCCC",
+    "CCCCCCCCCCCCCCCCCCCCCCCCCCC"
+  ],
+  "objects": [
+  ]
+}

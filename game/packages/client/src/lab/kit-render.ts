@@ -9,10 +9,13 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RAIL_MOD, railFit } from './kit-fit';
+import { fallMesh } from './kit-fall';
 import { waterMesh } from './kit-water';
 import { FOLIAGE_TIME, grow, type Recipe } from './foliage';
 
 export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string;
+  /** a fall's lip (fall.curtain): its line in u, the lower water on the right */
+  pts?: number[][];
   /** per instance (scatters, dressing): size, a colour multiplied in, metres above h, and the parts chosen per slot */
   scale?: number; tint?: string; up?: number; parts?: Record<string, string> };
 export type Floor = { t: string; id?: string; h: number; mat: string; polys: number[][][][] };
@@ -371,6 +374,8 @@ const ARCH_FACES: number[][] = [];
 /** The wall sections with a blind arch cut in them: no rock side there either (it would fill the recess). */
 const BLIND_SEGS: number[][] = [];
 const onArchFace = (ax: number, ay: number, bx: number, by: number) => onSegs(ARCH_FACES, ax, ay, bx, by);
+/** The lips of the falls being built: [ax, ay, bx, by, the upper water's height (m)]. The upper water is open there (it runs on over the lip) and flows toward it. */
+const FALL_LIPS: number[][] = [];
 /** Whether segment a-b lies along one of these (within a hair), as a floor's outline does along a face it bounds. */
 function onSegs(list: number[][], ax: number, ay: number, bx: number, by: number): boolean {
   for (const [px, py, qx, qy] of list) {
@@ -436,6 +441,7 @@ function wall(g: THREE.Group, L: number, h: number, low: number, v?: string, doo
 function piece(it: Inst): THREE.Group | null {
   const [cls, kind, shape] = it.p.split('.');
   if (isDecal(it.p)) return null;   // a decal draws as a picture on the ground (setDecal), not as a piece
+  if (cls === 'fall') return it.pts && it.low != null ? fallMesh(it.pts, yOf(it.h), yOf(it.low), TP_TIME) : null;   // water pouring into lower water (kit-fall.ts)
   if (cls === 'edge' || cls === 'sweep') {
     const g = edgeFrame(it), L = it.len!, low = it.low!;
     const drop = it.h - low;
@@ -823,13 +829,14 @@ function tintGroup(g: THREE.Object3D, tint: string) {
 /** The floors and pieces of a compiled scene, as one group. */
 export function buildKit(data: KitData): THREE.Group {
   const root = new THREE.Group();
-  JOINTS.clear(); SPINNERS.length = 0; ARCH_FACES.length = 0; BLIND_SEGS.length = 0;
+  JOINTS.clear(); SPINNERS.length = 0; ARCH_FACES.length = 0; BLIND_SEGS.length = 0; FALL_LIPS.length = 0;
   for (const it of data.instances) if ((it.v === 'blind' || it.v === 'blind-side') && it.x2 != null) BLIND_SEGS.push([it.x, it.y, it.x2, it.y2!]);
   findBays(data.instances);
   for (const it of data.instances) if (it.p.startsWith('arch.')) {   // an arch's two faces, before the floors and water are built
     const a = it as Inst & { nx?: number; ny?: number; depth?: number }, ex = (a.nx ?? 0) * (a.depth ?? 0), ey = (a.ny ?? 0) * (a.depth ?? 0);
     ARCH_FACES.push([a.x, a.y, a.x2!, a.y2!], [a.x + ex, a.y + ey, a.x2! + ex, a.y2! + ey]);
   }
+  for (const it of data.instances) if (it.p.startsWith('fall.') && it.pts) for (let i = 0; i + 1 < it.pts.length; i++) FALL_LIPS.push([...it.pts[i], ...it.pts[i + 1], it.h]);
   setDecal(data.instances.find((i) => isDecal(i.p)));
   for (const it of data.instances) if (it.p.startsWith('joint.')) JOINTS.set(jkey(it.x, it.y), it);
   const bottom = yOf(Math.min(0, ...data.floors.map((f) => f.h)) - 0.4);
@@ -842,7 +849,16 @@ export function buildKit(data: KitData): THREE.Group {
     m.userData.floor = f;
     root.add(m);
     // water: stylised and moving, all in code (kit-water.ts); the flat floor stays, hidden, for picking and painting
-    if (f.mat === 'water') { m.visible = false; root.add(waterMesh([outer, ...holes], yOf(f.h), data.size, TP_TIME, 8, onArchFace)); }
+    if (f.mat === 'water') {
+      // water with a fall's lip on its outline runs on over it (no foam along the lip) and flows toward it
+      const lips = FALL_LIPS.filter((l) => l[4] === f.h), flow = [0, 0];
+      for (let i = 0; i < outer.length; i++) {
+        const [ax, ay] = outer[i], [bx, by] = outer[(i + 1) % outer.length];
+        for (const l of lips) if (onSegs([l], ax, ay, bx, by)) { flow[0] -= l[3] - l[1]; flow[1] += l[2] - l[0]; }
+      }
+      const open = (ax: number, ay: number, bx: number, by: number) => onArchFace(ax, ay, bx, by) || onSegs(lips, ax, ay, bx, by);
+      m.visible = false; root.add(waterMesh([outer, ...holes], yOf(f.h), data.size, TP_TIME, 8, open, flow[0] || flow[1] ? [flow[0], flow[1]] : undefined));
+    }
   }
   // the water running on under each arch (open at its mouths: no foam across the stream there)
   for (const it of data.instances) if (it.p.startsWith('arch.') && (it as Inst & { mat?: string }).mat === 'water') {

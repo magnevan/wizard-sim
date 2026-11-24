@@ -22,28 +22,35 @@ export const MAX_D = 4;
 
 /**
  * A body of water's shore field over its box, every `cell` u: the signed distance (u) to the nearest shore. A shore is
- * an outline segment that isn't on the map's border (the sea running off the map edge has no foam there).
+ * an outline segment that isn't on the map's border (the sea running off the map edge has no foam there) or `open` (an arch's mouth).
  */
-export function shoreField(rings: Ring[], box: { x0: number; y0: number; x1: number; y1: number }, cell: number, size: [number, number]) {
+export function shoreField(rings: Ring[], box: { x0: number; y0: number; x1: number; y1: number }, cell: number, size: [number, number], open?: (ax: number, ay: number, bx: number, by: number) => boolean) {
   const W = Math.max(2, Math.ceil((box.x1 - box.x0) / cell) + 1), H = Math.max(2, Math.ceil((box.y1 - box.y0) / cell) + 1);
   const on = (v: number, lim: number) => Math.abs(v - lim) < 1e-3;
-  const segs: number[][] = [], all: number[][] = [];
+  const segs: number[][] = [], all: number[][] = [], opens: number[][] = [];
   for (const r of rings) for (let i = 0; i < r.length; i++) {
     const a = r[i], b = r[(i + 1) % r.length];
     all.push([a[0], a[1], b[0], b[1]]);
     const border = (on(a[0], 0) && on(b[0], 0)) || (on(a[0], size[0]) && on(b[0], size[0])) || (on(a[1], 0) && on(b[1], 0)) || (on(a[1], size[1]) && on(b[1], size[1]));
-    if (!border) segs.push([a[0], a[1], b[0], b[1]]);
+    if (open?.(a[0], a[1], b[0], b[1])) opens.push([a[0], a[1], b[0], b[1]]);   // open: the water runs on (an arch's mouth)
+    else if (!border) segs.push([a[0], a[1], b[0], b[1]]);
   }
+  const dist = (px: number, py: number, list: number[][]) => {
+    let d = MAX_D;
+    for (const [ax, ay, bx, by] of list) {
+      const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L)) : 0;
+      d = Math.min(d, Math.hypot(px - ax - t * dx, py - ay - t * dy));
+    }
+    return d;
+  };
   const data = new Uint8Array(W * H);
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
     const px = box.x0 + i * cell, py = box.y0 + j * cell;
     let inside = false;
     for (const [ax, ay, bx, by] of all) if ((ay > py) !== (by > py) && px < ((bx - ax) * (py - ay)) / (by - ay) + ax) inside = !inside;
-    let d = MAX_D;
-    for (const [ax, ay, bx, by] of segs) {
-      const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L)) : 0;
-      d = Math.min(d, Math.hypot(px - ax - t * dx, py - ay - t * dy));
-    }
+    const d = dist(px, py, segs);
+    // just past an open edge it is still water (no gap where the stream meets the water under an arch)
+    if (!inside && opens.length && dist(px, py, opens) < d) inside = true;
     const sd = inside ? d : -Math.min(d, MAX_D);
     data[j * W + i] = Math.round((0.5 + 0.5 * Math.max(-1, Math.min(1, sd / MAX_D))) * 255);
   }
@@ -87,11 +94,11 @@ const NOISE = /* glsl */ `
   }`;
 
 /** A body of water: a grid over its box (for the swell), cut to its outline in the shader. */
-export function waterMesh(rings: Ring[], y: number, size: [number, number], time: { value: number }, tile = 8): THREE.Mesh {
+export function waterMesh(rings: Ring[], y: number, size: [number, number], time: { value: number }, tile = 8, open?: (ax: number, ay: number, bx: number, by: number) => boolean): THREE.Mesh {
   const xs = rings.flat().map((p) => p[0]), ys = rings.flat().map((p) => p[1]);
   const box = { x0: Math.min(...xs) - 0.5, y0: Math.min(...ys) - 0.5, x1: Math.max(...xs) + 0.5, y1: Math.max(...ys) + 0.5 };
   const bw = box.x1 - box.x0, bh = box.y1 - box.y0;
-  const f = shoreField(rings, box, 0.5, size);
+  const f = shoreField(rings, box, 0.5, size, open);
   const sdf = new THREE.DataTexture(f.data, f.W, f.H, THREE.RedFormat, THREE.UnsignedByteType);
   sdf.magFilter = sdf.minFilter = THREE.LinearFilter; sdf.needsUpdate = true;
   const geo = new THREE.PlaneGeometry(bw, bh, Math.min(256, Math.ceil(bw)), Math.min(256, Math.ceil(bh))).rotateX(-Math.PI / 2);
@@ -114,7 +121,7 @@ export function waterMesh(rings: Ring[], y: number, size: [number, number], time
         vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz; vSd = sd0; vSw = sw;`);
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>${decl}${NOISE}`)
       .replace('#include <map_fragment>', `
-        if (vSd < 0.0) discard;                                        // outside the water's outline
+        if (vSd < -0.06) discard;   // outside the outline (a quarter u of grace: the field is coarse, and walls cover the overlap)
         float t = wTime, d = vSd * ${MAX_D.toFixed(1)};                 // d: u to the shore
         // the pattern's space: world u at about a 4 u cell; a stream's is turned to its flow and stretched along it
         vec2 p = vWPos.xz * 0.25;

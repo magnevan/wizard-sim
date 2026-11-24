@@ -102,3 +102,12 @@ One ground texture for the [procedural foliage](../../docs/explorations/2026-11-
 - Asked for "warm rose-tan, a mid tone, clearly darker than cream", it came back brick red and about nine rows across. The game's copy is re-toned locally (half its colour kept, half replaced by its brightness in a tan, then lightened). Name the colour by pointing at the reference ("the same colour as the floor in the attached image") and ask for more, smaller flags next time.
 - Two sprite sheets for the plants (`blossoms`, `leaves`), each "a 4 by 4 grid of sixteen separate ..., each centred in its own equal square cell" on a flat key colour, with one line per row saying what its four cells hold. Both came back exactly as laid out, first try, evenly spaced and clean to key. Asking for the subject "in greys only, like a monochrome value study" (leaves) or "pure white petals shaded in soft cool greys as if made of white porcelain" (blossoms) gave value maps the game can colour itself. Use green for a key under flowers and magenta under leaves.
 - A third sheet, `spikes` (lavender, delphinium, foxglove, hanging wisteria), in the same layout and the same "white porcelain" wording: again exact on the first try. "Chunky florets large enough to read from far away" kept them readable at game size.
+
+### 2026-11-24, waterfall
+
+Five images for the [waterfall thread](../../docs/threads/waterfall.md): four styles of fall painted over one grey-box of the real spot (the editor's `view` in the game camera, plus the courtyard concept), and a parts sheet from the concept alone. `make.py` writes the prompts. All five saved on the first try, five in parallel, in about two minutes.
+
+- Saying what is missing ("the stream simply stops... the bare brown rock face in the middle is where it belongs") and calling the fall "the subject of the picture" put it exactly in the gap, with the rest of the layout held in all four.
+- One paragraph starting "Style:" was enough to get four clearly different falls from the same scene and camera: a good way to compare styles in place.
+- The model matched the water round the fall to each style on its own (flat swirls for the ribbon, realistic chop for the veils), so judge the fall, not the sea.
+- The parts sheet ("top row, the parts... bottom row, the same parts assembled... at three sizes, a tiny wizard for scale") came back as laid out, with no labels. The "eight wizards tall" fall is nearer five: scale by wizard is loose.

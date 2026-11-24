@@ -26,6 +26,7 @@ from shapely.ops import unary_union
 HERE = os.path.dirname(os.path.abspath(__file__))
 KIT = json.load(open(os.path.join(HERE, 'kit.json'), encoding='utf-8'))
 RISE, GOING = 0.15, 0.5          # m per step, u per tread (kit.json connector.flight)
+FALL_MIN = 0.5                   # m: water this far above lower water pours into it as a fall (fall.curtain)
 OUT = {'S': (0, 1), 'N': (0, -1), 'E': (1, 0), 'W': (-1, 0)}
 VARIANTS = {'wall': ('plain', 'window', 'door'), 'retain': ('plain', 'niche'), 'parapet': ('plain', 'niche')}
 
@@ -310,6 +311,7 @@ def compile_scene(sc):
         lo = T.get(low_of.get((round(s[0][0], 4), round(s[0][1], 4), round(s[1][0], 4), round(s[1][1], 4)), ''), {})
         if 0.3 < drop <= 1.0 and 'steps' in (up.get('edge'), lo.get('edge')) and up.get('walk', True) and lo.get('walk', True)                 and up.get('edge') != 'wall':
             return 'steps'                  # a short drop either side asks to step over: steps all along it
+        if up.get('mat') == 'water' and lo.get('mat') == 'water': return 'open'    # water over lower water: a fall pours over it (falls, below)
         if up.get('edge') == 'steps' and drop > 1.0: return 'parapet'
         if up.get('edge') == 'wall': return 'wall'
         if drop < 0.01: return 'open'      # two levels at one height (woods beside a lawn): a seam, no edge piece
@@ -506,6 +508,32 @@ def compile_scene(sc):
     for o in kind('edge'):
         if o['id'] not in used_over: err('edge-missing', f"{label(o)}: no edge section at {o['at']}", o['at'], [o['id']], 'warning')
     inst += arches(allsegs, inst)
+
+    # ---- falls: water pouring over an edge into lower water, drawn to size by the renderer (kit-fall.ts), never a model ----
+    def falls(allsegs):
+        """Wherever a level of water meets a lower level of water across an edge, the upper pours over it: one fall.curtain
+        per unbroken run of that edge (pts: the lip, in u, the lower water on its right; h and low: the two waters). So a
+        fall is painted, not placed: water at two heights side by side. A drop under FALL_MIN is a ripple, not a fall."""
+        lowt = lambda s: low_of.get((round(s[0][0], 4), round(s[0][1], 4), round(s[1][0], 4), round(s[1][1], 4)))
+        k4 = lambda p: (round(p[0], 4), round(p[1], 4))
+        groups, out = {}, []
+        for s in allsegs:
+            up, lg = T[s[2]], lowt(s); lo = T.get(lg, {})
+            if up.get('mat') != 'water' or lo.get('mat') != 'water' or up['h'] - lo['h'] < FALL_MIN: continue
+            groups.setdefault((s[2], lg), []).append(s)
+        for (ter, lg), ss in groups.items():
+            start = {k4(s[0]): s for s in ss}; ends = {k4(s[1]) for s in ss}; used = set()
+            for h0 in [s for s in ss if k4(s[0]) not in ends] or ss[:1]:
+                chain, s = [], h0
+                while s is not None and id(s) not in used:
+                    used.add(id(s)); chain.append(s); s = start.get(k4(s[1]))
+                if not chain: continue
+                pts = [chain[0][0]] + [c[1] for c in chain]
+                out.append(dict(p='fall.curtain', x=pts[0][0] * G, y=pts[0][1] * G, pts=[[round(x * G, 4), round(y * G, 4)] for x, y in pts],
+                                h=T[ter]['h'], low=T[lg]['h'], rot=0, len=sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(pts, pts[1:])) * G,
+                                src=gid[ter]))
+        return out
+    inst += falls(allsegs)
     inst += list(joints.values())
     for f in flights:
         inst.append(dict(p='connector.flight', x=f['a'][0] * G, y=f['a'][1] * G, x2=f['b'][0] * G, y2=f['b'][1] * G,

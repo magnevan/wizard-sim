@@ -51,6 +51,17 @@ describe('map editor ops', () => {
     expect(() => revert(s2, s0, s1)).toThrow(OpError);
   });
 
+  it('takes rounds, lines and set pieces, and shifts a line with the map', () => {
+    const r = applyOps(base(), [
+      { op: 'add', kind: 'line', a: [0, 1.5], b: [3, 0.5] }, { op: 'add', kind: 'round', centre: [2, 2], r: 3 },
+      { op: 'add', kind: 'setpiece', piece: 'setpiece.post', at: [1, 1] }, { op: 'insert_rows', at: 0, n: 1 },
+    ]);
+    expect(r.minted).toEqual(['l1', 'r1', 's1']);
+    expect(r.scene.objects.find((o) => o.id === 'l1')).toMatchObject({ a: [0, 2.5], b: [3, 1.5] });
+    expect(r.scene.objects.find((o) => o.id === 's1')).toMatchObject({ name: 'post', front: 'S' });
+    expect(() => applyOps(base(), [{ op: 'add', kind: 'round', centre: [0, 0], r: 2, from: 10 }])).toThrow(OpError);
+  });
+
   it('writes the same file layout as tools/kit/scene.py', () => {
     const file = new URL('../../../../tools/kit/scenes/patch-b.scene.json', import.meta.url);
     const text = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');   // git may check it out with CRLF

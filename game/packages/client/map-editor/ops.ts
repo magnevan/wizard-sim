@@ -15,7 +15,7 @@ export type Shift = { axis: 'x' | 'y'; at: number; n: number };
 export class OpError extends Error {}
 
 const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-const KINDS: Record<string, string> = { flight: 'f', curve: 'c', round: 'r', edge: 'e', vignette: 'v', setpiece: 's' };
+const KINDS: Record<string, string> = { flight: 'f', curve: 'c', round: 'r', line: 'l', edge: 'e', vignette: 'v', setpiece: 's' };
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 const slug = (s: string) => s.toLowerCase().replace(/^the /, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'x';
 const num = (v: unknown, what: string): number => {
@@ -40,7 +40,7 @@ function mintId(sc: Scene, prefix: string): string {
 
 /** Every point-like field of an object, to move or shift it. */
 export function eachPoint(o: Obj, f: (p: [number, number]) => [number, number]) {
-  for (const k of ['at', 'centre']) if (Array.isArray(o[k])) o[k] = f(o[k] as [number, number]);
+  for (const k of ['at', 'centre', 'a', 'b']) if (Array.isArray(o[k])) o[k] = f(o[k] as [number, number]);   // a, b: a line's ends
   for (const k of ['head', 'ends']) if (Array.isArray(o[k])) o[k] = (o[k] as [number, number][]).map(f);
 }
 
@@ -108,6 +108,10 @@ export function applyOps(scene: Scene, ops: Op[]): { scene: Scene; minted: strin
           if (kind === 'flight') { const h = obj.head as unknown[]; if (!Array.isArray(h) || h.length !== 2) throw new OpError('a flight needs head: [[x, y], [x, y]]'); h.forEach((p) => pt(p, 'head')); }
           if (kind === 'edge') { pt(obj.at, 'at'); obj.v ??= 'window'; }
           if (kind === 'vignette') { pt(obj.at, 'at'); obj.piece ??= 'vignette.lamp'; obj.front ??= 'S'; }
+          if (kind === 'line') {   // a true straight line, at any angle, the edges near it snap onto (compile.py): a, b, tol?, terrace?
+            pt(obj.a, 'a'); pt(obj.b, 'b');
+            if (typeof obj.terrace === 'string') obj.terrace = terraceOf(sc, obj.terrace).id;
+          }
           if (kind === 'setpiece') {   // a unique made piece on its footprint (kit.json class setpiece): placed like a vignette
             pt(obj.at, 'at'); obj.front ??= 'S';
             if (typeof obj.piece !== 'string' || !obj.piece.startsWith('setpiece.')) throw new OpError('a set piece needs piece: "setpiece.<name>" (see tools/kit/kit.json)');

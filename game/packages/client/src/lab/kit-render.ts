@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RAIL_MOD, railFit } from './kit-fit';
 
 export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string };
 export type Floor = { t: string; id?: string; h: number; mat: string; polys: number[][][][] };
@@ -62,7 +63,45 @@ export async function loadKitArt(): Promise<void> {
     out[p.split('/').pop()!.replace('.glb', '')] = g.scene;
   })));
   ART = out;
+  await loadTextures();
 }
+
+// ---- tiling textures (content/generated/textures/<name>.png, seamless): floors by their mat, and the plain stone of
+// retaining walls (ashlar), kerbs and copings (kerb) and treads (tread), mapped in world space from all three axes, so a
+// texture runs on across pieces with no seam. Without a texture, a part draws as before (a flat tone or its made model).
+const texUrls = import.meta.glob<string>('../../../../content/generated/textures/*.png', { eager: true, query: '?url', import: 'default' });
+const texTiles = import.meta.glob<Record<string, number>>('../../../../content/generated/textures/tiles.json', { eager: true, import: 'default' });
+/** u per tile, by texture: tiles.json beside the textures overrides these. */
+// (as tools/kit/textures.py makes them, TILE_U: paving 4, plaza 6, road 3, lawn 4)
+const TILE: Record<string, number> = { paving: 4, plaza: 6, road: 3, lawn: 4, rock: 6, deck: 3, ashlar: 3, 'smooth-stone': 2, tread: 2, kerb: 2, ...(Object.values(texTiles)[0] ?? {}) };
+const TEX: Record<string, THREE.MeshStandardMaterial> = {};
+async function loadTextures() {
+  const loader = new THREE.TextureLoader();
+  await Promise.all(Object.entries(texUrls).map(([p, url]) => loader.loadAsync(url).then((t) => {
+    const name = p.split('/').pop()!.replace('.png', '');
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+    TEX[name] = triplanar(t, TILE[name] ?? 4);
+  }).catch(() => undefined)));
+  // one smooth stone serves treads, kerbs and copings, unless each has its own
+  if (TEX['smooth-stone']) { TEX.tread ??= TEX['smooth-stone']; TEX.kerb ??= TEX['smooth-stone']; }
+}
+/** A material that samples tex by world position, blended over the three axes by the surface's facing. */
+function triplanar(tex: THREE.Texture, tile: number): THREE.MeshStandardMaterial {
+  const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.92 });
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.tpMap = { value: tex }; sh.uniforms.tpScale = { value: 1 / tile };
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTpPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvTpNrm = normalize(mat3(modelMatrix) * objectNormal);');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;\nuniform sampler2D tpMap;\nuniform float tpScale;')
+      .replace('#include <map_fragment>', `vec3 tpW = pow(abs(normalize(vTpNrm)), vec3(4.0)); tpW /= (tpW.x + tpW.y + tpW.z);
+        vec4 tpC = texture2D(tpMap, vTpPos.zy * tpScale) * tpW.x + texture2D(tpMap, vTpPos.xz * tpScale) * tpW.y + texture2D(tpMap, vTpPos.xy * tpScale) * tpW.z;
+        diffuseColor *= tpC;`);
+  };
+  m.customProgramCacheKey = () => `tp${tile}`;
+  return m;
+}
+/** The material for a floor of this mat: its texture if made, else its tone. */
+const floorMat = (mat: string): THREE.Material => TEX[mat] ?? FLOOR[mat] ?? MAT.paving;
 
 function box(g: THREE.Group, m: THREE.Material, x0: number, x1: number, y0: number, y1: number, z0: number, z1: number) {
   if (x1 - x0 <= 1e-4 || y1 - y0 <= 1e-4 || z1 - z0 <= 1e-4) return;
@@ -112,8 +151,8 @@ function edgeFrame(it: Inst): THREE.Group {
 }
 const COP = 0.15, COP_OUT = 0.12, PROUD = 0.05;   // coping: m tall, u overhang, m it stands above the floor it caps
 function retain(g: THREE.Group, L: number, h: number, low: number) {
-  box(g, MAT.face, 0, L, yOf(low) - 0.4, yOf(h - COP), -0.45, 0);
-  box(g, MAT.coping, 0, L, yOf(h - COP), yOf(h + PROUD), -0.5, COP_OUT);
+  box(g, TEX.ashlar ?? MAT.face, 0, L, yOf(low) - 0.4, yOf(h - COP), -0.45, 0);
+  box(g, TEX.kerb ?? MAT.coping, 0, L, yOf(h - COP), yOf(h + PROUD), -0.5, COP_OUT);
 }
 function balustrade(g: THREE.Group, L: number, h: number, i0: number, i1 = i0) {
   const y0 = yOf(h), z0 = -0.36, z1 = -0.04;
@@ -121,6 +160,13 @@ function balustrade(g: THREE.Group, L: number, h: number, i0: number, i1 = i0) {
   box(g, MAT.stone, i0, L - i1, y0 + yOf(0.82), y0 + yOf(0.95), z0 - 0.03, z1 + 0.03);   // the rail
   const n = Math.max(1, Math.round((L - i0 - i1) / 0.32));
   for (let k = 0; k < n; k++) { const x = i0 + ((k + 0.5) * (L - i0 - i1)) / n; box(g, MAT.stone, x - 0.07, x + 0.07, y0 + yOf(0.12), y0 + yOf(0.82), -0.27, -0.13); }
+}
+/** The made balustrade between two piers' faces, in whole modules at nearly their own size (kit-fit.ts, railFit). */
+function railModules(g: THREE.Group, x0: number, span: number, y: number): boolean {
+  if (!ART.balustrade || span <= 0.05) return !!ART.balustrade;
+  const f = railFit(span), start = x0 - (f.shown - span) / 2;
+  for (let k = 0; k < f.n; k++) art(g, 'balustrade', start + k * RAIL_MOD * f.sx, y, f.sx);
+  return true;
 }
 // the joints of the kit being built, by corner: a balustrade runs to its piers' faces (buildKit fills it)
 const JOINTS = new Map<string, Inst>();
@@ -146,8 +192,8 @@ function railInset(vx: number, vy: number, dx: number, dy: number, nx: number, n
 /** Steps along an edge (a short drop you can step over anywhere along it): treads of about 0.15 m, 0.5 u deep, out onto the lower side. */
 function steps(g: THREE.Group, L: number, h: number, low: number) {
   const n = Math.max(2, Math.round((h - low) / 0.15)), rise = (h - low) / n;
-  box(g, MAT.face, 0, L, yOf(low) - 0.1, yOf(h), -0.06, 0);                                     // the top riser, under the upper floor's edge
-  for (let k = 1; k < n; k++) box(g, k % 2 ? MAT.stone : MAT.coping, 0, L, yOf(low) - 0.1, yOf(h - k * rise), (k - 1) * 0.5, k * 0.5);
+  box(g, TEX.tread ?? MAT.face, 0, L, yOf(low) - 0.1, yOf(h), -0.06, 0);                         // the top riser, under the upper floor's edge
+  for (let k = 1; k < n; k++) box(g, TEX.tread ?? (k % 2 ? MAT.stone : MAT.coping), 0, L, yOf(low) - 0.1, yOf(h - k * rise), (k - 1) * 0.5, k * 0.5);
 }
 function wall(g: THREE.Group, L: number, h: number, low: number, v?: string, door = false) {
   box(g, MAT.wall, 0, L, yOf(low) - 0.4, yOf(h), -0.6, 0);
@@ -170,9 +216,11 @@ function piece(it: Inst): THREE.Group | null {
     // (every other one mirrored, so the joints don't line up), never stretched
     let madeRetain = false;
     const niche = it.v === 'niche' && ART.niche;
-    if ((kind === 'retain' || kind === 'parapet') && drop >= 0.3 && art(g, niche ? 'niche' : 'retain-top', 0, yOf(it.h), L / 2)) {
+    // (with an ashlar texture the wall is a plain shape wearing it, so its courses never repeat at a seam; a niche stays made)
+    if ((kind === 'retain' || kind === 'parapet') && drop >= 0.3 && (!TEX.ashlar || niche) && art(g, niche ? 'niche' : 'retain-top', 0, yOf(it.h), L / 2)) {
       madeRetain = true;
-      for (let y = yOf(it.h) - (niche ? 2.0 : 1.1), k = 0; y > yOf(low) - 0.4; y -= 0.78, k++) {
+      if (TEX.ashlar) box(g, TEX.ashlar, 0, L, yOf(low) - 0.4, yOf(it.h) - 2.0, -0.45, 0);   // under a niche: the textured wall, as beside it
+      else for (let y = yOf(it.h) - (niche ? 2.0 : 1.1), k = 0; y > yOf(low) - 0.4; y -= 0.78, k++) {
         if (k % 2) art(g, 'retain-course', L, y, -L / 2); else art(g, 'retain-course', 0, y, L / 2);
       }
     }
@@ -182,9 +230,9 @@ function piece(it: Inst): THREE.Group | null {
       // pier face to pier face: on a straight run 0.275 at each end; on a bend, where the turned pier's face is
       const dx = (it.x2! - it.x) / L, dy = (it.y2! - it.y) / L, nx = -dy, ny = dx;
       const i0 = railInset(it.x, it.y, dx, dy, nx, ny), i1 = railInset(it.x2!, it.y2!, -dx, -dy, nx, ny);
-      if (!art(g, 'balustrade', i0, yOf(it.h + 0.05), (L - i0 - i1) / 1.45)) balustrade(g, L, it.h, i0, i1);
+      if (!railModules(g, i0, L - i0 - i1, yOf(it.h + 0.05))) balustrade(g, L, it.h, i0, i1);
     }
-    else if (kind === 'kerb') { if (!art(g, 'kerb', 0, yOf(it.h), L / 2)) box(g, MAT.kerb, 0, L, yOf(low) - 0.1, yOf(it.h), -0.32, 0); }
+    else if (kind === 'kerb') { if (TEX.kerb || !art(g, 'kerb', 0, yOf(it.h), L / 2)) box(g, TEX.kerb ?? MAT.kerb, 0, L, yOf(low) - 0.1, yOf(it.h), -0.32, 0); }
     else if (kind === 'wall') wall(g, L, it.h, low, it.v, shape === 'door');
     else if (kind === 'steps') steps(g, L, it.h, low);   // edge.steps.straight / .chamfer and sweep.steps
     return g;
@@ -211,47 +259,54 @@ function piece(it: Inst): THREE.Group | null {
     g.matrix.makeBasis(new THREE.Vector3(ax, 0, ay), new THREE.Vector3(0, 1, 0), new THREE.Vector3(ox, 0, oy)).setPosition(it.x, 0, it.y);
     const rise = (it.h - it.low!) / n, go = L / n;
     // the head sill: the terrace's edge stone across the flight (a row of made treads level with the terrace, if made)
-    if (ART.tread) { for (let m = -0.6; m < W + 0.6 - 0.01; m += (W + 1.2) / Math.ceil((W + 1.2) / 2)) { art(g, 'tread', m, yOf(it.h) + 0.01, (W + 1.2) / Math.ceil((W + 1.2) / 2) / 2); g.children[g.children.length - 1].position.z = 0.0; } }
-    else box(g, MAT.coping, -0.6, W + 0.6, yOf(it.h - rise) - 0.1, yOf(it.h + PROUD * 0.4), -0.45, 0.05);
-    const madeTreads = !!ART.tread;
+    // treads: made tread modules, unless there is a tread texture: then plain steps wearing it, one texture across all
+    const madeTreads = !!ART.tread && !TEX.tread, treadMat = TEX.tread ?? MAT.stone;
+    if (madeTreads) { for (let m = -0.6; m < W + 0.6 - 0.01; m += (W + 1.2) / Math.ceil((W + 1.2) / 2)) { art(g, 'tread', m, yOf(it.h) + 0.01, (W + 1.2) / Math.ceil((W + 1.2) / 2) / 2); g.children[g.children.length - 1].position.z = 0.0; } }
+    else box(g, TEX.tread ?? MAT.coping, -0.6, W + 0.6, yOf(it.h - rise) - 0.1, yOf(it.h + PROUD * 0.4), -0.45, 0.05);
     for (let k = 0; k < n; k++) {
       const top = yOf(it.h - (k + 1) * rise);
-      box(g, MAT.stone, 0, W, yOf(it.low!) - 0.4, madeTreads ? top - 0.3 : top, k * go, (k + 1) * go);
+      box(g, treadMat, 0, W, yOf(it.low!) - 0.4, madeTreads ? top - 0.3 : top, k * go, (k + 1) * go);
       if (madeTreads && k < n - 1) { for (let m = 0; m + 1.99 < W; m += 2) art(g, 'tread', m, top, 1, 1); g.children.slice(-Math.round(W / 2)).forEach((o) => { o.position.z = (k + 1) * go - 0.06; }); }
-      else box(g, MAT.coping, 0, W, top - 0.05, top, k * go - 0.05, k * go + 0.08);   // a nosing
+      else if (!TEX.tread) box(g, MAT.coping, 0, W, top - 0.05, top, k * go - 0.05, k * go + 0.08);   // a nosing (a textured tread shows its own edge)
     }
     const sl = yOf(it.h - it.low!) / L, topAt = (z: number) => yOf(it.h + 0.1) - sl * z;
-    const madeCheeks = !!(ART['retain-top'] && ART['retain-course'] && ART.balustrade && ART.pier);
-    for (const side of madeCheeks ? [-1, 1] : []) {
-      const x0 = side < 0 ? -0.6 : W, cx = x0 + 0.3, Z = new THREE.Vector3(side, 0, 0);
+    // the cheek walls: made courses (retain-top, retain-course) unless there is an ashlar texture, then a plain wall
+    // wearing it; the balustrade and its piers on top are made whenever they exist
+    const madeRails = !!(ART.balustrade && ART.pier);
+    const madeWalls = madeRails && !!(ART['retain-top'] && ART['retain-course']) && !TEX.ashlar;
+    for (const side of [-1, 1]) {
+      const x0 = side < 0 ? -0.6 : W, x1 = x0 + 0.6, cx = x0 + 0.3, Z = new THREE.Vector3(side, 0, 0);
       // left (side -1) runs from the head down; right runs from the foot up, so neither side is mirrored inside out
       const along = (z0: number, z1: number, len: number) => (side < 0 ? new THREE.Vector3(0, -sl, 1) : new THREE.Vector3(0, sl, -1)).multiplyScalar((z1 - z0) / len);
       const start = (z0: number, z1: number) => (side < 0 ? z0 : z1);
-      const nm = Math.max(1, Math.ceil(L / 2)), lm = L / nm;
-      for (let i = 0; i < nm; i++) {
-        const z0 = i * lm, z1 = z0 + lm, zs = start(z0, z1), wx = side < 0 ? x0 + 0.06 : x0 + 0.54;
-        artBasis(g, 'retain-top', along(z0, z1, 2), Z, new THREE.Vector3(wx, topAt(zs), zs));
-        for (let y = topAt(zs) - 1.1; y > yOf(it.low!) - 1.6 - sl * lm; y -= 0.78) artBasis(g, 'retain-course', along(z0, z1, 2), Z, new THREE.Vector3(wx, y, zs));
+      if (madeWalls) {
+        const nm = Math.max(1, Math.ceil(L / 2)), lm = L / nm;
+        for (let i = 0; i < nm; i++) {
+          const z0 = i * lm, z1 = z0 + lm, zs = start(z0, z1), wx = side < 0 ? x0 + 0.06 : x0 + 0.54;
+          artBasis(g, 'retain-top', along(z0, z1, 2), Z, new THREE.Vector3(wx, topAt(zs), zs));
+          for (let y = topAt(zs) - 1.1; y > yOf(it.low!) - 1.6 - sl * lm; y -= 0.78) artBasis(g, 'retain-course', along(z0, z1, 2), Z, new THREE.Vector3(wx, y, zs));
+        }
+      } else {
+        // a plain cheek: up to the coping line under the rails (or a solid parapet, 0.9 m, without them)
+        const cap = madeRails ? 0.1 : 0.9;
+        const prof = new THREE.Shape([new THREE.Vector2(0, yOf(it.low!) - 0.4), new THREE.Vector2(L + 0.1, yOf(it.low!) - 0.4), new THREE.Vector2(L + 0.1, yOf(it.low! + cap) - sl * 0.1), new THREE.Vector2(0, yOf(it.h + cap))]);
+        const cheek = new THREE.Mesh(new THREE.ExtrudeGeometry(prof, { depth: 0.6, bevelEnabled: false }), TEX.ashlar ?? MAT.face); cheek.castShadow = cheek.receiveShadow = true;
+        // the profile is drawn in (out, up); turn it so its x runs along the flight (local z) and its depth across (local x)
+        cheek.rotation.y = -Math.PI / 2; cheek.position.set(x1, 0, 0);
+        g.add(cheek);
+        const len = Math.hypot(L + 0.1, yOf(it.h - it.low!)), cop = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.16, len), TEX.kerb ?? MAT.coping);
+        cop.position.set((x0 + x1) / 2, (yOf(it.h + cap) + yOf(it.low! + cap) - sl * 0.1) / 2 + 0.02, (L + 0.1) / 2);
+        cop.rotation.x = Math.atan2(yOf(it.h - it.low!), L + 0.1); cop.castShadow = true; g.add(cop);
       }
+      if (!madeRails) continue;
       const nb = Math.max(1, Math.round(L / 1.75)), lb = L / nb;
       for (let i = 0; i < nb; i++) {
         const z0 = i * lb + 0.15, z1 = (i + 1) * lb - 0.15, zs = start(z0, z1);
-        artBasis(g, 'balustrade', along(z0, z1, 1.45), Z, new THREE.Vector3(cx - side * 0.2, topAt(zs) + yOf(0.05), zs));
+        // Z (the model's depth axis) points out (side): its middle depth -0.2 lands on the cheek wall's line, cx, from cx + side*0.2
+        artBasis(g, 'balustrade', along(z0, z1, 1.45), Z, new THREE.Vector3(cx + side * 0.2, topAt(zs) + yOf(0.05), zs));
         if (i > 0) { const pz = i * lb; art(g, 'pier', cx, topAt(pz) - 0.1, 1, 1, 0.85); g.children[g.children.length - 1].position.z = pz; }
       }
       art(g, 'pier', cx, yOf(it.low!), 1, 1, 1.25); g.children[g.children.length - 1].position.z = L - 0.4;   // the newel at the foot
-    }
-    for (const side of madeCheeks ? [] : [-1, 1]) {
-      const x0 = side < 0 ? -0.6 : W, x1 = x0 + 0.6;
-      const prof = new THREE.Shape([new THREE.Vector2(0, yOf(it.low!) - 0.4), new THREE.Vector2(L + 0.1, yOf(it.low!) - 0.4), new THREE.Vector2(L + 0.1, yOf(it.low! + 0.9)), new THREE.Vector2(0, yOf(it.h + 0.9))]);
-      const geo = new THREE.ExtrudeGeometry(prof, { depth: 0.6, bevelEnabled: false });
-      const cheek = new THREE.Mesh(geo, MAT.face); cheek.castShadow = cheek.receiveShadow = true;
-      // the profile is drawn in (out, up); turn it so its x runs along the flight (local z) and its depth across (local x)
-      cheek.rotation.y = -Math.PI / 2; cheek.position.set(x1, 0, 0);
-      g.add(cheek);
-      const len = Math.hypot(L + 0.1, yOf(it.h - it.low!)), cop = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.16, len), MAT.coping);
-      cop.position.set((x0 + x1) / 2, (yOf(it.h + 0.9) + yOf(it.low! + 0.9)) / 2 + 0.06, (L + 0.1) / 2);
-      cop.rotation.x = Math.atan2(yOf(it.h - it.low!), L + 0.1); cop.castShadow = true; g.add(cop);
     }
     return g;
   }
@@ -298,6 +353,13 @@ function piece(it: Inst): THREE.Group | null {
 // a floor's sides, down to the ground, in rock: where an edge has no piece (an 'open' edge: a cliff, a bank) this is
 // what shows; elsewhere the edge's piece stands in front of it (the offset keeps a wall face drawn over a side in its plane)
 const SIDE = new THREE.MeshStandardMaterial({ color: 0x7d7468, roughness: 0.95, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2 });
+/** The rock texture for floors' sides, with the same offset so a wall's face still draws over a side in its plane. */
+let sideTex: THREE.MeshStandardMaterial | null = null;
+const SIDE_TEX = () => {
+  if (!TEX.rock) return null;
+  if (!sideTex) { sideTex = TEX.rock.clone(); sideTex.onBeforeCompile = TEX.rock.onBeforeCompile; sideTex.customProgramCacheKey = TEX.rock.customProgramCacheKey; sideTex.side = THREE.DoubleSide; sideTex.polygonOffset = true; sideTex.polygonOffsetFactor = 2; sideTex.polygonOffsetUnits = 2; }
+  return sideTex;
+};
 function sides(rings: number[][][], top: number, bottom: number): THREE.Mesh | null {
   if (top - bottom < 0.02) return null;
   const pos: number[] = [];
@@ -307,7 +369,7 @@ function sides(rings: number[][][], top: number, bottom: number): THREE.Mesh | n
     pos.push(ax, top, ay, bx, top, by, bx, bottom, by, ax, top, ay, bx, bottom, by, ax, bottom, ay);
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
-  const m = new THREE.Mesh(g, SIDE); m.castShadow = m.receiveShadow = true;
+  const m = new THREE.Mesh(g, SIDE_TEX() ?? SIDE); m.castShadow = m.receiveShadow = true;
   return m;
 }
 
@@ -321,7 +383,7 @@ export function buildKit(data: KitData): THREE.Group {
     const sd = sides([outer, ...holes], yOf(f.h), bottom); if (sd) root.add(sd);
     const s = new THREE.Shape(outer.map(([x, y]) => new THREE.Vector2(x, -y)));
     for (const h of holes) s.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, -y))));
-    const m = new THREE.Mesh(new THREE.ShapeGeometry(s), FLOOR[f.mat] ?? MAT.paving);
+    const m = new THREE.Mesh(new THREE.ShapeGeometry(s), floorMat(f.mat));
     m.rotation.x = -Math.PI / 2; m.position.y = yOf(f.h); m.receiveShadow = true;
     m.userData.floor = f;
     root.add(m);

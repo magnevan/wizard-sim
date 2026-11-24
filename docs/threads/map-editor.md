@@ -17,6 +17,7 @@ Editor changes live here; building the courtyard and growing the kit is its own 
 
 ## Done
 
+- 2026-11-24: the Line tool (L); balustrades in whole modules (chamfers no longer squashed); a flight's balustrade back on its wall; tiling textures mapped in world space (floors, and walls, treads, kerbs when theirs exist).
 - 2026-11-24: a figure for scale (W), a stair's handles, copy and paste of cells (Ctrl+drag with R, Ctrl+C, Ctrl+V).
 - 2026-11-23: for the courtyard: the Round tool (O: three clicks fit a round, or drag a whole circle; handles and inspector), set pieces in the Prop tool (stand-ins at their footprint), steps as treads, rock faces on open edges.
 - 2026-11-23: concept images on a map: drop or paste one, the Concepts panel (K), a click on the image pins a note for Claude; Claude sees it marked with `cli.mjs ref <scene> show`.

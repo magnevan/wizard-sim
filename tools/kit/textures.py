@@ -5,9 +5,9 @@
 Each picture's centre square is resized to --size and made to tile: blended with a copy of itself shifted by half,
 weighted so the copy covers the original's edges (as tools/building-art/ground-tiles.py does). The Codex sources are kept
 in game/content/generated/textures/src/, the tiles written to game/content/generated/textures/<name>.png.
-TILE_U (below) is how many u one tile covers in the world: the renderer's UV scale.
+TILE_U (below) is how many u one tile covers in the world; it is written to textures/tiles.json, which the renderer (kit-render.ts) reads.
 """
-import os, shutil, sys
+import json, os, shutil, sys
 import numpy as np
 from PIL import Image
 
@@ -40,3 +40,4 @@ if __name__ == '__main__':
         shutil.copy(os.path.join(src, f), os.path.join(OUT, 'src', f))
         tile(Image.open(os.path.join(src, f)), size, name not in RAW).save(os.path.join(OUT, name + '.png'))
         print(f'{name}: {size} px, {TILE_U.get(name, 4)} u a tile' + (', as drawn' if name in RAW else ', blended'))
+    json.dump(TILE_U, open(os.path.join(OUT, 'tiles.json'), 'w'))

@@ -22,3 +22,14 @@ About ten small part meshes (toppers, pots, plants, flower boxes, a lamp post an
 1. Compiler, no meshes: sockets in `kit.json`, the `dress` object with one style, seeded variation fields on instances; stand-ins first, so placement is judged before modelling.
 2. The Map Editor session: per-instance tint and scale in the renderer, `dress` in ops and an inspector.
 3. Meshes (Codex, then Meshy): toppers and planters first.
+
+## Vines (the user, 2026-11-24: "the concept art has a lot of varied vines")
+
+The concept and paint-overs have ivy hanging from parapets and spilling over retaining walls, flowering climbers (wisteria-like violet, pink roses) up building corners and round doors, and ivy across the cliff faces. Vines are flat, hang off edges and differ in length everywhere, so they are a poor fit for Meshy models and a good one for painted cards:
+
+- **Painted strips, not meshes.** A few tall vine strips with transparent backgrounds from Codex (free): trailing ivy, flowering violet climber, pink rose, a moss-and-fern fringe. Each strip is drawn hanging from a straight top edge.
+- **Draped by the renderer**: a strip is a thin card laid flat against a wall face (a little proud of it so it never z-fights), its top on the coping, cut to a length; curved walls take several narrow cards. No new geometry to model, so any wall in the kit can carry them.
+- **Placed by style rules** like the rest of the dressing: a `drape` rule along parapet and retaining-wall faces (a chance per section, longer where the drop is taller, never across niches or flight cheeks), `climb` at building and tower corners from sockets, and `fringe` along cliff tops. Per instance: the strip, a length (a share of the drop), a horizontal flip, a tint and an offset into the strip so neighbours never repeat.
+- **Variation**: 4 strips × length × flip × tint × offset reads as hundreds of different vines.
+
+Cost: four free Codex pictures and one renderer feature (wall cards with alpha, asked of the Map Editor session). Trade-off: flat cards look thin seen edge-on; at our top-down camera walls are mostly seen face-on, and a slight outward lean on the card's lower end gives it some body.

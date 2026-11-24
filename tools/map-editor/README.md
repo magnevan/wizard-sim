@@ -48,7 +48,7 @@ The dev server (default `http://127.0.0.1:5187`, or `$MAP_EDITOR_URL`) serves th
 | `GET /__map/refs?name=N` | The concept images pinned to the map: `{refs: [{id, title, file, time, path}]}` (`path`: the file on disk, under `tools/kit/scenes/refs/<scene>/`) |
 | `POST /__map/refs` | Body `{name, op, ...}`: `add {title, data}` (`data`: a `data:image/...;base64,` URL, or base64 with `filename`), `rename {id, title}`, `remove {id}` (the file goes; its pins stay) |
 | `GET /__map/ref-image?name=N&id=r1` | The image's bytes |
-| `GET /__map/view?name=N` | A PNG of the scene as the editor renders it (an open editor page showing that scene, or a hidden headless one): `&cam=top` (straight down), `game` (the game's camera) or `current`; `&x=&y=` (corners) to centre on, `&r=` (corners) half the width shown; `&pins=0&findings=0` hide the markers; `&figure=x,y` stands the wizard (1.74 m) there, for scale |
+| `GET /__map/view?name=N` | A PNG of the scene as the editor renders it (an open editor page showing that scene, or a hidden headless one): `&cam=top` (straight down), `game` (the game's camera) or `current`; `&x=&y=` (corners) to centre on, `&r=` (corners) half the width shown; `&yaw=` (degrees round the target: 0 from the south as the game looks, 90 from the east) and `&pitch=` (elevation: the game's 46 by default, 5 to 10 near side-on) turn the camera; `&pins=0&findings=0` hide the markers; `&figure=x,y` stands the wizard (1.74 m) there, for scale |
 
 ### Ops
 

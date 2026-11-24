@@ -11,6 +11,7 @@ How things are made: pictures in Codex (free), models through the Meshy API (sta
 
 ## Next
 
+- [ ] **Foliage** (plants, flowers, vines, paving): moved to its own thread, [foliage](foliage.md), handed to a fresh session (2026-11-24).
 - [ ] **Dressing from the paint-overs**: flower boxes, banners, small trees in planters, lamps along the balcony road, violet cracks; these are vignettes or set pieces.
 - [ ] **Animated water** (the user, 2026-11-24): a water shader (scrolling layers of the painted water texture, ripple normals derived from it, a gentle swell, fresnel, foam at the shoreline, the stream flowing), asked of the Map Editor session; the painted texture carries the look (no code-drawn art).
 - [ ] **Water and the sea edge**: a quay edge and a cliff piece (the inlet, the falls). **Spans**: the bridge over the inlet.

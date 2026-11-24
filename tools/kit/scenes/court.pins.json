@@ -662,7 +662,7 @@
    "note": "Gaps in staircase",
    "author": "user",
    "rev": 19,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T00:40:26.505Z",
    "anchor": {
@@ -679,14 +679,21 @@
      79.83
     ]
    },
-   "thread": []
+   "thread": [
+    {
+     "author": "claude",
+     "text": "The rim's gateway piers' plinths had pushed the sunk plaza's edge into a V; the piers now stand at the sea stair's foot and the edge is a clean curve (rev 22).",
+     "time": "2026-11-24T01:20:00.356Z"
+    }
+   ],
+   "outcome": "scene"
   },
   {
    "id": "p27",
    "note": "textures on these stones look very glitchy",
    "author": "user",
    "rev": 21,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T00:45:40.787Z",
    "anchor": {
@@ -710,14 +717,21 @@
      41.57
     ]
    },
-   "thread": []
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Kerbs now wear the tiling smooth-stone texture instead of the Meshy kerb module.",
+     "time": "2026-11-24T01:20:01.017Z"
+    }
+   ],
+   "outcome": "piece"
   },
   {
    "id": "p28",
    "note": "railing is stretched and compressed",
    "author": "user",
    "rev": 21,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T00:46:53.052Z",
    "anchor": {
@@ -741,14 +755,21 @@
      60.21
     ]
    },
-   "thread": []
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Balustrades are now laid in whole modules near their own size (chamfers went from 60% to 94% of a module), and the prow lost its chamfers (rev 23).",
+     "time": "2026-11-24T01:20:00.567Z"
+    }
+   ],
+   "outcome": "rule"
   },
   {
    "id": "p29",
    "note": "obvious texture seams",
    "author": "user",
    "rev": 21,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T00:47:24.568Z",
    "anchor": {
@@ -772,14 +793,21 @@
      58.22
     ]
    },
-   "thread": []
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Retaining walls are now plain walls wearing a tiling ashlar texture (triplanar, world space), so there are no seams between pieces.",
+     "time": "2026-11-24T01:20:00.912Z"
+    }
+   ],
+   "outcome": "piece"
   },
   {
    "id": "p30",
    "note": "broken transition",
    "author": "user",
    "rev": 21,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T00:47:36.733Z",
    "anchor": {
@@ -803,14 +831,21 @@
      58.19
     ]
    },
-   "thread": []
+   "thread": [
+    {
+     "author": "claude",
+     "text": "The overlook's prow squared: no diagonal stubs at its corners (rev 23).",
+     "time": "2026-11-24T01:20:00.463Z"
+    }
+   ],
+   "outcome": "scene"
   },
   {
    "id": "p31",
    "note": "railing and ballusters not aligned",
    "author": "user",
    "rev": 21,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T00:48:26.680Z",
    "anchor": {
@@ -830,14 +865,21 @@
      57.41
     ]
    },
-   "thread": []
+   "thread": [
+    {
+     "author": "claude",
+     "text": "A sign error put the flight's balustrade 0.4 u inboard of its piers; it now sits on the cheek wall (Map Editor, 0833f6e).",
+     "time": "2026-11-24T01:20:00.809Z"
+    }
+   ],
+   "outcome": "rule"
   },
   {
    "id": "p32",
    "note": "ugly staircase texture",
    "author": "user",
    "rev": 21,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T00:48:35.114Z",
    "anchor": {
@@ -857,14 +899,21 @@
      57.41
     ]
    },
-   "thread": []
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Treads now wear the tiling smooth-stone texture instead of the Meshy tread module.",
+     "time": "2026-11-24T01:20:01.118Z"
+    }
+   ],
+   "outcome": "piece"
   },
   {
    "id": "p33",
    "note": "zig zag instead of curve",
    "author": "user",
    "rev": 21,
-   "status": "open",
+   "status": "resolved",
    "seen": false,
    "time": "2026-11-24T00:49:09.894Z",
    "anchor": {
@@ -888,7 +937,14 @@
      55.58
     ]
    },
-   "thread": []
+   "thread": [
+    {
+     "author": "claude",
+     "text": "New 'line' objects snap edges onto a straight line at any angle; plan D's four radial terrace ends are lines now (l1 to l4).",
+     "time": "2026-11-24T01:20:00.666Z"
+    }
+   ],
+   "outcome": "rule"
   }
  ]
 }

@@ -115,6 +115,9 @@ function frame() {
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); frame(); });
 frame();
 const wind = q.get('wind') !== '0';
+if (q.has('t')) FOLIAGE_TIME.value = num('t', 0);   // ?wind=0&t=12.5 holds the wind at that second, for comparing stills
+// (scripts/foliage-shot.mjs --frames steps the wind through this to film it)
+(window as unknown as { __foliageTime: (t: number) => void }).__foliageTime = (t) => { FOLIAGE_TIME.value = t; renderer.render(scene, cam); };
 const loop = () => { if (wind) FOLIAGE_TIME.value = performance.now() / 1000; renderer.render(scene, cam); requestAnimationFrame(loop); };
 loop();
 renderer.render(scene, cam);   // (compiles the plants' material, which starts the painted sheets loading)

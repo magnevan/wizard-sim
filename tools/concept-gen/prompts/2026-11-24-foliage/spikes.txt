@@ -1,0 +1,14 @@
+Generate one image with your image generation tool, then save it as spikes.png in the current directory. Reply with just the file name.
+
+The attached image shows the game this is for: stylised, hand-painted, warm light. Look at how its flowers are painted: chunky, simple, readable shapes with clear light and shade.
+
+Draw a square sprite sheet: a 4 by 4 grid of sixteen separate flower spikes, evenly spaced, each centred in its own equal square cell with clear empty space around it, on a flat, uniform, pure green (#00ff00) background.
+
+Every spike is made of many small pure white florets, shaded in soft cool greys as if made of white porcelain and lit from the upper left, with darker grey between the florets and on the side away from the light, so the whole spike reads as a rounded, solid form. Painted in that chunky hand-painted game style, with crisp clean edges and chunky florets large enough to read from far away.
+
+Row 1: four upright lavender spikes: a slim, dense head of small florets on the top two thirds, tapering to a point at the top, each a little different.
+Row 2: four upright delphinium or lupin spires: taller and fuller, wide at the bottom and tapering to a point at the top, packed with rounded florets.
+Row 3: four upright foxglove-like spires: bell-shaped florets hanging off one side, larger at the bottom and smaller toward the tip.
+Row 4: four hanging wisteria bunches: attached at the top of the cell, full and wide at the top, narrowing to a point at the bottom, packed with rounded florets.
+
+Each spike is thick and solid, stands straight in the middle of its cell and fills almost the full height of the cell. The sheet shows the white floret spikes only on the flat green.

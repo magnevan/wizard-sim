@@ -2,7 +2,7 @@
 
 2026-11-24 · thread: [outdoor foliage](../threads/foliage.md) · code: `game/packages/client/src/lab/foliage.ts` · lab page: `foliage.html`
 
-The user asked for a procedural foliage system that can reach the courtyard concept ([`area-courtyard-start.jpg`](../reference/element-order/area-courtyard-start.jpg)), built with fresh eyes, and allowed this session to bend the "no code-drawn art" rule: "that rule just exists because historically code drawn art has been very bad, but that's not necessarily the case for well crafted procedural stuff." The user's first verdict (2026-11-24): "It looks significantly better. My main critique is that the flowers look a bit flat", fixable perhaps with better shading and varied angles, and Codex-painted sheets were welcome. Round 2 below answers that; the pictures here are round 2.
+The user asked for a procedural foliage system that can reach the courtyard concept ([`area-courtyard-start.jpg`](../reference/element-order/area-courtyard-start.jpg)), built with fresh eyes, and allowed this session to bend the "no code-drawn art" rule: "that rule just exists because historically code drawn art has been very bad, but that's not necessarily the case for well crafted procedural stuff." The user's first verdict (2026-11-24): "It looks significantly better. My main critique is that the flowers look a bit flat", fixable perhaps with better shading and varied angles, and Codex-painted sheets were welcome. Round 2 below answers that. The second verdict: "Much better again", with the lavender invisible and three glitches seen in the game; round 3 answers those. The pictures here are round 3.
 
 ## What it looks like
 
@@ -34,7 +34,7 @@ Every mass is lit as one rounded form: yellow-green where the sun lands, blue-gr
 
 1. **A plant is a clump of lobes** (ellipsoids, a cone, hanging strands). A recipe places the lobes with a seeded random stream: a shrub is a main mass with smaller ones at its foot; a bed packs plants of three sizes, taller at the back.
 2. **Cards cover the lobes' outside.** Each card is a small square that always faces the camera. A card inside a neighbouring lobe is dropped, so a clump has one skin. Each card takes its lobe's surface direction for lighting, so the whole bush shades like one soft form.
-3. **Colour comes from a ramp.** A card's sprite is a grey picture (a clump of leaves, a tuft, a blossom, a spike). Leaves and blossoms are painted by Codex in greys (round 2); spikes and the dark cores are still drawn in code. The shader adds up sunlight, the sprite's grey and how deep the card sits in the plant, and looks the sum up in an eight-step palette from blue-green shade to yellow highlight. One sheet serves every species and colour.
+3. **Colour comes from a ramp.** A card's sprite is a grey picture (a clump of leaves, a tuft, a blossom, a spike). Leaves, blossoms and spikes are painted by Codex in greys (rounds 2 and 3); only the dark cores are still drawn in code. The shader adds up sunlight, the sprite's grey and how deep the card sits in the plant, and looks the sum up in an eight-step palette from blue-green shade to yellow highlight. One sheet serves every species and colour.
 4. **Blossoms gather in drifts**: a few spots per plant where they are thick, thinning away, one colour per drift.
 5. **Depth**: a dark core inside each lobe shows through the gaps, cards in the fold between two lobes are darker, hidden lobes cast the plant's shadow (and shade its own far side), and a soft dark patch sits on the ground under it.
 6. **Wind** leans each card a little, more toward a plant's top and a vine's tips.
@@ -48,9 +48,23 @@ The first blossoms were flat discs: every one faced the camera, drawn from one c
 - **Painted sheets.** Codex painted two grey sheets of sixteen sprites each: blossoms (four from the front, four in three-quarter view, a side-on cup, a half-open one, a bud, a rose, four bunches) in white with golden eyes, and leaf clumps (broad, round, upright tufts, hanging sprays). `tools/kit/foliage_sheets.py` keys them, stretches the greys and centres each sprite (`game/content/generated/textures/foliage-blossoms.png`, `foliage-leaves.png`). The palette ramp still gives the colour, so one white blossom sheet makes pink, lilac, white, rose and yellow flowers.
 - **Angles.** Each blossom faces its own way, and the shader squashes its card along the way it leans, so a front-view blossom on the side of a bush is drawn as the oval it would show. About four in ten are front faces tilted this way, three in ten painted three-quarter or side views, the rest bunches.
 - **Shading.** A blossom now takes more of the sun and its depth in the plant, and every card is a little lighter on its sunward side.
-- **A shadow under each blossom**: the same shape in the leaf's deep tone, shifted down and away from the sun, so the flower stands off the leaves.
+- **A shadow under each blossom** (the same shape in the leaf's deep tone, shifted away from the sun). Removed in round 3: in the game it read as flat green flowers.
 
 If the painted sheets are missing, the code-drawn sprites are used.
+
+## Round 3: what the user saw in the game (2026-11-24)
+
+The user: the lavender could not be seen and should be painted too; "odd solid green shadows under some flowers"; "some popping behavior in certain places", perhaps z-fighting; and the wind "feels unrealistic": bushes close together moving in different directions, and "a bit too rhythmic".
+
+| Seen | Cause | Change |
+|---|---|---|
+| Green shapes under flowers | the round-2 shadow cards: flat flower shapes in one dark green | removed; a blossom stands out by its own shading |
+| Popping | a card has one shadow sample for its whole face, so a card swaying across a shadow's edge switched lit or dark all at once; swaying also changed which card was in front | the wind now moves cards across the screen only (their shadow sample and their depth stay where they are at rest); light comes mostly from which way a lobe faces the sun, and the shadow map takes away only about half of it; card edges use coverage instead of a hard cut |
+| Neighbours leaning different ways | the wind was worked out in each plant's own coordinates, and plants are turned | one wind heading for the whole scene, its strength read from world position |
+| Too rhythmic | two fixed sine waves | a field of gusts drifting downwind (three waves that never line up); a plant leans downwind and recovers; each card flutters a little more inside a gust |
+| No lavender | small code-drawn spikes in pale tones | a painted sheet of sixteen spikes (slim, full, bells, hanging bunches): `foliage-spikes.png`. Bed spikes are about twice as tall; hanging bunches appear among a vine's blossoms |
+
+Checked by filming: `node scripts/foliage-shot.mjs out.png --frames 60 --dt 0.1` steps the wind and saves a frame each step. Over six seconds, at most 0.02% of pixels jump hard between frames. [The film](../reference/foliage/wind.mp4). It is from the headless software renderer, so the user's eyes on a real GPU, with the camera moving, are still the test.
 
 ## In the kit
 
@@ -67,13 +81,13 @@ A warm flag texture, `cobble` (Codex, prompt in `tools/concept-gen/prompts/2026-
 
 - Camera-facing cards look right from the game camera and while orbiting in the editor, but a plant has no true silhouette detail up close: at twice the game's zoom the cards read as stamps.
 - The painted leaf clumps are upright, so leaf cards now only lean up to about 45 degrees either way; a bush seen from straight above would show leaves all pointing "up the screen".
-- Each blossom is two cards (itself and its shadow).
+- Shadows on plants are softer than on stone: a bush under a tree darkens by about half as much as the paving beside it.
 - A vine on a curved wall is laid along each section's straight chord, so it can cut a corner on a tight curve.
 - Not measured for speed yet. The lab stage is about 30 plants with one draw call each for cards.
 
 ## Open
 
 - The user's verdict against the concept, at the game camera.
-- Painted spikes (lavender, delphinium) to match the painted blossoms.
+- Whether the popping is gone on the user's GPU with the camera moving.
 - Window boxes, plants between paving stones, climbers growing up from a wall's foot.
 - Merging a scene's plants into few draw calls if it becomes slow.

@@ -68,11 +68,12 @@ export const SPRITES = {
   blossom: 8, trio: 9, dab: 10, daisy: 11,
   spike: 12, raceme: 13, buds: 14, grass: 15,
 } as const;
-export type Sprite = keyof typeof SPRITES | `pb${number}` | `pl${number}`;
+export type Sprite = keyof typeof SPRITES | `pb${number}` | `pl${number}` | `ps${number}`;
 const ATLAS_N = 8, CELL = 128;
 /** A sprite's cell [column, row]: the code-drawn sixteen top left, painted blossoms pb0..15 top right, painted leaves pl0..15 bottom left. */
 function cellOf(sp: Sprite): [number, number] {
   if (sp.startsWith('pb')) { const i = Number(sp.slice(2)); return [4 + (i % 4), Math.floor(i / 4)]; }
+  if (sp.startsWith('ps')) { const i = Number(sp.slice(2)); return [4 + (i % 4), 4 + Math.floor(i / 4)]; }
   if (sp.startsWith('pl')) { const i = Number(sp.slice(2)); return [i % 4, 4 + Math.floor(i / 4)]; }
   const i = SPRITES[sp as keyof typeof SPRITES]; return [i % 4, Math.floor(i / 4)];
 }
@@ -80,12 +81,16 @@ function cellOf(sp: Sprite): [number, number] {
 const sheetUrls = import.meta.glob<string>('../../../../content/generated/textures/foliage-*.png', { eager: true, query: '?url', import: 'default' });
 const sheetUrl = (name: string) => Object.entries(sheetUrls).find(([p]) => p.endsWith(`/foliage-${name}.png`))?.[1];
 /** Which painted sheets exist: recipes choose painted sprites over the code-drawn ones when they do. */
-export const PAINTED = { blossoms: !!sheetUrl('blossoms'), leaves: !!sheetUrl('leaves') };
-const seq = (p: 'pb' | 'pl', a: number, b: number) => Array.from({ length: b - a }, (_, i) => `${p}${a + i}` as Sprite);
+export const PAINTED = { blossoms: !!sheetUrl('blossoms'), leaves: !!sheetUrl('leaves'), spikes: !!sheetUrl('spikes') };
+const seq = (p: 'pb' | 'pl' | 'ps', a: number, b: number) => Array.from({ length: b - a }, (_, i) => `${p}${a + i}` as Sprite);
 /** Blossom sprites: faces seen from the front (tilted in the shader), painted three-quarter and side views, and clusters. */
 const BLOOM_FRONT: Sprite[] = PAINTED.blossoms ? seq('pb', 0, 4) : ['blossom', 'daisy'];
 const BLOOM_TURNED: Sprite[] = PAINTED.blossoms ? seq('pb', 4, 12) : ['blossom'];
 const BLOOM_BUNCH: Sprite[] = PAINTED.blossoms ? seq('pb', 12, 16) : ['trio', 'dab'];
+/** Upright flower spikes (slim, full, bells), and hanging bunches. */
+const SPIKE_SLIM: Sprite[] = PAINTED.spikes ? seq('ps', 0, 4) : ['spike'];
+const SPIKE_FULL: Sprite[] = PAINTED.spikes ? seq('ps', 4, 12) : ['spike'];
+const SPIKE_HANG: Sprite[] = PAINTED.spikes ? seq('ps', 12, 16) : ['raceme'];
 /** Leaf sprites by habit. */
 const LEAF_BROAD: Sprite[] = PAINTED.leaves ? [...seq('pl', 0, 4), 'broadA'] : ['broadA', 'broadB'];
 const LEAF_ROUND: Sprite[] = PAINTED.leaves ? seq('pl', 4, 8) : ['roundA', 'roundB'];
@@ -171,7 +176,7 @@ function atlasTexture(): THREE.CanvasTexture {
     const url = sheetUrl(name); if (!url) return Promise.resolve();
     return new Promise<void>((done) => { const im = new Image(); im.onload = () => { ctx.clearRect(x, y, 4 * CELL, 4 * CELL); ctx.drawImage(im, x, y, 4 * CELL, 4 * CELL); tex.needsUpdate = true; done(); }; im.onerror = () => done(); im.src = url; });
   };
-  loaded = Promise.all([put('blossoms', 4 * CELL, 0), put('leaves', 0, 4 * CELL)]);
+  loaded = Promise.all([put('blossoms', 4 * CELL, 0), put('leaves', 0, 4 * CELL), put('spikes', 4 * CELL, 4 * CELL)]);
   atlasTex.colorSpace = THREE.NoColorSpace; atlasTex.anisotropy = 4; atlasTex.generateMipmaps = true;
   atlasTex.minFilter = THREE.LinearMipmapLinearFilter;
   return atlasTex;
@@ -183,46 +188,69 @@ function atlasTexture(): THREE.CanvasTexture {
 let cardMat: THREE.MeshLambertMaterial | null = null;
 function cardMaterial(): THREE.MeshLambertMaterial {
   if (cardMat) return cardMat;
-  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide, alphaToCoverage: true });
   m.onBeforeCompile = (sh) => {
     sh.uniforms.fTime = FOLIAGE_TIME; sh.uniforms.fDebug = FOLIAGE_DEBUG; sh.uniforms.fMap = { value: atlasTexture() }; sh.uniforms.fPal = { value: paletteTexture() };
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', `#include <common>
         attribute vec2 aCorner; attribute vec2 aUv; attribute vec4 aA; attribute vec4 aB; attribute vec2 aC;
-        uniform float fTime; varying vec2 vFuv; varying vec3 vFa; varying vec3 vFb;`)
+        uniform float fTime; varying vec2 vFuv; varying vec3 vFa; varying vec3 vFb;
+        const vec2 FWIND = vec2(0.93, 0.37);   // the wind's heading over the ground (x, z)`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
         // wind: the card's centre leans with slow gusts, more the further out on the plant it sits (aB.x), each on its own beat (aB.y)
-        float fGust = sin(fTime * 1.3 + position.x * 0.9 + position.z * 0.7) * 0.6 + sin(fTime * 2.7 + aB.y) * 0.4;
-        transformed.x += fGust * aB.x * 0.035; transformed.z += fGust * aB.x * 0.02;
         vFuv = aUv; vFa = vec3(aA.z, aA.w, aB.z);`)
       .replace('#include <project_vertex>', `
         vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
+        // The wind. One direction for the whole scene; its strength is a field of gusts drifting downwind across the
+        // world (three waves that never line up, so it has no beat), so plants side by side lean together and a gust
+        // can be seen crossing a bed. A plant leans downwind and comes back; it does not swing both ways. On top, each
+        // card flutters on its own, more in a gust. aB.x: how much this card gives (0 at a plant's foot).
+        vec3 fWp = (modelMatrix * vec4(transformed, 1.0)).xyz;
+        float fAl = dot(fWp.xz, FWIND), fAc = dot(fWp.xz, vec2(-FWIND.y, FWIND.x));
+        float fEnv = 0.42 + 0.3 * sin(fAl * 0.21 - fTime * 0.83 + 1.4 * sin(fAc * 0.13 + fTime * 0.11))
+                          + 0.26 * sin(fAl * 0.078 - fTime * 0.31 + fAc * 0.05 + 1.7)
+                          + 0.14 * sin(fAl * 0.47 - fTime * 1.57 + fAc * 0.29);
+        fEnv = clamp(fEnv, 0.0, 1.0); fEnv *= fEnv;
+        float fFlut = (sin(fTime * 4.3 + aB.y) * 0.6 + sin(fTime * 6.9 + aB.y * 2.3) * 0.4) * (0.25 + fEnv);
+        float fPush = aB.x * (fEnv * 0.06 + fFlut * 0.007) * length(modelMatrix[0].xyz);
+        mvPosition.xy += (viewMatrix * vec4(FWIND.x, -0.25 * fEnv, FWIND.y, 0.0)).xy * fPush;
+        float fGust = fEnv * 0.7 + fFlut * 0.35;
         float fSc = length(modelMatrix[0].xyz) * aA.x;
-        float fRoll = aA.y + fGust * aB.x * 0.12;
+        float fRoll = aA.y + fGust * aB.x * 0.09;
         vec2 fC = vec2(aCorner.x * cos(fRoll) - aCorner.y * sin(fRoll), aCorner.x * sin(fRoll) + aCorner.y * cos(fRoll));
         vFb = vec3(fC, aC.y);
         // a tilted card: squashed along the way its normal leans on screen, as a disc turned from the eye would be
         vec3 fVn = normalize(normalMatrix * normal);
         float fLean = length(fVn.xy);
         if (aC.x > 0.0 && fLean > 0.001) { vec2 fAx = fVn.xy / fLean; fC += fAx * dot(fC, fAx) * (mix(1.0, max(0.34, abs(fVn.z)), aC.x) - 1.0); }
-        mvPosition.xy += fC * fSc + aC.y * vec2(0.2, -0.3) * fSc;   // a shadow falls down and to the right, away from the sun
+        mvPosition.xy += fC * fSc;
         mvPosition.z += fSc * aB.w;          // toward the eye, so a card stands clear of what it grows on
         gl_Position = projectionMatrix * mvPosition;`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
         uniform sampler2D fMap; uniform sampler2D fPal; uniform float fDebug; varying vec2 vFuv; varying vec3 vFa; varying vec3 vFb;`)
-      .replace('#include <map_fragment>', `vec4 fTex = texture2D(fMap, vFuv); if (fTex.a < 0.42) discard;`)
+      .replace('#include <map_fragment>', `vec4 fTex = texture2D(fMap, vFuv);
+        diffuseColor.a = clamp((fTex.a - 0.42) / max(fwidth(fTex.a), 0.0001) + 0.5, 0.0, 1.0);
+        if (diffuseColor.a < 0.02) discard;`)
       .replace('#include <opaque_fragment>', `{
         // how much light reaches this card (the material is white, so the lit colour is the light itself)
-        float fLit = smoothstep(0.04, 0.62, dot(reflectedLight.directDiffuse, vec3(0.3, 0.6, 0.1)));
-        float fEye = clamp((fTex.r - fTex.b) * 1.6, 0.0, 1.0) * (1.0 - vFb.z);
+        // A card has one shadow sample for its whole face, so a cast shadow switches it on or off as a piece. Its light
+        // therefore comes mostly from which way its lobe faces the sun (smooth, and still under a moving camera); the
+        // shadow map takes away only part of that, so a card at a shadow's edge shifts a little instead of flashing.
+        float fNdl = 1.0, fSh = 1.0;
+        #if NUM_DIR_LIGHTS > 0
+          fNdl = clamp(dot(normal, directionalLights[0].direction), 0.0, 1.0);
+          float fSun = dot(reflectedLight.directDiffuse, vec3(0.3, 0.6, 0.1)) / max(dot(directionalLights[0].color, vec3(0.3, 0.6, 0.1)) * 0.3183, 0.0001);
+          fSh = clamp(fSun / max(fNdl, 0.05), 0.0, 1.0);
+        #endif
+        float fLit = smoothstep(0.05, 0.8, fNdl * mix(1.0, fSh, 0.55));
+        float fEye = clamp((fTex.r - fTex.b) * 1.6, 0.0, 1.0);
         // the ramp: light, the sprite's own value, and how deep in the plant the card sits (vFa.y: 0 buried, 1 crown)
         float fV = 0.48 + (fLit - 0.6) * 0.4 + (fTex.r - 0.55) * 0.75 + (vFa.y - 0.6) * 0.5;
         fV += dot(vFb.xy, vec2(-0.6, 0.8)) * 0.07;                          // each dab is lighter on its sunward side
         // blossoms hold their colour in shade, but still turn with the light: bright where the sun lands, deep under a neighbour
         float fBl = 0.02 + fTex.r * 0.54 + fLit * 0.26 + (vFa.y - 0.6) * 0.3 + dot(vFb.xy, vec2(-0.6, 0.8)) * 0.1;
         fV = mix(fV, fBl, vFa.z);
-        fV = mix(fV, 0.13 + fLit * 0.08, vFb.z);                          // a cast shadow: the plant's deepest tone
         vec3 fCol = texture2D(fPal, vec2(clamp(fV, 0.0, 1.0) * 0.875 + 0.0625, vFa.x)).rgb;
         fCol *= mix(vec3(0.86, 0.93, 1.1), vec3(1.1, 1.02, 0.88), fLit);   // cool shade, warm sun
         fCol = mix(fCol, vec3(1.0, 0.72, 0.12) * (0.55 + 0.6 * fLit), fEye);
@@ -231,7 +259,7 @@ function cardMaterial(): THREE.MeshLambertMaterial {
       }
       #include <opaque_fragment>`);
   };
-  m.customProgramCacheKey = () => 'foliage-cards-1';
+  m.customProgramCacheKey = () => 'foliage-cards-2';
   return (cardMat = m);
 }
 const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4030, roughness: 1 });
@@ -255,9 +283,7 @@ let contactMat: THREE.Material | null = null;
 type V3 = [number, number, number];
 export type CardOpt = { roll?: number; sway?: number; glow?: number; lift?: number; flip?: boolean;
   /** 0 to 1: how far the card turns to face along its normal instead of the camera (a blossom seen at an angle is an oval) */
-  tilt?: number;
-  /** 1: the card is another card's shadow, drawn dark and shifted away from the sun on screen */
-  cast?: number };
+  tilt?: number };
 export class Foliage {
   private pos: number[] = []; private nrm: number[] = []; private corner: number[] = []; private uv: number[] = [];
   private a: number[] = []; private b: number[] = []; private c: number[] = []; private idx: number[] = [];
@@ -274,7 +300,7 @@ export class Foliage {
     const phase = this.r() * 6.283;
     for (const [cx, cy, u, v] of cs) {
       this.pos.push(p[0], p[1], p[2]); this.nrm.push(n[0] / nl, n[1] / nl, n[2] / nl); this.corner.push(cx, cy); this.uv.push(u, v);
-      this.a.push(s, o.roll ?? 0, palRow(pal), Math.max(0, Math.min(1, ao))); this.b.push(o.sway ?? 1, phase, o.glow ?? 0, o.lift ?? 0.35); this.c.push(o.tilt ?? 0, o.cast ?? 0);
+      this.a.push(s, o.roll ?? 0, palRow(pal), Math.max(0, Math.min(1, ao))); this.b.push(o.sway ?? 1, phase, o.glow ?? 0, o.lift ?? 0.35); this.c.push(o.tilt ?? 0, 0);
     }
     this.idx.push(base, base + 1, base + 2, base, base + 2, base + 3); this.cards++;
   }
@@ -364,7 +390,7 @@ function fill(F: Foliage, lobes: Lobe[], o: Fill) {
         if (r() < (bl.amount ?? 0.5) * Math.exp(-(near * near) / (reach * reach)) * 1.6) {
           const bs = (bl.size ?? o.size * 0.6) * (0.8 + r() * 0.4), nn = Math.hypot(nrm[0], nrm[1], nrm[2]), out = bs * 0.5;
           blossom(F, [p[0] + (nrm[0] / nn) * out + (r() - 0.5) * o.size, p[1] + (nrm[1] / nn) * out + (r() - 0.5) * o.size * 0.6, p[2] + (nrm[2] / nn) * out + (r() - 0.5) * o.size],
-            nrm, bs, np, pal, ao + 0.2, (o.sway ?? 1) * (0.4 + t), (o.lift ?? 0.35) + 0.5, bl.sprites);
+            nrm, bs, np, ao + 0.2, (o.sway ?? 1) * (0.4 + t), (o.lift ?? 0.35) + 0.5, bl.sprites);
         }
       }
     }
@@ -374,15 +400,13 @@ function fill(F: Foliage, lobes: Lobe[], o: Fill) {
 
 /**
  * One blossom at p on a surface facing n: a face turned its own way (n, knocked about), drawn as the oval a tilted
- * flower shows, or a painted three-quarter or side view, or a bunch; under it, its shadow on the leaves, in the leaf's
- * palette.
+ * flower shows, or a painted three-quarter or side view, or a bunch.
  */
-function blossom(F: Foliage, p: V3, n: V3, s: number, pal: Pal, leafPal: Pal, ao: number, sway: number, lift: number, only?: Sprite[]) {
+function blossom(F: Foliage, p: V3, n: V3, s: number, pal: Pal, ao: number, sway: number, lift: number, only?: Sprite[]) {
   const r = F.r, nl = Math.hypot(n[0], n[1], n[2]) || 1, face: V3 = [n[0] / nl + (r() - 0.5) * 1.1, n[1] / nl + (r() - 0.5) * 0.9, n[2] / nl + (r() - 0.5) * 1.1];
   const k = r(), kind = only ? 3 : k < 0.42 ? 0 : k < 0.72 ? 1 : 2;
   const sprite = kind === 3 ? pick(r, only!) : kind === 0 ? pick(r, BLOOM_FRONT) : kind === 1 ? pick(r, BLOOM_TURNED) : pick(r, BLOOM_BUNCH);
   const size = s * (kind === 2 ? 1.25 : 1), roll = r() * 6.283, flip = r() < 0.5, tilt = kind === 1 ? 0.3 : kind === 2 ? 0.55 : 1;
-  F.card(p, n, size * 0.98, sprite, leafPal, 0, { roll, sway, flip, tilt, lift: lift - 0.25, cast: 1 });
   F.card(p, face, size, sprite, pal, ao, { roll, sway, flip, tilt, glow: 0.85, lift });
 }
 
@@ -432,10 +456,10 @@ export function bed(F: Foliage, o: BedOpt) {
   // spikes: groups of three to six, each leaning a little, standing 0.25 to 0.5 m above the leaf
   const sp = o.spikes ?? ['blue', 'lilac'];
   if (sp.length) for (let x = -w / 2 + 0.3; x < w / 2 - 0.2; x += 0.7 + r() * 0.9) {
-    const pal = pick(r, sp), z0 = -d / 2 + d * (0.15 + r() * 0.4), n = 3 + Math.floor(r() * 4);
+    const pal = pick(r, sp), z0 = -d / 2 + d * (0.15 + r() * 0.45), n = 3 + Math.floor(r() * 4), kind = r() < 0.5 ? SPIKE_SLIM : SPIKE_FULL;
     for (let i = 0; i < n; i++) {
-      const px = x + (r() - 0.5) * 0.4, pz = z0 + (r() - 0.5) * 0.25, hs = 0.15 + r() * 0.07;
-      F.card([px, y + H * 0.75 + hs * (0.7 + r() * 0.5), pz], [0, 1, 0.4], hs, 'spike', pal, 0.9, { roll: (r() - 0.5) * 0.45, sway: 1.6, glow: 0.7, lift: 0.6 });
+      const px = x + (r() - 0.5) * 0.45, pz = z0 + (r() - 0.5) * 0.3, hs = (kind === SPIKE_SLIM ? 0.2 : 0.24) + r() * 0.08;
+      F.card([px, y + H * 0.8 + hs * (0.75 + r() * 0.4), pz], [(r() - 0.5) * 0.8, 0.7, 0.6], hs, pick(r, kind), pal, 0.8, { roll: (r() - 0.5) * 0.4, sway: 1.8, glow: 0.85, lift: 0.7, flip: r() < 0.5 });
     }
   }
   F.contact(0, d * 0.15, w * 0.56, d * 0.95, y + 0.012);
@@ -486,7 +510,9 @@ export function cascade(F: Foliage, o: CascadeOpt) {
         { roll: (r() - 0.5) * 0.9, sway: 0.4 + k * 2.2, flip: r() < 0.5, lift: 0.5 });
       for (const d of drifts) if (r() < (o.bloom!.amount ?? 0.5) * Math.exp(-(Math.pow(px - d.x, 2) + Math.pow(-t - d.y, 2)) / (d.rad * d.rad))) {
         const bs = (o.bloom!.size ?? 0.09) * (0.8 + r() * 0.45);
-        blossom(F, [px + (r() - 0.5) * 0.12, -t + (r() - 0.5) * 0.1, z0 + 0.06], [(r() - 0.5) * 0.8, 0.5, 1], bs, d.pal, pal, 0.95, 0.4 + k * 2.2, 1.1, o.bloom!.sprites);
+        const bp: V3 = [px + (r() - 0.5) * 0.12, -t + (r() - 0.5) * 0.1, z0 + 0.06];
+        if (!o.bloom!.sprites && r() < 0.28) F.card(bp, [(r() - 0.5) * 0.6, 0.5, 1], bs * 1.7, pick(r, SPIKE_HANG), d.pal, 0.9, { roll: (r() - 0.5) * 0.35, sway: 0.6 + k * 2.4, glow: 0.85, lift: 1.1, flip: r() < 0.5 });
+        else blossom(F, bp, [(r() - 0.5) * 0.8, 0.5, 1], bs, d.pal, 0.95, 0.4 + k * 2.2, 1.1, o.bloom!.sprites);
       }
     }
     if (L > 0.3) F.lobe([x, -L * 0.45, z0 * 0.6], [0.06, L * 0.5, 0.05]);

@@ -52,4 +52,4 @@ The user asked the fresh session for a procedural system and allowed it to bend 
 - [ ] Paving: `cobble` exists; choose where the courtyard uses it (with the courtyard thread), and a way to vary it over large areas.
 - [ ] Window boxes, plants between stones, climbers from a wall's foot; vines that follow a curved wall.
 - [x] Flat flowers (the user, 2026-11-24): Codex-painted grey sheets for blossoms and leaves, blossoms tilted and shaded, a shadow under each. Waiting for the user's second look.
-- [ ] Painted spikes to match.
+- [x] Round 3 (the user, 2026-11-24: "much better again"; lavender unseen, green shadows under flowers, popping, wind): painted spikes, shadow cards removed, steadier light, one wind in gusts. Waiting for the user to confirm the popping is gone in the game.

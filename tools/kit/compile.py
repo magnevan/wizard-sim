@@ -415,6 +415,28 @@ def compile_scene(sc):
             if f2 is not f and b2.intersection(run).area > 1e-6:
                 err('flight-runout', f"{f['name']}: {f2['name']} is in front of its foot", (rc.x, rc.y), [f['id'], f2['id']], 'warning')
 
+    # steps need room for their treads on the lower side (0.5 u of going for every 0.15 m of drop); squeezed between two
+    # edges they turn into a jumble (the overlook, pin p24, 2026-11-24)
+    low_u = {}
+    step_ends = {}
+    for s in allsegs:
+        if s[4] == 'steps':
+            for e in (s[0], s[1]): step_ends[key(e)] = step_ends.get(key(e), 0) + 1
+    for s in allsegs:
+        if s[4] != 'steps': continue
+        (ax, ay), (bx, by) = s[0], s[1]; dx, dy = bx - ax, by - ay; L = math.hypot(dx, dy)
+        if L <= 1.0 + 1e-6 and min(step_ends[key(s[0])], step_ends[key(s[1])]) < 2: continue   # a short piece ending a run: it turns the corner, its treads shared
+        depth = (T[s[2]]['h'] - s[3]) / RISE * GOING / G                         # cells
+        nx_, ny_ = -dy / L, dx / L                                                  # toward the lower side
+        ux, uy = dx / L * 0.1 * L, dy / L * 0.1 * L                                  # trimmed at the ends: corners share their treads
+        strip = Polygon([(ax + ux, ay + uy), (bx - ux, by - uy), (bx - ux + nx_ * depth, by - uy + ny_ * depth), (ax + ux + nx_ * depth, ay + uy + ny_ * depth)])
+        if s[3] not in low_u: low_u[s[3]] = unary_union([u for c, u in floor_u.items() if abs(T[c]['h'] - s[3]) < 1e-6])
+        miss = strip.difference(low_u[s[3]]).area
+        if miss > 0.2 * strip.area:
+            c = strip.centroid
+            err('steps-runout', f"steps down from {T[s[2]].get('name', s[2])} at ({c.x:.1f},{c.y:.1f}) need {depth:.1f} cells of ground below for their treads; {miss / strip.area:.0%} of it isn't there",
+                (c.x, c.y), [gid[s[2]]])
+
     for v in kind('vignette') + kind('setpiece'):       # a set piece is a vignette at the scale of a landmark: one model on a footprint
         pc = KIT['pieces'].get(v['piece'])
         if pc is None: err('piece', f"no piece {v['piece']!r} in kit.json", v['at'], [v['id']]); continue

@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as setpiece-armillary-base.png in the current directory. Reply with just the file name.
+
+The attached image is the armillary from the academy courtyard: stylised, warm sandstone, gilded bronze, a violet crystal core.
+
+Draw only its base, as a single game asset on a plain light grey background, seen from slightly above in a three-quarter view: the round stone dais of two low circular sandstone steps with the gold-capped lamp posts around its upper rim, the carved bronze pedestal standing on it, and on top of the pedestal a short bronze spindle holding the glowing violet crystal core, floating just above a small bronze cup. Exactly as in the attached image, but with every ring of the sphere taken away, so the core stands bare. Nothing else in the image: no rings, no ground beyond the dais, no people, no text.

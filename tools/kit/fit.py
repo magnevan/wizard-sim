@@ -106,6 +106,14 @@ tris = sum(len(p.vertices) - 2 for p in ob.data.polygons)
 if tris > FIT['budget']:
     mod = ob.modifiers.new('dec', 'DECIMATE'); mod.ratio = FIT['budget'] / tris
     bpy.ops.object.modifier_apply(modifier=mod.name)
+# 6. a set piece is seen from every side: normals pointing out, and its materials drawn from both sides, so a face
+# Meshy turned inward never shows as a hole (the beacon, 2026-11-24)
+if FIT.get('uniform'):
+    bm = bmesh.new(); bm.from_mesh(ob.data)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    bm.to_mesh(ob.data); bm.free(); ob.data.update()
+    for m in ob.data.materials:
+        if m: m.use_backface_culling = False
 lo, hi = bbox()
 print(f'fit {piece}: {sum(len(p.vertices) - 2 for p in ob.data.polygons)} tris, box x {lo.x:.3f}..{hi.x:.3f} front..back y {lo.y:.3f}..{hi.y:.3f} z {lo.z:.3f}..{hi.z:.3f}')
 bpy.ops.export_scene.gltf(filepath=dst, export_format='GLB', use_selection=False)

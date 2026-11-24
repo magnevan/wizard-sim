@@ -1,5 +1,5 @@
 {
- "next": 22,
+ "next": 26,
  "pins": [
   {
    "id": "p1",
@@ -495,6 +495,145 @@
     }
    ],
    "outcome": "rule"
+  },
+  {
+   "id": "p22",
+   "note": "We should try to edit this model ourselves so that the rings are actually closed. I think this model is intended to look like a gyroscope, and I'd expect the rings to slowly rotate",
+   "author": "user",
+   "rev": 14,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T00:07:10.929Z",
+   "anchor": {
+    "x": 47.85,
+    "y": 41.35,
+    "h": 6.43,
+    "obj": "s18",
+    "inst": {
+     "p": "setpiece.armillary"
+    },
+    "cam": [
+     98.26,
+     47.4,
+     117.55,
+     98.26,
+     3.33,
+     75
+    ]
+   },
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Rebuilding it: a base (dais, pedestal, core) and one closed ring modelled separately, three copies assembled in Blender as separate parts, which the editor will turn slowly (asked of the Map Editor session).",
+     "time": "2026-11-24T00:16:55.789Z"
+    }
+   ]
+  },
+  {
+   "id": "p23",
+   "note": "Model looks slightly broken, I can see through parts of it",
+   "author": "user",
+   "rev": 14,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T00:08:01.487Z",
+   "anchor": {
+    "x": 56.15,
+    "y": 15.67,
+    "h": 6.92,
+    "obj": "s13",
+    "inst": {
+     "p": "setpiece.beacon"
+    },
+    "cam": [
+     112.57,
+     24.17,
+     52.82,
+     110.99,
+     3.33,
+     19.02
+    ]
+   },
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Likely faces Meshy turned inward. fit.py now recalculates normals outward and makes set pieces' materials two-sided; all set pieces refitted. Reload to see it.",
+     "time": "2026-11-24T00:16:55.555Z"
+    }
+   ]
+  },
+  {
+   "id": "p24",
+   "note": "Something very weird is happening with the stairs around this edge, seems like something that should've caused a layout error / not been allowed",
+   "author": "user",
+   "rev": 14,
+   "status": "resolved",
+   "seen": false,
+   "time": "2026-11-24T00:09:41.798Z",
+   "anchor": {
+    "x": 51.69,
+    "y": 28.34,
+    "h": 5.85,
+    "obj": "t-road-at-5-85-m",
+    "cam": [
+     105.04,
+     34.83,
+     86.58,
+     105.25,
+     3.33,
+     50.75
+    ]
+   },
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Fixed (rev 15 to 19). The plan's overlook stepped down in two treads 1 u deep, half a cell, so the trace made a sliver band plus a strip of balcony lip, and the steps had no room. Now the bay is one level ('the overlook bay', 5 m) with one run of steps up to the road; the sunk plaza is one level too (its 0.5 m ring merged), with one run of steps round it. And it is an error now: 'steps-runout' (compile.py) when a run of steps has no room for its treads below. It flags all 8 such places in the old scene.",
+     "time": "2026-11-24T00:16:55.323Z"
+    },
+    {
+     "author": "claude",
+     "text": "steps-runout added; the overlook and sunk plaza rebuilt (rev 19).",
+     "time": "2026-11-24T00:16:55.437Z"
+    }
+   ],
+   "outcome": "rule"
+  },
+  {
+   "id": "p25",
+   "note": "Railing doesn't quite connect to posts",
+   "author": "user",
+   "rev": 14,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T00:10:28.300Z",
+   "anchor": {
+    "x": 56.59,
+    "y": 27.92,
+    "h": 6.25,
+    "obj": "r7",
+    "inst": {
+     "p": "sweep.parapet",
+     "e": [
+      56.5616,
+      27.975
+     ]
+    },
+    "cam": [
+     115.63,
+     18.92,
+     65.34,
+     115.74,
+     3.33,
+     47.61
+    ]
+   },
+   "thread": [
+    {
+     "author": "claude",
+     "text": "That's where the renderer puts each balustrade section on a curved parapet; asked of the Map Editor session.",
+     "time": "2026-11-24T00:16:55.673Z"
+    }
+   ]
   }
  ]
 }

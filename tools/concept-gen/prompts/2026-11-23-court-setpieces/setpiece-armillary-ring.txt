@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as setpiece-armillary-ring.png in the current directory. Reply with just the file name.
+
+The attached image is the armillary from the academy courtyard: stylised, gilded bronze rings with engraved bands.
+
+Draw one single ring of that armillary on its own, as a game asset on a plain light grey background: a complete, closed circular ring of gilded bronze, thick and solid, its outer face engraved with a band of small stars and runes, standing upright and seen from the front, a little turned so its thickness shows. The ring is a perfect circle, unbroken all the way round, with an empty centre. Nothing else in the image: no sphere, no other rings, no stand, no ground, no shadow, no text.

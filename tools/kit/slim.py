@@ -1,17 +1,21 @@
-"""Slims the fitted kit models: re-encodes their textures smaller, in place. Run after fit.py.
+"""Slims the fitted kit models for the game: reads the full-size fitted model from meshy/kit-full/ and writes a copy
+with smaller textures to meshy/kit/ (what the renderer loads). Run after fit.py, which writes to kit-full/.
 
-  python tools/kit/slim.py [model.glb ...]      (default: every game/content/generated/meshy/kit/*.glb)
+  python tools/kit/slim.py [name ...]      (default: every game/content/generated/meshy/kit-full/*.glb)
+
+kit-full/ keeps the largest sizes (2K PBR as Meshy gave them) for later uses such as LoD; never slim it in place.
 
 Meshy gives 2K PBR maps, mostly PNG: about 8 to 18 MB a model, nearly all texture. At the game camera that detail
 is never seen. Base colour becomes JPEG at 2048 px for the landmark buildings (BIG) and 1024 px for the rest; the
 normal and metal-roughness maps half that. A base colour whose material uses alpha (MASK/BLEND) stays PNG.
-Meshes are untouched. Already-slim images are left as they are, so running it twice changes nothing.
+Meshes are untouched.
 """
 import glob, io, json, os, struct, sys
 from PIL import Image
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 KIT = os.path.join(ROOT, 'game', 'content', 'generated', 'meshy', 'kit')
+FULL = os.path.join(ROOT, 'game', 'content', 'generated', 'meshy', 'kit-full')
 BIG = {'great-hall', 'library', 'workshops', 'hall-half', 'battery-tower', 'bell-tower', 'armillary', 'gate-tower'}
 
 
@@ -45,7 +49,7 @@ def encode(data, mime, role, alpha, size):
     return buf.getvalue(), 'image/jpeg'
 
 
-def slim(path):
+def slim(path, dest):
     b = open(path, 'rb').read()
     n = struct.unpack('<I', b[12:16])[0]; j = json.loads(b[20:20 + n])
     bin_ = b[20 + n + 8:]
@@ -64,14 +68,15 @@ def slim(path):
     js = json.dumps(j, separators=(',', ':')).encode(); js += b' ' * (-len(js) % 4)
     glb = struct.pack('<III', 0x46546C67, 2, 12 + 8 + len(js) + 8 + len(out))
     glb += struct.pack('<II', len(js), 0x4E4F534A) + js + struct.pack('<II', len(out), 0x004E4942) + bytes(out)
-    open(path, 'wb').write(glb)
+    open(dest, 'wb').write(glb)
     return len(b), len(glb)
 
 
 if __name__ == '__main__':
-    files = sys.argv[1:] or sorted(glob.glob(os.path.join(KIT, '*.glb')))
+    names = [os.path.splitext(os.path.basename(n))[0] for n in sys.argv[1:]] or         sorted(os.path.splitext(os.path.basename(f))[0] for f in glob.glob(os.path.join(FULL, '*.glb')))
     tot = [0, 0]
-    for f in files:
-        a, z = slim(f); tot[0] += a; tot[1] += z
+    for n in names:
+        f = os.path.join(FULL, n + '.glb')
+        a, z = slim(f, os.path.join(KIT, n + '.glb')); tot[0] += a; tot[1] += z
         print(f'{os.path.basename(f):24} {a / 1e6:5.1f} -> {z / 1e6:5.1f} MB')
     print(f'{"total":24} {tot[0] / 1e6:5.1f} -> {tot[1] / 1e6:5.1f} MB')

@@ -13,12 +13,14 @@ from PIL import Image
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 OUT = os.path.join(ROOT, 'game', 'content', 'generated', 'textures')
+RAW = {'paving', 'plaza', 'deck', 'ashlar'}   # regular patterns: Codex draws them tileable, and blending doubles their joints
 TILE_U = {'paving': 4, 'plaza': 6, 'road': 3, 'lawn': 4, 'rock': 6, 'deck': 4, 'ashlar': 4, 'smooth-stone': 2}
 
 
-def tile(img, size):
+def tile(img, size, blend=True):
     w, h = img.size; s = min(w, h)
     img = img.crop(((w - s) // 2, (h - s) // 2, (w - s) // 2 + s, (h - s) // 2 + s)).resize((size, size), Image.LANCZOS)
+    if not blend: return img.convert('RGB')
     a = np.asarray(img.convert('RGB'), dtype=np.float32)
     b = np.roll(np.roll(a, size // 2, 0), size // 2, 1)
     # weight of the original: 1 in the middle, 0 at the edges (where the shifted copy is whole)
@@ -36,5 +38,5 @@ if __name__ == '__main__':
         if not (f.startswith('tex-') and f.endswith('.png')): continue
         name = f[4:-4]
         shutil.copy(os.path.join(src, f), os.path.join(OUT, 'src', f))
-        tile(Image.open(os.path.join(src, f)), size).save(os.path.join(OUT, name + '.png'))
-        print(f'{name}: {size} px, {TILE_U.get(name, 4)} u a tile')
+        tile(Image.open(os.path.join(src, f)), size, name not in RAW).save(os.path.join(OUT, name + '.png'))
+        print(f'{name}: {size} px, {TILE_U.get(name, 4)} u a tile' + (', as drawn' if name in RAW else ', blended'))

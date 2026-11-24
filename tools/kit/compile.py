@@ -572,34 +572,68 @@ def compile_scene(sc):
                 # the coping with gravity, wanders and branches, on which the renderer stamps painted clusters.
                 treat_ok = rule.get('drape') or rule.get('grow')
                 niche_at = {tuple(i['e']) for i in inst if i.get('v') == 'niche' and 'e' in i}
-                for s in allsegs:
-                    if s[4] not in treat_ok: continue
-                    drop = T[s[2]]['h'] - s[3]
-                    if drop < rule.get('min_drop', 1.0) or rng.random() > rule.get('chance', 0.3): continue
-                    (ax, ay), (bx, by) = s[0], s[1]
-                    mid = (round((ax + bx) / 2, 4), round((ay + by) / 2, 4))
-                    if mid in niche_at: continue
-                    if any(z.intersects(LineString([s[0], s[1]]).buffer(0.3)) for z in fl_zones): continue   # never over a flight
-                    if not ok_at(mid[0], mid[1]) and only is not None: continue
-                    pc_ = rng.choice(rule['put']); L = math.hypot(bx - ax, by - ay) * G * 0.6       # m along the wall
-                    base = dict(p=pc_, x=ax * G, y=ay * G, x2=bx * G, y2=by * G, h=T[s[2]]['h'], low=s[3], src=d_['id'], **vary(pc_, rng))
-                    if 'drape' in rule:
-                        tall = KIT['pieces'][pc_].get('size_m', [1, 3])[1]     # never longer than the painting (taller walls: grow)
-                        base.update(len=round(min(drop * rng.uniform(*rule.get('share', [0.3, 0.85])), tall * rng.uniform(0.7, 1.0)), 2), flip=rng.random() < 0.5,
-                                    offset=round(rng.random(), 3))
-                    else:     # a path in wall-local metres: s along the wall from a, z down from the coping
-                        paths = []
-                        for _ in range(rng.randint(1, rule.get('branches', 2))):
-                            sx, z = rng.uniform(0.15, 0.85) * L, 0.0; pts = [[round(sx, 2), 0.0]]
-                            target = drop * rng.uniform(*rule.get('share', [0.4, 1.0])); drift = rng.uniform(-0.3, 0.3)
-                            while z < target and len(pts) < 60:
-                                step = rng.uniform(0.15, 0.3); z += step
-                                drift = max(-0.6, min(0.6, drift + rng.uniform(-0.15, 0.15)))
-                                sx = max(0.05, min(L - 0.05, sx + drift * step))
-                                pts.append([round(sx, 2), round(min(z, drop - 0.05), 2)])
-                            paths.append(pts)
-                        base.update(paths=paths)
-                    inst.append(base)
+                def usable(s):
+                    if s[4] not in treat_ok or T[s[2]]['h'] - s[3] < rule.get('min_drop', 1.0): return False
+                    mid = (round((s[0][0] + s[1][0]) / 2, 4), round((s[0][1] + s[1][1]) / 2, 4))
+                    if mid in niche_at: return False
+                    if any(z.intersects(LineString([s[0], s[1]]).buffer(0.3)) for z in fl_zones): return False   # never over a flight
+                    return only is None or ok_at(*mid)
+                # runs: consecutive usable sections of one wall (same level, same drop), in order along the wall
+                k4_ = lambda p: (round(p[0], 4), round(p[1], 4))
+                cand = [s for s in allsegs if usable(s)]
+                nxt = {}
+                for s in cand: nxt[(k4_(s[0]), s[2], s[3])] = s
+                has_prev = {(k4_(s[1]), s[2], s[3]) for s in cand}
+                runs, seen_ = [], set()
+                for s in sorted(cand, key=lambda s: (k4_(s[0]), s[2])):
+                    if id(s) in seen_ or (k4_(s[0]), s[2], s[3]) in has_prev and nxt.get((k4_(s[0]), s[2], s[3])) is not s: continue
+                    run, cur = [], s
+                    while cur is not None and id(cur) not in seen_:
+                        seen_.add(id(cur)); run.append(cur); cur = nxt.get((k4_(cur[1]), cur[2], cur[3]))
+                    runs.append(run)
+                for s in cand:
+                    if id(s) not in seen_: seen_.add(id(s)); runs.append([s])
+                lens = lambda s: math.hypot(s[1][0] - s[0][0], s[1][1] - s[0][1]) * G * 0.6      # m
+                for run in runs:
+                    drop = T[run[0][2]]['h'] - run[0][3]
+                    i0 = 0
+                    while i0 < len(run):
+                        # a clump: 1 to 4 sections in a row, then a gap; how often depends on the chance
+                        span = rng.randint(1, rule.get('span', 4)); clump = run[i0:i0 + span]; i0 += span + rng.randint(1, 3)
+                        if rng.random() > rule.get('chance', 0.3): continue
+                        pc_ = rng.choice(rule['put']); v_ = vary(pc_, rng)
+                        if 'drape' in rule:     # one strip across the clump: the same length, the painting continuing section to section
+                            tall = KIT['pieces'][pc_].get('size_m', [1, 3])[1]
+                            ln = round(min(drop * rng.uniform(*rule.get('share', [0.3, 0.85])), tall * rng.uniform(0.7, 1.0)), 2)
+                            flip = rng.random() < 0.5; acc = rng.random()
+                            for n_, s in enumerate(clump):
+                                inst.append(dict(p=pc_, x=s[0][0] * G, y=s[0][1] * G, x2=s[1][0] * G, y2=s[1][1] * G, h=T[s[2]]['h'],
+                                                 low=s[3], src=d_['id'], len=ln, flip=flip, offset=round(acc % 1, 3),
+                                                 fade_l=n_ == 0, fade_r=n_ == len(clump) - 1, **v_))
+                                acc += lens(s) / KIT['pieces'][pc_].get('size_m', [1, 3])[0]
+                        else:     # grown vines: paths along the whole clump, in metres from its first section's start
+                            total = sum(lens(s) for s in clump); paths = []
+                            for _ in range(rng.randint(2, rule.get('branches', 3))):
+                                sx, z = rng.uniform(0.1, 0.9) * total, 0.0; pts = [[round(sx, 2), 0.0]]
+                                target = drop * rng.uniform(*rule.get('share', [0.4, 1.0])); drift = rng.uniform(-0.4, 0.4)
+                                while z < target and len(pts) < 80:
+                                    step = rng.uniform(0.15, 0.3); z += step
+                                    drift = max(-0.8, min(0.8, drift + rng.uniform(-0.2, 0.2)))
+                                    sx = max(0.05, min(total - 0.05, sx + drift * step))
+                                    pts.append([round(sx, 2), round(min(z, drop - 0.05), 2)])
+                                paths.append(pts)
+                            # each section carries the stretch of the paths over it, in its own metres (the renderer
+                            # stamps per section, so curved walls bend the vine with them)
+                            at = 0.0
+                            for s in clump:
+                                L = lens(s); mine = []
+                                for pts in paths:
+                                    seg = [[round(p[0] - at, 2), p[1]] for p in pts if at - 0.2 <= p[0] <= at + L + 0.2]
+                                    if len(seg) >= 2: mine.append(seg)
+                                if mine:
+                                    inst.append(dict(p=pc_, x=s[0][0] * G, y=s[0][1] * G, x2=s[1][0] * G, y2=s[1][1] * G, h=T[s[2]]['h'],
+                                                     low=s[3], src=d_['id'], paths=mine, **v_))
+                                at += L
             elif rule.get('along') == 'road':    # kerbs between a pavement and a road: lamps on the pavement side
                 step = rule.get('spacing', 9) / G; inset = rule.get('inset', 0.6); acc = step / 2
                 for s in allsegs:

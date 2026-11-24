@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-lawn.png in the current directory. Reply with just the file name.
+
+The attached image is the academy courtyard this texture is for: stylised, hand-painted, warm sandstone, gold trim, warm light.
+
+Draw a seamless tileable texture of short, lush stylised grass with a few tiny pale flowers and clover, in exactly that painted style, seen straight down from above, filling the whole square image edge to edge. Evenly lit, flat, with no shadows, no vignette, no perspective, no objects and no text. The pattern repeats cleanly when the image is tiled side by side.

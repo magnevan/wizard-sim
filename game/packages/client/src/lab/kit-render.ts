@@ -624,7 +624,7 @@ function standIn(g: THREE.Group, shape: string | undefined, w: number, d: number
   else box(g, m, -w / 2, w / 2, y0, y0 + h, -d / 2, d / 2);
 }
 /** A stacked part's stand-in by slot: its share of the piece's width and height, and its shape. */
-const SLOT: Record<string, [number, number, string]> = { pot: [0.8, 0.35, 'box'], plant: [1, 0.65, 'round'], post: [0.15, 0.82, 'round'], lantern: [0.45, 0.18, 'box'] };
+const SLOT: Record<string, [number, number, string]> = { pot: [0.8, 0.35, 'box'], plant: [0.55, 0.65, 'round'], post: [0.15, 0.82, 'round'], lantern: [0.45, 0.18, 'box'] };
 /** The top of what a group holds, in its own space (where the next stacked part goes). */
 function topOf(g: THREE.Group): number {
   if (!g.children.length) return 0;
@@ -655,13 +655,29 @@ function dressPiece(it: Inst, kind: string): THREE.Group {
     return g;
   }
   if (stack.length) {
+    let sink = 0;   // a pot's next part starts this far under its rim
     for (const slot of stack) {
-      const part = String(parts[slot] ?? ''), y0 = topOf(g);
-      if (art(g, part, 0, y0)) continue;
-      if (PLANT_PARTS[part]) { growInto(g, PLANT_PARTS[part], seedOf(it), y0); continue; }
-      // a stand-in in the slot's proportions (share of the width, share of the height, shape) until the part is made
-      const [sw, sh, shape] = SLOT[slot] ?? [1, 1 / stack.length, 'box'];
-      standIn(g, shape, w * sw, d * sw, y0, H * sh, slot === 'post' ? MAT.dark : PROP.stone);
+      const part = String(parts[slot] ?? ''), y0 = topOf(g) - sink, before = g.children.length;
+      sink = 0;
+      if (!art(g, part, 0, y0)) {
+        if (PLANT_PARTS[part]) { growInto(g, PLANT_PARTS[part], seedOf(it), y0); continue; }   // a plant grown in code (foliage)
+        // a stand-in in the slot's proportions (share of the width, share of the height, shape) until the part is made
+        const [sw, sh, shape] = SLOT[slot] ?? [1, 1 / stack.length, 'box'];
+        standIn(g, shape, w * sw, d * sw, y0, H * sh, slot === 'post' ? MAT.dark : PROP.stone);
+      }
+      if (slot === 'pot') {
+        // a pot is open: soil fills it just under the rim (0.8 of its measured width; square for a square pot), and
+        // the plant grows from 0.15 m under the rim, so a short plant never shows the pot's dark inside
+        const b = new THREE.Box3();
+        g.updateMatrixWorld(true);
+        const inv = g.matrixWorld.clone().invert();
+        for (const c of g.children.slice(before)) b.union(new THREE.Box3().setFromObject(c).applyMatrix4(inv));
+        const sx = (b.max.x - b.min.x) * 0.8, sz = (b.max.z - b.min.z) * 0.8, rim = b.max.y, cxp = (b.min.x + b.max.x) / 2, czp = (b.min.z + b.max.z) / 2;
+        const soilY = rim - yOf(0.06), soil = TEX.dirt ?? FLOOR.dirt;
+        if (part.includes('square')) box(g, soil, cxp - sx / 2, cxp + sx / 2, soilY - 0.05, soilY, czp - sz / 2, czp + sz / 2);
+        else { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.05, 28), soil); c.scale.set(sx, 1, sz); c.position.set(cxp, soilY - 0.025, czp); c.receiveShadow = true; g.add(c); }
+        sink = yOf(0.15);
+      }
     }
     return g;
   }

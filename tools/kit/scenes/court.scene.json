@@ -164,7 +164,6 @@
     {"kind": "setpiece", "name": "the sunk plaza floor", "piece": "setpiece.plaza-disc", "at": [47.5, 40], "front": "S", "id": "s19"},
     {"kind": "setpiece", "name": "the library", "piece": "setpiece.library", "at": [28, 33], "front": "S", "turn": -70.3, "id": "s20"},
     {"kind": "setpiece", "name": "the workshops", "piece": "setpiece.workshops", "at": [63.5, 34.5], "front": "S", "turn": 71, "id": "s21"},
-    {"kind": "setpiece", "name": "the great hall, west", "piece": "setpiece.hall-half", "at": [43.5, 17], "front": "S", "id": "s22"},
-    {"kind": "setpiece", "name": "the great hall, east", "piece": "setpiece.hall-half", "at": [52, 17], "front": "S", "id": "s23"}
+    {"kind": "setpiece", "name": "the great hall", "piece": "setpiece.great-hall", "at": [47.75, 17], "front": "S", "id": "s22"}
   ]
 }

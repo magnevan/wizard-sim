@@ -119,7 +119,7 @@
    "note": "FACADE: the great hall (16 m), with the north road passing through it and a stoop at each door. Now a plain wall box with no passage; it needs a gateway piece (an arch through a wall) and its facade.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
@@ -131,9 +131,15 @@
      "author": "claude",
      "text": "Two hall-half set pieces stand either side of the north road (rev 26). They read narrow: the model is a slender wing about 6 u wide and 10 m tall. Pin left open; next is a wider, grander hall.",
      "time": "2026-11-24T07:31:21.483Z"
+    },
+    {
+     "author": "claude",
+     "text": "One great hall set piece (Codex from the paint-overs, Meshy 7.1, 30 credits) in place of the two halves: two wings and a gatehouse whose open archway carries the north road through it (rev 27).",
+     "time": "2026-11-24T07:38:03.703Z"
     }
    ],
-   "trace": true
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p6",

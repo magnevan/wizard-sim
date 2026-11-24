@@ -45,6 +45,62 @@ const MAT = {
 } as const;
 export const FLOOR: Record<string, THREE.Material> = { paving: MAT.paving, plaza: MAT.plaza, road: MAT.road, lawn: MAT.lawn, roof: MAT.roof, rock: mat(0x7d7468),
   deck: mat(0x9a7a58), water: mat(0x4f7f9c, 0.25) };   // deck: timber (a quay, a bridge); water: the sea, a stream
+// props and set pieces have their own stone, so a decal on the ground never paints them
+const PROP = { stone: mat(0xd2cabd), coping: mat(0xe6e0d4) };
+
+// ---- a decal (kit.json class "decal": a picture on a footprint, placed like a set piece): projected straight down onto
+// the ground under it, floors, steps, kerbs, walls' faces and copings, so it drapes over steps; clipped to its shape.
+// One decal at a time (the plaza's disc). Its uniforms are shared by every receiving material, so setting them is enough.
+const DECAL = {
+  dcOn: { value: 0 }, dcTex: { value: null as THREE.Texture | null }, dcC: { value: new THREE.Vector2() },
+  dcH: { value: new THREE.Vector2(1, 1) }, dcRot: { value: 0 }, dcRound: { value: 1 },
+};
+/** Let a material take the decal (after any shader change it already makes). */
+function decalable<T extends THREE.Material>(m: T): T {
+  const prev = m.onBeforeCompile, key = m.customProgramCacheKey.bind(m);
+  m.onBeforeCompile = (sh, r) => {
+    prev.call(m, sh, r);
+    Object.assign(sh.uniforms, DECAL);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vDcPos;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvDcPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vDcPos;\nuniform float dcOn, dcRot, dcRound;\nuniform vec2 dcC, dcH;\nuniform sampler2D dcTex;')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        if (dcOn > 0.5) {
+          vec2 dd = vDcPos.xz - dcC; float cr = cos(dcRot), sr = sin(dcRot);
+          vec2 q = vec2(cr * dd.x + sr * dd.y, -sr * dd.x + cr * dd.y) / dcH;      // -1..1 across the footprint
+          if (dcRound > 0.5 ? dot(q, q) <= 1.0 : max(abs(q.x), abs(q.y)) <= 1.0) {
+            vec4 dc = texture2D(dcTex, vec2(q.x * 0.5 + 0.5, 0.5 - q.y * 0.5));       // the picture's top is north
+            diffuseColor.rgb = mix(diffuseColor.rgb, dc.rgb, dc.a);
+          }
+        }`);
+  };
+  m.customProgramCacheKey = () => `${key()}|dc`;
+  return m;
+}
+for (const m of [MAT.face, MAT.coping, MAT.stone, MAT.kerb, ...Object.values(FLOOR)]) decalable(m);
+const decalUrls = import.meta.glob<string>('../../../../content/generated/textures/**/*.png', { eager: true, query: '?url', import: 'default' });
+const decalTex: Record<string, Promise<THREE.Texture | null>> = {};
+/** A decal's picture: kit.json's texture path (under content/generated/), or until it is made, textures/src/tex-<name>.png. */
+function loadDecal(path: string): Promise<THREE.Texture | null> {
+  return (decalTex[path] ??= (async () => {
+    const base = '../../../../content/generated/', alt = path.replace(/^textures\/([^/]+)$/, 'textures/src/tex-$1');
+    const url = decalUrls[base + path] ?? decalUrls[base + alt];
+    if (!url) return null;
+    const t = await new THREE.TextureLoader().loadAsync(url).catch(() => null);
+    if (t) { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; }
+    return t;
+  })());
+}
+/** Put the scene's decal (or none) on the ground: every receiving material shows it at once. */
+function setDecal(it: Inst | undefined) {
+  const k = it && KIT_PIECES[it.p] as KitPiece & { texture?: string };
+  if (!it || !k?.texture) { DECAL.dcOn.value = 0; return; }
+  const [w, d] = k.footprint ?? [10, 10];
+  DECAL.dcC.value.set(it.x, it.y); DECAL.dcH.value.set(w / 2, d / 2); DECAL.dcRound.value = k.shape === 'round' ? 1 : 0;
+  DECAL.dcRot.value = it.rot - Math.PI / 2;   // its front (S by default) is the picture's bottom
+  loadDecal(k.texture).then((t) => { if (t) { DECAL.dcTex.value = t; DECAL.dcOn.value = 1; } });
+}
+export const isDecal = (p: string) => KIT_PIECES[p]?.class === 'decal';
 
 /** The kit's pieces as tools/kit/kit.json describes them (the map editor fetches it): set pieces need their size. */
 export type KitPiece = { class?: string; shape?: string; footprint?: [number, number]; height?: number; note?: string };
@@ -63,6 +119,8 @@ export async function loadKitArt(): Promise<void> {
     out[p.split('/').pop()!.replace('.glb', '')] = g.scene;
   })));
   ART = out;
+  // the made ground pieces take a decal too (their materials are theirs alone)
+  for (const n of ['retain-top', 'retain-course', 'tread', 'kerb', 'corner']) ART[n]?.traverse((c) => { const m = c as THREE.Mesh; if (m.isMesh) m.material = decalable((m.material as THREE.Material).clone()); });
   await loadTextures();
 }
 
@@ -98,7 +156,7 @@ function triplanar(tex: THREE.Texture, tile: number): THREE.MeshStandardMaterial
         diffuseColor *= tpC;`);
   };
   m.customProgramCacheKey = () => `tp${tile}`;
-  return m;
+  return decalable(m);
 }
 /** The material for a floor of this mat: its texture if made, else its tone. */
 const floorMat = (mat: string): THREE.Material => TEX[mat] ?? FLOOR[mat] ?? MAT.paving;
@@ -209,6 +267,7 @@ function wall(g: THREE.Group, L: number, h: number, low: number, v?: string, doo
 
 function piece(it: Inst): THREE.Group | null {
   const [cls, kind, shape] = it.p.split('.');
+  if (isDecal(it.p)) return null;   // a decal draws as a picture on the ground (setDecal), not as a piece
   if (cls === 'edge' || cls === 'sweep') {
     const g = edgeFrame(it), L = it.len!, low = it.low!;
     const drop = it.h - low;
@@ -324,9 +383,9 @@ function piece(it: Inst): THREE.Group | null {
         c.scale.set(sx, 1, sz); c.position.y = (y0 + y1) / 2; c.castShadow = c.receiveShadow = true; g.add(c);
       } else box(g, m, -sx / 2, sx / 2, y0, y1, -sz / 2, sz / 2);
     };
-    solid(w * 1.12, d * 1.12, y - 0.1, y + P, MAT.coping);              // the plinth
-    solid(w, d, y + P, y + H, MAT.stone);                                // the body
-    solid(w * 1.06, d * 1.06, y + H - yOf(0.3), y + H, MAT.coping);      // a cornice, so its top reads
+    solid(w * 1.12, d * 1.12, y - 0.1, y + P, PROP.coping);              // the plinth
+    solid(w, d, y + P, y + H, PROP.stone);                                // the body
+    solid(w * 1.06, d * 1.06, y + H - yOf(0.3), y + H, PROP.coping);      // a cornice, so its top reads
     box(g, MAT.dark, -Math.min(w, 1.4) / 2, Math.min(w, 1.4) / 2, y + P, y + P + Math.min(H * 0.4, yOf(2.6)), d / 2 - 0.05, d / 2 + 0.02);   // a door: its front
     return g;
   }
@@ -337,7 +396,7 @@ function piece(it: Inst): THREE.Group | null {
       box(g, MAT.wood, -1.0, 1.0, y + yOf(0.4), y + yOf(0.47), -0.3, 0.3); box(g, MAT.wood, -1.0, 1.0, y + yOf(0.47), y + yOf(0.9), -0.35, -0.27);
       for (const sx of [-0.85, 0.85]) box(g, MAT.metal, sx - 0.05, sx + 0.05, y, y + yOf(0.4), -0.25, 0.25);
       for (const sx of [-1.55, 1.55]) {
-        box(g, MAT.stone, sx - 0.4, sx + 0.4, y, y + yOf(0.6), -0.4, 0.4);
+        box(g, PROP.stone, sx - 0.4, sx + 0.4, y, y + yOf(0.6), -0.4, 0.4);
         const b = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12), MAT.leaf); b.position.set(sx, y + yOf(0.6) + 0.35, 0); b.castShadow = true; g.add(b);
       }
     }
@@ -352,7 +411,7 @@ function piece(it: Inst): THREE.Group | null {
 
 // a floor's sides, down to the ground, in rock: where an edge has no piece (an 'open' edge: a cliff, a bank) this is
 // what shows; elsewhere the edge's piece stands in front of it (the offset keeps a wall face drawn over a side in its plane)
-const SIDE = new THREE.MeshStandardMaterial({ color: 0x7d7468, roughness: 0.95, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2 });
+const SIDE = decalable(new THREE.MeshStandardMaterial({ color: 0x7d7468, roughness: 0.95, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2 }));
 /** The rock texture for floors' sides, with the same offset so a wall's face still draws over a side in its plane. */
 let sideTex: THREE.MeshStandardMaterial | null = null;
 const SIDE_TEX = () => {
@@ -377,6 +436,7 @@ function sides(rings: number[][][], top: number, bottom: number): THREE.Mesh | n
 export function buildKit(data: KitData): THREE.Group {
   const root = new THREE.Group();
   JOINTS.clear(); SPINNERS.length = 0;
+  setDecal(data.instances.find((i) => isDecal(i.p)));
   for (const it of data.instances) if (it.p.startsWith('joint.')) JOINTS.set(jkey(it.x, it.y), it);
   const bottom = yOf(Math.min(0, ...data.floors.map((f) => f.h)) - 0.4);
   for (const f of data.floors) for (const [outer, ...holes] of f.polys) {

@@ -8,7 +8,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import wizMeta from '../../../../content/assets/models/wizard.json';
-import { buildKit, groundPlane, loadKitArt, setupStage, spinKit, yOf, type KitData } from './kit-render';
+import { buildKit, groundPlane, loadKitArt, setKitPieces, setupStage, spinKit, yOf, type KitData } from './kit-render';
 
 const q = new URLSearchParams(location.search);
 const layouts = import.meta.glob<KitData>('./kit-*.json', { eager: true, import: 'default' });
@@ -23,6 +23,8 @@ const scene = new THREE.Scene();
 const sun = setupStage(renderer, scene);
 
 if (q.get('art') !== '0') await loadKitArt();
+// the kit's pieces (set pieces' sizes, decals) from the dev server's scene server, when there is one
+await fetch('/__map/kit').then((r) => r.json()).then((k) => setKitPieces(k.pieces)).catch(() => undefined);
 scene.add(groundPlane(data), buildKit(data));
 
 // ---- the wizard, for scale ----

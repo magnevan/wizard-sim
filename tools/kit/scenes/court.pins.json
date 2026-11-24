@@ -1,5 +1,5 @@
 {
- "next": 26,
+ "next": 28,
  "pins": [
   {
    "id": "p1",
@@ -531,6 +531,11 @@
      "author": "claude",
      "text": "Rebuilt: a base (dais, pedestal, crystal) and one closed ring made on meshy.ai, assembled by tools/kit/armillary.py. Three rings hang from spin nodes round the crystal (lifted so the rings clear the cup) and turn slowly (2, -3 and 4 turns a minute). About 10.4 m tall.",
      "time": "2026-11-24T00:26:02.147Z"
+    },
+    {
+     "author": "claude",
+     "text": "The holes came from decimating a mesh split along its texture seams; fixed by welding first (fit.py and armillary.py). The rings are solid now.",
+     "time": "2026-11-24T00:46:05.525Z"
     }
    ],
    "outcome": "piece"
@@ -565,6 +570,11 @@
      "author": "claude",
      "text": "Likely faces Meshy turned inward. fit.py now recalculates normals outward and makes set pieces' materials two-sided; all set pieces refitted. Reload to see it.",
      "time": "2026-11-24T00:16:55.555Z"
+    },
+    {
+     "author": "claude",
+     "text": "Remade as a standard Meshy 7.1 model (12 open edges after fitting, where the old one had 168), and fit.py now welds and fills holes for every set piece. Reload to check.",
+     "time": "2026-11-24T00:46:05.349Z"
     }
    ]
   },
@@ -646,6 +656,61 @@
     }
    ],
    "outcome": "rule"
+  },
+  {
+   "id": "p26",
+   "note": "Gaps in staircase",
+   "author": "user",
+   "rev": 19,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T00:40:26.505Z",
+   "anchor": {
+    "x": 48.47,
+    "y": 47.5,
+    "h": 2,
+    "obj": "t-dais-at-2-m",
+    "cam": [
+     90.86,
+     59.52,
+     134.09,
+     90.86,
+     3.33,
+     79.83
+    ]
+   },
+   "thread": []
+  },
+  {
+   "id": "p27",
+   "note": "textures on these stones look very glitchy",
+   "author": "user",
+   "rev": 21,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T00:45:40.787Z",
+   "anchor": {
+    "x": 49.72,
+    "y": 24.03,
+    "h": 5.97,
+    "obj": "r11",
+    "inst": {
+     "p": "sweep.kerb",
+     "e": [
+      50.013,
+      24.0782
+     ]
+    },
+    "cam": [
+     99.29,
+     17.85,
+     55.76,
+     100.54,
+     3.33,
+     41.57
+    ]
+   },
+   "thread": []
   }
  ]
 }

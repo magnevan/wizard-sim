@@ -522,13 +522,34 @@ function vineTexture(path?: string): THREE.Texture | null {
 }
 const vineMats = new Map<string, THREE.Material>();
 /** A vine's material: its painting with its alpha (cut, not blended, so it sorts and shadows like a solid), or a green stand-in. */
-function vineMat(tex: THREE.Texture | null, tint?: string): THREE.Material {
-  const key = `${tex?.uuid ?? 'none'}|${tint ?? ''}`;
+function vineMat(tex: THREE.Texture | null, tint?: string, strip = false): THREE.Material {
+  const key = `${tex?.uuid ?? 'none'}|${tint ?? ''}|${strip}`;
   let m = vineMats.get(key);
   if (!m) {
     m = tex ? new THREE.MeshStandardMaterial({ map: tex, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.95 })
       : new THREE.MeshStandardMaterial({ color: 0x4f7f3a, side: THREE.DoubleSide, roughness: 0.95, transparent: true, opacity: 0.75 });
     if (tint && /^#[0-9a-f]{6}$/i.test(tint)) (m as THREE.MeshStandardMaterial).color.multiply(new THREE.Color(tint));
+    if (strip) {
+      // a strip fades out over its last 0.6 m at a clump's ends (aEdge: metres to each faded end), the edge's line
+      // broken up by the painting itself (sampled elsewhere) and by its own light and dark, so strands end at different places and
+      // no straight cut shows where a run of vine starts or stops
+      m.onBeforeCompile = (sh) => {
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aEdge;\nvarying vec2 vEdge;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvEdge = aEdge;');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vEdge;')
+          .replace('#include <alphatest_fragment>', `{
+            float rag = 0.0;
+            #ifdef USE_MAP
+              // the painting itself, sampled elsewhere, as the edge's noise: its leaves and gaps make the line organic
+              vec4 nz = texture2D(map, vMapUv * vec2(0.37, 0.61) + vec2(0.41, 0.17));
+              rag = (nz.a * 0.6 + dot(nz.rgb, vec3(0.333)) * 0.4 - 0.45) * 0.7;   // metres
+            #endif
+            diffuseColor.a *= clamp((min(vEdge.x, vEdge.y) + rag) / 0.6 + (dot(diffuseColor.rgb, vec3(0.333)) - 0.35) * 0.6, 0.0, 1.0);
+          }
+          #include <alphatest_fragment>`);
+      };
+      m.customProgramCacheKey = () => 'vine-strip';
+    }
     vineMats.set(key, m);
   }
   return m;
@@ -544,7 +565,7 @@ function seeded(...ns: number[]) {
  * stretched), shifted by `offset`, mirrored by `flip`, its foot leaning out a little; a grown vine is cluster stamps
  * from a sheet along its `paths` ([s, z] m along the wall and down from the coping), two abreast for the first third.
  */
-function vinePiece(it: Inst & { len?: number; flip?: boolean; offset?: number; paths?: number[][][] }): THREE.Group {
+function vinePiece(it: Inst & { len?: number; flip?: boolean; offset?: number; paths?: number[][][]; fade_l?: boolean; fade_r?: boolean }): THREE.Group {
   const k = (KIT_PIECES[it.p] ?? {}) as VinePiece;
   const L = Math.hypot(it.x2! - it.x, it.y2! - it.y), dx = (it.x2! - it.x) / L, dy = (it.y2! - it.y) / L;
   const g = new THREE.Group(); g.matrixAutoUpdate = false;   // x along the wall, z out of its face, y up (as edgeFrame)
@@ -578,12 +599,16 @@ function vinePiece(it: Inst & { len?: number; flip?: boolean; offset?: number; p
   const off = (it.offset ?? 0) * tw, u0 = off / tw, u1 = (off + Wm) / tw, v1 = 1 - hang / th;
   const [U0, U1] = it.flip ? [-u0, -u1] : [u0, u1], lean = 0.1;
   quad([[0, top - H, 0.03 + lean], [L, top - H, 0.03 + lean], [L, top, 0.03], [0, top, 0.03]], [[U0, v1], [U1, v1], [U1, 1], [U0, 1]]);
-  g.add(new THREE.Mesh(vineGeo(pos, uv, idx), vineMat(tex, it.tint)));
+  // metres to each faded end of its clump (fade_l: its start is the clump's first, fade_r: its end the last); far otherwise
+  const far = 99, el = it.fade_l ? 0 : far, er = it.fade_r ? 0 : far, wl = it.fade_l ? Wm : far, wr = it.fade_r ? Wm : far;
+  const edge = [el, wr, wl, er, wl, er, el, wr];   // per corner, in quad's order: (left, right) metres
+  g.add(new THREE.Mesh(vineGeo(pos, uv, idx, edge), vineMat(tex, it.tint, true)));
   return g;
 }
-function vineGeo(pos: number[], uv: number[], idx: number[]) {
+function vineGeo(pos: number[], uv: number[], idx: number[], edge?: number[]) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  if (edge) geo.setAttribute('aEdge', new THREE.Float32BufferAttribute(edge, 2));
   geo.setIndex(idx); geo.computeVertexNormals();
   return geo;
 }

@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-plaza-disc.png in the current directory. Reply with just the file name.
+
+The first attached image is our courtyard's sunk plaza round the armillary, painted; the second is the academy's concept art. Both are stylised, hand-painted, warm sandstone with gold.
+
+Draw the floor of that round sunk plaza alone, seen straight down from directly above (orthographic top view, no perspective), as one perfect circle filling the square image edge to edge, centred: warm sandstone flagstones laid in concentric rings round the centre, each ring's stones cut to the curve, the rings growing wider outward. Seven narrow inlaid channels of coloured stone (violet, green, gold, blue, red, sky blue and amber) run straight out from a plain round centre to the rim, evenly spaced, each ending in a round bronze compass medallion with a gold star near the rim. A few faint violet cracks of magic. Evenly lit, flat, no shadows, no objects on the floor, nothing outside the circle but plain light grey, no text.

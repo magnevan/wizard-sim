@@ -1,5 +1,5 @@
 {
- "next": 5,
+ "next": 7,
  "refs": [
   {
    "id": "r1",
@@ -24,6 +24,18 @@
    "title": "Plan D in the game camera",
    "file": "r4-plan-d-in-the-game-camera.png",
    "time": "2026-11-23T22:42:00.189Z"
+  },
+  {
+   "id": "r5",
+   "title": "Paint-over of our grey-box: the plaza (Codex, layout kept). The art target, and the floor's radial channels and medallions",
+   "file": "r5-paint-over-of-our-grey-box-the-plaza-cod.png",
+   "time": "2026-11-24T01:24:55.830Z"
+  },
+  {
+   "id": "r6",
+   "title": "Paint-over of our grey-box: the whole courtyard (Codex, layout kept). The facades' reference: the hall's two halves, library, workshops",
+   "file": "r6-paint-over-of-our-grey-box-the-whole-cou.png",
+   "time": "2026-11-24T01:26:38.481Z"
   }
  ]
 }

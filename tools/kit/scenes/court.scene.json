@@ -1,5 +1,8 @@
 {
-  "schema": 1, "name": "court", "G": 2, "notes": "Traced from tools/place-plans/plans/court-d.py (Courtyard D: Terraces round a plaza (rev 21)) by tools/kit/trace_plan.py. One grid corner = (U, V) = (-95 + 2x, -62 + 2y) in the plan. Gaps (what the kit cannot say yet) are pins.",
+  "schema": 1,
+  "name": "court",
+  "G": 2,
+  "notes": "Traced from tools/place-plans/plans/court-d.py (Courtyard D: Terraces round a plaza (rev 21)) by tools/kit/trace_plan.py. One grid corner = (U, V) = (-95 + 2x, -62 + 2y) in the plan. Gaps (what the kit cannot say yet) are pins.",
   "terraces": [
     {"id": "t-sea", "glyph": "A", "name": "the sea", "h": -6, "mat": "water", "edge": "open", "walk": false},
     {"id": "t-rock", "glyph": "B", "name": "rock", "h": -5.5, "mat": "rock", "edge": "open", "walk": false},
@@ -161,6 +164,7 @@
     {"kind": "line", "name": "the terraces' radial end at 20 degrees", "a": [61.595, 16.13], "b": [91.666, 27.075], "id": "l1"},
     {"kind": "line", "name": "the terraces' radial end at 24 degrees", "a": [61.203, 17.101], "b": [90.437, 30.117], "id": "l2"},
     {"kind": "line", "name": "the terraces' radial end at 156 degrees", "a": [33.797, 17.101], "b": [4.563, 30.117], "id": "l3"},
-    {"kind": "line", "name": "the terraces' radial end at 160 degrees", "a": [33.405, 16.13], "b": [3.334, 27.075], "id": "l4"}
+    {"kind": "line", "name": "the terraces' radial end at 160 degrees", "a": [33.405, 16.13], "b": [3.334, 27.075], "id": "l4"},
+    {"kind": "setpiece", "name": "the sunk plaza floor", "piece": "setpiece.plaza-disc", "at": [47.5, 40], "front": "S", "id": "s19"}
   ]
 }

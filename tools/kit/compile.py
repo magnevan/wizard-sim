@@ -533,16 +533,29 @@ def compile_scene(sc):
         def ok_at(px, py):    # in scope, and clear of every flight's path
             pt = Point(px, py)
             return (only is None or only.buffer(1e-6).contains(pt)) and not any(z.contains(pt) for z in fl_paths)
-        def put(pieces, px, py, h, rot, up=0.0):
+        solid = [Point(o['at']).buffer(KIT['pieces'][o['piece']]['footprint'][0] / 2 / G) for o in kind('setpiece')
+                 if o.get('piece') in KIT['pieces'] and KIT['pieces'][o['piece']].get('class') == 'setpiece']
+        def fits(pc_, px, py, h):
+            """A floor piece needs flat ground at its height under its whole footprint, clear of set pieces (no planter on a
+            stoop's edge, pin-free fix 2026-11-24)."""
+            fw = KIT['pieces'][pc_].get('footprint', [1, 1])[0] / 2 / G
+            foot = Point(px, py).buffer(fw, 12)
+            ground = [u for c_, u in floor_u.items() if abs(T[c_]['h'] - h) < 1e-6 and T[c_].get('walk', True)]
+            return bool(ground) and unary_union(ground).buffer(1e-6).contains(foot) and not any(s.intersects(foot) for s in solid)
+        def put(pieces, px, py, h, rot, up=0.0, on_floor=False):
             pc_ = rng.choice(pieces)
+            if on_floor and not fits(pc_, px, py, h): return
             inst.append(dict(p=pc_, x=px * G, y=py * G, h=h, up=up, rot=rot, src=d_['id'], **vary(pc_, rng)))
         for rule in style['rules']:
-            if 'on' in rule:      # sockets on existing joints: every nth, in a stable order
+            if 'on' in rule:      # sockets on joints, spread evenly: a joint is taken only if no taken one is within 'gap' u
                 sock = KIT['pieces'][rule['on']].get('sockets', {}).get('cap', {})
                 js = sorted((j for j in joints.values() if j['p'] == rule['on']), key=lambda j: (round(j['y'], 3), round(j['x'], 3)))
-                for n_, j in enumerate(js):
-                    if n_ % rule.get('every', 1) == 0 and (only is None or only.buffer(0.6).contains(Point(j['x'] / G, j['y'] / G))):
-                        put(rule['put'], j['x'] / G, j['y'] / G, j['h'], j['rot'], sock.get('up', 0.0))
+                gap = rule.get('gap', 0.0); taken = []
+                for j in js:
+                    if only is not None and not only.buffer(0.6).contains(Point(j['x'] / G, j['y'] / G)): continue
+                    if any(math.hypot(j['x'] - t[0], j['y'] - t[1]) < gap for t in taken): continue
+                    taken.append((j['x'], j['y']))
+                    put(rule['put'], j['x'] / G, j['y'] / G, j['h'], j['rot'], sock.get('up', 0.0))
             elif rule.get('at') in ('flight-head', 'flight-foot'):
                 for f in flights:
                     (ax, ay), (bx, by) = f['a'], f['b']; w = math.hypot(bx - ax, by - ay); ux, uy = (bx - ax) / w, (by - ay) / w
@@ -551,7 +564,7 @@ def compile_scene(sc):
                     for (ex, ey), sgn in (((ax, ay), -1), ((bx, by), 1)):
                         px, py = ex + ux * sgn * 0.7 + f['dx'] * back, ey + uy * sgn * 0.7 + f['dy'] * back
                         if only is None or only.buffer(1e-6).contains(Point(px, py)):
-                            put(rule['put'], px, py, f['top_h'] if head else f['bot_h'], math.atan2(f['dy'], f['dx']))
+                            put(rule['put'], px, py, f['top_h'] if head else f['bot_h'], math.atan2(f['dy'], f['dx']), on_floor=True)
             elif rule.get('along') == 'road':    # kerbs between a pavement and a road: lamps on the pavement side
                 step = rule.get('spacing', 9) / G; inset = rule.get('inset', 0.6); acc = step / 2
                 for s in allsegs:
@@ -564,7 +577,7 @@ def compile_scene(sc):
                     t = acc
                     while t < L:
                         px, py = ax + (bx - ax) * t / L + nx_ * inset, ay + (by - ay) * t / L + ny_ * inset
-                        if ok_at(px, py): put(rule['put'], px, py, T[s[2]]['h'], math.atan2(-ny_, -nx_))
+                        if ok_at(px, py): put(rule['put'], px, py, T[s[2]]['h'], math.atan2(-ny_, -nx_), on_floor=True)
                         t += step
                     acc = t - L
 

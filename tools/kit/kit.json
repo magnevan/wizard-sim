@@ -49,7 +49,7 @@
     "dress.bench": {"class": "dress", "shape": "box", "footprint": [3.0, 1.2], "height": 1.0, "vary": {"tints": ["#ffffff", "#f0e0d0"]}, "note": "a stone bench facing a view"}
   },
   "styles": {
-    "courtyard-formal": {"note": "the courtyard's formal dressing, from the paint-overs", "rules": [{"on": "joint.pier", "every": 3, "put": ["dress.urn", "dress.cap-lantern"]}, {"on": "joint.newel", "every": 2, "put": ["dress.cap-lantern"]}, {"at": "flight-head", "put": ["dress.planter"]}, {"at": "flight-foot", "put": ["dress.planter"]}, {"along": "road", "spacing": 9, "inset": 0.6, "put": ["dress.lamp"]}]}
+    "courtyard-formal": {"note": "the courtyard's formal dressing, from the paint-overs", "rules": [{"on": "joint.pier", "put": ["dress.urn", "dress.cap-lantern"], "gap": 6}, {"on": "joint.newel", "put": ["dress.cap-lantern"], "gap": 4}, {"at": "flight-head", "put": ["dress.planter"]}, {"at": "flight-foot", "put": ["dress.planter"]}, {"along": "road", "spacing": 14, "inset": 0.6, "put": ["dress.lamp"]}]}
   },
-  "_doc_dress": "Dressing (docs/explorations/2026-11-24-dressing-variation.md): pieces of class 'dress' are placed by a scene's 'dress' objects following a style in 'styles'. A rule puts pieces on sockets ('on' a joint piece, 'every' nth), at places ('at' flight-head / flight-foot, a pair) or 'along' road kerbs at a spacing. 'parts' pieces pick one of each part per instance; 'vary' gives a seeded scale and tint per instance (scatters use it too)."
+  "_doc_dress": "Dressing (docs/explorations/2026-11-24-dressing-variation.md): pieces of class 'dress' are placed by a scene's 'dress' objects following a style in 'styles'. A rule puts pieces on sockets ('on' a joint piece, spread so none is within 'gap' u of another), at places ('at' flight-head / flight-foot, a pair) or 'along' road kerbs at a spacing. 'parts' pieces pick one of each part per instance; 'vary' gives a seeded scale and tint per instance (scatters use it too)."
 }

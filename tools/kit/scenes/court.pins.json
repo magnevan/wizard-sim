@@ -1007,7 +1007,13 @@
      80.61
     ]
    },
-   "thread": []
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Built as real stone: a slab set into the sunk plaza inside the ring of steps (r 14.9 u), 0.12 m proud within a low pale rim (0.06 m higher), the flagstone picture on its top. The seven stripes are now channels cut 0.1 m into the slab, with stone sides, running out from under the dais, each filled with the painted magic-flow field tinted its stripe's colour (read from the picture), glowing softly and drifting slowly outward. The channels stop at the slab's rim rather than climbing the steps; the compass medallions moved in (a little smaller) to sit at each channel's end, so the steps and the upper ring are plain stone. The painted stripes are gone from the decal (the original kept as src/tex-plaza-disc-striped.png). New kit feature: class 'inlay' in kit.json (setpiece.plaza-inlay), reusable for any recessed channels in a floor. Left open for you to judge: depth, glow, and whether the medallions should go back out past the steps.",
+     "time": "2026-11-24T22:50:05.636Z"
+    }
+   ]
   },
   {
    "id": "p35",

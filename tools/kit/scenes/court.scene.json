@@ -184,6 +184,7 @@
     {"kind": "setpiece", "name": "east garden corner: gold shrub", "piece": "setpiece.bush-gold", "at": [61.2, 41.15], "front": "S", "id": "s35"},
     {"kind": "setpiece", "name": "east garden corner: lilac shrub", "piece": "setpiece.bush-lilac", "at": [63.7, 38.9], "front": "S", "id": "s36"},
     {"kind": "setpiece", "name": "east garden corner: pink shrub", "piece": "setpiece.bush-pink", "at": [59.95, 42.15], "front": "S", "id": "s37"},
-    {"kind": "setpiece", "name": "east garden corner: gold shrub 2", "piece": "setpiece.bush-gold", "at": [61.95, 38.9], "front": "S", "id": "s38"}
+    {"kind": "setpiece", "name": "east garden corner: gold shrub 2", "piece": "setpiece.bush-gold", "at": [61.95, 38.9], "front": "S", "id": "s38"},
+    {"kind": "setpiece", "piece": "setpiece.plaza-inlay", "at": [47.5, 40], "front": "S", "name": "the sunk plaza inlay", "id": "s39"}
   ]
 }

@@ -8,7 +8,7 @@
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildKit, disposeKit, groundPlane, kitPiece, loadKitArt, setKitPieces, setupStage, spinKit, yOf, type Inst, type KitData, type KitPiece } from '../kit-render';
+import { buildKit, disposeKit, floorMats, groundPlane, kitPiece, loadKitArt, setKitPieces, setupStage, spinKit, yOf, type Inst, type KitData, type KitPiece } from '../kit-render';
 import { eachPoint, type Obj, type Op, type Scene, type Terrace } from '../../../map-editor/ops';
 import type { Compiled, Finding } from '../../../map-editor/compile-worker';
 import type { Pin } from '../../../map-editor/store';
@@ -1243,7 +1243,8 @@ function scatterBox(o: Obj): HTMLElement {
   (box.querySelector('#sc-new') as HTMLElement).onclick = () => set({ seed: 1 + Math.floor(Math.random() * 99999) }, 'scatter anew');
   return box;
 }
-const MATS = ['paving', 'plaza', 'road', 'lawn', 'woods', 'dirt', 'sand', 'roof', 'rock', 'deck', 'water'], EDGES = ['parapet', 'retain', 'wall', 'open'];
+// floors: the flat tones and every floor texture (kit-render.ts floorMats), so a new texture is offered on its own
+const MATS = floorMats(), EDGES = ['parapet', 'retain', 'wall', 'open'];
 const VARIANTS: Record<string, string[]> = { wall: ['plain', 'window', 'door'], parapet: ['plain', 'niche'], retain: ['plain', 'niche'] };
 function renderInspect() {
   if (typingIn('inspect')) return;
@@ -1269,7 +1270,7 @@ function renderInspect() {
     el.innerHTML = `<h3>Level · ${esc(t.id)}</h3>
       <div class="row"><label>Name</label><input id="t-name" value="${esc(t.name)}"></div>
       <div class="row"><label>Height</label><input id="t-h" type="number" step="0.05" value="${t.h}" style="width:70px"> m <button class="btn" id="t-dn">−0.5</button><button class="btn" id="t-up">+0.5</button></div>
-      <div class="row"><label>Floor</label><select id="t-mat">${MATS.map((m) => `<option ${m === t.mat ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+      <div class="row"><label>Floor</label><select id="t-mat">${[...new Set([...MATS, t.mat])].map((m) => `<option ${m === t.mat ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
       <div class="row"><label>Edge</label><select id="t-edge">${EDGES.map((m) => `<option ${m === (t.edge ?? 'retain') ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
       <div class="row"><label>Walkable</label><input id="t-walk" type="checkbox" ${t.walk === false ? '' : 'checked'}></div>
       <div class="meta">Edge: how it meets lower ground. Parapet: a balustrade; retain: a wall with coping; wall: a building; open: a bare drop.</div>

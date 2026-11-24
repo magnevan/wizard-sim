@@ -14,6 +14,7 @@ How things are made: pictures in Codex (free), models through the Meshy API (sta
 - [ ] **Foliage** (plants, flowers, vines, paving): moved to its own thread, [foliage](foliage.md), handed to a fresh session (2026-11-24).
 - [ ] **Dressing from the paint-overs**: flower boxes, banners, small trees in planters, lamps along the balcony road, violet cracks; these are vignettes or set pieces.
 - [ ] **Animated water** (the user, 2026-11-24): a water shader (scrolling layers of the painted water texture, ripple normals derived from it, a gentle swell, fresnel, foam at the shoreline, the stream flowing), asked of the Map Editor session; the painted texture carries the look (no code-drawn art).
+- [ ] **Later: the arch's keystone and trim** (the user, 2026-11-24). Either painted into the voussoir ring's texture (free; a keystone is a few pixels at the game camera), or as one of several small ornaments bundled into a single Meshy call: one Codex sheet (keystone, urn, finial, lantern, ball topper) → one model → split into loose parts in Blender → `fit.py` each. Bundling suits small ornaments, not buildings.
 - [ ] **The sea edge, still to do**: a quay edge and a cliff piece (the inlet, the falls).
 - [ ] Then the yard and the infirmary on the kit. They should need far fewer new pieces.
 

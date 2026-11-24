@@ -1,5 +1,5 @@
 {
- "next": 28,
+ "next": 34,
  "pins": [
   {
    "id": "p1",
@@ -708,6 +708,184 @@
      100.54,
      3.33,
      41.57
+    ]
+   },
+   "thread": []
+  },
+  {
+   "id": "p28",
+   "note": "railing is stretched and compressed",
+   "author": "user",
+   "rev": 21,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T00:46:53.052Z",
+   "anchor": {
+    "x": 49.71,
+    "y": 32.76,
+    "h": 5.2,
+    "obj": "t-paving-at-5-m-q",
+    "inst": {
+     "p": "edge.parapet.chamfer",
+     "e": [
+      49.75,
+      32.75
+     ]
+    },
+    "cam": [
+     100.43,
+     17.91,
+     74.62,
+     100.51,
+     3.33,
+     60.21
+    ]
+   },
+   "thread": []
+  },
+  {
+   "id": "p29",
+   "note": "obvious texture seams",
+   "author": "user",
+   "rev": 21,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T00:47:24.568Z",
+   "anchor": {
+    "x": 52,
+    "y": 32.52,
+    "h": 2.89,
+    "obj": "t-paving-at-5-m-q",
+    "inst": {
+     "p": "edge.parapet.straight",
+     "e": [
+      52.5,
+      32.5
+     ]
+    },
+    "cam": [
+     103.15,
+     11.69,
+     80.62,
+     99.86,
+     3.33,
+     58.22
+    ]
+   },
+   "thread": []
+  },
+  {
+   "id": "p30",
+   "note": "broken transition",
+   "author": "user",
+   "rev": 21,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T00:47:36.733Z",
+   "anchor": {
+    "x": 48.9,
+    "y": 33.25,
+    "h": 3.5,
+    "obj": "t-paving-at-5-m-q",
+    "inst": {
+     "p": "edge.parapet.chamfer",
+     "e": [
+      49.25,
+      33.25
+     ]
+    },
+    "cam": [
+     103.27,
+     11.82,
+     80.94,
+     99.93,
+     3.33,
+     58.19
+    ]
+   },
+   "thread": []
+  },
+  {
+   "id": "p31",
+   "note": "railing and ballusters not aligned",
+   "author": "user",
+   "rev": 21,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T00:48:26.680Z",
+   "anchor": {
+    "x": 36.02,
+    "y": 27.49,
+    "h": 4.55,
+    "obj": "f1",
+    "inst": {
+     "p": "connector.flight"
+    },
+    "cam": [
+     71.82,
+     26.77,
+     69.89,
+     72.62,
+     9.75,
+     57.41
+    ]
+   },
+   "thread": []
+  },
+  {
+   "id": "p32",
+   "note": "ugly staircase texture",
+   "author": "user",
+   "rev": 21,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T00:48:35.114Z",
+   "anchor": {
+    "x": 34.4,
+    "y": 27.02,
+    "h": 4.35,
+    "obj": "f1",
+    "inst": {
+     "p": "connector.flight"
+    },
+    "cam": [
+     71.82,
+     26.77,
+     69.89,
+     72.62,
+     9.75,
+     57.41
+    ]
+   },
+   "thread": []
+  },
+  {
+   "id": "p33",
+   "note": "zig zag instead of curve",
+   "author": "user",
+   "rev": 21,
+   "status": "open",
+   "seen": false,
+   "time": "2026-11-24T00:49:09.894Z",
+   "anchor": {
+    "x": 11.57,
+    "y": 24.15,
+    "h": 1.05,
+    "obj": "t-paving-at-1-m",
+    "inst": {
+     "p": "edge.parapet.chamfer",
+     "e": [
+      11.25,
+      24.25
+     ]
+    },
+    "cam": [
+     28.17,
+     40.49,
+     67.88,
+     26.8,
+     9.75,
+     55.58
     ]
    },
    "thread": []

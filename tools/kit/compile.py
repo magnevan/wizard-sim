@@ -216,21 +216,30 @@ def compile_scene(sc):
     # Works whichever side is higher (convex or concave): the floors between the stepped edge and the arc change hands.
     from shapely.validation import make_valid
     from shapely.strtree import STRtree
-    rounds = kind('round')
+    # lines: the same for a straight line at any angle ({kind: line, a: [x, y], b: [x, y], tol?, terrace?}), which the grid
+    # can only draw as 45-degree zig-zags (pin p33: the middle terrace's radial end)
+    rounds = kind('round') + kind('line')
     if rounds:   # every floor cell in one index: a round's pieces only touch the cells near its arc
         cells = [[g, f] for g in floors for f in floors[g]]
         tree = STRtree([f for _, f in cells])
     for rd in rounds:
-        (cx, cy), r = rd['centre'], rd['r']; tol = rd.get('tol', 0.75)
+        is_line = rd.get('kind') == 'line'
+        tol = rd.get('tol', 0.75)
         only = glyph_of.get(rd.get('terrace'), rd.get('terrace'))
-        def ang_ok(p):
-            if 'from' not in rd: return True
-            a = math.degrees(math.atan2(p[1] - cy, p[0] - cx)) % 360; a0, a1 = rd['from'] % 360, rd['to'] % 360
-            return (a0 <= a <= a1) if a0 <= a1 else (a >= a0 or a <= a1)
-        near = lambda p: abs(math.hypot(p[0] - cx, p[1] - cy) - r) <= tol
+        if is_line:
+            LA, LB = rd['a'], rd['b']; seg_ab = LineString([LA, LB]); cx, cy = (LA[0] + LB[0]) / 2, (LA[1] + LB[1]) / 2; r = 0
+            ang_ok = lambda p: True
+            near = lambda p: seg_ab.distance(Point(p)) <= tol
+        else:
+            (cx, cy), r = rd['centre'], rd['r']
+            def ang_ok(p):
+                if 'from' not in rd: return True
+                a = math.degrees(math.atan2(p[1] - cy, p[0] - cx)) % 360; a0, a1 = rd['from'] % 360, rd['to'] % 360
+                return (a0 <= a <= a1) if a0 <= a1 else (a >= a0 or a <= a1)
+            near = lambda p: abs(math.hypot(p[0] - cx, p[1] - cy) - r) <= tol
         cand = [s for s in segs if (only is None or s[2] == only) and near(s[0]) and near(s[1]) and ang_ok(((s[0][0] + s[1][0]) / 2, (s[0][1] + s[1][1]) / 2))]
         if not cand:
-            err('round', f"{label(rd)}: no edge lies along its circle (centre {rd['centre']}, r {r})", (cx, cy), [rd['id']], 'warning'); continue
+            err('round', f"{label(rd)}: no edge lies along its {'line' if is_line else 'circle'}" + ('' if is_line else f" (centre {rd['centre']}, r {r})"), (cx, cy), [rd['id']], 'warning'); continue
         # chain them into runs, one per (upper terrace, lower height), in edge direction (higher side on the left)
         k4 = lambda p: (round(p[0], 4), round(p[1], 4))
         groups = {}
@@ -253,19 +262,29 @@ def compile_scene(sc):
                     while angs[i] - angs[i - 1] > math.pi: angs[i] -= 2 * math.pi
                     while angs[i] - angs[i - 1] < -math.pi: angs[i] += 2 * math.pi
                 a0, a1 = angs[0], angs[-1]
-                mk = lambda k: [pts[0]] + [(cx + r * math.cos(a0 + (a1 - a0) * t / k), cy + r * math.sin(a0 + (a1 - a0) * t / k)) for t in range(1, k)] + [pts[-1]]
+                if is_line:     # straight from the run's first point to its last
+                    (sx, sy), (ex, ey) = pts[0], pts[-1]
+                    mk = lambda k: [pts[0]] + [(sx + (ex - sx) * t / k, sy + (ey - sy) * t / k) for t in range(1, k)] + [pts[-1]]
+                    span = math.hypot(ex - sx, ey - sy)
+                else:
+                    mk = lambda k: [pts[0]] + [(cx + r * math.cos(a0 + (a1 - a0) * t / k), cy + r * math.sin(a0 + (a1 - a0) * t / k)) for t in range(1, k)] + [pts[-1]]
+                    span = abs(a1 - a0) * r
                 fits = lambda arc: all(1.4 <= math.hypot(b[0] - a[0], b[1] - a[1]) * G <= 2.6 for a, b in zip(arc, arc[1:]))
-                k0 = max(1, round(abs(a1 - a0) * r * G / 2.0))           # sections of about 2 u; sweeps fit 1.4 to 2.6
+                k0 = max(1, round(span * G / 2.0))                       # sections of about 2 u; sweeps fit 1.4 to 2.6
                 arc = next((mk(k) for k in sorted(range(max(1, k0 - 3), k0 + 4), key=lambda k: abs(k - k0)) if fits(mk(k))), mk(k0))
                 # the ground between the stepped edge and the arc: on the higher side of the arc it's the upper terrace's
                 z = make_valid(Polygon(pts + arc[::-1]))
                 mid = len(arc) // 2; p, q = arc[mid - 1], arc[mid]
                 ux, uy = q[0] - p[0], q[1] - p[1]
-                up_inside = (ux * (cy - p[1]) - uy * (cx - p[0])) < 0      # the higher (left) side faces the centre
+                up_inside = True if is_line else (ux * (cy - p[1]) - uy * (cx - p[0])) < 0      # the higher (left) side faces the centre
                 lowg = [g for g in T if abs(T[g]['h'] - lower) < 1e-6]
                 for piece in getattr(z, 'geoms', [z]):
                     if piece.geom_type != 'Polygon' or piece.area < 1e-9: continue
-                    inside = Point(cx, cy).distance(piece.representative_point()) < r
+                    rp = piece.representative_point()
+                    if is_line:     # on the line's higher (left) side: the compiler's edges keep the upper side at cross <= 0
+                        inside = ((pts[-1][0] - pts[0][0]) * (rp.y - pts[0][1]) - (pts[-1][1] - pts[0][1]) * (rp.x - pts[0][0])) < 0
+                    else:
+                        inside = Point(cx, cy).distance(rp) < r
                     pb = piece.buffer(0.05)
                     near_i = [i for i in tree.query(pb) if cells[i][1].intersects(pb)]
                     if inside == up_inside: to = tg

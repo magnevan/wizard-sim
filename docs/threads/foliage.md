@@ -1,6 +1,6 @@
 # Outdoor foliage (plants, flowers, vines, ground cover)
 
-Status: active; plants grown in code are built and in the courtyard scene (branch `foliage`); next: the user's verdict · Last touched: 2026-11-24
+Status: paused 2026-11-24 with the user's approval ("it looks pretty good to me now"); branch `foliage` is ready to merge into `court-kit`; next when resumed: the open items below · Last touched: 2026-11-24
 Record: [procedural foliage](../explorations/2026-11-24-procedural-foliage.md) (what was built) · [dressing with variation](../explorations/2026-11-24-dressing-variation.md) (incl. the Vines sections) · [the courtyard on the kit](kit-courtyard.md) (where it started) · the comparison that started this: [ours vs the paint-over](../reference/court-kit/court-vines-vs-paintover.png) · concept: [`area-courtyard-start.jpg`](../reference/element-order/area-courtyard-start.jpg), paint-overs of our grey-box: [plaza](../reference/court-kit/court-plaza-paintover.png), [whole court](../reference/court-kit/court-whole-paintover.png), [sea stair](../reference/court-kit/court-sea-paintover.png)
 
 ## Why this thread
@@ -52,4 +52,5 @@ The user asked the fresh session for a procedural system and allowed it to bend 
 - [ ] Paving: `cobble` exists; choose where the courtyard uses it (with the courtyard thread), and a way to vary it over large areas.
 - [ ] Window boxes, plants between stones, climbers from a wall's foot; vines that follow a curved wall.
 - [x] Flat flowers (the user, 2026-11-24): Codex-painted grey sheets for blossoms and leaves, blossoms tilted and shaded, a shadow under each. Waiting for the user's second look.
-- [x] Round 3 (the user, 2026-11-24: "much better again"; lavender unseen, green shadows under flowers, popping, wind): painted spikes, shadow cards removed, steadier light, one wind in gusts. Waiting for the user to confirm the popping is gone in the game.
+- [x] Round 3 (the user, 2026-11-24: "much better again"; lavender unseen, green shadows under flowers, popping, wind): painted spikes, shadow cards removed, steadier light, one wind in gusts. The user: "it looks pretty good to me now"; work wrapped up for now ([decision](../decisions/README.md#2026-11-24-plants-are-grown-in-code-explorations2026-11-24-procedural-foliagemd)).
+- [ ] Merge branch `foliage` into `court-kit` (it adds to `kit-render.ts`, `kit.json` and the court scene).

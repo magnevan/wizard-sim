@@ -465,6 +465,13 @@ def compile_scene(sc):
         hw, hd = (fw / 2 / G, fd / 2 / G) if dy else (fd / 2 / G, fw / 2 / G)
         box = Polygon([(v['at'][0] - hw, v['at'][1] - hd), (v['at'][0] + hw, v['at'][1] - hd), (v['at'][0] + hw, v['at'][1] + hd), (v['at'][0] - hw, v['at'][1] + hd)])
         if pc.get('shape') == 'round': box = Point(v['at']).buffer(hw * 0.98, 24)      # a round piece stands on its circle
+        if pc.get('class') == 'decal':
+            # a decal is a picture laid over whatever lies under its footprint, steps and all (the plaza's channels run up
+            # its ring of steps); it needs no flat ground, only walkable ground under its centre, whose height it carries
+            under = [ch for ch, u in floor_u.items() if u.buffer(1e-6).contains(Point(v['at'])) and T[ch].get('walk', True)]
+            if not under: err('vignette-ground', f"{v['piece']} at {v['at']}: no walkable ground under its centre", v['at'], [v['id']]); continue
+            inst.append(dict(p=v['piece'], x=v['at'][0] * G, y=v['at'][1] * G, h=T[under[0]]['h'], rot=math.atan2(dy, dx), src=v['id']))
+            continue
         on = [ch for ch, u in floor_u.items() if u.buffer(1e-6).contains(box)]
         if not on and v['kind'] == 'setpiece':     # a set piece's plinth takes up a kerb: ground within 0.35 m will do
             under = [ch for ch, u in floor_u.items() if u.intersection(box).area > 1e-6]

@@ -1,5 +1,5 @@
 {
- "next": 7,
+ "next": 8,
  "refs": [
   {
    "id": "r1",
@@ -36,6 +36,12 @@
    "title": "Paint-over of our grey-box: the whole courtyard (Codex, layout kept). The facades' reference: the hall's two halves, library, workshops",
    "file": "r6-paint-over-of-our-grey-box-the-whole-cou.png",
    "time": "2026-11-24T01:26:38.481Z"
+  },
+  {
+   "id": "r7",
+   "title": "Paint-over: the sea stair (Codex). Strays at the top (buildings on the rim that we don't have); useful for the sea wall: blind arches, buttresses, a weathered base, medallions on the landings",
+   "file": "r7-paint-over-the-sea-stair-codex-strays-at.png",
+   "time": "2026-11-24T01:29:23.622Z"
   }
  ]
 }

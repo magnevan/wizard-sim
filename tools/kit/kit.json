@@ -32,7 +32,7 @@
     "setpiece.pier-round": { "class": "setpiece", "shape": "round", "footprint": [3.0, 3.0], "height": 5.0, "note": "a free-standing round pier, set in matched pairs: gateways, gates, thresholds" },
     "setpiece.gate-tower": { "class": "setpiece", "shape": "box", "footprint": [3.0, 3.0], "height": 8.0, "note": "a square tower either side of a road's gate" },
     "setpiece.gate-pier": { "class": "setpiece", "shape": "box", "footprint": [2.0, 2.0], "height": 4.0, "note": "a square gate pier" },
-    "setpiece.plaza-disc": { "class": "setpiece", "shape": "round", "footprint": [31.0, 31.0], "height": 0.05, "note": "the sunk plaza's radial paving: flagstone rings and seven coloured channels to compass medallions (tools/kit/disc.py)" },
+    "setpiece.plaza-disc": { "class": "decal", "shape": "round", "footprint": [42.0, 42.0], "height": 0.05, "texture": "textures/plaza-disc.png", "note": "the sunk plaza's radial paving, laid over its floor and ring of steps out to the rim: flagstone rings and seven coloured channels to compass medallions on the upper plaza" },
     "setpiece.post": { "class": "setpiece", "shape": "round", "footprint": [1.5, 1.5], "height": 2.5, "note": "a low post (the overlook's prow)" }
   }
 }

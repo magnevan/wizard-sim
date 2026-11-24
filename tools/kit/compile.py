@@ -359,7 +359,7 @@ def compile_scene(sc):
         """Bridges: a walkable level whose two parallel faces stand over the same water is crossing it, so the water runs
         on under an arch (arch.through, one arch per 6 m of span at most; the faces' sections there get v='bridge': only
         their coping and railing are drawn). Blind arches: tall walls that rise from ground no one walks (the sea) get a
-        shallow arched recess on every third section (v='blind'; on a curve, every other sweep section)."""
+        shallow arched recess on every third section (v='blind'; on a curve, every third sweep section)."""
         lowt = lambda s: low_of.get((round(s[0][0], 4), round(s[0][1], 4), round(s[1][0], 4), round(s[1][1], 4)))
         by_e = {tuple(i['e']): i for i in inst if 'e' in i}
         mid = lambda s: (round((s[0][0] + s[1][0]) / 2, 4), round((s[0][1] + s[1][1]) / 2, 4))
@@ -374,7 +374,7 @@ def compile_scene(sc):
             if drop < 3.0 or any(t.get('walk', True) and t['mat'] not in ('water',) for t in ([lo] if lo else under)): continue
             if len(s) > 5:
                 k = k_sweep[s[5][1]] = k_sweep.get(s[5][1], -1) + 1
-                if k % 2: continue
+                if k % 3: continue
             elif (round(s[0][0]) + round(s[0][1])) % 3: continue
             it['v'] = 'blind'
         # bridges: straight faces of a walkable level over water, grouped into runs along one line

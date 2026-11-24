@@ -14,7 +14,7 @@
  *   pins <name> [--status open|new|resolved|all]
  *   pin <name> add <x> <y> <note>   |  add --ref <id> <u> <v> <note>  |  reply <id> <text>
  *       resolve <id> <scene|rule|piece> [text]  |  seen <id...>  |  delete <id>
- *   view <name> [--cam top|game|current] [--x X --y Y --r R] [--out path.png]
+ *   view <name> [--cam top|game|current] [--x X --y Y --r R] [--figure X,Y] [--out path.png]   (--figure: the wizard, 1.74 m, for scale)
  *   refs <name>                     the concept images pinned to the map, with their files and pins
  *   ref <name> show <id> [--pin pN] [--out path.png]   the image with its open pins drawn on it (and with --pin,
  *       a close-up around that pin: <out>-crop.png)
@@ -28,7 +28,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const BASE = (process.env.MAP_EDITOR_URL || 'http://127.0.0.1:5187').replace(/\/$/, '');
-const VALUE_FLAGS = new Set(['base', 'label', 'author', 'status', 'cam', 'x', 'y', 'r', 'out', 'from', 'title', 'pin', 'ref']);
+const VALUE_FLAGS = new Set(['base', 'label', 'author', 'status', 'cam', 'x', 'y', 'r', 'out', 'from', 'title', 'pin', 'ref', 'figure']);
 const tmpDir = () => (process.env.CLAUDE_JOB_DIR ? path.join(process.env.CLAUDE_JOB_DIR, 'tmp') : os.tmpdir());
 
 function parseArgs(argv) {
@@ -206,7 +206,7 @@ async function main() {
     }
     case 'pin': return pinCmd(name, rest, flags);
     case 'view': {
-      const buf = await call('GET', 'view', { query: { name, cam: flags.cam, x: flags.x, y: flags.y, r: flags.r }, raw: true });
+      const buf = await call('GET', 'view', { query: { name, cam: flags.cam, x: flags.x, y: flags.y, r: flags.r, figure: flags.figure }, raw: true });
       const file = flags.out || path.join(tmpDir(), 'map-view.png');
       fs.mkdirSync(path.dirname(file), { recursive: true });
       fs.writeFileSync(file, buf);

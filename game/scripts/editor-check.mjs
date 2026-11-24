@@ -123,6 +123,40 @@ try {
     await page.screenshot({ path: `${OUT}/4f-setpiece.png` });
   } else console.log('skip set piece: the kit has none');
 
+  const after = async (r) => { for (let i = 0; i < 80 && (await state()).rev <= r; i++) await sleep(100); };
+
+  // 4g. a stair's end handle: select the grand stair, drag its far end one cell further along the edge
+  await page.keyboard.press('Escape'); await page.keyboard.press('v');
+  s = await api('scene');
+  const f1 = s.scene.objects.find((o) => o.id === 'f1'), [[ax, ay], [bx, by]] = f1.head;
+  [sx, sy] = await scr((ax + bx) / 2, ay + 1.5, 1); await page.mouse.click(sx, sy); await sleep(400);
+  const hs = await page.evaluate(() => window.__editor.handles());
+  const hb = hs.find((h) => h.w === 'b');
+  check((await state()).sel?.id === 'f1' && hs.length === 3, `a selected stair shows three handles (${JSON.stringify((await state()).sel)}, ${hs.map((h) => h.w)})`);
+  if (hb) {
+    let r0 = (await state()).rev;
+    const dir = Math.sign(bx - ax), [tx] = await scr(bx + dir, by, 2.1), [ox] = await scr(bx, by, 2.1);
+    await drag(hb.s, [hb.s[0] + (tx - ox), hb.s[1]]); await after(r0);
+    const f1b = (await api('scene')).scene.objects.find((o) => o.id === 'f1');
+    check(f1b.head[1][0] === bx + dir && f1b.head[0][0] === ax, `dragging its end widens it by a cell (${JSON.stringify(f1.head)} -> ${JSON.stringify(f1b.head)})`);
+  }
+
+  // 4h. copy and paste: Ctrl+drag with the Rectangle tool over the planted beds, Ctrl+C, then Ctrl+V further east
+  await page.keyboard.press('Escape'); await page.keyboard.press('r');
+  const src = (await api('scene')).scene.corners;
+  const count = (rows, x0, y0, x1, y1) => { let n = 0; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (rows[y][x] === 'L') n++; return n; };
+  await page.keyboard.down('Control'); await drag(await scr(10.5, 14.5), await scr(15.5, 17.5)); await page.keyboard.up('Control'); await sleep(200);
+  const reg = (await state()).region;
+  check(reg && reg.x0 === 10 && reg.y0 === 14 && reg.x1 === 16 && reg.y1 === 18, `Ctrl+drag selects the cells (${JSON.stringify(reg)})`);
+  await page.keyboard.down('Control'); await page.keyboard.press('c'); await page.keyboard.up('Control'); await sleep(200);
+  [sx, sy] = await scr(20, 14); await page.mouse.move(sx, sy); await sleep(150);
+  let r1 = (await state()).rev;
+  await page.keyboard.down('Control'); await page.keyboard.press('v'); await page.keyboard.up('Control'); await after(r1);
+  const dst = (await api('scene')).scene.corners;
+  check(count(dst, 20, 14, 26, 18) === count(src, 10, 14, 16, 18) && count(src, 10, 14, 16, 18) > 0, `Ctrl+C, Ctrl+V copies the beds east (${count(src, 10, 14, 16, 18)} bed corners -> ${count(dst, 20, 14, 26, 18)})`);
+  await page.screenshot({ path: `${OUT}/4h-paste.png` });
+  await page.keyboard.press('Escape');
+
   // 4d. a concept image: add one, open the panel (K), click its middle, write a note; then Claude's marked copy
   const img = `${ROOT}/docs/reference/map-editor/patch-b-greybox.jpg`;
   const added = await fetch(`${URL}/__map/refs`, { method: 'POST', headers: { 'content-type': 'application/json' },

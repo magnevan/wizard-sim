@@ -374,4 +374,6 @@ The user saw the curves (on a scratch copy of patch B: a semicircle on the hall 
 - **Steps** (`edge.steps.*`, `sweep.steps`) draw as treads down to the lower side; **open edges** (cliffs, banks) show rock: every floor now has rock sides down to the ground, behind any piece on its edge.
 Tested against the courtyard's compiler and scene (copied in for the test, then restored): `editor:check` fits a round by three clicks and drags its radius, and places and selects a set piece (when the kit has set pieces).
 
-Not built yet: the MCP bridge and channel (push), linking a spot on a concept to a spot on the map, dragging a stair's ends, copy and paste, a walk mode, a figure for scale.
+**The thread's last three, 2026-11-24** (the user: continue with pending work): **a figure for scale** (W: the game's wizard at 1.74 m, as the greybox page has it, standing on the floor under the cursor; `view --figure x,y` puts it in Claude's pictures), **a stair's handles** (each end of its head slides along the edge, the middle slides it along) and **copy and paste** (Ctrl+drag with the Rectangle tool selects cells; Ctrl+C copies them and everything standing wholly on them; Ctrl+V pastes at the cursor as one undo group, with fresh ids). `editor:check` drags a stair's end and copies the planted beds across the plaza.
+
+Not built yet: the MCP bridge and channel (push), linking a spot on a concept to a spot on the map, a walk mode.

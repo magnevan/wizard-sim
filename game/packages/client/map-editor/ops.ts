@@ -39,7 +39,7 @@ function mintId(sc: Scene, prefix: string): string {
 }
 
 /** Every point-like field of an object, to move or shift it. */
-function eachPoint(o: Obj, f: (p: [number, number]) => [number, number]) {
+export function eachPoint(o: Obj, f: (p: [number, number]) => [number, number]) {
   for (const k of ['at', 'centre']) if (Array.isArray(o[k])) o[k] = f(o[k] as [number, number]);
   for (const k of ['head', 'ends']) if (Array.isArray(o[k])) o[k] = (o[k] as [number, number][]).map(f);
 }

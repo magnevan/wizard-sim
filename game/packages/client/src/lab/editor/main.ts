@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildKit, disposeKit, groundPlane, kitPiece, loadKitArt, setKitPieces, setupStage, yOf, type Inst, type KitData, type KitPiece } from '../kit-render';
-import type { Obj, Op, Scene, Terrace } from '../../../map-editor/ops';
+import { eachPoint, type Obj, type Op, type Scene, type Terrace } from '../../../map-editor/ops';
 import type { Compiled, Finding } from '../../../map-editor/compile-worker';
 import type { Pin } from '../../../map-editor/store';
 import { Concepts } from './concepts';
@@ -194,6 +194,36 @@ function flash(keys: string[]) {
   flashUntil = performance.now() + 2500;
   const ids = new Set(keys.filter((k) => k.startsWith('o:')).map((k) => k.slice(2)));
   if (ids.size && !sel) { highlight((it) => ids.has(it.src ?? '') || ids.has(it.o ?? ''), 0x9fe3ff); setTimeout(highlightSel, 2500); }
+}
+
+// ---- a figure for scale: the game's wizard (1.74 m, as the greybox page has it), on the floor under the cursor (W) ----
+const wizUrl = Object.values(import.meta.glob<string>('../../../../../content/assets/models/wizard.glb', { eager: true, query: '?url', import: 'default' }))[0];
+const WIZ_H = 2.9;
+const figure = new THREE.Group(); figure.visible = false; world.add(figure);
+let figureOn = false, figureLoad: Promise<void> | null = null;
+function loadFigure() {
+  figureLoad ??= (async () => {
+    if (!wizUrl) return;
+    const [{ GLTFLoader }, meta] = await Promise.all([import('three/addons/loaders/GLTFLoader.js'), import('../../../../../content/assets/models/wizard.json')]);
+    const o = (await new GLTFLoader().loadAsync(wizUrl)).scene;
+    o.traverse((c) => { if ((c as THREE.Mesh).isMesh) c.castShadow = true; });
+    const m = meta.default as { show?: string[]; props?: { node: string; name?: string }[] };
+    const show = new Set(m.show ?? []), norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const hide = new Set((m.props ?? []).filter((p) => !show.has(p.name ?? '')).map((p) => norm(p.node)));
+    o.traverse((c) => { if (hide.has(norm(c.name))) c.visible = false; });   // its conjured weapons wait hidden; the staff shows
+    const b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3());
+    o.scale.setScalar(WIZ_H / s.y); o.position.y = -b.min.y * (WIZ_H / s.y); o.rotation.y = 0.4;
+    figure.add(o);
+  })();
+  return figureLoad;
+}
+/** Stand the figure at corner (x, y), on the floor there (y: the floor's world height). */
+function placeFigure(x: number, y: number, wy?: number) { figure.position.set(x * G(), wy ?? yOf(heightAt(x, y)), y * G()); }
+function toggleFigure(on = !figureOn) {
+  figureOn = on; figure.visible = on && !!hoverCorner;
+  if (on) loadFigure().then(() => { if (!wizUrl) toast('No wizard model to show', true); });
+  if (on && hoverCorner) placeFigure(hoverCorner[0], hoverCorner[1], lastY);
+  renderTop();
 }
 
 // ---- the scene from the server ----
@@ -439,10 +469,40 @@ function dragRound(b: RoundShape, which: string, p: Pt): RoundShape {
   return { ...b, [which]: Math.round(angleOf(b.centre, p)) % 360 };
 }
 
+// ---- a selected stair's handles: its head's ends slide along the edge (wider, narrower), its middle slides it along ----
+const selFlight = () => (sel?.type === 'obj' ? sc?.objects.find((o) => o.id === (sel as { id: string }).id && o.kind === 'flight') : undefined);
+type Head = [Pt, Pt];
+/** A flight's head after its handle `which` (a, b or mid) is dragged to p: whole cells along the head's line, at least one wide. */
+function dragHead(h: Head, which: string, p: Pt): Head {
+  const horiz = Math.abs(h[1][1] - h[0][1]) < 1e-6, i = horiz ? 0 : 1;
+  const at = (q: Pt, v: number): Pt => (horiz ? [v, q[1]] : [q[0], v]);
+  const a = h[0][i], b = h[1][i], dir = Math.sign(b - a) || 1, v = Math.round(p[i]);
+  if (which === 'mid') { const d = Math.round(p[i] - (a + b) / 2); return [at(h[0], a + d), at(h[1], b + d)]; }
+  if (which === 'a') return [at(h[0], dir > 0 ? Math.min(v, b - 1) : Math.max(v, b + 1)), h[1]];
+  return [h[0], at(h[1], dir > 0 ? Math.max(v, a + 1) : Math.min(v, a - 1))];
+}
+function headDots(h: Head, ok = true) {
+  const [[x0, y0], [x1, y1]] = h, n = Math.round(Math.hypot(x1 - x0, y1 - y0) * 2), pts: Sq[] = [];
+  for (let k = 0; k <= n; k++) { const x = x0 + ((x1 - x0) * k) / n, y = y0 + ((y1 - y0) * k) / n; pts.push({ x, y, h: upperAt(x, y), c: ok ? 0xffe08a : 0xff5544, s: 0.5 }); }
+  setSquares(preview, pts);
+}
+
 /** The selected curve's three handles (its ends and the middle of its bulge) and its outline; a selected round's handles. */
 function rebuildHandles() {
   handles.clear();
   rebuildRounds();
+  const fl = selFlight();
+  if (fl && tool === 'select') {
+    const h = fl.head as Head, mid: Pt = [(h[0][0] + h[1][0]) / 2, (h[0][1] + h[1][1]) / 2];
+    for (const [w, p] of [['a', h[0]], ['b', h[1]], ['mid', mid]] as [string, Pt][]) {
+      const m = new THREE.Mesh(handleGeo, handleMat), hm = upperAt(p[0], p[1]);
+      m.position.copy(at3(p[0], p[1], hm)).setY(yOf(hm) + 0.45); m.userData.handle = w; m.renderOrder = 12;
+      if (w === 'mid') m.scale.setScalar(1.3);
+      handles.add(m);
+    }
+    if (!curving && drag?.kind !== 'handle') showLine(null);
+    return;
+  }
   // a selected set piece: its footprint on the ground (a circle or its box, turned to its front)
   const sp = sel?.type === 'obj' ? sc?.objects.find((o) => o.id === (sel as { id: string }).id && o.kind === 'setpiece') : undefined;
   const fp = sp && kitPiece(String(sp.piece))?.footprint;
@@ -501,11 +561,64 @@ function dragHandle(d: Extract<Drag, { kind: 'handle' }>, p: Pt) {
 }
 const setCurve = (id: string, c: CurveShape, label: string) => apply([{ op: 'set', id, ends: c.ends, centre: c.centre, r: c.r }], label);
 
-type Drag = { kind: 'paint'; start: [number, number]; last: [number, number]; corners: Map<string, [number, number]>; px: [number, number] }
+// ---- copy and paste: Ctrl+drag in the Rectangle tool selects cells; Ctrl+C copies them and what stands wholly in them ----
+type Region = { x0: number; y0: number; x1: number; y1: number };
+type Clip = { w: number; h: number; corners: [number, number, string][]; objects: Obj[] };
+let region: Region | null = null, clip: Clip | null = null;
+const regionLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineDashedMaterial({ color: 0x9fe3ff, dashSize: 0.6, gapSize: 0.35, depthTest: false, transparent: true }));
+regionLine.renderOrder = 11; regionLine.frustumCulled = false; regionLine.visible = false; world.add(regionLine);
+const regionOf = (a: Pt, b: Pt): Region => ({ x0: Math.floor(Math.min(a[0], b[0])), y0: Math.floor(Math.min(a[1], b[1])), x1: Math.floor(Math.max(a[0], b[0])) + 1, y1: Math.floor(Math.max(a[1], b[1])) + 1 });
+function showRegion(r: Region | null) {
+  regionLine.visible = !!r; if (!r) return;
+  const ring: Pt[] = [];
+  for (let x = r.x0; x <= r.x1; x += 0.5) ring.push([x, r.y0]);
+  for (let y = r.y0; y <= r.y1; y += 0.5) ring.push([r.x1, y]);
+  for (let x = r.x1; x >= r.x0; x -= 0.5) ring.push([x, r.y1]);
+  for (let y = r.y1; y >= r.y0; y -= 0.5) ring.push([r.x0, y]);
+  regionLine.geometry.dispose();
+  regionLine.geometry = new THREE.BufferGeometry().setFromPoints(ring.map(([x, y]) => at3(x, y, upperAt(x, y)).setY(yOf(upperAt(x, y)) + 0.3)));
+  regionLine.computeLineDistances();
+}
+const objPoints = (o: Obj) => { const ps: Pt[] = []; eachPoint({ ...o }, (p) => { ps.push(p); return p; }); return ps; };
+function copyRegion() {
+  if (!sc || !region) { toast('Select cells first: Ctrl+drag with the Rectangle tool (R)', true); return; }
+  const r = region, corners: Clip['corners'] = [];
+  for (let y = r.y0; y <= r.y1; y++) for (let x = r.x0; x <= r.x1; x++) if (inMap(x, y)) corners.push([x - r.x0, y - r.y0, terrace(sc.corners[y][x])?.id ?? sc.corners[y][x]]);
+  const inside = (p: Pt) => p[0] >= r.x0 - 1e-6 && p[0] <= r.x1 + 1e-6 && p[1] >= r.y0 - 1e-6 && p[1] <= r.y1 + 1e-6;
+  const objects = sc.objects.filter((o) => { const ps = objPoints(o); return ps.length > 0 && ps.every(inside); }).map((o) => {
+    const c = JSON.parse(JSON.stringify(o)) as Obj; eachPoint(c, ([x, y]) => [x - r.x0, y - r.y0]); return c;
+  });
+  clip = { w: r.x1 - r.x0, h: r.y1 - r.y0, corners, objects };
+  toast(`Copied ${clip.w} × ${clip.h} cells${objects.length ? ` and ${objects.length} thing${objects.length > 1 ? 's' : ''} on them` : ''}: Ctrl+V pastes at the cursor`);
+}
+async function pasteRegion() {
+  if (!sc || !clip || !hoverCorner) return;
+  const ox = Math.round(hoverCorner[0]), oy = Math.round(hoverCorner[1]), by = new Map<string, Pt[]>();
+  for (const [dx, dy, t] of clip.corners) if (inMap(ox + dx, oy + dy)) { if (!by.has(t)) by.set(t, []); by.get(t)!.push([ox + dx, oy + dy]); }
+  const ops: Op[] = [...by].map(([t, at]) => ({ op: 'paint', terrace: t, at }));
+  for (const o of clip.objects) {
+    const c = JSON.parse(JSON.stringify(o)) as Obj; eachPoint(c, ([x, y]) => [x + ox, y + oy]);
+    const { id: _id, ...fields } = c; ops.push({ op: 'add', ...fields });
+  }
+  const r = await apply(ops, `paste ${clip.w} × ${clip.h} cells`);
+  if (r) { region = { x0: ox, y0: oy, x1: ox + clip.w, y1: oy + clip.h }; showRegion(region); toast('Pasted: Ctrl+Z undoes it'); }
+}
+// Ctrl+V: an image on the clipboard is a concept (concepts.ts); otherwise the copied cells. The paste event says which;
+// where none comes (no clipboard access), a moment after the key the cells are pasted anyway.
+let pasteTimer = 0;
+addEventListener('paste', (e) => {
+  clearTimeout(pasteTimer);
+  const tag = (e.target as HTMLElement).tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || !clip || [...(e.clipboardData?.items ?? [])].some((i) => i.type.startsWith('image/'))) return;
+  e.preventDefault(); pasteRegion();
+});
+
+type Drag = { kind: 'paint'; start: [number, number]; last: [number, number]; corners: Map<string, [number, number]>; px: [number, number]; select?: boolean }
   | { kind: 'prop'; id: string; start: [number, number]; at: [number, number] } | { kind: 'click'; px: [number, number] }
   | { kind: 'curve'; e: EdgeLine; a0: number; ends: [Pt, Pt]; ok: boolean }
   | { kind: 'handle'; id: string; which: string; e: EdgeLine; hm: number; base: CurveShape; shape: CurveShape; ok: boolean }
   | { kind: 'round'; start: Pt; px: [number, number]; moved: boolean }
+  | { kind: 'fhandle'; id: string; which: string; hm: number; base: Head; head: Head }
   | { kind: 'rhandle'; id: string; which: string; hm: number; base: RoundShape; shape: RoundShape };
 let drag: Drag | null = null;
 let hover: Hit | null = null, hoverCorner: [number, number] | null = null;
@@ -528,6 +641,9 @@ function updatePreview(ev: PointerEvent) {
       drag.last = c;
       pts = sq([...drag.corners.values()]);
     } else pts = sq(brushCorners(c[0], c[1]));
+  } else if (tool === 'rect' && c && drag?.kind === 'paint' && drag.select) {
+    const r = regionOf(drag.start, c); showRegion(r);
+    $('brushbar').innerHTML = `Selecting ${r.x1 - r.x0} × ${r.y1 - r.y0} cells to copy`;
   } else if (tool === 'rect' && c) {
     const xy = drag?.kind === 'paint' ? rectCorners(drag.start, c) : brushCorners(c[0], c[1]).slice(0, 4);
     pts = sq(xy);
@@ -572,6 +688,17 @@ cv.addEventListener('pointerdown', (ev) => {
   alt = ev.altKey;
   $('pinbox').style.display = 'none';
   if (tool === 'curve' && curving) { commitCurve(); return; }
+  if (tool === 'select' && handles.children.length && selFlight()) {
+    castFrom(ev);
+    const hh = ray.intersectObjects(handles.children, false)[0], o = selFlight()!;
+    if (hh) {
+      const base = o.head as Head, w = hh.object.userData.handle as string;
+      controls.enabled = false;
+      drag = { kind: 'fhandle', id: o.id, which: w, hm: upperAt((base[0][0] + base[1][0]) / 2, (base[0][1] + base[1][1]) / 2), base, head: base };
+      cv.setPointerCapture(ev.pointerId); headDots(base);
+      return;
+    }
+  }
   if ((tool === 'select' || tool === 'round') && handles.children.length && selRound()) {
     castFrom(ev);
     const hh = ray.intersectObjects(handles.children, false)[0], o = selRound()!;
@@ -624,12 +751,13 @@ cv.addEventListener('pointerdown', (ev) => {
   if (!c) return;
   if (tool === 'prop') { apply([{ op: 'add', kind: propPiece.startsWith('setpiece.') ? 'setpiece' : 'vignette', piece: propPiece, at: [Math.round(c[0] * 2) / 2, Math.round(c[1] * 2) / 2], front: propFront }], `place ${pieceName(propPiece)}`); return; }
   if (tool === 'pin') { ev.preventDefault(); const h = pick(ev); if (h) openPinBox(ev, h); return; }
-  drag = { kind: 'paint', start: c, last: c, corners: new Map(), px: [ev.clientX, ev.clientY] };
+  drag = { kind: 'paint', start: c, last: c, corners: new Map(), px: [ev.clientX, ev.clientY], select: tool === 'rect' && (ev.ctrlKey || ev.metaKey) };
   cv.setPointerCapture(ev.pointerId);
   updatePreview(ev);
 }, { capture: true });
 cv.addEventListener('pointermove', (ev) => {
   alt = ev.altKey;
+  if (figureOn) { const c = groundAt(ev); if (c) { hoverCorner = c; placeFigure(c[0], c[1], lastY); figure.visible = true; } }
   if (!drag || drag.kind === 'click') {
     hover = pick(ev); info(hover);
     const g = tool === 'select' && hover?.inst != null && kit ? kit.children.find((o) => o.userData.inst === hover!.inst) : null;
@@ -649,6 +777,13 @@ cv.addEventListener('pointermove', (ev) => {
     curving.shape = fromSag(curving.ends, curving.e.out, sagFor(curving.ends, curving.e.out, p));
     const ok = inBounds(arcPoints(curving.shape));
     showCurve(curving.shape, hm, ok); curveBar(curving.shape, ok ? 'Click to place' : 'Off the map');
+    return;
+  }
+  if (drag?.kind === 'fhandle') {
+    const p = planeAt(ev, drag.hm); if (!p) return;
+    drag.head = dragHead(drag.base, drag.which, p); headDots(drag.head);
+    const w = Math.round(Math.hypot(drag.head[1][0] - drag.head[0][0], drag.head[1][1] - drag.head[0][1]));
+    $('brushbar').style.display = 'flex'; $('brushbar').innerHTML = `The stair: ${w} cell${w > 1 ? 's' : ''} wide (${Math.round(w * G() * 0.6 * 10) / 10} m) · release to set it`;
     return;
   }
   if (drag?.kind === 'rhandle') {
@@ -699,6 +834,12 @@ cv.addEventListener('pointerup', (ev) => {
     showCurve(shape, hOf(e.glyph) ?? 0, inBounds(arcPoints(shape))); curveBar(shape, 'Move out for the bulge, click to place (Esc cancels)');
     return;
   }
+  if (d.kind === 'fhandle') {
+    endDrag();
+    if (JSON.stringify(d.head) !== JSON.stringify(d.base)) apply([{ op: 'set', id: d.id, head: d.head }], d.which === 'mid' ? 'slide a stair' : 'resize a stair');
+    rebuildHandles();
+    return;
+  }
   if (d.kind === 'rhandle') {
     endDrag(); roundPreview = null;
     const s = d.shape, b = d.base;
@@ -731,7 +872,10 @@ cv.addEventListener('pointerup', (ev) => {
     completeSaddles(d.corners, brushG);
     apply([{ op: 'paint', terrace: brushG, at: [...d.corners.values()] }], `paint ${terrace(brushG)?.name ?? brushG}`);
   }
-  if (tool === 'rect' && moved) {
+  if (tool === 'rect' && moved && d.select) {
+    region = regionOf(d.start, end); showRegion(region);
+    toast(`${region.x1 - region.x0} × ${region.y1 - region.y0} cells selected: Ctrl+C copies them, then Ctrl+V pastes at the cursor`);
+  } else if (tool === 'rect' && moved) {
     const m = new Map(rectCorners(d.start, end).map((p) => [p.join(), p] as [string, [number, number]]));
     completeSaddles(m, brushG);
     if (m.size) apply([{ op: 'paint', terrace: brushG, at: [...m.values()] }], `paint ${terrace(brushG)?.name ?? brushG}`);
@@ -811,6 +955,8 @@ addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
   if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); redo(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === 'c' && region) { e.preventDefault(); copyRegion(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === 'v' && clip) { clearTimeout(pasteTimer); pasteTimer = window.setTimeout(pasteRegion, 120); return; }
   if (e.ctrlKey || e.metaKey) return;
   if (TOOLKEY[k]) { setTool(TOOLKEY[k]); return; }
   if (k >= '1' && k <= '9' && sc?.terraces[Number(k) - 1]) { brushG = sc.terraces[Number(k) - 1].glyph; if (tool !== 'brush' && tool !== 'rect') setTool('brush'); renderPalette(); renderBrushbar(); return; }
@@ -822,9 +968,11 @@ addEventListener('keydown', (e) => {
   if (k === 'c') { cornersOn = !cornersOn; rebuildCorners(); renderTop(); return; }
   if (k === 'm') { showMarkers = !showMarkers; markers.visible = showMarkers; return; }
   if (k === 'k') { concepts.toggle(); return; }
+  if (k === 'w') { toggleFigure(); return; }
   if (k === '?' || k === 'h') { $('keys').style.display = $('keys').style.display === 'block' ? 'none' : 'block'; return; }
   if (k === 'i' && hoverCorner && sc) { const [x, y] = hoverCorner.map(Math.round); if (inMap(x, y)) { brushG = sc.corners[y][x]; renderPalette(); renderBrushbar(); toast(`Brush: ${terrace(brushG)?.name}`); } return; }
   if (k === 'escape' && (curving || drag?.kind === 'curve')) { drag = null; controls.enabled = true; cancelCurve(); return; }
+  if (k === 'escape' && region) { region = null; showRegion(null); return; }
   if (k === 'escape' && roundPts.length) { roundPts = []; roundPreview = null; rebuildRounds(); setSquares(preview, []); return; }
   if (k === 'escape') { sel = null; $('keys').style.display = 'none'; highlightSel(); renderInspect(); return; }
   if (k === 'q' || k === 'e') {
@@ -876,6 +1024,7 @@ function renderTop() {
     <span class="grow"></span>
     <button id="b-top" title="Look straight down (T)">Top</button><button id="b-game" title="The game's camera (G)">Game</button>
     <button id="b-corners" title="Show every corner's terrace (C)">${cornersOn ? '◉' : '○'} Corners</button>
+    <button id="b-figure" title="A wizard for scale, on the floor under the cursor (W)">${figureOn ? '◉' : '○'} Figure</button>
     <button id="b-concepts" title="Concept images for this map: click one to pin a note on it (K)">Concepts (${concepts.refs.length})</button>
     <button id="b-keys" title="All the keys (?)">?</button>
     <button id="b-undo" title="Undo (Ctrl+Z)"><img src="${icon('undo')}" width="18"></button>
@@ -901,6 +1050,7 @@ function renderTop() {
   $('b-keys').onclick = () => dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
   $('b-corners').onclick = () => { cornersOn = !cornersOn; rebuildCorners(); renderTop(); };
   $('b-concepts').onclick = () => concepts.toggle();
+  $('b-figure').onclick = () => toggleFigure();
 }
 
 const TOOLS: [Tool, string, string, string][] = [
@@ -922,7 +1072,7 @@ const pieceOptions = () => (['vignette', 'setpiece'] as const).map((c) => {
 function renderBrushbar() {
   const bar = $('brushbar'), t = terrace(brushG);
   bar.style.display = tool === 'select' || tool === 'pin' ? 'none' : 'flex';
-  if (tool === 'brush' || tool === 'rect') bar.innerHTML = `Painting <b>${esc(t?.name ?? brushG)}</b> (${t?.h ?? 0} m)${tool === 'brush' ? ` · brush ${brushN} cell${brushN > 1 ? 's' : ''} <button class="btn" id="bs-">−</button><button class="btn" id="bs+">+</button> · Alt: one corner` : ' · drag over the cells'}`;
+  if (tool === 'brush' || tool === 'rect') bar.innerHTML = `Painting <b>${esc(t?.name ?? brushG)}</b> (${t?.h ?? 0} m)${tool === 'brush' ? ` · brush ${brushN} cell${brushN > 1 ? 's' : ''} <button class="btn" id="bs-">−</button><button class="btn" id="bs+">+</button> · Alt: one corner` : ' · drag over the cells · Ctrl+drag: select them, then Ctrl+C, Ctrl+V'}`;
   if (tool === 'stair') bar.innerHTML = 'Drag along an edge between two levels: the stair runs down from there';
   if (tool === 'round') bar.innerHTML = 'Click three points along an edge to fit a round through them, or drag from a centre for a whole circle';
   if (tool === 'curve') bar.innerHTML = 'Drag along a straight edge of a higher level for the ends; then move out for the bulge and click';
@@ -1118,9 +1268,14 @@ function renderLists() {
 function renderUI() { renderTop(); renderTools(); renderBrushbar(); renderPalette(); renderInspect(); renderLists(); info(hover); }
 
 // ---- pictures for Claude (GET /__map/view) ----
-hot.on('map:view-request', (d: { id: number; name: string; opts: Record<string, string> }) => {
+hot.on('map:view-request', async (d: { id: number; name: string; opts: Record<string, string> }) => {
   if (d.name !== name || !shown) { hot.send('map:view', { id: d.id, error: `the open editor shows ${name}, not ${d.name}` }); return; }
-  const o = d.opts, saved = { pos: cam.position.clone(), target: controls.target.clone() }, mk = markers.visible;
+  const o = d.opts, fig = { on: figure.visible, at: figure.position.clone() };
+  if (o.figure) {   // &figure=x,y: the wizard for scale, standing there
+    const [fx, fy] = o.figure.split(',').map(Number);
+    if (Number.isFinite(fx) && Number.isFinite(fy)) { await loadFigure(); placeFigure(fx, fy); figure.visible = true; }
+  }
+  const saved = { pos: cam.position.clone(), target: controls.target.clone() }, mk = markers.visible;
   const [tx, ty] = targetCorner();
   const x = o.x != null ? Number(o.x) : tx, y = o.y != null ? Number(o.y) : ty, r = o.r != null ? Number(o.r) : null;
   if (o.cam === 'top') topView(x, y, r ?? span() / G() / 2);
@@ -1134,6 +1289,7 @@ hot.on('map:view-request', (d: { id: number; name: string; opts: Record<string, 
   cam.position.copy(saved.pos); controls.target.copy(saved.target); controls.update();
   for (const m of markers.children) m.visible = true;
   markers.visible = mk; hoverBox.visible = hb;
+  figure.visible = fig.on; figure.position.copy(fig.at);
   hot.send('map:view', { id: d.id, png });
 });
 
@@ -1155,7 +1311,9 @@ loop();
 /** For scripted checks (scripts/editor-check.mjs): where a corner (x, y) at height h (m) is on screen, and the state. */
 (window as unknown as { __editor: unknown }).__editor = {
   screen: (x: number, y: number, h?: number) => { const v = at3(x, y, h ?? heightAt(x, y)).project(cam); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; },
-  state: () => ({ name, rev, tool, sel, brushG, errors: comp?.errors.length, warnings: comp?.warnings.length, pins: pins.length }),
+  state: () => ({ name, rev, tool, sel, brushG, errors: comp?.errors.length, warnings: comp?.warnings.length, pins: pins.length, region, clip: clip && { w: clip.w, h: clip.h, objects: clip.objects.length } }),
+  /** The selected thing's handles, on screen. */
+  handles: () => handles.children.map((m) => { const v = m.position.clone().project(cam); return { w: m.userData.handle as string, s: [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight] }; }),
 };
 fetch('/__map/scenes').then((r) => r.json()).then((j: { scenes: { name: string }[] }) => { sceneNames = j.scenes.map((s) => s.name); renderTop(); });
 // the kit's pieces: set pieces' sizes for the drawing, and what the Prop tool offers

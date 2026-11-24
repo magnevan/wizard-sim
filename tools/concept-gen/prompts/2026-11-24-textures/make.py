@@ -27,6 +27,9 @@ TEX = {
     'sand': ('fine pale golden sand with soft ripples and a few tiny shells and pebbles, as on a sheltered shore', TOP),
     'smooth-stone': ('a smooth, fine-grained warm sandstone surface with faint tooling marks and a few soft stains, '
                      'for stair treads and kerbs', TOP),
+    'plinth': ('the foundation of a sea wall: massive dark weathered sandstone blocks in grey-brown, larger than ordinary '
+               'wall blocks, in about three regular courses, wet and stained, with patches of green moss and a few small '
+               'barnacles and limpets in the joints', FACE),
 }
 for name, (desc, view) in TEX.items():
     body = (f"Generate one image with your image generation tool, then save it as tex-{name}.png in the current "

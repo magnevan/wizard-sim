@@ -5,7 +5,7 @@
   "notes": "Traced from tools/place-plans/plans/court-d.py (Courtyard D: Terraces round a plaza (rev 21)) by tools/kit/trace_plan.py. One grid corner = (U, V) = (-95 + 2x, -62 + 2y) in the plan. Gaps (what the kit cannot say yet) are pins.",
   "terraces": [
     {"id": "t-sea", "glyph": "A", "name": "the sea", "h": -6, "mat": "water", "edge": "open", "walk": false},
-    {"id": "t-rock", "glyph": "B", "name": "rock", "h": -5.5, "mat": "rock", "edge": "open", "walk": false},
+    {"id": "t-rock", "glyph": "B", "name": "the sea wall's foot", "h": -5.5, "mat": "plinth", "edge": "open", "walk": false},
     {"id": "t-paving-at-5-m", "glyph": "C", "name": "paving at -5 m", "h": -5, "mat": "cobble", "edge": "parapet"},
     {"id": "t-wood-at-5-m", "glyph": "D", "name": "wood at -5 m", "h": -5, "mat": "deck", "edge": "parapet"},
     {"id": "t-paving-at-2-m", "glyph": "E", "name": "paving at -2 m", "h": -2, "mat": "cobble", "edge": "parapet"},

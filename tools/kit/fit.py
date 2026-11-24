@@ -14,6 +14,7 @@ from mathutils import Vector, Matrix
 
 argv = sys.argv[sys.argv.index('--') + 1:]
 src, dst, piece = argv[0], argv[1], argv[2]
+FLIP = 'flip' in argv[3:]     # turn it round after the front is found: when the overhang rule guesses wrong (the niche, 2026-11-24)
 M = 1 / 0.6
 
 # the box each piece must fill, in u, in Blender axes (x along, -y = the front (glTF +z), z up), and its pivot
@@ -70,6 +71,7 @@ if piece.startswith('retain') or piece == 'niche':
     vs = [v.co for v in ob.data.vertices]; zt = lo.z + 0.9 * (hi.z - lo.z); zm = lo.z + 0.5 * (hi.z - lo.z)
     top = [v.y for v in vs if v.z > zt]; mid = [v.y for v in vs if abs(v.z - zm) < 0.1 * (hi.z - lo.z)]
     if top and mid and (min(top) - min(mid)) > (max(mid) - max(top)): apply(Matrix.Rotation(math.pi, 4, 'Z'))   # overhang toward +y: turn it to -y
+if FLIP: apply(Matrix.Rotation(math.pi, 4, 'Z'))
 # 3. scale to the box (a little long, so the cut leaves flat ends)
 lo, hi = bbox(); size = hi - lo
 over = 1.04 if FIT['cut'] else 1.0

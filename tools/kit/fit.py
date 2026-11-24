@@ -33,13 +33,18 @@ FIT = {
     'corner': dict(len=None, box=(0.72, 0.72), hgt=(-0.25, 0.14), cut=False, budget=2000),
     'niche': dict(len=2.0, dep=(-0.55, 0.12), hgt=(-2.0, 0.05 * M), cut=True, budget=8000),
 }
-if piece.startswith('setpiece.'):
-    # a set piece: its footprint and height from kit.json, base centre at the pivot, scaled evenly across so a round piece
-    # stays round (it fills the footprint's narrower side); a landmark gets a bigger budget than a pier
+if piece.startswith(('setpiece.', 'dress.', 'part:')):
+    # a set piece or dressing: its footprint (u) and height (m) from kit.json, or for a part of a stacked piece given as
+    # part:<w u>,<d u>,<h m>; base centre at the pivot, scaled evenly across so a round piece stays round (it fills the
+    # footprint's narrower side); a landmark gets a bigger budget than a pier, a small part a small one
     import json, os
-    pc = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'kit.json'), encoding='utf-8'))['pieces'][piece]
-    fw, fd = pc['footprint']
-    FIT = dict(len=None, box=(fw, fd), hgt=(0.0, pc['height'] * M), cut=False, uniform=True, budget=30000 if fw >= 6 else 8000)
+    if piece.startswith('part:'):
+        fw, fd, ph = map(float, piece[5:].split(','))
+    else:
+        pc = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'kit.json'), encoding='utf-8'))['pieces'][piece]
+        (fw, fd), ph = pc['footprint'], pc['height']
+    FIT = dict(len=None, box=(fw, fd), hgt=(0.0, ph * M), cut=False, uniform=True,
+               budget=30000 if fw >= 6 else 8000 if fw >= 1.5 else 3000)
 else:
     FIT = FIT[piece]
 

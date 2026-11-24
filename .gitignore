@@ -36,3 +36,6 @@ tools/segments/01-opening/img/well-references.jpg
 # image-to-3D downloads are large (Meshy: 26 MB); keep only their joints files
 __pycache__/
 tools/sprites-3d/input/**/*.log
+
+# split bundled Meshy sheets: rebuilt from the committed sheet with tools/kit/split_sheet.py
+game/content/generated/meshy/kit-src/**/*-parts/

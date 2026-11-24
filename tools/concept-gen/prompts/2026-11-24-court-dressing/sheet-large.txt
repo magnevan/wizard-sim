@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as sheet-large.png in the current directory. Reply with just the file name.
+
+The attached image is a painting of our wizard academy's courtyard: stylised 3D, warm sandstone, gold trim, blue accents, warm morning light.
+
+Draw a sheet of three separate game assets for that courtyard, in exactly that style, on a plain light grey background, standing side by side in a row with clear empty space between them so they do not touch or overlap. All are seen from slightly above in the same three-quarter view, each upright on its own with nothing under it, at a consistent scale. Left: a slender black iron lamp post with gold details, a little taller than a person, its top a plain cap ready for a lantern. Middle: a sandstone lamp post, a short fluted column on a square base, the same height, also with a plain cap. Right: a carved sandstone garden bench with a curved back and scrolled arms, about three times as long as it is deep. Each object is solid and complete all round. Nothing else in the image: no ground, no lanterns, no plants, no people, no text.

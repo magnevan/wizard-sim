@@ -33,6 +33,9 @@
     "setpiece.gate-tower": { "class": "setpiece", "shape": "box", "footprint": [3.0, 3.0], "height": 8.0, "note": "a square tower either side of a road's gate" },
     "setpiece.gate-pier": { "class": "setpiece", "shape": "box", "footprint": [2.0, 2.0], "height": 4.0, "note": "a square gate pier" },
     "setpiece.plaza-disc": { "class": "decal", "shape": "round", "footprint": [42.0, 42.0], "height": 0.05, "reach": 1.05, "texture": "textures/plaza-disc.png", "note": "the sunk plaza's radial paving, laid over its floor and ring of steps out to the rim: flagstone rings and seven coloured channels to compass medallions on the upper plaza" },
+    "setpiece.library": { "class": "setpiece", "shape": "box", "footprint": [16.0, 14.0], "height": 10.0, "note": "the library on the middle terrace's west wing, its door toward the armillary (the whole-court paint-over)" },
+    "setpiece.workshops": { "class": "setpiece", "shape": "box", "footprint": [16.0, 14.0], "height": 10.0, "note": "the workshops on the middle terrace's east wing, its door toward the armillary" },
+    "setpiece.hall-half": { "class": "setpiece", "shape": "box", "footprint": [10.0, 12.0], "height": 16.0, "note": "one half of the great hall; two stand either side of the north road, facing the plaza" },
     "setpiece.post": { "class": "setpiece", "shape": "round", "footprint": [1.5, 1.5], "height": 2.5, "note": "a low post (the overlook's prow)" }
   }
 }

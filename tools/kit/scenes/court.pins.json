@@ -126,7 +126,13 @@
     "x": 47.5,
     "y": 17
    },
-   "thread": [],
+   "thread": [
+    {
+     "author": "claude",
+     "text": "Two hall-half set pieces stand either side of the north road (rev 26). They read narrow: the model is a slender wing about 6 u wide and 10 m tall. Pin left open; next is a wider, grander hall.",
+     "time": "2026-11-24T07:31:21.483Z"
+    }
+   ],
    "trace": true
   },
   {
@@ -134,30 +140,44 @@
    "note": "FACADE: the library (9 m), door mid-face toward the plaza. A plain wall box for now.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
     "x": 28.5,
     "y": 33
    },
-   "thread": [],
-   "trace": true
+   "thread": [
+    {
+     "author": "claude",
+     "text": "The library is a set piece now (Codex from the paint-overs, Meshy 7.1), turned to face the armillary.",
+     "time": "2026-11-24T07:31:21.272Z"
+    }
+   ],
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p7",
    "note": "FACADE: the workshops (9 m), door mid-face toward the plaza. A plain wall box for now.",
    "author": "claude",
    "rev": 0,
-   "status": "open",
+   "status": "resolved",
    "seen": true,
    "time": "2026-11-23T21:34:08.662603+00:00",
    "anchor": {
     "x": 66.5,
     "y": 33
    },
-   "thread": [],
-   "trace": true
+   "thread": [
+    {
+     "author": "claude",
+     "text": "The workshops are a set piece now (Codex from the paint-overs, Meshy 7.1), turned to face the armillary.",
+     "time": "2026-11-24T07:31:21.380Z"
+    }
+   ],
+   "trace": true,
+   "outcome": "piece"
   },
   {
    "id": "p8",

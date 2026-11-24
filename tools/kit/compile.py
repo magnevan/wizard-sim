@@ -464,6 +464,10 @@ def compile_scene(sc):
         fw, fd = pc['footprint']; dx, dy = OUT[v.get('front', 'S')]
         hw, hd = (fw / 2 / G, fd / 2 / G) if dy else (fd / 2 / G, fw / 2 / G)
         box = Polygon([(v['at'][0] - hw, v['at'][1] - hd), (v['at'][0] + hw, v['at'][1] - hd), (v['at'][0] + hw, v['at'][1] + hd), (v['at'][0] - hw, v['at'][1] + hd)])
+        if v.get('turn'):     # degrees past its front, clockwise on the map (the library faces the armillary, 2026-11-24)
+            t = math.radians(v['turn']); c0, s0 = math.cos(t), math.sin(t); cx0, cy0 = v['at']
+            box = Polygon([(cx0 + (px - cx0) * c0 - (py - cy0) * s0, cy0 + (px - cx0) * s0 + (py - cy0) * c0) for px, py in box.exterior.coords[:-1]])
+            dx, dy = dx * c0 - dy * s0, dx * s0 + dy * c0
         if pc.get('shape') == 'round': box = Point(v['at']).buffer(hw * 0.98, 24)      # a round piece stands on its circle
         if pc.get('class') == 'decal':
             # a decal is a picture laid over whatever lies under its footprint, steps and all (the plaza's channels run up

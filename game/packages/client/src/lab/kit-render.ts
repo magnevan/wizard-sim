@@ -403,6 +403,7 @@ function piece(it: Inst): THREE.Group | null {
     return g;
   }
   if (cls === 'dress') return dressPiece(it, kind);
+  if (cls === 'vine') return vinePiece(it);
   if (cls === 'vignette') {
     const g = new THREE.Group(), y = yOf(it.h);
     g.position.set(it.x, 0, it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // local +z is the front
@@ -506,6 +507,87 @@ function dressPiece(it: Inst, kind: string): THREE.Group {
   standIn(g, k.shape, w, d, 0, H, PROP.stone);
   return g;
 }
+// ---- vines (kit.json class "vine", placed by dress rules on wall faces): painted cards, never stretched with the wall ----
+type VinePiece = KitPiece & { texture?: string; sheet?: string; size_m?: number | number[]; cells?: [number, number]; spacing_m?: number };
+const vineUrls = import.meta.glob<string>('../../../../content/generated/textures/vine-*.png', { eager: true, query: '?url', import: 'default' });
+const vineTex: Record<string, THREE.Texture | null> = {};
+function vineTexture(path?: string): THREE.Texture | null {
+  if (!path) return null;
+  if (!(path in vineTex)) {
+    const url = vineUrls[`../../../../content/generated/${path}`];
+    vineTex[path] = url ? new THREE.TextureLoader().load(url) : null;
+    if (vineTex[path]) { vineTex[path]!.colorSpace = THREE.SRGBColorSpace; vineTex[path]!.wrapS = THREE.RepeatWrapping; vineTex[path]!.anisotropy = 4; }
+  }
+  return vineTex[path];
+}
+const vineMats = new Map<string, THREE.Material>();
+/** A vine's material: its painting with its alpha (cut, not blended, so it sorts and shadows like a solid), or a green stand-in. */
+function vineMat(tex: THREE.Texture | null, tint?: string): THREE.Material {
+  const key = `${tex?.uuid ?? 'none'}|${tint ?? ''}`;
+  let m = vineMats.get(key);
+  if (!m) {
+    m = tex ? new THREE.MeshStandardMaterial({ map: tex, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.95 })
+      : new THREE.MeshStandardMaterial({ color: 0x4f7f3a, side: THREE.DoubleSide, roughness: 0.95, transparent: true, opacity: 0.75 });
+    if (tint && /^#[0-9a-f]{6}$/i.test(tint)) (m as THREE.MeshStandardMaterial).color.multiply(new THREE.Color(tint));
+    vineMats.set(key, m);
+  }
+  return m;
+}
+/** A small seeded random stream, so a vine is the same every time it is drawn. */
+function seeded(...ns: number[]) {
+  let a = ns.reduce((h, n) => Math.imul(h ^ Math.round(n * 1000), 2654435761) >>> 0, 0x9e3779b9);
+  return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+/**
+ * A vine on a wall section (x, y to x2, y2; its front, the lower side, to the right): a strip hangs from the coping
+ * `len` m down, the painting at its real size (1 m across per metre of wall, repeating; its top at the coping, cut, not
+ * stretched), shifted by `offset`, mirrored by `flip`, its foot leaning out a little; a grown vine is cluster stamps
+ * from a sheet along its `paths` ([s, z] m along the wall and down from the coping), two abreast for the first third.
+ */
+function vinePiece(it: Inst & { len?: number; flip?: boolean; offset?: number; paths?: number[][][] }): THREE.Group {
+  const k = (KIT_PIECES[it.p] ?? {}) as VinePiece;
+  const L = Math.hypot(it.x2! - it.x, it.y2! - it.y), dx = (it.x2! - it.x) / L, dy = (it.y2! - it.y) / L;
+  const g = new THREE.Group(); g.matrixAutoUpdate = false;   // x along the wall, z out of its face, y up (as edgeFrame)
+  g.matrix.makeBasis(new THREE.Vector3(dx, 0, dy), new THREE.Vector3(0, 1, 0), new THREE.Vector3(-dy, 0, dx)).setPosition(it.x, 0, it.y);
+  const top = yOf(it.h - 0.15), pos: number[] = [], uv: number[] = [], idx: number[] = [];
+  const quad = (pts: number[][], uvs: number[][]) => { const b = pos.length / 3; for (const p of pts) pos.push(...p); for (const t of uvs) uv.push(...t); idx.push(b, b + 1, b + 2, b, b + 2, b + 3); };
+  if (it.paths) {
+    const sheet = vineTexture(k.sheet), [cx, cy] = k.cells ?? [4, 3], size = yOf(Array.isArray(k.size_m) ? k.size_m[0] : k.size_m ?? 0.3) * (it.scale ?? 1);
+    const step = yOf(k.spacing_m ?? 0.18), rnd = seeded(it.x, it.y, it.x2!, it.y2!);
+    for (const path of it.paths) {
+      // resample the path every step: the stamps go along it evenly however it was drawn
+      const P = path.map(([s, z]) => [yOf(s), top - yOf(z)]), lens = P.slice(1).map((p, i) => Math.hypot(p[0] - P[i][0], p[1] - P[i][1])), total = lens.reduce((a, b) => a + b, 0);
+      for (let t = 0; t <= total + 1e-6; t += step) {
+        let r = t, i = 0; while (i < lens.length - 1 && r > lens[i]) { r -= lens[i]; i++; }
+        const f = lens[i] ? Math.min(1, r / lens[i]) : 0, px = P[i][0] + ((P[i + 1]?.[0] ?? P[i][0]) - P[i][0]) * f, py = P[i][1] + ((P[i + 1]?.[1] ?? P[i][1]) - P[i][1]) * f;
+        for (const side of t < total / 3 ? [-0.3, 0.3] : [0]) {   // thicker near the top: two abreast
+          const cell = Math.floor(rnd() * cx * cy), u0 = (cell % cx) / cx, v0 = 1 - (Math.floor(cell / cx) + 1) / cy;
+          const a = (rnd() - 0.5) * (Math.PI / 3), s = size * (0.85 + rnd() * 0.3) / 2, fl = rnd() < 0.5, ca = Math.cos(a) * s, sa = Math.sin(a) * s;
+          const ox = px + side * size, z = 0.035 + rnd() * 0.03, corner = (u: number, v: number) => [ox + u * ca - v * sa, py + u * sa + v * ca, z];
+          const U0 = fl ? u0 + 1 / cx : u0, U1 = fl ? u0 : u0 + 1 / cx;
+          quad([corner(-1, -1), corner(1, -1), corner(1, 1), corner(-1, 1)], [[U0, v0], [U1, v0], [U1, v0 + 1 / cy], [U0, v0 + 1 / cy]]);
+        }
+      }
+    }
+    if (pos.length) g.add(new THREE.Mesh(vineGeo(pos, uv, idx), vineMat(sheet, it.tint)));
+    return g;
+  }
+  // a strip: across the section, from the coping down len m (at most the painting's height), at its real size
+  const tex = vineTexture(k.texture), [tw, th] = Array.isArray(k.size_m) ? k.size_m : [1, 3];
+  const hang = Math.min(it.len ?? 1.5, th, Math.max(0.2, it.h - (it.low ?? it.h - 3) - 0.2)), H = yOf(hang), Wm = L / yOf(1);
+  const off = (it.offset ?? 0) * tw, u0 = off / tw, u1 = (off + Wm) / tw, v1 = 1 - hang / th;
+  const [U0, U1] = it.flip ? [-u0, -u1] : [u0, u1], lean = 0.1;
+  quad([[0, top - H, 0.03 + lean], [L, top - H, 0.03 + lean], [L, top, 0.03], [0, top, 0.03]], [[U0, v1], [U1, v1], [U1, 1], [U0, 1]]);
+  g.add(new THREE.Mesh(vineGeo(pos, uv, idx), vineMat(tex, it.tint)));
+  return g;
+}
+function vineGeo(pos: number[], uv: number[], idx: number[]) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  return geo;
+}
+
 /** An instance's tint ('#rrggbb', multiplying its colours): materials cloned once per tint, shared by every instance with it. */
 const tinted = new Map<string, THREE.Material>();
 function tintGroup(g: THREE.Object3D, tint: string) {
@@ -546,7 +628,7 @@ export function buildKit(data: KitData): THREE.Group {
     const g = piece(it);
     if (!g) return;
     if (it.scale && it.scale !== 1) g.scale.multiplyScalar(it.scale);
-    if (it.tint) tintGroup(g, it.tint);
+    if (it.tint && !it.p.startsWith('vine.')) tintGroup(g, it.tint);   // (a vine takes its tint in its own material)
     g.userData.inst = i;
     root.add(g);
   });

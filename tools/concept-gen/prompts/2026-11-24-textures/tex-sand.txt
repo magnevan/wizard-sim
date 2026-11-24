@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as tex-sand.png in the current directory. Reply with just the file name.
+
+The attached image is the academy courtyard this texture is for: stylised, hand-painted, warm sandstone, gold trim, warm light.
+
+Draw a seamless tileable texture of fine pale golden sand with soft ripples and a few tiny shells and pebbles, as on a sheltered shore, in exactly that painted style, seen straight down from above, filling the whole square image edge to edge. Evenly lit, flat, with no shadows, no vignette, no perspective, no objects and no text. The pattern repeats cleanly when the image is tiled side by side.

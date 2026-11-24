@@ -20,6 +20,11 @@ TEX = {
     'deck': ('weathered timber planks running from left to right with small iron nails, warm brown', TOP),
     'ashlar': ('a wall of dressed warm sandstone blocks laid in regular horizontal courses, each block about twice as '
                'long as it is tall, with thin mortar joints and softly chipped edges, about six courses tall', FACE),
+    'water': ('calm sea water seen from above, deep teal-blue with soft painted ripples and a few small bright glints, '
+              'stylised and hand-painted like the sea in the attached image', TOP),
+    'woods': ('a shady forest floor of fallen leaves in warm browns and golds, small ferns, moss and a few pine needles', TOP),
+    'dirt': ('a packed earth footpath in warm light brown, with a few small pebbles and faint footprints, worn smooth', TOP),
+    'sand': ('fine pale golden sand with soft ripples and a few tiny shells and pebbles, as on a sheltered shore', TOP),
     'smooth-stone': ('a smooth, fine-grained warm sandstone surface with faint tooling marks and a few soft stains, '
                      'for stair treads and kerbs', TOP),
 }

@@ -14,7 +14,7 @@ from PIL import Image
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 OUT = os.path.join(ROOT, 'game', 'content', 'generated', 'textures')
 RAW = {'paving', 'plaza', 'deck', 'ashlar'}   # regular patterns: Codex draws them tileable, and blending doubles their joints
-TILE_U = {'paving': 4, 'plaza': 6, 'road': 3, 'lawn': 4, 'rock': 6, 'deck': 4, 'ashlar': 4, 'smooth-stone': 2}
+TILE_U = {'paving': 4, 'plaza': 6, 'road': 3, 'lawn': 4, 'rock': 6, 'deck': 4, 'ashlar': 4, 'smooth-stone': 2, 'water': 8, 'woods': 4, 'dirt': 3, 'sand': 4}
 
 
 def tile(img, size, blend=True):

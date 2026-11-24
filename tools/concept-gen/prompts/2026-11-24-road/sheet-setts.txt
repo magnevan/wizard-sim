@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as sheet-setts.png in the current directory. Reply with just the file name.
+
+The attached image is the academy courtyard these stones are for: stylised, hand-painted, warm sandstone, gold trim, warm light.
+
+Draw a sheet of twenty-four separate paving setts on a plain flat magenta (#ff00ff) background, in four rows of six, in exactly that painted style. Each sett is seen from straight above: the worn top face of a squared paving stone, a rectangle a little longer than it is wide, with square corners and straight sides. Every sett is different: its own tint, from warm grey through brown-grey to sandy buff, its own worn patches, small pits and faint cracks. Each sett is evenly lit and flat, with a wide clear gap of magenta all round it. No shadows, no perspective, no text.

@@ -12,6 +12,7 @@ import { RAIL_MOD, railFit } from './kit-fit';
 import { fallMesh } from './kit-fall';
 import { waterMesh } from './kit-water';
 import { FOLIAGE_TIME, grow, type Recipe } from './foliage';
+import { courseStones, kerbRows, KERB_W, stoneMaterial, type Course, type KerbSeg, type StoneSheet } from './kit-road';
 
 export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string; ox?: number; oy?: number;
   /** a fall's lip (fall.curtain): its line in u, the lower water on the right */
@@ -19,7 +20,9 @@ export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; 
   /** per instance (scatters, dressing): size, a colour multiplied in, metres above h, and the parts chosen per slot */
   scale?: number; tint?: string; up?: number; parts?: Record<string, string> };
 export type Floor = { t: string; id?: string; h: number; mat: string; polys: number[][][][] };
-export type KitData = { G: number; size: [number, number]; floors: Floor[]; instances: Inst[] };
+export type KitData = { G: number; size: [number, number]; floors: Floor[]; instances: Inst[];
+  /** the lines a road's courses of stones are laid along (compile.py road_courses; drawn by kit-road.ts) */
+  courses?: (Course & { sheet?: string })[] };
 
 export const M = 1 / 0.6;                         // u per metre
 export const yOf = (m: number) => m * M;
@@ -149,28 +152,43 @@ const NOT_FLOOR = /^(ashlar|smooth-stone|tread|kerb|plaza-disc|tiles|vine-.*|ban
  */
 export function floorMats(): string[] {
   const named = [...Object.keys(texUrls).map((p) => p.split('/').pop()!.replace('.png', '')), ...Object.keys(Object.values(texTiles)[0] ?? {})];
-  return [...new Set([...Object.keys(FLOOR), ...named.filter((n) => !NOT_FLOOR.test(n))])].sort();
+  return [...new Set([...Object.keys(FLOOR), ...named.filter((n) => !NOT_FLOOR.test(n) && !n.startsWith('stones'))])].sort();
 }
 /** u per tile, by texture: tiles.json beside the textures overrides these. */
 // (as tools/kit/textures.py makes them, TILE_U: paving 4, plaza 6, road 3, lawn 4)
-const TILE: Record<string, number> = { paving: 4, plaza: 6, road: 3, lawn: 4, rock: 6, deck: 3, ashlar: 3, 'smooth-stone': 2, tread: 2, kerb: 2,
+const TILE: Record<string, number> = { paving: 4, plaza: 6, road: 9, lawn: 4, rock: 6, deck: 3, ashlar: 3, 'smooth-stone': 2, tread: 2, kerb: 2,
   water: 8, woods: 4, dirt: 3, sand: 4, ...(Object.values(texTiles)[0] ?? {}) };
 /** Textures that drift on floors (tiles a second): water flows slowly. */
 const FLOW: Record<string, [number, number]> = { water: [0.012, 0.007] };
 const TP_TIME = { value: 0 };   // shared by every flowing texture; spinKit advances it each frame
+/**
+ * Floors that vary over a long distance, so a tile's repeat doesn't show as a grid: the tile's own colour, read again
+ * blurred at about a seventh of its scale and turned, lightens and darkens the ground in broad soft patches that never
+ * line up with the tiles (how strongly: 0 none, 1 as far as the tile itself varies, more exaggerates it).
+ */
+const MACRO: Record<string, number> = { road: 2.2 };
+/** A tone multiplied into a floor's texture (the road's painting came out pinker than the court's warm brown). */
+const TONE: Record<string, number> = { road: 0xf4d9b0 };
+/** Laid stones (kit-road.ts): each sheet's atlas grid (textures/stones.json) and, once loaded, its material. */
+const stoneSheets = import.meta.glob<Record<string, StoneSheet>>('../../../../content/generated/textures/stones.json', { eager: true, import: 'default' });
+const SHEETS: Record<string, StoneSheet> = Object.values(stoneSheets)[0] ?? {};
+const STONE: Record<string, THREE.MeshStandardMaterial> = {};
+const JOINT = mat(0x7d6a52);   // the sand between laid stones
 const TEX: Record<string, THREE.MeshStandardMaterial> = {}, RAW: Record<string, THREE.Texture> = {};
 async function loadTextures() {
   const loader = new THREE.TextureLoader();
   await Promise.all(Object.entries(texUrls).map(([p, url]) => loader.loadAsync(url).then((t) => {
     const name = p.split('/').pop()!.replace('.png', '');
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-    TEX[name] = triplanar(t, TILE[name] ?? 4, FLOW[name]); RAW[name] = t;
+    TEX[name] = triplanar(t, TILE[name] ?? 4, FLOW[name], true, MACRO[name] ?? 0); RAW[name] = t;
+    if (TONE[name]) TEX[name].color.setHex(TONE[name]);
+    if (name.startsWith('stones-') && SHEETS[name.slice(7)]) STONE[name.slice(7)] = decalable(stoneMaterial(t));
   }).catch(() => undefined)));
   // one smooth stone serves treads, kerbs and copings, unless each has its own
   if (TEX['smooth-stone']) { TEX.tread ??= TEX['smooth-stone']; TEX.kerb ??= TEX['smooth-stone']; }
 }
 /** A material that samples tex by world position, blended over the three axes by the surface's facing. */
-function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0, 0]): THREE.MeshStandardMaterial {
+function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0, 0], decal = true, macro = 0): THREE.MeshStandardMaterial {
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: flow[0] || flow[1] ? 0.35 : 0.92 });
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tpMap = { value: tex }; sh.uniforms.tpScale = { value: 1 / tile };
@@ -180,9 +198,11 @@ function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;\nuniform sampler2D tpMap;\nuniform float tpScale, tpTime;\nuniform vec2 tpFlow;')
       .replace('#include <map_fragment>', `vec3 tpW = pow(abs(normalize(vTpNrm)), vec3(4.0)); tpW /= (tpW.x + tpW.y + tpW.z);
         vec4 tpC = texture2D(tpMap, vTpPos.zy * tpScale) * tpW.x + texture2D(tpMap, vTpPos.xz * tpScale + tpFlow * tpTime) * tpW.y + texture2D(tpMap, vTpPos.xy * tpScale) * tpW.z;
+        ${macro ? `vec3 tpFar = texture2D(tpMap, mat2(0.8, -0.6, 0.6, 0.8) * vTpPos.xz * tpScale * 0.137, 5.0).rgb, tpMean = texture2D(tpMap, vec2(0.5), 20.0).rgb;
+        tpC.rgb *= clamp(1.0 + (dot(tpFar, vec3(0.333)) / max(dot(tpMean, vec3(0.333)), 0.02) - 1.0) * ${macro.toFixed(2)}, 0.8, 1.2);` : ''}
         diffuseColor *= tpC;`);
   };
-  m.customProgramCacheKey = () => `tp${tile}`;
+  m.customProgramCacheKey = () => `tp${tile}m${macro}`;
   return decalable(m);
 }
 /** A tiling texture's world-mapped material by name (paving, ashlar, smooth-stone...), once loadKitArt has run. */
@@ -467,7 +487,12 @@ function piece(it: Inst): THREE.Group | null {
       const i0 = railInset(it.x, it.y, dx, dy, nx, ny), i1 = railInset(it.x2!, it.y2!, -dx, -dy, nx, ny);
       if (!railModules(g, i0, L - i0 - i1, yOf(it.h + 0.05))) balustrade(g, L, it.h, i0, i1);
     }
-    else if (kind === 'kerb') { if (TEX.kerb || !art(g, 'kerb', 0, yOf(it.h), L / 2)) box(g, TEX.kerb ?? MAT.kerb, 0, L, yOf(low) - 0.1, yOf(it.h), -0.32, 0); }
+    else if (kind === 'kerb') {
+      // laid stone by stone, all a scene's kerbs at once (buildKit, kit-road.ts): the piece itself is the bed of sand
+      // that shows in the joints, and what a click on its stones finds
+      if (STONE.kerb) box(g, JOINT, 0, L, yOf(low) - 0.1, yOf(it.h) - 0.07, -KERB_W + 0.03, -0.03);
+      else if (TEX.kerb || !art(g, 'kerb', 0, yOf(it.h), L / 2)) box(g, TEX.kerb ?? MAT.kerb, 0, L, yOf(low) - 0.1, yOf(it.h), -KERB_W, 0);
+    }
     else if (kind === 'wall') wall(g, L, it.h, low, it.v, shape === 'door');
     else if (kind === 'steps') steps(g, L, it.h, low);   // edge.steps.straight / .chamfer and sweep.steps
     return g;
@@ -877,6 +902,19 @@ export function buildKit(data: KitData): THREE.Group {
       const open = (ax: number, ay: number, bx: number, by: number) => onArchFace(ax, ay, bx, by) || onSegs(lips, ax, ay, bx, by);
       m.visible = false; root.add(waterMesh([outer, ...holes], yOf(f.h), data.size, TP_TIME, 8, open, flow[0] || flow[1] ? [flow[0], flow[1]] : undefined));
     }
+  }
+  // the kerbs' stones, laid along each whole kerb so they run on across its pieces and are cut to its turns
+  if (STONE.kerb) {
+    const kerbs = data.instances.filter((it) => /^(edge|sweep)\.kerb/.test(it.p) && it.x2 != null && it.low != null) as KerbSeg[];
+    const m = new THREE.Mesh(kerbRows(kerbs, yOf, SHEETS.kerb), STONE.kerb);
+    m.castShadow = m.receiveShadow = true; m.raycast = () => undefined;
+    root.add(m);
+  }
+  // a road's courses of stones, one mesh per sheet (not picked: a click goes through to the road under them)
+  for (const sheet of new Set((data.courses ?? []).map((c) => c.sheet ?? 'sett'))) if (STONE[sheet]) {
+    const m = new THREE.Mesh(courseStones(data.courses!.filter((c) => (c.sheet ?? 'sett') === sheet), yOf, SHEETS[sheet]), STONE[sheet]);
+    m.castShadow = m.receiveShadow = true; m.raycast = () => undefined;
+    root.add(m);
   }
   // the water running on under each arch (open at its mouths: no foam across the stream there)
   for (const it of data.instances) if (it.p.startsWith('arch.') && (it as Inst & { mat?: string }).mat === 'water') {

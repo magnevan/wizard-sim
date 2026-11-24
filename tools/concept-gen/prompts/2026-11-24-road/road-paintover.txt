@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as road-paintover.png in the current directory. Reply with just the file name.
+
+The first attached image is a screenshot of a game's academy courtyard: a cobbled road runs from the great hall's archway down to a wide cobbled street, between pink flagstone pavements. The second attached image is the concept painting the game follows: stylised, hand-painted, warm sandstone, gold trim, warm light.
+
+Repaint the first image with the same camera, the same buildings, lamps and pavements, all in the same places, changing only how the cobbled road is laid, so it looks laid by hand like real paving. A course of long pale kerb stones runs along each edge of the road and turns every corner with it. Beside the kerb, on the road, runs a row of squared setts. Between them the cobbles are laid in gently curving rows that follow the road and bend where it bends and widens, the stones varied in size and tint, a little larger down the middle, with a few worn or sandy patches. Each stone is clearly readable.

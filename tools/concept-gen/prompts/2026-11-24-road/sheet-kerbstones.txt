@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as sheet-kerbstones.png in the current directory. Reply with just the file name.
+
+The attached image is the academy courtyard these stones are for: stylised, hand-painted, warm sandstone, gold trim, warm light.
+
+Draw a sheet of sixteen separate kerb stones on a plain flat magenta (#ff00ff) background, in four rows of four, in exactly that painted style. Each stone is seen from straight above: the top face of a long rectangular block of dressed sandstone, about three times as long as it is wide, lying horizontally, with square corners and straight sides. Every stone is different: its own faint tooling marks, a soft stain, a worn or chipped corner, a hairline crack, and its own tint, from pale cream through warm buff to light warm grey. Each stone is evenly lit and flat, with a wide clear gap of magenta all round it. No shadows, no perspective, no text.

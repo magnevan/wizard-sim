@@ -13,8 +13,8 @@ from PIL import Image
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 OUT = os.path.join(ROOT, 'game', 'content', 'generated', 'textures')
-RAW = {'paving', 'plaza', 'deck', 'ashlar', 'cobble', 'plinth'}   # regular patterns: Codex draws them tileable, and blending doubles their joints
-TILE_U = {'paving': 4, 'plaza': 6, 'road': 3, 'lawn': 4, 'rock': 6, 'deck': 4, 'ashlar': 5, 'smooth-stone': 2, 'water': 8, 'woods': 4, 'dirt': 3, 'sand': 4, 'cobble': 5, 'plinth': 4, 'magic-flow': 2}
+RAW = {'paving', 'plaza', 'deck', 'ashlar', 'cobble', 'plinth', 'road'}   # regular patterns: Codex draws them tileable, and blending doubles their joints
+TILE_U = {'paving': 4, 'plaza': 6, 'road': 9, 'lawn': 4, 'rock': 6, 'deck': 4, 'ashlar': 5, 'smooth-stone': 2, 'water': 8, 'woods': 4, 'dirt': 3, 'sand': 4, 'cobble': 5, 'plinth': 4, 'magic-flow': 2}
 
 
 def tile(img, size, blend=True):

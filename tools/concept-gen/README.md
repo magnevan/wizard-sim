@@ -111,3 +111,11 @@ Five images for the [waterfall thread](../../docs/threads/waterfall.md): four st
 - One paragraph starting "Style:" was enough to get four clearly different falls from the same scene and camera: a good way to compare styles in place.
 - The model matched the water round the fall to each style on its own (flat swirls for the ribbon, realistic chop for the veils), so judge the fall, not the sea.
 - The parts sheet ("top row, the parts... bottom row, the same parts assembled... at three sizes, a tiny wizard for scale") came back as laid out, with no labels. The "eight wizards tall" fall is nearer five: scale by wizard is loose.
+
+### 2026-11-24, road
+
+Four images for the [road stones](../../docs/explorations/2026-11-24-road-stones.md): a larger road tile, two sheets of separate stones (kerb blocks, setts) and a paint-over of the court's road. Reference: `court-free-a-2026-11-22.png`, and for the paint-over our own screenshot first.
+
+- "About thirty stones across the image" gave a tile that can cover 9 u, and it tiled as drawn with no visible seam. It came back as coursed rows, not the scattered cobbles of the first tile, and pinker than the court; the game re-tones it.
+- "A sheet of sixteen separate kerb stones on a plain flat magenta background, in four rows of four, each seen from straight above" came back exactly as laid out, every stone different, and cuts cleanly (`tools/kit/stones.py`).
+- "Repaint the first image with the same camera, the same buildings... changing only how the cobbled road is laid" kept the whole scene and changed only the road: a good way to get a target picture for one material in place.

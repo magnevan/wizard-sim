@@ -851,7 +851,32 @@ def compile_scene(sc):
         out_floors.append(dict(t=ch, id=gid[ch], h=T[ch]['h'], mat=T[ch]['mat'], polys=polys))
     counts = {}
     for it in inst: counts[it['p']] = counts.get(it['p'], 0) + 1
-    return result(floors=out_floors, instances=inst, pieces=counts)
+    return result(floors=out_floors, instances=inst, pieces=counts, courses=road_courses(floors, T, allsegs, G))
+
+
+def road_courses(floors, T, allsegs, G):
+    """The lines a road's courses of stones are laid along (kit.json 'roads'; drawn by kit-road.ts), in u.
+
+    Every level of a road material at one height is one surface. Row k of its courses runs (k + 0.5) w inside its
+    outline, round every edge and corner (the outline shrunk with mitred corners), except under what stands on the
+    road's own rim: a wall, or a retaining wall's coping and balustrade."""
+    out = []
+    for mat, spec in KIT.get('roads', {}).items():
+        w = spec['w'] / G
+        groups = {}
+        for ch, ps in floors.items():
+            if ps and T[ch]['mat'] == mat: groups.setdefault(round(T[ch]['h'], 3), []).append(ch)
+        for h, chs in sorted(groups.items()):
+            surface = unary_union([p for ch in chs for p in floors[ch]]).buffer(0)
+            rim = [LineString([s[0], s[1]]) for s in allsegs if s[2] in chs and s[4] in ('wall', 'retain', 'parapet')]
+            for k in range(spec.get('rows', 1)):
+                d = (k + 0.5) * w + 0.03 / G
+                line = surface.buffer(-d, join_style=2).boundary
+                if rim: line = line.difference(unary_union(rim).buffer(d + 0.35 / G))
+                lines = [g for g in getattr(line, 'geoms', [line]) if not g.is_empty and g.length > 2 * w]
+                lines = [[[round(x * G, 3), round(y * G, 3)] for x, y in g.simplify(0.01 / G).coords] for g in lines]
+                if lines: out.append(dict(mat=mat, h=h, w=spec['w'], row=k, sheet=spec.get('sheet', 'sett'), lines=lines))
+    return out
 
 
 def compile_layout(name):

@@ -37,6 +37,9 @@
     "setpiece.workshops": { "class": "setpiece", "shape": "box", "footprint": [16.0, 14.0], "height": 10.0, "note": "the workshops on the middle terrace's east wing, its door toward the armillary" },
     "setpiece.hall-half": { "class": "setpiece", "shape": "box", "footprint": [10.0, 12.0], "height": 16.0, "note": "one half of the great hall; two stand either side of the north road, facing the plaza" },
     "setpiece.great-hall": { "class": "setpiece", "shape": "box", "footprint": [26.0, 12.0], "height": 16.0, "note": "the great hall: two wings and a gatehouse whose archway carries the north road through it (pin p5)" },
+    "setpiece.tree-oak": { "class": "setpiece", "shape": "round", "footprint": [7.0, 7.0], "height": 9.0, "note": "a broad oak for the woods (scattered)" },
+    "setpiece.tree-pine": { "class": "setpiece", "shape": "round", "footprint": [5.0, 5.0], "height": 12.0, "note": "a tall conifer for the woods (scattered)" },
+    "setpiece.tree-blossom": { "class": "setpiece", "shape": "round", "footprint": [6.0, 6.0], "height": 7.0, "note": "a violet-blossom tree, as in the concept (scattered)" },
     "setpiece.post": { "class": "setpiece", "shape": "round", "footprint": [1.5, 1.5], "height": 2.5, "note": "a low post (the overlook's prow)" }
   }
 }

@@ -489,6 +489,29 @@ def compile_scene(sc):
         if any(z.intersects(box) for z in zones): err('vignette-flight', f"{v['piece']} at {v['at']}: in a flight or its landing", v['at'], [v['id']])
         inst.append(dict(p=v['piece'], x=v['at'][0] * G, y=v['at'][1] * G, h=T[on[0]]['h'], rot=math.atan2(dy, dx), src=v['id']))
 
+    # ---- scatter: a level filled with pieces at a spacing (the woods' trees), jittered and seeded, so a scene always
+    # gives the same woods: {kind: scatter, terrace, pieces: [...], spacing (u, default 7), margin (cells, default 1), seed}
+    import random
+    for s_ in kind('scatter'):
+        tg = glyph_of.get(s_.get('terrace'), s_.get('terrace'))
+        ground = floor_u.get(tg)
+        pieces = [p for p in s_.get('pieces', []) if p in KIT['pieces']]
+        if ground is None or not pieces:
+            err('scatter', f"{label(s_)}: no floor for {s_.get('terrace')!r} or no known pieces", None, [s_['id']], 'warning'); continue
+        rng = random.Random(s_.get('seed', s_['id']))
+        step = s_.get('spacing', 7.0) / G; inner = ground.buffer(-s_.get('margin', 1.0))
+        x0, y0, x1, y1 = ground.bounds; n = 0
+        yy = y0
+        while yy <= y1 and n < 600:
+            xx = x0
+            while xx <= x1 and n < 600:
+                px, py = xx + rng.uniform(-0.4, 0.4) * step, yy + rng.uniform(-0.4, 0.4) * step
+                if inner.contains(Point(px, py)):
+                    inst.append(dict(p=rng.choice(pieces), x=px * G, y=py * G, h=T[tg]['h'], rot=rng.uniform(-math.pi, math.pi), src=s_['id']))
+                    n += 1
+                xx += step
+            yy += step
+
     # ---- reachability: cells by terrace, joined where steps are small, plus flights ----
     walk = {c for c in T if T[c].get('edge') != 'wall' and T[c].get('walk', True)}
     nodes = {c for c in walk if floors[c]}

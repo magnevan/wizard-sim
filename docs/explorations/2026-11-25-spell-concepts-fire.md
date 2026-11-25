@@ -90,3 +90,51 @@ The floor follows [toon-floor-3](../reference/spell-concepts/fire/toon-floor-3.j
 The cost: the core streaks push toward "orange energy" if they dominate. Keep them to the first third of the cone and let the flame body take over.
 
 **For the user's review page:** toon-spray-2, hybrid-spray-1, jets-spray-1, ribbons-spray-2, breath-spray-1 and cel-spray-2 (one per direction, to pick a style), then toon-floor-3, hybrid-ring-1 and hybrid-sheet-1. The rest are kept as takes.
+
+## The build: toon volume (2026-11-25)
+
+The user picked **toon volume** ([toon-spray-2](../reference/spell-concepts/fire/toon-spray-2.jpg)), without the hybrid's streaks ("I don't think it's necessary to clarify the cone to this degree"), and [toon-floor-3](../reference/spell-concepts/fire/toon-floor-3.jpg) over [jets-floor-2](../reference/spell-concepts/fire/jets-floor-2.jpg)'s cracks for the floor. Built on branch `p3d-fire`: `view3d/fx/fire.ts` (the spray), `fire-floor.ts`, `fire-sheets.ts`. Shots: `npm run shot:fire3d` (`game/shots/port-3d/fire/`).
+
+**Painted sheets** (Codex, `game/content/generated/fx/`, prompts in `prompts/`, originals in `raw/`, `prep.py` makes the game sheets): `fire-rolls` (16 rolling flame masses), `fire-smoke` (16 pale puffs, tinted dark in the shader), `fire-carpet` (16 low clusters of short flames, cut to 2:1 cells), `fire-cracks` (a tileable char bed with glowing cracks). The edge licks reuse look B's `fire-wisps`. Each sheet came back usable on the first take.
+
+### The spec
+
+| Field | |
+|---|---|
+| **Job** | Who is burning what: one stream of flame from the staff, exactly the sim's cone, stopping where the sim stops it. The floor says "don't stand here" until it dies. |
+| **Silhouette** | A narrow white-hot core from the staff that swells into one rolling body filling the fan, with a dark red outline and a lumpy, billowing far end (a "heart" at 3 runes); dark smoke rising off the far end only. Floor: a low ragged carpet on a charred disc. |
+| **Movement** | Fast and stretched near the staff (masses trail 0.06 s of travel), slowing and turning (rolling) as they billow out. Each particle keeps its birth aim, so a sweep bends like a hose. Floor flames flicker in place and never travel. |
+| **Colour** | Core cream-white; body cream-yellow near the staff, orange, deep orange-red at the far end; rim deep red; smoke warm near-black brown; floor char near black with orange cracks. Contrast on pale stone comes from the rim, the smoke and the char, not from more orange. |
+| **Timing** | Full length in about 0.4 s; masses live 0.65 to 0.8 s, smoke 1.3 s. After the channel stops, what's in flight finishes. Floor: a lit cell flares up over 0.4 s, burns, sinks over its last second (the sim's `FLOOR_FADE`), and its char lingers 3 s. |
+| **Layers** (back to front) | smoke; rim (the body's own particles drawn 10% bigger in deep red, so only the outline shows); edge licks (tongues on the fan's sides, behind the body); body; core; embers; the light: a warm pool and fan decal on the floor plus two spell lights. |
+| **Runes** | The sim's wider, longer fan; more masses (290 a second at 1 rune, 530 at 5); a longer core (0.3 to 0.46 of the way); more smoke and embers. Five is a wall of fire with a smoke plume. No blue-white birth any more (the spike's pink smudges). |
+| **Budget** | Five runes: about 1,100 quads in 6 draw calls (body and rim 2 × 410, core 72, licks 72, smoke 40, embers 80) plus the fan. Floor: 3 clusters and 2 embers a burning cell. Cut first in a crowd: the rim and licks (they're the same as the body), then smoke. |
+| **Not** | Not orange smoke (A), not a bonfire of separate flames (B), not streaks. |
+
+**A floor cell's age.** The sim keeps only a burning cell's life left, and its starting life depends on the caster's linger, so it can't be worked back. `FireFloor` notes the sim time it first saw each cell lit and the time it saw one go out. A cell new since the previous frame (under 0.25 s ago) is lit now and grows in; one the view finds after a gap (its first frame, a frozen shot, a jump) is treated as burning for a while and drawn grown. Notes later than the clock (a rewind) are dropped and noted again.
+
+### What the rounds taught
+
+1. **Cell size is the whole look.** At half the fan's width a mass reads as a cauliflower and hides the goblins (round 1); at about a fifth of the local width (0.16 to 0.28 × the fan's half-width, more of them) the masses merge into one body and the goblins show over it.
+2. **Fill the fan's straight edges from the start.** Spreading masses across 70% of the half-angle right at the staff, not 25%, gives the cone its sides; narrowing them near the staff made a ball on a stick.
+3. **Let the painting carry the saturation.** Colouring the body from a position ramp instead of the painted texture (to make masses blend) washed it to beige cloud after the tone map: the same failure as look A. Tinting the painted colour keeps it fire.
+4. **A rim made from the body's own particles** is cheap and gives the concept's outline: same seed, 10% bigger, deep red, drawn first.
+5. **Stretch along motion** turns round masses into tongues where they're fast (near the staff) and leaves them round where they've slowed: the toon concept's "jet into billow" in one rule.
+6. **Floor carpet:** wide 2:1 clusters on a grid of cells read as rows of stripes; narrower clusters (aspect 1.1 to 1.6) scattered ±0.45 u, three a cell, read as a crowd of tongues.
+7. **A bug both looks had:** on a channel's first tick the sim's channel end reads as the room's origin, so a few particles flew 15 u away in the court. The reach is now capped at the sim's range.
+
+### Against the concept (court, 30 u, `court-n3-vs-concept.png`)
+
+- Reads as fire, one mass, toon-shaded, with a red rim and smoke: yes.
+- Shorter and wider than the painting: the sim's three-rune cone is 96° (the painting is about 65°), and in the shot the goblins have walked into it, so the channel stops at about 3 u. That's the sim's shape, drawn faithfully.
+- The white core hides behind the caster from the game camera when he faces north; it shows facing any other way.
+- The top edge is still a little lumpy (a row of puffs) where the painting has flame licks; the licks only show while the stream grows.
+- The warm light on the floor is weaker than the painting's.
+
+### For a spell-look guide
+
+- **Layers:** a hot core, one body, a darker outline, a non-orange contrast layer (smoke, char), light on the ground. Every good concept had all five.
+- **Palette:** fire on warm pale stone needs a dark value (rim, smoke, char) and a white value (core); orange alone sinks into the floor.
+- **Scale:** a particle is a fraction of the shape it builds (here a fifth of the local width); bigger reads as objects, smaller as noise.
+- **Contrast on pale stone:** covering alpha (0.95) for the body, not additive; additive only for the core.
+- **Timing:** fast and stretched at the source, slow and round where it spreads; the floor flares in, holds, sinks, leaves char.

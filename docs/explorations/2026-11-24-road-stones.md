@@ -98,6 +98,12 @@ The user on E: "the best version so far"; from here versions are compared with E
 
 Version F (`version-f.jpg`, beside E in `compare-e-f.jpg`): where a cross-joint ends on a row's line within 25 degrees of square, its end slides along the line until the joint stands square to it (`--square`, 0 turns it off); a true diagonal stays. The user couldn't see an improvement. Zoomed in on the four spots that differ most (`zoom-e-f.jpg`), F only reshuffles sizes, and in two of them squeezes a stone into a thin slab. Dropped: `--square` is off by default, so the script draws E.
 
+### Painting (pattern settled at E)
+
+The user agreed E is the pattern and asked for the painting experiments. `--style` paints the same stones four ways (`paint-styles.jpg`): `base`, `painterly` (less grain, more difference between stones, a sweep of light across each), `storybook` (strong variation, warm light, dark joints, crisp lit bevels; nearest r6) and `weathered` (worn pale arrises, broad patches, moss in joints, which draws as thin green lines and needs rethinking). Each style is a few numbers in `STYLES`.
+
+A target: Codex repainted the E still from above with r6 as the style (`stones-paint-target.txt`; `paint-target-a.jpg`, `-b.jpg`; beside our storybook in `paint-target-compare.jpg`). Both tries kept every stone where it was. What its stones have that ours lack: brush-stroke texture inside each stone, a thin light line just inside the edge on the lit side, and deeper, cooler joints. Not yet judged by the user.
+
 Open (written for the cut stones; the seam zones of the straightened cells are irregular polygons instead): where rows from several edges meet, each block of rows keeps its own direction, so wide paving reads as patches at different angles with a few dark triangles of mortar between them; a border course along each edge with one calm direction inside would be quieter. Colours are r6's, not yet matched to the court; nothing is in the shader yet.
 
 ## Trade-offs and what was not done

@@ -37,6 +37,18 @@ RECT = [float(v) for v in opt('--rect', '81,31.5625,111,48.4375').split(',')]
 SEED = int(opt('--seed', 1))
 ROAD_SCALE = float(opt('--road', 1.7))
 SQUARE = float(opt('--square', 0))            # cross-joints within this many degrees of square to their row are squared (0: off, the default: at 25 it only reshuffled stones and made a few thin ones)
+# ---- how stones are painted (--style): the layout is the same for all of them ----
+# grain: how strongly the painted stone sheet shows; tone: how far stones differ from each other; rim: how strongly the
+# bevel is lit; grad: a soft light-to-dark sweep across each stone; wear: a paler, chipped band inside each stone's edge;
+# joint: the mortar's brightness; moss: green creeping into the joints in patches; patch: broad change over the ground;
+# sat: colour strength; light: a tint over everything
+STYLES = {
+    'base': {},
+    'painterly': dict(grain=0.35, tone=1.6, rim=1.4, grad=0.08, joint=0.85, sat=1.08),
+    'storybook': dict(grain=0.5, tone=2.0, rim=2.0, grad=0.05, joint=0.68, sat=1.2, light=(1.05, 1.0, 0.93), wear=0.05),
+    'weathered': dict(grain=1.1, tone=1.3, rim=1.2, wear=0.11, joint=0.78, moss=0.6, patch=1.9),
+}
+STYLE = dict(dict(grain=1, tone=1, rim=1, grad=0, wear=0, joint=1, moss=0, patch=1, sat=1, light=(1, 1, 1)), **STYLES[opt('--style', 'base')])
 ROUND = float(opt('--round', 0.3))            # how far a stone's corners are rounded: a share of its shorter half-size        # the road's stones this many times the usual size
 # (surfaces are laid whole, never cut to the rectangle: a cut would be an edge, and rows would follow it)
 rng = np.random.default_rng(SEED)
@@ -432,6 +444,8 @@ def paint(layers, ppu):
     w, h = int(round((X1 - X0) * ppu)), int(round((Y1 - Y0) * ppu))
     img = np.zeros((h, w, 3)); height = np.zeros((h, w)); done = np.zeros((h, w), bool)
     sheets = json.load(open(os.path.join(TEX, 'stones.json')))
+    noise = lambda seed, sig: (lambda a: a / (np.abs(a).max() + 1e-9))(ndimage.gaussian_filter(np.random.default_rng(seed).normal(0, 1, (h, w)), sig * ppu))
+    chips, mossy = noise(SEED + 21, 0.03), noise(SEED + 22, 0.9)
     for S in layers:
         L = LAY[S['name']]
         mask = raster(S['geom'], ppu, RECT)
@@ -475,7 +489,9 @@ def paint(layers, ppu):
             inset = L['joint'] / 2
         n = len(S['sites']); r = np.random.default_rng(SEED + len(S['name']))
         pal = np.array(L['pal'], float)[r.integers(0, len(L['pal']), n)]
-        lum = 1 + r.uniform(-L['tone'], L['tone'], n); warm = r.uniform(-L['tone'], L['tone'], n) * 0.5
+        tn = L['tone'] * STYLE['tone']
+        lum = 1 + r.uniform(-tn, tn, n); warm = r.uniform(-tn, tn, n) * 0.5
+        sweep = r.uniform(0, 2 * np.pi, n)
         pal = pal * lum[:, None] * np.stack([1 + warm, np.ones(n), 1 - warm], 1)
         # painted grain: a window of one painted stone, laid along this stone, as a multiplier round 1
         sh = sheets[L['sheet']]; atlas = np.asarray(Image.open(os.path.join(TEX, f"stones-{L['sheet']}.png")).convert('RGB')).astype(float)
@@ -488,22 +504,32 @@ def paint(layers, ppu):
         px = ((cell[own] % sh['cols']) + u) * cw; py = ((cell[own] // sh['cols']) + v) * ch
         tex = atlas[np.clip(py.astype(int), 0, atlas.shape[0] - 1), np.clip(px.astype(int), 0, atlas.shape[1] - 1)]
         cmean = np.array([atlas[(k // sh['cols']) * ch:(k // sh['cols'] + 1) * ch, (k % sh['cols']) * cw:(k % sh['cols'] + 1) * cw].reshape(-1, 3).mean(0) for k in range(sh['n'])])
-        grain = 1 + (tex / cmean[cell[own]] - 1) * L.get('grain', 0.7)
+        grain = 1 + (tex / cmean[cell[own]] - 1) * L.get('grain', 0.7) * STYLE['grain']
         col = pal[own] * grain
         ee = e[ys, xs]
+        if STYLE['grad']:                         # a soft sweep of light across each stone, each its own way
+            col = col * (1 + STYLE['grad'] * ((dx * np.cos(sweep[own]) + dy * np.sin(sweep[own])) / np.maximum(S['a'][own], S['b'][own])))[:, None]
+        if STYLE['wear']:                         # a paler band just inside the edge, broken up, as worn and chipped arrises
+            band = np.exp(-((ee - inset - 0.03) / 0.03) ** 2) * (0.5 + 0.5 * np.clip(chips[ys, xs] * 2.2, -1, 1))
+            col = col * (1 + STYLE['wear'] * band)[:, None]
         k = np.clip((ee - inset) / (1.5 / ppu), 0, 1)                   # 0 in the joint, 1 on the stone
         ao = 0.9 + 0.1 * np.clip((ee - inset) / (L['bevel'] * 1.6), 0, 1)
-        img[ys, xs] = np.array(L['jointc'], float) * (1 - k[:, None]) + col * ao[:, None] * k[:, None]
+        jc = np.array(L['jointc'], float) * STYLE['joint'] * np.ones((len(ys), 3))
+        if STYLE['moss']:
+            m = np.clip((mossy[ys, xs] - 0.15) * 3, 0, 1)[:, None] * STYLE['moss']
+            jc = jc * (1 - m) + np.array([92, 112, 64.0]) * m
+        img[ys, xs] = jc * (1 - k[:, None]) + col * ao[:, None] * k[:, None]
         hh = np.clip((ee - inset) / L['bevel'], 0, 1); hh = hh * hh * (3 - 2 * hh)
         height[ys, xs] = hh * L['bevel']
         done |= mask
     # the bevels lit from the upper left, as the court's sun falls
     gy, gx = np.gradient(ndimage.gaussian_filter(height, 0.008 * ppu)); gy *= ppu; gx *= ppu
-    shade = np.clip(1 + (gx * 0.55 + gy * 0.45) * -0.3, 0.78, 1.2)
+    shade = np.clip(1 + (gx * 0.55 + gy * 0.45) * -0.3 * STYLE['rim'], 0.6, 1.4)
     img *= shade[..., None]
     # broad, soft change over the whole ground, so no stretch is quite like the next
     big = ndimage.gaussian_filter(np.random.default_rng(SEED + 9).normal(0, 1, (h, w)), 1.6 * ppu); big /= np.abs(big).max() + 1e-9
-    img *= (1 + big * 0.07)[..., None]
+    img *= (1 + big * 0.07 * STYLE['patch'])[..., None]
+    grey = img.mean(2, keepdims=True); img = (grey + (img - grey) * STYLE['sat']) * np.array(STYLE['light'])
     img[~done] = (60, 60, 66)
     return Image.fromarray(np.clip(img, 0, 255).astype(np.uint8))
 

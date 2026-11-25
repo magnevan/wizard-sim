@@ -1,6 +1,6 @@
 # Spell effects in 3D
 
-Status: active; handed off from the [port to 3D](port-3d.md) on 2026-11-25; four tone pieces built, every one judged "a bit wrong still"; studied against the pixel versions (the method is written, and accepted); the shared body reactions built on `p3d-react` (in review as `react`); next: fire · Last touched: 2026-11-25
+Status: active; handed off from the [port to 3D](port-3d.md) on 2026-11-25; four tone pieces built, every one judged "a bit wrong still"; studied against the pixel versions (the method is written, and accepted); round 2 built on `p3d-react`: the shared body reactions and all four rebuilt by the method (in review as `r2-*`); next: the user's round 2 verdicts · Last touched: 2026-11-25
 Record: [the study and the method](../explorations/2026-11-25-spell-effects-study.md) · [fire concepts and builds](../explorations/2026-11-25-spell-concepts-fire.md) · [tone pieces: beam, rock, ring](../explorations/2026-11-25-spell-concepts-tone.md) · [the 3D effects core spike](../explorations/2026-11-25-fx3d-spike.md) · [VFX workflow](../vfx-workflow.md) (spec headings, rubric) · [The Court in 3D](https://claude.ai/artifact/3dWPYc5ZxZqgrYfpksnegu) (the review page, `tools/port-3d-review/`; its db holds every verdict below) · concept art in `docs/reference/spell-concepts/`
 
 ## Where it stands
@@ -49,17 +49,16 @@ The [study](../explorations/2026-11-25-spell-effects-study.md) tested these agai
 
 ## Next
 
-Answered 2026-11-25: the method yes ("I just need to see it visually"), shared reactions first, the court darker (#24, the port thread's). Waiting on `react` (The Court in 3D, "The bodies react"); unanswered means go on to fire.
+Answered 2026-11-25: the method yes ("I just need to see it visually"), shared reactions first, the court darker (#24, the port thread's). The user prefers to review bigger batches (2026-11-25). Waiting on `r2-fire`, `r2-cold`, `r2-arcane`, `r2-earth` (The Court in 3D, "The four, rebuilt by the method"); unanswered means keep going.
 
-- [ ] **Fire:** a Codex flame texture panned and distorted through the body mesh, eroded at the edges; a dense layer of fast short tongues on top; the burning status on bodies; a floor glow as wide as the pixel one; a wall splash along the wall's face.
-- [ ] **Cold:** a frost blast wave ("a blast wave in a snowy landscape") on the radial-disc pattern: a white flash at the caster, a saturated disc of panned snow and frost racing out with a bright crest, a thick burst of snow powder and flung ice, a frost crust on the bodies it reaches, a saturated frost patch left behind.
-- [ ] **Arcane beam:** at least 0.4 u and fully saturated; a 30 Hz white glint, crackle re-rolled on frames, side sparks, a wide pink floor glow; a body hit is the body's flash, char and a splash back along the beam; a wall hit laid along the face.
-- [ ] **Earth:** the wake as speed lines, grit and a short dust trail, not a tube; a white flash at impact, struck goblins thrown and tumbling; chips off a wall's face.
+- [ ] **Walls:** Fire's splash and the rock's chips laid along a wall's face (the effects need the wall's direction from the sim, as the pixel game's `wallAt`).
+- [ ] **Round 2 follow-ups** from the verdicts: the Frost flash is faint; the frost glints on bodies are small.
 - [ ] **The spell-look guide**, written from the four once they pass, and a critic calibrated on the user's verdicts.
 - [ ] Then every other family in batches (sprays, beams, missiles, novas, lightning, ground effects, walls, Sigil devices, statuses, weapons and guards, enemy attacks, deaths, previews), one review page per batch.
 
 ## Done
 
+- 2026-11-25 Round 2, the four by the method (branch `p3d-react`): Fire's body painted with a Codex flow texture and 440 fast tongues a second; Cold as a snow blast wave over its ice with puffs, flakes and an opaque frost; the Arcane beam twice as thick with 30 Hz glints and a wide floor glow; the Earth rock's short trail, speed lines and contact flash ([record](../explorations/2026-11-25-spell-effects-study.md#round-2-the-four-by-the-method-2026-11-25)).
 - 2026-11-25 The shared body reactions (branch `p3d-react`, not merged into `port-3d` yet): the lab's crowd in reach, the hit flash on every hit, statuses hanging off bodies (`fx/statuses.ts`) ([record](../explorations/2026-11-25-spell-effects-study.md#the-users-answers-and-the-shared-step-built-2026-11-25)).
 - 2026-11-25 The study: each tone piece beside its pixel version at the same moments (`npm run compare:fx`, pairs in `tools/port-3d-review/img/study-*.jpg`), a layer count of both, references from stylised 3D games, and the method ([record](../explorations/2026-11-25-spell-effects-study.md)).
 - 2026-11-25 Effects core, stand-ins for every spell, the 3D VFX Lab, two concept rounds (fire; beam, rock, ring), four builds judged (in the [port to 3D](port-3d.md) thread).

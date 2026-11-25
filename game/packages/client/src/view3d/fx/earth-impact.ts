@@ -145,6 +145,9 @@ export class EarthImpacts {
     this.list.push(i);
   }
 
+  /** Impacts from the last `within` s before t (the flash's moment of contact). */
+  recent(t: number, within: number): readonly Impact[] { return this.list.filter((i) => t - i.t >= 0 && t - i.t < within); }
+
   /** Drop impacts after time t (a rewind: the replay makes them again), or all with t < 0. */
   rewind(t: number): void { this.list = t < 0 ? [] : this.list.filter((i) => i.t <= t + 1e-6); }
 

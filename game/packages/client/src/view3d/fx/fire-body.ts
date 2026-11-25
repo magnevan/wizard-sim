@@ -20,6 +20,7 @@
  * rollback draw it exactly.
  */
 import * as THREE from 'three';
+import { FIRE_TEX } from './fire-sheets';
 import { HASH, NOISE } from './glsl';
 import { premulMaterial } from './particles';
 import { FX_U } from './stage';
@@ -81,8 +82,9 @@ const FRAG = /* glsl */ `
 ${HASH}
 ${NOISE}
 uniform sampler2D uDepth; uniform vec2 uRes; uniform float uNear, uFar;
-uniform float uTime, uHot, uRim, uOn;
+uniform float uTime, uHot, uRim, uOn, uHasFlow;
 uniform vec4 uLobe;
+uniform sampler2D uFlow;
 in vec3 vWp; in vec3 vN; in vec2 vG; in float vS; in float vUp;
 out vec4 fxColor;
 void main() {
@@ -96,9 +98,15 @@ void main() {
   vec3 q = vec3(vS * 2.2 - uTime * 2.4, cos(th) * 2.6 + uLobe.w, sin(th) * 2.6 + uSeed * 0.1);
   float n1 = fbm3(q), n2 = fbm3(vec3(vS * 5.0 - uTime * 4.5, cos(th) * 6.0 + 11.0 + uLobe.w, sin(th) * 6.0 - uTime * 0.8));
   float n = n1 * 0.62 + n2 * 0.38;
-  // erosion: grazing surfaces, the far end and the tail eat away where the noise is low, leaving tongues
+  // the painted flame (fire-flow.png): tongues streaming outward along the tube, scrolled faster than the noise and bent
+  // by it (the study's method: a painted texture that pans, bends and erodes on a mesh)
+  vec2 fuv = vec2(vG.y * 3.0 + uLobe.w * 0.13 + (n1 - 0.5) * 0.22, vS * 1.7 - uTime * 2.8 + (n2 - 0.5) * 0.12);
+  vec3 tex = uHasFlow > 0.5 ? texture(uFlow, fuv).rgb : vec3(n);
+  float tl = max(tex.r, max(tex.g, tex.b));
+  // erosion: grazing surfaces, the far end and the tail eat away first where the painting is dark (the gaps between its
+  // tongues), so the body breaks into tongues rather than a smooth edge
   float er = pow(fres, 1.6) * 0.85 + smoothstep(0.5, 1.0, vG.x) * 0.7 + (1.0 - smoothstep(0.0, 0.08, vG.x)) * 0.4 - uRim * 0.06;
-  float a = smoothstep(er - 0.03, er + 0.03, n + 0.22);
+  float a = smoothstep(er - 0.03, er + 0.03, n * 0.45 + tl * 0.55 + 0.2);
   if (a <= 0.0) discard;
   float scene = -perspectiveDepthToViewZ(texture(uDepth, gl_FragCoord.xy / uRes).r, uNear, uFar);
   float vz = (viewMatrix * vec4(vWp, 1.0)).z;
@@ -119,8 +127,11 @@ void main() {
     c = mix(c, red, smoothstep(0.74 - e, 0.74 + e, h));
     // soft toon shading: a little darker on the lower flank, so it reads as a volume
     c *= mix(0.78, 1.08, smoothstep(-0.4, 0.6, N.y));
-    // covering in the middle, translucent toward the edges
-    float cover = mix(0.95, 0.55, smoothstep(0.35, 0.95, fres));
+    // the painting carries the colour (lifted into HDR so the tone map keeps it saturated), cooling toward the far end
+    vec3 painted = tex * vec3(2.3, 1.55, 1.1) * mix(vec3(1.0), vec3(0.8, 0.42, 0.3), smoothstep(0.45, 1.0, h));
+    c = mix(c, painted, 0.7 * uHasFlow);
+    // covering in the middle, translucent toward the edges and in the painting's dark gaps (layers show through)
+    float cover = mix(0.95, 0.55, smoothstep(0.35, 0.95, fres)) * mix(0.5, 1.0, smoothstep(0.12, 0.55, tl));
     o = vec4(c * cover, cover) * a;
   }
   fxColor = o * soft * uOn;
@@ -157,7 +168,7 @@ export class FireBody {
     const shell = (lobe: THREE.Vector4, scale: number, rim: boolean, order: number) => {
       const m = premulMaterial(new THREE.ShaderMaterial({
         glslVersion: THREE.GLSL3, side: THREE.DoubleSide,
-        uniforms: { ...FX_U, ...shared, uSeed: { value: seed }, uShell: { value: scale }, uLobe: { value: lobe }, uRim: { value: rim ? 1 : 0 }, uGrow: this.uGrow, uOn: this.uOn },
+        uniforms: { ...FX_U, ...shared, uSeed: { value: seed }, uShell: { value: scale }, uLobe: { value: lobe }, uRim: { value: rim ? 1 : 0 }, uGrow: this.uGrow, uOn: this.uOn, uFlow: { value: FIRE_TEX.flow }, uHasFlow: { value: FIRE_TEX.flow ? 1 : 0 } },
         vertexShader: VERT(head), fragmentShader: FRAG,
       }));
       const mesh = new THREE.Mesh(this.geo, m);

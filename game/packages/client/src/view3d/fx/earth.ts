@@ -29,6 +29,7 @@ import type { HeightAt } from './decal';
 import { DustMesh, paramGrid } from './dust-mesh';
 import { missileRunes, plainRock, rockRadius } from './earth-sheets';
 import { EarthImpacts } from './earth-impact';
+import { EarthStreaks, type StreakRock } from './earth-streaks';
 import { rockGeometry, stoneMaterial } from './rock-mesh';
 
 /** A rock's flight height over the floor at its middle (u): the staff's (standins.ts MISSILE_H). */
@@ -74,6 +75,8 @@ export class EarthFx {
   private shapes: THREE.BufferGeometry[];
   private grit: THREE.InstancedMesh;
   private wakes: DustMesh[] = [];
+  /** The air streaks behind each rock and the white flash where it hits (earth-streaks.ts). */
+  private streaks = new EarthStreaks();
   private m = new THREE.Matrix4(); private q = new THREE.Quaternion(); private q2 = new THREE.Quaternion(); private ax = new THREE.Vector3(); private v = new THREE.Vector3(); private s = new THREE.Vector3();
 
   constructor(private heightAt: HeightAt) {
@@ -94,6 +97,7 @@ export class EarthFx {
     }
     this.impacts = new EarthImpacts(heightAt);
     this.group.add(this.impacts.group);
+    this.group.add(this.streaks.group);
     this.meshes.add(this.impacts.meshes);
   }
 
@@ -192,6 +196,9 @@ export class EarthFx {
     for (let i = ri; i < this.rocks.length; i++) this.rocks[i].visible = false;
     this.grit.count = gi; this.grit.instanceMatrix.needsUpdate = true;
     this.impacts.update(td);
+    const flying: StreakRock[] = [];
+    for (const r of shown) if (r && td < r.end + 0.02) { const y = this.flightY(r.x0, r.z0, r.r); flying.push({ x0: r.x0, y, z0: r.z0, t0: r.t0, vx: r.vx, vz: r.vz, r: r.r, end: r.end === Infinity ? 1e9 : r.end }); }
+    this.streaks.update(td, flying, this.impacts.recent(td, 0.12).map((i) => ({ x: i.x, y: i.y, z: i.z, t: i.t, r: i.r })));
   }
 
   /** Rock r's wake at time td: from where the rock is (or ended) back along its line. */
@@ -202,7 +209,8 @@ export class EarthFx {
     if (!wk.mesh.visible) return;
     const x = r.x0 + r.vx * tt, z = r.z0 + r.vz * tt, u = wk.u;
     (u.uHead.value as THREE.Vector3).set(x, this.flightY(x, z, r.r), z); (u.uDir.value as THREE.Vector2).set(r.vx / sp, r.vz / sp);
-    u.uLen.value = Math.min(sp * tt, sp * life); u.uR.value = r.r * (0.9 + 0.08 * r.n); u.uSpeed.value = sp; u.uSince.value = since; u.uLife.value = life;
+    // a short trail of dust behind the rock, not a tube back to the staff (the user: "reads like a textured tube")
+    u.uLen.value = Math.min(sp * tt, 1.0 + 0.35 * r.n); u.uR.value = r.r * (0.9 + 0.08 * r.n); u.uSpeed.value = sp; u.uSince.value = since; u.uLife.value = life;
     u.uSeed.value = r.seed % 997; u.uSalt.value = (r.seed % 53) * 2.3; u.uClock.value = td - r.t0;
   }
 
@@ -247,6 +255,6 @@ export class EarthFx {
     for (const g of this.shapes) g.dispose();
     (this.rocks[0].material as THREE.Material).dispose();
     this.grit.geometry.dispose(); (this.grit.material as THREE.Material).dispose();
-    for (const w of this.wakes) w.dispose(); this.impacts.dispose();
+    for (const w of this.wakes) w.dispose(); this.impacts.dispose(); this.streaks.dispose();
   }
 }

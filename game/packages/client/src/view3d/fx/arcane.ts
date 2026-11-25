@@ -79,10 +79,10 @@ export function arcaneBeams(w: World): BeamIn[] {
 const surgeOf = (n: number) => { const v = 16 + 3 * n; return { v, sp: v / (3 + 3 * n), len: 0.35 + 0.1 * n }; };
 /** The body's and the core's half-widths (u) at n runes; the halo's reach and strength. A wizard is 2.7 u tall. */
 const widthOf = (n: number) => ({
-  body: 0.05 + 0.012 * n,
-  core: n >= 4 ? 0.026 + 0.008 * n : 0.012 + 0.005 * n,
-  halo: n >= 3 ? 0.18 + 0.04 * n : 0.13,
-  haloK: n >= 3 ? 0.3 + 0.07 * n : 0.18,
+  body: 0.13 + 0.025 * n,
+  core: n >= 4 ? 0.05 + 0.012 * n : 0.03 + 0.01 * n,
+  halo: 0.36 + 0.07 * n,
+  haloK: 0.32 + 0.07 * n,
 });
 
 const LINE = /* glsl */ `
@@ -98,7 +98,7 @@ vec4 look(float along, float across, float len) {
   // the halo swells round a surge softly (a sharp-headed glow reads as a box)
   float soft = exp(-pow((f - (1.0 - L * 0.4)) / (L * 0.6), 2.0)) * step(0.14, rnd(floor(ph) + 4096.0, 5.0)) * ends;
   surge *= ends;
-  float shim = 0.85 + 0.3 * vnoise3(vec3(along * 1.6 - uClock * 7.0, across * 9.0, uClock * 2.0));
+  float shim = 0.7 + 0.6 * vnoise3(vec3(along * 2.4 - uClock * 9.0, across * 14.0, uClock * 3.0));
   float body = uBody * uWide * (1.0 + 0.08 * surge), core = max(uCore * uWide * (1.0 + 0.7 * surge), aa * 0.6 * uWide);
   float rim = max(0.018, aa * 1.3) * uWide;
   // the halo: added light round the line
@@ -110,6 +110,10 @@ vec4 look(float along, float across, float len) {
   vec3 bodyCol = mix(vec3(1.05, 0.05, 1.3), vec3(1.9, 0.4, 2.2), smoothstep(core * 2.4, core * 1.1, d)) * shim * (1.0 + 0.9 * surge);
   vec3 coreCol = mix(vec3(2.6, 1.6, 3.3), vec3(5.0, 4.8, 5.2), max(uWhite, surge));
   vec3 inner = mix(vec3(0.12, 0.012, 0.2), mix(bodyCol, coreCol, coreA), bodyA);
+  // glints: short stretches of the body flash white, re-rolled 30 times a second (art/kit.ts: every fifth point at 30 Hz)
+  float seg = floor(along / 0.22), fr = floor(uClock * 30.0);
+  float glint = step(0.8, rnd(seg + fr * 131.0, 9.0)) * ends * (1.0 - smoothstep(body * 0.5, body, d));
+  inner = mix(inner, vec3(4.2, 3.6, 4.6), glint * bodyA * 0.85);
   return vec4(col * (1.0 - rimA) + inner * rimA, rimA * 0.95);
 }`;
 
@@ -141,7 +145,7 @@ vec3 beamPt(vec4 A, float d) { vec2 dir = vec2(cos(A.z), sin(A.z)), g = A.xy + d
 /** Each layer's births a second and life (s), at n runes and impact variant (0 a, 1 b). */
 const RATE = {
   hit: (n: number, b: number) => (b ? 26 + 6 * n : 12 + 3 * n), hitLife: (b: number) => (b ? 0.42 : 0.28),
-  shed: (n: number) => (n >= 3 ? 7 * (n - 2) : 0), shedLife: 0.4,
+  shed: (n: number) => 8 + 6 * n, shedLife: 0.4,
 };
 
 /** Sparks off the impact, thrown back toward the caster (a: a narrow splash; b: wide, faster, more). */
@@ -317,7 +321,7 @@ export class ArcaneBeam {
     this.line.set(this.a, this.b, W.halo * 1.8 + 0.05, W.halo * 1.8 + 0.05);
     // the floor strip
     const hitOn = hit && grow >= 1 ? wide : 0;
-    this.G.uFW.value = 0.26 + 0.04 * n; this.G.uOnG.value = wide * grow; this.G.uHitG.value = hitOn * (imp ? 1.3 : 0.8); this.G.uFK.value = 0.24 + 0.04 * n;
+    this.G.uFW.value = 0.7 + 0.1 * n; this.G.uOnG.value = wide * grow; this.G.uHitG.value = hitOn * (imp ? 1.3 : 0.8); this.G.uFK.value = 0.65 + 0.08 * n;
     this.floor.mesh.visible = this.line.mesh.visible;
     this.floor.set(this.a.x, this.a.z, this.b.x, this.b.z, Math.max(this.G.uFW.value * 1.6, 1.2), 1.2);
     // particles

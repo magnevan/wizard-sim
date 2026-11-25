@@ -75,6 +75,21 @@ The shared step, on branch `p3d-react`:
 
 What the rounds taught: licks placed on the body's own outline are hidden by it from a camera that looks down; out past the silhouette and up on the shoulders they show. A three-rune ring leaves a light chill, and glints in proportion to it almost never showed: any chill now shows, by its square root, at least 0.45. The frost glints are still small at the game camera; they can grow with the frost blast.
 
+## Round 2: the four by the method (2026-11-25)
+
+The user asked to review bigger batches ("I think I prefer to review it when you have more changes"), so the body reactions went on into all four spells before the next look. On branch `p3d-react`, in review on The Court in 3D as `r2-*`.
+
+- **Fire** (`fire-body.ts`, `fire.ts`): a Codex texture of flame tongues streaming one way (`content/generated/fx/fire-flow.png`, prompt and both takes in `prompts/` and `raw/`) scrolls along each lobe of the body, bent by the existing noise; its colour carries the body (lifted into HDR) and its dark gaps erode first and turn see-through. On top, about 440 painted tongues a second at three runes (`fire-licks`, unused since the sprite build), a quarter of a second each, their picture re-picked 12 times a second. The floor glow spills about twice as far.
+- **Cold** (`cold.ts`): the ice teeth stay as the frost at the wave's foot; over them a second ring band of snow powder with a billowing top, leaning out like a breaking wave, eroded as it dies; 90 + 40 a rune snow puffs riding the front; 24 + 9 a rune flung shards (from 8 + 3); flakes settling inside, twinkling on whole frames; a flash at the caster with a light; and the frost nearly opaque.
+- **Arcane** (`arcane.ts`): body half-width 0.13 + 0.025 a rune (0.41 u across at three), a wider halo, stretches of the body flashing white re-rolled at 30 Hz, a grainier shimmer, sparks shed at every rune count, a floor glow almost three times as wide.
+- **Earth** (`earth.ts`, new `earth-streaks.ts`): the wake capped to a short trail behind the rock; five white speed lines a rock, their lengths re-rolled at 30 Hz; a white flash at contact.
+
+What the rounds taught:
+1. **A painted texture on the mesh beats procedural bands.** The same fire mesh read as cloth with noise bands and as fire with a painted flow scrolling through it.
+2. **An unlit decal must be lifted to the lit floor's level.** At 0.72 cover the frost still tone-mapped to grey-lavender, because the sunlit stone under it is far above 1 in HDR and the decal isn't lit. Raised to the floor's level and nearly opaque, it reads as frost.
+3. **Opaque, then tint.** The bright version went white (the tone map turns bright cyan white); bluer base colours and a smaller lift brought the blue back.
+4. **The sim's instant hit shows.** The Frost ring hits the whole disc on its first tick, so the goblins flash before the front reaches them. Whether the hit should wait for the front is a rule question for the user.
+
 ## Sources
 
 - [Stylized VFX in RiME](https://www.unrealengine.com/events/unreal-fest-europe-2018/stylized-vfx-in-rime) (Simon Trümpler, Unreal Fest Europe 2018), and his [VFX Sketchbook](https://realtimevfx.com/t/simon-trumpler-vfx-sketchbook/4177?page=11) on realtimevfx.com (UV distortion plus alpha erosion; the inner duplicate mesh; faster scrolling while fading).

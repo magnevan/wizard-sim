@@ -11,6 +11,8 @@
  *    flame (the concept's rim, which keeps the fire off the warm floor).
  * 3. **The body**: one volume, a mesh from the staff to where the channel stops (fire-body.ts), with noise flowing
  *    outward through it cut into toon bands (white-hot, yellow, orange, deep red) and eroded into tongues at its edges.
+ * 3b. **Tongues**: many small painted licks (fire-licks.png) racing out through the body, a quarter of a second each,
+ *    their picture re-picked 12 times a second: the speed (the effects study's round 2).
  * 4. **The core**: a white-hot stream of soft glows from the staff's tip, the first third of the way out, drawn a little
  *    nearer the camera so it shows over a caster who faces away.
  * 5. **Embers**, a few, carrying past the end and falling.
@@ -62,6 +64,7 @@ const RATE = {
   core: (n: number) => 240 + 40 * n, coreLife: 0.16,
   smoke: (n: number) => 9 + 4 * n, smokeLife: 1.3,
   ember: (n: number) => (14 + 8 * n) * (n >= 5 ? 1.6 : 1), emberLife: 0.9,
+  tongue: (n: number) => 260 + 60 * n, tongueLife: 0.26,
 };
 
 /** The core: soft white-hot glows from the staff's tip, out to uCore of the way (0.3 at one rune to 0.46 at five). */
@@ -108,7 +111,40 @@ Particle particle(float k, float age, float ts) {
   return p;
 }`);
 
+/**
+ * Tongues: many small painted flame tongues racing out through the body, each a quarter of a second, its tip trailing
+ * behind it; the speed the body alone couldn't show (the study: the pixel spray is hundreds of small fast pieces).
+ */
+const TONGUE = streamMotion(/* glsl */ `${SPRAY_HEAD}
+Particle particle(float k, float age, float ts) {
+  vec4 A = aimAt(uTime - ts);
+  float s0 = 0.08 + 0.72 * rnd(k, 41.0), s = s0 + age * (0.32 + 0.2 * rnd(k, 42.0));
+  if (s > 1.02) return P0();
+  float side = (rnd(k, 43.0) * 2.0 - 1.0) * uHalf * 0.85 * smoothstep(0.0, 0.3, s), w = fanW(A, s);
+  Particle p = P0(); p.alive = true;
+  p.pos = sprayAt(A, s, side, 0.0, mix(axisH(s), w * 0.3 + 0.15, smoothstep(0.0, 0.6, s)) + (rnd(k, 44.0) - 0.3) * (0.2 + w * 0.35) + age * age * 0.3);
+  p.size = (0.12 + w * 0.09) * (0.7 + 0.5 * rnd(k, 45.0)) * sin(min(age, 0.999) * 3.14159);
+  p.aspect = 0.55; p.stretch = 0.035;
+  // its picture re-picked 12 times a second: the stepped flicker of the pixel flames
+  p.col = vec4(s, age, 0.0, 1.0);
+  p.data = vec4(rnd(k * 7.0 + floor(uTime * 12.0), 46.0), rnd(k, 47.0), 0.0, 0.0);
+  return p;
+}`);
+
 // ---- looks -------------------------------------------------------------------------------------------------------
+
+/** A tongue: the painted lick, tip trailing, covering where it's bright, cooler toward the far end. */
+const LOOK_TONGUE = /* glsl */ `
+uniform sampler2D uSheet;
+${SHEET_GLSL}
+vec4 look(vec2 uv, vec4 col, vec4 data) {
+  vec3 t = sheetCell(uSheet, vec2(uv.x * 0.5 + 0.5, 0.5 - uv.y * 0.5), data.x, data.y, 4.0, 4.0);
+  float lum = max(t.r, max(t.g, t.b)), m = smoothstep(0.08, 0.45, lum);
+  // the painting's own colour, pushed past white at its hottest and cooled to red toward the far end
+  vec3 c = t * mix(vec3(2.4, 1.9, 1.4), vec3(1.5, 0.7, 0.4), smoothstep(0.3, 1.0, col.x));
+  float a = m * 0.9;
+  return vec4(c * a, a);
+}`;
 
 /** The core: a soft white-hot glow, mostly added light, cooling to pale gold where it hands over to the body. */
 const LOOK_CORE = /* glsl */ `
@@ -148,15 +184,16 @@ const FAN = /* glsl */ `
 uniform vec4 uFan; uniform float uHalf, uFanOn, uClock, uNozF;
 vec4 decal(vec3 wp) {
   vec2 d = wp.xz - uFan.xy; float r = length(d);
-  if (r > uFan.w + 1.5 || uFanOn <= 0.0) return vec4(0.0);
+  if (r > uFan.w + 3.0 || uFanOn <= 0.0) return vec4(0.0);
   vec2 dir = vec2(cos(uFan.z), sin(uFan.z));
   float a = atan(d.y, d.x) - uFan.z; a = mod(a + 3.14159265, 6.2831853) - 3.14159265;
   // the light spills a little past the flames' outline (about a cell), never further
-  float side = 1.0 - smoothstep(uHalf * 0.85, uHalf * 1.25, abs(a)), end = 1.0 - smoothstep(uFan.w - 0.4, uFan.w + 1.2, r);
+  float side = 1.0 - smoothstep(uHalf * 0.9, uHalf * 1.6, abs(a)), end = 1.0 - smoothstep(uFan.w - 0.2, uFan.w + 2.4, r);
   float n = fbm3(vec3(wp.xz * 1.1 - dir * uClock * 3.0, uClock * 0.7));
   float fan = side * end * smoothstep(0.2, 1.0, r) * (0.7 + 0.3 * n);
-  float pool = exp(-dot(wp.xz - uFan.xy - dir * uNozF, wp.xz - uFan.xy - dir * uNozF) / 3.0);
-  float k = (fan * 1.0 + pool * 0.9) * uFanOn;
+  float pool = exp(-dot(wp.xz - uFan.xy - dir * uNozF, wp.xz - uFan.xy - dir * uNozF) / 7.0);
+  // as wide as the pixel spray's glow (the study): a pool round the caster and the fan, spilling past the flames
+  float k = (fan * 1.15 + pool * 1.0) * uFanOn;
   // a warm glaze: it takes a little of the pale stone's own colour away (alpha) and puts saturated firelight back, so the
   // floor under the fire turns orange rather than just brighter (which the tone map would wash to cream)
   vec3 c = mix(vec3(1.0, 0.45, 0.1), vec3(1.0, 0.24, 0.04), clamp(r / max(uFan.w, 1.0), 0.0, 1.0));
@@ -197,6 +234,7 @@ export class FireSpray {
     // the body: one volume, a mesh (fire-body.ts), its deep-red outline shell first, then the flame
     this.body = new FireBody(SPRAY_HEAD, this.U, seed);
     this.group.add(this.body.group);
+    add(TONGUE, LOOK_TONGUE, RATE.tongue, RATE.tongueLife, 4, { uSheet: { value: FIRE_TEX.licks } }, 6);
     add(CORE, LOOK_CORE, RATE.core, RATE.coreLife, 4);
     add(EMBER, LOOK_EMBER, RATE.ember, RATE.emberLife, 5);
     this.fan = new GroundDecal({ look: FAN, uniforms: { ...this.F, uHalf: this.U.uHalf } });
@@ -237,7 +275,7 @@ export class FireSpray {
     const grown = Math.min(1, (t - r.t0) / 0.45);
     this.F.uFan.value.set(now.x, now.z, now.ang, NOZZLE.forward + (now.reach - NOZZLE.forward) * grown); this.F.uFanOn.value = on * (0.75 + 0.07 * n); this.F.uClock.value = t;
     this.fan.heightAt = () => groundY;
-    this.fan.cover({ x0: now.x - now.reach - 1.5, z0: now.z - now.reach - 1.5, x1: now.x + now.reach + 1.5, z1: now.z + now.reach + 1.5 });
+    this.fan.cover({ x0: now.x - now.reach - 3, z0: now.z - now.reach - 3, x1: now.x + now.reach + 3, z1: now.z + now.reach + 3 });
     // light: the staff's flare and the stream, brighter with more runes, only while it's running
     if (lights && t <= r.end) {
       const A = now, cs = Math.cos(A.ang), sn = Math.sin(A.ang), on2 = Math.min(1, (t - r.t0) / 0.12);

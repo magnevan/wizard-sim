@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as fire-flow-2.png in the current directory. Reply with just the file name.
+
+The attached image is concept art for our stylised 3D game: a wizard's spray of toon-shaded fire. Make a square, seamlessly tileable texture of that fire's inside, to be scrolled through a flame mesh, in the same hand-painted toon style.
+
+Many long flame tongues streaming from the bottom of the square to the top, overlapping and interweaving, each tongue with a white-hot core, yellow and orange body and a thin deep-red edge, separated by dark red and near-black gaps. Crisp painted shapes with soft toon shading, not blurry smoke. The tongues are of mixed widths, curl a little sideways and split into forks at their tips. Even coverage across the whole square, no single centre, no vignette, no border, no background scene. Its left edge continues seamlessly into its right edge and its top into its bottom. No text.

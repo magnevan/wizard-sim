@@ -18,6 +18,10 @@
  *    veil at the edge, never puffs, never inside the ring.
  * 5. **Glints**: a few glassy slivers (8 + 3 a rune) thrown off as the teeth break; the only particles in it.
  *
+ * Round 2 (the effects study, 2026-11-25; the user: "a blast wave in a snowy landscape") adds a wall of snow powder
+ * riding over the teeth (LOOK_BLAST), snow puffs thrown with it, flakes settling after it, a flash at the caster, three
+ * times the shards and a nearly opaque frost.
+ *
  * No layer is a cluster of sprites (the user's verdict on the first built fire, 2026-11-25).
  *
  * Sizes and timing are the sim's: the radius from the burst event (SHAPES.novaRadius + novaPerRune a rune), the sim
@@ -56,6 +60,8 @@ export const COLD = {
   follow: 0.8,
   /** The rime: whole until `rimeHold` s, melted by `rimeHold + rimeMelt + rimePerRune × (n - 1)`. */
   rimeHold: 1.1, rimeMelt: 1.9, rimePerRune: 0.25,
+  /** The snow wall riding over the ice: its height at one rune and per extra rune (u), and how far its top leans out. */
+  blast: 0.95, blastPerRune: 0.15, blastLean: 0.45,
 };
 
 /** How much slower than the tuned timing a ring of radius r plays (art/novas.ts novaStretch, without its knob). */
@@ -68,7 +74,9 @@ const holdOf = (n: number): number => (n >= 5 ? 0.55 : 0);
 export const lifeOf = (r: number): number => COLD.rimeHold + COLD.rimeMelt + COLD.rimePerRune * (runesOf(r) - 1) + 0.2;
 
 /** Glints at most a ring: a few slivers as the teeth break, the only particles in it. */
-const SHARD_CAP = 24;
+const SHARD_CAP = 72;
+/** Snow puffs riding the blast, and flakes settling after it, at most a ring. */
+const PUFF_CAP = 300, FLAKE_CAP = 70;
 
 /** Ticks of the caster's path kept a ring, and the spacing of its samples on the GPU. */
 const PATH_TICKS = 120, PATH_N = 32, PATH_STEP = 4;
@@ -182,8 +190,113 @@ vec4 look(vec2 p) {
   vec3 q = vec3(cos(p.x) * 3.2, sin(p.x) * 3.2, p.y * 2.6 - uClock * 0.9);
   float n = fbm3(q + uSeed * 0.01), n2 = vnoise3(q * 2.3 + 4.0);
   float m = smoothstep(0.38 + 0.5 * y, 0.75 + 0.3 * y, n * 0.8 + n2 * 0.3) * pow(1.0 - y, 1.4) * smoothstep(0.0, 0.08, y);
-  float al = m * 0.22 * uMist;
+  float al = m * 0.32 * uMist;
   return vec4(vec3(0.82, 0.93, 1.0) * al, al);
+}`;
+
+/**
+ * The blast: a wall of snow powder racing out over the ice (a second ring band), its top a line of rolling billows,
+ * leaning outward like a breaking wave, white on top and pale cyan in its shade, and eaten away by noise as it dies
+ * (uFade 0..1): the user's "blast wave in a snowy landscape".
+ */
+const LOOK_BLAST = /* glsl */ `
+uniform float uClock, uFade, uGrow;
+vec4 look(vec2 p) {
+  float H = max(uHeight, 1e-3), y = p.y / H;
+  vec3 q = vec3(cos(p.x) * 4.0, sin(p.x) * 4.0, uClock * 1.6 + uSeed * 0.01);
+  float lump = fbm3(q), lump2 = vnoise3(vec3(cos(p.x) * 13.0, sin(p.x) * 13.0, uClock * 3.0 + 5.0));
+  float top = (0.5 + 0.5 * lump + 0.18 * (lump2 - 0.5)) * uGrow;
+  float d = top - y, aa = fwidth(y) + 1e-4;
+  float inside = smoothstep(-aa, aa, d);
+  if (inside <= 0.0 || top <= 0.01) return vec4(0.0);
+  // dying: holes open where the noise is low, from the bottom up
+  float n = fbm3(vec3(cos(p.x) * 7.0, sin(p.x) * 7.0, y * 3.0 - uClock * 2.2) + 3.0);
+  float er = uFade * 1.15 - 0.08;
+  float keep = smoothstep(er, er + 0.1, n * 0.75 + y * 0.35 + 0.05);
+  if (keep <= 0.0) return vec4(0.0);
+  // stepped toon tones up the billow, broken by the fine lumps; a bright crest just under the top
+  float tone = y / max(top, 1e-3) + (lump2 - 0.5) * 0.35;
+  vec3 c = tone > 0.66 ? vec3(1.7, 1.85, 1.95) : tone > 0.36 ? vec3(0.55, 1.05, 1.55) : vec3(0.12, 0.45, 1.0);
+  c = mix(c, vec3(2.1, 2.15, 2.2), smoothstep(0.1, 0.0, d) * 0.8);
+  float a = mix(0.78, 0.96, smoothstep(0.0, 0.55, y / max(top, 1e-3))) * keep * inside * mix(0.4, 1.0, smoothstep(0.0, 0.05, d));
+  return vec4(c * a, a);
+}`;
+
+/** Snow puffs: thrown out with the blast at every height, riding the front, then hanging and sinking as they thin. */
+const PUFFS = /* glsl */ `
+${PATH_GLSL}
+uniform float uPuffs;
+Particle emitParticle(float k, float back) {
+  if (k >= uPuffs) return P0();
+  float th = rnd(k, 31.0) * 6.2831853, born = rnd(k, 32.0) * 0.3 * uTr;
+  float life = 0.55 + 0.65 * rnd(k, 33.0), a = uAge - back - born;
+  if (a < 0.0 || a > life) return P0();
+  float al = a / life;
+  vec2 d = vec2(cos(th), sin(th)), c = centerAt(uAge - back);
+  float rr = min(frontR(uAge - back) * (0.6 + 0.45 * rnd(k, 34.0)) + al * 0.5, uR + 0.7);
+  float y = (0.1 + 1.1 * rnd(k, 35.0)) * uH * sin(min(al * 2.5, 1.0) * 1.5708) - al * al * 0.35;
+  Particle p = P0(); p.alive = true;
+  p.pos = vec3(c.x + d.x * rr, uGy + max(0.06, y), c.y + d.y * rr);
+  p.size = (0.2 + 0.22 * rnd(k, 36.0)) * (0.7 + 0.9 * al);
+  p.rot = rnd(k, 37.0) * 6.28;
+  p.col = vec4(al, 0.0, 0.0, (1.0 - al) * (1.0 - al) * smoothstep(0.0, 0.06, al));
+  p.data = vec4(rnd(k, 38.0), rnd(k, 39.0), 0.0, 0.0);
+  return p;
+}`;
+
+const LOOK_PUFF = /* glsl */ `
+uniform float uClock;
+vec4 look(vec2 uv, vec4 col, vec4 data) {
+  float n = vnoise3(vec3(uv * 2.3 + data.xy * 9.0, uClock * 1.3));
+  float m = smoothstep(1.0, 0.4, length(uv) * (0.72 + 0.55 * n));
+  vec3 c = mix(vec3(0.25, 0.65, 1.2), vec3(1.6, 1.75, 1.85), smoothstep(-0.4, 0.6, uv.y + (n - 0.5)));
+  float a = m * col.w * 0.8;
+  return vec4(c * a, a);
+}`;
+
+/** Flakes settling inside the ring after the blast, twinkling on whole frames. */
+const FLAKES = /* glsl */ `
+${PATH_GLSL}
+uniform float uFlakes;
+Particle emitParticle(float k, float back) {
+  if (k >= uFlakes) return P0();
+  float born = uTr * 0.5 + rnd(k, 51.0) * 0.8, life = 0.7 + 0.5 * rnd(k, 52.0), a = uAge - back - born;
+  if (a < 0.0 || a > life) return P0();
+  float th = rnd(k, 53.0) * 6.2831853, rr = sqrt(rnd(k, 54.0)) * uR;
+  vec2 c = centerAt(born);
+  Particle p = P0(); p.alive = true;
+  p.pos = vec3(c.x + cos(th) * rr + sin(a * 4.0 + k) * 0.12, uGy + (0.9 + 1.2 * rnd(k, 55.0)) * (1.0 - a / life) + 0.05, c.y + sin(th) * rr);
+  float tw = rnd(k * 3.0 + floor(uAge * 10.0), 56.0);
+  p.size = tw > 0.7 ? 0.07 : 0.04;
+  p.col = vec4(1.0, 0.0, 0.0, 1.0 - smoothstep(0.7, 1.0, a / life));
+  return p;
+}`;
+
+const LOOK_FLAKE = /* glsl */ `
+vec4 look(vec2 uv, vec4 col, vec4 data) {
+  float m = smoothstep(1.0, 0.2, length(uv));
+  return vec4(vec3(1.9, 2.0, 2.1) * m, m * 0.7) * col.w;
+}`;
+
+/** The flash at the caster as the ring goes off: a burst of cold white for a few frames, stepped. */
+const FLASH = /* glsl */ `
+${PATH_GLSL}
+Particle emitParticle(float k, float back) {
+  float a = uAge - back;
+  if (k > 0.5 || a < 0.0 || a > 0.12) return P0();
+  vec2 c = centerAt(0.0);
+  Particle p = P0(); p.alive = true;
+  p.pos = vec3(c.x, uGy + 0.9, c.y);
+  p.size = (1.1 + 0.12 * uR) * (a < 0.05 ? 1.0 : 0.75);
+  p.col = vec4(a < 0.05 ? 1.0 : 0.45);
+  return p;
+}`;
+
+const LOOK_FLASH = /* glsl */ `
+vec4 look(vec2 uv, vec4 col, vec4 data) {
+  float r = length(uv), m = smoothstep(1.0, 0.0, r);
+  vec3 c = mix(vec3(1.2, 1.8, 2.4), vec3(3.5, 3.6, 3.7), smoothstep(0.6, 0.0, r));
+  return vec4(c * m * m * col.x, m * m * 0.25 * col.x);
 }`;
 
 /**
@@ -210,10 +323,12 @@ vec4 decal(vec3 wp) {
     // frost grain: a fine mottle so the film reads as rime, not glass
     float grain = vnoise3(vec3(wp.xz * 9.0, 3.0));
     float k = inside * keep * dens;
-    float a = (0.28 + 0.1 * grain) * k;
-    vec3 film = vec3(0.36, 0.58, 0.82) * a + vec3(0.5, 0.62, 0.7) * veins * k * 0.5;
+    // full strength (the study): nearly opaque, since see-through cyan over the warm stone mixes to grey
+    // (the decal isn't lit, so its colour is lifted to the sunlit stone's level, or it reads as a grey film)
+    float a = (0.8 + 0.12 * grain) * k;
+    vec3 film = mix(vec3(0.06, 0.4, 1.15), vec3(0.55, 0.95, 1.4), smoothstep(0.35, 0.75, grain)) * 1.6 * a + vec3(1.0, 1.1, 1.15) * veins * k * 0.7;
     // a white rim where the front just passed, while it still runs
-    film += vec3(0.4, 0.5, 0.55) * smoothstep(0.06, 0.0, abs(rr - edge)) * uFront * 0.35 * keep;
+    film += vec3(1.0, 1.1, 1.15) * smoothstep(0.1, 0.0, abs(rr - edge)) * uFront * 0.6 * keep;
     o = vec4(film, a);
   }
   // the front's light on the floor: a thin cool band right under it, tinting the stone (a little alpha) and lighting it
@@ -232,6 +347,11 @@ class Slot {
   readonly shards: ParticleBatch;
   readonly mist: NovaRing;
   readonly rime: GroundDecal;
+  readonly blast: NovaRing;
+  readonly puffs: ParticleBatch;
+  readonly flakes: ParticleBatch;
+  readonly flash: ParticleBatch;
+  readonly B = { uClock: { value: 0 }, uFade: { value: 0 }, uGrow: { value: 0 } };
   readonly M = { uMist: { value: 0 }, uClock: { value: 0 } };
   readonly P = {
     uPath: { value: Array.from({ length: PATH_N }, () => new THREE.Vector2()) },
@@ -248,7 +368,11 @@ class Slot {
     this.front = new NovaRing({ look: LOOK_FRONT, uniforms: { ...this.F, uNt: this.P.uNt, uHold: this.P.uHold }, order: 2 });
     this.shards = new ParticleBatch({ motion: SHARDS, look: LOOK_SHARD, cap: SHARD_CAP, order: 3, soft: 0.05, uniforms: { ...this.P, uShards: { value: 0 } } });
     this.mist = new NovaRing({ look: LOOK_MIST, uniforms: this.M, columns: 192, soft: 0.3, order: 1 });
-    this.group.add(this.rime.mesh, this.front.mesh, this.shards.mesh, this.mist.mesh);
+    this.blast = new NovaRing({ look: LOOK_BLAST, uniforms: this.B, columns: 256, soft: 0.25, order: 3 });
+    this.puffs = new ParticleBatch({ motion: PUFFS, look: LOOK_PUFF, cap: PUFF_CAP, order: 4, soft: 0.4, uniforms: { ...this.P, uPuffs: { value: 0 }, uClock: this.B.uClock } });
+    this.flakes = new ParticleBatch({ motion: FLAKES, look: LOOK_FLAKE, cap: FLAKE_CAP, order: 5, soft: 0.05, uniforms: { ...this.P, uFlakes: { value: 0 } } });
+    this.flash = new ParticleBatch({ motion: FLASH, look: LOOK_FLASH, cap: 1, order: 6, soft: 0.6, uniforms: this.P });
+    this.group.add(this.rime.mesh, this.front.mesh, this.shards.mesh, this.mist.mesh, this.blast.mesh, this.puffs.mesh, this.flakes.mesh, this.flash.mesh);
   }
 
   /** Draw ring `r` at age `age` s; `heightAt` reads the floor (sim x, y). Returns the spell light's strength (0: none). */
@@ -260,7 +384,7 @@ class Slot {
     const [cx, cy] = this.centerAt(r, age);
     const gy = heightAt(r.x, r.y);
     const seed = r.seed;
-    for (const u of [this.front.u, this.shards.u, this.mist.u, this.rime.u]) u.uSeed.value = seed;
+    for (const u of [this.front.u, this.shards.u, this.mist.u, this.rime.u, this.blast.u, this.puffs.u, this.flakes.u, this.flash.u]) u.uSeed.value = seed;
     // the path for the particles, sampled every PATH_STEP ticks from the cast
     this.P.uPath.value.forEach((v, i) => v.set(...this.centerAt(r, (i * PATH_STEP) / 60)));
     this.P.uAge.value = age; this.P.uR.value = r.r; this.P.uTr.value = Tr; this.P.uH.value = H; this.P.uGy.value = gy;
@@ -272,8 +396,18 @@ class Slot {
       this.F.uQ.value = q; this.F.uGrow.value = Math.min(1, q * 5) * Math.min(1, Rn / 1.2);
       this.front.place(cx, cy, Rn, H, H * COLD.lean, heightAt);
     }
-    this.shards.u.uShards.value = 8 + 3 * n;
+    this.shards.u.uShards.value = 24 + 9 * n;
     this.shards.count = SHARD_CAP;
+    // the blast: snow powder racing out over the ice, then breaking up
+    const Hb = COLD.blast + COLD.blastPerRune * (n - 1), blastOn = q < 2.2 + hold;
+    this.blast.mesh.visible = blastOn;
+    this.B.uClock.value = age; this.B.uGrow.value = Math.min(1, q * 4); this.B.uFade.value = Math.min(1, Math.max(0, (q - 0.85 - hold) / 1.1));
+    if (blastOn) this.blast.place(cx, cy, Rn + 0.12, Hb, Hb * COLD.blastLean, heightAt);
+    this.puffs.u.uPuffs.value = Math.min(PUFF_CAP, 90 + 40 * n); this.puffs.count = PUFF_CAP;
+    this.puffs.mesh.visible = age < Tr * 0.3 + 1.3;
+    this.flakes.u.uFlakes.value = Math.min(FLAKE_CAP, 25 + 9 * n); this.flakes.count = FLAKE_CAP;
+    this.flakes.mesh.visible = age < Tr * 0.5 + 2.1;
+    this.flash.count = 1; this.flash.mesh.visible = age < 0.13;
     this.shards.mesh.visible = age < Tr * (1.3 + hold) + 0.9;
     // the mist veil: rises as the front gets going, rolls on outside it, thins away after the front breaks
     const mist = Math.min(1, Math.max(0, (q - 0.2) / 0.4)) * (1 - Math.min(1, Math.max(0, (age - Tr * (1 + hold)) / 0.9)));
@@ -306,7 +440,7 @@ class Slot {
 
   hide(): void { this.group.visible = false; this.rec = null; }
 
-  dispose(): void { this.front.dispose(); this.shards.dispose(); this.mist.dispose(); this.rime.dispose(); }
+  dispose(): void { for (const d of [this.front, this.shards, this.mist, this.rime, this.blast, this.puffs, this.flakes, this.flash]) d.dispose(); }
 }
 
 export class ColdNovas {
@@ -351,6 +485,7 @@ export class ColdNovas {
       const r = live[i];
       if (!r) { s.hide(); return; }
       const age = t - r.tick / 60, front = s.draw(r, age, this.heightAt);
+      if (lights && age < 0.12) { const [fx, fy] = s.centerAt(r, 0); lights.add(fx, this.heightAt(fx, fy) + 1.0, fy, 0xd8f4ff, age < 0.05 ? 6 : 3, r.r + 3); }
       if (lights && front > 0) {
         const [cx, cy] = s.centerAt(r, age), n = runesOf(r.r);
         lights.add(cx, this.heightAt(cx, cy) + 0.9, cy, 0x8fd4ff, (0.9 + 0.25 * n) * front, r.r + 2.5);

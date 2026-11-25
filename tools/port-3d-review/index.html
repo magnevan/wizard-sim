@@ -75,40 +75,124 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
   <header>
     <div class="eyebrow">Port to 3D · step 0 · 2026-11-25</div>
     <h1>The Court in 3D</h1>
-    <p class="lede"><b>New: <a href="#react">the bodies react</a>, the method's first step in motion.</b> Below it, <a href="#study">the study</a> and the four tone pieces you've judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
+    <p class="lede"><b>New: <a href="#r2">the four spells rebuilt by the method</a>, in motion.</b> Below them, <a href="#study">the study</a> and the first tone pieces you judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
     <div class="hero"><img src="img/plaza-26.jpg" alt="Two wizards and six goblins on the court's sunk plaza, seen from the 3D game camera"></div>
   </header>
 
-  <section id="react">
+  <section id="r2">
     <div class="top">
       <div>
-        <h2>The bodies react</h2>
-        <p>The first step of the method, the part every spell shares. Nothing about the spells themselves has changed yet: these are the same four tone pieces, now hitting a crowd.</p>
-        <ul>
-          <li><b>The lab's crowd is the pixel lab's:</b> a brute and ten goblins round the target, in reach. Before, they stood just outside the ring and the spray, so no hit was ever seen.</li>
-          <li><b>The white hit flash on every hit.</b> The models flashed only on the first hit; a beam or spray held on a goblin now flickers it, as in the pixel game.</li>
-          <li><b>Statuses on the body</b>, ported from the pixel game's: flame licks on the shoulders of a burning goblin (re-rolled 14 times a second), embers peeling off, and an orange light on it; frost glints and cold breath on a chilled one, bigger glints on a frozen one; sparks on a stunned one; drips on a wet one.</li>
-        </ul>
-        <p>Clips at 14 u, closer than the game, so the bodies show; the pair below is at the game's 30 u, pixel above, 3D below.</p>
+        <h2>The four, rebuilt by the method</h2>
+        <p>All four spells after one pass of the method you accepted, so they can be judged together, in motion. Three runes, in the pixel lab's crowd (now in reach, so you see what each does to the goblins), first at the game camera, then closer. Everything is still the sim's own shapes and timings.</p>
+        <p><b>For all four:</b> every hit flashes the goblin white, and a held beam or spray flickers it; statuses now hang off the body, ported from the pixel game (flames and embers on the burning, glints and cold breath on the chilled, sparks on the stunned, drips on the wet).</p>
       </div>
-      <div class="answer" data-id="react" data-rec="keep">
-        <div class="q">The bodies' reactions</div>
-        <div class="choices" role="group" aria-label="Body reactions">
-          <button type="button" data-v="keep">Right, go on to fire</button><button type="button" data-v="tune">Right idea, tune it</button><button type="button" data-v="redo">Not this</button>
+    </div>
+    <div class="top">
+      <div>
+        <h3>Fire spray</h3>
+        <ul>
+          <li><b>The body is painted now</b>: a Codex texture of streaming flame tongues scrolls through the mesh, bent by noise, with see-through gaps between its tongues; it was smooth bands before ("an orange cloth").</li>
+          <li><b>Rapid motion</b>: about 440 small painted tongues a second race out through the body, each a quarter of a second, their picture re-picked 12 times a second.</li>
+          <li>A floor glow as wide as the pixel spray's; burning goblins carry flames.</li>
+          <li>Still to come: a splash along a wall's face where the spray hits one.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r2-fire" data-rec="keep">
+        <div class="q">Fire spray</div>
+        <div class="choices" role="group" aria-label="Fire spray">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
         </div>
-        <div class="rec">Recommended: <b>go on to fire</b>; the frost glints are small at the game camera and can grow with the frost blast.</div>
-        <textarea id="note-react" aria-label="Note on the reactions" placeholder="The flash, the flames on the body, the frost"></textarea>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r2-fire" aria-label="Note on Fire spray" placeholder="Speed, the grain, the glow"></textarea>
         <div class="status"></div>
       </div>
     </div>
     <div class="vids">
-      <figure><video src="vid/react-fire.mp4" muted loop playsinline autoplay></video><figcaption><b>Fire</b> · the crowd flashes, then burns after the spray</figcaption></figure>
-      <figure><video src="vid/react-arcane.mp4" muted loop playsinline autoplay></video><figcaption><b>Beam</b> · the goblin it holds flickers white</figcaption></figure>
-      <figure><video src="vid/react-cold.mp4" muted loop playsinline autoplay></video><figcaption><b>Ring</b> · the near goblins flash and chill</figcaption></figure>
-      <figure><video src="vid/react-earth.mp4" muted loop playsinline autoplay></video><figcaption><b>Rock</b> · the struck goblin flashes</figcaption></figure>
+        <figure><video src="vid/r2-fire-30.mp4" muted loop playsinline autoplay></video><figcaption><b>The game camera, 30 u</b> · the crowd flashes, then burns</figcaption></figure>
+        <figure><video src="vid/r2-fire-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Closer, 14 u</b> · the painted body and the fast tongues</figcaption></figure>
     </div>
     <div class="shots wide">
-      <figure><img src="img/react-fire.jpg" alt="Fire spray with the crowd in reach, pixel above and 3D below"><figcaption><b>Fire at 30 u</b> · the 3D crowd now flashes and burns as the pixel one does</figcaption></figure>
+      <figure><img src="img/r2-fire.jpg" alt="Fire spray, pixel above and 3D below"><figcaption><b>Pixel above, 3D below</b> · the same moments, three runes, at 30 u</figcaption></figure>
+    </div>
+    <div class="top">
+      <div>
+        <h3>Frost blast</h3>
+        <ul>
+          <li><b>A blast wave of snow</b>, your "blast wave in a snowy landscape": a billowing rim of snow powder leaning out like a breaking wave races out over the ice teeth, then breaks up.</li>
+          <li>About 210 snow puffs ride the front, three times the flung ice, and flakes settle inside after it.</li>
+          <li>The frost it leaves is a mottled blue-white field, nearly opaque; see-through, it turned grey on the warm stone.</li>
+          <li>A flash at the caster as it goes off (faint so far).</li>
+          <li>The near goblins flash before the front reaches them, because the sim hits the whole disc at once. Say if the hit should wait for the front: that's a rule change, not a look.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r2-cold" data-rec="keep">
+        <div class="q">Frost blast</div>
+        <div class="choices" role="group" aria-label="Frost blast">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r2-cold" aria-label="Note on Frost blast" placeholder="The wave, the snow, the frost"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+        <figure><video src="vid/r2-cold-30.mp4" muted loop playsinline autoplay></video><figcaption><b>The game camera, 30 u</b> · the blast and the frost it leaves</figcaption></figure>
+        <figure><video src="vid/r2-cold-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Closer, 14 u</b> · the snow rim, puffs and flakes</figcaption></figure>
+    </div>
+    <div class="shots wide">
+      <figure><img src="img/r2-cold.jpg" alt="Frost ring, pixel above and 3D below"><figcaption><b>Pixel above, 3D below</b> · the same moments, three runes, at 30 u</figcaption></figure>
+    </div>
+    <div class="top">
+      <div>
+        <h3>Arcane beam</h3>
+        <ul>
+          <li><b>Twice as thick</b> (0.41 u at three runes; the pixel beam is 0.5) and fully saturated, with a wider halo.</li>
+          <li>Stretches of the body flash white 30 times a second, as the pixel beam's points do; sparks shed off it at every rune count; a wider pink glow on the floor.</li>
+          <li>The goblin it holds flickers white with every hit: the "effect of a beam hitting" rather than a stamp.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r2-arcane" data-rec="keep">
+        <div class="q">Arcane beam</div>
+        <div class="choices" role="group" aria-label="Arcane beam">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r2-arcane" aria-label="Note on Arcane beam" placeholder="Thickness, the glints, the hit"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+        <figure><video src="vid/r2-arcane-30.mp4" muted loop playsinline autoplay></video><figcaption><b>The game camera, 30 u</b> · a held beam on one goblin</figcaption></figure>
+        <figure><video src="vid/r2-arcane-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Closer, 14 u</b> · the glints and the flicker</figcaption></figure>
+    </div>
+    <div class="shots wide">
+      <figure><img src="img/r2-arcane.jpg" alt="Arcane beam, pixel above and 3D below"><figcaption><b>Pixel above, 3D below</b> · the same moments, three runes, at 30 u</figcaption></figure>
+    </div>
+    <div class="top">
+      <div>
+        <h3>Earth rock</h3>
+        <ul>
+          <li><b>No more tube</b>: a short dust trail, and white speed lines behind the rock whose lengths flicker 30 times a second, as the pixel rock's do.</li>
+          <li>A white flash at the moment of contact; the struck goblins flash and are thrown.</li>
+          <li>Still to come: chips off a wall's face when it hits a wall.</li>
+        </ul>
+      </div>
+      <div class="answer" data-id="r2-earth" data-rec="keep">
+        <div class="q">Earth rock</div>
+        <div class="choices" role="group" aria-label="Earth rock">
+          <button type="button" data-v="keep">Right, keep going</button><button type="button" data-v="tune">Close, tune it</button><button type="button" data-v="redo">Wrong direction</button>
+        </div>
+        <div class="rec">Recommended: <b>keep going</b></div>
+        <textarea id="note-r2-earth" aria-label="Note on Earth rock" placeholder="The flight, the hit"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="vids">
+        <figure><video src="vid/r2-earth-30.mp4" muted loop playsinline autoplay></video><figcaption><b>The game camera, 30 u</b> · speed lines, the flash, goblins thrown</figcaption></figure>
+        <figure><video src="vid/r2-earth-14.mp4" muted loop playsinline autoplay></video><figcaption><b>Closer, 14 u</b> · the moment of contact</figcaption></figure>
+    </div>
+    <div class="shots wide">
+      <figure><img src="img/r2-earth.jpg" alt="Earth rock, pixel above and 3D below"><figcaption><b>Pixel above, 3D below</b> · the same moments, three runes, at 30 u</figcaption></figure>
     </div>
   </section>
 

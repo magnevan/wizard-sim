@@ -2,7 +2,7 @@
  * The 3D view (the port to 3D, docs/explorations/2026-11-25-port-3d-plan.md): implements GameView with a three.js
  * renderer on its own canvas, hosting the kit scene (kit-scene.ts), the game camera (camera3d.ts), the characters
  * (bodies.ts), the spell effects (spells3d.ts: Fire's spray and floor so far) and holes for hidden wizards (fade.ts).
- * A transparent 2D canvas sits over the 3D one for the HUD (a later step: nothing draws on it yet).
+ * A transparent 2D canvas sits over the 3D one for the HUD (hud3d.ts: the pixel HUD's look, in whole art pixels).
  *
  * The camera follows the local wizards with rollback corrections eased; the bodies themselves don't take that easing
  * yet (Bodies3D interpolates on its own), which matters once two players are online (step 3).
@@ -14,10 +14,11 @@ import type { SoundDirector } from '../audio/director';
 import { setupStage, spinKit } from '../lab/kit-render';
 import { Camera3D } from './camera3d';
 import { Fader } from './fade';
-import { KitScene } from './kit-scene';
+import { KitScene, hasScene } from './kit-scene';
 import { sceneX, sceneZ, setSceneOrigin } from './scene-map';
 import { Bodies3D } from './bodies';
 import { Spells3D } from './spells3d';
+import { Hud3D } from './hud3d';
 
 export interface View3DOptions {
   /** Draw the kit's fitted models and textures (false: its greybox placeholders, quick to load). */
@@ -40,6 +41,8 @@ export class View3D implements GameView {
   readonly fader: Fader = new Fader([]);
   readonly bodies: Bodies3D;
   readonly spells: Spells3D;
+  /** The rune HUD and the marks over the world, on hudCanvas. */
+  readonly hud: Hud3D;
   sound: SoundDirector | null = null;
   isLocal: (seat: number) => boolean = () => true;
   catchUp = true;
@@ -74,24 +77,38 @@ export class View3D implements GameView {
     this.scene.add(this.kit.root);
     this.bodies = new Bodies3D(this.scene);
     this.spells = new Spells3D(this.scene, (x, z) => this.kit.heightAt(x, z));
+    this.hud = new Hud3D(this.hudCanvas);
   }
 
   /** The 3D canvas (input listens on it). */
   get canvas(): HTMLCanvasElement { return this.renderer.domElement; }
 
-  /** Load and build the room's scene. */
+  /**
+   * Load and build a room's scene (kit-scene.ts SCENES), in place of the one before. Later room changes load their own
+   * scene by themselves (draw); a room with no scene plays on the last one, as on a stand-in.
+   */
   async load(scene: string): Promise<void> {
-    await Promise.all([this.kit.load(scene, this.opts.art !== false), this.spells.load()]);
+    const enabled = this.fader.enabled;
+    this.loading = scene;
+    try {
+      await Promise.all([this.kit.load(scene, this.opts.art !== false), this.spellsLoaded ??= this.spells.load()]);
+    } finally { if (this.loading === scene) this.loading = ''; }
     (this as { fader: Fader }).fader = new Fader(this.kit.occluders);
+    this.fader.enabled = enabled;
   }
+
+  /** The scene being loaded now ('' when none). */
+  private loading = '';
+  private spellsLoaded: Promise<void> | null = null;
 
   resize(screenW: number, screenH: number): void {
     this.renderer.setSize(screenW, screenH, false);
     this.hudCanvas.width = screenW; this.hudCanvas.height = screenH;
     this.camera.resize(screenW, screenH);
+    this.hud.resize(screenW, screenH);
   }
 
-  setLocalSeat(seat: number): void { this.localSeat = seat; this.isLocal = (s) => s === seat; }
+  setLocalSeat(seat: number): void { this.localSeat = seat; this.hud.seat = seat; this.isLocal = (s) => s === seat; }
 
   beforeStep(w: World): void {
     this.prevX.set(w.bodies.x); this.prevY.set(w.bodies.y); this.prevKind.set(w.bodies.kind);
@@ -104,6 +121,7 @@ export class View3D implements GameView {
     for (let i = 0; i < MAX_BODIES; i++) if (b.kind[i] && this.prevKind[i] !== b.kind[i]) { this.prevX[i] = b.x[i]; this.prevY[i] = b.y[i]; }
     this.bodies.afterStep(w);
     this.spells.afterStep(w);
+    this.hud.afterStep(w);
     this.sound?.afterStep(w, this.isLocal);
   }
 
@@ -131,7 +149,12 @@ export class View3D implements GameView {
     const dt = this.lastDraw ? (now - this.lastDraw) / 1000 : 0;
     this.lastDraw = now;
     // a new room: the scene origin is its toScene (scene-map.ts), and the camera jumps
-    if (w.def !== this.def) { this.def = w.def; setSceneOrigin(w.def); this.camera.reset(); }
+    if (w.def !== this.def) {
+      this.def = w.def; setSceneOrigin(w.def); this.camera.reset();
+      if (hasScene(w.def.id) && w.def.id !== this.kit.name && w.def.id !== this.loading) {
+        void this.load(w.def.id).catch((err) => console.error(`the ${w.def.id} scene didn't load`, err));
+      }
+    }
     // rollback corrections ease out over ~100 ms
     const ease = Math.exp(-Math.max(0, dt) / 0.1);
     for (let i = 0; i < MAX_BODIES; i++) { this.smoothX[i] *= ease; this.smoothY[i] *= ease; }
@@ -163,6 +186,7 @@ export class View3D implements GameView {
     this.sun.position.set(t.x - 30, t.y + 40, t.z + 22); this.sun.target.position.copy(t);
     spinKit(now / 1000);
     this.render();
+    this.hud.draw(w, alpha, now, this.camera, (i) => this.drawnAt(w, i, alpha), (x, y) => ground(x, y));
     this.ready = true;
     const me = this.localSeat;
     this.sound?.frame(w, { cx: t.x - sceneX(0), cy: t.z - sceneZ(0), halfW: this.camera.halfWidth(), earX: b.x[me], earY: b.y[me] }, now / 1000);

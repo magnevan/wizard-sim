@@ -134,7 +134,10 @@ function kitGameArt(): Plugin {
   const used = (): string[] => {
     const pieces = JSON.parse(readFileSync(join(here, '../../../tools/kit/kit.json'), 'utf8')).pieces;
     const out = new Set<string>();
-    for (const scene of ['court']) {
+    // the scenes the game imports (kit-scene.ts SCENES)
+    const scenes = [...readFileSync(join(here, 'src/view3d/kit-scene.ts'), 'utf8').matchAll(/import\('\.\.\/lab\/kit-([\w-]+)\.json'\)/g)].map((m) => m[1]);
+    if (!scenes.length) throw new Error('kitGameArt: no scene imports found in view3d/kit-scene.ts');
+    for (const scene of scenes) {
       const data = JSON.parse(readFileSync(join(here, `src/lab/kit-${scene}.json`), 'utf8'));
       for (const p of kitArtPaths(kitArtFor(data, pieces, (f) => existsSync(join(gen, f))))) out.add(p);
     }

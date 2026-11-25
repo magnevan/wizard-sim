@@ -1,5 +1,6 @@
 /**
- * The kit scene hosted in the game: the compiled court (tools/kit/compile.py court -> lab/kit-court.json), drawn by
+ * The kit scene hosted in the game: a room's compiled scene (tools/kit/compile.py <scene> -> lab/kit-<scene>.json; the
+ * court, the practice ground), drawn by
  * lab/kit-render.ts with its fitted models, tiling textures and laid stones, plus what the game asks of it: the height
  * of the ground under a point, a cursor ray dropped onto the ground, and the pieces that can stand between the camera
  * and a wizard.
@@ -8,13 +9,14 @@
  * server, so a build carries it. It's committed for that reason: CI never runs Python (the plan's decision 1 does the
  * same for the room). The pieces' sizes come from tools/kit/kit.json the same way.
  *
- * Weight (step 6): only the art the scene uses is loaded (kit-assets.ts), and once built the
- * static pieces are drawn in batches (kit-batch.ts); the pieces themselves stay, hidden, for raycasts and fading.
+ * Weight (step 6): a room loads only the art its scene uses and the rooms before it haven't (kit-assets.ts), and once
+ * built its static pieces are drawn in batches (kit-batch.ts); the pieces themselves stay, hidden, for raycasts and
+ * fading.
  */
 import * as THREE from 'three';
 import kitJson from '../../../../../tools/kit/kit.json';
 import { loadStones } from '../lab/kit-stones';
-import { buildKit, groundPlane, loadKitArt, setKitPieces, useKitArt, type KitData, type KitPiece } from '../lab/kit-render';
+import { buildKit, disposeKit, groundPlane, loadKitArt, setKitPieces, useKitArt, type KitData, type KitPiece } from '../lab/kit-render';
 import { optOn } from '../dev-options';
 import { KIT_URLS, kitArt } from './kit-assets';
 import { batchKit, type KitBatch } from './kit-batch';
@@ -26,17 +28,20 @@ const NEVER_FADE = /^(edge\.kerb|sweep\.kerb|joint\.|setpiece\.plaza-(disc|inlay
 /** Height (u) under which a piece can't hide a standing wizard and isn't worth testing. */
 const LOW = 1.2;
 
+/**
+ * The compiled scenes, by room id: a room made from a kit scene (tools/kit/room.py) draws the scene it was made from.
+ * (The build reads these imports to ship each scene's art: vite.config.ts kitGameArt.)
+ */
+const SCENES: Record<string, () => Promise<unknown>> = {
+  court: () => import('../lab/kit-court.json'),
+  practice: () => import('../lab/kit-practice.json'),
+};
+
+/** Is there a compiled scene for this room? */
+export const hasScene = (room: string): boolean => Object.prototype.hasOwnProperty.call(SCENES, room);
+
 /** A piece that can hide a wizard: its box, and (when batched) how to show it on its own while fade.ts cuts it. */
 export interface Occluder { obj: THREE.Object3D; box: THREE.Box3; cut?: (on: boolean) => void }
-
-export interface KitLoadOptions {
-  /** Draw the fitted models and textures (false: the kit's placeholders only, fast, for checks). */
-  art?: boolean;
-  /** Every original model and texture instead of the scene's web copies (to compare against). */
-  allArt?: boolean;
-  /** Batch the static pieces (false: one draw per mesh, as kit-render builds it). */
-  batch?: boolean;
-}
 
 export class KitScene {
   readonly root = new THREE.Group();
@@ -45,31 +50,45 @@ export class KitScene {
   readonly walkable: THREE.Object3D[] = [];
   /** Everything that might stand between the camera and a wizard, with its box. */
   readonly occluders: Occluder[] = [];
-  /** The batches drawing the static pieces, once built. */
+  /** The batches drawing the static pieces (null with ?kitbatch=0). */
   batch: KitBatch | null = null;
   /** ms the load took, the page's time (performance.now) when it was done, and the bytes fetched by then (resource timings). */
   loadMs = 0;
   loadedAt = 0;
   loadBytes = 0;
+  /** The scene built now ('' before the first load). */
+  name = '';
   private heights = new Map<number, number>();
   private ray = new THREE.Raycaster();
+  /** The art loads so far, in order (each loads only what the ones before didn't). */
+  private art: Promise<void> = Promise.resolve();
 
-  /** Load the court and build it (`art` false, or opts.art false: the placeholders only). Batching and the originals follow ?kitbatch and ?kitall unless opts say. */
-  async load(name: string, given: boolean | KitLoadOptions = {}): Promise<void> {
+  /**
+   * Load a room's scene and build it in place of the one before. `art` false draws the kit's placeholders only (fast,
+   * for checks). The art comes per scene, what it uses and no earlier scene did; ?kitall=1 loads every original at the
+   * first load instead (dev server only: the build ships the scenes' art only), and ?kitbatch=0 leaves the pieces
+   * unbatched, to compare.
+   */
+  async load(name: string, art = true): Promise<void> {
     const t0 = performance.now();
-    const opts: KitLoadOptions = { allArt: optOn('kitall'), batch: optOn('kitbatch'), ...(typeof given === 'boolean' ? { art: given } : given) };
-    const art = opts.art !== false;
+    if (!hasScene(name)) throw new Error(`no compiled scene ${name}`);
     const pieces = (kitJson as unknown as { pieces: Record<string, KitPiece> }).pieces;
     setKitPieces(pieces);
     const stones = loadStones(name);
-    const mod = await (name === 'court' ? import('../lab/kit-court.json') : Promise.reject(new Error(`no compiled scene ${name}`)));
-    this.data = (mod as unknown as { default: KitData }).default;
-    useKitArt(opts.allArt ? null : { urls: KIT_URLS, ...kitArt(this.data, pieces) });
-    await Promise.all([art ? loadKitArt() : Promise.resolve(), stones]);
+    const mod = await SCENES[name]();
+    const data = (mod as unknown as { default: KitData }).default;
+    if (art) {
+      const all = optOn('kitall');
+      this.art = this.art.then(() => { useKitArt(all ? null : { urls: KIT_URLS, ...kitArt(data, pieces) }); return loadKitArt(); });
+    }
+    await Promise.all([art ? this.art : Promise.resolve(), stones]);
+    this.clear();
+    this.name = name;
+    this.data = data;
     const kit = buildKit(this.data);
     this.root.add(groundPlane(this.data), kit);
     this.index(kit);
-    if (opts.batch !== false) {
+    if (optOn('kitbatch')) {
       const b = (this.batch = batchKit(kit));
       this.root.add(b.group);
       for (const o of this.occluders) o.cut = (on) => b.cut(o.obj, on);
@@ -77,6 +96,14 @@ export class KitScene {
     this.loadedAt = performance.now();
     this.loadMs = this.loadedAt - t0;
     this.loadBytes = performance.getEntriesByType('resource').reduce((a, e) => a + ((e as PerformanceResourceTiming).transferSize || (e as PerformanceResourceTiming).encodedBodySize || 0), 0);
+  }
+
+  /** Take the built scene down, disposing its own geometry (the fitted models' shared geometry is kept). */
+  private clear(): void {
+    this.batch?.dispose();
+    this.batch = null;
+    for (const o of [...this.root.children]) { this.root.remove(o); disposeKit(o); }
+    this.walkable.length = 0; this.occluders.length = 0; this.heights.clear();
   }
 
   private index(kit: THREE.Group): void {

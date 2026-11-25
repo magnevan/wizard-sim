@@ -127,27 +127,27 @@ export const kitPiece = (p: string): KitPiece | undefined => KIT_PIECES[p];
 const artUrls = import.meta.glob<string>('../../../../content/generated/meshy/kit/*.glb', { eager: true, query: '?url', import: 'default' });
 let ART: Record<string, THREE.Object3D> = {};
 /**
- * Art handed in by a page that ships its own copies (the 3D game, view3d/kit-assets.ts): `urls` by path under
- * content/generated/ as the originals are named ('meshy/kit/pier.glb', 'textures/ashlar.png'), and the models and
- * tiling textures loadKitArt loads (by name), so a scene loads only what it uses. Unset (the editor, the labs): every
- * original, as before.
+ * Art handed in by a page that chooses what to load (the 3D game, view3d/kit-assets.ts): `urls` by path under
+ * content/generated/ ('meshy/kit/pier.glb', 'textures/ashlar.png'), and the models and tiling textures loadKitArt loads
+ * (by name), so a scene loads only what it uses; a later call adds to what earlier ones loaded. Unset (the editor, the
+ * labs): every original, as before.
  */
 let GIVEN: { urls: Record<string, string>; models: string[]; textures: string[] } | null = null;
-/** Hand in a page's own copies of the art (see GIVEN), before loadKitArt; null goes back to the originals. */
+/** Hand in what loadKitArt should load (see GIVEN), before calling it; null goes back to every original. */
 export function useKitArt(given: typeof GIVEN) { GIVEN = given; }
-/** A URL by its path under content/generated/: the given copy, or (nothing given) the original from `globbed`. */
+/** A URL by its path under content/generated/: from what was given, or (nothing given) the original from `globbed`. */
 const urlOf = (path: string, globbed: Record<string, string>) => (GIVEN ? GIVEN.urls[path] : globbed[`../../../../content/generated/${path}`]);
 /** Load the fitted models once (skip it for pure greybox). */
 export async function loadKitArt(): Promise<void> {
   const out: Record<string, THREE.Object3D> = {};
-  const models = GIVEN ? GIVEN.models.flatMap((n) => (GIVEN!.urls[`meshy/kit/${n}.glb`] ? [[`${n}.glb`, GIVEN!.urls[`meshy/kit/${n}.glb`]]] : [])) : Object.entries(artUrls);
+  const models = GIVEN ? GIVEN.models.flatMap((n) => (!ART[n] && GIVEN!.urls[`meshy/kit/${n}.glb`] ? [[`${n}.glb`, GIVEN!.urls[`meshy/kit/${n}.glb`]]] : [])) : Object.entries(artUrls);
   await Promise.all(models.map(([p, url]) => new GLTFLoader().loadAsync(url).then((g) => {
     g.scene.traverse((c) => { if ((c as THREE.Mesh).isMesh) c.castShadow = c.receiveShadow = true; });
     out[p.split('/').pop()!.replace('.glb', '')] = g.scene;
   })));
-  ART = out;
+  ART = GIVEN ? { ...ART, ...out } : out;
   // the made ground pieces take a decal too (their materials are theirs alone)
-  for (const n of ['retain-top', 'retain-course', 'tread', 'kerb', 'corner']) ART[n]?.traverse((c) => { const m = c as THREE.Mesh; if (m.isMesh) m.material = decalable((m.material as THREE.Material).clone()); });
+  for (const n of ['retain-top', 'retain-course', 'tread', 'kerb', 'corner']) out[n]?.traverse((c) => { const m = c as THREE.Mesh; if (m.isMesh) m.material = decalable((m.material as THREE.Material).clone()); });
   await loadTextures();
 }
 
@@ -187,7 +187,7 @@ const JOINT = mat(0x6a584a);   // a kerb piece under its blocks (a click target 
 const TEX: Record<string, THREE.MeshStandardMaterial> = {}, RAW: Record<string, THREE.Texture> = {};
 async function loadTextures() {
   const loader = new THREE.TextureLoader();
-  const texs = GIVEN ? GIVEN.textures.flatMap((n) => (GIVEN!.urls[`textures/${n}.png`] ? [[`${n}.png`, GIVEN!.urls[`textures/${n}.png`]]] : [])) : Object.entries(texUrls);
+  const texs = GIVEN ? GIVEN.textures.flatMap((n) => (!TEX[n] && GIVEN!.urls[`textures/${n}.png`] ? [[`${n}.png`, GIVEN!.urls[`textures/${n}.png`]]] : [])) : Object.entries(texUrls);
   await Promise.all(texs.map(([p, url]) => loader.loadAsync(url).then((t) => {
     const name = p.split('/').pop()!.replace('.png', '');
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;

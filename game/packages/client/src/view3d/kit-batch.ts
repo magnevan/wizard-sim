@@ -1,8 +1,9 @@
 /**
  * The kit scene drawn in few calls (the port's step 6): kit-render builds the court as some 1,600 pieces of 7,000
  * meshes, one draw call each, twice over with the shadow pass. Here the static ones are gathered, per square cell of
- * the scene (so what is out of view still isn't drawn) and per material:
- *  - a model repeated many times (piers, balustrades, lanterns, trees) becomes one InstancedMesh per cell;
+ * the scene (so what is out of view still isn't drawn) or copy by copy, and per material:
+ *  - a model repeated with one stock material (piers, balustrades, lanterns, urns) becomes one BatchedMesh holding
+ *    every copy: one call a pass, and each copy still culled on its own, in the shadow pass too;
  *  - everything else is merged into one mesh per material and cell, baked into world space.
  * The pieces stay where they were, hidden: what raycasts them (the ground's height, the cursor, fade.ts's tests) finds
  * them as before. A piece fade.ts is cutting is shown again on its own and taken out of its batches (cut()), so the
@@ -17,7 +18,7 @@ import * as THREE from 'three';
 
 /** A cell's side (u). */
 const CELL = 16;
-/** A geometry drawn at least this often with one material is instanced rather than merged. */
+/** A geometry drawn at least this often with one stock material is batched copy by copy rather than merged. */
 const INST_MIN = 3;
 
 type Slot = { mesh: THREE.Mesh; start: number; count: number } | { bm: THREE.BatchedMesh; i: number };
@@ -27,6 +28,8 @@ export interface KitBatch {
   group: THREE.Group;
   /** Show a piece on its own (on) and take it out of its batches, or put it back. */
   cut(piece: THREE.Object3D, on: boolean): void;
+  /** Free the batches' GPU data (their geometry, and the BatchedMeshes' matrix textures). */
+  dispose(): void;
   stats: { sources: number; merged: number; instanced: number; left: number };
 }
 
@@ -115,7 +118,8 @@ export function batchKit(kit: THREE.Group): KitBatch {
     piece.traverse((o) => { if ((o as THREE.Mesh).isMesh && srcSet.has(o as THREE.Mesh)) o.visible = on; });
   };
   const srcSet = new Set(srcs.map((s) => s.mesh));
-  return { group, cut, stats };
+  const dispose = () => { for (const o of group.children) { if ((o as THREE.BatchedMesh).isBatchedMesh) (o as THREE.BatchedMesh).dispose(); else (o as THREE.Mesh).geometry.dispose(); } };
+  return { group, cut, dispose, stats };
 }
 
 function eligible(m: THREE.Mesh): boolean {

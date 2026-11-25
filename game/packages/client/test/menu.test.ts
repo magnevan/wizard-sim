@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { KIND, ROOM_DIMS, createWorld, joinSeat } from '@wizard-sim/sim';
-import { SCENARIOS, fromLocation, hashFor, isPlayable, roomOf, scenarioById, scenarioForKey, scenarioOfRoom, worldFor } from '../src/scenarios';
+import { SCENARIOS, fromLocation, hashFor, isPlayable, roomOf, scenarioById, scenarioForKey, scenarioOfRoom, usePage, worldFor } from '../src/scenarios';
 import { escAction, helpPadPresses, keyToNav, menuScenarioKey, navigate, padMenuKeys, type NavItem, type NavState } from '../src/menu-nav';
 import { PAD, type PadState } from '../src/gamepad';
 
@@ -38,6 +38,20 @@ describe('the scenario registry', () => {
     expect(fromLocation('?room=nowhere', '').scenario.id).toBe('sanctum');
     // and back: the anchor a switch writes reads as the same place
     for (const s of SCENARIOS.filter(isPlayable)) for (const ally of [false, true]) expect(fromLocation('', hashFor(s, ally))).toMatchObject({ scenario: { id: s.id }, ally });
+  });
+
+  it('the 3D page offers only the rooms with a kit scene: the court and the practice ground', () => {
+    try {
+      usePage('3d');
+      expect(SCENARIOS.map((s) => s.id).sort()).toEqual(['court', 'practice']);
+      expect(SCENARIOS.every(isPlayable)).toBe(true);
+      expect(['Digit1', 'Digit8'].map((c) => scenarioForKey(c)?.id)).toEqual(['practice', 'court']);
+      expect(fromLocation('', '#practice').scenario.id).toBe('practice');
+      expect(fromLocation('?room=sanctum', '').scenario.id).toBe('court');
+      expect(scenarioOfRoom('survive').id).toBe('court');
+    } finally { usePage('pixel'); }
+    expect(scenarioById('practice')).toBeUndefined();
+    expect(scenarioForKey('Digit1')?.id).toBe('sanctum');
   });
 
   it('turns a room name from the network into a safe room', () => {

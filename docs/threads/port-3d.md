@@ -12,7 +12,7 @@ Branch `port-3d` (worktree `.claude/worktrees/port-3d`), not merged to main. Tea
 ## Next
 
 - [ ] Fire from concept art: a Codex round of directions for the spray, floor and ring (`docs/reference/spell-concepts/fire/`), the user picks, then the build follows it.
-- [ ] A dummy model (and the yard's straw goblin): a Codex picture first, then the user's OK for Meshy.
+- No art for the practice ground: it's a temporary space and keeps placeholder dummies (the user, 2026-11-25). Practice dummies and the straw goblin get made with the yard ([opening thread](opening.md)).
 - [ ] Later: a profiling pass on the user's machine; an exploration of asset handling (streaming, levels of detail, keeping assets across sessions) rather than squeezing sizes.
 - [ ] Agree scene markers (the `marker` object kind, already in `court.scene.json`) and re-running `room.py` on save with the map editor's session.
 - [ ] Step 2: the HUD on a 2D canvas over the view; every spell drawn as its sim hit shape; the practice ground (a flat kit scene with dummies, replacing the Sanctum's role); casting in the court behind a dev switch; the 3D VFX Lab.

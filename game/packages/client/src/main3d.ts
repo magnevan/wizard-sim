@@ -37,12 +37,11 @@ import { simX, simY } from './view3d/scene-map';
 const start = fromLocation(location.search, location.hash);
 if (start.ally) seedOpt('ally', '1');
 const hud = document.getElementById('hud')!;
-void boot();
 
 /** A shot's still scene: where the wizards and goblins stand (scene u, so it doesn't move with the offset). */
 const SHOTS: Record<string, { wiz: [number, number][]; gob: [number, number][]; face?: number }> = {
-  // the plaza, south of the armillary: two wizards facing a line of six goblins
-  plaza: { wiz: [[92, 91], [97, 92]], gob: [[86, 84], [89.5, 82.5], [93, 82], [96.5, 82], [100, 82.5], [103.5, 84]], face: 0.75 },
+  // the plaza, south of the armillary's dais: two wizards facing an arc of six goblins
+  plaza: { wiz: [[91.5, 95.5], [98.5, 95.5]], gob: [[83, 91], [86.5, 89.5], [90.5, 88.8], [99.5, 88.8], [103.5, 89.5], [107, 91]], face: 0.75 },
   // a wizard just north of the great hall (95.5, 34; 26 x 12 u, 16 m tall), with a goblin in front of the hall to compare
   wall: { wiz: [[95.5, 25.5], [104, 46]], gob: [[90, 44], [100, 45]], face: 0.25 },
 };
@@ -209,7 +208,8 @@ async function boot(): Promise<void> {
   // frame times, ms, for the shot script's perf note (window.__perf)
   const perf = { frame: [] as number[], render: [] as number[] };
   let frames = 0;
-  const SHOT_FRAMES = 10;
+  // ?perf=1: 240 frames, so the perf note's times are past the first frames' shader compiles
+  const SHOT_FRAMES = optOn('perf') ? 240 : 10;
   let lastFrame = performance.now();
   const frame = () => {
     const now = performance.now();
@@ -272,3 +272,9 @@ async function boot(): Promise<void> {
     world, get recorder() { return recorder; }, tune, tools, stats, view, menu, audio, get net() { return net; }, perf, switchScenario, startWave: (n: number) => devStartWave(world, n, 1),
   };
 }
+
+boot().catch((err: Error) => {
+  hud.style.display = '';
+  hud.textContent = `boot error: ${err.stack ?? err}`;
+  (window as unknown as { __error: string }).__error = String(err);
+});

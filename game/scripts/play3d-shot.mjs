@@ -27,8 +27,10 @@ const SHOTS = [
   { name: 'plaza-34', q: 'shot=plaza&cam=34' },
   { name: 'plaza-pixel-full-33.75', q: 'shot=plaza&cam=33.75' },
   { name: 'plaza-pixel-play-21.25', q: 'shot=plaza&cam=21.25' },
-  { name: 'wall-fade', q: 'shot=wall&cam=26' },
-  { name: 'wall-nofade', q: 'shot=wall&cam=26&fade=0' },
+  { name: 'wall-fade', q: 'shot=wall&cam=26&local=0' },
+  { name: 'wall-nofade', q: 'shot=wall&cam=26&local=0&fade=0' },
+  // the perf note: 240 frames at the default distance (times are the last 120)
+  { name: 'perf-plaza-26', q: 'shot=plaza&cam=26&perf=1' },
 ].filter((s) => !only || only.split(',').includes(s.name));
 
 const ext = process.env.DEV_URL;
@@ -43,12 +45,14 @@ try {
   for (const s of SHOTS) {
     const t0 = Date.now();
     await page.goto(lab.url(s.q), { waitUntil: 'load', timeout: 180000 });
-    await page.waitForFunction('window.__ready === true', { timeout: 600000, polling: 2000 });
+    await page.waitForFunction('window.__ready === true || !!window.__error', { timeout: 600000, polling: 2000 });
+    const err = await page.evaluate(() => window.__error);
+    if (err) throw new Error(`${s.name}: ${err}`);
     await new Promise((r) => setTimeout(r, 500));
     const file = `${out}/${s.name}.png`;
     await page.screenshot({ path: file });
     const p = await page.evaluate(() => {
-      const f = window.__perf, avg = (a) => a.slice(-30).reduce((x, y) => x + y, 0) / Math.min(30, a.length);
+      const f = window.__perf, avg = (a) => +(a.slice(-120).reduce((x, y) => x + y, 0) / Math.min(120, a.length)).toFixed(1);
       return { frameMs: avg(f.frame), renderMs: avg(f.render), ...f.info(), loadMs: Math.round(f.loadMs), loadMB: +(f.loadBytes / 1e6).toFixed(1), occluders: f.occluders, faded: f.faded() };
     });
     perf[s.name] = { ...p, pageMs: Date.now() - t0 };

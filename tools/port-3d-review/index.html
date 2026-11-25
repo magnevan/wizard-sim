@@ -75,9 +75,69 @@ dialog::backdrop { background: rgba(0,0,0,0.8); }
   <header>
     <div class="eyebrow">Port to 3D · step 0 · 2026-11-25</div>
     <h1>The Court in 3D</h1>
-    <p class="lede"><b>New: <a href="#motion">the four tone pieces in motion</a>, built in the game.</b> The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
+    <p class="lede"><b>New: <a href="#study">what the pixel effects had</a>, and how the next builds will be made.</b> Below it, the four tone pieces in motion you've judged. The game now runs on a second page, <span class="mono">play3d.html</span>, in the map editor's courtyard: the real sim, the real models, the kit's lighting, the game camera. Four things to decide before step 1 builds on them. Each box saves as you click; a box you leave empty means my recommendation stands.</p>
     <div class="hero"><img src="img/plaza-26.jpg" alt="Two wizards and six goblins on the court's sunk plaza, seen from the 3D game camera"></div>
   </header>
+
+  <section id="study">
+    <div class="top">
+      <div>
+        <h2>What the pixel effects had</h2>
+        <p>Each tone piece beside its pixel version at the same five moments after the cast, three runes, at the game's scale: pixel above, 3D below. I also counted what each one draws.</p>
+        <ul>
+          <li><b>Half the pixel effect is on the bodies.</b> Every goblin the spell reaches flashes white, then burns, frosts over or chars; the rock throws them. In 3D the models only change tint, and no status draws anything on a body. That's most of "a stamp, not the effect of a beam hitting", and of the rock's wrong wall and enemy hits.</li>
+          <li><b>Grain.</b> The pixel fire is about 685 small moving pieces at once, against 120 and one smooth mesh in 3D; the beam 55 against 8. Fine, changing detail reads as speed. Smooth gradients read as cloth and tubes.</li>
+          <li><b>Stepped flicker.</b> The pixel beam glints white 30 times a second, the rock's speed lines flicker at 30 Hz, the frost glints at 7 Hz. The 3D versions slide smoothly, which reads as calm.</li>
+          <li><b>Full strength.</b> Saturated, opaque colour and big floor glows. The 3D pieces came out pale and see-through: the ring is a grey disc, and the beam is a third as thick.</li>
+          <li>Not the amount of motion: the share of each effect that changes from frame to frame is about the same in both.</li>
+        </ul>
+        <p>Stylised 3D games build these as a simple mesh carrying a painted texture that pans, bends and erodes, with many small fast pieces on top, and a white flash on whatever is hit. The method I'd build by, in seven rules, is in <span class="mono">docs/explorations/2026-11-25-spell-effects-study.md</span>: start from the pixel version's layers and match its counts and flicker; body reactions in every effect; painted textures on meshes; grain and stepped flicker; full saturation and size; impacts by ground, wall or body; judge beside the pixel version.</p>
+      </div>
+      <div class="answer" data-id="study-method" data-rec="yes">
+        <div class="q">Is this the method for the next builds?</div>
+        <div class="choices" role="group" aria-label="The method">
+          <button type="button" data-v="yes">Yes</button><button type="button" data-v="adjust">Yes, with changes</button><button type="button" data-v="no">No</button>
+        </div>
+        <div class="rec">Recommended: <b>yes</b>. It overturns two of the tone round's draft rules: floor light stays small, and beams stay hat-thin.</div>
+        <textarea id="note-study-method" aria-label="Note on the method" placeholder="A rule to add, change or drop"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="shots wide">
+      <figure><img src="img/study-fire.jpg" alt="Fire spray, pixel above and 3D below, at 0.1, 0.3, 0.6, 1 and 1.6 seconds"><figcaption><b>Fire</b> · 0.1, 0.3, 0.6, 1, 1.6 s. The pixel goblins burn; the 3D ones don't react</figcaption></figure>
+      <figure><img src="img/study-arcane.jpg" alt="Arcane beam, pixel above and 3D below"><figcaption><b>Beam</b> · the same moments. Thick, saturated, glinting, a pink floor glow; against a pale thin line</figcaption></figure>
+      <figure><img src="img/study-cold.jpg" alt="Cold ring, pixel above and 3D below, at 0.05, 0.15, 0.3, 0.5 and 0.9 seconds"><figcaption><b>Ring</b> · 0.05 to 0.9 s. A flash, an opaque cyan front, frost that fills the disc; against a grey disc</figcaption></figure>
+      <figure><img src="img/study-earth.jpg" alt="Earth rock, pixel above and 3D below, at 0.1, 0.25, 0.4, 0.6 and 1 seconds"><figcaption><b>Rock</b> · 0.1 to 1 s. Speed lines, a white burst, goblins thrown; against a brown tube</figcaption></figure>
+    </div>
+    <div class="top">
+      <div>
+        <p><b>What I'd build next.</b> First, what every spell shares: the 3D lab's goblins moved into reach (they stood just outside the ring and the spray, so the pieces were tuned without seeing hits), the white hit flash on the models, and a status layer on a body that each element fills in. Then fire, with a painted flame texture moving through its mesh and fast tongues on top; then the ring as a frost blast wave, the beam and the rock.</p>
+      </div>
+      <div class="answer" data-id="study-order" data-rec="shared">
+        <div class="q">Shared body reactions first?</div>
+        <div class="choices" role="group" aria-label="Build order">
+          <button type="button" data-v="shared">Yes, then fire</button><button type="button" data-v="fire">Fire first</button><button type="button" data-v="other">Another order</button>
+        </div>
+        <div class="rec">Recommended: <b>yes, then fire</b>. It mends part of all four verdicts at once.</div>
+        <textarea id="note-study-order" aria-label="Note on the build order" placeholder="Which spell matters most to you"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+    <div class="top">
+      <div>
+        <p><b>One for the scene, not the effects:</b> the 3D court's floor is much paler and brighter than the pixel paving, so a see-through effect has no mid or dark value under it. Effects can bring their own darks, but the court's exposure may want a look in the port thread too.</p>
+      </div>
+      <div class="answer" data-id="study-floor" data-rec="look">
+        <div class="q">Look at the court's brightness?</div>
+        <div class="choices" role="group" aria-label="Court floor brightness">
+          <button type="button" data-v="look">Yes, try it darker</button><button type="button" data-v="keep">No, effects adapt</button>
+        </div>
+        <div class="rec">Recommended: <b>try it darker</b>, side by side, in the port thread.</div>
+        <textarea id="note-study-floor" aria-label="Note on the floor" placeholder="How the court should feel"></textarea>
+        <div class="status"></div>
+      </div>
+    </div>
+  </section>
 
   <section id="camera">
     <div class="top">

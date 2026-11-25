@@ -1,7 +1,7 @@
 # Spell effects in 3D
 
-Status: active; handed off from the [port to 3D](port-3d.md) on 2026-11-25; four tone pieces built, every one judged "a bit wrong still"; next: study what made the pixel effects work, then fire · Last touched: 2026-11-25
-Record: [fire concepts and builds](../explorations/2026-11-25-spell-concepts-fire.md) · [tone pieces: beam, rock, ring](../explorations/2026-11-25-spell-concepts-tone.md) · [the 3D effects core spike](../explorations/2026-11-25-fx3d-spike.md) · [VFX workflow](../vfx-workflow.md) (spec headings, rubric) · [The Court in 3D](https://claude.ai/artifact/3dWPYc5ZxZqgrYfpksnegu) (the review page, `tools/port-3d-review/`; its db holds every verdict below) · concept art in `docs/reference/spell-concepts/`
+Status: active; handed off from the [port to 3D](port-3d.md) on 2026-11-25; four tone pieces built, every one judged "a bit wrong still"; studied against the pixel versions (the method is written); next: the lab's crowd in reach and the body reactions every spell shares, then fire · Last touched: 2026-11-25
+Record: [the study and the method](../explorations/2026-11-25-spell-effects-study.md) · [fire concepts and builds](../explorations/2026-11-25-spell-concepts-fire.md) · [tone pieces: beam, rock, ring](../explorations/2026-11-25-spell-concepts-tone.md) · [the 3D effects core spike](../explorations/2026-11-25-fx3d-spike.md) · [VFX workflow](../vfx-workflow.md) (spec headings, rubric) · [The Court in 3D](https://claude.ai/artifact/3dWPYc5ZxZqgrYfpksnegu) (the review page, `tools/port-3d-review/`; its db holds every verdict below) · concept art in `docs/reference/spell-concepts/`
 
 ## Where it stands
 
@@ -17,6 +17,7 @@ To set the tone, four pieces were taken from Codex concept art the user picked t
 
 **The tools.**
 - `cast3d.html` is the 3D VFX Lab: the real sim at the game camera, with `spell=`, `form=`, `n=`, `t=`, `view=`, `hit=1`, `sweep=1`, `move=1`, `undying=1`, `impact=`, `clip=1` and `standins=all`. `fx3d.html` is the older fire lab.
+- `npm run compare:fx` (`scripts/fx-compare.mjs`): each of the four in the pixel and the 3D lab at the same moments, and how much of it moves, into `shots/port-3d/study/`.
 - Clips and shots: `npm run clip:fx` (any lab URL to MP4 on a virtual clock), `shot:arcane3d`, `clip:cold3d`, `shot:earth3d`, `shot:cast3d`.
 - The pixel game's own effects stay in `vfx-lab.html` and `art/`, for comparison.
 
@@ -37,6 +38,8 @@ To set the tone, four pieces were taken from Codex concept art the user picked t
 5. **Sizes and shapes come from the sim**: hit shapes stay true. Painted concepts show the mood, not the dimensions.
 6. **Judge in motion, at the game camera, in the court.** Stills and lab paving hid every one of these problems.
 
+The [study](../explorations/2026-11-25-spell-effects-study.md) tested these against the pixel versions and found the biggest gap none of them named: **half the pixel effect is on the bodies it hits** (a white flash, then the element's status drawn on the body; thrown bodies tumble). The 3D models get only a status tint. After that come grain inside the body, stepped flicker at 7 to 30 Hz, full saturation and opacity, and size; the raw amount of motion on screen is about the same. Its method (seven rules) is how every build in this thread is made and checked; it revises the tone round's draft rules 4 (floor light small) and 5 (thin sizes).
+
 ## How to work here
 
 - **Machine budget:** the user's machine maxed out with four agents rendering clips at once (2026-11-25), and one agent's server was stopped for low memory. Run at most two heavy agents (dev servers, Chrome, clips) at a time.
@@ -46,14 +49,17 @@ To set the tone, four pieces were taken from Codex concept art the user picked t
 
 ## Next
 
-- [ ] **Study first:** put each of the four next to its pixel version (`vfx-lab.html`) and its concept, at the same moment, and list what the pixel one does that the 3D one doesn't (counts of moving parts, speeds, layers, flicker). Look at how stylised 3D games build fire, frost blasts, beams and impacts (flipbooks on meshes, scrolling painted textures, distortion, many fast short-lived elements). Write it up as the method before building more.
-- [ ] **Fire:** a painted flame texture (Codex) scrolling through the body mesh, translucency, fast licks and flicker, embers; must read as rapid motion.
-- [ ] **Cold:** rethink as a frost blast wave from the caster ("a blast wave in a snowy landscape"): a burst of frost, snow and ice flung outward, much more happening than now.
-- [ ] **Arcane beam:** more life around the beam (crackle, orbiting motes, flicker); an impact that comes from the hit, not a stamp.
-- [ ] **Earth:** dust as billowing, translucent volume, not a tube; impacts that differ for the ground, a wall and a body.
+Waiting on the user (The Court in 3D, section "What the pixel effects had"): `study-method`, `study-order` (recommended: shared body reactions, then fire), `study-floor` (try the court darker, in the port thread). Unanswered means the recommendation stands.
+
+- [ ] **Shared first:** move `cast3d.html`'s crowd into the spells' reach; the white hit flash on the models (not only the stand-ins); a status layer on a body that each element fills in (flames, frost crust, char), following its mesh. Then `npm run compare:fx` again.
+- [ ] **Fire:** a Codex flame texture panned and distorted through the body mesh, eroded at the edges; a dense layer of fast short tongues on top; the burning status on bodies; a floor glow as wide as the pixel one; a wall splash along the wall's face.
+- [ ] **Cold:** a frost blast wave ("a blast wave in a snowy landscape") on the radial-disc pattern: a white flash at the caster, a saturated disc of panned snow and frost racing out with a bright crest, a thick burst of snow powder and flung ice, a frost crust on the bodies it reaches, a saturated frost patch left behind.
+- [ ] **Arcane beam:** at least 0.4 u and fully saturated; a 30 Hz white glint, crackle re-rolled on frames, side sparks, a wide pink floor glow; a body hit is the body's flash, char and a splash back along the beam; a wall hit laid along the face.
+- [ ] **Earth:** the wake as speed lines, grit and a short dust trail, not a tube; a white flash at impact, struck goblins thrown and tumbling; chips off a wall's face.
 - [ ] **The spell-look guide**, written from the four once they pass, and a critic calibrated on the user's verdicts.
 - [ ] Then every other family in batches (sprays, beams, missiles, novas, lightning, ground effects, walls, Sigil devices, statuses, weapons and guards, enemy attacks, deaths, previews), one review page per batch.
 
 ## Done
 
+- 2026-11-25 The study: each tone piece beside its pixel version at the same moments (`npm run compare:fx`, pairs in `tools/port-3d-review/img/study-*.jpg`), a layer count of both, references from stylised 3D games, and the method ([record](../explorations/2026-11-25-spell-effects-study.md)).
 - 2026-11-25 Effects core, stand-ins for every spell, the 3D VFX Lab, two concept rounds (fire; beam, rock, ring), four builds judged (in the [port to 3D](port-3d.md) thread).

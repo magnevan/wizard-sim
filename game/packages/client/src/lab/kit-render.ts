@@ -11,6 +11,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RAIL_MOD, railFit } from './kit-fit';
 import { fallMesh } from './kit-fall';
 import { waterMesh } from './kit-water';
+import { clearInlays, flowInlays, inlayInto, type InlaySpec } from './kit-inlay';
 import { FOLIAGE_TIME, grow, type Recipe } from './foliage';
 import { kerbRows, KERB_ROUND, KERB_W, type KerbSeg } from './kit-road';
 
@@ -143,7 +144,7 @@ export async function loadKitArt(): Promise<void> {
 const texUrls = import.meta.glob<string>('../../../../content/generated/textures/*.png', { eager: true, query: '?url', import: 'default' });
 const texTiles = import.meta.glob<Record<string, number>>('../../../../content/generated/textures/tiles.json', { eager: true, import: 'default' });
 /** Textures that dress walls, steps and props, not floors. */
-const NOT_FLOOR = /^(ashlar|smooth-stone|tread|kerb|plaza-disc|tiles|vine-.*|banner-.*)$/;
+const NOT_FLOOR = /^(ashlar|smooth-stone|tread|kerb|plaza-disc|magic-flow|tiles|vine-.*|banner-.*)$/;
 /**
  * The floor materials a level can have, for the editor: the flat tones, and every texture (in the textures folder or
  * in tiles.json) that isn't for walls, steps or props, so a new texture shows up as a floor on its own.
@@ -217,9 +218,20 @@ function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0
         }`);
   };
   m.customProgramCacheKey = () => `tp${tile}m${macro}p${paint}`;
-  return decalable(m);
+  return decal ? decalable(m) : m;
 }
-/** A tiling texture's world-mapped material by name (paving, ashlar, smooth-stone...), once loadKitArt has run. */
+/** An inlay's rim stone: the smooth stone, kept clear of the decal, so the rim reads as its own kerb round the picture. */
+let RIM_MAT: THREE.Material | undefined;
+/** An inlay (kit.json class "inlay", kit-inlay.ts): a slab set into its floor with flowing channels, the decal on its top. */
+function inlay(it: Inst): THREE.Group {
+  const g = new THREE.Group();
+  g.position.set(it.x, yOf(it.h), it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // as a set piece: local +z its front
+  const k = KIT_PIECES[it.p] as KitPiece & InlaySpec;
+  const stone = RAW['smooth-stone'];
+  const rim = stone ? (RIM_MAT ??= triplanar(stone, TILE['smooth-stone'] ?? 2, undefined, false, 0, false)) : PROP.coping;
+  const field = RAW[k.channels?.texture ?? 'magic-flow'];
+  return inlayInto(g, k, { top: floorMat('plaza'), side: TEX['smooth-stone'] ?? MAT.kerb, rim }, field);
+}
 let KERB_BLOCK: THREE.MeshStandardMaterial | undefined;
 /** What kerb blocks wear: the smooth stone mapped by world position on top and sides alike (so nothing drags down a side), each block's own tone in its vertices, and no ground painting over it. Undefined without the texture, or with ?kerb=0. */
 function kerbMat(): THREE.MeshStandardMaterial | undefined {
@@ -228,6 +240,7 @@ function kerbMat(): THREE.MeshStandardMaterial | undefined {
   if (!KERB_BLOCK) { KERB_BLOCK = triplanar(stone, TILE['smooth-stone'] ?? 2, undefined, true, 0, false); KERB_BLOCK.vertexColors = true; }
   return KERB_BLOCK;
 }
+/** A tiling texture's world-mapped material by name (paving, ashlar, smooth-stone...), once loadKitArt has run. */
 export const kitMat = (name: string): THREE.Material | undefined => TEX[name];
 /** The material for a floor of this mat: its texture if made, else its tone. */
 const floorMat = (mat: string): THREE.Material => TEX[mat] ?? FLOOR[mat] ?? MAT.paving;
@@ -262,6 +275,7 @@ const spinQ = new THREE.Quaternion();
 /** Turn every spinning part to where it is at time t (seconds): call it each frame. */
 export function spinKit(t: number) {
   TP_TIME.value = t;   // and flowing textures (water) drift
+  flowInlays(t);       // and the fields in an inlay's channels
   FOLIAGE_TIME.value = t;   // and the wind in the plants
   for (const s of SPINNERS) s.node.quaternion.copy(s.rest).multiply(spinQ.setFromAxisAngle(s.axis, ((t * s.rpm) / 60) * Math.PI * 2));
 }
@@ -484,6 +498,7 @@ function wall(g: THREE.Group, L: number, h: number, low: number, v?: string, doo
 function piece(it: Inst): THREE.Group | null {
   const [cls, kind, shape] = it.p.split('.');
   if (isDecal(it.p)) return null;   // a decal draws as a picture on the ground (setDecal), not as a piece
+  if (KIT_PIECES[it.p]?.class === 'inlay') return inlay(it);
   if (cls === 'fall') return it.pts && it.low != null ? fallMesh(it.pts, yOf(it.h), yOf(it.low), TP_TIME) : null;   // water pouring into lower water (kit-fall.ts)
   if (cls === 'edge' || cls === 'sweep') {
     const g = edgeFrame(it), L = it.len!, low = it.low!;
@@ -894,7 +909,7 @@ function tintGroup(g: THREE.Object3D, tint: string) {
 /** The floors and pieces of a compiled scene, as one group. */
 export function buildKit(data: KitData): THREE.Group {
   const root = new THREE.Group();
-  JOINTS.clear(); SPINNERS.length = 0; ARCH_FACES.length = 0; BLIND_SEGS.length = 0; FALL_LIPS.length = 0;
+  JOINTS.clear(); SPINNERS.length = 0; clearInlays(); ARCH_FACES.length = 0; BLIND_SEGS.length = 0; FALL_LIPS.length = 0;
   for (const it of data.instances) if ((it.v === 'blind' || it.v === 'blind-side') && it.x2 != null) BLIND_SEGS.push([it.x, it.y, it.x2, it.y2!]);
   findBays(data.instances);
   for (const it of data.instances) if (it.p.startsWith('arch.')) {   // an arch's two faces, before the floors and water are built

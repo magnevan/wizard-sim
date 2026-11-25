@@ -692,7 +692,7 @@ def compile_scene(sc):
             pt = Point(px, py)
             return (only is None or only.buffer(1e-6).contains(pt)) and not any(z.contains(pt) for z in fl_paths)
         solid = [Point(o['at']).buffer(KIT['pieces'][o['piece']]['footprint'][0] / 2 / G) for o in kind('setpiece')
-                 if o.get('piece') in KIT['pieces'] and KIT['pieces'][o['piece']].get('class') == 'setpiece']
+                 if o.get('piece') in KIT['pieces'] and KIT['pieces'][o['piece']].get('class') in ('setpiece', 'inlay')]   # (an inlay's channels take no planter)
         def fits(pc_, px, py, h):
             """A floor piece needs flat ground at its height under its whole footprint, clear of set pieces (no planter on a
             stoop's edge, pin-free fix 2026-11-24)."""

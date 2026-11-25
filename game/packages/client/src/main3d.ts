@@ -9,12 +9,13 @@
  * the panels. The page starts in the court; the number keys don't switch rooms (only the court has a 3D scene).
  *
  * ?cam=26 sets the view's distance (u of ground in view), ?fade=0 turns fading off, ?kitart=0 draws the kit as
- * greybox, ?shot=plaza / wall stands bodies still for scripts/play3d-shot.mjs (window.__ready, window.__perf).
+ * greybox, ?shot=plaza / wall / fire sets a scene for scripts/play3d-shot.mjs (window.__ready, window.__perf).
  */
 import {
-  ARCH, DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devSpawnEnemy, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
+  ARCH, DT, MAX_SEATS, NO_INPUT, ReplayRecorder, botInput, partyOf, createWorld, devRefillRunes, devSpawnEnemy, devStartWave, hashWorld, hex, newBotMemory, replaceWorld, step,
   type PartyState, type PlayerInput, type Room,
 } from '@wizard-sim/sim';
+import { demoInput, parseDemo } from './demo';
 import { PadSeats } from './gamepad';
 import { SaveWatch } from './saves';
 import { KeyboardMouse } from './input';
@@ -38,12 +39,18 @@ const start = fromLocation(location.search, location.hash);
 if (start.ally) seedOpt('ally', '1');
 const hud = document.getElementById('hud')!;
 
-/** A shot's still scene: where the wizards and goblins stand (scene u, so it doesn't move with the offset). */
-const SHOTS: Record<string, { wiz: [number, number][]; gob: [number, number][]; face?: number }> = {
+/**
+ * A shot's scene: where the wizards and goblins stand (scene u, so it doesn't move with the offset). With `spell`, seat
+ * 0 casts it (demo.ts's notation, aimed at `at`, scene u) and the sim runs `ticks` before the shot, the court's no-runes
+ * rule lifted for it; otherwise nobody moves.
+ */
+const SHOTS: Record<string, { wiz: [number, number][]; gob: [number, number][]; face?: number; spell?: string; at?: [number, number]; ticks?: number }> = {
   // the plaza, south of the armillary's dais: two wizards facing an arc of six goblins
   plaza: { wiz: [[91.5, 95.5], [98.5, 95.5]], gob: [[83, 91], [86.5, 89.5], [90.5, 88.8], [99.5, 88.8], [103.5, 89.5], [107, 91]], face: 0.75 },
   // a wizard just north of the great hall (95.5, 34; 26 x 12 u, 16 m tall), with a goblin in front of the hall to compare
   wall: { wiz: [[95.5, 25.5], [104, 46]], gob: [[90, 44], [100, 45]], face: 0.25 },
+  // Fire spray (three runes) at the goblins, look B, 70 ticks in: the spray, and the floor it set burning
+  fire: { wiz: [[95, 96]], gob: [[90, 89.5], [95, 88.8], [100, 89.5]], face: 0.75, spell: 'fire+fire+fire/force', at: [95, 89], ticks: 70 },
 };
 
 async function boot(): Promise<void> {
@@ -83,6 +90,15 @@ async function boot(): Promise<void> {
     shot.wiz.forEach(([x, y], s) => { world.bodies.x[s] = simX(x); world.bodies.y[s] = simY(y); world.bodies.face[s] = shot.face ?? 0.75; });
     for (const [x, y] of shot.gob) { const i = devSpawnEnemy(world, ARCH.swarmer, simX(x), simY(y)); if (i >= 0) world.bodies.face[i] = ((shot.face ?? 0.75) + 0.5) % 1; }
     view.beforeStep(world);
+    if (shot.spell) {
+      world.mode = { ...world.mode, runeMax: () => 5 };   // the court (and the party's pools) give no runes: five each, for this shot only
+      devRefillRunes(world, 0);
+      const d = parseDemo(`${shot.spell}@${simX(shot.at![0])},${simY(shot.at![1])}`)!;
+      for (let k = 0; k < (shot.ticks ?? 60); k++) {
+        const inputs = Array.from({ length: MAX_SEATS }, (_, p) => (p === 0 ? demoInput(world, k, 0, d) : NO_INPUT));
+        view.beforeStep(world); step(world, inputs); view.afterStep(world);
+      }
+    }
   }
   const saves = new SaveWatch(() => scenario);
   const bots = [newBotMemory(), newBotMemory()];

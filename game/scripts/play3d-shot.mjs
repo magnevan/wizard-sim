@@ -29,6 +29,7 @@ const SHOTS = [
   { name: 'plaza-pixel-play-21.25', q: 'shot=plaza&cam=21.25' },
   { name: 'wall-fade', q: 'shot=wall&cam=26&local=0' },
   { name: 'wall-nofade', q: 'shot=wall&cam=26&local=0&fade=0' },
+  { name: 'fire-spray', q: 'shot=fire&cam=26&local=0' },
   // the perf note: 240 frames at the default distance (times are the last 120)
   { name: 'perf-plaza-26', q: 'shot=plaza&cam=26&perf=1' },
 ].filter((s) => !only || only.split(',').includes(s.name));

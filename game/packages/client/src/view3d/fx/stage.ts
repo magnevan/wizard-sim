@@ -30,9 +30,10 @@ export class FxStage {
   /**
    * The world and its effects, tone-mapped to the screen. `box` (CSS px from the canvas's bottom left, as
    * renderer.setViewport takes it) draws into that part of the canvas only, leaving the rest as it was (a lab's film
-   * strip); the camera's aspect should match it.
+   * strip); the camera's aspect should match it. `fxCamera` draws the effects when their space is the world's moved
+   * (the game view: effects in sim space, the kit scene offset by the room's toScene); it must share `camera`'s lens.
    */
-  render(renderer: THREE.WebGLRenderer, world: THREE.Scene, camera: THREE.PerspectiveCamera, box?: { x: number; y: number; w: number; h: number }): void {
+  render(renderer: THREE.WebGLRenderer, world: THREE.Scene, camera: THREE.PerspectiveCamera, box?: { x: number; y: number; w: number; h: number }, fxCamera: THREE.Camera = camera): void {
     const pr = renderer.getPixelRatio();
     const size = box ? new THREE.Vector2(Math.round(box.w * pr), Math.round(box.h * pr)) : renderer.getDrawingBufferSize(new THREE.Vector2());
     if (!this.rt || this.rt.width !== size.x || this.rt.height !== size.y) {
@@ -46,7 +47,7 @@ export class FxStage {
     renderer.render(world, camera);
     renderer.autoClear = false;
     const c0 = renderer.info.autoReset ? 0 : renderer.info.render.calls, t0 = renderer.info.autoReset ? 0 : renderer.info.render.triangles;
-    renderer.render(this.scene, camera);   // with autoReset (the default) the counters now hold the effects alone
+    renderer.render(this.scene, fxCamera);   // with autoReset (the default) the counters now hold the effects alone
     this.stats.calls = renderer.info.render.calls - c0; this.stats.triangles = renderer.info.render.triangles - t0;
     renderer.autoClear = auto;
     renderer.setRenderTarget(null);

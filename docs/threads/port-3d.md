@@ -11,16 +11,19 @@ Branch `port-3d` (worktree `.claude/worktrees/port-3d`), not merged to main. Tea
 
 ## Next
 
-- [ ] Fire from concept art: 24 Codex images in seven directions are on the review page (`fire2`; [record](../explorations/2026-11-25-spell-concepts-fire.md)); the user picks, then fire.ts is rebuilt to it (recommended: the hybrid).
+- [ ] **Spell effects, how (agreed with the user 2026-11-25):** four tone pieces here (Fire spray and floor, Arcane beam, Earth rock and impact, Cold nova), each concept → build → the user's verdict; then a spell-look guide from them and a critic calibrated on it; then a dedicated effects thread works through every family in batches, one review page per batch. Stand-ins keep the game playable meanwhile; the swap doesn't wait.
+  - [ ] Fire: the user picked toon volume without streaks (`fire2`; [record](../explorations/2026-11-25-spell-concepts-fire.md)); `fx/fire.ts` being rebuilt to it (`p3d-fire`).
+  - [ ] Arcane beam, Earth rock, Cold nova: a Codex concept round in the same toon family, plus a family sheet (`docs/explorations/2026-11-25-spell-concepts-tone.md`).
 - No art for the practice ground: it's a temporary space and keeps placeholder dummies (the user, 2026-11-25). Practice dummies and the straw goblin get made with the yard ([opening thread](opening.md)).
 - [ ] Later: a profiling pass on the user's machine; an exploration of asset handling (streaming, levels of detail, keeping assets across sessions) rather than squeezing sizes.
 - [ ] Agree scene markers (the `marker` object kind, already in `court.scene.json`) and re-running `room.py` on save with the map editor's session.
-- [ ] Step 2: the HUD on a 2D canvas over the view; every spell drawn as its sim hit shape; the practice ground (a flat kit scene with dummies, replacing the Sanctum's role); casting in the court behind a dev switch; the 3D VFX Lab.
-- [ ] Weight before the swap: trim `kit-render.ts`'s eager texture glob (dist grew 40 → 217 MB; 104 MB first load), batch the kit (2,565 draw calls), load only the room's models; `play3d` shouldn't pull the Pixi chunk.
+- [ ] Frame time left (18.8 ms on the user's machine after batching): the shadow pass on heavy Meshy pieces (shadow-only proxies), `FxStage`'s 4× MSAA HDR target (~3 ms), `buildKit` taking 4.4 s of each load. For the profiling pass.
 - [ ] Then the swap: `play3d.html` becomes `index.html`, the pixel game moves to `classic.html`.
 - [ ] Rollback smoothing for bodies (`Bodies3D` has none; step 3).
 
 ## Done
+
+- 2026-11-25 step 2 merged: `p3d-cast` (every spell drawn as its sim shape, `?runes=1`, the 3D VFX Lab `cast3d.html`), `p3d-weight` (the kit batched: 2,616 → 438 draw calls, frame 30.7 → 18.8 ms; art loaded per room; no Pixi on the 3D page). Fire draws as stand-ins until rebuilt.
 
 - 2026-11-25 step 0 reviewed ([decision](../decisions/README.md#2026-11-25-the-ports-step-0-reviewed-a-30-u-camera-the-cut-out-the-models-kept-fire-back-to-concept-art-toolsport-3d-review)): camera 30 u, the cut-out kept, the models kept, both fire looks rejected, the walk grid right. Merged `p3d-hud` (the pixel HUD, bars and edge arrows over the view) and `p3d-practice` (`play3d.html#practice`, key 1: a flat kit sandbox with dummies).
 

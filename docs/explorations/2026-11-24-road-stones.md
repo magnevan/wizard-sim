@@ -75,7 +75,13 @@ Built as the mason's own rule instead of a clean-up pass (`cut_stones`): every s
 
 Stills: `cut-stones-small.jpg`, `cut-stones-large.jpg`, and on the ground at the game camera `cut-stones-large-in-game.jpg`.
 
-Open: where rows from several edges meet, each block of rows keeps its own direction, so wide paving reads as patches at different angles with a few dark triangles of mortar between them; a border course along each edge with one calm direction inside would be quieter. Colours are r6's, not yet matched to the court; nothing is in the shader yet.
+The user on cut stones: "a regression from last iteration. This looks more like the output from a square packing algorithm." Rejected; kept behind `--packed`.
+
+### Straightened cells (the default now)
+
+What the user first suggested: keep the relaxed cells and straighten their edges (`straighten`). A border between two stones becomes the straight line between the two corners where it ends (where three stones meet, or two stones and the surface's edge). The layout is exactly the relaxed one; only the wavy borders change, and joints stay one width with no gaps. Stills: `straightened-small.jpg`, `straightened-large.jpg`, `straightened-large-in-game.jpg`.
+
+Open (written for the cut stones; the seam zones of the straightened cells are irregular polygons instead): where rows from several edges meet, each block of rows keeps its own direction, so wide paving reads as patches at different angles with a few dark triangles of mortar between them; a border course along each edge with one calm direction inside would be quieter. Colours are r6's, not yet matched to the court; nothing is in the shader yet.
 
 ## Trade-offs and what was not done
 

@@ -307,6 +307,46 @@ def cut_stones(cen, th, hu, hv, L, geom):
     return list(laid.values())
 
 
+def straighten(sites, th, a, b, geom):
+    """The relaxed cells with their borders straightened: a border between two stones becomes the straight line between
+    the two corners where it ends (the points where three stones meet, or two stones and the surface's edge), so every
+    stone has straight sides, as cut stone has, and the layout is the relaxed one. Returns each stone's corners and
+    the index of its cell."""
+    res = int(np.clip(round(5 / b.min()), 16, 28))
+    bx = geom.bounds; X0, Y0 = bx[0] - 0.5, bx[1] - 0.5
+    mask = raster(geom, res, (X0, Y0, bx[2] + 0.5, bx[3] + 0.5))
+    ys, xs = np.nonzero(mask)
+    pts = np.stack([X0 + (xs + 0.5) / res, Y0 + (ys + 0.5) / res], 1)
+    own = np.concatenate([owners(pts[i:i + 200000], sites, th, a, b)[0] for i in range(0, len(pts), 200000)])
+    lab = np.zeros(mask.shape, np.int64); lab[ys, xs] = own + 1
+    # corners: where a 2 x 2 block of pixels holds three labels or more (outside the surface counts as one)
+    S = np.sort(np.stack([lab[:-1, :-1], lab[:-1, 1:], lab[1:, :-1], lab[1:, 1:]], -1), -1)
+    jy, jx = np.nonzero((S[..., 1:] != S[..., :-1]).sum(-1) >= 2)
+    L_, X_, Y_ = [], [], []
+    for k in range(4):
+        l = S[jy, jx, k]; ok = l > 0
+        L_.append(l[ok]); X_.append(X0 + (jx[ok] + 1) / res); Y_.append(Y0 + (jy[ok] + 1) / res)
+    # and the surface's own corners, each given to the stone lying on it
+    near = ndimage.distance_transform_edt(lab == 0, return_distances=False, return_indices=True)
+    for g in getattr(geom, 'geoms', [geom]):
+        if g.geom_type != 'Polygon': continue
+        for ring in [g.exterior, *g.interiors]:
+            c = np.array(ring.coords)[:-1]
+            iy = np.clip(((c[:, 1] - Y0) * res).astype(int), 0, lab.shape[0] - 1); ix = np.clip(((c[:, 0] - X0) * res).astype(int), 0, lab.shape[1] - 1)
+            l = lab[near[0][iy, ix], near[1][iy, ix]]
+            L_.append(l); X_.append(c[:, 0]); Y_.append(c[:, 1])
+    L_, X_, Y_ = np.concatenate(L_), np.concatenate(X_), np.concatenate(Y_)
+    o = np.argsort(L_, kind='stable'); L_, X_, Y_ = L_[o], X_[o], Y_[o]
+    cut = np.r_[0, np.nonzero(np.diff(L_))[0] + 1, len(L_)]
+    polys, idx = [], []
+    for i in range(len(cut) - 1):
+        P = np.unique(np.round(np.stack([X_[cut[i]:cut[i + 1]], Y_[cut[i]:cut[i + 1]]], 1) * res / 2) / (res / 2), axis=0)   # corners a pixel apart are one
+        if len(P) < 3: continue
+        c = P.mean(0); P = P[np.argsort(np.arctan2(P[:, 1] - c[1], P[:, 0] - c[0]))]
+        polys.append(P); idx.append(L_[cut[i]] - 1)
+    return polys, np.array(idx)
+
+
 def lay(name, geom, lppu=None):
     """A surface's stones: rows from the edge, then a little relaxing. Returns centres (u), row directions, half-sizes."""
     L = LAY[name]
@@ -320,7 +360,7 @@ def lay(name, geom, lppu=None):
     sites, size = rows(geom, L)
     keep = prune(sites, size, size[:, 3]); sites, size = sites[keep], size[keep]
     n = len(sites)
-    if '--cells' not in sys.argv:                 # cut stones: each on its own row, as laid
+    if '--packed' in sys.argv:                    # rectangles cut to fit, mason-style (the user: reads as square packing)
         polys = cut_stones(sites, size[:, 3], size[:, 0], size[:, 1], L, geom)
         cen = np.array([P.mean(0) for P in polys]); ths, aa, bb = [], [], []
         for P in polys:                           # each stone's own frame: along its longest side
@@ -335,7 +375,9 @@ def lay(name, geom, lppu=None):
         live = cnt > 0
         sites[live] = sites[live] * 0.4 + np.stack([cx, cy], 1)[live] * 0.6
     th = samp(sites)
-    return dict(sites=sites, th=th, a=size[:, 0], b=size[:, 1], name=name, geom=geom)   # (--cells: the relaxed cells as they are, uncut)
+    if '--cells' in sys.argv: return dict(sites=sites, th=th, a=size[:, 0], b=size[:, 1], name=name, geom=geom)   # the relaxed cells as they are
+    polys, idx = straighten(sites, th, size[:, 0], size[:, 1], geom)
+    return dict(quads=polys, clip=True, sites=sites[idx], th=th[idx], a=size[idx, 0], b=size[idx, 1], name=name, geom=geom)
 
 
 def paint(layers, ppu):
@@ -350,7 +392,7 @@ def paint(layers, ppu):
         if 'quads' in S:
             lab = Image.new('I', (w, h), 0); dr = ImageDraw.Draw(lab)
             for i, q in enumerate(S['quads']): dr.polygon([((x - X0) * ppu, (y - Y0) * ppu) for x, y in q], fill=i + 1)
-            lab = np.asarray(lab) * mask if S.get('cut') else np.asarray(lab); mask = mask | (lab > 0)
+            lab = np.asarray(lab) * mask if S.get('cut') or S.get('clip') else np.asarray(lab); mask = mask | (lab > 0)
             ys, xs = np.nonzero(mask)
             if not len(ys): continue
             pts = np.stack([X0 + (xs + 0.5) / ppu, Y0 + (ys + 0.5) / ppu], 1)

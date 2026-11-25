@@ -32,6 +32,10 @@ const SHOTS = [
   { name: 'fire-spray', q: 'shot=fire&cam=26&local=0' },
   // the HUD over the 3D view (view3d/hud3d.ts): the rune bar with a queue, a hurt burning wizard, bars, arrows off screen
   { name: 'hud-26', q: 'shot=hud&cam=26&local=0' },
+  // the practice ground (out-dir shots/port-3d/practice, --only practice-26,practice-34,practice-fire)
+  { name: 'practice-26', q: 'shot=practice&cam=26' },
+  { name: 'practice-34', q: 'shot=practice&cam=34' },
+  { name: 'practice-fire', q: 'shot=practice-fire&cam=26&local=0' },
   // the perf note: 240 frames at the default distance (times are the last 120)
   { name: 'perf-plaza-26', q: 'shot=plaza&cam=26&perf=1' },
 ].filter((s) => !only || only.split(',').includes(s.name));

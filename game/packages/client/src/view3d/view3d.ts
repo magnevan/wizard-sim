@@ -14,7 +14,7 @@ import type { SoundDirector } from '../audio/director';
 import { setupStage, spinKit } from '../lab/kit-render';
 import { Camera3D } from './camera3d';
 import { Fader } from './fade';
-import { KitScene } from './kit-scene';
+import { KitScene, hasScene } from './kit-scene';
 import { sceneX, sceneZ, setSceneOrigin } from './scene-map';
 import { Bodies3D } from './bodies';
 import { Spells3D } from './spells3d';
@@ -83,11 +83,23 @@ export class View3D implements GameView {
   /** The 3D canvas (input listens on it). */
   get canvas(): HTMLCanvasElement { return this.renderer.domElement; }
 
-  /** Load and build the room's scene. */
+  /**
+   * Load and build a room's scene (kit-scene.ts SCENES), in place of the one before. Later room changes load their own
+   * scene by themselves (draw); a room with no scene plays on the last one, as on a stand-in.
+   */
   async load(scene: string): Promise<void> {
-    await Promise.all([this.kit.load(scene, this.opts.art !== false), this.spells.load()]);
+    const enabled = this.fader.enabled;
+    this.loading = scene;
+    try {
+      await Promise.all([this.kit.load(scene, this.opts.art !== false), this.spellsLoaded ??= this.spells.load()]);
+    } finally { if (this.loading === scene) this.loading = ''; }
     (this as { fader: Fader }).fader = new Fader(this.kit.occluders);
+    this.fader.enabled = enabled;
   }
+
+  /** The scene being loaded now ('' when none). */
+  private loading = '';
+  private spellsLoaded: Promise<void> | null = null;
 
   resize(screenW: number, screenH: number): void {
     this.renderer.setSize(screenW, screenH, false);
@@ -137,7 +149,12 @@ export class View3D implements GameView {
     const dt = this.lastDraw ? (now - this.lastDraw) / 1000 : 0;
     this.lastDraw = now;
     // a new room: the scene origin is its toScene (scene-map.ts), and the camera jumps
-    if (w.def !== this.def) { this.def = w.def; setSceneOrigin(w.def); this.camera.reset(); }
+    if (w.def !== this.def) {
+      this.def = w.def; setSceneOrigin(w.def); this.camera.reset();
+      if (hasScene(w.def.id) && w.def.id !== this.kit.name && w.def.id !== this.loading) {
+        void this.load(w.def.id).catch((err) => console.error(`the ${w.def.id} scene didn't load`, err));
+      }
+    }
     // rollback corrections ease out over ~100 ms
     const ease = Math.exp(-Math.max(0, dt) / 0.1);
     for (let i = 0; i < MAX_BODIES; i++) { this.smoothX[i] *= ease; this.smoothY[i] *= ease; }

@@ -29,7 +29,8 @@ A scene corner (cx, cy) is scene point (cx * G, cy * G).
 - set pieces, vignettes and dressing block with their kit.json footprint (box or round, turned with the piece), unless
   lower than MIN_BLOCK_M or standing on a pier's cap; PASSAGES leaves a building's archway open;
 - starts and markers come from the scene's `marker` objects ({"kind": "marker", "id", "at": [x, y] in corners, "tag"?});
-  ids start-0 to start-3 are the four seats' starts.
+  ids start-0 to start-3 are the four seats' starts, and dummy-0, dummy-1 ... the room's practice dummies (in that
+  order; a mode that wants dummies, the sandbox, spawns one on each).
 The height-ready data the sim doesn't read yet is under `height3d` (not in the room, so not in its hash): each cell's
 surface, and every height edge's kind, top and the heights either side.
 
@@ -290,7 +291,7 @@ def export(name, r=None):
 
     # ---- markers and starts ----
     tags = json.load(open(TAGS, encoding='utf-8')).get('markers', {})
-    starts, markers, seen = [None] * 4, [], set()
+    starts, markers, seen, dummies = [None] * 4, [], set(), {}
     import re
     for o in sorted((o for o in sc.get('objects', []) if o.get('kind') == 'marker'), key=lambda o: o.get('id', '')):
         mid, at = o.get('id'), o.get('at')
@@ -300,6 +301,8 @@ def export(name, r=None):
         x, y = snap(at[0] * G - ox), snap(at[1] * G - oy)
         m = re.match(r'^start-([0-3])$', mid)
         if m: starts[int(m.group(1))] = [x, y]; continue
+        m = re.match(r'^dummy-(\d+)$', mid)
+        if m: dummies[int(m.group(1))] = [x, y]; continue
         tag = o.get('tag')
         if tag and tag not in tags: problems.append(f'marker {mid}: no marker tag {tag!r} in game/content/tags.json')
         markers.append(dict(id=mid, x=x, y=y, **({'tag': tag} if tag else {})))
@@ -307,7 +310,7 @@ def export(name, r=None):
         if starts[s] is None: problems.append(f'no marker start-{s} (seat {s}\'s start)')
 
     room = dict(id=name, w=snap(W), h=snap(H), terrain=terrain, rock=rock + [c[0] for c in cliffs], starts=[s for s in starts if s],
-                dummies=[], portals=[], altars=[], props=[], propRock=prop_rock, markers=markers, regions=[],
+                dummies=[dummies[k] for k in sorted(dummies)], portals=[], altars=[], props=[], propRock=prop_rock, markers=markers, regions=[],
                 height=dict(metres=[snap(h) if abs(h * 100 - round(h * 100)) < 1e-6 else h for h in used], rows=rows, cliffs=[c[1] for c in cliffs]))
 
     # ---- the height-ready data (height3d): surfaces per cell, and every height edge ----

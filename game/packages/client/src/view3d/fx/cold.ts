@@ -9,13 +9,16 @@
  *    was cast; it stays put (the caster may walk off) and melts unevenly over a few seconds.
  * 2. **The front's light on the floor**: a thin cool band just under the front (additive, dim), and one dim cyan
  *    spell light while it sweeps. Light hugs the ring; no wash.
- * 3. **The front** (nova-ring.ts): one connected band of ice teeth, knee-high at most, its top edge cut into sharp
- *    crystals (big teeth, a finer saw between them, a low connected band under both), toon-faceted (the side left of
- *    each tip lit), pale cyan going deeper at the foot, a white edge and a thin dark steel rim. It leans a little
- *    outward. Its teeth break one by one where it stops; at five runes it stands a moment first.
- * 4. **Shards**: small glassy slivers thrown out and up off each tooth as it breaks (and a few off the crest as it
- *    runs), falling under gravity. Covering, not glowing.
- * 5. **Mist**: a few low pale puffs (fire-smoke.png's shapes, tinted white) just outside the front, only at its edge.
+ * 3. **The front** (nova-ring.ts): one connected mesh band of ice teeth, knee-high at most, its top edge cut into
+ *    sharp crystals (big teeth, a finer saw between them, a low connected band under both), shaded in three stepped
+ *    toon bands and by facet (the side left of each tip lit), a white band under a soft translucent outline, a dark
+ *    steel line at the foot. It leans a little outward. Its teeth break one by one where it stops; at five runes it
+ *    stands a moment first.
+ * 4. **Mist**: a second, lower ring band just outside the front, translucent and eroded by rolling noise: one soft
+ *    veil at the edge, never puffs, never inside the ring.
+ * 5. **Glints**: a few glassy slivers (8 + 3 a rune) thrown off as the teeth break; the only particles in it.
+ *
+ * No layer is a cluster of sprites (the user's verdict on the first built fire, 2026-11-25).
  *
  * Sizes and timing are the sim's: the radius from the burst event (SHAPES.novaRadius + novaPerRune a rune), the sim
  * hits the whole disc at once, and the front takes the pixel game's time to get there (art/novas.ts: 0.38 s for a
@@ -29,7 +32,6 @@
 import * as THREE from 'three';
 import { EL, MAX_SEATS, SHAPES, specOf, type SpellSpec, type World } from '@wizard-sim/sim';
 import { GroundDecal } from './decal';
-import { FIRE_TEX, SHEET_GLSL } from './fire-sheets';
 import type { SpellLights } from './lights';
 import { NovaRing } from './nova-ring';
 import { ParticleBatch } from './particles';
@@ -64,6 +66,9 @@ export const runesOf = (r: number): number => Math.max(1, Math.min(5, Math.round
 const holdOf = (n: number): number => (n >= 5 ? 0.55 : 0);
 /** Seconds a ring of radius r is drawn for, rime included. */
 export const lifeOf = (r: number): number => COLD.rimeHold + COLD.rimeMelt + COLD.rimePerRune * (runesOf(r) - 1) + 0.2;
+
+/** Glints at most a ring: a few slivers as the teeth break, the only particles in it. */
+const SHARD_CAP = 24;
 
 /** Ticks of the caster's path kept a ring, and the spacing of its samples on the GPU. */
 const PATH_TICKS = 120, PATH_N = 32, PATH_STEP = 4;
@@ -100,16 +105,20 @@ vec4 look(vec2 p) {
   // toon facets: the face left of a tooth's tip catches the light, the right is in shade
   float onBig = big >= small && big >= band ? 1.0 : 0.0;
   float lit = onBig > 0.5 ? (u < c ? 1.0 : 0.62) : (u2 < 0.5 ? 0.9 : 0.68);
-  // (nearly opaque: see-through ice over the warm floor mixes to grey)
-  vec3 body = mix(vec3(0.05, 0.36, 0.85), vec3(0.42, 1.0, 1.4), smoothstep(0.0, 0.85, yN)) * lit;
-  // glassy streaks running up the crystals
-  body *= 0.8 + 0.4 * vnoise3(vec3(a * uNt * 4.0, p.y * 1.5, ti));
-  float alpha = 0.84 + 0.1 * yN;
-  // the edge: white just inside the top, a thin dark steel rim on the very outline
-  float white = smoothstep(0.08, 0.03, d), rim = smoothstep(0.035, 0.01, d);
-  vec3 col = mix(body, vec3(1.6, 1.8, 1.9), white * 0.9);
-  col = mix(col, vec3(0.03, 0.1, 0.2), rim * 0.8);
-  alpha = mix(alpha, 0.95, max(white * 0.85, rim));
+  // stepped toon bands (three tones up the crystal, stepped again by the facet), not a smooth gradient; nearly opaque
+  // in the body (see-through ice over the warm floor mixes to grey)
+  float glint = vnoise3(vec3(a * uNt * 4.0, p.y * 1.5, ti));
+  float tone = (yN + 0.25 * (glint - 0.5)) * lit;
+  float band3 = tone < 0.3 ? 0.0 : tone < 0.62 ? 0.5 : 1.0;
+  vec3 body = band3 < 0.25 ? vec3(0.04, 0.3, 0.75) : band3 < 0.75 ? vec3(0.16, 0.62, 1.1) : vec3(0.5, 1.0, 1.4);
+  float alpha = 0.86;
+  // the edge: a white band just inside the top, then the outline itself soft and translucent (no hard cut-out)
+  float white = smoothstep(0.08, 0.05, d);
+  vec3 col = mix(body, vec3(1.5, 1.7, 1.8), white * 0.9);
+  float soft = smoothstep(0.0, 0.035, d);
+  alpha = mix(alpha, 0.92, white) * mix(0.35, 1.0, soft);
+  // a thin darker steel line low on the crystal where it meets the floor
+  col = mix(col, vec3(0.03, 0.12, 0.25), smoothstep(0.06, 0.0, p.y) * 0.7);
   return vec4(col * alpha, alpha) * inside;
 }`;
 
@@ -161,34 +170,20 @@ vec4 look(vec2 uv, vec4 col, vec4 data) {
   return vec4(c * a, a);
 }`;
 
-/** Mist: low pale puffs just outside the front, drifting out, never inside the ring. */
-const MIST = /* glsl */ `
-${PATH_GLSL}
-uniform float uPuffs;
-Particle emitParticle(float k, float back) {
-  if (k >= uPuffs) return P0();
-  float th = rnd(k, 31.0) * 6.2831853, born = (0.3 + 0.75 * rnd(k, 32.0)) * uTr, life = 0.7 + 0.5 * rnd(k, 33.0);
-  float a = uAge - back - born;
-  if (a < 0.0 || a > life) return P0();
-  vec2 d = vec2(cos(th), sin(th)), c = centerAt(born);
-  float r = frontR(born) + 0.25 + 0.5 * a;
-  Particle p = P0(); p.alive = true;
-  p.pos = vec3(c.x + d.x * r, uGy + 0.12 + 0.25 * a, c.y + d.y * r);
-  p.size = (0.28 + 0.2 * rnd(k, 34.0)) * (0.7 + 0.6 * a / life);
-  p.rot = rnd(k, 35.0) * 6.2832 + a * 0.6;
-  p.col = vec4(a / life, 0.0, 0.0, smoothstep(0.0, 0.2, a / life) * (1.0 - a / life));
-  p.data = vec4(rnd(k, 36.0), rnd(k, 37.0), 0.0, 0.0);
-  return p;
-}`;
-
+/**
+ * Mist: a low translucent veil just outside the front (a second ring band, nova-ring.ts), eroded by noise that rolls
+ * outward and up, thinning toward its top: one soft layer, no puffs to count. uMist: how much there is (0..1).
+ */
 const LOOK_MIST = /* glsl */ `
-uniform sampler2D uSheet;
-${SHEET_GLSL}
-vec4 look(vec2 uv, vec4 col, vec4 data) {
-  vec3 t = sheetCell(uSheet, uv * 0.5 + 0.5, data.x, data.y, 4.0, 4.0);
-  float lum = max(t.r, max(t.g, t.b)), m = smoothstep(0.08, 0.6, lum);
-  float a = m * 0.16 * col.w;
-  return vec4(vec3(0.8, 0.92, 1.0) * (0.75 + 0.3 * lum) * a, a);
+uniform float uMist, uClock;
+vec4 look(vec2 p) {
+  float y = clamp(p.y / max(uHeight, 1e-3), 0.0, 1.0);   // (unclamped, pow() below gives NaN at the top: black dots)
+  // wraps round the ring without a seam: noise on the circle
+  vec3 q = vec3(cos(p.x) * 3.2, sin(p.x) * 3.2, p.y * 2.6 - uClock * 0.9);
+  float n = fbm3(q + uSeed * 0.01), n2 = vnoise3(q * 2.3 + 4.0);
+  float m = smoothstep(0.38 + 0.5 * y, 0.75 + 0.3 * y, n * 0.8 + n2 * 0.3) * pow(1.0 - y, 1.4) * smoothstep(0.0, 0.08, y);
+  float al = m * 0.22 * uMist;
+  return vec4(vec3(0.82, 0.93, 1.0) * al, al);
 }`;
 
 /**
@@ -235,8 +230,9 @@ class Slot {
   readonly group = new THREE.Group();
   readonly front: NovaRing;
   readonly shards: ParticleBatch;
-  readonly mist: ParticleBatch;
+  readonly mist: NovaRing;
   readonly rime: GroundDecal;
+  readonly M = { uMist: { value: 0 }, uClock: { value: 0 } };
   readonly P = {
     uPath: { value: Array.from({ length: PATH_N }, () => new THREE.Vector2()) },
     uAge: { value: 0 }, uR: { value: 3 }, uTr: { value: 0.38 }, uR0: { value: COLD.r0 }, uH: { value: 0.7 }, uGy: { value: 0 },
@@ -250,8 +246,8 @@ class Slot {
   constructor() {
     this.rime = new GroundDecal({ look: RIME, uniforms: this.D, order: -1 });
     this.front = new NovaRing({ look: LOOK_FRONT, uniforms: { ...this.F, uNt: this.P.uNt, uHold: this.P.uHold }, order: 2 });
-    this.shards = new ParticleBatch({ motion: SHARDS, look: LOOK_SHARD, cap: 160, order: 3, soft: 0.05, uniforms: { ...this.P, uShards: { value: 0 } } });
-    this.mist = new ParticleBatch({ motion: MIST, look: LOOK_MIST, cap: 60, order: 1, soft: 0.4, uniforms: { ...this.P, uPuffs: { value: 0 }, uSheet: { value: FIRE_TEX.smoke } } });
+    this.shards = new ParticleBatch({ motion: SHARDS, look: LOOK_SHARD, cap: SHARD_CAP, order: 3, soft: 0.05, uniforms: { ...this.P, uShards: { value: 0 } } });
+    this.mist = new NovaRing({ look: LOOK_MIST, uniforms: this.M, columns: 192, soft: 0.3, order: 1 });
     this.group.add(this.rime.mesh, this.front.mesh, this.shards.mesh, this.mist.mesh);
   }
 
@@ -276,11 +272,17 @@ class Slot {
       this.F.uQ.value = q; this.F.uGrow.value = Math.min(1, q * 5) * Math.min(1, Rn / 1.2);
       this.front.place(cx, cy, Rn, H, H * COLD.lean, heightAt);
     }
-    this.shards.u.uShards.value = 50 + 22 * n;
-    this.mist.u.uPuffs.value = 14 + 6 * n;
-    this.shards.count = 160; this.mist.count = 60;
+    this.shards.u.uShards.value = 8 + 3 * n;
+    this.shards.count = SHARD_CAP;
     this.shards.mesh.visible = age < Tr * (1.3 + hold) + 0.9;
-    this.mist.mesh.visible = age < Tr * 1.05 + 1.3;
+    // the mist veil: rises as the front gets going, rolls on outside it, thins away after the front breaks
+    const mist = Math.min(1, Math.max(0, (q - 0.2) / 0.4)) * (1 - Math.min(1, Math.max(0, (age - Tr * (1 + hold)) / 0.9)));
+    this.M.uMist.value = mist; this.M.uClock.value = age;
+    this.mist.mesh.visible = mist > 0;
+    if (mist > 0) {
+      const spread = Math.max(0, age - Tr) * 0.4;
+      this.mist.place(cx, cy, Rn + 0.15 + spread, 0.45 + 0.05 * n, 0.35, heightAt);
+    }
     // the rime and the band of light
     const melt0 = COLD.rimeHold, melt1 = melt0 + COLD.rimeMelt + COLD.rimePerRune * (n - 1);
     this.D.uM.value.set(r.x, r.y); this.D.uC.value.set(cx, cy); this.D.uRn.value = Rn; this.D.uRf.value = r.r; this.D.uN.value = n;

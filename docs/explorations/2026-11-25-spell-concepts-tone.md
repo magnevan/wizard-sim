@@ -103,7 +103,7 @@ The rest (toon-beam-1, -2, -4, toon-rock-1, -2, chunky-rock-1, toon-impact-1, to
 
 ## The build: the Frost ring (2026-11-25)
 
-The user picked the **crisp** take, [crisp-nova-1](../reference/spell-concepts/cold/crisp-nova-1.jpg), over toon-nova-1: "it feels a bit intense. Would have to see it in motion though. But the vibe is good." So: the crisp vibe (a thin, glassy, serrated front that *sweeps*, not a wall that hits), toned down (less glow, fewer sparkles, a smaller bright area, dimmer light, mist only at the edge). Built on branch `p3d-cold`: `game/packages/client/src/view3d/fx/cold.ts`, on a ring primitive the other rings can share, `fx/nova-ring.ts`. Films: `npm run clip:cold3d` (`scripts/cold3d-clips.mjs`, MP4s and stills in `game/shots/port-3d/tone/cold/`). No new painted sheet: the front is cut in its shader, and the mist borrows the fire's smoke puffs, tinted white.
+The user picked the **crisp** take, [crisp-nova-1](../reference/spell-concepts/cold/crisp-nova-1.jpg), over toon-nova-1: "it feels a bit intense. Would have to see it in motion though. But the vibe is good." So: the crisp vibe (a thin, glassy, serrated front that *sweeps*, not a wall that hits), toned down (less glow, fewer sparkles, a smaller bright area, dimmer light, mist only at the edge). Built on branch `p3d-cold`: `game/packages/client/src/view3d/fx/cold.ts`, on a ring primitive the other rings can share, `fx/nova-ring.ts`. Films: `npm run clip:cold3d` (`scripts/cold3d-clips.mjs`, MP4s and stills in `game/shots/port-3d/tone/cold/`). No painted sheet: the front and the mist are meshes cut and shaded in their shaders. After the user's verdict on the built fire ("a very obvious cluster of opaque sprites"), nothing here is a cluster of sprites: the front is one mesh band, the mist a second, the rime a decal, and the only particles are a few glints.
 
 ### The spec
 
@@ -112,11 +112,11 @@ The user picked the **crisp** take, [crisp-nova-1](../reference/spell-concepts/c
 | **Job** | "I froze everything round me": the sim hits the whole disc at once (radius 3 u + 0.6 a rune, chill twice a hit's); the front shows where, travelling out to exactly that radius. The rime says where it happened for a few seconds after. |
 | **Silhouette** | One connected ring of ice teeth, knee-high at most (0.66 u at one rune, +0.12 a rune), sharp crystals of mixed heights over a low connected band, leaning a little outward. A pale disc of rime inside it. |
 | **Movement** | The front sweeps out fast and eases into the radius (the pixel game's timing: 0.38 s to a 3 u ring, a bigger ring slower in proportion, so the front always moves at one speed). Its teeth break one by one where it stops, each throwing a few slivers out and up that fall. It follows a walking caster most of the way (0.8, as the pixel game); the rime stays where it was cast and melts in patches. |
-| **Colour** | Teeth: deep cyan-blue at the foot to pale cyan at the top, toon-faceted (the face left of each tip lit), a white edge and a thin dark steel outline. Rime: a cool grey-blue film with a few fine white cracks. Light: a thin cool band on the floor under the front, one dim cyan spell light while it runs. |
-| **Timing** | Front: full radius at 0.38 s × r / 3 u; teeth break from 0.86 of that, gone by 1.3. Shards: 0.45 to 0.8 s each. Mist: 0.7 to 1.2 s. Rime: whole for 1.1 s, melted by 3 s (+0.25 s a rune). |
-| **Layers** (floor up) | rime and the band of light (one ground decal); mist (low covering puffs, just outside the front); the front (one ring mesh, nearly opaque); shards (stretched glassy slivers, covering, not glowing); one spell light. |
-| **Runes** | A bigger ring (the sim's), taller teeth, more shards (50 + 22 a rune) and mist (14 + 6 a rune), a thicker rime that lasts longer. Five: the ring stands a moment (half its sweep time) before it breaks. |
-| **Budget** | Per ring: 3 draw calls plus the decal; 384 ring quads, 160 shard quads, 60 mist quads; a decal of about (2r + 8)² / 0.25 cells, built once. Eight rings at once at most. |
+| **Colour** | Teeth: three stepped toon bands, deep cyan-blue at the foot, cyan, pale cyan at the top, stepped again by facet (the face left of each tip lit), a white band under a soft translucent outline, a dark steel line at the foot. Rime: a cool grey-blue film with a few fine white cracks. Light: a thin cool band on the floor under the front, one dim cyan spell light while it runs. |
+| **Timing** | Front: full radius at 0.38 s × r / 3 u; teeth break from 0.86 of that, gone by 1.3. Glints: 0.45 to 0.8 s each. Mist: rises with the front, rolls on outside it, thins away within 0.9 s of the break. Rime: whole for 1.1 s, melted by 3 s (+0.25 s a rune). |
+| **Layers** (floor up) | rime and the band of light (one ground decal); mist (a low translucent ring band just outside the front, eroded by rolling noise); the front (one ring mesh, nearly opaque); glints (a few glassy slivers off the breaking teeth); one spell light. |
+| **Runes** | A bigger ring (the sim's), taller teeth, a taller mist, more glints (8 + 3 a rune), a thicker rime that lasts longer. Five: the ring stands a moment (half its sweep time) before it breaks. |
+| **Budget** | Per ring: 4 draw calls (front, mist, glints, decal); 384 + 192 ring quads, 24 glint quads; a decal of about (2r + 8)² / 0.25 cells, built once. Eight rings at once at most. |
 | **Not** | Not a wall that hits (toon-nova-1's tall crystals), no bloom or wash of cyan light, no sparkle field, no mist inside the ring. |
 
 ### What the rounds taught
@@ -124,8 +124,9 @@ The user picked the **crisp** take, [crisp-nova-1](../reference/spell-concepts/c
 1. **See-through ice over warm stone mixes to grey.** The first front, at 0.4 to 0.7 alpha, read as grey spikes: the court's orange showing through a cyan body averages to grey. Nearly opaque (0.85 to 0.95) with a brighter cyan makes it ice. "Glassy" comes from the facets, the streaks and the white edge, not from transparency.
 2. **Teeth need a body under them.** Spikes on a line read as a fringe; a low connected band under the teeth (0.3 of the height) and fuller teeth (a softer profile) make it one surface going outward.
 3. **Ridged noise makes a maze.** Rime veins from ridge noise at one frequency drew a labyrinth over the whole disc. Fewer, lower-frequency cracks, masked in patches, and a fine grain under them read as frost.
-4. **Mist at the edge is easy to overdo.** At 0.26 alpha the puffs made a milky halo round the ring that hid the front's foot; at 0.16 they're a breath at the edge.
-5. **Shards must be about 0.1 u to show at the game's 30 u**; at 0.05 they vanished.
+4. **Mist at the edge is easy to overdo.** As puffs at 0.26 alpha it made a milky halo round the ring that hid the front's foot. It's now a ring band of its own (no puffs to count), eroded by noise, at 0.22 alpha at most.
+5. **Glints must be about 0.1 u to show at the game's 30 u**; at 0.05 they vanished.
+6. **pow() of a negative base is NaN, and NaN draws black.** The mist band's top, a hair over its height, drew a dotted black circle until the height was clamped.
 
 ### Against the concept (`court-n3-t0.4.png`, `lab-n3-close-t0.3.png`)
 

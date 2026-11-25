@@ -607,10 +607,12 @@ export class Standins {
       const k = age / r.life, fade = 1 - k, P = r.heal ? palOf(EL.life) : palOf(r.look);
       switch (r.kind) {
         case 'burst': case 'slam': {
+          // the sim hits the whole disc at once: its rim stands at the full radius from the first frame, a wave runs out to it
           const Q = r.kind === 'slam' ? { light: SLAM, mid: SLAM, deep: SLAM } : P, grow = Math.min(1, age / 0.22), rr = r.r * (0.3 + 0.7 * grow);
-          B.ring(B.tintBuf, r.x, r.y, 0, rr, Q.mid, 0.25 * fade, Q.deep, 0.45 * fade);
-          B.circle(B.tintBuf, r.x, r.y, rr, 0.22, Q.deep, 0.95 * fade);
-          B.circle(B.glowBuf, r.x, r.y, rr, 0.1, Q.light, fade);
+          B.ring(B.tintBuf, r.x, r.y, 0, r.r, Q.mid, 0.2 * fade, Q.deep, 0.4 * fade);
+          B.circle(B.tintBuf, r.x, r.y, r.r, 0.22, Q.deep, 0.95 * fade);
+          B.circle(B.glowBuf, r.x, r.y, r.r, 0.08, Q.light, fade);
+          if (grow < 1) B.circle(B.glowBuf, r.x, r.y, rr, 0.18, Q.light, 0.8);
           // a short wall of light rising off the rim
           const g = this.ground(r.x, r.y);
           if (grow < 1 || k < 0.5) B.band(B.glowBuf, r.x, g, r.y, rr, g + 0.9 * (1 - k), Q.light, 0.5 * fade, 0);

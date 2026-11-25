@@ -53,8 +53,11 @@ uniform vec3 uC; uniform vec2 uDir; uniform float uR, uT, uLife, uTube, uRate, u
 void shape(vec2 q, out vec3 wp, out vec3 nrm, out float age) {
   float th = q.x * 6.2832, ph = q.y * 6.2832, go = 1.0 - exp(-uT * uRate);
   vec3 rd = vec3(cos(th), 0.0, sin(th)), up = vec3(0.0, 1.0, 0.0);
-  float R = uR * (uR0 + (1.0 - uR0) * go);
-  float tube = uTube * (0.45 + 0.75 * sqrt(go)) * (0.6 + 0.8 * vnoise3(vec3(rd.xz * 2.2, uSeed * 0.01)));
+  // thrown forward (the user: the ground impact was "still very circular"): the ring reaches far and thick ahead of the
+  // rock's travel and barely moves behind it, an arc of dust sprayed the way it flew
+  float f = smoothstep(-0.7, 1.0, dot(rd.xz, uDir));
+  float R = uR * (uR0 + (1.0 - uR0) * go) * mix(0.2, 1.35, f);
+  float tube = uTube * (0.45 + 0.75 * sqrt(go)) * (0.6 + 0.8 * vnoise3(vec3(rd.xz * 2.2, uSeed * 0.01))) * mix(0.25, 1.15, f);
   vec3 c = uC + rd * R + vec3(uDir.x, 0.0, uDir.y) * uR * 0.3 * go + up * tube * 0.8;
   nrm = rd * cos(ph) + up * sin(ph);
   wp = c + vec3(nrm.x, nrm.y * 1.25, nrm.z) * tube;
@@ -92,6 +95,10 @@ float crackAt(vec2 q) {
 }
 vec4 decal(vec3 wp) {
   vec2 d = wp.xz - uC0.xy; float R = uC0.z, t = uC0.w;
+  // stretched along the rock's travel (uC1.w, its angle) before the star's own turn: the cracks run the way it flew
+  float ca = cos(uC1.w), sa = sin(uC1.w), al = ca * d.x + sa * d.y, ac = -sa * d.x + ca * d.y;
+  al /= 1.7; ac /= 0.85;
+  d = vec2(ca * al - sa * ac, sa * al + ca * ac);
   float cs = cos(uC1.y), sn = sin(uC1.y);
   vec2 q = vec2(cs * d.x - sn * d.y, sn * d.x + cs * d.y) / R;
   float r = length(q);
@@ -177,8 +184,8 @@ export class EarthImpacts {
       // cracks
       const cr = 0.75 + 0.28 * i.n + i.r;
       (dc.u.uC0.value as THREE.Vector4).set(i.x + i.ux * cr * 0.3, i.z + i.uz * cr * 0.3, cr, age);
-      (dc.u.uC1.value as THREE.Vector4).set(Math.floor(h01(i.seed, 1) * 4), h01(i.seed, 2) * Math.PI * 2, i.n, 0);
-      if (i.pass) dc.cover(null); else dc.cover({ x0: i.x - cr * 1.3, z0: i.z - cr * 1.3, x1: i.x + cr * 1.3, z1: i.z + cr * 1.3 });
+      (dc.u.uC1.value as THREE.Vector4).set(Math.floor(h01(i.seed, 1) * 4), h01(i.seed, 2) * Math.PI * 2, i.n, Math.atan2(i.uz, i.ux));
+      if (i.pass) dc.cover(null); else dc.cover({ x0: i.x - cr * 2.4, z0: i.z - cr * 2.4, x1: i.x + cr * 2.4, z1: i.z + cr * 2.4 });
       k = this.drawShards(i, age, g, k);
     }
     this.shards.count = k;
@@ -197,7 +204,7 @@ export class EarthImpacts {
       u.uT.value = age; u.uLife.value = life; u.uR.value = R; u.uSeed.value = i.seed % 997; u.uSalt.value = (i.seed % 61) * 1.7; u.uClock.value = age;
       for (const [k, v] of Object.entries(o)) u[k].value = v;
     };
-    set(D.ring, !i.pass, 1.5 + 0.08 * i.n, { uTube: 0.22 + 0.04 * i.n, uRate: 5.5, uR0: 0.2 }, g, R * 0.55);
+    set(D.ring, !i.pass, 1.5 + 0.08 * i.n, { uTube: 0.22 + 0.04 * i.n, uRate: 5.5, uR0: 0.2 }, g, R * 0.15);
     set(D.shock, !i.pass && i.n >= 4, 0.5, { uTube: 0.1, uRate: 7, uR0: 0.4 }, g);
     D.shock.u.uR.value = R * 2;
     set(D.blob, true, 0.85, { uB: i.r * 0.7 + 0.18 }, i.pass ? i.y : (i.y + g) * 0.5, i.pass ? 0 : R * 0.3);

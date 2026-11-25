@@ -76,64 +76,46 @@ export function arcaneBeams(w: World): BeamIn[] {
 // ---- the line -----------------------------------------------------------------------------------------------------
 
 /** The surges: spacing (u), speed (u/s) and length (u) at n runes; slower and softer than the pixel beam (art/kit.ts beamSurge) since round 3 (the user and Codex: racing white blocks read as beads). */
-const surgeOf = (n: number) => { const v = 8 + 1.2 * n; return { v, sp: 2.6, len: 0.6 + 0.12 * n }; };
+const surgeOf = (n: number) => { const v = 22 + 3 * n; return { v, sp: 2.2, len: 0.7 + 0.1 * n }; };
 /** The body's and the core's half-widths (u) at n runes; the halo's reach and strength. A wizard is 2.7 u tall. */
 const widthOf = (n: number) => ({
-  body: 0.13 + 0.025 * n,
-  core: n >= 4 ? 0.05 + 0.012 * n : 0.03 + 0.01 * n,
-  halo: 0.36 + 0.07 * n,
-  haloK: 0.32 + 0.07 * n,
+  body: 0.1 + 0.02 * n,
+  core: n >= 4 ? 0.035 + 0.01 * n : 0.025 + 0.008 * n,
+  halo: 0.45 + 0.09 * n,
+  haloK: 0.55 + 0.1 * n,
 });
 
 const LINE = /* glsl */ `
 uniform float uClock, uBody, uCore, uHalo, uHaloK, uWide, uWhite, uSurgeSp, uSurgeV, uSurgeL;
+// Round 6, the user's pick: plasma core take 2. A white-hot core with no border, falling off sharply into magenta;
+// around it a wispy violet plasma cloud peeling off the beam and drifting outward, thicker toward what it hits; pulses
+// racing down the beam that brighten the core and light up the plasma round them (the user's Disintegrate description).
 vec4 look(float along, float across, float len) {
-  // the line bends: two travelling waves across it, pinned at both ends, so the hit stays where the sim says (the
-  // user: "the ray is too straight"); its width breathes too
-  float u = clamp(along / max(len, 1e-3), 0.0, 1.0), env = sin(3.14159 * u);
-  float bend = env * (0.035 * sin(along * 3.2 - uClock * 15.0) + 0.02 * sin(along * 7.1 - uClock * 23.0));
-  float q = across - bend * uWide;
-  float breathe = 1.0 + 0.15 * (vnoise3(vec3(along * 1.8 - uClock * 6.0, 3.0, uClock)) - 0.5) * 2.0;
-  float ax = along < 0.0 ? -along : max(along - len, 0.0), d0 = length(vec2(ax, q));
-  // a ragged edge: fine noise flowing along the line eats into and bulges out of the border, so it isn't a neat tube
-  float rag = (vnoise3(vec3(along * 6.0 - uClock * 11.0, q * 8.0, uClock * 2.0)) - 0.5) * uBody * 0.7;
-  float d = max(0.0, d0 + rag * smoothstep(0.0, uBody * 1.5, d0));
-  float aa = max(fwidth(across), 1e-4);
-  // surges: packets racing out, each a sharp head and a fading tail; one in seven skipped, so they don't tick like a clock
+  float ax = along < 0.0 ? -along : max(along - len, 0.0);
+  float ends = smoothstep(-0.05, 0.35, along) * smoothstep(len + 0.3, len - 0.1, along);
+  float d = length(vec2(ax, across)), side = abs(across);
+  // pulses: fast packets racing out from the staff; one in seven skipped so they don't tick like a clock
   float ph = (along - uClock * uSurgeV) / uSurgeSp, f = fract(ph), L = min(uSurgeL / uSurgeSp, 0.9);
-  float s = clamp((f - (1.0 - L)) / L, 0.0, 1.0);
-  float surge = s * s * smoothstep(1.0, 0.93, f) * step(0.14, rnd(floor(ph) + 4096.0, 5.0));
-  float ends = smoothstep(0.0, 0.5, along) * smoothstep(len, len - 0.25, along);
-  // the halo swells round a surge softly (a sharp-headed glow reads as a box)
-  float soft = exp(-pow((f - (1.0 - L * 0.4)) / (L * 0.6), 2.0)) * step(0.14, rnd(floor(ph) + 4096.0, 5.0)) * ends;
-  surge *= ends;
-  float shim = 0.8 + 0.4 * vnoise3(vec3(along * 2.4 - uClock * 5.0, q * 14.0, uClock * 3.0)) * (0.92 + 0.16 * rnd(floor(uClock * 18.0), 4.0));
-  float body = uBody * uWide * breathe, core = max(uCore * uWide * (1.0 + 0.15 * surge), aa * 0.6 * uWide);
-  float rim = max(0.018, aa * 1.3) * uWide;
-  // the halo: added light round the line
-  float dh = length(vec2(ax, across - bend * 0.6 * uWide)), hr = uHalo * uWide, halo = exp(-(dh * dh) / (hr * hr) * 2.2) * uHaloK * (1.0 + 0.4 * soft);
-  vec3 col = vec3(1.0, 0.1, 1.25) * halo;
-  float rimA = smoothstep(body + rim + aa * 0.5, body + rim - aa * 0.5, d);
-  float bodyA = smoothstep(body + aa * 0.5, body - aa * 0.5, d);
-  float coreA = smoothstep(core + aa * 0.5, core - aa * 0.5, d);
-  vec3 bodyCol = mix(vec3(1.05, 0.05, 1.3), vec3(1.9, 0.4, 2.2), smoothstep(core * 2.4, core * 1.1, d)) * shim * (1.0 + 0.25 * surge);
-  vec3 coreCol = mix(vec3(2.6, 1.6, 3.3), vec3(5.0, 4.8, 5.2), max(uWhite, surge));
-  vec3 inner = mix(vec3(0.12, 0.012, 0.2), mix(bodyCol, coreCol, coreA), bodyA);
-  // energy spilling over: two strands winding round the beam, flowing toward what it hits, and wisps of the halo torn
-  // off by noise, so light spills past the border (the user's reference: Diablo 3's Disintegrate)
-  float wisp = smoothstep(0.45, 0.85, fbm3(vec3(along * 2.2 - uClock * 9.0, across * 3.5, uClock * 1.7))) * ends;
-  float spill = 0.0;
-  for (int k = 0; k < 2; k++) {
-    // uneven: each strand's reach and speed wander with noise, and it breaks off in places, so it isn't a neat helix
-    float wan = vnoise3(vec3(along * 0.9 - uClock * 4.0, float(k) * 7.0, uClock * 0.8));
-    float ph = along * (3.4 + 1.6 * wan) - uClock * (17.0 + 8.0 * float(k)) + float(k) * 2.4;
-    float y = sin(ph) * body * (1.4 + 2.2 * wan) + bend * uWide, w = mix(0.01, 0.028, 0.5 + 0.5 * cos(ph));
-    float brk = smoothstep(0.3, 0.45, vnoise3(vec3(along * 1.7 - uClock * 9.0, float(k) * 3.0 + 1.0, 0.0)));
-    spill += smoothstep(w + aa, w - aa * 0.5, abs(across - y)) * (0.55 + 0.45 * cos(ph)) * ends * brk;
-  }
-  col += vec3(1.6, 0.25, 1.9) * wisp * halo * 2.2 + vec3(2.6, 1.2, 3.0) * spill * 0.8;
-  // (round 2's 30 Hz white glints are gone: they read as blinking beads, and the user didn't like how motion was shown)
-  return vec4(col * (1.0 - rimA) + inner * rimA, rimA * 0.95);
+  float pulse = exp(-pow((f - (1.0 - L * 0.5)) / (L * 0.5), 2.0)) * step(0.14, rnd(floor(ph) + 4096.0, 5.0)) * ends;
+  // the core and the body: gaussian falloffs, no edge to read as a border
+  float cw = uCore * uWide * (1.0 + 0.6 * pulse) + 0.008, bw = uBody * uWide;
+  float core = exp(-(d * d) / (cw * cw) * 1.5) * ends, body = exp(-(d * d) / (bw * bw) * 1.2) * ends;
+  // the plasma: two noises flowing slowly along and outward from the line, cut into wisps, inside an envelope that
+  // widens toward the hit
+  float reachW = uHalo * uWide * (0.7 + 0.8 * smoothstep(0.2 * len, len, along));
+  vec3 pq = vec3(along * 1.3 - uClock * 1.2, side * 2.4 - uClock * 1.1, uClock * 0.45 + sign(across) * 3.7);
+  // tendrils: ridged noise (bright where the noise crosses its middle) gives thin curling filaments with gaps between
+  float n = fbm3(pq), n2 = fbm3(pq * 2.2 + vec3(5.0, 1.0, uClock * 0.8));
+  float ridge = 1.0 - abs(n * 2.0 - 1.0), ridge2 = 1.0 - abs(n2 * 2.0 - 1.0);
+  float env = exp(-(side * side) / (reachW * reachW) * 1.4);
+  float wisp = (smoothstep(0.78, 0.97, ridge) + 0.6 * smoothstep(0.82, 0.98, ridge2)) * env * ends;
+  float haze = env * env * 0.18 * ends;
+  float lit = 0.55 + 1.8 * pulse;
+  vec3 c = vec3(1.2, 0.06, 2.0) * wisp * lit * uHaloK * 1.8 + vec3(0.7, 0.03, 1.0) * haze * lit;
+  c += mix(vec3(1.5, 0.18, 1.9), vec3(2.4, 0.9, 2.8), body) * body * (1.0 + 0.5 * pulse);
+  c += mix(vec3(3.0, 2.2, 3.4), vec3(5.0, 4.8, 5.2), max(uWhite, pulse)) * core;
+  float a = clamp(body * 0.85 + wisp * 0.55 * uHaloK + haze * 0.5, 0.0, 0.95);
+  return vec4(c, a);
 }`;
 
 /**
@@ -179,7 +161,7 @@ vec3 beamPt(vec4 A, float d) { vec2 dir = vec2(cos(A.z), sin(A.z)), g = A.xy + d
 
 /** Each layer's births a second and life (s), at n runes and impact variant (0 a, 1 b). */
 const RATE = {
-  hit: (n: number, b: number) => (b ? 26 + 6 * n : 12 + 3 * n), hitLife: (b: number) => (b ? 0.42 : 0.28),
+  hit: (n: number, b: number) => (b ? 26 + 6 * n : 34 + 8 * n), hitLife: (b: number) => (b ? 0.42 : 0.32),
   shed: (n: number) => 8 + 6 * n, shedLife: 0.4,
 };
 
@@ -189,12 +171,12 @@ Particle particle(float k, float age, float ts) {
   vec4 A = aimAt(uTime - ts);
   if (A.w <= 0.0 || ts < 0.08) return P0();
   float tt = age * uLife, back = A.z + 3.14159265;
-  float a = back + (rnd(k, 1.0) * 2.0 - 1.0) * mix(1.0, 2.4, uImp);
-  float v = mix(2.2, 3.0, uImp) + rnd(k, 2.0) * mix(2.8, 6.5, uImp), up = (rnd(k, 3.0) * 1.6 - 0.45) * v * 0.55;
+  float a = back + (rnd(k, 1.0) * 2.0 - 1.0) * mix(1.7, 2.4, uImp);
+  float v = mix(3.0, 3.0, uImp) + rnd(k, 2.0) * mix(5.5, 6.5, uImp), up = (rnd(k, 3.0) * 1.6 - 0.45) * v * 0.55;
   Particle p = P0(); p.alive = true;
   p.pos = beamPt(A, A.w) + vec3(cos(a) * v, up, sin(a) * v) * tt + vec3(0.0, -5.0 * tt * tt, 0.0);
   p.pos.y = max(p.pos.y, uLev.z + 0.03);
-  p.size = mix(0.022, 0.03, uImp) * (1.0 - 0.5 * age);
+  p.size = mix(0.03, 0.03, uImp) * (1.0 - 0.5 * age);
   p.stretch = 0.03;
   p.col = vec4(age, rnd(k, 4.0), 0.0, 1.0 - age * age);
   return p;
@@ -358,7 +340,7 @@ export class ArcaneBeam {
     this.L.uClock.value = t; this.L.uBody.value = W.body; this.L.uCore.value = W.core; this.L.uHalo.value = W.halo; this.L.uHaloK.value = W.haloK;
     this.L.uWide.value = Math.sqrt(wide); this.L.uWhite.value = n >= 4 ? 1 : 0; this.L.uSurgeSp.value = S.sp; this.L.uSurgeV.value = S.v; this.L.uSurgeL.value = S.len;
     this.line.mesh.visible = wide > 0 && len > 0.01;
-    this.line.set(this.a, this.b, W.halo * 1.8 + 0.15, W.halo * 1.8 + 0.05);
+    this.line.set(this.a, this.b, W.halo * 2.6 + 0.2, W.halo * 1.2 + 0.1);
     // its haze: a band about a wizard's arm either side of the line
     this.H.uClock.value = t; this.H.uHazeW.value = 0.5 + 0.04 * n; this.H.uOnH.value = wide * grow;
     this.haze.mesh.visible = this.line.mesh.visible;

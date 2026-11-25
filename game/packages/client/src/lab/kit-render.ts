@@ -667,6 +667,68 @@ function sides(rings: number[][][], top: number, bottom: number): THREE.Mesh | n
   return m;
 }
 
+// ---- a timber quay: a deck floor's edges over water get a fascia beam and piles, drawn to size in the deck's paint ----
+const inRing = (x: number, y: number, ring: number[][]) => {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+};
+const inFloor = (x: number, y: number, f: Floor) => f.polys.some(([o, ...hs]) => inRing(x, y, o) && !hs.some((h) => inRing(x, y, h)));
+let pileMat: THREE.Material | null = null;
+/** The deck's paint, darker and wetter, for piles and the fascia. */
+const PILE = (): THREE.Material => {
+  if (pileMat) return pileMat;
+  const d = TEX.deck;
+  if (!d) return (pileMat = mat(0x5a4632));
+  const m = d.clone(); m.onBeforeCompile = d.onBeforeCompile; m.customProgramCacheKey = d.customProgramCacheKey; m.color.setHex(0x8f7a66); m.side = THREE.DoubleSide;
+  return (pileMat = m);
+};
+const QUAY = { fascia: 0.35, pile: 0.17, every: 2.4, post: 0.8 };   // m
+/**
+ * A deck floor's quay: along every edge that has water outside it, a fascia beam under the deck and piles from the
+ * deck down past the water every QUAY.every m; at each corner of such a run a pile stands QUAY.post m proud as a
+ * mooring post with an iron cap. Edges against higher ground (the flight's foot) get nothing.
+ */
+function quay(f: Floor, waters: Floor[], bottom: number): THREE.Group | null {
+  if (!waters.length) return null;
+  const g = new THREE.Group(), top = yOf(f.h), r = yOf(QUAY.pile), step = yOf(QUAY.every);
+  const beam: number[] = [], posts: [number, number][] = [], corners = new Map<string, [number, number]>();
+  // straight runs as one edge (the grid cuts them per cell), so piles space evenly and only true corners get posts
+  const straight = (ring: number[][]) => ring.filter((p, i) => {
+    const a = ring[(i + ring.length - 1) % ring.length], b = ring[(i + 1) % ring.length];
+    const ux = p[0] - a[0], uy = p[1] - a[1], vx = b[0] - p[0], vy = b[1] - p[1];
+    return Math.abs(ux * vy - uy * vx) > 0.05 * Math.hypot(ux, uy) * Math.hypot(vx, vy);
+  });
+  for (const [ring] of f.polys) for (let i = 0, outer = straight(ring); i < outer.length; i++) {
+    const [ax, ay] = outer[i], [bx, by] = outer[(i + 1) % outer.length], L = Math.hypot(bx - ax, by - ay);
+    if (L < 1e-4) continue;
+    const mx = (ax + bx) / 2, my = (ay + by) / 2, nx = (by - ay) / L, ny = -(bx - ax) / L, e = 0.3;
+    const out = waters.find((w) => inFloor(mx + nx * e, my + ny * e, w)) ? 1 : waters.find((w) => inFloor(mx - nx * e, my - ny * e, w)) ? -1 : 0;
+    if (!out || inFloor(mx + nx * e * out, my + ny * e * out, f)) continue;
+    const ox = nx * out * r * 0.2, oy = ny * out * r * 0.2, lo = top - yOf(QUAY.fascia);
+    beam.push(ax + ox, top, ay + oy, bx + ox, top, by + oy, bx + ox, lo, by + oy, ax + ox, top, ay + oy, bx + ox, lo, by + oy, ax + ox, lo, ay + oy);
+    const n = Math.max(1, Math.round(L / step));
+    for (let k = 1; k < n; k++) posts.push([ax + ((bx - ax) * k) / n + nx * out * r * 0.5, ay + ((by - ay) * k) / n + ny * out * r * 0.5])   // half out past the edge, so a side seen from the south still shows them;
+    for (const [cx, cy] of [[ax, ay], [bx, by]]) corners.set(`${cx.toFixed(3)},${cy.toFixed(3)}`, [cx - nx * out * r, cy - ny * out * r]);
+  }
+  if (!beam.length) return null;
+  const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(beam, 3)); bg.computeVertexNormals();
+  const bm = new THREE.Mesh(bg, PILE()); bm.castShadow = bm.receiveShadow = true; g.add(bm);
+  const pile = (x: number, y: number, y1: number) => {
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.08, y1 - bottom, 10), PILE());
+    c.position.set(x, (y1 + bottom) / 2, y); c.castShadow = c.receiveShadow = true; g.add(c);
+  };
+  for (const [x, y] of posts) pile(x, y, top - 0.01);
+  for (const [x, y] of corners.values()) {
+    const y1 = top + yOf(QUAY.post); pile(x, y, y1);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.15, r * 1.15, yOf(0.08), 10), MAT.metal); cap.position.set(x, y1 + yOf(0.04), y); g.add(cap);
+  }
+  return g;
+}
+
 // ---- dressing (kit.json class "dress": small pieces placed by a style's rules): urns, lanterns, planters, lamps ----
 /** An element's colour, for a banner's stand-in until its cloth and emblem texture are made. */
 const EMBLEM: Record<string, number> = { fire: 0xd8553a, cold: 0xdcecf4, water: 0x3f7fc8, life: 0x5aa851, shield: 0xd8b24a, arcane: 0x8a5ac8, earth: 0x8a6a44 };
@@ -922,8 +984,10 @@ export function buildKit(data: KitData): THREE.Group {
   setDecal(data.instances.find((i) => isDecal(i.p)));
   for (const it of data.instances) if (it.p.startsWith('joint.')) JOINTS.set(jkey(it.x, it.y), it);
   const bottom = yOf(Math.min(0, ...data.floors.map((f) => f.h)) - 0.4);
+  const waters = data.floors.filter((f) => f.mat === 'water');
+  for (const f of data.floors) if (f.mat === 'deck') { const q = quay(f, waters.filter((w) => w.h < f.h), bottom); if (q) root.add(q); }
   for (const f of data.floors) for (const [outer, ...holes] of f.polys) {
-    const sd = sides([outer, ...holes], yOf(f.h), bottom); if (sd) root.add(sd);
+    const sd = f.mat === 'deck' && waters.length ? null : sides([outer, ...holes], yOf(f.h), bottom); if (sd) root.add(sd);
     const s = new THREE.Shape(outer.map(([x, y]) => new THREE.Vector2(x, -y)));
     for (const h of holes) s.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, -y))));
     const m = new THREE.Mesh(new THREE.ShapeGeometry(s), floorMat(f.mat));

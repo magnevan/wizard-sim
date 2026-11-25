@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as quay-sheet.png in the current directory. Reply with just the file name.
+
+The attached image is the academy courtyard's concept art (stylised, hand-painted, warm light, sandstone, navy and gold, a sea below the terraces). Match its painting style.
+
+Draw a sprite sheet of eight separate small harbour quay props for a game kit, laid out in a four by two grid with clear space between them, on a plain flat bright magenta (#ff00ff) background, each seen in a three-quarter view from above and in front: a black cast-iron mooring bollard with a gold band; a stout weathered timber mooring post with an iron cap and a rope looped round it; a coil of thick rope; a stack of two wooden crates with iron corners; a wooden barrel; a brass ship's lantern on a short iron hook post; a small wooden rowing boat seen from above at an angle, empty; a stone mooring ring set in a small block. Each object stands alone on its own, evenly lit, soft shadows only on the object itself, no text.

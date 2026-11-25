@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as cliff-sheet.png in the current directory. Reply with just the file name.
+
+The attached image is the academy courtyard's concept art (stylised, hand-painted, warm light, sandstone, navy and gold, a sea below the terraces). Match its painting style.
+
+Draw a sprite sheet of four separate modular sea-cliff rock sections for a game kit, laid out in a two by two grid with clear space between them, on a plain flat bright magenta (#ff00ff) background, each seen in a three-quarter view from above and in front. Each section is a block of warm layered sandstone cliff with a flat top edge where grass or paving would sit, a broken craggy front face with strong horizontal strata, ledges, fissures and a few tufts of moss and small hanging plants, and a darker wet weathered band with barnacles at its foot. The four are: a straight section twice as wide as tall; a straight section as wide as tall with a deep vertical fissure; an outside corner turning ninety degrees; a tall narrow buttress of stacked boulders. Each is about 6 metres tall. Evenly lit, soft shadows only on the rock itself, no text.

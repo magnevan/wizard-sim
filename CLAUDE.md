@@ -35,6 +35,11 @@ Project skills live in `.claude/skills/`:
 - `file`: "file that" files a discovery as a GitHub issue in one call, then goes back to the work at hand.
 - `triage`: Sonnet labels the issue inbox, links files, closes duplicates and flags possibly obsolete issues with `recheck`.
 
+**Worktrees:** settle where to work and what happens after at the start, while the context is warm; never later.
+- Before the first edit, unless the task already says, ask both in one AskUserQuestion. *Where:* a new worktree off main (recommended for game and docs work), a new one off court-kit (the 3D/kit line), an existing worktree by name (only if no other session is editing it), or no worktree (read-only answers). *After:* remove once merged (recommended), or keep (`git worktree lock --reason "keep: <why>"`). Keep reading and planning while the question waits.
+- Removal is `tools/prune-worktrees.mjs`, run in the background at every session start (`.claude/settings.json`). It removes a worktree only when it's clean, merged into another branch, untouched for 24 hours and not open in a running session, and saves its ignored non-build files to `.claude/worktree-leftovers/`. So a finished session needs no clean-up message, and never ask about clean-up at the end.
+- If you merge your own branch before you finish, leave with ExitWorktree (`remove`) as your last step. The final report names the branch and whether it's merged yet.
+
 **Tasks (docs/tasks.md):** when resuming a line of work, read its `docs/threads/` file first and update its status line and Next list as you go. When you notice something outside the current task, file it with the `file` skill rather than fixing it or forgetting it. List issues by label or search, titles only (`--json number,title`), and never dump the whole backlog. Fixing commits say `Fixes #n`.
 
 ## Keeping the docs current

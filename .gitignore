@@ -16,6 +16,8 @@ docs/personal notes/
 # Kept locally only: numbers read from the user's own game install
 docs/reference/magicka-numbers-extracted.md
 .claude/worktrees/
+# Ignored files saved from pruned worktrees (tools/prune-worktrees.mjs)
+.claude/worktree-leftovers/
 docs/.obsidian/*
 !docs/.obsidian/snippets/
 docs/.obsidian/snippets/*

@@ -11,6 +11,9 @@ The editor works: `npm run dev` in `game/`, then http://localhost:5187/editor.ht
 
 Editor changes live here; building the courtyard and growing the kit is its own thread, [kit-courtyard](kit-courtyard.md), which files editor gaps here as it hits them.
 
+- [ ] Markers (from the port-3d session, 2026-11-25; the scenes are the sim's source of truth): a `marker` object kind `{kind: "marker", id, at: [x, y], tag?: "landmark", name?}` (corners), already in `court.scene.json` on branch port-3d. `start-0` to `start-3` are the sim's starts, `gate-*` its exits. Show them, place and move them (`add` refuses the kind today; save, move, set and remove already keep them).
+- [ ] Save re-exports the sim's room: run `python tools/kit/room.py <scene>` (about 1 s on the court) after a save, so `npm run content:check` stays green.
+- [ ] Narrow the eager `content/generated/textures/**` glob in `lab/kit-render.ts` to what kit.json uses: the game imports it now, and it grows the build from 40 to 217 MB.
 - [ ] Curved flights, when the compiler has them ([kit-courtyard](kit-courtyard.md)).
 - [ ] A walk mode (walk the place at the game's camera), and a pin that links a spot on a concept to a spot on the map.
 - [ ] Later: push instead of pull, an MCP bridge with a Claude Code channel (check that an event starts a turn in an idle session).

@@ -50,6 +50,25 @@ The paint-over was a repainted screenshot, not something in the game. The test t
 
 Result: `painted-ground-in-game.jpg` and `painted-ground-close.jpg`, real renders at the game camera. Open points: it is paler than the paint-over (a painting made over a lit picture is lit twice; `pgain` only darkens it), the stones are flat (painted shading only), one picture covers 30 by 17 u at about 64 px a u, so the court needs a grid of them with matching borders, and any map edit under a painting means repainting it.
 
+## Field-aligned tessellation (2026-11-25)
+
+The user on the painted ground: it "didn't exactly hold up" (the road less nice than the paint-over, the painted kerb rounder than the modelled one, and making paintings meet "is going to be very difficult"). The pattern they want is `tools/kit/scenes/refs/court/r6-paint-over-of-our-grey-box-the-whole-cou.png`, which "looks like a texture that's created by some sort of tessellation algorithm, similar to voronoi". They asked for real thought about generating textures before more building.
+
+The design, and why the earlier ones were structurally wrong: laid stones were two unrelated systems (meshes over a tile) and rings from two edges collide with nothing to resolve them; a painted ground is made apart from the kerb models, so the two can't agree, and every painting border is a seam. Weighed and left: a road as a strip with a centreline (we have no centrelines; breaks at junctions), synthesis from a painted sample along a flow field (stones go mushy, huge textures), Codex painting over code-drawn outlines per chunk (tone drifts between chunks).
+
+Chosen: per ground surface, a direction field parallel to every edge and blended inside (kept four-fold, so stones stay in line through square corners); stone centres in rows laid inward from the edges, then relaxed under a box distance turned to the field (after Hausner, "Simulating Decorative Mosaics", 2001, cited from memory), which settles where rows from two edges meet; each stone drawn with its own tone from a palette, a lit bevel, painted grain from a Codex stone sheet and sand in the joints. In the game it is meant to be drawn by the ground shader from one small data texture of stone centres per map: sharp at any zoom, no tiles, so no seams or repeats.
+
+Proof, no engine: `python tools/kit/tess_proof.py out.png [--road 1.7]` paints a rectangle of the compiled court from above (`tessellation-small-stones.jpg`, `tessellation-large-stones.jpg`; the first try, relaxed from random points, is `tessellation-first-try.jpg`). Laid on the ground through `?paint=` it is `tessellation-large-in-game.jpg` (pale: a lit picture lit again, which the shader version doesn't have).
+
+The user on the first try: "already quite good"; the kerb blocks should be more regular and have their own logic ("they would never be more than 1 block wide"); the middle of the road dissolving is acceptable for small stones, and larger ones are worth seeing. So:
+
+- **Kerbs are not tessellated.** One row of equal blocks is cut along each straight run of the road's edge, with a joint on the bisector at every corner (`kerb_blocks`).
+- **Rows first.** Starting the relaxation from rows laid inward from the edge, not from random points, keeps the road in rows through its middle; only where rows from two edges meet do stones go irregular.
+- **Surfaces are laid whole.** Cutting a surface to the picture's rectangle makes a false edge that rows then follow.
+- **A compiler sliver.** The court's road outline runs out to a point and back near (83.4, 46.4), where the street's curve meets the grid; the kerb model shows it too. The proof closes notches under 0.4 u before laying.
+
+Open: the zones where rows from several edges meet in wide paving are still busy; colours are r6's, not yet matched to the court; nothing is in the shader yet.
+
 ## Trade-offs and what was not done
 
 - The road tile's rows run east to west everywhere, so they cross the north road and run along the east-west street. Only laying the road in rows (the experiment) fixes that.

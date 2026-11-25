@@ -865,6 +865,8 @@ def main():
     if r['errors']:
         print(f'{name}: {len(r["errors"])} problem(s):'); [print('  -', e) for e in r['errors']]; sys.exit(1)
     json.dump(r, open(out, 'w', encoding='utf-8'), separators=(',', ':'))
+    if len(sys.argv) <= 2:   # (the scene's own file: lay its road and paving stone by stone, when they changed)
+        import tess_layout; tess_layout.lay_scene(name, r)
     print(f'{name}: {len(r["instances"])} instances of {len(r["pieces"])} pieces, 0 problems, {len(r["warnings"])} warning(s) -> {os.path.relpath(out)}')
     for w in r['warnings']: print('  ! ' + w)
     for p, n in sorted(r['pieces'].items()): print(f'  {n:4d} {p}')

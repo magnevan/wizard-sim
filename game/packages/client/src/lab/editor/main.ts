@@ -8,6 +8,7 @@
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { loadStones } from '../kit-stones';
 import { buildKit, disposeKit, floorMats, groundPlane, kitPiece, loadKitArt, setKitPieces, setupStage, spinKit, yOf, type Inst, type KitData, type KitPiece } from '../kit-render';
 import { eachPoint, type Obj, type Op, type Scene, type Terrace } from '../../../map-editor/ops';
 import type { Compiled, Finding } from '../../../map-editor/compile-worker';
@@ -273,6 +274,7 @@ async function open(n: string) {
   history.replaceState(null, '', `?scene=${n}${q.get('art') === '0' ? '&art=0' : ''}`);
   const p = await call(`pins?name=${n}&status=all`); pins = p?.pins ?? [];
   await concepts.load();
+  await loadStones(n);   // its road and paving laid stone by stone, if tools/kit/tess_layout.py has laid them
   hot.send('map:hello', { name: n });
 }
 

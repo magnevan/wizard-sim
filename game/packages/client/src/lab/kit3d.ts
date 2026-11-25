@@ -3,14 +3,14 @@
  * tools/kit/compile.py into instances of made pieces, drawn by kit-render.ts (fitted Meshy models where made, plain
  * placeholders of their exact size elsewhere), so the joins can be judged. Its own page (kit3d.html).
  * ?layout=patch-a, ?x=&y= target (u), ?view=26, ?pitch=46, ?yaw=0 (degrees, turns the camera round the target),
- * ?wiz=0 hides the wizard, ?art=0 draws placeholders only. ?kerb=0 draws kerbs as plain strips, ?kerbw=0.32 sets a kerb block's width (u) and ?kerbr=0.15 how round its corners are seen from above.
- * ?plan=30 looks straight down on 30 u across (north up, no shadows, only floors and kerbs): the guide a ground painting is
- * painted over; ?paint=paint/x.png&prect=x0,y0,x1,y1 lays a ground painting over that rectangle (u). The map editor (editor.html) edits the same scenes live.
+ * ?wiz=0 hides the wizard, ?art=0 draws placeholders only. ?kerb=0 draws kerbs as plain strips, ?kerbw=0.32 sets a kerb block's width (u) and ?kerbr=0.15 how round its corners are seen from above. ?stones=0 keeps the tiles on floors that are laid stone by stone (kit-stones.ts).
+ * ?plan=30 looks straight down on 30 u across (north up, no shadows, only floors and kerbs). The map editor (editor.html) edits the same scenes live.
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import wizMeta from '../../../../content/assets/models/wizard.json';
-import { buildKit, groundPlane, KIT_OPTS, loadKitArt, setGroundPaint, setKitPieces, setupStage, spinKit, yOf, type KitData } from './kit-render';
+import { loadStones } from './kit-stones';
+import { buildKit, groundPlane, KIT_OPTS, loadKitArt, setKitPieces, setupStage, spinKit, yOf, type KitData } from './kit-render';
 
 const q = new URLSearchParams(location.search);
 const layouts = import.meta.glob<KitData>('./kit-*.json', { eager: true, import: 'default' });
@@ -30,9 +30,9 @@ await fetch('/__map/kit').then((r) => r.json()).then((k) => setKitPieces(k.piece
 KIT_OPTS.kerb = q.get('kerb') !== '0';
 if (q.get('kerbw')) KIT_OPTS.kerbW = Number(q.get('kerbw'));
 if (q.get('kerbr')) KIT_OPTS.kerbRound = Number(q.get('kerbr'));
+if (q.get('stones') !== '0') await loadStones(q.get('layout') ?? 'patch-a');   // the scene's floors laid stone by stone, if it has a layout
 const PLAN = Number(q.get('plan') ?? 0);
 if (PLAN) renderer.shadowMap.enabled = false;
-if (q.get('paint')) await setGroundPaint(q.get('paint'), (q.get('prect') ?? '').split(',').map(Number) as [number, number, number, number], Number(q.get('pgain') ?? 1));
 scene.add(groundPlane(data), buildKit(PLAN ? { ...data, instances: data.instances.filter((i) => /^(edge|sweep)\.kerb/.test(i.p)) } : data));
 
 // ---- the wizard, for scale ----

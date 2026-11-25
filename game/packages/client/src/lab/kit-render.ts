@@ -14,6 +14,7 @@ import { waterMesh } from './kit-water';
 import { clearInlays, flowInlays, inlayInto, type InlaySpec } from './kit-inlay';
 import { FOLIAGE_TIME, grow, type Recipe } from './foliage';
 import { kerbRows, KERB_ROUND, KERB_W, type KerbSeg } from './kit-road';
+import { STONE_DECL, STONE_MATS, STONE_PAINT, STONE_U, stoneFrag } from './kit-stones';
 
 export type Inst = { p: string; x: number; y: number; x2?: number; y2?: number; h: number; low?: number; rot: number; len?: number; v?: string; dx?: number; dy?: number; n?: number; src?: string; e?: [number, number]; o?: string; ox?: number; oy?: number;
   /** a fall's lip (fall.curtain): its line in u, the lower water on the right */
@@ -161,19 +162,6 @@ const TILE: Record<string, number> = { paving: 4, plaza: 6, road: 9, lawn: 4, ro
 const FLOW: Record<string, [number, number]> = { water: [0.012, 0.007] };
 /** Switches for trying things out (kit3d's URL): `kerb` draws kerbs as blocks (kit-road.ts), kerbW u wide, their corners kerbRound round. */
 export const KIT_OPTS = { kerb: true, kerbW: KERB_W, kerbRound: KERB_ROUND };
-/**
- * A ground painting (docs/explorations/2026-11-24-road-stones.md, approach 4): one picture of the ground seen from
- * straight above, covering the rectangle ptRect (x0, z0, x1, z1 in u; its top edge is north), which replaces the
- * tiling texture on every surface facing up inside it: floors and the tops of kerbs alike.
- */
-const PAINT = { ptOn: { value: 0 }, ptTex: { value: null as THREE.Texture | null }, ptRect: { value: new THREE.Vector4() }, ptGain: { value: 1 } };
-/** Show a ground painting (a path under content/generated/textures/) over a rectangle of the scene, or none. */
-export async function setGroundPaint(path: string | null, rect?: [number, number, number, number], gain = 1): Promise<void> {
-  PAINT.ptGain.value = gain;   // a painting made over a lit picture is lit twice: darken it by this
-  const t = path ? await loadDecal(`textures/${path}`) : null;
-  PAINT.ptTex.value = t; PAINT.ptOn.value = t && rect ? 1 : 0;
-  if (rect) PAINT.ptRect.value.set(...rect);
-}
 const TP_TIME = { value: 0 };   // shared by every flowing texture; spinKit advances it each frame
 /**
  * Floors that vary over a long distance, so a tile's repeat doesn't show as a grid: the tile's own colour, read again
@@ -190,34 +178,36 @@ async function loadTextures() {
   await Promise.all(Object.entries(texUrls).map(([p, url]) => loader.loadAsync(url).then((t) => {
     const name = p.split('/').pop()!.replace('.png', '');
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-    TEX[name] = triplanar(t, TILE[name] ?? 4, FLOW[name], true, MACRO[name] ?? 0); RAW[name] = t;
+    TEX[name] = triplanar(t, TILE[name] ?? 4, FLOW[name], true, MACRO[name] ?? 0, STONE_MATS.indexOf(name)); RAW[name] = t;
     if (TONE[name]) TEX[name].color.setHex(TONE[name]);
   }).catch(() => undefined)));
   // one smooth stone serves treads, kerbs and copings, unless each has its own
   if (TEX['smooth-stone']) { TEX.tread ??= TEX['smooth-stone']; TEX.kerb ??= TEX['smooth-stone']; }
 }
-/** A material that samples tex by world position, blended over the three axes by the surface's facing. */
-function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0, 0], decal = true, macro = 0, paint = true): THREE.MeshStandardMaterial {
+/**
+ * A material that samples tex by world position, blended over the three axes by the surface's facing. stone: the
+ * floor's place in STONE_MATS when it is laid stone by stone once a scene's stones are loaded (kit-stones.ts), else -1.
+ */
+function triplanar(tex: THREE.Texture, tile: number, flow: [number, number] = [0, 0], decal = true, macro = 0, stone = -1): THREE.MeshStandardMaterial {
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: flow[0] || flow[1] ? 0.35 : 0.92 });
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tpMap = { value: tex }; sh.uniforms.tpScale = { value: 1 / tile };
-    sh.uniforms.tpFlow = { value: new THREE.Vector2(...flow) }; sh.uniforms.tpTime = TP_TIME; Object.assign(sh.uniforms, PAINT);
+    sh.uniforms.tpFlow = { value: new THREE.Vector2(...flow) }; sh.uniforms.tpTime = TP_TIME;
+    if (stone >= 0) { const P = STONE_PAINT[STONE_MATS[stone]]; Object.assign(sh.uniforms, STONE_U, { stPal: P.pal, stJoint: P.joint, stK: P.k }); }
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTpPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvTpNrm = normalize(mat3(modelMatrix) * objectNormal);');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;\nuniform sampler2D tpMap, ptTex;\nuniform float tpScale, tpTime, ptOn, ptGain;\nuniform vec2 tpFlow;\nuniform vec4 ptRect;')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpPos;\nvarying vec3 vTpNrm;\nuniform sampler2D tpMap;\nuniform float tpScale, tpTime;\nuniform vec2 tpFlow;' + (stone >= 0 ? STONE_DECL : ''))
       .replace('#include <map_fragment>', `vec3 tpW = pow(abs(normalize(vTpNrm)), vec3(4.0)); tpW /= (tpW.x + tpW.y + tpW.z);
         vec4 tpC = texture2D(tpMap, vTpPos.zy * tpScale) * tpW.x + texture2D(tpMap, vTpPos.xz * tpScale + tpFlow * tpTime) * tpW.y + texture2D(tpMap, vTpPos.xy * tpScale) * tpW.z;
         ${macro ? `vec3 tpFar = texture2D(tpMap, mat2(0.8, -0.6, 0.6, 0.8) * vTpPos.xz * tpScale * 0.137, 5.0).rgb, tpMean = texture2D(tpMap, vec2(0.5), 20.0).rgb;
         tpC.rgb *= clamp(1.0 + (dot(tpFar, vec3(0.333)) / max(dot(tpMean, vec3(0.333)), 0.02) - 1.0) * ${macro.toFixed(2)}, 0.8, 1.2);` : ''}
         diffuseColor *= tpC;
-        vec2 ptUv = (vTpPos.xz - ptRect.xy) / (ptRect.zw - ptRect.xy);
-        if (${paint ? 'ptOn > 0.5' : 'false'} && ptUv.x > 0.0 && ptUv.x < 1.0 && ptUv.y > 0.0 && ptUv.y < 1.0) {
-          // faded in over the rectangle's rim, so the painting has no hard border on the ground
-          float ptK = tpW.y * smoothstep(0.0, 0.03, min(min(ptUv.x, 1.0 - ptUv.x), min(ptUv.y, 1.0 - ptUv.y)));
-          diffuseColor.rgb = mix(diffuseColor.rgb, texture2D(ptTex, vec2(ptUv.x, 1.0 - ptUv.y)).rgb * ptGain, ptK);
-        }`);
+        ${stone >= 0 ? stoneFrag(stone) : ''}
+`);
+    // a laid stone's bevel, lit by the scene's own light
+    if (stone >= 0) sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nif (stLaid > 0.5) normal = normalize((viewMatrix * vec4(stNrm, 0.0)).xyz);');
   };
-  m.customProgramCacheKey = () => `tp${tile}m${macro}p${paint}`;
+  m.customProgramCacheKey = () => `tp${tile}m${macro}s${stone}`;
   return decal ? decalable(m) : m;
 }
 /** An inlay's rim stone: the smooth stone, kept clear of the decal, so the rim reads as its own kerb round the picture. */
@@ -228,16 +218,16 @@ function inlay(it: Inst): THREE.Group {
   g.position.set(it.x, yOf(it.h), it.y); g.rotation.y = Math.atan2(Math.cos(it.rot), Math.sin(it.rot));   // as a set piece: local +z its front
   const k = KIT_PIECES[it.p] as KitPiece & InlaySpec;
   const stone = RAW['smooth-stone'];
-  const rim = stone ? (RIM_MAT ??= triplanar(stone, TILE['smooth-stone'] ?? 2, undefined, false, 0, false)) : PROP.coping;
+  const rim = stone ? (RIM_MAT ??= triplanar(stone, TILE['smooth-stone'] ?? 2, undefined, false)) : PROP.coping;
   const field = RAW[k.channels?.texture ?? 'magic-flow'];
   return inlayInto(g, k, { top: floorMat('plaza'), side: TEX['smooth-stone'] ?? MAT.kerb, rim }, field);
 }
 let KERB_BLOCK: THREE.MeshStandardMaterial | undefined;
-/** What kerb blocks wear: the smooth stone mapped by world position on top and sides alike (so nothing drags down a side), each block's own tone in its vertices, and no ground painting over it. Undefined without the texture, or with ?kerb=0. */
+/** What kerb blocks wear: the smooth stone mapped by world position on top and sides alike (so nothing drags down a side), each block's own tone in its vertices, Undefined without the texture, or with ?kerb=0. */
 function kerbMat(): THREE.MeshStandardMaterial | undefined {
   const stone = RAW['smooth-stone'];
   if (!stone || !KIT_OPTS.kerb) return undefined;
-  if (!KERB_BLOCK) { KERB_BLOCK = triplanar(stone, TILE['smooth-stone'] ?? 2, undefined, true, 0, false); KERB_BLOCK.vertexColors = true; }
+  if (!KERB_BLOCK) { KERB_BLOCK = triplanar(stone, TILE['smooth-stone'] ?? 2, undefined, true); KERB_BLOCK.vertexColors = true; }
   return KERB_BLOCK;
 }
 /** A tiling texture's world-mapped material by name (paving, ashlar, smooth-stone...), once loadKitArt has run. */

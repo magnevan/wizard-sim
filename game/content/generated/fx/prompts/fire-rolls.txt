@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as fire-rolls.png in the current directory. Reply with just the file name.
+
+The attached image is concept art for a Fire spray in our stylised 3D game: volumetric toon fire, a thick rolling body of flame. Make a sprite sheet of flame cells for building that flame body out of many big overlapping particles, in exactly this painted toon style.
+
+A 4 by 4 grid of equal square cells on a pure black background. Each cell holds one rolling, billowing mass of fire that fills most of its cell: a round to slightly oval puff of fireball, with soft round toon shading, a hot pale yellow middle, saturated orange around it, short curling flame licks around its outline, and a thin deep red rim on its outer edge. Each of the sixteen is different: some rounder, some curling to one side, some lumpy with two or three lobes, some trailing a short tongue. All are drawn at the same scale and lit the same way. Their outer edges are soft and feathered into the black, so they blend into one mass when they overlap. Nothing touches the cell borders. No text, no grid lines.

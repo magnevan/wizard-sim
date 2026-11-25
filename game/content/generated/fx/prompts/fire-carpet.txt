@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as fire-carpet.png in the current directory. Reply with just the file name.
+
+The attached image is concept art for our stylised 3D game: a low, wide carpet of short flames burning on the stone floor, like burning oil spilled on the ground. Make a sprite sheet of flame clusters for building that carpet out of many small upright particles, in exactly this painted toon style.
+
+A 4 by 4 grid of equal square cells on a pure black background. Each cell holds one low cluster of five to nine short flame tongues standing side by side on a flat base line along the bottom of its cell. Each cluster is about three times wider than it is tall: short, even tongues, the middle ones a little taller, the ends lower and ragged. Toon shading: pale yellow at the roots, saturated orange, deep red at the curling tips. Each of the sixteen is different, and some lean a little left or right as if in a breeze. All at the same scale. The base of each cluster is soft and glowing; nothing touches the cell borders. No text, no grid lines.

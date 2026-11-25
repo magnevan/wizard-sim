@@ -91,10 +91,10 @@ export class Standins {
   private recs: Rec[] = [];
   private keys = new Set<string>();
   /**
-   * True: Fire's spray and floor draw as stand-ins like every other spell. False: as look B (fire.ts). The user rejected
-   * both fire looks (2026-11-25), so stand-ins until fire is rebuilt from the Codex concept round.
+   * True: Fire's spray and floor draw as stand-ins like every other spell. False: as fire.ts draws them (the toon
+   * volume look the user picked from the Codex concept round, 2026-11-25).
    */
-  drawFire = true;
+  drawFire = false;
 
   get group(): THREE.Group { return this.batch.group; }
 

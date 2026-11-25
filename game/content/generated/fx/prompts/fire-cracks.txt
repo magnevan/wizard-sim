@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as fire-cracks.png in the current directory. Reply with just the file name.
+
+The attached image is concept art for our stylised 3D game: a burning patch of floor, charred stone with glowing cracks. Make a square, seamlessly tileable ground texture of that charred bed, seen straight from above, in the same painted style.
+
+Charred, nearly black stone covered by an irregular network of thin glowing cracks: bright yellow-orange inside the widest cracks, fading to deep red and then to dark at their thin ends, the cracks branching and forming irregular cells of different sizes, like dried mud or cooling lava crust. Even coverage across the whole square, no single centre, no vignette, no border. Its left edge continues seamlessly into its right edge and its top into its bottom. No text.

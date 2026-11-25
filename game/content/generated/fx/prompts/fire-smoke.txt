@@ -1,0 +1,5 @@
+Generate one image with your image generation tool, then save it as fire-smoke.png in the current directory. Reply with just the file name.
+
+The attached image is concept art for a Fire spray in our stylised 3D game: volumetric toon fire with dark smoke curling off its far end. Make a sprite sheet of smoke puffs for building that smoke out of particles, in the same painted toon style.
+
+A 4 by 4 grid of equal square cells on a pure black background. Each cell holds one billowing puff of smoke that fills most of its cell: rounded cauliflower lobes with soft round toon shading, painted in pale grey and white so its shape and shading read clearly against the black (the game tints it dark brown). Each of the sixteen is different: round puffs, puffs of two or three lobes, a puff curling to one side, a wispy torn puff. All at the same scale and lit the same way from the top left. Their outer edges are soft and feathered into the black. Nothing touches the cell borders. No text, no grid lines.
